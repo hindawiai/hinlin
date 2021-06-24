@@ -1,16 +1,17 @@
+<शैली गुरु>
 /*
- * Qualcomm Technologies HIDMA DMA engine interface
+ * Qualcomm Technologies HIDMA DMA engine पूर्णांकerface
  *
  * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 and
  * only version 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
 /*
@@ -20,20 +21,20 @@
  * Copyright (C) Alexander Popov, Promcontroller 2014
  *
  * Written by Piotr Ziecik <kosmo@semihalf.com>. Hardware description
- * (defines, structures and comments) was taken from MPC5121 DMA driver
- * written by Hongjun Chen <hong-jun.chen@freescale.com>.
+ * (defines, काष्ठाures and comments) was taken from MPC5121 DMA driver
+ * written by Hongjun Chen <hong-jun.chen@मुक्तscale.com>.
  *
  * Approved as OSADL project by a majority of OSADL members and funded
- * by OSADL membership fees in 2009;  for details see www.osadl.org.
+ * by OSADL membership fees in 2009;  क्रम details see www.osadl.org.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  *
  * The full GNU General Public License is included in this distribution in the
@@ -42,79 +43,79 @@
 
 /* Linux Foundation elects GPLv2 license only. */
 
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/of_dma.h>
-#include <linux/of_device.h>
-#include <linux/property.h>
-#include <linux/delay.h>
-#include <linux/acpi.h>
-#include <linux/irq.h>
-#include <linux/atomic.h>
-#include <linux/pm_runtime.h>
-#include <linux/msi.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/msi.h>
 
-#include "../dmaengine.h"
-#include "hidma.h"
+#समावेश "../dmaengine.h"
+#समावेश "hidma.h"
 
 /*
- * Default idle time is 2 seconds. This parameter can
+ * Default idle समय is 2 seconds. This parameter can
  * be overridden by changing the following
- * /sys/bus/platform/devices/QCOM8061:<xy>/power/autosuspend_delay_ms
+ * /sys/bus/platक्रमm/devices/QCOM8061:<xy>/घातer/स्वतःsuspend_delay_ms
  * during kernel boot.
  */
-#define HIDMA_AUTOSUSPEND_TIMEOUT		2000
-#define HIDMA_ERR_INFO_SW			0xFF
-#define HIDMA_ERR_CODE_UNEXPECTED_TERMINATE	0x0
-#define HIDMA_NR_DEFAULT_DESC			10
-#define HIDMA_MSI_INTS				11
+#घोषणा HIDMA_AUTOSUSPEND_TIMEOUT		2000
+#घोषणा HIDMA_ERR_INFO_SW			0xFF
+#घोषणा HIDMA_ERR_CODE_UNEXPECTED_TERMINATE	0x0
+#घोषणा HIDMA_NR_DEFAULT_DESC			10
+#घोषणा HIDMA_MSI_INTS				11
 
-static inline struct hidma_dev *to_hidma_dev(struct dma_device *dmadev)
-{
-	return container_of(dmadev, struct hidma_dev, ddev);
-}
+अटल अंतरभूत काष्ठा hidma_dev *to_hidma_dev(काष्ठा dma_device *dmadev)
+अणु
+	वापस container_of(dmadev, काष्ठा hidma_dev, ddev);
+पूर्ण
 
-static inline
-struct hidma_dev *to_hidma_dev_from_lldev(struct hidma_lldev **_lldevp)
-{
-	return container_of(_lldevp, struct hidma_dev, lldev);
-}
+अटल अंतरभूत
+काष्ठा hidma_dev *to_hidma_dev_from_lldev(काष्ठा hidma_lldev **_lldevp)
+अणु
+	वापस container_of(_lldevp, काष्ठा hidma_dev, lldev);
+पूर्ण
 
-static inline struct hidma_chan *to_hidma_chan(struct dma_chan *dmach)
-{
-	return container_of(dmach, struct hidma_chan, chan);
-}
+अटल अंतरभूत काष्ठा hidma_chan *to_hidma_chan(काष्ठा dma_chan *dmach)
+अणु
+	वापस container_of(dmach, काष्ठा hidma_chan, chan);
+पूर्ण
 
-static void hidma_free(struct hidma_dev *dmadev)
-{
+अटल व्योम hidma_मुक्त(काष्ठा hidma_dev *dmadev)
+अणु
 	INIT_LIST_HEAD(&dmadev->ddev.channels);
-}
+पूर्ण
 
-static unsigned int nr_desc_prm;
-module_param(nr_desc_prm, uint, 0644);
+अटल अचिन्हित पूर्णांक nr_desc_prm;
+module_param(nr_desc_prm, uपूर्णांक, 0644);
 MODULE_PARM_DESC(nr_desc_prm, "number of descriptors (default: 0)");
 
-enum hidma_cap {
+क्रमागत hidma_cap अणु
 	HIDMA_MSI_CAP = 1,
 	HIDMA_IDENTITY_CAP,
-};
+पूर्ण;
 
 /* process completed descriptors */
-static void hidma_process_completed(struct hidma_chan *mchan)
-{
-	struct dma_device *ddev = mchan->chan.device;
-	struct hidma_dev *mdma = to_hidma_dev(ddev);
-	struct dma_async_tx_descriptor *desc;
+अटल व्योम hidma_process_completed(काष्ठा hidma_chan *mchan)
+अणु
+	काष्ठा dma_device *ddev = mchan->chan.device;
+	काष्ठा hidma_dev *mdma = to_hidma_dev(ddev);
+	काष्ठा dma_async_tx_descriptor *desc;
 	dma_cookie_t last_cookie;
-	struct hidma_desc *mdesc;
-	struct hidma_desc *next;
-	unsigned long irqflags;
-	struct list_head list;
+	काष्ठा hidma_desc *mdesc;
+	काष्ठा hidma_desc *next;
+	अचिन्हित दीर्घ irqflags;
+	काष्ठा list_head list;
 
 	INIT_LIST_HEAD(&list);
 
@@ -124,10 +125,10 @@ static void hidma_process_completed(struct hidma_chan *mchan)
 	spin_unlock_irqrestore(&mchan->lock, irqflags);
 
 	/* Execute callbacks and run dependencies */
-	list_for_each_entry_safe(mdesc, next, &list, node) {
-		enum dma_status llstat;
-		struct dmaengine_desc_callback cb;
-		struct dmaengine_result result;
+	list_क्रम_each_entry_safe(mdesc, next, &list, node) अणु
+		क्रमागत dma_status llstat;
+		काष्ठा dmaengine_desc_callback cb;
+		काष्ठा dmaengine_result result;
 
 		desc = &mdesc->desc;
 		last_cookie = desc->cookie;
@@ -135,12 +136,12 @@ static void hidma_process_completed(struct hidma_chan *mchan)
 		llstat = hidma_ll_status(mdma->lldev, mdesc->tre_ch);
 
 		spin_lock_irqsave(&mchan->lock, irqflags);
-		if (llstat == DMA_COMPLETE) {
+		अगर (llstat == DMA_COMPLETE) अणु
 			mchan->last_success = last_cookie;
 			result.result = DMA_TRANS_NOERROR;
-		} else {
+		पूर्ण अन्यथा अणु
 			result.result = DMA_TRANS_ABORTED;
-		}
+		पूर्ण
 
 		dma_cookie_complete(desc);
 		spin_unlock_irqrestore(&mchan->lock, irqflags);
@@ -150,55 +151,55 @@ static void hidma_process_completed(struct hidma_chan *mchan)
 		dma_run_dependencies(desc);
 
 		spin_lock_irqsave(&mchan->lock, irqflags);
-		list_move(&mdesc->node, &mchan->free);
+		list_move(&mdesc->node, &mchan->मुक्त);
 		spin_unlock_irqrestore(&mchan->lock, irqflags);
 
 		dmaengine_desc_callback_invoke(&cb, &result);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Called once for each submitted descriptor.
- * PM is locked once for each descriptor that is currently
+ * Called once क्रम each submitted descriptor.
+ * PM is locked once क्रम each descriptor that is currently
  * in execution.
  */
-static void hidma_callback(void *data)
-{
-	struct hidma_desc *mdesc = data;
-	struct hidma_chan *mchan = to_hidma_chan(mdesc->desc.chan);
-	struct dma_device *ddev = mchan->chan.device;
-	struct hidma_dev *dmadev = to_hidma_dev(ddev);
-	unsigned long irqflags;
+अटल व्योम hidma_callback(व्योम *data)
+अणु
+	काष्ठा hidma_desc *mdesc = data;
+	काष्ठा hidma_chan *mchan = to_hidma_chan(mdesc->desc.chan);
+	काष्ठा dma_device *ddev = mchan->chan.device;
+	काष्ठा hidma_dev *dmadev = to_hidma_dev(ddev);
+	अचिन्हित दीर्घ irqflags;
 	bool queued = false;
 
 	spin_lock_irqsave(&mchan->lock, irqflags);
-	if (mdesc->node.next) {
+	अगर (mdesc->node.next) अणु
 		/* Delete from the active list, add to completed list */
 		list_move_tail(&mdesc->node, &mchan->completed);
 		queued = true;
 
 		/* calculate the next running descriptor */
 		mchan->running = list_first_entry(&mchan->active,
-						  struct hidma_desc, node);
-	}
+						  काष्ठा hidma_desc, node);
+	पूर्ण
 	spin_unlock_irqrestore(&mchan->lock, irqflags);
 
 	hidma_process_completed(mchan);
 
-	if (queued) {
-		pm_runtime_mark_last_busy(dmadev->ddev.dev);
-		pm_runtime_put_autosuspend(dmadev->ddev.dev);
-	}
-}
+	अगर (queued) अणु
+		pm_runसमय_mark_last_busy(dmadev->ddev.dev);
+		pm_runसमय_put_स्वतःsuspend(dmadev->ddev.dev);
+	पूर्ण
+पूर्ण
 
-static int hidma_chan_init(struct hidma_dev *dmadev, u32 dma_sig)
-{
-	struct hidma_chan *mchan;
-	struct dma_device *ddev;
+अटल पूर्णांक hidma_chan_init(काष्ठा hidma_dev *dmadev, u32 dma_sig)
+अणु
+	काष्ठा hidma_chan *mchan;
+	काष्ठा dma_device *ddev;
 
-	mchan = devm_kzalloc(dmadev->ddev.dev, sizeof(*mchan), GFP_KERNEL);
-	if (!mchan)
-		return -ENOMEM;
+	mchan = devm_kzalloc(dmadev->ddev.dev, माप(*mchan), GFP_KERNEL);
+	अगर (!mchan)
+		वापस -ENOMEM;
 
 	ddev = &dmadev->ddev;
 	mchan->dma_sig = dma_sig;
@@ -206,7 +207,7 @@ static int hidma_chan_init(struct hidma_dev *dmadev, u32 dma_sig)
 	mchan->chan.device = ddev;
 	dma_cookie_init(&mchan->chan);
 
-	INIT_LIST_HEAD(&mchan->free);
+	INIT_LIST_HEAD(&mchan->मुक्त);
 	INIT_LIST_HEAD(&mchan->prepared);
 	INIT_LIST_HEAD(&mchan->active);
 	INIT_LIST_HEAD(&mchan->completed);
@@ -215,117 +216,117 @@ static int hidma_chan_init(struct hidma_dev *dmadev, u32 dma_sig)
 	spin_lock_init(&mchan->lock);
 	list_add_tail(&mchan->chan.device_node, &ddev->channels);
 	dmadev->ddev.chancnt++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hidma_issue_task(struct tasklet_struct *t)
-{
-	struct hidma_dev *dmadev = from_tasklet(dmadev, t, task);
+अटल व्योम hidma_issue_task(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा hidma_dev *dmadev = from_tasklet(dmadev, t, task);
 
-	pm_runtime_get_sync(dmadev->ddev.dev);
+	pm_runसमय_get_sync(dmadev->ddev.dev);
 	hidma_ll_start(dmadev->lldev);
-}
+पूर्ण
 
-static void hidma_issue_pending(struct dma_chan *dmach)
-{
-	struct hidma_chan *mchan = to_hidma_chan(dmach);
-	struct hidma_dev *dmadev = mchan->dmadev;
-	unsigned long flags;
-	struct hidma_desc *qdesc, *next;
-	int status;
+अटल व्योम hidma_issue_pending(काष्ठा dma_chan *dmach)
+अणु
+	काष्ठा hidma_chan *mchan = to_hidma_chan(dmach);
+	काष्ठा hidma_dev *dmadev = mchan->dmadev;
+	अचिन्हित दीर्घ flags;
+	काष्ठा hidma_desc *qdesc, *next;
+	पूर्णांक status;
 
 	spin_lock_irqsave(&mchan->lock, flags);
-	list_for_each_entry_safe(qdesc, next, &mchan->queued, node) {
+	list_क्रम_each_entry_safe(qdesc, next, &mchan->queued, node) अणु
 		hidma_ll_queue_request(dmadev->lldev, qdesc->tre_ch);
 		list_move_tail(&qdesc->node, &mchan->active);
-	}
+	पूर्ण
 
-	if (!mchan->running) {
-		struct hidma_desc *desc = list_first_entry(&mchan->active,
-							   struct hidma_desc,
+	अगर (!mchan->running) अणु
+		काष्ठा hidma_desc *desc = list_first_entry(&mchan->active,
+							   काष्ठा hidma_desc,
 							   node);
 		mchan->running = desc;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&mchan->lock, flags);
 
 	/* PM will be released in hidma_callback function. */
-	status = pm_runtime_get(dmadev->ddev.dev);
-	if (status < 0)
+	status = pm_runसमय_get(dmadev->ddev.dev);
+	अगर (status < 0)
 		tasklet_schedule(&dmadev->task);
-	else
+	अन्यथा
 		hidma_ll_start(dmadev->lldev);
-}
+पूर्ण
 
-static inline bool hidma_txn_is_success(dma_cookie_t cookie,
+अटल अंतरभूत bool hidma_txn_is_success(dma_cookie_t cookie,
 		dma_cookie_t last_success, dma_cookie_t last_used)
-{
-	if (last_success <= last_used) {
-		if ((cookie <= last_success) || (cookie > last_used))
-			return true;
-	} else {
-		if ((cookie <= last_success) && (cookie > last_used))
-			return true;
-	}
-	return false;
-}
+अणु
+	अगर (last_success <= last_used) अणु
+		अगर ((cookie <= last_success) || (cookie > last_used))
+			वापस true;
+	पूर्ण अन्यथा अणु
+		अगर ((cookie <= last_success) && (cookie > last_used))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static enum dma_status hidma_tx_status(struct dma_chan *dmach,
+अटल क्रमागत dma_status hidma_tx_status(काष्ठा dma_chan *dmach,
 				       dma_cookie_t cookie,
-				       struct dma_tx_state *txstate)
-{
-	struct hidma_chan *mchan = to_hidma_chan(dmach);
-	enum dma_status ret;
+				       काष्ठा dma_tx_state *txstate)
+अणु
+	काष्ठा hidma_chan *mchan = to_hidma_chan(dmach);
+	क्रमागत dma_status ret;
 
 	ret = dma_cookie_status(dmach, cookie, txstate);
-	if (ret == DMA_COMPLETE) {
+	अगर (ret == DMA_COMPLETE) अणु
 		bool is_success;
 
 		is_success = hidma_txn_is_success(cookie, mchan->last_success,
 						  dmach->cookie);
-		return is_success ? ret : DMA_ERROR;
-	}
+		वापस is_success ? ret : DMA_ERROR;
+	पूर्ण
 
-	if (mchan->paused && (ret == DMA_IN_PROGRESS)) {
-		unsigned long flags;
+	अगर (mchan->छोड़ोd && (ret == DMA_IN_PROGRESS)) अणु
+		अचिन्हित दीर्घ flags;
 		dma_cookie_t runcookie;
 
 		spin_lock_irqsave(&mchan->lock, flags);
-		if (mchan->running)
+		अगर (mchan->running)
 			runcookie = mchan->running->desc.cookie;
-		else
+		अन्यथा
 			runcookie = -EINVAL;
 
-		if (runcookie == cookie)
+		अगर (runcookie == cookie)
 			ret = DMA_PAUSED;
 
 		spin_unlock_irqrestore(&mchan->lock, flags);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Submit descriptor to hardware.
- * Lock the PM for each descriptor we are sending.
+ * Lock the PM क्रम each descriptor we are sending.
  */
-static dma_cookie_t hidma_tx_submit(struct dma_async_tx_descriptor *txd)
-{
-	struct hidma_chan *mchan = to_hidma_chan(txd->chan);
-	struct hidma_dev *dmadev = mchan->dmadev;
-	struct hidma_desc *mdesc;
-	unsigned long irqflags;
+अटल dma_cookie_t hidma_tx_submit(काष्ठा dma_async_tx_descriptor *txd)
+अणु
+	काष्ठा hidma_chan *mchan = to_hidma_chan(txd->chan);
+	काष्ठा hidma_dev *dmadev = mchan->dmadev;
+	काष्ठा hidma_desc *mdesc;
+	अचिन्हित दीर्घ irqflags;
 	dma_cookie_t cookie;
 
-	pm_runtime_get_sync(dmadev->ddev.dev);
-	if (!hidma_ll_isenabled(dmadev->lldev)) {
-		pm_runtime_mark_last_busy(dmadev->ddev.dev);
-		pm_runtime_put_autosuspend(dmadev->ddev.dev);
-		return -ENODEV;
-	}
-	pm_runtime_mark_last_busy(dmadev->ddev.dev);
-	pm_runtime_put_autosuspend(dmadev->ddev.dev);
+	pm_runसमय_get_sync(dmadev->ddev.dev);
+	अगर (!hidma_ll_isenabled(dmadev->lldev)) अणु
+		pm_runसमय_mark_last_busy(dmadev->ddev.dev);
+		pm_runसमय_put_स्वतःsuspend(dmadev->ddev.dev);
+		वापस -ENODEV;
+	पूर्ण
+	pm_runसमय_mark_last_busy(dmadev->ddev.dev);
+	pm_runसमय_put_स्वतःsuspend(dmadev->ddev.dev);
 
-	mdesc = container_of(txd, struct hidma_desc, desc);
+	mdesc = container_of(txd, काष्ठा hidma_desc, desc);
 	spin_lock_irqsave(&mchan->lock, irqflags);
 
 	/* Move descriptor to queued */
@@ -336,79 +337,79 @@ static dma_cookie_t hidma_tx_submit(struct dma_async_tx_descriptor *txd)
 
 	spin_unlock_irqrestore(&mchan->lock, irqflags);
 
-	return cookie;
-}
+	वापस cookie;
+पूर्ण
 
-static int hidma_alloc_chan_resources(struct dma_chan *dmach)
-{
-	struct hidma_chan *mchan = to_hidma_chan(dmach);
-	struct hidma_dev *dmadev = mchan->dmadev;
-	struct hidma_desc *mdesc, *tmp;
-	unsigned long irqflags;
+अटल पूर्णांक hidma_alloc_chan_resources(काष्ठा dma_chan *dmach)
+अणु
+	काष्ठा hidma_chan *mchan = to_hidma_chan(dmach);
+	काष्ठा hidma_dev *dmadev = mchan->dmadev;
+	काष्ठा hidma_desc *mdesc, *पंचांगp;
+	अचिन्हित दीर्घ irqflags;
 	LIST_HEAD(descs);
-	unsigned int i;
-	int rc = 0;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक rc = 0;
 
-	if (mchan->allocated)
-		return 0;
+	अगर (mchan->allocated)
+		वापस 0;
 
-	/* Alloc descriptors for this channel */
-	for (i = 0; i < dmadev->nr_descriptors; i++) {
-		mdesc = kzalloc(sizeof(struct hidma_desc), GFP_NOWAIT);
-		if (!mdesc) {
+	/* Alloc descriptors क्रम this channel */
+	क्रम (i = 0; i < dmadev->nr_descriptors; i++) अणु
+		mdesc = kzalloc(माप(काष्ठा hidma_desc), GFP_NOWAIT);
+		अगर (!mdesc) अणु
 			rc = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		dma_async_tx_descriptor_init(&mdesc->desc, dmach);
 		mdesc->desc.tx_submit = hidma_tx_submit;
 
 		rc = hidma_ll_request(dmadev->lldev, mchan->dma_sig,
 				      "DMA engine", hidma_callback, mdesc,
 				      &mdesc->tre_ch);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(dmach->device->dev,
 				"channel alloc failed at %u\n", i);
-			kfree(mdesc);
-			break;
-		}
+			kमुक्त(mdesc);
+			अवरोध;
+		पूर्ण
 		list_add_tail(&mdesc->node, &descs);
-	}
+	पूर्ण
 
-	if (rc) {
-		/* return the allocated descriptors */
-		list_for_each_entry_safe(mdesc, tmp, &descs, node) {
-			hidma_ll_free(dmadev->lldev, mdesc->tre_ch);
-			kfree(mdesc);
-		}
-		return rc;
-	}
+	अगर (rc) अणु
+		/* वापस the allocated descriptors */
+		list_क्रम_each_entry_safe(mdesc, पंचांगp, &descs, node) अणु
+			hidma_ll_मुक्त(dmadev->lldev, mdesc->tre_ch);
+			kमुक्त(mdesc);
+		पूर्ण
+		वापस rc;
+	पूर्ण
 
 	spin_lock_irqsave(&mchan->lock, irqflags);
-	list_splice_tail_init(&descs, &mchan->free);
+	list_splice_tail_init(&descs, &mchan->मुक्त);
 	mchan->allocated = true;
 	spin_unlock_irqrestore(&mchan->lock, irqflags);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static struct dma_async_tx_descriptor *
-hidma_prep_dma_memcpy(struct dma_chan *dmach, dma_addr_t dest, dma_addr_t src,
-		size_t len, unsigned long flags)
-{
-	struct hidma_chan *mchan = to_hidma_chan(dmach);
-	struct hidma_desc *mdesc = NULL;
-	struct hidma_dev *mdma = mchan->dmadev;
-	unsigned long irqflags;
+अटल काष्ठा dma_async_tx_descriptor *
+hidma_prep_dma_स_नकल(काष्ठा dma_chan *dmach, dma_addr_t dest, dma_addr_t src,
+		माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा hidma_chan *mchan = to_hidma_chan(dmach);
+	काष्ठा hidma_desc *mdesc = शून्य;
+	काष्ठा hidma_dev *mdma = mchan->dmadev;
+	अचिन्हित दीर्घ irqflags;
 
-	/* Get free descriptor */
+	/* Get मुक्त descriptor */
 	spin_lock_irqsave(&mchan->lock, irqflags);
-	if (!list_empty(&mchan->free)) {
-		mdesc = list_first_entry(&mchan->free, struct hidma_desc, node);
+	अगर (!list_empty(&mchan->मुक्त)) अणु
+		mdesc = list_first_entry(&mchan->मुक्त, काष्ठा hidma_desc, node);
 		list_del(&mdesc->node);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&mchan->lock, irqflags);
 
-	if (!mdesc)
-		return NULL;
+	अगर (!mdesc)
+		वापस शून्य;
 
 	mdesc->desc.flags = flags;
 	hidma_ll_set_transfer_params(mdma->lldev, mdesc->tre_ch,
@@ -420,28 +421,28 @@ hidma_prep_dma_memcpy(struct dma_chan *dmach, dma_addr_t dest, dma_addr_t src,
 	list_add_tail(&mdesc->node, &mchan->prepared);
 	spin_unlock_irqrestore(&mchan->lock, irqflags);
 
-	return &mdesc->desc;
-}
+	वापस &mdesc->desc;
+पूर्ण
 
-static struct dma_async_tx_descriptor *
-hidma_prep_dma_memset(struct dma_chan *dmach, dma_addr_t dest, int value,
-		size_t len, unsigned long flags)
-{
-	struct hidma_chan *mchan = to_hidma_chan(dmach);
-	struct hidma_desc *mdesc = NULL;
-	struct hidma_dev *mdma = mchan->dmadev;
-	unsigned long irqflags;
+अटल काष्ठा dma_async_tx_descriptor *
+hidma_prep_dma_स_रखो(काष्ठा dma_chan *dmach, dma_addr_t dest, पूर्णांक value,
+		माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा hidma_chan *mchan = to_hidma_chan(dmach);
+	काष्ठा hidma_desc *mdesc = शून्य;
+	काष्ठा hidma_dev *mdma = mchan->dmadev;
+	अचिन्हित दीर्घ irqflags;
 
-	/* Get free descriptor */
+	/* Get मुक्त descriptor */
 	spin_lock_irqsave(&mchan->lock, irqflags);
-	if (!list_empty(&mchan->free)) {
-		mdesc = list_first_entry(&mchan->free, struct hidma_desc, node);
+	अगर (!list_empty(&mchan->मुक्त)) अणु
+		mdesc = list_first_entry(&mchan->मुक्त, काष्ठा hidma_desc, node);
 		list_del(&mdesc->node);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&mchan->lock, irqflags);
 
-	if (!mdesc)
-		return NULL;
+	अगर (!mdesc)
+		वापस शून्य;
 
 	mdesc->desc.flags = flags;
 	hidma_ll_set_transfer_params(mdma->lldev, mdesc->tre_ch,
@@ -453,19 +454,19 @@ hidma_prep_dma_memset(struct dma_chan *dmach, dma_addr_t dest, int value,
 	list_add_tail(&mdesc->node, &mchan->prepared);
 	spin_unlock_irqrestore(&mchan->lock, irqflags);
 
-	return &mdesc->desc;
-}
+	वापस &mdesc->desc;
+पूर्ण
 
-static int hidma_terminate_channel(struct dma_chan *chan)
-{
-	struct hidma_chan *mchan = to_hidma_chan(chan);
-	struct hidma_dev *dmadev = to_hidma_dev(mchan->chan.device);
-	struct hidma_desc *tmp, *mdesc;
-	unsigned long irqflags;
+अटल पूर्णांक hidma_terminate_channel(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा hidma_chan *mchan = to_hidma_chan(chan);
+	काष्ठा hidma_dev *dmadev = to_hidma_dev(mchan->chan.device);
+	काष्ठा hidma_desc *पंचांगp, *mdesc;
+	अचिन्हित दीर्घ irqflags;
 	LIST_HEAD(list);
-	int rc;
+	पूर्णांक rc;
 
-	pm_runtime_get_sync(dmadev->ddev.dev);
+	pm_runसमय_get_sync(dmadev->ddev.dev);
 	/* give completed requests a chance to finish */
 	hidma_process_completed(mchan);
 
@@ -479,495 +480,495 @@ static int hidma_terminate_channel(struct dma_chan *chan)
 
 	/* this suspends the existing transfer */
 	rc = hidma_ll_disable(dmadev->lldev);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(dmadev->ddev.dev, "channel did not pause\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* return all user requests */
-	list_for_each_entry_safe(mdesc, tmp, &list, node) {
-		struct dma_async_tx_descriptor *txd = &mdesc->desc;
+	/* वापस all user requests */
+	list_क्रम_each_entry_safe(mdesc, पंचांगp, &list, node) अणु
+		काष्ठा dma_async_tx_descriptor *txd = &mdesc->desc;
 
 		dma_descriptor_unmap(txd);
-		dmaengine_desc_get_callback_invoke(txd, NULL);
+		dmaengine_desc_get_callback_invoke(txd, शून्य);
 		dma_run_dependencies(txd);
 
-		/* move myself to free_list */
-		list_move(&mdesc->node, &mchan->free);
-	}
+		/* move myself to मुक्त_list */
+		list_move(&mdesc->node, &mchan->मुक्त);
+	पूर्ण
 
 	rc = hidma_ll_enable(dmadev->lldev);
 out:
-	pm_runtime_mark_last_busy(dmadev->ddev.dev);
-	pm_runtime_put_autosuspend(dmadev->ddev.dev);
-	return rc;
-}
+	pm_runसमय_mark_last_busy(dmadev->ddev.dev);
+	pm_runसमय_put_स्वतःsuspend(dmadev->ddev.dev);
+	वापस rc;
+पूर्ण
 
-static int hidma_terminate_all(struct dma_chan *chan)
-{
-	struct hidma_chan *mchan = to_hidma_chan(chan);
-	struct hidma_dev *dmadev = to_hidma_dev(mchan->chan.device);
-	int rc;
+अटल पूर्णांक hidma_terminate_all(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा hidma_chan *mchan = to_hidma_chan(chan);
+	काष्ठा hidma_dev *dmadev = to_hidma_dev(mchan->chan.device);
+	पूर्णांक rc;
 
 	rc = hidma_terminate_channel(chan);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/* reinitialize the hardware */
-	pm_runtime_get_sync(dmadev->ddev.dev);
+	pm_runसमय_get_sync(dmadev->ddev.dev);
 	rc = hidma_ll_setup(dmadev->lldev);
-	pm_runtime_mark_last_busy(dmadev->ddev.dev);
-	pm_runtime_put_autosuspend(dmadev->ddev.dev);
-	return rc;
-}
+	pm_runसमय_mark_last_busy(dmadev->ddev.dev);
+	pm_runसमय_put_स्वतःsuspend(dmadev->ddev.dev);
+	वापस rc;
+पूर्ण
 
-static void hidma_free_chan_resources(struct dma_chan *dmach)
-{
-	struct hidma_chan *mchan = to_hidma_chan(dmach);
-	struct hidma_dev *mdma = mchan->dmadev;
-	struct hidma_desc *mdesc, *tmp;
-	unsigned long irqflags;
+अटल व्योम hidma_मुक्त_chan_resources(काष्ठा dma_chan *dmach)
+अणु
+	काष्ठा hidma_chan *mchan = to_hidma_chan(dmach);
+	काष्ठा hidma_dev *mdma = mchan->dmadev;
+	काष्ठा hidma_desc *mdesc, *पंचांगp;
+	अचिन्हित दीर्घ irqflags;
 	LIST_HEAD(descs);
 
-	/* terminate running transactions and free descriptors */
+	/* terminate running transactions and मुक्त descriptors */
 	hidma_terminate_channel(dmach);
 
 	spin_lock_irqsave(&mchan->lock, irqflags);
 
 	/* Move data */
-	list_splice_tail_init(&mchan->free, &descs);
+	list_splice_tail_init(&mchan->मुक्त, &descs);
 
 	/* Free descriptors */
-	list_for_each_entry_safe(mdesc, tmp, &descs, node) {
-		hidma_ll_free(mdma->lldev, mdesc->tre_ch);
+	list_क्रम_each_entry_safe(mdesc, पंचांगp, &descs, node) अणु
+		hidma_ll_मुक्त(mdma->lldev, mdesc->tre_ch);
 		list_del(&mdesc->node);
-		kfree(mdesc);
-	}
+		kमुक्त(mdesc);
+	पूर्ण
 
 	mchan->allocated = false;
 	spin_unlock_irqrestore(&mchan->lock, irqflags);
-}
+पूर्ण
 
-static int hidma_pause(struct dma_chan *chan)
-{
-	struct hidma_chan *mchan;
-	struct hidma_dev *dmadev;
+अटल पूर्णांक hidma_छोड़ो(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा hidma_chan *mchan;
+	काष्ठा hidma_dev *dmadev;
 
 	mchan = to_hidma_chan(chan);
 	dmadev = to_hidma_dev(mchan->chan.device);
-	if (!mchan->paused) {
-		pm_runtime_get_sync(dmadev->ddev.dev);
-		if (hidma_ll_disable(dmadev->lldev))
+	अगर (!mchan->छोड़ोd) अणु
+		pm_runसमय_get_sync(dmadev->ddev.dev);
+		अगर (hidma_ll_disable(dmadev->lldev))
 			dev_warn(dmadev->ddev.dev, "channel did not stop\n");
-		mchan->paused = true;
-		pm_runtime_mark_last_busy(dmadev->ddev.dev);
-		pm_runtime_put_autosuspend(dmadev->ddev.dev);
-	}
-	return 0;
-}
+		mchan->छोड़ोd = true;
+		pm_runसमय_mark_last_busy(dmadev->ddev.dev);
+		pm_runसमय_put_स्वतःsuspend(dmadev->ddev.dev);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int hidma_resume(struct dma_chan *chan)
-{
-	struct hidma_chan *mchan;
-	struct hidma_dev *dmadev;
-	int rc = 0;
+अटल पूर्णांक hidma_resume(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा hidma_chan *mchan;
+	काष्ठा hidma_dev *dmadev;
+	पूर्णांक rc = 0;
 
 	mchan = to_hidma_chan(chan);
 	dmadev = to_hidma_dev(mchan->chan.device);
-	if (mchan->paused) {
-		pm_runtime_get_sync(dmadev->ddev.dev);
+	अगर (mchan->छोड़ोd) अणु
+		pm_runसमय_get_sync(dmadev->ddev.dev);
 		rc = hidma_ll_enable(dmadev->lldev);
-		if (!rc)
-			mchan->paused = false;
-		else
+		अगर (!rc)
+			mchan->छोड़ोd = false;
+		अन्यथा
 			dev_err(dmadev->ddev.dev,
 				"failed to resume the channel");
-		pm_runtime_mark_last_busy(dmadev->ddev.dev);
-		pm_runtime_put_autosuspend(dmadev->ddev.dev);
-	}
-	return rc;
-}
+		pm_runसमय_mark_last_busy(dmadev->ddev.dev);
+		pm_runसमय_put_स्वतःsuspend(dmadev->ddev.dev);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static irqreturn_t hidma_chirq_handler(int chirq, void *arg)
-{
-	struct hidma_lldev *lldev = arg;
+अटल irqवापस_t hidma_chirq_handler(पूर्णांक chirq, व्योम *arg)
+अणु
+	काष्ठा hidma_lldev *lldev = arg;
 
 	/*
-	 * All interrupts are request driven.
-	 * HW doesn't send an interrupt by itself.
+	 * All पूर्णांकerrupts are request driven.
+	 * HW करोesn't send an पूर्णांकerrupt by itself.
 	 */
-	return hidma_ll_inthandler(chirq, lldev);
-}
+	वापस hidma_ll_पूर्णांकhandler(chirq, lldev);
+पूर्ण
 
-#ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
-static irqreturn_t hidma_chirq_handler_msi(int chirq, void *arg)
-{
-	struct hidma_lldev **lldevp = arg;
-	struct hidma_dev *dmadev = to_hidma_dev_from_lldev(lldevp);
+#अगर_घोषित CONFIG_GENERIC_MSI_IRQ_DOMAIN
+अटल irqवापस_t hidma_chirq_handler_msi(पूर्णांक chirq, व्योम *arg)
+अणु
+	काष्ठा hidma_lldev **lldevp = arg;
+	काष्ठा hidma_dev *dmadev = to_hidma_dev_from_lldev(lldevp);
 
-	return hidma_ll_inthandler_msi(chirq, *lldevp,
+	वापस hidma_ll_पूर्णांकhandler_msi(chirq, *lldevp,
 				       1 << (chirq - dmadev->msi_virqbase));
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static ssize_t hidma_show_values(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct hidma_dev *mdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार hidma_show_values(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hidma_dev *mdev = dev_get_drvdata(dev);
 
 	buf[0] = 0;
 
-	if (strcmp(attr->attr.name, "chid") == 0)
-		sprintf(buf, "%d\n", mdev->chidx);
+	अगर (म_भेद(attr->attr.name, "chid") == 0)
+		प्र_लिखो(buf, "%d\n", mdev->chidx);
 
-	return strlen(buf);
-}
+	वापस म_माप(buf);
+पूर्ण
 
-static inline void  hidma_sysfs_uninit(struct hidma_dev *dev)
-{
-	device_remove_file(dev->ddev.dev, dev->chid_attrs);
-}
+अटल अंतरभूत व्योम  hidma_sysfs_uninit(काष्ठा hidma_dev *dev)
+अणु
+	device_हटाओ_file(dev->ddev.dev, dev->chid_attrs);
+पूर्ण
 
-static struct device_attribute*
-hidma_create_sysfs_entry(struct hidma_dev *dev, char *name, int mode)
-{
-	struct device_attribute *attrs;
-	char *name_copy;
+अटल काष्ठा device_attribute*
+hidma_create_sysfs_entry(काष्ठा hidma_dev *dev, अक्षर *name, पूर्णांक mode)
+अणु
+	काष्ठा device_attribute *attrs;
+	अक्षर *name_copy;
 
-	attrs = devm_kmalloc(dev->ddev.dev, sizeof(struct device_attribute),
+	attrs = devm_kदो_स्मृति(dev->ddev.dev, माप(काष्ठा device_attribute),
 			     GFP_KERNEL);
-	if (!attrs)
-		return NULL;
+	अगर (!attrs)
+		वापस शून्य;
 
 	name_copy = devm_kstrdup(dev->ddev.dev, name, GFP_KERNEL);
-	if (!name_copy)
-		return NULL;
+	अगर (!name_copy)
+		वापस शून्य;
 
 	attrs->attr.name = name_copy;
 	attrs->attr.mode = mode;
 	attrs->show = hidma_show_values;
 	sysfs_attr_init(&attrs->attr);
 
-	return attrs;
-}
+	वापस attrs;
+पूर्ण
 
-static int hidma_sysfs_init(struct hidma_dev *dev)
-{
+अटल पूर्णांक hidma_sysfs_init(काष्ठा hidma_dev *dev)
+अणु
 	dev->chid_attrs = hidma_create_sysfs_entry(dev, "chid", S_IRUGO);
-	if (!dev->chid_attrs)
-		return -ENOMEM;
+	अगर (!dev->chid_attrs)
+		वापस -ENOMEM;
 
-	return device_create_file(dev->ddev.dev, dev->chid_attrs);
-}
+	वापस device_create_file(dev->ddev.dev, dev->chid_attrs);
+पूर्ण
 
-#ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
-static void hidma_write_msi_msg(struct msi_desc *desc, struct msi_msg *msg)
-{
-	struct device *dev = msi_desc_to_dev(desc);
-	struct hidma_dev *dmadev = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_GENERIC_MSI_IRQ_DOMAIN
+अटल व्योम hidma_ग_लिखो_msi_msg(काष्ठा msi_desc *desc, काष्ठा msi_msg *msg)
+अणु
+	काष्ठा device *dev = msi_desc_to_dev(desc);
+	काष्ठा hidma_dev *dmadev = dev_get_drvdata(dev);
 
-	if (!desc->platform.msi_index) {
-		writel(msg->address_lo, dmadev->dev_evca + 0x118);
-		writel(msg->address_hi, dmadev->dev_evca + 0x11C);
-		writel(msg->data, dmadev->dev_evca + 0x120);
-	}
-}
-#endif
+	अगर (!desc->platक्रमm.msi_index) अणु
+		ग_लिखोl(msg->address_lo, dmadev->dev_evca + 0x118);
+		ग_लिखोl(msg->address_hi, dmadev->dev_evca + 0x11C);
+		ग_लिखोl(msg->data, dmadev->dev_evca + 0x120);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static void hidma_free_msis(struct hidma_dev *dmadev)
-{
-#ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
-	struct device *dev = dmadev->ddev.dev;
-	struct msi_desc *desc;
+अटल व्योम hidma_मुक्त_msis(काष्ठा hidma_dev *dmadev)
+अणु
+#अगर_घोषित CONFIG_GENERIC_MSI_IRQ_DOMAIN
+	काष्ठा device *dev = dmadev->ddev.dev;
+	काष्ठा msi_desc *desc;
 
-	/* free allocated MSI interrupts above */
-	for_each_msi_entry(desc, dev)
-		devm_free_irq(dev, desc->irq, &dmadev->lldev);
+	/* मुक्त allocated MSI पूर्णांकerrupts above */
+	क्रम_each_msi_entry(desc, dev)
+		devm_मुक्त_irq(dev, desc->irq, &dmadev->lldev);
 
-	platform_msi_domain_free_irqs(dev);
-#endif
-}
+	platक्रमm_msi_करोमुख्य_मुक्त_irqs(dev);
+#पूर्ण_अगर
+पूर्ण
 
-static int hidma_request_msi(struct hidma_dev *dmadev,
-			     struct platform_device *pdev)
-{
-#ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
-	int rc;
-	struct msi_desc *desc;
-	struct msi_desc *failed_desc = NULL;
+अटल पूर्णांक hidma_request_msi(काष्ठा hidma_dev *dmadev,
+			     काष्ठा platक्रमm_device *pdev)
+अणु
+#अगर_घोषित CONFIG_GENERIC_MSI_IRQ_DOMAIN
+	पूर्णांक rc;
+	काष्ठा msi_desc *desc;
+	काष्ठा msi_desc *failed_desc = शून्य;
 
-	rc = platform_msi_domain_alloc_irqs(&pdev->dev, HIDMA_MSI_INTS,
-					    hidma_write_msi_msg);
-	if (rc)
-		return rc;
+	rc = platक्रमm_msi_करोमुख्य_alloc_irqs(&pdev->dev, HIDMA_MSI_INTS,
+					    hidma_ग_लिखो_msi_msg);
+	अगर (rc)
+		वापस rc;
 
-	for_each_msi_entry(desc, &pdev->dev) {
-		if (!desc->platform.msi_index)
+	क्रम_each_msi_entry(desc, &pdev->dev) अणु
+		अगर (!desc->platक्रमm.msi_index)
 			dmadev->msi_virqbase = desc->irq;
 
 		rc = devm_request_irq(&pdev->dev, desc->irq,
 				       hidma_chirq_handler_msi,
 				       0, "qcom-hidma-msi",
 				       &dmadev->lldev);
-		if (rc) {
+		अगर (rc) अणु
 			failed_desc = desc;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (rc) {
-		/* free allocated MSI interrupts above */
-		for_each_msi_entry(desc, &pdev->dev) {
-			if (desc == failed_desc)
-				break;
-			devm_free_irq(&pdev->dev, desc->irq,
+	अगर (rc) अणु
+		/* मुक्त allocated MSI पूर्णांकerrupts above */
+		क्रम_each_msi_entry(desc, &pdev->dev) अणु
+			अगर (desc == failed_desc)
+				अवरोध;
+			devm_मुक्त_irq(&pdev->dev, desc->irq,
 				      &dmadev->lldev);
-		}
-	} else {
-		/* Add callback to free MSIs on teardown */
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Add callback to मुक्त MSIs on tearकरोwn */
 		hidma_ll_setup_irq(dmadev->lldev, true);
 
-	}
-	if (rc)
+	पूर्ण
+	अगर (rc)
 		dev_warn(&pdev->dev,
 			 "failed to request MSI irq, falling back to wired IRQ\n");
-	return rc;
-#else
-	return -EINVAL;
-#endif
-}
+	वापस rc;
+#अन्यथा
+	वापस -EINVAL;
+#पूर्ण_अगर
+पूर्ण
 
-static bool hidma_test_capability(struct device *dev, enum hidma_cap test_cap)
-{
-	enum hidma_cap cap;
+अटल bool hidma_test_capability(काष्ठा device *dev, क्रमागत hidma_cap test_cap)
+अणु
+	क्रमागत hidma_cap cap;
 
-	cap = (enum hidma_cap) device_get_match_data(dev);
-	return cap ? ((cap & test_cap) > 0) : 0;
-}
+	cap = (क्रमागत hidma_cap) device_get_match_data(dev);
+	वापस cap ? ((cap & test_cap) > 0) : 0;
+पूर्ण
 
-static int hidma_probe(struct platform_device *pdev)
-{
-	struct hidma_dev *dmadev;
-	struct resource *trca_resource;
-	struct resource *evca_resource;
-	int chirq;
-	void __iomem *evca;
-	void __iomem *trca;
-	int rc;
+अटल पूर्णांक hidma_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hidma_dev *dmadev;
+	काष्ठा resource *trca_resource;
+	काष्ठा resource *evca_resource;
+	पूर्णांक chirq;
+	व्योम __iomem *evca;
+	व्योम __iomem *trca;
+	पूर्णांक rc;
 	bool msi;
 
-	pm_runtime_set_autosuspend_delay(&pdev->dev, HIDMA_AUTOSUSPEND_TIMEOUT);
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_set_active(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, HIDMA_AUTOSUSPEND_TIMEOUT);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_set_active(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	trca_resource = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	trca_resource = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	trca = devm_ioremap_resource(&pdev->dev, trca_resource);
-	if (IS_ERR(trca)) {
+	अगर (IS_ERR(trca)) अणु
 		rc = -ENOMEM;
-		goto bailout;
-	}
+		जाओ bailout;
+	पूर्ण
 
-	evca_resource = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	evca_resource = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 	evca = devm_ioremap_resource(&pdev->dev, evca_resource);
-	if (IS_ERR(evca)) {
+	अगर (IS_ERR(evca)) अणु
 		rc = -ENOMEM;
-		goto bailout;
-	}
+		जाओ bailout;
+	पूर्ण
 
 	/*
 	 * This driver only handles the channel IRQs.
 	 * Common IRQ is handled by the management driver.
 	 */
-	chirq = platform_get_irq(pdev, 0);
-	if (chirq < 0) {
+	chirq = platक्रमm_get_irq(pdev, 0);
+	अगर (chirq < 0) अणु
 		rc = -ENODEV;
-		goto bailout;
-	}
+		जाओ bailout;
+	पूर्ण
 
-	dmadev = devm_kzalloc(&pdev->dev, sizeof(*dmadev), GFP_KERNEL);
-	if (!dmadev) {
+	dmadev = devm_kzalloc(&pdev->dev, माप(*dmadev), GFP_KERNEL);
+	अगर (!dmadev) अणु
 		rc = -ENOMEM;
-		goto bailout;
-	}
+		जाओ bailout;
+	पूर्ण
 
 	INIT_LIST_HEAD(&dmadev->ddev.channels);
 	spin_lock_init(&dmadev->lock);
 	dmadev->ddev.dev = &pdev->dev;
-	pm_runtime_get_sync(dmadev->ddev.dev);
+	pm_runसमय_get_sync(dmadev->ddev.dev);
 
 	dma_cap_set(DMA_MEMCPY, dmadev->ddev.cap_mask);
 	dma_cap_set(DMA_MEMSET, dmadev->ddev.cap_mask);
-	if (WARN_ON(!pdev->dev.dma_mask)) {
+	अगर (WARN_ON(!pdev->dev.dma_mask)) अणु
 		rc = -ENXIO;
-		goto dmafree;
-	}
+		जाओ dmaमुक्त;
+	पूर्ण
 
 	dmadev->dev_evca = evca;
 	dmadev->evca_resource = evca_resource;
 	dmadev->dev_trca = trca;
 	dmadev->trca_resource = trca_resource;
-	dmadev->ddev.device_prep_dma_memcpy = hidma_prep_dma_memcpy;
-	dmadev->ddev.device_prep_dma_memset = hidma_prep_dma_memset;
+	dmadev->ddev.device_prep_dma_स_नकल = hidma_prep_dma_स_नकल;
+	dmadev->ddev.device_prep_dma_स_रखो = hidma_prep_dma_स_रखो;
 	dmadev->ddev.device_alloc_chan_resources = hidma_alloc_chan_resources;
-	dmadev->ddev.device_free_chan_resources = hidma_free_chan_resources;
+	dmadev->ddev.device_मुक्त_chan_resources = hidma_मुक्त_chan_resources;
 	dmadev->ddev.device_tx_status = hidma_tx_status;
 	dmadev->ddev.device_issue_pending = hidma_issue_pending;
-	dmadev->ddev.device_pause = hidma_pause;
+	dmadev->ddev.device_छोड़ो = hidma_छोड़ो;
 	dmadev->ddev.device_resume = hidma_resume;
 	dmadev->ddev.device_terminate_all = hidma_terminate_all;
 	dmadev->ddev.copy_align = 8;
 
 	/*
-	 * Determine the MSI capability of the platform. Old HW doesn't
+	 * Determine the MSI capability of the platक्रमm. Old HW करोesn't
 	 * support MSI.
 	 */
 	msi = hidma_test_capability(&pdev->dev, HIDMA_MSI_CAP);
-	device_property_read_u32(&pdev->dev, "desc-count",
+	device_property_पढ़ो_u32(&pdev->dev, "desc-count",
 				 &dmadev->nr_descriptors);
 
-	if (nr_desc_prm) {
+	अगर (nr_desc_prm) अणु
 		dev_info(&pdev->dev, "overriding number of descriptors as %d\n",
 			 nr_desc_prm);
 		dmadev->nr_descriptors = nr_desc_prm;
-	}
+	पूर्ण
 
-	if (!dmadev->nr_descriptors)
+	अगर (!dmadev->nr_descriptors)
 		dmadev->nr_descriptors = HIDMA_NR_DEFAULT_DESC;
 
-	if (hidma_test_capability(&pdev->dev, HIDMA_IDENTITY_CAP))
-		dmadev->chidx = readl(dmadev->dev_trca + 0x40);
-	else
-		dmadev->chidx = readl(dmadev->dev_trca + 0x28);
+	अगर (hidma_test_capability(&pdev->dev, HIDMA_IDENTITY_CAP))
+		dmadev->chidx = पढ़ोl(dmadev->dev_trca + 0x40);
+	अन्यथा
+		dmadev->chidx = पढ़ोl(dmadev->dev_trca + 0x28);
 
 	/* Set DMA mask to 64 bits. */
 	rc = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	if (rc) {
+	अगर (rc) अणु
 		dev_warn(&pdev->dev, "unable to set coherent mask to 64");
 		rc = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-		if (rc)
-			goto dmafree;
-	}
+		अगर (rc)
+			जाओ dmaमुक्त;
+	पूर्ण
 
 	dmadev->lldev = hidma_ll_init(dmadev->ddev.dev,
 				      dmadev->nr_descriptors, dmadev->dev_trca,
 				      dmadev->dev_evca, dmadev->chidx);
-	if (!dmadev->lldev) {
+	अगर (!dmadev->lldev) अणु
 		rc = -EPROBE_DEFER;
-		goto dmafree;
-	}
+		जाओ dmaमुक्त;
+	पूर्ण
 
-	platform_set_drvdata(pdev, dmadev);
-	if (msi)
+	platक्रमm_set_drvdata(pdev, dmadev);
+	अगर (msi)
 		rc = hidma_request_msi(dmadev, pdev);
 
-	if (!msi || rc) {
+	अगर (!msi || rc) अणु
 		hidma_ll_setup_irq(dmadev->lldev, false);
 		rc = devm_request_irq(&pdev->dev, chirq, hidma_chirq_handler,
 				      0, "qcom-hidma", dmadev->lldev);
-		if (rc)
-			goto uninit;
-	}
+		अगर (rc)
+			जाओ uninit;
+	पूर्ण
 
 	INIT_LIST_HEAD(&dmadev->ddev.channels);
 	rc = hidma_chan_init(dmadev, 0);
-	if (rc)
-		goto uninit;
+	अगर (rc)
+		जाओ uninit;
 
-	rc = dma_async_device_register(&dmadev->ddev);
-	if (rc)
-		goto uninit;
+	rc = dma_async_device_रेजिस्टर(&dmadev->ddev);
+	अगर (rc)
+		जाओ uninit;
 
 	dmadev->irq = chirq;
 	tasklet_setup(&dmadev->task, hidma_issue_task);
 	hidma_debug_init(dmadev);
 	hidma_sysfs_init(dmadev);
 	dev_info(&pdev->dev, "HI-DMA engine driver registration complete\n");
-	pm_runtime_mark_last_busy(dmadev->ddev.dev);
-	pm_runtime_put_autosuspend(dmadev->ddev.dev);
-	return 0;
+	pm_runसमय_mark_last_busy(dmadev->ddev.dev);
+	pm_runसमय_put_स्वतःsuspend(dmadev->ddev.dev);
+	वापस 0;
 
 uninit:
-	if (msi)
-		hidma_free_msis(dmadev);
+	अगर (msi)
+		hidma_मुक्त_msis(dmadev);
 
 	hidma_ll_uninit(dmadev->lldev);
-dmafree:
-	if (dmadev)
-		hidma_free(dmadev);
+dmaमुक्त:
+	अगर (dmadev)
+		hidma_मुक्त(dmadev);
 bailout:
-	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
-	return rc;
-}
+	pm_runसमय_put_sync(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	वापस rc;
+पूर्ण
 
-static void hidma_shutdown(struct platform_device *pdev)
-{
-	struct hidma_dev *dmadev = platform_get_drvdata(pdev);
+अटल व्योम hidma_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hidma_dev *dmadev = platक्रमm_get_drvdata(pdev);
 
 	dev_info(dmadev->ddev.dev, "HI-DMA engine shutdown\n");
 
-	pm_runtime_get_sync(dmadev->ddev.dev);
-	if (hidma_ll_disable(dmadev->lldev))
+	pm_runसमय_get_sync(dmadev->ddev.dev);
+	अगर (hidma_ll_disable(dmadev->lldev))
 		dev_warn(dmadev->ddev.dev, "channel did not stop\n");
-	pm_runtime_mark_last_busy(dmadev->ddev.dev);
-	pm_runtime_put_autosuspend(dmadev->ddev.dev);
+	pm_runसमय_mark_last_busy(dmadev->ddev.dev);
+	pm_runसमय_put_स्वतःsuspend(dmadev->ddev.dev);
 
-}
+पूर्ण
 
-static int hidma_remove(struct platform_device *pdev)
-{
-	struct hidma_dev *dmadev = platform_get_drvdata(pdev);
+अटल पूर्णांक hidma_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hidma_dev *dmadev = platक्रमm_get_drvdata(pdev);
 
-	pm_runtime_get_sync(dmadev->ddev.dev);
-	dma_async_device_unregister(&dmadev->ddev);
-	if (!dmadev->lldev->msi_support)
-		devm_free_irq(dmadev->ddev.dev, dmadev->irq, dmadev->lldev);
-	else
-		hidma_free_msis(dmadev);
+	pm_runसमय_get_sync(dmadev->ddev.dev);
+	dma_async_device_unरेजिस्टर(&dmadev->ddev);
+	अगर (!dmadev->lldev->msi_support)
+		devm_मुक्त_irq(dmadev->ddev.dev, dmadev->irq, dmadev->lldev);
+	अन्यथा
+		hidma_मुक्त_msis(dmadev);
 
-	tasklet_kill(&dmadev->task);
+	tasklet_समाप्त(&dmadev->task);
 	hidma_sysfs_uninit(dmadev);
 	hidma_debug_uninit(dmadev);
 	hidma_ll_uninit(dmadev->lldev);
-	hidma_free(dmadev);
+	hidma_मुक्त(dmadev);
 
 	dev_info(&pdev->dev, "HI-DMA engine removed\n");
-	pm_runtime_put_sync_suspend(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_put_sync_suspend(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_ACPI)
-static const struct acpi_device_id hidma_acpi_ids[] = {
-	{"QCOM8061"},
-	{"QCOM8062", HIDMA_MSI_CAP},
-	{"QCOM8063", (HIDMA_MSI_CAP | HIDMA_IDENTITY_CAP)},
-	{},
-};
+#अगर IS_ENABLED(CONFIG_ACPI)
+अटल स्थिर काष्ठा acpi_device_id hidma_acpi_ids[] = अणु
+	अणु"QCOM8061"पूर्ण,
+	अणु"QCOM8062", HIDMA_MSI_CAPपूर्ण,
+	अणु"QCOM8063", (HIDMA_MSI_CAP | HIDMA_IDENTITY_CAP)पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, hidma_acpi_ids);
-#endif
+#पूर्ण_अगर
 
-static const struct of_device_id hidma_match[] = {
-	{.compatible = "qcom,hidma-1.0",},
-	{.compatible = "qcom,hidma-1.1", .data = (void *)(HIDMA_MSI_CAP),},
-	{.compatible = "qcom,hidma-1.2",
-	 .data = (void *)(HIDMA_MSI_CAP | HIDMA_IDENTITY_CAP),},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id hidma_match[] = अणु
+	अणु.compatible = "qcom,hidma-1.0",पूर्ण,
+	अणु.compatible = "qcom,hidma-1.1", .data = (व्योम *)(HIDMA_MSI_CAP),पूर्ण,
+	अणु.compatible = "qcom,hidma-1.2",
+	 .data = (व्योम *)(HIDMA_MSI_CAP | HIDMA_IDENTITY_CAP),पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, hidma_match);
 
-static struct platform_driver hidma_driver = {
+अटल काष्ठा platक्रमm_driver hidma_driver = अणु
 	.probe = hidma_probe,
-	.remove = hidma_remove,
-	.shutdown = hidma_shutdown,
-	.driver = {
+	.हटाओ = hidma_हटाओ,
+	.shutकरोwn = hidma_shutकरोwn,
+	.driver = अणु
 		   .name = "hidma",
 		   .of_match_table = hidma_match,
 		   .acpi_match_table = ACPI_PTR(hidma_acpi_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(hidma_driver);
+module_platक्रमm_driver(hidma_driver);
 MODULE_LICENSE("GPL v2");

@@ -1,342 +1,343 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * stackglue.c
  *
- * Code which implements an OCFS2 specific interface to underlying
+ * Code which implements an OCFS2 specअगरic पूर्णांकerface to underlying
  * cluster stacks.
  *
  * Copyright (C) 2007, 2009 Oracle.  All rights reserved.
  */
 
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/kmod.h>
-#include <linux/fs.h>
-#include <linux/kobject.h>
-#include <linux/sysfs.h>
-#include <linux/sysctl.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/sysctl.h>
 
-#include "ocfs2_fs.h"
+#समावेश "ocfs2_fs.h"
 
-#include "stackglue.h"
+#समावेश "stackglue.h"
 
-#define OCFS2_STACK_PLUGIN_O2CB		"o2cb"
-#define OCFS2_STACK_PLUGIN_USER		"user"
-#define OCFS2_MAX_HB_CTL_PATH		256
+#घोषणा OCFS2_STACK_PLUGIN_O2CB		"o2cb"
+#घोषणा OCFS2_STACK_PLUGIN_USER		"user"
+#घोषणा OCFS2_MAX_HB_CTL_PATH		256
 
-static struct ocfs2_protocol_version locking_max_version;
-static DEFINE_SPINLOCK(ocfs2_stack_lock);
-static LIST_HEAD(ocfs2_stack_list);
-static char cluster_stack_name[OCFS2_STACK_LABEL_LEN + 1];
-static char ocfs2_hb_ctl_path[OCFS2_MAX_HB_CTL_PATH] = "/sbin/ocfs2_hb_ctl";
+अटल काष्ठा ocfs2_protocol_version locking_max_version;
+अटल DEFINE_SPINLOCK(ocfs2_stack_lock);
+अटल LIST_HEAD(ocfs2_stack_list);
+अटल अक्षर cluster_stack_name[OCFS2_STACK_LABEL_LEN + 1];
+अटल अक्षर ocfs2_hb_ctl_path[OCFS2_MAX_HB_CTL_PATH] = "/sbin/ocfs2_hb_ctl";
 
 /*
  * The stack currently in use.  If not null, active_stack->sp_count > 0,
  * the module is pinned, and the locking protocol cannot be changed.
  */
-static struct ocfs2_stack_plugin *active_stack;
+अटल काष्ठा ocfs2_stack_plugin *active_stack;
 
-static struct ocfs2_stack_plugin *ocfs2_stack_lookup(const char *name)
-{
-	struct ocfs2_stack_plugin *p;
+अटल काष्ठा ocfs2_stack_plugin *ocfs2_stack_lookup(स्थिर अक्षर *name)
+अणु
+	काष्ठा ocfs2_stack_plugin *p;
 
-	assert_spin_locked(&ocfs2_stack_lock);
+	निश्चित_spin_locked(&ocfs2_stack_lock);
 
-	list_for_each_entry(p, &ocfs2_stack_list, sp_list) {
-		if (!strcmp(p->sp_name, name))
-			return p;
-	}
+	list_क्रम_each_entry(p, &ocfs2_stack_list, sp_list) अणु
+		अगर (!म_भेद(p->sp_name, name))
+			वापस p;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int ocfs2_stack_driver_request(const char *stack_name,
-				      const char *plugin_name)
-{
-	int rc;
-	struct ocfs2_stack_plugin *p;
+अटल पूर्णांक ocfs2_stack_driver_request(स्थिर अक्षर *stack_name,
+				      स्थिर अक्षर *plugin_name)
+अणु
+	पूर्णांक rc;
+	काष्ठा ocfs2_stack_plugin *p;
 
 	spin_lock(&ocfs2_stack_lock);
 
 	/*
-	 * If the stack passed by the filesystem isn't the selected one,
-	 * we can't continue.
+	 * If the stack passed by the fileप्रणाली isn't the selected one,
+	 * we can't जारी.
 	 */
-	if (strcmp(stack_name, cluster_stack_name)) {
+	अगर (म_भेद(stack_name, cluster_stack_name)) अणु
 		rc = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (active_stack) {
+	अगर (active_stack) अणु
 		/*
 		 * If the active stack isn't the one we want, it cannot
 		 * be selected right now.
 		 */
-		if (!strcmp(active_stack->sp_name, plugin_name))
+		अगर (!म_भेद(active_stack->sp_name, plugin_name))
 			rc = 0;
-		else
+		अन्यथा
 			rc = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	p = ocfs2_stack_lookup(plugin_name);
-	if (!p || !try_module_get(p->sp_owner)) {
+	अगर (!p || !try_module_get(p->sp_owner)) अणु
 		rc = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	active_stack = p;
 	rc = 0;
 
 out:
 	/* If we found it, pin it */
-	if (!rc)
+	अगर (!rc)
 		active_stack->sp_count++;
 
 	spin_unlock(&ocfs2_stack_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * This function looks up the appropriate stack and makes it active.  If
- * there is no stack, it tries to load it.  It will fail if the stack still
- * cannot be found.  It will also fail if a different stack is in use.
+ * there is no stack, it tries to load it.  It will fail अगर the stack still
+ * cannot be found.  It will also fail अगर a dअगरferent stack is in use.
  */
-static int ocfs2_stack_driver_get(const char *stack_name)
-{
-	int rc;
-	char *plugin_name = OCFS2_STACK_PLUGIN_O2CB;
+अटल पूर्णांक ocfs2_stack_driver_get(स्थिर अक्षर *stack_name)
+अणु
+	पूर्णांक rc;
+	अक्षर *plugin_name = OCFS2_STACK_PLUGIN_O2CB;
 
 	/*
-	 * Classic stack does not pass in a stack name.  This is
+	 * Classic stack करोes not pass in a stack name.  This is
 	 * compatible with older tools as well.
 	 */
-	if (!stack_name || !*stack_name)
+	अगर (!stack_name || !*stack_name)
 		stack_name = OCFS2_STACK_PLUGIN_O2CB;
 
-	if (strlen(stack_name) != OCFS2_STACK_LABEL_LEN) {
-		printk(KERN_ERR
+	अगर (म_माप(stack_name) != OCFS2_STACK_LABEL_LEN) अणु
+		prपूर्णांकk(KERN_ERR
 		       "ocfs2 passed an invalid cluster stack label: \"%s\"\n",
 		       stack_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Anything that isn't the classic stack is a user stack */
-	if (strcmp(stack_name, OCFS2_STACK_PLUGIN_O2CB))
+	अगर (म_भेद(stack_name, OCFS2_STACK_PLUGIN_O2CB))
 		plugin_name = OCFS2_STACK_PLUGIN_USER;
 
 	rc = ocfs2_stack_driver_request(stack_name, plugin_name);
-	if (rc == -ENOENT) {
+	अगर (rc == -ENOENT) अणु
 		request_module("ocfs2_stack_%s", plugin_name);
 		rc = ocfs2_stack_driver_request(stack_name, plugin_name);
-	}
+	पूर्ण
 
-	if (rc == -ENOENT) {
-		printk(KERN_ERR
+	अगर (rc == -ENOENT) अणु
+		prपूर्णांकk(KERN_ERR
 		       "ocfs2: Cluster stack driver \"%s\" cannot be found\n",
 		       plugin_name);
-	} else if (rc == -EBUSY) {
-		printk(KERN_ERR
+	पूर्ण अन्यथा अगर (rc == -EBUSY) अणु
+		prपूर्णांकk(KERN_ERR
 		       "ocfs2: A different cluster stack is in use\n");
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void ocfs2_stack_driver_put(void)
-{
+अटल व्योम ocfs2_stack_driver_put(व्योम)
+अणु
 	spin_lock(&ocfs2_stack_lock);
-	BUG_ON(active_stack == NULL);
+	BUG_ON(active_stack == शून्य);
 	BUG_ON(active_stack->sp_count == 0);
 
 	active_stack->sp_count--;
-	if (!active_stack->sp_count) {
+	अगर (!active_stack->sp_count) अणु
 		module_put(active_stack->sp_owner);
-		active_stack = NULL;
-	}
+		active_stack = शून्य;
+	पूर्ण
 	spin_unlock(&ocfs2_stack_lock);
-}
+पूर्ण
 
-int ocfs2_stack_glue_register(struct ocfs2_stack_plugin *plugin)
-{
-	int rc;
+पूर्णांक ocfs2_stack_glue_रेजिस्टर(काष्ठा ocfs2_stack_plugin *plugin)
+अणु
+	पूर्णांक rc;
 
 	spin_lock(&ocfs2_stack_lock);
-	if (!ocfs2_stack_lookup(plugin->sp_name)) {
+	अगर (!ocfs2_stack_lookup(plugin->sp_name)) अणु
 		plugin->sp_count = 0;
 		plugin->sp_max_proto = locking_max_version;
 		list_add(&plugin->sp_list, &ocfs2_stack_list);
-		printk(KERN_INFO "ocfs2: Registered cluster interface %s\n",
+		prपूर्णांकk(KERN_INFO "ocfs2: Registered cluster interface %s\n",
 		       plugin->sp_name);
 		rc = 0;
-	} else {
-		printk(KERN_ERR "ocfs2: Stack \"%s\" already registered\n",
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "ocfs2: Stack \"%s\" already registered\n",
 		       plugin->sp_name);
 		rc = -EEXIST;
-	}
+	पूर्ण
 	spin_unlock(&ocfs2_stack_lock);
 
-	return rc;
-}
-EXPORT_SYMBOL_GPL(ocfs2_stack_glue_register);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(ocfs2_stack_glue_रेजिस्टर);
 
-void ocfs2_stack_glue_unregister(struct ocfs2_stack_plugin *plugin)
-{
-	struct ocfs2_stack_plugin *p;
+व्योम ocfs2_stack_glue_unरेजिस्टर(काष्ठा ocfs2_stack_plugin *plugin)
+अणु
+	काष्ठा ocfs2_stack_plugin *p;
 
 	spin_lock(&ocfs2_stack_lock);
 	p = ocfs2_stack_lookup(plugin->sp_name);
-	if (p) {
+	अगर (p) अणु
 		BUG_ON(p != plugin);
 		BUG_ON(plugin == active_stack);
 		BUG_ON(plugin->sp_count != 0);
 		list_del_init(&plugin->sp_list);
-		printk(KERN_INFO "ocfs2: Unregistered cluster interface %s\n",
+		prपूर्णांकk(KERN_INFO "ocfs2: Unregistered cluster interface %s\n",
 		       plugin->sp_name);
-	} else {
-		printk(KERN_ERR "Stack \"%s\" is not registered\n",
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "Stack \"%s\" is not registered\n",
 		       plugin->sp_name);
-	}
+	पूर्ण
 	spin_unlock(&ocfs2_stack_lock);
-}
-EXPORT_SYMBOL_GPL(ocfs2_stack_glue_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(ocfs2_stack_glue_unरेजिस्टर);
 
-void ocfs2_stack_glue_set_max_proto_version(struct ocfs2_protocol_version *max_proto)
-{
-	struct ocfs2_stack_plugin *p;
+व्योम ocfs2_stack_glue_set_max_proto_version(काष्ठा ocfs2_protocol_version *max_proto)
+अणु
+	काष्ठा ocfs2_stack_plugin *p;
 
 	spin_lock(&ocfs2_stack_lock);
-	if (memcmp(max_proto, &locking_max_version,
-		   sizeof(struct ocfs2_protocol_version))) {
+	अगर (स_भेद(max_proto, &locking_max_version,
+		   माप(काष्ठा ocfs2_protocol_version))) अणु
 		BUG_ON(locking_max_version.pv_major != 0);
 
 		locking_max_version = *max_proto;
-		list_for_each_entry(p, &ocfs2_stack_list, sp_list) {
+		list_क्रम_each_entry(p, &ocfs2_stack_list, sp_list) अणु
 			p->sp_max_proto = locking_max_version;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&ocfs2_stack_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_stack_glue_set_max_proto_version);
 
 
 /*
  * The ocfs2_dlm_lock() and ocfs2_dlm_unlock() functions take no argument
- * for the ast and bast functions.  They will pass the lksb to the ast
- * and bast.  The caller can wrap the lksb with their own structure to
- * get more information.
+ * क्रम the ast and bast functions.  They will pass the lksb to the ast
+ * and bast.  The caller can wrap the lksb with their own काष्ठाure to
+ * get more inक्रमmation.
  */
-int ocfs2_dlm_lock(struct ocfs2_cluster_connection *conn,
-		   int mode,
-		   struct ocfs2_dlm_lksb *lksb,
+पूर्णांक ocfs2_dlm_lock(काष्ठा ocfs2_cluster_connection *conn,
+		   पूर्णांक mode,
+		   काष्ठा ocfs2_dlm_lksb *lksb,
 		   u32 flags,
-		   void *name,
-		   unsigned int namelen)
-{
-	if (!lksb->lksb_conn)
+		   व्योम *name,
+		   अचिन्हित पूर्णांक namelen)
+अणु
+	अगर (!lksb->lksb_conn)
 		lksb->lksb_conn = conn;
-	else
+	अन्यथा
 		BUG_ON(lksb->lksb_conn != conn);
-	return active_stack->sp_ops->dlm_lock(conn, mode, lksb, flags,
+	वापस active_stack->sp_ops->dlm_lock(conn, mode, lksb, flags,
 					      name, namelen);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_dlm_lock);
 
-int ocfs2_dlm_unlock(struct ocfs2_cluster_connection *conn,
-		     struct ocfs2_dlm_lksb *lksb,
+पूर्णांक ocfs2_dlm_unlock(काष्ठा ocfs2_cluster_connection *conn,
+		     काष्ठा ocfs2_dlm_lksb *lksb,
 		     u32 flags)
-{
-	BUG_ON(lksb->lksb_conn == NULL);
+अणु
+	BUG_ON(lksb->lksb_conn == शून्य);
 
-	return active_stack->sp_ops->dlm_unlock(conn, lksb, flags);
-}
+	वापस active_stack->sp_ops->dlm_unlock(conn, lksb, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_dlm_unlock);
 
-int ocfs2_dlm_lock_status(struct ocfs2_dlm_lksb *lksb)
-{
-	return active_stack->sp_ops->lock_status(lksb);
-}
+पूर्णांक ocfs2_dlm_lock_status(काष्ठा ocfs2_dlm_lksb *lksb)
+अणु
+	वापस active_stack->sp_ops->lock_status(lksb);
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_dlm_lock_status);
 
-int ocfs2_dlm_lvb_valid(struct ocfs2_dlm_lksb *lksb)
-{
-	return active_stack->sp_ops->lvb_valid(lksb);
-}
+पूर्णांक ocfs2_dlm_lvb_valid(काष्ठा ocfs2_dlm_lksb *lksb)
+अणु
+	वापस active_stack->sp_ops->lvb_valid(lksb);
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_dlm_lvb_valid);
 
-void *ocfs2_dlm_lvb(struct ocfs2_dlm_lksb *lksb)
-{
-	return active_stack->sp_ops->lock_lvb(lksb);
-}
+व्योम *ocfs2_dlm_lvb(काष्ठा ocfs2_dlm_lksb *lksb)
+अणु
+	वापस active_stack->sp_ops->lock_lvb(lksb);
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_dlm_lvb);
 
-void ocfs2_dlm_dump_lksb(struct ocfs2_dlm_lksb *lksb)
-{
+व्योम ocfs2_dlm_dump_lksb(काष्ठा ocfs2_dlm_lksb *lksb)
+अणु
 	active_stack->sp_ops->dump_lksb(lksb);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_dlm_dump_lksb);
 
-int ocfs2_stack_supports_plocks(void)
-{
-	return active_stack && active_stack->sp_ops->plock;
-}
+पूर्णांक ocfs2_stack_supports_plocks(व्योम)
+अणु
+	वापस active_stack && active_stack->sp_ops->plock;
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_stack_supports_plocks);
 
 /*
- * ocfs2_plock() can only be safely called if
- * ocfs2_stack_supports_plocks() returned true
+ * ocfs2_plock() can only be safely called अगर
+ * ocfs2_stack_supports_plocks() वापसed true
  */
-int ocfs2_plock(struct ocfs2_cluster_connection *conn, u64 ino,
-		struct file *file, int cmd, struct file_lock *fl)
-{
-	WARN_ON_ONCE(active_stack->sp_ops->plock == NULL);
-	if (active_stack->sp_ops->plock)
-		return active_stack->sp_ops->plock(conn, ino, file, cmd, fl);
-	return -EOPNOTSUPP;
-}
+पूर्णांक ocfs2_plock(काष्ठा ocfs2_cluster_connection *conn, u64 ino,
+		काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
+अणु
+	WARN_ON_ONCE(active_stack->sp_ops->plock == शून्य);
+	अगर (active_stack->sp_ops->plock)
+		वापस active_stack->sp_ops->plock(conn, ino, file, cmd, fl);
+	वापस -EOPNOTSUPP;
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_plock);
 
-int ocfs2_cluster_connect(const char *stack_name,
-			  const char *cluster_name,
-			  int cluster_name_len,
-			  const char *group,
-			  int grouplen,
-			  struct ocfs2_locking_protocol *lproto,
-			  void (*recovery_handler)(int node_num,
-						   void *recovery_data),
-			  void *recovery_data,
-			  struct ocfs2_cluster_connection **conn)
-{
-	int rc = 0;
-	struct ocfs2_cluster_connection *new_conn;
+पूर्णांक ocfs2_cluster_connect(स्थिर अक्षर *stack_name,
+			  स्थिर अक्षर *cluster_name,
+			  पूर्णांक cluster_name_len,
+			  स्थिर अक्षर *group,
+			  पूर्णांक grouplen,
+			  काष्ठा ocfs2_locking_protocol *lproto,
+			  व्योम (*recovery_handler)(पूर्णांक node_num,
+						   व्योम *recovery_data),
+			  व्योम *recovery_data,
+			  काष्ठा ocfs2_cluster_connection **conn)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा ocfs2_cluster_connection *new_conn;
 
-	BUG_ON(group == NULL);
-	BUG_ON(conn == NULL);
-	BUG_ON(recovery_handler == NULL);
+	BUG_ON(group == शून्य);
+	BUG_ON(conn == शून्य);
+	BUG_ON(recovery_handler == शून्य);
 
-	if (grouplen > GROUP_NAME_MAX) {
+	अगर (grouplen > GROUP_NAME_MAX) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (memcmp(&lproto->lp_max_version, &locking_max_version,
-		   sizeof(struct ocfs2_protocol_version))) {
+	अगर (स_भेद(&lproto->lp_max_version, &locking_max_version,
+		   माप(काष्ठा ocfs2_protocol_version))) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	new_conn = kzalloc(sizeof(struct ocfs2_cluster_connection),
+	new_conn = kzalloc(माप(काष्ठा ocfs2_cluster_connection),
 			   GFP_KERNEL);
-	if (!new_conn) {
+	अगर (!new_conn) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	strlcpy(new_conn->cc_name, group, GROUP_NAME_MAX + 1);
 	new_conn->cc_namelen = grouplen;
-	if (cluster_name_len)
+	अगर (cluster_name_len)
 		strlcpy(new_conn->cc_cluster_name, cluster_name,
 			CLUSTER_NAME_MAX + 1);
 	new_conn->cc_cluster_name_len = cluster_name_len;
@@ -347,121 +348,121 @@ int ocfs2_cluster_connect(const char *stack_name,
 	/* Start the new connection at our maximum compatibility level */
 	new_conn->cc_version = lproto->lp_max_version;
 
-	/* This will pin the stack driver if successful */
+	/* This will pin the stack driver अगर successful */
 	rc = ocfs2_stack_driver_get(stack_name);
-	if (rc)
-		goto out_free;
+	अगर (rc)
+		जाओ out_मुक्त;
 
 	rc = active_stack->sp_ops->connect(new_conn);
-	if (rc) {
+	अगर (rc) अणु
 		ocfs2_stack_driver_put();
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	*conn = new_conn;
 
-out_free:
-	if (rc)
-		kfree(new_conn);
+out_मुक्त:
+	अगर (rc)
+		kमुक्त(new_conn);
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_cluster_connect);
 
 /* The caller will ensure all nodes have the same cluster stack */
-int ocfs2_cluster_connect_agnostic(const char *group,
-				   int grouplen,
-				   struct ocfs2_locking_protocol *lproto,
-				   void (*recovery_handler)(int node_num,
-							    void *recovery_data),
-				   void *recovery_data,
-				   struct ocfs2_cluster_connection **conn)
-{
-	char *stack_name = NULL;
+पूर्णांक ocfs2_cluster_connect_agnostic(स्थिर अक्षर *group,
+				   पूर्णांक grouplen,
+				   काष्ठा ocfs2_locking_protocol *lproto,
+				   व्योम (*recovery_handler)(पूर्णांक node_num,
+							    व्योम *recovery_data),
+				   व्योम *recovery_data,
+				   काष्ठा ocfs2_cluster_connection **conn)
+अणु
+	अक्षर *stack_name = शून्य;
 
-	if (cluster_stack_name[0])
+	अगर (cluster_stack_name[0])
 		stack_name = cluster_stack_name;
-	return ocfs2_cluster_connect(stack_name, NULL, 0, group, grouplen,
+	वापस ocfs2_cluster_connect(stack_name, शून्य, 0, group, grouplen,
 				     lproto, recovery_handler, recovery_data,
 				     conn);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_cluster_connect_agnostic);
 
 /* If hangup_pending is 0, the stack driver will be dropped */
-int ocfs2_cluster_disconnect(struct ocfs2_cluster_connection *conn,
-			     int hangup_pending)
-{
-	int ret;
+पूर्णांक ocfs2_cluster_disconnect(काष्ठा ocfs2_cluster_connection *conn,
+			     पूर्णांक hangup_pending)
+अणु
+	पूर्णांक ret;
 
-	BUG_ON(conn == NULL);
+	BUG_ON(conn == शून्य);
 
 	ret = active_stack->sp_ops->disconnect(conn);
 
-	/* XXX Should we free it anyway? */
-	if (!ret) {
-		kfree(conn);
-		if (!hangup_pending)
+	/* XXX Should we मुक्त it anyway? */
+	अगर (!ret) अणु
+		kमुक्त(conn);
+		अगर (!hangup_pending)
 			ocfs2_stack_driver_put();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_cluster_disconnect);
 
 /*
- * Leave the group for this filesystem.  This is executed by a userspace
+ * Leave the group क्रम this fileप्रणाली.  This is executed by a userspace
  * program (stored in ocfs2_hb_ctl_path).
  */
-static void ocfs2_leave_group(const char *group)
-{
-	int ret;
-	char *argv[5], *envp[3];
+अटल व्योम ocfs2_leave_group(स्थिर अक्षर *group)
+अणु
+	पूर्णांक ret;
+	अक्षर *argv[5], *envp[3];
 
 	argv[0] = ocfs2_hb_ctl_path;
 	argv[1] = "-K";
 	argv[2] = "-u";
-	argv[3] = (char *)group;
-	argv[4] = NULL;
+	argv[3] = (अक्षर *)group;
+	argv[4] = शून्य;
 
 	/* minimal command environment taken from cpu_run_sbin_hotplug */
 	envp[0] = "HOME=/";
 	envp[1] = "PATH=/sbin:/bin:/usr/sbin:/usr/bin";
-	envp[2] = NULL;
+	envp[2] = शून्य;
 
 	ret = call_usermodehelper(argv[0], argv, envp, UMH_WAIT_PROC);
-	if (ret < 0) {
-		printk(KERN_ERR
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR
 		       "ocfs2: Error %d running user helper "
 		       "\"%s %s %s %s\"\n",
 		       ret, argv[0], argv[1], argv[2], argv[3]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Hangup is a required post-umount.  ocfs2-tools software expects the
- * filesystem to call "ocfs2_hb_ctl" during unmount.  This happens
- * regardless of whether the DLM got started, so we can't do it
- * in ocfs2_cluster_disconnect().  The ocfs2_leave_group() function does
+ * fileप्रणाली to call "ocfs2_hb_ctl" during unmount.  This happens
+ * regardless of whether the DLM got started, so we can't करो it
+ * in ocfs2_cluster_disconnect().  The ocfs2_leave_group() function करोes
  * the actual work.
  */
-void ocfs2_cluster_hangup(const char *group, int grouplen)
-{
-	BUG_ON(group == NULL);
+व्योम ocfs2_cluster_hangup(स्थिर अक्षर *group, पूर्णांक grouplen)
+अणु
+	BUG_ON(group == शून्य);
 	BUG_ON(group[grouplen] != '\0');
 
 	ocfs2_leave_group(group);
 
 	/* cluster_disconnect() was called with hangup_pending==1 */
 	ocfs2_stack_driver_put();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_cluster_hangup);
 
-int ocfs2_cluster_this_node(struct ocfs2_cluster_connection *conn,
-			    unsigned int *node)
-{
-	return active_stack->sp_ops->this_node(conn, node);
-}
+पूर्णांक ocfs2_cluster_this_node(काष्ठा ocfs2_cluster_connection *conn,
+			    अचिन्हित पूर्णांक *node)
+अणु
+	वापस active_stack->sp_ops->this_node(conn, node);
+पूर्ण
 EXPORT_SYMBOL_GPL(ocfs2_cluster_this_node);
 
 
@@ -469,182 +470,182 @@ EXPORT_SYMBOL_GPL(ocfs2_cluster_this_node);
  * Sysfs bits
  */
 
-static ssize_t ocfs2_max_locking_protocol_show(struct kobject *kobj,
-					       struct kobj_attribute *attr,
-					       char *buf)
-{
-	ssize_t ret = 0;
+अटल sमाप_प्रकार ocfs2_max_locking_protocol_show(काष्ठा kobject *kobj,
+					       काष्ठा kobj_attribute *attr,
+					       अक्षर *buf)
+अणु
+	sमाप_प्रकार ret = 0;
 
 	spin_lock(&ocfs2_stack_lock);
-	if (locking_max_version.pv_major)
-		ret = snprintf(buf, PAGE_SIZE, "%u.%u\n",
+	अगर (locking_max_version.pv_major)
+		ret = snम_लिखो(buf, PAGE_SIZE, "%u.%u\n",
 			       locking_max_version.pv_major,
 			       locking_max_version.pv_minor);
 	spin_unlock(&ocfs2_stack_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct kobj_attribute ocfs2_attr_max_locking_protocol =
+अटल काष्ठा kobj_attribute ocfs2_attr_max_locking_protocol =
 	__ATTR(max_locking_protocol, S_IRUGO,
-	       ocfs2_max_locking_protocol_show, NULL);
+	       ocfs2_max_locking_protocol_show, शून्य);
 
-static ssize_t ocfs2_loaded_cluster_plugins_show(struct kobject *kobj,
-						 struct kobj_attribute *attr,
-						 char *buf)
-{
-	ssize_t ret = 0, total = 0, remain = PAGE_SIZE;
-	struct ocfs2_stack_plugin *p;
+अटल sमाप_प्रकार ocfs2_loaded_cluster_plugins_show(काष्ठा kobject *kobj,
+						 काष्ठा kobj_attribute *attr,
+						 अक्षर *buf)
+अणु
+	sमाप_प्रकार ret = 0, total = 0, reमुख्य = PAGE_SIZE;
+	काष्ठा ocfs2_stack_plugin *p;
 
 	spin_lock(&ocfs2_stack_lock);
-	list_for_each_entry(p, &ocfs2_stack_list, sp_list) {
-		ret = snprintf(buf, remain, "%s\n",
+	list_क्रम_each_entry(p, &ocfs2_stack_list, sp_list) अणु
+		ret = snम_लिखो(buf, reमुख्य, "%s\n",
 			       p->sp_name);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			total = ret;
-			break;
-		}
-		if (ret == remain) {
-			/* snprintf() didn't fit */
+			अवरोध;
+		पूर्ण
+		अगर (ret == reमुख्य) अणु
+			/* snम_लिखो() didn't fit */
 			total = -E2BIG;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		total += ret;
-		remain -= ret;
-	}
+		reमुख्य -= ret;
+	पूर्ण
 	spin_unlock(&ocfs2_stack_lock);
 
-	return total;
-}
+	वापस total;
+पूर्ण
 
-static struct kobj_attribute ocfs2_attr_loaded_cluster_plugins =
+अटल काष्ठा kobj_attribute ocfs2_attr_loaded_cluster_plugins =
 	__ATTR(loaded_cluster_plugins, S_IRUGO,
-	       ocfs2_loaded_cluster_plugins_show, NULL);
+	       ocfs2_loaded_cluster_plugins_show, शून्य);
 
-static ssize_t ocfs2_active_cluster_plugin_show(struct kobject *kobj,
-						struct kobj_attribute *attr,
-						char *buf)
-{
-	ssize_t ret = 0;
+अटल sमाप_प्रकार ocfs2_active_cluster_plugin_show(काष्ठा kobject *kobj,
+						काष्ठा kobj_attribute *attr,
+						अक्षर *buf)
+अणु
+	sमाप_प्रकार ret = 0;
 
 	spin_lock(&ocfs2_stack_lock);
-	if (active_stack) {
-		ret = snprintf(buf, PAGE_SIZE, "%s\n",
+	अगर (active_stack) अणु
+		ret = snम_लिखो(buf, PAGE_SIZE, "%s\n",
 			       active_stack->sp_name);
-		if (ret == PAGE_SIZE)
+		अगर (ret == PAGE_SIZE)
 			ret = -E2BIG;
-	}
+	पूर्ण
 	spin_unlock(&ocfs2_stack_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct kobj_attribute ocfs2_attr_active_cluster_plugin =
+अटल काष्ठा kobj_attribute ocfs2_attr_active_cluster_plugin =
 	__ATTR(active_cluster_plugin, S_IRUGO,
-	       ocfs2_active_cluster_plugin_show, NULL);
+	       ocfs2_active_cluster_plugin_show, शून्य);
 
-static ssize_t ocfs2_cluster_stack_show(struct kobject *kobj,
-					struct kobj_attribute *attr,
-					char *buf)
-{
-	ssize_t ret;
+अटल sमाप_प्रकार ocfs2_cluster_stack_show(काष्ठा kobject *kobj,
+					काष्ठा kobj_attribute *attr,
+					अक्षर *buf)
+अणु
+	sमाप_प्रकार ret;
 	spin_lock(&ocfs2_stack_lock);
-	ret = snprintf(buf, PAGE_SIZE, "%s\n", cluster_stack_name);
+	ret = snम_लिखो(buf, PAGE_SIZE, "%s\n", cluster_stack_name);
 	spin_unlock(&ocfs2_stack_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ocfs2_cluster_stack_store(struct kobject *kobj,
-					 struct kobj_attribute *attr,
-					 const char *buf, size_t count)
-{
-	size_t len = count;
-	ssize_t ret;
+अटल sमाप_प्रकार ocfs2_cluster_stack_store(काष्ठा kobject *kobj,
+					 काष्ठा kobj_attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	माप_प्रकार len = count;
+	sमाप_प्रकार ret;
 
-	if (len == 0)
-		return len;
+	अगर (len == 0)
+		वापस len;
 
-	if (buf[len - 1] == '\n')
+	अगर (buf[len - 1] == '\n')
 		len--;
 
-	if ((len != OCFS2_STACK_LABEL_LEN) ||
+	अगर ((len != OCFS2_STACK_LABEL_LEN) ||
 	    (strnlen(buf, len) != len))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	spin_lock(&ocfs2_stack_lock);
-	if (active_stack) {
-		if (!strncmp(buf, cluster_stack_name, len))
+	अगर (active_stack) अणु
+		अगर (!म_भेदन(buf, cluster_stack_name, len))
 			ret = count;
-		else
+		अन्यथा
 			ret = -EBUSY;
-	} else {
-		memcpy(cluster_stack_name, buf, len);
+	पूर्ण अन्यथा अणु
+		स_नकल(cluster_stack_name, buf, len);
 		ret = count;
-	}
+	पूर्ण
 	spin_unlock(&ocfs2_stack_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static struct kobj_attribute ocfs2_attr_cluster_stack =
+अटल काष्ठा kobj_attribute ocfs2_attr_cluster_stack =
 	__ATTR(cluster_stack, S_IRUGO | S_IWUSR,
 	       ocfs2_cluster_stack_show,
 	       ocfs2_cluster_stack_store);
 
 
 
-static ssize_t ocfs2_dlm_recover_show(struct kobject *kobj,
-					struct kobj_attribute *attr,
-					char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "1\n");
-}
+अटल sमाप_प्रकार ocfs2_dlm_recover_show(काष्ठा kobject *kobj,
+					काष्ठा kobj_attribute *attr,
+					अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "1\n");
+पूर्ण
 
-static struct kobj_attribute ocfs2_attr_dlm_recover_support =
+अटल काष्ठा kobj_attribute ocfs2_attr_dlm_recover_support =
 	__ATTR(dlm_recover_callback_support, S_IRUGO,
-	       ocfs2_dlm_recover_show, NULL);
+	       ocfs2_dlm_recover_show, शून्य);
 
-static struct attribute *ocfs2_attrs[] = {
+अटल काष्ठा attribute *ocfs2_attrs[] = अणु
 	&ocfs2_attr_max_locking_protocol.attr,
 	&ocfs2_attr_loaded_cluster_plugins.attr,
 	&ocfs2_attr_active_cluster_plugin.attr,
 	&ocfs2_attr_cluster_stack.attr,
 	&ocfs2_attr_dlm_recover_support.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group ocfs2_attr_group = {
+अटल स्थिर काष्ठा attribute_group ocfs2_attr_group = अणु
 	.attrs = ocfs2_attrs,
-};
+पूर्ण;
 
-struct kset *ocfs2_kset;
+काष्ठा kset *ocfs2_kset;
 EXPORT_SYMBOL_GPL(ocfs2_kset);
 
-static void ocfs2_sysfs_exit(void)
-{
-	kset_unregister(ocfs2_kset);
-}
+अटल व्योम ocfs2_sysfs_निकास(व्योम)
+अणु
+	kset_unरेजिस्टर(ocfs2_kset);
+पूर्ण
 
-static int ocfs2_sysfs_init(void)
-{
-	int ret;
+अटल पूर्णांक ocfs2_sysfs_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ocfs2_kset = kset_create_and_add("ocfs2", NULL, fs_kobj);
-	if (!ocfs2_kset)
-		return -ENOMEM;
+	ocfs2_kset = kset_create_and_add("ocfs2", शून्य, fs_kobj);
+	अगर (!ocfs2_kset)
+		वापस -ENOMEM;
 
 	ret = sysfs_create_group(&ocfs2_kset->kobj, &ocfs2_attr_group);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 
 error:
-	kset_unregister(ocfs2_kset);
-	return ret;
-}
+	kset_unरेजिस्टर(ocfs2_kset);
+	वापस ret;
+पूर्ण
 
 /*
  * Sysctl bits
@@ -654,82 +655,82 @@ error:
  * and easier to preserve the name.
  */
 
-static struct ctl_table ocfs2_nm_table[] = {
-	{
+अटल काष्ठा ctl_table ocfs2_nm_table[] = अणु
+	अणु
 		.procname	= "hb_ctl_path",
 		.data		= ocfs2_hb_ctl_path,
 		.maxlen		= OCFS2_MAX_HB_CTL_PATH,
 		.mode		= 0644,
-		.proc_handler	= proc_dostring,
-	},
-	{ }
-};
+		.proc_handler	= proc_करोstring,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table ocfs2_mod_table[] = {
-	{
+अटल काष्ठा ctl_table ocfs2_mod_table[] = अणु
+	अणु
 		.procname	= "nm",
-		.data		= NULL,
+		.data		= शून्य,
 		.maxlen		= 0,
 		.mode		= 0555,
 		.child		= ocfs2_nm_table
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table ocfs2_kern_table[] = {
-	{
+अटल काष्ठा ctl_table ocfs2_kern_table[] = अणु
+	अणु
 		.procname	= "ocfs2",
-		.data		= NULL,
+		.data		= शून्य,
 		.maxlen		= 0,
 		.mode		= 0555,
 		.child		= ocfs2_mod_table
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table ocfs2_root_table[] = {
-	{
+अटल काष्ठा ctl_table ocfs2_root_table[] = अणु
+	अणु
 		.procname	= "fs",
-		.data		= NULL,
+		.data		= शून्य,
 		.maxlen		= 0,
 		.mode		= 0555,
 		.child		= ocfs2_kern_table
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table_header *ocfs2_table_header;
+अटल काष्ठा ctl_table_header *ocfs2_table_header;
 
 
 /*
  * Initialization
  */
 
-static int __init ocfs2_stack_glue_init(void)
-{
-	strcpy(cluster_stack_name, OCFS2_STACK_PLUGIN_O2CB);
+अटल पूर्णांक __init ocfs2_stack_glue_init(व्योम)
+अणु
+	म_नकल(cluster_stack_name, OCFS2_STACK_PLUGIN_O2CB);
 
-	ocfs2_table_header = register_sysctl_table(ocfs2_root_table);
-	if (!ocfs2_table_header) {
-		printk(KERN_ERR
+	ocfs2_table_header = रेजिस्टर_sysctl_table(ocfs2_root_table);
+	अगर (!ocfs2_table_header) अणु
+		prपूर्णांकk(KERN_ERR
 		       "ocfs2 stack glue: unable to register sysctl\n");
-		return -ENOMEM; /* or something. */
-	}
+		वापस -ENOMEM; /* or something. */
+	पूर्ण
 
-	return ocfs2_sysfs_init();
-}
+	वापस ocfs2_sysfs_init();
+पूर्ण
 
-static void __exit ocfs2_stack_glue_exit(void)
-{
-	memset(&locking_max_version, 0,
-	       sizeof(struct ocfs2_protocol_version));
-	ocfs2_sysfs_exit();
-	if (ocfs2_table_header)
-		unregister_sysctl_table(ocfs2_table_header);
-}
+अटल व्योम __निकास ocfs2_stack_glue_निकास(व्योम)
+अणु
+	स_रखो(&locking_max_version, 0,
+	       माप(काष्ठा ocfs2_protocol_version));
+	ocfs2_sysfs_निकास();
+	अगर (ocfs2_table_header)
+		unरेजिस्टर_sysctl_table(ocfs2_table_header);
+पूर्ण
 
 MODULE_AUTHOR("Oracle");
 MODULE_DESCRIPTION("ocfs2 cluster stack glue layer");
 MODULE_LICENSE("GPL");
 module_init(ocfs2_stack_glue_init);
-module_exit(ocfs2_stack_glue_exit);
+module_निकास(ocfs2_stack_glue_निकास);

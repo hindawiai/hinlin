@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* MFD cell driver data for the DS1WM driver
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* MFD cell driver data क्रम the DS1WM driver
  *
  * to be defined in the MFD device that is
- * using this driver for one of his sub devices
+ * using this driver क्रम one of his sub devices
  */
 
-struct ds1wm_driver_data {
-	int active_high;
-	int clock_rate;
-	/* in milliseconds, the amount of time to
+काष्ठा ds1wm_driver_data अणु
+	पूर्णांक active_high;
+	पूर्णांक घड़ी_rate;
+	/* in milliseconds, the amount of समय to
 	 * sleep following a reset pulse. Zero
-	 * should work if your bus devices recover
-	 * time respects the 1-wire spec since the
+	 * should work अगर your bus devices recover
+	 * समय respects the 1-wire spec since the
 	 * ds1wm implements the precise timings of
 	 * a reset pulse/presence detect sequence.
 	 */
-	unsigned int reset_recover_delay;
+	अचिन्हित पूर्णांक reset_recover_delay;
 
-	/* Say 1 here for big endian Hardware
-	 * (only relevant with bus-shift > 0
+	/* Say 1 here क्रम big endian Hardware
+	 * (only relevant with bus-shअगरt > 0
 	 */
 	bool is_hw_big_endian;
 
-	/* left shift of register number to get register address offsett.
-	 * Only 0,1,2 allowed for 8,16 or 32 bit bus width respectively
+	/* left shअगरt of रेजिस्टर number to get रेजिस्टर address offsett.
+	 * Only 0,1,2 allowed क्रम 8,16 or 32 bit bus width respectively
 	 */
-	unsigned int bus_shift;
-};
+	अचिन्हित पूर्णांक bus_shअगरt;
+पूर्ण;

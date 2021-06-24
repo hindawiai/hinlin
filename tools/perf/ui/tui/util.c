@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <signal.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/ttydefaults.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <संकेत.स>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/ttyशेषs.h>
 
-#include "../browser.h"
-#include "../keysyms.h"
-#include "../helpline.h"
-#include "../ui.h"
-#include "../util.h"
-#include "../libslang.h"
+#समावेश "../browser.h"
+#समावेश "../keysyms.h"
+#समावेश "../helpline.h"
+#समावेश "../ui.h"
+#समावेश "../util.h"
+#समावेश "../libslang.h"
 
-static void ui_browser__argv_write(struct ui_browser *browser,
-				   void *entry, int row)
-{
-	char **arg = entry;
+अटल व्योम ui_browser__argv_ग_लिखो(काष्ठा ui_browser *browser,
+				   व्योम *entry, पूर्णांक row)
+अणु
+	अक्षर **arg = entry;
 	bool current_entry = ui_browser__is_current_entry(browser, row);
 
 	ui_browser__set_color(browser, current_entry ? HE_COLORSET_SELECTED :
 						       HE_COLORSET_NORMAL);
-	ui_browser__write_nstring(browser, *arg, browser->width);
-}
+	ui_browser__ग_लिखो_nstring(browser, *arg, browser->width);
+पूर्ण
 
-static int popup_menu__run(struct ui_browser *menu, int *keyp)
-{
-	int key;
+अटल पूर्णांक popup_menu__run(काष्ठा ui_browser *menu, पूर्णांक *keyp)
+अणु
+	पूर्णांक key;
 
-	if (ui_browser__show(menu, " ", "ESC: exit, ENTER|->: Select option") < 0)
-		return -1;
+	अगर (ui_browser__show(menu, " ", "ESC: exit, ENTER|->: Select option") < 0)
+		वापस -1;
 
-	while (1) {
+	जबतक (1) अणु
 		key = ui_browser__run(menu, 0);
 
-		switch (key) {
-		case K_RIGHT:
-		case K_ENTER:
+		चयन (key) अणु
+		हाल K_RIGHT:
+		हाल K_ENTER:
 			key = menu->index;
-			break;
-		case K_LEFT:
-		case K_ESC:
-		case 'q':
-		case CTRL('c'):
+			अवरोध;
+		हाल K_LEFT:
+		हाल K_ESC:
+		हाल 'q':
+		हाल CTRL('c'):
 			key = -1;
-			break;
-		default:
-			if (keyp) {
+			अवरोध;
+		शेष:
+			अगर (keyp) अणु
 				*keyp = key;
 				key = menu->nr_entries;
-				break;
-			}
-			continue;
-		}
+				अवरोध;
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ui_browser__hide(menu);
-	return key;
-}
+	वापस key;
+पूर्ण
 
-int ui__popup_menu(int argc, char * const argv[], int *keyp)
-{
-	struct ui_browser menu = {
-		.entries    = (void *)argv,
+पूर्णांक ui__popup_menu(पूर्णांक argc, अक्षर * स्थिर argv[], पूर्णांक *keyp)
+अणु
+	काष्ठा ui_browser menu = अणु
+		.entries    = (व्योम *)argv,
 		.refresh    = ui_browser__argv_refresh,
 		.seek	    = ui_browser__argv_seek,
-		.write	    = ui_browser__argv_write,
+		.ग_लिखो	    = ui_browser__argv_ग_लिखो,
 		.nr_entries = argc,
-	};
-	return popup_menu__run(&menu, keyp);
-}
+	पूर्ण;
+	वापस popup_menu__run(&menu, keyp);
+पूर्ण
 
-int ui_browser__input_window(const char *title, const char *text, char *input,
-			     const char *exit_msg, int delay_secs)
-{
-	int x, y, len, key;
-	int max_len = 60, nr_lines = 0;
-	static char buf[50];
-	const char *t;
+पूर्णांक ui_browser__input_winकरोw(स्थिर अक्षर *title, स्थिर अक्षर *text, अक्षर *input,
+			     स्थिर अक्षर *निकास_msg, पूर्णांक delay_secs)
+अणु
+	पूर्णांक x, y, len, key;
+	पूर्णांक max_len = 60, nr_lines = 0;
+	अटल अक्षर buf[50];
+	स्थिर अक्षर *t;
 
 	t = text;
-	while (1) {
-		const char *sep = strchr(t, '\n');
+	जबतक (1) अणु
+		स्थिर अक्षर *sep = म_अक्षर(t, '\n');
 
-		if (sep == NULL)
-			sep = strchr(t, '\0');
+		अगर (sep == शून्य)
+			sep = म_अक्षर(t, '\0');
 		len = sep - t;
-		if (max_len < len)
+		अगर (max_len < len)
 			max_len = len;
 		++nr_lines;
-		if (*sep == '\0')
-			break;
+		अगर (*sep == '\0')
+			अवरोध;
 		t = sep + 1;
-	}
+	पूर्ण
 
-	pthread_mutex_lock(&ui__lock);
+	pthपढ़ो_mutex_lock(&ui__lock);
 
 	max_len += 2;
 	nr_lines += 8;
@@ -104,171 +105,171 @@ int ui_browser__input_window(const char *title, const char *text, char *input,
 
 	SLsmg_set_color(0);
 	SLsmg_draw_box(y, x++, nr_lines, max_len);
-	if (title) {
-		SLsmg_gotorc(y, x + 1);
-		SLsmg_write_string((char *)title);
-	}
-	SLsmg_gotorc(++y, x);
+	अगर (title) अणु
+		SLsmg_जाओrc(y, x + 1);
+		SLsmg_ग_लिखो_string((अक्षर *)title);
+	पूर्ण
+	SLsmg_जाओrc(++y, x);
 	nr_lines -= 7;
 	max_len -= 2;
-	SLsmg_write_wrapped_string((unsigned char *)text, y, x,
+	SLsmg_ग_लिखो_wrapped_string((अचिन्हित अक्षर *)text, y, x,
 				   nr_lines, max_len, 1);
 	y += nr_lines;
 	len = 5;
-	while (len--) {
-		SLsmg_gotorc(y + len - 1, x);
-		SLsmg_write_nstring((char *)" ", max_len);
-	}
+	जबतक (len--) अणु
+		SLsmg_जाओrc(y + len - 1, x);
+		SLsmg_ग_लिखो_nstring((अक्षर *)" ", max_len);
+	पूर्ण
 	SLsmg_draw_box(y++, x + 1, 3, max_len - 2);
 
-	SLsmg_gotorc(y + 3, x);
-	SLsmg_write_nstring((char *)exit_msg, max_len);
+	SLsmg_जाओrc(y + 3, x);
+	SLsmg_ग_लिखो_nstring((अक्षर *)निकास_msg, max_len);
 	SLsmg_refresh();
 
-	pthread_mutex_unlock(&ui__lock);
+	pthपढ़ो_mutex_unlock(&ui__lock);
 
 	x += 2;
 	len = 0;
-	key = ui__getch(delay_secs);
-	while (key != K_TIMER && key != K_ENTER && key != K_ESC) {
-		pthread_mutex_lock(&ui__lock);
+	key = ui__अ_लोh(delay_secs);
+	जबतक (key != K_TIMER && key != K_ENTER && key != K_ESC) अणु
+		pthपढ़ो_mutex_lock(&ui__lock);
 
-		if (key == K_BKSPC) {
-			if (len == 0) {
-				pthread_mutex_unlock(&ui__lock);
-				goto next_key;
-			}
-			SLsmg_gotorc(y, x + --len);
-			SLsmg_write_char(' ');
-		} else {
+		अगर (key == K_BKSPC) अणु
+			अगर (len == 0) अणु
+				pthपढ़ो_mutex_unlock(&ui__lock);
+				जाओ next_key;
+			पूर्ण
+			SLsmg_जाओrc(y, x + --len);
+			SLsmg_ग_लिखो_अक्षर(' ');
+		पूर्ण अन्यथा अणु
 			buf[len] = key;
-			SLsmg_gotorc(y, x + len++);
-			SLsmg_write_char(key);
-		}
+			SLsmg_जाओrc(y, x + len++);
+			SLsmg_ग_लिखो_अक्षर(key);
+		पूर्ण
 		SLsmg_refresh();
 
-		pthread_mutex_unlock(&ui__lock);
+		pthपढ़ो_mutex_unlock(&ui__lock);
 
 		/* XXX more graceful overflow handling needed */
-		if (len == sizeof(buf) - 1) {
+		अगर (len == माप(buf) - 1) अणु
 			ui_helpline__push("maximum size of symbol name reached!");
 			key = K_ENTER;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 next_key:
-		key = ui__getch(delay_secs);
-	}
+		key = ui__अ_लोh(delay_secs);
+	पूर्ण
 
 	buf[len] = '\0';
-	strncpy(input, buf, len+1);
-	return key;
-}
+	म_नकलन(input, buf, len+1);
+	वापस key;
+पूर्ण
 
-void __ui__info_window(const char *title, const char *text, const char *exit_msg)
-{
-	int x, y;
-	int max_len = 0, nr_lines = 0;
-	const char *t;
+व्योम __ui__info_winकरोw(स्थिर अक्षर *title, स्थिर अक्षर *text, स्थिर अक्षर *निकास_msg)
+अणु
+	पूर्णांक x, y;
+	पूर्णांक max_len = 0, nr_lines = 0;
+	स्थिर अक्षर *t;
 
 	t = text;
-	while (1) {
-		const char *sep = strchr(t, '\n');
-		int len;
+	जबतक (1) अणु
+		स्थिर अक्षर *sep = म_अक्षर(t, '\n');
+		पूर्णांक len;
 
-		if (sep == NULL)
-			sep = strchr(t, '\0');
+		अगर (sep == शून्य)
+			sep = म_अक्षर(t, '\0');
 		len = sep - t;
-		if (max_len < len)
+		अगर (max_len < len)
 			max_len = len;
 		++nr_lines;
-		if (*sep == '\0')
-			break;
+		अगर (*sep == '\0')
+			अवरोध;
 		t = sep + 1;
-	}
+	पूर्ण
 
 	max_len += 2;
 	nr_lines += 2;
-	if (exit_msg)
+	अगर (निकास_msg)
 		nr_lines += 2;
 	y = SLtt_Screen_Rows / 2 - nr_lines / 2,
 	x = SLtt_Screen_Cols / 2 - max_len / 2;
 
 	SLsmg_set_color(0);
 	SLsmg_draw_box(y, x++, nr_lines, max_len);
-	if (title) {
-		SLsmg_gotorc(y, x + 1);
-		SLsmg_write_string((char *)title);
-	}
-	SLsmg_gotorc(++y, x);
-	if (exit_msg)
+	अगर (title) अणु
+		SLsmg_जाओrc(y, x + 1);
+		SLsmg_ग_लिखो_string((अक्षर *)title);
+	पूर्ण
+	SLsmg_जाओrc(++y, x);
+	अगर (निकास_msg)
 		nr_lines -= 2;
 	max_len -= 2;
-	SLsmg_write_wrapped_string((unsigned char *)text, y, x,
+	SLsmg_ग_लिखो_wrapped_string((अचिन्हित अक्षर *)text, y, x,
 				   nr_lines, max_len, 1);
-	if (exit_msg) {
-		SLsmg_gotorc(y + nr_lines - 2, x);
-		SLsmg_write_nstring((char *)" ", max_len);
-		SLsmg_gotorc(y + nr_lines - 1, x);
-		SLsmg_write_nstring((char *)exit_msg, max_len);
-	}
-}
+	अगर (निकास_msg) अणु
+		SLsmg_जाओrc(y + nr_lines - 2, x);
+		SLsmg_ग_लिखो_nstring((अक्षर *)" ", max_len);
+		SLsmg_जाओrc(y + nr_lines - 1, x);
+		SLsmg_ग_लिखो_nstring((अक्षर *)निकास_msg, max_len);
+	पूर्ण
+पूर्ण
 
-void ui__info_window(const char *title, const char *text)
-{
-	pthread_mutex_lock(&ui__lock);
-	__ui__info_window(title, text, NULL);
+व्योम ui__info_winकरोw(स्थिर अक्षर *title, स्थिर अक्षर *text)
+अणु
+	pthपढ़ो_mutex_lock(&ui__lock);
+	__ui__info_winकरोw(title, text, शून्य);
 	SLsmg_refresh();
-	pthread_mutex_unlock(&ui__lock);
-}
+	pthपढ़ो_mutex_unlock(&ui__lock);
+पूर्ण
 
-int ui__question_window(const char *title, const char *text,
-			const char *exit_msg, int delay_secs)
-{
-	pthread_mutex_lock(&ui__lock);
-	__ui__info_window(title, text, exit_msg);
+पूर्णांक ui__question_winकरोw(स्थिर अक्षर *title, स्थिर अक्षर *text,
+			स्थिर अक्षर *निकास_msg, पूर्णांक delay_secs)
+अणु
+	pthपढ़ो_mutex_lock(&ui__lock);
+	__ui__info_winकरोw(title, text, निकास_msg);
 	SLsmg_refresh();
-	pthread_mutex_unlock(&ui__lock);
-	return ui__getch(delay_secs);
-}
+	pthपढ़ो_mutex_unlock(&ui__lock);
+	वापस ui__अ_लोh(delay_secs);
+पूर्ण
 
-int ui__help_window(const char *text)
-{
-	return ui__question_window("Help", text, "Press any key...", 0);
-}
+पूर्णांक ui__help_winकरोw(स्थिर अक्षर *text)
+अणु
+	वापस ui__question_winकरोw("Help", text, "Press any key...", 0);
+पूर्ण
 
-int ui__dialog_yesno(const char *msg)
-{
-	return ui__question_window(NULL, msg, "Enter: Yes, ESC: No", 0);
-}
+पूर्णांक ui__dialog_yesno(स्थिर अक्षर *msg)
+अणु
+	वापस ui__question_winकरोw(शून्य, msg, "Enter: Yes, ESC: No", 0);
+पूर्ण
 
-static int __ui__warning(const char *title, const char *format, va_list args)
-{
-	char *s;
+अटल पूर्णांक __ui__warning(स्थिर अक्षर *title, स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
+	अक्षर *s;
 
-	if (vasprintf(&s, format, args) > 0) {
-		int key;
+	अगर (vaप्र_लिखो(&s, क्रमmat, args) > 0) अणु
+		पूर्णांक key;
 
-		key = ui__question_window(title, s, "Press any key...", 0);
-		free(s);
-		return key;
-	}
+		key = ui__question_winकरोw(title, s, "Press any key...", 0);
+		मुक्त(s);
+		वापस key;
+	पूर्ण
 
-	fprintf(stderr, "%s\n", title);
-	vfprintf(stderr, format, args);
-	return K_ESC;
-}
+	ख_लिखो(मानक_त्रुटि, "%s\n", title);
+	भख_लिखो(मानक_त्रुटि, क्रमmat, args);
+	वापस K_ESC;
+पूर्ण
 
-static int perf_tui__error(const char *format, va_list args)
-{
-	return __ui__warning("Error:", format, args);
-}
+अटल पूर्णांक perf_tui__error(स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
+	वापस __ui__warning("Error:", क्रमmat, args);
+पूर्ण
 
-static int perf_tui__warning(const char *format, va_list args)
-{
-	return __ui__warning("Warning:", format, args);
-}
+अटल पूर्णांक perf_tui__warning(स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
+	वापस __ui__warning("Warning:", क्रमmat, args);
+पूर्ण
 
-struct perf_error_ops perf_tui_eops = {
+काष्ठा perf_error_ops perf_tui_eops = अणु
 	.error		= perf_tui__error,
 	.warning	= perf_tui__warning,
-};
+पूर्ण;

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause */
 /*
  * Copyright (c) 2020, MIPI Alliance, Inc.
  *
@@ -7,10 +8,10 @@
  * Common DCT related stuff
  */
 
-#ifndef DCT_H
-#define DCT_H
+#अगर_अघोषित DCT_H
+#घोषणा DCT_H
 
-void i3c_hci_dct_get_val(struct i3c_hci *hci, unsigned int dct_idx,
-			 u64 *pid, unsigned int *dcr, unsigned int *bcr);
+व्योम i3c_hci_dct_get_val(काष्ठा i3c_hci *hci, अचिन्हित पूर्णांक dct_idx,
+			 u64 *pid, अचिन्हित पूर्णांक *dcr, अचिन्हित पूर्णांक *bcr);
 
-#endif
+#पूर्ण_अगर

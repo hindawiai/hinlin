@@ -1,92 +1,93 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2009-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <net/mac80211.h>
+#समावेश <net/mac80211.h>
 
-#include "../ath.h"
+#समावेश "../ath.h"
 
-#include "hw.h"
-#include "hw-ops.h"
+#समावेश "hw.h"
+#समावेश "hw-ops.h"
 
-#include "common-init.h"
-#include "common-beacon.h"
-#include "common-debug.h"
-#include "common-spectral.h"
+#समावेश "common-init.h"
+#समावेश "common-beacon.h"
+#समावेश "common-debug.h"
+#समावेश "common-spectral.h"
 
-/* Common header for Atheros 802.11n base driver cores */
+/* Common header क्रम Atheros 802.11n base driver cores */
 
-#define WME_BA_BMP_SIZE         64
-#define WME_MAX_BA              WME_BA_BMP_SIZE
-#define ATH_TID_MAX_BUFS        (2 * WME_MAX_BA)
+#घोषणा WME_BA_BMP_SIZE         64
+#घोषणा WME_MAX_BA              WME_BA_BMP_SIZE
+#घोषणा ATH_TID_MAX_BUFS        (2 * WME_MAX_BA)
 
-#define ATH_RSSI_DUMMY_MARKER   127
-#define ATH_RSSI_LPF_LEN 		10
-#define RSSI_LPF_THRESHOLD		-20
-#define ATH_RSSI_EP_MULTIPLIER     (1<<7)
-#define ATH_EP_MUL(x, mul)         ((x) * (mul))
-#define ATH_RSSI_IN(x)             (ATH_EP_MUL((x), ATH_RSSI_EP_MULTIPLIER))
-#define ATH_LPF_RSSI(x, y, len) \
+#घोषणा ATH_RSSI_DUMMY_MARKER   127
+#घोषणा ATH_RSSI_LPF_LEN 		10
+#घोषणा RSSI_LPF_THRESHOLD		-20
+#घोषणा ATH_RSSI_EP_MULTIPLIER     (1<<7)
+#घोषणा ATH_EP_MUL(x, mul)         ((x) * (mul))
+#घोषणा ATH_RSSI_IN(x)             (ATH_EP_MUL((x), ATH_RSSI_EP_MULTIPLIER))
+#घोषणा ATH_LPF_RSSI(x, y, len) \
     ((x != ATH_RSSI_DUMMY_MARKER) ? (((x) * ((len) - 1) + (y)) / (len)) : (y))
-#define ATH_RSSI_LPF(x, y) do {                     			\
-    if ((y) >= RSSI_LPF_THRESHOLD)                         		\
+#घोषणा ATH_RSSI_LPF(x, y) करो अणु                     			\
+    अगर ((y) >= RSSI_LPF_THRESHOLD)                         		\
 	x = ATH_LPF_RSSI((x), ATH_RSSI_IN((y)), ATH_RSSI_LPF_LEN);  	\
-} while (0)
-#define ATH_EP_RND(x, mul) 						\
+पूर्ण जबतक (0)
+#घोषणा ATH_EP_RND(x, mul) 						\
 	(((x) + ((mul)/2)) / (mul))
 
-#define IEEE80211_MS_TO_TU(x)   (((x) * 1000) / 1024)
+#घोषणा IEEE80211_MS_TO_TU(x)   (((x) * 1000) / 1024)
 
-struct ath_beacon_config {
-	struct ieee80211_vif *main_vif;
-	int beacon_interval;
+काष्ठा ath_beacon_config अणु
+	काष्ठा ieee80211_vअगर *मुख्य_vअगर;
+	पूर्णांक beacon_पूर्णांकerval;
 	u16 dtim_period;
-	u16 bmiss_timeout;
+	u16 bmiss_समयout;
 	u8 dtim_count;
 	u8 enable_beacon;
 	bool ibss_creator;
 	u32 nexttbtt;
-	u32 intval;
-};
+	u32 पूर्णांकval;
+पूर्ण;
 
-bool ath9k_cmn_rx_accept(struct ath_common *common,
-			 struct ieee80211_hdr *hdr,
-			 struct ieee80211_rx_status *rxs,
-			 struct ath_rx_status *rx_stats,
+bool ath9k_cmn_rx_accept(काष्ठा ath_common *common,
+			 काष्ठा ieee80211_hdr *hdr,
+			 काष्ठा ieee80211_rx_status *rxs,
+			 काष्ठा ath_rx_status *rx_stats,
 			 bool *decrypt_error,
-			 unsigned int rxfilter);
-void ath9k_cmn_rx_skb_postprocess(struct ath_common *common,
-				  struct sk_buff *skb,
-				  struct ath_rx_status *rx_stats,
-				  struct ieee80211_rx_status *rxs,
+			 अचिन्हित पूर्णांक rxfilter);
+व्योम ath9k_cmn_rx_skb_postprocess(काष्ठा ath_common *common,
+				  काष्ठा sk_buff *skb,
+				  काष्ठा ath_rx_status *rx_stats,
+				  काष्ठा ieee80211_rx_status *rxs,
 				  bool decrypt_error);
-int ath9k_cmn_process_rate(struct ath_common *common,
-			   struct ieee80211_hw *hw,
-			   struct ath_rx_status *rx_stats,
-			   struct ieee80211_rx_status *rxs);
-void ath9k_cmn_process_rssi(struct ath_common *common,
-			    struct ieee80211_hw *hw,
-			    struct ath_rx_status *rx_stats,
-			    struct ieee80211_rx_status *rxs);
-int ath9k_cmn_get_hw_crypto_keytype(struct sk_buff *skb);
-struct ath9k_channel *ath9k_cmn_get_channel(struct ieee80211_hw *hw,
-					    struct ath_hw *ah,
-					    struct cfg80211_chan_def *chandef);
-int ath9k_cmn_count_streams(unsigned int chainmask, int max);
-void ath9k_cmn_btcoex_bt_stomp(struct ath_common *common,
-				  enum ath_stomp_type stomp_type);
-void ath9k_cmn_update_txpow(struct ath_hw *ah, u16 cur_txpow,
-			    u16 new_txpow, u16 *txpower);
-void ath9k_cmn_init_crypto(struct ath_hw *ah);
+पूर्णांक ath9k_cmn_process_rate(काष्ठा ath_common *common,
+			   काष्ठा ieee80211_hw *hw,
+			   काष्ठा ath_rx_status *rx_stats,
+			   काष्ठा ieee80211_rx_status *rxs);
+व्योम ath9k_cmn_process_rssi(काष्ठा ath_common *common,
+			    काष्ठा ieee80211_hw *hw,
+			    काष्ठा ath_rx_status *rx_stats,
+			    काष्ठा ieee80211_rx_status *rxs);
+पूर्णांक ath9k_cmn_get_hw_crypto_keytype(काष्ठा sk_buff *skb);
+काष्ठा ath9k_channel *ath9k_cmn_get_channel(काष्ठा ieee80211_hw *hw,
+					    काष्ठा ath_hw *ah,
+					    काष्ठा cfg80211_chan_def *chandef);
+पूर्णांक ath9k_cmn_count_streams(अचिन्हित पूर्णांक chainmask, पूर्णांक max);
+व्योम ath9k_cmn_btcoex_bt_stomp(काष्ठा ath_common *common,
+				  क्रमागत ath_stomp_type stomp_type);
+व्योम ath9k_cmn_update_txघात(काष्ठा ath_hw *ah, u16 cur_txघात,
+			    u16 new_txघात, u16 *txघातer);
+व्योम ath9k_cmn_init_crypto(काष्ठा ath_hw *ah);

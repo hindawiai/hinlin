@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Witness Service client for CIFS
+ * Witness Service client क्रम CIFS
  *
  * Copyright (c) 2020 Samuel Cabrero <scabrero@suse.de>
  */
 
-#ifndef _CIFS_SWN_H
-#define _CIFS_SWN_H
-#include "cifsglob.h"
+#अगर_अघोषित _CIFS_SWN_H
+#घोषणा _CIFS_SWN_H
+#समावेश "cifsglob.h"
 
-struct cifs_tcon;
-struct sk_buff;
-struct genl_info;
+काष्ठा cअगरs_tcon;
+काष्ठा sk_buff;
+काष्ठा genl_info;
 
-#ifdef CONFIG_CIFS_SWN_UPCALL
-extern int cifs_swn_register(struct cifs_tcon *tcon);
+#अगर_घोषित CONFIG_CIFS_SWN_UPCALL
+बाह्य पूर्णांक cअगरs_swn_रेजिस्टर(काष्ठा cअगरs_tcon *tcon);
 
-extern int cifs_swn_unregister(struct cifs_tcon *tcon);
+बाह्य पूर्णांक cअगरs_swn_unरेजिस्टर(काष्ठा cअगरs_tcon *tcon);
 
-extern int cifs_swn_notify(struct sk_buff *skb, struct genl_info *info);
+बाह्य पूर्णांक cअगरs_swn_notअगरy(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
 
-extern void cifs_swn_dump(struct seq_file *m);
+बाह्य व्योम cअगरs_swn_dump(काष्ठा seq_file *m);
 
-extern void cifs_swn_check(void);
+बाह्य व्योम cअगरs_swn_check(व्योम);
 
-static inline bool cifs_swn_set_server_dstaddr(struct TCP_Server_Info *server)
-{
-	if (server->use_swn_dstaddr) {
+अटल अंतरभूत bool cअगरs_swn_set_server_dstaddr(काष्ठा TCP_Server_Info *server)
+अणु
+	अगर (server->use_swn_dstaddr) अणु
 		server->dstaddr = server->swn_dstaddr;
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static inline void cifs_swn_reset_server_dstaddr(struct TCP_Server_Info *server)
-{
+अटल अंतरभूत व्योम cअगरs_swn_reset_server_dstaddr(काष्ठा TCP_Server_Info *server)
+अणु
 	server->use_swn_dstaddr = false;
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline int cifs_swn_register(struct cifs_tcon *tcon) { return 0; }
-static inline int cifs_swn_unregister(struct cifs_tcon *tcon) { return 0; }
-static inline int cifs_swn_notify(struct sk_buff *s, struct genl_info *i) { return 0; }
-static inline void cifs_swn_dump(struct seq_file *m) {}
-static inline void cifs_swn_check(void) {}
-static inline bool cifs_swn_set_server_dstaddr(struct TCP_Server_Info *server) { return false; }
-static inline void cifs_swn_reset_server_dstaddr(struct TCP_Server_Info *server) {}
+अटल अंतरभूत पूर्णांक cअगरs_swn_रेजिस्टर(काष्ठा cअगरs_tcon *tcon) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक cअगरs_swn_unरेजिस्टर(काष्ठा cअगरs_tcon *tcon) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक cअगरs_swn_notअगरy(काष्ठा sk_buff *s, काष्ठा genl_info *i) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम cअगरs_swn_dump(काष्ठा seq_file *m) अणुपूर्ण
+अटल अंतरभूत व्योम cअगरs_swn_check(व्योम) अणुपूर्ण
+अटल अंतरभूत bool cअगरs_swn_set_server_dstaddr(काष्ठा TCP_Server_Info *server) अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम cअगरs_swn_reset_server_dstaddr(काष्ठा TCP_Server_Info *server) अणुपूर्ण
 
-#endif /* CONFIG_CIFS_SWN_UPCALL */
-#endif /* _CIFS_SWN_H */
+#पूर्ण_अगर /* CONFIG_CIFS_SWN_UPCALL */
+#पूर्ण_अगर /* _CIFS_SWN_H */

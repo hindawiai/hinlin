@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * PowerPC 64-bit swsusp implementation
  *
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
-#include <asm/iommu.h>
-#include <linux/irq.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/nmi.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/nmi.h>
 
-void do_after_copyback(void)
-{
+व्योम करो_after_copyback(व्योम)
+अणु
 	iommu_restore();
-	touch_softlockup_watchdog();
+	touch_softlockup_watchकरोg();
 	mb();
-}
+पूर्ण
 
-void _iommu_save(void)
-{
+व्योम _iommu_save(व्योम)
+अणु
 	iommu_save();
-}
+पूर्ण

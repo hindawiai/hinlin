@@ -1,618 +1,619 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Mailbox: Common code for Mailbox controllers and users
+ * Mailbox: Common code क्रम Mailbox controllers and users
  *
  * Copyright (C) 2013-2014 Linaro Ltd.
  * Author: Jassi Brar <jassisinghbrar@gmail.com>
  */
 
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <linux/mutex.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/bitops.h>
-#include <linux/mailbox_client.h>
-#include <linux/mailbox_controller.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/mailbox_client.h>
+#समावेश <linux/mailbox_controller.h>
 
-#include "mailbox.h"
+#समावेश "mailbox.h"
 
-static LIST_HEAD(mbox_cons);
-static DEFINE_MUTEX(con_mutex);
+अटल LIST_HEAD(mbox_cons);
+अटल DEFINE_MUTEX(con_mutex);
 
-static int add_to_rbuf(struct mbox_chan *chan, void *mssg)
-{
-	int idx;
-	unsigned long flags;
+अटल पूर्णांक add_to_rbuf(काष्ठा mbox_chan *chan, व्योम *mssg)
+अणु
+	पूर्णांक idx;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chan->lock, flags);
 
-	/* See if there is any space left */
-	if (chan->msg_count == MBOX_TX_QUEUE_LEN) {
+	/* See अगर there is any space left */
+	अगर (chan->msg_count == MBOX_TX_QUEUE_LEN) अणु
 		spin_unlock_irqrestore(&chan->lock, flags);
-		return -ENOBUFS;
-	}
+		वापस -ENOBUFS;
+	पूर्ण
 
-	idx = chan->msg_free;
+	idx = chan->msg_मुक्त;
 	chan->msg_data[idx] = mssg;
 	chan->msg_count++;
 
-	if (idx == MBOX_TX_QUEUE_LEN - 1)
-		chan->msg_free = 0;
-	else
-		chan->msg_free++;
+	अगर (idx == MBOX_TX_QUEUE_LEN - 1)
+		chan->msg_मुक्त = 0;
+	अन्यथा
+		chan->msg_मुक्त++;
 
 	spin_unlock_irqrestore(&chan->lock, flags);
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static void msg_submit(struct mbox_chan *chan)
-{
-	unsigned count, idx;
-	unsigned long flags;
-	void *data;
-	int err = -EBUSY;
+अटल व्योम msg_submit(काष्ठा mbox_chan *chan)
+अणु
+	अचिन्हित count, idx;
+	अचिन्हित दीर्घ flags;
+	व्योम *data;
+	पूर्णांक err = -EBUSY;
 
 	spin_lock_irqsave(&chan->lock, flags);
 
-	if (!chan->msg_count || chan->active_req)
-		goto exit;
+	अगर (!chan->msg_count || chan->active_req)
+		जाओ निकास;
 
 	count = chan->msg_count;
-	idx = chan->msg_free;
-	if (idx >= count)
+	idx = chan->msg_मुक्त;
+	अगर (idx >= count)
 		idx -= count;
-	else
+	अन्यथा
 		idx += MBOX_TX_QUEUE_LEN - count;
 
 	data = chan->msg_data[idx];
 
-	if (chan->cl->tx_prepare)
+	अगर (chan->cl->tx_prepare)
 		chan->cl->tx_prepare(chan->cl, data);
 	/* Try to submit a message to the MBOX controller */
 	err = chan->mbox->ops->send_data(chan, data);
-	if (!err) {
+	अगर (!err) अणु
 		chan->active_req = data;
 		chan->msg_count--;
-	}
-exit:
+	पूर्ण
+निकास:
 	spin_unlock_irqrestore(&chan->lock, flags);
 
-	/* kick start the timer immediately to avoid delays */
-	if (!err && (chan->txdone_method & TXDONE_BY_POLL)) {
-		/* but only if not already active */
-		if (!hrtimer_active(&chan->mbox->poll_hrt))
-			hrtimer_start(&chan->mbox->poll_hrt, 0, HRTIMER_MODE_REL);
-	}
-}
+	/* kick start the समयr immediately to aव्योम delays */
+	अगर (!err && (chan->txकरोne_method & TXDONE_BY_POLL)) अणु
+		/* but only अगर not alपढ़ोy active */
+		अगर (!hrसमयr_active(&chan->mbox->poll_hrt))
+			hrसमयr_start(&chan->mbox->poll_hrt, 0, HRTIMER_MODE_REL);
+	पूर्ण
+पूर्ण
 
-static void tx_tick(struct mbox_chan *chan, int r)
-{
-	unsigned long flags;
-	void *mssg;
+अटल व्योम tx_tick(काष्ठा mbox_chan *chan, पूर्णांक r)
+अणु
+	अचिन्हित दीर्घ flags;
+	व्योम *mssg;
 
 	spin_lock_irqsave(&chan->lock, flags);
 	mssg = chan->active_req;
-	chan->active_req = NULL;
+	chan->active_req = शून्य;
 	spin_unlock_irqrestore(&chan->lock, flags);
 
 	/* Submit next message */
 	msg_submit(chan);
 
-	if (!mssg)
-		return;
+	अगर (!mssg)
+		वापस;
 
-	/* Notify the client */
-	if (chan->cl->tx_done)
-		chan->cl->tx_done(chan->cl, mssg, r);
+	/* Notअगरy the client */
+	अगर (chan->cl->tx_करोne)
+		chan->cl->tx_करोne(chan->cl, mssg, r);
 
-	if (r != -ETIME && chan->cl->tx_block)
+	अगर (r != -ETIME && chan->cl->tx_block)
 		complete(&chan->tx_complete);
-}
+पूर्ण
 
-static enum hrtimer_restart txdone_hrtimer(struct hrtimer *hrtimer)
-{
-	struct mbox_controller *mbox =
-		container_of(hrtimer, struct mbox_controller, poll_hrt);
-	bool txdone, resched = false;
-	int i;
+अटल क्रमागत hrसमयr_restart txकरोne_hrसमयr(काष्ठा hrसमयr *hrसमयr)
+अणु
+	काष्ठा mbox_controller *mbox =
+		container_of(hrसमयr, काष्ठा mbox_controller, poll_hrt);
+	bool txकरोne, resched = false;
+	पूर्णांक i;
 
-	for (i = 0; i < mbox->num_chans; i++) {
-		struct mbox_chan *chan = &mbox->chans[i];
+	क्रम (i = 0; i < mbox->num_chans; i++) अणु
+		काष्ठा mbox_chan *chan = &mbox->chans[i];
 
-		if (chan->active_req && chan->cl) {
+		अगर (chan->active_req && chan->cl) अणु
 			resched = true;
-			txdone = chan->mbox->ops->last_tx_done(chan);
-			if (txdone)
+			txकरोne = chan->mbox->ops->last_tx_करोne(chan);
+			अगर (txकरोne)
 				tx_tick(chan, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (resched) {
-		hrtimer_forward_now(hrtimer, ms_to_ktime(mbox->txpoll_period));
-		return HRTIMER_RESTART;
-	}
-	return HRTIMER_NORESTART;
-}
+	अगर (resched) अणु
+		hrसमयr_क्रमward_now(hrसमयr, ms_to_kसमय(mbox->txpoll_period));
+		वापस HRTIMER_RESTART;
+	पूर्ण
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
 /**
- * mbox_chan_received_data - A way for controller driver to push data
+ * mbox_chan_received_data - A way क्रम controller driver to push data
  *				received from remote to the upper layer.
- * @chan: Pointer to the mailbox channel on which RX happened.
- * @mssg: Client specific message typecasted as void *
+ * @chan: Poपूर्णांकer to the mailbox channel on which RX happened.
+ * @mssg: Client specअगरic message typecasted as व्योम *
  *
- * After startup and before shutdown any data received on the chan
+ * After startup and beक्रमe shutकरोwn any data received on the chan
  * is passed on to the API via atomic mbox_chan_received_data().
- * The controller should ACK the RX only after this call returns.
+ * The controller should ACK the RX only after this call वापसs.
  */
-void mbox_chan_received_data(struct mbox_chan *chan, void *mssg)
-{
+व्योम mbox_chan_received_data(काष्ठा mbox_chan *chan, व्योम *mssg)
+अणु
 	/* No buffering the received data */
-	if (chan->cl->rx_callback)
+	अगर (chan->cl->rx_callback)
 		chan->cl->rx_callback(chan->cl, mssg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mbox_chan_received_data);
 
 /**
- * mbox_chan_txdone - A way for controller driver to notify the
+ * mbox_chan_txकरोne - A way क्रम controller driver to notअगरy the
  *			framework that the last TX has completed.
- * @chan: Pointer to the mailbox chan on which TX happened.
+ * @chan: Poपूर्णांकer to the mailbox chan on which TX happened.
  * @r: Status of last TX - OK or ERROR
  *
- * The controller that has IRQ for TX ACK calls this atomic API
- * to tick the TX state machine. It works only if txdone_irq
+ * The controller that has IRQ क्रम TX ACK calls this atomic API
+ * to tick the TX state machine. It works only अगर txकरोne_irq
  * is set by the controller.
  */
-void mbox_chan_txdone(struct mbox_chan *chan, int r)
-{
-	if (unlikely(!(chan->txdone_method & TXDONE_BY_IRQ))) {
+व्योम mbox_chan_txकरोne(काष्ठा mbox_chan *chan, पूर्णांक r)
+अणु
+	अगर (unlikely(!(chan->txकरोne_method & TXDONE_BY_IRQ))) अणु
 		dev_err(chan->mbox->dev,
 		       "Controller can't run the TX ticker\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tx_tick(chan, r);
-}
-EXPORT_SYMBOL_GPL(mbox_chan_txdone);
+पूर्ण
+EXPORT_SYMBOL_GPL(mbox_chan_txकरोne);
 
 /**
- * mbox_client_txdone - The way for a client to run the TX state machine.
- * @chan: Mailbox channel assigned to this client.
+ * mbox_client_txकरोne - The way क्रम a client to run the TX state machine.
+ * @chan: Mailbox channel asचिन्हित to this client.
  * @r: Success status of last transmission.
  *
- * The client/protocol had received some 'ACK' packet and it notifies
+ * The client/protocol had received some 'ACK' packet and it notअगरies
  * the API that the last packet was sent successfully. This only works
- * if the controller can't sense TX-Done.
+ * अगर the controller can't sense TX-Done.
  */
-void mbox_client_txdone(struct mbox_chan *chan, int r)
-{
-	if (unlikely(!(chan->txdone_method & TXDONE_BY_ACK))) {
+व्योम mbox_client_txकरोne(काष्ठा mbox_chan *chan, पूर्णांक r)
+अणु
+	अगर (unlikely(!(chan->txकरोne_method & TXDONE_BY_ACK))) अणु
 		dev_err(chan->mbox->dev, "Client can't run the TX ticker\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tx_tick(chan, r);
-}
-EXPORT_SYMBOL_GPL(mbox_client_txdone);
+पूर्ण
+EXPORT_SYMBOL_GPL(mbox_client_txकरोne);
 
 /**
- * mbox_client_peek_data - A way for client driver to pull data
+ * mbox_client_peek_data - A way क्रम client driver to pull data
  *			received from remote by the controller.
- * @chan: Mailbox channel assigned to this client.
+ * @chan: Mailbox channel asचिन्हित to this client.
  *
- * A poke to controller driver for any received data.
+ * A poke to controller driver क्रम any received data.
  * The data is actually passed onto client via the
  * mbox_chan_received_data()
  * The call can be made from atomic context, so the controller's
  * implementation of peek_data() must not sleep.
  *
- * Return: True, if controller has, and is going to push after this,
+ * Return: True, अगर controller has, and is going to push after this,
  *          some data.
- *         False, if controller doesn't have any data to be read.
+ *         False, अगर controller करोesn't have any data to be पढ़ो.
  */
-bool mbox_client_peek_data(struct mbox_chan *chan)
-{
-	if (chan->mbox->ops->peek_data)
-		return chan->mbox->ops->peek_data(chan);
+bool mbox_client_peek_data(काष्ठा mbox_chan *chan)
+अणु
+	अगर (chan->mbox->ops->peek_data)
+		वापस chan->mbox->ops->peek_data(chan);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(mbox_client_peek_data);
 
 /**
  * mbox_send_message -	For client to submit a message to be
  *				sent to the remote.
- * @chan: Mailbox channel assigned to this client.
- * @mssg: Client specific message typecasted.
+ * @chan: Mailbox channel asचिन्हित to this client.
+ * @mssg: Client specअगरic message typecasted.
  *
- * For client to submit data to the controller destined for a remote
- * processor. If the client had set 'tx_block', the call will return
+ * For client to submit data to the controller destined क्रम a remote
+ * processor. If the client had set 'tx_block', the call will वापस
  * either when the remote receives the data or when 'tx_tout' millisecs
  * run out.
  *  In non-blocking mode, the requests are buffered by the API and a
- * non-negative token is returned for each queued request. If the request
- * is not queued, a negative token is returned. Upon failure or successful
+ * non-negative token is वापसed क्रम each queued request. If the request
+ * is not queued, a negative token is वापसed. Upon failure or successful
  * TX, the API calls 'tx_done' from atomic context, from which the client
  * could submit yet another request.
- * The pointer to message should be preserved until it is sent
- * over the chan, i.e, tx_done() is made.
+ * The poपूर्णांकer to message should be preserved until it is sent
+ * over the chan, i.e, tx_करोne() is made.
  * This function could be called from atomic context as it simply
- * queues the data and returns a token against the request.
+ * queues the data and वापसs a token against the request.
  *
- * Return: Non-negative integer for successful submission (non-blocking mode)
+ * Return: Non-negative पूर्णांकeger क्रम successful submission (non-blocking mode)
  *	or transmission over chan (blocking mode).
  *	Negative value denotes failure.
  */
-int mbox_send_message(struct mbox_chan *chan, void *mssg)
-{
-	int t;
+पूर्णांक mbox_send_message(काष्ठा mbox_chan *chan, व्योम *mssg)
+अणु
+	पूर्णांक t;
 
-	if (!chan || !chan->cl)
-		return -EINVAL;
+	अगर (!chan || !chan->cl)
+		वापस -EINVAL;
 
 	t = add_to_rbuf(chan, mssg);
-	if (t < 0) {
+	अगर (t < 0) अणु
 		dev_err(chan->mbox->dev, "Try increasing MBOX_TX_QUEUE_LEN\n");
-		return t;
-	}
+		वापस t;
+	पूर्ण
 
 	msg_submit(chan);
 
-	if (chan->cl->tx_block) {
-		unsigned long wait;
-		int ret;
+	अगर (chan->cl->tx_block) अणु
+		अचिन्हित दीर्घ रुको;
+		पूर्णांक ret;
 
-		if (!chan->cl->tx_tout) /* wait forever */
-			wait = msecs_to_jiffies(3600000);
-		else
-			wait = msecs_to_jiffies(chan->cl->tx_tout);
+		अगर (!chan->cl->tx_tout) /* रुको क्रमever */
+			रुको = msecs_to_jअगरfies(3600000);
+		अन्यथा
+			रुको = msecs_to_jअगरfies(chan->cl->tx_tout);
 
-		ret = wait_for_completion_timeout(&chan->tx_complete, wait);
-		if (ret == 0) {
+		ret = रुको_क्रम_completion_समयout(&chan->tx_complete, रुको);
+		अगर (ret == 0) अणु
 			t = -ETIME;
 			tx_tick(chan, t);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return t;
-}
+	वापस t;
+पूर्ण
 EXPORT_SYMBOL_GPL(mbox_send_message);
 
 /**
  * mbox_flush - flush a mailbox channel
  * @chan: mailbox channel to flush
- * @timeout: time, in milliseconds, to allow the flush operation to succeed
+ * @समयout: समय, in milliseconds, to allow the flush operation to succeed
  *
  * Mailbox controllers that need to work in atomic context can implement the
  * ->flush() callback to busy loop until a transmission has been completed.
- * The implementation must call mbox_chan_txdone() upon success. Clients can
- * call the mbox_flush() function at any time after mbox_send_message() to
- * flush the transmission. After the function returns success, the mailbox
+ * The implementation must call mbox_chan_txकरोne() upon success. Clients can
+ * call the mbox_flush() function at any समय after mbox_send_message() to
+ * flush the transmission. After the function वापसs success, the mailbox
  * transmission is guaranteed to have completed.
  *
  * Returns: 0 on success or a negative error code on failure.
  */
-int mbox_flush(struct mbox_chan *chan, unsigned long timeout)
-{
-	int ret;
+पूर्णांक mbox_flush(काष्ठा mbox_chan *chan, अचिन्हित दीर्घ समयout)
+अणु
+	पूर्णांक ret;
 
-	if (!chan->mbox->ops->flush)
-		return -ENOTSUPP;
+	अगर (!chan->mbox->ops->flush)
+		वापस -ENOTSUPP;
 
-	ret = chan->mbox->ops->flush(chan, timeout);
-	if (ret < 0)
+	ret = chan->mbox->ops->flush(chan, समयout);
+	अगर (ret < 0)
 		tx_tick(chan, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mbox_flush);
 
 /**
  * mbox_request_channel - Request a mailbox channel.
  * @cl: Identity of the client requesting the channel.
- * @index: Index of mailbox specifier in 'mboxes' property.
+ * @index: Index of mailbox specअगरier in 'mboxes' property.
  *
- * The Client specifies its requirements and capabilities while asking for
+ * The Client specअगरies its requirements and capabilities जबतक asking क्रम
  * a mailbox channel. It can't be called from atomic context.
  * The channel is exclusively allocated and can't be used by another
- * client before the owner calls mbox_free_channel.
+ * client beक्रमe the owner calls mbox_मुक्त_channel.
  * After assignment, any packet received on this channel will be
  * handed over to the client via the 'rx_callback'.
  * The framework holds reference to the client, so the mbox_client
- * structure shouldn't be modified until the mbox_free_channel returns.
+ * काष्ठाure shouldn't be modअगरied until the mbox_मुक्त_channel वापसs.
  *
- * Return: Pointer to the channel assigned to the client if successful.
- *		ERR_PTR for request failure.
+ * Return: Poपूर्णांकer to the channel asचिन्हित to the client अगर successful.
+ *		ERR_PTR क्रम request failure.
  */
-struct mbox_chan *mbox_request_channel(struct mbox_client *cl, int index)
-{
-	struct device *dev = cl->dev;
-	struct mbox_controller *mbox;
-	struct of_phandle_args spec;
-	struct mbox_chan *chan;
-	unsigned long flags;
-	int ret;
+काष्ठा mbox_chan *mbox_request_channel(काष्ठा mbox_client *cl, पूर्णांक index)
+अणु
+	काष्ठा device *dev = cl->dev;
+	काष्ठा mbox_controller *mbox;
+	काष्ठा of_phandle_args spec;
+	काष्ठा mbox_chan *chan;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (!dev || !dev->of_node) {
+	अगर (!dev || !dev->of_node) अणु
 		pr_debug("%s: No owner device node\n", __func__);
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
 	mutex_lock(&con_mutex);
 
-	if (of_parse_phandle_with_args(dev->of_node, "mboxes",
-				       "#mbox-cells", index, &spec)) {
+	अगर (of_parse_phandle_with_args(dev->of_node, "mboxes",
+				       "#mbox-cells", index, &spec)) अणु
 		dev_dbg(dev, "%s: can't parse \"mboxes\" property\n", __func__);
 		mutex_unlock(&con_mutex);
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
 	chan = ERR_PTR(-EPROBE_DEFER);
-	list_for_each_entry(mbox, &mbox_cons, node)
-		if (mbox->dev->of_node == spec.np) {
+	list_क्रम_each_entry(mbox, &mbox_cons, node)
+		अगर (mbox->dev->of_node == spec.np) अणु
 			chan = mbox->of_xlate(mbox, &spec);
-			if (!IS_ERR(chan))
-				break;
-		}
+			अगर (!IS_ERR(chan))
+				अवरोध;
+		पूर्ण
 
 	of_node_put(spec.np);
 
-	if (IS_ERR(chan)) {
+	अगर (IS_ERR(chan)) अणु
 		mutex_unlock(&con_mutex);
-		return chan;
-	}
+		वापस chan;
+	पूर्ण
 
-	if (chan->cl || !try_module_get(mbox->dev->driver->owner)) {
+	अगर (chan->cl || !try_module_get(mbox->dev->driver->owner)) अणु
 		dev_dbg(dev, "%s: mailbox not free\n", __func__);
 		mutex_unlock(&con_mutex);
-		return ERR_PTR(-EBUSY);
-	}
+		वापस ERR_PTR(-EBUSY);
+	पूर्ण
 
 	spin_lock_irqsave(&chan->lock, flags);
-	chan->msg_free = 0;
+	chan->msg_मुक्त = 0;
 	chan->msg_count = 0;
-	chan->active_req = NULL;
+	chan->active_req = शून्य;
 	chan->cl = cl;
 	init_completion(&chan->tx_complete);
 
-	if (chan->txdone_method	== TXDONE_BY_POLL && cl->knows_txdone)
-		chan->txdone_method = TXDONE_BY_ACK;
+	अगर (chan->txकरोne_method	== TXDONE_BY_POLL && cl->knows_txकरोne)
+		chan->txकरोne_method = TXDONE_BY_ACK;
 
 	spin_unlock_irqrestore(&chan->lock, flags);
 
-	if (chan->mbox->ops->startup) {
+	अगर (chan->mbox->ops->startup) अणु
 		ret = chan->mbox->ops->startup(chan);
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Unable to startup the chan (%d)\n", ret);
-			mbox_free_channel(chan);
+			mbox_मुक्त_channel(chan);
 			chan = ERR_PTR(ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&con_mutex);
-	return chan;
-}
+	वापस chan;
+पूर्ण
 EXPORT_SYMBOL_GPL(mbox_request_channel);
 
-struct mbox_chan *mbox_request_channel_byname(struct mbox_client *cl,
-					      const char *name)
-{
-	struct device_node *np = cl->dev->of_node;
-	struct property *prop;
-	const char *mbox_name;
-	int index = 0;
+काष्ठा mbox_chan *mbox_request_channel_byname(काष्ठा mbox_client *cl,
+					      स्थिर अक्षर *name)
+अणु
+	काष्ठा device_node *np = cl->dev->of_node;
+	काष्ठा property *prop;
+	स्थिर अक्षर *mbox_name;
+	पूर्णांक index = 0;
 
-	if (!np) {
+	अगर (!np) अणु
 		dev_err(cl->dev, "%s() currently only supports DT\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (!of_get_property(np, "mbox-names", NULL)) {
+	अगर (!of_get_property(np, "mbox-names", शून्य)) अणु
 		dev_err(cl->dev,
 			"%s() requires an \"mbox-names\" property\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	of_property_for_each_string(np, "mbox-names", prop, mbox_name) {
-		if (!strncmp(name, mbox_name, strlen(name)))
-			return mbox_request_channel(cl, index);
+	of_property_क्रम_each_string(np, "mbox-names", prop, mbox_name) अणु
+		अगर (!म_भेदन(name, mbox_name, म_माप(name)))
+			वापस mbox_request_channel(cl, index);
 		index++;
-	}
+	पूर्ण
 
 	dev_err(cl->dev, "%s() could not locate channel named \"%s\"\n",
 		__func__, name);
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 EXPORT_SYMBOL_GPL(mbox_request_channel_byname);
 
 /**
- * mbox_free_channel - The client relinquishes control of a mailbox
+ * mbox_मुक्त_channel - The client relinquishes control of a mailbox
  *			channel by this call.
- * @chan: The mailbox channel to be freed.
+ * @chan: The mailbox channel to be मुक्तd.
  */
-void mbox_free_channel(struct mbox_chan *chan)
-{
-	unsigned long flags;
+व्योम mbox_मुक्त_channel(काष्ठा mbox_chan *chan)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!chan || !chan->cl)
-		return;
+	अगर (!chan || !chan->cl)
+		वापस;
 
-	if (chan->mbox->ops->shutdown)
-		chan->mbox->ops->shutdown(chan);
+	अगर (chan->mbox->ops->shutकरोwn)
+		chan->mbox->ops->shutकरोwn(chan);
 
-	/* The queued TX requests are simply aborted, no callbacks are made */
+	/* The queued TX requests are simply पातed, no callbacks are made */
 	spin_lock_irqsave(&chan->lock, flags);
-	chan->cl = NULL;
-	chan->active_req = NULL;
-	if (chan->txdone_method == TXDONE_BY_ACK)
-		chan->txdone_method = TXDONE_BY_POLL;
+	chan->cl = शून्य;
+	chan->active_req = शून्य;
+	अगर (chan->txकरोne_method == TXDONE_BY_ACK)
+		chan->txकरोne_method = TXDONE_BY_POLL;
 
 	module_put(chan->mbox->dev->driver->owner);
 	spin_unlock_irqrestore(&chan->lock, flags);
-}
-EXPORT_SYMBOL_GPL(mbox_free_channel);
+पूर्ण
+EXPORT_SYMBOL_GPL(mbox_मुक्त_channel);
 
-static struct mbox_chan *
-of_mbox_index_xlate(struct mbox_controller *mbox,
-		    const struct of_phandle_args *sp)
-{
-	int ind = sp->args[0];
+अटल काष्ठा mbox_chan *
+of_mbox_index_xlate(काष्ठा mbox_controller *mbox,
+		    स्थिर काष्ठा of_phandle_args *sp)
+अणु
+	पूर्णांक ind = sp->args[0];
 
-	if (ind >= mbox->num_chans)
-		return ERR_PTR(-EINVAL);
+	अगर (ind >= mbox->num_chans)
+		वापस ERR_PTR(-EINVAL);
 
-	return &mbox->chans[ind];
-}
+	वापस &mbox->chans[ind];
+पूर्ण
 
 /**
- * mbox_controller_register - Register the mailbox controller
- * @mbox:	Pointer to the mailbox controller.
+ * mbox_controller_रेजिस्टर - Register the mailbox controller
+ * @mbox:	Poपूर्णांकer to the mailbox controller.
  *
- * The controller driver registers its communication channels
+ * The controller driver रेजिस्टरs its communication channels
  */
-int mbox_controller_register(struct mbox_controller *mbox)
-{
-	int i, txdone;
+पूर्णांक mbox_controller_रेजिस्टर(काष्ठा mbox_controller *mbox)
+अणु
+	पूर्णांक i, txकरोne;
 
 	/* Sanity check */
-	if (!mbox || !mbox->dev || !mbox->ops || !mbox->num_chans)
-		return -EINVAL;
+	अगर (!mbox || !mbox->dev || !mbox->ops || !mbox->num_chans)
+		वापस -EINVAL;
 
-	if (mbox->txdone_irq)
-		txdone = TXDONE_BY_IRQ;
-	else if (mbox->txdone_poll)
-		txdone = TXDONE_BY_POLL;
-	else /* It has to be ACK then */
-		txdone = TXDONE_BY_ACK;
+	अगर (mbox->txकरोne_irq)
+		txकरोne = TXDONE_BY_IRQ;
+	अन्यथा अगर (mbox->txकरोne_poll)
+		txकरोne = TXDONE_BY_POLL;
+	अन्यथा /* It has to be ACK then */
+		txकरोne = TXDONE_BY_ACK;
 
-	if (txdone == TXDONE_BY_POLL) {
+	अगर (txकरोne == TXDONE_BY_POLL) अणु
 
-		if (!mbox->ops->last_tx_done) {
+		अगर (!mbox->ops->last_tx_करोne) अणु
 			dev_err(mbox->dev, "last_tx_done method is absent\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		hrtimer_init(&mbox->poll_hrt, CLOCK_MONOTONIC,
+		hrसमयr_init(&mbox->poll_hrt, CLOCK_MONOTONIC,
 			     HRTIMER_MODE_REL);
-		mbox->poll_hrt.function = txdone_hrtimer;
-	}
+		mbox->poll_hrt.function = txकरोne_hrसमयr;
+	पूर्ण
 
-	for (i = 0; i < mbox->num_chans; i++) {
-		struct mbox_chan *chan = &mbox->chans[i];
+	क्रम (i = 0; i < mbox->num_chans; i++) अणु
+		काष्ठा mbox_chan *chan = &mbox->chans[i];
 
-		chan->cl = NULL;
+		chan->cl = शून्य;
 		chan->mbox = mbox;
-		chan->txdone_method = txdone;
+		chan->txकरोne_method = txकरोne;
 		spin_lock_init(&chan->lock);
-	}
+	पूर्ण
 
-	if (!mbox->of_xlate)
+	अगर (!mbox->of_xlate)
 		mbox->of_xlate = of_mbox_index_xlate;
 
 	mutex_lock(&con_mutex);
 	list_add_tail(&mbox->node, &mbox_cons);
 	mutex_unlock(&con_mutex);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mbox_controller_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mbox_controller_रेजिस्टर);
 
 /**
- * mbox_controller_unregister - Unregister the mailbox controller
- * @mbox:	Pointer to the mailbox controller.
+ * mbox_controller_unरेजिस्टर - Unरेजिस्टर the mailbox controller
+ * @mbox:	Poपूर्णांकer to the mailbox controller.
  */
-void mbox_controller_unregister(struct mbox_controller *mbox)
-{
-	int i;
+व्योम mbox_controller_unरेजिस्टर(काष्ठा mbox_controller *mbox)
+अणु
+	पूर्णांक i;
 
-	if (!mbox)
-		return;
+	अगर (!mbox)
+		वापस;
 
 	mutex_lock(&con_mutex);
 
 	list_del(&mbox->node);
 
-	for (i = 0; i < mbox->num_chans; i++)
-		mbox_free_channel(&mbox->chans[i]);
+	क्रम (i = 0; i < mbox->num_chans; i++)
+		mbox_मुक्त_channel(&mbox->chans[i]);
 
-	if (mbox->txdone_poll)
-		hrtimer_cancel(&mbox->poll_hrt);
+	अगर (mbox->txकरोne_poll)
+		hrसमयr_cancel(&mbox->poll_hrt);
 
 	mutex_unlock(&con_mutex);
-}
-EXPORT_SYMBOL_GPL(mbox_controller_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(mbox_controller_unरेजिस्टर);
 
-static void __devm_mbox_controller_unregister(struct device *dev, void *res)
-{
-	struct mbox_controller **mbox = res;
+अटल व्योम __devm_mbox_controller_unरेजिस्टर(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा mbox_controller **mbox = res;
 
-	mbox_controller_unregister(*mbox);
-}
+	mbox_controller_unरेजिस्टर(*mbox);
+पूर्ण
 
-static int devm_mbox_controller_match(struct device *dev, void *res, void *data)
-{
-	struct mbox_controller **mbox = res;
+अटल पूर्णांक devm_mbox_controller_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा mbox_controller **mbox = res;
 
-	if (WARN_ON(!mbox || !*mbox))
-		return 0;
+	अगर (WARN_ON(!mbox || !*mbox))
+		वापस 0;
 
-	return *mbox == data;
-}
+	वापस *mbox == data;
+पूर्ण
 
 /**
- * devm_mbox_controller_register() - managed mbox_controller_register()
- * @dev: device owning the mailbox controller being registered
- * @mbox: mailbox controller being registered
+ * devm_mbox_controller_रेजिस्टर() - managed mbox_controller_रेजिस्टर()
+ * @dev: device owning the mailbox controller being रेजिस्टरed
+ * @mbox: mailbox controller being रेजिस्टरed
  *
  * This function adds a device-managed resource that will make sure that the
- * mailbox controller, which is registered using mbox_controller_register()
- * as part of this function, will be unregistered along with the rest of
+ * mailbox controller, which is रेजिस्टरed using mbox_controller_रेजिस्टर()
+ * as part of this function, will be unरेजिस्टरed aदीर्घ with the rest of
  * device-managed resources upon driver probe failure or driver removal.
  *
  * Returns 0 on success or a negative error code on failure.
  */
-int devm_mbox_controller_register(struct device *dev,
-				  struct mbox_controller *mbox)
-{
-	struct mbox_controller **ptr;
-	int err;
+पूर्णांक devm_mbox_controller_रेजिस्टर(काष्ठा device *dev,
+				  काष्ठा mbox_controller *mbox)
+अणु
+	काष्ठा mbox_controller **ptr;
+	पूर्णांक err;
 
-	ptr = devres_alloc(__devm_mbox_controller_unregister, sizeof(*ptr),
+	ptr = devres_alloc(__devm_mbox_controller_unरेजिस्टर, माप(*ptr),
 			   GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	अगर (!ptr)
+		वापस -ENOMEM;
 
-	err = mbox_controller_register(mbox);
-	if (err < 0) {
-		devres_free(ptr);
-		return err;
-	}
+	err = mbox_controller_रेजिस्टर(mbox);
+	अगर (err < 0) अणु
+		devres_मुक्त(ptr);
+		वापस err;
+	पूर्ण
 
 	devres_add(dev, ptr);
 	*ptr = mbox;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(devm_mbox_controller_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_mbox_controller_रेजिस्टर);
 
 /**
- * devm_mbox_controller_unregister() - managed mbox_controller_unregister()
- * @dev: device owning the mailbox controller being unregistered
- * @mbox: mailbox controller being unregistered
+ * devm_mbox_controller_unरेजिस्टर() - managed mbox_controller_unरेजिस्टर()
+ * @dev: device owning the mailbox controller being unरेजिस्टरed
+ * @mbox: mailbox controller being unरेजिस्टरed
  *
- * This function unregisters the mailbox controller and removes the device-
- * managed resource that was set up to automatically unregister the mailbox
+ * This function unरेजिस्टरs the mailbox controller and हटाओs the device-
+ * managed resource that was set up to स्वतःmatically unरेजिस्टर the mailbox
  * controller on driver probe failure or driver removal. It's typically not
  * necessary to call this function.
  */
-void devm_mbox_controller_unregister(struct device *dev, struct mbox_controller *mbox)
-{
-	WARN_ON(devres_release(dev, __devm_mbox_controller_unregister,
+व्योम devm_mbox_controller_unरेजिस्टर(काष्ठा device *dev, काष्ठा mbox_controller *mbox)
+अणु
+	WARN_ON(devres_release(dev, __devm_mbox_controller_unरेजिस्टर,
 			       devm_mbox_controller_match, mbox));
-}
-EXPORT_SYMBOL_GPL(devm_mbox_controller_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_mbox_controller_unरेजिस्टर);

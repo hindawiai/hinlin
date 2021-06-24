@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * ks8842.h KS8842 platform data struct definition
+ * ks8842.h KS8842 platक्रमm data काष्ठा definition
  * Copyright (c) 2010 Intel Corporation
  */
 
-#ifndef _LINUX_KS8842_H
-#define _LINUX_KS8842_H
+#अगर_अघोषित _LINUX_KS8842_H
+#घोषणा _LINUX_KS8842_H
 
-#include <linux/if_ether.h>
+#समावेश <linux/अगर_ether.h>
 
 /**
- * struct ks8842_platform_data - Platform data of the KS8842 network driver
+ * काष्ठा ks8842_platक्रमm_data - Platक्रमm data of the KS8842 network driver
  * @macaddr:	The MAC address of the device, set to all 0:s to use the on in
  *		the chip.
- * @rx_dma_channel:	The DMA channel to use for RX, -1 for none.
- * @tx_dma_channel:	The DMA channel to use for TX, -1 for none.
+ * @rx_dma_channel:	The DMA channel to use क्रम RX, -1 क्रम none.
+ * @tx_dma_channel:	The DMA channel to use क्रम TX, -1 क्रम none.
  *
  */
-struct ks8842_platform_data {
+काष्ठा ks8842_platक्रमm_data अणु
 	u8 macaddr[ETH_ALEN];
-	int rx_dma_channel;
-	int tx_dma_channel;
-};
+	पूर्णांक rx_dma_channel;
+	पूर्णांक tx_dma_channel;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,167 +1,168 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * FireDTV driver (formerly known as FireSAT)
+ * FireDTV driver (क्रमmerly known as FireSAT)
  *
  * Copyright (C) 2004 Andreas Monitzer <andy@monitzer.com>
  * Copyright (C) 2008 Henrik Kurelid <henrik@kurelid.se>
  */
 
-#ifndef _FIREDTV_H
-#define _FIREDTV_H
+#अगर_अघोषित _FIREDTV_H
+#घोषणा _FIREDTV_H
 
-#include <linux/time.h>
-#include <linux/dvb/dmx.h>
-#include <linux/dvb/frontend.h>
-#include <linux/list.h>
-#include <linux/mod_devicetable.h>
-#include <linux/mutex.h>
-#include <linux/spinlock_types.h>
-#include <linux/types.h>
-#include <linux/wait.h>
-#include <linux/workqueue.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/dvb/dmx.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock_types.h>
+#समावेश <linux/types.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/workqueue.h>
 
-#include <media/demux.h>
-#include <media/dmxdev.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
-#include <media/dvb_net.h>
-#include <media/dvbdev.h>
+#समावेश <media/demux.h>
+#समावेश <media/dmxdev.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_net.h>
+#समावेश <media/dvbdev.h>
 
-struct firedtv_tuner_status {
-	unsigned active_system:8;
-	unsigned searching:1;
-	unsigned moving:1;
-	unsigned no_rf:1;
-	unsigned input:1;
-	unsigned selected_antenna:7;
-	unsigned ber:32;
-	unsigned signal_strength:8;
-	unsigned raster_frequency:2;
-	unsigned rf_frequency:22;
-	unsigned man_dep_info_length:8;
-	unsigned front_end_error:1;
-	unsigned antenna_error:1;
-	unsigned front_end_power_status:1;
-	unsigned power_supply:1;
-	unsigned carrier_noise_ratio:16;
-	unsigned power_supply_voltage:8;
-	unsigned antenna_voltage:8;
-	unsigned firewire_bus_voltage:8;
-	unsigned ca_mmi:1;
-	unsigned ca_pmt_reply:1;
-	unsigned ca_date_time_request:1;
-	unsigned ca_application_info:1;
-	unsigned ca_module_present_status:1;
-	unsigned ca_dvb_flag:1;
-	unsigned ca_error_flag:1;
-	unsigned ca_initialization_status:1;
-};
+काष्ठा firedtv_tuner_status अणु
+	अचिन्हित active_प्रणाली:8;
+	अचिन्हित searching:1;
+	अचिन्हित moving:1;
+	अचिन्हित no_rf:1;
+	अचिन्हित input:1;
+	अचिन्हित selected_antenna:7;
+	अचिन्हित ber:32;
+	अचिन्हित संकेत_strength:8;
+	अचिन्हित raster_frequency:2;
+	अचिन्हित rf_frequency:22;
+	अचिन्हित man_dep_info_length:8;
+	अचिन्हित front_end_error:1;
+	अचिन्हित antenna_error:1;
+	अचिन्हित front_end_घातer_status:1;
+	अचिन्हित घातer_supply:1;
+	अचिन्हित carrier_noise_ratio:16;
+	अचिन्हित घातer_supply_voltage:8;
+	अचिन्हित antenna_voltage:8;
+	अचिन्हित firewire_bus_voltage:8;
+	अचिन्हित ca_mmi:1;
+	अचिन्हित ca_pmt_reply:1;
+	अचिन्हित ca_date_समय_request:1;
+	अचिन्हित ca_application_info:1;
+	अचिन्हित ca_module_present_status:1;
+	अचिन्हित ca_dvb_flag:1;
+	अचिन्हित ca_error_flag:1;
+	अचिन्हित ca_initialization_status:1;
+पूर्ण;
 
-enum model_type {
+क्रमागत model_type अणु
 	FIREDTV_UNKNOWN = 0,
 	FIREDTV_DVB_S   = 1,
 	FIREDTV_DVB_C   = 2,
 	FIREDTV_DVB_T   = 3,
 	FIREDTV_DVB_S2  = 4,
-};
+पूर्ण;
 
-struct device;
-struct input_dev;
-struct fdtv_ir_context;
+काष्ठा device;
+काष्ठा input_dev;
+काष्ठा fdtv_ir_context;
 
-struct firedtv {
-	struct device *device;
-	struct list_head list;
+काष्ठा firedtv अणु
+	काष्ठा device *device;
+	काष्ठा list_head list;
 
-	struct dvb_adapter	adapter;
-	struct dmxdev		dmxdev;
-	struct dvb_demux	demux;
-	struct dmx_frontend	frontend;
-	struct dvb_net		dvbnet;
-	struct dvb_frontend	fe;
+	काष्ठा dvb_adapter	adapter;
+	काष्ठा dmxdev		dmxdev;
+	काष्ठा dvb_demux	demux;
+	काष्ठा dmx_frontend	frontend;
+	काष्ठा dvb_net		dvbnet;
+	काष्ठा dvb_frontend	fe;
 
-	struct dvb_device	*cadev;
-	int			ca_last_command;
-	int			ca_time_interval;
+	काष्ठा dvb_device	*cadev;
+	पूर्णांक			ca_last_command;
+	पूर्णांक			ca_समय_पूर्णांकerval;
 
-	struct mutex		avc_mutex;
-	wait_queue_head_t	avc_wait;
+	काष्ठा mutex		avc_mutex;
+	रुको_queue_head_t	avc_रुको;
 	bool			avc_reply_received;
-	struct work_struct	remote_ctrl_work;
-	struct input_dev	*remote_ctrl_dev;
+	काष्ठा work_काष्ठा	remote_ctrl_work;
+	काष्ठा input_dev	*remote_ctrl_dev;
 
-	enum model_type		type;
-	char			subunit;
+	क्रमागत model_type		type;
+	अक्षर			subunit;
 	s8			isochannel;
-	struct fdtv_ir_context	*ir_context;
+	काष्ठा fdtv_ir_context	*ir_context;
 
-	enum fe_sec_voltage	voltage;
-	enum fe_sec_tone_mode	tone;
+	क्रमागत fe_sec_voltage	voltage;
+	क्रमागत fe_sec_tone_mode	tone;
 
-	struct mutex		demux_mutex;
-	unsigned long		channel_active;
+	काष्ठा mutex		demux_mutex;
+	अचिन्हित दीर्घ		channel_active;
 	u16			channel_pid[16];
 
-	int			avc_data_length;
+	पूर्णांक			avc_data_length;
 	u8			avc_data[512];
-};
+पूर्ण;
 
 /* firedtv-avc.c */
-int avc_recv(struct firedtv *fdtv, void *data, size_t length);
-int avc_tuner_status(struct firedtv *fdtv, struct firedtv_tuner_status *stat);
-struct dtv_frontend_properties;
-int avc_tuner_dsd(struct firedtv *fdtv, struct dtv_frontend_properties *params);
-int avc_tuner_set_pids(struct firedtv *fdtv, unsigned char pidc, u16 pid[]);
-int avc_tuner_get_ts(struct firedtv *fdtv);
-int avc_identify_subunit(struct firedtv *fdtv);
-struct dvb_diseqc_master_cmd;
-int avc_lnb_control(struct firedtv *fdtv, char voltage, char burst,
-		    char conttone, char nrdiseq,
-		    struct dvb_diseqc_master_cmd *diseqcmd);
-void avc_remote_ctrl_work(struct work_struct *work);
-int avc_register_remote_control(struct firedtv *fdtv);
-int avc_ca_app_info(struct firedtv *fdtv, unsigned char *app_info,
-		    unsigned int *len);
-int avc_ca_info(struct firedtv *fdtv, unsigned char *app_info,
-		unsigned int *len);
-int avc_ca_reset(struct firedtv *fdtv);
-int avc_ca_pmt(struct firedtv *fdtv, char *app_info, int length);
-int avc_ca_get_time_date(struct firedtv *fdtv, int *interval);
-int avc_ca_enter_menu(struct firedtv *fdtv);
-int avc_ca_get_mmi(struct firedtv *fdtv, char *mmi_object, unsigned int *len);
-int cmp_establish_pp_connection(struct firedtv *fdtv, int plug, int channel);
-void cmp_break_pp_connection(struct firedtv *fdtv, int plug, int channel);
+पूर्णांक avc_recv(काष्ठा firedtv *fdtv, व्योम *data, माप_प्रकार length);
+पूर्णांक avc_tuner_status(काष्ठा firedtv *fdtv, काष्ठा firedtv_tuner_status *stat);
+काष्ठा dtv_frontend_properties;
+पूर्णांक avc_tuner_dsd(काष्ठा firedtv *fdtv, काष्ठा dtv_frontend_properties *params);
+पूर्णांक avc_tuner_set_pids(काष्ठा firedtv *fdtv, अचिन्हित अक्षर pidc, u16 pid[]);
+पूर्णांक avc_tuner_get_ts(काष्ठा firedtv *fdtv);
+पूर्णांक avc_identअगरy_subunit(काष्ठा firedtv *fdtv);
+काष्ठा dvb_diseqc_master_cmd;
+पूर्णांक avc_lnb_control(काष्ठा firedtv *fdtv, अक्षर voltage, अक्षर burst,
+		    अक्षर conttone, अक्षर nrdiseq,
+		    काष्ठा dvb_diseqc_master_cmd *diseqcmd);
+व्योम avc_remote_ctrl_work(काष्ठा work_काष्ठा *work);
+पूर्णांक avc_रेजिस्टर_remote_control(काष्ठा firedtv *fdtv);
+पूर्णांक avc_ca_app_info(काष्ठा firedtv *fdtv, अचिन्हित अक्षर *app_info,
+		    अचिन्हित पूर्णांक *len);
+पूर्णांक avc_ca_info(काष्ठा firedtv *fdtv, अचिन्हित अक्षर *app_info,
+		अचिन्हित पूर्णांक *len);
+पूर्णांक avc_ca_reset(काष्ठा firedtv *fdtv);
+पूर्णांक avc_ca_pmt(काष्ठा firedtv *fdtv, अक्षर *app_info, पूर्णांक length);
+पूर्णांक avc_ca_get_समय_date(काष्ठा firedtv *fdtv, पूर्णांक *पूर्णांकerval);
+पूर्णांक avc_ca_enter_menu(काष्ठा firedtv *fdtv);
+पूर्णांक avc_ca_get_mmi(काष्ठा firedtv *fdtv, अक्षर *mmi_object, अचिन्हित पूर्णांक *len);
+पूर्णांक cmp_establish_pp_connection(काष्ठा firedtv *fdtv, पूर्णांक plug, पूर्णांक channel);
+व्योम cmp_अवरोध_pp_connection(काष्ठा firedtv *fdtv, पूर्णांक plug, पूर्णांक channel);
 
 /* firedtv-ci.c */
-int fdtv_ca_register(struct firedtv *fdtv);
-void fdtv_ca_release(struct firedtv *fdtv);
+पूर्णांक fdtv_ca_रेजिस्टर(काष्ठा firedtv *fdtv);
+व्योम fdtv_ca_release(काष्ठा firedtv *fdtv);
 
 /* firedtv-dvb.c */
-int fdtv_start_feed(struct dvb_demux_feed *dvbdmxfeed);
-int fdtv_stop_feed(struct dvb_demux_feed *dvbdmxfeed);
-int fdtv_dvb_register(struct firedtv *fdtv, const char *name);
-void fdtv_dvb_unregister(struct firedtv *fdtv);
+पूर्णांक fdtv_start_feed(काष्ठा dvb_demux_feed *dvbdmxfeed);
+पूर्णांक fdtv_stop_feed(काष्ठा dvb_demux_feed *dvbdmxfeed);
+पूर्णांक fdtv_dvb_रेजिस्टर(काष्ठा firedtv *fdtv, स्थिर अक्षर *name);
+व्योम fdtv_dvb_unरेजिस्टर(काष्ठा firedtv *fdtv);
 
 /* firedtv-fe.c */
-void fdtv_frontend_init(struct firedtv *fdtv, const char *name);
+व्योम fdtv_frontend_init(काष्ठा firedtv *fdtv, स्थिर अक्षर *name);
 
 /* firedtv-fw.c */
-int fdtv_lock(struct firedtv *fdtv, u64 addr, void *data);
-int fdtv_read(struct firedtv *fdtv, u64 addr, void *data);
-int fdtv_write(struct firedtv *fdtv, u64 addr, void *data, size_t len);
-int fdtv_start_iso(struct firedtv *fdtv);
-void fdtv_stop_iso(struct firedtv *fdtv);
+पूर्णांक fdtv_lock(काष्ठा firedtv *fdtv, u64 addr, व्योम *data);
+पूर्णांक fdtv_पढ़ो(काष्ठा firedtv *fdtv, u64 addr, व्योम *data);
+पूर्णांक fdtv_ग_लिखो(काष्ठा firedtv *fdtv, u64 addr, व्योम *data, माप_प्रकार len);
+पूर्णांक fdtv_start_iso(काष्ठा firedtv *fdtv);
+व्योम fdtv_stop_iso(काष्ठा firedtv *fdtv);
 
 /* firedtv-rc.c */
-#ifdef CONFIG_DVB_FIREDTV_INPUT
-int fdtv_register_rc(struct firedtv *fdtv, struct device *dev);
-void fdtv_unregister_rc(struct firedtv *fdtv);
-void fdtv_handle_rc(struct firedtv *fdtv, unsigned int code);
-#else
-static inline int fdtv_register_rc(struct firedtv *fdtv,
-				   struct device *dev) { return 0; }
-static inline void fdtv_unregister_rc(struct firedtv *fdtv) {}
-static inline void fdtv_handle_rc(struct firedtv *fdtv, unsigned int code) {}
-#endif
+#अगर_घोषित CONFIG_DVB_FIREDTV_INPUT
+पूर्णांक fdtv_रेजिस्टर_rc(काष्ठा firedtv *fdtv, काष्ठा device *dev);
+व्योम fdtv_unरेजिस्टर_rc(काष्ठा firedtv *fdtv);
+व्योम fdtv_handle_rc(काष्ठा firedtv *fdtv, अचिन्हित पूर्णांक code);
+#अन्यथा
+अटल अंतरभूत पूर्णांक fdtv_रेजिस्टर_rc(काष्ठा firedtv *fdtv,
+				   काष्ठा device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम fdtv_unरेजिस्टर_rc(काष्ठा firedtv *fdtv) अणुपूर्ण
+अटल अंतरभूत व्योम fdtv_handle_rc(काष्ठा firedtv *fdtv, अचिन्हित पूर्णांक code) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* _FIREDTV_H */
+#पूर्ण_अगर /* _FIREDTV_H */

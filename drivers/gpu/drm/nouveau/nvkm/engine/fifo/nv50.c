@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,63 +22,63 @@
  *
  * Authors: Ben Skeggs
  */
-#include "nv50.h"
-#include "channv50.h"
+#समावेश "nv50.h"
+#समावेश "channv50.h"
 
-#include <core/gpuobj.h>
+#समावेश <core/gpuobj.h>
 
-static void
-nv50_fifo_runlist_update_locked(struct nv50_fifo *fifo)
-{
-	struct nvkm_device *device = fifo->base.engine.subdev.device;
-	struct nvkm_memory *cur;
-	int i, p;
+अटल व्योम
+nv50_fअगरo_runlist_update_locked(काष्ठा nv50_fअगरo *fअगरo)
+अणु
+	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
+	काष्ठा nvkm_memory *cur;
+	पूर्णांक i, p;
 
-	cur = fifo->runlist[fifo->cur_runlist];
-	fifo->cur_runlist = !fifo->cur_runlist;
+	cur = fअगरo->runlist[fअगरo->cur_runlist];
+	fअगरo->cur_runlist = !fअगरo->cur_runlist;
 
 	nvkm_kmap(cur);
-	for (i = 0, p = 0; i < fifo->base.nr; i++) {
-		if (nvkm_rd32(device, 0x002600 + (i * 4)) & 0x80000000)
+	क्रम (i = 0, p = 0; i < fअगरo->base.nr; i++) अणु
+		अगर (nvkm_rd32(device, 0x002600 + (i * 4)) & 0x80000000)
 			nvkm_wo32(cur, p++ * 4, i);
-	}
-	nvkm_done(cur);
+	पूर्ण
+	nvkm_करोne(cur);
 
 	nvkm_wr32(device, 0x0032f4, nvkm_memory_addr(cur) >> 12);
 	nvkm_wr32(device, 0x0032ec, p);
 	nvkm_wr32(device, 0x002500, 0x00000101);
-}
+पूर्ण
 
-void
-nv50_fifo_runlist_update(struct nv50_fifo *fifo)
-{
-	mutex_lock(&fifo->base.mutex);
-	nv50_fifo_runlist_update_locked(fifo);
-	mutex_unlock(&fifo->base.mutex);
-}
+व्योम
+nv50_fअगरo_runlist_update(काष्ठा nv50_fअगरo *fअगरo)
+अणु
+	mutex_lock(&fअगरo->base.mutex);
+	nv50_fअगरo_runlist_update_locked(fअगरo);
+	mutex_unlock(&fअगरo->base.mutex);
+पूर्ण
 
-int
-nv50_fifo_oneinit(struct nvkm_fifo *base)
-{
-	struct nv50_fifo *fifo = nv50_fifo(base);
-	struct nvkm_device *device = fifo->base.engine.subdev.device;
-	int ret;
+पूर्णांक
+nv50_fअगरo_oneinit(काष्ठा nvkm_fअगरo *base)
+अणु
+	काष्ठा nv50_fअगरo *fअगरo = nv50_fअगरo(base);
+	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
+	पूर्णांक ret;
 
 	ret = nvkm_memory_new(device, NVKM_MEM_TARGET_INST, 128 * 4, 0x1000,
-			      false, &fifo->runlist[0]);
-	if (ret)
-		return ret;
+			      false, &fअगरo->runlist[0]);
+	अगर (ret)
+		वापस ret;
 
-	return nvkm_memory_new(device, NVKM_MEM_TARGET_INST, 128 * 4, 0x1000,
-			       false, &fifo->runlist[1]);
-}
+	वापस nvkm_memory_new(device, NVKM_MEM_TARGET_INST, 128 * 4, 0x1000,
+			       false, &fअगरo->runlist[1]);
+पूर्ण
 
-void
-nv50_fifo_init(struct nvkm_fifo *base)
-{
-	struct nv50_fifo *fifo = nv50_fifo(base);
-	struct nvkm_device *device = fifo->base.engine.subdev.device;
-	int i;
+व्योम
+nv50_fअगरo_init(काष्ठा nvkm_fअगरo *base)
+अणु
+	काष्ठा nv50_fअगरo *fअगरo = nv50_fअगरo(base);
+	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
+	पूर्णांक i;
 
 	nvkm_mask(device, 0x000200, 0x00000100, 0x00000000);
 	nvkm_mask(device, 0x000200, 0x00000100, 0x00000100);
@@ -87,64 +88,64 @@ nv50_fifo_init(struct nvkm_fifo *base)
 	nvkm_wr32(device, 0x002100, 0xffffffff);
 	nvkm_wr32(device, 0x002140, 0xbfffffff);
 
-	for (i = 0; i < 128; i++)
+	क्रम (i = 0; i < 128; i++)
 		nvkm_wr32(device, 0x002600 + (i * 4), 0x00000000);
-	nv50_fifo_runlist_update_locked(fifo);
+	nv50_fअगरo_runlist_update_locked(fअगरo);
 
 	nvkm_wr32(device, 0x003200, 0x00000001);
 	nvkm_wr32(device, 0x003250, 0x00000001);
 	nvkm_wr32(device, 0x002500, 0x00000001);
-}
+पूर्ण
 
-void *
-nv50_fifo_dtor(struct nvkm_fifo *base)
-{
-	struct nv50_fifo *fifo = nv50_fifo(base);
-	nvkm_memory_unref(&fifo->runlist[1]);
-	nvkm_memory_unref(&fifo->runlist[0]);
-	return fifo;
-}
+व्योम *
+nv50_fअगरo_dtor(काष्ठा nvkm_fअगरo *base)
+अणु
+	काष्ठा nv50_fअगरo *fअगरo = nv50_fअगरo(base);
+	nvkm_memory_unref(&fअगरo->runlist[1]);
+	nvkm_memory_unref(&fअगरo->runlist[0]);
+	वापस fअगरo;
+पूर्ण
 
-int
-nv50_fifo_new_(const struct nvkm_fifo_func *func, struct nvkm_device *device,
-	       enum nvkm_subdev_type type, int inst, struct nvkm_fifo **pfifo)
-{
-	struct nv50_fifo *fifo;
-	int ret;
+पूर्णांक
+nv50_fअगरo_new_(स्थिर काष्ठा nvkm_fअगरo_func *func, काष्ठा nvkm_device *device,
+	       क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fअगरo **pfअगरo)
+अणु
+	काष्ठा nv50_fअगरo *fअगरo;
+	पूर्णांक ret;
 
-	if (!(fifo = kzalloc(sizeof(*fifo), GFP_KERNEL)))
-		return -ENOMEM;
-	*pfifo = &fifo->base;
+	अगर (!(fअगरo = kzalloc(माप(*fअगरo), GFP_KERNEL)))
+		वापस -ENOMEM;
+	*pfअगरo = &fअगरo->base;
 
-	ret = nvkm_fifo_ctor(func, device, type, inst, 128, &fifo->base);
-	if (ret)
-		return ret;
+	ret = nvkm_fअगरo_ctor(func, device, type, inst, 128, &fअगरo->base);
+	अगर (ret)
+		वापस ret;
 
-	set_bit(0, fifo->base.mask); /* PIO channel */
-	set_bit(127, fifo->base.mask); /* inactive channel */
-	return 0;
-}
+	set_bit(0, fअगरo->base.mask); /* PIO channel */
+	set_bit(127, fअगरo->base.mask); /* inactive channel */
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_fifo_func
-nv50_fifo = {
-	.dtor = nv50_fifo_dtor,
-	.oneinit = nv50_fifo_oneinit,
-	.init = nv50_fifo_init,
-	.intr = nv04_fifo_intr,
-	.engine_id = nv04_fifo_engine_id,
-	.id_engine = nv04_fifo_id_engine,
-	.pause = nv04_fifo_pause,
-	.start = nv04_fifo_start,
-	.chan = {
-		&nv50_fifo_dma_oclass,
-		&nv50_fifo_gpfifo_oclass,
-		NULL
-	},
-};
+अटल स्थिर काष्ठा nvkm_fअगरo_func
+nv50_fअगरo = अणु
+	.dtor = nv50_fअगरo_dtor,
+	.oneinit = nv50_fअगरo_oneinit,
+	.init = nv50_fअगरo_init,
+	.पूर्णांकr = nv04_fअगरo_पूर्णांकr,
+	.engine_id = nv04_fअगरo_engine_id,
+	.id_engine = nv04_fअगरo_id_engine,
+	.छोड़ो = nv04_fअगरo_छोड़ो,
+	.start = nv04_fअगरo_start,
+	.chan = अणु
+		&nv50_fअगरo_dma_oclass,
+		&nv50_fअगरo_gpfअगरo_oclass,
+		शून्य
+	पूर्ण,
+पूर्ण;
 
-int
-nv50_fifo_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_fifo **pfifo)
-{
-	return nv50_fifo_new_(&nv50_fifo, device, type, inst, pfifo);
-}
+पूर्णांक
+nv50_fअगरo_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_fअगरo **pfअगरo)
+अणु
+	वापस nv50_fअगरo_new_(&nv50_fअगरo, device, type, inst, pfअगरo);
+पूर्ण

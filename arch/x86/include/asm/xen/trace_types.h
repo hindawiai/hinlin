@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_XEN_TRACE_TYPES_H
-#define _ASM_XEN_TRACE_TYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_XEN_TRACE_TYPES_H
+#घोषणा _ASM_XEN_TRACE_TYPES_H
 
-enum xen_mc_flush_reason {
+क्रमागत xen_mc_flush_reason अणु
 	XEN_MC_FL_NONE,		/* explicit flush */
 	XEN_MC_FL_BATCH,	/* out of hypercall space */
 	XEN_MC_FL_ARGS,		/* out of argument space */
 	XEN_MC_FL_CALLBACK,	/* out of callback space */
-};
+पूर्ण;
 
-enum xen_mc_extend_args {
+क्रमागत xen_mc_extend_args अणु
 	XEN_MC_XE_OK,
 	XEN_MC_XE_BAD_OP,
 	XEN_MC_XE_NO_SPACE
-};
-typedef void (*xen_mc_callback_fn_t)(void *);
+पूर्ण;
+प्रकार व्योम (*xen_mc_callback_fn_t)(व्योम *);
 
-#endif	/* _ASM_XEN_TRACE_TYPES_H */
+#पूर्ण_अगर	/* _ASM_XEN_TRACE_TYPES_H */

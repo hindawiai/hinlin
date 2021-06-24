@@ -1,278 +1,279 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <limits.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
-#include <linux/pkt_cls.h>
-#include <linux/bpf.h>
-#include <linux/in.h>
-#include <linux/if_ether.h>
-#include <linux/icmp.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/if_packet.h>
-#include <sys/socket.h>
-#include <linux/if_tunnel.h>
-#include <linux/mpls.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <सीमा.स>
+#समावेश <मानकघोष.स>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
+#समावेश <linux/pkt_cls.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/in.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/अगर_packet.h>
+#समावेश <sys/socket.h>
+#समावेश <linux/अगर_tunnel.h>
+#समावेश <linux/mpls.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
 
-int _version SEC("version") = 1;
-#define PROG(F) PROG_(F, _##F)
-#define PROG_(NUM, NAME) SEC("flow_dissector/"#NUM) int bpf_func##NAME
+पूर्णांक _version SEC("version") = 1;
+#घोषणा PROG(F) PROG_(F, _##F)
+#घोषणा PROG_(NUM, NAME) SEC("flow_dissector/"#NUM) पूर्णांक bpf_func##NAME
 
-/* These are the identifiers of the BPF programs that will be used in tail
- * calls. Name is limited to 16 characters, with the terminating character and
+/* These are the identअगरiers of the BPF programs that will be used in tail
+ * calls. Name is limited to 16 अक्षरacters, with the terminating अक्षरacter and
  * bpf_func_ above, we have only 6 to work with, anything after will be cropped.
  */
-#define IP		0
-#define IPV6		1
-#define IPV6OP		2 /* Destination/Hop-by-Hop Options IPv6 Ext. Header */
-#define IPV6FR		3 /* Fragmentation IPv6 Extension Header */
-#define MPLS		4
-#define VLAN		5
-#define MAX_PROG	6
+#घोषणा IP		0
+#घोषणा IPV6		1
+#घोषणा IPV6OP		2 /* Destination/Hop-by-Hop Options IPv6 Ext. Header */
+#घोषणा IPV6FR		3 /* Fragmentation IPv6 Extension Header */
+#घोषणा MPLS		4
+#घोषणा VLAN		5
+#घोषणा MAX_PROG	6
 
-#define IP_MF		0x2000
-#define IP_OFFSET	0x1FFF
-#define IP6_MF		0x0001
-#define IP6_OFFSET	0xFFF8
+#घोषणा IP_MF		0x2000
+#घोषणा IP_OFFSET	0x1FFF
+#घोषणा IP6_MF		0x0001
+#घोषणा IP6_OFFSET	0xFFF8
 
-struct vlan_hdr {
+काष्ठा vlan_hdr अणु
 	__be16 h_vlan_TCI;
 	__be16 h_vlan_encapsulated_proto;
-};
+पूर्ण;
 
-struct gre_hdr {
+काष्ठा gre_hdr अणु
 	__be16 flags;
 	__be16 proto;
-};
+पूर्ण;
 
-struct frag_hdr {
+काष्ठा frag_hdr अणु
 	__u8 nexthdr;
 	__u8 reserved;
 	__be16 frag_off;
-	__be32 identification;
-};
+	__be32 identअगरication;
+पूर्ण;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
-	__uint(max_entries, MAX_PROG);
-	__uint(key_size, sizeof(__u32));
-	__uint(value_size, sizeof(__u32));
-} jmp_table SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PROG_ARRAY);
+	__uपूर्णांक(max_entries, MAX_PROG);
+	__uपूर्णांक(key_size, माप(__u32));
+	__uपूर्णांक(value_size, माप(__u32));
+पूर्ण jmp_table SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__uint(max_entries, 1024);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__uपूर्णांक(max_entries, 1024);
 	__type(key, __u32);
-	__type(value, struct bpf_flow_keys);
-} last_dissection SEC(".maps");
+	__type(value, काष्ठा bpf_flow_keys);
+पूर्ण last_dissection SEC(".maps");
 
-static __always_inline int export_flow_keys(struct bpf_flow_keys *keys,
-					    int ret)
-{
+अटल __always_अंतरभूत पूर्णांक export_flow_keys(काष्ठा bpf_flow_keys *keys,
+					    पूर्णांक ret)
+अणु
 	__u32 key = (__u32)(keys->sport) << 16 | keys->dport;
-	struct bpf_flow_keys val;
+	काष्ठा bpf_flow_keys val;
 
-	memcpy(&val, keys, sizeof(val));
+	स_नकल(&val, keys, माप(val));
 	bpf_map_update_elem(&last_dissection, &key, &val, BPF_ANY);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define IPV6_FLOWLABEL_MASK		__bpf_constant_htonl(0x000FFFFF)
-static inline __be32 ip6_flowlabel(const struct ipv6hdr *hdr)
-{
-	return *(__be32 *)hdr & IPV6_FLOWLABEL_MASK;
-}
+#घोषणा IPV6_FLOWLABEL_MASK		__bpf_स्थिरant_htonl(0x000FFFFF)
+अटल अंतरभूत __be32 ip6_flowlabel(स्थिर काष्ठा ipv6hdr *hdr)
+अणु
+	वापस *(__be32 *)hdr & IPV6_FLOWLABEL_MASK;
+पूर्ण
 
-static __always_inline void *bpf_flow_dissect_get_header(struct __sk_buff *skb,
+अटल __always_अंतरभूत व्योम *bpf_flow_dissect_get_header(काष्ठा __sk_buff *skb,
 							 __u16 hdr_size,
-							 void *buffer)
-{
-	void *data_end = (void *)(long)skb->data_end;
-	void *data = (void *)(long)skb->data;
+							 व्योम *buffer)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)skb->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)skb->data;
 	__u16 thoff = skb->flow_keys->thoff;
 	__u8 *hdr;
 
-	/* Verifies this variable offset does not overflow */
-	if (thoff > (USHRT_MAX - hdr_size))
-		return NULL;
+	/* Verअगरies this variable offset करोes not overflow */
+	अगर (thoff > (अच_लघु_उच्च - hdr_size))
+		वापस शून्य;
 
 	hdr = data + thoff;
-	if (hdr + hdr_size <= data_end)
-		return hdr;
+	अगर (hdr + hdr_size <= data_end)
+		वापस hdr;
 
-	if (bpf_skb_load_bytes(skb, thoff, buffer, hdr_size))
-		return NULL;
+	अगर (bpf_skb_load_bytes(skb, thoff, buffer, hdr_size))
+		वापस शून्य;
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
 /* Dispatches on ETHERTYPE */
-static __always_inline int parse_eth_proto(struct __sk_buff *skb, __be16 proto)
-{
-	struct bpf_flow_keys *keys = skb->flow_keys;
+अटल __always_अंतरभूत पूर्णांक parse_eth_proto(काष्ठा __sk_buff *skb, __be16 proto)
+अणु
+	काष्ठा bpf_flow_keys *keys = skb->flow_keys;
 
-	switch (proto) {
-	case bpf_htons(ETH_P_IP):
-		bpf_tail_call_static(skb, &jmp_table, IP);
-		break;
-	case bpf_htons(ETH_P_IPV6):
-		bpf_tail_call_static(skb, &jmp_table, IPV6);
-		break;
-	case bpf_htons(ETH_P_MPLS_MC):
-	case bpf_htons(ETH_P_MPLS_UC):
-		bpf_tail_call_static(skb, &jmp_table, MPLS);
-		break;
-	case bpf_htons(ETH_P_8021Q):
-	case bpf_htons(ETH_P_8021AD):
-		bpf_tail_call_static(skb, &jmp_table, VLAN);
-		break;
-	default:
+	चयन (proto) अणु
+	हाल bpf_htons(ETH_P_IP):
+		bpf_tail_call_अटल(skb, &jmp_table, IP);
+		अवरोध;
+	हाल bpf_htons(ETH_P_IPV6):
+		bpf_tail_call_अटल(skb, &jmp_table, IPV6);
+		अवरोध;
+	हाल bpf_htons(ETH_P_MPLS_MC):
+	हाल bpf_htons(ETH_P_MPLS_UC):
+		bpf_tail_call_अटल(skb, &jmp_table, MPLS);
+		अवरोध;
+	हाल bpf_htons(ETH_P_8021Q):
+	हाल bpf_htons(ETH_P_8021AD):
+		bpf_tail_call_अटल(skb, &jmp_table, VLAN);
+		अवरोध;
+	शेष:
 		/* Protocol not supported */
-		return export_flow_keys(keys, BPF_DROP);
-	}
+		वापस export_flow_keys(keys, BPF_DROP);
+	पूर्ण
 
-	return export_flow_keys(keys, BPF_DROP);
-}
+	वापस export_flow_keys(keys, BPF_DROP);
+पूर्ण
 
 SEC("flow_dissector")
-int _dissect(struct __sk_buff *skb)
-{
-	struct bpf_flow_keys *keys = skb->flow_keys;
+पूर्णांक _dissect(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_flow_keys *keys = skb->flow_keys;
 
-	return parse_eth_proto(skb, keys->n_proto);
-}
+	वापस parse_eth_proto(skb, keys->n_proto);
+पूर्ण
 
 /* Parses on IPPROTO_* */
-static __always_inline int parse_ip_proto(struct __sk_buff *skb, __u8 proto)
-{
-	struct bpf_flow_keys *keys = skb->flow_keys;
-	void *data_end = (void *)(long)skb->data_end;
-	struct icmphdr *icmp, _icmp;
-	struct gre_hdr *gre, _gre;
-	struct ethhdr *eth, _eth;
-	struct tcphdr *tcp, _tcp;
-	struct udphdr *udp, _udp;
+अटल __always_अंतरभूत पूर्णांक parse_ip_proto(काष्ठा __sk_buff *skb, __u8 proto)
+अणु
+	काष्ठा bpf_flow_keys *keys = skb->flow_keys;
+	व्योम *data_end = (व्योम *)(दीर्घ)skb->data_end;
+	काष्ठा icmphdr *icmp, _icmp;
+	काष्ठा gre_hdr *gre, _gre;
+	काष्ठा ethhdr *eth, _eth;
+	काष्ठा tcphdr *tcp, _tcp;
+	काष्ठा udphdr *udp, _udp;
 
-	switch (proto) {
-	case IPPROTO_ICMP:
-		icmp = bpf_flow_dissect_get_header(skb, sizeof(*icmp), &_icmp);
-		if (!icmp)
-			return export_flow_keys(keys, BPF_DROP);
-		return export_flow_keys(keys, BPF_OK);
-	case IPPROTO_IPIP:
+	चयन (proto) अणु
+	हाल IPPROTO_ICMP:
+		icmp = bpf_flow_dissect_get_header(skb, माप(*icmp), &_icmp);
+		अगर (!icmp)
+			वापस export_flow_keys(keys, BPF_DROP);
+		वापस export_flow_keys(keys, BPF_OK);
+	हाल IPPROTO_IPIP:
 		keys->is_encap = true;
-		if (keys->flags & BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP)
-			return export_flow_keys(keys, BPF_OK);
+		अगर (keys->flags & BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP)
+			वापस export_flow_keys(keys, BPF_OK);
 
-		return parse_eth_proto(skb, bpf_htons(ETH_P_IP));
-	case IPPROTO_IPV6:
+		वापस parse_eth_proto(skb, bpf_htons(ETH_P_IP));
+	हाल IPPROTO_IPV6:
 		keys->is_encap = true;
-		if (keys->flags & BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP)
-			return export_flow_keys(keys, BPF_OK);
+		अगर (keys->flags & BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP)
+			वापस export_flow_keys(keys, BPF_OK);
 
-		return parse_eth_proto(skb, bpf_htons(ETH_P_IPV6));
-	case IPPROTO_GRE:
-		gre = bpf_flow_dissect_get_header(skb, sizeof(*gre), &_gre);
-		if (!gre)
-			return export_flow_keys(keys, BPF_DROP);
+		वापस parse_eth_proto(skb, bpf_htons(ETH_P_IPV6));
+	हाल IPPROTO_GRE:
+		gre = bpf_flow_dissect_get_header(skb, माप(*gre), &_gre);
+		अगर (!gre)
+			वापस export_flow_keys(keys, BPF_DROP);
 
-		if (bpf_htons(gre->flags & GRE_VERSION))
+		अगर (bpf_htons(gre->flags & GRE_VERSION))
 			/* Only inspect standard GRE packets with version 0 */
-			return export_flow_keys(keys, BPF_OK);
+			वापस export_flow_keys(keys, BPF_OK);
 
-		keys->thoff += sizeof(*gre); /* Step over GRE Flags and Proto */
-		if (GRE_IS_CSUM(gre->flags))
+		keys->thoff += माप(*gre); /* Step over GRE Flags and Proto */
+		अगर (GRE_IS_CSUM(gre->flags))
 			keys->thoff += 4; /* Step over chksum and Padding */
-		if (GRE_IS_KEY(gre->flags))
+		अगर (GRE_IS_KEY(gre->flags))
 			keys->thoff += 4; /* Step over key */
-		if (GRE_IS_SEQ(gre->flags))
+		अगर (GRE_IS_SEQ(gre->flags))
 			keys->thoff += 4; /* Step over sequence number */
 
 		keys->is_encap = true;
-		if (keys->flags & BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP)
-			return export_flow_keys(keys, BPF_OK);
+		अगर (keys->flags & BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP)
+			वापस export_flow_keys(keys, BPF_OK);
 
-		if (gre->proto == bpf_htons(ETH_P_TEB)) {
-			eth = bpf_flow_dissect_get_header(skb, sizeof(*eth),
+		अगर (gre->proto == bpf_htons(ETH_P_TEB)) अणु
+			eth = bpf_flow_dissect_get_header(skb, माप(*eth),
 							  &_eth);
-			if (!eth)
-				return export_flow_keys(keys, BPF_DROP);
+			अगर (!eth)
+				वापस export_flow_keys(keys, BPF_DROP);
 
-			keys->thoff += sizeof(*eth);
+			keys->thoff += माप(*eth);
 
-			return parse_eth_proto(skb, eth->h_proto);
-		} else {
-			return parse_eth_proto(skb, gre->proto);
-		}
-	case IPPROTO_TCP:
-		tcp = bpf_flow_dissect_get_header(skb, sizeof(*tcp), &_tcp);
-		if (!tcp)
-			return export_flow_keys(keys, BPF_DROP);
+			वापस parse_eth_proto(skb, eth->h_proto);
+		पूर्ण अन्यथा अणु
+			वापस parse_eth_proto(skb, gre->proto);
+		पूर्ण
+	हाल IPPROTO_TCP:
+		tcp = bpf_flow_dissect_get_header(skb, माप(*tcp), &_tcp);
+		अगर (!tcp)
+			वापस export_flow_keys(keys, BPF_DROP);
 
-		if (tcp->doff < 5)
-			return export_flow_keys(keys, BPF_DROP);
+		अगर (tcp->करोff < 5)
+			वापस export_flow_keys(keys, BPF_DROP);
 
-		if ((__u8 *)tcp + (tcp->doff << 2) > data_end)
-			return export_flow_keys(keys, BPF_DROP);
+		अगर ((__u8 *)tcp + (tcp->करोff << 2) > data_end)
+			वापस export_flow_keys(keys, BPF_DROP);
 
 		keys->sport = tcp->source;
 		keys->dport = tcp->dest;
-		return export_flow_keys(keys, BPF_OK);
-	case IPPROTO_UDP:
-	case IPPROTO_UDPLITE:
-		udp = bpf_flow_dissect_get_header(skb, sizeof(*udp), &_udp);
-		if (!udp)
-			return export_flow_keys(keys, BPF_DROP);
+		वापस export_flow_keys(keys, BPF_OK);
+	हाल IPPROTO_UDP:
+	हाल IPPROTO_UDPLITE:
+		udp = bpf_flow_dissect_get_header(skb, माप(*udp), &_udp);
+		अगर (!udp)
+			वापस export_flow_keys(keys, BPF_DROP);
 
 		keys->sport = udp->source;
 		keys->dport = udp->dest;
-		return export_flow_keys(keys, BPF_OK);
-	default:
-		return export_flow_keys(keys, BPF_DROP);
-	}
+		वापस export_flow_keys(keys, BPF_OK);
+	शेष:
+		वापस export_flow_keys(keys, BPF_DROP);
+	पूर्ण
 
-	return export_flow_keys(keys, BPF_DROP);
-}
+	वापस export_flow_keys(keys, BPF_DROP);
+पूर्ण
 
-static __always_inline int parse_ipv6_proto(struct __sk_buff *skb, __u8 nexthdr)
-{
-	struct bpf_flow_keys *keys = skb->flow_keys;
+अटल __always_अंतरभूत पूर्णांक parse_ipv6_proto(काष्ठा __sk_buff *skb, __u8 nexthdr)
+अणु
+	काष्ठा bpf_flow_keys *keys = skb->flow_keys;
 
-	switch (nexthdr) {
-	case IPPROTO_HOPOPTS:
-	case IPPROTO_DSTOPTS:
-		bpf_tail_call_static(skb, &jmp_table, IPV6OP);
-		break;
-	case IPPROTO_FRAGMENT:
-		bpf_tail_call_static(skb, &jmp_table, IPV6FR);
-		break;
-	default:
-		return parse_ip_proto(skb, nexthdr);
-	}
+	चयन (nexthdr) अणु
+	हाल IPPROTO_HOPOPTS:
+	हाल IPPROTO_DSTOPTS:
+		bpf_tail_call_अटल(skb, &jmp_table, IPV6OP);
+		अवरोध;
+	हाल IPPROTO_FRAGMENT:
+		bpf_tail_call_अटल(skb, &jmp_table, IPV6FR);
+		अवरोध;
+	शेष:
+		वापस parse_ip_proto(skb, nexthdr);
+	पूर्ण
 
-	return export_flow_keys(keys, BPF_DROP);
-}
+	वापस export_flow_keys(keys, BPF_DROP);
+पूर्ण
 
-PROG(IP)(struct __sk_buff *skb)
-{
-	void *data_end = (void *)(long)skb->data_end;
-	struct bpf_flow_keys *keys = skb->flow_keys;
-	void *data = (void *)(long)skb->data;
-	struct iphdr *iph, _iph;
-	bool done = false;
+PROG(IP)(काष्ठा __sk_buff *skb)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)skb->data_end;
+	काष्ठा bpf_flow_keys *keys = skb->flow_keys;
+	व्योम *data = (व्योम *)(दीर्घ)skb->data;
+	काष्ठा iphdr *iph, _iph;
+	bool करोne = false;
 
-	iph = bpf_flow_dissect_get_header(skb, sizeof(*iph), &_iph);
-	if (!iph)
-		return export_flow_keys(keys, BPF_DROP);
+	iph = bpf_flow_dissect_get_header(skb, माप(*iph), &_iph);
+	अगर (!iph)
+		वापस export_flow_keys(keys, BPF_DROP);
 
 	/* IP header cannot be smaller than 20 bytes */
-	if (iph->ihl < 5)
-		return export_flow_keys(keys, BPF_DROP);
+	अगर (iph->ihl < 5)
+		वापस export_flow_keys(keys, BPF_DROP);
 
 	keys->addr_proto = ETH_P_IP;
 	keys->ipv4_src = iph->saddr;
@@ -280,144 +281,144 @@ PROG(IP)(struct __sk_buff *skb)
 	keys->ip_proto = iph->protocol;
 
 	keys->thoff += iph->ihl << 2;
-	if (data + keys->thoff > data_end)
-		return export_flow_keys(keys, BPF_DROP);
+	अगर (data + keys->thoff > data_end)
+		वापस export_flow_keys(keys, BPF_DROP);
 
-	if (iph->frag_off & bpf_htons(IP_MF | IP_OFFSET)) {
+	अगर (iph->frag_off & bpf_htons(IP_MF | IP_OFFSET)) अणु
 		keys->is_frag = true;
-		if (iph->frag_off & bpf_htons(IP_OFFSET)) {
-			/* From second fragment on, packets do not have headers
+		अगर (iph->frag_off & bpf_htons(IP_OFFSET)) अणु
+			/* From second fragment on, packets करो not have headers
 			 * we can parse.
 			 */
-			done = true;
-		} else {
+			करोne = true;
+		पूर्ण अन्यथा अणु
 			keys->is_first_frag = true;
 			/* No need to parse fragmented packet unless
-			 * explicitly asked for.
+			 * explicitly asked क्रम.
 			 */
-			if (!(keys->flags &
+			अगर (!(keys->flags &
 			      BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG))
-				done = true;
-		}
-	}
+				करोne = true;
+		पूर्ण
+	पूर्ण
 
-	if (done)
-		return export_flow_keys(keys, BPF_OK);
+	अगर (करोne)
+		वापस export_flow_keys(keys, BPF_OK);
 
-	return parse_ip_proto(skb, iph->protocol);
-}
+	वापस parse_ip_proto(skb, iph->protocol);
+पूर्ण
 
-PROG(IPV6)(struct __sk_buff *skb)
-{
-	struct bpf_flow_keys *keys = skb->flow_keys;
-	struct ipv6hdr *ip6h, _ip6h;
+PROG(IPV6)(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_flow_keys *keys = skb->flow_keys;
+	काष्ठा ipv6hdr *ip6h, _ip6h;
 
-	ip6h = bpf_flow_dissect_get_header(skb, sizeof(*ip6h), &_ip6h);
-	if (!ip6h)
-		return export_flow_keys(keys, BPF_DROP);
+	ip6h = bpf_flow_dissect_get_header(skb, माप(*ip6h), &_ip6h);
+	अगर (!ip6h)
+		वापस export_flow_keys(keys, BPF_DROP);
 
 	keys->addr_proto = ETH_P_IPV6;
-	memcpy(&keys->ipv6_src, &ip6h->saddr, 2*sizeof(ip6h->saddr));
+	स_नकल(&keys->ipv6_src, &ip6h->saddr, 2*माप(ip6h->saddr));
 
-	keys->thoff += sizeof(struct ipv6hdr);
+	keys->thoff += माप(काष्ठा ipv6hdr);
 	keys->ip_proto = ip6h->nexthdr;
 	keys->flow_label = ip6_flowlabel(ip6h);
 
-	if (keys->flags & BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL)
-		return export_flow_keys(keys, BPF_OK);
+	अगर (keys->flags & BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL)
+		वापस export_flow_keys(keys, BPF_OK);
 
-	return parse_ipv6_proto(skb, ip6h->nexthdr);
-}
+	वापस parse_ipv6_proto(skb, ip6h->nexthdr);
+पूर्ण
 
-PROG(IPV6OP)(struct __sk_buff *skb)
-{
-	struct bpf_flow_keys *keys = skb->flow_keys;
-	struct ipv6_opt_hdr *ip6h, _ip6h;
+PROG(IPV6OP)(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_flow_keys *keys = skb->flow_keys;
+	काष्ठा ipv6_opt_hdr *ip6h, _ip6h;
 
-	ip6h = bpf_flow_dissect_get_header(skb, sizeof(*ip6h), &_ip6h);
-	if (!ip6h)
-		return export_flow_keys(keys, BPF_DROP);
+	ip6h = bpf_flow_dissect_get_header(skb, माप(*ip6h), &_ip6h);
+	अगर (!ip6h)
+		वापस export_flow_keys(keys, BPF_DROP);
 
-	/* hlen is in 8-octets and does not include the first 8 bytes
+	/* hlen is in 8-octets and करोes not include the first 8 bytes
 	 * of the header
 	 */
 	keys->thoff += (1 + ip6h->hdrlen) << 3;
 	keys->ip_proto = ip6h->nexthdr;
 
-	return parse_ipv6_proto(skb, ip6h->nexthdr);
-}
+	वापस parse_ipv6_proto(skb, ip6h->nexthdr);
+पूर्ण
 
-PROG(IPV6FR)(struct __sk_buff *skb)
-{
-	struct bpf_flow_keys *keys = skb->flow_keys;
-	struct frag_hdr *fragh, _fragh;
+PROG(IPV6FR)(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_flow_keys *keys = skb->flow_keys;
+	काष्ठा frag_hdr *fragh, _fragh;
 
-	fragh = bpf_flow_dissect_get_header(skb, sizeof(*fragh), &_fragh);
-	if (!fragh)
-		return export_flow_keys(keys, BPF_DROP);
+	fragh = bpf_flow_dissect_get_header(skb, माप(*fragh), &_fragh);
+	अगर (!fragh)
+		वापस export_flow_keys(keys, BPF_DROP);
 
-	keys->thoff += sizeof(*fragh);
+	keys->thoff += माप(*fragh);
 	keys->is_frag = true;
 	keys->ip_proto = fragh->nexthdr;
 
-	if (!(fragh->frag_off & bpf_htons(IP6_OFFSET))) {
+	अगर (!(fragh->frag_off & bpf_htons(IP6_OFFSET))) अणु
 		keys->is_first_frag = true;
 
 		/* No need to parse fragmented packet unless
-		 * explicitly asked for.
+		 * explicitly asked क्रम.
 		 */
-		if (!(keys->flags & BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG))
-			return export_flow_keys(keys, BPF_OK);
-	} else {
-		return export_flow_keys(keys, BPF_OK);
-	}
+		अगर (!(keys->flags & BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG))
+			वापस export_flow_keys(keys, BPF_OK);
+	पूर्ण अन्यथा अणु
+		वापस export_flow_keys(keys, BPF_OK);
+	पूर्ण
 
-	return parse_ipv6_proto(skb, fragh->nexthdr);
-}
+	वापस parse_ipv6_proto(skb, fragh->nexthdr);
+पूर्ण
 
-PROG(MPLS)(struct __sk_buff *skb)
-{
-	struct bpf_flow_keys *keys = skb->flow_keys;
-	struct mpls_label *mpls, _mpls;
+PROG(MPLS)(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_flow_keys *keys = skb->flow_keys;
+	काष्ठा mpls_label *mpls, _mpls;
 
-	mpls = bpf_flow_dissect_get_header(skb, sizeof(*mpls), &_mpls);
-	if (!mpls)
-		return export_flow_keys(keys, BPF_DROP);
+	mpls = bpf_flow_dissect_get_header(skb, माप(*mpls), &_mpls);
+	अगर (!mpls)
+		वापस export_flow_keys(keys, BPF_DROP);
 
-	return export_flow_keys(keys, BPF_OK);
-}
+	वापस export_flow_keys(keys, BPF_OK);
+पूर्ण
 
-PROG(VLAN)(struct __sk_buff *skb)
-{
-	struct bpf_flow_keys *keys = skb->flow_keys;
-	struct vlan_hdr *vlan, _vlan;
+PROG(VLAN)(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_flow_keys *keys = skb->flow_keys;
+	काष्ठा vlan_hdr *vlan, _vlan;
 
-	/* Account for double-tagging */
-	if (keys->n_proto == bpf_htons(ETH_P_8021AD)) {
-		vlan = bpf_flow_dissect_get_header(skb, sizeof(*vlan), &_vlan);
-		if (!vlan)
-			return export_flow_keys(keys, BPF_DROP);
+	/* Account क्रम द्विगुन-tagging */
+	अगर (keys->n_proto == bpf_htons(ETH_P_8021AD)) अणु
+		vlan = bpf_flow_dissect_get_header(skb, माप(*vlan), &_vlan);
+		अगर (!vlan)
+			वापस export_flow_keys(keys, BPF_DROP);
 
-		if (vlan->h_vlan_encapsulated_proto != bpf_htons(ETH_P_8021Q))
-			return export_flow_keys(keys, BPF_DROP);
+		अगर (vlan->h_vlan_encapsulated_proto != bpf_htons(ETH_P_8021Q))
+			वापस export_flow_keys(keys, BPF_DROP);
 
-		keys->nhoff += sizeof(*vlan);
-		keys->thoff += sizeof(*vlan);
-	}
+		keys->nhoff += माप(*vlan);
+		keys->thoff += माप(*vlan);
+	पूर्ण
 
-	vlan = bpf_flow_dissect_get_header(skb, sizeof(*vlan), &_vlan);
-	if (!vlan)
-		return export_flow_keys(keys, BPF_DROP);
+	vlan = bpf_flow_dissect_get_header(skb, माप(*vlan), &_vlan);
+	अगर (!vlan)
+		वापस export_flow_keys(keys, BPF_DROP);
 
-	keys->nhoff += sizeof(*vlan);
-	keys->thoff += sizeof(*vlan);
-	/* Only allow 8021AD + 8021Q double tagging and no triple tagging.*/
-	if (vlan->h_vlan_encapsulated_proto == bpf_htons(ETH_P_8021AD) ||
+	keys->nhoff += माप(*vlan);
+	keys->thoff += माप(*vlan);
+	/* Only allow 8021AD + 8021Q द्विगुन tagging and no triple tagging.*/
+	अगर (vlan->h_vlan_encapsulated_proto == bpf_htons(ETH_P_8021AD) ||
 	    vlan->h_vlan_encapsulated_proto == bpf_htons(ETH_P_8021Q))
-		return export_flow_keys(keys, BPF_DROP);
+		वापस export_flow_keys(keys, BPF_DROP);
 
 	keys->n_proto = vlan->h_vlan_encapsulated_proto;
-	return parse_eth_proto(skb, vlan->h_vlan_encapsulated_proto);
-}
+	वापस parse_eth_proto(skb, vlan->h_vlan_encapsulated_proto);
+पूर्ण
 
-char __license[] SEC("license") = "GPL";
+अक्षर __license[] SEC("license") = "GPL";

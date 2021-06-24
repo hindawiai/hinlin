@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/kernel/cpu/sh4a/setup-sh7734.c
  *
@@ -8,288 +9,288 @@
  * Copyright (C) 2011,2012 Renesas Solutions Corp.
  */
 
-#include <linux/platform_device.h>
-#include <linux/init.h>
-#include <linux/serial.h>
-#include <linux/mm.h>
-#include <linux/dma-mapping.h>
-#include <linux/serial_sci.h>
-#include <linux/sh_timer.h>
-#include <linux/io.h>
-#include <asm/clock.h>
-#include <asm/irq.h>
-#include <asm/platform_early.h>
-#include <cpu/sh7734.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/serial_sci.h>
+#समावेश <linux/sh_समयr.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/घड़ी.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/platक्रमm_early.h>
+#समावेश <cpu/sh7734.h>
 
 /* SCIF */
-static struct plat_sci_port scif0_platform_data = {
+अटल काष्ठा plat_sci_port scअगर0_platक्रमm_data = अणु
 	.scscr          = SCSCR_REIE,
 	.type           = PORT_SCIF,
 	.regtype        = SCIx_SH4_SCIF_BRG_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif0_resources[] = {
+अटल काष्ठा resource scअगर0_resources[] = अणु
 	DEFINE_RES_MEM(0xffe40000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0x8c0)),
-};
+पूर्ण;
 
-static struct platform_device scif0_device = {
+अटल काष्ठा platक्रमm_device scअगर0_device = अणु
 	.name		= "sh-sci",
 	.id		= 0,
-	.resource	= scif0_resources,
-	.num_resources	= ARRAY_SIZE(scif0_resources),
-	.dev		= {
-		.platform_data	= &scif0_platform_data,
-	},
-};
+	.resource	= scअगर0_resources,
+	.num_resources	= ARRAY_SIZE(scअगर0_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर0_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif1_platform_data = {
+अटल काष्ठा plat_sci_port scअगर1_platक्रमm_data = अणु
 	.scscr          = SCSCR_REIE,
 	.type           = PORT_SCIF,
 	.regtype        = SCIx_SH4_SCIF_BRG_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif1_resources[] = {
+अटल काष्ठा resource scअगर1_resources[] = अणु
 	DEFINE_RES_MEM(0xffe41000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0x8e0)),
-};
+पूर्ण;
 
-static struct platform_device scif1_device = {
+अटल काष्ठा platक्रमm_device scअगर1_device = अणु
 	.name		= "sh-sci",
 	.id		= 1,
-	.resource	= scif1_resources,
-	.num_resources	= ARRAY_SIZE(scif1_resources),
-	.dev		= {
-		.platform_data = &scif1_platform_data,
-	},
-};
+	.resource	= scअगर1_resources,
+	.num_resources	= ARRAY_SIZE(scअगर1_resources),
+	.dev		= अणु
+		.platक्रमm_data = &scअगर1_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif2_platform_data = {
+अटल काष्ठा plat_sci_port scअगर2_platक्रमm_data = अणु
 	.scscr          = SCSCR_REIE,
 	.type           = PORT_SCIF,
 	.regtype        = SCIx_SH4_SCIF_BRG_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif2_resources[] = {
+अटल काष्ठा resource scअगर2_resources[] = अणु
 	DEFINE_RES_MEM(0xffe42000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0x900)),
-};
+पूर्ण;
 
-static struct platform_device scif2_device = {
+अटल काष्ठा platक्रमm_device scअगर2_device = अणु
 	.name		= "sh-sci",
 	.id		= 2,
-	.resource	= scif2_resources,
-	.num_resources	= ARRAY_SIZE(scif2_resources),
-	.dev		= {
-		.platform_data = &scif2_platform_data,
-	},
-};
+	.resource	= scअगर2_resources,
+	.num_resources	= ARRAY_SIZE(scअगर2_resources),
+	.dev		= अणु
+		.platक्रमm_data = &scअगर2_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif3_platform_data = {
+अटल काष्ठा plat_sci_port scअगर3_platक्रमm_data = अणु
 	.scscr          = SCSCR_REIE | SCSCR_TOIE,
 	.type           = PORT_SCIF,
 	.regtype        = SCIx_SH4_SCIF_BRG_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif3_resources[] = {
+अटल काष्ठा resource scअगर3_resources[] = अणु
 	DEFINE_RES_MEM(0xffe43000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0x920)),
-};
+पूर्ण;
 
-static struct platform_device scif3_device = {
+अटल काष्ठा platक्रमm_device scअगर3_device = अणु
 	.name		= "sh-sci",
 	.id		= 3,
-	.resource	= scif3_resources,
-	.num_resources	= ARRAY_SIZE(scif3_resources),
-	.dev		= {
-		.platform_data	= &scif3_platform_data,
-	},
-};
+	.resource	= scअगर3_resources,
+	.num_resources	= ARRAY_SIZE(scअगर3_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर3_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif4_platform_data = {
+अटल काष्ठा plat_sci_port scअगर4_platक्रमm_data = अणु
 	.scscr          = SCSCR_REIE,
 	.type           = PORT_SCIF,
 	.regtype        = SCIx_SH4_SCIF_BRG_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif4_resources[] = {
+अटल काष्ठा resource scअगर4_resources[] = अणु
 	DEFINE_RES_MEM(0xffe44000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0x940)),
-};
+पूर्ण;
 
-static struct platform_device scif4_device = {
+अटल काष्ठा platक्रमm_device scअगर4_device = अणु
 	.name		= "sh-sci",
 	.id		= 4,
-	.resource	= scif4_resources,
-	.num_resources	= ARRAY_SIZE(scif4_resources),
-	.dev		= {
-		.platform_data	= &scif4_platform_data,
-	},
-};
+	.resource	= scअगर4_resources,
+	.num_resources	= ARRAY_SIZE(scअगर4_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर4_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif5_platform_data = {
+अटल काष्ठा plat_sci_port scअगर5_platक्रमm_data = अणु
 	.scscr          = SCSCR_REIE,
 	.type           = PORT_SCIF,
 	.regtype	= SCIx_SH4_SCIF_BRG_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif5_resources[] = {
+अटल काष्ठा resource scअगर5_resources[] = अणु
 	DEFINE_RES_MEM(0xffe43000, 0x100),
 	DEFINE_RES_IRQ(evt2irq(0x960)),
-};
+पूर्ण;
 
-static struct platform_device scif5_device = {
+अटल काष्ठा platक्रमm_device scअगर5_device = अणु
 	.name		= "sh-sci",
 	.id		= 5,
-	.resource	= scif5_resources,
-	.num_resources	= ARRAY_SIZE(scif5_resources),
-	.dev		= {
-		.platform_data	= &scif5_platform_data,
-	},
-};
+	.resource	= scअगर5_resources,
+	.num_resources	= ARRAY_SIZE(scअगर5_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर5_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
 /* RTC */
-static struct resource rtc_resources[] = {
-	[0] = {
+अटल काष्ठा resource rtc_resources[] = अणु
+	[0] = अणु
 		.name	= "rtc",
 		.start	= 0xFFFC5000,
 		.end	= 0xFFFC5000 + 0x26 - 1,
 		.flags	= IORESOURCE_IO,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= evt2irq(0xC00),
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device rtc_device = {
+अटल काष्ठा platक्रमm_device rtc_device = अणु
 	.name		= "sh-rtc",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(rtc_resources),
 	.resource	= rtc_resources,
-};
+पूर्ण;
 
 /* I2C 0 */
-static struct resource i2c0_resources[] = {
-	[0] = {
+अटल काष्ठा resource i2c0_resources[] = अणु
+	[0] = अणु
 		.name	= "IIC0",
 		.start  = 0xFFC70000,
 		.end    = 0xFFC7000A - 1,
 		.flags  = IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start  = evt2irq(0x860),
 		.flags  = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device i2c0_device = {
+अटल काष्ठा platक्रमm_device i2c0_device = अणु
 	.name           = "i2c-sh7734",
 	.id             = 0,
 	.num_resources  = ARRAY_SIZE(i2c0_resources),
 	.resource       = i2c0_resources,
-};
+पूर्ण;
 
 /* TMU */
-static struct sh_timer_config tmu0_platform_data = {
+अटल काष्ठा sh_समयr_config पंचांगu0_platक्रमm_data = अणु
 	.channels_mask = 7,
-};
+पूर्ण;
 
-static struct resource tmu0_resources[] = {
+अटल काष्ठा resource पंचांगu0_resources[] = अणु
 	DEFINE_RES_MEM(0xffd80000, 0x30),
 	DEFINE_RES_IRQ(evt2irq(0x400)),
 	DEFINE_RES_IRQ(evt2irq(0x420)),
 	DEFINE_RES_IRQ(evt2irq(0x440)),
-};
+पूर्ण;
 
-static struct platform_device tmu0_device = {
+अटल काष्ठा platक्रमm_device पंचांगu0_device = अणु
 	.name		= "sh-tmu",
 	.id		= 0,
-	.dev = {
-		.platform_data	= &tmu0_platform_data,
-	},
-	.resource	= tmu0_resources,
-	.num_resources	= ARRAY_SIZE(tmu0_resources),
-};
+	.dev = अणु
+		.platक्रमm_data	= &पंचांगu0_platक्रमm_data,
+	पूर्ण,
+	.resource	= पंचांगu0_resources,
+	.num_resources	= ARRAY_SIZE(पंचांगu0_resources),
+पूर्ण;
 
-static struct sh_timer_config tmu1_platform_data = {
+अटल काष्ठा sh_समयr_config पंचांगu1_platक्रमm_data = अणु
 	.channels_mask = 7,
-};
+पूर्ण;
 
-static struct resource tmu1_resources[] = {
+अटल काष्ठा resource पंचांगu1_resources[] = अणु
 	DEFINE_RES_MEM(0xffd81000, 0x30),
 	DEFINE_RES_IRQ(evt2irq(0x480)),
 	DEFINE_RES_IRQ(evt2irq(0x4a0)),
 	DEFINE_RES_IRQ(evt2irq(0x4c0)),
-};
+पूर्ण;
 
-static struct platform_device tmu1_device = {
+अटल काष्ठा platक्रमm_device पंचांगu1_device = अणु
 	.name		= "sh-tmu",
 	.id		= 1,
-	.dev = {
-		.platform_data	= &tmu1_platform_data,
-	},
-	.resource	= tmu1_resources,
-	.num_resources	= ARRAY_SIZE(tmu1_resources),
-};
+	.dev = अणु
+		.platक्रमm_data	= &पंचांगu1_platक्रमm_data,
+	पूर्ण,
+	.resource	= पंचांगu1_resources,
+	.num_resources	= ARRAY_SIZE(पंचांगu1_resources),
+पूर्ण;
 
-static struct sh_timer_config tmu2_platform_data = {
+अटल काष्ठा sh_समयr_config पंचांगu2_platक्रमm_data = अणु
 	.channels_mask = 7,
-};
+पूर्ण;
 
-static struct resource tmu2_resources[] = {
+अटल काष्ठा resource पंचांगu2_resources[] = अणु
 	DEFINE_RES_MEM(0xffd82000, 0x30),
 	DEFINE_RES_IRQ(evt2irq(0x500)),
 	DEFINE_RES_IRQ(evt2irq(0x520)),
 	DEFINE_RES_IRQ(evt2irq(0x540)),
-};
+पूर्ण;
 
-static struct platform_device tmu2_device = {
+अटल काष्ठा platक्रमm_device पंचांगu2_device = अणु
 	.name		= "sh-tmu",
 	.id		= 2,
-	.dev = {
-		.platform_data	= &tmu2_platform_data,
-	},
-	.resource	= tmu2_resources,
-	.num_resources	= ARRAY_SIZE(tmu2_resources),
-};
+	.dev = अणु
+		.platक्रमm_data	= &पंचांगu2_platक्रमm_data,
+	पूर्ण,
+	.resource	= पंचांगu2_resources,
+	.num_resources	= ARRAY_SIZE(पंचांगu2_resources),
+पूर्ण;
 
-static struct platform_device *sh7734_devices[] __initdata = {
-	&scif0_device,
-	&scif1_device,
-	&scif2_device,
-	&scif3_device,
-	&scif4_device,
-	&scif5_device,
-	&tmu0_device,
-	&tmu1_device,
-	&tmu2_device,
+अटल काष्ठा platक्रमm_device *sh7734_devices[] __initdata = अणु
+	&scअगर0_device,
+	&scअगर1_device,
+	&scअगर2_device,
+	&scअगर3_device,
+	&scअगर4_device,
+	&scअगर5_device,
+	&पंचांगu0_device,
+	&पंचांगu1_device,
+	&पंचांगu2_device,
 	&rtc_device,
-};
+पूर्ण;
 
-static struct platform_device *sh7734_early_devices[] __initdata = {
-	&scif0_device,
-	&scif1_device,
-	&scif2_device,
-	&scif3_device,
-	&scif4_device,
-	&scif5_device,
-	&tmu0_device,
-	&tmu1_device,
-	&tmu2_device,
-};
+अटल काष्ठा platक्रमm_device *sh7734_early_devices[] __initdata = अणु
+	&scअगर0_device,
+	&scअगर1_device,
+	&scअगर2_device,
+	&scअगर3_device,
+	&scअगर4_device,
+	&scअगर5_device,
+	&पंचांगu0_device,
+	&पंचांगu1_device,
+	&पंचांगu2_device,
+पूर्ण;
 
-void __init plat_early_device_setup(void)
-{
-	sh_early_platform_add_devices(sh7734_early_devices,
+व्योम __init plat_early_device_setup(व्योम)
+अणु
+	sh_early_platक्रमm_add_devices(sh7734_early_devices,
 		ARRAY_SIZE(sh7734_early_devices));
-}
+पूर्ण
 
-#define GROUP 0
-enum {
+#घोषणा GROUP 0
+क्रमागत अणु
 	UNUSED = 0,
 
-	/* interrupt sources */
+	/* पूर्णांकerrupt sources */
 
 	IRL0_LLLL, IRL0_LLLH, IRL0_LLHL, IRL0_LLHH,
 	IRL0_LHLL, IRL0_LHLH, IRL0_LHHL, IRL0_LHHH,
@@ -362,9 +363,9 @@ enum {
 	SDHI,
 	SSI,
 	SPI,
-};
+पूर्ण;
 
-static struct intc_vect vectors[] __initdata = {
+अटल काष्ठा पूर्णांकc_vect vectors[] __initdata = अणु
 	INTC_VECT(DU, 0x3E0),
 	INTC_VECT(TMU00, 0x400),
 	INTC_VECT(TMU10, 0x420),
@@ -430,9 +431,9 @@ static struct intc_vect vectors[] __initdata = {
 	INTC_VECT(QSPI, 0xE60),
 	INTC_VECT(HSCIF, 0xFC0),
 	INTC_VECT(VEU3F_VE3, 0xF40),
-};
+पूर्ण;
 
-static struct intc_group groups[] __initdata = {
+अटल काष्ठा पूर्णांकc_group groups[] __initdata = अणु
 	/* Common */
 	INTC_GROUP(SDHI, SDHI0, SDHI1, SDHI2),
 	INTC_GROUP(SPI, HSPI, RSPI, QSPI),
@@ -458,11 +459,11 @@ static struct intc_group groups[] __initdata = {
 	/* Priority group*/
 	INTC_GROUP(RCAN_P, RCAN0, RCAN1), /* INT2PRI5 */
 	INTC_GROUP(LBSCDMAC_P, LBSCDMAC0, LBSCDMAC1), /* INT2PRI5 */
-};
+पूर्ण;
 
-static struct intc_mask_reg mask_registers[] __initdata = {
-	{ 0xFF804040, 0xFF804044, 32, /* INT2MSKRG / INT2MSKCR */
-	  { 0,
+अटल काष्ठा पूर्णांकc_mask_reg mask_रेजिस्टरs[] __initdata = अणु
+	अणु 0xFF804040, 0xFF804044, 32, /* INT2MSKRG / INT2MSKCR */
+	  अणु 0,
 		VEU3F_VE3,
 		SDHI, /* SDHI 0-2 */
 		ADMAC,
@@ -493,74 +494,74 @@ static struct intc_mask_reg mask_registers[] __initdata = {
 		I2C0, /* I2C */ /* I2C 0, 1*/
 		TMU_3_M, /* TMU30 - TMU80 */
 		TMU_0_M, /* TMU00 - TMU21 */
-		DU } },
-};
+		DU पूर्ण पूर्ण,
+पूर्ण;
 
-static struct intc_prio_reg prio_registers[] __initdata = {
-	{ 0xFF804000, 0, 32, 8, /* INT2PRI0 */
-		{ DU, TMU00, TMU10, TMU20 } },
-	{ 0xFF804004, 0, 32, 8, /* INT2PRI1 */
-		{ TMU30, TMU60, RTC, SDHI } },
-	{ 0xFF804008, 0, 32, 8, /* INT2PRI2 */
-		{ HUDI, SHDMAC, USB, SSI } },
-	{ 0xFF80400C, 0, 32, 8, /* INT2PRI3 */
-		{ VIN0, SPI, _2DG, LBSCATA } },
-	{ 0xFF804010, 0, 32, 8, /* INT2PRI4 */
-		{ SCIF0, SCIF3, HSCIF, LCDC } },
-	{ 0xFF804014, 0, 32, 8, /* INT2PRI5 */
-		{ RCAN_P, LBSCDMAC_P, LBSCDMAC2, MMC } },
-	{ 0xFF804018, 0, 32, 8, /* INT2PRI6 */
-		{ HPBDMAC0_3, HPBDMAC4_10, HPBDMAC11_18, HPBDMAC19_22 } },
-	{ 0xFF80401C, 0, 32, 8, /* INT2PRI7 */
-		{ HPBDMAC23_25_27_28, I2C0, SRC0, SRC1 } },
-	{ 0xFF804020, 0, 32, 8, /* INT2PRI8 */
-		{ 0 /* ADIF */, VIN1, RESET_WDT, HIF } },
-	{ 0xFF804024, 0, 32, 8, /* INT2PRI9 */
-		{ ADMAC, FLCTL, GPIO0_3, GPIO4_5 } },
-	{ 0xFF804028, 0, 32, 8, /* INT2PRI10 */
-		{ STIF0, STIF1, VEU3F_VE3, GETHER } },
-	{ 0xFF80402C, 0, 32, 8, /* INT2PRI11 */
-		{ MTU2, RGPVG, MIMLB, IEBUS } },
-};
+अटल काष्ठा पूर्णांकc_prio_reg prio_रेजिस्टरs[] __initdata = अणु
+	अणु 0xFF804000, 0, 32, 8, /* INT2PRI0 */
+		अणु DU, TMU00, TMU10, TMU20 पूर्ण पूर्ण,
+	अणु 0xFF804004, 0, 32, 8, /* INT2PRI1 */
+		अणु TMU30, TMU60, RTC, SDHI पूर्ण पूर्ण,
+	अणु 0xFF804008, 0, 32, 8, /* INT2PRI2 */
+		अणु HUDI, SHDMAC, USB, SSI पूर्ण पूर्ण,
+	अणु 0xFF80400C, 0, 32, 8, /* INT2PRI3 */
+		अणु VIN0, SPI, _2DG, LBSCATA पूर्ण पूर्ण,
+	अणु 0xFF804010, 0, 32, 8, /* INT2PRI4 */
+		अणु SCIF0, SCIF3, HSCIF, LCDC पूर्ण पूर्ण,
+	अणु 0xFF804014, 0, 32, 8, /* INT2PRI5 */
+		अणु RCAN_P, LBSCDMAC_P, LBSCDMAC2, MMC पूर्ण पूर्ण,
+	अणु 0xFF804018, 0, 32, 8, /* INT2PRI6 */
+		अणु HPBDMAC0_3, HPBDMAC4_10, HPBDMAC11_18, HPBDMAC19_22 पूर्ण पूर्ण,
+	अणु 0xFF80401C, 0, 32, 8, /* INT2PRI7 */
+		अणु HPBDMAC23_25_27_28, I2C0, SRC0, SRC1 पूर्ण पूर्ण,
+	अणु 0xFF804020, 0, 32, 8, /* INT2PRI8 */
+		अणु 0 /* ADIF */, VIN1, RESET_WDT, HIF पूर्ण पूर्ण,
+	अणु 0xFF804024, 0, 32, 8, /* INT2PRI9 */
+		अणु ADMAC, FLCTL, GPIO0_3, GPIO4_5 पूर्ण पूर्ण,
+	अणु 0xFF804028, 0, 32, 8, /* INT2PRI10 */
+		अणु STIF0, STIF1, VEU3F_VE3, GETHER पूर्ण पूर्ण,
+	अणु 0xFF80402C, 0, 32, 8, /* INT2PRI11 */
+		अणु MTU2, RGPVG, MIMLB, IEBUS पूर्ण पूर्ण,
+पूर्ण;
 
-static DECLARE_INTC_DESC(intc_desc, "sh7734", vectors, groups,
-	mask_registers, prio_registers, NULL);
+अटल DECLARE_INTC_DESC(पूर्णांकc_desc, "sh7734", vectors, groups,
+	mask_रेजिस्टरs, prio_रेजिस्टरs, शून्य);
 
-/* Support for external interrupt pins in IRQ mode */
+/* Support क्रम बाह्यal पूर्णांकerrupt pins in IRQ mode */
 
-static struct intc_vect irq3210_vectors[] __initdata = {
+अटल काष्ठा पूर्णांकc_vect irq3210_vectors[] __initdata = अणु
 	INTC_VECT(IRQ0, 0x240), INTC_VECT(IRQ1, 0x280),
 	INTC_VECT(IRQ2, 0x2C0), INTC_VECT(IRQ3, 0x300),
-};
+पूर्ण;
 
-static struct intc_sense_reg irq3210_sense_registers[] __initdata = {
-	{ 0xFF80201C, 32, 2, /* ICR1 */
-	{ IRQ0, IRQ1, IRQ2, IRQ3, } },
-};
+अटल काष्ठा पूर्णांकc_sense_reg irq3210_sense_रेजिस्टरs[] __initdata = अणु
+	अणु 0xFF80201C, 32, 2, /* ICR1 */
+	अणु IRQ0, IRQ1, IRQ2, IRQ3, पूर्ण पूर्ण,
+पूर्ण;
 
-static struct intc_mask_reg irq3210_ack_registers[] __initdata = {
-	{ 0xFF802024, 0, 32, /* INTREQ */
-	{ IRQ0, IRQ1, IRQ2, IRQ3, } },
-};
+अटल काष्ठा पूर्णांकc_mask_reg irq3210_ack_रेजिस्टरs[] __initdata = अणु
+	अणु 0xFF802024, 0, 32, /* INTREQ */
+	अणु IRQ0, IRQ1, IRQ2, IRQ3, पूर्ण पूर्ण,
+पूर्ण;
 
-static struct intc_mask_reg irq3210_mask_registers[] __initdata = {
-	{ 0xFF802044, 0xFF802064, 32, /* INTMSK0 / INTMSKCLR0 */
-	{ IRQ0, IRQ1, IRQ2, IRQ3, } },
-};
+अटल काष्ठा पूर्णांकc_mask_reg irq3210_mask_रेजिस्टरs[] __initdata = अणु
+	अणु 0xFF802044, 0xFF802064, 32, /* INTMSK0 / INTMSKCLR0 */
+	अणु IRQ0, IRQ1, IRQ2, IRQ3, पूर्ण पूर्ण,
+पूर्ण;
 
-static struct intc_prio_reg irq3210_prio_registers[] __initdata = {
-	{ 0xFF802010, 0, 32, 4, /* INTPRI */
-	{ IRQ0, IRQ1, IRQ2, IRQ3, } },
-};
+अटल काष्ठा पूर्णांकc_prio_reg irq3210_prio_रेजिस्टरs[] __initdata = अणु
+	अणु 0xFF802010, 0, 32, 4, /* INTPRI */
+	अणु IRQ0, IRQ1, IRQ2, IRQ3, पूर्ण पूर्ण,
+पूर्ण;
 
-static DECLARE_INTC_DESC_ACK(intc_desc_irq3210, "sh7734-irq3210",
-	irq3210_vectors, NULL,
-	irq3210_mask_registers, irq3210_prio_registers,
-	irq3210_sense_registers, irq3210_ack_registers);
+अटल DECLARE_INTC_DESC_ACK(पूर्णांकc_desc_irq3210, "sh7734-irq3210",
+	irq3210_vectors, शून्य,
+	irq3210_mask_रेजिस्टरs, irq3210_prio_रेजिस्टरs,
+	irq3210_sense_रेजिस्टरs, irq3210_ack_रेजिस्टरs);
 
-/* External interrupt pins in IRL mode */
+/* External पूर्णांकerrupt pins in IRL mode */
 
-static struct intc_vect vectors_irl3210[] __initdata = {
+अटल काष्ठा पूर्णांकc_vect vectors_irl3210[] __initdata = अणु
 	INTC_VECT(IRL0_LLLL, 0x200), INTC_VECT(IRL0_LLLH, 0x220),
 	INTC_VECT(IRL0_LLHL, 0x240), INTC_VECT(IRL0_LLHH, 0x260),
 	INTC_VECT(IRL0_LHLL, 0x280), INTC_VECT(IRL0_LHLH, 0x2a0),
@@ -569,53 +570,53 @@ static struct intc_vect vectors_irl3210[] __initdata = {
 	INTC_VECT(IRL0_HLHL, 0x340), INTC_VECT(IRL0_HLHH, 0x360),
 	INTC_VECT(IRL0_HHLL, 0x380), INTC_VECT(IRL0_HHLH, 0x3a0),
 	INTC_VECT(IRL0_HHHL, 0x3c0),
-};
+पूर्ण;
 
-static DECLARE_INTC_DESC(intc_desc_irl3210, "sh7734-irl3210",
-	vectors_irl3210, NULL, mask_registers, NULL, NULL);
+अटल DECLARE_INTC_DESC(पूर्णांकc_desc_irl3210, "sh7734-irl3210",
+	vectors_irl3210, शून्य, mask_रेजिस्टरs, शून्य, शून्य);
 
-#define INTC_ICR0		0xFF802000
-#define INTC_INTMSK0    0xFF802044
-#define INTC_INTMSK1    0xFF802048
-#define INTC_INTMSKCLR0 0xFF802064
-#define INTC_INTMSKCLR1 0xFF802068
+#घोषणा INTC_ICR0		0xFF802000
+#घोषणा INTC_INTMSK0    0xFF802044
+#घोषणा INTC_INTMSK1    0xFF802048
+#घोषणा INTC_INTMSKCLR0 0xFF802064
+#घोषणा INTC_INTMSKCLR1 0xFF802068
 
-void __init plat_irq_setup(void)
-{
+व्योम __init plat_irq_setup(व्योम)
+अणु
 	/* disable IRQ3-0 */
-	__raw_writel(0xF0000000, INTC_INTMSK0);
+	__raw_ग_लिखोl(0xF0000000, INTC_INTMSK0);
 
 	/* disable IRL3-0 */
-	__raw_writel(0x80000000, INTC_INTMSK1);
+	__raw_ग_लिखोl(0x80000000, INTC_INTMSK1);
 
-	/* select IRL mode for IRL3-0 */
-	__raw_writel(__raw_readl(INTC_ICR0) & ~0x00800000, INTC_ICR0);
+	/* select IRL mode क्रम IRL3-0 */
+	__raw_ग_लिखोl(__raw_पढ़ोl(INTC_ICR0) & ~0x00800000, INTC_ICR0);
 
 	/* disable holding function, ie enable "SH-4 Mode (LVLMODE)" */
-	__raw_writel(__raw_readl(INTC_ICR0) | 0x00200000, INTC_ICR0);
+	__raw_ग_लिखोl(__raw_पढ़ोl(INTC_ICR0) | 0x00200000, INTC_ICR0);
 
-	register_intc_controller(&intc_desc);
-}
+	रेजिस्टर_पूर्णांकc_controller(&पूर्णांकc_desc);
+पूर्ण
 
-void __init plat_irq_setup_pins(int mode)
-{
-	switch (mode) {
-	case IRQ_MODE_IRQ3210:
-		/* select IRQ mode for IRL3-0 */
-		__raw_writel(__raw_readl(INTC_ICR0) | 0x00800000, INTC_ICR0);
-		register_intc_controller(&intc_desc_irq3210);
-		break;
-	case IRQ_MODE_IRL3210:
-		/* enable IRL0-3 but don't provide any masking */
-		__raw_writel(0x80000000, INTC_INTMSKCLR1);
-		__raw_writel(0xf0000000, INTC_INTMSKCLR0);
-		break;
-	case IRQ_MODE_IRL3210_MASK:
-		/* enable IRL0-3 and mask using cpu intc controller */
-		__raw_writel(0x80000000, INTC_INTMSKCLR0);
-		register_intc_controller(&intc_desc_irl3210);
-		break;
-	default:
+व्योम __init plat_irq_setup_pins(पूर्णांक mode)
+अणु
+	चयन (mode) अणु
+	हाल IRQ_MODE_IRQ3210:
+		/* select IRQ mode क्रम IRL3-0 */
+		__raw_ग_लिखोl(__raw_पढ़ोl(INTC_ICR0) | 0x00800000, INTC_ICR0);
+		रेजिस्टर_पूर्णांकc_controller(&पूर्णांकc_desc_irq3210);
+		अवरोध;
+	हाल IRQ_MODE_IRL3210:
+		/* enable IRL0-3 but करोn't provide any masking */
+		__raw_ग_लिखोl(0x80000000, INTC_INTMSKCLR1);
+		__raw_ग_लिखोl(0xf0000000, INTC_INTMSKCLR0);
+		अवरोध;
+	हाल IRQ_MODE_IRL3210_MASK:
+		/* enable IRL0-3 and mask using cpu पूर्णांकc controller */
+		__raw_ग_लिखोl(0x80000000, INTC_INTMSKCLR0);
+		रेजिस्टर_पूर्णांकc_controller(&पूर्णांकc_desc_irl3210);
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण

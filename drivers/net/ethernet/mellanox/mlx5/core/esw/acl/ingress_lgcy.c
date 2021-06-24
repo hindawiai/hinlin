@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies Inc. All rights reserved. */
 
-#include "mlx5_core.h"
-#include "eswitch.h"
-#include "helper.h"
-#include "lgcy.h"
+#समावेश "mlx5_core.h"
+#समावेश "eswitch.h"
+#समावेश "helper.h"
+#समावेश "lgcy.h"
 
-static void esw_acl_ingress_lgcy_rules_destroy(struct mlx5_vport *vport)
-{
-	if (vport->ingress.legacy.drop_rule) {
+अटल व्योम esw_acl_ingress_lgcy_rules_destroy(काष्ठा mlx5_vport *vport)
+अणु
+	अगर (vport->ingress.legacy.drop_rule) अणु
 		mlx5_del_flow_rules(vport->ingress.legacy.drop_rule);
-		vport->ingress.legacy.drop_rule = NULL;
-	}
+		vport->ingress.legacy.drop_rule = शून्य;
+	पूर्ण
 	esw_acl_ingress_allow_rule_destroy(vport);
-}
+पूर्ण
 
-static int esw_acl_ingress_lgcy_groups_create(struct mlx5_eswitch *esw,
-					      struct mlx5_vport *vport)
-{
-	int inlen = MLX5_ST_SZ_BYTES(create_flow_group_in);
-	struct mlx5_core_dev *dev = esw->dev;
-	struct mlx5_flow_group *g;
-	void *match_criteria;
+अटल पूर्णांक esw_acl_ingress_lgcy_groups_create(काष्ठा mlx5_eचयन *esw,
+					      काष्ठा mlx5_vport *vport)
+अणु
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(create_flow_group_in);
+	काष्ठा mlx5_core_dev *dev = esw->dev;
+	काष्ठा mlx5_flow_group *g;
+	व्योम *match_criteria;
 	u32 *flow_group_in;
-	int err;
+	पूर्णांक err;
 
 	flow_group_in = kvzalloc(inlen, GFP_KERNEL);
-	if (!flow_group_in)
-		return -ENOMEM;
+	अगर (!flow_group_in)
+		वापस -ENOMEM;
 
 	match_criteria = MLX5_ADDR_OF(create_flow_group_in, flow_group_in, match_criteria);
 
@@ -40,15 +41,15 @@ static int esw_acl_ingress_lgcy_groups_create(struct mlx5_eswitch *esw,
 	MLX5_SET(create_flow_group_in, flow_group_in, end_flow_index, 0);
 
 	g = mlx5_create_flow_group(vport->ingress.acl, flow_group_in);
-	if (IS_ERR(g)) {
+	अगर (IS_ERR(g)) अणु
 		err = PTR_ERR(g);
 		esw_warn(dev, "vport[%d] ingress create untagged spoofchk flow group, err(%d)\n",
 			 vport->vport, err);
-		goto spoof_err;
-	}
+		जाओ spoof_err;
+	पूर्ण
 	vport->ingress.legacy.allow_untagged_spoofchk_grp = g;
 
-	memset(flow_group_in, 0, inlen);
+	स_रखो(flow_group_in, 0, inlen);
 	MLX5_SET(create_flow_group_in, flow_group_in, match_criteria_enable,
 		 MLX5_MATCH_OUTER_HEADERS);
 	MLX5_SET_TO_ONES(fte_match_param, match_criteria, outer_headers.cvlan_tag);
@@ -56,15 +57,15 @@ static int esw_acl_ingress_lgcy_groups_create(struct mlx5_eswitch *esw,
 	MLX5_SET(create_flow_group_in, flow_group_in, end_flow_index, 1);
 
 	g = mlx5_create_flow_group(vport->ingress.acl, flow_group_in);
-	if (IS_ERR(g)) {
+	अगर (IS_ERR(g)) अणु
 		err = PTR_ERR(g);
 		esw_warn(dev, "vport[%d] ingress create untagged flow group, err(%d)\n",
 			 vport->vport, err);
-		goto untagged_err;
-	}
+		जाओ untagged_err;
+	पूर्ण
 	vport->ingress.legacy.allow_untagged_only_grp = g;
 
-	memset(flow_group_in, 0, inlen);
+	स_रखो(flow_group_in, 0, inlen);
 	MLX5_SET(create_flow_group_in, flow_group_in, match_criteria_enable,
 		 MLX5_MATCH_OUTER_HEADERS);
 	MLX5_SET_TO_ONES(fte_match_param, match_criteria, outer_headers.smac_47_16);
@@ -73,79 +74,79 @@ static int esw_acl_ingress_lgcy_groups_create(struct mlx5_eswitch *esw,
 	MLX5_SET(create_flow_group_in, flow_group_in, end_flow_index, 2);
 
 	g = mlx5_create_flow_group(vport->ingress.acl, flow_group_in);
-	if (IS_ERR(g)) {
+	अगर (IS_ERR(g)) अणु
 		err = PTR_ERR(g);
 		esw_warn(dev, "vport[%d] ingress create spoofchk flow group, err(%d)\n",
 			 vport->vport, err);
-		goto allow_spoof_err;
-	}
+		जाओ allow_spoof_err;
+	पूर्ण
 	vport->ingress.legacy.allow_spoofchk_only_grp = g;
 
-	memset(flow_group_in, 0, inlen);
+	स_रखो(flow_group_in, 0, inlen);
 	MLX5_SET(create_flow_group_in, flow_group_in, start_flow_index, 3);
 	MLX5_SET(create_flow_group_in, flow_group_in, end_flow_index, 3);
 
 	g = mlx5_create_flow_group(vport->ingress.acl, flow_group_in);
-	if (IS_ERR(g)) {
+	अगर (IS_ERR(g)) अणु
 		err = PTR_ERR(g);
 		esw_warn(dev, "vport[%d] ingress create drop flow group, err(%d)\n",
 			 vport->vport, err);
-		goto drop_err;
-	}
+		जाओ drop_err;
+	पूर्ण
 	vport->ingress.legacy.drop_grp = g;
-	kvfree(flow_group_in);
-	return 0;
+	kvमुक्त(flow_group_in);
+	वापस 0;
 
 drop_err:
-	if (!IS_ERR_OR_NULL(vport->ingress.legacy.allow_spoofchk_only_grp)) {
+	अगर (!IS_ERR_OR_शून्य(vport->ingress.legacy.allow_spoofchk_only_grp)) अणु
 		mlx5_destroy_flow_group(vport->ingress.legacy.allow_spoofchk_only_grp);
-		vport->ingress.legacy.allow_spoofchk_only_grp = NULL;
-	}
+		vport->ingress.legacy.allow_spoofchk_only_grp = शून्य;
+	पूर्ण
 allow_spoof_err:
-	if (!IS_ERR_OR_NULL(vport->ingress.legacy.allow_untagged_only_grp)) {
+	अगर (!IS_ERR_OR_शून्य(vport->ingress.legacy.allow_untagged_only_grp)) अणु
 		mlx5_destroy_flow_group(vport->ingress.legacy.allow_untagged_only_grp);
-		vport->ingress.legacy.allow_untagged_only_grp = NULL;
-	}
+		vport->ingress.legacy.allow_untagged_only_grp = शून्य;
+	पूर्ण
 untagged_err:
-	if (!IS_ERR_OR_NULL(vport->ingress.legacy.allow_untagged_spoofchk_grp)) {
+	अगर (!IS_ERR_OR_शून्य(vport->ingress.legacy.allow_untagged_spoofchk_grp)) अणु
 		mlx5_destroy_flow_group(vport->ingress.legacy.allow_untagged_spoofchk_grp);
-		vport->ingress.legacy.allow_untagged_spoofchk_grp = NULL;
-	}
+		vport->ingress.legacy.allow_untagged_spoofchk_grp = शून्य;
+	पूर्ण
 spoof_err:
-	kvfree(flow_group_in);
-	return err;
-}
+	kvमुक्त(flow_group_in);
+	वापस err;
+पूर्ण
 
-static void esw_acl_ingress_lgcy_groups_destroy(struct mlx5_vport *vport)
-{
-	if (vport->ingress.legacy.allow_spoofchk_only_grp) {
+अटल व्योम esw_acl_ingress_lgcy_groups_destroy(काष्ठा mlx5_vport *vport)
+अणु
+	अगर (vport->ingress.legacy.allow_spoofchk_only_grp) अणु
 		mlx5_destroy_flow_group(vport->ingress.legacy.allow_spoofchk_only_grp);
-		vport->ingress.legacy.allow_spoofchk_only_grp = NULL;
-	}
-	if (vport->ingress.legacy.allow_untagged_only_grp) {
+		vport->ingress.legacy.allow_spoofchk_only_grp = शून्य;
+	पूर्ण
+	अगर (vport->ingress.legacy.allow_untagged_only_grp) अणु
 		mlx5_destroy_flow_group(vport->ingress.legacy.allow_untagged_only_grp);
-		vport->ingress.legacy.allow_untagged_only_grp = NULL;
-	}
-	if (vport->ingress.legacy.allow_untagged_spoofchk_grp) {
+		vport->ingress.legacy.allow_untagged_only_grp = शून्य;
+	पूर्ण
+	अगर (vport->ingress.legacy.allow_untagged_spoofchk_grp) अणु
 		mlx5_destroy_flow_group(vport->ingress.legacy.allow_untagged_spoofchk_grp);
-		vport->ingress.legacy.allow_untagged_spoofchk_grp = NULL;
-	}
-	if (vport->ingress.legacy.drop_grp) {
+		vport->ingress.legacy.allow_untagged_spoofchk_grp = शून्य;
+	पूर्ण
+	अगर (vport->ingress.legacy.drop_grp) अणु
 		mlx5_destroy_flow_group(vport->ingress.legacy.drop_grp);
-		vport->ingress.legacy.drop_grp = NULL;
-	}
-}
+		vport->ingress.legacy.drop_grp = शून्य;
+	पूर्ण
+पूर्ण
 
-int esw_acl_ingress_lgcy_setup(struct mlx5_eswitch *esw,
-			       struct mlx5_vport *vport)
-{
-	struct mlx5_flow_destination drop_ctr_dst = {};
-	struct mlx5_flow_destination *dst = NULL;
-	struct mlx5_flow_act flow_act = {};
-	struct mlx5_flow_spec *spec = NULL;
-	struct mlx5_fc *counter = NULL;
+पूर्णांक esw_acl_ingress_lgcy_setup(काष्ठा mlx5_eचयन *esw,
+			       काष्ठा mlx5_vport *vport)
+अणु
+	काष्ठा mlx5_flow_destination drop_ctr_dst = अणुपूर्ण;
+	काष्ठा mlx5_flow_destination *dst = शून्य;
+	काष्ठा mlx5_flow_act flow_act = अणुपूर्ण;
+	काष्ठा mlx5_flow_spec *spec = शून्य;
+	काष्ठा mlx5_fc *counter = शून्य;
 	/* The ingress acl table contains 4 groups
-	 * (2 active rules at the same time -
+	 * (2 active rules at the same समय -
 	 *      1 allow rule from one of the first 3 groups.
 	 *      1 drop rule from the last group):
 	 * 1)Allow untagged traffic with smac=original mac.
@@ -153,59 +154,59 @@ int esw_acl_ingress_lgcy_setup(struct mlx5_eswitch *esw,
 	 * 3)Allow traffic with smac=original mac.
 	 * 4)Drop all other traffic.
 	 */
-	int table_size = 4;
-	int dest_num = 0;
-	int err = 0;
+	पूर्णांक table_size = 4;
+	पूर्णांक dest_num = 0;
+	पूर्णांक err = 0;
 	u8 *smac_v;
 
 	esw_acl_ingress_lgcy_rules_destroy(vport);
 
-	if (MLX5_CAP_ESW_INGRESS_ACL(esw->dev, flow_counter)) {
+	अगर (MLX5_CAP_ESW_INGRESS_ACL(esw->dev, flow_counter)) अणु
 		counter = mlx5_fc_create(esw->dev, false);
-		if (IS_ERR(counter)) {
+		अगर (IS_ERR(counter)) अणु
 			esw_warn(esw->dev,
 				 "vport[%d] configure ingress drop rule counter failed\n",
 				 vport->vport);
-			counter = NULL;
-		}
+			counter = शून्य;
+		पूर्ण
 		vport->ingress.legacy.drop_counter = counter;
-	}
+	पूर्ण
 
-	if (!vport->info.vlan && !vport->info.qos && !vport->info.spoofchk) {
+	अगर (!vport->info.vlan && !vport->info.qos && !vport->info.spoofchk) अणु
 		esw_acl_ingress_lgcy_cleanup(esw, vport);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!vport->ingress.acl) {
+	अगर (!vport->ingress.acl) अणु
 		vport->ingress.acl = esw_acl_table_create(esw, vport,
 							  MLX5_FLOW_NAMESPACE_ESW_INGRESS,
 							  table_size);
-		if (IS_ERR(vport->ingress.acl)) {
+		अगर (IS_ERR(vport->ingress.acl)) अणु
 			err = PTR_ERR(vport->ingress.acl);
-			vport->ingress.acl = NULL;
-			return err;
-		}
+			vport->ingress.acl = शून्य;
+			वापस err;
+		पूर्ण
 
 		err = esw_acl_ingress_lgcy_groups_create(esw, vport);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 	esw_debug(esw->dev,
 		  "vport[%d] configure ingress rules, vlan(%d) qos(%d)\n",
 		  vport->vport, vport->info.vlan, vport->info.qos);
 
-	spec = kvzalloc(sizeof(*spec), GFP_KERNEL);
-	if (!spec) {
+	spec = kvzalloc(माप(*spec), GFP_KERNEL);
+	अगर (!spec) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (vport->info.vlan || vport->info.qos)
+	अगर (vport->info.vlan || vport->info.qos)
 		MLX5_SET_TO_ONES(fte_match_param, spec->match_criteria,
 				 outer_headers.cvlan_tag);
 
-	if (vport->info.spoofchk) {
+	अगर (vport->info.spoofchk) अणु
 		MLX5_SET_TO_ONES(fte_match_param, spec->match_criteria,
 				 outer_headers.smac_47_16);
 		MLX5_SET_TO_ONES(fte_match_param, spec->match_criteria,
@@ -214,57 +215,57 @@ int esw_acl_ingress_lgcy_setup(struct mlx5_eswitch *esw,
 				      spec->match_value,
 				      outer_headers.smac_47_16);
 		ether_addr_copy(smac_v, vport->info.mac);
-	}
+	पूर्ण
 
 	/* Create ingress allow rule */
 	spec->match_criteria_enable = MLX5_MATCH_OUTER_HEADERS;
 	flow_act.action = MLX5_FLOW_CONTEXT_ACTION_ALLOW;
 	vport->ingress.allow_rule = mlx5_add_flow_rules(vport->ingress.acl, spec,
-							&flow_act, NULL, 0);
-	if (IS_ERR(vport->ingress.allow_rule)) {
+							&flow_act, शून्य, 0);
+	अगर (IS_ERR(vport->ingress.allow_rule)) अणु
 		err = PTR_ERR(vport->ingress.allow_rule);
 		esw_warn(esw->dev,
 			 "vport[%d] configure ingress allow rule, err(%d)\n",
 			 vport->vport, err);
-		vport->ingress.allow_rule = NULL;
-		goto out;
-	}
+		vport->ingress.allow_rule = शून्य;
+		जाओ out;
+	पूर्ण
 
-	memset(&flow_act, 0, sizeof(flow_act));
+	स_रखो(&flow_act, 0, माप(flow_act));
 	flow_act.action = MLX5_FLOW_CONTEXT_ACTION_DROP;
 	/* Attach drop flow counter */
-	if (counter) {
+	अगर (counter) अणु
 		flow_act.action |= MLX5_FLOW_CONTEXT_ACTION_COUNT;
 		drop_ctr_dst.type = MLX5_FLOW_DESTINATION_TYPE_COUNTER;
 		drop_ctr_dst.counter_id = mlx5_fc_id(counter);
 		dst = &drop_ctr_dst;
 		dest_num++;
-	}
+	पूर्ण
 	vport->ingress.legacy.drop_rule =
-		mlx5_add_flow_rules(vport->ingress.acl, NULL,
+		mlx5_add_flow_rules(vport->ingress.acl, शून्य,
 				    &flow_act, dst, dest_num);
-	if (IS_ERR(vport->ingress.legacy.drop_rule)) {
+	अगर (IS_ERR(vport->ingress.legacy.drop_rule)) अणु
 		err = PTR_ERR(vport->ingress.legacy.drop_rule);
 		esw_warn(esw->dev,
 			 "vport[%d] configure ingress drop rule, err(%d)\n",
 			 vport->vport, err);
-		vport->ingress.legacy.drop_rule = NULL;
-		goto out;
-	}
-	kvfree(spec);
-	return 0;
+		vport->ingress.legacy.drop_rule = शून्य;
+		जाओ out;
+	पूर्ण
+	kvमुक्त(spec);
+	वापस 0;
 
 out:
 	esw_acl_ingress_lgcy_cleanup(esw, vport);
-	kvfree(spec);
-	return err;
-}
+	kvमुक्त(spec);
+	वापस err;
+पूर्ण
 
-void esw_acl_ingress_lgcy_cleanup(struct mlx5_eswitch *esw,
-				  struct mlx5_vport *vport)
-{
-	if (IS_ERR_OR_NULL(vport->ingress.acl))
-		goto clean_drop_counter;
+व्योम esw_acl_ingress_lgcy_cleanup(काष्ठा mlx5_eचयन *esw,
+				  काष्ठा mlx5_vport *vport)
+अणु
+	अगर (IS_ERR_OR_शून्य(vport->ingress.acl))
+		जाओ clean_drop_counter;
 
 	esw_debug(esw->dev, "Destroy vport[%d] E-Switch ingress ACL\n", vport->vport);
 
@@ -273,8 +274,8 @@ void esw_acl_ingress_lgcy_cleanup(struct mlx5_eswitch *esw,
 	esw_acl_ingress_table_destroy(vport);
 
 clean_drop_counter:
-	if (vport->ingress.legacy.drop_counter) {
+	अगर (vport->ingress.legacy.drop_counter) अणु
 		mlx5_fc_destroy(esw->dev, vport->ingress.legacy.drop_counter);
-		vport->ingress.legacy.drop_counter = NULL;
-	}
-}
+		vport->ingress.legacy.drop_counter = शून्य;
+	पूर्ण
+पूर्ण

@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * DECnet       An implementation of the DECnet protocol suite for the LINUX
- *              operating system.  DECnet is implemented using the  BSD Socket
- *              interface as the means of communication with the user level.
+ * DECnet       An implementation of the DECnet protocol suite क्रम the LINUX
+ *              operating प्रणाली.  DECnet is implemented using the  BSD Socket
+ *              पूर्णांकerface as the means of communication with the user level.
  *
  *              DECnet Routing Functions (Endnode and Router)
  *
  * Authors:     Steve Whitehouse <SteveW@ACM.org>
- *              Eduardo Marcelo Serrat <emserrat@geocities.com>
+ *              Eduarकरो Marcelo Serrat <emserrat@geocities.com>
  *
  * Changes:
  *              Steve Whitehouse : Fixes to allow "intra-ethernet" and
  *                                 "return-to-sender" bits on outgoing
  *                                 packets.
- *		Steve Whitehouse : Timeouts for cached routes.
- *              Steve Whitehouse : Use dst cache for input routes too.
+ *		Steve Whitehouse : Timeouts क्रम cached routes.
+ *              Steve Whitehouse : Use dst cache क्रम input routes too.
  *              Steve Whitehouse : Fixed error values in dn_send_skb.
  *              Steve Whitehouse : Rework routing functions to better fit
  *                                 DECnet routing design
@@ -26,20 +27,20 @@
  *                                 Alexey Kuznetsov's finer grained locking
  *                                 from ipv4/route.c.
  *              Steve Whitehouse : Routing is now starting to look like a
- *                                 sensible set of code now, mainly due to
+ *                                 sensible set of code now, मुख्यly due to
  *                                 my copying the IPv4 routing code. The
- *                                 hooks here are modified and will continue
- *                                 to evolve for a while.
+ *                                 hooks here are modअगरied and will जारी
+ *                                 to evolve क्रम a जबतक.
  *              Steve Whitehouse : Real SMP at last :-) Also new netfilter
  *                                 stuff. Look out raw sockets your days
  *                                 are numbered!
- *              Steve Whitehouse : Added return-to-sender functions. Added
- *                                 backlog congestion level return codes.
+ *              Steve Whitehouse : Added वापस-to-sender functions. Added
+ *                                 backlog congestion level वापस codes.
  *		Steve Whitehouse : Fixed bug where routes were set up with
  *                                 no ref count on net devices.
- *              Steve Whitehouse : RCU for the route cache
- *              Steve Whitehouse : Preparations for the flow cache
- *              Steve Whitehouse : Prepare for nonlinear skbs
+ *              Steve Whitehouse : RCU क्रम the route cache
+ *              Steve Whitehouse : Preparations क्रम the flow cache
+ *              Steve Whitehouse : Prepare क्रम nonlinear skbs
  */
 
 /******************************************************************************
@@ -47,378 +48,378 @@
 
 *******************************************************************************/
 
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/netdevice.h>
-#include <linux/inet.h>
-#include <linux/route.h>
-#include <linux/in_route.h>
-#include <linux/slab.h>
-#include <net/sock.h>
-#include <linux/mm.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/init.h>
-#include <linux/rtnetlink.h>
-#include <linux/string.h>
-#include <linux/netfilter_decnet.h>
-#include <linux/rcupdate.h>
-#include <linux/times.h>
-#include <linux/export.h>
-#include <asm/errno.h>
-#include <net/net_namespace.h>
-#include <net/netlink.h>
-#include <net/neighbour.h>
-#include <net/dst.h>
-#include <net/flow.h>
-#include <net/fib_rules.h>
-#include <net/dn.h>
-#include <net/dn_dev.h>
-#include <net/dn_nsp.h>
-#include <net/dn_route.h>
-#include <net/dn_neigh.h>
-#include <net/dn_fib.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/route.h>
+#समावेश <linux/in_route.h>
+#समावेश <linux/slab.h>
+#समावेश <net/sock.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/init.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/netfilter_decnet.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/बार.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netlink.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/dst.h>
+#समावेश <net/flow.h>
+#समावेश <net/fib_rules.h>
+#समावेश <net/dn.h>
+#समावेश <net/dn_dev.h>
+#समावेश <net/dn_nsp.h>
+#समावेश <net/dn_route.h>
+#समावेश <net/dn_neigh.h>
+#समावेश <net/dn_fib.h>
 
-struct dn_rt_hash_bucket {
-	struct dn_route __rcu *chain;
+काष्ठा dn_rt_hash_bucket अणु
+	काष्ठा dn_route __rcu *chain;
 	spinlock_t lock;
-};
+पूर्ण;
 
-extern struct neigh_table dn_neigh_table;
+बाह्य काष्ठा neigh_table dn_neigh_table;
 
 
-static unsigned char dn_hiord_addr[6] = {0xAA, 0x00, 0x04, 0x00, 0x00, 0x00};
+अटल अचिन्हित अक्षर dn_hiord_addr[6] = अणु0xAA, 0x00, 0x04, 0x00, 0x00, 0x00पूर्ण;
 
-static const int dn_rt_min_delay = 2 * HZ;
-static const int dn_rt_max_delay = 10 * HZ;
-static const int dn_rt_mtu_expires = 10 * 60 * HZ;
+अटल स्थिर पूर्णांक dn_rt_min_delay = 2 * HZ;
+अटल स्थिर पूर्णांक dn_rt_max_delay = 10 * HZ;
+अटल स्थिर पूर्णांक dn_rt_mtu_expires = 10 * 60 * HZ;
 
-static unsigned long dn_rt_deadline;
+अटल अचिन्हित दीर्घ dn_rt_deadline;
 
-static int dn_dst_gc(struct dst_ops *ops);
-static struct dst_entry *dn_dst_check(struct dst_entry *, __u32);
-static unsigned int dn_dst_default_advmss(const struct dst_entry *dst);
-static unsigned int dn_dst_mtu(const struct dst_entry *dst);
-static void dn_dst_destroy(struct dst_entry *);
-static void dn_dst_ifdown(struct dst_entry *, struct net_device *dev, int how);
-static struct dst_entry *dn_dst_negative_advice(struct dst_entry *);
-static void dn_dst_link_failure(struct sk_buff *);
-static void dn_dst_update_pmtu(struct dst_entry *dst, struct sock *sk,
-			       struct sk_buff *skb , u32 mtu,
+अटल पूर्णांक dn_dst_gc(काष्ठा dst_ops *ops);
+अटल काष्ठा dst_entry *dn_dst_check(काष्ठा dst_entry *, __u32);
+अटल अचिन्हित पूर्णांक dn_dst_शेष_advmss(स्थिर काष्ठा dst_entry *dst);
+अटल अचिन्हित पूर्णांक dn_dst_mtu(स्थिर काष्ठा dst_entry *dst);
+अटल व्योम dn_dst_destroy(काष्ठा dst_entry *);
+अटल व्योम dn_dst_अगरकरोwn(काष्ठा dst_entry *, काष्ठा net_device *dev, पूर्णांक how);
+अटल काष्ठा dst_entry *dn_dst_negative_advice(काष्ठा dst_entry *);
+अटल व्योम dn_dst_link_failure(काष्ठा sk_buff *);
+अटल व्योम dn_dst_update_pmtu(काष्ठा dst_entry *dst, काष्ठा sock *sk,
+			       काष्ठा sk_buff *skb , u32 mtu,
 			       bool confirm_neigh);
-static void dn_dst_redirect(struct dst_entry *dst, struct sock *sk,
-			    struct sk_buff *skb);
-static struct neighbour *dn_dst_neigh_lookup(const struct dst_entry *dst,
-					     struct sk_buff *skb,
-					     const void *daddr);
-static int dn_route_input(struct sk_buff *);
-static void dn_run_flush(struct timer_list *unused);
+अटल व्योम dn_dst_redirect(काष्ठा dst_entry *dst, काष्ठा sock *sk,
+			    काष्ठा sk_buff *skb);
+अटल काष्ठा neighbour *dn_dst_neigh_lookup(स्थिर काष्ठा dst_entry *dst,
+					     काष्ठा sk_buff *skb,
+					     स्थिर व्योम *daddr);
+अटल पूर्णांक dn_route_input(काष्ठा sk_buff *);
+अटल व्योम dn_run_flush(काष्ठा समयr_list *unused);
 
-static struct dn_rt_hash_bucket *dn_rt_hash_table;
-static unsigned int dn_rt_hash_mask;
+अटल काष्ठा dn_rt_hash_bucket *dn_rt_hash_table;
+अटल अचिन्हित पूर्णांक dn_rt_hash_mask;
 
-static struct timer_list dn_route_timer;
-static DEFINE_TIMER(dn_rt_flush_timer, dn_run_flush);
-int decnet_dst_gc_interval = 2;
+अटल काष्ठा समयr_list dn_route_समयr;
+अटल DEFINE_TIMER(dn_rt_flush_समयr, dn_run_flush);
+पूर्णांक decnet_dst_gc_पूर्णांकerval = 2;
 
-static struct dst_ops dn_dst_ops = {
+अटल काष्ठा dst_ops dn_dst_ops = अणु
 	.family =		PF_DECnet,
 	.gc_thresh =		128,
 	.gc =			dn_dst_gc,
 	.check =		dn_dst_check,
-	.default_advmss =	dn_dst_default_advmss,
+	.शेष_advmss =	dn_dst_शेष_advmss,
 	.mtu =			dn_dst_mtu,
 	.cow_metrics =		dst_cow_metrics_generic,
 	.destroy =		dn_dst_destroy,
-	.ifdown =		dn_dst_ifdown,
+	.अगरकरोwn =		dn_dst_अगरकरोwn,
 	.negative_advice =	dn_dst_negative_advice,
 	.link_failure =		dn_dst_link_failure,
 	.update_pmtu =		dn_dst_update_pmtu,
 	.redirect =		dn_dst_redirect,
 	.neigh_lookup =		dn_dst_neigh_lookup,
-};
+पूर्ण;
 
-static void dn_dst_destroy(struct dst_entry *dst)
-{
-	struct dn_route *rt = (struct dn_route *) dst;
+अटल व्योम dn_dst_destroy(काष्ठा dst_entry *dst)
+अणु
+	काष्ठा dn_route *rt = (काष्ठा dn_route *) dst;
 
-	if (rt->n)
+	अगर (rt->n)
 		neigh_release(rt->n);
 	dst_destroy_metrics_generic(dst);
-}
+पूर्ण
 
-static void dn_dst_ifdown(struct dst_entry *dst, struct net_device *dev, int how)
-{
-	if (how) {
-		struct dn_route *rt = (struct dn_route *) dst;
-		struct neighbour *n = rt->n;
+अटल व्योम dn_dst_अगरकरोwn(काष्ठा dst_entry *dst, काष्ठा net_device *dev, पूर्णांक how)
+अणु
+	अगर (how) अणु
+		काष्ठा dn_route *rt = (काष्ठा dn_route *) dst;
+		काष्ठा neighbour *n = rt->n;
 
-		if (n && n->dev == dev) {
+		अगर (n && n->dev == dev) अणु
 			n->dev = dev_net(dev)->loopback_dev;
 			dev_hold(n->dev);
 			dev_put(dev);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static __inline__ unsigned int dn_hash(__le16 src, __le16 dst)
-{
-	__u16 tmp = (__u16 __force)(src ^ dst);
-	tmp ^= (tmp >> 3);
-	tmp ^= (tmp >> 5);
-	tmp ^= (tmp >> 10);
-	return dn_rt_hash_mask & (unsigned int)tmp;
-}
+अटल __अंतरभूत__ अचिन्हित पूर्णांक dn_hash(__le16 src, __le16 dst)
+अणु
+	__u16 पंचांगp = (__u16 __क्रमce)(src ^ dst);
+	पंचांगp ^= (पंचांगp >> 3);
+	पंचांगp ^= (पंचांगp >> 5);
+	पंचांगp ^= (पंचांगp >> 10);
+	वापस dn_rt_hash_mask & (अचिन्हित पूर्णांक)पंचांगp;
+पूर्ण
 
-static void dn_dst_check_expire(struct timer_list *unused)
-{
-	int i;
-	struct dn_route *rt;
-	struct dn_route __rcu **rtp;
-	unsigned long now = jiffies;
-	unsigned long expire = 120 * HZ;
+अटल व्योम dn_dst_check_expire(काष्ठा समयr_list *unused)
+अणु
+	पूर्णांक i;
+	काष्ठा dn_route *rt;
+	काष्ठा dn_route __rcu **rtp;
+	अचिन्हित दीर्घ now = jअगरfies;
+	अचिन्हित दीर्घ expire = 120 * HZ;
 
-	for (i = 0; i <= dn_rt_hash_mask; i++) {
+	क्रम (i = 0; i <= dn_rt_hash_mask; i++) अणु
 		rtp = &dn_rt_hash_table[i].chain;
 
 		spin_lock(&dn_rt_hash_table[i].lock);
-		while ((rt = rcu_dereference_protected(*rtp,
-						lockdep_is_held(&dn_rt_hash_table[i].lock))) != NULL) {
-			if (atomic_read(&rt->dst.__refcnt) > 1 ||
-			    (now - rt->dst.lastuse) < expire) {
+		जबतक ((rt = rcu_dereference_रक्षित(*rtp,
+						lockdep_is_held(&dn_rt_hash_table[i].lock))) != शून्य) अणु
+			अगर (atomic_पढ़ो(&rt->dst.__refcnt) > 1 ||
+			    (now - rt->dst.lastuse) < expire) अणु
 				rtp = &rt->dn_next;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			*rtp = rt->dn_next;
-			rt->dn_next = NULL;
+			rt->dn_next = शून्य;
 			dst_dev_put(&rt->dst);
 			dst_release(&rt->dst);
-		}
+		पूर्ण
 		spin_unlock(&dn_rt_hash_table[i].lock);
 
-		if ((jiffies - now) > 0)
-			break;
-	}
+		अगर ((jअगरfies - now) > 0)
+			अवरोध;
+	पूर्ण
 
-	mod_timer(&dn_route_timer, now + decnet_dst_gc_interval * HZ);
-}
+	mod_समयr(&dn_route_समयr, now + decnet_dst_gc_पूर्णांकerval * HZ);
+पूर्ण
 
-static int dn_dst_gc(struct dst_ops *ops)
-{
-	struct dn_route *rt;
-	struct dn_route __rcu **rtp;
-	int i;
-	unsigned long now = jiffies;
-	unsigned long expire = 10 * HZ;
+अटल पूर्णांक dn_dst_gc(काष्ठा dst_ops *ops)
+अणु
+	काष्ठा dn_route *rt;
+	काष्ठा dn_route __rcu **rtp;
+	पूर्णांक i;
+	अचिन्हित दीर्घ now = jअगरfies;
+	अचिन्हित दीर्घ expire = 10 * HZ;
 
-	for (i = 0; i <= dn_rt_hash_mask; i++) {
+	क्रम (i = 0; i <= dn_rt_hash_mask; i++) अणु
 
 		spin_lock_bh(&dn_rt_hash_table[i].lock);
 		rtp = &dn_rt_hash_table[i].chain;
 
-		while ((rt = rcu_dereference_protected(*rtp,
-						lockdep_is_held(&dn_rt_hash_table[i].lock))) != NULL) {
-			if (atomic_read(&rt->dst.__refcnt) > 1 ||
-			    (now - rt->dst.lastuse) < expire) {
+		जबतक ((rt = rcu_dereference_रक्षित(*rtp,
+						lockdep_is_held(&dn_rt_hash_table[i].lock))) != शून्य) अणु
+			अगर (atomic_पढ़ो(&rt->dst.__refcnt) > 1 ||
+			    (now - rt->dst.lastuse) < expire) अणु
 				rtp = &rt->dn_next;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			*rtp = rt->dn_next;
-			rt->dn_next = NULL;
+			rt->dn_next = शून्य;
 			dst_dev_put(&rt->dst);
 			dst_release(&rt->dst);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		spin_unlock_bh(&dn_rt_hash_table[i].lock);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The decnet standards don't impose a particular minimum mtu, what they
- * do insist on is that the routing layer accepts a datagram of at least
- * 230 bytes long. Here we have to subtract the routing header length from
+ * The decnet standards करोn't impose a particular minimum mtu, what they
+ * करो insist on is that the routing layer accepts a datagram of at least
+ * 230 bytes दीर्घ. Here we have to subtract the routing header length from
  * 230 to get the minimum acceptable mtu. If there is no neighbour, then we
- * assume the worst and use a long header size.
+ * assume the worst and use a दीर्घ header size.
  *
  * We update both the mtu and the advertised mss (i.e. the segment size we
  * advertise to the other end).
  */
-static void dn_dst_update_pmtu(struct dst_entry *dst, struct sock *sk,
-			       struct sk_buff *skb, u32 mtu,
+अटल व्योम dn_dst_update_pmtu(काष्ठा dst_entry *dst, काष्ठा sock *sk,
+			       काष्ठा sk_buff *skb, u32 mtu,
 			       bool confirm_neigh)
-{
-	struct dn_route *rt = (struct dn_route *) dst;
-	struct neighbour *n = rt->n;
+अणु
+	काष्ठा dn_route *rt = (काष्ठा dn_route *) dst;
+	काष्ठा neighbour *n = rt->n;
 	u32 min_mtu = 230;
-	struct dn_dev *dn;
+	काष्ठा dn_dev *dn;
 
-	dn = n ? rcu_dereference_raw(n->dev->dn_ptr) : NULL;
+	dn = n ? rcu_dereference_raw(n->dev->dn_ptr) : शून्य;
 
-	if (dn && dn->use_long == 0)
+	अगर (dn && dn->use_दीर्घ == 0)
 		min_mtu -= 6;
-	else
+	अन्यथा
 		min_mtu -= 21;
 
-	if (dst_metric(dst, RTAX_MTU) > mtu && mtu >= min_mtu) {
-		if (!(dst_metric_locked(dst, RTAX_MTU))) {
+	अगर (dst_metric(dst, RTAX_MTU) > mtu && mtu >= min_mtu) अणु
+		अगर (!(dst_metric_locked(dst, RTAX_MTU))) अणु
 			dst_metric_set(dst, RTAX_MTU, mtu);
 			dst_set_expires(dst, dn_rt_mtu_expires);
-		}
-		if (!(dst_metric_locked(dst, RTAX_ADVMSS))) {
+		पूर्ण
+		अगर (!(dst_metric_locked(dst, RTAX_ADVMSS))) अणु
 			u32 mss = mtu - DN_MAX_NSP_DATA_HEADER;
 			u32 existing_mss = dst_metric_raw(dst, RTAX_ADVMSS);
-			if (!existing_mss || existing_mss > mss)
+			अगर (!existing_mss || existing_mss > mss)
 				dst_metric_set(dst, RTAX_ADVMSS, mss);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void dn_dst_redirect(struct dst_entry *dst, struct sock *sk,
-			    struct sk_buff *skb)
-{
-}
+अटल व्योम dn_dst_redirect(काष्ठा dst_entry *dst, काष्ठा sock *sk,
+			    काष्ठा sk_buff *skb)
+अणु
+पूर्ण
 
 /*
  * When a route has been marked obsolete. (e.g. routing cache flush)
  */
-static struct dst_entry *dn_dst_check(struct dst_entry *dst, __u32 cookie)
-{
-	return NULL;
-}
+अटल काष्ठा dst_entry *dn_dst_check(काष्ठा dst_entry *dst, __u32 cookie)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static struct dst_entry *dn_dst_negative_advice(struct dst_entry *dst)
-{
+अटल काष्ठा dst_entry *dn_dst_negative_advice(काष्ठा dst_entry *dst)
+अणु
 	dst_release(dst);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void dn_dst_link_failure(struct sk_buff *skb)
-{
-}
+अटल व्योम dn_dst_link_failure(काष्ठा sk_buff *skb)
+अणु
+पूर्ण
 
-static inline int compare_keys(struct flowidn *fl1, struct flowidn *fl2)
-{
-	return ((fl1->daddr ^ fl2->daddr) |
+अटल अंतरभूत पूर्णांक compare_keys(काष्ठा flowidn *fl1, काष्ठा flowidn *fl2)
+अणु
+	वापस ((fl1->daddr ^ fl2->daddr) |
 		(fl1->saddr ^ fl2->saddr) |
 		(fl1->flowidn_mark ^ fl2->flowidn_mark) |
 		(fl1->flowidn_scope ^ fl2->flowidn_scope) |
-		(fl1->flowidn_oif ^ fl2->flowidn_oif) |
-		(fl1->flowidn_iif ^ fl2->flowidn_iif)) == 0;
-}
+		(fl1->flowidn_oअगर ^ fl2->flowidn_oअगर) |
+		(fl1->flowidn_iअगर ^ fl2->flowidn_iअगर)) == 0;
+पूर्ण
 
-static int dn_insert_route(struct dn_route *rt, unsigned int hash, struct dn_route **rp)
-{
-	struct dn_route *rth;
-	struct dn_route __rcu **rthp;
-	unsigned long now = jiffies;
+अटल पूर्णांक dn_insert_route(काष्ठा dn_route *rt, अचिन्हित पूर्णांक hash, काष्ठा dn_route **rp)
+अणु
+	काष्ठा dn_route *rth;
+	काष्ठा dn_route __rcu **rthp;
+	अचिन्हित दीर्घ now = jअगरfies;
 
 	rthp = &dn_rt_hash_table[hash].chain;
 
 	spin_lock_bh(&dn_rt_hash_table[hash].lock);
-	while ((rth = rcu_dereference_protected(*rthp,
-						lockdep_is_held(&dn_rt_hash_table[hash].lock))) != NULL) {
-		if (compare_keys(&rth->fld, &rt->fld)) {
+	जबतक ((rth = rcu_dereference_रक्षित(*rthp,
+						lockdep_is_held(&dn_rt_hash_table[hash].lock))) != शून्य) अणु
+		अगर (compare_keys(&rth->fld, &rt->fld)) अणु
 			/* Put it first */
 			*rthp = rth->dn_next;
-			rcu_assign_pointer(rth->dn_next,
+			rcu_assign_poपूर्णांकer(rth->dn_next,
 					   dn_rt_hash_table[hash].chain);
-			rcu_assign_pointer(dn_rt_hash_table[hash].chain, rth);
+			rcu_assign_poपूर्णांकer(dn_rt_hash_table[hash].chain, rth);
 
 			dst_hold_and_use(&rth->dst, now);
 			spin_unlock_bh(&dn_rt_hash_table[hash].lock);
 
 			dst_release_immediate(&rt->dst);
 			*rp = rth;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		rthp = &rth->dn_next;
-	}
+	पूर्ण
 
-	rcu_assign_pointer(rt->dn_next, dn_rt_hash_table[hash].chain);
-	rcu_assign_pointer(dn_rt_hash_table[hash].chain, rt);
+	rcu_assign_poपूर्णांकer(rt->dn_next, dn_rt_hash_table[hash].chain);
+	rcu_assign_poपूर्णांकer(dn_rt_hash_table[hash].chain, rt);
 
 	dst_hold_and_use(&rt->dst, now);
 	spin_unlock_bh(&dn_rt_hash_table[hash].lock);
 	*rp = rt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dn_run_flush(struct timer_list *unused)
-{
-	int i;
-	struct dn_route *rt, *next;
+अटल व्योम dn_run_flush(काष्ठा समयr_list *unused)
+अणु
+	पूर्णांक i;
+	काष्ठा dn_route *rt, *next;
 
-	for (i = 0; i < dn_rt_hash_mask; i++) {
+	क्रम (i = 0; i < dn_rt_hash_mask; i++) अणु
 		spin_lock_bh(&dn_rt_hash_table[i].lock);
 
-		rt = xchg((struct dn_route **)&dn_rt_hash_table[i].chain, NULL);
-		if (!rt)
-			goto nothing_to_declare;
+		rt = xchg((काष्ठा dn_route **)&dn_rt_hash_table[i].chain, शून्य);
+		अगर (!rt)
+			जाओ nothing_to_declare;
 
-		for (; rt; rt = next) {
+		क्रम (; rt; rt = next) अणु
 			next = rcu_dereference_raw(rt->dn_next);
-			RCU_INIT_POINTER(rt->dn_next, NULL);
+			RCU_INIT_POINTER(rt->dn_next, शून्य);
 			dst_dev_put(&rt->dst);
 			dst_release(&rt->dst);
-		}
+		पूर्ण
 
 nothing_to_declare:
 		spin_unlock_bh(&dn_rt_hash_table[i].lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static DEFINE_SPINLOCK(dn_rt_flush_lock);
+अटल DEFINE_SPINLOCK(dn_rt_flush_lock);
 
-void dn_rt_cache_flush(int delay)
-{
-	unsigned long now = jiffies;
-	int user_mode = !in_interrupt();
+व्योम dn_rt_cache_flush(पूर्णांक delay)
+अणु
+	अचिन्हित दीर्घ now = jअगरfies;
+	पूर्णांक user_mode = !in_पूर्णांकerrupt();
 
-	if (delay < 0)
+	अगर (delay < 0)
 		delay = dn_rt_min_delay;
 
 	spin_lock_bh(&dn_rt_flush_lock);
 
-	if (del_timer(&dn_rt_flush_timer) && delay > 0 && dn_rt_deadline) {
-		long tmo = (long)(dn_rt_deadline - now);
+	अगर (del_समयr(&dn_rt_flush_समयr) && delay > 0 && dn_rt_deadline) अणु
+		दीर्घ पंचांगo = (दीर्घ)(dn_rt_deadline - now);
 
-		if (user_mode && tmo < dn_rt_max_delay - dn_rt_min_delay)
-			tmo = 0;
+		अगर (user_mode && पंचांगo < dn_rt_max_delay - dn_rt_min_delay)
+			पंचांगo = 0;
 
-		if (delay > tmo)
-			delay = tmo;
-	}
+		अगर (delay > पंचांगo)
+			delay = पंचांगo;
+	पूर्ण
 
-	if (delay <= 0) {
+	अगर (delay <= 0) अणु
 		spin_unlock_bh(&dn_rt_flush_lock);
-		dn_run_flush(NULL);
-		return;
-	}
+		dn_run_flush(शून्य);
+		वापस;
+	पूर्ण
 
-	if (dn_rt_deadline == 0)
+	अगर (dn_rt_deadline == 0)
 		dn_rt_deadline = now + dn_rt_max_delay;
 
-	dn_rt_flush_timer.expires = now + delay;
-	add_timer(&dn_rt_flush_timer);
+	dn_rt_flush_समयr.expires = now + delay;
+	add_समयr(&dn_rt_flush_समयr);
 	spin_unlock_bh(&dn_rt_flush_lock);
-}
+पूर्ण
 
 /**
- * dn_return_short - Return a short packet to its sender
- * @skb: The packet to return
+ * dn_वापस_लघु - Return a लघु packet to its sender
+ * @skb: The packet to वापस
  *
  */
-static int dn_return_short(struct sk_buff *skb)
-{
-	struct dn_skb_cb *cb;
-	unsigned char *ptr;
+अटल पूर्णांक dn_वापस_लघु(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_skb_cb *cb;
+	अचिन्हित अक्षर *ptr;
 	__le16 *src;
 	__le16 *dst;
 
@@ -426,11 +427,11 @@ static int dn_return_short(struct sk_buff *skb)
 	skb_push(skb, skb->data - skb_network_header(skb));
 
 	skb = skb_unshare(skb, GFP_ATOMIC);
-	if (!skb)
-		return NET_RX_DROP;
+	अगर (!skb)
+		वापस NET_RX_DROP;
 
 	cb = DN_SKB_CB(skb);
-	/* Skip packet length and point to flags */
+	/* Skip packet length and poपूर्णांक to flags */
 	ptr = skb->data + 2;
 	*ptr++ = (cb->rt_flags & ~DN_RT_F_RQR) | DN_RT_F_RTS;
 
@@ -443,38 +444,38 @@ static int dn_return_short(struct sk_buff *skb)
 	swap(*src, *dst);
 
 	skb->pkt_type = PACKET_OUTGOING;
-	dn_rt_finish_output(skb, NULL, NULL);
-	return NET_RX_SUCCESS;
-}
+	dn_rt_finish_output(skb, शून्य, शून्य);
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
 /**
- * dn_return_long - Return a long packet to its sender
- * @skb: The long format packet to return
+ * dn_वापस_दीर्घ - Return a दीर्घ packet to its sender
+ * @skb: The दीर्घ क्रमmat packet to वापस
  *
  */
-static int dn_return_long(struct sk_buff *skb)
-{
-	struct dn_skb_cb *cb;
-	unsigned char *ptr;
-	unsigned char *src_addr, *dst_addr;
-	unsigned char tmp[ETH_ALEN];
+अटल पूर्णांक dn_वापस_दीर्घ(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_skb_cb *cb;
+	अचिन्हित अक्षर *ptr;
+	अचिन्हित अक्षर *src_addr, *dst_addr;
+	अचिन्हित अक्षर पंचांगp[ETH_ALEN];
 
 	/* Add back all headers */
 	skb_push(skb, skb->data - skb_network_header(skb));
 
 	skb = skb_unshare(skb, GFP_ATOMIC);
-	if (!skb)
-		return NET_RX_DROP;
+	अगर (!skb)
+		वापस NET_RX_DROP;
 
 	cb = DN_SKB_CB(skb);
-	/* Ignore packet length and point to flags */
+	/* Ignore packet length and poपूर्णांक to flags */
 	ptr = skb->data + 2;
 
 	/* Skip padding */
-	if (*ptr & DN_RT_F_PF) {
-		char padlen = (*ptr & ~DN_RT_F_PF);
+	अगर (*ptr & DN_RT_F_PF) अणु
+		अक्षर padlen = (*ptr & ~DN_RT_F_PF);
 		ptr += padlen;
-	}
+	पूर्ण
 
 	*ptr++ = (cb->rt_flags & ~DN_RT_F_RQR) | DN_RT_F_RTS;
 	ptr += 2;
@@ -485,63 +486,63 @@ static int dn_return_long(struct sk_buff *skb)
 	*ptr = 0; /* Zero hop count */
 
 	/* Swap source and destination */
-	memcpy(tmp, src_addr, ETH_ALEN);
-	memcpy(src_addr, dst_addr, ETH_ALEN);
-	memcpy(dst_addr, tmp, ETH_ALEN);
+	स_नकल(पंचांगp, src_addr, ETH_ALEN);
+	स_नकल(src_addr, dst_addr, ETH_ALEN);
+	स_नकल(dst_addr, पंचांगp, ETH_ALEN);
 
 	skb->pkt_type = PACKET_OUTGOING;
 	dn_rt_finish_output(skb, dst_addr, src_addr);
-	return NET_RX_SUCCESS;
-}
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
 /**
- * dn_route_rx_packet - Try and find a route for an incoming packet
+ * dn_route_rx_packet - Try and find a route क्रम an incoming packet
  * @net: The applicable net namespace
  * @sk: Socket packet transmitted on
- * @skb: The packet to find a route for
+ * @skb: The packet to find a route क्रम
  *
- * Returns: result of input function if route is found, error code otherwise
+ * Returns: result of input function अगर route is found, error code otherwise
  */
-static int dn_route_rx_packet(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	struct dn_skb_cb *cb;
-	int err;
+अटल पूर्णांक dn_route_rx_packet(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_skb_cb *cb;
+	पूर्णांक err;
 
 	err = dn_route_input(skb);
-	if (err == 0)
-		return dst_input(skb);
+	अगर (err == 0)
+		वापस dst_input(skb);
 
 	cb = DN_SKB_CB(skb);
-	if (decnet_debug_level & 4) {
-		char *devname = skb->dev ? skb->dev->name : "???";
+	अगर (decnet_debug_level & 4) अणु
+		अक्षर *devname = skb->dev ? skb->dev->name : "???";
 
-		printk(KERN_DEBUG
+		prपूर्णांकk(KERN_DEBUG
 			"DECnet: dn_route_rx_packet: rt_flags=0x%02x dev=%s len=%d src=0x%04hx dst=0x%04hx err=%d type=%d\n",
-			(int)cb->rt_flags, devname, skb->len,
+			(पूर्णांक)cb->rt_flags, devname, skb->len,
 			le16_to_cpu(cb->src), le16_to_cpu(cb->dst),
 			err, skb->pkt_type);
-	}
+	पूर्ण
 
-	if ((skb->pkt_type == PACKET_HOST) && (cb->rt_flags & DN_RT_F_RQR)) {
-		switch (cb->rt_flags & DN_RT_PKT_MSK) {
-		case DN_RT_PKT_SHORT:
-			return dn_return_short(skb);
-		case DN_RT_PKT_LONG:
-			return dn_return_long(skb);
-		}
-	}
+	अगर ((skb->pkt_type == PACKET_HOST) && (cb->rt_flags & DN_RT_F_RQR)) अणु
+		चयन (cb->rt_flags & DN_RT_PKT_MSK) अणु
+		हाल DN_RT_PKT_SHORT:
+			वापस dn_वापस_लघु(skb);
+		हाल DN_RT_PKT_LONG:
+			वापस dn_वापस_दीर्घ(skb);
+		पूर्ण
+	पूर्ण
 
-	kfree_skb(skb);
-	return NET_RX_DROP;
-}
+	kमुक्त_skb(skb);
+	वापस NET_RX_DROP;
+पूर्ण
 
-static int dn_route_rx_long(struct sk_buff *skb)
-{
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	unsigned char *ptr = skb->data;
+अटल पूर्णांक dn_route_rx_दीर्घ(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	अचिन्हित अक्षर *ptr = skb->data;
 
-	if (!pskb_may_pull(skb, 21)) /* 20 for long header, 1 for shortest nsp */
-		goto drop_it;
+	अगर (!pskb_may_pull(skb, 21)) /* 20 क्रम दीर्घ header, 1 क्रम लघुest nsp */
+		जाओ drop_it;
 
 	skb_pull(skb, 20);
 	skb_reset_transport_header(skb);
@@ -549,39 +550,39 @@ static int dn_route_rx_long(struct sk_buff *skb)
 	/* Destination info */
 	ptr += 2;
 	cb->dst = dn_eth2dn(ptr);
-	if (memcmp(ptr, dn_hiord_addr, 4) != 0)
-		goto drop_it;
+	अगर (स_भेद(ptr, dn_hiord_addr, 4) != 0)
+		जाओ drop_it;
 	ptr += 6;
 
 
 	/* Source info */
 	ptr += 2;
 	cb->src = dn_eth2dn(ptr);
-	if (memcmp(ptr, dn_hiord_addr, 4) != 0)
-		goto drop_it;
+	अगर (स_भेद(ptr, dn_hiord_addr, 4) != 0)
+		जाओ drop_it;
 	ptr += 6;
 	/* Other junk */
 	ptr++;
 	cb->hops = *ptr++; /* Visit Count */
 
-	return NF_HOOK(NFPROTO_DECNET, NF_DN_PRE_ROUTING,
-		       &init_net, NULL, skb, skb->dev, NULL,
+	वापस NF_HOOK(NFPROTO_DECNET, NF_DN_PRE_ROUTING,
+		       &init_net, शून्य, skb, skb->dev, शून्य,
 		       dn_route_rx_packet);
 
 drop_it:
-	kfree_skb(skb);
-	return NET_RX_DROP;
-}
+	kमुक्त_skb(skb);
+	वापस NET_RX_DROP;
+पूर्ण
 
 
 
-static int dn_route_rx_short(struct sk_buff *skb)
-{
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	unsigned char *ptr = skb->data;
+अटल पूर्णांक dn_route_rx_लघु(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	अचिन्हित अक्षर *ptr = skb->data;
 
-	if (!pskb_may_pull(skb, 6)) /* 5 for short header + 1 for shortest nsp */
-		goto drop_it;
+	अगर (!pskb_may_pull(skb, 6)) /* 5 क्रम लघु header + 1 क्रम लघुest nsp */
+		जाओ drop_it;
 
 	skb_pull(skb, 5);
 	skb_reset_transport_header(skb);
@@ -592,161 +593,161 @@ static int dn_route_rx_short(struct sk_buff *skb)
 	ptr += 2;
 	cb->hops = *ptr & 0x3f;
 
-	return NF_HOOK(NFPROTO_DECNET, NF_DN_PRE_ROUTING,
-		       &init_net, NULL, skb, skb->dev, NULL,
+	वापस NF_HOOK(NFPROTO_DECNET, NF_DN_PRE_ROUTING,
+		       &init_net, शून्य, skb, skb->dev, शून्य,
 		       dn_route_rx_packet);
 
 drop_it:
-	kfree_skb(skb);
-	return NET_RX_DROP;
-}
+	kमुक्त_skb(skb);
+	वापस NET_RX_DROP;
+पूर्ण
 
-static int dn_route_discard(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
+अटल पूर्णांक dn_route_discard(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	/*
 	 * I know we drop the packet here, but thats considered success in
-	 * this case
+	 * this हाल
 	 */
-	kfree_skb(skb);
-	return NET_RX_SUCCESS;
-}
+	kमुक्त_skb(skb);
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
-static int dn_route_ptp_hello(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
+अटल पूर्णांक dn_route_ptp_hello(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	dn_dev_hello(skb);
-	dn_neigh_pointopoint_hello(skb);
-	return NET_RX_SUCCESS;
-}
+	dn_neigh_poपूर्णांकopoपूर्णांक_hello(skb);
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
-int dn_route_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt, struct net_device *orig_dev)
-{
-	struct dn_skb_cb *cb;
-	unsigned char flags = 0;
+पूर्णांक dn_route_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev, काष्ठा packet_type *pt, काष्ठा net_device *orig_dev)
+अणु
+	काष्ठा dn_skb_cb *cb;
+	अचिन्हित अक्षर flags = 0;
 	__u16 len = le16_to_cpu(*(__le16 *)skb->data);
-	struct dn_dev *dn = rcu_dereference(dev->dn_ptr);
-	unsigned char padlen = 0;
+	काष्ठा dn_dev *dn = rcu_dereference(dev->dn_ptr);
+	अचिन्हित अक्षर padlen = 0;
 
-	if (!net_eq(dev_net(dev), &init_net))
-		goto dump_it;
+	अगर (!net_eq(dev_net(dev), &init_net))
+		जाओ dump_it;
 
-	if (dn == NULL)
-		goto dump_it;
+	अगर (dn == शून्य)
+		जाओ dump_it;
 
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
-	if (!pskb_may_pull(skb, 3))
-		goto dump_it;
+	अगर (!pskb_may_pull(skb, 3))
+		जाओ dump_it;
 
 	skb_pull(skb, 2);
 
-	if (len > skb->len)
-		goto dump_it;
+	अगर (len > skb->len)
+		जाओ dump_it;
 
 	skb_trim(skb, len);
 
 	flags = *skb->data;
 
 	cb = DN_SKB_CB(skb);
-	cb->stamp = jiffies;
-	cb->iif = dev->ifindex;
+	cb->stamp = jअगरfies;
+	cb->iअगर = dev->अगरindex;
 
 	/*
-	 * If we have padding, remove it.
+	 * If we have padding, हटाओ it.
 	 */
-	if (flags & DN_RT_F_PF) {
+	अगर (flags & DN_RT_F_PF) अणु
 		padlen = flags & ~DN_RT_F_PF;
-		if (!pskb_may_pull(skb, padlen + 1))
-			goto dump_it;
+		अगर (!pskb_may_pull(skb, padlen + 1))
+			जाओ dump_it;
 		skb_pull(skb, padlen);
 		flags = *skb->data;
-	}
+	पूर्ण
 
 	skb_reset_network_header(skb);
 
 	/*
 	 * Weed out future version DECnet
 	 */
-	if (flags & DN_RT_F_VER)
-		goto dump_it;
+	अगर (flags & DN_RT_F_VER)
+		जाओ dump_it;
 
 	cb->rt_flags = flags;
 
-	if (decnet_debug_level & 1)
-		printk(KERN_DEBUG
+	अगर (decnet_debug_level & 1)
+		prपूर्णांकk(KERN_DEBUG
 			"dn_route_rcv: got 0x%02x from %s [%d %d %d]\n",
-			(int)flags, dev->name, len, skb->len,
+			(पूर्णांक)flags, dev->name, len, skb->len,
 			padlen);
 
-	if (flags & DN_RT_PKT_CNTL) {
-		if (unlikely(skb_linearize(skb)))
-			goto dump_it;
+	अगर (flags & DN_RT_PKT_CNTL) अणु
+		अगर (unlikely(skb_linearize(skb)))
+			जाओ dump_it;
 
-		switch (flags & DN_RT_CNTL_MSK) {
-		case DN_RT_PKT_INIT:
+		चयन (flags & DN_RT_CNTL_MSK) अणु
+		हाल DN_RT_PKT_INIT:
 			dn_dev_init_pkt(skb);
-			break;
-		case DN_RT_PKT_VERI:
+			अवरोध;
+		हाल DN_RT_PKT_VERI:
 			dn_dev_veri_pkt(skb);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (dn->parms.state != DN_DEV_S_RU)
-			goto dump_it;
+		अगर (dn->parms.state != DN_DEV_S_RU)
+			जाओ dump_it;
 
-		switch (flags & DN_RT_CNTL_MSK) {
-		case DN_RT_PKT_HELO:
-			return NF_HOOK(NFPROTO_DECNET, NF_DN_HELLO,
-				       &init_net, NULL, skb, skb->dev, NULL,
+		चयन (flags & DN_RT_CNTL_MSK) अणु
+		हाल DN_RT_PKT_HELO:
+			वापस NF_HOOK(NFPROTO_DECNET, NF_DN_HELLO,
+				       &init_net, शून्य, skb, skb->dev, शून्य,
 				       dn_route_ptp_hello);
 
-		case DN_RT_PKT_L1RT:
-		case DN_RT_PKT_L2RT:
-			return NF_HOOK(NFPROTO_DECNET, NF_DN_ROUTE,
-				       &init_net, NULL, skb, skb->dev, NULL,
+		हाल DN_RT_PKT_L1RT:
+		हाल DN_RT_PKT_L2RT:
+			वापस NF_HOOK(NFPROTO_DECNET, NF_DN_ROUTE,
+				       &init_net, शून्य, skb, skb->dev, शून्य,
 				       dn_route_discard);
-		case DN_RT_PKT_ERTH:
-			return NF_HOOK(NFPROTO_DECNET, NF_DN_HELLO,
-				       &init_net, NULL, skb, skb->dev, NULL,
+		हाल DN_RT_PKT_ERTH:
+			वापस NF_HOOK(NFPROTO_DECNET, NF_DN_HELLO,
+				       &init_net, शून्य, skb, skb->dev, शून्य,
 				       dn_neigh_router_hello);
 
-		case DN_RT_PKT_EEDH:
-			return NF_HOOK(NFPROTO_DECNET, NF_DN_HELLO,
-				       &init_net, NULL, skb, skb->dev, NULL,
+		हाल DN_RT_PKT_EEDH:
+			वापस NF_HOOK(NFPROTO_DECNET, NF_DN_HELLO,
+				       &init_net, शून्य, skb, skb->dev, शून्य,
 				       dn_neigh_endnode_hello);
-		}
-	} else {
-		if (dn->parms.state != DN_DEV_S_RU)
-			goto dump_it;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (dn->parms.state != DN_DEV_S_RU)
+			जाओ dump_it;
 
 		skb_pull(skb, 1); /* Pull flags */
 
-		switch (flags & DN_RT_PKT_MSK) {
-		case DN_RT_PKT_LONG:
-			return dn_route_rx_long(skb);
-		case DN_RT_PKT_SHORT:
-			return dn_route_rx_short(skb);
-		}
-	}
+		चयन (flags & DN_RT_PKT_MSK) अणु
+		हाल DN_RT_PKT_LONG:
+			वापस dn_route_rx_दीर्घ(skb);
+		हाल DN_RT_PKT_SHORT:
+			वापस dn_route_rx_लघु(skb);
+		पूर्ण
+	पूर्ण
 
 dump_it:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 out:
-	return NET_RX_DROP;
-}
+	वापस NET_RX_DROP;
+पूर्ण
 
-static int dn_output(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	struct dst_entry *dst = skb_dst(skb);
-	struct dn_route *rt = (struct dn_route *)dst;
-	struct net_device *dev = dst->dev;
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
+अटल पूर्णांक dn_output(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	काष्ठा dn_route *rt = (काष्ठा dn_route *)dst;
+	काष्ठा net_device *dev = dst->dev;
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
 
-	int err = -EINVAL;
+	पूर्णांक err = -EINVAL;
 
-	if (rt->n == NULL)
-		goto error;
+	अगर (rt->n == शून्य)
+		जाओ error;
 
 	skb->dev = dev;
 
@@ -756,439 +757,439 @@ static int dn_output(struct net *net, struct sock *sk, struct sk_buff *skb)
 	/*
 	 * Always set the Intra-Ethernet bit on all outgoing packets
 	 * originated on this node. Only valid flag from upper layers
-	 * is return-to-sender-requested. Set hop count to 0 too.
+	 * is वापस-to-sender-requested. Set hop count to 0 too.
 	 */
 	cb->rt_flags &= ~DN_RT_F_RQR;
 	cb->rt_flags |= DN_RT_F_IE;
 	cb->hops = 0;
 
-	return NF_HOOK(NFPROTO_DECNET, NF_DN_LOCAL_OUT,
-		       &init_net, sk, skb, NULL, dev,
+	वापस NF_HOOK(NFPROTO_DECNET, NF_DN_LOCAL_OUT,
+		       &init_net, sk, skb, शून्य, dev,
 		       dn_to_neigh_output);
 
 error:
 	net_dbg_ratelimited("dn_output: This should not happen\n");
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dn_forward(struct sk_buff *skb)
-{
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	struct dst_entry *dst = skb_dst(skb);
-	struct dn_dev *dn_db = rcu_dereference(dst->dev->dn_ptr);
-	struct dn_route *rt;
-	int header_len;
-	struct net_device *dev = skb->dev;
+अटल पूर्णांक dn_क्रमward(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	काष्ठा dn_dev *dn_db = rcu_dereference(dst->dev->dn_ptr);
+	काष्ठा dn_route *rt;
+	पूर्णांक header_len;
+	काष्ठा net_device *dev = skb->dev;
 
-	if (skb->pkt_type != PACKET_HOST)
-		goto drop;
+	अगर (skb->pkt_type != PACKET_HOST)
+		जाओ drop;
 
-	/* Ensure that we have enough space for headers */
-	rt = (struct dn_route *)skb_dst(skb);
-	header_len = dn_db->use_long ? 21 : 6;
-	if (skb_cow(skb, LL_RESERVED_SPACE(rt->dst.dev)+header_len))
-		goto drop;
+	/* Ensure that we have enough space क्रम headers */
+	rt = (काष्ठा dn_route *)skb_dst(skb);
+	header_len = dn_db->use_दीर्घ ? 21 : 6;
+	अगर (skb_cow(skb, LL_RESERVED_SPACE(rt->dst.dev)+header_len))
+		जाओ drop;
 
 	/*
 	 * Hop count exceeded.
 	 */
-	if (++cb->hops > 30)
-		goto drop;
+	अगर (++cb->hops > 30)
+		जाओ drop;
 
 	skb->dev = rt->dst.dev;
 
 	/*
-	 * If packet goes out same interface it came in on, then set
-	 * the Intra-Ethernet bit. This has no effect for short
-	 * packets, so we don't need to test for them here.
+	 * If packet goes out same पूर्णांकerface it came in on, then set
+	 * the Intra-Ethernet bit. This has no effect क्रम लघु
+	 * packets, so we करोn't need to test क्रम them here.
 	 */
 	cb->rt_flags &= ~DN_RT_F_IE;
-	if (rt->rt_flags & RTCF_DOREDIRECT)
+	अगर (rt->rt_flags & RTCF_DOREसूचीECT)
 		cb->rt_flags |= DN_RT_F_IE;
 
-	return NF_HOOK(NFPROTO_DECNET, NF_DN_FORWARD,
-		       &init_net, NULL, skb, dev, skb->dev,
+	वापस NF_HOOK(NFPROTO_DECNET, NF_DN_FORWARD,
+		       &init_net, शून्य, skb, dev, skb->dev,
 		       dn_to_neigh_output);
 
 drop:
-	kfree_skb(skb);
-	return NET_RX_DROP;
-}
+	kमुक्त_skb(skb);
+	वापस NET_RX_DROP;
+पूर्ण
 
 /*
  * Used to catch bugs. This should never normally get
  * called.
  */
-static int dn_rt_bug_out(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
+अटल पूर्णांक dn_rt_bug_out(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
 
 	net_dbg_ratelimited("dn_rt_bug: skb from:%04x to:%04x\n",
 			    le16_to_cpu(cb->src), le16_to_cpu(cb->dst));
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return NET_RX_DROP;
-}
+	वापस NET_RX_DROP;
+पूर्ण
 
-static int dn_rt_bug(struct sk_buff *skb)
-{
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
+अटल पूर्णांक dn_rt_bug(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
 
 	net_dbg_ratelimited("dn_rt_bug: skb from:%04x to:%04x\n",
 			    le16_to_cpu(cb->src), le16_to_cpu(cb->dst));
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return NET_RX_DROP;
-}
+	वापस NET_RX_DROP;
+पूर्ण
 
-static unsigned int dn_dst_default_advmss(const struct dst_entry *dst)
-{
-	return dn_mss_from_pmtu(dst->dev, dst_mtu(dst));
-}
+अटल अचिन्हित पूर्णांक dn_dst_शेष_advmss(स्थिर काष्ठा dst_entry *dst)
+अणु
+	वापस dn_mss_from_pmtu(dst->dev, dst_mtu(dst));
+पूर्ण
 
-static unsigned int dn_dst_mtu(const struct dst_entry *dst)
-{
-	unsigned int mtu = dst_metric_raw(dst, RTAX_MTU);
+अटल अचिन्हित पूर्णांक dn_dst_mtu(स्थिर काष्ठा dst_entry *dst)
+अणु
+	अचिन्हित पूर्णांक mtu = dst_metric_raw(dst, RTAX_MTU);
 
-	return mtu ? : dst->dev->mtu;
-}
+	वापस mtu ? : dst->dev->mtu;
+पूर्ण
 
-static struct neighbour *dn_dst_neigh_lookup(const struct dst_entry *dst,
-					     struct sk_buff *skb,
-					     const void *daddr)
-{
-	return __neigh_lookup_errno(&dn_neigh_table, daddr, dst->dev);
-}
+अटल काष्ठा neighbour *dn_dst_neigh_lookup(स्थिर काष्ठा dst_entry *dst,
+					     काष्ठा sk_buff *skb,
+					     स्थिर व्योम *daddr)
+अणु
+	वापस __neigh_lookup_त्रुटि_सं(&dn_neigh_table, daddr, dst->dev);
+पूर्ण
 
-static int dn_rt_set_next_hop(struct dn_route *rt, struct dn_fib_res *res)
-{
-	struct dn_fib_info *fi = res->fi;
-	struct net_device *dev = rt->dst.dev;
-	unsigned int mss_metric;
-	struct neighbour *n;
+अटल पूर्णांक dn_rt_set_next_hop(काष्ठा dn_route *rt, काष्ठा dn_fib_res *res)
+अणु
+	काष्ठा dn_fib_info *fi = res->fi;
+	काष्ठा net_device *dev = rt->dst.dev;
+	अचिन्हित पूर्णांक mss_metric;
+	काष्ठा neighbour *n;
 
-	if (fi) {
-		if (DN_FIB_RES_GW(*res) &&
+	अगर (fi) अणु
+		अगर (DN_FIB_RES_GW(*res) &&
 		    DN_FIB_RES_NH(*res).nh_scope == RT_SCOPE_LINK)
 			rt->rt_gateway = DN_FIB_RES_GW(*res);
 		dst_init_metrics(&rt->dst, fi->fib_metrics, true);
-	}
+	पूर्ण
 	rt->rt_type = res->type;
 
-	if (dev != NULL && rt->n == NULL) {
-		n = __neigh_lookup_errno(&dn_neigh_table, &rt->rt_gateway, dev);
-		if (IS_ERR(n))
-			return PTR_ERR(n);
+	अगर (dev != शून्य && rt->n == शून्य) अणु
+		n = __neigh_lookup_त्रुटि_सं(&dn_neigh_table, &rt->rt_gateway, dev);
+		अगर (IS_ERR(n))
+			वापस PTR_ERR(n);
 		rt->n = n;
-	}
+	पूर्ण
 
-	if (dst_metric(&rt->dst, RTAX_MTU) > rt->dst.dev->mtu)
+	अगर (dst_metric(&rt->dst, RTAX_MTU) > rt->dst.dev->mtu)
 		dst_metric_set(&rt->dst, RTAX_MTU, rt->dst.dev->mtu);
 	mss_metric = dst_metric_raw(&rt->dst, RTAX_ADVMSS);
-	if (mss_metric) {
-		unsigned int mss = dn_mss_from_pmtu(dev, dst_mtu(&rt->dst));
-		if (mss_metric > mss)
+	अगर (mss_metric) अणु
+		अचिन्हित पूर्णांक mss = dn_mss_from_pmtu(dev, dst_mtu(&rt->dst));
+		अगर (mss_metric > mss)
 			dst_metric_set(&rt->dst, RTAX_ADVMSS, mss);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int dn_match_addr(__le16 addr1, __le16 addr2)
-{
-	__u16 tmp = le16_to_cpu(addr1) ^ le16_to_cpu(addr2);
-	int match = 16;
-	while (tmp) {
-		tmp >>= 1;
+अटल अंतरभूत पूर्णांक dn_match_addr(__le16 addr1, __le16 addr2)
+अणु
+	__u16 पंचांगp = le16_to_cpu(addr1) ^ le16_to_cpu(addr2);
+	पूर्णांक match = 16;
+	जबतक (पंचांगp) अणु
+		पंचांगp >>= 1;
 		match--;
-	}
-	return match;
-}
+	पूर्ण
+	वापस match;
+पूर्ण
 
-static __le16 dnet_select_source(const struct net_device *dev, __le16 daddr, int scope)
-{
+अटल __le16 dnet_select_source(स्थिर काष्ठा net_device *dev, __le16 daddr, पूर्णांक scope)
+अणु
 	__le16 saddr = 0;
-	struct dn_dev *dn_db;
-	struct dn_ifaddr *ifa;
-	int best_match = 0;
-	int ret;
+	काष्ठा dn_dev *dn_db;
+	काष्ठा dn_अगरaddr *अगरa;
+	पूर्णांक best_match = 0;
+	पूर्णांक ret;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	dn_db = rcu_dereference(dev->dn_ptr);
-	for (ifa = rcu_dereference(dn_db->ifa_list);
-	     ifa != NULL;
-	     ifa = rcu_dereference(ifa->ifa_next)) {
-		if (ifa->ifa_scope > scope)
-			continue;
-		if (!daddr) {
-			saddr = ifa->ifa_local;
-			break;
-		}
-		ret = dn_match_addr(daddr, ifa->ifa_local);
-		if (ret > best_match)
-			saddr = ifa->ifa_local;
-		if (best_match == 0)
-			saddr = ifa->ifa_local;
-	}
-	rcu_read_unlock();
+	क्रम (अगरa = rcu_dereference(dn_db->अगरa_list);
+	     अगरa != शून्य;
+	     अगरa = rcu_dereference(अगरa->अगरa_next)) अणु
+		अगर (अगरa->अगरa_scope > scope)
+			जारी;
+		अगर (!daddr) अणु
+			saddr = अगरa->अगरa_local;
+			अवरोध;
+		पूर्ण
+		ret = dn_match_addr(daddr, अगरa->अगरa_local);
+		अगर (ret > best_match)
+			saddr = अगरa->अगरa_local;
+		अगर (best_match == 0)
+			saddr = अगरa->अगरa_local;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return saddr;
-}
+	वापस saddr;
+पूर्ण
 
-static inline __le16 __dn_fib_res_prefsrc(struct dn_fib_res *res)
-{
-	return dnet_select_source(DN_FIB_RES_DEV(*res), DN_FIB_RES_GW(*res), res->scope);
-}
+अटल अंतरभूत __le16 __dn_fib_res_prefsrc(काष्ठा dn_fib_res *res)
+अणु
+	वापस dnet_select_source(DN_FIB_RES_DEV(*res), DN_FIB_RES_GW(*res), res->scope);
+पूर्ण
 
-static inline __le16 dn_fib_rules_map_destination(__le16 daddr, struct dn_fib_res *res)
-{
+अटल अंतरभूत __le16 dn_fib_rules_map_destination(__le16 daddr, काष्ठा dn_fib_res *res)
+अणु
 	__le16 mask = dnet_make_mask(res->prefixlen);
-	return (daddr&~mask)|res->fi->fib_nh->nh_gw;
-}
+	वापस (daddr&~mask)|res->fi->fib_nh->nh_gw;
+पूर्ण
 
-static int dn_route_output_slow(struct dst_entry **pprt, const struct flowidn *oldflp, int try_hard)
-{
-	struct flowidn fld = {
+अटल पूर्णांक dn_route_output_slow(काष्ठा dst_entry **pprt, स्थिर काष्ठा flowidn *oldflp, पूर्णांक try_hard)
+अणु
+	काष्ठा flowidn fld = अणु
 		.daddr = oldflp->daddr,
 		.saddr = oldflp->saddr,
 		.flowidn_scope = RT_SCOPE_UNIVERSE,
 		.flowidn_mark = oldflp->flowidn_mark,
-		.flowidn_iif = LOOPBACK_IFINDEX,
-		.flowidn_oif = oldflp->flowidn_oif,
-	};
-	struct dn_route *rt = NULL;
-	struct net_device *dev_out = NULL, *dev;
-	struct neighbour *neigh = NULL;
-	unsigned int hash;
-	unsigned int flags = 0;
-	struct dn_fib_res res = { .fi = NULL, .type = RTN_UNICAST };
-	int err;
-	int free_res = 0;
+		.flowidn_iअगर = LOOPBACK_IFINDEX,
+		.flowidn_oअगर = oldflp->flowidn_oअगर,
+	पूर्ण;
+	काष्ठा dn_route *rt = शून्य;
+	काष्ठा net_device *dev_out = शून्य, *dev;
+	काष्ठा neighbour *neigh = शून्य;
+	अचिन्हित पूर्णांक hash;
+	अचिन्हित पूर्णांक flags = 0;
+	काष्ठा dn_fib_res res = अणु .fi = शून्य, .type = RTN_UNICAST पूर्ण;
+	पूर्णांक err;
+	पूर्णांक मुक्त_res = 0;
 	__le16 gateway = 0;
 
-	if (decnet_debug_level & 16)
-		printk(KERN_DEBUG
+	अगर (decnet_debug_level & 16)
+		prपूर्णांकk(KERN_DEBUG
 		       "dn_route_output_slow: dst=%04x src=%04x mark=%d"
 		       " iif=%d oif=%d\n", le16_to_cpu(oldflp->daddr),
 		       le16_to_cpu(oldflp->saddr),
 		       oldflp->flowidn_mark, LOOPBACK_IFINDEX,
-		       oldflp->flowidn_oif);
+		       oldflp->flowidn_oअगर);
 
-	/* If we have an output interface, verify its a DECnet device */
-	if (oldflp->flowidn_oif) {
-		dev_out = dev_get_by_index(&init_net, oldflp->flowidn_oif);
+	/* If we have an output पूर्णांकerface, verअगरy its a DECnet device */
+	अगर (oldflp->flowidn_oअगर) अणु
+		dev_out = dev_get_by_index(&init_net, oldflp->flowidn_oअगर);
 		err = -ENODEV;
-		if (dev_out && dev_out->dn_ptr == NULL) {
+		अगर (dev_out && dev_out->dn_ptr == शून्य) अणु
 			dev_put(dev_out);
-			dev_out = NULL;
-		}
-		if (dev_out == NULL)
-			goto out;
-	}
+			dev_out = शून्य;
+		पूर्ण
+		अगर (dev_out == शून्य)
+			जाओ out;
+	पूर्ण
 
-	/* If we have a source address, verify that its a local address */
-	if (oldflp->saddr) {
+	/* If we have a source address, verअगरy that its a local address */
+	अगर (oldflp->saddr) अणु
 		err = -EADDRNOTAVAIL;
 
-		if (dev_out) {
-			if (dn_dev_islocal(dev_out, oldflp->saddr))
-				goto source_ok;
+		अगर (dev_out) अणु
+			अगर (dn_dev_islocal(dev_out, oldflp->saddr))
+				जाओ source_ok;
 			dev_put(dev_out);
-			goto out;
-		}
-		rcu_read_lock();
-		for_each_netdev_rcu(&init_net, dev) {
-			if (!dev->dn_ptr)
-				continue;
-			if (!dn_dev_islocal(dev, oldflp->saddr))
-				continue;
-			if ((dev->flags & IFF_LOOPBACK) &&
+			जाओ out;
+		पूर्ण
+		rcu_पढ़ो_lock();
+		क्रम_each_netdev_rcu(&init_net, dev) अणु
+			अगर (!dev->dn_ptr)
+				जारी;
+			अगर (!dn_dev_islocal(dev, oldflp->saddr))
+				जारी;
+			अगर ((dev->flags & IFF_LOOPBACK) &&
 			    oldflp->daddr &&
 			    !dn_dev_islocal(dev, oldflp->daddr))
-				continue;
+				जारी;
 
 			dev_out = dev;
-			break;
-		}
-		rcu_read_unlock();
-		if (dev_out == NULL)
-			goto out;
+			अवरोध;
+		पूर्ण
+		rcu_पढ़ो_unlock();
+		अगर (dev_out == शून्य)
+			जाओ out;
 		dev_hold(dev_out);
 source_ok:
 		;
-	}
+	पूर्ण
 
 	/* No destination? Assume its local */
-	if (!fld.daddr) {
+	अगर (!fld.daddr) अणु
 		fld.daddr = fld.saddr;
 
-		if (dev_out)
+		अगर (dev_out)
 			dev_put(dev_out);
 		err = -EINVAL;
 		dev_out = init_net.loopback_dev;
-		if (!dev_out->dn_ptr)
-			goto out;
+		अगर (!dev_out->dn_ptr)
+			जाओ out;
 		err = -EADDRNOTAVAIL;
 		dev_hold(dev_out);
-		if (!fld.daddr) {
+		अगर (!fld.daddr) अणु
 			fld.daddr =
 			fld.saddr = dnet_select_source(dev_out, 0,
 						       RT_SCOPE_HOST);
-			if (!fld.daddr)
-				goto done;
-		}
-		fld.flowidn_oif = LOOPBACK_IFINDEX;
+			अगर (!fld.daddr)
+				जाओ करोne;
+		पूर्ण
+		fld.flowidn_oअगर = LOOPBACK_IFINDEX;
 		res.type = RTN_LOCAL;
-		goto make_route;
-	}
+		जाओ make_route;
+	पूर्ण
 
-	if (decnet_debug_level & 16)
-		printk(KERN_DEBUG
+	अगर (decnet_debug_level & 16)
+		prपूर्णांकk(KERN_DEBUG
 		       "dn_route_output_slow: initial checks complete."
 		       " dst=%04x src=%04x oif=%d try_hard=%d\n",
 		       le16_to_cpu(fld.daddr), le16_to_cpu(fld.saddr),
-		       fld.flowidn_oif, try_hard);
+		       fld.flowidn_oअगर, try_hard);
 
 	/*
 	 * N.B. If the kernel is compiled without router support then
-	 * dn_fib_lookup() will evaluate to non-zero so this if () block
+	 * dn_fib_lookup() will evaluate to non-zero so this अगर () block
 	 * will always be executed.
 	 */
 	err = -ESRCH;
-	if (try_hard || (err = dn_fib_lookup(&fld, &res)) != 0) {
-		struct dn_dev *dn_db;
-		if (err != -ESRCH)
-			goto out;
+	अगर (try_hard || (err = dn_fib_lookup(&fld, &res)) != 0) अणु
+		काष्ठा dn_dev *dn_db;
+		अगर (err != -ESRCH)
+			जाओ out;
 		/*
-		 * Here the fallback is basically the standard algorithm for
+		 * Here the fallback is basically the standard algorithm क्रम
 		 * routing in endnodes which is described in the DECnet routing
-		 * docs
+		 * करोcs
 		 *
 		 * If we are not trying hard, look in neighbour cache.
-		 * The result is tested to ensure that if a specific output
+		 * The result is tested to ensure that अगर a specअगरic output
 		 * device/source address was requested, then we honour that
 		 * here
 		 */
-		if (!try_hard) {
+		अगर (!try_hard) अणु
 			neigh = neigh_lookup_nodev(&dn_neigh_table, &init_net, &fld.daddr);
-			if (neigh) {
-				if ((oldflp->flowidn_oif &&
-				    (neigh->dev->ifindex != oldflp->flowidn_oif)) ||
+			अगर (neigh) अणु
+				अगर ((oldflp->flowidn_oअगर &&
+				    (neigh->dev->अगरindex != oldflp->flowidn_oअगर)) ||
 				    (oldflp->saddr &&
 				    (!dn_dev_islocal(neigh->dev,
-						     oldflp->saddr)))) {
+						     oldflp->saddr)))) अणु
 					neigh_release(neigh);
-					neigh = NULL;
-				} else {
-					if (dev_out)
+					neigh = शून्य;
+				पूर्ण अन्यथा अणु
+					अगर (dev_out)
 						dev_put(dev_out);
-					if (dn_dev_islocal(neigh->dev, fld.daddr)) {
+					अगर (dn_dev_islocal(neigh->dev, fld.daddr)) अणु
 						dev_out = init_net.loopback_dev;
 						res.type = RTN_LOCAL;
-					} else {
+					पूर्ण अन्यथा अणु
 						dev_out = neigh->dev;
-					}
+					पूर्ण
 					dev_hold(dev_out);
-					goto select_source;
-				}
-			}
-		}
+					जाओ select_source;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		/* Not there? Perhaps its a local address */
-		if (dev_out == NULL)
-			dev_out = dn_dev_get_default();
+		अगर (dev_out == शून्य)
+			dev_out = dn_dev_get_शेष();
 		err = -ENODEV;
-		if (dev_out == NULL)
-			goto out;
+		अगर (dev_out == शून्य)
+			जाओ out;
 		dn_db = rcu_dereference_raw(dev_out->dn_ptr);
-		if (!dn_db)
-			goto e_inval;
-		/* Possible improvement - check all devices for local addr */
-		if (dn_dev_islocal(dev_out, fld.daddr)) {
+		अगर (!dn_db)
+			जाओ e_inval;
+		/* Possible improvement - check all devices क्रम local addr */
+		अगर (dn_dev_islocal(dev_out, fld.daddr)) अणु
 			dev_put(dev_out);
 			dev_out = init_net.loopback_dev;
 			dev_hold(dev_out);
 			res.type = RTN_LOCAL;
-			goto select_source;
-		}
-		/* Not local either.... try sending it to the default router */
+			जाओ select_source;
+		पूर्ण
+		/* Not local either.... try sending it to the शेष router */
 		neigh = neigh_clone(dn_db->router);
 		BUG_ON(neigh && neigh->dev != dev_out);
 
 		/* Ok then, we assume its directly connected and move on */
 select_source:
-		if (neigh)
-			gateway = ((struct dn_neigh *)neigh)->addr;
-		if (gateway == 0)
+		अगर (neigh)
+			gateway = ((काष्ठा dn_neigh *)neigh)->addr;
+		अगर (gateway == 0)
 			gateway = fld.daddr;
-		if (fld.saddr == 0) {
+		अगर (fld.saddr == 0) अणु
 			fld.saddr = dnet_select_source(dev_out, gateway,
 						       res.type == RTN_LOCAL ?
 						       RT_SCOPE_HOST :
 						       RT_SCOPE_LINK);
-			if (fld.saddr == 0 && res.type != RTN_LOCAL)
-				goto e_addr;
-		}
-		fld.flowidn_oif = dev_out->ifindex;
-		goto make_route;
-	}
-	free_res = 1;
+			अगर (fld.saddr == 0 && res.type != RTN_LOCAL)
+				जाओ e_addr;
+		पूर्ण
+		fld.flowidn_oअगर = dev_out->अगरindex;
+		जाओ make_route;
+	पूर्ण
+	मुक्त_res = 1;
 
-	if (res.type == RTN_NAT)
-		goto e_inval;
+	अगर (res.type == RTN_NAT)
+		जाओ e_inval;
 
-	if (res.type == RTN_LOCAL) {
-		if (!fld.saddr)
+	अगर (res.type == RTN_LOCAL) अणु
+		अगर (!fld.saddr)
 			fld.saddr = fld.daddr;
-		if (dev_out)
+		अगर (dev_out)
 			dev_put(dev_out);
 		dev_out = init_net.loopback_dev;
 		dev_hold(dev_out);
-		if (!dev_out->dn_ptr)
-			goto e_inval;
-		fld.flowidn_oif = dev_out->ifindex;
-		if (res.fi)
+		अगर (!dev_out->dn_ptr)
+			जाओ e_inval;
+		fld.flowidn_oअगर = dev_out->अगरindex;
+		अगर (res.fi)
 			dn_fib_info_put(res.fi);
-		res.fi = NULL;
-		goto make_route;
-	}
+		res.fi = शून्य;
+		जाओ make_route;
+	पूर्ण
 
-	if (res.fi->fib_nhs > 1 && fld.flowidn_oif == 0)
+	अगर (res.fi->fib_nhs > 1 && fld.flowidn_oअगर == 0)
 		dn_fib_select_multipath(&fld, &res);
 
 	/*
-	 * We could add some logic to deal with default routes here and
+	 * We could add some logic to deal with शेष routes here and
 	 * get rid of some of the special casing above.
 	 */
 
-	if (!fld.saddr)
+	अगर (!fld.saddr)
 		fld.saddr = DN_FIB_RES_PREFSRC(res);
 
-	if (dev_out)
+	अगर (dev_out)
 		dev_put(dev_out);
 	dev_out = DN_FIB_RES_DEV(res);
 	dev_hold(dev_out);
-	fld.flowidn_oif = dev_out->ifindex;
+	fld.flowidn_oअगर = dev_out->अगरindex;
 	gateway = DN_FIB_RES_GW(res);
 
 make_route:
-	if (dev_out->flags & IFF_LOOPBACK)
+	अगर (dev_out->flags & IFF_LOOPBACK)
 		flags |= RTCF_LOCAL;
 
 	rt = dst_alloc(&dn_dst_ops, dev_out, 0, DST_OBSOLETE_NONE, 0);
-	if (rt == NULL)
-		goto e_nobufs;
+	अगर (rt == शून्य)
+		जाओ e_nobufs;
 
-	rt->dn_next = NULL;
-	memset(&rt->fld, 0, sizeof(rt->fld));
+	rt->dn_next = शून्य;
+	स_रखो(&rt->fld, 0, माप(rt->fld));
 	rt->fld.saddr        = oldflp->saddr;
 	rt->fld.daddr        = oldflp->daddr;
-	rt->fld.flowidn_oif  = oldflp->flowidn_oif;
-	rt->fld.flowidn_iif  = 0;
+	rt->fld.flowidn_oअगर  = oldflp->flowidn_oअगर;
+	rt->fld.flowidn_iअगर  = 0;
 	rt->fld.flowidn_mark = oldflp->flowidn_mark;
 
 	rt->rt_saddr      = fld.saddr;
@@ -1200,262 +1201,262 @@ make_route:
 	rt->rt_src_map    = fld.saddr;
 
 	rt->n = neigh;
-	neigh = NULL;
+	neigh = शून्य;
 
-	rt->dst.lastuse = jiffies;
+	rt->dst.lastuse = jअगरfies;
 	rt->dst.output  = dn_output;
 	rt->dst.input   = dn_rt_bug;
 	rt->rt_flags      = flags;
-	if (flags & RTCF_LOCAL)
+	अगर (flags & RTCF_LOCAL)
 		rt->dst.input = dn_nsp_rx;
 
 	err = dn_rt_set_next_hop(rt, &res);
-	if (err)
-		goto e_neighbour;
+	अगर (err)
+		जाओ e_neighbour;
 
 	hash = dn_hash(rt->fld.saddr, rt->fld.daddr);
 	/* dn_insert_route() increments dst->__refcnt */
-	dn_insert_route(rt, hash, (struct dn_route **)pprt);
+	dn_insert_route(rt, hash, (काष्ठा dn_route **)pprt);
 
-done:
-	if (neigh)
+करोne:
+	अगर (neigh)
 		neigh_release(neigh);
-	if (free_res)
+	अगर (मुक्त_res)
 		dn_fib_res_put(&res);
-	if (dev_out)
+	अगर (dev_out)
 		dev_put(dev_out);
 out:
-	return err;
+	वापस err;
 
 e_addr:
 	err = -EADDRNOTAVAIL;
-	goto done;
+	जाओ करोne;
 e_inval:
 	err = -EINVAL;
-	goto done;
+	जाओ करोne;
 e_nobufs:
 	err = -ENOBUFS;
-	goto done;
+	जाओ करोne;
 e_neighbour:
 	dst_release_immediate(&rt->dst);
-	goto e_nobufs;
-}
+	जाओ e_nobufs;
+पूर्ण
 
 
 /*
- * N.B. The flags may be moved into the flowi at some future stage.
+ * N.B. The flags may be moved पूर्णांकo the flowi at some future stage.
  */
-static int __dn_route_output_key(struct dst_entry **pprt, const struct flowidn *flp, int flags)
-{
-	unsigned int hash = dn_hash(flp->saddr, flp->daddr);
-	struct dn_route *rt = NULL;
+अटल पूर्णांक __dn_route_output_key(काष्ठा dst_entry **pprt, स्थिर काष्ठा flowidn *flp, पूर्णांक flags)
+अणु
+	अचिन्हित पूर्णांक hash = dn_hash(flp->saddr, flp->daddr);
+	काष्ठा dn_route *rt = शून्य;
 
-	if (!(flags & MSG_TRYHARD)) {
-		rcu_read_lock_bh();
-		for (rt = rcu_dereference_bh(dn_rt_hash_table[hash].chain); rt;
-			rt = rcu_dereference_bh(rt->dn_next)) {
-			if ((flp->daddr == rt->fld.daddr) &&
+	अगर (!(flags & MSG_TRYHARD)) अणु
+		rcu_पढ़ो_lock_bh();
+		क्रम (rt = rcu_dereference_bh(dn_rt_hash_table[hash].chain); rt;
+			rt = rcu_dereference_bh(rt->dn_next)) अणु
+			अगर ((flp->daddr == rt->fld.daddr) &&
 			    (flp->saddr == rt->fld.saddr) &&
 			    (flp->flowidn_mark == rt->fld.flowidn_mark) &&
 			    dn_is_output_route(rt) &&
-			    (rt->fld.flowidn_oif == flp->flowidn_oif)) {
-				dst_hold_and_use(&rt->dst, jiffies);
-				rcu_read_unlock_bh();
+			    (rt->fld.flowidn_oअगर == flp->flowidn_oअगर)) अणु
+				dst_hold_and_use(&rt->dst, jअगरfies);
+				rcu_पढ़ो_unlock_bh();
 				*pprt = &rt->dst;
-				return 0;
-			}
-		}
-		rcu_read_unlock_bh();
-	}
+				वापस 0;
+			पूर्ण
+		पूर्ण
+		rcu_पढ़ो_unlock_bh();
+	पूर्ण
 
-	return dn_route_output_slow(pprt, flp, flags);
-}
+	वापस dn_route_output_slow(pprt, flp, flags);
+पूर्ण
 
-static int dn_route_output_key(struct dst_entry **pprt, struct flowidn *flp, int flags)
-{
-	int err;
+अटल पूर्णांक dn_route_output_key(काष्ठा dst_entry **pprt, काष्ठा flowidn *flp, पूर्णांक flags)
+अणु
+	पूर्णांक err;
 
 	err = __dn_route_output_key(pprt, flp, flags);
-	if (err == 0 && flp->flowidn_proto) {
+	अगर (err == 0 && flp->flowidn_proto) अणु
 		*pprt = xfrm_lookup(&init_net, *pprt,
-				    flowidn_to_flowi(flp), NULL, 0);
-		if (IS_ERR(*pprt)) {
+				    flowidn_to_flowi(flp), शून्य, 0);
+		अगर (IS_ERR(*pprt)) अणु
 			err = PTR_ERR(*pprt);
-			*pprt = NULL;
-		}
-	}
-	return err;
-}
+			*pprt = शून्य;
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-int dn_route_output_sock(struct dst_entry __rcu **pprt, struct flowidn *fl, struct sock *sk, int flags)
-{
-	int err;
+पूर्णांक dn_route_output_sock(काष्ठा dst_entry __rcu **pprt, काष्ठा flowidn *fl, काष्ठा sock *sk, पूर्णांक flags)
+अणु
+	पूर्णांक err;
 
 	err = __dn_route_output_key(pprt, fl, flags & MSG_TRYHARD);
-	if (err == 0 && fl->flowidn_proto) {
+	अगर (err == 0 && fl->flowidn_proto) अणु
 		*pprt = xfrm_lookup(&init_net, *pprt,
 				    flowidn_to_flowi(fl), sk, 0);
-		if (IS_ERR(*pprt)) {
+		अगर (IS_ERR(*pprt)) अणु
 			err = PTR_ERR(*pprt);
-			*pprt = NULL;
-		}
-	}
-	return err;
-}
+			*pprt = शून्य;
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int dn_route_input_slow(struct sk_buff *skb)
-{
-	struct dn_route *rt = NULL;
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	struct net_device *in_dev = skb->dev;
-	struct net_device *out_dev = NULL;
-	struct dn_dev *dn_db;
-	struct neighbour *neigh = NULL;
-	unsigned int hash;
-	int flags = 0;
+अटल पूर्णांक dn_route_input_slow(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_route *rt = शून्य;
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	काष्ठा net_device *in_dev = skb->dev;
+	काष्ठा net_device *out_dev = शून्य;
+	काष्ठा dn_dev *dn_db;
+	काष्ठा neighbour *neigh = शून्य;
+	अचिन्हित पूर्णांक hash;
+	पूर्णांक flags = 0;
 	__le16 gateway = 0;
 	__le16 local_src = 0;
-	struct flowidn fld = {
+	काष्ठा flowidn fld = अणु
 		.daddr = cb->dst,
 		.saddr = cb->src,
 		.flowidn_scope = RT_SCOPE_UNIVERSE,
 		.flowidn_mark = skb->mark,
-		.flowidn_iif = skb->dev->ifindex,
-	};
-	struct dn_fib_res res = { .fi = NULL, .type = RTN_UNREACHABLE };
-	int err = -EINVAL;
-	int free_res = 0;
+		.flowidn_iअगर = skb->dev->अगरindex,
+	पूर्ण;
+	काष्ठा dn_fib_res res = अणु .fi = शून्य, .type = RTN_UNREACHABLE पूर्ण;
+	पूर्णांक err = -EINVAL;
+	पूर्णांक मुक्त_res = 0;
 
 	dev_hold(in_dev);
 
 	dn_db = rcu_dereference(in_dev->dn_ptr);
-	if (!dn_db)
-		goto out;
+	अगर (!dn_db)
+		जाओ out;
 
 	/* Zero source addresses are not allowed */
-	if (fld.saddr == 0)
-		goto out;
+	अगर (fld.saddr == 0)
+		जाओ out;
 
 	/*
-	 * In this case we've just received a packet from a source
-	 * outside ourselves pretending to come from us. We don't
+	 * In this हाल we've just received a packet from a source
+	 * outside ourselves pretending to come from us. We करोn't
 	 * allow it any further to prevent routing loops, spoofing and
-	 * other nasties. Loopback packets already have the dst attached
-	 * so this only affects packets which have originated elsewhere.
+	 * other nasties. Loopback packets alपढ़ोy have the dst attached
+	 * so this only affects packets which have originated अन्यथाwhere.
 	 */
 	err  = -ENOTUNIQ;
-	if (dn_dev_islocal(in_dev, cb->src))
-		goto out;
+	अगर (dn_dev_islocal(in_dev, cb->src))
+		जाओ out;
 
 	err = dn_fib_lookup(&fld, &res);
-	if (err) {
-		if (err != -ESRCH)
-			goto out;
+	अगर (err) अणु
+		अगर (err != -ESRCH)
+			जाओ out;
 		/*
 		 * Is the destination us ?
 		 */
-		if (!dn_dev_islocal(in_dev, cb->dst))
-			goto e_inval;
+		अगर (!dn_dev_islocal(in_dev, cb->dst))
+			जाओ e_inval;
 
 		res.type = RTN_LOCAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		__le16 src_map = fld.saddr;
-		free_res = 1;
+		मुक्त_res = 1;
 
 		out_dev = DN_FIB_RES_DEV(res);
-		if (out_dev == NULL) {
+		अगर (out_dev == शून्य) अणु
 			net_crit_ratelimited("Bug in dn_route_input_slow() No output device\n");
-			goto e_inval;
-		}
+			जाओ e_inval;
+		पूर्ण
 		dev_hold(out_dev);
 
-		if (res.r)
-			src_map = fld.saddr; /* no NAT support for now */
+		अगर (res.r)
+			src_map = fld.saddr; /* no NAT support क्रम now */
 
 		gateway = DN_FIB_RES_GW(res);
-		if (res.type == RTN_NAT) {
+		अगर (res.type == RTN_NAT) अणु
 			fld.daddr = dn_fib_rules_map_destination(fld.daddr, &res);
 			dn_fib_res_put(&res);
-			free_res = 0;
-			if (dn_fib_lookup(&fld, &res))
-				goto e_inval;
-			free_res = 1;
-			if (res.type != RTN_UNICAST)
-				goto e_inval;
+			मुक्त_res = 0;
+			अगर (dn_fib_lookup(&fld, &res))
+				जाओ e_inval;
+			मुक्त_res = 1;
+			अगर (res.type != RTN_UNICAST)
+				जाओ e_inval;
 			flags |= RTCF_DNAT;
 			gateway = fld.daddr;
-		}
+		पूर्ण
 		fld.saddr = src_map;
-	}
+	पूर्ण
 
-	switch (res.type) {
-	case RTN_UNICAST:
+	चयन (res.type) अणु
+	हाल RTN_UNICAST:
 		/*
-		 * Forwarding check here, we only check for forwarding
-		 * being turned off, if you want to only forward intra
+		 * Forwarding check here, we only check क्रम क्रमwarding
+		 * being turned off, अगर you want to only क्रमward पूर्णांकra
 		 * area, its up to you to set the routing tables up
 		 * correctly.
 		 */
-		if (dn_db->parms.forwarding == 0)
-			goto e_inval;
+		अगर (dn_db->parms.क्रमwarding == 0)
+			जाओ e_inval;
 
-		if (res.fi->fib_nhs > 1 && fld.flowidn_oif == 0)
+		अगर (res.fi->fib_nhs > 1 && fld.flowidn_oअगर == 0)
 			dn_fib_select_multipath(&fld, &res);
 
 		/*
-		 * Check for out_dev == in_dev. We use the RTCF_DOREDIRECT
-		 * flag as a hint to set the intra-ethernet bit when
-		 * forwarding. If we've got NAT in operation, we don't do
+		 * Check क्रम out_dev == in_dev. We use the RTCF_DOREसूचीECT
+		 * flag as a hपूर्णांक to set the पूर्णांकra-ethernet bit when
+		 * क्रमwarding. If we've got NAT in operation, we don't करो
 		 * this optimisation.
 		 */
-		if (out_dev == in_dev && !(flags & RTCF_NAT))
-			flags |= RTCF_DOREDIRECT;
+		अगर (out_dev == in_dev && !(flags & RTCF_NAT))
+			flags |= RTCF_DOREसूचीECT;
 
 		local_src = DN_FIB_RES_PREFSRC(res);
-		break;
-	case RTN_BLACKHOLE:
-	case RTN_UNREACHABLE:
-		break;
-	case RTN_LOCAL:
+		अवरोध;
+	हाल RTN_BLACKHOLE:
+	हाल RTN_UNREACHABLE:
+		अवरोध;
+	हाल RTN_LOCAL:
 		flags |= RTCF_LOCAL;
 		fld.saddr = cb->dst;
 		fld.daddr = cb->src;
 
 		/* Routing tables gave us a gateway */
-		if (gateway)
-			goto make_route;
+		अगर (gateway)
+			जाओ make_route;
 
-		/* Packet was intra-ethernet, so we know its on-link */
-		if (cb->rt_flags & DN_RT_F_IE) {
+		/* Packet was पूर्णांकra-ethernet, so we know its on-link */
+		अगर (cb->rt_flags & DN_RT_F_IE) अणु
 			gateway = cb->src;
-			goto make_route;
-		}
+			जाओ make_route;
+		पूर्ण
 
-		/* Use the default router if there is one */
+		/* Use the शेष router अगर there is one */
 		neigh = neigh_clone(dn_db->router);
-		if (neigh) {
-			gateway = ((struct dn_neigh *)neigh)->addr;
-			goto make_route;
-		}
+		अगर (neigh) अणु
+			gateway = ((काष्ठा dn_neigh *)neigh)->addr;
+			जाओ make_route;
+		पूर्ण
 
 		/* Close eyes and pray */
 		gateway = cb->src;
-		goto make_route;
-	default:
-		goto e_inval;
-	}
+		जाओ make_route;
+	शेष:
+		जाओ e_inval;
+	पूर्ण
 
 make_route:
 	rt = dst_alloc(&dn_dst_ops, out_dev, 1, DST_OBSOLETE_NONE, 0);
-	if (rt == NULL)
-		goto e_nobufs;
+	अगर (rt == शून्य)
+		जाओ e_nobufs;
 
-	rt->dn_next = NULL;
-	memset(&rt->fld, 0, sizeof(rt->fld));
+	rt->dn_next = शून्य;
+	स_रखो(&rt->fld, 0, माप(rt->fld));
 	rt->rt_saddr      = fld.saddr;
 	rt->rt_daddr      = fld.daddr;
 	rt->rt_gateway    = fld.daddr;
-	if (gateway)
+	अगर (gateway)
 		rt->rt_gateway = gateway;
 	rt->rt_local_src  = local_src ? local_src : rt->rt_saddr;
 
@@ -1464,224 +1465,224 @@ make_route:
 
 	rt->fld.saddr        = cb->src;
 	rt->fld.daddr        = cb->dst;
-	rt->fld.flowidn_oif  = 0;
-	rt->fld.flowidn_iif  = in_dev->ifindex;
+	rt->fld.flowidn_oअगर  = 0;
+	rt->fld.flowidn_iअगर  = in_dev->अगरindex;
 	rt->fld.flowidn_mark = fld.flowidn_mark;
 
 	rt->n = neigh;
-	rt->dst.lastuse = jiffies;
+	rt->dst.lastuse = jअगरfies;
 	rt->dst.output = dn_rt_bug_out;
-	switch (res.type) {
-	case RTN_UNICAST:
-		rt->dst.input = dn_forward;
-		break;
-	case RTN_LOCAL:
+	चयन (res.type) अणु
+	हाल RTN_UNICAST:
+		rt->dst.input = dn_क्रमward;
+		अवरोध;
+	हाल RTN_LOCAL:
 		rt->dst.output = dn_output;
 		rt->dst.input = dn_nsp_rx;
 		rt->dst.dev = in_dev;
 		flags |= RTCF_LOCAL;
-		break;
-	default:
-	case RTN_UNREACHABLE:
-	case RTN_BLACKHOLE:
+		अवरोध;
+	शेष:
+	हाल RTN_UNREACHABLE:
+	हाल RTN_BLACKHOLE:
 		rt->dst.input = dst_discard;
-	}
+	पूर्ण
 	rt->rt_flags = flags;
 
 	err = dn_rt_set_next_hop(rt, &res);
-	if (err)
-		goto e_neighbour;
+	अगर (err)
+		जाओ e_neighbour;
 
 	hash = dn_hash(rt->fld.saddr, rt->fld.daddr);
 	/* dn_insert_route() increments dst->__refcnt */
 	dn_insert_route(rt, hash, &rt);
 	skb_dst_set(skb, &rt->dst);
 
-done:
-	if (neigh)
+करोne:
+	अगर (neigh)
 		neigh_release(neigh);
-	if (free_res)
+	अगर (मुक्त_res)
 		dn_fib_res_put(&res);
 	dev_put(in_dev);
-	if (out_dev)
+	अगर (out_dev)
 		dev_put(out_dev);
 out:
-	return err;
+	वापस err;
 
 e_inval:
 	err = -EINVAL;
-	goto done;
+	जाओ करोne;
 
 e_nobufs:
 	err = -ENOBUFS;
-	goto done;
+	जाओ करोne;
 
 e_neighbour:
 	dst_release_immediate(&rt->dst);
-	goto done;
-}
+	जाओ करोne;
+पूर्ण
 
-static int dn_route_input(struct sk_buff *skb)
-{
-	struct dn_route *rt;
-	struct dn_skb_cb *cb = DN_SKB_CB(skb);
-	unsigned int hash = dn_hash(cb->src, cb->dst);
+अटल पूर्णांक dn_route_input(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dn_route *rt;
+	काष्ठा dn_skb_cb *cb = DN_SKB_CB(skb);
+	अचिन्हित पूर्णांक hash = dn_hash(cb->src, cb->dst);
 
-	if (skb_dst(skb))
-		return 0;
+	अगर (skb_dst(skb))
+		वापस 0;
 
-	rcu_read_lock();
-	for (rt = rcu_dereference(dn_rt_hash_table[hash].chain); rt != NULL;
-	    rt = rcu_dereference(rt->dn_next)) {
-		if ((rt->fld.saddr == cb->src) &&
+	rcu_पढ़ो_lock();
+	क्रम (rt = rcu_dereference(dn_rt_hash_table[hash].chain); rt != शून्य;
+	    rt = rcu_dereference(rt->dn_next)) अणु
+		अगर ((rt->fld.saddr == cb->src) &&
 		    (rt->fld.daddr == cb->dst) &&
-		    (rt->fld.flowidn_oif == 0) &&
+		    (rt->fld.flowidn_oअगर == 0) &&
 		    (rt->fld.flowidn_mark == skb->mark) &&
-		    (rt->fld.flowidn_iif == cb->iif)) {
-			dst_hold_and_use(&rt->dst, jiffies);
-			rcu_read_unlock();
-			skb_dst_set(skb, (struct dst_entry *)rt);
-			return 0;
-		}
-	}
-	rcu_read_unlock();
+		    (rt->fld.flowidn_iअगर == cb->iअगर)) अणु
+			dst_hold_and_use(&rt->dst, jअगरfies);
+			rcu_पढ़ो_unlock();
+			skb_dst_set(skb, (काष्ठा dst_entry *)rt);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return dn_route_input_slow(skb);
-}
+	वापस dn_route_input_slow(skb);
+पूर्ण
 
-static int dn_rt_fill_info(struct sk_buff *skb, u32 portid, u32 seq,
-			   int event, int nowait, unsigned int flags)
-{
-	struct dn_route *rt = (struct dn_route *)skb_dst(skb);
-	struct rtmsg *r;
-	struct nlmsghdr *nlh;
-	long expires;
+अटल पूर्णांक dn_rt_fill_info(काष्ठा sk_buff *skb, u32 portid, u32 seq,
+			   पूर्णांक event, पूर्णांक noरुको, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा dn_route *rt = (काष्ठा dn_route *)skb_dst(skb);
+	काष्ठा rपंचांगsg *r;
+	काष्ठा nlmsghdr *nlh;
+	दीर्घ expires;
 
-	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*r), flags);
-	if (!nlh)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, portid, seq, event, माप(*r), flags);
+	अगर (!nlh)
+		वापस -EMSGSIZE;
 
 	r = nlmsg_data(nlh);
-	r->rtm_family = AF_DECnet;
-	r->rtm_dst_len = 16;
-	r->rtm_src_len = 0;
-	r->rtm_tos = 0;
-	r->rtm_table = RT_TABLE_MAIN;
-	r->rtm_type = rt->rt_type;
-	r->rtm_flags = (rt->rt_flags & ~0xFFFF) | RTM_F_CLONED;
-	r->rtm_scope = RT_SCOPE_UNIVERSE;
-	r->rtm_protocol = RTPROT_UNSPEC;
+	r->rपंचांग_family = AF_DECnet;
+	r->rपंचांग_dst_len = 16;
+	r->rपंचांग_src_len = 0;
+	r->rपंचांग_tos = 0;
+	r->rपंचांग_table = RT_TABLE_MAIN;
+	r->rपंचांग_type = rt->rt_type;
+	r->rपंचांग_flags = (rt->rt_flags & ~0xFFFF) | RTM_F_CLONED;
+	r->rपंचांग_scope = RT_SCOPE_UNIVERSE;
+	r->rपंचांग_protocol = RTPROT_UNSPEC;
 
-	if (rt->rt_flags & RTCF_NOTIFY)
-		r->rtm_flags |= RTM_F_NOTIFY;
+	अगर (rt->rt_flags & RTCF_NOTIFY)
+		r->rपंचांग_flags |= RTM_F_NOTIFY;
 
-	if (nla_put_u32(skb, RTA_TABLE, RT_TABLE_MAIN) < 0 ||
+	अगर (nla_put_u32(skb, RTA_TABLE, RT_TABLE_MAIN) < 0 ||
 	    nla_put_le16(skb, RTA_DST, rt->rt_daddr) < 0)
-		goto errout;
+		जाओ errout;
 
-	if (rt->fld.saddr) {
-		r->rtm_src_len = 16;
-		if (nla_put_le16(skb, RTA_SRC, rt->fld.saddr) < 0)
-			goto errout;
-	}
-	if (rt->dst.dev &&
-	    nla_put_u32(skb, RTA_OIF, rt->dst.dev->ifindex) < 0)
-		goto errout;
+	अगर (rt->fld.saddr) अणु
+		r->rपंचांग_src_len = 16;
+		अगर (nla_put_le16(skb, RTA_SRC, rt->fld.saddr) < 0)
+			जाओ errout;
+	पूर्ण
+	अगर (rt->dst.dev &&
+	    nla_put_u32(skb, RTA_OIF, rt->dst.dev->अगरindex) < 0)
+		जाओ errout;
 
 	/*
-	 * Note to self - change this if input routes reverse direction when
-	 * they deal only with inputs and not with replies like they do
+	 * Note to self - change this अगर input routes reverse direction when
+	 * they deal only with inमाला_दो and not with replies like they करो
 	 * currently.
 	 */
-	if (nla_put_le16(skb, RTA_PREFSRC, rt->rt_local_src) < 0)
-		goto errout;
+	अगर (nla_put_le16(skb, RTA_PREFSRC, rt->rt_local_src) < 0)
+		जाओ errout;
 
-	if (rt->rt_daddr != rt->rt_gateway &&
+	अगर (rt->rt_daddr != rt->rt_gateway &&
 	    nla_put_le16(skb, RTA_GATEWAY, rt->rt_gateway) < 0)
-		goto errout;
+		जाओ errout;
 
-	if (rtnetlink_put_metrics(skb, dst_metrics_ptr(&rt->dst)) < 0)
-		goto errout;
+	अगर (rtnetlink_put_metrics(skb, dst_metrics_ptr(&rt->dst)) < 0)
+		जाओ errout;
 
-	expires = rt->dst.expires ? rt->dst.expires - jiffies : 0;
-	if (rtnl_put_cacheinfo(skb, &rt->dst, 0, expires,
+	expires = rt->dst.expires ? rt->dst.expires - jअगरfies : 0;
+	अगर (rtnl_put_cacheinfo(skb, &rt->dst, 0, expires,
 			       rt->dst.error) < 0)
-		goto errout;
+		जाओ errout;
 
-	if (dn_is_input_route(rt) &&
-	    nla_put_u32(skb, RTA_IIF, rt->fld.flowidn_iif) < 0)
-		goto errout;
+	अगर (dn_is_input_route(rt) &&
+	    nla_put_u32(skb, RTA_IIF, rt->fld.flowidn_iअगर) < 0)
+		जाओ errout;
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 errout:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-const struct nla_policy rtm_dn_policy[RTA_MAX + 1] = {
-	[RTA_DST]		= { .type = NLA_U16 },
-	[RTA_SRC]		= { .type = NLA_U16 },
-	[RTA_IIF]		= { .type = NLA_U32 },
-	[RTA_OIF]		= { .type = NLA_U32 },
-	[RTA_GATEWAY]		= { .type = NLA_U16 },
-	[RTA_PRIORITY]		= { .type = NLA_U32 },
-	[RTA_PREFSRC]		= { .type = NLA_U16 },
-	[RTA_METRICS]		= { .type = NLA_NESTED },
-	[RTA_MULTIPATH]		= { .type = NLA_NESTED },
-	[RTA_TABLE]		= { .type = NLA_U32 },
-	[RTA_MARK]		= { .type = NLA_U32 },
-};
+स्थिर काष्ठा nla_policy rपंचांग_dn_policy[RTA_MAX + 1] = अणु
+	[RTA_DST]		= अणु .type = NLA_U16 पूर्ण,
+	[RTA_SRC]		= अणु .type = NLA_U16 पूर्ण,
+	[RTA_IIF]		= अणु .type = NLA_U32 पूर्ण,
+	[RTA_OIF]		= अणु .type = NLA_U32 पूर्ण,
+	[RTA_GATEWAY]		= अणु .type = NLA_U16 पूर्ण,
+	[RTA_PRIORITY]		= अणु .type = NLA_U32 पूर्ण,
+	[RTA_PREFSRC]		= अणु .type = NLA_U16 पूर्ण,
+	[RTA_METRICS]		= अणु .type = NLA_NESTED पूर्ण,
+	[RTA_MULTIPATH]		= अणु .type = NLA_NESTED पूर्ण,
+	[RTA_TABLE]		= अणु .type = NLA_U32 पूर्ण,
+	[RTA_MARK]		= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
 /*
  * This is called by both endnodes and routers now.
  */
-static int dn_cache_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
-			     struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(in_skb->sk);
-	struct rtmsg *rtm = nlmsg_data(nlh);
-	struct dn_route *rt = NULL;
-	struct dn_skb_cb *cb;
-	int err;
-	struct sk_buff *skb;
-	struct flowidn fld;
-	struct nlattr *tb[RTA_MAX+1];
+अटल पूर्णांक dn_cache_getroute(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *nlh,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(in_skb->sk);
+	काष्ठा rपंचांगsg *rपंचांग = nlmsg_data(nlh);
+	काष्ठा dn_route *rt = शून्य;
+	काष्ठा dn_skb_cb *cb;
+	पूर्णांक err;
+	काष्ठा sk_buff *skb;
+	काष्ठा flowidn fld;
+	काष्ठा nlattr *tb[RTA_MAX+1];
 
-	if (!net_eq(net, &init_net))
-		return -EINVAL;
+	अगर (!net_eq(net, &init_net))
+		वापस -EINVAL;
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*rtm), tb, RTA_MAX,
-				     rtm_dn_policy, extack);
-	if (err < 0)
-		return err;
+	err = nlmsg_parse_deprecated(nlh, माप(*rपंचांग), tb, RTA_MAX,
+				     rपंचांग_dn_policy, extack);
+	अगर (err < 0)
+		वापस err;
 
-	memset(&fld, 0, sizeof(fld));
+	स_रखो(&fld, 0, माप(fld));
 	fld.flowidn_proto = DNPROTO_NSP;
 
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (skb == NULL)
-		return -ENOBUFS;
+	अगर (skb == शून्य)
+		वापस -ENOBUFS;
 	skb_reset_mac_header(skb);
 	cb = DN_SKB_CB(skb);
 
-	if (tb[RTA_SRC])
+	अगर (tb[RTA_SRC])
 		fld.saddr = nla_get_le16(tb[RTA_SRC]);
 
-	if (tb[RTA_DST])
+	अगर (tb[RTA_DST])
 		fld.daddr = nla_get_le16(tb[RTA_DST]);
 
-	if (tb[RTA_IIF])
-		fld.flowidn_iif = nla_get_u32(tb[RTA_IIF]);
+	अगर (tb[RTA_IIF])
+		fld.flowidn_iअगर = nla_get_u32(tb[RTA_IIF]);
 
-	if (fld.flowidn_iif) {
-		struct net_device *dev;
-		dev = __dev_get_by_index(&init_net, fld.flowidn_iif);
-		if (!dev || !dev->dn_ptr) {
-			kfree_skb(skb);
-			return -ENODEV;
-		}
+	अगर (fld.flowidn_iअगर) अणु
+		काष्ठा net_device *dev;
+		dev = __dev_get_by_index(&init_net, fld.flowidn_iअगर);
+		अगर (!dev || !dev->dn_ptr) अणु
+			kमुक्त_skb(skb);
+			वापस -ENODEV;
+		पूर्ण
 		skb->protocol = htons(ETH_P_DNA_RT);
 		skb->dev = dev;
 		cb->src = fld.saddr;
@@ -1689,240 +1690,240 @@ static int dn_cache_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 		local_bh_disable();
 		err = dn_route_input(skb);
 		local_bh_enable();
-		memset(cb, 0, sizeof(struct dn_skb_cb));
-		rt = (struct dn_route *)skb_dst(skb);
-		if (!err && -rt->dst.error)
+		स_रखो(cb, 0, माप(काष्ठा dn_skb_cb));
+		rt = (काष्ठा dn_route *)skb_dst(skb);
+		अगर (!err && -rt->dst.error)
 			err = rt->dst.error;
-	} else {
-		if (tb[RTA_OIF])
-			fld.flowidn_oif = nla_get_u32(tb[RTA_OIF]);
+	पूर्ण अन्यथा अणु
+		अगर (tb[RTA_OIF])
+			fld.flowidn_oअगर = nla_get_u32(tb[RTA_OIF]);
 
-		err = dn_route_output_key((struct dst_entry **)&rt, &fld, 0);
-	}
+		err = dn_route_output_key((काष्ठा dst_entry **)&rt, &fld, 0);
+	पूर्ण
 
-	skb->dev = NULL;
-	if (err)
-		goto out_free;
+	skb->dev = शून्य;
+	अगर (err)
+		जाओ out_मुक्त;
 	skb_dst_set(skb, &rt->dst);
-	if (rtm->rtm_flags & RTM_F_NOTIFY)
+	अगर (rपंचांग->rपंचांग_flags & RTM_F_NOTIFY)
 		rt->rt_flags |= RTCF_NOTIFY;
 
 	err = dn_rt_fill_info(skb, NETLINK_CB(in_skb).portid, nlh->nlmsg_seq, RTM_NEWROUTE, 0, 0);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		err = -EMSGSIZE;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	return rtnl_unicast(skb, &init_net, NETLINK_CB(in_skb).portid);
+	वापस rtnl_unicast(skb, &init_net, NETLINK_CB(in_skb).portid);
 
-out_free:
-	kfree_skb(skb);
-	return err;
-}
+out_मुक्त:
+	kमुक्त_skb(skb);
+	वापस err;
+पूर्ण
 
 /*
- * For routers, this is called from dn_fib_dump, but for endnodes its
+ * For routers, this is called from dn_fib_dump, but क्रम endnodes its
  * called directly from the rtnetlink dispatch table.
  */
-int dn_cache_dump(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct net *net = sock_net(skb->sk);
-	struct dn_route *rt;
-	int h, s_h;
-	int idx, s_idx;
-	struct rtmsg *rtm;
+पूर्णांक dn_cache_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा dn_route *rt;
+	पूर्णांक h, s_h;
+	पूर्णांक idx, s_idx;
+	काष्ठा rपंचांगsg *rपंचांग;
 
-	if (!net_eq(net, &init_net))
-		return 0;
+	अगर (!net_eq(net, &init_net))
+		वापस 0;
 
-	if (nlmsg_len(cb->nlh) < sizeof(struct rtmsg))
-		return -EINVAL;
+	अगर (nlmsg_len(cb->nlh) < माप(काष्ठा rपंचांगsg))
+		वापस -EINVAL;
 
-	rtm = nlmsg_data(cb->nlh);
-	if (!(rtm->rtm_flags & RTM_F_CLONED))
-		return 0;
+	rपंचांग = nlmsg_data(cb->nlh);
+	अगर (!(rपंचांग->rपंचांग_flags & RTM_F_CLONED))
+		वापस 0;
 
 	s_h = cb->args[0];
 	s_idx = idx = cb->args[1];
-	for (h = 0; h <= dn_rt_hash_mask; h++) {
-		if (h < s_h)
-			continue;
-		if (h > s_h)
+	क्रम (h = 0; h <= dn_rt_hash_mask; h++) अणु
+		अगर (h < s_h)
+			जारी;
+		अगर (h > s_h)
 			s_idx = 0;
-		rcu_read_lock_bh();
-		for (rt = rcu_dereference_bh(dn_rt_hash_table[h].chain), idx = 0;
+		rcu_पढ़ो_lock_bh();
+		क्रम (rt = rcu_dereference_bh(dn_rt_hash_table[h].chain), idx = 0;
 			rt;
-			rt = rcu_dereference_bh(rt->dn_next), idx++) {
-			if (idx < s_idx)
-				continue;
+			rt = rcu_dereference_bh(rt->dn_next), idx++) अणु
+			अगर (idx < s_idx)
+				जारी;
 			skb_dst_set(skb, dst_clone(&rt->dst));
-			if (dn_rt_fill_info(skb, NETLINK_CB(cb->skb).portid,
+			अगर (dn_rt_fill_info(skb, NETLINK_CB(cb->skb).portid,
 					cb->nlh->nlmsg_seq, RTM_NEWROUTE,
-					1, NLM_F_MULTI) < 0) {
+					1, NLM_F_MULTI) < 0) अणु
 				skb_dst_drop(skb);
-				rcu_read_unlock_bh();
-				goto done;
-			}
+				rcu_पढ़ो_unlock_bh();
+				जाओ करोne;
+			पूर्ण
 			skb_dst_drop(skb);
-		}
-		rcu_read_unlock_bh();
-	}
+		पूर्ण
+		rcu_पढ़ो_unlock_bh();
+	पूर्ण
 
-done:
+करोne:
 	cb->args[0] = h;
 	cb->args[1] = idx;
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-struct dn_rt_cache_iter_state {
-	int bucket;
-};
+#अगर_घोषित CONFIG_PROC_FS
+काष्ठा dn_rt_cache_iter_state अणु
+	पूर्णांक bucket;
+पूर्ण;
 
-static struct dn_route *dn_rt_cache_get_first(struct seq_file *seq)
-{
-	struct dn_route *rt = NULL;
-	struct dn_rt_cache_iter_state *s = seq->private;
+अटल काष्ठा dn_route *dn_rt_cache_get_first(काष्ठा seq_file *seq)
+अणु
+	काष्ठा dn_route *rt = शून्य;
+	काष्ठा dn_rt_cache_iter_state *s = seq->निजी;
 
-	for (s->bucket = dn_rt_hash_mask; s->bucket >= 0; --s->bucket) {
-		rcu_read_lock_bh();
+	क्रम (s->bucket = dn_rt_hash_mask; s->bucket >= 0; --s->bucket) अणु
+		rcu_पढ़ो_lock_bh();
 		rt = rcu_dereference_bh(dn_rt_hash_table[s->bucket].chain);
-		if (rt)
-			break;
-		rcu_read_unlock_bh();
-	}
-	return rt;
-}
+		अगर (rt)
+			अवरोध;
+		rcu_पढ़ो_unlock_bh();
+	पूर्ण
+	वापस rt;
+पूर्ण
 
-static struct dn_route *dn_rt_cache_get_next(struct seq_file *seq, struct dn_route *rt)
-{
-	struct dn_rt_cache_iter_state *s = seq->private;
+अटल काष्ठा dn_route *dn_rt_cache_get_next(काष्ठा seq_file *seq, काष्ठा dn_route *rt)
+अणु
+	काष्ठा dn_rt_cache_iter_state *s = seq->निजी;
 
 	rt = rcu_dereference_bh(rt->dn_next);
-	while (!rt) {
-		rcu_read_unlock_bh();
-		if (--s->bucket < 0)
-			break;
-		rcu_read_lock_bh();
+	जबतक (!rt) अणु
+		rcu_पढ़ो_unlock_bh();
+		अगर (--s->bucket < 0)
+			अवरोध;
+		rcu_पढ़ो_lock_bh();
 		rt = rcu_dereference_bh(dn_rt_hash_table[s->bucket].chain);
-	}
-	return rt;
-}
+	पूर्ण
+	वापस rt;
+पूर्ण
 
-static void *dn_rt_cache_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct dn_route *rt = dn_rt_cache_get_first(seq);
+अटल व्योम *dn_rt_cache_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा dn_route *rt = dn_rt_cache_get_first(seq);
 
-	if (rt) {
-		while (*pos && (rt = dn_rt_cache_get_next(seq, rt)))
+	अगर (rt) अणु
+		जबतक (*pos && (rt = dn_rt_cache_get_next(seq, rt)))
 			--*pos;
-	}
-	return *pos ? NULL : rt;
-}
+	पूर्ण
+	वापस *pos ? शून्य : rt;
+पूर्ण
 
-static void *dn_rt_cache_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct dn_route *rt = dn_rt_cache_get_next(seq, v);
+अटल व्योम *dn_rt_cache_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा dn_route *rt = dn_rt_cache_get_next(seq, v);
 	++*pos;
-	return rt;
-}
+	वापस rt;
+पूर्ण
 
-static void dn_rt_cache_seq_stop(struct seq_file *seq, void *v)
-{
-	if (v)
-		rcu_read_unlock_bh();
-}
+अटल व्योम dn_rt_cache_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	अगर (v)
+		rcu_पढ़ो_unlock_bh();
+पूर्ण
 
-static int dn_rt_cache_seq_show(struct seq_file *seq, void *v)
-{
-	struct dn_route *rt = v;
-	char buf1[DN_ASCBUF_LEN], buf2[DN_ASCBUF_LEN];
+अटल पूर्णांक dn_rt_cache_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा dn_route *rt = v;
+	अक्षर buf1[DN_ASCBUF_LEN], buf2[DN_ASCBUF_LEN];
 
-	seq_printf(seq, "%-8s %-7s %-7s %04d %04d %04d\n",
+	seq_म_लिखो(seq, "%-8s %-7s %-7s %04d %04d %04d\n",
 		   rt->dst.dev ? rt->dst.dev->name : "*",
 		   dn_addr2asc(le16_to_cpu(rt->rt_daddr), buf1),
 		   dn_addr2asc(le16_to_cpu(rt->rt_saddr), buf2),
-		   atomic_read(&rt->dst.__refcnt),
+		   atomic_पढ़ो(&rt->dst.__refcnt),
 		   rt->dst.__use, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations dn_rt_cache_seq_ops = {
+अटल स्थिर काष्ठा seq_operations dn_rt_cache_seq_ops = अणु
 	.start	= dn_rt_cache_seq_start,
 	.next	= dn_rt_cache_seq_next,
 	.stop	= dn_rt_cache_seq_stop,
 	.show	= dn_rt_cache_seq_show,
-};
-#endif /* CONFIG_PROC_FS */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PROC_FS */
 
-void __init dn_route_init(void)
-{
-	int i, goal, order;
+व्योम __init dn_route_init(व्योम)
+अणु
+	पूर्णांक i, goal, order;
 
 	dn_dst_ops.kmem_cachep =
-		kmem_cache_create("dn_dst_cache", sizeof(struct dn_route), 0,
-				  SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL);
+		kmem_cache_create("dn_dst_cache", माप(काष्ठा dn_route), 0,
+				  SLAB_HWCACHE_ALIGN|SLAB_PANIC, शून्य);
 	dst_entries_init(&dn_dst_ops);
-	timer_setup(&dn_route_timer, dn_dst_check_expire, 0);
-	dn_route_timer.expires = jiffies + decnet_dst_gc_interval * HZ;
-	add_timer(&dn_route_timer);
+	समयr_setup(&dn_route_समयr, dn_dst_check_expire, 0);
+	dn_route_समयr.expires = jअगरfies + decnet_dst_gc_पूर्णांकerval * HZ;
+	add_समयr(&dn_route_समयr);
 
 	goal = totalram_pages() >> (26 - PAGE_SHIFT);
 
-	for (order = 0; (1UL << order) < goal; order++)
+	क्रम (order = 0; (1UL << order) < goal; order++)
 		/* NOTHING */;
 
 	/*
 	 * Only want 1024 entries max, since the table is very, very unlikely
 	 * to be larger than that.
 	 */
-	while (order && ((((1UL << order) * PAGE_SIZE) /
-				sizeof(struct dn_rt_hash_bucket)) >= 2048))
+	जबतक (order && ((((1UL << order) * PAGE_SIZE) /
+				माप(काष्ठा dn_rt_hash_bucket)) >= 2048))
 		order--;
 
-	do {
+	करो अणु
 		dn_rt_hash_mask = (1UL << order) * PAGE_SIZE /
-			sizeof(struct dn_rt_hash_bucket);
-		while (dn_rt_hash_mask & (dn_rt_hash_mask - 1))
+			माप(काष्ठा dn_rt_hash_bucket);
+		जबतक (dn_rt_hash_mask & (dn_rt_hash_mask - 1))
 			dn_rt_hash_mask--;
-		dn_rt_hash_table = (struct dn_rt_hash_bucket *)
-			__get_free_pages(GFP_ATOMIC, order);
-	} while (dn_rt_hash_table == NULL && --order > 0);
+		dn_rt_hash_table = (काष्ठा dn_rt_hash_bucket *)
+			__get_मुक्त_pages(GFP_ATOMIC, order);
+	पूर्ण जबतक (dn_rt_hash_table == शून्य && --order > 0);
 
-	if (!dn_rt_hash_table)
+	अगर (!dn_rt_hash_table)
 		panic("Failed to allocate DECnet route cache hash table\n");
 
-	printk(KERN_INFO
+	prपूर्णांकk(KERN_INFO
 		"DECnet: Routing cache hash table of %u buckets, %ldKbytes\n",
 		dn_rt_hash_mask,
-		(long)(dn_rt_hash_mask*sizeof(struct dn_rt_hash_bucket))/1024);
+		(दीर्घ)(dn_rt_hash_mask*माप(काष्ठा dn_rt_hash_bucket))/1024);
 
 	dn_rt_hash_mask--;
-	for (i = 0; i <= dn_rt_hash_mask; i++) {
+	क्रम (i = 0; i <= dn_rt_hash_mask; i++) अणु
 		spin_lock_init(&dn_rt_hash_table[i].lock);
-		dn_rt_hash_table[i].chain = NULL;
-	}
+		dn_rt_hash_table[i].chain = शून्य;
+	पूर्ण
 
 	dn_dst_ops.gc_thresh = (dn_rt_hash_mask + 1);
 
-	proc_create_seq_private("decnet_cache", 0444, init_net.proc_net,
+	proc_create_seq_निजी("decnet_cache", 0444, init_net.proc_net,
 			&dn_rt_cache_seq_ops,
-			sizeof(struct dn_rt_cache_iter_state), NULL);
+			माप(काष्ठा dn_rt_cache_iter_state), शून्य);
 
-#ifdef CONFIG_DECNET_ROUTER
-	rtnl_register_module(THIS_MODULE, PF_DECnet, RTM_GETROUTE,
+#अगर_घोषित CONFIG_DECNET_ROUTER
+	rtnl_रेजिस्टर_module(THIS_MODULE, PF_DECnet, RTM_GETROUTE,
 			     dn_cache_getroute, dn_fib_dump, 0);
-#else
-	rtnl_register_module(THIS_MODULE, PF_DECnet, RTM_GETROUTE,
+#अन्यथा
+	rtnl_रेजिस्टर_module(THIS_MODULE, PF_DECnet, RTM_GETROUTE,
 			     dn_cache_getroute, dn_cache_dump, 0);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void __exit dn_route_cleanup(void)
-{
-	del_timer(&dn_route_timer);
-	dn_run_flush(NULL);
+व्योम __निकास dn_route_cleanup(व्योम)
+अणु
+	del_समयr(&dn_route_समयr);
+	dn_run_flush(शून्य);
 
-	remove_proc_entry("decnet_cache", init_net.proc_net);
+	हटाओ_proc_entry("decnet_cache", init_net.proc_net);
 	dst_entries_destroy(&dn_dst_ops);
-}
+पूर्ण

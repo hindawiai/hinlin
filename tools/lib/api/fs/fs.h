@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __API_FS__
-#define __API_FS__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __API_FS__
+#घोषणा __API_FS__
 
-#include <stdbool.h>
-#include <unistd.h>
+#समावेश <stdbool.h>
+#समावेश <unistd.h>
 
 /*
- * On most systems <limits.h> would have given us this, but  not on some systems
+ * On most प्रणालीs <सीमा.स> would have given us this, but  not on some प्रणालीs
  * (e.g. GNU/Hurd).
  */
-#ifndef PATH_MAX
-#define PATH_MAX 4096
-#endif
+#अगर_अघोषित PATH_MAX
+#घोषणा PATH_MAX 4096
+#पूर्ण_अगर
 
-#define FS(name)				\
-	const char *name##__mountpoint(void);	\
-	const char *name##__mount(void);	\
-	bool name##__configured(void);		\
+#घोषणा FS(name)				\
+	स्थिर अक्षर *name##__mountpoपूर्णांक(व्योम);	\
+	स्थिर अक्षर *name##__mount(व्योम);	\
+	bool name##__configured(व्योम);		\
 
 /*
- * The xxxx__mountpoint() entry points find the first match mount point for each
- * filesystems listed below, where xxxx is the filesystem type.
+ * The xxxx__mountpoपूर्णांक() entry poपूर्णांकs find the first match mount poपूर्णांक क्रम each
+ * fileप्रणालीs listed below, where xxxx is the fileप्रणाली type.
  *
- * The interface is as follows:
+ * The पूर्णांकerface is as follows:
  *
- * - If a mount point is found on first call, it is cached and used for all
+ * - If a mount poपूर्णांक is found on first call, it is cached and used क्रम all
  *   subsequent calls.
  *
- * - If a mount point is not found, NULL is returned on first call and all
+ * - If a mount poपूर्णांक is not found, शून्य is वापसed on first call and all
  *   subsequent calls.
  */
 FS(sysfs)
@@ -37,26 +38,26 @@ FS(tracefs)
 FS(hugetlbfs)
 FS(bpf_fs)
 
-#undef FS
+#अघोषित FS
 
 
-int cgroupfs_find_mountpoint(char *buf, size_t maxlen, const char *subsys);
+पूर्णांक cgroupfs_find_mountpoपूर्णांक(अक्षर *buf, माप_प्रकार maxlen, स्थिर अक्षर *subsys);
 
-int filename__read_int(const char *filename, int *value);
-int filename__read_ull(const char *filename, unsigned long long *value);
-int filename__read_xll(const char *filename, unsigned long long *value);
-int filename__read_str(const char *filename, char **buf, size_t *sizep);
+पूर्णांक filename__पढ़ो_पूर्णांक(स्थिर अक्षर *filename, पूर्णांक *value);
+पूर्णांक filename__पढ़ो_ull(स्थिर अक्षर *filename, अचिन्हित दीर्घ दीर्घ *value);
+पूर्णांक filename__पढ़ो_xll(स्थिर अक्षर *filename, अचिन्हित दीर्घ दीर्घ *value);
+पूर्णांक filename__पढ़ो_str(स्थिर अक्षर *filename, अक्षर **buf, माप_प्रकार *sizep);
 
-int filename__write_int(const char *filename, int value);
+पूर्णांक filename__ग_लिखो_पूर्णांक(स्थिर अक्षर *filename, पूर्णांक value);
 
-int procfs__read_str(const char *entry, char **buf, size_t *sizep);
+पूर्णांक procfs__पढ़ो_str(स्थिर अक्षर *entry, अक्षर **buf, माप_प्रकार *sizep);
 
-int sysctl__read_int(const char *sysctl, int *value);
-int sysfs__read_int(const char *entry, int *value);
-int sysfs__read_ull(const char *entry, unsigned long long *value);
-int sysfs__read_xll(const char *entry, unsigned long long *value);
-int sysfs__read_str(const char *entry, char **buf, size_t *sizep);
-int sysfs__read_bool(const char *entry, bool *value);
+पूर्णांक sysctl__पढ़ो_पूर्णांक(स्थिर अक्षर *sysctl, पूर्णांक *value);
+पूर्णांक sysfs__पढ़ो_पूर्णांक(स्थिर अक्षर *entry, पूर्णांक *value);
+पूर्णांक sysfs__पढ़ो_ull(स्थिर अक्षर *entry, अचिन्हित दीर्घ दीर्घ *value);
+पूर्णांक sysfs__पढ़ो_xll(स्थिर अक्षर *entry, अचिन्हित दीर्घ दीर्घ *value);
+पूर्णांक sysfs__पढ़ो_str(स्थिर अक्षर *entry, अक्षर **buf, माप_प्रकार *sizep);
+पूर्णांक sysfs__पढ़ो_bool(स्थिर अक्षर *entry, bool *value);
 
-int sysfs__write_int(const char *entry, int value);
-#endif /* __API_FS__ */
+पूर्णांक sysfs__ग_लिखो_पूर्णांक(स्थिर अक्षर *entry, पूर्णांक value);
+#पूर्ण_अगर /* __API_FS__ */

@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-2-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-2-Clause) */
 /*
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available at
- * <http://www.fsf.org/copyleft/gpl.html>, or the OpenIB.org BSD
+ * <http://www.fsf.org/copyleft/gpl.hपंचांगl>, or the OpenIB.org BSD
  * license, available in the LICENSE.TXT file accompanying this
  * software.  These details are also available at
- * <http://www.openfabrics.org/software_license.htm>.
+ * <http://www.खोलोfabrics.org/software_license.hपंचांग>.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
@@ -22,9 +23,9 @@
  * $Id$
  */
 
-#ifndef _LINUX_IF_INFINIBAND_H
-#define _LINUX_IF_INFINIBAND_H
+#अगर_अघोषित _LINUX_IF_INFINIBAND_H
+#घोषणा _LINUX_IF_INFINIBAND_H
 
-#define INFINIBAND_ALEN		20	/* Octets in IPoIB HW addr	*/
+#घोषणा INFINIBAND_ALEN		20	/* Octets in IPoIB HW addr	*/
 
-#endif /* _LINUX_IF_INFINIBAND_H */
+#पूर्ण_अगर /* _LINUX_IF_INFINIBAND_H */

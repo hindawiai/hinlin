@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,14 +21,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef RV6XXD_H
-#define RV6XXD_H
+#अगर_अघोषित RV6XXD_H
+#घोषणा RV6XXD_H
 
-/* RV6xx power management */
-#define SPLL_CNTL_MODE                                    0x60c
+/* RV6xx घातer management */
+#घोषणा SPLL_CNTL_MODE                                    0x60c
 #       define SPLL_DIV_SYNC                              (1 << 5)
 
-#define GENERAL_PWRMGT                                    0x618
+#घोषणा GENERAL_PWRMGT                                    0x618
 #       define GLOBAL_PWRMGT_EN                           (1 << 0)
 #       define STATIC_PM_EN                               (1 << 1)
 #       define MOBILE_SU                                  (1 << 2)
@@ -44,7 +45,7 @@
 #       define BACKBIAS_DPM_CNTL                          (1 << 18)
 #       define DYN_SPREAD_SPECTRUM_EN                     (1 << 21)
 
-#define MCLK_PWRMGT_CNTL                                  0x624
+#घोषणा MCLK_PWRMGT_CNTL                                  0x624
 #       define MPLL_PWRMGT_OFF                            (1 << 0)
 #       define YCLK_TURNOFF                               (1 << 1)
 #       define MPLL_TURNOFF                               (1 << 2)
@@ -75,7 +76,7 @@
 #       define MPLL_TURNOFF_D2                            (1 << 28)
 #       define USE_DISPLAY_URGENT_CTXSW                   (1 << 29)
 
-#define MPLL_FREQ_LEVEL_0                                 0x6e8
+#घोषणा MPLL_FREQ_LEVEL_0                                 0x6e8
 #       define LEVEL0_MPLL_POST_DIV(x)                    ((x) << 0)
 #       define LEVEL0_MPLL_POST_DIV_MASK                  (0xff << 0)
 #       define LEVEL0_MPLL_FB_DIV(x)                      ((x) << 8)
@@ -86,7 +87,7 @@
 #       define LEVEL0_DLL_BYPASS                          (1 << 29)
 #       define LEVEL0_DLL_RESET                           (1 << 30)
 
-#define VID_RT                                            0x6f8
+#घोषणा VID_RT                                            0x6f8
 #       define VID_CRT(x)                                 ((x) << 0)
 #       define VID_CRT_MASK                               (0x1fff << 0)
 #       define VID_CRTU(x)                                ((x) << 13)
@@ -98,11 +99,11 @@
 #       define BRT(x)                                     ((x) << 24)
 #       define BRT_MASK                                   (0xff << 24)
 
-#define TARGET_AND_CURRENT_PROFILE_INDEX                  0x70c
-#       define TARGET_PROFILE_INDEX_MASK                  (3 << 0)
-#       define TARGET_PROFILE_INDEX_SHIFT                 0
-#       define CURRENT_PROFILE_INDEX_MASK                 (3 << 2)
-#       define CURRENT_PROFILE_INDEX_SHIFT                2
+#घोषणा TARGET_AND_CURRENT_PROखाता_INDEX                  0x70c
+#       define TARGET_PROखाता_INDEX_MASK                  (3 << 0)
+#       define TARGET_PROखाता_INDEX_SHIFT                 0
+#       define CURRENT_PROखाता_INDEX_MASK                 (3 << 2)
+#       define CURRENT_PROखाता_INDEX_SHIFT                2
 #       define DYN_PWR_ENTER_INDEX(x)                     ((x) << 4)
 #       define DYN_PWR_ENTER_INDEX_MASK                   (3 << 4)
 #       define DYN_PWR_ENTER_INDEX_SHIFT                  4
@@ -113,7 +114,7 @@
 #       define CURR_VID_INDEX_MASK                        (3 << 13)
 #       define CURR_VID_INDEX_SHIFT                       13
 
-#define VID_UPPER_GPIO_CNTL                               0x740
+#घोषणा VID_UPPER_GPIO_CNTL                               0x740
 #       define CTXSW_UPPER_GPIO_VALUES(x)                 ((x) << 0)
 #       define CTXSW_UPPER_GPIO_VALUES_MASK               (7 << 0)
 #       define HIGH_UPPER_GPIO_VALUES(x)                  ((x) << 3)
@@ -127,7 +128,7 @@
 #       define MEDIUM_BACKBIAS_VALUE                      (1 << 14)
 #       define LOW_BACKBIAS_VALUE                         (1 << 15)
 
-#define CG_DISPLAY_GAP_CNTL                               0x7dc
+#घोषणा CG_DISPLAY_GAP_CNTL                               0x7dc
 #       define DISP1_GAP(x)                               ((x) << 0)
 #       define DISP1_GAP_MASK                             (3 << 0)
 #       define DISP2_GAP(x)                               ((x) << 2)
@@ -141,7 +142,7 @@
 #       define DISP2_GAP_MCHG(x)                          ((x) << 26)
 #       define DISP2_GAP_MCHG_MASK                        (3 << 26)
 
-#define CG_THERMAL_CTRL                                   0x7f0
+#घोषणा CG_THERMAL_CTRL                                   0x7f0
 #       define DPM_EVENT_SRC(x)                           ((x) << 0)
 #       define DPM_EVENT_SRC_MASK                         (7 << 0)
 #       define THERM_INC_CLK                              (1 << 3)
@@ -154,7 +155,7 @@
 #       define CTF_PAD_POLARITY                           (1 << 23)
 #       define CTF_PAD_EN                                 (1 << 24)
 
-#define CG_SPLL_SPREAD_SPECTRUM_LOW                       0x820
+#घोषणा CG_SPLL_SPREAD_SPECTRUM_LOW                       0x820
 #       define SSEN                                       (1 << 0)
 #       define CLKS(x)                                    ((x) << 3)
 #       define CLKS_MASK                                  (0xff << 3)
@@ -162,28 +163,28 @@
 #       define CLKV(x)                                    ((x) << 11)
 #       define CLKV_MASK                                  (0x7ff << 11)
 #       define CLKV_SHIFT                                 11
-#define CG_MPLL_SPREAD_SPECTRUM                           0x830
+#घोषणा CG_MPLL_SPREAD_SPECTRUM                           0x830
 
-#define CITF_CNTL					0x200c
+#घोषणा CITF_CNTL					0x200c
 #       define BLACKOUT_RD                              (1 << 0)
 #       define BLACKOUT_WR                              (1 << 1)
 
-#define RAMCFG						0x2408
-#define		NOOFBANK_SHIFT					0
-#define		NOOFBANK_MASK					0x00000001
-#define		NOOFRANK_SHIFT					1
-#define		NOOFRANK_MASK					0x00000002
-#define		NOOFROWS_SHIFT					2
-#define		NOOFROWS_MASK					0x0000001C
-#define		NOOFCOLS_SHIFT					5
-#define		NOOFCOLS_MASK					0x00000060
-#define		CHANSIZE_SHIFT					7
-#define		CHANSIZE_MASK					0x00000080
-#define		BURSTLENGTH_SHIFT				8
-#define		BURSTLENGTH_MASK				0x00000100
-#define		CHANSIZE_OVERRIDE				(1 << 10)
+#घोषणा RAMCFG						0x2408
+#घोषणा		NOOFBANK_SHIFT					0
+#घोषणा		NOOFBANK_MASK					0x00000001
+#घोषणा		NOOFRANK_SHIFT					1
+#घोषणा		NOOFRANK_MASK					0x00000002
+#घोषणा		NOOFROWS_SHIFT					2
+#घोषणा		NOOFROWS_MASK					0x0000001C
+#घोषणा		NOOFCOLS_SHIFT					5
+#घोषणा		NOOFCOLS_MASK					0x00000060
+#घोषणा		CHANSIZE_SHIFT					7
+#घोषणा		CHANSIZE_MASK					0x00000080
+#घोषणा		BURSTLENGTH_SHIFT				8
+#घोषणा		BURSTLENGTH_MASK				0x00000100
+#घोषणा		CHANSIZE_OVERRIDE				(1 << 10)
 
-#define SQM_RATIO					0x2424
+#घोषणा SQM_RATIO					0x2424
 #       define STATE0(x)                                ((x) << 0)
 #       define STATE0_MASK                              (0xff << 0)
 #       define STATE1(x)                                ((x) << 8)
@@ -193,9 +194,9 @@
 #       define STATE3(x)                                ((x) << 24)
 #       define STATE3_MASK                              (0xff << 24)
 
-#define ARB_RFSH_CNTL					0x2460
+#घोषणा ARB_RFSH_CNTL					0x2460
 #       define ENABLE                                   (1 << 0)
-#define ARB_RFSH_RATE					0x2464
+#घोषणा ARB_RFSH_RATE					0x2464
 #       define POWERMODE0(x)                            ((x) << 0)
 #       define POWERMODE0_MASK                          (0xff << 0)
 #       define POWERMODE1(x)                            ((x) << 8)
@@ -205,26 +206,26 @@
 #       define POWERMODE3(x)                            ((x) << 24)
 #       define POWERMODE3_MASK                          (0xff << 24)
 
-#define MC_SEQ_DRAM					0x2608
+#घोषणा MC_SEQ_DRAM					0x2608
 #       define CKE_DYN                                  (1 << 12)
 
-#define MC_SEQ_CMD					0x26c4
+#घोषणा MC_SEQ_CMD					0x26c4
 
-#define MC_SEQ_RESERVE_S				0x2890
-#define MC_SEQ_RESERVE_M				0x2894
+#घोषणा MC_SEQ_RESERVE_S				0x2890
+#घोषणा MC_SEQ_RESERVE_M				0x2894
 
-#define LVTMA_DATA_SYNCHRONIZATION                      0x7adc
+#घोषणा LVTMA_DATA_SYNCHRONIZATION                      0x7adc
 #       define LVTMA_PFREQCHG                           (1 << 8)
-#define DCE3_LVTMA_DATA_SYNCHRONIZATION                 0x7f98
+#घोषणा DCE3_LVTMA_DATA_SYNCHRONIZATION                 0x7f98
 
 /* PCIE indirect regs */
-#define PCIE_P_CNTL                                       0x40
+#घोषणा PCIE_P_CNTL                                       0x40
 #       define P_PLL_PWRDN_IN_L1L23                       (1 << 3)
 #       define P_PLL_BUF_PDNB                             (1 << 4)
 #       define P_PLL_PDNB                                 (1 << 9)
 #       define P_ALLOW_PRX_FRONTEND_SHUTOFF               (1 << 12)
 /* PCIE PORT indirect regs */
-#define PCIE_LC_CNTL                                      0xa0
+#घोषणा PCIE_LC_CNTL                                      0xa0
 #       define LC_L0S_INACTIVITY(x)                       ((x) << 8)
 #       define LC_L0S_INACTIVITY_MASK                     (0xf << 8)
 #       define LC_L0S_INACTIVITY_SHIFT                    8
@@ -233,7 +234,7 @@
 #       define LC_L1_INACTIVITY_SHIFT                     12
 #       define LC_PMI_TO_L1_DIS                           (1 << 16)
 #       define LC_ASPM_TO_L1_DIS                          (1 << 24)
-#define PCIE_LC_SPEED_CNTL                                0xa4
+#घोषणा PCIE_LC_SPEED_CNTL                                0xa4
 #       define LC_GEN2_EN                                 (1 << 0)
 #       define LC_INITIATE_LINK_SPEED_CHANGE              (1 << 7)
 #       define LC_CURRENT_DATA_RATE                       (1 << 11)
@@ -243,4 +244,4 @@
 #       define LC_OTHER_SIDE_EVER_SENT_GEN2               (1 << 23)
 #       define LC_OTHER_SIDE_SUPPORTS_GEN2                (1 << 24)
 
-#endif
+#पूर्ण_अगर

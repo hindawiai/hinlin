@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
- *   fs/cifs/fscache.h - CIFS filesystem cache interface definitions
+ *   fs/cअगरs/fscache.h - CIFS fileप्रणाली cache पूर्णांकerface definitions
  *
  *   Copyright (c) 2010 Novell, Inc.
  *   Authors(s): Suresh Jayaraman (sjayaraman@suse.de>
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -12,161 +13,161 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   the GNU Lesser General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, write to the Free Software
+ *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-#ifndef _CIFS_FSCACHE_H
-#define _CIFS_FSCACHE_H
+#अगर_अघोषित _CIFS_FSCACHE_H
+#घोषणा _CIFS_FSCACHE_H
 
-#include <linux/fscache.h>
+#समावेश <linux/fscache.h>
 
-#include "cifsglob.h"
+#समावेश "cifsglob.h"
 
-#ifdef CONFIG_CIFS_FSCACHE
+#अगर_घोषित CONFIG_CIFS_FSCACHE
 
 /*
  * Auxiliary data attached to CIFS superblock within the cache
  */
-struct cifs_fscache_super_auxdata {
+काष्ठा cअगरs_fscache_super_auxdata अणु
 	u64	resource_id;		/* unique server resource id */
-	__le64	vol_create_time;
+	__le64	vol_create_समय;
 	u32	vol_serial_number;
-} __packed;
+पूर्ण __packed;
 
 /*
  * Auxiliary data attached to CIFS inode within the cache
  */
-struct cifs_fscache_inode_auxdata {
-	u64 last_write_time_sec;
-	u64 last_change_time_sec;
-	u32 last_write_time_nsec;
-	u32 last_change_time_nsec;
+काष्ठा cअगरs_fscache_inode_auxdata अणु
+	u64 last_ग_लिखो_समय_sec;
+	u64 last_change_समय_sec;
+	u32 last_ग_लिखो_समय_nsec;
+	u32 last_change_समय_nsec;
 	u64 eof;
-};
+पूर्ण;
 
 /*
  * cache.c
  */
-extern struct fscache_netfs cifs_fscache_netfs;
-extern const struct fscache_cookie_def cifs_fscache_server_index_def;
-extern const struct fscache_cookie_def cifs_fscache_super_index_def;
-extern const struct fscache_cookie_def cifs_fscache_inode_object_def;
+बाह्य काष्ठा fscache_netfs cअगरs_fscache_netfs;
+बाह्य स्थिर काष्ठा fscache_cookie_def cअगरs_fscache_server_index_def;
+बाह्य स्थिर काष्ठा fscache_cookie_def cअगरs_fscache_super_index_def;
+बाह्य स्थिर काष्ठा fscache_cookie_def cअगरs_fscache_inode_object_def;
 
-extern int cifs_fscache_register(void);
-extern void cifs_fscache_unregister(void);
+बाह्य पूर्णांक cअगरs_fscache_रेजिस्टर(व्योम);
+बाह्य व्योम cअगरs_fscache_unरेजिस्टर(व्योम);
 
 /*
  * fscache.c
  */
-extern void cifs_fscache_get_client_cookie(struct TCP_Server_Info *);
-extern void cifs_fscache_release_client_cookie(struct TCP_Server_Info *);
-extern void cifs_fscache_get_super_cookie(struct cifs_tcon *);
-extern void cifs_fscache_release_super_cookie(struct cifs_tcon *);
+बाह्य व्योम cअगरs_fscache_get_client_cookie(काष्ठा TCP_Server_Info *);
+बाह्य व्योम cअगरs_fscache_release_client_cookie(काष्ठा TCP_Server_Info *);
+बाह्य व्योम cअगरs_fscache_get_super_cookie(काष्ठा cअगरs_tcon *);
+बाह्य व्योम cअगरs_fscache_release_super_cookie(काष्ठा cअगरs_tcon *);
 
-extern void cifs_fscache_release_inode_cookie(struct inode *);
-extern void cifs_fscache_set_inode_cookie(struct inode *, struct file *);
-extern void cifs_fscache_reset_inode_cookie(struct inode *);
+बाह्य व्योम cअगरs_fscache_release_inode_cookie(काष्ठा inode *);
+बाह्य व्योम cअगरs_fscache_set_inode_cookie(काष्ठा inode *, काष्ठा file *);
+बाह्य व्योम cअगरs_fscache_reset_inode_cookie(काष्ठा inode *);
 
-extern void __cifs_fscache_invalidate_page(struct page *, struct inode *);
-extern int cifs_fscache_release_page(struct page *page, gfp_t gfp);
-extern int __cifs_readpage_from_fscache(struct inode *, struct page *);
-extern int __cifs_readpages_from_fscache(struct inode *,
-					 struct address_space *,
-					 struct list_head *,
-					 unsigned *);
-extern void __cifs_fscache_readpages_cancel(struct inode *, struct list_head *);
+बाह्य व्योम __cअगरs_fscache_invalidate_page(काष्ठा page *, काष्ठा inode *);
+बाह्य पूर्णांक cअगरs_fscache_release_page(काष्ठा page *page, gfp_t gfp);
+बाह्य पूर्णांक __cअगरs_पढ़ोpage_from_fscache(काष्ठा inode *, काष्ठा page *);
+बाह्य पूर्णांक __cअगरs_पढ़ोpages_from_fscache(काष्ठा inode *,
+					 काष्ठा address_space *,
+					 काष्ठा list_head *,
+					 अचिन्हित *);
+बाह्य व्योम __cअगरs_fscache_पढ़ोpages_cancel(काष्ठा inode *, काष्ठा list_head *);
 
-extern void __cifs_readpage_to_fscache(struct inode *, struct page *);
+बाह्य व्योम __cअगरs_पढ़ोpage_to_fscache(काष्ठा inode *, काष्ठा page *);
 
-static inline void cifs_fscache_invalidate_page(struct page *page,
-					       struct inode *inode)
-{
-	if (PageFsCache(page))
-		__cifs_fscache_invalidate_page(page, inode);
-}
+अटल अंतरभूत व्योम cअगरs_fscache_invalidate_page(काष्ठा page *page,
+					       काष्ठा inode *inode)
+अणु
+	अगर (PageFsCache(page))
+		__cअगरs_fscache_invalidate_page(page, inode);
+पूर्ण
 
-static inline int cifs_readpage_from_fscache(struct inode *inode,
-					     struct page *page)
-{
-	if (CIFS_I(inode)->fscache)
-		return __cifs_readpage_from_fscache(inode, page);
+अटल अंतरभूत पूर्णांक cअगरs_पढ़ोpage_from_fscache(काष्ठा inode *inode,
+					     काष्ठा page *page)
+अणु
+	अगर (CIFS_I(inode)->fscache)
+		वापस __cअगरs_पढ़ोpage_from_fscache(inode, page);
 
-	return -ENOBUFS;
-}
+	वापस -ENOBUFS;
+पूर्ण
 
-static inline int cifs_readpages_from_fscache(struct inode *inode,
-					      struct address_space *mapping,
-					      struct list_head *pages,
-					      unsigned *nr_pages)
-{
-	if (CIFS_I(inode)->fscache)
-		return __cifs_readpages_from_fscache(inode, mapping, pages,
+अटल अंतरभूत पूर्णांक cअगरs_पढ़ोpages_from_fscache(काष्ठा inode *inode,
+					      काष्ठा address_space *mapping,
+					      काष्ठा list_head *pages,
+					      अचिन्हित *nr_pages)
+अणु
+	अगर (CIFS_I(inode)->fscache)
+		वापस __cअगरs_पढ़ोpages_from_fscache(inode, mapping, pages,
 						     nr_pages);
-	return -ENOBUFS;
-}
+	वापस -ENOBUFS;
+पूर्ण
 
-static inline void cifs_readpage_to_fscache(struct inode *inode,
-					    struct page *page)
-{
-	if (PageFsCache(page))
-		__cifs_readpage_to_fscache(inode, page);
-}
+अटल अंतरभूत व्योम cअगरs_पढ़ोpage_to_fscache(काष्ठा inode *inode,
+					    काष्ठा page *page)
+अणु
+	अगर (PageFsCache(page))
+		__cअगरs_पढ़ोpage_to_fscache(inode, page);
+पूर्ण
 
-static inline void cifs_fscache_readpages_cancel(struct inode *inode,
-						 struct list_head *pages)
-{
-	if (CIFS_I(inode)->fscache)
-		return __cifs_fscache_readpages_cancel(inode, pages);
-}
+अटल अंतरभूत व्योम cअगरs_fscache_पढ़ोpages_cancel(काष्ठा inode *inode,
+						 काष्ठा list_head *pages)
+अणु
+	अगर (CIFS_I(inode)->fscache)
+		वापस __cअगरs_fscache_पढ़ोpages_cancel(inode, pages);
+पूर्ण
 
-#else /* CONFIG_CIFS_FSCACHE */
-static inline int cifs_fscache_register(void) { return 0; }
-static inline void cifs_fscache_unregister(void) {}
+#अन्यथा /* CONFIG_CIFS_FSCACHE */
+अटल अंतरभूत पूर्णांक cअगरs_fscache_रेजिस्टर(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम cअगरs_fscache_unरेजिस्टर(व्योम) अणुपूर्ण
 
-static inline void
-cifs_fscache_get_client_cookie(struct TCP_Server_Info *server) {}
-static inline void
-cifs_fscache_release_client_cookie(struct TCP_Server_Info *server) {}
-static inline void cifs_fscache_get_super_cookie(struct cifs_tcon *tcon) {}
-static inline void
-cifs_fscache_release_super_cookie(struct cifs_tcon *tcon) {}
+अटल अंतरभूत व्योम
+cअगरs_fscache_get_client_cookie(काष्ठा TCP_Server_Info *server) अणुपूर्ण
+अटल अंतरभूत व्योम
+cअगरs_fscache_release_client_cookie(काष्ठा TCP_Server_Info *server) अणुपूर्ण
+अटल अंतरभूत व्योम cअगरs_fscache_get_super_cookie(काष्ठा cअगरs_tcon *tcon) अणुपूर्ण
+अटल अंतरभूत व्योम
+cअगरs_fscache_release_super_cookie(काष्ठा cअगरs_tcon *tcon) अणुपूर्ण
 
-static inline void cifs_fscache_release_inode_cookie(struct inode *inode) {}
-static inline void cifs_fscache_set_inode_cookie(struct inode *inode,
-						 struct file *filp) {}
-static inline void cifs_fscache_reset_inode_cookie(struct inode *inode) {}
-static inline int cifs_fscache_release_page(struct page *page, gfp_t gfp)
-{
-	return 1; /* May release page */
-}
+अटल अंतरभूत व्योम cअगरs_fscache_release_inode_cookie(काष्ठा inode *inode) अणुपूर्ण
+अटल अंतरभूत व्योम cअगरs_fscache_set_inode_cookie(काष्ठा inode *inode,
+						 काष्ठा file *filp) अणुपूर्ण
+अटल अंतरभूत व्योम cअगरs_fscache_reset_inode_cookie(काष्ठा inode *inode) अणुपूर्ण
+अटल अंतरभूत पूर्णांक cअगरs_fscache_release_page(काष्ठा page *page, gfp_t gfp)
+अणु
+	वापस 1; /* May release page */
+पूर्ण
 
-static inline void cifs_fscache_invalidate_page(struct page *page,
-			struct inode *inode) {}
-static inline int
-cifs_readpage_from_fscache(struct inode *inode, struct page *page)
-{
-	return -ENOBUFS;
-}
+अटल अंतरभूत व्योम cअगरs_fscache_invalidate_page(काष्ठा page *page,
+			काष्ठा inode *inode) अणुपूर्ण
+अटल अंतरभूत पूर्णांक
+cअगरs_पढ़ोpage_from_fscache(काष्ठा inode *inode, काष्ठा page *page)
+अणु
+	वापस -ENOBUFS;
+पूर्ण
 
-static inline int cifs_readpages_from_fscache(struct inode *inode,
-					      struct address_space *mapping,
-					      struct list_head *pages,
-					      unsigned *nr_pages)
-{
-	return -ENOBUFS;
-}
+अटल अंतरभूत पूर्णांक cअगरs_पढ़ोpages_from_fscache(काष्ठा inode *inode,
+					      काष्ठा address_space *mapping,
+					      काष्ठा list_head *pages,
+					      अचिन्हित *nr_pages)
+अणु
+	वापस -ENOBUFS;
+पूर्ण
 
-static inline void cifs_readpage_to_fscache(struct inode *inode,
-			struct page *page) {}
+अटल अंतरभूत व्योम cअगरs_पढ़ोpage_to_fscache(काष्ठा inode *inode,
+			काष्ठा page *page) अणुपूर्ण
 
-static inline void cifs_fscache_readpages_cancel(struct inode *inode,
-						 struct list_head *pages)
-{
-}
+अटल अंतरभूत व्योम cअगरs_fscache_पढ़ोpages_cancel(काष्ठा inode *inode,
+						 काष्ठा list_head *pages)
+अणु
+पूर्ण
 
-#endif /* CONFIG_CIFS_FSCACHE */
+#पूर्ण_अगर /* CONFIG_CIFS_FSCACHE */
 
-#endif /* _CIFS_FSCACHE_H */
+#पूर्ण_अगर /* _CIFS_FSCACHE_H */

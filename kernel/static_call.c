@@ -1,545 +1,546 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/init.h>
-#include <linux/static_call.h>
-#include <linux/bug.h>
-#include <linux/smp.h>
-#include <linux/sort.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/cpu.h>
-#include <linux/processor.h>
-#include <asm/sections.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/init.h>
+#समावेश <linux/अटल_call.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/processor.h>
+#समावेश <यंत्र/sections.h>
 
-extern struct static_call_site __start_static_call_sites[],
-			       __stop_static_call_sites[];
-extern struct static_call_tramp_key __start_static_call_tramp_key[],
-				    __stop_static_call_tramp_key[];
+बाह्य काष्ठा अटल_call_site __start_अटल_call_sites[],
+			       __stop_अटल_call_sites[];
+बाह्य काष्ठा अटल_call_tramp_key __start_अटल_call_tramp_key[],
+				    __stop_अटल_call_tramp_key[];
 
-static bool static_call_initialized;
+अटल bool अटल_call_initialized;
 
 /* mutex to protect key modules/sites */
-static DEFINE_MUTEX(static_call_mutex);
+अटल DEFINE_MUTEX(अटल_call_mutex);
 
-static void static_call_lock(void)
-{
-	mutex_lock(&static_call_mutex);
-}
+अटल व्योम अटल_call_lock(व्योम)
+अणु
+	mutex_lock(&अटल_call_mutex);
+पूर्ण
 
-static void static_call_unlock(void)
-{
-	mutex_unlock(&static_call_mutex);
-}
+अटल व्योम अटल_call_unlock(व्योम)
+अणु
+	mutex_unlock(&अटल_call_mutex);
+पूर्ण
 
-static inline void *static_call_addr(struct static_call_site *site)
-{
-	return (void *)((long)site->addr + (long)&site->addr);
-}
+अटल अंतरभूत व्योम *अटल_call_addr(काष्ठा अटल_call_site *site)
+अणु
+	वापस (व्योम *)((दीर्घ)site->addr + (दीर्घ)&site->addr);
+पूर्ण
 
-static inline unsigned long __static_call_key(const struct static_call_site *site)
-{
-	return (long)site->key + (long)&site->key;
-}
+अटल अंतरभूत अचिन्हित दीर्घ __अटल_call_key(स्थिर काष्ठा अटल_call_site *site)
+अणु
+	वापस (दीर्घ)site->key + (दीर्घ)&site->key;
+पूर्ण
 
-static inline struct static_call_key *static_call_key(const struct static_call_site *site)
-{
-	return (void *)(__static_call_key(site) & ~STATIC_CALL_SITE_FLAGS);
-}
+अटल अंतरभूत काष्ठा अटल_call_key *अटल_call_key(स्थिर काष्ठा अटल_call_site *site)
+अणु
+	वापस (व्योम *)(__अटल_call_key(site) & ~STATIC_CALL_SITE_FLAGS);
+पूर्ण
 
 /* These assume the key is word-aligned. */
-static inline bool static_call_is_init(struct static_call_site *site)
-{
-	return __static_call_key(site) & STATIC_CALL_SITE_INIT;
-}
+अटल अंतरभूत bool अटल_call_is_init(काष्ठा अटल_call_site *site)
+अणु
+	वापस __अटल_call_key(site) & STATIC_CALL_SITE_INIT;
+पूर्ण
 
-static inline bool static_call_is_tail(struct static_call_site *site)
-{
-	return __static_call_key(site) & STATIC_CALL_SITE_TAIL;
-}
+अटल अंतरभूत bool अटल_call_is_tail(काष्ठा अटल_call_site *site)
+अणु
+	वापस __अटल_call_key(site) & STATIC_CALL_SITE_TAIL;
+पूर्ण
 
-static inline void static_call_set_init(struct static_call_site *site)
-{
-	site->key = (__static_call_key(site) | STATIC_CALL_SITE_INIT) -
-		    (long)&site->key;
-}
+अटल अंतरभूत व्योम अटल_call_set_init(काष्ठा अटल_call_site *site)
+अणु
+	site->key = (__अटल_call_key(site) | STATIC_CALL_SITE_INIT) -
+		    (दीर्घ)&site->key;
+पूर्ण
 
-static int static_call_site_cmp(const void *_a, const void *_b)
-{
-	const struct static_call_site *a = _a;
-	const struct static_call_site *b = _b;
-	const struct static_call_key *key_a = static_call_key(a);
-	const struct static_call_key *key_b = static_call_key(b);
+अटल पूर्णांक अटल_call_site_cmp(स्थिर व्योम *_a, स्थिर व्योम *_b)
+अणु
+	स्थिर काष्ठा अटल_call_site *a = _a;
+	स्थिर काष्ठा अटल_call_site *b = _b;
+	स्थिर काष्ठा अटल_call_key *key_a = अटल_call_key(a);
+	स्थिर काष्ठा अटल_call_key *key_b = अटल_call_key(b);
 
-	if (key_a < key_b)
-		return -1;
+	अगर (key_a < key_b)
+		वापस -1;
 
-	if (key_a > key_b)
-		return 1;
+	अगर (key_a > key_b)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void static_call_site_swap(void *_a, void *_b, int size)
-{
-	long delta = (unsigned long)_a - (unsigned long)_b;
-	struct static_call_site *a = _a;
-	struct static_call_site *b = _b;
-	struct static_call_site tmp = *a;
+अटल व्योम अटल_call_site_swap(व्योम *_a, व्योम *_b, पूर्णांक size)
+अणु
+	दीर्घ delta = (अचिन्हित दीर्घ)_a - (अचिन्हित दीर्घ)_b;
+	काष्ठा अटल_call_site *a = _a;
+	काष्ठा अटल_call_site *b = _b;
+	काष्ठा अटल_call_site पंचांगp = *a;
 
 	a->addr = b->addr  - delta;
 	a->key  = b->key   - delta;
 
-	b->addr = tmp.addr + delta;
-	b->key  = tmp.key  + delta;
-}
+	b->addr = पंचांगp.addr + delta;
+	b->key  = पंचांगp.key  + delta;
+पूर्ण
 
-static inline void static_call_sort_entries(struct static_call_site *start,
-					    struct static_call_site *stop)
-{
-	sort(start, stop - start, sizeof(struct static_call_site),
-	     static_call_site_cmp, static_call_site_swap);
-}
+अटल अंतरभूत व्योम अटल_call_sort_entries(काष्ठा अटल_call_site *start,
+					    काष्ठा अटल_call_site *stop)
+अणु
+	sort(start, stop - start, माप(काष्ठा अटल_call_site),
+	     अटल_call_site_cmp, अटल_call_site_swap);
+पूर्ण
 
-static inline bool static_call_key_has_mods(struct static_call_key *key)
-{
-	return !(key->type & 1);
-}
+अटल अंतरभूत bool अटल_call_key_has_mods(काष्ठा अटल_call_key *key)
+अणु
+	वापस !(key->type & 1);
+पूर्ण
 
-static inline struct static_call_mod *static_call_key_next(struct static_call_key *key)
-{
-	if (!static_call_key_has_mods(key))
-		return NULL;
+अटल अंतरभूत काष्ठा अटल_call_mod *अटल_call_key_next(काष्ठा अटल_call_key *key)
+अणु
+	अगर (!अटल_call_key_has_mods(key))
+		वापस शून्य;
 
-	return key->mods;
-}
+	वापस key->mods;
+पूर्ण
 
-static inline struct static_call_site *static_call_key_sites(struct static_call_key *key)
-{
-	if (static_call_key_has_mods(key))
-		return NULL;
+अटल अंतरभूत काष्ठा अटल_call_site *अटल_call_key_sites(काष्ठा अटल_call_key *key)
+अणु
+	अगर (अटल_call_key_has_mods(key))
+		वापस शून्य;
 
-	return (struct static_call_site *)(key->type & ~1);
-}
+	वापस (काष्ठा अटल_call_site *)(key->type & ~1);
+पूर्ण
 
-void __static_call_update(struct static_call_key *key, void *tramp, void *func)
-{
-	struct static_call_site *site, *stop;
-	struct static_call_mod *site_mod, first;
+व्योम __अटल_call_update(काष्ठा अटल_call_key *key, व्योम *tramp, व्योम *func)
+अणु
+	काष्ठा अटल_call_site *site, *stop;
+	काष्ठा अटल_call_mod *site_mod, first;
 
-	cpus_read_lock();
-	static_call_lock();
+	cpus_पढ़ो_lock();
+	अटल_call_lock();
 
-	if (key->func == func)
-		goto done;
+	अगर (key->func == func)
+		जाओ करोne;
 
 	key->func = func;
 
-	arch_static_call_transform(NULL, tramp, func, false);
+	arch_अटल_call_transक्रमm(शून्य, tramp, func, false);
 
 	/*
 	 * If uninitialized, we'll not update the callsites, but they still
-	 * point to the trampoline and we just patched that.
+	 * poपूर्णांक to the trampoline and we just patched that.
 	 */
-	if (WARN_ON_ONCE(!static_call_initialized))
-		goto done;
+	अगर (WARN_ON_ONCE(!अटल_call_initialized))
+		जाओ करोne;
 
-	first = (struct static_call_mod){
-		.next = static_call_key_next(key),
-		.mod = NULL,
-		.sites = static_call_key_sites(key),
-	};
+	first = (काष्ठा अटल_call_mod)अणु
+		.next = अटल_call_key_next(key),
+		.mod = शून्य,
+		.sites = अटल_call_key_sites(key),
+	पूर्ण;
 
-	for (site_mod = &first; site_mod; site_mod = site_mod->next) {
-		bool init = system_state < SYSTEM_RUNNING;
-		struct module *mod = site_mod->mod;
+	क्रम (site_mod = &first; site_mod; site_mod = site_mod->next) अणु
+		bool init = प्रणाली_state < SYSTEM_RUNNING;
+		काष्ठा module *mod = site_mod->mod;
 
-		if (!site_mod->sites) {
+		अगर (!site_mod->sites) अणु
 			/*
-			 * This can happen if the static call key is defined in
-			 * a module which doesn't use it.
+			 * This can happen अगर the अटल call key is defined in
+			 * a module which करोesn't use it.
 			 *
-			 * It also happens in the has_mods case, where the
+			 * It also happens in the has_mods हाल, where the
 			 * 'first' entry has no sites associated with it.
 			 */
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		stop = __stop_static_call_sites;
+		stop = __stop_अटल_call_sites;
 
-		if (mod) {
-#ifdef CONFIG_MODULES
-			stop = mod->static_call_sites +
-			       mod->num_static_call_sites;
+		अगर (mod) अणु
+#अगर_घोषित CONFIG_MODULES
+			stop = mod->अटल_call_sites +
+			       mod->num_अटल_call_sites;
 			init = mod->state == MODULE_STATE_COMING;
-#endif
-		}
+#पूर्ण_अगर
+		पूर्ण
 
-		for (site = site_mod->sites;
-		     site < stop && static_call_key(site) == key; site++) {
-			void *site_addr = static_call_addr(site);
+		क्रम (site = site_mod->sites;
+		     site < stop && अटल_call_key(site) == key; site++) अणु
+			व्योम *site_addr = अटल_call_addr(site);
 
-			if (!init && static_call_is_init(site))
-				continue;
+			अगर (!init && अटल_call_is_init(site))
+				जारी;
 
-			if (!kernel_text_address((unsigned long)site_addr)) {
+			अगर (!kernel_text_address((अचिन्हित दीर्घ)site_addr)) अणु
 				/*
-				 * This skips patching built-in __exit, which
+				 * This skips patching built-in __निकास, which
 				 * is part of init_section_contains() but is
 				 * not part of kernel_text_address().
 				 *
-				 * Skipping built-in __exit is fine since it
+				 * Skipping built-in __निकास is fine since it
 				 * will never be executed.
 				 */
-				WARN_ONCE(!static_call_is_init(site),
+				WARN_ONCE(!अटल_call_is_init(site),
 					  "can't patch static call site at %pS",
 					  site_addr);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			arch_static_call_transform(site_addr, NULL, func,
-						   static_call_is_tail(site));
-		}
-	}
+			arch_अटल_call_transक्रमm(site_addr, शून्य, func,
+						   अटल_call_is_tail(site));
+		पूर्ण
+	पूर्ण
 
-done:
-	static_call_unlock();
-	cpus_read_unlock();
-}
-EXPORT_SYMBOL_GPL(__static_call_update);
+करोne:
+	अटल_call_unlock();
+	cpus_पढ़ो_unlock();
+पूर्ण
+EXPORT_SYMBOL_GPL(__अटल_call_update);
 
-static int __static_call_init(struct module *mod,
-			      struct static_call_site *start,
-			      struct static_call_site *stop)
-{
-	struct static_call_site *site;
-	struct static_call_key *key, *prev_key = NULL;
-	struct static_call_mod *site_mod;
+अटल पूर्णांक __अटल_call_init(काष्ठा module *mod,
+			      काष्ठा अटल_call_site *start,
+			      काष्ठा अटल_call_site *stop)
+अणु
+	काष्ठा अटल_call_site *site;
+	काष्ठा अटल_call_key *key, *prev_key = शून्य;
+	काष्ठा अटल_call_mod *site_mod;
 
-	if (start == stop)
-		return 0;
+	अगर (start == stop)
+		वापस 0;
 
-	static_call_sort_entries(start, stop);
+	अटल_call_sort_entries(start, stop);
 
-	for (site = start; site < stop; site++) {
-		void *site_addr = static_call_addr(site);
+	क्रम (site = start; site < stop; site++) अणु
+		व्योम *site_addr = अटल_call_addr(site);
 
-		if ((mod && within_module_init((unsigned long)site_addr, mod)) ||
+		अगर ((mod && within_module_init((अचिन्हित दीर्घ)site_addr, mod)) ||
 		    (!mod && init_section_contains(site_addr, 1)))
-			static_call_set_init(site);
+			अटल_call_set_init(site);
 
-		key = static_call_key(site);
-		if (key != prev_key) {
+		key = अटल_call_key(site);
+		अगर (key != prev_key) अणु
 			prev_key = key;
 
 			/*
-			 * For vmlinux (!mod) avoid the allocation by storing
-			 * the sites pointer in the key itself. Also see
-			 * __static_call_update()'s @first.
+			 * For vmlinux (!mod) aव्योम the allocation by storing
+			 * the sites poपूर्णांकer in the key itself. Also see
+			 * __अटल_call_update()'s @first.
 			 *
 			 * This allows architectures (eg. x86) to call
-			 * static_call_init() before memory allocation works.
+			 * अटल_call_init() beक्रमe memory allocation works.
 			 */
-			if (!mod) {
+			अगर (!mod) अणु
 				key->sites = site;
 				key->type |= 1;
-				goto do_transform;
-			}
+				जाओ करो_transक्रमm;
+			पूर्ण
 
-			site_mod = kzalloc(sizeof(*site_mod), GFP_KERNEL);
-			if (!site_mod)
-				return -ENOMEM;
+			site_mod = kzalloc(माप(*site_mod), GFP_KERNEL);
+			अगर (!site_mod)
+				वापस -ENOMEM;
 
 			/*
-			 * When the key has a direct sites pointer, extract
-			 * that into an explicit struct static_call_mod, so we
+			 * When the key has a direct sites poपूर्णांकer, extract
+			 * that पूर्णांकo an explicit काष्ठा अटल_call_mod, so we
 			 * can have a list of modules.
 			 */
-			if (static_call_key_sites(key)) {
-				site_mod->mod = NULL;
-				site_mod->next = NULL;
-				site_mod->sites = static_call_key_sites(key);
+			अगर (अटल_call_key_sites(key)) अणु
+				site_mod->mod = शून्य;
+				site_mod->next = शून्य;
+				site_mod->sites = अटल_call_key_sites(key);
 
 				key->mods = site_mod;
 
-				site_mod = kzalloc(sizeof(*site_mod), GFP_KERNEL);
-				if (!site_mod)
-					return -ENOMEM;
-			}
+				site_mod = kzalloc(माप(*site_mod), GFP_KERNEL);
+				अगर (!site_mod)
+					वापस -ENOMEM;
+			पूर्ण
 
 			site_mod->mod = mod;
 			site_mod->sites = site;
-			site_mod->next = static_call_key_next(key);
+			site_mod->next = अटल_call_key_next(key);
 			key->mods = site_mod;
-		}
+		पूर्ण
 
-do_transform:
-		arch_static_call_transform(site_addr, NULL, key->func,
-				static_call_is_tail(site));
-	}
+करो_transक्रमm:
+		arch_अटल_call_transक्रमm(site_addr, शून्य, key->func,
+				अटल_call_is_tail(site));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int addr_conflict(struct static_call_site *site, void *start, void *end)
-{
-	unsigned long addr = (unsigned long)static_call_addr(site);
+अटल पूर्णांक addr_conflict(काष्ठा अटल_call_site *site, व्योम *start, व्योम *end)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)अटल_call_addr(site);
 
-	if (addr <= (unsigned long)end &&
-	    addr + CALL_INSN_SIZE > (unsigned long)start)
-		return 1;
+	अगर (addr <= (अचिन्हित दीर्घ)end &&
+	    addr + CALL_INSN_SIZE > (अचिन्हित दीर्घ)start)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __static_call_text_reserved(struct static_call_site *iter_start,
-				       struct static_call_site *iter_stop,
-				       void *start, void *end)
-{
-	struct static_call_site *iter = iter_start;
+अटल पूर्णांक __अटल_call_text_reserved(काष्ठा अटल_call_site *iter_start,
+				       काष्ठा अटल_call_site *iter_stop,
+				       व्योम *start, व्योम *end)
+अणु
+	काष्ठा अटल_call_site *iter = iter_start;
 
-	while (iter < iter_stop) {
-		if (addr_conflict(iter, start, end))
-			return 1;
+	जबतक (iter < iter_stop) अणु
+		अगर (addr_conflict(iter, start, end))
+			वापस 1;
 		iter++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_MODULES
+#अगर_घोषित CONFIG_MODULES
 
-static int __static_call_mod_text_reserved(void *start, void *end)
-{
-	struct module *mod;
-	int ret;
+अटल पूर्णांक __अटल_call_mod_text_reserved(व्योम *start, व्योम *end)
+अणु
+	काष्ठा module *mod;
+	पूर्णांक ret;
 
 	preempt_disable();
-	mod = __module_text_address((unsigned long)start);
-	WARN_ON_ONCE(__module_text_address((unsigned long)end) != mod);
-	if (!try_module_get(mod))
-		mod = NULL;
+	mod = __module_text_address((अचिन्हित दीर्घ)start);
+	WARN_ON_ONCE(__module_text_address((अचिन्हित दीर्घ)end) != mod);
+	अगर (!try_module_get(mod))
+		mod = शून्य;
 	preempt_enable();
 
-	if (!mod)
-		return 0;
+	अगर (!mod)
+		वापस 0;
 
-	ret = __static_call_text_reserved(mod->static_call_sites,
-			mod->static_call_sites + mod->num_static_call_sites,
+	ret = __अटल_call_text_reserved(mod->अटल_call_sites,
+			mod->अटल_call_sites + mod->num_अटल_call_sites,
 			start, end);
 
 	module_put(mod);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned long tramp_key_lookup(unsigned long addr)
-{
-	struct static_call_tramp_key *start = __start_static_call_tramp_key;
-	struct static_call_tramp_key *stop = __stop_static_call_tramp_key;
-	struct static_call_tramp_key *tramp_key;
+अटल अचिन्हित दीर्घ tramp_key_lookup(अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा अटल_call_tramp_key *start = __start_अटल_call_tramp_key;
+	काष्ठा अटल_call_tramp_key *stop = __stop_अटल_call_tramp_key;
+	काष्ठा अटल_call_tramp_key *tramp_key;
 
-	for (tramp_key = start; tramp_key != stop; tramp_key++) {
-		unsigned long tramp;
+	क्रम (tramp_key = start; tramp_key != stop; tramp_key++) अणु
+		अचिन्हित दीर्घ tramp;
 
-		tramp = (long)tramp_key->tramp + (long)&tramp_key->tramp;
-		if (tramp == addr)
-			return (long)tramp_key->key + (long)&tramp_key->key;
-	}
+		tramp = (दीर्घ)tramp_key->tramp + (दीर्घ)&tramp_key->tramp;
+		अगर (tramp == addr)
+			वापस (दीर्घ)tramp_key->key + (दीर्घ)&tramp_key->key;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int static_call_add_module(struct module *mod)
-{
-	struct static_call_site *start = mod->static_call_sites;
-	struct static_call_site *stop = start + mod->num_static_call_sites;
-	struct static_call_site *site;
+अटल पूर्णांक अटल_call_add_module(काष्ठा module *mod)
+अणु
+	काष्ठा अटल_call_site *start = mod->अटल_call_sites;
+	काष्ठा अटल_call_site *stop = start + mod->num_अटल_call_sites;
+	काष्ठा अटल_call_site *site;
 
-	for (site = start; site != stop; site++) {
-		unsigned long s_key = __static_call_key(site);
-		unsigned long addr = s_key & ~STATIC_CALL_SITE_FLAGS;
-		unsigned long key;
+	क्रम (site = start; site != stop; site++) अणु
+		अचिन्हित दीर्घ s_key = __अटल_call_key(site);
+		अचिन्हित दीर्घ addr = s_key & ~STATIC_CALL_SITE_FLAGS;
+		अचिन्हित दीर्घ key;
 
 		/*
-		 * Is the key is exported, 'addr' points to the key, which
-		 * means modules are allowed to call static_call_update() on
+		 * Is the key is exported, 'addr' poपूर्णांकs to the key, which
+		 * means modules are allowed to call अटल_call_update() on
 		 * it.
 		 *
-		 * Otherwise, the key isn't exported, and 'addr' points to the
+		 * Otherwise, the key isn't exported, and 'addr' poपूर्णांकs to the
 		 * trampoline so we need to lookup the key.
 		 *
 		 * We go through this dance to prevent crazy modules from
-		 * abusing sensitive static calls.
+		 * abusing sensitive अटल calls.
 		 */
-		if (!kernel_text_address(addr))
-			continue;
+		अगर (!kernel_text_address(addr))
+			जारी;
 
 		key = tramp_key_lookup(addr);
-		if (!key) {
+		अगर (!key) अणु
 			pr_warn("Failed to fixup __raw_static_call() usage at: %ps\n",
-				static_call_addr(site));
-			return -EINVAL;
-		}
+				अटल_call_addr(site));
+			वापस -EINVAL;
+		पूर्ण
 
 		key |= s_key & STATIC_CALL_SITE_FLAGS;
-		site->key = key - (long)&site->key;
-	}
+		site->key = key - (दीर्घ)&site->key;
+	पूर्ण
 
-	return __static_call_init(mod, start, stop);
-}
+	वापस __अटल_call_init(mod, start, stop);
+पूर्ण
 
-static void static_call_del_module(struct module *mod)
-{
-	struct static_call_site *start = mod->static_call_sites;
-	struct static_call_site *stop = mod->static_call_sites +
-					mod->num_static_call_sites;
-	struct static_call_key *key, *prev_key = NULL;
-	struct static_call_mod *site_mod, **prev;
-	struct static_call_site *site;
+अटल व्योम अटल_call_del_module(काष्ठा module *mod)
+अणु
+	काष्ठा अटल_call_site *start = mod->अटल_call_sites;
+	काष्ठा अटल_call_site *stop = mod->अटल_call_sites +
+					mod->num_अटल_call_sites;
+	काष्ठा अटल_call_key *key, *prev_key = शून्य;
+	काष्ठा अटल_call_mod *site_mod, **prev;
+	काष्ठा अटल_call_site *site;
 
-	for (site = start; site < stop; site++) {
-		key = static_call_key(site);
-		if (key == prev_key)
-			continue;
+	क्रम (site = start; site < stop; site++) अणु
+		key = अटल_call_key(site);
+		अगर (key == prev_key)
+			जारी;
 
 		prev_key = key;
 
-		for (prev = &key->mods, site_mod = key->mods;
+		क्रम (prev = &key->mods, site_mod = key->mods;
 		     site_mod && site_mod->mod != mod;
 		     prev = &site_mod->next, site_mod = site_mod->next)
 			;
 
-		if (!site_mod)
-			continue;
+		अगर (!site_mod)
+			जारी;
 
 		*prev = site_mod->next;
-		kfree(site_mod);
-	}
-}
+		kमुक्त(site_mod);
+	पूर्ण
+पूर्ण
 
-static int static_call_module_notify(struct notifier_block *nb,
-				     unsigned long val, void *data)
-{
-	struct module *mod = data;
-	int ret = 0;
+अटल पूर्णांक अटल_call_module_notअगरy(काष्ठा notअगरier_block *nb,
+				     अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	काष्ठा module *mod = data;
+	पूर्णांक ret = 0;
 
-	cpus_read_lock();
-	static_call_lock();
+	cpus_पढ़ो_lock();
+	अटल_call_lock();
 
-	switch (val) {
-	case MODULE_STATE_COMING:
-		ret = static_call_add_module(mod);
-		if (ret) {
+	चयन (val) अणु
+	हाल MODULE_STATE_COMING:
+		ret = अटल_call_add_module(mod);
+		अगर (ret) अणु
 			WARN(1, "Failed to allocate memory for static calls");
-			static_call_del_module(mod);
-		}
-		break;
-	case MODULE_STATE_GOING:
-		static_call_del_module(mod);
-		break;
-	}
+			अटल_call_del_module(mod);
+		पूर्ण
+		अवरोध;
+	हाल MODULE_STATE_GOING:
+		अटल_call_del_module(mod);
+		अवरोध;
+	पूर्ण
 
-	static_call_unlock();
-	cpus_read_unlock();
+	अटल_call_unlock();
+	cpus_पढ़ो_unlock();
 
-	return notifier_from_errno(ret);
-}
+	वापस notअगरier_from_त्रुटि_सं(ret);
+पूर्ण
 
-static struct notifier_block static_call_module_nb = {
-	.notifier_call = static_call_module_notify,
-};
+अटल काष्ठा notअगरier_block अटल_call_module_nb = अणु
+	.notअगरier_call = अटल_call_module_notअगरy,
+पूर्ण;
 
-#else
+#अन्यथा
 
-static inline int __static_call_mod_text_reserved(void *start, void *end)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __अटल_call_mod_text_reserved(व्योम *start, व्योम *end)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_MODULES */
+#पूर्ण_अगर /* CONFIG_MODULES */
 
-int static_call_text_reserved(void *start, void *end)
-{
-	int ret = __static_call_text_reserved(__start_static_call_sites,
-			__stop_static_call_sites, start, end);
+पूर्णांक अटल_call_text_reserved(व्योम *start, व्योम *end)
+अणु
+	पूर्णांक ret = __अटल_call_text_reserved(__start_अटल_call_sites,
+			__stop_अटल_call_sites, start, end);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return __static_call_mod_text_reserved(start, end);
-}
+	वापस __अटल_call_mod_text_reserved(start, end);
+पूर्ण
 
-int __init static_call_init(void)
-{
-	int ret;
+पूर्णांक __init अटल_call_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (static_call_initialized)
-		return 0;
+	अगर (अटल_call_initialized)
+		वापस 0;
 
-	cpus_read_lock();
-	static_call_lock();
-	ret = __static_call_init(NULL, __start_static_call_sites,
-				 __stop_static_call_sites);
-	static_call_unlock();
-	cpus_read_unlock();
+	cpus_पढ़ो_lock();
+	अटल_call_lock();
+	ret = __अटल_call_init(शून्य, __start_अटल_call_sites,
+				 __stop_अटल_call_sites);
+	अटल_call_unlock();
+	cpus_पढ़ो_unlock();
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Failed to allocate memory for static_call!\n");
 		BUG();
-	}
+	पूर्ण
 
-	static_call_initialized = true;
+	अटल_call_initialized = true;
 
-#ifdef CONFIG_MODULES
-	register_module_notifier(&static_call_module_nb);
-#endif
-	return 0;
-}
-early_initcall(static_call_init);
+#अगर_घोषित CONFIG_MODULES
+	रेजिस्टर_module_notअगरier(&अटल_call_module_nb);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
+early_initcall(अटल_call_init);
 
-long __static_call_return0(void)
-{
-	return 0;
-}
+दीर्घ __अटल_call_वापस0(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_STATIC_CALL_SELFTEST
+#अगर_घोषित CONFIG_STATIC_CALL_SELFTEST
 
-static int func_a(int x)
-{
-	return x+1;
-}
+अटल पूर्णांक func_a(पूर्णांक x)
+अणु
+	वापस x+1;
+पूर्ण
 
-static int func_b(int x)
-{
-	return x+2;
-}
+अटल पूर्णांक func_b(पूर्णांक x)
+अणु
+	वापस x+2;
+पूर्ण
 
 DEFINE_STATIC_CALL(sc_selftest, func_a);
 
-static struct static_call_data {
-      int (*func)(int);
-      int val;
-      int expect;
-} static_call_data [] __initdata = {
-      { NULL,   2, 3 },
-      { func_b, 2, 4 },
-      { func_a, 2, 3 }
-};
+अटल काष्ठा अटल_call_data अणु
+      पूर्णांक (*func)(पूर्णांक);
+      पूर्णांक val;
+      पूर्णांक expect;
+पूर्ण अटल_call_data [] __initdata = अणु
+      अणु शून्य,   2, 3 पूर्ण,
+      अणु func_b, 2, 4 पूर्ण,
+      अणु func_a, 2, 3 पूर्ण
+पूर्ण;
 
-static int __init test_static_call_init(void)
-{
-      int i;
+अटल पूर्णांक __init test_अटल_call_init(व्योम)
+अणु
+      पूर्णांक i;
 
-      for (i = 0; i < ARRAY_SIZE(static_call_data); i++ ) {
-	      struct static_call_data *scd = &static_call_data[i];
+      क्रम (i = 0; i < ARRAY_SIZE(अटल_call_data); i++ ) अणु
+	      काष्ठा अटल_call_data *scd = &अटल_call_data[i];
 
-              if (scd->func)
-                      static_call_update(sc_selftest, scd->func);
+              अगर (scd->func)
+                      अटल_call_update(sc_selftest, scd->func);
 
-              WARN_ON(static_call(sc_selftest)(scd->val) != scd->expect);
-      }
+              WARN_ON(अटल_call(sc_selftest)(scd->val) != scd->expect);
+      पूर्ण
 
-      return 0;
-}
-early_initcall(test_static_call_init);
+      वापस 0;
+पूर्ण
+early_initcall(test_अटल_call_init);
 
-#endif /* CONFIG_STATIC_CALL_SELFTEST */
+#पूर्ण_अगर /* CONFIG_STATIC_CALL_SELFTEST */

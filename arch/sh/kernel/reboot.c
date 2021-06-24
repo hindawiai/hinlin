@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/pm.h>
-#include <linux/kexec.h>
-#include <linux/kernel.h>
-#include <linux/reboot.h>
-#include <linux/module.h>
-#include <asm/watchdog.h>
-#include <asm/addrspace.h>
-#include <asm/reboot.h>
-#include <asm/tlbflush.h>
-#include <asm/traps.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/pm.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/watchकरोg.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/reboot.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/traps.h>
 
-void (*pm_power_off)(void);
-EXPORT_SYMBOL(pm_power_off);
+व्योम (*pm_घातer_off)(व्योम);
+EXPORT_SYMBOL(pm_घातer_off);
 
-static void watchdog_trigger_immediate(void)
-{
-	sh_wdt_write_cnt(0xFF);
-	sh_wdt_write_csr(0xC2);
-}
+अटल व्योम watchकरोg_trigger_immediate(व्योम)
+अणु
+	sh_wdt_ग_लिखो_cnt(0xFF);
+	sh_wdt_ग_लिखो_csr(0xC2);
+पूर्ण
 
-static void native_machine_restart(char * __unused)
-{
+अटल व्योम native_machine_restart(अक्षर * __unused)
+अणु
 	local_irq_disable();
 
-	/* Destroy all of the TLBs in preparation for reset by MMU */
+	/* Destroy all of the TLBs in preparation क्रम reset by MMU */
 	__flush_tlb_global();
 
 	/* Address error with SR.BL=1 first. */
 	trigger_address_error();
 
-	/* If that fails or is unsupported, go for the watchdog next. */
-	watchdog_trigger_immediate();
+	/* If that fails or is unsupported, go क्रम the watchकरोg next. */
+	watchकरोg_trigger_immediate();
 
 	/*
 	 * Give up and sleep.
 	 */
-	while (1)
+	जबतक (1)
 		cpu_sleep();
-}
+पूर्ण
 
-static void native_machine_shutdown(void)
-{
+अटल व्योम native_machine_shutकरोwn(व्योम)
+अणु
 	smp_send_stop();
-}
+पूर्ण
 
-static void native_machine_power_off(void)
-{
-	if (pm_power_off)
-		pm_power_off();
-}
+अटल व्योम native_machine_घातer_off(व्योम)
+अणु
+	अगर (pm_घातer_off)
+		pm_घातer_off();
+पूर्ण
 
-static void native_machine_halt(void)
-{
+अटल व्योम native_machine_halt(व्योम)
+अणु
 	/* stop other cpus */
-	machine_shutdown();
+	machine_shutकरोwn();
 
 	/* stop this cpu */
-	stop_this_cpu(NULL);
-}
+	stop_this_cpu(शून्य);
+पूर्ण
 
-struct machine_ops machine_ops = {
-	.power_off	= native_machine_power_off,
-	.shutdown	= native_machine_shutdown,
+काष्ठा machine_ops machine_ops = अणु
+	.घातer_off	= native_machine_घातer_off,
+	.shutकरोwn	= native_machine_shutकरोwn,
 	.restart	= native_machine_restart,
 	.halt		= native_machine_halt,
-#ifdef CONFIG_KEXEC
-	.crash_shutdown = native_machine_crash_shutdown,
-#endif
-};
+#अगर_घोषित CONFIG_KEXEC
+	.crash_shutकरोwn = native_machine_crash_shutकरोwn,
+#पूर्ण_अगर
+पूर्ण;
 
-void machine_power_off(void)
-{
-	machine_ops.power_off();
-}
+व्योम machine_घातer_off(व्योम)
+अणु
+	machine_ops.घातer_off();
+पूर्ण
 
-void machine_shutdown(void)
-{
-	machine_ops.shutdown();
-}
+व्योम machine_shutकरोwn(व्योम)
+अणु
+	machine_ops.shutकरोwn();
+पूर्ण
 
-void machine_restart(char *cmd)
-{
+व्योम machine_restart(अक्षर *cmd)
+अणु
 	machine_ops.restart(cmd);
-}
+पूर्ण
 
-void machine_halt(void)
-{
+व्योम machine_halt(व्योम)
+अणु
 	machine_ops.halt();
-}
+पूर्ण
 
-#ifdef CONFIG_KEXEC
-void machine_crash_shutdown(struct pt_regs *regs)
-{
-	machine_ops.crash_shutdown(regs);
-}
-#endif
+#अगर_घोषित CONFIG_KEXEC
+व्योम machine_crash_shutकरोwn(काष्ठा pt_regs *regs)
+अणु
+	machine_ops.crash_shutकरोwn(regs);
+पूर्ण
+#पूर्ण_अगर

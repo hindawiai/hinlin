@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * MAC commands interface
+ * MAC commands पूर्णांकerface
  *
  * Copyright 2007-2012 Siemens AG
  *
@@ -10,33 +11,33 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
-#include <linux/skbuff.h>
-#include <linux/if_arp.h>
-#include <linux/ieee802154.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/ieee802154.h>
 
-#include <net/ieee802154_netdev.h>
-#include <net/cfg802154.h>
-#include <net/mac802154.h>
+#समावेश <net/ieee802154_netdev.h>
+#समावेश <net/cfg802154.h>
+#समावेश <net/mac802154.h>
 
-#include "ieee802154_i.h"
-#include "driver-ops.h"
+#समावेश "ieee802154_i.h"
+#समावेश "driver-ops.h"
 
-static int mac802154_mlme_start_req(struct net_device *dev,
-				    struct ieee802154_addr *addr,
+अटल पूर्णांक mac802154_mlme_start_req(काष्ठा net_device *dev,
+				    काष्ठा ieee802154_addr *addr,
 				    u8 channel, u8 page,
 				    u8 bcn_ord, u8 sf_ord,
 				    u8 pan_coord, u8 blx,
 				    u8 coord_realign)
-{
-	struct ieee802154_llsec_params params;
-	int changed = 0;
+अणु
+	काष्ठा ieee802154_llsec_params params;
+	पूर्णांक changed = 0;
 
 	ASSERT_RTNL();
 
 	BUG_ON(addr->mode != IEEE802154_ADDR_SHORT);
 
 	dev->ieee802154_ptr->pan_id = addr->pan_id;
-	dev->ieee802154_ptr->short_addr = addr->short_addr;
+	dev->ieee802154_ptr->लघु_addr = addr->लघु_addr;
 	mac802154_dev_set_page_channel(dev, page, channel);
 
 	params.pan_id = addr->pan_id;
@@ -48,24 +49,24 @@ static int mac802154_mlme_start_req(struct net_device *dev,
 	params.coord_hwaddr = params.hwaddr;
 	changed |= IEEE802154_LLSEC_PARAM_COORD_HWADDR;
 
-	params.coord_shortaddr = addr->short_addr;
+	params.coord_लघुaddr = addr->लघु_addr;
 	changed |= IEEE802154_LLSEC_PARAM_COORD_SHORTADDR;
 
-	return mac802154_set_params(dev, &params, changed);
-}
+	वापस mac802154_set_params(dev, &params, changed);
+पूर्ण
 
-static int mac802154_set_mac_params(struct net_device *dev,
-				    const struct ieee802154_mac_params *params)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct ieee802154_local *local = sdata->local;
-	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
-	int ret;
+अटल पूर्णांक mac802154_set_mac_params(काष्ठा net_device *dev,
+				    स्थिर काष्ठा ieee802154_mac_params *params)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा ieee802154_local *local = sdata->local;
+	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
+	पूर्णांक ret;
 
 	ASSERT_RTNL();
 
 	/* PHY */
-	wpan_dev->wpan_phy->transmit_power = params->transmit_power;
+	wpan_dev->wpan_phy->transmit_घातer = params->transmit_घातer;
 	wpan_dev->wpan_phy->cca = params->cca;
 	wpan_dev->wpan_phy->cca_ed_level = params->cca_ed_level;
 
@@ -76,37 +77,37 @@ static int mac802154_set_mac_params(struct net_device *dev,
 	wpan_dev->frame_retries = params->frame_retries;
 	wpan_dev->lbt = params->lbt;
 
-	if (local->hw.phy->flags & WPAN_PHY_FLAG_TXPOWER) {
-		ret = drv_set_tx_power(local, params->transmit_power);
-		if (ret < 0)
-			return ret;
-	}
+	अगर (local->hw.phy->flags & WPAN_PHY_FLAG_TXPOWER) अणु
+		ret = drv_set_tx_घातer(local, params->transmit_घातer);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (local->hw.phy->flags & WPAN_PHY_FLAG_CCA_MODE) {
+	अगर (local->hw.phy->flags & WPAN_PHY_FLAG_CCA_MODE) अणु
 		ret = drv_set_cca_mode(local, &params->cca);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (local->hw.phy->flags & WPAN_PHY_FLAG_CCA_ED_LEVEL) {
+	अगर (local->hw.phy->flags & WPAN_PHY_FLAG_CCA_ED_LEVEL) अणु
 		ret = drv_set_cca_ed_level(local, params->cca_ed_level);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mac802154_get_mac_params(struct net_device *dev,
-				     struct ieee802154_mac_params *params)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
+अटल व्योम mac802154_get_mac_params(काष्ठा net_device *dev,
+				     काष्ठा ieee802154_mac_params *params)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
 
 	ASSERT_RTNL();
 
 	/* PHY */
-	params->transmit_power = wpan_dev->wpan_phy->transmit_power;
+	params->transmit_घातer = wpan_dev->wpan_phy->transmit_घातer;
 	params->cca = wpan_dev->wpan_phy->cca;
 	params->cca_ed_level = wpan_dev->wpan_phy->cca_ed_level;
 
@@ -116,9 +117,9 @@ static void mac802154_get_mac_params(struct net_device *dev,
 	params->csma_retries = wpan_dev->csma_retries;
 	params->frame_retries = wpan_dev->frame_retries;
 	params->lbt = wpan_dev->lbt;
-}
+पूर्ण
 
-static const struct ieee802154_llsec_ops mac802154_llsec_ops = {
+अटल स्थिर काष्ठा ieee802154_llsec_ops mac802154_llsec_ops = अणु
 	.get_params = mac802154_get_params,
 	.set_params = mac802154_set_params,
 	.add_key = mac802154_add_key,
@@ -132,13 +133,13 @@ static const struct ieee802154_llsec_ops mac802154_llsec_ops = {
 	.lock_table = mac802154_lock_table,
 	.get_table = mac802154_get_table,
 	.unlock_table = mac802154_unlock_table,
-};
+पूर्ण;
 
-struct ieee802154_mlme_ops mac802154_mlme_wpan = {
+काष्ठा ieee802154_mlme_ops mac802154_mlme_wpan = अणु
 	.start_req = mac802154_mlme_start_req,
 
 	.llsec = &mac802154_llsec_ops,
 
 	.set_mac_params = mac802154_set_mac_params,
 	.get_mac_params = mac802154_get_mac_params,
-};
+पूर्ण;

@@ -1,45 +1,46 @@
+<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- *   redistributing this file, you may do so under either license.
+ *   redistributing this file, you may करो so under either license.
  *
  *   GPL LICENSE SUMMARY
  *
  *   Copyright (C) 2015 EMC Corporation. All Rights Reserved.
- *   Copyright (C) 2017 T-Platforms All Rights Reserved.
+ *   Copyright (C) 2017 T-Platक्रमms All Rights Reserved.
  *
- *   This program is free software; you can redistribute it and/or modify
+ *   This program is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of version 2 of the GNU General Public License as
  *   published by the Free Software Foundation.
  *
  *   This program is distributed in the hope that it will be useful, but
  *   WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *   General Public License for more details.
+ *   General Public License क्रम more details.
  *
  *   BSD LICENSE
  *
  *   Copyright (C) 2015 EMC Corporation. All Rights Reserved.
- *   Copyright (C) 2017 T-Platforms All Rights Reserved.
+ *   Copyright (C) 2017 T-Platक्रमms All Rights Reserved.
  *
- *   Redistribution and use in source and binary forms, with or without
- *   modification, are permitted provided that the following conditions
+ *   Redistribution and use in source and binary क्रमms, with or without
+ *   modअगरication, are permitted provided that the following conditions
  *   are met:
  *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copy
+ *     * Redistributions in binary क्रमm must reproduce the above copy
  *       notice, this list of conditions and the following disclaimer in
- *       the documentation and/or other materials provided with the
+ *       the करोcumentation and/or other materials provided with the
  *       distribution.
  *     * Neither the name of Intel Corporation nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
+ *       contributors may be used to enकरोrse or promote products derived
+ *       from this software without specअगरic prior written permission.
  *
  *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -53,33 +54,33 @@
 /*
  * How to use this tool, by example.
  *
- * Assuming $DBG_DIR is something like:
+ * Assuming $DBG_सूची is something like:
  * '/sys/kernel/debug/ntb_tool/0000:00:03.0'
  * Suppose aside from local device there is at least one remote device
  * connected to NTB with index 0.
  *-----------------------------------------------------------------------------
- * Eg: check local/peer device information.
+ * Eg: check local/peer device inक्रमmation.
  *
  * # Get local device port number
- * root@self# cat $DBG_DIR/port
+ * root@self# cat $DBG_सूची/port
  *
  * # Check local device functionality
- * root@self# ls $DBG_DIR
+ * root@self# ls $DBG_सूची
  * db            msg1          msg_sts     peer4/        port
  * db_event      msg2          peer0/      peer5/        spad0
  * db_mask       msg3          peer1/      peer_db       spad1
  * link          msg_event     peer2/      peer_db_mask  spad2
  * msg0          msg_mask      peer3/      peer_spad     spad3
  * # As one can see it supports:
- * # 1) four inbound message registers
+ * # 1) four inbound message रेजिस्टरs
  * # 2) four inbound scratchpads
  * # 3) up to six peer devices
  *
  * # Check peer device port number
- * root@self# cat $DBG_DIR/peer0/port
+ * root@self# cat $DBG_सूची/peer0/port
  *
  * # Check peer device(s) functionality to be used
- * root@self# ls $DBG_DIR/peer0
+ * root@self# ls $DBG_सूची/peer0
  * link             mw_trans0       mw_trans6        port
  * link_event       mw_trans1       mw_trans7        spad0
  * msg0             mw_trans2       peer_mw_trans0   spad1
@@ -87,109 +88,109 @@
  * msg2             mw_trans4       peer_mw_trans2   spad3
  * msg3             mw_trans5       peer_mw_trans3
  * # As one can see we got:
- * # 1) four outbound message registers
+ * # 1) four outbound message रेजिस्टरs
  * # 2) four outbound scratchpads
- * # 3) eight inbound memory windows
- * # 4) four outbound memory windows
+ * # 3) eight inbound memory winकरोws
+ * # 4) four outbound memory winकरोws
  *-----------------------------------------------------------------------------
  * Eg: NTB link tests
  *
- * # Set local link up/down
- * root@self# echo Y > $DBG_DIR/link
- * root@self# echo N > $DBG_DIR/link
+ * # Set local link up/करोwn
+ * root@self# echo Y > $DBG_सूची/link
+ * root@self# echo N > $DBG_सूची/link
  *
- * # Check if link with peer device is up/down:
- * root@self# cat $DBG_DIR/peer0/link
+ * # Check अगर link with peer device is up/करोwn:
+ * root@self# cat $DBG_सूची/peer0/link
  *
- * # Block until the link is up/down
- * root@self# echo Y > $DBG_DIR/peer0/link_event
- * root@self# echo N > $DBG_DIR/peer0/link_event
+ * # Block until the link is up/करोwn
+ * root@self# echo Y > $DBG_सूची/peer0/link_event
+ * root@self# echo N > $DBG_सूची/peer0/link_event
  *-----------------------------------------------------------------------------
- * Eg: Doorbell registers tests (some functionality might be absent)
+ * Eg: Doorbell रेजिस्टरs tests (some functionality might be असलent)
  *
- * # Set/clear/get local doorbell
- * root@self# echo 's 1' > $DBG_DIR/db
- * root@self# echo 'c 1' > $DBG_DIR/db
- * root@self# cat  $DBG_DIR/db
+ * # Set/clear/get local करोorbell
+ * root@self# echo 's 1' > $DBG_सूची/db
+ * root@self# echo 'c 1' > $DBG_सूची/db
+ * root@self# cat  $DBG_सूची/db
  *
- * # Set/clear/get local doorbell mask
- * root@self# echo 's 1' > $DBG_DIR/db_mask
- * root@self# echo 'c 1' > $DBG_DIR/db_mask
- * root@self# cat $DBG_DIR/db_mask
+ * # Set/clear/get local करोorbell mask
+ * root@self# echo 's 1' > $DBG_सूची/db_mask
+ * root@self# echo 'c 1' > $DBG_सूची/db_mask
+ * root@self# cat $DBG_सूची/db_mask
  *
- * # Ring/clear/get peer doorbell
- * root@peer# echo 's 1' > $DBG_DIR/peer_db
- * root@peer# echo 'c 1' > $DBG_DIR/peer_db
- * root@peer# cat $DBG_DIR/peer_db
+ * # Ring/clear/get peer करोorbell
+ * root@peer# echo 's 1' > $DBG_सूची/peer_db
+ * root@peer# echo 'c 1' > $DBG_सूची/peer_db
+ * root@peer# cat $DBG_सूची/peer_db
  *
- * # Set/clear/get peer doorbell mask
- * root@self# echo 's 1' > $DBG_DIR/peer_db_mask
- * root@self# echo 'c 1' > $DBG_DIR/peer_db_mask
- * root@self# cat $DBG_DIR/peer_db_mask
+ * # Set/clear/get peer करोorbell mask
+ * root@self# echo 's 1' > $DBG_सूची/peer_db_mask
+ * root@self# echo 'c 1' > $DBG_सूची/peer_db_mask
+ * root@self# cat $DBG_सूची/peer_db_mask
  *
- * # Block until local doorbell is set with specified value
- * root@self# echo 1 > $DBG_DIR/db_event
+ * # Block until local करोorbell is set with specअगरied value
+ * root@self# echo 1 > $DBG_सूची/db_event
  *-----------------------------------------------------------------------------
- * Eg: Message registers tests (functionality might be absent)
+ * Eg: Message रेजिस्टरs tests (functionality might be असलent)
  *
- * # Set/clear/get in/out message registers status
- * root@self# echo 's 1' > $DBG_DIR/msg_sts
- * root@self# echo 'c 1' > $DBG_DIR/msg_sts
- * root@self# cat $DBG_DIR/msg_sts
+ * # Set/clear/get in/out message रेजिस्टरs status
+ * root@self# echo 's 1' > $DBG_सूची/msg_sts
+ * root@self# echo 'c 1' > $DBG_सूची/msg_sts
+ * root@self# cat $DBG_सूची/msg_sts
  *
- * # Set/clear in/out message registers mask
- * root@self# echo 's 1' > $DBG_DIR/msg_mask
- * root@self# echo 'c 1' > $DBG_DIR/msg_mask
+ * # Set/clear in/out message रेजिस्टरs mask
+ * root@self# echo 's 1' > $DBG_सूची/msg_mask
+ * root@self# echo 'c 1' > $DBG_सूची/msg_mask
  *
- * # Get inbound message register #0 value and source of port index
- * root@self# cat  $DBG_DIR/msg0
+ * # Get inbound message रेजिस्टर #0 value and source of port index
+ * root@self# cat  $DBG_सूची/msg0
  *
- * # Send some data to peer over outbound message register #0
- * root@self# echo 0x01020304 > $DBG_DIR/peer0/msg0
+ * # Send some data to peer over outbound message रेजिस्टर #0
+ * root@self# echo 0x01020304 > $DBG_सूची/peer0/msg0
  *-----------------------------------------------------------------------------
- * Eg: Scratchpad registers tests (functionality might be absent)
+ * Eg: Scratchpad रेजिस्टरs tests (functionality might be असलent)
  *
- * # Write/read to/from local scratchpad register #0
- * root@peer# echo 0x01020304 > $DBG_DIR/spad0
- * root@peer# cat $DBG_DIR/spad0
+ * # Write/पढ़ो to/from local scratchpad रेजिस्टर #0
+ * root@peer# echo 0x01020304 > $DBG_सूची/spad0
+ * root@peer# cat $DBG_सूची/spad0
  *
- * # Write/read to/from peer scratchpad register #0
- * root@peer# echo 0x01020304 > $DBG_DIR/peer0/spad0
- * root@peer# cat $DBG_DIR/peer0/spad0
+ * # Write/पढ़ो to/from peer scratchpad रेजिस्टर #0
+ * root@peer# echo 0x01020304 > $DBG_सूची/peer0/spad0
+ * root@peer# cat $DBG_सूची/peer0/spad0
  *-----------------------------------------------------------------------------
- * Eg: Memory windows tests
+ * Eg: Memory winकरोws tests
  *
- * # Create inbound memory window buffer of specified size/get its base address
- * root@peer# echo 16384 > $DBG_DIR/peer0/mw_trans0
- * root@peer# cat $DBG_DIR/peer0/mw_trans0
+ * # Create inbound memory winकरोw buffer of specअगरied size/get its base address
+ * root@peer# echo 16384 > $DBG_सूची/peer0/mw_trans0
+ * root@peer# cat $DBG_सूची/peer0/mw_trans0
  *
- * # Write/read data to/from inbound memory window
- * root@peer# echo Hello > $DBG_DIR/peer0/mw0
- * root@peer# head -c 7 $DBG_DIR/peer0/mw0
+ * # Write/पढ़ो data to/from inbound memory winकरोw
+ * root@peer# echo Hello > $DBG_सूची/peer0/mw0
+ * root@peer# head -c 7 $DBG_सूची/peer0/mw0
  *
- * # Map outbound memory window/check it settings (on peer device)
- * root@peer# echo 0xADD0BA5E:16384 > $DBG_DIR/peer0/peer_mw_trans0
- * root@peer# cat $DBG_DIR/peer0/peer_mw_trans0
+ * # Map outbound memory winकरोw/check it settings (on peer device)
+ * root@peer# echo 0xADD0BA5E:16384 > $DBG_सूची/peer0/peer_mw_trans0
+ * root@peer# cat $DBG_सूची/peer0/peer_mw_trans0
  *
- * # Write/read data to/from outbound memory window (on peer device)
- * root@peer# echo olleH > $DBG_DIR/peer0/peer_mw0
- * root@peer# head -c 7 $DBG_DIR/peer0/peer_mw0
+ * # Write/पढ़ो data to/from outbound memory winकरोw (on peer device)
+ * root@peer# echo olleH > $DBG_सूची/peer0/peer_mw0
+ * root@peer# head -c 7 $DBG_सूची/peer0/peer_mw0
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include <linux/debugfs.h>
-#include <linux/dma-mapping.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
 
-#include <linux/ntb.h>
+#समावेश <linux/ntb.h>
 
-#define DRIVER_NAME		"ntb_tool"
-#define DRIVER_VERSION		"2.0"
+#घोषणा DRIVER_NAME		"ntb_tool"
+#घोषणा DRIVER_VERSION		"2.0"
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_VERSION(DRIVER_VERSION);
@@ -197,101 +198,101 @@ MODULE_AUTHOR("Allen Hubbe <Allen.Hubbe@emc.com>");
 MODULE_DESCRIPTION("PCIe NTB Debugging Tool");
 
 /*
- * Inbound and outbound memory windows descriptor. Union members selection
- * depends on the MW type the structure describes. mm_base/dma_base are the
- * virtual and DMA address of an inbound MW. io_base/tr_base are the MMIO
- * mapped virtual and xlat addresses of an outbound MW respectively.
+ * Inbound and outbound memory winकरोws descriptor. Union members selection
+ * depends on the MW type the काष्ठाure describes. mm_base/dma_base are the
+ * भव and DMA address of an inbound MW. io_base/tr_base are the MMIO
+ * mapped भव and xlat addresses of an outbound MW respectively.
  */
-struct tool_mw {
-	int widx;
-	int pidx;
-	struct tool_ctx *tc;
-	union {
+काष्ठा tool_mw अणु
+	पूर्णांक widx;
+	पूर्णांक pidx;
+	काष्ठा tool_ctx *tc;
+	जोड़ अणु
 		u8 *mm_base;
 		u8 __iomem *io_base;
-	};
-	union {
+	पूर्ण;
+	जोड़ अणु
 		dma_addr_t dma_base;
 		u64 tr_base;
-	};
-	resource_size_t size;
-	struct dentry *dbgfs_file;
-};
+	पूर्ण;
+	resource_माप_प्रकार size;
+	काष्ठा dentry *dbgfs_file;
+पूर्ण;
 
 /*
- * Wrapper structure is used to distinguish the outbound MW peers reference
+ * Wrapper काष्ठाure is used to distinguish the outbound MW peers reference
  * within the corresponding DebugFS directory IO operation.
  */
-struct tool_mw_wrap {
-	int pidx;
-	struct tool_mw *mw;
-};
+काष्ठा tool_mw_wrap अणु
+	पूर्णांक pidx;
+	काष्ठा tool_mw *mw;
+पूर्ण;
 
-struct tool_msg {
-	int midx;
-	int pidx;
-	struct tool_ctx *tc;
-};
+काष्ठा tool_msg अणु
+	पूर्णांक midx;
+	पूर्णांक pidx;
+	काष्ठा tool_ctx *tc;
+पूर्ण;
 
-struct tool_spad {
-	int sidx;
-	int pidx;
-	struct tool_ctx *tc;
-};
+काष्ठा tool_spad अणु
+	पूर्णांक sidx;
+	पूर्णांक pidx;
+	काष्ठा tool_ctx *tc;
+पूर्ण;
 
-struct tool_peer {
-	int pidx;
-	struct tool_ctx *tc;
-	int inmw_cnt;
-	struct tool_mw *inmws;
-	int outmw_cnt;
-	struct tool_mw_wrap *outmws;
-	int outmsg_cnt;
-	struct tool_msg *outmsgs;
-	int outspad_cnt;
-	struct tool_spad *outspads;
-	struct dentry *dbgfs_dir;
-};
+काष्ठा tool_peer अणु
+	पूर्णांक pidx;
+	काष्ठा tool_ctx *tc;
+	पूर्णांक inmw_cnt;
+	काष्ठा tool_mw *inmws;
+	पूर्णांक ouपंचांगw_cnt;
+	काष्ठा tool_mw_wrap *ouपंचांगws;
+	पूर्णांक ouपंचांगsg_cnt;
+	काष्ठा tool_msg *ouपंचांगsgs;
+	पूर्णांक outspad_cnt;
+	काष्ठा tool_spad *outspads;
+	काष्ठा dentry *dbgfs_dir;
+पूर्ण;
 
-struct tool_ctx {
-	struct ntb_dev *ntb;
-	wait_queue_head_t link_wq;
-	wait_queue_head_t db_wq;
-	wait_queue_head_t msg_wq;
-	int outmw_cnt;
-	struct tool_mw *outmws;
-	int peer_cnt;
-	struct tool_peer *peers;
-	int inmsg_cnt;
-	struct tool_msg *inmsgs;
-	int inspad_cnt;
-	struct tool_spad *inspads;
-	struct dentry *dbgfs_dir;
-};
+काष्ठा tool_ctx अणु
+	काष्ठा ntb_dev *ntb;
+	रुको_queue_head_t link_wq;
+	रुको_queue_head_t db_wq;
+	रुको_queue_head_t msg_wq;
+	पूर्णांक ouपंचांगw_cnt;
+	काष्ठा tool_mw *ouपंचांगws;
+	पूर्णांक peer_cnt;
+	काष्ठा tool_peer *peers;
+	पूर्णांक inmsg_cnt;
+	काष्ठा tool_msg *inmsgs;
+	पूर्णांक inspad_cnt;
+	काष्ठा tool_spad *inspads;
+	काष्ठा dentry *dbgfs_dir;
+पूर्ण;
 
-#define TOOL_FOPS_RDWR(__name, __read, __write) \
-	const struct file_operations __name = {	\
+#घोषणा TOOL_FOPS_RDWR(__name, __पढ़ो, __ग_लिखो) \
+	स्थिर काष्ठा file_operations __name = अणु	\
 		.owner = THIS_MODULE,		\
-		.open = simple_open,		\
-		.read = __read,			\
-		.write = __write,		\
-	}
+		.खोलो = simple_खोलो,		\
+		.पढ़ो = __पढ़ो,			\
+		.ग_लिखो = __ग_लिखो,		\
+	पूर्ण
 
-#define TOOL_BUF_LEN 32
+#घोषणा TOOL_BUF_LEN 32
 
-static struct dentry *tool_dbgfs_topdir;
+अटल काष्ठा dentry *tool_dbgfs_topdir;
 
 /*==============================================================================
  *                               NTB events handlers
  *==============================================================================
  */
 
-static void tool_link_event(void *ctx)
-{
-	struct tool_ctx *tc = ctx;
-	enum ntb_speed speed;
-	enum ntb_width width;
-	int up;
+अटल व्योम tool_link_event(व्योम *ctx)
+अणु
+	काष्ठा tool_ctx *tc = ctx;
+	क्रमागत ntb_speed speed;
+	क्रमागत ntb_width width;
+	पूर्णांक up;
 
 	up = ntb_link_is_up(tc->ntb, &speed, &width);
 
@@ -299,1200 +300,1200 @@ static void tool_link_event(void *ctx)
 		up ? "up" : "down", speed, width);
 
 	wake_up(&tc->link_wq);
-}
+पूर्ण
 
-static void tool_db_event(void *ctx, int vec)
-{
-	struct tool_ctx *tc = ctx;
+अटल व्योम tool_db_event(व्योम *ctx, पूर्णांक vec)
+अणु
+	काष्ठा tool_ctx *tc = ctx;
 	u64 db_bits, db_mask;
 
 	db_mask = ntb_db_vector_mask(tc->ntb, vec);
-	db_bits = ntb_db_read(tc->ntb);
+	db_bits = ntb_db_पढ़ो(tc->ntb);
 
 	dev_dbg(&tc->ntb->dev, "doorbell vec %d mask %#llx bits %#llx\n",
 		vec, db_mask, db_bits);
 
 	wake_up(&tc->db_wq);
-}
+पूर्ण
 
-static void tool_msg_event(void *ctx)
-{
-	struct tool_ctx *tc = ctx;
+अटल व्योम tool_msg_event(व्योम *ctx)
+अणु
+	काष्ठा tool_ctx *tc = ctx;
 	u64 msg_sts;
 
-	msg_sts = ntb_msg_read_sts(tc->ntb);
+	msg_sts = ntb_msg_पढ़ो_sts(tc->ntb);
 
 	dev_dbg(&tc->ntb->dev, "message bits %#llx\n", msg_sts);
 
 	wake_up(&tc->msg_wq);
-}
+पूर्ण
 
-static const struct ntb_ctx_ops tool_ops = {
+अटल स्थिर काष्ठा ntb_ctx_ops tool_ops = अणु
 	.link_event = tool_link_event,
 	.db_event = tool_db_event,
 	.msg_event = tool_msg_event
-};
+पूर्ण;
 
 /*==============================================================================
- *                        Common read/write methods
+ *                        Common पढ़ो/ग_लिखो methods
  *==============================================================================
  */
 
-static ssize_t tool_fn_read(struct tool_ctx *tc, char __user *ubuf,
-			    size_t size, loff_t *offp,
-			    u64 (*fn_read)(struct ntb_dev *))
-{
-	size_t buf_size;
-	char buf[TOOL_BUF_LEN];
-	ssize_t pos;
+अटल sमाप_प्रकार tool_fn_पढ़ो(काष्ठा tool_ctx *tc, अक्षर __user *ubuf,
+			    माप_प्रकार size, loff_t *offp,
+			    u64 (*fn_पढ़ो)(काष्ठा ntb_dev *))
+अणु
+	माप_प्रकार buf_size;
+	अक्षर buf[TOOL_BUF_LEN];
+	sमाप_प्रकार pos;
 
-	if (!fn_read)
-		return -EINVAL;
+	अगर (!fn_पढ़ो)
+		वापस -EINVAL;
 
-	buf_size = min(size, sizeof(buf));
+	buf_size = min(size, माप(buf));
 
-	pos = scnprintf(buf, buf_size, "%#llx\n", fn_read(tc->ntb));
+	pos = scnम_लिखो(buf, buf_size, "%#llx\n", fn_पढ़ो(tc->ntb));
 
-	return simple_read_from_buffer(ubuf, size, offp, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, size, offp, buf, pos);
+पूर्ण
 
-static ssize_t tool_fn_write(struct tool_ctx *tc,
-			     const char __user *ubuf,
-			     size_t size, loff_t *offp,
-			     int (*fn_set)(struct ntb_dev *, u64),
-			     int (*fn_clear)(struct ntb_dev *, u64))
-{
-	char *buf, cmd;
-	ssize_t ret;
+अटल sमाप_प्रकार tool_fn_ग_लिखो(काष्ठा tool_ctx *tc,
+			     स्थिर अक्षर __user *ubuf,
+			     माप_प्रकार size, loff_t *offp,
+			     पूर्णांक (*fn_set)(काष्ठा ntb_dev *, u64),
+			     पूर्णांक (*fn_clear)(काष्ठा ntb_dev *, u64))
+अणु
+	अक्षर *buf, cmd;
+	sमाप_प्रकार ret;
 	u64 bits;
-	int n;
+	पूर्णांक n;
 
-	buf = kmalloc(size + 1, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(size + 1, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	ret = simple_write_to_buffer(buf, size, offp, ubuf, size);
-	if (ret < 0) {
-		kfree(buf);
-		return ret;
-	}
+	ret = simple_ग_लिखो_to_buffer(buf, size, offp, ubuf, size);
+	अगर (ret < 0) अणु
+		kमुक्त(buf);
+		वापस ret;
+	पूर्ण
 
 	buf[size] = 0;
 
-	n = sscanf(buf, "%c %lli", &cmd, &bits);
+	n = माला_पूछो(buf, "%c %lli", &cmd, &bits);
 
-	kfree(buf);
+	kमुक्त(buf);
 
-	if (n != 2) {
+	अगर (n != 2) अणु
 		ret = -EINVAL;
-	} else if (cmd == 's') {
-		if (!fn_set)
+	पूर्ण अन्यथा अगर (cmd == 's') अणु
+		अगर (!fn_set)
 			ret = -EINVAL;
-		else
+		अन्यथा
 			ret = fn_set(tc->ntb, bits);
-	} else if (cmd == 'c') {
-		if (!fn_clear)
+	पूर्ण अन्यथा अगर (cmd == 'c') अणु
+		अगर (!fn_clear)
 			ret = -EINVAL;
-		else
+		अन्यथा
 			ret = fn_clear(tc->ntb, bits);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret ? : size;
-}
+	वापस ret ? : size;
+पूर्ण
 
 /*==============================================================================
- *                            Port read/write methods
+ *                            Port पढ़ो/ग_लिखो methods
  *==============================================================================
  */
 
-static ssize_t tool_port_read(struct file *filep, char __user *ubuf,
-			      size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
-	char buf[TOOL_BUF_LEN];
-	int pos;
+अटल sमाप_प्रकार tool_port_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+			      माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
+	अक्षर buf[TOOL_BUF_LEN];
+	पूर्णांक pos;
 
-	pos = scnprintf(buf, sizeof(buf), "%d\n", ntb_port_number(tc->ntb));
+	pos = scnम_लिखो(buf, माप(buf), "%d\n", ntb_port_number(tc->ntb));
 
-	return simple_read_from_buffer(ubuf, size, offp, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, size, offp, buf, pos);
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_port_fops,
-		      tool_port_read,
-		      NULL);
+अटल TOOL_FOPS_RDWR(tool_port_fops,
+		      tool_port_पढ़ो,
+		      शून्य);
 
-static ssize_t tool_peer_port_read(struct file *filep, char __user *ubuf,
-				   size_t size, loff_t *offp)
-{
-	struct tool_peer *peer = filep->private_data;
-	struct tool_ctx *tc = peer->tc;
-	char buf[TOOL_BUF_LEN];
-	int pos;
+अटल sमाप_प्रकार tool_peer_port_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				   माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_peer *peer = filep->निजी_data;
+	काष्ठा tool_ctx *tc = peer->tc;
+	अक्षर buf[TOOL_BUF_LEN];
+	पूर्णांक pos;
 
-	pos = scnprintf(buf, sizeof(buf), "%d\n",
+	pos = scnम_लिखो(buf, माप(buf), "%d\n",
 		ntb_peer_port_number(tc->ntb, peer->pidx));
 
-	return simple_read_from_buffer(ubuf, size, offp, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, size, offp, buf, pos);
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_peer_port_fops,
-		      tool_peer_port_read,
-		      NULL);
+अटल TOOL_FOPS_RDWR(tool_peer_port_fops,
+		      tool_peer_port_पढ़ो,
+		      शून्य);
 
-static int tool_init_peers(struct tool_ctx *tc)
-{
-	int pidx;
+अटल पूर्णांक tool_init_peers(काष्ठा tool_ctx *tc)
+अणु
+	पूर्णांक pidx;
 
 	tc->peer_cnt = ntb_peer_port_count(tc->ntb);
-	tc->peers = devm_kcalloc(&tc->ntb->dev, tc->peer_cnt,
-				 sizeof(*tc->peers), GFP_KERNEL);
-	if (tc->peers == NULL)
-		return -ENOMEM;
+	tc->peers = devm_kसुस्मृति(&tc->ntb->dev, tc->peer_cnt,
+				 माप(*tc->peers), GFP_KERNEL);
+	अगर (tc->peers == शून्य)
+		वापस -ENOMEM;
 
-	for (pidx = 0; pidx < tc->peer_cnt; pidx++) {
+	क्रम (pidx = 0; pidx < tc->peer_cnt; pidx++) अणु
 		tc->peers[pidx].pidx = pidx;
 		tc->peers[pidx].tc = tc;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*==============================================================================
- *                       Link state read/write methods
+ *                       Link state पढ़ो/ग_लिखो methods
  *==============================================================================
  */
 
-static ssize_t tool_link_write(struct file *filep, const char __user *ubuf,
-			       size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_link_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+			       माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 	bool val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtobool_from_user(ubuf, size, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (val)
+	अगर (val)
 		ret = ntb_link_enable(tc->ntb, NTB_SPEED_AUTO, NTB_WIDTH_AUTO);
-	else
+	अन्यथा
 		ret = ntb_link_disable(tc->ntb);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_link_fops,
-		      NULL,
-		      tool_link_write);
+अटल TOOL_FOPS_RDWR(tool_link_fops,
+		      शून्य,
+		      tool_link_ग_लिखो);
 
-static ssize_t tool_peer_link_read(struct file *filep, char __user *ubuf,
-				   size_t size, loff_t *offp)
-{
-	struct tool_peer *peer = filep->private_data;
-	struct tool_ctx *tc = peer->tc;
-	char buf[3];
+अटल sमाप_प्रकार tool_peer_link_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				   माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_peer *peer = filep->निजी_data;
+	काष्ठा tool_ctx *tc = peer->tc;
+	अक्षर buf[3];
 
-	if (ntb_link_is_up(tc->ntb, NULL, NULL) & BIT(peer->pidx))
+	अगर (ntb_link_is_up(tc->ntb, शून्य, शून्य) & BIT(peer->pidx))
 		buf[0] = 'Y';
-	else
+	अन्यथा
 		buf[0] = 'N';
 	buf[1] = '\n';
 	buf[2] = '\0';
 
-	return simple_read_from_buffer(ubuf, size, offp, buf, 2);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, size, offp, buf, 2);
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_peer_link_fops,
-		      tool_peer_link_read,
-		      NULL);
+अटल TOOL_FOPS_RDWR(tool_peer_link_fops,
+		      tool_peer_link_पढ़ो,
+		      शून्य);
 
-static ssize_t tool_peer_link_event_write(struct file *filep,
-					  const char __user *ubuf,
-					  size_t size, loff_t *offp)
-{
-	struct tool_peer *peer = filep->private_data;
-	struct tool_ctx *tc = peer->tc;
+अटल sमाप_प्रकार tool_peer_link_event_ग_लिखो(काष्ठा file *filep,
+					  स्थिर अक्षर __user *ubuf,
+					  माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_peer *peer = filep->निजी_data;
+	काष्ठा tool_ctx *tc = peer->tc;
 	u64 link_msk;
 	bool val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtobool_from_user(ubuf, size, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	link_msk = BIT_ULL_MASK(peer->pidx);
 
-	if (wait_event_interruptible(tc->link_wq,
-		!!(ntb_link_is_up(tc->ntb, NULL, NULL) & link_msk) == val))
-		return -ERESTART;
+	अगर (रुको_event_पूर्णांकerruptible(tc->link_wq,
+		!!(ntb_link_is_up(tc->ntb, शून्य, शून्य) & link_msk) == val))
+		वापस -ERESTART;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_peer_link_event_fops,
-		      NULL,
-		      tool_peer_link_event_write);
+अटल TOOL_FOPS_RDWR(tool_peer_link_event_fops,
+		      शून्य,
+		      tool_peer_link_event_ग_लिखो);
 
 /*==============================================================================
- *                  Memory windows read/write/setting methods
+ *                  Memory winकरोws पढ़ो/ग_लिखो/setting methods
  *==============================================================================
  */
 
-static ssize_t tool_mw_read(struct file *filep, char __user *ubuf,
-			    size_t size, loff_t *offp)
-{
-	struct tool_mw *inmw = filep->private_data;
+अटल sमाप_प्रकार tool_mw_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+			    माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_mw *inmw = filep->निजी_data;
 
-	if (inmw->mm_base == NULL)
-		return -ENXIO;
+	अगर (inmw->mm_base == शून्य)
+		वापस -ENXIO;
 
-	return simple_read_from_buffer(ubuf, size, offp,
+	वापस simple_पढ़ो_from_buffer(ubuf, size, offp,
 				       inmw->mm_base, inmw->size);
-}
+पूर्ण
 
-static ssize_t tool_mw_write(struct file *filep, const char __user *ubuf,
-			     size_t size, loff_t *offp)
-{
-	struct tool_mw *inmw = filep->private_data;
+अटल sमाप_प्रकार tool_mw_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+			     माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_mw *inmw = filep->निजी_data;
 
-	if (inmw->mm_base == NULL)
-		return -ENXIO;
+	अगर (inmw->mm_base == शून्य)
+		वापस -ENXIO;
 
-	return simple_write_to_buffer(inmw->mm_base, inmw->size, offp,
+	वापस simple_ग_लिखो_to_buffer(inmw->mm_base, inmw->size, offp,
 				      ubuf, size);
-}
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_mw_fops,
-		      tool_mw_read,
-		      tool_mw_write);
+अटल TOOL_FOPS_RDWR(tool_mw_fops,
+		      tool_mw_पढ़ो,
+		      tool_mw_ग_लिखो);
 
-static int tool_setup_mw(struct tool_ctx *tc, int pidx, int widx,
-			 size_t req_size)
-{
-	resource_size_t size, addr_align, size_align;
-	struct tool_mw *inmw = &tc->peers[pidx].inmws[widx];
-	char buf[TOOL_BUF_LEN];
-	int ret;
+अटल पूर्णांक tool_setup_mw(काष्ठा tool_ctx *tc, पूर्णांक pidx, पूर्णांक widx,
+			 माप_प्रकार req_size)
+अणु
+	resource_माप_प्रकार size, addr_align, size_align;
+	काष्ठा tool_mw *inmw = &tc->peers[pidx].inmws[widx];
+	अक्षर buf[TOOL_BUF_LEN];
+	पूर्णांक ret;
 
-	if (inmw->mm_base != NULL)
-		return 0;
+	अगर (inmw->mm_base != शून्य)
+		वापस 0;
 
 	ret = ntb_mw_get_align(tc->ntb, pidx, widx, &addr_align,
 				&size_align, &size);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	inmw->size = min_t(resource_size_t, req_size, size);
+	inmw->size = min_t(resource_माप_प्रकार, req_size, size);
 	inmw->size = round_up(inmw->size, addr_align);
 	inmw->size = round_up(inmw->size, size_align);
 	inmw->mm_base = dma_alloc_coherent(&tc->ntb->pdev->dev, inmw->size,
 					   &inmw->dma_base, GFP_KERNEL);
-	if (!inmw->mm_base)
-		return -ENOMEM;
+	अगर (!inmw->mm_base)
+		वापस -ENOMEM;
 
-	if (!IS_ALIGNED(inmw->dma_base, addr_align)) {
+	अगर (!IS_ALIGNED(inmw->dma_base, addr_align)) अणु
 		ret = -ENOMEM;
-		goto err_free_dma;
-	}
+		जाओ err_मुक्त_dma;
+	पूर्ण
 
 	ret = ntb_mw_set_trans(tc->ntb, pidx, widx, inmw->dma_base, inmw->size);
-	if (ret)
-		goto err_free_dma;
+	अगर (ret)
+		जाओ err_मुक्त_dma;
 
-	snprintf(buf, sizeof(buf), "mw%d", widx);
+	snम_लिखो(buf, माप(buf), "mw%d", widx);
 	inmw->dbgfs_file = debugfs_create_file(buf, 0600,
 					       tc->peers[pidx].dbgfs_dir, inmw,
 					       &tool_mw_fops);
 
-	return 0;
+	वापस 0;
 
-err_free_dma:
-	dma_free_coherent(&tc->ntb->pdev->dev, inmw->size, inmw->mm_base,
+err_मुक्त_dma:
+	dma_मुक्त_coherent(&tc->ntb->pdev->dev, inmw->size, inmw->mm_base,
 			  inmw->dma_base);
-	inmw->mm_base = NULL;
+	inmw->mm_base = शून्य;
 	inmw->dma_base = 0;
 	inmw->size = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void tool_free_mw(struct tool_ctx *tc, int pidx, int widx)
-{
-	struct tool_mw *inmw = &tc->peers[pidx].inmws[widx];
+अटल व्योम tool_मुक्त_mw(काष्ठा tool_ctx *tc, पूर्णांक pidx, पूर्णांक widx)
+अणु
+	काष्ठा tool_mw *inmw = &tc->peers[pidx].inmws[widx];
 
-	debugfs_remove(inmw->dbgfs_file);
+	debugfs_हटाओ(inmw->dbgfs_file);
 
-	if (inmw->mm_base != NULL) {
+	अगर (inmw->mm_base != शून्य) अणु
 		ntb_mw_clear_trans(tc->ntb, pidx, widx);
-		dma_free_coherent(&tc->ntb->pdev->dev, inmw->size,
+		dma_मुक्त_coherent(&tc->ntb->pdev->dev, inmw->size,
 				  inmw->mm_base, inmw->dma_base);
-	}
+	पूर्ण
 
-	inmw->mm_base = NULL;
+	inmw->mm_base = शून्य;
 	inmw->dma_base = 0;
 	inmw->size = 0;
-	inmw->dbgfs_file = NULL;
-}
+	inmw->dbgfs_file = शून्य;
+पूर्ण
 
-static ssize_t tool_mw_trans_read(struct file *filep, char __user *ubuf,
-				  size_t size, loff_t *offp)
-{
-	struct tool_mw *inmw = filep->private_data;
-	resource_size_t addr_align;
-	resource_size_t size_align;
-	resource_size_t size_max;
-	ssize_t ret, off = 0;
-	size_t buf_size;
-	char *buf;
+अटल sमाप_प्रकार tool_mw_trans_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				  माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_mw *inmw = filep->निजी_data;
+	resource_माप_प्रकार addr_align;
+	resource_माप_प्रकार size_align;
+	resource_माप_प्रकार size_max;
+	sमाप_प्रकार ret, off = 0;
+	माप_प्रकार buf_size;
+	अक्षर *buf;
 
-	buf_size = min_t(size_t, size, 512);
+	buf_size = min_t(माप_प्रकार, size, 512);
 
-	buf = kmalloc(buf_size, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(buf_size, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	ret = ntb_mw_get_align(inmw->tc->ntb, inmw->pidx, inmw->widx,
 			       &addr_align, &size_align, &size_max);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	off += scnprintf(buf + off, buf_size - off,
+	off += scnम_लिखो(buf + off, buf_size - off,
 			 "Inbound MW     \t%d\n",
 			 inmw->widx);
 
-	off += scnprintf(buf + off, buf_size - off,
+	off += scnम_लिखो(buf + off, buf_size - off,
 			 "Port           \t%d (%d)\n",
 			 ntb_peer_port_number(inmw->tc->ntb, inmw->pidx),
 			 inmw->pidx);
 
-	off += scnprintf(buf + off, buf_size - off,
+	off += scnम_लिखो(buf + off, buf_size - off,
 			 "Window Address \t0x%pK\n", inmw->mm_base);
 
-	off += scnprintf(buf + off, buf_size - off,
+	off += scnम_लिखो(buf + off, buf_size - off,
 			 "DMA Address    \t%pad\n",
 			 &inmw->dma_base);
 
-	off += scnprintf(buf + off, buf_size - off,
+	off += scnम_लिखो(buf + off, buf_size - off,
 			 "Window Size    \t%pap\n",
 			 &inmw->size);
 
-	off += scnprintf(buf + off, buf_size - off,
+	off += scnम_लिखो(buf + off, buf_size - off,
 			 "Alignment      \t%pap\n",
 			 &addr_align);
 
-	off += scnprintf(buf + off, buf_size - off,
+	off += scnम_लिखो(buf + off, buf_size - off,
 			 "Size Alignment \t%pap\n",
 			 &size_align);
 
-	off += scnprintf(buf + off, buf_size - off,
+	off += scnम_लिखो(buf + off, buf_size - off,
 			 "Size Max       \t%pap\n",
 			 &size_max);
 
-	ret = simple_read_from_buffer(ubuf, size, offp, buf, off);
+	ret = simple_पढ़ो_from_buffer(ubuf, size, offp, buf, off);
 
 err:
-	kfree(buf);
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t tool_mw_trans_write(struct file *filep, const char __user *ubuf,
-				   size_t size, loff_t *offp)
-{
-	struct tool_mw *inmw = filep->private_data;
-	unsigned int val;
-	int ret;
+अटल sमाप_प्रकार tool_mw_trans_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+				   माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_mw *inmw = filep->निजी_data;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = kstrtouint_from_user(ubuf, size, 0, &val);
-	if (ret)
-		return ret;
+	ret = kstrtouपूर्णांक_from_user(ubuf, size, 0, &val);
+	अगर (ret)
+		वापस ret;
 
-	tool_free_mw(inmw->tc, inmw->pidx, inmw->widx);
-	if (val) {
+	tool_मुक्त_mw(inmw->tc, inmw->pidx, inmw->widx);
+	अगर (val) अणु
 		ret = tool_setup_mw(inmw->tc, inmw->pidx, inmw->widx, val);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_mw_trans_fops,
-		      tool_mw_trans_read,
-		      tool_mw_trans_write);
+अटल TOOL_FOPS_RDWR(tool_mw_trans_fops,
+		      tool_mw_trans_पढ़ो,
+		      tool_mw_trans_ग_लिखो);
 
-static ssize_t tool_peer_mw_read(struct file *filep, char __user *ubuf,
-				 size_t size, loff_t *offp)
-{
-	struct tool_mw *outmw = filep->private_data;
+अटल sमाप_प्रकार tool_peer_mw_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				 माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_mw *ouपंचांगw = filep->निजी_data;
 	loff_t pos = *offp;
-	ssize_t ret;
-	void *buf;
+	sमाप_प्रकार ret;
+	व्योम *buf;
 
-	if (outmw->io_base == NULL)
-		return -EIO;
+	अगर (ouपंचांगw->io_base == शून्य)
+		वापस -EIO;
 
-	if (pos >= outmw->size || !size)
-		return 0;
+	अगर (pos >= ouपंचांगw->size || !size)
+		वापस 0;
 
-	if (size > outmw->size - pos)
-		size = outmw->size - pos;
+	अगर (size > ouपंचांगw->size - pos)
+		size = ouपंचांगw->size - pos;
 
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	memcpy_fromio(buf, outmw->io_base + pos, size);
+	स_नकल_fromio(buf, ouपंचांगw->io_base + pos, size);
 	ret = copy_to_user(ubuf, buf, size);
-	if (ret == size) {
+	अगर (ret == size) अणु
 		ret = -EFAULT;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	size -= ret;
 	*offp = pos + size;
 	ret = size;
 
-err_free:
-	kfree(buf);
+err_मुक्त:
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t tool_peer_mw_write(struct file *filep, const char __user *ubuf,
-				  size_t size, loff_t *offp)
-{
-	struct tool_mw *outmw = filep->private_data;
-	ssize_t ret;
+अटल sमाप_प्रकार tool_peer_mw_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+				  माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_mw *ouपंचांगw = filep->निजी_data;
+	sमाप_प्रकार ret;
 	loff_t pos = *offp;
-	void *buf;
+	व्योम *buf;
 
-	if (outmw->io_base == NULL)
-		return -EIO;
+	अगर (ouपंचांगw->io_base == शून्य)
+		वापस -EIO;
 
-	if (pos >= outmw->size || !size)
-		return 0;
-	if (size > outmw->size - pos)
-		size = outmw->size - pos;
+	अगर (pos >= ouपंचांगw->size || !size)
+		वापस 0;
+	अगर (size > ouपंचांगw->size - pos)
+		size = ouपंचांगw->size - pos;
 
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	ret = copy_from_user(buf, ubuf, size);
-	if (ret == size) {
+	अगर (ret == size) अणु
 		ret = -EFAULT;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	size -= ret;
 	*offp = pos + size;
 	ret = size;
 
-	memcpy_toio(outmw->io_base + pos, buf, size);
+	स_नकल_toio(ouपंचांगw->io_base + pos, buf, size);
 
-err_free:
-	kfree(buf);
+err_मुक्त:
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_peer_mw_fops,
-		      tool_peer_mw_read,
-		      tool_peer_mw_write);
+अटल TOOL_FOPS_RDWR(tool_peer_mw_fops,
+		      tool_peer_mw_पढ़ो,
+		      tool_peer_mw_ग_लिखो);
 
-static int tool_setup_peer_mw(struct tool_ctx *tc, int pidx, int widx,
-			      u64 req_addr, size_t req_size)
-{
-	struct tool_mw *outmw = &tc->outmws[widx];
-	resource_size_t map_size;
+अटल पूर्णांक tool_setup_peer_mw(काष्ठा tool_ctx *tc, पूर्णांक pidx, पूर्णांक widx,
+			      u64 req_addr, माप_प्रकार req_size)
+अणु
+	काष्ठा tool_mw *ouपंचांगw = &tc->ouपंचांगws[widx];
+	resource_माप_प्रकार map_size;
 	phys_addr_t map_base;
-	char buf[TOOL_BUF_LEN];
-	int ret;
+	अक्षर buf[TOOL_BUF_LEN];
+	पूर्णांक ret;
 
-	if (outmw->io_base != NULL)
-		return 0;
+	अगर (ouपंचांगw->io_base != शून्य)
+		वापस 0;
 
 	ret = ntb_peer_mw_get_addr(tc->ntb, widx, &map_base, &map_size);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ntb_peer_mw_set_trans(tc->ntb, pidx, widx, req_addr, req_size);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	outmw->io_base = ioremap_wc(map_base, map_size);
-	if (outmw->io_base == NULL) {
+	ouपंचांगw->io_base = ioremap_wc(map_base, map_size);
+	अगर (ouपंचांगw->io_base == शून्य) अणु
 		ret = -EFAULT;
-		goto err_clear_trans;
-	}
+		जाओ err_clear_trans;
+	पूर्ण
 
-	outmw->tr_base = req_addr;
-	outmw->size = req_size;
-	outmw->pidx = pidx;
+	ouपंचांगw->tr_base = req_addr;
+	ouपंचांगw->size = req_size;
+	ouपंचांगw->pidx = pidx;
 
-	snprintf(buf, sizeof(buf), "peer_mw%d", widx);
-	outmw->dbgfs_file = debugfs_create_file(buf, 0600,
-					       tc->peers[pidx].dbgfs_dir, outmw,
+	snम_लिखो(buf, माप(buf), "peer_mw%d", widx);
+	ouपंचांगw->dbgfs_file = debugfs_create_file(buf, 0600,
+					       tc->peers[pidx].dbgfs_dir, ouपंचांगw,
 					       &tool_peer_mw_fops);
 
-	return 0;
+	वापस 0;
 
 err_clear_trans:
 	ntb_peer_mw_clear_trans(tc->ntb, pidx, widx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void tool_free_peer_mw(struct tool_ctx *tc, int widx)
-{
-	struct tool_mw *outmw = &tc->outmws[widx];
+अटल व्योम tool_मुक्त_peer_mw(काष्ठा tool_ctx *tc, पूर्णांक widx)
+अणु
+	काष्ठा tool_mw *ouपंचांगw = &tc->ouपंचांगws[widx];
 
-	debugfs_remove(outmw->dbgfs_file);
+	debugfs_हटाओ(ouपंचांगw->dbgfs_file);
 
-	if (outmw->io_base != NULL) {
-		iounmap(tc->outmws[widx].io_base);
-		ntb_peer_mw_clear_trans(tc->ntb, outmw->pidx, widx);
-	}
+	अगर (ouपंचांगw->io_base != शून्य) अणु
+		iounmap(tc->ouपंचांगws[widx].io_base);
+		ntb_peer_mw_clear_trans(tc->ntb, ouपंचांगw->pidx, widx);
+	पूर्ण
 
-	outmw->io_base = NULL;
-	outmw->tr_base = 0;
-	outmw->size = 0;
-	outmw->pidx = -1;
-	outmw->dbgfs_file = NULL;
-}
+	ouपंचांगw->io_base = शून्य;
+	ouपंचांगw->tr_base = 0;
+	ouपंचांगw->size = 0;
+	ouपंचांगw->pidx = -1;
+	ouपंचांगw->dbgfs_file = शून्य;
+पूर्ण
 
-static ssize_t tool_peer_mw_trans_read(struct file *filep, char __user *ubuf,
-					size_t size, loff_t *offp)
-{
-	struct tool_mw_wrap *outmw_wrap = filep->private_data;
-	struct tool_mw *outmw = outmw_wrap->mw;
-	resource_size_t map_size;
+अटल sमाप_प्रकार tool_peer_mw_trans_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+					माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_mw_wrap *ouपंचांगw_wrap = filep->निजी_data;
+	काष्ठा tool_mw *ouपंचांगw = ouपंचांगw_wrap->mw;
+	resource_माप_प्रकार map_size;
 	phys_addr_t map_base;
-	ssize_t off = 0;
-	size_t buf_size;
-	char *buf;
-	int ret;
+	sमाप_प्रकार off = 0;
+	माप_प्रकार buf_size;
+	अक्षर *buf;
+	पूर्णांक ret;
 
-	ret = ntb_peer_mw_get_addr(outmw->tc->ntb, outmw->widx,
+	ret = ntb_peer_mw_get_addr(ouपंचांगw->tc->ntb, ouपंचांगw->widx,
 				  &map_base, &map_size);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	buf_size = min_t(size_t, size, 512);
+	buf_size = min_t(माप_प्रकार, size, 512);
 
-	buf = kmalloc(buf_size, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(buf_size, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	off += scnprintf(buf + off, buf_size - off,
-			 "Outbound MW:        \t%d\n", outmw->widx);
+	off += scnम_लिखो(buf + off, buf_size - off,
+			 "Outbound MW:        \t%d\n", ouपंचांगw->widx);
 
-	if (outmw->io_base != NULL) {
-		off += scnprintf(buf + off, buf_size - off,
+	अगर (ouपंचांगw->io_base != शून्य) अणु
+		off += scnम_लिखो(buf + off, buf_size - off,
 			"Port attached       \t%d (%d)\n",
-			ntb_peer_port_number(outmw->tc->ntb, outmw->pidx),
-			outmw->pidx);
-	} else {
-		off += scnprintf(buf + off, buf_size - off,
+			ntb_peer_port_number(ouपंचांगw->tc->ntb, ouपंचांगw->pidx),
+			ouपंचांगw->pidx);
+	पूर्ण अन्यथा अणु
+		off += scnम_लिखो(buf + off, buf_size - off,
 				 "Port attached       \t-1 (-1)\n");
-	}
+	पूर्ण
 
-	off += scnprintf(buf + off, buf_size - off,
-			 "Virtual address     \t0x%pK\n", outmw->io_base);
+	off += scnम_लिखो(buf + off, buf_size - off,
+			 "Virtual address     \t0x%pK\n", ouपंचांगw->io_base);
 
-	off += scnprintf(buf + off, buf_size - off,
+	off += scnम_लिखो(buf + off, buf_size - off,
 			 "Phys Address        \t%pap\n", &map_base);
 
-	off += scnprintf(buf + off, buf_size - off,
+	off += scnम_लिखो(buf + off, buf_size - off,
 			 "Mapping Size        \t%pap\n", &map_size);
 
-	off += scnprintf(buf + off, buf_size - off,
-			 "Translation Address \t0x%016llx\n", outmw->tr_base);
+	off += scnम_लिखो(buf + off, buf_size - off,
+			 "Translation Address \t0x%016llx\n", ouपंचांगw->tr_base);
 
-	off += scnprintf(buf + off, buf_size - off,
-			 "Window Size         \t%pap\n", &outmw->size);
+	off += scnम_लिखो(buf + off, buf_size - off,
+			 "Window Size         \t%pap\n", &ouपंचांगw->size);
 
-	ret = simple_read_from_buffer(ubuf, size, offp, buf, off);
-	kfree(buf);
+	ret = simple_पढ़ो_from_buffer(ubuf, size, offp, buf, off);
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t tool_peer_mw_trans_write(struct file *filep,
-					const char __user *ubuf,
-					size_t size, loff_t *offp)
-{
-	struct tool_mw_wrap *outmw_wrap = filep->private_data;
-	struct tool_mw *outmw = outmw_wrap->mw;
-	size_t buf_size, wsize;
-	char buf[TOOL_BUF_LEN];
-	int ret, n;
+अटल sमाप_प्रकार tool_peer_mw_trans_ग_लिखो(काष्ठा file *filep,
+					स्थिर अक्षर __user *ubuf,
+					माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_mw_wrap *ouपंचांगw_wrap = filep->निजी_data;
+	काष्ठा tool_mw *ouपंचांगw = ouपंचांगw_wrap->mw;
+	माप_प्रकार buf_size, wsize;
+	अक्षर buf[TOOL_BUF_LEN];
+	पूर्णांक ret, n;
 	u64 addr;
 
-	buf_size = min(size, (sizeof(buf) - 1));
-	if (copy_from_user(buf, ubuf, buf_size))
-		return -EFAULT;
+	buf_size = min(size, (माप(buf) - 1));
+	अगर (copy_from_user(buf, ubuf, buf_size))
+		वापस -EFAULT;
 
 	buf[buf_size] = '\0';
 
-	n = sscanf(buf, "%lli:%zi", &addr, &wsize);
-	if (n != 2)
-		return -EINVAL;
+	n = माला_पूछो(buf, "%lli:%zi", &addr, &wsize);
+	अगर (n != 2)
+		वापस -EINVAL;
 
-	tool_free_peer_mw(outmw->tc, outmw->widx);
-	if (wsize) {
-		ret = tool_setup_peer_mw(outmw->tc, outmw_wrap->pidx,
-					 outmw->widx, addr, wsize);
-		if (ret)
-			return ret;
-	}
+	tool_मुक्त_peer_mw(ouपंचांगw->tc, ouपंचांगw->widx);
+	अगर (wsize) अणु
+		ret = tool_setup_peer_mw(ouपंचांगw->tc, ouपंचांगw_wrap->pidx,
+					 ouपंचांगw->widx, addr, wsize);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_peer_mw_trans_fops,
-		      tool_peer_mw_trans_read,
-		      tool_peer_mw_trans_write);
+अटल TOOL_FOPS_RDWR(tool_peer_mw_trans_fops,
+		      tool_peer_mw_trans_पढ़ो,
+		      tool_peer_mw_trans_ग_लिखो);
 
-static int tool_init_mws(struct tool_ctx *tc)
-{
-	int widx, pidx;
+अटल पूर्णांक tool_init_mws(काष्ठा tool_ctx *tc)
+अणु
+	पूर्णांक widx, pidx;
 
-	/* Initialize outbound memory windows */
-	tc->outmw_cnt = ntb_peer_mw_count(tc->ntb);
-	tc->outmws = devm_kcalloc(&tc->ntb->dev, tc->outmw_cnt,
-				  sizeof(*tc->outmws), GFP_KERNEL);
-	if (tc->outmws == NULL)
-		return -ENOMEM;
+	/* Initialize outbound memory winकरोws */
+	tc->ouपंचांगw_cnt = ntb_peer_mw_count(tc->ntb);
+	tc->ouपंचांगws = devm_kसुस्मृति(&tc->ntb->dev, tc->ouपंचांगw_cnt,
+				  माप(*tc->ouपंचांगws), GFP_KERNEL);
+	अगर (tc->ouपंचांगws == शून्य)
+		वापस -ENOMEM;
 
-	for (widx = 0; widx < tc->outmw_cnt; widx++) {
-		tc->outmws[widx].widx = widx;
-		tc->outmws[widx].pidx = -1;
-		tc->outmws[widx].tc = tc;
-	}
+	क्रम (widx = 0; widx < tc->ouपंचांगw_cnt; widx++) अणु
+		tc->ouपंचांगws[widx].widx = widx;
+		tc->ouपंचांगws[widx].pidx = -1;
+		tc->ouपंचांगws[widx].tc = tc;
+	पूर्ण
 
-	/* Initialize inbound memory windows and outbound MWs wrapper */
-	for (pidx = 0; pidx < tc->peer_cnt; pidx++) {
+	/* Initialize inbound memory winकरोws and outbound MWs wrapper */
+	क्रम (pidx = 0; pidx < tc->peer_cnt; pidx++) अणु
 		tc->peers[pidx].inmw_cnt = ntb_mw_count(tc->ntb, pidx);
 		tc->peers[pidx].inmws =
-			devm_kcalloc(&tc->ntb->dev, tc->peers[pidx].inmw_cnt,
-				    sizeof(*tc->peers[pidx].inmws), GFP_KERNEL);
-		if (tc->peers[pidx].inmws == NULL)
-			return -ENOMEM;
+			devm_kसुस्मृति(&tc->ntb->dev, tc->peers[pidx].inmw_cnt,
+				    माप(*tc->peers[pidx].inmws), GFP_KERNEL);
+		अगर (tc->peers[pidx].inmws == शून्य)
+			वापस -ENOMEM;
 
-		for (widx = 0; widx < tc->peers[pidx].inmw_cnt; widx++) {
+		क्रम (widx = 0; widx < tc->peers[pidx].inmw_cnt; widx++) अणु
 			tc->peers[pidx].inmws[widx].widx = widx;
 			tc->peers[pidx].inmws[widx].pidx = pidx;
 			tc->peers[pidx].inmws[widx].tc = tc;
-		}
+		पूर्ण
 
-		tc->peers[pidx].outmw_cnt = ntb_peer_mw_count(tc->ntb);
-		tc->peers[pidx].outmws =
-			devm_kcalloc(&tc->ntb->dev, tc->peers[pidx].outmw_cnt,
-				   sizeof(*tc->peers[pidx].outmws), GFP_KERNEL);
+		tc->peers[pidx].ouपंचांगw_cnt = ntb_peer_mw_count(tc->ntb);
+		tc->peers[pidx].ouपंचांगws =
+			devm_kसुस्मृति(&tc->ntb->dev, tc->peers[pidx].ouपंचांगw_cnt,
+				   माप(*tc->peers[pidx].ouपंचांगws), GFP_KERNEL);
 
-		for (widx = 0; widx < tc->peers[pidx].outmw_cnt; widx++) {
-			tc->peers[pidx].outmws[widx].pidx = pidx;
-			tc->peers[pidx].outmws[widx].mw = &tc->outmws[widx];
-		}
-	}
+		क्रम (widx = 0; widx < tc->peers[pidx].ouपंचांगw_cnt; widx++) अणु
+			tc->peers[pidx].ouपंचांगws[widx].pidx = pidx;
+			tc->peers[pidx].ouपंचांगws[widx].mw = &tc->ouपंचांगws[widx];
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tool_clear_mws(struct tool_ctx *tc)
-{
-	int widx, pidx;
+अटल व्योम tool_clear_mws(काष्ठा tool_ctx *tc)
+अणु
+	पूर्णांक widx, pidx;
 
-	/* Free outbound memory windows */
-	for (widx = 0; widx < tc->outmw_cnt; widx++)
-		tool_free_peer_mw(tc, widx);
+	/* Free outbound memory winकरोws */
+	क्रम (widx = 0; widx < tc->ouपंचांगw_cnt; widx++)
+		tool_मुक्त_peer_mw(tc, widx);
 
-	/* Free outbound memory windows */
-	for (pidx = 0; pidx < tc->peer_cnt; pidx++)
-		for (widx = 0; widx < tc->peers[pidx].inmw_cnt; widx++)
-			tool_free_mw(tc, pidx, widx);
-}
+	/* Free outbound memory winकरोws */
+	क्रम (pidx = 0; pidx < tc->peer_cnt; pidx++)
+		क्रम (widx = 0; widx < tc->peers[pidx].inmw_cnt; widx++)
+			tool_मुक्त_mw(tc, pidx, widx);
+पूर्ण
 
 /*==============================================================================
- *                       Doorbell read/write methods
+ *                       Doorbell पढ़ो/ग_लिखो methods
  *==============================================================================
  */
 
-static ssize_t tool_db_read(struct file *filep, char __user *ubuf,
-			    size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_db_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+			    माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_read(tc, ubuf, size, offp, tc->ntb->ops->db_read);
-}
+	वापस tool_fn_पढ़ो(tc, ubuf, size, offp, tc->ntb->ops->db_पढ़ो);
+पूर्ण
 
-static ssize_t tool_db_write(struct file *filep, const char __user *ubuf,
-			     size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_db_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+			     माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_write(tc, ubuf, size, offp, tc->ntb->ops->db_set,
+	वापस tool_fn_ग_लिखो(tc, ubuf, size, offp, tc->ntb->ops->db_set,
 			     tc->ntb->ops->db_clear);
-}
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_db_fops,
-		      tool_db_read,
-		      tool_db_write);
+अटल TOOL_FOPS_RDWR(tool_db_fops,
+		      tool_db_पढ़ो,
+		      tool_db_ग_लिखो);
 
-static ssize_t tool_db_valid_mask_read(struct file *filep, char __user *ubuf,
-				       size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_db_valid_mask_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				       माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_read(tc, ubuf, size, offp, tc->ntb->ops->db_valid_mask);
-}
+	वापस tool_fn_पढ़ो(tc, ubuf, size, offp, tc->ntb->ops->db_valid_mask);
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_db_valid_mask_fops,
-		      tool_db_valid_mask_read,
-		      NULL);
+अटल TOOL_FOPS_RDWR(tool_db_valid_mask_fops,
+		      tool_db_valid_mask_पढ़ो,
+		      शून्य);
 
-static ssize_t tool_db_mask_read(struct file *filep, char __user *ubuf,
-				 size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_db_mask_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				 माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_read(tc, ubuf, size, offp, tc->ntb->ops->db_read_mask);
-}
+	वापस tool_fn_पढ़ो(tc, ubuf, size, offp, tc->ntb->ops->db_पढ़ो_mask);
+पूर्ण
 
-static ssize_t tool_db_mask_write(struct file *filep, const char __user *ubuf,
-			       size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_db_mask_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+			       माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_write(tc, ubuf, size, offp, tc->ntb->ops->db_set_mask,
+	वापस tool_fn_ग_लिखो(tc, ubuf, size, offp, tc->ntb->ops->db_set_mask,
 			     tc->ntb->ops->db_clear_mask);
-}
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_db_mask_fops,
-		      tool_db_mask_read,
-		      tool_db_mask_write);
+अटल TOOL_FOPS_RDWR(tool_db_mask_fops,
+		      tool_db_mask_पढ़ो,
+		      tool_db_mask_ग_लिखो);
 
-static ssize_t tool_peer_db_read(struct file *filep, char __user *ubuf,
-				 size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_peer_db_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				 माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_read(tc, ubuf, size, offp, tc->ntb->ops->peer_db_read);
-}
+	वापस tool_fn_पढ़ो(tc, ubuf, size, offp, tc->ntb->ops->peer_db_पढ़ो);
+पूर्ण
 
-static ssize_t tool_peer_db_write(struct file *filep, const char __user *ubuf,
-				  size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_peer_db_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+				  माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_write(tc, ubuf, size, offp, tc->ntb->ops->peer_db_set,
+	वापस tool_fn_ग_लिखो(tc, ubuf, size, offp, tc->ntb->ops->peer_db_set,
 			     tc->ntb->ops->peer_db_clear);
-}
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_peer_db_fops,
-		      tool_peer_db_read,
-		      tool_peer_db_write);
+अटल TOOL_FOPS_RDWR(tool_peer_db_fops,
+		      tool_peer_db_पढ़ो,
+		      tool_peer_db_ग_लिखो);
 
-static ssize_t tool_peer_db_mask_read(struct file *filep, char __user *ubuf,
-				   size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_peer_db_mask_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				   माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_read(tc, ubuf, size, offp,
-			    tc->ntb->ops->peer_db_read_mask);
-}
+	वापस tool_fn_पढ़ो(tc, ubuf, size, offp,
+			    tc->ntb->ops->peer_db_पढ़ो_mask);
+पूर्ण
 
-static ssize_t tool_peer_db_mask_write(struct file *filep,
-				       const char __user *ubuf,
-				       size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_peer_db_mask_ग_लिखो(काष्ठा file *filep,
+				       स्थिर अक्षर __user *ubuf,
+				       माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_write(tc, ubuf, size, offp,
+	वापस tool_fn_ग_लिखो(tc, ubuf, size, offp,
 			     tc->ntb->ops->peer_db_set_mask,
 			     tc->ntb->ops->peer_db_clear_mask);
-}
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_peer_db_mask_fops,
-		      tool_peer_db_mask_read,
-		      tool_peer_db_mask_write);
+अटल TOOL_FOPS_RDWR(tool_peer_db_mask_fops,
+		      tool_peer_db_mask_पढ़ो,
+		      tool_peer_db_mask_ग_लिखो);
 
-static ssize_t tool_db_event_write(struct file *filep,
-				   const char __user *ubuf,
-				   size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_db_event_ग_लिखो(काष्ठा file *filep,
+				   स्थिर अक्षर __user *ubuf,
+				   माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 	u64 val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou64_from_user(ubuf, size, 0, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (wait_event_interruptible(tc->db_wq, ntb_db_read(tc->ntb) == val))
-		return -ERESTART;
+	अगर (रुको_event_पूर्णांकerruptible(tc->db_wq, ntb_db_पढ़ो(tc->ntb) == val))
+		वापस -ERESTART;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_db_event_fops,
-		      NULL,
-		      tool_db_event_write);
+अटल TOOL_FOPS_RDWR(tool_db_event_fops,
+		      शून्य,
+		      tool_db_event_ग_लिखो);
 
 /*==============================================================================
- *                       Scratchpads read/write methods
+ *                       Scratchpads पढ़ो/ग_लिखो methods
  *==============================================================================
  */
 
-static ssize_t tool_spad_read(struct file *filep, char __user *ubuf,
-			      size_t size, loff_t *offp)
-{
-	struct tool_spad *spad = filep->private_data;
-	char buf[TOOL_BUF_LEN];
-	ssize_t pos;
+अटल sमाप_प्रकार tool_spad_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+			      माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_spad *spad = filep->निजी_data;
+	अक्षर buf[TOOL_BUF_LEN];
+	sमाप_प्रकार pos;
 
-	if (!spad->tc->ntb->ops->spad_read)
-		return -EINVAL;
+	अगर (!spad->tc->ntb->ops->spad_पढ़ो)
+		वापस -EINVAL;
 
-	pos = scnprintf(buf, sizeof(buf), "%#x\n",
-		ntb_spad_read(spad->tc->ntb, spad->sidx));
+	pos = scnम_लिखो(buf, माप(buf), "%#x\n",
+		ntb_spad_पढ़ो(spad->tc->ntb, spad->sidx));
 
-	return simple_read_from_buffer(ubuf, size, offp, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, size, offp, buf, pos);
+पूर्ण
 
-static ssize_t tool_spad_write(struct file *filep, const char __user *ubuf,
-			       size_t size, loff_t *offp)
-{
-	struct tool_spad *spad = filep->private_data;
+अटल sमाप_प्रकार tool_spad_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+			       माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_spad *spad = filep->निजी_data;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (!spad->tc->ntb->ops->spad_write) {
+	अगर (!spad->tc->ntb->ops->spad_ग_लिखो) अणु
 		dev_dbg(&spad->tc->ntb->dev, "no spad write fn\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = kstrtou32_from_user(ubuf, size, 0, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = ntb_spad_write(spad->tc->ntb, spad->sidx, val);
+	ret = ntb_spad_ग_लिखो(spad->tc->ntb, spad->sidx, val);
 
-	return ret ?: size;
-}
+	वापस ret ?: size;
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_spad_fops,
-		      tool_spad_read,
-		      tool_spad_write);
+अटल TOOL_FOPS_RDWR(tool_spad_fops,
+		      tool_spad_पढ़ो,
+		      tool_spad_ग_लिखो);
 
-static ssize_t tool_peer_spad_read(struct file *filep, char __user *ubuf,
-				   size_t size, loff_t *offp)
-{
-	struct tool_spad *spad = filep->private_data;
-	char buf[TOOL_BUF_LEN];
-	ssize_t pos;
+अटल sमाप_प्रकार tool_peer_spad_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				   माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_spad *spad = filep->निजी_data;
+	अक्षर buf[TOOL_BUF_LEN];
+	sमाप_प्रकार pos;
 
-	if (!spad->tc->ntb->ops->peer_spad_read)
-		return -EINVAL;
+	अगर (!spad->tc->ntb->ops->peer_spad_पढ़ो)
+		वापस -EINVAL;
 
-	pos = scnprintf(buf, sizeof(buf), "%#x\n",
-		ntb_peer_spad_read(spad->tc->ntb, spad->pidx, spad->sidx));
+	pos = scnम_लिखो(buf, माप(buf), "%#x\n",
+		ntb_peer_spad_पढ़ो(spad->tc->ntb, spad->pidx, spad->sidx));
 
-	return simple_read_from_buffer(ubuf, size, offp, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, size, offp, buf, pos);
+पूर्ण
 
-static ssize_t tool_peer_spad_write(struct file *filep, const char __user *ubuf,
-				    size_t size, loff_t *offp)
-{
-	struct tool_spad *spad = filep->private_data;
+अटल sमाप_प्रकार tool_peer_spad_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+				    माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_spad *spad = filep->निजी_data;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (!spad->tc->ntb->ops->peer_spad_write) {
+	अगर (!spad->tc->ntb->ops->peer_spad_ग_लिखो) अणु
 		dev_dbg(&spad->tc->ntb->dev, "no spad write fn\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = kstrtou32_from_user(ubuf, size, 0, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = ntb_peer_spad_write(spad->tc->ntb, spad->pidx, spad->sidx, val);
+	ret = ntb_peer_spad_ग_लिखो(spad->tc->ntb, spad->pidx, spad->sidx, val);
 
-	return ret ?: size;
-}
+	वापस ret ?: size;
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_peer_spad_fops,
-		      tool_peer_spad_read,
-		      tool_peer_spad_write);
+अटल TOOL_FOPS_RDWR(tool_peer_spad_fops,
+		      tool_peer_spad_पढ़ो,
+		      tool_peer_spad_ग_लिखो);
 
-static int tool_init_spads(struct tool_ctx *tc)
-{
-	int sidx, pidx;
+अटल पूर्णांक tool_init_spads(काष्ठा tool_ctx *tc)
+अणु
+	पूर्णांक sidx, pidx;
 
-	/* Initialize inbound scratchpad structures */
+	/* Initialize inbound scratchpad काष्ठाures */
 	tc->inspad_cnt = ntb_spad_count(tc->ntb);
-	tc->inspads = devm_kcalloc(&tc->ntb->dev, tc->inspad_cnt,
-				   sizeof(*tc->inspads), GFP_KERNEL);
-	if (tc->inspads == NULL)
-		return -ENOMEM;
+	tc->inspads = devm_kसुस्मृति(&tc->ntb->dev, tc->inspad_cnt,
+				   माप(*tc->inspads), GFP_KERNEL);
+	अगर (tc->inspads == शून्य)
+		वापस -ENOMEM;
 
-	for (sidx = 0; sidx < tc->inspad_cnt; sidx++) {
+	क्रम (sidx = 0; sidx < tc->inspad_cnt; sidx++) अणु
 		tc->inspads[sidx].sidx = sidx;
 		tc->inspads[sidx].pidx = -1;
 		tc->inspads[sidx].tc = tc;
-	}
+	पूर्ण
 
-	/* Initialize outbound scratchpad structures */
-	for (pidx = 0; pidx < tc->peer_cnt; pidx++) {
+	/* Initialize outbound scratchpad काष्ठाures */
+	क्रम (pidx = 0; pidx < tc->peer_cnt; pidx++) अणु
 		tc->peers[pidx].outspad_cnt = ntb_spad_count(tc->ntb);
 		tc->peers[pidx].outspads =
-			devm_kcalloc(&tc->ntb->dev, tc->peers[pidx].outspad_cnt,
-				sizeof(*tc->peers[pidx].outspads), GFP_KERNEL);
-		if (tc->peers[pidx].outspads == NULL)
-			return -ENOMEM;
+			devm_kसुस्मृति(&tc->ntb->dev, tc->peers[pidx].outspad_cnt,
+				माप(*tc->peers[pidx].outspads), GFP_KERNEL);
+		अगर (tc->peers[pidx].outspads == शून्य)
+			वापस -ENOMEM;
 
-		for (sidx = 0; sidx < tc->peers[pidx].outspad_cnt; sidx++) {
+		क्रम (sidx = 0; sidx < tc->peers[pidx].outspad_cnt; sidx++) अणु
 			tc->peers[pidx].outspads[sidx].sidx = sidx;
 			tc->peers[pidx].outspads[sidx].pidx = pidx;
 			tc->peers[pidx].outspads[sidx].tc = tc;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*==============================================================================
- *                       Messages read/write methods
+ *                       Messages पढ़ो/ग_लिखो methods
  *==============================================================================
  */
 
-static ssize_t tool_inmsg_read(struct file *filep, char __user *ubuf,
-			       size_t size, loff_t *offp)
-{
-	struct tool_msg *msg = filep->private_data;
-	char buf[TOOL_BUF_LEN];
-	ssize_t pos;
+अटल sमाप_प्रकार tool_inmsg_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+			       माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_msg *msg = filep->निजी_data;
+	अक्षर buf[TOOL_BUF_LEN];
+	sमाप_प्रकार pos;
 	u32 data;
-	int pidx;
+	पूर्णांक pidx;
 
-	data = ntb_msg_read(msg->tc->ntb, &pidx, msg->midx);
+	data = ntb_msg_पढ़ो(msg->tc->ntb, &pidx, msg->midx);
 
-	pos = scnprintf(buf, sizeof(buf), "0x%08x<-%d\n", data, pidx);
+	pos = scnम_लिखो(buf, माप(buf), "0x%08x<-%d\n", data, pidx);
 
-	return simple_read_from_buffer(ubuf, size, offp, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, size, offp, buf, pos);
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_inmsg_fops,
-		      tool_inmsg_read,
-		      NULL);
+अटल TOOL_FOPS_RDWR(tool_inmsg_fops,
+		      tool_inmsg_पढ़ो,
+		      शून्य);
 
-static ssize_t tool_outmsg_write(struct file *filep,
-				 const char __user *ubuf,
-				 size_t size, loff_t *offp)
-{
-	struct tool_msg *msg = filep->private_data;
+अटल sमाप_प्रकार tool_ouपंचांगsg_ग_लिखो(काष्ठा file *filep,
+				 स्थिर अक्षर __user *ubuf,
+				 माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_msg *msg = filep->निजी_data;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou32_from_user(ubuf, size, 0, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = ntb_peer_msg_write(msg->tc->ntb, msg->pidx, msg->midx, val);
+	ret = ntb_peer_msg_ग_लिखो(msg->tc->ntb, msg->pidx, msg->midx, val);
 
-	return ret ? : size;
-}
+	वापस ret ? : size;
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_outmsg_fops,
-		      NULL,
-		      tool_outmsg_write);
+अटल TOOL_FOPS_RDWR(tool_ouपंचांगsg_fops,
+		      शून्य,
+		      tool_ouपंचांगsg_ग_लिखो);
 
-static ssize_t tool_msg_sts_read(struct file *filep, char __user *ubuf,
-				 size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_msg_sts_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				 माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_read(tc, ubuf, size, offp, tc->ntb->ops->msg_read_sts);
-}
+	वापस tool_fn_पढ़ो(tc, ubuf, size, offp, tc->ntb->ops->msg_पढ़ो_sts);
+पूर्ण
 
-static ssize_t tool_msg_sts_write(struct file *filep, const char __user *ubuf,
-				  size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_msg_sts_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+				  माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_write(tc, ubuf, size, offp, NULL,
+	वापस tool_fn_ग_लिखो(tc, ubuf, size, offp, शून्य,
 			     tc->ntb->ops->msg_clear_sts);
-}
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_msg_sts_fops,
-		      tool_msg_sts_read,
-		      tool_msg_sts_write);
+अटल TOOL_FOPS_RDWR(tool_msg_sts_fops,
+		      tool_msg_sts_पढ़ो,
+		      tool_msg_sts_ग_लिखो);
 
-static ssize_t tool_msg_inbits_read(struct file *filep, char __user *ubuf,
-				    size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_msg_inbits_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				    माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_read(tc, ubuf, size, offp, tc->ntb->ops->msg_inbits);
-}
+	वापस tool_fn_पढ़ो(tc, ubuf, size, offp, tc->ntb->ops->msg_inbits);
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_msg_inbits_fops,
-		      tool_msg_inbits_read,
-		      NULL);
+अटल TOOL_FOPS_RDWR(tool_msg_inbits_fops,
+		      tool_msg_inbits_पढ़ो,
+		      शून्य);
 
-static ssize_t tool_msg_outbits_read(struct file *filep, char __user *ubuf,
-				     size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_msg_outbits_पढ़ो(काष्ठा file *filep, अक्षर __user *ubuf,
+				     माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_read(tc, ubuf, size, offp, tc->ntb->ops->msg_outbits);
-}
+	वापस tool_fn_पढ़ो(tc, ubuf, size, offp, tc->ntb->ops->msg_outbits);
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_msg_outbits_fops,
-		      tool_msg_outbits_read,
-		      NULL);
+अटल TOOL_FOPS_RDWR(tool_msg_outbits_fops,
+		      tool_msg_outbits_पढ़ो,
+		      शून्य);
 
-static ssize_t tool_msg_mask_write(struct file *filep, const char __user *ubuf,
-				   size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_msg_mask_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *ubuf,
+				   माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 
-	return tool_fn_write(tc, ubuf, size, offp,
+	वापस tool_fn_ग_लिखो(tc, ubuf, size, offp,
 			     tc->ntb->ops->msg_set_mask,
 			     tc->ntb->ops->msg_clear_mask);
-}
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_msg_mask_fops,
-		      NULL,
-		      tool_msg_mask_write);
+अटल TOOL_FOPS_RDWR(tool_msg_mask_fops,
+		      शून्य,
+		      tool_msg_mask_ग_लिखो);
 
-static ssize_t tool_msg_event_write(struct file *filep,
-				    const char __user *ubuf,
-				    size_t size, loff_t *offp)
-{
-	struct tool_ctx *tc = filep->private_data;
+अटल sमाप_प्रकार tool_msg_event_ग_लिखो(काष्ठा file *filep,
+				    स्थिर अक्षर __user *ubuf,
+				    माप_प्रकार size, loff_t *offp)
+अणु
+	काष्ठा tool_ctx *tc = filep->निजी_data;
 	u64 val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou64_from_user(ubuf, size, 0, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (wait_event_interruptible(tc->msg_wq,
-		ntb_msg_read_sts(tc->ntb) == val))
-		return -ERESTART;
+	अगर (रुको_event_पूर्णांकerruptible(tc->msg_wq,
+		ntb_msg_पढ़ो_sts(tc->ntb) == val))
+		वापस -ERESTART;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static TOOL_FOPS_RDWR(tool_msg_event_fops,
-		      NULL,
-		      tool_msg_event_write);
+अटल TOOL_FOPS_RDWR(tool_msg_event_fops,
+		      शून्य,
+		      tool_msg_event_ग_लिखो);
 
-static int tool_init_msgs(struct tool_ctx *tc)
-{
-	int midx, pidx;
+अटल पूर्णांक tool_init_msgs(काष्ठा tool_ctx *tc)
+अणु
+	पूर्णांक midx, pidx;
 
-	/* Initialize inbound message structures */
+	/* Initialize inbound message काष्ठाures */
 	tc->inmsg_cnt = ntb_msg_count(tc->ntb);
-	tc->inmsgs = devm_kcalloc(&tc->ntb->dev, tc->inmsg_cnt,
-				   sizeof(*tc->inmsgs), GFP_KERNEL);
-	if (tc->inmsgs == NULL)
-		return -ENOMEM;
+	tc->inmsgs = devm_kसुस्मृति(&tc->ntb->dev, tc->inmsg_cnt,
+				   माप(*tc->inmsgs), GFP_KERNEL);
+	अगर (tc->inmsgs == शून्य)
+		वापस -ENOMEM;
 
-	for (midx = 0; midx < tc->inmsg_cnt; midx++) {
+	क्रम (midx = 0; midx < tc->inmsg_cnt; midx++) अणु
 		tc->inmsgs[midx].midx = midx;
 		tc->inmsgs[midx].pidx = -1;
 		tc->inmsgs[midx].tc = tc;
-	}
+	पूर्ण
 
-	/* Initialize outbound message structures */
-	for (pidx = 0; pidx < tc->peer_cnt; pidx++) {
-		tc->peers[pidx].outmsg_cnt = ntb_msg_count(tc->ntb);
-		tc->peers[pidx].outmsgs =
-			devm_kcalloc(&tc->ntb->dev, tc->peers[pidx].outmsg_cnt,
-				sizeof(*tc->peers[pidx].outmsgs), GFP_KERNEL);
-		if (tc->peers[pidx].outmsgs == NULL)
-			return -ENOMEM;
+	/* Initialize outbound message काष्ठाures */
+	क्रम (pidx = 0; pidx < tc->peer_cnt; pidx++) अणु
+		tc->peers[pidx].ouपंचांगsg_cnt = ntb_msg_count(tc->ntb);
+		tc->peers[pidx].ouपंचांगsgs =
+			devm_kसुस्मृति(&tc->ntb->dev, tc->peers[pidx].ouपंचांगsg_cnt,
+				माप(*tc->peers[pidx].ouपंचांगsgs), GFP_KERNEL);
+		अगर (tc->peers[pidx].ouपंचांगsgs == शून्य)
+			वापस -ENOMEM;
 
-		for (midx = 0; midx < tc->peers[pidx].outmsg_cnt; midx++) {
-			tc->peers[pidx].outmsgs[midx].midx = midx;
-			tc->peers[pidx].outmsgs[midx].pidx = pidx;
-			tc->peers[pidx].outmsgs[midx].tc = tc;
-		}
-	}
+		क्रम (midx = 0; midx < tc->peers[pidx].ouपंचांगsg_cnt; midx++) अणु
+			tc->peers[pidx].ouपंचांगsgs[midx].midx = midx;
+			tc->peers[pidx].ouपंचांगsgs[midx].pidx = pidx;
+			tc->peers[pidx].ouपंचांगsgs[midx].tc = tc;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*==============================================================================
  *                          Initialization methods
  *==============================================================================
  */
 
-static struct tool_ctx *tool_create_data(struct ntb_dev *ntb)
-{
-	struct tool_ctx *tc;
+अटल काष्ठा tool_ctx *tool_create_data(काष्ठा ntb_dev *ntb)
+अणु
+	काष्ठा tool_ctx *tc;
 
-	tc = devm_kzalloc(&ntb->dev, sizeof(*tc), GFP_KERNEL);
-	if (tc == NULL)
-		return ERR_PTR(-ENOMEM);
+	tc = devm_kzalloc(&ntb->dev, माप(*tc), GFP_KERNEL);
+	अगर (tc == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
 	tc->ntb = ntb;
-	init_waitqueue_head(&tc->link_wq);
-	init_waitqueue_head(&tc->db_wq);
-	init_waitqueue_head(&tc->msg_wq);
+	init_रुकोqueue_head(&tc->link_wq);
+	init_रुकोqueue_head(&tc->db_wq);
+	init_रुकोqueue_head(&tc->msg_wq);
 
-	if (ntb_db_is_unsafe(ntb))
+	अगर (ntb_db_is_unsafe(ntb))
 		dev_dbg(&ntb->dev, "doorbell is unsafe\n");
 
-	if (ntb_spad_is_unsafe(ntb))
+	अगर (ntb_spad_is_unsafe(ntb))
 		dev_dbg(&ntb->dev, "scratchpad is unsafe\n");
 
-	return tc;
-}
+	वापस tc;
+पूर्ण
 
-static void tool_clear_data(struct tool_ctx *tc)
-{
+अटल व्योम tool_clear_data(काष्ठा tool_ctx *tc)
+अणु
 	wake_up(&tc->link_wq);
 	wake_up(&tc->db_wq);
 	wake_up(&tc->msg_wq);
-}
+पूर्ण
 
-static int tool_init_ntb(struct tool_ctx *tc)
-{
-	return ntb_set_ctx(tc->ntb, tc, &tool_ops);
-}
+अटल पूर्णांक tool_init_ntb(काष्ठा tool_ctx *tc)
+अणु
+	वापस ntb_set_ctx(tc->ntb, tc, &tool_ops);
+पूर्ण
 
-static void tool_clear_ntb(struct tool_ctx *tc)
-{
+अटल व्योम tool_clear_ntb(काष्ठा tool_ctx *tc)
+अणु
 	ntb_clear_ctx(tc->ntb);
 	ntb_link_disable(tc->ntb);
-}
+पूर्ण
 
-static void tool_setup_dbgfs(struct tool_ctx *tc)
-{
-	int pidx, widx, sidx, midx;
-	char buf[TOOL_BUF_LEN];
+अटल व्योम tool_setup_dbgfs(काष्ठा tool_ctx *tc)
+अणु
+	पूर्णांक pidx, widx, sidx, midx;
+	अक्षर buf[TOOL_BUF_LEN];
 
 	/* This modules is useless without dbgfs... */
-	if (!tool_dbgfs_topdir) {
-		tc->dbgfs_dir = NULL;
-		return;
-	}
+	अगर (!tool_dbgfs_topdir) अणु
+		tc->dbgfs_dir = शून्य;
+		वापस;
+	पूर्ण
 
 	tc->dbgfs_dir = debugfs_create_dir(dev_name(&tc->ntb->dev),
 					   tool_dbgfs_topdir);
-	if (!tc->dbgfs_dir)
-		return;
+	अगर (!tc->dbgfs_dir)
+		वापस;
 
 	debugfs_create_file("port", 0600, tc->dbgfs_dir,
 			    tc, &tool_port_fops);
@@ -1518,21 +1519,21 @@ static void tool_setup_dbgfs(struct tool_ctx *tc)
 	debugfs_create_file("peer_db_mask", 0600, tc->dbgfs_dir,
 			    tc, &tool_peer_db_mask_fops);
 
-	if (tc->inspad_cnt != 0) {
-		for (sidx = 0; sidx < tc->inspad_cnt; sidx++) {
-			snprintf(buf, sizeof(buf), "spad%d", sidx);
+	अगर (tc->inspad_cnt != 0) अणु
+		क्रम (sidx = 0; sidx < tc->inspad_cnt; sidx++) अणु
+			snम_लिखो(buf, माप(buf), "spad%d", sidx);
 
 			debugfs_create_file(buf, 0600, tc->dbgfs_dir,
 					   &tc->inspads[sidx], &tool_spad_fops);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (tc->inmsg_cnt != 0) {
-		for (midx = 0; midx < tc->inmsg_cnt; midx++) {
-			snprintf(buf, sizeof(buf), "msg%d", midx);
+	अगर (tc->inmsg_cnt != 0) अणु
+		क्रम (midx = 0; midx < tc->inmsg_cnt; midx++) अणु
+			snम_लिखो(buf, माप(buf), "msg%d", midx);
 			debugfs_create_file(buf, 0600, tc->dbgfs_dir,
 					   &tc->inmsgs[midx], &tool_inmsg_fops);
-		}
+		पूर्ण
 
 		debugfs_create_file("msg_sts", 0600, tc->dbgfs_dir,
 				    tc, &tool_msg_sts_fops);
@@ -1548,10 +1549,10 @@ static void tool_setup_dbgfs(struct tool_ctx *tc)
 
 		debugfs_create_file("msg_event", 0600, tc->dbgfs_dir,
 				    tc, &tool_msg_event_fops);
-	}
+	पूर्ण
 
-	for (pidx = 0; pidx < tc->peer_cnt; pidx++) {
-		snprintf(buf, sizeof(buf), "peer%d", pidx);
+	क्रम (pidx = 0; pidx < tc->peer_cnt; pidx++) अणु
+		snम_लिखो(buf, माप(buf), "peer%d", pidx);
 		tc->peers[pidx].dbgfs_dir =
 			debugfs_create_dir(buf, tc->dbgfs_dir);
 
@@ -1567,78 +1568,78 @@ static void tool_setup_dbgfs(struct tool_ctx *tc)
 				  tc->peers[pidx].dbgfs_dir,
 				  &tc->peers[pidx], &tool_peer_link_event_fops);
 
-		for (widx = 0; widx < tc->peers[pidx].inmw_cnt; widx++) {
-			snprintf(buf, sizeof(buf), "mw_trans%d", widx);
+		क्रम (widx = 0; widx < tc->peers[pidx].inmw_cnt; widx++) अणु
+			snम_लिखो(buf, माप(buf), "mw_trans%d", widx);
 			debugfs_create_file(buf, 0600,
 					    tc->peers[pidx].dbgfs_dir,
 					    &tc->peers[pidx].inmws[widx],
 					    &tool_mw_trans_fops);
-		}
+		पूर्ण
 
-		for (widx = 0; widx < tc->peers[pidx].outmw_cnt; widx++) {
-			snprintf(buf, sizeof(buf), "peer_mw_trans%d", widx);
+		क्रम (widx = 0; widx < tc->peers[pidx].ouपंचांगw_cnt; widx++) अणु
+			snम_लिखो(buf, माप(buf), "peer_mw_trans%d", widx);
 			debugfs_create_file(buf, 0600,
 					    tc->peers[pidx].dbgfs_dir,
-					    &tc->peers[pidx].outmws[widx],
+					    &tc->peers[pidx].ouपंचांगws[widx],
 					    &tool_peer_mw_trans_fops);
-		}
+		पूर्ण
 
-		for (sidx = 0; sidx < tc->peers[pidx].outspad_cnt; sidx++) {
-			snprintf(buf, sizeof(buf), "spad%d", sidx);
+		क्रम (sidx = 0; sidx < tc->peers[pidx].outspad_cnt; sidx++) अणु
+			snम_लिखो(buf, माप(buf), "spad%d", sidx);
 
 			debugfs_create_file(buf, 0600,
 					    tc->peers[pidx].dbgfs_dir,
 					    &tc->peers[pidx].outspads[sidx],
 					    &tool_peer_spad_fops);
-		}
+		पूर्ण
 
-		for (midx = 0; midx < tc->peers[pidx].outmsg_cnt; midx++) {
-			snprintf(buf, sizeof(buf), "msg%d", midx);
+		क्रम (midx = 0; midx < tc->peers[pidx].ouपंचांगsg_cnt; midx++) अणु
+			snम_लिखो(buf, माप(buf), "msg%d", midx);
 			debugfs_create_file(buf, 0600,
 					    tc->peers[pidx].dbgfs_dir,
-					    &tc->peers[pidx].outmsgs[midx],
-					    &tool_outmsg_fops);
-		}
-	}
-}
+					    &tc->peers[pidx].ouपंचांगsgs[midx],
+					    &tool_ouपंचांगsg_fops);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void tool_clear_dbgfs(struct tool_ctx *tc)
-{
-	debugfs_remove_recursive(tc->dbgfs_dir);
-}
+अटल व्योम tool_clear_dbgfs(काष्ठा tool_ctx *tc)
+अणु
+	debugfs_हटाओ_recursive(tc->dbgfs_dir);
+पूर्ण
 
-static int tool_probe(struct ntb_client *self, struct ntb_dev *ntb)
-{
-	struct tool_ctx *tc;
-	int ret;
+अटल पूर्णांक tool_probe(काष्ठा ntb_client *self, काष्ठा ntb_dev *ntb)
+अणु
+	काष्ठा tool_ctx *tc;
+	पूर्णांक ret;
 
 	tc = tool_create_data(ntb);
-	if (IS_ERR(tc))
-		return PTR_ERR(tc);
+	अगर (IS_ERR(tc))
+		वापस PTR_ERR(tc);
 
 	ret = tool_init_peers(tc);
-	if (ret != 0)
-		goto err_clear_data;
+	अगर (ret != 0)
+		जाओ err_clear_data;
 
 	ret = tool_init_mws(tc);
-	if (ret != 0)
-		goto err_clear_data;
+	अगर (ret != 0)
+		जाओ err_clear_data;
 
 	ret = tool_init_spads(tc);
-	if (ret != 0)
-		goto err_clear_mws;
+	अगर (ret != 0)
+		जाओ err_clear_mws;
 
 	ret = tool_init_msgs(tc);
-	if (ret != 0)
-		goto err_clear_mws;
+	अगर (ret != 0)
+		जाओ err_clear_mws;
 
 	ret = tool_init_ntb(tc);
-	if (ret != 0)
-		goto err_clear_mws;
+	अगर (ret != 0)
+		जाओ err_clear_mws;
 
 	tool_setup_dbgfs(tc);
 
-	return 0;
+	वापस 0;
 
 err_clear_mws:
 	tool_clear_mws(tc);
@@ -1646,12 +1647,12 @@ err_clear_mws:
 err_clear_data:
 	tool_clear_data(tc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void tool_remove(struct ntb_client *self, struct ntb_dev *ntb)
-{
-	struct tool_ctx *tc = ntb->ctx;
+अटल व्योम tool_हटाओ(काष्ठा ntb_client *self, काष्ठा ntb_dev *ntb)
+अणु
+	काष्ठा tool_ctx *tc = ntb->ctx;
 
 	tool_clear_dbgfs(tc);
 
@@ -1660,33 +1661,33 @@ static void tool_remove(struct ntb_client *self, struct ntb_dev *ntb)
 	tool_clear_mws(tc);
 
 	tool_clear_data(tc);
-}
+पूर्ण
 
-static struct ntb_client tool_client = {
-	.ops = {
+अटल काष्ठा ntb_client tool_client = अणु
+	.ops = अणु
 		.probe = tool_probe,
-		.remove = tool_remove,
-	}
-};
+		.हटाओ = tool_हटाओ,
+	पूर्ण
+पूर्ण;
 
-static int __init tool_init(void)
-{
-	int ret;
+अटल पूर्णांक __init tool_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (debugfs_initialized())
-		tool_dbgfs_topdir = debugfs_create_dir(KBUILD_MODNAME, NULL);
+	अगर (debugfs_initialized())
+		tool_dbgfs_topdir = debugfs_create_dir(KBUILD_MODNAME, शून्य);
 
-	ret = ntb_register_client(&tool_client);
-	if (ret)
-		debugfs_remove_recursive(tool_dbgfs_topdir);
+	ret = ntb_रेजिस्टर_client(&tool_client);
+	अगर (ret)
+		debugfs_हटाओ_recursive(tool_dbgfs_topdir);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 module_init(tool_init);
 
-static void __exit tool_exit(void)
-{
-	ntb_unregister_client(&tool_client);
-	debugfs_remove_recursive(tool_dbgfs_topdir);
-}
-module_exit(tool_exit);
+अटल व्योम __निकास tool_निकास(व्योम)
+अणु
+	ntb_unरेजिस्टर_client(&tool_client);
+	debugfs_हटाओ_recursive(tool_dbgfs_topdir);
+पूर्ण
+module_निकास(tool_निकास);

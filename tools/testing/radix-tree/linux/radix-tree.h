@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _TEST_RADIX_TREE_H
-#define _TEST_RADIX_TREE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _TEST_RADIX_TREE_H
+#घोषणा _TEST_RADIX_TREE_H
 
-#include "../../../../include/linux/radix-tree.h"
+#समावेश "../../../../include/linux/radix-tree.h"
 
-extern int kmalloc_verbose;
-extern int test_verbose;
+बाह्य पूर्णांक kदो_स्मृति_verbose;
+बाह्य पूर्णांक test_verbose;
 
-static inline void trace_call_rcu(struct rcu_head *head,
-		void (*func)(struct rcu_head *head))
-{
-	if (kmalloc_verbose)
-		printf("Delaying free of %p to slab\n", (char *)head -
-				offsetof(struct radix_tree_node, rcu_head));
+अटल अंतरभूत व्योम trace_call_rcu(काष्ठा rcu_head *head,
+		व्योम (*func)(काष्ठा rcu_head *head))
+अणु
+	अगर (kदो_स्मृति_verbose)
+		म_लिखो("Delaying free of %p to slab\n", (अक्षर *)head -
+				दुरत्व(काष्ठा radix_tree_node, rcu_head));
 	call_rcu(head, func);
-}
+पूर्ण
 
-#define printv(verbosity_level, fmt, ...) \
-	if(test_verbose >= verbosity_level) \
-		printf(fmt, ##__VA_ARGS__)
+#घोषणा prपूर्णांकv(verbosity_level, fmt, ...) \
+	अगर(test_verbose >= verbosity_level) \
+		म_लिखो(fmt, ##__VA_ARGS__)
 
-#undef call_rcu
-#define call_rcu(x, y) trace_call_rcu(x, y)
+#अघोषित call_rcu
+#घोषणा call_rcu(x, y) trace_call_rcu(x, y)
 
-#endif /* _TEST_RADIX_TREE_H */
+#पूर्ण_अगर /* _TEST_RADIX_TREE_H */

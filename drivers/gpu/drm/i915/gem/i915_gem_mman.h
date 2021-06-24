@@ -1,32 +1,33 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __I915_GEM_MMAN_H__
-#define __I915_GEM_MMAN_H__
+#अगर_अघोषित __I915_GEM_MMAN_H__
+#घोषणा __I915_GEM_MMAN_H__
 
-#include <linux/mm_types.h>
-#include <linux/types.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/types.h>
 
-struct drm_device;
-struct drm_file;
-struct drm_i915_gem_object;
-struct file;
-struct i915_mmap_offset;
-struct mutex;
+काष्ठा drm_device;
+काष्ठा drm_file;
+काष्ठा drm_i915_gem_object;
+काष्ठा file;
+काष्ठा i915_mmap_offset;
+काष्ठा mutex;
 
-int i915_gem_mmap_gtt_version(void);
-int i915_gem_mmap(struct file *filp, struct vm_area_struct *vma);
+पूर्णांक i915_gem_mmap_gtt_version(व्योम);
+पूर्णांक i915_gem_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma);
 
-int i915_gem_dumb_mmap_offset(struct drm_file *file_priv,
-			      struct drm_device *dev,
+पूर्णांक i915_gem_dumb_mmap_offset(काष्ठा drm_file *file_priv,
+			      काष्ठा drm_device *dev,
 			      u32 handle, u64 *offset);
 
-void __i915_gem_object_release_mmap_gtt(struct drm_i915_gem_object *obj);
-void i915_gem_object_release_mmap_gtt(struct drm_i915_gem_object *obj);
+व्योम __i915_gem_object_release_mmap_gtt(काष्ठा drm_i915_gem_object *obj);
+व्योम i915_gem_object_release_mmap_gtt(काष्ठा drm_i915_gem_object *obj);
 
-void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object *obj);
+व्योम i915_gem_object_release_mmap_offset(काष्ठा drm_i915_gem_object *obj);
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2020 MediaTek Inc.
  * Copyright (c) 2020 BayLibre, SAS
@@ -6,48 +7,48 @@
  *         Fabien Parent <fparent@baylibre.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "clk-mtk.h"
-#include "clk-gate.h"
+#समावेश "clk-mtk.h"
+#समावेश "clk-gate.h"
 
-#include <dt-bindings/clock/mt8167-clk.h>
+#समावेश <dt-bindings/घड़ी/mt8167-clk.h>
 
-static const struct mtk_gate_regs mm0_cg_regs = {
+अटल स्थिर काष्ठा mtk_gate_regs mm0_cg_regs = अणु
 	.set_ofs = 0x104,
 	.clr_ofs = 0x108,
 	.sta_ofs = 0x100,
-};
+पूर्ण;
 
-static const struct mtk_gate_regs mm1_cg_regs = {
+अटल स्थिर काष्ठा mtk_gate_regs mm1_cg_regs = अणु
 	.set_ofs = 0x114,
 	.clr_ofs = 0x118,
 	.sta_ofs = 0x110,
-};
+पूर्ण;
 
-#define GATE_MM0(_id, _name, _parent, _shift) {		\
+#घोषणा GATE_MM0(_id, _name, _parent, _shअगरt) अणु		\
 		.id = _id,				\
 		.name = _name,				\
 		.parent_name = _parent,			\
 		.regs = &mm0_cg_regs,			\
-		.shift = _shift,			\
+		.shअगरt = _shअगरt,			\
 		.ops = &mtk_clk_gate_ops_setclr,	\
-	}
+	पूर्ण
 
-#define GATE_MM1(_id, _name, _parent, _shift) {		\
+#घोषणा GATE_MM1(_id, _name, _parent, _shअगरt) अणु		\
 		.id = _id,				\
 		.name = _name,				\
 		.parent_name = _parent,			\
 		.regs = &mm1_cg_regs,			\
-		.shift = _shift,			\
+		.shअगरt = _shअगरt,			\
 		.ops = &mtk_clk_gate_ops_setclr,	\
-	}
+	पूर्ण
 
-static const struct mtk_gate mm_clks[] = {
+अटल स्थिर काष्ठा mtk_gate mm_clks[] = अणु
 	/* MM0 */
 	GATE_MM0(CLK_MM_SMI_COMMON, "mm_smi_common", "smi_mm", 0),
 	GATE_MM0(CLK_MM_SMI_LARB0, "mm_smi_larb0", "smi_mm", 1),
@@ -84,49 +85,49 @@ static const struct mtk_gate mm_clks[] = {
 	GATE_MM1(CLK_MM_HDMI_SPDIF, "mm_hdmi_spdif", "apll12_div6", 19),
 	GATE_MM1(CLK_MM_HDMI_ADSP_BCK, "mm_hdmi_adsp_b", "apll12_div4b", 20),
 	GATE_MM1(CLK_MM_HDMI_PLL, "mm_hdmi_pll", "hdmtx_dig_cts", 21),
-};
+पूर्ण;
 
-struct clk_mt8167_mm_driver_data {
-	const struct mtk_gate *gates_clk;
-	int gates_num;
-};
+काष्ठा clk_mt8167_mm_driver_data अणु
+	स्थिर काष्ठा mtk_gate *gates_clk;
+	पूर्णांक gates_num;
+पूर्ण;
 
-static const struct clk_mt8167_mm_driver_data mt8167_mmsys_driver_data = {
+अटल स्थिर काष्ठा clk_mt8167_mm_driver_data mt8167_mmsys_driver_data = अणु
 	.gates_clk = mm_clks,
 	.gates_num = ARRAY_SIZE(mm_clks),
-};
+पूर्ण;
 
-static int clk_mt8167_mm_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *node = dev->parent->of_node;
-	const struct clk_mt8167_mm_driver_data *data;
-	struct clk_onecell_data *clk_data;
-	int ret;
+अटल पूर्णांक clk_mt8167_mm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *node = dev->parent->of_node;
+	स्थिर काष्ठा clk_mt8167_mm_driver_data *data;
+	काष्ठा clk_onecell_data *clk_data;
+	पूर्णांक ret;
 
 	clk_data = mtk_alloc_clk_data(CLK_MM_NR_CLK);
-	if (!clk_data)
-		return -ENOMEM;
+	अगर (!clk_data)
+		वापस -ENOMEM;
 
 	data = &mt8167_mmsys_driver_data;
 
-	ret = mtk_clk_register_gates(node, data->gates_clk, data->gates_num,
+	ret = mtk_clk_रेजिस्टर_gates(node, data->gates_clk, data->gates_num,
 				     clk_data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver clk_mt8173_mm_drv = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver clk_mt8173_mm_drv = अणु
+	.driver = अणु
 		.name = "clk-mt8167-mm",
-	},
+	पूर्ण,
 	.probe = clk_mt8167_mm_probe,
-};
+पूर्ण;
 
-builtin_platform_driver(clk_mt8173_mm_drv);
+builtin_platक्रमm_driver(clk_mt8173_mm_drv);

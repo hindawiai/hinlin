@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2017 The Linux Foundation. All rights reserved.
  */
 
-#ifndef __MDP5_LM_H__
-#define __MDP5_LM_H__
+#अगर_अघोषित __MDP5_LM_H__
+#घोषणा __MDP5_LM_H__
 
-/* represents a hw Layer Mixer, one (or more) is dynamically assigned to a crtc */
-struct mdp5_hw_mixer {
-	int idx;
+/* represents a hw Layer Mixer, one (or more) is dynamically asचिन्हित to a crtc */
+काष्ठा mdp5_hw_mixer अणु
+	पूर्णांक idx;
 
-	const char *name;
+	स्थिर अक्षर *name;
 
-	int lm;			/* the LM instance # */
-	uint32_t caps;
-	int pp;
-	int dspp;
+	पूर्णांक lm;			/* the LM instance # */
+	uपूर्णांक32_t caps;
+	पूर्णांक pp;
+	पूर्णांक dspp;
 
-	uint32_t flush_mask;      /* used to commit LM registers */
-};
+	uपूर्णांक32_t flush_mask;      /* used to commit LM रेजिस्टरs */
+पूर्ण;
 
 /* global atomic state of assignment between CRTCs and Layer Mixers: */
-struct mdp5_hw_mixer_state {
-	struct drm_crtc *hwmixer_to_crtc[8];
-};
+काष्ठा mdp5_hw_mixer_state अणु
+	काष्ठा drm_crtc *hwmixer_to_crtc[8];
+पूर्ण;
 
-struct mdp5_hw_mixer *mdp5_mixer_init(const struct mdp5_lm_instance *lm);
-void mdp5_mixer_destroy(struct mdp5_hw_mixer *lm);
-int mdp5_mixer_assign(struct drm_atomic_state *s, struct drm_crtc *crtc,
-		      uint32_t caps, struct mdp5_hw_mixer **mixer,
-		      struct mdp5_hw_mixer **r_mixer);
-void mdp5_mixer_release(struct drm_atomic_state *s,
-			struct mdp5_hw_mixer *mixer);
+काष्ठा mdp5_hw_mixer *mdp5_mixer_init(स्थिर काष्ठा mdp5_lm_instance *lm);
+व्योम mdp5_mixer_destroy(काष्ठा mdp5_hw_mixer *lm);
+पूर्णांक mdp5_mixer_assign(काष्ठा drm_atomic_state *s, काष्ठा drm_crtc *crtc,
+		      uपूर्णांक32_t caps, काष्ठा mdp5_hw_mixer **mixer,
+		      काष्ठा mdp5_hw_mixer **r_mixer);
+व्योम mdp5_mixer_release(काष्ठा drm_atomic_state *s,
+			काष्ठा mdp5_hw_mixer *mixer);
 
-#endif /* __MDP5_LM_H__ */
+#पूर्ण_अगर /* __MDP5_LM_H__ */

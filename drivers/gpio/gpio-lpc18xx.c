@@ -1,414 +1,415 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * GPIO driver for NXP LPC18xx/43xx.
+ * GPIO driver क्रम NXP LPC18xx/43xx.
  *
  * Copyright (C) 2018 Vladimir Zapolskiy <vz@mleia.com>
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  *
  */
 
-#include <linux/clk.h>
-#include <linux/gpio/driver.h>
-#include <linux/io.h>
-#include <linux/irqdomain.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_gpio.h>
-#include <linux/of_irq.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
 
-/* LPC18xx GPIO register offsets */
-#define LPC18XX_REG_DIR(n)	(0x2000 + n * sizeof(u32))
+/* LPC18xx GPIO रेजिस्टर offsets */
+#घोषणा LPC18XX_REG_सूची(n)	(0x2000 + n * माप(u32))
 
-#define LPC18XX_MAX_PORTS	8
-#define LPC18XX_PINS_PER_PORT	32
+#घोषणा LPC18XX_MAX_PORTS	8
+#घोषणा LPC18XX_PINS_PER_PORT	32
 
-/* LPC18xx GPIO pin interrupt controller register offsets */
-#define LPC18XX_GPIO_PIN_IC_ISEL	0x00
-#define LPC18XX_GPIO_PIN_IC_IENR	0x04
-#define LPC18XX_GPIO_PIN_IC_SIENR	0x08
-#define LPC18XX_GPIO_PIN_IC_CIENR	0x0c
-#define LPC18XX_GPIO_PIN_IC_IENF	0x10
-#define LPC18XX_GPIO_PIN_IC_SIENF	0x14
-#define LPC18XX_GPIO_PIN_IC_CIENF	0x18
-#define LPC18XX_GPIO_PIN_IC_RISE	0x1c
-#define LPC18XX_GPIO_PIN_IC_FALL	0x20
-#define LPC18XX_GPIO_PIN_IC_IST		0x24
+/* LPC18xx GPIO pin पूर्णांकerrupt controller रेजिस्टर offsets */
+#घोषणा LPC18XX_GPIO_PIN_IC_ISEL	0x00
+#घोषणा LPC18XX_GPIO_PIN_IC_IENR	0x04
+#घोषणा LPC18XX_GPIO_PIN_IC_SIENR	0x08
+#घोषणा LPC18XX_GPIO_PIN_IC_CIENR	0x0c
+#घोषणा LPC18XX_GPIO_PIN_IC_IENF	0x10
+#घोषणा LPC18XX_GPIO_PIN_IC_SIENF	0x14
+#घोषणा LPC18XX_GPIO_PIN_IC_CIENF	0x18
+#घोषणा LPC18XX_GPIO_PIN_IC_RISE	0x1c
+#घोषणा LPC18XX_GPIO_PIN_IC_FALL	0x20
+#घोषणा LPC18XX_GPIO_PIN_IC_IST		0x24
 
-#define NR_LPC18XX_GPIO_PIN_IC_IRQS	8
+#घोषणा NR_LPC18XX_GPIO_PIN_IC_IRQS	8
 
-struct lpc18xx_gpio_pin_ic {
-	void __iomem *base;
-	struct irq_domain *domain;
-	struct raw_spinlock lock;
-};
+काष्ठा lpc18xx_gpio_pin_ic अणु
+	व्योम __iomem *base;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+	काष्ठा raw_spinlock lock;
+पूर्ण;
 
-struct lpc18xx_gpio_chip {
-	struct gpio_chip gpio;
-	void __iomem *base;
-	struct clk *clk;
-	struct lpc18xx_gpio_pin_ic *pin_ic;
+काष्ठा lpc18xx_gpio_chip अणु
+	काष्ठा gpio_chip gpio;
+	व्योम __iomem *base;
+	काष्ठा clk *clk;
+	काष्ठा lpc18xx_gpio_pin_ic *pin_ic;
 	spinlock_t lock;
-};
+पूर्ण;
 
-static inline void lpc18xx_gpio_pin_ic_isel(struct lpc18xx_gpio_pin_ic *ic,
+अटल अंतरभूत व्योम lpc18xx_gpio_pin_ic_isel(काष्ठा lpc18xx_gpio_pin_ic *ic,
 					    u32 pin, bool set)
-{
-	u32 val = readl_relaxed(ic->base + LPC18XX_GPIO_PIN_IC_ISEL);
+अणु
+	u32 val = पढ़ोl_relaxed(ic->base + LPC18XX_GPIO_PIN_IC_ISEL);
 
-	if (set)
+	अगर (set)
 		val &= ~BIT(pin);
-	else
+	अन्यथा
 		val |= BIT(pin);
 
-	writel_relaxed(val, ic->base + LPC18XX_GPIO_PIN_IC_ISEL);
-}
+	ग_लिखोl_relaxed(val, ic->base + LPC18XX_GPIO_PIN_IC_ISEL);
+पूर्ण
 
-static inline void lpc18xx_gpio_pin_ic_set(struct lpc18xx_gpio_pin_ic *ic,
+अटल अंतरभूत व्योम lpc18xx_gpio_pin_ic_set(काष्ठा lpc18xx_gpio_pin_ic *ic,
 					   u32 pin, u32 reg)
-{
-	writel_relaxed(BIT(pin), ic->base + reg);
-}
+अणु
+	ग_लिखोl_relaxed(BIT(pin), ic->base + reg);
+पूर्ण
 
-static void lpc18xx_gpio_pin_ic_mask(struct irq_data *d)
-{
-	struct lpc18xx_gpio_pin_ic *ic = d->chip_data;
+अटल व्योम lpc18xx_gpio_pin_ic_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा lpc18xx_gpio_pin_ic *ic = d->chip_data;
 	u32 type = irqd_get_trigger_type(d);
 
 	raw_spin_lock(&ic->lock);
 
-	if (type & IRQ_TYPE_LEVEL_MASK || type & IRQ_TYPE_EDGE_RISING)
+	अगर (type & IRQ_TYPE_LEVEL_MASK || type & IRQ_TYPE_EDGE_RISING)
 		lpc18xx_gpio_pin_ic_set(ic, d->hwirq,
 					LPC18XX_GPIO_PIN_IC_CIENR);
 
-	if (type & IRQ_TYPE_EDGE_FALLING)
+	अगर (type & IRQ_TYPE_EDGE_FALLING)
 		lpc18xx_gpio_pin_ic_set(ic, d->hwirq,
 					LPC18XX_GPIO_PIN_IC_CIENF);
 
 	raw_spin_unlock(&ic->lock);
 
 	irq_chip_mask_parent(d);
-}
+पूर्ण
 
-static void lpc18xx_gpio_pin_ic_unmask(struct irq_data *d)
-{
-	struct lpc18xx_gpio_pin_ic *ic = d->chip_data;
+अटल व्योम lpc18xx_gpio_pin_ic_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा lpc18xx_gpio_pin_ic *ic = d->chip_data;
 	u32 type = irqd_get_trigger_type(d);
 
 	raw_spin_lock(&ic->lock);
 
-	if (type & IRQ_TYPE_LEVEL_MASK || type & IRQ_TYPE_EDGE_RISING)
+	अगर (type & IRQ_TYPE_LEVEL_MASK || type & IRQ_TYPE_EDGE_RISING)
 		lpc18xx_gpio_pin_ic_set(ic, d->hwirq,
 					LPC18XX_GPIO_PIN_IC_SIENR);
 
-	if (type & IRQ_TYPE_EDGE_FALLING)
+	अगर (type & IRQ_TYPE_EDGE_FALLING)
 		lpc18xx_gpio_pin_ic_set(ic, d->hwirq,
 					LPC18XX_GPIO_PIN_IC_SIENF);
 
 	raw_spin_unlock(&ic->lock);
 
 	irq_chip_unmask_parent(d);
-}
+पूर्ण
 
-static void lpc18xx_gpio_pin_ic_eoi(struct irq_data *d)
-{
-	struct lpc18xx_gpio_pin_ic *ic = d->chip_data;
+अटल व्योम lpc18xx_gpio_pin_ic_eoi(काष्ठा irq_data *d)
+अणु
+	काष्ठा lpc18xx_gpio_pin_ic *ic = d->chip_data;
 	u32 type = irqd_get_trigger_type(d);
 
 	raw_spin_lock(&ic->lock);
 
-	if (type & IRQ_TYPE_EDGE_BOTH)
+	अगर (type & IRQ_TYPE_EDGE_BOTH)
 		lpc18xx_gpio_pin_ic_set(ic, d->hwirq,
 					LPC18XX_GPIO_PIN_IC_IST);
 
 	raw_spin_unlock(&ic->lock);
 
 	irq_chip_eoi_parent(d);
-}
+पूर्ण
 
-static int lpc18xx_gpio_pin_ic_set_type(struct irq_data *d, unsigned int type)
-{
-	struct lpc18xx_gpio_pin_ic *ic = d->chip_data;
+अटल पूर्णांक lpc18xx_gpio_pin_ic_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा lpc18xx_gpio_pin_ic *ic = d->chip_data;
 
 	raw_spin_lock(&ic->lock);
 
-	if (type & IRQ_TYPE_LEVEL_HIGH) {
+	अगर (type & IRQ_TYPE_LEVEL_HIGH) अणु
 		lpc18xx_gpio_pin_ic_isel(ic, d->hwirq, true);
 		lpc18xx_gpio_pin_ic_set(ic, d->hwirq,
 					LPC18XX_GPIO_PIN_IC_SIENF);
-	} else if (type & IRQ_TYPE_LEVEL_LOW) {
+	पूर्ण अन्यथा अगर (type & IRQ_TYPE_LEVEL_LOW) अणु
 		lpc18xx_gpio_pin_ic_isel(ic, d->hwirq, true);
 		lpc18xx_gpio_pin_ic_set(ic, d->hwirq,
 					LPC18XX_GPIO_PIN_IC_CIENF);
-	} else {
+	पूर्ण अन्यथा अणु
 		lpc18xx_gpio_pin_ic_isel(ic, d->hwirq, false);
-	}
+	पूर्ण
 
 	raw_spin_unlock(&ic->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip lpc18xx_gpio_pin_ic = {
+अटल काष्ठा irq_chip lpc18xx_gpio_pin_ic = अणु
 	.name		= "LPC18xx GPIO pin",
 	.irq_mask	= lpc18xx_gpio_pin_ic_mask,
 	.irq_unmask	= lpc18xx_gpio_pin_ic_unmask,
 	.irq_eoi	= lpc18xx_gpio_pin_ic_eoi,
 	.irq_set_type	= lpc18xx_gpio_pin_ic_set_type,
 	.flags		= IRQCHIP_SET_TYPE_MASKED,
-};
+पूर्ण;
 
-static int lpc18xx_gpio_pin_ic_domain_alloc(struct irq_domain *domain,
-					    unsigned int virq,
-					    unsigned int nr_irqs, void *data)
-{
-	struct irq_fwspec parent_fwspec, *fwspec = data;
-	struct lpc18xx_gpio_pin_ic *ic = domain->host_data;
+अटल पूर्णांक lpc18xx_gpio_pin_ic_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य,
+					    अचिन्हित पूर्णांक virq,
+					    अचिन्हित पूर्णांक nr_irqs, व्योम *data)
+अणु
+	काष्ठा irq_fwspec parent_fwspec, *fwspec = data;
+	काष्ठा lpc18xx_gpio_pin_ic *ic = करोमुख्य->host_data;
 	irq_hw_number_t hwirq;
-	int ret;
+	पूर्णांक ret;
 
-	if (nr_irqs != 1)
-		return -EINVAL;
+	अगर (nr_irqs != 1)
+		वापस -EINVAL;
 
 	hwirq = fwspec->param[0];
-	if (hwirq >= NR_LPC18XX_GPIO_PIN_IC_IRQS)
-		return -EINVAL;
+	अगर (hwirq >= NR_LPC18XX_GPIO_PIN_IC_IRQS)
+		वापस -EINVAL;
 
 	/*
-	 * All LPC18xx/LPC43xx GPIO pin hardware interrupts are translated
-	 * into edge interrupts 32...39 on parent Cortex-M3/M4 NVIC
+	 * All LPC18xx/LPC43xx GPIO pin hardware पूर्णांकerrupts are translated
+	 * पूर्णांकo edge पूर्णांकerrupts 32...39 on parent Cortex-M3/M4 NVIC
 	 */
-	parent_fwspec.fwnode = domain->parent->fwnode;
+	parent_fwspec.fwnode = करोमुख्य->parent->fwnode;
 	parent_fwspec.param_count = 1;
 	parent_fwspec.param[0] = hwirq + 32;
 
-	ret = irq_domain_alloc_irqs_parent(domain, virq, 1, &parent_fwspec);
-	if (ret < 0) {
+	ret = irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, 1, &parent_fwspec);
+	अगर (ret < 0) अणु
 		pr_err("failed to allocate parent irq %u: %d\n",
 		       parent_fwspec.param[0], ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return irq_domain_set_hwirq_and_chip(domain, virq, hwirq,
+	वापस irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq, hwirq,
 					     &lpc18xx_gpio_pin_ic, ic);
-}
+पूर्ण
 
-static const struct irq_domain_ops lpc18xx_gpio_pin_ic_domain_ops = {
-	.alloc	= lpc18xx_gpio_pin_ic_domain_alloc,
-	.xlate	= irq_domain_xlate_twocell,
-	.free	= irq_domain_free_irqs_common,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops lpc18xx_gpio_pin_ic_करोमुख्य_ops = अणु
+	.alloc	= lpc18xx_gpio_pin_ic_करोमुख्य_alloc,
+	.xlate	= irq_करोमुख्य_xlate_twocell,
+	.मुक्त	= irq_करोमुख्य_मुक्त_irqs_common,
+पूर्ण;
 
-static int lpc18xx_gpio_pin_ic_probe(struct lpc18xx_gpio_chip *gc)
-{
-	struct device *dev = gc->gpio.parent;
-	struct irq_domain *parent_domain;
-	struct device_node *parent_node;
-	struct lpc18xx_gpio_pin_ic *ic;
-	struct resource res;
-	int ret, index;
+अटल पूर्णांक lpc18xx_gpio_pin_ic_probe(काष्ठा lpc18xx_gpio_chip *gc)
+अणु
+	काष्ठा device *dev = gc->gpio.parent;
+	काष्ठा irq_करोमुख्य *parent_करोमुख्य;
+	काष्ठा device_node *parent_node;
+	काष्ठा lpc18xx_gpio_pin_ic *ic;
+	काष्ठा resource res;
+	पूर्णांक ret, index;
 
 	parent_node = of_irq_find_parent(dev->of_node);
-	if (!parent_node)
-		return -ENXIO;
+	अगर (!parent_node)
+		वापस -ENXIO;
 
-	parent_domain = irq_find_host(parent_node);
+	parent_करोमुख्य = irq_find_host(parent_node);
 	of_node_put(parent_node);
-	if (!parent_domain)
-		return -ENXIO;
+	अगर (!parent_करोमुख्य)
+		वापस -ENXIO;
 
-	ic = devm_kzalloc(dev, sizeof(*ic), GFP_KERNEL);
-	if (!ic)
-		return -ENOMEM;
+	ic = devm_kzalloc(dev, माप(*ic), GFP_KERNEL);
+	अगर (!ic)
+		वापस -ENOMEM;
 
 	index = of_property_match_string(dev->of_node, "reg-names",
 					 "gpio-pin-ic");
-	if (index < 0) {
+	अगर (index < 0) अणु
 		ret = -ENODEV;
-		goto free_ic;
-	}
+		जाओ मुक्त_ic;
+	पूर्ण
 
 	ret = of_address_to_resource(dev->of_node, index, &res);
-	if (ret < 0)
-		goto free_ic;
+	अगर (ret < 0)
+		जाओ मुक्त_ic;
 
 	ic->base = devm_ioremap_resource(dev, &res);
-	if (IS_ERR(ic->base)) {
+	अगर (IS_ERR(ic->base)) अणु
 		ret = PTR_ERR(ic->base);
-		goto free_ic;
-	}
+		जाओ मुक्त_ic;
+	पूर्ण
 
 	raw_spin_lock_init(&ic->lock);
 
-	ic->domain = irq_domain_add_hierarchy(parent_domain, 0,
+	ic->करोमुख्य = irq_करोमुख्य_add_hierarchy(parent_करोमुख्य, 0,
 					      NR_LPC18XX_GPIO_PIN_IC_IRQS,
 					      dev->of_node,
-					      &lpc18xx_gpio_pin_ic_domain_ops,
+					      &lpc18xx_gpio_pin_ic_करोमुख्य_ops,
 					      ic);
-	if (!ic->domain) {
+	अगर (!ic->करोमुख्य) अणु
 		pr_err("unable to add irq domain\n");
 		ret = -ENODEV;
-		goto free_iomap;
-	}
+		जाओ मुक्त_iomap;
+	पूर्ण
 
 	gc->pin_ic = ic;
 
-	return 0;
+	वापस 0;
 
-free_iomap:
+मुक्त_iomap:
 	devm_iounmap(dev, ic->base);
-free_ic:
-	devm_kfree(dev, ic);
+मुक्त_ic:
+	devm_kमुक्त(dev, ic);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void lpc18xx_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	struct lpc18xx_gpio_chip *gc = gpiochip_get_data(chip);
-	writeb(value ? 1 : 0, gc->base + offset);
-}
+अटल व्योम lpc18xx_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा lpc18xx_gpio_chip *gc = gpiochip_get_data(chip);
+	ग_लिखोb(value ? 1 : 0, gc->base + offset);
+पूर्ण
 
-static int lpc18xx_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct lpc18xx_gpio_chip *gc = gpiochip_get_data(chip);
-	return !!readb(gc->base + offset);
-}
+अटल पूर्णांक lpc18xx_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा lpc18xx_gpio_chip *gc = gpiochip_get_data(chip);
+	वापस !!पढ़ोb(gc->base + offset);
+पूर्ण
 
-static int lpc18xx_gpio_direction(struct gpio_chip *chip, unsigned offset,
+अटल पूर्णांक lpc18xx_gpio_direction(काष्ठा gpio_chip *chip, अचिन्हित offset,
 				  bool out)
-{
-	struct lpc18xx_gpio_chip *gc = gpiochip_get_data(chip);
-	unsigned long flags;
+अणु
+	काष्ठा lpc18xx_gpio_chip *gc = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ flags;
 	u32 port, pin, dir;
 
 	port = offset / LPC18XX_PINS_PER_PORT;
 	pin  = offset % LPC18XX_PINS_PER_PORT;
 
 	spin_lock_irqsave(&gc->lock, flags);
-	dir = readl(gc->base + LPC18XX_REG_DIR(port));
-	if (out)
+	dir = पढ़ोl(gc->base + LPC18XX_REG_सूची(port));
+	अगर (out)
 		dir |= BIT(pin);
-	else
+	अन्यथा
 		dir &= ~BIT(pin);
-	writel(dir, gc->base + LPC18XX_REG_DIR(port));
+	ग_लिखोl(dir, gc->base + LPC18XX_REG_सूची(port));
 	spin_unlock_irqrestore(&gc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_gpio_direction_input(struct gpio_chip *chip,
-					unsigned offset)
-{
-	return lpc18xx_gpio_direction(chip, offset, false);
-}
+अटल पूर्णांक lpc18xx_gpio_direction_input(काष्ठा gpio_chip *chip,
+					अचिन्हित offset)
+अणु
+	वापस lpc18xx_gpio_direction(chip, offset, false);
+पूर्ण
 
-static int lpc18xx_gpio_direction_output(struct gpio_chip *chip,
-					 unsigned offset, int value)
-{
+अटल पूर्णांक lpc18xx_gpio_direction_output(काष्ठा gpio_chip *chip,
+					 अचिन्हित offset, पूर्णांक value)
+अणु
 	lpc18xx_gpio_set(chip, offset, value);
-	return lpc18xx_gpio_direction(chip, offset, true);
-}
+	वापस lpc18xx_gpio_direction(chip, offset, true);
+पूर्ण
 
-static const struct gpio_chip lpc18xx_chip = {
+अटल स्थिर काष्ठा gpio_chip lpc18xx_chip = अणु
 	.label			= "lpc18xx/43xx-gpio",
 	.request		= gpiochip_generic_request,
-	.free			= gpiochip_generic_free,
+	.मुक्त			= gpiochip_generic_मुक्त,
 	.direction_input	= lpc18xx_gpio_direction_input,
 	.direction_output	= lpc18xx_gpio_direction_output,
 	.set			= lpc18xx_gpio_set,
 	.get			= lpc18xx_gpio_get,
 	.ngpio			= LPC18XX_MAX_PORTS * LPC18XX_PINS_PER_PORT,
 	.owner			= THIS_MODULE,
-};
+पूर्ण;
 
-static int lpc18xx_gpio_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct lpc18xx_gpio_chip *gc;
-	int index, ret;
+अटल पूर्णांक lpc18xx_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा lpc18xx_gpio_chip *gc;
+	पूर्णांक index, ret;
 
-	gc = devm_kzalloc(dev, sizeof(*gc), GFP_KERNEL);
-	if (!gc)
-		return -ENOMEM;
+	gc = devm_kzalloc(dev, माप(*gc), GFP_KERNEL);
+	अगर (!gc)
+		वापस -ENOMEM;
 
 	gc->gpio = lpc18xx_chip;
-	platform_set_drvdata(pdev, gc);
+	platक्रमm_set_drvdata(pdev, gc);
 
 	index = of_property_match_string(dev->of_node, "reg-names", "gpio");
-	if (index < 0) {
+	अगर (index < 0) अणु
 		/* To support backward compatibility take the first resource */
-		gc->base = devm_platform_ioremap_resource(pdev, 0);
-	} else {
-		struct resource res;
+		gc->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	पूर्ण अन्यथा अणु
+		काष्ठा resource res;
 
 		ret = of_address_to_resource(dev->of_node, index, &res);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		gc->base = devm_ioremap_resource(dev, &res);
-	}
-	if (IS_ERR(gc->base))
-		return PTR_ERR(gc->base);
+	पूर्ण
+	अगर (IS_ERR(gc->base))
+		वापस PTR_ERR(gc->base);
 
-	gc->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(gc->clk)) {
+	gc->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(gc->clk)) अणु
 		dev_err(dev, "input clock not found\n");
-		return PTR_ERR(gc->clk);
-	}
+		वापस PTR_ERR(gc->clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(gc->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "unable to enable clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	spin_lock_init(&gc->lock);
 
 	gc->gpio.parent = dev;
 
 	ret = devm_gpiochip_add_data(dev, &gc->gpio, gc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to add gpio chip\n");
 		clk_disable_unprepare(gc->clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* On error GPIO pin interrupt controller just won't be registered */
+	/* On error GPIO pin पूर्णांकerrupt controller just won't be रेजिस्टरed */
 	lpc18xx_gpio_pin_ic_probe(gc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_gpio_remove(struct platform_device *pdev)
-{
-	struct lpc18xx_gpio_chip *gc = platform_get_drvdata(pdev);
+अटल पूर्णांक lpc18xx_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpc18xx_gpio_chip *gc = platक्रमm_get_drvdata(pdev);
 
-	if (gc->pin_ic)
-		irq_domain_remove(gc->pin_ic->domain);
+	अगर (gc->pin_ic)
+		irq_करोमुख्य_हटाओ(gc->pin_ic->करोमुख्य);
 
 	clk_disable_unprepare(gc->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id lpc18xx_gpio_match[] = {
-	{ .compatible = "nxp,lpc1850-gpio" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id lpc18xx_gpio_match[] = अणु
+	अणु .compatible = "nxp,lpc1850-gpio" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, lpc18xx_gpio_match);
 
-static struct platform_driver lpc18xx_gpio_driver = {
+अटल काष्ठा platक्रमm_driver lpc18xx_gpio_driver = अणु
 	.probe	= lpc18xx_gpio_probe,
-	.remove	= lpc18xx_gpio_remove,
-	.driver	= {
+	.हटाओ	= lpc18xx_gpio_हटाओ,
+	.driver	= अणु
 		.name		= "lpc18xx-gpio",
 		.of_match_table	= lpc18xx_gpio_match,
-	},
-};
-module_platform_driver(lpc18xx_gpio_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(lpc18xx_gpio_driver);
 
 MODULE_AUTHOR("Joachim Eastwood <manabian@gmail.com>");
 MODULE_AUTHOR("Vladimir Zapolskiy <vz@mleia.com>");

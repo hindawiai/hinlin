@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * rsparser.c - parses and encodes pnpbios resource data streams
  */
 
-#include <linux/ctype.h>
-#include <linux/pnp.h>
-#include <linux/string.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/pnp.h>
+#समावेश <linux/माला.स>
 
-#ifdef CONFIG_PCI
-#include <linux/pci.h>
-#else
-inline void pcibios_penalize_isa_irq(int irq, int active)
-{
-}
-#endif				/* CONFIG_PCI */
+#अगर_घोषित CONFIG_PCI
+#समावेश <linux/pci.h>
+#अन्यथा
+अंतरभूत व्योम pcibios_penalize_isa_irq(पूर्णांक irq, पूर्णांक active)
+अणु
+पूर्ण
+#पूर्ण_अगर				/* CONFIG_PCI */
 
-#include "../base.h"
-#include "pnpbios.h"
+#समावेश "../base.h"
+#समावेश "pnpbios.h"
 
 /* standard resource tags */
-#define SMALL_TAG_PNPVERNO		0x01
-#define SMALL_TAG_LOGDEVID		0x02
-#define SMALL_TAG_COMPATDEVID		0x03
-#define SMALL_TAG_IRQ			0x04
-#define SMALL_TAG_DMA			0x05
-#define SMALL_TAG_STARTDEP		0x06
-#define SMALL_TAG_ENDDEP		0x07
-#define SMALL_TAG_PORT			0x08
-#define SMALL_TAG_FIXEDPORT		0x09
-#define SMALL_TAG_VENDOR		0x0e
-#define SMALL_TAG_END			0x0f
-#define LARGE_TAG			0x80
-#define LARGE_TAG_MEM			0x81
-#define LARGE_TAG_ANSISTR		0x82
-#define LARGE_TAG_UNICODESTR		0x83
-#define LARGE_TAG_VENDOR		0x84
-#define LARGE_TAG_MEM32			0x85
-#define LARGE_TAG_FIXEDMEM32		0x86
+#घोषणा SMALL_TAG_PNPVERNO		0x01
+#घोषणा SMALL_TAG_LOGDEVID		0x02
+#घोषणा SMALL_TAG_COMPATDEVID		0x03
+#घोषणा SMALL_TAG_IRQ			0x04
+#घोषणा SMALL_TAG_DMA			0x05
+#घोषणा SMALL_TAG_STARTDEP		0x06
+#घोषणा SMALL_TAG_ENDDEP		0x07
+#घोषणा SMALL_TAG_PORT			0x08
+#घोषणा SMALL_TAG_FIXEDPORT		0x09
+#घोषणा SMALL_TAG_VENDOR		0x0e
+#घोषणा SMALL_TAG_END			0x0f
+#घोषणा LARGE_TAG			0x80
+#घोषणा LARGE_TAG_MEM			0x81
+#घोषणा LARGE_TAG_ANSISTR		0x82
+#घोषणा LARGE_TAG_UNICODESTR		0x83
+#घोषणा LARGE_TAG_VENDOR		0x84
+#घोषणा LARGE_TAG_MEM32			0x85
+#घोषणा LARGE_TAG_FIXEDMEM32		0x86
 
 /*
  * Resource Data Stream Format:
@@ -53,464 +54,464 @@ inline void pcibios_penalize_isa_irq(int irq, int active)
  * Allocated Resources
  */
 
-static void pnpbios_parse_allocated_ioresource(struct pnp_dev *dev,
-					       int start, int len)
-{
-	int flags = 0;
-	int end = start + len - 1;
+अटल व्योम pnpbios_parse_allocated_ioresource(काष्ठा pnp_dev *dev,
+					       पूर्णांक start, पूर्णांक len)
+अणु
+	पूर्णांक flags = 0;
+	पूर्णांक end = start + len - 1;
 
-	if (len <= 0 || end >= 0x10003)
+	अगर (len <= 0 || end >= 0x10003)
 		flags |= IORESOURCE_DISABLED;
 
 	pnp_add_io_resource(dev, start, end, flags);
-}
+पूर्ण
 
-static void pnpbios_parse_allocated_memresource(struct pnp_dev *dev,
-						int start, int len)
-{
-	int flags = 0;
-	int end = start + len - 1;
+अटल व्योम pnpbios_parse_allocated_memresource(काष्ठा pnp_dev *dev,
+						पूर्णांक start, पूर्णांक len)
+अणु
+	पूर्णांक flags = 0;
+	पूर्णांक end = start + len - 1;
 
-	if (len <= 0)
+	अगर (len <= 0)
 		flags |= IORESOURCE_DISABLED;
 
 	pnp_add_mem_resource(dev, start, end, flags);
-}
+पूर्ण
 
-static unsigned char *pnpbios_parse_allocated_resource_data(struct pnp_dev *dev,
-							    unsigned char *p,
-							    unsigned char *end)
-{
-	unsigned int len, tag;
-	int io, size, mask, i, flags;
+अटल अचिन्हित अक्षर *pnpbios_parse_allocated_resource_data(काष्ठा pnp_dev *dev,
+							    अचिन्हित अक्षर *p,
+							    अचिन्हित अक्षर *end)
+अणु
+	अचिन्हित पूर्णांक len, tag;
+	पूर्णांक io, size, mask, i, flags;
 
-	if (!p)
-		return NULL;
+	अगर (!p)
+		वापस शून्य;
 
 	pnp_dbg(&dev->dev, "parse allocated resources\n");
 
 	pnp_init_resources(dev);
 
-	while ((char *)p < (char *)end) {
+	जबतक ((अक्षर *)p < (अक्षर *)end) अणु
 
 		/* determine the type of tag */
-		if (p[0] & LARGE_TAG) {	/* large tag */
+		अगर (p[0] & LARGE_TAG) अणु	/* large tag */
 			len = (p[2] << 8) | p[1];
 			tag = p[0];
-		} else {	/* small tag */
+		पूर्ण अन्यथा अणु	/* small tag */
 			len = p[0] & 0x07;
 			tag = ((p[0] >> 3) & 0x0f);
-		}
+		पूर्ण
 
-		switch (tag) {
+		चयन (tag) अणु
 
-		case LARGE_TAG_MEM:
-			if (len != 9)
-				goto len_err;
-			io = *(short *)&p[4];
-			size = *(short *)&p[10];
+		हाल LARGE_TAG_MEM:
+			अगर (len != 9)
+				जाओ len_err;
+			io = *(लघु *)&p[4];
+			size = *(लघु *)&p[10];
 			pnpbios_parse_allocated_memresource(dev, io, size);
-			break;
+			अवरोध;
 
-		case LARGE_TAG_ANSISTR:
-			/* ignore this for now */
-			break;
+		हाल LARGE_TAG_ANSISTR:
+			/* ignore this क्रम now */
+			अवरोध;
 
-		case LARGE_TAG_VENDOR:
-			/* do nothing */
-			break;
+		हाल LARGE_TAG_VENDOR:
+			/* करो nothing */
+			अवरोध;
 
-		case LARGE_TAG_MEM32:
-			if (len != 17)
-				goto len_err;
-			io = *(int *)&p[4];
-			size = *(int *)&p[16];
+		हाल LARGE_TAG_MEM32:
+			अगर (len != 17)
+				जाओ len_err;
+			io = *(पूर्णांक *)&p[4];
+			size = *(पूर्णांक *)&p[16];
 			pnpbios_parse_allocated_memresource(dev, io, size);
-			break;
+			अवरोध;
 
-		case LARGE_TAG_FIXEDMEM32:
-			if (len != 9)
-				goto len_err;
-			io = *(int *)&p[4];
-			size = *(int *)&p[8];
+		हाल LARGE_TAG_FIXEDMEM32:
+			अगर (len != 9)
+				जाओ len_err;
+			io = *(पूर्णांक *)&p[4];
+			size = *(पूर्णांक *)&p[8];
 			pnpbios_parse_allocated_memresource(dev, io, size);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_IRQ:
-			if (len < 2 || len > 3)
-				goto len_err;
+		हाल SMALL_TAG_IRQ:
+			अगर (len < 2 || len > 3)
+				जाओ len_err;
 			flags = 0;
 			io = -1;
 			mask = p[1] + p[2] * 256;
-			for (i = 0; i < 16; i++, mask = mask >> 1)
-				if (mask & 0x01)
+			क्रम (i = 0; i < 16; i++, mask = mask >> 1)
+				अगर (mask & 0x01)
 					io = i;
-			if (io != -1)
+			अगर (io != -1)
 				pcibios_penalize_isa_irq(io, 1);
-			else
+			अन्यथा
 				flags = IORESOURCE_DISABLED;
 			pnp_add_irq_resource(dev, io, flags);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_DMA:
-			if (len != 2)
-				goto len_err;
+		हाल SMALL_TAG_DMA:
+			अगर (len != 2)
+				जाओ len_err;
 			flags = 0;
 			io = -1;
 			mask = p[1];
-			for (i = 0; i < 8; i++, mask = mask >> 1)
-				if (mask & 0x01)
+			क्रम (i = 0; i < 8; i++, mask = mask >> 1)
+				अगर (mask & 0x01)
 					io = i;
-			if (io == -1)
+			अगर (io == -1)
 				flags = IORESOURCE_DISABLED;
 			pnp_add_dma_resource(dev, io, flags);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_PORT:
-			if (len != 7)
-				goto len_err;
+		हाल SMALL_TAG_PORT:
+			अगर (len != 7)
+				जाओ len_err;
 			io = p[2] + p[3] * 256;
 			size = p[7];
 			pnpbios_parse_allocated_ioresource(dev, io, size);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_VENDOR:
-			/* do nothing */
-			break;
+		हाल SMALL_TAG_VENDOR:
+			/* करो nothing */
+			अवरोध;
 
-		case SMALL_TAG_FIXEDPORT:
-			if (len != 3)
-				goto len_err;
+		हाल SMALL_TAG_FIXEDPORT:
+			अगर (len != 3)
+				जाओ len_err;
 			io = p[1] + p[2] * 256;
 			size = p[3];
 			pnpbios_parse_allocated_ioresource(dev, io, size);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_END:
+		हाल SMALL_TAG_END:
 			p = p + 2;
-			return (unsigned char *)p;
-			break;
+			वापस (अचिन्हित अक्षर *)p;
+			अवरोध;
 
-		default:	/* an unknown tag */
+		शेष:	/* an unknown tag */
 len_err:
 			dev_err(&dev->dev, "unknown tag %#x length %d\n",
 				tag, len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* continue to the next tag */
-		if (p[0] & LARGE_TAG)
+		/* जारी to the next tag */
+		अगर (p[0] & LARGE_TAG)
 			p += len + 3;
-		else
+		अन्यथा
 			p += len + 1;
-	}
+	पूर्ण
 
 	dev_err(&dev->dev, "no end tag in resource structure\n");
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Resource Configuration Options
  */
 
-static __init void pnpbios_parse_mem_option(struct pnp_dev *dev,
-					    unsigned char *p, int size,
-					    unsigned int option_flags)
-{
-	resource_size_t min, max, align, len;
-	unsigned char flags;
+अटल __init व्योम pnpbios_parse_mem_option(काष्ठा pnp_dev *dev,
+					    अचिन्हित अक्षर *p, पूर्णांक size,
+					    अचिन्हित पूर्णांक option_flags)
+अणु
+	resource_माप_प्रकार min, max, align, len;
+	अचिन्हित अक्षर flags;
 
 	min = ((p[5] << 8) | p[4]) << 8;
 	max = ((p[7] << 8) | p[6]) << 8;
 	align = (p[9] << 8) | p[8];
 	len = ((p[11] << 8) | p[10]) << 8;
 	flags = p[3];
-	pnp_register_mem_resource(dev, option_flags, min, max, align, len,
+	pnp_रेजिस्टर_mem_resource(dev, option_flags, min, max, align, len,
 				  flags);
-}
+पूर्ण
 
-static __init void pnpbios_parse_mem32_option(struct pnp_dev *dev,
-					      unsigned char *p, int size,
-					      unsigned int option_flags)
-{
-	resource_size_t min, max, align, len;
-	unsigned char flags;
+अटल __init व्योम pnpbios_parse_mem32_option(काष्ठा pnp_dev *dev,
+					      अचिन्हित अक्षर *p, पूर्णांक size,
+					      अचिन्हित पूर्णांक option_flags)
+अणु
+	resource_माप_प्रकार min, max, align, len;
+	अचिन्हित अक्षर flags;
 
 	min = (p[7] << 24) | (p[6] << 16) | (p[5] << 8) | p[4];
 	max = (p[11] << 24) | (p[10] << 16) | (p[9] << 8) | p[8];
 	align = (p[15] << 24) | (p[14] << 16) | (p[13] << 8) | p[12];
 	len = (p[19] << 24) | (p[18] << 16) | (p[17] << 8) | p[16];
 	flags = p[3];
-	pnp_register_mem_resource(dev, option_flags, min, max, align, len,
+	pnp_रेजिस्टर_mem_resource(dev, option_flags, min, max, align, len,
 				  flags);
-}
+पूर्ण
 
-static __init void pnpbios_parse_fixed_mem32_option(struct pnp_dev *dev,
-						    unsigned char *p, int size,
-						    unsigned int option_flags)
-{
-	resource_size_t base, len;
-	unsigned char flags;
+अटल __init व्योम pnpbios_parse_fixed_mem32_option(काष्ठा pnp_dev *dev,
+						    अचिन्हित अक्षर *p, पूर्णांक size,
+						    अचिन्हित पूर्णांक option_flags)
+अणु
+	resource_माप_प्रकार base, len;
+	अचिन्हित अक्षर flags;
 
 	base = (p[7] << 24) | (p[6] << 16) | (p[5] << 8) | p[4];
 	len = (p[11] << 24) | (p[10] << 16) | (p[9] << 8) | p[8];
 	flags = p[3];
-	pnp_register_mem_resource(dev, option_flags, base, base, 0, len, flags);
-}
+	pnp_रेजिस्टर_mem_resource(dev, option_flags, base, base, 0, len, flags);
+पूर्ण
 
-static __init void pnpbios_parse_irq_option(struct pnp_dev *dev,
-					    unsigned char *p, int size,
-					    unsigned int option_flags)
-{
-	unsigned long bits;
+अटल __init व्योम pnpbios_parse_irq_option(काष्ठा pnp_dev *dev,
+					    अचिन्हित अक्षर *p, पूर्णांक size,
+					    अचिन्हित पूर्णांक option_flags)
+अणु
+	अचिन्हित दीर्घ bits;
 	pnp_irq_mask_t map;
-	unsigned char flags = IORESOURCE_IRQ_HIGHEDGE;
+	अचिन्हित अक्षर flags = IORESOURCE_IRQ_HIGHEDGE;
 
 	bits = (p[2] << 8) | p[1];
 
-	bitmap_zero(map.bits, PNP_IRQ_NR);
-	bitmap_copy(map.bits, &bits, 16);
+	biपंचांगap_zero(map.bits, PNP_IRQ_NR);
+	biपंचांगap_copy(map.bits, &bits, 16);
 
-	if (size > 2)
+	अगर (size > 2)
 		flags = p[3];
 
-	pnp_register_irq_resource(dev, option_flags, &map, flags);
-}
+	pnp_रेजिस्टर_irq_resource(dev, option_flags, &map, flags);
+पूर्ण
 
-static __init void pnpbios_parse_dma_option(struct pnp_dev *dev,
-					    unsigned char *p, int size,
-					    unsigned int option_flags)
-{
-	pnp_register_dma_resource(dev, option_flags, p[1], p[2]);
-}
+अटल __init व्योम pnpbios_parse_dma_option(काष्ठा pnp_dev *dev,
+					    अचिन्हित अक्षर *p, पूर्णांक size,
+					    अचिन्हित पूर्णांक option_flags)
+अणु
+	pnp_रेजिस्टर_dma_resource(dev, option_flags, p[1], p[2]);
+पूर्ण
 
-static __init void pnpbios_parse_port_option(struct pnp_dev *dev,
-					     unsigned char *p, int size,
-					     unsigned int option_flags)
-{
-	resource_size_t min, max, align, len;
-	unsigned char flags;
+अटल __init व्योम pnpbios_parse_port_option(काष्ठा pnp_dev *dev,
+					     अचिन्हित अक्षर *p, पूर्णांक size,
+					     अचिन्हित पूर्णांक option_flags)
+अणु
+	resource_माप_प्रकार min, max, align, len;
+	अचिन्हित अक्षर flags;
 
 	min = (p[3] << 8) | p[2];
 	max = (p[5] << 8) | p[4];
 	align = p[6];
 	len = p[7];
 	flags = p[1] ? IORESOURCE_IO_16BIT_ADDR : 0;
-	pnp_register_port_resource(dev, option_flags, min, max, align, len,
+	pnp_रेजिस्टर_port_resource(dev, option_flags, min, max, align, len,
 				   flags);
-}
+पूर्ण
 
-static __init void pnpbios_parse_fixed_port_option(struct pnp_dev *dev,
-						   unsigned char *p, int size,
-						   unsigned int option_flags)
-{
-	resource_size_t base, len;
+अटल __init व्योम pnpbios_parse_fixed_port_option(काष्ठा pnp_dev *dev,
+						   अचिन्हित अक्षर *p, पूर्णांक size,
+						   अचिन्हित पूर्णांक option_flags)
+अणु
+	resource_माप_प्रकार base, len;
 
 	base = (p[2] << 8) | p[1];
 	len = p[3];
-	pnp_register_port_resource(dev, option_flags, base, base, 0, len,
+	pnp_रेजिस्टर_port_resource(dev, option_flags, base, base, 0, len,
 				   IORESOURCE_IO_FIXED);
-}
+पूर्ण
 
-static __init unsigned char *
-pnpbios_parse_resource_option_data(unsigned char *p, unsigned char *end,
-				   struct pnp_dev *dev)
-{
-	unsigned int len, tag;
-	int priority;
-	unsigned int option_flags;
+अटल __init अचिन्हित अक्षर *
+pnpbios_parse_resource_option_data(अचिन्हित अक्षर *p, अचिन्हित अक्षर *end,
+				   काष्ठा pnp_dev *dev)
+अणु
+	अचिन्हित पूर्णांक len, tag;
+	पूर्णांक priority;
+	अचिन्हित पूर्णांक option_flags;
 
-	if (!p)
-		return NULL;
+	अगर (!p)
+		वापस शून्य;
 
 	pnp_dbg(&dev->dev, "parse resource options\n");
 	option_flags = 0;
-	while ((char *)p < (char *)end) {
+	जबतक ((अक्षर *)p < (अक्षर *)end) अणु
 
 		/* determine the type of tag */
-		if (p[0] & LARGE_TAG) {	/* large tag */
+		अगर (p[0] & LARGE_TAG) अणु	/* large tag */
 			len = (p[2] << 8) | p[1];
 			tag = p[0];
-		} else {	/* small tag */
+		पूर्ण अन्यथा अणु	/* small tag */
 			len = p[0] & 0x07;
 			tag = ((p[0] >> 3) & 0x0f);
-		}
+		पूर्ण
 
-		switch (tag) {
+		चयन (tag) अणु
 
-		case LARGE_TAG_MEM:
-			if (len != 9)
-				goto len_err;
+		हाल LARGE_TAG_MEM:
+			अगर (len != 9)
+				जाओ len_err;
 			pnpbios_parse_mem_option(dev, p, len, option_flags);
-			break;
+			अवरोध;
 
-		case LARGE_TAG_MEM32:
-			if (len != 17)
-				goto len_err;
+		हाल LARGE_TAG_MEM32:
+			अगर (len != 17)
+				जाओ len_err;
 			pnpbios_parse_mem32_option(dev, p, len, option_flags);
-			break;
+			अवरोध;
 
-		case LARGE_TAG_FIXEDMEM32:
-			if (len != 9)
-				goto len_err;
+		हाल LARGE_TAG_FIXEDMEM32:
+			अगर (len != 9)
+				जाओ len_err;
 			pnpbios_parse_fixed_mem32_option(dev, p, len,
 							 option_flags);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_IRQ:
-			if (len < 2 || len > 3)
-				goto len_err;
+		हाल SMALL_TAG_IRQ:
+			अगर (len < 2 || len > 3)
+				जाओ len_err;
 			pnpbios_parse_irq_option(dev, p, len, option_flags);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_DMA:
-			if (len != 2)
-				goto len_err;
+		हाल SMALL_TAG_DMA:
+			अगर (len != 2)
+				जाओ len_err;
 			pnpbios_parse_dma_option(dev, p, len, option_flags);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_PORT:
-			if (len != 7)
-				goto len_err;
+		हाल SMALL_TAG_PORT:
+			अगर (len != 7)
+				जाओ len_err;
 			pnpbios_parse_port_option(dev, p, len, option_flags);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_VENDOR:
-			/* do nothing */
-			break;
+		हाल SMALL_TAG_VENDOR:
+			/* करो nothing */
+			अवरोध;
 
-		case SMALL_TAG_FIXEDPORT:
-			if (len != 3)
-				goto len_err;
+		हाल SMALL_TAG_FIXEDPORT:
+			अगर (len != 3)
+				जाओ len_err;
 			pnpbios_parse_fixed_port_option(dev, p, len,
 							option_flags);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_STARTDEP:
-			if (len > 1)
-				goto len_err;
+		हाल SMALL_TAG_STARTDEP:
+			अगर (len > 1)
+				जाओ len_err;
 			priority = PNP_RES_PRIORITY_ACCEPTABLE;
-			if (len > 0)
+			अगर (len > 0)
 				priority = p[1];
 			option_flags = pnp_new_dependent_set(dev, priority);
-			break;
+			अवरोध;
 
-		case SMALL_TAG_ENDDEP:
-			if (len != 0)
-				goto len_err;
+		हाल SMALL_TAG_ENDDEP:
+			अगर (len != 0)
+				जाओ len_err;
 			option_flags = 0;
-			break;
+			अवरोध;
 
-		case SMALL_TAG_END:
-			return p + 2;
+		हाल SMALL_TAG_END:
+			वापस p + 2;
 
-		default:	/* an unknown tag */
+		शेष:	/* an unknown tag */
 len_err:
 			dev_err(&dev->dev, "unknown tag %#x length %d\n",
 				tag, len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* continue to the next tag */
-		if (p[0] & LARGE_TAG)
+		/* जारी to the next tag */
+		अगर (p[0] & LARGE_TAG)
 			p += len + 3;
-		else
+		अन्यथा
 			p += len + 1;
-	}
+	पूर्ण
 
 	dev_err(&dev->dev, "no end tag in resource structure\n");
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Compatible Device IDs
  */
 
-static unsigned char *pnpbios_parse_compatible_ids(unsigned char *p,
-						   unsigned char *end,
-						   struct pnp_dev *dev)
-{
-	int len, tag;
+अटल अचिन्हित अक्षर *pnpbios_parse_compatible_ids(अचिन्हित अक्षर *p,
+						   अचिन्हित अक्षर *end,
+						   काष्ठा pnp_dev *dev)
+अणु
+	पूर्णांक len, tag;
 	u32 eisa_id;
-	char id[8];
-	struct pnp_id *dev_id;
+	अक्षर id[8];
+	काष्ठा pnp_id *dev_id;
 
-	if (!p)
-		return NULL;
+	अगर (!p)
+		वापस शून्य;
 
-	while ((char *)p < (char *)end) {
+	जबतक ((अक्षर *)p < (अक्षर *)end) अणु
 
 		/* determine the type of tag */
-		if (p[0] & LARGE_TAG) {	/* large tag */
+		अगर (p[0] & LARGE_TAG) अणु	/* large tag */
 			len = (p[2] << 8) | p[1];
 			tag = p[0];
-		} else {	/* small tag */
+		पूर्ण अन्यथा अणु	/* small tag */
 			len = p[0] & 0x07;
 			tag = ((p[0] >> 3) & 0x0f);
-		}
+		पूर्ण
 
-		switch (tag) {
+		चयन (tag) अणु
 
-		case LARGE_TAG_ANSISTR:
-			strncpy(dev->name, p + 3,
+		हाल LARGE_TAG_ANSISTR:
+			म_नकलन(dev->name, p + 3,
 				len >= PNP_NAME_LEN ? PNP_NAME_LEN - 2 : len);
 			dev->name[len >=
 				  PNP_NAME_LEN ? PNP_NAME_LEN - 1 : len] = '\0';
-			break;
+			अवरोध;
 
-		case SMALL_TAG_COMPATDEVID:	/* compatible ID */
-			if (len != 4)
-				goto len_err;
+		हाल SMALL_TAG_COMPATDEVID:	/* compatible ID */
+			अगर (len != 4)
+				जाओ len_err;
 			eisa_id = p[1] | p[2] << 8 | p[3] << 16 | p[4] << 24;
 			pnp_eisa_id_to_string(eisa_id & PNP_EISA_ID_MASK, id);
 			dev_id = pnp_add_id(dev, id);
-			if (!dev_id)
-				return NULL;
-			break;
+			अगर (!dev_id)
+				वापस शून्य;
+			अवरोध;
 
-		case SMALL_TAG_END:
+		हाल SMALL_TAG_END:
 			p = p + 2;
-			return (unsigned char *)p;
-			break;
+			वापस (अचिन्हित अक्षर *)p;
+			अवरोध;
 
-		default:	/* an unknown tag */
+		शेष:	/* an unknown tag */
 len_err:
 			dev_err(&dev->dev, "unknown tag %#x length %d\n",
 				tag, len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* continue to the next tag */
-		if (p[0] & LARGE_TAG)
+		/* जारी to the next tag */
+		अगर (p[0] & LARGE_TAG)
 			p += len + 3;
-		else
+		अन्यथा
 			p += len + 1;
-	}
+	पूर्ण
 
 	dev_err(&dev->dev, "no end tag in resource structure\n");
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Allocated Resource Encoding
  */
 
-static void pnpbios_encode_mem(struct pnp_dev *dev, unsigned char *p,
-			       struct resource *res)
-{
-	unsigned long base;
-	unsigned long len;
+अटल व्योम pnpbios_encode_mem(काष्ठा pnp_dev *dev, अचिन्हित अक्षर *p,
+			       काष्ठा resource *res)
+अणु
+	अचिन्हित दीर्घ base;
+	अचिन्हित दीर्घ len;
 
-	if (pnp_resource_enabled(res)) {
+	अगर (pnp_resource_enabled(res)) अणु
 		base = res->start;
 		len = resource_size(res);
-	} else {
+	पूर्ण अन्यथा अणु
 		base = 0;
 		len = 0;
-	}
+	पूर्ण
 
 	p[4] = (base >> 8) & 0xff;
 	p[5] = ((base >> 8) >> 8) & 0xff;
@@ -520,21 +521,21 @@ static void pnpbios_encode_mem(struct pnp_dev *dev, unsigned char *p,
 	p[11] = ((len >> 8) >> 8) & 0xff;
 
 	pnp_dbg(&dev->dev, "  encode mem %#lx-%#lx\n", base, base + len - 1);
-}
+पूर्ण
 
-static void pnpbios_encode_mem32(struct pnp_dev *dev, unsigned char *p,
-				 struct resource *res)
-{
-	unsigned long base;
-	unsigned long len;
+अटल व्योम pnpbios_encode_mem32(काष्ठा pnp_dev *dev, अचिन्हित अक्षर *p,
+				 काष्ठा resource *res)
+अणु
+	अचिन्हित दीर्घ base;
+	अचिन्हित दीर्घ len;
 
-	if (pnp_resource_enabled(res)) {
+	अगर (pnp_resource_enabled(res)) अणु
 		base = res->start;
 		len = resource_size(res);
-	} else {
+	पूर्ण अन्यथा अणु
 		base = 0;
 		len = 0;
-	}
+	पूर्ण
 
 	p[4] = base & 0xff;
 	p[5] = (base >> 8) & 0xff;
@@ -550,21 +551,21 @@ static void pnpbios_encode_mem32(struct pnp_dev *dev, unsigned char *p,
 	p[19] = (len >> 24) & 0xff;
 
 	pnp_dbg(&dev->dev, "  encode mem32 %#lx-%#lx\n", base, base + len - 1);
-}
+पूर्ण
 
-static void pnpbios_encode_fixed_mem32(struct pnp_dev *dev, unsigned char *p,
-				       struct resource *res)
-{
-	unsigned long base;
-	unsigned long len;
+अटल व्योम pnpbios_encode_fixed_mem32(काष्ठा pnp_dev *dev, अचिन्हित अक्षर *p,
+				       काष्ठा resource *res)
+अणु
+	अचिन्हित दीर्घ base;
+	अचिन्हित दीर्घ len;
 
-	if (pnp_resource_enabled(res)) {
+	अगर (pnp_resource_enabled(res)) अणु
 		base = res->start;
 		len = resource_size(res);
-	} else {
+	पूर्ण अन्यथा अणु
 		base = 0;
 		len = 0;
-	}
+	पूर्ण
 
 	p[4] = base & 0xff;
 	p[5] = (base >> 8) & 0xff;
@@ -577,52 +578,52 @@ static void pnpbios_encode_fixed_mem32(struct pnp_dev *dev, unsigned char *p,
 
 	pnp_dbg(&dev->dev, "  encode fixed_mem32 %#lx-%#lx\n", base,
 		base + len - 1);
-}
+पूर्ण
 
-static void pnpbios_encode_irq(struct pnp_dev *dev, unsigned char *p,
-			       struct resource *res)
-{
-	unsigned long map;
+अटल व्योम pnpbios_encode_irq(काष्ठा pnp_dev *dev, अचिन्हित अक्षर *p,
+			       काष्ठा resource *res)
+अणु
+	अचिन्हित दीर्घ map;
 
-	if (pnp_resource_enabled(res))
+	अगर (pnp_resource_enabled(res))
 		map = 1 << res->start;
-	else
+	अन्यथा
 		map = 0;
 
 	p[1] = map & 0xff;
 	p[2] = (map >> 8) & 0xff;
 
 	pnp_dbg(&dev->dev, "  encode irq mask %#lx\n", map);
-}
+पूर्ण
 
-static void pnpbios_encode_dma(struct pnp_dev *dev, unsigned char *p,
-			       struct resource *res)
-{
-	unsigned long map;
+अटल व्योम pnpbios_encode_dma(काष्ठा pnp_dev *dev, अचिन्हित अक्षर *p,
+			       काष्ठा resource *res)
+अणु
+	अचिन्हित दीर्घ map;
 
-	if (pnp_resource_enabled(res))
+	अगर (pnp_resource_enabled(res))
 		map = 1 << res->start;
-	else
+	अन्यथा
 		map = 0;
 
 	p[1] = map & 0xff;
 
 	pnp_dbg(&dev->dev, "  encode dma mask %#lx\n", map);
-}
+पूर्ण
 
-static void pnpbios_encode_port(struct pnp_dev *dev, unsigned char *p,
-				struct resource *res)
-{
-	unsigned long base;
-	unsigned long len;
+अटल व्योम pnpbios_encode_port(काष्ठा pnp_dev *dev, अचिन्हित अक्षर *p,
+				काष्ठा resource *res)
+अणु
+	अचिन्हित दीर्घ base;
+	अचिन्हित दीर्घ len;
 
-	if (pnp_resource_enabled(res)) {
+	अगर (pnp_resource_enabled(res)) अणु
 		base = res->start;
 		len = resource_size(res);
-	} else {
+	पूर्ण अन्यथा अणु
 		base = 0;
 		len = 0;
-	}
+	पूर्ण
 
 	p[2] = base & 0xff;
 	p[3] = (base >> 8) & 0xff;
@@ -631,21 +632,21 @@ static void pnpbios_encode_port(struct pnp_dev *dev, unsigned char *p,
 	p[7] = len & 0xff;
 
 	pnp_dbg(&dev->dev, "  encode io %#lx-%#lx\n", base, base + len - 1);
-}
+पूर्ण
 
-static void pnpbios_encode_fixed_port(struct pnp_dev *dev, unsigned char *p,
-				      struct resource *res)
-{
-	unsigned long base = res->start;
-	unsigned long len = resource_size(res);
+अटल व्योम pnpbios_encode_fixed_port(काष्ठा pnp_dev *dev, अचिन्हित अक्षर *p,
+				      काष्ठा resource *res)
+अणु
+	अचिन्हित दीर्घ base = res->start;
+	अचिन्हित दीर्घ len = resource_size(res);
 
-	if (pnp_resource_enabled(res)) {
+	अगर (pnp_resource_enabled(res)) अणु
 		base = res->start;
 		len = resource_size(res);
-	} else {
+	पूर्ण अन्यथा अणु
 		base = 0;
 		len = 0;
-	}
+	पूर्ण
 
 	p[1] = base & 0xff;
 	p[2] = (base >> 8) & 0xff;
@@ -653,158 +654,158 @@ static void pnpbios_encode_fixed_port(struct pnp_dev *dev, unsigned char *p,
 
 	pnp_dbg(&dev->dev, "  encode fixed_io %#lx-%#lx\n", base,
 		base + len - 1);
-}
+पूर्ण
 
-static unsigned char *pnpbios_encode_allocated_resource_data(struct pnp_dev
+अटल अचिन्हित अक्षर *pnpbios_encode_allocated_resource_data(काष्ठा pnp_dev
 								*dev,
-							     unsigned char *p,
-							     unsigned char *end)
-{
-	unsigned int len, tag;
-	int port = 0, irq = 0, dma = 0, mem = 0;
+							     अचिन्हित अक्षर *p,
+							     अचिन्हित अक्षर *end)
+अणु
+	अचिन्हित पूर्णांक len, tag;
+	पूर्णांक port = 0, irq = 0, dma = 0, mem = 0;
 
-	if (!p)
-		return NULL;
+	अगर (!p)
+		वापस शून्य;
 
-	while ((char *)p < (char *)end) {
+	जबतक ((अक्षर *)p < (अक्षर *)end) अणु
 
 		/* determine the type of tag */
-		if (p[0] & LARGE_TAG) {	/* large tag */
+		अगर (p[0] & LARGE_TAG) अणु	/* large tag */
 			len = (p[2] << 8) | p[1];
 			tag = p[0];
-		} else {	/* small tag */
+		पूर्ण अन्यथा अणु	/* small tag */
 			len = p[0] & 0x07;
 			tag = ((p[0] >> 3) & 0x0f);
-		}
+		पूर्ण
 
-		switch (tag) {
+		चयन (tag) अणु
 
-		case LARGE_TAG_MEM:
-			if (len != 9)
-				goto len_err;
+		हाल LARGE_TAG_MEM:
+			अगर (len != 9)
+				जाओ len_err;
 			pnpbios_encode_mem(dev, p,
 				pnp_get_resource(dev, IORESOURCE_MEM, mem));
 			mem++;
-			break;
+			अवरोध;
 
-		case LARGE_TAG_MEM32:
-			if (len != 17)
-				goto len_err;
+		हाल LARGE_TAG_MEM32:
+			अगर (len != 17)
+				जाओ len_err;
 			pnpbios_encode_mem32(dev, p,
 				pnp_get_resource(dev, IORESOURCE_MEM, mem));
 			mem++;
-			break;
+			अवरोध;
 
-		case LARGE_TAG_FIXEDMEM32:
-			if (len != 9)
-				goto len_err;
+		हाल LARGE_TAG_FIXEDMEM32:
+			अगर (len != 9)
+				जाओ len_err;
 			pnpbios_encode_fixed_mem32(dev, p,
 				pnp_get_resource(dev, IORESOURCE_MEM, mem));
 			mem++;
-			break;
+			अवरोध;
 
-		case SMALL_TAG_IRQ:
-			if (len < 2 || len > 3)
-				goto len_err;
+		हाल SMALL_TAG_IRQ:
+			अगर (len < 2 || len > 3)
+				जाओ len_err;
 			pnpbios_encode_irq(dev, p,
 				pnp_get_resource(dev, IORESOURCE_IRQ, irq));
 			irq++;
-			break;
+			अवरोध;
 
-		case SMALL_TAG_DMA:
-			if (len != 2)
-				goto len_err;
+		हाल SMALL_TAG_DMA:
+			अगर (len != 2)
+				जाओ len_err;
 			pnpbios_encode_dma(dev, p,
 				pnp_get_resource(dev, IORESOURCE_DMA, dma));
 			dma++;
-			break;
+			अवरोध;
 
-		case SMALL_TAG_PORT:
-			if (len != 7)
-				goto len_err;
+		हाल SMALL_TAG_PORT:
+			अगर (len != 7)
+				जाओ len_err;
 			pnpbios_encode_port(dev, p,
 				pnp_get_resource(dev, IORESOURCE_IO, port));
 			port++;
-			break;
+			अवरोध;
 
-		case SMALL_TAG_VENDOR:
-			/* do nothing */
-			break;
+		हाल SMALL_TAG_VENDOR:
+			/* करो nothing */
+			अवरोध;
 
-		case SMALL_TAG_FIXEDPORT:
-			if (len != 3)
-				goto len_err;
+		हाल SMALL_TAG_FIXEDPORT:
+			अगर (len != 3)
+				जाओ len_err;
 			pnpbios_encode_fixed_port(dev, p,
 				pnp_get_resource(dev, IORESOURCE_IO, port));
 			port++;
-			break;
+			अवरोध;
 
-		case SMALL_TAG_END:
+		हाल SMALL_TAG_END:
 			p = p + 2;
-			return (unsigned char *)p;
-			break;
+			वापस (अचिन्हित अक्षर *)p;
+			अवरोध;
 
-		default:	/* an unknown tag */
+		शेष:	/* an unknown tag */
 len_err:
 			dev_err(&dev->dev, "unknown tag %#x length %d\n",
 				tag, len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* continue to the next tag */
-		if (p[0] & LARGE_TAG)
+		/* जारी to the next tag */
+		अगर (p[0] & LARGE_TAG)
 			p += len + 3;
-		else
+		अन्यथा
 			p += len + 1;
-	}
+	पूर्ण
 
 	dev_err(&dev->dev, "no end tag in resource structure\n");
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Core Parsing Functions
  */
 
-int __init pnpbios_parse_data_stream(struct pnp_dev *dev,
-					struct pnp_bios_node *node)
-{
-	unsigned char *p = (char *)node->data;
-	unsigned char *end = (char *)(node->data + node->size);
+पूर्णांक __init pnpbios_parse_data_stream(काष्ठा pnp_dev *dev,
+					काष्ठा pnp_bios_node *node)
+अणु
+	अचिन्हित अक्षर *p = (अक्षर *)node->data;
+	अचिन्हित अक्षर *end = (अक्षर *)(node->data + node->size);
 
 	p = pnpbios_parse_allocated_resource_data(dev, p, end);
-	if (!p)
-		return -EIO;
+	अगर (!p)
+		वापस -EIO;
 	p = pnpbios_parse_resource_option_data(p, end, dev);
-	if (!p)
-		return -EIO;
+	अगर (!p)
+		वापस -EIO;
 	p = pnpbios_parse_compatible_ids(p, end, dev);
-	if (!p)
-		return -EIO;
-	return 0;
-}
+	अगर (!p)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-int pnpbios_read_resources_from_node(struct pnp_dev *dev,
-				     struct pnp_bios_node *node)
-{
-	unsigned char *p = (char *)node->data;
-	unsigned char *end = (char *)(node->data + node->size);
+पूर्णांक pnpbios_पढ़ो_resources_from_node(काष्ठा pnp_dev *dev,
+				     काष्ठा pnp_bios_node *node)
+अणु
+	अचिन्हित अक्षर *p = (अक्षर *)node->data;
+	अचिन्हित अक्षर *end = (अक्षर *)(node->data + node->size);
 
 	p = pnpbios_parse_allocated_resource_data(dev, p, end);
-	if (!p)
-		return -EIO;
-	return 0;
-}
+	अगर (!p)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-int pnpbios_write_resources_to_node(struct pnp_dev *dev,
-				    struct pnp_bios_node *node)
-{
-	unsigned char *p = (char *)node->data;
-	unsigned char *end = (char *)(node->data + node->size);
+पूर्णांक pnpbios_ग_लिखो_resources_to_node(काष्ठा pnp_dev *dev,
+				    काष्ठा pnp_bios_node *node)
+अणु
+	अचिन्हित अक्षर *p = (अक्षर *)node->data;
+	अचिन्हित अक्षर *end = (अक्षर *)(node->data + node->size);
 
 	p = pnpbios_encode_allocated_resource_data(dev, p, end);
-	if (!p)
-		return -EIO;
-	return 0;
-}
+	अगर (!p)
+		वापस -EIO;
+	वापस 0;
+पूर्ण

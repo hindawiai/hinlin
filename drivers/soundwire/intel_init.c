@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
 // Copyright(c) 2015-17 Intel Corporation.
 
 /*
@@ -7,124 +8,124 @@
  * Initializes and creates SDW devices based on ACPI and Hardware values
  */
 
-#include <linux/acpi.h>
-#include <linux/export.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/soundwire/sdw_intel.h>
-#include "cadence_master.h"
-#include "intel.h"
+#समावेश <linux/acpi.h>
+#समावेश <linux/export.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/soundwire/sdw_पूर्णांकel.h>
+#समावेश "cadence_master.h"
+#समावेश "intel.h"
 
-#define SDW_SHIM_LCAP		0x0
-#define SDW_SHIM_BASE		0x2C000
-#define SDW_ALH_BASE		0x2C800
-#define SDW_LINK_BASE		0x30000
-#define SDW_LINK_SIZE		0x10000
+#घोषणा SDW_SHIM_LCAP		0x0
+#घोषणा SDW_SHIM_BASE		0x2C000
+#घोषणा SDW_ALH_BASE		0x2C800
+#घोषणा SDW_LINK_BASE		0x30000
+#घोषणा SDW_LINK_SIZE		0x10000
 
-static int sdw_intel_cleanup(struct sdw_intel_ctx *ctx)
-{
-	struct sdw_intel_link_res *link = ctx->links;
+अटल पूर्णांक sdw_पूर्णांकel_cleanup(काष्ठा sdw_पूर्णांकel_ctx *ctx)
+अणु
+	काष्ठा sdw_पूर्णांकel_link_res *link = ctx->links;
 	u32 link_mask;
-	int i;
+	पूर्णांक i;
 
-	if (!link)
-		return 0;
+	अगर (!link)
+		वापस 0;
 
 	link_mask = ctx->link_mask;
 
-	for (i = 0; i < ctx->count; i++, link++) {
-		if (!(link_mask & BIT(i)))
-			continue;
+	क्रम (i = 0; i < ctx->count; i++, link++) अणु
+		अगर (!(link_mask & BIT(i)))
+			जारी;
 
-		if (link->pdev) {
-			pm_runtime_disable(&link->pdev->dev);
-			platform_device_unregister(link->pdev);
-		}
+		अगर (link->pdev) अणु
+			pm_runसमय_disable(&link->pdev->dev);
+			platक्रमm_device_unरेजिस्टर(link->pdev);
+		पूर्ण
 
-		if (!link->clock_stop_quirks)
-			pm_runtime_put_noidle(link->dev);
-	}
+		अगर (!link->घड़ी_stop_quirks)
+			pm_runसमय_put_noidle(link->dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define HDA_DSP_REG_ADSPIC2             (0x10)
-#define HDA_DSP_REG_ADSPIS2             (0x14)
-#define HDA_DSP_REG_ADSPIC2_SNDW        BIT(5)
+#घोषणा HDA_DSP_REG_ADSPIC2             (0x10)
+#घोषणा HDA_DSP_REG_ADSPIS2             (0x14)
+#घोषणा HDA_DSP_REG_ADSPIC2_SNDW        BIT(5)
 
 /**
- * sdw_intel_enable_irq() - enable/disable Intel SoundWire IRQ
- * @mmio_base: The mmio base of the control register
- * @enable: true if enable
+ * sdw_पूर्णांकel_enable_irq() - enable/disable Intel SoundWire IRQ
+ * @mmio_base: The mmio base of the control रेजिस्टर
+ * @enable: true अगर enable
  */
-void sdw_intel_enable_irq(void __iomem *mmio_base, bool enable)
-{
+व्योम sdw_पूर्णांकel_enable_irq(व्योम __iomem *mmio_base, bool enable)
+अणु
 	u32 val;
 
-	val = readl(mmio_base + HDA_DSP_REG_ADSPIC2);
+	val = पढ़ोl(mmio_base + HDA_DSP_REG_ADSPIC2);
 
-	if (enable)
+	अगर (enable)
 		val |= HDA_DSP_REG_ADSPIC2_SNDW;
-	else
+	अन्यथा
 		val &= ~HDA_DSP_REG_ADSPIC2_SNDW;
 
-	writel(val, mmio_base + HDA_DSP_REG_ADSPIC2);
-}
-EXPORT_SYMBOL_NS(sdw_intel_enable_irq, SOUNDWIRE_INTEL_INIT);
+	ग_लिखोl(val, mmio_base + HDA_DSP_REG_ADSPIC2);
+पूर्ण
+EXPORT_SYMBOL_NS(sdw_पूर्णांकel_enable_irq, SOUNDWIRE_INTEL_INIT);
 
-irqreturn_t sdw_intel_thread(int irq, void *dev_id)
-{
-	struct sdw_intel_ctx *ctx = dev_id;
-	struct sdw_intel_link_res *link;
+irqवापस_t sdw_पूर्णांकel_thपढ़ो(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sdw_पूर्णांकel_ctx *ctx = dev_id;
+	काष्ठा sdw_पूर्णांकel_link_res *link;
 
-	list_for_each_entry(link, &ctx->link_list, list)
+	list_क्रम_each_entry(link, &ctx->link_list, list)
 		sdw_cdns_irq(irq, link->cdns);
 
-	sdw_intel_enable_irq(ctx->mmio_base, true);
-	return IRQ_HANDLED;
-}
-EXPORT_SYMBOL_NS(sdw_intel_thread, SOUNDWIRE_INTEL_INIT);
+	sdw_पूर्णांकel_enable_irq(ctx->mmio_base, true);
+	वापस IRQ_HANDLED;
+पूर्ण
+EXPORT_SYMBOL_NS(sdw_पूर्णांकel_thपढ़ो, SOUNDWIRE_INTEL_INIT);
 
-static struct sdw_intel_ctx
-*sdw_intel_probe_controller(struct sdw_intel_res *res)
-{
-	struct platform_device_info pdevinfo;
-	struct platform_device *pdev;
-	struct sdw_intel_link_res *link;
-	struct sdw_intel_ctx *ctx;
-	struct acpi_device *adev;
-	struct sdw_slave *slave;
-	struct list_head *node;
-	struct sdw_bus *bus;
+अटल काष्ठा sdw_पूर्णांकel_ctx
+*sdw_पूर्णांकel_probe_controller(काष्ठा sdw_पूर्णांकel_res *res)
+अणु
+	काष्ठा platक्रमm_device_info pdevinfo;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा sdw_पूर्णांकel_link_res *link;
+	काष्ठा sdw_पूर्णांकel_ctx *ctx;
+	काष्ठा acpi_device *adev;
+	काष्ठा sdw_slave *slave;
+	काष्ठा list_head *node;
+	काष्ठा sdw_bus *bus;
 	u32 link_mask;
-	int num_slaves = 0;
-	int count;
-	int i;
+	पूर्णांक num_slaves = 0;
+	पूर्णांक count;
+	पूर्णांक i;
 
-	if (!res)
-		return NULL;
+	अगर (!res)
+		वापस शून्य;
 
-	if (acpi_bus_get_device(res->handle, &adev))
-		return NULL;
+	अगर (acpi_bus_get_device(res->handle, &adev))
+		वापस शून्य;
 
-	if (!res->count)
-		return NULL;
+	अगर (!res->count)
+		वापस शून्य;
 
 	count = res->count;
 	dev_dbg(&adev->dev, "Creating %d SDW Link devices\n", count);
 
-	ctx = devm_kzalloc(&adev->dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return NULL;
+	ctx = devm_kzalloc(&adev->dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस शून्य;
 
 	ctx->count = count;
-	ctx->links = devm_kcalloc(&adev->dev, ctx->count,
-				  sizeof(*ctx->links), GFP_KERNEL);
-	if (!ctx->links)
-		return NULL;
+	ctx->links = devm_kसुस्मृति(&adev->dev, ctx->count,
+				  माप(*ctx->links), GFP_KERNEL);
+	अगर (!ctx->links)
+		वापस शून्य;
 
 	ctx->count = count;
 	ctx->mmio_base = res->mmio_base;
@@ -138,15 +139,15 @@ static struct sdw_intel_ctx
 	INIT_LIST_HEAD(&ctx->link_list);
 
 	/* Create SDW Master devices */
-	for (i = 0; i < count; i++, link++) {
-		if (!(link_mask & BIT(i))) {
+	क्रम (i = 0; i < count; i++, link++) अणु
+		अगर (!(link_mask & BIT(i))) अणु
 			dev_dbg(&adev->dev,
 				"Link %d masked, will not be enabled\n", i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		link->mmio_base = res->mmio_base;
-		link->registers = res->mmio_base + SDW_LINK_BASE
+		link->रेजिस्टरs = res->mmio_base + SDW_LINK_BASE
 			+ (SDW_LINK_SIZE * i);
 		link->shim = res->mmio_base + SDW_SHIM_BASE;
 		link->alh = res->mmio_base + SDW_ALH_BASE;
@@ -154,182 +155,182 @@ static struct sdw_intel_ctx
 		link->ops = res->ops;
 		link->dev = res->dev;
 
-		link->clock_stop_quirks = res->clock_stop_quirks;
+		link->घड़ी_stop_quirks = res->घड़ी_stop_quirks;
 		link->shim_lock = &ctx->shim_lock;
 		link->shim_mask = &ctx->shim_mask;
 		link->link_mask = link_mask;
 
-		memset(&pdevinfo, 0, sizeof(pdevinfo));
+		स_रखो(&pdevinfo, 0, माप(pdevinfo));
 
 		pdevinfo.parent = res->parent;
 		pdevinfo.name = "intel-sdw";
 		pdevinfo.id = i;
 		pdevinfo.fwnode = acpi_fwnode_handle(adev);
 		pdevinfo.data = link;
-		pdevinfo.size_data = sizeof(*link);
+		pdevinfo.size_data = माप(*link);
 
-		pdev = platform_device_register_full(&pdevinfo);
-		if (IS_ERR(pdev)) {
+		pdev = platक्रमm_device_रेजिस्टर_full(&pdevinfo);
+		अगर (IS_ERR(pdev)) अणु
 			dev_err(&adev->dev,
 				"platform device creation failed: %ld\n",
 				PTR_ERR(pdev));
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		link->pdev = pdev;
-		link->cdns = platform_get_drvdata(pdev);
+		link->cdns = platक्रमm_get_drvdata(pdev);
 
-		if (!link->cdns) {
+		अगर (!link->cdns) अणु
 			dev_err(&adev->dev, "failed to get link->cdns\n");
 			/*
 			 * 1 will be subtracted from i in the err label, but we need to call
-			 * intel_link_dev_unregister for this ldev, so plus 1 now
+			 * पूर्णांकel_link_dev_unरेजिस्टर क्रम this ldev, so plus 1 now
 			 */
 			i++;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		list_add_tail(&link->list, &ctx->link_list);
 		bus = &link->cdns->bus;
 		/* Calculate number of slaves */
-		list_for_each(node, &bus->slaves)
+		list_क्रम_each(node, &bus->slaves)
 			num_slaves++;
-	}
+	पूर्ण
 
-	ctx->ids = devm_kcalloc(&adev->dev, num_slaves,
-				sizeof(*ctx->ids), GFP_KERNEL);
-	if (!ctx->ids)
-		goto err;
+	ctx->ids = devm_kसुस्मृति(&adev->dev, num_slaves,
+				माप(*ctx->ids), GFP_KERNEL);
+	अगर (!ctx->ids)
+		जाओ err;
 
 	ctx->num_slaves = num_slaves;
 	i = 0;
-	list_for_each_entry(link, &ctx->link_list, list) {
+	list_क्रम_each_entry(link, &ctx->link_list, list) अणु
 		bus = &link->cdns->bus;
-		list_for_each_entry(slave, &bus->slaves, node) {
+		list_क्रम_each_entry(slave, &bus->slaves, node) अणु
 			ctx->ids[i].id = slave->id;
 			ctx->ids[i].link_id = bus->link_id;
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ctx;
+	वापस ctx;
 
 err:
 	ctx->count = i;
-	sdw_intel_cleanup(ctx);
-	return NULL;
-}
+	sdw_पूर्णांकel_cleanup(ctx);
+	वापस शून्य;
+पूर्ण
 
-static int
-sdw_intel_startup_controller(struct sdw_intel_ctx *ctx)
-{
-	struct acpi_device *adev;
-	struct sdw_intel_link_res *link;
+अटल पूर्णांक
+sdw_पूर्णांकel_startup_controller(काष्ठा sdw_पूर्णांकel_ctx *ctx)
+अणु
+	काष्ठा acpi_device *adev;
+	काष्ठा sdw_पूर्णांकel_link_res *link;
 	u32 caps;
 	u32 link_mask;
-	int i;
+	पूर्णांक i;
 
-	if (acpi_bus_get_device(ctx->handle, &adev))
-		return -EINVAL;
+	अगर (acpi_bus_get_device(ctx->handle, &adev))
+		वापस -EINVAL;
 
 	/* Check SNDWLCAP.LCOUNT */
-	caps = ioread32(ctx->mmio_base + SDW_SHIM_BASE + SDW_SHIM_LCAP);
+	caps = ioपढ़ो32(ctx->mmio_base + SDW_SHIM_BASE + SDW_SHIM_LCAP);
 	caps &= GENMASK(2, 0);
 
 	/* Check HW supported vs property value */
-	if (caps < ctx->count) {
+	अगर (caps < ctx->count) अणु
 		dev_err(&adev->dev,
 			"BIOS master count is larger than hardware capabilities\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!ctx->links)
-		return -EINVAL;
+	अगर (!ctx->links)
+		वापस -EINVAL;
 
 	link = ctx->links;
 	link_mask = ctx->link_mask;
 
 	/* Startup SDW Master devices */
-	for (i = 0; i < ctx->count; i++, link++) {
-		if (!(link_mask & BIT(i)))
-			continue;
+	क्रम (i = 0; i < ctx->count; i++, link++) अणु
+		अगर (!(link_mask & BIT(i)))
+			जारी;
 
-		intel_master_startup(link->pdev);
+		पूर्णांकel_master_startup(link->pdev);
 
-		if (!link->clock_stop_quirks) {
+		अगर (!link->घड़ी_stop_quirks) अणु
 			/*
 			 * we need to prevent the parent PCI device
-			 * from entering pm_runtime suspend, so that
-			 * power rails to the SoundWire IP are not
+			 * from entering pm_runसमय suspend, so that
+			 * घातer rails to the SoundWire IP are not
 			 * turned off.
 			 */
-			pm_runtime_get_noresume(link->dev);
-		}
-	}
+			pm_runसमय_get_noresume(link->dev);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sdw_intel_probe() - SoundWire Intel probe routine
+ * sdw_पूर्णांकel_probe() - SoundWire Intel probe routine
  * @res: resource data
  *
- * This registers a platform device for each Master handled by the controller,
- * and SoundWire Master and Slave devices will be created by the platform
- * device probe. All the information necessary is stored in the context, and
- * the res argument pointer can be freed after this step.
- * This function will be called after sdw_intel_acpi_scan() by SOF probe.
+ * This रेजिस्टरs a platक्रमm device क्रम each Master handled by the controller,
+ * and SoundWire Master and Slave devices will be created by the platक्रमm
+ * device probe. All the inक्रमmation necessary is stored in the context, and
+ * the res argument poपूर्णांकer can be मुक्तd after this step.
+ * This function will be called after sdw_पूर्णांकel_acpi_scan() by SOF probe.
  */
-struct sdw_intel_ctx
-*sdw_intel_probe(struct sdw_intel_res *res)
-{
-	return sdw_intel_probe_controller(res);
-}
-EXPORT_SYMBOL_NS(sdw_intel_probe, SOUNDWIRE_INTEL_INIT);
+काष्ठा sdw_पूर्णांकel_ctx
+*sdw_पूर्णांकel_probe(काष्ठा sdw_पूर्णांकel_res *res)
+अणु
+	वापस sdw_पूर्णांकel_probe_controller(res);
+पूर्ण
+EXPORT_SYMBOL_NS(sdw_पूर्णांकel_probe, SOUNDWIRE_INTEL_INIT);
 
 /**
- * sdw_intel_startup() - SoundWire Intel startup
+ * sdw_पूर्णांकel_startup() - SoundWire Intel startup
  * @ctx: SoundWire context allocated in the probe
  *
  * Startup Intel SoundWire controller. This function will be called after
- * Intel Audio DSP is powered up.
+ * Intel Audio DSP is घातered up.
  */
-int sdw_intel_startup(struct sdw_intel_ctx *ctx)
-{
-	return sdw_intel_startup_controller(ctx);
-}
-EXPORT_SYMBOL_NS(sdw_intel_startup, SOUNDWIRE_INTEL_INIT);
+पूर्णांक sdw_पूर्णांकel_startup(काष्ठा sdw_पूर्णांकel_ctx *ctx)
+अणु
+	वापस sdw_पूर्णांकel_startup_controller(ctx);
+पूर्ण
+EXPORT_SYMBOL_NS(sdw_पूर्णांकel_startup, SOUNDWIRE_INTEL_INIT);
 /**
- * sdw_intel_exit() - SoundWire Intel exit
+ * sdw_पूर्णांकel_निकास() - SoundWire Intel निकास
  * @ctx: SoundWire context allocated in the probe
  *
  * Delete the controller instances created and cleanup
  */
-void sdw_intel_exit(struct sdw_intel_ctx *ctx)
-{
-	sdw_intel_cleanup(ctx);
-}
-EXPORT_SYMBOL_NS(sdw_intel_exit, SOUNDWIRE_INTEL_INIT);
+व्योम sdw_पूर्णांकel_निकास(काष्ठा sdw_पूर्णांकel_ctx *ctx)
+अणु
+	sdw_पूर्णांकel_cleanup(ctx);
+पूर्ण
+EXPORT_SYMBOL_NS(sdw_पूर्णांकel_निकास, SOUNDWIRE_INTEL_INIT);
 
-void sdw_intel_process_wakeen_event(struct sdw_intel_ctx *ctx)
-{
-	struct sdw_intel_link_res *link;
+व्योम sdw_पूर्णांकel_process_wakeen_event(काष्ठा sdw_पूर्णांकel_ctx *ctx)
+अणु
+	काष्ठा sdw_पूर्णांकel_link_res *link;
 	u32 link_mask;
-	int i;
+	पूर्णांक i;
 
-	if (!ctx->links)
-		return;
+	अगर (!ctx->links)
+		वापस;
 
 	link = ctx->links;
 	link_mask = ctx->link_mask;
 
 	/* Startup SDW Master devices */
-	for (i = 0; i < ctx->count; i++, link++) {
-		if (!(link_mask & BIT(i)))
-			continue;
+	क्रम (i = 0; i < ctx->count; i++, link++) अणु
+		अगर (!(link_mask & BIT(i)))
+			जारी;
 
-		intel_master_process_wakeen_event(link->pdev);
-	}
-}
-EXPORT_SYMBOL_NS(sdw_intel_process_wakeen_event, SOUNDWIRE_INTEL_INIT);
+		पूर्णांकel_master_process_wakeen_event(link->pdev);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_NS(sdw_पूर्णांकel_process_wakeen_event, SOUNDWIRE_INTEL_INIT);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("Intel Soundwire Init Library");

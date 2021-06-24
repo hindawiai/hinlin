@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
  * Legacy blkg rwstat helpers enabled by CONFIG_BLK_CGROUP_RWSTAT.
  * Do not use in new code.
  */
-#ifndef _BLK_CGROUP_RWSTAT_H
-#define _BLK_CGROUP_RWSTAT_H
+#अगर_अघोषित _BLK_CGROUP_RWSTAT_H
+#घोषणा _BLK_CGROUP_RWSTAT_H
 
-#include <linux/blk-cgroup.h>
+#समावेश <linux/blk-cgroup.h>
 
-enum blkg_rwstat_type {
+क्रमागत blkg_rwstat_type अणु
 	BLKG_RWSTAT_READ,
 	BLKG_RWSTAT_WRITE,
 	BLKG_RWSTAT_SYNC,
@@ -17,36 +18,36 @@ enum blkg_rwstat_type {
 
 	BLKG_RWSTAT_NR,
 	BLKG_RWSTAT_TOTAL = BLKG_RWSTAT_NR,
-};
+पूर्ण;
 
 /*
- * blkg_[rw]stat->aux_cnt is excluded for local stats but included for
+ * blkg_[rw]stat->aux_cnt is excluded क्रम local stats but included क्रम
  * recursive.  Used to carry stats of dead children.
  */
-struct blkg_rwstat {
-	struct percpu_counter		cpu_cnt[BLKG_RWSTAT_NR];
+काष्ठा blkg_rwstat अणु
+	काष्ठा percpu_counter		cpu_cnt[BLKG_RWSTAT_NR];
 	atomic64_t			aux_cnt[BLKG_RWSTAT_NR];
-};
+पूर्ण;
 
-struct blkg_rwstat_sample {
+काष्ठा blkg_rwstat_sample अणु
 	u64				cnt[BLKG_RWSTAT_NR];
-};
+पूर्ण;
 
-static inline u64 blkg_rwstat_read_counter(struct blkg_rwstat *rwstat,
-		unsigned int idx)
-{
-	return atomic64_read(&rwstat->aux_cnt[idx]) +
+अटल अंतरभूत u64 blkg_rwstat_पढ़ो_counter(काष्ठा blkg_rwstat *rwstat,
+		अचिन्हित पूर्णांक idx)
+अणु
+	वापस atomic64_पढ़ो(&rwstat->aux_cnt[idx]) +
 		percpu_counter_sum_positive(&rwstat->cpu_cnt[idx]);
-}
+पूर्ण
 
-int blkg_rwstat_init(struct blkg_rwstat *rwstat, gfp_t gfp);
-void blkg_rwstat_exit(struct blkg_rwstat *rwstat);
-u64 __blkg_prfill_rwstat(struct seq_file *sf, struct blkg_policy_data *pd,
-			 const struct blkg_rwstat_sample *rwstat);
-u64 blkg_prfill_rwstat(struct seq_file *sf, struct blkg_policy_data *pd,
-		       int off);
-void blkg_rwstat_recursive_sum(struct blkcg_gq *blkg, struct blkcg_policy *pol,
-		int off, struct blkg_rwstat_sample *sum);
+पूर्णांक blkg_rwstat_init(काष्ठा blkg_rwstat *rwstat, gfp_t gfp);
+व्योम blkg_rwstat_निकास(काष्ठा blkg_rwstat *rwstat);
+u64 __blkg_prfill_rwstat(काष्ठा seq_file *sf, काष्ठा blkg_policy_data *pd,
+			 स्थिर काष्ठा blkg_rwstat_sample *rwstat);
+u64 blkg_prfill_rwstat(काष्ठा seq_file *sf, काष्ठा blkg_policy_data *pd,
+		       पूर्णांक off);
+व्योम blkg_rwstat_recursive_sum(काष्ठा blkcg_gq *blkg, काष्ठा blkcg_policy *pol,
+		पूर्णांक off, काष्ठा blkg_rwstat_sample *sum);
 
 
 /**
@@ -56,94 +57,94 @@ void blkg_rwstat_recursive_sum(struct blkcg_gq *blkg, struct blkcg_policy *pol,
  * @val: value to add
  *
  * Add @val to @rwstat.  The counters are chosen according to @rw.  The
- * caller is responsible for synchronizing calls to this function.
+ * caller is responsible क्रम synchronizing calls to this function.
  */
-static inline void blkg_rwstat_add(struct blkg_rwstat *rwstat,
-				   unsigned int op, uint64_t val)
-{
-	struct percpu_counter *cnt;
+अटल अंतरभूत व्योम blkg_rwstat_add(काष्ठा blkg_rwstat *rwstat,
+				   अचिन्हित पूर्णांक op, uपूर्णांक64_t val)
+अणु
+	काष्ठा percpu_counter *cnt;
 
-	if (op_is_discard(op))
+	अगर (op_is_discard(op))
 		cnt = &rwstat->cpu_cnt[BLKG_RWSTAT_DISCARD];
-	else if (op_is_write(op))
+	अन्यथा अगर (op_is_ग_लिखो(op))
 		cnt = &rwstat->cpu_cnt[BLKG_RWSTAT_WRITE];
-	else
+	अन्यथा
 		cnt = &rwstat->cpu_cnt[BLKG_RWSTAT_READ];
 
 	percpu_counter_add_batch(cnt, val, BLKG_STAT_CPU_BATCH);
 
-	if (op_is_sync(op))
+	अगर (op_is_sync(op))
 		cnt = &rwstat->cpu_cnt[BLKG_RWSTAT_SYNC];
-	else
+	अन्यथा
 		cnt = &rwstat->cpu_cnt[BLKG_RWSTAT_ASYNC];
 
 	percpu_counter_add_batch(cnt, val, BLKG_STAT_CPU_BATCH);
-}
+पूर्ण
 
 /**
- * blkg_rwstat_read - read the current values of a blkg_rwstat
- * @rwstat: blkg_rwstat to read
+ * blkg_rwstat_पढ़ो - पढ़ो the current values of a blkg_rwstat
+ * @rwstat: blkg_rwstat to पढ़ो
  *
- * Read the current snapshot of @rwstat and return it in the aux counts.
+ * Read the current snapshot of @rwstat and वापस it in the aux counts.
  */
-static inline void blkg_rwstat_read(struct blkg_rwstat *rwstat,
-		struct blkg_rwstat_sample *result)
-{
-	int i;
+अटल अंतरभूत व्योम blkg_rwstat_पढ़ो(काष्ठा blkg_rwstat *rwstat,
+		काष्ठा blkg_rwstat_sample *result)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BLKG_RWSTAT_NR; i++)
+	क्रम (i = 0; i < BLKG_RWSTAT_NR; i++)
 		result->cnt[i] =
 			percpu_counter_sum_positive(&rwstat->cpu_cnt[i]);
-}
+पूर्ण
 
 /**
- * blkg_rwstat_total - read the total count of a blkg_rwstat
- * @rwstat: blkg_rwstat to read
+ * blkg_rwstat_total - पढ़ो the total count of a blkg_rwstat
+ * @rwstat: blkg_rwstat to पढ़ो
  *
  * Return the total count of @rwstat regardless of the IO direction.  This
  * function can be called without synchronization and takes care of u64
  * atomicity.
  */
-static inline uint64_t blkg_rwstat_total(struct blkg_rwstat *rwstat)
-{
-	struct blkg_rwstat_sample tmp = { };
+अटल अंतरभूत uपूर्णांक64_t blkg_rwstat_total(काष्ठा blkg_rwstat *rwstat)
+अणु
+	काष्ठा blkg_rwstat_sample पंचांगp = अणु पूर्ण;
 
-	blkg_rwstat_read(rwstat, &tmp);
-	return tmp.cnt[BLKG_RWSTAT_READ] + tmp.cnt[BLKG_RWSTAT_WRITE];
-}
+	blkg_rwstat_पढ़ो(rwstat, &पंचांगp);
+	वापस पंचांगp.cnt[BLKG_RWSTAT_READ] + पंचांगp.cnt[BLKG_RWSTAT_WRITE];
+पूर्ण
 
 /**
  * blkg_rwstat_reset - reset a blkg_rwstat
  * @rwstat: blkg_rwstat to reset
  */
-static inline void blkg_rwstat_reset(struct blkg_rwstat *rwstat)
-{
-	int i;
+अटल अंतरभूत व्योम blkg_rwstat_reset(काष्ठा blkg_rwstat *rwstat)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BLKG_RWSTAT_NR; i++) {
+	क्रम (i = 0; i < BLKG_RWSTAT_NR; i++) अणु
 		percpu_counter_set(&rwstat->cpu_cnt[i], 0);
 		atomic64_set(&rwstat->aux_cnt[i], 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * blkg_rwstat_add_aux - add a blkg_rwstat into another's aux count
+ * blkg_rwstat_add_aux - add a blkg_rwstat पूर्णांकo another's aux count
  * @to: the destination blkg_rwstat
  * @from: the source
  *
  * Add @from's count including the aux one to @to's aux count.
  */
-static inline void blkg_rwstat_add_aux(struct blkg_rwstat *to,
-				       struct blkg_rwstat *from)
-{
+अटल अंतरभूत व्योम blkg_rwstat_add_aux(काष्ठा blkg_rwstat *to,
+				       काष्ठा blkg_rwstat *from)
+अणु
 	u64 sum[BLKG_RWSTAT_NR];
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < BLKG_RWSTAT_NR; i++)
+	क्रम (i = 0; i < BLKG_RWSTAT_NR; i++)
 		sum[i] = percpu_counter_sum_positive(&from->cpu_cnt[i]);
 
-	for (i = 0; i < BLKG_RWSTAT_NR; i++)
-		atomic64_add(sum[i] + atomic64_read(&from->aux_cnt[i]),
+	क्रम (i = 0; i < BLKG_RWSTAT_NR; i++)
+		atomic64_add(sum[i] + atomic64_पढ़ो(&from->aux_cnt[i]),
 			     &to->aux_cnt[i]);
-}
-#endif	/* _BLK_CGROUP_RWSTAT_H */
+पूर्ण
+#पूर्ण_अगर	/* _BLK_CGROUP_RWSTAT_H */

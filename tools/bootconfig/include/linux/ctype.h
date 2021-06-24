@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SKC_LINUX_CTYPE_H
-#define _SKC_LINUX_CTYPE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SKC_LINUX_CTYPE_H
+#घोषणा _SKC_LINUX_CTYPE_H
 
-#include <ctype.h>
+#समावेश <प्रकार.स>
 
-#endif
+#पूर्ण_अगर

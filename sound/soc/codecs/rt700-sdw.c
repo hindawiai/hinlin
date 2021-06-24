@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // rt700-sdw.c -- rt700 ALSA SoC audio driver
 //
@@ -6,510 +7,510 @@
 //
 //
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/mod_devicetable.h>
-#include <linux/soundwire/sdw.h>
-#include <linux/soundwire/sdw_type.h>
-#include <linux/soundwire/sdw_registers.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <sound/soc.h>
-#include "rt700.h"
-#include "rt700-sdw.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/soundwire/sdw.h>
+#समावेश <linux/soundwire/sdw_type.h>
+#समावेश <linux/soundwire/sdw_रेजिस्टरs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <sound/soc.h>
+#समावेश "rt700.h"
+#समावेश "rt700-sdw.h"
 
-static bool rt700_readable_register(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case 0x00e0:
-	case 0x00f0:
-	case 0x2000 ... 0x200e:
-	case 0x2012 ... 0x2016:
-	case 0x201a ... 0x2027:
-	case 0x2029 ... 0x202a:
-	case 0x202d ... 0x2034:
-	case 0x2200 ... 0x2204:
-	case 0x2206 ... 0x2212:
-	case 0x2220 ... 0x2223:
-	case 0x2230 ... 0x2231:
-	case 0x3000 ... 0x3fff:
-	case 0x7000 ... 0x7fff:
-	case 0x8300 ... 0x83ff:
-	case 0x9c00 ... 0x9cff:
-	case 0xb900 ... 0xb9ff:
-	case 0x75201a:
-	case 0x752045:
-	case 0x752046:
-	case 0x752048:
-	case 0x75204a:
-	case 0x75206b:
-	case 0x752080:
-	case 0x752081:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool rt700_पढ़ोable_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल 0x00e0:
+	हाल 0x00f0:
+	हाल 0x2000 ... 0x200e:
+	हाल 0x2012 ... 0x2016:
+	हाल 0x201a ... 0x2027:
+	हाल 0x2029 ... 0x202a:
+	हाल 0x202d ... 0x2034:
+	हाल 0x2200 ... 0x2204:
+	हाल 0x2206 ... 0x2212:
+	हाल 0x2220 ... 0x2223:
+	हाल 0x2230 ... 0x2231:
+	हाल 0x3000 ... 0x3fff:
+	हाल 0x7000 ... 0x7fff:
+	हाल 0x8300 ... 0x83ff:
+	हाल 0x9c00 ... 0x9cff:
+	हाल 0xb900 ... 0xb9ff:
+	हाल 0x75201a:
+	हाल 0x752045:
+	हाल 0x752046:
+	हाल 0x752048:
+	हाल 0x75204a:
+	हाल 0x75206b:
+	हाल 0x752080:
+	हाल 0x752081:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool rt700_volatile_register(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case 0x2009:
-	case 0x2016:
-	case 0x201b:
-	case 0x201c:
-	case 0x201d:
-	case 0x201f:
-	case 0x2021:
-	case 0x2023:
-	case 0x2230:
-	case 0x200b ... 0x200e: /* i2c read */
-	case 0x2012 ... 0x2015: /* HD-A read */
-	case 0x202d ... 0x202f: /* BRA */
-	case 0x2201 ... 0x2212: /* i2c debug */
-	case 0x2220 ... 0x2223: /* decoded HD-A */
-	case 0x9c00 ... 0x9cff:
-	case 0xb900 ... 0xb9ff:
-	case 0xff01:
-	case 0x75201a:
-	case 0x752046:
-	case 0x752080:
-	case 0x752081:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool rt700_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल 0x2009:
+	हाल 0x2016:
+	हाल 0x201b:
+	हाल 0x201c:
+	हाल 0x201d:
+	हाल 0x201f:
+	हाल 0x2021:
+	हाल 0x2023:
+	हाल 0x2230:
+	हाल 0x200b ... 0x200e: /* i2c पढ़ो */
+	हाल 0x2012 ... 0x2015: /* HD-A पढ़ो */
+	हाल 0x202d ... 0x202f: /* BRA */
+	हाल 0x2201 ... 0x2212: /* i2c debug */
+	हाल 0x2220 ... 0x2223: /* decoded HD-A */
+	हाल 0x9c00 ... 0x9cff:
+	हाल 0xb900 ... 0xb9ff:
+	हाल 0xff01:
+	हाल 0x75201a:
+	हाल 0x752046:
+	हाल 0x752080:
+	हाल 0x752081:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int rt700_sdw_read(void *context, unsigned int reg, unsigned int *val)
-{
-	struct device *dev = context;
-	struct rt700_priv *rt700 = dev_get_drvdata(dev);
-	unsigned int sdw_data_3, sdw_data_2, sdw_data_1, sdw_data_0;
-	unsigned int reg2 = 0, reg3 = 0, reg4 = 0, mask, nid, val2;
-	unsigned int is_hda_reg = 1, is_index_reg = 0;
-	int ret;
+अटल पूर्णांक rt700_sdw_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा rt700_priv *rt700 = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक sdw_data_3, sdw_data_2, sdw_data_1, sdw_data_0;
+	अचिन्हित पूर्णांक reg2 = 0, reg3 = 0, reg4 = 0, mask, nid, val2;
+	अचिन्हित पूर्णांक is_hda_reg = 1, is_index_reg = 0;
+	पूर्णांक ret;
 
-	if (reg > 0xffff)
+	अगर (reg > 0xffff)
 		is_index_reg = 1;
 
 	mask = reg & 0xf000;
 
-	if (is_index_reg) { /* index registers */
+	अगर (is_index_reg) अणु /* index रेजिस्टरs */
 		val2 = reg & 0xff;
 		reg = reg >> 8;
 		nid = reg & 0xff;
-		ret = regmap_write(rt700->sdw_regmap, reg, 0);
-		if (ret < 0)
-			return ret;
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg, 0);
+		अगर (ret < 0)
+			वापस ret;
 		reg2 = reg + 0x1000;
 		reg2 |= 0x80;
-		ret = regmap_write(rt700->sdw_regmap, reg2, val2);
-		if (ret < 0)
-			return ret;
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg2, val2);
+		अगर (ret < 0)
+			वापस ret;
 
 		reg3 = RT700_PRIV_DATA_R_H | nid;
-		ret = regmap_write(rt700->sdw_regmap,
+		ret = regmap_ग_लिखो(rt700->sdw_regmap,
 			reg3, ((*val >> 8) & 0xff));
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		reg4 = reg3 + 0x1000;
 		reg4 |= 0x80;
-		ret = regmap_write(rt700->sdw_regmap, reg4, (*val & 0xff));
-		if (ret < 0)
-			return ret;
-	} else if (mask   == 0x3000) {
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg4, (*val & 0xff));
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अगर (mask   == 0x3000) अणु
 		reg += 0x8000;
-		ret = regmap_write(rt700->sdw_regmap, reg, *val);
-		if (ret < 0)
-			return ret;
-	} else if (mask == 0x7000) {
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg, *val);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अगर (mask == 0x7000) अणु
 		reg += 0x2000;
 		reg |= 0x800;
-		ret = regmap_write(rt700->sdw_regmap,
+		ret = regmap_ग_लिखो(rt700->sdw_regmap,
 			reg, ((*val >> 8) & 0xff));
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		reg2 = reg + 0x1000;
 		reg2 |= 0x80;
-		ret = regmap_write(rt700->sdw_regmap, reg2, (*val & 0xff));
-		if (ret < 0)
-			return ret;
-	} else if ((reg & 0xff00) == 0x8300) { /* for R channel */
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg2, (*val & 0xff));
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अगर ((reg & 0xff00) == 0x8300) अणु /* क्रम R channel */
 		reg2 = reg - 0x1000;
 		reg2 &= ~0x80;
-		ret = regmap_write(rt700->sdw_regmap,
+		ret = regmap_ग_लिखो(rt700->sdw_regmap,
 			reg2, ((*val >> 8) & 0xff));
-		if (ret < 0)
-			return ret;
-		ret = regmap_write(rt700->sdw_regmap, reg, (*val & 0xff));
-		if (ret < 0)
-			return ret;
-	} else if (mask == 0x9000) {
-		ret = regmap_write(rt700->sdw_regmap,
+		अगर (ret < 0)
+			वापस ret;
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg, (*val & 0xff));
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अगर (mask == 0x9000) अणु
+		ret = regmap_ग_लिखो(rt700->sdw_regmap,
 			reg, ((*val >> 8) & 0xff));
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		reg2 = reg + 0x1000;
 		reg2 |= 0x80;
-		ret = regmap_write(rt700->sdw_regmap, reg2, (*val & 0xff));
-		if (ret < 0)
-			return ret;
-	} else if (mask == 0xb000) {
-		ret = regmap_write(rt700->sdw_regmap, reg, *val);
-		if (ret < 0)
-			return ret;
-	} else {
-		ret = regmap_read(rt700->sdw_regmap, reg, val);
-		if (ret < 0)
-			return ret;
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg2, (*val & 0xff));
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अगर (mask == 0xb000) अणु
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg, *val);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		ret = regmap_पढ़ो(rt700->sdw_regmap, reg, val);
+		अगर (ret < 0)
+			वापस ret;
 		is_hda_reg = 0;
-	}
+	पूर्ण
 
-	if (is_hda_reg || is_index_reg) {
+	अगर (is_hda_reg || is_index_reg) अणु
 		sdw_data_3 = 0;
 		sdw_data_2 = 0;
 		sdw_data_1 = 0;
 		sdw_data_0 = 0;
-		ret = regmap_read(rt700->sdw_regmap,
+		ret = regmap_पढ़ो(rt700->sdw_regmap,
 			RT700_READ_HDA_3, &sdw_data_3);
-		if (ret < 0)
-			return ret;
-		ret = regmap_read(rt700->sdw_regmap,
+		अगर (ret < 0)
+			वापस ret;
+		ret = regmap_पढ़ो(rt700->sdw_regmap,
 			RT700_READ_HDA_2, &sdw_data_2);
-		if (ret < 0)
-			return ret;
-		ret = regmap_read(rt700->sdw_regmap,
+		अगर (ret < 0)
+			वापस ret;
+		ret = regmap_पढ़ो(rt700->sdw_regmap,
 			RT700_READ_HDA_1, &sdw_data_1);
-		if (ret < 0)
-			return ret;
-		ret = regmap_read(rt700->sdw_regmap,
+		अगर (ret < 0)
+			वापस ret;
+		ret = regmap_पढ़ो(rt700->sdw_regmap,
 			RT700_READ_HDA_0, &sdw_data_0);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		*val = ((sdw_data_3 & 0xff) << 24) |
 			((sdw_data_2 & 0xff) << 16) |
 			((sdw_data_1 & 0xff) << 8) | (sdw_data_0 & 0xff);
-	}
+	पूर्ण
 
-	if (is_hda_reg == 0)
+	अगर (is_hda_reg == 0)
 		dev_dbg(dev, "[%s] %04x => %08x\n", __func__, reg, *val);
-	else if (is_index_reg)
+	अन्यथा अगर (is_index_reg)
 		dev_dbg(dev, "[%s] %04x %04x %04x %04x => %08x\n",
 			__func__, reg, reg2, reg3, reg4, *val);
-	else
+	अन्यथा
 		dev_dbg(dev, "[%s] %04x %04x => %08x\n",
 			__func__, reg, reg2, *val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt700_sdw_write(void *context, unsigned int reg, unsigned int val)
-{
-	struct device *dev = context;
-	struct rt700_priv *rt700 = dev_get_drvdata(dev);
-	unsigned int reg2 = 0, reg3, reg4, nid, mask, val2;
-	unsigned int is_index_reg = 0;
-	int ret;
+अटल पूर्णांक rt700_sdw_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा rt700_priv *rt700 = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक reg2 = 0, reg3, reg4, nid, mask, val2;
+	अचिन्हित पूर्णांक is_index_reg = 0;
+	पूर्णांक ret;
 
-	if (reg > 0xffff)
+	अगर (reg > 0xffff)
 		is_index_reg = 1;
 
 	mask = reg & 0xf000;
 
-	if (is_index_reg) { /* index registers */
+	अगर (is_index_reg) अणु /* index रेजिस्टरs */
 		val2 = reg & 0xff;
 		reg = reg >> 8;
 		nid = reg & 0xff;
-		ret = regmap_write(rt700->sdw_regmap, reg, 0);
-		if (ret < 0)
-			return ret;
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg, 0);
+		अगर (ret < 0)
+			वापस ret;
 		reg2 = reg + 0x1000;
 		reg2 |= 0x80;
-		ret = regmap_write(rt700->sdw_regmap, reg2, val2);
-		if (ret < 0)
-			return ret;
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg2, val2);
+		अगर (ret < 0)
+			वापस ret;
 
 		reg3 = RT700_PRIV_DATA_W_H | nid;
-		ret = regmap_write(rt700->sdw_regmap,
+		ret = regmap_ग_लिखो(rt700->sdw_regmap,
 			reg3, ((val >> 8) & 0xff));
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		reg4 = reg3 + 0x1000;
 		reg4 |= 0x80;
-		ret = regmap_write(rt700->sdw_regmap, reg4, (val & 0xff));
-		if (ret < 0)
-			return ret;
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg4, (val & 0xff));
+		अगर (ret < 0)
+			वापस ret;
 		is_index_reg = 1;
-	} else if (reg < 0x4fff) {
-		ret = regmap_write(rt700->sdw_regmap, reg, val);
-		if (ret < 0)
-			return ret;
-	} else if (reg == 0xff01) {
-		ret = regmap_write(rt700->sdw_regmap, reg, val);
-		if (ret < 0)
-			return ret;
-	} else if (mask == 0x7000) {
-		ret = regmap_write(rt700->sdw_regmap,
+	पूर्ण अन्यथा अगर (reg < 0x4fff) अणु
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg, val);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अगर (reg == 0xff01) अणु
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg, val);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अगर (mask == 0x7000) अणु
+		ret = regmap_ग_लिखो(rt700->sdw_regmap,
 			reg, ((val >> 8) & 0xff));
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		reg2 = reg + 0x1000;
 		reg2 |= 0x80;
-		ret = regmap_write(rt700->sdw_regmap, reg2, (val & 0xff));
-		if (ret < 0)
-			return ret;
-	} else if ((reg & 0xff00) == 0x8300) {  /* for R channel */
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg2, (val & 0xff));
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अगर ((reg & 0xff00) == 0x8300) अणु  /* क्रम R channel */
 		reg2 = reg - 0x1000;
 		reg2 &= ~0x80;
-		ret = regmap_write(rt700->sdw_regmap,
+		ret = regmap_ग_लिखो(rt700->sdw_regmap,
 			reg2, ((val >> 8) & 0xff));
-		if (ret < 0)
-			return ret;
-		ret = regmap_write(rt700->sdw_regmap, reg, (val & 0xff));
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+		ret = regmap_ग_लिखो(rt700->sdw_regmap, reg, (val & 0xff));
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (reg2 == 0)
+	अगर (reg2 == 0)
 		dev_dbg(dev, "[%s] %04x <= %04x\n", __func__, reg, val);
-	else if (is_index_reg)
+	अन्यथा अगर (is_index_reg)
 		dev_dbg(dev, "[%s] %04x %04x %04x %04x <= %04x %04x\n",
 			__func__, reg, reg2, reg3, reg4, val2, val);
-	else
+	अन्यथा
 		dev_dbg(dev, "[%s] %04x %04x <= %04x\n",
 			__func__, reg, reg2, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regmap_config rt700_regmap = {
+अटल स्थिर काष्ठा regmap_config rt700_regmap = अणु
 	.reg_bits = 24,
 	.val_bits = 32,
-	.readable_reg = rt700_readable_register,
-	.volatile_reg = rt700_volatile_register,
-	.max_register = 0x755800,
-	.reg_defaults = rt700_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(rt700_reg_defaults),
+	.पढ़ोable_reg = rt700_पढ़ोable_रेजिस्टर,
+	.अस्थिर_reg = rt700_अस्थिर_रेजिस्टर,
+	.max_रेजिस्टर = 0x755800,
+	.reg_शेषs = rt700_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(rt700_reg_शेषs),
 	.cache_type = REGCACHE_RBTREE,
-	.use_single_read = true,
-	.use_single_write = true,
-	.reg_read = rt700_sdw_read,
-	.reg_write = rt700_sdw_write,
-};
+	.use_single_पढ़ो = true,
+	.use_single_ग_लिखो = true,
+	.reg_पढ़ो = rt700_sdw_पढ़ो,
+	.reg_ग_लिखो = rt700_sdw_ग_लिखो,
+पूर्ण;
 
-static const struct regmap_config rt700_sdw_regmap = {
+अटल स्थिर काष्ठा regmap_config rt700_sdw_regmap = अणु
 	.name = "sdw",
 	.reg_bits = 32,
 	.val_bits = 8,
-	.readable_reg = rt700_readable_register,
-	.max_register = 0xff01,
+	.पढ़ोable_reg = rt700_पढ़ोable_रेजिस्टर,
+	.max_रेजिस्टर = 0xff01,
 	.cache_type = REGCACHE_NONE,
-	.use_single_read = true,
-	.use_single_write = true,
-};
+	.use_single_पढ़ो = true,
+	.use_single_ग_लिखो = true,
+पूर्ण;
 
-static int rt700_update_status(struct sdw_slave *slave,
-					enum sdw_slave_status status)
-{
-	struct rt700_priv *rt700 = dev_get_drvdata(&slave->dev);
+अटल पूर्णांक rt700_update_status(काष्ठा sdw_slave *slave,
+					क्रमागत sdw_slave_status status)
+अणु
+	काष्ठा rt700_priv *rt700 = dev_get_drvdata(&slave->dev);
 
 	/* Update the status */
 	rt700->status = status;
 
-	if (status == SDW_SLAVE_UNATTACHED)
+	अगर (status == SDW_SLAVE_UNATTACHED)
 		rt700->hw_init = false;
 
 	/*
-	 * Perform initialization only if slave status is present and
+	 * Perक्रमm initialization only अगर slave status is present and
 	 * hw_init flag is false
 	 */
-	if (rt700->hw_init || rt700->status != SDW_SLAVE_ATTACHED)
-		return 0;
+	अगर (rt700->hw_init || rt700->status != SDW_SLAVE_ATTACHED)
+		वापस 0;
 
-	/* perform I/O transfers required for Slave initialization */
-	return rt700_io_init(&slave->dev, slave);
-}
+	/* perक्रमm I/O transfers required क्रम Slave initialization */
+	वापस rt700_io_init(&slave->dev, slave);
+पूर्ण
 
-static int rt700_read_prop(struct sdw_slave *slave)
-{
-	struct sdw_slave_prop *prop = &slave->prop;
-	int nval, i;
+अटल पूर्णांक rt700_पढ़ो_prop(काष्ठा sdw_slave *slave)
+अणु
+	काष्ठा sdw_slave_prop *prop = &slave->prop;
+	पूर्णांक nval, i;
 	u32 bit;
-	unsigned long addr;
-	struct sdw_dpn_prop *dpn;
+	अचिन्हित दीर्घ addr;
+	काष्ठा sdw_dpn_prop *dpn;
 
-	prop->scp_int1_mask = SDW_SCP_INT1_IMPL_DEF | SDW_SCP_INT1_BUS_CLASH |
+	prop->scp_पूर्णांक1_mask = SDW_SCP_INT1_IMPL_DEF | SDW_SCP_INT1_BUS_CLASH |
 		SDW_SCP_INT1_PARITY;
 	prop->quirks = SDW_SLAVE_QUIRKS_INVALID_INITIAL_PARITY;
 
 	prop->paging_support = false;
 
-	/* first we need to allocate memory for set bits in port lists */
+	/* first we need to allocate memory क्रम set bits in port lists */
 	prop->source_ports = 0x14; /* BITMAP: 00010100 */
 	prop->sink_ports = 0xA; /* BITMAP:  00001010 */
 
 	nval = hweight32(prop->source_ports);
-	prop->src_dpn_prop = devm_kcalloc(&slave->dev, nval,
-						sizeof(*prop->src_dpn_prop),
+	prop->src_dpn_prop = devm_kसुस्मृति(&slave->dev, nval,
+						माप(*prop->src_dpn_prop),
 						GFP_KERNEL);
-	if (!prop->src_dpn_prop)
-		return -ENOMEM;
+	अगर (!prop->src_dpn_prop)
+		वापस -ENOMEM;
 
 	i = 0;
 	dpn = prop->src_dpn_prop;
 	addr = prop->source_ports;
-	for_each_set_bit(bit, &addr, 32) {
+	क्रम_each_set_bit(bit, &addr, 32) अणु
 		dpn[i].num = bit;
 		dpn[i].type = SDW_DPN_FULL;
 		dpn[i].simple_ch_prep_sm = true;
-		dpn[i].ch_prep_timeout = 10;
+		dpn[i].ch_prep_समयout = 10;
 		i++;
-	}
+	पूर्ण
 
-	/* do this again for sink now */
+	/* करो this again क्रम sink now */
 	nval = hweight32(prop->sink_ports);
-	prop->sink_dpn_prop = devm_kcalloc(&slave->dev, nval,
-						sizeof(*prop->sink_dpn_prop),
+	prop->sink_dpn_prop = devm_kसुस्मृति(&slave->dev, nval,
+						माप(*prop->sink_dpn_prop),
 						GFP_KERNEL);
-	if (!prop->sink_dpn_prop)
-		return -ENOMEM;
+	अगर (!prop->sink_dpn_prop)
+		वापस -ENOMEM;
 
 	i = 0;
 	dpn = prop->sink_dpn_prop;
 	addr = prop->sink_ports;
-	for_each_set_bit(bit, &addr, 32) {
+	क्रम_each_set_bit(bit, &addr, 32) अणु
 		dpn[i].num = bit;
 		dpn[i].type = SDW_DPN_FULL;
 		dpn[i].simple_ch_prep_sm = true;
-		dpn[i].ch_prep_timeout = 10;
+		dpn[i].ch_prep_समयout = 10;
 		i++;
-	}
+	पूर्ण
 
-	/* set the timeout values */
-	prop->clk_stop_timeout = 20;
+	/* set the समयout values */
+	prop->clk_stop_समयout = 20;
 
 	/* wake-up event */
 	prop->wake_capable = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt700_bus_config(struct sdw_slave *slave,
-				struct sdw_bus_params *params)
-{
-	struct rt700_priv *rt700 = dev_get_drvdata(&slave->dev);
-	int ret;
+अटल पूर्णांक rt700_bus_config(काष्ठा sdw_slave *slave,
+				काष्ठा sdw_bus_params *params)
+अणु
+	काष्ठा rt700_priv *rt700 = dev_get_drvdata(&slave->dev);
+	पूर्णांक ret;
 
-	memcpy(&rt700->params, params, sizeof(*params));
+	स_नकल(&rt700->params, params, माप(*params));
 
-	ret = rt700_clock_config(&slave->dev);
-	if (ret < 0)
+	ret = rt700_घड़ी_config(&slave->dev);
+	अगर (ret < 0)
 		dev_err(&slave->dev, "Invalid clk config");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rt700_interrupt_callback(struct sdw_slave *slave,
-					struct sdw_slave_intr_status *status)
-{
-	struct rt700_priv *rt700 = dev_get_drvdata(&slave->dev);
+अटल पूर्णांक rt700_पूर्णांकerrupt_callback(काष्ठा sdw_slave *slave,
+					काष्ठा sdw_slave_पूर्णांकr_status *status)
+अणु
+	काष्ठा rt700_priv *rt700 = dev_get_drvdata(&slave->dev);
 
 	dev_dbg(&slave->dev,
 		"%s control_port_stat=%x", __func__, status->control_port);
 
-	if (status->control_port & 0x4) {
-		mod_delayed_work(system_power_efficient_wq,
-			&rt700->jack_detect_work, msecs_to_jiffies(250));
-	}
+	अगर (status->control_port & 0x4) अणु
+		mod_delayed_work(प्रणाली_घातer_efficient_wq,
+			&rt700->jack_detect_work, msecs_to_jअगरfies(250));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * slave_ops: callbacks for get_clock_stop_mode, clock_stop and
- * port_prep are not defined for now
+ * slave_ops: callbacks क्रम get_घड़ी_stop_mode, घड़ी_stop and
+ * port_prep are not defined क्रम now
  */
-static const struct sdw_slave_ops rt700_slave_ops = {
-	.read_prop = rt700_read_prop,
-	.interrupt_callback = rt700_interrupt_callback,
+अटल स्थिर काष्ठा sdw_slave_ops rt700_slave_ops = अणु
+	.पढ़ो_prop = rt700_पढ़ो_prop,
+	.पूर्णांकerrupt_callback = rt700_पूर्णांकerrupt_callback,
 	.update_status = rt700_update_status,
 	.bus_config = rt700_bus_config,
-};
+पूर्ण;
 
-static int rt700_sdw_probe(struct sdw_slave *slave,
-				const struct sdw_device_id *id)
-{
-	struct regmap *sdw_regmap, *regmap;
+अटल पूर्णांक rt700_sdw_probe(काष्ठा sdw_slave *slave,
+				स्थिर काष्ठा sdw_device_id *id)
+अणु
+	काष्ठा regmap *sdw_regmap, *regmap;
 
 	/* Regmap Initialization */
 	sdw_regmap = devm_regmap_init_sdw(slave, &rt700_sdw_regmap);
-	if (IS_ERR(sdw_regmap))
-		return PTR_ERR(sdw_regmap);
+	अगर (IS_ERR(sdw_regmap))
+		वापस PTR_ERR(sdw_regmap);
 
-	regmap = devm_regmap_init(&slave->dev, NULL,
+	regmap = devm_regmap_init(&slave->dev, शून्य,
 		&slave->dev, &rt700_regmap);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
 	rt700_init(&slave->dev, sdw_regmap, regmap, slave);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt700_sdw_remove(struct sdw_slave *slave)
-{
-	struct rt700_priv *rt700 = dev_get_drvdata(&slave->dev);
+अटल पूर्णांक rt700_sdw_हटाओ(काष्ठा sdw_slave *slave)
+अणु
+	काष्ठा rt700_priv *rt700 = dev_get_drvdata(&slave->dev);
 
-	if (rt700 && rt700->hw_init) {
+	अगर (rt700 && rt700->hw_init) अणु
 		cancel_delayed_work_sync(&rt700->jack_detect_work);
 		cancel_delayed_work_sync(&rt700->jack_btn_check_work);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct sdw_device_id rt700_id[] = {
+अटल स्थिर काष्ठा sdw_device_id rt700_id[] = अणु
 	SDW_SLAVE_ENTRY_EXT(0x025d, 0x700, 0x1, 0, 0),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(sdw, rt700_id);
 
-static int __maybe_unused rt700_dev_suspend(struct device *dev)
-{
-	struct rt700_priv *rt700 = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused rt700_dev_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा rt700_priv *rt700 = dev_get_drvdata(dev);
 
-	if (!rt700->hw_init)
-		return 0;
+	अगर (!rt700->hw_init)
+		वापस 0;
 
 	cancel_delayed_work_sync(&rt700->jack_detect_work);
 	cancel_delayed_work_sync(&rt700->jack_btn_check_work);
 
 	regcache_cache_only(rt700->regmap, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define RT700_PROBE_TIMEOUT 5000
+#घोषणा RT700_PROBE_TIMEOUT 5000
 
-static int __maybe_unused rt700_dev_resume(struct device *dev)
-{
-	struct sdw_slave *slave = dev_to_sdw_dev(dev);
-	struct rt700_priv *rt700 = dev_get_drvdata(dev);
-	unsigned long time;
+अटल पूर्णांक __maybe_unused rt700_dev_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);
+	काष्ठा rt700_priv *rt700 = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ समय;
 
-	if (!rt700->hw_init)
-		return 0;
+	अगर (!rt700->hw_init)
+		वापस 0;
 
-	if (!slave->unattach_request)
-		goto regmap_sync;
+	अगर (!slave->unattach_request)
+		जाओ regmap_sync;
 
-	time = wait_for_completion_timeout(&slave->initialization_complete,
-				msecs_to_jiffies(RT700_PROBE_TIMEOUT));
-	if (!time) {
+	समय = रुको_क्रम_completion_समयout(&slave->initialization_complete,
+				msecs_to_jअगरfies(RT700_PROBE_TIMEOUT));
+	अगर (!समय) अणु
 		dev_err(&slave->dev, "Initialization not complete, timed out\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 regmap_sync:
 	slave->unattach_request = 0;
@@ -517,25 +518,25 @@ regmap_sync:
 	regcache_sync_region(rt700->regmap, 0x3000, 0x8fff);
 	regcache_sync_region(rt700->regmap, 0x752010, 0x75206b);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops rt700_pm = {
+अटल स्थिर काष्ठा dev_pm_ops rt700_pm = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(rt700_dev_suspend, rt700_dev_resume)
-	SET_RUNTIME_PM_OPS(rt700_dev_suspend, rt700_dev_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(rt700_dev_suspend, rt700_dev_resume, शून्य)
+पूर्ण;
 
-static struct sdw_driver rt700_sdw_driver = {
-	.driver = {
+अटल काष्ठा sdw_driver rt700_sdw_driver = अणु
+	.driver = अणु
 		.name = "rt700",
 		.owner = THIS_MODULE,
 		.pm = &rt700_pm,
-	},
+	पूर्ण,
 	.probe = rt700_sdw_probe,
-	.remove = rt700_sdw_remove,
+	.हटाओ = rt700_sdw_हटाओ,
 	.ops = &rt700_slave_ops,
 	.id_table = rt700_id,
-};
+पूर्ण;
 module_sdw_driver(rt700_sdw_driver);
 
 MODULE_DESCRIPTION("ASoC RT700 driver SDW");

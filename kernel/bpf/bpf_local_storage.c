@@ -1,281 +1,282 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2019 Facebook  */
-#include <linux/rculist.h>
-#include <linux/list.h>
-#include <linux/hash.h>
-#include <linux/types.h>
-#include <linux/spinlock.h>
-#include <linux/bpf.h>
-#include <linux/btf_ids.h>
-#include <linux/bpf_local_storage.h>
-#include <net/sock.h>
-#include <uapi/linux/sock_diag.h>
-#include <uapi/linux/btf.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/list.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/types.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/btf_ids.h>
+#समावेश <linux/bpf_local_storage.h>
+#समावेश <net/sock.h>
+#समावेश <uapi/linux/sock_diag.h>
+#समावेश <uapi/linux/btf.h>
 
-#define BPF_LOCAL_STORAGE_CREATE_FLAG_MASK (BPF_F_NO_PREALLOC | BPF_F_CLONE)
+#घोषणा BPF_LOCAL_STORAGE_CREATE_FLAG_MASK (BPF_F_NO_PREALLOC | BPF_F_CLONE)
 
-static struct bpf_local_storage_map_bucket *
-select_bucket(struct bpf_local_storage_map *smap,
-	      struct bpf_local_storage_elem *selem)
-{
-	return &smap->buckets[hash_ptr(selem, smap->bucket_log)];
-}
+अटल काष्ठा bpf_local_storage_map_bucket *
+select_bucket(काष्ठा bpf_local_storage_map *smap,
+	      काष्ठा bpf_local_storage_elem *selem)
+अणु
+	वापस &smap->buckets[hash_ptr(selem, smap->bucket_log)];
+पूर्ण
 
-static int mem_charge(struct bpf_local_storage_map *smap, void *owner, u32 size)
-{
-	struct bpf_map *map = &smap->map;
+अटल पूर्णांक mem_अक्षरge(काष्ठा bpf_local_storage_map *smap, व्योम *owner, u32 size)
+अणु
+	काष्ठा bpf_map *map = &smap->map;
 
-	if (!map->ops->map_local_storage_charge)
-		return 0;
+	अगर (!map->ops->map_local_storage_अक्षरge)
+		वापस 0;
 
-	return map->ops->map_local_storage_charge(smap, owner, size);
-}
+	वापस map->ops->map_local_storage_अक्षरge(smap, owner, size);
+पूर्ण
 
-static void mem_uncharge(struct bpf_local_storage_map *smap, void *owner,
+अटल व्योम mem_unअक्षरge(काष्ठा bpf_local_storage_map *smap, व्योम *owner,
 			 u32 size)
-{
-	struct bpf_map *map = &smap->map;
+अणु
+	काष्ठा bpf_map *map = &smap->map;
 
-	if (map->ops->map_local_storage_uncharge)
-		map->ops->map_local_storage_uncharge(smap, owner, size);
-}
+	अगर (map->ops->map_local_storage_unअक्षरge)
+		map->ops->map_local_storage_unअक्षरge(smap, owner, size);
+पूर्ण
 
-static struct bpf_local_storage __rcu **
-owner_storage(struct bpf_local_storage_map *smap, void *owner)
-{
-	struct bpf_map *map = &smap->map;
+अटल काष्ठा bpf_local_storage __rcu **
+owner_storage(काष्ठा bpf_local_storage_map *smap, व्योम *owner)
+अणु
+	काष्ठा bpf_map *map = &smap->map;
 
-	return map->ops->map_owner_storage_ptr(owner);
-}
+	वापस map->ops->map_owner_storage_ptr(owner);
+पूर्ण
 
-static bool selem_linked_to_storage(const struct bpf_local_storage_elem *selem)
-{
-	return !hlist_unhashed(&selem->snode);
-}
+अटल bool selem_linked_to_storage(स्थिर काष्ठा bpf_local_storage_elem *selem)
+अणु
+	वापस !hlist_unhashed(&selem->snode);
+पूर्ण
 
-static bool selem_linked_to_map(const struct bpf_local_storage_elem *selem)
-{
-	return !hlist_unhashed(&selem->map_node);
-}
+अटल bool selem_linked_to_map(स्थिर काष्ठा bpf_local_storage_elem *selem)
+अणु
+	वापस !hlist_unhashed(&selem->map_node);
+पूर्ण
 
-struct bpf_local_storage_elem *
-bpf_selem_alloc(struct bpf_local_storage_map *smap, void *owner,
-		void *value, bool charge_mem)
-{
-	struct bpf_local_storage_elem *selem;
+काष्ठा bpf_local_storage_elem *
+bpf_selem_alloc(काष्ठा bpf_local_storage_map *smap, व्योम *owner,
+		व्योम *value, bool अक्षरge_mem)
+अणु
+	काष्ठा bpf_local_storage_elem *selem;
 
-	if (charge_mem && mem_charge(smap, owner, smap->elem_size))
-		return NULL;
+	अगर (अक्षरge_mem && mem_अक्षरge(smap, owner, smap->elem_size))
+		वापस शून्य;
 
 	selem = bpf_map_kzalloc(&smap->map, smap->elem_size,
 				GFP_ATOMIC | __GFP_NOWARN);
-	if (selem) {
-		if (value)
-			memcpy(SDATA(selem)->data, value, smap->map.value_size);
-		return selem;
-	}
+	अगर (selem) अणु
+		अगर (value)
+			स_नकल(SDATA(selem)->data, value, smap->map.value_size);
+		वापस selem;
+	पूर्ण
 
-	if (charge_mem)
-		mem_uncharge(smap, owner, smap->elem_size);
+	अगर (अक्षरge_mem)
+		mem_unअक्षरge(smap, owner, smap->elem_size);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* local_storage->lock must be held and selem->local_storage == local_storage.
  * The caller must ensure selem->smap is still valid to be
- * dereferenced for its smap->elem_size and smap->cache_idx.
+ * dereferenced क्रम its smap->elem_size and smap->cache_idx.
  */
-bool bpf_selem_unlink_storage_nolock(struct bpf_local_storage *local_storage,
-				     struct bpf_local_storage_elem *selem,
-				     bool uncharge_mem)
-{
-	struct bpf_local_storage_map *smap;
-	bool free_local_storage;
-	void *owner;
+bool bpf_selem_unlink_storage_nolock(काष्ठा bpf_local_storage *local_storage,
+				     काष्ठा bpf_local_storage_elem *selem,
+				     bool unअक्षरge_mem)
+अणु
+	काष्ठा bpf_local_storage_map *smap;
+	bool मुक्त_local_storage;
+	व्योम *owner;
 
 	smap = rcu_dereference(SDATA(selem)->smap);
 	owner = local_storage->owner;
 
-	/* All uncharging on the owner must be done first.
-	 * The owner may be freed once the last selem is unlinked
+	/* All unअक्षरging on the owner must be करोne first.
+	 * The owner may be मुक्तd once the last selem is unlinked
 	 * from local_storage.
 	 */
-	if (uncharge_mem)
-		mem_uncharge(smap, owner, smap->elem_size);
+	अगर (unअक्षरge_mem)
+		mem_unअक्षरge(smap, owner, smap->elem_size);
 
-	free_local_storage = hlist_is_singular_node(&selem->snode,
+	मुक्त_local_storage = hlist_is_singular_node(&selem->snode,
 						    &local_storage->list);
-	if (free_local_storage) {
-		mem_uncharge(smap, owner, sizeof(struct bpf_local_storage));
-		local_storage->owner = NULL;
+	अगर (मुक्त_local_storage) अणु
+		mem_unअक्षरge(smap, owner, माप(काष्ठा bpf_local_storage));
+		local_storage->owner = शून्य;
 
-		/* After this RCU_INIT, owner may be freed and cannot be used */
-		RCU_INIT_POINTER(*owner_storage(smap, owner), NULL);
+		/* After this RCU_INIT, owner may be मुक्तd and cannot be used */
+		RCU_INIT_POINTER(*owner_storage(smap, owner), शून्य);
 
-		/* local_storage is not freed now.  local_storage->lock is
+		/* local_storage is not मुक्तd now.  local_storage->lock is
 		 * still held and raw_spin_unlock_bh(&local_storage->lock)
-		 * will be done by the caller.
+		 * will be करोne by the caller.
 		 *
-		 * Although the unlock will be done under
-		 * rcu_read_lock(),  it is more intutivie to
-		 * read if kfree_rcu(local_storage, rcu) is done
+		 * Although the unlock will be करोne under
+		 * rcu_पढ़ो_lock(),  it is more पूर्णांकutivie to
+		 * पढ़ो अगर kमुक्त_rcu(local_storage, rcu) is करोne
 		 * after the raw_spin_unlock_bh(&local_storage->lock).
 		 *
-		 * Hence, a "bool free_local_storage" is returned
-		 * to the caller which then calls the kfree_rcu()
+		 * Hence, a "bool free_local_storage" is वापसed
+		 * to the caller which then calls the kमुक्त_rcu()
 		 * after unlock.
 		 */
-	}
+	पूर्ण
 	hlist_del_init_rcu(&selem->snode);
-	if (rcu_access_pointer(local_storage->cache[smap->cache_idx]) ==
+	अगर (rcu_access_poपूर्णांकer(local_storage->cache[smap->cache_idx]) ==
 	    SDATA(selem))
-		RCU_INIT_POINTER(local_storage->cache[smap->cache_idx], NULL);
+		RCU_INIT_POINTER(local_storage->cache[smap->cache_idx], शून्य);
 
-	kfree_rcu(selem, rcu);
+	kमुक्त_rcu(selem, rcu);
 
-	return free_local_storage;
-}
+	वापस मुक्त_local_storage;
+पूर्ण
 
-static void __bpf_selem_unlink_storage(struct bpf_local_storage_elem *selem)
-{
-	struct bpf_local_storage *local_storage;
-	bool free_local_storage = false;
-	unsigned long flags;
+अटल व्योम __bpf_selem_unlink_storage(काष्ठा bpf_local_storage_elem *selem)
+अणु
+	काष्ठा bpf_local_storage *local_storage;
+	bool मुक्त_local_storage = false;
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!selem_linked_to_storage(selem)))
-		/* selem has already been unlinked from sk */
-		return;
+	अगर (unlikely(!selem_linked_to_storage(selem)))
+		/* selem has alपढ़ोy been unlinked from sk */
+		वापस;
 
 	local_storage = rcu_dereference(selem->local_storage);
 	raw_spin_lock_irqsave(&local_storage->lock, flags);
-	if (likely(selem_linked_to_storage(selem)))
-		free_local_storage = bpf_selem_unlink_storage_nolock(
+	अगर (likely(selem_linked_to_storage(selem)))
+		मुक्त_local_storage = bpf_selem_unlink_storage_nolock(
 			local_storage, selem, true);
 	raw_spin_unlock_irqrestore(&local_storage->lock, flags);
 
-	if (free_local_storage)
-		kfree_rcu(local_storage, rcu);
-}
+	अगर (मुक्त_local_storage)
+		kमुक्त_rcu(local_storage, rcu);
+पूर्ण
 
-void bpf_selem_link_storage_nolock(struct bpf_local_storage *local_storage,
-				   struct bpf_local_storage_elem *selem)
-{
+व्योम bpf_selem_link_storage_nolock(काष्ठा bpf_local_storage *local_storage,
+				   काष्ठा bpf_local_storage_elem *selem)
+अणु
 	RCU_INIT_POINTER(selem->local_storage, local_storage);
 	hlist_add_head_rcu(&selem->snode, &local_storage->list);
-}
+पूर्ण
 
-void bpf_selem_unlink_map(struct bpf_local_storage_elem *selem)
-{
-	struct bpf_local_storage_map *smap;
-	struct bpf_local_storage_map_bucket *b;
-	unsigned long flags;
+व्योम bpf_selem_unlink_map(काष्ठा bpf_local_storage_elem *selem)
+अणु
+	काष्ठा bpf_local_storage_map *smap;
+	काष्ठा bpf_local_storage_map_bucket *b;
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!selem_linked_to_map(selem)))
-		/* selem has already be unlinked from smap */
-		return;
+	अगर (unlikely(!selem_linked_to_map(selem)))
+		/* selem has alपढ़ोy be unlinked from smap */
+		वापस;
 
 	smap = rcu_dereference(SDATA(selem)->smap);
 	b = select_bucket(smap, selem);
 	raw_spin_lock_irqsave(&b->lock, flags);
-	if (likely(selem_linked_to_map(selem)))
+	अगर (likely(selem_linked_to_map(selem)))
 		hlist_del_init_rcu(&selem->map_node);
 	raw_spin_unlock_irqrestore(&b->lock, flags);
-}
+पूर्ण
 
-void bpf_selem_link_map(struct bpf_local_storage_map *smap,
-			struct bpf_local_storage_elem *selem)
-{
-	struct bpf_local_storage_map_bucket *b = select_bucket(smap, selem);
-	unsigned long flags;
+व्योम bpf_selem_link_map(काष्ठा bpf_local_storage_map *smap,
+			काष्ठा bpf_local_storage_elem *selem)
+अणु
+	काष्ठा bpf_local_storage_map_bucket *b = select_bucket(smap, selem);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&b->lock, flags);
 	RCU_INIT_POINTER(SDATA(selem)->smap, smap);
 	hlist_add_head_rcu(&selem->map_node, &b->list);
 	raw_spin_unlock_irqrestore(&b->lock, flags);
-}
+पूर्ण
 
-void bpf_selem_unlink(struct bpf_local_storage_elem *selem)
-{
-	/* Always unlink from map before unlinking from local_storage
-	 * because selem will be freed after successfully unlinked from
+व्योम bpf_selem_unlink(काष्ठा bpf_local_storage_elem *selem)
+अणु
+	/* Always unlink from map beक्रमe unlinking from local_storage
+	 * because selem will be मुक्तd after successfully unlinked from
 	 * the local_storage.
 	 */
 	bpf_selem_unlink_map(selem);
 	__bpf_selem_unlink_storage(selem);
-}
+पूर्ण
 
-struct bpf_local_storage_data *
-bpf_local_storage_lookup(struct bpf_local_storage *local_storage,
-			 struct bpf_local_storage_map *smap,
+काष्ठा bpf_local_storage_data *
+bpf_local_storage_lookup(काष्ठा bpf_local_storage *local_storage,
+			 काष्ठा bpf_local_storage_map *smap,
 			 bool cacheit_lockit)
-{
-	struct bpf_local_storage_data *sdata;
-	struct bpf_local_storage_elem *selem;
+अणु
+	काष्ठा bpf_local_storage_data *sdata;
+	काष्ठा bpf_local_storage_elem *selem;
 
 	/* Fast path (cache hit) */
 	sdata = rcu_dereference(local_storage->cache[smap->cache_idx]);
-	if (sdata && rcu_access_pointer(sdata->smap) == smap)
-		return sdata;
+	अगर (sdata && rcu_access_poपूर्णांकer(sdata->smap) == smap)
+		वापस sdata;
 
 	/* Slow path (cache miss) */
-	hlist_for_each_entry_rcu(selem, &local_storage->list, snode)
-		if (rcu_access_pointer(SDATA(selem)->smap) == smap)
-			break;
+	hlist_क्रम_each_entry_rcu(selem, &local_storage->list, snode)
+		अगर (rcu_access_poपूर्णांकer(SDATA(selem)->smap) == smap)
+			अवरोध;
 
-	if (!selem)
-		return NULL;
+	अगर (!selem)
+		वापस शून्य;
 
 	sdata = SDATA(selem);
-	if (cacheit_lockit) {
-		unsigned long flags;
+	अगर (cacheit_lockit) अणु
+		अचिन्हित दीर्घ flags;
 
-		/* spinlock is needed to avoid racing with the
-		 * parallel delete.  Otherwise, publishing an already
-		 * deleted sdata to the cache will become a use-after-free
+		/* spinlock is needed to aव्योम racing with the
+		 * parallel delete.  Otherwise, publishing an alपढ़ोy
+		 * deleted sdata to the cache will become a use-after-मुक्त
 		 * problem in the next bpf_local_storage_lookup().
 		 */
 		raw_spin_lock_irqsave(&local_storage->lock, flags);
-		if (selem_linked_to_storage(selem))
-			rcu_assign_pointer(local_storage->cache[smap->cache_idx],
+		अगर (selem_linked_to_storage(selem))
+			rcu_assign_poपूर्णांकer(local_storage->cache[smap->cache_idx],
 					   sdata);
 		raw_spin_unlock_irqrestore(&local_storage->lock, flags);
-	}
+	पूर्ण
 
-	return sdata;
-}
+	वापस sdata;
+पूर्ण
 
-static int check_flags(const struct bpf_local_storage_data *old_sdata,
+अटल पूर्णांक check_flags(स्थिर काष्ठा bpf_local_storage_data *old_sdata,
 		       u64 map_flags)
-{
-	if (old_sdata && (map_flags & ~BPF_F_LOCK) == BPF_NOEXIST)
-		/* elem already exists */
-		return -EEXIST;
+अणु
+	अगर (old_sdata && (map_flags & ~BPF_F_LOCK) == BPF_NOEXIST)
+		/* elem alपढ़ोy exists */
+		वापस -EEXIST;
 
-	if (!old_sdata && (map_flags & ~BPF_F_LOCK) == BPF_EXIST)
-		/* elem doesn't exist, cannot update it */
-		return -ENOENT;
+	अगर (!old_sdata && (map_flags & ~BPF_F_LOCK) == BPF_EXIST)
+		/* elem करोesn't exist, cannot update it */
+		वापस -ENOENT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bpf_local_storage_alloc(void *owner,
-			    struct bpf_local_storage_map *smap,
-			    struct bpf_local_storage_elem *first_selem)
-{
-	struct bpf_local_storage *prev_storage, *storage;
-	struct bpf_local_storage **owner_storage_ptr;
-	int err;
+पूर्णांक bpf_local_storage_alloc(व्योम *owner,
+			    काष्ठा bpf_local_storage_map *smap,
+			    काष्ठा bpf_local_storage_elem *first_selem)
+अणु
+	काष्ठा bpf_local_storage *prev_storage, *storage;
+	काष्ठा bpf_local_storage **owner_storage_ptr;
+	पूर्णांक err;
 
-	err = mem_charge(smap, owner, sizeof(*storage));
-	if (err)
-		return err;
+	err = mem_अक्षरge(smap, owner, माप(*storage));
+	अगर (err)
+		वापस err;
 
-	storage = bpf_map_kzalloc(&smap->map, sizeof(*storage),
+	storage = bpf_map_kzalloc(&smap->map, माप(*storage),
 				  GFP_ATOMIC | __GFP_NOWARN);
-	if (!storage) {
+	अगर (!storage) अणु
 		err = -ENOMEM;
-		goto uncharge;
-	}
+		जाओ unअक्षरge;
+	पूर्ण
 
 	INIT_HLIST_HEAD(&storage->list);
 	raw_spin_lock_init(&storage->lock);
@@ -285,140 +286,140 @@ int bpf_local_storage_alloc(void *owner,
 	bpf_selem_link_map(smap, first_selem);
 
 	owner_storage_ptr =
-		(struct bpf_local_storage **)owner_storage(smap, owner);
+		(काष्ठा bpf_local_storage **)owner_storage(smap, owner);
 	/* Publish storage to the owner.
 	 * Instead of using any lock of the kernel object (i.e. owner),
 	 * cmpxchg will work with any kernel object regardless what
 	 * the running context is, bh, irq...etc.
 	 *
-	 * From now on, the owner->storage pointer (e.g. sk->sk_bpf_storage)
-	 * is protected by the storage->lock.  Hence, when freeing
-	 * the owner->storage, the storage->lock must be held before
-	 * setting owner->storage ptr to NULL.
+	 * From now on, the owner->storage poपूर्णांकer (e.g. sk->sk_bpf_storage)
+	 * is रक्षित by the storage->lock.  Hence, when मुक्तing
+	 * the owner->storage, the storage->lock must be held beक्रमe
+	 * setting owner->storage ptr to शून्य.
 	 */
-	prev_storage = cmpxchg(owner_storage_ptr, NULL, storage);
-	if (unlikely(prev_storage)) {
+	prev_storage = cmpxchg(owner_storage_ptr, शून्य, storage);
+	अगर (unlikely(prev_storage)) अणु
 		bpf_selem_unlink_map(first_selem);
 		err = -EAGAIN;
-		goto uncharge;
+		जाओ unअक्षरge;
 
 		/* Note that even first_selem was linked to smap's
-		 * bucket->list, first_selem can be freed immediately
-		 * (instead of kfree_rcu) because
-		 * bpf_local_storage_map_free() does a
-		 * synchronize_rcu() before walking the bucket->list.
+		 * bucket->list, first_selem can be मुक्तd immediately
+		 * (instead of kमुक्त_rcu) because
+		 * bpf_local_storage_map_मुक्त() करोes a
+		 * synchronize_rcu() beक्रमe walking the bucket->list.
 		 * Hence, no one is accessing selem from the
-		 * bucket->list under rcu_read_lock().
+		 * bucket->list under rcu_पढ़ो_lock().
 		 */
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-uncharge:
-	kfree(storage);
-	mem_uncharge(smap, owner, sizeof(*storage));
-	return err;
-}
+unअक्षरge:
+	kमुक्त(storage);
+	mem_unअक्षरge(smap, owner, माप(*storage));
+	वापस err;
+पूर्ण
 
 /* sk cannot be going away because it is linking new elem
  * to sk->sk_bpf_storage. (i.e. sk->sk_refcnt cannot be 0).
  * Otherwise, it will become a leak (and other memory issues
- * during map destruction).
+ * during map deकाष्ठाion).
  */
-struct bpf_local_storage_data *
-bpf_local_storage_update(void *owner, struct bpf_local_storage_map *smap,
-			 void *value, u64 map_flags)
-{
-	struct bpf_local_storage_data *old_sdata = NULL;
-	struct bpf_local_storage_elem *selem;
-	struct bpf_local_storage *local_storage;
-	unsigned long flags;
-	int err;
+काष्ठा bpf_local_storage_data *
+bpf_local_storage_update(व्योम *owner, काष्ठा bpf_local_storage_map *smap,
+			 व्योम *value, u64 map_flags)
+अणु
+	काष्ठा bpf_local_storage_data *old_sdata = शून्य;
+	काष्ठा bpf_local_storage_elem *selem;
+	काष्ठा bpf_local_storage *local_storage;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	/* BPF_EXIST and BPF_NOEXIST cannot be both set */
-	if (unlikely((map_flags & ~BPF_F_LOCK) > BPF_EXIST) ||
+	अगर (unlikely((map_flags & ~BPF_F_LOCK) > BPF_EXIST) ||
 	    /* BPF_F_LOCK can only be used in a value with spin_lock */
 	    unlikely((map_flags & BPF_F_LOCK) &&
 		     !map_value_has_spin_lock(&smap->map)))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
 	local_storage = rcu_dereference(*owner_storage(smap, owner));
-	if (!local_storage || hlist_empty(&local_storage->list)) {
-		/* Very first elem for the owner */
-		err = check_flags(NULL, map_flags);
-		if (err)
-			return ERR_PTR(err);
+	अगर (!local_storage || hlist_empty(&local_storage->list)) अणु
+		/* Very first elem क्रम the owner */
+		err = check_flags(शून्य, map_flags);
+		अगर (err)
+			वापस ERR_PTR(err);
 
 		selem = bpf_selem_alloc(smap, owner, value, true);
-		if (!selem)
-			return ERR_PTR(-ENOMEM);
+		अगर (!selem)
+			वापस ERR_PTR(-ENOMEM);
 
 		err = bpf_local_storage_alloc(owner, smap, selem);
-		if (err) {
-			kfree(selem);
-			mem_uncharge(smap, owner, smap->elem_size);
-			return ERR_PTR(err);
-		}
+		अगर (err) अणु
+			kमुक्त(selem);
+			mem_unअक्षरge(smap, owner, smap->elem_size);
+			वापस ERR_PTR(err);
+		पूर्ण
 
-		return SDATA(selem);
-	}
+		वापस SDATA(selem);
+	पूर्ण
 
-	if ((map_flags & BPF_F_LOCK) && !(map_flags & BPF_NOEXIST)) {
-		/* Hoping to find an old_sdata to do inline update
-		 * such that it can avoid taking the local_storage->lock
+	अगर ((map_flags & BPF_F_LOCK) && !(map_flags & BPF_NOEXIST)) अणु
+		/* Hoping to find an old_sdata to करो अंतरभूत update
+		 * such that it can aव्योम taking the local_storage->lock
 		 * and changing the lists.
 		 */
 		old_sdata =
 			bpf_local_storage_lookup(local_storage, smap, false);
 		err = check_flags(old_sdata, map_flags);
-		if (err)
-			return ERR_PTR(err);
-		if (old_sdata && selem_linked_to_storage(SELEM(old_sdata))) {
+		अगर (err)
+			वापस ERR_PTR(err);
+		अगर (old_sdata && selem_linked_to_storage(SELEM(old_sdata))) अणु
 			copy_map_value_locked(&smap->map, old_sdata->data,
 					      value, false);
-			return old_sdata;
-		}
-	}
+			वापस old_sdata;
+		पूर्ण
+	पूर्ण
 
 	raw_spin_lock_irqsave(&local_storage->lock, flags);
 
 	/* Recheck local_storage->list under local_storage->lock */
-	if (unlikely(hlist_empty(&local_storage->list))) {
+	अगर (unlikely(hlist_empty(&local_storage->list))) अणु
 		/* A parallel del is happening and local_storage is going
-		 * away.  It has just been checked before, so very
+		 * away.  It has just been checked beक्रमe, so very
 		 * unlikely.  Return instead of retry to keep things
 		 * simple.
 		 */
 		err = -EAGAIN;
-		goto unlock_err;
-	}
+		जाओ unlock_err;
+	पूर्ण
 
 	old_sdata = bpf_local_storage_lookup(local_storage, smap, false);
 	err = check_flags(old_sdata, map_flags);
-	if (err)
-		goto unlock_err;
+	अगर (err)
+		जाओ unlock_err;
 
-	if (old_sdata && (map_flags & BPF_F_LOCK)) {
+	अगर (old_sdata && (map_flags & BPF_F_LOCK)) अणु
 		copy_map_value_locked(&smap->map, old_sdata->data, value,
 				      false);
 		selem = SELEM(old_sdata);
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	/* local_storage->lock is held.  Hence, we are sure
-	 * we can unlink and uncharge the old_sdata successfully
-	 * later.  Hence, instead of charging the new selem now
-	 * and then uncharge the old selem later (which may cause
-	 * a potential but unnecessary charge failure),  avoid taking
-	 * a charge at all here (the "!old_sdata" check) and the
-	 * old_sdata will not be uncharged later during
+	 * we can unlink and unअक्षरge the old_sdata successfully
+	 * later.  Hence, instead of अक्षरging the new selem now
+	 * and then unअक्षरge the old selem later (which may cause
+	 * a potential but unnecessary अक्षरge failure),  aव्योम taking
+	 * a अक्षरge at all here (the "!old_sdata" check) and the
+	 * old_sdata will not be unअक्षरged later during
 	 * bpf_selem_unlink_storage_nolock().
 	 */
 	selem = bpf_selem_alloc(smap, owner, value, !old_sdata);
-	if (!selem) {
+	अगर (!selem) अणु
 		err = -ENOMEM;
-		goto unlock_err;
-	}
+		जाओ unlock_err;
+	पूर्ण
 
 	/* First, link the new selem to the map */
 	bpf_selem_link_map(smap, selem);
@@ -426,182 +427,182 @@ bpf_local_storage_update(void *owner, struct bpf_local_storage_map *smap,
 	/* Second, link (and publish) the new selem to local_storage */
 	bpf_selem_link_storage_nolock(local_storage, selem);
 
-	/* Third, remove old selem, SELEM(old_sdata) */
-	if (old_sdata) {
+	/* Third, हटाओ old selem, SELEM(old_sdata) */
+	अगर (old_sdata) अणु
 		bpf_selem_unlink_map(SELEM(old_sdata));
 		bpf_selem_unlink_storage_nolock(local_storage, SELEM(old_sdata),
 						false);
-	}
+	पूर्ण
 
 unlock:
 	raw_spin_unlock_irqrestore(&local_storage->lock, flags);
-	return SDATA(selem);
+	वापस SDATA(selem);
 
 unlock_err:
 	raw_spin_unlock_irqrestore(&local_storage->lock, flags);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-u16 bpf_local_storage_cache_idx_get(struct bpf_local_storage_cache *cache)
-{
+u16 bpf_local_storage_cache_idx_get(काष्ठा bpf_local_storage_cache *cache)
+अणु
 	u64 min_usage = U64_MAX;
 	u16 i, res = 0;
 
 	spin_lock(&cache->idx_lock);
 
-	for (i = 0; i < BPF_LOCAL_STORAGE_CACHE_SIZE; i++) {
-		if (cache->idx_usage_counts[i] < min_usage) {
+	क्रम (i = 0; i < BPF_LOCAL_STORAGE_CACHE_SIZE; i++) अणु
+		अगर (cache->idx_usage_counts[i] < min_usage) अणु
 			min_usage = cache->idx_usage_counts[i];
 			res = i;
 
-			/* Found a free cache_idx */
-			if (!min_usage)
-				break;
-		}
-	}
+			/* Found a मुक्त cache_idx */
+			अगर (!min_usage)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	cache->idx_usage_counts[res]++;
 
 	spin_unlock(&cache->idx_lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-void bpf_local_storage_cache_idx_free(struct bpf_local_storage_cache *cache,
+व्योम bpf_local_storage_cache_idx_मुक्त(काष्ठा bpf_local_storage_cache *cache,
 				      u16 idx)
-{
+अणु
 	spin_lock(&cache->idx_lock);
 	cache->idx_usage_counts[idx]--;
 	spin_unlock(&cache->idx_lock);
-}
+पूर्ण
 
-void bpf_local_storage_map_free(struct bpf_local_storage_map *smap,
-				int __percpu *busy_counter)
-{
-	struct bpf_local_storage_elem *selem;
-	struct bpf_local_storage_map_bucket *b;
-	unsigned int i;
+व्योम bpf_local_storage_map_मुक्त(काष्ठा bpf_local_storage_map *smap,
+				पूर्णांक __percpu *busy_counter)
+अणु
+	काष्ठा bpf_local_storage_elem *selem;
+	काष्ठा bpf_local_storage_map_bucket *b;
+	अचिन्हित पूर्णांक i;
 
 	/* Note that this map might be concurrently cloned from
-	 * bpf_sk_storage_clone. Wait for any existing bpf_sk_storage_clone
-	 * RCU read section to finish before proceeding. New RCU
-	 * read sections should be prevented via bpf_map_inc_not_zero.
+	 * bpf_sk_storage_clone. Wait क्रम any existing bpf_sk_storage_clone
+	 * RCU पढ़ो section to finish beक्रमe proceeding. New RCU
+	 * पढ़ो sections should be prevented via bpf_map_inc_not_zero.
 	 */
 	synchronize_rcu();
 
-	/* bpf prog and the userspace can no longer access this map
+	/* bpf prog and the userspace can no दीर्घer access this map
 	 * now.  No new selem (of this map) can be added
 	 * to the owner->storage or to the map bucket's list.
 	 *
 	 * The elem of this map can be cleaned up here
-	 * or when the storage is freed e.g.
-	 * by bpf_sk_storage_free() during __sk_destruct().
+	 * or when the storage is मुक्तd e.g.
+	 * by bpf_sk_storage_मुक्त() during __sk_deकाष्ठा().
 	 */
-	for (i = 0; i < (1U << smap->bucket_log); i++) {
+	क्रम (i = 0; i < (1U << smap->bucket_log); i++) अणु
 		b = &smap->buckets[i];
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		/* No one is adding to b->list now */
-		while ((selem = hlist_entry_safe(
+		जबतक ((selem = hlist_entry_safe(
 				rcu_dereference_raw(hlist_first_rcu(&b->list)),
-				struct bpf_local_storage_elem, map_node))) {
-			if (busy_counter) {
+				काष्ठा bpf_local_storage_elem, map_node))) अणु
+			अगर (busy_counter) अणु
 				migrate_disable();
 				__this_cpu_inc(*busy_counter);
-			}
+			पूर्ण
 			bpf_selem_unlink(selem);
-			if (busy_counter) {
+			अगर (busy_counter) अणु
 				__this_cpu_dec(*busy_counter);
 				migrate_enable();
-			}
+			पूर्ण
 			cond_resched_rcu();
-		}
-		rcu_read_unlock();
-	}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	/* While freeing the storage we may still need to access the map.
+	/* While मुक्तing the storage we may still need to access the map.
 	 *
-	 * e.g. when bpf_sk_storage_free() has unlinked selem from the map
-	 * which then made the above while((selem = ...)) loop
-	 * exit immediately.
+	 * e.g. when bpf_sk_storage_मुक्त() has unlinked selem from the map
+	 * which then made the above जबतक((selem = ...)) loop
+	 * निकास immediately.
 	 *
-	 * However, while freeing the storage one still needs to access the
-	 * smap->elem_size to do the uncharging in
+	 * However, जबतक मुक्तing the storage one still needs to access the
+	 * smap->elem_size to करो the unअक्षरging in
 	 * bpf_selem_unlink_storage_nolock().
 	 *
-	 * Hence, wait another rcu grace period for the storage to be freed.
+	 * Hence, रुको another rcu grace period क्रम the storage to be मुक्तd.
 	 */
 	synchronize_rcu();
 
-	kvfree(smap->buckets);
-	kfree(smap);
-}
+	kvमुक्त(smap->buckets);
+	kमुक्त(smap);
+पूर्ण
 
-int bpf_local_storage_map_alloc_check(union bpf_attr *attr)
-{
-	if (attr->map_flags & ~BPF_LOCAL_STORAGE_CREATE_FLAG_MASK ||
+पूर्णांक bpf_local_storage_map_alloc_check(जोड़ bpf_attr *attr)
+अणु
+	अगर (attr->map_flags & ~BPF_LOCAL_STORAGE_CREATE_FLAG_MASK ||
 	    !(attr->map_flags & BPF_F_NO_PREALLOC) ||
 	    attr->max_entries ||
-	    attr->key_size != sizeof(int) || !attr->value_size ||
-	    /* Enforce BTF for userspace sk dumping */
+	    attr->key_size != माप(पूर्णांक) || !attr->value_size ||
+	    /* Enक्रमce BTF क्रम userspace sk dumping */
 	    !attr->btf_key_type_id || !attr->btf_value_type_id)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!bpf_capable())
-		return -EPERM;
+	अगर (!bpf_capable())
+		वापस -EPERM;
 
-	if (attr->value_size > BPF_LOCAL_STORAGE_MAX_VALUE_SIZE)
-		return -E2BIG;
+	अगर (attr->value_size > BPF_LOCAL_STORAGE_MAX_VALUE_SIZE)
+		वापस -E2BIG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct bpf_local_storage_map *bpf_local_storage_map_alloc(union bpf_attr *attr)
-{
-	struct bpf_local_storage_map *smap;
-	unsigned int i;
+काष्ठा bpf_local_storage_map *bpf_local_storage_map_alloc(जोड़ bpf_attr *attr)
+अणु
+	काष्ठा bpf_local_storage_map *smap;
+	अचिन्हित पूर्णांक i;
 	u32 nbuckets;
 
-	smap = kzalloc(sizeof(*smap), GFP_USER | __GFP_NOWARN | __GFP_ACCOUNT);
-	if (!smap)
-		return ERR_PTR(-ENOMEM);
+	smap = kzalloc(माप(*smap), GFP_USER | __GFP_NOWARN | __GFP_ACCOUNT);
+	अगर (!smap)
+		वापस ERR_PTR(-ENOMEM);
 	bpf_map_init_from_attr(&smap->map, attr);
 
-	nbuckets = roundup_pow_of_two(num_possible_cpus());
+	nbuckets = roundup_घात_of_two(num_possible_cpus());
 	/* Use at least 2 buckets, select_bucket() is undefined behavior with 1 bucket */
 	nbuckets = max_t(u32, 2, nbuckets);
 	smap->bucket_log = ilog2(nbuckets);
 
-	smap->buckets = kvcalloc(sizeof(*smap->buckets), nbuckets,
+	smap->buckets = kvसुस्मृति(माप(*smap->buckets), nbuckets,
 				 GFP_USER | __GFP_NOWARN | __GFP_ACCOUNT);
-	if (!smap->buckets) {
-		kfree(smap);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!smap->buckets) अणु
+		kमुक्त(smap);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	for (i = 0; i < nbuckets; i++) {
+	क्रम (i = 0; i < nbuckets; i++) अणु
 		INIT_HLIST_HEAD(&smap->buckets[i].list);
 		raw_spin_lock_init(&smap->buckets[i].lock);
-	}
+	पूर्ण
 
 	smap->elem_size =
-		sizeof(struct bpf_local_storage_elem) + attr->value_size;
+		माप(काष्ठा bpf_local_storage_elem) + attr->value_size;
 
-	return smap;
-}
+	वापस smap;
+पूर्ण
 
-int bpf_local_storage_map_check_btf(const struct bpf_map *map,
-				    const struct btf *btf,
-				    const struct btf_type *key_type,
-				    const struct btf_type *value_type)
-{
-	u32 int_data;
+पूर्णांक bpf_local_storage_map_check_btf(स्थिर काष्ठा bpf_map *map,
+				    स्थिर काष्ठा btf *btf,
+				    स्थिर काष्ठा btf_type *key_type,
+				    स्थिर काष्ठा btf_type *value_type)
+अणु
+	u32 पूर्णांक_data;
 
-	if (BTF_INFO_KIND(key_type->info) != BTF_KIND_INT)
-		return -EINVAL;
+	अगर (BTF_INFO_KIND(key_type->info) != BTF_KIND_INT)
+		वापस -EINVAL;
 
-	int_data = *(u32 *)(key_type + 1);
-	if (BTF_INT_BITS(int_data) != 32 || BTF_INT_OFFSET(int_data))
-		return -EINVAL;
+	पूर्णांक_data = *(u32 *)(key_type + 1);
+	अगर (BTF_INT_BITS(पूर्णांक_data) != 32 || BTF_INT_OFFSET(पूर्णांक_data))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

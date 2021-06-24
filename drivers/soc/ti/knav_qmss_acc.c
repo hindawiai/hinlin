@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Keystone accumulator queue manager
  *
@@ -8,83 +9,83 @@
  *		Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/io.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/soc/ti/knav_qmss.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/soc/ti/knav_qmss.h>
 
-#include "knav_qmss.h"
+#समावेश "knav_qmss.h"
 
-#define knav_range_offset_to_inst(kdev, range, q)	\
-	(range->queue_base_inst + (q << kdev->inst_shift))
+#घोषणा knav_range_offset_to_inst(kdev, range, q)	\
+	(range->queue_base_inst + (q << kdev->inst_shअगरt))
 
-static void __knav_acc_notify(struct knav_range_info *range,
-				struct knav_acc_channel *acc)
-{
-	struct knav_device *kdev = range->kdev;
-	struct knav_queue_inst *inst;
-	int range_base, queue;
+अटल व्योम __knav_acc_notअगरy(काष्ठा knav_range_info *range,
+				काष्ठा knav_acc_channel *acc)
+अणु
+	काष्ठा knav_device *kdev = range->kdev;
+	काष्ठा knav_queue_inst *inst;
+	पूर्णांक range_base, queue;
 
 	range_base = kdev->base_id + range->queue_base;
 
-	if (range->flags & RANGE_MULTI_QUEUE) {
-		for (queue = 0; queue < range->num_queues; queue++) {
+	अगर (range->flags & RANGE_MULTI_QUEUE) अणु
+		क्रम (queue = 0; queue < range->num_queues; queue++) अणु
 			inst = knav_range_offset_to_inst(kdev, range,
 								queue);
-			if (inst->notify_needed) {
-				inst->notify_needed = 0;
+			अगर (inst->notअगरy_needed) अणु
+				inst->notअगरy_needed = 0;
 				dev_dbg(kdev->dev, "acc-irq: notifying %d\n",
 					range_base + queue);
-				knav_queue_notify(inst);
-			}
-		}
-	} else {
+				knav_queue_notअगरy(inst);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		queue = acc->channel - range->acc_info.start_channel;
 		inst = knav_range_offset_to_inst(kdev, range, queue);
 		dev_dbg(kdev->dev, "acc-irq: notifying %d\n",
 			range_base + queue);
-		knav_queue_notify(inst);
-	}
-}
+		knav_queue_notअगरy(inst);
+	पूर्ण
+पूर्ण
 
-static int knav_acc_set_notify(struct knav_range_info *range,
-				struct knav_queue_inst *kq,
+अटल पूर्णांक knav_acc_set_notअगरy(काष्ठा knav_range_info *range,
+				काष्ठा knav_queue_inst *kq,
 				bool enabled)
-{
-	struct knav_pdsp_info *pdsp = range->acc_info.pdsp;
-	struct knav_device *kdev = range->kdev;
+अणु
+	काष्ठा knav_pdsp_info *pdsp = range->acc_info.pdsp;
+	काष्ठा knav_device *kdev = range->kdev;
 	u32 mask, offset;
 
 	/*
-	 * when enabling, we need to re-trigger an interrupt if we
+	 * when enabling, we need to re-trigger an पूर्णांकerrupt अगर we
 	 * have descriptors pending
 	 */
-	if (!enabled || atomic_read(&kq->desc_count) <= 0)
-		return 0;
+	अगर (!enabled || atomic_पढ़ो(&kq->desc_count) <= 0)
+		वापस 0;
 
-	kq->notify_needed = 1;
+	kq->notअगरy_needed = 1;
 	atomic_inc(&kq->acc->retrigger_count);
 	mask = BIT(kq->acc->channel % 32);
 	offset = ACC_INTD_OFFSET_STATUS(kq->acc->channel);
 	dev_dbg(kdev->dev, "setup-notify: re-triggering irq for %s\n",
 		kq->acc->name);
-	writel_relaxed(mask, pdsp->intd + offset);
-	return 0;
-}
+	ग_लिखोl_relaxed(mask, pdsp->पूर्णांकd + offset);
+	वापस 0;
+पूर्ण
 
-static irqreturn_t knav_acc_int_handler(int irq, void *_instdata)
-{
-	struct knav_acc_channel *acc;
-	struct knav_queue_inst *kq = NULL;
-	struct knav_range_info *range;
-	struct knav_pdsp_info *pdsp;
-	struct knav_acc_info *info;
-	struct knav_device *kdev;
+अटल irqवापस_t knav_acc_पूर्णांक_handler(पूर्णांक irq, व्योम *_instdata)
+अणु
+	काष्ठा knav_acc_channel *acc;
+	काष्ठा knav_queue_inst *kq = शून्य;
+	काष्ठा knav_range_info *range;
+	काष्ठा knav_pdsp_info *pdsp;
+	काष्ठा knav_acc_info *info;
+	काष्ठा knav_device *kdev;
 
-	u32 *list, *list_cpu, val, idx, notifies;
-	int range_base, channel, queue = 0;
+	u32 *list, *list_cpu, val, idx, notअगरies;
+	पूर्णांक range_base, channel, queue = 0;
 	dma_addr_t list_dma;
 
 	range = _instdata;
@@ -94,169 +95,169 @@ static irqreturn_t knav_acc_int_handler(int irq, void *_instdata)
 	acc   = range->acc;
 
 	range_base = kdev->base_id + range->queue_base;
-	if ((range->flags & RANGE_MULTI_QUEUE) == 0) {
-		for (queue = 0; queue < range->num_irqs; queue++)
-			if (range->irqs[queue].irq == irq)
-				break;
+	अगर ((range->flags & RANGE_MULTI_QUEUE) == 0) अणु
+		क्रम (queue = 0; queue < range->num_irqs; queue++)
+			अगर (range->irqs[queue].irq == irq)
+				अवरोध;
 		kq = knav_range_offset_to_inst(kdev, range, queue);
 		acc += queue;
-	}
+	पूर्ण
 
 	channel = acc->channel;
 	list_dma = acc->list_dma[acc->list_index];
 	list_cpu = acc->list_cpu[acc->list_index];
 	dev_dbg(kdev->dev, "acc-irq: channel %d, list %d, virt %p, dma %pad\n",
 		channel, acc->list_index, list_cpu, &list_dma);
-	if (atomic_read(&acc->retrigger_count)) {
+	अगर (atomic_पढ़ो(&acc->retrigger_count)) अणु
 		atomic_dec(&acc->retrigger_count);
-		__knav_acc_notify(range, acc);
-		writel_relaxed(1, pdsp->intd + ACC_INTD_OFFSET_COUNT(channel));
-		/* ack the interrupt */
-		writel_relaxed(ACC_CHANNEL_INT_BASE + channel,
-			       pdsp->intd + ACC_INTD_OFFSET_EOI);
+		__knav_acc_notअगरy(range, acc);
+		ग_लिखोl_relaxed(1, pdsp->पूर्णांकd + ACC_INTD_OFFSET_COUNT(channel));
+		/* ack the पूर्णांकerrupt */
+		ग_लिखोl_relaxed(ACC_CHANNEL_INT_BASE + channel,
+			       pdsp->पूर्णांकd + ACC_INTD_OFFSET_EOI);
 
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	notifies = readl_relaxed(pdsp->intd + ACC_INTD_OFFSET_COUNT(channel));
-	WARN_ON(!notifies);
-	dma_sync_single_for_cpu(kdev->dev, list_dma, info->list_size,
+	notअगरies = पढ़ोl_relaxed(pdsp->पूर्णांकd + ACC_INTD_OFFSET_COUNT(channel));
+	WARN_ON(!notअगरies);
+	dma_sync_single_क्रम_cpu(kdev->dev, list_dma, info->list_size,
 				DMA_FROM_DEVICE);
 
-	for (list = list_cpu; list < list_cpu + (info->list_size / sizeof(u32));
-	     list += ACC_LIST_ENTRY_WORDS) {
-		if (ACC_LIST_ENTRY_WORDS == 1) {
+	क्रम (list = list_cpu; list < list_cpu + (info->list_size / माप(u32));
+	     list += ACC_LIST_ENTRY_WORDS) अणु
+		अगर (ACC_LIST_ENTRY_WORDS == 1) अणु
 			dev_dbg(kdev->dev,
 				"acc-irq: list %d, entry @%p, %08x\n",
 				acc->list_index, list, list[0]);
-		} else if (ACC_LIST_ENTRY_WORDS == 2) {
+		पूर्ण अन्यथा अगर (ACC_LIST_ENTRY_WORDS == 2) अणु
 			dev_dbg(kdev->dev,
 				"acc-irq: list %d, entry @%p, %08x %08x\n",
 				acc->list_index, list, list[0], list[1]);
-		} else if (ACC_LIST_ENTRY_WORDS == 4) {
+		पूर्ण अन्यथा अगर (ACC_LIST_ENTRY_WORDS == 4) अणु
 			dev_dbg(kdev->dev,
 				"acc-irq: list %d, entry @%p, %08x %08x %08x %08x\n",
 				acc->list_index, list, list[0], list[1],
 				list[2], list[3]);
-		}
+		पूर्ण
 
 		val = list[ACC_LIST_ENTRY_DESC_IDX];
-		if (!val)
-			break;
+		अगर (!val)
+			अवरोध;
 
-		if (range->flags & RANGE_MULTI_QUEUE) {
+		अगर (range->flags & RANGE_MULTI_QUEUE) अणु
 			queue = list[ACC_LIST_ENTRY_QUEUE_IDX] >> 16;
-			if (queue < range_base ||
-			    queue >= range_base + range->num_queues) {
+			अगर (queue < range_base ||
+			    queue >= range_base + range->num_queues) अणु
 				dev_err(kdev->dev,
 					"bad queue %d, expecting %d-%d\n",
 					queue, range_base,
 					range_base + range->num_queues);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			queue -= range_base;
 			kq = knav_range_offset_to_inst(kdev, range,
 								queue);
-		}
+		पूर्ण
 
-		if (atomic_inc_return(&kq->desc_count) >= ACC_DESCS_MAX) {
+		अगर (atomic_inc_वापस(&kq->desc_count) >= ACC_DESCS_MAX) अणु
 			atomic_dec(&kq->desc_count);
 			dev_err(kdev->dev,
 				"acc-irq: queue %d full, entry dropped\n",
 				queue + range_base);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		idx = atomic_inc_return(&kq->desc_tail) & ACC_DESCS_MASK;
+		idx = atomic_inc_वापस(&kq->desc_tail) & ACC_DESCS_MASK;
 		kq->descs[idx] = val;
-		kq->notify_needed = 1;
+		kq->notअगरy_needed = 1;
 		dev_dbg(kdev->dev, "acc-irq: enqueue %08x at %d, queue %d\n",
 			val, idx, queue + range_base);
-	}
+	पूर्ण
 
-	__knav_acc_notify(range, acc);
-	memset(list_cpu, 0, info->list_size);
-	dma_sync_single_for_device(kdev->dev, list_dma, info->list_size,
+	__knav_acc_notअगरy(range, acc);
+	स_रखो(list_cpu, 0, info->list_size);
+	dma_sync_single_क्रम_device(kdev->dev, list_dma, info->list_size,
 				   DMA_TO_DEVICE);
 
 	/* flip to the other list */
 	acc->list_index ^= 1;
 
-	/* reset the interrupt counter */
-	writel_relaxed(1, pdsp->intd + ACC_INTD_OFFSET_COUNT(channel));
+	/* reset the पूर्णांकerrupt counter */
+	ग_लिखोl_relaxed(1, pdsp->पूर्णांकd + ACC_INTD_OFFSET_COUNT(channel));
 
-	/* ack the interrupt */
-	writel_relaxed(ACC_CHANNEL_INT_BASE + channel,
-		       pdsp->intd + ACC_INTD_OFFSET_EOI);
+	/* ack the पूर्णांकerrupt */
+	ग_लिखोl_relaxed(ACC_CHANNEL_INT_BASE + channel,
+		       pdsp->पूर्णांकd + ACC_INTD_OFFSET_EOI);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int knav_range_setup_acc_irq(struct knav_range_info *range,
-				int queue, bool enabled)
-{
-	struct knav_device *kdev = range->kdev;
-	struct knav_acc_channel *acc;
-	struct cpumask *cpu_mask;
-	int ret = 0, irq;
+अटल पूर्णांक knav_range_setup_acc_irq(काष्ठा knav_range_info *range,
+				पूर्णांक queue, bool enabled)
+अणु
+	काष्ठा knav_device *kdev = range->kdev;
+	काष्ठा knav_acc_channel *acc;
+	काष्ठा cpumask *cpu_mask;
+	पूर्णांक ret = 0, irq;
 	u32 old, new;
 
-	if (range->flags & RANGE_MULTI_QUEUE) {
+	अगर (range->flags & RANGE_MULTI_QUEUE) अणु
 		acc = range->acc;
 		irq = range->irqs[0].irq;
 		cpu_mask = range->irqs[0].cpu_mask;
-	} else {
+	पूर्ण अन्यथा अणु
 		acc = range->acc + queue;
 		irq = range->irqs[queue].irq;
 		cpu_mask = range->irqs[queue].cpu_mask;
-	}
+	पूर्ण
 
-	old = acc->open_mask;
-	if (enabled)
+	old = acc->खोलो_mask;
+	अगर (enabled)
 		new = old | BIT(queue);
-	else
+	अन्यथा
 		new = old & ~BIT(queue);
-	acc->open_mask = new;
+	acc->खोलो_mask = new;
 
 	dev_dbg(kdev->dev,
 		"setup-acc-irq: open mask old %08x, new %08x, channel %s\n",
 		old, new, acc->name);
 
-	if (likely(new == old))
-		return 0;
+	अगर (likely(new == old))
+		वापस 0;
 
-	if (new && !old) {
+	अगर (new && !old) अणु
 		dev_dbg(kdev->dev,
 			"setup-acc-irq: requesting %s for channel %s\n",
 			acc->name, acc->name);
-		ret = request_irq(irq, knav_acc_int_handler, 0, acc->name,
+		ret = request_irq(irq, knav_acc_पूर्णांक_handler, 0, acc->name,
 				  range);
-		if (!ret && cpu_mask) {
-			ret = irq_set_affinity_hint(irq, cpu_mask);
-			if (ret) {
+		अगर (!ret && cpu_mask) अणु
+			ret = irq_set_affinity_hपूर्णांक(irq, cpu_mask);
+			अगर (ret) अणु
 				dev_warn(range->kdev->dev,
 					 "Failed to set IRQ affinity\n");
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (old && !new) {
+	अगर (old && !new) अणु
 		dev_dbg(kdev->dev, "setup-acc-irq: freeing %s for channel %s\n",
 			acc->name, acc->name);
-		ret = irq_set_affinity_hint(irq, NULL);
-		if (ret)
+		ret = irq_set_affinity_hपूर्णांक(irq, शून्य);
+		अगर (ret)
 			dev_warn(range->kdev->dev,
 				 "Failed to set IRQ affinity\n");
-		free_irq(irq, range);
-	}
+		मुक्त_irq(irq, range);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *knav_acc_result_str(enum knav_acc_result result)
-{
-	static const char * const result_str[] = {
+अटल स्थिर अक्षर *knav_acc_result_str(क्रमागत knav_acc_result result)
+अणु
+	अटल स्थिर अक्षर * स्थिर result_str[] = अणु
 		[ACC_RET_IDLE]			= "idle",
 		[ACC_RET_SUCCESS]		= "success",
 		[ACC_RET_INVALID_COMMAND]	= "invalid command",
@@ -265,310 +266,310 @@ static const char *knav_acc_result_str(enum knav_acc_result result)
 		[ACC_RET_ACTIVE_CHANNEL]	= "active channel",
 		[ACC_RET_INVALID_QUEUE]		= "invalid queue",
 		[ACC_RET_INVALID_RET]		= "invalid return code",
-	};
+	पूर्ण;
 
-	if (result >= ARRAY_SIZE(result_str))
-		return result_str[ACC_RET_INVALID_RET];
-	else
-		return result_str[result];
-}
+	अगर (result >= ARRAY_SIZE(result_str))
+		वापस result_str[ACC_RET_INVALID_RET];
+	अन्यथा
+		वापस result_str[result];
+पूर्ण
 
-static enum knav_acc_result
-knav_acc_write(struct knav_device *kdev, struct knav_pdsp_info *pdsp,
-		struct knav_reg_acc_command *cmd)
-{
+अटल क्रमागत knav_acc_result
+knav_acc_ग_लिखो(काष्ठा knav_device *kdev, काष्ठा knav_pdsp_info *pdsp,
+		काष्ठा knav_reg_acc_command *cmd)
+अणु
 	u32 result;
 
 	dev_dbg(kdev->dev, "acc command %08x %08x %08x %08x %08x\n",
 		cmd->command, cmd->queue_mask, cmd->list_dma,
-		cmd->queue_num, cmd->timer_config);
+		cmd->queue_num, cmd->समयr_config);
 
-	writel_relaxed(cmd->timer_config, &pdsp->acc_command->timer_config);
-	writel_relaxed(cmd->queue_num, &pdsp->acc_command->queue_num);
-	writel_relaxed(cmd->list_dma, &pdsp->acc_command->list_dma);
-	writel_relaxed(cmd->queue_mask, &pdsp->acc_command->queue_mask);
-	writel_relaxed(cmd->command, &pdsp->acc_command->command);
+	ग_लिखोl_relaxed(cmd->समयr_config, &pdsp->acc_command->समयr_config);
+	ग_लिखोl_relaxed(cmd->queue_num, &pdsp->acc_command->queue_num);
+	ग_लिखोl_relaxed(cmd->list_dma, &pdsp->acc_command->list_dma);
+	ग_लिखोl_relaxed(cmd->queue_mask, &pdsp->acc_command->queue_mask);
+	ग_लिखोl_relaxed(cmd->command, &pdsp->acc_command->command);
 
-	/* wait for the command to clear */
-	do {
-		result = readl_relaxed(&pdsp->acc_command->command);
-	} while ((result >> 8) & 0xff);
+	/* रुको क्रम the command to clear */
+	करो अणु
+		result = पढ़ोl_relaxed(&pdsp->acc_command->command);
+	पूर्ण जबतक ((result >> 8) & 0xff);
 
-	return (result >> 24) & 0xff;
-}
+	वापस (result >> 24) & 0xff;
+पूर्ण
 
-static void knav_acc_setup_cmd(struct knav_device *kdev,
-				struct knav_range_info *range,
-				struct knav_reg_acc_command *cmd,
-				int queue)
-{
-	struct knav_acc_info *info = &range->acc_info;
-	struct knav_acc_channel *acc;
-	int queue_base;
+अटल व्योम knav_acc_setup_cmd(काष्ठा knav_device *kdev,
+				काष्ठा knav_range_info *range,
+				काष्ठा knav_reg_acc_command *cmd,
+				पूर्णांक queue)
+अणु
+	काष्ठा knav_acc_info *info = &range->acc_info;
+	काष्ठा knav_acc_channel *acc;
+	पूर्णांक queue_base;
 	u32 queue_mask;
 
-	if (range->flags & RANGE_MULTI_QUEUE) {
+	अगर (range->flags & RANGE_MULTI_QUEUE) अणु
 		acc = range->acc;
 		queue_base = range->queue_base;
 		queue_mask = BIT(range->num_queues) - 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		acc = range->acc + queue;
 		queue_base = range->queue_base + queue;
 		queue_mask = 0;
-	}
+	पूर्ण
 
-	memset(cmd, 0, sizeof(*cmd));
+	स_रखो(cmd, 0, माप(*cmd));
 	cmd->command    = acc->channel;
 	cmd->queue_mask = queue_mask;
 	cmd->list_dma   = (u32)acc->list_dma[0];
 	cmd->queue_num  = info->list_entries << 16;
 	cmd->queue_num |= queue_base;
 
-	cmd->timer_config = ACC_LIST_ENTRY_TYPE << 18;
-	if (range->flags & RANGE_MULTI_QUEUE)
-		cmd->timer_config |= ACC_CFG_MULTI_QUEUE;
-	cmd->timer_config |= info->pacing_mode << 16;
-	cmd->timer_config |= info->timer_count;
-}
+	cmd->समयr_config = ACC_LIST_ENTRY_TYPE << 18;
+	अगर (range->flags & RANGE_MULTI_QUEUE)
+		cmd->समयr_config |= ACC_CFG_MULTI_QUEUE;
+	cmd->समयr_config |= info->pacing_mode << 16;
+	cmd->समयr_config |= info->समयr_count;
+पूर्ण
 
-static void knav_acc_stop(struct knav_device *kdev,
-				struct knav_range_info *range,
-				int queue)
-{
-	struct knav_reg_acc_command cmd;
-	struct knav_acc_channel *acc;
-	enum knav_acc_result result;
+अटल व्योम knav_acc_stop(काष्ठा knav_device *kdev,
+				काष्ठा knav_range_info *range,
+				पूर्णांक queue)
+अणु
+	काष्ठा knav_reg_acc_command cmd;
+	काष्ठा knav_acc_channel *acc;
+	क्रमागत knav_acc_result result;
 
 	acc = range->acc + queue;
 
 	knav_acc_setup_cmd(kdev, range, &cmd, queue);
 	cmd.command |= ACC_CMD_DISABLE_CHANNEL << 8;
-	result = knav_acc_write(kdev, range->acc_info.pdsp, &cmd);
+	result = knav_acc_ग_लिखो(kdev, range->acc_info.pdsp, &cmd);
 
 	dev_dbg(kdev->dev, "stopped acc channel %s, result %s\n",
 		acc->name, knav_acc_result_str(result));
-}
+पूर्ण
 
-static enum knav_acc_result knav_acc_start(struct knav_device *kdev,
-						struct knav_range_info *range,
-						int queue)
-{
-	struct knav_reg_acc_command cmd;
-	struct knav_acc_channel *acc;
-	enum knav_acc_result result;
+अटल क्रमागत knav_acc_result knav_acc_start(काष्ठा knav_device *kdev,
+						काष्ठा knav_range_info *range,
+						पूर्णांक queue)
+अणु
+	काष्ठा knav_reg_acc_command cmd;
+	काष्ठा knav_acc_channel *acc;
+	क्रमागत knav_acc_result result;
 
 	acc = range->acc + queue;
 
 	knav_acc_setup_cmd(kdev, range, &cmd, queue);
 	cmd.command |= ACC_CMD_ENABLE_CHANNEL << 8;
-	result = knav_acc_write(kdev, range->acc_info.pdsp, &cmd);
+	result = knav_acc_ग_लिखो(kdev, range->acc_info.pdsp, &cmd);
 
 	dev_dbg(kdev->dev, "started acc channel %s, result %s\n",
 		acc->name, knav_acc_result_str(result));
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int knav_acc_init_range(struct knav_range_info *range)
-{
-	struct knav_device *kdev = range->kdev;
-	struct knav_acc_channel *acc;
-	enum knav_acc_result result;
-	int queue;
+अटल पूर्णांक knav_acc_init_range(काष्ठा knav_range_info *range)
+अणु
+	काष्ठा knav_device *kdev = range->kdev;
+	काष्ठा knav_acc_channel *acc;
+	क्रमागत knav_acc_result result;
+	पूर्णांक queue;
 
-	for (queue = 0; queue < range->num_queues; queue++) {
+	क्रम (queue = 0; queue < range->num_queues; queue++) अणु
 		acc = range->acc + queue;
 
 		knav_acc_stop(kdev, range, queue);
 		acc->list_index = 0;
 		result = knav_acc_start(kdev, range, queue);
 
-		if (result != ACC_RET_SUCCESS)
-			return -EIO;
+		अगर (result != ACC_RET_SUCCESS)
+			वापस -EIO;
 
-		if (range->flags & RANGE_MULTI_QUEUE)
-			return 0;
-	}
-	return 0;
-}
+		अगर (range->flags & RANGE_MULTI_QUEUE)
+			वापस 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int knav_acc_init_queue(struct knav_range_info *range,
-				struct knav_queue_inst *kq)
-{
-	unsigned id = kq->id - range->queue_base;
+अटल पूर्णांक knav_acc_init_queue(काष्ठा knav_range_info *range,
+				काष्ठा knav_queue_inst *kq)
+अणु
+	अचिन्हित id = kq->id - range->queue_base;
 
-	kq->descs = devm_kcalloc(range->kdev->dev,
-				 ACC_DESCS_MAX, sizeof(u32), GFP_KERNEL);
-	if (!kq->descs)
-		return -ENOMEM;
+	kq->descs = devm_kसुस्मृति(range->kdev->dev,
+				 ACC_DESCS_MAX, माप(u32), GFP_KERNEL);
+	अगर (!kq->descs)
+		वापस -ENOMEM;
 
 	kq->acc = range->acc;
-	if ((range->flags & RANGE_MULTI_QUEUE) == 0)
+	अगर ((range->flags & RANGE_MULTI_QUEUE) == 0)
 		kq->acc += id;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int knav_acc_open_queue(struct knav_range_info *range,
-				struct knav_queue_inst *inst, unsigned flags)
-{
-	unsigned id = inst->id - range->queue_base;
+अटल पूर्णांक knav_acc_खोलो_queue(काष्ठा knav_range_info *range,
+				काष्ठा knav_queue_inst *inst, अचिन्हित flags)
+अणु
+	अचिन्हित id = inst->id - range->queue_base;
 
-	return knav_range_setup_acc_irq(range, id, true);
-}
+	वापस knav_range_setup_acc_irq(range, id, true);
+पूर्ण
 
-static int knav_acc_close_queue(struct knav_range_info *range,
-					struct knav_queue_inst *inst)
-{
-	unsigned id = inst->id - range->queue_base;
+अटल पूर्णांक knav_acc_बंद_queue(काष्ठा knav_range_info *range,
+					काष्ठा knav_queue_inst *inst)
+अणु
+	अचिन्हित id = inst->id - range->queue_base;
 
-	return knav_range_setup_acc_irq(range, id, false);
-}
+	वापस knav_range_setup_acc_irq(range, id, false);
+पूर्ण
 
-static int knav_acc_free_range(struct knav_range_info *range)
-{
-	struct knav_device *kdev = range->kdev;
-	struct knav_acc_channel *acc;
-	struct knav_acc_info *info;
-	int channel, channels;
+अटल पूर्णांक knav_acc_मुक्त_range(काष्ठा knav_range_info *range)
+अणु
+	काष्ठा knav_device *kdev = range->kdev;
+	काष्ठा knav_acc_channel *acc;
+	काष्ठा knav_acc_info *info;
+	पूर्णांक channel, channels;
 
 	info = &range->acc_info;
 
-	if (range->flags & RANGE_MULTI_QUEUE)
+	अगर (range->flags & RANGE_MULTI_QUEUE)
 		channels = 1;
-	else
+	अन्यथा
 		channels = range->num_queues;
 
-	for (channel = 0; channel < channels; channel++) {
+	क्रम (channel = 0; channel < channels; channel++) अणु
 		acc = range->acc + channel;
-		if (!acc->list_cpu[0])
-			continue;
+		अगर (!acc->list_cpu[0])
+			जारी;
 		dma_unmap_single(kdev->dev, acc->list_dma[0],
-				 info->mem_size, DMA_BIDIRECTIONAL);
-		free_pages_exact(acc->list_cpu[0], info->mem_size);
-	}
-	devm_kfree(range->kdev->dev, range->acc);
-	return 0;
-}
+				 info->mem_size, DMA_BIसूचीECTIONAL);
+		मुक्त_pages_exact(acc->list_cpu[0], info->mem_size);
+	पूर्ण
+	devm_kमुक्त(range->kdev->dev, range->acc);
+	वापस 0;
+पूर्ण
 
-static struct knav_range_ops knav_acc_range_ops = {
-	.set_notify	= knav_acc_set_notify,
+अटल काष्ठा knav_range_ops knav_acc_range_ops = अणु
+	.set_notअगरy	= knav_acc_set_notअगरy,
 	.init_queue	= knav_acc_init_queue,
-	.open_queue	= knav_acc_open_queue,
-	.close_queue	= knav_acc_close_queue,
+	.खोलो_queue	= knav_acc_खोलो_queue,
+	.बंद_queue	= knav_acc_बंद_queue,
 	.init_range	= knav_acc_init_range,
-	.free_range	= knav_acc_free_range,
-};
+	.मुक्त_range	= knav_acc_मुक्त_range,
+पूर्ण;
 
 /**
  * knav_init_acc_range: Initialise accumulator ranges
  *
  * @kdev:		qmss device
  * @node:		device node
- * @range:		qmms range information
+ * @range:		qmms range inक्रमmation
  *
  * Return 0 on success or error
  */
-int knav_init_acc_range(struct knav_device *kdev,
-			struct device_node *node,
-			struct knav_range_info *range)
-{
-	struct knav_acc_channel *acc;
-	struct knav_pdsp_info *pdsp;
-	struct knav_acc_info *info;
-	int ret, channel, channels;
-	int list_size, mem_size;
+पूर्णांक knav_init_acc_range(काष्ठा knav_device *kdev,
+			काष्ठा device_node *node,
+			काष्ठा knav_range_info *range)
+अणु
+	काष्ठा knav_acc_channel *acc;
+	काष्ठा knav_pdsp_info *pdsp;
+	काष्ठा knav_acc_info *info;
+	पूर्णांक ret, channel, channels;
+	पूर्णांक list_size, mem_size;
 	dma_addr_t list_dma;
-	void *list_mem;
+	व्योम *list_mem;
 	u32 config[5];
 
 	range->flags |= RANGE_HAS_ACCUMULATOR;
 	info = &range->acc_info;
 
-	ret = of_property_read_u32_array(node, "accumulator", config, 5);
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32_array(node, "accumulator", config, 5);
+	अगर (ret)
+		वापस ret;
 
 	info->pdsp_id		= config[0];
 	info->start_channel	= config[1];
 	info->list_entries	= config[2];
 	info->pacing_mode	= config[3];
-	info->timer_count	= config[4] / ACC_DEFAULT_PERIOD;
+	info->समयr_count	= config[4] / ACC_DEFAULT_PERIOD;
 
-	if (info->start_channel > ACC_MAX_CHANNEL) {
+	अगर (info->start_channel > ACC_MAX_CHANNEL) अणु
 		dev_err(kdev->dev, "channel %d invalid for range %s\n",
 			info->start_channel, range->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (info->pacing_mode > 3) {
+	अगर (info->pacing_mode > 3) अणु
 		dev_err(kdev->dev, "pacing mode %d invalid for range %s\n",
 			info->pacing_mode, range->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pdsp = knav_find_pdsp(kdev, info->pdsp_id);
-	if (!pdsp) {
+	अगर (!pdsp) अणु
 		dev_err(kdev->dev, "pdsp id %d not found for range %s\n",
 			info->pdsp_id, range->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!pdsp->started) {
+	अगर (!pdsp->started) अणु
 		dev_err(kdev->dev, "pdsp id %d not started for range %s\n",
 			info->pdsp_id, range->name);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	info->pdsp = pdsp;
 	channels = range->num_queues;
-	if (of_get_property(node, "multi-queue", NULL)) {
+	अगर (of_get_property(node, "multi-queue", शून्य)) अणु
 		range->flags |= RANGE_MULTI_QUEUE;
 		channels = 1;
-		if (range->queue_base & (32 - 1)) {
+		अगर (range->queue_base & (32 - 1)) अणु
 			dev_err(kdev->dev,
 				"misaligned multi-queue accumulator range %s\n",
 				range->name);
-			return -EINVAL;
-		}
-		if (range->num_queues > 32) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (range->num_queues > 32) अणु
 			dev_err(kdev->dev,
 				"too many queues in accumulator range %s\n",
 				range->name);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* figure out list size */
 	list_size  = info->list_entries;
-	list_size *= ACC_LIST_ENTRY_WORDS * sizeof(u32);
+	list_size *= ACC_LIST_ENTRY_WORDS * माप(u32);
 	info->list_size = list_size;
 	mem_size   = PAGE_ALIGN(list_size * 2);
 	info->mem_size  = mem_size;
-	range->acc = devm_kcalloc(kdev->dev, channels, sizeof(*range->acc),
+	range->acc = devm_kसुस्मृति(kdev->dev, channels, माप(*range->acc),
 				  GFP_KERNEL);
-	if (!range->acc)
-		return -ENOMEM;
+	अगर (!range->acc)
+		वापस -ENOMEM;
 
-	for (channel = 0; channel < channels; channel++) {
+	क्रम (channel = 0; channel < channels; channel++) अणु
 		acc = range->acc + channel;
 		acc->channel = info->start_channel + channel;
 
-		/* allocate memory for the two lists */
+		/* allocate memory क्रम the two lists */
 		list_mem = alloc_pages_exact(mem_size, GFP_KERNEL | GFP_DMA);
-		if (!list_mem)
-			return -ENOMEM;
+		अगर (!list_mem)
+			वापस -ENOMEM;
 
 		list_dma = dma_map_single(kdev->dev, list_mem, mem_size,
-					  DMA_BIDIRECTIONAL);
-		if (dma_mapping_error(kdev->dev, list_dma)) {
-			free_pages_exact(list_mem, mem_size);
-			return -ENOMEM;
-		}
+					  DMA_BIसूचीECTIONAL);
+		अगर (dma_mapping_error(kdev->dev, list_dma)) अणु
+			मुक्त_pages_exact(list_mem, mem_size);
+			वापस -ENOMEM;
+		पूर्ण
 
-		memset(list_mem, 0, mem_size);
-		dma_sync_single_for_device(kdev->dev, list_dma, mem_size,
+		स_रखो(list_mem, 0, mem_size);
+		dma_sync_single_क्रम_device(kdev->dev, list_dma, mem_size,
 					   DMA_TO_DEVICE);
-		scnprintf(acc->name, sizeof(acc->name), "hwqueue-acc-%d",
+		scnम_लिखो(acc->name, माप(acc->name), "hwqueue-acc-%d",
 			  acc->channel);
 		acc->list_cpu[0] = list_mem;
 		acc->list_cpu[1] = list_mem + list_size;
@@ -576,9 +577,9 @@ int knav_init_acc_range(struct knav_device *kdev,
 		acc->list_dma[1] = list_dma + list_size;
 		dev_dbg(kdev->dev, "%s: channel %d, dma %pad, virt %8p\n",
 			acc->name, acc->channel, &list_dma, list_mem);
-	}
+	पूर्ण
 
 	range->ops = &knav_acc_range_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_init_acc_range);

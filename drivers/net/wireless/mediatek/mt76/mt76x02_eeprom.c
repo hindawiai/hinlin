@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "mt76x02_eeprom.h"
+#समावेश "mt76x02_eeprom.h"
 
-static int
-mt76x02_efuse_read(struct mt76x02_dev *dev, u16 addr, u8 *data,
-		   enum mt76x02_eeprom_modes mode)
-{
+अटल पूर्णांक
+mt76x02_efuse_पढ़ो(काष्ठा mt76x02_dev *dev, u16 addr, u8 *data,
+		   क्रमागत mt76x02_eeprom_modes mode)
+अणु
 	u32 val;
-	int i;
+	पूर्णांक i;
 
 	val = mt76_rr(dev, MT_EFUSE_CTRL);
 	val &= ~(MT_EFUSE_CTRL_AIN |
@@ -23,85 +24,85 @@ mt76x02_efuse_read(struct mt76x02_dev *dev, u16 addr, u8 *data,
 	val |= MT_EFUSE_CTRL_KICK;
 	mt76_wr(dev, MT_EFUSE_CTRL, val);
 
-	if (!mt76_poll_msec(dev, MT_EFUSE_CTRL, MT_EFUSE_CTRL_KICK, 0, 1000))
-		return -ETIMEDOUT;
+	अगर (!mt76_poll_msec(dev, MT_EFUSE_CTRL, MT_EFUSE_CTRL_KICK, 0, 1000))
+		वापस -ETIMEDOUT;
 
 	udelay(2);
 
 	val = mt76_rr(dev, MT_EFUSE_CTRL);
-	if ((val & MT_EFUSE_CTRL_AOUT) == MT_EFUSE_CTRL_AOUT) {
-		memset(data, 0xff, 16);
-		return 0;
-	}
+	अगर ((val & MT_EFUSE_CTRL_AOUT) == MT_EFUSE_CTRL_AOUT) अणु
+		स_रखो(data, 0xff, 16);
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		val = mt76_rr(dev, MT_EFUSE_DATA(i));
 		put_unaligned_le32(val, data + 4 * i);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mt76x02_eeprom_copy(struct mt76x02_dev *dev,
-			enum mt76x02_eeprom_field field,
-			void *dest, int len)
-{
-	if (field + len > dev->mt76.eeprom.size)
-		return -1;
+पूर्णांक mt76x02_eeprom_copy(काष्ठा mt76x02_dev *dev,
+			क्रमागत mt76x02_eeprom_field field,
+			व्योम *dest, पूर्णांक len)
+अणु
+	अगर (field + len > dev->mt76.eeprom.size)
+		वापस -1;
 
-	memcpy(dest, dev->mt76.eeprom.data + field, len);
-	return 0;
-}
+	स_नकल(dest, dev->mt76.eeprom.data + field, len);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_eeprom_copy);
 
-int mt76x02_get_efuse_data(struct mt76x02_dev *dev, u16 base, void *buf,
-			   int len, enum mt76x02_eeprom_modes mode)
-{
-	int ret, i;
+पूर्णांक mt76x02_get_efuse_data(काष्ठा mt76x02_dev *dev, u16 base, व्योम *buf,
+			   पूर्णांक len, क्रमागत mt76x02_eeprom_modes mode)
+अणु
+	पूर्णांक ret, i;
 
-	for (i = 0; i + 16 <= len; i += 16) {
-		ret = mt76x02_efuse_read(dev, base + i, buf + i, mode);
-		if (ret)
-			return ret;
-	}
+	क्रम (i = 0; i + 16 <= len; i += 16) अणु
+		ret = mt76x02_efuse_पढ़ो(dev, base + i, buf + i, mode);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_get_efuse_data);
 
-void mt76x02_eeprom_parse_hw_cap(struct mt76x02_dev *dev)
-{
+व्योम mt76x02_eeprom_parse_hw_cap(काष्ठा mt76x02_dev *dev)
+अणु
 	u16 val = mt76x02_eeprom_get(dev, MT_EE_NIC_CONF_0);
 
-	switch (FIELD_GET(MT_EE_NIC_CONF_0_BOARD_TYPE, val)) {
-	case BOARD_TYPE_5GHZ:
+	चयन (FIELD_GET(MT_EE_NIC_CONF_0_BOARD_TYPE, val)) अणु
+	हाल BOARD_TYPE_5GHZ:
 		dev->mphy.cap.has_5ghz = true;
-		break;
-	case BOARD_TYPE_2GHZ:
+		अवरोध;
+	हाल BOARD_TYPE_2GHZ:
 		dev->mphy.cap.has_2ghz = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev->mphy.cap.has_2ghz = true;
 		dev->mphy.cap.has_5ghz = true;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_eeprom_parse_hw_cap);
 
-bool mt76x02_ext_pa_enabled(struct mt76x02_dev *dev, enum nl80211_band band)
-{
+bool mt76x02_ext_pa_enabled(काष्ठा mt76x02_dev *dev, क्रमागत nl80211_band band)
+अणु
 	u16 conf0 = mt76x02_eeprom_get(dev, MT_EE_NIC_CONF_0);
 
-	if (band == NL80211_BAND_5GHZ)
-		return !(conf0 & MT_EE_NIC_CONF_0_PA_INT_5G);
-	else
-		return !(conf0 & MT_EE_NIC_CONF_0_PA_INT_2G);
-}
+	अगर (band == NL80211_BAND_5GHZ)
+		वापस !(conf0 & MT_EE_NIC_CONF_0_PA_INT_5G);
+	अन्यथा
+		वापस !(conf0 & MT_EE_NIC_CONF_0_PA_INT_2G);
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_ext_pa_enabled);
 
-void mt76x02_get_rx_gain(struct mt76x02_dev *dev, enum nl80211_band band,
+व्योम mt76x02_get_rx_gain(काष्ठा mt76x02_dev *dev, क्रमागत nl80211_band band,
 			 u16 *rssi_offset, s8 *lna_2g, s8 *lna_5g)
-{
+अणु
 	u16 val;
 
 	val = mt76x02_eeprom_get(dev, MT_EE_LNA_GAIN);
@@ -114,41 +115,41 @@ void mt76x02_get_rx_gain(struct mt76x02_dev *dev, enum nl80211_band band,
 	val = mt76x02_eeprom_get(dev, MT_EE_RSSI_OFFSET_5G_1);
 	lna_5g[2] = val >> 8;
 
-	if (!mt76x02_field_valid(lna_5g[1]))
+	अगर (!mt76x02_field_valid(lna_5g[1]))
 		lna_5g[1] = lna_5g[0];
 
-	if (!mt76x02_field_valid(lna_5g[2]))
+	अगर (!mt76x02_field_valid(lna_5g[2]))
 		lna_5g[2] = lna_5g[0];
 
-	if (band == NL80211_BAND_2GHZ)
+	अगर (band == NL80211_BAND_2GHZ)
 		*rssi_offset = mt76x02_eeprom_get(dev, MT_EE_RSSI_OFFSET_2G_0);
-	else
+	अन्यथा
 		*rssi_offset = mt76x02_eeprom_get(dev, MT_EE_RSSI_OFFSET_5G_0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_get_rx_gain);
 
-u8 mt76x02_get_lna_gain(struct mt76x02_dev *dev,
+u8 mt76x02_get_lna_gain(काष्ठा mt76x02_dev *dev,
 			s8 *lna_2g, s8 *lna_5g,
-			struct ieee80211_channel *chan)
-{
+			काष्ठा ieee80211_channel *chan)
+अणु
 	u16 val;
 	u8 lna;
 
 	val = mt76x02_eeprom_get(dev, MT_EE_NIC_CONF_1);
-	if (val & MT_EE_NIC_CONF_1_LNA_EXT_2G)
+	अगर (val & MT_EE_NIC_CONF_1_LNA_EXT_2G)
 		*lna_2g = 0;
-	if (val & MT_EE_NIC_CONF_1_LNA_EXT_5G)
-		memset(lna_5g, 0, sizeof(s8) * 3);
+	अगर (val & MT_EE_NIC_CONF_1_LNA_EXT_5G)
+		स_रखो(lna_5g, 0, माप(s8) * 3);
 
-	if (chan->band == NL80211_BAND_2GHZ)
+	अगर (chan->band == NL80211_BAND_2GHZ)
 		lna = *lna_2g;
-	else if (chan->hw_value <= 64)
+	अन्यथा अगर (chan->hw_value <= 64)
 		lna = lna_5g[0];
-	else if (chan->hw_value <= 128)
+	अन्यथा अगर (chan->hw_value <= 128)
 		lna = lna_5g[1];
-	else
+	अन्यथा
 		lna = lna_5g[2];
 
-	return lna != 0xff ? lna : 0;
-}
+	वापस lna != 0xff ? lna : 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_get_lna_gain);

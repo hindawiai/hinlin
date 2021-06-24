@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,15 +21,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/string.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
 
-#include <drm/drm_dp_dual_mode_helper.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm_dp_dual_mode_helper.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
 /**
  * DOC: dp dual mode helpers
@@ -36,362 +37,362 @@
  * Helper functions to deal with DP dual mode (aka. DP++) adaptors.
  *
  * Type 1:
- * Adaptor registers (if any) and the sink DDC bus may be accessed via I2C.
+ * Adaptor रेजिस्टरs (अगर any) and the sink DDC bus may be accessed via I2C.
  *
  * Type 2:
- * Adaptor registers and sink DDC bus can be accessed either via I2C or
+ * Adaptor रेजिस्टरs and sink DDC bus can be accessed either via I2C or
  * I2C-over-AUX. Source devices may choose to implement either of these
  * access methods.
  */
 
-#define DP_DUAL_MODE_SLAVE_ADDRESS 0x40
+#घोषणा DP_DUAL_MODE_SLAVE_ADDRESS 0x40
 
 /**
- * drm_dp_dual_mode_read - Read from the DP dual mode adaptor register(s)
- * @adapter: I2C adapter for the DDC bus
- * @offset: register offset
- * @buffer: buffer for return data
+ * drm_dp_dual_mode_पढ़ो - Read from the DP dual mode adaptor रेजिस्टर(s)
+ * @adapter: I2C adapter क्रम the DDC bus
+ * @offset: रेजिस्टर offset
+ * @buffer: buffer क्रम वापस data
  * @size: sizo of the buffer
  *
- * Reads @size bytes from the DP dual mode adaptor registers
+ * Reads @size bytes from the DP dual mode adaptor रेजिस्टरs
  * starting at @offset.
  *
  * Returns:
  * 0 on success, negative error code on failure
  */
-ssize_t drm_dp_dual_mode_read(struct i2c_adapter *adapter,
-			      u8 offset, void *buffer, size_t size)
-{
-	struct i2c_msg msgs[] = {
-		{
+sमाप_प्रकार drm_dp_dual_mode_पढ़ो(काष्ठा i2c_adapter *adapter,
+			      u8 offset, व्योम *buffer, माप_प्रकार size)
+अणु
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु
 			.addr = DP_DUAL_MODE_SLAVE_ADDRESS,
 			.flags = 0,
 			.len = 1,
 			.buf = &offset,
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr = DP_DUAL_MODE_SLAVE_ADDRESS,
 			.flags = I2C_M_RD,
 			.len = size,
 			.buf = buffer,
-		},
-	};
-	int ret;
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक ret;
 
 	ret = i2c_transfer(adapter, msgs, ARRAY_SIZE(msgs));
-	if (ret < 0)
-		return ret;
-	if (ret != ARRAY_SIZE(msgs))
-		return -EPROTO;
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret != ARRAY_SIZE(msgs))
+		वापस -EPROTO;
 
-	return 0;
-}
-EXPORT_SYMBOL(drm_dp_dual_mode_read);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(drm_dp_dual_mode_पढ़ो);
 
 /**
- * drm_dp_dual_mode_write - Write to the DP dual mode adaptor register(s)
- * @adapter: I2C adapter for the DDC bus
- * @offset: register offset
- * @buffer: buffer for write data
+ * drm_dp_dual_mode_ग_लिखो - Write to the DP dual mode adaptor रेजिस्टर(s)
+ * @adapter: I2C adapter क्रम the DDC bus
+ * @offset: रेजिस्टर offset
+ * @buffer: buffer क्रम ग_लिखो data
  * @size: sizo of the buffer
  *
- * Writes @size bytes to the DP dual mode adaptor registers
+ * Writes @size bytes to the DP dual mode adaptor रेजिस्टरs
  * starting at @offset.
  *
  * Returns:
  * 0 on success, negative error code on failure
  */
-ssize_t drm_dp_dual_mode_write(struct i2c_adapter *adapter,
-			       u8 offset, const void *buffer, size_t size)
-{
-	struct i2c_msg msg = {
+sमाप_प्रकार drm_dp_dual_mode_ग_लिखो(काष्ठा i2c_adapter *adapter,
+			       u8 offset, स्थिर व्योम *buffer, माप_प्रकार size)
+अणु
+	काष्ठा i2c_msg msg = अणु
 		.addr = DP_DUAL_MODE_SLAVE_ADDRESS,
 		.flags = 0,
 		.len = 1 + size,
-		.buf = NULL,
-	};
-	void *data;
-	int ret;
+		.buf = शून्य,
+	पूर्ण;
+	व्योम *data;
+	पूर्णांक ret;
 
-	data = kmalloc(msg.len, GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kदो_स्मृति(msg.len, GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	msg.buf = data;
 
-	memcpy(data, &offset, 1);
-	memcpy(data + 1, buffer, size);
+	स_नकल(data, &offset, 1);
+	स_नकल(data + 1, buffer, size);
 
 	ret = i2c_transfer(adapter, &msg, 1);
 
-	kfree(data);
+	kमुक्त(data);
 
-	if (ret < 0)
-		return ret;
-	if (ret != 1)
-		return -EPROTO;
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret != 1)
+		वापस -EPROTO;
 
-	return 0;
-}
-EXPORT_SYMBOL(drm_dp_dual_mode_write);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(drm_dp_dual_mode_ग_लिखो);
 
-static bool is_hdmi_adaptor(const char hdmi_id[DP_DUAL_MODE_HDMI_ID_LEN])
-{
-	static const char dp_dual_mode_hdmi_id[DP_DUAL_MODE_HDMI_ID_LEN] =
+अटल bool is_hdmi_adaptor(स्थिर अक्षर hdmi_id[DP_DUAL_MODE_HDMI_ID_LEN])
+अणु
+	अटल स्थिर अक्षर dp_dual_mode_hdmi_id[DP_DUAL_MODE_HDMI_ID_LEN] =
 		"DP-HDMI ADAPTOR\x04";
 
-	return memcmp(hdmi_id, dp_dual_mode_hdmi_id,
-		      sizeof(dp_dual_mode_hdmi_id)) == 0;
-}
+	वापस स_भेद(hdmi_id, dp_dual_mode_hdmi_id,
+		      माप(dp_dual_mode_hdmi_id)) == 0;
+पूर्ण
 
-static bool is_type1_adaptor(uint8_t adaptor_id)
-{
-	return adaptor_id == 0 || adaptor_id == 0xff;
-}
+अटल bool is_type1_adaptor(uपूर्णांक8_t adaptor_id)
+अणु
+	वापस adaptor_id == 0 || adaptor_id == 0xff;
+पूर्ण
 
-static bool is_type2_adaptor(uint8_t adaptor_id)
-{
-	return adaptor_id == (DP_DUAL_MODE_TYPE_TYPE2 |
+अटल bool is_type2_adaptor(uपूर्णांक8_t adaptor_id)
+अणु
+	वापस adaptor_id == (DP_DUAL_MODE_TYPE_TYPE2 |
 			      DP_DUAL_MODE_REV_TYPE2);
-}
+पूर्ण
 
-static bool is_lspcon_adaptor(const char hdmi_id[DP_DUAL_MODE_HDMI_ID_LEN],
-			      const uint8_t adaptor_id)
-{
-	return is_hdmi_adaptor(hdmi_id) &&
+अटल bool is_lspcon_adaptor(स्थिर अक्षर hdmi_id[DP_DUAL_MODE_HDMI_ID_LEN],
+			      स्थिर uपूर्णांक8_t adaptor_id)
+अणु
+	वापस is_hdmi_adaptor(hdmi_id) &&
 		(adaptor_id == (DP_DUAL_MODE_TYPE_TYPE2 |
 		 DP_DUAL_MODE_TYPE_HAS_DPCD));
-}
+पूर्ण
 
 /**
- * drm_dp_dual_mode_detect - Identify the DP dual mode adaptor
- * @adapter: I2C adapter for the DDC bus
+ * drm_dp_dual_mode_detect - Identअगरy the DP dual mode adaptor
+ * @adapter: I2C adapter क्रम the DDC bus
  *
- * Attempt to identify the type of the DP dual mode adaptor used.
+ * Attempt to identअगरy the type of the DP dual mode adaptor used.
  *
  * Note that when the answer is @DRM_DP_DUAL_MODE_UNKNOWN it's not
  * certain whether we're dealing with a native HDMI port or
  * a type 1 DVI dual mode adaptor. The driver will have to use
- * some other hardware/driver specific mechanism to make that
+ * some other hardware/driver specअगरic mechanism to make that
  * distinction.
  *
  * Returns:
  * The type of the DP dual mode adaptor used
  */
-enum drm_dp_dual_mode_type drm_dp_dual_mode_detect(struct i2c_adapter *adapter)
-{
-	char hdmi_id[DP_DUAL_MODE_HDMI_ID_LEN] = {};
-	uint8_t adaptor_id = 0x00;
-	ssize_t ret;
+क्रमागत drm_dp_dual_mode_type drm_dp_dual_mode_detect(काष्ठा i2c_adapter *adapter)
+अणु
+	अक्षर hdmi_id[DP_DUAL_MODE_HDMI_ID_LEN] = अणुपूर्ण;
+	uपूर्णांक8_t adaptor_id = 0x00;
+	sमाप_प्रकार ret;
 
 	/*
-	 * Let's see if the adaptor is there the by reading the
-	 * HDMI ID registers.
+	 * Let's see अगर the adaptor is there the by पढ़ोing the
+	 * HDMI ID रेजिस्टरs.
 	 *
 	 * Note that type 1 DVI adaptors are not required to implemnt
-	 * any registers, and that presents a problem for detection.
+	 * any रेजिस्टरs, and that presents a problem क्रम detection.
 	 * If the i2c transfer is nacked, we may or may not be dealing
 	 * with a type 1 DVI adaptor. Some other mechanism of detecting
 	 * the presence of the adaptor is required. One way would be
 	 * to check the state of the CONFIG1 pin, Another method would
 	 * simply require the driver to know whether the port is a DP++
 	 * port or a native HDMI port. Both of these methods are entirely
-	 * hardware/driver specific so we can't deal with them here.
+	 * hardware/driver specअगरic so we can't deal with them here.
 	 */
-	ret = drm_dp_dual_mode_read(adapter, DP_DUAL_MODE_HDMI_ID,
-				    hdmi_id, sizeof(hdmi_id));
+	ret = drm_dp_dual_mode_पढ़ो(adapter, DP_DUAL_MODE_HDMI_ID,
+				    hdmi_id, माप(hdmi_id));
 	DRM_DEBUG_KMS("DP dual mode HDMI ID: %*pE (err %zd)\n",
-		      ret ? 0 : (int)sizeof(hdmi_id), hdmi_id, ret);
-	if (ret)
-		return DRM_DP_DUAL_MODE_UNKNOWN;
+		      ret ? 0 : (पूर्णांक)माप(hdmi_id), hdmi_id, ret);
+	अगर (ret)
+		वापस DRM_DP_DUAL_MODE_UNKNOWN;
 
 	/*
 	 * Sigh. Some (maybe all?) type 1 adaptors are broken and ack
-	 * the offset but ignore it, and instead they just always return
-	 * data from the start of the HDMI ID buffer. So for a broken
-	 * type 1 HDMI adaptor a single byte read will always give us
-	 * 0x44, and for a type 1 DVI adaptor it should give 0x00
-	 * (assuming it implements any registers). Fortunately neither
+	 * the offset but ignore it, and instead they just always वापस
+	 * data from the start of the HDMI ID buffer. So क्रम a broken
+	 * type 1 HDMI adaptor a single byte पढ़ो will always give us
+	 * 0x44, and क्रम a type 1 DVI adaptor it should give 0x00
+	 * (assuming it implements any रेजिस्टरs). Fortunately neither
 	 * of those values will match the type 2 signature of the
-	 * DP_DUAL_MODE_ADAPTOR_ID register so we can proceed with
+	 * DP_DUAL_MODE_ADAPTOR_ID रेजिस्टर so we can proceed with
 	 * the type 2 adaptor detection safely even in the presence
 	 * of broken type 1 adaptors.
 	 */
-	ret = drm_dp_dual_mode_read(adapter, DP_DUAL_MODE_ADAPTOR_ID,
-				    &adaptor_id, sizeof(adaptor_id));
+	ret = drm_dp_dual_mode_पढ़ो(adapter, DP_DUAL_MODE_ADAPTOR_ID,
+				    &adaptor_id, माप(adaptor_id));
 	DRM_DEBUG_KMS("DP dual mode adaptor ID: %02x (err %zd)\n",
 		      adaptor_id, ret);
-	if (ret == 0) {
-		if (is_lspcon_adaptor(hdmi_id, adaptor_id))
-			return DRM_DP_DUAL_MODE_LSPCON;
-		if (is_type2_adaptor(adaptor_id)) {
-			if (is_hdmi_adaptor(hdmi_id))
-				return DRM_DP_DUAL_MODE_TYPE2_HDMI;
-			else
-				return DRM_DP_DUAL_MODE_TYPE2_DVI;
-		}
+	अगर (ret == 0) अणु
+		अगर (is_lspcon_adaptor(hdmi_id, adaptor_id))
+			वापस DRM_DP_DUAL_MODE_LSPCON;
+		अगर (is_type2_adaptor(adaptor_id)) अणु
+			अगर (is_hdmi_adaptor(hdmi_id))
+				वापस DRM_DP_DUAL_MODE_TYPE2_HDMI;
+			अन्यथा
+				वापस DRM_DP_DUAL_MODE_TYPE2_DVI;
+		पूर्ण
 		/*
 		 * If neither a proper type 1 ID nor a broken type 1 adaptor
 		 * as described above, assume type 1, but let the user know
 		 * that we may have misdetected the type.
 		 */
-		if (!is_type1_adaptor(adaptor_id) && adaptor_id != hdmi_id[0])
+		अगर (!is_type1_adaptor(adaptor_id) && adaptor_id != hdmi_id[0])
 			DRM_ERROR("Unexpected DP dual mode adaptor ID %02x\n",
 				  adaptor_id);
 
-	}
+	पूर्ण
 
-	if (is_hdmi_adaptor(hdmi_id))
-		return DRM_DP_DUAL_MODE_TYPE1_HDMI;
-	else
-		return DRM_DP_DUAL_MODE_TYPE1_DVI;
-}
+	अगर (is_hdmi_adaptor(hdmi_id))
+		वापस DRM_DP_DUAL_MODE_TYPE1_HDMI;
+	अन्यथा
+		वापस DRM_DP_DUAL_MODE_TYPE1_DVI;
+पूर्ण
 EXPORT_SYMBOL(drm_dp_dual_mode_detect);
 
 /**
- * drm_dp_dual_mode_max_tmds_clock - Max TMDS clock for DP dual mode adaptor
+ * drm_dp_dual_mode_max_पंचांगds_घड़ी - Max TMDS घड़ी क्रम DP dual mode adaptor
  * @type: DP dual mode adaptor type
- * @adapter: I2C adapter for the DDC bus
+ * @adapter: I2C adapter क्रम the DDC bus
  *
- * Determine the max TMDS clock the adaptor supports based on the
+ * Determine the max TMDS घड़ी the adaptor supports based on the
  * type of the dual mode adaptor and the DP_DUAL_MODE_MAX_TMDS_CLOCK
- * register (on type2 adaptors). As some type 1 adaptors have
- * problems with registers (see comments in drm_dp_dual_mode_detect())
- * we don't read the register on those, instead we simply assume
- * a 165 MHz limit based on the specification.
+ * रेजिस्टर (on type2 adaptors). As some type 1 adaptors have
+ * problems with रेजिस्टरs (see comments in drm_dp_dual_mode_detect())
+ * we करोn't पढ़ो the रेजिस्टर on those, instead we simply assume
+ * a 165 MHz limit based on the specअगरication.
  *
  * Returns:
- * Maximum supported TMDS clock rate for the DP dual mode adaptor in kHz.
+ * Maximum supported TMDS घड़ी rate क्रम the DP dual mode adaptor in kHz.
  */
-int drm_dp_dual_mode_max_tmds_clock(enum drm_dp_dual_mode_type type,
-				    struct i2c_adapter *adapter)
-{
-	uint8_t max_tmds_clock;
-	ssize_t ret;
+पूर्णांक drm_dp_dual_mode_max_पंचांगds_घड़ी(क्रमागत drm_dp_dual_mode_type type,
+				    काष्ठा i2c_adapter *adapter)
+अणु
+	uपूर्णांक8_t max_पंचांगds_घड़ी;
+	sमाप_प्रकार ret;
 
 	/* native HDMI so no limit */
-	if (type == DRM_DP_DUAL_MODE_NONE)
-		return 0;
+	अगर (type == DRM_DP_DUAL_MODE_NONE)
+		वापस 0;
 
 	/*
 	 * Type 1 adaptors are limited to 165MHz
 	 * Type 2 adaptors can tells us their limit
 	 */
-	if (type < DRM_DP_DUAL_MODE_TYPE2_DVI)
-		return 165000;
+	अगर (type < DRM_DP_DUAL_MODE_TYPE2_DVI)
+		वापस 165000;
 
-	ret = drm_dp_dual_mode_read(adapter, DP_DUAL_MODE_MAX_TMDS_CLOCK,
-				    &max_tmds_clock, sizeof(max_tmds_clock));
-	if (ret || max_tmds_clock == 0x00 || max_tmds_clock == 0xff) {
+	ret = drm_dp_dual_mode_पढ़ो(adapter, DP_DUAL_MODE_MAX_TMDS_CLOCK,
+				    &max_पंचांगds_घड़ी, माप(max_पंचांगds_घड़ी));
+	अगर (ret || max_पंचांगds_घड़ी == 0x00 || max_पंचांगds_घड़ी == 0xff) अणु
 		DRM_DEBUG_KMS("Failed to query max TMDS clock\n");
-		return 165000;
-	}
+		वापस 165000;
+	पूर्ण
 
-	return max_tmds_clock * 5000 / 2;
-}
-EXPORT_SYMBOL(drm_dp_dual_mode_max_tmds_clock);
+	वापस max_पंचांगds_घड़ी * 5000 / 2;
+पूर्ण
+EXPORT_SYMBOL(drm_dp_dual_mode_max_पंचांगds_घड़ी);
 
 /**
- * drm_dp_dual_mode_get_tmds_output - Get the state of the TMDS output buffers in the DP dual mode adaptor
+ * drm_dp_dual_mode_get_पंचांगds_output - Get the state of the TMDS output buffers in the DP dual mode adaptor
  * @type: DP dual mode adaptor type
- * @adapter: I2C adapter for the DDC bus
+ * @adapter: I2C adapter क्रम the DDC bus
  * @enabled: current state of the TMDS output buffers
  *
  * Get the state of the TMDS output buffers in the adaptor. For
  * type2 adaptors this is queried from the DP_DUAL_MODE_TMDS_OEN
- * register. As some type 1 adaptors have problems with registers
- * (see comments in drm_dp_dual_mode_detect()) we don't read the
- * register on those, instead we simply assume that the buffers
+ * रेजिस्टर. As some type 1 adaptors have problems with रेजिस्टरs
+ * (see comments in drm_dp_dual_mode_detect()) we करोn't पढ़ो the
+ * रेजिस्टर on those, instead we simply assume that the buffers
  * are always enabled.
  *
  * Returns:
  * 0 on success, negative error code on failure
  */
-int drm_dp_dual_mode_get_tmds_output(enum drm_dp_dual_mode_type type,
-				     struct i2c_adapter *adapter,
+पूर्णांक drm_dp_dual_mode_get_पंचांगds_output(क्रमागत drm_dp_dual_mode_type type,
+				     काष्ठा i2c_adapter *adapter,
 				     bool *enabled)
-{
-	uint8_t tmds_oen;
-	ssize_t ret;
+अणु
+	uपूर्णांक8_t पंचांगds_oen;
+	sमाप_प्रकार ret;
 
-	if (type < DRM_DP_DUAL_MODE_TYPE2_DVI) {
+	अगर (type < DRM_DP_DUAL_MODE_TYPE2_DVI) अणु
 		*enabled = true;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ret = drm_dp_dual_mode_read(adapter, DP_DUAL_MODE_TMDS_OEN,
-				    &tmds_oen, sizeof(tmds_oen));
-	if (ret) {
+	ret = drm_dp_dual_mode_पढ़ो(adapter, DP_DUAL_MODE_TMDS_OEN,
+				    &पंचांगds_oen, माप(पंचांगds_oen));
+	अगर (ret) अणु
 		DRM_DEBUG_KMS("Failed to query state of TMDS output buffers\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	*enabled = !(tmds_oen & DP_DUAL_MODE_TMDS_DISABLE);
+	*enabled = !(पंचांगds_oen & DP_DUAL_MODE_TMDS_DISABLE);
 
-	return 0;
-}
-EXPORT_SYMBOL(drm_dp_dual_mode_get_tmds_output);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(drm_dp_dual_mode_get_पंचांगds_output);
 
 /**
- * drm_dp_dual_mode_set_tmds_output - Enable/disable TMDS output buffers in the DP dual mode adaptor
+ * drm_dp_dual_mode_set_पंचांगds_output - Enable/disable TMDS output buffers in the DP dual mode adaptor
  * @type: DP dual mode adaptor type
- * @adapter: I2C adapter for the DDC bus
+ * @adapter: I2C adapter क्रम the DDC bus
  * @enable: enable (as opposed to disable) the TMDS output buffers
  *
  * Set the state of the TMDS output buffers in the adaptor. For
- * type2 this is set via the DP_DUAL_MODE_TMDS_OEN register. As
- * some type 1 adaptors have problems with registers (see comments
- * in drm_dp_dual_mode_detect()) we avoid touching the register,
+ * type2 this is set via the DP_DUAL_MODE_TMDS_OEN रेजिस्टर. As
+ * some type 1 adaptors have problems with रेजिस्टरs (see comments
+ * in drm_dp_dual_mode_detect()) we aव्योम touching the रेजिस्टर,
  * making this function a no-op on type 1 adaptors.
  *
  * Returns:
  * 0 on success, negative error code on failure
  */
-int drm_dp_dual_mode_set_tmds_output(enum drm_dp_dual_mode_type type,
-				     struct i2c_adapter *adapter, bool enable)
-{
-	uint8_t tmds_oen = enable ? 0 : DP_DUAL_MODE_TMDS_DISABLE;
-	ssize_t ret;
-	int retry;
+पूर्णांक drm_dp_dual_mode_set_पंचांगds_output(क्रमागत drm_dp_dual_mode_type type,
+				     काष्ठा i2c_adapter *adapter, bool enable)
+अणु
+	uपूर्णांक8_t पंचांगds_oen = enable ? 0 : DP_DUAL_MODE_TMDS_DISABLE;
+	sमाप_प्रकार ret;
+	पूर्णांक retry;
 
-	if (type < DRM_DP_DUAL_MODE_TYPE2_DVI)
-		return 0;
+	अगर (type < DRM_DP_DUAL_MODE_TYPE2_DVI)
+		वापस 0;
 
 	/*
-	 * LSPCON adapters in low-power state may ignore the first write, so
-	 * read back and verify the written value a few times.
+	 * LSPCON adapters in low-घातer state may ignore the first ग_लिखो, so
+	 * पढ़ो back and verअगरy the written value a few बार.
 	 */
-	for (retry = 0; retry < 3; retry++) {
-		uint8_t tmp;
+	क्रम (retry = 0; retry < 3; retry++) अणु
+		uपूर्णांक8_t पंचांगp;
 
-		ret = drm_dp_dual_mode_write(adapter, DP_DUAL_MODE_TMDS_OEN,
-					     &tmds_oen, sizeof(tmds_oen));
-		if (ret) {
+		ret = drm_dp_dual_mode_ग_लिखो(adapter, DP_DUAL_MODE_TMDS_OEN,
+					     &पंचांगds_oen, माप(पंचांगds_oen));
+		अगर (ret) अणु
 			DRM_DEBUG_KMS("Failed to %s TMDS output buffers (%d attempts)\n",
 				      enable ? "enable" : "disable",
 				      retry + 1);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = drm_dp_dual_mode_read(adapter, DP_DUAL_MODE_TMDS_OEN,
-					    &tmp, sizeof(tmp));
-		if (ret) {
+		ret = drm_dp_dual_mode_पढ़ो(adapter, DP_DUAL_MODE_TMDS_OEN,
+					    &पंचांगp, माप(पंचांगp));
+		अगर (ret) अणु
 			DRM_DEBUG_KMS("I2C read failed during TMDS output buffer %s (%d attempts)\n",
 				      enable ? "enabling" : "disabling",
 				      retry + 1);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (tmp == tmds_oen)
-			return 0;
-	}
+		अगर (पंचांगp == पंचांगds_oen)
+			वापस 0;
+	पूर्ण
 
 	DRM_DEBUG_KMS("I2C write value mismatch during TMDS output buffer %s\n",
 		      enable ? "enabling" : "disabling");
 
-	return -EIO;
-}
-EXPORT_SYMBOL(drm_dp_dual_mode_set_tmds_output);
+	वापस -EIO;
+पूर्ण
+EXPORT_SYMBOL(drm_dp_dual_mode_set_पंचांगds_output);
 
 /**
  * drm_dp_get_dual_mode_type_name - Get the name of the DP dual mode adaptor type as a string
@@ -400,31 +401,31 @@ EXPORT_SYMBOL(drm_dp_dual_mode_set_tmds_output);
  * Returns:
  * String representation of the DP dual mode adaptor type
  */
-const char *drm_dp_get_dual_mode_type_name(enum drm_dp_dual_mode_type type)
-{
-	switch (type) {
-	case DRM_DP_DUAL_MODE_NONE:
-		return "none";
-	case DRM_DP_DUAL_MODE_TYPE1_DVI:
-		return "type 1 DVI";
-	case DRM_DP_DUAL_MODE_TYPE1_HDMI:
-		return "type 1 HDMI";
-	case DRM_DP_DUAL_MODE_TYPE2_DVI:
-		return "type 2 DVI";
-	case DRM_DP_DUAL_MODE_TYPE2_HDMI:
-		return "type 2 HDMI";
-	case DRM_DP_DUAL_MODE_LSPCON:
-		return "lspcon";
-	default:
+स्थिर अक्षर *drm_dp_get_dual_mode_type_name(क्रमागत drm_dp_dual_mode_type type)
+अणु
+	चयन (type) अणु
+	हाल DRM_DP_DUAL_MODE_NONE:
+		वापस "none";
+	हाल DRM_DP_DUAL_MODE_TYPE1_DVI:
+		वापस "type 1 DVI";
+	हाल DRM_DP_DUAL_MODE_TYPE1_HDMI:
+		वापस "type 1 HDMI";
+	हाल DRM_DP_DUAL_MODE_TYPE2_DVI:
+		वापस "type 2 DVI";
+	हाल DRM_DP_DUAL_MODE_TYPE2_HDMI:
+		वापस "type 2 HDMI";
+	हाल DRM_DP_DUAL_MODE_LSPCON:
+		वापस "lspcon";
+	शेष:
 		WARN_ON(type != DRM_DP_DUAL_MODE_UNKNOWN);
-		return "unknown";
-	}
-}
+		वापस "unknown";
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(drm_dp_get_dual_mode_type_name);
 
 /**
  * drm_lspcon_get_mode: Get LSPCON's current mode of operation by
- * reading offset (0x80, 0x41)
+ * पढ़ोing offset (0x80, 0x41)
  * @adapter: I2C-over-aux adapter
  * @mode: current lspcon mode of operation output variable
  *
@@ -432,41 +433,41 @@ EXPORT_SYMBOL(drm_dp_get_dual_mode_type_name);
  * 0 on success, sets the current_mode value to appropriate mode
  * -error on failure
  */
-int drm_lspcon_get_mode(struct i2c_adapter *adapter,
-			enum drm_lspcon_mode *mode)
-{
+पूर्णांक drm_lspcon_get_mode(काष्ठा i2c_adapter *adapter,
+			क्रमागत drm_lspcon_mode *mode)
+अणु
 	u8 data;
-	int ret = 0;
-	int retry;
+	पूर्णांक ret = 0;
+	पूर्णांक retry;
 
-	if (!mode) {
+	अगर (!mode) अणु
 		DRM_ERROR("NULL input\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Read Status: i2c over aux */
-	for (retry = 0; retry < 6; retry++) {
-		if (retry)
+	क्रम (retry = 0; retry < 6; retry++) अणु
+		अगर (retry)
 			usleep_range(500, 1000);
 
-		ret = drm_dp_dual_mode_read(adapter,
+		ret = drm_dp_dual_mode_पढ़ो(adapter,
 					    DP_DUAL_MODE_LSPCON_CURRENT_MODE,
-					    &data, sizeof(data));
-		if (!ret)
-			break;
-	}
+					    &data, माप(data));
+		अगर (!ret)
+			अवरोध;
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		DRM_DEBUG_KMS("LSPCON read(0x80, 0x41) failed\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (data & DP_DUAL_MODE_LSPCON_MODE_PCON)
+	अगर (data & DP_DUAL_MODE_LSPCON_MODE_PCON)
 		*mode = DRM_LSPCON_MODE_PCON;
-	else
+	अन्यथा
 		*mode = DRM_LSPCON_MODE_LS;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_lspcon_get_mode);
 
 /**
@@ -476,51 +477,51 @@ EXPORT_SYMBOL(drm_lspcon_get_mode);
  * @mode: required mode of operation
  *
  * Returns:
- * 0 on success, -error on failure/timeout
+ * 0 on success, -error on failure/समयout
  */
-int drm_lspcon_set_mode(struct i2c_adapter *adapter,
-			enum drm_lspcon_mode mode)
-{
+पूर्णांक drm_lspcon_set_mode(काष्ठा i2c_adapter *adapter,
+			क्रमागत drm_lspcon_mode mode)
+अणु
 	u8 data = 0;
-	int ret;
-	int time_out = 200;
-	enum drm_lspcon_mode current_mode;
+	पूर्णांक ret;
+	पूर्णांक समय_out = 200;
+	क्रमागत drm_lspcon_mode current_mode;
 
-	if (mode == DRM_LSPCON_MODE_PCON)
+	अगर (mode == DRM_LSPCON_MODE_PCON)
 		data = DP_DUAL_MODE_LSPCON_MODE_PCON;
 
 	/* Change mode */
-	ret = drm_dp_dual_mode_write(adapter, DP_DUAL_MODE_LSPCON_MODE_CHANGE,
-				     &data, sizeof(data));
-	if (ret < 0) {
+	ret = drm_dp_dual_mode_ग_लिखो(adapter, DP_DUAL_MODE_LSPCON_MODE_CHANGE,
+				     &data, माप(data));
+	अगर (ret < 0) अणु
 		DRM_ERROR("LSPCON mode change failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Confirm mode change by reading the status bit.
-	 * Sometimes, it takes a while to change the mode,
-	 * so wait and retry until time out or done.
+	 * Confirm mode change by पढ़ोing the status bit.
+	 * Someबार, it takes a जबतक to change the mode,
+	 * so रुको and retry until समय out or करोne.
 	 */
-	do {
+	करो अणु
 		ret = drm_lspcon_get_mode(adapter, &current_mode);
-		if (ret) {
+		अगर (ret) अणु
 			DRM_ERROR("can't confirm LSPCON mode change\n");
-			return ret;
-		} else {
-			if (current_mode != mode) {
+			वापस ret;
+		पूर्ण अन्यथा अणु
+			अगर (current_mode != mode) अणु
 				msleep(10);
-				time_out -= 10;
-			} else {
+				समय_out -= 10;
+			पूर्ण अन्यथा अणु
 				DRM_DEBUG_KMS("LSPCON mode changed to %s\n",
 						mode == DRM_LSPCON_MODE_LS ?
 						"LS" : "PCON");
-				return 0;
-			}
-		}
-	} while (time_out);
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (समय_out);
 
 	DRM_ERROR("LSPCON mode change timed out\n");
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 EXPORT_SYMBOL(drm_lspcon_set_mode);

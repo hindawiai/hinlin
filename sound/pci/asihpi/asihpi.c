@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Asihpi soundcard
  *  Copyright (c) by AudioScience Inc <support@audioscience.com>
  *
  *  The following is not a condition of use, merely a request:
- *  If you modify this program, particularly if you fix errors, AudioScience Inc
- *  would appreciate it if you grant us the right to use those modifications
- *  for any purpose including commercial applications.
+ *  If you modअगरy this program, particularly अगर you fix errors, AudioScience Inc
+ *  would appreciate it अगर you grant us the right to use those modअगरications
+ *  क्रम any purpose including commercial applications.
  */
 
-#include "hpi_internal.h"
-#include "hpi_version.h"
-#include "hpimsginit.h"
-#include "hpioctl.h"
-#include "hpicmn.h"
+#समावेश "hpi_internal.h"
+#समावेश "hpi_version.h"
+#समावेश "hpimsginit.h"
+#समावेश "hpioctl.h"
+#समावेश "hpicmn.h"
 
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/jiffies.h>
-#include <linux/slab.h>
-#include <linux/time.h>
-#include <linux/wait.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/control.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/info.h>
-#include <sound/initval.h>
-#include <sound/tlv.h>
-#include <sound/hwdep.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/control.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/info.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/hwdep.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("AudioScience inc. <support@audioscience.com>");
 MODULE_DESCRIPTION("AudioScience ALSA ASI5xxx ASI6xxx ASI87xx ASI89xx "
 			HPI_VER_STRING);
 
-#if defined CONFIG_SND_DEBUG_VERBOSE
+#अगर defined CONFIG_SND_DEBUG_VERBOSE
 /**
- * snd_printddd - very verbose debug printk
- * @format: format string
+ * snd_prपूर्णांकddd - very verbose debug prपूर्णांकk
+ * @क्रमmat: क्रमmat string
  *
- * Works like snd_printk() for debugging purposes.
+ * Works like snd_prपूर्णांकk() क्रम debugging purposes.
  * Ignored when CONFIG_SND_DEBUG_VERBOSE is not set.
- * Must set snd module debug parameter to 3 to enable at runtime.
+ * Must set snd module debug parameter to 3 to enable at runसमय.
  */
-#define snd_printddd(format, args...) \
-	__snd_printk(3, __FILE__, __LINE__, format, ##args)
-#else
-#define snd_printddd(format, args...) do { } while (0)
-#endif
+#घोषणा snd_prपूर्णांकddd(क्रमmat, args...) \
+	__snd_prपूर्णांकk(3, __खाता__, __LINE__, क्रमmat, ##args)
+#अन्यथा
+#घोषणा snd_prपूर्णांकddd(क्रमmat, args...) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* index 0-MAX */
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
-static bool enable_hpi_hwdep = 1;
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* index 0-MAX */
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+अटल bool enable_hpi_hwdep = 1;
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "ALSA index value for AudioScience soundcard.");
 
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ALSA ID string for AudioScience soundcard.");
 
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "ALSA enable AudioScience soundcard.");
 
 module_param(enable_hpi_hwdep, bool, 0644);
 MODULE_PARM_DESC(enable_hpi_hwdep,
 		"ALSA enable HPI hwdep for AudioScience soundcard ");
 
-/* identify driver */
-#ifdef KERNEL_ALSA_BUILD
-static char *build_info = "Built using headers from kernel source";
-module_param(build_info, charp, 0444);
+/* identअगरy driver */
+#अगर_घोषित KERNEL_ALSA_BUILD
+अटल अक्षर *build_info = "Built using headers from kernel source";
+module_param(build_info, अक्षरp, 0444);
 MODULE_PARM_DESC(build_info, "Built using headers from kernel source");
-#else
-static char *build_info = "Built within ALSA source";
-module_param(build_info, charp, 0444);
+#अन्यथा
+अटल अक्षर *build_info = "Built within ALSA source";
+module_param(build_info, अक्षरp, 0444);
 MODULE_PARM_DESC(build_info, "Built within ALSA source");
-#endif
+#पूर्ण_अगर
 
 /* set to 1 to dump every control from adapter to log */
-static const int mixer_dump;
+अटल स्थिर पूर्णांक mixer_dump;
 
-#define DEFAULT_SAMPLERATE 44100
-static int adapter_fs = DEFAULT_SAMPLERATE;
+#घोषणा DEFAULT_SAMPLERATE 44100
+अटल पूर्णांक adapter_fs = DEFAULT_SAMPLERATE;
 
-/* defaults */
-#define PERIODS_MIN 2
-#define PERIOD_BYTES_MIN  2048
-#define BUFFER_BYTES_MAX (512 * 1024)
+/* शेषs */
+#घोषणा PERIODS_MIN 2
+#घोषणा PERIOD_BYTES_MIN  2048
+#घोषणा BUFFER_BYTES_MAX (512 * 1024)
 
-#define MAX_CLOCKSOURCES (HPI_SAMPLECLOCK_SOURCE_LAST + 1 + 7)
+#घोषणा MAX_CLOCKSOURCES (HPI_SAMPLECLOCK_SOURCE_LAST + 1 + 7)
 
-struct clk_source {
-	int source;
-	int index;
-	const char *name;
-};
+काष्ठा clk_source अणु
+	पूर्णांक source;
+	पूर्णांक index;
+	स्थिर अक्षर *name;
+पूर्ण;
 
-struct clk_cache {
-	int count;
-	int has_local;
-	struct clk_source s[MAX_CLOCKSOURCES];
-};
+काष्ठा clk_cache अणु
+	पूर्णांक count;
+	पूर्णांक has_local;
+	काष्ठा clk_source s[MAX_CLOCKSOURCES];
+पूर्ण;
 
 /* Per card data */
-struct snd_card_asihpi {
-	struct snd_card *card;
-	struct pci_dev *pci;
-	struct hpi_adapter *hpi;
+काष्ठा snd_card_asihpi अणु
+	काष्ठा snd_card *card;
+	काष्ठा pci_dev *pci;
+	काष्ठा hpi_adapter *hpi;
 
-	/* In low latency mode there is only one stream, a pointer to its
-	 * private data is stored here on trigger and cleared on stop.
-	 * The interrupt handler uses it as a parameter when calling
-	 * snd_card_asihpi_timer_function().
+	/* In low latency mode there is only one stream, a poपूर्णांकer to its
+	 * निजी data is stored here on trigger and cleared on stop.
+	 * The पूर्णांकerrupt handler uses it as a parameter when calling
+	 * snd_card_asihpi_समयr_function().
 	 */
-	struct snd_card_asihpi_pcm *llmode_streampriv;
-	void (*pcm_start)(struct snd_pcm_substream *substream);
-	void (*pcm_stop)(struct snd_pcm_substream *substream);
+	काष्ठा snd_card_asihpi_pcm *llmode_streampriv;
+	व्योम (*pcm_start)(काष्ठा snd_pcm_substream *substream);
+	व्योम (*pcm_stop)(काष्ठा snd_pcm_substream *substream);
 
 	u32 h_mixer;
-	struct clk_cache cc;
+	काष्ठा clk_cache cc;
 
 	u16 can_dma;
 	u16 support_grouping;
 	u16 support_mrx;
-	u16 update_interval_frames;
+	u16 update_पूर्णांकerval_frames;
 	u16 in_max_chans;
 	u16 out_max_chans;
 	u16 in_min_chans;
 	u16 out_min_chans;
-};
+पूर्ण;
 
 /* Per stream data */
-struct snd_card_asihpi_pcm {
-	struct timer_list timer;
-	unsigned int respawn_timer;
-	unsigned int hpi_buffer_attached;
-	unsigned int buffer_bytes;
-	unsigned int period_bytes;
-	unsigned int bytes_per_sec;
-	unsigned int pcm_buf_host_rw_ofs; /* Host R/W pos */
-	unsigned int pcm_buf_dma_ofs;	/* DMA R/W offset in buffer */
-	unsigned int pcm_buf_elapsed_dma_ofs;	/* DMA R/W offset in buffer */
-	unsigned int drained_count;
-	struct snd_pcm_substream *substream;
+काष्ठा snd_card_asihpi_pcm अणु
+	काष्ठा समयr_list समयr;
+	अचिन्हित पूर्णांक respawn_समयr;
+	अचिन्हित पूर्णांक hpi_buffer_attached;
+	अचिन्हित पूर्णांक buffer_bytes;
+	अचिन्हित पूर्णांक period_bytes;
+	अचिन्हित पूर्णांक bytes_per_sec;
+	अचिन्हित पूर्णांक pcm_buf_host_rw_ofs; /* Host R/W pos */
+	अचिन्हित पूर्णांक pcm_buf_dma_ofs;	/* DMA R/W offset in buffer */
+	अचिन्हित पूर्णांक pcm_buf_elapsed_dma_ofs;	/* DMA R/W offset in buffer */
+	अचिन्हित पूर्णांक drained_count;
+	काष्ठा snd_pcm_substream *substream;
 	u32 h_stream;
-	struct hpi_format format;
-};
+	काष्ठा hpi_क्रमmat क्रमmat;
+पूर्ण;
 
 /* universal stream verbs work with out or in stream handles */
 
-/* Functions to allow driver to give a buffer to HPI for busmastering */
+/* Functions to allow driver to give a buffer to HPI क्रम busmastering */
 
-static u16 hpi_stream_host_buffer_attach(
+अटल u16 hpi_stream_host_buffer_attach(
 	u32 h_stream,   /* handle to outstream. */
 	u32 size_in_bytes, /* size in bytes of bus mastering buffer */
 	u32 pci_address
 )
-{
-	struct hpi_message hm;
-	struct hpi_response hr;
-	unsigned int obj = hpi_handle_object(h_stream);
+अणु
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
+	अचिन्हित पूर्णांक obj = hpi_handle_object(h_stream);
 
-	if (!h_stream)
-		return HPI_ERROR_INVALID_OBJ;
+	अगर (!h_stream)
+		वापस HPI_ERROR_INVALID_OBJ;
 	hpi_init_message_response(&hm, &hr, obj,
 			obj == HPI_OBJ_OSTREAM ?
 				HPI_OSTREAM_HOSTBUFFER_ALLOC :
@@ -178,17 +179,17 @@ static u16 hpi_stream_host_buffer_attach(
 	hm.u.d.u.buffer.pci_address = pci_address;
 	hm.u.d.u.buffer.command = HPI_BUFFER_CMD_INTERNAL_GRANTADAPTER;
 	hpi_send_recv(&hm, &hr);
-	return hr.error;
-}
+	वापस hr.error;
+पूर्ण
 
-static u16 hpi_stream_host_buffer_detach(u32  h_stream)
-{
-	struct hpi_message hm;
-	struct hpi_response hr;
-	unsigned int obj = hpi_handle_object(h_stream);
+अटल u16 hpi_stream_host_buffer_detach(u32  h_stream)
+अणु
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
+	अचिन्हित पूर्णांक obj = hpi_handle_object(h_stream);
 
-	if (!h_stream)
-		return HPI_ERROR_INVALID_OBJ;
+	अगर (!h_stream)
+		वापस HPI_ERROR_INVALID_OBJ;
 
 	hpi_init_message_response(&hm, &hr,  obj,
 			obj == HPI_OBJ_OSTREAM ?
@@ -199,26 +200,26 @@ static u16 hpi_stream_host_buffer_detach(u32  h_stream)
 				&hm.obj_index);
 	hm.u.d.u.buffer.command = HPI_BUFFER_CMD_INTERNAL_REVOKEADAPTER;
 	hpi_send_recv(&hm, &hr);
-	return hr.error;
-}
+	वापस hr.error;
+पूर्ण
 
-static inline u16 hpi_stream_start(u32 h_stream)
-{
-	if (hpi_handle_object(h_stream) ==  HPI_OBJ_OSTREAM)
-		return hpi_outstream_start(h_stream);
-	else
-		return hpi_instream_start(h_stream);
-}
+अटल अंतरभूत u16 hpi_stream_start(u32 h_stream)
+अणु
+	अगर (hpi_handle_object(h_stream) ==  HPI_OBJ_OSTREAM)
+		वापस hpi_outstream_start(h_stream);
+	अन्यथा
+		वापस hpi_instream_start(h_stream);
+पूर्ण
 
-static inline u16 hpi_stream_stop(u32 h_stream)
-{
-	if (hpi_handle_object(h_stream) ==  HPI_OBJ_OSTREAM)
-		return hpi_outstream_stop(h_stream);
-	else
-		return hpi_instream_stop(h_stream);
-}
+अटल अंतरभूत u16 hpi_stream_stop(u32 h_stream)
+अणु
+	अगर (hpi_handle_object(h_stream) ==  HPI_OBJ_OSTREAM)
+		वापस hpi_outstream_stop(h_stream);
+	अन्यथा
+		वापस hpi_instream_stop(h_stream);
+पूर्ण
 
-static inline u16 hpi_stream_get_info_ex(
+अटल अंतरभूत u16 hpi_stream_get_info_ex(
     u32 h_stream,
     u16        *pw_state,
     u32        *pbuffer_size,
@@ -226,71 +227,71 @@ static inline u16 hpi_stream_get_info_ex(
     u32        *psample_count,
     u32        *pauxiliary_data
 )
-{
+अणु
 	u16 e;
-	if (hpi_handle_object(h_stream)  ==  HPI_OBJ_OSTREAM)
+	अगर (hpi_handle_object(h_stream)  ==  HPI_OBJ_OSTREAM)
 		e = hpi_outstream_get_info_ex(h_stream, pw_state,
 					pbuffer_size, pdata_in_buffer,
 					psample_count, pauxiliary_data);
-	else
+	अन्यथा
 		e = hpi_instream_get_info_ex(h_stream, pw_state,
 					pbuffer_size, pdata_in_buffer,
 					psample_count, pauxiliary_data);
-	return e;
-}
+	वापस e;
+पूर्ण
 
-static inline u16 hpi_stream_group_add(
+अटल अंतरभूत u16 hpi_stream_group_add(
 					u32 h_master,
 					u32 h_stream)
-{
-	if (hpi_handle_object(h_master) ==  HPI_OBJ_OSTREAM)
-		return hpi_outstream_group_add(h_master, h_stream);
-	else
-		return hpi_instream_group_add(h_master, h_stream);
-}
+अणु
+	अगर (hpi_handle_object(h_master) ==  HPI_OBJ_OSTREAM)
+		वापस hpi_outstream_group_add(h_master, h_stream);
+	अन्यथा
+		वापस hpi_instream_group_add(h_master, h_stream);
+पूर्ण
 
-static inline u16 hpi_stream_group_reset(u32 h_stream)
-{
-	if (hpi_handle_object(h_stream) ==  HPI_OBJ_OSTREAM)
-		return hpi_outstream_group_reset(h_stream);
-	else
-		return hpi_instream_group_reset(h_stream);
-}
+अटल अंतरभूत u16 hpi_stream_group_reset(u32 h_stream)
+अणु
+	अगर (hpi_handle_object(h_stream) ==  HPI_OBJ_OSTREAM)
+		वापस hpi_outstream_group_reset(h_stream);
+	अन्यथा
+		वापस hpi_instream_group_reset(h_stream);
+पूर्ण
 
-static u16 handle_error(u16 err, int line, char *filename)
-{
-	if (err)
-		printk(KERN_WARNING
+अटल u16 handle_error(u16 err, पूर्णांक line, अक्षर *filename)
+अणु
+	अगर (err)
+		prपूर्णांकk(KERN_WARNING
 			"in file %s, line %d: HPI error %d\n",
 			filename, line, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#define hpi_handle_error(x)  handle_error(x, __LINE__, __FILE__)
+#घोषणा hpi_handle_error(x)  handle_error(x, __LINE__, __खाता__)
 
 /***************************** GENERAL PCM ****************/
 
-static void print_hwparams(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *p)
-{
-	char name[16];
-	snd_pcm_debug_name(substream, name, sizeof(name));
-	snd_printdd("%s HWPARAMS\n", name);
-	snd_printdd(" samplerate=%dHz channels=%d format=%d subformat=%d\n",
+अटल व्योम prपूर्णांक_hwparams(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_pcm_hw_params *p)
+अणु
+	अक्षर name[16];
+	snd_pcm_debug_name(substream, name, माप(name));
+	snd_prपूर्णांकdd("%s HWPARAMS\n", name);
+	snd_prपूर्णांकdd(" samplerate=%dHz channels=%d format=%d subformat=%d\n",
 		params_rate(p), params_channels(p),
-		params_format(p), params_subformat(p));
-	snd_printdd(" buffer=%dB period=%dB period_size=%dB periods=%d\n",
+		params_क्रमmat(p), params_subक्रमmat(p));
+	snd_prपूर्णांकdd(" buffer=%dB period=%dB period_size=%dB periods=%d\n",
 		params_buffer_bytes(p), params_period_bytes(p),
 		params_period_size(p), params_periods(p));
-	snd_printdd(" buffer_size=%d access=%d data_rate=%dB/s\n",
+	snd_prपूर्णांकdd(" buffer_size=%d access=%d data_rate=%dB/s\n",
 		params_buffer_size(p), params_access(p),
 		params_rate(p) * params_channels(p) *
-		snd_pcm_format_width(params_format(p)) / 8);
-}
+		snd_pcm_क्रमmat_width(params_क्रमmat(p)) / 8);
+पूर्ण
 
-#define INVALID_FORMAT	(__force snd_pcm_format_t)(-1)
+#घोषणा INVALID_FORMAT	(__क्रमce snd_pcm_क्रमmat_t)(-1)
 
-static const snd_pcm_format_t hpi_to_alsa_formats[] = {
+अटल स्थिर snd_pcm_क्रमmat_t hpi_to_alsa_क्रमmats[] = अणु
 	INVALID_FORMAT,		/* INVALID */
 	SNDRV_PCM_FORMAT_U8,	/* HPI_FORMAT_PCM8_UNSIGNED        1 */
 	SNDRV_PCM_FORMAT_S16,	/* HPI_FORMAT_PCM16_SIGNED         2 */
@@ -306,368 +307,368 @@ static const snd_pcm_format_t hpi_to_alsa_formats[] = {
 	INVALID_FORMAT,		/* HPI_FORMAT_RAW_BITSTREAM       12 */
 	INVALID_FORMAT,		/* HPI_FORMAT_AA_TAGIT1_HITS_EX1  13 */
 	SNDRV_PCM_FORMAT_FLOAT,	/* HPI_FORMAT_PCM32_FLOAT         14 */
-#if 1
-	/* ALSA can't handle 3 byte sample size together with power-of-2
-	 *  constraint on buffer_bytes, so disable this format
+#अगर 1
+	/* ALSA can't handle 3 byte sample size together with घातer-of-2
+	 *  स्थिरraपूर्णांक on buffer_bytes, so disable this क्रमmat
 	 */
 	INVALID_FORMAT
-#else
+#अन्यथा
 	/* SNDRV_PCM_FORMAT_S24_3LE */ /* HPI_FORMAT_PCM24_SIGNED 15 */
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 
-static int snd_card_asihpi_format_alsa2hpi(snd_pcm_format_t alsa_format,
-					   u16 *hpi_format)
-{
-	u16 format;
+अटल पूर्णांक snd_card_asihpi_क्रमmat_alsa2hpi(snd_pcm_क्रमmat_t alsa_क्रमmat,
+					   u16 *hpi_क्रमmat)
+अणु
+	u16 क्रमmat;
 
-	for (format = HPI_FORMAT_PCM8_UNSIGNED;
-	     format <= HPI_FORMAT_PCM24_SIGNED; format++) {
-		if (hpi_to_alsa_formats[format] == alsa_format) {
-			*hpi_format = format;
-			return 0;
-		}
-	}
+	क्रम (क्रमmat = HPI_FORMAT_PCM8_UNSIGNED;
+	     क्रमmat <= HPI_FORMAT_PCM24_SIGNED; क्रमmat++) अणु
+		अगर (hpi_to_alsa_क्रमmats[क्रमmat] == alsa_क्रमmat) अणु
+			*hpi_क्रमmat = क्रमmat;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	snd_printd(KERN_WARNING "failed match for alsa format %d\n",
-		   alsa_format);
-	*hpi_format = 0;
-	return -EINVAL;
-}
+	snd_prपूर्णांकd(KERN_WARNING "failed match for alsa format %d\n",
+		   alsa_क्रमmat);
+	*hpi_क्रमmat = 0;
+	वापस -EINVAL;
+पूर्ण
 
-static void snd_card_asihpi_pcm_samplerates(struct snd_card_asihpi *asihpi,
-					 struct snd_pcm_hardware *pcmhw)
-{
+अटल व्योम snd_card_asihpi_pcm_samplerates(काष्ठा snd_card_asihpi *asihpi,
+					 काष्ठा snd_pcm_hardware *pcmhw)
+अणु
 	u16 err;
 	u32 h_control;
 	u32 sample_rate;
-	int idx;
-	unsigned int rate_min = 200000;
-	unsigned int rate_max = 0;
-	unsigned int rates = 0;
+	पूर्णांक idx;
+	अचिन्हित पूर्णांक rate_min = 200000;
+	अचिन्हित पूर्णांक rate_max = 0;
+	अचिन्हित पूर्णांक rates = 0;
 
-	if (asihpi->support_mrx) {
+	अगर (asihpi->support_mrx) अणु
 		rates |= SNDRV_PCM_RATE_CONTINUOUS;
 		rates |= SNDRV_PCM_RATE_8000_96000;
 		rate_min = 8000;
 		rate_max = 100000;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* on cards without SRC,
-		   valid rates are determined by sampleclock */
+		   valid rates are determined by sampleघड़ी */
 		err = hpi_mixer_get_control(asihpi->h_mixer,
 					  HPI_SOURCENODE_CLOCK_SOURCE, 0, 0, 0,
 					  HPI_CONTROL_SAMPLECLOCK, &h_control);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&asihpi->pci->dev,
 				"No local sampleclock, err %d\n", err);
-		}
+		पूर्ण
 
-		for (idx = -1; idx < 100; idx++) {
-			if (idx == -1) {
-				if (hpi_sample_clock_get_sample_rate(h_control,
+		क्रम (idx = -1; idx < 100; idx++) अणु
+			अगर (idx == -1) अणु
+				अगर (hpi_sample_घड़ी_get_sample_rate(h_control,
 								&sample_rate))
-					continue;
-			} else if (hpi_sample_clock_query_local_rate(h_control,
-							idx, &sample_rate)) {
-				break;
-			}
+					जारी;
+			पूर्ण अन्यथा अगर (hpi_sample_घड़ी_query_local_rate(h_control,
+							idx, &sample_rate)) अणु
+				अवरोध;
+			पूर्ण
 
 			rate_min = min(rate_min, sample_rate);
 			rate_max = max(rate_max, sample_rate);
 
-			switch (sample_rate) {
-			case 5512:
+			चयन (sample_rate) अणु
+			हाल 5512:
 				rates |= SNDRV_PCM_RATE_5512;
-				break;
-			case 8000:
+				अवरोध;
+			हाल 8000:
 				rates |= SNDRV_PCM_RATE_8000;
-				break;
-			case 11025:
+				अवरोध;
+			हाल 11025:
 				rates |= SNDRV_PCM_RATE_11025;
-				break;
-			case 16000:
+				अवरोध;
+			हाल 16000:
 				rates |= SNDRV_PCM_RATE_16000;
-				break;
-			case 22050:
+				अवरोध;
+			हाल 22050:
 				rates |= SNDRV_PCM_RATE_22050;
-				break;
-			case 32000:
+				अवरोध;
+			हाल 32000:
 				rates |= SNDRV_PCM_RATE_32000;
-				break;
-			case 44100:
+				अवरोध;
+			हाल 44100:
 				rates |= SNDRV_PCM_RATE_44100;
-				break;
-			case 48000:
+				अवरोध;
+			हाल 48000:
 				rates |= SNDRV_PCM_RATE_48000;
-				break;
-			case 64000:
+				अवरोध;
+			हाल 64000:
 				rates |= SNDRV_PCM_RATE_64000;
-				break;
-			case 88200:
+				अवरोध;
+			हाल 88200:
 				rates |= SNDRV_PCM_RATE_88200;
-				break;
-			case 96000:
+				अवरोध;
+			हाल 96000:
 				rates |= SNDRV_PCM_RATE_96000;
-				break;
-			case 176400:
+				अवरोध;
+			हाल 176400:
 				rates |= SNDRV_PCM_RATE_176400;
-				break;
-			case 192000:
+				अवरोध;
+			हाल 192000:
 				rates |= SNDRV_PCM_RATE_192000;
-				break;
-			default: /* some other rate */
+				अवरोध;
+			शेष: /* some other rate */
 				rates |= SNDRV_PCM_RATE_KNOT;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	pcmhw->rates = rates;
 	pcmhw->rate_min = rate_min;
 	pcmhw->rate_max = rate_max;
-}
+पूर्ण
 
-static int snd_card_asihpi_pcm_hw_params(struct snd_pcm_substream *substream,
-					 struct snd_pcm_hw_params *params)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi_pcm *dpcm = runtime->private_data;
-	struct snd_card_asihpi *card = snd_pcm_substream_chip(substream);
-	int err;
-	u16 format;
-	int width;
-	unsigned int bytes_per_sec;
+अटल पूर्णांक snd_card_asihpi_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
+					 काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi_pcm *dpcm = runसमय->निजी_data;
+	काष्ठा snd_card_asihpi *card = snd_pcm_substream_chip(substream);
+	पूर्णांक err;
+	u16 क्रमmat;
+	पूर्णांक width;
+	अचिन्हित पूर्णांक bytes_per_sec;
 
-	print_hwparams(substream, params);
-	err = snd_card_asihpi_format_alsa2hpi(params_format(params), &format);
-	if (err)
-		return err;
+	prपूर्णांक_hwparams(substream, params);
+	err = snd_card_asihpi_क्रमmat_alsa2hpi(params_क्रमmat(params), &क्रमmat);
+	अगर (err)
+		वापस err;
 
-	hpi_handle_error(hpi_format_create(&dpcm->format,
+	hpi_handle_error(hpi_क्रमmat_create(&dpcm->क्रमmat,
 			params_channels(params),
-			format, params_rate(params), 0, 0));
+			क्रमmat, params_rate(params), 0, 0));
 
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
-		if (hpi_instream_reset(dpcm->h_stream) != 0)
-			return -EINVAL;
+	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
+		अगर (hpi_instream_reset(dpcm->h_stream) != 0)
+			वापस -EINVAL;
 
-		if (hpi_instream_set_format(
-			dpcm->h_stream, &dpcm->format) != 0)
-			return -EINVAL;
-	}
+		अगर (hpi_instream_set_क्रमmat(
+			dpcm->h_stream, &dpcm->क्रमmat) != 0)
+			वापस -EINVAL;
+	पूर्ण
 
 	dpcm->hpi_buffer_attached = 0;
-	if (card->can_dma) {
+	अगर (card->can_dma) अणु
 		err = hpi_stream_host_buffer_attach(dpcm->h_stream,
-			params_buffer_bytes(params),  runtime->dma_addr);
-		if (err == 0) {
-			snd_printdd(
+			params_buffer_bytes(params),  runसमय->dma_addr);
+		अगर (err == 0) अणु
+			snd_prपूर्णांकdd(
 				"stream_host_buffer_attach success %u %lu\n",
 				params_buffer_bytes(params),
-				(unsigned long)runtime->dma_addr);
-		} else {
-			snd_printd("stream_host_buffer_attach error %d\n",
+				(अचिन्हित दीर्घ)runसमय->dma_addr);
+		पूर्ण अन्यथा अणु
+			snd_prपूर्णांकd("stream_host_buffer_attach error %d\n",
 					err);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		err = hpi_stream_get_info_ex(dpcm->h_stream, NULL,
-				&dpcm->hpi_buffer_attached, NULL, NULL, NULL);
-	}
+		err = hpi_stream_get_info_ex(dpcm->h_stream, शून्य,
+				&dpcm->hpi_buffer_attached, शून्य, शून्य, शून्य);
+	पूर्ण
 	bytes_per_sec = params_rate(params) * params_channels(params);
-	width = snd_pcm_format_width(params_format(params));
+	width = snd_pcm_क्रमmat_width(params_क्रमmat(params));
 	bytes_per_sec *= width;
 	bytes_per_sec /= 8;
-	if (width < 0 || bytes_per_sec == 0)
-		return -EINVAL;
+	अगर (width < 0 || bytes_per_sec == 0)
+		वापस -EINVAL;
 
 	dpcm->bytes_per_sec = bytes_per_sec;
 	dpcm->buffer_bytes = params_buffer_bytes(params);
 	dpcm->period_bytes = params_period_bytes(params);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-snd_card_asihpi_hw_free(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi_pcm *dpcm = runtime->private_data;
-	if (dpcm->hpi_buffer_attached)
+अटल पूर्णांक
+snd_card_asihpi_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi_pcm *dpcm = runसमय->निजी_data;
+	अगर (dpcm->hpi_buffer_attached)
 		hpi_stream_host_buffer_detach(dpcm->h_stream);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_card_asihpi_runtime_free(struct snd_pcm_runtime *runtime)
-{
-	struct snd_card_asihpi_pcm *dpcm = runtime->private_data;
-	kfree(dpcm);
-}
+अटल व्योम snd_card_asihpi_runसमय_मुक्त(काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	काष्ठा snd_card_asihpi_pcm *dpcm = runसमय->निजी_data;
+	kमुक्त(dpcm);
+पूर्ण
 
-static void snd_card_asihpi_pcm_timer_start(struct snd_pcm_substream *
+अटल व्योम snd_card_asihpi_pcm_समयr_start(काष्ठा snd_pcm_substream *
 					    substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi_pcm *dpcm = runtime->private_data;
-	int expiry;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi_pcm *dpcm = runसमय->निजी_data;
+	पूर्णांक expiry;
 
 	expiry = HZ / 200;
 
-	expiry = max(expiry, 1); /* don't let it be zero! */
-	mod_timer(&dpcm->timer, jiffies + expiry);
-	dpcm->respawn_timer = 1;
-}
+	expiry = max(expiry, 1); /* करोn't let it be zero! */
+	mod_समयr(&dpcm->समयr, jअगरfies + expiry);
+	dpcm->respawn_समयr = 1;
+पूर्ण
 
-static void snd_card_asihpi_pcm_timer_stop(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi_pcm *dpcm = runtime->private_data;
+अटल व्योम snd_card_asihpi_pcm_समयr_stop(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi_pcm *dpcm = runसमय->निजी_data;
 
-	dpcm->respawn_timer = 0;
-	del_timer(&dpcm->timer);
-}
+	dpcm->respawn_समयr = 0;
+	del_समयr(&dpcm->समयr);
+पूर्ण
 
-static void snd_card_asihpi_pcm_int_start(struct snd_pcm_substream *substream)
-{
-	struct snd_card_asihpi_pcm *dpcm;
-	struct snd_card_asihpi *card;
+अटल व्योम snd_card_asihpi_pcm_पूर्णांक_start(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_card_asihpi_pcm *dpcm;
+	काष्ठा snd_card_asihpi *card;
 
-	dpcm = (struct snd_card_asihpi_pcm *)substream->runtime->private_data;
+	dpcm = (काष्ठा snd_card_asihpi_pcm *)substream->runसमय->निजी_data;
 	card = snd_pcm_substream_chip(substream);
 
-	WARN_ON(in_interrupt());
+	WARN_ON(in_पूर्णांकerrupt());
 	card->llmode_streampriv = dpcm;
 
 	hpi_handle_error(hpi_adapter_set_property(card->hpi->adapter->index,
 		HPI_ADAPTER_PROPERTY_IRQ_RATE,
-		card->update_interval_frames, 0));
-}
+		card->update_पूर्णांकerval_frames, 0));
+पूर्ण
 
-static void snd_card_asihpi_pcm_int_stop(struct snd_pcm_substream *substream)
-{
-	struct snd_card_asihpi *card;
+अटल व्योम snd_card_asihpi_pcm_पूर्णांक_stop(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_card_asihpi *card;
 
 	card = snd_pcm_substream_chip(substream);
 
 	hpi_handle_error(hpi_adapter_set_property(card->hpi->adapter->index,
 		HPI_ADAPTER_PROPERTY_IRQ_RATE, 0, 0));
 
-	card->llmode_streampriv = NULL;
-}
+	card->llmode_streampriv = शून्य;
+पूर्ण
 
-static int snd_card_asihpi_trigger(struct snd_pcm_substream *substream,
-					   int cmd)
-{
-	struct snd_card_asihpi_pcm *dpcm = substream->runtime->private_data;
-	struct snd_card_asihpi *card = snd_pcm_substream_chip(substream);
-	struct snd_pcm_substream *s;
+अटल पूर्णांक snd_card_asihpi_trigger(काष्ठा snd_pcm_substream *substream,
+					   पूर्णांक cmd)
+अणु
+	काष्ठा snd_card_asihpi_pcm *dpcm = substream->runसमय->निजी_data;
+	काष्ठा snd_card_asihpi *card = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_substream *s;
 	u16 e;
-	char name[16];
+	अक्षर name[16];
 
-	snd_pcm_debug_name(substream, name, sizeof(name));
+	snd_pcm_debug_name(substream, name, माप(name));
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-		snd_printdd("%s trigger start\n", name);
-		snd_pcm_group_for_each_entry(s, substream) {
-			struct snd_pcm_runtime *runtime = s->runtime;
-			struct snd_card_asihpi_pcm *ds = runtime->private_data;
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+		snd_prपूर्णांकdd("%s trigger start\n", name);
+		snd_pcm_group_क्रम_each_entry(s, substream) अणु
+			काष्ठा snd_pcm_runसमय *runसमय = s->runसमय;
+			काष्ठा snd_card_asihpi_pcm *ds = runसमय->निजी_data;
 
-			if (snd_pcm_substream_chip(s) != card)
-				continue;
+			अगर (snd_pcm_substream_chip(s) != card)
+				जारी;
 
-			/* don't link Cap and Play */
-			if (substream->stream != s->stream)
-				continue;
+			/* करोn't link Cap and Play */
+			अगर (substream->stream != s->stream)
+				जारी;
 
 			ds->drained_count = 0;
-			if (s->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-				/* How do I know how much valid data is present
+			अगर (s->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+				/* How करो I know how much valid data is present
 				* in buffer? Must be at least one period!
-				* Guessing 2 periods, but if
+				* Guessing 2 periods, but अगर
 				* buffer is bigger it may contain even more
 				* data??
 				*/
-				unsigned int preload = ds->period_bytes * 1;
-				snd_printddd("%d preload %d\n", s->number, preload);
-				hpi_handle_error(hpi_outstream_write_buf(
+				अचिन्हित पूर्णांक preload = ds->period_bytes * 1;
+				snd_prपूर्णांकddd("%d preload %d\n", s->number, preload);
+				hpi_handle_error(hpi_outstream_ग_लिखो_buf(
 						ds->h_stream,
-						&runtime->dma_area[0],
+						&runसमय->dma_area[0],
 						preload,
-						&ds->format));
+						&ds->क्रमmat));
 				ds->pcm_buf_host_rw_ofs = preload;
-			}
+			पूर्ण
 
-			if (card->support_grouping) {
-				snd_printdd("%d group\n", s->number);
+			अगर (card->support_grouping) अणु
+				snd_prपूर्णांकdd("%d group\n", s->number);
 				e = hpi_stream_group_add(
 					dpcm->h_stream,
 					ds->h_stream);
-				if (!e) {
-					snd_pcm_trigger_done(s, substream);
-				} else {
+				अगर (!e) अणु
+					snd_pcm_trigger_करोne(s, substream);
+				पूर्ण अन्यथा अणु
 					hpi_handle_error(e);
-					break;
-				}
-			} else
-				break;
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण अन्यथा
+				अवरोध;
+		पूर्ण
 		/* start the master stream */
 		card->pcm_start(substream);
-		if ((substream->stream == SNDRV_PCM_STREAM_CAPTURE) ||
+		अगर ((substream->stream == SNDRV_PCM_STREAM_CAPTURE) ||
 			!card->can_dma)
 			hpi_handle_error(hpi_stream_start(dpcm->h_stream));
-		break;
+		अवरोध;
 
-	case SNDRV_PCM_TRIGGER_STOP:
-		snd_printdd("%s trigger stop\n", name);
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		snd_prपूर्णांकdd("%s trigger stop\n", name);
 		card->pcm_stop(substream);
-		snd_pcm_group_for_each_entry(s, substream) {
-			if (snd_pcm_substream_chip(s) != card)
-				continue;
-			/* don't link Cap and Play */
-			if (substream->stream != s->stream)
-				continue;
+		snd_pcm_group_क्रम_each_entry(s, substream) अणु
+			अगर (snd_pcm_substream_chip(s) != card)
+				जारी;
+			/* करोn't link Cap and Play */
+			अगर (substream->stream != s->stream)
+				जारी;
 
-			/*? workaround linked streams don't
+			/*? workaround linked streams करोn't
 			transition to SETUP 20070706*/
-			s->runtime->status->state = SNDRV_PCM_STATE_SETUP;
+			s->runसमय->status->state = SNDRV_PCM_STATE_SETUP;
 
-			if (card->support_grouping) {
-				snd_printdd("%d group\n", s->number);
-				snd_pcm_trigger_done(s, substream);
-			} else
-				break;
-		}
+			अगर (card->support_grouping) अणु
+				snd_prपूर्णांकdd("%d group\n", s->number);
+				snd_pcm_trigger_करोne(s, substream);
+			पूर्ण अन्यथा
+				अवरोध;
+		पूर्ण
 
 		/* _prepare and _hwparams reset the stream */
 		hpi_handle_error(hpi_stream_stop(dpcm->h_stream));
-		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 			hpi_handle_error(
 				hpi_outstream_reset(dpcm->h_stream));
 
-		if (card->support_grouping)
+		अगर (card->support_grouping)
 			hpi_handle_error(hpi_stream_group_reset(dpcm->h_stream));
-		break;
+		अवरोध;
 
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		snd_printdd("%s trigger pause release\n", name);
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		snd_prपूर्णांकdd("%s trigger pause release\n", name);
 		card->pcm_start(substream);
 		hpi_handle_error(hpi_stream_start(dpcm->h_stream));
-		break;
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		snd_printdd("%s trigger pause push\n", name);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		snd_prपूर्णांकdd("%s trigger pause push\n", name);
 		card->pcm_stop(substream);
 		hpi_handle_error(hpi_stream_stop(dpcm->h_stream));
-		break;
-	default:
-		snd_printd(KERN_ERR "\tINVALID\n");
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		snd_prपूर्णांकd(KERN_ERR "\tINVALID\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*algorithm outline
  Without linking degenerates to getting single stream pos etc
@@ -675,75 +676,75 @@ static int snd_card_asihpi_trigger(struct snd_pcm_substream *substream,
 */
 /*
 pcm_buf_dma_ofs=get_buf_pos(s);
-for_each_linked_stream(s) {
+क्रम_each_linked_stream(s) अणु
 	pcm_buf_dma_ofs=get_buf_pos(s);
 	min_buf_pos = modulo_min(min_buf_pos, pcm_buf_dma_ofs, buffer_bytes)
 	new_data = min(new_data, calc_new_data(pcm_buf_dma_ofs,irq_pos)
-}
-timer.expires = jiffies + predict_next_period_ready(min_buf_pos);
-for_each_linked_stream(s) {
+पूर्ण
+समयr.expires = jअगरfies + predict_next_period_पढ़ोy(min_buf_pos);
+क्रम_each_linked_stream(s) अणु
 	s->pcm_buf_dma_ofs = min_buf_pos;
-	if (new_data > period_bytes) {
-		if (mmap) {
+	अगर (new_data > period_bytes) अणु
+		अगर (mmap) अणु
 			irq_pos = (irq_pos + period_bytes) % buffer_bytes;
-			if (playback) {
-				write(period_bytes);
-			} else {
-				read(period_bytes);
-			}
-		}
+			अगर (playback) अणु
+				ग_लिखो(period_bytes);
+			पूर्ण अन्यथा अणु
+				पढ़ो(period_bytes);
+			पूर्ण
+		पूर्ण
 		snd_pcm_period_elapsed(s);
-	}
-}
+	पूर्ण
+पूर्ण
 */
 
-/** Minimum of 2 modulo values.  Works correctly when the difference between
+/** Minimum of 2 modulo values.  Works correctly when the dअगरference between
 * the values is less than half the modulus
 */
-static inline unsigned int modulo_min(unsigned int a, unsigned int b,
-					unsigned long int modulus)
-{
-	unsigned int result;
-	if (((a-b) % modulus) < (modulus/2))
+अटल अंतरभूत अचिन्हित पूर्णांक modulo_min(अचिन्हित पूर्णांक a, अचिन्हित पूर्णांक b,
+					अचिन्हित दीर्घ पूर्णांक modulus)
+अणु
+	अचिन्हित पूर्णांक result;
+	अगर (((a-b) % modulus) < (modulus/2))
 		result = b;
-	else
+	अन्यथा
 		result = a;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-/** Timer function, equivalent to interrupt service routine for cards
+/** Timer function, equivalent to पूर्णांकerrupt service routine क्रम cards
 */
-static void snd_card_asihpi_timer_function(struct timer_list *t)
-{
-	struct snd_card_asihpi_pcm *dpcm = from_timer(dpcm, t, timer);
-	struct snd_pcm_substream *substream = dpcm->substream;
-	struct snd_card_asihpi *card = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime;
-	struct snd_pcm_substream *s;
-	unsigned int newdata = 0;
-	unsigned int pcm_buf_dma_ofs, min_buf_pos = 0;
-	unsigned int remdata, xfercount, next_jiffies;
-	int first = 1;
-	int loops = 0;
+अटल व्योम snd_card_asihpi_समयr_function(काष्ठा समयr_list *t)
+अणु
+	काष्ठा snd_card_asihpi_pcm *dpcm = from_समयr(dpcm, t, समयr);
+	काष्ठा snd_pcm_substream *substream = dpcm->substream;
+	काष्ठा snd_card_asihpi *card = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय;
+	काष्ठा snd_pcm_substream *s;
+	अचिन्हित पूर्णांक newdata = 0;
+	अचिन्हित पूर्णांक pcm_buf_dma_ofs, min_buf_pos = 0;
+	अचिन्हित पूर्णांक remdata, xfercount, next_jअगरfies;
+	पूर्णांक first = 1;
+	पूर्णांक loops = 0;
 	u16 state;
 	u32 buffer_size, bytes_avail, samples_played, on_card_bytes;
-	char name[16];
+	अक्षर name[16];
 
 
-	snd_pcm_debug_name(substream, name, sizeof(name));
+	snd_pcm_debug_name(substream, name, माप(name));
 
 	/* find minimum newdata and buffer pos in group */
-	snd_pcm_group_for_each_entry(s, substream) {
-		struct snd_card_asihpi_pcm *ds = s->runtime->private_data;
-		runtime = s->runtime;
+	snd_pcm_group_क्रम_each_entry(s, substream) अणु
+		काष्ठा snd_card_asihpi_pcm *ds = s->runसमय->निजी_data;
+		runसमय = s->runसमय;
 
-		if (snd_pcm_substream_chip(s) != card)
-			continue;
+		अगर (snd_pcm_substream_chip(s) != card)
+			जारी;
 
-		/* don't link Cap and Play */
-		if (substream->stream != s->stream)
-			continue;
+		/* करोn't link Cap and Play */
+		अगर (substream->stream != s->stream)
+			जारी;
 
 		hpi_handle_error(hpi_stream_get_info_ex(
 					ds->h_stream, &state,
@@ -751,286 +752,286 @@ static void snd_card_asihpi_timer_function(struct timer_list *t)
 					&samples_played, &on_card_bytes));
 
 		/* number of bytes in on-card buffer */
-		runtime->delay = on_card_bytes;
+		runसमय->delay = on_card_bytes;
 
-		if (!card->can_dma)
+		अगर (!card->can_dma)
 			on_card_bytes = bytes_avail;
 
-		if (s->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		अगर (s->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 			pcm_buf_dma_ofs = ds->pcm_buf_host_rw_ofs - bytes_avail;
-			if (state == HPI_STATE_STOPPED) {
-				if (bytes_avail == 0) {
+			अगर (state == HPI_STATE_STOPPED) अणु
+				अगर (bytes_avail == 0) अणु
 					hpi_handle_error(hpi_stream_start(ds->h_stream));
-					snd_printdd("P%d start\n", s->number);
+					snd_prपूर्णांकdd("P%d start\n", s->number);
 					ds->drained_count = 0;
-				}
-			} else if (state == HPI_STATE_DRAINED) {
-				snd_printd(KERN_WARNING "P%d drained\n",
+				पूर्ण
+			पूर्ण अन्यथा अगर (state == HPI_STATE_DRAINED) अणु
+				snd_prपूर्णांकd(KERN_WARNING "P%d drained\n",
 						s->number);
 				ds->drained_count++;
-				if (ds->drained_count > 20) {
+				अगर (ds->drained_count > 20) अणु
 					snd_pcm_stop_xrun(s);
-					continue;
-				}
-			} else {
+					जारी;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				ds->drained_count = 0;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			pcm_buf_dma_ofs = bytes_avail + ds->pcm_buf_host_rw_ofs;
 
-		if (first) {
-			/* can't statically init min when wrap is involved */
+		अगर (first) अणु
+			/* can't अटलally init min when wrap is involved */
 			min_buf_pos = pcm_buf_dma_ofs;
 			newdata = (pcm_buf_dma_ofs - ds->pcm_buf_elapsed_dma_ofs) % ds->buffer_bytes;
 			first = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			min_buf_pos =
-				modulo_min(min_buf_pos, pcm_buf_dma_ofs, UINT_MAX+1L);
+				modulo_min(min_buf_pos, pcm_buf_dma_ofs, अच_पूर्णांक_उच्च+1L);
 			newdata = min(
 				(pcm_buf_dma_ofs - ds->pcm_buf_elapsed_dma_ofs) % ds->buffer_bytes,
 				newdata);
-		}
+		पूर्ण
 
-		snd_printddd(
+		snd_prपूर्णांकddd(
 			"timer1, %s, %d, S=%d, elap=%d, rw=%d, dsp=%d, left=%d, aux=%d, space=%d, hw_ptr=%ld, appl_ptr=%ld\n",
 			name, s->number, state,
 			ds->pcm_buf_elapsed_dma_ofs,
 			ds->pcm_buf_host_rw_ofs,
 			pcm_buf_dma_ofs,
-			(int)bytes_avail,
+			(पूर्णांक)bytes_avail,
 
-			(int)on_card_bytes,
+			(पूर्णांक)on_card_bytes,
 			buffer_size-bytes_avail,
-			(unsigned long)frames_to_bytes(runtime,
-						runtime->status->hw_ptr),
-			(unsigned long)frames_to_bytes(runtime,
-						runtime->control->appl_ptr)
+			(अचिन्हित दीर्घ)frames_to_bytes(runसमय,
+						runसमय->status->hw_ptr),
+			(अचिन्हित दीर्घ)frames_to_bytes(runसमय,
+						runसमय->control->appl_ptr)
 		);
 		loops++;
-	}
+	पूर्ण
 	pcm_buf_dma_ofs = min_buf_pos;
 
 	remdata = newdata % dpcm->period_bytes;
 	xfercount = newdata - remdata; /* a multiple of period_bytes */
 	/* come back when on_card_bytes has decreased enough to allow
-	   write to happen, or when data has been consumed to make another
+	   ग_लिखो to happen, or when data has been consumed to make another
 	   period
 	*/
-	if (xfercount && (on_card_bytes  > dpcm->period_bytes))
-		next_jiffies = ((on_card_bytes - dpcm->period_bytes) * HZ / dpcm->bytes_per_sec);
-	else
-		next_jiffies = ((dpcm->period_bytes - remdata) * HZ / dpcm->bytes_per_sec);
+	अगर (xfercount && (on_card_bytes  > dpcm->period_bytes))
+		next_jअगरfies = ((on_card_bytes - dpcm->period_bytes) * HZ / dpcm->bytes_per_sec);
+	अन्यथा
+		next_jअगरfies = ((dpcm->period_bytes - remdata) * HZ / dpcm->bytes_per_sec);
 
-	next_jiffies = max(next_jiffies, 1U);
-	dpcm->timer.expires = jiffies + next_jiffies;
-	snd_printddd("timer2, jif=%d, buf_pos=%d, newdata=%d, xfer=%d\n",
-			next_jiffies, pcm_buf_dma_ofs, newdata, xfercount);
+	next_jअगरfies = max(next_jअगरfies, 1U);
+	dpcm->समयr.expires = jअगरfies + next_jअगरfies;
+	snd_prपूर्णांकddd("timer2, jif=%d, buf_pos=%d, newdata=%d, xfer=%d\n",
+			next_jअगरfies, pcm_buf_dma_ofs, newdata, xfercount);
 
-	snd_pcm_group_for_each_entry(s, substream) {
-		struct snd_card_asihpi_pcm *ds = s->runtime->private_data;
+	snd_pcm_group_क्रम_each_entry(s, substream) अणु
+		काष्ठा snd_card_asihpi_pcm *ds = s->runसमय->निजी_data;
 
-		/* don't link Cap and Play */
-		if (substream->stream != s->stream)
-			continue;
+		/* करोn't link Cap and Play */
+		अगर (substream->stream != s->stream)
+			जारी;
 
-		/* Store dma offset for use by pointer callback */
+		/* Store dma offset क्रम use by poपूर्णांकer callback */
 		ds->pcm_buf_dma_ofs = pcm_buf_dma_ofs;
 
-		if (xfercount &&
-			/* Limit use of on card fifo for playback */
+		अगर (xfercount &&
+			/* Limit use of on card fअगरo क्रम playback */
 			((on_card_bytes <= ds->period_bytes) ||
 			(s->stream == SNDRV_PCM_STREAM_CAPTURE)))
 
-		{
+		अणु
 
-			unsigned int buf_ofs = ds->pcm_buf_host_rw_ofs % ds->buffer_bytes;
-			unsigned int xfer1, xfer2;
-			char *pd = &s->runtime->dma_area[buf_ofs];
+			अचिन्हित पूर्णांक buf_ofs = ds->pcm_buf_host_rw_ofs % ds->buffer_bytes;
+			अचिन्हित पूर्णांक xfer1, xfer2;
+			अक्षर *pd = &s->runसमय->dma_area[buf_ofs];
 
-			if (card->can_dma) { /* buffer wrap is handled at lower level */
+			अगर (card->can_dma) अणु /* buffer wrap is handled at lower level */
 				xfer1 = xfercount;
 				xfer2 = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				xfer1 = min(xfercount, ds->buffer_bytes - buf_ofs);
 				xfer2 = xfercount - xfer1;
-			}
+			पूर्ण
 
-			if (s->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-				snd_printddd("write1, P=%d, xfer=%d, buf_ofs=%d\n",
+			अगर (s->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+				snd_prपूर्णांकddd("write1, P=%d, xfer=%d, buf_ofs=%d\n",
 					s->number, xfer1, buf_ofs);
 				hpi_handle_error(
-					hpi_outstream_write_buf(
+					hpi_outstream_ग_लिखो_buf(
 						ds->h_stream, pd, xfer1,
-						&ds->format));
+						&ds->क्रमmat));
 
-				if (xfer2) {
-					pd = s->runtime->dma_area;
+				अगर (xfer2) अणु
+					pd = s->runसमय->dma_area;
 
-					snd_printddd("write2, P=%d, xfer=%d, buf_ofs=%d\n",
+					snd_prपूर्णांकddd("write2, P=%d, xfer=%d, buf_ofs=%d\n",
 							s->number,
 							xfercount - xfer1, buf_ofs);
 					hpi_handle_error(
-						hpi_outstream_write_buf(
+						hpi_outstream_ग_लिखो_buf(
 							ds->h_stream, pd,
 							xfercount - xfer1,
-							&ds->format));
-				}
-			} else {
-				snd_printddd("read1, C=%d, xfer=%d\n",
+							&ds->क्रमmat));
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				snd_prपूर्णांकddd("read1, C=%d, xfer=%d\n",
 					s->number, xfer1);
 				hpi_handle_error(
-					hpi_instream_read_buf(
+					hpi_instream_पढ़ो_buf(
 						ds->h_stream,
 						pd, xfer1));
-				if (xfer2) {
-					pd = s->runtime->dma_area;
-					snd_printddd("read2, C=%d, xfer=%d\n",
+				अगर (xfer2) अणु
+					pd = s->runसमय->dma_area;
+					snd_prपूर्णांकddd("read2, C=%d, xfer=%d\n",
 						s->number, xfer2);
 					hpi_handle_error(
-						hpi_instream_read_buf(
+						hpi_instream_पढ़ो_buf(
 							ds->h_stream,
 							pd, xfer2));
-				}
-			}
+				पूर्ण
+			पूर्ण
 			/* ? host_rw_ofs always ahead of elapsed_dma_ofs by preload size? */
 			ds->pcm_buf_host_rw_ofs += xfercount;
 			ds->pcm_buf_elapsed_dma_ofs += xfercount;
 			snd_pcm_period_elapsed(s);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!card->hpi->interrupt_mode && dpcm->respawn_timer)
-		add_timer(&dpcm->timer);
-}
+	अगर (!card->hpi->पूर्णांकerrupt_mode && dpcm->respawn_समयr)
+		add_समयr(&dpcm->समयr);
+पूर्ण
 
-static void snd_card_asihpi_isr(struct hpi_adapter *a)
-{
-	struct snd_card_asihpi *asihpi;
+अटल व्योम snd_card_asihpi_isr(काष्ठा hpi_adapter *a)
+अणु
+	काष्ठा snd_card_asihpi *asihpi;
 
-	WARN_ON(!a || !a->snd_card || !a->snd_card->private_data);
-	asihpi = (struct snd_card_asihpi *)a->snd_card->private_data;
-	if (asihpi->llmode_streampriv)
-		snd_card_asihpi_timer_function(
-			&asihpi->llmode_streampriv->timer);
-}
+	WARN_ON(!a || !a->snd_card || !a->snd_card->निजी_data);
+	asihpi = (काष्ठा snd_card_asihpi *)a->snd_card->निजी_data;
+	अगर (asihpi->llmode_streampriv)
+		snd_card_asihpi_समयr_function(
+			&asihpi->llmode_streampriv->समयr);
+पूर्ण
 
 /***************************** PLAYBACK OPS ****************/
-static int snd_card_asihpi_playback_prepare(struct snd_pcm_substream *
+अटल पूर्णांक snd_card_asihpi_playback_prepare(काष्ठा snd_pcm_substream *
 					    substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi_pcm *dpcm = runtime->private_data;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi_pcm *dpcm = runसमय->निजी_data;
 
-	snd_printdd("P%d prepare\n", substream->number);
+	snd_prपूर्णांकdd("P%d prepare\n", substream->number);
 
 	hpi_handle_error(hpi_outstream_reset(dpcm->h_stream));
 	dpcm->pcm_buf_host_rw_ofs = 0;
 	dpcm->pcm_buf_dma_ofs = 0;
 	dpcm->pcm_buf_elapsed_dma_ofs = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static snd_pcm_uframes_t
-snd_card_asihpi_playback_pointer(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi_pcm *dpcm = runtime->private_data;
+अटल snd_pcm_uframes_t
+snd_card_asihpi_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi_pcm *dpcm = runसमय->निजी_data;
 	snd_pcm_uframes_t ptr;
-	char name[16];
-	snd_pcm_debug_name(substream, name, sizeof(name));
+	अक्षर name[16];
+	snd_pcm_debug_name(substream, name, माप(name));
 
-	ptr = bytes_to_frames(runtime, dpcm->pcm_buf_dma_ofs  % dpcm->buffer_bytes);
-	snd_printddd("%s, pointer=%ld\n", name, (unsigned long)ptr);
-	return ptr;
-}
+	ptr = bytes_to_frames(runसमय, dpcm->pcm_buf_dma_ofs  % dpcm->buffer_bytes);
+	snd_prपूर्णांकddd("%s, pointer=%ld\n", name, (अचिन्हित दीर्घ)ptr);
+	वापस ptr;
+पूर्ण
 
-static u64 snd_card_asihpi_playback_formats(struct snd_card_asihpi *asihpi,
+अटल u64 snd_card_asihpi_playback_क्रमmats(काष्ठा snd_card_asihpi *asihpi,
 						u32 h_stream)
-{
-	struct hpi_format hpi_format;
-	u16 format;
+अणु
+	काष्ठा hpi_क्रमmat hpi_क्रमmat;
+	u16 क्रमmat;
 	u16 err;
 	u32 h_control;
 	u32 sample_rate = 48000;
-	u64 formats = 0;
+	u64 क्रमmats = 0;
 
 	/* on cards without SRC, must query at valid rate,
-	* maybe set by external sync
+	* maybe set by बाह्यal sync
 	*/
 	err = hpi_mixer_get_control(asihpi->h_mixer,
 				  HPI_SOURCENODE_CLOCK_SOURCE, 0, 0, 0,
 				  HPI_CONTROL_SAMPLECLOCK, &h_control);
 
-	if (!err)
-		err = hpi_sample_clock_get_sample_rate(h_control,
+	अगर (!err)
+		err = hpi_sample_घड़ी_get_sample_rate(h_control,
 				&sample_rate);
 
-	for (format = HPI_FORMAT_PCM8_UNSIGNED;
-	     format <= HPI_FORMAT_PCM24_SIGNED; format++) {
-		err = hpi_format_create(&hpi_format, asihpi->out_max_chans,
-					format, sample_rate, 128000, 0);
-		if (!err)
-			err = hpi_outstream_query_format(h_stream, &hpi_format);
-		if (!err && (hpi_to_alsa_formats[format] != INVALID_FORMAT))
-			formats |= pcm_format_to_bits(hpi_to_alsa_formats[format]);
-	}
-	return formats;
-}
+	क्रम (क्रमmat = HPI_FORMAT_PCM8_UNSIGNED;
+	     क्रमmat <= HPI_FORMAT_PCM24_SIGNED; क्रमmat++) अणु
+		err = hpi_क्रमmat_create(&hpi_क्रमmat, asihpi->out_max_chans,
+					क्रमmat, sample_rate, 128000, 0);
+		अगर (!err)
+			err = hpi_outstream_query_क्रमmat(h_stream, &hpi_क्रमmat);
+		अगर (!err && (hpi_to_alsa_क्रमmats[क्रमmat] != INVALID_FORMAT))
+			क्रमmats |= pcm_क्रमmat_to_bits(hpi_to_alsa_क्रमmats[क्रमmat]);
+	पूर्ण
+	वापस क्रमmats;
+पूर्ण
 
-static int snd_card_asihpi_playback_open(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi_pcm *dpcm;
-	struct snd_card_asihpi *card = snd_pcm_substream_chip(substream);
-	struct snd_pcm_hardware snd_card_asihpi_playback;
-	int err;
+अटल पूर्णांक snd_card_asihpi_playback_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi_pcm *dpcm;
+	काष्ठा snd_card_asihpi *card = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_hardware snd_card_asihpi_playback;
+	पूर्णांक err;
 
-	dpcm = kzalloc(sizeof(*dpcm), GFP_KERNEL);
-	if (dpcm == NULL)
-		return -ENOMEM;
+	dpcm = kzalloc(माप(*dpcm), GFP_KERNEL);
+	अगर (dpcm == शून्य)
+		वापस -ENOMEM;
 
-	err = hpi_outstream_open(card->hpi->adapter->index,
+	err = hpi_outstream_खोलो(card->hpi->adapter->index,
 			      substream->number, &dpcm->h_stream);
 	hpi_handle_error(err);
-	if (err)
-		kfree(dpcm);
-	if (err == HPI_ERROR_OBJ_ALREADY_OPEN)
-		return -EBUSY;
-	if (err)
-		return -EIO;
+	अगर (err)
+		kमुक्त(dpcm);
+	अगर (err == HPI_ERROR_OBJ_ALREADY_OPEN)
+		वापस -EBUSY;
+	अगर (err)
+		वापस -EIO;
 
 	/*? also check ASI5000 samplerate source
-	    If external, only support external rate.
-	    If internal and other stream playing, can't switch
+	    If बाह्यal, only support बाह्यal rate.
+	    If पूर्णांकernal and other stream playing, can't चयन
 	*/
 
-	timer_setup(&dpcm->timer, snd_card_asihpi_timer_function, 0);
+	समयr_setup(&dpcm->समयr, snd_card_asihpi_समयr_function, 0);
 	dpcm->substream = substream;
-	runtime->private_data = dpcm;
-	runtime->private_free = snd_card_asihpi_runtime_free;
+	runसमय->निजी_data = dpcm;
+	runसमय->निजी_मुक्त = snd_card_asihpi_runसमय_मुक्त;
 
-	memset(&snd_card_asihpi_playback, 0, sizeof(snd_card_asihpi_playback));
-	if (!card->hpi->interrupt_mode) {
+	स_रखो(&snd_card_asihpi_playback, 0, माप(snd_card_asihpi_playback));
+	अगर (!card->hpi->पूर्णांकerrupt_mode) अणु
 		snd_card_asihpi_playback.buffer_bytes_max = BUFFER_BYTES_MAX;
 		snd_card_asihpi_playback.period_bytes_min = PERIOD_BYTES_MIN;
 		snd_card_asihpi_playback.period_bytes_max = BUFFER_BYTES_MAX / PERIODS_MIN;
 		snd_card_asihpi_playback.periods_min = PERIODS_MIN;
 		snd_card_asihpi_playback.periods_max = BUFFER_BYTES_MAX / PERIOD_BYTES_MIN;
-	} else {
-		size_t pbmin = card->update_interval_frames *
+	पूर्ण अन्यथा अणु
+		माप_प्रकार pbmin = card->update_पूर्णांकerval_frames *
 			card->out_max_chans;
 		snd_card_asihpi_playback.buffer_bytes_max = BUFFER_BYTES_MAX;
 		snd_card_asihpi_playback.period_bytes_min = pbmin;
 		snd_card_asihpi_playback.period_bytes_max = BUFFER_BYTES_MAX / PERIODS_MIN;
 		snd_card_asihpi_playback.periods_min = PERIODS_MIN;
 		snd_card_asihpi_playback.periods_max = BUFFER_BYTES_MAX / pbmin;
-	}
+	पूर्ण
 
-	/* snd_card_asihpi_playback.fifo_size = 0; */
+	/* snd_card_asihpi_playback.fअगरo_size = 0; */
 	snd_card_asihpi_playback.channels_max = card->out_max_chans;
 	snd_card_asihpi_playback.channels_min = card->out_min_chans;
-	snd_card_asihpi_playback.formats =
-			snd_card_asihpi_playback_formats(card, dpcm->h_stream);
+	snd_card_asihpi_playback.क्रमmats =
+			snd_card_asihpi_playback_क्रमmats(card, dpcm->h_stream);
 
 	snd_card_asihpi_pcm_samplerates(card,  &snd_card_asihpi_playback);
 
@@ -1042,215 +1043,215 @@ static int snd_card_asihpi_playback_open(struct snd_pcm_substream *substream)
 					SNDRV_PCM_INFO_MMAP |
 					SNDRV_PCM_INFO_MMAP_VALID;
 
-	if (card->support_grouping) {
+	अगर (card->support_grouping) अणु
 		snd_card_asihpi_playback.info |= SNDRV_PCM_INFO_SYNC_START;
 		snd_pcm_set_sync(substream);
-	}
+	पूर्ण
 
-	/* struct is copied, so can create initializer dynamically */
-	runtime->hw = snd_card_asihpi_playback;
+	/* काष्ठा is copied, so can create initializer dynamically */
+	runसमय->hw = snd_card_asihpi_playback;
 
-	if (card->can_dma)
-		err = snd_pcm_hw_constraint_pow2(runtime, 0,
+	अगर (card->can_dma)
+		err = snd_pcm_hw_स्थिरraपूर्णांक_घात2(runसमय, 0,
 					SNDRV_PCM_HW_PARAM_BUFFER_BYTES);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
-		card->update_interval_frames);
+	snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
+		card->update_पूर्णांकerval_frames);
 
-	snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
-		card->update_interval_frames, UINT_MAX);
+	snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
+		card->update_पूर्णांकerval_frames, अच_पूर्णांक_उच्च);
 
-	snd_printdd("playback open\n");
+	snd_prपूर्णांकdd("playback open\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_card_asihpi_playback_close(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi_pcm *dpcm = runtime->private_data;
+अटल पूर्णांक snd_card_asihpi_playback_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi_pcm *dpcm = runसमय->निजी_data;
 
-	hpi_handle_error(hpi_outstream_close(dpcm->h_stream));
-	snd_printdd("playback close\n");
+	hpi_handle_error(hpi_outstream_बंद(dpcm->h_stream));
+	snd_prपूर्णांकdd("playback close\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_pcm_ops snd_card_asihpi_playback_mmap_ops = {
-	.open = snd_card_asihpi_playback_open,
-	.close = snd_card_asihpi_playback_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_card_asihpi_playback_mmap_ops = अणु
+	.खोलो = snd_card_asihpi_playback_खोलो,
+	.बंद = snd_card_asihpi_playback_बंद,
 	.hw_params = snd_card_asihpi_pcm_hw_params,
-	.hw_free = snd_card_asihpi_hw_free,
+	.hw_मुक्त = snd_card_asihpi_hw_मुक्त,
 	.prepare = snd_card_asihpi_playback_prepare,
 	.trigger = snd_card_asihpi_trigger,
-	.pointer = snd_card_asihpi_playback_pointer,
-};
+	.poपूर्णांकer = snd_card_asihpi_playback_poपूर्णांकer,
+पूर्ण;
 
 /***************************** CAPTURE OPS ****************/
-static snd_pcm_uframes_t
-snd_card_asihpi_capture_pointer(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi_pcm *dpcm = runtime->private_data;
-	char name[16];
-	snd_pcm_debug_name(substream, name, sizeof(name));
+अटल snd_pcm_uframes_t
+snd_card_asihpi_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi_pcm *dpcm = runसमय->निजी_data;
+	अक्षर name[16];
+	snd_pcm_debug_name(substream, name, माप(name));
 
-	snd_printddd("%s, pointer=%d\n", name, dpcm->pcm_buf_dma_ofs);
+	snd_prपूर्णांकddd("%s, pointer=%d\n", name, dpcm->pcm_buf_dma_ofs);
 	/* NOTE Unlike playback can't use actual samples_played
-		for the capture position, because those samples aren't yet in
-		the local buffer available for reading.
+		क्रम the capture position, because those samples aren't yet in
+		the local buffer available क्रम पढ़ोing.
 	*/
-	return bytes_to_frames(runtime, dpcm->pcm_buf_dma_ofs % dpcm->buffer_bytes);
-}
+	वापस bytes_to_frames(runसमय, dpcm->pcm_buf_dma_ofs % dpcm->buffer_bytes);
+पूर्ण
 
-static int snd_card_asihpi_capture_prepare(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi_pcm *dpcm = runtime->private_data;
+अटल पूर्णांक snd_card_asihpi_capture_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi_pcm *dpcm = runसमय->निजी_data;
 
 	hpi_handle_error(hpi_instream_reset(dpcm->h_stream));
 	dpcm->pcm_buf_host_rw_ofs = 0;
 	dpcm->pcm_buf_dma_ofs = 0;
 	dpcm->pcm_buf_elapsed_dma_ofs = 0;
 
-	snd_printdd("Capture Prepare %d\n", substream->number);
-	return 0;
-}
+	snd_prपूर्णांकdd("Capture Prepare %d\n", substream->number);
+	वापस 0;
+पूर्ण
 
-static u64 snd_card_asihpi_capture_formats(struct snd_card_asihpi *asihpi,
+अटल u64 snd_card_asihpi_capture_क्रमmats(काष्ठा snd_card_asihpi *asihpi,
 					u32 h_stream)
-{
-	struct hpi_format hpi_format;
-	u16 format;
+अणु
+	काष्ठा hpi_क्रमmat hpi_क्रमmat;
+	u16 क्रमmat;
 	u16 err;
 	u32 h_control;
 	u32 sample_rate = 48000;
-	u64 formats = 0;
+	u64 क्रमmats = 0;
 
 	/* on cards without SRC, must query at valid rate,
-		maybe set by external sync */
+		maybe set by बाह्यal sync */
 	err = hpi_mixer_get_control(asihpi->h_mixer,
 				  HPI_SOURCENODE_CLOCK_SOURCE, 0, 0, 0,
 				  HPI_CONTROL_SAMPLECLOCK, &h_control);
 
-	if (!err)
-		err = hpi_sample_clock_get_sample_rate(h_control,
+	अगर (!err)
+		err = hpi_sample_घड़ी_get_sample_rate(h_control,
 			&sample_rate);
 
-	for (format = HPI_FORMAT_PCM8_UNSIGNED;
-		format <= HPI_FORMAT_PCM24_SIGNED; format++) {
+	क्रम (क्रमmat = HPI_FORMAT_PCM8_UNSIGNED;
+		क्रमmat <= HPI_FORMAT_PCM24_SIGNED; क्रमmat++) अणु
 
-		err = hpi_format_create(&hpi_format, asihpi->in_max_chans,
-					format, sample_rate, 128000, 0);
-		if (!err)
-			err = hpi_instream_query_format(h_stream, &hpi_format);
-		if (!err && (hpi_to_alsa_formats[format] != INVALID_FORMAT))
-			formats |= pcm_format_to_bits(hpi_to_alsa_formats[format]);
-	}
-	return formats;
-}
+		err = hpi_क्रमmat_create(&hpi_क्रमmat, asihpi->in_max_chans,
+					क्रमmat, sample_rate, 128000, 0);
+		अगर (!err)
+			err = hpi_instream_query_क्रमmat(h_stream, &hpi_क्रमmat);
+		अगर (!err && (hpi_to_alsa_क्रमmats[क्रमmat] != INVALID_FORMAT))
+			क्रमmats |= pcm_क्रमmat_to_bits(hpi_to_alsa_क्रमmats[क्रमmat]);
+	पूर्ण
+	वापस क्रमmats;
+पूर्ण
 
-static int snd_card_asihpi_capture_open(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_card_asihpi *card = snd_pcm_substream_chip(substream);
-	struct snd_card_asihpi_pcm *dpcm;
-	struct snd_pcm_hardware snd_card_asihpi_capture;
-	int err;
+अटल पूर्णांक snd_card_asihpi_capture_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_card_asihpi *card = snd_pcm_substream_chip(substream);
+	काष्ठा snd_card_asihpi_pcm *dpcm;
+	काष्ठा snd_pcm_hardware snd_card_asihpi_capture;
+	पूर्णांक err;
 
-	dpcm = kzalloc(sizeof(*dpcm), GFP_KERNEL);
-	if (dpcm == NULL)
-		return -ENOMEM;
+	dpcm = kzalloc(माप(*dpcm), GFP_KERNEL);
+	अगर (dpcm == शून्य)
+		वापस -ENOMEM;
 
-	snd_printdd("capture open adapter %d stream %d\n",
+	snd_prपूर्णांकdd("capture open adapter %d stream %d\n",
 			card->hpi->adapter->index, substream->number);
 
 	err = hpi_handle_error(
-	    hpi_instream_open(card->hpi->adapter->index,
+	    hpi_instream_खोलो(card->hpi->adapter->index,
 			     substream->number, &dpcm->h_stream));
-	if (err)
-		kfree(dpcm);
-	if (err == HPI_ERROR_OBJ_ALREADY_OPEN)
-		return -EBUSY;
-	if (err)
-		return -EIO;
+	अगर (err)
+		kमुक्त(dpcm);
+	अगर (err == HPI_ERROR_OBJ_ALREADY_OPEN)
+		वापस -EBUSY;
+	अगर (err)
+		वापस -EIO;
 
-	timer_setup(&dpcm->timer, snd_card_asihpi_timer_function, 0);
+	समयr_setup(&dpcm->समयr, snd_card_asihpi_समयr_function, 0);
 	dpcm->substream = substream;
-	runtime->private_data = dpcm;
-	runtime->private_free = snd_card_asihpi_runtime_free;
+	runसमय->निजी_data = dpcm;
+	runसमय->निजी_मुक्त = snd_card_asihpi_runसमय_मुक्त;
 
-	memset(&snd_card_asihpi_capture, 0, sizeof(snd_card_asihpi_capture));
-	if (!card->hpi->interrupt_mode) {
+	स_रखो(&snd_card_asihpi_capture, 0, माप(snd_card_asihpi_capture));
+	अगर (!card->hpi->पूर्णांकerrupt_mode) अणु
 		snd_card_asihpi_capture.buffer_bytes_max = BUFFER_BYTES_MAX;
 		snd_card_asihpi_capture.period_bytes_min = PERIOD_BYTES_MIN;
 		snd_card_asihpi_capture.period_bytes_max = BUFFER_BYTES_MAX / PERIODS_MIN;
 		snd_card_asihpi_capture.periods_min = PERIODS_MIN;
 		snd_card_asihpi_capture.periods_max = BUFFER_BYTES_MAX / PERIOD_BYTES_MIN;
-	} else {
-		size_t pbmin = card->update_interval_frames *
+	पूर्ण अन्यथा अणु
+		माप_प्रकार pbmin = card->update_पूर्णांकerval_frames *
 			card->out_max_chans;
 		snd_card_asihpi_capture.buffer_bytes_max = BUFFER_BYTES_MAX;
 		snd_card_asihpi_capture.period_bytes_min = pbmin;
 		snd_card_asihpi_capture.period_bytes_max = BUFFER_BYTES_MAX / PERIODS_MIN;
 		snd_card_asihpi_capture.periods_min = PERIODS_MIN;
 		snd_card_asihpi_capture.periods_max = BUFFER_BYTES_MAX / pbmin;
-	}
-	/* snd_card_asihpi_capture.fifo_size = 0; */
+	पूर्ण
+	/* snd_card_asihpi_capture.fअगरo_size = 0; */
 	snd_card_asihpi_capture.channels_max = card->in_max_chans;
 	snd_card_asihpi_capture.channels_min = card->in_min_chans;
-	snd_card_asihpi_capture.formats =
-		snd_card_asihpi_capture_formats(card, dpcm->h_stream);
+	snd_card_asihpi_capture.क्रमmats =
+		snd_card_asihpi_capture_क्रमmats(card, dpcm->h_stream);
 	snd_card_asihpi_pcm_samplerates(card,  &snd_card_asihpi_capture);
 	snd_card_asihpi_capture.info = SNDRV_PCM_INFO_INTERLEAVED |
 					SNDRV_PCM_INFO_MMAP |
 					SNDRV_PCM_INFO_MMAP_VALID;
 
-	if (card->support_grouping)
+	अगर (card->support_grouping)
 		snd_card_asihpi_capture.info |= SNDRV_PCM_INFO_SYNC_START;
 
-	runtime->hw = snd_card_asihpi_capture;
+	runसमय->hw = snd_card_asihpi_capture;
 
-	if (card->can_dma)
-		err = snd_pcm_hw_constraint_pow2(runtime, 0,
+	अगर (card->can_dma)
+		err = snd_pcm_hw_स्थिरraपूर्णांक_घात2(runसमय, 0,
 					SNDRV_PCM_HW_PARAM_BUFFER_BYTES);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
-		card->update_interval_frames);
-	snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
-		card->update_interval_frames, UINT_MAX);
+	snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
+		card->update_पूर्णांकerval_frames);
+	snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
+		card->update_पूर्णांकerval_frames, अच_पूर्णांक_उच्च);
 
 	snd_pcm_set_sync(substream);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_card_asihpi_capture_close(struct snd_pcm_substream *substream)
-{
-	struct snd_card_asihpi_pcm *dpcm = substream->runtime->private_data;
+अटल पूर्णांक snd_card_asihpi_capture_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_card_asihpi_pcm *dpcm = substream->runसमय->निजी_data;
 
-	hpi_handle_error(hpi_instream_close(dpcm->h_stream));
-	return 0;
-}
+	hpi_handle_error(hpi_instream_बंद(dpcm->h_stream));
+	वापस 0;
+पूर्ण
 
-static const struct snd_pcm_ops snd_card_asihpi_capture_mmap_ops = {
-	.open = snd_card_asihpi_capture_open,
-	.close = snd_card_asihpi_capture_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_card_asihpi_capture_mmap_ops = अणु
+	.खोलो = snd_card_asihpi_capture_खोलो,
+	.बंद = snd_card_asihpi_capture_बंद,
 	.hw_params = snd_card_asihpi_pcm_hw_params,
-	.hw_free = snd_card_asihpi_hw_free,
+	.hw_मुक्त = snd_card_asihpi_hw_मुक्त,
 	.prepare = snd_card_asihpi_capture_prepare,
 	.trigger = snd_card_asihpi_trigger,
-	.pointer = snd_card_asihpi_capture_pointer,
-};
+	.poपूर्णांकer = snd_card_asihpi_capture_poपूर्णांकer,
+पूर्ण;
 
-static int snd_card_asihpi_pcm_new(struct snd_card_asihpi *asihpi, int device)
-{
-	struct snd_pcm *pcm;
-	int err;
+अटल पूर्णांक snd_card_asihpi_pcm_new(काष्ठा snd_card_asihpi *asihpi, पूर्णांक device)
+अणु
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक err;
 	u16 num_instreams, num_outstreams, x16;
 	u32 x32;
 
@@ -1260,30 +1261,30 @@ static int snd_card_asihpi_pcm_new(struct snd_card_asihpi *asihpi, int device)
 
 	err = snd_pcm_new(asihpi->card, "Asihpi PCM", device,
 			num_outstreams,	num_instreams, &pcm);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* pointer to ops struct is stored, dont change ops afterwards! */
+	/* poपूर्णांकer to ops काष्ठा is stored, करोnt change ops afterwards! */
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK,
 			&snd_card_asihpi_playback_mmap_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE,
 			&snd_card_asihpi_capture_mmap_ops);
 
-	pcm->private_data = asihpi;
+	pcm->निजी_data = asihpi;
 	pcm->info_flags = 0;
-	strcpy(pcm->name, "Asihpi PCM");
+	म_नकल(pcm->name, "Asihpi PCM");
 
-	/*? do we want to emulate MMAP for non-BBM cards?
-	Jack doesn't work with ALSAs MMAP emulation - WHY NOT? */
+	/*? करो we want to emulate MMAP क्रम non-BBM cards?
+	Jack करोesn't work with ALSAs MMAP emulation - WHY NOT? */
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV,
 				       &asihpi->pci->dev,
 				       64*1024, BUFFER_BYTES_MAX);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /***************************** MIXER CONTROLS ****************/
-struct hpi_control {
+काष्ठा hpi_control अणु
 	u32 h_control;
 	u16 control_type;
 	u16 src_node_type;
@@ -1291,10 +1292,10 @@ struct hpi_control {
 	u16 dst_node_type;
 	u16 dst_node_index;
 	u16 band;
-	char name[SNDRV_CTL_ELEM_ID_NAME_MAXLEN]; /* copied to snd_ctl_elem_id.name[44]; */
-};
+	अक्षर name[SNDRV_CTL_ELEM_ID_NAME_MAXLEN]; /* copied to snd_ctl_elem_id.name[44]; */
+पूर्ण;
 
-static const char * const asihpi_tuner_band_names[] = {
+अटल स्थिर अक्षर * स्थिर asihpi_tuner_band_names[] = अणु
 	"invalid",
 	"AM",
 	"FM mono",
@@ -1306,14 +1307,14 @@ static const char * const asihpi_tuner_band_names[] = {
 	"TV PAL DK",
 	"TV SECAM",
 	"TV DAB",
-};
-/* Number of strings must match the enumerations for HPI_TUNER_BAND in hpi.h */
-compile_time_assert(
+पूर्ण;
+/* Number of strings must match the क्रमागतerations क्रम HPI_TUNER_BAND in hpi.h */
+compile_समय_निश्चित(
 	(ARRAY_SIZE(asihpi_tuner_band_names) ==
 		(HPI_TUNER_BAND_LAST+1)),
-	assert_tuner_band_names_size);
+	निश्चित_tuner_band_names_size);
 
-static const char * const asihpi_src_names[] = {
+अटल स्थिर अक्षर * स्थिर asihpi_src_names[] = अणु
 	"no source",
 	"PCM",
 	"Line",
@@ -1330,14 +1331,14 @@ static const char * const asihpi_src_names[] = {
 	"Internal",
 	"AVB",
 	"BLU-Link"
-};
-/* Number of strings must match the enumerations for HPI_SOURCENODES in hpi.h */
-compile_time_assert(
+पूर्ण;
+/* Number of strings must match the क्रमागतerations क्रम HPI_SOURCENODES in hpi.h */
+compile_समय_निश्चित(
 	(ARRAY_SIZE(asihpi_src_names) ==
 		(HPI_SOURCENODE_LAST_INDEX-HPI_SOURCENODE_NONE+1)),
-	assert_src_names_size);
+	निश्चित_src_names_size);
 
-static const char * const asihpi_dst_names[] = {
+अटल स्थिर अक्षर * स्थिर asihpi_dst_names[] = अणु
 	"no destination",
 	"PCM",
 	"Line",
@@ -1350,174 +1351,174 @@ static const char * const asihpi_dst_names[] = {
 	"AVB",
 	"Internal",
 	"BLU-Link"
-};
-/* Number of strings must match the enumerations for HPI_DESTNODES in hpi.h */
-compile_time_assert(
+पूर्ण;
+/* Number of strings must match the क्रमागतerations क्रम HPI_DESTNODES in hpi.h */
+compile_समय_निश्चित(
 	(ARRAY_SIZE(asihpi_dst_names) ==
 		(HPI_DESTNODE_LAST_INDEX-HPI_DESTNODE_NONE+1)),
-	assert_dst_names_size);
+	निश्चित_dst_names_size);
 
-static inline int ctl_add(struct snd_card *card, struct snd_kcontrol_new *ctl,
-				struct snd_card_asihpi *asihpi)
-{
-	int err;
+अटल अंतरभूत पूर्णांक ctl_add(काष्ठा snd_card *card, काष्ठा snd_kcontrol_new *ctl,
+				काष्ठा snd_card_asihpi *asihpi)
+अणु
+	पूर्णांक err;
 
 	err = snd_ctl_add(card, snd_ctl_new1(ctl, asihpi));
-	if (err < 0)
-		return err;
-	else if (mixer_dump)
+	अगर (err < 0)
+		वापस err;
+	अन्यथा अगर (mixer_dump)
 		dev_info(&asihpi->pci->dev, "added %s(%d)\n", ctl->name, ctl->index);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Convert HPI control name and location into ALSA control name */
-static void asihpi_ctl_init(struct snd_kcontrol_new *snd_control,
-				struct hpi_control *hpi_ctl,
-				char *name)
-{
-	char *dir;
-	memset(snd_control, 0, sizeof(*snd_control));
+/* Convert HPI control name and location पूर्णांकo ALSA control name */
+अटल व्योम asihpi_ctl_init(काष्ठा snd_kcontrol_new *snd_control,
+				काष्ठा hpi_control *hpi_ctl,
+				अक्षर *name)
+अणु
+	अक्षर *dir;
+	स_रखो(snd_control, 0, माप(*snd_control));
 	snd_control->name = hpi_ctl->name;
-	snd_control->private_value = hpi_ctl->h_control;
-	snd_control->iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	snd_control->निजी_value = hpi_ctl->h_control;
+	snd_control->अगरace = SNDRV_CTL_ELEM_IFACE_MIXER;
 	snd_control->index = 0;
 
-	if (hpi_ctl->src_node_type + HPI_SOURCENODE_NONE == HPI_SOURCENODE_CLOCK_SOURCE)
-		dir = ""; /* clock is neither capture nor playback */
-	else if (hpi_ctl->dst_node_type + HPI_DESTNODE_NONE == HPI_DESTNODE_ISTREAM)
+	अगर (hpi_ctl->src_node_type + HPI_SOURCENODE_NONE == HPI_SOURCENODE_CLOCK_SOURCE)
+		dir = ""; /* घड़ी is neither capture nor playback */
+	अन्यथा अगर (hpi_ctl->dst_node_type + HPI_DESTNODE_NONE == HPI_DESTNODE_ISTREAM)
 		dir = "Capture ";  /* On or towards a PCM capture destination*/
-	else if ((hpi_ctl->src_node_type + HPI_SOURCENODE_NONE != HPI_SOURCENODE_OSTREAM) &&
+	अन्यथा अगर ((hpi_ctl->src_node_type + HPI_SOURCENODE_NONE != HPI_SOURCENODE_OSTREAM) &&
 		(!hpi_ctl->dst_node_type))
 		dir = "Capture "; /* On a source node that is not PCM playback */
-	else if (hpi_ctl->src_node_type &&
+	अन्यथा अगर (hpi_ctl->src_node_type &&
 		(hpi_ctl->src_node_type + HPI_SOURCENODE_NONE != HPI_SOURCENODE_OSTREAM) &&
 		(hpi_ctl->dst_node_type))
 		dir = "Monitor Playback "; /* Between an input and an output */
-	else
+	अन्यथा
 		dir = "Playback "; /* PCM Playback source, or  output node */
 
-	if (hpi_ctl->src_node_type && hpi_ctl->dst_node_type)
-		sprintf(hpi_ctl->name, "%s %d %s %d %s%s",
+	अगर (hpi_ctl->src_node_type && hpi_ctl->dst_node_type)
+		प्र_लिखो(hpi_ctl->name, "%s %d %s %d %s%s",
 			asihpi_src_names[hpi_ctl->src_node_type],
 			hpi_ctl->src_node_index,
 			asihpi_dst_names[hpi_ctl->dst_node_type],
 			hpi_ctl->dst_node_index,
 			dir, name);
-	else if (hpi_ctl->dst_node_type) {
-		sprintf(hpi_ctl->name, "%s %d %s%s",
+	अन्यथा अगर (hpi_ctl->dst_node_type) अणु
+		प्र_लिखो(hpi_ctl->name, "%s %d %s%s",
 		asihpi_dst_names[hpi_ctl->dst_node_type],
 		hpi_ctl->dst_node_index,
 		dir, name);
-	} else {
-		sprintf(hpi_ctl->name, "%s %d %s%s",
+	पूर्ण अन्यथा अणु
+		प्र_लिखो(hpi_ctl->name, "%s %d %s%s",
 		asihpi_src_names[hpi_ctl->src_node_type],
 		hpi_ctl->src_node_index,
 		dir, name);
-	}
-	/* printk(KERN_INFO "Adding %s %d to %d ",  hpi_ctl->name,
+	पूर्ण
+	/* prपूर्णांकk(KERN_INFO "Adding %s %d to %d ",  hpi_ctl->name,
 		hpi_ctl->wSrcNodeType, hpi_ctl->wDstNodeType); */
-}
+पूर्ण
 
 /*------------------------------------------------------------
    Volume controls
  ------------------------------------------------------------*/
-#define VOL_STEP_mB 1
-static int snd_asihpi_volume_info(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
-	u32 h_control = kcontrol->private_value;
+#घोषणा VOL_STEP_mB 1
+अटल पूर्णांक snd_asihpi_volume_info(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u32 count;
 	u16 err;
 	/* native gains are in millibels */
-	short min_gain_mB;
-	short max_gain_mB;
-	short step_gain_mB;
+	लघु min_gain_mB;
+	लघु max_gain_mB;
+	लघु step_gain_mB;
 
 	err = hpi_volume_query_range(h_control,
 			&min_gain_mB, &max_gain_mB, &step_gain_mB);
-	if (err) {
+	अगर (err) अणु
 		max_gain_mB = 0;
 		min_gain_mB = -10000;
 		step_gain_mB = VOL_STEP_mB;
-	}
+	पूर्ण
 
 	err = hpi_meter_query_channels(h_control, &count);
-	if (err)
+	अगर (err)
 		count = HPI_MAX_CHANNELS;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = count;
-	uinfo->value.integer.min = min_gain_mB / VOL_STEP_mB;
-	uinfo->value.integer.max = max_gain_mB / VOL_STEP_mB;
-	uinfo->value.integer.step = step_gain_mB / VOL_STEP_mB;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = min_gain_mB / VOL_STEP_mB;
+	uinfo->value.पूर्णांकeger.max = max_gain_mB / VOL_STEP_mB;
+	uinfo->value.पूर्णांकeger.step = step_gain_mB / VOL_STEP_mB;
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_volume_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
-	short an_gain_mB[HPI_MAX_CHANNELS];
+अटल पूर्णांक snd_asihpi_volume_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
+	लघु an_gain_mB[HPI_MAX_CHANNELS];
 
 	hpi_handle_error(hpi_volume_get_gain(h_control, an_gain_mB));
-	ucontrol->value.integer.value[0] = an_gain_mB[0] / VOL_STEP_mB;
-	ucontrol->value.integer.value[1] = an_gain_mB[1] / VOL_STEP_mB;
+	ucontrol->value.पूर्णांकeger.value[0] = an_gain_mB[0] / VOL_STEP_mB;
+	ucontrol->value.पूर्णांकeger.value[1] = an_gain_mB[1] / VOL_STEP_mB;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_volume_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
-	short an_gain_mB[HPI_MAX_CHANNELS];
+अटल पूर्णांक snd_asihpi_volume_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
+	लघु an_gain_mB[HPI_MAX_CHANNELS];
 
 	an_gain_mB[0] =
-	    (ucontrol->value.integer.value[0]) * VOL_STEP_mB;
+	    (ucontrol->value.पूर्णांकeger.value[0]) * VOL_STEP_mB;
 	an_gain_mB[1] =
-	    (ucontrol->value.integer.value[1]) * VOL_STEP_mB;
+	    (ucontrol->value.पूर्णांकeger.value[1]) * VOL_STEP_mB;
 	/*  change = asihpi->mixer_volume[addr][0] != left ||
 	   asihpi->mixer_volume[addr][1] != right;
 	 */
 	hpi_handle_error(hpi_volume_set_gain(h_control, an_gain_mB));
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const DECLARE_TLV_DB_SCALE(db_scale_100, -10000, VOL_STEP_mB, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_100, -10000, VOL_STEP_mB, 0);
 
-#define snd_asihpi_volume_mute_info	snd_ctl_boolean_mono_info
+#घोषणा snd_asihpi_volume_mute_info	snd_ctl_boolean_mono_info
 
-static int snd_asihpi_volume_mute_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_volume_mute_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u32 mute;
 
 	hpi_handle_error(hpi_volume_get_mute(h_control, &mute));
-	ucontrol->value.integer.value[0] = mute ? 0 : 1;
+	ucontrol->value.पूर्णांकeger.value[0] = mute ? 0 : 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_volume_mute_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_volume_mute_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	/* HPI currently only supports all or none muting of multichannel volume
 	ALSA Switch element has opposite sense to HPI mute: on==unmuted, off=muted
 	*/
-	int mute =  ucontrol->value.integer.value[0] ? 0 : HPI_BITMASK_ALL_CHANNELS;
+	पूर्णांक mute =  ucontrol->value.पूर्णांकeger.value[0] ? 0 : HPI_BITMASK_ALL_CHANNELS;
 	hpi_handle_error(hpi_volume_set_mute(h_control, mute));
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int snd_asihpi_volume_add(struct snd_card_asihpi *asihpi,
-				 struct hpi_control *hpi_ctl)
-{
-	struct snd_card *card = asihpi->card;
-	struct snd_kcontrol_new snd_control;
-	int err;
+अटल पूर्णांक snd_asihpi_volume_add(काष्ठा snd_card_asihpi *asihpi,
+				 काष्ठा hpi_control *hpi_ctl)
+अणु
+	काष्ठा snd_card *card = asihpi->card;
+	काष्ठा snd_kcontrol_new snd_control;
+	पूर्णांक err;
 	u32 mute;
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Volume");
@@ -1529,90 +1530,90 @@ static int snd_asihpi_volume_add(struct snd_card_asihpi *asihpi,
 	snd_control.tlv.p = db_scale_100;
 
 	err = ctl_add(card, &snd_control, asihpi);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (hpi_volume_get_mute(hpi_ctl->h_control, &mute) == 0) {
+	अगर (hpi_volume_get_mute(hpi_ctl->h_control, &mute) == 0) अणु
 		asihpi_ctl_init(&snd_control, hpi_ctl, "Switch");
 		snd_control.access = SNDRV_CTL_ELEM_ACCESS_READWRITE;
 		snd_control.info = snd_asihpi_volume_mute_info;
 		snd_control.get = snd_asihpi_volume_mute_get;
 		snd_control.put = snd_asihpi_volume_mute_put;
 		err = ctl_add(card, &snd_control, asihpi);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /*------------------------------------------------------------
    Level controls
  ------------------------------------------------------------*/
-static int snd_asihpi_level_info(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_info *uinfo)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_level_info(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u16 err;
-	short min_gain_mB;
-	short max_gain_mB;
-	short step_gain_mB;
+	लघु min_gain_mB;
+	लघु max_gain_mB;
+	लघु step_gain_mB;
 
 	err =
 	    hpi_level_query_range(h_control, &min_gain_mB,
 			       &max_gain_mB, &step_gain_mB);
-	if (err) {
+	अगर (err) अणु
 		max_gain_mB = 2400;
 		min_gain_mB = -1000;
 		step_gain_mB = 100;
-	}
+	पूर्ण
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.integer.min = min_gain_mB / HPI_UNITS_PER_dB;
-	uinfo->value.integer.max = max_gain_mB / HPI_UNITS_PER_dB;
-	uinfo->value.integer.step = step_gain_mB / HPI_UNITS_PER_dB;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = min_gain_mB / HPI_UNITS_PER_dB;
+	uinfo->value.पूर्णांकeger.max = max_gain_mB / HPI_UNITS_PER_dB;
+	uinfo->value.पूर्णांकeger.step = step_gain_mB / HPI_UNITS_PER_dB;
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_level_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
-	short an_gain_mB[HPI_MAX_CHANNELS];
+अटल पूर्णांक snd_asihpi_level_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
+	लघु an_gain_mB[HPI_MAX_CHANNELS];
 
 	hpi_handle_error(hpi_level_get_gain(h_control, an_gain_mB));
-	ucontrol->value.integer.value[0] =
+	ucontrol->value.पूर्णांकeger.value[0] =
 	    an_gain_mB[0] / HPI_UNITS_PER_dB;
-	ucontrol->value.integer.value[1] =
+	ucontrol->value.पूर्णांकeger.value[1] =
 	    an_gain_mB[1] / HPI_UNITS_PER_dB;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_level_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	int change;
-	u32 h_control = kcontrol->private_value;
-	short an_gain_mB[HPI_MAX_CHANNELS];
+अटल पूर्णांक snd_asihpi_level_put(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक change;
+	u32 h_control = kcontrol->निजी_value;
+	लघु an_gain_mB[HPI_MAX_CHANNELS];
 
 	an_gain_mB[0] =
-	    (ucontrol->value.integer.value[0]) * HPI_UNITS_PER_dB;
+	    (ucontrol->value.पूर्णांकeger.value[0]) * HPI_UNITS_PER_dB;
 	an_gain_mB[1] =
-	    (ucontrol->value.integer.value[1]) * HPI_UNITS_PER_dB;
+	    (ucontrol->value.पूर्णांकeger.value[1]) * HPI_UNITS_PER_dB;
 	/*  change = asihpi->mixer_level[addr][0] != left ||
 	   asihpi->mixer_level[addr][1] != right;
 	 */
 	change = 1;
 	hpi_handle_error(hpi_level_set_gain(h_control, an_gain_mB));
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static const DECLARE_TLV_DB_SCALE(db_scale_level, -1000, 100, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_level, -1000, 100, 0);
 
-static int snd_asihpi_level_add(struct snd_card_asihpi *asihpi,
-				struct hpi_control *hpi_ctl)
-{
-	struct snd_card *card = asihpi->card;
-	struct snd_kcontrol_new snd_control;
+अटल पूर्णांक snd_asihpi_level_add(काष्ठा snd_card_asihpi *asihpi,
+				काष्ठा hpi_control *hpi_ctl)
+अणु
+	काष्ठा snd_card *card = asihpi->card;
+	काष्ठा snd_kcontrol_new snd_control;
 
 	/* can't use 'volume' cos some nodes have volume as well */
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Level");
@@ -1623,117 +1624,117 @@ static int snd_asihpi_level_add(struct snd_card_asihpi *asihpi,
 	snd_control.put = snd_asihpi_level_put;
 	snd_control.tlv.p = db_scale_level;
 
-	return ctl_add(card, &snd_control, asihpi);
-}
+	वापस ctl_add(card, &snd_control, asihpi);
+पूर्ण
 
 /*------------------------------------------------------------
    AESEBU controls
  ------------------------------------------------------------*/
 
-/* AESEBU format */
-static const char * const asihpi_aesebu_format_names[] = {
-	"N/A", "S/PDIF", "AES/EBU" };
+/* AESEBU क्रमmat */
+अटल स्थिर अक्षर * स्थिर asihpi_aesebu_क्रमmat_names[] = अणु
+	"N/A", "S/PDIF", "AES/EBU" पूर्ण;
 
-static int snd_asihpi_aesebu_format_info(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
-	return snd_ctl_enum_info(uinfo, 1, 3, asihpi_aesebu_format_names);
-}
+अटल पूर्णांक snd_asihpi_aesebu_क्रमmat_info(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 3, asihpi_aesebu_क्रमmat_names);
+पूर्ण
 
-static int snd_asihpi_aesebu_format_get(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol,
+अटल पूर्णांक snd_asihpi_aesebu_क्रमmat_get(काष्ठा snd_kcontrol *kcontrol,
+			काष्ठा snd_ctl_elem_value *ucontrol,
 			u16 (*func)(u32, u16 *))
-{
-	u32 h_control = kcontrol->private_value;
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u16 source, err;
 
 	err = func(h_control, &source);
 
-	/* default to N/A */
-	ucontrol->value.enumerated.item[0] = 0;
-	/* return success but set the control to N/A */
-	if (err)
-		return 0;
-	if (source == HPI_AESEBU_FORMAT_SPDIF)
-		ucontrol->value.enumerated.item[0] = 1;
-	if (source == HPI_AESEBU_FORMAT_AESEBU)
-		ucontrol->value.enumerated.item[0] = 2;
+	/* शेष to N/A */
+	ucontrol->value.क्रमागतerated.item[0] = 0;
+	/* वापस success but set the control to N/A */
+	अगर (err)
+		वापस 0;
+	अगर (source == HPI_AESEBU_FORMAT_SPDIF)
+		ucontrol->value.क्रमागतerated.item[0] = 1;
+	अगर (source == HPI_AESEBU_FORMAT_AESEBU)
+		ucontrol->value.क्रमागतerated.item[0] = 2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_aesebu_format_put(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol,
+अटल पूर्णांक snd_asihpi_aesebu_क्रमmat_put(काष्ठा snd_kcontrol *kcontrol,
+			काष्ठा snd_ctl_elem_value *ucontrol,
 			 u16 (*func)(u32, u16))
-{
-	u32 h_control = kcontrol->private_value;
+अणु
+	u32 h_control = kcontrol->निजी_value;
 
-	/* default to S/PDIF */
+	/* शेष to S/PDIF */
 	u16 source = HPI_AESEBU_FORMAT_SPDIF;
 
-	if (ucontrol->value.enumerated.item[0] == 1)
+	अगर (ucontrol->value.क्रमागतerated.item[0] == 1)
 		source = HPI_AESEBU_FORMAT_SPDIF;
-	if (ucontrol->value.enumerated.item[0] == 2)
+	अगर (ucontrol->value.क्रमागतerated.item[0] == 2)
 		source = HPI_AESEBU_FORMAT_AESEBU;
 
-	if (func(h_control, source) != 0)
-		return -EINVAL;
+	अगर (func(h_control, source) != 0)
+		वापस -EINVAL;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int snd_asihpi_aesebu_rx_format_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol) {
-	return snd_asihpi_aesebu_format_get(kcontrol, ucontrol,
-					hpi_aesebu_receiver_get_format);
-}
+अटल पूर्णांक snd_asihpi_aesebu_rx_क्रमmat_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol) अणु
+	वापस snd_asihpi_aesebu_क्रमmat_get(kcontrol, ucontrol,
+					hpi_aesebu_receiver_get_क्रमmat);
+पूर्ण
 
-static int snd_asihpi_aesebu_rx_format_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol) {
-	return snd_asihpi_aesebu_format_put(kcontrol, ucontrol,
-					hpi_aesebu_receiver_set_format);
-}
+अटल पूर्णांक snd_asihpi_aesebu_rx_क्रमmat_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol) अणु
+	वापस snd_asihpi_aesebu_क्रमmat_put(kcontrol, ucontrol,
+					hpi_aesebu_receiver_set_क्रमmat);
+पूर्ण
 
-static int snd_asihpi_aesebu_rxstatus_info(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_asihpi_aesebu_rxstatus_info(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
 
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 0X1F;
-	uinfo->value.integer.step = 1;
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = 0X1F;
+	uinfo->value.पूर्णांकeger.step = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_aesebu_rxstatus_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol) {
+अटल पूर्णांक snd_asihpi_aesebu_rxstatus_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol) अणु
 
-	u32 h_control = kcontrol->private_value;
+	u32 h_control = kcontrol->निजी_value;
 	u16 status;
 
 	hpi_handle_error(hpi_aesebu_receiver_get_error_status(
 					 h_control, &status));
-	ucontrol->value.integer.value[0] = status;
-	return 0;
-}
+	ucontrol->value.पूर्णांकeger.value[0] = status;
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_aesebu_rx_add(struct snd_card_asihpi *asihpi,
-				    struct hpi_control *hpi_ctl)
-{
-	struct snd_card *card = asihpi->card;
-	struct snd_kcontrol_new snd_control;
+अटल पूर्णांक snd_asihpi_aesebu_rx_add(काष्ठा snd_card_asihpi *asihpi,
+				    काष्ठा hpi_control *hpi_ctl)
+अणु
+	काष्ठा snd_card *card = asihpi->card;
+	काष्ठा snd_kcontrol_new snd_control;
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Format");
 	snd_control.access = SNDRV_CTL_ELEM_ACCESS_READWRITE;
-	snd_control.info = snd_asihpi_aesebu_format_info;
-	snd_control.get = snd_asihpi_aesebu_rx_format_get;
-	snd_control.put = snd_asihpi_aesebu_rx_format_put;
+	snd_control.info = snd_asihpi_aesebu_क्रमmat_info;
+	snd_control.get = snd_asihpi_aesebu_rx_क्रमmat_get;
+	snd_control.put = snd_asihpi_aesebu_rx_क्रमmat_put;
 
 
-	if (ctl_add(card, &snd_control, asihpi) < 0)
-		return -EINVAL;
+	अगर (ctl_add(card, &snd_control, asihpi) < 0)
+		वापस -EINVAL;
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Status");
 	snd_control.access =
@@ -1741,36 +1742,36 @@ static int snd_asihpi_aesebu_rx_add(struct snd_card_asihpi *asihpi,
 	snd_control.info = snd_asihpi_aesebu_rxstatus_info;
 	snd_control.get = snd_asihpi_aesebu_rxstatus_get;
 
-	return ctl_add(card, &snd_control, asihpi);
-}
+	वापस ctl_add(card, &snd_control, asihpi);
+पूर्ण
 
-static int snd_asihpi_aesebu_tx_format_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol) {
-	return snd_asihpi_aesebu_format_get(kcontrol, ucontrol,
-					hpi_aesebu_transmitter_get_format);
-}
+अटल पूर्णांक snd_asihpi_aesebu_tx_क्रमmat_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol) अणु
+	वापस snd_asihpi_aesebu_क्रमmat_get(kcontrol, ucontrol,
+					hpi_aesebu_transmitter_get_क्रमmat);
+पूर्ण
 
-static int snd_asihpi_aesebu_tx_format_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol) {
-	return snd_asihpi_aesebu_format_put(kcontrol, ucontrol,
-					hpi_aesebu_transmitter_set_format);
-}
+अटल पूर्णांक snd_asihpi_aesebu_tx_क्रमmat_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol) अणु
+	वापस snd_asihpi_aesebu_क्रमmat_put(kcontrol, ucontrol,
+					hpi_aesebu_transmitter_set_क्रमmat);
+पूर्ण
 
 
-static int snd_asihpi_aesebu_tx_add(struct snd_card_asihpi *asihpi,
-				    struct hpi_control *hpi_ctl)
-{
-	struct snd_card *card = asihpi->card;
-	struct snd_kcontrol_new snd_control;
+अटल पूर्णांक snd_asihpi_aesebu_tx_add(काष्ठा snd_card_asihpi *asihpi,
+				    काष्ठा hpi_control *hpi_ctl)
+अणु
+	काष्ठा snd_card *card = asihpi->card;
+	काष्ठा snd_kcontrol_new snd_control;
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Format");
 	snd_control.access = SNDRV_CTL_ELEM_ACCESS_READWRITE;
-	snd_control.info = snd_asihpi_aesebu_format_info;
-	snd_control.get = snd_asihpi_aesebu_tx_format_get;
-	snd_control.put = snd_asihpi_aesebu_tx_format_put;
+	snd_control.info = snd_asihpi_aesebu_क्रमmat_info;
+	snd_control.get = snd_asihpi_aesebu_tx_क्रमmat_get;
+	snd_control.put = snd_asihpi_aesebu_tx_क्रमmat_put;
 
-	return ctl_add(card, &snd_control, asihpi);
-}
+	वापस ctl_add(card, &snd_control, asihpi);
+पूर्ण
 
 /*------------------------------------------------------------
    Tuner controls
@@ -1778,101 +1779,101 @@ static int snd_asihpi_aesebu_tx_add(struct snd_card_asihpi *asihpi,
 
 /* Gain */
 
-static int snd_asihpi_tuner_gain_info(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_tuner_gain_info(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u16 err;
-	short idx;
+	लघु idx;
 	u16 gain_range[3];
 
-	for (idx = 0; idx < 3; idx++) {
+	क्रम (idx = 0; idx < 3; idx++) अणु
 		err = hpi_tuner_query_gain(h_control,
 					  idx, &gain_range[idx]);
-		if (err != 0)
-			return err;
-	}
+		अगर (err != 0)
+			वापस err;
+	पूर्ण
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = ((int)gain_range[0]) / HPI_UNITS_PER_dB;
-	uinfo->value.integer.max = ((int)gain_range[1]) / HPI_UNITS_PER_dB;
-	uinfo->value.integer.step = ((int) gain_range[2]) / HPI_UNITS_PER_dB;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = ((पूर्णांक)gain_range[0]) / HPI_UNITS_PER_dB;
+	uinfo->value.पूर्णांकeger.max = ((पूर्णांक)gain_range[1]) / HPI_UNITS_PER_dB;
+	uinfo->value.पूर्णांकeger.step = ((पूर्णांक) gain_range[2]) / HPI_UNITS_PER_dB;
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_tuner_gain_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
+अटल पूर्णांक snd_asihpi_tuner_gain_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
 	/*
-	struct snd_card_asihpi *asihpi = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_card_asihpi *asihpi = snd_kcontrol_chip(kcontrol);
 	*/
-	u32 h_control = kcontrol->private_value;
-	short gain;
+	u32 h_control = kcontrol->निजी_value;
+	लघु gain;
 
 	hpi_handle_error(hpi_tuner_get_gain(h_control, &gain));
-	ucontrol->value.integer.value[0] = gain / HPI_UNITS_PER_dB;
+	ucontrol->value.पूर्णांकeger.value[0] = gain / HPI_UNITS_PER_dB;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_tuner_gain_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
+अटल पूर्णांक snd_asihpi_tuner_gain_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
 	/*
-	struct snd_card_asihpi *asihpi = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_card_asihpi *asihpi = snd_kcontrol_chip(kcontrol);
 	*/
-	u32 h_control = kcontrol->private_value;
-	short gain;
+	u32 h_control = kcontrol->निजी_value;
+	लघु gain;
 
-	gain = (ucontrol->value.integer.value[0]) * HPI_UNITS_PER_dB;
+	gain = (ucontrol->value.पूर्णांकeger.value[0]) * HPI_UNITS_PER_dB;
 	hpi_handle_error(hpi_tuner_set_gain(h_control, gain));
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Band  */
 
-static int asihpi_tuner_band_query(struct snd_kcontrol *kcontrol,
-					u16 *band_list, u32 len) {
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक asihpi_tuner_band_query(काष्ठा snd_kcontrol *kcontrol,
+					u16 *band_list, u32 len) अणु
+	u32 h_control = kcontrol->निजी_value;
 	u16 err = 0;
 	u32 i;
 
-	for (i = 0; i < len; i++) {
+	क्रम (i = 0; i < len; i++) अणु
 		err = hpi_tuner_query_band(
 				h_control, i, &band_list[i]);
-		if (err != 0)
-			break;
-	}
+		अगर (err != 0)
+			अवरोध;
+	पूर्ण
 
-	if (err && (err != HPI_ERROR_INVALID_OBJ_INDEX))
-		return -EIO;
+	अगर (err && (err != HPI_ERROR_INVALID_OBJ_INDEX))
+		वापस -EIO;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int snd_asihpi_tuner_band_info(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_asihpi_tuner_band_info(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	u16 tuner_bands[HPI_TUNER_BAND_LAST];
-	int num_bands = 0;
+	पूर्णांक num_bands = 0;
 
 	num_bands = asihpi_tuner_band_query(kcontrol, tuner_bands,
 				HPI_TUNER_BAND_LAST);
 
-	if (num_bands < 0)
-		return num_bands;
+	अगर (num_bands < 0)
+		वापस num_bands;
 
-	return snd_ctl_enum_info(uinfo, 1, num_bands, asihpi_tuner_band_names);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, num_bands, asihpi_tuner_band_names);
+पूर्ण
 
-static int snd_asihpi_tuner_band_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_tuner_band_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	/*
-	struct snd_card_asihpi *asihpi = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_card_asihpi *asihpi = snd_kcontrol_chip(kcontrol);
 	*/
 	u16 band, idx;
 	u16 tuner_bands[HPI_TUNER_BAND_LAST];
@@ -1883,24 +1884,24 @@ static int snd_asihpi_tuner_band_get(struct snd_kcontrol *kcontrol,
 
 	hpi_handle_error(hpi_tuner_get_band(h_control, &band));
 
-	ucontrol->value.enumerated.item[0] = -1;
-	for (idx = 0; idx < HPI_TUNER_BAND_LAST; idx++)
-		if (tuner_bands[idx] == band) {
-			ucontrol->value.enumerated.item[0] = idx;
-			break;
-		}
+	ucontrol->value.क्रमागतerated.item[0] = -1;
+	क्रम (idx = 0; idx < HPI_TUNER_BAND_LAST; idx++)
+		अगर (tuner_bands[idx] == band) अणु
+			ucontrol->value.क्रमागतerated.item[0] = idx;
+			अवरोध;
+		पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_tuner_band_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
+अटल पूर्णांक snd_asihpi_tuner_band_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
 	/*
-	struct snd_card_asihpi *asihpi = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_card_asihpi *asihpi = snd_kcontrol_chip(kcontrol);
 	*/
-	u32 h_control = kcontrol->private_value;
-	unsigned int idx;
+	u32 h_control = kcontrol->निजी_value;
+	अचिन्हित पूर्णांक idx;
 	u16 band;
 	u16 tuner_bands[HPI_TUNER_BAND_LAST];
 	__always_unused u32 num_bands;
@@ -1908,21 +1909,21 @@ static int snd_asihpi_tuner_band_put(struct snd_kcontrol *kcontrol,
 	num_bands = asihpi_tuner_band_query(kcontrol, tuner_bands,
 			HPI_TUNER_BAND_LAST);
 
-	idx = ucontrol->value.enumerated.item[0];
-	if (idx >= ARRAY_SIZE(tuner_bands))
+	idx = ucontrol->value.क्रमागतerated.item[0];
+	अगर (idx >= ARRAY_SIZE(tuner_bands))
 		idx = ARRAY_SIZE(tuner_bands) - 1;
 	band = tuner_bands[idx];
 	hpi_handle_error(hpi_tuner_set_band(h_control, band));
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Freq */
 
-static int snd_asihpi_tuner_freq_info(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_tuner_freq_info(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u16 err;
 	u16 tuner_bands[HPI_TUNER_BAND_LAST];
 	u16 num_bands = 0, band_iter, idx;
@@ -1931,121 +1932,121 @@ static int snd_asihpi_tuner_freq_info(struct snd_kcontrol *kcontrol,
 	num_bands = asihpi_tuner_band_query(kcontrol, tuner_bands,
 			HPI_TUNER_BAND_LAST);
 
-	freq_range[0] = INT_MAX;
+	freq_range[0] = पूर्णांक_उच्च;
 	freq_range[1] = 0;
-	freq_range[2] = INT_MAX;
+	freq_range[2] = पूर्णांक_उच्च;
 
-	for (band_iter = 0; band_iter < num_bands; band_iter++) {
-		for (idx = 0; idx < 3; idx++) {
+	क्रम (band_iter = 0; band_iter < num_bands; band_iter++) अणु
+		क्रम (idx = 0; idx < 3; idx++) अणु
 			err = hpi_tuner_query_frequency(h_control,
 				idx, tuner_bands[band_iter],
 				&temp_freq_range[idx]);
-			if (err != 0)
-				return err;
-		}
+			अगर (err != 0)
+				वापस err;
+		पूर्ण
 
 		/* skip band with bogus stepping */
-		if (temp_freq_range[2] <= 0)
-			continue;
+		अगर (temp_freq_range[2] <= 0)
+			जारी;
 
-		if (temp_freq_range[0] < freq_range[0])
+		अगर (temp_freq_range[0] < freq_range[0])
 			freq_range[0] = temp_freq_range[0];
-		if (temp_freq_range[1] > freq_range[1])
+		अगर (temp_freq_range[1] > freq_range[1])
 			freq_range[1] = temp_freq_range[1];
-		if (temp_freq_range[2] < freq_range[2])
+		अगर (temp_freq_range[2] < freq_range[2])
 			freq_range[2] = temp_freq_range[2];
-	}
+	पूर्ण
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = ((int)freq_range[0]);
-	uinfo->value.integer.max = ((int)freq_range[1]);
-	uinfo->value.integer.step = ((int)freq_range[2]);
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = ((पूर्णांक)freq_range[0]);
+	uinfo->value.पूर्णांकeger.max = ((पूर्णांक)freq_range[1]);
+	uinfo->value.पूर्णांकeger.step = ((पूर्णांक)freq_range[2]);
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_tuner_freq_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_tuner_freq_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u32 freq;
 
 	hpi_handle_error(hpi_tuner_get_frequency(h_control, &freq));
-	ucontrol->value.integer.value[0] = freq;
+	ucontrol->value.पूर्णांकeger.value[0] = freq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_tuner_freq_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_tuner_freq_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u32 freq;
 
-	freq = ucontrol->value.integer.value[0];
+	freq = ucontrol->value.पूर्णांकeger.value[0];
 	hpi_handle_error(hpi_tuner_set_frequency(h_control, freq));
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Tuner control group initializer  */
-static int snd_asihpi_tuner_add(struct snd_card_asihpi *asihpi,
-				struct hpi_control *hpi_ctl)
-{
-	struct snd_card *card = asihpi->card;
-	struct snd_kcontrol_new snd_control;
+अटल पूर्णांक snd_asihpi_tuner_add(काष्ठा snd_card_asihpi *asihpi,
+				काष्ठा hpi_control *hpi_ctl)
+अणु
+	काष्ठा snd_card *card = asihpi->card;
+	काष्ठा snd_kcontrol_new snd_control;
 
-	snd_control.private_value = hpi_ctl->h_control;
+	snd_control.निजी_value = hpi_ctl->h_control;
 	snd_control.access = SNDRV_CTL_ELEM_ACCESS_READWRITE;
 
-	if (!hpi_tuner_get_gain(hpi_ctl->h_control, NULL)) {
+	अगर (!hpi_tuner_get_gain(hpi_ctl->h_control, शून्य)) अणु
 		asihpi_ctl_init(&snd_control, hpi_ctl, "Gain");
 		snd_control.info = snd_asihpi_tuner_gain_info;
 		snd_control.get = snd_asihpi_tuner_gain_get;
 		snd_control.put = snd_asihpi_tuner_gain_put;
 
-		if (ctl_add(card, &snd_control, asihpi) < 0)
-			return -EINVAL;
-	}
+		अगर (ctl_add(card, &snd_control, asihpi) < 0)
+			वापस -EINVAL;
+	पूर्ण
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Band");
 	snd_control.info = snd_asihpi_tuner_band_info;
 	snd_control.get = snd_asihpi_tuner_band_get;
 	snd_control.put = snd_asihpi_tuner_band_put;
 
-	if (ctl_add(card, &snd_control, asihpi) < 0)
-		return -EINVAL;
+	अगर (ctl_add(card, &snd_control, asihpi) < 0)
+		वापस -EINVAL;
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Freq");
 	snd_control.info = snd_asihpi_tuner_freq_info;
 	snd_control.get = snd_asihpi_tuner_freq_get;
 	snd_control.put = snd_asihpi_tuner_freq_put;
 
-	return ctl_add(card, &snd_control, asihpi);
-}
+	वापस ctl_add(card, &snd_control, asihpi);
+पूर्ण
 
 /*------------------------------------------------------------
    Meter controls
  ------------------------------------------------------------*/
-static int snd_asihpi_meter_info(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_info *uinfo)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_meter_info(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u32 count;
 	u16 err;
 	err = hpi_meter_query_channels(h_control, &count);
-	if (err)
+	अगर (err)
 		count = HPI_MAX_CHANNELS;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = count;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 0x7FFFFFFF;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = 0x7FFFFFFF;
+	वापस 0;
+पूर्ण
 
-/* linear values for 10dB steps */
-static const int log2lin[] = {
+/* linear values क्रम 10dB steps */
+अटल स्थिर पूर्णांक log2lin[] = अणु
 	0x7FFFFFFF, /* 0dB */
 	679093956,
 	214748365,
@@ -2065,39 +2066,39 @@ static const int log2lin[] = {
 	       21,
 		7,
 		2
-};
+पूर्ण;
 
-static int snd_asihpi_meter_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
-	short an_gain_mB[HPI_MAX_CHANNELS], i;
+अटल पूर्णांक snd_asihpi_meter_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
+	लघु an_gain_mB[HPI_MAX_CHANNELS], i;
 	u16 err;
 
 	err = hpi_meter_get_peak(h_control, an_gain_mB);
 
-	for (i = 0; i < HPI_MAX_CHANNELS; i++) {
-		if (err) {
-			ucontrol->value.integer.value[i] = 0;
-		} else if (an_gain_mB[i] >= 0) {
-			ucontrol->value.integer.value[i] =
+	क्रम (i = 0; i < HPI_MAX_CHANNELS; i++) अणु
+		अगर (err) अणु
+			ucontrol->value.पूर्णांकeger.value[i] = 0;
+		पूर्ण अन्यथा अगर (an_gain_mB[i] >= 0) अणु
+			ucontrol->value.पूर्णांकeger.value[i] =
 				an_gain_mB[i] << 16;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* -ve is log value in millibels < -60dB,
 			* convert to (roughly!) linear,
 			*/
-			ucontrol->value.integer.value[i] =
+			ucontrol->value.पूर्णांकeger.value[i] =
 					log2lin[an_gain_mB[i] / -1000];
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_meter_add(struct snd_card_asihpi *asihpi,
-				struct hpi_control *hpi_ctl, int subidx)
-{
-	struct snd_card *card = asihpi->card;
-	struct snd_kcontrol_new snd_control;
+अटल पूर्णांक snd_asihpi_meter_add(काष्ठा snd_card_asihpi *asihpi,
+				काष्ठा hpi_control *hpi_ctl, पूर्णांक subidx)
+अणु
+	काष्ठा snd_card *card = asihpi->card;
+	काष्ठा snd_kcontrol_new snd_control;
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Meter");
 	snd_control.access =
@@ -2107,109 +2108,109 @@ static int snd_asihpi_meter_add(struct snd_card_asihpi *asihpi,
 
 	snd_control.index = subidx;
 
-	return ctl_add(card, &snd_control, asihpi);
-}
+	वापस ctl_add(card, &snd_control, asihpi);
+पूर्ण
 
 /*------------------------------------------------------------
    Multiplexer controls
  ------------------------------------------------------------*/
-static int snd_card_asihpi_mux_count_sources(struct snd_kcontrol *snd_control)
-{
-	u32 h_control = snd_control->private_value;
-	struct hpi_control hpi_ctl;
-	int s, err;
-	for (s = 0; s < 32; s++) {
+अटल पूर्णांक snd_card_asihpi_mux_count_sources(काष्ठा snd_kcontrol *snd_control)
+अणु
+	u32 h_control = snd_control->निजी_value;
+	काष्ठा hpi_control hpi_ctl;
+	पूर्णांक s, err;
+	क्रम (s = 0; s < 32; s++) अणु
 		err = hpi_multiplexer_query_source(h_control, s,
 						  &hpi_ctl.
 						  src_node_type,
 						  &hpi_ctl.
 						  src_node_index);
-		if (err)
-			break;
-	}
-	return s;
-}
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	वापस s;
+पूर्ण
 
-static int snd_asihpi_mux_info(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_asihpi_mux_info(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	u16 src_node_type, src_node_index;
-	u32 h_control = kcontrol->private_value;
+	u32 h_control = kcontrol->निजी_value;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.enumerated.items =
+	uinfo->value.क्रमागतerated.items =
 	    snd_card_asihpi_mux_count_sources(kcontrol);
 
-	if (uinfo->value.enumerated.item >= uinfo->value.enumerated.items)
-		uinfo->value.enumerated.item =
-		    uinfo->value.enumerated.items - 1;
+	अगर (uinfo->value.क्रमागतerated.item >= uinfo->value.क्रमागतerated.items)
+		uinfo->value.क्रमागतerated.item =
+		    uinfo->value.क्रमागतerated.items - 1;
 
 	hpi_multiplexer_query_source(h_control,
-				     uinfo->value.enumerated.item,
+				     uinfo->value.क्रमागतerated.item,
 				     &src_node_type, &src_node_index);
 
-	sprintf(uinfo->value.enumerated.name, "%s %d",
+	प्र_लिखो(uinfo->value.क्रमागतerated.name, "%s %d",
 		asihpi_src_names[src_node_type - HPI_SOURCENODE_NONE],
 		src_node_index);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_mux_get(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_mux_get(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u16 source_type, source_index;
 	u16 src_node_type, src_node_index;
-	int s;
+	पूर्णांक s;
 
 	hpi_handle_error(hpi_multiplexer_get_source(h_control,
 				&source_type, &source_index));
 	/* Should cache this search result! */
-	for (s = 0; s < 256; s++) {
-		if (hpi_multiplexer_query_source(h_control, s,
+	क्रम (s = 0; s < 256; s++) अणु
+		अगर (hpi_multiplexer_query_source(h_control, s,
 					    &src_node_type, &src_node_index))
-			break;
+			अवरोध;
 
-		if ((source_type == src_node_type)
-		    && (source_index == src_node_index)) {
-			ucontrol->value.enumerated.item[0] = s;
-			return 0;
-		}
-	}
-	snd_printd(KERN_WARNING
+		अगर ((source_type == src_node_type)
+		    && (source_index == src_node_index)) अणु
+			ucontrol->value.क्रमागतerated.item[0] = s;
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	snd_prपूर्णांकd(KERN_WARNING
 		"Control %x failed to match mux source %hu %hu\n",
 		h_control, source_type, source_index);
-	ucontrol->value.enumerated.item[0] = 0;
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = 0;
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_mux_put(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	int change;
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_mux_put(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक change;
+	u32 h_control = kcontrol->निजी_value;
 	u16 source_type, source_index;
 	u16 e;
 
 	change = 1;
 
 	e = hpi_multiplexer_query_source(h_control,
-				    ucontrol->value.enumerated.item[0],
+				    ucontrol->value.क्रमागतerated.item[0],
 				    &source_type, &source_index);
-	if (!e)
+	अगर (!e)
 		hpi_handle_error(
 			hpi_multiplexer_set_source(h_control,
 						source_type, source_index));
-	return change;
-}
+	वापस change;
+पूर्ण
 
 
-static int  snd_asihpi_mux_add(struct snd_card_asihpi *asihpi,
-			       struct hpi_control *hpi_ctl)
-{
-	struct snd_card *card = asihpi->card;
-	struct snd_kcontrol_new snd_control;
+अटल पूर्णांक  snd_asihpi_mux_add(काष्ठा snd_card_asihpi *asihpi,
+			       काष्ठा hpi_control *hpi_ctl)
+अणु
+	काष्ठा snd_card *card = asihpi->card;
+	काष्ठा snd_kcontrol_new snd_control;
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Route");
 	snd_control.access = SNDRV_CTL_ELEM_ACCESS_READWRITE;
@@ -2217,78 +2218,78 @@ static int  snd_asihpi_mux_add(struct snd_card_asihpi *asihpi,
 	snd_control.get = snd_asihpi_mux_get;
 	snd_control.put = snd_asihpi_mux_put;
 
-	return ctl_add(card, &snd_control, asihpi);
+	वापस ctl_add(card, &snd_control, asihpi);
 
-}
+पूर्ण
 
 /*------------------------------------------------------------
    Channel mode controls
  ------------------------------------------------------------*/
-static int snd_asihpi_cmode_info(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const mode_names[HPI_CHANNEL_MODE_LAST + 1] = {
+अटल पूर्णांक snd_asihpi_cmode_info(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर mode_names[HPI_CHANNEL_MODE_LAST + 1] = अणु
 		"invalid",
 		"Normal", "Swap",
 		"From Left", "From Right",
 		"To Left", "To Right"
-	};
+	पूर्ण;
 
-	u32 h_control = kcontrol->private_value;
+	u32 h_control = kcontrol->निजी_value;
 	u16 mode;
-	int i;
-	const char *mapped_names[6];
-	int valid_modes = 0;
+	पूर्णांक i;
+	स्थिर अक्षर *mapped_names[6];
+	पूर्णांक valid_modes = 0;
 
 	/* HPI channel mode values can be from 1 to 6
 	Some adapters only support a contiguous subset
 	*/
-	for (i = 0; i < HPI_CHANNEL_MODE_LAST; i++)
-		if (!hpi_channel_mode_query_mode(
-			h_control, i, &mode)) {
+	क्रम (i = 0; i < HPI_CHANNEL_MODE_LAST; i++)
+		अगर (!hpi_channel_mode_query_mode(
+			h_control, i, &mode)) अणु
 			mapped_names[valid_modes] = mode_names[mode];
 			valid_modes++;
-			}
+			पूर्ण
 
-	if (!valid_modes)
-		return -EINVAL;
+	अगर (!valid_modes)
+		वापस -EINVAL;
 
-	return snd_ctl_enum_info(uinfo, 1, valid_modes, mapped_names);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, valid_modes, mapped_names);
+पूर्ण
 
-static int snd_asihpi_cmode_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_cmode_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u16 mode;
 
-	if (hpi_channel_mode_get(h_control, &mode))
+	अगर (hpi_channel_mode_get(h_control, &mode))
 		mode = 1;
 
-	ucontrol->value.enumerated.item[0] = mode - 1;
+	ucontrol->value.क्रमागतerated.item[0] = mode - 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_cmode_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	int change;
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_cmode_put(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक change;
+	u32 h_control = kcontrol->निजी_value;
 
 	change = 1;
 
 	hpi_handle_error(hpi_channel_mode_set(h_control,
-			   ucontrol->value.enumerated.item[0] + 1));
-	return change;
-}
+			   ucontrol->value.क्रमागतerated.item[0] + 1));
+	वापस change;
+पूर्ण
 
 
-static int snd_asihpi_cmode_add(struct snd_card_asihpi *asihpi,
-				struct hpi_control *hpi_ctl)
-{
-	struct snd_card *card = asihpi->card;
-	struct snd_kcontrol_new snd_control;
+अटल पूर्णांक snd_asihpi_cmode_add(काष्ठा snd_card_asihpi *asihpi,
+				काष्ठा hpi_control *hpi_ctl)
+अणु
+	काष्ठा snd_card *card = asihpi->card;
+	काष्ठा snd_kcontrol_new snd_control;
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Mode");
 	snd_control.access = SNDRV_CTL_ELEM_ACCESS_READWRITE;
@@ -2296,214 +2297,214 @@ static int snd_asihpi_cmode_add(struct snd_card_asihpi *asihpi,
 	snd_control.get = snd_asihpi_cmode_get;
 	snd_control.put = snd_asihpi_cmode_put;
 
-	return ctl_add(card, &snd_control, asihpi);
-}
+	वापस ctl_add(card, &snd_control, asihpi);
+पूर्ण
 
 /*------------------------------------------------------------
-   Sampleclock source  controls
+   Sampleघड़ी source  controls
  ------------------------------------------------------------*/
-static const char * const sampleclock_sources[] = {
+अटल स्थिर अक्षर * स्थिर sampleघड़ी_sources[] = अणु
 	"N/A", "Local PLL", "Digital Sync", "Word External", "Word Header",
 	"SMPTE", "Digital1", "Auto", "Network", "Invalid",
 	"Prev Module", "BLU-Link",
 	"Digital2", "Digital3", "Digital4", "Digital5",
-	"Digital6", "Digital7", "Digital8"};
+	"Digital6", "Digital7", "Digital8"पूर्ण;
 
-	/* Number of strings must match expected enumerated values */
-	compile_time_assert(
-		(ARRAY_SIZE(sampleclock_sources) == MAX_CLOCKSOURCES),
-		assert_sampleclock_sources_size);
+	/* Number of strings must match expected क्रमागतerated values */
+	compile_समय_निश्चित(
+		(ARRAY_SIZE(sampleघड़ी_sources) == MAX_CLOCKSOURCES),
+		निश्चित_sampleघड़ी_sources_size);
 
-static int snd_asihpi_clksrc_info(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
-	struct snd_card_asihpi *asihpi =
-			(struct snd_card_asihpi *)(kcontrol->private_data);
-	struct clk_cache *clkcache = &asihpi->cc;
+अटल पूर्णांक snd_asihpi_clksrc_info(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	काष्ठा snd_card_asihpi *asihpi =
+			(काष्ठा snd_card_asihpi *)(kcontrol->निजी_data);
+	काष्ठा clk_cache *clkcache = &asihpi->cc;
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.enumerated.items = clkcache->count;
+	uinfo->value.क्रमागतerated.items = clkcache->count;
 
-	if (uinfo->value.enumerated.item >= uinfo->value.enumerated.items)
-		uinfo->value.enumerated.item =
-				uinfo->value.enumerated.items - 1;
+	अगर (uinfo->value.क्रमागतerated.item >= uinfo->value.क्रमागतerated.items)
+		uinfo->value.क्रमागतerated.item =
+				uinfo->value.क्रमागतerated.items - 1;
 
-	strcpy(uinfo->value.enumerated.name,
-	       clkcache->s[uinfo->value.enumerated.item].name);
-	return 0;
-}
+	म_नकल(uinfo->value.क्रमागतerated.name,
+	       clkcache->s[uinfo->value.क्रमागतerated.item].name);
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_clksrc_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_card_asihpi *asihpi =
-			(struct snd_card_asihpi *)(kcontrol->private_data);
-	struct clk_cache *clkcache = &asihpi->cc;
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_clksrc_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_card_asihpi *asihpi =
+			(काष्ठा snd_card_asihpi *)(kcontrol->निजी_data);
+	काष्ठा clk_cache *clkcache = &asihpi->cc;
+	u32 h_control = kcontrol->निजी_value;
 	u16 source, srcindex = 0;
-	int i;
+	पूर्णांक i;
 
-	ucontrol->value.enumerated.item[0] = 0;
-	if (hpi_sample_clock_get_source(h_control, &source))
+	ucontrol->value.क्रमागतerated.item[0] = 0;
+	अगर (hpi_sample_घड़ी_get_source(h_control, &source))
 		source = 0;
 
-	if (source == HPI_SAMPLECLOCK_SOURCE_AESEBU_INPUT)
-		if (hpi_sample_clock_get_source_index(h_control, &srcindex))
+	अगर (source == HPI_SAMPLECLOCK_SOURCE_AESEBU_INPUT)
+		अगर (hpi_sample_घड़ी_get_source_index(h_control, &srcindex))
 			srcindex = 0;
 
-	for (i = 0; i < clkcache->count; i++)
-		if ((clkcache->s[i].source == source) &&
+	क्रम (i = 0; i < clkcache->count; i++)
+		अगर ((clkcache->s[i].source == source) &&
 			(clkcache->s[i].index == srcindex))
-			break;
+			अवरोध;
 
-	ucontrol->value.enumerated.item[0] = i;
+	ucontrol->value.क्रमागतerated.item[0] = i;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_clksrc_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_card_asihpi *asihpi =
-			(struct snd_card_asihpi *)(kcontrol->private_data);
-	struct clk_cache *clkcache = &asihpi->cc;
-	unsigned int item;
-	int change;
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_clksrc_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_card_asihpi *asihpi =
+			(काष्ठा snd_card_asihpi *)(kcontrol->निजी_data);
+	काष्ठा clk_cache *clkcache = &asihpi->cc;
+	अचिन्हित पूर्णांक item;
+	पूर्णांक change;
+	u32 h_control = kcontrol->निजी_value;
 
 	change = 1;
-	item = ucontrol->value.enumerated.item[0];
-	if (item >= clkcache->count)
+	item = ucontrol->value.क्रमागतerated.item[0];
+	अगर (item >= clkcache->count)
 		item = clkcache->count-1;
 
-	hpi_handle_error(hpi_sample_clock_set_source(
+	hpi_handle_error(hpi_sample_घड़ी_set_source(
 				h_control, clkcache->s[item].source));
 
-	if (clkcache->s[item].source == HPI_SAMPLECLOCK_SOURCE_AESEBU_INPUT)
-		hpi_handle_error(hpi_sample_clock_set_source_index(
+	अगर (clkcache->s[item].source == HPI_SAMPLECLOCK_SOURCE_AESEBU_INPUT)
+		hpi_handle_error(hpi_sample_घड़ी_set_source_index(
 				h_control, clkcache->s[item].index));
-	return change;
-}
+	वापस change;
+पूर्ण
 
 /*------------------------------------------------------------
    Clkrate controls
  ------------------------------------------------------------*/
-/* Need to change this to enumerated control with list of rates */
-static int snd_asihpi_clklocal_info(struct snd_kcontrol *kcontrol,
-				   struct snd_ctl_elem_info *uinfo)
-{
+/* Need to change this to क्रमागतerated control with list of rates */
+अटल पूर्णांक snd_asihpi_clklocal_info(काष्ठा snd_kcontrol *kcontrol,
+				   काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = 8000;
-	uinfo->value.integer.max = 192000;
-	uinfo->value.integer.step = 100;
+	uinfo->value.पूर्णांकeger.min = 8000;
+	uinfo->value.पूर्णांकeger.max = 192000;
+	uinfo->value.पूर्णांकeger.step = 100;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_clklocal_get(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_clklocal_get(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u32 rate;
 	u16 e;
 
-	e = hpi_sample_clock_get_local_rate(h_control, &rate);
-	if (!e)
-		ucontrol->value.integer.value[0] = rate;
-	else
-		ucontrol->value.integer.value[0] = 0;
-	return 0;
-}
+	e = hpi_sample_घड़ी_get_local_rate(h_control, &rate);
+	अगर (!e)
+		ucontrol->value.पूर्णांकeger.value[0] = rate;
+	अन्यथा
+		ucontrol->value.पूर्णांकeger.value[0] = 0;
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_clklocal_put(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_value *ucontrol)
-{
-	int change;
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_clklocal_put(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक change;
+	u32 h_control = kcontrol->निजी_value;
 
 	/*  change = asihpi->mixer_clkrate[addr][0] != left ||
 	   asihpi->mixer_clkrate[addr][1] != right;
 	 */
 	change = 1;
-	hpi_handle_error(hpi_sample_clock_set_local_rate(h_control,
-				      ucontrol->value.integer.value[0]));
-	return change;
-}
+	hpi_handle_error(hpi_sample_घड़ी_set_local_rate(h_control,
+				      ucontrol->value.पूर्णांकeger.value[0]));
+	वापस change;
+पूर्ण
 
-static int snd_asihpi_clkrate_info(struct snd_kcontrol *kcontrol,
-				   struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_asihpi_clkrate_info(काष्ठा snd_kcontrol *kcontrol,
+				   काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = 8000;
-	uinfo->value.integer.max = 192000;
-	uinfo->value.integer.step = 100;
+	uinfo->value.पूर्णांकeger.min = 8000;
+	uinfo->value.पूर्णांकeger.max = 192000;
+	uinfo->value.पूर्णांकeger.step = 100;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_clkrate_get(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_value *ucontrol)
-{
-	u32 h_control = kcontrol->private_value;
+अटल पूर्णांक snd_asihpi_clkrate_get(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	u32 h_control = kcontrol->निजी_value;
 	u32 rate;
 	u16 e;
 
-	e = hpi_sample_clock_get_sample_rate(h_control, &rate);
-	if (!e)
-		ucontrol->value.integer.value[0] = rate;
-	else
-		ucontrol->value.integer.value[0] = 0;
-	return 0;
-}
+	e = hpi_sample_घड़ी_get_sample_rate(h_control, &rate);
+	अगर (!e)
+		ucontrol->value.पूर्णांकeger.value[0] = rate;
+	अन्यथा
+		ucontrol->value.पूर्णांकeger.value[0] = 0;
+	वापस 0;
+पूर्ण
 
-static int snd_asihpi_sampleclock_add(struct snd_card_asihpi *asihpi,
-				      struct hpi_control *hpi_ctl)
-{
-	struct snd_card *card;
-	struct snd_kcontrol_new snd_control;
+अटल पूर्णांक snd_asihpi_sampleघड़ी_add(काष्ठा snd_card_asihpi *asihpi,
+				      काष्ठा hpi_control *hpi_ctl)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_kcontrol_new snd_control;
 
-	struct clk_cache *clkcache;
+	काष्ठा clk_cache *clkcache;
 	u32 hSC =  hpi_ctl->h_control;
-	int has_aes_in = 0;
-	int i, j;
+	पूर्णांक has_aes_in = 0;
+	पूर्णांक i, j;
 	u16 source;
 
-	if (snd_BUG_ON(!asihpi))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!asihpi))
+		वापस -EINVAL;
 	card = asihpi->card;
 	clkcache = &asihpi->cc;
-	snd_control.private_value = hpi_ctl->h_control;
+	snd_control.निजी_value = hpi_ctl->h_control;
 
 	clkcache->has_local = 0;
 
-	for (i = 0; i <= HPI_SAMPLECLOCK_SOURCE_LAST; i++) {
-		if  (hpi_sample_clock_query_source(hSC,
+	क्रम (i = 0; i <= HPI_SAMPLECLOCK_SOURCE_LAST; i++) अणु
+		अगर  (hpi_sample_घड़ी_query_source(hSC,
 				i, &source))
-			break;
+			अवरोध;
 		clkcache->s[i].source = source;
 		clkcache->s[i].index = 0;
-		clkcache->s[i].name = sampleclock_sources[source];
-		if (source == HPI_SAMPLECLOCK_SOURCE_AESEBU_INPUT)
+		clkcache->s[i].name = sampleघड़ी_sources[source];
+		अगर (source == HPI_SAMPLECLOCK_SOURCE_AESEBU_INPUT)
 			has_aes_in = 1;
-		if (source == HPI_SAMPLECLOCK_SOURCE_LOCAL)
+		अगर (source == HPI_SAMPLECLOCK_SOURCE_LOCAL)
 			clkcache->has_local = 1;
-	}
-	if (has_aes_in)
-		/* already will have picked up index 0 above */
-		for (j = 1; j < 8; j++) {
-			if (hpi_sample_clock_query_source_index(hSC,
+	पूर्ण
+	अगर (has_aes_in)
+		/* alपढ़ोy will have picked up index 0 above */
+		क्रम (j = 1; j < 8; j++) अणु
+			अगर (hpi_sample_घड़ी_query_source_index(hSC,
 				j, HPI_SAMPLECLOCK_SOURCE_AESEBU_INPUT,
 				&source))
-				break;
+				अवरोध;
 			clkcache->s[i].source =
 				HPI_SAMPLECLOCK_SOURCE_AESEBU_INPUT;
 			clkcache->s[i].index = j;
-			clkcache->s[i].name = sampleclock_sources[
+			clkcache->s[i].name = sampleघड़ी_sources[
 					j+HPI_SAMPLECLOCK_SOURCE_LAST];
 			i++;
-		}
+		पूर्ण
 	clkcache->count = i;
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Source");
@@ -2511,11 +2512,11 @@ static int snd_asihpi_sampleclock_add(struct snd_card_asihpi *asihpi,
 	snd_control.info = snd_asihpi_clksrc_info;
 	snd_control.get = snd_asihpi_clksrc_get;
 	snd_control.put = snd_asihpi_clksrc_put;
-	if (ctl_add(card, &snd_control, asihpi) < 0)
-		return -EINVAL;
+	अगर (ctl_add(card, &snd_control, asihpi) < 0)
+		वापस -EINVAL;
 
 
-	if (clkcache->has_local) {
+	अगर (clkcache->has_local) अणु
 		asihpi_ctl_init(&snd_control, hpi_ctl, "Localrate");
 		snd_control.access = SNDRV_CTL_ELEM_ACCESS_READWRITE ;
 		snd_control.info = snd_asihpi_clklocal_info;
@@ -2523,9 +2524,9 @@ static int snd_asihpi_sampleclock_add(struct snd_card_asihpi *asihpi,
 		snd_control.put = snd_asihpi_clklocal_put;
 
 
-		if (ctl_add(card, &snd_control, asihpi) < 0)
-			return -EINVAL;
-	}
+		अगर (ctl_add(card, &snd_control, asihpi) < 0)
+			वापस -EINVAL;
+	पूर्ण
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Rate");
 	snd_control.access =
@@ -2533,36 +2534,36 @@ static int snd_asihpi_sampleclock_add(struct snd_card_asihpi *asihpi,
 	snd_control.info = snd_asihpi_clkrate_info;
 	snd_control.get = snd_asihpi_clkrate_get;
 
-	return ctl_add(card, &snd_control, asihpi);
-}
+	वापस ctl_add(card, &snd_control, asihpi);
+पूर्ण
 /*------------------------------------------------------------
    Mixer
  ------------------------------------------------------------*/
 
-static int snd_card_asihpi_mixer_new(struct snd_card_asihpi *asihpi)
-{
-	struct snd_card *card;
-	unsigned int idx = 0;
-	unsigned int subindex = 0;
-	int err;
-	struct hpi_control hpi_ctl, prev_ctl;
+अटल पूर्णांक snd_card_asihpi_mixer_new(काष्ठा snd_card_asihpi *asihpi)
+अणु
+	काष्ठा snd_card *card;
+	अचिन्हित पूर्णांक idx = 0;
+	अचिन्हित पूर्णांक subindex = 0;
+	पूर्णांक err;
+	काष्ठा hpi_control hpi_ctl, prev_ctl;
 
-	if (snd_BUG_ON(!asihpi))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!asihpi))
+		वापस -EINVAL;
 	card = asihpi->card;
-	strcpy(card->mixername, "Asihpi Mixer");
+	म_नकल(card->mixername, "Asihpi Mixer");
 
 	err =
-	    hpi_mixer_open(asihpi->hpi->adapter->index,
+	    hpi_mixer_खोलो(asihpi->hpi->adapter->index,
 			  &asihpi->h_mixer);
 	hpi_handle_error(err);
-	if (err)
-		return -err;
+	अगर (err)
+		वापस -err;
 
-	memset(&prev_ctl, 0, sizeof(prev_ctl));
+	स_रखो(&prev_ctl, 0, माप(prev_ctl));
 	prev_ctl.control_type = -1;
 
-	for (idx = 0; idx < 2000; idx++) {
+	क्रम (idx = 0; idx < 2000; idx++) अणु
 		err = hpi_mixer_get_control_by_index(
 				asihpi->h_mixer,
 				idx,
@@ -2572,74 +2573,74 @@ static int snd_card_asihpi_mixer_new(struct snd_card_asihpi *asihpi)
 				&hpi_ctl.dst_node_index,
 				&hpi_ctl.control_type,
 				&hpi_ctl.h_control);
-		if (err) {
-			if (err == HPI_ERROR_CONTROL_DISABLED) {
-				if (mixer_dump)
+		अगर (err) अणु
+			अगर (err == HPI_ERROR_CONTROL_DISABLED) अणु
+				अगर (mixer_dump)
 					dev_info(&asihpi->pci->dev,
 						   "Disabled HPI Control(%d)\n",
 						   idx);
-				continue;
-			} else
-				break;
+				जारी;
+			पूर्ण अन्यथा
+				अवरोध;
 
-		}
+		पूर्ण
 
 		hpi_ctl.src_node_type -= HPI_SOURCENODE_NONE;
 		hpi_ctl.dst_node_type -= HPI_DESTNODE_NONE;
 
 		/* ASI50xx in SSX mode has multiple meters on the same node.
 		   Use subindex to create distinct ALSA controls
-		   for any duplicated controls.
+		   क्रम any duplicated controls.
 		*/
-		if ((hpi_ctl.control_type == prev_ctl.control_type) &&
+		अगर ((hpi_ctl.control_type == prev_ctl.control_type) &&
 		    (hpi_ctl.src_node_type == prev_ctl.src_node_type) &&
 		    (hpi_ctl.src_node_index == prev_ctl.src_node_index) &&
 		    (hpi_ctl.dst_node_type == prev_ctl.dst_node_type) &&
 		    (hpi_ctl.dst_node_index == prev_ctl.dst_node_index))
 			subindex++;
-		else
+		अन्यथा
 			subindex = 0;
 
 		prev_ctl = hpi_ctl;
 
-		switch (hpi_ctl.control_type) {
-		case HPI_CONTROL_VOLUME:
+		चयन (hpi_ctl.control_type) अणु
+		हाल HPI_CONTROL_VOLUME:
 			err = snd_asihpi_volume_add(asihpi, &hpi_ctl);
-			break;
-		case HPI_CONTROL_LEVEL:
+			अवरोध;
+		हाल HPI_CONTROL_LEVEL:
 			err = snd_asihpi_level_add(asihpi, &hpi_ctl);
-			break;
-		case HPI_CONTROL_MULTIPLEXER:
+			अवरोध;
+		हाल HPI_CONTROL_MULTIPLEXER:
 			err = snd_asihpi_mux_add(asihpi, &hpi_ctl);
-			break;
-		case HPI_CONTROL_CHANNEL_MODE:
+			अवरोध;
+		हाल HPI_CONTROL_CHANNEL_MODE:
 			err = snd_asihpi_cmode_add(asihpi, &hpi_ctl);
-			break;
-		case HPI_CONTROL_METER:
+			अवरोध;
+		हाल HPI_CONTROL_METER:
 			err = snd_asihpi_meter_add(asihpi, &hpi_ctl, subindex);
-			break;
-		case HPI_CONTROL_SAMPLECLOCK:
-			err = snd_asihpi_sampleclock_add(
+			अवरोध;
+		हाल HPI_CONTROL_SAMPLECLOCK:
+			err = snd_asihpi_sampleघड़ी_add(
 						asihpi, &hpi_ctl);
-			break;
-		case HPI_CONTROL_CONNECTION:	/* ignore these */
-			continue;
-		case HPI_CONTROL_TUNER:
+			अवरोध;
+		हाल HPI_CONTROL_CONNECTION:	/* ignore these */
+			जारी;
+		हाल HPI_CONTROL_TUNER:
 			err = snd_asihpi_tuner_add(asihpi, &hpi_ctl);
-			break;
-		case HPI_CONTROL_AESEBU_TRANSMITTER:
+			अवरोध;
+		हाल HPI_CONTROL_AESEBU_TRANSMITTER:
 			err = snd_asihpi_aesebu_tx_add(asihpi, &hpi_ctl);
-			break;
-		case HPI_CONTROL_AESEBU_RECEIVER:
+			अवरोध;
+		हाल HPI_CONTROL_AESEBU_RECEIVER:
 			err = snd_asihpi_aesebu_rx_add(asihpi, &hpi_ctl);
-			break;
-		case HPI_CONTROL_VOX:
-		case HPI_CONTROL_BITSTREAM:
-		case HPI_CONTROL_MICROPHONE:
-		case HPI_CONTROL_PARAMETRIC_EQ:
-		case HPI_CONTROL_COMPANDER:
-		default:
-			if (mixer_dump)
+			अवरोध;
+		हाल HPI_CONTROL_VOX:
+		हाल HPI_CONTROL_BITSTREAM:
+		हाल HPI_CONTROL_MICROPHONE:
+		हाल HPI_CONTROL_PARAMETRIC_EQ:
+		हाल HPI_CONTROL_COMPANDER:
+		शेष:
+			अगर (mixer_dump)
 				dev_info(&asihpi->pci->dev,
 					"Untranslated HPI Control (%d) %d %d %d %d %d\n",
 					idx,
@@ -2648,28 +2649,28 @@ static int snd_card_asihpi_mixer_new(struct snd_card_asihpi *asihpi)
 					hpi_ctl.src_node_index,
 					hpi_ctl.dst_node_type,
 					hpi_ctl.dst_node_index);
-			continue;
-		}
-		if (err < 0)
-			return err;
-	}
-	if (HPI_ERROR_INVALID_OBJ_INDEX != err)
+			जारी;
+		पूर्ण
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	अगर (HPI_ERROR_INVALID_OBJ_INDEX != err)
 		hpi_handle_error(err);
 
 	dev_info(&asihpi->pci->dev, "%d mixer controls found\n", idx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*------------------------------------------------------------
-   /proc interface
+   /proc पूर्णांकerface
  ------------------------------------------------------------*/
 
-static void
-snd_asihpi_proc_read(struct snd_info_entry *entry,
-			struct snd_info_buffer *buffer)
-{
-	struct snd_card_asihpi *asihpi = entry->private_data;
+अटल व्योम
+snd_asihpi_proc_पढ़ो(काष्ठा snd_info_entry *entry,
+			काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_card_asihpi *asihpi = entry->निजी_data;
 	u32 h_control;
 	u32 rate = 0;
 	u16 source = 0;
@@ -2680,21 +2681,21 @@ snd_asihpi_proc_read(struct snd_info_entry *entry,
 	u32 serial_number;
 	u16 type;
 
-	int err;
+	पूर्णांक err;
 
-	snd_iprintf(buffer, "ASIHPI driver proc file\n");
+	snd_iम_लिखो(buffer, "ASIHPI driver proc file\n");
 
 	hpi_handle_error(hpi_adapter_get_info(asihpi->hpi->adapter->index,
 			&num_outstreams, &num_instreams,
 			&version, &serial_number, &type));
 
-	snd_iprintf(buffer,
+	snd_iम_लिखो(buffer,
 			"Adapter type ASI%4X\nHardware Index %d\n"
 			"%d outstreams\n%d instreams\n",
 			type, asihpi->hpi->adapter->index,
 			num_outstreams, num_instreams);
 
-	snd_iprintf(buffer,
+	snd_iम_लिखो(buffer,
 		"Serial#%d\nHardware version %c%d\nDSP code version %03d\n",
 		serial_number, ((version >> 3) & 0xf) + 'A', version & 0x7,
 		((version >> 13) * 100) + ((version >> 7) & 0x3f));
@@ -2703,120 +2704,120 @@ snd_asihpi_proc_read(struct snd_info_entry *entry,
 				  HPI_SOURCENODE_CLOCK_SOURCE, 0, 0, 0,
 				  HPI_CONTROL_SAMPLECLOCK, &h_control);
 
-	if (!err) {
-		err = hpi_sample_clock_get_sample_rate(h_control, &rate);
-		err += hpi_sample_clock_get_source(h_control, &source);
+	अगर (!err) अणु
+		err = hpi_sample_घड़ी_get_sample_rate(h_control, &rate);
+		err += hpi_sample_घड़ी_get_source(h_control, &source);
 
-		if (!err)
-			snd_iprintf(buffer, "Sample Clock %dHz, source %s\n",
-			rate, sampleclock_sources[source]);
-	}
-}
+		अगर (!err)
+			snd_iम_लिखो(buffer, "Sample Clock %dHz, source %s\n",
+			rate, sampleघड़ी_sources[source]);
+	पूर्ण
+पूर्ण
 
-static void snd_asihpi_proc_init(struct snd_card_asihpi *asihpi)
-{
+अटल व्योम snd_asihpi_proc_init(काष्ठा snd_card_asihpi *asihpi)
+अणु
 	snd_card_ro_proc_new(asihpi->card, "info", asihpi,
-			     snd_asihpi_proc_read);
-}
+			     snd_asihpi_proc_पढ़ो);
+पूर्ण
 
 /*------------------------------------------------------------
    HWDEP
  ------------------------------------------------------------*/
 
-static int snd_asihpi_hpi_open(struct snd_hwdep *hw, struct file *file)
-{
-	if (enable_hpi_hwdep)
-		return 0;
-	else
-		return -ENODEV;
+अटल पूर्णांक snd_asihpi_hpi_खोलो(काष्ठा snd_hwdep *hw, काष्ठा file *file)
+अणु
+	अगर (enable_hpi_hwdep)
+		वापस 0;
+	अन्यथा
+		वापस -ENODEV;
 
-}
+पूर्ण
 
-static int snd_asihpi_hpi_release(struct snd_hwdep *hw, struct file *file)
-{
-	if (enable_hpi_hwdep)
-		return asihpi_hpi_release(file);
-	else
-		return -ENODEV;
-}
+अटल पूर्णांक snd_asihpi_hpi_release(काष्ठा snd_hwdep *hw, काष्ठा file *file)
+अणु
+	अगर (enable_hpi_hwdep)
+		वापस asihpi_hpi_release(file);
+	अन्यथा
+		वापस -ENODEV;
+पूर्ण
 
-static int snd_asihpi_hpi_ioctl(struct snd_hwdep *hw, struct file *file,
-				unsigned int cmd, unsigned long arg)
-{
-	if (enable_hpi_hwdep)
-		return asihpi_hpi_ioctl(file, cmd, arg);
-	else
-		return -ENODEV;
-}
+अटल पूर्णांक snd_asihpi_hpi_ioctl(काष्ठा snd_hwdep *hw, काष्ठा file *file,
+				अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	अगर (enable_hpi_hwdep)
+		वापस asihpi_hpi_ioctl(file, cmd, arg);
+	अन्यथा
+		वापस -ENODEV;
+पूर्ण
 
 
-/* results in /dev/snd/hwC#D0 file for each card with index #
+/* results in /dev/snd/hwC#D0 file क्रम each card with index #
    also /proc/asound/hwdep will contain '#-00: asihpi (HPI) for each card'
 */
-static int snd_asihpi_hpi_new(struct snd_card_asihpi *asihpi, int device)
-{
-	struct snd_hwdep *hw;
-	int err;
+अटल पूर्णांक snd_asihpi_hpi_new(काष्ठा snd_card_asihpi *asihpi, पूर्णांक device)
+अणु
+	काष्ठा snd_hwdep *hw;
+	पूर्णांक err;
 
 	err = snd_hwdep_new(asihpi->card, "HPI", device, &hw);
-	if (err < 0)
-		return err;
-	strcpy(hw->name, "asihpi (HPI)");
-	hw->iface = SNDRV_HWDEP_IFACE_LAST;
-	hw->ops.open = snd_asihpi_hpi_open;
+	अगर (err < 0)
+		वापस err;
+	म_नकल(hw->name, "asihpi (HPI)");
+	hw->अगरace = SNDRV_HWDEP_IFACE_LAST;
+	hw->ops.खोलो = snd_asihpi_hpi_खोलो;
 	hw->ops.ioctl = snd_asihpi_hpi_ioctl;
 	hw->ops.release = snd_asihpi_hpi_release;
-	hw->private_data = asihpi;
-	return 0;
-}
+	hw->निजी_data = asihpi;
+	वापस 0;
+पूर्ण
 
 /*------------------------------------------------------------
    CARD
  ------------------------------------------------------------*/
-static int snd_asihpi_probe(struct pci_dev *pci_dev,
-			    const struct pci_device_id *pci_id)
-{
-	int err;
-	struct hpi_adapter *hpi;
-	struct snd_card *card;
-	struct snd_card_asihpi *asihpi;
+अटल पूर्णांक snd_asihpi_probe(काष्ठा pci_dev *pci_dev,
+			    स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	पूर्णांक err;
+	काष्ठा hpi_adapter *hpi;
+	काष्ठा snd_card *card;
+	काष्ठा snd_card_asihpi *asihpi;
 
 	u32 h_control;
 	u32 h_stream;
 	u32 adapter_index;
 
-	static int dev;
-	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+	अटल पूर्णांक dev;
+	अगर (dev >= SNDRV_CARDS)
+		वापस -ENODEV;
 
 	/* Should this be enable[hpi->index] ? */
-	if (!enable[dev]) {
+	अगर (!enable[dev]) अणु
 		dev++;
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	/* Initialise low-level HPI driver */
 	err = asihpi_adapter_probe(pci_dev, pci_id);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	hpi = pci_get_drvdata(pci_dev);
 	adapter_index = hpi->adapter->index;
 	/* first try to give the card the same index as its hardware index */
 	err = snd_card_new(&pci_dev->dev, adapter_index, id[adapter_index],
-			   THIS_MODULE, sizeof(struct snd_card_asihpi), &card);
-	if (err < 0) {
-		/* if that fails, try the default index==next available */
+			   THIS_MODULE, माप(काष्ठा snd_card_asihpi), &card);
+	अगर (err < 0) अणु
+		/* अगर that fails, try the शेष index==next available */
 		err = snd_card_new(&pci_dev->dev, index[dev], id[dev],
-				   THIS_MODULE, sizeof(struct snd_card_asihpi),
+				   THIS_MODULE, माप(काष्ठा snd_card_asihpi),
 				   &card);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 		dev_warn(&pci_dev->dev, "Adapter index %d->ALSA index %d\n",
 			adapter_index, card->number);
-	}
+	पूर्ण
 
-	asihpi = card->private_data;
+	asihpi = card->निजी_data;
 	asihpi->card = card;
 	asihpi->pci = pci_dev;
 	asihpi->hpi = hpi;
@@ -2824,83 +2825,83 @@ static int snd_asihpi_probe(struct pci_dev *pci_dev,
 
 	err = hpi_adapter_get_property(adapter_index,
 		HPI_ADAPTER_PROPERTY_CAPS1,
-		NULL, &asihpi->support_grouping);
-	if (err)
+		शून्य, &asihpi->support_grouping);
+	अगर (err)
 		asihpi->support_grouping = 0;
 
 	err = hpi_adapter_get_property(adapter_index,
 		HPI_ADAPTER_PROPERTY_CAPS2,
-		&asihpi->support_mrx, NULL);
-	if (err)
+		&asihpi->support_mrx, शून्य);
+	अगर (err)
 		asihpi->support_mrx = 0;
 
 	err = hpi_adapter_get_property(adapter_index,
 		HPI_ADAPTER_PROPERTY_INTERVAL,
-		NULL, &asihpi->update_interval_frames);
-	if (err)
-		asihpi->update_interval_frames = 512;
+		शून्य, &asihpi->update_पूर्णांकerval_frames);
+	अगर (err)
+		asihpi->update_पूर्णांकerval_frames = 512;
 
-	if (hpi->interrupt_mode) {
-		asihpi->pcm_start = snd_card_asihpi_pcm_int_start;
-		asihpi->pcm_stop = snd_card_asihpi_pcm_int_stop;
-		hpi->interrupt_callback = snd_card_asihpi_isr;
-	} else {
-		asihpi->pcm_start = snd_card_asihpi_pcm_timer_start;
-		asihpi->pcm_stop = snd_card_asihpi_pcm_timer_stop;
-	}
+	अगर (hpi->पूर्णांकerrupt_mode) अणु
+		asihpi->pcm_start = snd_card_asihpi_pcm_पूर्णांक_start;
+		asihpi->pcm_stop = snd_card_asihpi_pcm_पूर्णांक_stop;
+		hpi->पूर्णांकerrupt_callback = snd_card_asihpi_isr;
+	पूर्ण अन्यथा अणु
+		asihpi->pcm_start = snd_card_asihpi_pcm_समयr_start;
+		asihpi->pcm_stop = snd_card_asihpi_pcm_समयr_stop;
+	पूर्ण
 
-	hpi_handle_error(hpi_instream_open(adapter_index,
+	hpi_handle_error(hpi_instream_खोलो(adapter_index,
 			     0, &h_stream));
 
-	err = hpi_instream_host_buffer_free(h_stream);
+	err = hpi_instream_host_buffer_मुक्त(h_stream);
 	asihpi->can_dma = (!err);
 
-	hpi_handle_error(hpi_instream_close(h_stream));
+	hpi_handle_error(hpi_instream_बंद(h_stream));
 
-	if (!asihpi->can_dma)
-		asihpi->update_interval_frames *= 2;
+	अगर (!asihpi->can_dma)
+		asihpi->update_पूर्णांकerval_frames *= 2;
 
 	err = hpi_adapter_get_property(adapter_index,
 		HPI_ADAPTER_PROPERTY_CURCHANNELS,
 		&asihpi->in_max_chans, &asihpi->out_max_chans);
-	if (err) {
+	अगर (err) अणु
 		asihpi->in_max_chans = 2;
 		asihpi->out_max_chans = 2;
-	}
+	पूर्ण
 
-	if (asihpi->out_max_chans > 2) { /* assume LL mode */
+	अगर (asihpi->out_max_chans > 2) अणु /* assume LL mode */
 		asihpi->out_min_chans = asihpi->out_max_chans;
 		asihpi->in_min_chans = asihpi->in_max_chans;
 		asihpi->support_grouping = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		asihpi->out_min_chans = 1;
 		asihpi->in_min_chans = 1;
-	}
+	पूर्ण
 
 	dev_info(&pci_dev->dev, "Has dma:%d, grouping:%d, mrx:%d, uif:%d\n",
 			asihpi->can_dma,
 			asihpi->support_grouping,
 			asihpi->support_mrx,
-			asihpi->update_interval_frames
+			asihpi->update_पूर्णांकerval_frames
 	      );
 
 	err = snd_card_asihpi_pcm_new(asihpi, 0);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pci_dev->dev, "pcm_new failed\n");
-		goto __nodev;
-	}
+		जाओ __nodev;
+	पूर्ण
 	err = snd_card_asihpi_mixer_new(asihpi);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pci_dev->dev, "mixer_new failed\n");
-		goto __nodev;
-	}
+		जाओ __nodev;
+	पूर्ण
 
 	err = hpi_mixer_get_control(asihpi->h_mixer,
 				  HPI_SOURCENODE_CLOCK_SOURCE, 0, 0, 0,
 				  HPI_CONTROL_SAMPLECLOCK, &h_control);
 
-	if (!err)
-		err = hpi_sample_clock_set_local_rate(
+	अगर (!err)
+		err = hpi_sample_घड़ी_set_local_rate(
 			h_control, adapter_fs);
 
 	snd_asihpi_proc_init(asihpi);
@@ -2909,72 +2910,72 @@ static int snd_asihpi_probe(struct pci_dev *pci_dev,
 	    by enable_hwdep  module param*/
 	snd_asihpi_hpi_new(asihpi, 0);
 
-	strcpy(card->driver, "ASIHPI");
+	म_नकल(card->driver, "ASIHPI");
 
-	sprintf(card->shortname, "AudioScience ASI%4X",
+	प्र_लिखो(card->लघुname, "AudioScience ASI%4X",
 			asihpi->hpi->adapter->type);
-	sprintf(card->longname, "%s %i",
-			card->shortname, adapter_index);
-	err = snd_card_register(card);
+	प्र_लिखो(card->दीर्घname, "%s %i",
+			card->लघुname, adapter_index);
+	err = snd_card_रेजिस्टर(card);
 
-	if (!err) {
+	अगर (!err) अणु
 		dev++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 __nodev:
-	snd_card_free(card);
+	snd_card_मुक्त(card);
 	dev_err(&pci_dev->dev, "snd_asihpi_probe error %d\n", err);
-	return err;
+	वापस err;
 
-}
+पूर्ण
 
-static void snd_asihpi_remove(struct pci_dev *pci_dev)
-{
-	struct hpi_adapter *hpi = pci_get_drvdata(pci_dev);
+अटल व्योम snd_asihpi_हटाओ(काष्ठा pci_dev *pci_dev)
+अणु
+	काष्ठा hpi_adapter *hpi = pci_get_drvdata(pci_dev);
 
-	/* Stop interrupts */
-	if (hpi->interrupt_mode) {
-		hpi->interrupt_callback = NULL;
+	/* Stop पूर्णांकerrupts */
+	अगर (hpi->पूर्णांकerrupt_mode) अणु
+		hpi->पूर्णांकerrupt_callback = शून्य;
 		hpi_handle_error(hpi_adapter_set_property(hpi->adapter->index,
 			HPI_ADAPTER_PROPERTY_IRQ_RATE, 0, 0));
-	}
+	पूर्ण
 
-	snd_card_free(hpi->snd_card);
-	hpi->snd_card = NULL;
-	asihpi_adapter_remove(pci_dev);
-}
+	snd_card_मुक्त(hpi->snd_card);
+	hpi->snd_card = शून्य;
+	asihpi_adapter_हटाओ(pci_dev);
+पूर्ण
 
-static const struct pci_device_id asihpi_pci_tbl[] = {
-	{HPI_PCI_VENDOR_ID_TI, HPI_PCI_DEV_ID_DSP6205,
+अटल स्थिर काष्ठा pci_device_id asihpi_pci_tbl[] = अणु
+	अणुHPI_PCI_VENDOR_ID_TI, HPI_PCI_DEV_ID_DSP6205,
 		HPI_PCI_VENDOR_ID_AUDIOSCIENCE, PCI_ANY_ID, 0, 0,
-		(kernel_ulong_t)HPI_6205},
-	{HPI_PCI_VENDOR_ID_TI, HPI_PCI_DEV_ID_PCI2040,
+		(kernel_uदीर्घ_t)HPI_6205पूर्ण,
+	अणुHPI_PCI_VENDOR_ID_TI, HPI_PCI_DEV_ID_PCI2040,
 		HPI_PCI_VENDOR_ID_AUDIOSCIENCE, PCI_ANY_ID, 0, 0,
-		(kernel_ulong_t)HPI_6000},
-	{0,}
-};
+		(kernel_uदीर्घ_t)HPI_6000पूर्ण,
+	अणु0,पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, asihpi_pci_tbl);
 
-static struct pci_driver driver = {
+अटल काष्ठा pci_driver driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = asihpi_pci_tbl,
 	.probe = snd_asihpi_probe,
-	.remove = snd_asihpi_remove,
-};
+	.हटाओ = snd_asihpi_हटाओ,
+पूर्ण;
 
-static int __init snd_asihpi_init(void)
-{
+अटल पूर्णांक __init snd_asihpi_init(व्योम)
+अणु
 	asihpi_init();
-	return pci_register_driver(&driver);
-}
+	वापस pci_रेजिस्टर_driver(&driver);
+पूर्ण
 
-static void __exit snd_asihpi_exit(void)
-{
+अटल व्योम __निकास snd_asihpi_निकास(व्योम)
+अणु
 
-	pci_unregister_driver(&driver);
-	asihpi_exit();
-}
+	pci_unरेजिस्टर_driver(&driver);
+	asihpi_निकास();
+पूर्ण
 
 module_init(snd_asihpi_init)
-module_exit(snd_asihpi_exit)
+module_निकास(snd_asihpi_निकास)
 

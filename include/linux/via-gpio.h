@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Support for viafb GPIO ports.
+ * Support क्रम viafb GPIO ports.
  *
  * Copyright 2009 Jonathan Corbet <corbet@lwn.net>
  */
 
-#ifndef __VIA_GPIO_H__
-#define __VIA_GPIO_H__
+#अगर_अघोषित __VIA_GPIO_H__
+#घोषणा __VIA_GPIO_H__
 
-extern int viafb_gpio_lookup(const char *name);
-extern int viafb_gpio_init(void);
-extern void viafb_gpio_exit(void);
-#endif
+बाह्य पूर्णांक viafb_gpio_lookup(स्थिर अक्षर *name);
+बाह्य पूर्णांक viafb_gpio_init(व्योम);
+बाह्य व्योम viafb_gpio_निकास(व्योम);
+#पूर्ण_अगर

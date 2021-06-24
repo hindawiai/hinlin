@@ -1,125 +1,126 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/module.h>
-#include <linux/smp.h>
-#include <linux/time.h>
-#include <linux/errno.h>
-#include <linux/timex.h>
-#include <linux/clocksource.h>
-#include <linux/io.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/module.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/समयx.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/पन.स>
 
 /* IBM Summit (EXA) Cyclone counter code*/
-#define CYCLONE_CBAR_ADDR 0xFEB00CD0
-#define CYCLONE_PMCC_OFFSET 0x51A0
-#define CYCLONE_MPMC_OFFSET 0x51D0
-#define CYCLONE_MPCS_OFFSET 0x51A8
-#define CYCLONE_TIMER_FREQ 100000000
+#घोषणा CYCLONE_CBAR_ADDR 0xFEB00CD0
+#घोषणा CYCLONE_PMCC_OFFSET 0x51A0
+#घोषणा CYCLONE_MPMC_OFFSET 0x51D0
+#घोषणा CYCLONE_MPCS_OFFSET 0x51A8
+#घोषणा CYCLONE_TIMER_FREQ 100000000
 
-int use_cyclone;
-void __init cyclone_setup(void)
-{
+पूर्णांक use_cyclone;
+व्योम __init cyclone_setup(व्योम)
+अणु
 	use_cyclone = 1;
-}
+पूर्ण
 
-static void __iomem *cyclone_mc;
+अटल व्योम __iomem *cyclone_mc;
 
-static u64 read_cyclone(struct clocksource *cs)
-{
-	return (u64)readq((void __iomem *)cyclone_mc);
-}
+अटल u64 पढ़ो_cyclone(काष्ठा घड़ीsource *cs)
+अणु
+	वापस (u64)पढ़ोq((व्योम __iomem *)cyclone_mc);
+पूर्ण
 
-static struct clocksource clocksource_cyclone = {
+अटल काष्ठा घड़ीsource घड़ीsource_cyclone = अणु
         .name           = "cyclone",
         .rating         = 300,
-        .read           = read_cyclone,
+        .पढ़ो           = पढ़ो_cyclone,
         .mask           = (1LL << 40) - 1,
         .flags          = CLOCK_SOURCE_IS_CONTINUOUS,
-};
+पूर्ण;
 
-int __init init_cyclone_clock(void)
-{
+पूर्णांक __init init_cyclone_घड़ी(व्योम)
+अणु
 	u64 __iomem *reg;
 	u64 base;	/* saved cyclone base address */
-	u64 offset;	/* offset from pageaddr to cyclone_timer register */
-	int i;
-	u32 __iomem *cyclone_timer;	/* Cyclone MPMC0 register */
+	u64 offset;	/* offset from pageaddr to cyclone_समयr रेजिस्टर */
+	पूर्णांक i;
+	u32 __iomem *cyclone_समयr;	/* Cyclone MPMC0 रेजिस्टर */
 
-	if (!use_cyclone)
-		return 0;
+	अगर (!use_cyclone)
+		वापस 0;
 
-	printk(KERN_INFO "Summit chipset: Starting Cyclone Counter.\n");
+	prपूर्णांकk(KERN_INFO "Summit chipset: Starting Cyclone Counter.\n");
 
 	/* find base address */
 	offset = (CYCLONE_CBAR_ADDR);
-	reg = ioremap(offset, sizeof(u64));
-	if(!reg){
-		printk(KERN_ERR "Summit chipset: Could not find valid CBAR"
+	reg = ioremap(offset, माप(u64));
+	अगर(!reg)अणु
+		prपूर्णांकk(KERN_ERR "Summit chipset: Could not find valid CBAR"
 				" register.\n");
 		use_cyclone = 0;
-		return -ENODEV;
-	}
-	base = readq(reg);
+		वापस -ENODEV;
+	पूर्ण
+	base = पढ़ोq(reg);
 	iounmap(reg);
-	if(!base){
-		printk(KERN_ERR "Summit chipset: Could not find valid CBAR"
+	अगर(!base)अणु
+		prपूर्णांकk(KERN_ERR "Summit chipset: Could not find valid CBAR"
 				" value.\n");
 		use_cyclone = 0;
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* setup PMCC */
 	offset = (base + CYCLONE_PMCC_OFFSET);
-	reg = ioremap(offset, sizeof(u64));
-	if(!reg){
-		printk(KERN_ERR "Summit chipset: Could not find valid PMCC"
+	reg = ioremap(offset, माप(u64));
+	अगर(!reg)अणु
+		prपूर्णांकk(KERN_ERR "Summit chipset: Could not find valid PMCC"
 				" register.\n");
 		use_cyclone = 0;
-		return -ENODEV;
-	}
-	writel(0x00000001,reg);
+		वापस -ENODEV;
+	पूर्ण
+	ग_लिखोl(0x00000001,reg);
 	iounmap(reg);
 
 	/* setup MPCS */
 	offset = (base + CYCLONE_MPCS_OFFSET);
-	reg = ioremap(offset, sizeof(u64));
-	if(!reg){
-		printk(KERN_ERR "Summit chipset: Could not find valid MPCS"
+	reg = ioremap(offset, माप(u64));
+	अगर(!reg)अणु
+		prपूर्णांकk(KERN_ERR "Summit chipset: Could not find valid MPCS"
 				" register.\n");
 		use_cyclone = 0;
-		return -ENODEV;
-	}
-	writel(0x00000001,reg);
+		वापस -ENODEV;
+	पूर्ण
+	ग_लिखोl(0x00000001,reg);
 	iounmap(reg);
 
-	/* map in cyclone_timer */
+	/* map in cyclone_समयr */
 	offset = (base + CYCLONE_MPMC_OFFSET);
-	cyclone_timer = ioremap(offset, sizeof(u32));
-	if(!cyclone_timer){
-		printk(KERN_ERR "Summit chipset: Could not find valid MPMC"
+	cyclone_समयr = ioremap(offset, माप(u32));
+	अगर(!cyclone_समयr)अणु
+		prपूर्णांकk(KERN_ERR "Summit chipset: Could not find valid MPMC"
 				" register.\n");
 		use_cyclone = 0;
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*quick test to make sure its ticking*/
-	for(i=0; i<3; i++){
-		u32 old = readl(cyclone_timer);
-		int stall = 100;
-		while(stall--) barrier();
-		if(readl(cyclone_timer) == old){
-			printk(KERN_ERR "Summit chipset: Counter not counting!"
+	क्रम(i=0; i<3; i++)अणु
+		u32 old = पढ़ोl(cyclone_समयr);
+		पूर्णांक stall = 100;
+		जबतक(stall--) barrier();
+		अगर(पढ़ोl(cyclone_समयr) == old)अणु
+			prपूर्णांकk(KERN_ERR "Summit chipset: Counter not counting!"
 					" DISABLED\n");
-			iounmap(cyclone_timer);
-			cyclone_timer = NULL;
+			iounmap(cyclone_समयr);
+			cyclone_समयr = शून्य;
 			use_cyclone = 0;
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 	/* initialize last tick */
-	cyclone_mc = cyclone_timer;
-	clocksource_cyclone.archdata.fsys_mmio = cyclone_timer;
-	clocksource_register_hz(&clocksource_cyclone, CYCLONE_TIMER_FREQ);
+	cyclone_mc = cyclone_समयr;
+	घड़ीsource_cyclone.archdata.fsys_mmio = cyclone_समयr;
+	घड़ीsource_रेजिस्टर_hz(&घड़ीsource_cyclone, CYCLONE_TIMER_FREQ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__initcall(init_cyclone_clock);
+__initcall(init_cyclone_घड़ी);

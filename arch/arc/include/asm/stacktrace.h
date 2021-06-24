@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2014-15 Synopsys, Inc. (www.synopsys.com)
  * Copyright (C) 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#ifndef __ASM_STACKTRACE_H
-#define __ASM_STACKTRACE_H
+#अगर_अघोषित __ASM_STACKTRACE_H
+#घोषणा __ASM_STACKTRACE_H
 
-#include <linux/sched.h>
+#समावेश <linux/sched.h>
 
 /**
- * arc_unwind_core - Unwind the kernel mode stack for an execution context
- * @tsk:		NULL for current task, specific task otherwise
- * @regs:		pt_regs used to seed the unwinder {SP, FP, BLINK, PC}
- * 			If NULL, use pt_regs of @tsk (if !NULL) otherwise
- * 			use the current values of {SP, FP, BLINK, PC}
- * @consumer_fn:	Callback invoked for each frame unwound
- * 			Returns 0 to continue unwinding, -1 to stop
+ * arc_unwind_core - Unwind the kernel mode stack क्रम an execution context
+ * @tsk:		शून्य क्रम current task, specअगरic task otherwise
+ * @regs:		pt_regs used to seed the unwinder अणुSP, FP, BLINK, PCपूर्ण
+ * 			If शून्य, use pt_regs of @tsk (अगर !शून्य) otherwise
+ * 			use the current values of अणुSP, FP, BLINK, PCपूर्ण
+ * @consumer_fn:	Callback invoked क्रम each frame unwound
+ * 			Returns 0 to जारी unwinding, -1 to stop
  * @arg:		Arg to callback
  *
  * Returns the address of first function in stack
  *
  * Semantics:
- *  - synchronous unwinding (e.g. dump_stack): @tsk  NULL, @regs  NULL
- *  - Asynchronous unwinding of sleeping task: @tsk !NULL, @regs  NULL
- *  - Asynchronous unwinding of intr/excp etc: @tsk !NULL, @regs !NULL
+ *  - synchronous unwinding (e.g. dump_stack): @tsk  शून्य, @regs  शून्य
+ *  - Asynchronous unwinding of sleeping task: @tsk !शून्य, @regs  शून्य
+ *  - Asynchronous unwinding of पूर्णांकr/excp etc: @tsk !शून्य, @regs !शून्य
  */
-notrace noinline unsigned int arc_unwind_core(
-	struct task_struct *tsk, struct pt_regs *regs,
-	int (*consumer_fn) (unsigned int, void *),
-	void *arg);
+notrace noअंतरभूत अचिन्हित पूर्णांक arc_unwind_core(
+	काष्ठा task_काष्ठा *tsk, काष्ठा pt_regs *regs,
+	पूर्णांक (*consumer_fn) (अचिन्हित पूर्णांक, व्योम *),
+	व्योम *arg);
 
-#endif /* __ASM_STACKTRACE_H */
+#पूर्ण_अगर /* __ASM_STACKTRACE_H */

@@ -1,224 +1,225 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
- * Support for VIA PadLock hardware crypto engine.
+ * Support क्रम VIA PadLock hardware crypto engine.
  *
  * Copyright (c) 2006  Michal Ludvig <michal@logix.cz>
  */
 
-#include <crypto/internal/hash.h>
-#include <crypto/padlock.h>
-#include <crypto/sha1.h>
-#include <crypto/sha2.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/scatterlist.h>
-#include <asm/cpu_device_id.h>
-#include <asm/fpu/api.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/padlock.h>
+#समावेश <crypto/sha1.h>
+#समावेश <crypto/sha2.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/fpu/api.h>
 
-struct padlock_sha_desc {
-	struct shash_desc fallback;
-};
+काष्ठा padlock_sha_desc अणु
+	काष्ठा shash_desc fallback;
+पूर्ण;
 
-struct padlock_sha_ctx {
-	struct crypto_shash *fallback;
-};
+काष्ठा padlock_sha_ctx अणु
+	काष्ठा crypto_shash *fallback;
+पूर्ण;
 
-static int padlock_sha_init(struct shash_desc *desc)
-{
-	struct padlock_sha_desc *dctx = shash_desc_ctx(desc);
-	struct padlock_sha_ctx *ctx = crypto_shash_ctx(desc->tfm);
-
-	dctx->fallback.tfm = ctx->fallback;
-	return crypto_shash_init(&dctx->fallback);
-}
-
-static int padlock_sha_update(struct shash_desc *desc,
-			      const u8 *data, unsigned int length)
-{
-	struct padlock_sha_desc *dctx = shash_desc_ctx(desc);
-
-	return crypto_shash_update(&dctx->fallback, data, length);
-}
-
-static int padlock_sha_export(struct shash_desc *desc, void *out)
-{
-	struct padlock_sha_desc *dctx = shash_desc_ctx(desc);
-
-	return crypto_shash_export(&dctx->fallback, out);
-}
-
-static int padlock_sha_import(struct shash_desc *desc, const void *in)
-{
-	struct padlock_sha_desc *dctx = shash_desc_ctx(desc);
-	struct padlock_sha_ctx *ctx = crypto_shash_ctx(desc->tfm);
+अटल पूर्णांक padlock_sha_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा padlock_sha_desc *dctx = shash_desc_ctx(desc);
+	काष्ठा padlock_sha_ctx *ctx = crypto_shash_ctx(desc->tfm);
 
 	dctx->fallback.tfm = ctx->fallback;
-	return crypto_shash_import(&dctx->fallback, in);
-}
+	वापस crypto_shash_init(&dctx->fallback);
+पूर्ण
 
-static inline void padlock_output_block(uint32_t *src,
-		 	uint32_t *dst, size_t count)
-{
-	while (count--)
+अटल पूर्णांक padlock_sha_update(काष्ठा shash_desc *desc,
+			      स्थिर u8 *data, अचिन्हित पूर्णांक length)
+अणु
+	काष्ठा padlock_sha_desc *dctx = shash_desc_ctx(desc);
+
+	वापस crypto_shash_update(&dctx->fallback, data, length);
+पूर्ण
+
+अटल पूर्णांक padlock_sha_export(काष्ठा shash_desc *desc, व्योम *out)
+अणु
+	काष्ठा padlock_sha_desc *dctx = shash_desc_ctx(desc);
+
+	वापस crypto_shash_export(&dctx->fallback, out);
+पूर्ण
+
+अटल पूर्णांक padlock_sha_import(काष्ठा shash_desc *desc, स्थिर व्योम *in)
+अणु
+	काष्ठा padlock_sha_desc *dctx = shash_desc_ctx(desc);
+	काष्ठा padlock_sha_ctx *ctx = crypto_shash_ctx(desc->tfm);
+
+	dctx->fallback.tfm = ctx->fallback;
+	वापस crypto_shash_import(&dctx->fallback, in);
+पूर्ण
+
+अटल अंतरभूत व्योम padlock_output_block(uपूर्णांक32_t *src,
+		 	uपूर्णांक32_t *dst, माप_प्रकार count)
+अणु
+	जबतक (count--)
 		*dst++ = swab32(*src++);
-}
+पूर्ण
 
-static int padlock_sha1_finup(struct shash_desc *desc, const u8 *in,
-			      unsigned int count, u8 *out)
-{
+अटल पूर्णांक padlock_sha1_finup(काष्ठा shash_desc *desc, स्थिर u8 *in,
+			      अचिन्हित पूर्णांक count, u8 *out)
+अणु
 	/* We can't store directly to *out as it may be unaligned. */
 	/* BTW Don't reduce the buffer size below 128 Bytes!
 	 *     PadLock microcode needs it that big. */
-	char buf[128 + PADLOCK_ALIGNMENT - STACK_ALIGN] __attribute__
+	अक्षर buf[128 + PADLOCK_ALIGNMENT - STACK_ALIGN] __attribute__
 		((aligned(STACK_ALIGN)));
-	char *result = PTR_ALIGN(&buf[0], PADLOCK_ALIGNMENT);
-	struct padlock_sha_desc *dctx = shash_desc_ctx(desc);
-	struct sha1_state state;
-	unsigned int space;
-	unsigned int leftover;
-	int err;
+	अक्षर *result = PTR_ALIGN(&buf[0], PADLOCK_ALIGNMENT);
+	काष्ठा padlock_sha_desc *dctx = shash_desc_ctx(desc);
+	काष्ठा sha1_state state;
+	अचिन्हित पूर्णांक space;
+	अचिन्हित पूर्णांक leftover;
+	पूर्णांक err;
 
 	err = crypto_shash_export(&dctx->fallback, &state);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (state.count + count > ULONG_MAX)
-		return crypto_shash_finup(&dctx->fallback, in, count, out);
+	अगर (state.count + count > अच_दीर्घ_उच्च)
+		वापस crypto_shash_finup(&dctx->fallback, in, count, out);
 
 	leftover = ((state.count - 1) & (SHA1_BLOCK_SIZE - 1)) + 1;
 	space =  SHA1_BLOCK_SIZE - leftover;
-	if (space) {
-		if (count > space) {
+	अगर (space) अणु
+		अगर (count > space) अणु
 			err = crypto_shash_update(&dctx->fallback, in, space) ?:
 			      crypto_shash_export(&dctx->fallback, &state);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 			count -= space;
 			in += space;
-		} else {
-			memcpy(state.buffer + leftover, in, count);
+		पूर्ण अन्यथा अणु
+			स_नकल(state.buffer + leftover, in, count);
 			in = state.buffer;
 			count += leftover;
 			state.count &= ~(SHA1_BLOCK_SIZE - 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	memcpy(result, &state.state, SHA1_DIGEST_SIZE);
+	स_नकल(result, &state.state, SHA1_DIGEST_SIZE);
 
-	asm volatile (".byte 0xf3,0x0f,0xa6,0xc8" /* rep xsha1 */
+	यंत्र अस्थिर (".byte 0xf3,0x0f,0xa6,0xc8" /* rep xsha1 */
 		      : \
-		      : "c"((unsigned long)state.count + count), \
-			"a"((unsigned long)state.count), \
+		      : "c"((अचिन्हित दीर्घ)state.count + count), \
+			"a"((अचिन्हित दीर्घ)state.count), \
 			"S"(in), "D"(result));
 
-	padlock_output_block((uint32_t *)result, (uint32_t *)out, 5);
+	padlock_output_block((uपूर्णांक32_t *)result, (uपूर्णांक32_t *)out, 5);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int padlock_sha1_final(struct shash_desc *desc, u8 *out)
-{
+अटल पूर्णांक padlock_sha1_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
 	u8 buf[4];
 
-	return padlock_sha1_finup(desc, buf, 0, out);
-}
+	वापस padlock_sha1_finup(desc, buf, 0, out);
+पूर्ण
 
-static int padlock_sha256_finup(struct shash_desc *desc, const u8 *in,
-				unsigned int count, u8 *out)
-{
+अटल पूर्णांक padlock_sha256_finup(काष्ठा shash_desc *desc, स्थिर u8 *in,
+				अचिन्हित पूर्णांक count, u8 *out)
+अणु
 	/* We can't store directly to *out as it may be unaligned. */
 	/* BTW Don't reduce the buffer size below 128 Bytes!
 	 *     PadLock microcode needs it that big. */
-	char buf[128 + PADLOCK_ALIGNMENT - STACK_ALIGN] __attribute__
+	अक्षर buf[128 + PADLOCK_ALIGNMENT - STACK_ALIGN] __attribute__
 		((aligned(STACK_ALIGN)));
-	char *result = PTR_ALIGN(&buf[0], PADLOCK_ALIGNMENT);
-	struct padlock_sha_desc *dctx = shash_desc_ctx(desc);
-	struct sha256_state state;
-	unsigned int space;
-	unsigned int leftover;
-	int err;
+	अक्षर *result = PTR_ALIGN(&buf[0], PADLOCK_ALIGNMENT);
+	काष्ठा padlock_sha_desc *dctx = shash_desc_ctx(desc);
+	काष्ठा sha256_state state;
+	अचिन्हित पूर्णांक space;
+	अचिन्हित पूर्णांक leftover;
+	पूर्णांक err;
 
 	err = crypto_shash_export(&dctx->fallback, &state);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (state.count + count > ULONG_MAX)
-		return crypto_shash_finup(&dctx->fallback, in, count, out);
+	अगर (state.count + count > अच_दीर्घ_उच्च)
+		वापस crypto_shash_finup(&dctx->fallback, in, count, out);
 
 	leftover = ((state.count - 1) & (SHA256_BLOCK_SIZE - 1)) + 1;
 	space =  SHA256_BLOCK_SIZE - leftover;
-	if (space) {
-		if (count > space) {
+	अगर (space) अणु
+		अगर (count > space) अणु
 			err = crypto_shash_update(&dctx->fallback, in, space) ?:
 			      crypto_shash_export(&dctx->fallback, &state);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 			count -= space;
 			in += space;
-		} else {
-			memcpy(state.buf + leftover, in, count);
+		पूर्ण अन्यथा अणु
+			स_नकल(state.buf + leftover, in, count);
 			in = state.buf;
 			count += leftover;
 			state.count &= ~(SHA1_BLOCK_SIZE - 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	memcpy(result, &state.state, SHA256_DIGEST_SIZE);
+	स_नकल(result, &state.state, SHA256_DIGEST_SIZE);
 
-	asm volatile (".byte 0xf3,0x0f,0xa6,0xd0" /* rep xsha256 */
+	यंत्र अस्थिर (".byte 0xf3,0x0f,0xa6,0xd0" /* rep xsha256 */
 		      : \
-		      : "c"((unsigned long)state.count + count), \
-			"a"((unsigned long)state.count), \
+		      : "c"((अचिन्हित दीर्घ)state.count + count), \
+			"a"((अचिन्हित दीर्घ)state.count), \
 			"S"(in), "D"(result));
 
-	padlock_output_block((uint32_t *)result, (uint32_t *)out, 8);
+	padlock_output_block((uपूर्णांक32_t *)result, (uपूर्णांक32_t *)out, 8);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int padlock_sha256_final(struct shash_desc *desc, u8 *out)
-{
+अटल पूर्णांक padlock_sha256_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
 	u8 buf[4];
 
-	return padlock_sha256_finup(desc, buf, 0, out);
-}
+	वापस padlock_sha256_finup(desc, buf, 0, out);
+पूर्ण
 
-static int padlock_init_tfm(struct crypto_shash *hash)
-{
-	const char *fallback_driver_name = crypto_shash_alg_name(hash);
-	struct padlock_sha_ctx *ctx = crypto_shash_ctx(hash);
-	struct crypto_shash *fallback_tfm;
+अटल पूर्णांक padlock_init_tfm(काष्ठा crypto_shash *hash)
+अणु
+	स्थिर अक्षर *fallback_driver_name = crypto_shash_alg_name(hash);
+	काष्ठा padlock_sha_ctx *ctx = crypto_shash_ctx(hash);
+	काष्ठा crypto_shash *fallback_tfm;
 
-	/* Allocate a fallback and abort if it failed. */
+	/* Allocate a fallback and पात अगर it failed. */
 	fallback_tfm = crypto_alloc_shash(fallback_driver_name, 0,
 					  CRYPTO_ALG_NEED_FALLBACK);
-	if (IS_ERR(fallback_tfm)) {
-		printk(KERN_WARNING PFX "Fallback driver '%s' could not be loaded!\n",
+	अगर (IS_ERR(fallback_tfm)) अणु
+		prपूर्णांकk(KERN_WARNING PFX "Fallback driver '%s' could not be loaded!\n",
 		       fallback_driver_name);
-		return PTR_ERR(fallback_tfm);
-	}
+		वापस PTR_ERR(fallback_tfm);
+	पूर्ण
 
 	ctx->fallback = fallback_tfm;
 	hash->descsize += crypto_shash_descsize(fallback_tfm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void padlock_exit_tfm(struct crypto_shash *hash)
-{
-	struct padlock_sha_ctx *ctx = crypto_shash_ctx(hash);
+अटल व्योम padlock_निकास_tfm(काष्ठा crypto_shash *hash)
+अणु
+	काष्ठा padlock_sha_ctx *ctx = crypto_shash_ctx(hash);
 
-	crypto_free_shash(ctx->fallback);
-}
+	crypto_मुक्त_shash(ctx->fallback);
+पूर्ण
 
-static struct shash_alg sha1_alg = {
+अटल काष्ठा shash_alg sha1_alg = अणु
 	.digestsize	=	SHA1_DIGEST_SIZE,
 	.init   	= 	padlock_sha_init,
 	.update 	=	padlock_sha_update,
@@ -227,21 +228,21 @@ static struct shash_alg sha1_alg = {
 	.export		=	padlock_sha_export,
 	.import		=	padlock_sha_import,
 	.init_tfm	=	padlock_init_tfm,
-	.exit_tfm	=	padlock_exit_tfm,
-	.descsize	=	sizeof(struct padlock_sha_desc),
-	.statesize	=	sizeof(struct sha1_state),
-	.base		=	{
+	.निकास_tfm	=	padlock_निकास_tfm,
+	.descsize	=	माप(काष्ठा padlock_sha_desc),
+	.statesize	=	माप(काष्ठा sha1_state),
+	.base		=	अणु
 		.cra_name		=	"sha1",
 		.cra_driver_name	=	"sha1-padlock",
 		.cra_priority		=	PADLOCK_CRA_PRIORITY,
 		.cra_flags		=	CRYPTO_ALG_NEED_FALLBACK,
 		.cra_blocksize		=	SHA1_BLOCK_SIZE,
-		.cra_ctxsize		=	sizeof(struct padlock_sha_ctx),
+		.cra_ctxsize		=	माप(काष्ठा padlock_sha_ctx),
 		.cra_module		=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct shash_alg sha256_alg = {
+अटल काष्ठा shash_alg sha256_alg = अणु
 	.digestsize	=	SHA256_DIGEST_SIZE,
 	.init   	= 	padlock_sha_init,
 	.update 	=	padlock_sha_update,
@@ -250,39 +251,39 @@ static struct shash_alg sha256_alg = {
 	.export		=	padlock_sha_export,
 	.import		=	padlock_sha_import,
 	.init_tfm	=	padlock_init_tfm,
-	.exit_tfm	=	padlock_exit_tfm,
-	.descsize	=	sizeof(struct padlock_sha_desc),
-	.statesize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.निकास_tfm	=	padlock_निकास_tfm,
+	.descsize	=	माप(काष्ठा padlock_sha_desc),
+	.statesize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name		=	"sha256",
 		.cra_driver_name	=	"sha256-padlock",
 		.cra_priority		=	PADLOCK_CRA_PRIORITY,
 		.cra_flags		=	CRYPTO_ALG_NEED_FALLBACK,
 		.cra_blocksize		=	SHA256_BLOCK_SIZE,
-		.cra_ctxsize		=	sizeof(struct padlock_sha_ctx),
+		.cra_ctxsize		=	माप(काष्ठा padlock_sha_ctx),
 		.cra_module		=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-/* Add two shash_alg instance for hardware-implemented *
+/* Add two shash_alg instance क्रम hardware-implemented *
 * multiple-parts hash supported by VIA Nano Processor.*/
-static int padlock_sha1_init_nano(struct shash_desc *desc)
-{
-	struct sha1_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक padlock_sha1_init_nano(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा sha1_state *sctx = shash_desc_ctx(desc);
 
-	*sctx = (struct sha1_state){
-		.state = { SHA1_H0, SHA1_H1, SHA1_H2, SHA1_H3, SHA1_H4 },
-	};
+	*sctx = (काष्ठा sha1_state)अणु
+		.state = अणु SHA1_H0, SHA1_H1, SHA1_H2, SHA1_H3, SHA1_H4 पूर्ण,
+	पूर्ण;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int padlock_sha1_update_nano(struct shash_desc *desc,
-			const u8 *data,	unsigned int len)
-{
-	struct sha1_state *sctx = shash_desc_ctx(desc);
-	unsigned int partial, done;
-	const u8 *src;
+अटल पूर्णांक padlock_sha1_update_nano(काष्ठा shash_desc *desc,
+			स्थिर u8 *data,	अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा sha1_state *sctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial, करोne;
+	स्थिर u8 *src;
 	/*The PHE require the out buffer must 128 bytes and 16-bytes aligned*/
 	u8 buf[128 + PADLOCK_ALIGNMENT - STACK_ALIGN] __attribute__
 		((aligned(STACK_ALIGN)));
@@ -290,48 +291,48 @@ static int padlock_sha1_update_nano(struct shash_desc *desc,
 
 	partial = sctx->count & 0x3f;
 	sctx->count += len;
-	done = 0;
+	करोne = 0;
 	src = data;
-	memcpy(dst, (u8 *)(sctx->state), SHA1_DIGEST_SIZE);
+	स_नकल(dst, (u8 *)(sctx->state), SHA1_DIGEST_SIZE);
 
-	if ((partial + len) >= SHA1_BLOCK_SIZE) {
+	अगर ((partial + len) >= SHA1_BLOCK_SIZE) अणु
 
 		/* Append the bytes in state's buffer to a block to handle */
-		if (partial) {
-			done = -partial;
-			memcpy(sctx->buffer + partial, data,
-				done + SHA1_BLOCK_SIZE);
+		अगर (partial) अणु
+			करोne = -partial;
+			स_नकल(sctx->buffer + partial, data,
+				करोne + SHA1_BLOCK_SIZE);
 			src = sctx->buffer;
-			asm volatile (".byte 0xf3,0x0f,0xa6,0xc8"
+			यंत्र अस्थिर (".byte 0xf3,0x0f,0xa6,0xc8"
 			: "+S"(src), "+D"(dst) \
-			: "a"((long)-1), "c"((unsigned long)1));
-			done += SHA1_BLOCK_SIZE;
-			src = data + done;
-		}
+			: "a"((दीर्घ)-1), "c"((अचिन्हित दीर्घ)1));
+			करोne += SHA1_BLOCK_SIZE;
+			src = data + करोne;
+		पूर्ण
 
 		/* Process the left bytes from the input data */
-		if (len - done >= SHA1_BLOCK_SIZE) {
-			asm volatile (".byte 0xf3,0x0f,0xa6,0xc8"
+		अगर (len - करोne >= SHA1_BLOCK_SIZE) अणु
+			यंत्र अस्थिर (".byte 0xf3,0x0f,0xa6,0xc8"
 			: "+S"(src), "+D"(dst)
-			: "a"((long)-1),
-			"c"((unsigned long)((len - done) / SHA1_BLOCK_SIZE)));
-			done += ((len - done) - (len - done) % SHA1_BLOCK_SIZE);
-			src = data + done;
-		}
+			: "a"((दीर्घ)-1),
+			"c"((अचिन्हित दीर्घ)((len - करोne) / SHA1_BLOCK_SIZE)));
+			करोne += ((len - करोne) - (len - करोne) % SHA1_BLOCK_SIZE);
+			src = data + करोne;
+		पूर्ण
 		partial = 0;
-	}
-	memcpy((u8 *)(sctx->state), dst, SHA1_DIGEST_SIZE);
-	memcpy(sctx->buffer + partial, src, len - done);
+	पूर्ण
+	स_नकल((u8 *)(sctx->state), dst, SHA1_DIGEST_SIZE);
+	स_नकल(sctx->buffer + partial, src, len - करोne);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int padlock_sha1_final_nano(struct shash_desc *desc, u8 *out)
-{
-	struct sha1_state *state = (struct sha1_state *)shash_desc_ctx(desc);
-	unsigned int partial, padlen;
+अटल पूर्णांक padlock_sha1_final_nano(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा sha1_state *state = (काष्ठा sha1_state *)shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial, padlen;
 	__be64 bits;
-	static const u8 padding[64] = { 0x80, };
+	अटल स्थिर u8 padding[64] = अणु 0x80, पूर्ण;
 
 	bits = cpu_to_be64(state->count << 3);
 
@@ -341,32 +342,32 @@ static int padlock_sha1_final_nano(struct shash_desc *desc, u8 *out)
 	padlock_sha1_update_nano(desc, padding, padlen);
 
 	/* Append length field bytes */
-	padlock_sha1_update_nano(desc, (const u8 *)&bits, sizeof(bits));
+	padlock_sha1_update_nano(desc, (स्थिर u8 *)&bits, माप(bits));
 
 	/* Swap to output */
-	padlock_output_block((uint32_t *)(state->state), (uint32_t *)out, 5);
+	padlock_output_block((uपूर्णांक32_t *)(state->state), (uपूर्णांक32_t *)out, 5);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int padlock_sha256_init_nano(struct shash_desc *desc)
-{
-	struct sha256_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक padlock_sha256_init_nano(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा sha256_state *sctx = shash_desc_ctx(desc);
 
-	*sctx = (struct sha256_state){
-		.state = { SHA256_H0, SHA256_H1, SHA256_H2, SHA256_H3, \
-				SHA256_H4, SHA256_H5, SHA256_H6, SHA256_H7},
-	};
+	*sctx = (काष्ठा sha256_state)अणु
+		.state = अणु SHA256_H0, SHA256_H1, SHA256_H2, SHA256_H3, \
+				SHA256_H4, SHA256_H5, SHA256_H6, SHA256_H7पूर्ण,
+	पूर्ण;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int padlock_sha256_update_nano(struct shash_desc *desc, const u8 *data,
-			  unsigned int len)
-{
-	struct sha256_state *sctx = shash_desc_ctx(desc);
-	unsigned int partial, done;
-	const u8 *src;
+अटल पूर्णांक padlock_sha256_update_nano(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			  अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा sha256_state *sctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial, करोne;
+	स्थिर u8 *src;
 	/*The PHE require the out buffer must 128 bytes and 16-bytes aligned*/
 	u8 buf[128 + PADLOCK_ALIGNMENT - STACK_ALIGN] __attribute__
 		((aligned(STACK_ALIGN)));
@@ -374,49 +375,49 @@ static int padlock_sha256_update_nano(struct shash_desc *desc, const u8 *data,
 
 	partial = sctx->count & 0x3f;
 	sctx->count += len;
-	done = 0;
+	करोne = 0;
 	src = data;
-	memcpy(dst, (u8 *)(sctx->state), SHA256_DIGEST_SIZE);
+	स_नकल(dst, (u8 *)(sctx->state), SHA256_DIGEST_SIZE);
 
-	if ((partial + len) >= SHA256_BLOCK_SIZE) {
+	अगर ((partial + len) >= SHA256_BLOCK_SIZE) अणु
 
 		/* Append the bytes in state's buffer to a block to handle */
-		if (partial) {
-			done = -partial;
-			memcpy(sctx->buf + partial, data,
-				done + SHA256_BLOCK_SIZE);
+		अगर (partial) अणु
+			करोne = -partial;
+			स_नकल(sctx->buf + partial, data,
+				करोne + SHA256_BLOCK_SIZE);
 			src = sctx->buf;
-			asm volatile (".byte 0xf3,0x0f,0xa6,0xd0"
+			यंत्र अस्थिर (".byte 0xf3,0x0f,0xa6,0xd0"
 			: "+S"(src), "+D"(dst)
-			: "a"((long)-1), "c"((unsigned long)1));
-			done += SHA256_BLOCK_SIZE;
-			src = data + done;
-		}
+			: "a"((दीर्घ)-1), "c"((अचिन्हित दीर्घ)1));
+			करोne += SHA256_BLOCK_SIZE;
+			src = data + करोne;
+		पूर्ण
 
 		/* Process the left bytes from input data*/
-		if (len - done >= SHA256_BLOCK_SIZE) {
-			asm volatile (".byte 0xf3,0x0f,0xa6,0xd0"
+		अगर (len - करोne >= SHA256_BLOCK_SIZE) अणु
+			यंत्र अस्थिर (".byte 0xf3,0x0f,0xa6,0xd0"
 			: "+S"(src), "+D"(dst)
-			: "a"((long)-1),
-			"c"((unsigned long)((len - done) / 64)));
-			done += ((len - done) - (len - done) % 64);
-			src = data + done;
-		}
+			: "a"((दीर्घ)-1),
+			"c"((अचिन्हित दीर्घ)((len - करोne) / 64)));
+			करोne += ((len - करोne) - (len - करोne) % 64);
+			src = data + करोne;
+		पूर्ण
 		partial = 0;
-	}
-	memcpy((u8 *)(sctx->state), dst, SHA256_DIGEST_SIZE);
-	memcpy(sctx->buf + partial, src, len - done);
+	पूर्ण
+	स_नकल((u8 *)(sctx->state), dst, SHA256_DIGEST_SIZE);
+	स_नकल(sctx->buf + partial, src, len - करोne);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int padlock_sha256_final_nano(struct shash_desc *desc, u8 *out)
-{
-	struct sha256_state *state =
-		(struct sha256_state *)shash_desc_ctx(desc);
-	unsigned int partial, padlen;
+अटल पूर्णांक padlock_sha256_final_nano(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा sha256_state *state =
+		(काष्ठा sha256_state *)shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial, padlen;
 	__be64 bits;
-	static const u8 padding[64] = { 0x80, };
+	अटल स्थिर u8 padding[64] = अणु 0x80, पूर्ण;
 
 	bits = cpu_to_be64(state->count << 3);
 
@@ -426,131 +427,131 @@ static int padlock_sha256_final_nano(struct shash_desc *desc, u8 *out)
 	padlock_sha256_update_nano(desc, padding, padlen);
 
 	/* Append length field bytes */
-	padlock_sha256_update_nano(desc, (const u8 *)&bits, sizeof(bits));
+	padlock_sha256_update_nano(desc, (स्थिर u8 *)&bits, माप(bits));
 
 	/* Swap to output */
-	padlock_output_block((uint32_t *)(state->state), (uint32_t *)out, 8);
+	padlock_output_block((uपूर्णांक32_t *)(state->state), (uपूर्णांक32_t *)out, 8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int padlock_sha_export_nano(struct shash_desc *desc,
-				void *out)
-{
-	int statesize = crypto_shash_statesize(desc->tfm);
-	void *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक padlock_sha_export_nano(काष्ठा shash_desc *desc,
+				व्योम *out)
+अणु
+	पूर्णांक statesize = crypto_shash_statesize(desc->tfm);
+	व्योम *sctx = shash_desc_ctx(desc);
 
-	memcpy(out, sctx, statesize);
-	return 0;
-}
+	स_नकल(out, sctx, statesize);
+	वापस 0;
+पूर्ण
 
-static int padlock_sha_import_nano(struct shash_desc *desc,
-				const void *in)
-{
-	int statesize = crypto_shash_statesize(desc->tfm);
-	void *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक padlock_sha_import_nano(काष्ठा shash_desc *desc,
+				स्थिर व्योम *in)
+अणु
+	पूर्णांक statesize = crypto_shash_statesize(desc->tfm);
+	व्योम *sctx = shash_desc_ctx(desc);
 
-	memcpy(sctx, in, statesize);
-	return 0;
-}
+	स_नकल(sctx, in, statesize);
+	वापस 0;
+पूर्ण
 
-static struct shash_alg sha1_alg_nano = {
+अटल काष्ठा shash_alg sha1_alg_nano = अणु
 	.digestsize	=	SHA1_DIGEST_SIZE,
 	.init		=	padlock_sha1_init_nano,
 	.update		=	padlock_sha1_update_nano,
 	.final		=	padlock_sha1_final_nano,
 	.export		=	padlock_sha_export_nano,
 	.import		=	padlock_sha_import_nano,
-	.descsize	=	sizeof(struct sha1_state),
-	.statesize	=	sizeof(struct sha1_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha1_state),
+	.statesize	=	माप(काष्ठा sha1_state),
+	.base		=	अणु
 		.cra_name		=	"sha1",
 		.cra_driver_name	=	"sha1-padlock-nano",
 		.cra_priority		=	PADLOCK_CRA_PRIORITY,
 		.cra_blocksize		=	SHA1_BLOCK_SIZE,
 		.cra_module		=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct shash_alg sha256_alg_nano = {
+अटल काष्ठा shash_alg sha256_alg_nano = अणु
 	.digestsize	=	SHA256_DIGEST_SIZE,
 	.init		=	padlock_sha256_init_nano,
 	.update		=	padlock_sha256_update_nano,
 	.final		=	padlock_sha256_final_nano,
 	.export		=	padlock_sha_export_nano,
 	.import		=	padlock_sha_import_nano,
-	.descsize	=	sizeof(struct sha256_state),
-	.statesize	=	sizeof(struct sha256_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha256_state),
+	.statesize	=	माप(काष्ठा sha256_state),
+	.base		=	अणु
 		.cra_name		=	"sha256",
 		.cra_driver_name	=	"sha256-padlock-nano",
 		.cra_priority		=	PADLOCK_CRA_PRIORITY,
 		.cra_blocksize		=	SHA256_BLOCK_SIZE,
 		.cra_module		=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct x86_cpu_id padlock_sha_ids[] = {
-	X86_MATCH_FEATURE(X86_FEATURE_PHE, NULL),
-	{}
-};
+अटल स्थिर काष्ठा x86_cpu_id padlock_sha_ids[] = अणु
+	X86_MATCH_FEATURE(X86_FEATURE_PHE, शून्य),
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(x86cpu, padlock_sha_ids);
 
-static int __init padlock_init(void)
-{
-	int rc = -ENODEV;
-	struct cpuinfo_x86 *c = &cpu_data(0);
-	struct shash_alg *sha1;
-	struct shash_alg *sha256;
+अटल पूर्णांक __init padlock_init(व्योम)
+अणु
+	पूर्णांक rc = -ENODEV;
+	काष्ठा cpuinfo_x86 *c = &cpu_data(0);
+	काष्ठा shash_alg *sha1;
+	काष्ठा shash_alg *sha256;
 
-	if (!x86_match_cpu(padlock_sha_ids) || !boot_cpu_has(X86_FEATURE_PHE_EN))
-		return -ENODEV;
+	अगर (!x86_match_cpu(padlock_sha_ids) || !boot_cpu_has(X86_FEATURE_PHE_EN))
+		वापस -ENODEV;
 
-	/* Register the newly added algorithm module if on *
-	* VIA Nano processor, or else just do as before */
-	if (c->x86_model < 0x0f) {
+	/* Register the newly added algorithm module अगर on *
+	* VIA Nano processor, or अन्यथा just करो as beक्रमe */
+	अगर (c->x86_model < 0x0f) अणु
 		sha1 = &sha1_alg;
 		sha256 = &sha256_alg;
-	} else {
+	पूर्ण अन्यथा अणु
 		sha1 = &sha1_alg_nano;
 		sha256 = &sha256_alg_nano;
-	}
+	पूर्ण
 
-	rc = crypto_register_shash(sha1);
-	if (rc)
-		goto out;
+	rc = crypto_रेजिस्टर_shash(sha1);
+	अगर (rc)
+		जाओ out;
 
-	rc = crypto_register_shash(sha256);
-	if (rc)
-		goto out_unreg1;
+	rc = crypto_रेजिस्टर_shash(sha256);
+	अगर (rc)
+		जाओ out_unreg1;
 
-	printk(KERN_NOTICE PFX "Using VIA PadLock ACE for SHA1/SHA256 algorithms.\n");
+	prपूर्णांकk(KERN_NOTICE PFX "Using VIA PadLock ACE for SHA1/SHA256 algorithms.\n");
 
-	return 0;
+	वापस 0;
 
 out_unreg1:
-	crypto_unregister_shash(sha1);
+	crypto_unरेजिस्टर_shash(sha1);
 
 out:
-	printk(KERN_ERR PFX "VIA PadLock SHA1/SHA256 initialization failed.\n");
-	return rc;
-}
+	prपूर्णांकk(KERN_ERR PFX "VIA PadLock SHA1/SHA256 initialization failed.\n");
+	वापस rc;
+पूर्ण
 
-static void __exit padlock_fini(void)
-{
-	struct cpuinfo_x86 *c = &cpu_data(0);
+अटल व्योम __निकास padlock_fini(व्योम)
+अणु
+	काष्ठा cpuinfo_x86 *c = &cpu_data(0);
 
-	if (c->x86_model >= 0x0f) {
-		crypto_unregister_shash(&sha1_alg_nano);
-		crypto_unregister_shash(&sha256_alg_nano);
-	} else {
-		crypto_unregister_shash(&sha1_alg);
-		crypto_unregister_shash(&sha256_alg);
-	}
-}
+	अगर (c->x86_model >= 0x0f) अणु
+		crypto_unरेजिस्टर_shash(&sha1_alg_nano);
+		crypto_unरेजिस्टर_shash(&sha256_alg_nano);
+	पूर्ण अन्यथा अणु
+		crypto_unरेजिस्टर_shash(&sha1_alg);
+		crypto_unरेजिस्टर_shash(&sha256_alg);
+	पूर्ण
+पूर्ण
 
 module_init(padlock_init);
-module_exit(padlock_fini);
+module_निकास(padlock_fini);
 
 MODULE_DESCRIPTION("VIA PadLock SHA1/SHA256 algorithms support.");
 MODULE_LICENSE("GPL");

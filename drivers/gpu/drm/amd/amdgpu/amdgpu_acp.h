@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,20 +24,20 @@
  *
  */
 
-#ifndef __AMDGPU_ACP_H__
-#define __AMDGPU_ACP_H__
+#अगर_अघोषित __AMDGPU_ACP_H__
+#घोषणा __AMDGPU_ACP_H__
 
-#include <linux/mfd/core.h>
+#समावेश <linux/mfd/core.h>
 
-struct amdgpu_acp {
-	struct device *parent;
-	struct cgs_device *cgs_device;
-	struct amd_acp_private *private;
-	struct mfd_cell *acp_cell;
-	struct resource *acp_res;
-	struct acp_pm_domain *acp_genpd;
-};
+काष्ठा amdgpu_acp अणु
+	काष्ठा device *parent;
+	काष्ठा cgs_device *cgs_device;
+	काष्ठा amd_acp_निजी *निजी;
+	काष्ठा mfd_cell *acp_cell;
+	काष्ठा resource *acp_res;
+	काष्ठा acp_pm_करोमुख्य *acp_genpd;
+पूर्ण;
 
-extern const struct amdgpu_ip_block_version acp_ip_block;
+बाह्य स्थिर काष्ठा amdgpu_ip_block_version acp_ip_block;
 
-#endif /* __AMDGPU_ACP_H__ */
+#पूर्ण_अगर /* __AMDGPU_ACP_H__ */

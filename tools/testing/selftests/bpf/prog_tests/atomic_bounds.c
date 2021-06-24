@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <test_progs.h>
+#समावेश <test_progs.h>
 
-#include "atomic_bounds.skel.h"
+#समावेश "atomic_bounds.skel.h"
 
-void test_atomic_bounds(void)
-{
-	struct atomic_bounds *skel;
+व्योम test_atomic_bounds(व्योम)
+अणु
+	काष्ठा atomic_bounds *skel;
 	__u32 duration = 0;
 
-	skel = atomic_bounds__open_and_load();
-	if (CHECK(!skel, "skel_load", "couldn't load program\n"))
-		return;
+	skel = atomic_bounds__खोलो_and_load();
+	अगर (CHECK(!skel, "skel_load", "couldn't load program\n"))
+		वापस;
 
 	atomic_bounds__destroy(skel);
-}
+पूर्ण

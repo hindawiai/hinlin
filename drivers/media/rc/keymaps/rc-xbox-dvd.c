@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0+
-// Keytable for Xbox DVD remote
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
+// Keytable क्रम Xbox DVD remote
 // Copyright (c) 2018 by Benjamin Valentin <benpicco@googlemail.com>
 
-#include <media/rc-map.h>
-#include <linux/module.h>
+#समावेश <media/rc-map.h>
+#समावेश <linux/module.h>
 
 /* based on lircd.conf.xbox */
-static struct rc_map_table xbox_dvd[] = {
-	{0xa0b, KEY_OK},
-	{0xaa6, KEY_UP},
-	{0xaa7, KEY_DOWN},
-	{0xaa8, KEY_RIGHT},
-	{0xaa9, KEY_LEFT},
-	{0xac3, KEY_INFO},
+अटल काष्ठा rc_map_table xbox_dvd[] = अणु
+	अणु0xa0b, KEY_OKपूर्ण,
+	अणु0xaa6, KEY_UPपूर्ण,
+	अणु0xaa7, KEY_DOWNपूर्ण,
+	अणु0xaa8, KEY_RIGHTपूर्ण,
+	अणु0xaa9, KEY_LEFTपूर्ण,
+	अणु0xac3, KEY_INFOपूर्ण,
 
-	{0xac6, KEY_NUMERIC_9},
-	{0xac7, KEY_NUMERIC_8},
-	{0xac8, KEY_NUMERIC_7},
-	{0xac9, KEY_NUMERIC_6},
-	{0xaca, KEY_NUMERIC_5},
-	{0xacb, KEY_NUMERIC_4},
-	{0xacc, KEY_NUMERIC_3},
-	{0xacd, KEY_NUMERIC_2},
-	{0xace, KEY_NUMERIC_1},
-	{0xacf, KEY_NUMERIC_0},
+	अणु0xac6, KEY_NUMERIC_9पूर्ण,
+	अणु0xac7, KEY_NUMERIC_8पूर्ण,
+	अणु0xac8, KEY_NUMERIC_7पूर्ण,
+	अणु0xac9, KEY_NUMERIC_6पूर्ण,
+	अणु0xaca, KEY_NUMERIC_5पूर्ण,
+	अणु0xacb, KEY_NUMERIC_4पूर्ण,
+	अणु0xacc, KEY_NUMERIC_3पूर्ण,
+	अणु0xacd, KEY_NUMERIC_2पूर्ण,
+	अणु0xace, KEY_NUMERIC_1पूर्ण,
+	अणु0xacf, KEY_NUMERIC_0पूर्ण,
 
-	{0xad5, KEY_ANGLE},
-	{0xad8, KEY_BACK},
-	{0xadd, KEY_PREVIOUSSONG},
-	{0xadf, KEY_NEXTSONG},
-	{0xae0, KEY_STOP},
-	{0xae2, KEY_REWIND},
-	{0xae3, KEY_FASTFORWARD},
-	{0xae5, KEY_TITLE},
-	{0xae6, KEY_PAUSE},
-	{0xaea, KEY_PLAY},
-	{0xaf7, KEY_MENU},
-};
+	अणु0xad5, KEY_ANGLEपूर्ण,
+	अणु0xad8, KEY_BACKपूर्ण,
+	अणु0xadd, KEY_PREVIOUSSONGपूर्ण,
+	अणु0xadf, KEY_NEXTSONGपूर्ण,
+	अणु0xae0, KEY_STOPपूर्ण,
+	अणु0xae2, KEY_REWINDपूर्ण,
+	अणु0xae3, KEY_FASTFORWARDपूर्ण,
+	अणु0xae5, KEY_TITLEपूर्ण,
+	अणु0xae6, KEY_PAUSEपूर्ण,
+	अणु0xaea, KEY_PLAYपूर्ण,
+	अणु0xaf7, KEY_MENUपूर्ण,
+पूर्ण;
 
-static struct rc_map_list xbox_dvd_map = {
-	.map = {
+अटल काष्ठा rc_map_list xbox_dvd_map = अणु
+	.map = अणु
 		.scan     = xbox_dvd,
 		.size     = ARRAY_SIZE(xbox_dvd),
 		.rc_proto = RC_PROTO_XBOX_DVD,
 		.name     = RC_MAP_XBOX_DVD,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init init_rc_map(void)
-{
-	return rc_map_register(&xbox_dvd_map);
-}
+अटल पूर्णांक __init init_rc_map(व्योम)
+अणु
+	वापस rc_map_रेजिस्टर(&xbox_dvd_map);
+पूर्ण
 
-static void __exit exit_rc_map(void)
-{
-	rc_map_unregister(&xbox_dvd_map);
-}
+अटल व्योम __निकास निकास_rc_map(व्योम)
+अणु
+	rc_map_unरेजिस्टर(&xbox_dvd_map);
+पूर्ण
 
 module_init(init_rc_map)
-module_exit(exit_rc_map)
+module_निकास(निकास_rc_map)
 
 MODULE_LICENSE("GPL");

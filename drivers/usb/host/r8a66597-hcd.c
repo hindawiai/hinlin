@@ -1,182 +1,183 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * R8A66597 HCD (Host Controller Driver)
  *
  * Copyright (C) 2006-2007 Renesas Solutions Corp.
- * Portions Copyright (C) 2004 Psion Teklogix (for NetBook PRO)
+ * Portions Copyright (C) 2004 Psion Teklogix (क्रम NetBook PRO)
  * Portions Copyright (C) 2004-2005 David Brownell
  * Portions Copyright (C) 1999 Roman Weissgaerber
  *
  * Author : Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/errno.h>
-#include <linux/timer.h>
-#include <linux/delay.h>
-#include <linux/list.h>
-#include <linux/interrupt.h>
-#include <linux/usb.h>
-#include <linux/usb/hcd.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/mm.h>
-#include <linux/irq.h>
-#include <linux/slab.h>
-#include <asm/cacheflush.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/cacheflush.h>
 
-#include "r8a66597.h"
+#समावेश "r8a66597.h"
 
 MODULE_DESCRIPTION("R8A66597 USB Host Controller Driver");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Yoshihiro Shimoda");
 MODULE_ALIAS("platform:r8a66597_hcd");
 
-#define DRIVER_VERSION	"2009-05-26"
+#घोषणा DRIVER_VERSION	"2009-05-26"
 
-static const char hcd_name[] = "r8a66597_hcd";
+अटल स्थिर अक्षर hcd_name[] = "r8a66597_hcd";
 
-static void packet_write(struct r8a66597 *r8a66597, u16 pipenum);
-static int r8a66597_get_frame(struct usb_hcd *hcd);
+अटल व्योम packet_ग_लिखो(काष्ठा r8a66597 *r8a66597, u16 pipक्रमागत);
+अटल पूर्णांक r8a66597_get_frame(काष्ठा usb_hcd *hcd);
 
-/* this function must be called with interrupt disabled */
-static void enable_pipe_irq(struct r8a66597 *r8a66597, u16 pipenum,
-			    unsigned long reg)
-{
-	u16 tmp;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम enable_pipe_irq(काष्ठा r8a66597 *r8a66597, u16 pipक्रमागत,
+			    अचिन्हित दीर्घ reg)
+अणु
+	u16 पंचांगp;
 
-	tmp = r8a66597_read(r8a66597, INTENB0);
+	पंचांगp = r8a66597_पढ़ो(r8a66597, INTENB0);
 	r8a66597_bclr(r8a66597, BEMPE | NRDYE | BRDYE, INTENB0);
-	r8a66597_bset(r8a66597, 1 << pipenum, reg);
-	r8a66597_write(r8a66597, tmp, INTENB0);
-}
+	r8a66597_bset(r8a66597, 1 << pipक्रमागत, reg);
+	r8a66597_ग_लिखो(r8a66597, पंचांगp, INTENB0);
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void disable_pipe_irq(struct r8a66597 *r8a66597, u16 pipenum,
-			     unsigned long reg)
-{
-	u16 tmp;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम disable_pipe_irq(काष्ठा r8a66597 *r8a66597, u16 pipक्रमागत,
+			     अचिन्हित दीर्घ reg)
+अणु
+	u16 पंचांगp;
 
-	tmp = r8a66597_read(r8a66597, INTENB0);
+	पंचांगp = r8a66597_पढ़ो(r8a66597, INTENB0);
 	r8a66597_bclr(r8a66597, BEMPE | NRDYE | BRDYE, INTENB0);
-	r8a66597_bclr(r8a66597, 1 << pipenum, reg);
-	r8a66597_write(r8a66597, tmp, INTENB0);
-}
+	r8a66597_bclr(r8a66597, 1 << pipक्रमागत, reg);
+	r8a66597_ग_लिखो(r8a66597, पंचांगp, INTENB0);
+पूर्ण
 
-static void set_devadd_reg(struct r8a66597 *r8a66597, u8 r8a66597_address,
-			   u16 usbspd, u8 upphub, u8 hubport, int port)
-{
+अटल व्योम set_devadd_reg(काष्ठा r8a66597 *r8a66597, u8 r8a66597_address,
+			   u16 usbspd, u8 upphub, u8 hubport, पूर्णांक port)
+अणु
 	u16 val;
-	unsigned long devadd_reg = get_devadd_addr(r8a66597_address);
+	अचिन्हित दीर्घ devadd_reg = get_devadd_addr(r8a66597_address);
 
 	val = (upphub << 11) | (hubport << 8) | (usbspd << 6) | (port & 0x0001);
-	r8a66597_write(r8a66597, val, devadd_reg);
-}
+	r8a66597_ग_लिखो(r8a66597, val, devadd_reg);
+पूर्ण
 
-static int r8a66597_clock_enable(struct r8a66597 *r8a66597)
-{
-	u16 tmp;
-	int i = 0;
+अटल पूर्णांक r8a66597_घड़ी_enable(काष्ठा r8a66597 *r8a66597)
+अणु
+	u16 पंचांगp;
+	पूर्णांक i = 0;
 
-	if (r8a66597->pdata->on_chip) {
+	अगर (r8a66597->pdata->on_chip) अणु
 		clk_prepare_enable(r8a66597->clk);
-		do {
-			r8a66597_write(r8a66597, SCKE, SYSCFG0);
-			tmp = r8a66597_read(r8a66597, SYSCFG0);
-			if (i++ > 1000) {
-				printk(KERN_ERR "r8a66597: reg access fail.\n");
-				return -ENXIO;
-			}
-		} while ((tmp & SCKE) != SCKE);
-		r8a66597_write(r8a66597, 0x04, 0x02);
-	} else {
-		do {
-			r8a66597_write(r8a66597, USBE, SYSCFG0);
-			tmp = r8a66597_read(r8a66597, SYSCFG0);
-			if (i++ > 1000) {
-				printk(KERN_ERR "r8a66597: reg access fail.\n");
-				return -ENXIO;
-			}
-		} while ((tmp & USBE) != USBE);
+		करो अणु
+			r8a66597_ग_लिखो(r8a66597, SCKE, SYSCFG0);
+			पंचांगp = r8a66597_पढ़ो(r8a66597, SYSCFG0);
+			अगर (i++ > 1000) अणु
+				prपूर्णांकk(KERN_ERR "r8a66597: reg access fail.\n");
+				वापस -ENXIO;
+			पूर्ण
+		पूर्ण जबतक ((पंचांगp & SCKE) != SCKE);
+		r8a66597_ग_लिखो(r8a66597, 0x04, 0x02);
+	पूर्ण अन्यथा अणु
+		करो अणु
+			r8a66597_ग_लिखो(r8a66597, USBE, SYSCFG0);
+			पंचांगp = r8a66597_पढ़ो(r8a66597, SYSCFG0);
+			अगर (i++ > 1000) अणु
+				prपूर्णांकk(KERN_ERR "r8a66597: reg access fail.\n");
+				वापस -ENXIO;
+			पूर्ण
+		पूर्ण जबतक ((पंचांगp & USBE) != USBE);
 		r8a66597_bclr(r8a66597, USBE, SYSCFG0);
 		r8a66597_mdfy(r8a66597, get_xtal_from_pdata(r8a66597->pdata),
 			      XTAL, SYSCFG0);
 
 		i = 0;
 		r8a66597_bset(r8a66597, XCKE, SYSCFG0);
-		do {
+		करो अणु
 			msleep(1);
-			tmp = r8a66597_read(r8a66597, SYSCFG0);
-			if (i++ > 500) {
-				printk(KERN_ERR "r8a66597: reg access fail.\n");
-				return -ENXIO;
-			}
-		} while ((tmp & SCKE) != SCKE);
-	}
+			पंचांगp = r8a66597_पढ़ो(r8a66597, SYSCFG0);
+			अगर (i++ > 500) अणु
+				prपूर्णांकk(KERN_ERR "r8a66597: reg access fail.\n");
+				वापस -ENXIO;
+			पूर्ण
+		पूर्ण जबतक ((पंचांगp & SCKE) != SCKE);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void r8a66597_clock_disable(struct r8a66597 *r8a66597)
-{
+अटल व्योम r8a66597_घड़ी_disable(काष्ठा r8a66597 *r8a66597)
+अणु
 	r8a66597_bclr(r8a66597, SCKE, SYSCFG0);
 	udelay(1);
 
-	if (r8a66597->pdata->on_chip) {
+	अगर (r8a66597->pdata->on_chip) अणु
 		clk_disable_unprepare(r8a66597->clk);
-	} else {
+	पूर्ण अन्यथा अणु
 		r8a66597_bclr(r8a66597, PLLC, SYSCFG0);
 		r8a66597_bclr(r8a66597, XCKE, SYSCFG0);
 		r8a66597_bclr(r8a66597, USBE, SYSCFG0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void r8a66597_enable_port(struct r8a66597 *r8a66597, int port)
-{
+अटल व्योम r8a66597_enable_port(काष्ठा r8a66597 *r8a66597, पूर्णांक port)
+अणु
 	u16 val;
 
 	val = port ? DRPD : DCFM | DRPD;
 	r8a66597_bset(r8a66597, val, get_syscfg_reg(port));
 	r8a66597_bset(r8a66597, HSE, get_syscfg_reg(port));
 
-	r8a66597_write(r8a66597, BURST | CPU_ADR_RD_WR, get_dmacfg_reg(port));
-	r8a66597_bclr(r8a66597, DTCHE, get_intenb_reg(port));
-	r8a66597_bset(r8a66597, ATTCHE, get_intenb_reg(port));
-}
+	r8a66597_ग_लिखो(r8a66597, BURST | CPU_ADR_RD_WR, get_dmacfg_reg(port));
+	r8a66597_bclr(r8a66597, DTCHE, get_पूर्णांकenb_reg(port));
+	r8a66597_bset(r8a66597, ATTCHE, get_पूर्णांकenb_reg(port));
+पूर्ण
 
-static void r8a66597_disable_port(struct r8a66597 *r8a66597, int port)
-{
-	u16 val, tmp;
+अटल व्योम r8a66597_disable_port(काष्ठा r8a66597 *r8a66597, पूर्णांक port)
+अणु
+	u16 val, पंचांगp;
 
-	r8a66597_write(r8a66597, 0, get_intenb_reg(port));
-	r8a66597_write(r8a66597, 0, get_intsts_reg(port));
+	r8a66597_ग_लिखो(r8a66597, 0, get_पूर्णांकenb_reg(port));
+	r8a66597_ग_लिखो(r8a66597, 0, get_पूर्णांकsts_reg(port));
 
-	r8a66597_port_power(r8a66597, port, 0);
+	r8a66597_port_घातer(r8a66597, port, 0);
 
-	do {
-		tmp = r8a66597_read(r8a66597, SOFCFG) & EDGESTS;
+	करो अणु
+		पंचांगp = r8a66597_पढ़ो(r8a66597, SOFCFG) & EDGESTS;
 		udelay(640);
-	} while (tmp == EDGESTS);
+	पूर्ण जबतक (पंचांगp == EDGESTS);
 
 	val = port ? DRPD : DCFM | DRPD;
 	r8a66597_bclr(r8a66597, val, get_syscfg_reg(port));
 	r8a66597_bclr(r8a66597, HSE, get_syscfg_reg(port));
-}
+पूर्ण
 
-static int enable_controller(struct r8a66597 *r8a66597)
-{
-	int ret, port;
-	u16 vif = r8a66597->pdata->vif ? LDRV : 0;
+अटल पूर्णांक enable_controller(काष्ठा r8a66597 *r8a66597)
+अणु
+	पूर्णांक ret, port;
+	u16 vअगर = r8a66597->pdata->vअगर ? LDRV : 0;
 	u16 irq_sense = r8a66597->irq_sense_low ? INTL : 0;
 	u16 endian = r8a66597->pdata->endian ? BIGEND : 0;
 
-	ret = r8a66597_clock_enable(r8a66597);
-	if (ret < 0)
-		return ret;
+	ret = r8a66597_घड़ी_enable(r8a66597);
+	अगर (ret < 0)
+		वापस ret;
 
-	r8a66597_bset(r8a66597, vif & LDRV, PINCFG);
+	r8a66597_bset(r8a66597, vअगर & LDRV, PINCFG);
 	r8a66597_bset(r8a66597, USBE, SYSCFG0);
 
 	r8a66597_bset(r8a66597, BEMPE | NRDYE | BRDYE, INTENB0);
@@ -191,155 +192,155 @@ static int enable_controller(struct r8a66597 *r8a66597)
 
 	r8a66597_bset(r8a66597, SIGNE | SACKE, INTENB1);
 
-	for (port = 0; port < r8a66597->max_root_hub; port++)
+	क्रम (port = 0; port < r8a66597->max_root_hub; port++)
 		r8a66597_enable_port(r8a66597, port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void disable_controller(struct r8a66597 *r8a66597)
-{
-	int port;
+अटल व्योम disable_controller(काष्ठा r8a66597 *r8a66597)
+अणु
+	पूर्णांक port;
 
-	/* disable interrupts */
-	r8a66597_write(r8a66597, 0, INTENB0);
-	r8a66597_write(r8a66597, 0, INTENB1);
-	r8a66597_write(r8a66597, 0, BRDYENB);
-	r8a66597_write(r8a66597, 0, BEMPENB);
-	r8a66597_write(r8a66597, 0, NRDYENB);
+	/* disable पूर्णांकerrupts */
+	r8a66597_ग_लिखो(r8a66597, 0, INTENB0);
+	r8a66597_ग_लिखो(r8a66597, 0, INTENB1);
+	r8a66597_ग_लिखो(r8a66597, 0, BRDYENB);
+	r8a66597_ग_लिखो(r8a66597, 0, BEMPENB);
+	r8a66597_ग_लिखो(r8a66597, 0, NRDYENB);
 
 	/* clear status */
-	r8a66597_write(r8a66597, 0, BRDYSTS);
-	r8a66597_write(r8a66597, 0, NRDYSTS);
-	r8a66597_write(r8a66597, 0, BEMPSTS);
+	r8a66597_ग_लिखो(r8a66597, 0, BRDYSTS);
+	r8a66597_ग_लिखो(r8a66597, 0, NRDYSTS);
+	r8a66597_ग_लिखो(r8a66597, 0, BEMPSTS);
 
-	for (port = 0; port < r8a66597->max_root_hub; port++)
+	क्रम (port = 0; port < r8a66597->max_root_hub; port++)
 		r8a66597_disable_port(r8a66597, port);
 
-	r8a66597_clock_disable(r8a66597);
-}
+	r8a66597_घड़ी_disable(r8a66597);
+पूर्ण
 
-static int get_parent_r8a66597_address(struct r8a66597 *r8a66597,
-				       struct usb_device *udev)
-{
-	struct r8a66597_device *dev;
+अटल पूर्णांक get_parent_r8a66597_address(काष्ठा r8a66597 *r8a66597,
+				       काष्ठा usb_device *udev)
+अणु
+	काष्ठा r8a66597_device *dev;
 
-	if (udev->parent && udev->parent->devnum != 1)
+	अगर (udev->parent && udev->parent->devnum != 1)
 		udev = udev->parent;
 
 	dev = dev_get_drvdata(&udev->dev);
-	if (dev)
-		return dev->address;
-	else
-		return 0;
-}
+	अगर (dev)
+		वापस dev->address;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int is_child_device(char *devpath)
-{
-	return (devpath[2] ? 1 : 0);
-}
+अटल पूर्णांक is_child_device(अक्षर *devpath)
+अणु
+	वापस (devpath[2] ? 1 : 0);
+पूर्ण
 
-static int is_hub_limit(char *devpath)
-{
-	return ((strlen(devpath) >= 4) ? 1 : 0);
-}
+अटल पूर्णांक is_hub_limit(अक्षर *devpath)
+अणु
+	वापस ((म_माप(devpath) >= 4) ? 1 : 0);
+पूर्ण
 
-static void get_port_number(struct r8a66597 *r8a66597,
-			    char *devpath, u16 *root_port, u16 *hub_port)
-{
-	if (root_port) {
+अटल व्योम get_port_number(काष्ठा r8a66597 *r8a66597,
+			    अक्षर *devpath, u16 *root_port, u16 *hub_port)
+अणु
+	अगर (root_port) अणु
 		*root_port = (devpath[0] & 0x0F) - 1;
-		if (*root_port >= r8a66597->max_root_hub)
-			printk(KERN_ERR "r8a66597: Illegal root port number.\n");
-	}
-	if (hub_port)
+		अगर (*root_port >= r8a66597->max_root_hub)
+			prपूर्णांकk(KERN_ERR "r8a66597: Illegal root port number.\n");
+	पूर्ण
+	अगर (hub_port)
 		*hub_port = devpath[2] & 0x0F;
-}
+पूर्ण
 
-static u16 get_r8a66597_usb_speed(enum usb_device_speed speed)
-{
+अटल u16 get_r8a66597_usb_speed(क्रमागत usb_device_speed speed)
+अणु
 	u16 usbspd = 0;
 
-	switch (speed) {
-	case USB_SPEED_LOW:
+	चयन (speed) अणु
+	हाल USB_SPEED_LOW:
 		usbspd = LSMODE;
-		break;
-	case USB_SPEED_FULL:
+		अवरोध;
+	हाल USB_SPEED_FULL:
 		usbspd = FSMODE;
-		break;
-	case USB_SPEED_HIGH:
+		अवरोध;
+	हाल USB_SPEED_HIGH:
 		usbspd = HSMODE;
-		break;
-	default:
-		printk(KERN_ERR "r8a66597: unknown speed\n");
-		break;
-	}
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "r8a66597: unknown speed\n");
+		अवरोध;
+	पूर्ण
 
-	return usbspd;
-}
+	वापस usbspd;
+पूर्ण
 
-static void set_child_connect_map(struct r8a66597 *r8a66597, int address)
-{
-	int idx;
+अटल व्योम set_child_connect_map(काष्ठा r8a66597 *r8a66597, पूर्णांक address)
+अणु
+	पूर्णांक idx;
 
 	idx = address / 32;
 	r8a66597->child_connect_map[idx] |= 1 << (address % 32);
-}
+पूर्ण
 
-static void put_child_connect_map(struct r8a66597 *r8a66597, int address)
-{
-	int idx;
+अटल व्योम put_child_connect_map(काष्ठा r8a66597 *r8a66597, पूर्णांक address)
+अणु
+	पूर्णांक idx;
 
 	idx = address / 32;
 	r8a66597->child_connect_map[idx] &= ~(1 << (address % 32));
-}
+पूर्ण
 
-static void set_pipe_reg_addr(struct r8a66597_pipe *pipe, u8 dma_ch)
-{
-	u16 pipenum = pipe->info.pipenum;
-	const unsigned long fifoaddr[] = {D0FIFO, D1FIFO, CFIFO};
-	const unsigned long fifosel[] = {D0FIFOSEL, D1FIFOSEL, CFIFOSEL};
-	const unsigned long fifoctr[] = {D0FIFOCTR, D1FIFOCTR, CFIFOCTR};
+अटल व्योम set_pipe_reg_addr(काष्ठा r8a66597_pipe *pipe, u8 dma_ch)
+अणु
+	u16 pipक्रमागत = pipe->info.pipक्रमागत;
+	स्थिर अचिन्हित दीर्घ fअगरoaddr[] = अणुD0FIFO, D1FIFO, CFIFOपूर्ण;
+	स्थिर अचिन्हित दीर्घ fअगरosel[] = अणुD0FIFOSEL, D1FIFOSEL, CFIFOSELपूर्ण;
+	स्थिर अचिन्हित दीर्घ fअगरoctr[] = अणुD0FIFOCTR, D1FIFOCTR, CFIFOCTRपूर्ण;
 
-	if (dma_ch > R8A66597_PIPE_NO_DMA)	/* dma fifo not use? */
+	अगर (dma_ch > R8A66597_PIPE_NO_DMA)	/* dma fअगरo not use? */
 		dma_ch = R8A66597_PIPE_NO_DMA;
 
-	pipe->fifoaddr = fifoaddr[dma_ch];
-	pipe->fifosel = fifosel[dma_ch];
-	pipe->fifoctr = fifoctr[dma_ch];
+	pipe->fअगरoaddr = fअगरoaddr[dma_ch];
+	pipe->fअगरosel = fअगरosel[dma_ch];
+	pipe->fअगरoctr = fअगरoctr[dma_ch];
 
-	if (pipenum == 0)
+	अगर (pipक्रमागत == 0)
 		pipe->pipectr = DCPCTR;
-	else
-		pipe->pipectr = get_pipectr_addr(pipenum);
+	अन्यथा
+		pipe->pipectr = get_pipectr_addr(pipक्रमागत);
 
-	if (check_bulk_or_isoc(pipenum)) {
-		pipe->pipetre = get_pipetre_addr(pipenum);
-		pipe->pipetrn = get_pipetrn_addr(pipenum);
-	} else {
+	अगर (check_bulk_or_isoc(pipक्रमागत)) अणु
+		pipe->pipetre = get_pipetre_addr(pipक्रमागत);
+		pipe->pipetrn = get_pipetrn_addr(pipक्रमागत);
+	पूर्ण अन्यथा अणु
 		pipe->pipetre = 0;
 		pipe->pipetrn = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct r8a66597_device *
-get_urb_to_r8a66597_dev(struct r8a66597 *r8a66597, struct urb *urb)
-{
-	if (usb_pipedevice(urb->pipe) == 0)
-		return &r8a66597->device0;
+अटल काष्ठा r8a66597_device *
+get_urb_to_r8a66597_dev(काष्ठा r8a66597 *r8a66597, काष्ठा urb *urb)
+अणु
+	अगर (usb_pipedevice(urb->pipe) == 0)
+		वापस &r8a66597->device0;
 
-	return dev_get_drvdata(&urb->dev->dev);
-}
+	वापस dev_get_drvdata(&urb->dev->dev);
+पूर्ण
 
-static int make_r8a66597_device(struct r8a66597 *r8a66597,
-				struct urb *urb, u8 addr)
-{
-	struct r8a66597_device *dev;
-	int usb_address = urb->setup_packet[2];	/* urb->pipe is address 0 */
+अटल पूर्णांक make_r8a66597_device(काष्ठा r8a66597 *r8a66597,
+				काष्ठा urb *urb, u8 addr)
+अणु
+	काष्ठा r8a66597_device *dev;
+	पूर्णांक usb_address = urb->setup_packet[2];	/* urb->pipe is address 0 */
 
-	dev = kzalloc(sizeof(struct r8a66597_device), GFP_ATOMIC);
-	if (dev == NULL)
-		return -ENOMEM;
+	dev = kzalloc(माप(काष्ठा r8a66597_device), GFP_ATOMIC);
+	अगर (dev == शून्य)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(&urb->dev->dev, dev);
 	dev->udev = urb->dev;
@@ -353,7 +354,7 @@ static int make_r8a66597_device(struct r8a66597 *r8a66597,
 
 	get_port_number(r8a66597, urb->dev->devpath,
 			&dev->root_port, &dev->hub_port);
-	if (!is_child_device(urb->dev->devpath))
+	अगर (!is_child_device(urb->dev->devpath))
 		r8a66597->root_hub[dev->root_port].dev = dev;
 
 	set_devadd_reg(r8a66597, dev->address,
@@ -361,52 +362,52 @@ static int make_r8a66597_device(struct r8a66597 *r8a66597,
 		       get_parent_r8a66597_address(r8a66597, urb->dev),
 		       dev->hub_port, dev->root_port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static u8 alloc_usb_address(struct r8a66597 *r8a66597, struct urb *urb)
-{
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल u8 alloc_usb_address(काष्ठा r8a66597 *r8a66597, काष्ठा urb *urb)
+अणु
 	u8 addr;	/* R8A66597's address */
-	struct r8a66597_device *dev;
+	काष्ठा r8a66597_device *dev;
 
-	if (is_hub_limit(urb->dev->devpath)) {
+	अगर (is_hub_limit(urb->dev->devpath)) अणु
 		dev_err(&urb->dev->dev, "External hub limit reached.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev = get_urb_to_r8a66597_dev(r8a66597, urb);
-	if (dev && dev->state >= USB_STATE_ADDRESS)
-		return dev->address;
+	अगर (dev && dev->state >= USB_STATE_ADDRESS)
+		वापस dev->address;
 
-	for (addr = 1; addr <= R8A66597_MAX_DEVICE; addr++) {
-		if (r8a66597->address_map & (1 << addr))
-			continue;
+	क्रम (addr = 1; addr <= R8A66597_MAX_DEVICE; addr++) अणु
+		अगर (r8a66597->address_map & (1 << addr))
+			जारी;
 
 		dev_dbg(&urb->dev->dev, "alloc_address: r8a66597_addr=%d\n", addr);
 		r8a66597->address_map |= 1 << addr;
 
-		if (make_r8a66597_device(r8a66597, urb, addr) < 0)
-			return 0;
+		अगर (make_r8a66597_device(r8a66597, urb, addr) < 0)
+			वापस 0;
 
-		return addr;
-	}
+		वापस addr;
+	पूर्ण
 
 	dev_err(&urb->dev->dev,
 		"cannot communicate with a USB device more than 10.(%x)\n",
 		r8a66597->address_map);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void free_usb_address(struct r8a66597 *r8a66597,
-			     struct r8a66597_device *dev, int reset)
-{
-	int port;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम मुक्त_usb_address(काष्ठा r8a66597 *r8a66597,
+			     काष्ठा r8a66597_device *dev, पूर्णांक reset)
+अणु
+	पूर्णांक port;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
 	dev_dbg(&dev->udev->dev, "free_addr: addr=%d\n", dev->address);
 
@@ -415,1696 +416,1696 @@ static void free_usb_address(struct r8a66597 *r8a66597,
 	dev->address = 0;
 	/*
 	 * Only when resetting USB, it is necessary to erase drvdata. When
-	 * a usb device with usb hub is disconnect, "dev->udev" is already
-	 * freed on usb_desconnect(). So we cannot access the data.
+	 * a usb device with usb hub is disconnect, "dev->udev" is alपढ़ोy
+	 * मुक्तd on usb_desconnect(). So we cannot access the data.
 	 */
-	if (reset)
-		dev_set_drvdata(&dev->udev->dev, NULL);
+	अगर (reset)
+		dev_set_drvdata(&dev->udev->dev, शून्य);
 	list_del(&dev->device_list);
-	kfree(dev);
+	kमुक्त(dev);
 
-	for (port = 0; port < r8a66597->max_root_hub; port++) {
-		if (r8a66597->root_hub[port].dev == dev) {
-			r8a66597->root_hub[port].dev = NULL;
-			break;
-		}
-	}
-}
+	क्रम (port = 0; port < r8a66597->max_root_hub; port++) अणु
+		अगर (r8a66597->root_hub[port].dev == dev) अणु
+			r8a66597->root_hub[port].dev = शून्य;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void r8a66597_reg_wait(struct r8a66597 *r8a66597, unsigned long reg,
+अटल व्योम r8a66597_reg_रुको(काष्ठा r8a66597 *r8a66597, अचिन्हित दीर्घ reg,
 			      u16 mask, u16 loop)
-{
-	u16 tmp;
-	int i = 0;
+अणु
+	u16 पंचांगp;
+	पूर्णांक i = 0;
 
-	do {
-		tmp = r8a66597_read(r8a66597, reg);
-		if (i++ > 1000000) {
-			printk(KERN_ERR "r8a66597: register%lx, loop %x "
+	करो अणु
+		पंचांगp = r8a66597_पढ़ो(r8a66597, reg);
+		अगर (i++ > 1000000) अणु
+			prपूर्णांकk(KERN_ERR "r8a66597: register%lx, loop %x "
 			       "is timeout\n", reg, loop);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ndelay(1);
-	} while ((tmp & mask) != loop);
-}
+	पूर्ण जबतक ((पंचांगp & mask) != loop);
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void pipe_start(struct r8a66597 *r8a66597, struct r8a66597_pipe *pipe)
-{
-	u16 tmp;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम pipe_start(काष्ठा r8a66597 *r8a66597, काष्ठा r8a66597_pipe *pipe)
+अणु
+	u16 पंचांगp;
 
-	tmp = r8a66597_read(r8a66597, pipe->pipectr) & PID;
-	if ((pipe->info.pipenum != 0) & ((tmp & PID_STALL) != 0)) /* stall? */
+	पंचांगp = r8a66597_पढ़ो(r8a66597, pipe->pipectr) & PID;
+	अगर ((pipe->info.pipक्रमागत != 0) & ((पंचांगp & PID_STALL) != 0)) /* stall? */
 		r8a66597_mdfy(r8a66597, PID_NAK, PID, pipe->pipectr);
 	r8a66597_mdfy(r8a66597, PID_BUF, PID, pipe->pipectr);
-}
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void pipe_stop(struct r8a66597 *r8a66597, struct r8a66597_pipe *pipe)
-{
-	u16 tmp;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम pipe_stop(काष्ठा r8a66597 *r8a66597, काष्ठा r8a66597_pipe *pipe)
+अणु
+	u16 पंचांगp;
 
-	tmp = r8a66597_read(r8a66597, pipe->pipectr) & PID;
-	if ((tmp & PID_STALL11) != PID_STALL11)	/* force stall? */
+	पंचांगp = r8a66597_पढ़ो(r8a66597, pipe->pipectr) & PID;
+	अगर ((पंचांगp & PID_STALL11) != PID_STALL11)	/* क्रमce stall? */
 		r8a66597_mdfy(r8a66597, PID_STALL, PID, pipe->pipectr);
 	r8a66597_mdfy(r8a66597, PID_NAK, PID, pipe->pipectr);
-	r8a66597_reg_wait(r8a66597, pipe->pipectr, PBUSY, 0);
-}
+	r8a66597_reg_रुको(r8a66597, pipe->pipectr, PBUSY, 0);
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void clear_all_buffer(struct r8a66597 *r8a66597,
-			     struct r8a66597_pipe *pipe)
-{
-	if (!pipe || pipe->info.pipenum == 0)
-		return;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम clear_all_buffer(काष्ठा r8a66597 *r8a66597,
+			     काष्ठा r8a66597_pipe *pipe)
+अणु
+	अगर (!pipe || pipe->info.pipक्रमागत == 0)
+		वापस;
 
 	pipe_stop(r8a66597, pipe);
 	r8a66597_bset(r8a66597, ACLRM, pipe->pipectr);
-	r8a66597_read(r8a66597, pipe->pipectr);
-	r8a66597_read(r8a66597, pipe->pipectr);
-	r8a66597_read(r8a66597, pipe->pipectr);
+	r8a66597_पढ़ो(r8a66597, pipe->pipectr);
+	r8a66597_पढ़ो(r8a66597, pipe->pipectr);
+	r8a66597_पढ़ो(r8a66597, pipe->pipectr);
 	r8a66597_bclr(r8a66597, ACLRM, pipe->pipectr);
-}
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void r8a66597_pipe_toggle(struct r8a66597 *r8a66597,
-				 struct r8a66597_pipe *pipe, int toggle)
-{
-	if (toggle)
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम r8a66597_pipe_toggle(काष्ठा r8a66597 *r8a66597,
+				 काष्ठा r8a66597_pipe *pipe, पूर्णांक toggle)
+अणु
+	अगर (toggle)
 		r8a66597_bset(r8a66597, SQSET, pipe->pipectr);
-	else
+	अन्यथा
 		r8a66597_bset(r8a66597, SQCLR, pipe->pipectr);
-}
+पूर्ण
 
-static inline unsigned short mbw_value(struct r8a66597 *r8a66597)
-{
-	if (r8a66597->pdata->on_chip)
-		return MBW_32;
-	else
-		return MBW_16;
-}
+अटल अंतरभूत अचिन्हित लघु mbw_value(काष्ठा r8a66597 *r8a66597)
+अणु
+	अगर (r8a66597->pdata->on_chip)
+		वापस MBW_32;
+	अन्यथा
+		वापस MBW_16;
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static inline void cfifo_change(struct r8a66597 *r8a66597, u16 pipenum)
-{
-	unsigned short mbw = mbw_value(r8a66597);
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल अंतरभूत व्योम cfअगरo_change(काष्ठा r8a66597 *r8a66597, u16 pipक्रमागत)
+अणु
+	अचिन्हित लघु mbw = mbw_value(r8a66597);
 
-	r8a66597_mdfy(r8a66597, mbw | pipenum, mbw | CURPIPE, CFIFOSEL);
-	r8a66597_reg_wait(r8a66597, CFIFOSEL, CURPIPE, pipenum);
-}
+	r8a66597_mdfy(r8a66597, mbw | pipक्रमागत, mbw | CURPIPE, CFIFOSEL);
+	r8a66597_reg_रुको(r8a66597, CFIFOSEL, CURPIPE, pipक्रमागत);
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static inline void fifo_change_from_pipe(struct r8a66597 *r8a66597,
-					 struct r8a66597_pipe *pipe)
-{
-	unsigned short mbw = mbw_value(r8a66597);
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल अंतरभूत व्योम fअगरo_change_from_pipe(काष्ठा r8a66597 *r8a66597,
+					 काष्ठा r8a66597_pipe *pipe)
+अणु
+	अचिन्हित लघु mbw = mbw_value(r8a66597);
 
-	cfifo_change(r8a66597, 0);
+	cfअगरo_change(r8a66597, 0);
 	r8a66597_mdfy(r8a66597, mbw | 0, mbw | CURPIPE, D0FIFOSEL);
 	r8a66597_mdfy(r8a66597, mbw | 0, mbw | CURPIPE, D1FIFOSEL);
 
-	r8a66597_mdfy(r8a66597, mbw | pipe->info.pipenum, mbw | CURPIPE,
-		      pipe->fifosel);
-	r8a66597_reg_wait(r8a66597, pipe->fifosel, CURPIPE, pipe->info.pipenum);
-}
+	r8a66597_mdfy(r8a66597, mbw | pipe->info.pipक्रमागत, mbw | CURPIPE,
+		      pipe->fअगरosel);
+	r8a66597_reg_रुको(r8a66597, pipe->fअगरosel, CURPIPE, pipe->info.pipक्रमागत);
+पूर्ण
 
-static u16 r8a66597_get_pipenum(struct urb *urb, struct usb_host_endpoint *hep)
-{
-	struct r8a66597_pipe *pipe = hep->hcpriv;
+अटल u16 r8a66597_get_pipक्रमागत(काष्ठा urb *urb, काष्ठा usb_host_endpoपूर्णांक *hep)
+अणु
+	काष्ठा r8a66597_pipe *pipe = hep->hcpriv;
 
-	if (usb_pipeendpoint(urb->pipe) == 0)
-		return 0;
-	else
-		return pipe->info.pipenum;
-}
+	अगर (usb_pipeendpoपूर्णांक(urb->pipe) == 0)
+		वापस 0;
+	अन्यथा
+		वापस pipe->info.pipक्रमागत;
+पूर्ण
 
-static u16 get_urb_to_r8a66597_addr(struct r8a66597 *r8a66597, struct urb *urb)
-{
-	struct r8a66597_device *dev = get_urb_to_r8a66597_dev(r8a66597, urb);
+अटल u16 get_urb_to_r8a66597_addr(काष्ठा r8a66597 *r8a66597, काष्ठा urb *urb)
+अणु
+	काष्ठा r8a66597_device *dev = get_urb_to_r8a66597_dev(r8a66597, urb);
 
-	return (usb_pipedevice(urb->pipe) == 0) ? 0 : dev->address;
-}
+	वापस (usb_pipedevice(urb->pipe) == 0) ? 0 : dev->address;
+पूर्ण
 
-static unsigned short *get_toggle_pointer(struct r8a66597_device *dev,
-					  int urb_pipe)
-{
-	if (!dev)
-		return NULL;
+अटल अचिन्हित लघु *get_toggle_poपूर्णांकer(काष्ठा r8a66597_device *dev,
+					  पूर्णांक urb_pipe)
+अणु
+	अगर (!dev)
+		वापस शून्य;
 
-	return usb_pipein(urb_pipe) ? &dev->ep_in_toggle : &dev->ep_out_toggle;
-}
+	वापस usb_pipein(urb_pipe) ? &dev->ep_in_toggle : &dev->ep_out_toggle;
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void pipe_toggle_set(struct r8a66597 *r8a66597,
-			    struct r8a66597_pipe *pipe,
-			    struct urb *urb, int set)
-{
-	struct r8a66597_device *dev = get_urb_to_r8a66597_dev(r8a66597, urb);
-	unsigned char endpoint = usb_pipeendpoint(urb->pipe);
-	unsigned short *toggle = get_toggle_pointer(dev, urb->pipe);
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम pipe_toggle_set(काष्ठा r8a66597 *r8a66597,
+			    काष्ठा r8a66597_pipe *pipe,
+			    काष्ठा urb *urb, पूर्णांक set)
+अणु
+	काष्ठा r8a66597_device *dev = get_urb_to_r8a66597_dev(r8a66597, urb);
+	अचिन्हित अक्षर endpoपूर्णांक = usb_pipeendpoपूर्णांक(urb->pipe);
+	अचिन्हित लघु *toggle = get_toggle_poपूर्णांकer(dev, urb->pipe);
 
-	if (!toggle)
-		return;
+	अगर (!toggle)
+		वापस;
 
-	if (set)
-		*toggle |= 1 << endpoint;
-	else
-		*toggle &= ~(1 << endpoint);
-}
+	अगर (set)
+		*toggle |= 1 << endpoपूर्णांक;
+	अन्यथा
+		*toggle &= ~(1 << endpoपूर्णांक);
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void pipe_toggle_save(struct r8a66597 *r8a66597,
-			     struct r8a66597_pipe *pipe,
-			     struct urb *urb)
-{
-	if (r8a66597_read(r8a66597, pipe->pipectr) & SQMON)
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम pipe_toggle_save(काष्ठा r8a66597 *r8a66597,
+			     काष्ठा r8a66597_pipe *pipe,
+			     काष्ठा urb *urb)
+अणु
+	अगर (r8a66597_पढ़ो(r8a66597, pipe->pipectr) & SQMON)
 		pipe_toggle_set(r8a66597, pipe, urb, 1);
-	else
+	अन्यथा
 		pipe_toggle_set(r8a66597, pipe, urb, 0);
-}
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void pipe_toggle_restore(struct r8a66597 *r8a66597,
-				struct r8a66597_pipe *pipe,
-				struct urb *urb)
-{
-	struct r8a66597_device *dev = get_urb_to_r8a66597_dev(r8a66597, urb);
-	unsigned char endpoint = usb_pipeendpoint(urb->pipe);
-	unsigned short *toggle = get_toggle_pointer(dev, urb->pipe);
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम pipe_toggle_restore(काष्ठा r8a66597 *r8a66597,
+				काष्ठा r8a66597_pipe *pipe,
+				काष्ठा urb *urb)
+अणु
+	काष्ठा r8a66597_device *dev = get_urb_to_r8a66597_dev(r8a66597, urb);
+	अचिन्हित अक्षर endpoपूर्णांक = usb_pipeendpoपूर्णांक(urb->pipe);
+	अचिन्हित लघु *toggle = get_toggle_poपूर्णांकer(dev, urb->pipe);
 
-	if (!toggle)
-		return;
+	अगर (!toggle)
+		वापस;
 
-	r8a66597_pipe_toggle(r8a66597, pipe, *toggle & (1 << endpoint));
-}
+	r8a66597_pipe_toggle(r8a66597, pipe, *toggle & (1 << endpoपूर्णांक));
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void pipe_buffer_setting(struct r8a66597 *r8a66597,
-				struct r8a66597_pipe_info *info)
-{
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम pipe_buffer_setting(काष्ठा r8a66597 *r8a66597,
+				काष्ठा r8a66597_pipe_info *info)
+अणु
 	u16 val = 0;
 
-	if (info->pipenum == 0)
-		return;
+	अगर (info->pipक्रमागत == 0)
+		वापस;
 
-	r8a66597_bset(r8a66597, ACLRM, get_pipectr_addr(info->pipenum));
-	r8a66597_bclr(r8a66597, ACLRM, get_pipectr_addr(info->pipenum));
-	r8a66597_write(r8a66597, info->pipenum, PIPESEL);
-	if (!info->dir_in)
-		val |= R8A66597_DIR;
-	if (info->type == R8A66597_BULK && info->dir_in)
+	r8a66597_bset(r8a66597, ACLRM, get_pipectr_addr(info->pipक्रमागत));
+	r8a66597_bclr(r8a66597, ACLRM, get_pipectr_addr(info->pipक्रमागत));
+	r8a66597_ग_लिखो(r8a66597, info->pipक्रमागत, PIPESEL);
+	अगर (!info->dir_in)
+		val |= R8A66597_सूची;
+	अगर (info->type == R8A66597_BULK && info->dir_in)
 		val |= R8A66597_DBLB | R8A66597_SHTNAK;
 	val |= info->type | info->epnum;
-	r8a66597_write(r8a66597, val, PIPECFG);
+	r8a66597_ग_लिखो(r8a66597, val, PIPECFG);
 
-	r8a66597_write(r8a66597, (info->buf_bsize << 10) | (info->bufnum),
+	r8a66597_ग_लिखो(r8a66597, (info->buf_bsize << 10) | (info->bufnum),
 		       PIPEBUF);
-	r8a66597_write(r8a66597, make_devsel(info->address) | info->maxpacket,
+	r8a66597_ग_लिखो(r8a66597, make_devsel(info->address) | info->maxpacket,
 		       PIPEMAXP);
-	r8a66597_write(r8a66597, info->interval, PIPEPERI);
-}
+	r8a66597_ग_लिखो(r8a66597, info->पूर्णांकerval, PIPEPERI);
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void pipe_setting(struct r8a66597 *r8a66597, struct r8a66597_td *td)
-{
-	struct r8a66597_pipe_info *info;
-	struct urb *urb = td->urb;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम pipe_setting(काष्ठा r8a66597 *r8a66597, काष्ठा r8a66597_td *td)
+अणु
+	काष्ठा r8a66597_pipe_info *info;
+	काष्ठा urb *urb = td->urb;
 
-	if (td->pipenum > 0) {
+	अगर (td->pipक्रमागत > 0) अणु
 		info = &td->pipe->info;
-		cfifo_change(r8a66597, 0);
+		cfअगरo_change(r8a66597, 0);
 		pipe_buffer_setting(r8a66597, info);
 
-		if (!usb_gettoggle(urb->dev, usb_pipeendpoint(urb->pipe),
+		अगर (!usb_gettoggle(urb->dev, usb_pipeendpoपूर्णांक(urb->pipe),
 				   usb_pipeout(urb->pipe)) &&
-		    !usb_pipecontrol(urb->pipe)) {
+		    !usb_pipecontrol(urb->pipe)) अणु
 			r8a66597_pipe_toggle(r8a66597, td->pipe, 0);
 			pipe_toggle_set(r8a66597, td->pipe, urb, 0);
 			clear_all_buffer(r8a66597, td->pipe);
-			usb_settoggle(urb->dev, usb_pipeendpoint(urb->pipe),
+			usb_settoggle(urb->dev, usb_pipeendpoपूर्णांक(urb->pipe),
 				      usb_pipeout(urb->pipe), 1);
-		}
+		पूर्ण
 		pipe_toggle_restore(r8a66597, td->pipe, urb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static u16 get_empty_pipenum(struct r8a66597 *r8a66597,
-			     struct usb_endpoint_descriptor *ep)
-{
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल u16 get_empty_pipक्रमागत(काष्ठा r8a66597 *r8a66597,
+			     काष्ठा usb_endpoपूर्णांक_descriptor *ep)
+अणु
 	u16 array[R8A66597_MAX_NUM_PIPE], i = 0, min;
 
-	memset(array, 0, sizeof(array));
-	switch (usb_endpoint_type(ep)) {
-	case USB_ENDPOINT_XFER_BULK:
-		if (usb_endpoint_dir_in(ep))
+	स_रखो(array, 0, माप(array));
+	चयन (usb_endpoपूर्णांक_type(ep)) अणु
+	हाल USB_ENDPOINT_XFER_BULK:
+		अगर (usb_endpoपूर्णांक_dir_in(ep))
 			array[i++] = 4;
-		else {
+		अन्यथा अणु
 			array[i++] = 3;
 			array[i++] = 5;
-		}
-		break;
-	case USB_ENDPOINT_XFER_INT:
-		if (usb_endpoint_dir_in(ep)) {
+		पूर्ण
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
+		अगर (usb_endpoपूर्णांक_dir_in(ep)) अणु
 			array[i++] = 6;
 			array[i++] = 7;
 			array[i++] = 8;
-		} else
+		पूर्ण अन्यथा
 			array[i++] = 9;
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
-		if (usb_endpoint_dir_in(ep))
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
+		अगर (usb_endpoपूर्णांक_dir_in(ep))
 			array[i++] = 2;
-		else
+		अन्यथा
 			array[i++] = 1;
-		break;
-	default:
-		printk(KERN_ERR "r8a66597: Illegal type\n");
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "r8a66597: Illegal type\n");
+		वापस 0;
+	पूर्ण
 
 	i = 1;
 	min = array[0];
-	while (array[i] != 0) {
-		if (r8a66597->pipe_cnt[min] > r8a66597->pipe_cnt[array[i]])
+	जबतक (array[i] != 0) अणु
+		अगर (r8a66597->pipe_cnt[min] > r8a66597->pipe_cnt[array[i]])
 			min = array[i];
 		i++;
-	}
+	पूर्ण
 
-	return min;
-}
+	वापस min;
+पूर्ण
 
-static u16 get_r8a66597_type(__u8 type)
-{
+अटल u16 get_r8a66597_type(__u8 type)
+अणु
 	u16 r8a66597_type;
 
-	switch (type) {
-	case USB_ENDPOINT_XFER_BULK:
+	चयन (type) अणु
+	हाल USB_ENDPOINT_XFER_BULK:
 		r8a66597_type = R8A66597_BULK;
-		break;
-	case USB_ENDPOINT_XFER_INT:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		r8a66597_type = R8A66597_INT;
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
 		r8a66597_type = R8A66597_ISO;
-		break;
-	default:
-		printk(KERN_ERR "r8a66597: Illegal type\n");
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "r8a66597: Illegal type\n");
 		r8a66597_type = 0x0000;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return r8a66597_type;
-}
+	वापस r8a66597_type;
+पूर्ण
 
-static u16 get_bufnum(u16 pipenum)
-{
+अटल u16 get_bufnum(u16 pipक्रमागत)
+अणु
 	u16 bufnum = 0;
 
-	if (pipenum == 0)
+	अगर (pipक्रमागत == 0)
 		bufnum = 0;
-	else if (check_bulk_or_isoc(pipenum))
-		bufnum = 8 + (pipenum - 1) * R8A66597_BUF_BSIZE*2;
-	else if (check_interrupt(pipenum))
-		bufnum = 4 + (pipenum - 6);
-	else
-		printk(KERN_ERR "r8a66597: Illegal pipenum (%d)\n", pipenum);
+	अन्यथा अगर (check_bulk_or_isoc(pipक्रमागत))
+		bufnum = 8 + (pipक्रमागत - 1) * R8A66597_BUF_BSIZE*2;
+	अन्यथा अगर (check_पूर्णांकerrupt(pipक्रमागत))
+		bufnum = 4 + (pipक्रमागत - 6);
+	अन्यथा
+		prपूर्णांकk(KERN_ERR "r8a66597: Illegal pipenum (%d)\n", pipक्रमागत);
 
-	return bufnum;
-}
+	वापस bufnum;
+पूर्ण
 
-static u16 get_buf_bsize(u16 pipenum)
-{
+अटल u16 get_buf_bsize(u16 pipक्रमागत)
+अणु
 	u16 buf_bsize = 0;
 
-	if (pipenum == 0)
+	अगर (pipक्रमागत == 0)
 		buf_bsize = 3;
-	else if (check_bulk_or_isoc(pipenum))
+	अन्यथा अगर (check_bulk_or_isoc(pipक्रमागत))
 		buf_bsize = R8A66597_BUF_BSIZE - 1;
-	else if (check_interrupt(pipenum))
+	अन्यथा अगर (check_पूर्णांकerrupt(pipक्रमागत))
 		buf_bsize = 0;
-	else
-		printk(KERN_ERR "r8a66597: Illegal pipenum (%d)\n", pipenum);
+	अन्यथा
+		prपूर्णांकk(KERN_ERR "r8a66597: Illegal pipenum (%d)\n", pipक्रमागत);
 
-	return buf_bsize;
-}
+	वापस buf_bsize;
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void enable_r8a66597_pipe_dma(struct r8a66597 *r8a66597,
-				     struct r8a66597_device *dev,
-				     struct r8a66597_pipe *pipe,
-				     struct urb *urb)
-{
-	int i;
-	struct r8a66597_pipe_info *info = &pipe->info;
-	unsigned short mbw = mbw_value(r8a66597);
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम enable_r8a66597_pipe_dma(काष्ठा r8a66597 *r8a66597,
+				     काष्ठा r8a66597_device *dev,
+				     काष्ठा r8a66597_pipe *pipe,
+				     काष्ठा urb *urb)
+अणु
+	पूर्णांक i;
+	काष्ठा r8a66597_pipe_info *info = &pipe->info;
+	अचिन्हित लघु mbw = mbw_value(r8a66597);
 
-	/* pipe dma is only for external controlles */
-	if (r8a66597->pdata->on_chip)
-		return;
+	/* pipe dma is only क्रम बाह्यal controlles */
+	अगर (r8a66597->pdata->on_chip)
+		वापस;
 
-	if ((pipe->info.pipenum != 0) && (info->type != R8A66597_INT)) {
-		for (i = 0; i < R8A66597_MAX_DMA_CHANNEL; i++) {
-			if ((r8a66597->dma_map & (1 << i)) != 0)
-				continue;
+	अगर ((pipe->info.pipक्रमागत != 0) && (info->type != R8A66597_INT)) अणु
+		क्रम (i = 0; i < R8A66597_MAX_DMA_CHANNEL; i++) अणु
+			अगर ((r8a66597->dma_map & (1 << i)) != 0)
+				जारी;
 
 			dev_info(&dev->udev->dev,
 				 "address %d, EndpointAddress 0x%02x use "
 				 "DMA FIFO\n", usb_pipedevice(urb->pipe),
 				 info->dir_in ?
-				 	USB_ENDPOINT_DIR_MASK + info->epnum
+				 	USB_ENDPOINT_सूची_MASK + info->epnum
 					: info->epnum);
 
 			r8a66597->dma_map |= 1 << i;
 			dev->dma_map |= 1 << i;
 			set_pipe_reg_addr(pipe, i);
 
-			cfifo_change(r8a66597, 0);
-			r8a66597_mdfy(r8a66597, mbw | pipe->info.pipenum,
-				      mbw | CURPIPE, pipe->fifosel);
+			cfअगरo_change(r8a66597, 0);
+			r8a66597_mdfy(r8a66597, mbw | pipe->info.pipक्रमागत,
+				      mbw | CURPIPE, pipe->fअगरosel);
 
-			r8a66597_reg_wait(r8a66597, pipe->fifosel, CURPIPE,
-					  pipe->info.pipenum);
-			r8a66597_bset(r8a66597, BCLR, pipe->fifoctr);
-			break;
-		}
-	}
-}
+			r8a66597_reg_रुको(r8a66597, pipe->fअगरosel, CURPIPE,
+					  pipe->info.pipक्रमागत);
+			r8a66597_bset(r8a66597, BCLR, pipe->fअगरoctr);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void enable_r8a66597_pipe(struct r8a66597 *r8a66597, struct urb *urb,
-				 struct usb_host_endpoint *hep,
-				 struct r8a66597_pipe_info *info)
-{
-	struct r8a66597_device *dev = get_urb_to_r8a66597_dev(r8a66597, urb);
-	struct r8a66597_pipe *pipe = hep->hcpriv;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम enable_r8a66597_pipe(काष्ठा r8a66597 *r8a66597, काष्ठा urb *urb,
+				 काष्ठा usb_host_endpoपूर्णांक *hep,
+				 काष्ठा r8a66597_pipe_info *info)
+अणु
+	काष्ठा r8a66597_device *dev = get_urb_to_r8a66597_dev(r8a66597, urb);
+	काष्ठा r8a66597_pipe *pipe = hep->hcpriv;
 
 	dev_dbg(&dev->udev->dev, "enable_pipe:\n");
 
 	pipe->info = *info;
 	set_pipe_reg_addr(pipe, R8A66597_PIPE_NO_DMA);
-	r8a66597->pipe_cnt[pipe->info.pipenum]++;
-	dev->pipe_cnt[pipe->info.pipenum]++;
+	r8a66597->pipe_cnt[pipe->info.pipक्रमागत]++;
+	dev->pipe_cnt[pipe->info.pipक्रमागत]++;
 
 	enable_r8a66597_pipe_dma(r8a66597, dev, pipe, urb);
-}
+पूर्ण
 
-static void r8a66597_urb_done(struct r8a66597 *r8a66597, struct urb *urb,
-			      int status)
+अटल व्योम r8a66597_urb_करोne(काष्ठा r8a66597 *r8a66597, काष्ठा urb *urb,
+			      पूर्णांक status)
 __releases(r8a66597->lock)
 __acquires(r8a66597->lock)
-{
-	if (usb_pipein(urb->pipe) && usb_pipetype(urb->pipe) != PIPE_CONTROL) {
-		void *ptr;
+अणु
+	अगर (usb_pipein(urb->pipe) && usb_pipetype(urb->pipe) != PIPE_CONTROL) अणु
+		व्योम *ptr;
 
-		for (ptr = urb->transfer_buffer;
+		क्रम (ptr = urb->transfer_buffer;
 		     ptr < urb->transfer_buffer + urb->transfer_buffer_length;
 		     ptr += PAGE_SIZE)
 			flush_dcache_page(virt_to_page(ptr));
-	}
+	पूर्ण
 
 	usb_hcd_unlink_urb_from_ep(r8a66597_to_hcd(r8a66597), urb);
 	spin_unlock(&r8a66597->lock);
 	usb_hcd_giveback_urb(r8a66597_to_hcd(r8a66597), urb, status);
 	spin_lock(&r8a66597->lock);
-}
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void force_dequeue(struct r8a66597 *r8a66597, u16 pipenum, u16 address)
-{
-	struct r8a66597_td *td, *next;
-	struct urb *urb;
-	struct list_head *list = &r8a66597->pipe_queue[pipenum];
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम क्रमce_dequeue(काष्ठा r8a66597 *r8a66597, u16 pipक्रमागत, u16 address)
+अणु
+	काष्ठा r8a66597_td *td, *next;
+	काष्ठा urb *urb;
+	काष्ठा list_head *list = &r8a66597->pipe_queue[pipक्रमागत];
 
-	if (list_empty(list))
-		return;
+	अगर (list_empty(list))
+		वापस;
 
-	list_for_each_entry_safe(td, next, list, queue) {
-		if (td->address != address)
-			continue;
+	list_क्रम_each_entry_safe(td, next, list, queue) अणु
+		अगर (td->address != address)
+			जारी;
 
 		urb = td->urb;
 		list_del(&td->queue);
-		kfree(td);
+		kमुक्त(td);
 
-		if (urb)
-			r8a66597_urb_done(r8a66597, urb, -ENODEV);
+		अगर (urb)
+			r8a66597_urb_करोne(r8a66597, urb, -ENODEV);
 
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void disable_r8a66597_pipe_all(struct r8a66597 *r8a66597,
-				      struct r8a66597_device *dev)
-{
-	int check_ep0 = 0;
-	u16 pipenum;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम disable_r8a66597_pipe_all(काष्ठा r8a66597 *r8a66597,
+				      काष्ठा r8a66597_device *dev)
+अणु
+	पूर्णांक check_ep0 = 0;
+	u16 pipक्रमागत;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
-	for (pipenum = 1; pipenum < R8A66597_MAX_NUM_PIPE; pipenum++) {
-		if (!dev->pipe_cnt[pipenum])
-			continue;
+	क्रम (pipक्रमागत = 1; pipक्रमागत < R8A66597_MAX_NUM_PIPE; pipक्रमागत++) अणु
+		अगर (!dev->pipe_cnt[pipक्रमागत])
+			जारी;
 
-		if (!check_ep0) {
+		अगर (!check_ep0) अणु
 			check_ep0 = 1;
-			force_dequeue(r8a66597, 0, dev->address);
-		}
+			क्रमce_dequeue(r8a66597, 0, dev->address);
+		पूर्ण
 
-		r8a66597->pipe_cnt[pipenum] -= dev->pipe_cnt[pipenum];
-		dev->pipe_cnt[pipenum] = 0;
-		force_dequeue(r8a66597, pipenum, dev->address);
-	}
+		r8a66597->pipe_cnt[pipक्रमागत] -= dev->pipe_cnt[pipक्रमागत];
+		dev->pipe_cnt[pipक्रमागत] = 0;
+		क्रमce_dequeue(r8a66597, pipक्रमागत, dev->address);
+	पूर्ण
 
 	dev_dbg(&dev->udev->dev, "disable_pipe\n");
 
 	r8a66597->dma_map &= ~(dev->dma_map);
 	dev->dma_map = 0;
-}
+पूर्ण
 
-static u16 get_interval(struct urb *urb, __u8 interval)
-{
-	u16 time = 1;
-	int i;
+अटल u16 get_पूर्णांकerval(काष्ठा urb *urb, __u8 पूर्णांकerval)
+अणु
+	u16 समय = 1;
+	पूर्णांक i;
 
-	if (urb->dev->speed == USB_SPEED_HIGH) {
-		if (interval > IITV)
-			time = IITV;
-		else
-			time = interval ? interval - 1 : 0;
-	} else {
-		if (interval > 128) {
-			time = IITV;
-		} else {
-			/* calculate the nearest value for PIPEPERI */
-			for (i = 0; i < 7; i++) {
-				if ((1 << i) < interval &&
-				    (1 << (i + 1) > interval))
-					time = 1 << i;
-			}
-		}
-	}
+	अगर (urb->dev->speed == USB_SPEED_HIGH) अणु
+		अगर (पूर्णांकerval > IITV)
+			समय = IITV;
+		अन्यथा
+			समय = पूर्णांकerval ? पूर्णांकerval - 1 : 0;
+	पूर्ण अन्यथा अणु
+		अगर (पूर्णांकerval > 128) अणु
+			समय = IITV;
+		पूर्ण अन्यथा अणु
+			/* calculate the nearest value क्रम PIPEPERI */
+			क्रम (i = 0; i < 7; i++) अणु
+				अगर ((1 << i) < पूर्णांकerval &&
+				    (1 << (i + 1) > पूर्णांकerval))
+					समय = 1 << i;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return time;
-}
+	वापस समय;
+पूर्ण
 
-static unsigned long get_timer_interval(struct urb *urb, __u8 interval)
-{
+अटल अचिन्हित दीर्घ get_समयr_पूर्णांकerval(काष्ठा urb *urb, __u8 पूर्णांकerval)
+अणु
 	__u8 i;
-	unsigned long time = 1;
+	अचिन्हित दीर्घ समय = 1;
 
-	if (usb_pipeisoc(urb->pipe))
-		return 0;
+	अगर (usb_pipeisoc(urb->pipe))
+		वापस 0;
 
-	if (get_r8a66597_usb_speed(urb->dev->speed) == HSMODE) {
-		for (i = 0; i < (interval - 1); i++)
-			time *= 2;
-		time = time * 125 / 1000;	/* uSOF -> msec */
-	} else {
-		time = interval;
-	}
+	अगर (get_r8a66597_usb_speed(urb->dev->speed) == HSMODE) अणु
+		क्रम (i = 0; i < (पूर्णांकerval - 1); i++)
+			समय *= 2;
+		समय = समय * 125 / 1000;	/* uSOF -> msec */
+	पूर्ण अन्यथा अणु
+		समय = पूर्णांकerval;
+	पूर्ण
 
-	return time;
-}
+	वापस समय;
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void init_pipe_info(struct r8a66597 *r8a66597, struct urb *urb,
-			   struct usb_host_endpoint *hep,
-			   struct usb_endpoint_descriptor *ep)
-{
-	struct r8a66597_pipe_info info;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम init_pipe_info(काष्ठा r8a66597 *r8a66597, काष्ठा urb *urb,
+			   काष्ठा usb_host_endpoपूर्णांक *hep,
+			   काष्ठा usb_endpoपूर्णांक_descriptor *ep)
+अणु
+	काष्ठा r8a66597_pipe_info info;
 
-	info.pipenum = get_empty_pipenum(r8a66597, ep);
+	info.pipक्रमागत = get_empty_pipक्रमागत(r8a66597, ep);
 	info.address = get_urb_to_r8a66597_addr(r8a66597, urb);
-	info.epnum = usb_endpoint_num(ep);
-	info.maxpacket = usb_endpoint_maxp(ep);
-	info.type = get_r8a66597_type(usb_endpoint_type(ep));
-	info.bufnum = get_bufnum(info.pipenum);
-	info.buf_bsize = get_buf_bsize(info.pipenum);
-	if (info.type == R8A66597_BULK) {
-		info.interval = 0;
-		info.timer_interval = 0;
-	} else {
-		info.interval = get_interval(urb, ep->bInterval);
-		info.timer_interval = get_timer_interval(urb, ep->bInterval);
-	}
-	if (usb_endpoint_dir_in(ep))
+	info.epnum = usb_endpoपूर्णांक_num(ep);
+	info.maxpacket = usb_endpoपूर्णांक_maxp(ep);
+	info.type = get_r8a66597_type(usb_endpoपूर्णांक_type(ep));
+	info.bufnum = get_bufnum(info.pipक्रमागत);
+	info.buf_bsize = get_buf_bsize(info.pipक्रमागत);
+	अगर (info.type == R8A66597_BULK) अणु
+		info.पूर्णांकerval = 0;
+		info.समयr_पूर्णांकerval = 0;
+	पूर्ण अन्यथा अणु
+		info.पूर्णांकerval = get_पूर्णांकerval(urb, ep->bInterval);
+		info.समयr_पूर्णांकerval = get_समयr_पूर्णांकerval(urb, ep->bInterval);
+	पूर्ण
+	अगर (usb_endpoपूर्णांक_dir_in(ep))
 		info.dir_in = 1;
-	else
+	अन्यथा
 		info.dir_in = 0;
 
 	enable_r8a66597_pipe(r8a66597, urb, hep, &info);
-}
+पूर्ण
 
-static void init_pipe_config(struct r8a66597 *r8a66597, struct urb *urb)
-{
-	struct r8a66597_device *dev;
+अटल व्योम init_pipe_config(काष्ठा r8a66597 *r8a66597, काष्ठा urb *urb)
+अणु
+	काष्ठा r8a66597_device *dev;
 
 	dev = get_urb_to_r8a66597_dev(r8a66597, urb);
 	dev->state = USB_STATE_CONFIGURED;
-}
+पूर्ण
 
-static void pipe_irq_enable(struct r8a66597 *r8a66597, struct urb *urb,
-			    u16 pipenum)
-{
-	if (pipenum == 0 && usb_pipeout(urb->pipe))
-		enable_irq_empty(r8a66597, pipenum);
-	else
-		enable_irq_ready(r8a66597, pipenum);
+अटल व्योम pipe_irq_enable(काष्ठा r8a66597 *r8a66597, काष्ठा urb *urb,
+			    u16 pipक्रमागत)
+अणु
+	अगर (pipक्रमागत == 0 && usb_pipeout(urb->pipe))
+		enable_irq_empty(r8a66597, pipक्रमागत);
+	अन्यथा
+		enable_irq_पढ़ोy(r8a66597, pipक्रमागत);
 
-	if (!usb_pipeisoc(urb->pipe))
-		enable_irq_nrdy(r8a66597, pipenum);
-}
+	अगर (!usb_pipeisoc(urb->pipe))
+		enable_irq_nrdy(r8a66597, pipक्रमागत);
+पूर्ण
 
-static void pipe_irq_disable(struct r8a66597 *r8a66597, u16 pipenum)
-{
-	disable_irq_ready(r8a66597, pipenum);
-	disable_irq_nrdy(r8a66597, pipenum);
-}
+अटल व्योम pipe_irq_disable(काष्ठा r8a66597 *r8a66597, u16 pipक्रमागत)
+अणु
+	disable_irq_पढ़ोy(r8a66597, pipक्रमागत);
+	disable_irq_nrdy(r8a66597, pipक्रमागत);
+पूर्ण
 
-static void r8a66597_root_hub_start_polling(struct r8a66597 *r8a66597)
-{
-	mod_timer(&r8a66597->rh_timer,
-			jiffies + msecs_to_jiffies(R8A66597_RH_POLL_TIME));
-}
+अटल व्योम r8a66597_root_hub_start_polling(काष्ठा r8a66597 *r8a66597)
+अणु
+	mod_समयr(&r8a66597->rh_समयr,
+			jअगरfies + msecs_to_jअगरfies(R8A66597_RH_POLL_TIME));
+पूर्ण
 
-static void start_root_hub_sampling(struct r8a66597 *r8a66597, int port,
-					int connect)
-{
-	struct r8a66597_root_hub *rh = &r8a66597->root_hub[port];
+अटल व्योम start_root_hub_sampling(काष्ठा r8a66597 *r8a66597, पूर्णांक port,
+					पूर्णांक connect)
+अणु
+	काष्ठा r8a66597_root_hub *rh = &r8a66597->root_hub[port];
 
-	rh->old_syssts = r8a66597_read(r8a66597, get_syssts_reg(port)) & LNST;
+	rh->old_syssts = r8a66597_पढ़ो(r8a66597, get_syssts_reg(port)) & LNST;
 	rh->scount = R8A66597_MAX_SAMPLING;
-	if (connect)
+	अगर (connect)
 		rh->port |= USB_PORT_STAT_CONNECTION;
-	else
+	अन्यथा
 		rh->port &= ~USB_PORT_STAT_CONNECTION;
 	rh->port |= USB_PORT_STAT_C_CONNECTION << 16;
 
 	r8a66597_root_hub_start_polling(r8a66597);
-}
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void r8a66597_check_syssts(struct r8a66597 *r8a66597, int port,
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम r8a66597_check_syssts(काष्ठा r8a66597 *r8a66597, पूर्णांक port,
 					u16 syssts)
 __releases(r8a66597->lock)
 __acquires(r8a66597->lock)
-{
-	if (syssts == SE0) {
-		r8a66597_write(r8a66597, ~ATTCH, get_intsts_reg(port));
-		r8a66597_bset(r8a66597, ATTCHE, get_intenb_reg(port));
-	} else {
-		if (syssts == FS_JSTS)
+अणु
+	अगर (syssts == SE0) अणु
+		r8a66597_ग_लिखो(r8a66597, ~ATTCH, get_पूर्णांकsts_reg(port));
+		r8a66597_bset(r8a66597, ATTCHE, get_पूर्णांकenb_reg(port));
+	पूर्ण अन्यथा अणु
+		अगर (syssts == FS_JSTS)
 			r8a66597_bset(r8a66597, HSE, get_syscfg_reg(port));
-		else if (syssts == LS_JSTS)
+		अन्यथा अगर (syssts == LS_JSTS)
 			r8a66597_bclr(r8a66597, HSE, get_syscfg_reg(port));
 
-		r8a66597_write(r8a66597, ~DTCH, get_intsts_reg(port));
-		r8a66597_bset(r8a66597, DTCHE, get_intenb_reg(port));
+		r8a66597_ग_लिखो(r8a66597, ~DTCH, get_पूर्णांकsts_reg(port));
+		r8a66597_bset(r8a66597, DTCHE, get_पूर्णांकenb_reg(port));
 
-		if (r8a66597->bus_suspended)
+		अगर (r8a66597->bus_suspended)
 			usb_hcd_resume_root_hub(r8a66597_to_hcd(r8a66597));
-	}
+	पूर्ण
 
 	spin_unlock(&r8a66597->lock);
 	usb_hcd_poll_rh_status(r8a66597_to_hcd(r8a66597));
 	spin_lock(&r8a66597->lock);
-}
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void r8a66597_usb_connect(struct r8a66597 *r8a66597, int port)
-{
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम r8a66597_usb_connect(काष्ठा r8a66597 *r8a66597, पूर्णांक port)
+अणु
 	u16 speed = get_rh_usb_speed(r8a66597, port);
-	struct r8a66597_root_hub *rh = &r8a66597->root_hub[port];
+	काष्ठा r8a66597_root_hub *rh = &r8a66597->root_hub[port];
 
 	rh->port &= ~(USB_PORT_STAT_HIGH_SPEED | USB_PORT_STAT_LOW_SPEED);
-	if (speed == HSMODE)
+	अगर (speed == HSMODE)
 		rh->port |= USB_PORT_STAT_HIGH_SPEED;
-	else if (speed == LSMODE)
+	अन्यथा अगर (speed == LSMODE)
 		rh->port |= USB_PORT_STAT_LOW_SPEED;
 
 	rh->port &= ~USB_PORT_STAT_RESET;
 	rh->port |= USB_PORT_STAT_ENABLE;
-}
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void r8a66597_usb_disconnect(struct r8a66597 *r8a66597, int port)
-{
-	struct r8a66597_device *dev = r8a66597->root_hub[port].dev;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम r8a66597_usb_disconnect(काष्ठा r8a66597 *r8a66597, पूर्णांक port)
+अणु
+	काष्ठा r8a66597_device *dev = r8a66597->root_hub[port].dev;
 
 	disable_r8a66597_pipe_all(r8a66597, dev);
-	free_usb_address(r8a66597, dev, 0);
+	मुक्त_usb_address(r8a66597, dev, 0);
 
 	start_root_hub_sampling(r8a66597, port, 0);
-}
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void prepare_setup_packet(struct r8a66597 *r8a66597,
-				 struct r8a66597_td *td)
-{
-	int i;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम prepare_setup_packet(काष्ठा r8a66597 *r8a66597,
+				 काष्ठा r8a66597_td *td)
+अणु
+	पूर्णांक i;
 	__le16 *p = (__le16 *)td->urb->setup_packet;
-	unsigned long setup_addr = USBREQ;
+	अचिन्हित दीर्घ setup_addr = USBREQ;
 
-	r8a66597_write(r8a66597, make_devsel(td->address) | td->maxpacket,
+	r8a66597_ग_लिखो(r8a66597, make_devsel(td->address) | td->maxpacket,
 		       DCPMAXP);
-	r8a66597_write(r8a66597, ~(SIGN | SACK), INTSTS1);
+	r8a66597_ग_लिखो(r8a66597, ~(SIGN | SACK), INTSTS1);
 
-	for (i = 0; i < 4; i++) {
-		r8a66597_write(r8a66597, le16_to_cpu(p[i]), setup_addr);
+	क्रम (i = 0; i < 4; i++) अणु
+		r8a66597_ग_लिखो(r8a66597, le16_to_cpu(p[i]), setup_addr);
 		setup_addr += 2;
-	}
-	r8a66597_write(r8a66597, SUREQ, DCPCTR);
-}
+	पूर्ण
+	r8a66597_ग_लिखो(r8a66597, SUREQ, DCPCTR);
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void prepare_packet_read(struct r8a66597 *r8a66597,
-				struct r8a66597_td *td)
-{
-	struct urb *urb = td->urb;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम prepare_packet_पढ़ो(काष्ठा r8a66597 *r8a66597,
+				काष्ठा r8a66597_td *td)
+अणु
+	काष्ठा urb *urb = td->urb;
 
-	if (usb_pipecontrol(urb->pipe)) {
-		r8a66597_bclr(r8a66597, R8A66597_DIR, DCPCFG);
+	अगर (usb_pipecontrol(urb->pipe)) अणु
+		r8a66597_bclr(r8a66597, R8A66597_सूची, DCPCFG);
 		r8a66597_mdfy(r8a66597, 0, ISEL | CURPIPE, CFIFOSEL);
-		r8a66597_reg_wait(r8a66597, CFIFOSEL, CURPIPE, 0);
-		if (urb->actual_length == 0) {
+		r8a66597_reg_रुको(r8a66597, CFIFOSEL, CURPIPE, 0);
+		अगर (urb->actual_length == 0) अणु
 			r8a66597_pipe_toggle(r8a66597, td->pipe, 1);
-			r8a66597_write(r8a66597, BCLR, CFIFOCTR);
-		}
-		pipe_irq_disable(r8a66597, td->pipenum);
+			r8a66597_ग_लिखो(r8a66597, BCLR, CFIFOCTR);
+		पूर्ण
+		pipe_irq_disable(r8a66597, td->pipक्रमागत);
 		pipe_start(r8a66597, td->pipe);
-		pipe_irq_enable(r8a66597, urb, td->pipenum);
-	} else {
-		if (urb->actual_length == 0) {
-			pipe_irq_disable(r8a66597, td->pipenum);
+		pipe_irq_enable(r8a66597, urb, td->pipक्रमागत);
+	पूर्ण अन्यथा अणु
+		अगर (urb->actual_length == 0) अणु
+			pipe_irq_disable(r8a66597, td->pipक्रमागत);
 			pipe_setting(r8a66597, td);
 			pipe_stop(r8a66597, td->pipe);
-			r8a66597_write(r8a66597, ~(1 << td->pipenum), BRDYSTS);
+			r8a66597_ग_लिखो(r8a66597, ~(1 << td->pipक्रमागत), BRDYSTS);
 
-			if (td->pipe->pipetre) {
-				r8a66597_write(r8a66597, TRCLR,
+			अगर (td->pipe->pipetre) अणु
+				r8a66597_ग_लिखो(r8a66597, TRCLR,
 						td->pipe->pipetre);
-				r8a66597_write(r8a66597,
+				r8a66597_ग_लिखो(r8a66597,
 						DIV_ROUND_UP
 						  (urb->transfer_buffer_length,
 						   td->maxpacket),
 						td->pipe->pipetrn);
 				r8a66597_bset(r8a66597, TRENB,
 						td->pipe->pipetre);
-			}
+			पूर्ण
 
 			pipe_start(r8a66597, td->pipe);
-			pipe_irq_enable(r8a66597, urb, td->pipenum);
-		}
-	}
-}
+			pipe_irq_enable(r8a66597, urb, td->pipक्रमागत);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void prepare_packet_write(struct r8a66597 *r8a66597,
-				 struct r8a66597_td *td)
-{
-	u16 tmp;
-	struct urb *urb = td->urb;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम prepare_packet_ग_लिखो(काष्ठा r8a66597 *r8a66597,
+				 काष्ठा r8a66597_td *td)
+अणु
+	u16 पंचांगp;
+	काष्ठा urb *urb = td->urb;
 
-	if (usb_pipecontrol(urb->pipe)) {
+	अगर (usb_pipecontrol(urb->pipe)) अणु
 		pipe_stop(r8a66597, td->pipe);
-		r8a66597_bset(r8a66597, R8A66597_DIR, DCPCFG);
+		r8a66597_bset(r8a66597, R8A66597_सूची, DCPCFG);
 		r8a66597_mdfy(r8a66597, ISEL, ISEL | CURPIPE, CFIFOSEL);
-		r8a66597_reg_wait(r8a66597, CFIFOSEL, CURPIPE, 0);
-		if (urb->actual_length == 0) {
+		r8a66597_reg_रुको(r8a66597, CFIFOSEL, CURPIPE, 0);
+		अगर (urb->actual_length == 0) अणु
 			r8a66597_pipe_toggle(r8a66597, td->pipe, 1);
-			r8a66597_write(r8a66597, BCLR, CFIFOCTR);
-		}
-	} else {
-		if (urb->actual_length == 0)
+			r8a66597_ग_लिखो(r8a66597, BCLR, CFIFOCTR);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (urb->actual_length == 0)
 			pipe_setting(r8a66597, td);
-		if (td->pipe->pipetre)
+		अगर (td->pipe->pipetre)
 			r8a66597_bclr(r8a66597, TRENB, td->pipe->pipetre);
-	}
-	r8a66597_write(r8a66597, ~(1 << td->pipenum), BRDYSTS);
+	पूर्ण
+	r8a66597_ग_लिखो(r8a66597, ~(1 << td->pipक्रमागत), BRDYSTS);
 
-	fifo_change_from_pipe(r8a66597, td->pipe);
-	tmp = r8a66597_read(r8a66597, td->pipe->fifoctr);
-	if (unlikely((tmp & FRDY) == 0))
-		pipe_irq_enable(r8a66597, urb, td->pipenum);
-	else
-		packet_write(r8a66597, td->pipenum);
+	fअगरo_change_from_pipe(r8a66597, td->pipe);
+	पंचांगp = r8a66597_पढ़ो(r8a66597, td->pipe->fअगरoctr);
+	अगर (unlikely((पंचांगp & FRDY) == 0))
+		pipe_irq_enable(r8a66597, urb, td->pipक्रमागत);
+	अन्यथा
+		packet_ग_लिखो(r8a66597, td->pipक्रमागत);
 	pipe_start(r8a66597, td->pipe);
-}
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void prepare_status_packet(struct r8a66597 *r8a66597,
-				  struct r8a66597_td *td)
-{
-	struct urb *urb = td->urb;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम prepare_status_packet(काष्ठा r8a66597 *r8a66597,
+				  काष्ठा r8a66597_td *td)
+अणु
+	काष्ठा urb *urb = td->urb;
 
 	r8a66597_pipe_toggle(r8a66597, td->pipe, 1);
 	pipe_stop(r8a66597, td->pipe);
 
-	if (urb->setup_packet[0] & USB_ENDPOINT_DIR_MASK) {
-		r8a66597_bset(r8a66597, R8A66597_DIR, DCPCFG);
+	अगर (urb->setup_packet[0] & USB_ENDPOINT_सूची_MASK) अणु
+		r8a66597_bset(r8a66597, R8A66597_सूची, DCPCFG);
 		r8a66597_mdfy(r8a66597, ISEL, ISEL | CURPIPE, CFIFOSEL);
-		r8a66597_reg_wait(r8a66597, CFIFOSEL, CURPIPE, 0);
-		r8a66597_write(r8a66597, ~BEMP0, BEMPSTS);
-		r8a66597_write(r8a66597, BCLR | BVAL, CFIFOCTR);
+		r8a66597_reg_रुको(r8a66597, CFIFOSEL, CURPIPE, 0);
+		r8a66597_ग_लिखो(r8a66597, ~BEMP0, BEMPSTS);
+		r8a66597_ग_लिखो(r8a66597, BCLR | BVAL, CFIFOCTR);
 		enable_irq_empty(r8a66597, 0);
-	} else {
-		r8a66597_bclr(r8a66597, R8A66597_DIR, DCPCFG);
+	पूर्ण अन्यथा अणु
+		r8a66597_bclr(r8a66597, R8A66597_सूची, DCPCFG);
 		r8a66597_mdfy(r8a66597, 0, ISEL | CURPIPE, CFIFOSEL);
-		r8a66597_reg_wait(r8a66597, CFIFOSEL, CURPIPE, 0);
-		r8a66597_write(r8a66597, BCLR, CFIFOCTR);
-		enable_irq_ready(r8a66597, 0);
-	}
+		r8a66597_reg_रुको(r8a66597, CFIFOSEL, CURPIPE, 0);
+		r8a66597_ग_लिखो(r8a66597, BCLR, CFIFOCTR);
+		enable_irq_पढ़ोy(r8a66597, 0);
+	पूर्ण
 	enable_irq_nrdy(r8a66597, 0);
 	pipe_start(r8a66597, td->pipe);
-}
+पूर्ण
 
-static int is_set_address(unsigned char *setup_packet)
-{
-	if (((setup_packet[0] & USB_TYPE_MASK) == USB_TYPE_STANDARD) &&
+अटल पूर्णांक is_set_address(अचिन्हित अक्षर *setup_packet)
+अणु
+	अगर (((setup_packet[0] & USB_TYPE_MASK) == USB_TYPE_STANDARD) &&
 			setup_packet[1] == USB_REQ_SET_ADDRESS)
-		return 1;
-	else
-		return 0;
-}
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static int start_transfer(struct r8a66597 *r8a66597, struct r8a66597_td *td)
-{
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल पूर्णांक start_transfer(काष्ठा r8a66597 *r8a66597, काष्ठा r8a66597_td *td)
+अणु
 	BUG_ON(!td);
 
-	switch (td->type) {
-	case USB_PID_SETUP:
-		if (is_set_address(td->urb->setup_packet)) {
+	चयन (td->type) अणु
+	हाल USB_PID_SETUP:
+		अगर (is_set_address(td->urb->setup_packet)) अणु
 			td->set_address = 1;
 			td->urb->setup_packet[2] = alloc_usb_address(r8a66597,
 								     td->urb);
-			if (td->urb->setup_packet[2] == 0)
-				return -EPIPE;
-		}
+			अगर (td->urb->setup_packet[2] == 0)
+				वापस -EPIPE;
+		पूर्ण
 		prepare_setup_packet(r8a66597, td);
-		break;
-	case USB_PID_IN:
-		prepare_packet_read(r8a66597, td);
-		break;
-	case USB_PID_OUT:
-		prepare_packet_write(r8a66597, td);
-		break;
-	case USB_PID_ACK:
+		अवरोध;
+	हाल USB_PID_IN:
+		prepare_packet_पढ़ो(r8a66597, td);
+		अवरोध;
+	हाल USB_PID_OUT:
+		prepare_packet_ग_लिखो(r8a66597, td);
+		अवरोध;
+	हाल USB_PID_ACK:
 		prepare_status_packet(r8a66597, td);
-		break;
-	default:
-		printk(KERN_ERR "r8a66597: invalid type.\n");
-		break;
-	}
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "r8a66597: invalid type.\n");
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_transfer_finish(struct r8a66597_td *td, struct urb *urb)
-{
-	if (usb_pipeisoc(urb->pipe)) {
-		if (urb->number_of_packets == td->iso_cnt)
-			return 1;
-	}
+अटल पूर्णांक check_transfer_finish(काष्ठा r8a66597_td *td, काष्ठा urb *urb)
+अणु
+	अगर (usb_pipeisoc(urb->pipe)) अणु
+		अगर (urb->number_of_packets == td->iso_cnt)
+			वापस 1;
+	पूर्ण
 
-	/* control or bulk or interrupt */
-	if ((urb->transfer_buffer_length <= urb->actual_length) ||
-	    (td->short_packet) || (td->zero_packet))
-		return 1;
+	/* control or bulk or पूर्णांकerrupt */
+	अगर ((urb->transfer_buffer_length <= urb->actual_length) ||
+	    (td->लघु_packet) || (td->zero_packet))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void set_td_timer(struct r8a66597 *r8a66597, struct r8a66597_td *td)
-{
-	unsigned long time;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम set_td_समयr(काष्ठा r8a66597 *r8a66597, काष्ठा r8a66597_td *td)
+अणु
+	अचिन्हित दीर्घ समय;
 
 	BUG_ON(!td);
 
-	if (!list_empty(&r8a66597->pipe_queue[td->pipenum]) &&
-	    !usb_pipecontrol(td->urb->pipe) && usb_pipein(td->urb->pipe)) {
-		r8a66597->timeout_map |= 1 << td->pipenum;
-		switch (usb_pipetype(td->urb->pipe)) {
-		case PIPE_INTERRUPT:
-		case PIPE_ISOCHRONOUS:
-			time = 30;
-			break;
-		default:
-			time = 50;
-			break;
-		}
+	अगर (!list_empty(&r8a66597->pipe_queue[td->pipक्रमागत]) &&
+	    !usb_pipecontrol(td->urb->pipe) && usb_pipein(td->urb->pipe)) अणु
+		r8a66597->समयout_map |= 1 << td->pipक्रमागत;
+		चयन (usb_pipetype(td->urb->pipe)) अणु
+		हाल PIPE_INTERRUPT:
+		हाल PIPE_ISOCHRONOUS:
+			समय = 30;
+			अवरोध;
+		शेष:
+			समय = 50;
+			अवरोध;
+		पूर्ण
 
-		mod_timer(&r8a66597->timers[td->pipenum].td,
-			  jiffies + msecs_to_jiffies(time));
-	}
-}
+		mod_समयr(&r8a66597->समयrs[td->pipक्रमागत].td,
+			  jअगरfies + msecs_to_jअगरfies(समय));
+	पूर्ण
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void finish_request(struct r8a66597 *r8a66597, struct r8a66597_td *td,
-		u16 pipenum, struct urb *urb, int status)
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम finish_request(काष्ठा r8a66597 *r8a66597, काष्ठा r8a66597_td *td,
+		u16 pipक्रमागत, काष्ठा urb *urb, पूर्णांक status)
 __releases(r8a66597->lock) __acquires(r8a66597->lock)
-{
-	int restart = 0;
-	struct usb_hcd *hcd = r8a66597_to_hcd(r8a66597);
+अणु
+	पूर्णांक restart = 0;
+	काष्ठा usb_hcd *hcd = r8a66597_to_hcd(r8a66597);
 
-	r8a66597->timeout_map &= ~(1 << pipenum);
+	r8a66597->समयout_map &= ~(1 << pipक्रमागत);
 
-	if (likely(td)) {
-		if (td->set_address && (status != 0 || urb->unlinked))
+	अगर (likely(td)) अणु
+		अगर (td->set_address && (status != 0 || urb->unlinked))
 			r8a66597->address_map &= ~(1 << urb->setup_packet[2]);
 
 		pipe_toggle_save(r8a66597, td->pipe, urb);
 		list_del(&td->queue);
-		kfree(td);
-	}
+		kमुक्त(td);
+	पूर्ण
 
-	if (!list_empty(&r8a66597->pipe_queue[pipenum]))
+	अगर (!list_empty(&r8a66597->pipe_queue[pipक्रमागत]))
 		restart = 1;
 
-	if (likely(urb)) {
-		if (usb_pipeisoc(urb->pipe))
+	अगर (likely(urb)) अणु
+		अगर (usb_pipeisoc(urb->pipe))
 			urb->start_frame = r8a66597_get_frame(hcd);
 
-		r8a66597_urb_done(r8a66597, urb, status);
-	}
+		r8a66597_urb_करोne(r8a66597, urb, status);
+	पूर्ण
 
-	if (restart) {
-		td = r8a66597_get_td(r8a66597, pipenum);
-		if (unlikely(!td))
-			return;
+	अगर (restart) अणु
+		td = r8a66597_get_td(r8a66597, pipक्रमागत);
+		अगर (unlikely(!td))
+			वापस;
 
 		start_transfer(r8a66597, td);
-		set_td_timer(r8a66597, td);
-	}
-}
+		set_td_समयr(r8a66597, td);
+	पूर्ण
+पूर्ण
 
-static void packet_read(struct r8a66597 *r8a66597, u16 pipenum)
-{
-	u16 tmp;
-	int rcv_len, bufsize, urb_len, size;
+अटल व्योम packet_पढ़ो(काष्ठा r8a66597 *r8a66597, u16 pipक्रमागत)
+अणु
+	u16 पंचांगp;
+	पूर्णांक rcv_len, bufsize, urb_len, size;
 	u16 *buf;
-	struct r8a66597_td *td = r8a66597_get_td(r8a66597, pipenum);
-	struct urb *urb;
-	int finish = 0;
-	int status = 0;
+	काष्ठा r8a66597_td *td = r8a66597_get_td(r8a66597, pipक्रमागत);
+	काष्ठा urb *urb;
+	पूर्णांक finish = 0;
+	पूर्णांक status = 0;
 
-	if (unlikely(!td))
-		return;
+	अगर (unlikely(!td))
+		वापस;
 	urb = td->urb;
 
-	fifo_change_from_pipe(r8a66597, td->pipe);
-	tmp = r8a66597_read(r8a66597, td->pipe->fifoctr);
-	if (unlikely((tmp & FRDY) == 0)) {
+	fअगरo_change_from_pipe(r8a66597, td->pipe);
+	पंचांगp = r8a66597_पढ़ो(r8a66597, td->pipe->fअगरoctr);
+	अगर (unlikely((पंचांगp & FRDY) == 0)) अणु
 		pipe_stop(r8a66597, td->pipe);
-		pipe_irq_disable(r8a66597, pipenum);
-		printk(KERN_ERR "r8a66597: in fifo not ready (%d)\n", pipenum);
-		finish_request(r8a66597, td, pipenum, td->urb, -EPIPE);
-		return;
-	}
+		pipe_irq_disable(r8a66597, pipक्रमागत);
+		prपूर्णांकk(KERN_ERR "r8a66597: in fifo not ready (%d)\n", pipक्रमागत);
+		finish_request(r8a66597, td, pipक्रमागत, td->urb, -EPIPE);
+		वापस;
+	पूर्ण
 
 	/* prepare parameters */
-	rcv_len = tmp & DTLN;
-	if (usb_pipeisoc(urb->pipe)) {
+	rcv_len = पंचांगp & DTLN;
+	अगर (usb_pipeisoc(urb->pipe)) अणु
 		buf = (u16 *)(urb->transfer_buffer +
 				urb->iso_frame_desc[td->iso_cnt].offset);
 		urb_len = urb->iso_frame_desc[td->iso_cnt].length;
-	} else {
-		buf = (void *)urb->transfer_buffer + urb->actual_length;
+	पूर्ण अन्यथा अणु
+		buf = (व्योम *)urb->transfer_buffer + urb->actual_length;
 		urb_len = urb->transfer_buffer_length - urb->actual_length;
-	}
-	bufsize = min(urb_len, (int) td->maxpacket);
-	if (rcv_len <= bufsize) {
+	पूर्ण
+	bufsize = min(urb_len, (पूर्णांक) td->maxpacket);
+	अगर (rcv_len <= bufsize) अणु
 		size = rcv_len;
-	} else {
+	पूर्ण अन्यथा अणु
 		size = bufsize;
 		status = -EOVERFLOW;
 		finish = 1;
-	}
+	पूर्ण
 
 	/* update parameters */
 	urb->actual_length += size;
-	if (rcv_len == 0)
+	अगर (rcv_len == 0)
 		td->zero_packet = 1;
-	if (rcv_len < bufsize) {
-		td->short_packet = 1;
-	}
-	if (usb_pipeisoc(urb->pipe)) {
+	अगर (rcv_len < bufsize) अणु
+		td->लघु_packet = 1;
+	पूर्ण
+	अगर (usb_pipeisoc(urb->pipe)) अणु
 		urb->iso_frame_desc[td->iso_cnt].actual_length = size;
 		urb->iso_frame_desc[td->iso_cnt].status = status;
 		td->iso_cnt++;
 		finish = 0;
-	}
+	पूर्ण
 
 	/* check transfer finish */
-	if (finish || check_transfer_finish(td, urb)) {
+	अगर (finish || check_transfer_finish(td, urb)) अणु
 		pipe_stop(r8a66597, td->pipe);
-		pipe_irq_disable(r8a66597, pipenum);
+		pipe_irq_disable(r8a66597, pipक्रमागत);
 		finish = 1;
-	}
+	पूर्ण
 
-	/* read fifo */
-	if (urb->transfer_buffer) {
-		if (size == 0)
-			r8a66597_write(r8a66597, BCLR, td->pipe->fifoctr);
-		else
-			r8a66597_read_fifo(r8a66597, td->pipe->fifoaddr,
+	/* पढ़ो fअगरo */
+	अगर (urb->transfer_buffer) अणु
+		अगर (size == 0)
+			r8a66597_ग_लिखो(r8a66597, BCLR, td->pipe->fअगरoctr);
+		अन्यथा
+			r8a66597_पढ़ो_fअगरo(r8a66597, td->pipe->fअगरoaddr,
 					   buf, size);
-	}
+	पूर्ण
 
-	if (finish && pipenum != 0)
-		finish_request(r8a66597, td, pipenum, urb, status);
-}
+	अगर (finish && pipक्रमागत != 0)
+		finish_request(r8a66597, td, pipक्रमागत, urb, status);
+पूर्ण
 
-static void packet_write(struct r8a66597 *r8a66597, u16 pipenum)
-{
-	u16 tmp;
-	int bufsize, size;
+अटल व्योम packet_ग_लिखो(काष्ठा r8a66597 *r8a66597, u16 pipक्रमागत)
+अणु
+	u16 पंचांगp;
+	पूर्णांक bufsize, size;
 	u16 *buf;
-	struct r8a66597_td *td = r8a66597_get_td(r8a66597, pipenum);
-	struct urb *urb;
+	काष्ठा r8a66597_td *td = r8a66597_get_td(r8a66597, pipक्रमागत);
+	काष्ठा urb *urb;
 
-	if (unlikely(!td))
-		return;
+	अगर (unlikely(!td))
+		वापस;
 	urb = td->urb;
 
-	fifo_change_from_pipe(r8a66597, td->pipe);
-	tmp = r8a66597_read(r8a66597, td->pipe->fifoctr);
-	if (unlikely((tmp & FRDY) == 0)) {
+	fअगरo_change_from_pipe(r8a66597, td->pipe);
+	पंचांगp = r8a66597_पढ़ो(r8a66597, td->pipe->fअगरoctr);
+	अगर (unlikely((पंचांगp & FRDY) == 0)) अणु
 		pipe_stop(r8a66597, td->pipe);
-		pipe_irq_disable(r8a66597, pipenum);
-		printk(KERN_ERR "r8a66597: out fifo not ready (%d)\n", pipenum);
-		finish_request(r8a66597, td, pipenum, urb, -EPIPE);
-		return;
-	}
+		pipe_irq_disable(r8a66597, pipक्रमागत);
+		prपूर्णांकk(KERN_ERR "r8a66597: out fifo not ready (%d)\n", pipक्रमागत);
+		finish_request(r8a66597, td, pipक्रमागत, urb, -EPIPE);
+		वापस;
+	पूर्ण
 
 	/* prepare parameters */
 	bufsize = td->maxpacket;
-	if (usb_pipeisoc(urb->pipe)) {
+	अगर (usb_pipeisoc(urb->pipe)) अणु
 		buf = (u16 *)(urb->transfer_buffer +
 				urb->iso_frame_desc[td->iso_cnt].offset);
 		size = min(bufsize,
-			   (int)urb->iso_frame_desc[td->iso_cnt].length);
-	} else {
+			   (पूर्णांक)urb->iso_frame_desc[td->iso_cnt].length);
+	पूर्ण अन्यथा अणु
 		buf = (u16 *)(urb->transfer_buffer + urb->actual_length);
 		size = min_t(u32, bufsize,
 			   urb->transfer_buffer_length - urb->actual_length);
-	}
+	पूर्ण
 
-	/* write fifo */
-	if (pipenum > 0)
-		r8a66597_write(r8a66597, ~(1 << pipenum), BEMPSTS);
-	if (urb->transfer_buffer) {
-		r8a66597_write_fifo(r8a66597, td->pipe, buf, size);
-		if (!usb_pipebulk(urb->pipe) || td->maxpacket != size)
-			r8a66597_write(r8a66597, BVAL, td->pipe->fifoctr);
-	}
+	/* ग_लिखो fअगरo */
+	अगर (pipक्रमागत > 0)
+		r8a66597_ग_लिखो(r8a66597, ~(1 << pipक्रमागत), BEMPSTS);
+	अगर (urb->transfer_buffer) अणु
+		r8a66597_ग_लिखो_fअगरo(r8a66597, td->pipe, buf, size);
+		अगर (!usb_pipebulk(urb->pipe) || td->maxpacket != size)
+			r8a66597_ग_लिखो(r8a66597, BVAL, td->pipe->fअगरoctr);
+	पूर्ण
 
 	/* update parameters */
 	urb->actual_length += size;
-	if (usb_pipeisoc(urb->pipe)) {
+	अगर (usb_pipeisoc(urb->pipe)) अणु
 		urb->iso_frame_desc[td->iso_cnt].actual_length = size;
 		urb->iso_frame_desc[td->iso_cnt].status = 0;
 		td->iso_cnt++;
-	}
+	पूर्ण
 
 	/* check transfer finish */
-	if (check_transfer_finish(td, urb)) {
-		disable_irq_ready(r8a66597, pipenum);
-		enable_irq_empty(r8a66597, pipenum);
-		if (!usb_pipeisoc(urb->pipe))
-			enable_irq_nrdy(r8a66597, pipenum);
-	} else
-		pipe_irq_enable(r8a66597, urb, pipenum);
-}
+	अगर (check_transfer_finish(td, urb)) अणु
+		disable_irq_पढ़ोy(r8a66597, pipक्रमागत);
+		enable_irq_empty(r8a66597, pipक्रमागत);
+		अगर (!usb_pipeisoc(urb->pipe))
+			enable_irq_nrdy(r8a66597, pipक्रमागत);
+	पूर्ण अन्यथा
+		pipe_irq_enable(r8a66597, urb, pipक्रमागत);
+पूर्ण
 
 
-static void check_next_phase(struct r8a66597 *r8a66597, int status)
-{
-	struct r8a66597_td *td = r8a66597_get_td(r8a66597, 0);
-	struct urb *urb;
+अटल व्योम check_next_phase(काष्ठा r8a66597 *r8a66597, पूर्णांक status)
+अणु
+	काष्ठा r8a66597_td *td = r8a66597_get_td(r8a66597, 0);
+	काष्ठा urb *urb;
 	u8 finish = 0;
 
-	if (unlikely(!td))
-		return;
+	अगर (unlikely(!td))
+		वापस;
 	urb = td->urb;
 
-	switch (td->type) {
-	case USB_PID_IN:
-	case USB_PID_OUT:
-		if (check_transfer_finish(td, urb))
+	चयन (td->type) अणु
+	हाल USB_PID_IN:
+	हाल USB_PID_OUT:
+		अगर (check_transfer_finish(td, urb))
 			td->type = USB_PID_ACK;
-		break;
-	case USB_PID_SETUP:
-		if (urb->transfer_buffer_length == urb->actual_length)
+		अवरोध;
+	हाल USB_PID_SETUP:
+		अगर (urb->transfer_buffer_length == urb->actual_length)
 			td->type = USB_PID_ACK;
-		else if (usb_pipeout(urb->pipe))
+		अन्यथा अगर (usb_pipeout(urb->pipe))
 			td->type = USB_PID_OUT;
-		else
+		अन्यथा
 			td->type = USB_PID_IN;
-		break;
-	case USB_PID_ACK:
+		अवरोध;
+	हाल USB_PID_ACK:
 		finish = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (finish || status != 0 || urb->unlinked)
+	अगर (finish || status != 0 || urb->unlinked)
 		finish_request(r8a66597, td, 0, urb, status);
-	else
+	अन्यथा
 		start_transfer(r8a66597, td);
-}
+पूर्ण
 
-static int get_urb_error(struct r8a66597 *r8a66597, u16 pipenum)
-{
-	struct r8a66597_td *td = r8a66597_get_td(r8a66597, pipenum);
+अटल पूर्णांक get_urb_error(काष्ठा r8a66597 *r8a66597, u16 pipक्रमागत)
+अणु
+	काष्ठा r8a66597_td *td = r8a66597_get_td(r8a66597, pipक्रमागत);
 
-	if (td) {
-		u16 pid = r8a66597_read(r8a66597, td->pipe->pipectr) & PID;
+	अगर (td) अणु
+		u16 pid = r8a66597_पढ़ो(r8a66597, td->pipe->pipectr) & PID;
 
-		if (pid == PID_NAK)
-			return -ECONNRESET;
-		else
-			return -EPIPE;
-	}
-	return 0;
-}
+		अगर (pid == PID_NAK)
+			वापस -ECONNRESET;
+		अन्यथा
+			वापस -EPIPE;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void irq_pipe_ready(struct r8a66597 *r8a66597)
-{
+अटल व्योम irq_pipe_पढ़ोy(काष्ठा r8a66597 *r8a66597)
+अणु
 	u16 check;
-	u16 pipenum;
+	u16 pipक्रमागत;
 	u16 mask;
-	struct r8a66597_td *td;
+	काष्ठा r8a66597_td *td;
 
-	mask = r8a66597_read(r8a66597, BRDYSTS)
-	       & r8a66597_read(r8a66597, BRDYENB);
-	r8a66597_write(r8a66597, ~mask, BRDYSTS);
-	if (mask & BRDY0) {
+	mask = r8a66597_पढ़ो(r8a66597, BRDYSTS)
+	       & r8a66597_पढ़ो(r8a66597, BRDYENB);
+	r8a66597_ग_लिखो(r8a66597, ~mask, BRDYSTS);
+	अगर (mask & BRDY0) अणु
 		td = r8a66597_get_td(r8a66597, 0);
-		if (td && td->type == USB_PID_IN)
-			packet_read(r8a66597, 0);
-		else
+		अगर (td && td->type == USB_PID_IN)
+			packet_पढ़ो(r8a66597, 0);
+		अन्यथा
 			pipe_irq_disable(r8a66597, 0);
 		check_next_phase(r8a66597, 0);
-	}
+	पूर्ण
 
-	for (pipenum = 1; pipenum < R8A66597_MAX_NUM_PIPE; pipenum++) {
-		check = 1 << pipenum;
-		if (mask & check) {
-			td = r8a66597_get_td(r8a66597, pipenum);
-			if (unlikely(!td))
-				continue;
+	क्रम (pipक्रमागत = 1; pipक्रमागत < R8A66597_MAX_NUM_PIPE; pipक्रमागत++) अणु
+		check = 1 << pipक्रमागत;
+		अगर (mask & check) अणु
+			td = r8a66597_get_td(r8a66597, pipक्रमागत);
+			अगर (unlikely(!td))
+				जारी;
 
-			if (td->type == USB_PID_IN)
-				packet_read(r8a66597, pipenum);
-			else if (td->type == USB_PID_OUT)
-				packet_write(r8a66597, pipenum);
-		}
-	}
-}
+			अगर (td->type == USB_PID_IN)
+				packet_पढ़ो(r8a66597, pipक्रमागत);
+			अन्यथा अगर (td->type == USB_PID_OUT)
+				packet_ग_लिखो(r8a66597, pipक्रमागत);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void irq_pipe_empty(struct r8a66597 *r8a66597)
-{
-	u16 tmp;
+अटल व्योम irq_pipe_empty(काष्ठा r8a66597 *r8a66597)
+अणु
+	u16 पंचांगp;
 	u16 check;
-	u16 pipenum;
+	u16 pipक्रमागत;
 	u16 mask;
-	struct r8a66597_td *td;
+	काष्ठा r8a66597_td *td;
 
-	mask = r8a66597_read(r8a66597, BEMPSTS)
-	       & r8a66597_read(r8a66597, BEMPENB);
-	r8a66597_write(r8a66597, ~mask, BEMPSTS);
-	if (mask & BEMP0) {
-		cfifo_change(r8a66597, 0);
+	mask = r8a66597_पढ़ो(r8a66597, BEMPSTS)
+	       & r8a66597_पढ़ो(r8a66597, BEMPENB);
+	r8a66597_ग_लिखो(r8a66597, ~mask, BEMPSTS);
+	अगर (mask & BEMP0) अणु
+		cfअगरo_change(r8a66597, 0);
 		td = r8a66597_get_td(r8a66597, 0);
-		if (td && td->type != USB_PID_OUT)
+		अगर (td && td->type != USB_PID_OUT)
 			disable_irq_empty(r8a66597, 0);
 		check_next_phase(r8a66597, 0);
-	}
+	पूर्ण
 
-	for (pipenum = 1; pipenum < R8A66597_MAX_NUM_PIPE; pipenum++) {
-		check = 1 << pipenum;
-		if (mask &  check) {
-			struct r8a66597_td *td;
-			td = r8a66597_get_td(r8a66597, pipenum);
-			if (unlikely(!td))
-				continue;
+	क्रम (pipक्रमागत = 1; pipक्रमागत < R8A66597_MAX_NUM_PIPE; pipक्रमागत++) अणु
+		check = 1 << pipक्रमागत;
+		अगर (mask &  check) अणु
+			काष्ठा r8a66597_td *td;
+			td = r8a66597_get_td(r8a66597, pipक्रमागत);
+			अगर (unlikely(!td))
+				जारी;
 
-			tmp = r8a66597_read(r8a66597, td->pipe->pipectr);
-			if ((tmp & INBUFM) == 0) {
-				disable_irq_empty(r8a66597, pipenum);
-				pipe_irq_disable(r8a66597, pipenum);
-				finish_request(r8a66597, td, pipenum, td->urb,
+			पंचांगp = r8a66597_पढ़ो(r8a66597, td->pipe->pipectr);
+			अगर ((पंचांगp & INBUFM) == 0) अणु
+				disable_irq_empty(r8a66597, pipक्रमागत);
+				pipe_irq_disable(r8a66597, pipक्रमागत);
+				finish_request(r8a66597, td, pipक्रमागत, td->urb,
 						0);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void irq_pipe_nrdy(struct r8a66597 *r8a66597)
-{
+अटल व्योम irq_pipe_nrdy(काष्ठा r8a66597 *r8a66597)
+अणु
 	u16 check;
-	u16 pipenum;
+	u16 pipक्रमागत;
 	u16 mask;
-	int status;
+	पूर्णांक status;
 
-	mask = r8a66597_read(r8a66597, NRDYSTS)
-	       & r8a66597_read(r8a66597, NRDYENB);
-	r8a66597_write(r8a66597, ~mask, NRDYSTS);
-	if (mask & NRDY0) {
-		cfifo_change(r8a66597, 0);
+	mask = r8a66597_पढ़ो(r8a66597, NRDYSTS)
+	       & r8a66597_पढ़ो(r8a66597, NRDYENB);
+	r8a66597_ग_लिखो(r8a66597, ~mask, NRDYSTS);
+	अगर (mask & NRDY0) अणु
+		cfअगरo_change(r8a66597, 0);
 		status = get_urb_error(r8a66597, 0);
 		pipe_irq_disable(r8a66597, 0);
 		check_next_phase(r8a66597, status);
-	}
+	पूर्ण
 
-	for (pipenum = 1; pipenum < R8A66597_MAX_NUM_PIPE; pipenum++) {
-		check = 1 << pipenum;
-		if (mask & check) {
-			struct r8a66597_td *td;
-			td = r8a66597_get_td(r8a66597, pipenum);
-			if (unlikely(!td))
-				continue;
+	क्रम (pipक्रमागत = 1; pipक्रमागत < R8A66597_MAX_NUM_PIPE; pipक्रमागत++) अणु
+		check = 1 << pipक्रमागत;
+		अगर (mask & check) अणु
+			काष्ठा r8a66597_td *td;
+			td = r8a66597_get_td(r8a66597, pipक्रमागत);
+			अगर (unlikely(!td))
+				जारी;
 
-			status = get_urb_error(r8a66597, pipenum);
-			pipe_irq_disable(r8a66597, pipenum);
+			status = get_urb_error(r8a66597, pipक्रमागत);
+			pipe_irq_disable(r8a66597, pipक्रमागत);
 			pipe_stop(r8a66597, td->pipe);
-			finish_request(r8a66597, td, pipenum, td->urb, status);
-		}
-	}
-}
+			finish_request(r8a66597, td, pipक्रमागत, td->urb, status);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t r8a66597_irq(struct usb_hcd *hcd)
-{
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
-	u16 intsts0, intsts1, intsts2;
-	u16 intenb0, intenb1, intenb2;
+अटल irqवापस_t r8a66597_irq(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+	u16 पूर्णांकsts0, पूर्णांकsts1, पूर्णांकsts2;
+	u16 पूर्णांकenb0, पूर्णांकenb1, पूर्णांकenb2;
 	u16 mask0, mask1, mask2;
-	int status;
+	पूर्णांक status;
 
 	spin_lock(&r8a66597->lock);
 
-	intsts0 = r8a66597_read(r8a66597, INTSTS0);
-	intsts1 = r8a66597_read(r8a66597, INTSTS1);
-	intsts2 = r8a66597_read(r8a66597, INTSTS2);
-	intenb0 = r8a66597_read(r8a66597, INTENB0);
-	intenb1 = r8a66597_read(r8a66597, INTENB1);
-	intenb2 = r8a66597_read(r8a66597, INTENB2);
+	पूर्णांकsts0 = r8a66597_पढ़ो(r8a66597, INTSTS0);
+	पूर्णांकsts1 = r8a66597_पढ़ो(r8a66597, INTSTS1);
+	पूर्णांकsts2 = r8a66597_पढ़ो(r8a66597, INTSTS2);
+	पूर्णांकenb0 = r8a66597_पढ़ो(r8a66597, INTENB0);
+	पूर्णांकenb1 = r8a66597_पढ़ो(r8a66597, INTENB1);
+	पूर्णांकenb2 = r8a66597_पढ़ो(r8a66597, INTENB2);
 
-	mask2 = intsts2 & intenb2;
-	mask1 = intsts1 & intenb1;
-	mask0 = intsts0 & intenb0 & (BEMP | NRDY | BRDY);
-	if (mask2) {
-		if (mask2 & ATTCH) {
-			r8a66597_write(r8a66597, ~ATTCH, INTSTS2);
+	mask2 = पूर्णांकsts2 & पूर्णांकenb2;
+	mask1 = पूर्णांकsts1 & पूर्णांकenb1;
+	mask0 = पूर्णांकsts0 & पूर्णांकenb0 & (BEMP | NRDY | BRDY);
+	अगर (mask2) अणु
+		अगर (mask2 & ATTCH) अणु
+			r8a66597_ग_लिखो(r8a66597, ~ATTCH, INTSTS2);
 			r8a66597_bclr(r8a66597, ATTCHE, INTENB2);
 
 			/* start usb bus sampling */
 			start_root_hub_sampling(r8a66597, 1, 1);
-		}
-		if (mask2 & DTCH) {
-			r8a66597_write(r8a66597, ~DTCH, INTSTS2);
+		पूर्ण
+		अगर (mask2 & DTCH) अणु
+			r8a66597_ग_लिखो(r8a66597, ~DTCH, INTSTS2);
 			r8a66597_bclr(r8a66597, DTCHE, INTENB2);
 			r8a66597_usb_disconnect(r8a66597, 1);
-		}
-		if (mask2 & BCHG) {
-			r8a66597_write(r8a66597, ~BCHG, INTSTS2);
+		पूर्ण
+		अगर (mask2 & BCHG) अणु
+			r8a66597_ग_लिखो(r8a66597, ~BCHG, INTSTS2);
 			r8a66597_bclr(r8a66597, BCHGE, INTENB2);
 			usb_hcd_resume_root_hub(r8a66597_to_hcd(r8a66597));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (mask1) {
-		if (mask1 & ATTCH) {
-			r8a66597_write(r8a66597, ~ATTCH, INTSTS1);
+	अगर (mask1) अणु
+		अगर (mask1 & ATTCH) अणु
+			r8a66597_ग_लिखो(r8a66597, ~ATTCH, INTSTS1);
 			r8a66597_bclr(r8a66597, ATTCHE, INTENB1);
 
 			/* start usb bus sampling */
 			start_root_hub_sampling(r8a66597, 0, 1);
-		}
-		if (mask1 & DTCH) {
-			r8a66597_write(r8a66597, ~DTCH, INTSTS1);
+		पूर्ण
+		अगर (mask1 & DTCH) अणु
+			r8a66597_ग_लिखो(r8a66597, ~DTCH, INTSTS1);
 			r8a66597_bclr(r8a66597, DTCHE, INTENB1);
 			r8a66597_usb_disconnect(r8a66597, 0);
-		}
-		if (mask1 & BCHG) {
-			r8a66597_write(r8a66597, ~BCHG, INTSTS1);
+		पूर्ण
+		अगर (mask1 & BCHG) अणु
+			r8a66597_ग_लिखो(r8a66597, ~BCHG, INTSTS1);
 			r8a66597_bclr(r8a66597, BCHGE, INTENB1);
 			usb_hcd_resume_root_hub(r8a66597_to_hcd(r8a66597));
-		}
+		पूर्ण
 
-		if (mask1 & SIGN) {
-			r8a66597_write(r8a66597, ~SIGN, INTSTS1);
+		अगर (mask1 & SIGN) अणु
+			r8a66597_ग_लिखो(r8a66597, ~SIGN, INTSTS1);
 			status = get_urb_error(r8a66597, 0);
 			check_next_phase(r8a66597, status);
-		}
-		if (mask1 & SACK) {
-			r8a66597_write(r8a66597, ~SACK, INTSTS1);
+		पूर्ण
+		अगर (mask1 & SACK) अणु
+			r8a66597_ग_लिखो(r8a66597, ~SACK, INTSTS1);
 			check_next_phase(r8a66597, 0);
-		}
-	}
-	if (mask0) {
-		if (mask0 & BRDY)
-			irq_pipe_ready(r8a66597);
-		if (mask0 & BEMP)
+		पूर्ण
+	पूर्ण
+	अगर (mask0) अणु
+		अगर (mask0 & BRDY)
+			irq_pipe_पढ़ोy(r8a66597);
+		अगर (mask0 & BEMP)
 			irq_pipe_empty(r8a66597);
-		if (mask0 & NRDY)
+		अगर (mask0 & NRDY)
 			irq_pipe_nrdy(r8a66597);
-	}
+	पूर्ण
 
 	spin_unlock(&r8a66597->lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static void r8a66597_root_hub_control(struct r8a66597 *r8a66597, int port)
-{
-	u16 tmp;
-	struct r8a66597_root_hub *rh = &r8a66597->root_hub[port];
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल व्योम r8a66597_root_hub_control(काष्ठा r8a66597 *r8a66597, पूर्णांक port)
+अणु
+	u16 पंचांगp;
+	काष्ठा r8a66597_root_hub *rh = &r8a66597->root_hub[port];
 
-	if (rh->port & USB_PORT_STAT_RESET) {
-		unsigned long dvstctr_reg = get_dvstctr_reg(port);
+	अगर (rh->port & USB_PORT_STAT_RESET) अणु
+		अचिन्हित दीर्घ dvstctr_reg = get_dvstctr_reg(port);
 
-		tmp = r8a66597_read(r8a66597, dvstctr_reg);
-		if ((tmp & USBRST) == USBRST) {
+		पंचांगp = r8a66597_पढ़ो(r8a66597, dvstctr_reg);
+		अगर ((पंचांगp & USBRST) == USBRST) अणु
 			r8a66597_mdfy(r8a66597, UACT, USBRST | UACT,
 				      dvstctr_reg);
 			r8a66597_root_hub_start_polling(r8a66597);
-		} else
+		पूर्ण अन्यथा
 			r8a66597_usb_connect(r8a66597, port);
-	}
+	पूर्ण
 
-	if (!(rh->port & USB_PORT_STAT_CONNECTION)) {
-		r8a66597_write(r8a66597, ~ATTCH, get_intsts_reg(port));
-		r8a66597_bset(r8a66597, ATTCHE, get_intenb_reg(port));
-	}
+	अगर (!(rh->port & USB_PORT_STAT_CONNECTION)) अणु
+		r8a66597_ग_लिखो(r8a66597, ~ATTCH, get_पूर्णांकsts_reg(port));
+		r8a66597_bset(r8a66597, ATTCHE, get_पूर्णांकenb_reg(port));
+	पूर्ण
 
-	if (rh->scount > 0) {
-		tmp = r8a66597_read(r8a66597, get_syssts_reg(port)) & LNST;
-		if (tmp == rh->old_syssts) {
+	अगर (rh->scount > 0) अणु
+		पंचांगp = r8a66597_पढ़ो(r8a66597, get_syssts_reg(port)) & LNST;
+		अगर (पंचांगp == rh->old_syssts) अणु
 			rh->scount--;
-			if (rh->scount == 0)
-				r8a66597_check_syssts(r8a66597, port, tmp);
-			else
+			अगर (rh->scount == 0)
+				r8a66597_check_syssts(r8a66597, port, पंचांगp);
+			अन्यथा
 				r8a66597_root_hub_start_polling(r8a66597);
-		} else {
+		पूर्ण अन्यथा अणु
 			rh->scount = R8A66597_MAX_SAMPLING;
-			rh->old_syssts = tmp;
+			rh->old_syssts = पंचांगp;
 			r8a66597_root_hub_start_polling(r8a66597);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void r8a66597_interval_timer(struct timer_list *t)
-{
-	struct r8a66597_timers *timers = from_timer(timers, t, interval);
-	struct r8a66597 *r8a66597 = timers->r8a66597;
-	unsigned long flags;
-	u16 pipenum;
-	struct r8a66597_td *td;
+अटल व्योम r8a66597_पूर्णांकerval_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा r8a66597_समयrs *समयrs = from_समयr(समयrs, t, पूर्णांकerval);
+	काष्ठा r8a66597 *r8a66597 = समयrs->r8a66597;
+	अचिन्हित दीर्घ flags;
+	u16 pipक्रमागत;
+	काष्ठा r8a66597_td *td;
 
 	spin_lock_irqsave(&r8a66597->lock, flags);
 
-	for (pipenum = 0; pipenum < R8A66597_MAX_NUM_PIPE; pipenum++) {
-		if (!(r8a66597->interval_map & (1 << pipenum)))
-			continue;
-		if (timer_pending(&r8a66597->timers[pipenum].interval))
-			continue;
+	क्रम (pipक्रमागत = 0; pipक्रमागत < R8A66597_MAX_NUM_PIPE; pipक्रमागत++) अणु
+		अगर (!(r8a66597->पूर्णांकerval_map & (1 << pipक्रमागत)))
+			जारी;
+		अगर (समयr_pending(&r8a66597->समयrs[pipक्रमागत].पूर्णांकerval))
+			जारी;
 
-		td = r8a66597_get_td(r8a66597, pipenum);
-		if (td)
+		td = r8a66597_get_td(r8a66597, pipक्रमागत);
+		अगर (td)
 			start_transfer(r8a66597, td);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&r8a66597->lock, flags);
-}
+पूर्ण
 
-static void r8a66597_td_timer(struct timer_list *t)
-{
-	struct r8a66597_timers *timers = from_timer(timers, t, td);
-	struct r8a66597 *r8a66597 = timers->r8a66597;
-	unsigned long flags;
-	u16 pipenum;
-	struct r8a66597_td *td, *new_td = NULL;
-	struct r8a66597_pipe *pipe;
+अटल व्योम r8a66597_td_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा r8a66597_समयrs *समयrs = from_समयr(समयrs, t, td);
+	काष्ठा r8a66597 *r8a66597 = समयrs->r8a66597;
+	अचिन्हित दीर्घ flags;
+	u16 pipक्रमागत;
+	काष्ठा r8a66597_td *td, *new_td = शून्य;
+	काष्ठा r8a66597_pipe *pipe;
 
 	spin_lock_irqsave(&r8a66597->lock, flags);
-	for (pipenum = 0; pipenum < R8A66597_MAX_NUM_PIPE; pipenum++) {
-		if (!(r8a66597->timeout_map & (1 << pipenum)))
-			continue;
-		if (timer_pending(&r8a66597->timers[pipenum].td))
-			continue;
+	क्रम (pipक्रमागत = 0; pipक्रमागत < R8A66597_MAX_NUM_PIPE; pipक्रमागत++) अणु
+		अगर (!(r8a66597->समयout_map & (1 << pipक्रमागत)))
+			जारी;
+		अगर (समयr_pending(&r8a66597->समयrs[pipक्रमागत].td))
+			जारी;
 
-		td = r8a66597_get_td(r8a66597, pipenum);
-		if (!td) {
-			r8a66597->timeout_map &= ~(1 << pipenum);
-			continue;
-		}
+		td = r8a66597_get_td(r8a66597, pipक्रमागत);
+		अगर (!td) अणु
+			r8a66597->समयout_map &= ~(1 << pipक्रमागत);
+			जारी;
+		पूर्ण
 
-		if (td->urb->actual_length) {
-			set_td_timer(r8a66597, td);
-			break;
-		}
+		अगर (td->urb->actual_length) अणु
+			set_td_समयr(r8a66597, td);
+			अवरोध;
+		पूर्ण
 
 		pipe = td->pipe;
 		pipe_stop(r8a66597, pipe);
 
-		/* Select a different address or endpoint */
+		/* Select a dअगरferent address or endpoपूर्णांक */
 		new_td = td;
-		do {
+		करो अणु
 			list_move_tail(&new_td->queue,
-				       &r8a66597->pipe_queue[pipenum]);
-			new_td = r8a66597_get_td(r8a66597, pipenum);
-			if (!new_td) {
+				       &r8a66597->pipe_queue[pipक्रमागत]);
+			new_td = r8a66597_get_td(r8a66597, pipक्रमागत);
+			अगर (!new_td) अणु
 				new_td = td;
-				break;
-			}
-		} while (td != new_td && td->address == new_td->address &&
+				अवरोध;
+			पूर्ण
+		पूर्ण जबतक (td != new_td && td->address == new_td->address &&
 			td->pipe->info.epnum == new_td->pipe->info.epnum);
 
 		start_transfer(r8a66597, new_td);
 
-		if (td == new_td)
-			r8a66597->timeout_map &= ~(1 << pipenum);
-		else
-			set_td_timer(r8a66597, new_td);
-		break;
-	}
+		अगर (td == new_td)
+			r8a66597->समयout_map &= ~(1 << pipक्रमागत);
+		अन्यथा
+			set_td_समयr(r8a66597, new_td);
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&r8a66597->lock, flags);
-}
+पूर्ण
 
-static void r8a66597_timer(struct timer_list *t)
-{
-	struct r8a66597 *r8a66597 = from_timer(r8a66597, t, rh_timer);
-	unsigned long flags;
-	int port;
+अटल व्योम r8a66597_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा r8a66597 *r8a66597 = from_समयr(r8a66597, t, rh_समयr);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक port;
 
 	spin_lock_irqsave(&r8a66597->lock, flags);
 
-	for (port = 0; port < r8a66597->max_root_hub; port++)
+	क्रम (port = 0; port < r8a66597->max_root_hub; port++)
 		r8a66597_root_hub_control(r8a66597, port);
 
 	spin_unlock_irqrestore(&r8a66597->lock, flags);
-}
+पूर्ण
 
-static int check_pipe_config(struct r8a66597 *r8a66597, struct urb *urb)
-{
-	struct r8a66597_device *dev = get_urb_to_r8a66597_dev(r8a66597, urb);
+अटल पूर्णांक check_pipe_config(काष्ठा r8a66597 *r8a66597, काष्ठा urb *urb)
+अणु
+	काष्ठा r8a66597_device *dev = get_urb_to_r8a66597_dev(r8a66597, urb);
 
-	if (dev && dev->address && dev->state != USB_STATE_CONFIGURED &&
+	अगर (dev && dev->address && dev->state != USB_STATE_CONFIGURED &&
 	    (urb->dev->state == USB_STATE_CONFIGURED))
-		return 1;
-	else
-		return 0;
-}
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int r8a66597_start(struct usb_hcd *hcd)
-{
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+अटल पूर्णांक r8a66597_start(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
 
 	hcd->state = HC_STATE_RUNNING;
-	return enable_controller(r8a66597);
-}
+	वापस enable_controller(r8a66597);
+पूर्ण
 
-static void r8a66597_stop(struct usb_hcd *hcd)
-{
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+अटल व्योम r8a66597_stop(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
 
 	disable_controller(r8a66597);
-}
+पूर्ण
 
-static void set_address_zero(struct r8a66597 *r8a66597, struct urb *urb)
-{
-	unsigned int usb_address = usb_pipedevice(urb->pipe);
+अटल व्योम set_address_zero(काष्ठा r8a66597 *r8a66597, काष्ठा urb *urb)
+अणु
+	अचिन्हित पूर्णांक usb_address = usb_pipedevice(urb->pipe);
 	u16 root_port, hub_port;
 
-	if (usb_address == 0) {
+	अगर (usb_address == 0) अणु
 		get_port_number(r8a66597, urb->dev->devpath,
 				&root_port, &hub_port);
 		set_devadd_reg(r8a66597, 0,
 			       get_r8a66597_usb_speed(urb->dev->speed),
 			       get_parent_r8a66597_address(r8a66597, urb->dev),
 			       hub_port, root_port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct r8a66597_td *r8a66597_make_td(struct r8a66597 *r8a66597,
-					    struct urb *urb,
-					    struct usb_host_endpoint *hep)
-{
-	struct r8a66597_td *td;
-	u16 pipenum;
+अटल काष्ठा r8a66597_td *r8a66597_make_td(काष्ठा r8a66597 *r8a66597,
+					    काष्ठा urb *urb,
+					    काष्ठा usb_host_endpoपूर्णांक *hep)
+अणु
+	काष्ठा r8a66597_td *td;
+	u16 pipक्रमागत;
 
-	td = kzalloc(sizeof(struct r8a66597_td), GFP_ATOMIC);
-	if (td == NULL)
-		return NULL;
+	td = kzalloc(माप(काष्ठा r8a66597_td), GFP_ATOMIC);
+	अगर (td == शून्य)
+		वापस शून्य;
 
-	pipenum = r8a66597_get_pipenum(urb, hep);
-	td->pipenum = pipenum;
+	pipक्रमागत = r8a66597_get_pipक्रमागत(urb, hep);
+	td->pipक्रमागत = pipक्रमागत;
 	td->pipe = hep->hcpriv;
 	td->urb = urb;
 	td->address = get_urb_to_r8a66597_addr(r8a66597, urb);
 	td->maxpacket = usb_maxpacket(urb->dev, urb->pipe,
 				      !usb_pipein(urb->pipe));
-	if (usb_pipecontrol(urb->pipe))
+	अगर (usb_pipecontrol(urb->pipe))
 		td->type = USB_PID_SETUP;
-	else if (usb_pipein(urb->pipe))
+	अन्यथा अगर (usb_pipein(urb->pipe))
 		td->type = USB_PID_IN;
-	else
+	अन्यथा
 		td->type = USB_PID_OUT;
 	INIT_LIST_HEAD(&td->queue);
 
-	return td;
-}
+	वापस td;
+पूर्ण
 
-static int r8a66597_urb_enqueue(struct usb_hcd *hcd,
-				struct urb *urb,
+अटल पूर्णांक r8a66597_urb_enqueue(काष्ठा usb_hcd *hcd,
+				काष्ठा urb *urb,
 				gfp_t mem_flags)
-{
-	struct usb_host_endpoint *hep = urb->ep;
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
-	struct r8a66597_td *td = NULL;
-	int ret, request = 0;
-	unsigned long flags;
+अणु
+	काष्ठा usb_host_endpoपूर्णांक *hep = urb->ep;
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+	काष्ठा r8a66597_td *td = शून्य;
+	पूर्णांक ret, request = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&r8a66597->lock, flags);
-	if (!get_urb_to_r8a66597_dev(r8a66597, urb)) {
+	अगर (!get_urb_to_r8a66597_dev(r8a66597, urb)) अणु
 		ret = -ENODEV;
-		goto error_not_linked;
-	}
+		जाओ error_not_linked;
+	पूर्ण
 
 	ret = usb_hcd_link_urb_to_ep(hcd, urb);
-	if (ret)
-		goto error_not_linked;
+	अगर (ret)
+		जाओ error_not_linked;
 
-	if (!hep->hcpriv) {
-		hep->hcpriv = kzalloc(sizeof(struct r8a66597_pipe),
+	अगर (!hep->hcpriv) अणु
+		hep->hcpriv = kzalloc(माप(काष्ठा r8a66597_pipe),
 				GFP_ATOMIC);
-		if (!hep->hcpriv) {
+		अगर (!hep->hcpriv) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		set_pipe_reg_addr(hep->hcpriv, R8A66597_PIPE_NO_DMA);
-		if (usb_pipeendpoint(urb->pipe))
+		अगर (usb_pipeendpoपूर्णांक(urb->pipe))
 			init_pipe_info(r8a66597, urb, hep, &hep->desc);
-	}
+	पूर्ण
 
-	if (unlikely(check_pipe_config(r8a66597, urb)))
+	अगर (unlikely(check_pipe_config(r8a66597, urb)))
 		init_pipe_config(r8a66597, urb);
 
 	set_address_zero(r8a66597, urb);
 	td = r8a66597_make_td(r8a66597, urb, hep);
-	if (td == NULL) {
+	अगर (td == शून्य) अणु
 		ret = -ENOMEM;
-		goto error;
-	}
-	if (list_empty(&r8a66597->pipe_queue[td->pipenum]))
+		जाओ error;
+	पूर्ण
+	अगर (list_empty(&r8a66597->pipe_queue[td->pipक्रमागत]))
 		request = 1;
-	list_add_tail(&td->queue, &r8a66597->pipe_queue[td->pipenum]);
+	list_add_tail(&td->queue, &r8a66597->pipe_queue[td->pipक्रमागत]);
 	urb->hcpriv = td;
 
-	if (request) {
-		if (td->pipe->info.timer_interval) {
-			r8a66597->interval_map |= 1 << td->pipenum;
-			mod_timer(&r8a66597->timers[td->pipenum].interval,
-				  jiffies + msecs_to_jiffies(
-					td->pipe->info.timer_interval));
-		} else {
+	अगर (request) अणु
+		अगर (td->pipe->info.समयr_पूर्णांकerval) अणु
+			r8a66597->पूर्णांकerval_map |= 1 << td->pipक्रमागत;
+			mod_समयr(&r8a66597->समयrs[td->pipक्रमागत].पूर्णांकerval,
+				  jअगरfies + msecs_to_jअगरfies(
+					td->pipe->info.समयr_पूर्णांकerval));
+		पूर्ण अन्यथा अणु
 			ret = start_transfer(r8a66597, td);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				list_del(&td->queue);
-				kfree(td);
-			}
-		}
-	} else
-		set_td_timer(r8a66597, td);
+				kमुक्त(td);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा
+		set_td_समयr(r8a66597, td);
 
 error:
-	if (ret)
+	अगर (ret)
 		usb_hcd_unlink_urb_from_ep(hcd, urb);
 error_not_linked:
 	spin_unlock_irqrestore(&r8a66597->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int r8a66597_urb_dequeue(struct usb_hcd *hcd, struct urb *urb,
-		int status)
-{
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
-	struct r8a66597_td *td;
-	unsigned long flags;
-	int rc;
+अटल पूर्णांक r8a66597_urb_dequeue(काष्ठा usb_hcd *hcd, काष्ठा urb *urb,
+		पूर्णांक status)
+अणु
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+	काष्ठा r8a66597_td *td;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
 	spin_lock_irqsave(&r8a66597->lock, flags);
 	rc = usb_hcd_check_unlink_urb(hcd, urb, status);
-	if (rc)
-		goto done;
+	अगर (rc)
+		जाओ करोne;
 
-	if (urb->hcpriv) {
+	अगर (urb->hcpriv) अणु
 		td = urb->hcpriv;
 		pipe_stop(r8a66597, td->pipe);
-		pipe_irq_disable(r8a66597, td->pipenum);
-		disable_irq_empty(r8a66597, td->pipenum);
-		finish_request(r8a66597, td, td->pipenum, urb, status);
-	}
- done:
+		pipe_irq_disable(r8a66597, td->pipक्रमागत);
+		disable_irq_empty(r8a66597, td->pipक्रमागत);
+		finish_request(r8a66597, td, td->pipक्रमागत, urb, status);
+	पूर्ण
+ करोne:
 	spin_unlock_irqrestore(&r8a66597->lock, flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void r8a66597_endpoint_disable(struct usb_hcd *hcd,
-				      struct usb_host_endpoint *hep)
+अटल व्योम r8a66597_endpoपूर्णांक_disable(काष्ठा usb_hcd *hcd,
+				      काष्ठा usb_host_endpoपूर्णांक *hep)
 __acquires(r8a66597->lock)
 __releases(r8a66597->lock)
-{
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
-	struct r8a66597_pipe *pipe = (struct r8a66597_pipe *)hep->hcpriv;
-	struct r8a66597_td *td;
-	struct urb *urb = NULL;
-	u16 pipenum;
-	unsigned long flags;
+अणु
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+	काष्ठा r8a66597_pipe *pipe = (काष्ठा r8a66597_pipe *)hep->hcpriv;
+	काष्ठा r8a66597_td *td;
+	काष्ठा urb *urb = शून्य;
+	u16 pipक्रमागत;
+	अचिन्हित दीर्घ flags;
 
-	if (pipe == NULL)
-		return;
-	pipenum = pipe->info.pipenum;
+	अगर (pipe == शून्य)
+		वापस;
+	pipक्रमागत = pipe->info.pipक्रमागत;
 
 	spin_lock_irqsave(&r8a66597->lock, flags);
-	if (pipenum == 0) {
-		kfree(hep->hcpriv);
-		hep->hcpriv = NULL;
+	अगर (pipक्रमागत == 0) अणु
+		kमुक्त(hep->hcpriv);
+		hep->hcpriv = शून्य;
 		spin_unlock_irqrestore(&r8a66597->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pipe_stop(r8a66597, pipe);
-	pipe_irq_disable(r8a66597, pipenum);
-	disable_irq_empty(r8a66597, pipenum);
-	td = r8a66597_get_td(r8a66597, pipenum);
-	if (td)
+	pipe_irq_disable(r8a66597, pipक्रमागत);
+	disable_irq_empty(r8a66597, pipक्रमागत);
+	td = r8a66597_get_td(r8a66597, pipक्रमागत);
+	अगर (td)
 		urb = td->urb;
-	finish_request(r8a66597, td, pipenum, urb, -ESHUTDOWN);
-	kfree(hep->hcpriv);
-	hep->hcpriv = NULL;
+	finish_request(r8a66597, td, pipक्रमागत, urb, -ESHUTDOWN);
+	kमुक्त(hep->hcpriv);
+	hep->hcpriv = शून्य;
 	spin_unlock_irqrestore(&r8a66597->lock, flags);
-}
+पूर्ण
 
-static int r8a66597_get_frame(struct usb_hcd *hcd)
-{
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
-	return r8a66597_read(r8a66597, FRMNUM) & 0x03FF;
-}
+अटल पूर्णांक r8a66597_get_frame(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+	वापस r8a66597_पढ़ो(r8a66597, FRMNUM) & 0x03FF;
+पूर्ण
 
-static void collect_usb_address_map(struct usb_device *udev, unsigned long *map)
-{
-	int chix;
-	struct usb_device *childdev;
+अटल व्योम collect_usb_address_map(काष्ठा usb_device *udev, अचिन्हित दीर्घ *map)
+अणु
+	पूर्णांक chix;
+	काष्ठा usb_device *childdev;
 
-	if (udev->state == USB_STATE_CONFIGURED &&
+	अगर (udev->state == USB_STATE_CONFIGURED &&
 	    udev->parent && udev->parent->devnum > 1 &&
 	    udev->parent->descriptor.bDeviceClass == USB_CLASS_HUB)
 		map[udev->devnum/32] |= (1 << (udev->devnum % 32));
 
-	usb_hub_for_each_child(udev, chix, childdev)
+	usb_hub_क्रम_each_child(udev, chix, childdev)
 		collect_usb_address_map(childdev, map);
-}
+पूर्ण
 
-/* this function must be called with interrupt disabled */
-static struct r8a66597_device *get_r8a66597_device(struct r8a66597 *r8a66597,
-						   int addr)
-{
-	struct r8a66597_device *dev;
-	struct list_head *list = &r8a66597->child_device;
+/* this function must be called with पूर्णांकerrupt disabled */
+अटल काष्ठा r8a66597_device *get_r8a66597_device(काष्ठा r8a66597 *r8a66597,
+						   पूर्णांक addr)
+अणु
+	काष्ठा r8a66597_device *dev;
+	काष्ठा list_head *list = &r8a66597->child_device;
 
-	list_for_each_entry(dev, list, device_list) {
-		if (dev->usb_address != addr)
-			continue;
+	list_क्रम_each_entry(dev, list, device_list) अणु
+		अगर (dev->usb_address != addr)
+			जारी;
 
-		return dev;
-	}
+		वापस dev;
+	पूर्ण
 
-	printk(KERN_ERR "r8a66597: get_r8a66597_device fail.(%d)\n", addr);
-	return NULL;
-}
+	prपूर्णांकk(KERN_ERR "r8a66597: get_r8a66597_device fail.(%d)\n", addr);
+	वापस शून्य;
+पूर्ण
 
-static void update_usb_address_map(struct r8a66597 *r8a66597,
-				   struct usb_device *root_hub,
-				   unsigned long *map)
-{
-	int i, j, addr;
-	unsigned long diff;
-	unsigned long flags;
+अटल व्योम update_usb_address_map(काष्ठा r8a66597 *r8a66597,
+				   काष्ठा usb_device *root_hub,
+				   अचिन्हित दीर्घ *map)
+अणु
+	पूर्णांक i, j, addr;
+	अचिन्हित दीर्घ dअगरf;
+	अचिन्हित दीर्घ flags;
 
-	for (i = 0; i < 4; i++) {
-		diff = r8a66597->child_connect_map[i] ^ map[i];
-		if (!diff)
-			continue;
+	क्रम (i = 0; i < 4; i++) अणु
+		dअगरf = r8a66597->child_connect_map[i] ^ map[i];
+		अगर (!dअगरf)
+			जारी;
 
-		for (j = 0; j < 32; j++) {
-			if (!(diff & (1 << j)))
-				continue;
+		क्रम (j = 0; j < 32; j++) अणु
+			अगर (!(dअगरf & (1 << j)))
+				जारी;
 
 			addr = i * 32 + j;
-			if (map[i] & (1 << j))
+			अगर (map[i] & (1 << j))
 				set_child_connect_map(r8a66597, addr);
-			else {
-				struct r8a66597_device *dev;
+			अन्यथा अणु
+				काष्ठा r8a66597_device *dev;
 
 				spin_lock_irqsave(&r8a66597->lock, flags);
 				dev = get_r8a66597_device(r8a66597, addr);
 				disable_r8a66597_pipe_all(r8a66597, dev);
-				free_usb_address(r8a66597, dev, 0);
+				मुक्त_usb_address(r8a66597, dev, 0);
 				put_child_connect_map(r8a66597, addr);
 				spin_unlock_irqrestore(&r8a66597->lock, flags);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void r8a66597_check_detect_child(struct r8a66597 *r8a66597,
-					struct usb_hcd *hcd)
-{
-	struct usb_bus *bus;
-	unsigned long now_map[4];
+अटल व्योम r8a66597_check_detect_child(काष्ठा r8a66597 *r8a66597,
+					काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा usb_bus *bus;
+	अचिन्हित दीर्घ now_map[4];
 
-	memset(now_map, 0, sizeof(now_map));
+	स_रखो(now_map, 0, माप(now_map));
 
 	mutex_lock(&usb_bus_idr_lock);
 	bus = idr_find(&usb_bus_idr, hcd->self.busnum);
-	if (bus && bus->root_hub) {
+	अगर (bus && bus->root_hub) अणु
 		collect_usb_address_map(bus->root_hub, now_map);
 		update_usb_address_map(r8a66597, bus->root_hub, now_map);
-	}
+	पूर्ण
 	mutex_unlock(&usb_bus_idr_lock);
-}
+पूर्ण
 
-static int r8a66597_hub_status_data(struct usb_hcd *hcd, char *buf)
-{
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
-	unsigned long flags;
-	int i;
+अटल पूर्णांक r8a66597_hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf)
+अणु
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	r8a66597_check_detect_child(r8a66597, hcd);
 
@@ -2112,19 +2113,19 @@ static int r8a66597_hub_status_data(struct usb_hcd *hcd, char *buf)
 
 	*buf = 0;	/* initialize (no change) */
 
-	for (i = 0; i < r8a66597->max_root_hub; i++) {
-		if (r8a66597->root_hub[i].port & 0xffff0000)
+	क्रम (i = 0; i < r8a66597->max_root_hub; i++) अणु
+		अगर (r8a66597->root_hub[i].port & 0xffff0000)
 			*buf |= 1 << (i + 1);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&r8a66597->lock, flags);
 
-	return (*buf != 0);
-}
+	वापस (*buf != 0);
+पूर्ण
 
-static void r8a66597_hub_descriptor(struct r8a66597 *r8a66597,
-				    struct usb_hub_descriptor *desc)
-{
+अटल व्योम r8a66597_hub_descriptor(काष्ठा r8a66597 *r8a66597,
+				    काष्ठा usb_hub_descriptor *desc)
+अणु
 	desc->bDescriptorType = USB_DT_HUB;
 	desc->bHubContrCurrent = 0;
 	desc->bNbrPorts = r8a66597->max_root_hub;
@@ -2135,156 +2136,156 @@ static void r8a66597_hub_descriptor(struct r8a66597 *r8a66597,
 	desc->u.hs.DeviceRemovable[0] =
 		((1 << r8a66597->max_root_hub) - 1) << 1;
 	desc->u.hs.DeviceRemovable[1] = ~0;
-}
+पूर्ण
 
-static int r8a66597_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
-				u16 wIndex, char *buf, u16 wLength)
-{
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
-	int ret;
-	int port = (wIndex & 0x00FF) - 1;
-	struct r8a66597_root_hub *rh = &r8a66597->root_hub[port];
-	unsigned long flags;
+अटल पूर्णांक r8a66597_hub_control(काष्ठा usb_hcd *hcd, u16 typeReq, u16 wValue,
+				u16 wIndex, अक्षर *buf, u16 wLength)
+अणु
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+	पूर्णांक ret;
+	पूर्णांक port = (wIndex & 0x00FF) - 1;
+	काष्ठा r8a66597_root_hub *rh = &r8a66597->root_hub[port];
+	अचिन्हित दीर्घ flags;
 
 	ret = 0;
 
 	spin_lock_irqsave(&r8a66597->lock, flags);
-	switch (typeReq) {
-	case ClearHubFeature:
-	case SetHubFeature:
-		switch (wValue) {
-		case C_HUB_OVER_CURRENT:
-		case C_HUB_LOCAL_POWER:
-			break;
-		default:
-			goto error;
-		}
-		break;
-	case ClearPortFeature:
-		if (wIndex > r8a66597->max_root_hub)
-			goto error;
-		if (wLength != 0)
-			goto error;
+	चयन (typeReq) अणु
+	हाल ClearHubFeature:
+	हाल SetHubFeature:
+		चयन (wValue) अणु
+		हाल C_HUB_OVER_CURRENT:
+		हाल C_HUB_LOCAL_POWER:
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
+		अवरोध;
+	हाल ClearPortFeature:
+		अगर (wIndex > r8a66597->max_root_hub)
+			जाओ error;
+		अगर (wLength != 0)
+			जाओ error;
 
-		switch (wValue) {
-		case USB_PORT_FEAT_ENABLE:
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_ENABLE:
 			rh->port &= ~USB_PORT_STAT_POWER;
-			break;
-		case USB_PORT_FEAT_SUSPEND:
-			break;
-		case USB_PORT_FEAT_POWER:
-			r8a66597_port_power(r8a66597, port, 0);
-			break;
-		case USB_PORT_FEAT_C_ENABLE:
-		case USB_PORT_FEAT_C_SUSPEND:
-		case USB_PORT_FEAT_C_CONNECTION:
-		case USB_PORT_FEAT_C_OVER_CURRENT:
-		case USB_PORT_FEAT_C_RESET:
-			break;
-		default:
-			goto error;
-		}
+			अवरोध;
+		हाल USB_PORT_FEAT_SUSPEND:
+			अवरोध;
+		हाल USB_PORT_FEAT_POWER:
+			r8a66597_port_घातer(r8a66597, port, 0);
+			अवरोध;
+		हाल USB_PORT_FEAT_C_ENABLE:
+		हाल USB_PORT_FEAT_C_SUSPEND:
+		हाल USB_PORT_FEAT_C_CONNECTION:
+		हाल USB_PORT_FEAT_C_OVER_CURRENT:
+		हाल USB_PORT_FEAT_C_RESET:
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
 		rh->port &= ~(1 << wValue);
-		break;
-	case GetHubDescriptor:
+		अवरोध;
+	हाल GetHubDescriptor:
 		r8a66597_hub_descriptor(r8a66597,
-					(struct usb_hub_descriptor *)buf);
-		break;
-	case GetHubStatus:
+					(काष्ठा usb_hub_descriptor *)buf);
+		अवरोध;
+	हाल GetHubStatus:
 		*buf = 0x00;
-		break;
-	case GetPortStatus:
-		if (wIndex > r8a66597->max_root_hub)
-			goto error;
+		अवरोध;
+	हाल GetPortStatus:
+		अगर (wIndex > r8a66597->max_root_hub)
+			जाओ error;
 		*(__le32 *)buf = cpu_to_le32(rh->port);
-		break;
-	case SetPortFeature:
-		if (wIndex > r8a66597->max_root_hub)
-			goto error;
-		if (wLength != 0)
-			goto error;
+		अवरोध;
+	हाल SetPortFeature:
+		अगर (wIndex > r8a66597->max_root_hub)
+			जाओ error;
+		अगर (wLength != 0)
+			जाओ error;
 
-		switch (wValue) {
-		case USB_PORT_FEAT_SUSPEND:
-			break;
-		case USB_PORT_FEAT_POWER:
-			r8a66597_port_power(r8a66597, port, 1);
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_SUSPEND:
+			अवरोध;
+		हाल USB_PORT_FEAT_POWER:
+			r8a66597_port_घातer(r8a66597, port, 1);
 			rh->port |= USB_PORT_STAT_POWER;
-			break;
-		case USB_PORT_FEAT_RESET: {
-			struct r8a66597_device *dev = rh->dev;
+			अवरोध;
+		हाल USB_PORT_FEAT_RESET: अणु
+			काष्ठा r8a66597_device *dev = rh->dev;
 
 			rh->port |= USB_PORT_STAT_RESET;
 
 			disable_r8a66597_pipe_all(r8a66597, dev);
-			free_usb_address(r8a66597, dev, 1);
+			मुक्त_usb_address(r8a66597, dev, 1);
 
 			r8a66597_mdfy(r8a66597, USBRST, USBRST | UACT,
 				      get_dvstctr_reg(port));
-			mod_timer(&r8a66597->rh_timer,
-				  jiffies + msecs_to_jiffies(50));
-			}
-			break;
-		default:
-			goto error;
-		}
+			mod_समयr(&r8a66597->rh_समयr,
+				  jअगरfies + msecs_to_jअगरfies(50));
+			पूर्ण
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
 		rh->port |= 1 << wValue;
-		break;
-	default:
+		अवरोध;
+	शेष:
 error:
 		ret = -EPIPE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&r8a66597->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#if defined(CONFIG_PM)
-static int r8a66597_bus_suspend(struct usb_hcd *hcd)
-{
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
-	int port;
+#अगर defined(CONFIG_PM)
+अटल पूर्णांक r8a66597_bus_suspend(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+	पूर्णांक port;
 
 	dev_dbg(&r8a66597->device0.udev->dev, "%s\n", __func__);
 
-	for (port = 0; port < r8a66597->max_root_hub; port++) {
-		struct r8a66597_root_hub *rh = &r8a66597->root_hub[port];
-		unsigned long dvstctr_reg = get_dvstctr_reg(port);
+	क्रम (port = 0; port < r8a66597->max_root_hub; port++) अणु
+		काष्ठा r8a66597_root_hub *rh = &r8a66597->root_hub[port];
+		अचिन्हित दीर्घ dvstctr_reg = get_dvstctr_reg(port);
 
-		if (!(rh->port & USB_PORT_STAT_ENABLE))
-			continue;
+		अगर (!(rh->port & USB_PORT_STAT_ENABLE))
+			जारी;
 
 		dev_dbg(&rh->dev->udev->dev, "suspend port = %d\n", port);
 		r8a66597_bclr(r8a66597, UACT, dvstctr_reg);	/* suspend */
 		rh->port |= USB_PORT_STAT_SUSPEND;
 
-		if (rh->dev->udev->do_remote_wakeup) {
-			msleep(3);	/* waiting last SOF */
+		अगर (rh->dev->udev->करो_remote_wakeup) अणु
+			msleep(3);	/* रुकोing last SOF */
 			r8a66597_bset(r8a66597, RWUPE, dvstctr_reg);
-			r8a66597_write(r8a66597, ~BCHG, get_intsts_reg(port));
-			r8a66597_bset(r8a66597, BCHGE, get_intenb_reg(port));
-		}
-	}
+			r8a66597_ग_लिखो(r8a66597, ~BCHG, get_पूर्णांकsts_reg(port));
+			r8a66597_bset(r8a66597, BCHGE, get_पूर्णांकenb_reg(port));
+		पूर्ण
+	पूर्ण
 
 	r8a66597->bus_suspended = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r8a66597_bus_resume(struct usb_hcd *hcd)
-{
-	struct r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
-	int port;
+अटल पूर्णांक r8a66597_bus_resume(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा r8a66597 *r8a66597 = hcd_to_r8a66597(hcd);
+	पूर्णांक port;
 
 	dev_dbg(&r8a66597->device0.udev->dev, "%s\n", __func__);
 
-	for (port = 0; port < r8a66597->max_root_hub; port++) {
-		struct r8a66597_root_hub *rh = &r8a66597->root_hub[port];
-		unsigned long dvstctr_reg = get_dvstctr_reg(port);
+	क्रम (port = 0; port < r8a66597->max_root_hub; port++) अणु
+		काष्ठा r8a66597_root_hub *rh = &r8a66597->root_hub[port];
+		अचिन्हित दीर्घ dvstctr_reg = get_dvstctr_reg(port);
 
-		if (!(rh->port & USB_PORT_STAT_SUSPEND))
-			continue;
+		अगर (!(rh->port & USB_PORT_STAT_SUSPEND))
+			जारी;
 
 		dev_dbg(&rh->dev->udev->dev, "resume port = %d\n", port);
 		rh->port &= ~USB_PORT_STAT_SUSPEND;
@@ -2292,19 +2293,19 @@ static int r8a66597_bus_resume(struct usb_hcd *hcd)
 		r8a66597_mdfy(r8a66597, RESUME, RESUME | UACT, dvstctr_reg);
 		msleep(USB_RESUME_TIMEOUT);
 		r8a66597_mdfy(r8a66597, UACT, RESUME | UACT, dvstctr_reg);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
-#else
-#define	r8a66597_bus_suspend	NULL
-#define	r8a66597_bus_resume	NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा	r8a66597_bus_suspend	शून्य
+#घोषणा	r8a66597_bus_resume	शून्य
+#पूर्ण_अगर
 
-static const struct hc_driver r8a66597_hc_driver = {
+अटल स्थिर काष्ठा hc_driver r8a66597_hc_driver = अणु
 	.description =		hcd_name,
-	.hcd_priv_size =	sizeof(struct r8a66597),
+	.hcd_priv_size =	माप(काष्ठा r8a66597),
 	.irq =			r8a66597_irq,
 
 	/*
@@ -2320,7 +2321,7 @@ static const struct hc_driver r8a66597_hc_driver = {
 	 */
 	.urb_enqueue =		r8a66597_urb_enqueue,
 	.urb_dequeue =		r8a66597_urb_dequeue,
-	.endpoint_disable =	r8a66597_endpoint_disable,
+	.endpoपूर्णांक_disable =	r8a66597_endpoपूर्णांक_disable,
 
 	/*
 	 * periodic schedule support
@@ -2334,189 +2335,189 @@ static const struct hc_driver r8a66597_hc_driver = {
 	.hub_control =		r8a66597_hub_control,
 	.bus_suspend =		r8a66597_bus_suspend,
 	.bus_resume =		r8a66597_bus_resume,
-};
+पूर्ण;
 
-#if defined(CONFIG_PM)
-static int r8a66597_suspend(struct device *dev)
-{
-	struct r8a66597		*r8a66597 = dev_get_drvdata(dev);
-	int port;
+#अगर defined(CONFIG_PM)
+अटल पूर्णांक r8a66597_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा r8a66597		*r8a66597 = dev_get_drvdata(dev);
+	पूर्णांक port;
 
 	dev_dbg(dev, "%s\n", __func__);
 
 	disable_controller(r8a66597);
 
-	for (port = 0; port < r8a66597->max_root_hub; port++) {
-		struct r8a66597_root_hub *rh = &r8a66597->root_hub[port];
+	क्रम (port = 0; port < r8a66597->max_root_hub; port++) अणु
+		काष्ठा r8a66597_root_hub *rh = &r8a66597->root_hub[port];
 
 		rh->port = 0x00000000;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r8a66597_resume(struct device *dev)
-{
-	struct r8a66597		*r8a66597 = dev_get_drvdata(dev);
-	struct usb_hcd		*hcd = r8a66597_to_hcd(r8a66597);
+अटल पूर्णांक r8a66597_resume(काष्ठा device *dev)
+अणु
+	काष्ठा r8a66597		*r8a66597 = dev_get_drvdata(dev);
+	काष्ठा usb_hcd		*hcd = r8a66597_to_hcd(r8a66597);
 
 	dev_dbg(dev, "%s\n", __func__);
 
 	enable_controller(r8a66597);
-	usb_root_hub_lost_power(hcd->self.root_hub);
+	usb_root_hub_lost_घातer(hcd->self.root_hub);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops r8a66597_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops r8a66597_dev_pm_ops = अणु
 	.suspend = r8a66597_suspend,
 	.resume = r8a66597_resume,
-	.poweroff = r8a66597_suspend,
+	.घातeroff = r8a66597_suspend,
 	.restore = r8a66597_resume,
-};
+पूर्ण;
 
-#define R8A66597_DEV_PM_OPS	(&r8a66597_dev_pm_ops)
-#else	/* if defined(CONFIG_PM) */
-#define R8A66597_DEV_PM_OPS	NULL
-#endif
+#घोषणा R8A66597_DEV_PM_OPS	(&r8a66597_dev_pm_ops)
+#अन्यथा	/* अगर defined(CONFIG_PM) */
+#घोषणा R8A66597_DEV_PM_OPS	शून्य
+#पूर्ण_अगर
 
-static int r8a66597_remove(struct platform_device *pdev)
-{
-	struct r8a66597		*r8a66597 = platform_get_drvdata(pdev);
-	struct usb_hcd		*hcd = r8a66597_to_hcd(r8a66597);
+अटल पूर्णांक r8a66597_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा r8a66597		*r8a66597 = platक्रमm_get_drvdata(pdev);
+	काष्ठा usb_hcd		*hcd = r8a66597_to_hcd(r8a66597);
 
-	del_timer_sync(&r8a66597->rh_timer);
-	usb_remove_hcd(hcd);
+	del_समयr_sync(&r8a66597->rh_समयr);
+	usb_हटाओ_hcd(hcd);
 	iounmap(r8a66597->reg);
-	if (r8a66597->pdata->on_chip)
+	अगर (r8a66597->pdata->on_chip)
 		clk_put(r8a66597->clk);
 	usb_put_hcd(hcd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r8a66597_probe(struct platform_device *pdev)
-{
-	char clk_name[8];
-	struct resource *res = NULL, *ires;
-	int irq = -1;
-	void __iomem *reg = NULL;
-	struct usb_hcd *hcd = NULL;
-	struct r8a66597 *r8a66597;
-	int ret = 0;
-	int i;
-	unsigned long irq_trigger;
+अटल पूर्णांक r8a66597_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	अक्षर clk_name[8];
+	काष्ठा resource *res = शून्य, *ires;
+	पूर्णांक irq = -1;
+	व्योम __iomem *reg = शून्य;
+	काष्ठा usb_hcd *hcd = शून्य;
+	काष्ठा r8a66597 *r8a66597;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
+	अचिन्हित दीर्घ irq_trigger;
 
-	if (usb_disabled())
-		return -ENODEV;
+	अगर (usb_disabled())
+		वापस -ENODEV;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		ret = -ENODEV;
 		dev_err(&pdev->dev, "platform_get_resource error.\n");
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
-	ires = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!ires) {
+	ires = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (!ires) अणु
 		ret = -ENODEV;
 		dev_err(&pdev->dev,
 			"platform_get_resource IORESOURCE_IRQ error.\n");
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
 	irq = ires->start;
 	irq_trigger = ires->flags & IRQF_TRIGGER_MASK;
 
 	reg = ioremap(res->start, resource_size(res));
-	if (reg == NULL) {
+	अगर (reg == शून्य) अणु
 		ret = -ENOMEM;
 		dev_err(&pdev->dev, "ioremap error.\n");
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
-	if (pdev->dev.platform_data == NULL) {
+	अगर (pdev->dev.platक्रमm_data == शून्य) अणु
 		dev_err(&pdev->dev, "no platform data\n");
 		ret = -ENODEV;
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
 	/* initialize hcd */
-	hcd = usb_create_hcd(&r8a66597_hc_driver, &pdev->dev, (char *)hcd_name);
-	if (!hcd) {
+	hcd = usb_create_hcd(&r8a66597_hc_driver, &pdev->dev, (अक्षर *)hcd_name);
+	अगर (!hcd) अणु
 		ret = -ENOMEM;
 		dev_err(&pdev->dev, "Failed to create hcd\n");
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 	r8a66597 = hcd_to_r8a66597(hcd);
-	memset(r8a66597, 0, sizeof(struct r8a66597));
-	platform_set_drvdata(pdev, r8a66597);
+	स_रखो(r8a66597, 0, माप(काष्ठा r8a66597));
+	platक्रमm_set_drvdata(pdev, r8a66597);
 	r8a66597->pdata = dev_get_platdata(&pdev->dev);
 	r8a66597->irq_sense_low = irq_trigger == IRQF_TRIGGER_LOW;
 
-	if (r8a66597->pdata->on_chip) {
-		snprintf(clk_name, sizeof(clk_name), "usb%d", pdev->id);
+	अगर (r8a66597->pdata->on_chip) अणु
+		snम_लिखो(clk_name, माप(clk_name), "usb%d", pdev->id);
 		r8a66597->clk = clk_get(&pdev->dev, clk_name);
-		if (IS_ERR(r8a66597->clk)) {
+		अगर (IS_ERR(r8a66597->clk)) अणु
 			dev_err(&pdev->dev, "cannot get clock \"%s\"\n",
 				clk_name);
 			ret = PTR_ERR(r8a66597->clk);
-			goto clean_up2;
-		}
+			जाओ clean_up2;
+		पूर्ण
 		r8a66597->max_root_hub = 1;
-	} else
+	पूर्ण अन्यथा
 		r8a66597->max_root_hub = 2;
 
 	spin_lock_init(&r8a66597->lock);
-	timer_setup(&r8a66597->rh_timer, r8a66597_timer, 0);
+	समयr_setup(&r8a66597->rh_समयr, r8a66597_समयr, 0);
 	r8a66597->reg = reg;
 
-	/* make sure no interrupts are pending */
-	ret = r8a66597_clock_enable(r8a66597);
-	if (ret < 0)
-		goto clean_up3;
+	/* make sure no पूर्णांकerrupts are pending */
+	ret = r8a66597_घड़ी_enable(r8a66597);
+	अगर (ret < 0)
+		जाओ clean_up3;
 	disable_controller(r8a66597);
 
-	for (i = 0; i < R8A66597_MAX_NUM_PIPE; i++) {
+	क्रम (i = 0; i < R8A66597_MAX_NUM_PIPE; i++) अणु
 		INIT_LIST_HEAD(&r8a66597->pipe_queue[i]);
-		r8a66597->timers[i].r8a66597 = r8a66597;
-		timer_setup(&r8a66597->timers[i].td, r8a66597_td_timer, 0);
-		timer_setup(&r8a66597->timers[i].interval,
-			    r8a66597_interval_timer, 0);
-	}
+		r8a66597->समयrs[i].r8a66597 = r8a66597;
+		समयr_setup(&r8a66597->समयrs[i].td, r8a66597_td_समयr, 0);
+		समयr_setup(&r8a66597->समयrs[i].पूर्णांकerval,
+			    r8a66597_पूर्णांकerval_समयr, 0);
+	पूर्ण
 	INIT_LIST_HEAD(&r8a66597->child_device);
 
 	hcd->rsrc_start = res->start;
 	hcd->has_tt = 1;
 
 	ret = usb_add_hcd(hcd, irq, irq_trigger);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(&pdev->dev, "Failed to add hcd\n");
-		goto clean_up3;
-	}
+		जाओ clean_up3;
+	पूर्ण
 	device_wakeup_enable(hcd->self.controller);
 
-	return 0;
+	वापस 0;
 
 clean_up3:
-	if (r8a66597->pdata->on_chip)
+	अगर (r8a66597->pdata->on_chip)
 		clk_put(r8a66597->clk);
 clean_up2:
 	usb_put_hcd(hcd);
 
 clean_up:
-	if (reg)
+	अगर (reg)
 		iounmap(reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver r8a66597_driver = {
+अटल काष्ठा platक्रमm_driver r8a66597_driver = अणु
 	.probe =	r8a66597_probe,
-	.remove =	r8a66597_remove,
-	.driver		= {
+	.हटाओ =	r8a66597_हटाओ,
+	.driver		= अणु
 		.name = hcd_name,
 		.pm	= R8A66597_DEV_PM_OPS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(r8a66597_driver);
+module_platक्रमm_driver(r8a66597_driver);

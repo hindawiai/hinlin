@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Platform information definitions for the CPM Uart driver.
+ * Platक्रमm inक्रमmation definitions क्रम the CPM Uart driver.
  *
  * 2006 (c) MontaVista Software, Inc.
  * Vitaly Bordug <vbordug@ru.mvista.com>
@@ -9,12 +10,12 @@
  * kind, whether express or implied.
  */
 
-#ifndef FS_UART_PD_H
-#define FS_UART_PD_H
+#अगर_अघोषित FS_UART_PD_H
+#घोषणा FS_UART_PD_H
 
-#include <asm/types.h>
+#समावेश <यंत्र/types.h>
 
-enum fs_uart_id {
+क्रमागत fs_uart_id अणु
 	fsid_smc1_uart,
 	fsid_smc2_uart,
 	fsid_scc1_uart,
@@ -22,50 +23,50 @@ enum fs_uart_id {
 	fsid_scc3_uart,
 	fsid_scc4_uart,
 	fs_uart_nr,
-};
+पूर्ण;
 
-static inline int fs_uart_id_scc2fsid(int id)
-{
-    return fsid_scc1_uart + id - 1;
-}
+अटल अंतरभूत पूर्णांक fs_uart_id_scc2fsid(पूर्णांक id)
+अणु
+    वापस fsid_scc1_uart + id - 1;
+पूर्ण
 
-static inline int fs_uart_id_fsid2scc(int id)
-{
-    return id - fsid_scc1_uart + 1;
-}
+अटल अंतरभूत पूर्णांक fs_uart_id_fsid2scc(पूर्णांक id)
+अणु
+    वापस id - fsid_scc1_uart + 1;
+पूर्ण
 
-static inline int fs_uart_id_smc2fsid(int id)
-{
-    return fsid_smc1_uart + id - 1;
-}
+अटल अंतरभूत पूर्णांक fs_uart_id_smc2fsid(पूर्णांक id)
+अणु
+    वापस fsid_smc1_uart + id - 1;
+पूर्ण
 
-static inline int fs_uart_id_fsid2smc(int id)
-{
-    return id - fsid_smc1_uart + 1;
-}
+अटल अंतरभूत पूर्णांक fs_uart_id_fsid2smc(पूर्णांक id)
+अणु
+    वापस id - fsid_smc1_uart + 1;
+पूर्ण
 
-struct fs_uart_platform_info {
-        void(*init_ioports)(struct fs_uart_platform_info *);
-	/* device specific information */
-	int fs_no;		/* controller index */
-	char fs_type[4];        /* controller type  */
+काष्ठा fs_uart_platक्रमm_info अणु
+        व्योम(*init_ioports)(काष्ठा fs_uart_platक्रमm_info *);
+	/* device specअगरic inक्रमmation */
+	पूर्णांक fs_no;		/* controller index */
+	अक्षर fs_type[4];        /* controller type  */
 	u32 uart_clk;
-	u8 tx_num_fifo;
+	u8 tx_num_fअगरo;
 	u8 tx_buf_size;
-	u8 rx_num_fifo;
+	u8 rx_num_fअगरo;
 	u8 rx_buf_size;
 	u8 brg;
 	u8 clk_rx;
 	u8 clk_tx;
-};
+पूर्ण;
 
-static inline int fs_uart_get_id(struct fs_uart_platform_info *fpi)
-{
-        if(strstr(fpi->fs_type, "SMC"))
-                return fs_uart_id_smc2fsid(fpi->fs_no);
-        if(strstr(fpi->fs_type, "SCC"))
-                return fs_uart_id_scc2fsid(fpi->fs_no);
-        return fpi->fs_no;
-}
+अटल अंतरभूत पूर्णांक fs_uart_get_id(काष्ठा fs_uart_platक्रमm_info *fpi)
+अणु
+        अगर(म_माला(fpi->fs_type, "SMC"))
+                वापस fs_uart_id_smc2fsid(fpi->fs_no);
+        अगर(म_माला(fpi->fs_type, "SCC"))
+                वापस fs_uart_id_scc2fsid(fpi->fs_no);
+        वापस fpi->fs_no;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

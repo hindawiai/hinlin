@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <zlib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <zlib.h>
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	z_stream zs;
 
 	inflateInit(&zs);
-	return 0;
-}
+	वापस 0;
+पूर्ण

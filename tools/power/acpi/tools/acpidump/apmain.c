@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: apmain - Main module for the acpidump utility
+ * Module Name: apमुख्य - Main module क्रम the acpidump utility
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#define _DECLARE_GLOBALS
-#include "acpidump.h"
+#घोषणा _DECLARE_GLOBALS
+#समावेश "acpidump.h"
 
 /*
- * acpidump - A portable utility for obtaining system ACPI tables and dumping
- * them in an ASCII hex format suitable for binary extraction via acpixtract.
+ * acpidump - A portable utility क्रम obtaining प्रणाली ACPI tables and dumping
+ * them in an ASCII hex क्रमmat suitable क्रम binary extraction via acpixtract.
  *
- * Obtaining the system ACPI tables is an OS-specific operation.
+ * Obtaining the प्रणाली ACPI tables is an OS-specअगरic operation.
  *
- * This utility can be ported to any host operating system by providing a
- * module containing system-specific versions of these interfaces:
+ * This utility can be ported to any host operating प्रणाली by providing a
+ * module containing प्रणाली-specअगरic versions of these पूर्णांकerfaces:
  *
  *      acpi_os_get_table_by_address
  *      acpi_os_get_table_by_index
  *      acpi_os_get_table_by_name
  *
- * See the ACPICA Reference Guide for the exact definitions of these
- * interfaces. Also, see these ACPICA source code modules for example
+ * See the ACPICA Reference Guide क्रम the exact definitions of these
+ * पूर्णांकerfaces. Also, see these ACPICA source code modules क्रम example
  * implementations:
  *
- *      source/os_specific/service_layers/oswintbl.c
- *      source/os_specific/service_layers/oslinuxtbl.c
+ *      source/os_specअगरic/service_layers/oswपूर्णांकbl.c
+ *      source/os_specअगरic/service_layers/oslinuxtbl.c
  */
 
 /* Local prototypes */
 
-static void ap_display_usage(void);
+अटल व्योम ap_display_usage(व्योम);
 
-static int ap_do_options(int argc, char **argv);
+अटल पूर्णांक ap_करो_options(पूर्णांक argc, अक्षर **argv);
 
-static int ap_insert_action(char *argument, u32 to_be_done);
+अटल पूर्णांक ap_insert_action(अक्षर *argument, u32 to_be_करोne);
 
-/* Table for deferred actions from command line options */
+/* Table क्रम deferred actions from command line options */
 
-struct ap_dump_action action_table[AP_MAX_ACTIONS];
+काष्ठा ap_dump_action action_table[AP_MAX_ACTIONS];
 u32 current_action = 0;
 
-#define AP_UTILITY_NAME             "ACPI Binary Table Dump Utility"
-#define AP_SUPPORTED_OPTIONS        "?a:bc:f:hn:o:r:sv^xz"
+#घोषणा AP_UTILITY_NAME             "ACPI Binary Table Dump Utility"
+#घोषणा AP_SUPPORTED_OPTIONS        "?a:bc:f:hn:o:r:sv^xz"
 
 /******************************************************************************
  *
  * FUNCTION:    ap_display_usage
  *
- * DESCRIPTION: Usage message for the acpi_dump utility
+ * DESCRIPTION: Usage message क्रम the acpi_dump utility
  *
  ******************************************************************************/
 
-static void ap_display_usage(void)
-{
+अटल व्योम ap_display_usage(व्योम)
+अणु
 
 	ACPI_USAGE_HEADER("acpidump [options]");
 
@@ -81,14 +82,14 @@ static void ap_display_usage(void)
 	ACPI_USAGE_TEXT("\n"
 			"Invocation without parameters dumps all available tables\n"
 			"Multiple mixed instances of -a, -f, and -n are supported\n\n");
-}
+पूर्ण
 
 /******************************************************************************
  *
  * FUNCTION:    ap_insert_action
  *
- * PARAMETERS:  argument            - Pointer to the argument for this action
- *              to_be_done          - What to do to process this action
+ * PARAMETERS:  argument            - Poपूर्णांकer to the argument क्रम this action
+ *              to_be_करोne          - What to करो to process this action
  *
  * RETURN:      Status
  *
@@ -96,271 +97,271 @@ static void ap_display_usage(void)
  *
  ******************************************************************************/
 
-static int ap_insert_action(char *argument, u32 to_be_done)
-{
+अटल पूर्णांक ap_insert_action(अक्षर *argument, u32 to_be_करोne)
+अणु
 
-	/* Insert action and check for table overflow */
+	/* Insert action and check क्रम table overflow */
 
 	action_table[current_action].argument = argument;
-	action_table[current_action].to_be_done = to_be_done;
+	action_table[current_action].to_be_करोne = to_be_करोne;
 
 	current_action++;
-	if (current_action > AP_MAX_ACTIONS) {
-		fprintf(stderr, "Too many table options (max %d)\n",
+	अगर (current_action > AP_MAX_ACTIONS) अणु
+		ख_लिखो(मानक_त्रुटि, "Too many table options (max %d)\n",
 			AP_MAX_ACTIONS);
-		return (-1);
-	}
+		वापस (-1);
+	पूर्ण
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 /******************************************************************************
  *
- * FUNCTION:    ap_do_options
+ * FUNCTION:    ap_करो_options
  *
  * PARAMETERS:  argc/argv           - Standard argc/argv
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Command line option processing. The main actions for getting
+ * DESCRIPTION: Command line option processing. The मुख्य actions क्रम getting
  *              and dumping tables are deferred via the action table.
  *
  *****************************************************************************/
 
-static int ap_do_options(int argc, char **argv)
-{
-	int j;
+अटल पूर्णांक ap_करो_options(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक j;
 	acpi_status status;
 
 	/* Command line options */
 
-	while ((j =
+	जबतक ((j =
 		acpi_getopt(argc, argv, AP_SUPPORTED_OPTIONS)) != ACPI_OPT_END)
-		switch (j) {
+		चयन (j) अणु
 			/*
 			 * Global options
 			 */
-		case 'b':	/* Dump all input tables to binary files */
+		हाल 'b':	/* Dump all input tables to binary files */
 
 			gbl_binary_mode = TRUE;
-			continue;
+			जारी;
 
-		case 'c':	/* Dump customized tables */
+		हाल 'c':	/* Dump customized tables */
 
-			if (!strcmp(acpi_gbl_optarg, "on")) {
+			अगर (!म_भेद(acpi_gbl_optarg, "on")) अणु
 				gbl_dump_customized_tables = TRUE;
-			} else if (!strcmp(acpi_gbl_optarg, "off")) {
+			पूर्ण अन्यथा अगर (!म_भेद(acpi_gbl_optarg, "off")) अणु
 				gbl_dump_customized_tables = FALSE;
-			} else {
-				fprintf(stderr,
+			पूर्ण अन्यथा अणु
+				ख_लिखो(मानक_त्रुटि,
 					"%s: Cannot handle this switch, please use on|off\n",
 					acpi_gbl_optarg);
-				return (-1);
-			}
-			continue;
+				वापस (-1);
+			पूर्ण
+			जारी;
 
-		case 'h':
-		case '?':
+		हाल 'h':
+		हाल '?':
 
 			ap_display_usage();
-			return (1);
+			वापस (1);
 
-		case 'o':	/* Redirect output to a single file */
+		हाल 'o':	/* Redirect output to a single file */
 
-			if (ap_open_output_file(acpi_gbl_optarg)) {
-				return (-1);
-			}
-			continue;
+			अगर (ap_खोलो_output_file(acpi_gbl_optarg)) अणु
+				वापस (-1);
+			पूर्ण
+			जारी;
 
-		case 'r':	/* Dump tables from specified RSDP */
+		हाल 'r':	/* Dump tables from specअगरied RSDP */
 
 			status =
-			    acpi_ut_strtoul64(acpi_gbl_optarg, &gbl_rsdp_base);
-			if (ACPI_FAILURE(status)) {
-				fprintf(stderr,
+			    acpi_ut_म_से_अदीर्घ64(acpi_gbl_optarg, &gbl_rsdp_base);
+			अगर (ACPI_FAILURE(status)) अणु
+				ख_लिखो(मानक_त्रुटि,
 					"%s: Could not convert to a physical address\n",
 					acpi_gbl_optarg);
-				return (-1);
-			}
-			continue;
+				वापस (-1);
+			पूर्ण
+			जारी;
 
-		case 's':	/* Print table summaries only */
+		हाल 's':	/* Prपूर्णांक table summaries only */
 
 			gbl_summary_mode = TRUE;
-			continue;
+			जारी;
 
-		case 'x':	/* Do not use XSDT */
+		हाल 'x':	/* Do not use XSDT */
 
-			if (!acpi_gbl_do_not_use_xsdt) {
-				acpi_gbl_do_not_use_xsdt = TRUE;
-			} else {
-				gbl_do_not_dump_xsdt = TRUE;
-			}
-			continue;
+			अगर (!acpi_gbl_करो_not_use_xsdt) अणु
+				acpi_gbl_करो_not_use_xsdt = TRUE;
+			पूर्ण अन्यथा अणु
+				gbl_करो_not_dump_xsdt = TRUE;
+			पूर्ण
+			जारी;
 
-		case 'v':	/* -v: (Version): signon already emitted, just exit */
+		हाल 'v':	/* -v: (Version): signon alपढ़ोy emitted, just निकास */
 
-			switch (acpi_gbl_optarg[0]) {
-			case '^':	/* -v: (Version) */
+			चयन (acpi_gbl_optarg[0]) अणु
+			हाल '^':	/* -v: (Version) */
 
-				fprintf(stderr,
+				ख_लिखो(मानक_त्रुटि,
 					ACPI_COMMON_SIGNON(AP_UTILITY_NAME));
-				return (1);
+				वापस (1);
 
-			case 'd':
+			हाल 'd':
 
-				fprintf(stderr,
+				ख_लिखो(मानक_त्रुटि,
 					ACPI_COMMON_SIGNON(AP_UTILITY_NAME));
-				printf(ACPI_COMMON_BUILD_TIME);
-				return (1);
+				म_लिखो(ACPI_COMMON_BUILD_TIME);
+				वापस (1);
 
-			default:
+			शेष:
 
-				printf("Unknown option: -v%s\n",
+				म_लिखो("Unknown option: -v%s\n",
 				       acpi_gbl_optarg);
-				return (-1);
-			}
-			break;
+				वापस (-1);
+			पूर्ण
+			अवरोध;
 
-		case 'z':	/* Verbose mode */
+		हाल 'z':	/* Verbose mode */
 
 			gbl_verbose_mode = TRUE;
-			fprintf(stderr, ACPI_COMMON_SIGNON(AP_UTILITY_NAME));
-			continue;
+			ख_लिखो(मानक_त्रुटि, ACPI_COMMON_SIGNON(AP_UTILITY_NAME));
+			जारी;
 
 			/*
 			 * Table options
 			 */
-		case 'a':	/* Get table by physical address */
+		हाल 'a':	/* Get table by physical address */
 
-			if (ap_insert_action
-			    (acpi_gbl_optarg, AP_DUMP_TABLE_BY_ADDRESS)) {
-				return (-1);
-			}
-			break;
+			अगर (ap_insert_action
+			    (acpi_gbl_optarg, AP_DUMP_TABLE_BY_ADDRESS)) अणु
+				वापस (-1);
+			पूर्ण
+			अवरोध;
 
-		case 'f':	/* Get table from a file */
+		हाल 'f':	/* Get table from a file */
 
-			if (ap_insert_action
-			    (acpi_gbl_optarg, AP_DUMP_TABLE_BY_FILE)) {
-				return (-1);
-			}
-			break;
+			अगर (ap_insert_action
+			    (acpi_gbl_optarg, AP_DUMP_TABLE_BY_खाता)) अणु
+				वापस (-1);
+			पूर्ण
+			अवरोध;
 
-		case 'n':	/* Get table by input name (signature) */
+		हाल 'n':	/* Get table by input name (signature) */
 
-			if (ap_insert_action
-			    (acpi_gbl_optarg, AP_DUMP_TABLE_BY_NAME)) {
-				return (-1);
-			}
-			break;
+			अगर (ap_insert_action
+			    (acpi_gbl_optarg, AP_DUMP_TABLE_BY_NAME)) अणु
+				वापस (-1);
+			पूर्ण
+			अवरोध;
 
-		default:
+		शेष:
 
 			ap_display_usage();
-			return (-1);
-		}
+			वापस (-1);
+		पूर्ण
 
 	/* If there are no actions, this means "get/dump all tables" */
 
-	if (current_action == 0) {
-		if (ap_insert_action(NULL, AP_DUMP_ALL_TABLES)) {
-			return (-1);
-		}
-	}
+	अगर (current_action == 0) अणु
+		अगर (ap_insert_action(शून्य, AP_DUMP_ALL_TABLES)) अणु
+			वापस (-1);
+		पूर्ण
+	पूर्ण
 
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
 /******************************************************************************
  *
- * FUNCTION:    main
+ * FUNCTION:    मुख्य
  *
  * PARAMETERS:  argc/argv           - Standard argc/argv
  *
  * RETURN:      Status
  *
- * DESCRIPTION: C main function for acpidump utility
+ * DESCRIPTION: C मुख्य function क्रम acpidump utility
  *
  ******************************************************************************/
 
-#if !defined(_GNU_EFI) && !defined(_EDK2_EFI)
-int ACPI_SYSTEM_XFACE main(int argc, char *argv[])
-#else
-int ACPI_SYSTEM_XFACE acpi_main(int argc, char *argv[])
-#endif
-{
-	int status = 0;
-	struct ap_dump_action *action;
+#अगर !defined(_GNU_EFI) && !defined(_EDK2_EFI)
+पूर्णांक ACPI_SYSTEM_XFACE मुख्य(पूर्णांक argc, अक्षर *argv[])
+#अन्यथा
+पूर्णांक ACPI_SYSTEM_XFACE acpi_मुख्य(पूर्णांक argc, अक्षर *argv[])
+#पूर्ण_अगर
+अणु
+	पूर्णांक status = 0;
+	काष्ठा ap_dump_action *action;
 	u32 file_size;
 	u32 i;
 
 	ACPI_DEBUG_INITIALIZE();	/* For debug version only */
 	acpi_os_initialize();
-	gbl_output_file = ACPI_FILE_OUT;
-	acpi_gbl_integer_byte_width = 8;
+	gbl_output_file = ACPI_खाता_OUT;
+	acpi_gbl_पूर्णांकeger_byte_width = 8;
 
 	/* Process command line options */
 
-	status = ap_do_options(argc, argv);
-	if (status > 0) {
-		return (0);
-	}
-	if (status < 0) {
-		return (status);
-	}
+	status = ap_करो_options(argc, argv);
+	अगर (status > 0) अणु
+		वापस (0);
+	पूर्ण
+	अगर (status < 0) अणु
+		वापस (status);
+	पूर्ण
 
 	/* Get/dump ACPI table(s) as requested */
 
-	for (i = 0; i < current_action; i++) {
+	क्रम (i = 0; i < current_action; i++) अणु
 		action = &action_table[i];
-		switch (action->to_be_done) {
-		case AP_DUMP_ALL_TABLES:
+		चयन (action->to_be_करोne) अणु
+		हाल AP_DUMP_ALL_TABLES:
 
 			status = ap_dump_all_tables();
-			break;
+			अवरोध;
 
-		case AP_DUMP_TABLE_BY_ADDRESS:
+		हाल AP_DUMP_TABLE_BY_ADDRESS:
 
 			status = ap_dump_table_by_address(action->argument);
-			break;
+			अवरोध;
 
-		case AP_DUMP_TABLE_BY_NAME:
+		हाल AP_DUMP_TABLE_BY_NAME:
 
 			status = ap_dump_table_by_name(action->argument);
-			break;
+			अवरोध;
 
-		case AP_DUMP_TABLE_BY_FILE:
+		हाल AP_DUMP_TABLE_BY_खाता:
 
 			status = ap_dump_table_from_file(action->argument);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 
-			fprintf(stderr,
+			ख_लिखो(मानक_त्रुटि,
 				"Internal error, invalid action: 0x%X\n",
-				action->to_be_done);
-			return (-1);
-		}
+				action->to_be_करोne);
+			वापस (-1);
+		पूर्ण
 
-		if (status) {
-			return (status);
-		}
-	}
+		अगर (status) अणु
+			वापस (status);
+		पूर्ण
+	पूर्ण
 
-	if (gbl_output_filename) {
-		if (gbl_verbose_mode) {
+	अगर (gbl_output_filename) अणु
+		अगर (gbl_verbose_mode) अणु
 
-			/* Summary for the output file */
+			/* Summary क्रम the output file */
 
 			file_size = cm_get_file_size(gbl_output_file);
-			fprintf(stderr,
+			ख_लिखो(मानक_त्रुटि,
 				"Output file %s contains 0x%X (%u) bytes\n\n",
 				gbl_output_filename, file_size, file_size);
-		}
+		पूर्ण
 
-		fclose(gbl_output_file);
-	}
+		ख_बंद(gbl_output_file);
+	पूर्ण
 
-	return (status);
-}
+	वापस (status);
+पूर्ण

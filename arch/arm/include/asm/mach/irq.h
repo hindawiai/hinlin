@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  arch/arm/include/asm/mach/irq.h
+ *  arch/arm/include/यंत्र/mach/irq.h
  *
  *  Copyright (C) 1995-2000 Russell King.
  */
-#ifndef __ASM_ARM_MACH_IRQ_H
-#define __ASM_ARM_MACH_IRQ_H
+#अगर_अघोषित __ASM_ARM_MACH_IRQ_H
+#घोषणा __ASM_ARM_MACH_IRQ_H
 
-#include <linux/irq.h>
+#समावेश <linux/irq.h>
 
-struct seq_file;
-
-/*
- * This is internal.  Do not use it.
- */
-extern void init_FIQ(int);
-extern int show_fiq_list(struct seq_file *, int);
+काष्ठा seq_file;
 
 /*
- * This is for easy migration, but should be changed in the source
+ * This is पूर्णांकernal.  Do not use it.
  */
-#define do_bad_IRQ(desc)				\
-do {							\
+बाह्य व्योम init_FIQ(पूर्णांक);
+बाह्य पूर्णांक show_fiq_list(काष्ठा seq_file *, पूर्णांक);
+
+/*
+ * This is क्रम easy migration, but should be changed in the source
+ */
+#घोषणा करो_bad_IRQ(desc)				\
+करो अणु							\
 	raw_spin_lock(&desc->lock);			\
 	handle_bad_irq(desc);				\
 	raw_spin_unlock(&desc->lock);			\
-} while(0)
+पूर्ण जबतक(0)
 
-#endif
+#पूर्ण_अगर

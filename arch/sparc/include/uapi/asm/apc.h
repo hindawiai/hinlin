@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-/* apc - Driver definitions for power management functions
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* apc - Driver definitions क्रम घातer management functions
  * of Aurora Personality Chip (APC) on SPARCstation-4/5 and 
  * derivatives
  *
@@ -7,59 +8,59 @@
  *
  */
 
-#ifndef _SPARC_APC_H
-#define _SPARC_APC_H
+#अगर_अघोषित _SPARC_APC_H
+#घोषणा _SPARC_APC_H
 
-#include <linux/ioctl.h>
+#समावेश <linux/ioctl.h>
 
-#define APC_IOC	'A'
+#घोषणा APC_IOC	'A'
 
-#define APCIOCGFANCTL _IOR(APC_IOC, 0x00, int)	/* Get fan speed	*/
-#define APCIOCSFANCTL _IOW(APC_IOC, 0x01, int)	/* Set fan speed	*/
+#घोषणा APCIOCGFANCTL _IOR(APC_IOC, 0x00, पूर्णांक)	/* Get fan speed	*/
+#घोषणा APCIOCSFANCTL _IOW(APC_IOC, 0x01, पूर्णांक)	/* Set fan speed	*/
 
-#define APCIOCGCPWR   _IOR(APC_IOC, 0x02, int)	/* Get CPOWER state	*/
-#define APCIOCSCPWR   _IOW(APC_IOC, 0x03, int)	/* Set CPOWER state	*/
+#घोषणा APCIOCGCPWR   _IOR(APC_IOC, 0x02, पूर्णांक)	/* Get CPOWER state	*/
+#घोषणा APCIOCSCPWR   _IOW(APC_IOC, 0x03, पूर्णांक)	/* Set CPOWER state	*/
 
-#define APCIOCGBPORT   _IOR(APC_IOC, 0x04, int)	/* Get BPORT state 	*/
-#define APCIOCSBPORT   _IOW(APC_IOC, 0x05, int)	/* Set BPORT state	*/
+#घोषणा APCIOCGBPORT   _IOR(APC_IOC, 0x04, पूर्णांक)	/* Get BPORT state 	*/
+#घोषणा APCIOCSBPORT   _IOW(APC_IOC, 0x05, पूर्णांक)	/* Set BPORT state	*/
 
 /*
  * Register offsets
  */
-#define APC_IDLE_REG	0x00
-#define APC_FANCTL_REG	0x20
-#define APC_CPOWER_REG	0x24
-#define APC_BPORT_REG	0x30
+#घोषणा APC_IDLE_REG	0x00
+#घोषणा APC_FANCTL_REG	0x20
+#घोषणा APC_CPOWER_REG	0x24
+#घोषणा APC_BPORT_REG	0x30
 
-#define APC_REGMASK		0x01
-#define APC_BPMASK		0x03
+#घोषणा APC_REGMASK		0x01
+#घोषणा APC_BPMASK		0x03
 
 /*
  * IDLE - CPU standby values (set to initiate standby)
  */
-#define APC_IDLE_ON		0x01
+#घोषणा APC_IDLE_ON		0x01
 
 /*
  * FANCTL - Fan speed control state values
  */
-#define APC_FANCTL_HI	0x00	/* Fan speed high	*/
-#define APC_FANCTL_LO	0x01	/* Fan speed low	*/
+#घोषणा APC_FANCTL_HI	0x00	/* Fan speed high	*/
+#घोषणा APC_FANCTL_LO	0x01	/* Fan speed low	*/
 
 /*
- * CPWR - Convenience power outlet state values 
+ * CPWR - Convenience घातer outlet state values 
  */
-#define APC_CPOWER_ON	0x00	/* Conv power on	*/
-#define APC_CPOWER_OFF	0x01	/* Conv power off	*/
+#घोषणा APC_CPOWER_ON	0x00	/* Conv घातer on	*/
+#घोषणा APC_CPOWER_OFF	0x01	/* Conv घातer off	*/
 
 /*
- * BPA/BPB - Read-Write "Bit Ports" state values (reset to 0 at power-on)
+ * BPA/BPB - Read-Write "Bit Ports" state values (reset to 0 at घातer-on)
  *
- * WARNING: Internal usage of bit ports is platform dependent--
- * don't modify BPORT settings unless you know what you are doing.
+ * WARNING: Internal usage of bit ports is platक्रमm dependent--
+ * करोn't modअगरy BPORT settings unless you know what you are करोing.
  * 
  * On SS5 BPA seems to toggle onboard ethernet loopback... -E
  */
-#define APC_BPORT_A		0x01	/* Bit Port A		*/
-#define APC_BPORT_B		0x02	/* Bit Port B		*/
+#घोषणा APC_BPORT_A		0x01	/* Bit Port A		*/
+#घोषणा APC_BPORT_B		0x02	/* Bit Port B		*/
 
-#endif /* !(_SPARC_APC_H) */
+#पूर्ण_अगर /* !(_SPARC_APC_H) */

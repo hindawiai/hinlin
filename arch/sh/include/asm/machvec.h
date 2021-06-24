@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
- * include/asm-sh/machvec.h
+ * include/यंत्र-sh/machvec.h
  *
  * Copyright 2000 Stuart Menefy (stuart.menefy@st.com)
  */
 
-#ifndef _ASM_SH_MACHVEC_H
-#define _ASM_SH_MACHVEC_H
+#अगर_अघोषित _ASM_SH_MACHVEC_H
+#घोषणा _ASM_SH_MACHVEC_H
 
-#include <linux/types.h>
-#include <linux/time.h>
-#include <generated/machtypes.h>
+#समावेश <linux/types.h>
+#समावेश <linux/समय.स>
+#समावेश <generated/machtypes.h>
 
-struct sh_machine_vector {
-	void (*mv_setup)(char **cmdline_p);
-	const char *mv_name;
+काष्ठा sh_machine_vector अणु
+	व्योम (*mv_setup)(अक्षर **cmdline_p);
+	स्थिर अक्षर *mv_name;
 
-	int (*mv_irq_demux)(int irq);
-	void (*mv_init_irq)(void);
+	पूर्णांक (*mv_irq_demux)(पूर्णांक irq);
+	व्योम (*mv_init_irq)(व्योम);
 
-#ifdef CONFIG_HAS_IOPORT_MAP
-	void __iomem *(*mv_ioport_map)(unsigned long port, unsigned int size);
-	void (*mv_ioport_unmap)(void __iomem *);
-#endif
+#अगर_घोषित CONFIG_HAS_IOPORT_MAP
+	व्योम __iomem *(*mv_ioport_map)(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक size);
+	व्योम (*mv_ioport_unmap)(व्योम __iomem *);
+#पूर्ण_अगर
 
-	int (*mv_clk_init)(void);
-	int (*mv_mode_pins)(void);
+	पूर्णांक (*mv_clk_init)(व्योम);
+	पूर्णांक (*mv_mode_pins)(व्योम);
 
-	void (*mv_mem_init)(void);
-	void (*mv_mem_reserve)(void);
-};
+	व्योम (*mv_mem_init)(व्योम);
+	व्योम (*mv_mem_reserve)(व्योम);
+पूर्ण;
 
-extern struct sh_machine_vector sh_mv;
+बाह्य काष्ठा sh_machine_vector sh_mv;
 
-#define get_system_type()	sh_mv.mv_name
+#घोषणा get_प्रणाली_type()	sh_mv.mv_name
 
-#define __initmv \
+#घोषणा __iniपंचांगv \
 	__used __section(".machvec.init")
 
-#endif /* _ASM_SH_MACHVEC_H */
+#पूर्ण_अगर /* _ASM_SH_MACHVEC_H */

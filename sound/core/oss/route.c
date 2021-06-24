@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
  *  Route Plug-In
  *  Copyright (c) 2000 by Abramo Bagnara <abramo@alsa-project.org>
  *
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Library General Public License as
  *   published by the Free Software Foundation; either version 2 of
  *   the License, or (at your option) any later version.
@@ -11,101 +12,101 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU Library General Public License for more details.
+ *   GNU Library General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU Library General Public
- *   License along with this library; if not, write to the Free Software
+ *   License aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  *
  */
 
-#include <linux/time.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include "pcm_plugin.h"
+#समावेश <linux/समय.स>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश "pcm_plugin.h"
 
-static void zero_areas(struct snd_pcm_plugin_channel *dvp, int ndsts,
-		       snd_pcm_uframes_t frames, snd_pcm_format_t format)
-{
-	int dst = 0;
-	for (; dst < ndsts; ++dst) {
-		if (dvp->wanted)
-			snd_pcm_area_silence(&dvp->area, 0, frames, format);
+अटल व्योम zero_areas(काष्ठा snd_pcm_plugin_channel *dvp, पूर्णांक ndsts,
+		       snd_pcm_uframes_t frames, snd_pcm_क्रमmat_t क्रमmat)
+अणु
+	पूर्णांक dst = 0;
+	क्रम (; dst < ndsts; ++dst) अणु
+		अगर (dvp->wanted)
+			snd_pcm_area_silence(&dvp->area, 0, frames, क्रमmat);
 		dvp->enabled = 0;
 		dvp++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void copy_area(const struct snd_pcm_plugin_channel *src_channel,
-			     struct snd_pcm_plugin_channel *dst_channel,
-			     snd_pcm_uframes_t frames, snd_pcm_format_t format)
-{
+अटल अंतरभूत व्योम copy_area(स्थिर काष्ठा snd_pcm_plugin_channel *src_channel,
+			     काष्ठा snd_pcm_plugin_channel *dst_channel,
+			     snd_pcm_uframes_t frames, snd_pcm_क्रमmat_t क्रमmat)
+अणु
 	dst_channel->enabled = 1;
-	snd_pcm_area_copy(&src_channel->area, 0, &dst_channel->area, 0, frames, format);
-}
+	snd_pcm_area_copy(&src_channel->area, 0, &dst_channel->area, 0, frames, क्रमmat);
+पूर्ण
 
-static snd_pcm_sframes_t route_transfer(struct snd_pcm_plugin *plugin,
-					const struct snd_pcm_plugin_channel *src_channels,
-					struct snd_pcm_plugin_channel *dst_channels,
+अटल snd_pcm_sframes_t route_transfer(काष्ठा snd_pcm_plugin *plugin,
+					स्थिर काष्ठा snd_pcm_plugin_channel *src_channels,
+					काष्ठा snd_pcm_plugin_channel *dst_channels,
 					snd_pcm_uframes_t frames)
-{
-	int nsrcs, ndsts, dst;
-	struct snd_pcm_plugin_channel *dvp;
-	snd_pcm_format_t format;
+अणु
+	पूर्णांक nsrcs, ndsts, dst;
+	काष्ठा snd_pcm_plugin_channel *dvp;
+	snd_pcm_क्रमmat_t क्रमmat;
 
-	if (snd_BUG_ON(!plugin || !src_channels || !dst_channels))
-		return -ENXIO;
-	if (frames == 0)
-		return 0;
-	if (frames > dst_channels[0].frames)
+	अगर (snd_BUG_ON(!plugin || !src_channels || !dst_channels))
+		वापस -ENXIO;
+	अगर (frames == 0)
+		वापस 0;
+	अगर (frames > dst_channels[0].frames)
 		frames = dst_channels[0].frames;
 
-	nsrcs = plugin->src_format.channels;
-	ndsts = plugin->dst_format.channels;
+	nsrcs = plugin->src_क्रमmat.channels;
+	ndsts = plugin->dst_क्रमmat.channels;
 
-	format = plugin->dst_format.format;
+	क्रमmat = plugin->dst_क्रमmat.क्रमmat;
 	dvp = dst_channels;
-	if (nsrcs <= 1) {
+	अगर (nsrcs <= 1) अणु
 		/* expand to all channels */
-		for (dst = 0; dst < ndsts; ++dst) {
-			copy_area(src_channels, dvp, frames, format);
+		क्रम (dst = 0; dst < ndsts; ++dst) अणु
+			copy_area(src_channels, dvp, frames, क्रमmat);
 			dvp++;
-		}
-		return frames;
-	}
+		पूर्ण
+		वापस frames;
+	पूर्ण
 
-	for (dst = 0; dst < ndsts && dst < nsrcs; ++dst) {
-		copy_area(src_channels, dvp, frames, format);
+	क्रम (dst = 0; dst < ndsts && dst < nsrcs; ++dst) अणु
+		copy_area(src_channels, dvp, frames, क्रमmat);
 		dvp++;
 		src_channels++;
-	}
-	if (dst < ndsts)
-		zero_areas(dvp, ndsts - dst, frames, format);
-	return frames;
-}
+	पूर्ण
+	अगर (dst < ndsts)
+		zero_areas(dvp, ndsts - dst, frames, क्रमmat);
+	वापस frames;
+पूर्ण
 
-int snd_pcm_plugin_build_route(struct snd_pcm_substream *plug,
-			       struct snd_pcm_plugin_format *src_format,
-			       struct snd_pcm_plugin_format *dst_format,
-			       struct snd_pcm_plugin **r_plugin)
-{
-	struct snd_pcm_plugin *plugin;
-	int err;
+पूर्णांक snd_pcm_plugin_build_route(काष्ठा snd_pcm_substream *plug,
+			       काष्ठा snd_pcm_plugin_क्रमmat *src_क्रमmat,
+			       काष्ठा snd_pcm_plugin_क्रमmat *dst_क्रमmat,
+			       काष्ठा snd_pcm_plugin **r_plugin)
+अणु
+	काष्ठा snd_pcm_plugin *plugin;
+	पूर्णांक err;
 
-	if (snd_BUG_ON(!r_plugin))
-		return -ENXIO;
-	*r_plugin = NULL;
-	if (snd_BUG_ON(src_format->rate != dst_format->rate))
-		return -ENXIO;
-	if (snd_BUG_ON(src_format->format != dst_format->format))
-		return -ENXIO;
+	अगर (snd_BUG_ON(!r_plugin))
+		वापस -ENXIO;
+	*r_plugin = शून्य;
+	अगर (snd_BUG_ON(src_क्रमmat->rate != dst_क्रमmat->rate))
+		वापस -ENXIO;
+	अगर (snd_BUG_ON(src_क्रमmat->क्रमmat != dst_क्रमmat->क्रमmat))
+		वापस -ENXIO;
 
 	err = snd_pcm_plugin_build(plug, "route conversion",
-				   src_format, dst_format, 0, &plugin);
-	if (err < 0)
-		return err;
+				   src_क्रमmat, dst_क्रमmat, 0, &plugin);
+	अगर (err < 0)
+		वापस err;
 
 	plugin->transfer = route_transfer;
 	*r_plugin = plugin;
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,130 +1,131 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * File		pci-acpi.h
  *
  * Copyright (C) 2004 Intel
- * Copyright (C) Tom Long Nguyen (tom.l.nguyen@intel.com)
+ * Copyright (C) Tom Long Nguyen (tom.l.nguyen@पूर्णांकel.com)
  */
 
-#ifndef _PCI_ACPI_H_
-#define _PCI_ACPI_H_
+#अगर_अघोषित _PCI_ACPI_H_
+#घोषणा _PCI_ACPI_H_
 
-#include <linux/acpi.h>
+#समावेश <linux/acpi.h>
 
-#ifdef CONFIG_ACPI
-extern acpi_status pci_acpi_add_bus_pm_notifier(struct acpi_device *dev);
-static inline acpi_status pci_acpi_remove_bus_pm_notifier(struct acpi_device *dev)
-{
-	return acpi_remove_pm_notifier(dev);
-}
-extern acpi_status pci_acpi_add_pm_notifier(struct acpi_device *dev,
-					     struct pci_dev *pci_dev);
-static inline acpi_status pci_acpi_remove_pm_notifier(struct acpi_device *dev)
-{
-	return acpi_remove_pm_notifier(dev);
-}
-extern phys_addr_t acpi_pci_root_get_mcfg_addr(acpi_handle handle);
+#अगर_घोषित CONFIG_ACPI
+बाह्य acpi_status pci_acpi_add_bus_pm_notअगरier(काष्ठा acpi_device *dev);
+अटल अंतरभूत acpi_status pci_acpi_हटाओ_bus_pm_notअगरier(काष्ठा acpi_device *dev)
+अणु
+	वापस acpi_हटाओ_pm_notअगरier(dev);
+पूर्ण
+बाह्य acpi_status pci_acpi_add_pm_notअगरier(काष्ठा acpi_device *dev,
+					     काष्ठा pci_dev *pci_dev);
+अटल अंतरभूत acpi_status pci_acpi_हटाओ_pm_notअगरier(काष्ठा acpi_device *dev)
+अणु
+	वापस acpi_हटाओ_pm_notअगरier(dev);
+पूर्ण
+बाह्य phys_addr_t acpi_pci_root_get_mcfg_addr(acpi_handle handle);
 
-struct pci_ecam_ops;
-extern int pci_mcfg_lookup(struct acpi_pci_root *root, struct resource *cfgres,
-			   const struct pci_ecam_ops **ecam_ops);
+काष्ठा pci_ecam_ops;
+बाह्य पूर्णांक pci_mcfg_lookup(काष्ठा acpi_pci_root *root, काष्ठा resource *cfgres,
+			   स्थिर काष्ठा pci_ecam_ops **ecam_ops);
 
-static inline acpi_handle acpi_find_root_bridge_handle(struct pci_dev *pdev)
-{
-	struct pci_bus *pbus = pdev->bus;
+अटल अंतरभूत acpi_handle acpi_find_root_bridge_handle(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_bus *pbus = pdev->bus;
 
 	/* Find a PCI root bus */
-	while (!pci_is_root_bus(pbus))
+	जबतक (!pci_is_root_bus(pbus))
 		pbus = pbus->parent;
 
-	return ACPI_HANDLE(pbus->bridge);
-}
+	वापस ACPI_HANDLE(pbus->bridge);
+पूर्ण
 
-static inline acpi_handle acpi_pci_get_bridge_handle(struct pci_bus *pbus)
-{
-	struct device *dev;
+अटल अंतरभूत acpi_handle acpi_pci_get_bridge_handle(काष्ठा pci_bus *pbus)
+अणु
+	काष्ठा device *dev;
 
-	if (pci_is_root_bus(pbus))
+	अगर (pci_is_root_bus(pbus))
 		dev = pbus->bridge;
-	else {
-		/* If pbus is a virtual bus, there is no bridge to it */
-		if (!pbus->self)
-			return NULL;
+	अन्यथा अणु
+		/* If pbus is a भव bus, there is no bridge to it */
+		अगर (!pbus->self)
+			वापस शून्य;
 
 		dev = &pbus->self->dev;
-	}
+	पूर्ण
 
-	return ACPI_HANDLE(dev);
-}
+	वापस ACPI_HANDLE(dev);
+पूर्ण
 
-struct acpi_pci_root;
-struct acpi_pci_root_ops;
+काष्ठा acpi_pci_root;
+काष्ठा acpi_pci_root_ops;
 
-struct acpi_pci_root_info {
-	struct acpi_pci_root		*root;
-	struct acpi_device		*bridge;
-	struct acpi_pci_root_ops	*ops;
-	struct list_head		resources;
-	char				name[16];
-};
+काष्ठा acpi_pci_root_info अणु
+	काष्ठा acpi_pci_root		*root;
+	काष्ठा acpi_device		*bridge;
+	काष्ठा acpi_pci_root_ops	*ops;
+	काष्ठा list_head		resources;
+	अक्षर				name[16];
+पूर्ण;
 
-struct acpi_pci_root_ops {
-	struct pci_ops *pci_ops;
-	int (*init_info)(struct acpi_pci_root_info *info);
-	void (*release_info)(struct acpi_pci_root_info *info);
-	int (*prepare_resources)(struct acpi_pci_root_info *info);
-};
+काष्ठा acpi_pci_root_ops अणु
+	काष्ठा pci_ops *pci_ops;
+	पूर्णांक (*init_info)(काष्ठा acpi_pci_root_info *info);
+	व्योम (*release_info)(काष्ठा acpi_pci_root_info *info);
+	पूर्णांक (*prepare_resources)(काष्ठा acpi_pci_root_info *info);
+पूर्ण;
 
-extern int acpi_pci_probe_root_resources(struct acpi_pci_root_info *info);
-extern struct pci_bus *acpi_pci_root_create(struct acpi_pci_root *root,
-					    struct acpi_pci_root_ops *ops,
-					    struct acpi_pci_root_info *info,
-					    void *sd);
+बाह्य पूर्णांक acpi_pci_probe_root_resources(काष्ठा acpi_pci_root_info *info);
+बाह्य काष्ठा pci_bus *acpi_pci_root_create(काष्ठा acpi_pci_root *root,
+					    काष्ठा acpi_pci_root_ops *ops,
+					    काष्ठा acpi_pci_root_info *info,
+					    व्योम *sd);
 
-void acpi_pci_add_bus(struct pci_bus *bus);
-void acpi_pci_remove_bus(struct pci_bus *bus);
+व्योम acpi_pci_add_bus(काष्ठा pci_bus *bus);
+व्योम acpi_pci_हटाओ_bus(काष्ठा pci_bus *bus);
 
-#ifdef	CONFIG_ACPI_PCI_SLOT
-void acpi_pci_slot_init(void);
-void acpi_pci_slot_enumerate(struct pci_bus *bus);
-void acpi_pci_slot_remove(struct pci_bus *bus);
-#else
-static inline void acpi_pci_slot_init(void) { }
-static inline void acpi_pci_slot_enumerate(struct pci_bus *bus) { }
-static inline void acpi_pci_slot_remove(struct pci_bus *bus) { }
-#endif
+#अगर_घोषित	CONFIG_ACPI_PCI_SLOT
+व्योम acpi_pci_slot_init(व्योम);
+व्योम acpi_pci_slot_क्रमागतerate(काष्ठा pci_bus *bus);
+व्योम acpi_pci_slot_हटाओ(काष्ठा pci_bus *bus);
+#अन्यथा
+अटल अंतरभूत व्योम acpi_pci_slot_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम acpi_pci_slot_क्रमागतerate(काष्ठा pci_bus *bus) अणु पूर्ण
+अटल अंतरभूत व्योम acpi_pci_slot_हटाओ(काष्ठा pci_bus *bus) अणु पूर्ण
+#पूर्ण_अगर
 
-#ifdef	CONFIG_HOTPLUG_PCI_ACPI
-void acpiphp_init(void);
-void acpiphp_enumerate_slots(struct pci_bus *bus);
-void acpiphp_remove_slots(struct pci_bus *bus);
-void acpiphp_check_host_bridge(struct acpi_device *adev);
-#else
-static inline void acpiphp_init(void) { }
-static inline void acpiphp_enumerate_slots(struct pci_bus *bus) { }
-static inline void acpiphp_remove_slots(struct pci_bus *bus) { }
-static inline void acpiphp_check_host_bridge(struct acpi_device *adev) { }
-#endif
+#अगर_घोषित	CONFIG_HOTPLUG_PCI_ACPI
+व्योम acpiphp_init(व्योम);
+व्योम acpiphp_क्रमागतerate_slots(काष्ठा pci_bus *bus);
+व्योम acpiphp_हटाओ_slots(काष्ठा pci_bus *bus);
+व्योम acpiphp_check_host_bridge(काष्ठा acpi_device *adev);
+#अन्यथा
+अटल अंतरभूत व्योम acpiphp_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम acpiphp_क्रमागतerate_slots(काष्ठा pci_bus *bus) अणु पूर्ण
+अटल अंतरभूत व्योम acpiphp_हटाओ_slots(काष्ठा pci_bus *bus) अणु पूर्ण
+अटल अंतरभूत व्योम acpiphp_check_host_bridge(काष्ठा acpi_device *adev) अणु पूर्ण
+#पूर्ण_अगर
 
-extern const guid_t pci_acpi_dsm_guid;
+बाह्य स्थिर guid_t pci_acpi_dsm_guid;
 
-/* _DSM Definitions for PCI */
-#define DSM_PCI_PRESERVE_BOOT_CONFIG		0x05
-#define DSM_PCI_DEVICE_NAME			0x07
-#define DSM_PCI_POWER_ON_RESET_DELAY		0x08
-#define DSM_PCI_DEVICE_READINESS_DURATIONS	0x09
+/* _DSM Definitions क्रम PCI */
+#घोषणा DSM_PCI_PRESERVE_BOOT_CONFIG		0x05
+#घोषणा DSM_PCI_DEVICE_NAME			0x07
+#घोषणा DSM_PCI_POWER_ON_RESET_DELAY		0x08
+#घोषणा DSM_PCI_DEVICE_READINESS_DURATIONS	0x09
 
-#ifdef CONFIG_PCIE_EDR
-void pci_acpi_add_edr_notifier(struct pci_dev *pdev);
-void pci_acpi_remove_edr_notifier(struct pci_dev *pdev);
-#else
-static inline void pci_acpi_add_edr_notifier(struct pci_dev *pdev) { }
-static inline void pci_acpi_remove_edr_notifier(struct pci_dev *pdev) { }
-#endif /* CONFIG_PCIE_EDR */
+#अगर_घोषित CONFIG_PCIE_EDR
+व्योम pci_acpi_add_edr_notअगरier(काष्ठा pci_dev *pdev);
+व्योम pci_acpi_हटाओ_edr_notअगरier(काष्ठा pci_dev *pdev);
+#अन्यथा
+अटल अंतरभूत व्योम pci_acpi_add_edr_notअगरier(काष्ठा pci_dev *pdev) अणु पूर्ण
+अटल अंतरभूत व्योम pci_acpi_हटाओ_edr_notअगरier(काष्ठा pci_dev *pdev) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_PCIE_EDR */
 
-#else	/* CONFIG_ACPI */
-static inline void acpi_pci_add_bus(struct pci_bus *bus) { }
-static inline void acpi_pci_remove_bus(struct pci_bus *bus) { }
-#endif	/* CONFIG_ACPI */
+#अन्यथा	/* CONFIG_ACPI */
+अटल अंतरभूत व्योम acpi_pci_add_bus(काष्ठा pci_bus *bus) अणु पूर्ण
+अटल अंतरभूत व्योम acpi_pci_हटाओ_bus(काष्ठा pci_bus *bus) अणु पूर्ण
+#पूर्ण_अगर	/* CONFIG_ACPI */
 
-#endif	/* _PCI_ACPI_H_ */
+#पूर्ण_अगर	/* _PCI_ACPI_H_ */

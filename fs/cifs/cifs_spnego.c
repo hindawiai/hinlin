@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
- *   fs/cifs/cifs_spnego.c -- SPNEGO upcall management for CIFS
+ *   fs/cअगरs/cअगरs_spnego.c -- SPNEGO upcall management क्रम CIFS
  *
  *   Copyright (c) 2007 Red Hat, Inc.
  *   Author(s): Jeff Layton (jlayton@redhat.com)
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -12,237 +13,237 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   the GNU Lesser General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, write to the Free Software
+ *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <keys/user-type.h>
-#include <linux/key-type.h>
-#include <linux/keyctl.h>
-#include <linux/inet.h>
-#include "cifsglob.h"
-#include "cifs_spnego.h"
-#include "cifs_debug.h"
-#include "cifsproto.h"
-static const struct cred *spnego_cred;
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <keys/user-type.h>
+#समावेश <linux/key-type.h>
+#समावेश <linux/keyctl.h>
+#समावेश <linux/inet.h>
+#समावेश "cifsglob.h"
+#समावेश "cifs_spnego.h"
+#समावेश "cifs_debug.h"
+#समावेश "cifsproto.h"
+अटल स्थिर काष्ठा cred *spnego_cred;
 
-/* create a new cifs key */
-static int
-cifs_spnego_key_instantiate(struct key *key, struct key_preparsed_payload *prep)
-{
-	char *payload;
-	int ret;
+/* create a new cअगरs key */
+अटल पूर्णांक
+cअगरs_spnego_key_instantiate(काष्ठा key *key, काष्ठा key_preparsed_payload *prep)
+अणु
+	अक्षर *payload;
+	पूर्णांक ret;
 
 	ret = -ENOMEM;
 	payload = kmemdup(prep->data, prep->datalen, GFP_KERNEL);
-	if (!payload)
-		goto error;
+	अगर (!payload)
+		जाओ error;
 
 	/* attach the data */
 	key->payload.data[0] = payload;
 	ret = 0;
 
 error:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-cifs_spnego_key_destroy(struct key *key)
-{
-	kfree(key->payload.data[0]);
-}
+अटल व्योम
+cअगरs_spnego_key_destroy(काष्ठा key *key)
+अणु
+	kमुक्त(key->payload.data[0]);
+पूर्ण
 
 
 /*
- * keytype for CIFS spnego keys
+ * keytype क्रम CIFS spnego keys
  */
-struct key_type cifs_spnego_key_type = {
+काष्ठा key_type cअगरs_spnego_key_type = अणु
 	.name		= "cifs.spnego",
-	.instantiate	= cifs_spnego_key_instantiate,
-	.destroy	= cifs_spnego_key_destroy,
+	.instantiate	= cअगरs_spnego_key_instantiate,
+	.destroy	= cअगरs_spnego_key_destroy,
 	.describe	= user_describe,
-};
+पूर्ण;
 
-/* length of longest version string e.g.  strlen("ver=0xFF") */
-#define MAX_VER_STR_LEN		8
+/* length of दीर्घest version string e.g.  म_माप("ver=0xFF") */
+#घोषणा MAX_VER_STR_LEN		8
 
-/* length of longest security mechanism name, eg in future could have
- * strlen(";sec=ntlmsspi") */
-#define MAX_MECH_STR_LEN	13
+/* length of दीर्घest security mechanism name, eg in future could have
+ * म_माप(";sec=ntlmsspi") */
+#घोषणा MAX_MECH_STR_LEN	13
 
-/* strlen of "host=" */
-#define HOST_KEY_LEN		5
+/* म_माप of "host=" */
+#घोषणा HOST_KEY_LEN		5
 
-/* strlen of ";ip4=" or ";ip6=" */
-#define IP_KEY_LEN		5
+/* म_माप of ";ip4=" or ";ip6=" */
+#घोषणा IP_KEY_LEN		5
 
-/* strlen of ";uid=0x" */
-#define UID_KEY_LEN		7
+/* म_माप of ";uid=0x" */
+#घोषणा UID_KEY_LEN		7
 
-/* strlen of ";creduid=0x" */
-#define CREDUID_KEY_LEN		11
+/* म_माप of ";creduid=0x" */
+#घोषणा CREDUID_KEY_LEN		11
 
-/* strlen of ";user=" */
-#define USER_KEY_LEN		6
+/* म_माप of ";user=" */
+#घोषणा USER_KEY_LEN		6
 
-/* strlen of ";pid=0x" */
-#define PID_KEY_LEN		7
+/* म_माप of ";pid=0x" */
+#घोषणा PID_KEY_LEN		7
 
-/* get a key struct with a SPNEGO security blob, suitable for session setup */
-struct key *
-cifs_get_spnego_key(struct cifs_ses *sesInfo)
-{
-	struct TCP_Server_Info *server = cifs_ses_server(sesInfo);
-	struct sockaddr_in *sa = (struct sockaddr_in *) &server->dstaddr;
-	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *) &server->dstaddr;
-	char *description, *dp;
-	size_t desc_len;
-	struct key *spnego_key;
-	const char *hostname = server->hostname;
-	const struct cred *saved_cred;
+/* get a key काष्ठा with a SPNEGO security blob, suitable क्रम session setup */
+काष्ठा key *
+cअगरs_get_spnego_key(काष्ठा cअगरs_ses *sesInfo)
+अणु
+	काष्ठा TCP_Server_Info *server = cअगरs_ses_server(sesInfo);
+	काष्ठा sockaddr_in *sa = (काष्ठा sockaddr_in *) &server->dstaddr;
+	काष्ठा sockaddr_in6 *sa6 = (काष्ठा sockaddr_in6 *) &server->dstaddr;
+	अक्षर *description, *dp;
+	माप_प्रकार desc_len;
+	काष्ठा key *spnego_key;
+	स्थिर अक्षर *hostname = server->hostname;
+	स्थिर काष्ठा cred *saved_cred;
 
 	/* length of fields (with semicolons): ver=0xyz ip4=ipaddress
 	   host=hostname sec=mechanism uid=0xFF user=username */
 	desc_len = MAX_VER_STR_LEN +
-		   HOST_KEY_LEN + strlen(hostname) +
+		   HOST_KEY_LEN + म_माप(hostname) +
 		   IP_KEY_LEN + INET6_ADDRSTRLEN +
 		   MAX_MECH_STR_LEN +
-		   UID_KEY_LEN + (sizeof(uid_t) * 2) +
-		   CREDUID_KEY_LEN + (sizeof(uid_t) * 2) +
-		   PID_KEY_LEN + (sizeof(pid_t) * 2) + 1;
+		   UID_KEY_LEN + (माप(uid_t) * 2) +
+		   CREDUID_KEY_LEN + (माप(uid_t) * 2) +
+		   PID_KEY_LEN + (माप(pid_t) * 2) + 1;
 
-	if (sesInfo->user_name)
-		desc_len += USER_KEY_LEN + strlen(sesInfo->user_name);
+	अगर (sesInfo->user_name)
+		desc_len += USER_KEY_LEN + म_माप(sesInfo->user_name);
 
 	spnego_key = ERR_PTR(-ENOMEM);
 	description = kzalloc(desc_len, GFP_KERNEL);
-	if (description == NULL)
-		goto out;
+	अगर (description == शून्य)
+		जाओ out;
 
 	dp = description;
 	/* start with version and hostname portion of UNC string */
 	spnego_key = ERR_PTR(-EINVAL);
-	sprintf(dp, "ver=0x%x;host=%s;", CIFS_SPNEGO_UPCALL_VERSION,
+	प्र_लिखो(dp, "ver=0x%x;host=%s;", CIFS_SPNEGO_UPCALL_VERSION,
 		hostname);
-	dp = description + strlen(description);
+	dp = description + म_माप(description);
 
 	/* add the server address */
-	if (server->dstaddr.ss_family == AF_INET)
-		sprintf(dp, "ip4=%pI4", &sa->sin_addr);
-	else if (server->dstaddr.ss_family == AF_INET6)
-		sprintf(dp, "ip6=%pI6", &sa6->sin6_addr);
-	else
-		goto out;
+	अगर (server->dstaddr.ss_family == AF_INET)
+		प्र_लिखो(dp, "ip4=%pI4", &sa->sin_addr);
+	अन्यथा अगर (server->dstaddr.ss_family == AF_INET6)
+		प्र_लिखो(dp, "ip6=%pI6", &sa6->sin6_addr);
+	अन्यथा
+		जाओ out;
 
-	dp = description + strlen(description);
+	dp = description + म_माप(description);
 
-	/* for now, only sec=krb5 and sec=mskrb5 are valid */
-	if (server->sec_kerberos)
-		sprintf(dp, ";sec=krb5");
-	else if (server->sec_mskerberos)
-		sprintf(dp, ";sec=mskrb5");
-	else {
-		cifs_dbg(VFS, "unknown or missing server auth type, use krb5\n");
-		sprintf(dp, ";sec=krb5");
-	}
+	/* क्रम now, only sec=krb5 and sec=mskrb5 are valid */
+	अगर (server->sec_kerberos)
+		प्र_लिखो(dp, ";sec=krb5");
+	अन्यथा अगर (server->sec_mskerberos)
+		प्र_लिखो(dp, ";sec=mskrb5");
+	अन्यथा अणु
+		cअगरs_dbg(VFS, "unknown or missing server auth type, use krb5\n");
+		प्र_लिखो(dp, ";sec=krb5");
+	पूर्ण
 
-	dp = description + strlen(description);
-	sprintf(dp, ";uid=0x%x",
+	dp = description + म_माप(description);
+	प्र_लिखो(dp, ";uid=0x%x",
 		from_kuid_munged(&init_user_ns, sesInfo->linux_uid));
 
-	dp = description + strlen(description);
-	sprintf(dp, ";creduid=0x%x",
+	dp = description + म_माप(description);
+	प्र_लिखो(dp, ";creduid=0x%x",
 		from_kuid_munged(&init_user_ns, sesInfo->cred_uid));
 
-	if (sesInfo->user_name) {
-		dp = description + strlen(description);
-		sprintf(dp, ";user=%s", sesInfo->user_name);
-	}
+	अगर (sesInfo->user_name) अणु
+		dp = description + म_माप(description);
+		प्र_लिखो(dp, ";user=%s", sesInfo->user_name);
+	पूर्ण
 
-	dp = description + strlen(description);
-	sprintf(dp, ";pid=0x%x", current->pid);
+	dp = description + म_माप(description);
+	प्र_लिखो(dp, ";pid=0x%x", current->pid);
 
-	cifs_dbg(FYI, "key description = %s\n", description);
+	cअगरs_dbg(FYI, "key description = %s\n", description);
 	saved_cred = override_creds(spnego_cred);
-	spnego_key = request_key(&cifs_spnego_key_type, description, "");
+	spnego_key = request_key(&cअगरs_spnego_key_type, description, "");
 	revert_creds(saved_cred);
 
-#ifdef CONFIG_CIFS_DEBUG2
-	if (cifsFYI && !IS_ERR(spnego_key)) {
-		struct cifs_spnego_msg *msg = spnego_key->payload.data[0];
-		cifs_dump_mem("SPNEGO reply blob:", msg->data, min(1024U,
+#अगर_घोषित CONFIG_CIFS_DEBUG2
+	अगर (cअगरsFYI && !IS_ERR(spnego_key)) अणु
+		काष्ठा cअगरs_spnego_msg *msg = spnego_key->payload.data[0];
+		cअगरs_dump_mem("SPNEGO reply blob:", msg->data, min(1024U,
 				msg->secblob_len + msg->sesskey_len));
-	}
-#endif /* CONFIG_CIFS_DEBUG2 */
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_CIFS_DEBUG2 */
 
 out:
-	kfree(description);
-	return spnego_key;
-}
+	kमुक्त(description);
+	वापस spnego_key;
+पूर्ण
 
-int
-init_cifs_spnego(void)
-{
-	struct cred *cred;
-	struct key *keyring;
-	int ret;
+पूर्णांक
+init_cअगरs_spnego(व्योम)
+अणु
+	काष्ठा cred *cred;
+	काष्ठा key *keyring;
+	पूर्णांक ret;
 
-	cifs_dbg(FYI, "Registering the %s key type\n",
-		 cifs_spnego_key_type.name);
+	cअगरs_dbg(FYI, "Registering the %s key type\n",
+		 cअगरs_spnego_key_type.name);
 
 	/*
-	 * Create an override credential set with special thread keyring for
+	 * Create an override credential set with special thपढ़ो keyring क्रम
 	 * spnego upcalls.
 	 */
 
-	cred = prepare_kernel_cred(NULL);
-	if (!cred)
-		return -ENOMEM;
+	cred = prepare_kernel_cred(शून्य);
+	अगर (!cred)
+		वापस -ENOMEM;
 
 	keyring = keyring_alloc(".cifs_spnego",
 				GLOBAL_ROOT_UID, GLOBAL_ROOT_GID, cred,
 				(KEY_POS_ALL & ~KEY_POS_SETATTR) |
 				KEY_USR_VIEW | KEY_USR_READ,
-				KEY_ALLOC_NOT_IN_QUOTA, NULL, NULL);
-	if (IS_ERR(keyring)) {
+				KEY_ALLOC_NOT_IN_QUOTA, शून्य, शून्य);
+	अगर (IS_ERR(keyring)) अणु
 		ret = PTR_ERR(keyring);
-		goto failed_put_cred;
-	}
+		जाओ failed_put_cred;
+	पूर्ण
 
-	ret = register_key_type(&cifs_spnego_key_type);
-	if (ret < 0)
-		goto failed_put_key;
+	ret = रेजिस्टर_key_type(&cअगरs_spnego_key_type);
+	अगर (ret < 0)
+		जाओ failed_put_key;
 
 	/*
-	 * instruct request_key() to use this special keyring as a cache for
+	 * inकाष्ठा request_key() to use this special keyring as a cache क्रम
 	 * the results it looks up
 	 */
 	set_bit(KEY_FLAG_ROOT_CAN_CLEAR, &keyring->flags);
-	cred->thread_keyring = keyring;
+	cred->thपढ़ो_keyring = keyring;
 	cred->jit_keyring = KEY_REQKEY_DEFL_THREAD_KEYRING;
 	spnego_cred = cred;
 
-	cifs_dbg(FYI, "cifs spnego keyring: %d\n", key_serial(keyring));
-	return 0;
+	cअगरs_dbg(FYI, "cifs spnego keyring: %d\n", key_serial(keyring));
+	वापस 0;
 
 failed_put_key:
 	key_put(keyring);
 failed_put_cred:
 	put_cred(cred);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-exit_cifs_spnego(void)
-{
-	key_revoke(spnego_cred->thread_keyring);
-	unregister_key_type(&cifs_spnego_key_type);
+व्योम
+निकास_cअगरs_spnego(व्योम)
+अणु
+	key_revoke(spnego_cred->thपढ़ो_keyring);
+	unरेजिस्टर_key_type(&cअगरs_spnego_key_type);
 	put_cred(spnego_cred);
-	cifs_dbg(FYI, "Unregistered %s key type\n", cifs_spnego_key_type.name);
-}
+	cअगरs_dbg(FYI, "Unregistered %s key type\n", cअगरs_spnego_key_type.name);
+पूर्ण

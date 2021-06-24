@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Definitions for RTL8187 leds
+ * Definitions क्रम RTL8187 leds
  *
  * Copyright 2009 Larry Finger <Larry.Finger@lwfinger.net>
  *
@@ -8,24 +9,24 @@
  * Copyright (c) Realtek Semiconductor Corp. All rights reserved.
  */
 
-#ifndef RTL8187_LED_H
-#define RTL8187_LED_H
+#अगर_अघोषित RTL8187_LED_H
+#घोषणा RTL8187_LED_H
 
-#ifdef CONFIG_RTL8187_LEDS
+#अगर_घोषित CONFIG_RTL8187_LEDS
 
-#define RTL8187_LED_MAX_NAME_LEN	21
+#घोषणा RTL8187_LED_MAX_NAME_LEN	21
 
-#include <linux/leds.h>
-#include <linux/types.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/types.h>
 
-enum {
+क्रमागत अणु
 	LED_PIN_LED0,
 	LED_PIN_LED1,
 	LED_PIN_GPIO0,
 	LED_PIN_HW
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	EEPROM_CID_RSVD0 = 0x00,
 	EEPROM_CID_RSVD1 = 0xFF,
 	EEPROM_CID_ALPHA0 = 0x01,
@@ -34,23 +35,23 @@ enum {
 	EEPROM_CID_TOSHIBA = 0x04,
 	EEPROM_CID_QMI = 0x07,
 	EEPROM_CID_DELL = 0x08
-};
+पूर्ण;
 
-struct rtl8187_led {
-	struct ieee80211_hw *dev;
+काष्ठा rtl8187_led अणु
+	काष्ठा ieee80211_hw *dev;
 	/* The LED class device */
-	struct led_classdev led_dev;
+	काष्ठा led_classdev led_dev;
 	/* The pin/method used to control the led */
 	u8 ledpin;
-	/* The unique name string for this LED device. */
-	char name[RTL8187_LED_MAX_NAME_LEN + 1];
+	/* The unique name string क्रम this LED device. */
+	अक्षर name[RTL8187_LED_MAX_NAME_LEN + 1];
 	/* If the LED is radio or tx/rx */
 	bool is_radio;
-};
+पूर्ण;
 
-void rtl8187_leds_init(struct ieee80211_hw *dev, u16 code);
-void rtl8187_leds_exit(struct ieee80211_hw *dev);
+व्योम rtl8187_leds_init(काष्ठा ieee80211_hw *dev, u16 code);
+व्योम rtl8187_leds_निकास(काष्ठा ieee80211_hw *dev);
 
-#endif /* def CONFIG_RTL8187_LEDS */
+#पूर्ण_अगर /* def CONFIG_RTL8187_LEDS */
 
-#endif /* RTL8187_LED_H */
+#पूर्ण_अगर /* RTL8187_LED_H */

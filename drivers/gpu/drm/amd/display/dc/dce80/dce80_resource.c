@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,219 +24,219 @@
  *
  */
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "dce/dce_8_0_d.h"
-#include "dce/dce_8_0_sh_mask.h"
+#समावेश "dce/dce_8_0_d.h"
+#समावेश "dce/dce_8_0_sh_mask.h"
 
-#include "dm_services.h"
+#समावेश "dm_services.h"
 
-#include "link_encoder.h"
-#include "stream_encoder.h"
+#समावेश "link_encoder.h"
+#समावेश "stream_encoder.h"
 
-#include "resource.h"
-#include "include/irq_service_interface.h"
-#include "irq/dce80/irq_service_dce80.h"
-#include "dce110/dce110_timing_generator.h"
-#include "dce110/dce110_resource.h"
-#include "dce80/dce80_timing_generator.h"
-#include "dce/dce_mem_input.h"
-#include "dce/dce_link_encoder.h"
-#include "dce/dce_stream_encoder.h"
-#include "dce/dce_ipp.h"
-#include "dce/dce_transform.h"
-#include "dce/dce_opp.h"
-#include "dce/dce_clock_source.h"
-#include "dce/dce_audio.h"
-#include "dce/dce_hwseq.h"
-#include "dce80/dce80_hw_sequencer.h"
-#include "dce100/dce100_resource.h"
-#include "dce/dce_panel_cntl.h"
+#समावेश "resource.h"
+#समावेश "include/irq_service_interface.h"
+#समावेश "irq/dce80/irq_service_dce80.h"
+#समावेश "dce110/dce110_timing_generator.h"
+#समावेश "dce110/dce110_resource.h"
+#समावेश "dce80/dce80_timing_generator.h"
+#समावेश "dce/dce_mem_input.h"
+#समावेश "dce/dce_link_encoder.h"
+#समावेश "dce/dce_stream_encoder.h"
+#समावेश "dce/dce_ipp.h"
+#समावेश "dce/dce_transform.h"
+#समावेश "dce/dce_opp.h"
+#समावेश "dce/dce_clock_source.h"
+#समावेश "dce/dce_audio.h"
+#समावेश "dce/dce_hwseq.h"
+#समावेश "dce80/dce80_hw_sequencer.h"
+#समावेश "dce100/dce100_resource.h"
+#समावेश "dce/dce_panel_cntl.h"
 
-#include "reg_helper.h"
+#समावेश "reg_helper.h"
 
-#include "dce/dce_dmcu.h"
-#include "dce/dce_aux.h"
-#include "dce/dce_abm.h"
-#include "dce/dce_i2c.h"
-/* TODO remove this include */
+#समावेश "dce/dce_dmcu.h"
+#समावेश "dce/dce_aux.h"
+#समावेश "dce/dce_abm.h"
+#समावेश "dce/dce_i2c.h"
+/* TODO हटाओ this include */
 
-#include "dce80_resource.h"
+#समावेश "dce80_resource.h"
 
-#ifndef mmMC_HUB_RDREQ_DMIF_LIMIT
-#include "gmc/gmc_7_1_d.h"
-#include "gmc/gmc_7_1_sh_mask.h"
-#endif
+#अगर_अघोषित mmMC_HUB_RDREQ_DMIF_LIMIT
+#समावेश "gmc/gmc_7_1_d.h"
+#समावेश "gmc/gmc_7_1_sh_mask.h"
+#पूर्ण_अगर
 
-#ifndef mmDP_DPHY_INTERNAL_CTRL
-#define mmDP_DPHY_INTERNAL_CTRL                         0x1CDE
-#define mmDP0_DP_DPHY_INTERNAL_CTRL                     0x1CDE
-#define mmDP1_DP_DPHY_INTERNAL_CTRL                     0x1FDE
-#define mmDP2_DP_DPHY_INTERNAL_CTRL                     0x42DE
-#define mmDP3_DP_DPHY_INTERNAL_CTRL                     0x45DE
-#define mmDP4_DP_DPHY_INTERNAL_CTRL                     0x48DE
-#define mmDP5_DP_DPHY_INTERNAL_CTRL                     0x4BDE
-#define mmDP6_DP_DPHY_INTERNAL_CTRL                     0x4EDE
-#endif
-
-
-#ifndef mmBIOS_SCRATCH_2
-	#define mmBIOS_SCRATCH_2 0x05CB
-	#define mmBIOS_SCRATCH_3 0x05CC
-	#define mmBIOS_SCRATCH_6 0x05CF
-#endif
-
-#ifndef mmDP_DPHY_FAST_TRAINING
-	#define mmDP_DPHY_FAST_TRAINING                         0x1CCE
-	#define mmDP0_DP_DPHY_FAST_TRAINING                     0x1CCE
-	#define mmDP1_DP_DPHY_FAST_TRAINING                     0x1FCE
-	#define mmDP2_DP_DPHY_FAST_TRAINING                     0x42CE
-	#define mmDP3_DP_DPHY_FAST_TRAINING                     0x45CE
-	#define mmDP4_DP_DPHY_FAST_TRAINING                     0x48CE
-	#define mmDP5_DP_DPHY_FAST_TRAINING                     0x4BCE
-	#define mmDP6_DP_DPHY_FAST_TRAINING                     0x4ECE
-#endif
+#अगर_अघोषित mmDP_DPHY_INTERNAL_CTRL
+#घोषणा mmDP_DPHY_INTERNAL_CTRL                         0x1CDE
+#घोषणा mmDP0_DP_DPHY_INTERNAL_CTRL                     0x1CDE
+#घोषणा mmDP1_DP_DPHY_INTERNAL_CTRL                     0x1FDE
+#घोषणा mmDP2_DP_DPHY_INTERNAL_CTRL                     0x42DE
+#घोषणा mmDP3_DP_DPHY_INTERNAL_CTRL                     0x45DE
+#घोषणा mmDP4_DP_DPHY_INTERNAL_CTRL                     0x48DE
+#घोषणा mmDP5_DP_DPHY_INTERNAL_CTRL                     0x4BDE
+#घोषणा mmDP6_DP_DPHY_INTERNAL_CTRL                     0x4EDE
+#पूर्ण_अगर
 
 
-#ifndef mmHPD_DC_HPD_CONTROL
-	#define mmHPD_DC_HPD_CONTROL                            0x189A
-	#define mmHPD0_DC_HPD_CONTROL                           0x189A
-	#define mmHPD1_DC_HPD_CONTROL                           0x18A2
-	#define mmHPD2_DC_HPD_CONTROL                           0x18AA
-	#define mmHPD3_DC_HPD_CONTROL                           0x18B2
-	#define mmHPD4_DC_HPD_CONTROL                           0x18BA
-	#define mmHPD5_DC_HPD_CONTROL                           0x18C2
-#endif
+#अगर_अघोषित mmBIOS_SCRATCH_2
+	#घोषणा mmBIOS_SCRATCH_2 0x05CB
+	#घोषणा mmBIOS_SCRATCH_3 0x05CC
+	#घोषणा mmBIOS_SCRATCH_6 0x05CF
+#पूर्ण_अगर
 
-#define DCE11_DIG_FE_CNTL 0x4a00
-#define DCE11_DIG_BE_CNTL 0x4a47
-#define DCE11_DP_SEC 0x4ac3
+#अगर_अघोषित mmDP_DPHY_FAST_TRAINING
+	#घोषणा mmDP_DPHY_FAST_TRAINING                         0x1CCE
+	#घोषणा mmDP0_DP_DPHY_FAST_TRAINING                     0x1CCE
+	#घोषणा mmDP1_DP_DPHY_FAST_TRAINING                     0x1FCE
+	#घोषणा mmDP2_DP_DPHY_FAST_TRAINING                     0x42CE
+	#घोषणा mmDP3_DP_DPHY_FAST_TRAINING                     0x45CE
+	#घोषणा mmDP4_DP_DPHY_FAST_TRAINING                     0x48CE
+	#घोषणा mmDP5_DP_DPHY_FAST_TRAINING                     0x4BCE
+	#घोषणा mmDP6_DP_DPHY_FAST_TRAINING                     0x4ECE
+#पूर्ण_अगर
 
-static const struct dce110_timing_generator_offsets dce80_tg_offsets[] = {
-		{
+
+#अगर_अघोषित mmHPD_DC_HPD_CONTROL
+	#घोषणा mmHPD_DC_HPD_CONTROL                            0x189A
+	#घोषणा mmHPD0_DC_HPD_CONTROL                           0x189A
+	#घोषणा mmHPD1_DC_HPD_CONTROL                           0x18A2
+	#घोषणा mmHPD2_DC_HPD_CONTROL                           0x18AA
+	#घोषणा mmHPD3_DC_HPD_CONTROL                           0x18B2
+	#घोषणा mmHPD4_DC_HPD_CONTROL                           0x18BA
+	#घोषणा mmHPD5_DC_HPD_CONTROL                           0x18C2
+#पूर्ण_अगर
+
+#घोषणा DCE11_DIG_FE_CNTL 0x4a00
+#घोषणा DCE11_DIG_BE_CNTL 0x4a47
+#घोषणा DCE11_DP_SEC 0x4ac3
+
+अटल स्थिर काष्ठा dce110_timing_generator_offsets dce80_tg_offsets[] = अणु
+		अणु
 			.crtc = (mmCRTC0_CRTC_CONTROL - mmCRTC_CONTROL),
 			.dcp =  (mmGRPH_CONTROL - mmGRPH_CONTROL),
-			.dmif = (mmDMIF_PG0_DPG_WATERMARK_MASK_CONTROL
+			.dmअगर = (mmDMIF_PG0_DPG_WATERMARK_MASK_CONTROL
 					- mmDPG_WATERMARK_MASK_CONTROL),
-		},
-		{
+		पूर्ण,
+		अणु
 			.crtc = (mmCRTC1_CRTC_CONTROL - mmCRTC_CONTROL),
 			.dcp = (mmDCP1_GRPH_CONTROL - mmGRPH_CONTROL),
-			.dmif = (mmDMIF_PG1_DPG_WATERMARK_MASK_CONTROL
+			.dmअगर = (mmDMIF_PG1_DPG_WATERMARK_MASK_CONTROL
 					- mmDPG_WATERMARK_MASK_CONTROL),
-		},
-		{
+		पूर्ण,
+		अणु
 			.crtc = (mmCRTC2_CRTC_CONTROL - mmCRTC_CONTROL),
 			.dcp = (mmDCP2_GRPH_CONTROL - mmGRPH_CONTROL),
-			.dmif = (mmDMIF_PG2_DPG_WATERMARK_MASK_CONTROL
+			.dmअगर = (mmDMIF_PG2_DPG_WATERMARK_MASK_CONTROL
 					- mmDPG_WATERMARK_MASK_CONTROL),
-		},
-		{
+		पूर्ण,
+		अणु
 			.crtc = (mmCRTC3_CRTC_CONTROL - mmCRTC_CONTROL),
 			.dcp = (mmDCP3_GRPH_CONTROL - mmGRPH_CONTROL),
-			.dmif = (mmDMIF_PG3_DPG_WATERMARK_MASK_CONTROL
+			.dmअगर = (mmDMIF_PG3_DPG_WATERMARK_MASK_CONTROL
 					- mmDPG_WATERMARK_MASK_CONTROL),
-		},
-		{
+		पूर्ण,
+		अणु
 			.crtc = (mmCRTC4_CRTC_CONTROL - mmCRTC_CONTROL),
 			.dcp = (mmDCP4_GRPH_CONTROL - mmGRPH_CONTROL),
-			.dmif = (mmDMIF_PG4_DPG_WATERMARK_MASK_CONTROL
+			.dmअगर = (mmDMIF_PG4_DPG_WATERMARK_MASK_CONTROL
 					- mmDPG_WATERMARK_MASK_CONTROL),
-		},
-		{
+		पूर्ण,
+		अणु
 			.crtc = (mmCRTC5_CRTC_CONTROL - mmCRTC_CONTROL),
 			.dcp = (mmDCP5_GRPH_CONTROL - mmGRPH_CONTROL),
-			.dmif = (mmDMIF_PG5_DPG_WATERMARK_MASK_CONTROL
+			.dmअगर = (mmDMIF_PG5_DPG_WATERMARK_MASK_CONTROL
 					- mmDPG_WATERMARK_MASK_CONTROL),
-		}
-};
+		पूर्ण
+पूर्ण;
 
-/* set register offset */
-#define SR(reg_name)\
+/* set रेजिस्टर offset */
+#घोषणा SR(reg_name)\
 	.reg_name = mm ## reg_name
 
-/* set register offset with instance */
-#define SRI(reg_name, block, id)\
+/* set रेजिस्टर offset with instance */
+#घोषणा SRI(reg_name, block, id)\
 	.reg_name = mm ## block ## id ## _ ## reg_name
 
-#define ipp_regs(id)\
-[id] = {\
+#घोषणा ipp_regs(id)\
+[id] = अणु\
 		IPP_COMMON_REG_LIST_DCE_BASE(id)\
-}
+पूर्ण
 
-static const struct dce_ipp_registers ipp_regs[] = {
+अटल स्थिर काष्ठा dce_ipp_रेजिस्टरs ipp_regs[] = अणु
 		ipp_regs(0),
 		ipp_regs(1),
 		ipp_regs(2),
 		ipp_regs(3),
 		ipp_regs(4),
 		ipp_regs(5)
-};
+पूर्ण;
 
-static const struct dce_ipp_shift ipp_shift = {
+अटल स्थिर काष्ठा dce_ipp_shअगरt ipp_shअगरt = अणु
 		IPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce_ipp_mask ipp_mask = {
+अटल स्थिर काष्ठा dce_ipp_mask ipp_mask = अणु
 		IPP_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(_MASK)
-};
+पूर्ण;
 
-#define transform_regs(id)\
-[id] = {\
+#घोषणा transक्रमm_regs(id)\
+[id] = अणु\
 		XFM_COMMON_REG_LIST_DCE80(id)\
-}
+पूर्ण
 
-static const struct dce_transform_registers xfm_regs[] = {
-		transform_regs(0),
-		transform_regs(1),
-		transform_regs(2),
-		transform_regs(3),
-		transform_regs(4),
-		transform_regs(5)
-};
+अटल स्थिर काष्ठा dce_transक्रमm_रेजिस्टरs xfm_regs[] = अणु
+		transक्रमm_regs(0),
+		transक्रमm_regs(1),
+		transक्रमm_regs(2),
+		transक्रमm_regs(3),
+		transक्रमm_regs(4),
+		transक्रमm_regs(5)
+पूर्ण;
 
-static const struct dce_transform_shift xfm_shift = {
+अटल स्थिर काष्ठा dce_transक्रमm_shअगरt xfm_shअगरt = अणु
 		XFM_COMMON_MASK_SH_LIST_DCE80(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce_transform_mask xfm_mask = {
+अटल स्थिर काष्ठा dce_transक्रमm_mask xfm_mask = अणु
 		XFM_COMMON_MASK_SH_LIST_DCE80(_MASK)
-};
+पूर्ण;
 
-#define aux_regs(id)\
-[id] = {\
+#घोषणा aux_regs(id)\
+[id] = अणु\
 	AUX_REG_LIST(id)\
-}
+पूर्ण
 
-static const struct dce110_link_enc_aux_registers link_enc_aux_regs[] = {
+अटल स्थिर काष्ठा dce110_link_enc_aux_रेजिस्टरs link_enc_aux_regs[] = अणु
 	aux_regs(0),
 	aux_regs(1),
 	aux_regs(2),
 	aux_regs(3),
 	aux_regs(4),
 	aux_regs(5)
-};
+पूर्ण;
 
-#define hpd_regs(id)\
-[id] = {\
+#घोषणा hpd_regs(id)\
+[id] = अणु\
 	HPD_REG_LIST(id)\
-}
+पूर्ण
 
-static const struct dce110_link_enc_hpd_registers link_enc_hpd_regs[] = {
+अटल स्थिर काष्ठा dce110_link_enc_hpd_रेजिस्टरs link_enc_hpd_regs[] = अणु
 		hpd_regs(0),
 		hpd_regs(1),
 		hpd_regs(2),
 		hpd_regs(3),
 		hpd_regs(4),
 		hpd_regs(5)
-};
+पूर्ण;
 
-#define link_regs(id)\
-[id] = {\
+#घोषणा link_regs(id)\
+[id] = अणु\
 	LE_DCE80_REG_LIST(id)\
-}
+पूर्ण
 
-static const struct dce110_link_enc_registers link_enc_regs[] = {
+अटल स्थिर काष्ठा dce110_link_enc_रेजिस्टरs link_enc_regs[] = अणु
 	link_regs(0),
 	link_regs(1),
 	link_regs(2),
@@ -243,15 +244,15 @@ static const struct dce110_link_enc_registers link_enc_regs[] = {
 	link_regs(4),
 	link_regs(5),
 	link_regs(6),
-};
+पूर्ण;
 
-#define stream_enc_regs(id)\
-[id] = {\
+#घोषणा stream_enc_regs(id)\
+[id] = अणु\
 	SE_COMMON_REG_LIST_DCE_BASE(id),\
 	.AFMT_CNTL = 0,\
-}
+पूर्ण
 
-static const struct dce110_stream_enc_registers stream_enc_regs[] = {
+अटल स्थिर काष्ठा dce110_stream_enc_रेजिस्टरs stream_enc_regs[] = अणु
 	stream_enc_regs(0),
 	stream_enc_regs(1),
 	stream_enc_regs(2),
@@ -259,79 +260,79 @@ static const struct dce110_stream_enc_registers stream_enc_regs[] = {
 	stream_enc_regs(4),
 	stream_enc_regs(5),
 	stream_enc_regs(6)
-};
+पूर्ण;
 
-static const struct dce_stream_encoder_shift se_shift = {
+अटल स्थिर काष्ठा dce_stream_encoder_shअगरt se_shअगरt = अणु
 		SE_COMMON_MASK_SH_LIST_DCE80_100(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce_stream_encoder_mask se_mask = {
+अटल स्थिर काष्ठा dce_stream_encoder_mask se_mask = अणु
 		SE_COMMON_MASK_SH_LIST_DCE80_100(_MASK)
-};
+पूर्ण;
 
-static const struct dce_panel_cntl_registers panel_cntl_regs[] = {
-	{ DCE_PANEL_CNTL_REG_LIST() }
-};
+अटल स्थिर काष्ठा dce_panel_cntl_रेजिस्टरs panel_cntl_regs[] = अणु
+	अणु DCE_PANEL_CNTL_REG_LIST() पूर्ण
+पूर्ण;
 
-static const struct dce_panel_cntl_shift panel_cntl_shift = {
+अटल स्थिर काष्ठा dce_panel_cntl_shअगरt panel_cntl_shअगरt = अणु
 	DCE_PANEL_CNTL_MASK_SH_LIST(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce_panel_cntl_mask panel_cntl_mask = {
+अटल स्थिर काष्ठा dce_panel_cntl_mask panel_cntl_mask = अणु
 	DCE_PANEL_CNTL_MASK_SH_LIST(_MASK)
-};
+पूर्ण;
 
-#define opp_regs(id)\
-[id] = {\
+#घोषणा opp_regs(id)\
+[id] = अणु\
 	OPP_DCE_80_REG_LIST(id),\
-}
+पूर्ण
 
-static const struct dce_opp_registers opp_regs[] = {
+अटल स्थिर काष्ठा dce_opp_रेजिस्टरs opp_regs[] = अणु
 	opp_regs(0),
 	opp_regs(1),
 	opp_regs(2),
 	opp_regs(3),
 	opp_regs(4),
 	opp_regs(5)
-};
+पूर्ण;
 
-static const struct dce_opp_shift opp_shift = {
+अटल स्थिर काष्ठा dce_opp_shअगरt opp_shअगरt = अणु
 	OPP_COMMON_MASK_SH_LIST_DCE_80(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce_opp_mask opp_mask = {
+अटल स्थिर काष्ठा dce_opp_mask opp_mask = अणु
 	OPP_COMMON_MASK_SH_LIST_DCE_80(_MASK)
-};
+पूर्ण;
 
-static const struct dce110_aux_registers_shift aux_shift = {
+अटल स्थिर काष्ठा dce110_aux_रेजिस्टरs_shअगरt aux_shअगरt = अणु
 	DCE10_AUX_MASK_SH_LIST(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce110_aux_registers_mask aux_mask = {
+अटल स्थिर काष्ठा dce110_aux_रेजिस्टरs_mask aux_mask = अणु
 	DCE10_AUX_MASK_SH_LIST(_MASK)
-};
+पूर्ण;
 
-#define aux_engine_regs(id)\
-[id] = {\
+#घोषणा aux_engine_regs(id)\
+[id] = अणु\
 	AUX_COMMON_REG_LIST(id), \
 	.AUX_RESET_MASK = 0 \
-}
+पूर्ण
 
-static const struct dce110_aux_registers aux_engine_regs[] = {
+अटल स्थिर काष्ठा dce110_aux_रेजिस्टरs aux_engine_regs[] = अणु
 		aux_engine_regs(0),
 		aux_engine_regs(1),
 		aux_engine_regs(2),
 		aux_engine_regs(3),
 		aux_engine_regs(4),
 		aux_engine_regs(5)
-};
+पूर्ण;
 
-#define audio_regs(id)\
-[id] = {\
+#घोषणा audio_regs(id)\
+[id] = अणु\
 	AUD_COMMON_REG_LIST(id)\
-}
+पूर्ण
 
-static const struct dce_audio_registers audio_regs[] = {
+अटल स्थिर काष्ठा dce_audio_रेजिस्टरs audio_regs[] = अणु
 	audio_regs(0),
 	audio_regs(1),
 	audio_regs(2),
@@ -339,599 +340,599 @@ static const struct dce_audio_registers audio_regs[] = {
 	audio_regs(4),
 	audio_regs(5),
 	audio_regs(6),
-};
+पूर्ण;
 
-static const struct dce_audio_shift audio_shift = {
+अटल स्थिर काष्ठा dce_audio_shअगरt audio_shअगरt = अणु
 		AUD_COMMON_MASK_SH_LIST(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce_audio_mask audio_mask = {
+अटल स्थिर काष्ठा dce_audio_mask audio_mask = अणु
 		AUD_COMMON_MASK_SH_LIST(_MASK)
-};
+पूर्ण;
 
-#define clk_src_regs(id)\
-[id] = {\
+#घोषणा clk_src_regs(id)\
+[id] = अणु\
 	CS_COMMON_REG_LIST_DCE_80(id),\
-}
+पूर्ण
 
 
-static const struct dce110_clk_src_regs clk_src_regs[] = {
+अटल स्थिर काष्ठा dce110_clk_src_regs clk_src_regs[] = अणु
 	clk_src_regs(0),
 	clk_src_regs(1),
 	clk_src_regs(2)
-};
+पूर्ण;
 
-static const struct dce110_clk_src_shift cs_shift = {
+अटल स्थिर काष्ठा dce110_clk_src_shअगरt cs_shअगरt = अणु
 		CS_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce110_clk_src_mask cs_mask = {
+अटल स्थिर काष्ठा dce110_clk_src_mask cs_mask = अणु
 		CS_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(_MASK)
-};
+पूर्ण;
 
-static const struct bios_registers bios_regs = {
+अटल स्थिर काष्ठा bios_रेजिस्टरs bios_regs = अणु
 	.BIOS_SCRATCH_3 = mmBIOS_SCRATCH_3,
 	.BIOS_SCRATCH_6 = mmBIOS_SCRATCH_6
-};
+पूर्ण;
 
-static const struct resource_caps res_cap = {
+अटल स्थिर काष्ठा resource_caps res_cap = अणु
 		.num_timing_generator = 6,
 		.num_audio = 6,
 		.num_stream_encoder = 6,
 		.num_pll = 3,
 		.num_ddc = 6,
-};
+पूर्ण;
 
-static const struct resource_caps res_cap_81 = {
+अटल स्थिर काष्ठा resource_caps res_cap_81 = अणु
 		.num_timing_generator = 4,
 		.num_audio = 7,
 		.num_stream_encoder = 7,
 		.num_pll = 3,
 		.num_ddc = 6,
-};
+पूर्ण;
 
-static const struct resource_caps res_cap_83 = {
+अटल स्थिर काष्ठा resource_caps res_cap_83 = अणु
 		.num_timing_generator = 2,
 		.num_audio = 6,
 		.num_stream_encoder = 6,
 		.num_pll = 2,
 		.num_ddc = 2,
-};
+पूर्ण;
 
-static const struct dc_plane_cap plane_cap = {
+अटल स्थिर काष्ठा dc_plane_cap plane_cap = अणु
 	.type = DC_PLANE_TYPE_DCE_RGB,
 
-	.pixel_format_support = {
+	.pixel_क्रमmat_support = अणु
 			.argb8888 = true,
 			.nv12 = false,
 			.fp16 = true
-	},
+	पूर्ण,
 
-	.max_upscale_factor = {
+	.max_upscale_factor = अणु
 			.argb8888 = 16000,
 			.nv12 = 1,
 			.fp16 = 1
-	},
+	पूर्ण,
 
-	.max_downscale_factor = {
+	.max_करोwnscale_factor = अणु
 			.argb8888 = 250,
 			.nv12 = 1,
 			.fp16 = 1
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct dce_dmcu_registers dmcu_regs = {
+अटल स्थिर काष्ठा dce_dmcu_रेजिस्टरs dmcu_regs = अणु
 		DMCU_DCE80_REG_LIST()
-};
+पूर्ण;
 
-static const struct dce_dmcu_shift dmcu_shift = {
+अटल स्थिर काष्ठा dce_dmcu_shअगरt dmcu_shअगरt = अणु
 		DMCU_MASK_SH_LIST_DCE80(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce_dmcu_mask dmcu_mask = {
+अटल स्थिर काष्ठा dce_dmcu_mask dmcu_mask = अणु
 		DMCU_MASK_SH_LIST_DCE80(_MASK)
-};
-static const struct dce_abm_registers abm_regs = {
+पूर्ण;
+अटल स्थिर काष्ठा dce_abm_रेजिस्टरs abm_regs = अणु
 		ABM_DCE110_COMMON_REG_LIST()
-};
+पूर्ण;
 
-static const struct dce_abm_shift abm_shift = {
+अटल स्थिर काष्ठा dce_abm_shअगरt abm_shअगरt = अणु
 		ABM_MASK_SH_LIST_DCE110(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce_abm_mask abm_mask = {
+अटल स्थिर काष्ठा dce_abm_mask abm_mask = अणु
 		ABM_MASK_SH_LIST_DCE110(_MASK)
-};
+पूर्ण;
 
-#define CTX  ctx
-#define REG(reg) mm ## reg
+#घोषणा CTX  ctx
+#घोषणा REG(reg) mm ## reg
 
-#ifndef mmCC_DC_HDMI_STRAPS
-#define mmCC_DC_HDMI_STRAPS 0x1918
-#define CC_DC_HDMI_STRAPS__HDMI_DISABLE_MASK 0x40
-#define CC_DC_HDMI_STRAPS__HDMI_DISABLE__SHIFT 0x6
-#define CC_DC_HDMI_STRAPS__AUDIO_STREAM_NUMBER_MASK 0x700
-#define CC_DC_HDMI_STRAPS__AUDIO_STREAM_NUMBER__SHIFT 0x8
-#endif
+#अगर_अघोषित mmCC_DC_HDMI_STRAPS
+#घोषणा mmCC_DC_HDMI_STRAPS 0x1918
+#घोषणा CC_DC_HDMI_STRAPS__HDMI_DISABLE_MASK 0x40
+#घोषणा CC_DC_HDMI_STRAPS__HDMI_DISABLE__SHIFT 0x6
+#घोषणा CC_DC_HDMI_STRAPS__AUDIO_STREAM_NUMBER_MASK 0x700
+#घोषणा CC_DC_HDMI_STRAPS__AUDIO_STREAM_NUMBER__SHIFT 0x8
+#पूर्ण_अगर
 
-static int map_transmitter_id_to_phy_instance(
-	enum transmitter transmitter)
-{
-	switch (transmitter) {
-	case TRANSMITTER_UNIPHY_A:
-		return 0;
-	case TRANSMITTER_UNIPHY_B:
-		return 1;
-	case TRANSMITTER_UNIPHY_C:
-		return 2;
-	case TRANSMITTER_UNIPHY_D:
-		return 3;
-	case TRANSMITTER_UNIPHY_E:
-		return 4;
-	case TRANSMITTER_UNIPHY_F:
-		return 5;
-	case TRANSMITTER_UNIPHY_G:
-		return 6;
-	default:
+अटल पूर्णांक map_transmitter_id_to_phy_instance(
+	क्रमागत transmitter transmitter)
+अणु
+	चयन (transmitter) अणु
+	हाल TRANSMITTER_UNIPHY_A:
+		वापस 0;
+	हाल TRANSMITTER_UNIPHY_B:
+		वापस 1;
+	हाल TRANSMITTER_UNIPHY_C:
+		वापस 2;
+	हाल TRANSMITTER_UNIPHY_D:
+		वापस 3;
+	हाल TRANSMITTER_UNIPHY_E:
+		वापस 4;
+	हाल TRANSMITTER_UNIPHY_F:
+		वापस 5;
+	हाल TRANSMITTER_UNIPHY_G:
+		वापस 6;
+	शेष:
 		ASSERT(0);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void read_dce_straps(
-	struct dc_context *ctx,
-	struct resource_straps *straps)
-{
+अटल व्योम पढ़ो_dce_straps(
+	काष्ठा dc_context *ctx,
+	काष्ठा resource_straps *straps)
+अणु
 	REG_GET_2(CC_DC_HDMI_STRAPS,
 			HDMI_DISABLE, &straps->hdmi_disable,
 			AUDIO_STREAM_NUMBER, &straps->audio_stream_number);
 
 	REG_GET(DC_PINSTRAPS, DC_PINSTRAPS_AUDIO, &straps->dc_pinstraps_audio);
-}
+पूर्ण
 
-static struct audio *create_audio(
-		struct dc_context *ctx, unsigned int inst)
-{
-	return dce_audio_create(ctx, inst,
-			&audio_regs[inst], &audio_shift, &audio_mask);
-}
+अटल काष्ठा audio *create_audio(
+		काष्ठा dc_context *ctx, अचिन्हित पूर्णांक inst)
+अणु
+	वापस dce_audio_create(ctx, inst,
+			&audio_regs[inst], &audio_shअगरt, &audio_mask);
+पूर्ण
 
-static struct timing_generator *dce80_timing_generator_create(
-		struct dc_context *ctx,
-		uint32_t instance,
-		const struct dce110_timing_generator_offsets *offsets)
-{
-	struct dce110_timing_generator *tg110 =
-		kzalloc(sizeof(struct dce110_timing_generator), GFP_KERNEL);
+अटल काष्ठा timing_generator *dce80_timing_generator_create(
+		काष्ठा dc_context *ctx,
+		uपूर्णांक32_t instance,
+		स्थिर काष्ठा dce110_timing_generator_offsets *offsets)
+अणु
+	काष्ठा dce110_timing_generator *tg110 =
+		kzalloc(माप(काष्ठा dce110_timing_generator), GFP_KERNEL);
 
-	if (!tg110)
-		return NULL;
+	अगर (!tg110)
+		वापस शून्य;
 
-	dce80_timing_generator_construct(tg110, ctx, instance, offsets);
-	return &tg110->base;
-}
+	dce80_timing_generator_स्थिरruct(tg110, ctx, instance, offsets);
+	वापस &tg110->base;
+पूर्ण
 
-static struct output_pixel_processor *dce80_opp_create(
-	struct dc_context *ctx,
-	uint32_t inst)
-{
-	struct dce110_opp *opp =
-		kzalloc(sizeof(struct dce110_opp), GFP_KERNEL);
+अटल काष्ठा output_pixel_processor *dce80_opp_create(
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst)
+अणु
+	काष्ठा dce110_opp *opp =
+		kzalloc(माप(काष्ठा dce110_opp), GFP_KERNEL);
 
-	if (!opp)
-		return NULL;
+	अगर (!opp)
+		वापस शून्य;
 
-	dce110_opp_construct(opp,
-			     ctx, inst, &opp_regs[inst], &opp_shift, &opp_mask);
-	return &opp->base;
-}
+	dce110_opp_स्थिरruct(opp,
+			     ctx, inst, &opp_regs[inst], &opp_shअगरt, &opp_mask);
+	वापस &opp->base;
+पूर्ण
 
-static struct dce_aux *dce80_aux_engine_create(
-	struct dc_context *ctx,
-	uint32_t inst)
-{
-	struct aux_engine_dce110 *aux_engine =
-		kzalloc(sizeof(struct aux_engine_dce110), GFP_KERNEL);
+अटल काष्ठा dce_aux *dce80_aux_engine_create(
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst)
+अणु
+	काष्ठा aux_engine_dce110 *aux_engine =
+		kzalloc(माप(काष्ठा aux_engine_dce110), GFP_KERNEL);
 
-	if (!aux_engine)
-		return NULL;
+	अगर (!aux_engine)
+		वापस शून्य;
 
-	dce110_aux_engine_construct(aux_engine, ctx, inst,
+	dce110_aux_engine_स्थिरruct(aux_engine, ctx, inst,
 				    SW_AUX_TIMEOUT_PERIOD_MULTIPLIER * AUX_TIMEOUT_PERIOD,
 				    &aux_engine_regs[inst],
 					&aux_mask,
-					&aux_shift,
-					ctx->dc->caps.extended_aux_timeout_support);
+					&aux_shअगरt,
+					ctx->dc->caps.extended_aux_समयout_support);
 
-	return &aux_engine->base;
-}
-#define i2c_inst_regs(id) { I2C_HW_ENGINE_COMMON_REG_LIST(id) }
+	वापस &aux_engine->base;
+पूर्ण
+#घोषणा i2c_inst_regs(id) अणु I2C_HW_ENGINE_COMMON_REG_LIST(id) पूर्ण
 
-static const struct dce_i2c_registers i2c_hw_regs[] = {
+अटल स्थिर काष्ठा dce_i2c_रेजिस्टरs i2c_hw_regs[] = अणु
 		i2c_inst_regs(1),
 		i2c_inst_regs(2),
 		i2c_inst_regs(3),
 		i2c_inst_regs(4),
 		i2c_inst_regs(5),
 		i2c_inst_regs(6),
-};
+पूर्ण;
 
-static const struct dce_i2c_shift i2c_shifts = {
+अटल स्थिर काष्ठा dce_i2c_shअगरt i2c_shअगरts = अणु
 		I2C_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce_i2c_mask i2c_masks = {
+अटल स्थिर काष्ठा dce_i2c_mask i2c_masks = अणु
 		I2C_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(_MASK)
-};
+पूर्ण;
 
-static struct dce_i2c_hw *dce80_i2c_hw_create(
-	struct dc_context *ctx,
-	uint32_t inst)
-{
-	struct dce_i2c_hw *dce_i2c_hw =
-		kzalloc(sizeof(struct dce_i2c_hw), GFP_KERNEL);
+अटल काष्ठा dce_i2c_hw *dce80_i2c_hw_create(
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst)
+अणु
+	काष्ठा dce_i2c_hw *dce_i2c_hw =
+		kzalloc(माप(काष्ठा dce_i2c_hw), GFP_KERNEL);
 
-	if (!dce_i2c_hw)
-		return NULL;
+	अगर (!dce_i2c_hw)
+		वापस शून्य;
 
-	dce_i2c_hw_construct(dce_i2c_hw, ctx, inst,
-				    &i2c_hw_regs[inst], &i2c_shifts, &i2c_masks);
+	dce_i2c_hw_स्थिरruct(dce_i2c_hw, ctx, inst,
+				    &i2c_hw_regs[inst], &i2c_shअगरts, &i2c_masks);
 
-	return dce_i2c_hw;
-}
+	वापस dce_i2c_hw;
+पूर्ण
 
-static struct dce_i2c_sw *dce80_i2c_sw_create(
-	struct dc_context *ctx)
-{
-	struct dce_i2c_sw *dce_i2c_sw =
-		kzalloc(sizeof(struct dce_i2c_sw), GFP_KERNEL);
+अटल काष्ठा dce_i2c_sw *dce80_i2c_sw_create(
+	काष्ठा dc_context *ctx)
+अणु
+	काष्ठा dce_i2c_sw *dce_i2c_sw =
+		kzalloc(माप(काष्ठा dce_i2c_sw), GFP_KERNEL);
 
-	if (!dce_i2c_sw)
-		return NULL;
+	अगर (!dce_i2c_sw)
+		वापस शून्य;
 
-	dce_i2c_sw_construct(dce_i2c_sw, ctx);
+	dce_i2c_sw_स्थिरruct(dce_i2c_sw, ctx);
 
-	return dce_i2c_sw;
-}
-static struct stream_encoder *dce80_stream_encoder_create(
-	enum engine_id eng_id,
-	struct dc_context *ctx)
-{
-	struct dce110_stream_encoder *enc110 =
-		kzalloc(sizeof(struct dce110_stream_encoder), GFP_KERNEL);
+	वापस dce_i2c_sw;
+पूर्ण
+अटल काष्ठा stream_encoder *dce80_stream_encoder_create(
+	क्रमागत engine_id eng_id,
+	काष्ठा dc_context *ctx)
+अणु
+	काष्ठा dce110_stream_encoder *enc110 =
+		kzalloc(माप(काष्ठा dce110_stream_encoder), GFP_KERNEL);
 
-	if (!enc110)
-		return NULL;
+	अगर (!enc110)
+		वापस शून्य;
 
-	dce110_stream_encoder_construct(enc110, ctx, ctx->dc_bios, eng_id,
+	dce110_stream_encoder_स्थिरruct(enc110, ctx, ctx->dc_bios, eng_id,
 					&stream_enc_regs[eng_id],
-					&se_shift, &se_mask);
-	return &enc110->base;
-}
+					&se_shअगरt, &se_mask);
+	वापस &enc110->base;
+पूर्ण
 
-#define SRII(reg_name, block, id)\
+#घोषणा SRII(reg_name, block, id)\
 	.reg_name[id] = mm ## block ## id ## _ ## reg_name
 
-static const struct dce_hwseq_registers hwseq_reg = {
+अटल स्थिर काष्ठा dce_hwseq_रेजिस्टरs hwseq_reg = अणु
 		HWSEQ_DCE8_REG_LIST()
-};
+पूर्ण;
 
-static const struct dce_hwseq_shift hwseq_shift = {
+अटल स्थिर काष्ठा dce_hwseq_shअगरt hwseq_shअगरt = अणु
 		HWSEQ_DCE8_MASK_SH_LIST(__SHIFT)
-};
+पूर्ण;
 
-static const struct dce_hwseq_mask hwseq_mask = {
+अटल स्थिर काष्ठा dce_hwseq_mask hwseq_mask = अणु
 		HWSEQ_DCE8_MASK_SH_LIST(_MASK)
-};
+पूर्ण;
 
-static struct dce_hwseq *dce80_hwseq_create(
-	struct dc_context *ctx)
-{
-	struct dce_hwseq *hws = kzalloc(sizeof(struct dce_hwseq), GFP_KERNEL);
+अटल काष्ठा dce_hwseq *dce80_hwseq_create(
+	काष्ठा dc_context *ctx)
+अणु
+	काष्ठा dce_hwseq *hws = kzalloc(माप(काष्ठा dce_hwseq), GFP_KERNEL);
 
-	if (hws) {
+	अगर (hws) अणु
 		hws->ctx = ctx;
 		hws->regs = &hwseq_reg;
-		hws->shifts = &hwseq_shift;
+		hws->shअगरts = &hwseq_shअगरt;
 		hws->masks = &hwseq_mask;
-	}
-	return hws;
-}
+	पूर्ण
+	वापस hws;
+पूर्ण
 
-static const struct resource_create_funcs res_create_funcs = {
-	.read_dce_straps = read_dce_straps,
+अटल स्थिर काष्ठा resource_create_funcs res_create_funcs = अणु
+	.पढ़ो_dce_straps = पढ़ो_dce_straps,
 	.create_audio = create_audio,
 	.create_stream_encoder = dce80_stream_encoder_create,
 	.create_hwseq = dce80_hwseq_create,
-};
+पूर्ण;
 
-#define mi_inst_regs(id) { \
+#घोषणा mi_inst_regs(id) अणु \
 	MI_DCE8_REG_LIST(id), \
 	.MC_HUB_RDREQ_DMIF_LIMIT = mmMC_HUB_RDREQ_DMIF_LIMIT \
-}
-static const struct dce_mem_input_registers mi_regs[] = {
+पूर्ण
+अटल स्थिर काष्ठा dce_mem_input_रेजिस्टरs mi_regs[] = अणु
 		mi_inst_regs(0),
 		mi_inst_regs(1),
 		mi_inst_regs(2),
 		mi_inst_regs(3),
 		mi_inst_regs(4),
 		mi_inst_regs(5),
-};
+पूर्ण;
 
-static const struct dce_mem_input_shift mi_shifts = {
+अटल स्थिर काष्ठा dce_mem_input_shअगरt mi_shअगरts = अणु
 		MI_DCE8_MASK_SH_LIST(__SHIFT),
 		.ENABLE = MC_HUB_RDREQ_DMIF_LIMIT__ENABLE__SHIFT
-};
+पूर्ण;
 
-static const struct dce_mem_input_mask mi_masks = {
+अटल स्थिर काष्ठा dce_mem_input_mask mi_masks = अणु
 		MI_DCE8_MASK_SH_LIST(_MASK),
 		.ENABLE = MC_HUB_RDREQ_DMIF_LIMIT__ENABLE_MASK
-};
+पूर्ण;
 
-static struct mem_input *dce80_mem_input_create(
-	struct dc_context *ctx,
-	uint32_t inst)
-{
-	struct dce_mem_input *dce_mi = kzalloc(sizeof(struct dce_mem_input),
+अटल काष्ठा mem_input *dce80_mem_input_create(
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst)
+अणु
+	काष्ठा dce_mem_input *dce_mi = kzalloc(माप(काष्ठा dce_mem_input),
 					       GFP_KERNEL);
 
-	if (!dce_mi) {
+	अगर (!dce_mi) अणु
 		BREAK_TO_DEBUGGER();
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	dce_mem_input_construct(dce_mi, ctx, inst, &mi_regs[inst], &mi_shifts, &mi_masks);
-	dce_mi->wa.single_head_rdreq_dmif_limit = 2;
-	return &dce_mi->base;
-}
+	dce_mem_input_स्थिरruct(dce_mi, ctx, inst, &mi_regs[inst], &mi_shअगरts, &mi_masks);
+	dce_mi->wa.single_head_rdreq_dmअगर_limit = 2;
+	वापस &dce_mi->base;
+पूर्ण
 
-static void dce80_transform_destroy(struct transform **xfm)
-{
-	kfree(TO_DCE_TRANSFORM(*xfm));
-	*xfm = NULL;
-}
+अटल व्योम dce80_transक्रमm_destroy(काष्ठा transक्रमm **xfm)
+अणु
+	kमुक्त(TO_DCE_TRANSFORM(*xfm));
+	*xfm = शून्य;
+पूर्ण
 
-static struct transform *dce80_transform_create(
-	struct dc_context *ctx,
-	uint32_t inst)
-{
-	struct dce_transform *transform =
-		kzalloc(sizeof(struct dce_transform), GFP_KERNEL);
+अटल काष्ठा transक्रमm *dce80_transक्रमm_create(
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst)
+अणु
+	काष्ठा dce_transक्रमm *transक्रमm =
+		kzalloc(माप(काष्ठा dce_transक्रमm), GFP_KERNEL);
 
-	if (!transform)
-		return NULL;
+	अगर (!transक्रमm)
+		वापस शून्य;
 
-	dce_transform_construct(transform, ctx, inst,
-				&xfm_regs[inst], &xfm_shift, &xfm_mask);
-	transform->prescaler_on = false;
-	return &transform->base;
-}
+	dce_transक्रमm_स्थिरruct(transक्रमm, ctx, inst,
+				&xfm_regs[inst], &xfm_shअगरt, &xfm_mask);
+	transक्रमm->prescaler_on = false;
+	वापस &transक्रमm->base;
+पूर्ण
 
-static const struct encoder_feature_support link_enc_feature = {
+अटल स्थिर काष्ठा encoder_feature_support link_enc_feature = अणु
 		.max_hdmi_deep_color = COLOR_DEPTH_121212,
-		.max_hdmi_pixel_clock = 297000,
+		.max_hdmi_pixel_घड़ी = 297000,
 		.flags.bits.IS_HBR2_CAPABLE = true,
 		.flags.bits.IS_TPS3_CAPABLE = true
-};
+पूर्ण;
 
-static struct link_encoder *dce80_link_encoder_create(
-	const struct encoder_init_data *enc_init_data)
-{
-	struct dce110_link_encoder *enc110 =
-		kzalloc(sizeof(struct dce110_link_encoder), GFP_KERNEL);
-	int link_regs_id;
+अटल काष्ठा link_encoder *dce80_link_encoder_create(
+	स्थिर काष्ठा encoder_init_data *enc_init_data)
+अणु
+	काष्ठा dce110_link_encoder *enc110 =
+		kzalloc(माप(काष्ठा dce110_link_encoder), GFP_KERNEL);
+	पूर्णांक link_regs_id;
 
-	if (!enc110)
-		return NULL;
+	अगर (!enc110)
+		वापस शून्य;
 
 	link_regs_id =
 		map_transmitter_id_to_phy_instance(enc_init_data->transmitter);
 
-	dce110_link_encoder_construct(enc110,
+	dce110_link_encoder_स्थिरruct(enc110,
 				      enc_init_data,
 				      &link_enc_feature,
 				      &link_enc_regs[link_regs_id],
 				      &link_enc_aux_regs[enc_init_data->channel - 1],
 				      &link_enc_hpd_regs[enc_init_data->hpd_source]);
-	return &enc110->base;
-}
+	वापस &enc110->base;
+पूर्ण
 
-static struct panel_cntl *dce80_panel_cntl_create(const struct panel_cntl_init_data *init_data)
-{
-	struct dce_panel_cntl *panel_cntl =
-		kzalloc(sizeof(struct dce_panel_cntl), GFP_KERNEL);
+अटल काष्ठा panel_cntl *dce80_panel_cntl_create(स्थिर काष्ठा panel_cntl_init_data *init_data)
+अणु
+	काष्ठा dce_panel_cntl *panel_cntl =
+		kzalloc(माप(काष्ठा dce_panel_cntl), GFP_KERNEL);
 
-	if (!panel_cntl)
-		return NULL;
+	अगर (!panel_cntl)
+		वापस शून्य;
 
-	dce_panel_cntl_construct(panel_cntl,
+	dce_panel_cntl_स्थिरruct(panel_cntl,
 			init_data,
 			&panel_cntl_regs[init_data->inst],
-			&panel_cntl_shift,
+			&panel_cntl_shअगरt,
 			&panel_cntl_mask);
 
-	return &panel_cntl->base;
-}
+	वापस &panel_cntl->base;
+पूर्ण
 
-static struct clock_source *dce80_clock_source_create(
-	struct dc_context *ctx,
-	struct dc_bios *bios,
-	enum clock_source_id id,
-	const struct dce110_clk_src_regs *regs,
+अटल काष्ठा घड़ी_source *dce80_घड़ी_source_create(
+	काष्ठा dc_context *ctx,
+	काष्ठा dc_bios *bios,
+	क्रमागत घड़ी_source_id id,
+	स्थिर काष्ठा dce110_clk_src_regs *regs,
 	bool dp_clk_src)
-{
-	struct dce110_clk_src *clk_src =
-		kzalloc(sizeof(struct dce110_clk_src), GFP_KERNEL);
+अणु
+	काष्ठा dce110_clk_src *clk_src =
+		kzalloc(माप(काष्ठा dce110_clk_src), GFP_KERNEL);
 
-	if (!clk_src)
-		return NULL;
+	अगर (!clk_src)
+		वापस शून्य;
 
-	if (dce110_clk_src_construct(clk_src, ctx, bios, id,
-			regs, &cs_shift, &cs_mask)) {
+	अगर (dce110_clk_src_स्थिरruct(clk_src, ctx, bios, id,
+			regs, &cs_shअगरt, &cs_mask)) अणु
 		clk_src->base.dp_clk_src = dp_clk_src;
-		return &clk_src->base;
-	}
+		वापस &clk_src->base;
+	पूर्ण
 
-	kfree(clk_src);
+	kमुक्त(clk_src);
 	BREAK_TO_DEBUGGER();
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void dce80_clock_source_destroy(struct clock_source **clk_src)
-{
-	kfree(TO_DCE110_CLK_SRC(*clk_src));
-	*clk_src = NULL;
-}
+अटल व्योम dce80_घड़ी_source_destroy(काष्ठा घड़ी_source **clk_src)
+अणु
+	kमुक्त(TO_DCE110_CLK_SRC(*clk_src));
+	*clk_src = शून्य;
+पूर्ण
 
-static struct input_pixel_processor *dce80_ipp_create(
-	struct dc_context *ctx, uint32_t inst)
-{
-	struct dce_ipp *ipp = kzalloc(sizeof(struct dce_ipp), GFP_KERNEL);
+अटल काष्ठा input_pixel_processor *dce80_ipp_create(
+	काष्ठा dc_context *ctx, uपूर्णांक32_t inst)
+अणु
+	काष्ठा dce_ipp *ipp = kzalloc(माप(काष्ठा dce_ipp), GFP_KERNEL);
 
-	if (!ipp) {
+	अगर (!ipp) अणु
 		BREAK_TO_DEBUGGER();
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	dce_ipp_construct(ipp, ctx, inst,
-			&ipp_regs[inst], &ipp_shift, &ipp_mask);
-	return &ipp->base;
-}
+	dce_ipp_स्थिरruct(ipp, ctx, inst,
+			&ipp_regs[inst], &ipp_shअगरt, &ipp_mask);
+	वापस &ipp->base;
+पूर्ण
 
-static void dce80_resource_destruct(struct dce110_resource_pool *pool)
-{
-	unsigned int i;
+अटल व्योम dce80_resource_deकाष्ठा(काष्ठा dce110_resource_pool *pool)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pool->base.pipe_count; i++) {
-		if (pool->base.opps[i] != NULL)
+	क्रम (i = 0; i < pool->base.pipe_count; i++) अणु
+		अगर (pool->base.opps[i] != शून्य)
 			dce110_opp_destroy(&pool->base.opps[i]);
 
-		if (pool->base.transforms[i] != NULL)
-			dce80_transform_destroy(&pool->base.transforms[i]);
+		अगर (pool->base.transक्रमms[i] != शून्य)
+			dce80_transक्रमm_destroy(&pool->base.transक्रमms[i]);
 
-		if (pool->base.ipps[i] != NULL)
+		अगर (pool->base.ipps[i] != शून्य)
 			dce_ipp_destroy(&pool->base.ipps[i]);
 
-		if (pool->base.mis[i] != NULL) {
-			kfree(TO_DCE_MEM_INPUT(pool->base.mis[i]));
-			pool->base.mis[i] = NULL;
-		}
+		अगर (pool->base.mis[i] != शून्य) अणु
+			kमुक्त(TO_DCE_MEM_INPUT(pool->base.mis[i]));
+			pool->base.mis[i] = शून्य;
+		पूर्ण
 
-		if (pool->base.timing_generators[i] != NULL)	{
-			kfree(DCE110TG_FROM_TG(pool->base.timing_generators[i]));
-			pool->base.timing_generators[i] = NULL;
-		}
-	}
+		अगर (pool->base.timing_generators[i] != शून्य)	अणु
+			kमुक्त(DCE110TG_FROM_TG(pool->base.timing_generators[i]));
+			pool->base.timing_generators[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < pool->base.res_cap->num_ddc; i++) {
-		if (pool->base.engines[i] != NULL)
+	क्रम (i = 0; i < pool->base.res_cap->num_ddc; i++) अणु
+		अगर (pool->base.engines[i] != शून्य)
 			dce110_engine_destroy(&pool->base.engines[i]);
-		if (pool->base.hw_i2cs[i] != NULL) {
-			kfree(pool->base.hw_i2cs[i]);
-			pool->base.hw_i2cs[i] = NULL;
-		}
-		if (pool->base.sw_i2cs[i] != NULL) {
-			kfree(pool->base.sw_i2cs[i]);
-			pool->base.sw_i2cs[i] = NULL;
-		}
-	}
+		अगर (pool->base.hw_i2cs[i] != शून्य) अणु
+			kमुक्त(pool->base.hw_i2cs[i]);
+			pool->base.hw_i2cs[i] = शून्य;
+		पूर्ण
+		अगर (pool->base.sw_i2cs[i] != शून्य) अणु
+			kमुक्त(pool->base.sw_i2cs[i]);
+			pool->base.sw_i2cs[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < pool->base.stream_enc_count; i++) {
-		if (pool->base.stream_enc[i] != NULL)
-			kfree(DCE110STRENC_FROM_STRENC(pool->base.stream_enc[i]));
-	}
+	क्रम (i = 0; i < pool->base.stream_enc_count; i++) अणु
+		अगर (pool->base.stream_enc[i] != शून्य)
+			kमुक्त(DCE110STRENC_FROM_STRENC(pool->base.stream_enc[i]));
+	पूर्ण
 
-	for (i = 0; i < pool->base.clk_src_count; i++) {
-		if (pool->base.clock_sources[i] != NULL) {
-			dce80_clock_source_destroy(&pool->base.clock_sources[i]);
-		}
-	}
+	क्रम (i = 0; i < pool->base.clk_src_count; i++) अणु
+		अगर (pool->base.घड़ी_sources[i] != शून्य) अणु
+			dce80_घड़ी_source_destroy(&pool->base.घड़ी_sources[i]);
+		पूर्ण
+	पूर्ण
 
-	if (pool->base.abm != NULL)
+	अगर (pool->base.abm != शून्य)
 			dce_abm_destroy(&pool->base.abm);
 
-	if (pool->base.dmcu != NULL)
+	अगर (pool->base.dmcu != शून्य)
 			dce_dmcu_destroy(&pool->base.dmcu);
 
-	if (pool->base.dp_clock_source != NULL)
-		dce80_clock_source_destroy(&pool->base.dp_clock_source);
+	अगर (pool->base.dp_घड़ी_source != शून्य)
+		dce80_घड़ी_source_destroy(&pool->base.dp_घड़ी_source);
 
-	for (i = 0; i < pool->base.audio_count; i++)	{
-		if (pool->base.audios[i] != NULL) {
+	क्रम (i = 0; i < pool->base.audio_count; i++)	अणु
+		अगर (pool->base.audios[i] != शून्य) अणु
 			dce_aud_destroy(&pool->base.audios[i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pool->base.irqs != NULL) {
+	अगर (pool->base.irqs != शून्य) अणु
 		dal_irq_service_destroy(&pool->base.irqs);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool dce80_validate_bandwidth(
-	struct dc *dc,
-	struct dc_state *context,
+अटल bool dce80_validate_bandwidth(
+	काष्ठा dc *dc,
+	काष्ठा dc_state *context,
 	bool fast_validate)
-{
-	int i;
+अणु
+	पूर्णांक i;
 	bool at_least_one_pipe = false;
 
-	for (i = 0; i < dc->res_pool->pipe_count; i++) {
-		if (context->res_ctx.pipe_ctx[i].stream)
+	क्रम (i = 0; i < dc->res_pool->pipe_count; i++) अणु
+		अगर (context->res_ctx.pipe_ctx[i].stream)
 			at_least_one_pipe = true;
-	}
+	पूर्ण
 
-	if (at_least_one_pipe) {
-		/* TODO implement when needed but for now hardcode max value*/
+	अगर (at_least_one_pipe) अणु
+		/* TODO implement when needed but क्रम now hardcode max value*/
 		context->bw_ctx.bw.dce.dispclk_khz = 681000;
 		context->bw_ctx.bw.dce.yclk_khz = 250000 * MEMORY_TYPE_MULTIPLIER_CZ;
-	} else {
+	पूर्ण अन्यथा अणु
 		context->bw_ctx.bw.dce.dispclk_khz = 0;
 		context->bw_ctx.bw.dce.yclk_khz = 0;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool dce80_validate_surface_sets(
-		struct dc_state *context)
-{
-	int i;
+अटल bool dce80_validate_surface_sets(
+		काष्ठा dc_state *context)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < context->stream_count; i++) {
-		if (context->stream_status[i].plane_count == 0)
-			continue;
+	क्रम (i = 0; i < context->stream_count; i++) अणु
+		अगर (context->stream_status[i].plane_count == 0)
+			जारी;
 
-		if (context->stream_status[i].plane_count > 1)
-			return false;
+		अगर (context->stream_status[i].plane_count > 1)
+			वापस false;
 
-		if (context->stream_status[i].plane_states[0]->format
+		अगर (context->stream_status[i].plane_states[0]->क्रमmat
 				>= SURFACE_PIXEL_FORMAT_VIDEO_BEGIN)
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static enum dc_status dce80_validate_global(
-		struct dc *dc,
-		struct dc_state *context)
-{
-	if (!dce80_validate_surface_sets(context))
-		return DC_FAIL_SURFACE_VALIDATE;
+अटल क्रमागत dc_status dce80_validate_global(
+		काष्ठा dc *dc,
+		काष्ठा dc_state *context)
+अणु
+	अगर (!dce80_validate_surface_sets(context))
+		वापस DC_FAIL_SURFACE_VALIDATE;
 
-	return DC_OK;
-}
+	वापस DC_OK;
+पूर्ण
 
-static void dce80_destroy_resource_pool(struct resource_pool **pool)
-{
-	struct dce110_resource_pool *dce110_pool = TO_DCE110_RES_POOL(*pool);
+अटल व्योम dce80_destroy_resource_pool(काष्ठा resource_pool **pool)
+अणु
+	काष्ठा dce110_resource_pool *dce110_pool = TO_DCE110_RES_POOL(*pool);
 
-	dce80_resource_destruct(dce110_pool);
-	kfree(dce110_pool);
-	*pool = NULL;
-}
+	dce80_resource_deकाष्ठा(dce110_pool);
+	kमुक्त(dce110_pool);
+	*pool = शून्य;
+पूर्ण
 
-static const struct resource_funcs dce80_res_pool_funcs = {
+अटल स्थिर काष्ठा resource_funcs dce80_res_pool_funcs = अणु
 	.destroy = dce80_destroy_resource_pool,
 	.link_enc_create = dce80_link_encoder_create,
 	.panel_cntl_create = dce80_panel_cntl_create,
@@ -939,17 +940,17 @@ static const struct resource_funcs dce80_res_pool_funcs = {
 	.validate_plane = dce100_validate_plane,
 	.add_stream_to_ctx = dce100_add_stream_to_ctx,
 	.validate_global = dce80_validate_global,
-	.find_first_free_match_stream_enc_for_link = dce100_find_first_free_match_stream_enc_for_link
-};
+	.find_first_मुक्त_match_stream_enc_क्रम_link = dce100_find_first_मुक्त_match_stream_enc_क्रम_link
+पूर्ण;
 
-static bool dce80_construct(
-	uint8_t num_virtual_links,
-	struct dc *dc,
-	struct dce110_resource_pool *pool)
-{
-	unsigned int i;
-	struct dc_context *ctx = dc->ctx;
-	struct dc_bios *bp;
+अटल bool dce80_स्थिरruct(
+	uपूर्णांक8_t num_भव_links,
+	काष्ठा dc *dc,
+	काष्ठा dce110_resource_pool *pool)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा dc_context *ctx = dc->ctx;
+	काष्ठा dc_bios *bp;
 
 	ctx->dc_bios->regs = &bios_regs;
 
@@ -963,13 +964,13 @@ static bool dce80_construct(
 	pool->base.underlay_pipe_index = NO_UNDERLAY_PIPE;
 	pool->base.pipe_count = res_cap.num_timing_generator;
 	pool->base.timing_generator_count = res_cap.num_timing_generator;
-	dc->caps.max_downscale_ratio = 200;
+	dc->caps.max_करोwnscale_ratio = 200;
 	dc->caps.i2c_speed_in_khz = 40;
 	dc->caps.i2c_speed_in_khz_hdcp = 40;
 	dc->caps.max_cursor_size = 128;
 	dc->caps.min_horizontal_blanking_period = 80;
 	dc->caps.dual_link_dvi = true;
-	dc->caps.extended_aux_timeout_support = false;
+	dc->caps.extended_aux_समयout_support = false;
 
 	/*************************************************
 	 *  Create resources                             *
@@ -977,179 +978,179 @@ static bool dce80_construct(
 
 	bp = ctx->dc_bios;
 
-	if (bp->fw_info_valid && bp->fw_info.external_clock_source_frequency_for_dp != 0) {
-		pool->base.dp_clock_source =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_EXTERNAL, NULL, true);
+	अगर (bp->fw_info_valid && bp->fw_info.बाह्यal_घड़ी_source_frequency_क्रम_dp != 0) अणु
+		pool->base.dp_घड़ी_source =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_EXTERNAL, शून्य, true);
 
-		pool->base.clock_sources[0] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL0, &clk_src_regs[0], false);
-		pool->base.clock_sources[1] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[1], false);
-		pool->base.clock_sources[2] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[2], false);
+		pool->base.घड़ी_sources[0] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL0, &clk_src_regs[0], false);
+		pool->base.घड़ी_sources[1] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[1], false);
+		pool->base.घड़ी_sources[2] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[2], false);
 		pool->base.clk_src_count = 3;
 
-	} else {
-		pool->base.dp_clock_source =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL0, &clk_src_regs[0], true);
+	पूर्ण अन्यथा अणु
+		pool->base.dp_घड़ी_source =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL0, &clk_src_regs[0], true);
 
-		pool->base.clock_sources[0] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[1], false);
-		pool->base.clock_sources[1] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[2], false);
+		pool->base.घड़ी_sources[0] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[1], false);
+		pool->base.घड़ी_sources[1] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[2], false);
 		pool->base.clk_src_count = 2;
-	}
+	पूर्ण
 
-	if (pool->base.dp_clock_source == NULL) {
+	अगर (pool->base.dp_घड़ी_source == शून्य) अणु
 		dm_error("DC: failed to create dp clock source!\n");
 		BREAK_TO_DEBUGGER();
-		goto res_create_fail;
-	}
+		जाओ res_create_fail;
+	पूर्ण
 
-	for (i = 0; i < pool->base.clk_src_count; i++) {
-		if (pool->base.clock_sources[i] == NULL) {
+	क्रम (i = 0; i < pool->base.clk_src_count; i++) अणु
+		अगर (pool->base.घड़ी_sources[i] == शून्य) अणु
 			dm_error("DC: failed to create clock sources!\n");
 			BREAK_TO_DEBUGGER();
-			goto res_create_fail;
-		}
-	}
+			जाओ res_create_fail;
+		पूर्ण
+	पूर्ण
 
 	pool->base.dmcu = dce_dmcu_create(ctx,
 			&dmcu_regs,
-			&dmcu_shift,
+			&dmcu_shअगरt,
 			&dmcu_mask);
-	if (pool->base.dmcu == NULL) {
+	अगर (pool->base.dmcu == शून्य) अणु
 		dm_error("DC: failed to create dmcu!\n");
 		BREAK_TO_DEBUGGER();
-		goto res_create_fail;
-	}
+		जाओ res_create_fail;
+	पूर्ण
 
 	pool->base.abm = dce_abm_create(ctx,
 			&abm_regs,
-			&abm_shift,
+			&abm_shअगरt,
 			&abm_mask);
-	if (pool->base.abm == NULL) {
+	अगर (pool->base.abm == शून्य) अणु
 		dm_error("DC: failed to create abm!\n");
 		BREAK_TO_DEBUGGER();
-		goto res_create_fail;
-	}
+		जाओ res_create_fail;
+	पूर्ण
 
-	{
-		struct irq_service_init_data init_data;
+	अणु
+		काष्ठा irq_service_init_data init_data;
 		init_data.ctx = dc->ctx;
 		pool->base.irqs = dal_irq_service_dce80_create(&init_data);
-		if (!pool->base.irqs)
-			goto res_create_fail;
-	}
+		अगर (!pool->base.irqs)
+			जाओ res_create_fail;
+	पूर्ण
 
-	for (i = 0; i < pool->base.pipe_count; i++) {
+	क्रम (i = 0; i < pool->base.pipe_count; i++) अणु
 		pool->base.timing_generators[i] = dce80_timing_generator_create(
 				ctx, i, &dce80_tg_offsets[i]);
-		if (pool->base.timing_generators[i] == NULL) {
+		अगर (pool->base.timing_generators[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create tg!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
 		pool->base.mis[i] = dce80_mem_input_create(ctx, i);
-		if (pool->base.mis[i] == NULL) {
+		अगर (pool->base.mis[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create memory input!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
 		pool->base.ipps[i] = dce80_ipp_create(ctx, i);
-		if (pool->base.ipps[i] == NULL) {
+		अगर (pool->base.ipps[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create input pixel processor!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
-		pool->base.transforms[i] = dce80_transform_create(ctx, i);
-		if (pool->base.transforms[i] == NULL) {
+		pool->base.transक्रमms[i] = dce80_transक्रमm_create(ctx, i);
+		अगर (pool->base.transक्रमms[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create transform!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
 		pool->base.opps[i] = dce80_opp_create(ctx, i);
-		if (pool->base.opps[i] == NULL) {
+		अगर (pool->base.opps[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create output pixel processor!\n");
-			goto res_create_fail;
-		}
-	}
+			जाओ res_create_fail;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < pool->base.res_cap->num_ddc; i++) {
+	क्रम (i = 0; i < pool->base.res_cap->num_ddc; i++) अणु
 		pool->base.engines[i] = dce80_aux_engine_create(ctx, i);
-		if (pool->base.engines[i] == NULL) {
+		अगर (pool->base.engines[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error(
 				"DC:failed to create aux engine!!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 		pool->base.hw_i2cs[i] = dce80_i2c_hw_create(ctx, i);
-		if (pool->base.hw_i2cs[i] == NULL) {
+		अगर (pool->base.hw_i2cs[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error(
 				"DC:failed to create i2c engine!!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 		pool->base.sw_i2cs[i] = dce80_i2c_sw_create(ctx);
-		if (pool->base.sw_i2cs[i] == NULL) {
+		अगर (pool->base.sw_i2cs[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error(
 				"DC:failed to create sw i2c!!\n");
-			goto res_create_fail;
-		}
-	}
+			जाओ res_create_fail;
+		पूर्ण
+	पूर्ण
 
 	dc->caps.max_planes =  pool->base.pipe_count;
 
-	for (i = 0; i < dc->caps.max_planes; ++i)
+	क्रम (i = 0; i < dc->caps.max_planes; ++i)
 		dc->caps.planes[i] = plane_cap;
 
 	dc->caps.disable_dp_clk_share = true;
 
-	if (!resource_construct(num_virtual_links, dc, &pool->base,
+	अगर (!resource_स्थिरruct(num_भव_links, dc, &pool->base,
 			&res_create_funcs))
-		goto res_create_fail;
+		जाओ res_create_fail;
 
 	/* Create hardware sequencer */
-	dce80_hw_sequencer_construct(dc);
+	dce80_hw_sequencer_स्थिरruct(dc);
 
-	return true;
+	वापस true;
 
 res_create_fail:
-	dce80_resource_destruct(pool);
-	return false;
-}
+	dce80_resource_deकाष्ठा(pool);
+	वापस false;
+पूर्ण
 
-struct resource_pool *dce80_create_resource_pool(
-	uint8_t num_virtual_links,
-	struct dc *dc)
-{
-	struct dce110_resource_pool *pool =
-		kzalloc(sizeof(struct dce110_resource_pool), GFP_KERNEL);
+काष्ठा resource_pool *dce80_create_resource_pool(
+	uपूर्णांक8_t num_भव_links,
+	काष्ठा dc *dc)
+अणु
+	काष्ठा dce110_resource_pool *pool =
+		kzalloc(माप(काष्ठा dce110_resource_pool), GFP_KERNEL);
 
-	if (!pool)
-		return NULL;
+	अगर (!pool)
+		वापस शून्य;
 
-	if (dce80_construct(num_virtual_links, dc, pool))
-		return &pool->base;
+	अगर (dce80_स्थिरruct(num_भव_links, dc, pool))
+		वापस &pool->base;
 
 	BREAK_TO_DEBUGGER();
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool dce81_construct(
-	uint8_t num_virtual_links,
-	struct dc *dc,
-	struct dce110_resource_pool *pool)
-{
-	unsigned int i;
-	struct dc_context *ctx = dc->ctx;
-	struct dc_bios *bp;
+अटल bool dce81_स्थिरruct(
+	uपूर्णांक8_t num_भव_links,
+	काष्ठा dc *dc,
+	काष्ठा dce110_resource_pool *pool)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा dc_context *ctx = dc->ctx;
+	काष्ठा dc_bios *bp;
 
 	ctx->dc_bios->regs = &bios_regs;
 
@@ -1163,7 +1164,7 @@ static bool dce81_construct(
 	pool->base.underlay_pipe_index = NO_UNDERLAY_PIPE;
 	pool->base.pipe_count = res_cap_81.num_timing_generator;
 	pool->base.timing_generator_count = res_cap_81.num_timing_generator;
-	dc->caps.max_downscale_ratio = 200;
+	dc->caps.max_करोwnscale_ratio = 200;
 	dc->caps.i2c_speed_in_khz = 40;
 	dc->caps.i2c_speed_in_khz_hdcp = 40;
 	dc->caps.max_cursor_size = 128;
@@ -1176,179 +1177,179 @@ static bool dce81_construct(
 
 	bp = ctx->dc_bios;
 
-	if (bp->fw_info_valid && bp->fw_info.external_clock_source_frequency_for_dp != 0) {
-		pool->base.dp_clock_source =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_EXTERNAL, NULL, true);
+	अगर (bp->fw_info_valid && bp->fw_info.बाह्यal_घड़ी_source_frequency_क्रम_dp != 0) अणु
+		pool->base.dp_घड़ी_source =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_EXTERNAL, शून्य, true);
 
-		pool->base.clock_sources[0] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL0, &clk_src_regs[0], false);
-		pool->base.clock_sources[1] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[1], false);
-		pool->base.clock_sources[2] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[2], false);
+		pool->base.घड़ी_sources[0] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL0, &clk_src_regs[0], false);
+		pool->base.घड़ी_sources[1] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[1], false);
+		pool->base.घड़ी_sources[2] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[2], false);
 		pool->base.clk_src_count = 3;
 
-	} else {
-		pool->base.dp_clock_source =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL0, &clk_src_regs[0], true);
+	पूर्ण अन्यथा अणु
+		pool->base.dp_घड़ी_source =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL0, &clk_src_regs[0], true);
 
-		pool->base.clock_sources[0] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[1], false);
-		pool->base.clock_sources[1] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[2], false);
+		pool->base.घड़ी_sources[0] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[1], false);
+		pool->base.घड़ी_sources[1] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[2], false);
 		pool->base.clk_src_count = 2;
-	}
+	पूर्ण
 
-	if (pool->base.dp_clock_source == NULL) {
+	अगर (pool->base.dp_घड़ी_source == शून्य) अणु
 		dm_error("DC: failed to create dp clock source!\n");
 		BREAK_TO_DEBUGGER();
-		goto res_create_fail;
-	}
+		जाओ res_create_fail;
+	पूर्ण
 
-	for (i = 0; i < pool->base.clk_src_count; i++) {
-		if (pool->base.clock_sources[i] == NULL) {
+	क्रम (i = 0; i < pool->base.clk_src_count; i++) अणु
+		अगर (pool->base.घड़ी_sources[i] == शून्य) अणु
 			dm_error("DC: failed to create clock sources!\n");
 			BREAK_TO_DEBUGGER();
-			goto res_create_fail;
-		}
-	}
+			जाओ res_create_fail;
+		पूर्ण
+	पूर्ण
 
 	pool->base.dmcu = dce_dmcu_create(ctx,
 			&dmcu_regs,
-			&dmcu_shift,
+			&dmcu_shअगरt,
 			&dmcu_mask);
-	if (pool->base.dmcu == NULL) {
+	अगर (pool->base.dmcu == शून्य) अणु
 		dm_error("DC: failed to create dmcu!\n");
 		BREAK_TO_DEBUGGER();
-		goto res_create_fail;
-	}
+		जाओ res_create_fail;
+	पूर्ण
 
 	pool->base.abm = dce_abm_create(ctx,
 			&abm_regs,
-			&abm_shift,
+			&abm_shअगरt,
 			&abm_mask);
-	if (pool->base.abm == NULL) {
+	अगर (pool->base.abm == शून्य) अणु
 		dm_error("DC: failed to create abm!\n");
 		BREAK_TO_DEBUGGER();
-		goto res_create_fail;
-	}
+		जाओ res_create_fail;
+	पूर्ण
 
-	{
-		struct irq_service_init_data init_data;
+	अणु
+		काष्ठा irq_service_init_data init_data;
 		init_data.ctx = dc->ctx;
 		pool->base.irqs = dal_irq_service_dce80_create(&init_data);
-		if (!pool->base.irqs)
-			goto res_create_fail;
-	}
+		अगर (!pool->base.irqs)
+			जाओ res_create_fail;
+	पूर्ण
 
-	for (i = 0; i < pool->base.pipe_count; i++) {
+	क्रम (i = 0; i < pool->base.pipe_count; i++) अणु
 		pool->base.timing_generators[i] = dce80_timing_generator_create(
 				ctx, i, &dce80_tg_offsets[i]);
-		if (pool->base.timing_generators[i] == NULL) {
+		अगर (pool->base.timing_generators[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create tg!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
 		pool->base.mis[i] = dce80_mem_input_create(ctx, i);
-		if (pool->base.mis[i] == NULL) {
+		अगर (pool->base.mis[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create memory input!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
 		pool->base.ipps[i] = dce80_ipp_create(ctx, i);
-		if (pool->base.ipps[i] == NULL) {
+		अगर (pool->base.ipps[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create input pixel processor!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
-		pool->base.transforms[i] = dce80_transform_create(ctx, i);
-		if (pool->base.transforms[i] == NULL) {
+		pool->base.transक्रमms[i] = dce80_transक्रमm_create(ctx, i);
+		अगर (pool->base.transक्रमms[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create transform!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
 		pool->base.opps[i] = dce80_opp_create(ctx, i);
-		if (pool->base.opps[i] == NULL) {
+		अगर (pool->base.opps[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create output pixel processor!\n");
-			goto res_create_fail;
-		}
-	}
+			जाओ res_create_fail;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < pool->base.res_cap->num_ddc; i++) {
+	क्रम (i = 0; i < pool->base.res_cap->num_ddc; i++) अणु
 		pool->base.engines[i] = dce80_aux_engine_create(ctx, i);
-		if (pool->base.engines[i] == NULL) {
+		अगर (pool->base.engines[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error(
 				"DC:failed to create aux engine!!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 		pool->base.hw_i2cs[i] = dce80_i2c_hw_create(ctx, i);
-		if (pool->base.hw_i2cs[i] == NULL) {
+		अगर (pool->base.hw_i2cs[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error(
 				"DC:failed to create i2c engine!!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 		pool->base.sw_i2cs[i] = dce80_i2c_sw_create(ctx);
-		if (pool->base.sw_i2cs[i] == NULL) {
+		अगर (pool->base.sw_i2cs[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error(
 				"DC:failed to create sw i2c!!\n");
-			goto res_create_fail;
-		}
-	}
+			जाओ res_create_fail;
+		पूर्ण
+	पूर्ण
 
 	dc->caps.max_planes =  pool->base.pipe_count;
 
-	for (i = 0; i < dc->caps.max_planes; ++i)
+	क्रम (i = 0; i < dc->caps.max_planes; ++i)
 		dc->caps.planes[i] = plane_cap;
 
 	dc->caps.disable_dp_clk_share = true;
 
-	if (!resource_construct(num_virtual_links, dc, &pool->base,
+	अगर (!resource_स्थिरruct(num_भव_links, dc, &pool->base,
 			&res_create_funcs))
-		goto res_create_fail;
+		जाओ res_create_fail;
 
 	/* Create hardware sequencer */
-	dce80_hw_sequencer_construct(dc);
+	dce80_hw_sequencer_स्थिरruct(dc);
 
-	return true;
+	वापस true;
 
 res_create_fail:
-	dce80_resource_destruct(pool);
-	return false;
-}
+	dce80_resource_deकाष्ठा(pool);
+	वापस false;
+पूर्ण
 
-struct resource_pool *dce81_create_resource_pool(
-	uint8_t num_virtual_links,
-	struct dc *dc)
-{
-	struct dce110_resource_pool *pool =
-		kzalloc(sizeof(struct dce110_resource_pool), GFP_KERNEL);
+काष्ठा resource_pool *dce81_create_resource_pool(
+	uपूर्णांक8_t num_भव_links,
+	काष्ठा dc *dc)
+अणु
+	काष्ठा dce110_resource_pool *pool =
+		kzalloc(माप(काष्ठा dce110_resource_pool), GFP_KERNEL);
 
-	if (!pool)
-		return NULL;
+	अगर (!pool)
+		वापस शून्य;
 
-	if (dce81_construct(num_virtual_links, dc, pool))
-		return &pool->base;
+	अगर (dce81_स्थिरruct(num_भव_links, dc, pool))
+		वापस &pool->base;
 
 	BREAK_TO_DEBUGGER();
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool dce83_construct(
-	uint8_t num_virtual_links,
-	struct dc *dc,
-	struct dce110_resource_pool *pool)
-{
-	unsigned int i;
-	struct dc_context *ctx = dc->ctx;
-	struct dc_bios *bp;
+अटल bool dce83_स्थिरruct(
+	uपूर्णांक8_t num_भव_links,
+	काष्ठा dc *dc,
+	काष्ठा dce110_resource_pool *pool)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा dc_context *ctx = dc->ctx;
+	काष्ठा dc_bios *bp;
 
 	ctx->dc_bios->regs = &bios_regs;
 
@@ -1362,7 +1363,7 @@ static bool dce83_construct(
 	pool->base.underlay_pipe_index = NO_UNDERLAY_PIPE;
 	pool->base.pipe_count = res_cap_83.num_timing_generator;
 	pool->base.timing_generator_count = res_cap_83.num_timing_generator;
-	dc->caps.max_downscale_ratio = 200;
+	dc->caps.max_करोwnscale_ratio = 200;
 	dc->caps.i2c_speed_in_khz = 40;
 	dc->caps.i2c_speed_in_khz_hdcp = 40;
 	dc->caps.max_cursor_size = 128;
@@ -1375,163 +1376,163 @@ static bool dce83_construct(
 
 	bp = ctx->dc_bios;
 
-	if (bp->fw_info_valid && bp->fw_info.external_clock_source_frequency_for_dp != 0) {
-		pool->base.dp_clock_source =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_EXTERNAL, NULL, true);
+	अगर (bp->fw_info_valid && bp->fw_info.बाह्यal_घड़ी_source_frequency_क्रम_dp != 0) अणु
+		pool->base.dp_घड़ी_source =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_EXTERNAL, शून्य, true);
 
-		pool->base.clock_sources[0] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[0], false);
-		pool->base.clock_sources[1] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[1], false);
+		pool->base.घड़ी_sources[0] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[0], false);
+		pool->base.घड़ी_sources[1] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[1], false);
 		pool->base.clk_src_count = 2;
 
-	} else {
-		pool->base.dp_clock_source =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[0], true);
+	पूर्ण अन्यथा अणु
+		pool->base.dp_घड़ी_source =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL1, &clk_src_regs[0], true);
 
-		pool->base.clock_sources[0] =
-				dce80_clock_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[1], false);
+		pool->base.घड़ी_sources[0] =
+				dce80_घड़ी_source_create(ctx, bp, CLOCK_SOURCE_ID_PLL2, &clk_src_regs[1], false);
 		pool->base.clk_src_count = 1;
-	}
+	पूर्ण
 
-	if (pool->base.dp_clock_source == NULL) {
+	अगर (pool->base.dp_घड़ी_source == शून्य) अणु
 		dm_error("DC: failed to create dp clock source!\n");
 		BREAK_TO_DEBUGGER();
-		goto res_create_fail;
-	}
+		जाओ res_create_fail;
+	पूर्ण
 
-	for (i = 0; i < pool->base.clk_src_count; i++) {
-		if (pool->base.clock_sources[i] == NULL) {
+	क्रम (i = 0; i < pool->base.clk_src_count; i++) अणु
+		अगर (pool->base.घड़ी_sources[i] == शून्य) अणु
 			dm_error("DC: failed to create clock sources!\n");
 			BREAK_TO_DEBUGGER();
-			goto res_create_fail;
-		}
-	}
+			जाओ res_create_fail;
+		पूर्ण
+	पूर्ण
 
 	pool->base.dmcu = dce_dmcu_create(ctx,
 			&dmcu_regs,
-			&dmcu_shift,
+			&dmcu_shअगरt,
 			&dmcu_mask);
-	if (pool->base.dmcu == NULL) {
+	अगर (pool->base.dmcu == शून्य) अणु
 		dm_error("DC: failed to create dmcu!\n");
 		BREAK_TO_DEBUGGER();
-		goto res_create_fail;
-	}
+		जाओ res_create_fail;
+	पूर्ण
 
 	pool->base.abm = dce_abm_create(ctx,
 			&abm_regs,
-			&abm_shift,
+			&abm_shअगरt,
 			&abm_mask);
-	if (pool->base.abm == NULL) {
+	अगर (pool->base.abm == शून्य) अणु
 		dm_error("DC: failed to create abm!\n");
 		BREAK_TO_DEBUGGER();
-		goto res_create_fail;
-	}
+		जाओ res_create_fail;
+	पूर्ण
 
-	{
-		struct irq_service_init_data init_data;
+	अणु
+		काष्ठा irq_service_init_data init_data;
 		init_data.ctx = dc->ctx;
 		pool->base.irqs = dal_irq_service_dce80_create(&init_data);
-		if (!pool->base.irqs)
-			goto res_create_fail;
-	}
+		अगर (!pool->base.irqs)
+			जाओ res_create_fail;
+	पूर्ण
 
-	for (i = 0; i < pool->base.pipe_count; i++) {
+	क्रम (i = 0; i < pool->base.pipe_count; i++) अणु
 		pool->base.timing_generators[i] = dce80_timing_generator_create(
 				ctx, i, &dce80_tg_offsets[i]);
-		if (pool->base.timing_generators[i] == NULL) {
+		अगर (pool->base.timing_generators[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create tg!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
 		pool->base.mis[i] = dce80_mem_input_create(ctx, i);
-		if (pool->base.mis[i] == NULL) {
+		अगर (pool->base.mis[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create memory input!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
 		pool->base.ipps[i] = dce80_ipp_create(ctx, i);
-		if (pool->base.ipps[i] == NULL) {
+		अगर (pool->base.ipps[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create input pixel processor!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
-		pool->base.transforms[i] = dce80_transform_create(ctx, i);
-		if (pool->base.transforms[i] == NULL) {
+		pool->base.transक्रमms[i] = dce80_transक्रमm_create(ctx, i);
+		अगर (pool->base.transक्रमms[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create transform!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 
 		pool->base.opps[i] = dce80_opp_create(ctx, i);
-		if (pool->base.opps[i] == NULL) {
+		अगर (pool->base.opps[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error("DC: failed to create output pixel processor!\n");
-			goto res_create_fail;
-		}
-	}
+			जाओ res_create_fail;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < pool->base.res_cap->num_ddc; i++) {
+	क्रम (i = 0; i < pool->base.res_cap->num_ddc; i++) अणु
 		pool->base.engines[i] = dce80_aux_engine_create(ctx, i);
-		if (pool->base.engines[i] == NULL) {
+		अगर (pool->base.engines[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error(
 				"DC:failed to create aux engine!!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 		pool->base.hw_i2cs[i] = dce80_i2c_hw_create(ctx, i);
-		if (pool->base.hw_i2cs[i] == NULL) {
+		अगर (pool->base.hw_i2cs[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error(
 				"DC:failed to create i2c engine!!\n");
-			goto res_create_fail;
-		}
+			जाओ res_create_fail;
+		पूर्ण
 		pool->base.sw_i2cs[i] = dce80_i2c_sw_create(ctx);
-		if (pool->base.sw_i2cs[i] == NULL) {
+		अगर (pool->base.sw_i2cs[i] == शून्य) अणु
 			BREAK_TO_DEBUGGER();
 			dm_error(
 				"DC:failed to create sw i2c!!\n");
-			goto res_create_fail;
-		}
-	}
+			जाओ res_create_fail;
+		पूर्ण
+	पूर्ण
 
 	dc->caps.max_planes =  pool->base.pipe_count;
 
-	for (i = 0; i < dc->caps.max_planes; ++i)
+	क्रम (i = 0; i < dc->caps.max_planes; ++i)
 		dc->caps.planes[i] = plane_cap;
 
 	dc->caps.disable_dp_clk_share = true;
 
-	if (!resource_construct(num_virtual_links, dc, &pool->base,
+	अगर (!resource_स्थिरruct(num_भव_links, dc, &pool->base,
 			&res_create_funcs))
-		goto res_create_fail;
+		जाओ res_create_fail;
 
 	/* Create hardware sequencer */
-	dce80_hw_sequencer_construct(dc);
+	dce80_hw_sequencer_स्थिरruct(dc);
 
-	return true;
+	वापस true;
 
 res_create_fail:
-	dce80_resource_destruct(pool);
-	return false;
-}
+	dce80_resource_deकाष्ठा(pool);
+	वापस false;
+पूर्ण
 
-struct resource_pool *dce83_create_resource_pool(
-	uint8_t num_virtual_links,
-	struct dc *dc)
-{
-	struct dce110_resource_pool *pool =
-		kzalloc(sizeof(struct dce110_resource_pool), GFP_KERNEL);
+काष्ठा resource_pool *dce83_create_resource_pool(
+	uपूर्णांक8_t num_भव_links,
+	काष्ठा dc *dc)
+अणु
+	काष्ठा dce110_resource_pool *pool =
+		kzalloc(माप(काष्ठा dce110_resource_pool), GFP_KERNEL);
 
-	if (!pool)
-		return NULL;
+	अगर (!pool)
+		वापस शून्य;
 
-	if (dce83_construct(num_virtual_links, dc, pool))
-		return &pool->base;
+	अगर (dce83_स्थिरruct(num_भव_links, dc, pool))
+		वापस &pool->base;
 
 	BREAK_TO_DEBUGGER();
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

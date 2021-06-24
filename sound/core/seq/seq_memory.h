@@ -1,88 +1,89 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  ALSA sequencer Memory Manager
  *  Copyright (c) 1998 by Frank van de Pol <fvdpol@coil.demon.nl>
  */
-#ifndef __SND_SEQ_MEMORYMGR_H
-#define __SND_SEQ_MEMORYMGR_H
+#अगर_अघोषित __SND_SEQ_MEMORYMGR_H
+#घोषणा __SND_SEQ_MEMORYMGR_H
 
-#include <sound/seq_kernel.h>
-#include <linux/poll.h>
+#समावेश <sound/seq_kernel.h>
+#समावेश <linux/poll.h>
 
-struct snd_info_buffer;
+काष्ठा snd_info_buffer;
 
-/* container for sequencer event (internal use) */
-struct snd_seq_event_cell {
-	struct snd_seq_event event;
-	struct snd_seq_pool *pool;				/* used pool */
-	struct snd_seq_event_cell *next;	/* next cell */
-};
+/* container क्रम sequencer event (पूर्णांकernal use) */
+काष्ठा snd_seq_event_cell अणु
+	काष्ठा snd_seq_event event;
+	काष्ठा snd_seq_pool *pool;				/* used pool */
+	काष्ठा snd_seq_event_cell *next;	/* next cell */
+पूर्ण;
 
-/* design note: the pool is a contiguous block of memory, if we dynamicly
+/* design note: the pool is a contiguous block of memory, अगर we dynamicly
    want to add additional cells to the pool be better store this in another
    pool as we need to know the base address of the pool when releasing
    memory. */
 
-struct snd_seq_pool {
-	struct snd_seq_event_cell *ptr;	/* pointer to first event chunk */
-	struct snd_seq_event_cell *free;	/* pointer to the head of the free list */
+काष्ठा snd_seq_pool अणु
+	काष्ठा snd_seq_event_cell *ptr;	/* poपूर्णांकer to first event chunk */
+	काष्ठा snd_seq_event_cell *मुक्त;	/* poपूर्णांकer to the head of the मुक्त list */
 
-	int total_elements;	/* pool size actually allocated */
-	atomic_t counter;	/* cells free */
+	पूर्णांक total_elements;	/* pool size actually allocated */
+	atomic_t counter;	/* cells मुक्त */
 
-	int size;		/* pool size to be allocated */
-	int room;		/* watermark for sleep/wakeup */
+	पूर्णांक size;		/* pool size to be allocated */
+	पूर्णांक room;		/* watermark क्रम sleep/wakeup */
 
-	int closing;
+	पूर्णांक closing;
 
 	/* statistics */
-	int max_used;
-	int event_alloc_nopool;
-	int event_alloc_failures;
-	int event_alloc_success;
+	पूर्णांक max_used;
+	पूर्णांक event_alloc_nopool;
+	पूर्णांक event_alloc_failures;
+	पूर्णांक event_alloc_success;
 
 	/* Write locking */
-	wait_queue_head_t output_sleep;
+	रुको_queue_head_t output_sleep;
 
 	/* Pool lock */
 	spinlock_t lock;
-};
+पूर्ण;
 
-void snd_seq_cell_free(struct snd_seq_event_cell *cell);
+व्योम snd_seq_cell_मुक्त(काष्ठा snd_seq_event_cell *cell);
 
-int snd_seq_event_dup(struct snd_seq_pool *pool, struct snd_seq_event *event,
-		      struct snd_seq_event_cell **cellp, int nonblock,
-		      struct file *file, struct mutex *mutexp);
+पूर्णांक snd_seq_event_dup(काष्ठा snd_seq_pool *pool, काष्ठा snd_seq_event *event,
+		      काष्ठा snd_seq_event_cell **cellp, पूर्णांक nonblock,
+		      काष्ठा file *file, काष्ठा mutex *mutexp);
 
-/* return number of unused (free) cells */
-static inline int snd_seq_unused_cells(struct snd_seq_pool *pool)
-{
-	return pool ? pool->total_elements - atomic_read(&pool->counter) : 0;
-}
+/* वापस number of unused (मुक्त) cells */
+अटल अंतरभूत पूर्णांक snd_seq_unused_cells(काष्ठा snd_seq_pool *pool)
+अणु
+	वापस pool ? pool->total_elements - atomic_पढ़ो(&pool->counter) : 0;
+पूर्ण
 
-/* return total number of allocated cells */
-static inline int snd_seq_total_cells(struct snd_seq_pool *pool)
-{
-	return pool ? pool->total_elements : 0;
-}
+/* वापस total number of allocated cells */
+अटल अंतरभूत पूर्णांक snd_seq_total_cells(काष्ठा snd_seq_pool *pool)
+अणु
+	वापस pool ? pool->total_elements : 0;
+पूर्ण
 
 /* init pool - allocate events */
-int snd_seq_pool_init(struct snd_seq_pool *pool);
+पूर्णांक snd_seq_pool_init(काष्ठा snd_seq_pool *pool);
 
-/* done pool - free events */
-void snd_seq_pool_mark_closing(struct snd_seq_pool *pool);
-int snd_seq_pool_done(struct snd_seq_pool *pool);
+/* करोne pool - मुक्त events */
+व्योम snd_seq_pool_mark_closing(काष्ठा snd_seq_pool *pool);
+पूर्णांक snd_seq_pool_करोne(काष्ठा snd_seq_pool *pool);
 
 /* create pool */
-struct snd_seq_pool *snd_seq_pool_new(int poolsize);
+काष्ठा snd_seq_pool *snd_seq_pool_new(पूर्णांक poolsize);
 
-/* remove pool */
-int snd_seq_pool_delete(struct snd_seq_pool **pool);
+/* हटाओ pool */
+पूर्णांक snd_seq_pool_delete(काष्ठा snd_seq_pool **pool);
 
 /* polling */
-int snd_seq_pool_poll_wait(struct snd_seq_pool *pool, struct file *file, poll_table *wait);
+पूर्णांक snd_seq_pool_poll_रुको(काष्ठा snd_seq_pool *pool, काष्ठा file *file, poll_table *रुको);
 
-void snd_seq_info_pool(struct snd_info_buffer *buffer,
-		       struct snd_seq_pool *pool, char *space);
+व्योम snd_seq_info_pool(काष्ठा snd_info_buffer *buffer,
+		       काष्ठा snd_seq_pool *pool, अक्षर *space);
 
-#endif
+#पूर्ण_अगर

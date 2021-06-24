@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#include <test_progs.h>
-#include <bpf/btf.h>
-#include "btf_helpers.h"
+#समावेश <test_progs.h>
+#समावेश <bpf/btf.h>
+#समावेश "btf_helpers.h"
 
-static int duration = 0;
+अटल पूर्णांक duration = 0;
 
-void test_btf_write() {
-	const struct btf_var_secinfo *vi;
-	const struct btf_type *t;
-	const struct btf_member *m;
-	const struct btf_enum *v;
-	const struct btf_param *p;
-	struct btf *btf;
-	int id, err, str_off;
+व्योम test_btf_ग_लिखो() अणु
+	स्थिर काष्ठा btf_var_secinfo *vi;
+	स्थिर काष्ठा btf_type *t;
+	स्थिर काष्ठा btf_member *m;
+	स्थिर काष्ठा btf_क्रमागत *v;
+	स्थिर काष्ठा btf_param *p;
+	काष्ठा btf *btf;
+	पूर्णांक id, err, str_off;
 
 	btf = btf__new_empty();
-	if (CHECK(IS_ERR(btf), "new_empty", "failed: %ld\n", PTR_ERR(btf)))
-		return;
+	अगर (CHECK(IS_ERR(btf), "new_empty", "failed: %ld\n", PTR_ERR(btf)))
+		वापस;
 
 	str_off = btf__find_str(btf, "int");
 	ASSERT_EQ(str_off, -ENOENT, "int_str_missing_off");
@@ -29,7 +30,7 @@ void test_btf_write() {
 	ASSERT_EQ(str_off, 1, "int_str_found_off");
 
 	/* BTF_KIND_INT */
-	id = btf__add_int(btf, "int", 4,  BTF_INT_SIGNED);
+	id = btf__add_पूर्णांक(btf, "int", 4,  BTF_INT_SIGNED);
 	ASSERT_EQ(id, 1, "int_id");
 
 	t = btf__type_by_id(btf, 1);
@@ -38,22 +39,22 @@ void test_btf_write() {
 	ASSERT_STREQ(btf__str_by_offset(btf, t->name_off), "int", "int_name");
 	ASSERT_EQ(btf_kind(t), BTF_KIND_INT, "int_kind");
 	ASSERT_EQ(t->size, 4, "int_sz");
-	ASSERT_EQ(btf_int_encoding(t), BTF_INT_SIGNED, "int_enc");
-	ASSERT_EQ(btf_int_bits(t), 32, "int_bits");
+	ASSERT_EQ(btf_पूर्णांक_encoding(t), BTF_INT_SIGNED, "int_enc");
+	ASSERT_EQ(btf_पूर्णांक_bits(t), 32, "int_bits");
 	ASSERT_STREQ(btf_type_raw_dump(btf, 1),
 		     "[1] INT 'int' size=4 bits_offset=0 nr_bits=32 encoding=SIGNED", "raw_dump");
 
-	/* invalid int size */
-	id = btf__add_int(btf, "bad sz int", 7, 0);
+	/* invalid पूर्णांक size */
+	id = btf__add_पूर्णांक(btf, "bad sz int", 7, 0);
 	ASSERT_ERR(id, "int_bad_sz");
 	/* invalid encoding */
-	id = btf__add_int(btf, "bad enc int", 4, 123);
+	id = btf__add_पूर्णांक(btf, "bad enc int", 4, 123);
 	ASSERT_ERR(id, "int_bad_enc");
-	/* NULL name */
-	id = btf__add_int(btf, NULL, 4, 0);
+	/* शून्य name */
+	id = btf__add_पूर्णांक(btf, शून्य, 4, 0);
 	ASSERT_ERR(id, "int_bad_null_name");
 	/* empty name */
-	id = btf__add_int(btf, "", 4, 0);
+	id = btf__add_पूर्णांक(btf, "", 4, 0);
 	ASSERT_ERR(id, "int_bad_empty_name");
 
 	/* PTR/CONST/VOLATILE/RESTRICT */
@@ -65,7 +66,7 @@ void test_btf_write() {
 	ASSERT_STREQ(btf_type_raw_dump(btf, 2),
 		     "[2] PTR '(anon)' type_id=1", "raw_dump");
 
-	id = btf__add_const(btf, 5); /* points forward to restrict */
+	id = btf__add_स्थिर(btf, 5); /* poपूर्णांकs क्रमward to restrict */
 	ASSERT_EQ(id, 3, "const_id");
 	t = btf__type_by_id(btf, 3);
 	ASSERT_EQ(btf_kind(t), BTF_KIND_CONST, "const_kind");
@@ -73,7 +74,7 @@ void test_btf_write() {
 	ASSERT_STREQ(btf_type_raw_dump(btf, 3),
 		     "[3] CONST '(anon)' type_id=5", "raw_dump");
 
-	id = btf__add_volatile(btf, 3);
+	id = btf__add_अस्थिर(btf, 3);
 	ASSERT_EQ(id, 4, "volatile_id");
 	t = btf__type_by_id(btf, 4);
 	ASSERT_EQ(btf_kind(t), BTF_KIND_VOLATILE, "volatile_kind");
@@ -90,7 +91,7 @@ void test_btf_write() {
 		     "[5] RESTRICT '(anon)' type_id=4", "raw_dump");
 
 	/* ARRAY */
-	id = btf__add_array(btf, 1, 2, 10); /* int *[10] */
+	id = btf__add_array(btf, 1, 2, 10); /* पूर्णांक *[10] */
 	ASSERT_EQ(id, 6, "array_id");
 	t = btf__type_by_id(btf, 6);
 	ASSERT_EQ(btf_kind(t), BTF_KIND_ARRAY, "array_kind");
@@ -103,7 +104,7 @@ void test_btf_write() {
 	/* STRUCT */
 	err = btf__add_field(btf, "field", 1, 0, 0);
 	ASSERT_ERR(err, "no_struct_field");
-	id = btf__add_struct(btf, "s1", 8);
+	id = btf__add_काष्ठा(btf, "s1", 8);
 	ASSERT_EQ(id, 7, "struct_id");
 	err = btf__add_field(btf, "f1", 1, 0, 0);
 	ASSERT_OK(err, "f1_res");
@@ -132,7 +133,7 @@ void test_btf_write() {
 		     "\t'f2' type_id=1 bits_offset=32 bitfield_size=16", "raw_dump");
 
 	/* UNION */
-	id = btf__add_union(btf, "u1", 8);
+	id = btf__add_जोड़(btf, "u1", 8);
 	ASSERT_EQ(id, 8, "union_id");
 
 	/* invalid, non-zero offset */
@@ -158,11 +159,11 @@ void test_btf_write() {
 		     "\t'f1' type_id=1 bits_offset=0 bitfield_size=16", "raw_dump");
 
 	/* ENUM */
-	id = btf__add_enum(btf, "e1", 4);
+	id = btf__add_क्रमागत(btf, "e1", 4);
 	ASSERT_EQ(id, 9, "enum_id");
-	err = btf__add_enum_value(btf, "v1", 1);
+	err = btf__add_क्रमागत_value(btf, "v1", 1);
 	ASSERT_OK(err, "v1_res");
-	err = btf__add_enum_value(btf, "v2", 2);
+	err = btf__add_क्रमागत_value(btf, "v2", 2);
 	ASSERT_OK(err, "v2_res");
 
 	t = btf__type_by_id(btf, 9);
@@ -170,10 +171,10 @@ void test_btf_write() {
 	ASSERT_EQ(btf_kind(t), BTF_KIND_ENUM, "enum_kind");
 	ASSERT_EQ(btf_vlen(t), 2, "enum_vlen");
 	ASSERT_EQ(t->size, 4, "enum_sz");
-	v = btf_enum(t) + 0;
+	v = btf_क्रमागत(t) + 0;
 	ASSERT_STREQ(btf__str_by_offset(btf, v->name_off), "v1", "v1_name");
 	ASSERT_EQ(v->val, 1, "v1_val");
-	v = btf_enum(t) + 1;
+	v = btf_क्रमागत(t) + 1;
 	ASSERT_STREQ(btf__str_by_offset(btf, v->name_off), "v2", "v2_name");
 	ASSERT_EQ(v->val, 2, "v2_val");
 	ASSERT_STREQ(btf_type_raw_dump(btf, 9),
@@ -211,7 +212,7 @@ void test_btf_write() {
 		     "[12] ENUM 'enum_fwd' size=4 vlen=0", "raw_dump");
 
 	/* TYPEDEF */
-	id = btf__add_typedef(btf, "typedef1", 1);
+	id = btf__add_प्रकार(btf, "typedef1", 1);
 	ASSERT_EQ(id, 13, "typedef_fwd_id");
 	t = btf__type_by_id(btf, 13);
 	ASSERT_STREQ(btf__str_by_offset(btf, t->name_off), "typedef1", "typedef_name");
@@ -283,5 +284,5 @@ void test_btf_write() {
 		     "[17] DATASEC 'datasec1' size=12 vlen=1\n"
 		     "\ttype_id=1 offset=4 size=8", "raw_dump");
 
-	btf__free(btf);
-}
+	btf__मुक्त(btf);
+पूर्ण

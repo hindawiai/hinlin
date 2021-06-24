@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  HID driver for Logitech receivers
+ *  HID driver क्रम Logitech receivers
  *
  *  Copyright (c) 2011 Logitech
  */
 
 
 
-#include <linux/device.h>
-#include <linux/hid.h>
-#include <linux/module.h>
-#include <linux/kfifo.h>
-#include <linux/delay.h>
-#include <linux/usb.h> /* For to_usb_interface for kvm extra intf check */
-#include <asm/unaligned.h>
-#include "hid-ids.h"
+#समावेश <linux/device.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kfअगरo.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/usb.h> /* For to_usb_पूर्णांकerface क्रम kvm extra पूर्णांकf check */
+#समावेश <यंत्र/unaligned.h>
+#समावेश "hid-ids.h"
 
-#define DJ_MAX_PAIRED_DEVICES			7
-#define DJ_MAX_NUMBER_NOTIFS			8
-#define DJ_RECEIVER_INDEX			0
-#define DJ_DEVICE_INDEX_MIN			1
-#define DJ_DEVICE_INDEX_MAX			7
+#घोषणा DJ_MAX_PAIRED_DEVICES			7
+#घोषणा DJ_MAX_NUMBER_NOTIFS			8
+#घोषणा DJ_RECEIVER_INDEX			0
+#घोषणा DJ_DEVICE_INDEX_MIN			1
+#घोषणा DJ_DEVICE_INDEX_MAX			7
 
-#define DJREPORT_SHORT_LENGTH			15
-#define DJREPORT_LONG_LENGTH			32
+#घोषणा DJREPORT_SHORT_LENGTH			15
+#घोषणा DJREPORT_LONG_LENGTH			32
 
-#define REPORT_ID_DJ_SHORT			0x20
-#define REPORT_ID_DJ_LONG			0x21
+#घोषणा REPORT_ID_DJ_SHORT			0x20
+#घोषणा REPORT_ID_DJ_LONG			0x21
 
-#define REPORT_ID_HIDPP_SHORT			0x10
-#define REPORT_ID_HIDPP_LONG			0x11
-#define REPORT_ID_HIDPP_VERY_LONG		0x12
+#घोषणा REPORT_ID_HIDPP_SHORT			0x10
+#घोषणा REPORT_ID_HIDPP_LONG			0x11
+#घोषणा REPORT_ID_HIDPP_VERY_LONG		0x12
 
-#define HIDPP_REPORT_SHORT_LENGTH		7
-#define HIDPP_REPORT_LONG_LENGTH		20
+#घोषणा HIDPP_REPORT_SHORT_LENGTH		7
+#घोषणा HIDPP_REPORT_LONG_LENGTH		20
 
-#define HIDPP_RECEIVER_INDEX			0xff
+#घोषणा HIDPP_RECEIVER_INDEX			0xff
 
-#define REPORT_TYPE_RFREPORT_FIRST		0x01
-#define REPORT_TYPE_RFREPORT_LAST		0x1F
+#घोषणा REPORT_TYPE_RFREPORT_FIRST		0x01
+#घोषणा REPORT_TYPE_RFREPORT_LAST		0x1F
 
 /* Command Switch to DJ mode */
-#define REPORT_TYPE_CMD_SWITCH			0x80
-#define CMD_SWITCH_PARAM_DEVBITFIELD		0x00
-#define CMD_SWITCH_PARAM_TIMEOUT_SECONDS	0x01
-#define TIMEOUT_NO_KEEPALIVE			0x00
+#घोषणा REPORT_TYPE_CMD_SWITCH			0x80
+#घोषणा CMD_SWITCH_PARAM_DEVBITFIELD		0x00
+#घोषणा CMD_SWITCH_PARAM_TIMEOUT_SECONDS	0x01
+#घोषणा TIMEOUT_NO_KEEPALIVE			0x00
 
 /* Command to Get the list of Paired devices */
-#define REPORT_TYPE_CMD_GET_PAIRED_DEVICES	0x81
+#घोषणा REPORT_TYPE_CMD_GET_PAIRED_DEVICES	0x81
 
-/* Device Paired Notification */
-#define REPORT_TYPE_NOTIF_DEVICE_PAIRED		0x41
-#define SPFUNCTION_MORE_NOTIF_EXPECTED		0x01
-#define SPFUNCTION_DEVICE_LIST_EMPTY		0x02
-#define DEVICE_PAIRED_PARAM_SPFUNCTION		0x00
-#define DEVICE_PAIRED_PARAM_EQUAD_ID_LSB	0x01
-#define DEVICE_PAIRED_PARAM_EQUAD_ID_MSB	0x02
-#define DEVICE_PAIRED_RF_REPORT_TYPE		0x03
+/* Device Paired Notअगरication */
+#घोषणा REPORT_TYPE_NOTIF_DEVICE_PAIRED		0x41
+#घोषणा SPFUNCTION_MORE_NOTIF_EXPECTED		0x01
+#घोषणा SPFUNCTION_DEVICE_LIST_EMPTY		0x02
+#घोषणा DEVICE_PAIRED_PARAM_SPFUNCTION		0x00
+#घोषणा DEVICE_PAIRED_PARAM_EQUAD_ID_LSB	0x01
+#घोषणा DEVICE_PAIRED_PARAM_EQUAD_ID_MSB	0x02
+#घोषणा DEVICE_PAIRED_RF_REPORT_TYPE		0x03
 
-/* Device Un-Paired Notification */
-#define REPORT_TYPE_NOTIF_DEVICE_UNPAIRED	0x40
+/* Device Un-Paired Notअगरication */
+#घोषणा REPORT_TYPE_NOTIF_DEVICE_UNPAIRED	0x40
 
-/* Connection Status Notification */
-#define REPORT_TYPE_NOTIF_CONNECTION_STATUS	0x42
-#define CONNECTION_STATUS_PARAM_STATUS		0x00
-#define STATUS_LINKLOSS				0x01
+/* Connection Status Notअगरication */
+#घोषणा REPORT_TYPE_NOTIF_CONNECTION_STATUS	0x42
+#घोषणा CONNECTION_STATUS_PARAM_STATUS		0x00
+#घोषणा STATUS_LINKLOSS				0x01
 
-/* Error Notification */
-#define REPORT_TYPE_NOTIF_ERROR			0x7F
-#define NOTIF_ERROR_PARAM_ETYPE			0x00
-#define ETYPE_KEEPALIVE_TIMEOUT			0x01
+/* Error Notअगरication */
+#घोषणा REPORT_TYPE_NOTIF_ERROR			0x7F
+#घोषणा NOTIF_ERROR_PARAM_ETYPE			0x00
+#घोषणा ETYPE_KEEPALIVE_TIMEOUT			0x01
 
 /* supported DJ HID && RF report types */
-#define REPORT_TYPE_KEYBOARD			0x01
-#define REPORT_TYPE_MOUSE			0x02
-#define REPORT_TYPE_CONSUMER_CONTROL		0x03
-#define REPORT_TYPE_SYSTEM_CONTROL		0x04
-#define REPORT_TYPE_MEDIA_CENTER		0x08
-#define REPORT_TYPE_LEDS			0x0E
+#घोषणा REPORT_TYPE_KEYBOARD			0x01
+#घोषणा REPORT_TYPE_MOUSE			0x02
+#घोषणा REPORT_TYPE_CONSUMER_CONTROL		0x03
+#घोषणा REPORT_TYPE_SYSTEM_CONTROL		0x04
+#घोषणा REPORT_TYPE_MEDIA_CENTER		0x08
+#घोषणा REPORT_TYPE_LEDS			0x0E
 
 /* RF Report types bitfield */
-#define STD_KEYBOARD				BIT(1)
-#define STD_MOUSE				BIT(2)
-#define MULTIMEDIA				BIT(3)
-#define POWER_KEYS				BIT(4)
-#define KBD_MOUSE				BIT(5)
-#define MEDIA_CENTER				BIT(8)
-#define KBD_LEDS				BIT(14)
+#घोषणा STD_KEYBOARD				BIT(1)
+#घोषणा STD_MOUSE				BIT(2)
+#घोषणा MULTIMEDIA				BIT(3)
+#घोषणा POWER_KEYS				BIT(4)
+#घोषणा KBD_MOUSE				BIT(5)
+#घोषणा MEDIA_CENTER				BIT(8)
+#घोषणा KBD_LEDS				BIT(14)
 /* Fake (bitnr > NUMBER_OF_HID_REPORTS) bit to track HID++ capability */
-#define HIDPP					BIT_ULL(63)
+#घोषणा HIDPP					BIT_ULL(63)
 
-/* HID++ Device Connected Notification */
-#define REPORT_TYPE_NOTIF_DEVICE_CONNECTED	0x41
-#define HIDPP_PARAM_PROTO_TYPE			0x00
-#define HIDPP_PARAM_DEVICE_INFO			0x01
-#define HIDPP_PARAM_EQUAD_LSB			0x02
-#define HIDPP_PARAM_EQUAD_MSB			0x03
-#define HIDPP_PARAM_27MHZ_DEVID			0x03
-#define HIDPP_DEVICE_TYPE_MASK			GENMASK(3, 0)
-#define HIDPP_LINK_STATUS_MASK			BIT(6)
-#define HIDPP_MANUFACTURER_MASK			BIT(7)
+/* HID++ Device Connected Notअगरication */
+#घोषणा REPORT_TYPE_NOTIF_DEVICE_CONNECTED	0x41
+#घोषणा HIDPP_PARAM_PROTO_TYPE			0x00
+#घोषणा HIDPP_PARAM_DEVICE_INFO			0x01
+#घोषणा HIDPP_PARAM_EQUAD_LSB			0x02
+#घोषणा HIDPP_PARAM_EQUAD_MSB			0x03
+#घोषणा HIDPP_PARAM_27MHZ_DEVID			0x03
+#घोषणा HIDPP_DEVICE_TYPE_MASK			GENMASK(3, 0)
+#घोषणा HIDPP_LINK_STATUS_MASK			BIT(6)
+#घोषणा HIDPP_MANUFACTURER_MASK			BIT(7)
 
-#define HIDPP_DEVICE_TYPE_KEYBOARD		1
-#define HIDPP_DEVICE_TYPE_MOUSE			2
+#घोषणा HIDPP_DEVICE_TYPE_KEYBOARD		1
+#घोषणा HIDPP_DEVICE_TYPE_MOUSE			2
 
-#define HIDPP_SET_REGISTER			0x80
-#define HIDPP_GET_LONG_REGISTER			0x83
-#define HIDPP_REG_CONNECTION_STATE		0x02
-#define HIDPP_REG_PAIRING_INFORMATION		0xB5
-#define HIDPP_PAIRING_INFORMATION		0x20
-#define HIDPP_FAKE_DEVICE_ARRIVAL		0x02
+#घोषणा HIDPP_SET_REGISTER			0x80
+#घोषणा HIDPP_GET_LONG_REGISTER			0x83
+#घोषणा HIDPP_REG_CONNECTION_STATE		0x02
+#घोषणा HIDPP_REG_PAIRING_INFORMATION		0xB5
+#घोषणा HIDPP_PAIRING_INFORMATION		0x20
+#घोषणा HIDPP_FAKE_DEVICE_ARRIVAL		0x02
 
-enum recvr_type {
+क्रमागत recvr_type अणु
 	recvr_type_dj,
 	recvr_type_hidpp,
 	recvr_type_gaming_hidpp,
@@ -119,62 +120,62 @@ enum recvr_type {
 	recvr_type_27mhz,
 	recvr_type_bluetooth,
 	recvr_type_dinovo,
-};
+पूर्ण;
 
-struct dj_report {
+काष्ठा dj_report अणु
 	u8 report_id;
 	u8 device_index;
 	u8 report_type;
 	u8 report_params[DJREPORT_SHORT_LENGTH - 3];
-};
+पूर्ण;
 
-struct hidpp_event {
+काष्ठा hidpp_event अणु
 	u8 report_id;
 	u8 device_index;
 	u8 sub_id;
 	u8 params[HIDPP_REPORT_LONG_LENGTH - 3U];
-} __packed;
+पूर्ण __packed;
 
-struct dj_receiver_dev {
-	struct hid_device *mouse;
-	struct hid_device *keyboard;
-	struct hid_device *hidpp;
-	struct dj_device *paired_dj_devices[DJ_MAX_PAIRED_DEVICES +
+काष्ठा dj_receiver_dev अणु
+	काष्ठा hid_device *mouse;
+	काष्ठा hid_device *keyboard;
+	काष्ठा hid_device *hidpp;
+	काष्ठा dj_device *paired_dj_devices[DJ_MAX_PAIRED_DEVICES +
 					    DJ_DEVICE_INDEX_MIN];
-	struct list_head list;
-	struct kref kref;
-	struct work_struct work;
-	struct kfifo notif_fifo;
-	unsigned long last_query; /* in jiffies */
-	bool ready;
-	enum recvr_type type;
-	unsigned int unnumbered_application;
+	काष्ठा list_head list;
+	काष्ठा kref kref;
+	काष्ठा work_काष्ठा work;
+	काष्ठा kfअगरo notअगर_fअगरo;
+	अचिन्हित दीर्घ last_query; /* in jअगरfies */
+	bool पढ़ोy;
+	क्रमागत recvr_type type;
+	अचिन्हित पूर्णांक unnumbered_application;
 	spinlock_t lock;
-};
+पूर्ण;
 
-struct dj_device {
-	struct hid_device *hdev;
-	struct dj_receiver_dev *dj_receiver_dev;
+काष्ठा dj_device अणु
+	काष्ठा hid_device *hdev;
+	काष्ठा dj_receiver_dev *dj_receiver_dev;
 	u64 reports_supported;
 	u8 device_index;
-};
+पूर्ण;
 
-#define WORKITEM_TYPE_EMPTY	0
-#define WORKITEM_TYPE_PAIRED	1
-#define WORKITEM_TYPE_UNPAIRED	2
-#define WORKITEM_TYPE_UNKNOWN	255
+#घोषणा WORKITEM_TYPE_EMPTY	0
+#घोषणा WORKITEM_TYPE_PAIRED	1
+#घोषणा WORKITEM_TYPE_UNPAIRED	2
+#घोषणा WORKITEM_TYPE_UNKNOWN	255
 
-struct dj_workitem {
+काष्ठा dj_workitem अणु
 	u8 type;		/* WORKITEM_TYPE_* */
 	u8 device_index;
 	u8 device_type;
 	u8 quad_id_msb;
 	u8 quad_id_lsb;
 	u64 reports_supported;
-};
+पूर्ण;
 
 /* Keyboard descriptor (1) */
-static const char kbd_descriptor[] = {
+अटल स्थिर अक्षर kbd_descriptor[] = अणु
 	0x05, 0x01,		/* USAGE_PAGE (generic Desktop)     */
 	0x09, 0x06,		/* USAGE (Keyboard)         */
 	0xA1, 0x01,		/* COLLECTION (Application)     */
@@ -208,15 +209,15 @@ static const char kbd_descriptor[] = {
 	0x75, 0x03,		/*   REPORT SIZE (3)            */
 	0x91, 0x01,		/*   OUTPUT (Constant)          */
 	0xC0
-};
+पूर्ण;
 
 /* Mouse descriptor (2)     */
-static const char mse_descriptor[] = {
+अटल स्थिर अक्षर mse_descriptor[] = अणु
 	0x05, 0x01,		/*  USAGE_PAGE (Generic Desktop)        */
 	0x09, 0x02,		/*  USAGE (Mouse)                       */
 	0xA1, 0x01,		/*  COLLECTION (Application)            */
 	0x85, 0x02,		/*    REPORT_ID = 2                     */
-	0x09, 0x01,		/*    USAGE (pointer)                   */
+	0x09, 0x01,		/*    USAGE (poपूर्णांकer)                   */
 	0xA1, 0x00,		/*    COLLECTION (physical)             */
 	0x05, 0x09,		/*      USAGE_PAGE (buttons)            */
 	0x19, 0x01,		/*      USAGE_MIN (1)                   */
@@ -225,7 +226,7 @@ static const char mse_descriptor[] = {
 	0x25, 0x01,		/*      LOGICAL_MAX (1)                 */
 	0x95, 0x10,		/*      REPORT_COUNT (16)               */
 	0x75, 0x01,		/*      REPORT_SIZE (1)                 */
-	0x81, 0x02,		/*      INPUT (data var abs)            */
+	0x81, 0x02,		/*      INPUT (data var असल)            */
 	0x05, 0x01,		/*      USAGE_PAGE (generic desktop)    */
 	0x16, 0x01, 0xF8,	/*      LOGICAL_MIN (-2047)             */
 	0x26, 0xFF, 0x07,	/*      LOGICAL_MAX (2047)              */
@@ -246,15 +247,15 @@ static const char mse_descriptor[] = {
 	0x81, 0x06,		/*      INPUT                           */
 	0xC0,			/*    END_COLLECTION                    */
 	0xC0,			/*  END_COLLECTION                      */
-};
+पूर्ण;
 
-/* Mouse descriptor (2) for 27 MHz receiver, only 8 buttons */
-static const char mse_27mhz_descriptor[] = {
+/* Mouse descriptor (2) क्रम 27 MHz receiver, only 8 buttons */
+अटल स्थिर अक्षर mse_27mhz_descriptor[] = अणु
 	0x05, 0x01,		/*  USAGE_PAGE (Generic Desktop)        */
 	0x09, 0x02,		/*  USAGE (Mouse)                       */
 	0xA1, 0x01,		/*  COLLECTION (Application)            */
 	0x85, 0x02,		/*    REPORT_ID = 2                     */
-	0x09, 0x01,		/*    USAGE (pointer)                   */
+	0x09, 0x01,		/*    USAGE (poपूर्णांकer)                   */
 	0xA1, 0x00,		/*    COLLECTION (physical)             */
 	0x05, 0x09,		/*      USAGE_PAGE (buttons)            */
 	0x19, 0x01,		/*      USAGE_MIN (1)                   */
@@ -263,7 +264,7 @@ static const char mse_27mhz_descriptor[] = {
 	0x25, 0x01,		/*      LOGICAL_MAX (1)                 */
 	0x95, 0x08,		/*      REPORT_COUNT (8)                */
 	0x75, 0x01,		/*      REPORT_SIZE (1)                 */
-	0x81, 0x02,		/*      INPUT (data var abs)            */
+	0x81, 0x02,		/*      INPUT (data var असल)            */
 	0x05, 0x01,		/*      USAGE_PAGE (generic desktop)    */
 	0x16, 0x01, 0xF8,	/*      LOGICAL_MIN (-2047)             */
 	0x26, 0xFF, 0x07,	/*      LOGICAL_MAX (2047)              */
@@ -284,15 +285,15 @@ static const char mse_27mhz_descriptor[] = {
 	0x81, 0x06,		/*      INPUT                           */
 	0xC0,			/*    END_COLLECTION                    */
 	0xC0,			/*  END_COLLECTION                      */
-};
+पूर्ण;
 
-/* Mouse descriptor (2) for Bluetooth receiver, low-res hwheel, 12 buttons */
-static const char mse_bluetooth_descriptor[] = {
+/* Mouse descriptor (2) क्रम Bluetooth receiver, low-res hwheel, 12 buttons */
+अटल स्थिर अक्षर mse_bluetooth_descriptor[] = अणु
 	0x05, 0x01,		/*  USAGE_PAGE (Generic Desktop)        */
 	0x09, 0x02,		/*  USAGE (Mouse)                       */
 	0xA1, 0x01,		/*  COLLECTION (Application)            */
 	0x85, 0x02,		/*    REPORT_ID = 2                     */
-	0x09, 0x01,		/*    USAGE (pointer)                   */
+	0x09, 0x01,		/*    USAGE (poपूर्णांकer)                   */
 	0xA1, 0x00,		/*    COLLECTION (physical)             */
 	0x05, 0x09,		/*      USAGE_PAGE (buttons)            */
 	0x19, 0x01,		/*      USAGE_MIN (1)                   */
@@ -301,7 +302,7 @@ static const char mse_bluetooth_descriptor[] = {
 	0x25, 0x01,		/*      LOGICAL_MAX (1)                 */
 	0x95, 0x08,		/*      REPORT_COUNT (8)                */
 	0x75, 0x01,		/*      REPORT_SIZE (1)                 */
-	0x81, 0x02,		/*      INPUT (data var abs)            */
+	0x81, 0x02,		/*      INPUT (data var असल)            */
 	0x05, 0x01,		/*      USAGE_PAGE (generic desktop)    */
 	0x16, 0x01, 0xF8,	/*      LOGICAL_MIN (-2047)             */
 	0x26, 0xFF, 0x07,	/*      LOGICAL_MAX (2047)              */
@@ -333,15 +334,15 @@ static const char mse_bluetooth_descriptor[] = {
 	0x81, 0x02,		/*      INPUT (Data,Var,Abs)            */
 	0xC0,			/*    END_COLLECTION                    */
 	0xC0,			/*  END_COLLECTION                      */
-};
+पूर्ण;
 
-/* Mouse descriptor (5) for Bluetooth receiver, normal-res hwheel, 8 buttons */
-static const char mse5_bluetooth_descriptor[] = {
+/* Mouse descriptor (5) क्रम Bluetooth receiver, normal-res hwheel, 8 buttons */
+अटल स्थिर अक्षर mse5_bluetooth_descriptor[] = अणु
 	0x05, 0x01,		/*  USAGE_PAGE (Generic Desktop)        */
 	0x09, 0x02,		/*  Usage (Mouse)                       */
 	0xa1, 0x01,		/*  Collection (Application)            */
 	0x85, 0x05,		/*   Report ID (5)                      */
-	0x09, 0x01,		/*   Usage (Pointer)                    */
+	0x09, 0x01,		/*   Usage (Poपूर्णांकer)                    */
 	0xa1, 0x00,		/*   Collection (Physical)              */
 	0x05, 0x09,		/*    Usage Page (Button)               */
 	0x19, 0x01,		/*    Usage Minimum (1)                 */
@@ -374,15 +375,15 @@ static const char mse5_bluetooth_descriptor[] = {
 	0x81, 0x06,		/*    Input (Data,Var,Rel)              */
 	0xc0,			/*   End Collection                     */
 	0xc0,			/*  End Collection                      */
-};
+पूर्ण;
 
 /* Gaming Mouse descriptor (2) */
-static const char mse_high_res_descriptor[] = {
+अटल स्थिर अक्षर mse_high_res_descriptor[] = अणु
 	0x05, 0x01,		/*  USAGE_PAGE (Generic Desktop)        */
 	0x09, 0x02,		/*  USAGE (Mouse)                       */
 	0xA1, 0x01,		/*  COLLECTION (Application)            */
 	0x85, 0x02,		/*    REPORT_ID = 2                     */
-	0x09, 0x01,		/*    USAGE (pointer)                   */
+	0x09, 0x01,		/*    USAGE (poपूर्णांकer)                   */
 	0xA1, 0x00,		/*    COLLECTION (physical)             */
 	0x05, 0x09,		/*      USAGE_PAGE (buttons)            */
 	0x19, 0x01,		/*      USAGE_MIN (1)                   */
@@ -391,7 +392,7 @@ static const char mse_high_res_descriptor[] = {
 	0x25, 0x01,		/*      LOGICAL_MAX (1)                 */
 	0x95, 0x10,		/*      REPORT_COUNT (16)               */
 	0x75, 0x01,		/*      REPORT_SIZE (1)                 */
-	0x81, 0x02,		/*      INPUT (data var abs)            */
+	0x81, 0x02,		/*      INPUT (data var असल)            */
 	0x05, 0x01,		/*      USAGE_PAGE (generic desktop)    */
 	0x16, 0x01, 0x80,	/*      LOGICAL_MIN (-32767)            */
 	0x26, 0xFF, 0x7F,	/*      LOGICAL_MAX (32767)             */
@@ -412,10 +413,10 @@ static const char mse_high_res_descriptor[] = {
 	0x81, 0x06,		/*      INPUT                           */
 	0xC0,			/*    END_COLLECTION                    */
 	0xC0,			/*  END_COLLECTION                      */
-};
+पूर्ण;
 
 /* Consumer Control descriptor (3) */
-static const char consumer_descriptor[] = {
+अटल स्थिर अक्षर consumer_descriptor[] = अणु
 	0x05, 0x0C,		/* USAGE_PAGE (Consumer Devices)       */
 	0x09, 0x01,		/* USAGE (Consumer Control)            */
 	0xA1, 0x01,		/* COLLECTION (Application)            */
@@ -428,10 +429,10 @@ static const char consumer_descriptor[] = {
 	0x2A, 0xFF, 0x02,	/* USAGE_MAX (767)                     */
 	0x81, 0x00,		/* INPUT (Data Ary Abs)                */
 	0xC0,			/* END_COLLECTION                      */
-};				/*                                     */
+पूर्ण;				/*                                     */
 
 /* System control descriptor (4) */
-static const char syscontrol_descriptor[] = {
+अटल स्थिर अक्षर syscontrol_descriptor[] = अणु
 	0x05, 0x01,		/*   USAGE_PAGE (Generic Desktop)      */
 	0x09, 0x80,		/*   USAGE (System Control)            */
 	0xA1, 0x01,		/*   COLLECTION (Application)          */
@@ -447,10 +448,10 @@ static const char syscontrol_descriptor[] = {
 	0x75, 0x06,		/*   REPORT_SIZE (6)                   */
 	0x81, 0x03,		/*   INPUT (Cnst Var Abs)              */
 	0xC0,			/*   END_COLLECTION                    */
-};
+पूर्ण;
 
 /* Media descriptor (8) */
-static const char media_descriptor[] = {
+अटल स्थिर अक्षर media_descriptor[] = अणु
 	0x06, 0xbc, 0xff,	/* Usage Page 0xffbc                   */
 	0x09, 0x88,		/* Usage 0x0088                        */
 	0xa1, 0x01,		/* BeginCollection                     */
@@ -463,312 +464,312 @@ static const char media_descriptor[] = {
 	0x95, 0x01,		/*   Report Count 1                    */
 	0x81, 0x00,		/*   Input                             */
 	0xc0,			/* EndCollection                       */
-};				/*                                     */
+पूर्ण;				/*                                     */
 
 /* HIDPP descriptor */
-static const char hidpp_descriptor[] = {
-	0x06, 0x00, 0xff,	/* Usage Page (Vendor Defined Page 1)  */
-	0x09, 0x01,		/* Usage (Vendor Usage 1)              */
+अटल स्थिर अक्षर hidpp_descriptor[] = अणु
+	0x06, 0x00, 0xff,	/* Usage Page (Venकरोr Defined Page 1)  */
+	0x09, 0x01,		/* Usage (Venकरोr Usage 1)              */
 	0xa1, 0x01,		/* Collection (Application)            */
 	0x85, 0x10,		/*   Report ID (16)                    */
 	0x75, 0x08,		/*   Report Size (8)                   */
 	0x95, 0x06,		/*   Report Count (6)                  */
 	0x15, 0x00,		/*   Logical Minimum (0)               */
 	0x26, 0xff, 0x00,	/*   Logical Maximum (255)             */
-	0x09, 0x01,		/*   Usage (Vendor Usage 1)            */
+	0x09, 0x01,		/*   Usage (Venकरोr Usage 1)            */
 	0x81, 0x00,		/*   Input (Data,Arr,Abs)              */
-	0x09, 0x01,		/*   Usage (Vendor Usage 1)            */
+	0x09, 0x01,		/*   Usage (Venकरोr Usage 1)            */
 	0x91, 0x00,		/*   Output (Data,Arr,Abs)             */
 	0xc0,			/* End Collection                      */
-	0x06, 0x00, 0xff,	/* Usage Page (Vendor Defined Page 1)  */
-	0x09, 0x02,		/* Usage (Vendor Usage 2)              */
+	0x06, 0x00, 0xff,	/* Usage Page (Venकरोr Defined Page 1)  */
+	0x09, 0x02,		/* Usage (Venकरोr Usage 2)              */
 	0xa1, 0x01,		/* Collection (Application)            */
 	0x85, 0x11,		/*   Report ID (17)                    */
 	0x75, 0x08,		/*   Report Size (8)                   */
 	0x95, 0x13,		/*   Report Count (19)                 */
 	0x15, 0x00,		/*   Logical Minimum (0)               */
 	0x26, 0xff, 0x00,	/*   Logical Maximum (255)             */
-	0x09, 0x02,		/*   Usage (Vendor Usage 2)            */
+	0x09, 0x02,		/*   Usage (Venकरोr Usage 2)            */
 	0x81, 0x00,		/*   Input (Data,Arr,Abs)              */
-	0x09, 0x02,		/*   Usage (Vendor Usage 2)            */
+	0x09, 0x02,		/*   Usage (Venकरोr Usage 2)            */
 	0x91, 0x00,		/*   Output (Data,Arr,Abs)             */
 	0xc0,			/* End Collection                      */
-	0x06, 0x00, 0xff,	/* Usage Page (Vendor Defined Page 1)  */
-	0x09, 0x04,		/* Usage (Vendor Usage 0x04)           */
+	0x06, 0x00, 0xff,	/* Usage Page (Venकरोr Defined Page 1)  */
+	0x09, 0x04,		/* Usage (Venकरोr Usage 0x04)           */
 	0xa1, 0x01,		/* Collection (Application)            */
 	0x85, 0x20,		/*   Report ID (32)                    */
 	0x75, 0x08,		/*   Report Size (8)                   */
 	0x95, 0x0e,		/*   Report Count (14)                 */
 	0x15, 0x00,		/*   Logical Minimum (0)               */
 	0x26, 0xff, 0x00,	/*   Logical Maximum (255)             */
-	0x09, 0x41,		/*   Usage (Vendor Usage 0x41)         */
+	0x09, 0x41,		/*   Usage (Venकरोr Usage 0x41)         */
 	0x81, 0x00,		/*   Input (Data,Arr,Abs)              */
-	0x09, 0x41,		/*   Usage (Vendor Usage 0x41)         */
+	0x09, 0x41,		/*   Usage (Venकरोr Usage 0x41)         */
 	0x91, 0x00,		/*   Output (Data,Arr,Abs)             */
 	0x85, 0x21,		/*   Report ID (33)                    */
 	0x95, 0x1f,		/*   Report Count (31)                 */
 	0x15, 0x00,		/*   Logical Minimum (0)               */
 	0x26, 0xff, 0x00,	/*   Logical Maximum (255)             */
-	0x09, 0x42,		/*   Usage (Vendor Usage 0x42)         */
+	0x09, 0x42,		/*   Usage (Venकरोr Usage 0x42)         */
 	0x81, 0x00,		/*   Input (Data,Arr,Abs)              */
-	0x09, 0x42,		/*   Usage (Vendor Usage 0x42)         */
+	0x09, 0x42,		/*   Usage (Venकरोr Usage 0x42)         */
 	0x91, 0x00,		/*   Output (Data,Arr,Abs)             */
 	0xc0,			/* End Collection                      */
-};
+पूर्ण;
 
 /* Maximum size of all defined hid reports in bytes (including report id) */
-#define MAX_REPORT_SIZE 8
+#घोषणा MAX_REPORT_SIZE 8
 
 /* Make sure all descriptors are present here */
-#define MAX_RDESC_SIZE				\
-	(sizeof(kbd_descriptor) +		\
-	 sizeof(mse_bluetooth_descriptor) +	\
-	 sizeof(mse5_bluetooth_descriptor) +	\
-	 sizeof(consumer_descriptor) +		\
-	 sizeof(syscontrol_descriptor) +	\
-	 sizeof(media_descriptor) +	\
-	 sizeof(hidpp_descriptor))
+#घोषणा MAX_RDESC_SIZE				\
+	(माप(kbd_descriptor) +		\
+	 माप(mse_bluetooth_descriptor) +	\
+	 माप(mse5_bluetooth_descriptor) +	\
+	 माप(consumer_descriptor) +		\
+	 माप(syscontrol_descriptor) +	\
+	 माप(media_descriptor) +	\
+	 माप(hidpp_descriptor))
 
 /* Number of possible hid report types that can be created by this driver.
  *
  * Right now, RF report types have the same report types (or report id's)
  * than the hid report created from those RF reports. In the future
- * this doesnt have to be true.
+ * this करोesnt have to be true.
  *
  * For instance, RF report type 0x01 which has a size of 8 bytes, corresponds
  * to hid report id 0x01, this is standard keyboard. Same thing applies to mice
- * reports and consumer control, etc. If a new RF report is created, it doesn't
+ * reports and consumer control, etc. If a new RF report is created, it करोesn't
  * has to have the same report id as its corresponding hid report, so an
- * translation may have to take place for future report types.
+ * translation may have to take place क्रम future report types.
  */
-#define NUMBER_OF_HID_REPORTS 32
-static const u8 hid_reportid_size_map[NUMBER_OF_HID_REPORTS] = {
+#घोषणा NUMBER_OF_HID_REPORTS 32
+अटल स्थिर u8 hid_reportid_size_map[NUMBER_OF_HID_REPORTS] = अणु
 	[1] = 8,		/* Standard keyboard */
 	[2] = 8,		/* Standard mouse */
 	[3] = 5,		/* Consumer control */
 	[4] = 2,		/* System control */
 	[8] = 2,		/* Media Center */
-};
+पूर्ण;
 
 
-#define LOGITECH_DJ_INTERFACE_NUMBER 0x02
+#घोषणा LOGITECH_DJ_INTERFACE_NUMBER 0x02
 
-static struct hid_ll_driver logi_dj_ll_driver;
+अटल काष्ठा hid_ll_driver logi_dj_ll_driver;
 
-static int logi_dj_recv_query_paired_devices(struct dj_receiver_dev *djrcv_dev);
-static void delayedwork_callback(struct work_struct *work);
+अटल पूर्णांक logi_dj_recv_query_paired_devices(काष्ठा dj_receiver_dev *djrcv_dev);
+अटल व्योम delayedwork_callback(काष्ठा work_काष्ठा *work);
 
-static LIST_HEAD(dj_hdev_list);
-static DEFINE_MUTEX(dj_hdev_list_lock);
+अटल LIST_HEAD(dj_hdev_list);
+अटल DEFINE_MUTEX(dj_hdev_list_lock);
 
-static bool recvr_type_is_bluetooth(enum recvr_type type)
-{
-	return type == recvr_type_bluetooth || type == recvr_type_dinovo;
-}
+अटल bool recvr_type_is_bluetooth(क्रमागत recvr_type type)
+अणु
+	वापस type == recvr_type_bluetooth || type == recvr_type_dinovo;
+पूर्ण
 
 /*
- * dj/HID++ receivers are really a single logical entity, but for BIOS/Windows
- * compatibility they have multiple USB interfaces. On HID++ receivers we need
- * to listen for input reports on both interfaces. The functions below are used
- * to create a single struct dj_receiver_dev for all interfaces belonging to
+ * dj/HID++ receivers are really a single logical entity, but क्रम BIOS/Winकरोws
+ * compatibility they have multiple USB पूर्णांकerfaces. On HID++ receivers we need
+ * to listen क्रम input reports on both पूर्णांकerfaces. The functions below are used
+ * to create a single काष्ठा dj_receiver_dev क्रम all पूर्णांकerfaces beदीर्घing to
  * a single USB-device / receiver.
  */
-static struct dj_receiver_dev *dj_find_receiver_dev(struct hid_device *hdev,
-						    enum recvr_type type)
-{
-	struct dj_receiver_dev *djrcv_dev;
-	char sep;
+अटल काष्ठा dj_receiver_dev *dj_find_receiver_dev(काष्ठा hid_device *hdev,
+						    क्रमागत recvr_type type)
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev;
+	अक्षर sep;
 
 	/*
 	 * The bluetooth receiver contains a built-in hub and has separate
-	 * USB-devices for the keyboard and mouse interfaces.
+	 * USB-devices क्रम the keyboard and mouse पूर्णांकerfaces.
 	 */
 	sep = recvr_type_is_bluetooth(type) ? '.' : '/';
 
-	/* Try to find an already-probed interface from the same device */
-	list_for_each_entry(djrcv_dev, &dj_hdev_list, list) {
-		if (djrcv_dev->mouse &&
-		    hid_compare_device_paths(hdev, djrcv_dev->mouse, sep)) {
+	/* Try to find an alपढ़ोy-probed पूर्णांकerface from the same device */
+	list_क्रम_each_entry(djrcv_dev, &dj_hdev_list, list) अणु
+		अगर (djrcv_dev->mouse &&
+		    hid_compare_device_paths(hdev, djrcv_dev->mouse, sep)) अणु
 			kref_get(&djrcv_dev->kref);
-			return djrcv_dev;
-		}
-		if (djrcv_dev->keyboard &&
-		    hid_compare_device_paths(hdev, djrcv_dev->keyboard, sep)) {
+			वापस djrcv_dev;
+		पूर्ण
+		अगर (djrcv_dev->keyboard &&
+		    hid_compare_device_paths(hdev, djrcv_dev->keyboard, sep)) अणु
 			kref_get(&djrcv_dev->kref);
-			return djrcv_dev;
-		}
-		if (djrcv_dev->hidpp &&
-		    hid_compare_device_paths(hdev, djrcv_dev->hidpp, sep)) {
+			वापस djrcv_dev;
+		पूर्ण
+		अगर (djrcv_dev->hidpp &&
+		    hid_compare_device_paths(hdev, djrcv_dev->hidpp, sep)) अणु
 			kref_get(&djrcv_dev->kref);
-			return djrcv_dev;
-		}
-	}
+			वापस djrcv_dev;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void dj_release_receiver_dev(struct kref *kref)
-{
-	struct dj_receiver_dev *djrcv_dev = container_of(kref, struct dj_receiver_dev, kref);
+अटल व्योम dj_release_receiver_dev(काष्ठा kref *kref)
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev = container_of(kref, काष्ठा dj_receiver_dev, kref);
 
 	list_del(&djrcv_dev->list);
-	kfifo_free(&djrcv_dev->notif_fifo);
-	kfree(djrcv_dev);
-}
+	kfअगरo_मुक्त(&djrcv_dev->notअगर_fअगरo);
+	kमुक्त(djrcv_dev);
+पूर्ण
 
-static void dj_put_receiver_dev(struct hid_device *hdev)
-{
-	struct dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
+अटल व्योम dj_put_receiver_dev(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
 
 	mutex_lock(&dj_hdev_list_lock);
 
-	if (djrcv_dev->mouse == hdev)
-		djrcv_dev->mouse = NULL;
-	if (djrcv_dev->keyboard == hdev)
-		djrcv_dev->keyboard = NULL;
-	if (djrcv_dev->hidpp == hdev)
-		djrcv_dev->hidpp = NULL;
+	अगर (djrcv_dev->mouse == hdev)
+		djrcv_dev->mouse = शून्य;
+	अगर (djrcv_dev->keyboard == hdev)
+		djrcv_dev->keyboard = शून्य;
+	अगर (djrcv_dev->hidpp == hdev)
+		djrcv_dev->hidpp = शून्य;
 
 	kref_put(&djrcv_dev->kref, dj_release_receiver_dev);
 
 	mutex_unlock(&dj_hdev_list_lock);
-}
+पूर्ण
 
-static struct dj_receiver_dev *dj_get_receiver_dev(struct hid_device *hdev,
-						   enum recvr_type type,
-						   unsigned int application,
+अटल काष्ठा dj_receiver_dev *dj_get_receiver_dev(काष्ठा hid_device *hdev,
+						   क्रमागत recvr_type type,
+						   अचिन्हित पूर्णांक application,
 						   bool is_hidpp)
-{
-	struct dj_receiver_dev *djrcv_dev;
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev;
 
 	mutex_lock(&dj_hdev_list_lock);
 
 	djrcv_dev = dj_find_receiver_dev(hdev, type);
-	if (!djrcv_dev) {
-		djrcv_dev = kzalloc(sizeof(*djrcv_dev), GFP_KERNEL);
-		if (!djrcv_dev)
-			goto out;
+	अगर (!djrcv_dev) अणु
+		djrcv_dev = kzalloc(माप(*djrcv_dev), GFP_KERNEL);
+		अगर (!djrcv_dev)
+			जाओ out;
 
 		INIT_WORK(&djrcv_dev->work, delayedwork_callback);
 		spin_lock_init(&djrcv_dev->lock);
-		if (kfifo_alloc(&djrcv_dev->notif_fifo,
-			    DJ_MAX_NUMBER_NOTIFS * sizeof(struct dj_workitem),
-			    GFP_KERNEL)) {
-			kfree(djrcv_dev);
-			djrcv_dev = NULL;
-			goto out;
-		}
+		अगर (kfअगरo_alloc(&djrcv_dev->notअगर_fअगरo,
+			    DJ_MAX_NUMBER_NOTIFS * माप(काष्ठा dj_workitem),
+			    GFP_KERNEL)) अणु
+			kमुक्त(djrcv_dev);
+			djrcv_dev = शून्य;
+			जाओ out;
+		पूर्ण
 		kref_init(&djrcv_dev->kref);
 		list_add_tail(&djrcv_dev->list, &dj_hdev_list);
-		djrcv_dev->last_query = jiffies;
+		djrcv_dev->last_query = jअगरfies;
 		djrcv_dev->type = type;
-	}
+	पूर्ण
 
-	if (application == HID_GD_KEYBOARD)
+	अगर (application == HID_GD_KEYBOARD)
 		djrcv_dev->keyboard = hdev;
-	if (application == HID_GD_MOUSE)
+	अगर (application == HID_GD_MOUSE)
 		djrcv_dev->mouse = hdev;
-	if (is_hidpp)
+	अगर (is_hidpp)
 		djrcv_dev->hidpp = hdev;
 
 	hid_set_drvdata(hdev, djrcv_dev);
 out:
 	mutex_unlock(&dj_hdev_list_lock);
-	return djrcv_dev;
-}
+	वापस djrcv_dev;
+पूर्ण
 
-static void logi_dj_recv_destroy_djhid_device(struct dj_receiver_dev *djrcv_dev,
-					      struct dj_workitem *workitem)
-{
+अटल व्योम logi_dj_recv_destroy_djhid_device(काष्ठा dj_receiver_dev *djrcv_dev,
+					      काष्ठा dj_workitem *workitem)
+अणु
 	/* Called in delayed work context */
-	struct dj_device *dj_dev;
-	unsigned long flags;
+	काष्ठा dj_device *dj_dev;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&djrcv_dev->lock, flags);
 	dj_dev = djrcv_dev->paired_dj_devices[workitem->device_index];
-	djrcv_dev->paired_dj_devices[workitem->device_index] = NULL;
+	djrcv_dev->paired_dj_devices[workitem->device_index] = शून्य;
 	spin_unlock_irqrestore(&djrcv_dev->lock, flags);
 
-	if (dj_dev != NULL) {
+	अगर (dj_dev != शून्य) अणु
 		hid_destroy_device(dj_dev->hdev);
-		kfree(dj_dev);
-	} else {
+		kमुक्त(dj_dev);
+	पूर्ण अन्यथा अणु
 		hid_err(djrcv_dev->hidpp, "%s: can't destroy a NULL device\n",
 			__func__);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void logi_dj_recv_add_djhid_device(struct dj_receiver_dev *djrcv_dev,
-					  struct dj_workitem *workitem)
-{
+अटल व्योम logi_dj_recv_add_djhid_device(काष्ठा dj_receiver_dev *djrcv_dev,
+					  काष्ठा dj_workitem *workitem)
+अणु
 	/* Called in delayed work context */
-	struct hid_device *djrcv_hdev = djrcv_dev->hidpp;
-	struct hid_device *dj_hiddev;
-	struct dj_device *dj_dev;
+	काष्ठा hid_device *djrcv_hdev = djrcv_dev->hidpp;
+	काष्ठा hid_device *dj_hiddev;
+	काष्ठा dj_device *dj_dev;
 	u8 device_index = workitem->device_index;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	/* Device index goes from 1 to 6, we need 3 bytes to store the
 	 * semicolon, the index, and a null terminator
 	 */
-	unsigned char tmpstr[3];
+	अचिन्हित अक्षर पंचांगpstr[3];
 
 	/* We are the only one ever adding a device, no need to lock */
-	if (djrcv_dev->paired_dj_devices[device_index]) {
-		/* The device is already known. No need to reallocate it. */
+	अगर (djrcv_dev->paired_dj_devices[device_index]) अणु
+		/* The device is alपढ़ोy known. No need to पुनः_स्मृतिate it. */
 		dbg_hid("%s: device is already known\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dj_hiddev = hid_allocate_device();
-	if (IS_ERR(dj_hiddev)) {
+	अगर (IS_ERR(dj_hiddev)) अणु
 		hid_err(djrcv_hdev, "%s: hid_allocate_dev failed\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dj_hiddev->ll_driver = &logi_dj_ll_driver;
 
 	dj_hiddev->dev.parent = &djrcv_hdev->dev;
 	dj_hiddev->bus = BUS_USB;
-	dj_hiddev->vendor = djrcv_hdev->vendor;
+	dj_hiddev->venकरोr = djrcv_hdev->venकरोr;
 	dj_hiddev->product = (workitem->quad_id_msb << 8) |
 			      workitem->quad_id_lsb;
-	if (workitem->device_type) {
-		const char *type_str = "Device";
+	अगर (workitem->device_type) अणु
+		स्थिर अक्षर *type_str = "Device";
 
-		switch (workitem->device_type) {
-		case 0x01: type_str = "Keyboard";	break;
-		case 0x02: type_str = "Mouse";		break;
-		case 0x03: type_str = "Numpad";		break;
-		case 0x04: type_str = "Presenter";	break;
-		case 0x07: type_str = "Remote Control";	break;
-		case 0x08: type_str = "Trackball";	break;
-		case 0x09: type_str = "Touchpad";	break;
-		}
-		snprintf(dj_hiddev->name, sizeof(dj_hiddev->name),
+		चयन (workitem->device_type) अणु
+		हाल 0x01: type_str = "Keyboard";	अवरोध;
+		हाल 0x02: type_str = "Mouse";		अवरोध;
+		हाल 0x03: type_str = "Numpad";		अवरोध;
+		हाल 0x04: type_str = "Presenter";	अवरोध;
+		हाल 0x07: type_str = "Remote Control";	अवरोध;
+		हाल 0x08: type_str = "Trackball";	अवरोध;
+		हाल 0x09: type_str = "Touchpad";	अवरोध;
+		पूर्ण
+		snम_लिखो(dj_hiddev->name, माप(dj_hiddev->name),
 			"Logitech Wireless %s PID:%04x",
 			type_str, dj_hiddev->product);
-	} else {
-		snprintf(dj_hiddev->name, sizeof(dj_hiddev->name),
+	पूर्ण अन्यथा अणु
+		snम_लिखो(dj_hiddev->name, माप(dj_hiddev->name),
 			"Logitech Wireless Device PID:%04x",
 			dj_hiddev->product);
-	}
+	पूर्ण
 
-	if (djrcv_dev->type == recvr_type_27mhz)
+	अगर (djrcv_dev->type == recvr_type_27mhz)
 		dj_hiddev->group = HID_GROUP_LOGITECH_27MHZ_DEVICE;
-	else
+	अन्यथा
 		dj_hiddev->group = HID_GROUP_LOGITECH_DJ_DEVICE;
 
-	memcpy(dj_hiddev->phys, djrcv_hdev->phys, sizeof(djrcv_hdev->phys));
-	snprintf(tmpstr, sizeof(tmpstr), ":%d", device_index);
-	strlcat(dj_hiddev->phys, tmpstr, sizeof(dj_hiddev->phys));
+	स_नकल(dj_hiddev->phys, djrcv_hdev->phys, माप(djrcv_hdev->phys));
+	snम_लिखो(पंचांगpstr, माप(पंचांगpstr), ":%d", device_index);
+	strlcat(dj_hiddev->phys, पंचांगpstr, माप(dj_hiddev->phys));
 
-	dj_dev = kzalloc(sizeof(struct dj_device), GFP_KERNEL);
+	dj_dev = kzalloc(माप(काष्ठा dj_device), GFP_KERNEL);
 
-	if (!dj_dev) {
+	अगर (!dj_dev) अणु
 		hid_err(djrcv_hdev, "%s: failed allocating dj_dev\n", __func__);
-		goto dj_device_allocate_fail;
-	}
+		जाओ dj_device_allocate_fail;
+	पूर्ण
 
 	dj_dev->reports_supported = workitem->reports_supported;
 	dj_dev->hdev = dj_hiddev;
@@ -780,121 +781,121 @@ static void logi_dj_recv_add_djhid_device(struct dj_receiver_dev *djrcv_dev,
 	djrcv_dev->paired_dj_devices[device_index] = dj_dev;
 	spin_unlock_irqrestore(&djrcv_dev->lock, flags);
 
-	if (hid_add_device(dj_hiddev)) {
+	अगर (hid_add_device(dj_hiddev)) अणु
 		hid_err(djrcv_hdev, "%s: failed adding dj_device\n", __func__);
-		goto hid_add_device_fail;
-	}
+		जाओ hid_add_device_fail;
+	पूर्ण
 
-	return;
+	वापस;
 
 hid_add_device_fail:
 	spin_lock_irqsave(&djrcv_dev->lock, flags);
-	djrcv_dev->paired_dj_devices[device_index] = NULL;
+	djrcv_dev->paired_dj_devices[device_index] = शून्य;
 	spin_unlock_irqrestore(&djrcv_dev->lock, flags);
-	kfree(dj_dev);
+	kमुक्त(dj_dev);
 dj_device_allocate_fail:
 	hid_destroy_device(dj_hiddev);
-}
+पूर्ण
 
-static void delayedwork_callback(struct work_struct *work)
-{
-	struct dj_receiver_dev *djrcv_dev =
-		container_of(work, struct dj_receiver_dev, work);
+अटल व्योम delayedwork_callback(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev =
+		container_of(work, काष्ठा dj_receiver_dev, work);
 
-	struct dj_workitem workitem;
-	unsigned long flags;
-	int count;
-	int retval;
+	काष्ठा dj_workitem workitem;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count;
+	पूर्णांक retval;
 
 	dbg_hid("%s\n", __func__);
 
 	spin_lock_irqsave(&djrcv_dev->lock, flags);
 
 	/*
-	 * Since we attach to multiple interfaces, we may get scheduled before
-	 * we are bound to the HID++ interface, catch this.
+	 * Since we attach to multiple पूर्णांकerfaces, we may get scheduled beक्रमe
+	 * we are bound to the HID++ पूर्णांकerface, catch this.
 	 */
-	if (!djrcv_dev->ready) {
+	अगर (!djrcv_dev->पढ़ोy) अणु
 		pr_warn("%s: delayedwork queued before hidpp interface was enumerated\n",
 			__func__);
 		spin_unlock_irqrestore(&djrcv_dev->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	count = kfifo_out(&djrcv_dev->notif_fifo, &workitem, sizeof(workitem));
+	count = kfअगरo_out(&djrcv_dev->notअगर_fअगरo, &workitem, माप(workitem));
 
-	if (count != sizeof(workitem)) {
+	अगर (count != माप(workitem)) अणु
 		spin_unlock_irqrestore(&djrcv_dev->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!kfifo_is_empty(&djrcv_dev->notif_fifo))
+	अगर (!kfअगरo_is_empty(&djrcv_dev->notअगर_fअगरo))
 		schedule_work(&djrcv_dev->work);
 
 	spin_unlock_irqrestore(&djrcv_dev->lock, flags);
 
-	switch (workitem.type) {
-	case WORKITEM_TYPE_PAIRED:
+	चयन (workitem.type) अणु
+	हाल WORKITEM_TYPE_PAIRED:
 		logi_dj_recv_add_djhid_device(djrcv_dev, &workitem);
-		break;
-	case WORKITEM_TYPE_UNPAIRED:
+		अवरोध;
+	हाल WORKITEM_TYPE_UNPAIRED:
 		logi_dj_recv_destroy_djhid_device(djrcv_dev, &workitem);
-		break;
-	case WORKITEM_TYPE_UNKNOWN:
+		अवरोध;
+	हाल WORKITEM_TYPE_UNKNOWN:
 		retval = logi_dj_recv_query_paired_devices(djrcv_dev);
-		if (retval) {
+		अगर (retval) अणु
 			hid_err(djrcv_dev->hidpp, "%s: logi_dj_recv_query_paired_devices error: %d\n",
 				__func__, retval);
-		}
-		break;
-	case WORKITEM_TYPE_EMPTY:
+		पूर्ण
+		अवरोध;
+	हाल WORKITEM_TYPE_EMPTY:
 		dbg_hid("%s: device list is empty\n", __func__);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * Sometimes we receive reports for which we do not have a paired dj_device
- * associated with the device_index or report-type to forward the report to.
- * This means that the original "device paired" notification corresponding
- * to the dj_device never arrived to this driver. Possible reasons for this are:
+ * Someबार we receive reports क्रम which we करो not have a paired dj_device
+ * associated with the device_index or report-type to क्रमward the report to.
+ * This means that the original "device paired" notअगरication corresponding
+ * to the dj_device never arrived to this driver. Possible reasons क्रम this are:
  * 1) hid-core discards all packets coming from a device during probe().
- * 2) if the receiver is plugged into a KVM switch then the pairing reports
- * are only forwarded to it if the focus is on this PC.
- * This function deals with this by re-asking the receiver for the list of
+ * 2) अगर the receiver is plugged पूर्णांकo a KVM चयन then the pairing reports
+ * are only क्रमwarded to it अगर the focus is on this PC.
+ * This function deals with this by re-asking the receiver क्रम the list of
  * connected devices in the delayed work callback.
  * This function MUST be called with djrcv->lock held.
  */
-static void logi_dj_recv_queue_unknown_work(struct dj_receiver_dev *djrcv_dev)
-{
-	struct dj_workitem workitem = { .type = WORKITEM_TYPE_UNKNOWN };
+अटल व्योम logi_dj_recv_queue_unknown_work(काष्ठा dj_receiver_dev *djrcv_dev)
+अणु
+	काष्ठा dj_workitem workitem = अणु .type = WORKITEM_TYPE_UNKNOWN पूर्ण;
 
-	/* Rate limit queries done because of unhandled reports to 2/sec */
-	if (time_before(jiffies, djrcv_dev->last_query + HZ / 2))
-		return;
+	/* Rate limit queries करोne because of unhandled reports to 2/sec */
+	अगर (समय_beक्रमe(jअगरfies, djrcv_dev->last_query + HZ / 2))
+		वापस;
 
-	kfifo_in(&djrcv_dev->notif_fifo, &workitem, sizeof(workitem));
+	kfअगरo_in(&djrcv_dev->notअगर_fअगरo, &workitem, माप(workitem));
 	schedule_work(&djrcv_dev->work);
-}
+पूर्ण
 
-static void logi_dj_recv_queue_notification(struct dj_receiver_dev *djrcv_dev,
-					   struct dj_report *dj_report)
-{
+अटल व्योम logi_dj_recv_queue_notअगरication(काष्ठा dj_receiver_dev *djrcv_dev,
+					   काष्ठा dj_report *dj_report)
+अणु
 	/* We are called from atomic context (tasklet && djrcv->lock held) */
-	struct dj_workitem workitem = {
+	काष्ठा dj_workitem workitem = अणु
 		.device_index = dj_report->device_index,
-	};
+	पूर्ण;
 
-	switch (dj_report->report_type) {
-	case REPORT_TYPE_NOTIF_DEVICE_PAIRED:
+	चयन (dj_report->report_type) अणु
+	हाल REPORT_TYPE_NOTIF_DEVICE_PAIRED:
 		workitem.type = WORKITEM_TYPE_PAIRED;
-		if (dj_report->report_params[DEVICE_PAIRED_PARAM_SPFUNCTION] &
-		    SPFUNCTION_DEVICE_LIST_EMPTY) {
+		अगर (dj_report->report_params[DEVICE_PAIRED_PARAM_SPFUNCTION] &
+		    SPFUNCTION_DEVICE_LIST_EMPTY) अणु
 			workitem.type = WORKITEM_TYPE_EMPTY;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case REPORT_TYPE_NOTIF_DEVICE_UNPAIRED:
+	हाल REPORT_TYPE_NOTIF_DEVICE_UNPAIRED:
 		workitem.quad_id_msb =
 			dj_report->report_params[DEVICE_PAIRED_PARAM_EQUAD_ID_MSB];
 		workitem.quad_id_lsb =
@@ -903,383 +904,383 @@ static void logi_dj_recv_queue_notification(struct dj_receiver_dev *djrcv_dev,
 						dj_report->report_params +
 						DEVICE_PAIRED_RF_REPORT_TYPE);
 		workitem.reports_supported |= HIDPP;
-		if (dj_report->report_type == REPORT_TYPE_NOTIF_DEVICE_UNPAIRED)
+		अगर (dj_report->report_type == REPORT_TYPE_NOTIF_DEVICE_UNPAIRED)
 			workitem.type = WORKITEM_TYPE_UNPAIRED;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		logi_dj_recv_queue_unknown_work(djrcv_dev);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	kfifo_in(&djrcv_dev->notif_fifo, &workitem, sizeof(workitem));
+	kfअगरo_in(&djrcv_dev->notअगर_fअगरo, &workitem, माप(workitem));
 	schedule_work(&djrcv_dev->work);
-}
+पूर्ण
 
 /*
- * Some quad/bluetooth keyboards have a builtin touchpad in this case we see
+ * Some quad/bluetooth keyboards have a builtin touchpad in this हाल we see
  * only 1 paired device with a device_type of REPORT_TYPE_KEYBOARD. For the
- * touchpad to work we must also forward mouse input reports to the dj_hiddev
- * created for the keyboard (instead of forwarding them to a second paired
+ * touchpad to work we must also क्रमward mouse input reports to the dj_hiddev
+ * created क्रम the keyboard (instead of क्रमwarding them to a second paired
  * device with a device_type of REPORT_TYPE_MOUSE as we normally would).
  *
  * On Dinovo receivers the keyboard's touchpad and an optional paired actual
- * mouse send separate input reports, INPUT(2) aka STD_MOUSE for the mouse
- * and INPUT(5) aka KBD_MOUSE for the keyboard's touchpad.
+ * mouse send separate input reports, INPUT(2) aka STD_MOUSE क्रम the mouse
+ * and INPUT(5) aka KBD_MOUSE क्रम the keyboard's touchpad.
  *
  * On MX5x00 receivers (which can also be paired with a Dinovo keyboard)
- * INPUT(2) is used for both an optional paired actual mouse and for the
+ * INPUT(2) is used क्रम both an optional paired actual mouse and क्रम the
  * keyboard's touchpad.
  */
-static const u16 kbd_builtin_touchpad_ids[] = {
+अटल स्थिर u16 kbd_builtin_touchpad_ids[] = अणु
 	0xb309, /* Dinovo Edge */
 	0xb30c, /* Dinovo Mini */
-};
+पूर्ण;
 
-static void logi_hidpp_dev_conn_notif_equad(struct hid_device *hdev,
-					    struct hidpp_event *hidpp_report,
-					    struct dj_workitem *workitem)
-{
-	struct dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
-	int i, id;
+अटल व्योम logi_hidpp_dev_conn_notअगर_equad(काष्ठा hid_device *hdev,
+					    काष्ठा hidpp_event *hidpp_report,
+					    काष्ठा dj_workitem *workitem)
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
+	पूर्णांक i, id;
 
 	workitem->type = WORKITEM_TYPE_PAIRED;
 	workitem->device_type = hidpp_report->params[HIDPP_PARAM_DEVICE_INFO] &
 				HIDPP_DEVICE_TYPE_MASK;
 	workitem->quad_id_msb = hidpp_report->params[HIDPP_PARAM_EQUAD_MSB];
 	workitem->quad_id_lsb = hidpp_report->params[HIDPP_PARAM_EQUAD_LSB];
-	switch (workitem->device_type) {
-	case REPORT_TYPE_KEYBOARD:
+	चयन (workitem->device_type) अणु
+	हाल REPORT_TYPE_KEYBOARD:
 		workitem->reports_supported |= STD_KEYBOARD | MULTIMEDIA |
 					       POWER_KEYS | MEDIA_CENTER |
 					       HIDPP;
 		id = (workitem->quad_id_msb << 8) | workitem->quad_id_lsb;
-		for (i = 0; i < ARRAY_SIZE(kbd_builtin_touchpad_ids); i++) {
-			if (id == kbd_builtin_touchpad_ids[i]) {
-				if (djrcv_dev->type == recvr_type_dinovo)
+		क्रम (i = 0; i < ARRAY_SIZE(kbd_builtin_touchpad_ids); i++) अणु
+			अगर (id == kbd_builtin_touchpad_ids[i]) अणु
+				अगर (djrcv_dev->type == recvr_type_dinovo)
 					workitem->reports_supported |= KBD_MOUSE;
-				else
+				अन्यथा
 					workitem->reports_supported |= STD_MOUSE;
-				break;
-			}
-		}
-		break;
-	case REPORT_TYPE_MOUSE:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल REPORT_TYPE_MOUSE:
 		workitem->reports_supported |= STD_MOUSE | HIDPP;
-		if (djrcv_dev->type == recvr_type_mouse_only)
+		अगर (djrcv_dev->type == recvr_type_mouse_only)
 			workitem->reports_supported |= MULTIMEDIA;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void logi_hidpp_dev_conn_notif_27mhz(struct hid_device *hdev,
-					    struct hidpp_event *hidpp_report,
-					    struct dj_workitem *workitem)
-{
+अटल व्योम logi_hidpp_dev_conn_notअगर_27mhz(काष्ठा hid_device *hdev,
+					    काष्ठा hidpp_event *hidpp_report,
+					    काष्ठा dj_workitem *workitem)
+अणु
 	workitem->type = WORKITEM_TYPE_PAIRED;
 	workitem->quad_id_lsb = hidpp_report->params[HIDPP_PARAM_27MHZ_DEVID];
-	switch (hidpp_report->device_index) {
-	case 1: /* Index 1 is always a mouse */
-	case 2: /* Index 2 is always a mouse */
+	चयन (hidpp_report->device_index) अणु
+	हाल 1: /* Index 1 is always a mouse */
+	हाल 2: /* Index 2 is always a mouse */
 		workitem->device_type = HIDPP_DEVICE_TYPE_MOUSE;
 		workitem->reports_supported |= STD_MOUSE | HIDPP;
-		break;
-	case 3: /* Index 3 is always the keyboard */
-	case 4: /* Index 4 is used for an optional separate numpad */
+		अवरोध;
+	हाल 3: /* Index 3 is always the keyboard */
+	हाल 4: /* Index 4 is used क्रम an optional separate numpad */
 		workitem->device_type = HIDPP_DEVICE_TYPE_KEYBOARD;
 		workitem->reports_supported |= STD_KEYBOARD | MULTIMEDIA |
 					       POWER_KEYS | HIDPP;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		hid_warn(hdev, "%s: unexpected device-index %d", __func__,
 			 hidpp_report->device_index);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void logi_hidpp_recv_queue_notif(struct hid_device *hdev,
-					struct hidpp_event *hidpp_report)
-{
+अटल व्योम logi_hidpp_recv_queue_notअगर(काष्ठा hid_device *hdev,
+					काष्ठा hidpp_event *hidpp_report)
+अणु
 	/* We are called from atomic context (tasklet && djrcv->lock held) */
-	struct dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
-	const char *device_type = "UNKNOWN";
-	struct dj_workitem workitem = {
+	काष्ठा dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
+	स्थिर अक्षर *device_type = "UNKNOWN";
+	काष्ठा dj_workitem workitem = अणु
 		.type = WORKITEM_TYPE_EMPTY,
 		.device_index = hidpp_report->device_index,
-	};
+	पूर्ण;
 
-	switch (hidpp_report->params[HIDPP_PARAM_PROTO_TYPE]) {
-	case 0x01:
+	चयन (hidpp_report->params[HIDPP_PARAM_PROTO_TYPE]) अणु
+	हाल 0x01:
 		device_type = "Bluetooth";
 		/* Bluetooth connect packet contents is the same as (e)QUAD */
-		logi_hidpp_dev_conn_notif_equad(hdev, hidpp_report, &workitem);
-		if (!(hidpp_report->params[HIDPP_PARAM_DEVICE_INFO] &
-						HIDPP_MANUFACTURER_MASK)) {
+		logi_hidpp_dev_conn_notअगर_equad(hdev, hidpp_report, &workitem);
+		अगर (!(hidpp_report->params[HIDPP_PARAM_DEVICE_INFO] &
+						HIDPP_MANUFACTURER_MASK)) अणु
 			hid_info(hdev, "Non Logitech device connected on slot %d\n",
 				 hidpp_report->device_index);
 			workitem.reports_supported &= ~HIDPP;
-		}
-		break;
-	case 0x02:
+		पूर्ण
+		अवरोध;
+	हाल 0x02:
 		device_type = "27 Mhz";
-		logi_hidpp_dev_conn_notif_27mhz(hdev, hidpp_report, &workitem);
-		break;
-	case 0x03:
+		logi_hidpp_dev_conn_notअगर_27mhz(hdev, hidpp_report, &workitem);
+		अवरोध;
+	हाल 0x03:
 		device_type = "QUAD or eQUAD";
-		logi_hidpp_dev_conn_notif_equad(hdev, hidpp_report, &workitem);
-		break;
-	case 0x04:
+		logi_hidpp_dev_conn_notअगर_equad(hdev, hidpp_report, &workitem);
+		अवरोध;
+	हाल 0x04:
 		device_type = "eQUAD step 4 DJ";
-		logi_hidpp_dev_conn_notif_equad(hdev, hidpp_report, &workitem);
-		break;
-	case 0x05:
+		logi_hidpp_dev_conn_notअगर_equad(hdev, hidpp_report, &workitem);
+		अवरोध;
+	हाल 0x05:
 		device_type = "DFU Lite";
-		break;
-	case 0x06:
+		अवरोध;
+	हाल 0x06:
 		device_type = "eQUAD step 4 Lite";
-		logi_hidpp_dev_conn_notif_equad(hdev, hidpp_report, &workitem);
-		break;
-	case 0x07:
+		logi_hidpp_dev_conn_notअगर_equad(hdev, hidpp_report, &workitem);
+		अवरोध;
+	हाल 0x07:
 		device_type = "eQUAD step 4 Gaming";
-		logi_hidpp_dev_conn_notif_equad(hdev, hidpp_report, &workitem);
+		logi_hidpp_dev_conn_notअगर_equad(hdev, hidpp_report, &workitem);
 		workitem.reports_supported |= STD_KEYBOARD;
-		break;
-	case 0x08:
+		अवरोध;
+	हाल 0x08:
 		device_type = "eQUAD step 4 for gamepads";
-		break;
-	case 0x0a:
+		अवरोध;
+	हाल 0x0a:
 		device_type = "eQUAD nano Lite";
-		logi_hidpp_dev_conn_notif_equad(hdev, hidpp_report, &workitem);
-		break;
-	case 0x0c:
+		logi_hidpp_dev_conn_notअगर_equad(hdev, hidpp_report, &workitem);
+		अवरोध;
+	हाल 0x0c:
 		device_type = "eQUAD Lightspeed 1";
-		logi_hidpp_dev_conn_notif_equad(hdev, hidpp_report, &workitem);
+		logi_hidpp_dev_conn_notअगर_equad(hdev, hidpp_report, &workitem);
 		workitem.reports_supported |= STD_KEYBOARD;
-		break;
-	case 0x0d:
+		अवरोध;
+	हाल 0x0d:
 		device_type = "eQUAD Lightspeed 1.1";
-		logi_hidpp_dev_conn_notif_equad(hdev, hidpp_report, &workitem);
+		logi_hidpp_dev_conn_notअगर_equad(hdev, hidpp_report, &workitem);
 		workitem.reports_supported |= STD_KEYBOARD;
-		break;
-	case 0x0f:
+		अवरोध;
+	हाल 0x0f:
 		device_type = "eQUAD Lightspeed 1.2";
-		logi_hidpp_dev_conn_notif_equad(hdev, hidpp_report, &workitem);
+		logi_hidpp_dev_conn_notअगर_equad(hdev, hidpp_report, &workitem);
 		workitem.reports_supported |= STD_KEYBOARD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* custom receiver device (eg. powerplay) */
-	if (hidpp_report->device_index == 7) {
+	/* custom receiver device (eg. घातerplay) */
+	अगर (hidpp_report->device_index == 7) अणु
 		workitem.reports_supported |= HIDPP;
-	}
+	पूर्ण
 
-	if (workitem.type == WORKITEM_TYPE_EMPTY) {
+	अगर (workitem.type == WORKITEM_TYPE_EMPTY) अणु
 		hid_warn(hdev,
 			 "unusable device of type %s (0x%02x) connected on slot %d",
 			 device_type,
 			 hidpp_report->params[HIDPP_PARAM_PROTO_TYPE],
 			 hidpp_report->device_index);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hid_info(hdev, "device of type %s (0x%02x) connected on slot %d",
 		 device_type, hidpp_report->params[HIDPP_PARAM_PROTO_TYPE],
 		 hidpp_report->device_index);
 
-	kfifo_in(&djrcv_dev->notif_fifo, &workitem, sizeof(workitem));
+	kfअगरo_in(&djrcv_dev->notअगर_fअगरo, &workitem, माप(workitem));
 	schedule_work(&djrcv_dev->work);
-}
+पूर्ण
 
-static void logi_dj_recv_forward_null_report(struct dj_receiver_dev *djrcv_dev,
-					     struct dj_report *dj_report)
-{
+अटल व्योम logi_dj_recv_क्रमward_null_report(काष्ठा dj_receiver_dev *djrcv_dev,
+					     काष्ठा dj_report *dj_report)
+अणु
 	/* We are called from atomic context (tasklet && djrcv->lock held) */
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 	u8 reportbuffer[MAX_REPORT_SIZE];
-	struct dj_device *djdev;
+	काष्ठा dj_device *djdev;
 
 	djdev = djrcv_dev->paired_dj_devices[dj_report->device_index];
 
-	memset(reportbuffer, 0, sizeof(reportbuffer));
+	स_रखो(reportbuffer, 0, माप(reportbuffer));
 
-	for (i = 0; i < NUMBER_OF_HID_REPORTS; i++) {
-		if (djdev->reports_supported & (1 << i)) {
+	क्रम (i = 0; i < NUMBER_OF_HID_REPORTS; i++) अणु
+		अगर (djdev->reports_supported & (1 << i)) अणु
 			reportbuffer[0] = i;
-			if (hid_input_report(djdev->hdev,
+			अगर (hid_input_report(djdev->hdev,
 					     HID_INPUT_REPORT,
 					     reportbuffer,
-					     hid_reportid_size_map[i], 1)) {
+					     hid_reportid_size_map[i], 1)) अणु
 				dbg_hid("hid_input_report error sending null "
 					"report\n");
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void logi_dj_recv_forward_dj(struct dj_receiver_dev *djrcv_dev,
-				    struct dj_report *dj_report)
-{
+अटल व्योम logi_dj_recv_क्रमward_dj(काष्ठा dj_receiver_dev *djrcv_dev,
+				    काष्ठा dj_report *dj_report)
+अणु
 	/* We are called from atomic context (tasklet && djrcv->lock held) */
-	struct dj_device *dj_device;
+	काष्ठा dj_device *dj_device;
 
 	dj_device = djrcv_dev->paired_dj_devices[dj_report->device_index];
 
-	if ((dj_report->report_type > ARRAY_SIZE(hid_reportid_size_map) - 1) ||
-	    (hid_reportid_size_map[dj_report->report_type] == 0)) {
+	अगर ((dj_report->report_type > ARRAY_SIZE(hid_reportid_size_map) - 1) ||
+	    (hid_reportid_size_map[dj_report->report_type] == 0)) अणु
 		dbg_hid("invalid report type:%x\n", dj_report->report_type);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (hid_input_report(dj_device->hdev,
+	अगर (hid_input_report(dj_device->hdev,
 			HID_INPUT_REPORT, &dj_report->report_type,
-			hid_reportid_size_map[dj_report->report_type], 1)) {
+			hid_reportid_size_map[dj_report->report_type], 1)) अणु
 		dbg_hid("hid_input_report error\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void logi_dj_recv_forward_report(struct dj_device *dj_dev, u8 *data,
-					int size)
-{
+अटल व्योम logi_dj_recv_क्रमward_report(काष्ठा dj_device *dj_dev, u8 *data,
+					पूर्णांक size)
+अणु
 	/* We are called from atomic context (tasklet && djrcv->lock held) */
-	if (hid_input_report(dj_dev->hdev, HID_INPUT_REPORT, data, size, 1))
+	अगर (hid_input_report(dj_dev->hdev, HID_INPUT_REPORT, data, size, 1))
 		dbg_hid("hid_input_report error\n");
-}
+पूर्ण
 
-static void logi_dj_recv_forward_input_report(struct hid_device *hdev,
-					      u8 *data, int size)
-{
-	struct dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
-	struct dj_device *dj_dev;
-	unsigned long flags;
+अटल व्योम logi_dj_recv_क्रमward_input_report(काष्ठा hid_device *hdev,
+					      u8 *data, पूर्णांक size)
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
+	काष्ठा dj_device *dj_dev;
+	अचिन्हित दीर्घ flags;
 	u8 report = data[0];
-	int i;
+	पूर्णांक i;
 
-	if (report > REPORT_TYPE_RFREPORT_LAST) {
+	अगर (report > REPORT_TYPE_RFREPORT_LAST) अणु
 		hid_err(hdev, "Unexpected input report number %d\n", report);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&djrcv_dev->lock, flags);
-	for (i = 0; i < (DJ_MAX_PAIRED_DEVICES + DJ_DEVICE_INDEX_MIN); i++) {
+	क्रम (i = 0; i < (DJ_MAX_PAIRED_DEVICES + DJ_DEVICE_INDEX_MIN); i++) अणु
 		dj_dev = djrcv_dev->paired_dj_devices[i];
-		if (dj_dev && (dj_dev->reports_supported & BIT(report))) {
-			logi_dj_recv_forward_report(dj_dev, data, size);
+		अगर (dj_dev && (dj_dev->reports_supported & BIT(report))) अणु
+			logi_dj_recv_क्रमward_report(dj_dev, data, size);
 			spin_unlock_irqrestore(&djrcv_dev->lock, flags);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	logi_dj_recv_queue_unknown_work(djrcv_dev);
 	spin_unlock_irqrestore(&djrcv_dev->lock, flags);
 
 	dbg_hid("No dj-devs handling input report number %d\n", report);
-}
+पूर्ण
 
-static int logi_dj_recv_send_report(struct dj_receiver_dev *djrcv_dev,
-				    struct dj_report *dj_report)
-{
-	struct hid_device *hdev = djrcv_dev->hidpp;
-	struct hid_report *report;
-	struct hid_report_enum *output_report_enum;
+अटल पूर्णांक logi_dj_recv_send_report(काष्ठा dj_receiver_dev *djrcv_dev,
+				    काष्ठा dj_report *dj_report)
+अणु
+	काष्ठा hid_device *hdev = djrcv_dev->hidpp;
+	काष्ठा hid_report *report;
+	काष्ठा hid_report_क्रमागत *output_report_क्रमागत;
 	u8 *data = (u8 *)(&dj_report->device_index);
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	output_report_enum = &hdev->report_enum[HID_OUTPUT_REPORT];
-	report = output_report_enum->report_id_hash[REPORT_ID_DJ_SHORT];
+	output_report_क्रमागत = &hdev->report_क्रमागत[HID_OUTPUT_REPORT];
+	report = output_report_क्रमागत->report_id_hash[REPORT_ID_DJ_SHORT];
 
-	if (!report) {
+	अगर (!report) अणु
 		hid_err(hdev, "%s: unable to find dj report\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for (i = 0; i < DJREPORT_SHORT_LENGTH - 1; i++)
+	क्रम (i = 0; i < DJREPORT_SHORT_LENGTH - 1; i++)
 		report->field[0]->value[i] = data[i];
 
 	hid_hw_request(hdev, report, HID_REQ_SET_REPORT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int logi_dj_recv_query_hidpp_devices(struct dj_receiver_dev *djrcv_dev)
-{
-	static const u8 template[] = {
+अटल पूर्णांक logi_dj_recv_query_hidpp_devices(काष्ठा dj_receiver_dev *djrcv_dev)
+अणु
+	अटल स्थिर u8 ढाँचा[] = अणु
 		REPORT_ID_HIDPP_SHORT,
 		HIDPP_RECEIVER_INDEX,
 		HIDPP_SET_REGISTER,
 		HIDPP_REG_CONNECTION_STATE,
 		HIDPP_FAKE_DEVICE_ARRIVAL,
 		0x00, 0x00
-	};
+	पूर्ण;
 	u8 *hidpp_report;
-	int retval;
+	पूर्णांक retval;
 
-	hidpp_report = kmemdup(template, sizeof(template), GFP_KERNEL);
-	if (!hidpp_report)
-		return -ENOMEM;
+	hidpp_report = kmemdup(ढाँचा, माप(ढाँचा), GFP_KERNEL);
+	अगर (!hidpp_report)
+		वापस -ENOMEM;
 
 	retval = hid_hw_raw_request(djrcv_dev->hidpp,
 				    REPORT_ID_HIDPP_SHORT,
-				    hidpp_report, sizeof(template),
+				    hidpp_report, माप(ढाँचा),
 				    HID_OUTPUT_REPORT,
 				    HID_REQ_SET_REPORT);
 
-	kfree(hidpp_report);
-	return (retval < 0) ? retval : 0;
-}
+	kमुक्त(hidpp_report);
+	वापस (retval < 0) ? retval : 0;
+पूर्ण
 
-static int logi_dj_recv_query_paired_devices(struct dj_receiver_dev *djrcv_dev)
-{
-	struct dj_report *dj_report;
-	int retval;
+अटल पूर्णांक logi_dj_recv_query_paired_devices(काष्ठा dj_receiver_dev *djrcv_dev)
+अणु
+	काष्ठा dj_report *dj_report;
+	पूर्णांक retval;
 
-	djrcv_dev->last_query = jiffies;
+	djrcv_dev->last_query = jअगरfies;
 
-	if (djrcv_dev->type != recvr_type_dj)
-		return logi_dj_recv_query_hidpp_devices(djrcv_dev);
+	अगर (djrcv_dev->type != recvr_type_dj)
+		वापस logi_dj_recv_query_hidpp_devices(djrcv_dev);
 
-	dj_report = kzalloc(sizeof(struct dj_report), GFP_KERNEL);
-	if (!dj_report)
-		return -ENOMEM;
+	dj_report = kzalloc(माप(काष्ठा dj_report), GFP_KERNEL);
+	अगर (!dj_report)
+		वापस -ENOMEM;
 	dj_report->report_id = REPORT_ID_DJ_SHORT;
 	dj_report->device_index = HIDPP_RECEIVER_INDEX;
 	dj_report->report_type = REPORT_TYPE_CMD_GET_PAIRED_DEVICES;
 	retval = logi_dj_recv_send_report(djrcv_dev, dj_report);
-	kfree(dj_report);
-	return retval;
-}
+	kमुक्त(dj_report);
+	वापस retval;
+पूर्ण
 
 
-static int logi_dj_recv_switch_to_dj_mode(struct dj_receiver_dev *djrcv_dev,
-					  unsigned timeout)
-{
-	struct hid_device *hdev = djrcv_dev->hidpp;
-	struct dj_report *dj_report;
+अटल पूर्णांक logi_dj_recv_चयन_to_dj_mode(काष्ठा dj_receiver_dev *djrcv_dev,
+					  अचिन्हित समयout)
+अणु
+	काष्ठा hid_device *hdev = djrcv_dev->hidpp;
+	काष्ठा dj_report *dj_report;
 	u8 *buf;
-	int retval = 0;
+	पूर्णांक retval = 0;
 
-	dj_report = kzalloc(sizeof(struct dj_report), GFP_KERNEL);
-	if (!dj_report)
-		return -ENOMEM;
+	dj_report = kzalloc(माप(काष्ठा dj_report), GFP_KERNEL);
+	अगर (!dj_report)
+		वापस -ENOMEM;
 
-	if (djrcv_dev->type == recvr_type_dj) {
+	अगर (djrcv_dev->type == recvr_type_dj) अणु
 		dj_report->report_id = REPORT_ID_DJ_SHORT;
 		dj_report->device_index = HIDPP_RECEIVER_INDEX;
 		dj_report->report_type = REPORT_TYPE_CMD_SWITCH;
 		dj_report->report_params[CMD_SWITCH_PARAM_DEVBITFIELD] = 0x3F;
 		dj_report->report_params[CMD_SWITCH_PARAM_TIMEOUT_SECONDS] =
-								(u8)timeout;
+								(u8)समयout;
 
 		retval = logi_dj_recv_send_report(djrcv_dev, dj_report);
 
 		/*
 		 * Ugly sleep to work around a USB 3.0 bug when the receiver is
-		 * still processing the "switch-to-dj" command while we send an
+		 * still processing the "switch-to-dj" command जबतक we send an
 		 * other command.
-		 * 50 msec should gives enough time to the receiver to be ready.
+		 * 50 msec should gives enough समय to the receiver to be पढ़ोy.
 		 */
 		msleep(50);
-	}
+	पूर्ण
 
 	/*
-	 * Magical bits to set up hidpp notifications when the dj devices
+	 * Magical bits to set up hidpp notअगरications when the dj devices
 	 * are connected/disconnected.
 	 *
 	 * We can reuse dj_report because HIDPP_REPORT_SHORT_LENGTH is smaller
@@ -1287,7 +1288,7 @@ static int logi_dj_recv_switch_to_dj_mode(struct dj_receiver_dev *djrcv_dev,
 	 */
 	buf = (u8 *)dj_report;
 
-	memset(buf, 0, HIDPP_REPORT_SHORT_LENGTH);
+	स_रखो(buf, 0, HIDPP_REPORT_SHORT_LENGTH);
 
 	buf[0] = REPORT_ID_HIDPP_SHORT;
 	buf[1] = HIDPP_RECEIVER_INDEX;
@@ -1301,729 +1302,729 @@ static int logi_dj_recv_switch_to_dj_mode(struct dj_receiver_dev *djrcv_dev,
 			HIDPP_REPORT_SHORT_LENGTH, HID_OUTPUT_REPORT,
 			HID_REQ_SET_REPORT);
 
-	kfree(dj_report);
-	return retval;
-}
+	kमुक्त(dj_report);
+	वापस retval;
+पूर्ण
 
 
-static int logi_dj_ll_open(struct hid_device *hid)
-{
+अटल पूर्णांक logi_dj_ll_खोलो(काष्ठा hid_device *hid)
+अणु
 	dbg_hid("%s: %s\n", __func__, hid->phys);
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static void logi_dj_ll_close(struct hid_device *hid)
-{
+अटल व्योम logi_dj_ll_बंद(काष्ठा hid_device *hid)
+अणु
 	dbg_hid("%s: %s\n", __func__, hid->phys);
-}
+पूर्ण
 
 /*
- * Register 0xB5 is "pairing information". It is solely intended for the
- * receiver, so do not overwrite the device index.
+ * Register 0xB5 is "pairing information". It is solely पूर्णांकended क्रम the
+ * receiver, so करो not overग_लिखो the device index.
  */
-static u8 unifying_pairing_query[]  = { REPORT_ID_HIDPP_SHORT,
+अटल u8 unअगरying_pairing_query[]  = अणु REPORT_ID_HIDPP_SHORT,
 					HIDPP_RECEIVER_INDEX,
 					HIDPP_GET_LONG_REGISTER,
-					HIDPP_REG_PAIRING_INFORMATION };
-static u8 unifying_pairing_answer[] = { REPORT_ID_HIDPP_LONG,
+					HIDPP_REG_PAIRING_INFORMATION पूर्ण;
+अटल u8 unअगरying_pairing_answer[] = अणु REPORT_ID_HIDPP_LONG,
 					HIDPP_RECEIVER_INDEX,
 					HIDPP_GET_LONG_REGISTER,
-					HIDPP_REG_PAIRING_INFORMATION };
+					HIDPP_REG_PAIRING_INFORMATION पूर्ण;
 
-static int logi_dj_ll_raw_request(struct hid_device *hid,
-				  unsigned char reportnum, __u8 *buf,
-				  size_t count, unsigned char report_type,
-				  int reqtype)
-{
-	struct dj_device *djdev = hid->driver_data;
-	struct dj_receiver_dev *djrcv_dev = djdev->dj_receiver_dev;
+अटल पूर्णांक logi_dj_ll_raw_request(काष्ठा hid_device *hid,
+				  अचिन्हित अक्षर reportnum, __u8 *buf,
+				  माप_प्रकार count, अचिन्हित अक्षर report_type,
+				  पूर्णांक reqtype)
+अणु
+	काष्ठा dj_device *djdev = hid->driver_data;
+	काष्ठा dj_receiver_dev *djrcv_dev = djdev->dj_receiver_dev;
 	u8 *out_buf;
-	int ret;
+	पूर्णांक ret;
 
-	if ((buf[0] == REPORT_ID_HIDPP_SHORT) ||
+	अगर ((buf[0] == REPORT_ID_HIDPP_SHORT) ||
 	    (buf[0] == REPORT_ID_HIDPP_LONG) ||
-	    (buf[0] == REPORT_ID_HIDPP_VERY_LONG)) {
-		if (count < 2)
-			return -EINVAL;
+	    (buf[0] == REPORT_ID_HIDPP_VERY_LONG)) अणु
+		अगर (count < 2)
+			वापस -EINVAL;
 
-		/* special case where we should not overwrite
+		/* special हाल where we should not overग_लिखो
 		 * the device_index */
-		if (count == 7 && !memcmp(buf, unifying_pairing_query,
-					  sizeof(unifying_pairing_query)))
+		अगर (count == 7 && !स_भेद(buf, unअगरying_pairing_query,
+					  माप(unअगरying_pairing_query)))
 			buf[4] = (buf[4] & 0xf0) | (djdev->device_index - 1);
-		else
+		अन्यथा
 			buf[1] = djdev->device_index;
-		return hid_hw_raw_request(djrcv_dev->hidpp, reportnum, buf,
+		वापस hid_hw_raw_request(djrcv_dev->hidpp, reportnum, buf,
 				count, report_type, reqtype);
-	}
+	पूर्ण
 
-	if (buf[0] != REPORT_TYPE_LEDS)
-		return -EINVAL;
+	अगर (buf[0] != REPORT_TYPE_LEDS)
+		वापस -EINVAL;
 
-	if (djrcv_dev->type != recvr_type_dj && count >= 2) {
-		if (!djrcv_dev->keyboard) {
+	अगर (djrcv_dev->type != recvr_type_dj && count >= 2) अणु
+		अगर (!djrcv_dev->keyboard) अणु
 			hid_warn(hid, "Received REPORT_TYPE_LEDS request before the keyboard interface was enumerated\n");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		/* usbhid overrides the report ID and ignores the first byte */
-		return hid_hw_raw_request(djrcv_dev->keyboard, 0, buf, count,
+		वापस hid_hw_raw_request(djrcv_dev->keyboard, 0, buf, count,
 					  report_type, reqtype);
-	}
+	पूर्ण
 
 	out_buf = kzalloc(DJREPORT_SHORT_LENGTH, GFP_ATOMIC);
-	if (!out_buf)
-		return -ENOMEM;
+	अगर (!out_buf)
+		वापस -ENOMEM;
 
-	if (count > DJREPORT_SHORT_LENGTH - 2)
+	अगर (count > DJREPORT_SHORT_LENGTH - 2)
 		count = DJREPORT_SHORT_LENGTH - 2;
 
 	out_buf[0] = REPORT_ID_DJ_SHORT;
 	out_buf[1] = djdev->device_index;
-	memcpy(out_buf + 2, buf, count);
+	स_नकल(out_buf + 2, buf, count);
 
 	ret = hid_hw_raw_request(djrcv_dev->hidpp, out_buf[0], out_buf,
 		DJREPORT_SHORT_LENGTH, report_type, reqtype);
 
-	kfree(out_buf);
-	return ret;
-}
+	kमुक्त(out_buf);
+	वापस ret;
+पूर्ण
 
-static void rdcat(char *rdesc, unsigned int *rsize, const char *data, unsigned int size)
-{
-	memcpy(rdesc + *rsize, data, size);
+अटल व्योम rdcat(अक्षर *rdesc, अचिन्हित पूर्णांक *rsize, स्थिर अक्षर *data, अचिन्हित पूर्णांक size)
+अणु
+	स_नकल(rdesc + *rsize, data, size);
 	*rsize += size;
-}
+पूर्ण
 
-static int logi_dj_ll_parse(struct hid_device *hid)
-{
-	struct dj_device *djdev = hid->driver_data;
-	unsigned int rsize = 0;
-	char *rdesc;
-	int retval;
+अटल पूर्णांक logi_dj_ll_parse(काष्ठा hid_device *hid)
+अणु
+	काष्ठा dj_device *djdev = hid->driver_data;
+	अचिन्हित पूर्णांक rsize = 0;
+	अक्षर *rdesc;
+	पूर्णांक retval;
 
 	dbg_hid("%s\n", __func__);
 
 	djdev->hdev->version = 0x0111;
 	djdev->hdev->country = 0x00;
 
-	rdesc = kmalloc(MAX_RDESC_SIZE, GFP_KERNEL);
-	if (!rdesc)
-		return -ENOMEM;
+	rdesc = kदो_स्मृति(MAX_RDESC_SIZE, GFP_KERNEL);
+	अगर (!rdesc)
+		वापस -ENOMEM;
 
-	if (djdev->reports_supported & STD_KEYBOARD) {
+	अगर (djdev->reports_supported & STD_KEYBOARD) अणु
 		dbg_hid("%s: sending a kbd descriptor, reports_supported: %llx\n",
 			__func__, djdev->reports_supported);
-		rdcat(rdesc, &rsize, kbd_descriptor, sizeof(kbd_descriptor));
-	}
+		rdcat(rdesc, &rsize, kbd_descriptor, माप(kbd_descriptor));
+	पूर्ण
 
-	if (djdev->reports_supported & STD_MOUSE) {
+	अगर (djdev->reports_supported & STD_MOUSE) अणु
 		dbg_hid("%s: sending a mouse descriptor, reports_supported: %llx\n",
 			__func__, djdev->reports_supported);
-		if (djdev->dj_receiver_dev->type == recvr_type_gaming_hidpp ||
+		अगर (djdev->dj_receiver_dev->type == recvr_type_gaming_hidpp ||
 		    djdev->dj_receiver_dev->type == recvr_type_mouse_only)
 			rdcat(rdesc, &rsize, mse_high_res_descriptor,
-			      sizeof(mse_high_res_descriptor));
-		else if (djdev->dj_receiver_dev->type == recvr_type_27mhz)
+			      माप(mse_high_res_descriptor));
+		अन्यथा अगर (djdev->dj_receiver_dev->type == recvr_type_27mhz)
 			rdcat(rdesc, &rsize, mse_27mhz_descriptor,
-			      sizeof(mse_27mhz_descriptor));
-		else if (recvr_type_is_bluetooth(djdev->dj_receiver_dev->type))
+			      माप(mse_27mhz_descriptor));
+		अन्यथा अगर (recvr_type_is_bluetooth(djdev->dj_receiver_dev->type))
 			rdcat(rdesc, &rsize, mse_bluetooth_descriptor,
-			      sizeof(mse_bluetooth_descriptor));
-		else
+			      माप(mse_bluetooth_descriptor));
+		अन्यथा
 			rdcat(rdesc, &rsize, mse_descriptor,
-			      sizeof(mse_descriptor));
-	}
+			      माप(mse_descriptor));
+	पूर्ण
 
-	if (djdev->reports_supported & KBD_MOUSE) {
+	अगर (djdev->reports_supported & KBD_MOUSE) अणु
 		dbg_hid("%s: sending a kbd-mouse descriptor, reports_supported: %llx\n",
 			__func__, djdev->reports_supported);
 		rdcat(rdesc, &rsize, mse5_bluetooth_descriptor,
-		      sizeof(mse5_bluetooth_descriptor));
-	}
+		      माप(mse5_bluetooth_descriptor));
+	पूर्ण
 
-	if (djdev->reports_supported & MULTIMEDIA) {
+	अगर (djdev->reports_supported & MULTIMEDIA) अणु
 		dbg_hid("%s: sending a multimedia report descriptor: %llx\n",
 			__func__, djdev->reports_supported);
-		rdcat(rdesc, &rsize, consumer_descriptor, sizeof(consumer_descriptor));
-	}
+		rdcat(rdesc, &rsize, consumer_descriptor, माप(consumer_descriptor));
+	पूर्ण
 
-	if (djdev->reports_supported & POWER_KEYS) {
+	अगर (djdev->reports_supported & POWER_KEYS) अणु
 		dbg_hid("%s: sending a power keys report descriptor: %llx\n",
 			__func__, djdev->reports_supported);
-		rdcat(rdesc, &rsize, syscontrol_descriptor, sizeof(syscontrol_descriptor));
-	}
+		rdcat(rdesc, &rsize, syscontrol_descriptor, माप(syscontrol_descriptor));
+	पूर्ण
 
-	if (djdev->reports_supported & MEDIA_CENTER) {
+	अगर (djdev->reports_supported & MEDIA_CENTER) अणु
 		dbg_hid("%s: sending a media center report descriptor: %llx\n",
 			__func__, djdev->reports_supported);
-		rdcat(rdesc, &rsize, media_descriptor, sizeof(media_descriptor));
-	}
+		rdcat(rdesc, &rsize, media_descriptor, माप(media_descriptor));
+	पूर्ण
 
-	if (djdev->reports_supported & KBD_LEDS) {
+	अगर (djdev->reports_supported & KBD_LEDS) अणु
 		dbg_hid("%s: need to send kbd leds report descriptor: %llx\n",
 			__func__, djdev->reports_supported);
-	}
+	पूर्ण
 
-	if (djdev->reports_supported & HIDPP) {
+	अगर (djdev->reports_supported & HIDPP) अणु
 		dbg_hid("%s: sending a HID++ descriptor, reports_supported: %llx\n",
 			__func__, djdev->reports_supported);
 		rdcat(rdesc, &rsize, hidpp_descriptor,
-		      sizeof(hidpp_descriptor));
-	}
+		      माप(hidpp_descriptor));
+	पूर्ण
 
 	retval = hid_parse_report(hid, rdesc, rsize);
-	kfree(rdesc);
+	kमुक्त(rdesc);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int logi_dj_ll_start(struct hid_device *hid)
-{
+अटल पूर्णांक logi_dj_ll_start(काष्ठा hid_device *hid)
+अणु
 	dbg_hid("%s\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void logi_dj_ll_stop(struct hid_device *hid)
-{
+अटल व्योम logi_dj_ll_stop(काष्ठा hid_device *hid)
+अणु
 	dbg_hid("%s\n", __func__);
-}
+पूर्ण
 
 
-static struct hid_ll_driver logi_dj_ll_driver = {
+अटल काष्ठा hid_ll_driver logi_dj_ll_driver = अणु
 	.parse = logi_dj_ll_parse,
 	.start = logi_dj_ll_start,
 	.stop = logi_dj_ll_stop,
-	.open = logi_dj_ll_open,
-	.close = logi_dj_ll_close,
+	.खोलो = logi_dj_ll_खोलो,
+	.बंद = logi_dj_ll_बंद,
 	.raw_request = logi_dj_ll_raw_request,
-};
+पूर्ण;
 
-static int logi_dj_dj_event(struct hid_device *hdev,
-			     struct hid_report *report, u8 *data,
-			     int size)
-{
-	struct dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
-	struct dj_report *dj_report = (struct dj_report *) data;
-	unsigned long flags;
+अटल पूर्णांक logi_dj_dj_event(काष्ठा hid_device *hdev,
+			     काष्ठा hid_report *report, u8 *data,
+			     पूर्णांक size)
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
+	काष्ठा dj_report *dj_report = (काष्ठा dj_report *) data;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * Here we receive all data coming from iface 2, there are 3 cases:
+	 * Here we receive all data coming from अगरace 2, there are 3 हालs:
 	 *
-	 * 1) Data is intended for this driver i. e. data contains arrival,
-	 * departure, etc notifications, in which case we queue them for delayed
-	 * processing by the work queue. We return 1 to hid-core as no further
+	 * 1) Data is पूर्णांकended क्रम this driver i. e. data contains arrival,
+	 * departure, etc notअगरications, in which हाल we queue them क्रम delayed
+	 * processing by the work queue. We वापस 1 to hid-core as no further
 	 * processing is required from it.
 	 *
-	 * 2) Data informs a connection change, if the change means rf link
+	 * 2) Data inक्रमms a connection change, अगर the change means rf link
 	 * loss, then we must send a null report to the upper layer to discard
-	 * potentially pressed keys that may be repeated forever by the input
+	 * potentially pressed keys that may be repeated क्रमever by the input
 	 * layer. Return 1 to hid-core as no further processing is required.
 	 *
 	 * 3) Data is an actual input event from a paired DJ device in which
-	 * case we forward it to the correct hid device (via hid_input_report()
-	 * ) and return 1 so hid-core does not anything else with it.
+	 * हाल we क्रमward it to the correct hid device (via hid_input_report()
+	 * ) and वापस 1 so hid-core करोes not anything अन्यथा with it.
 	 */
 
-	if ((dj_report->device_index < DJ_DEVICE_INDEX_MIN) ||
-	    (dj_report->device_index > DJ_DEVICE_INDEX_MAX)) {
+	अगर ((dj_report->device_index < DJ_DEVICE_INDEX_MIN) ||
+	    (dj_report->device_index > DJ_DEVICE_INDEX_MAX)) अणु
 		/*
 		 * Device index is wrong, bail out.
-		 * This driver can ignore safely the receiver notifications,
+		 * This driver can ignore safely the receiver notअगरications,
 		 * so ignore those reports too.
 		 */
-		if (dj_report->device_index != DJ_RECEIVER_INDEX)
+		अगर (dj_report->device_index != DJ_RECEIVER_INDEX)
 			hid_err(hdev, "%s: invalid device index:%d\n",
 				__func__, dj_report->device_index);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	spin_lock_irqsave(&djrcv_dev->lock, flags);
 
-	if (!djrcv_dev->paired_dj_devices[dj_report->device_index]) {
-		/* received an event for an unknown device, bail out */
-		logi_dj_recv_queue_notification(djrcv_dev, dj_report);
-		goto out;
-	}
+	अगर (!djrcv_dev->paired_dj_devices[dj_report->device_index]) अणु
+		/* received an event क्रम an unknown device, bail out */
+		logi_dj_recv_queue_notअगरication(djrcv_dev, dj_report);
+		जाओ out;
+	पूर्ण
 
-	switch (dj_report->report_type) {
-	case REPORT_TYPE_NOTIF_DEVICE_PAIRED:
-		/* pairing notifications are handled above the switch */
-		break;
-	case REPORT_TYPE_NOTIF_DEVICE_UNPAIRED:
-		logi_dj_recv_queue_notification(djrcv_dev, dj_report);
-		break;
-	case REPORT_TYPE_NOTIF_CONNECTION_STATUS:
-		if (dj_report->report_params[CONNECTION_STATUS_PARAM_STATUS] ==
-		    STATUS_LINKLOSS) {
-			logi_dj_recv_forward_null_report(djrcv_dev, dj_report);
-		}
-		break;
-	default:
-		logi_dj_recv_forward_dj(djrcv_dev, dj_report);
-	}
+	चयन (dj_report->report_type) अणु
+	हाल REPORT_TYPE_NOTIF_DEVICE_PAIRED:
+		/* pairing notअगरications are handled above the चयन */
+		अवरोध;
+	हाल REPORT_TYPE_NOTIF_DEVICE_UNPAIRED:
+		logi_dj_recv_queue_notअगरication(djrcv_dev, dj_report);
+		अवरोध;
+	हाल REPORT_TYPE_NOTIF_CONNECTION_STATUS:
+		अगर (dj_report->report_params[CONNECTION_STATUS_PARAM_STATUS] ==
+		    STATUS_LINKLOSS) अणु
+			logi_dj_recv_क्रमward_null_report(djrcv_dev, dj_report);
+		पूर्ण
+		अवरोध;
+	शेष:
+		logi_dj_recv_क्रमward_dj(djrcv_dev, dj_report);
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&djrcv_dev->lock, flags);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int logi_dj_hidpp_event(struct hid_device *hdev,
-			     struct hid_report *report, u8 *data,
-			     int size)
-{
-	struct dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
-	struct hidpp_event *hidpp_report = (struct hidpp_event *) data;
-	struct dj_device *dj_dev;
-	unsigned long flags;
+अटल पूर्णांक logi_dj_hidpp_event(काष्ठा hid_device *hdev,
+			     काष्ठा hid_report *report, u8 *data,
+			     पूर्णांक size)
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
+	काष्ठा hidpp_event *hidpp_report = (काष्ठा hidpp_event *) data;
+	काष्ठा dj_device *dj_dev;
+	अचिन्हित दीर्घ flags;
 	u8 device_index = hidpp_report->device_index;
 
-	if (device_index == HIDPP_RECEIVER_INDEX) {
-		/* special case were the device wants to know its unifying
+	अगर (device_index == HIDPP_RECEIVER_INDEX) अणु
+		/* special हाल were the device wants to know its unअगरying
 		 * name */
-		if (size == HIDPP_REPORT_LONG_LENGTH &&
-		    !memcmp(data, unifying_pairing_answer,
-			    sizeof(unifying_pairing_answer)))
+		अगर (size == HIDPP_REPORT_LONG_LENGTH &&
+		    !स_भेद(data, unअगरying_pairing_answer,
+			    माप(unअगरying_pairing_answer)))
 			device_index = (data[4] & 0x0F) + 1;
-		else
-			return false;
-	}
+		अन्यथा
+			वापस false;
+	पूर्ण
 
 	/*
-	 * Data is from the HID++ collection, in this case, we forward the
-	 * data to the corresponding child dj device and return 0 to hid-core
+	 * Data is from the HID++ collection, in this हाल, we क्रमward the
+	 * data to the corresponding child dj device and वापस 0 to hid-core
 	 * so he data also goes to the hidraw device of the receiver. This
 	 * allows a user space application to implement the full HID++ routing
 	 * via the receiver.
 	 */
 
-	if ((device_index < DJ_DEVICE_INDEX_MIN) ||
-	    (device_index > DJ_DEVICE_INDEX_MAX)) {
+	अगर ((device_index < DJ_DEVICE_INDEX_MIN) ||
+	    (device_index > DJ_DEVICE_INDEX_MAX)) अणु
 		/*
 		 * Device index is wrong, bail out.
-		 * This driver can ignore safely the receiver notifications,
+		 * This driver can ignore safely the receiver notअगरications,
 		 * so ignore those reports too.
 		 */
 		hid_err(hdev, "%s: invalid device index:%d\n", __func__,
 			hidpp_report->device_index);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	spin_lock_irqsave(&djrcv_dev->lock, flags);
 
 	dj_dev = djrcv_dev->paired_dj_devices[device_index];
 
 	/*
-	 * With 27 MHz receivers, we do not get an explicit unpair event,
-	 * remove the old device if the user has paired a *different* device.
+	 * With 27 MHz receivers, we करो not get an explicit unpair event,
+	 * हटाओ the old device अगर the user has paired a *dअगरferent* device.
 	 */
-	if (djrcv_dev->type == recvr_type_27mhz && dj_dev &&
+	अगर (djrcv_dev->type == recvr_type_27mhz && dj_dev &&
 	    hidpp_report->sub_id == REPORT_TYPE_NOTIF_DEVICE_CONNECTED &&
 	    hidpp_report->params[HIDPP_PARAM_PROTO_TYPE] == 0x02 &&
 	    hidpp_report->params[HIDPP_PARAM_27MHZ_DEVID] !=
-						dj_dev->hdev->product) {
-		struct dj_workitem workitem = {
+						dj_dev->hdev->product) अणु
+		काष्ठा dj_workitem workitem = अणु
 			.device_index = hidpp_report->device_index,
 			.type = WORKITEM_TYPE_UNPAIRED,
-		};
-		kfifo_in(&djrcv_dev->notif_fifo, &workitem, sizeof(workitem));
-		/* logi_hidpp_recv_queue_notif will queue the work */
-		dj_dev = NULL;
-	}
+		पूर्ण;
+		kfअगरo_in(&djrcv_dev->notअगर_fअगरo, &workitem, माप(workitem));
+		/* logi_hidpp_recv_queue_notअगर will queue the work */
+		dj_dev = शून्य;
+	पूर्ण
 
-	if (dj_dev) {
-		logi_dj_recv_forward_report(dj_dev, data, size);
-	} else {
-		if (hidpp_report->sub_id == REPORT_TYPE_NOTIF_DEVICE_CONNECTED)
-			logi_hidpp_recv_queue_notif(hdev, hidpp_report);
-		else
+	अगर (dj_dev) अणु
+		logi_dj_recv_क्रमward_report(dj_dev, data, size);
+	पूर्ण अन्यथा अणु
+		अगर (hidpp_report->sub_id == REPORT_TYPE_NOTIF_DEVICE_CONNECTED)
+			logi_hidpp_recv_queue_notअगर(hdev, hidpp_report);
+		अन्यथा
 			logi_dj_recv_queue_unknown_work(djrcv_dev);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&djrcv_dev->lock, flags);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int logi_dj_raw_event(struct hid_device *hdev,
-			     struct hid_report *report, u8 *data,
-			     int size)
-{
-	struct dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
+अटल पूर्णांक logi_dj_raw_event(काष्ठा hid_device *hdev,
+			     काष्ठा hid_report *report, u8 *data,
+			     पूर्णांक size)
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
 	dbg_hid("%s, size:%d\n", __func__, size);
 
-	if (!djrcv_dev)
-		return 0;
+	अगर (!djrcv_dev)
+		वापस 0;
 
-	if (!hdev->report_enum[HID_INPUT_REPORT].numbered) {
+	अगर (!hdev->report_क्रमागत[HID_INPUT_REPORT].numbered) अणु
 
-		if (djrcv_dev->unnumbered_application == HID_GD_KEYBOARD) {
+		अगर (djrcv_dev->unnumbered_application == HID_GD_KEYBOARD) अणु
 			/*
 			 * For the keyboard, we can reuse the same report by
-			 * using the second byte which is constant in the USB
+			 * using the second byte which is स्थिरant in the USB
 			 * HID report descriptor.
 			 */
 			data[1] = data[0];
 			data[0] = REPORT_TYPE_KEYBOARD;
 
-			logi_dj_recv_forward_input_report(hdev, data, size);
+			logi_dj_recv_क्रमward_input_report(hdev, data, size);
 
 			/* restore previous state */
 			data[0] = data[1];
 			data[1] = 0;
-		}
+		पूर्ण
 		/*
 		 * Mouse-only receivers send unnumbered mouse data. The 27 MHz
 		 * receiver uses 6 byte packets, the nano receiver 8 bytes.
 		 */
-		if (djrcv_dev->unnumbered_application == HID_GD_MOUSE &&
-		    size <= 8) {
+		अगर (djrcv_dev->unnumbered_application == HID_GD_MOUSE &&
+		    size <= 8) अणु
 			u8 mouse_report[9];
 
 			/* Prepend report id */
 			mouse_report[0] = REPORT_TYPE_MOUSE;
-			memcpy(mouse_report + 1, data, size);
-			logi_dj_recv_forward_input_report(hdev, mouse_report,
+			स_नकल(mouse_report + 1, data, size);
+			logi_dj_recv_क्रमward_input_report(hdev, mouse_report,
 							  size + 1);
-		}
+		पूर्ण
 
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	switch (data[0]) {
-	case REPORT_ID_DJ_SHORT:
-		if (size != DJREPORT_SHORT_LENGTH) {
+	चयन (data[0]) अणु
+	हाल REPORT_ID_DJ_SHORT:
+		अगर (size != DJREPORT_SHORT_LENGTH) अणु
 			hid_err(hdev, "Short DJ report bad size (%d)", size);
-			return false;
-		}
-		return logi_dj_dj_event(hdev, report, data, size);
-	case REPORT_ID_DJ_LONG:
-		if (size != DJREPORT_LONG_LENGTH) {
+			वापस false;
+		पूर्ण
+		वापस logi_dj_dj_event(hdev, report, data, size);
+	हाल REPORT_ID_DJ_LONG:
+		अगर (size != DJREPORT_LONG_LENGTH) अणु
 			hid_err(hdev, "Long DJ report bad size (%d)", size);
-			return false;
-		}
-		return logi_dj_dj_event(hdev, report, data, size);
-	case REPORT_ID_HIDPP_SHORT:
-		if (size != HIDPP_REPORT_SHORT_LENGTH) {
+			वापस false;
+		पूर्ण
+		वापस logi_dj_dj_event(hdev, report, data, size);
+	हाल REPORT_ID_HIDPP_SHORT:
+		अगर (size != HIDPP_REPORT_SHORT_LENGTH) अणु
 			hid_err(hdev, "Short HID++ report bad size (%d)", size);
-			return false;
-		}
-		return logi_dj_hidpp_event(hdev, report, data, size);
-	case REPORT_ID_HIDPP_LONG:
-		if (size != HIDPP_REPORT_LONG_LENGTH) {
+			वापस false;
+		पूर्ण
+		वापस logi_dj_hidpp_event(hdev, report, data, size);
+	हाल REPORT_ID_HIDPP_LONG:
+		अगर (size != HIDPP_REPORT_LONG_LENGTH) अणु
 			hid_err(hdev, "Long HID++ report bad size (%d)", size);
-			return false;
-		}
-		return logi_dj_hidpp_event(hdev, report, data, size);
-	}
+			वापस false;
+		पूर्ण
+		वापस logi_dj_hidpp_event(hdev, report, data, size);
+	पूर्ण
 
-	logi_dj_recv_forward_input_report(hdev, data, size);
+	logi_dj_recv_क्रमward_input_report(hdev, data, size);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int logi_dj_probe(struct hid_device *hdev,
-			 const struct hid_device_id *id)
-{
-	struct hid_report_enum *rep_enum;
-	struct hid_report *rep;
-	struct dj_receiver_dev *djrcv_dev;
-	struct usb_interface *intf;
-	unsigned int no_dj_interfaces = 0;
+अटल पूर्णांक logi_dj_probe(काष्ठा hid_device *hdev,
+			 स्थिर काष्ठा hid_device_id *id)
+अणु
+	काष्ठा hid_report_क्रमागत *rep_क्रमागत;
+	काष्ठा hid_report *rep;
+	काष्ठा dj_receiver_dev *djrcv_dev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	अचिन्हित पूर्णांक no_dj_पूर्णांकerfaces = 0;
 	bool has_hidpp = false;
-	unsigned long flags;
-	int retval;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक retval;
 
 	/*
 	 * Call to usbhid to fetch the HID descriptors of the current
-	 * interface subsequently call to the hid/hid-core to parse the
+	 * पूर्णांकerface subsequently call to the hid/hid-core to parse the
 	 * fetched descriptors.
 	 */
 	retval = hid_parse(hdev);
-	if (retval) {
+	अगर (retval) अणु
 		hid_err(hdev, "%s: parse failed\n", __func__);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	/*
-	 * Some KVMs add an extra interface for e.g. mouse emulation. If we
-	 * treat these as logitech-dj interfaces then this causes input events
-	 * reported through this extra interface to not be reported correctly.
-	 * To avoid this, we treat these as generic-hid devices.
+	 * Some KVMs add an extra पूर्णांकerface क्रम e.g. mouse emulation. If we
+	 * treat these as logitech-dj पूर्णांकerfaces then this causes input events
+	 * reported through this extra पूर्णांकerface to not be reported correctly.
+	 * To aव्योम this, we treat these as generic-hid devices.
 	 */
-	switch (id->driver_data) {
-	case recvr_type_dj:		no_dj_interfaces = 3; break;
-	case recvr_type_hidpp:		no_dj_interfaces = 2; break;
-	case recvr_type_gaming_hidpp:	no_dj_interfaces = 3; break;
-	case recvr_type_mouse_only:	no_dj_interfaces = 2; break;
-	case recvr_type_27mhz:		no_dj_interfaces = 2; break;
-	case recvr_type_bluetooth:	no_dj_interfaces = 2; break;
-	case recvr_type_dinovo:		no_dj_interfaces = 2; break;
-	}
-	if (hid_is_using_ll_driver(hdev, &usb_hid_driver)) {
-		intf = to_usb_interface(hdev->dev.parent);
-		if (intf && intf->altsetting->desc.bInterfaceNumber >=
-							no_dj_interfaces) {
+	चयन (id->driver_data) अणु
+	हाल recvr_type_dj:		no_dj_पूर्णांकerfaces = 3; अवरोध;
+	हाल recvr_type_hidpp:		no_dj_पूर्णांकerfaces = 2; अवरोध;
+	हाल recvr_type_gaming_hidpp:	no_dj_पूर्णांकerfaces = 3; अवरोध;
+	हाल recvr_type_mouse_only:	no_dj_पूर्णांकerfaces = 2; अवरोध;
+	हाल recvr_type_27mhz:		no_dj_पूर्णांकerfaces = 2; अवरोध;
+	हाल recvr_type_bluetooth:	no_dj_पूर्णांकerfaces = 2; अवरोध;
+	हाल recvr_type_dinovo:		no_dj_पूर्णांकerfaces = 2; अवरोध;
+	पूर्ण
+	अगर (hid_is_using_ll_driver(hdev, &usb_hid_driver)) अणु
+		पूर्णांकf = to_usb_पूर्णांकerface(hdev->dev.parent);
+		अगर (पूर्णांकf && पूर्णांकf->altsetting->desc.bInterfaceNumber >=
+							no_dj_पूर्णांकerfaces) अणु
 			hdev->quirks |= HID_QUIRK_INPUT_PER_APP;
-			return hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-		}
-	}
+			वापस hid_hw_start(hdev, HID_CONNECT_DEFAULT);
+		पूर्ण
+	पूर्ण
 
-	rep_enum = &hdev->report_enum[HID_INPUT_REPORT];
+	rep_क्रमागत = &hdev->report_क्रमागत[HID_INPUT_REPORT];
 
 	/* no input reports, bail out */
-	if (list_empty(&rep_enum->report_list))
-		return -ENODEV;
+	अगर (list_empty(&rep_क्रमागत->report_list))
+		वापस -ENODEV;
 
 	/*
-	 * Check for the HID++ application.
-	 * Note: we should theoretically check for HID++ and DJ
-	 * collections, but this will do.
+	 * Check क्रम the HID++ application.
+	 * Note: we should theoretically check क्रम HID++ and DJ
+	 * collections, but this will करो.
 	 */
-	list_for_each_entry(rep, &rep_enum->report_list, list) {
-		if (rep->application == 0xff000001)
+	list_क्रम_each_entry(rep, &rep_क्रमागत->report_list, list) अणु
+		अगर (rep->application == 0xff000001)
 			has_hidpp = true;
-	}
+	पूर्ण
 
 	/*
-	 * Ignore interfaces without DJ/HID++ collection, they will not carry
-	 * any data, dont create any hid_device for them.
+	 * Ignore पूर्णांकerfaces without DJ/HID++ collection, they will not carry
+	 * any data, करोnt create any hid_device क्रम them.
 	 */
-	if (!has_hidpp && id->driver_data == recvr_type_dj)
-		return -ENODEV;
+	अगर (!has_hidpp && id->driver_data == recvr_type_dj)
+		वापस -ENODEV;
 
 	/* get the current application attached to the node */
-	rep = list_first_entry(&rep_enum->report_list, struct hid_report, list);
+	rep = list_first_entry(&rep_क्रमागत->report_list, काष्ठा hid_report, list);
 	djrcv_dev = dj_get_receiver_dev(hdev, id->driver_data,
 					rep->application, has_hidpp);
-	if (!djrcv_dev) {
+	अगर (!djrcv_dev) अणु
 		hid_err(hdev, "%s: dj_get_receiver_dev failed\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (!rep_enum->numbered)
+	अगर (!rep_क्रमागत->numbered)
 		djrcv_dev->unnumbered_application = rep->application;
 
-	/* Starts the usb device and connects to upper interfaces hiddev and
+	/* Starts the usb device and connects to upper पूर्णांकerfaces hiddev and
 	 * hidraw */
 	retval = hid_hw_start(hdev, HID_CONNECT_HIDRAW|HID_CONNECT_HIDDEV);
-	if (retval) {
+	अगर (retval) अणु
 		hid_err(hdev, "%s: hid_hw_start returned error\n", __func__);
-		goto hid_hw_start_fail;
-	}
+		जाओ hid_hw_start_fail;
+	पूर्ण
 
-	if (has_hidpp) {
-		retval = logi_dj_recv_switch_to_dj_mode(djrcv_dev, 0);
-		if (retval < 0) {
+	अगर (has_hidpp) अणु
+		retval = logi_dj_recv_चयन_to_dj_mode(djrcv_dev, 0);
+		अगर (retval < 0) अणु
 			hid_err(hdev, "%s: logi_dj_recv_switch_to_dj_mode returned error:%d\n",
 				__func__, retval);
-			goto switch_to_dj_mode_fail;
-		}
-	}
+			जाओ चयन_to_dj_mode_fail;
+		पूर्ण
+	पूर्ण
 
-	/* This is enabling the polling urb on the IN endpoint */
-	retval = hid_hw_open(hdev);
-	if (retval < 0) {
+	/* This is enabling the polling urb on the IN endpoपूर्णांक */
+	retval = hid_hw_खोलो(hdev);
+	अगर (retval < 0) अणु
 		hid_err(hdev, "%s: hid_hw_open returned error:%d\n",
 			__func__, retval);
-		goto llopen_failed;
-	}
+		जाओ llखोलो_failed;
+	पूर्ण
 
 	/* Allow incoming packets to arrive: */
 	hid_device_io_start(hdev);
 
-	if (has_hidpp) {
+	अगर (has_hidpp) अणु
 		spin_lock_irqsave(&djrcv_dev->lock, flags);
-		djrcv_dev->ready = true;
+		djrcv_dev->पढ़ोy = true;
 		spin_unlock_irqrestore(&djrcv_dev->lock, flags);
 		retval = logi_dj_recv_query_paired_devices(djrcv_dev);
-		if (retval < 0) {
+		अगर (retval < 0) अणु
 			hid_err(hdev, "%s: logi_dj_recv_query_paired_devices error:%d\n",
 				__func__, retval);
 			/*
 			 * This can happen with a KVM, let the probe succeed,
 			 * logi_dj_recv_queue_unknown_work will retry later.
 			 */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-llopen_failed:
-switch_to_dj_mode_fail:
+llखोलो_failed:
+चयन_to_dj_mode_fail:
 	hid_hw_stop(hdev);
 
 hid_hw_start_fail:
 	dj_put_receiver_dev(hdev);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int logi_dj_reset_resume(struct hid_device *hdev)
-{
-	int retval;
-	struct dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक logi_dj_reset_resume(काष्ठा hid_device *hdev)
+अणु
+	पूर्णांक retval;
+	काष्ठा dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
 
-	if (!djrcv_dev || djrcv_dev->hidpp != hdev)
-		return 0;
+	अगर (!djrcv_dev || djrcv_dev->hidpp != hdev)
+		वापस 0;
 
-	retval = logi_dj_recv_switch_to_dj_mode(djrcv_dev, 0);
-	if (retval < 0) {
+	retval = logi_dj_recv_चयन_to_dj_mode(djrcv_dev, 0);
+	अगर (retval < 0) अणु
 		hid_err(hdev, "%s: logi_dj_recv_switch_to_dj_mode returned error:%d\n",
 			__func__, retval);
-	}
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static void logi_dj_remove(struct hid_device *hdev)
-{
-	struct dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
-	struct dj_device *dj_dev;
-	unsigned long flags;
-	int i;
+अटल व्योम logi_dj_हटाओ(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा dj_receiver_dev *djrcv_dev = hid_get_drvdata(hdev);
+	काष्ठा dj_device *dj_dev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	dbg_hid("%s\n", __func__);
 
-	if (!djrcv_dev)
-		return hid_hw_stop(hdev);
+	अगर (!djrcv_dev)
+		वापस hid_hw_stop(hdev);
 
 	/*
-	 * This ensures that if the work gets requeued from another
-	 * interface of the same receiver it will be a no-op.
+	 * This ensures that अगर the work माला_लो requeued from another
+	 * पूर्णांकerface of the same receiver it will be a no-op.
 	 */
 	spin_lock_irqsave(&djrcv_dev->lock, flags);
-	djrcv_dev->ready = false;
+	djrcv_dev->पढ़ोy = false;
 	spin_unlock_irqrestore(&djrcv_dev->lock, flags);
 
 	cancel_work_sync(&djrcv_dev->work);
 
-	hid_hw_close(hdev);
+	hid_hw_बंद(hdev);
 	hid_hw_stop(hdev);
 
 	/*
-	 * For proper operation we need access to all interfaces, so we destroy
-	 * the paired devices when we're unbound from any interface.
+	 * For proper operation we need access to all पूर्णांकerfaces, so we destroy
+	 * the paired devices when we're unbound from any पूर्णांकerface.
 	 *
-	 * Note we may still be bound to other interfaces, sharing the same
+	 * Note we may still be bound to other पूर्णांकerfaces, sharing the same
 	 * djrcv_dev, so we need locking here.
 	 */
-	for (i = 0; i < (DJ_MAX_PAIRED_DEVICES + DJ_DEVICE_INDEX_MIN); i++) {
+	क्रम (i = 0; i < (DJ_MAX_PAIRED_DEVICES + DJ_DEVICE_INDEX_MIN); i++) अणु
 		spin_lock_irqsave(&djrcv_dev->lock, flags);
 		dj_dev = djrcv_dev->paired_dj_devices[i];
-		djrcv_dev->paired_dj_devices[i] = NULL;
+		djrcv_dev->paired_dj_devices[i] = शून्य;
 		spin_unlock_irqrestore(&djrcv_dev->lock, flags);
-		if (dj_dev != NULL) {
+		अगर (dj_dev != शून्य) अणु
 			hid_destroy_device(dj_dev->hdev);
-			kfree(dj_dev);
-		}
-	}
+			kमुक्त(dj_dev);
+		पूर्ण
+	पूर्ण
 
 	dj_put_receiver_dev(hdev);
-}
+पूर्ण
 
-static const struct hid_device_id logi_dj_receivers[] = {
-	{ /* Logitech unifying receiver (0xc52b) */
+अटल स्थिर काष्ठा hid_device_id logi_dj_receivers[] = अणु
+	अणु /* Logitech unअगरying receiver (0xc52b) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_LOGITECH_UNIFYING_RECEIVER),
-	 .driver_data = recvr_type_dj},
-	{ /* Logitech unifying receiver (0xc532) */
+	 .driver_data = recvr_type_djपूर्ण,
+	अणु /* Logitech unअगरying receiver (0xc532) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_LOGITECH_UNIFYING_RECEIVER_2),
-	 .driver_data = recvr_type_dj},
+	 .driver_data = recvr_type_djपूर्ण,
 
-	{ /* Logitech Nano mouse only receiver (0xc52f) */
+	अणु /* Logitech Nano mouse only receiver (0xc52f) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
-			 USB_DEVICE_ID_LOGITECH_NANO_RECEIVER),
-	 .driver_data = recvr_type_mouse_only},
-	{ /* Logitech Nano (non DJ) receiver (0xc534) */
+			 USB_DEVICE_ID_LOGITECH_न_अंकO_RECEIVER),
+	 .driver_data = recvr_type_mouse_onlyपूर्ण,
+	अणु /* Logitech Nano (non DJ) receiver (0xc534) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
-			 USB_DEVICE_ID_LOGITECH_NANO_RECEIVER_2),
-	 .driver_data = recvr_type_hidpp},
+			 USB_DEVICE_ID_LOGITECH_न_अंकO_RECEIVER_2),
+	 .driver_data = recvr_type_hidppपूर्ण,
 
-	{ /* Logitech G700(s) receiver (0xc531) */
+	अणु /* Logitech G700(s) receiver (0xc531) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 			 USB_DEVICE_ID_LOGITECH_G700_RECEIVER),
-	 .driver_data = recvr_type_gaming_hidpp},
-	{ /* Logitech G602 receiver (0xc537) */
+	 .driver_data = recvr_type_gaming_hidppपूर्ण,
+	अणु /* Logitech G602 receiver (0xc537) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		0xc537),
-	 .driver_data = recvr_type_gaming_hidpp},
-	{ /* Logitech lightspeed receiver (0xc539) */
+	 .driver_data = recvr_type_gaming_hidppपूर्ण,
+	अणु /* Logitech lightspeed receiver (0xc539) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
-		USB_DEVICE_ID_LOGITECH_NANO_RECEIVER_LIGHTSPEED_1),
-	 .driver_data = recvr_type_gaming_hidpp},
-	{ /* Logitech powerplay receiver (0xc53a) */
+		USB_DEVICE_ID_LOGITECH_न_अंकO_RECEIVER_LIGHTSPEED_1),
+	 .driver_data = recvr_type_gaming_hidppपूर्ण,
+	अणु /* Logitech घातerplay receiver (0xc53a) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
-		USB_DEVICE_ID_LOGITECH_NANO_RECEIVER_POWERPLAY),
-	 .driver_data = recvr_type_gaming_hidpp},
-	{ /* Logitech lightspeed receiver (0xc53f) */
+		USB_DEVICE_ID_LOGITECH_न_अंकO_RECEIVER_POWERPLAY),
+	 .driver_data = recvr_type_gaming_hidppपूर्ण,
+	अणु /* Logitech lightspeed receiver (0xc53f) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
-		USB_DEVICE_ID_LOGITECH_NANO_RECEIVER_LIGHTSPEED_1_1),
-	 .driver_data = recvr_type_gaming_hidpp},
+		USB_DEVICE_ID_LOGITECH_न_अंकO_RECEIVER_LIGHTSPEED_1_1),
+	 .driver_data = recvr_type_gaming_hidppपूर्ण,
 
-	{ /* Logitech 27 MHz HID++ 1.0 receiver (0xc513) */
+	अणु /* Logitech 27 MHz HID++ 1.0 receiver (0xc513) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH, USB_DEVICE_ID_MX3000_RECEIVER),
-	 .driver_data = recvr_type_27mhz},
-	{ /* Logitech 27 MHz HID++ 1.0 receiver (0xc517) */
+	 .driver_data = recvr_type_27mhzपूर्ण,
+	अणु /* Logitech 27 MHz HID++ 1.0 receiver (0xc517) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_S510_RECEIVER_2),
-	 .driver_data = recvr_type_27mhz},
-	{ /* Logitech 27 MHz HID++ 1.0 mouse-only receiver (0xc51b) */
+	 .driver_data = recvr_type_27mhzपूर्ण,
+	अणु /* Logitech 27 MHz HID++ 1.0 mouse-only receiver (0xc51b) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_LOGITECH_27MHZ_MOUSE_RECEIVER),
-	 .driver_data = recvr_type_27mhz},
+	 .driver_data = recvr_type_27mhzपूर्ण,
 
-	{ /* Logitech MX5000 HID++ / bluetooth receiver keyboard intf. (0xc70e) */
+	अणु /* Logitech MX5000 HID++ / bluetooth receiver keyboard पूर्णांकf. (0xc70e) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_MX5000_RECEIVER_KBD_DEV),
-	 .driver_data = recvr_type_bluetooth},
-	{ /* Logitech MX5000 HID++ / bluetooth receiver mouse intf. (0xc70a) */
+	 .driver_data = recvr_type_bluetoothपूर्ण,
+	अणु /* Logitech MX5000 HID++ / bluetooth receiver mouse पूर्णांकf. (0xc70a) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_MX5000_RECEIVER_MOUSE_DEV),
-	 .driver_data = recvr_type_bluetooth},
-	{ /* Logitech MX5500 HID++ / bluetooth receiver keyboard intf. (0xc71b) */
+	 .driver_data = recvr_type_bluetoothपूर्ण,
+	अणु /* Logitech MX5500 HID++ / bluetooth receiver keyboard पूर्णांकf. (0xc71b) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_MX5500_RECEIVER_KBD_DEV),
-	 .driver_data = recvr_type_bluetooth},
-	{ /* Logitech MX5500 HID++ / bluetooth receiver mouse intf. (0xc71c) */
+	 .driver_data = recvr_type_bluetoothपूर्ण,
+	अणु /* Logitech MX5500 HID++ / bluetooth receiver mouse पूर्णांकf. (0xc71c) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_MX5500_RECEIVER_MOUSE_DEV),
-	 .driver_data = recvr_type_bluetooth},
+	 .driver_data = recvr_type_bluetoothपूर्ण,
 
-	{ /* Logitech Dinovo Edge HID++ / bluetooth receiver keyboard intf. (0xc713) */
+	अणु /* Logitech Dinovo Edge HID++ / bluetooth receiver keyboard पूर्णांकf. (0xc713) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_DINOVO_EDGE_RECEIVER_KBD_DEV),
-	 .driver_data = recvr_type_dinovo},
-	{ /* Logitech Dinovo Edge HID++ / bluetooth receiver mouse intf. (0xc714) */
+	 .driver_data = recvr_type_dinovoपूर्ण,
+	अणु /* Logitech Dinovo Edge HID++ / bluetooth receiver mouse पूर्णांकf. (0xc714) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_DINOVO_EDGE_RECEIVER_MOUSE_DEV),
-	 .driver_data = recvr_type_dinovo},
-	{ /* Logitech DiNovo Mini HID++ / bluetooth receiver mouse intf. (0xc71e) */
+	 .driver_data = recvr_type_dinovoपूर्ण,
+	अणु /* Logitech DiNovo Mini HID++ / bluetooth receiver mouse पूर्णांकf. (0xc71e) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_DINOVO_MINI_RECEIVER_KBD_DEV),
-	 .driver_data = recvr_type_dinovo},
-	{ /* Logitech DiNovo Mini HID++ / bluetooth receiver keyboard intf. (0xc71f) */
+	 .driver_data = recvr_type_dinovoपूर्ण,
+	अणु /* Logitech DiNovo Mini HID++ / bluetooth receiver keyboard पूर्णांकf. (0xc71f) */
 	  HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_DINOVO_MINI_RECEIVER_MOUSE_DEV),
-	 .driver_data = recvr_type_dinovo},
-	{}
-};
+	 .driver_data = recvr_type_dinovoपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(hid, logi_dj_receivers);
 
-static struct hid_driver logi_djreceiver_driver = {
+अटल काष्ठा hid_driver logi_djreceiver_driver = अणु
 	.name = "logitech-djreceiver",
 	.id_table = logi_dj_receivers,
 	.probe = logi_dj_probe,
-	.remove = logi_dj_remove,
+	.हटाओ = logi_dj_हटाओ,
 	.raw_event = logi_dj_raw_event,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.reset_resume = logi_dj_reset_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_hid_driver(logi_djreceiver_driver);
 

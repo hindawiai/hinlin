@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,22 +24,22 @@
  *
  */
 
-#ifndef DAL_DC_DCE_DCE110_CLK_MGR_H_
-#define DAL_DC_DCE_DCE110_CLK_MGR_H_
+#अगर_अघोषित DAL_DC_DCE_DCE110_CLK_MGR_H_
+#घोषणा DAL_DC_DCE_DCE110_CLK_MGR_H_
 
-void dce110_clk_mgr_construct(
-		struct dc_context *ctx,
-		struct clk_mgr_internal *clk_mgr);
+व्योम dce110_clk_mgr_स्थिरruct(
+		काष्ठा dc_context *ctx,
+		काष्ठा clk_mgr_पूर्णांकernal *clk_mgr);
 
-void dce110_fill_display_configs(
-	const struct dc_state *context,
-	struct dm_pp_display_configuration *pp_display_cfg);
+व्योम dce110_fill_display_configs(
+	स्थिर काष्ठा dc_state *context,
+	काष्ठा dm_pp_display_configuration *pp_display_cfg);
 
 /* functions shared with other clk mgr*/
-void dce11_pplib_apply_display_requirements(
-	struct dc *dc,
-	struct dc_state *context);
+व्योम dce11_pplib_apply_display_requirements(
+	काष्ठा dc *dc,
+	काष्ठा dc_state *context);
 
-uint32_t dce110_get_min_vblank_time_us(const struct dc_state *context);
+uपूर्णांक32_t dce110_get_min_vblank_समय_us(स्थिर काष्ठा dc_state *context);
 
-#endif /* DAL_DC_DCE_DCE110_CLK_MGR_H_ */
+#पूर्ण_अगर /* DAL_DC_DCE_DCE110_CLK_MGR_H_ */

@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2013-2016, The Linux Foundation. All rights reserved.
  */
 
 /* Qualcomm Technologies, Inc. EMAC PHY Controller driver.
  */
 
-#include <linux/of_mdio.h>
-#include <linux/phy.h>
-#include <linux/iopoll.h>
-#include <linux/acpi.h>
-#include "emac.h"
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/acpi.h>
+#समावेश "emac.h"
 
-/* EMAC base register offsets */
-#define EMAC_MDIO_CTRL                                        0x001414
-#define EMAC_PHY_STS                                          0x001418
-#define EMAC_MDIO_EX_CTRL                                     0x001440
+/* EMAC base रेजिस्टर offsets */
+#घोषणा EMAC_MDIO_CTRL                                        0x001414
+#घोषणा EMAC_PHY_STS                                          0x001418
+#घोषणा EMAC_MDIO_EX_CTRL                                     0x001440
 
 /* EMAC_MDIO_CTRL */
-#define MDIO_MODE                                              BIT(30)
-#define MDIO_PR                                                BIT(29)
-#define MDIO_AP_EN                                             BIT(28)
-#define MDIO_BUSY                                              BIT(27)
-#define MDIO_CLK_SEL_BMSK                                    0x7000000
-#define MDIO_CLK_SEL_SHFT                                           24
-#define MDIO_START                                             BIT(23)
-#define SUP_PREAMBLE                                           BIT(22)
-#define MDIO_RD_NWR                                            BIT(21)
-#define MDIO_REG_ADDR_BMSK                                    0x1f0000
-#define MDIO_REG_ADDR_SHFT                                          16
-#define MDIO_DATA_BMSK                                          0xffff
-#define MDIO_DATA_SHFT                                               0
+#घोषणा MDIO_MODE                                              BIT(30)
+#घोषणा MDIO_PR                                                BIT(29)
+#घोषणा MDIO_AP_EN                                             BIT(28)
+#घोषणा MDIO_BUSY                                              BIT(27)
+#घोषणा MDIO_CLK_SEL_BMSK                                    0x7000000
+#घोषणा MDIO_CLK_SEL_SHFT                                           24
+#घोषणा MDIO_START                                             BIT(23)
+#घोषणा SUP_PREAMBLE                                           BIT(22)
+#घोषणा MDIO_RD_NWR                                            BIT(21)
+#घोषणा MDIO_REG_ADDR_BMSK                                    0x1f0000
+#घोषणा MDIO_REG_ADDR_SHFT                                          16
+#घोषणा MDIO_DATA_BMSK                                          0xffff
+#घोषणा MDIO_DATA_SHFT                                               0
 
 /* EMAC_PHY_STS */
-#define PHY_ADDR_BMSK                                         0x1f0000
-#define PHY_ADDR_SHFT                                               16
+#घोषणा PHY_ADDR_BMSK                                         0x1f0000
+#घोषणा PHY_ADDR_SHFT                                               16
 
-#define MDIO_CLK_25_4                                                0
-#define MDIO_CLK_25_28                                               7
+#घोषणा MDIO_CLK_25_4                                                0
+#घोषणा MDIO_CLK_25_28                                               7
 
-#define MDIO_WAIT_TIMES                                           1000
-#define MDIO_STATUS_DELAY_TIME                                       1
+#घोषणा MDIO_WAIT_TIMES                                           1000
+#घोषणा MDIO_STATUS_DELAY_TIME                                       1
 
-static int emac_mdio_read(struct mii_bus *bus, int addr, int regnum)
-{
-	struct emac_adapter *adpt = bus->priv;
+अटल पूर्णांक emac_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक addr, पूर्णांक regnum)
+अणु
+	काष्ठा emac_adapter *adpt = bus->priv;
 	u32 reg;
 
 	emac_reg_update32(adpt->base + EMAC_PHY_STS, PHY_ADDR_BMSK,
@@ -54,19 +55,19 @@ static int emac_mdio_read(struct mii_bus *bus, int addr, int regnum)
 	      ((regnum << MDIO_REG_ADDR_SHFT) & MDIO_REG_ADDR_BMSK) |
 	      MDIO_START | MDIO_RD_NWR;
 
-	writel(reg, adpt->base + EMAC_MDIO_CTRL);
+	ग_लिखोl(reg, adpt->base + EMAC_MDIO_CTRL);
 
-	if (readl_poll_timeout(adpt->base + EMAC_MDIO_CTRL, reg,
+	अगर (पढ़ोl_poll_समयout(adpt->base + EMAC_MDIO_CTRL, reg,
 			       !(reg & (MDIO_START | MDIO_BUSY)),
 			       MDIO_STATUS_DELAY_TIME, MDIO_WAIT_TIMES * 100))
-		return -EIO;
+		वापस -EIO;
 
-	return (reg >> MDIO_DATA_SHFT) & MDIO_DATA_BMSK;
-}
+	वापस (reg >> MDIO_DATA_SHFT) & MDIO_DATA_BMSK;
+पूर्ण
 
-static int emac_mdio_write(struct mii_bus *bus, int addr, int regnum, u16 val)
-{
-	struct emac_adapter *adpt = bus->priv;
+अटल पूर्णांक emac_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक addr, पूर्णांक regnum, u16 val)
+अणु
+	काष्ठा emac_adapter *adpt = bus->priv;
 	u32 reg;
 
 	emac_reg_update32(adpt->base + EMAC_PHY_STS, PHY_ADDR_BMSK,
@@ -78,79 +79,79 @@ static int emac_mdio_write(struct mii_bus *bus, int addr, int regnum, u16 val)
 		((val << MDIO_DATA_SHFT) & MDIO_DATA_BMSK) |
 		MDIO_START;
 
-	writel(reg, adpt->base + EMAC_MDIO_CTRL);
+	ग_लिखोl(reg, adpt->base + EMAC_MDIO_CTRL);
 
-	if (readl_poll_timeout(adpt->base + EMAC_MDIO_CTRL, reg,
+	अगर (पढ़ोl_poll_समयout(adpt->base + EMAC_MDIO_CTRL, reg,
 			       !(reg & (MDIO_START | MDIO_BUSY)),
 			       MDIO_STATUS_DELAY_TIME, MDIO_WAIT_TIMES * 100))
-		return -EIO;
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Configure the MDIO bus and connect the external PHY */
-int emac_phy_config(struct platform_device *pdev, struct emac_adapter *adpt)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct mii_bus *mii_bus;
-	int ret;
+/* Configure the MDIO bus and connect the बाह्यal PHY */
+पूर्णांक emac_phy_config(काष्ठा platक्रमm_device *pdev, काष्ठा emac_adapter *adpt)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा mii_bus *mii_bus;
+	पूर्णांक ret;
 
-	/* Create the mii_bus object for talking to the MDIO bus */
+	/* Create the mii_bus object क्रम talking to the MDIO bus */
 	adpt->mii_bus = mii_bus = devm_mdiobus_alloc(&pdev->dev);
-	if (!mii_bus)
-		return -ENOMEM;
+	अगर (!mii_bus)
+		वापस -ENOMEM;
 
 	mii_bus->name = "emac-mdio";
-	snprintf(mii_bus->id, MII_BUS_ID_SIZE, "%s", pdev->name);
-	mii_bus->read = emac_mdio_read;
-	mii_bus->write = emac_mdio_write;
+	snम_लिखो(mii_bus->id, MII_BUS_ID_SIZE, "%s", pdev->name);
+	mii_bus->पढ़ो = emac_mdio_पढ़ो;
+	mii_bus->ग_लिखो = emac_mdio_ग_लिखो;
 	mii_bus->parent = &pdev->dev;
 	mii_bus->priv = adpt;
 
-	if (has_acpi_companion(&pdev->dev)) {
+	अगर (has_acpi_companion(&pdev->dev)) अणु
 		u32 phy_addr;
 
-		ret = mdiobus_register(mii_bus);
-		if (ret) {
+		ret = mdiobus_रेजिस्टर(mii_bus);
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "could not register mdio bus\n");
-			return ret;
-		}
-		ret = device_property_read_u32(&pdev->dev, "phy-channel",
+			वापस ret;
+		पूर्ण
+		ret = device_property_पढ़ो_u32(&pdev->dev, "phy-channel",
 					       &phy_addr);
-		if (ret)
-			/* If we can't read a valid phy address, then assume
+		अगर (ret)
+			/* If we can't पढ़ो a valid phy address, then assume
 			 * that there is only one phy on this mdio bus.
 			 */
 			adpt->phydev = phy_find_first(mii_bus);
-		else
+		अन्यथा
 			adpt->phydev = mdiobus_get_phy(mii_bus, phy_addr);
 
 		/* of_phy_find_device() claims a reference to the phydev,
-		 * so we do that here manually as well. When the driver
+		 * so we करो that here manually as well. When the driver
 		 * later unloads, it can unilaterally drop the reference
 		 * without worrying about ACPI vs DT.
 		 */
-		if (adpt->phydev)
+		अगर (adpt->phydev)
 			get_device(&adpt->phydev->mdio.dev);
-	} else {
-		struct device_node *phy_np;
+	पूर्ण अन्यथा अणु
+		काष्ठा device_node *phy_np;
 
-		ret = of_mdiobus_register(mii_bus, np);
-		if (ret) {
+		ret = of_mdiobus_रेजिस्टर(mii_bus, np);
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "could not register mdio bus\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		phy_np = of_parse_phandle(np, "phy-handle", 0);
 		adpt->phydev = of_phy_find_device(phy_np);
 		of_node_put(phy_np);
-	}
+	पूर्ण
 
-	if (!adpt->phydev) {
+	अगर (!adpt->phydev) अणु
 		dev_err(&pdev->dev, "could not find external phy\n");
-		mdiobus_unregister(mii_bus);
-		return -ENODEV;
-	}
+		mdiobus_unरेजिस्टर(mii_bus);
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

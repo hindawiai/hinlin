@@ -1,224 +1,225 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * PowerNV OPAL asynchronous completion interfaces
+ * PowerNV OPAL asynchronous completion पूर्णांकerfaces
  *
  * Copyright 2013-2017 IBM Corp.
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/semaphore.h>
-#include <linux/spinlock.h>
-#include <linux/wait.h>
-#include <linux/gfp.h>
-#include <linux/of.h>
-#include <asm/machdep.h>
-#include <asm/opal.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/of.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/opal.h>
 
-enum opal_async_token_state {
+क्रमागत opal_async_token_state अणु
 	ASYNC_TOKEN_UNALLOCATED = 0,
 	ASYNC_TOKEN_ALLOCATED,
 	ASYNC_TOKEN_DISPATCHED,
 	ASYNC_TOKEN_ABANDONED,
 	ASYNC_TOKEN_COMPLETED
-};
+पूर्ण;
 
-struct opal_async_token {
-	enum opal_async_token_state state;
-	struct opal_msg response;
-};
+काष्ठा opal_async_token अणु
+	क्रमागत opal_async_token_state state;
+	काष्ठा opal_msg response;
+पूर्ण;
 
-static DECLARE_WAIT_QUEUE_HEAD(opal_async_wait);
-static DEFINE_SPINLOCK(opal_async_comp_lock);
-static struct semaphore opal_async_sem;
-static unsigned int opal_max_async_tokens;
-static struct opal_async_token *opal_async_tokens;
+अटल DECLARE_WAIT_QUEUE_HEAD(opal_async_रुको);
+अटल DEFINE_SPINLOCK(opal_async_comp_lock);
+अटल काष्ठा semaphore opal_async_sem;
+अटल अचिन्हित पूर्णांक opal_max_async_tokens;
+अटल काष्ठा opal_async_token *opal_async_tokens;
 
-static int __opal_async_get_token(void)
-{
-	unsigned long flags;
-	int i, token = -EBUSY;
+अटल पूर्णांक __opal_async_get_token(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, token = -EBUSY;
 
 	spin_lock_irqsave(&opal_async_comp_lock, flags);
 
-	for (i = 0; i < opal_max_async_tokens; i++) {
-		if (opal_async_tokens[i].state == ASYNC_TOKEN_UNALLOCATED) {
+	क्रम (i = 0; i < opal_max_async_tokens; i++) अणु
+		अगर (opal_async_tokens[i].state == ASYNC_TOKEN_UNALLOCATED) अणु
 			opal_async_tokens[i].state = ASYNC_TOKEN_ALLOCATED;
 			token = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&opal_async_comp_lock, flags);
-	return token;
-}
+	वापस token;
+पूर्ण
 
 /*
- * Note: If the returned token is used in an opal call and opal returns
- * OPAL_ASYNC_COMPLETION you MUST call one of opal_async_wait_response() or
- * opal_async_wait_response_interruptible() at least once before calling another
+ * Note: If the वापसed token is used in an opal call and opal वापसs
+ * OPAL_ASYNC_COMPLETION you MUST call one of opal_async_रुको_response() or
+ * opal_async_रुको_response_पूर्णांकerruptible() at least once beक्रमe calling another
  * opal_async_* function
  */
-int opal_async_get_token_interruptible(void)
-{
-	int token;
+पूर्णांक opal_async_get_token_पूर्णांकerruptible(व्योम)
+अणु
+	पूर्णांक token;
 
 	/* Wait until a token is available */
-	if (down_interruptible(&opal_async_sem))
-		return -ERESTARTSYS;
+	अगर (करोwn_पूर्णांकerruptible(&opal_async_sem))
+		वापस -ERESTARTSYS;
 
 	token = __opal_async_get_token();
-	if (token < 0)
+	अगर (token < 0)
 		up(&opal_async_sem);
 
-	return token;
-}
-EXPORT_SYMBOL_GPL(opal_async_get_token_interruptible);
+	वापस token;
+पूर्ण
+EXPORT_SYMBOL_GPL(opal_async_get_token_पूर्णांकerruptible);
 
-static int __opal_async_release_token(int token)
-{
-	unsigned long flags;
-	int rc;
+अटल पूर्णांक __opal_async_release_token(पूर्णांक token)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
-	if (token < 0 || token >= opal_max_async_tokens) {
+	अगर (token < 0 || token >= opal_max_async_tokens) अणु
 		pr_err("%s: Passed token is out of range, token %d\n",
 				__func__, token);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irqsave(&opal_async_comp_lock, flags);
-	switch (opal_async_tokens[token].state) {
-	case ASYNC_TOKEN_COMPLETED:
-	case ASYNC_TOKEN_ALLOCATED:
+	चयन (opal_async_tokens[token].state) अणु
+	हाल ASYNC_TOKEN_COMPLETED:
+	हाल ASYNC_TOKEN_ALLOCATED:
 		opal_async_tokens[token].state = ASYNC_TOKEN_UNALLOCATED;
 		rc = 0;
-		break;
+		अवरोध;
 	/*
-	 * DISPATCHED and ABANDONED tokens must wait for OPAL to respond.
+	 * DISPATCHED and ABANDONED tokens must रुको क्रम OPAL to respond.
 	 * Mark a DISPATCHED token as ABANDONED so that the response handling
-	 * code knows no one cares and that it can free it then.
+	 * code knows no one cares and that it can मुक्त it then.
 	 */
-	case ASYNC_TOKEN_DISPATCHED:
+	हाल ASYNC_TOKEN_DISPATCHED:
 		opal_async_tokens[token].state = ASYNC_TOKEN_ABANDONED;
 		fallthrough;
-	default:
+	शेष:
 		rc = 1;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&opal_async_comp_lock, flags);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int opal_async_release_token(int token)
-{
-	int ret;
+पूर्णांक opal_async_release_token(पूर्णांक token)
+अणु
+	पूर्णांक ret;
 
 	ret = __opal_async_release_token(token);
-	if (!ret)
+	अगर (!ret)
 		up(&opal_async_sem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(opal_async_release_token);
 
-int opal_async_wait_response(uint64_t token, struct opal_msg *msg)
-{
-	if (token >= opal_max_async_tokens) {
+पूर्णांक opal_async_रुको_response(uपूर्णांक64_t token, काष्ठा opal_msg *msg)
+अणु
+	अगर (token >= opal_max_async_tokens) अणु
 		pr_err("%s: Invalid token passed\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!msg) {
+	अगर (!msg) अणु
 		pr_err("%s: Invalid message pointer passed\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * There is no need to mark the token as dispatched, wait_event()
+	 * There is no need to mark the token as dispatched, रुको_event()
 	 * will block until the token completes.
 	 *
-	 * Wakeup the poller before we wait for events to speed things
-	 * up on platforms or simulators where the interrupts aren't
+	 * Wakeup the poller beक्रमe we रुको क्रम events to speed things
+	 * up on platक्रमms or simulators where the पूर्णांकerrupts aren't
 	 * functional.
 	 */
 	opal_wake_poller();
-	wait_event(opal_async_wait, opal_async_tokens[token].state
+	रुको_event(opal_async_रुको, opal_async_tokens[token].state
 			== ASYNC_TOKEN_COMPLETED);
-	memcpy(msg, &opal_async_tokens[token].response, sizeof(*msg));
+	स_नकल(msg, &opal_async_tokens[token].response, माप(*msg));
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(opal_async_wait_response);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(opal_async_रुको_response);
 
-int opal_async_wait_response_interruptible(uint64_t token, struct opal_msg *msg)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक opal_async_रुको_response_पूर्णांकerruptible(uपूर्णांक64_t token, काष्ठा opal_msg *msg)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (token >= opal_max_async_tokens) {
+	अगर (token >= opal_max_async_tokens) अणु
 		pr_err("%s: Invalid token passed\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!msg) {
+	अगर (!msg) अणु
 		pr_err("%s: Invalid message pointer passed\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * The first time this gets called we mark the token as DISPATCHED
-	 * so that if wait_event_interruptible() returns not zero and the
-	 * caller frees the token, we know not to actually free the token
+	 * The first समय this माला_लो called we mark the token as DISPATCHED
+	 * so that अगर रुको_event_पूर्णांकerruptible() वापसs not zero and the
+	 * caller मुक्तs the token, we know not to actually मुक्त the token
 	 * until the response comes.
 	 *
-	 * Only change if the token is ALLOCATED - it may have been
-	 * completed even before the caller gets around to calling this
-	 * the first time.
+	 * Only change अगर the token is ALLOCATED - it may have been
+	 * completed even beक्रमe the caller माला_लो around to calling this
+	 * the first समय.
 	 *
 	 * There is also a dirty great comment at the token allocation
-	 * function that if the opal call returns OPAL_ASYNC_COMPLETION to
+	 * function that अगर the opal call वापसs OPAL_ASYNC_COMPLETION to
 	 * the caller then the caller *must* call this or the not
-	 * interruptible version before doing anything else with the
+	 * पूर्णांकerruptible version beक्रमe करोing anything अन्यथा with the
 	 * token.
 	 */
-	if (opal_async_tokens[token].state == ASYNC_TOKEN_ALLOCATED) {
+	अगर (opal_async_tokens[token].state == ASYNC_TOKEN_ALLOCATED) अणु
 		spin_lock_irqsave(&opal_async_comp_lock, flags);
-		if (opal_async_tokens[token].state == ASYNC_TOKEN_ALLOCATED)
+		अगर (opal_async_tokens[token].state == ASYNC_TOKEN_ALLOCATED)
 			opal_async_tokens[token].state = ASYNC_TOKEN_DISPATCHED;
 		spin_unlock_irqrestore(&opal_async_comp_lock, flags);
-	}
+	पूर्ण
 
 	/*
-	 * Wakeup the poller before we wait for events to speed things
-	 * up on platforms or simulators where the interrupts aren't
+	 * Wakeup the poller beक्रमe we रुको क्रम events to speed things
+	 * up on platक्रमms or simulators where the पूर्णांकerrupts aren't
 	 * functional.
 	 */
 	opal_wake_poller();
-	ret = wait_event_interruptible(opal_async_wait,
+	ret = रुको_event_पूर्णांकerruptible(opal_async_रुको,
 			opal_async_tokens[token].state ==
 			ASYNC_TOKEN_COMPLETED);
-	if (!ret)
-		memcpy(msg, &opal_async_tokens[token].response, sizeof(*msg));
+	अगर (!ret)
+		स_नकल(msg, &opal_async_tokens[token].response, माप(*msg));
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(opal_async_wait_response_interruptible);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(opal_async_रुको_response_पूर्णांकerruptible);
 
-/* Called from interrupt context */
-static int opal_async_comp_event(struct notifier_block *nb,
-		unsigned long msg_type, void *msg)
-{
-	struct opal_msg *comp_msg = msg;
-	enum opal_async_token_state state;
-	unsigned long flags;
-	uint64_t token;
+/* Called from पूर्णांकerrupt context */
+अटल पूर्णांक opal_async_comp_event(काष्ठा notअगरier_block *nb,
+		अचिन्हित दीर्घ msg_type, व्योम *msg)
+अणु
+	काष्ठा opal_msg *comp_msg = msg;
+	क्रमागत opal_async_token_state state;
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक64_t token;
 
-	if (msg_type != OPAL_MSG_ASYNC_COMP)
-		return 0;
+	अगर (msg_type != OPAL_MSG_ASYNC_COMP)
+		वापस 0;
 
 	token = be64_to_cpu(comp_msg->params[0]);
 	spin_lock_irqsave(&opal_async_comp_lock, flags);
@@ -226,65 +227,65 @@ static int opal_async_comp_event(struct notifier_block *nb,
 	opal_async_tokens[token].state = ASYNC_TOKEN_COMPLETED;
 	spin_unlock_irqrestore(&opal_async_comp_lock, flags);
 
-	if (state == ASYNC_TOKEN_ABANDONED) {
-		/* Free the token, no one else will */
+	अगर (state == ASYNC_TOKEN_ABANDONED) अणु
+		/* Free the token, no one अन्यथा will */
 		opal_async_release_token(token);
-		return 0;
-	}
-	memcpy(&opal_async_tokens[token].response, comp_msg, sizeof(*comp_msg));
-	wake_up(&opal_async_wait);
+		वापस 0;
+	पूर्ण
+	स_नकल(&opal_async_tokens[token].response, comp_msg, माप(*comp_msg));
+	wake_up(&opal_async_रुको);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct notifier_block opal_async_comp_nb = {
-		.notifier_call	= opal_async_comp_event,
-		.next		= NULL,
+अटल काष्ठा notअगरier_block opal_async_comp_nb = अणु
+		.notअगरier_call	= opal_async_comp_event,
+		.next		= शून्य,
 		.priority	= 0,
-};
+पूर्ण;
 
-int __init opal_async_comp_init(void)
-{
-	struct device_node *opal_node;
-	const __be32 *async;
-	int err;
+पूर्णांक __init opal_async_comp_init(व्योम)
+अणु
+	काष्ठा device_node *opal_node;
+	स्थिर __be32 *async;
+	पूर्णांक err;
 
 	opal_node = of_find_node_by_path("/ibm,opal");
-	if (!opal_node) {
+	अगर (!opal_node) अणु
 		pr_err("%s: Opal node not found\n", __func__);
 		err = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	async = of_get_property(opal_node, "opal-msg-async-num", NULL);
-	if (!async) {
+	async = of_get_property(opal_node, "opal-msg-async-num", शून्य);
+	अगर (!async) अणु
 		pr_err("%s: %pOF has no opal-msg-async-num\n",
 				__func__, opal_node);
 		err = -ENOENT;
-		goto out_opal_node;
-	}
+		जाओ out_opal_node;
+	पूर्ण
 
 	opal_max_async_tokens = be32_to_cpup(async);
-	opal_async_tokens = kcalloc(opal_max_async_tokens,
-			sizeof(*opal_async_tokens), GFP_KERNEL);
-	if (!opal_async_tokens) {
+	opal_async_tokens = kसुस्मृति(opal_max_async_tokens,
+			माप(*opal_async_tokens), GFP_KERNEL);
+	अगर (!opal_async_tokens) अणु
 		err = -ENOMEM;
-		goto out_opal_node;
-	}
+		जाओ out_opal_node;
+	पूर्ण
 
-	err = opal_message_notifier_register(OPAL_MSG_ASYNC_COMP,
+	err = opal_message_notअगरier_रेजिस्टर(OPAL_MSG_ASYNC_COMP,
 			&opal_async_comp_nb);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: Can't register OPAL event notifier (%d)\n",
 				__func__, err);
-		kfree(opal_async_tokens);
-		goto out_opal_node;
-	}
+		kमुक्त(opal_async_tokens);
+		जाओ out_opal_node;
+	पूर्ण
 
 	sema_init(&opal_async_sem, opal_max_async_tokens);
 
 out_opal_node:
 	of_node_put(opal_node);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण

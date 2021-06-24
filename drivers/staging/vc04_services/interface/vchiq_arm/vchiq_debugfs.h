@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /* Copyright (c) 2014 Raspberry Pi (Trading) Ltd. All rights reserved. */
 
-#ifndef VCHIQ_DEBUGFS_H
-#define VCHIQ_DEBUGFS_H
+#अगर_अघोषित VCHIQ_DEBUGFS_H
+#घोषणा VCHIQ_DEBUGFS_H
 
-#include "vchiq_core.h"
+#समावेश "vchiq_core.h"
 
-struct vchiq_debugfs_node {
-	struct dentry *dentry;
-};
+काष्ठा vchiq_debugfs_node अणु
+	काष्ठा dentry *dentry;
+पूर्ण;
 
-void vchiq_debugfs_init(void);
+व्योम vchiq_debugfs_init(व्योम);
 
-void vchiq_debugfs_deinit(void);
+व्योम vchiq_debugfs_deinit(व्योम);
 
-void vchiq_debugfs_add_instance(struct vchiq_instance *instance);
+व्योम vchiq_debugfs_add_instance(काष्ठा vchiq_instance *instance);
 
-void vchiq_debugfs_remove_instance(struct vchiq_instance *instance);
+व्योम vchiq_debugfs_हटाओ_instance(काष्ठा vchiq_instance *instance);
 
-#endif /* VCHIQ_DEBUGFS_H */
+#पूर्ण_अगर /* VCHIQ_DEBUGFS_H */

@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * arch/powerpc/platforms/embedded6xx/usbgecko_udbg.c
+ * arch/घातerpc/platक्रमms/embedded6xx/usbgecko_udbg.c
  *
- * udbg serial input/output routines for the USB Gecko adapter.
+ * udbg serial input/output routines क्रम the USB Gecko adapter.
  * Copyright (C) 2008-2009 The GameCube Linux Team
  * Copyright (C) 2008,2009 Albert Herranz
  */
 
-#include <mm/mmu_decl.h>
+#समावेश <mm/mmu_decl.h>
 
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/udbg.h>
-#include <asm/fixmap.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/udbg.h>
+#समावेश <यंत्र/fixmap.h>
 
-#include "usbgecko_udbg.h"
-
-
-#define EXI_CLK_32MHZ           5
-
-#define EXI_CSR                 0x00
-#define   EXI_CSR_CLKMASK       (0x7<<4)
-#define     EXI_CSR_CLK_32MHZ   (EXI_CLK_32MHZ<<4)
-#define   EXI_CSR_CSMASK        (0x7<<7)
-#define     EXI_CSR_CS_0        (0x1<<7)  /* Chip Select 001 */
-
-#define EXI_CR                  0x0c
-#define   EXI_CR_TSTART         (1<<0)
-#define   EXI_CR_WRITE		(1<<2)
-#define   EXI_CR_READ_WRITE     (2<<2)
-#define   EXI_CR_TLEN(len)      (((len)-1)<<4)
-
-#define EXI_DATA                0x10
-
-#define UG_READ_ATTEMPTS	100
-#define UG_WRITE_ATTEMPTS	100
+#समावेश "usbgecko_udbg.h"
 
 
-static void __iomem *ug_io_base;
+#घोषणा EXI_CLK_32MHZ           5
+
+#घोषणा EXI_CSR                 0x00
+#घोषणा   EXI_CSR_CLKMASK       (0x7<<4)
+#घोषणा     EXI_CSR_CLK_32MHZ   (EXI_CLK_32MHZ<<4)
+#घोषणा   EXI_CSR_CSMASK        (0x7<<7)
+#घोषणा     EXI_CSR_CS_0        (0x1<<7)  /* Chip Select 001 */
+
+#घोषणा EXI_CR                  0x0c
+#घोषणा   EXI_CR_TSTART         (1<<0)
+#घोषणा   EXI_CR_WRITE		(1<<2)
+#घोषणा   EXI_CR_READ_WRITE     (2<<2)
+#घोषणा   EXI_CR_TLEN(len)      (((len)-1)<<4)
+
+#घोषणा EXI_DATA                0x10
+
+#घोषणा UG_READ_ATTEMPTS	100
+#घोषणा UG_WRITE_ATTEMPTS	100
+
+
+अटल व्योम __iomem *ug_io_base;
 
 /*
- * Performs one input/output transaction between the exi host and the usbgecko.
+ * Perक्रमms one input/output transaction between the exi host and the usbgecko.
  */
-static u32 ug_io_transaction(u32 in)
-{
+अटल u32 ug_io_transaction(u32 in)
+अणु
 	u32 __iomem *csr_reg = ug_io_base + EXI_CSR;
 	u32 __iomem *data_reg = ug_io_base + EXI_DATA;
 	u32 __iomem *cr_reg = ug_io_base + EXI_CR;
@@ -53,13 +54,13 @@ static u32 ug_io_transaction(u32 in)
 	csr = EXI_CSR_CLK_32MHZ | EXI_CSR_CS_0;
 	out_be32(csr_reg, csr);
 
-	/* read/write */
+	/* पढ़ो/ग_लिखो */
 	data = in;
 	out_be32(data_reg, data);
 	cr = EXI_CR_TLEN(2) | EXI_CR_READ_WRITE | EXI_CR_TSTART;
 	out_be32(cr_reg, cr);
 
-	while (in_be32(cr_reg) & EXI_CR_TSTART)
+	जबतक (in_be32(cr_reg) & EXI_CR_TSTART)
 		barrier();
 
 	/* deselect */
@@ -68,93 +69,93 @@ static u32 ug_io_transaction(u32 in)
 	/* result */
 	data = in_be32(data_reg);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
 /*
- * Returns true if an usbgecko adapter is found.
+ * Returns true अगर an usbgecko adapter is found.
  */
-static int ug_is_adapter_present(void)
-{
-	if (!ug_io_base)
-		return 0;
+अटल पूर्णांक ug_is_adapter_present(व्योम)
+अणु
+	अगर (!ug_io_base)
+		वापस 0;
 
-	return ug_io_transaction(0x90000000) == 0x04700000;
-}
-
-/*
- * Returns true if the TX fifo is ready for transmission.
- */
-static int ug_is_txfifo_ready(void)
-{
-	return ug_io_transaction(0xc0000000) & 0x04000000;
-}
+	वापस ug_io_transaction(0x90000000) == 0x04700000;
+पूर्ण
 
 /*
- * Tries to transmit a character.
- * If the TX fifo is not ready the result is undefined.
+ * Returns true अगर the TX fअगरo is पढ़ोy क्रम transmission.
  */
-static void ug_raw_putc(char ch)
-{
+अटल पूर्णांक ug_is_txfअगरo_पढ़ोy(व्योम)
+अणु
+	वापस ug_io_transaction(0xc0000000) & 0x04000000;
+पूर्ण
+
+/*
+ * Tries to transmit a अक्षरacter.
+ * If the TX fअगरo is not पढ़ोy the result is undefined.
+ */
+अटल व्योम ug_raw_अ_दो(अक्षर ch)
+अणु
 	ug_io_transaction(0xb0000000 | (ch << 20));
-}
+पूर्ण
 
 /*
- * Transmits a character.
- * It silently fails if the TX fifo is not ready after a number of retries.
+ * Transmits a अक्षरacter.
+ * It silently fails अगर the TX fअगरo is not पढ़ोy after a number of retries.
  */
-static void ug_putc(char ch)
-{
-	int count = UG_WRITE_ATTEMPTS;
+अटल व्योम ug_अ_दो(अक्षर ch)
+अणु
+	पूर्णांक count = UG_WRITE_ATTEMPTS;
 
-	if (!ug_io_base)
-		return;
+	अगर (!ug_io_base)
+		वापस;
 
-	if (ch == '\n')
-		ug_putc('\r');
+	अगर (ch == '\n')
+		ug_अ_दो('\r');
 
-	while (!ug_is_txfifo_ready() && count--)
+	जबतक (!ug_is_txfअगरo_पढ़ोy() && count--)
 		barrier();
-	if (count >= 0)
-		ug_raw_putc(ch);
-}
+	अगर (count >= 0)
+		ug_raw_अ_दो(ch);
+पूर्ण
 
 /*
- * Returns true if the RX fifo is ready for transmission.
+ * Returns true अगर the RX fअगरo is पढ़ोy क्रम transmission.
  */
-static int ug_is_rxfifo_ready(void)
-{
-	return ug_io_transaction(0xd0000000) & 0x04000000;
-}
+अटल पूर्णांक ug_is_rxfअगरo_पढ़ोy(व्योम)
+अणु
+	वापस ug_io_transaction(0xd0000000) & 0x04000000;
+पूर्ण
 
 /*
- * Tries to receive a character.
- * If a character is unavailable the function returns -1.
+ * Tries to receive a अक्षरacter.
+ * If a अक्षरacter is unavailable the function वापसs -1.
  */
-static int ug_raw_getc(void)
-{
+अटल पूर्णांक ug_raw_अ_लो(व्योम)
+अणु
 	u32 data = ug_io_transaction(0xa0000000);
-	if (data & 0x08000000)
-		return (data >> 16) & 0xff;
-	else
-		return -1;
-}
+	अगर (data & 0x08000000)
+		वापस (data >> 16) & 0xff;
+	अन्यथा
+		वापस -1;
+पूर्ण
 
 /*
- * Receives a character.
- * It fails if the RX fifo is not ready after a number of retries.
+ * Receives a अक्षरacter.
+ * It fails अगर the RX fअगरo is not पढ़ोy after a number of retries.
  */
-static int ug_getc(void)
-{
-	int count = UG_READ_ATTEMPTS;
+अटल पूर्णांक ug_अ_लो(व्योम)
+अणु
+	पूर्णांक count = UG_READ_ATTEMPTS;
 
-	if (!ug_io_base)
-		return -1;
+	अगर (!ug_io_base)
+		वापस -1;
 
-	while (!ug_is_rxfifo_ready() && count--)
+	जबतक (!ug_is_rxfअगरo_पढ़ोy() && count--)
 		barrier();
-	return ug_raw_getc();
-}
+	वापस ug_raw_अ_लो();
+पूर्ण
 
 /*
  * udbg functions.
@@ -162,162 +163,162 @@ static int ug_getc(void)
  */
 
 /*
- * Transmits a character.
+ * Transmits a अक्षरacter.
  */
-static void ug_udbg_putc(char ch)
-{
-	ug_putc(ch);
-}
+अटल व्योम ug_udbg_अ_दो(अक्षर ch)
+अणु
+	ug_अ_दो(ch);
+पूर्ण
 
 /*
- * Receives a character. Waits until a character is available.
+ * Receives a अक्षरacter. Waits until a अक्षरacter is available.
  */
-static int ug_udbg_getc(void)
-{
-	int ch;
+अटल पूर्णांक ug_udbg_अ_लो(व्योम)
+अणु
+	पूर्णांक ch;
 
-	while ((ch = ug_getc()) == -1)
+	जबतक ((ch = ug_अ_लो()) == -1)
 		barrier();
-	return ch;
-}
+	वापस ch;
+पूर्ण
 
 /*
- * Receives a character. If a character is not available, returns -1.
+ * Receives a अक्षरacter. If a अक्षरacter is not available, वापसs -1.
  */
-static int ug_udbg_getc_poll(void)
-{
-	if (!ug_is_rxfifo_ready())
-		return -1;
-	return ug_getc();
-}
+अटल पूर्णांक ug_udbg_अ_लो_poll(व्योम)
+अणु
+	अगर (!ug_is_rxfअगरo_पढ़ोy())
+		वापस -1;
+	वापस ug_अ_लो();
+पूर्ण
 
 /*
- * Retrieves and prepares the virtual address needed to access the hardware.
+ * Retrieves and prepares the भव address needed to access the hardware.
  */
-static void __iomem *ug_udbg_setup_exi_io_base(struct device_node *np)
-{
-	void __iomem *exi_io_base = NULL;
+अटल व्योम __iomem *ug_udbg_setup_exi_io_base(काष्ठा device_node *np)
+अणु
+	व्योम __iomem *exi_io_base = शून्य;
 	phys_addr_t paddr;
-	const unsigned int *reg;
+	स्थिर अचिन्हित पूर्णांक *reg;
 
-	reg = of_get_property(np, "reg", NULL);
-	if (reg) {
+	reg = of_get_property(np, "reg", शून्य);
+	अगर (reg) अणु
 		paddr = of_translate_address(np, reg);
-		if (paddr)
+		अगर (paddr)
 			exi_io_base = ioremap(paddr, reg[1]);
-	}
-	return exi_io_base;
-}
+	पूर्ण
+	वापस exi_io_base;
+पूर्ण
 
 /*
- * Checks if a USB Gecko adapter is inserted in any memory card slot.
+ * Checks अगर a USB Gecko adapter is inserted in any memory card slot.
  */
-static void __iomem *ug_udbg_probe(void __iomem *exi_io_base)
-{
-	int i;
+अटल व्योम __iomem *ug_udbg_probe(व्योम __iomem *exi_io_base)
+अणु
+	पूर्णांक i;
 
-	/* look for a usbgecko on memcard slots A and B */
-	for (i = 0; i < 2; i++) {
+	/* look क्रम a usbgecko on memcard slots A and B */
+	क्रम (i = 0; i < 2; i++) अणु
 		ug_io_base = exi_io_base + 0x14 * i;
-		if (ug_is_adapter_present())
-			break;
-	}
-	if (i == 2)
-		ug_io_base = NULL;
-	return ug_io_base;
+		अगर (ug_is_adapter_present())
+			अवरोध;
+	पूर्ण
+	अगर (i == 2)
+		ug_io_base = शून्य;
+	वापस ug_io_base;
 
-}
+पूर्ण
 
 /*
  * USB Gecko udbg support initialization.
  */
-void __init ug_udbg_init(void)
-{
-	struct device_node *np;
-	void __iomem *exi_io_base;
+व्योम __init ug_udbg_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	व्योम __iomem *exi_io_base;
 
-	if (ug_io_base)
-		udbg_printf("%s: early -> final\n", __func__);
+	अगर (ug_io_base)
+		udbg_म_लिखो("%s: early -> final\n", __func__);
 
-	np = of_find_compatible_node(NULL, NULL, "nintendo,flipper-exi");
-	if (!np) {
-		udbg_printf("%s: EXI node not found\n", __func__);
-		goto out;
-	}
+	np = of_find_compatible_node(शून्य, शून्य, "nintendo,flipper-exi");
+	अगर (!np) अणु
+		udbg_म_लिखो("%s: EXI node not found\n", __func__);
+		जाओ out;
+	पूर्ण
 
 	exi_io_base = ug_udbg_setup_exi_io_base(np);
-	if (!exi_io_base) {
-		udbg_printf("%s: failed to setup EXI io base\n", __func__);
-		goto done;
-	}
+	अगर (!exi_io_base) अणु
+		udbg_म_लिखो("%s: failed to setup EXI io base\n", __func__);
+		जाओ करोne;
+	पूर्ण
 
-	if (!ug_udbg_probe(exi_io_base)) {
-		udbg_printf("usbgecko_udbg: not found\n");
+	अगर (!ug_udbg_probe(exi_io_base)) अणु
+		udbg_म_लिखो("usbgecko_udbg: not found\n");
 		iounmap(exi_io_base);
-	} else {
-		udbg_putc = ug_udbg_putc;
-		udbg_getc = ug_udbg_getc;
-		udbg_getc_poll = ug_udbg_getc_poll;
-		udbg_printf("usbgecko_udbg: ready\n");
-	}
+	पूर्ण अन्यथा अणु
+		udbg_अ_दो = ug_udbg_अ_दो;
+		udbg_अ_लो = ug_udbg_अ_लो;
+		udbg_अ_लो_poll = ug_udbg_अ_लो_poll;
+		udbg_म_लिखो("usbgecko_udbg: ready\n");
+	पूर्ण
 
-done:
+करोne:
 	of_node_put(np);
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-#ifdef CONFIG_PPC_EARLY_DEBUG_USBGECKO
+#अगर_घोषित CONFIG_PPC_EARLY_DEBUG_USBGECKO
 
-static phys_addr_t __init ug_early_grab_io_addr(void)
-{
-#if defined(CONFIG_GAMECUBE)
-	return 0x0c000000;
-#elif defined(CONFIG_WII)
-	return 0x0d000000;
-#else
-#error Invalid platform for USB Gecko based early debugging.
-#endif
-}
+अटल phys_addr_t __init ug_early_grab_io_addr(व्योम)
+अणु
+#अगर defined(CONFIG_GAMECUBE)
+	वापस 0x0c000000;
+#या_अगर defined(CONFIG_WII)
+	वापस 0x0d000000;
+#अन्यथा
+#त्रुटि Invalid platक्रमm क्रम USB Gecko based early debugging.
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * USB Gecko early debug support initialization for udbg.
+ * USB Gecko early debug support initialization क्रम udbg.
  */
-void __init udbg_init_usbgecko(void)
-{
-	void __iomem *early_debug_area;
-	void __iomem *exi_io_base;
+व्योम __init udbg_init_usbgecko(व्योम)
+अणु
+	व्योम __iomem *early_debug_area;
+	व्योम __iomem *exi_io_base;
 
 	/*
-	 * At this point we have a BAT already setup that enables I/O
+	 * At this poपूर्णांक we have a BAT alपढ़ोy setup that enables I/O
 	 * to the EXI hardware.
 	 *
-	 * The BAT uses a virtual address range reserved at the fixmap.
-	 * This must match the virtual address configured in
+	 * The BAT uses a भव address range reserved at the fixmap.
+	 * This must match the भव address configured in
 	 * head_32.S:setup_usbgecko_bat().
 	 */
-	early_debug_area = (void __iomem *)__fix_to_virt(FIX_EARLY_DEBUG_BASE);
+	early_debug_area = (व्योम __iomem *)__fix_to_virt(FIX_EARLY_DEBUG_BASE);
 	exi_io_base = early_debug_area + 0x00006800;
 
 	/* try to detect a USB Gecko */
-	if (!ug_udbg_probe(exi_io_base))
-		return;
+	अगर (!ug_udbg_probe(exi_io_base))
+		वापस;
 
 	/* we found a USB Gecko, load udbg hooks */
-	udbg_putc = ug_udbg_putc;
-	udbg_getc = ug_udbg_getc;
-	udbg_getc_poll = ug_udbg_getc_poll;
+	udbg_अ_दो = ug_udbg_अ_दो;
+	udbg_अ_लो = ug_udbg_अ_लो;
+	udbg_अ_लो_poll = ug_udbg_अ_लो_poll;
 
 	/*
-	 * Prepare again the same BAT for MMU_init.
-	 * This allows udbg I/O to continue working after the MMU is
-	 * turned on for real.
-	 * It is safe to continue using the same virtual address as it is
+	 * Prepare again the same BAT क्रम MMU_init.
+	 * This allows udbg I/O to जारी working after the MMU is
+	 * turned on क्रम real.
+	 * It is safe to जारी using the same भव address as it is
 	 * a reserved fixmap area.
 	 */
-	setbat(1, (unsigned long)early_debug_area,
+	setbat(1, (अचिन्हित दीर्घ)early_debug_area,
 	       ug_early_grab_io_addr(), 128*1024, PAGE_KERNEL_NCG);
-}
+पूर्ण
 
-#endif /* CONFIG_PPC_EARLY_DEBUG_USBGECKO */
+#पूर्ण_अगर /* CONFIG_PPC_EARLY_DEBUG_USBGECKO */
 

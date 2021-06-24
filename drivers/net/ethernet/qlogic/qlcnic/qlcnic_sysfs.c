@@ -1,759 +1,760 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * QLogic qlcnic NIC Driver
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/swab.h>
-#include <linux/dma-mapping.h>
-#include <net/ip.h>
-#include <linux/ipv6.h>
-#include <linux/inetdevice.h>
-#include <linux/sysfs.h>
-#include <linux/aer.h>
-#include <linux/log2.h>
-#ifdef CONFIG_QLCNIC_HWMON
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#endif
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/swab.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <net/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/aer.h>
+#समावेश <linux/log2.h>
+#अगर_घोषित CONFIG_QLCNIC_HWMON
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#पूर्ण_अगर
 
-#include "qlcnic.h"
-#include "qlcnic_hw.h"
+#समावेश "qlcnic.h"
+#समावेश "qlcnic_hw.h"
 
-int qlcnicvf_config_bridged_mode(struct qlcnic_adapter *adapter, u32 enable)
-{
-	return -EOPNOTSUPP;
-}
+पूर्णांक qlcnicvf_config_bridged_mode(काष्ठा qlcnic_adapter *adapter, u32 enable)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-int qlcnicvf_config_led(struct qlcnic_adapter *adapter, u32 state, u32 rate)
-{
-	return -EOPNOTSUPP;
-}
+पूर्णांक qlcnicvf_config_led(काष्ठा qlcnic_adapter *adapter, u32 state, u32 rate)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static ssize_t qlcnic_store_bridged_mode(struct device *dev,
-					 struct device_attribute *attr,
-					 const char *buf, size_t len)
-{
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	unsigned long new;
-	int ret = -EINVAL;
+अटल sमाप_प्रकार qlcnic_store_bridged_mode(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ new;
+	पूर्णांक ret = -EINVAL;
 
-	if (!(adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_BDG))
-		goto err_out;
+	अगर (!(adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_BDG))
+		जाओ err_out;
 
-	if (!test_bit(__QLCNIC_DEV_UP, &adapter->state))
-		goto err_out;
+	अगर (!test_bit(__QLCNIC_DEV_UP, &adapter->state))
+		जाओ err_out;
 
-	if (kstrtoul(buf, 2, &new))
-		goto err_out;
+	अगर (kम_से_अदीर्घ(buf, 2, &new))
+		जाओ err_out;
 
-	if (!qlcnic_config_bridged_mode(adapter, !!new))
+	अगर (!qlcnic_config_bridged_mode(adapter, !!new))
 		ret = len;
 
 err_out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t qlcnic_show_bridged_mode(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	int bridged_mode = 0;
+अटल sमाप_प्रकार qlcnic_show_bridged_mode(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	पूर्णांक bridged_mode = 0;
 
-	if (adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_BDG)
+	अगर (adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_BDG)
 		bridged_mode = !!(adapter->flags & QLCNIC_BRIDGE_ENABLED);
 
-	return sprintf(buf, "%d\n", bridged_mode);
-}
+	वापस प्र_लिखो(buf, "%d\n", bridged_mode);
+पूर्ण
 
-static ssize_t qlcnic_store_diag_mode(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf, size_t len)
-{
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	unsigned long new;
+अटल sमाप_प्रकार qlcnic_store_diag_mode(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ new;
 
-	if (kstrtoul(buf, 2, &new))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 2, &new))
+		वापस -EINVAL;
 
-	if (!!new != !!(adapter->flags & QLCNIC_DIAG_ENABLED))
+	अगर (!!new != !!(adapter->flags & QLCNIC_DIAG_ENABLED))
 		adapter->flags ^= QLCNIC_DIAG_ENABLED;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t qlcnic_show_diag_mode(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	return sprintf(buf, "%d\n", !!(adapter->flags & QLCNIC_DIAG_ENABLED));
-}
+अटल sमाप_प्रकार qlcnic_show_diag_mode(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	वापस प्र_लिखो(buf, "%d\n", !!(adapter->flags & QLCNIC_DIAG_ENABLED));
+पूर्ण
 
-static int qlcnic_validate_beacon(struct qlcnic_adapter *adapter, u16 beacon,
+अटल पूर्णांक qlcnic_validate_beacon(काष्ठा qlcnic_adapter *adapter, u16 beacon,
 				  u8 *state, u8 *rate)
-{
+अणु
 	*rate = LSB(beacon);
 	*state = MSB(beacon);
 
 	QLCDB(adapter, DRV, "rate %x state %x\n", *rate, *state);
 
-	if (!*state) {
+	अगर (!*state) अणु
 		*rate = __QLCNIC_MAX_LED_RATE;
-		return 0;
-	} else if (*state > __QLCNIC_MAX_LED_STATE) {
-		return -EINVAL;
-	}
+		वापस 0;
+	पूर्ण अन्यथा अगर (*state > __QLCNIC_MAX_LED_STATE) अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((!*rate) || (*rate > __QLCNIC_MAX_LED_RATE))
-		return -EINVAL;
+	अगर ((!*rate) || (*rate > __QLCNIC_MAX_LED_RATE))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qlcnic_83xx_store_beacon(struct qlcnic_adapter *adapter,
-				    const char *buf, size_t len)
-{
-	struct qlcnic_hardware_context *ahw = adapter->ahw;
-	unsigned long h_beacon;
-	int err;
+अटल पूर्णांक qlcnic_83xx_store_beacon(काष्ठा qlcnic_adapter *adapter,
+				    स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
+	अचिन्हित दीर्घ h_beacon;
+	पूर्णांक err;
 
-	if (test_bit(__QLCNIC_RESETTING, &adapter->state))
-		return -EIO;
+	अगर (test_bit(__QLCNIC_RESETTING, &adapter->state))
+		वापस -EIO;
 
-	if (kstrtoul(buf, 2, &h_beacon))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 2, &h_beacon))
+		वापस -EINVAL;
 
 	qlcnic_get_beacon_state(adapter);
 
-	if (ahw->beacon_state == h_beacon)
-		return len;
+	अगर (ahw->beacon_state == h_beacon)
+		वापस len;
 
 	rtnl_lock();
-	if (!ahw->beacon_state) {
-		if (test_and_set_bit(__QLCNIC_LED_ENABLE, &adapter->state)) {
+	अगर (!ahw->beacon_state) अणु
+		अगर (test_and_set_bit(__QLCNIC_LED_ENABLE, &adapter->state)) अणु
 			rtnl_unlock();
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	if (h_beacon)
+	अगर (h_beacon)
 		err = qlcnic_83xx_config_led(adapter, 1, h_beacon);
-	else
+	अन्यथा
 		err = qlcnic_83xx_config_led(adapter, 0, !h_beacon);
-	if (!err)
+	अगर (!err)
 		ahw->beacon_state = h_beacon;
 
-	if (!ahw->beacon_state)
+	अगर (!ahw->beacon_state)
 		clear_bit(__QLCNIC_LED_ENABLE, &adapter->state);
 
 	rtnl_unlock();
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int qlcnic_82xx_store_beacon(struct qlcnic_adapter *adapter,
-				    const char *buf, size_t len)
-{
-	struct qlcnic_hardware_context *ahw = adapter->ahw;
-	int err, drv_sds_rings = adapter->drv_sds_rings;
+अटल पूर्णांक qlcnic_82xx_store_beacon(काष्ठा qlcnic_adapter *adapter,
+				    स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
+	पूर्णांक err, drv_sds_rings = adapter->drv_sds_rings;
 	u16 beacon;
 	u8 b_state, b_rate;
 
-	if (len != sizeof(u16))
-		return -EINVAL;
+	अगर (len != माप(u16))
+		वापस -EINVAL;
 
-	memcpy(&beacon, buf, sizeof(u16));
+	स_नकल(&beacon, buf, माप(u16));
 	err = qlcnic_validate_beacon(adapter, beacon, &b_state, &b_rate);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	qlcnic_get_beacon_state(adapter);
 
-	if (ahw->beacon_state == b_state)
-		return len;
+	अगर (ahw->beacon_state == b_state)
+		वापस len;
 
 	rtnl_lock();
-	if (!ahw->beacon_state) {
-		if (test_and_set_bit(__QLCNIC_LED_ENABLE, &adapter->state)) {
+	अगर (!ahw->beacon_state) अणु
+		अगर (test_and_set_bit(__QLCNIC_LED_ENABLE, &adapter->state)) अणु
 			rtnl_unlock();
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	if (test_bit(__QLCNIC_RESETTING, &adapter->state)) {
+	अगर (test_bit(__QLCNIC_RESETTING, &adapter->state)) अणु
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!test_bit(__QLCNIC_DEV_UP, &adapter->state)) {
+	अगर (!test_bit(__QLCNIC_DEV_UP, &adapter->state)) अणु
 		err = qlcnic_diag_alloc_res(adapter->netdev, QLCNIC_LED_TEST);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		set_bit(__QLCNIC_DIAG_RES_ALLOC, &adapter->state);
-	}
+	पूर्ण
 
 	err = qlcnic_config_led(adapter, b_state, b_rate);
-	if (!err) {
+	अगर (!err) अणु
 		err = len;
 		ahw->beacon_state = b_state;
-	}
+	पूर्ण
 
-	if (test_and_clear_bit(__QLCNIC_DIAG_RES_ALLOC, &adapter->state))
-		qlcnic_diag_free_res(adapter->netdev, drv_sds_rings);
+	अगर (test_and_clear_bit(__QLCNIC_DIAG_RES_ALLOC, &adapter->state))
+		qlcnic_diag_मुक्त_res(adapter->netdev, drv_sds_rings);
 
 out:
-	if (!ahw->beacon_state)
+	अगर (!ahw->beacon_state)
 		clear_bit(__QLCNIC_LED_ENABLE, &adapter->state);
 	rtnl_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static ssize_t qlcnic_store_beacon(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t len)
-{
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	int err = 0;
+अटल sमाप_प्रकार qlcnic_store_beacon(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	पूर्णांक err = 0;
 
-	if (adapter->ahw->op_mode == QLCNIC_NON_PRIV_FUNC) {
+	अगर (adapter->ahw->op_mode == QLCNIC_NON_PRIV_FUNC) अणु
 		dev_warn(dev,
 			 "LED test not supported in non privileged mode\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (qlcnic_82xx_check(adapter))
+	अगर (qlcnic_82xx_check(adapter))
 		err = qlcnic_82xx_store_beacon(adapter, buf, len);
-	else if (qlcnic_83xx_check(adapter))
+	अन्यथा अगर (qlcnic_83xx_check(adapter))
 		err = qlcnic_83xx_store_beacon(adapter, buf, len);
-	else
-		return -EIO;
+	अन्यथा
+		वापस -EIO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static ssize_t qlcnic_show_beacon(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
+अटल sमाप_प्रकार qlcnic_show_beacon(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", adapter->ahw->beacon_state);
-}
+	वापस प्र_लिखो(buf, "%d\n", adapter->ahw->beacon_state);
+पूर्ण
 
-static int qlcnic_sysfs_validate_crb(struct qlcnic_adapter *adapter,
-				     loff_t offset, size_t size)
-{
-	size_t crb_size = 4;
+अटल पूर्णांक qlcnic_sysfs_validate_crb(काष्ठा qlcnic_adapter *adapter,
+				     loff_t offset, माप_प्रकार size)
+अणु
+	माप_प्रकार crb_size = 4;
 
-	if (!(adapter->flags & QLCNIC_DIAG_ENABLED))
-		return -EIO;
+	अगर (!(adapter->flags & QLCNIC_DIAG_ENABLED))
+		वापस -EIO;
 
-	if (offset < QLCNIC_PCI_CRBSPACE) {
-		if (ADDR_IN_RANGE(offset, QLCNIC_PCI_CAMQM,
+	अगर (offset < QLCNIC_PCI_CRBSPACE) अणु
+		अगर (ADDR_IN_RANGE(offset, QLCNIC_PCI_CAMQM,
 				  QLCNIC_PCI_CAMQM_END))
 			crb_size = 8;
-		else
-			return -EINVAL;
-	}
+		अन्यथा
+			वापस -EINVAL;
+	पूर्ण
 
-	if ((size != crb_size) || (offset & (crb_size-1)))
-		return  -EINVAL;
+	अगर ((size != crb_size) || (offset & (crb_size-1)))
+		वापस  -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_read_crb(struct file *filp, struct kobject *kobj,
-				     struct bin_attribute *attr, char *buf,
-				     loff_t offset, size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	int ret;
-
-	ret = qlcnic_sysfs_validate_crb(adapter, offset, size);
-	if (ret != 0)
-		return ret;
-	qlcnic_read_crb(adapter, buf, offset, size);
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
-
-	return size;
-}
-
-static ssize_t qlcnic_sysfs_write_crb(struct file *filp, struct kobject *kobj,
-				      struct bin_attribute *attr, char *buf,
-				      loff_t offset, size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	int ret;
+अटल sमाप_प्रकार qlcnic_sysfs_पढ़ो_crb(काष्ठा file *filp, काष्ठा kobject *kobj,
+				     काष्ठा bin_attribute *attr, अक्षर *buf,
+				     loff_t offset, माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = qlcnic_sysfs_validate_crb(adapter, offset, size);
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
+	qlcnic_पढ़ो_crb(adapter, buf, offset, size);
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
 
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
-	qlcnic_write_crb(adapter, buf, offset, size);
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int qlcnic_sysfs_validate_mem(struct qlcnic_adapter *adapter,
-				     loff_t offset, size_t size)
-{
-	if (!(adapter->flags & QLCNIC_DIAG_ENABLED))
-		return -EIO;
+अटल sमाप_प्रकार qlcnic_sysfs_ग_लिखो_crb(काष्ठा file *filp, काष्ठा kobject *kobj,
+				      काष्ठा bin_attribute *attr, अक्षर *buf,
+				      loff_t offset, माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if ((size != 8) || (offset & 0x7))
-		return  -EIO;
+	ret = qlcnic_sysfs_validate_crb(adapter, offset, size);
+	अगर (ret != 0)
+		वापस ret;
 
-	return 0;
-}
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
+	qlcnic_ग_लिखो_crb(adapter, buf, offset, size);
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_read_mem(struct file *filp, struct kobject *kobj,
-				     struct bin_attribute *attr, char *buf,
-				     loff_t offset, size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
+अटल पूर्णांक qlcnic_sysfs_validate_mem(काष्ठा qlcnic_adapter *adapter,
+				     loff_t offset, माप_प्रकार size)
+अणु
+	अगर (!(adapter->flags & QLCNIC_DIAG_ENABLED))
+		वापस -EIO;
+
+	अगर ((size != 8) || (offset & 0x7))
+		वापस  -EIO;
+
+	वापस 0;
+पूर्ण
+
+अटल sमाप_प्रकार qlcnic_sysfs_पढ़ो_mem(काष्ठा file *filp, काष्ठा kobject *kobj,
+				     काष्ठा bin_attribute *attr, अक्षर *buf,
+				     loff_t offset, माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
 	u64 data;
-	int ret;
+	पूर्णांक ret;
 
 	ret = qlcnic_sysfs_validate_mem(adapter, offset, size);
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
-	if (qlcnic_pci_mem_read_2M(adapter, offset, &data))
-		return -EIO;
+	अगर (qlcnic_pci_mem_पढ़ो_2M(adapter, offset, &data))
+		वापस -EIO;
 
-	memcpy(buf, &data, size);
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
+	स_नकल(buf, &data, size);
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_write_mem(struct file *filp, struct kobject *kobj,
-				      struct bin_attribute *attr, char *buf,
-				      loff_t offset, size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
+अटल sमाप_प्रकार qlcnic_sysfs_ग_लिखो_mem(काष्ठा file *filp, काष्ठा kobject *kobj,
+				      काष्ठा bin_attribute *attr, अक्षर *buf,
+				      loff_t offset, माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
 	u64 data;
-	int ret;
+	पूर्णांक ret;
 
 	ret = qlcnic_sysfs_validate_mem(adapter, offset, size);
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
-	memcpy(&data, buf, size);
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
+	स_नकल(&data, buf, size);
 
-	if (qlcnic_pci_mem_write_2M(adapter, offset, data))
-		return -EIO;
+	अगर (qlcnic_pci_mem_ग_लिखो_2M(adapter, offset, data))
+		वापस -EIO;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-int qlcnic_is_valid_nic_func(struct qlcnic_adapter *adapter, u8 pci_func)
-{
-	int i;
+पूर्णांक qlcnic_is_valid_nic_func(काष्ठा qlcnic_adapter *adapter, u8 pci_func)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->ahw->total_nic_func; i++) {
-		if (adapter->npars[i].pci_func == pci_func)
-			return i;
-	}
+	क्रम (i = 0; i < adapter->ahw->total_nic_func; i++) अणु
+		अगर (adapter->npars[i].pci_func == pci_func)
+			वापस i;
+	पूर्ण
 
 	dev_err(&adapter->pdev->dev, "%s: Invalid nic function\n", __func__);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int validate_pm_config(struct qlcnic_adapter *adapter,
-			      struct qlcnic_pm_func_cfg *pm_cfg, int count)
-{
+अटल पूर्णांक validate_pm_config(काष्ठा qlcnic_adapter *adapter,
+			      काष्ठा qlcnic_pm_func_cfg *pm_cfg, पूर्णांक count)
+अणु
 	u8 src_pci_func, s_esw_id, d_esw_id;
 	u8 dest_pci_func;
-	int i, src_index, dest_index;
+	पूर्णांक i, src_index, dest_index;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		src_pci_func = pm_cfg[i].pci_func;
 		dest_pci_func = pm_cfg[i].dest_npar;
 		src_index = qlcnic_is_valid_nic_func(adapter, src_pci_func);
-		if (src_index < 0)
-			return -EINVAL;
+		अगर (src_index < 0)
+			वापस -EINVAL;
 
 		dest_index = qlcnic_is_valid_nic_func(adapter, dest_pci_func);
-		if (dest_index < 0)
-			return -EINVAL;
+		अगर (dest_index < 0)
+			वापस -EINVAL;
 
 		s_esw_id = adapter->npars[src_index].phy_port;
 		d_esw_id = adapter->npars[dest_index].phy_port;
 
-		if (s_esw_id != d_esw_id)
-			return -EINVAL;
-	}
+		अगर (s_esw_id != d_esw_id)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_write_pm_config(struct file *filp,
-					    struct kobject *kobj,
-					    struct bin_attribute *attr,
-					    char *buf, loff_t offset,
-					    size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	struct qlcnic_pm_func_cfg *pm_cfg;
+अटल sमाप_प्रकार qlcnic_sysfs_ग_लिखो_pm_config(काष्ठा file *filp,
+					    काष्ठा kobject *kobj,
+					    काष्ठा bin_attribute *attr,
+					    अक्षर *buf, loff_t offset,
+					    माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा qlcnic_pm_func_cfg *pm_cfg;
 	u32 id, action, pci_func;
-	int count, rem, i, ret, index;
+	पूर्णांक count, rem, i, ret, index;
 
-	count	= size / sizeof(struct qlcnic_pm_func_cfg);
-	rem	= size % sizeof(struct qlcnic_pm_func_cfg);
-	if (rem)
-		return -EINVAL;
+	count	= size / माप(काष्ठा qlcnic_pm_func_cfg);
+	rem	= size % माप(काष्ठा qlcnic_pm_func_cfg);
+	अगर (rem)
+		वापस -EINVAL;
 
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
-	pm_cfg = (struct qlcnic_pm_func_cfg *)buf;
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
+	pm_cfg = (काष्ठा qlcnic_pm_func_cfg *)buf;
 	ret = validate_pm_config(adapter, pm_cfg, count);
 
-	if (ret)
-		return ret;
-	for (i = 0; i < count; i++) {
+	अगर (ret)
+		वापस ret;
+	क्रम (i = 0; i < count; i++) अणु
 		pci_func = pm_cfg[i].pci_func;
 		action = !!pm_cfg[i].action;
 		index = qlcnic_is_valid_nic_func(adapter, pci_func);
-		if (index < 0)
-			return -EINVAL;
+		अगर (index < 0)
+			वापस -EINVAL;
 
 		id = adapter->npars[index].phy_port;
 		ret = qlcnic_config_port_mirroring(adapter, id,
 						   action, pci_func);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		pci_func = pm_cfg[i].pci_func;
 		index = qlcnic_is_valid_nic_func(adapter, pci_func);
-		if (index < 0)
-			return -EINVAL;
+		अगर (index < 0)
+			वापस -EINVAL;
 		id = adapter->npars[index].phy_port;
 		adapter->npars[index].enable_pm = !!pm_cfg[i].action;
 		adapter->npars[index].dest_npar = id;
-	}
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_read_pm_config(struct file *filp,
-					   struct kobject *kobj,
-					   struct bin_attribute *attr,
-					   char *buf, loff_t offset,
-					   size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	struct qlcnic_pm_func_cfg *pm_cfg;
+अटल sमाप_प्रकार qlcnic_sysfs_पढ़ो_pm_config(काष्ठा file *filp,
+					   काष्ठा kobject *kobj,
+					   काष्ठा bin_attribute *attr,
+					   अक्षर *buf, loff_t offset,
+					   माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा qlcnic_pm_func_cfg *pm_cfg;
 	u8 pci_func;
 	u32 count;
-	int i;
+	पूर्णांक i;
 
-	memset(buf, 0, size);
-	pm_cfg = (struct qlcnic_pm_func_cfg *)buf;
-	count = size / sizeof(struct qlcnic_pm_func_cfg);
-	for (i = 0; i < adapter->ahw->total_nic_func; i++) {
+	स_रखो(buf, 0, size);
+	pm_cfg = (काष्ठा qlcnic_pm_func_cfg *)buf;
+	count = size / माप(काष्ठा qlcnic_pm_func_cfg);
+	क्रम (i = 0; i < adapter->ahw->total_nic_func; i++) अणु
 		pci_func = adapter->npars[i].pci_func;
-		if (pci_func >= count) {
+		अगर (pci_func >= count) अणु
 			dev_dbg(dev, "%s: Total nic functions[%d], App sent function count[%d]\n",
 				__func__, adapter->ahw->total_nic_func, count);
-			continue;
-		}
-		if (!adapter->npars[i].eswitch_status)
-			continue;
+			जारी;
+		पूर्ण
+		अगर (!adapter->npars[i].eचयन_status)
+			जारी;
 
 		pm_cfg[pci_func].action = adapter->npars[i].enable_pm;
 		pm_cfg[pci_func].dest_npar = 0;
 		pm_cfg[pci_func].pci_func = i;
-	}
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
-	return size;
-}
+	पूर्ण
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
+	वापस size;
+पूर्ण
 
-static int validate_esw_config(struct qlcnic_adapter *adapter,
-			       struct qlcnic_esw_func_cfg *esw_cfg, int count)
-{
-	struct qlcnic_hardware_context *ahw = adapter->ahw;
-	int i, ret;
+अटल पूर्णांक validate_esw_config(काष्ठा qlcnic_adapter *adapter,
+			       काष्ठा qlcnic_esw_func_cfg *esw_cfg, पूर्णांक count)
+अणु
+	काष्ठा qlcnic_hardware_context *ahw = adapter->ahw;
+	पूर्णांक i, ret;
 	u32 op_mode;
 	u8 pci_func;
 
-	if (qlcnic_82xx_check(adapter))
-		op_mode = readl(ahw->pci_base0 + QLCNIC_DRV_OP_MODE);
-	else
+	अगर (qlcnic_82xx_check(adapter))
+		op_mode = पढ़ोl(ahw->pci_base0 + QLCNIC_DRV_OP_MODE);
+	अन्यथा
 		op_mode = QLCRDX(ahw, QLC_83XX_DRV_OP_MODE);
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		pci_func = esw_cfg[i].pci_func;
-		if (pci_func >= ahw->max_vnic_func)
-			return -EINVAL;
+		अगर (pci_func >= ahw->max_vnic_func)
+			वापस -EINVAL;
 
-		if (adapter->ahw->op_mode == QLCNIC_MGMT_FUNC)
-			if (qlcnic_is_valid_nic_func(adapter, pci_func) < 0)
-				return -EINVAL;
+		अगर (adapter->ahw->op_mode == QLCNIC_MGMT_FUNC)
+			अगर (qlcnic_is_valid_nic_func(adapter, pci_func) < 0)
+				वापस -EINVAL;
 
-		switch (esw_cfg[i].op_mode) {
-		case QLCNIC_PORT_DEFAULTS:
-			if (qlcnic_82xx_check(adapter)) {
+		चयन (esw_cfg[i].op_mode) अणु
+		हाल QLCNIC_PORT_DEFAULTS:
+			अगर (qlcnic_82xx_check(adapter)) अणु
 				ret = QLC_DEV_GET_DRV(op_mode, pci_func);
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = QLC_83XX_GET_FUNC_PRIVILEGE(op_mode,
 								  pci_func);
 				esw_cfg[i].offload_flags = 0;
-			}
+			पूर्ण
 
-			if (ret != QLCNIC_NON_PRIV_FUNC) {
-				if (esw_cfg[i].mac_anti_spoof != 0)
-					return -EINVAL;
-				if (esw_cfg[i].mac_override != 1)
-					return -EINVAL;
-				if (esw_cfg[i].promisc_mode != 1)
-					return -EINVAL;
-			}
-			break;
-		case QLCNIC_ADD_VLAN:
-			if (!IS_VALID_VLAN(esw_cfg[i].vlan_id))
-				return -EINVAL;
-			if (!esw_cfg[i].op_type)
-				return -EINVAL;
-			break;
-		case QLCNIC_DEL_VLAN:
-			if (!esw_cfg[i].op_type)
-				return -EINVAL;
-			break;
-		default:
-			return -EINVAL;
-		}
-	}
+			अगर (ret != QLCNIC_NON_PRIV_FUNC) अणु
+				अगर (esw_cfg[i].mac_anti_spoof != 0)
+					वापस -EINVAL;
+				अगर (esw_cfg[i].mac_override != 1)
+					वापस -EINVAL;
+				अगर (esw_cfg[i].promisc_mode != 1)
+					वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		हाल QLCNIC_ADD_VLAN:
+			अगर (!IS_VALID_VLAN(esw_cfg[i].vlan_id))
+				वापस -EINVAL;
+			अगर (!esw_cfg[i].op_type)
+				वापस -EINVAL;
+			अवरोध;
+		हाल QLCNIC_DEL_VLAN:
+			अगर (!esw_cfg[i].op_type)
+				वापस -EINVAL;
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_write_esw_config(struct file *file,
-					     struct kobject *kobj,
-					     struct bin_attribute *attr,
-					     char *buf, loff_t offset,
-					     size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	struct qlcnic_esw_func_cfg *esw_cfg;
-	struct qlcnic_npar_info *npar;
-	int count, rem, i, ret;
-	int index;
+अटल sमाप_प्रकार qlcnic_sysfs_ग_लिखो_esw_config(काष्ठा file *file,
+					     काष्ठा kobject *kobj,
+					     काष्ठा bin_attribute *attr,
+					     अक्षर *buf, loff_t offset,
+					     माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा qlcnic_esw_func_cfg *esw_cfg;
+	काष्ठा qlcnic_npar_info *npar;
+	पूर्णांक count, rem, i, ret;
+	पूर्णांक index;
 	u8 op_mode = 0, pci_func;
 
-	count	= size / sizeof(struct qlcnic_esw_func_cfg);
-	rem	= size % sizeof(struct qlcnic_esw_func_cfg);
-	if (rem)
-		return -EINVAL;
+	count	= size / माप(काष्ठा qlcnic_esw_func_cfg);
+	rem	= size % माप(काष्ठा qlcnic_esw_func_cfg);
+	अगर (rem)
+		वापस -EINVAL;
 
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
-	esw_cfg = (struct qlcnic_esw_func_cfg *)buf;
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
+	esw_cfg = (काष्ठा qlcnic_esw_func_cfg *)buf;
 	ret = validate_esw_config(adapter, esw_cfg, count);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < count; i++) {
-		if (adapter->ahw->op_mode == QLCNIC_MGMT_FUNC)
-			if (qlcnic_config_switch_port(adapter, &esw_cfg[i]))
-				return -EINVAL;
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (adapter->ahw->op_mode == QLCNIC_MGMT_FUNC)
+			अगर (qlcnic_config_चयन_port(adapter, &esw_cfg[i]))
+				वापस -EINVAL;
 
-		if (adapter->ahw->pci_func != esw_cfg[i].pci_func)
-			continue;
+		अगर (adapter->ahw->pci_func != esw_cfg[i].pci_func)
+			जारी;
 
 		op_mode = esw_cfg[i].op_mode;
-		qlcnic_get_eswitch_port_config(adapter, &esw_cfg[i]);
+		qlcnic_get_eचयन_port_config(adapter, &esw_cfg[i]);
 		esw_cfg[i].op_mode = op_mode;
 		esw_cfg[i].pci_func = adapter->ahw->pci_func;
 
-		switch (esw_cfg[i].op_mode) {
-		case QLCNIC_PORT_DEFAULTS:
-			qlcnic_set_eswitch_port_features(adapter, &esw_cfg[i]);
+		चयन (esw_cfg[i].op_mode) अणु
+		हाल QLCNIC_PORT_DEFAULTS:
+			qlcnic_set_eचयन_port_features(adapter, &esw_cfg[i]);
 			rtnl_lock();
 			qlcnic_set_netdev_features(adapter, &esw_cfg[i]);
 			rtnl_unlock();
-			break;
-		case QLCNIC_ADD_VLAN:
+			अवरोध;
+		हाल QLCNIC_ADD_VLAN:
 			qlcnic_set_vlan_config(adapter, &esw_cfg[i]);
-			break;
-		case QLCNIC_DEL_VLAN:
+			अवरोध;
+		हाल QLCNIC_DEL_VLAN:
 			esw_cfg[i].vlan_id = 0;
 			qlcnic_set_vlan_config(adapter, &esw_cfg[i]);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (adapter->ahw->op_mode != QLCNIC_MGMT_FUNC)
-		goto out;
+	अगर (adapter->ahw->op_mode != QLCNIC_MGMT_FUNC)
+		जाओ out;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		pci_func = esw_cfg[i].pci_func;
 		index = qlcnic_is_valid_nic_func(adapter, pci_func);
-		if (index < 0)
-			return -EINVAL;
+		अगर (index < 0)
+			वापस -EINVAL;
 		npar = &adapter->npars[index];
-		switch (esw_cfg[i].op_mode) {
-		case QLCNIC_PORT_DEFAULTS:
+		चयन (esw_cfg[i].op_mode) अणु
+		हाल QLCNIC_PORT_DEFAULTS:
 			npar->promisc_mode = esw_cfg[i].promisc_mode;
 			npar->mac_override = esw_cfg[i].mac_override;
 			npar->offload_flags = esw_cfg[i].offload_flags;
 			npar->mac_anti_spoof = esw_cfg[i].mac_anti_spoof;
 			npar->discard_tagged = esw_cfg[i].discard_tagged;
-			break;
-		case QLCNIC_ADD_VLAN:
+			अवरोध;
+		हाल QLCNIC_ADD_VLAN:
 			npar->pvid = esw_cfg[i].vlan_id;
-			break;
-		case QLCNIC_DEL_VLAN:
+			अवरोध;
+		हाल QLCNIC_DEL_VLAN:
 			npar->pvid = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 out:
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_read_esw_config(struct file *file,
-					    struct kobject *kobj,
-					    struct bin_attribute *attr,
-					    char *buf, loff_t offset,
-					    size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	struct qlcnic_esw_func_cfg *esw_cfg;
+अटल sमाप_प्रकार qlcnic_sysfs_पढ़ो_esw_config(काष्ठा file *file,
+					    काष्ठा kobject *kobj,
+					    काष्ठा bin_attribute *attr,
+					    अक्षर *buf, loff_t offset,
+					    माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा qlcnic_esw_func_cfg *esw_cfg;
 	u8 pci_func;
 	u32 count;
-	int i;
+	पूर्णांक i;
 
-	memset(buf, 0, size);
-	esw_cfg = (struct qlcnic_esw_func_cfg *)buf;
-	count = size / sizeof(struct qlcnic_esw_func_cfg);
-	for (i = 0; i < adapter->ahw->total_nic_func; i++) {
+	स_रखो(buf, 0, size);
+	esw_cfg = (काष्ठा qlcnic_esw_func_cfg *)buf;
+	count = size / माप(काष्ठा qlcnic_esw_func_cfg);
+	क्रम (i = 0; i < adapter->ahw->total_nic_func; i++) अणु
 		pci_func = adapter->npars[i].pci_func;
-		if (pci_func >= count) {
+		अगर (pci_func >= count) अणु
 			dev_dbg(dev, "%s: Total nic functions[%d], App sent function count[%d]\n",
 				__func__, adapter->ahw->total_nic_func, count);
-			continue;
-		}
-		if (!adapter->npars[i].eswitch_status)
-			continue;
+			जारी;
+		पूर्ण
+		अगर (!adapter->npars[i].eचयन_status)
+			जारी;
 
 		esw_cfg[pci_func].pci_func = pci_func;
-		if (qlcnic_get_eswitch_port_config(adapter, &esw_cfg[pci_func]))
-			return -EINVAL;
-	}
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
-	return size;
-}
+		अगर (qlcnic_get_eचयन_port_config(adapter, &esw_cfg[pci_func]))
+			वापस -EINVAL;
+	पूर्ण
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
+	वापस size;
+पूर्ण
 
-static int validate_npar_config(struct qlcnic_adapter *adapter,
-				struct qlcnic_npar_func_cfg *np_cfg,
-				int count)
-{
+अटल पूर्णांक validate_npar_config(काष्ठा qlcnic_adapter *adapter,
+				काष्ठा qlcnic_npar_func_cfg *np_cfg,
+				पूर्णांक count)
+अणु
 	u8 pci_func, i;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		pci_func = np_cfg[i].pci_func;
-		if (qlcnic_is_valid_nic_func(adapter, pci_func) < 0)
-			return -EINVAL;
+		अगर (qlcnic_is_valid_nic_func(adapter, pci_func) < 0)
+			वापस -EINVAL;
 
-		if (!IS_VALID_BW(np_cfg[i].min_bw) ||
+		अगर (!IS_VALID_BW(np_cfg[i].min_bw) ||
 		    !IS_VALID_BW(np_cfg[i].max_bw))
-			return -EINVAL;
-	}
-	return 0;
-}
+			वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_write_npar_config(struct file *file,
-					      struct kobject *kobj,
-					      struct bin_attribute *attr,
-					      char *buf, loff_t offset,
-					      size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	struct qlcnic_info nic_info;
-	struct qlcnic_npar_func_cfg *np_cfg;
-	int i, count, rem, ret, index;
+अटल sमाप_प्रकार qlcnic_sysfs_ग_लिखो_npar_config(काष्ठा file *file,
+					      काष्ठा kobject *kobj,
+					      काष्ठा bin_attribute *attr,
+					      अक्षर *buf, loff_t offset,
+					      माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा qlcnic_info nic_info;
+	काष्ठा qlcnic_npar_func_cfg *np_cfg;
+	पूर्णांक i, count, rem, ret, index;
 	u8 pci_func;
 
-	count	= size / sizeof(struct qlcnic_npar_func_cfg);
-	rem	= size % sizeof(struct qlcnic_npar_func_cfg);
-	if (rem)
-		return -EINVAL;
+	count	= size / माप(काष्ठा qlcnic_npar_func_cfg);
+	rem	= size % माप(काष्ठा qlcnic_npar_func_cfg);
+	अगर (rem)
+		वापस -EINVAL;
 
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
-	np_cfg = (struct qlcnic_npar_func_cfg *)buf;
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
+	np_cfg = (काष्ठा qlcnic_npar_func_cfg *)buf;
 	ret = validate_npar_config(adapter, np_cfg, count);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		pci_func = np_cfg[i].pci_func;
 
-		memset(&nic_info, 0, sizeof(struct qlcnic_info));
+		स_रखो(&nic_info, 0, माप(काष्ठा qlcnic_info));
 		ret = qlcnic_get_nic_info(adapter, &nic_info, pci_func);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		nic_info.pci_func = pci_func;
 		nic_info.min_tx_bw = np_cfg[i].min_bw;
 		nic_info.max_tx_bw = np_cfg[i].max_bw;
 		ret = qlcnic_set_nic_info(adapter, &nic_info);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		index = qlcnic_is_valid_nic_func(adapter, pci_func);
-		if (index < 0)
-			return -EINVAL;
+		अगर (index < 0)
+			वापस -EINVAL;
 		adapter->npars[index].min_bw = nic_info.min_tx_bw;
 		adapter->npars[index].max_bw = nic_info.max_tx_bw;
-	}
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_read_npar_config(struct file *file,
-					     struct kobject *kobj,
-					     struct bin_attribute *attr,
-					     char *buf, loff_t offset,
-					     size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	struct qlcnic_npar_func_cfg *np_cfg;
-	struct qlcnic_info nic_info;
+अटल sमाप_प्रकार qlcnic_sysfs_पढ़ो_npar_config(काष्ठा file *file,
+					     काष्ठा kobject *kobj,
+					     काष्ठा bin_attribute *attr,
+					     अक्षर *buf, loff_t offset,
+					     माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा qlcnic_npar_func_cfg *np_cfg;
+	काष्ठा qlcnic_info nic_info;
 	u8 pci_func;
-	int i, ret;
+	पूर्णांक i, ret;
 	u32 count;
 
-	memset(&nic_info, 0, sizeof(struct qlcnic_info));
-	memset(buf, 0, size);
-	np_cfg = (struct qlcnic_npar_func_cfg *)buf;
+	स_रखो(&nic_info, 0, माप(काष्ठा qlcnic_info));
+	स_रखो(buf, 0, size);
+	np_cfg = (काष्ठा qlcnic_npar_func_cfg *)buf;
 
-	count = size / sizeof(struct qlcnic_npar_func_cfg);
-	for (i = 0; i < adapter->ahw->total_nic_func; i++) {
-		if (adapter->npars[i].pci_func >= count) {
+	count = size / माप(काष्ठा qlcnic_npar_func_cfg);
+	क्रम (i = 0; i < adapter->ahw->total_nic_func; i++) अणु
+		अगर (adapter->npars[i].pci_func >= count) अणु
 			dev_dbg(dev, "%s: Total nic functions[%d], App sent function count[%d]\n",
 				__func__, adapter->ahw->total_nic_func, count);
-			continue;
-		}
-		if (!adapter->npars[i].eswitch_status)
-			continue;
+			जारी;
+		पूर्ण
+		अगर (!adapter->npars[i].eचयन_status)
+			जारी;
 		pci_func = adapter->npars[i].pci_func;
-		if (qlcnic_is_valid_nic_func(adapter, pci_func) < 0)
-			continue;
+		अगर (qlcnic_is_valid_nic_func(adapter, pci_func) < 0)
+			जारी;
 		ret = qlcnic_get_nic_info(adapter, &nic_info, pci_func);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		np_cfg[pci_func].pci_func = pci_func;
 		np_cfg[pci_func].op_mode = (u8)nic_info.op_mode;
@@ -763,669 +764,669 @@ static ssize_t qlcnic_sysfs_read_npar_config(struct file *file,
 		np_cfg[pci_func].max_bw = nic_info.max_tx_bw;
 		np_cfg[pci_func].max_tx_queues = nic_info.max_tx_ques;
 		np_cfg[pci_func].max_rx_queues = nic_info.max_rx_ques;
-	}
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
-	return size;
-}
+	पूर्ण
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_get_port_stats(struct file *file,
-					   struct kobject *kobj,
-					   struct bin_attribute *attr,
-					   char *buf, loff_t offset,
-					   size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	struct qlcnic_esw_statistics port_stats;
-	int ret;
+अटल sमाप_प्रकार qlcnic_sysfs_get_port_stats(काष्ठा file *file,
+					   काष्ठा kobject *kobj,
+					   काष्ठा bin_attribute *attr,
+					   अक्षर *buf, loff_t offset,
+					   माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा qlcnic_esw_statistics port_stats;
+	पूर्णांक ret;
 
-	if (qlcnic_83xx_check(adapter))
-		return -EOPNOTSUPP;
+	अगर (qlcnic_83xx_check(adapter))
+		वापस -EOPNOTSUPP;
 
-	if (size != sizeof(struct qlcnic_esw_statistics))
-		return -EINVAL;
+	अगर (size != माप(काष्ठा qlcnic_esw_statistics))
+		वापस -EINVAL;
 
-	if (offset >= adapter->ahw->max_vnic_func)
-		return -EINVAL;
+	अगर (offset >= adapter->ahw->max_vnic_func)
+		वापस -EINVAL;
 
-	memset(&port_stats, 0, size);
+	स_रखो(&port_stats, 0, size);
 	ret = qlcnic_get_port_stats(adapter, offset, QLCNIC_QUERY_RX_COUNTER,
 				    &port_stats.rx);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = qlcnic_get_port_stats(adapter, offset, QLCNIC_QUERY_TX_COUNTER,
 				    &port_stats.tx);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memcpy(buf, &port_stats, size);
-	return size;
-}
+	स_नकल(buf, &port_stats, size);
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_get_esw_stats(struct file *file,
-					  struct kobject *kobj,
-					  struct bin_attribute *attr,
-					  char *buf, loff_t offset,
-					  size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	struct qlcnic_esw_statistics esw_stats;
-	int ret;
+अटल sमाप_प्रकार qlcnic_sysfs_get_esw_stats(काष्ठा file *file,
+					  काष्ठा kobject *kobj,
+					  काष्ठा bin_attribute *attr,
+					  अक्षर *buf, loff_t offset,
+					  माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा qlcnic_esw_statistics esw_stats;
+	पूर्णांक ret;
 
-	if (qlcnic_83xx_check(adapter))
-		return -EOPNOTSUPP;
+	अगर (qlcnic_83xx_check(adapter))
+		वापस -EOPNOTSUPP;
 
-	if (size != sizeof(struct qlcnic_esw_statistics))
-		return -EINVAL;
+	अगर (size != माप(काष्ठा qlcnic_esw_statistics))
+		वापस -EINVAL;
 
-	if (offset >= QLCNIC_NIU_MAX_XG_PORTS)
-		return -EINVAL;
+	अगर (offset >= QLCNIC_NIU_MAX_XG_PORTS)
+		वापस -EINVAL;
 
-	memset(&esw_stats, 0, size);
-	ret = qlcnic_get_eswitch_stats(adapter, offset, QLCNIC_QUERY_RX_COUNTER,
+	स_रखो(&esw_stats, 0, size);
+	ret = qlcnic_get_eचयन_stats(adapter, offset, QLCNIC_QUERY_RX_COUNTER,
 				       &esw_stats.rx);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = qlcnic_get_eswitch_stats(adapter, offset, QLCNIC_QUERY_TX_COUNTER,
+	ret = qlcnic_get_eचयन_stats(adapter, offset, QLCNIC_QUERY_TX_COUNTER,
 				       &esw_stats.tx);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memcpy(buf, &esw_stats, size);
-	return size;
-}
+	स_नकल(buf, &esw_stats, size);
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_clear_esw_stats(struct file *file,
-					    struct kobject *kobj,
-					    struct bin_attribute *attr,
-					    char *buf, loff_t offset,
-					    size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	int ret;
+अटल sमाप_प्रकार qlcnic_sysfs_clear_esw_stats(काष्ठा file *file,
+					    काष्ठा kobject *kobj,
+					    काष्ठा bin_attribute *attr,
+					    अक्षर *buf, loff_t offset,
+					    माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (qlcnic_83xx_check(adapter))
-		return -EOPNOTSUPP;
+	अगर (qlcnic_83xx_check(adapter))
+		वापस -EOPNOTSUPP;
 
-	if (offset >= QLCNIC_NIU_MAX_XG_PORTS)
-		return -EINVAL;
+	अगर (offset >= QLCNIC_NIU_MAX_XG_PORTS)
+		वापस -EINVAL;
 
 	ret = qlcnic_clear_esw_stats(adapter, QLCNIC_STATS_ESWITCH, offset,
 				     QLCNIC_QUERY_RX_COUNTER);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = qlcnic_clear_esw_stats(adapter, QLCNIC_STATS_ESWITCH, offset,
 				     QLCNIC_QUERY_TX_COUNTER);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_clear_port_stats(struct file *file,
-					     struct kobject *kobj,
-					     struct bin_attribute *attr,
-					     char *buf, loff_t offset,
-					     size_t size)
-{
+अटल sमाप_प्रकार qlcnic_sysfs_clear_port_stats(काष्ठा file *file,
+					     काष्ठा kobject *kobj,
+					     काष्ठा bin_attribute *attr,
+					     अक्षर *buf, loff_t offset,
+					     माप_प्रकार size)
+अणु
 
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	int ret;
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (qlcnic_83xx_check(adapter))
-		return -EOPNOTSUPP;
+	अगर (qlcnic_83xx_check(adapter))
+		वापस -EOPNOTSUPP;
 
-	if (offset >= adapter->ahw->max_vnic_func)
-		return -EINVAL;
+	अगर (offset >= adapter->ahw->max_vnic_func)
+		वापस -EINVAL;
 
 	ret = qlcnic_clear_esw_stats(adapter, QLCNIC_STATS_PORT, offset,
 				     QLCNIC_QUERY_RX_COUNTER);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = qlcnic_clear_esw_stats(adapter, QLCNIC_STATS_PORT, offset,
 				     QLCNIC_QUERY_TX_COUNTER);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_sysfs_read_pci_config(struct file *file,
-					    struct kobject *kobj,
-					    struct bin_attribute *attr,
-					    char *buf, loff_t offset,
-					    size_t size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	struct qlcnic_pci_func_cfg *pci_cfg;
-	struct qlcnic_pci_info *pci_info;
-	int i, ret;
+अटल sमाप_प्रकार qlcnic_sysfs_पढ़ो_pci_config(काष्ठा file *file,
+					    काष्ठा kobject *kobj,
+					    काष्ठा bin_attribute *attr,
+					    अक्षर *buf, loff_t offset,
+					    माप_प्रकार size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	काष्ठा qlcnic_pci_func_cfg *pci_cfg;
+	काष्ठा qlcnic_pci_info *pci_info;
+	पूर्णांक i, ret;
 	u32 count;
 
-	pci_info = kcalloc(size, sizeof(*pci_info), GFP_KERNEL);
-	if (!pci_info)
-		return -ENOMEM;
+	pci_info = kसुस्मृति(size, माप(*pci_info), GFP_KERNEL);
+	अगर (!pci_info)
+		वापस -ENOMEM;
 
 	ret = qlcnic_get_pci_info(adapter, pci_info);
-	if (ret) {
-		kfree(pci_info);
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त(pci_info);
+		वापस ret;
+	पूर्ण
 
-	pci_cfg = (struct qlcnic_pci_func_cfg *)buf;
-	count = size / sizeof(struct qlcnic_pci_func_cfg);
-	qlcnic_swap32_buffer((u32 *)pci_info, size / sizeof(u32));
-	for (i = 0; i < count; i++) {
+	pci_cfg = (काष्ठा qlcnic_pci_func_cfg *)buf;
+	count = size / माप(काष्ठा qlcnic_pci_func_cfg);
+	qlcnic_swap32_buffer((u32 *)pci_info, size / माप(u32));
+	क्रम (i = 0; i < count; i++) अणु
 		pci_cfg[i].pci_func = pci_info[i].id;
 		pci_cfg[i].func_type = pci_info[i].type;
 		pci_cfg[i].func_state = 0;
-		pci_cfg[i].port_num = pci_info[i].default_port;
+		pci_cfg[i].port_num = pci_info[i].शेष_port;
 		pci_cfg[i].min_bw = pci_info[i].tx_min_bw;
 		pci_cfg[i].max_bw = pci_info[i].tx_max_bw;
-		memcpy(&pci_cfg[i].def_mac_addr, &pci_info[i].mac, ETH_ALEN);
-	}
+		स_नकल(&pci_cfg[i].def_mac_addr, &pci_info[i].mac, ETH_ALEN);
+	पूर्ण
 
-	kfree(pci_info);
-	return size;
-}
+	kमुक्त(pci_info);
+	वापस size;
+पूर्ण
 
-static ssize_t qlcnic_83xx_sysfs_flash_read_handler(struct file *filp,
-						    struct kobject *kobj,
-						    struct bin_attribute *attr,
-						    char *buf, loff_t offset,
-						    size_t size)
-{
-	unsigned char *p_read_buf;
-	int  ret, count;
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
+अटल sमाप_प्रकार qlcnic_83xx_sysfs_flash_पढ़ो_handler(काष्ठा file *filp,
+						    काष्ठा kobject *kobj,
+						    काष्ठा bin_attribute *attr,
+						    अक्षर *buf, loff_t offset,
+						    माप_प्रकार size)
+अणु
+	अचिन्हित अक्षर *p_पढ़ो_buf;
+	पूर्णांक  ret, count;
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
 
-	if (!size)
-		return -EINVAL;
+	अगर (!size)
+		वापस -EINVAL;
 
-	count = size / sizeof(u32);
+	count = size / माप(u32);
 
-	if (size % sizeof(u32))
+	अगर (size % माप(u32))
 		count++;
 
-	p_read_buf = kcalloc(size, sizeof(unsigned char), GFP_KERNEL);
-	if (!p_read_buf)
-		return -ENOMEM;
-	if (qlcnic_83xx_lock_flash(adapter) != 0) {
-		kfree(p_read_buf);
-		return -EIO;
-	}
+	p_पढ़ो_buf = kसुस्मृति(size, माप(अचिन्हित अक्षर), GFP_KERNEL);
+	अगर (!p_पढ़ो_buf)
+		वापस -ENOMEM;
+	अगर (qlcnic_83xx_lock_flash(adapter) != 0) अणु
+		kमुक्त(p_पढ़ो_buf);
+		वापस -EIO;
+	पूर्ण
 
-	ret = qlcnic_83xx_lockless_flash_read32(adapter, offset, p_read_buf,
+	ret = qlcnic_83xx_lockless_flash_पढ़ो32(adapter, offset, p_पढ़ो_buf,
 						count);
 
-	if (ret) {
+	अगर (ret) अणु
 		qlcnic_83xx_unlock_flash(adapter);
-		kfree(p_read_buf);
-		return ret;
-	}
+		kमुक्त(p_पढ़ो_buf);
+		वापस ret;
+	पूर्ण
 
 	qlcnic_83xx_unlock_flash(adapter);
-	qlcnic_swap32_buffer((u32 *)p_read_buf, count);
-	memcpy(buf, p_read_buf, size);
-	kfree(p_read_buf);
+	qlcnic_swap32_buffer((u32 *)p_पढ़ो_buf, count);
+	स_नकल(buf, p_पढ़ो_buf, size);
+	kमुक्त(p_पढ़ो_buf);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int qlcnic_83xx_sysfs_flash_bulk_write(struct qlcnic_adapter *adapter,
-					      char *buf, loff_t offset,
-					      size_t size)
-{
-	int  i, ret, count;
-	unsigned char *p_cache, *p_src;
+अटल पूर्णांक qlcnic_83xx_sysfs_flash_bulk_ग_लिखो(काष्ठा qlcnic_adapter *adapter,
+					      अक्षर *buf, loff_t offset,
+					      माप_प्रकार size)
+अणु
+	पूर्णांक  i, ret, count;
+	अचिन्हित अक्षर *p_cache, *p_src;
 
-	p_cache = kcalloc(size, sizeof(unsigned char), GFP_KERNEL);
-	if (!p_cache)
-		return -ENOMEM;
+	p_cache = kसुस्मृति(size, माप(अचिन्हित अक्षर), GFP_KERNEL);
+	अगर (!p_cache)
+		वापस -ENOMEM;
 
-	count = size / sizeof(u32);
+	count = size / माप(u32);
 	qlcnic_swap32_buffer((u32 *)buf, count);
-	memcpy(p_cache, buf, size);
+	स_नकल(p_cache, buf, size);
 	p_src = p_cache;
 
-	if (qlcnic_83xx_lock_flash(adapter) != 0) {
-		kfree(p_cache);
-		return -EIO;
-	}
+	अगर (qlcnic_83xx_lock_flash(adapter) != 0) अणु
+		kमुक्त(p_cache);
+		वापस -EIO;
+	पूर्ण
 
-	if (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) {
-		ret = qlcnic_83xx_enable_flash_write(adapter);
-		if (ret) {
-			kfree(p_cache);
+	अगर (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) अणु
+		ret = qlcnic_83xx_enable_flash_ग_लिखो(adapter);
+		अगर (ret) अणु
+			kमुक्त(p_cache);
 			qlcnic_83xx_unlock_flash(adapter);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < count / QLC_83XX_FLASH_WRITE_MAX; i++) {
-		ret = qlcnic_83xx_flash_bulk_write(adapter, offset,
+	क्रम (i = 0; i < count / QLC_83XX_FLASH_WRITE_MAX; i++) अणु
+		ret = qlcnic_83xx_flash_bulk_ग_लिखो(adapter, offset,
 						   (u32 *)p_src,
 						   QLC_83XX_FLASH_WRITE_MAX);
 
-		if (ret) {
-			if (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) {
-				ret = qlcnic_83xx_disable_flash_write(adapter);
-				if (ret) {
-					kfree(p_cache);
+		अगर (ret) अणु
+			अगर (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) अणु
+				ret = qlcnic_83xx_disable_flash_ग_लिखो(adapter);
+				अगर (ret) अणु
+					kमुक्त(p_cache);
 					qlcnic_83xx_unlock_flash(adapter);
-					return -EIO;
-				}
-			}
+					वापस -EIO;
+				पूर्ण
+			पूर्ण
 
-			kfree(p_cache);
+			kमुक्त(p_cache);
 			qlcnic_83xx_unlock_flash(adapter);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		p_src = p_src + sizeof(u32)*QLC_83XX_FLASH_WRITE_MAX;
-		offset = offset + sizeof(u32)*QLC_83XX_FLASH_WRITE_MAX;
-	}
+		p_src = p_src + माप(u32)*QLC_83XX_FLASH_WRITE_MAX;
+		offset = offset + माप(u32)*QLC_83XX_FLASH_WRITE_MAX;
+	पूर्ण
 
-	if (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) {
-		ret = qlcnic_83xx_disable_flash_write(adapter);
-		if (ret) {
-			kfree(p_cache);
+	अगर (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) अणु
+		ret = qlcnic_83xx_disable_flash_ग_लिखो(adapter);
+		अगर (ret) अणु
+			kमुक्त(p_cache);
 			qlcnic_83xx_unlock_flash(adapter);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	kfree(p_cache);
+	kमुक्त(p_cache);
 	qlcnic_83xx_unlock_flash(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qlcnic_83xx_sysfs_flash_write(struct qlcnic_adapter *adapter,
-					 char *buf, loff_t offset, size_t size)
-{
-	int  i, ret, count;
-	unsigned char *p_cache, *p_src;
+अटल पूर्णांक qlcnic_83xx_sysfs_flash_ग_लिखो(काष्ठा qlcnic_adapter *adapter,
+					 अक्षर *buf, loff_t offset, माप_प्रकार size)
+अणु
+	पूर्णांक  i, ret, count;
+	अचिन्हित अक्षर *p_cache, *p_src;
 
-	p_cache = kcalloc(size, sizeof(unsigned char), GFP_KERNEL);
-	if (!p_cache)
-		return -ENOMEM;
+	p_cache = kसुस्मृति(size, माप(अचिन्हित अक्षर), GFP_KERNEL);
+	अगर (!p_cache)
+		वापस -ENOMEM;
 
-	qlcnic_swap32_buffer((u32 *)buf, size / sizeof(u32));
-	memcpy(p_cache, buf, size);
+	qlcnic_swap32_buffer((u32 *)buf, size / माप(u32));
+	स_नकल(p_cache, buf, size);
 	p_src = p_cache;
-	count = size / sizeof(u32);
+	count = size / माप(u32);
 
-	if (qlcnic_83xx_lock_flash(adapter) != 0) {
-		kfree(p_cache);
-		return -EIO;
-	}
+	अगर (qlcnic_83xx_lock_flash(adapter) != 0) अणु
+		kमुक्त(p_cache);
+		वापस -EIO;
+	पूर्ण
 
-	if (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) {
-		ret = qlcnic_83xx_enable_flash_write(adapter);
-		if (ret) {
-			kfree(p_cache);
+	अगर (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) अणु
+		ret = qlcnic_83xx_enable_flash_ग_लिखो(adapter);
+		अगर (ret) अणु
+			kमुक्त(p_cache);
 			qlcnic_83xx_unlock_flash(adapter);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
-		ret = qlcnic_83xx_flash_write32(adapter, offset, (u32 *)p_src);
-		if (ret) {
-			if (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) {
-				ret = qlcnic_83xx_disable_flash_write(adapter);
-				if (ret) {
-					kfree(p_cache);
+	क्रम (i = 0; i < count; i++) अणु
+		ret = qlcnic_83xx_flash_ग_लिखो32(adapter, offset, (u32 *)p_src);
+		अगर (ret) अणु
+			अगर (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) अणु
+				ret = qlcnic_83xx_disable_flash_ग_लिखो(adapter);
+				अगर (ret) अणु
+					kमुक्त(p_cache);
 					qlcnic_83xx_unlock_flash(adapter);
-					return -EIO;
-				}
-			}
-			kfree(p_cache);
+					वापस -EIO;
+				पूर्ण
+			पूर्ण
+			kमुक्त(p_cache);
 			qlcnic_83xx_unlock_flash(adapter);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		p_src = p_src + sizeof(u32);
-		offset = offset + sizeof(u32);
-	}
+		p_src = p_src + माप(u32);
+		offset = offset + माप(u32);
+	पूर्ण
 
-	if (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) {
-		ret = qlcnic_83xx_disable_flash_write(adapter);
-		if (ret) {
-			kfree(p_cache);
+	अगर (adapter->ahw->fdt.mfg_id == adapter->flash_mfg_id) अणु
+		ret = qlcnic_83xx_disable_flash_ग_लिखो(adapter);
+		अगर (ret) अणु
+			kमुक्त(p_cache);
 			qlcnic_83xx_unlock_flash(adapter);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	kfree(p_cache);
+	kमुक्त(p_cache);
 	qlcnic_83xx_unlock_flash(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t qlcnic_83xx_sysfs_flash_write_handler(struct file *filp,
-						     struct kobject *kobj,
-						     struct bin_attribute *attr,
-						     char *buf, loff_t offset,
-						     size_t size)
-{
-	int  ret;
-	static int flash_mode;
-	unsigned long data;
-	struct device *dev = kobj_to_dev(kobj);
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
+अटल sमाप_प्रकार qlcnic_83xx_sysfs_flash_ग_लिखो_handler(काष्ठा file *filp,
+						     काष्ठा kobject *kobj,
+						     काष्ठा bin_attribute *attr,
+						     अक्षर *buf, loff_t offset,
+						     माप_प्रकार size)
+अणु
+	पूर्णांक  ret;
+	अटल पूर्णांक flash_mode;
+	अचिन्हित दीर्घ data;
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
 
-	ret = kstrtoul(buf, 16, &data);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &data);
+	अगर (ret)
+		वापस ret;
 
-	switch (data) {
-	case QLC_83XX_FLASH_SECTOR_ERASE_CMD:
+	चयन (data) अणु
+	हाल QLC_83XX_FLASH_SECTOR_ERASE_CMD:
 		flash_mode = QLC_83XX_ERASE_MODE;
 		ret = qlcnic_83xx_erase_flash_sector(adapter, offset);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&adapter->pdev->dev,
 				"%s failed at %d\n", __func__, __LINE__);
-			return -EIO;
-		}
-		break;
+			वापस -EIO;
+		पूर्ण
+		अवरोध;
 
-	case QLC_83XX_FLASH_BULK_WRITE_CMD:
+	हाल QLC_83XX_FLASH_BULK_WRITE_CMD:
 		flash_mode = QLC_83XX_BULK_WRITE_MODE;
-		break;
+		अवरोध;
 
-	case QLC_83XX_FLASH_WRITE_CMD:
+	हाल QLC_83XX_FLASH_WRITE_CMD:
 		flash_mode = QLC_83XX_WRITE_MODE;
-		break;
-	default:
-		if (flash_mode == QLC_83XX_BULK_WRITE_MODE) {
-			ret = qlcnic_83xx_sysfs_flash_bulk_write(adapter, buf,
+		अवरोध;
+	शेष:
+		अगर (flash_mode == QLC_83XX_BULK_WRITE_MODE) अणु
+			ret = qlcnic_83xx_sysfs_flash_bulk_ग_लिखो(adapter, buf,
 								 offset, size);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(&adapter->pdev->dev,
 					"%s failed at %d\n",
 					__func__, __LINE__);
-				return -EIO;
-			}
-		}
+				वापस -EIO;
+			पूर्ण
+		पूर्ण
 
-		if (flash_mode == QLC_83XX_WRITE_MODE) {
-			ret = qlcnic_83xx_sysfs_flash_write(adapter, buf,
+		अगर (flash_mode == QLC_83XX_WRITE_MODE) अणु
+			ret = qlcnic_83xx_sysfs_flash_ग_लिखो(adapter, buf,
 							    offset, size);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(&adapter->pdev->dev,
 					"%s failed at %d\n", __func__,
 					__LINE__);
-				return -EIO;
-			}
-		}
-	}
+				वापस -EIO;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static const struct device_attribute dev_attr_bridged_mode = {
-	.attr = { .name = "bridged_mode", .mode = 0644 },
+अटल स्थिर काष्ठा device_attribute dev_attr_bridged_mode = अणु
+	.attr = अणु .name = "bridged_mode", .mode = 0644 पूर्ण,
 	.show = qlcnic_show_bridged_mode,
 	.store = qlcnic_store_bridged_mode,
-};
+पूर्ण;
 
-static const struct device_attribute dev_attr_diag_mode = {
-	.attr = { .name = "diag_mode", .mode = 0644 },
+अटल स्थिर काष्ठा device_attribute dev_attr_diag_mode = अणु
+	.attr = अणु .name = "diag_mode", .mode = 0644 पूर्ण,
 	.show = qlcnic_show_diag_mode,
 	.store = qlcnic_store_diag_mode,
-};
+पूर्ण;
 
-static const struct device_attribute dev_attr_beacon = {
-	.attr = { .name = "beacon", .mode = 0644 },
+अटल स्थिर काष्ठा device_attribute dev_attr_beacon = अणु
+	.attr = अणु .name = "beacon", .mode = 0644 पूर्ण,
 	.show = qlcnic_show_beacon,
 	.store = qlcnic_store_beacon,
-};
+पूर्ण;
 
-static const struct bin_attribute bin_attr_crb = {
-	.attr = { .name = "crb", .mode = 0644 },
+अटल स्थिर काष्ठा bin_attribute bin_attr_crb = अणु
+	.attr = अणु .name = "crb", .mode = 0644 पूर्ण,
 	.size = 0,
-	.read = qlcnic_sysfs_read_crb,
-	.write = qlcnic_sysfs_write_crb,
-};
+	.पढ़ो = qlcnic_sysfs_पढ़ो_crb,
+	.ग_लिखो = qlcnic_sysfs_ग_लिखो_crb,
+पूर्ण;
 
-static const struct bin_attribute bin_attr_mem = {
-	.attr = { .name = "mem", .mode = 0644 },
+अटल स्थिर काष्ठा bin_attribute bin_attr_mem = अणु
+	.attr = अणु .name = "mem", .mode = 0644 पूर्ण,
 	.size = 0,
-	.read = qlcnic_sysfs_read_mem,
-	.write = qlcnic_sysfs_write_mem,
-};
+	.पढ़ो = qlcnic_sysfs_पढ़ो_mem,
+	.ग_लिखो = qlcnic_sysfs_ग_लिखो_mem,
+पूर्ण;
 
-static const struct bin_attribute bin_attr_npar_config = {
-	.attr = { .name = "npar_config", .mode = 0644 },
+अटल स्थिर काष्ठा bin_attribute bin_attr_npar_config = अणु
+	.attr = अणु .name = "npar_config", .mode = 0644 पूर्ण,
 	.size = 0,
-	.read = qlcnic_sysfs_read_npar_config,
-	.write = qlcnic_sysfs_write_npar_config,
-};
+	.पढ़ो = qlcnic_sysfs_पढ़ो_npar_config,
+	.ग_लिखो = qlcnic_sysfs_ग_लिखो_npar_config,
+पूर्ण;
 
-static const struct bin_attribute bin_attr_pci_config = {
-	.attr = { .name = "pci_config", .mode = 0644 },
+अटल स्थिर काष्ठा bin_attribute bin_attr_pci_config = अणु
+	.attr = अणु .name = "pci_config", .mode = 0644 पूर्ण,
 	.size = 0,
-	.read = qlcnic_sysfs_read_pci_config,
-	.write = NULL,
-};
+	.पढ़ो = qlcnic_sysfs_पढ़ो_pci_config,
+	.ग_लिखो = शून्य,
+पूर्ण;
 
-static const struct bin_attribute bin_attr_port_stats = {
-	.attr = { .name = "port_stats", .mode = 0644 },
+अटल स्थिर काष्ठा bin_attribute bin_attr_port_stats = अणु
+	.attr = अणु .name = "port_stats", .mode = 0644 पूर्ण,
 	.size = 0,
-	.read = qlcnic_sysfs_get_port_stats,
-	.write = qlcnic_sysfs_clear_port_stats,
-};
+	.पढ़ो = qlcnic_sysfs_get_port_stats,
+	.ग_लिखो = qlcnic_sysfs_clear_port_stats,
+पूर्ण;
 
-static const struct bin_attribute bin_attr_esw_stats = {
-	.attr = { .name = "esw_stats", .mode = 0644 },
+अटल स्थिर काष्ठा bin_attribute bin_attr_esw_stats = अणु
+	.attr = अणु .name = "esw_stats", .mode = 0644 पूर्ण,
 	.size = 0,
-	.read = qlcnic_sysfs_get_esw_stats,
-	.write = qlcnic_sysfs_clear_esw_stats,
-};
+	.पढ़ो = qlcnic_sysfs_get_esw_stats,
+	.ग_लिखो = qlcnic_sysfs_clear_esw_stats,
+पूर्ण;
 
-static const struct bin_attribute bin_attr_esw_config = {
-	.attr = { .name = "esw_config", .mode = 0644 },
+अटल स्थिर काष्ठा bin_attribute bin_attr_esw_config = अणु
+	.attr = अणु .name = "esw_config", .mode = 0644 पूर्ण,
 	.size = 0,
-	.read = qlcnic_sysfs_read_esw_config,
-	.write = qlcnic_sysfs_write_esw_config,
-};
+	.पढ़ो = qlcnic_sysfs_पढ़ो_esw_config,
+	.ग_लिखो = qlcnic_sysfs_ग_लिखो_esw_config,
+पूर्ण;
 
-static const struct bin_attribute bin_attr_pm_config = {
-	.attr = { .name = "pm_config", .mode = 0644 },
+अटल स्थिर काष्ठा bin_attribute bin_attr_pm_config = अणु
+	.attr = अणु .name = "pm_config", .mode = 0644 पूर्ण,
 	.size = 0,
-	.read = qlcnic_sysfs_read_pm_config,
-	.write = qlcnic_sysfs_write_pm_config,
-};
+	.पढ़ो = qlcnic_sysfs_पढ़ो_pm_config,
+	.ग_लिखो = qlcnic_sysfs_ग_लिखो_pm_config,
+पूर्ण;
 
-static const struct bin_attribute bin_attr_flash = {
-	.attr = { .name = "flash", .mode = 0644 },
+अटल स्थिर काष्ठा bin_attribute bin_attr_flash = अणु
+	.attr = अणु .name = "flash", .mode = 0644 पूर्ण,
 	.size = 0,
-	.read = qlcnic_83xx_sysfs_flash_read_handler,
-	.write = qlcnic_83xx_sysfs_flash_write_handler,
-};
+	.पढ़ो = qlcnic_83xx_sysfs_flash_पढ़ो_handler,
+	.ग_लिखो = qlcnic_83xx_sysfs_flash_ग_लिखो_handler,
+पूर्ण;
 
-#ifdef CONFIG_QLCNIC_HWMON
+#अगर_घोषित CONFIG_QLCNIC_HWMON
 
-static ssize_t qlcnic_hwmon_show_temp(struct device *dev,
-				      struct device_attribute *dev_attr,
-				      char *buf)
-{
-	struct qlcnic_adapter *adapter = dev_get_drvdata(dev);
-	unsigned int temperature = 0, value = 0;
+अटल sमाप_प्रकार qlcnic_hwmon_show_temp(काष्ठा device *dev,
+				      काष्ठा device_attribute *dev_attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा qlcnic_adapter *adapter = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक temperature = 0, value = 0;
 
-	if (qlcnic_83xx_check(adapter))
+	अगर (qlcnic_83xx_check(adapter))
 		value = QLCRDX(adapter->ahw, QLC_83XX_ASIC_TEMP);
-	else if (qlcnic_82xx_check(adapter))
+	अन्यथा अगर (qlcnic_82xx_check(adapter))
 		value = QLC_SHARED_REG_RD32(adapter, QLCNIC_ASIC_TEMP);
 
 	temperature = qlcnic_get_temp_val(value);
 	/* display millidegree celcius */
 	temperature *= 1000;
-	return sprintf(buf, "%u\n", temperature);
-}
+	वापस प्र_लिखो(buf, "%u\n", temperature);
+पूर्ण
 
 /* hwmon-sysfs attributes */
-static SENSOR_DEVICE_ATTR(temp1_input, 0444,
-			  qlcnic_hwmon_show_temp, NULL, 1);
+अटल SENSOR_DEVICE_ATTR(temp1_input, 0444,
+			  qlcnic_hwmon_show_temp, शून्य, 1);
 
-static struct attribute *qlcnic_hwmon_attrs[] = {
+अटल काष्ठा attribute *qlcnic_hwmon_attrs[] = अणु
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 ATTRIBUTE_GROUPS(qlcnic_hwmon);
 
-void qlcnic_register_hwmon_dev(struct qlcnic_adapter *adapter)
-{
-	struct device *dev = &adapter->pdev->dev;
-	struct device *hwmon_dev;
+व्योम qlcnic_रेजिस्टर_hwmon_dev(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा device *dev = &adapter->pdev->dev;
+	काष्ठा device *hwmon_dev;
 
-	/* Skip hwmon registration for a VF device */
-	if (qlcnic_sriov_vf_check(adapter)) {
-		adapter->ahw->hwmon_dev = NULL;
-		return;
-	}
-	hwmon_dev = hwmon_device_register_with_groups(dev, qlcnic_driver_name,
+	/* Skip hwmon registration क्रम a VF device */
+	अगर (qlcnic_sriov_vf_check(adapter)) अणु
+		adapter->ahw->hwmon_dev = शून्य;
+		वापस;
+	पूर्ण
+	hwmon_dev = hwmon_device_रेजिस्टर_with_groups(dev, qlcnic_driver_name,
 						      adapter,
 						      qlcnic_hwmon_groups);
-	if (IS_ERR(hwmon_dev)) {
+	अगर (IS_ERR(hwmon_dev)) अणु
 		dev_err(dev, "Cannot register with hwmon, err=%ld\n",
 			PTR_ERR(hwmon_dev));
-		hwmon_dev = NULL;
-	}
+		hwmon_dev = शून्य;
+	पूर्ण
 	adapter->ahw->hwmon_dev = hwmon_dev;
-}
+पूर्ण
 
-void qlcnic_unregister_hwmon_dev(struct qlcnic_adapter *adapter)
-{
-	struct device *hwmon_dev = adapter->ahw->hwmon_dev;
-	if (hwmon_dev) {
-		hwmon_device_unregister(hwmon_dev);
-		adapter->ahw->hwmon_dev = NULL;
-	}
-}
-#endif
+व्योम qlcnic_unरेजिस्टर_hwmon_dev(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा device *hwmon_dev = adapter->ahw->hwmon_dev;
+	अगर (hwmon_dev) अणु
+		hwmon_device_unरेजिस्टर(hwmon_dev);
+		adapter->ahw->hwmon_dev = शून्य;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-void qlcnic_create_sysfs_entries(struct qlcnic_adapter *adapter)
-{
-	struct device *dev = &adapter->pdev->dev;
+व्योम qlcnic_create_sysfs_entries(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा device *dev = &adapter->pdev->dev;
 
-	if (adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_BDG)
-		if (device_create_file(dev, &dev_attr_bridged_mode))
+	अगर (adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_BDG)
+		अगर (device_create_file(dev, &dev_attr_bridged_mode))
 			dev_warn(dev,
 				 "failed to create bridged_mode sysfs entry\n");
-}
+पूर्ण
 
-void qlcnic_remove_sysfs_entries(struct qlcnic_adapter *adapter)
-{
-	struct device *dev = &adapter->pdev->dev;
+व्योम qlcnic_हटाओ_sysfs_entries(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा device *dev = &adapter->pdev->dev;
 
-	if (adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_BDG)
-		device_remove_file(dev, &dev_attr_bridged_mode);
-}
+	अगर (adapter->ahw->capabilities & QLCNIC_FW_CAPABILITY_BDG)
+		device_हटाओ_file(dev, &dev_attr_bridged_mode);
+पूर्ण
 
-static void qlcnic_create_diag_entries(struct qlcnic_adapter *adapter)
-{
-	struct device *dev = &adapter->pdev->dev;
+अटल व्योम qlcnic_create_diag_entries(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा device *dev = &adapter->pdev->dev;
 
-	if (device_create_bin_file(dev, &bin_attr_port_stats))
+	अगर (device_create_bin_file(dev, &bin_attr_port_stats))
 		dev_info(dev, "failed to create port stats sysfs entry");
 
-	if (adapter->ahw->op_mode == QLCNIC_NON_PRIV_FUNC)
-		return;
-	if (device_create_file(dev, &dev_attr_diag_mode))
+	अगर (adapter->ahw->op_mode == QLCNIC_NON_PRIV_FUNC)
+		वापस;
+	अगर (device_create_file(dev, &dev_attr_diag_mode))
 		dev_info(dev, "failed to create diag_mode sysfs entry\n");
-	if (device_create_bin_file(dev, &bin_attr_crb))
+	अगर (device_create_bin_file(dev, &bin_attr_crb))
 		dev_info(dev, "failed to create crb sysfs entry\n");
-	if (device_create_bin_file(dev, &bin_attr_mem))
+	अगर (device_create_bin_file(dev, &bin_attr_mem))
 		dev_info(dev, "failed to create mem sysfs entry\n");
 
-	if (test_bit(__QLCNIC_MAINTENANCE_MODE, &adapter->state))
-		return;
+	अगर (test_bit(__QLCNIC_MAINTEन_अंकCE_MODE, &adapter->state))
+		वापस;
 
-	if (device_create_bin_file(dev, &bin_attr_pci_config))
+	अगर (device_create_bin_file(dev, &bin_attr_pci_config))
 		dev_info(dev, "failed to create pci config sysfs entry");
 
-	if (device_create_file(dev, &dev_attr_beacon))
+	अगर (device_create_file(dev, &dev_attr_beacon))
 		dev_info(dev, "failed to create beacon sysfs entry");
 
-	if (!(adapter->flags & QLCNIC_ESWITCH_ENABLED))
-		return;
-	if (device_create_bin_file(dev, &bin_attr_esw_config))
+	अगर (!(adapter->flags & QLCNIC_ESWITCH_ENABLED))
+		वापस;
+	अगर (device_create_bin_file(dev, &bin_attr_esw_config))
 		dev_info(dev, "failed to create esw config sysfs entry");
-	if (adapter->ahw->op_mode != QLCNIC_MGMT_FUNC)
-		return;
-	if (device_create_bin_file(dev, &bin_attr_npar_config))
+	अगर (adapter->ahw->op_mode != QLCNIC_MGMT_FUNC)
+		वापस;
+	अगर (device_create_bin_file(dev, &bin_attr_npar_config))
 		dev_info(dev, "failed to create npar config sysfs entry");
-	if (device_create_bin_file(dev, &bin_attr_pm_config))
+	अगर (device_create_bin_file(dev, &bin_attr_pm_config))
 		dev_info(dev, "failed to create pm config sysfs entry");
-	if (device_create_bin_file(dev, &bin_attr_esw_stats))
+	अगर (device_create_bin_file(dev, &bin_attr_esw_stats))
 		dev_info(dev, "failed to create eswitch stats sysfs entry");
-}
+पूर्ण
 
-static void qlcnic_remove_diag_entries(struct qlcnic_adapter *adapter)
-{
-	struct device *dev = &adapter->pdev->dev;
+अटल व्योम qlcnic_हटाओ_diag_entries(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा device *dev = &adapter->pdev->dev;
 
-	device_remove_bin_file(dev, &bin_attr_port_stats);
+	device_हटाओ_bin_file(dev, &bin_attr_port_stats);
 
-	if (adapter->ahw->op_mode == QLCNIC_NON_PRIV_FUNC)
-		return;
-	device_remove_file(dev, &dev_attr_diag_mode);
-	device_remove_bin_file(dev, &bin_attr_crb);
-	device_remove_bin_file(dev, &bin_attr_mem);
+	अगर (adapter->ahw->op_mode == QLCNIC_NON_PRIV_FUNC)
+		वापस;
+	device_हटाओ_file(dev, &dev_attr_diag_mode);
+	device_हटाओ_bin_file(dev, &bin_attr_crb);
+	device_हटाओ_bin_file(dev, &bin_attr_mem);
 
-	if (test_bit(__QLCNIC_MAINTENANCE_MODE, &adapter->state))
-		return;
+	अगर (test_bit(__QLCNIC_MAINTEन_अंकCE_MODE, &adapter->state))
+		वापस;
 
-	device_remove_bin_file(dev, &bin_attr_pci_config);
-	device_remove_file(dev, &dev_attr_beacon);
-	if (!(adapter->flags & QLCNIC_ESWITCH_ENABLED))
-		return;
-	device_remove_bin_file(dev, &bin_attr_esw_config);
-	if (adapter->ahw->op_mode != QLCNIC_MGMT_FUNC)
-		return;
-	device_remove_bin_file(dev, &bin_attr_npar_config);
-	device_remove_bin_file(dev, &bin_attr_pm_config);
-	device_remove_bin_file(dev, &bin_attr_esw_stats);
-}
+	device_हटाओ_bin_file(dev, &bin_attr_pci_config);
+	device_हटाओ_file(dev, &dev_attr_beacon);
+	अगर (!(adapter->flags & QLCNIC_ESWITCH_ENABLED))
+		वापस;
+	device_हटाओ_bin_file(dev, &bin_attr_esw_config);
+	अगर (adapter->ahw->op_mode != QLCNIC_MGMT_FUNC)
+		वापस;
+	device_हटाओ_bin_file(dev, &bin_attr_npar_config);
+	device_हटाओ_bin_file(dev, &bin_attr_pm_config);
+	device_हटाओ_bin_file(dev, &bin_attr_esw_stats);
+पूर्ण
 
-void qlcnic_82xx_add_sysfs(struct qlcnic_adapter *adapter)
-{
+व्योम qlcnic_82xx_add_sysfs(काष्ठा qlcnic_adapter *adapter)
+अणु
 	qlcnic_create_diag_entries(adapter);
-}
+पूर्ण
 
-void qlcnic_82xx_remove_sysfs(struct qlcnic_adapter *adapter)
-{
-	qlcnic_remove_diag_entries(adapter);
-}
+व्योम qlcnic_82xx_हटाओ_sysfs(काष्ठा qlcnic_adapter *adapter)
+अणु
+	qlcnic_हटाओ_diag_entries(adapter);
+पूर्ण
 
-void qlcnic_83xx_add_sysfs(struct qlcnic_adapter *adapter)
-{
-	struct device *dev = &adapter->pdev->dev;
+व्योम qlcnic_83xx_add_sysfs(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा device *dev = &adapter->pdev->dev;
 
 	qlcnic_create_diag_entries(adapter);
 
-	if (sysfs_create_bin_file(&dev->kobj, &bin_attr_flash))
+	अगर (sysfs_create_bin_file(&dev->kobj, &bin_attr_flash))
 		dev_info(dev, "failed to create flash sysfs entry\n");
-}
+पूर्ण
 
-void qlcnic_83xx_remove_sysfs(struct qlcnic_adapter *adapter)
-{
-	struct device *dev = &adapter->pdev->dev;
+व्योम qlcnic_83xx_हटाओ_sysfs(काष्ठा qlcnic_adapter *adapter)
+अणु
+	काष्ठा device *dev = &adapter->pdev->dev;
 
-	qlcnic_remove_diag_entries(adapter);
-	sysfs_remove_bin_file(&dev->kobj, &bin_attr_flash);
-}
+	qlcnic_हटाओ_diag_entries(adapter);
+	sysfs_हटाओ_bin_file(&dev->kobj, &bin_attr_flash);
+पूर्ण

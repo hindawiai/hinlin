@@ -1,162 +1,163 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SPARC_PTRACE_H
-#define __SPARC_PTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SPARC_PTRACE_H
+#घोषणा __SPARC_PTRACE_H
 
-#include <uapi/asm/ptrace.h>
+#समावेश <uapi/यंत्र/ptrace.h>
 
-#if defined(__sparc__) && defined(__arch64__)
-#ifndef __ASSEMBLY__
+#अगर defined(__sparc__) && defined(__arch64__)
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/compiler.h>
-#include <linux/threads.h>
-#include <asm/switch_to.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <यंत्र/चयन_to.h>
 
-static inline int pt_regs_trap_type(struct pt_regs *regs)
-{
-	return regs->magic & 0x1ff;
-}
+अटल अंतरभूत पूर्णांक pt_regs_trap_type(काष्ठा pt_regs *regs)
+अणु
+	वापस regs->magic & 0x1ff;
+पूर्ण
 
-static inline bool pt_regs_is_syscall(struct pt_regs *regs)
-{
-	return (regs->tstate & TSTATE_SYSCALL);
-}
+अटल अंतरभूत bool pt_regs_is_syscall(काष्ठा pt_regs *regs)
+अणु
+	वापस (regs->tstate & TSTATE_SYSCALL);
+पूर्ण
 
-static inline bool pt_regs_clear_syscall(struct pt_regs *regs)
-{
-	return (regs->tstate &= ~TSTATE_SYSCALL);
-}
+अटल अंतरभूत bool pt_regs_clear_syscall(काष्ठा pt_regs *regs)
+अणु
+	वापस (regs->tstate &= ~TSTATE_SYSCALL);
+पूर्ण
 
-#define arch_ptrace_stop_needed(exit_code, info) \
-({	flush_user_windows(); \
-	get_thread_wsaved() != 0; \
-})
+#घोषणा arch_ptrace_stop_needed(निकास_code, info) \
+(अणु	flush_user_winकरोws(); \
+	get_thपढ़ो_wsaved() != 0; \
+पूर्ण)
 
-#define arch_ptrace_stop(exit_code, info) \
+#घोषणा arch_ptrace_stop(निकास_code, info) \
 	synchronize_user_stack()
 
-#define current_pt_regs() \
-	((struct pt_regs *)((unsigned long)current_thread_info() + THREAD_SIZE) - 1)
+#घोषणा current_pt_regs() \
+	((काष्ठा pt_regs *)((अचिन्हित दीर्घ)current_thपढ़ो_info() + THREAD_SIZE) - 1)
 
-struct global_reg_snapshot {
-	unsigned long		tstate;
-	unsigned long		tpc;
-	unsigned long		tnpc;
-	unsigned long		o7;
-	unsigned long		i7;
-	unsigned long		rpc;
-	struct thread_info	*thread;
-	unsigned long		pad1;
-};
+काष्ठा global_reg_snapshot अणु
+	अचिन्हित दीर्घ		tstate;
+	अचिन्हित दीर्घ		tpc;
+	अचिन्हित दीर्घ		tnpc;
+	अचिन्हित दीर्घ		o7;
+	अचिन्हित दीर्घ		i7;
+	अचिन्हित दीर्घ		rpc;
+	काष्ठा thपढ़ो_info	*thपढ़ो;
+	अचिन्हित दीर्घ		pad1;
+पूर्ण;
 
-struct global_pmu_snapshot {
-	unsigned long		pcr[4];
-	unsigned long		pic[4];
-};
+काष्ठा global_pmu_snapshot अणु
+	अचिन्हित दीर्घ		pcr[4];
+	अचिन्हित दीर्घ		pic[4];
+पूर्ण;
 
-union global_cpu_snapshot {
-	struct global_reg_snapshot	reg;
-	struct global_pmu_snapshot	pmu;
-};
+जोड़ global_cpu_snapshot अणु
+	काष्ठा global_reg_snapshot	reg;
+	काष्ठा global_pmu_snapshot	pmu;
+पूर्ण;
 
-extern union global_cpu_snapshot global_cpu_snapshot[NR_CPUS];
+बाह्य जोड़ global_cpu_snapshot global_cpu_snapshot[NR_CPUS];
 
-#define force_successful_syscall_return() set_thread_noerror(1)
-#define user_mode(regs) (!((regs)->tstate & TSTATE_PRIV))
-#define instruction_pointer(regs) ((regs)->tpc)
-#define instruction_pointer_set(regs, val) do { \
+#घोषणा क्रमce_successful_syscall_वापस() set_thपढ़ो_noerror(1)
+#घोषणा user_mode(regs) (!((regs)->tstate & TSTATE_PRIV))
+#घोषणा inकाष्ठाion_poपूर्णांकer(regs) ((regs)->tpc)
+#घोषणा inकाष्ठाion_poपूर्णांकer_set(regs, val) करो अणु \
 		(regs)->tpc = (val); \
 		(regs)->tnpc = (val)+4; \
-	} while (0)
-#define user_stack_pointer(regs) ((regs)->u_regs[UREG_FP])
-static inline int is_syscall_success(struct pt_regs *regs)
-{
-	return !(regs->tstate & (TSTATE_XCARRY | TSTATE_ICARRY));
-}
+	पूर्ण जबतक (0)
+#घोषणा user_stack_poपूर्णांकer(regs) ((regs)->u_regs[UREG_FP])
+अटल अंतरभूत पूर्णांक is_syscall_success(काष्ठा pt_regs *regs)
+अणु
+	वापस !(regs->tstate & (TSTATE_XCARRY | TSTATE_ICARRY));
+पूर्ण
 
-static inline long regs_return_value(struct pt_regs *regs)
-{
-	return regs->u_regs[UREG_I0];
-}
-#ifdef CONFIG_SMP
-unsigned long profile_pc(struct pt_regs *);
-#else
-#define profile_pc(regs) instruction_pointer(regs)
-#endif
+अटल अंतरभूत दीर्घ regs_वापस_value(काष्ठा pt_regs *regs)
+अणु
+	वापस regs->u_regs[UREG_I0];
+पूर्ण
+#अगर_घोषित CONFIG_SMP
+अचिन्हित दीर्घ profile_pc(काष्ठा pt_regs *);
+#अन्यथा
+#घोषणा profile_pc(regs) inकाष्ठाion_poपूर्णांकer(regs)
+#पूर्ण_अगर
 
-#define MAX_REG_OFFSET (offsetof(struct pt_regs, magic))
+#घोषणा MAX_REG_OFFSET (दुरत्व(काष्ठा pt_regs, magic))
 
-int regs_query_register_offset(const char *name);
-unsigned long regs_get_kernel_stack_nth(struct pt_regs *regs, unsigned int n);
+पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name);
+अचिन्हित दीर्घ regs_get_kernel_stack_nth(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक n);
 
 /**
- * regs_get_register() - get register value from its offset
- * @regs:	pt_regs from which register value is gotten
- * @offset:	offset number of the register.
+ * regs_get_रेजिस्टर() - get रेजिस्टर value from its offset
+ * @regs:	pt_regs from which रेजिस्टर value is gotten
+ * @offset:	offset number of the रेजिस्टर.
  *
- * regs_get_register returns the value of a register whose
- * offset from @regs. The @offset is the offset of the register
- * in struct pt_regs. If @offset is bigger than MAX_REG_OFFSET,
- * this returns 0.
+ * regs_get_रेजिस्टर वापसs the value of a रेजिस्टर whose
+ * offset from @regs. The @offset is the offset of the रेजिस्टर
+ * in काष्ठा pt_regs. If @offset is bigger than MAX_REG_OFFSET,
+ * this वापसs 0.
  */
-static inline unsigned long regs_get_register(struct pt_regs *regs,
-					     unsigned long offset)
-{
-	if (unlikely(offset >= MAX_REG_OFFSET))
-		return 0;
-	if (offset == PT_V9_Y)
-		return *(unsigned int *)((unsigned long)regs + offset);
-	return *(unsigned long *)((unsigned long)regs + offset);
-}
+अटल अंतरभूत अचिन्हित दीर्घ regs_get_रेजिस्टर(काष्ठा pt_regs *regs,
+					     अचिन्हित दीर्घ offset)
+अणु
+	अगर (unlikely(offset >= MAX_REG_OFFSET))
+		वापस 0;
+	अगर (offset == PT_V9_Y)
+		वापस *(अचिन्हित पूर्णांक *)((अचिन्हित दीर्घ)regs + offset);
+	वापस *(अचिन्हित दीर्घ *)((अचिन्हित दीर्घ)regs + offset);
+पूर्ण
 
-/* Valid only for Kernel mode traps. */
-static inline unsigned long kernel_stack_pointer(struct pt_regs *regs)
-{
-	return regs->u_regs[UREG_I6];
-}
-#else /* __ASSEMBLY__ */
-#endif /* __ASSEMBLY__ */
-#else /* (defined(__sparc__) && defined(__arch64__)) */
-#ifndef __ASSEMBLY__
-#include <asm/switch_to.h>
+/* Valid only क्रम Kernel mode traps. */
+अटल अंतरभूत अचिन्हित दीर्घ kernel_stack_poपूर्णांकer(काष्ठा pt_regs *regs)
+अणु
+	वापस regs->u_regs[UREG_I6];
+पूर्ण
+#अन्यथा /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#अन्यथा /* (defined(__sparc__) && defined(__arch64__)) */
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <यंत्र/चयन_to.h>
 
-static inline bool pt_regs_is_syscall(struct pt_regs *regs)
-{
-	return (regs->psr & PSR_SYSCALL);
-}
+अटल अंतरभूत bool pt_regs_is_syscall(काष्ठा pt_regs *regs)
+अणु
+	वापस (regs->psr & PSR_SYSCALL);
+पूर्ण
 
-static inline bool pt_regs_clear_syscall(struct pt_regs *regs)
-{
-	return (regs->psr &= ~PSR_SYSCALL);
-}
+अटल अंतरभूत bool pt_regs_clear_syscall(काष्ठा pt_regs *regs)
+अणु
+	वापस (regs->psr &= ~PSR_SYSCALL);
+पूर्ण
 
-#define arch_ptrace_stop_needed(exit_code, info) \
-({	flush_user_windows(); \
-	current_thread_info()->w_saved != 0;	\
-})
+#घोषणा arch_ptrace_stop_needed(निकास_code, info) \
+(अणु	flush_user_winकरोws(); \
+	current_thपढ़ो_info()->w_saved != 0;	\
+पूर्ण)
 
-#define arch_ptrace_stop(exit_code, info) \
+#घोषणा arch_ptrace_stop(निकास_code, info) \
 	synchronize_user_stack()
 
-#define current_pt_regs() \
-	((struct pt_regs *)((unsigned long)current_thread_info() + THREAD_SIZE) - 1)
+#घोषणा current_pt_regs() \
+	((काष्ठा pt_regs *)((अचिन्हित दीर्घ)current_thपढ़ो_info() + THREAD_SIZE) - 1)
 
-#define user_mode(regs) (!((regs)->psr & PSR_PS))
-#define instruction_pointer(regs) ((regs)->pc)
-#define user_stack_pointer(regs) ((regs)->u_regs[UREG_FP])
-unsigned long profile_pc(struct pt_regs *);
-#else /* (!__ASSEMBLY__) */
-#endif /* (!__ASSEMBLY__) */
-#endif /* (defined(__sparc__) && defined(__arch64__)) */
-#define STACK_BIAS		2047
+#घोषणा user_mode(regs) (!((regs)->psr & PSR_PS))
+#घोषणा inकाष्ठाion_poपूर्णांकer(regs) ((regs)->pc)
+#घोषणा user_stack_poपूर्णांकer(regs) ((regs)->u_regs[UREG_FP])
+अचिन्हित दीर्घ profile_pc(काष्ठा pt_regs *);
+#अन्यथा /* (!__ASSEMBLY__) */
+#पूर्ण_अगर /* (!__ASSEMBLY__) */
+#पूर्ण_अगर /* (defined(__sparc__) && defined(__arch64__)) */
+#घोषणा STACK_BIAS		2047
 
 /* global_reg_snapshot offsets */
-#define GR_SNAP_TSTATE	0x00
-#define GR_SNAP_TPC	0x08
-#define GR_SNAP_TNPC	0x10
-#define GR_SNAP_O7	0x18
-#define GR_SNAP_I7	0x20
-#define GR_SNAP_RPC	0x28
-#define GR_SNAP_THREAD	0x30
-#define GR_SNAP_PAD1	0x38
+#घोषणा GR_SNAP_TSTATE	0x00
+#घोषणा GR_SNAP_TPC	0x08
+#घोषणा GR_SNAP_TNPC	0x10
+#घोषणा GR_SNAP_O7	0x18
+#घोषणा GR_SNAP_I7	0x20
+#घोषणा GR_SNAP_RPC	0x28
+#घोषणा GR_SNAP_THREAD	0x30
+#घोषणा GR_SNAP_PAD1	0x38
 
-#endif /* !(__SPARC_PTRACE_H) */
+#पूर्ण_अगर /* !(__SPARC_PTRACE_H) */

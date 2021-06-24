@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  *  linux/net/sunrpc/gss_rpc_upcall.h
  *
  *  Copyright (C) 2012 Simo Sorce <simo@redhat.com>
  */
 
-#ifndef _GSS_RPC_UPCALL_H
-#define _GSS_RPC_UPCALL_H
+#अगर_अघोषित _GSS_RPC_UPCALL_H
+#घोषणा _GSS_RPC_UPCALL_H
 
-#include <linux/sunrpc/gss_api.h>
-#include <linux/sunrpc/auth_gss.h>
-#include "gss_rpc_xdr.h"
-#include "../netns.h"
+#समावेश <linux/sunrpc/gss_api.h>
+#समावेश <linux/sunrpc/auth_gss.h>
+#समावेश "gss_rpc_xdr.h"
+#समावेश "../netns.h"
 
-struct gssp_upcall_data {
-	struct xdr_netobj in_handle;
-	struct gssp_in_token in_token;
-	struct xdr_netobj out_handle;
-	struct xdr_netobj out_token;
-	struct rpcsec_gss_oid mech_oid;
-	struct svc_cred creds;
-	int found_creds;
-	int major_status;
-	int minor_status;
-};
+काष्ठा gssp_upcall_data अणु
+	काष्ठा xdr_netobj in_handle;
+	काष्ठा gssp_in_token in_token;
+	काष्ठा xdr_netobj out_handle;
+	काष्ठा xdr_netobj out_token;
+	काष्ठा rpcsec_gss_oid mech_oid;
+	काष्ठा svc_cred creds;
+	पूर्णांक found_creds;
+	पूर्णांक major_status;
+	पूर्णांक minor_status;
+पूर्ण;
 
-int gssp_accept_sec_context_upcall(struct net *net,
-				struct gssp_upcall_data *data);
-void gssp_free_upcall_data(struct gssp_upcall_data *data);
+पूर्णांक gssp_accept_sec_context_upcall(काष्ठा net *net,
+				काष्ठा gssp_upcall_data *data);
+व्योम gssp_मुक्त_upcall_data(काष्ठा gssp_upcall_data *data);
 
-void init_gssp_clnt(struct sunrpc_net *);
-int set_gssp_clnt(struct net *);
-void clear_gssp_clnt(struct sunrpc_net *);
+व्योम init_gssp_clnt(काष्ठा sunrpc_net *);
+पूर्णांक set_gssp_clnt(काष्ठा net *);
+व्योम clear_gssp_clnt(काष्ठा sunrpc_net *);
 
-#endif /* _GSS_RPC_UPCALL_H */
+#पूर्ण_अगर /* _GSS_RPC_UPCALL_H */

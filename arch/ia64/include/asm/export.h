@@ -1,3 +1,4 @@
+<शैली गुरु>
 /* EXPORT_DATA_SYMBOL != EXPORT_SYMBOL here */
-#define KSYM_FUNC(name) @fptr(name)
-#include <asm-generic/export.h>
+#घोषणा KSYM_FUNC(name) @fptr(name)
+#समावेश <यंत्र-generic/export.h>

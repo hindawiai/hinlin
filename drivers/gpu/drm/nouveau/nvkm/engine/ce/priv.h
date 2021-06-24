@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_CE_PRIV_H__
-#define __NVKM_CE_PRIV_H__
-#include <engine/ce.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_CE_PRIV_H__
+#घोषणा __NVKM_CE_PRIV_H__
+#समावेश <engine/ce.h>
 
-void gt215_ce_intr(struct nvkm_falcon *, struct nvkm_fifo_chan *);
-void gk104_ce_intr(struct nvkm_engine *);
-void gp100_ce_intr(struct nvkm_engine *);
-#endif
+व्योम gt215_ce_पूर्णांकr(काष्ठा nvkm_falcon *, काष्ठा nvkm_fअगरo_chan *);
+व्योम gk104_ce_पूर्णांकr(काष्ठा nvkm_engine *);
+व्योम gp100_ce_पूर्णांकr(काष्ठा nvkm_engine *);
+#पूर्ण_अगर

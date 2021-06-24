@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#ifndef __GEN8_PPGTT_H__
-#define __GEN8_PPGTT_H__
+#अगर_अघोषित __GEN8_PPGTT_H__
+#घोषणा __GEN8_PPGTT_H__
 
-struct intel_gt;
+काष्ठा पूर्णांकel_gt;
 
-struct i915_ppgtt *gen8_ppgtt_create(struct intel_gt *gt);
+काष्ठा i915_ppgtt *gen8_ppgtt_create(काष्ठा पूर्णांकel_gt *gt);
 
-#endif
+#पूर्ण_अगर

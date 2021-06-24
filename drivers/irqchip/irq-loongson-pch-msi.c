@@ -1,250 +1,251 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2020, Jiaxun Yang <jiaxun.yang@flygoat.com>
  *  Loongson PCH MSI support
  */
 
-#define pr_fmt(fmt) "pch-msi: " fmt
+#घोषणा pr_fmt(fmt) "pch-msi: " fmt
 
-#include <linux/irqchip.h>
-#include <linux/msi.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_pci.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
 
-struct pch_msi_data {
-	struct mutex	msi_map_lock;
-	phys_addr_t	doorbell;
+काष्ठा pch_msi_data अणु
+	काष्ठा mutex	msi_map_lock;
+	phys_addr_t	करोorbell;
 	u32		irq_first;	/* The vector number that MSIs starts */
-	u32		num_irqs;	/* The number of vectors for MSIs */
-	unsigned long	*msi_map;
-};
+	u32		num_irqs;	/* The number of vectors क्रम MSIs */
+	अचिन्हित दीर्घ	*msi_map;
+पूर्ण;
 
-static void pch_msi_mask_msi_irq(struct irq_data *d)
-{
+अटल व्योम pch_msi_mask_msi_irq(काष्ठा irq_data *d)
+अणु
 	pci_msi_mask_irq(d);
 	irq_chip_mask_parent(d);
-}
+पूर्ण
 
-static void pch_msi_unmask_msi_irq(struct irq_data *d)
-{
+अटल व्योम pch_msi_unmask_msi_irq(काष्ठा irq_data *d)
+अणु
 	irq_chip_unmask_parent(d);
 	pci_msi_unmask_irq(d);
-}
+पूर्ण
 
-static struct irq_chip pch_msi_irq_chip = {
+अटल काष्ठा irq_chip pch_msi_irq_chip = अणु
 	.name			= "PCH PCI MSI",
 	.irq_mask		= pch_msi_mask_msi_irq,
 	.irq_unmask		= pch_msi_unmask_msi_irq,
 	.irq_ack		= irq_chip_ack_parent,
 	.irq_set_affinity	= irq_chip_set_affinity_parent,
-};
+पूर्ण;
 
-static int pch_msi_allocate_hwirq(struct pch_msi_data *priv, int num_req)
-{
-	int first;
+अटल पूर्णांक pch_msi_allocate_hwirq(काष्ठा pch_msi_data *priv, पूर्णांक num_req)
+अणु
+	पूर्णांक first;
 
 	mutex_lock(&priv->msi_map_lock);
 
-	first = bitmap_find_free_region(priv->msi_map, priv->num_irqs,
+	first = biपंचांगap_find_मुक्त_region(priv->msi_map, priv->num_irqs,
 					get_count_order(num_req));
-	if (first < 0) {
+	अगर (first < 0) अणु
 		mutex_unlock(&priv->msi_map_lock);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
 	mutex_unlock(&priv->msi_map_lock);
 
-	return priv->irq_first + first;
-}
+	वापस priv->irq_first + first;
+पूर्ण
 
-static void pch_msi_free_hwirq(struct pch_msi_data *priv,
-				int hwirq, int num_req)
-{
-	int first = hwirq - priv->irq_first;
+अटल व्योम pch_msi_मुक्त_hwirq(काष्ठा pch_msi_data *priv,
+				पूर्णांक hwirq, पूर्णांक num_req)
+अणु
+	पूर्णांक first = hwirq - priv->irq_first;
 
 	mutex_lock(&priv->msi_map_lock);
-	bitmap_release_region(priv->msi_map, first, get_count_order(num_req));
+	biपंचांगap_release_region(priv->msi_map, first, get_count_order(num_req));
 	mutex_unlock(&priv->msi_map_lock);
-}
+पूर्ण
 
-static void pch_msi_compose_msi_msg(struct irq_data *data,
-					struct msi_msg *msg)
-{
-	struct pch_msi_data *priv = irq_data_get_irq_chip_data(data);
+अटल व्योम pch_msi_compose_msi_msg(काष्ठा irq_data *data,
+					काष्ठा msi_msg *msg)
+अणु
+	काष्ठा pch_msi_data *priv = irq_data_get_irq_chip_data(data);
 
-	msg->address_hi = upper_32_bits(priv->doorbell);
-	msg->address_lo = lower_32_bits(priv->doorbell);
+	msg->address_hi = upper_32_bits(priv->करोorbell);
+	msg->address_lo = lower_32_bits(priv->करोorbell);
 	msg->data = data->hwirq;
-}
+पूर्ण
 
-static struct msi_domain_info pch_msi_domain_info = {
+अटल काष्ठा msi_करोमुख्य_info pch_msi_करोमुख्य_info = अणु
 	.flags	= MSI_FLAG_USE_DEF_DOM_OPS | MSI_FLAG_USE_DEF_CHIP_OPS |
 		  MSI_FLAG_MULTI_PCI_MSI | MSI_FLAG_PCI_MSIX,
 	.chip	= &pch_msi_irq_chip,
-};
+पूर्ण;
 
-static struct irq_chip middle_irq_chip = {
+अटल काष्ठा irq_chip middle_irq_chip = अणु
 	.name			= "PCH MSI",
 	.irq_mask		= irq_chip_mask_parent,
 	.irq_unmask		= irq_chip_unmask_parent,
 	.irq_ack		= irq_chip_ack_parent,
 	.irq_set_affinity	= irq_chip_set_affinity_parent,
 	.irq_compose_msi_msg	= pch_msi_compose_msi_msg,
-};
+पूर्ण;
 
-static int pch_msi_parent_domain_alloc(struct irq_domain *domain,
-					unsigned int virq, int hwirq)
-{
-	struct irq_fwspec fwspec;
+अटल पूर्णांक pch_msi_parent_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य,
+					अचिन्हित पूर्णांक virq, पूर्णांक hwirq)
+अणु
+	काष्ठा irq_fwspec fwspec;
 
-	fwspec.fwnode = domain->parent->fwnode;
+	fwspec.fwnode = करोमुख्य->parent->fwnode;
 	fwspec.param_count = 1;
 	fwspec.param[0] = hwirq;
 
-	return irq_domain_alloc_irqs_parent(domain, virq, 1, &fwspec);
-}
+	वापस irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, 1, &fwspec);
+पूर्ण
 
-static int pch_msi_middle_domain_alloc(struct irq_domain *domain,
-					   unsigned int virq,
-					   unsigned int nr_irqs, void *args)
-{
-	struct pch_msi_data *priv = domain->host_data;
-	int hwirq, err, i;
+अटल पूर्णांक pch_msi_middle_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य,
+					   अचिन्हित पूर्णांक virq,
+					   अचिन्हित पूर्णांक nr_irqs, व्योम *args)
+अणु
+	काष्ठा pch_msi_data *priv = करोमुख्य->host_data;
+	पूर्णांक hwirq, err, i;
 
 	hwirq = pch_msi_allocate_hwirq(priv, nr_irqs);
-	if (hwirq < 0)
-		return hwirq;
+	अगर (hwirq < 0)
+		वापस hwirq;
 
-	for (i = 0; i < nr_irqs; i++) {
-		err = pch_msi_parent_domain_alloc(domain, virq + i, hwirq + i);
-		if (err)
-			goto err_hwirq;
+	क्रम (i = 0; i < nr_irqs; i++) अणु
+		err = pch_msi_parent_करोमुख्य_alloc(करोमुख्य, virq + i, hwirq + i);
+		अगर (err)
+			जाओ err_hwirq;
 
-		irq_domain_set_hwirq_and_chip(domain, virq + i, hwirq + i,
+		irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq + i, hwirq + i,
 					      &middle_irq_chip, priv);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_hwirq:
-	pch_msi_free_hwirq(priv, hwirq, nr_irqs);
-	irq_domain_free_irqs_parent(domain, virq, i - 1);
+	pch_msi_मुक्त_hwirq(priv, hwirq, nr_irqs);
+	irq_करोमुख्य_मुक्त_irqs_parent(करोमुख्य, virq, i - 1);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void pch_msi_middle_domain_free(struct irq_domain *domain,
-					   unsigned int virq,
-					   unsigned int nr_irqs)
-{
-	struct irq_data *d = irq_domain_get_irq_data(domain, virq);
-	struct pch_msi_data *priv = irq_data_get_irq_chip_data(d);
+अटल व्योम pch_msi_middle_करोमुख्य_मुक्त(काष्ठा irq_करोमुख्य *करोमुख्य,
+					   अचिन्हित पूर्णांक virq,
+					   अचिन्हित पूर्णांक nr_irqs)
+अणु
+	काष्ठा irq_data *d = irq_करोमुख्य_get_irq_data(करोमुख्य, virq);
+	काष्ठा pch_msi_data *priv = irq_data_get_irq_chip_data(d);
 
-	irq_domain_free_irqs_parent(domain, virq, nr_irqs);
-	pch_msi_free_hwirq(priv, d->hwirq, nr_irqs);
-}
+	irq_करोमुख्य_मुक्त_irqs_parent(करोमुख्य, virq, nr_irqs);
+	pch_msi_मुक्त_hwirq(priv, d->hwirq, nr_irqs);
+पूर्ण
 
-static const struct irq_domain_ops pch_msi_middle_domain_ops = {
-	.alloc	= pch_msi_middle_domain_alloc,
-	.free	= pch_msi_middle_domain_free,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops pch_msi_middle_करोमुख्य_ops = अणु
+	.alloc	= pch_msi_middle_करोमुख्य_alloc,
+	.मुक्त	= pch_msi_middle_करोमुख्य_मुक्त,
+पूर्ण;
 
-static int pch_msi_init_domains(struct pch_msi_data *priv,
-				struct device_node *node,
-				struct irq_domain *parent)
-{
-	struct irq_domain *middle_domain, *msi_domain;
+अटल पूर्णांक pch_msi_init_करोमुख्यs(काष्ठा pch_msi_data *priv,
+				काष्ठा device_node *node,
+				काष्ठा irq_करोमुख्य *parent)
+अणु
+	काष्ठा irq_करोमुख्य *middle_करोमुख्य, *msi_करोमुख्य;
 
-	middle_domain = irq_domain_create_linear(of_node_to_fwnode(node),
+	middle_करोमुख्य = irq_करोमुख्य_create_linear(of_node_to_fwnode(node),
 						priv->num_irqs,
-						&pch_msi_middle_domain_ops,
+						&pch_msi_middle_करोमुख्य_ops,
 						priv);
-	if (!middle_domain) {
+	अगर (!middle_करोमुख्य) अणु
 		pr_err("Failed to create the MSI middle domain\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	middle_domain->parent = parent;
-	irq_domain_update_bus_token(middle_domain, DOMAIN_BUS_NEXUS);
+	middle_करोमुख्य->parent = parent;
+	irq_करोमुख्य_update_bus_token(middle_करोमुख्य, DOMAIN_BUS_NEXUS);
 
-	msi_domain = pci_msi_create_irq_domain(of_node_to_fwnode(node),
-					       &pch_msi_domain_info,
-					       middle_domain);
-	if (!msi_domain) {
+	msi_करोमुख्य = pci_msi_create_irq_करोमुख्य(of_node_to_fwnode(node),
+					       &pch_msi_करोमुख्य_info,
+					       middle_करोमुख्य);
+	अगर (!msi_करोमुख्य) अणु
 		pr_err("Failed to create PCI MSI domain\n");
-		irq_domain_remove(middle_domain);
-		return -ENOMEM;
-	}
+		irq_करोमुख्य_हटाओ(middle_करोमुख्य);
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pch_msi_init(struct device_node *node,
-			    struct device_node *parent)
-{
-	struct pch_msi_data *priv;
-	struct irq_domain *parent_domain;
-	struct resource res;
-	int ret;
+अटल पूर्णांक pch_msi_init(काष्ठा device_node *node,
+			    काष्ठा device_node *parent)
+अणु
+	काष्ठा pch_msi_data *priv;
+	काष्ठा irq_करोमुख्य *parent_करोमुख्य;
+	काष्ठा resource res;
+	पूर्णांक ret;
 
-	parent_domain = irq_find_host(parent);
-	if (!parent_domain) {
+	parent_करोमुख्य = irq_find_host(parent);
+	अगर (!parent_करोमुख्य) अणु
 		pr_err("Failed to find the parent domain\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	mutex_init(&priv->msi_map_lock);
 
 	ret = of_address_to_resource(node, 0, &res);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Failed to allocate resource\n");
-		goto err_priv;
-	}
+		जाओ err_priv;
+	पूर्ण
 
-	priv->doorbell = res.start;
+	priv->करोorbell = res.start;
 
-	if (of_property_read_u32(node, "loongson,msi-base-vec",
-				&priv->irq_first)) {
+	अगर (of_property_पढ़ो_u32(node, "loongson,msi-base-vec",
+				&priv->irq_first)) अणु
 		pr_err("Unable to parse MSI vec base\n");
 		ret = -EINVAL;
-		goto err_priv;
-	}
+		जाओ err_priv;
+	पूर्ण
 
-	if (of_property_read_u32(node, "loongson,msi-num-vecs",
-				&priv->num_irqs)) {
+	अगर (of_property_पढ़ो_u32(node, "loongson,msi-num-vecs",
+				&priv->num_irqs)) अणु
 		pr_err("Unable to parse MSI vec number\n");
 		ret = -EINVAL;
-		goto err_priv;
-	}
+		जाओ err_priv;
+	पूर्ण
 
-	priv->msi_map = bitmap_zalloc(priv->num_irqs, GFP_KERNEL);
-	if (!priv->msi_map) {
+	priv->msi_map = biपंचांगap_zalloc(priv->num_irqs, GFP_KERNEL);
+	अगर (!priv->msi_map) अणु
 		ret = -ENOMEM;
-		goto err_priv;
-	}
+		जाओ err_priv;
+	पूर्ण
 
 	pr_debug("Registering %d MSIs, starting at %d\n",
 		 priv->num_irqs, priv->irq_first);
 
-	ret = pch_msi_init_domains(priv, node, parent_domain);
-	if (ret)
-		goto err_map;
+	ret = pch_msi_init_करोमुख्यs(priv, node, parent_करोमुख्य);
+	अगर (ret)
+		जाओ err_map;
 
-	return 0;
+	वापस 0;
 
 err_map:
-	kfree(priv->msi_map);
+	kमुक्त(priv->msi_map);
 err_priv:
-	kfree(priv);
-	return ret;
-}
+	kमुक्त(priv);
+	वापस ret;
+पूर्ण
 
 IRQCHIP_DECLARE(pch_msi, "loongson,pch-msi-1.0", pch_msi_init);

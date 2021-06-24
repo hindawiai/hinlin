@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 //
 // Copyright (C) 2019 ROHM Semiconductors
 //
 // ROHM BD71828/BD71815 PMIC driver
 
-#include <linux/gpio_keys.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/irq.h>
-#include <linux/mfd/core.h>
-#include <linux/mfd/rohm-bd71815.h>
-#include <linux/mfd/rohm-bd71828.h>
-#include <linux/mfd/rohm-generic.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/regmap.h>
-#include <linux/types.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/mfd/rohm-bd71815.h>
+#समावेश <linux/mfd/rohm-bd71828.h>
+#समावेश <linux/mfd/rohm-generic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/types.h>
 
-static struct gpio_keys_button button = {
+अटल काष्ठा gpio_keys_button button = अणु
 	.code = KEY_POWER,
 	.gpio = -1,
 	.type = EV_KEY,
-};
+पूर्ण;
 
-static struct gpio_keys_platform_data bd71828_powerkey_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data bd71828_घातerkey_data = अणु
 	.buttons = &button,
 	.nbuttons = 1,
 	.name = "bd71828-pwrkey",
-};
+पूर्ण;
 
-static const struct resource bd71815_rtc_irqs[] = {
+अटल स्थिर काष्ठा resource bd71815_rtc_irqs[] = अणु
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_RTC0, "bd71815-rtc-alm-0"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_RTC1, "bd71815-rtc-alm-1"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_RTC2, "bd71815-rtc-alm-2"),
-};
+पूर्ण;
 
-static const struct resource bd71828_rtc_irqs[] = {
+अटल स्थिर काष्ठा resource bd71828_rtc_irqs[] = अणु
 	DEFINE_RES_IRQ_NAMED(BD71828_INT_RTC0, "bd71828-rtc-alm-0"),
 	DEFINE_RES_IRQ_NAMED(BD71828_INT_RTC1, "bd71828-rtc-alm-1"),
 	DEFINE_RES_IRQ_NAMED(BD71828_INT_RTC2, "bd71828-rtc-alm-2"),
-};
+पूर्ण;
 
-static struct resource bd71815_power_irqs[] = {
+अटल काष्ठा resource bd71815_घातer_irqs[] = अणु
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_DCIN_RMV, "bd71815-dcin-rmv"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_CLPS_OUT, "bd71815-clps-out"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_CLPS_IN, "bd71815-clps-in"),
@@ -64,7 +65,7 @@ static struct resource bd71815_power_irqs[] = {
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_CHG_RANGED_TEMP_TRANSITION, "bd71815-ranged-temp-transit"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_CHG_STATE_TRANSITION, "bd71815-chg-state-change"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_BAT_TEMP_NORMAL, "bd71815-bat-temp-normal"),
-	DEFINE_RES_IRQ_NAMED(BD71815_INT_BAT_TEMP_ERANGE, "bd71815-bat-temp-erange"),
+	DEFINE_RES_IRQ_NAMED(BD71815_INT_BAT_TEMP_दुस्फल, "bd71815-bat-temp-erange"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_BAT_REMOVED, "bd71815-bat-rmv"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_BAT_DETECTED, "bd71815-bat-det"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_THERM_REMOVED, "bd71815-therm-rmv"),
@@ -91,139 +92,139 @@ static struct resource bd71815_power_irqs[] = {
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_TEMP_BAT_LOW_DET, "bd71815-bat-low-det"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_TEMP_BAT_HI_RES, "bd71815-bat-hi-res"),
 	DEFINE_RES_IRQ_NAMED(BD71815_INT_TEMP_BAT_HI_DET, "bd71815-bat-hi-det"),
-};
+पूर्ण;
 
-static struct mfd_cell bd71815_mfd_cells[] = {
-	{ .name = "bd71815-pmic", },
-	{ .name = "bd71815-clk", },
-	{ .name = "bd71815-gpo", },
-	{
+अटल काष्ठा mfd_cell bd71815_mfd_cells[] = अणु
+	अणु .name = "bd71815-pmic", पूर्ण,
+	अणु .name = "bd71815-clk", पूर्ण,
+	अणु .name = "bd71815-gpo", पूर्ण,
+	अणु
 		.name = "bd71815-power",
-		.num_resources = ARRAY_SIZE(bd71815_power_irqs),
-		.resources = &bd71815_power_irqs[0],
-	},
-	{
+		.num_resources = ARRAY_SIZE(bd71815_घातer_irqs),
+		.resources = &bd71815_घातer_irqs[0],
+	पूर्ण,
+	अणु
 		.name = "bd71815-rtc",
 		.num_resources = ARRAY_SIZE(bd71815_rtc_irqs),
 		.resources = &bd71815_rtc_irqs[0],
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct mfd_cell bd71828_mfd_cells[] = {
-	{ .name = "bd71828-pmic", },
-	{ .name = "bd71828-gpio", },
-	{ .name = "bd71828-led", .of_compatible = "rohm,bd71828-leds" },
+अटल काष्ठा mfd_cell bd71828_mfd_cells[] = अणु
+	अणु .name = "bd71828-pmic", पूर्ण,
+	अणु .name = "bd71828-gpio", पूर्ण,
+	अणु .name = "bd71828-led", .of_compatible = "rohm,bd71828-leds" पूर्ण,
 	/*
-	 * We use BD71837 driver to drive the clock block. Only differences to
-	 * BD70528 clock gate are the register address and mask.
+	 * We use BD71837 driver to drive the घड़ी block. Only dअगरferences to
+	 * BD70528 घड़ी gate are the रेजिस्टर address and mask.
 	 */
-	{ .name = "bd71828-clk", },
-	{ .name = "bd71827-power", },
-	{
+	अणु .name = "bd71828-clk", पूर्ण,
+	अणु .name = "bd71827-power", पूर्ण,
+	अणु
 		.name = "bd71828-rtc",
 		.resources = bd71828_rtc_irqs,
 		.num_resources = ARRAY_SIZE(bd71828_rtc_irqs),
-	}, {
+	पूर्ण, अणु
 		.name = "gpio-keys",
-		.platform_data = &bd71828_powerkey_data,
-		.pdata_size = sizeof(bd71828_powerkey_data),
-	},
-};
+		.platक्रमm_data = &bd71828_घातerkey_data,
+		.pdata_size = माप(bd71828_घातerkey_data),
+	पूर्ण,
+पूर्ण;
 
-static const struct regmap_range bd71815_volatile_ranges[] = {
-	{
+अटल स्थिर काष्ठा regmap_range bd71815_अस्थिर_ranges[] = अणु
+	अणु
 		.range_min = BD71815_REG_SEC,
 		.range_max = BD71815_REG_YEAR,
-	}, {
+	पूर्ण, अणु
 		.range_min = BD71815_REG_CONF,
 		.range_max = BD71815_REG_BAT_TEMP,
-	}, {
+	पूर्ण, अणु
 		.range_min = BD71815_REG_VM_IBAT_U,
 		.range_max = BD71815_REG_CC_CTRL,
-	}, {
+	पूर्ण, अणु
 		.range_min = BD71815_REG_CC_STAT,
 		.range_max = BD71815_REG_CC_CURCD_L,
-	}, {
+	पूर्ण, अणु
 		.range_min = BD71815_REG_VM_BTMP_MON,
 		.range_max = BD71815_REG_VM_BTMP_MON,
-	}, {
+	पूर्ण, अणु
 		.range_min = BD71815_REG_INT_STAT,
 		.range_max = BD71815_REG_INT_UPDATE,
-	}, {
+	पूर्ण, अणु
 		.range_min = BD71815_REG_VM_VSYS_U,
 		.range_max = BD71815_REG_REX_CTRL_1,
-	}, {
+	पूर्ण, अणु
 		.range_min = BD71815_REG_FULL_CCNTD_3,
 		.range_max = BD71815_REG_CCNTD_CHG_2,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct regmap_range bd71828_volatile_ranges[] = {
-	{
+अटल स्थिर काष्ठा regmap_range bd71828_अस्थिर_ranges[] = अणु
+	अणु
 		.range_min = BD71828_REG_PS_CTRL_1,
 		.range_max = BD71828_REG_PS_CTRL_1,
-	}, {
+	पूर्ण, अणु
 		.range_min = BD71828_REG_PS_CTRL_3,
 		.range_max = BD71828_REG_PS_CTRL_3,
-	}, {
+	पूर्ण, अणु
 		.range_min = BD71828_REG_RTC_SEC,
 		.range_max = BD71828_REG_RTC_YEAR,
-	}, {
+	पूर्ण, अणु
 		/*
-		 * For now make all charger registers volatile because many
-		 * needs to be and because the charger block is not that
-		 * performance critical.
+		 * For now make all अक्षरger रेजिस्टरs अस्थिर because many
+		 * needs to be and because the अक्षरger block is not that
+		 * perक्रमmance critical.
 		 */
 		.range_min = BD71828_REG_CHG_STATE,
 		.range_max = BD71828_REG_CHG_FULL,
-	}, {
+	पूर्ण, अणु
 		.range_min = BD71828_REG_INT_MAIN,
 		.range_max = BD71828_REG_IO_STAT,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct regmap_access_table bd71815_volatile_regs = {
-	.yes_ranges = &bd71815_volatile_ranges[0],
-	.n_yes_ranges = ARRAY_SIZE(bd71815_volatile_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table bd71815_अस्थिर_regs = अणु
+	.yes_ranges = &bd71815_अस्थिर_ranges[0],
+	.n_yes_ranges = ARRAY_SIZE(bd71815_अस्थिर_ranges),
+पूर्ण;
 
-static const struct regmap_access_table bd71828_volatile_regs = {
-	.yes_ranges = &bd71828_volatile_ranges[0],
-	.n_yes_ranges = ARRAY_SIZE(bd71828_volatile_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table bd71828_अस्थिर_regs = अणु
+	.yes_ranges = &bd71828_अस्थिर_ranges[0],
+	.n_yes_ranges = ARRAY_SIZE(bd71828_अस्थिर_ranges),
+पूर्ण;
 
-static const struct regmap_config bd71815_regmap = {
+अटल स्थिर काष्ठा regmap_config bd71815_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.volatile_table = &bd71815_volatile_regs,
-	.max_register = BD71815_MAX_REGISTER - 1,
+	.अस्थिर_table = &bd71815_अस्थिर_regs,
+	.max_रेजिस्टर = BD71815_MAX_REGISTER - 1,
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static const struct regmap_config bd71828_regmap = {
+अटल स्थिर काष्ठा regmap_config bd71828_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.volatile_table = &bd71828_volatile_regs,
-	.max_register = BD71828_MAX_REGISTER,
+	.अस्थिर_table = &bd71828_अस्थिर_regs,
+	.max_रेजिस्टर = BD71828_MAX_REGISTER,
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 
 /*
- * Mapping of main IRQ register bits to sub-IRQ register offsets so that we can
- * access corect sub-IRQ registers based on bits that are set in main IRQ
- * register. BD71815 and BD71828 have same sub-register-block offests.
+ * Mapping of मुख्य IRQ रेजिस्टर bits to sub-IRQ रेजिस्टर offsets so that we can
+ * access corect sub-IRQ रेजिस्टरs based on bits that are set in मुख्य IRQ
+ * रेजिस्टर. BD71815 and BD71828 have same sub-रेजिस्टर-block offests.
  */
 
-static unsigned int bit0_offsets[] = {11};		/* RTC IRQ */
-static unsigned int bit1_offsets[] = {10};		/* TEMP IRQ */
-static unsigned int bit2_offsets[] = {6, 7, 8, 9};	/* BAT MON IRQ */
-static unsigned int bit3_offsets[] = {5};		/* BAT IRQ */
-static unsigned int bit4_offsets[] = {4};		/* CHG IRQ */
-static unsigned int bit5_offsets[] = {3};		/* VSYS IRQ */
-static unsigned int bit6_offsets[] = {1, 2};		/* DCIN IRQ */
-static unsigned int bit7_offsets[] = {0};		/* BUCK IRQ */
+अटल अचिन्हित पूर्णांक bit0_offsets[] = अणु11पूर्ण;		/* RTC IRQ */
+अटल अचिन्हित पूर्णांक bit1_offsets[] = अणु10पूर्ण;		/* TEMP IRQ */
+अटल अचिन्हित पूर्णांक bit2_offsets[] = अणु6, 7, 8, 9पूर्ण;	/* BAT MON IRQ */
+अटल अचिन्हित पूर्णांक bit3_offsets[] = अणु5पूर्ण;		/* BAT IRQ */
+अटल अचिन्हित पूर्णांक bit4_offsets[] = अणु4पूर्ण;		/* CHG IRQ */
+अटल अचिन्हित पूर्णांक bit5_offsets[] = अणु3पूर्ण;		/* VSYS IRQ */
+अटल अचिन्हित पूर्णांक bit6_offsets[] = अणु1, 2पूर्ण;		/* DCIN IRQ */
+अटल अचिन्हित पूर्णांक bit7_offsets[] = अणु0पूर्ण;		/* BUCK IRQ */
 
-static struct regmap_irq_sub_irq_map bd718xx_sub_irq_offsets[] = {
+अटल काष्ठा regmap_irq_sub_irq_map bd718xx_sub_irq_offsets[] = अणु
 	REGMAP_IRQ_MAIN_REG_OFFSET(bit0_offsets),
 	REGMAP_IRQ_MAIN_REG_OFFSET(bit1_offsets),
 	REGMAP_IRQ_MAIN_REG_OFFSET(bit2_offsets),
@@ -232,9 +233,9 @@ static struct regmap_irq_sub_irq_map bd718xx_sub_irq_offsets[] = {
 	REGMAP_IRQ_MAIN_REG_OFFSET(bit5_offsets),
 	REGMAP_IRQ_MAIN_REG_OFFSET(bit6_offsets),
 	REGMAP_IRQ_MAIN_REG_OFFSET(bit7_offsets),
-};
+पूर्ण;
 
-static const struct regmap_irq bd71815_irqs[] = {
+अटल स्थिर काष्ठा regmap_irq bd71815_irqs[] = अणु
 	REGMAP_IRQ_REG(BD71815_INT_BUCK1_OCP, 0, BD71815_INT_BUCK1_OCP_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_BUCK2_OCP, 0, BD71815_INT_BUCK2_OCP_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_BUCK3_OCP, 0, BD71815_INT_BUCK3_OCP_MASK),
@@ -243,13 +244,13 @@ static const struct regmap_irq bd71815_irqs[] = {
 	REGMAP_IRQ_REG(BD71815_INT_LED_OVP, 0, BD71815_INT_LED_OVP_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_LED_OCP, 0, BD71815_INT_LED_OCP_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_LED_SCP, 0, BD71815_INT_LED_SCP_MASK),
-	/* DCIN1 interrupts */
+	/* DCIN1 पूर्णांकerrupts */
 	REGMAP_IRQ_REG(BD71815_INT_DCIN_RMV, 1, BD71815_INT_DCIN_RMV_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_CLPS_OUT, 1, BD71815_INT_CLPS_OUT_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_CLPS_IN, 1, BD71815_INT_CLPS_IN_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_DCIN_OVP_RES, 1, BD71815_INT_DCIN_OVP_RES_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_DCIN_OVP_DET, 1, BD71815_INT_DCIN_OVP_DET_MASK),
-	/* DCIN2 interrupts */
+	/* DCIN2 पूर्णांकerrupts */
 	REGMAP_IRQ_REG(BD71815_INT_DCIN_MON_RES, 2, BD71815_INT_DCIN_MON_RES_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_DCIN_MON_DET, 2, BD71815_INT_DCIN_MON_DET_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_WDOG, 2, BD71815_INT_WDOG_MASK),
@@ -270,7 +271,7 @@ static const struct regmap_irq bd71815_irqs[] = {
 	REGMAP_IRQ_REG(BD71815_INT_CHG_STATE_TRANSITION, 4, BD71815_INT_CHG_STATE_TRANSITION_MASK),
 	/* Battery */
 	REGMAP_IRQ_REG(BD71815_INT_BAT_TEMP_NORMAL, 5, BD71815_INT_BAT_TEMP_NORMAL_MASK),
-	REGMAP_IRQ_REG(BD71815_INT_BAT_TEMP_ERANGE, 5, BD71815_INT_BAT_TEMP_ERANGE_MASK),
+	REGMAP_IRQ_REG(BD71815_INT_BAT_TEMP_दुस्फल, 5, BD71815_INT_BAT_TEMP_दुस्फल_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_BAT_REMOVED, 5, BD71815_INT_BAT_REMOVED_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_BAT_DETECTED, 5, BD71815_INT_BAT_DETECTED_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_THERM_REMOVED, 5, BD71815_INT_THERM_REMOVED_MASK),
@@ -314,9 +315,9 @@ static const struct regmap_irq bd71815_irqs[] = {
 	REGMAP_IRQ_REG(BD71815_INT_RTC0, 11, BD71815_INT_RTC0_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_RTC1, 11, BD71815_INT_RTC1_MASK),
 	REGMAP_IRQ_REG(BD71815_INT_RTC2, 11, BD71815_INT_RTC2_MASK),
-};
+पूर्ण;
 
-static struct regmap_irq bd71828_irqs[] = {
+अटल काष्ठा regmap_irq bd71828_irqs[] = अणु
 	REGMAP_IRQ_REG(BD71828_INT_BUCK1_OCP, 0, BD71828_INT_BUCK1_OCP_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_BUCK2_OCP, 0, BD71828_INT_BUCK2_OCP_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_BUCK3_OCP, 0, BD71828_INT_BUCK3_OCP_MASK),
@@ -325,12 +326,12 @@ static struct regmap_irq bd71828_irqs[] = {
 	REGMAP_IRQ_REG(BD71828_INT_BUCK6_OCP, 0, BD71828_INT_BUCK6_OCP_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_BUCK7_OCP, 0, BD71828_INT_BUCK7_OCP_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_PGFAULT, 0, BD71828_INT_PGFAULT_MASK),
-	/* DCIN1 interrupts */
+	/* DCIN1 पूर्णांकerrupts */
 	REGMAP_IRQ_REG(BD71828_INT_DCIN_DET, 1, BD71828_INT_DCIN_DET_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_DCIN_RMV, 1, BD71828_INT_DCIN_RMV_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_CLPS_OUT, 1, BD71828_INT_CLPS_OUT_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_CLPS_IN, 1, BD71828_INT_CLPS_IN_MASK),
-	/* DCIN2 interrupts */
+	/* DCIN2 पूर्णांकerrupts */
 	REGMAP_IRQ_REG(BD71828_INT_DCIN_MON_RES, 2, BD71828_INT_DCIN_MON_RES_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_DCIN_MON_DET, 2, BD71828_INT_DCIN_MON_DET_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_LONGPUSH, 2, BD71828_INT_LONGPUSH_MASK),
@@ -360,7 +361,7 @@ static struct regmap_irq bd71828_irqs[] = {
 	REGMAP_IRQ_REG(BD71828_INT_CHG_STATE_TRANSITION, 4, BD71828_INT_CHG_STATE_TRANSITION_MASK),
 	/* Battery */
 	REGMAP_IRQ_REG(BD71828_INT_BAT_TEMP_NORMAL, 5, BD71828_INT_BAT_TEMP_NORMAL_MASK),
-	REGMAP_IRQ_REG(BD71828_INT_BAT_TEMP_ERANGE, 5, BD71828_INT_BAT_TEMP_ERANGE_MASK),
+	REGMAP_IRQ_REG(BD71828_INT_BAT_TEMP_दुस्फल, 5, BD71828_INT_BAT_TEMP_दुस्फल_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_BAT_TEMP_WARN, 5, BD71828_INT_BAT_TEMP_WARN_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_BAT_REMOVED, 5, BD71828_INT_BAT_REMOVED_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_BAT_DETECTED, 5, BD71828_INT_BAT_DETECTED_MASK),
@@ -405,11 +406,11 @@ static struct regmap_irq bd71828_irqs[] = {
 	REGMAP_IRQ_REG(BD71828_INT_RTC0, 11, BD71828_INT_RTC0_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_RTC1, 11, BD71828_INT_RTC1_MASK),
 	REGMAP_IRQ_REG(BD71828_INT_RTC2, 11, BD71828_INT_RTC2_MASK),
-};
+पूर्ण;
 
-static struct regmap_irq_chip bd71828_irq_chip = {
+अटल काष्ठा regmap_irq_chip bd71828_irq_chip = अणु
 	.name = "bd71828_irq",
-	.main_status = BD71828_REG_INT_MAIN,
+	.मुख्य_status = BD71828_REG_INT_MAIN,
 	.irqs = &bd71828_irqs[0],
 	.num_irqs = ARRAY_SIZE(bd71828_irqs),
 	.status_base = BD71828_REG_INT_BUCK,
@@ -418,15 +419,15 @@ static struct regmap_irq_chip bd71828_irq_chip = {
 	.mask_invert = true,
 	.init_ack_masked = true,
 	.num_regs = 12,
-	.num_main_regs = 1,
+	.num_मुख्य_regs = 1,
 	.sub_reg_offsets = &bd718xx_sub_irq_offsets[0],
-	.num_main_status_bits = 8,
+	.num_मुख्य_status_bits = 8,
 	.irq_reg_stride = 1,
-};
+पूर्ण;
 
-static struct regmap_irq_chip bd71815_irq_chip = {
+अटल काष्ठा regmap_irq_chip bd71815_irq_chip = अणु
 	.name = "bd71815_irq",
-	.main_status = BD71815_REG_INT_STAT,
+	.मुख्य_status = BD71815_REG_INT_STAT,
 	.irqs = &bd71815_irqs[0],
 	.num_irqs = ARRAY_SIZE(bd71815_irqs),
 	.status_base = BD71815_REG_INT_STAT_01,
@@ -435,67 +436,67 @@ static struct regmap_irq_chip bd71815_irq_chip = {
 	.mask_invert = true,
 	.init_ack_masked = true,
 	.num_regs = 12,
-	.num_main_regs = 1,
+	.num_मुख्य_regs = 1,
 	.sub_reg_offsets = &bd718xx_sub_irq_offsets[0],
-	.num_main_status_bits = 8,
+	.num_मुख्य_status_bits = 8,
 	.irq_reg_stride = 1,
-};
+पूर्ण;
 
-static int set_clk_mode(struct device *dev, struct regmap *regmap,
-			int clkmode_reg)
-{
-	int ret;
-	unsigned int open_drain;
+अटल पूर्णांक set_clk_mode(काष्ठा device *dev, काष्ठा regmap *regmap,
+			पूर्णांक clkmode_reg)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक खोलो_drain;
 
-	ret = of_property_read_u32(dev->of_node, "rohm,clkout-open-drain", &open_drain);
-	if (ret) {
-		if (ret == -EINVAL)
-			return 0;
-		return ret;
-	}
-	if (open_drain > 1) {
+	ret = of_property_पढ़ो_u32(dev->of_node, "rohm,clkout-open-drain", &खोलो_drain);
+	अगर (ret) अणु
+		अगर (ret == -EINVAL)
+			वापस 0;
+		वापस ret;
+	पूर्ण
+	अगर (खोलो_drain > 1) अणु
 		dev_err(dev, "bad clk32kout mode configuration");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (open_drain)
-		return regmap_update_bits(regmap, clkmode_reg, OUT32K_MODE,
+	अगर (खोलो_drain)
+		वापस regmap_update_bits(regmap, clkmode_reg, OUT32K_MODE,
 					  OUT32K_MODE_OPEN_DRAIN);
 
-	return regmap_update_bits(regmap, clkmode_reg, OUT32K_MODE,
+	वापस regmap_update_bits(regmap, clkmode_reg, OUT32K_MODE,
 				  OUT32K_MODE_CMOS);
-}
+पूर्ण
 
-static int bd71828_i2c_probe(struct i2c_client *i2c)
-{
-	struct regmap_irq_chip_data *irq_data;
-	int ret;
-	struct regmap *regmap;
-	const struct regmap_config *regmap_config;
-	struct regmap_irq_chip *irqchip;
-	unsigned int chip_type;
-	struct mfd_cell *mfd;
-	int cells;
-	int button_irq;
-	int clkmode_reg;
+अटल पूर्णांक bd71828_i2c_probe(काष्ठा i2c_client *i2c)
+अणु
+	काष्ठा regmap_irq_chip_data *irq_data;
+	पूर्णांक ret;
+	काष्ठा regmap *regmap;
+	स्थिर काष्ठा regmap_config *regmap_config;
+	काष्ठा regmap_irq_chip *irqchip;
+	अचिन्हित पूर्णांक chip_type;
+	काष्ठा mfd_cell *mfd;
+	पूर्णांक cells;
+	पूर्णांक button_irq;
+	पूर्णांक clkmode_reg;
 
-	if (!i2c->irq) {
+	अगर (!i2c->irq) अणु
 		dev_err(&i2c->dev, "No IRQ configured\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	chip_type = (unsigned int)(uintptr_t)
+	chip_type = (अचिन्हित पूर्णांक)(uपूर्णांकptr_t)
 		    of_device_get_match_data(&i2c->dev);
-	switch (chip_type) {
-	case ROHM_CHIP_TYPE_BD71828:
+	चयन (chip_type) अणु
+	हाल ROHM_CHIP_TYPE_BD71828:
 		mfd = bd71828_mfd_cells;
 		cells = ARRAY_SIZE(bd71828_mfd_cells);
 		regmap_config = &bd71828_regmap;
 		irqchip = &bd71828_irq_chip;
 		clkmode_reg = BD71828_REG_OUT32K;
 		button_irq = BD71828_INT_SHORTPUSH;
-		break;
-	case ROHM_CHIP_TYPE_BD71815:
+		अवरोध;
+	हाल ROHM_CHIP_TYPE_BD71815:
 		mfd = bd71815_mfd_cells;
 		cells = ARRAY_SIZE(bd71815_mfd_cells);
 		regmap_config = &bd71815_regmap;
@@ -503,74 +504,74 @@ static int bd71828_i2c_probe(struct i2c_client *i2c)
 		clkmode_reg = BD71815_REG_OUT32K;
 		/*
 		 * If BD71817 support is needed we should be able to handle it
-		 * with proper DT configs + BD71815 drivers + power-button.
-		 * BD71815 data-sheet does not list the power-button IRQ so we
-		 * don't use it.
+		 * with proper DT configs + BD71815 drivers + घातer-button.
+		 * BD71815 data-sheet करोes not list the घातer-button IRQ so we
+		 * करोn't use it.
 		 */
 		button_irq = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&i2c->dev, "Unknown device type");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap = devm_regmap_init_i2c(i2c, regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&i2c->dev, "Failed to initialize Regmap\n");
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
 	ret = devm_regmap_add_irq_chip(&i2c->dev, regmap, i2c->irq,
 				       IRQF_ONESHOT, 0, irqchip, &irq_data);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&i2c->dev, "Failed to add IRQ chip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_dbg(&i2c->dev, "Registered %d IRQs for chip\n",
 		irqchip->num_irqs);
 
-	if (button_irq) {
+	अगर (button_irq) अणु
 		ret = regmap_irq_get_virq(irq_data, button_irq);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&i2c->dev, "Failed to get the power-key IRQ\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		button.irq = ret;
-	}
+	पूर्ण
 
 	ret = set_clk_mode(&i2c->dev, regmap, clkmode_reg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = devm_mfd_add_devices(&i2c->dev, PLATFORM_DEVID_AUTO, mfd, cells,
-				   NULL, 0, regmap_irq_get_domain(irq_data));
-	if (ret)
+				   शून्य, 0, regmap_irq_get_करोमुख्य(irq_data));
+	अगर (ret)
 		dev_err(&i2c->dev, "Failed to create subdevices\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id bd71828_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id bd71828_of_match[] = अणु
+	अणु
 		.compatible = "rohm,bd71828",
-		.data = (void *)ROHM_CHIP_TYPE_BD71828,
-	}, {
+		.data = (व्योम *)ROHM_CHIP_TYPE_BD71828,
+	पूर्ण, अणु
 		.compatible = "rohm,bd71815",
-		.data = (void *)ROHM_CHIP_TYPE_BD71815,
-	 },
-	{ },
-};
+		.data = (व्योम *)ROHM_CHIP_TYPE_BD71815,
+	 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bd71828_of_match);
 
-static struct i2c_driver bd71828_drv = {
-	.driver = {
+अटल काष्ठा i2c_driver bd71828_drv = अणु
+	.driver = अणु
 		.name = "rohm-bd71828",
 		.of_match_table = bd71828_of_match,
-	},
+	पूर्ण,
 	.probe_new = &bd71828_i2c_probe,
-};
+पूर्ण;
 module_i2c_driver(bd71828_drv);
 
 MODULE_AUTHOR("Matti Vaittinen <matti.vaittinen@fi.rohmeurope.com>");

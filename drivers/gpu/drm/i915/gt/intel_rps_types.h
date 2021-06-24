@@ -1,102 +1,103 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef INTEL_RPS_TYPES_H
-#define INTEL_RPS_TYPES_H
+#अगर_अघोषित INTEL_RPS_TYPES_H
+#घोषणा INTEL_RPS_TYPES_H
 
-#include <linux/atomic.h>
-#include <linux/ktime.h>
-#include <linux/mutex.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
 
-struct intel_ips {
+काष्ठा पूर्णांकel_ips अणु
 	u64 last_count1;
-	unsigned long last_time1;
-	unsigned long chipset_power;
+	अचिन्हित दीर्घ last_समय1;
+	अचिन्हित दीर्घ chipset_घातer;
 	u64 last_count2;
-	u64 last_time2;
-	unsigned long gfx_power;
+	u64 last_समय2;
+	अचिन्हित दीर्घ gfx_घातer;
 	u8 corr;
 
-	int c, m;
-};
+	पूर्णांक c, m;
+पूर्ण;
 
-struct intel_rps_ei {
-	ktime_t ktime;
+काष्ठा पूर्णांकel_rps_ei अणु
+	kसमय_प्रकार kसमय;
 	u32 render_c0;
 	u32 media_c0;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	INTEL_RPS_ENABLED = 0,
 	INTEL_RPS_ACTIVE,
 	INTEL_RPS_INTERRUPTS,
 	INTEL_RPS_TIMER,
-};
+पूर्ण;
 
-struct intel_rps {
-	struct mutex lock; /* protects enabling and the worker */
+काष्ठा पूर्णांकel_rps अणु
+	काष्ठा mutex lock; /* protects enabling and the worker */
 
 	/*
-	 * work, interrupts_enabled and pm_iir are protected by
+	 * work, पूर्णांकerrupts_enabled and pm_iir are रक्षित by
 	 * dev_priv->irq_lock
 	 */
-	struct timer_list timer;
-	struct work_struct work;
-	unsigned long flags;
+	काष्ठा समयr_list समयr;
+	काष्ठा work_काष्ठा work;
+	अचिन्हित दीर्घ flags;
 
-	ktime_t pm_timestamp;
-	u32 pm_interval;
+	kसमय_प्रकार pm_बारtamp;
+	u32 pm_पूर्णांकerval;
 	u32 pm_iir;
 
-	/* PM interrupt bits that should never be masked */
-	u32 pm_intrmsk_mbz;
+	/* PM पूर्णांकerrupt bits that should never be masked */
+	u32 pm_पूर्णांकrmsk_mbz;
 	u32 pm_events;
 
-	/* Frequencies are stored in potentially platform dependent multiples.
-	 * In other words, *_freq needs to be multiplied by X to be interesting.
-	 * Soft limits are those which are used for the dynamic reclocking done
-	 * by the driver (raise frequencies under heavy loads, and lower for
+	/* Frequencies are stored in potentially platक्रमm dependent multiples.
+	 * In other words, *_freq needs to be multiplied by X to be पूर्णांकeresting.
+	 * Soft limits are those which are used क्रम the dynamic reघड़ीing करोne
+	 * by the driver (उठाओ frequencies under heavy loads, and lower क्रम
 	 * lighter loads). Hard limits are those imposed by the hardware.
 	 *
-	 * A distinction is made for overclocking, which is never enabled by
-	 * default, and is considered to be above the hard limit if it's
+	 * A distinction is made क्रम overघड़ीing, which is never enabled by
+	 * शेष, and is considered to be above the hard limit अगर it's
 	 * possible at all.
 	 */
 	u8 cur_freq;		/* Current frequency (cached, may not == HW) */
 	u8 last_freq;		/* Last SWREQ frequency */
 	u8 min_freq_softlimit;	/* Minimum frequency permitted by the driver */
 	u8 max_freq_softlimit;	/* Max frequency permitted by the driver */
-	u8 max_freq;		/* Maximum frequency, RP0 if not overclocking */
+	u8 max_freq;		/* Maximum frequency, RP0 अगर not overघड़ीing */
 	u8 min_freq;		/* AKA RPn. Minimum frequency */
-	u8 boost_freq;		/* Frequency to request when wait boosting */
+	u8 boost_freq;		/* Frequency to request when रुको boosting */
 	u8 idle_freq;		/* Frequency to request when we are idle */
 	u8 efficient_freq;	/* AKA RPe. Pre-determined balanced frequency */
-	u8 rp1_freq;		/* "less than" RP0 power/freqency */
-	u8 rp0_freq;		/* Non-overclocked max frequency. */
+	u8 rp1_freq;		/* "less than" RP0 घातer/freqency */
+	u8 rp0_freq;		/* Non-overघड़ीed max frequency. */
 	u16 gpll_ref_freq;	/* vlv/chv GPLL reference frequency */
 
-	int last_adj;
+	पूर्णांक last_adj;
 
-	struct {
-		struct mutex mutex;
+	काष्ठा अणु
+		काष्ठा mutex mutex;
 
-		enum { LOW_POWER, BETWEEN, HIGH_POWER } mode;
-		unsigned int interactive;
+		क्रमागत अणु LOW_POWER, BETWEEN, HIGH_POWER पूर्ण mode;
+		अचिन्हित पूर्णांक पूर्णांकeractive;
 
 		u8 up_threshold; /* Current %busy required to uplock */
-		u8 down_threshold; /* Current %busy required to downclock */
-	} power;
+		u8 करोwn_threshold; /* Current %busy required to करोwnघड़ी */
+	पूर्ण घातer;
 
-	atomic_t num_waiters;
-	unsigned int boosts;
+	atomic_t num_रुकोers;
+	अचिन्हित पूर्णांक boosts;
 
 	/* manual wa residency calculations */
-	struct intel_rps_ei ei;
-	struct intel_ips ips;
-};
+	काष्ठा पूर्णांकel_rps_ei ei;
+	काष्ठा पूर्णांकel_ips ips;
+पूर्ण;
 
-#endif /* INTEL_RPS_TYPES_H */
+#पूर्ण_अगर /* INTEL_RPS_TYPES_H */

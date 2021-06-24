@@ -1,115 +1,116 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Wrapper functions for accessing the file_struct fd array.
+ * Wrapper functions क्रम accessing the file_काष्ठा fd array.
  */
 
-#ifndef __LINUX_FILE_H
-#define __LINUX_FILE_H
+#अगर_अघोषित __LINUX_खाता_H
+#घोषणा __LINUX_खाता_H
 
-#include <linux/compiler.h>
-#include <linux/types.h>
-#include <linux/posix_types.h>
-#include <linux/errno.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <linux/posix_types.h>
+#समावेश <linux/त्रुटिसं.स>
 
-struct file;
+काष्ठा file;
 
-extern void fput(struct file *);
-extern void fput_many(struct file *, unsigned int);
+बाह्य व्योम fput(काष्ठा file *);
+बाह्य व्योम fput_many(काष्ठा file *, अचिन्हित पूर्णांक);
 
-struct file_operations;
-struct task_struct;
-struct vfsmount;
-struct dentry;
-struct inode;
-struct path;
-extern struct file *alloc_file_pseudo(struct inode *, struct vfsmount *,
-	const char *, int flags, const struct file_operations *);
-extern struct file *alloc_file_clone(struct file *, int flags,
-	const struct file_operations *);
+काष्ठा file_operations;
+काष्ठा task_काष्ठा;
+काष्ठा vfsmount;
+काष्ठा dentry;
+काष्ठा inode;
+काष्ठा path;
+बाह्य काष्ठा file *alloc_file_pseuकरो(काष्ठा inode *, काष्ठा vfsmount *,
+	स्थिर अक्षर *, पूर्णांक flags, स्थिर काष्ठा file_operations *);
+बाह्य काष्ठा file *alloc_file_clone(काष्ठा file *, पूर्णांक flags,
+	स्थिर काष्ठा file_operations *);
 
-static inline void fput_light(struct file *file, int fput_needed)
-{
-	if (fput_needed)
+अटल अंतरभूत व्योम fput_light(काष्ठा file *file, पूर्णांक fput_needed)
+अणु
+	अगर (fput_needed)
 		fput(file);
-}
+पूर्ण
 
-struct fd {
-	struct file *file;
-	unsigned int flags;
-};
-#define FDPUT_FPUT       1
-#define FDPUT_POS_UNLOCK 2
+काष्ठा fd अणु
+	काष्ठा file *file;
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
+#घोषणा FDPUT_FPUT       1
+#घोषणा FDPUT_POS_UNLOCK 2
 
-static inline void fdput(struct fd fd)
-{
-	if (fd.flags & FDPUT_FPUT)
+अटल अंतरभूत व्योम fdput(काष्ठा fd fd)
+अणु
+	अगर (fd.flags & FDPUT_FPUT)
 		fput(fd.file);
-}
+पूर्ण
 
-extern struct file *fget(unsigned int fd);
-extern struct file *fget_many(unsigned int fd, unsigned int refs);
-extern struct file *fget_raw(unsigned int fd);
-extern struct file *fget_task(struct task_struct *task, unsigned int fd);
-extern unsigned long __fdget(unsigned int fd);
-extern unsigned long __fdget_raw(unsigned int fd);
-extern unsigned long __fdget_pos(unsigned int fd);
-extern void __f_unlock_pos(struct file *);
+बाह्य काष्ठा file *fget(अचिन्हित पूर्णांक fd);
+बाह्य काष्ठा file *fget_many(अचिन्हित पूर्णांक fd, अचिन्हित पूर्णांक refs);
+बाह्य काष्ठा file *fget_raw(अचिन्हित पूर्णांक fd);
+बाह्य काष्ठा file *fget_task(काष्ठा task_काष्ठा *task, अचिन्हित पूर्णांक fd);
+बाह्य अचिन्हित दीर्घ __fdget(अचिन्हित पूर्णांक fd);
+बाह्य अचिन्हित दीर्घ __fdget_raw(अचिन्हित पूर्णांक fd);
+बाह्य अचिन्हित दीर्घ __fdget_pos(अचिन्हित पूर्णांक fd);
+बाह्य व्योम __f_unlock_pos(काष्ठा file *);
 
-static inline struct fd __to_fd(unsigned long v)
-{
-	return (struct fd){(struct file *)(v & ~3),v & 3};
-}
+अटल अंतरभूत काष्ठा fd __to_fd(अचिन्हित दीर्घ v)
+अणु
+	वापस (काष्ठा fd)अणु(काष्ठा file *)(v & ~3),v & 3पूर्ण;
+पूर्ण
 
-static inline struct fd fdget(unsigned int fd)
-{
-	return __to_fd(__fdget(fd));
-}
+अटल अंतरभूत काष्ठा fd fdget(अचिन्हित पूर्णांक fd)
+अणु
+	वापस __to_fd(__fdget(fd));
+पूर्ण
 
-static inline struct fd fdget_raw(unsigned int fd)
-{
-	return __to_fd(__fdget_raw(fd));
-}
+अटल अंतरभूत काष्ठा fd fdget_raw(अचिन्हित पूर्णांक fd)
+अणु
+	वापस __to_fd(__fdget_raw(fd));
+पूर्ण
 
-static inline struct fd fdget_pos(int fd)
-{
-	return __to_fd(__fdget_pos(fd));
-}
+अटल अंतरभूत काष्ठा fd fdget_pos(पूर्णांक fd)
+अणु
+	वापस __to_fd(__fdget_pos(fd));
+पूर्ण
 
-static inline void fdput_pos(struct fd f)
-{
-	if (f.flags & FDPUT_POS_UNLOCK)
+अटल अंतरभूत व्योम fdput_pos(काष्ठा fd f)
+अणु
+	अगर (f.flags & FDPUT_POS_UNLOCK)
 		__f_unlock_pos(f.file);
 	fdput(f);
-}
+पूर्ण
 
-extern int f_dupfd(unsigned int from, struct file *file, unsigned flags);
-extern int replace_fd(unsigned fd, struct file *file, unsigned flags);
-extern void set_close_on_exec(unsigned int fd, int flag);
-extern bool get_close_on_exec(unsigned int fd);
-extern int __get_unused_fd_flags(unsigned flags, unsigned long nofile);
-extern int get_unused_fd_flags(unsigned flags);
-extern void put_unused_fd(unsigned int fd);
+बाह्य पूर्णांक f_dupfd(अचिन्हित पूर्णांक from, काष्ठा file *file, अचिन्हित flags);
+बाह्य पूर्णांक replace_fd(अचिन्हित fd, काष्ठा file *file, अचिन्हित flags);
+बाह्य व्योम set_बंद_on_exec(अचिन्हित पूर्णांक fd, पूर्णांक flag);
+बाह्य bool get_बंद_on_exec(अचिन्हित पूर्णांक fd);
+बाह्य पूर्णांक __get_unused_fd_flags(अचिन्हित flags, अचिन्हित दीर्घ nofile);
+बाह्य पूर्णांक get_unused_fd_flags(अचिन्हित flags);
+बाह्य व्योम put_unused_fd(अचिन्हित पूर्णांक fd);
 
-extern void fd_install(unsigned int fd, struct file *file);
+बाह्य व्योम fd_install(अचिन्हित पूर्णांक fd, काष्ठा file *file);
 
-extern int __receive_fd(struct file *file, int __user *ufd,
-			unsigned int o_flags);
-static inline int receive_fd_user(struct file *file, int __user *ufd,
-				  unsigned int o_flags)
-{
-	if (ufd == NULL)
-		return -EFAULT;
-	return __receive_fd(file, ufd, o_flags);
-}
-static inline int receive_fd(struct file *file, unsigned int o_flags)
-{
-	return __receive_fd(file, NULL, o_flags);
-}
-int receive_fd_replace(int new_fd, struct file *file, unsigned int o_flags);
+बाह्य पूर्णांक __receive_fd(काष्ठा file *file, पूर्णांक __user *ufd,
+			अचिन्हित पूर्णांक o_flags);
+अटल अंतरभूत पूर्णांक receive_fd_user(काष्ठा file *file, पूर्णांक __user *ufd,
+				  अचिन्हित पूर्णांक o_flags)
+अणु
+	अगर (ufd == शून्य)
+		वापस -EFAULT;
+	वापस __receive_fd(file, ufd, o_flags);
+पूर्ण
+अटल अंतरभूत पूर्णांक receive_fd(काष्ठा file *file, अचिन्हित पूर्णांक o_flags)
+अणु
+	वापस __receive_fd(file, शून्य, o_flags);
+पूर्ण
+पूर्णांक receive_fd_replace(पूर्णांक new_fd, काष्ठा file *file, अचिन्हित पूर्णांक o_flags);
 
-extern void flush_delayed_fput(void);
-extern void __fput_sync(struct file *);
+बाह्य व्योम flush_delayed_fput(व्योम);
+बाह्य व्योम __fput_sync(काष्ठा file *);
 
-extern unsigned int sysctl_nr_open_min, sysctl_nr_open_max;
+बाह्य अचिन्हित पूर्णांक sysctl_nr_खोलो_min, sysctl_nr_खोलो_max;
 
-#endif /* __LINUX_FILE_H */
+#पूर्ण_अगर /* __LINUX_खाता_H */

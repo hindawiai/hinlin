@@ -1,225 +1,226 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_POWERPC_BOOK3S_64_MMU_HASH_H_
-#define _ASM_POWERPC_BOOK3S_64_MMU_HASH_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_POWERPC_BOOK3S_64_MMU_HASH_H_
+#घोषणा _ASM_POWERPC_BOOK3S_64_MMU_HASH_H_
 /*
- * PowerPC64 memory management structures
+ * PowerPC64 memory management काष्ठाures
  *
- * Dave Engebretsen & Mike Corrigan <{engebret|mikejc}@us.ibm.com>
+ * Dave Engebretsen & Mike Corrigan <अणुengebret|mikejcपूर्ण@us.ibm.com>
  *   PPC64 rework.
  */
 
-#include <asm/page.h>
-#include <asm/bug.h>
-#include <asm/asm-const.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/bug.h>
+#समावेश <यंत्र/यंत्र-स्थिर.h>
 
 /*
  * This is necessary to get the definition of PGTABLE_RANGE which we
- * need for various slices related matters. Note that this isn't the
+ * need क्रम various slices related matters. Note that this isn't the
  * complete pgtable.h but only a portion of it.
  */
-#include <asm/book3s/64/pgtable.h>
-#include <asm/task_size_64.h>
-#include <asm/cpu_has_feature.h>
+#समावेश <यंत्र/book3s/64/pgtable.h>
+#समावेश <यंत्र/task_size_64.h>
+#समावेश <यंत्र/cpu_has_feature.h>
 
 /*
  * SLB
  */
 
-#define SLB_NUM_BOLTED		2
-#define SLB_CACHE_ENTRIES	8
-#define SLB_MIN_SIZE		32
+#घोषणा SLB_NUM_BOLTED		2
+#घोषणा SLB_CACHE_ENTRIES	8
+#घोषणा SLB_MIN_SIZE		32
 
 /* Bits in the SLB ESID word */
-#define SLB_ESID_V		ASM_CONST(0x0000000008000000) /* valid */
+#घोषणा SLB_ESID_V		ASM_CONST(0x0000000008000000) /* valid */
 
 /* Bits in the SLB VSID word */
-#define SLB_VSID_SHIFT		12
-#define SLB_VSID_SHIFT_256M	SLB_VSID_SHIFT
-#define SLB_VSID_SHIFT_1T	24
-#define SLB_VSID_SSIZE_SHIFT	62
-#define SLB_VSID_B		ASM_CONST(0xc000000000000000)
-#define SLB_VSID_B_256M		ASM_CONST(0x0000000000000000)
-#define SLB_VSID_B_1T		ASM_CONST(0x4000000000000000)
-#define SLB_VSID_KS		ASM_CONST(0x0000000000000800)
-#define SLB_VSID_KP		ASM_CONST(0x0000000000000400)
-#define SLB_VSID_N		ASM_CONST(0x0000000000000200) /* no-execute */
-#define SLB_VSID_L		ASM_CONST(0x0000000000000100)
-#define SLB_VSID_C		ASM_CONST(0x0000000000000080) /* class */
-#define SLB_VSID_LP		ASM_CONST(0x0000000000000030)
-#define SLB_VSID_LP_00		ASM_CONST(0x0000000000000000)
-#define SLB_VSID_LP_01		ASM_CONST(0x0000000000000010)
-#define SLB_VSID_LP_10		ASM_CONST(0x0000000000000020)
-#define SLB_VSID_LP_11		ASM_CONST(0x0000000000000030)
-#define SLB_VSID_LLP		(SLB_VSID_L|SLB_VSID_LP)
+#घोषणा SLB_VSID_SHIFT		12
+#घोषणा SLB_VSID_SHIFT_256M	SLB_VSID_SHIFT
+#घोषणा SLB_VSID_SHIFT_1T	24
+#घोषणा SLB_VSID_SSIZE_SHIFT	62
+#घोषणा SLB_VSID_B		ASM_CONST(0xc000000000000000)
+#घोषणा SLB_VSID_B_256M		ASM_CONST(0x0000000000000000)
+#घोषणा SLB_VSID_B_1T		ASM_CONST(0x4000000000000000)
+#घोषणा SLB_VSID_KS		ASM_CONST(0x0000000000000800)
+#घोषणा SLB_VSID_KP		ASM_CONST(0x0000000000000400)
+#घोषणा SLB_VSID_N		ASM_CONST(0x0000000000000200) /* no-execute */
+#घोषणा SLB_VSID_L		ASM_CONST(0x0000000000000100)
+#घोषणा SLB_VSID_C		ASM_CONST(0x0000000000000080) /* class */
+#घोषणा SLB_VSID_LP		ASM_CONST(0x0000000000000030)
+#घोषणा SLB_VSID_LP_00		ASM_CONST(0x0000000000000000)
+#घोषणा SLB_VSID_LP_01		ASM_CONST(0x0000000000000010)
+#घोषणा SLB_VSID_LP_10		ASM_CONST(0x0000000000000020)
+#घोषणा SLB_VSID_LP_11		ASM_CONST(0x0000000000000030)
+#घोषणा SLB_VSID_LLP		(SLB_VSID_L|SLB_VSID_LP)
 
-#define SLB_VSID_KERNEL		(SLB_VSID_KP)
-#define SLB_VSID_USER		(SLB_VSID_KP|SLB_VSID_KS|SLB_VSID_C)
+#घोषणा SLB_VSID_KERNEL		(SLB_VSID_KP)
+#घोषणा SLB_VSID_USER		(SLB_VSID_KP|SLB_VSID_KS|SLB_VSID_C)
 
-#define SLBIE_C			(0x08000000)
-#define SLBIE_SSIZE_SHIFT	25
+#घोषणा SLBIE_C			(0x08000000)
+#घोषणा SLBIE_SSIZE_SHIFT	25
 
 /*
  * Hash table
  */
 
-#define HPTES_PER_GROUP 8
+#घोषणा HPTES_PER_GROUP 8
 
-#define HPTE_V_SSIZE_SHIFT	62
-#define HPTE_V_AVPN_SHIFT	7
-#define HPTE_V_COMMON_BITS	ASM_CONST(0x000fffffffffffff)
-#define HPTE_V_AVPN		ASM_CONST(0x3fffffffffffff80)
-#define HPTE_V_AVPN_3_0		ASM_CONST(0x000fffffffffff80)
-#define HPTE_V_AVPN_VAL(x)	(((x) & HPTE_V_AVPN) >> HPTE_V_AVPN_SHIFT)
-#define HPTE_V_COMPARE(x,y)	(!(((x) ^ (y)) & 0xffffffffffffff80UL))
-#define HPTE_V_BOLTED		ASM_CONST(0x0000000000000010)
-#define HPTE_V_LOCK		ASM_CONST(0x0000000000000008)
-#define HPTE_V_LARGE		ASM_CONST(0x0000000000000004)
-#define HPTE_V_SECONDARY	ASM_CONST(0x0000000000000002)
-#define HPTE_V_VALID		ASM_CONST(0x0000000000000001)
+#घोषणा HPTE_V_SSIZE_SHIFT	62
+#घोषणा HPTE_V_AVPN_SHIFT	7
+#घोषणा HPTE_V_COMMON_BITS	ASM_CONST(0x000fffffffffffff)
+#घोषणा HPTE_V_AVPN		ASM_CONST(0x3fffffffffffff80)
+#घोषणा HPTE_V_AVPN_3_0		ASM_CONST(0x000fffffffffff80)
+#घोषणा HPTE_V_AVPN_VAL(x)	(((x) & HPTE_V_AVPN) >> HPTE_V_AVPN_SHIFT)
+#घोषणा HPTE_V_COMPARE(x,y)	(!(((x) ^ (y)) & 0xffffffffffffff80UL))
+#घोषणा HPTE_V_BOLTED		ASM_CONST(0x0000000000000010)
+#घोषणा HPTE_V_LOCK		ASM_CONST(0x0000000000000008)
+#घोषणा HPTE_V_LARGE		ASM_CONST(0x0000000000000004)
+#घोषणा HPTE_V_SECONDARY	ASM_CONST(0x0000000000000002)
+#घोषणा HPTE_V_VALID		ASM_CONST(0x0000000000000001)
 
 /*
- * ISA 3.0 has a different HPTE format.
+ * ISA 3.0 has a dअगरferent HPTE क्रमmat.
  */
-#define HPTE_R_3_0_SSIZE_SHIFT	58
-#define HPTE_R_3_0_SSIZE_MASK	(3ull << HPTE_R_3_0_SSIZE_SHIFT)
-#define HPTE_R_PP0		ASM_CONST(0x8000000000000000)
-#define HPTE_R_TS		ASM_CONST(0x4000000000000000)
-#define HPTE_R_KEY_HI		ASM_CONST(0x3000000000000000)
-#define HPTE_R_KEY_BIT4		ASM_CONST(0x2000000000000000)
-#define HPTE_R_KEY_BIT3		ASM_CONST(0x1000000000000000)
-#define HPTE_R_RPN_SHIFT	12
-#define HPTE_R_RPN		ASM_CONST(0x0ffffffffffff000)
-#define HPTE_R_RPN_3_0		ASM_CONST(0x01fffffffffff000)
-#define HPTE_R_PP		ASM_CONST(0x0000000000000003)
-#define HPTE_R_PPP		ASM_CONST(0x8000000000000003)
-#define HPTE_R_N		ASM_CONST(0x0000000000000004)
-#define HPTE_R_G		ASM_CONST(0x0000000000000008)
-#define HPTE_R_M		ASM_CONST(0x0000000000000010)
-#define HPTE_R_I		ASM_CONST(0x0000000000000020)
-#define HPTE_R_W		ASM_CONST(0x0000000000000040)
-#define HPTE_R_WIMG		ASM_CONST(0x0000000000000078)
-#define HPTE_R_C		ASM_CONST(0x0000000000000080)
-#define HPTE_R_R		ASM_CONST(0x0000000000000100)
-#define HPTE_R_KEY_LO		ASM_CONST(0x0000000000000e00)
-#define HPTE_R_KEY_BIT2		ASM_CONST(0x0000000000000800)
-#define HPTE_R_KEY_BIT1		ASM_CONST(0x0000000000000400)
-#define HPTE_R_KEY_BIT0		ASM_CONST(0x0000000000000200)
-#define HPTE_R_KEY		(HPTE_R_KEY_LO | HPTE_R_KEY_HI)
+#घोषणा HPTE_R_3_0_SSIZE_SHIFT	58
+#घोषणा HPTE_R_3_0_SSIZE_MASK	(3ull << HPTE_R_3_0_SSIZE_SHIFT)
+#घोषणा HPTE_R_PP0		ASM_CONST(0x8000000000000000)
+#घोषणा HPTE_R_TS		ASM_CONST(0x4000000000000000)
+#घोषणा HPTE_R_KEY_HI		ASM_CONST(0x3000000000000000)
+#घोषणा HPTE_R_KEY_BIT4		ASM_CONST(0x2000000000000000)
+#घोषणा HPTE_R_KEY_BIT3		ASM_CONST(0x1000000000000000)
+#घोषणा HPTE_R_RPN_SHIFT	12
+#घोषणा HPTE_R_RPN		ASM_CONST(0x0ffffffffffff000)
+#घोषणा HPTE_R_RPN_3_0		ASM_CONST(0x01fffffffffff000)
+#घोषणा HPTE_R_PP		ASM_CONST(0x0000000000000003)
+#घोषणा HPTE_R_PPP		ASM_CONST(0x8000000000000003)
+#घोषणा HPTE_R_N		ASM_CONST(0x0000000000000004)
+#घोषणा HPTE_R_G		ASM_CONST(0x0000000000000008)
+#घोषणा HPTE_R_M		ASM_CONST(0x0000000000000010)
+#घोषणा HPTE_R_I		ASM_CONST(0x0000000000000020)
+#घोषणा HPTE_R_W		ASM_CONST(0x0000000000000040)
+#घोषणा HPTE_R_WIMG		ASM_CONST(0x0000000000000078)
+#घोषणा HPTE_R_C		ASM_CONST(0x0000000000000080)
+#घोषणा HPTE_R_R		ASM_CONST(0x0000000000000100)
+#घोषणा HPTE_R_KEY_LO		ASM_CONST(0x0000000000000e00)
+#घोषणा HPTE_R_KEY_BIT2		ASM_CONST(0x0000000000000800)
+#घोषणा HPTE_R_KEY_BIT1		ASM_CONST(0x0000000000000400)
+#घोषणा HPTE_R_KEY_BIT0		ASM_CONST(0x0000000000000200)
+#घोषणा HPTE_R_KEY		(HPTE_R_KEY_LO | HPTE_R_KEY_HI)
 
-#define HPTE_V_1TB_SEG		ASM_CONST(0x4000000000000000)
-#define HPTE_V_VRMA_MASK	ASM_CONST(0x4001ffffff000000)
+#घोषणा HPTE_V_1TB_SEG		ASM_CONST(0x4000000000000000)
+#घोषणा HPTE_V_VRMA_MASK	ASM_CONST(0x4001ffffff000000)
 
-/* Values for PP (assumes Ks=0, Kp=1) */
-#define PP_RWXX	0	/* Supervisor read/write, User none */
-#define PP_RWRX 1	/* Supervisor read/write, User read */
-#define PP_RWRW 2	/* Supervisor read/write, User read/write */
-#define PP_RXRX 3	/* Supervisor read,       User read */
-#define PP_RXXX	(HPTE_R_PP0 | 2)	/* Supervisor read, user none */
+/* Values क्रम PP (assumes Ks=0, Kp=1) */
+#घोषणा PP_RWXX	0	/* Supervisor पढ़ो/ग_लिखो, User none */
+#घोषणा PP_RWRX 1	/* Supervisor पढ़ो/ग_लिखो, User पढ़ो */
+#घोषणा PP_RWRW 2	/* Supervisor पढ़ो/ग_लिखो, User पढ़ो/ग_लिखो */
+#घोषणा PP_RXRX 3	/* Supervisor पढ़ो,       User पढ़ो */
+#घोषणा PP_RXXX	(HPTE_R_PP0 | 2)	/* Supervisor पढ़ो, user none */
 
-/* Fields for tlbiel instruction in architecture 2.06 */
-#define TLBIEL_INVAL_SEL_MASK	0xc00	/* invalidation selector */
-#define  TLBIEL_INVAL_PAGE	0x000	/* invalidate a single page */
-#define  TLBIEL_INVAL_SET_LPID	0x800	/* invalidate a set for current LPID */
-#define  TLBIEL_INVAL_SET	0xc00	/* invalidate a set for all LPIDs */
-#define TLBIEL_INVAL_SET_MASK	0xfff000	/* set number to inval. */
-#define TLBIEL_INVAL_SET_SHIFT	12
+/* Fields क्रम tlbiel inकाष्ठाion in architecture 2.06 */
+#घोषणा TLBIEL_INVAL_SEL_MASK	0xc00	/* invalidation selector */
+#घोषणा  TLBIEL_INVAL_PAGE	0x000	/* invalidate a single page */
+#घोषणा  TLBIEL_INVAL_SET_LPID	0x800	/* invalidate a set क्रम current LPID */
+#घोषणा  TLBIEL_INVAL_SET	0xc00	/* invalidate a set क्रम all LPIDs */
+#घोषणा TLBIEL_INVAL_SET_MASK	0xfff000	/* set number to inval. */
+#घोषणा TLBIEL_INVAL_SET_SHIFT	12
 
-#define POWER7_TLB_SETS		128	/* # sets in POWER7 TLB */
-#define POWER8_TLB_SETS		512	/* # sets in POWER8 TLB */
-#define POWER9_TLB_SETS_HASH	256	/* # sets in POWER9 TLB Hash mode */
-#define POWER9_TLB_SETS_RADIX	128	/* # sets in POWER9 TLB Radix mode */
+#घोषणा POWER7_TLB_SETS		128	/* # sets in POWER7 TLB */
+#घोषणा POWER8_TLB_SETS		512	/* # sets in POWER8 TLB */
+#घोषणा POWER9_TLB_SETS_HASH	256	/* # sets in POWER9 TLB Hash mode */
+#घोषणा POWER9_TLB_SETS_RADIX	128	/* # sets in POWER9 TLB Radix mode */
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-struct mmu_hash_ops {
-	void            (*hpte_invalidate)(unsigned long slot,
-					   unsigned long vpn,
-					   int bpsize, int apsize,
-					   int ssize, int local);
-	long		(*hpte_updatepp)(unsigned long slot,
-					 unsigned long newpp,
-					 unsigned long vpn,
-					 int bpsize, int apsize,
-					 int ssize, unsigned long flags);
-	void            (*hpte_updateboltedpp)(unsigned long newpp,
-					       unsigned long ea,
-					       int psize, int ssize);
-	long		(*hpte_insert)(unsigned long hpte_group,
-				       unsigned long vpn,
-				       unsigned long prpn,
-				       unsigned long rflags,
-				       unsigned long vflags,
-				       int psize, int apsize,
-				       int ssize);
-	long		(*hpte_remove)(unsigned long hpte_group);
-	int             (*hpte_removebolted)(unsigned long ea,
-					     int psize, int ssize);
-	void		(*flush_hash_range)(unsigned long number, int local);
-	void		(*hugepage_invalidate)(unsigned long vsid,
-					       unsigned long addr,
-					       unsigned char *hpte_slot_array,
-					       int psize, int ssize, int local);
-	int		(*resize_hpt)(unsigned long shift);
+काष्ठा mmu_hash_ops अणु
+	व्योम            (*hpte_invalidate)(अचिन्हित दीर्घ slot,
+					   अचिन्हित दीर्घ vpn,
+					   पूर्णांक bpsize, पूर्णांक apsize,
+					   पूर्णांक ssize, पूर्णांक local);
+	दीर्घ		(*hpte_updatepp)(अचिन्हित दीर्घ slot,
+					 अचिन्हित दीर्घ newpp,
+					 अचिन्हित दीर्घ vpn,
+					 पूर्णांक bpsize, पूर्णांक apsize,
+					 पूर्णांक ssize, अचिन्हित दीर्घ flags);
+	व्योम            (*hpte_updateboltedpp)(अचिन्हित दीर्घ newpp,
+					       अचिन्हित दीर्घ ea,
+					       पूर्णांक psize, पूर्णांक ssize);
+	दीर्घ		(*hpte_insert)(अचिन्हित दीर्घ hpte_group,
+				       अचिन्हित दीर्घ vpn,
+				       अचिन्हित दीर्घ prpn,
+				       अचिन्हित दीर्घ rflags,
+				       अचिन्हित दीर्घ vflags,
+				       पूर्णांक psize, पूर्णांक apsize,
+				       पूर्णांक ssize);
+	दीर्घ		(*hpte_हटाओ)(अचिन्हित दीर्घ hpte_group);
+	पूर्णांक             (*hpte_हटाओbolted)(अचिन्हित दीर्घ ea,
+					     पूर्णांक psize, पूर्णांक ssize);
+	व्योम		(*flush_hash_range)(अचिन्हित दीर्घ number, पूर्णांक local);
+	व्योम		(*hugepage_invalidate)(अचिन्हित दीर्घ vsid,
+					       अचिन्हित दीर्घ addr,
+					       अचिन्हित अक्षर *hpte_slot_array,
+					       पूर्णांक psize, पूर्णांक ssize, पूर्णांक local);
+	पूर्णांक		(*resize_hpt)(अचिन्हित दीर्घ shअगरt);
 	/*
-	 * Special for kexec.
-	 * To be called in real mode with interrupts disabled. No locks are
+	 * Special क्रम kexec.
+	 * To be called in real mode with पूर्णांकerrupts disabled. No locks are
 	 * taken as such, concurrent access on pre POWER5 hardware could result
 	 * in a deadlock.
 	 * The linear mapping is destroyed as well.
 	 */
-	void		(*hpte_clear_all)(void);
-};
-extern struct mmu_hash_ops mmu_hash_ops;
+	व्योम		(*hpte_clear_all)(व्योम);
+पूर्ण;
+बाह्य काष्ठा mmu_hash_ops mmu_hash_ops;
 
-struct hash_pte {
+काष्ठा hash_pte अणु
 	__be64 v;
 	__be64 r;
-};
+पूर्ण;
 
-extern struct hash_pte *htab_address;
-extern unsigned long htab_size_bytes;
-extern unsigned long htab_hash_mask;
+बाह्य काष्ठा hash_pte *htab_address;
+बाह्य अचिन्हित दीर्घ htab_size_bytes;
+बाह्य अचिन्हित दीर्घ htab_hash_mask;
 
 
-static inline int shift_to_mmu_psize(unsigned int shift)
-{
-	int psize;
+अटल अंतरभूत पूर्णांक shअगरt_to_mmu_psize(अचिन्हित पूर्णांक shअगरt)
+अणु
+	पूर्णांक psize;
 
-	for (psize = 0; psize < MMU_PAGE_COUNT; ++psize)
-		if (mmu_psize_defs[psize].shift == shift)
-			return psize;
-	return -1;
-}
+	क्रम (psize = 0; psize < MMU_PAGE_COUNT; ++psize)
+		अगर (mmu_psize_defs[psize].shअगरt == shअगरt)
+			वापस psize;
+	वापस -1;
+पूर्ण
 
-static inline unsigned int mmu_psize_to_shift(unsigned int mmu_psize)
-{
-	if (mmu_psize_defs[mmu_psize].shift)
-		return mmu_psize_defs[mmu_psize].shift;
+अटल अंतरभूत अचिन्हित पूर्णांक mmu_pमाप_प्रकारo_shअगरt(अचिन्हित पूर्णांक mmu_psize)
+अणु
+	अगर (mmu_psize_defs[mmu_psize].shअगरt)
+		वापस mmu_psize_defs[mmu_psize].shअगरt;
 	BUG();
-}
+पूर्ण
 
-static inline unsigned int ap_to_shift(unsigned long ap)
-{
-	int psize;
+अटल अंतरभूत अचिन्हित पूर्णांक ap_to_shअगरt(अचिन्हित दीर्घ ap)
+अणु
+	पूर्णांक psize;
 
-	for (psize = 0; psize < MMU_PAGE_COUNT; psize++) {
-		if (mmu_psize_defs[psize].ap == ap)
-			return mmu_psize_defs[psize].shift;
-	}
+	क्रम (psize = 0; psize < MMU_PAGE_COUNT; psize++) अणु
+		अगर (mmu_psize_defs[psize].ap == ap)
+			वापस mmu_psize_defs[psize].shअगरt;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static inline unsigned long get_sllp_encoding(int psize)
-{
-	unsigned long sllp;
+अटल अंतरभूत अचिन्हित दीर्घ get_sllp_encoding(पूर्णांक psize)
+अणु
+	अचिन्हित दीर्घ sllp;
 
 	sllp = ((mmu_psize_defs[psize].sllp & SLB_VSID_L) >> 6) |
 		((mmu_psize_defs[psize].sllp & SLB_VSID_LP) >> 4);
-	return sllp;
-}
+	वापस sllp;
+पूर्ण
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
 /*
  * Segment sizes.
@@ -227,305 +228,305 @@ static inline unsigned long get_sllp_encoding(int psize)
  * SLB entries and the first dword of MMU hashtable entries.
  * The B field is 2 bits; the values 2 and 3 are unused and reserved.
  */
-#define MMU_SEGSIZE_256M	0
-#define MMU_SEGSIZE_1T		1
+#घोषणा MMU_SEGSIZE_256M	0
+#घोषणा MMU_SEGSIZE_1T		1
 
 /*
- * encode page number shift.
- * in order to fit the 78 bit va in a 64 bit variable we shift the va by
+ * encode page number shअगरt.
+ * in order to fit the 78 bit va in a 64 bit variable we shअगरt the va by
  * 12 bits. This enable us to address upto 76 bit va.
- * For hpt hash from a va we can ignore the page size bits of va and for
+ * For hpt hash from a va we can ignore the page size bits of va and क्रम
  * hpte encoding we ignore up to 23 bits of va. So ignoring lower 12 bits ensure
- * we work in all cases including 4k page size.
+ * we work in all हालs including 4k page size.
  */
-#define VPN_SHIFT	12
+#घोषणा VPN_SHIFT	12
 
 /*
  * HPTE Large Page (LP) details
  */
-#define LP_SHIFT	12
-#define LP_BITS		8
-#define LP_MASK(i)	((0xFF >> (i)) << LP_SHIFT)
+#घोषणा LP_SHIFT	12
+#घोषणा LP_BITS		8
+#घोषणा LP_MASK(i)	((0xFF >> (i)) << LP_SHIFT)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-static inline int slb_vsid_shift(int ssize)
-{
-	if (ssize == MMU_SEGSIZE_256M)
-		return SLB_VSID_SHIFT;
-	return SLB_VSID_SHIFT_1T;
-}
+अटल अंतरभूत पूर्णांक slb_vsid_shअगरt(पूर्णांक ssize)
+अणु
+	अगर (ssize == MMU_SEGSIZE_256M)
+		वापस SLB_VSID_SHIFT;
+	वापस SLB_VSID_SHIFT_1T;
+पूर्ण
 
-static inline int segment_shift(int ssize)
-{
-	if (ssize == MMU_SEGSIZE_256M)
-		return SID_SHIFT;
-	return SID_SHIFT_1T;
-}
+अटल अंतरभूत पूर्णांक segment_shअगरt(पूर्णांक ssize)
+अणु
+	अगर (ssize == MMU_SEGSIZE_256M)
+		वापस SID_SHIFT;
+	वापस SID_SHIFT_1T;
+पूर्ण
 
 /*
  * This array is indexed by the LP field of the HPTE second dword.
  * Since this field may contain some RPN bits, some entries are
  * replicated so that we get the same value irrespective of RPN.
- * The top 4 bits are the page size index (MMU_PAGE_*) for the
+ * The top 4 bits are the page size index (MMU_PAGE_*) क्रम the
  * actual page size, the bottom 4 bits are the base page size.
  */
-extern u8 hpte_page_sizes[1 << LP_BITS];
+बाह्य u8 hpte_page_sizes[1 << LP_BITS];
 
-static inline unsigned long __hpte_page_size(unsigned long h, unsigned long l,
+अटल अंतरभूत अचिन्हित दीर्घ __hpte_page_size(अचिन्हित दीर्घ h, अचिन्हित दीर्घ l,
 					     bool is_base_size)
-{
-	unsigned int i, lp;
+अणु
+	अचिन्हित पूर्णांक i, lp;
 
-	if (!(h & HPTE_V_LARGE))
-		return 1ul << 12;
+	अगर (!(h & HPTE_V_LARGE))
+		वापस 1ul << 12;
 
 	/* Look at the 8 bit LP value */
 	lp = (l >> LP_SHIFT) & ((1 << LP_BITS) - 1);
 	i = hpte_page_sizes[lp];
-	if (!i)
-		return 0;
-	if (!is_base_size)
+	अगर (!i)
+		वापस 0;
+	अगर (!is_base_size)
 		i >>= 4;
-	return 1ul << mmu_psize_defs[i & 0xf].shift;
-}
+	वापस 1ul << mmu_psize_defs[i & 0xf].shअगरt;
+पूर्ण
 
-static inline unsigned long hpte_page_size(unsigned long h, unsigned long l)
-{
-	return __hpte_page_size(h, l, 0);
-}
+अटल अंतरभूत अचिन्हित दीर्घ hpte_page_size(अचिन्हित दीर्घ h, अचिन्हित दीर्घ l)
+अणु
+	वापस __hpte_page_size(h, l, 0);
+पूर्ण
 
-static inline unsigned long hpte_base_page_size(unsigned long h, unsigned long l)
-{
-	return __hpte_page_size(h, l, 1);
-}
+अटल अंतरभूत अचिन्हित दीर्घ hpte_base_page_size(अचिन्हित दीर्घ h, अचिन्हित दीर्घ l)
+अणु
+	वापस __hpte_page_size(h, l, 1);
+पूर्ण
 
 /*
- * The current system page and segment sizes
+ * The current प्रणाली page and segment sizes
  */
-extern int mmu_kernel_ssize;
-extern int mmu_highuser_ssize;
-extern u16 mmu_slb_size;
-extern unsigned long tce_alloc_start, tce_alloc_end;
+बाह्य पूर्णांक mmu_kernel_ssize;
+बाह्य पूर्णांक mmu_highuser_ssize;
+बाह्य u16 mmu_slb_size;
+बाह्य अचिन्हित दीर्घ tce_alloc_start, tce_alloc_end;
 
 /*
  * If the processor supports 64k normal pages but not 64k cache
- * inhibited pages, we have to be prepared to switch processes
+ * inhibited pages, we have to be prepared to चयन processes
  * to use 4k pages when they create cache-inhibited mappings.
- * If this is the case, mmu_ci_restrictions will be set to 1.
+ * If this is the हाल, mmu_ci_restrictions will be set to 1.
  */
-extern int mmu_ci_restrictions;
+बाह्य पूर्णांक mmu_ci_restrictions;
 
 /*
  * This computes the AVPN and B fields of the first dword of a HPTE,
- * for use when we want to match an existing PTE.  The bottom 7 bits
- * of the returned value are zero.
+ * क्रम use when we want to match an existing PTE.  The bottom 7 bits
+ * of the वापसed value are zero.
  */
-static inline unsigned long hpte_encode_avpn(unsigned long vpn, int psize,
-					     int ssize)
-{
-	unsigned long v;
+अटल अंतरभूत अचिन्हित दीर्घ hpte_encode_avpn(अचिन्हित दीर्घ vpn, पूर्णांक psize,
+					     पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ v;
 	/*
 	 * The AVA field omits the low-order 23 bits of the 78 bits VA.
 	 * These bits are not needed in the PTE, because the
 	 * low-order b of these bits are part of the byte offset
-	 * into the virtual page and, if b < 23, the high-order
+	 * पूर्णांकo the भव page and, अगर b < 23, the high-order
 	 * 23-b of these bits are always used in selecting the
 	 * PTEGs to be searched
 	 */
 	v = (vpn >> (23 - VPN_SHIFT)) & ~(mmu_psize_defs[psize].avpnm);
 	v <<= HPTE_V_AVPN_SHIFT;
-	v |= ((unsigned long) ssize) << HPTE_V_SSIZE_SHIFT;
-	return v;
-}
+	v |= ((अचिन्हित दीर्घ) ssize) << HPTE_V_SSIZE_SHIFT;
+	वापस v;
+पूर्ण
 
 /*
- * ISA v3.0 defines a new HPTE format, which differs from the old
- * format in having smaller AVPN and ARPN fields, and the B field
+ * ISA v3.0 defines a new HPTE क्रमmat, which dअगरfers from the old
+ * क्रमmat in having smaller AVPN and ARPN fields, and the B field
  * in the second dword instead of the first.
  */
-static inline unsigned long hpte_old_to_new_v(unsigned long v)
-{
+अटल अंतरभूत अचिन्हित दीर्घ hpte_old_to_new_v(अचिन्हित दीर्घ v)
+अणु
 	/* trim AVPN, drop B */
-	return v & HPTE_V_COMMON_BITS;
-}
+	वापस v & HPTE_V_COMMON_BITS;
+पूर्ण
 
-static inline unsigned long hpte_old_to_new_r(unsigned long v, unsigned long r)
-{
+अटल अंतरभूत अचिन्हित दीर्घ hpte_old_to_new_r(अचिन्हित दीर्घ v, अचिन्हित दीर्घ r)
+अणु
 	/* move B field from 1st to 2nd dword, trim ARPN */
-	return (r & ~HPTE_R_3_0_SSIZE_MASK) |
+	वापस (r & ~HPTE_R_3_0_SSIZE_MASK) |
 		(((v) >> HPTE_V_SSIZE_SHIFT) << HPTE_R_3_0_SSIZE_SHIFT);
-}
+पूर्ण
 
-static inline unsigned long hpte_new_to_old_v(unsigned long v, unsigned long r)
-{
+अटल अंतरभूत अचिन्हित दीर्घ hpte_new_to_old_v(अचिन्हित दीर्घ v, अचिन्हित दीर्घ r)
+अणु
 	/* insert B field */
-	return (v & HPTE_V_COMMON_BITS) |
+	वापस (v & HPTE_V_COMMON_BITS) |
 		((r & HPTE_R_3_0_SSIZE_MASK) <<
 		 (HPTE_V_SSIZE_SHIFT - HPTE_R_3_0_SSIZE_SHIFT));
-}
+पूर्ण
 
-static inline unsigned long hpte_new_to_old_r(unsigned long r)
-{
+अटल अंतरभूत अचिन्हित दीर्घ hpte_new_to_old_r(अचिन्हित दीर्घ r)
+अणु
 	/* clear out B field */
-	return r & ~HPTE_R_3_0_SSIZE_MASK;
-}
+	वापस r & ~HPTE_R_3_0_SSIZE_MASK;
+पूर्ण
 
-static inline unsigned long hpte_get_old_v(struct hash_pte *hptep)
-{
-	unsigned long hpte_v;
+अटल अंतरभूत अचिन्हित दीर्घ hpte_get_old_v(काष्ठा hash_pte *hptep)
+अणु
+	अचिन्हित दीर्घ hpte_v;
 
 	hpte_v = be64_to_cpu(hptep->v);
-	if (cpu_has_feature(CPU_FTR_ARCH_300))
+	अगर (cpu_has_feature(CPU_FTR_ARCH_300))
 		hpte_v = hpte_new_to_old_v(hpte_v, be64_to_cpu(hptep->r));
-	return hpte_v;
-}
+	वापस hpte_v;
+पूर्ण
 
 /*
  * This function sets the AVPN and L fields of the HPTE  appropriately
  * using the base page size and actual page size.
  */
-static inline unsigned long hpte_encode_v(unsigned long vpn, int base_psize,
-					  int actual_psize, int ssize)
-{
-	unsigned long v;
+अटल अंतरभूत अचिन्हित दीर्घ hpte_encode_v(अचिन्हित दीर्घ vpn, पूर्णांक base_psize,
+					  पूर्णांक actual_psize, पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ v;
 	v = hpte_encode_avpn(vpn, base_psize, ssize);
-	if (actual_psize != MMU_PAGE_4K)
+	अगर (actual_psize != MMU_PAGE_4K)
 		v |= HPTE_V_LARGE;
-	return v;
-}
+	वापस v;
+पूर्ण
 
 /*
  * This function sets the ARPN, and LP fields of the HPTE appropriately
- * for the page size. We assume the pa is already "clean" that is properly
- * aligned for the requested page size
+ * क्रम the page size. We assume the pa is alपढ़ोy "clean" that is properly
+ * aligned क्रम the requested page size
  */
-static inline unsigned long hpte_encode_r(unsigned long pa, int base_psize,
-					  int actual_psize)
-{
+अटल अंतरभूत अचिन्हित दीर्घ hpte_encode_r(अचिन्हित दीर्घ pa, पूर्णांक base_psize,
+					  पूर्णांक actual_psize)
+अणु
 	/* A 4K page needs no special encoding */
-	if (actual_psize == MMU_PAGE_4K)
-		return pa & HPTE_R_RPN;
-	else {
-		unsigned int penc = mmu_psize_defs[base_psize].penc[actual_psize];
-		unsigned int shift = mmu_psize_defs[actual_psize].shift;
-		return (pa & ~((1ul << shift) - 1)) | (penc << LP_SHIFT);
-	}
-}
+	अगर (actual_psize == MMU_PAGE_4K)
+		वापस pa & HPTE_R_RPN;
+	अन्यथा अणु
+		अचिन्हित पूर्णांक penc = mmu_psize_defs[base_psize].penc[actual_psize];
+		अचिन्हित पूर्णांक shअगरt = mmu_psize_defs[actual_psize].shअगरt;
+		वापस (pa & ~((1ul << shअगरt) - 1)) | (penc << LP_SHIFT);
+	पूर्ण
+पूर्ण
 
 /*
- * Build a VPN_SHIFT bit shifted va given VSID, EA and segment size.
+ * Build a VPN_SHIFT bit shअगरted va given VSID, EA and segment size.
  */
-static inline unsigned long hpt_vpn(unsigned long ea,
-				    unsigned long vsid, int ssize)
-{
-	unsigned long mask;
-	int s_shift = segment_shift(ssize);
+अटल अंतरभूत अचिन्हित दीर्घ hpt_vpn(अचिन्हित दीर्घ ea,
+				    अचिन्हित दीर्घ vsid, पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ mask;
+	पूर्णांक s_shअगरt = segment_shअगरt(ssize);
 
-	mask = (1ul << (s_shift - VPN_SHIFT)) - 1;
-	return (vsid << (s_shift - VPN_SHIFT)) | ((ea >> VPN_SHIFT) & mask);
-}
+	mask = (1ul << (s_shअगरt - VPN_SHIFT)) - 1;
+	वापस (vsid << (s_shअगरt - VPN_SHIFT)) | ((ea >> VPN_SHIFT) & mask);
+पूर्ण
 
 /*
- * This hashes a virtual address
+ * This hashes a भव address
  */
-static inline unsigned long hpt_hash(unsigned long vpn,
-				     unsigned int shift, int ssize)
-{
-	unsigned long mask;
-	unsigned long hash, vsid;
+अटल अंतरभूत अचिन्हित दीर्घ hpt_hash(अचिन्हित दीर्घ vpn,
+				     अचिन्हित पूर्णांक shअगरt, पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ mask;
+	अचिन्हित दीर्घ hash, vsid;
 
-	/* VPN_SHIFT can be atmost 12 */
-	if (ssize == MMU_SEGSIZE_256M) {
+	/* VPN_SHIFT can be aपंचांगost 12 */
+	अगर (ssize == MMU_SEGSIZE_256M) अणु
 		mask = (1ul << (SID_SHIFT - VPN_SHIFT)) - 1;
 		hash = (vpn >> (SID_SHIFT - VPN_SHIFT)) ^
-			((vpn & mask) >> (shift - VPN_SHIFT));
-	} else {
+			((vpn & mask) >> (shअगरt - VPN_SHIFT));
+	पूर्ण अन्यथा अणु
 		mask = (1ul << (SID_SHIFT_1T - VPN_SHIFT)) - 1;
 		vsid = vpn >> (SID_SHIFT_1T - VPN_SHIFT);
 		hash = vsid ^ (vsid << 25) ^
-			((vpn & mask) >> (shift - VPN_SHIFT)) ;
-	}
-	return hash & 0x7fffffffffUL;
-}
+			((vpn & mask) >> (shअगरt - VPN_SHIFT)) ;
+	पूर्ण
+	वापस hash & 0x7fffffffffUL;
+पूर्ण
 
-#define HPTE_LOCAL_UPDATE	0x1
-#define HPTE_NOHPTE_UPDATE	0x2
-#define HPTE_USE_KERNEL_KEY	0x4
+#घोषणा HPTE_LOCAL_UPDATE	0x1
+#घोषणा HPTE_NOHPTE_UPDATE	0x2
+#घोषणा HPTE_USE_KERNEL_KEY	0x4
 
-long hpte_insert_repeating(unsigned long hash, unsigned long vpn, unsigned long pa,
-			   unsigned long rlags, unsigned long vflags, int psize, int ssize);
-extern int __hash_page_4K(unsigned long ea, unsigned long access,
-			  unsigned long vsid, pte_t *ptep, unsigned long trap,
-			  unsigned long flags, int ssize, int subpage_prot);
-extern int __hash_page_64K(unsigned long ea, unsigned long access,
-			   unsigned long vsid, pte_t *ptep, unsigned long trap,
-			   unsigned long flags, int ssize);
-struct mm_struct;
-unsigned int hash_page_do_lazy_icache(unsigned int pp, pte_t pte, int trap);
-extern int hash_page_mm(struct mm_struct *mm, unsigned long ea,
-			unsigned long access, unsigned long trap,
-			unsigned long flags);
-extern int hash_page(unsigned long ea, unsigned long access, unsigned long trap,
-		     unsigned long dsisr);
-void low_hash_fault(struct pt_regs *regs, unsigned long address, int rc);
-int __hash_page(unsigned long trap, unsigned long ea, unsigned long dsisr, unsigned long msr);
-int __hash_page_huge(unsigned long ea, unsigned long access, unsigned long vsid,
-		     pte_t *ptep, unsigned long trap, unsigned long flags,
-		     int ssize, unsigned int shift, unsigned int mmu_psize);
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-extern int __hash_page_thp(unsigned long ea, unsigned long access,
-			   unsigned long vsid, pmd_t *pmdp, unsigned long trap,
-			   unsigned long flags, int ssize, unsigned int psize);
-#else
-static inline int __hash_page_thp(unsigned long ea, unsigned long access,
-				  unsigned long vsid, pmd_t *pmdp,
-				  unsigned long trap, unsigned long flags,
-				  int ssize, unsigned int psize)
-{
+दीर्घ hpte_insert_repeating(अचिन्हित दीर्घ hash, अचिन्हित दीर्घ vpn, अचिन्हित दीर्घ pa,
+			   अचिन्हित दीर्घ rlags, अचिन्हित दीर्घ vflags, पूर्णांक psize, पूर्णांक ssize);
+बाह्य पूर्णांक __hash_page_4K(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ access,
+			  अचिन्हित दीर्घ vsid, pte_t *ptep, अचिन्हित दीर्घ trap,
+			  अचिन्हित दीर्घ flags, पूर्णांक ssize, पूर्णांक subpage_prot);
+बाह्य पूर्णांक __hash_page_64K(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ access,
+			   अचिन्हित दीर्घ vsid, pte_t *ptep, अचिन्हित दीर्घ trap,
+			   अचिन्हित दीर्घ flags, पूर्णांक ssize);
+काष्ठा mm_काष्ठा;
+अचिन्हित पूर्णांक hash_page_करो_lazy_icache(अचिन्हित पूर्णांक pp, pte_t pte, पूर्णांक trap);
+बाह्य पूर्णांक hash_page_mm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ea,
+			अचिन्हित दीर्घ access, अचिन्हित दीर्घ trap,
+			अचिन्हित दीर्घ flags);
+बाह्य पूर्णांक hash_page(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ access, अचिन्हित दीर्घ trap,
+		     अचिन्हित दीर्घ dsisr);
+व्योम low_hash_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ address, पूर्णांक rc);
+पूर्णांक __hash_page(अचिन्हित दीर्घ trap, अचिन्हित दीर्घ ea, अचिन्हित दीर्घ dsisr, अचिन्हित दीर्घ msr);
+पूर्णांक __hash_page_huge(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ access, अचिन्हित दीर्घ vsid,
+		     pte_t *ptep, अचिन्हित दीर्घ trap, अचिन्हित दीर्घ flags,
+		     पूर्णांक ssize, अचिन्हित पूर्णांक shअगरt, अचिन्हित पूर्णांक mmu_psize);
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+बाह्य पूर्णांक __hash_page_thp(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ access,
+			   अचिन्हित दीर्घ vsid, pmd_t *pmdp, अचिन्हित दीर्घ trap,
+			   अचिन्हित दीर्घ flags, पूर्णांक ssize, अचिन्हित पूर्णांक psize);
+#अन्यथा
+अटल अंतरभूत पूर्णांक __hash_page_thp(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ access,
+				  अचिन्हित दीर्घ vsid, pmd_t *pmdp,
+				  अचिन्हित दीर्घ trap, अचिन्हित दीर्घ flags,
+				  पूर्णांक ssize, अचिन्हित पूर्णांक psize)
+अणु
 	BUG();
-	return -1;
-}
-#endif
-extern void hash_failure_debug(unsigned long ea, unsigned long access,
-			       unsigned long vsid, unsigned long trap,
-			       int ssize, int psize, int lpsize,
-			       unsigned long pte);
-extern int htab_bolt_mapping(unsigned long vstart, unsigned long vend,
-			     unsigned long pstart, unsigned long prot,
-			     int psize, int ssize);
-int htab_remove_mapping(unsigned long vstart, unsigned long vend,
-			int psize, int ssize);
-extern void pseries_add_gpage(u64 addr, u64 page_size, unsigned long number_of_pages);
-extern void demote_segment_4k(struct mm_struct *mm, unsigned long addr);
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
+बाह्य व्योम hash_failure_debug(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ access,
+			       अचिन्हित दीर्घ vsid, अचिन्हित दीर्घ trap,
+			       पूर्णांक ssize, पूर्णांक psize, पूर्णांक lpsize,
+			       अचिन्हित दीर्घ pte);
+बाह्य पूर्णांक htab_bolt_mapping(अचिन्हित दीर्घ vstart, अचिन्हित दीर्घ vend,
+			     अचिन्हित दीर्घ pstart, अचिन्हित दीर्घ prot,
+			     पूर्णांक psize, पूर्णांक ssize);
+पूर्णांक htab_हटाओ_mapping(अचिन्हित दीर्घ vstart, अचिन्हित दीर्घ vend,
+			पूर्णांक psize, पूर्णांक ssize);
+बाह्य व्योम pseries_add_gpage(u64 addr, u64 page_size, अचिन्हित दीर्घ number_of_pages);
+बाह्य व्योम demote_segment_4k(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr);
 
-extern void hash__setup_new_exec(void);
+बाह्य व्योम hash__setup_new_exec(व्योम);
 
-#ifdef CONFIG_PPC_PSERIES
-void hpte_init_pseries(void);
-#else
-static inline void hpte_init_pseries(void) { }
-#endif
+#अगर_घोषित CONFIG_PPC_PSERIES
+व्योम hpte_init_pseries(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम hpte_init_pseries(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-extern void hpte_init_native(void);
+बाह्य व्योम hpte_init_native(व्योम);
 
-struct slb_entry {
+काष्ठा slb_entry अणु
 	u64	esid;
 	u64	vsid;
-};
+पूर्ण;
 
-extern void slb_initialize(void);
-void slb_flush_and_restore_bolted(void);
-void slb_flush_all_realmode(void);
-void __slb_restore_bolted_realmode(void);
-void slb_restore_bolted_realmode(void);
-void slb_save_contents(struct slb_entry *slb_ptr);
-void slb_dump_contents(struct slb_entry *slb_ptr);
+बाह्य व्योम slb_initialize(व्योम);
+व्योम slb_flush_and_restore_bolted(व्योम);
+व्योम slb_flush_all_realmode(व्योम);
+व्योम __slb_restore_bolted_realmode(व्योम);
+व्योम slb_restore_bolted_realmode(व्योम);
+व्योम slb_save_contents(काष्ठा slb_entry *slb_ptr);
+व्योम slb_dump_contents(काष्ठा slb_entry *slb_ptr);
 
-extern void slb_vmalloc_update(void);
-extern void slb_set_size(u16 size);
-void preload_new_slb_context(unsigned long start, unsigned long sp);
-#endif /* __ASSEMBLY__ */
+बाह्य व्योम slb_vदो_स्मृति_update(व्योम);
+बाह्य व्योम slb_set_size(u16 size);
+व्योम preload_new_slb_context(अचिन्हित दीर्घ start, अचिन्हित दीर्घ sp);
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
 /*
  * VSID allocation (256MB segment)
@@ -538,7 +539,7 @@ void preload_new_slb_context(unsigned long start, unsigned long sp);
  *
  * For kernel space get_kernel_context
  *
- * The proto-VSIDs are then scrambled into real VSIDs with the
+ * The proto-VSIDs are then scrambled पूर्णांकo real VSIDs with the
  * multiplicative hash:
  *
  *	VSID = (proto-VSID * VSID_MULTIPLIER) % VSID_MODULUS
@@ -546,7 +547,7 @@ void preload_new_slb_context(unsigned long start, unsigned long sp);
  * VSID_MULTIPLIER is prime, so in particular it is
  * co-prime to VSID_MODULUS, making this a 1:1 scrambling function.
  * Because the modulus is 2^n-1 we can compute it efficiently without
- * a divide or extra multiply (see below). The scramble function gives
+ * a भागide or extra multiply (see below). The scramble function gives
  * robust scattering in the hash table (at least based on some initial
  * results).
  *
@@ -554,7 +555,7 @@ void preload_new_slb_context(unsigned long start, unsigned long sp);
  * 0, because a context id of 0 and an EA of 0 gives a proto-VSID of 0, which
  * will produce a VSID of 0.
  *
- * We also need to avoid the last segment of the last context, because that
+ * We also need to aव्योम the last segment of the last context, because that
  * would give a protovsid of 0x1fffffffff. That will result in a VSID 0
  * because of the modulo operation in vsid scramble.
  */
@@ -564,63 +565,63 @@ void preload_new_slb_context(unsigned long start, unsigned long sp);
  * context ID.
  * Restrictions:
  * GPU has restrictions of not able to access beyond 128TB
- * (47 bit effective address). We also cannot do more than 20bit PID.
- * For p4 and p5 which can only do 65 bit VA, we restrict our CONTEXT_BITS
- * to 16 bits (ie, we can only have 2^16 pids at the same time).
+ * (47 bit effective address). We also cannot करो more than 20bit PID.
+ * For p4 and p5 which can only करो 65 bit VA, we restrict our CONTEXT_BITS
+ * to 16 bits (ie, we can only have 2^16 pids at the same समय).
  */
-#define VA_BITS			68
-#define CONTEXT_BITS		19
-#define ESID_BITS		(VA_BITS - (SID_SHIFT + CONTEXT_BITS))
-#define ESID_BITS_1T		(VA_BITS - (SID_SHIFT_1T + CONTEXT_BITS))
+#घोषणा VA_BITS			68
+#घोषणा CONTEXT_BITS		19
+#घोषणा ESID_BITS		(VA_BITS - (SID_SHIFT + CONTEXT_BITS))
+#घोषणा ESID_BITS_1T		(VA_BITS - (SID_SHIFT_1T + CONTEXT_BITS))
 
-#define ESID_BITS_MASK		((1 << ESID_BITS) - 1)
-#define ESID_BITS_1T_MASK	((1 << ESID_BITS_1T) - 1)
+#घोषणा ESID_BITS_MASK		((1 << ESID_BITS) - 1)
+#घोषणा ESID_BITS_1T_MASK	((1 << ESID_BITS_1T) - 1)
 
 /*
  * Now certain config support MAX_PHYSMEM more than 512TB. Hence we will need
- * to use more than one context for linear mapping the kernel.
- * For vmalloc and memmap, we use just one context with 512TB. With 64 byte
- * struct page size, we need ony 32 TB in memmap for 2PB (51 bits (MAX_PHYSMEM_BITS)).
+ * to use more than one context क्रम linear mapping the kernel.
+ * For vदो_स्मृति and memmap, we use just one context with 512TB. With 64 byte
+ * काष्ठा page size, we need ony 32 TB in memmap क्रम 2PB (51 bits (MAX_PHYSMEM_BITS)).
  */
-#if (H_MAX_PHYSMEM_BITS > MAX_EA_BITS_PER_CONTEXT)
-#define MAX_KERNEL_CTX_CNT	(1UL << (H_MAX_PHYSMEM_BITS - MAX_EA_BITS_PER_CONTEXT))
-#else
-#define MAX_KERNEL_CTX_CNT	1
-#endif
+#अगर (H_MAX_PHYSMEM_BITS > MAX_EA_BITS_PER_CONTEXT)
+#घोषणा MAX_KERNEL_CTX_CNT	(1UL << (H_MAX_PHYSMEM_BITS - MAX_EA_BITS_PER_CONTEXT))
+#अन्यथा
+#घोषणा MAX_KERNEL_CTX_CNT	1
+#पूर्ण_अगर
 
-#define MAX_VMALLOC_CTX_CNT	1
-#define MAX_IO_CTX_CNT		1
-#define MAX_VMEMMAP_CTX_CNT	1
+#घोषणा MAX_VMALLOC_CTX_CNT	1
+#घोषणा MAX_IO_CTX_CNT		1
+#घोषणा MAX_VMEMMAP_CTX_CNT	1
 
 /*
  * 256MB segment
  * The proto-VSID space has 2^(CONTEX_BITS + ESID_BITS) - 1 segments
- * available for user + kernel mapping. VSID 0 is reserved as invalid, contexts
- * 1-4 are used for kernel mapping. Each segment contains 2^28 bytes. Each
+ * available क्रम user + kernel mapping. VSID 0 is reserved as invalid, contexts
+ * 1-4 are used क्रम kernel mapping. Each segment contains 2^28 bytes. Each
  * context maps 2^49 bytes (512TB).
  *
- * We also need to avoid the last segment of the last context, because that
+ * We also need to aव्योम the last segment of the last context, because that
  * would give a protovsid of 0x1fffffffff. That will result in a VSID 0
  * because of the modulo operation in vsid scramble.
  *
  */
-#define MAX_USER_CONTEXT	((ASM_CONST(1) << CONTEXT_BITS) - 2)
+#घोषणा MAX_USER_CONTEXT	((ASM_CONST(1) << CONTEXT_BITS) - 2)
 
-// The + 2 accounts for INVALID_REGION and 1 more to avoid overlap with kernel
-#define MIN_USER_CONTEXT	(MAX_KERNEL_CTX_CNT + MAX_VMALLOC_CTX_CNT + \
+// The + 2 accounts क्रम INVALID_REGION and 1 more to aव्योम overlap with kernel
+#घोषणा MIN_USER_CONTEXT	(MAX_KERNEL_CTX_CNT + MAX_VMALLOC_CTX_CNT + \
 				 MAX_IO_CTX_CNT + MAX_VMEMMAP_CTX_CNT + 2)
 
 /*
- * For platforms that support on 65bit VA we limit the context bits
+ * For platक्रमms that support on 65bit VA we limit the context bits
  */
-#define MAX_USER_CONTEXT_65BIT_VA ((ASM_CONST(1) << (65 - (SID_SHIFT + ESID_BITS))) - 2)
+#घोषणा MAX_USER_CONTEXT_65BIT_VA ((ASM_CONST(1) << (65 - (SID_SHIFT + ESID_BITS))) - 2)
 
 /*
  * This should be computed such that protovosid * vsid_mulitplier
- * doesn't overflow 64 bits. The vsid_mutliplier should also be
+ * करोesn't overflow 64 bits. The vsid_mutliplier should also be
  * co-prime to vsid_modulus. We also need to make sure that number
- * of bits in multiplied result (dividend) is less than twice the number of
- * protovsid bits for our modulus optmization to work.
+ * of bits in multiplied result (भागidend) is less than twice the number of
+ * protovsid bits क्रम our modulus opपंचांगization to work.
  *
  * The below table shows the current values used.
  * |-------+------------+----------------------+------------+-------------------|
@@ -640,162 +641,162 @@ void preload_new_slb_context(unsigned long start, unsigned long sp);
  * |-------+------------+----------------------+------------+--------------------|
  *
  */
-#define VSID_MULTIPLIER_256M	ASM_CONST(12538073)	/* 24-bit prime */
-#define VSID_BITS_256M		(VA_BITS - SID_SHIFT)
-#define VSID_BITS_65_256M	(65 - SID_SHIFT)
+#घोषणा VSID_MULTIPLIER_256M	ASM_CONST(12538073)	/* 24-bit prime */
+#घोषणा VSID_BITS_256M		(VA_BITS - SID_SHIFT)
+#घोषणा VSID_BITS_65_256M	(65 - SID_SHIFT)
 /*
  * Modular multiplicative inverse of VSID_MULTIPLIER under modulo VSID_MODULUS
  */
-#define VSID_MULINV_256M	ASM_CONST(665548017062)
+#घोषणा VSID_MULINV_256M	ASM_CONST(665548017062)
 
-#define VSID_MULTIPLIER_1T	ASM_CONST(12538073)	/* 24-bit prime */
-#define VSID_BITS_1T		(VA_BITS - SID_SHIFT_1T)
-#define VSID_BITS_65_1T		(65 - SID_SHIFT_1T)
-#define VSID_MULINV_1T		ASM_CONST(209034062)
+#घोषणा VSID_MULTIPLIER_1T	ASM_CONST(12538073)	/* 24-bit prime */
+#घोषणा VSID_BITS_1T		(VA_BITS - SID_SHIFT_1T)
+#घोषणा VSID_BITS_65_1T		(65 - SID_SHIFT_1T)
+#घोषणा VSID_MULINV_1T		ASM_CONST(209034062)
 
-/* 1TB VSID reserved for VRMA */
-#define VRMA_VSID	0x1ffffffUL
-#define USER_VSID_RANGE	(1UL << (ESID_BITS + SID_SHIFT))
+/* 1TB VSID reserved क्रम VRMA */
+#घोषणा VRMA_VSID	0x1ffffffUL
+#घोषणा USER_VSID_RANGE	(1UL << (ESID_BITS + SID_SHIFT))
 
 /* 4 bits per slice and we have one slice per 1TB */
-#define SLICE_ARRAY_SIZE	(H_PGTABLE_RANGE >> 41)
-#define LOW_SLICE_ARRAY_SZ	(BITS_PER_LONG / BITS_PER_BYTE)
-#define TASK_SLICE_ARRAY_SZ(x)	((x)->hash_context->slb_addr_limit >> 41)
-#ifndef __ASSEMBLY__
+#घोषणा SLICE_ARRAY_SIZE	(H_PGTABLE_RANGE >> 41)
+#घोषणा LOW_SLICE_ARRAY_SZ	(BITS_PER_LONG / BITS_PER_BYTE)
+#घोषणा TASK_SLICE_ARRAY_SZ(x)	((x)->hash_context->slb_addr_limit >> 41)
+#अगर_अघोषित __ASSEMBLY__
 
-#ifdef CONFIG_PPC_SUBPAGE_PROT
+#अगर_घोषित CONFIG_PPC_SUBPAGE_PROT
 /*
  * For the sub-page protection option, we extend the PGD with one of
  * these.  Basically we have a 3-level tree, with the top level being
  * the protptrs array.  To optimize speed and memory consumption when
- * only addresses < 4GB are being protected, pointers to the first
+ * only addresses < 4GB are being रक्षित, poपूर्णांकers to the first
  * four pages of sub-page protection words are stored in the low_prot
  * array.
  * Each page of sub-page protection words protects 1GB (4 bytes
- * protects 64k).  For the 3-level tree, each page of pointers then
+ * protects 64k).  For the 3-level tree, each page of poपूर्णांकers then
  * protects 8TB.
  */
-struct subpage_prot_table {
-	unsigned long maxaddr;	/* only addresses < this are protected */
-	unsigned int **protptrs[(TASK_SIZE_USER64 >> 43)];
-	unsigned int *low_prot[4];
-};
+काष्ठा subpage_prot_table अणु
+	अचिन्हित दीर्घ maxaddr;	/* only addresses < this are रक्षित */
+	अचिन्हित पूर्णांक **protptrs[(TASK_SIZE_USER64 >> 43)];
+	अचिन्हित पूर्णांक *low_prot[4];
+पूर्ण;
 
-#define SBP_L1_BITS		(PAGE_SHIFT - 2)
-#define SBP_L2_BITS		(PAGE_SHIFT - 3)
-#define SBP_L1_COUNT		(1 << SBP_L1_BITS)
-#define SBP_L2_COUNT		(1 << SBP_L2_BITS)
-#define SBP_L2_SHIFT		(PAGE_SHIFT + SBP_L1_BITS)
-#define SBP_L3_SHIFT		(SBP_L2_SHIFT + SBP_L2_BITS)
+#घोषणा SBP_L1_BITS		(PAGE_SHIFT - 2)
+#घोषणा SBP_L2_BITS		(PAGE_SHIFT - 3)
+#घोषणा SBP_L1_COUNT		(1 << SBP_L1_BITS)
+#घोषणा SBP_L2_COUNT		(1 << SBP_L2_BITS)
+#घोषणा SBP_L2_SHIFT		(PAGE_SHIFT + SBP_L1_BITS)
+#घोषणा SBP_L3_SHIFT		(SBP_L2_SHIFT + SBP_L2_BITS)
 
-extern void subpage_prot_free(struct mm_struct *mm);
-#else
-static inline void subpage_prot_free(struct mm_struct *mm) {}
-#endif /* CONFIG_PPC_SUBPAGE_PROT */
+बाह्य व्योम subpage_prot_मुक्त(काष्ठा mm_काष्ठा *mm);
+#अन्यथा
+अटल अंतरभूत व्योम subpage_prot_मुक्त(काष्ठा mm_काष्ठा *mm) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_SUBPAGE_PROT */
 
 /*
  * One bit per slice. We have lower slices which cover 256MB segments
- * upto 4G range. That gets us 16 low slices. For the rest we track slices
+ * upto 4G range. That माला_लो us 16 low slices. For the rest we track slices
  * in 1TB size.
  */
-struct slice_mask {
+काष्ठा slice_mask अणु
 	u64 low_slices;
 	DECLARE_BITMAP(high_slices, SLICE_NUM_HIGH);
-};
+पूर्ण;
 
-struct hash_mm_context {
+काष्ठा hash_mm_context अणु
 	u16 user_psize; /* page size index */
 
 	/* SLB page size encodings*/
-	unsigned char low_slices_psize[LOW_SLICE_ARRAY_SZ];
-	unsigned char high_slices_psize[SLICE_ARRAY_SIZE];
-	unsigned long slb_addr_limit;
-#ifdef CONFIG_PPC_64K_PAGES
-	struct slice_mask mask_64k;
-#endif
-	struct slice_mask mask_4k;
-#ifdef CONFIG_HUGETLB_PAGE
-	struct slice_mask mask_16m;
-	struct slice_mask mask_16g;
-#endif
+	अचिन्हित अक्षर low_slices_psize[LOW_SLICE_ARRAY_SZ];
+	अचिन्हित अक्षर high_slices_psize[SLICE_ARRAY_SIZE];
+	अचिन्हित दीर्घ slb_addr_limit;
+#अगर_घोषित CONFIG_PPC_64K_PAGES
+	काष्ठा slice_mask mask_64k;
+#पूर्ण_अगर
+	काष्ठा slice_mask mask_4k;
+#अगर_घोषित CONFIG_HUGETLB_PAGE
+	काष्ठा slice_mask mask_16m;
+	काष्ठा slice_mask mask_16g;
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_SUBPAGE_PROT
-	struct subpage_prot_table *spt;
-#endif /* CONFIG_PPC_SUBPAGE_PROT */
-};
+#अगर_घोषित CONFIG_PPC_SUBPAGE_PROT
+	काष्ठा subpage_prot_table *spt;
+#पूर्ण_अगर /* CONFIG_PPC_SUBPAGE_PROT */
+पूर्ण;
 
-#if 0
+#अगर 0
 /*
- * The code below is equivalent to this function for arguments
+ * The code below is equivalent to this function क्रम arguments
  * < 2^VSID_BITS, which is all this should ever be called
  * with.  However gcc is not clever enough to compute the
  * modulus (2^n-1) without a second multiply.
  */
-#define vsid_scramble(protovsid, size) \
+#घोषणा vsid_scramble(protovsid, size) \
 	((((protovsid) * VSID_MULTIPLIER_##size) % VSID_MODULUS_##size))
 
-/* simplified form avoiding mod operation */
-#define vsid_scramble(protovsid, size) \
-	({								 \
-		unsigned long x;					 \
+/* simplअगरied क्रमm aव्योमing mod operation */
+#घोषणा vsid_scramble(protovsid, size) \
+	(अणु								 \
+		अचिन्हित दीर्घ x;					 \
 		x = (protovsid) * VSID_MULTIPLIER_##size;		 \
 		x = (x >> VSID_BITS_##size) + (x & VSID_MODULUS_##size); \
 		(x + ((x+1) >> VSID_BITS_##size)) & VSID_MODULUS_##size; \
-	})
+	पूर्ण)
 
-#else /* 1 */
-static inline unsigned long vsid_scramble(unsigned long protovsid,
-				  unsigned long vsid_multiplier, int vsid_bits)
-{
-	unsigned long vsid;
-	unsigned long vsid_modulus = ((1UL << vsid_bits) - 1);
+#अन्यथा /* 1 */
+अटल अंतरभूत अचिन्हित दीर्घ vsid_scramble(अचिन्हित दीर्घ protovsid,
+				  अचिन्हित दीर्घ vsid_multiplier, पूर्णांक vsid_bits)
+अणु
+	अचिन्हित दीर्घ vsid;
+	अचिन्हित दीर्घ vsid_modulus = ((1UL << vsid_bits) - 1);
 	/*
-	 * We have same multipler for both 256 and 1T segements now
+	 * We have same multipler क्रम both 256 and 1T segements now
 	 */
 	vsid = protovsid * vsid_multiplier;
 	vsid = (vsid >> vsid_bits) + (vsid & vsid_modulus);
-	return (vsid + ((vsid + 1) >> vsid_bits)) & vsid_modulus;
-}
+	वापस (vsid + ((vsid + 1) >> vsid_bits)) & vsid_modulus;
+पूर्ण
 
-#endif /* 1 */
+#पूर्ण_अगर /* 1 */
 
-/* Returns the segment size indicator for a user address */
-static inline int user_segment_size(unsigned long addr)
-{
-	/* Use 1T segments if possible for addresses >= 1T */
-	if (addr >= (1UL << SID_SHIFT_1T))
-		return mmu_highuser_ssize;
-	return MMU_SEGSIZE_256M;
-}
+/* Returns the segment size indicator क्रम a user address */
+अटल अंतरभूत पूर्णांक user_segment_size(अचिन्हित दीर्घ addr)
+अणु
+	/* Use 1T segments अगर possible क्रम addresses >= 1T */
+	अगर (addr >= (1UL << SID_SHIFT_1T))
+		वापस mmu_highuser_ssize;
+	वापस MMU_SEGSIZE_256M;
+पूर्ण
 
-static inline unsigned long get_vsid(unsigned long context, unsigned long ea,
-				     int ssize)
-{
-	unsigned long va_bits = VA_BITS;
-	unsigned long vsid_bits;
-	unsigned long protovsid;
+अटल अंतरभूत अचिन्हित दीर्घ get_vsid(अचिन्हित दीर्घ context, अचिन्हित दीर्घ ea,
+				     पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ va_bits = VA_BITS;
+	अचिन्हित दीर्घ vsid_bits;
+	अचिन्हित दीर्घ protovsid;
 
 	/*
-	 * Bad address. We return VSID 0 for that
+	 * Bad address. We वापस VSID 0 क्रम that
 	 */
-	if ((ea & EA_MASK)  >= H_PGTABLE_RANGE)
-		return 0;
+	अगर ((ea & EA_MASK)  >= H_PGTABLE_RANGE)
+		वापस 0;
 
-	if (!mmu_has_feature(MMU_FTR_68_BIT_VA))
+	अगर (!mmu_has_feature(MMU_FTR_68_BIT_VA))
 		va_bits = 65;
 
-	if (ssize == MMU_SEGSIZE_256M) {
+	अगर (ssize == MMU_SEGSIZE_256M) अणु
 		vsid_bits = va_bits - SID_SHIFT;
 		protovsid = (context << ESID_BITS) |
 			((ea >> SID_SHIFT) & ESID_BITS_MASK);
-		return vsid_scramble(protovsid, VSID_MULTIPLIER_256M, vsid_bits);
-	}
+		वापस vsid_scramble(protovsid, VSID_MULTIPLIER_256M, vsid_bits);
+	पूर्ण
 	/* 1T segment */
 	vsid_bits = va_bits - SID_SHIFT_1T;
 	protovsid = (context << ESID_BITS_1T) |
 		((ea >> SID_SHIFT_1T) & ESID_BITS_1T_MASK);
-	return vsid_scramble(protovsid, VSID_MULTIPLIER_1T, vsid_bits);
-}
+	वापस vsid_scramble(protovsid, VSID_MULTIPLIER_1T, vsid_bits);
+पूर्ण
 
 /*
  * For kernel space, we use context ids as
@@ -813,66 +814,66 @@ static inline unsigned long get_vsid(unsigned long context, unsigned long ea,
  * 0x00007 -  [ 0xc00c000000000000 - 0xc00dffffffffffff]
  *
  */
-static inline unsigned long get_kernel_context(unsigned long ea)
-{
-	unsigned long region_id = get_region_id(ea);
-	unsigned long ctx;
+अटल अंतरभूत अचिन्हित दीर्घ get_kernel_context(अचिन्हित दीर्घ ea)
+अणु
+	अचिन्हित दीर्घ region_id = get_region_id(ea);
+	अचिन्हित दीर्घ ctx;
 	/*
 	 * Depending on Kernel config, kernel region can have one context
 	 * or more.
 	 */
-	if (region_id == LINEAR_MAP_REGION_ID) {
+	अगर (region_id == LINEAR_MAP_REGION_ID) अणु
 		/*
-		 * We already verified ea to be not beyond the addr limit.
+		 * We alपढ़ोy verअगरied ea to be not beyond the addr limit.
 		 */
 		ctx =  1 + ((ea & EA_MASK) >> MAX_EA_BITS_PER_CONTEXT);
-	} else
+	पूर्ण अन्यथा
 		ctx = region_id + MAX_KERNEL_CTX_CNT - 1;
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
 /*
- * This is only valid for addresses >= PAGE_OFFSET
+ * This is only valid क्रम addresses >= PAGE_OFFSET
  */
-static inline unsigned long get_kernel_vsid(unsigned long ea, int ssize)
-{
-	unsigned long context;
+अटल अंतरभूत अचिन्हित दीर्घ get_kernel_vsid(अचिन्हित दीर्घ ea, पूर्णांक ssize)
+अणु
+	अचिन्हित दीर्घ context;
 
-	if (!is_kernel_addr(ea))
-		return 0;
+	अगर (!is_kernel_addr(ea))
+		वापस 0;
 
 	context = get_kernel_context(ea);
-	return get_vsid(context, ea, ssize);
-}
+	वापस get_vsid(context, ea, ssize);
+पूर्ण
 
-unsigned htab_shift_for_mem_size(unsigned long mem_size);
+अचिन्हित htab_shअगरt_क्रम_mem_size(अचिन्हित दीर्घ mem_size);
 
-enum slb_index {
+क्रमागत slb_index अणु
 	LINEAR_INDEX	= 0, /* Kernel linear map  (0xc000000000000000) */
 	KSTACK_INDEX	= 1, /* Kernel stack map */
-};
+पूर्ण;
 
-#define slb_esid_mask(ssize)	\
+#घोषणा slb_esid_mask(ssize)	\
 	(((ssize) == MMU_SEGSIZE_256M) ? ESID_MASK : ESID_MASK_1T)
 
-static inline unsigned long mk_esid_data(unsigned long ea, int ssize,
-					 enum slb_index index)
-{
-	return (ea & slb_esid_mask(ssize)) | SLB_ESID_V | index;
-}
+अटल अंतरभूत अचिन्हित दीर्घ mk_esid_data(अचिन्हित दीर्घ ea, पूर्णांक ssize,
+					 क्रमागत slb_index index)
+अणु
+	वापस (ea & slb_esid_mask(ssize)) | SLB_ESID_V | index;
+पूर्ण
 
-static inline unsigned long __mk_vsid_data(unsigned long vsid, int ssize,
-					   unsigned long flags)
-{
-	return (vsid << slb_vsid_shift(ssize)) | flags |
-		((unsigned long)ssize << SLB_VSID_SSIZE_SHIFT);
-}
+अटल अंतरभूत अचिन्हित दीर्घ __mk_vsid_data(अचिन्हित दीर्घ vsid, पूर्णांक ssize,
+					   अचिन्हित दीर्घ flags)
+अणु
+	वापस (vsid << slb_vsid_shअगरt(ssize)) | flags |
+		((अचिन्हित दीर्घ)ssize << SLB_VSID_SSIZE_SHIFT);
+पूर्ण
 
-static inline unsigned long mk_vsid_data(unsigned long ea, int ssize,
-					 unsigned long flags)
-{
-	return __mk_vsid_data(get_kernel_vsid(ea, ssize), ssize, flags);
-}
+अटल अंतरभूत अचिन्हित दीर्घ mk_vsid_data(अचिन्हित दीर्घ ea, पूर्णांक ssize,
+					 अचिन्हित दीर्घ flags)
+अणु
+	वापस __mk_vsid_data(get_kernel_vsid(ea, ssize), ssize, flags);
+पूर्ण
 
-#endif /* __ASSEMBLY__ */
-#endif /* _ASM_POWERPC_BOOK3S_64_MMU_HASH_H_ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* _ASM_POWERPC_BOOK3S_64_MMU_HASH_H_ */

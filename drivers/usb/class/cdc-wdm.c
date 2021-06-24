@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * cdc-wdm.c
  *
@@ -12,325 +13,325 @@
  *
  * Many thanks to Carl Nordbeck
  */
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/ioctl.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/uaccess.h>
-#include <linux/bitops.h>
-#include <linux/poll.h>
-#include <linux/usb.h>
-#include <linux/usb/cdc.h>
-#include <asm/byteorder.h>
-#include <asm/unaligned.h>
-#include <linux/usb/cdc-wdm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/cdc.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/usb/cdc-wdm.h>
 
-#define DRIVER_AUTHOR "Oliver Neukum"
-#define DRIVER_DESC "USB Abstract Control Model driver for USB WCM Device Management"
+#घोषणा DRIVER_AUTHOR "Oliver Neukum"
+#घोषणा DRIVER_DESC "USB Abstract Control Model driver for USB WCM Device Management"
 
-static const struct usb_device_id wdm_ids[] = {
-	{
+अटल स्थिर काष्ठा usb_device_id wdm_ids[] = अणु
+	अणु
 		.match_flags = USB_DEVICE_ID_MATCH_INT_CLASS |
 				 USB_DEVICE_ID_MATCH_INT_SUBCLASS,
 		.bInterfaceClass = USB_CLASS_COMM,
 		.bInterfaceSubClass = USB_CDC_SUBCLASS_DMM
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE (usb, wdm_ids);
 
-#define WDM_MINOR_BASE	176
+#घोषणा WDM_MINOR_BASE	176
 
 
-#define WDM_IN_USE		1
-#define WDM_DISCONNECTING	2
-#define WDM_RESULT		3
-#define WDM_READ		4
-#define WDM_INT_STALL		5
-#define WDM_POLL_RUNNING	6
-#define WDM_RESPONDING		7
-#define WDM_SUSPENDING		8
-#define WDM_RESETTING		9
-#define WDM_OVERFLOW		10
+#घोषणा WDM_IN_USE		1
+#घोषणा WDM_DISCONNECTING	2
+#घोषणा WDM_RESULT		3
+#घोषणा WDM_READ		4
+#घोषणा WDM_INT_STALL		5
+#घोषणा WDM_POLL_RUNNING	6
+#घोषणा WDM_RESPONDING		7
+#घोषणा WDM_SUSPENDING		8
+#घोषणा WDM_RESETTING		9
+#घोषणा WDM_OVERFLOW		10
 
-#define WDM_MAX			16
+#घोषणा WDM_MAX			16
 
-/* we cannot wait forever at flush() */
-#define WDM_FLUSH_TIMEOUT	(30 * HZ)
+/* we cannot रुको क्रमever at flush() */
+#घोषणा WDM_FLUSH_TIMEOUT	(30 * HZ)
 
 /* CDC-WMC r1.1 requires wMaxCommand to be "at least 256 decimal (0x100)" */
-#define WDM_DEFAULT_BUFSIZE	256
+#घोषणा WDM_DEFAULT_बफ_मानE	256
 
-static DEFINE_MUTEX(wdm_mutex);
-static DEFINE_SPINLOCK(wdm_device_list_lock);
-static LIST_HEAD(wdm_device_list);
+अटल DEFINE_MUTEX(wdm_mutex);
+अटल DEFINE_SPINLOCK(wdm_device_list_lock);
+अटल LIST_HEAD(wdm_device_list);
 
 /* --- method tables --- */
 
-struct wdm_device {
-	u8			*inbuf; /* buffer for response */
-	u8			*outbuf; /* buffer for command */
-	u8			*sbuf; /* buffer for status */
-	u8			*ubuf; /* buffer for copy to user space */
+काष्ठा wdm_device अणु
+	u8			*inbuf; /* buffer क्रम response */
+	u8			*outbuf; /* buffer क्रम command */
+	u8			*sbuf; /* buffer क्रम status */
+	u8			*ubuf; /* buffer क्रम copy to user space */
 
-	struct urb		*command;
-	struct urb		*response;
-	struct urb		*validity;
-	struct usb_interface	*intf;
-	struct usb_ctrlrequest	*orq;
-	struct usb_ctrlrequest	*irq;
+	काष्ठा urb		*command;
+	काष्ठा urb		*response;
+	काष्ठा urb		*validity;
+	काष्ठा usb_पूर्णांकerface	*पूर्णांकf;
+	काष्ठा usb_ctrlrequest	*orq;
+	काष्ठा usb_ctrlrequest	*irq;
 	spinlock_t		iuspin;
 
-	unsigned long		flags;
+	अचिन्हित दीर्घ		flags;
 	u16			bufsize;
 	u16			wMaxCommand;
 	u16			wMaxPacketSize;
 	__le16			inum;
-	int			reslength;
-	int			length;
-	int			read;
-	int			count;
+	पूर्णांक			reslength;
+	पूर्णांक			length;
+	पूर्णांक			पढ़ो;
+	पूर्णांक			count;
 	dma_addr_t		shandle;
 	dma_addr_t		ihandle;
-	struct mutex		wlock;
-	struct mutex		rlock;
-	wait_queue_head_t	wait;
-	struct work_struct	rxwork;
-	struct work_struct	service_outs_intr;
-	int			werr;
-	int			rerr;
-	int                     resp_count;
+	काष्ठा mutex		wlock;
+	काष्ठा mutex		rlock;
+	रुको_queue_head_t	रुको;
+	काष्ठा work_काष्ठा	rxwork;
+	काष्ठा work_काष्ठा	service_outs_पूर्णांकr;
+	पूर्णांक			werr;
+	पूर्णांक			rerr;
+	पूर्णांक                     resp_count;
 
-	struct list_head	device_list;
-	int			(*manage_power)(struct usb_interface *, int);
-};
+	काष्ठा list_head	device_list;
+	पूर्णांक			(*manage_घातer)(काष्ठा usb_पूर्णांकerface *, पूर्णांक);
+पूर्ण;
 
-static struct usb_driver wdm_driver;
+अटल काष्ठा usb_driver wdm_driver;
 
-/* return intfdata if we own the interface, else look up intf in the list */
-static struct wdm_device *wdm_find_device(struct usb_interface *intf)
-{
-	struct wdm_device *desc;
+/* वापस पूर्णांकfdata अगर we own the पूर्णांकerface, अन्यथा look up पूर्णांकf in the list */
+अटल काष्ठा wdm_device *wdm_find_device(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा wdm_device *desc;
 
 	spin_lock(&wdm_device_list_lock);
-	list_for_each_entry(desc, &wdm_device_list, device_list)
-		if (desc->intf == intf)
-			goto found;
-	desc = NULL;
+	list_क्रम_each_entry(desc, &wdm_device_list, device_list)
+		अगर (desc->पूर्णांकf == पूर्णांकf)
+			जाओ found;
+	desc = शून्य;
 found:
 	spin_unlock(&wdm_device_list_lock);
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-static struct wdm_device *wdm_find_device_by_minor(int minor)
-{
-	struct wdm_device *desc;
+अटल काष्ठा wdm_device *wdm_find_device_by_minor(पूर्णांक minor)
+अणु
+	काष्ठा wdm_device *desc;
 
 	spin_lock(&wdm_device_list_lock);
-	list_for_each_entry(desc, &wdm_device_list, device_list)
-		if (desc->intf->minor == minor)
-			goto found;
-	desc = NULL;
+	list_क्रम_each_entry(desc, &wdm_device_list, device_list)
+		अगर (desc->पूर्णांकf->minor == minor)
+			जाओ found;
+	desc = शून्य;
 found:
 	spin_unlock(&wdm_device_list_lock);
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
 /* --- callbacks --- */
-static void wdm_out_callback(struct urb *urb)
-{
-	struct wdm_device *desc;
-	unsigned long flags;
+अटल व्योम wdm_out_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा wdm_device *desc;
+	अचिन्हित दीर्घ flags;
 
 	desc = urb->context;
 	spin_lock_irqsave(&desc->iuspin, flags);
 	desc->werr = urb->status;
 	spin_unlock_irqrestore(&desc->iuspin, flags);
-	kfree(desc->outbuf);
-	desc->outbuf = NULL;
+	kमुक्त(desc->outbuf);
+	desc->outbuf = शून्य;
 	clear_bit(WDM_IN_USE, &desc->flags);
-	wake_up_all(&desc->wait);
-}
+	wake_up_all(&desc->रुको);
+पूर्ण
 
-static void wdm_in_callback(struct urb *urb)
-{
-	unsigned long flags;
-	struct wdm_device *desc = urb->context;
-	int status = urb->status;
-	int length = urb->actual_length;
+अटल व्योम wdm_in_callback(काष्ठा urb *urb)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा wdm_device *desc = urb->context;
+	पूर्णांक status = urb->status;
+	पूर्णांक length = urb->actual_length;
 
 	spin_lock_irqsave(&desc->iuspin, flags);
 	clear_bit(WDM_RESPONDING, &desc->flags);
 
-	if (status) {
-		switch (status) {
-		case -ENOENT:
-			dev_dbg(&desc->intf->dev,
+	अगर (status) अणु
+		चयन (status) अणु
+		हाल -ENOENT:
+			dev_dbg(&desc->पूर्णांकf->dev,
 				"nonzero urb status received: -ENOENT\n");
-			goto skip_error;
-		case -ECONNRESET:
-			dev_dbg(&desc->intf->dev,
+			जाओ skip_error;
+		हाल -ECONNRESET:
+			dev_dbg(&desc->पूर्णांकf->dev,
 				"nonzero urb status received: -ECONNRESET\n");
-			goto skip_error;
-		case -ESHUTDOWN:
-			dev_dbg(&desc->intf->dev,
+			जाओ skip_error;
+		हाल -ESHUTDOWN:
+			dev_dbg(&desc->पूर्णांकf->dev,
 				"nonzero urb status received: -ESHUTDOWN\n");
-			goto skip_error;
-		case -EPIPE:
-			dev_err(&desc->intf->dev,
+			जाओ skip_error;
+		हाल -EPIPE:
+			dev_err(&desc->पूर्णांकf->dev,
 				"nonzero urb status received: -EPIPE\n");
-			break;
-		default:
-			dev_err(&desc->intf->dev,
+			अवरोध;
+		शेष:
+			dev_err(&desc->पूर्णांकf->dev,
 				"Unexpected error %d\n", status);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * only set a new error if there is no previous error.
-	 * Errors are only cleared during read/open
-	 * Avoid propagating -EPIPE (stall) to userspace since it is
-	 * better handled as an empty read
+	 * only set a new error अगर there is no previous error.
+	 * Errors are only cleared during पढ़ो/खोलो
+	 * Aव्योम propagating -EPIPE (stall) to userspace since it is
+	 * better handled as an empty पढ़ो
 	 */
-	if (desc->rerr == 0 && status != -EPIPE)
+	अगर (desc->rerr == 0 && status != -EPIPE)
 		desc->rerr = status;
 
-	if (length + desc->length > desc->wMaxCommand) {
+	अगर (length + desc->length > desc->wMaxCommand) अणु
 		/* The buffer would overflow */
 		set_bit(WDM_OVERFLOW, &desc->flags);
-	} else {
-		/* we may already be in overflow */
-		if (!test_bit(WDM_OVERFLOW, &desc->flags)) {
-			memmove(desc->ubuf + desc->length, desc->inbuf, length);
+	पूर्ण अन्यथा अणु
+		/* we may alपढ़ोy be in overflow */
+		अगर (!test_bit(WDM_OVERFLOW, &desc->flags)) अणु
+			स_हटाओ(desc->ubuf + desc->length, desc->inbuf, length);
 			desc->length += length;
 			desc->reslength = length;
-		}
-	}
+		पूर्ण
+	पूर्ण
 skip_error:
 
-	if (desc->rerr) {
+	अगर (desc->rerr) अणु
 		/*
-		 * Since there was an error, userspace may decide to not read
+		 * Since there was an error, userspace may decide to not पढ़ो
 		 * any data after poll'ing.
 		 * We should respond to further attempts from the device to send
 		 * data, so that we can get unstuck.
 		 */
-		schedule_work(&desc->service_outs_intr);
-	} else {
+		schedule_work(&desc->service_outs_पूर्णांकr);
+	पूर्ण अन्यथा अणु
 		set_bit(WDM_READ, &desc->flags);
-		wake_up(&desc->wait);
-	}
+		wake_up(&desc->रुको);
+	पूर्ण
 	spin_unlock_irqrestore(&desc->iuspin, flags);
-}
+पूर्ण
 
-static void wdm_int_callback(struct urb *urb)
-{
-	unsigned long flags;
-	int rv = 0;
-	int responding;
-	int status = urb->status;
-	struct wdm_device *desc;
-	struct usb_cdc_notification *dr;
+अटल व्योम wdm_पूर्णांक_callback(काष्ठा urb *urb)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rv = 0;
+	पूर्णांक responding;
+	पूर्णांक status = urb->status;
+	काष्ठा wdm_device *desc;
+	काष्ठा usb_cdc_notअगरication *dr;
 
 	desc = urb->context;
-	dr = (struct usb_cdc_notification *)desc->sbuf;
+	dr = (काष्ठा usb_cdc_notअगरication *)desc->sbuf;
 
-	if (status) {
-		switch (status) {
-		case -ESHUTDOWN:
-		case -ENOENT:
-		case -ECONNRESET:
-			return; /* unplug */
-		case -EPIPE:
+	अगर (status) अणु
+		चयन (status) अणु
+		हाल -ESHUTDOWN:
+		हाल -ENOENT:
+		हाल -ECONNRESET:
+			वापस; /* unplug */
+		हाल -EPIPE:
 			set_bit(WDM_INT_STALL, &desc->flags);
-			dev_err(&desc->intf->dev, "Stall on int endpoint\n");
-			goto sw; /* halt is cleared in work */
-		default:
-			dev_err(&desc->intf->dev,
+			dev_err(&desc->पूर्णांकf->dev, "Stall on int endpoint\n");
+			जाओ sw; /* halt is cleared in work */
+		शेष:
+			dev_err(&desc->पूर्णांकf->dev,
 				"nonzero urb status received: %d\n", status);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (urb->actual_length < sizeof(struct usb_cdc_notification)) {
-		dev_err(&desc->intf->dev, "wdm_int_callback - %d bytes\n",
+	अगर (urb->actual_length < माप(काष्ठा usb_cdc_notअगरication)) अणु
+		dev_err(&desc->पूर्णांकf->dev, "wdm_int_callback - %d bytes\n",
 			urb->actual_length);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	switch (dr->bNotificationType) {
-	case USB_CDC_NOTIFY_RESPONSE_AVAILABLE:
-		dev_dbg(&desc->intf->dev,
+	चयन (dr->bNotअगरicationType) अणु
+	हाल USB_CDC_NOTIFY_RESPONSE_AVAILABLE:
+		dev_dbg(&desc->पूर्णांकf->dev,
 			"NOTIFY_RESPONSE_AVAILABLE received: index %d len %d\n",
 			le16_to_cpu(dr->wIndex), le16_to_cpu(dr->wLength));
-		break;
+		अवरोध;
 
-	case USB_CDC_NOTIFY_NETWORK_CONNECTION:
+	हाल USB_CDC_NOTIFY_NETWORK_CONNECTION:
 
-		dev_dbg(&desc->intf->dev,
+		dev_dbg(&desc->पूर्णांकf->dev,
 			"NOTIFY_NETWORK_CONNECTION %s network\n",
 			dr->wValue ? "connected to" : "disconnected from");
-		goto exit;
-	case USB_CDC_NOTIFY_SPEED_CHANGE:
-		dev_dbg(&desc->intf->dev, "SPEED_CHANGE received (len %u)\n",
+		जाओ निकास;
+	हाल USB_CDC_NOTIFY_SPEED_CHANGE:
+		dev_dbg(&desc->पूर्णांकf->dev, "SPEED_CHANGE received (len %u)\n",
 			urb->actual_length);
-		goto exit;
-	default:
+		जाओ निकास;
+	शेष:
 		clear_bit(WDM_POLL_RUNNING, &desc->flags);
-		dev_err(&desc->intf->dev,
+		dev_err(&desc->पूर्णांकf->dev,
 			"unknown notification %d received: index %d len %d\n",
-			dr->bNotificationType,
+			dr->bNotअगरicationType,
 			le16_to_cpu(dr->wIndex),
 			le16_to_cpu(dr->wLength));
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	spin_lock_irqsave(&desc->iuspin, flags);
 	responding = test_and_set_bit(WDM_RESPONDING, &desc->flags);
-	if (!desc->resp_count++ && !responding
+	अगर (!desc->resp_count++ && !responding
 		&& !test_bit(WDM_DISCONNECTING, &desc->flags)
-		&& !test_bit(WDM_SUSPENDING, &desc->flags)) {
+		&& !test_bit(WDM_SUSPENDING, &desc->flags)) अणु
 		rv = usb_submit_urb(desc->response, GFP_ATOMIC);
-		dev_dbg(&desc->intf->dev, "submit response URB %d\n", rv);
-	}
+		dev_dbg(&desc->पूर्णांकf->dev, "submit response URB %d\n", rv);
+	पूर्ण
 	spin_unlock_irqrestore(&desc->iuspin, flags);
-	if (rv < 0) {
+	अगर (rv < 0) अणु
 		clear_bit(WDM_RESPONDING, &desc->flags);
-		if (rv == -EPERM)
-			return;
-		if (rv == -ENOMEM) {
+		अगर (rv == -EPERM)
+			वापस;
+		अगर (rv == -ENOMEM) अणु
 sw:
 			rv = schedule_work(&desc->rxwork);
-			if (rv)
-				dev_err(&desc->intf->dev,
+			अगर (rv)
+				dev_err(&desc->पूर्णांकf->dev,
 					"Cannot schedule work\n");
-		}
-	}
-exit:
+		पूर्ण
+	पूर्ण
+निकास:
 	rv = usb_submit_urb(urb, GFP_ATOMIC);
-	if (rv)
-		dev_err(&desc->intf->dev,
+	अगर (rv)
+		dev_err(&desc->पूर्णांकf->dev,
 			"%s - usb_submit_urb failed with result %d\n",
 			__func__, rv);
 
-}
+पूर्ण
 
-static void poison_urbs(struct wdm_device *desc)
-{
+अटल व्योम poison_urbs(काष्ठा wdm_device *desc)
+अणु
 	/* the order here is essential */
 	usb_poison_urb(desc->command);
 	usb_poison_urb(desc->validity);
 	usb_poison_urb(desc->response);
-}
+पूर्ण
 
-static void unpoison_urbs(struct wdm_device *desc)
-{
+अटल व्योम unpoison_urbs(काष्ठा wdm_device *desc)
+अणु
 	/*
 	 *  the order here is not essential
 	 *  it is symmetrical just to be nice
@@ -338,707 +339,707 @@ static void unpoison_urbs(struct wdm_device *desc)
 	usb_unpoison_urb(desc->response);
 	usb_unpoison_urb(desc->validity);
 	usb_unpoison_urb(desc->command);
-}
+पूर्ण
 
-static void free_urbs(struct wdm_device *desc)
-{
-	usb_free_urb(desc->validity);
-	usb_free_urb(desc->response);
-	usb_free_urb(desc->command);
-}
+अटल व्योम मुक्त_urbs(काष्ठा wdm_device *desc)
+अणु
+	usb_मुक्त_urb(desc->validity);
+	usb_मुक्त_urb(desc->response);
+	usb_मुक्त_urb(desc->command);
+पूर्ण
 
-static void cleanup(struct wdm_device *desc)
-{
-	kfree(desc->sbuf);
-	kfree(desc->inbuf);
-	kfree(desc->orq);
-	kfree(desc->irq);
-	kfree(desc->ubuf);
-	free_urbs(desc);
-	kfree(desc);
-}
+अटल व्योम cleanup(काष्ठा wdm_device *desc)
+अणु
+	kमुक्त(desc->sbuf);
+	kमुक्त(desc->inbuf);
+	kमुक्त(desc->orq);
+	kमुक्त(desc->irq);
+	kमुक्त(desc->ubuf);
+	मुक्त_urbs(desc);
+	kमुक्त(desc);
+पूर्ण
 
-static ssize_t wdm_write
-(struct file *file, const char __user *buffer, size_t count, loff_t *ppos)
-{
+अटल sमाप_प्रकार wdm_ग_लिखो
+(काष्ठा file *file, स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *ppos)
+अणु
 	u8 *buf;
-	int rv = -EMSGSIZE, r, we;
-	struct wdm_device *desc = file->private_data;
-	struct usb_ctrlrequest *req;
+	पूर्णांक rv = -EMSGSIZE, r, we;
+	काष्ठा wdm_device *desc = file->निजी_data;
+	काष्ठा usb_ctrlrequest *req;
 
-	if (count > desc->wMaxCommand)
+	अगर (count > desc->wMaxCommand)
 		count = desc->wMaxCommand;
 
 	spin_lock_irq(&desc->iuspin);
 	we = desc->werr;
 	desc->werr = 0;
 	spin_unlock_irq(&desc->iuspin);
-	if (we < 0)
-		return usb_translate_errors(we);
+	अगर (we < 0)
+		वापस usb_translate_errors(we);
 
 	buf = memdup_user(buffer, count);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
-	/* concurrent writes and disconnect */
-	r = mutex_lock_interruptible(&desc->wlock);
+	/* concurrent ग_लिखोs and disconnect */
+	r = mutex_lock_पूर्णांकerruptible(&desc->wlock);
 	rv = -ERESTARTSYS;
-	if (r)
-		goto out_free_mem;
+	अगर (r)
+		जाओ out_मुक्त_mem;
 
-	if (test_bit(WDM_DISCONNECTING, &desc->flags)) {
+	अगर (test_bit(WDM_DISCONNECTING, &desc->flags)) अणु
 		rv = -ENODEV;
-		goto out_free_mem_lock;
-	}
+		जाओ out_मुक्त_mem_lock;
+	पूर्ण
 
-	r = usb_autopm_get_interface(desc->intf);
-	if (r < 0) {
+	r = usb_स्वतःpm_get_पूर्णांकerface(desc->पूर्णांकf);
+	अगर (r < 0) अणु
 		rv = usb_translate_errors(r);
-		goto out_free_mem_lock;
-	}
+		जाओ out_मुक्त_mem_lock;
+	पूर्ण
 
-	if (!(file->f_flags & O_NONBLOCK))
-		r = wait_event_interruptible(desc->wait, !test_bit(WDM_IN_USE,
+	अगर (!(file->f_flags & O_NONBLOCK))
+		r = रुको_event_पूर्णांकerruptible(desc->रुको, !test_bit(WDM_IN_USE,
 								&desc->flags));
-	else
-		if (test_bit(WDM_IN_USE, &desc->flags))
+	अन्यथा
+		अगर (test_bit(WDM_IN_USE, &desc->flags))
 			r = -EAGAIN;
 
-	if (test_bit(WDM_RESETTING, &desc->flags))
+	अगर (test_bit(WDM_RESETTING, &desc->flags))
 		r = -EIO;
 
-	if (test_bit(WDM_DISCONNECTING, &desc->flags))
+	अगर (test_bit(WDM_DISCONNECTING, &desc->flags))
 		r = -ENODEV;
 
-	if (r < 0) {
+	अगर (r < 0) अणु
 		rv = r;
-		goto out_free_mem_pm;
-	}
+		जाओ out_मुक्त_mem_pm;
+	पूर्ण
 
 	req = desc->orq;
 	usb_fill_control_urb(
 		desc->command,
-		interface_to_usbdev(desc->intf),
-		/* using common endpoint 0 */
-		usb_sndctrlpipe(interface_to_usbdev(desc->intf), 0),
-		(unsigned char *)req,
+		पूर्णांकerface_to_usbdev(desc->पूर्णांकf),
+		/* using common endpoपूर्णांक 0 */
+		usb_sndctrlpipe(पूर्णांकerface_to_usbdev(desc->पूर्णांकf), 0),
+		(अचिन्हित अक्षर *)req,
 		buf,
 		count,
 		wdm_out_callback,
 		desc
 	);
 
-	req->bRequestType = (USB_DIR_OUT | USB_TYPE_CLASS |
+	req->bRequestType = (USB_सूची_OUT | USB_TYPE_CLASS |
 			     USB_RECIP_INTERFACE);
 	req->bRequest = USB_CDC_SEND_ENCAPSULATED_COMMAND;
 	req->wValue = 0;
-	req->wIndex = desc->inum; /* already converted */
+	req->wIndex = desc->inum; /* alपढ़ोy converted */
 	req->wLength = cpu_to_le16(count);
 	set_bit(WDM_IN_USE, &desc->flags);
 	desc->outbuf = buf;
 
 	rv = usb_submit_urb(desc->command, GFP_KERNEL);
-	if (rv < 0) {
-		desc->outbuf = NULL;
+	अगर (rv < 0) अणु
+		desc->outbuf = शून्य;
 		clear_bit(WDM_IN_USE, &desc->flags);
-		wake_up_all(&desc->wait); /* for wdm_wait_for_response() */
-		dev_err(&desc->intf->dev, "Tx URB error: %d\n", rv);
+		wake_up_all(&desc->रुको); /* क्रम wdm_रुको_क्रम_response() */
+		dev_err(&desc->पूर्णांकf->dev, "Tx URB error: %d\n", rv);
 		rv = usb_translate_errors(rv);
-		goto out_free_mem_pm;
-	} else {
-		dev_dbg(&desc->intf->dev, "Tx URB has been submitted index=%d\n",
+		जाओ out_मुक्त_mem_pm;
+	पूर्ण अन्यथा अणु
+		dev_dbg(&desc->पूर्णांकf->dev, "Tx URB has been submitted index=%d\n",
 			le16_to_cpu(req->wIndex));
-	}
+	पूर्ण
 
-	usb_autopm_put_interface(desc->intf);
+	usb_स्वतःpm_put_पूर्णांकerface(desc->पूर्णांकf);
 	mutex_unlock(&desc->wlock);
-	return count;
+	वापस count;
 
-out_free_mem_pm:
-	usb_autopm_put_interface(desc->intf);
-out_free_mem_lock:
+out_मुक्त_mem_pm:
+	usb_स्वतःpm_put_पूर्णांकerface(desc->पूर्णांकf);
+out_मुक्त_mem_lock:
 	mutex_unlock(&desc->wlock);
-out_free_mem:
-	kfree(buf);
-	return rv;
-}
+out_मुक्त_mem:
+	kमुक्त(buf);
+	वापस rv;
+पूर्ण
 
 /*
- * Submit the read urb if resp_count is non-zero.
+ * Submit the पढ़ो urb अगर resp_count is non-zero.
  *
  * Called with desc->iuspin locked
  */
-static int service_outstanding_interrupt(struct wdm_device *desc)
-{
-	int rv = 0;
+अटल पूर्णांक service_outstanding_पूर्णांकerrupt(काष्ठा wdm_device *desc)
+अणु
+	पूर्णांक rv = 0;
 
-	/* submit read urb only if the device is waiting for it */
-	if (!desc->resp_count || !--desc->resp_count)
-		goto out;
+	/* submit पढ़ो urb only अगर the device is रुकोing क्रम it */
+	अगर (!desc->resp_count || !--desc->resp_count)
+		जाओ out;
 
-	if (test_bit(WDM_DISCONNECTING, &desc->flags)) {
+	अगर (test_bit(WDM_DISCONNECTING, &desc->flags)) अणु
 		rv = -ENODEV;
-		goto out;
-	}
-	if (test_bit(WDM_RESETTING, &desc->flags)) {
+		जाओ out;
+	पूर्ण
+	अगर (test_bit(WDM_RESETTING, &desc->flags)) अणु
 		rv = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	set_bit(WDM_RESPONDING, &desc->flags);
 	spin_unlock_irq(&desc->iuspin);
 	rv = usb_submit_urb(desc->response, GFP_KERNEL);
 	spin_lock_irq(&desc->iuspin);
-	if (rv) {
-		if (!test_bit(WDM_DISCONNECTING, &desc->flags))
-			dev_err(&desc->intf->dev,
+	अगर (rv) अणु
+		अगर (!test_bit(WDM_DISCONNECTING, &desc->flags))
+			dev_err(&desc->पूर्णांकf->dev,
 				"usb_submit_urb failed with result %d\n", rv);
 
-		/* make sure the next notification trigger a submit */
+		/* make sure the next notअगरication trigger a submit */
 		clear_bit(WDM_RESPONDING, &desc->flags);
 		desc->resp_count = 0;
-	}
+	पूर्ण
 out:
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static ssize_t wdm_read
-(struct file *file, char __user *buffer, size_t count, loff_t *ppos)
-{
-	int rv, cntr;
-	int i = 0;
-	struct wdm_device *desc = file->private_data;
+अटल sमाप_प्रकार wdm_पढ़ो
+(काष्ठा file *file, अक्षर __user *buffer, माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक rv, cntr;
+	पूर्णांक i = 0;
+	काष्ठा wdm_device *desc = file->निजी_data;
 
 
-	rv = mutex_lock_interruptible(&desc->rlock); /*concurrent reads */
-	if (rv < 0)
-		return -ERESTARTSYS;
+	rv = mutex_lock_पूर्णांकerruptible(&desc->rlock); /*concurrent पढ़ोs */
+	अगर (rv < 0)
+		वापस -ERESTARTSYS;
 
 	cntr = READ_ONCE(desc->length);
-	if (cntr == 0) {
-		desc->read = 0;
+	अगर (cntr == 0) अणु
+		desc->पढ़ो = 0;
 retry:
-		if (test_bit(WDM_DISCONNECTING, &desc->flags)) {
+		अगर (test_bit(WDM_DISCONNECTING, &desc->flags)) अणु
 			rv = -ENODEV;
-			goto err;
-		}
-		if (test_bit(WDM_OVERFLOW, &desc->flags)) {
+			जाओ err;
+		पूर्ण
+		अगर (test_bit(WDM_OVERFLOW, &desc->flags)) अणु
 			clear_bit(WDM_OVERFLOW, &desc->flags);
 			rv = -ENOBUFS;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		i++;
-		if (file->f_flags & O_NONBLOCK) {
-			if (!test_bit(WDM_READ, &desc->flags)) {
+		अगर (file->f_flags & O_NONBLOCK) अणु
+			अगर (!test_bit(WDM_READ, &desc->flags)) अणु
 				rv = -EAGAIN;
-				goto err;
-			}
+				जाओ err;
+			पूर्ण
 			rv = 0;
-		} else {
-			rv = wait_event_interruptible(desc->wait,
+		पूर्ण अन्यथा अणु
+			rv = रुको_event_पूर्णांकerruptible(desc->रुको,
 				test_bit(WDM_READ, &desc->flags));
-		}
+		पूर्ण
 
-		/* may have happened while we slept */
-		if (test_bit(WDM_DISCONNECTING, &desc->flags)) {
+		/* may have happened जबतक we slept */
+		अगर (test_bit(WDM_DISCONNECTING, &desc->flags)) अणु
 			rv = -ENODEV;
-			goto err;
-		}
-		if (test_bit(WDM_RESETTING, &desc->flags)) {
+			जाओ err;
+		पूर्ण
+		अगर (test_bit(WDM_RESETTING, &desc->flags)) अणु
 			rv = -EIO;
-			goto err;
-		}
-		usb_mark_last_busy(interface_to_usbdev(desc->intf));
-		if (rv < 0) {
+			जाओ err;
+		पूर्ण
+		usb_mark_last_busy(पूर्णांकerface_to_usbdev(desc->पूर्णांकf));
+		अगर (rv < 0) अणु
 			rv = -ERESTARTSYS;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		spin_lock_irq(&desc->iuspin);
 
-		if (desc->rerr) { /* read completed, error happened */
+		अगर (desc->rerr) अणु /* पढ़ो completed, error happened */
 			rv = usb_translate_errors(desc->rerr);
 			desc->rerr = 0;
 			spin_unlock_irq(&desc->iuspin);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		/*
 		 * recheck whether we've lost the race
 		 * against the completion handler
 		 */
-		if (!test_bit(WDM_READ, &desc->flags)) { /* lost race */
+		अगर (!test_bit(WDM_READ, &desc->flags)) अणु /* lost race */
 			spin_unlock_irq(&desc->iuspin);
-			goto retry;
-		}
+			जाओ retry;
+		पूर्ण
 
-		if (!desc->reslength) { /* zero length read */
-			dev_dbg(&desc->intf->dev, "zero length - clearing WDM_READ\n");
+		अगर (!desc->reslength) अणु /* zero length पढ़ो */
+			dev_dbg(&desc->पूर्णांकf->dev, "zero length - clearing WDM_READ\n");
 			clear_bit(WDM_READ, &desc->flags);
-			rv = service_outstanding_interrupt(desc);
+			rv = service_outstanding_पूर्णांकerrupt(desc);
 			spin_unlock_irq(&desc->iuspin);
-			if (rv < 0)
-				goto err;
-			goto retry;
-		}
+			अगर (rv < 0)
+				जाओ err;
+			जाओ retry;
+		पूर्ण
 		cntr = desc->length;
 		spin_unlock_irq(&desc->iuspin);
-	}
+	पूर्ण
 
-	if (cntr > count)
+	अगर (cntr > count)
 		cntr = count;
 	rv = copy_to_user(buffer, desc->ubuf, cntr);
-	if (rv > 0) {
+	अगर (rv > 0) अणु
 		rv = -EFAULT;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	spin_lock_irq(&desc->iuspin);
 
-	for (i = 0; i < desc->length - cntr; i++)
+	क्रम (i = 0; i < desc->length - cntr; i++)
 		desc->ubuf[i] = desc->ubuf[i + cntr];
 
 	desc->length -= cntr;
-	/* in case we had outstanding data */
-	if (!desc->length) {
+	/* in हाल we had outstanding data */
+	अगर (!desc->length) अणु
 		clear_bit(WDM_READ, &desc->flags);
-		service_outstanding_interrupt(desc);
-	}
+		service_outstanding_पूर्णांकerrupt(desc);
+	पूर्ण
 	spin_unlock_irq(&desc->iuspin);
 	rv = cntr;
 
 err:
 	mutex_unlock(&desc->rlock);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int wdm_wait_for_response(struct file *file, long timeout)
-{
-	struct wdm_device *desc = file->private_data;
-	long rv; /* Use long here because (int) MAX_SCHEDULE_TIMEOUT < 0. */
+अटल पूर्णांक wdm_रुको_क्रम_response(काष्ठा file *file, दीर्घ समयout)
+अणु
+	काष्ठा wdm_device *desc = file->निजी_data;
+	दीर्घ rv; /* Use दीर्घ here because (पूर्णांक) MAX_SCHEDULE_TIMEOUT < 0. */
 
 	/*
-	 * Needs both flags. We cannot do with one because resetting it would
-	 * cause a race with write() yet we need to signal a disconnect.
+	 * Needs both flags. We cannot करो with one because resetting it would
+	 * cause a race with ग_लिखो() yet we need to संकेत a disconnect.
 	 */
-	rv = wait_event_interruptible_timeout(desc->wait,
+	rv = रुको_event_पूर्णांकerruptible_समयout(desc->रुको,
 			      !test_bit(WDM_IN_USE, &desc->flags) ||
 			      test_bit(WDM_DISCONNECTING, &desc->flags),
-			      timeout);
+			      समयout);
 
 	/*
-	 * To report the correct error. This is best effort.
+	 * To report the correct error. This is best efक्रमt.
 	 * We are inevitably racing with the hardware.
 	 */
-	if (test_bit(WDM_DISCONNECTING, &desc->flags))
-		return -ENODEV;
-	if (!rv)
-		return -EIO;
-	if (rv < 0)
-		return -EINTR;
+	अगर (test_bit(WDM_DISCONNECTING, &desc->flags))
+		वापस -ENODEV;
+	अगर (!rv)
+		वापस -EIO;
+	अगर (rv < 0)
+		वापस -EINTR;
 
 	spin_lock_irq(&desc->iuspin);
 	rv = desc->werr;
 	desc->werr = 0;
 	spin_unlock_irq(&desc->iuspin);
 
-	return usb_translate_errors(rv);
+	वापस usb_translate_errors(rv);
 
-}
+पूर्ण
 
 /*
- * You need to send a signal when you react to malicious or defective hardware.
- * Also, don't abort when fsync() returned -EINVAL, for older kernels which do
- * not implement wdm_flush() will return -EINVAL.
+ * You need to send a संकेत when you react to malicious or defective hardware.
+ * Also, करोn't पात when fsync() वापसed -EINVAL, क्रम older kernels which करो
+ * not implement wdm_flush() will वापस -EINVAL.
  */
-static int wdm_fsync(struct file *file, loff_t start, loff_t end, int datasync)
-{
-	return wdm_wait_for_response(file, MAX_SCHEDULE_TIMEOUT);
-}
+अटल पूर्णांक wdm_fsync(काष्ठा file *file, loff_t start, loff_t end, पूर्णांक datasync)
+अणु
+	वापस wdm_रुको_क्रम_response(file, MAX_SCHEDULE_TIMEOUT);
+पूर्ण
 
 /*
- * Same with wdm_fsync(), except it uses finite timeout in order to react to
- * malicious or defective hardware which ceased communication after close() was
+ * Same with wdm_fsync(), except it uses finite समयout in order to react to
+ * malicious or defective hardware which ceased communication after बंद() was
  * implicitly called due to process termination.
  */
-static int wdm_flush(struct file *file, fl_owner_t id)
-{
-	return wdm_wait_for_response(file, WDM_FLUSH_TIMEOUT);
-}
+अटल पूर्णांक wdm_flush(काष्ठा file *file, fl_owner_t id)
+अणु
+	वापस wdm_रुको_क्रम_response(file, WDM_FLUSH_TIMEOUT);
+पूर्ण
 
-static __poll_t wdm_poll(struct file *file, struct poll_table_struct *wait)
-{
-	struct wdm_device *desc = file->private_data;
-	unsigned long flags;
+अटल __poll_t wdm_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *रुको)
+अणु
+	काष्ठा wdm_device *desc = file->निजी_data;
+	अचिन्हित दीर्घ flags;
 	__poll_t mask = 0;
 
 	spin_lock_irqsave(&desc->iuspin, flags);
-	if (test_bit(WDM_DISCONNECTING, &desc->flags)) {
+	अगर (test_bit(WDM_DISCONNECTING, &desc->flags)) अणु
 		mask = EPOLLHUP | EPOLLERR;
 		spin_unlock_irqrestore(&desc->iuspin, flags);
-		goto desc_out;
-	}
-	if (test_bit(WDM_READ, &desc->flags))
+		जाओ desc_out;
+	पूर्ण
+	अगर (test_bit(WDM_READ, &desc->flags))
 		mask = EPOLLIN | EPOLLRDNORM;
-	if (desc->rerr || desc->werr)
+	अगर (desc->rerr || desc->werr)
 		mask |= EPOLLERR;
-	if (!test_bit(WDM_IN_USE, &desc->flags))
+	अगर (!test_bit(WDM_IN_USE, &desc->flags))
 		mask |= EPOLLOUT | EPOLLWRNORM;
 	spin_unlock_irqrestore(&desc->iuspin, flags);
 
-	poll_wait(file, &desc->wait, wait);
+	poll_रुको(file, &desc->रुको, रुको);
 
 desc_out:
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int wdm_open(struct inode *inode, struct file *file)
-{
-	int minor = iminor(inode);
-	int rv = -ENODEV;
-	struct usb_interface *intf;
-	struct wdm_device *desc;
+अटल पूर्णांक wdm_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक minor = iminor(inode);
+	पूर्णांक rv = -ENODEV;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	काष्ठा wdm_device *desc;
 
 	mutex_lock(&wdm_mutex);
 	desc = wdm_find_device_by_minor(minor);
-	if (!desc)
-		goto out;
+	अगर (!desc)
+		जाओ out;
 
-	intf = desc->intf;
-	if (test_bit(WDM_DISCONNECTING, &desc->flags))
-		goto out;
-	file->private_data = desc;
+	पूर्णांकf = desc->पूर्णांकf;
+	अगर (test_bit(WDM_DISCONNECTING, &desc->flags))
+		जाओ out;
+	file->निजी_data = desc;
 
-	rv = usb_autopm_get_interface(desc->intf);
-	if (rv < 0) {
-		dev_err(&desc->intf->dev, "Error autopm - %d\n", rv);
-		goto out;
-	}
+	rv = usb_स्वतःpm_get_पूर्णांकerface(desc->पूर्णांकf);
+	अगर (rv < 0) अणु
+		dev_err(&desc->पूर्णांकf->dev, "Error autopm - %d\n", rv);
+		जाओ out;
+	पूर्ण
 
-	/* using write lock to protect desc->count */
+	/* using ग_लिखो lock to protect desc->count */
 	mutex_lock(&desc->wlock);
-	if (!desc->count++) {
+	अगर (!desc->count++) अणु
 		desc->werr = 0;
 		desc->rerr = 0;
 		rv = usb_submit_urb(desc->validity, GFP_KERNEL);
-		if (rv < 0) {
+		अगर (rv < 0) अणु
 			desc->count--;
-			dev_err(&desc->intf->dev,
+			dev_err(&desc->पूर्णांकf->dev,
 				"Error submitting int urb - %d\n", rv);
 			rv = usb_translate_errors(rv);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rv = 0;
-	}
+	पूर्ण
 	mutex_unlock(&desc->wlock);
-	if (desc->count == 1)
-		desc->manage_power(intf, 1);
-	usb_autopm_put_interface(desc->intf);
+	अगर (desc->count == 1)
+		desc->manage_घातer(पूर्णांकf, 1);
+	usb_स्वतःpm_put_पूर्णांकerface(desc->पूर्णांकf);
 out:
 	mutex_unlock(&wdm_mutex);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int wdm_release(struct inode *inode, struct file *file)
-{
-	struct wdm_device *desc = file->private_data;
+अटल पूर्णांक wdm_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा wdm_device *desc = file->निजी_data;
 
 	mutex_lock(&wdm_mutex);
 
-	/* using write lock to protect desc->count */
+	/* using ग_लिखो lock to protect desc->count */
 	mutex_lock(&desc->wlock);
 	desc->count--;
 	mutex_unlock(&desc->wlock);
 
-	if (!desc->count) {
-		if (!test_bit(WDM_DISCONNECTING, &desc->flags)) {
-			dev_dbg(&desc->intf->dev, "wdm_release: cleanup\n");
+	अगर (!desc->count) अणु
+		अगर (!test_bit(WDM_DISCONNECTING, &desc->flags)) अणु
+			dev_dbg(&desc->पूर्णांकf->dev, "wdm_release: cleanup\n");
 			poison_urbs(desc);
 			spin_lock_irq(&desc->iuspin);
 			desc->resp_count = 0;
 			spin_unlock_irq(&desc->iuspin);
-			desc->manage_power(desc->intf, 0);
+			desc->manage_घातer(desc->पूर्णांकf, 0);
 			unpoison_urbs(desc);
-		} else {
-			/* must avoid dev_printk here as desc->intf is invalid */
+		पूर्ण अन्यथा अणु
+			/* must aव्योम dev_prपूर्णांकk here as desc->पूर्णांकf is invalid */
 			pr_debug(KBUILD_MODNAME " %s: device gone - cleaning up\n", __func__);
 			cleanup(desc);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&wdm_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long wdm_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct wdm_device *desc = file->private_data;
-	int rv = 0;
+अटल दीर्घ wdm_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा wdm_device *desc = file->निजी_data;
+	पूर्णांक rv = 0;
 
-	switch (cmd) {
-	case IOCTL_WDM_MAX_COMMAND:
-		if (copy_to_user((void __user *)arg, &desc->wMaxCommand, sizeof(desc->wMaxCommand)))
+	चयन (cmd) अणु
+	हाल IOCTL_WDM_MAX_COMMAND:
+		अगर (copy_to_user((व्योम __user *)arg, &desc->wMaxCommand, माप(desc->wMaxCommand)))
 			rv = -EFAULT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rv = -ENOTTY;
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-static const struct file_operations wdm_fops = {
+अटल स्थिर काष्ठा file_operations wdm_fops = अणु
 	.owner =	THIS_MODULE,
-	.read =		wdm_read,
-	.write =	wdm_write,
+	.पढ़ो =		wdm_पढ़ो,
+	.ग_लिखो =	wdm_ग_लिखो,
 	.fsync =	wdm_fsync,
-	.open =		wdm_open,
+	.खोलो =		wdm_खोलो,
 	.flush =	wdm_flush,
 	.release =	wdm_release,
 	.poll =		wdm_poll,
 	.unlocked_ioctl = wdm_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
 	.llseek =	noop_llseek,
-};
+पूर्ण;
 
-static struct usb_class_driver wdm_class = {
+अटल काष्ठा usb_class_driver wdm_class = अणु
 	.name =		"cdc-wdm%d",
 	.fops =		&wdm_fops,
 	.minor_base =	WDM_MINOR_BASE,
-};
+पूर्ण;
 
 /* --- error handling --- */
-static void wdm_rxwork(struct work_struct *work)
-{
-	struct wdm_device *desc = container_of(work, struct wdm_device, rxwork);
-	unsigned long flags;
-	int rv = 0;
-	int responding;
+अटल व्योम wdm_rxwork(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wdm_device *desc = container_of(work, काष्ठा wdm_device, rxwork);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rv = 0;
+	पूर्णांक responding;
 
 	spin_lock_irqsave(&desc->iuspin, flags);
-	if (test_bit(WDM_DISCONNECTING, &desc->flags)) {
+	अगर (test_bit(WDM_DISCONNECTING, &desc->flags)) अणु
 		spin_unlock_irqrestore(&desc->iuspin, flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		responding = test_and_set_bit(WDM_RESPONDING, &desc->flags);
 		spin_unlock_irqrestore(&desc->iuspin, flags);
-		if (!responding)
+		अगर (!responding)
 			rv = usb_submit_urb(desc->response, GFP_KERNEL);
-		if (rv < 0 && rv != -EPERM) {
+		अगर (rv < 0 && rv != -EPERM) अणु
 			spin_lock_irqsave(&desc->iuspin, flags);
 			clear_bit(WDM_RESPONDING, &desc->flags);
-			if (!test_bit(WDM_DISCONNECTING, &desc->flags))
+			अगर (!test_bit(WDM_DISCONNECTING, &desc->flags))
 				schedule_work(&desc->rxwork);
 			spin_unlock_irqrestore(&desc->iuspin, flags);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void service_interrupt_work(struct work_struct *work)
-{
-	struct wdm_device *desc;
+अटल व्योम service_पूर्णांकerrupt_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wdm_device *desc;
 
-	desc = container_of(work, struct wdm_device, service_outs_intr);
+	desc = container_of(work, काष्ठा wdm_device, service_outs_पूर्णांकr);
 
 	spin_lock_irq(&desc->iuspin);
-	service_outstanding_interrupt(desc);
-	if (!desc->resp_count) {
+	service_outstanding_पूर्णांकerrupt(desc);
+	अगर (!desc->resp_count) अणु
 		set_bit(WDM_READ, &desc->flags);
-		wake_up(&desc->wait);
-	}
+		wake_up(&desc->रुको);
+	पूर्ण
 	spin_unlock_irq(&desc->iuspin);
-}
+पूर्ण
 
 /* --- hotplug --- */
 
-static int wdm_create(struct usb_interface *intf, struct usb_endpoint_descriptor *ep,
-		u16 bufsize, int (*manage_power)(struct usb_interface *, int))
-{
-	int rv = -ENOMEM;
-	struct wdm_device *desc;
+अटल पूर्णांक wdm_create(काष्ठा usb_पूर्णांकerface *पूर्णांकf, काष्ठा usb_endpoपूर्णांक_descriptor *ep,
+		u16 bufsize, पूर्णांक (*manage_घातer)(काष्ठा usb_पूर्णांकerface *, पूर्णांक))
+अणु
+	पूर्णांक rv = -ENOMEM;
+	काष्ठा wdm_device *desc;
 
-	desc = kzalloc(sizeof(struct wdm_device), GFP_KERNEL);
-	if (!desc)
-		goto out;
+	desc = kzalloc(माप(काष्ठा wdm_device), GFP_KERNEL);
+	अगर (!desc)
+		जाओ out;
 	INIT_LIST_HEAD(&desc->device_list);
 	mutex_init(&desc->rlock);
 	mutex_init(&desc->wlock);
 	spin_lock_init(&desc->iuspin);
-	init_waitqueue_head(&desc->wait);
+	init_रुकोqueue_head(&desc->रुको);
 	desc->wMaxCommand = bufsize;
 	/* this will be expanded and needed in hardware endianness */
-	desc->inum = cpu_to_le16((u16)intf->cur_altsetting->desc.bInterfaceNumber);
-	desc->intf = intf;
+	desc->inum = cpu_to_le16((u16)पूर्णांकf->cur_altsetting->desc.bInterfaceNumber);
+	desc->पूर्णांकf = पूर्णांकf;
 	INIT_WORK(&desc->rxwork, wdm_rxwork);
-	INIT_WORK(&desc->service_outs_intr, service_interrupt_work);
+	INIT_WORK(&desc->service_outs_पूर्णांकr, service_पूर्णांकerrupt_work);
 
 	rv = -EINVAL;
-	if (!usb_endpoint_is_int_in(ep))
-		goto err;
+	अगर (!usb_endpoपूर्णांक_is_पूर्णांक_in(ep))
+		जाओ err;
 
-	desc->wMaxPacketSize = usb_endpoint_maxp(ep);
+	desc->wMaxPacketSize = usb_endpoपूर्णांक_maxp(ep);
 
-	desc->orq = kmalloc(sizeof(struct usb_ctrlrequest), GFP_KERNEL);
-	if (!desc->orq)
-		goto err;
-	desc->irq = kmalloc(sizeof(struct usb_ctrlrequest), GFP_KERNEL);
-	if (!desc->irq)
-		goto err;
+	desc->orq = kदो_स्मृति(माप(काष्ठा usb_ctrlrequest), GFP_KERNEL);
+	अगर (!desc->orq)
+		जाओ err;
+	desc->irq = kदो_स्मृति(माप(काष्ठा usb_ctrlrequest), GFP_KERNEL);
+	अगर (!desc->irq)
+		जाओ err;
 
 	desc->validity = usb_alloc_urb(0, GFP_KERNEL);
-	if (!desc->validity)
-		goto err;
+	अगर (!desc->validity)
+		जाओ err;
 
 	desc->response = usb_alloc_urb(0, GFP_KERNEL);
-	if (!desc->response)
-		goto err;
+	अगर (!desc->response)
+		जाओ err;
 
 	desc->command = usb_alloc_urb(0, GFP_KERNEL);
-	if (!desc->command)
-		goto err;
+	अगर (!desc->command)
+		जाओ err;
 
-	desc->ubuf = kmalloc(desc->wMaxCommand, GFP_KERNEL);
-	if (!desc->ubuf)
-		goto err;
+	desc->ubuf = kदो_स्मृति(desc->wMaxCommand, GFP_KERNEL);
+	अगर (!desc->ubuf)
+		जाओ err;
 
-	desc->sbuf = kmalloc(desc->wMaxPacketSize, GFP_KERNEL);
-	if (!desc->sbuf)
-		goto err;
+	desc->sbuf = kदो_स्मृति(desc->wMaxPacketSize, GFP_KERNEL);
+	अगर (!desc->sbuf)
+		जाओ err;
 
-	desc->inbuf = kmalloc(desc->wMaxCommand, GFP_KERNEL);
-	if (!desc->inbuf)
-		goto err;
+	desc->inbuf = kदो_स्मृति(desc->wMaxCommand, GFP_KERNEL);
+	अगर (!desc->inbuf)
+		जाओ err;
 
-	usb_fill_int_urb(
+	usb_fill_पूर्णांक_urb(
 		desc->validity,
-		interface_to_usbdev(intf),
-		usb_rcvintpipe(interface_to_usbdev(intf), ep->bEndpointAddress),
+		पूर्णांकerface_to_usbdev(पूर्णांकf),
+		usb_rcvपूर्णांकpipe(पूर्णांकerface_to_usbdev(पूर्णांकf), ep->bEndpoपूर्णांकAddress),
 		desc->sbuf,
 		desc->wMaxPacketSize,
-		wdm_int_callback,
+		wdm_पूर्णांक_callback,
 		desc,
 		ep->bInterval
 	);
 
-	desc->irq->bRequestType = (USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE);
+	desc->irq->bRequestType = (USB_सूची_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE);
 	desc->irq->bRequest = USB_CDC_GET_ENCAPSULATED_RESPONSE;
 	desc->irq->wValue = 0;
-	desc->irq->wIndex = desc->inum; /* already converted */
+	desc->irq->wIndex = desc->inum; /* alपढ़ोy converted */
 	desc->irq->wLength = cpu_to_le16(desc->wMaxCommand);
 
 	usb_fill_control_urb(
 		desc->response,
-		interface_to_usbdev(intf),
-		/* using common endpoint 0 */
-		usb_rcvctrlpipe(interface_to_usbdev(desc->intf), 0),
-		(unsigned char *)desc->irq,
+		पूर्णांकerface_to_usbdev(पूर्णांकf),
+		/* using common endpoपूर्णांक 0 */
+		usb_rcvctrlpipe(पूर्णांकerface_to_usbdev(desc->पूर्णांकf), 0),
+		(अचिन्हित अक्षर *)desc->irq,
 		desc->inbuf,
 		desc->wMaxCommand,
 		wdm_in_callback,
 		desc
 	);
 
-	desc->manage_power = manage_power;
+	desc->manage_घातer = manage_घातer;
 
 	spin_lock(&wdm_device_list_lock);
 	list_add(&desc->device_list, &wdm_device_list);
 	spin_unlock(&wdm_device_list_lock);
 
-	rv = usb_register_dev(intf, &wdm_class);
-	if (rv < 0)
-		goto err;
-	else
-		dev_info(&intf->dev, "%s: USB WDM device\n", dev_name(intf->usb_dev));
+	rv = usb_रेजिस्टर_dev(पूर्णांकf, &wdm_class);
+	अगर (rv < 0)
+		जाओ err;
+	अन्यथा
+		dev_info(&पूर्णांकf->dev, "%s: USB WDM device\n", dev_name(पूर्णांकf->usb_dev));
 out:
-	return rv;
+	वापस rv;
 err:
 	spin_lock(&wdm_device_list_lock);
 	list_del(&desc->device_list);
 	spin_unlock(&wdm_device_list_lock);
 	cleanup(desc);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int wdm_manage_power(struct usb_interface *intf, int on)
-{
-	/* need autopm_get/put here to ensure the usbcore sees the new value */
-	int rv = usb_autopm_get_interface(intf);
+अटल पूर्णांक wdm_manage_घातer(काष्ठा usb_पूर्णांकerface *पूर्णांकf, पूर्णांक on)
+अणु
+	/* need स्वतःpm_get/put here to ensure the usbcore sees the new value */
+	पूर्णांक rv = usb_स्वतःpm_get_पूर्णांकerface(पूर्णांकf);
 
-	intf->needs_remote_wakeup = on;
-	if (!rv)
-		usb_autopm_put_interface(intf);
-	return 0;
-}
+	पूर्णांकf->needs_remote_wakeup = on;
+	अगर (!rv)
+		usb_स्वतःpm_put_पूर्णांकerface(पूर्णांकf);
+	वापस 0;
+पूर्ण
 
-static int wdm_probe(struct usb_interface *intf, const struct usb_device_id *id)
-{
-	int rv = -EINVAL;
-	struct usb_host_interface *iface;
-	struct usb_endpoint_descriptor *ep;
-	struct usb_cdc_parsed_header hdr;
-	u8 *buffer = intf->altsetting->extra;
-	int buflen = intf->altsetting->extralen;
-	u16 maxcom = WDM_DEFAULT_BUFSIZE;
+अटल पूर्णांक wdm_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
+अणु
+	पूर्णांक rv = -EINVAL;
+	काष्ठा usb_host_पूर्णांकerface *अगरace;
+	काष्ठा usb_endpoपूर्णांक_descriptor *ep;
+	काष्ठा usb_cdc_parsed_header hdr;
+	u8 *buffer = पूर्णांकf->altsetting->extra;
+	पूर्णांक buflen = पूर्णांकf->altsetting->extralen;
+	u16 maxcom = WDM_DEFAULT_बफ_मानE;
 
-	if (!buffer)
-		goto err;
+	अगर (!buffer)
+		जाओ err;
 
-	cdc_parse_cdc_header(&hdr, intf, buffer, buflen);
+	cdc_parse_cdc_header(&hdr, पूर्णांकf, buffer, buflen);
 
-	if (hdr.usb_cdc_dmm_desc)
+	अगर (hdr.usb_cdc_dmm_desc)
 		maxcom = le16_to_cpu(hdr.usb_cdc_dmm_desc->wMaxCommand);
 
-	iface = intf->cur_altsetting;
-	if (iface->desc.bNumEndpoints != 1)
-		goto err;
-	ep = &iface->endpoint[0].desc;
+	अगरace = पूर्णांकf->cur_altsetting;
+	अगर (अगरace->desc.bNumEndpoपूर्णांकs != 1)
+		जाओ err;
+	ep = &अगरace->endpoपूर्णांक[0].desc;
 
-	rv = wdm_create(intf, ep, maxcom, &wdm_manage_power);
+	rv = wdm_create(पूर्णांकf, ep, maxcom, &wdm_manage_घातer);
 
 err:
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
 /**
- * usb_cdc_wdm_register - register a WDM subdriver
- * @intf: usb interface the subdriver will associate with
- * @ep: interrupt endpoint to monitor for notifications
- * @bufsize: maximum message size to support for read/write
- * @manage_power: call-back invoked during open and release to
- *                manage the device's power
- * Create WDM usb class character device and associate it with intf
- * without binding, allowing another driver to manage the interface.
+ * usb_cdc_wdm_रेजिस्टर - रेजिस्टर a WDM subdriver
+ * @पूर्णांकf: usb पूर्णांकerface the subdriver will associate with
+ * @ep: पूर्णांकerrupt endpoपूर्णांक to monitor क्रम notअगरications
+ * @bufsize: maximum message size to support क्रम पढ़ो/ग_लिखो
+ * @manage_घातer: call-back invoked during खोलो and release to
+ *                manage the device's घातer
+ * Create WDM usb class अक्षरacter device and associate it with पूर्णांकf
+ * without binding, allowing another driver to manage the पूर्णांकerface.
  *
- * The subdriver will manage the given interrupt endpoint exclusively
- * and will issue control requests referring to the given intf. It
- * will otherwise avoid interferring, and in particular not do
- * usb_set_intfdata/usb_get_intfdata on intf.
+ * The subdriver will manage the given पूर्णांकerrupt endpoपूर्णांक exclusively
+ * and will issue control requests referring to the given पूर्णांकf. It
+ * will otherwise aव्योम पूर्णांकerferring, and in particular not करो
+ * usb_set_पूर्णांकfdata/usb_get_पूर्णांकfdata on पूर्णांकf.
  *
- * The return value is a pointer to the subdriver's struct usb_driver.
- * The registering driver is responsible for calling this subdriver's
+ * The वापस value is a poपूर्णांकer to the subdriver's काष्ठा usb_driver.
+ * The रेजिस्टरing driver is responsible क्रम calling this subdriver's
  * disconnect, suspend, resume, pre_reset and post_reset methods from
  * its own.
  */
-struct usb_driver *usb_cdc_wdm_register(struct usb_interface *intf,
-					struct usb_endpoint_descriptor *ep,
-					int bufsize,
-					int (*manage_power)(struct usb_interface *, int))
-{
-	int rv;
+काष्ठा usb_driver *usb_cdc_wdm_रेजिस्टर(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+					काष्ठा usb_endpoपूर्णांक_descriptor *ep,
+					पूर्णांक bufsize,
+					पूर्णांक (*manage_घातer)(काष्ठा usb_पूर्णांकerface *, पूर्णांक))
+अणु
+	पूर्णांक rv;
 
-	rv = wdm_create(intf, ep, bufsize, manage_power);
-	if (rv < 0)
-		goto err;
+	rv = wdm_create(पूर्णांकf, ep, bufsize, manage_घातer);
+	अगर (rv < 0)
+		जाओ err;
 
-	return &wdm_driver;
+	वापस &wdm_driver;
 err:
-	return ERR_PTR(rv);
-}
-EXPORT_SYMBOL(usb_cdc_wdm_register);
+	वापस ERR_PTR(rv);
+पूर्ण
+EXPORT_SYMBOL(usb_cdc_wdm_रेजिस्टर);
 
-static void wdm_disconnect(struct usb_interface *intf)
-{
-	struct wdm_device *desc;
-	unsigned long flags;
+अटल व्योम wdm_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा wdm_device *desc;
+	अचिन्हित दीर्घ flags;
 
-	usb_deregister_dev(intf, &wdm_class);
-	desc = wdm_find_device(intf);
+	usb_deरेजिस्टर_dev(पूर्णांकf, &wdm_class);
+	desc = wdm_find_device(पूर्णांकf);
 	mutex_lock(&wdm_mutex);
 
 	/* the spinlock makes sure no new urbs are generated in the callbacks */
@@ -1046,123 +1047,123 @@ static void wdm_disconnect(struct usb_interface *intf)
 	set_bit(WDM_DISCONNECTING, &desc->flags);
 	set_bit(WDM_READ, &desc->flags);
 	spin_unlock_irqrestore(&desc->iuspin, flags);
-	wake_up_all(&desc->wait);
+	wake_up_all(&desc->रुको);
 	mutex_lock(&desc->rlock);
 	mutex_lock(&desc->wlock);
 	poison_urbs(desc);
 	cancel_work_sync(&desc->rxwork);
-	cancel_work_sync(&desc->service_outs_intr);
+	cancel_work_sync(&desc->service_outs_पूर्णांकr);
 	mutex_unlock(&desc->wlock);
 	mutex_unlock(&desc->rlock);
 
-	/* the desc->intf pointer used as list key is now invalid */
+	/* the desc->पूर्णांकf poपूर्णांकer used as list key is now invalid */
 	spin_lock(&wdm_device_list_lock);
 	list_del(&desc->device_list);
 	spin_unlock(&wdm_device_list_lock);
 
-	if (!desc->count)
+	अगर (!desc->count)
 		cleanup(desc);
-	else
-		dev_dbg(&intf->dev, "%d open files - postponing cleanup\n", desc->count);
+	अन्यथा
+		dev_dbg(&पूर्णांकf->dev, "%d open files - postponing cleanup\n", desc->count);
 	mutex_unlock(&wdm_mutex);
-}
+पूर्ण
 
-#ifdef CONFIG_PM
-static int wdm_suspend(struct usb_interface *intf, pm_message_t message)
-{
-	struct wdm_device *desc = wdm_find_device(intf);
-	int rv = 0;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक wdm_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
+अणु
+	काष्ठा wdm_device *desc = wdm_find_device(पूर्णांकf);
+	पूर्णांक rv = 0;
 
-	dev_dbg(&desc->intf->dev, "wdm%d_suspend\n", intf->minor);
+	dev_dbg(&desc->पूर्णांकf->dev, "wdm%d_suspend\n", पूर्णांकf->minor);
 
-	/* if this is an autosuspend the caller does the locking */
-	if (!PMSG_IS_AUTO(message)) {
+	/* अगर this is an स्वतःsuspend the caller करोes the locking */
+	अगर (!PMSG_IS_AUTO(message)) अणु
 		mutex_lock(&desc->rlock);
 		mutex_lock(&desc->wlock);
-	}
+	पूर्ण
 	spin_lock_irq(&desc->iuspin);
 
-	if (PMSG_IS_AUTO(message) &&
+	अगर (PMSG_IS_AUTO(message) &&
 			(test_bit(WDM_IN_USE, &desc->flags)
-			|| test_bit(WDM_RESPONDING, &desc->flags))) {
+			|| test_bit(WDM_RESPONDING, &desc->flags))) अणु
 		spin_unlock_irq(&desc->iuspin);
 		rv = -EBUSY;
-	} else {
+	पूर्ण अन्यथा अणु
 
 		set_bit(WDM_SUSPENDING, &desc->flags);
 		spin_unlock_irq(&desc->iuspin);
 		/* callback submits work - order is essential */
 		poison_urbs(desc);
 		cancel_work_sync(&desc->rxwork);
-		cancel_work_sync(&desc->service_outs_intr);
+		cancel_work_sync(&desc->service_outs_पूर्णांकr);
 		unpoison_urbs(desc);
-	}
-	if (!PMSG_IS_AUTO(message)) {
+	पूर्ण
+	अगर (!PMSG_IS_AUTO(message)) अणु
 		mutex_unlock(&desc->wlock);
 		mutex_unlock(&desc->rlock);
-	}
+	पूर्ण
 
-	return rv;
-}
-#endif
+	वापस rv;
+पूर्ण
+#पूर्ण_अगर
 
-static int recover_from_urb_loss(struct wdm_device *desc)
-{
-	int rv = 0;
+अटल पूर्णांक recover_from_urb_loss(काष्ठा wdm_device *desc)
+अणु
+	पूर्णांक rv = 0;
 
-	if (desc->count) {
+	अगर (desc->count) अणु
 		rv = usb_submit_urb(desc->validity, GFP_NOIO);
-		if (rv < 0)
-			dev_err(&desc->intf->dev,
+		अगर (rv < 0)
+			dev_err(&desc->पूर्णांकf->dev,
 				"Error resume submitting int urb - %d\n", rv);
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int wdm_resume(struct usb_interface *intf)
-{
-	struct wdm_device *desc = wdm_find_device(intf);
-	int rv;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक wdm_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा wdm_device *desc = wdm_find_device(पूर्णांकf);
+	पूर्णांक rv;
 
-	dev_dbg(&desc->intf->dev, "wdm%d_resume\n", intf->minor);
+	dev_dbg(&desc->पूर्णांकf->dev, "wdm%d_resume\n", पूर्णांकf->minor);
 
 	clear_bit(WDM_SUSPENDING, &desc->flags);
 	rv = recover_from_urb_loss(desc);
 
-	return rv;
-}
-#endif
+	वापस rv;
+पूर्ण
+#पूर्ण_अगर
 
-static int wdm_pre_reset(struct usb_interface *intf)
-{
-	struct wdm_device *desc = wdm_find_device(intf);
+अटल पूर्णांक wdm_pre_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा wdm_device *desc = wdm_find_device(पूर्णांकf);
 
 	/*
-	 * we notify everybody using poll of
+	 * we notअगरy everybody using poll of
 	 * an exceptional situation
-	 * must be done before recovery lest a spontaneous
+	 * must be करोne beक्रमe recovery lest a spontaneous
 	 * message from the device is lost
 	 */
 	spin_lock_irq(&desc->iuspin);
-	set_bit(WDM_RESETTING, &desc->flags);	/* inform read/write */
-	set_bit(WDM_READ, &desc->flags);	/* unblock read */
-	clear_bit(WDM_IN_USE, &desc->flags);	/* unblock write */
+	set_bit(WDM_RESETTING, &desc->flags);	/* inक्रमm पढ़ो/ग_लिखो */
+	set_bit(WDM_READ, &desc->flags);	/* unblock पढ़ो */
+	clear_bit(WDM_IN_USE, &desc->flags);	/* unblock ग_लिखो */
 	desc->rerr = -EINTR;
 	spin_unlock_irq(&desc->iuspin);
-	wake_up_all(&desc->wait);
+	wake_up_all(&desc->रुको);
 	mutex_lock(&desc->rlock);
 	mutex_lock(&desc->wlock);
 	poison_urbs(desc);
 	cancel_work_sync(&desc->rxwork);
-	cancel_work_sync(&desc->service_outs_intr);
-	return 0;
-}
+	cancel_work_sync(&desc->service_outs_पूर्णांकr);
+	वापस 0;
+पूर्ण
 
-static int wdm_post_reset(struct usb_interface *intf)
-{
-	struct wdm_device *desc = wdm_find_device(intf);
-	int rv;
+अटल पूर्णांक wdm_post_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा wdm_device *desc = wdm_find_device(पूर्णांकf);
+	पूर्णांक rv;
 
 	unpoison_urbs(desc);
 	clear_bit(WDM_OVERFLOW, &desc->flags);
@@ -1170,24 +1171,24 @@ static int wdm_post_reset(struct usb_interface *intf)
 	rv = recover_from_urb_loss(desc);
 	mutex_unlock(&desc->wlock);
 	mutex_unlock(&desc->rlock);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static struct usb_driver wdm_driver = {
+अटल काष्ठा usb_driver wdm_driver = अणु
 	.name =		"cdc_wdm",
 	.probe =	wdm_probe,
 	.disconnect =	wdm_disconnect,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend =	wdm_suspend,
 	.resume =	wdm_resume,
 	.reset_resume =	wdm_resume,
-#endif
+#पूर्ण_अगर
 	.pre_reset =	wdm_pre_reset,
 	.post_reset =	wdm_post_reset,
 	.id_table =	wdm_ids,
-	.supports_autosuspend = 1,
+	.supports_स्वतःsuspend = 1,
 	.disable_hub_initiated_lpm = 1,
-};
+पूर्ण;
 
 module_usb_driver(wdm_driver);
 

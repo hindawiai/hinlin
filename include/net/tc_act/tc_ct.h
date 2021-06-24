@@ -1,93 +1,94 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_TC_CT_H
-#define __NET_TC_CT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_TC_CT_H
+#घोषणा __NET_TC_CT_H
 
-#include <net/act_api.h>
-#include <uapi/linux/tc_act/tc_ct.h>
+#समावेश <net/act_api.h>
+#समावेश <uapi/linux/tc_act/tc_ct.h>
 
-#if IS_ENABLED(CONFIG_NF_CONNTRACK)
-#include <net/netfilter/nf_nat.h>
-#include <net/netfilter/nf_conntrack_labels.h>
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
+#समावेश <net/netfilter/nf_nat.h>
+#समावेश <net/netfilter/nf_conntrack_labels.h>
 
-struct tcf_ct_params {
-	struct nf_conn *tmpl;
+काष्ठा tcf_ct_params अणु
+	काष्ठा nf_conn *पंचांगpl;
 	u16 zone;
 
 	u32 mark;
 	u32 mark_mask;
 
-	u32 labels[NF_CT_LABELS_MAX_SIZE / sizeof(u32)];
-	u32 labels_mask[NF_CT_LABELS_MAX_SIZE / sizeof(u32)];
+	u32 labels[NF_CT_LABELS_MAX_SIZE / माप(u32)];
+	u32 labels_mask[NF_CT_LABELS_MAX_SIZE / माप(u32)];
 
-	struct nf_nat_range2 range;
+	काष्ठा nf_nat_range2 range;
 	bool ipv4_range;
 
 	u16 ct_action;
 
-	struct rcu_head rcu;
+	काष्ठा rcu_head rcu;
 
-	struct tcf_ct_flow_table *ct_ft;
-	struct nf_flowtable *nf_ft;
-};
+	काष्ठा tcf_ct_flow_table *ct_ft;
+	काष्ठा nf_flowtable *nf_ft;
+पूर्ण;
 
-struct tcf_ct {
-	struct tc_action common;
-	struct tcf_ct_params __rcu *params;
-};
+काष्ठा tcf_ct अणु
+	काष्ठा tc_action common;
+	काष्ठा tcf_ct_params __rcu *params;
+पूर्ण;
 
-#define to_ct(a) ((struct tcf_ct *)a)
-#define to_ct_params(a)							\
-	((struct tcf_ct_params *)					\
-	 rcu_dereference_protected(to_ct(a)->params,			\
+#घोषणा to_ct(a) ((काष्ठा tcf_ct *)a)
+#घोषणा to_ct_params(a)							\
+	((काष्ठा tcf_ct_params *)					\
+	 rcu_dereference_रक्षित(to_ct(a)->params,			\
 				   lockdep_is_held(&a->tcfa_lock)))
 
-static inline uint16_t tcf_ct_zone(const struct tc_action *a)
-{
-	return to_ct_params(a)->zone;
-}
+अटल अंतरभूत uपूर्णांक16_t tcf_ct_zone(स्थिर काष्ठा tc_action *a)
+अणु
+	वापस to_ct_params(a)->zone;
+पूर्ण
 
-static inline int tcf_ct_action(const struct tc_action *a)
-{
-	return to_ct_params(a)->ct_action;
-}
+अटल अंतरभूत पूर्णांक tcf_ct_action(स्थिर काष्ठा tc_action *a)
+अणु
+	वापस to_ct_params(a)->ct_action;
+पूर्ण
 
-static inline struct nf_flowtable *tcf_ct_ft(const struct tc_action *a)
-{
-	return to_ct_params(a)->nf_ft;
-}
+अटल अंतरभूत काष्ठा nf_flowtable *tcf_ct_ft(स्थिर काष्ठा tc_action *a)
+अणु
+	वापस to_ct_params(a)->nf_ft;
+पूर्ण
 
-#else
-static inline uint16_t tcf_ct_zone(const struct tc_action *a) { return 0; }
-static inline int tcf_ct_action(const struct tc_action *a) { return 0; }
-static inline struct nf_flowtable *tcf_ct_ft(const struct tc_action *a)
-{
-	return NULL;
-}
-#endif /* CONFIG_NF_CONNTRACK */
+#अन्यथा
+अटल अंतरभूत uपूर्णांक16_t tcf_ct_zone(स्थिर काष्ठा tc_action *a) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक tcf_ct_action(स्थिर काष्ठा tc_action *a) अणु वापस 0; पूर्ण
+अटल अंतरभूत काष्ठा nf_flowtable *tcf_ct_ft(स्थिर काष्ठा tc_action *a)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK */
 
-#if IS_ENABLED(CONFIG_NET_ACT_CT)
-static inline void
-tcf_ct_flow_table_restore_skb(struct sk_buff *skb, unsigned long cookie)
-{
-	enum ip_conntrack_info ctinfo = cookie & NFCT_INFOMASK;
-	struct nf_conn *ct;
+#अगर IS_ENABLED(CONFIG_NET_ACT_CT)
+अटल अंतरभूत व्योम
+tcf_ct_flow_table_restore_skb(काष्ठा sk_buff *skb, अचिन्हित दीर्घ cookie)
+अणु
+	क्रमागत ip_conntrack_info ctinfo = cookie & NFCT_INFOMASK;
+	काष्ठा nf_conn *ct;
 
-	ct = (struct nf_conn *)(cookie & NFCT_PTRMASK);
+	ct = (काष्ठा nf_conn *)(cookie & NFCT_PTRMASK);
 	nf_conntrack_get(&ct->ct_general);
 	nf_ct_set(skb, ct, ctinfo);
-}
-#else
-static inline void
-tcf_ct_flow_table_restore_skb(struct sk_buff *skb, unsigned long cookie) { }
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम
+tcf_ct_flow_table_restore_skb(काष्ठा sk_buff *skb, अचिन्हित दीर्घ cookie) अणु पूर्ण
+#पूर्ण_अगर
 
-static inline bool is_tcf_ct(const struct tc_action *a)
-{
-#if defined(CONFIG_NET_CLS_ACT) && IS_ENABLED(CONFIG_NF_CONNTRACK)
-	if (a->ops && a->ops->id == TCA_ID_CT)
-		return true;
-#endif
-	return false;
-}
+अटल अंतरभूत bool is_tcf_ct(स्थिर काष्ठा tc_action *a)
+अणु
+#अगर defined(CONFIG_NET_CLS_ACT) && IS_ENABLED(CONFIG_NF_CONNTRACK)
+	अगर (a->ops && a->ops->id == TCA_ID_CT)
+		वापस true;
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
 
-#endif /* __NET_TC_CT_H */
+#पूर्ण_अगर /* __NET_TC_CT_H */

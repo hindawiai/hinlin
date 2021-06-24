@@ -1,113 +1,114 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1995, 1996, 1997, 2000, 2001, 05 by Ralf Baechle
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 2001 MIPS Technologies, Inc.
  */
-#include <linux/capability.h>
-#include <linux/errno.h>
-#include <linux/linkage.h>
-#include <linux/fs.h>
-#include <linux/smp.h>
-#include <linux/ptrace.h>
-#include <linux/string.h>
-#include <linux/syscalls.h>
-#include <linux/file.h>
-#include <linux/utsname.h>
-#include <linux/unistd.h>
-#include <linux/sem.h>
-#include <linux/msg.h>
-#include <linux/shm.h>
-#include <linux/compiler.h>
-#include <linux/ipc.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
-#include <linux/elf.h>
-#include <linux/sched/task_stack.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/linkage.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/file.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/sem.h>
+#समावेश <linux/msg.h>
+#समावेश <linux/shm.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/ipc.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/sched/task_stack.h>
 
-#include <asm/asm.h>
-#include <asm/asm-eva.h>
-#include <asm/branch.h>
-#include <asm/cachectl.h>
-#include <asm/cacheflush.h>
-#include <asm/asm-offsets.h>
-#include <asm/signal.h>
-#include <asm/sim.h>
-#include <asm/shmparam.h>
-#include <asm/sync.h>
-#include <asm/sysmips.h>
-#include <asm/switch_to.h>
+#समावेश <यंत्र/यंत्र.h>
+#समावेश <यंत्र/यंत्र-eva.h>
+#समावेश <यंत्र/branch.h>
+#समावेश <यंत्र/cachectl.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/यंत्र-offsets.h>
+#समावेश <यंत्र/संकेत.स>
+#समावेश <यंत्र/sim.h>
+#समावेश <यंत्र/shmparam.h>
+#समावेश <यंत्र/sync.h>
+#समावेश <यंत्र/sysmips.h>
+#समावेश <यंत्र/चयन_to.h>
 
 /*
  * For historic reasons the pipe(2) syscall on MIPS has an unusual calling
- * convention.	It returns results in registers $v0 / $v1 which means there
- * is no need for it to do verify the validity of a userspace pointer
+ * convention.	It वापसs results in रेजिस्टरs $v0 / $v1 which means there
+ * is no need क्रम it to करो verअगरy the validity of a userspace poपूर्णांकer
  * argument.  Historically that used to be expensive in Linux.	These days
- * the performance advantage is negligible.
+ * the perक्रमmance advantage is negligible.
  */
-asmlinkage int sysm_pipe(void)
-{
-	int fd[2];
-	int error = do_pipe_flags(fd, 0);
-	if (error)
-		return error;
+यंत्रlinkage पूर्णांक sysm_pipe(व्योम)
+अणु
+	पूर्णांक fd[2];
+	पूर्णांक error = करो_pipe_flags(fd, 0);
+	अगर (error)
+		वापस error;
 	current_pt_regs()->regs[3] = fd[1];
-	return fd[0];
-}
+	वापस fd[0];
+पूर्ण
 
-SYSCALL_DEFINE6(mips_mmap, unsigned long, addr, unsigned long, len,
-	unsigned long, prot, unsigned long, flags, unsigned long,
+SYSCALL_DEFINE6(mips_mmap, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, len,
+	अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, flags, अचिन्हित दीर्घ,
 	fd, off_t, offset)
-{
-	if (offset & ~PAGE_MASK)
-		return -EINVAL;
-	return ksys_mmap_pgoff(addr, len, prot, flags, fd,
+अणु
+	अगर (offset & ~PAGE_MASK)
+		वापस -EINVAL;
+	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd,
 			       offset >> PAGE_SHIFT);
-}
+पूर्ण
 
-SYSCALL_DEFINE6(mips_mmap2, unsigned long, addr, unsigned long, len,
-	unsigned long, prot, unsigned long, flags, unsigned long, fd,
-	unsigned long, pgoff)
-{
-	if (pgoff & (~PAGE_MASK >> 12))
-		return -EINVAL;
+SYSCALL_DEFINE6(mips_mmap2, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, len,
+	अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, flags, अचिन्हित दीर्घ, fd,
+	अचिन्हित दीर्घ, pgoff)
+अणु
+	अगर (pgoff & (~PAGE_MASK >> 12))
+		वापस -EINVAL;
 
-	return ksys_mmap_pgoff(addr, len, prot, flags, fd,
+	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd,
 			       pgoff >> (PAGE_SHIFT - 12));
-}
+पूर्ण
 
-save_static_function(sys_fork);
-save_static_function(sys_clone);
-save_static_function(sys_clone3);
+save_अटल_function(sys_विभाजन);
+save_अटल_function(sys_clone);
+save_अटल_function(sys_clone3);
 
-SYSCALL_DEFINE1(set_thread_area, unsigned long, addr)
-{
-	struct thread_info *ti = task_thread_info(current);
+SYSCALL_DEFINE1(set_thपढ़ो_area, अचिन्हित दीर्घ, addr)
+अणु
+	काष्ठा thपढ़ो_info *ti = task_thपढ़ो_info(current);
 
 	ti->tp_value = addr;
-	if (cpu_has_userlocal)
-		write_c0_userlocal(addr);
+	अगर (cpu_has_userlocal)
+		ग_लिखो_c0_userlocal(addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int mips_atomic_set(unsigned long addr, unsigned long new)
-{
-	unsigned long old, tmp;
-	struct pt_regs *regs;
-	unsigned int err;
+अटल अंतरभूत पूर्णांक mips_atomic_set(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ new)
+अणु
+	अचिन्हित दीर्घ old, पंचांगp;
+	काष्ठा pt_regs *regs;
+	अचिन्हित पूर्णांक err;
 
-	if (unlikely(addr & 3))
-		return -EINVAL;
+	अगर (unlikely(addr & 3))
+		वापस -EINVAL;
 
-	if (unlikely(!access_ok((const void __user *)addr, 4)))
-		return -EINVAL;
+	अगर (unlikely(!access_ok((स्थिर व्योम __user *)addr, 4)))
+		वापस -EINVAL;
 
-	if (cpu_has_llsc && IS_ENABLED(CONFIG_WAR_R10000_LLSC)) {
-		__asm__ __volatile__ (
+	अगर (cpu_has_llsc && IS_ENABLED(CONFIG_WAR_R10000_LLSC)) अणु
+		__यंत्र__ __अस्थिर__ (
 		"	.set	push					\n"
 		"	.set	arch=r4000				\n"
 		"	li	%[err], 0				\n"
@@ -128,13 +129,13 @@ static inline int mips_atomic_set(unsigned long addr, unsigned long new)
 		"	.set	pop					\n"
 		: [old] "=&r" (old),
 		  [err] "=&r" (err),
-		  [tmp] "=&r" (tmp)
+		  [पंचांगp] "=&r" (पंचांगp)
 		: [addr] "r" (addr),
 		  [new] "r" (new),
 		  [efault] "i" (-EFAULT)
 		: "memory");
-	} else if (cpu_has_llsc) {
-		__asm__ __volatile__ (
+	पूर्ण अन्यथा अगर (cpu_has_llsc) अणु
+		__यंत्र__ __अस्थिर__ (
 		"	.set	push					\n"
 		"	.set	"MIPS_ISA_ARCH_LEVEL"			\n"
 		"	li	%[err], 0				\n"
@@ -158,94 +159,94 @@ static inline int mips_atomic_set(unsigned long addr, unsigned long new)
 		"	.set	pop					\n"
 		: [old] "=&r" (old),
 		  [err] "=&r" (err),
-		  [tmp] "=&r" (tmp)
+		  [पंचांगp] "=&r" (पंचांगp)
 		: [addr] "r" (addr),
 		  [new] "r" (new),
 		  [efault] "i" (-EFAULT)
 		: "memory");
-	} else {
-		do {
+	पूर्ण अन्यथा अणु
+		करो अणु
 			preempt_disable();
 			ll_bit = 1;
 			ll_task = current;
 			preempt_enable();
 
-			err = __get_user(old, (unsigned int *) addr);
-			err |= __put_user(new, (unsigned int *) addr);
-			if (err)
-				break;
+			err = __get_user(old, (अचिन्हित पूर्णांक *) addr);
+			err |= __put_user(new, (अचिन्हित पूर्णांक *) addr);
+			अगर (err)
+				अवरोध;
 			rmb();
-		} while (!ll_bit);
-	}
+		पूर्ण जबतक (!ll_bit);
+	पूर्ण
 
-	if (unlikely(err))
-		return err;
+	अगर (unlikely(err))
+		वापस err;
 
 	regs = current_pt_regs();
 	regs->regs[2] = old;
 	regs->regs[7] = 0;	/* No error */
 
 	/*
-	 * Don't let your children do this ...
+	 * Don't let your children करो this ...
 	 */
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	move	$29, %0						\n"
 	"	j	syscall_exit					\n"
-	: /* no outputs */
+	: /* no outमाला_दो */
 	: "r" (regs));
 
 	/* unreached.  Honestly.  */
 	unreachable();
-}
+पूर्ण
 
 /*
- * mips_atomic_set() normally returns directly via syscall_exit potentially
- * clobbering static registers, so be sure to preserve them.
+ * mips_atomic_set() normally वापसs directly via syscall_निकास potentially
+ * clobbering अटल रेजिस्टरs, so be sure to preserve them.
  */
-save_static_function(sys_sysmips);
+save_अटल_function(sys_sysmips);
 
-SYSCALL_DEFINE3(sysmips, long, cmd, long, arg1, long, arg2)
-{
-	switch (cmd) {
-	case MIPS_ATOMIC_SET:
-		return mips_atomic_set(arg1, arg2);
+SYSCALL_DEFINE3(sysmips, दीर्घ, cmd, दीर्घ, arg1, दीर्घ, arg2)
+अणु
+	चयन (cmd) अणु
+	हाल MIPS_ATOMIC_SET:
+		वापस mips_atomic_set(arg1, arg2);
 
-	case MIPS_FIXADE:
-		if (arg1 & ~3)
-			return -EINVAL;
+	हाल MIPS_FIXADE:
+		अगर (arg1 & ~3)
+			वापस -EINVAL;
 
-		if (arg1 & 1)
-			set_thread_flag(TIF_FIXADE);
-		else
-			clear_thread_flag(TIF_FIXADE);
-		if (arg1 & 2)
-			set_thread_flag(TIF_LOGADE);
-		else
-			clear_thread_flag(TIF_LOGADE);
+		अगर (arg1 & 1)
+			set_thपढ़ो_flag(TIF_FIXADE);
+		अन्यथा
+			clear_thपढ़ो_flag(TIF_FIXADE);
+		अगर (arg1 & 2)
+			set_thपढ़ो_flag(TIF_LOGADE);
+		अन्यथा
+			clear_thपढ़ो_flag(TIF_LOGADE);
 
-		return 0;
+		वापस 0;
 
-	case FLUSH_CACHE:
+	हाल FLUSH_CACHE:
 		__flush_cache_all();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * No implemented yet ...
  */
-SYSCALL_DEFINE3(cachectl, char *, addr, int, nbytes, int, op)
-{
-	return -ENOSYS;
-}
+SYSCALL_DEFINE3(cachectl, अक्षर *, addr, पूर्णांक, nbytes, पूर्णांक, op)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
 /*
  * If we ever come here the user sp is bad.  Zap the process right away.
- * Due to the bad stack signaling wouldn't work.
+ * Due to the bad stack संकेतing wouldn't work.
  */
-asmlinkage void bad_stack(void)
-{
-	do_exit(SIGSEGV);
-}
+यंत्रlinkage व्योम bad_stack(व्योम)
+अणु
+	करो_निकास(संक_अंश);
+पूर्ण

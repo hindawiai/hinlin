@@ -1,374 +1,375 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/platform_device.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/genalloc.h>
-#include <linux/vmalloc.h>
-#include <linux/dma-mapping.h>
-#include <linux/list_sort.h>
-#include <linux/libnvdimm.h>
-#include <linux/ndctl.h>
-#include <nd-core.h>
-#include <linux/printk.h>
-#include <linux/seq_buf.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/genभाग.स>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/list_sort.h>
+#समावेश <linux/libnvdimm.h>
+#समावेश <linux/ndctl.h>
+#समावेश <nd-core.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/seq_buf.h>
 
-#include "../watermark.h"
-#include "nfit_test.h"
-#include "ndtest.h"
+#समावेश "../watermark.h"
+#समावेश "nfit_test.h"
+#समावेश "ndtest.h"
 
-enum {
+क्रमागत अणु
 	DIMM_SIZE = SZ_32M,
 	LABEL_SIZE = SZ_128K,
 	NUM_INSTANCES = 2,
 	NUM_DCR = 4,
 	NDTEST_MAX_MAPPING = 6,
-};
+पूर्ण;
 
-#define NDTEST_SCM_DIMM_CMD_MASK	   \
+#घोषणा NDTEST_SCM_DIMM_CMD_MASK	   \
 	((1ul << ND_CMD_GET_CONFIG_SIZE) | \
 	 (1ul << ND_CMD_GET_CONFIG_DATA) | \
 	 (1ul << ND_CMD_SET_CONFIG_DATA) | \
 	 (1ul << ND_CMD_CALL))
 
-#define NFIT_DIMM_HANDLE(node, socket, imc, chan, dimm)			\
+#घोषणा NFIT_DIMM_HANDLE(node, socket, imc, chan, dimm)			\
 	(((node & 0xfff) << 16) | ((socket & 0xf) << 12)		\
 	 | ((imc & 0xf) << 8) | ((chan & 0xf) << 4) | (dimm & 0xf))
 
-static DEFINE_SPINLOCK(ndtest_lock);
-static struct ndtest_priv *instances[NUM_INSTANCES];
-static struct class *ndtest_dimm_class;
-static struct gen_pool *ndtest_pool;
+अटल DEFINE_SPINLOCK(ndtest_lock);
+अटल काष्ठा ndtest_priv *instances[NUM_INSTANCES];
+अटल काष्ठा class *ndtest_dimm_class;
+अटल काष्ठा gen_pool *ndtest_pool;
 
-static struct ndtest_dimm dimm_group1[] = {
-	{
+अटल काष्ठा ndtest_dimm dimm_group1[] = अणु
+	अणु
 		.size = DIMM_SIZE,
 		.handle = NFIT_DIMM_HANDLE(0, 0, 0, 0, 0),
 		.uuid_str = "1e5c75d2-b618-11ea-9aa3-507b9ddc0f72",
 		.physical_id = 0,
-		.num_formats = 2,
-	},
-	{
+		.num_क्रमmats = 2,
+	पूर्ण,
+	अणु
 		.size = DIMM_SIZE,
 		.handle = NFIT_DIMM_HANDLE(0, 0, 0, 0, 1),
 		.uuid_str = "1c4d43ac-b618-11ea-be80-507b9ddc0f72",
 		.physical_id = 1,
-		.num_formats = 2,
-	},
-	{
+		.num_क्रमmats = 2,
+	पूर्ण,
+	अणु
 		.size = DIMM_SIZE,
 		.handle = NFIT_DIMM_HANDLE(0, 0, 1, 0, 0),
 		.uuid_str = "a9f17ffc-b618-11ea-b36d-507b9ddc0f72",
 		.physical_id = 2,
-		.num_formats = 2,
-	},
-	{
+		.num_क्रमmats = 2,
+	पूर्ण,
+	अणु
 		.size = DIMM_SIZE,
 		.handle = NFIT_DIMM_HANDLE(0, 0, 1, 0, 1),
 		.uuid_str = "b6b83b22-b618-11ea-8aae-507b9ddc0f72",
 		.physical_id = 3,
-		.num_formats = 2,
-	},
-	{
+		.num_क्रमmats = 2,
+	पूर्ण,
+	अणु
 		.size = DIMM_SIZE,
 		.handle = NFIT_DIMM_HANDLE(0, 1, 0, 0, 0),
 		.uuid_str = "bf9baaee-b618-11ea-b181-507b9ddc0f72",
 		.physical_id = 4,
-		.num_formats = 2,
-	},
-};
+		.num_क्रमmats = 2,
+	पूर्ण,
+पूर्ण;
 
-static struct ndtest_dimm dimm_group2[] = {
-	{
+अटल काष्ठा ndtest_dimm dimm_group2[] = अणु
+	अणु
 		.size = DIMM_SIZE,
 		.handle = NFIT_DIMM_HANDLE(1, 0, 0, 0, 0),
 		.uuid_str = "ca0817e2-b618-11ea-9db3-507b9ddc0f72",
 		.physical_id = 0,
-		.num_formats = 1,
+		.num_क्रमmats = 1,
 		.flags = PAPR_PMEM_UNARMED | PAPR_PMEM_EMPTY |
-			 PAPR_PMEM_SAVE_FAILED | PAPR_PMEM_SHUTDOWN_DIRTY |
+			 PAPR_PMEM_SAVE_FAILED | PAPR_PMEM_SHUTDOWN_सूचीTY |
 			 PAPR_PMEM_HEALTH_FATAL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct ndtest_mapping region0_mapping[] = {
-	{
+अटल काष्ठा ndtest_mapping region0_mapping[] = अणु
+	अणु
 		.dimm = 0,
 		.position = 0,
 		.start = 0,
 		.size = SZ_16M,
-	},
-	{
+	पूर्ण,
+	अणु
 		.dimm = 1,
 		.position = 1,
 		.start = 0,
 		.size = SZ_16M,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct ndtest_mapping region1_mapping[] = {
-	{
+अटल काष्ठा ndtest_mapping region1_mapping[] = अणु
+	अणु
 		.dimm = 0,
 		.position = 0,
 		.start = SZ_16M,
 		.size = SZ_16M,
-	},
-	{
+	पूर्ण,
+	अणु
 		.dimm = 1,
 		.position = 1,
 		.start = SZ_16M,
 		.size = SZ_16M,
-	},
-	{
+	पूर्ण,
+	अणु
 		.dimm = 2,
 		.position = 2,
 		.start = SZ_16M,
 		.size = SZ_16M,
-	},
-	{
+	पूर्ण,
+	अणु
 		.dimm = 3,
 		.position = 3,
 		.start = SZ_16M,
 		.size = SZ_16M,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct ndtest_mapping region2_mapping[] = {
-	{
+अटल काष्ठा ndtest_mapping region2_mapping[] = अणु
+	अणु
 		.dimm = 0,
 		.position = 0,
 		.start = 0,
 		.size = DIMM_SIZE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct ndtest_mapping region3_mapping[] = {
-	{
+अटल काष्ठा ndtest_mapping region3_mapping[] = अणु
+	अणु
 		.dimm = 1,
 		.start = 0,
 		.size = DIMM_SIZE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct ndtest_mapping region4_mapping[] = {
-	{
+अटल काष्ठा ndtest_mapping region4_mapping[] = अणु
+	अणु
 		.dimm = 2,
 		.start = 0,
 		.size = DIMM_SIZE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct ndtest_mapping region5_mapping[] = {
-	{
+अटल काष्ठा ndtest_mapping region5_mapping[] = अणु
+	अणु
 		.dimm = 3,
 		.start = 0,
 		.size = DIMM_SIZE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct ndtest_region bus0_regions[] = {
-	{
+अटल काष्ठा ndtest_region bus0_regions[] = अणु
+	अणु
 		.type = ND_DEVICE_NAMESPACE_PMEM,
 		.num_mappings = ARRAY_SIZE(region0_mapping),
 		.mapping = region0_mapping,
 		.size = DIMM_SIZE,
 		.range_index = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = ND_DEVICE_NAMESPACE_PMEM,
 		.num_mappings = ARRAY_SIZE(region1_mapping),
 		.mapping = region1_mapping,
 		.size = DIMM_SIZE * 2,
 		.range_index = 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = ND_DEVICE_NAMESPACE_BLK,
 		.num_mappings = ARRAY_SIZE(region2_mapping),
 		.mapping = region2_mapping,
 		.size = DIMM_SIZE,
 		.range_index = 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = ND_DEVICE_NAMESPACE_BLK,
 		.num_mappings = ARRAY_SIZE(region3_mapping),
 		.mapping = region3_mapping,
 		.size = DIMM_SIZE,
 		.range_index = 4,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = ND_DEVICE_NAMESPACE_BLK,
 		.num_mappings = ARRAY_SIZE(region4_mapping),
 		.mapping = region4_mapping,
 		.size = DIMM_SIZE,
 		.range_index = 5,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = ND_DEVICE_NAMESPACE_BLK,
 		.num_mappings = ARRAY_SIZE(region5_mapping),
 		.mapping = region5_mapping,
 		.size = DIMM_SIZE,
 		.range_index = 6,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct ndtest_mapping region6_mapping[] = {
-	{
+अटल काष्ठा ndtest_mapping region6_mapping[] = अणु
+	अणु
 		.dimm = 0,
 		.position = 0,
 		.start = 0,
 		.size = DIMM_SIZE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct ndtest_region bus1_regions[] = {
-	{
+अटल काष्ठा ndtest_region bus1_regions[] = अणु
+	अणु
 		.type = ND_DEVICE_NAMESPACE_IO,
 		.num_mappings = ARRAY_SIZE(region6_mapping),
 		.mapping = region6_mapping,
 		.size = DIMM_SIZE,
 		.range_index = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct ndtest_config bus_configs[NUM_INSTANCES] = {
+अटल काष्ठा ndtest_config bus_configs[NUM_INSTANCES] = अणु
 	/* bus 1 */
-	{
+	अणु
 		.dimm_start = 0,
 		.dimm_count = ARRAY_SIZE(dimm_group1),
 		.dimms = dimm_group1,
 		.regions = bus0_regions,
 		.num_regions = ARRAY_SIZE(bus0_regions),
-	},
+	पूर्ण,
 	/* bus 2 */
-	{
+	अणु
 		.dimm_start = ARRAY_SIZE(dimm_group1),
 		.dimm_count = ARRAY_SIZE(dimm_group2),
 		.dimms = dimm_group2,
 		.regions = bus1_regions,
 		.num_regions = ARRAY_SIZE(bus1_regions),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static inline struct ndtest_priv *to_ndtest_priv(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
+अटल अंतरभूत काष्ठा ndtest_priv *to_ndtest_priv(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
 
-	return container_of(pdev, struct ndtest_priv, pdev);
-}
+	वापस container_of(pdev, काष्ठा ndtest_priv, pdev);
+पूर्ण
 
-static int ndtest_config_get(struct ndtest_dimm *p, unsigned int buf_len,
-			     struct nd_cmd_get_config_data_hdr *hdr)
-{
-	unsigned int len;
+अटल पूर्णांक ndtest_config_get(काष्ठा ndtest_dimm *p, अचिन्हित पूर्णांक buf_len,
+			     काष्ठा nd_cmd_get_config_data_hdr *hdr)
+अणु
+	अचिन्हित पूर्णांक len;
 
-	if ((hdr->in_offset + hdr->in_length) > LABEL_SIZE)
-		return -EINVAL;
+	अगर ((hdr->in_offset + hdr->in_length) > LABEL_SIZE)
+		वापस -EINVAL;
 
 	hdr->status = 0;
 	len = min(hdr->in_length, LABEL_SIZE - hdr->in_offset);
-	memcpy(hdr->out_buf, p->label_area + hdr->in_offset, len);
+	स_नकल(hdr->out_buf, p->label_area + hdr->in_offset, len);
 
-	return buf_len - len;
-}
+	वापस buf_len - len;
+पूर्ण
 
-static int ndtest_config_set(struct ndtest_dimm *p, unsigned int buf_len,
-			     struct nd_cmd_set_config_hdr *hdr)
-{
-	unsigned int len;
+अटल पूर्णांक ndtest_config_set(काष्ठा ndtest_dimm *p, अचिन्हित पूर्णांक buf_len,
+			     काष्ठा nd_cmd_set_config_hdr *hdr)
+अणु
+	अचिन्हित पूर्णांक len;
 
-	if ((hdr->in_offset + hdr->in_length) > LABEL_SIZE)
-		return -EINVAL;
+	अगर ((hdr->in_offset + hdr->in_length) > LABEL_SIZE)
+		वापस -EINVAL;
 
 	len = min(hdr->in_length, LABEL_SIZE - hdr->in_offset);
-	memcpy(p->label_area + hdr->in_offset, hdr->in_buf, len);
+	स_नकल(p->label_area + hdr->in_offset, hdr->in_buf, len);
 
-	return buf_len - len;
-}
+	वापस buf_len - len;
+पूर्ण
 
-static int ndtest_get_config_size(struct ndtest_dimm *dimm, unsigned int buf_len,
-				  struct nd_cmd_get_config_size *size)
-{
+अटल पूर्णांक ndtest_get_config_size(काष्ठा ndtest_dimm *dimm, अचिन्हित पूर्णांक buf_len,
+				  काष्ठा nd_cmd_get_config_size *size)
+अणु
 	size->status = 0;
 	size->max_xfer = 8;
 	size->config_size = dimm->config_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ndtest_ctl(struct nvdimm_bus_descriptor *nd_desc,
-		      struct nvdimm *nvdimm, unsigned int cmd, void *buf,
-		      unsigned int buf_len, int *cmd_rc)
-{
-	struct ndtest_dimm *dimm;
-	int _cmd_rc;
+अटल पूर्णांक ndtest_ctl(काष्ठा nvdimm_bus_descriptor *nd_desc,
+		      काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक cmd, व्योम *buf,
+		      अचिन्हित पूर्णांक buf_len, पूर्णांक *cmd_rc)
+अणु
+	काष्ठा ndtest_dimm *dimm;
+	पूर्णांक _cmd_rc;
 
-	if (!cmd_rc)
+	अगर (!cmd_rc)
 		cmd_rc = &_cmd_rc;
 
 	*cmd_rc = 0;
 
-	if (!nvdimm)
-		return -EINVAL;
+	अगर (!nvdimm)
+		वापस -EINVAL;
 
 	dimm = nvdimm_provider_data(nvdimm);
-	if (!dimm)
-		return -EINVAL;
+	अगर (!dimm)
+		वापस -EINVAL;
 
-	switch (cmd) {
-	case ND_CMD_GET_CONFIG_SIZE:
+	चयन (cmd) अणु
+	हाल ND_CMD_GET_CONFIG_SIZE:
 		*cmd_rc = ndtest_get_config_size(dimm, buf_len, buf);
-		break;
-	case ND_CMD_GET_CONFIG_DATA:
+		अवरोध;
+	हाल ND_CMD_GET_CONFIG_DATA:
 		*cmd_rc = ndtest_config_get(dimm, buf_len, buf);
-		break;
-	case ND_CMD_SET_CONFIG_DATA:
+		अवरोध;
+	हाल ND_CMD_SET_CONFIG_DATA:
 		*cmd_rc = ndtest_config_set(dimm, buf_len, buf);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Failures for a DIMM can be injected using fail_cmd and
+	/* Failures क्रम a DIMM can be injected using fail_cmd and
 	 * fail_cmd_code, see the device attributes below
 	 */
-	if ((1 << cmd) & dimm->fail_cmd)
-		return dimm->fail_cmd_code ? dimm->fail_cmd_code : -EIO;
+	अगर ((1 << cmd) & dimm->fail_cmd)
+		वापस dimm->fail_cmd_code ? dimm->fail_cmd_code : -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ndtest_blk_do_io(struct nd_blk_region *ndbr, resource_size_t dpa,
-		void *iobuf, u64 len, int rw)
-{
-	struct ndtest_dimm *dimm = ndbr->blk_provider_data;
-	struct ndtest_blk_mmio *mmio = dimm->mmio;
-	struct nd_region *nd_region = &ndbr->nd_region;
-	unsigned int lane;
+अटल पूर्णांक ndtest_blk_करो_io(काष्ठा nd_blk_region *ndbr, resource_माप_प्रकार dpa,
+		व्योम *iobuf, u64 len, पूर्णांक rw)
+अणु
+	काष्ठा ndtest_dimm *dimm = ndbr->blk_provider_data;
+	काष्ठा ndtest_blk_mmio *mmio = dimm->mmio;
+	काष्ठा nd_region *nd_region = &ndbr->nd_region;
+	अचिन्हित पूर्णांक lane;
 
-	if (!mmio)
-		return -ENOMEM;
+	अगर (!mmio)
+		वापस -ENOMEM;
 
 	lane = nd_region_acquire_lane(nd_region);
-	if (rw)
-		memcpy(mmio->base + dpa, iobuf, len);
-	else {
-		memcpy(iobuf, mmio->base + dpa, len);
+	अगर (rw)
+		स_नकल(mmio->base + dpa, iobuf, len);
+	अन्यथा अणु
+		स_नकल(iobuf, mmio->base + dpa, len);
 		arch_invalidate_pmem(mmio->base + dpa, len);
-	}
+	पूर्ण
 
 	nd_region_release_lane(nd_region, lane);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ndtest_blk_region_enable(struct nvdimm_bus *nvdimm_bus,
-				    struct device *dev)
-{
-	struct nd_blk_region *ndbr = to_nd_blk_region(dev);
-	struct nvdimm *nvdimm;
-	struct ndtest_dimm *dimm;
-	struct ndtest_blk_mmio *mmio;
+अटल पूर्णांक ndtest_blk_region_enable(काष्ठा nvdimm_bus *nvdimm_bus,
+				    काष्ठा device *dev)
+अणु
+	काष्ठा nd_blk_region *ndbr = to_nd_blk_region(dev);
+	काष्ठा nvdimm *nvdimm;
+	काष्ठा ndtest_dimm *dimm;
+	काष्ठा ndtest_blk_mmio *mmio;
 
 	nvdimm = nd_blk_region_to_dimm(ndbr);
 	dimm = nvdimm_provider_data(nvdimm);
@@ -376,95 +377,95 @@ static int ndtest_blk_region_enable(struct nvdimm_bus *nvdimm_bus,
 	nd_blk_region_set_provider_data(ndbr, dimm);
 	dimm->blk_region = to_nd_region(dev);
 
-	mmio = devm_kzalloc(dev, sizeof(struct ndtest_blk_mmio), GFP_KERNEL);
-	if (!mmio)
-		return -ENOMEM;
+	mmio = devm_kzalloc(dev, माप(काष्ठा ndtest_blk_mmio), GFP_KERNEL);
+	अगर (!mmio)
+		वापस -ENOMEM;
 
-	mmio->base = (void __iomem *) devm_nvdimm_memremap(
+	mmio->base = (व्योम __iomem *) devm_nvdimm_memremap(
 		dev, dimm->address, 12, nd_blk_memremap_flags(ndbr));
-	if (!mmio->base) {
+	अगर (!mmio->base) अणु
 		dev_err(dev, "%s failed to map blk dimm\n", nvdimm_name(nvdimm));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	mmio->size = dimm->size;
 	mmio->base_offset = 0;
 
 	dimm->mmio = mmio;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct nfit_test_resource *ndtest_resource_lookup(resource_size_t addr)
-{
-	int i;
+अटल काष्ठा nfit_test_resource *ndtest_resource_lookup(resource_माप_प्रकार addr)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NUM_INSTANCES; i++) {
-		struct nfit_test_resource *n, *nfit_res = NULL;
-		struct ndtest_priv *t = instances[i];
+	क्रम (i = 0; i < NUM_INSTANCES; i++) अणु
+		काष्ठा nfit_test_resource *n, *nfit_res = शून्य;
+		काष्ठा ndtest_priv *t = instances[i];
 
-		if (!t)
-			continue;
+		अगर (!t)
+			जारी;
 		spin_lock(&ndtest_lock);
-		list_for_each_entry(n, &t->resources, list) {
-			if (addr >= n->res.start && (addr < n->res.start
-						+ resource_size(&n->res))) {
+		list_क्रम_each_entry(n, &t->resources, list) अणु
+			अगर (addr >= n->res.start && (addr < n->res.start
+						+ resource_size(&n->res))) अणु
 				nfit_res = n;
-				break;
-			} else if (addr >= (unsigned long) n->buf
-					&& (addr < (unsigned long) n->buf
-						+ resource_size(&n->res))) {
+				अवरोध;
+			पूर्ण अन्यथा अगर (addr >= (अचिन्हित दीर्घ) n->buf
+					&& (addr < (अचिन्हित दीर्घ) n->buf
+						+ resource_size(&n->res))) अणु
 				nfit_res = n;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		spin_unlock(&ndtest_lock);
-		if (nfit_res)
-			return nfit_res;
-	}
+		अगर (nfit_res)
+			वापस nfit_res;
+	पूर्ण
 
 	pr_warn("Failed to get resource\n");
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void ndtest_release_resource(void *data)
-{
-	struct nfit_test_resource *res  = data;
+अटल व्योम ndtest_release_resource(व्योम *data)
+अणु
+	काष्ठा nfit_test_resource *res  = data;
 
 	spin_lock(&ndtest_lock);
 	list_del(&res->list);
 	spin_unlock(&ndtest_lock);
 
-	if (resource_size(&res->res) >= DIMM_SIZE)
-		gen_pool_free(ndtest_pool, res->res.start,
+	अगर (resource_size(&res->res) >= DIMM_SIZE)
+		gen_pool_मुक्त(ndtest_pool, res->res.start,
 				resource_size(&res->res));
-	vfree(res->buf);
-	kfree(res);
-}
+	vमुक्त(res->buf);
+	kमुक्त(res);
+पूर्ण
 
-static void *ndtest_alloc_resource(struct ndtest_priv *p, size_t size,
+अटल व्योम *ndtest_alloc_resource(काष्ठा ndtest_priv *p, माप_प्रकार size,
 				   dma_addr_t *dma)
-{
+अणु
 	dma_addr_t __dma;
-	void *buf;
-	struct nfit_test_resource *res;
-	struct genpool_data_align data = {
+	व्योम *buf;
+	काष्ठा nfit_test_resource *res;
+	काष्ठा genpool_data_align data = अणु
 		.align = SZ_128M,
-	};
+	पूर्ण;
 
-	res = kzalloc(sizeof(*res), GFP_KERNEL);
-	if (!res)
-		return NULL;
+	res = kzalloc(माप(*res), GFP_KERNEL);
+	अगर (!res)
+		वापस शून्य;
 
-	buf = vmalloc(size);
-	if (size >= DIMM_SIZE)
+	buf = vदो_स्मृति(size);
+	अगर (size >= DIMM_SIZE)
 		__dma = gen_pool_alloc_algo(ndtest_pool, size,
 					    gen_pool_first_fit_align, &data);
-	else
-		__dma = (unsigned long) buf;
+	अन्यथा
+		__dma = (अचिन्हित दीर्घ) buf;
 
-	if (!__dma)
-		goto buf_err;
+	अगर (!__dma)
+		जाओ buf_err;
 
 	INIT_LIST_HEAD(&res->list);
 	res->dev = &p->pdev.dev;
@@ -478,65 +479,65 @@ static void *ndtest_alloc_resource(struct ndtest_priv *p, size_t size,
 	list_add(&res->list, &p->resources);
 	spin_unlock(&ndtest_lock);
 
-	if (dma)
+	अगर (dma)
 		*dma = __dma;
 
-	if (!devm_add_action(&p->pdev.dev, ndtest_release_resource, res))
-		return res->buf;
+	अगर (!devm_add_action(&p->pdev.dev, ndtest_release_resource, res))
+		वापस res->buf;
 
 buf_err:
-	if (__dma && size >= DIMM_SIZE)
-		gen_pool_free(ndtest_pool, __dma, size);
-	if (buf)
-		vfree(buf);
-	kfree(res);
+	अगर (__dma && size >= DIMM_SIZE)
+		gen_pool_मुक्त(ndtest_pool, __dma, size);
+	अगर (buf)
+		vमुक्त(buf);
+	kमुक्त(res);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static ssize_t range_index_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nd_region *nd_region = to_nd_region(dev);
-	struct ndtest_region *region = nd_region_provider_data(nd_region);
+अटल sमाप_प्रकार range_index_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nd_region *nd_region = to_nd_region(dev);
+	काष्ठा ndtest_region *region = nd_region_provider_data(nd_region);
 
-	return sprintf(buf, "%d\n", region->range_index);
-}
-static DEVICE_ATTR_RO(range_index);
+	वापस प्र_लिखो(buf, "%d\n", region->range_index);
+पूर्ण
+अटल DEVICE_ATTR_RO(range_index);
 
-static struct attribute *ndtest_region_attributes[] = {
+अटल काष्ठा attribute *ndtest_region_attributes[] = अणु
 	&dev_attr_range_index.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group ndtest_region_attribute_group = {
+अटल स्थिर काष्ठा attribute_group ndtest_region_attribute_group = अणु
 	.name = "papr",
 	.attrs = ndtest_region_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *ndtest_region_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *ndtest_region_attribute_groups[] = अणु
 	&ndtest_region_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int ndtest_create_region(struct ndtest_priv *p,
-				struct ndtest_region *region)
-{
-	struct nd_mapping_desc mappings[NDTEST_MAX_MAPPING];
-	struct nd_blk_region_desc ndbr_desc;
-	struct nd_interleave_set *nd_set;
-	struct nd_region_desc *ndr_desc;
-	struct resource res;
-	int i, ndimm = region->mapping[0].dimm;
+अटल पूर्णांक ndtest_create_region(काष्ठा ndtest_priv *p,
+				काष्ठा ndtest_region *region)
+अणु
+	काष्ठा nd_mapping_desc mappings[NDTEST_MAX_MAPPING];
+	काष्ठा nd_blk_region_desc ndbr_desc;
+	काष्ठा nd_पूर्णांकerleave_set *nd_set;
+	काष्ठा nd_region_desc *ndr_desc;
+	काष्ठा resource res;
+	पूर्णांक i, ndimm = region->mapping[0].dimm;
 	u64 uuid[2];
 
-	memset(&res, 0, sizeof(res));
-	memset(&mappings, 0, sizeof(mappings));
-	memset(&ndbr_desc, 0, sizeof(ndbr_desc));
+	स_रखो(&res, 0, माप(res));
+	स_रखो(&mappings, 0, माप(mappings));
+	स_रखो(&ndbr_desc, 0, माप(ndbr_desc));
 	ndr_desc = &ndbr_desc.ndr_desc;
 
-	if (!ndtest_alloc_resource(p, region->size, &res.start))
-		return -ENOMEM;
+	अगर (!ndtest_alloc_resource(p, region->size, &res.start))
+		वापस -ENOMEM;
 
 	res.end = res.start + region->size - 1;
 	ndr_desc->mapping = mappings;
@@ -544,21 +545,21 @@ static int ndtest_create_region(struct ndtest_priv *p,
 	ndr_desc->provider_data = region;
 	ndr_desc->attr_groups = ndtest_region_attribute_groups;
 
-	if (uuid_parse(p->config->dimms[ndimm].uuid_str, (uuid_t *)uuid)) {
+	अगर (uuid_parse(p->config->dimms[ndimm].uuid_str, (uuid_t *)uuid)) अणु
 		pr_err("failed to parse UUID\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	nd_set = devm_kzalloc(&p->pdev.dev, sizeof(*nd_set), GFP_KERNEL);
-	if (!nd_set)
-		return -ENOMEM;
+	nd_set = devm_kzalloc(&p->pdev.dev, माप(*nd_set), GFP_KERNEL);
+	अगर (!nd_set)
+		वापस -ENOMEM;
 
 	nd_set->cookie1 = cpu_to_le64(uuid[0]);
 	nd_set->cookie2 = cpu_to_le64(uuid[1]);
 	nd_set->altcookie = nd_set->cookie1;
 	ndr_desc->nd_set = nd_set;
 
-	if (region->type == ND_DEVICE_NAMESPACE_BLK) {
+	अगर (region->type == ND_DEVICE_NAMESPACE_BLK) अणु
 		mappings[0].start = 0;
 		mappings[0].size = DIMM_SIZE;
 		mappings[0].nvdimm = p->config->dimms[ndimm].nvdimm;
@@ -567,563 +568,563 @@ static int ndtest_create_region(struct ndtest_priv *p,
 		ndr_desc->num_mappings = 1;
 		ndr_desc->num_lanes = 1;
 		ndbr_desc.enable = ndtest_blk_region_enable;
-		ndbr_desc.do_io = ndtest_blk_do_io;
+		ndbr_desc.करो_io = ndtest_blk_करो_io;
 		region->region = nvdimm_blk_region_create(p->bus, ndr_desc);
 
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	for (i = 0; i < region->num_mappings; i++) {
+	क्रम (i = 0; i < region->num_mappings; i++) अणु
 		ndimm = region->mapping[i].dimm;
 		mappings[i].start = region->mapping[i].start;
 		mappings[i].size = region->mapping[i].size;
 		mappings[i].position = region->mapping[i].position;
 		mappings[i].nvdimm = p->config->dimms[ndimm].nvdimm;
-	}
+	पूर्ण
 
 	ndr_desc->num_mappings = region->num_mappings;
 	region->region = nvdimm_pmem_region_create(p->bus, ndr_desc);
 
-done:
-	if (!region->region) {
+करोne:
+	अगर (!region->region) अणु
 		dev_err(&p->pdev.dev, "Error registering region %pR\n",
 			ndr_desc->res);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ndtest_init_regions(struct ndtest_priv *p)
-{
-	int i, ret = 0;
+अटल पूर्णांक ndtest_init_regions(काष्ठा ndtest_priv *p)
+अणु
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < p->config->num_regions; i++) {
+	क्रम (i = 0; i < p->config->num_regions; i++) अणु
 		ret = ndtest_create_region(p, &p->config->regions[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void put_dimms(void *data)
-{
-	struct ndtest_priv *p = data;
-	int i;
+अटल व्योम put_dimms(व्योम *data)
+अणु
+	काष्ठा ndtest_priv *p = data;
+	पूर्णांक i;
 
-	for (i = 0; i < p->config->dimm_count; i++)
-		if (p->config->dimms[i].dev) {
-			device_unregister(p->config->dimms[i].dev);
-			p->config->dimms[i].dev = NULL;
-		}
-}
+	क्रम (i = 0; i < p->config->dimm_count; i++)
+		अगर (p->config->dimms[i].dev) अणु
+			device_unरेजिस्टर(p->config->dimms[i].dev);
+			p->config->dimms[i].dev = शून्य;
+		पूर्ण
+पूर्ण
 
-static ssize_t handle_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct ndtest_dimm *dimm = dev_get_drvdata(dev);
+अटल sमाप_प्रकार handle_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा ndtest_dimm *dimm = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%#x\n", dimm->handle);
-}
-static DEVICE_ATTR_RO(handle);
+	वापस प्र_लिखो(buf, "%#x\n", dimm->handle);
+पूर्ण
+अटल DEVICE_ATTR_RO(handle);
 
-static ssize_t fail_cmd_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct ndtest_dimm *dimm = dev_get_drvdata(dev);
+अटल sमाप_प्रकार fail_cmd_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा ndtest_dimm *dimm = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%#x\n", dimm->fail_cmd);
-}
+	वापस प्र_लिखो(buf, "%#x\n", dimm->fail_cmd);
+पूर्ण
 
-static ssize_t fail_cmd_store(struct device *dev, struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct ndtest_dimm *dimm = dev_get_drvdata(dev);
-	unsigned long val;
-	ssize_t rc;
+अटल sमाप_प्रकार fail_cmd_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा ndtest_dimm *dimm = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ val;
+	sमाप_प्रकार rc;
 
-	rc = kstrtol(buf, 0, &val);
-	if (rc)
-		return rc;
+	rc = kम_से_दीर्घ(buf, 0, &val);
+	अगर (rc)
+		वापस rc;
 
 	dimm->fail_cmd = val;
 
-	return size;
-}
-static DEVICE_ATTR_RW(fail_cmd);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(fail_cmd);
 
-static ssize_t fail_cmd_code_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct ndtest_dimm *dimm = dev_get_drvdata(dev);
+अटल sमाप_प्रकार fail_cmd_code_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा ndtest_dimm *dimm = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", dimm->fail_cmd_code);
-}
+	वापस प्र_लिखो(buf, "%d\n", dimm->fail_cmd_code);
+पूर्ण
 
-static ssize_t fail_cmd_code_store(struct device *dev, struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	struct ndtest_dimm *dimm = dev_get_drvdata(dev);
-	unsigned long val;
-	ssize_t rc;
+अटल sमाप_प्रकार fail_cmd_code_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा ndtest_dimm *dimm = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ val;
+	sमाप_प्रकार rc;
 
-	rc = kstrtol(buf, 0, &val);
-	if (rc)
-		return rc;
+	rc = kम_से_दीर्घ(buf, 0, &val);
+	अगर (rc)
+		वापस rc;
 
 	dimm->fail_cmd_code = val;
-	return size;
-}
-static DEVICE_ATTR_RW(fail_cmd_code);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(fail_cmd_code);
 
-static struct attribute *dimm_attributes[] = {
+अटल काष्ठा attribute *dimm_attributes[] = अणु
 	&dev_attr_handle.attr,
 	&dev_attr_fail_cmd.attr,
 	&dev_attr_fail_cmd_code.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group dimm_attribute_group = {
+अटल काष्ठा attribute_group dimm_attribute_group = अणु
 	.attrs = dimm_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *dimm_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *dimm_attribute_groups[] = अणु
 	&dimm_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static ssize_t phys_id_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
+अटल sमाप_प्रकार phys_id_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
 
-	return sprintf(buf, "%#x\n", dimm->physical_id);
-}
-static DEVICE_ATTR_RO(phys_id);
+	वापस प्र_लिखो(buf, "%#x\n", dimm->physical_id);
+पूर्ण
+अटल DEVICE_ATTR_RO(phys_id);
 
-static ssize_t vendor_show(struct device *dev,
-			   struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "0x1234567\n");
-}
-static DEVICE_ATTR_RO(vendor);
+अटल sमाप_प्रकार venकरोr_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "0x1234567\n");
+पूर्ण
+अटल DEVICE_ATTR_RO(venकरोr);
 
-static ssize_t id_show(struct device *dev,
-		       struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
+अटल sमाप_प्रकार id_show(काष्ठा device *dev,
+		       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
 
-	return sprintf(buf, "%04x-%02x-%04x-%08x", 0xabcd,
+	वापस प्र_लिखो(buf, "%04x-%02x-%04x-%08x", 0xabcd,
 		       0xa, 2016, ~(dimm->handle));
-}
-static DEVICE_ATTR_RO(id);
+पूर्ण
+अटल DEVICE_ATTR_RO(id);
 
-static ssize_t nvdimm_handle_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
+अटल sमाप_प्रकार nvdimm_handle_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
 
-	return sprintf(buf, "%#x\n", dimm->handle);
-}
+	वापस प्र_लिखो(buf, "%#x\n", dimm->handle);
+पूर्ण
 
-static struct device_attribute dev_attr_nvdimm_show_handle =  {
-	.attr	= { .name = "handle", .mode = 0444 },
+अटल काष्ठा device_attribute dev_attr_nvdimm_show_handle =  अणु
+	.attr	= अणु .name = "handle", .mode = 0444 पूर्ण,
 	.show	= nvdimm_handle_show,
-};
+पूर्ण;
 
-static ssize_t subsystem_vendor_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "0x%04x\n", 0);
-}
-static DEVICE_ATTR_RO(subsystem_vendor);
+अटल sमाप_प्रकार subप्रणाली_venकरोr_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "0x%04x\n", 0);
+पूर्ण
+अटल DEVICE_ATTR_RO(subप्रणाली_venकरोr);
 
-static ssize_t dirty_shutdown_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", 42);
-}
-static DEVICE_ATTR_RO(dirty_shutdown);
+अटल sमाप_प्रकार dirty_shutकरोwn_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", 42);
+पूर्ण
+अटल DEVICE_ATTR_RO(dirty_shutकरोwn);
 
-static ssize_t formats_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
+अटल sमाप_प्रकार क्रमmats_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
 
-	return sprintf(buf, "%d\n", dimm->num_formats);
-}
-static DEVICE_ATTR_RO(formats);
+	वापस प्र_लिखो(buf, "%d\n", dimm->num_क्रमmats);
+पूर्ण
+अटल DEVICE_ATTR_RO(क्रमmats);
 
-static ssize_t format_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
+अटल sमाप_प्रकार क्रमmat_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
 
-	if (dimm->num_formats > 1)
-		return sprintf(buf, "0x201\n");
+	अगर (dimm->num_क्रमmats > 1)
+		वापस प्र_लिखो(buf, "0x201\n");
 
-	return sprintf(buf, "0x101\n");
-}
-static DEVICE_ATTR_RO(format);
+	वापस प्र_लिखो(buf, "0x101\n");
+पूर्ण
+अटल DEVICE_ATTR_RO(क्रमmat);
 
-static ssize_t format1_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	return sprintf(buf, "0x301\n");
-}
-static DEVICE_ATTR_RO(format1);
+अटल sमाप_प्रकार क्रमmat1_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "0x301\n");
+पूर्ण
+अटल DEVICE_ATTR_RO(क्रमmat1);
 
-static umode_t ndtest_nvdimm_attr_visible(struct kobject *kobj,
-					struct attribute *a, int n)
-{
-	struct device *dev = container_of(kobj, struct device, kobj);
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
+अटल umode_t ndtest_nvdimm_attr_visible(काष्ठा kobject *kobj,
+					काष्ठा attribute *a, पूर्णांक n)
+अणु
+	काष्ठा device *dev = container_of(kobj, काष्ठा device, kobj);
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
 
-	if (a == &dev_attr_format1.attr && dimm->num_formats <= 1)
-		return 0;
+	अगर (a == &dev_attr_क्रमmat1.attr && dimm->num_क्रमmats <= 1)
+		वापस 0;
 
-	return a->mode;
-}
+	वापस a->mode;
+पूर्ण
 
-static ssize_t flags_show(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
-	struct seq_buf s;
+अटल sमाप_प्रकार flags_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा ndtest_dimm *dimm = nvdimm_provider_data(nvdimm);
+	काष्ठा seq_buf s;
 	u64 flags;
 
 	flags = dimm->flags;
 
 	seq_buf_init(&s, buf, PAGE_SIZE);
-	if (flags & PAPR_PMEM_UNARMED_MASK)
-		seq_buf_printf(&s, "not_armed ");
+	अगर (flags & PAPR_PMEM_UNARMED_MASK)
+		seq_buf_म_लिखो(&s, "not_armed ");
 
-	if (flags & PAPR_PMEM_BAD_SHUTDOWN_MASK)
-		seq_buf_printf(&s, "flush_fail ");
+	अगर (flags & PAPR_PMEM_BAD_SHUTDOWN_MASK)
+		seq_buf_म_लिखो(&s, "flush_fail ");
 
-	if (flags & PAPR_PMEM_BAD_RESTORE_MASK)
-		seq_buf_printf(&s, "restore_fail ");
+	अगर (flags & PAPR_PMEM_BAD_RESTORE_MASK)
+		seq_buf_म_लिखो(&s, "restore_fail ");
 
-	if (flags & PAPR_PMEM_SAVE_MASK)
-		seq_buf_printf(&s, "save_fail ");
+	अगर (flags & PAPR_PMEM_SAVE_MASK)
+		seq_buf_म_लिखो(&s, "save_fail ");
 
-	if (flags & PAPR_PMEM_SMART_EVENT_MASK)
-		seq_buf_printf(&s, "smart_notify ");
+	अगर (flags & PAPR_PMEM_SMART_EVENT_MASK)
+		seq_buf_म_लिखो(&s, "smart_notify ");
 
 
-	if (seq_buf_used(&s))
-		seq_buf_printf(&s, "\n");
+	अगर (seq_buf_used(&s))
+		seq_buf_म_लिखो(&s, "\n");
 
-	return seq_buf_used(&s);
-}
-static DEVICE_ATTR_RO(flags);
+	वापस seq_buf_used(&s);
+पूर्ण
+अटल DEVICE_ATTR_RO(flags);
 
-static struct attribute *ndtest_nvdimm_attributes[] = {
+अटल काष्ठा attribute *ndtest_nvdimm_attributes[] = अणु
 	&dev_attr_nvdimm_show_handle.attr,
-	&dev_attr_vendor.attr,
+	&dev_attr_venकरोr.attr,
 	&dev_attr_id.attr,
 	&dev_attr_phys_id.attr,
-	&dev_attr_subsystem_vendor.attr,
-	&dev_attr_dirty_shutdown.attr,
-	&dev_attr_formats.attr,
-	&dev_attr_format.attr,
-	&dev_attr_format1.attr,
+	&dev_attr_subप्रणाली_venकरोr.attr,
+	&dev_attr_dirty_shutकरोwn.attr,
+	&dev_attr_क्रमmats.attr,
+	&dev_attr_क्रमmat.attr,
+	&dev_attr_क्रमmat1.attr,
 	&dev_attr_flags.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group ndtest_nvdimm_attribute_group = {
+अटल स्थिर काष्ठा attribute_group ndtest_nvdimm_attribute_group = अणु
 	.name = "papr",
 	.attrs = ndtest_nvdimm_attributes,
 	.is_visible = ndtest_nvdimm_attr_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *ndtest_nvdimm_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *ndtest_nvdimm_attribute_groups[] = अणु
 	&ndtest_nvdimm_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int ndtest_dimm_register(struct ndtest_priv *priv,
-				struct ndtest_dimm *dimm, int id)
-{
-	struct device *dev = &priv->pdev.dev;
-	unsigned long dimm_flags = dimm->flags;
+अटल पूर्णांक ndtest_dimm_रेजिस्टर(काष्ठा ndtest_priv *priv,
+				काष्ठा ndtest_dimm *dimm, पूर्णांक id)
+अणु
+	काष्ठा device *dev = &priv->pdev.dev;
+	अचिन्हित दीर्घ dimm_flags = dimm->flags;
 
-	if (dimm->num_formats > 1) {
+	अगर (dimm->num_क्रमmats > 1) अणु
 		set_bit(NDD_ALIASING, &dimm_flags);
 		set_bit(NDD_LABELING, &dimm_flags);
-	}
+	पूर्ण
 
-	if (dimm->flags & PAPR_PMEM_UNARMED_MASK)
+	अगर (dimm->flags & PAPR_PMEM_UNARMED_MASK)
 		set_bit(NDD_UNARMED, &dimm_flags);
 
 	dimm->nvdimm = nvdimm_create(priv->bus, dimm,
 				    ndtest_nvdimm_attribute_groups, dimm_flags,
-				    NDTEST_SCM_DIMM_CMD_MASK, 0, NULL);
-	if (!dimm->nvdimm) {
+				    NDTEST_SCM_DIMM_CMD_MASK, 0, शून्य);
+	अगर (!dimm->nvdimm) अणु
 		dev_err(dev, "Error creating DIMM object for %pOF\n", priv->dn);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	dimm->dev = device_create_with_groups(ndtest_dimm_class,
 					     &priv->pdev.dev,
 					     0, dimm, dimm_attribute_groups,
 					     "test_dimm%d", id);
-	if (!dimm->dev) {
+	अगर (!dimm->dev) अणु
 		pr_err("Could not create dimm device attributes\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ndtest_nvdimm_init(struct ndtest_priv *p)
-{
-	struct ndtest_dimm *d;
-	void *res;
-	int i, id;
+अटल पूर्णांक ndtest_nvdimm_init(काष्ठा ndtest_priv *p)
+अणु
+	काष्ठा ndtest_dimm *d;
+	व्योम *res;
+	पूर्णांक i, id;
 
-	for (i = 0; i < p->config->dimm_count; i++) {
+	क्रम (i = 0; i < p->config->dimm_count; i++) अणु
 		d = &p->config->dimms[i];
 		d->id = id = p->config->dimm_start + i;
-		res = ndtest_alloc_resource(p, LABEL_SIZE, NULL);
-		if (!res)
-			return -ENOMEM;
+		res = ndtest_alloc_resource(p, LABEL_SIZE, शून्य);
+		अगर (!res)
+			वापस -ENOMEM;
 
 		d->label_area = res;
-		sprintf(d->label_area, "label%d", id);
+		प्र_लिखो(d->label_area, "label%d", id);
 		d->config_size = LABEL_SIZE;
 
-		if (!ndtest_alloc_resource(p, d->size,
+		अगर (!ndtest_alloc_resource(p, d->size,
 					   &p->dimm_dma[id]))
-			return -ENOMEM;
+			वापस -ENOMEM;
 
-		if (!ndtest_alloc_resource(p, LABEL_SIZE,
+		अगर (!ndtest_alloc_resource(p, LABEL_SIZE,
 					   &p->label_dma[id]))
-			return -ENOMEM;
+			वापस -ENOMEM;
 
-		if (!ndtest_alloc_resource(p, LABEL_SIZE,
+		अगर (!ndtest_alloc_resource(p, LABEL_SIZE,
 					   &p->dcr_dma[id]))
-			return -ENOMEM;
+			वापस -ENOMEM;
 
 		d->address = p->dimm_dma[id];
 
-		ndtest_dimm_register(p, d, id);
-	}
+		ndtest_dimm_रेजिस्टर(p, d, id);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t compatible_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "nvdimm_test");
-}
-static DEVICE_ATTR_RO(compatible);
+अटल sमाप_प्रकार compatible_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "nvdimm_test");
+पूर्ण
+अटल DEVICE_ATTR_RO(compatible);
 
-static struct attribute *of_node_attributes[] = {
+अटल काष्ठा attribute *of_node_attributes[] = अणु
 	&dev_attr_compatible.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group of_node_attribute_group = {
+अटल स्थिर काष्ठा attribute_group of_node_attribute_group = अणु
 	.name = "of_node",
 	.attrs = of_node_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *ndtest_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *ndtest_attribute_groups[] = अणु
 	&of_node_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int ndtest_bus_register(struct ndtest_priv *p)
-{
+अटल पूर्णांक ndtest_bus_रेजिस्टर(काष्ठा ndtest_priv *p)
+अणु
 	p->config = &bus_configs[p->pdev.id];
 
 	p->bus_desc.ndctl = ndtest_ctl;
 	p->bus_desc.module = THIS_MODULE;
-	p->bus_desc.provider_name = NULL;
+	p->bus_desc.provider_name = शून्य;
 	p->bus_desc.attr_groups = ndtest_attribute_groups;
 
-	p->bus = nvdimm_bus_register(&p->pdev.dev, &p->bus_desc);
-	if (!p->bus) {
+	p->bus = nvdimm_bus_रेजिस्टर(&p->pdev.dev, &p->bus_desc);
+	अगर (!p->bus) अणु
 		dev_err(&p->pdev.dev, "Error creating nvdimm bus %pOF\n", p->dn);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ndtest_remove(struct platform_device *pdev)
-{
-	struct ndtest_priv *p = to_ndtest_priv(&pdev->dev);
+अटल पूर्णांक ndtest_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ndtest_priv *p = to_ndtest_priv(&pdev->dev);
 
-	nvdimm_bus_unregister(p->bus);
-	return 0;
-}
+	nvdimm_bus_unरेजिस्टर(p->bus);
+	वापस 0;
+पूर्ण
 
-static int ndtest_probe(struct platform_device *pdev)
-{
-	struct ndtest_priv *p;
-	int rc;
+अटल पूर्णांक ndtest_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ndtest_priv *p;
+	पूर्णांक rc;
 
 	p = to_ndtest_priv(&pdev->dev);
-	if (ndtest_bus_register(p))
-		return -ENOMEM;
+	अगर (ndtest_bus_रेजिस्टर(p))
+		वापस -ENOMEM;
 
-	p->dcr_dma = devm_kcalloc(&p->pdev.dev, NUM_DCR,
-				 sizeof(dma_addr_t), GFP_KERNEL);
-	p->label_dma = devm_kcalloc(&p->pdev.dev, NUM_DCR,
-				   sizeof(dma_addr_t), GFP_KERNEL);
-	p->dimm_dma = devm_kcalloc(&p->pdev.dev, NUM_DCR,
-				  sizeof(dma_addr_t), GFP_KERNEL);
+	p->dcr_dma = devm_kसुस्मृति(&p->pdev.dev, NUM_DCR,
+				 माप(dma_addr_t), GFP_KERNEL);
+	p->label_dma = devm_kसुस्मृति(&p->pdev.dev, NUM_DCR,
+				   माप(dma_addr_t), GFP_KERNEL);
+	p->dimm_dma = devm_kसुस्मृति(&p->pdev.dev, NUM_DCR,
+				  माप(dma_addr_t), GFP_KERNEL);
 
 	rc = ndtest_nvdimm_init(p);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
 	rc = ndtest_init_regions(p);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
 	rc = devm_add_action_or_reset(&pdev->dev, put_dimms, p);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
-	platform_set_drvdata(pdev, p);
+	platक्रमm_set_drvdata(pdev, p);
 
-	return 0;
+	वापस 0;
 
 err:
 	pr_err("%s:%d Failed nvdimm init\n", __func__, __LINE__);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct platform_device_id ndtest_id[] = {
-	{ KBUILD_MODNAME },
-	{ },
-};
+अटल स्थिर काष्ठा platक्रमm_device_id ndtest_id[] = अणु
+	अणु KBUILD_MODNAME पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver ndtest_driver = {
+अटल काष्ठा platक्रमm_driver ndtest_driver = अणु
 	.probe = ndtest_probe,
-	.remove = ndtest_remove,
-	.driver = {
+	.हटाओ = ndtest_हटाओ,
+	.driver = अणु
 		.name = KBUILD_MODNAME,
-	},
+	पूर्ण,
 	.id_table = ndtest_id,
-};
+पूर्ण;
 
-static void ndtest_release(struct device *dev)
-{
-	struct ndtest_priv *p = to_ndtest_priv(dev);
+अटल व्योम ndtest_release(काष्ठा device *dev)
+अणु
+	काष्ठा ndtest_priv *p = to_ndtest_priv(dev);
 
-	kfree(p);
-}
+	kमुक्त(p);
+पूर्ण
 
-static void cleanup_devices(void)
-{
-	int i;
+अटल व्योम cleanup_devices(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NUM_INSTANCES; i++)
-		if (instances[i])
-			platform_device_unregister(&instances[i]->pdev);
+	क्रम (i = 0; i < NUM_INSTANCES; i++)
+		अगर (instances[i])
+			platक्रमm_device_unरेजिस्टर(&instances[i]->pdev);
 
-	nfit_test_teardown();
+	nfit_test_tearकरोwn();
 
-	if (ndtest_pool)
+	अगर (ndtest_pool)
 		gen_pool_destroy(ndtest_pool);
 
 
-	if (ndtest_dimm_class)
+	अगर (ndtest_dimm_class)
 		class_destroy(ndtest_dimm_class);
-}
+पूर्ण
 
-static __init int ndtest_init(void)
-{
-	int rc, i;
+अटल __init पूर्णांक ndtest_init(व्योम)
+अणु
+	पूर्णांक rc, i;
 
 	pmem_test();
 	libnvdimm_test();
 	device_dax_test();
 	dax_pmem_test();
 	dax_pmem_core_test();
-#ifdef CONFIG_DEV_DAX_PMEM_COMPAT
+#अगर_घोषित CONFIG_DEV_DAX_PMEM_COMPAT
 	dax_pmem_compat_test();
-#endif
+#पूर्ण_अगर
 
-	nfit_test_setup(ndtest_resource_lookup, NULL);
+	nfit_test_setup(ndtest_resource_lookup, शून्य);
 
 	ndtest_dimm_class = class_create(THIS_MODULE, "nfit_test_dimm");
-	if (IS_ERR(ndtest_dimm_class)) {
+	अगर (IS_ERR(ndtest_dimm_class)) अणु
 		rc = PTR_ERR(ndtest_dimm_class);
-		goto err_register;
-	}
+		जाओ err_रेजिस्टर;
+	पूर्ण
 
 	ndtest_pool = gen_pool_create(ilog2(SZ_4M), NUMA_NO_NODE);
-	if (!ndtest_pool) {
+	अगर (!ndtest_pool) अणु
 		rc = -ENOMEM;
-		goto err_register;
-	}
+		जाओ err_रेजिस्टर;
+	पूर्ण
 
-	if (gen_pool_add(ndtest_pool, SZ_4G, SZ_4G, NUMA_NO_NODE)) {
+	अगर (gen_pool_add(ndtest_pool, SZ_4G, SZ_4G, NUMA_NO_NODE)) अणु
 		rc = -ENOMEM;
-		goto err_register;
-	}
+		जाओ err_रेजिस्टर;
+	पूर्ण
 
 	/* Each instance can be taken as a bus, which can have multiple dimms */
-	for (i = 0; i < NUM_INSTANCES; i++) {
-		struct ndtest_priv *priv;
-		struct platform_device *pdev;
+	क्रम (i = 0; i < NUM_INSTANCES; i++) अणु
+		काष्ठा ndtest_priv *priv;
+		काष्ठा platक्रमm_device *pdev;
 
-		priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-		if (!priv) {
+		priv = kzalloc(माप(*priv), GFP_KERNEL);
+		अगर (!priv) अणु
 			rc = -ENOMEM;
-			goto err_register;
-		}
+			जाओ err_रेजिस्टर;
+		पूर्ण
 
 		INIT_LIST_HEAD(&priv->resources);
 		pdev = &priv->pdev;
 		pdev->name = KBUILD_MODNAME;
 		pdev->id = i;
 		pdev->dev.release = ndtest_release;
-		rc = platform_device_register(pdev);
-		if (rc) {
+		rc = platक्रमm_device_रेजिस्टर(pdev);
+		अगर (rc) अणु
 			put_device(&pdev->dev);
-			goto err_register;
-		}
+			जाओ err_रेजिस्टर;
+		पूर्ण
 		get_device(&pdev->dev);
 
 		instances[i] = priv;
-	}
+	पूर्ण
 
-	rc = platform_driver_register(&ndtest_driver);
-	if (rc)
-		goto err_register;
+	rc = platक्रमm_driver_रेजिस्टर(&ndtest_driver);
+	अगर (rc)
+		जाओ err_रेजिस्टर;
 
-	return 0;
+	वापस 0;
 
-err_register:
+err_रेजिस्टर:
 	pr_err("Error registering platform device\n");
 	cleanup_devices();
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static __exit void ndtest_exit(void)
-{
+अटल __निकास व्योम ndtest_निकास(व्योम)
+अणु
 	cleanup_devices();
-	platform_driver_unregister(&ndtest_driver);
-}
+	platक्रमm_driver_unरेजिस्टर(&ndtest_driver);
+पूर्ण
 
 module_init(ndtest_init);
-module_exit(ndtest_exit);
+module_निकास(ndtest_निकास);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("IBM Corporation");

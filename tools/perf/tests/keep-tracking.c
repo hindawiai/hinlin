@@ -1,98 +1,99 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <limits.h>
-#include <unistd.h>
-#include <sys/prctl.h>
-#include <perf/cpumap.h>
-#include <perf/evlist.h>
-#include <perf/mmap.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <सीमा.स>
+#समावेश <unistd.h>
+#समावेश <sys/prctl.h>
+#समावेश <perf/cpumap.h>
+#समावेश <perf/evlist.h>
+#समावेश <perf/mmap.h>
 
-#include "debug.h"
-#include "parse-events.h"
-#include "evlist.h"
-#include "evsel.h"
-#include "record.h"
-#include "thread_map.h"
-#include "tests.h"
-#include "util/mmap.h"
+#समावेश "debug.h"
+#समावेश "parse-events.h"
+#समावेश "evlist.h"
+#समावेश "evsel.h"
+#समावेश "record.h"
+#समावेश "thread_map.h"
+#समावेश "tests.h"
+#समावेश "util/mmap.h"
 
-#define CHECK__(x) {				\
-	while ((x) < 0) {			\
+#घोषणा CHECK__(x) अणु				\
+	जबतक ((x) < 0) अणु			\
 		pr_debug(#x " failed!\n");	\
-		goto out_err;			\
-	}					\
-}
+		जाओ out_err;			\
+	पूर्ण					\
+पूर्ण
 
-#define CHECK_NOT_NULL__(x) {			\
-	while ((x) == NULL) {			\
+#घोषणा CHECK_NOT_शून्य__(x) अणु			\
+	जबतक ((x) == शून्य) अणु			\
 		pr_debug(#x " failed!\n");	\
-		goto out_err;			\
-	}					\
-}
+		जाओ out_err;			\
+	पूर्ण					\
+पूर्ण
 
-static int find_comm(struct evlist *evlist, const char *comm)
-{
-	union perf_event *event;
-	struct mmap *md;
-	int i, found;
+अटल पूर्णांक find_comm(काष्ठा evlist *evlist, स्थिर अक्षर *comm)
+अणु
+	जोड़ perf_event *event;
+	काष्ठा mmap *md;
+	पूर्णांक i, found;
 
 	found = 0;
-	for (i = 0; i < evlist->core.nr_mmaps; i++) {
+	क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
 		md = &evlist->mmap[i];
-		if (perf_mmap__read_init(&md->core) < 0)
-			continue;
-		while ((event = perf_mmap__read_event(&md->core)) != NULL) {
-			if (event->header.type == PERF_RECORD_COMM &&
+		अगर (perf_mmap__पढ़ो_init(&md->core) < 0)
+			जारी;
+		जबतक ((event = perf_mmap__पढ़ो_event(&md->core)) != शून्य) अणु
+			अगर (event->header.type == PERF_RECORD_COMM &&
 			    (pid_t)event->comm.pid == getpid() &&
 			    (pid_t)event->comm.tid == getpid() &&
-			    strcmp(event->comm.comm, comm) == 0)
+			    म_भेद(event->comm.comm, comm) == 0)
 				found += 1;
 			perf_mmap__consume(&md->core);
-		}
-		perf_mmap__read_done(&md->core);
-	}
-	return found;
-}
+		पूर्ण
+		perf_mmap__पढ़ो_करोne(&md->core);
+	पूर्ण
+	वापस found;
+पूर्ण
 
 /**
  * test__keep_tracking - test using a dummy software event to keep tracking.
  *
- * This function implements a test that checks that tracking events continue
+ * This function implements a test that checks that tracking events जारी
  * when an event is disabled but a dummy software event is not disabled.  If the
- * test passes %0 is returned, otherwise %-1 is returned.
+ * test passes %0 is वापसed, otherwise %-1 is वापसed.
  */
-int test__keep_tracking(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	struct record_opts opts = {
-		.mmap_pages	     = UINT_MAX,
-		.user_freq	     = UINT_MAX,
-		.user_interval	     = ULLONG_MAX,
-		.target		     = {
+पूर्णांक test__keep_tracking(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	काष्ठा record_opts opts = अणु
+		.mmap_pages	     = अच_पूर्णांक_उच्च,
+		.user_freq	     = अच_पूर्णांक_उच्च,
+		.user_पूर्णांकerval	     = ULदीर्घ_उच्च,
+		.target		     = अणु
 			.uses_mmap   = true,
-		},
-	};
-	struct perf_thread_map *threads = NULL;
-	struct perf_cpu_map *cpus = NULL;
-	struct evlist *evlist = NULL;
-	struct evsel *evsel = NULL;
-	int found, err = -1;
-	const char *comm;
+		पूर्ण,
+	पूर्ण;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs = शून्य;
+	काष्ठा perf_cpu_map *cpus = शून्य;
+	काष्ठा evlist *evlist = शून्य;
+	काष्ठा evsel *evsel = शून्य;
+	पूर्णांक found, err = -1;
+	स्थिर अक्षर *comm;
 
-	threads = thread_map__new(-1, getpid(), UINT_MAX);
-	CHECK_NOT_NULL__(threads);
+	thपढ़ोs = thपढ़ो_map__new(-1, getpid(), अच_पूर्णांक_उच्च);
+	CHECK_NOT_शून्य__(thपढ़ोs);
 
-	cpus = perf_cpu_map__new(NULL);
-	CHECK_NOT_NULL__(cpus);
+	cpus = perf_cpu_map__new(शून्य);
+	CHECK_NOT_शून्य__(cpus);
 
 	evlist = evlist__new();
-	CHECK_NOT_NULL__(evlist);
+	CHECK_NOT_शून्य__(evlist);
 
-	perf_evlist__set_maps(&evlist->core, cpus, threads);
+	perf_evlist__set_maps(&evlist->core, cpus, thपढ़ोs);
 
-	CHECK__(parse_events(evlist, "dummy:u", NULL));
-	CHECK__(parse_events(evlist, "cycles:u", NULL));
+	CHECK__(parse_events(evlist, "dummy:u", शून्य));
+	CHECK__(parse_events(evlist, "cycles:u", शून्य));
 
-	evlist__config(evlist, &opts, NULL);
+	evlist__config(evlist, &opts, शून्य);
 
 	evsel = evlist__first(evlist);
 
@@ -100,13 +101,13 @@ int test__keep_tracking(struct test *test __maybe_unused, int subtest __maybe_un
 	evsel->core.attr.disabled = 1;
 	evsel->core.attr.enable_on_exec = 0;
 
-	if (evlist__open(evlist) < 0) {
+	अगर (evlist__खोलो(evlist) < 0) अणु
 		pr_debug("Unable to open dummy and cycles event\n");
 		err = TEST_SKIP;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	CHECK__(evlist__mmap(evlist, UINT_MAX));
+	CHECK__(evlist__mmap(evlist, अच_पूर्णांक_उच्च));
 
 	/*
 	 * First, test that a 'comm' event can be found when the event is
@@ -116,15 +117,15 @@ int test__keep_tracking(struct test *test __maybe_unused, int subtest __maybe_un
 	evlist__enable(evlist);
 
 	comm = "Test COMM 1";
-	CHECK__(prctl(PR_SET_NAME, (unsigned long)comm, 0, 0, 0));
+	CHECK__(prctl(PR_SET_NAME, (अचिन्हित दीर्घ)comm, 0, 0, 0));
 
 	evlist__disable(evlist);
 
 	found = find_comm(evlist, comm);
-	if (found != 1) {
+	अगर (found != 1) अणु
 		pr_debug("First time, failed to find tracking event.\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/*
 	 * Secondly, test that a 'comm' event can be found when the event is
@@ -138,25 +139,25 @@ int test__keep_tracking(struct test *test __maybe_unused, int subtest __maybe_un
 	CHECK__(evsel__disable(evsel));
 
 	comm = "Test COMM 2";
-	CHECK__(prctl(PR_SET_NAME, (unsigned long)comm, 0, 0, 0));
+	CHECK__(prctl(PR_SET_NAME, (अचिन्हित दीर्घ)comm, 0, 0, 0));
 
 	evlist__disable(evlist);
 
 	found = find_comm(evlist, comm);
-	if (found != 1) {
+	अगर (found != 1) अणु
 		pr_debug("Second time, failed to find tracking event.\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	err = 0;
 
 out_err:
-	if (evlist) {
+	अगर (evlist) अणु
 		evlist__disable(evlist);
 		evlist__delete(evlist);
-	}
+	पूर्ण
 	perf_cpu_map__put(cpus);
-	perf_thread_map__put(threads);
+	perf_thपढ़ो_map__put(thपढ़ोs);
 
-	return err;
-}
+	वापस err;
+पूर्ण

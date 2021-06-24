@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright 2017 IBM Corp.
-#ifndef _MISC_OCXL_H_
-#define _MISC_OCXL_H_
+#अगर_अघोषित _MISC_OCXL_H_
+#घोषणा _MISC_OCXL_H_
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
 /*
  * Opencapi drivers all need some common facilities, like parsing the
@@ -14,13 +15,13 @@
  * reuse common code. A bit like a in-kernel library.
  */
 
-#define OCXL_AFU_NAME_SZ      (24+1)  /* add 1 for NULL termination */
+#घोषणा OCXL_AFU_NAME_SZ      (24+1)  /* add 1 क्रम शून्य termination */
 
 
-struct ocxl_afu_config {
+काष्ठा ocxl_afu_config अणु
 	u8 idx;
-	int dvsec_afu_control_pos; /* offset of AFU control DVSEC */
-	char name[OCXL_AFU_NAME_SZ];
+	पूर्णांक dvsec_afu_control_pos; /* offset of AFU control DVSEC */
+	अक्षर name[OCXL_AFU_NAME_SZ];
 	u8 version_major;
 	u8 version_minor;
 	u8 afuc_type;
@@ -38,44 +39,44 @@ struct ocxl_afu_config {
 	u64 special_purpose_mem_size;
 	u8 pasid_supported_log;
 	u16 actag_supported;
-};
+पूर्ण;
 
-struct ocxl_fn_config {
-	int dvsec_tl_pos;       /* offset of the Transaction Layer DVSEC */
-	int dvsec_function_pos; /* offset of the Function DVSEC */
-	int dvsec_afu_info_pos; /* offset of the AFU information DVSEC */
+काष्ठा ocxl_fn_config अणु
+	पूर्णांक dvsec_tl_pos;       /* offset of the Transaction Layer DVSEC */
+	पूर्णांक dvsec_function_pos; /* offset of the Function DVSEC */
+	पूर्णांक dvsec_afu_info_pos; /* offset of the AFU inक्रमmation DVSEC */
 	s8 max_pasid_log;
 	s8 max_afu_index;
-};
+पूर्ण;
 
-enum ocxl_endian {
+क्रमागत ocxl_endian अणु
 	OCXL_BIG_ENDIAN = 0,    /**< AFU data is big-endian */
 	OCXL_LITTLE_ENDIAN = 1, /**< AFU data is little-endian */
 	OCXL_HOST_ENDIAN = 2,   /**< AFU data is the same endianness as the host */
-};
+पूर्ण;
 
 // These are opaque outside the ocxl driver
-struct ocxl_afu;
-struct ocxl_fn;
-struct ocxl_context;
+काष्ठा ocxl_afu;
+काष्ठा ocxl_fn;
+काष्ठा ocxl_context;
 
 // Device detection & initialisation
 
 /**
- * ocxl_function_open() - Open an OpenCAPI function on an OpenCAPI device
+ * ocxl_function_खोलो() - Open an OpenCAPI function on an OpenCAPI device
  * @dev: The PCI device that contains the function
  *
- * Returns an opaque pointer to the function, or an error pointer (check with IS_ERR)
+ * Returns an opaque poपूर्णांकer to the function, or an error poपूर्णांकer (check with IS_ERR)
  */
-struct ocxl_fn *ocxl_function_open(struct pci_dev *dev);
+काष्ठा ocxl_fn *ocxl_function_खोलो(काष्ठा pci_dev *dev);
 
 /**
  * ocxl_function_afu_list() - Get the list of AFUs associated with a PCI function device
- * Returns a list of struct ocxl_afu *
+ * Returns a list of काष्ठा ocxl_afu *
  *
  * @fn: The OpenCAPI function containing the AFUs
  */
-struct list_head *ocxl_function_afu_list(struct ocxl_fn *fn);
+काष्ठा list_head *ocxl_function_afu_list(काष्ठा ocxl_fn *fn);
 
 /**
  * ocxl_function_fetch_afu() - Fetch an AFU instance from an OpenCAPI function
@@ -84,68 +85,68 @@ struct list_head *ocxl_function_afu_list(struct ocxl_fn *fn);
  *
  * If successful, the AFU should be released with ocxl_afu_put()
  *
- * Returns a pointer to the AFU, or NULL on error
+ * Returns a poपूर्णांकer to the AFU, or शून्य on error
  */
-struct ocxl_afu *ocxl_function_fetch_afu(struct ocxl_fn *fn, u8 afu_idx);
+काष्ठा ocxl_afu *ocxl_function_fetch_afu(काष्ठा ocxl_fn *fn, u8 afu_idx);
 
 /**
  * ocxl_afu_get() - Take a reference to an AFU
  * @afu: The AFU to increment the reference count on
  */
-void ocxl_afu_get(struct ocxl_afu *afu);
+व्योम ocxl_afu_get(काष्ठा ocxl_afu *afu);
 
 /**
  * ocxl_afu_put() - Release a reference to an AFU
  * @afu: The AFU to decrement the reference count on
  */
-void ocxl_afu_put(struct ocxl_afu *afu);
+व्योम ocxl_afu_put(काष्ठा ocxl_afu *afu);
 
 
 /**
- * ocxl_function_config() - Get the configuration information for an OpenCAPI function
- * @fn: The OpenCAPI function to get the config for
+ * ocxl_function_config() - Get the configuration inक्रमmation क्रम an OpenCAPI function
+ * @fn: The OpenCAPI function to get the config क्रम
  *
- * Returns the function config, or NULL on error
+ * Returns the function config, or शून्य on error
  */
-const struct ocxl_fn_config *ocxl_function_config(struct ocxl_fn *fn);
+स्थिर काष्ठा ocxl_fn_config *ocxl_function_config(काष्ठा ocxl_fn *fn);
 
 /**
- * ocxl_function_close() - Close an OpenCAPI function
- * This will free any AFUs previously retrieved from the function, and
- * detach and associated contexts. The contexts must by freed by the caller.
+ * ocxl_function_बंद() - Close an OpenCAPI function
+ * This will मुक्त any AFUs previously retrieved from the function, and
+ * detach and associated contexts. The contexts must by मुक्तd by the caller.
  *
- * @fn: The OpenCAPI function to close
+ * @fn: The OpenCAPI function to बंद
  *
  */
-void ocxl_function_close(struct ocxl_fn *fn);
+व्योम ocxl_function_बंद(काष्ठा ocxl_fn *fn);
 
 // Context allocation
 
 /**
  * ocxl_context_alloc() - Allocate an OpenCAPI context
- * @context: The OpenCAPI context to allocate, must be freed with ocxl_context_free
- * @afu: The AFU the context belongs to
- * @mapping: The mapping to unmap when the context is closed (may be NULL)
+ * @context: The OpenCAPI context to allocate, must be मुक्तd with ocxl_context_मुक्त
+ * @afu: The AFU the context beदीर्घs to
+ * @mapping: The mapping to unmap when the context is बंदd (may be शून्य)
  */
-int ocxl_context_alloc(struct ocxl_context **context, struct ocxl_afu *afu,
-			struct address_space *mapping);
+पूर्णांक ocxl_context_alloc(काष्ठा ocxl_context **context, काष्ठा ocxl_afu *afu,
+			काष्ठा address_space *mapping);
 
 /**
- * ocxl_context_free() - Free an OpenCAPI context
- * @ctx: The OpenCAPI context to free
+ * ocxl_context_मुक्त() - Free an OpenCAPI context
+ * @ctx: The OpenCAPI context to मुक्त
  */
-void ocxl_context_free(struct ocxl_context *ctx);
+व्योम ocxl_context_मुक्त(काष्ठा ocxl_context *ctx);
 
 /**
  * ocxl_context_attach() - Grant access to an MM to an OpenCAPI context
  * @ctx: The OpenCAPI context to attach
- * @amr: The value of the AMR register to restrict access
+ * @amr: The value of the AMR रेजिस्टर to restrict access
  * @mm: The mm to attach to the context
  *
  * Returns 0 on success, negative on failure
  */
-int ocxl_context_attach(struct ocxl_context *ctx, u64 amr,
-				struct mm_struct *mm);
+पूर्णांक ocxl_context_attach(काष्ठा ocxl_context *ctx, u64 amr,
+				काष्ठा mm_काष्ठा *mm);
 
 /**
  * ocxl_context_detach() - Detach an MM from an OpenCAPI context
@@ -153,7 +154,7 @@ int ocxl_context_attach(struct ocxl_context *ctx, u64 amr,
  *
  * Returns 0 on success, negative on failure
  */
-int ocxl_context_detach(struct ocxl_context *ctx);
+पूर्णांक ocxl_context_detach(काष्ठा ocxl_context *ctx);
 
 // AFU IRQs
 
@@ -164,175 +165,175 @@ int ocxl_context_detach(struct ocxl_context *ctx);
  *
  * Returns 0 on success, negative on failure
  */
-int ocxl_afu_irq_alloc(struct ocxl_context *ctx, int *irq_id);
+पूर्णांक ocxl_afu_irq_alloc(काष्ठा ocxl_context *ctx, पूर्णांक *irq_id);
 
 /**
- * ocxl_afu_irq_free() - Frees an IRQ associated with an AFU context
+ * ocxl_afu_irq_मुक्त() - Frees an IRQ associated with an AFU context
  * @ctx: the AFU context
  * @irq_id: the IRQ ID
  *
  * Returns 0 on success, negative on failure
  */
-int ocxl_afu_irq_free(struct ocxl_context *ctx, int irq_id);
+पूर्णांक ocxl_afu_irq_मुक्त(काष्ठा ocxl_context *ctx, पूर्णांक irq_id);
 
 /**
- * ocxl_afu_irq_get_addr() - Gets the address of the trigger page for an IRQ
- * This can then be provided to an AFU which will write to that
+ * ocxl_afu_irq_get_addr() - Gets the address of the trigger page क्रम an IRQ
+ * This can then be provided to an AFU which will ग_लिखो to that
  * page to trigger the IRQ.
  * @ctx: The AFU context that the IRQ is associated with
  * @irq_id: The IRQ ID
  *
- * returns the trigger page address, or 0 if the IRQ is not valid
+ * वापसs the trigger page address, or 0 अगर the IRQ is not valid
  */
-u64 ocxl_afu_irq_get_addr(struct ocxl_context *ctx, int irq_id);
+u64 ocxl_afu_irq_get_addr(काष्ठा ocxl_context *ctx, पूर्णांक irq_id);
 
 /**
  * ocxl_irq_set_handler() - Provide a callback to be called when an IRQ is triggered
  * @ctx: The AFU context that the IRQ is associated with
  * @irq_id: The IRQ ID
  * @handler: the callback to be called when the IRQ is triggered
- * @free_private: the callback to be called when the IRQ is freed (may be NULL)
- * @private: Private data to be passed to the callbacks
+ * @मुक्त_निजी: the callback to be called when the IRQ is मुक्तd (may be शून्य)
+ * @निजी: Private data to be passed to the callbacks
  *
  * Returns 0 on success, negative on failure
  */
-int ocxl_irq_set_handler(struct ocxl_context *ctx, int irq_id,
-		irqreturn_t (*handler)(void *private),
-		void (*free_private)(void *private),
-		void *private);
+पूर्णांक ocxl_irq_set_handler(काष्ठा ocxl_context *ctx, पूर्णांक irq_id,
+		irqवापस_t (*handler)(व्योम *निजी),
+		व्योम (*मुक्त_निजी)(व्योम *निजी),
+		व्योम *निजी);
 
 // AFU Metadata
 
 /**
- * ocxl_afu_config() - Get a pointer to the config for an AFU
- * @afu: a pointer to the AFU to get the config for
+ * ocxl_afu_config() - Get a poपूर्णांकer to the config क्रम an AFU
+ * @afu: a poपूर्णांकer to the AFU to get the config क्रम
  *
- * Returns a pointer to the AFU config
+ * Returns a poपूर्णांकer to the AFU config
  */
-struct ocxl_afu_config *ocxl_afu_config(struct ocxl_afu *afu);
+काष्ठा ocxl_afu_config *ocxl_afu_config(काष्ठा ocxl_afu *afu);
 
 /**
- * ocxl_afu_set_private() - Assign opaque hardware specific information to an OpenCAPI AFU.
+ * ocxl_afu_set_निजी() - Assign opaque hardware specअगरic inक्रमmation to an OpenCAPI AFU.
  * @afu: The OpenCAPI AFU
- * @private: the opaque hardware specific information to assign to the driver
+ * @निजी: the opaque hardware specअगरic inक्रमmation to assign to the driver
  */
-void ocxl_afu_set_private(struct ocxl_afu *afu, void *private);
+व्योम ocxl_afu_set_निजी(काष्ठा ocxl_afu *afu, व्योम *निजी);
 
 /**
- * ocxl_afu_get_private() - Fetch the hardware specific information associated with
- * an external OpenCAPI AFU. This may be consumed by an external OpenCAPI driver.
+ * ocxl_afu_get_निजी() - Fetch the hardware specअगरic inक्रमmation associated with
+ * an बाह्यal OpenCAPI AFU. This may be consumed by an बाह्यal OpenCAPI driver.
  * @afu: The OpenCAPI AFU
  *
- * Returns the opaque pointer associated with the device, or NULL if not set
+ * Returns the opaque poपूर्णांकer associated with the device, or शून्य अगर not set
  */
-void *ocxl_afu_get_private(struct ocxl_afu *afu);
+व्योम *ocxl_afu_get_निजी(काष्ठा ocxl_afu *afu);
 
 // Global MMIO
 /**
- * ocxl_global_mmio_read32() - Read a 32 bit value from global MMIO
+ * ocxl_global_mmio_पढ़ो32() - Read a 32 bit value from global MMIO
  * @afu: The AFU
  * @offset: The Offset from the start of MMIO
  * @endian: the endianness that the MMIO data is in
- * @val: returns the value
+ * @val: वापसs the value
  *
- * Returns 0 for success, negative on error
+ * Returns 0 क्रम success, negative on error
  */
-int ocxl_global_mmio_read32(struct ocxl_afu *afu, size_t offset,
-			    enum ocxl_endian endian, u32 *val);
+पूर्णांक ocxl_global_mmio_पढ़ो32(काष्ठा ocxl_afu *afu, माप_प्रकार offset,
+			    क्रमागत ocxl_endian endian, u32 *val);
 
 /**
- * ocxl_global_mmio_read64() - Read a 64 bit value from global MMIO
+ * ocxl_global_mmio_पढ़ो64() - Read a 64 bit value from global MMIO
  * @afu: The AFU
  * @offset: The Offset from the start of MMIO
  * @endian: the endianness that the MMIO data is in
- * @val: returns the value
+ * @val: वापसs the value
  *
- * Returns 0 for success, negative on error
+ * Returns 0 क्रम success, negative on error
  */
-int ocxl_global_mmio_read64(struct ocxl_afu *afu, size_t offset,
-			    enum ocxl_endian endian, u64 *val);
+पूर्णांक ocxl_global_mmio_पढ़ो64(काष्ठा ocxl_afu *afu, माप_प्रकार offset,
+			    क्रमागत ocxl_endian endian, u64 *val);
 
 /**
- * ocxl_global_mmio_write32() - Write a 32 bit value to global MMIO
+ * ocxl_global_mmio_ग_लिखो32() - Write a 32 bit value to global MMIO
  * @afu: The AFU
  * @offset: The Offset from the start of MMIO
  * @endian: the endianness that the MMIO data is in
- * @val: The value to write
+ * @val: The value to ग_लिखो
  *
- * Returns 0 for success, negative on error
+ * Returns 0 क्रम success, negative on error
  */
-int ocxl_global_mmio_write32(struct ocxl_afu *afu, size_t offset,
-			     enum ocxl_endian endian, u32 val);
+पूर्णांक ocxl_global_mmio_ग_लिखो32(काष्ठा ocxl_afu *afu, माप_प्रकार offset,
+			     क्रमागत ocxl_endian endian, u32 val);
 
 /**
- * ocxl_global_mmio_write64() - Write a 64 bit value to global MMIO
+ * ocxl_global_mmio_ग_लिखो64() - Write a 64 bit value to global MMIO
  * @afu: The AFU
  * @offset: The Offset from the start of MMIO
  * @endian: the endianness that the MMIO data is in
- * @val: The value to write
+ * @val: The value to ग_लिखो
  *
- * Returns 0 for success, negative on error
+ * Returns 0 क्रम success, negative on error
  */
-int ocxl_global_mmio_write64(struct ocxl_afu *afu, size_t offset,
-			     enum ocxl_endian endian, u64 val);
+पूर्णांक ocxl_global_mmio_ग_लिखो64(काष्ठा ocxl_afu *afu, माप_प्रकार offset,
+			     क्रमागत ocxl_endian endian, u64 val);
 
 /**
- * ocxl_global_mmio_set32() - Set bits in a 32 bit global MMIO register
+ * ocxl_global_mmio_set32() - Set bits in a 32 bit global MMIO रेजिस्टर
  * @afu: The AFU
  * @offset: The Offset from the start of MMIO
  * @endian: the endianness that the MMIO data is in
  * @mask: a mask of the bits to set
  *
- * Returns 0 for success, negative on error
+ * Returns 0 क्रम success, negative on error
  */
-int ocxl_global_mmio_set32(struct ocxl_afu *afu, size_t offset,
-			   enum ocxl_endian endian, u32 mask);
+पूर्णांक ocxl_global_mmio_set32(काष्ठा ocxl_afu *afu, माप_प्रकार offset,
+			   क्रमागत ocxl_endian endian, u32 mask);
 
 /**
- * ocxl_global_mmio_set64() - Set bits in a 64 bit global MMIO register
+ * ocxl_global_mmio_set64() - Set bits in a 64 bit global MMIO रेजिस्टर
  * @afu: The AFU
  * @offset: The Offset from the start of MMIO
  * @endian: the endianness that the MMIO data is in
  * @mask: a mask of the bits to set
  *
- * Returns 0 for success, negative on error
+ * Returns 0 क्रम success, negative on error
  */
-int ocxl_global_mmio_set64(struct ocxl_afu *afu, size_t offset,
-			   enum ocxl_endian endian, u64 mask);
+पूर्णांक ocxl_global_mmio_set64(काष्ठा ocxl_afu *afu, माप_प्रकार offset,
+			   क्रमागत ocxl_endian endian, u64 mask);
 
 /**
- * ocxl_global_mmio_clear32() - Set bits in a 32 bit global MMIO register
+ * ocxl_global_mmio_clear32() - Set bits in a 32 bit global MMIO रेजिस्टर
  * @afu: The AFU
  * @offset: The Offset from the start of MMIO
  * @endian: the endianness that the MMIO data is in
  * @mask: a mask of the bits to set
  *
- * Returns 0 for success, negative on error
+ * Returns 0 क्रम success, negative on error
  */
-int ocxl_global_mmio_clear32(struct ocxl_afu *afu, size_t offset,
-			     enum ocxl_endian endian, u32 mask);
+पूर्णांक ocxl_global_mmio_clear32(काष्ठा ocxl_afu *afu, माप_प्रकार offset,
+			     क्रमागत ocxl_endian endian, u32 mask);
 
 /**
- * ocxl_global_mmio_clear64() - Set bits in a 64 bit global MMIO register
+ * ocxl_global_mmio_clear64() - Set bits in a 64 bit global MMIO रेजिस्टर
  * @afu: The AFU
  * @offset: The Offset from the start of MMIO
  * @endian: the endianness that the MMIO data is in
  * @mask: a mask of the bits to set
  *
- * Returns 0 for success, negative on error
+ * Returns 0 क्रम success, negative on error
  */
-int ocxl_global_mmio_clear64(struct ocxl_afu *afu, size_t offset,
-			     enum ocxl_endian endian, u64 mask);
+पूर्णांक ocxl_global_mmio_clear64(काष्ठा ocxl_afu *afu, माप_प्रकार offset,
+			     क्रमागत ocxl_endian endian, u64 mask);
 
-// Functions left here are for compatibility with the cxlflash driver
+// Functions left here are क्रम compatibility with the cxlflash driver
 
 /*
- * Read the configuration space of a function for the AFU specified by
- * the index 'afu_idx'. Fills in a ocxl_afu_config structure
+ * Read the configuration space of a function क्रम the AFU specअगरied by
+ * the index 'afu_idx'. Fills in a ocxl_afu_config काष्ठाure
  */
-int ocxl_config_read_afu(struct pci_dev *dev,
-				struct ocxl_fn_config *fn,
-				struct ocxl_afu_config *afu,
+पूर्णांक ocxl_config_पढ़ो_afu(काष्ठा pci_dev *dev,
+				काष्ठा ocxl_fn_config *fn,
+				काष्ठा ocxl_afu_config *afu,
 				u8 afu_idx);
 
 /*
@@ -343,18 +344,18 @@ int ocxl_config_read_afu(struct pci_dev *dev,
  * 'afu_control_offset' is the offset of the AFU control DVSEC which
  * can be found in the function configuration
  */
-void ocxl_config_set_afu_pasid(struct pci_dev *dev,
-				int afu_control_offset,
-				int pasid_base, u32 pasid_count_log);
+व्योम ocxl_config_set_afu_pasid(काष्ठा pci_dev *dev,
+				पूर्णांक afu_control_offset,
+				पूर्णांक pasid_base, u32 pasid_count_log);
 
 /*
- * Get the actag configuration for the function:
+ * Get the actag configuration क्रम the function:
  * 'base' is the first actag value that can be used.
  * 'enabled' it the number of actags available, starting from base.
  * 'supported' is the total number of actags desired by all the AFUs
  *             of the function.
  */
-int ocxl_config_get_actag_info(struct pci_dev *dev,
+पूर्णांक ocxl_config_get_actag_info(काष्ठा pci_dev *dev,
 				u16 *base, u16 *enabled, u16 *supported);
 
 /*
@@ -364,108 +365,108 @@ int ocxl_config_get_actag_info(struct pci_dev *dev,
  * 'func_offset' is the offset of the Function DVSEC that can found in
  * the function configuration
  */
-void ocxl_config_set_actag(struct pci_dev *dev, int func_offset,
+व्योम ocxl_config_set_actag(काष्ठा pci_dev *dev, पूर्णांक func_offset,
 				u32 actag_base, u32 actag_count);
 
 /*
  * Tell an AFU, by writing in the configuration space, the actags it
  * can use.
  *
- * 'afu_control_offset' is the offset of the AFU control DVSEC for the
+ * 'afu_control_offset' is the offset of the AFU control DVSEC क्रम the
  * desired AFU. It can be found in the AFU configuration
  */
-void ocxl_config_set_afu_actag(struct pci_dev *dev,
-				int afu_control_offset,
-				int actag_base, int actag_count);
+व्योम ocxl_config_set_afu_actag(काष्ठा pci_dev *dev,
+				पूर्णांक afu_control_offset,
+				पूर्णांक actag_base, पूर्णांक actag_count);
 
 /*
  * Enable/disable an AFU, by writing in the configuration space.
  *
- * 'afu_control_offset' is the offset of the AFU control DVSEC for the
+ * 'afu_control_offset' is the offset of the AFU control DVSEC क्रम the
  * desired AFU. It can be found in the AFU configuration
  */
-void ocxl_config_set_afu_state(struct pci_dev *dev,
-				int afu_control_offset, int enable);
+व्योम ocxl_config_set_afu_state(काष्ठा pci_dev *dev,
+				पूर्णांक afu_control_offset, पूर्णांक enable);
 
 /*
  * Set the Transaction Layer configuration in the configuration space.
- * Only needed for function 0.
+ * Only needed क्रम function 0.
  *
  * It queries the host TL capabilities, find some common ground
  * between the host and device, and set the Transaction Layer on both
  * accordingly.
  */
-int ocxl_config_set_TL(struct pci_dev *dev, int tl_dvsec);
+पूर्णांक ocxl_config_set_TL(काष्ठा pci_dev *dev, पूर्णांक tl_dvsec);
 
 /*
  * Request an AFU to terminate a PASID.
- * Will return once the AFU has acked the request, or an error in case
- * of timeout.
+ * Will वापस once the AFU has acked the request, or an error in हाल
+ * of समयout.
  *
- * The hardware can only terminate one PASID at a time, so caller must
+ * The hardware can only terminate one PASID at a समय, so caller must
  * guarantee some kind of serialization.
  *
- * 'afu_control_offset' is the offset of the AFU control DVSEC for the
+ * 'afu_control_offset' is the offset of the AFU control DVSEC क्रम the
  * desired AFU. It can be found in the AFU configuration
  */
-int ocxl_config_terminate_pasid(struct pci_dev *dev,
-				int afu_control_offset, int pasid);
+पूर्णांक ocxl_config_terminate_pasid(काष्ठा pci_dev *dev,
+				पूर्णांक afu_control_offset, पूर्णांक pasid);
 
 /*
  * Read the configuration space of a function and fill in a
- * ocxl_fn_config structure with all the function details
+ * ocxl_fn_config काष्ठाure with all the function details
  */
-int ocxl_config_read_function(struct pci_dev *dev,
-				struct ocxl_fn_config *fn);
+पूर्णांक ocxl_config_पढ़ो_function(काष्ठा pci_dev *dev,
+				काष्ठा ocxl_fn_config *fn);
 
 /*
- * Set up the opencapi link for the function.
+ * Set up the खोलोcapi link क्रम the function.
  *
- * When called for the first time for a link, it sets up the Shared
- * Process Area for the link and the interrupt handler to process
+ * When called क्रम the first समय क्रम a link, it sets up the Shared
+ * Process Area क्रम the link and the पूर्णांकerrupt handler to process
  * translation faults.
  *
- * Returns a 'link handle' that should be used for further calls for
+ * Returns a 'link handle' that should be used क्रम further calls क्रम
  * the link
  */
-int ocxl_link_setup(struct pci_dev *dev, int PE_mask,
-			void **link_handle);
+पूर्णांक ocxl_link_setup(काष्ठा pci_dev *dev, पूर्णांक PE_mask,
+			व्योम **link_handle);
 
 /*
  * Remove the association between the function and its link.
  */
-void ocxl_link_release(struct pci_dev *dev, void *link_handle);
+व्योम ocxl_link_release(काष्ठा pci_dev *dev, व्योम *link_handle);
 
 /*
- * Add a Process Element to the Shared Process Area for a link.
- * The process is defined by its PASID, pid, tid and its mm_struct.
+ * Add a Process Element to the Shared Process Area क्रम a link.
+ * The process is defined by its PASID, pid, tid and its mm_काष्ठा.
  *
- * 'xsl_err_cb' is an optional callback if the driver wants to be
- * notified when the translation fault interrupt handler detects an
+ * 'xsl_err_cb' is an optional callback अगर the driver wants to be
+ * notअगरied when the translation fault पूर्णांकerrupt handler detects an
  * address error.
- * 'xsl_err_data' is an argument passed to the above callback, if
+ * 'xsl_err_data' is an argument passed to the above callback, अगर
  * defined
  */
-int ocxl_link_add_pe(void *link_handle, int pasid, u32 pidr, u32 tidr,
-		u64 amr, u16 bdf, struct mm_struct *mm,
-		void (*xsl_err_cb)(void *data, u64 addr, u64 dsisr),
-		void *xsl_err_data);
+पूर्णांक ocxl_link_add_pe(व्योम *link_handle, पूर्णांक pasid, u32 pidr, u32 tidr,
+		u64 amr, u16 bdf, काष्ठा mm_काष्ठा *mm,
+		व्योम (*xsl_err_cb)(व्योम *data, u64 addr, u64 dsisr),
+		व्योम *xsl_err_data);
 
 /*
- * Remove a Process Element from the Shared Process Area for a link
+ * Remove a Process Element from the Shared Process Area क्रम a link
  */
-int ocxl_link_remove_pe(void *link_handle, int pasid);
+पूर्णांक ocxl_link_हटाओ_pe(व्योम *link_handle, पूर्णांक pasid);
 
 /*
- * Allocate an AFU interrupt associated to the link.
+ * Allocate an AFU पूर्णांकerrupt associated to the link.
  *
- * 'hw_irq' is the hardware interrupt number
+ * 'hw_irq' is the hardware पूर्णांकerrupt number
  */
-int ocxl_link_irq_alloc(void *link_handle, int *hw_irq);
+पूर्णांक ocxl_link_irq_alloc(व्योम *link_handle, पूर्णांक *hw_irq);
 
 /*
- * Free a previously allocated AFU interrupt
+ * Free a previously allocated AFU पूर्णांकerrupt
  */
-void ocxl_link_free_irq(void *link_handle, int hw_irq);
+व्योम ocxl_link_मुक्त_irq(व्योम *link_handle, पूर्णांक hw_irq);
 
-#endif /* _MISC_OCXL_H_ */
+#पूर्ण_अगर /* _MISC_OCXL_H_ */

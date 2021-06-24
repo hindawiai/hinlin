@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef GPIOLIB_SYSFS_H
-#define GPIOLIB_SYSFS_H
+#अगर_अघोषित GPIOLIB_SYSFS_H
+#घोषणा GPIOLIB_SYSFS_H
 
-#ifdef CONFIG_GPIO_SYSFS
+#अगर_घोषित CONFIG_GPIO_SYSFS
 
-int gpiochip_sysfs_register(struct gpio_device *gdev);
-void gpiochip_sysfs_unregister(struct gpio_device *gdev);
+पूर्णांक gpiochip_sysfs_रेजिस्टर(काष्ठा gpio_device *gdev);
+व्योम gpiochip_sysfs_unरेजिस्टर(काष्ठा gpio_device *gdev);
 
-#else
+#अन्यथा
 
-static inline int gpiochip_sysfs_register(struct gpio_device *gdev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक gpiochip_sysfs_रेजिस्टर(काष्ठा gpio_device *gdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void gpiochip_sysfs_unregister(struct gpio_device *gdev)
-{
-}
+अटल अंतरभूत व्योम gpiochip_sysfs_unरेजिस्टर(काष्ठा gpio_device *gdev)
+अणु
+पूर्ण
 
-#endif /* CONFIG_GPIO_SYSFS */
+#पूर्ण_अगर /* CONFIG_GPIO_SYSFS */
 
-#endif /* GPIOLIB_SYSFS_H */
+#पूर्ण_अगर /* GPIOLIB_SYSFS_H */

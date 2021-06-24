@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * GPIO driver for the ACCES PCI-IDIO-16
+ * GPIO driver क्रम the ACCES PCI-IDIO-16
  * Copyright (C) 2017 William Breathitt Gray
  */
-#include <linux/bitmap.h>
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/irqdesc.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqdesc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
 
 /**
- * struct idio_16_gpio_reg - GPIO device registers structure
- * @out0_7:	Read: FET Drive Outputs 0-7
- *		Write: FET Drive Outputs 0-7
- * @in0_7:	Read: Isolated Inputs 0-7
+ * काष्ठा idio_16_gpio_reg - GPIO device रेजिस्टरs काष्ठाure
+ * @out0_7:	Read: FET Drive Outमाला_दो 0-7
+ *		Write: FET Drive Outमाला_दो 0-7
+ * @in0_7:	Read: Isolated Inमाला_दो 0-7
  *		Write: Clear Interrupt
  * @irq_ctl:	Read: Enable IRQ
  *		Write: Disable IRQ
  * @filter_ctl:	Read: Activate Input Filters 0-15
  *		Write: Deactivate Input Filters 0-15
- * @out8_15:	Read: FET Drive Outputs 8-15
- *		Write: FET Drive Outputs 8-15
- * @in8_15:	Read: Isolated Inputs 8-15
+ * @out8_15:	Read: FET Drive Outमाला_दो 8-15
+ *		Write: FET Drive Outमाला_दो 8-15
+ * @in8_15:	Read: Isolated Inमाला_दो 8-15
  *		Write: Unused
  * @irq_status:	Read: Interrupt status
  *		Write: Unused
  */
-struct idio_16_gpio_reg {
+काष्ठा idio_16_gpio_reg अणु
 	u8 out0_7;
 	u8 in0_7;
 	u8 irq_ctl;
@@ -41,285 +42,285 @@ struct idio_16_gpio_reg {
 	u8 out8_15;
 	u8 in8_15;
 	u8 irq_status;
-};
+पूर्ण;
 
 /**
- * struct idio_16_gpio - GPIO device private data structure
+ * काष्ठा idio_16_gpio - GPIO device निजी data काष्ठाure
  * @chip:	instance of the gpio_chip
  * @lock:	synchronization lock to prevent I/O race conditions
- * @reg:	I/O address offset for the GPIO device registers
- * @irq_mask:	I/O bits affected by interrupts
+ * @reg:	I/O address offset क्रम the GPIO device रेजिस्टरs
+ * @irq_mask:	I/O bits affected by पूर्णांकerrupts
  */
-struct idio_16_gpio {
-	struct gpio_chip chip;
+काष्ठा idio_16_gpio अणु
+	काष्ठा gpio_chip chip;
 	raw_spinlock_t lock;
-	struct idio_16_gpio_reg __iomem *reg;
-	unsigned long irq_mask;
-};
+	काष्ठा idio_16_gpio_reg __iomem *reg;
+	अचिन्हित दीर्घ irq_mask;
+पूर्ण;
 
-static int idio_16_gpio_get_direction(struct gpio_chip *chip,
-	unsigned int offset)
-{
-	if (offset > 15)
-		return GPIO_LINE_DIRECTION_IN;
+अटल पूर्णांक idio_16_gpio_get_direction(काष्ठा gpio_chip *chip,
+	अचिन्हित पूर्णांक offset)
+अणु
+	अगर (offset > 15)
+		वापस GPIO_LINE_सूचीECTION_IN;
 
-	return GPIO_LINE_DIRECTION_OUT;
-}
+	वापस GPIO_LINE_सूचीECTION_OUT;
+पूर्ण
 
-static int idio_16_gpio_direction_input(struct gpio_chip *chip,
-	unsigned int offset)
-{
-	return 0;
-}
+अटल पूर्णांक idio_16_gpio_direction_input(काष्ठा gpio_chip *chip,
+	अचिन्हित पूर्णांक offset)
+अणु
+	वापस 0;
+पूर्ण
 
-static int idio_16_gpio_direction_output(struct gpio_chip *chip,
-	unsigned int offset, int value)
-{
+अटल पूर्णांक idio_16_gpio_direction_output(काष्ठा gpio_chip *chip,
+	अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
 	chip->set(chip, offset, value);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int idio_16_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct idio_16_gpio *const idio16gpio = gpiochip_get_data(chip);
-	unsigned long mask = BIT(offset);
+अटल पूर्णांक idio_16_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा idio_16_gpio *स्थिर idio16gpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ mask = BIT(offset);
 
-	if (offset < 8)
-		return !!(ioread8(&idio16gpio->reg->out0_7) & mask);
+	अगर (offset < 8)
+		वापस !!(ioपढ़ो8(&idio16gpio->reg->out0_7) & mask);
 
-	if (offset < 16)
-		return !!(ioread8(&idio16gpio->reg->out8_15) & (mask >> 8));
+	अगर (offset < 16)
+		वापस !!(ioपढ़ो8(&idio16gpio->reg->out8_15) & (mask >> 8));
 
-	if (offset < 24)
-		return !!(ioread8(&idio16gpio->reg->in0_7) & (mask >> 16));
+	अगर (offset < 24)
+		वापस !!(ioपढ़ो8(&idio16gpio->reg->in0_7) & (mask >> 16));
 
-	return !!(ioread8(&idio16gpio->reg->in8_15) & (mask >> 24));
-}
+	वापस !!(ioपढ़ो8(&idio16gpio->reg->in8_15) & (mask >> 24));
+पूर्ण
 
-static int idio_16_gpio_get_multiple(struct gpio_chip *chip,
-	unsigned long *mask, unsigned long *bits)
-{
-	struct idio_16_gpio *const idio16gpio = gpiochip_get_data(chip);
-	unsigned long offset;
-	unsigned long gpio_mask;
-	void __iomem *ports[] = {
+अटल पूर्णांक idio_16_gpio_get_multiple(काष्ठा gpio_chip *chip,
+	अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा idio_16_gpio *स्थिर idio16gpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ gpio_mask;
+	व्योम __iomem *ports[] = अणु
 		&idio16gpio->reg->out0_7, &idio16gpio->reg->out8_15,
 		&idio16gpio->reg->in0_7, &idio16gpio->reg->in8_15,
-	};
-	void __iomem *port_addr;
-	unsigned long port_state;
+	पूर्ण;
+	व्योम __iomem *port_addr;
+	अचिन्हित दीर्घ port_state;
 
 	/* clear bits array to a clean slate */
-	bitmap_zero(bits, chip->ngpio);
+	biपंचांगap_zero(bits, chip->ngpio);
 
-	for_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) {
+	क्रम_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) अणु
 		port_addr = ports[offset / 8];
-		port_state = ioread8(port_addr) & gpio_mask;
+		port_state = ioपढ़ो8(port_addr) & gpio_mask;
 
-		bitmap_set_value8(bits, port_state, offset);
-	}
+		biपंचांगap_set_value8(bits, port_state, offset);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void idio_16_gpio_set(struct gpio_chip *chip, unsigned int offset,
-	int value)
-{
-	struct idio_16_gpio *const idio16gpio = gpiochip_get_data(chip);
-	unsigned int mask = BIT(offset);
-	void __iomem *base;
-	unsigned long flags;
-	unsigned int out_state;
+अटल व्योम idio_16_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+	पूर्णांक value)
+अणु
+	काष्ठा idio_16_gpio *स्थिर idio16gpio = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक mask = BIT(offset);
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक out_state;
 
-	if (offset > 15)
-		return;
+	अगर (offset > 15)
+		वापस;
 
-	if (offset > 7) {
+	अगर (offset > 7) अणु
 		mask >>= 8;
 		base = &idio16gpio->reg->out8_15;
-	} else
+	पूर्ण अन्यथा
 		base = &idio16gpio->reg->out0_7;
 
 	raw_spin_lock_irqsave(&idio16gpio->lock, flags);
 
-	if (value)
-		out_state = ioread8(base) | mask;
-	else
-		out_state = ioread8(base) & ~mask;
+	अगर (value)
+		out_state = ioपढ़ो8(base) | mask;
+	अन्यथा
+		out_state = ioपढ़ो8(base) & ~mask;
 
-	iowrite8(out_state, base);
+	ioग_लिखो8(out_state, base);
 
 	raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-}
+पूर्ण
 
-static void idio_16_gpio_set_multiple(struct gpio_chip *chip,
-	unsigned long *mask, unsigned long *bits)
-{
-	struct idio_16_gpio *const idio16gpio = gpiochip_get_data(chip);
-	unsigned long offset;
-	unsigned long gpio_mask;
-	void __iomem *ports[] = {
+अटल व्योम idio_16_gpio_set_multiple(काष्ठा gpio_chip *chip,
+	अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा idio_16_gpio *स्थिर idio16gpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ gpio_mask;
+	व्योम __iomem *ports[] = अणु
 		&idio16gpio->reg->out0_7, &idio16gpio->reg->out8_15,
-	};
-	size_t index;
-	void __iomem *port_addr;
-	unsigned long bitmask;
-	unsigned long flags;
-	unsigned long out_state;
+	पूर्ण;
+	माप_प्रकार index;
+	व्योम __iomem *port_addr;
+	अचिन्हित दीर्घ biपंचांगask;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ out_state;
 
-	for_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) {
+	क्रम_each_set_clump8(offset, gpio_mask, mask, ARRAY_SIZE(ports) * 8) अणु
 		index = offset / 8;
 		port_addr = ports[index];
 
-		bitmask = bitmap_get_value8(bits, offset) & gpio_mask;
+		biपंचांगask = biपंचांगap_get_value8(bits, offset) & gpio_mask;
 
 		raw_spin_lock_irqsave(&idio16gpio->lock, flags);
 
-		out_state = ioread8(port_addr) & ~gpio_mask;
-		out_state |= bitmask;
-		iowrite8(out_state, port_addr);
+		out_state = ioपढ़ो8(port_addr) & ~gpio_mask;
+		out_state |= biपंचांगask;
+		ioग_लिखो8(out_state, port_addr);
 
 		raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void idio_16_irq_ack(struct irq_data *data)
-{
-}
+अटल व्योम idio_16_irq_ack(काष्ठा irq_data *data)
+अणु
+पूर्ण
 
-static void idio_16_irq_mask(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct idio_16_gpio *const idio16gpio = gpiochip_get_data(chip);
-	const unsigned long mask = BIT(irqd_to_hwirq(data));
-	unsigned long flags;
+अटल व्योम idio_16_irq_mask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा idio_16_gpio *स्थिर idio16gpio = gpiochip_get_data(chip);
+	स्थिर अचिन्हित दीर्घ mask = BIT(irqd_to_hwirq(data));
+	अचिन्हित दीर्घ flags;
 
 	idio16gpio->irq_mask &= ~mask;
 
-	if (!idio16gpio->irq_mask) {
+	अगर (!idio16gpio->irq_mask) अणु
 		raw_spin_lock_irqsave(&idio16gpio->lock, flags);
 
-		iowrite8(0, &idio16gpio->reg->irq_ctl);
+		ioग_लिखो8(0, &idio16gpio->reg->irq_ctl);
 
 		raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void idio_16_irq_unmask(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct idio_16_gpio *const idio16gpio = gpiochip_get_data(chip);
-	const unsigned long mask = BIT(irqd_to_hwirq(data));
-	const unsigned long prev_irq_mask = idio16gpio->irq_mask;
-	unsigned long flags;
+अटल व्योम idio_16_irq_unmask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा idio_16_gpio *स्थिर idio16gpio = gpiochip_get_data(chip);
+	स्थिर अचिन्हित दीर्घ mask = BIT(irqd_to_hwirq(data));
+	स्थिर अचिन्हित दीर्घ prev_irq_mask = idio16gpio->irq_mask;
+	अचिन्हित दीर्घ flags;
 
 	idio16gpio->irq_mask |= mask;
 
-	if (!prev_irq_mask) {
+	अगर (!prev_irq_mask) अणु
 		raw_spin_lock_irqsave(&idio16gpio->lock, flags);
 
-		ioread8(&idio16gpio->reg->irq_ctl);
+		ioपढ़ो8(&idio16gpio->reg->irq_ctl);
 
 		raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int idio_16_irq_set_type(struct irq_data *data, unsigned int flow_type)
-{
+अटल पूर्णांक idio_16_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक flow_type)
+अणु
 	/* The only valid irq types are none and both-edges */
-	if (flow_type != IRQ_TYPE_NONE &&
+	अगर (flow_type != IRQ_TYPE_NONE &&
 		(flow_type & IRQ_TYPE_EDGE_BOTH) != IRQ_TYPE_EDGE_BOTH)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip idio_16_irqchip = {
+अटल काष्ठा irq_chip idio_16_irqchip = अणु
 	.name = "pci-idio-16",
 	.irq_ack = idio_16_irq_ack,
 	.irq_mask = idio_16_irq_mask,
 	.irq_unmask = idio_16_irq_unmask,
 	.irq_set_type = idio_16_irq_set_type
-};
+पूर्ण;
 
-static irqreturn_t idio_16_irq_handler(int irq, void *dev_id)
-{
-	struct idio_16_gpio *const idio16gpio = dev_id;
-	unsigned int irq_status;
-	struct gpio_chip *const chip = &idio16gpio->chip;
-	int gpio;
+अटल irqवापस_t idio_16_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा idio_16_gpio *स्थिर idio16gpio = dev_id;
+	अचिन्हित पूर्णांक irq_status;
+	काष्ठा gpio_chip *स्थिर chip = &idio16gpio->chip;
+	पूर्णांक gpio;
 
 	raw_spin_lock(&idio16gpio->lock);
 
-	irq_status = ioread8(&idio16gpio->reg->irq_status);
+	irq_status = ioपढ़ो8(&idio16gpio->reg->irq_status);
 
 	raw_spin_unlock(&idio16gpio->lock);
 
 	/* Make sure our device generated IRQ */
-	if (!(irq_status & 0x3) || !(irq_status & 0x4))
-		return IRQ_NONE;
+	अगर (!(irq_status & 0x3) || !(irq_status & 0x4))
+		वापस IRQ_NONE;
 
-	for_each_set_bit(gpio, &idio16gpio->irq_mask, chip->ngpio)
-		generic_handle_irq(irq_find_mapping(chip->irq.domain, gpio));
+	क्रम_each_set_bit(gpio, &idio16gpio->irq_mask, chip->ngpio)
+		generic_handle_irq(irq_find_mapping(chip->irq.करोमुख्य, gpio));
 
 	raw_spin_lock(&idio16gpio->lock);
 
-	/* Clear interrupt */
-	iowrite8(0, &idio16gpio->reg->in0_7);
+	/* Clear पूर्णांकerrupt */
+	ioग_लिखो8(0, &idio16gpio->reg->in0_7);
 
 	raw_spin_unlock(&idio16gpio->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#define IDIO_16_NGPIO 32
-static const char *idio_16_names[IDIO_16_NGPIO] = {
+#घोषणा IDIO_16_NGPIO 32
+अटल स्थिर अक्षर *idio_16_names[IDIO_16_NGPIO] = अणु
 	"OUT0", "OUT1", "OUT2", "OUT3", "OUT4", "OUT5", "OUT6", "OUT7",
 	"OUT8", "OUT9", "OUT10", "OUT11", "OUT12", "OUT13", "OUT14", "OUT15",
 	"IIN0", "IIN1", "IIN2", "IIN3", "IIN4", "IIN5", "IIN6", "IIN7",
 	"IIN8", "IIN9", "IIN10", "IIN11", "IIN12", "IIN13", "IIN14", "IIN15"
-};
+पूर्ण;
 
-static int idio_16_irq_init_hw(struct gpio_chip *gc)
-{
-	struct idio_16_gpio *const idio16gpio = gpiochip_get_data(gc);
+अटल पूर्णांक idio_16_irq_init_hw(काष्ठा gpio_chip *gc)
+अणु
+	काष्ठा idio_16_gpio *स्थिर idio16gpio = gpiochip_get_data(gc);
 
-	/* Disable IRQ by default and clear any pending interrupt */
-	iowrite8(0, &idio16gpio->reg->irq_ctl);
-	iowrite8(0, &idio16gpio->reg->in0_7);
+	/* Disable IRQ by शेष and clear any pending पूर्णांकerrupt */
+	ioग_लिखो8(0, &idio16gpio->reg->irq_ctl);
+	ioग_लिखो8(0, &idio16gpio->reg->in0_7);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int idio_16_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	struct device *const dev = &pdev->dev;
-	struct idio_16_gpio *idio16gpio;
-	int err;
-	const size_t pci_bar_index = 2;
-	const char *const name = pci_name(pdev);
-	struct gpio_irq_chip *girq;
+अटल पूर्णांक idio_16_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा device *स्थिर dev = &pdev->dev;
+	काष्ठा idio_16_gpio *idio16gpio;
+	पूर्णांक err;
+	स्थिर माप_प्रकार pci_bar_index = 2;
+	स्थिर अक्षर *स्थिर name = pci_name(pdev);
+	काष्ठा gpio_irq_chip *girq;
 
-	idio16gpio = devm_kzalloc(dev, sizeof(*idio16gpio), GFP_KERNEL);
-	if (!idio16gpio)
-		return -ENOMEM;
+	idio16gpio = devm_kzalloc(dev, माप(*idio16gpio), GFP_KERNEL);
+	अगर (!idio16gpio)
+		वापस -ENOMEM;
 
 	err = pcim_enable_device(pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Failed to enable PCI device (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = pcim_iomap_regions(pdev, BIT(pci_bar_index), name);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Unable to map PCI I/O addresses (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	idio16gpio->reg = pcim_iomap_table(pdev)[pci_bar_index];
 
 	/* Deactivate input filters */
-	iowrite8(0, &idio16gpio->reg->filter_ctl);
+	ioग_लिखो8(0, &idio16gpio->reg->filter_ctl);
 
 	idio16gpio->chip.label = name;
 	idio16gpio->chip.parent = dev;
@@ -338,41 +339,41 @@ static int idio_16_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	girq = &idio16gpio->chip.irq;
 	girq->chip = &idio_16_irqchip;
 	/* This will let us handle the parent IRQ in the driver */
-	girq->parent_handler = NULL;
+	girq->parent_handler = शून्य;
 	girq->num_parents = 0;
-	girq->parents = NULL;
-	girq->default_type = IRQ_TYPE_NONE;
+	girq->parents = शून्य;
+	girq->शेष_type = IRQ_TYPE_NONE;
 	girq->handler = handle_edge_irq;
 	girq->init_hw = idio_16_irq_init_hw;
 
 	raw_spin_lock_init(&idio16gpio->lock);
 
 	err = devm_gpiochip_add_data(dev, &idio16gpio->chip, idio16gpio);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "GPIO registering failed (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = devm_request_irq(dev, pdev->irq, idio_16_irq_handler, IRQF_SHARED,
 		name, idio16gpio);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "IRQ handler registering failed (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pci_device_id idio_16_pci_dev_id[] = {
-	{ PCI_DEVICE(0x494F, 0x0DC8) }, { 0 }
-};
+अटल स्थिर काष्ठा pci_device_id idio_16_pci_dev_id[] = अणु
+	अणु PCI_DEVICE(0x494F, 0x0DC8) पूर्ण, अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, idio_16_pci_dev_id);
 
-static struct pci_driver idio_16_driver = {
+अटल काष्ठा pci_driver idio_16_driver = अणु
 	.name = "pci-idio-16",
 	.id_table = idio_16_pci_dev_id,
 	.probe = idio_16_probe
-};
+पूर्ण;
 
 module_pci_driver(idio_16_driver);
 

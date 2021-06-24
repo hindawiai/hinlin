@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/fs.h>
-#include <linux/quota.h>
-#include <linux/export.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/fs.h>
+#समावेश <linux/quota.h>
+#समावेश <linux/export.h>
 
 /**
- *	qid_eq - Test to see if to kquid values are the same
+ *	qid_eq - Test to see अगर to kquid values are the same
  *	@left: A qid value
  *	@right: Another quid value
  *
- *	Return true if the two qid values are equal and false otherwise.
+ *	Return true अगर the two qid values are equal and false otherwise.
  */
-bool qid_eq(struct kqid left, struct kqid right)
-{
-	if (left.type != right.type)
-		return false;
-	switch(left.type) {
-	case USRQUOTA:
-		return uid_eq(left.uid, right.uid);
-	case GRPQUOTA:
-		return gid_eq(left.gid, right.gid);
-	case PRJQUOTA:
-		return projid_eq(left.projid, right.projid);
-	default:
+bool qid_eq(काष्ठा kqid left, काष्ठा kqid right)
+अणु
+	अगर (left.type != right.type)
+		वापस false;
+	चयन(left.type) अणु
+	हाल USRQUOTA:
+		वापस uid_eq(left.uid, right.uid);
+	हाल GRPQUOTA:
+		वापस gid_eq(left.gid, right.gid);
+	हाल PRJQUOTA:
+		वापस projid_eq(left.projid, right.projid);
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(qid_eq);
 
 /**
- *	qid_lt - Test to see if one qid value is less than another
+ *	qid_lt - Test to see अगर one qid value is less than another
  *	@left: The possibly lesser qid value
  *	@right: The possibly greater qid value
  *
- *	Return true if left is less than right and false otherwise.
+ *	Return true अगर left is less than right and false otherwise.
  */
-bool qid_lt(struct kqid left, struct kqid right)
-{
-	if (left.type < right.type)
-		return true;
-	if (left.type > right.type)
-		return false;
-	switch (left.type) {
-	case USRQUOTA:
-		return uid_lt(left.uid, right.uid);
-	case GRPQUOTA:
-		return gid_lt(left.gid, right.gid);
-	case PRJQUOTA:
-		return projid_lt(left.projid, right.projid);
-	default:
+bool qid_lt(काष्ठा kqid left, काष्ठा kqid right)
+अणु
+	अगर (left.type < right.type)
+		वापस true;
+	अगर (left.type > right.type)
+		वापस false;
+	चयन (left.type) अणु
+	हाल USRQUOTA:
+		वापस uid_lt(left.uid, right.uid);
+	हाल GRPQUOTA:
+		वापस gid_lt(left.gid, right.gid);
+	हाल PRJQUOTA:
+		वापस projid_lt(left.projid, right.projid);
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(qid_lt);
 
 /**
  *	from_kqid - Create a qid from a kqid user-namespace pair.
  *	@targ: The user namespace we want a qid in.
- *	@kqid: The kernel internal quota identifier to start with.
+ *	@kqid: The kernel पूर्णांकernal quota identअगरier to start with.
  *
- *	Map @kqid into the user-namespace specified by @targ and
- *	return the resulting qid.
+ *	Map @kqid पूर्णांकo the user-namespace specअगरied by @targ and
+ *	वापस the resulting qid.
  *
- *	There is always a mapping into the initial user_namespace.
+ *	There is always a mapping पूर्णांकo the initial user_namespace.
  *
- *	If @kqid has no mapping in @targ (qid_t)-1 is returned.
+ *	If @kqid has no mapping in @targ (qid_t)-1 is वापसed.
  */
-qid_t from_kqid(struct user_namespace *targ, struct kqid kqid)
-{
-	switch (kqid.type) {
-	case USRQUOTA:
-		return from_kuid(targ, kqid.uid);
-	case GRPQUOTA:
-		return from_kgid(targ, kqid.gid);
-	case PRJQUOTA:
-		return from_kprojid(targ, kqid.projid);
-	default:
+qid_t from_kqid(काष्ठा user_namespace *targ, काष्ठा kqid kqid)
+अणु
+	चयन (kqid.type) अणु
+	हाल USRQUOTA:
+		वापस from_kuid(targ, kqid.uid);
+	हाल GRPQUOTA:
+		वापस from_kgid(targ, kqid.gid);
+	हाल PRJQUOTA:
+		वापस from_kprojid(targ, kqid.projid);
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(from_kqid);
 
 /**
  *	from_kqid_munged - Create a qid from a kqid user-namespace pair.
  *	@targ: The user namespace we want a qid in.
- *	@kqid: The kernel internal quota identifier to start with.
+ *	@kqid: The kernel पूर्णांकernal quota identअगरier to start with.
  *
- *	Map @kqid into the user-namespace specified by @targ and
- *	return the resulting qid.
+ *	Map @kqid पूर्णांकo the user-namespace specअगरied by @targ and
+ *	वापस the resulting qid.
  *
- *	There is always a mapping into the initial user_namespace.
+ *	There is always a mapping पूर्णांकo the initial user_namespace.
  *
  *	Unlike from_kqid from_kqid_munged never fails and always
- *	returns a valid projid.  This makes from_kqid_munged
- *	appropriate for use in places where failing to provide
+ *	वापसs a valid projid.  This makes from_kqid_munged
+ *	appropriate क्रम use in places where failing to provide
  *	a qid_t is not a good option.
  *
- *	If @kqid has no mapping in @targ the kqid.type specific
- *	overflow identifier is returned.
+ *	If @kqid has no mapping in @targ the kqid.type specअगरic
+ *	overflow identअगरier is वापसed.
  */
-qid_t from_kqid_munged(struct user_namespace *targ, struct kqid kqid)
-{
-	switch (kqid.type) {
-	case USRQUOTA:
-		return from_kuid_munged(targ, kqid.uid);
-	case GRPQUOTA:
-		return from_kgid_munged(targ, kqid.gid);
-	case PRJQUOTA:
-		return from_kprojid_munged(targ, kqid.projid);
-	default:
+qid_t from_kqid_munged(काष्ठा user_namespace *targ, काष्ठा kqid kqid)
+अणु
+	चयन (kqid.type) अणु
+	हाल USRQUOTA:
+		वापस from_kuid_munged(targ, kqid.uid);
+	हाल GRPQUOTA:
+		वापस from_kgid_munged(targ, kqid.gid);
+	हाल PRJQUOTA:
+		वापस from_kprojid_munged(targ, kqid.projid);
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(from_kqid_munged);
 
 /**
- *	qid_valid - Report if a valid value is stored in a kqid.
- *	@qid: The kernel internal quota identifier to test.
+ *	qid_valid - Report अगर a valid value is stored in a kqid.
+ *	@qid: The kernel पूर्णांकernal quota identअगरier to test.
  */
-bool qid_valid(struct kqid qid)
-{
-	switch (qid.type) {
-	case USRQUOTA:
-		return uid_valid(qid.uid);
-	case GRPQUOTA:
-		return gid_valid(qid.gid);
-	case PRJQUOTA:
-		return projid_valid(qid.projid);
-	default:
+bool qid_valid(काष्ठा kqid qid)
+अणु
+	चयन (qid.type) अणु
+	हाल USRQUOTA:
+		वापस uid_valid(qid.uid);
+	हाल GRPQUOTA:
+		वापस gid_valid(qid.gid);
+	हाल PRJQUOTA:
+		वापस projid_valid(qid.projid);
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(qid_valid);

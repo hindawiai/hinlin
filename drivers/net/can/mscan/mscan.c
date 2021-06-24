@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * CAN bus driver for the alone generic (as possible as) MSCAN controller.
+ * CAN bus driver क्रम the alone generic (as possible as) MSCAN controller.
  *
  * Copyright (C) 2005-2006 Andrey Volkov <avolkov@varma-el.com>,
  *                         Varma Electronics Oy
- * Copyright (C) 2008-2009 Wolfgang Grandegger <wg@grandegger.com>
+ * Copyright (C) 2008-2009 Wolfgang Gअक्रमegger <wg@gअक्रमegger.com>
  * Copyright (C) 2008-2009 Pengutronix <kernel@pengutronix.de>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/if_ether.h>
-#include <linux/list.h>
-#include <linux/can/dev.h>
-#include <linux/can/error.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/list.h>
+#समावेश <linux/can/dev.h>
+#समावेश <linux/can/error.h>
+#समावेश <linux/पन.स>
 
-#include "mscan.h"
+#समावेश "mscan.h"
 
-static const struct can_bittiming_const mscan_bittiming_const = {
+अटल स्थिर काष्ठा can_bittiming_स्थिर mscan_bittiming_स्थिर = अणु
 	.name = "mscan",
 	.tseg1_min = 4,
 	.tseg1_max = 16,
@@ -32,103 +33,103 @@ static const struct can_bittiming_const mscan_bittiming_const = {
 	.brp_min = 1,
 	.brp_max = 64,
 	.brp_inc = 1,
-};
+पूर्ण;
 
-struct mscan_state {
+काष्ठा mscan_state अणु
 	u8 mode;
 	u8 canrier;
 	u8 cantier;
-};
+पूर्ण;
 
-static enum can_state state_map[] = {
+अटल क्रमागत can_state state_map[] = अणु
 	CAN_STATE_ERROR_ACTIVE,
 	CAN_STATE_ERROR_WARNING,
 	CAN_STATE_ERROR_PASSIVE,
 	CAN_STATE_BUS_OFF
-};
+पूर्ण;
 
-static int mscan_set_mode(struct net_device *dev, u8 mode)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
-	int ret = 0;
-	int i;
+अटल पूर्णांक mscan_set_mode(काष्ठा net_device *dev, u8 mode)
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 	u8 canctl1;
 
-	if (mode != MSCAN_NORMAL_MODE) {
-		if (priv->tx_active) {
-			/* Abort transfers before going to sleep */#
+	अगर (mode != MSCAN_NORMAL_MODE) अणु
+		अगर (priv->tx_active) अणु
+			/* Abort transfers beक्रमe going to sleep */#
 			out_8(&regs->cantarq, priv->tx_active);
-			/* Suppress TX done interrupts */
+			/* Suppress TX करोne पूर्णांकerrupts */
 			out_8(&regs->cantier, 0);
-		}
+		पूर्ण
 
 		canctl1 = in_8(&regs->canctl1);
-		if ((mode & MSCAN_SLPRQ) && !(canctl1 & MSCAN_SLPAK)) {
+		अगर ((mode & MSCAN_SLPRQ) && !(canctl1 & MSCAN_SLPAK)) अणु
 			setbits8(&regs->canctl0, MSCAN_SLPRQ);
-			for (i = 0; i < MSCAN_SET_MODE_RETRIES; i++) {
-				if (in_8(&regs->canctl1) & MSCAN_SLPAK)
-					break;
+			क्रम (i = 0; i < MSCAN_SET_MODE_RETRIES; i++) अणु
+				अगर (in_8(&regs->canctl1) & MSCAN_SLPAK)
+					अवरोध;
 				udelay(100);
-			}
+			पूर्ण
 			/*
 			 * The mscan controller will fail to enter sleep mode,
-			 * while there are irregular activities on bus, like
+			 * जबतक there are irregular activities on bus, like
 			 * somebody keeps retransmitting. This behavior is
-			 * undocumented and seems to differ between mscan built
-			 * in mpc5200b and mpc5200. We proceed in that case,
+			 * unकरोcumented and seems to dअगरfer between mscan built
+			 * in mpc5200b and mpc5200. We proceed in that हाल,
 			 * since otherwise the slprq will be kept set and the
 			 * controller will get stuck. NOTE: INITRQ or CSWAI
-			 * will abort all active transmit actions, if still
+			 * will पात all active transmit actions, अगर still
 			 * any, at once.
 			 */
-			if (i >= MSCAN_SET_MODE_RETRIES)
+			अगर (i >= MSCAN_SET_MODE_RETRIES)
 				netdev_dbg(dev,
 					   "device failed to enter sleep mode. "
 					   "We proceed anyhow.\n");
-			else
+			अन्यथा
 				priv->can.state = CAN_STATE_SLEEPING;
-		}
+		पूर्ण
 
-		if ((mode & MSCAN_INITRQ) && !(canctl1 & MSCAN_INITAK)) {
+		अगर ((mode & MSCAN_INITRQ) && !(canctl1 & MSCAN_INITAK)) अणु
 			setbits8(&regs->canctl0, MSCAN_INITRQ);
-			for (i = 0; i < MSCAN_SET_MODE_RETRIES; i++) {
-				if (in_8(&regs->canctl1) & MSCAN_INITAK)
-					break;
-			}
-			if (i >= MSCAN_SET_MODE_RETRIES)
+			क्रम (i = 0; i < MSCAN_SET_MODE_RETRIES; i++) अणु
+				अगर (in_8(&regs->canctl1) & MSCAN_INITAK)
+					अवरोध;
+			पूर्ण
+			अगर (i >= MSCAN_SET_MODE_RETRIES)
 				ret = -ENODEV;
-		}
-		if (!ret)
+		पूर्ण
+		अगर (!ret)
 			priv->can.state = CAN_STATE_STOPPED;
 
-		if (mode & MSCAN_CSWAI)
+		अगर (mode & MSCAN_CSWAI)
 			setbits8(&regs->canctl0, MSCAN_CSWAI);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		canctl1 = in_8(&regs->canctl1);
-		if (canctl1 & (MSCAN_SLPAK | MSCAN_INITAK)) {
+		अगर (canctl1 & (MSCAN_SLPAK | MSCAN_INITAK)) अणु
 			clrbits8(&regs->canctl0, MSCAN_SLPRQ | MSCAN_INITRQ);
-			for (i = 0; i < MSCAN_SET_MODE_RETRIES; i++) {
+			क्रम (i = 0; i < MSCAN_SET_MODE_RETRIES; i++) अणु
 				canctl1 = in_8(&regs->canctl1);
-				if (!(canctl1 & (MSCAN_INITAK | MSCAN_SLPAK)))
-					break;
-			}
-			if (i >= MSCAN_SET_MODE_RETRIES)
+				अगर (!(canctl1 & (MSCAN_INITAK | MSCAN_SLPAK)))
+					अवरोध;
+			पूर्ण
+			अगर (i >= MSCAN_SET_MODE_RETRIES)
 				ret = -ENODEV;
-			else
+			अन्यथा
 				priv->can.state = CAN_STATE_ERROR_ACTIVE;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int mscan_start(struct net_device *dev)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
+अटल पूर्णांक mscan_start(काष्ठा net_device *dev)
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
 	u8 canrflg;
-	int err;
+	पूर्णांक err;
 
 	out_8(&regs->canrier, 0);
 
@@ -136,101 +137,101 @@ static int mscan_start(struct net_device *dev)
 	priv->prev_buf_id = 0;
 	priv->cur_pri = 0;
 	priv->tx_active = 0;
-	priv->shadow_canrier = 0;
+	priv->shaकरोw_canrier = 0;
 	priv->flags = 0;
 
-	if (priv->type == MSCAN_TYPE_MPC5121) {
+	अगर (priv->type == MSCAN_TYPE_MPC5121) अणु
 		/* Clear pending bus-off condition */
-		if (in_8(&regs->canmisc) & MSCAN_BOHOLD)
+		अगर (in_8(&regs->canmisc) & MSCAN_BOHOLD)
 			out_8(&regs->canmisc, MSCAN_BOHOLD);
-	}
+	पूर्ण
 
 	err = mscan_set_mode(dev, MSCAN_NORMAL_MODE);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	canrflg = in_8(&regs->canrflg);
-	priv->shadow_statflg = canrflg & MSCAN_STAT_MSK;
+	priv->shaकरोw_statflg = canrflg & MSCAN_STAT_MSK;
 	priv->can.state = state_map[max(MSCAN_STATE_RX(canrflg),
 				    MSCAN_STATE_TX(canrflg))];
 	out_8(&regs->cantier, 0);
 
-	/* Enable receive interrupts. */
+	/* Enable receive पूर्णांकerrupts. */
 	out_8(&regs->canrier, MSCAN_RX_INTS_ENABLE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mscan_restart(struct net_device *dev)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
+अटल पूर्णांक mscan_restart(काष्ठा net_device *dev)
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
 
-	if (priv->type == MSCAN_TYPE_MPC5121) {
-		struct mscan_regs __iomem *regs = priv->reg_base;
+	अगर (priv->type == MSCAN_TYPE_MPC5121) अणु
+		काष्ठा mscan_regs __iomem *regs = priv->reg_base;
 
 		priv->can.state = CAN_STATE_ERROR_ACTIVE;
 		WARN(!(in_8(&regs->canmisc) & MSCAN_BOHOLD),
 		     "bus-off state expected\n");
 		out_8(&regs->canmisc, MSCAN_BOHOLD);
-		/* Re-enable receive interrupts. */
+		/* Re-enable receive पूर्णांकerrupts. */
 		out_8(&regs->canrier, MSCAN_RX_INTS_ENABLE);
-	} else {
-		if (priv->can.state <= CAN_STATE_BUS_OFF)
+	पूर्ण अन्यथा अणु
+		अगर (priv->can.state <= CAN_STATE_BUS_OFF)
 			mscan_set_mode(dev, MSCAN_INIT_MODE);
-		return mscan_start(dev);
-	}
+		वापस mscan_start(dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t mscan_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct can_frame *frame = (struct can_frame *)skb->data;
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
-	int i, rtr, buf_id;
+अटल netdev_tx_t mscan_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा can_frame *frame = (काष्ठा can_frame *)skb->data;
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
+	पूर्णांक i, rtr, buf_id;
 	u32 can_id;
 
-	if (can_dropped_invalid_skb(dev, skb))
-		return NETDEV_TX_OK;
+	अगर (can_dropped_invalid_skb(dev, skb))
+		वापस NETDEV_TX_OK;
 
 	out_8(&regs->cantier, 0);
 
 	i = ~priv->tx_active & MSCAN_TXE;
 	buf_id = ffs(i) - 1;
-	switch (hweight8(i)) {
-	case 0:
-		netif_stop_queue(dev);
+	चयन (hweight8(i)) अणु
+	हाल 0:
+		netअगर_stop_queue(dev);
 		netdev_err(dev, "Tx Ring full when queue awake!\n");
-		return NETDEV_TX_BUSY;
-	case 1:
+		वापस NETDEV_TX_BUSY;
+	हाल 1:
 		/*
-		 * if buf_id < 3, then current frame will be send out of order,
+		 * अगर buf_id < 3, then current frame will be send out of order,
 		 * since buffer with lower id have higher priority (hell..)
 		 */
-		netif_stop_queue(dev);
+		netअगर_stop_queue(dev);
 		fallthrough;
-	case 2:
-		if (buf_id < priv->prev_buf_id) {
+	हाल 2:
+		अगर (buf_id < priv->prev_buf_id) अणु
 			priv->cur_pri++;
-			if (priv->cur_pri == 0xff) {
+			अगर (priv->cur_pri == 0xff) अणु
 				set_bit(F_TX_WAIT_ALL, &priv->flags);
-				netif_stop_queue(dev);
-			}
-		}
+				netअगर_stop_queue(dev);
+			पूर्ण
+		पूर्ण
 		set_bit(F_TX_PROGRESS, &priv->flags);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	priv->prev_buf_id = buf_id;
 	out_8(&regs->cantbsel, i);
 
 	rtr = frame->can_id & CAN_RTR_FLAG;
 
-	/* RTR is always the lowest bit of interest, then IDs follow */
-	if (frame->can_id & CAN_EFF_FLAG) {
+	/* RTR is always the lowest bit of पूर्णांकerest, then IDs follow */
+	अगर (frame->can_id & CAN_EFF_FLAG) अणु
 		can_id = (frame->can_id & CAN_EFF_MASK)
 			 << (MSCAN_EFF_RTR_SHIFT + 1);
-		if (rtr)
+		अगर (rtr)
 			can_id |= 1 << MSCAN_EFF_RTR_SHIFT;
 		out_be16(&regs->tx.idr3_2, can_id);
 
@@ -238,26 +239,26 @@ static netdev_tx_t mscan_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		/* EFF_FLAGS are between the IDs :( */
 		can_id = (can_id & 0x7) | ((can_id << 2) & 0xffe0)
 			 | MSCAN_EFF_FLAGS;
-	} else {
+	पूर्ण अन्यथा अणु
 		can_id = (frame->can_id & CAN_SFF_MASK)
 			 << (MSCAN_SFF_RTR_SHIFT + 1);
-		if (rtr)
+		अगर (rtr)
 			can_id |= 1 << MSCAN_SFF_RTR_SHIFT;
-	}
+	पूर्ण
 	out_be16(&regs->tx.idr1_0, can_id);
 
-	if (!rtr) {
-		void __iomem *data = &regs->tx.dsr1_0;
+	अगर (!rtr) अणु
+		व्योम __iomem *data = &regs->tx.dsr1_0;
 		u16 *payload = (u16 *)frame->data;
 
-		for (i = 0; i < frame->len / 2; i++) {
+		क्रम (i = 0; i < frame->len / 2; i++) अणु
 			out_be16(data, *payload++);
 			data += 2 + _MSCAN_RESERVED_DSR_SIZE;
-		}
-		/* write remaining byte if necessary */
-		if (frame->len & 1)
+		पूर्ण
+		/* ग_लिखो reमुख्यing byte अगर necessary */
+		अगर (frame->len & 1)
 			out_8(data, frame->data[frame->len - 1]);
-	}
+	पूर्ण
 
 	out_8(&regs->tx.dlr, frame->len);
 	out_8(&regs->tx.tbpr, priv->cur_pri);
@@ -265,249 +266,249 @@ static netdev_tx_t mscan_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	/* Start transmission. */
 	out_8(&regs->cantflg, 1 << buf_id);
 
-	if (!test_bit(F_TX_PROGRESS, &priv->flags))
-		netif_trans_update(dev);
+	अगर (!test_bit(F_TX_PROGRESS, &priv->flags))
+		netअगर_trans_update(dev);
 
 	list_add_tail(&priv->tx_queue[buf_id].list, &priv->tx_head);
 
 	can_put_echo_skb(skb, dev, buf_id, 0);
 
-	/* Enable interrupt. */
+	/* Enable पूर्णांकerrupt. */
 	priv->tx_active |= 1 << buf_id;
 	out_8(&regs->cantier, priv->tx_active);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static enum can_state get_new_state(struct net_device *dev, u8 canrflg)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
+अटल क्रमागत can_state get_new_state(काष्ठा net_device *dev, u8 canrflg)
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
 
-	if (unlikely(canrflg & MSCAN_CSCIF))
-		return state_map[max(MSCAN_STATE_RX(canrflg),
+	अगर (unlikely(canrflg & MSCAN_CSCIF))
+		वापस state_map[max(MSCAN_STATE_RX(canrflg),
 				 MSCAN_STATE_TX(canrflg))];
 
-	return priv->can.state;
-}
+	वापस priv->can.state;
+पूर्ण
 
-static void mscan_get_rx_frame(struct net_device *dev, struct can_frame *frame)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
+अटल व्योम mscan_get_rx_frame(काष्ठा net_device *dev, काष्ठा can_frame *frame)
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
 	u32 can_id;
-	int i;
+	पूर्णांक i;
 
 	can_id = in_be16(&regs->rx.idr1_0);
-	if (can_id & (1 << 3)) {
+	अगर (can_id & (1 << 3)) अणु
 		frame->can_id = CAN_EFF_FLAG;
 		can_id = ((can_id << 16) | in_be16(&regs->rx.idr3_2));
 		can_id = ((can_id & 0xffe00000) |
 			  ((can_id & 0x7ffff) << 2)) >> 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		can_id >>= 4;
 		frame->can_id = 0;
-	}
+	पूर्ण
 
 	frame->can_id |= can_id >> 1;
-	if (can_id & 1)
+	अगर (can_id & 1)
 		frame->can_id |= CAN_RTR_FLAG;
 
 	frame->len = can_cc_dlc2len(in_8(&regs->rx.dlr) & 0xf);
 
-	if (!(frame->can_id & CAN_RTR_FLAG)) {
-		void __iomem *data = &regs->rx.dsr1_0;
+	अगर (!(frame->can_id & CAN_RTR_FLAG)) अणु
+		व्योम __iomem *data = &regs->rx.dsr1_0;
 		u16 *payload = (u16 *)frame->data;
 
-		for (i = 0; i < frame->len / 2; i++) {
+		क्रम (i = 0; i < frame->len / 2; i++) अणु
 			*payload++ = in_be16(data);
 			data += 2 + _MSCAN_RESERVED_DSR_SIZE;
-		}
-		/* read remaining byte if necessary */
-		if (frame->len & 1)
+		पूर्ण
+		/* पढ़ो reमुख्यing byte अगर necessary */
+		अगर (frame->len & 1)
 			frame->data[frame->len - 1] = in_8(data);
-	}
+	पूर्ण
 
 	out_8(&regs->canrflg, MSCAN_RXF);
-}
+पूर्ण
 
-static void mscan_get_err_frame(struct net_device *dev, struct can_frame *frame,
+अटल व्योम mscan_get_err_frame(काष्ठा net_device *dev, काष्ठा can_frame *frame,
 				u8 canrflg)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
-	struct net_device_stats *stats = &dev->stats;
-	enum can_state new_state;
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
+	काष्ठा net_device_stats *stats = &dev->stats;
+	क्रमागत can_state new_state;
 
 	netdev_dbg(dev, "error interrupt (canrflg=%#x)\n", canrflg);
 	frame->can_id = CAN_ERR_FLAG;
 
-	if (canrflg & MSCAN_OVRIF) {
+	अगर (canrflg & MSCAN_OVRIF) अणु
 		frame->can_id |= CAN_ERR_CRTL;
 		frame->data[1] = CAN_ERR_CRTL_RX_OVERFLOW;
 		stats->rx_over_errors++;
 		stats->rx_errors++;
-	} else {
+	पूर्ण अन्यथा अणु
 		frame->data[1] = 0;
-	}
+	पूर्ण
 
 	new_state = get_new_state(dev, canrflg);
-	if (new_state != priv->can.state) {
+	अगर (new_state != priv->can.state) अणु
 		can_change_state(dev, frame,
 				 state_map[MSCAN_STATE_TX(canrflg)],
 				 state_map[MSCAN_STATE_RX(canrflg)]);
 
-		if (priv->can.state == CAN_STATE_BUS_OFF) {
+		अगर (priv->can.state == CAN_STATE_BUS_OFF) अणु
 			/*
-			 * The MSCAN on the MPC5200 does recover from bus-off
-			 * automatically. To avoid that we stop the chip doing
+			 * The MSCAN on the MPC5200 करोes recover from bus-off
+			 * स्वतःmatically. To aव्योम that we stop the chip करोing
 			 * a light-weight stop (we are in irq-context).
 			 */
-			if (priv->type != MSCAN_TYPE_MPC5121) {
+			अगर (priv->type != MSCAN_TYPE_MPC5121) अणु
 				out_8(&regs->cantier, 0);
 				out_8(&regs->canrier, 0);
 				setbits8(&regs->canctl0,
 					 MSCAN_SLPRQ | MSCAN_INITRQ);
-			}
+			पूर्ण
 			can_bus_off(dev);
-		}
-	}
-	priv->shadow_statflg = canrflg & MSCAN_STAT_MSK;
+		पूर्ण
+	पूर्ण
+	priv->shaकरोw_statflg = canrflg & MSCAN_STAT_MSK;
 	frame->len = CAN_ERR_DLC;
 	out_8(&regs->canrflg, MSCAN_ERR_IF);
-}
+पूर्ण
 
-static int mscan_rx_poll(struct napi_struct *napi, int quota)
-{
-	struct mscan_priv *priv = container_of(napi, struct mscan_priv, napi);
-	struct net_device *dev = napi->dev;
-	struct mscan_regs __iomem *regs = priv->reg_base;
-	struct net_device_stats *stats = &dev->stats;
-	int work_done = 0;
-	struct sk_buff *skb;
-	struct can_frame *frame;
+अटल पूर्णांक mscan_rx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक quota)
+अणु
+	काष्ठा mscan_priv *priv = container_of(napi, काष्ठा mscan_priv, napi);
+	काष्ठा net_device *dev = napi->dev;
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
+	काष्ठा net_device_stats *stats = &dev->stats;
+	पूर्णांक work_करोne = 0;
+	काष्ठा sk_buff *skb;
+	काष्ठा can_frame *frame;
 	u8 canrflg;
 
-	while (work_done < quota) {
+	जबतक (work_करोne < quota) अणु
 		canrflg = in_8(&regs->canrflg);
-		if (!(canrflg & (MSCAN_RXF | MSCAN_ERR_IF)))
-			break;
+		अगर (!(canrflg & (MSCAN_RXF | MSCAN_ERR_IF)))
+			अवरोध;
 
 		skb = alloc_can_skb(dev, &frame);
-		if (!skb) {
-			if (printk_ratelimit())
+		अगर (!skb) अणु
+			अगर (prपूर्णांकk_ratelimit())
 				netdev_notice(dev, "packet dropped\n");
 			stats->rx_dropped++;
 			out_8(&regs->canrflg, canrflg);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (canrflg & MSCAN_RXF)
+		अगर (canrflg & MSCAN_RXF)
 			mscan_get_rx_frame(dev, frame);
-		else if (canrflg & MSCAN_ERR_IF)
+		अन्यथा अगर (canrflg & MSCAN_ERR_IF)
 			mscan_get_err_frame(dev, frame, canrflg);
 
 		stats->rx_packets++;
 		stats->rx_bytes += frame->len;
-		work_done++;
-		netif_receive_skb(skb);
-	}
+		work_करोne++;
+		netअगर_receive_skb(skb);
+	पूर्ण
 
-	if (work_done < quota) {
-		if (likely(napi_complete_done(&priv->napi, work_done))) {
+	अगर (work_करोne < quota) अणु
+		अगर (likely(napi_complete_करोne(&priv->napi, work_करोne))) अणु
 			clear_bit(F_RX_PROGRESS, &priv->flags);
-			if (priv->can.state < CAN_STATE_BUS_OFF)
-				out_8(&regs->canrier, priv->shadow_canrier);
-		}
-	}
-	return work_done;
-}
+			अगर (priv->can.state < CAN_STATE_BUS_OFF)
+				out_8(&regs->canrier, priv->shaकरोw_canrier);
+		पूर्ण
+	पूर्ण
+	वापस work_करोne;
+पूर्ण
 
-static irqreturn_t mscan_isr(int irq, void *dev_id)
-{
-	struct net_device *dev = (struct net_device *)dev_id;
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
-	struct net_device_stats *stats = &dev->stats;
+अटल irqवापस_t mscan_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = (काष्ठा net_device *)dev_id;
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
+	काष्ठा net_device_stats *stats = &dev->stats;
 	u8 cantier, cantflg, canrflg;
-	irqreturn_t ret = IRQ_NONE;
+	irqवापस_t ret = IRQ_NONE;
 
 	cantier = in_8(&regs->cantier) & MSCAN_TXE;
 	cantflg = in_8(&regs->cantflg) & cantier;
 
-	if (cantier && cantflg) {
-		struct list_head *tmp, *pos;
+	अगर (cantier && cantflg) अणु
+		काष्ठा list_head *पंचांगp, *pos;
 
-		list_for_each_safe(pos, tmp, &priv->tx_head) {
-			struct tx_queue_entry *entry =
-			    list_entry(pos, struct tx_queue_entry, list);
+		list_क्रम_each_safe(pos, पंचांगp, &priv->tx_head) अणु
+			काष्ठा tx_queue_entry *entry =
+			    list_entry(pos, काष्ठा tx_queue_entry, list);
 			u8 mask = entry->mask;
 
-			if (!(cantflg & mask))
-				continue;
+			अगर (!(cantflg & mask))
+				जारी;
 
 			out_8(&regs->cantbsel, mask);
 			stats->tx_bytes += in_8(&regs->tx.dlr);
 			stats->tx_packets++;
-			can_get_echo_skb(dev, entry->id, NULL);
+			can_get_echo_skb(dev, entry->id, शून्य);
 			priv->tx_active &= ~mask;
 			list_del(pos);
-		}
+		पूर्ण
 
-		if (list_empty(&priv->tx_head)) {
+		अगर (list_empty(&priv->tx_head)) अणु
 			clear_bit(F_TX_WAIT_ALL, &priv->flags);
 			clear_bit(F_TX_PROGRESS, &priv->flags);
 			priv->cur_pri = 0;
-		} else {
-			netif_trans_update(dev);
-		}
+		पूर्ण अन्यथा अणु
+			netअगर_trans_update(dev);
+		पूर्ण
 
-		if (!test_bit(F_TX_WAIT_ALL, &priv->flags))
-			netif_wake_queue(dev);
+		अगर (!test_bit(F_TX_WAIT_ALL, &priv->flags))
+			netअगर_wake_queue(dev);
 
 		out_8(&regs->cantier, priv->tx_active);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
 	canrflg = in_8(&regs->canrflg);
-	if ((canrflg & ~MSCAN_STAT_MSK) &&
-	    !test_and_set_bit(F_RX_PROGRESS, &priv->flags)) {
-		if (canrflg & ~MSCAN_STAT_MSK) {
-			priv->shadow_canrier = in_8(&regs->canrier);
+	अगर ((canrflg & ~MSCAN_STAT_MSK) &&
+	    !test_and_set_bit(F_RX_PROGRESS, &priv->flags)) अणु
+		अगर (canrflg & ~MSCAN_STAT_MSK) अणु
+			priv->shaकरोw_canrier = in_8(&regs->canrier);
 			out_8(&regs->canrier, 0);
 			napi_schedule(&priv->napi);
 			ret = IRQ_HANDLED;
-		} else {
+		पूर्ण अन्यथा अणु
 			clear_bit(F_RX_PROGRESS, &priv->flags);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int mscan_do_set_mode(struct net_device *dev, enum can_mode mode)
-{
-	int ret = 0;
+अटल पूर्णांक mscan_करो_set_mode(काष्ठा net_device *dev, क्रमागत can_mode mode)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (mode) {
-	case CAN_MODE_START:
+	चयन (mode) अणु
+	हाल CAN_MODE_START:
 		ret = mscan_restart(dev);
-		if (ret)
-			break;
-		if (netif_queue_stopped(dev))
-			netif_wake_queue(dev);
-		break;
+		अगर (ret)
+			अवरोध;
+		अगर (netअगर_queue_stopped(dev))
+			netअगर_wake_queue(dev);
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EOPNOTSUPP;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int mscan_do_set_bittiming(struct net_device *dev)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
-	struct can_bittiming *bt = &priv->can.bittiming;
+अटल पूर्णांक mscan_करो_set_bittiming(काष्ठा net_device *dev)
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
+	काष्ठा can_bittiming *bt = &priv->can.bittiming;
 	u8 btr0, btr1;
 
 	btr0 = BTR0_SET_BRP(bt->brp) | BTR0_SET_SJW(bt->sjw);
@@ -520,116 +521,116 @@ static int mscan_do_set_bittiming(struct net_device *dev)
 	out_8(&regs->canbtr0, btr0);
 	out_8(&regs->canbtr1, btr1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mscan_get_berr_counter(const struct net_device *dev,
-				  struct can_berr_counter *bec)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
+अटल पूर्णांक mscan_get_berr_counter(स्थिर काष्ठा net_device *dev,
+				  काष्ठा can_berr_counter *bec)
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
 
 	bec->txerr = in_8(&regs->cantxerr);
 	bec->rxerr = in_8(&regs->canrxerr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mscan_open(struct net_device *dev)
-{
-	int ret;
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
+अटल पूर्णांक mscan_खोलो(काष्ठा net_device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
 
 	ret = clk_prepare_enable(priv->clk_ipg);
-	if (ret)
-		goto exit_retcode;
+	अगर (ret)
+		जाओ निकास_retcode;
 	ret = clk_prepare_enable(priv->clk_can);
-	if (ret)
-		goto exit_dis_ipg_clock;
+	अगर (ret)
+		जाओ निकास_dis_ipg_घड़ी;
 
-	/* common open */
-	ret = open_candev(dev);
-	if (ret)
-		goto exit_dis_can_clock;
+	/* common खोलो */
+	ret = खोलो_candev(dev);
+	अगर (ret)
+		जाओ निकास_dis_can_घड़ी;
 
 	napi_enable(&priv->napi);
 
 	ret = request_irq(dev->irq, mscan_isr, 0, dev->name, dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		netdev_err(dev, "failed to attach interrupt\n");
-		goto exit_napi_disable;
-	}
+		जाओ निकास_napi_disable;
+	पूर्ण
 
-	if (priv->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
+	अगर (priv->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
 		setbits8(&regs->canctl1, MSCAN_LISTEN);
-	else
+	अन्यथा
 		clrbits8(&regs->canctl1, MSCAN_LISTEN);
 
 	ret = mscan_start(dev);
-	if (ret)
-		goto exit_free_irq;
+	अगर (ret)
+		जाओ निकास_मुक्त_irq;
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	return 0;
+	वापस 0;
 
-exit_free_irq:
-	free_irq(dev->irq, dev);
-exit_napi_disable:
+निकास_मुक्त_irq:
+	मुक्त_irq(dev->irq, dev);
+निकास_napi_disable:
 	napi_disable(&priv->napi);
-	close_candev(dev);
-exit_dis_can_clock:
+	बंद_candev(dev);
+निकास_dis_can_घड़ी:
 	clk_disable_unprepare(priv->clk_can);
-exit_dis_ipg_clock:
+निकास_dis_ipg_घड़ी:
 	clk_disable_unprepare(priv->clk_ipg);
-exit_retcode:
-	return ret;
-}
+निकास_retcode:
+	वापस ret;
+पूर्ण
 
-static int mscan_close(struct net_device *dev)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
+अटल पूर्णांक mscan_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	napi_disable(&priv->napi);
 
 	out_8(&regs->cantier, 0);
 	out_8(&regs->canrier, 0);
 	mscan_set_mode(dev, MSCAN_INIT_MODE);
-	close_candev(dev);
-	free_irq(dev->irq, dev);
+	बंद_candev(dev);
+	मुक्त_irq(dev->irq, dev);
 
 	clk_disable_unprepare(priv->clk_can);
 	clk_disable_unprepare(priv->clk_ipg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops mscan_netdev_ops = {
-	.ndo_open	= mscan_open,
-	.ndo_stop	= mscan_close,
-	.ndo_start_xmit	= mscan_start_xmit,
-	.ndo_change_mtu	= can_change_mtu,
-};
+अटल स्थिर काष्ठा net_device_ops mscan_netdev_ops = अणु
+	.nकरो_खोलो	= mscan_खोलो,
+	.nकरो_stop	= mscan_बंद,
+	.nकरो_start_xmit	= mscan_start_xmit,
+	.nकरो_change_mtu	= can_change_mtu,
+पूर्ण;
 
-int register_mscandev(struct net_device *dev, int mscan_clksrc)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
+पूर्णांक रेजिस्टर_mscandev(काष्ठा net_device *dev, पूर्णांक mscan_clksrc)
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
 	u8 ctl1;
 
 	ctl1 = in_8(&regs->canctl1);
-	if (mscan_clksrc)
+	अगर (mscan_clksrc)
 		ctl1 |= MSCAN_CLKSRC;
-	else
+	अन्यथा
 		ctl1 &= ~MSCAN_CLKSRC;
 
-	if (priv->type == MSCAN_TYPE_MPC5121) {
-		priv->can.do_get_berr_counter = mscan_get_berr_counter;
+	अगर (priv->type == MSCAN_TYPE_MPC5121) अणु
+		priv->can.करो_get_berr_counter = mscan_get_berr_counter;
 		ctl1 |= MSCAN_BORM; /* bus-off recovery upon request */
-	}
+	पूर्ण
 
 	ctl1 |= MSCAN_CANE;
 	out_8(&regs->canctl1, ctl1);
@@ -650,48 +651,48 @@ int register_mscandev(struct net_device *dev, int mscan_clksrc)
 
 	mscan_set_mode(dev, MSCAN_INIT_MODE);
 
-	return register_candev(dev);
-}
+	वापस रेजिस्टर_candev(dev);
+पूर्ण
 
-void unregister_mscandev(struct net_device *dev)
-{
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs __iomem *regs = priv->reg_base;
+व्योम unरेजिस्टर_mscandev(काष्ठा net_device *dev)
+अणु
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs __iomem *regs = priv->reg_base;
 	mscan_set_mode(dev, MSCAN_INIT_MODE);
 	clrbits8(&regs->canctl1, MSCAN_CANE);
-	unregister_candev(dev);
-}
+	unरेजिस्टर_candev(dev);
+पूर्ण
 
-struct net_device *alloc_mscandev(void)
-{
-	struct net_device *dev;
-	struct mscan_priv *priv;
-	int i;
+काष्ठा net_device *alloc_mscandev(व्योम)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा mscan_priv *priv;
+	पूर्णांक i;
 
-	dev = alloc_candev(sizeof(struct mscan_priv), MSCAN_ECHO_SKB_MAX);
-	if (!dev)
-		return NULL;
+	dev = alloc_candev(माप(काष्ठा mscan_priv), MSCAN_ECHO_SKB_MAX);
+	अगर (!dev)
+		वापस शून्य;
 	priv = netdev_priv(dev);
 
 	dev->netdev_ops = &mscan_netdev_ops;
 
 	dev->flags |= IFF_ECHO;	/* we support local echo */
 
-	netif_napi_add(dev, &priv->napi, mscan_rx_poll, 8);
+	netअगर_napi_add(dev, &priv->napi, mscan_rx_poll, 8);
 
-	priv->can.bittiming_const = &mscan_bittiming_const;
-	priv->can.do_set_bittiming = mscan_do_set_bittiming;
-	priv->can.do_set_mode = mscan_do_set_mode;
+	priv->can.bittiming_स्थिर = &mscan_bittiming_स्थिर;
+	priv->can.करो_set_bittiming = mscan_करो_set_bittiming;
+	priv->can.करो_set_mode = mscan_करो_set_mode;
 	priv->can.ctrlmode_supported = CAN_CTRLMODE_3_SAMPLES |
 		CAN_CTRLMODE_LISTENONLY;
 
-	for (i = 0; i < TX_QUEUE_SIZE; i++) {
+	क्रम (i = 0; i < TX_QUEUE_SIZE; i++) अणु
 		priv->tx_queue[i].id = i;
 		priv->tx_queue[i].mask = 1 << i;
-	}
+	पूर्ण
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
 MODULE_AUTHOR("Andrey Volkov <avolkov@varma-el.com>");
 MODULE_LICENSE("GPL v2");

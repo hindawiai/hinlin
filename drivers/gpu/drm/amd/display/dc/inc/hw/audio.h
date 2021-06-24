@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,41 +24,41 @@
  *
  */
 
-#ifndef __DAL_AUDIO_H__
-#define __DAL_AUDIO_H__
+#अगर_अघोषित __DAL_AUDIO_H__
+#घोषणा __DAL_AUDIO_H__
 
-#include "audio_types.h"
+#समावेश "audio_types.h"
 
-struct audio;
+काष्ठा audio;
 
-struct audio_funcs {
+काष्ठा audio_funcs अणु
 
-	bool (*endpoint_valid)(struct audio *audio);
+	bool (*endpoपूर्णांक_valid)(काष्ठा audio *audio);
 
-	void (*hw_init)(struct audio *audio);
+	व्योम (*hw_init)(काष्ठा audio *audio);
 
-	void (*az_enable)(struct audio *audio);
+	व्योम (*az_enable)(काष्ठा audio *audio);
 
-	void (*az_disable)(struct audio *audio);
+	व्योम (*az_disable)(काष्ठा audio *audio);
 
-	void (*az_configure)(struct audio *audio,
-		enum signal_type signal,
-		const struct audio_crtc_info *crtc_info,
-		const struct audio_info *audio_info);
+	व्योम (*az_configure)(काष्ठा audio *audio,
+		क्रमागत संकेत_type संकेत,
+		स्थिर काष्ठा audio_crtc_info *crtc_info,
+		स्थिर काष्ठा audio_info *audio_info);
 
-	void (*wall_dto_setup)(struct audio *audio,
-		enum signal_type signal,
-		const struct audio_crtc_info *crtc_info,
-		const struct audio_pll_info *pll_info);
+	व्योम (*wall_dto_setup)(काष्ठा audio *audio,
+		क्रमागत संकेत_type संकेत,
+		स्थिर काष्ठा audio_crtc_info *crtc_info,
+		स्थिर काष्ठा audio_pll_info *pll_info);
 
-	void (*destroy)(struct audio **audio);
-};
+	व्योम (*destroy)(काष्ठा audio **audio);
+पूर्ण;
 
-struct audio {
-	const struct audio_funcs *funcs;
-	struct dc_context *ctx;
-	unsigned int inst;
+काष्ठा audio अणु
+	स्थिर काष्ठा audio_funcs *funcs;
+	काष्ठा dc_context *ctx;
+	अचिन्हित पूर्णांक inst;
 	bool enabled;
-};
+पूर्ण;
 
-#endif  /* __DAL_AUDIO__ */
+#पूर्ण_अगर  /* __DAL_AUDIO__ */

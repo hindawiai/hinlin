@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 Advanced Micro Devices, Inc.
  * Author: Joerg Roedel <jroedel@suse.de>
  *
- * This header file contains stuff that is shared between different interrupt
+ * This header file contains stuff that is shared between dअगरferent पूर्णांकerrupt
  * remapping drivers but with no need to be visible outside of the IOMMU layer.
  */
 
-#ifndef __IRQ_REMAPPING_H
-#define __IRQ_REMAPPING_H
+#अगर_अघोषित __IRQ_REMAPPING_H
+#घोषणा __IRQ_REMAPPING_H
 
-#ifdef CONFIG_IRQ_REMAP
+#अगर_घोषित CONFIG_IRQ_REMAP
 
-struct irq_data;
-struct msi_msg;
-struct irq_domain;
-struct irq_alloc_info;
+काष्ठा irq_data;
+काष्ठा msi_msg;
+काष्ठा irq_करोमुख्य;
+काष्ठा irq_alloc_info;
 
-extern int irq_remap_broken;
-extern int disable_sourceid_checking;
-extern int no_x2apic_optout;
-extern int irq_remapping_enabled;
+बाह्य पूर्णांक irq_remap_broken;
+बाह्य पूर्णांक disable_sourceid_checking;
+बाह्य पूर्णांक no_x2apic_optout;
+बाह्य पूर्णांक irq_remapping_enabled;
 
-extern int disable_irq_post;
+बाह्य पूर्णांक disable_irq_post;
 
-struct irq_remap_ops {
+काष्ठा irq_remap_ops अणु
 	/* The supported capabilities */
-	int capability;
+	पूर्णांक capability;
 
-	/* Initializes hardware and makes it ready for remapping interrupts */
-	int  (*prepare)(void);
+	/* Initializes hardware and makes it पढ़ोy क्रम remapping पूर्णांकerrupts */
+	पूर्णांक  (*prepare)(व्योम);
 
 	/* Enables the remapping hardware */
-	int  (*enable)(void);
+	पूर्णांक  (*enable)(व्योम);
 
 	/* Disables the remapping hardware */
-	void (*disable)(void);
+	व्योम (*disable)(व्योम);
 
 	/* Reenables the remapping hardware */
-	int  (*reenable)(int);
+	पूर्णांक  (*reenable)(पूर्णांक);
 
 	/* Enable fault handling */
-	int  (*enable_faulting)(void);
-};
+	पूर्णांक  (*enable_faulting)(व्योम);
+पूर्ण;
 
-extern struct irq_remap_ops intel_irq_remap_ops;
-extern struct irq_remap_ops amd_iommu_irq_ops;
-extern struct irq_remap_ops hyperv_irq_remap_ops;
+बाह्य काष्ठा irq_remap_ops पूर्णांकel_irq_remap_ops;
+बाह्य काष्ठा irq_remap_ops amd_iommu_irq_ops;
+बाह्य काष्ठा irq_remap_ops hyperv_irq_remap_ops;
 
-#else  /* CONFIG_IRQ_REMAP */
+#अन्यथा  /* CONFIG_IRQ_REMAP */
 
-#define irq_remapping_enabled 0
-#define irq_remap_broken      0
-#define disable_irq_post      1
+#घोषणा irq_remapping_enabled 0
+#घोषणा irq_remap_broken      0
+#घोषणा disable_irq_post      1
 
-#endif /* CONFIG_IRQ_REMAP */
+#पूर्ण_अगर /* CONFIG_IRQ_REMAP */
 
-#endif /* __IRQ_REMAPPING_H */
+#पूर्ण_अगर /* __IRQ_REMAPPING_H */

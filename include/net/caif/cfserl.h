@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#ifndef CFSERL_H_
-#define CFSERL_H_
-#include <net/caif/caif_layer.h>
+#अगर_अघोषित CFSERL_H_
+#घोषणा CFSERL_H_
+#समावेश <net/caअगर/caअगर_layer.h>
 
-struct cflayer *cfserl_create(int instance, bool use_stx);
-void cfserl_release(struct cflayer *layer);
-#endif
+काष्ठा cflayer *cfserl_create(पूर्णांक instance, bool use_stx);
+व्योम cfserl_release(काष्ठा cflayer *layer);
+#पूर्ण_अगर

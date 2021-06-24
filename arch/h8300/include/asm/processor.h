@@ -1,127 +1,128 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * include/asm-h8300/processor.h
+ * include/यंत्र-h8300/processor.h
  *
  * Copyright (C) 2002 Yoshinori Sato
  *
- * Based on: linux/asm-m68nommu/processor.h
+ * Based on: linux/यंत्र-m68nommu/processor.h
  *
- * Copyright (C) 1995 Hamish Macdonald
+ * Copyright (C) 1995 Hamish Macकरोnald
  */
 
-#ifndef __ASM_H8300_PROCESSOR_H
-#define __ASM_H8300_PROCESSOR_H
+#अगर_अघोषित __ASM_H8300_PROCESSOR_H
+#घोषणा __ASM_H8300_PROCESSOR_H
 
-#include <linux/compiler.h>
-#include <asm/segment.h>
-#include <asm/ptrace.h>
-#include <asm/current.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/segment.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/current.h>
 
-static inline unsigned long rdusp(void)
-{
-	extern unsigned int	_sw_usp;
+अटल अंतरभूत अचिन्हित दीर्घ rdusp(व्योम)
+अणु
+	बाह्य अचिन्हित पूर्णांक	_sw_usp;
 
-	return _sw_usp;
-}
+	वापस _sw_usp;
+पूर्ण
 
-static inline void wrusp(unsigned long usp)
-{
-	extern unsigned int	_sw_usp;
+अटल अंतरभूत व्योम wrusp(अचिन्हित दीर्घ usp)
+अणु
+	बाह्य अचिन्हित पूर्णांक	_sw_usp;
 
 	_sw_usp = usp;
-}
+पूर्ण
 
 /*
- * User space process size: 3.75GB. This is hardcoded into a few places,
- * so don't change it unless you know what you are doing.
+ * User space process size: 3.75GB. This is hardcoded पूर्णांकo a few places,
+ * so करोn't change it unless you know what you are करोing.
  */
-#define TASK_SIZE	(0xFFFFFFFFUL)
+#घोषणा TASK_SIZE	(0xFFFFFFFFUL)
 
-#ifdef __KERNEL__
-#define STACK_TOP	TASK_SIZE
-#define STACK_TOP_MAX	STACK_TOP
-#endif
+#अगर_घोषित __KERNEL__
+#घोषणा STACK_TOP	TASK_SIZE
+#घोषणा STACK_TOP_MAX	STACK_TOP
+#पूर्ण_अगर
 
 /*
- * This decides where the kernel will search for a free chunk of vm
+ * This decides where the kernel will search क्रम a मुक्त chunk of vm
  * space during mmap's. We won't be using it
  */
-#define TASK_UNMAPPED_BASE	0
+#घोषणा TASK_UNMAPPED_BASE	0
 
-struct thread_struct {
-	unsigned long  ksp;		/* kernel stack pointer */
-	unsigned long  usp;		/* user stack pointer */
-	unsigned long  ccr;		/* saved status register */
-	unsigned long  esp0;            /* points to SR of stack frame */
-	struct {
-		unsigned short *addr;
-		unsigned short inst;
-	} breakinfo;
-};
+काष्ठा thपढ़ो_काष्ठा अणु
+	अचिन्हित दीर्घ  ksp;		/* kernel stack poपूर्णांकer */
+	अचिन्हित दीर्घ  usp;		/* user stack poपूर्णांकer */
+	अचिन्हित दीर्घ  ccr;		/* saved status रेजिस्टर */
+	अचिन्हित दीर्घ  esp0;            /* poपूर्णांकs to SR of stack frame */
+	काष्ठा अणु
+		अचिन्हित लघु *addr;
+		अचिन्हित लघु inst;
+	पूर्ण अवरोधinfo;
+पूर्ण;
 
-#define INIT_THREAD  {						\
-	.ksp  = sizeof(init_stack) + (unsigned long)init_stack, \
+#घोषणा INIT_THREAD  अणु						\
+	.ksp  = माप(init_stack) + (अचिन्हित दीर्घ)init_stack, \
 	.usp  = 0,						\
 	.ccr  = PS_S,						\
 	.esp0 = 0,						\
-	.breakinfo = {						\
-		.addr = (unsigned short *)-1,			\
+	.अवरोधinfo = अणु						\
+		.addr = (अचिन्हित लघु *)-1,			\
 		.inst = 0					\
-	}							\
-}
+	पूर्ण							\
+पूर्ण
 
 /*
- * Do necessary setup to start up a newly executed thread.
+ * Do necessary setup to start up a newly executed thपढ़ो.
  *
- * pass the data segment into user programs if it exists,
+ * pass the data segment पूर्णांकo user programs अगर it exists,
  * it can't hurt anything as far as I can tell
  */
-#if defined(CONFIG_CPU_H8300H)
-#define start_thread(_regs, _pc, _usp)				\
-do {								\
+#अगर defined(CONFIG_CPU_H8300H)
+#घोषणा start_thपढ़ो(_regs, _pc, _usp)				\
+करो अणु								\
 	(_regs)->pc = (_pc);					\
 	(_regs)->ccr = 0x00;	   /* clear all flags */	\
 	(_regs)->er5 = current->mm->start_data;	/* GOT base */	\
-	(_regs)->sp = ((unsigned long)(_usp)) - sizeof(unsigned long) * 3; \
-} while (0)
-#endif
-#if defined(CONFIG_CPU_H8S)
-#define start_thread(_regs, _pc, _usp)				\
-do {								\
+	(_regs)->sp = ((अचिन्हित दीर्घ)(_usp)) - माप(अचिन्हित दीर्घ) * 3; \
+पूर्ण जबतक (0)
+#पूर्ण_अगर
+#अगर defined(CONFIG_CPU_H8S)
+#घोषणा start_thपढ़ो(_regs, _pc, _usp)				\
+करो अणु								\
 	(_regs)->pc = (_pc);					\
 	(_regs)->ccr = 0x00;	   /* clear kernel flag */	\
-	(_regs)->exr = 0x78;	   /* enable all interrupts */	\
+	(_regs)->exr = 0x78;	   /* enable all पूर्णांकerrupts */	\
 	(_regs)->er5 = current->mm->start_data;	/* GOT base */	\
-	/* 14 = space for retaddr(4), vector(4), er0(4) and exr(2) on stack */ \
-	(_regs)->sp = ((unsigned long)(_usp)) - 14;		\
-} while (0)
-#endif
+	/* 14 = space क्रम retaddr(4), vector(4), er0(4) and exr(2) on stack */ \
+	(_regs)->sp = ((अचिन्हित दीर्घ)(_usp)) - 14;		\
+पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /* Forward declaration, a strange C thing */
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-/* Free all resources held by a thread. */
-static inline void release_thread(struct task_struct *dead_task)
-{
-}
+/* Free all resources held by a thपढ़ो. */
+अटल अंतरभूत व्योम release_thपढ़ो(काष्ठा task_काष्ठा *dead_task)
+अणु
+पूर्ण
 
-unsigned long get_wchan(struct task_struct *p);
+अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
 
-#define	KSTK_EIP(tsk)	\
-	({			 \
-		unsigned long eip = 0;	      \
-		if ((tsk)->thread.esp0 > PAGE_SIZE &&	\
-		    MAP_NR((tsk)->thread.esp0) < max_mapnr)	 \
-			eip = ((struct pt_regs *) (tsk)->thread.esp0)->pc; \
-		eip; })
+#घोषणा	KSTK_EIP(tsk)	\
+	(अणु			 \
+		अचिन्हित दीर्घ eip = 0;	      \
+		अगर ((tsk)->thपढ़ो.esp0 > PAGE_SIZE &&	\
+		    MAP_NR((tsk)->thपढ़ो.esp0) < max_mapnr)	 \
+			eip = ((काष्ठा pt_regs *) (tsk)->thपढ़ो.esp0)->pc; \
+		eip; पूर्ण)
 
-#define	KSTK_ESP(tsk)	((tsk) == current ? rdusp() : (tsk)->thread.usp)
+#घोषणा	KSTK_ESP(tsk)	((tsk) == current ? rdusp() : (tsk)->thपढ़ो.usp)
 
-#define cpu_relax()    barrier()
+#घोषणा cpu_relax()    barrier()
 
-#define HARD_RESET_NOW() ({		\
+#घोषणा HARD_RESET_NOW() (अणु		\
 	local_irq_disable();		\
-	asm("jmp @@0");			\
-})
+	यंत्र("jmp @@0");			\
+पूर्ण)
 
-#endif
+#पूर्ण_अगर

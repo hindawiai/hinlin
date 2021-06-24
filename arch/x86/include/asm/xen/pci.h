@@ -1,83 +1,84 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_XEN_PCI_H
-#define _ASM_X86_XEN_PCI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_XEN_PCI_H
+#घोषणा _ASM_X86_XEN_PCI_H
 
-#if defined(CONFIG_PCI_XEN)
-extern int __init pci_xen_init(void);
-extern int __init pci_xen_hvm_init(void);
-#define pci_xen 1
-#else
-#define pci_xen 0
-#define pci_xen_init (0)
-static inline int pci_xen_hvm_init(void)
-{
-	return -1;
-}
-#endif
-#if defined(CONFIG_XEN_DOM0)
-int __init pci_xen_initial_domain(void);
-int xen_find_device_domain_owner(struct pci_dev *dev);
-int xen_register_device_domain_owner(struct pci_dev *dev, uint16_t domain);
-int xen_unregister_device_domain_owner(struct pci_dev *dev);
-#else
-static inline int __init pci_xen_initial_domain(void)
-{
-	return -1;
-}
-static inline int xen_find_device_domain_owner(struct pci_dev *dev)
-{
-	return -1;
-}
-static inline int xen_register_device_domain_owner(struct pci_dev *dev,
-						   uint16_t domain)
-{
-	return -1;
-}
-static inline int xen_unregister_device_domain_owner(struct pci_dev *dev)
-{
-	return -1;
-}
-#endif
+#अगर defined(CONFIG_PCI_XEN)
+बाह्य पूर्णांक __init pci_xen_init(व्योम);
+बाह्य पूर्णांक __init pci_xen_hvm_init(व्योम);
+#घोषणा pci_xen 1
+#अन्यथा
+#घोषणा pci_xen 0
+#घोषणा pci_xen_init (0)
+अटल अंतरभूत पूर्णांक pci_xen_hvm_init(व्योम)
+अणु
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
+#अगर defined(CONFIG_XEN_DOM0)
+पूर्णांक __init pci_xen_initial_करोमुख्य(व्योम);
+पूर्णांक xen_find_device_करोमुख्य_owner(काष्ठा pci_dev *dev);
+पूर्णांक xen_रेजिस्टर_device_करोमुख्य_owner(काष्ठा pci_dev *dev, uपूर्णांक16_t करोमुख्य);
+पूर्णांक xen_unरेजिस्टर_device_करोमुख्य_owner(काष्ठा pci_dev *dev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक __init pci_xen_initial_करोमुख्य(व्योम)
+अणु
+	वापस -1;
+पूर्ण
+अटल अंतरभूत पूर्णांक xen_find_device_करोमुख्य_owner(काष्ठा pci_dev *dev)
+अणु
+	वापस -1;
+पूर्ण
+अटल अंतरभूत पूर्णांक xen_रेजिस्टर_device_करोमुख्य_owner(काष्ठा pci_dev *dev,
+						   uपूर्णांक16_t करोमुख्य)
+अणु
+	वापस -1;
+पूर्ण
+अटल अंतरभूत पूर्णांक xen_unरेजिस्टर_device_करोमुख्य_owner(काष्ठा pci_dev *dev)
+अणु
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_PCI_MSI)
-#if defined(CONFIG_PCI_XEN)
-/* The drivers/pci/xen-pcifront.c sets this structure to
+#अगर defined(CONFIG_PCI_MSI)
+#अगर defined(CONFIG_PCI_XEN)
+/* The drivers/pci/xen-pcअगरront.c sets this काष्ठाure to
  * its own functions.
  */
-struct xen_pci_frontend_ops {
-	int (*enable_msi)(struct pci_dev *dev, int vectors[]);
-	void (*disable_msi)(struct pci_dev *dev);
-	int (*enable_msix)(struct pci_dev *dev, int vectors[], int nvec);
-	void (*disable_msix)(struct pci_dev *dev);
-};
+काष्ठा xen_pci_frontend_ops अणु
+	पूर्णांक (*enable_msi)(काष्ठा pci_dev *dev, पूर्णांक vectors[]);
+	व्योम (*disable_msi)(काष्ठा pci_dev *dev);
+	पूर्णांक (*enable_msix)(काष्ठा pci_dev *dev, पूर्णांक vectors[], पूर्णांक nvec);
+	व्योम (*disable_msix)(काष्ठा pci_dev *dev);
+पूर्ण;
 
-extern struct xen_pci_frontend_ops *xen_pci_frontend;
+बाह्य काष्ठा xen_pci_frontend_ops *xen_pci_frontend;
 
-static inline int xen_pci_frontend_enable_msi(struct pci_dev *dev,
-					      int vectors[])
-{
-	if (xen_pci_frontend && xen_pci_frontend->enable_msi)
-		return xen_pci_frontend->enable_msi(dev, vectors);
-	return -ENOSYS;
-}
-static inline void xen_pci_frontend_disable_msi(struct pci_dev *dev)
-{
-	if (xen_pci_frontend && xen_pci_frontend->disable_msi)
+अटल अंतरभूत पूर्णांक xen_pci_frontend_enable_msi(काष्ठा pci_dev *dev,
+					      पूर्णांक vectors[])
+अणु
+	अगर (xen_pci_frontend && xen_pci_frontend->enable_msi)
+		वापस xen_pci_frontend->enable_msi(dev, vectors);
+	वापस -ENOSYS;
+पूर्ण
+अटल अंतरभूत व्योम xen_pci_frontend_disable_msi(काष्ठा pci_dev *dev)
+अणु
+	अगर (xen_pci_frontend && xen_pci_frontend->disable_msi)
 			xen_pci_frontend->disable_msi(dev);
-}
-static inline int xen_pci_frontend_enable_msix(struct pci_dev *dev,
-					       int vectors[], int nvec)
-{
-	if (xen_pci_frontend && xen_pci_frontend->enable_msix)
-		return xen_pci_frontend->enable_msix(dev, vectors, nvec);
-	return -ENOSYS;
-}
-static inline void xen_pci_frontend_disable_msix(struct pci_dev *dev)
-{
-	if (xen_pci_frontend && xen_pci_frontend->disable_msix)
+पूर्ण
+अटल अंतरभूत पूर्णांक xen_pci_frontend_enable_msix(काष्ठा pci_dev *dev,
+					       पूर्णांक vectors[], पूर्णांक nvec)
+अणु
+	अगर (xen_pci_frontend && xen_pci_frontend->enable_msix)
+		वापस xen_pci_frontend->enable_msix(dev, vectors, nvec);
+	वापस -ENOSYS;
+पूर्ण
+अटल अंतरभूत व्योम xen_pci_frontend_disable_msix(काष्ठा pci_dev *dev)
+अणु
+	अगर (xen_pci_frontend && xen_pci_frontend->disable_msix)
 			xen_pci_frontend->disable_msix(dev);
-}
-#endif /* CONFIG_PCI_XEN */
-#endif /* CONFIG_PCI_MSI */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_XEN */
+#पूर्ण_अगर /* CONFIG_PCI_MSI */
 
-#endif	/* _ASM_X86_XEN_PCI_H */
+#पूर्ण_अगर	/* _ASM_X86_XEN_PCI_H */

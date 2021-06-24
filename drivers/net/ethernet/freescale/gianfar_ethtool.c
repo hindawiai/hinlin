@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  drivers/net/ethernet/freescale/gianfar_ethtool.c
+ *  drivers/net/ethernet/मुक्तscale/gianfar_ethtool.c
  *
  *  Gianfar Ethernet Driver
- *  Ethtool support for Gianfar Enet
+ *  Ethtool support क्रम Gianfar Enet
  *  Based on e1000 ethtool support
  *
  *  Author: Andy Fleming
- *  Maintainer: Kumar Gala
- *  Modifier: Sandeep Gopalpet <sandeep.kumar@freescale.com>
+ *  Maपूर्णांकainer: Kumar Gala
+ *  Modअगरier: Sandeep Gopalpet <sandeep.kumar@मुक्तscale.com>
  *
  *  Copyright 2003-2006, 2008-2009, 2011 Freescale Semiconductor, Inc.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/net_tstamp.h>
-#include <linux/skbuff.h>
-#include <linux/spinlock.h>
-#include <linux/mm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/net_tstamp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mm.h>
 
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <linux/uaccess.h>
-#include <linux/module.h>
-#include <linux/crc32.h>
-#include <asm/types.h>
-#include <linux/ethtool.h>
-#include <linux/mii.h>
-#include <linux/phy.h>
-#include <linux/sort.h>
-#include <linux/if_vlan.h>
-#include <linux/of_platform.h>
-#include <linux/fsl/ptp_qoriq.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/crc32.h>
+#समावेश <यंत्र/types.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/fsl/ptp_qoriq.h>
 
-#include "gianfar.h"
+#समावेश "gianfar.h"
 
-#define GFAR_MAX_COAL_USECS 0xffff
-#define GFAR_MAX_COAL_FRAMES 0xff
+#घोषणा GFAR_MAX_COAL_USECS 0xffff
+#घोषणा GFAR_MAX_COAL_FRAMES 0xff
 
-static const char stat_gstrings[][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर stat_gstrings[][ETH_GSTRING_LEN] = अणु
 	/* extra stats */
 	"rx-allocation-errors",
 	"rx-large-frame-errors",
@@ -106,273 +107,273 @@ static const char stat_gstrings[][ETH_GSTRING_LEN] = {
 	"tx-oversize-frames",
 	"tx-undersize-frames",
 	"tx-fragmented-frames",
-};
+पूर्ण;
 
 /* Fill in a buffer with the strings which correspond to the
  * stats */
-static void gfar_gstrings(struct net_device *dev, u32 stringset, u8 * buf)
-{
-	struct gfar_private *priv = netdev_priv(dev);
+अटल व्योम gfar_gstrings(काष्ठा net_device *dev, u32 stringset, u8 * buf)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
 
-	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_RMON)
-		memcpy(buf, stat_gstrings, GFAR_STATS_LEN * ETH_GSTRING_LEN);
-	else
-		memcpy(buf, stat_gstrings,
+	अगर (priv->device_flags & FSL_GIANFAR_DEV_HAS_RMON)
+		स_नकल(buf, stat_gstrings, GFAR_STATS_LEN * ETH_GSTRING_LEN);
+	अन्यथा
+		स_नकल(buf, stat_gstrings,
 		       GFAR_EXTRA_STATS_LEN * ETH_GSTRING_LEN);
-}
+पूर्ण
 
 /* Fill in an array of 64-bit statistics from various sources.
  * This array will be appended to the end of the ethtool_stats
- * structure, and returned to user space
+ * काष्ठाure, and वापसed to user space
  */
-static void gfar_fill_stats(struct net_device *dev, struct ethtool_stats *dummy,
+अटल व्योम gfar_fill_stats(काष्ठा net_device *dev, काष्ठा ethtool_stats *dummy,
 			    u64 *buf)
-{
-	int i;
-	struct gfar_private *priv = netdev_priv(dev);
-	struct gfar __iomem *regs = priv->gfargrp[0].regs;
+अणु
+	पूर्णांक i;
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
+	काष्ठा gfar __iomem *regs = priv->gfargrp[0].regs;
 	atomic64_t *extra = (atomic64_t *)&priv->extra_stats;
 
-	for (i = 0; i < GFAR_EXTRA_STATS_LEN; i++)
-		buf[i] = atomic64_read(&extra[i]);
+	क्रम (i = 0; i < GFAR_EXTRA_STATS_LEN; i++)
+		buf[i] = atomic64_पढ़ो(&extra[i]);
 
-	if (priv->device_flags & FSL_GIANFAR_DEV_HAS_RMON) {
+	अगर (priv->device_flags & FSL_GIANFAR_DEV_HAS_RMON) अणु
 		u32 __iomem *rmon = (u32 __iomem *) &regs->rmon;
 
-		for (; i < GFAR_STATS_LEN; i++, rmon++)
-			buf[i] = (u64) gfar_read(rmon);
-	}
-}
+		क्रम (; i < GFAR_STATS_LEN; i++, rmon++)
+			buf[i] = (u64) gfar_पढ़ो(rmon);
+	पूर्ण
+पूर्ण
 
-static int gfar_sset_count(struct net_device *dev, int sset)
-{
-	struct gfar_private *priv = netdev_priv(dev);
+अटल पूर्णांक gfar_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
 
-	switch (sset) {
-	case ETH_SS_STATS:
-		if (priv->device_flags & FSL_GIANFAR_DEV_HAS_RMON)
-			return GFAR_STATS_LEN;
-		else
-			return GFAR_EXTRA_STATS_LEN;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		अगर (priv->device_flags & FSL_GIANFAR_DEV_HAS_RMON)
+			वापस GFAR_STATS_LEN;
+		अन्यथा
+			वापस GFAR_EXTRA_STATS_LEN;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-/* Fills in the drvinfo structure with some basic info */
-static void gfar_gdrvinfo(struct net_device *dev,
-			  struct ethtool_drvinfo *drvinfo)
-{
-	strlcpy(drvinfo->driver, DRV_NAME, sizeof(drvinfo->driver));
-}
+/* Fills in the drvinfo काष्ठाure with some basic info */
+अटल व्योम gfar_gdrvinfo(काष्ठा net_device *dev,
+			  काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	strlcpy(drvinfo->driver, DRV_NAME, माप(drvinfo->driver));
+पूर्ण
 
-/* Return the length of the register structure */
-static int gfar_reglen(struct net_device *dev)
-{
-	return sizeof (struct gfar);
-}
+/* Return the length of the रेजिस्टर काष्ठाure */
+अटल पूर्णांक gfar_reglen(काष्ठा net_device *dev)
+अणु
+	वापस माप (काष्ठा gfar);
+पूर्ण
 
-/* Return a dump of the GFAR register space */
-static void gfar_get_regs(struct net_device *dev, struct ethtool_regs *regs,
-			  void *regbuf)
-{
-	int i;
-	struct gfar_private *priv = netdev_priv(dev);
+/* Return a dump of the GFAR रेजिस्टर space */
+अटल व्योम gfar_get_regs(काष्ठा net_device *dev, काष्ठा ethtool_regs *regs,
+			  व्योम *regbuf)
+अणु
+	पूर्णांक i;
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
 	u32 __iomem *theregs = (u32 __iomem *) priv->gfargrp[0].regs;
 	u32 *buf = (u32 *) regbuf;
 
-	for (i = 0; i < sizeof (struct gfar) / sizeof (u32); i++)
-		buf[i] = gfar_read(&theregs[i]);
-}
+	क्रम (i = 0; i < माप (काष्ठा gfar) / माप (u32); i++)
+		buf[i] = gfar_पढ़ो(&theregs[i]);
+पूर्ण
 
-/* Convert microseconds to ethernet clock ticks, which changes
+/* Convert microseconds to ethernet घड़ी ticks, which changes
  * depending on what speed the controller is running at */
-static unsigned int gfar_usecs2ticks(struct gfar_private *priv,
-				     unsigned int usecs)
-{
-	struct net_device *ndev = priv->ndev;
-	struct phy_device *phydev = ndev->phydev;
-	unsigned int count;
+अटल अचिन्हित पूर्णांक gfar_usecs2ticks(काष्ठा gfar_निजी *priv,
+				     अचिन्हित पूर्णांक usecs)
+अणु
+	काष्ठा net_device *ndev = priv->ndev;
+	काष्ठा phy_device *phydev = ndev->phydev;
+	अचिन्हित पूर्णांक count;
 
-	/* The timer is different, depending on the interface speed */
-	switch (phydev->speed) {
-	case SPEED_1000:
+	/* The समयr is dअगरferent, depending on the पूर्णांकerface speed */
+	चयन (phydev->speed) अणु
+	हाल SPEED_1000:
 		count = GFAR_GBIT_TIME;
-		break;
-	case SPEED_100:
+		अवरोध;
+	हाल SPEED_100:
 		count = GFAR_100_TIME;
-		break;
-	case SPEED_10:
-	default:
+		अवरोध;
+	हाल SPEED_10:
+	शेष:
 		count = GFAR_10_TIME;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Make sure we return a number greater than 0
-	 * if usecs > 0 */
-	return DIV_ROUND_UP(usecs * 1000, count);
-}
+	/* Make sure we वापस a number greater than 0
+	 * अगर usecs > 0 */
+	वापस DIV_ROUND_UP(usecs * 1000, count);
+पूर्ण
 
-/* Convert ethernet clock ticks to microseconds */
-static unsigned int gfar_ticks2usecs(struct gfar_private *priv,
-				     unsigned int ticks)
-{
-	struct net_device *ndev = priv->ndev;
-	struct phy_device *phydev = ndev->phydev;
-	unsigned int count;
+/* Convert ethernet घड़ी ticks to microseconds */
+अटल अचिन्हित पूर्णांक gfar_ticks2usecs(काष्ठा gfar_निजी *priv,
+				     अचिन्हित पूर्णांक ticks)
+अणु
+	काष्ठा net_device *ndev = priv->ndev;
+	काष्ठा phy_device *phydev = ndev->phydev;
+	अचिन्हित पूर्णांक count;
 
-	/* The timer is different, depending on the interface speed */
-	switch (phydev->speed) {
-	case SPEED_1000:
+	/* The समयr is dअगरferent, depending on the पूर्णांकerface speed */
+	चयन (phydev->speed) अणु
+	हाल SPEED_1000:
 		count = GFAR_GBIT_TIME;
-		break;
-	case SPEED_100:
+		अवरोध;
+	हाल SPEED_100:
 		count = GFAR_100_TIME;
-		break;
-	case SPEED_10:
-	default:
+		अवरोध;
+	हाल SPEED_10:
+	शेष:
 		count = GFAR_10_TIME;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Make sure we return a number greater than 0 */
-	/* if ticks is > 0 */
-	return (ticks * count) / 1000;
-}
+	/* Make sure we वापस a number greater than 0 */
+	/* अगर ticks is > 0 */
+	वापस (ticks * count) / 1000;
+पूर्ण
 
 /* Get the coalescing parameters, and put them in the cvals
- * structure.  */
-static int gfar_gcoalesce(struct net_device *dev,
-			  struct ethtool_coalesce *cvals)
-{
-	struct gfar_private *priv = netdev_priv(dev);
-	struct gfar_priv_rx_q *rx_queue = NULL;
-	struct gfar_priv_tx_q *tx_queue = NULL;
-	unsigned long rxtime;
-	unsigned long rxcount;
-	unsigned long txtime;
-	unsigned long txcount;
+ * काष्ठाure.  */
+अटल पूर्णांक gfar_gcoalesce(काष्ठा net_device *dev,
+			  काष्ठा ethtool_coalesce *cvals)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
+	काष्ठा gfar_priv_rx_q *rx_queue = शून्य;
+	काष्ठा gfar_priv_tx_q *tx_queue = शून्य;
+	अचिन्हित दीर्घ rxसमय;
+	अचिन्हित दीर्घ rxcount;
+	अचिन्हित दीर्घ txसमय;
+	अचिन्हित दीर्घ txcount;
 
-	if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_COALESCE))
-		return -EOPNOTSUPP;
+	अगर (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_COALESCE))
+		वापस -EOPNOTSUPP;
 
-	if (!dev->phydev)
-		return -ENODEV;
+	अगर (!dev->phydev)
+		वापस -ENODEV;
 
 	rx_queue = priv->rx_queue[0];
 	tx_queue = priv->tx_queue[0];
 
-	rxtime  = get_ictt_value(rx_queue->rxic);
+	rxसमय  = get_ictt_value(rx_queue->rxic);
 	rxcount = get_icft_value(rx_queue->rxic);
-	txtime  = get_ictt_value(tx_queue->txic);
+	txसमय  = get_ictt_value(tx_queue->txic);
 	txcount = get_icft_value(tx_queue->txic);
-	cvals->rx_coalesce_usecs = gfar_ticks2usecs(priv, rxtime);
+	cvals->rx_coalesce_usecs = gfar_ticks2usecs(priv, rxसमय);
 	cvals->rx_max_coalesced_frames = rxcount;
 
-	cvals->tx_coalesce_usecs = gfar_ticks2usecs(priv, txtime);
+	cvals->tx_coalesce_usecs = gfar_ticks2usecs(priv, txसमय);
 	cvals->tx_max_coalesced_frames = txcount;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Change the coalescing values.
  * Both cvals->*_usecs and cvals->*_frames have to be > 0
- * in order for coalescing to be active
+ * in order क्रम coalescing to be active
  */
-static int gfar_scoalesce(struct net_device *dev,
-			  struct ethtool_coalesce *cvals)
-{
-	struct gfar_private *priv = netdev_priv(dev);
-	int i, err = 0;
+अटल पूर्णांक gfar_scoalesce(काष्ठा net_device *dev,
+			  काष्ठा ethtool_coalesce *cvals)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
+	पूर्णांक i, err = 0;
 
-	if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_COALESCE))
-		return -EOPNOTSUPP;
+	अगर (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_COALESCE))
+		वापस -EOPNOTSUPP;
 
-	if (!dev->phydev)
-		return -ENODEV;
-
-	/* Check the bounds of the values */
-	if (cvals->rx_coalesce_usecs > GFAR_MAX_COAL_USECS) {
-		netdev_info(dev, "Coalescing is limited to %d microseconds\n",
-			    GFAR_MAX_COAL_USECS);
-		return -EINVAL;
-	}
-
-	if (cvals->rx_max_coalesced_frames > GFAR_MAX_COAL_FRAMES) {
-		netdev_info(dev, "Coalescing is limited to %d frames\n",
-			    GFAR_MAX_COAL_FRAMES);
-		return -EINVAL;
-	}
+	अगर (!dev->phydev)
+		वापस -ENODEV;
 
 	/* Check the bounds of the values */
-	if (cvals->tx_coalesce_usecs > GFAR_MAX_COAL_USECS) {
+	अगर (cvals->rx_coalesce_usecs > GFAR_MAX_COAL_USECS) अणु
 		netdev_info(dev, "Coalescing is limited to %d microseconds\n",
 			    GFAR_MAX_COAL_USECS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cvals->tx_max_coalesced_frames > GFAR_MAX_COAL_FRAMES) {
+	अगर (cvals->rx_max_coalesced_frames > GFAR_MAX_COAL_FRAMES) अणु
 		netdev_info(dev, "Coalescing is limited to %d frames\n",
 			    GFAR_MAX_COAL_FRAMES);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	while (test_and_set_bit_lock(GFAR_RESETTING, &priv->state))
+	/* Check the bounds of the values */
+	अगर (cvals->tx_coalesce_usecs > GFAR_MAX_COAL_USECS) अणु
+		netdev_info(dev, "Coalescing is limited to %d microseconds\n",
+			    GFAR_MAX_COAL_USECS);
+		वापस -EINVAL;
+	पूर्ण
+
+	अगर (cvals->tx_max_coalesced_frames > GFAR_MAX_COAL_FRAMES) अणु
+		netdev_info(dev, "Coalescing is limited to %d frames\n",
+			    GFAR_MAX_COAL_FRAMES);
+		वापस -EINVAL;
+	पूर्ण
+
+	जबतक (test_and_set_bit_lock(GFAR_RESETTING, &priv->state))
 		cpu_relax();
 
 	/* Set up rx coalescing */
-	if ((cvals->rx_coalesce_usecs == 0) ||
-	    (cvals->rx_max_coalesced_frames == 0)) {
-		for (i = 0; i < priv->num_rx_queues; i++)
+	अगर ((cvals->rx_coalesce_usecs == 0) ||
+	    (cvals->rx_max_coalesced_frames == 0)) अणु
+		क्रम (i = 0; i < priv->num_rx_queues; i++)
 			priv->rx_queue[i]->rxcoalescing = 0;
-	} else {
-		for (i = 0; i < priv->num_rx_queues; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < priv->num_rx_queues; i++)
 			priv->rx_queue[i]->rxcoalescing = 1;
-	}
+	पूर्ण
 
-	for (i = 0; i < priv->num_rx_queues; i++) {
+	क्रम (i = 0; i < priv->num_rx_queues; i++) अणु
 		priv->rx_queue[i]->rxic = mk_ic_value(
 			cvals->rx_max_coalesced_frames,
 			gfar_usecs2ticks(priv, cvals->rx_coalesce_usecs));
-	}
+	पूर्ण
 
 	/* Set up tx coalescing */
-	if ((cvals->tx_coalesce_usecs == 0) ||
-	    (cvals->tx_max_coalesced_frames == 0)) {
-		for (i = 0; i < priv->num_tx_queues; i++)
+	अगर ((cvals->tx_coalesce_usecs == 0) ||
+	    (cvals->tx_max_coalesced_frames == 0)) अणु
+		क्रम (i = 0; i < priv->num_tx_queues; i++)
 			priv->tx_queue[i]->txcoalescing = 0;
-	} else {
-		for (i = 0; i < priv->num_tx_queues; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < priv->num_tx_queues; i++)
 			priv->tx_queue[i]->txcoalescing = 1;
-	}
+	पूर्ण
 
-	for (i = 0; i < priv->num_tx_queues; i++) {
+	क्रम (i = 0; i < priv->num_tx_queues; i++) अणु
 		priv->tx_queue[i]->txic = mk_ic_value(
 			cvals->tx_max_coalesced_frames,
 			gfar_usecs2ticks(priv, cvals->tx_coalesce_usecs));
-	}
+	पूर्ण
 
-	if (dev->flags & IFF_UP) {
+	अगर (dev->flags & IFF_UP) अणु
 		stop_gfar(dev);
 		err = startup_gfar(dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		gfar_mac_reset(priv);
-	}
+	पूर्ण
 
 	clear_bit_unlock(GFAR_RESETTING, &priv->state);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Fills in rvals with the current ring parameters.  Currently,
  * rx, rx_mini, and rx_jumbo rings are the same size, as mini and
  * jumbo are ignored by the driver */
-static void gfar_gringparam(struct net_device *dev,
-			    struct ethtool_ringparam *rvals)
-{
-	struct gfar_private *priv = netdev_priv(dev);
-	struct gfar_priv_tx_q *tx_queue = NULL;
-	struct gfar_priv_rx_q *rx_queue = NULL;
+अटल व्योम gfar_gringparam(काष्ठा net_device *dev,
+			    काष्ठा ethtool_ringparam *rvals)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
+	काष्ठा gfar_priv_tx_q *tx_queue = शून्य;
+	काष्ठा gfar_priv_rx_q *rx_queue = शून्य;
 
 	tx_queue = priv->tx_queue[0];
 	rx_queue = priv->rx_queue[0];
@@ -389,363 +390,363 @@ static void gfar_gringparam(struct net_device *dev,
 	rvals->rx_mini_pending = rx_queue->rx_ring_size;
 	rvals->rx_jumbo_pending = rx_queue->rx_ring_size;
 	rvals->tx_pending = tx_queue->tx_ring_size;
-}
+पूर्ण
 
-/* Change the current ring parameters, stopping the controller if
- * necessary so that we don't mess things up while we're in motion.
+/* Change the current ring parameters, stopping the controller अगर
+ * necessary so that we करोn't mess things up while we're in motion.
  */
-static int gfar_sringparam(struct net_device *dev,
-			   struct ethtool_ringparam *rvals)
-{
-	struct gfar_private *priv = netdev_priv(dev);
-	int err = 0, i;
+अटल पूर्णांक gfar_sringparam(काष्ठा net_device *dev,
+			   काष्ठा ethtool_ringparam *rvals)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
+	पूर्णांक err = 0, i;
 
-	if (rvals->rx_pending > GFAR_RX_MAX_RING_SIZE)
-		return -EINVAL;
+	अगर (rvals->rx_pending > GFAR_RX_MAX_RING_SIZE)
+		वापस -EINVAL;
 
-	if (!is_power_of_2(rvals->rx_pending)) {
+	अगर (!is_घातer_of_2(rvals->rx_pending)) अणु
 		netdev_err(dev, "Ring sizes must be a power of 2\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (rvals->tx_pending > GFAR_TX_MAX_RING_SIZE)
-		return -EINVAL;
+	अगर (rvals->tx_pending > GFAR_TX_MAX_RING_SIZE)
+		वापस -EINVAL;
 
-	if (!is_power_of_2(rvals->tx_pending)) {
+	अगर (!is_घातer_of_2(rvals->tx_pending)) अणु
 		netdev_err(dev, "Ring sizes must be a power of 2\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	while (test_and_set_bit_lock(GFAR_RESETTING, &priv->state))
+	जबतक (test_and_set_bit_lock(GFAR_RESETTING, &priv->state))
 		cpu_relax();
 
-	if (dev->flags & IFF_UP)
+	अगर (dev->flags & IFF_UP)
 		stop_gfar(dev);
 
 	/* Change the sizes */
-	for (i = 0; i < priv->num_rx_queues; i++)
+	क्रम (i = 0; i < priv->num_rx_queues; i++)
 		priv->rx_queue[i]->rx_ring_size = rvals->rx_pending;
 
-	for (i = 0; i < priv->num_tx_queues; i++)
+	क्रम (i = 0; i < priv->num_tx_queues; i++)
 		priv->tx_queue[i]->tx_ring_size = rvals->tx_pending;
 
 	/* Rebuild the rings with the new size */
-	if (dev->flags & IFF_UP)
+	अगर (dev->flags & IFF_UP)
 		err = startup_gfar(dev);
 
 	clear_bit_unlock(GFAR_RESETTING, &priv->state);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void gfar_gpauseparam(struct net_device *dev,
-			     struct ethtool_pauseparam *epause)
-{
-	struct gfar_private *priv = netdev_priv(dev);
+अटल व्योम gfar_gछोड़ोparam(काष्ठा net_device *dev,
+			     काष्ठा ethtool_छोड़ोparam *eछोड़ो)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
 
-	epause->autoneg = !!priv->pause_aneg_en;
-	epause->rx_pause = !!priv->rx_pause_en;
-	epause->tx_pause = !!priv->tx_pause_en;
-}
+	eछोड़ो->स्वतःneg = !!priv->छोड़ो_aneg_en;
+	eछोड़ो->rx_छोड़ो = !!priv->rx_छोड़ो_en;
+	eछोड़ो->tx_छोड़ो = !!priv->tx_छोड़ो_en;
+पूर्ण
 
-static int gfar_spauseparam(struct net_device *dev,
-			    struct ethtool_pauseparam *epause)
-{
-	struct gfar_private *priv = netdev_priv(dev);
-	struct phy_device *phydev = dev->phydev;
-	struct gfar __iomem *regs = priv->gfargrp[0].regs;
+अटल पूर्णांक gfar_sछोड़ोparam(काष्ठा net_device *dev,
+			    काष्ठा ethtool_छोड़ोparam *eछोड़ो)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
+	काष्ठा phy_device *phydev = dev->phydev;
+	काष्ठा gfar __iomem *regs = priv->gfargrp[0].regs;
 
-	if (!phydev)
-		return -ENODEV;
+	अगर (!phydev)
+		वापस -ENODEV;
 
-	if (!phy_validate_pause(phydev, epause))
-		return -EINVAL;
+	अगर (!phy_validate_छोड़ो(phydev, eछोड़ो))
+		वापस -EINVAL;
 
-	priv->rx_pause_en = priv->tx_pause_en = 0;
-	phy_set_asym_pause(phydev, epause->rx_pause, epause->tx_pause);
-	if (epause->rx_pause) {
-		priv->rx_pause_en = 1;
+	priv->rx_छोड़ो_en = priv->tx_छोड़ो_en = 0;
+	phy_set_asym_छोड़ो(phydev, eछोड़ो->rx_छोड़ो, eछोड़ो->tx_छोड़ो);
+	अगर (eछोड़ो->rx_छोड़ो) अणु
+		priv->rx_छोड़ो_en = 1;
 
-		if (epause->tx_pause) {
-			priv->tx_pause_en = 1;
-		}
-	} else if (epause->tx_pause) {
-		priv->tx_pause_en = 1;
-	}
+		अगर (eछोड़ो->tx_छोड़ो) अणु
+			priv->tx_छोड़ो_en = 1;
+		पूर्ण
+	पूर्ण अन्यथा अगर (eछोड़ो->tx_छोड़ो) अणु
+		priv->tx_छोड़ो_en = 1;
+	पूर्ण
 
-	if (epause->autoneg)
-		priv->pause_aneg_en = 1;
-	else
-		priv->pause_aneg_en = 0;
+	अगर (eछोड़ो->स्वतःneg)
+		priv->छोड़ो_aneg_en = 1;
+	अन्यथा
+		priv->छोड़ो_aneg_en = 0;
 
-	if (!epause->autoneg) {
-		u32 tempval = gfar_read(&regs->maccfg1);
+	अगर (!eछोड़ो->स्वतःneg) अणु
+		u32 tempval = gfar_पढ़ो(&regs->maccfg1);
 
 		tempval &= ~(MACCFG1_TX_FLOW | MACCFG1_RX_FLOW);
 
 		priv->tx_actual_en = 0;
-		if (priv->tx_pause_en) {
+		अगर (priv->tx_छोड़ो_en) अणु
 			priv->tx_actual_en = 1;
 			tempval |= MACCFG1_TX_FLOW;
-		}
+		पूर्ण
 
-		if (priv->rx_pause_en)
+		अगर (priv->rx_छोड़ो_en)
 			tempval |= MACCFG1_RX_FLOW;
-		gfar_write(&regs->maccfg1, tempval);
-	}
+		gfar_ग_लिखो(&regs->maccfg1, tempval);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int gfar_set_features(struct net_device *dev, netdev_features_t features)
-{
+पूर्णांक gfar_set_features(काष्ठा net_device *dev, netdev_features_t features)
+अणु
 	netdev_features_t changed = dev->features ^ features;
-	struct gfar_private *priv = netdev_priv(dev);
-	int err = 0;
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
+	पूर्णांक err = 0;
 
-	if (!(changed & (NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_CTAG_RX |
+	अगर (!(changed & (NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_CTAG_RX |
 			 NETIF_F_RXCSUM)))
-		return 0;
+		वापस 0;
 
-	while (test_and_set_bit_lock(GFAR_RESETTING, &priv->state))
+	जबतक (test_and_set_bit_lock(GFAR_RESETTING, &priv->state))
 		cpu_relax();
 
 	dev->features = features;
 
-	if (dev->flags & IFF_UP) {
-		/* Now we take down the rings to rebuild them */
+	अगर (dev->flags & IFF_UP) अणु
+		/* Now we take करोwn the rings to rebuild them */
 		stop_gfar(dev);
 		err = startup_gfar(dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		gfar_mac_reset(priv);
-	}
+	पूर्ण
 
 	clear_bit_unlock(GFAR_RESETTING, &priv->state);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static uint32_t gfar_get_msglevel(struct net_device *dev)
-{
-	struct gfar_private *priv = netdev_priv(dev);
+अटल uपूर्णांक32_t gfar_get_msglevel(काष्ठा net_device *dev)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
 
-	return priv->msg_enable;
-}
+	वापस priv->msg_enable;
+पूर्ण
 
-static void gfar_set_msglevel(struct net_device *dev, uint32_t data)
-{
-	struct gfar_private *priv = netdev_priv(dev);
+अटल व्योम gfar_set_msglevel(काष्ठा net_device *dev, uपूर्णांक32_t data)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
 
 	priv->msg_enable = data;
-}
+पूर्ण
 
-#ifdef CONFIG_PM
-static void gfar_get_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
-{
-	struct gfar_private *priv = netdev_priv(dev);
+#अगर_घोषित CONFIG_PM
+अटल व्योम gfar_get_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
 
 	wol->supported = 0;
 	wol->wolopts = 0;
 
-	if (priv->wol_supported & GFAR_WOL_MAGIC)
+	अगर (priv->wol_supported & GFAR_WOL_MAGIC)
 		wol->supported |= WAKE_MAGIC;
 
-	if (priv->wol_supported & GFAR_WOL_FILER_UCAST)
+	अगर (priv->wol_supported & GFAR_WOL_खाताR_UCAST)
 		wol->supported |= WAKE_UCAST;
 
-	if (priv->wol_opts & GFAR_WOL_MAGIC)
+	अगर (priv->wol_opts & GFAR_WOL_MAGIC)
 		wol->wolopts |= WAKE_MAGIC;
 
-	if (priv->wol_opts & GFAR_WOL_FILER_UCAST)
+	अगर (priv->wol_opts & GFAR_WOL_खाताR_UCAST)
 		wol->wolopts |= WAKE_UCAST;
-}
+पूर्ण
 
-static int gfar_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
-{
-	struct gfar_private *priv = netdev_priv(dev);
+अटल पूर्णांक gfar_set_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
 	u16 wol_opts = 0;
-	int err;
+	पूर्णांक err;
 
-	if (!priv->wol_supported && wol->wolopts)
-		return -EINVAL;
+	अगर (!priv->wol_supported && wol->wolopts)
+		वापस -EINVAL;
 
-	if (wol->wolopts & ~(WAKE_MAGIC | WAKE_UCAST))
-		return -EINVAL;
+	अगर (wol->wolopts & ~(WAKE_MAGIC | WAKE_UCAST))
+		वापस -EINVAL;
 
-	if (wol->wolopts & WAKE_MAGIC) {
+	अगर (wol->wolopts & WAKE_MAGIC) अणु
 		wol_opts |= GFAR_WOL_MAGIC;
-	} else {
-		if (wol->wolopts & WAKE_UCAST)
-			wol_opts |= GFAR_WOL_FILER_UCAST;
-	}
+	पूर्ण अन्यथा अणु
+		अगर (wol->wolopts & WAKE_UCAST)
+			wol_opts |= GFAR_WOL_खाताR_UCAST;
+	पूर्ण
 
 	wol_opts &= priv->wol_supported;
 	priv->wol_opts = 0;
 
 	err = device_set_wakeup_enable(priv->dev, wol_opts);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	priv->wol_opts = wol_opts;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static void ethflow_to_filer_rules (struct gfar_private *priv, u64 ethflow)
-{
-	u32 fcr = 0x0, fpr = FPR_FILER_MASK;
+अटल व्योम ethflow_to_filer_rules (काष्ठा gfar_निजी *priv, u64 ethflow)
+अणु
+	u32 fcr = 0x0, fpr = FPR_खाताR_MASK;
 
-	if (ethflow & RXH_L2DA) {
+	अगर (ethflow & RXH_L2DA) अणु
 		fcr = RQFCR_PID_DAH | RQFCR_CMP_NOMATCH |
 		      RQFCR_HASH | RQFCR_AND | RQFCR_HASHTBL_0;
 		priv->ftp_rqfpr[priv->cur_filer_idx] = fpr;
 		priv->ftp_rqfcr[priv->cur_filer_idx] = fcr;
-		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		gfar_ग_लिखो_filer(priv, priv->cur_filer_idx, fcr, fpr);
 		priv->cur_filer_idx = priv->cur_filer_idx - 1;
 
 		fcr = RQFCR_PID_DAL | RQFCR_CMP_NOMATCH |
 		      RQFCR_HASH | RQFCR_AND | RQFCR_HASHTBL_0;
 		priv->ftp_rqfpr[priv->cur_filer_idx] = fpr;
 		priv->ftp_rqfcr[priv->cur_filer_idx] = fcr;
-		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		gfar_ग_लिखो_filer(priv, priv->cur_filer_idx, fcr, fpr);
 		priv->cur_filer_idx = priv->cur_filer_idx - 1;
-	}
+	पूर्ण
 
-	if (ethflow & RXH_VLAN) {
+	अगर (ethflow & RXH_VLAN) अणु
 		fcr = RQFCR_PID_VID | RQFCR_CMP_NOMATCH | RQFCR_HASH |
 		      RQFCR_AND | RQFCR_HASHTBL_0;
-		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		gfar_ग_लिखो_filer(priv, priv->cur_filer_idx, fcr, fpr);
 		priv->ftp_rqfpr[priv->cur_filer_idx] = fpr;
 		priv->ftp_rqfcr[priv->cur_filer_idx] = fcr;
 		priv->cur_filer_idx = priv->cur_filer_idx - 1;
-	}
+	पूर्ण
 
-	if (ethflow & RXH_IP_SRC) {
+	अगर (ethflow & RXH_IP_SRC) अणु
 		fcr = RQFCR_PID_SIA | RQFCR_CMP_NOMATCH | RQFCR_HASH |
 		      RQFCR_AND | RQFCR_HASHTBL_0;
 		priv->ftp_rqfpr[priv->cur_filer_idx] = fpr;
 		priv->ftp_rqfcr[priv->cur_filer_idx] = fcr;
-		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		gfar_ग_लिखो_filer(priv, priv->cur_filer_idx, fcr, fpr);
 		priv->cur_filer_idx = priv->cur_filer_idx - 1;
-	}
+	पूर्ण
 
-	if (ethflow & (RXH_IP_DST)) {
+	अगर (ethflow & (RXH_IP_DST)) अणु
 		fcr = RQFCR_PID_DIA | RQFCR_CMP_NOMATCH | RQFCR_HASH |
 		      RQFCR_AND | RQFCR_HASHTBL_0;
 		priv->ftp_rqfpr[priv->cur_filer_idx] = fpr;
 		priv->ftp_rqfcr[priv->cur_filer_idx] = fcr;
-		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		gfar_ग_लिखो_filer(priv, priv->cur_filer_idx, fcr, fpr);
 		priv->cur_filer_idx = priv->cur_filer_idx - 1;
-	}
+	पूर्ण
 
-	if (ethflow & RXH_L3_PROTO) {
+	अगर (ethflow & RXH_L3_PROTO) अणु
 		fcr = RQFCR_PID_L4P | RQFCR_CMP_NOMATCH | RQFCR_HASH |
 		      RQFCR_AND | RQFCR_HASHTBL_0;
 		priv->ftp_rqfpr[priv->cur_filer_idx] = fpr;
 		priv->ftp_rqfcr[priv->cur_filer_idx] = fcr;
-		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		gfar_ग_लिखो_filer(priv, priv->cur_filer_idx, fcr, fpr);
 		priv->cur_filer_idx = priv->cur_filer_idx - 1;
-	}
+	पूर्ण
 
-	if (ethflow & RXH_L4_B_0_1) {
+	अगर (ethflow & RXH_L4_B_0_1) अणु
 		fcr = RQFCR_PID_SPT | RQFCR_CMP_NOMATCH | RQFCR_HASH |
 		      RQFCR_AND | RQFCR_HASHTBL_0;
 		priv->ftp_rqfpr[priv->cur_filer_idx] = fpr;
 		priv->ftp_rqfcr[priv->cur_filer_idx] = fcr;
-		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		gfar_ग_लिखो_filer(priv, priv->cur_filer_idx, fcr, fpr);
 		priv->cur_filer_idx = priv->cur_filer_idx - 1;
-	}
+	पूर्ण
 
-	if (ethflow & RXH_L4_B_2_3) {
+	अगर (ethflow & RXH_L4_B_2_3) अणु
 		fcr = RQFCR_PID_DPT | RQFCR_CMP_NOMATCH | RQFCR_HASH |
 		      RQFCR_AND | RQFCR_HASHTBL_0;
 		priv->ftp_rqfpr[priv->cur_filer_idx] = fpr;
 		priv->ftp_rqfcr[priv->cur_filer_idx] = fcr;
-		gfar_write_filer(priv, priv->cur_filer_idx, fcr, fpr);
+		gfar_ग_लिखो_filer(priv, priv->cur_filer_idx, fcr, fpr);
 		priv->cur_filer_idx = priv->cur_filer_idx - 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int gfar_ethflow_to_filer_table(struct gfar_private *priv, u64 ethflow,
+अटल पूर्णांक gfar_ethflow_to_filer_table(काष्ठा gfar_निजी *priv, u64 ethflow,
 				       u64 class)
-{
-	unsigned int cmp_rqfpr;
-	unsigned int *local_rqfpr;
-	unsigned int *local_rqfcr;
-	int i = 0x0, k = 0x0;
-	int j = MAX_FILER_IDX, l = 0x0;
-	int ret = 1;
+अणु
+	अचिन्हित पूर्णांक cmp_rqfpr;
+	अचिन्हित पूर्णांक *local_rqfpr;
+	अचिन्हित पूर्णांक *local_rqfcr;
+	पूर्णांक i = 0x0, k = 0x0;
+	पूर्णांक j = MAX_खाताR_IDX, l = 0x0;
+	पूर्णांक ret = 1;
 
-	local_rqfpr = kmalloc_array(MAX_FILER_IDX + 1, sizeof(unsigned int),
+	local_rqfpr = kदो_स्मृति_array(MAX_खाताR_IDX + 1, माप(अचिन्हित पूर्णांक),
 				    GFP_KERNEL);
-	local_rqfcr = kmalloc_array(MAX_FILER_IDX + 1, sizeof(unsigned int),
+	local_rqfcr = kदो_स्मृति_array(MAX_खाताR_IDX + 1, माप(अचिन्हित पूर्णांक),
 				    GFP_KERNEL);
-	if (!local_rqfpr || !local_rqfcr) {
+	अगर (!local_rqfpr || !local_rqfcr) अणु
 		ret = 0;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	switch (class) {
-	case TCP_V4_FLOW:
+	चयन (class) अणु
+	हाल TCP_V4_FLOW:
 		cmp_rqfpr = RQFPR_IPV4 |RQFPR_TCP;
-		break;
-	case UDP_V4_FLOW:
+		अवरोध;
+	हाल UDP_V4_FLOW:
 		cmp_rqfpr = RQFPR_IPV4 |RQFPR_UDP;
-		break;
-	case TCP_V6_FLOW:
+		अवरोध;
+	हाल TCP_V6_FLOW:
 		cmp_rqfpr = RQFPR_IPV6 |RQFPR_TCP;
-		break;
-	case UDP_V6_FLOW:
+		अवरोध;
+	हाल UDP_V6_FLOW:
 		cmp_rqfpr = RQFPR_IPV6 |RQFPR_UDP;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_err(priv->ndev,
 			   "Right now this class is not supported\n");
 		ret = 0;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	for (i = 0; i < MAX_FILER_IDX + 1; i++) {
+	क्रम (i = 0; i < MAX_खाताR_IDX + 1; i++) अणु
 		local_rqfpr[j] = priv->ftp_rqfpr[i];
 		local_rqfcr[j] = priv->ftp_rqfcr[i];
 		j--;
-		if ((priv->ftp_rqfcr[i] ==
+		अगर ((priv->ftp_rqfcr[i] ==
 		     (RQFCR_PID_PARSE | RQFCR_CLE | RQFCR_AND)) &&
 		    (priv->ftp_rqfpr[i] == cmp_rqfpr))
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	if (i == MAX_FILER_IDX + 1) {
+	अगर (i == MAX_खाताR_IDX + 1) अणु
 		netdev_err(priv->ndev,
 			   "No parse rule found, can't create hash rules\n");
 		ret = 0;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* If a match was found, then it begins the starting of a cluster rule
-	 * if it was already programmed, we need to overwrite these rules
+	 * अगर it was alपढ़ोy programmed, we need to overग_लिखो these rules
 	 */
-	for (l = i+1; l < MAX_FILER_IDX; l++) {
-		if ((priv->ftp_rqfcr[l] & RQFCR_CLE) &&
-		    !(priv->ftp_rqfcr[l] & RQFCR_AND)) {
+	क्रम (l = i+1; l < MAX_खाताR_IDX; l++) अणु
+		अगर ((priv->ftp_rqfcr[l] & RQFCR_CLE) &&
+		    !(priv->ftp_rqfcr[l] & RQFCR_AND)) अणु
 			priv->ftp_rqfcr[l] = RQFCR_CLE | RQFCR_CMP_EXACT |
 					     RQFCR_HASHTBL_0 | RQFCR_PID_MASK;
-			priv->ftp_rqfpr[l] = FPR_FILER_MASK;
-			gfar_write_filer(priv, l, priv->ftp_rqfcr[l],
+			priv->ftp_rqfpr[l] = FPR_खाताR_MASK;
+			gfar_ग_लिखो_filer(priv, l, priv->ftp_rqfcr[l],
 					 priv->ftp_rqfpr[l]);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!(priv->ftp_rqfcr[l] & RQFCR_CLE) &&
+		अगर (!(priv->ftp_rqfcr[l] & RQFCR_CLE) &&
 			(priv->ftp_rqfcr[l] & RQFCR_AND))
-			continue;
-		else {
+			जारी;
+		अन्यथा अणु
 			local_rqfpr[j] = priv->ftp_rqfpr[l];
 			local_rqfcr[j] = priv->ftp_rqfcr[l];
 			j--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	priv->cur_filer_idx = l - 1;
 
@@ -753,177 +754,177 @@ static int gfar_ethflow_to_filer_table(struct gfar_private *priv, u64 ethflow,
 	ethflow_to_filer_rules(priv, ethflow);
 
 	/* Write back the popped out rules again */
-	for (k = j+1; k < MAX_FILER_IDX; k++) {
+	क्रम (k = j+1; k < MAX_खाताR_IDX; k++) अणु
 		priv->ftp_rqfpr[priv->cur_filer_idx] = local_rqfpr[k];
 		priv->ftp_rqfcr[priv->cur_filer_idx] = local_rqfcr[k];
-		gfar_write_filer(priv, priv->cur_filer_idx,
+		gfar_ग_लिखो_filer(priv, priv->cur_filer_idx,
 				 local_rqfcr[k], local_rqfpr[k]);
-		if (!priv->cur_filer_idx)
-			break;
+		अगर (!priv->cur_filer_idx)
+			अवरोध;
 		priv->cur_filer_idx = priv->cur_filer_idx - 1;
-	}
+	पूर्ण
 
 err:
-	kfree(local_rqfcr);
-	kfree(local_rqfpr);
-	return ret;
-}
+	kमुक्त(local_rqfcr);
+	kमुक्त(local_rqfpr);
+	वापस ret;
+पूर्ण
 
-static int gfar_set_hash_opts(struct gfar_private *priv,
-			      struct ethtool_rxnfc *cmd)
-{
-	/* write the filer rules here */
-	if (!gfar_ethflow_to_filer_table(priv, cmd->data, cmd->flow_type))
-		return -EINVAL;
+अटल पूर्णांक gfar_set_hash_opts(काष्ठा gfar_निजी *priv,
+			      काष्ठा ethtool_rxnfc *cmd)
+अणु
+	/* ग_लिखो the filer rules here */
+	अगर (!gfar_ethflow_to_filer_table(priv, cmd->data, cmd->flow_type))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfar_check_filer_hardware(struct gfar_private *priv)
-{
-	struct gfar __iomem *regs = priv->gfargrp[0].regs;
+अटल पूर्णांक gfar_check_filer_hardware(काष्ठा gfar_निजी *priv)
+अणु
+	काष्ठा gfar __iomem *regs = priv->gfargrp[0].regs;
 	u32 i;
 
-	/* Check if we are in FIFO mode */
-	i = gfar_read(&regs->ecntrl);
+	/* Check अगर we are in FIFO mode */
+	i = gfar_पढ़ो(&regs->ecntrl);
 	i &= ECNTRL_FIFM;
-	if (i == ECNTRL_FIFM) {
+	अगर (i == ECNTRL_FIFM) अणु
 		netdev_notice(priv->ndev, "Interface in FIFO mode\n");
-		i = gfar_read(&regs->rctrl);
+		i = gfar_पढ़ो(&regs->rctrl);
 		i &= RCTRL_PRSDEP_MASK | RCTRL_PRSFM;
-		if (i == (RCTRL_PRSDEP_MASK | RCTRL_PRSFM)) {
+		अगर (i == (RCTRL_PRSDEP_MASK | RCTRL_PRSFM)) अणु
 			netdev_info(priv->ndev,
 				    "Receive Queue Filtering enabled\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			netdev_warn(priv->ndev,
 				    "Receive Queue Filtering disabled\n");
-			return -EOPNOTSUPP;
-		}
-	}
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण
 	/* Or in standard mode */
-	else {
-		i = gfar_read(&regs->rctrl);
+	अन्यथा अणु
+		i = gfar_पढ़ो(&regs->rctrl);
 		i &= RCTRL_PRSDEP_MASK;
-		if (i == RCTRL_PRSDEP_MASK) {
+		अगर (i == RCTRL_PRSDEP_MASK) अणु
 			netdev_info(priv->ndev,
 				    "Receive Queue Filtering enabled\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			netdev_warn(priv->ndev,
 				    "Receive Queue Filtering disabled\n");
-			return -EOPNOTSUPP;
-		}
-	}
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	/* Sets the properties for arbitrary filer rule
+	/* Sets the properties क्रम arbitrary filer rule
 	 * to the first 4 Layer 4 Bytes
 	 */
-	gfar_write(&regs->rbifx, 0xC0C1C2C3);
-	return 0;
-}
+	gfar_ग_लिखो(&regs->rbअगरx, 0xC0C1C2C3);
+	वापस 0;
+पूर्ण
 
 /* Write a mask to filer cache */
-static void gfar_set_mask(u32 mask, struct filer_table *tab)
-{
+अटल व्योम gfar_set_mask(u32 mask, काष्ठा filer_table *tab)
+अणु
 	tab->fe[tab->index].ctrl = RQFCR_AND | RQFCR_PID_MASK | RQFCR_CMP_EXACT;
 	tab->fe[tab->index].prop = mask;
 	tab->index++;
-}
+पूर्ण
 
 /* Sets parse bits (e.g. IP or TCP) */
-static void gfar_set_parse_bits(u32 value, u32 mask, struct filer_table *tab)
-{
+अटल व्योम gfar_set_parse_bits(u32 value, u32 mask, काष्ठा filer_table *tab)
+अणु
 	gfar_set_mask(mask, tab);
 	tab->fe[tab->index].ctrl = RQFCR_CMP_EXACT | RQFCR_PID_PARSE |
 				   RQFCR_AND;
 	tab->fe[tab->index].prop = value;
 	tab->index++;
-}
+पूर्ण
 
-static void gfar_set_general_attribute(u32 value, u32 mask, u32 flag,
-				       struct filer_table *tab)
-{
+अटल व्योम gfar_set_general_attribute(u32 value, u32 mask, u32 flag,
+				       काष्ठा filer_table *tab)
+अणु
 	gfar_set_mask(mask, tab);
 	tab->fe[tab->index].ctrl = RQFCR_CMP_EXACT | RQFCR_AND | flag;
 	tab->fe[tab->index].prop = value;
 	tab->index++;
-}
+पूर्ण
 
 /* For setting a tuple of value and mask of type flag
  * Example:
  * IP-Src = 10.0.0.0/255.0.0.0
  * value: 0x0A000000 mask: FF000000 flag: RQFPR_IPV4
  *
- * Ethtool gives us a value=0 and mask=~0 for don't care a tuple
- * For a don't care mask it gives us a 0
+ * Ethtool gives us a value=0 and mask=~0 क्रम करोn't care a tuple
+ * For a करोn't care mask it gives us a 0
  *
- * The check if don't care and the mask adjustment if mask=0 is done for VLAN
- * and MAC stuff on an upper level (due to missing information on this level).
- * For these guys we can discard them if they are value=0 and mask=0.
+ * The check अगर करोn't care and the mask adjusपंचांगent अगर mask=0 is करोne क्रम VLAN
+ * and MAC stuff on an upper level (due to missing inक्रमmation on this level).
+ * For these guys we can discard them अगर they are value=0 and mask=0.
  *
- * Further the all masks are one-padded for better hardware efficiency.
+ * Further the all masks are one-padded क्रम better hardware efficiency.
  */
-static void gfar_set_attribute(u32 value, u32 mask, u32 flag,
-			       struct filer_table *tab)
-{
-	switch (flag) {
+अटल व्योम gfar_set_attribute(u32 value, u32 mask, u32 flag,
+			       काष्ठा filer_table *tab)
+अणु
+	चयन (flag) अणु
 		/* 3bit */
-	case RQFCR_PID_PRI:
-		if (!(value | mask))
-			return;
+	हाल RQFCR_PID_PRI:
+		अगर (!(value | mask))
+			वापस;
 		mask |= RQFCR_PID_PRI_MASK;
-		break;
+		अवरोध;
 		/* 8bit */
-	case RQFCR_PID_L4P:
-	case RQFCR_PID_TOS:
-		if (!~(mask | RQFCR_PID_L4P_MASK))
-			return;
-		if (!mask)
+	हाल RQFCR_PID_L4P:
+	हाल RQFCR_PID_TOS:
+		अगर (!~(mask | RQFCR_PID_L4P_MASK))
+			वापस;
+		अगर (!mask)
 			mask = ~0;
-		else
+		अन्यथा
 			mask |= RQFCR_PID_L4P_MASK;
-		break;
+		अवरोध;
 		/* 12bit */
-	case RQFCR_PID_VID:
-		if (!(value | mask))
-			return;
+	हाल RQFCR_PID_VID:
+		अगर (!(value | mask))
+			वापस;
 		mask |= RQFCR_PID_VID_MASK;
-		break;
+		अवरोध;
 		/* 16bit */
-	case RQFCR_PID_DPT:
-	case RQFCR_PID_SPT:
-	case RQFCR_PID_ETY:
-		if (!~(mask | RQFCR_PID_PORT_MASK))
-			return;
-		if (!mask)
+	हाल RQFCR_PID_DPT:
+	हाल RQFCR_PID_SPT:
+	हाल RQFCR_PID_ETY:
+		अगर (!~(mask | RQFCR_PID_PORT_MASK))
+			वापस;
+		अगर (!mask)
 			mask = ~0;
-		else
+		अन्यथा
 			mask |= RQFCR_PID_PORT_MASK;
-		break;
+		अवरोध;
 		/* 24bit */
-	case RQFCR_PID_DAH:
-	case RQFCR_PID_DAL:
-	case RQFCR_PID_SAH:
-	case RQFCR_PID_SAL:
-		if (!(value | mask))
-			return;
+	हाल RQFCR_PID_DAH:
+	हाल RQFCR_PID_DAL:
+	हाल RQFCR_PID_SAH:
+	हाल RQFCR_PID_SAL:
+		अगर (!(value | mask))
+			वापस;
 		mask |= RQFCR_PID_MAC_MASK;
-		break;
-		/* for all real 32bit masks */
-	default:
-		if (!~mask)
-			return;
-		if (!mask)
+		अवरोध;
+		/* क्रम all real 32bit masks */
+	शेष:
+		अगर (!~mask)
+			वापस;
+		अगर (!mask)
 			mask = ~0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	gfar_set_general_attribute(value, mask, flag, tab);
-}
+पूर्ण
 
-/* Translates value and mask for UDP, TCP or SCTP */
-static void gfar_set_basic_ip(struct ethtool_tcpip4_spec *value,
-			      struct ethtool_tcpip4_spec *mask,
-			      struct filer_table *tab)
-{
+/* Translates value and mask क्रम UDP, TCP or SCTP */
+अटल व्योम gfar_set_basic_ip(काष्ठा ethtool_tcpip4_spec *value,
+			      काष्ठा ethtool_tcpip4_spec *mask,
+			      काष्ठा filer_table *tab)
+अणु
 	gfar_set_attribute(be32_to_cpu(value->ip4src),
 			   be32_to_cpu(mask->ip4src),
 			   RQFCR_PID_SIA, tab);
@@ -937,13 +938,13 @@ static void gfar_set_basic_ip(struct ethtool_tcpip4_spec *value,
 			   be16_to_cpu(mask->psrc),
 			   RQFCR_PID_SPT, tab);
 	gfar_set_attribute(value->tos, mask->tos, RQFCR_PID_TOS, tab);
-}
+पूर्ण
 
-/* Translates value and mask for RAW-IP4 */
-static void gfar_set_user_ip(struct ethtool_usrip4_spec *value,
-			     struct ethtool_usrip4_spec *mask,
-			     struct filer_table *tab)
-{
+/* Translates value and mask क्रम RAW-IP4 */
+अटल व्योम gfar_set_user_ip(काष्ठा ethtool_usrip4_spec *value,
+			     काष्ठा ethtool_usrip4_spec *mask,
+			     काष्ठा filer_table *tab)
+अणु
 	gfar_set_attribute(be32_to_cpu(value->ip4src),
 			   be32_to_cpu(mask->ip4src),
 			   RQFCR_PID_SIA, tab);
@@ -956,122 +957,122 @@ static void gfar_set_user_ip(struct ethtool_usrip4_spec *value,
 			   be32_to_cpu(mask->l4_4_bytes),
 			   RQFCR_PID_ARB, tab);
 
-}
+पूर्ण
 
-/* Translates value and mask for ETHER spec */
-static void gfar_set_ether(struct ethhdr *value, struct ethhdr *mask,
-			   struct filer_table *tab)
-{
+/* Translates value and mask क्रम ETHER spec */
+अटल व्योम gfar_set_ether(काष्ठा ethhdr *value, काष्ठा ethhdr *mask,
+			   काष्ठा filer_table *tab)
+अणु
 	u32 upper_temp_mask = 0;
 	u32 lower_temp_mask = 0;
 
 	/* Source address */
-	if (!is_broadcast_ether_addr(mask->h_source)) {
-		if (is_zero_ether_addr(mask->h_source)) {
+	अगर (!is_broadcast_ether_addr(mask->h_source)) अणु
+		अगर (is_zero_ether_addr(mask->h_source)) अणु
 			upper_temp_mask = 0xFFFFFFFF;
 			lower_temp_mask = 0xFFFFFFFF;
-		} else {
+		पूर्ण अन्यथा अणु
 			upper_temp_mask = mask->h_source[0] << 16 |
 					  mask->h_source[1] << 8  |
 					  mask->h_source[2];
 			lower_temp_mask = mask->h_source[3] << 16 |
 					  mask->h_source[4] << 8  |
 					  mask->h_source[5];
-		}
+		पूर्ण
 		/* Upper 24bit */
 		gfar_set_attribute(value->h_source[0] << 16 |
 				   value->h_source[1] << 8  |
 				   value->h_source[2],
 				   upper_temp_mask, RQFCR_PID_SAH, tab);
-		/* And the same for the lower part */
+		/* And the same क्रम the lower part */
 		gfar_set_attribute(value->h_source[3] << 16 |
 				   value->h_source[4] << 8  |
 				   value->h_source[5],
 				   lower_temp_mask, RQFCR_PID_SAL, tab);
-	}
+	पूर्ण
 	/* Destination address */
-	if (!is_broadcast_ether_addr(mask->h_dest)) {
-		/* Special for destination is limited broadcast */
-		if ((is_broadcast_ether_addr(value->h_dest) &&
-		    is_zero_ether_addr(mask->h_dest))) {
+	अगर (!is_broadcast_ether_addr(mask->h_dest)) अणु
+		/* Special क्रम destination is limited broadcast */
+		अगर ((is_broadcast_ether_addr(value->h_dest) &&
+		    is_zero_ether_addr(mask->h_dest))) अणु
 			gfar_set_parse_bits(RQFPR_EBC, RQFPR_EBC, tab);
-		} else {
-			if (is_zero_ether_addr(mask->h_dest)) {
+		पूर्ण अन्यथा अणु
+			अगर (is_zero_ether_addr(mask->h_dest)) अणु
 				upper_temp_mask = 0xFFFFFFFF;
 				lower_temp_mask = 0xFFFFFFFF;
-			} else {
+			पूर्ण अन्यथा अणु
 				upper_temp_mask = mask->h_dest[0] << 16 |
 						  mask->h_dest[1] << 8  |
 						  mask->h_dest[2];
 				lower_temp_mask = mask->h_dest[3] << 16 |
 						  mask->h_dest[4] << 8  |
 						  mask->h_dest[5];
-			}
+			पूर्ण
 
 			/* Upper 24bit */
 			gfar_set_attribute(value->h_dest[0] << 16 |
 					   value->h_dest[1] << 8  |
 					   value->h_dest[2],
 					   upper_temp_mask, RQFCR_PID_DAH, tab);
-			/* And the same for the lower part */
+			/* And the same क्रम the lower part */
 			gfar_set_attribute(value->h_dest[3] << 16 |
 					   value->h_dest[4] << 8  |
 					   value->h_dest[5],
 					   lower_temp_mask, RQFCR_PID_DAL, tab);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	gfar_set_attribute(be16_to_cpu(value->h_proto),
 			   be16_to_cpu(mask->h_proto),
 			   RQFCR_PID_ETY, tab);
-}
+पूर्ण
 
-static inline u32 vlan_tci_vid(struct ethtool_rx_flow_spec *rule)
-{
-	return be16_to_cpu(rule->h_ext.vlan_tci) & VLAN_VID_MASK;
-}
+अटल अंतरभूत u32 vlan_tci_vid(काष्ठा ethtool_rx_flow_spec *rule)
+अणु
+	वापस be16_to_cpu(rule->h_ext.vlan_tci) & VLAN_VID_MASK;
+पूर्ण
 
-static inline u32 vlan_tci_vidm(struct ethtool_rx_flow_spec *rule)
-{
-	return be16_to_cpu(rule->m_ext.vlan_tci) & VLAN_VID_MASK;
-}
+अटल अंतरभूत u32 vlan_tci_vidm(काष्ठा ethtool_rx_flow_spec *rule)
+अणु
+	वापस be16_to_cpu(rule->m_ext.vlan_tci) & VLAN_VID_MASK;
+पूर्ण
 
-static inline u32 vlan_tci_cfi(struct ethtool_rx_flow_spec *rule)
-{
-	return be16_to_cpu(rule->h_ext.vlan_tci) & VLAN_CFI_MASK;
-}
+अटल अंतरभूत u32 vlan_tci_cfi(काष्ठा ethtool_rx_flow_spec *rule)
+अणु
+	वापस be16_to_cpu(rule->h_ext.vlan_tci) & VLAN_CFI_MASK;
+पूर्ण
 
-static inline u32 vlan_tci_cfim(struct ethtool_rx_flow_spec *rule)
-{
-	return be16_to_cpu(rule->m_ext.vlan_tci) & VLAN_CFI_MASK;
-}
+अटल अंतरभूत u32 vlan_tci_cfim(काष्ठा ethtool_rx_flow_spec *rule)
+अणु
+	वापस be16_to_cpu(rule->m_ext.vlan_tci) & VLAN_CFI_MASK;
+पूर्ण
 
-static inline u32 vlan_tci_prio(struct ethtool_rx_flow_spec *rule)
-{
-	return (be16_to_cpu(rule->h_ext.vlan_tci) & VLAN_PRIO_MASK) >>
+अटल अंतरभूत u32 vlan_tci_prio(काष्ठा ethtool_rx_flow_spec *rule)
+अणु
+	वापस (be16_to_cpu(rule->h_ext.vlan_tci) & VLAN_PRIO_MASK) >>
 		VLAN_PRIO_SHIFT;
-}
+पूर्ण
 
-static inline u32 vlan_tci_priom(struct ethtool_rx_flow_spec *rule)
-{
-	return (be16_to_cpu(rule->m_ext.vlan_tci) & VLAN_PRIO_MASK) >>
+अटल अंतरभूत u32 vlan_tci_priom(काष्ठा ethtool_rx_flow_spec *rule)
+अणु
+	वापस (be16_to_cpu(rule->m_ext.vlan_tci) & VLAN_PRIO_MASK) >>
 		VLAN_PRIO_SHIFT;
-}
+पूर्ण
 
-/* Convert a rule to binary filter format of gianfar */
-static int gfar_convert_to_filer(struct ethtool_rx_flow_spec *rule,
-				 struct filer_table *tab)
-{
+/* Convert a rule to binary filter क्रमmat of gianfar */
+अटल पूर्णांक gfar_convert_to_filer(काष्ठा ethtool_rx_flow_spec *rule,
+				 काष्ठा filer_table *tab)
+अणु
 	u32 vlan = 0, vlan_mask = 0;
 	u32 id = 0, id_mask = 0;
 	u32 cfi = 0, cfi_mask = 0;
 	u32 prio = 0, prio_mask = 0;
 	u32 old_index = tab->index;
 
-	/* Check if vlan is wanted */
-	if ((rule->flow_type & FLOW_EXT) &&
-	    (rule->m_ext.vlan_tci != cpu_to_be16(0xFFFF))) {
-		if (!rule->m_ext.vlan_tci)
+	/* Check अगर vlan is wanted */
+	अगर ((rule->flow_type & FLOW_EXT) &&
+	    (rule->m_ext.vlan_tci != cpu_to_be16(0xFFFF))) अणु
+		अगर (!rule->m_ext.vlan_tci)
 			rule->m_ext.vlan_tci = cpu_to_be16(0xFFFF);
 
 		vlan = RQFPR_VLN;
@@ -1085,395 +1086,395 @@ static int gfar_convert_to_filer(struct ethtool_rx_flow_spec *rule,
 		prio = vlan_tci_prio(rule);
 		prio_mask = vlan_tci_priom(rule);
 
-		if (cfi_mask) {
-			if (cfi)
+		अगर (cfi_mask) अणु
+			अगर (cfi)
 				vlan |= RQFPR_CFI;
 			vlan_mask |= RQFPR_CFI;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	switch (rule->flow_type & ~FLOW_EXT) {
-	case TCP_V4_FLOW:
+	चयन (rule->flow_type & ~FLOW_EXT) अणु
+	हाल TCP_V4_FLOW:
 		gfar_set_parse_bits(RQFPR_IPV4 | RQFPR_TCP | vlan,
 				    RQFPR_IPV4 | RQFPR_TCP | vlan_mask, tab);
 		gfar_set_basic_ip(&rule->h_u.tcp_ip4_spec,
 				  &rule->m_u.tcp_ip4_spec, tab);
-		break;
-	case UDP_V4_FLOW:
+		अवरोध;
+	हाल UDP_V4_FLOW:
 		gfar_set_parse_bits(RQFPR_IPV4 | RQFPR_UDP | vlan,
 				    RQFPR_IPV4 | RQFPR_UDP | vlan_mask, tab);
 		gfar_set_basic_ip(&rule->h_u.udp_ip4_spec,
 				  &rule->m_u.udp_ip4_spec, tab);
-		break;
-	case SCTP_V4_FLOW:
+		अवरोध;
+	हाल SCTP_V4_FLOW:
 		gfar_set_parse_bits(RQFPR_IPV4 | vlan, RQFPR_IPV4 | vlan_mask,
 				    tab);
 		gfar_set_attribute(132, 0, RQFCR_PID_L4P, tab);
-		gfar_set_basic_ip((struct ethtool_tcpip4_spec *)&rule->h_u,
-				  (struct ethtool_tcpip4_spec *)&rule->m_u,
+		gfar_set_basic_ip((काष्ठा ethtool_tcpip4_spec *)&rule->h_u,
+				  (काष्ठा ethtool_tcpip4_spec *)&rule->m_u,
 				  tab);
-		break;
-	case IP_USER_FLOW:
+		अवरोध;
+	हाल IP_USER_FLOW:
 		gfar_set_parse_bits(RQFPR_IPV4 | vlan, RQFPR_IPV4 | vlan_mask,
 				    tab);
-		gfar_set_user_ip((struct ethtool_usrip4_spec *) &rule->h_u,
-				 (struct ethtool_usrip4_spec *) &rule->m_u,
+		gfar_set_user_ip((काष्ठा ethtool_usrip4_spec *) &rule->h_u,
+				 (काष्ठा ethtool_usrip4_spec *) &rule->m_u,
 				 tab);
-		break;
-	case ETHER_FLOW:
-		if (vlan)
+		अवरोध;
+	हाल ETHER_FLOW:
+		अगर (vlan)
 			gfar_set_parse_bits(vlan, vlan_mask, tab);
-		gfar_set_ether((struct ethhdr *) &rule->h_u,
-			       (struct ethhdr *) &rule->m_u, tab);
-		break;
-	default:
-		return -1;
-	}
+		gfar_set_ether((काष्ठा ethhdr *) &rule->h_u,
+			       (काष्ठा ethhdr *) &rule->m_u, tab);
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
 	/* Set the vlan attributes in the end */
-	if (vlan) {
+	अगर (vlan) अणु
 		gfar_set_attribute(id, id_mask, RQFCR_PID_VID, tab);
 		gfar_set_attribute(prio, prio_mask, RQFCR_PID_PRI, tab);
-	}
+	पूर्ण
 
-	/* If there has been nothing written till now, it must be a default */
-	if (tab->index == old_index) {
+	/* If there has been nothing written till now, it must be a शेष */
+	अगर (tab->index == old_index) अणु
 		gfar_set_mask(0xFFFFFFFF, tab);
 		tab->fe[tab->index].ctrl = 0x20;
 		tab->fe[tab->index].prop = 0x0;
 		tab->index++;
-	}
+	पूर्ण
 
 	/* Remove last AND */
 	tab->fe[tab->index - 1].ctrl &= (~RQFCR_AND);
 
-	/* Specify which queue to use or to drop */
-	if (rule->ring_cookie == RX_CLS_FLOW_DISC)
+	/* Specअगरy which queue to use or to drop */
+	अगर (rule->ring_cookie == RX_CLS_FLOW_DISC)
 		tab->fe[tab->index - 1].ctrl |= RQFCR_RJE;
-	else
+	अन्यथा
 		tab->fe[tab->index - 1].ctrl |= (rule->ring_cookie << 10);
 
 	/* Only big enough entries can be clustered */
-	if (tab->index > (old_index + 2)) {
+	अगर (tab->index > (old_index + 2)) अणु
 		tab->fe[old_index + 1].ctrl |= RQFCR_CLE;
 		tab->fe[tab->index - 1].ctrl |= RQFCR_CLE;
-	}
+	पूर्ण
 
-	/* In rare cases the cache can be full while there is
-	 * free space in hw
+	/* In rare हालs the cache can be full जबतक there is
+	 * मुक्त space in hw
 	 */
-	if (tab->index > MAX_FILER_CACHE_IDX - 1)
-		return -EBUSY;
+	अगर (tab->index > MAX_खाताR_CACHE_IDX - 1)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Write the bit-pattern from software's buffer to hardware registers */
-static int gfar_write_filer_table(struct gfar_private *priv,
-				  struct filer_table *tab)
-{
+/* Write the bit-pattern from software's buffer to hardware रेजिस्टरs */
+अटल पूर्णांक gfar_ग_लिखो_filer_table(काष्ठा gfar_निजी *priv,
+				  काष्ठा filer_table *tab)
+अणु
 	u32 i = 0;
-	if (tab->index > MAX_FILER_IDX - 1)
-		return -EBUSY;
+	अगर (tab->index > MAX_खाताR_IDX - 1)
+		वापस -EBUSY;
 
 	/* Fill regular entries */
-	for (; i < MAX_FILER_IDX && (tab->fe[i].ctrl | tab->fe[i].prop); i++)
-		gfar_write_filer(priv, i, tab->fe[i].ctrl, tab->fe[i].prop);
+	क्रम (; i < MAX_खाताR_IDX && (tab->fe[i].ctrl | tab->fe[i].prop); i++)
+		gfar_ग_लिखो_filer(priv, i, tab->fe[i].ctrl, tab->fe[i].prop);
 	/* Fill the rest with fall-troughs */
-	for (; i < MAX_FILER_IDX; i++)
-		gfar_write_filer(priv, i, 0x60, 0xFFFFFFFF);
-	/* Last entry must be default accept
+	क्रम (; i < MAX_खाताR_IDX; i++)
+		gfar_ग_लिखो_filer(priv, i, 0x60, 0xFFFFFFFF);
+	/* Last entry must be शेष accept
 	 * because that's what people expect
 	 */
-	gfar_write_filer(priv, i, 0x20, 0x0);
+	gfar_ग_लिखो_filer(priv, i, 0x20, 0x0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfar_check_capability(struct ethtool_rx_flow_spec *flow,
-				 struct gfar_private *priv)
-{
+अटल पूर्णांक gfar_check_capability(काष्ठा ethtool_rx_flow_spec *flow,
+				 काष्ठा gfar_निजी *priv)
+अणु
 
-	if (flow->flow_type & FLOW_EXT)	{
-		if (~flow->m_ext.data[0] || ~flow->m_ext.data[1])
+	अगर (flow->flow_type & FLOW_EXT)	अणु
+		अगर (~flow->m_ext.data[0] || ~flow->m_ext.data[1])
 			netdev_warn(priv->ndev,
 				    "User-specific data not supported!\n");
-		if (~flow->m_ext.vlan_etype)
+		अगर (~flow->m_ext.vlan_etype)
 			netdev_warn(priv->ndev,
 				    "VLAN-etype not supported!\n");
-	}
-	if (flow->flow_type == IP_USER_FLOW)
-		if (flow->h_u.usr_ip4_spec.ip_ver != ETH_RX_NFC_IP4)
+	पूर्ण
+	अगर (flow->flow_type == IP_USER_FLOW)
+		अगर (flow->h_u.usr_ip4_spec.ip_ver != ETH_RX_NFC_IP4)
 			netdev_warn(priv->ndev,
 				    "IP-Version differing from IPv4 not supported!\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfar_process_filer_changes(struct gfar_private *priv)
-{
-	struct ethtool_flow_spec_container *j;
-	struct filer_table *tab;
+अटल पूर्णांक gfar_process_filer_changes(काष्ठा gfar_निजी *priv)
+अणु
+	काष्ठा ethtool_flow_spec_container *j;
+	काष्ठा filer_table *tab;
 	s32 ret = 0;
 
 	/* So index is set to zero, too! */
-	tab = kzalloc(sizeof(*tab), GFP_KERNEL);
-	if (tab == NULL)
-		return -ENOMEM;
+	tab = kzalloc(माप(*tab), GFP_KERNEL);
+	अगर (tab == शून्य)
+		वापस -ENOMEM;
 
-	/* Now convert the existing filer data from flow_spec into
-	 * filer tables binary format
+	/* Now convert the existing filer data from flow_spec पूर्णांकo
+	 * filer tables binary क्रमmat
 	 */
-	list_for_each_entry(j, &priv->rx_list.list, list) {
+	list_क्रम_each_entry(j, &priv->rx_list.list, list) अणु
 		ret = gfar_convert_to_filer(&j->fs, tab);
-		if (ret == -EBUSY) {
+		अगर (ret == -EBUSY) अणु
 			netdev_err(priv->ndev,
 				   "Rule not added: No free space!\n");
-			goto end;
-		}
-		if (ret == -1) {
+			जाओ end;
+		पूर्ण
+		अगर (ret == -1) अणु
 			netdev_err(priv->ndev,
 				   "Rule not added: Unsupported Flow-type!\n");
-			goto end;
-		}
-	}
+			जाओ end;
+		पूर्ण
+	पूर्ण
 
 	/* Write everything to hardware */
-	ret = gfar_write_filer_table(priv, tab);
-	if (ret == -EBUSY) {
+	ret = gfar_ग_लिखो_filer_table(priv, tab);
+	अगर (ret == -EBUSY) अणु
 		netdev_err(priv->ndev, "Rule not added: No free space!\n");
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 end:
-	kfree(tab);
-	return ret;
-}
+	kमुक्त(tab);
+	वापस ret;
+पूर्ण
 
-static void gfar_invert_masks(struct ethtool_rx_flow_spec *flow)
-{
+अटल व्योम gfar_invert_masks(काष्ठा ethtool_rx_flow_spec *flow)
+अणु
 	u32 i = 0;
 
-	for (i = 0; i < sizeof(flow->m_u); i++)
+	क्रम (i = 0; i < माप(flow->m_u); i++)
 		flow->m_u.hdata[i] ^= 0xFF;
 
 	flow->m_ext.vlan_etype ^= cpu_to_be16(0xFFFF);
 	flow->m_ext.vlan_tci ^= cpu_to_be16(0xFFFF);
 	flow->m_ext.data[0] ^= cpu_to_be32(~0);
 	flow->m_ext.data[1] ^= cpu_to_be32(~0);
-}
+पूर्ण
 
-static int gfar_add_cls(struct gfar_private *priv,
-			struct ethtool_rx_flow_spec *flow)
-{
-	struct ethtool_flow_spec_container *temp, *comp;
-	int ret = 0;
+अटल पूर्णांक gfar_add_cls(काष्ठा gfar_निजी *priv,
+			काष्ठा ethtool_rx_flow_spec *flow)
+अणु
+	काष्ठा ethtool_flow_spec_container *temp, *comp;
+	पूर्णांक ret = 0;
 
-	temp = kmalloc(sizeof(*temp), GFP_KERNEL);
-	if (temp == NULL)
-		return -ENOMEM;
-	memcpy(&temp->fs, flow, sizeof(temp->fs));
+	temp = kदो_स्मृति(माप(*temp), GFP_KERNEL);
+	अगर (temp == शून्य)
+		वापस -ENOMEM;
+	स_नकल(&temp->fs, flow, माप(temp->fs));
 
 	gfar_invert_masks(&temp->fs);
 	ret = gfar_check_capability(&temp->fs, priv);
-	if (ret)
-		goto clean_mem;
+	अगर (ret)
+		जाओ clean_mem;
 	/* Link in the new element at the right @location */
-	if (list_empty(&priv->rx_list.list)) {
+	अगर (list_empty(&priv->rx_list.list)) अणु
 		ret = gfar_check_filer_hardware(priv);
-		if (ret != 0)
-			goto clean_mem;
+		अगर (ret != 0)
+			जाओ clean_mem;
 		list_add(&temp->list, &priv->rx_list.list);
-		goto process;
-	} else {
-		list_for_each_entry(comp, &priv->rx_list.list, list) {
-			if (comp->fs.location > flow->location) {
+		जाओ process;
+	पूर्ण अन्यथा अणु
+		list_क्रम_each_entry(comp, &priv->rx_list.list, list) अणु
+			अगर (comp->fs.location > flow->location) अणु
 				list_add_tail(&temp->list, &comp->list);
-				goto process;
-			}
-			if (comp->fs.location == flow->location) {
+				जाओ process;
+			पूर्ण
+			अगर (comp->fs.location == flow->location) अणु
 				netdev_err(priv->ndev,
 					   "Rule not added: ID %d not free!\n",
 					   flow->location);
 				ret = -EBUSY;
-				goto clean_mem;
-			}
-		}
+				जाओ clean_mem;
+			पूर्ण
+		पूर्ण
 		list_add_tail(&temp->list, &priv->rx_list.list);
-	}
+	पूर्ण
 
 process:
 	priv->rx_list.count++;
 	ret = gfar_process_filer_changes(priv);
-	if (ret)
-		goto clean_list;
-	return ret;
+	अगर (ret)
+		जाओ clean_list;
+	वापस ret;
 
 clean_list:
 	priv->rx_list.count--;
 	list_del(&temp->list);
 clean_mem:
-	kfree(temp);
-	return ret;
-}
+	kमुक्त(temp);
+	वापस ret;
+पूर्ण
 
-static int gfar_del_cls(struct gfar_private *priv, u32 loc)
-{
-	struct ethtool_flow_spec_container *comp;
+अटल पूर्णांक gfar_del_cls(काष्ठा gfar_निजी *priv, u32 loc)
+अणु
+	काष्ठा ethtool_flow_spec_container *comp;
 	u32 ret = -EINVAL;
 
-	if (list_empty(&priv->rx_list.list))
-		return ret;
+	अगर (list_empty(&priv->rx_list.list))
+		वापस ret;
 
-	list_for_each_entry(comp, &priv->rx_list.list, list) {
-		if (comp->fs.location == loc) {
+	list_क्रम_each_entry(comp, &priv->rx_list.list, list) अणु
+		अगर (comp->fs.location == loc) अणु
 			list_del(&comp->list);
-			kfree(comp);
+			kमुक्त(comp);
 			priv->rx_list.count--;
 			gfar_process_filer_changes(priv);
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gfar_get_cls(struct gfar_private *priv, struct ethtool_rxnfc *cmd)
-{
-	struct ethtool_flow_spec_container *comp;
+अटल पूर्णांक gfar_get_cls(काष्ठा gfar_निजी *priv, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा ethtool_flow_spec_container *comp;
 	u32 ret = -EINVAL;
 
-	list_for_each_entry(comp, &priv->rx_list.list, list) {
-		if (comp->fs.location == cmd->fs.location) {
-			memcpy(&cmd->fs, &comp->fs, sizeof(cmd->fs));
+	list_क्रम_each_entry(comp, &priv->rx_list.list, list) अणु
+		अगर (comp->fs.location == cmd->fs.location) अणु
+			स_नकल(&cmd->fs, &comp->fs, माप(cmd->fs));
 			gfar_invert_masks(&cmd->fs);
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gfar_get_cls_all(struct gfar_private *priv,
-			    struct ethtool_rxnfc *cmd, u32 *rule_locs)
-{
-	struct ethtool_flow_spec_container *comp;
+अटल पूर्णांक gfar_get_cls_all(काष्ठा gfar_निजी *priv,
+			    काष्ठा ethtool_rxnfc *cmd, u32 *rule_locs)
+अणु
+	काष्ठा ethtool_flow_spec_container *comp;
 	u32 i = 0;
 
-	list_for_each_entry(comp, &priv->rx_list.list, list) {
-		if (i == cmd->rule_cnt)
-			return -EMSGSIZE;
+	list_क्रम_each_entry(comp, &priv->rx_list.list, list) अणु
+		अगर (i == cmd->rule_cnt)
+			वापस -EMSGSIZE;
 		rule_locs[i] = comp->fs.location;
 		i++;
-	}
+	पूर्ण
 
-	cmd->data = MAX_FILER_IDX;
+	cmd->data = MAX_खाताR_IDX;
 	cmd->rule_cnt = i;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfar_set_nfc(struct net_device *dev, struct ethtool_rxnfc *cmd)
-{
-	struct gfar_private *priv = netdev_priv(dev);
-	int ret = 0;
+अटल पूर्णांक gfar_set_nfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
+	पूर्णांक ret = 0;
 
-	if (test_bit(GFAR_RESETTING, &priv->state))
-		return -EBUSY;
+	अगर (test_bit(GFAR_RESETTING, &priv->state))
+		वापस -EBUSY;
 
 	mutex_lock(&priv->rx_queue_access);
 
-	switch (cmd->cmd) {
-	case ETHTOOL_SRXFH:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_SRXFH:
 		ret = gfar_set_hash_opts(priv, cmd);
-		break;
-	case ETHTOOL_SRXCLSRLINS:
-		if ((cmd->fs.ring_cookie != RX_CLS_FLOW_DISC &&
+		अवरोध;
+	हाल ETHTOOL_SRXCLSRLINS:
+		अगर ((cmd->fs.ring_cookie != RX_CLS_FLOW_DISC &&
 		     cmd->fs.ring_cookie >= priv->num_rx_queues) ||
-		    cmd->fs.location >= MAX_FILER_IDX) {
+		    cmd->fs.location >= MAX_खाताR_IDX) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ret = gfar_add_cls(priv, &cmd->fs);
-		break;
-	case ETHTOOL_SRXCLSRLDEL:
+		अवरोध;
+	हाल ETHTOOL_SRXCLSRLDEL:
 		ret = gfar_del_cls(priv, cmd->fs.location);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	mutex_unlock(&priv->rx_queue_access);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gfar_get_nfc(struct net_device *dev, struct ethtool_rxnfc *cmd,
+अटल पूर्णांक gfar_get_nfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd,
 			u32 *rule_locs)
-{
-	struct gfar_private *priv = netdev_priv(dev);
-	int ret = 0;
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
+	पूर्णांक ret = 0;
 
-	switch (cmd->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		cmd->data = priv->num_rx_queues;
-		break;
-	case ETHTOOL_GRXCLSRLCNT:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRLCNT:
 		cmd->rule_cnt = priv->rx_list.count;
-		break;
-	case ETHTOOL_GRXCLSRULE:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRULE:
 		ret = gfar_get_cls(priv, cmd);
-		break;
-	case ETHTOOL_GRXCLSRLALL:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRLALL:
 		ret = gfar_get_cls_all(priv, cmd, rule_locs);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gfar_get_ts_info(struct net_device *dev,
-			    struct ethtool_ts_info *info)
-{
-	struct gfar_private *priv = netdev_priv(dev);
-	struct platform_device *ptp_dev;
-	struct device_node *ptp_node;
-	struct ptp_qoriq *ptp = NULL;
+अटल पूर्णांक gfar_get_ts_info(काष्ठा net_device *dev,
+			    काष्ठा ethtool_ts_info *info)
+अणु
+	काष्ठा gfar_निजी *priv = netdev_priv(dev);
+	काष्ठा platक्रमm_device *ptp_dev;
+	काष्ठा device_node *ptp_node;
+	काष्ठा ptp_qoriq *ptp = शून्य;
 
 	info->phc_index = -1;
 
-	if (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_TIMER)) {
-		info->so_timestamping = SOF_TIMESTAMPING_RX_SOFTWARE |
+	अगर (!(priv->device_flags & FSL_GIANFAR_DEV_HAS_TIMER)) अणु
+		info->so_बारtamping = SOF_TIMESTAMPING_RX_SOFTWARE |
 					SOF_TIMESTAMPING_SOFTWARE;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ptp_node = of_find_compatible_node(NULL, NULL, "fsl,etsec-ptp");
-	if (ptp_node) {
+	ptp_node = of_find_compatible_node(शून्य, शून्य, "fsl,etsec-ptp");
+	अगर (ptp_node) अणु
 		ptp_dev = of_find_device_by_node(ptp_node);
-		if (ptp_dev)
-			ptp = platform_get_drvdata(ptp_dev);
-	}
+		अगर (ptp_dev)
+			ptp = platक्रमm_get_drvdata(ptp_dev);
+	पूर्ण
 
-	if (ptp)
+	अगर (ptp)
 		info->phc_index = ptp->phc_index;
 
-	info->so_timestamping = SOF_TIMESTAMPING_TX_HARDWARE |
+	info->so_बारtamping = SOF_TIMESTAMPING_TX_HARDWARE |
 				SOF_TIMESTAMPING_RX_HARDWARE |
 				SOF_TIMESTAMPING_RAW_HARDWARE;
 	info->tx_types = (1 << HWTSTAMP_TX_OFF) |
 			 (1 << HWTSTAMP_TX_ON);
 	info->rx_filters = (1 << HWTSTAMP_FILTER_NONE) |
 			   (1 << HWTSTAMP_FILTER_ALL);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct ethtool_ops gfar_ethtool_ops = {
+स्थिर काष्ठा ethtool_ops gfar_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES,
 	.get_drvinfo = gfar_gdrvinfo,
@@ -1484,20 +1485,20 @@ const struct ethtool_ops gfar_ethtool_ops = {
 	.set_coalesce = gfar_scoalesce,
 	.get_ringparam = gfar_gringparam,
 	.set_ringparam = gfar_sringparam,
-	.get_pauseparam = gfar_gpauseparam,
-	.set_pauseparam = gfar_spauseparam,
+	.get_छोड़ोparam = gfar_gछोड़ोparam,
+	.set_छोड़ोparam = gfar_sछोड़ोparam,
 	.get_strings = gfar_gstrings,
 	.get_sset_count = gfar_sset_count,
 	.get_ethtool_stats = gfar_fill_stats,
 	.get_msglevel = gfar_get_msglevel,
 	.set_msglevel = gfar_set_msglevel,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.get_wol = gfar_get_wol,
 	.set_wol = gfar_set_wol,
-#endif
+#पूर्ण_अगर
 	.set_rxnfc = gfar_set_nfc,
 	.get_rxnfc = gfar_get_nfc,
 	.get_ts_info = gfar_get_ts_info,
 	.get_link_ksettings = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
-};
+पूर्ण;

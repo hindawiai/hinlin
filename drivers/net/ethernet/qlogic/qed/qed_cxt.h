@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#ifndef _QED_CXT_H
-#define _QED_CXT_H
+#अगर_अघोषित _QED_CXT_H
+#घोषणा _QED_CXT_H
 
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/qed/qed_if.h>
-#include "qed_hsi.h"
-#include "qed.h"
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/qed/qed_अगर.h>
+#समावेश "qed_hsi.h"
+#समावेश "qed.h"
 
-struct qed_cxt_info {
-	void			*p_cxt;
+काष्ठा qed_cxt_info अणु
+	व्योम			*p_cxt;
 	u32			iid;
-	enum protocol_type	type;
-};
+	क्रमागत protocol_type	type;
+पूर्ण;
 
-#define MAX_TID_BLOCKS                  512
-struct qed_tid_mem {
+#घोषणा MAX_TID_BLOCKS                  512
+काष्ठा qed_tid_mem अणु
 	u32 tid_size;
 	u32 num_tids_per_block;
 	u32 waste;
 	u8 *blocks[MAX_TID_BLOCKS];	/* 4K */
-};
+पूर्ण;
 
 /**
- * @brief qedo_cid_get_cxt_info - Returns the context info for a specific cid
+ * @brief qeकरो_cid_get_cxt_info - Returns the context info क्रम a specअगरic cid
  *
  *
  * @param p_hwfn
  * @param p_info in/out
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_cxt_get_cid_info(struct qed_hwfn *p_hwfn,
-			 struct qed_cxt_info *p_info);
+पूर्णांक qed_cxt_get_cid_info(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_cxt_info *p_info);
 
 /**
  * @brief qed_cxt_get_tid_mem_info
@@ -45,32 +46,32 @@ int qed_cxt_get_cid_info(struct qed_hwfn *p_hwfn,
  * @param p_hwfn
  * @param p_info
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_cxt_get_tid_mem_info(struct qed_hwfn *p_hwfn,
-			     struct qed_tid_mem *p_info);
+पूर्णांक qed_cxt_get_tid_mem_info(काष्ठा qed_hwfn *p_hwfn,
+			     काष्ठा qed_tid_mem *p_info);
 
-#define QED_CXT_ISCSI_TID_SEG	PROTOCOLID_ISCSI
-#define QED_CXT_ROCE_TID_SEG	PROTOCOLID_ROCE
-#define QED_CXT_FCOE_TID_SEG	PROTOCOLID_FCOE
-enum qed_cxt_elem_type {
+#घोषणा QED_CXT_ISCSI_TID_SEG	PROTOCOLID_ISCSI
+#घोषणा QED_CXT_ROCE_TID_SEG	PROTOCOLID_ROCE
+#घोषणा QED_CXT_FCOE_TID_SEG	PROTOCOLID_FCOE
+क्रमागत qed_cxt_elem_type अणु
 	QED_ELEM_CXT,
 	QED_ELEM_SRQ,
 	QED_ELEM_TASK,
 	QED_ELEM_XRC_SRQ,
-};
+पूर्ण;
 
-u32 qed_cxt_get_proto_cid_count(struct qed_hwfn *p_hwfn,
-				enum protocol_type type, u32 *vf_cid);
+u32 qed_cxt_get_proto_cid_count(काष्ठा qed_hwfn *p_hwfn,
+				क्रमागत protocol_type type, u32 *vf_cid);
 
 /**
- * @brief qed_cxt_set_pf_params - Set the PF params for cxt init
+ * @brief qed_cxt_set_pf_params - Set the PF params क्रम cxt init
  *
  * @param p_hwfn
  * @param rdma_tasks - requested maximum
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_cxt_set_pf_params(struct qed_hwfn *p_hwfn, u32 rdma_tasks);
+पूर्णांक qed_cxt_set_pf_params(काष्ठा qed_hwfn *p_hwfn, u32 rdma_tasks);
 
 /**
  * @brief qed_cxt_cfg_ilt_compute - compute ILT init parameters
@@ -78,9 +79,9 @@ int qed_cxt_set_pf_params(struct qed_hwfn *p_hwfn, u32 rdma_tasks);
  * @param p_hwfn
  * @param last_line
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_cxt_cfg_ilt_compute(struct qed_hwfn *p_hwfn, u32 *last_line);
+पूर्णांक qed_cxt_cfg_ilt_compute(काष्ठा qed_hwfn *p_hwfn, u32 *last_line);
 
 /**
  * @brief qed_cxt_cfg_ilt_compute_excess - how many lines can be decreased
@@ -88,39 +89,39 @@ int qed_cxt_cfg_ilt_compute(struct qed_hwfn *p_hwfn, u32 *last_line);
  * @param p_hwfn
  * @param used_lines
  */
-u32 qed_cxt_cfg_ilt_compute_excess(struct qed_hwfn *p_hwfn, u32 used_lines);
+u32 qed_cxt_cfg_ilt_compute_excess(काष्ठा qed_hwfn *p_hwfn, u32 used_lines);
 
 /**
- * @brief qed_cxt_mngr_alloc - Allocate and init the context manager struct
+ * @brief qed_cxt_mngr_alloc - Allocate and init the context manager काष्ठा
  *
  * @param p_hwfn
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_cxt_mngr_alloc(struct qed_hwfn *p_hwfn);
+पूर्णांक qed_cxt_mngr_alloc(काष्ठा qed_hwfn *p_hwfn);
 
 /**
- * @brief qed_cxt_mngr_free
+ * @brief qed_cxt_mngr_मुक्त
  *
  * @param p_hwfn
  */
-void qed_cxt_mngr_free(struct qed_hwfn *p_hwfn);
+व्योम qed_cxt_mngr_मुक्त(काष्ठा qed_hwfn *p_hwfn);
 
 /**
- * @brief qed_cxt_tables_alloc - Allocate ILT shadow, Searcher T2, acquired map
+ * @brief qed_cxt_tables_alloc - Allocate ILT shaकरोw, Searcher T2, acquired map
  *
  * @param p_hwfn
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_cxt_tables_alloc(struct qed_hwfn *p_hwfn);
+पूर्णांक qed_cxt_tables_alloc(काष्ठा qed_hwfn *p_hwfn);
 
 /**
  * @brief qed_cxt_mngr_setup - Reset the acquired CIDs
  *
  * @param p_hwfn
  */
-void qed_cxt_mngr_setup(struct qed_hwfn *p_hwfn);
+व्योम qed_cxt_mngr_setup(काष्ठा qed_hwfn *p_hwfn);
 
 /**
  * @brief qed_cxt_hw_init_common - Initailze ILT and DQ, common phase, per path.
@@ -129,7 +130,7 @@ void qed_cxt_mngr_setup(struct qed_hwfn *p_hwfn);
  *
  * @param p_hwfn
  */
-void qed_cxt_hw_init_common(struct qed_hwfn *p_hwfn);
+व्योम qed_cxt_hw_init_common(काष्ठा qed_hwfn *p_hwfn);
 
 /**
  * @brief qed_cxt_hw_init_pf - Initailze ILT and DQ, PF phase, per path.
@@ -137,7 +138,7 @@ void qed_cxt_hw_init_common(struct qed_hwfn *p_hwfn);
  * @param p_hwfn
  * @param p_ptt
  */
-void qed_cxt_hw_init_pf(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt);
+व्योम qed_cxt_hw_init_pf(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt);
 
 /**
  * @brief qed_qm_init_pf - Initailze the QM PF phase, per path
@@ -146,8 +147,8 @@ void qed_cxt_hw_init_pf(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt);
  * @param p_ptt
  * @param is_pf_loading
  */
-void qed_qm_init_pf(struct qed_hwfn *p_hwfn,
-		    struct qed_ptt *p_ptt, bool is_pf_loading);
+व्योम qed_qm_init_pf(काष्ठा qed_hwfn *p_hwfn,
+		    काष्ठा qed_ptt *p_ptt, bool is_pf_loading);
 
 /**
  * @brief Reconfigures QM pf on the fly
@@ -155,11 +156,11 @@ void qed_qm_init_pf(struct qed_hwfn *p_hwfn,
  * @param p_hwfn
  * @param p_ptt
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_qm_reconf(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt);
+पूर्णांक qed_qm_reconf(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt);
 
-#define QED_CXT_PF_CID (0xff)
+#घोषणा QED_CXT_PF_CID (0xff)
 
 /**
  * @brief qed_cxt_release - Release a cid
@@ -167,167 +168,167 @@ int qed_qm_reconf(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt);
  * @param p_hwfn
  * @param cid
  */
-void qed_cxt_release_cid(struct qed_hwfn *p_hwfn, u32 cid);
+व्योम qed_cxt_release_cid(काष्ठा qed_hwfn *p_hwfn, u32 cid);
 
 /**
- * @brief qed_cxt_release - Release a cid belonging to a vf-queue
+ * @brief qed_cxt_release - Release a cid beदीर्घing to a vf-queue
  *
  * @param p_hwfn
  * @param cid
- * @param vfid - engine relative index. QED_CXT_PF_CID if belongs to PF
+ * @param vfid - engine relative index. QED_CXT_PF_CID अगर beदीर्घs to PF
  */
-void _qed_cxt_release_cid(struct qed_hwfn *p_hwfn, u32 cid, u8 vfid);
+व्योम _qed_cxt_release_cid(काष्ठा qed_hwfn *p_hwfn, u32 cid, u8 vfid);
 
 /**
- * @brief qed_cxt_acquire - Acquire a new cid of a specific protocol type
+ * @brief qed_cxt_acquire - Acquire a new cid of a specअगरic protocol type
  *
  * @param p_hwfn
  * @param type
  * @param p_cid
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_cxt_acquire_cid(struct qed_hwfn *p_hwfn,
-			enum protocol_type type, u32 *p_cid);
+पूर्णांक qed_cxt_acquire_cid(काष्ठा qed_hwfn *p_hwfn,
+			क्रमागत protocol_type type, u32 *p_cid);
 
 /**
- * @brief _qed_cxt_acquire - Acquire a new cid of a specific protocol type
- *                           for a vf-queue
+ * @brief _qed_cxt_acquire - Acquire a new cid of a specअगरic protocol type
+ *                           क्रम a vf-queue
  *
  * @param p_hwfn
  * @param type
  * @param p_cid
- * @param vfid - engine relative index. QED_CXT_PF_CID if belongs to PF
+ * @param vfid - engine relative index. QED_CXT_PF_CID अगर beदीर्घs to PF
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int _qed_cxt_acquire_cid(struct qed_hwfn *p_hwfn,
-			 enum protocol_type type, u32 *p_cid, u8 vfid);
+पूर्णांक _qed_cxt_acquire_cid(काष्ठा qed_hwfn *p_hwfn,
+			 क्रमागत protocol_type type, u32 *p_cid, u8 vfid);
 
-int qed_cxt_dynamic_ilt_alloc(struct qed_hwfn *p_hwfn,
-			      enum qed_cxt_elem_type elem_type, u32 iid);
-u32 qed_cxt_get_proto_tid_count(struct qed_hwfn *p_hwfn,
-				enum protocol_type type);
-u32 qed_cxt_get_proto_cid_start(struct qed_hwfn *p_hwfn,
-				enum protocol_type type);
-int qed_cxt_free_proto_ilt(struct qed_hwfn *p_hwfn, enum protocol_type proto);
+पूर्णांक qed_cxt_dynamic_ilt_alloc(काष्ठा qed_hwfn *p_hwfn,
+			      क्रमागत qed_cxt_elem_type elem_type, u32 iid);
+u32 qed_cxt_get_proto_tid_count(काष्ठा qed_hwfn *p_hwfn,
+				क्रमागत protocol_type type);
+u32 qed_cxt_get_proto_cid_start(काष्ठा qed_hwfn *p_hwfn,
+				क्रमागत protocol_type type);
+पूर्णांक qed_cxt_मुक्त_proto_ilt(काष्ठा qed_hwfn *p_hwfn, क्रमागत protocol_type proto);
 
-#define QED_CTX_WORKING_MEM 0
-#define QED_CTX_FL_MEM 1
-int qed_cxt_get_task_ctx(struct qed_hwfn *p_hwfn,
-			 u32 tid, u8 ctx_type, void **task_ctx);
+#घोषणा QED_CTX_WORKING_MEM 0
+#घोषणा QED_CTX_FL_MEM 1
+पूर्णांक qed_cxt_get_task_ctx(काष्ठा qed_hwfn *p_hwfn,
+			 u32 tid, u8 ctx_type, व्योम **task_ctx);
 
 /* Max number of connection types in HW (DQ/CDU etc.) */
-#define MAX_CONN_TYPES          PROTOCOLID_COMMON
-#define NUM_TASK_TYPES          2
-#define NUM_TASK_PF_SEGMENTS    4
-#define NUM_TASK_VF_SEGMENTS    1
+#घोषणा MAX_CONN_TYPES          PROTOCOLID_COMMON
+#घोषणा NUM_TASK_TYPES          2
+#घोषणा NUM_TASK_PF_SEGMENTS    4
+#घोषणा NUM_TASK_VF_SEGMENTS    1
 
 /* PF per protocl configuration object */
-#define TASK_SEGMENTS   (NUM_TASK_PF_SEGMENTS + NUM_TASK_VF_SEGMENTS)
-#define TASK_SEGMENT_VF (NUM_TASK_PF_SEGMENTS)
+#घोषणा TASK_SEGMENTS   (NUM_TASK_PF_SEGMENTS + NUM_TASK_VF_SEGMENTS)
+#घोषणा TASK_SEGMENT_VF (NUM_TASK_PF_SEGMENTS)
 
-struct qed_tid_seg {
+काष्ठा qed_tid_seg अणु
 	u32 count;
 	u8 type;
 	bool has_fl_mem;
-};
+पूर्ण;
 
-struct qed_conn_type_cfg {
+काष्ठा qed_conn_type_cfg अणु
 	u32 cid_count;
 	u32 cids_per_vf;
-	struct qed_tid_seg tid_seg[TASK_SEGMENTS];
-};
+	काष्ठा qed_tid_seg tid_seg[TASK_SEGMENTS];
+पूर्ण;
 
 /* ILT Client configuration,
  * Per connection type (protocol) resources (cids, tis, vf cids etc.)
- * 1 - for connection context (CDUC) and for each task context we need two
- * values, for regular task context and for force load memory
+ * 1 - क्रम connection context (CDUC) and क्रम each task context we need two
+ * values, क्रम regular task context and क्रम क्रमce load memory
  */
-#define ILT_CLI_PF_BLOCKS       (1 + NUM_TASK_PF_SEGMENTS * 2)
-#define ILT_CLI_VF_BLOCKS       (1 + NUM_TASK_VF_SEGMENTS * 2)
-#define CDUC_BLK                (0)
-#define SRQ_BLK                 (0)
-#define CDUT_SEG_BLK(n)         (1 + (u8)(n))
-#define CDUT_FL_SEG_BLK(n, X)   (1 + (n) + NUM_TASK_ ## X ## _SEGMENTS)
+#घोषणा ILT_CLI_PF_BLOCKS       (1 + NUM_TASK_PF_SEGMENTS * 2)
+#घोषणा ILT_CLI_VF_BLOCKS       (1 + NUM_TASK_VF_SEGMENTS * 2)
+#घोषणा CDUC_BLK                (0)
+#घोषणा SRQ_BLK                 (0)
+#घोषणा CDUT_SEG_BLK(n)         (1 + (u8)(n))
+#घोषणा CDUT_FL_SEG_BLK(n, X)   (1 + (n) + NUM_TASK_ ## X ## _SEGMENTS)
 
-struct ilt_cfg_pair {
+काष्ठा ilt_cfg_pair अणु
 	u32 reg;
 	u32 val;
-};
+पूर्ण;
 
-struct qed_ilt_cli_blk {
+काष्ठा qed_ilt_cli_blk अणु
 	u32 total_size;		/* 0 means not active */
 	u32 real_size_in_page;
 	u32 start_line;
 	u32 dynamic_line_offset;
 	u32 dynamic_line_cnt;
-};
+पूर्ण;
 
-struct qed_ilt_client_cfg {
+काष्ठा qed_ilt_client_cfg अणु
 	bool active;
 
 	/* ILT boundaries */
-	struct ilt_cfg_pair first;
-	struct ilt_cfg_pair last;
-	struct ilt_cfg_pair p_size;
+	काष्ठा ilt_cfg_pair first;
+	काष्ठा ilt_cfg_pair last;
+	काष्ठा ilt_cfg_pair p_size;
 
-	/* ILT client blocks for PF */
-	struct qed_ilt_cli_blk pf_blks[ILT_CLI_PF_BLOCKS];
+	/* ILT client blocks क्रम PF */
+	काष्ठा qed_ilt_cli_blk pf_blks[ILT_CLI_PF_BLOCKS];
 	u32 pf_total_lines;
 
-	/* ILT client blocks for VFs */
-	struct qed_ilt_cli_blk vf_blks[ILT_CLI_VF_BLOCKS];
+	/* ILT client blocks क्रम VFs */
+	काष्ठा qed_ilt_cli_blk vf_blks[ILT_CLI_VF_BLOCKS];
 	u32 vf_total_lines;
-};
+पूर्ण;
 
-struct qed_cid_acquired_map {
+काष्ठा qed_cid_acquired_map अणु
 	u32		start_cid;
 	u32		max_count;
-	unsigned long	*cid_map;
-};
+	अचिन्हित दीर्घ	*cid_map;
+पूर्ण;
 
-struct qed_src_t2 {
-	struct phys_mem_desc *dma_mem;
+काष्ठा qed_src_t2 अणु
+	काष्ठा phys_mem_desc *dma_mem;
 	u32 num_pages;
-	u64 first_free;
-	u64 last_free;
-};
+	u64 first_मुक्त;
+	u64 last_मुक्त;
+पूर्ण;
 
-struct qed_cxt_mngr {
+काष्ठा qed_cxt_mngr अणु
 	/* Per protocl configuration */
-	struct qed_conn_type_cfg	conn_cfg[MAX_CONN_TYPES];
+	काष्ठा qed_conn_type_cfg	conn_cfg[MAX_CONN_TYPES];
 
-	/* computed ILT structure */
-	struct qed_ilt_client_cfg	clients[MAX_ILT_CLIENTS];
+	/* computed ILT काष्ठाure */
+	काष्ठा qed_ilt_client_cfg	clients[MAX_ILT_CLIENTS];
 
 	/* Task type sizes */
 	u32 task_type_size[NUM_TASK_TYPES];
 
-	/* total number of VFs for this hwfn -
+	/* total number of VFs क्रम this hwfn -
 	 * ALL VFs are symmetric in terms of HW resources
 	 */
 	u32 vf_count;
 	u32 first_vf_in_pf;
 
 	/* Acquired CIDs */
-	struct qed_cid_acquired_map	acquired[MAX_CONN_TYPES];
+	काष्ठा qed_cid_acquired_map	acquired[MAX_CONN_TYPES];
 
-	struct qed_cid_acquired_map
+	काष्ठा qed_cid_acquired_map
 	acquired_vf[MAX_CONN_TYPES][MAX_NUM_VFS];
 
-	/* ILT  shadow table */
-	struct phys_mem_desc *ilt_shadow;
-	u32 ilt_shadow_size;
+	/* ILT  shaकरोw table */
+	काष्ठा phys_mem_desc *ilt_shaकरोw;
+	u32 ilt_shaकरोw_size;
 	u32 pf_start_line;
 
-	/* Mutex for a dynamic ILT allocation */
-	struct mutex mutex;
+	/* Mutex क्रम a dynamic ILT allocation */
+	काष्ठा mutex mutex;
 
 	/* SRC T2 */
-	struct qed_src_t2 src_t2;
+	काष्ठा qed_src_t2 src_t2;
 
-	/* total number of SRQ's for this hwfn */
+	/* total number of SRQ's क्रम this hwfn */
 	u32 srq_count;
 	u32 xrc_srq_count;
 
@@ -337,16 +338,16 @@ struct qed_cxt_mngr {
 	u8 task_type_id;
 	u16 task_ctx_size;
 	u16 conn_ctx_size;
-};
+पूर्ण;
 
-u16 qed_get_cdut_num_pf_init_pages(struct qed_hwfn *p_hwfn);
-u16 qed_get_cdut_num_vf_init_pages(struct qed_hwfn *p_hwfn);
-u16 qed_get_cdut_num_pf_work_pages(struct qed_hwfn *p_hwfn);
-u16 qed_get_cdut_num_vf_work_pages(struct qed_hwfn *p_hwfn);
+u16 qed_get_cdut_num_pf_init_pages(काष्ठा qed_hwfn *p_hwfn);
+u16 qed_get_cdut_num_vf_init_pages(काष्ठा qed_hwfn *p_hwfn);
+u16 qed_get_cdut_num_pf_work_pages(काष्ठा qed_hwfn *p_hwfn);
+u16 qed_get_cdut_num_vf_work_pages(काष्ठा qed_hwfn *p_hwfn);
 
-u32 qed_cxt_get_ilt_page_size(struct qed_hwfn *p_hwfn,
-			      enum ilt_clients ilt_client);
+u32 qed_cxt_get_ilt_page_size(काष्ठा qed_hwfn *p_hwfn,
+			      क्रमागत ilt_clients ilt_client);
 
-u32 qed_cxt_get_total_srq_count(struct qed_hwfn *p_hwfn);
+u32 qed_cxt_get_total_srq_count(काष्ठा qed_hwfn *p_hwfn);
 
-#endif
+#पूर्ण_अगर

@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright 2015-2020 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
-#include <linux/ethtool.h>
-#include <linux/pci.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/pci.h>
 
-#include "ena_netdev.h"
+#समावेश "ena_netdev.h"
 
-struct ena_stats {
-	char name[ETH_GSTRING_LEN];
-	int stat_offset;
-};
+काष्ठा ena_stats अणु
+	अक्षर name[ETH_GSTRING_LEN];
+	पूर्णांक stat_offset;
+पूर्ण;
 
-#define ENA_STAT_ENA_COM_ENTRY(stat) { \
+#घोषणा ENA_STAT_ENA_COM_ENTRY(stat) अणु \
 	.name = #stat, \
-	.stat_offset = offsetof(struct ena_com_stats_admin, stat) / sizeof(u64) \
-}
+	.stat_offset = दुरत्व(काष्ठा ena_com_stats_admin, stat) / माप(u64) \
+पूर्ण
 
-#define ENA_STAT_ENTRY(stat, stat_type) { \
+#घोषणा ENA_STAT_ENTRY(stat, stat_type) अणु \
 	.name = #stat, \
-	.stat_offset = offsetof(struct ena_stats_##stat_type, stat) / sizeof(u64) \
-}
+	.stat_offset = दुरत्व(काष्ठा ena_stats_##stat_type, stat) / माप(u64) \
+पूर्ण
 
-#define ENA_STAT_HW_ENTRY(stat, stat_type) { \
+#घोषणा ENA_STAT_HW_ENTRY(stat, stat_type) अणु \
 	.name = #stat, \
-	.stat_offset = offsetof(struct ena_admin_##stat_type, stat) / sizeof(u64) \
-}
+	.stat_offset = दुरत्व(काष्ठा ena_admin_##stat_type, stat) / माप(u64) \
+पूर्ण
 
-#define ENA_STAT_RX_ENTRY(stat) \
+#घोषणा ENA_STAT_RX_ENTRY(stat) \
 	ENA_STAT_ENTRY(stat, rx)
 
-#define ENA_STAT_TX_ENTRY(stat) \
+#घोषणा ENA_STAT_TX_ENTRY(stat) \
 	ENA_STAT_ENTRY(stat, tx)
 
-#define ENA_STAT_GLOBAL_ENTRY(stat) \
+#घोषणा ENA_STAT_GLOBAL_ENTRY(stat) \
 	ENA_STAT_ENTRY(stat, dev)
 
-#define ENA_STAT_ENI_ENTRY(stat) \
+#घोषणा ENA_STAT_ENI_ENTRY(stat) \
 	ENA_STAT_HW_ENTRY(stat, eni_stats)
 
-static const struct ena_stats ena_stats_global_strings[] = {
-	ENA_STAT_GLOBAL_ENTRY(tx_timeout),
+अटल स्थिर काष्ठा ena_stats ena_stats_global_strings[] = अणु
+	ENA_STAT_GLOBAL_ENTRY(tx_समयout),
 	ENA_STAT_GLOBAL_ENTRY(suspend),
 	ENA_STAT_GLOBAL_ENTRY(resume),
 	ENA_STAT_GLOBAL_ENTRY(wd_expired),
-	ENA_STAT_GLOBAL_ENTRY(interface_up),
-	ENA_STAT_GLOBAL_ENTRY(interface_down),
-	ENA_STAT_GLOBAL_ENTRY(admin_q_pause),
-};
+	ENA_STAT_GLOBAL_ENTRY(पूर्णांकerface_up),
+	ENA_STAT_GLOBAL_ENTRY(पूर्णांकerface_करोwn),
+	ENA_STAT_GLOBAL_ENTRY(admin_q_छोड़ो),
+पूर्ण;
 
-static const struct ena_stats ena_stats_eni_strings[] = {
+अटल स्थिर काष्ठा ena_stats ena_stats_eni_strings[] = अणु
 	ENA_STAT_ENI_ENTRY(bw_in_allowance_exceeded),
 	ENA_STAT_ENI_ENTRY(bw_out_allowance_exceeded),
 	ENA_STAT_ENI_ENTRY(pps_allowance_exceeded),
 	ENA_STAT_ENI_ENTRY(conntrack_allowance_exceeded),
 	ENA_STAT_ENI_ENTRY(linklocal_allowance_exceeded),
-};
+पूर्ण;
 
-static const struct ena_stats ena_stats_tx_strings[] = {
+अटल स्थिर काष्ठा ena_stats ena_stats_tx_strings[] = अणु
 	ENA_STAT_TX_ENTRY(cnt),
 	ENA_STAT_TX_ENTRY(bytes),
 	ENA_STAT_TX_ENTRY(queue_stop),
@@ -68,18 +69,18 @@ static const struct ena_stats ena_stats_tx_strings[] = {
 	ENA_STAT_TX_ENTRY(linearize_failed),
 	ENA_STAT_TX_ENTRY(napi_comp),
 	ENA_STAT_TX_ENTRY(tx_poll),
-	ENA_STAT_TX_ENTRY(doorbells),
+	ENA_STAT_TX_ENTRY(करोorbells),
 	ENA_STAT_TX_ENTRY(prepare_ctx_err),
 	ENA_STAT_TX_ENTRY(bad_req_id),
 	ENA_STAT_TX_ENTRY(llq_buffer_copy),
 	ENA_STAT_TX_ENTRY(missed_tx),
-	ENA_STAT_TX_ENTRY(unmask_interrupt),
-};
+	ENA_STAT_TX_ENTRY(unmask_पूर्णांकerrupt),
+पूर्ण;
 
-static const struct ena_stats ena_stats_rx_strings[] = {
+अटल स्थिर काष्ठा ena_stats ena_stats_rx_strings[] = अणु
 	ENA_STAT_RX_ENTRY(cnt),
 	ENA_STAT_RX_ENTRY(bytes),
-	ENA_STAT_RX_ENTRY(rx_copybreak_pkt),
+	ENA_STAT_RX_ENTRY(rx_copyअवरोध_pkt),
 	ENA_STAT_RX_ENTRY(csum_good),
 	ENA_STAT_RX_ENTRY(refil_partial),
 	ENA_STAT_RX_ENTRY(bad_csum),
@@ -90,803 +91,803 @@ static const struct ena_stats ena_stats_rx_strings[] = {
 	ENA_STAT_RX_ENTRY(bad_req_id),
 	ENA_STAT_RX_ENTRY(empty_rx_ring),
 	ENA_STAT_RX_ENTRY(csum_unchecked),
-	ENA_STAT_RX_ENTRY(xdp_aborted),
+	ENA_STAT_RX_ENTRY(xdp_पातed),
 	ENA_STAT_RX_ENTRY(xdp_drop),
 	ENA_STAT_RX_ENTRY(xdp_pass),
 	ENA_STAT_RX_ENTRY(xdp_tx),
 	ENA_STAT_RX_ENTRY(xdp_invalid),
 	ENA_STAT_RX_ENTRY(xdp_redirect),
-};
+पूर्ण;
 
-static const struct ena_stats ena_stats_ena_com_strings[] = {
-	ENA_STAT_ENA_COM_ENTRY(aborted_cmd),
+अटल स्थिर काष्ठा ena_stats ena_stats_ena_com_strings[] = अणु
+	ENA_STAT_ENA_COM_ENTRY(पातed_cmd),
 	ENA_STAT_ENA_COM_ENTRY(submitted_cmd),
 	ENA_STAT_ENA_COM_ENTRY(completed_cmd),
 	ENA_STAT_ENA_COM_ENTRY(out_of_space),
 	ENA_STAT_ENA_COM_ENTRY(no_completion),
-};
+पूर्ण;
 
-#define ENA_STATS_ARRAY_GLOBAL		ARRAY_SIZE(ena_stats_global_strings)
-#define ENA_STATS_ARRAY_TX		ARRAY_SIZE(ena_stats_tx_strings)
-#define ENA_STATS_ARRAY_RX		ARRAY_SIZE(ena_stats_rx_strings)
-#define ENA_STATS_ARRAY_ENA_COM		ARRAY_SIZE(ena_stats_ena_com_strings)
-#define ENA_STATS_ARRAY_ENI(adapter)	\
+#घोषणा ENA_STATS_ARRAY_GLOBAL		ARRAY_SIZE(ena_stats_global_strings)
+#घोषणा ENA_STATS_ARRAY_TX		ARRAY_SIZE(ena_stats_tx_strings)
+#घोषणा ENA_STATS_ARRAY_RX		ARRAY_SIZE(ena_stats_rx_strings)
+#घोषणा ENA_STATS_ARRAY_ENA_COM		ARRAY_SIZE(ena_stats_ena_com_strings)
+#घोषणा ENA_STATS_ARRAY_ENI(adapter)	\
 	(ARRAY_SIZE(ena_stats_eni_strings) * (adapter)->eni_stats_supported)
 
-static void ena_safe_update_stat(u64 *src, u64 *dst,
-				 struct u64_stats_sync *syncp)
-{
-	unsigned int start;
+अटल व्योम ena_safe_update_stat(u64 *src, u64 *dst,
+				 काष्ठा u64_stats_sync *syncp)
+अणु
+	अचिन्हित पूर्णांक start;
 
-	do {
+	करो अणु
 		start = u64_stats_fetch_begin_irq(syncp);
 		*(dst) = *src;
-	} while (u64_stats_fetch_retry_irq(syncp, start));
-}
+	पूर्ण जबतक (u64_stats_fetch_retry_irq(syncp, start));
+पूर्ण
 
-static void ena_queue_stats(struct ena_adapter *adapter, u64 **data)
-{
-	const struct ena_stats *ena_stats;
-	struct ena_ring *ring;
+अटल व्योम ena_queue_stats(काष्ठा ena_adapter *adapter, u64 **data)
+अणु
+	स्थिर काष्ठा ena_stats *ena_stats;
+	काष्ठा ena_ring *ring;
 
 	u64 *ptr;
-	int i, j;
+	पूर्णांक i, j;
 
-	for (i = 0; i < adapter->num_io_queues + adapter->xdp_num_queues; i++) {
+	क्रम (i = 0; i < adapter->num_io_queues + adapter->xdp_num_queues; i++) अणु
 		/* Tx stats */
 		ring = &adapter->tx_ring[i];
 
-		for (j = 0; j < ENA_STATS_ARRAY_TX; j++) {
+		क्रम (j = 0; j < ENA_STATS_ARRAY_TX; j++) अणु
 			ena_stats = &ena_stats_tx_strings[j];
 
 			ptr = (u64 *)&ring->tx_stats + ena_stats->stat_offset;
 
 			ena_safe_update_stat(ptr, (*data)++, &ring->syncp);
-		}
-		/* XDP TX queues don't have a RX queue counterpart */
-		if (!ENA_IS_XDP_INDEX(adapter, i)) {
+		पूर्ण
+		/* XDP TX queues करोn't have a RX queue counterpart */
+		अगर (!ENA_IS_XDP_INDEX(adapter, i)) अणु
 			/* Rx stats */
 			ring = &adapter->rx_ring[i];
 
-			for (j = 0; j < ENA_STATS_ARRAY_RX; j++) {
+			क्रम (j = 0; j < ENA_STATS_ARRAY_RX; j++) अणु
 				ena_stats = &ena_stats_rx_strings[j];
 
 				ptr = (u64 *)&ring->rx_stats +
 					ena_stats->stat_offset;
 
 				ena_safe_update_stat(ptr, (*data)++, &ring->syncp);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ena_dev_admin_queue_stats(struct ena_adapter *adapter, u64 **data)
-{
-	const struct ena_stats *ena_stats;
+अटल व्योम ena_dev_admin_queue_stats(काष्ठा ena_adapter *adapter, u64 **data)
+अणु
+	स्थिर काष्ठा ena_stats *ena_stats;
 	u64 *ptr;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < ENA_STATS_ARRAY_ENA_COM; i++) {
+	क्रम (i = 0; i < ENA_STATS_ARRAY_ENA_COM; i++) अणु
 		ena_stats = &ena_stats_ena_com_strings[i];
 
 		ptr = (u64 *)&adapter->ena_dev->admin_queue.stats +
 			ena_stats->stat_offset;
 
 		*(*data)++ = *ptr;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ena_get_stats(struct ena_adapter *adapter,
+अटल व्योम ena_get_stats(काष्ठा ena_adapter *adapter,
 			  u64 *data,
 			  bool eni_stats_needed)
-{
-	const struct ena_stats *ena_stats;
+अणु
+	स्थिर काष्ठा ena_stats *ena_stats;
 	u64 *ptr;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < ENA_STATS_ARRAY_GLOBAL; i++) {
+	क्रम (i = 0; i < ENA_STATS_ARRAY_GLOBAL; i++) अणु
 		ena_stats = &ena_stats_global_strings[i];
 
 		ptr = (u64 *)&adapter->dev_stats + ena_stats->stat_offset;
 
 		ena_safe_update_stat(ptr, data++, &adapter->syncp);
-	}
+	पूर्ण
 
-	if (eni_stats_needed) {
+	अगर (eni_stats_needed) अणु
 		ena_update_hw_stats(adapter);
-		for (i = 0; i < ENA_STATS_ARRAY_ENI(adapter); i++) {
+		क्रम (i = 0; i < ENA_STATS_ARRAY_ENI(adapter); i++) अणु
 			ena_stats = &ena_stats_eni_strings[i];
 
 			ptr = (u64 *)&adapter->eni_stats +
 				ena_stats->stat_offset;
 
 			ena_safe_update_stat(ptr, data++, &adapter->syncp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ena_queue_stats(adapter, &data);
 	ena_dev_admin_queue_stats(adapter, &data);
-}
+पूर्ण
 
-static void ena_get_ethtool_stats(struct net_device *netdev,
-				  struct ethtool_stats *stats,
+अटल व्योम ena_get_ethtool_stats(काष्ठा net_device *netdev,
+				  काष्ठा ethtool_stats *stats,
 				  u64 *data)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
 
 	ena_get_stats(adapter, data, adapter->eni_stats_supported);
-}
+पूर्ण
 
-static int ena_get_sw_stats_count(struct ena_adapter *adapter)
-{
-	return adapter->num_io_queues * (ENA_STATS_ARRAY_TX + ENA_STATS_ARRAY_RX)
+अटल पूर्णांक ena_get_sw_stats_count(काष्ठा ena_adapter *adapter)
+अणु
+	वापस adapter->num_io_queues * (ENA_STATS_ARRAY_TX + ENA_STATS_ARRAY_RX)
 		+ adapter->xdp_num_queues * ENA_STATS_ARRAY_TX
 		+ ENA_STATS_ARRAY_GLOBAL + ENA_STATS_ARRAY_ENA_COM;
-}
+पूर्ण
 
-static int ena_get_hw_stats_count(struct ena_adapter *adapter)
-{
-	return ENA_STATS_ARRAY_ENI(adapter);
-}
+अटल पूर्णांक ena_get_hw_stats_count(काष्ठा ena_adapter *adapter)
+अणु
+	वापस ENA_STATS_ARRAY_ENI(adapter);
+पूर्ण
 
-int ena_get_sset_count(struct net_device *netdev, int sset)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
+पूर्णांक ena_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
 
-	if (sset != ETH_SS_STATS)
-		return -EOPNOTSUPP;
+	अगर (sset != ETH_SS_STATS)
+		वापस -EOPNOTSUPP;
 
-	return ena_get_sw_stats_count(adapter) + ena_get_hw_stats_count(adapter);
-}
+	वापस ena_get_sw_stats_count(adapter) + ena_get_hw_stats_count(adapter);
+पूर्ण
 
-static void ena_queue_strings(struct ena_adapter *adapter, u8 **data)
-{
-	const struct ena_stats *ena_stats;
+अटल व्योम ena_queue_strings(काष्ठा ena_adapter *adapter, u8 **data)
+अणु
+	स्थिर काष्ठा ena_stats *ena_stats;
 	bool is_xdp;
-	int i, j;
+	पूर्णांक i, j;
 
-	for (i = 0; i < adapter->num_io_queues + adapter->xdp_num_queues; i++) {
+	क्रम (i = 0; i < adapter->num_io_queues + adapter->xdp_num_queues; i++) अणु
 		is_xdp = ENA_IS_XDP_INDEX(adapter, i);
 		/* Tx stats */
-		for (j = 0; j < ENA_STATS_ARRAY_TX; j++) {
+		क्रम (j = 0; j < ENA_STATS_ARRAY_TX; j++) अणु
 			ena_stats = &ena_stats_tx_strings[j];
 
-			ethtool_sprintf(data,
+			ethtool_प्र_लिखो(data,
 					"queue_%u_%s_%s", i,
 					is_xdp ? "xdp_tx" : "tx",
 					ena_stats->name);
-		}
+		पूर्ण
 
-		if (!is_xdp) {
+		अगर (!is_xdp) अणु
 			/* RX stats, in XDP there isn't a RX queue
 			 * counterpart
 			 */
-			for (j = 0; j < ENA_STATS_ARRAY_RX; j++) {
+			क्रम (j = 0; j < ENA_STATS_ARRAY_RX; j++) अणु
 				ena_stats = &ena_stats_rx_strings[j];
 
-				ethtool_sprintf(data,
+				ethtool_प्र_लिखो(data,
 						"queue_%u_rx_%s", i,
 						ena_stats->name);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ena_com_dev_strings(u8 **data)
-{
-	const struct ena_stats *ena_stats;
-	int i;
+अटल व्योम ena_com_dev_strings(u8 **data)
+अणु
+	स्थिर काष्ठा ena_stats *ena_stats;
+	पूर्णांक i;
 
-	for (i = 0; i < ENA_STATS_ARRAY_ENA_COM; i++) {
+	क्रम (i = 0; i < ENA_STATS_ARRAY_ENA_COM; i++) अणु
 		ena_stats = &ena_stats_ena_com_strings[i];
 
-		ethtool_sprintf(data,
+		ethtool_प्र_लिखो(data,
 				"ena_admin_q_%s", ena_stats->name);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ena_get_strings(struct ena_adapter *adapter,
+अटल व्योम ena_get_strings(काष्ठा ena_adapter *adapter,
 			    u8 *data,
 			    bool eni_stats_needed)
-{
-	const struct ena_stats *ena_stats;
-	int i;
+अणु
+	स्थिर काष्ठा ena_stats *ena_stats;
+	पूर्णांक i;
 
-	for (i = 0; i < ENA_STATS_ARRAY_GLOBAL; i++) {
+	क्रम (i = 0; i < ENA_STATS_ARRAY_GLOBAL; i++) अणु
 		ena_stats = &ena_stats_global_strings[i];
-		ethtool_sprintf(&data, ena_stats->name);
-	}
+		ethtool_प्र_लिखो(&data, ena_stats->name);
+	पूर्ण
 
-	if (eni_stats_needed) {
-		for (i = 0; i < ENA_STATS_ARRAY_ENI(adapter); i++) {
+	अगर (eni_stats_needed) अणु
+		क्रम (i = 0; i < ENA_STATS_ARRAY_ENI(adapter); i++) अणु
 			ena_stats = &ena_stats_eni_strings[i];
-			ethtool_sprintf(&data, ena_stats->name);
-		}
-	}
+			ethtool_प्र_लिखो(&data, ena_stats->name);
+		पूर्ण
+	पूर्ण
 
 	ena_queue_strings(adapter, &data);
 	ena_com_dev_strings(&data);
-}
+पूर्ण
 
-static void ena_get_ethtool_strings(struct net_device *netdev,
+अटल व्योम ena_get_ethtool_strings(काष्ठा net_device *netdev,
 				    u32 sset,
 				    u8 *data)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
 
-	if (sset != ETH_SS_STATS)
-		return;
+	अगर (sset != ETH_SS_STATS)
+		वापस;
 
 	ena_get_strings(adapter, data, adapter->eni_stats_supported);
-}
+पूर्ण
 
-static int ena_get_link_ksettings(struct net_device *netdev,
-				  struct ethtool_link_ksettings *link_ksettings)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
-	struct ena_com_dev *ena_dev = adapter->ena_dev;
-	struct ena_admin_get_feature_link_desc *link;
-	struct ena_admin_get_feat_resp feat_resp;
-	int rc;
+अटल पूर्णांक ena_get_link_ksettings(काष्ठा net_device *netdev,
+				  काष्ठा ethtool_link_ksettings *link_ksettings)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ena_com_dev *ena_dev = adapter->ena_dev;
+	काष्ठा ena_admin_get_feature_link_desc *link;
+	काष्ठा ena_admin_get_feat_resp feat_resp;
+	पूर्णांक rc;
 
 	rc = ena_com_get_link_params(ena_dev, &feat_resp);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	link = &feat_resp.u.link;
 	link_ksettings->base.speed = link->speed;
 
-	if (link->flags & ENA_ADMIN_GET_FEATURE_LINK_DESC_AUTONEG_MASK) {
+	अगर (link->flags & ENA_ADMIN_GET_FEATURE_LINK_DESC_AUTONEG_MASK) अणु
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     supported, Autoneg);
 		ethtool_link_ksettings_add_link_mode(link_ksettings,
 						     supported, Autoneg);
-	}
+	पूर्ण
 
-	link_ksettings->base.autoneg =
+	link_ksettings->base.स्वतःneg =
 		(link->flags & ENA_ADMIN_GET_FEATURE_LINK_DESC_AUTONEG_MASK) ?
 		AUTONEG_ENABLE : AUTONEG_DISABLE;
 
 	link_ksettings->base.duplex = DUPLEX_FULL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ena_get_coalesce(struct net_device *net_dev,
-			    struct ethtool_coalesce *coalesce)
-{
-	struct ena_adapter *adapter = netdev_priv(net_dev);
-	struct ena_com_dev *ena_dev = adapter->ena_dev;
+अटल पूर्णांक ena_get_coalesce(काष्ठा net_device *net_dev,
+			    काष्ठा ethtool_coalesce *coalesce)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(net_dev);
+	काष्ठा ena_com_dev *ena_dev = adapter->ena_dev;
 
-	if (!ena_com_interrupt_moderation_supported(ena_dev))
-		return -EOPNOTSUPP;
+	अगर (!ena_com_पूर्णांकerrupt_moderation_supported(ena_dev))
+		वापस -EOPNOTSUPP;
 
 	coalesce->tx_coalesce_usecs =
-		ena_com_get_nonadaptive_moderation_interval_tx(ena_dev) *
-			ena_dev->intr_delay_resolution;
+		ena_com_get_nonadaptive_moderation_पूर्णांकerval_tx(ena_dev) *
+			ena_dev->पूर्णांकr_delay_resolution;
 
 	coalesce->rx_coalesce_usecs =
-		ena_com_get_nonadaptive_moderation_interval_rx(ena_dev)
-		* ena_dev->intr_delay_resolution;
+		ena_com_get_nonadaptive_moderation_पूर्णांकerval_rx(ena_dev)
+		* ena_dev->पूर्णांकr_delay_resolution;
 
 	coalesce->use_adaptive_rx_coalesce =
 		ena_com_get_adaptive_moderation_enabled(ena_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ena_update_tx_rings_nonadaptive_intr_moderation(struct ena_adapter *adapter)
-{
-	unsigned int val;
-	int i;
+अटल व्योम ena_update_tx_rings_nonadaptive_पूर्णांकr_moderation(काष्ठा ena_adapter *adapter)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक i;
 
-	val = ena_com_get_nonadaptive_moderation_interval_tx(adapter->ena_dev);
+	val = ena_com_get_nonadaptive_moderation_पूर्णांकerval_tx(adapter->ena_dev);
 
-	for (i = 0; i < adapter->num_io_queues; i++)
-		adapter->tx_ring[i].smoothed_interval = val;
-}
+	क्रम (i = 0; i < adapter->num_io_queues; i++)
+		adapter->tx_ring[i].smoothed_पूर्णांकerval = val;
+पूर्ण
 
-static void ena_update_rx_rings_nonadaptive_intr_moderation(struct ena_adapter *adapter)
-{
-	unsigned int val;
-	int i;
+अटल व्योम ena_update_rx_rings_nonadaptive_पूर्णांकr_moderation(काष्ठा ena_adapter *adapter)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक i;
 
-	val = ena_com_get_nonadaptive_moderation_interval_rx(adapter->ena_dev);
+	val = ena_com_get_nonadaptive_moderation_पूर्णांकerval_rx(adapter->ena_dev);
 
-	for (i = 0; i < adapter->num_io_queues; i++)
-		adapter->rx_ring[i].smoothed_interval = val;
-}
+	क्रम (i = 0; i < adapter->num_io_queues; i++)
+		adapter->rx_ring[i].smoothed_पूर्णांकerval = val;
+पूर्ण
 
-static int ena_set_coalesce(struct net_device *net_dev,
-			    struct ethtool_coalesce *coalesce)
-{
-	struct ena_adapter *adapter = netdev_priv(net_dev);
-	struct ena_com_dev *ena_dev = adapter->ena_dev;
-	int rc;
+अटल पूर्णांक ena_set_coalesce(काष्ठा net_device *net_dev,
+			    काष्ठा ethtool_coalesce *coalesce)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(net_dev);
+	काष्ठा ena_com_dev *ena_dev = adapter->ena_dev;
+	पूर्णांक rc;
 
-	if (!ena_com_interrupt_moderation_supported(ena_dev))
-		return -EOPNOTSUPP;
+	अगर (!ena_com_पूर्णांकerrupt_moderation_supported(ena_dev))
+		वापस -EOPNOTSUPP;
 
-	rc = ena_com_update_nonadaptive_moderation_interval_tx(ena_dev,
+	rc = ena_com_update_nonadaptive_moderation_पूर्णांकerval_tx(ena_dev,
 							       coalesce->tx_coalesce_usecs);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	ena_update_tx_rings_nonadaptive_intr_moderation(adapter);
+	ena_update_tx_rings_nonadaptive_पूर्णांकr_moderation(adapter);
 
-	rc = ena_com_update_nonadaptive_moderation_interval_rx(ena_dev,
+	rc = ena_com_update_nonadaptive_moderation_पूर्णांकerval_rx(ena_dev,
 							       coalesce->rx_coalesce_usecs);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	ena_update_rx_rings_nonadaptive_intr_moderation(adapter);
+	ena_update_rx_rings_nonadaptive_पूर्णांकr_moderation(adapter);
 
-	if (coalesce->use_adaptive_rx_coalesce &&
+	अगर (coalesce->use_adaptive_rx_coalesce &&
 	    !ena_com_get_adaptive_moderation_enabled(ena_dev))
 		ena_com_enable_adaptive_moderation(ena_dev);
 
-	if (!coalesce->use_adaptive_rx_coalesce &&
+	अगर (!coalesce->use_adaptive_rx_coalesce &&
 	    ena_com_get_adaptive_moderation_enabled(ena_dev))
 		ena_com_disable_adaptive_moderation(ena_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 ena_get_msglevel(struct net_device *netdev)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
+अटल u32 ena_get_msglevel(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
 
-	return adapter->msg_enable;
-}
+	वापस adapter->msg_enable;
+पूर्ण
 
-static void ena_set_msglevel(struct net_device *netdev, u32 value)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
+अटल व्योम ena_set_msglevel(काष्ठा net_device *netdev, u32 value)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
 
 	adapter->msg_enable = value;
-}
+पूर्ण
 
-static void ena_get_drvinfo(struct net_device *dev,
-			    struct ethtool_drvinfo *info)
-{
-	struct ena_adapter *adapter = netdev_priv(dev);
+अटल व्योम ena_get_drvinfo(काष्ठा net_device *dev,
+			    काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(dev);
 
-	strlcpy(info->driver, DRV_MODULE_NAME, sizeof(info->driver));
+	strlcpy(info->driver, DRV_MODULE_NAME, माप(info->driver));
 	strlcpy(info->bus_info, pci_name(adapter->pdev),
-		sizeof(info->bus_info));
-}
+		माप(info->bus_info));
+पूर्ण
 
-static void ena_get_ringparam(struct net_device *netdev,
-			      struct ethtool_ringparam *ring)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
+अटल व्योम ena_get_ringparam(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
 
 	ring->tx_max_pending = adapter->max_tx_ring_size;
 	ring->rx_max_pending = adapter->max_rx_ring_size;
 	ring->tx_pending = adapter->tx_ring[0].ring_size;
 	ring->rx_pending = adapter->rx_ring[0].ring_size;
-}
+पूर्ण
 
-static int ena_set_ringparam(struct net_device *netdev,
-			     struct ethtool_ringparam *ring)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक ena_set_ringparam(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
 	u32 new_tx_size, new_rx_size;
 
 	new_tx_size = ring->tx_pending < ENA_MIN_RING_SIZE ?
 			ENA_MIN_RING_SIZE : ring->tx_pending;
-	new_tx_size = rounddown_pow_of_two(new_tx_size);
+	new_tx_size = roundकरोwn_घात_of_two(new_tx_size);
 
 	new_rx_size = ring->rx_pending < ENA_MIN_RING_SIZE ?
 			ENA_MIN_RING_SIZE : ring->rx_pending;
-	new_rx_size = rounddown_pow_of_two(new_rx_size);
+	new_rx_size = roundकरोwn_घात_of_two(new_rx_size);
 
-	if (new_tx_size == adapter->requested_tx_ring_size &&
+	अगर (new_tx_size == adapter->requested_tx_ring_size &&
 	    new_rx_size == adapter->requested_rx_ring_size)
-		return 0;
+		वापस 0;
 
-	return ena_update_queue_sizes(adapter, new_tx_size, new_rx_size);
-}
+	वापस ena_update_queue_sizes(adapter, new_tx_size, new_rx_size);
+पूर्ण
 
-static u32 ena_flow_hash_to_flow_type(u16 hash_fields)
-{
+अटल u32 ena_flow_hash_to_flow_type(u16 hash_fields)
+अणु
 	u32 data = 0;
 
-	if (hash_fields & ENA_ADMIN_RSS_L2_DA)
+	अगर (hash_fields & ENA_ADMIN_RSS_L2_DA)
 		data |= RXH_L2DA;
 
-	if (hash_fields & ENA_ADMIN_RSS_L3_DA)
+	अगर (hash_fields & ENA_ADMIN_RSS_L3_DA)
 		data |= RXH_IP_DST;
 
-	if (hash_fields & ENA_ADMIN_RSS_L3_SA)
+	अगर (hash_fields & ENA_ADMIN_RSS_L3_SA)
 		data |= RXH_IP_SRC;
 
-	if (hash_fields & ENA_ADMIN_RSS_L4_DP)
+	अगर (hash_fields & ENA_ADMIN_RSS_L4_DP)
 		data |= RXH_L4_B_2_3;
 
-	if (hash_fields & ENA_ADMIN_RSS_L4_SP)
+	अगर (hash_fields & ENA_ADMIN_RSS_L4_SP)
 		data |= RXH_L4_B_0_1;
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static u16 ena_flow_data_to_flow_hash(u32 hash_fields)
-{
+अटल u16 ena_flow_data_to_flow_hash(u32 hash_fields)
+अणु
 	u16 data = 0;
 
-	if (hash_fields & RXH_L2DA)
+	अगर (hash_fields & RXH_L2DA)
 		data |= ENA_ADMIN_RSS_L2_DA;
 
-	if (hash_fields & RXH_IP_DST)
+	अगर (hash_fields & RXH_IP_DST)
 		data |= ENA_ADMIN_RSS_L3_DA;
 
-	if (hash_fields & RXH_IP_SRC)
+	अगर (hash_fields & RXH_IP_SRC)
 		data |= ENA_ADMIN_RSS_L3_SA;
 
-	if (hash_fields & RXH_L4_B_2_3)
+	अगर (hash_fields & RXH_L4_B_2_3)
 		data |= ENA_ADMIN_RSS_L4_DP;
 
-	if (hash_fields & RXH_L4_B_0_1)
+	अगर (hash_fields & RXH_L4_B_0_1)
 		data |= ENA_ADMIN_RSS_L4_SP;
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static int ena_get_rss_hash(struct ena_com_dev *ena_dev,
-			    struct ethtool_rxnfc *cmd)
-{
-	enum ena_admin_flow_hash_proto proto;
+अटल पूर्णांक ena_get_rss_hash(काष्ठा ena_com_dev *ena_dev,
+			    काष्ठा ethtool_rxnfc *cmd)
+अणु
+	क्रमागत ena_admin_flow_hash_proto proto;
 	u16 hash_fields;
-	int rc;
+	पूर्णांक rc;
 
 	cmd->data = 0;
 
-	switch (cmd->flow_type) {
-	case TCP_V4_FLOW:
+	चयन (cmd->flow_type) अणु
+	हाल TCP_V4_FLOW:
 		proto = ENA_ADMIN_RSS_TCP4;
-		break;
-	case UDP_V4_FLOW:
+		अवरोध;
+	हाल UDP_V4_FLOW:
 		proto = ENA_ADMIN_RSS_UDP4;
-		break;
-	case TCP_V6_FLOW:
+		अवरोध;
+	हाल TCP_V6_FLOW:
 		proto = ENA_ADMIN_RSS_TCP6;
-		break;
-	case UDP_V6_FLOW:
+		अवरोध;
+	हाल UDP_V6_FLOW:
 		proto = ENA_ADMIN_RSS_UDP6;
-		break;
-	case IPV4_FLOW:
+		अवरोध;
+	हाल IPV4_FLOW:
 		proto = ENA_ADMIN_RSS_IP4;
-		break;
-	case IPV6_FLOW:
+		अवरोध;
+	हाल IPV6_FLOW:
 		proto = ENA_ADMIN_RSS_IP6;
-		break;
-	case ETHER_FLOW:
+		अवरोध;
+	हाल ETHER_FLOW:
 		proto = ENA_ADMIN_RSS_NOT_IP;
-		break;
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-	case SCTP_V4_FLOW:
-	case AH_ESP_V4_FLOW:
-		return -EOPNOTSUPP;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+	हाल SCTP_V4_FLOW:
+	हाल AH_ESP_V4_FLOW:
+		वापस -EOPNOTSUPP;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	rc = ena_com_get_hash_ctrl(ena_dev, proto, &hash_fields);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	cmd->data = ena_flow_hash_to_flow_type(hash_fields);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ena_set_rss_hash(struct ena_com_dev *ena_dev,
-			    struct ethtool_rxnfc *cmd)
-{
-	enum ena_admin_flow_hash_proto proto;
+अटल पूर्णांक ena_set_rss_hash(काष्ठा ena_com_dev *ena_dev,
+			    काष्ठा ethtool_rxnfc *cmd)
+अणु
+	क्रमागत ena_admin_flow_hash_proto proto;
 	u16 hash_fields;
 
-	switch (cmd->flow_type) {
-	case TCP_V4_FLOW:
+	चयन (cmd->flow_type) अणु
+	हाल TCP_V4_FLOW:
 		proto = ENA_ADMIN_RSS_TCP4;
-		break;
-	case UDP_V4_FLOW:
+		अवरोध;
+	हाल UDP_V4_FLOW:
 		proto = ENA_ADMIN_RSS_UDP4;
-		break;
-	case TCP_V6_FLOW:
+		अवरोध;
+	हाल TCP_V6_FLOW:
 		proto = ENA_ADMIN_RSS_TCP6;
-		break;
-	case UDP_V6_FLOW:
+		अवरोध;
+	हाल UDP_V6_FLOW:
 		proto = ENA_ADMIN_RSS_UDP6;
-		break;
-	case IPV4_FLOW:
+		अवरोध;
+	हाल IPV4_FLOW:
 		proto = ENA_ADMIN_RSS_IP4;
-		break;
-	case IPV6_FLOW:
+		अवरोध;
+	हाल IPV6_FLOW:
 		proto = ENA_ADMIN_RSS_IP6;
-		break;
-	case ETHER_FLOW:
+		अवरोध;
+	हाल ETHER_FLOW:
 		proto = ENA_ADMIN_RSS_NOT_IP;
-		break;
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-	case SCTP_V4_FLOW:
-	case AH_ESP_V4_FLOW:
-		return -EOPNOTSUPP;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+	हाल SCTP_V4_FLOW:
+	हाल AH_ESP_V4_FLOW:
+		वापस -EOPNOTSUPP;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	hash_fields = ena_flow_data_to_flow_hash(cmd->data);
 
-	return ena_com_fill_hash_ctrl(ena_dev, proto, hash_fields);
-}
+	वापस ena_com_fill_hash_ctrl(ena_dev, proto, hash_fields);
+पूर्ण
 
-static int ena_set_rxnfc(struct net_device *netdev, struct ethtool_rxnfc *info)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
-	int rc = 0;
+अटल पूर्णांक ena_set_rxnfc(काष्ठा net_device *netdev, काष्ठा ethtool_rxnfc *info)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक rc = 0;
 
-	switch (info->cmd) {
-	case ETHTOOL_SRXFH:
+	चयन (info->cmd) अणु
+	हाल ETHTOOL_SRXFH:
 		rc = ena_set_rss_hash(adapter->ena_dev, info);
-		break;
-	case ETHTOOL_SRXCLSRLDEL:
-	case ETHTOOL_SRXCLSRLINS:
-	default:
-		netif_err(adapter, drv, netdev,
+		अवरोध;
+	हाल ETHTOOL_SRXCLSRLDEL:
+	हाल ETHTOOL_SRXCLSRLINS:
+	शेष:
+		netअगर_err(adapter, drv, netdev,
 			  "Command parameter %d is not supported\n", info->cmd);
 		rc = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ena_get_rxnfc(struct net_device *netdev, struct ethtool_rxnfc *info,
+अटल पूर्णांक ena_get_rxnfc(काष्ठा net_device *netdev, काष्ठा ethtool_rxnfc *info,
 			 u32 *rules)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
-	int rc = 0;
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक rc = 0;
 
-	switch (info->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (info->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		info->data = adapter->num_io_queues;
 		rc = 0;
-		break;
-	case ETHTOOL_GRXFH:
+		अवरोध;
+	हाल ETHTOOL_GRXFH:
 		rc = ena_get_rss_hash(adapter->ena_dev, info);
-		break;
-	case ETHTOOL_GRXCLSRLCNT:
-	case ETHTOOL_GRXCLSRULE:
-	case ETHTOOL_GRXCLSRLALL:
-	default:
-		netif_err(adapter, drv, netdev,
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRLCNT:
+	हाल ETHTOOL_GRXCLSRULE:
+	हाल ETHTOOL_GRXCLSRLALL:
+	शेष:
+		netअगर_err(adapter, drv, netdev,
 			  "Command parameter %d is not supported\n", info->cmd);
 		rc = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static u32 ena_get_rxfh_indir_size(struct net_device *netdev)
-{
-	return ENA_RX_RSS_TABLE_SIZE;
-}
+अटल u32 ena_get_rxfh_indir_size(काष्ठा net_device *netdev)
+अणु
+	वापस ENA_RX_RSS_TABLE_SIZE;
+पूर्ण
 
-static u32 ena_get_rxfh_key_size(struct net_device *netdev)
-{
-	return ENA_HASH_KEY_SIZE;
-}
+अटल u32 ena_get_rxfh_key_size(काष्ठा net_device *netdev)
+अणु
+	वापस ENA_HASH_KEY_SIZE;
+पूर्ण
 
-static int ena_indirection_table_set(struct ena_adapter *adapter,
-				     const u32 *indir)
-{
-	struct ena_com_dev *ena_dev = adapter->ena_dev;
-	int i, rc;
+अटल पूर्णांक ena_indirection_table_set(काष्ठा ena_adapter *adapter,
+				     स्थिर u32 *indir)
+अणु
+	काष्ठा ena_com_dev *ena_dev = adapter->ena_dev;
+	पूर्णांक i, rc;
 
-	for (i = 0; i < ENA_RX_RSS_TABLE_SIZE; i++) {
+	क्रम (i = 0; i < ENA_RX_RSS_TABLE_SIZE; i++) अणु
 		rc = ena_com_indirect_table_fill_entry(ena_dev,
 						       i,
 						       ENA_IO_RXQ_IDX(indir[i]));
-		if (unlikely(rc)) {
-			netif_err(adapter, drv, adapter->netdev,
+		अगर (unlikely(rc)) अणु
+			netअगर_err(adapter, drv, adapter->netdev,
 				  "Cannot fill indirect table (index is too large)\n");
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
 	rc = ena_com_indirect_table_set(ena_dev);
-	if (rc) {
-		netif_err(adapter, drv, adapter->netdev,
+	अगर (rc) अणु
+		netअगर_err(adapter, drv, adapter->netdev,
 			  "Cannot set indirect table\n");
-		return rc == -EPERM ? -EOPNOTSUPP : rc;
-	}
-	return rc;
-}
+		वापस rc == -EPERM ? -EOPNOTSUPP : rc;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int ena_indirection_table_get(struct ena_adapter *adapter, u32 *indir)
-{
-	struct ena_com_dev *ena_dev = adapter->ena_dev;
-	int i, rc;
+अटल पूर्णांक ena_indirection_table_get(काष्ठा ena_adapter *adapter, u32 *indir)
+अणु
+	काष्ठा ena_com_dev *ena_dev = adapter->ena_dev;
+	पूर्णांक i, rc;
 
-	if (!indir)
-		return 0;
+	अगर (!indir)
+		वापस 0;
 
 	rc = ena_com_indirect_table_get(ena_dev, indir);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Our internal representation of the indices is: even indices
-	 * for Tx and uneven indices for Rx. We need to convert the Rx
+	/* Our पूर्णांकernal representation of the indices is: even indices
+	 * क्रम Tx and uneven indices क्रम Rx. We need to convert the Rx
 	 * indices to be consecutive
 	 */
-	for (i = 0; i < ENA_RX_RSS_TABLE_SIZE; i++)
+	क्रम (i = 0; i < ENA_RX_RSS_TABLE_SIZE; i++)
 		indir[i] = ENA_IO_RXQ_IDX_TO_COMBINED_IDX(indir[i]);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ena_get_rxfh(struct net_device *netdev, u32 *indir, u8 *key,
+अटल पूर्णांक ena_get_rxfh(काष्ठा net_device *netdev, u32 *indir, u8 *key,
 			u8 *hfunc)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
-	enum ena_admin_hash_functions ena_func;
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
+	क्रमागत ena_admin_hash_functions ena_func;
 	u8 func;
-	int rc;
+	पूर्णांक rc;
 
 	rc = ena_indirection_table_get(adapter, indir);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* We call this function in order to check if the device
+	/* We call this function in order to check अगर the device
 	 * supports getting/setting the hash function.
 	 */
 	rc = ena_com_get_hash_function(adapter->ena_dev, &ena_func);
-	if (rc) {
-		if (rc == -EOPNOTSUPP)
+	अगर (rc) अणु
+		अगर (rc == -EOPNOTSUPP)
 			rc = 0;
 
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = ena_com_get_hash_key(adapter->ena_dev, key);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	switch (ena_func) {
-	case ENA_ADMIN_TOEPLITZ:
+	चयन (ena_func) अणु
+	हाल ENA_ADMIN_TOEPLITZ:
 		func = ETH_RSS_HASH_TOP;
-		break;
-	case ENA_ADMIN_CRC32:
+		अवरोध;
+	हाल ENA_ADMIN_CRC32:
 		func = ETH_RSS_HASH_CRC32;
-		break;
-	default:
-		netif_err(adapter, drv, netdev,
+		अवरोध;
+	शेष:
+		netअगर_err(adapter, drv, netdev,
 			  "Command parameter is not supported\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = func;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ena_set_rxfh(struct net_device *netdev, const u32 *indir,
-			const u8 *key, const u8 hfunc)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
-	struct ena_com_dev *ena_dev = adapter->ena_dev;
-	enum ena_admin_hash_functions func = 0;
-	int rc;
+अटल पूर्णांक ena_set_rxfh(काष्ठा net_device *netdev, स्थिर u32 *indir,
+			स्थिर u8 *key, स्थिर u8 hfunc)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ena_com_dev *ena_dev = adapter->ena_dev;
+	क्रमागत ena_admin_hash_functions func = 0;
+	पूर्णांक rc;
 
-	if (indir) {
+	अगर (indir) अणु
 		rc = ena_indirection_table_set(adapter, indir);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	switch (hfunc) {
-	case ETH_RSS_HASH_NO_CHANGE:
+	चयन (hfunc) अणु
+	हाल ETH_RSS_HASH_NO_CHANGE:
 		func = ena_com_get_current_hash_function(ena_dev);
-		break;
-	case ETH_RSS_HASH_TOP:
+		अवरोध;
+	हाल ETH_RSS_HASH_TOP:
 		func = ENA_ADMIN_TOEPLITZ;
-		break;
-	case ETH_RSS_HASH_CRC32:
+		अवरोध;
+	हाल ETH_RSS_HASH_CRC32:
 		func = ENA_ADMIN_CRC32;
-		break;
-	default:
-		netif_err(adapter, drv, netdev, "Unsupported hfunc %d\n",
+		अवरोध;
+	शेष:
+		netअगर_err(adapter, drv, netdev, "Unsupported hfunc %d\n",
 			  hfunc);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (key || func) {
+	अगर (key || func) अणु
 		rc = ena_com_fill_hash_function(ena_dev, func, key,
 						ENA_HASH_KEY_SIZE,
 						0xFFFFFFFF);
-		if (unlikely(rc)) {
-			netif_err(adapter, drv, netdev, "Cannot fill key\n");
-			return rc == -EPERM ? -EOPNOTSUPP : rc;
-		}
-	}
+		अगर (unlikely(rc)) अणु
+			netअगर_err(adapter, drv, netdev, "Cannot fill key\n");
+			वापस rc == -EPERM ? -EOPNOTSUPP : rc;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ena_get_channels(struct net_device *netdev,
-			     struct ethtool_channels *channels)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
+अटल व्योम ena_get_channels(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_channels *channels)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
 
 	channels->max_combined = adapter->max_num_io_queues;
 	channels->combined_count = adapter->num_io_queues;
-}
+पूर्ण
 
-static int ena_set_channels(struct net_device *netdev,
-			    struct ethtool_channels *channels)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक ena_set_channels(काष्ठा net_device *netdev,
+			    काष्ठा ethtool_channels *channels)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
 	u32 count = channels->combined_count;
-	/* The check for max value is already done in ethtool */
-	if (count < ENA_MIN_NUM_IO_QUEUES ||
+	/* The check क्रम max value is alपढ़ोy करोne in ethtool */
+	अगर (count < ENA_MIN_NUM_IO_QUEUES ||
 	    (ena_xdp_present(adapter) &&
 	    !ena_xdp_legal_queue_count(adapter, count)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return ena_update_queue_count(adapter, count);
-}
+	वापस ena_update_queue_count(adapter, count);
+पूर्ण
 
-static int ena_get_tunable(struct net_device *netdev,
-			   const struct ethtool_tunable *tuna, void *data)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
-	int ret = 0;
+अटल पूर्णांक ena_get_tunable(काष्ठा net_device *netdev,
+			   स्थिर काष्ठा ethtool_tunable *tuna, व्योम *data)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक ret = 0;
 
-	switch (tuna->id) {
-	case ETHTOOL_RX_COPYBREAK:
-		*(u32 *)data = adapter->rx_copybreak;
-		break;
-	default:
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_RX_COPYBREAK:
+		*(u32 *)data = adapter->rx_copyअवरोध;
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ena_set_tunable(struct net_device *netdev,
-			   const struct ethtool_tunable *tuna,
-			   const void *data)
-{
-	struct ena_adapter *adapter = netdev_priv(netdev);
-	int ret = 0;
+अटल पूर्णांक ena_set_tunable(काष्ठा net_device *netdev,
+			   स्थिर काष्ठा ethtool_tunable *tuna,
+			   स्थिर व्योम *data)
+अणु
+	काष्ठा ena_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक ret = 0;
 	u32 len;
 
-	switch (tuna->id) {
-	case ETHTOOL_RX_COPYBREAK:
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_RX_COPYBREAK:
 		len = *(u32 *)data;
-		if (len > adapter->netdev->mtu) {
+		अगर (len > adapter->netdev->mtu) अणु
 			ret = -EINVAL;
-			break;
-		}
-		adapter->rx_copybreak = len;
-		break;
-	default:
+			अवरोध;
+		पूर्ण
+		adapter->rx_copyअवरोध = len;
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct ethtool_ops ena_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops ena_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_USE_ADAPTIVE_RX,
 	.get_link_ksettings	= ena_get_link_ksettings,
@@ -912,77 +913,77 @@ static const struct ethtool_ops ena_ethtool_ops = {
 	.get_tunable		= ena_get_tunable,
 	.set_tunable		= ena_set_tunable,
 	.get_ts_info            = ethtool_op_get_ts_info,
-};
+पूर्ण;
 
-void ena_set_ethtool_ops(struct net_device *netdev)
-{
+व्योम ena_set_ethtool_ops(काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = &ena_ethtool_ops;
-}
+पूर्ण
 
-static void ena_dump_stats_ex(struct ena_adapter *adapter, u8 *buf)
-{
-	struct net_device *netdev = adapter->netdev;
+अटल व्योम ena_dump_stats_ex(काष्ठा ena_adapter *adapter, u8 *buf)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
 	u8 *strings_buf;
 	u64 *data_buf;
-	int strings_num;
-	int i, rc;
+	पूर्णांक strings_num;
+	पूर्णांक i, rc;
 
 	strings_num = ena_get_sw_stats_count(adapter);
-	if (strings_num <= 0) {
-		netif_err(adapter, drv, netdev, "Can't get stats num\n");
-		return;
-	}
+	अगर (strings_num <= 0) अणु
+		netअगर_err(adapter, drv, netdev, "Can't get stats num\n");
+		वापस;
+	पूर्ण
 
-	strings_buf = devm_kcalloc(&adapter->pdev->dev,
+	strings_buf = devm_kसुस्मृति(&adapter->pdev->dev,
 				   ETH_GSTRING_LEN, strings_num,
 				   GFP_ATOMIC);
-	if (!strings_buf) {
-		netif_err(adapter, drv, netdev,
+	अगर (!strings_buf) अणु
+		netअगर_err(adapter, drv, netdev,
 			  "Failed to allocate strings_buf\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	data_buf = devm_kcalloc(&adapter->pdev->dev,
-				strings_num, sizeof(u64),
+	data_buf = devm_kसुस्मृति(&adapter->pdev->dev,
+				strings_num, माप(u64),
 				GFP_ATOMIC);
-	if (!data_buf) {
-		netif_err(adapter, drv, netdev,
+	अगर (!data_buf) अणु
+		netअगर_err(adapter, drv, netdev,
 			  "Failed to allocate data buf\n");
-		devm_kfree(&adapter->pdev->dev, strings_buf);
-		return;
-	}
+		devm_kमुक्त(&adapter->pdev->dev, strings_buf);
+		वापस;
+	पूर्ण
 
 	ena_get_strings(adapter, strings_buf, false);
 	ena_get_stats(adapter, data_buf, false);
 
-	/* If there is a buffer, dump stats, otherwise print them to dmesg */
-	if (buf)
-		for (i = 0; i < strings_num; i++) {
-			rc = snprintf(buf, ETH_GSTRING_LEN + sizeof(u64),
+	/* If there is a buffer, dump stats, otherwise prपूर्णांक them to dmesg */
+	अगर (buf)
+		क्रम (i = 0; i < strings_num; i++) अणु
+			rc = snम_लिखो(buf, ETH_GSTRING_LEN + माप(u64),
 				      "%s %llu\n",
 				      strings_buf + i * ETH_GSTRING_LEN,
 				      data_buf[i]);
 			buf += rc;
-		}
-	else
-		for (i = 0; i < strings_num; i++)
-			netif_err(adapter, drv, netdev, "%s: %llu\n",
+		पूर्ण
+	अन्यथा
+		क्रम (i = 0; i < strings_num; i++)
+			netअगर_err(adapter, drv, netdev, "%s: %llu\n",
 				  strings_buf + i * ETH_GSTRING_LEN,
 				  data_buf[i]);
 
-	devm_kfree(&adapter->pdev->dev, strings_buf);
-	devm_kfree(&adapter->pdev->dev, data_buf);
-}
+	devm_kमुक्त(&adapter->pdev->dev, strings_buf);
+	devm_kमुक्त(&adapter->pdev->dev, data_buf);
+पूर्ण
 
-void ena_dump_stats_to_buf(struct ena_adapter *adapter, u8 *buf)
-{
-	if (!buf)
-		return;
+व्योम ena_dump_stats_to_buf(काष्ठा ena_adapter *adapter, u8 *buf)
+अणु
+	अगर (!buf)
+		वापस;
 
 	ena_dump_stats_ex(adapter, buf);
-}
+पूर्ण
 
-void ena_dump_stats_to_dmesg(struct ena_adapter *adapter)
-{
-	ena_dump_stats_ex(adapter, NULL);
-}
+व्योम ena_dump_stats_to_dmesg(काष्ठा ena_adapter *adapter)
+अणु
+	ena_dump_stats_ex(adapter, शून्य);
+पूर्ण

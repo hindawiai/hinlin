@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2005,2006,2007,2008 IBM Corporation
  *
@@ -8,233 +9,233 @@
  * Mimi Zohar <zohar@us.ibm.com>
  *
  * File: ima_queue.c
- *       Implements queues that store template measurements and
- *       maintains aggregate over the stored measurements
- *       in the pre-configured TPM PCR (if available).
+ *       Implements queues that store ढाँचा measurements and
+ *       मुख्यtains aggregate over the stored measurements
+ *       in the pre-configured TPM PCR (अगर available).
  *       The measurement list is append-only. No entry is
- *       ever removed or changed during the boot-cycle.
+ *       ever हटाओd or changed during the boot-cycle.
  */
 
-#include <linux/rculist.h>
-#include <linux/slab.h>
-#include "ima.h"
+#समावेश <linux/rculist.h>
+#समावेश <linux/slab.h>
+#समावेश "ima.h"
 
-#define AUDIT_CAUSE_LEN_MAX 32
+#घोषणा AUDIT_CAUSE_LEN_MAX 32
 
-/* pre-allocated array of tpm_digest structures to extend a PCR */
-static struct tpm_digest *digests;
+/* pre-allocated array of tpm_digest काष्ठाures to extend a PCR */
+अटल काष्ठा tpm_digest *digests;
 
 LIST_HEAD(ima_measurements);	/* list of all measurements */
-#ifdef CONFIG_IMA_KEXEC
-static unsigned long binary_runtime_size;
-#else
-static unsigned long binary_runtime_size = ULONG_MAX;
-#endif
+#अगर_घोषित CONFIG_IMA_KEXEC
+अटल अचिन्हित दीर्घ binary_runसमय_size;
+#अन्यथा
+अटल अचिन्हित दीर्घ binary_runसमय_size = अच_दीर्घ_उच्च;
+#पूर्ण_अगर
 
-/* key: inode (before secure-hashing a file) */
-struct ima_h_table ima_htable = {
+/* key: inode (beक्रमe secure-hashing a file) */
+काष्ठा ima_h_table ima_htable = अणु
 	.len = ATOMIC_LONG_INIT(0),
 	.violations = ATOMIC_LONG_INIT(0),
 	.queue[0 ... IMA_MEASURE_HTABLE_SIZE - 1] = HLIST_HEAD_INIT
-};
+पूर्ण;
 
 /* mutex protects atomicity of extending measurement list
  * and extending the TPM PCR aggregate. Since tpm_extend can take
- * long (and the tpm driver uses a mutex), we can't use the spinlock.
+ * दीर्घ (and the tpm driver uses a mutex), we can't use the spinlock.
  */
-static DEFINE_MUTEX(ima_extend_list_mutex);
+अटल DEFINE_MUTEX(ima_extend_list_mutex);
 
-/* lookup up the digest value in the hash table, and return the entry */
-static struct ima_queue_entry *ima_lookup_digest_entry(u8 *digest_value,
-						       int pcr)
-{
-	struct ima_queue_entry *qe, *ret = NULL;
-	unsigned int key;
-	int rc;
+/* lookup up the digest value in the hash table, and वापस the entry */
+अटल काष्ठा ima_queue_entry *ima_lookup_digest_entry(u8 *digest_value,
+						       पूर्णांक pcr)
+अणु
+	काष्ठा ima_queue_entry *qe, *ret = शून्य;
+	अचिन्हित पूर्णांक key;
+	पूर्णांक rc;
 
 	key = ima_hash_key(digest_value);
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(qe, &ima_htable.queue[key], hnext) {
-		rc = memcmp(qe->entry->digests[ima_hash_algo_idx].digest,
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(qe, &ima_htable.queue[key], hnext) अणु
+		rc = स_भेद(qe->entry->digests[ima_hash_algo_idx].digest,
 			    digest_value, hash_digest_size[ima_hash_algo]);
-		if ((rc == 0) && (qe->entry->pcr == pcr)) {
+		अगर ((rc == 0) && (qe->entry->pcr == pcr)) अणु
 			ret = qe;
-			break;
-		}
-	}
-	rcu_read_unlock();
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
 /*
- * Calculate the memory required for serializing a single
- * binary_runtime_measurement list entry, which contains a
- * couple of variable length fields (e.g template name and data).
+ * Calculate the memory required क्रम serializing a single
+ * binary_runसमय_measurement list entry, which contains a
+ * couple of variable length fields (e.g ढाँचा name and data).
  */
-static int get_binary_runtime_size(struct ima_template_entry *entry)
-{
-	int size = 0;
+अटल पूर्णांक get_binary_runसमय_size(काष्ठा ima_ढाँचा_entry *entry)
+अणु
+	पूर्णांक size = 0;
 
-	size += sizeof(u32);	/* pcr */
+	size += माप(u32);	/* pcr */
 	size += TPM_DIGEST_SIZE;
-	size += sizeof(int);	/* template name size field */
-	size += strlen(entry->template_desc->name);
-	size += sizeof(entry->template_data_len);
-	size += entry->template_data_len;
-	return size;
-}
+	size += माप(पूर्णांक);	/* ढाँचा name size field */
+	size += म_माप(entry->ढाँचा_desc->name);
+	size += माप(entry->ढाँचा_data_len);
+	size += entry->ढाँचा_data_len;
+	वापस size;
+पूर्ण
 
-/* ima_add_template_entry helper function:
- * - Add template entry to the measurement list and hash table, for
+/* ima_add_ढाँचा_entry helper function:
+ * - Add ढाँचा entry to the measurement list and hash table, क्रम
  *   all entries except those carried across kexec.
  *
  * (Called with ima_extend_list_mutex held.)
  */
-static int ima_add_digest_entry(struct ima_template_entry *entry,
+अटल पूर्णांक ima_add_digest_entry(काष्ठा ima_ढाँचा_entry *entry,
 				bool update_htable)
-{
-	struct ima_queue_entry *qe;
-	unsigned int key;
+अणु
+	काष्ठा ima_queue_entry *qe;
+	अचिन्हित पूर्णांक key;
 
-	qe = kmalloc(sizeof(*qe), GFP_KERNEL);
-	if (qe == NULL) {
+	qe = kदो_स्मृति(माप(*qe), GFP_KERNEL);
+	अगर (qe == शून्य) अणु
 		pr_err("OUT OF MEMORY ERROR creating queue entry\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	qe->entry = entry;
 
 	INIT_LIST_HEAD(&qe->later);
 	list_add_tail_rcu(&qe->later, &ima_measurements);
 
-	atomic_long_inc(&ima_htable.len);
-	if (update_htable) {
+	atomic_दीर्घ_inc(&ima_htable.len);
+	अगर (update_htable) अणु
 		key = ima_hash_key(entry->digests[ima_hash_algo_idx].digest);
 		hlist_add_head_rcu(&qe->hnext, &ima_htable.queue[key]);
-	}
+	पूर्ण
 
-	if (binary_runtime_size != ULONG_MAX) {
-		int size;
+	अगर (binary_runसमय_size != अच_दीर्घ_उच्च) अणु
+		पूर्णांक size;
 
-		size = get_binary_runtime_size(entry);
-		binary_runtime_size = (binary_runtime_size < ULONG_MAX - size) ?
-		     binary_runtime_size + size : ULONG_MAX;
-	}
-	return 0;
-}
+		size = get_binary_runसमय_size(entry);
+		binary_runसमय_size = (binary_runसमय_size < अच_दीर्घ_उच्च - size) ?
+		     binary_runसमय_size + size : अच_दीर्घ_उच्च;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Return the amount of memory required for serializing the
- * entire binary_runtime_measurement list, including the ima_kexec_hdr
- * structure.
+ * Return the amount of memory required क्रम serializing the
+ * entire binary_runसमय_measurement list, including the ima_kexec_hdr
+ * काष्ठाure.
  */
-unsigned long ima_get_binary_runtime_size(void)
-{
-	if (binary_runtime_size >= (ULONG_MAX - sizeof(struct ima_kexec_hdr)))
-		return ULONG_MAX;
-	else
-		return binary_runtime_size + sizeof(struct ima_kexec_hdr);
-}
+अचिन्हित दीर्घ ima_get_binary_runसमय_size(व्योम)
+अणु
+	अगर (binary_runसमय_size >= (अच_दीर्घ_उच्च - माप(काष्ठा ima_kexec_hdr)))
+		वापस अच_दीर्घ_उच्च;
+	अन्यथा
+		वापस binary_runसमय_size + माप(काष्ठा ima_kexec_hdr);
+पूर्ण
 
-static int ima_pcr_extend(struct tpm_digest *digests_arg, int pcr)
-{
-	int result = 0;
+अटल पूर्णांक ima_pcr_extend(काष्ठा tpm_digest *digests_arg, पूर्णांक pcr)
+अणु
+	पूर्णांक result = 0;
 
-	if (!ima_tpm_chip)
-		return result;
+	अगर (!ima_tpm_chip)
+		वापस result;
 
 	result = tpm_pcr_extend(ima_tpm_chip, pcr, digests_arg);
-	if (result != 0)
+	अगर (result != 0)
 		pr_err("Error Communicating to TPM chip, result: %d\n", result);
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
- * Add template entry to the measurement list and hash table, and
+ * Add ढाँचा entry to the measurement list and hash table, and
  * extend the pcr.
  *
- * On systems which support carrying the IMA measurement list across
- * kexec, maintain the total memory size required for serializing the
- * binary_runtime_measurements.
+ * On प्रणालीs which support carrying the IMA measurement list across
+ * kexec, मुख्यtain the total memory size required क्रम serializing the
+ * binary_runसमय_measurements.
  */
-int ima_add_template_entry(struct ima_template_entry *entry, int violation,
-			   const char *op, struct inode *inode,
-			   const unsigned char *filename)
-{
+पूर्णांक ima_add_ढाँचा_entry(काष्ठा ima_ढाँचा_entry *entry, पूर्णांक violation,
+			   स्थिर अक्षर *op, काष्ठा inode *inode,
+			   स्थिर अचिन्हित अक्षर *filename)
+अणु
 	u8 *digest = entry->digests[ima_hash_algo_idx].digest;
-	struct tpm_digest *digests_arg = entry->digests;
-	const char *audit_cause = "hash_added";
-	char tpm_audit_cause[AUDIT_CAUSE_LEN_MAX];
-	int audit_info = 1;
-	int result = 0, tpmresult = 0;
+	काष्ठा tpm_digest *digests_arg = entry->digests;
+	स्थिर अक्षर *audit_cause = "hash_added";
+	अक्षर tpm_audit_cause[AUDIT_CAUSE_LEN_MAX];
+	पूर्णांक audit_info = 1;
+	पूर्णांक result = 0, tpmresult = 0;
 
 	mutex_lock(&ima_extend_list_mutex);
-	if (!violation) {
-		if (ima_lookup_digest_entry(digest, entry->pcr)) {
+	अगर (!violation) अणु
+		अगर (ima_lookup_digest_entry(digest, entry->pcr)) अणु
 			audit_cause = "hash_exists";
 			result = -EEXIST;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	result = ima_add_digest_entry(entry, 1);
-	if (result < 0) {
+	अगर (result < 0) अणु
 		audit_cause = "ENOMEM";
 		audit_info = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (violation)		/* invalidate pcr */
+	अगर (violation)		/* invalidate pcr */
 		digests_arg = digests;
 
 	tpmresult = ima_pcr_extend(digests_arg, entry->pcr);
-	if (tpmresult != 0) {
-		snprintf(tpm_audit_cause, AUDIT_CAUSE_LEN_MAX, "TPM_error(%d)",
+	अगर (tpmresult != 0) अणु
+		snम_लिखो(tpm_audit_cause, AUDIT_CAUSE_LEN_MAX, "TPM_error(%d)",
 			 tpmresult);
 		audit_cause = tpm_audit_cause;
 		audit_info = 0;
-	}
+	पूर्ण
 out:
 	mutex_unlock(&ima_extend_list_mutex);
-	integrity_audit_msg(AUDIT_INTEGRITY_PCR, inode, filename,
+	पूर्णांकegrity_audit_msg(AUDIT_INTEGRITY_PCR, inode, filename,
 			    op, audit_cause, result, audit_info);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-int ima_restore_measurement_entry(struct ima_template_entry *entry)
-{
-	int result = 0;
+पूर्णांक ima_restore_measurement_entry(काष्ठा ima_ढाँचा_entry *entry)
+अणु
+	पूर्णांक result = 0;
 
 	mutex_lock(&ima_extend_list_mutex);
 	result = ima_add_digest_entry(entry, 0);
 	mutex_unlock(&ima_extend_list_mutex);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-int __init ima_init_digests(void)
-{
+पूर्णांक __init ima_init_digests(व्योम)
+अणु
 	u16 digest_size;
 	u16 crypto_id;
-	int i;
+	पूर्णांक i;
 
-	if (!ima_tpm_chip)
-		return 0;
+	अगर (!ima_tpm_chip)
+		वापस 0;
 
-	digests = kcalloc(ima_tpm_chip->nr_allocated_banks, sizeof(*digests),
+	digests = kसुस्मृति(ima_tpm_chip->nr_allocated_banks, माप(*digests),
 			  GFP_NOFS);
-	if (!digests)
-		return -ENOMEM;
+	अगर (!digests)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ima_tpm_chip->nr_allocated_banks; i++) {
+	क्रम (i = 0; i < ima_tpm_chip->nr_allocated_banks; i++) अणु
 		digests[i].alg_id = ima_tpm_chip->allocated_banks[i].alg_id;
 		digest_size = ima_tpm_chip->allocated_banks[i].digest_size;
 		crypto_id = ima_tpm_chip->allocated_banks[i].crypto_id;
 
-		/* for unmapped TPM algorithms digest is still a padded SHA1 */
-		if (crypto_id == HASH_ALGO__LAST)
+		/* क्रम unmapped TPM algorithms digest is still a padded SHA1 */
+		अगर (crypto_id == HASH_ALGO__LAST)
 			digest_size = SHA1_DIGEST_SIZE;
 
-		memset(digests[i].digest, 0xff, digest_size);
-	}
+		स_रखो(digests[i].digest, 0xff, digest_size);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Common bus abstraction layer.
+ * Common bus असलtraction layer.
  *
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
-#ifndef WFX_BUS_H
-#define WFX_BUS_H
+#अगर_अघोषित WFX_BUS_H
+#घोषणा WFX_BUS_H
 
-#include <linux/mmc/sdio_func.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/spi/spi.h>
 
-#define WFX_REG_CONFIG        0x0
-#define WFX_REG_CONTROL       0x1
-#define WFX_REG_IN_OUT_QUEUE  0x2
-#define WFX_REG_AHB_DPORT     0x3
-#define WFX_REG_BASE_ADDR     0x4
-#define WFX_REG_SRAM_DPORT    0x5
-#define WFX_REG_SET_GEN_R_W   0x6
-#define WFX_REG_FRAME_OUT     0x7
+#घोषणा WFX_REG_CONFIG        0x0
+#घोषणा WFX_REG_CONTROL       0x1
+#घोषणा WFX_REG_IN_OUT_QUEUE  0x2
+#घोषणा WFX_REG_AHB_DPORT     0x3
+#घोषणा WFX_REG_BASE_ADDR     0x4
+#घोषणा WFX_REG_SRAM_DPORT    0x5
+#घोषणा WFX_REG_SET_GEN_R_W   0x6
+#घोषणा WFX_REG_FRAME_OUT     0x7
 
-struct hwbus_ops {
-	int (*copy_from_io)(void *bus_priv, unsigned int addr,
-			    void *dst, size_t count);
-	int (*copy_to_io)(void *bus_priv, unsigned int addr,
-			  const void *src, size_t count);
-	int (*irq_subscribe)(void *bus_priv);
-	int (*irq_unsubscribe)(void *bus_priv);
-	void (*lock)(void *bus_priv);
-	void (*unlock)(void *bus_priv);
-	size_t (*align_size)(void *bus_priv, size_t size);
-};
+काष्ठा hwbus_ops अणु
+	पूर्णांक (*copy_from_io)(व्योम *bus_priv, अचिन्हित पूर्णांक addr,
+			    व्योम *dst, माप_प्रकार count);
+	पूर्णांक (*copy_to_io)(व्योम *bus_priv, अचिन्हित पूर्णांक addr,
+			  स्थिर व्योम *src, माप_प्रकार count);
+	पूर्णांक (*irq_subscribe)(व्योम *bus_priv);
+	पूर्णांक (*irq_unsubscribe)(व्योम *bus_priv);
+	व्योम (*lock)(व्योम *bus_priv);
+	व्योम (*unlock)(व्योम *bus_priv);
+	माप_प्रकार (*align_size)(व्योम *bus_priv, माप_प्रकार size);
+पूर्ण;
 
-extern struct sdio_driver wfx_sdio_driver;
-extern struct spi_driver wfx_spi_driver;
+बाह्य काष्ठा sdio_driver wfx_sdio_driver;
+बाह्य काष्ठा spi_driver wfx_spi_driver;
 
-#endif
+#पूर्ण_अगर

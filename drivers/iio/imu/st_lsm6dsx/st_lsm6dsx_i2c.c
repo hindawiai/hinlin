@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics st_lsm6dsx i2c driver
  *
@@ -8,133 +9,133 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/regmap.h>
 
-#include "st_lsm6dsx.h"
+#समावेश "st_lsm6dsx.h"
 
-static const struct regmap_config st_lsm6dsx_i2c_regmap_config = {
+अटल स्थिर काष्ठा regmap_config st_lsm6dsx_i2c_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-};
+पूर्ण;
 
-static int st_lsm6dsx_i2c_probe(struct i2c_client *client,
-				const struct i2c_device_id *id)
-{
-	int hw_id = id->driver_data;
-	struct regmap *regmap;
+अटल पूर्णांक st_lsm6dsx_i2c_probe(काष्ठा i2c_client *client,
+				स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक hw_id = id->driver_data;
+	काष्ठा regmap *regmap;
 
 	regmap = devm_regmap_init_i2c(client, &st_lsm6dsx_i2c_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&client->dev, "Failed to register i2c regmap %ld\n", PTR_ERR(regmap));
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return st_lsm6dsx_probe(&client->dev, client->irq, hw_id, regmap);
-}
+	वापस st_lsm6dsx_probe(&client->dev, client->irq, hw_id, regmap);
+पूर्ण
 
-static const struct of_device_id st_lsm6dsx_i2c_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id st_lsm6dsx_i2c_of_match[] = अणु
+	अणु
 		.compatible = "st,lsm6ds3",
-		.data = (void *)ST_LSM6DS3_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DS3_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6ds3h",
-		.data = (void *)ST_LSM6DS3H_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DS3H_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6dsl",
-		.data = (void *)ST_LSM6DSL_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DSL_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6dsm",
-		.data = (void *)ST_LSM6DSM_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DSM_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,ism330dlc",
-		.data = (void *)ST_ISM330DLC_ID,
-	},
-	{
+		.data = (व्योम *)ST_ISM330DLC_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6dso",
-		.data = (void *)ST_LSM6DSO_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DSO_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,asm330lhh",
-		.data = (void *)ST_ASM330LHH_ID,
-	},
-	{
+		.data = (व्योम *)ST_ASM330LHH_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6dsox",
-		.data = (void *)ST_LSM6DSOX_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DSOX_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6dsr",
-		.data = (void *)ST_LSM6DSR_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DSR_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6ds3tr-c",
-		.data = (void *)ST_LSM6DS3TRC_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DS3TRC_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,ism330dhcx",
-		.data = (void *)ST_ISM330DHCX_ID,
-	},
-	{
+		.data = (व्योम *)ST_ISM330DHCX_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm9ds1-imu",
-		.data = (void *)ST_LSM9DS1_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM9DS1_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6ds0",
-		.data = (void *)ST_LSM6DS0_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DS0_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6dsrx",
-		.data = (void *)ST_LSM6DSRX_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DSRX_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6dst",
-		.data = (void *)ST_LSM6DST_ID,
-	},
-	{
+		.data = (व्योम *)ST_LSM6DST_ID,
+	पूर्ण,
+	अणु
 		.compatible = "st,lsm6dsop",
-		.data = (void *)ST_LSM6DSOP_ID,
-	},
-	{},
-};
+		.data = (व्योम *)ST_LSM6DSOP_ID,
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, st_lsm6dsx_i2c_of_match);
 
-static const struct i2c_device_id st_lsm6dsx_i2c_id_table[] = {
-	{ ST_LSM6DS3_DEV_NAME, ST_LSM6DS3_ID },
-	{ ST_LSM6DS3H_DEV_NAME, ST_LSM6DS3H_ID },
-	{ ST_LSM6DSL_DEV_NAME, ST_LSM6DSL_ID },
-	{ ST_LSM6DSM_DEV_NAME, ST_LSM6DSM_ID },
-	{ ST_ISM330DLC_DEV_NAME, ST_ISM330DLC_ID },
-	{ ST_LSM6DSO_DEV_NAME, ST_LSM6DSO_ID },
-	{ ST_ASM330LHH_DEV_NAME, ST_ASM330LHH_ID },
-	{ ST_LSM6DSOX_DEV_NAME, ST_LSM6DSOX_ID },
-	{ ST_LSM6DSR_DEV_NAME, ST_LSM6DSR_ID },
-	{ ST_LSM6DS3TRC_DEV_NAME, ST_LSM6DS3TRC_ID },
-	{ ST_ISM330DHCX_DEV_NAME, ST_ISM330DHCX_ID },
-	{ ST_LSM9DS1_DEV_NAME, ST_LSM9DS1_ID },
-	{ ST_LSM6DS0_DEV_NAME, ST_LSM6DS0_ID },
-	{ ST_LSM6DSRX_DEV_NAME, ST_LSM6DSRX_ID },
-	{ ST_LSM6DST_DEV_NAME, ST_LSM6DST_ID },
-	{ ST_LSM6DSOP_DEV_NAME, ST_LSM6DSOP_ID },
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id st_lsm6dsx_i2c_id_table[] = अणु
+	अणु ST_LSM6DS3_DEV_NAME, ST_LSM6DS3_ID पूर्ण,
+	अणु ST_LSM6DS3H_DEV_NAME, ST_LSM6DS3H_ID पूर्ण,
+	अणु ST_LSM6DSL_DEV_NAME, ST_LSM6DSL_ID पूर्ण,
+	अणु ST_LSM6DSM_DEV_NAME, ST_LSM6DSM_ID पूर्ण,
+	अणु ST_ISM330DLC_DEV_NAME, ST_ISM330DLC_ID पूर्ण,
+	अणु ST_LSM6DSO_DEV_NAME, ST_LSM6DSO_ID पूर्ण,
+	अणु ST_ASM330LHH_DEV_NAME, ST_ASM330LHH_ID पूर्ण,
+	अणु ST_LSM6DSOX_DEV_NAME, ST_LSM6DSOX_ID पूर्ण,
+	अणु ST_LSM6DSR_DEV_NAME, ST_LSM6DSR_ID पूर्ण,
+	अणु ST_LSM6DS3TRC_DEV_NAME, ST_LSM6DS3TRC_ID पूर्ण,
+	अणु ST_ISM330DHCX_DEV_NAME, ST_ISM330DHCX_ID पूर्ण,
+	अणु ST_LSM9DS1_DEV_NAME, ST_LSM9DS1_ID पूर्ण,
+	अणु ST_LSM6DS0_DEV_NAME, ST_LSM6DS0_ID पूर्ण,
+	अणु ST_LSM6DSRX_DEV_NAME, ST_LSM6DSRX_ID पूर्ण,
+	अणु ST_LSM6DST_DEV_NAME, ST_LSM6DST_ID पूर्ण,
+	अणु ST_LSM6DSOP_DEV_NAME, ST_LSM6DSOP_ID पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, st_lsm6dsx_i2c_id_table);
 
-static struct i2c_driver st_lsm6dsx_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver st_lsm6dsx_driver = अणु
+	.driver = अणु
 		.name = "st_lsm6dsx_i2c",
 		.pm = &st_lsm6dsx_pm_ops,
 		.of_match_table = st_lsm6dsx_i2c_of_match,
-	},
+	पूर्ण,
 	.probe = st_lsm6dsx_i2c_probe,
 	.id_table = st_lsm6dsx_i2c_id_table,
-};
+पूर्ण;
 module_i2c_driver(st_lsm6dsx_driver);
 
 MODULE_AUTHOR("Lorenzo Bianconi <lorenzo.bianconi@st.com>");

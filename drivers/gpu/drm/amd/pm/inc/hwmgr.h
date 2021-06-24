@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,56 +21,56 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef _HWMGR_H_
-#define _HWMGR_H_
+#अगर_अघोषित _HWMGR_H_
+#घोषणा _HWMGR_H_
 
-#include <linux/seq_file.h>
-#include "amd_powerplay.h"
-#include "hardwaremanager.h"
-#include "hwmgr_ppt.h"
-#include "ppatomctrl.h"
-#include "power_state.h"
-#include "smu_helper.h"
+#समावेश <linux/seq_file.h>
+#समावेश "amd_powerplay.h"
+#समावेश "hardwaremanager.h"
+#समावेश "hwmgr_ppt.h"
+#समावेश "ppatomctrl.h"
+#समावेश "power_state.h"
+#समावेश "smu_helper.h"
 
-struct pp_hwmgr;
-struct phm_fan_speed_info;
-struct pp_atomctrl_voltage_table;
+काष्ठा pp_hwmgr;
+काष्ठा phm_fan_speed_info;
+काष्ठा pp_atomctrl_voltage_table;
 
-#define VOLTAGE_SCALE 4
-#define VOLTAGE_VID_OFFSET_SCALE1   625
-#define VOLTAGE_VID_OFFSET_SCALE2   100
+#घोषणा VOLTAGE_SCALE 4
+#घोषणा VOLTAGE_VID_OFFSET_SCALE1   625
+#घोषणा VOLTAGE_VID_OFFSET_SCALE2   100
 
-enum DISPLAY_GAP {
-	DISPLAY_GAP_VBLANK_OR_WM = 0,   /* Wait for vblank or MCHG watermark. */
-	DISPLAY_GAP_VBLANK       = 1,   /* Wait for vblank. */
-	DISPLAY_GAP_WATERMARK    = 2,   /* Wait for MCHG watermark. (Note that HW may deassert WM in VBI depending on DC_STUTTER_CNTL.) */
-	DISPLAY_GAP_IGNORE       = 3    /* Do not wait. */
-};
-typedef enum DISPLAY_GAP DISPLAY_GAP;
+क्रमागत DISPLAY_GAP अणु
+	DISPLAY_GAP_VBLANK_OR_WM = 0,   /* Wait क्रम vblank or MCHG watermark. */
+	DISPLAY_GAP_VBLANK       = 1,   /* Wait क्रम vblank. */
+	DISPLAY_GAP_WATERMARK    = 2,   /* Wait क्रम MCHG watermark. (Note that HW may deनिश्चित WM in VBI depending on DC_STUTTER_CNTL.) */
+	DISPLAY_GAP_IGNORE       = 3    /* Do not रुको. */
+पूर्ण;
+प्रकार क्रमागत DISPLAY_GAP DISPLAY_GAP;
 
-enum BACO_STATE {
+क्रमागत BACO_STATE अणु
 	BACO_STATE_OUT = 0,
 	BACO_STATE_IN,
-};
+पूर्ण;
 
-struct vi_dpm_level {
+काष्ठा vi_dpm_level अणु
 	bool enabled;
-	uint32_t value;
-	uint32_t param1;
-};
+	uपूर्णांक32_t value;
+	uपूर्णांक32_t param1;
+पूर्ण;
 
-struct vi_dpm_table {
-	uint32_t count;
-	struct vi_dpm_level dpm_level[];
-};
+काष्ठा vi_dpm_table अणु
+	uपूर्णांक32_t count;
+	काष्ठा vi_dpm_level dpm_level[];
+पूर्ण;
 
-#define PCIE_PERF_REQ_REMOVE_REGISTRY   0
-#define PCIE_PERF_REQ_FORCE_LOWPOWER    1
-#define PCIE_PERF_REQ_GEN1         2
-#define PCIE_PERF_REQ_GEN2         3
-#define PCIE_PERF_REQ_GEN3         4
+#घोषणा PCIE_PERF_REQ_REMOVE_REGISTRY   0
+#घोषणा PCIE_PERF_REQ_FORCE_LOWPOWER    1
+#घोषणा PCIE_PERF_REQ_GEN1         2
+#घोषणा PCIE_PERF_REQ_GEN2         3
+#घोषणा PCIE_PERF_REQ_GEN3         4
 
-enum PHM_BackEnd_Magic {
+क्रमागत PHM_BackEnd_Magic अणु
 	PHM_Dummy_Magic       = 0xAA5555AA,
 	PHM_RV770_Magic       = 0xDCBAABCD,
 	PHM_Kong_Magic        = 0x239478DF,
@@ -82,755 +83,755 @@ enum PHM_BackEnd_Magic {
 	PHM_VIslands_Magic    = 0x20130307,
 	PHM_Cz_Magic          = 0x67DCBA25,
 	PHM_Rv_Magic          = 0x20161121
-};
+पूर्ण;
 
-struct phm_set_power_state_input {
-	const struct pp_hw_power_state *pcurrent_state;
-	const struct pp_hw_power_state *pnew_state;
-};
+काष्ठा phm_set_घातer_state_input अणु
+	स्थिर काष्ठा pp_hw_घातer_state *pcurrent_state;
+	स्थिर काष्ठा pp_hw_घातer_state *pnew_state;
+पूर्ण;
 
-struct phm_clock_array {
-	uint32_t count;
-	uint32_t values[];
-};
+काष्ठा phm_घड़ी_array अणु
+	uपूर्णांक32_t count;
+	uपूर्णांक32_t values[];
+पूर्ण;
 
-struct phm_clock_voltage_dependency_record {
-	uint32_t clk;
-	uint32_t v;
-};
+काष्ठा phm_घड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t clk;
+	uपूर्णांक32_t v;
+पूर्ण;
 
-struct phm_vceclock_voltage_dependency_record {
-	uint32_t ecclk;
-	uint32_t evclk;
-	uint32_t v;
-};
+काष्ठा phm_vceघड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t ecclk;
+	uपूर्णांक32_t evclk;
+	uपूर्णांक32_t v;
+पूर्ण;
 
-struct phm_uvdclock_voltage_dependency_record {
-	uint32_t vclk;
-	uint32_t dclk;
-	uint32_t v;
-};
+काष्ठा phm_uvdघड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t vclk;
+	uपूर्णांक32_t dclk;
+	uपूर्णांक32_t v;
+पूर्ण;
 
-struct phm_samuclock_voltage_dependency_record {
-	uint32_t samclk;
-	uint32_t v;
-};
+काष्ठा phm_samuघड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t samclk;
+	uपूर्णांक32_t v;
+पूर्ण;
 
-struct phm_acpclock_voltage_dependency_record {
-	uint32_t acpclk;
-	uint32_t v;
-};
+काष्ठा phm_acpघड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t acpclk;
+	uपूर्णांक32_t v;
+पूर्ण;
 
-struct phm_clock_voltage_dependency_table {
-	uint32_t count;							/* Number of entries. */
-	struct phm_clock_voltage_dependency_record entries[];		/* Dynamically allocate count entries. */
-};
+काष्ठा phm_घड़ी_voltage_dependency_table अणु
+	uपूर्णांक32_t count;							/* Number of entries. */
+	काष्ठा phm_घड़ी_voltage_dependency_record entries[];		/* Dynamically allocate count entries. */
+पूर्ण;
 
-struct phm_phase_shedding_limits_record {
-	uint32_t  Voltage;
-	uint32_t    Sclk;
-	uint32_t    Mclk;
-};
+काष्ठा phm_phase_shedding_limits_record अणु
+	uपूर्णांक32_t  Voltage;
+	uपूर्णांक32_t    Sclk;
+	uपूर्णांक32_t    Mclk;
+पूर्ण;
 
-struct phm_uvd_clock_voltage_dependency_record {
-	uint32_t vclk;
-	uint32_t dclk;
-	uint32_t v;
-};
+काष्ठा phm_uvd_घड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t vclk;
+	uपूर्णांक32_t dclk;
+	uपूर्णांक32_t v;
+पूर्ण;
 
-struct phm_uvd_clock_voltage_dependency_table {
-	uint8_t count;
-	struct phm_uvd_clock_voltage_dependency_record entries[];
-};
+काष्ठा phm_uvd_घड़ी_voltage_dependency_table अणु
+	uपूर्णांक8_t count;
+	काष्ठा phm_uvd_घड़ी_voltage_dependency_record entries[];
+पूर्ण;
 
-struct phm_acp_clock_voltage_dependency_record {
-	uint32_t acpclk;
-	uint32_t v;
-};
+काष्ठा phm_acp_घड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t acpclk;
+	uपूर्णांक32_t v;
+पूर्ण;
 
-struct phm_acp_clock_voltage_dependency_table {
-	uint32_t count;
-	struct phm_acp_clock_voltage_dependency_record entries[];
-};
+काष्ठा phm_acp_घड़ी_voltage_dependency_table अणु
+	uपूर्णांक32_t count;
+	काष्ठा phm_acp_घड़ी_voltage_dependency_record entries[];
+पूर्ण;
 
-struct phm_vce_clock_voltage_dependency_record {
-	uint32_t ecclk;
-	uint32_t evclk;
-	uint32_t v;
-};
+काष्ठा phm_vce_घड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t ecclk;
+	uपूर्णांक32_t evclk;
+	uपूर्णांक32_t v;
+पूर्ण;
 
-struct phm_phase_shedding_limits_table {
-	uint32_t                           count;
-	struct phm_phase_shedding_limits_record  entries[];
-};
+काष्ठा phm_phase_shedding_limits_table अणु
+	uपूर्णांक32_t                           count;
+	काष्ठा phm_phase_shedding_limits_record  entries[];
+पूर्ण;
 
-struct phm_vceclock_voltage_dependency_table {
-	uint8_t count;                                    /* Number of entries. */
-	struct phm_vceclock_voltage_dependency_record entries[1]; /* Dynamically allocate count entries. */
-};
+काष्ठा phm_vceघड़ी_voltage_dependency_table अणु
+	uपूर्णांक8_t count;                                    /* Number of entries. */
+	काष्ठा phm_vceघड़ी_voltage_dependency_record entries[1]; /* Dynamically allocate count entries. */
+पूर्ण;
 
-struct phm_uvdclock_voltage_dependency_table {
-	uint8_t count;                                    /* Number of entries. */
-	struct phm_uvdclock_voltage_dependency_record entries[1]; /* Dynamically allocate count entries. */
-};
+काष्ठा phm_uvdघड़ी_voltage_dependency_table अणु
+	uपूर्णांक8_t count;                                    /* Number of entries. */
+	काष्ठा phm_uvdघड़ी_voltage_dependency_record entries[1]; /* Dynamically allocate count entries. */
+पूर्ण;
 
-struct phm_samuclock_voltage_dependency_table {
-	uint8_t count;                                    /* Number of entries. */
-	struct phm_samuclock_voltage_dependency_record entries[1]; /* Dynamically allocate count entries. */
-};
+काष्ठा phm_samuघड़ी_voltage_dependency_table अणु
+	uपूर्णांक8_t count;                                    /* Number of entries. */
+	काष्ठा phm_samuघड़ी_voltage_dependency_record entries[1]; /* Dynamically allocate count entries. */
+पूर्ण;
 
-struct phm_acpclock_voltage_dependency_table {
-	uint32_t count;                                    /* Number of entries. */
-	struct phm_acpclock_voltage_dependency_record entries[1]; /* Dynamically allocate count entries. */
-};
+काष्ठा phm_acpघड़ी_voltage_dependency_table अणु
+	uपूर्णांक32_t count;                                    /* Number of entries. */
+	काष्ठा phm_acpघड़ी_voltage_dependency_record entries[1]; /* Dynamically allocate count entries. */
+पूर्ण;
 
-struct phm_vce_clock_voltage_dependency_table {
-	uint8_t count;
-	struct phm_vce_clock_voltage_dependency_record entries[];
-};
+काष्ठा phm_vce_घड़ी_voltage_dependency_table अणु
+	uपूर्णांक8_t count;
+	काष्ठा phm_vce_घड़ी_voltage_dependency_record entries[];
+पूर्ण;
 
 
-enum SMU_ASIC_RESET_MODE
-{
+क्रमागत SMU_ASIC_RESET_MODE
+अणु
     SMU_ASIC_RESET_MODE_0,
     SMU_ASIC_RESET_MODE_1,
     SMU_ASIC_RESET_MODE_2,
-};
+पूर्ण;
 
-struct pp_smumgr_func {
-	char *name;
-	int (*smu_init)(struct pp_hwmgr  *hwmgr);
-	int (*smu_fini)(struct pp_hwmgr  *hwmgr);
-	int (*start_smu)(struct pp_hwmgr  *hwmgr);
-	int (*check_fw_load_finish)(struct pp_hwmgr  *hwmgr,
-				    uint32_t firmware);
-	int (*request_smu_load_fw)(struct pp_hwmgr  *hwmgr);
-	int (*request_smu_load_specific_fw)(struct pp_hwmgr  *hwmgr,
-					    uint32_t firmware);
-	uint32_t (*get_argument)(struct pp_hwmgr  *hwmgr);
-	int (*send_msg_to_smc)(struct pp_hwmgr  *hwmgr, uint16_t msg);
-	int (*send_msg_to_smc_with_parameter)(struct pp_hwmgr  *hwmgr,
-					  uint16_t msg, uint32_t parameter);
-	int (*download_pptable_settings)(struct pp_hwmgr  *hwmgr,
-					 void **table);
-	int (*upload_pptable_settings)(struct pp_hwmgr  *hwmgr);
-	int (*update_smc_table)(struct pp_hwmgr *hwmgr, uint32_t type);
-	int (*process_firmware_header)(struct pp_hwmgr *hwmgr);
-	int (*update_sclk_threshold)(struct pp_hwmgr *hwmgr);
-	int (*thermal_setup_fan_table)(struct pp_hwmgr *hwmgr);
-	int (*thermal_avfs_enable)(struct pp_hwmgr *hwmgr);
-	int (*init_smc_table)(struct pp_hwmgr *hwmgr);
-	int (*populate_all_graphic_levels)(struct pp_hwmgr *hwmgr);
-	int (*populate_all_memory_levels)(struct pp_hwmgr *hwmgr);
-	int (*initialize_mc_reg_table)(struct pp_hwmgr *hwmgr);
-	uint32_t (*get_offsetof)(uint32_t type, uint32_t member);
-	uint32_t (*get_mac_definition)(uint32_t value);
-	bool (*is_dpm_running)(struct pp_hwmgr *hwmgr);
-	bool (*is_hw_avfs_present)(struct pp_hwmgr  *hwmgr);
-	int (*update_dpm_settings)(struct pp_hwmgr *hwmgr, void *profile_setting);
-	int (*smc_table_manager)(struct pp_hwmgr *hwmgr, uint8_t *table, uint16_t table_id, bool rw); /*rw: true for read, false for write */
-	int (*stop_smc)(struct pp_hwmgr *hwmgr);
-};
+काष्ठा pp_smumgr_func अणु
+	अक्षर *name;
+	पूर्णांक (*smu_init)(काष्ठा pp_hwmgr  *hwmgr);
+	पूर्णांक (*smu_fini)(काष्ठा pp_hwmgr  *hwmgr);
+	पूर्णांक (*start_smu)(काष्ठा pp_hwmgr  *hwmgr);
+	पूर्णांक (*check_fw_load_finish)(काष्ठा pp_hwmgr  *hwmgr,
+				    uपूर्णांक32_t firmware);
+	पूर्णांक (*request_smu_load_fw)(काष्ठा pp_hwmgr  *hwmgr);
+	पूर्णांक (*request_smu_load_specअगरic_fw)(काष्ठा pp_hwmgr  *hwmgr,
+					    uपूर्णांक32_t firmware);
+	uपूर्णांक32_t (*get_argument)(काष्ठा pp_hwmgr  *hwmgr);
+	पूर्णांक (*send_msg_to_smc)(काष्ठा pp_hwmgr  *hwmgr, uपूर्णांक16_t msg);
+	पूर्णांक (*send_msg_to_smc_with_parameter)(काष्ठा pp_hwmgr  *hwmgr,
+					  uपूर्णांक16_t msg, uपूर्णांक32_t parameter);
+	पूर्णांक (*करोwnload_pptable_settings)(काष्ठा pp_hwmgr  *hwmgr,
+					 व्योम **table);
+	पूर्णांक (*upload_pptable_settings)(काष्ठा pp_hwmgr  *hwmgr);
+	पूर्णांक (*update_smc_table)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t type);
+	पूर्णांक (*process_firmware_header)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*update_sclk_threshold)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*thermal_setup_fan_table)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*thermal_avfs_enable)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*init_smc_table)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*populate_all_graphic_levels)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*populate_all_memory_levels)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*initialize_mc_reg_table)(काष्ठा pp_hwmgr *hwmgr);
+	uपूर्णांक32_t (*get_दुरत्व)(uपूर्णांक32_t type, uपूर्णांक32_t member);
+	uपूर्णांक32_t (*get_mac_definition)(uपूर्णांक32_t value);
+	bool (*is_dpm_running)(काष्ठा pp_hwmgr *hwmgr);
+	bool (*is_hw_avfs_present)(काष्ठा pp_hwmgr  *hwmgr);
+	पूर्णांक (*update_dpm_settings)(काष्ठा pp_hwmgr *hwmgr, व्योम *profile_setting);
+	पूर्णांक (*smc_table_manager)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक8_t *table, uपूर्णांक16_t table_id, bool rw); /*rw: true क्रम पढ़ो, false क्रम ग_लिखो */
+	पूर्णांक (*stop_smc)(काष्ठा pp_hwmgr *hwmgr);
+पूर्ण;
 
-struct pp_hwmgr_func {
-	int (*backend_init)(struct pp_hwmgr *hw_mgr);
-	int (*backend_fini)(struct pp_hwmgr *hw_mgr);
-	int (*asic_setup)(struct pp_hwmgr *hw_mgr);
-	int (*get_power_state_size)(struct pp_hwmgr *hw_mgr);
+काष्ठा pp_hwmgr_func अणु
+	पूर्णांक (*backend_init)(काष्ठा pp_hwmgr *hw_mgr);
+	पूर्णांक (*backend_fini)(काष्ठा pp_hwmgr *hw_mgr);
+	पूर्णांक (*asic_setup)(काष्ठा pp_hwmgr *hw_mgr);
+	पूर्णांक (*get_घातer_state_size)(काष्ठा pp_hwmgr *hw_mgr);
 
-	int (*apply_state_adjust_rules)(struct pp_hwmgr *hwmgr,
-				struct pp_power_state  *prequest_ps,
-			const struct pp_power_state *pcurrent_ps);
+	पूर्णांक (*apply_state_adjust_rules)(काष्ठा pp_hwmgr *hwmgr,
+				काष्ठा pp_घातer_state  *prequest_ps,
+			स्थिर काष्ठा pp_घातer_state *pcurrent_ps);
 
-	int (*apply_clocks_adjust_rules)(struct pp_hwmgr *hwmgr);
+	पूर्णांक (*apply_घड़ीs_adjust_rules)(काष्ठा pp_hwmgr *hwmgr);
 
-	int (*force_dpm_level)(struct pp_hwmgr *hw_mgr,
-					enum amd_dpm_forced_level level);
+	पूर्णांक (*क्रमce_dpm_level)(काष्ठा pp_hwmgr *hw_mgr,
+					क्रमागत amd_dpm_क्रमced_level level);
 
-	int (*dynamic_state_management_enable)(
-						struct pp_hwmgr *hw_mgr);
-	int (*dynamic_state_management_disable)(
-						struct pp_hwmgr *hw_mgr);
+	पूर्णांक (*dynamic_state_management_enable)(
+						काष्ठा pp_hwmgr *hw_mgr);
+	पूर्णांक (*dynamic_state_management_disable)(
+						काष्ठा pp_hwmgr *hw_mgr);
 
-	int (*patch_boot_state)(struct pp_hwmgr *hwmgr,
-				     struct pp_hw_power_state *hw_ps);
+	पूर्णांक (*patch_boot_state)(काष्ठा pp_hwmgr *hwmgr,
+				     काष्ठा pp_hw_घातer_state *hw_ps);
 
-	int (*get_pp_table_entry)(struct pp_hwmgr *hwmgr,
-			    unsigned long, struct pp_power_state *);
-	int (*get_num_of_pp_table_entries)(struct pp_hwmgr *hwmgr);
-	int (*powerdown_uvd)(struct pp_hwmgr *hwmgr);
-	void (*powergate_vce)(struct pp_hwmgr *hwmgr, bool bgate);
-	void (*powergate_uvd)(struct pp_hwmgr *hwmgr, bool bgate);
-	void (*powergate_acp)(struct pp_hwmgr *hwmgr, bool bgate);
-	uint32_t (*get_mclk)(struct pp_hwmgr *hwmgr, bool low);
-	uint32_t (*get_sclk)(struct pp_hwmgr *hwmgr, bool low);
-	int (*power_state_set)(struct pp_hwmgr *hwmgr,
-						const void *state);
-	int (*notify_smc_display_config_after_ps_adjustment)(struct pp_hwmgr *hwmgr);
-	int (*pre_display_config_changed)(struct pp_hwmgr *hwmgr);
-	int (*display_config_changed)(struct pp_hwmgr *hwmgr);
-	int (*disable_clock_power_gating)(struct pp_hwmgr *hwmgr);
-	int (*update_clock_gatings)(struct pp_hwmgr *hwmgr,
-						const uint32_t *msg_id);
-	int (*set_max_fan_rpm_output)(struct pp_hwmgr *hwmgr, uint16_t us_max_fan_pwm);
-	int (*set_max_fan_pwm_output)(struct pp_hwmgr *hwmgr, uint16_t us_max_fan_pwm);
-	int (*stop_thermal_controller)(struct pp_hwmgr *hwmgr);
-	int (*get_fan_speed_info)(struct pp_hwmgr *hwmgr, struct phm_fan_speed_info *fan_speed_info);
-	void (*set_fan_control_mode)(struct pp_hwmgr *hwmgr, uint32_t mode);
-	uint32_t (*get_fan_control_mode)(struct pp_hwmgr *hwmgr);
-	int (*set_fan_speed_percent)(struct pp_hwmgr *hwmgr, uint32_t percent);
-	int (*get_fan_speed_percent)(struct pp_hwmgr *hwmgr, uint32_t *speed);
-	int (*set_fan_speed_rpm)(struct pp_hwmgr *hwmgr, uint32_t percent);
-	int (*get_fan_speed_rpm)(struct pp_hwmgr *hwmgr, uint32_t *speed);
-	int (*reset_fan_speed_to_default)(struct pp_hwmgr *hwmgr);
-	int (*uninitialize_thermal_controller)(struct pp_hwmgr *hwmgr);
-	int (*register_irq_handlers)(struct pp_hwmgr *hwmgr);
-	bool (*check_smc_update_required_for_display_configuration)(struct pp_hwmgr *hwmgr);
-	int (*check_states_equal)(struct pp_hwmgr *hwmgr,
-					const struct pp_hw_power_state *pstate1,
-					const struct pp_hw_power_state *pstate2,
+	पूर्णांक (*get_pp_table_entry)(काष्ठा pp_hwmgr *hwmgr,
+			    अचिन्हित दीर्घ, काष्ठा pp_घातer_state *);
+	पूर्णांक (*get_num_of_pp_table_entries)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*घातerकरोwn_uvd)(काष्ठा pp_hwmgr *hwmgr);
+	व्योम (*घातergate_vce)(काष्ठा pp_hwmgr *hwmgr, bool bgate);
+	व्योम (*घातergate_uvd)(काष्ठा pp_hwmgr *hwmgr, bool bgate);
+	व्योम (*घातergate_acp)(काष्ठा pp_hwmgr *hwmgr, bool bgate);
+	uपूर्णांक32_t (*get_mclk)(काष्ठा pp_hwmgr *hwmgr, bool low);
+	uपूर्णांक32_t (*get_sclk)(काष्ठा pp_hwmgr *hwmgr, bool low);
+	पूर्णांक (*घातer_state_set)(काष्ठा pp_hwmgr *hwmgr,
+						स्थिर व्योम *state);
+	पूर्णांक (*notअगरy_smc_display_config_after_ps_adjusपंचांगent)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*pre_display_config_changed)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*display_config_changed)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*disable_घड़ी_घातer_gating)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*update_घड़ी_gatings)(काष्ठा pp_hwmgr *hwmgr,
+						स्थिर uपूर्णांक32_t *msg_id);
+	पूर्णांक (*set_max_fan_rpm_output)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक16_t us_max_fan_pwm);
+	पूर्णांक (*set_max_fan_pwm_output)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक16_t us_max_fan_pwm);
+	पूर्णांक (*stop_thermal_controller)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*get_fan_speed_info)(काष्ठा pp_hwmgr *hwmgr, काष्ठा phm_fan_speed_info *fan_speed_info);
+	व्योम (*set_fan_control_mode)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t mode);
+	uपूर्णांक32_t (*get_fan_control_mode)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*set_fan_speed_percent)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t percent);
+	पूर्णांक (*get_fan_speed_percent)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t *speed);
+	पूर्णांक (*set_fan_speed_rpm)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t percent);
+	पूर्णांक (*get_fan_speed_rpm)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t *speed);
+	पूर्णांक (*reset_fan_speed_to_शेष)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*uninitialize_thermal_controller)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*रेजिस्टर_irq_handlers)(काष्ठा pp_hwmgr *hwmgr);
+	bool (*check_smc_update_required_क्रम_display_configuration)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*check_states_equal)(काष्ठा pp_hwmgr *hwmgr,
+					स्थिर काष्ठा pp_hw_घातer_state *pstate1,
+					स्थिर काष्ठा pp_hw_घातer_state *pstate2,
 					bool *equal);
-	int (*set_cpu_power_state)(struct pp_hwmgr *hwmgr);
-	int (*store_cc6_data)(struct pp_hwmgr *hwmgr, uint32_t separation_time,
+	पूर्णांक (*set_cpu_घातer_state)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*store_cc6_data)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t separation_समय,
 				bool cc6_disable, bool pstate_disable,
-				bool pstate_switch_disable);
-	int (*get_dal_power_level)(struct pp_hwmgr *hwmgr,
-			struct amd_pp_simple_clock_info *info);
-	int (*get_performance_level)(struct pp_hwmgr *, const struct pp_hw_power_state *,
-			PHM_PerformanceLevelDesignation, uint32_t, PHM_PerformanceLevel *);
-	int (*get_current_shallow_sleep_clocks)(struct pp_hwmgr *hwmgr,
-				const struct pp_hw_power_state *state, struct pp_clock_info *clock_info);
-	int (*get_clock_by_type)(struct pp_hwmgr *hwmgr, enum amd_pp_clock_type type, struct amd_pp_clocks *clocks);
-	int (*get_clock_by_type_with_latency)(struct pp_hwmgr *hwmgr,
-			enum amd_pp_clock_type type,
-			struct pp_clock_levels_with_latency *clocks);
-	int (*get_clock_by_type_with_voltage)(struct pp_hwmgr *hwmgr,
-			enum amd_pp_clock_type type,
-			struct pp_clock_levels_with_voltage *clocks);
-	int (*set_watermarks_for_clocks_ranges)(struct pp_hwmgr *hwmgr, void *clock_ranges);
-	int (*display_clock_voltage_request)(struct pp_hwmgr *hwmgr,
-			struct pp_display_clock_request *clock);
-	int (*get_max_high_clocks)(struct pp_hwmgr *hwmgr, struct amd_pp_simple_clock_info *clocks);
-	int (*power_off_asic)(struct pp_hwmgr *hwmgr);
-	int (*force_clock_level)(struct pp_hwmgr *hwmgr, enum pp_clock_type type, uint32_t mask);
-	int (*print_clock_levels)(struct pp_hwmgr *hwmgr, enum pp_clock_type type, char *buf);
-	int (*powergate_gfx)(struct pp_hwmgr *hwmgr, bool enable);
-	int (*get_sclk_od)(struct pp_hwmgr *hwmgr);
-	int (*set_sclk_od)(struct pp_hwmgr *hwmgr, uint32_t value);
-	int (*get_mclk_od)(struct pp_hwmgr *hwmgr);
-	int (*set_mclk_od)(struct pp_hwmgr *hwmgr, uint32_t value);
-	int (*read_sensor)(struct pp_hwmgr *hwmgr, int idx, void *value, int *size);
-	int (*avfs_control)(struct pp_hwmgr *hwmgr, bool enable);
-	int (*disable_smc_firmware_ctf)(struct pp_hwmgr *hwmgr);
-	int (*set_active_display_count)(struct pp_hwmgr *hwmgr, uint32_t count);
-	int (*set_min_deep_sleep_dcefclk)(struct pp_hwmgr *hwmgr, uint32_t clock);
-	int (*start_thermal_controller)(struct pp_hwmgr *hwmgr, struct PP_TemperatureRange *range);
-	int (*notify_cac_buffer_info)(struct pp_hwmgr *hwmgr,
-					uint32_t virtual_addr_low,
-					uint32_t virtual_addr_hi,
-					uint32_t mc_addr_low,
-					uint32_t mc_addr_hi,
-					uint32_t size);
-	int (*update_nbdpm_pstate)(struct pp_hwmgr *hwmgr,
+				bool pstate_चयन_disable);
+	पूर्णांक (*get_dal_घातer_level)(काष्ठा pp_hwmgr *hwmgr,
+			काष्ठा amd_pp_simple_घड़ी_info *info);
+	पूर्णांक (*get_perक्रमmance_level)(काष्ठा pp_hwmgr *, स्थिर काष्ठा pp_hw_घातer_state *,
+			PHM_Perक्रमmanceLevelDesignation, uपूर्णांक32_t, PHM_Perक्रमmanceLevel *);
+	पूर्णांक (*get_current_shallow_sleep_घड़ीs)(काष्ठा pp_hwmgr *hwmgr,
+				स्थिर काष्ठा pp_hw_घातer_state *state, काष्ठा pp_घड़ी_info *घड़ी_info);
+	पूर्णांक (*get_घड़ी_by_type)(काष्ठा pp_hwmgr *hwmgr, क्रमागत amd_pp_घड़ी_प्रकारype type, काष्ठा amd_pp_घड़ीs *घड़ीs);
+	पूर्णांक (*get_घड़ी_by_type_with_latency)(काष्ठा pp_hwmgr *hwmgr,
+			क्रमागत amd_pp_घड़ी_प्रकारype type,
+			काष्ठा pp_घड़ी_levels_with_latency *घड़ीs);
+	पूर्णांक (*get_घड़ी_by_type_with_voltage)(काष्ठा pp_hwmgr *hwmgr,
+			क्रमागत amd_pp_घड़ी_प्रकारype type,
+			काष्ठा pp_घड़ी_levels_with_voltage *घड़ीs);
+	पूर्णांक (*set_watermarks_क्रम_घड़ीs_ranges)(काष्ठा pp_hwmgr *hwmgr, व्योम *घड़ी_ranges);
+	पूर्णांक (*display_घड़ी_voltage_request)(काष्ठा pp_hwmgr *hwmgr,
+			काष्ठा pp_display_घड़ी_request *घड़ी);
+	पूर्णांक (*get_max_high_घड़ीs)(काष्ठा pp_hwmgr *hwmgr, काष्ठा amd_pp_simple_घड़ी_info *घड़ीs);
+	पूर्णांक (*घातer_off_asic)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*क्रमce_घड़ी_level)(काष्ठा pp_hwmgr *hwmgr, क्रमागत pp_घड़ी_प्रकारype type, uपूर्णांक32_t mask);
+	पूर्णांक (*prपूर्णांक_घड़ी_levels)(काष्ठा pp_hwmgr *hwmgr, क्रमागत pp_घड़ी_प्रकारype type, अक्षर *buf);
+	पूर्णांक (*घातergate_gfx)(काष्ठा pp_hwmgr *hwmgr, bool enable);
+	पूर्णांक (*get_sclk_od)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*set_sclk_od)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t value);
+	पूर्णांक (*get_mclk_od)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*set_mclk_od)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t value);
+	पूर्णांक (*पढ़ो_sensor)(काष्ठा pp_hwmgr *hwmgr, पूर्णांक idx, व्योम *value, पूर्णांक *size);
+	पूर्णांक (*avfs_control)(काष्ठा pp_hwmgr *hwmgr, bool enable);
+	पूर्णांक (*disable_smc_firmware_ctf)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*set_active_display_count)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t count);
+	पूर्णांक (*set_min_deep_sleep_dcefclk)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t घड़ी);
+	पूर्णांक (*start_thermal_controller)(काष्ठा pp_hwmgr *hwmgr, काष्ठा PP_TemperatureRange *range);
+	पूर्णांक (*notअगरy_cac_buffer_info)(काष्ठा pp_hwmgr *hwmgr,
+					uपूर्णांक32_t भव_addr_low,
+					uपूर्णांक32_t भव_addr_hi,
+					uपूर्णांक32_t mc_addr_low,
+					uपूर्णांक32_t mc_addr_hi,
+					uपूर्णांक32_t size);
+	पूर्णांक (*update_nbdpm_pstate)(काष्ठा pp_hwmgr *hwmgr,
 					bool enable,
 					bool lock);
-	int (*get_thermal_temperature_range)(struct pp_hwmgr *hwmgr,
-					struct PP_TemperatureRange *range);
-	int (*get_power_profile_mode)(struct pp_hwmgr *hwmgr, char *buf);
-	int (*set_power_profile_mode)(struct pp_hwmgr *hwmgr, long *input, uint32_t size);
-	int (*odn_edit_dpm_table)(struct pp_hwmgr *hwmgr,
-					enum PP_OD_DPM_TABLE_COMMAND type,
-					long *input, uint32_t size);
-	int (*set_fine_grain_clk_vol)(struct pp_hwmgr *hwmgr,
-				      enum PP_OD_DPM_TABLE_COMMAND type,
-				      long *input, uint32_t size);
-	int (*set_power_limit)(struct pp_hwmgr *hwmgr, uint32_t n);
-	int (*powergate_mmhub)(struct pp_hwmgr *hwmgr);
-	int (*smus_notify_pwe)(struct pp_hwmgr *hwmgr);
-	int (*powergate_sdma)(struct pp_hwmgr *hwmgr, bool bgate);
-	int (*enable_mgpu_fan_boost)(struct pp_hwmgr *hwmgr);
-	int (*set_hard_min_dcefclk_by_freq)(struct pp_hwmgr *hwmgr, uint32_t clock);
-	int (*set_hard_min_fclk_by_freq)(struct pp_hwmgr *hwmgr, uint32_t clock);
-	int (*set_hard_min_gfxclk_by_freq)(struct pp_hwmgr *hwmgr, uint32_t clock);
-	int (*set_soft_max_gfxclk_by_freq)(struct pp_hwmgr *hwmgr, uint32_t clock);
-	int (*get_asic_baco_capability)(struct pp_hwmgr *hwmgr, bool *cap);
-	int (*get_asic_baco_state)(struct pp_hwmgr *hwmgr, enum BACO_STATE *state);
-	int (*set_asic_baco_state)(struct pp_hwmgr *hwmgr, enum BACO_STATE state);
-	int (*get_ppfeature_status)(struct pp_hwmgr *hwmgr, char *buf);
-	int (*set_ppfeature_status)(struct pp_hwmgr *hwmgr, uint64_t ppfeature_masks);
-	int (*set_mp1_state)(struct pp_hwmgr *hwmgr, enum pp_mp1_state mp1_state);
-	int (*asic_reset)(struct pp_hwmgr *hwmgr, enum SMU_ASIC_RESET_MODE mode);
-	int (*smu_i2c_bus_access)(struct pp_hwmgr *hwmgr, bool aquire);
-	int (*set_df_cstate)(struct pp_hwmgr *hwmgr, enum pp_df_cstate state);
-	int (*set_xgmi_pstate)(struct pp_hwmgr *hwmgr, uint32_t pstate);
-	int (*disable_power_features_for_compute_performance)(struct pp_hwmgr *hwmgr,
+	पूर्णांक (*get_thermal_temperature_range)(काष्ठा pp_hwmgr *hwmgr,
+					काष्ठा PP_TemperatureRange *range);
+	पूर्णांक (*get_घातer_profile_mode)(काष्ठा pp_hwmgr *hwmgr, अक्षर *buf);
+	पूर्णांक (*set_घातer_profile_mode)(काष्ठा pp_hwmgr *hwmgr, दीर्घ *input, uपूर्णांक32_t size);
+	पूर्णांक (*odn_edit_dpm_table)(काष्ठा pp_hwmgr *hwmgr,
+					क्रमागत PP_OD_DPM_TABLE_COMMAND type,
+					दीर्घ *input, uपूर्णांक32_t size);
+	पूर्णांक (*set_fine_grain_clk_vol)(काष्ठा pp_hwmgr *hwmgr,
+				      क्रमागत PP_OD_DPM_TABLE_COMMAND type,
+				      दीर्घ *input, uपूर्णांक32_t size);
+	पूर्णांक (*set_घातer_limit)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t n);
+	पूर्णांक (*घातergate_mmhub)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*smus_notअगरy_pwe)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*घातergate_sdma)(काष्ठा pp_hwmgr *hwmgr, bool bgate);
+	पूर्णांक (*enable_mgpu_fan_boost)(काष्ठा pp_hwmgr *hwmgr);
+	पूर्णांक (*set_hard_min_dcefclk_by_freq)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t घड़ी);
+	पूर्णांक (*set_hard_min_fclk_by_freq)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t घड़ी);
+	पूर्णांक (*set_hard_min_gfxclk_by_freq)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t घड़ी);
+	पूर्णांक (*set_soft_max_gfxclk_by_freq)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t घड़ी);
+	पूर्णांक (*get_asic_baco_capability)(काष्ठा pp_hwmgr *hwmgr, bool *cap);
+	पूर्णांक (*get_asic_baco_state)(काष्ठा pp_hwmgr *hwmgr, क्रमागत BACO_STATE *state);
+	पूर्णांक (*set_asic_baco_state)(काष्ठा pp_hwmgr *hwmgr, क्रमागत BACO_STATE state);
+	पूर्णांक (*get_ppfeature_status)(काष्ठा pp_hwmgr *hwmgr, अक्षर *buf);
+	पूर्णांक (*set_ppfeature_status)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक64_t ppfeature_masks);
+	पूर्णांक (*set_mp1_state)(काष्ठा pp_hwmgr *hwmgr, क्रमागत pp_mp1_state mp1_state);
+	पूर्णांक (*asic_reset)(काष्ठा pp_hwmgr *hwmgr, क्रमागत SMU_ASIC_RESET_MODE mode);
+	पूर्णांक (*smu_i2c_bus_access)(काष्ठा pp_hwmgr *hwmgr, bool aquire);
+	पूर्णांक (*set_df_cstate)(काष्ठा pp_hwmgr *hwmgr, क्रमागत pp_df_cstate state);
+	पूर्णांक (*set_xgmi_pstate)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t pstate);
+	पूर्णांक (*disable_घातer_features_क्रम_compute_perक्रमmance)(काष्ठा pp_hwmgr *hwmgr,
 					bool disable);
-	ssize_t (*get_gpu_metrics)(struct pp_hwmgr *hwmgr, void **table);
-	int (*gfx_state_change)(struct pp_hwmgr *hwmgr, uint32_t state);
-};
+	sमाप_प्रकार (*get_gpu_metrics)(काष्ठा pp_hwmgr *hwmgr, व्योम **table);
+	पूर्णांक (*gfx_state_change)(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t state);
+पूर्ण;
 
-struct pp_table_func {
-	int (*pptable_init)(struct pp_hwmgr *hw_mgr);
-	int (*pptable_fini)(struct pp_hwmgr *hw_mgr);
-	int (*pptable_get_number_of_vce_state_table_entries)(struct pp_hwmgr *hw_mgr);
-	int (*pptable_get_vce_state_table_entry)(
-						struct pp_hwmgr *hwmgr,
-						unsigned long i,
-						struct amd_vce_state *vce_state,
-						void **clock_info,
-						unsigned long *flag);
-};
+काष्ठा pp_table_func अणु
+	पूर्णांक (*pptable_init)(काष्ठा pp_hwmgr *hw_mgr);
+	पूर्णांक (*pptable_fini)(काष्ठा pp_hwmgr *hw_mgr);
+	पूर्णांक (*pptable_get_number_of_vce_state_table_entries)(काष्ठा pp_hwmgr *hw_mgr);
+	पूर्णांक (*pptable_get_vce_state_table_entry)(
+						काष्ठा pp_hwmgr *hwmgr,
+						अचिन्हित दीर्घ i,
+						काष्ठा amd_vce_state *vce_state,
+						व्योम **घड़ी_info,
+						अचिन्हित दीर्घ *flag);
+पूर्ण;
 
-union phm_cac_leakage_record {
-	struct {
-		uint16_t Vddc;          /* in CI, we use it for StdVoltageHiSidd */
-		uint32_t Leakage;       /* in CI, we use it for StdVoltageLoSidd */
-	};
-	struct {
-		uint16_t Vddc1;
-		uint16_t Vddc2;
-		uint16_t Vddc3;
-	};
-};
+जोड़ phm_cac_leakage_record अणु
+	काष्ठा अणु
+		uपूर्णांक16_t Vddc;          /* in CI, we use it क्रम StdVoltageHiSidd */
+		uपूर्णांक32_t Leakage;       /* in CI, we use it क्रम StdVoltageLoSidd */
+	पूर्ण;
+	काष्ठा अणु
+		uपूर्णांक16_t Vddc1;
+		uपूर्णांक16_t Vddc2;
+		uपूर्णांक16_t Vddc3;
+	पूर्ण;
+पूर्ण;
 
-struct phm_cac_leakage_table {
-	uint32_t count;
-	union phm_cac_leakage_record entries[];
-};
+काष्ठा phm_cac_leakage_table अणु
+	uपूर्णांक32_t count;
+	जोड़ phm_cac_leakage_record entries[];
+पूर्ण;
 
-struct phm_samu_clock_voltage_dependency_record {
-	uint32_t samclk;
-	uint32_t v;
-};
+काष्ठा phm_samu_घड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t samclk;
+	uपूर्णांक32_t v;
+पूर्ण;
 
 
-struct phm_samu_clock_voltage_dependency_table {
-	uint8_t count;
-	struct phm_samu_clock_voltage_dependency_record entries[];
-};
+काष्ठा phm_samu_घड़ी_voltage_dependency_table अणु
+	uपूर्णांक8_t count;
+	काष्ठा phm_samu_घड़ी_voltage_dependency_record entries[];
+पूर्ण;
 
-struct phm_cac_tdp_table {
-	uint16_t usTDP;
-	uint16_t usConfigurableTDP;
-	uint16_t usTDC;
-	uint16_t usBatteryPowerLimit;
-	uint16_t usSmallPowerLimit;
-	uint16_t usLowCACLeakage;
-	uint16_t usHighCACLeakage;
-	uint16_t usMaximumPowerDeliveryLimit;
-	uint16_t usEDCLimit;
-	uint16_t usOperatingTempMinLimit;
-	uint16_t usOperatingTempMaxLimit;
-	uint16_t usOperatingTempStep;
-	uint16_t usOperatingTempHyst;
-	uint16_t usDefaultTargetOperatingTemp;
-	uint16_t usTargetOperatingTemp;
-	uint16_t usPowerTuneDataSetID;
-	uint16_t usSoftwareShutdownTemp;
-	uint16_t usClockStretchAmount;
-	uint16_t usTemperatureLimitHotspot;
-	uint16_t usTemperatureLimitLiquid1;
-	uint16_t usTemperatureLimitLiquid2;
-	uint16_t usTemperatureLimitVrVddc;
-	uint16_t usTemperatureLimitVrMvdd;
-	uint16_t usTemperatureLimitPlx;
-	uint8_t  ucLiquid1_I2C_address;
-	uint8_t  ucLiquid2_I2C_address;
-	uint8_t  ucLiquid_I2C_Line;
-	uint8_t  ucVr_I2C_address;
-	uint8_t  ucVr_I2C_Line;
-	uint8_t  ucPlx_I2C_address;
-	uint8_t  ucPlx_I2C_Line;
-	uint32_t usBoostPowerLimit;
-	uint8_t  ucCKS_LDO_REFSEL;
-	uint8_t  ucHotSpotOnly;
-};
+काष्ठा phm_cac_tdp_table अणु
+	uपूर्णांक16_t usTDP;
+	uपूर्णांक16_t usConfigurableTDP;
+	uपूर्णांक16_t usTDC;
+	uपूर्णांक16_t usBatteryPowerLimit;
+	uपूर्णांक16_t usSmallPowerLimit;
+	uपूर्णांक16_t usLowCACLeakage;
+	uपूर्णांक16_t usHighCACLeakage;
+	uपूर्णांक16_t usMaximumPowerDeliveryLimit;
+	uपूर्णांक16_t usEDCLimit;
+	uपूर्णांक16_t usOperatingTempMinLimit;
+	uपूर्णांक16_t usOperatingTempMaxLimit;
+	uपूर्णांक16_t usOperatingTempStep;
+	uपूर्णांक16_t usOperatingTempHyst;
+	uपूर्णांक16_t usDefaultTargetOperatingTemp;
+	uपूर्णांक16_t usTargetOperatingTemp;
+	uपूर्णांक16_t usPowerTuneDataSetID;
+	uपूर्णांक16_t usSoftwareShutकरोwnTemp;
+	uपूर्णांक16_t usClockStretchAmount;
+	uपूर्णांक16_t usTemperatureLimitHotspot;
+	uपूर्णांक16_t usTemperatureLimitLiquid1;
+	uपूर्णांक16_t usTemperatureLimitLiquid2;
+	uपूर्णांक16_t usTemperatureLimitVrVddc;
+	uपूर्णांक16_t usTemperatureLimitVrMvdd;
+	uपूर्णांक16_t usTemperatureLimitPlx;
+	uपूर्णांक8_t  ucLiquid1_I2C_address;
+	uपूर्णांक8_t  ucLiquid2_I2C_address;
+	uपूर्णांक8_t  ucLiquid_I2C_Line;
+	uपूर्णांक8_t  ucVr_I2C_address;
+	uपूर्णांक8_t  ucVr_I2C_Line;
+	uपूर्णांक8_t  ucPlx_I2C_address;
+	uपूर्णांक8_t  ucPlx_I2C_Line;
+	uपूर्णांक32_t usBoostPowerLimit;
+	uपूर्णांक8_t  ucCKS_LDO_REFSEL;
+	uपूर्णांक8_t  ucHotSpotOnly;
+पूर्ण;
 
-struct phm_tdp_table {
-	uint16_t usTDP;
-	uint16_t usConfigurableTDP;
-	uint16_t usTDC;
-	uint16_t usBatteryPowerLimit;
-	uint16_t usSmallPowerLimit;
-	uint16_t usLowCACLeakage;
-	uint16_t usHighCACLeakage;
-	uint16_t usMaximumPowerDeliveryLimit;
-	uint16_t usEDCLimit;
-	uint16_t usOperatingTempMinLimit;
-	uint16_t usOperatingTempMaxLimit;
-	uint16_t usOperatingTempStep;
-	uint16_t usOperatingTempHyst;
-	uint16_t usDefaultTargetOperatingTemp;
-	uint16_t usTargetOperatingTemp;
-	uint16_t usPowerTuneDataSetID;
-	uint16_t usSoftwareShutdownTemp;
-	uint16_t usClockStretchAmount;
-	uint16_t usTemperatureLimitTedge;
-	uint16_t usTemperatureLimitHotspot;
-	uint16_t usTemperatureLimitLiquid1;
-	uint16_t usTemperatureLimitLiquid2;
-	uint16_t usTemperatureLimitHBM;
-	uint16_t usTemperatureLimitVrVddc;
-	uint16_t usTemperatureLimitVrMvdd;
-	uint16_t usTemperatureLimitPlx;
-	uint8_t  ucLiquid1_I2C_address;
-	uint8_t  ucLiquid2_I2C_address;
-	uint8_t  ucLiquid_I2C_Line;
-	uint8_t  ucVr_I2C_address;
-	uint8_t  ucVr_I2C_Line;
-	uint8_t  ucPlx_I2C_address;
-	uint8_t  ucPlx_I2C_Line;
-	uint8_t  ucLiquid_I2C_LineSDA;
-	uint8_t  ucVr_I2C_LineSDA;
-	uint8_t  ucPlx_I2C_LineSDA;
-	uint32_t usBoostPowerLimit;
-	uint16_t usBoostStartTemperature;
-	uint16_t usBoostStopTemperature;
-	uint32_t  ulBoostClock;
-};
+काष्ठा phm_tdp_table अणु
+	uपूर्णांक16_t usTDP;
+	uपूर्णांक16_t usConfigurableTDP;
+	uपूर्णांक16_t usTDC;
+	uपूर्णांक16_t usBatteryPowerLimit;
+	uपूर्णांक16_t usSmallPowerLimit;
+	uपूर्णांक16_t usLowCACLeakage;
+	uपूर्णांक16_t usHighCACLeakage;
+	uपूर्णांक16_t usMaximumPowerDeliveryLimit;
+	uपूर्णांक16_t usEDCLimit;
+	uपूर्णांक16_t usOperatingTempMinLimit;
+	uपूर्णांक16_t usOperatingTempMaxLimit;
+	uपूर्णांक16_t usOperatingTempStep;
+	uपूर्णांक16_t usOperatingTempHyst;
+	uपूर्णांक16_t usDefaultTargetOperatingTemp;
+	uपूर्णांक16_t usTargetOperatingTemp;
+	uपूर्णांक16_t usPowerTuneDataSetID;
+	uपूर्णांक16_t usSoftwareShutकरोwnTemp;
+	uपूर्णांक16_t usClockStretchAmount;
+	uपूर्णांक16_t usTemperatureLimitTedge;
+	uपूर्णांक16_t usTemperatureLimitHotspot;
+	uपूर्णांक16_t usTemperatureLimitLiquid1;
+	uपूर्णांक16_t usTemperatureLimitLiquid2;
+	uपूर्णांक16_t usTemperatureLimitHBM;
+	uपूर्णांक16_t usTemperatureLimitVrVddc;
+	uपूर्णांक16_t usTemperatureLimitVrMvdd;
+	uपूर्णांक16_t usTemperatureLimitPlx;
+	uपूर्णांक8_t  ucLiquid1_I2C_address;
+	uपूर्णांक8_t  ucLiquid2_I2C_address;
+	uपूर्णांक8_t  ucLiquid_I2C_Line;
+	uपूर्णांक8_t  ucVr_I2C_address;
+	uपूर्णांक8_t  ucVr_I2C_Line;
+	uपूर्णांक8_t  ucPlx_I2C_address;
+	uपूर्णांक8_t  ucPlx_I2C_Line;
+	uपूर्णांक8_t  ucLiquid_I2C_LineSDA;
+	uपूर्णांक8_t  ucVr_I2C_LineSDA;
+	uपूर्णांक8_t  ucPlx_I2C_LineSDA;
+	uपूर्णांक32_t usBoostPowerLimit;
+	uपूर्णांक16_t usBoostStartTemperature;
+	uपूर्णांक16_t usBoostStopTemperature;
+	uपूर्णांक32_t  ulBoostClock;
+पूर्ण;
 
-struct phm_ppm_table {
-	uint8_t   ppm_design;
-	uint16_t  cpu_core_number;
-	uint32_t  platform_tdp;
-	uint32_t  small_ac_platform_tdp;
-	uint32_t  platform_tdc;
-	uint32_t  small_ac_platform_tdc;
-	uint32_t  apu_tdp;
-	uint32_t  dgpu_tdp;
-	uint32_t  dgpu_ulv_power;
-	uint32_t  tj_max;
-};
+काष्ठा phm_ppm_table अणु
+	uपूर्णांक8_t   ppm_design;
+	uपूर्णांक16_t  cpu_core_number;
+	uपूर्णांक32_t  platक्रमm_tdp;
+	uपूर्णांक32_t  small_ac_platक्रमm_tdp;
+	uपूर्णांक32_t  platक्रमm_tdc;
+	uपूर्णांक32_t  small_ac_platक्रमm_tdc;
+	uपूर्णांक32_t  apu_tdp;
+	uपूर्णांक32_t  dgpu_tdp;
+	uपूर्णांक32_t  dgpu_ulv_घातer;
+	uपूर्णांक32_t  tj_max;
+पूर्ण;
 
-struct phm_vq_budgeting_record {
-	uint32_t ulCUs;
-	uint32_t ulSustainableSOCPowerLimitLow;
-	uint32_t ulSustainableSOCPowerLimitHigh;
-	uint32_t ulMinSclkLow;
-	uint32_t ulMinSclkHigh;
-	uint8_t  ucDispConfig;
-	uint32_t ulDClk;
-	uint32_t ulEClk;
-	uint32_t ulSustainableSclk;
-	uint32_t ulSustainableCUs;
-};
+काष्ठा phm_vq_budgeting_record अणु
+	uपूर्णांक32_t ulCUs;
+	uपूर्णांक32_t ulSustainableSOCPowerLimitLow;
+	uपूर्णांक32_t ulSustainableSOCPowerLimitHigh;
+	uपूर्णांक32_t ulMinSclkLow;
+	uपूर्णांक32_t ulMinSclkHigh;
+	uपूर्णांक8_t  ucDispConfig;
+	uपूर्णांक32_t ulDClk;
+	uपूर्णांक32_t ulEClk;
+	uपूर्णांक32_t ulSustainableSclk;
+	uपूर्णांक32_t ulSustainableCUs;
+पूर्ण;
 
-struct phm_vq_budgeting_table {
-	uint8_t numEntries;
-	struct phm_vq_budgeting_record entries[1];
-};
+काष्ठा phm_vq_budgeting_table अणु
+	uपूर्णांक8_t numEntries;
+	काष्ठा phm_vq_budgeting_record entries[1];
+पूर्ण;
 
-struct phm_clock_and_voltage_limits {
-	uint32_t sclk;
-	uint32_t mclk;
-	uint32_t gfxclk;
-	uint16_t vddc;
-	uint16_t vddci;
-	uint16_t vddgfx;
-	uint16_t vddmem;
-};
+काष्ठा phm_घड़ी_and_voltage_limits अणु
+	uपूर्णांक32_t sclk;
+	uपूर्णांक32_t mclk;
+	uपूर्णांक32_t gfxclk;
+	uपूर्णांक16_t vddc;
+	uपूर्णांक16_t vddci;
+	uपूर्णांक16_t vddgfx;
+	uपूर्णांक16_t vddmem;
+पूर्ण;
 
-/* Structure to hold PPTable information */
+/* Structure to hold PPTable inक्रमmation */
 
-struct phm_ppt_v1_information {
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_sclk;
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_mclk;
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_socclk;
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_dcefclk;
-	struct phm_clock_array *valid_sclk_values;
-	struct phm_clock_array *valid_mclk_values;
-	struct phm_clock_array *valid_socclk_values;
-	struct phm_clock_array *valid_dcefclk_values;
-	struct phm_clock_and_voltage_limits max_clock_voltage_on_dc;
-	struct phm_clock_and_voltage_limits max_clock_voltage_on_ac;
-	struct phm_clock_voltage_dependency_table *vddc_dep_on_dal_pwrl;
-	struct phm_ppm_table *ppm_parameter_table;
-	struct phm_cac_tdp_table *cac_dtp_table;
-	struct phm_tdp_table *tdp_table;
-	struct phm_ppt_v1_mm_clock_voltage_dependency_table *mm_dep_table;
-	struct phm_ppt_v1_voltage_lookup_table *vddc_lookup_table;
-	struct phm_ppt_v1_voltage_lookup_table *vddgfx_lookup_table;
-	struct phm_ppt_v1_voltage_lookup_table *vddmem_lookup_table;
-	struct phm_ppt_v1_pcie_table *pcie_table;
-	struct phm_ppt_v1_gpio_table *gpio_table;
-	uint16_t us_ulv_voltage_offset;
-	uint16_t us_ulv_smnclk_did;
-	uint16_t us_ulv_mp1clk_did;
-	uint16_t us_ulv_gfxclk_bypass;
-	uint16_t us_gfxclk_slew_rate;
-	uint16_t us_min_gfxclk_freq_limit;
-};
+काष्ठा phm_ppt_v1_inक्रमmation अणु
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_sclk;
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_mclk;
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_socclk;
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_dcefclk;
+	काष्ठा phm_घड़ी_array *valid_sclk_values;
+	काष्ठा phm_घड़ी_array *valid_mclk_values;
+	काष्ठा phm_घड़ी_array *valid_socclk_values;
+	काष्ठा phm_घड़ी_array *valid_dcefclk_values;
+	काष्ठा phm_घड़ी_and_voltage_limits max_घड़ी_voltage_on_dc;
+	काष्ठा phm_घड़ी_and_voltage_limits max_घड़ी_voltage_on_ac;
+	काष्ठा phm_घड़ी_voltage_dependency_table *vddc_dep_on_dal_pwrl;
+	काष्ठा phm_ppm_table *ppm_parameter_table;
+	काष्ठा phm_cac_tdp_table *cac_dtp_table;
+	काष्ठा phm_tdp_table *tdp_table;
+	काष्ठा phm_ppt_v1_mm_घड़ी_voltage_dependency_table *mm_dep_table;
+	काष्ठा phm_ppt_v1_voltage_lookup_table *vddc_lookup_table;
+	काष्ठा phm_ppt_v1_voltage_lookup_table *vddgfx_lookup_table;
+	काष्ठा phm_ppt_v1_voltage_lookup_table *vddmem_lookup_table;
+	काष्ठा phm_ppt_v1_pcie_table *pcie_table;
+	काष्ठा phm_ppt_v1_gpio_table *gpio_table;
+	uपूर्णांक16_t us_ulv_voltage_offset;
+	uपूर्णांक16_t us_ulv_smnclk_did;
+	uपूर्णांक16_t us_ulv_mp1clk_did;
+	uपूर्णांक16_t us_ulv_gfxclk_bypass;
+	uपूर्णांक16_t us_gfxclk_slew_rate;
+	uपूर्णांक16_t us_min_gfxclk_freq_limit;
+पूर्ण;
 
-struct phm_ppt_v2_information {
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_sclk;
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_mclk;
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_socclk;
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_dcefclk;
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_pixclk;
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_dispclk;
-	struct phm_ppt_v1_clock_voltage_dependency_table *vdd_dep_on_phyclk;
-	struct phm_ppt_v1_mm_clock_voltage_dependency_table *mm_dep_table;
+काष्ठा phm_ppt_v2_inक्रमmation अणु
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_sclk;
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_mclk;
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_socclk;
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_dcefclk;
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_pixclk;
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_dispclk;
+	काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table *vdd_dep_on_phyclk;
+	काष्ठा phm_ppt_v1_mm_घड़ी_voltage_dependency_table *mm_dep_table;
 
-	struct phm_clock_voltage_dependency_table *vddc_dep_on_dalpwrl;
+	काष्ठा phm_घड़ी_voltage_dependency_table *vddc_dep_on_dalpwrl;
 
-	struct phm_clock_array *valid_sclk_values;
-	struct phm_clock_array *valid_mclk_values;
-	struct phm_clock_array *valid_socclk_values;
-	struct phm_clock_array *valid_dcefclk_values;
+	काष्ठा phm_घड़ी_array *valid_sclk_values;
+	काष्ठा phm_घड़ी_array *valid_mclk_values;
+	काष्ठा phm_घड़ी_array *valid_socclk_values;
+	काष्ठा phm_घड़ी_array *valid_dcefclk_values;
 
-	struct phm_clock_and_voltage_limits max_clock_voltage_on_dc;
-	struct phm_clock_and_voltage_limits max_clock_voltage_on_ac;
+	काष्ठा phm_घड़ी_and_voltage_limits max_घड़ी_voltage_on_dc;
+	काष्ठा phm_घड़ी_and_voltage_limits max_घड़ी_voltage_on_ac;
 
-	struct phm_ppm_table *ppm_parameter_table;
-	struct phm_cac_tdp_table *cac_dtp_table;
-	struct phm_tdp_table *tdp_table;
+	काष्ठा phm_ppm_table *ppm_parameter_table;
+	काष्ठा phm_cac_tdp_table *cac_dtp_table;
+	काष्ठा phm_tdp_table *tdp_table;
 
-	struct phm_ppt_v1_voltage_lookup_table *vddc_lookup_table;
-	struct phm_ppt_v1_voltage_lookup_table *vddgfx_lookup_table;
-	struct phm_ppt_v1_voltage_lookup_table *vddmem_lookup_table;
-	struct phm_ppt_v1_voltage_lookup_table *vddci_lookup_table;
+	काष्ठा phm_ppt_v1_voltage_lookup_table *vddc_lookup_table;
+	काष्ठा phm_ppt_v1_voltage_lookup_table *vddgfx_lookup_table;
+	काष्ठा phm_ppt_v1_voltage_lookup_table *vddmem_lookup_table;
+	काष्ठा phm_ppt_v1_voltage_lookup_table *vddci_lookup_table;
 
-	struct phm_ppt_v1_pcie_table *pcie_table;
+	काष्ठा phm_ppt_v1_pcie_table *pcie_table;
 
-	uint16_t us_ulv_voltage_offset;
-	uint16_t us_ulv_smnclk_did;
-	uint16_t us_ulv_mp1clk_did;
-	uint16_t us_ulv_gfxclk_bypass;
-	uint16_t us_gfxclk_slew_rate;
-	uint16_t us_min_gfxclk_freq_limit;
+	uपूर्णांक16_t us_ulv_voltage_offset;
+	uपूर्णांक16_t us_ulv_smnclk_did;
+	uपूर्णांक16_t us_ulv_mp1clk_did;
+	uपूर्णांक16_t us_ulv_gfxclk_bypass;
+	uपूर्णांक16_t us_gfxclk_slew_rate;
+	uपूर्णांक16_t us_min_gfxclk_freq_limit;
 
-	uint8_t  uc_gfx_dpm_voltage_mode;
-	uint8_t  uc_soc_dpm_voltage_mode;
-	uint8_t  uc_uclk_dpm_voltage_mode;
-	uint8_t  uc_uvd_dpm_voltage_mode;
-	uint8_t  uc_vce_dpm_voltage_mode;
-	uint8_t  uc_mp0_dpm_voltage_mode;
-	uint8_t  uc_dcef_dpm_voltage_mode;
-};
+	uपूर्णांक8_t  uc_gfx_dpm_voltage_mode;
+	uपूर्णांक8_t  uc_soc_dpm_voltage_mode;
+	uपूर्णांक8_t  uc_uclk_dpm_voltage_mode;
+	uपूर्णांक8_t  uc_uvd_dpm_voltage_mode;
+	uपूर्णांक8_t  uc_vce_dpm_voltage_mode;
+	uपूर्णांक8_t  uc_mp0_dpm_voltage_mode;
+	uपूर्णांक8_t  uc_dcef_dpm_voltage_mode;
+पूर्ण;
 
-struct phm_ppt_v3_information
-{
-	uint8_t uc_thermal_controller_type;
+काष्ठा phm_ppt_v3_inक्रमmation
+अणु
+	uपूर्णांक8_t uc_thermal_controller_type;
 
-	uint16_t us_small_power_limit1;
-	uint16_t us_small_power_limit2;
-	uint16_t us_boost_power_limit;
+	uपूर्णांक16_t us_small_घातer_limit1;
+	uपूर्णांक16_t us_small_घातer_limit2;
+	uपूर्णांक16_t us_boost_घातer_limit;
 
-	uint16_t us_od_turbo_power_limit;
-	uint16_t us_od_powersave_power_limit;
-	uint16_t us_software_shutdown_temp;
+	uपूर्णांक16_t us_od_turbo_घातer_limit;
+	uपूर्णांक16_t us_od_घातersave_घातer_limit;
+	uपूर्णांक16_t us_software_shutकरोwn_temp;
 
-	uint32_t *power_saving_clock_max;
-	uint32_t *power_saving_clock_min;
+	uपूर्णांक32_t *घातer_saving_घड़ी_max;
+	uपूर्णांक32_t *घातer_saving_घड़ी_min;
 
-	uint8_t *od_feature_capabilities;
-	uint32_t *od_settings_max;
-	uint32_t *od_settings_min;
+	uपूर्णांक8_t *od_feature_capabilities;
+	uपूर्णांक32_t *od_settings_max;
+	uपूर्णांक32_t *od_settings_min;
 
-	void *smc_pptable;
-};
+	व्योम *smc_pptable;
+पूर्ण;
 
-struct phm_dynamic_state_info {
-	struct phm_clock_voltage_dependency_table *vddc_dependency_on_sclk;
-	struct phm_clock_voltage_dependency_table *vddci_dependency_on_mclk;
-	struct phm_clock_voltage_dependency_table *vddc_dependency_on_mclk;
-	struct phm_clock_voltage_dependency_table *mvdd_dependency_on_mclk;
-	struct phm_clock_voltage_dependency_table *vddc_dep_on_dal_pwrl;
-	struct phm_clock_array                    *valid_sclk_values;
-	struct phm_clock_array                    *valid_mclk_values;
-	struct phm_clock_and_voltage_limits       max_clock_voltage_on_dc;
-	struct phm_clock_and_voltage_limits       max_clock_voltage_on_ac;
-	uint32_t                                  mclk_sclk_ratio;
-	uint32_t                                  sclk_mclk_delta;
-	uint32_t                                  vddc_vddci_delta;
-	uint32_t                                  min_vddc_for_pcie_gen2;
-	struct phm_cac_leakage_table              *cac_leakage_table;
-	struct phm_phase_shedding_limits_table  *vddc_phase_shed_limits_table;
+काष्ठा phm_dynamic_state_info अणु
+	काष्ठा phm_घड़ी_voltage_dependency_table *vddc_dependency_on_sclk;
+	काष्ठा phm_घड़ी_voltage_dependency_table *vddci_dependency_on_mclk;
+	काष्ठा phm_घड़ी_voltage_dependency_table *vddc_dependency_on_mclk;
+	काष्ठा phm_घड़ी_voltage_dependency_table *mvdd_dependency_on_mclk;
+	काष्ठा phm_घड़ी_voltage_dependency_table *vddc_dep_on_dal_pwrl;
+	काष्ठा phm_घड़ी_array                    *valid_sclk_values;
+	काष्ठा phm_घड़ी_array                    *valid_mclk_values;
+	काष्ठा phm_घड़ी_and_voltage_limits       max_घड़ी_voltage_on_dc;
+	काष्ठा phm_घड़ी_and_voltage_limits       max_घड़ी_voltage_on_ac;
+	uपूर्णांक32_t                                  mclk_sclk_ratio;
+	uपूर्णांक32_t                                  sclk_mclk_delta;
+	uपूर्णांक32_t                                  vddc_vddci_delta;
+	uपूर्णांक32_t                                  min_vddc_क्रम_pcie_gen2;
+	काष्ठा phm_cac_leakage_table              *cac_leakage_table;
+	काष्ठा phm_phase_shedding_limits_table  *vddc_phase_shed_limits_table;
 
-	struct phm_vce_clock_voltage_dependency_table
-					    *vce_clock_voltage_dependency_table;
-	struct phm_uvd_clock_voltage_dependency_table
-					    *uvd_clock_voltage_dependency_table;
-	struct phm_acp_clock_voltage_dependency_table
-					    *acp_clock_voltage_dependency_table;
-	struct phm_samu_clock_voltage_dependency_table
-					   *samu_clock_voltage_dependency_table;
+	काष्ठा phm_vce_घड़ी_voltage_dependency_table
+					    *vce_घड़ी_voltage_dependency_table;
+	काष्ठा phm_uvd_घड़ी_voltage_dependency_table
+					    *uvd_घड़ी_voltage_dependency_table;
+	काष्ठा phm_acp_घड़ी_voltage_dependency_table
+					    *acp_घड़ी_voltage_dependency_table;
+	काष्ठा phm_samu_घड़ी_voltage_dependency_table
+					   *samu_घड़ी_voltage_dependency_table;
 
-	struct phm_ppm_table                          *ppm_parameter_table;
-	struct phm_cac_tdp_table                      *cac_dtp_table;
-	struct phm_clock_voltage_dependency_table	*vdd_gfx_dependency_on_sclk;
-};
+	काष्ठा phm_ppm_table                          *ppm_parameter_table;
+	काष्ठा phm_cac_tdp_table                      *cac_dtp_table;
+	काष्ठा phm_घड़ी_voltage_dependency_table	*vdd_gfx_dependency_on_sclk;
+पूर्ण;
 
-struct pp_fan_info {
+काष्ठा pp_fan_info अणु
 	bool bNoFan;
-	uint8_t   ucTachometerPulsesPerRevolution;
-	uint32_t   ulMinRPM;
-	uint32_t   ulMaxRPM;
-};
+	uपूर्णांक8_t   ucTachometerPulsesPerRevolution;
+	uपूर्णांक32_t   ulMinRPM;
+	uपूर्णांक32_t   ulMaxRPM;
+पूर्ण;
 
-struct pp_advance_fan_control_parameters {
-	uint16_t  usTMin;                          /* The temperature, in 0.01 centigrades, below which we just run at a minimal PWM. */
-	uint16_t  usTMed;                          /* The middle temperature where we change slopes. */
-	uint16_t  usTHigh;                         /* The high temperature for setting the second slope. */
-	uint16_t  usPWMMin;                        /* The minimum PWM value in percent (0.01% increments). */
-	uint16_t  usPWMMed;                        /* The PWM value (in percent) at TMed. */
-	uint16_t  usPWMHigh;                       /* The PWM value at THigh. */
-	uint8_t   ucTHyst;                         /* Temperature hysteresis. Integer. */
-	uint32_t   ulCycleDelay;                   /* The time between two invocations of the fan control routine in microseconds. */
-	uint16_t  usTMax;                          /* The max temperature */
-	uint8_t   ucFanControlMode;
-	uint16_t  usFanPWMMinLimit;
-	uint16_t  usFanPWMMaxLimit;
-	uint16_t  usFanPWMStep;
-	uint16_t  usDefaultMaxFanPWM;
-	uint16_t  usFanOutputSensitivity;
-	uint16_t  usDefaultFanOutputSensitivity;
-	uint16_t  usMaxFanPWM;                     /* The max Fan PWM value for Fuzzy Fan Control feature */
-	uint16_t  usFanRPMMinLimit;                /* Minimum limit range in percentage, need to calculate based on minRPM/MaxRpm */
-	uint16_t  usFanRPMMaxLimit;                /* Maximum limit range in percentage, usually set to 100% by default */
-	uint16_t  usFanRPMStep;                    /* Step increments/decerements, in percent */
-	uint16_t  usDefaultMaxFanRPM;              /* The max Fan RPM value for Fuzzy Fan Control feature, default from PPTable */
-	uint16_t  usMaxFanRPM;                     /* The max Fan RPM value for Fuzzy Fan Control feature, user defined */
-	uint16_t  usFanCurrentLow;                 /* Low current */
-	uint16_t  usFanCurrentHigh;                /* High current */
-	uint16_t  usFanRPMLow;                     /* Low RPM */
-	uint16_t  usFanRPMHigh;                    /* High RPM */
-	uint32_t   ulMinFanSCLKAcousticLimit;      /* Minimum Fan Controller SCLK Frequency Acoustic Limit. */
-	uint8_t   ucTargetTemperature;             /* Advanced fan controller target temperature. */
-	uint8_t   ucMinimumPWMLimit;               /* The minimum PWM that the advanced fan controller can set.  This should be set to the highest PWM that will run the fan at its lowest RPM. */
-	uint16_t  usFanGainEdge;                   /* The following is added for Fiji */
-	uint16_t  usFanGainHotspot;
-	uint16_t  usFanGainLiquid;
-	uint16_t  usFanGainVrVddc;
-	uint16_t  usFanGainVrMvdd;
-	uint16_t  usFanGainPlx;
-	uint16_t  usFanGainHbm;
-	uint8_t   ucEnableZeroRPM;
-	uint8_t   ucFanStopTemperature;
-	uint8_t   ucFanStartTemperature;
-	uint32_t  ulMaxFanSCLKAcousticLimit;       /* Maximum Fan Controller SCLK Frequency Acoustic Limit. */
-	uint32_t  ulTargetGfxClk;
-	uint16_t  usZeroRPMStartTemperature;
-	uint16_t  usZeroRPMStopTemperature;
-	uint16_t  usMGpuThrottlingRPMLimit;
-};
+काष्ठा pp_advance_fan_control_parameters अणु
+	uपूर्णांक16_t  usTMin;                          /* The temperature, in 0.01 centigrades, below which we just run at a minimal PWM. */
+	uपूर्णांक16_t  usTMed;                          /* The middle temperature where we change slopes. */
+	uपूर्णांक16_t  usTHigh;                         /* The high temperature क्रम setting the second slope. */
+	uपूर्णांक16_t  usPWMMin;                        /* The minimum PWM value in percent (0.01% increments). */
+	uपूर्णांक16_t  usPWMMed;                        /* The PWM value (in percent) at TMed. */
+	uपूर्णांक16_t  usPWMHigh;                       /* The PWM value at THigh. */
+	uपूर्णांक8_t   ucTHyst;                         /* Temperature hysteresis. Integer. */
+	uपूर्णांक32_t   ulCycleDelay;                   /* The समय between two invocations of the fan control routine in microseconds. */
+	uपूर्णांक16_t  usTMax;                          /* The max temperature */
+	uपूर्णांक8_t   ucFanControlMode;
+	uपूर्णांक16_t  usFanPWMMinLimit;
+	uपूर्णांक16_t  usFanPWMMaxLimit;
+	uपूर्णांक16_t  usFanPWMStep;
+	uपूर्णांक16_t  usDefaultMaxFanPWM;
+	uपूर्णांक16_t  usFanOutputSensitivity;
+	uपूर्णांक16_t  usDefaultFanOutputSensitivity;
+	uपूर्णांक16_t  usMaxFanPWM;                     /* The max Fan PWM value क्रम Fuzzy Fan Control feature */
+	uपूर्णांक16_t  usFanRPMMinLimit;                /* Minimum limit range in percentage, need to calculate based on minRPM/MaxRpm */
+	uपूर्णांक16_t  usFanRPMMaxLimit;                /* Maximum limit range in percentage, usually set to 100% by शेष */
+	uपूर्णांक16_t  usFanRPMStep;                    /* Step increments/decerements, in percent */
+	uपूर्णांक16_t  usDefaultMaxFanRPM;              /* The max Fan RPM value क्रम Fuzzy Fan Control feature, शेष from PPTable */
+	uपूर्णांक16_t  usMaxFanRPM;                     /* The max Fan RPM value क्रम Fuzzy Fan Control feature, user defined */
+	uपूर्णांक16_t  usFanCurrentLow;                 /* Low current */
+	uपूर्णांक16_t  usFanCurrentHigh;                /* High current */
+	uपूर्णांक16_t  usFanRPMLow;                     /* Low RPM */
+	uपूर्णांक16_t  usFanRPMHigh;                    /* High RPM */
+	uपूर्णांक32_t   ulMinFanSCLKAcousticLimit;      /* Minimum Fan Controller SCLK Frequency Acoustic Limit. */
+	uपूर्णांक8_t   ucTargetTemperature;             /* Advanced fan controller target temperature. */
+	uपूर्णांक8_t   ucMinimumPWMLimit;               /* The minimum PWM that the advanced fan controller can set.  This should be set to the highest PWM that will run the fan at its lowest RPM. */
+	uपूर्णांक16_t  usFanGainEdge;                   /* The following is added क्रम Fiji */
+	uपूर्णांक16_t  usFanGainHotspot;
+	uपूर्णांक16_t  usFanGainLiquid;
+	uपूर्णांक16_t  usFanGainVrVddc;
+	uपूर्णांक16_t  usFanGainVrMvdd;
+	uपूर्णांक16_t  usFanGainPlx;
+	uपूर्णांक16_t  usFanGainHbm;
+	uपूर्णांक8_t   ucEnableZeroRPM;
+	uपूर्णांक8_t   ucFanStopTemperature;
+	uपूर्णांक8_t   ucFanStartTemperature;
+	uपूर्णांक32_t  ulMaxFanSCLKAcousticLimit;       /* Maximum Fan Controller SCLK Frequency Acoustic Limit. */
+	uपूर्णांक32_t  ulTargetGfxClk;
+	uपूर्णांक16_t  usZeroRPMStartTemperature;
+	uपूर्णांक16_t  usZeroRPMStopTemperature;
+	uपूर्णांक16_t  usMGpuThrottlingRPMLimit;
+पूर्ण;
 
-struct pp_thermal_controller_info {
-	uint8_t ucType;
-	uint8_t ucI2cLine;
-	uint8_t ucI2cAddress;
-	uint8_t use_hw_fan_control;
-	struct pp_fan_info fanInfo;
-	struct pp_advance_fan_control_parameters advanceFanControlParameters;
-};
+काष्ठा pp_thermal_controller_info अणु
+	uपूर्णांक8_t ucType;
+	uपूर्णांक8_t ucI2cLine;
+	uपूर्णांक8_t ucI2cAddress;
+	uपूर्णांक8_t use_hw_fan_control;
+	काष्ठा pp_fan_info fanInfo;
+	काष्ठा pp_advance_fan_control_parameters advanceFanControlParameters;
+पूर्ण;
 
-struct phm_microcode_version_info {
-	uint32_t SMC;
-	uint32_t DMCU;
-	uint32_t MC;
-	uint32_t NB;
-};
+काष्ठा phm_microcode_version_info अणु
+	uपूर्णांक32_t SMC;
+	uपूर्णांक32_t DMCU;
+	uपूर्णांक32_t MC;
+	uपूर्णांक32_t NB;
+पूर्ण;
 
-enum PP_TABLE_VERSION {
+क्रमागत PP_TABLE_VERSION अणु
 	PP_TABLE_V0 = 0,
 	PP_TABLE_V1,
 	PP_TABLE_V2,
 	PP_TABLE_MAX
-};
+पूर्ण;
 
 /**
- * The main hardware manager structure.
+ * The मुख्य hardware manager काष्ठाure.
  */
-#define Workload_Policy_Max 6
+#घोषणा Workload_Policy_Max 6
 
-struct pp_hwmgr {
-	void *adev;
-	uint32_t chip_family;
-	uint32_t chip_id;
-	uint32_t smu_version;
+काष्ठा pp_hwmgr अणु
+	व्योम *adev;
+	uपूर्णांक32_t chip_family;
+	uपूर्णांक32_t chip_id;
+	uपूर्णांक32_t smu_version;
 	bool not_vf;
 	bool pm_en;
 	bool pp_one_vf;
-	struct mutex smu_lock;
-	struct mutex msg_lock;
+	काष्ठा mutex smu_lock;
+	काष्ठा mutex msg_lock;
 
-	uint32_t pp_table_version;
-	void *device;
-	struct pp_smumgr *smumgr;
-	const void *soft_pp_table;
-	uint32_t soft_pp_table_size;
-	void *hardcode_pp_table;
+	uपूर्णांक32_t pp_table_version;
+	व्योम *device;
+	काष्ठा pp_smumgr *smumgr;
+	स्थिर व्योम *soft_pp_table;
+	uपूर्णांक32_t soft_pp_table_size;
+	व्योम *hardcode_pp_table;
 	bool need_pp_table_upload;
 
-	struct amd_vce_state vce_states[AMD_MAX_VCE_LEVELS];
-	uint32_t num_vce_state_tables;
+	काष्ठा amd_vce_state vce_states[AMD_MAX_VCE_LEVELS];
+	uपूर्णांक32_t num_vce_state_tables;
 
-	enum amd_dpm_forced_level dpm_level;
-	enum amd_dpm_forced_level saved_dpm_level;
-	enum amd_dpm_forced_level request_dpm_level;
-	uint32_t usec_timeout;
-	void *pptable;
-	struct phm_platform_descriptor platform_descriptor;
-	void *backend;
+	क्रमागत amd_dpm_क्रमced_level dpm_level;
+	क्रमागत amd_dpm_क्रमced_level saved_dpm_level;
+	क्रमागत amd_dpm_क्रमced_level request_dpm_level;
+	uपूर्णांक32_t usec_समयout;
+	व्योम *pptable;
+	काष्ठा phm_platक्रमm_descriptor platक्रमm_descriptor;
+	व्योम *backend;
 
-	void *smu_backend;
-	const struct pp_smumgr_func *smumgr_funcs;
+	व्योम *smu_backend;
+	स्थिर काष्ठा pp_smumgr_func *smumgr_funcs;
 	bool is_kicker;
 
-	enum PP_DAL_POWERLEVEL dal_power_level;
-	struct phm_dynamic_state_info dyn_state;
-	const struct pp_hwmgr_func *hwmgr_func;
-	const struct pp_table_func *pptable_func;
+	क्रमागत PP_DAL_POWERLEVEL dal_घातer_level;
+	काष्ठा phm_dynamic_state_info dyn_state;
+	स्थिर काष्ठा pp_hwmgr_func *hwmgr_func;
+	स्थिर काष्ठा pp_table_func *pptable_func;
 
-	struct pp_power_state    *ps;
-	uint32_t num_ps;
-	struct pp_thermal_controller_info thermal_controller;
-	bool fan_ctrl_is_in_default_mode;
-	uint32_t fan_ctrl_default_mode;
+	काष्ठा pp_घातer_state    *ps;
+	uपूर्णांक32_t num_ps;
+	काष्ठा pp_thermal_controller_info thermal_controller;
+	bool fan_ctrl_is_in_शेष_mode;
+	uपूर्णांक32_t fan_ctrl_शेष_mode;
 	bool fan_ctrl_enabled;
-	uint32_t tmin;
-	struct phm_microcode_version_info microcode_version_info;
-	uint32_t ps_size;
-	struct pp_power_state    *current_ps;
-	struct pp_power_state    *request_ps;
-	struct pp_power_state    *boot_ps;
-	struct pp_power_state    *uvd_ps;
-	const struct amd_pp_display_configuration *display_config;
-	uint32_t feature_mask;
+	uपूर्णांक32_t पंचांगin;
+	काष्ठा phm_microcode_version_info microcode_version_info;
+	uपूर्णांक32_t ps_size;
+	काष्ठा pp_घातer_state    *current_ps;
+	काष्ठा pp_घातer_state    *request_ps;
+	काष्ठा pp_घातer_state    *boot_ps;
+	काष्ठा pp_घातer_state    *uvd_ps;
+	स्थिर काष्ठा amd_pp_display_configuration *display_config;
+	uपूर्णांक32_t feature_mask;
 	bool avfs_supported;
 	/* UMD Pstate */
 	bool en_umd_pstate;
-	uint32_t power_profile_mode;
-	uint32_t default_power_profile_mode;
-	uint32_t pstate_sclk;
-	uint32_t pstate_mclk;
+	uपूर्णांक32_t घातer_profile_mode;
+	uपूर्णांक32_t शेष_घातer_profile_mode;
+	uपूर्णांक32_t pstate_sclk;
+	uपूर्णांक32_t pstate_mclk;
 	bool od_enabled;
-	uint32_t power_limit;
-	uint32_t default_power_limit;
-	uint32_t workload_mask;
-	uint32_t workload_prority[Workload_Policy_Max];
-	uint32_t workload_setting[Workload_Policy_Max];
+	uपूर्णांक32_t घातer_limit;
+	uपूर्णांक32_t शेष_घातer_limit;
+	uपूर्णांक32_t workload_mask;
+	uपूर्णांक32_t workload_prority[Workload_Policy_Max];
+	uपूर्णांक32_t workload_setting[Workload_Policy_Max];
 	bool gfxoff_state_changed_by_workload;
-};
+पूर्ण;
 
-int hwmgr_early_init(struct pp_hwmgr *hwmgr);
-int hwmgr_sw_init(struct pp_hwmgr *hwmgr);
-int hwmgr_sw_fini(struct pp_hwmgr *hwmgr);
-int hwmgr_hw_init(struct pp_hwmgr *hwmgr);
-int hwmgr_hw_fini(struct pp_hwmgr *hwmgr);
-int hwmgr_suspend(struct pp_hwmgr *hwmgr);
-int hwmgr_resume(struct pp_hwmgr *hwmgr);
+पूर्णांक hwmgr_early_init(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक hwmgr_sw_init(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक hwmgr_sw_fini(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक hwmgr_hw_init(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक hwmgr_hw_fini(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक hwmgr_suspend(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक hwmgr_resume(काष्ठा pp_hwmgr *hwmgr);
 
-int hwmgr_handle_task(struct pp_hwmgr *hwmgr,
-				enum amd_pp_task task_id,
-				enum amd_pm_state_type *user_state);
+पूर्णांक hwmgr_handle_task(काष्ठा pp_hwmgr *hwmgr,
+				क्रमागत amd_pp_task task_id,
+				क्रमागत amd_pm_state_type *user_state);
 
 
-#define PHM_ENTIRE_REGISTER_MASK 0xFFFFFFFFU
+#घोषणा PHM_ENTIRE_REGISTER_MASK 0xFFFFFFFFU
 
-int smu7_init_function_pointers(struct pp_hwmgr *hwmgr);
-int smu8_init_function_pointers(struct pp_hwmgr *hwmgr);
-int vega12_hwmgr_init(struct pp_hwmgr *hwmgr);
-int vega20_hwmgr_init(struct pp_hwmgr *hwmgr);
+पूर्णांक smu7_init_function_poपूर्णांकers(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक smu8_init_function_poपूर्णांकers(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक vega12_hwmgr_init(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक vega20_hwmgr_init(काष्ठा pp_hwmgr *hwmgr);
 
-#endif /* _HWMGR_H_ */
+#पूर्ण_अगर /* _HWMGR_H_ */

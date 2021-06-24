@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,218 +26,218 @@
  *
  */
 
-#ifndef STREAM_ENCODER_H_
-#define STREAM_ENCODER_H_
+#अगर_अघोषित STREAM_ENCODER_H_
+#घोषणा STREAM_ENCODER_H_
 
-#include "audio_types.h"
-#include "hw_shared.h"
+#समावेश "audio_types.h"
+#समावेश "hw_shared.h"
 
-struct dc_bios;
-struct dc_context;
-struct dc_crtc_timing;
+काष्ठा dc_bios;
+काष्ठा dc_context;
+काष्ठा dc_crtc_timing;
 
-enum dp_pixel_encoding_type {
+क्रमागत dp_pixel_encoding_type अणु
 	DP_PIXEL_ENCODING_TYPE_RGB444		= 0x00000000,
 	DP_PIXEL_ENCODING_TYPE_YCBCR422		= 0x00000001,
 	DP_PIXEL_ENCODING_TYPE_YCBCR444		= 0x00000002,
 	DP_PIXEL_ENCODING_TYPE_RGB_WIDE_GAMUT	= 0x00000003,
 	DP_PIXEL_ENCODING_TYPE_Y_ONLY		= 0x00000004,
 	DP_PIXEL_ENCODING_TYPE_YCBCR420		= 0x00000005
-};
+पूर्ण;
 
-enum dp_component_depth {
+क्रमागत dp_component_depth अणु
 	DP_COMPONENT_PIXEL_DEPTH_6BPC		= 0x00000000,
 	DP_COMPONENT_PIXEL_DEPTH_8BPC		= 0x00000001,
 	DP_COMPONENT_PIXEL_DEPTH_10BPC		= 0x00000002,
 	DP_COMPONENT_PIXEL_DEPTH_12BPC		= 0x00000003,
 	DP_COMPONENT_PIXEL_DEPTH_16BPC		= 0x00000004
-};
+पूर्ण;
 
-struct audio_clock_info {
-	/* pixel clock frequency*/
-	uint32_t pixel_clock_in_10khz;
+काष्ठा audio_घड़ी_info अणु
+	/* pixel घड़ी frequency*/
+	uपूर्णांक32_t pixel_घड़ी_in_10khz;
 	/* N - 32KHz audio */
-	uint32_t n_32khz;
+	uपूर्णांक32_t n_32khz;
 	/* CTS - 32KHz audio*/
-	uint32_t cts_32khz;
-	uint32_t n_44khz;
-	uint32_t cts_44khz;
-	uint32_t n_48khz;
-	uint32_t cts_48khz;
-};
+	uपूर्णांक32_t cts_32khz;
+	uपूर्णांक32_t n_44khz;
+	uपूर्णांक32_t cts_44khz;
+	uपूर्णांक32_t n_48khz;
+	uपूर्णांक32_t cts_48khz;
+पूर्ण;
 
-enum dynamic_metadata_mode {
+क्रमागत dynamic_metadata_mode अणु
 	dmdata_dp,
 	dmdata_hdmi,
-	dmdata_dolby_vision
-};
+	dmdata_करोlby_vision
+पूर्ण;
 
-struct encoder_info_frame {
-	/* auxiliary video information */
-	struct dc_info_packet avi;
-	struct dc_info_packet gamut;
-	struct dc_info_packet vendor;
-	struct dc_info_packet hfvsif;
+काष्ठा encoder_info_frame अणु
+	/* auxiliary video inक्रमmation */
+	काष्ठा dc_info_packet avi;
+	काष्ठा dc_info_packet gamut;
+	काष्ठा dc_info_packet venकरोr;
+	काष्ठा dc_info_packet hfvsअगर;
 	/* source product description */
-	struct dc_info_packet spd;
+	काष्ठा dc_info_packet spd;
 	/* video stream configuration */
-	struct dc_info_packet vsc;
+	काष्ठा dc_info_packet vsc;
 	/* HDR Static MetaData */
-	struct dc_info_packet hdrsmd;
-};
+	काष्ठा dc_info_packet hdrsmd;
+पूर्ण;
 
-struct encoder_unblank_param {
-	struct dc_link_settings link_settings;
-	struct dc_crtc_timing timing;
-	int opp_cnt;
-};
+काष्ठा encoder_unblank_param अणु
+	काष्ठा dc_link_settings link_settings;
+	काष्ठा dc_crtc_timing timing;
+	पूर्णांक opp_cnt;
+पूर्ण;
 
-struct encoder_set_dp_phy_pattern_param {
-	enum dp_test_pattern dp_phy_pattern;
-	const uint8_t *custom_pattern;
-	uint32_t custom_pattern_size;
-	enum dp_panel_mode dp_panel_mode;
-};
+काष्ठा encoder_set_dp_phy_pattern_param अणु
+	क्रमागत dp_test_pattern dp_phy_pattern;
+	स्थिर uपूर्णांक8_t *custom_pattern;
+	uपूर्णांक32_t custom_pattern_size;
+	क्रमागत dp_panel_mode dp_panel_mode;
+पूर्ण;
 
-struct stream_encoder {
-	const struct stream_encoder_funcs *funcs;
-	struct dc_context *ctx;
-	struct dc_bios *bp;
-	enum engine_id id;
-	uint32_t stream_enc_inst;
-	struct vpg *vpg;
-	struct afmt *afmt;
-};
+काष्ठा stream_encoder अणु
+	स्थिर काष्ठा stream_encoder_funcs *funcs;
+	काष्ठा dc_context *ctx;
+	काष्ठा dc_bios *bp;
+	क्रमागत engine_id id;
+	uपूर्णांक32_t stream_enc_inst;
+	काष्ठा vpg *vpg;
+	काष्ठा afmt *afmt;
+पूर्ण;
 
-struct enc_state {
-	uint32_t dsc_mode;  // DISABLED  0; 1 or 2 indicate enabled state.
-	uint32_t dsc_slice_width;
-	uint32_t sec_gsp_pps_line_num;
-	uint32_t vbid6_line_reference;
-	uint32_t vbid6_line_num;
-	uint32_t sec_gsp_pps_enable;
-	uint32_t sec_stream_enable;
-};
+काष्ठा enc_state अणु
+	uपूर्णांक32_t dsc_mode;  // DISABLED  0; 1 or 2 indicate enabled state.
+	uपूर्णांक32_t dsc_slice_width;
+	uपूर्णांक32_t sec_gsp_pps_line_num;
+	uपूर्णांक32_t vbid6_line_reference;
+	uपूर्णांक32_t vbid6_line_num;
+	uपूर्णांक32_t sec_gsp_pps_enable;
+	uपूर्णांक32_t sec_stream_enable;
+पूर्ण;
 
-struct stream_encoder_funcs {
-	void (*dp_set_stream_attribute)(
-		struct stream_encoder *enc,
-		struct dc_crtc_timing *crtc_timing,
-		enum dc_color_space output_color_space,
-		bool use_vsc_sdp_for_colorimetry,
-		uint32_t enable_sdp_splitting);
+काष्ठा stream_encoder_funcs अणु
+	व्योम (*dp_set_stream_attribute)(
+		काष्ठा stream_encoder *enc,
+		काष्ठा dc_crtc_timing *crtc_timing,
+		क्रमागत dc_color_space output_color_space,
+		bool use_vsc_sdp_क्रम_colorimetry,
+		uपूर्णांक32_t enable_sdp_splitting);
 
-	void (*hdmi_set_stream_attribute)(
-		struct stream_encoder *enc,
-		struct dc_crtc_timing *crtc_timing,
-		int actual_pix_clk_khz,
+	व्योम (*hdmi_set_stream_attribute)(
+		काष्ठा stream_encoder *enc,
+		काष्ठा dc_crtc_timing *crtc_timing,
+		पूर्णांक actual_pix_clk_khz,
 		bool enable_audio);
 
-	void (*dvi_set_stream_attribute)(
-		struct stream_encoder *enc,
-		struct dc_crtc_timing *crtc_timing,
+	व्योम (*dvi_set_stream_attribute)(
+		काष्ठा stream_encoder *enc,
+		काष्ठा dc_crtc_timing *crtc_timing,
 		bool is_dual_link);
 
-	void (*lvds_set_stream_attribute)(
-		struct stream_encoder *enc,
-		struct dc_crtc_timing *crtc_timing);
+	व्योम (*lvds_set_stream_attribute)(
+		काष्ठा stream_encoder *enc,
+		काष्ठा dc_crtc_timing *crtc_timing);
 
-	void (*set_throttled_vcp_size)(
-		struct stream_encoder *enc,
-		struct fixed31_32 avg_time_slots_per_mtp);
+	व्योम (*set_throttled_vcp_size)(
+		काष्ठा stream_encoder *enc,
+		काष्ठा fixed31_32 avg_समय_slots_per_mtp);
 
-	void (*update_hdmi_info_packets)(
-		struct stream_encoder *enc,
-		const struct encoder_info_frame *info_frame);
+	व्योम (*update_hdmi_info_packets)(
+		काष्ठा stream_encoder *enc,
+		स्थिर काष्ठा encoder_info_frame *info_frame);
 
-	void (*stop_hdmi_info_packets)(
-		struct stream_encoder *enc);
+	व्योम (*stop_hdmi_info_packets)(
+		काष्ठा stream_encoder *enc);
 
-	void (*update_dp_info_packets)(
-		struct stream_encoder *enc,
-		const struct encoder_info_frame *info_frame);
+	व्योम (*update_dp_info_packets)(
+		काष्ठा stream_encoder *enc,
+		स्थिर काष्ठा encoder_info_frame *info_frame);
 
-	void (*send_immediate_sdp_message)(
-				struct stream_encoder *enc,
-				const uint8_t *custom_sdp_message,
-				unsigned int sdp_message_size);
+	व्योम (*send_immediate_sdp_message)(
+				काष्ठा stream_encoder *enc,
+				स्थिर uपूर्णांक8_t *custom_sdp_message,
+				अचिन्हित पूर्णांक sdp_message_size);
 
-	void (*stop_dp_info_packets)(
-		struct stream_encoder *enc);
+	व्योम (*stop_dp_info_packets)(
+		काष्ठा stream_encoder *enc);
 
-	void (*dp_blank)(
-		struct stream_encoder *enc);
+	व्योम (*dp_blank)(
+		काष्ठा stream_encoder *enc);
 
-	void (*dp_unblank)(
-		struct stream_encoder *enc,
-		const struct encoder_unblank_param *param);
+	व्योम (*dp_unblank)(
+		काष्ठा stream_encoder *enc,
+		स्थिर काष्ठा encoder_unblank_param *param);
 
-	void (*audio_mute_control)(
-		struct stream_encoder *enc, bool mute);
+	व्योम (*audio_mute_control)(
+		काष्ठा stream_encoder *enc, bool mute);
 
-	void (*dp_audio_setup)(
-		struct stream_encoder *enc,
-		unsigned int az_inst,
-		struct audio_info *info);
+	व्योम (*dp_audio_setup)(
+		काष्ठा stream_encoder *enc,
+		अचिन्हित पूर्णांक az_inst,
+		काष्ठा audio_info *info);
 
-	void (*dp_audio_enable) (
-			struct stream_encoder *enc);
+	व्योम (*dp_audio_enable) (
+			काष्ठा stream_encoder *enc);
 
-	void (*dp_audio_disable) (
-			struct stream_encoder *enc);
+	व्योम (*dp_audio_disable) (
+			काष्ठा stream_encoder *enc);
 
-	void (*hdmi_audio_setup)(
-		struct stream_encoder *enc,
-		unsigned int az_inst,
-		struct audio_info *info,
-		struct audio_crtc_info *audio_crtc_info);
+	व्योम (*hdmi_audio_setup)(
+		काष्ठा stream_encoder *enc,
+		अचिन्हित पूर्णांक az_inst,
+		काष्ठा audio_info *info,
+		काष्ठा audio_crtc_info *audio_crtc_info);
 
-	void (*hdmi_audio_disable) (
-			struct stream_encoder *enc);
+	व्योम (*hdmi_audio_disable) (
+			काष्ठा stream_encoder *enc);
 
-	void (*setup_stereo_sync) (
-			struct stream_encoder *enc,
-			int tg_inst,
+	व्योम (*setup_stereo_sync) (
+			काष्ठा stream_encoder *enc,
+			पूर्णांक tg_inst,
 			bool enable);
 
-	void (*set_avmute)(
-		struct stream_encoder *enc, bool enable);
+	व्योम (*set_avmute)(
+		काष्ठा stream_encoder *enc, bool enable);
 
-	void (*dig_connect_to_otg)(
-		struct stream_encoder *enc,
-		int tg_inst);
+	व्योम (*dig_connect_to_otg)(
+		काष्ठा stream_encoder *enc,
+		पूर्णांक tg_inst);
 
-	void (*hdmi_reset_stream_attribute)(
-		struct stream_encoder *enc);
+	व्योम (*hdmi_reset_stream_attribute)(
+		काष्ठा stream_encoder *enc);
 
-	unsigned int (*dig_source_otg)(
-		struct stream_encoder *enc);
+	अचिन्हित पूर्णांक (*dig_source_otg)(
+		काष्ठा stream_encoder *enc);
 
-	bool (*dp_get_pixel_format)(
-		struct stream_encoder *enc,
-		enum dc_pixel_encoding *encoding,
-		enum dc_color_depth *depth);
+	bool (*dp_get_pixel_क्रमmat)(
+		काष्ठा stream_encoder *enc,
+		क्रमागत dc_pixel_encoding *encoding,
+		क्रमागत dc_color_depth *depth);
 
-	void (*enc_read_state)(struct stream_encoder *enc, struct enc_state *s);
+	व्योम (*enc_पढ़ो_state)(काष्ठा stream_encoder *enc, काष्ठा enc_state *s);
 
-	void (*dp_set_dsc_config)(
-			struct stream_encoder *enc,
-			enum optc_dsc_mode dsc_mode,
-			uint32_t dsc_bytes_per_pixel,
-			uint32_t dsc_slice_width);
+	व्योम (*dp_set_dsc_config)(
+			काष्ठा stream_encoder *enc,
+			क्रमागत optc_dsc_mode dsc_mode,
+			uपूर्णांक32_t dsc_bytes_per_pixel,
+			uपूर्णांक32_t dsc_slice_width);
 
-	void (*dp_set_dsc_pps_info_packet)(struct stream_encoder *enc,
+	व्योम (*dp_set_dsc_pps_info_packet)(काष्ठा stream_encoder *enc,
 				bool enable,
-				uint8_t *dsc_packed_pps);
+				uपूर्णांक8_t *dsc_packed_pps);
 
-	void (*set_dynamic_metadata)(struct stream_encoder *enc,
+	व्योम (*set_dynamic_metadata)(काष्ठा stream_encoder *enc,
 			bool enable,
-			uint32_t hubp_requestor_id,
-			enum dynamic_metadata_mode dmdata_mode);
+			uपूर्णांक32_t hubp_requestor_id,
+			क्रमागत dynamic_metadata_mode dmdata_mode);
 
-	void (*dp_set_odm_combine)(
-		struct stream_encoder *enc,
+	व्योम (*dp_set_odm_combine)(
+		काष्ठा stream_encoder *enc,
 		bool odm_combine);
-};
+पूर्ण;
 
-#endif /* STREAM_ENCODER_H_ */
+#पूर्ण_अगर /* STREAM_ENCODER_H_ */

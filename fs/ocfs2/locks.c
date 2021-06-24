@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * locks.c
  *
@@ -7,42 +8,42 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
-#include <linux/fs.h>
-#include <linux/fcntl.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/fcntl.h>
 
-#include <cluster/masklog.h>
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
+#समावेश "ocfs2.h"
 
-#include "dlmglue.h"
-#include "file.h"
-#include "inode.h"
-#include "locks.h"
+#समावेश "dlmglue.h"
+#समावेश "file.h"
+#समावेश "inode.h"
+#समावेश "locks.h"
 
-static int ocfs2_do_flock(struct file *file, struct inode *inode,
-			  int cmd, struct file_lock *fl)
-{
-	int ret = 0, level = 0, trylock = 0;
-	struct ocfs2_file_private *fp = file->private_data;
-	struct ocfs2_lock_res *lockres = &fp->fp_flock;
+अटल पूर्णांक ocfs2_करो_flock(काष्ठा file *file, काष्ठा inode *inode,
+			  पूर्णांक cmd, काष्ठा file_lock *fl)
+अणु
+	पूर्णांक ret = 0, level = 0, trylock = 0;
+	काष्ठा ocfs2_file_निजी *fp = file->निजी_data;
+	काष्ठा ocfs2_lock_res *lockres = &fp->fp_flock;
 
-	if (fl->fl_type == F_WRLCK)
+	अगर (fl->fl_type == F_WRLCK)
 		level = 1;
-	if (!IS_SETLKW(cmd))
+	अगर (!IS_SETLKW(cmd))
 		trylock = 1;
 
 	mutex_lock(&fp->fp_mutex);
 
-	if (lockres->l_flags & OCFS2_LOCK_ATTACHED &&
-	    lockres->l_level > LKM_NLMODE) {
-		int old_level = 0;
-		struct file_lock request;
+	अगर (lockres->l_flags & OCFS2_LOCK_ATTACHED &&
+	    lockres->l_level > LKM_NLMODE) अणु
+		पूर्णांक old_level = 0;
+		काष्ठा file_lock request;
 
-		if (lockres->l_level == LKM_EXMODE)
+		अगर (lockres->l_level == LKM_EXMODE)
 			old_level = 1;
 
-		if (level == old_level)
-			goto out;
+		अगर (level == old_level)
+			जाओ out;
 
 		/*
 		 * Converting an existing lock is not guaranteed to be
@@ -54,75 +55,75 @@ static int ocfs2_do_flock(struct file *file, struct inode *inode,
 		locks_init_lock(&request);
 		request.fl_type = F_UNLCK;
 		request.fl_flags = FL_FLOCK;
-		locks_lock_file_wait(file, &request);
+		locks_lock_file_रुको(file, &request);
 
 		ocfs2_file_unlock(file);
-	}
+	पूर्ण
 
 	ret = ocfs2_file_lock(file, level, trylock);
-	if (ret) {
-		if (ret == -EAGAIN && trylock)
+	अगर (ret) अणु
+		अगर (ret == -EAGAIN && trylock)
 			ret = -EWOULDBLOCK;
-		else
-			mlog_errno(ret);
-		goto out;
-	}
+		अन्यथा
+			mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	ret = locks_lock_file_wait(file, fl);
-	if (ret)
+	ret = locks_lock_file_रुको(file, fl);
+	अगर (ret)
 		ocfs2_file_unlock(file);
 
 out:
 	mutex_unlock(&fp->fp_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_do_funlock(struct file *file, int cmd, struct file_lock *fl)
-{
-	int ret;
-	struct ocfs2_file_private *fp = file->private_data;
+अटल पूर्णांक ocfs2_करो_funlock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
+अणु
+	पूर्णांक ret;
+	काष्ठा ocfs2_file_निजी *fp = file->निजी_data;
 
 	mutex_lock(&fp->fp_mutex);
 	ocfs2_file_unlock(file);
-	ret = locks_lock_file_wait(file, fl);
+	ret = locks_lock_file_रुको(file, fl);
 	mutex_unlock(&fp->fp_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Overall flow of ocfs2_flock() was influenced by gfs2_flock().
  */
-int ocfs2_flock(struct file *file, int cmd, struct file_lock *fl)
-{
-	struct inode *inode = file->f_mapping->host;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+पूर्णांक ocfs2_flock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
+अणु
+	काष्ठा inode *inode = file->f_mapping->host;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (!(fl->fl_flags & FL_FLOCK))
-		return -ENOLCK;
-	if (__mandatory_lock(inode))
-		return -ENOLCK;
+	अगर (!(fl->fl_flags & FL_FLOCK))
+		वापस -ENOLCK;
+	अगर (__mandatory_lock(inode))
+		वापस -ENOLCK;
 
-	if ((osb->s_mount_opt & OCFS2_MOUNT_LOCALFLOCKS) ||
+	अगर ((osb->s_mount_opt & OCFS2_MOUNT_LOCALFLOCKS) ||
 	    ocfs2_mount_local(osb))
-		return locks_lock_file_wait(file, fl);
+		वापस locks_lock_file_रुको(file, fl);
 
-	if (fl->fl_type == F_UNLCK)
-		return ocfs2_do_funlock(file, cmd, fl);
-	else
-		return ocfs2_do_flock(file, inode, cmd, fl);
-}
+	अगर (fl->fl_type == F_UNLCK)
+		वापस ocfs2_करो_funlock(file, cmd, fl);
+	अन्यथा
+		वापस ocfs2_करो_flock(file, inode, cmd, fl);
+पूर्ण
 
-int ocfs2_lock(struct file *file, int cmd, struct file_lock *fl)
-{
-	struct inode *inode = file->f_mapping->host;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+पूर्णांक ocfs2_lock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
+अणु
+	काष्ठा inode *inode = file->f_mapping->host;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (!(fl->fl_flags & FL_POSIX))
-		return -ENOLCK;
-	if (__mandatory_lock(inode) && fl->fl_type != F_UNLCK)
-		return -ENOLCK;
+	अगर (!(fl->fl_flags & FL_POSIX))
+		वापस -ENOLCK;
+	अगर (__mandatory_lock(inode) && fl->fl_type != F_UNLCK)
+		वापस -ENOLCK;
 
-	return ocfs2_plock(osb->cconn, OCFS2_I(inode)->ip_blkno, file, cmd, fl);
-}
+	वापस ocfs2_plock(osb->cconn, OCFS2_I(inode)->ip_blkno, file, cmd, fl);
+पूर्ण

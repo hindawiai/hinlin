@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * fs/f2fs/acl.h
  *
@@ -9,43 +10,43 @@
  *
  * Copyright (C) 2001-2003 Andreas Gruenbacher, <agruen@suse.de>
  */
-#ifndef __F2FS_ACL_H__
-#define __F2FS_ACL_H__
+#अगर_अघोषित __F2FS_ACL_H__
+#घोषणा __F2FS_ACL_H__
 
-#include <linux/posix_acl_xattr.h>
+#समावेश <linux/posix_acl_xattr.h>
 
-#define F2FS_ACL_VERSION	0x0001
+#घोषणा F2FS_ACL_VERSION	0x0001
 
-struct f2fs_acl_entry {
+काष्ठा f2fs_acl_entry अणु
 	__le16 e_tag;
 	__le16 e_perm;
 	__le32 e_id;
-};
+पूर्ण;
 
-struct f2fs_acl_entry_short {
+काष्ठा f2fs_acl_entry_लघु अणु
 	__le16 e_tag;
 	__le16 e_perm;
-};
+पूर्ण;
 
-struct f2fs_acl_header {
+काष्ठा f2fs_acl_header अणु
 	__le32 a_version;
-};
+पूर्ण;
 
-#ifdef CONFIG_F2FS_FS_POSIX_ACL
+#अगर_घोषित CONFIG_F2FS_FS_POSIX_ACL
 
-extern struct posix_acl *f2fs_get_acl(struct inode *, int);
-extern int f2fs_set_acl(struct user_namespace *, struct inode *,
-			struct posix_acl *, int);
-extern int f2fs_init_acl(struct inode *, struct inode *, struct page *,
-							struct page *);
-#else
-#define f2fs_get_acl	NULL
-#define f2fs_set_acl	NULL
+बाह्य काष्ठा posix_acl *f2fs_get_acl(काष्ठा inode *, पूर्णांक);
+बाह्य पूर्णांक f2fs_set_acl(काष्ठा user_namespace *, काष्ठा inode *,
+			काष्ठा posix_acl *, पूर्णांक);
+बाह्य पूर्णांक f2fs_init_acl(काष्ठा inode *, काष्ठा inode *, काष्ठा page *,
+							काष्ठा page *);
+#अन्यथा
+#घोषणा f2fs_get_acl	शून्य
+#घोषणा f2fs_set_acl	शून्य
 
-static inline int f2fs_init_acl(struct inode *inode, struct inode *dir,
-				struct page *ipage, struct page *dpage)
-{
-	return 0;
-}
-#endif
-#endif /* __F2FS_ACL_H__ */
+अटल अंतरभूत पूर्णांक f2fs_init_acl(काष्ठा inode *inode, काष्ठा inode *dir,
+				काष्ठा page *ipage, काष्ठा page *dpage)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर /* __F2FS_ACL_H__ */

@@ -1,290 +1,291 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NFS_FS_SB
-#define _NFS_FS_SB
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NFS_FS_SB
+#घोषणा _NFS_FS_SB
 
-#include <linux/list.h>
-#include <linux/backing-dev.h>
-#include <linux/idr.h>
-#include <linux/wait.h>
-#include <linux/nfs_xdr.h>
-#include <linux/sunrpc/xprt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/nfs_xdr.h>
+#समावेश <linux/sunrpc/xprt.h>
 
-#include <linux/atomic.h>
-#include <linux/refcount.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/refcount.h>
 
-struct nfs4_session;
-struct nfs_iostats;
-struct nlm_host;
-struct nfs4_sequence_args;
-struct nfs4_sequence_res;
-struct nfs_server;
-struct nfs4_minor_version_ops;
-struct nfs41_server_scope;
-struct nfs41_impl_id;
+काष्ठा nfs4_session;
+काष्ठा nfs_iostats;
+काष्ठा nlm_host;
+काष्ठा nfs4_sequence_args;
+काष्ठा nfs4_sequence_res;
+काष्ठा nfs_server;
+काष्ठा nfs4_minor_version_ops;
+काष्ठा nfs41_server_scope;
+काष्ठा nfs41_impl_id;
 
 /*
- * The nfs_client identifies our client state to the server.
+ * The nfs_client identअगरies our client state to the server.
  */
-struct nfs_client {
+काष्ठा nfs_client अणु
 	refcount_t		cl_count;
 	atomic_t		cl_mds_count;
-	int			cl_cons_state;	/* current construction state (-ve: init error) */
-#define NFS_CS_READY		0		/* ready to be used */
-#define NFS_CS_INITING		1		/* busy initialising */
-#define NFS_CS_SESSION_INITING	2		/* busy initialising  session */
-	unsigned long		cl_res_state;	/* NFS resources state */
-#define NFS_CS_CALLBACK		1		/* - callback started */
-#define NFS_CS_IDMAP		2		/* - idmap started */
-#define NFS_CS_RENEWD		3		/* - renewd started */
-#define NFS_CS_STOP_RENEW	4		/* no more state to renew */
-#define NFS_CS_CHECK_LEASE_TIME	5		/* need to check lease time */
-	unsigned long		cl_flags;	/* behavior switches */
-#define NFS_CS_NORESVPORT	0		/* - use ephemeral src port */
-#define NFS_CS_DISCRTRY		1		/* - disconnect on RPC retry */
-#define NFS_CS_MIGRATION	2		/* - transparent state migr */
-#define NFS_CS_INFINITE_SLOTS	3		/* - don't limit TCP slots */
-#define NFS_CS_NO_RETRANS_TIMEOUT	4	/* - Disable retransmit timeouts */
-#define NFS_CS_TSM_POSSIBLE	5		/* - Maybe state migration */
-#define NFS_CS_NOPING		6		/* - don't ping on connect */
-#define NFS_CS_DS		7		/* - Server is a DS */
-#define NFS_CS_REUSEPORT	8		/* - reuse src port on reconnect */
-	struct sockaddr_storage	cl_addr;	/* server identifier */
-	size_t			cl_addrlen;
-	char *			cl_hostname;	/* hostname of server */
-	char *			cl_acceptor;	/* GSSAPI acceptor name */
-	struct list_head	cl_share_link;	/* link in global client list */
-	struct list_head	cl_superblocks;	/* List of nfs_server structs */
+	पूर्णांक			cl_cons_state;	/* current स्थिरruction state (-ve: init error) */
+#घोषणा NFS_CS_READY		0		/* पढ़ोy to be used */
+#घोषणा NFS_CS_INITING		1		/* busy initialising */
+#घोषणा NFS_CS_SESSION_INITING	2		/* busy initialising  session */
+	अचिन्हित दीर्घ		cl_res_state;	/* NFS resources state */
+#घोषणा NFS_CS_CALLBACK		1		/* - callback started */
+#घोषणा NFS_CS_IDMAP		2		/* - idmap started */
+#घोषणा NFS_CS_RENEWD		3		/* - renewd started */
+#घोषणा NFS_CS_STOP_RENEW	4		/* no more state to renew */
+#घोषणा NFS_CS_CHECK_LEASE_TIME	5		/* need to check lease समय */
+	अचिन्हित दीर्घ		cl_flags;	/* behavior चयनes */
+#घोषणा NFS_CS_NORESVPORT	0		/* - use ephemeral src port */
+#घोषणा NFS_CS_DISCRTRY		1		/* - disconnect on RPC retry */
+#घोषणा NFS_CS_MIGRATION	2		/* - transparent state migr */
+#घोषणा NFS_CS_INFINITE_SLOTS	3		/* - करोn't limit TCP slots */
+#घोषणा NFS_CS_NO_RETRANS_TIMEOUT	4	/* - Disable retransmit समयouts */
+#घोषणा NFS_CS_TSM_POSSIBLE	5		/* - Maybe state migration */
+#घोषणा NFS_CS_NOPING		6		/* - करोn't ping on connect */
+#घोषणा NFS_CS_DS		7		/* - Server is a DS */
+#घोषणा NFS_CS_REUSEPORT	8		/* - reuse src port on reconnect */
+	काष्ठा sockaddr_storage	cl_addr;	/* server identअगरier */
+	माप_प्रकार			cl_addrlen;
+	अक्षर *			cl_hostname;	/* hostname of server */
+	अक्षर *			cl_acceptor;	/* GSSAPI acceptor name */
+	काष्ठा list_head	cl_share_link;	/* link in global client list */
+	काष्ठा list_head	cl_superblocks;	/* List of nfs_server काष्ठाs */
 
-	struct rpc_clnt *	cl_rpcclient;
-	const struct nfs_rpc_ops *rpc_ops;	/* NFS protocol vector */
-	int			cl_proto;	/* Network transport protocol */
-	struct nfs_subversion *	cl_nfs_mod;	/* pointer to nfs version module */
+	काष्ठा rpc_clnt *	cl_rpcclient;
+	स्थिर काष्ठा nfs_rpc_ops *rpc_ops;	/* NFS protocol vector */
+	पूर्णांक			cl_proto;	/* Network transport protocol */
+	काष्ठा nfs_subversion *	cl_nfs_mod;	/* poपूर्णांकer to nfs version module */
 
 	u32			cl_minorversion;/* NFSv4 minorversion */
-	unsigned int		cl_nconnect;	/* Number of connections */
-	const char *		cl_principal;  /* used for machine cred */
+	अचिन्हित पूर्णांक		cl_nconnect;	/* Number of connections */
+	स्थिर अक्षर *		cl_principal;  /* used क्रम machine cred */
 
-#if IS_ENABLED(CONFIG_NFS_V4)
-	struct list_head	cl_ds_clients; /* auth flavor data servers */
-	u64			cl_clientid;	/* constant */
-	nfs4_verifier		cl_confirm;	/* Clientid verifier */
-	unsigned long		cl_state;
+#अगर IS_ENABLED(CONFIG_NFS_V4)
+	काष्ठा list_head	cl_ds_clients; /* auth flavor data servers */
+	u64			cl_clientid;	/* स्थिरant */
+	nfs4_verअगरier		cl_confirm;	/* Clientid verअगरier */
+	अचिन्हित दीर्घ		cl_state;
 
 	spinlock_t		cl_lock;
 
-	unsigned long		cl_lease_time;
-	unsigned long		cl_last_renewal;
-	struct delayed_work	cl_renewd;
+	अचिन्हित दीर्घ		cl_lease_समय;
+	अचिन्हित दीर्घ		cl_last_renewal;
+	काष्ठा delayed_work	cl_renewd;
 
-	struct rpc_wait_queue	cl_rpcwaitq;
+	काष्ठा rpc_रुको_queue	cl_rpcरुकोq;
 
 	/* idmapper */
-	struct idmap *		cl_idmap;
+	काष्ठा idmap *		cl_idmap;
 
-	/* Client owner identifier */
-	const char *		cl_owner_id;
+	/* Client owner identअगरier */
+	स्थिर अक्षर *		cl_owner_id;
 
-	u32			cl_cb_ident;	/* v4.0 callback identifier */
-	const struct nfs4_minor_version_ops *cl_mvops;
-	unsigned long		cl_mig_gen;
+	u32			cl_cb_ident;	/* v4.0 callback identअगरier */
+	स्थिर काष्ठा nfs4_minor_version_ops *cl_mvops;
+	अचिन्हित दीर्घ		cl_mig_gen;
 
 	/* NFSv4.0 transport blocking */
-	struct nfs4_slot_table	*cl_slot_tbl;
+	काष्ठा nfs4_slot_table	*cl_slot_tbl;
 
-	/* The sequence id to use for the next CREATE_SESSION */
+	/* The sequence id to use क्रम the next CREATE_SESSION */
 	u32			cl_seqid;
-	/* The flags used for obtaining the clientid during EXCHANGE_ID */
+	/* The flags used क्रम obtaining the clientid during EXCHANGE_ID */
 	u32			cl_exchange_flags;
-	struct nfs4_session	*cl_session;	/* shared session */
+	काष्ठा nfs4_session	*cl_session;	/* shared session */
 	bool			cl_preserve_clid;
-	struct nfs41_server_owner *cl_serverowner;
-	struct nfs41_server_scope *cl_serverscope;
-	struct nfs41_impl_id	*cl_implid;
+	काष्ठा nfs41_server_owner *cl_serverowner;
+	काष्ठा nfs41_server_scope *cl_serverscope;
+	काष्ठा nfs41_impl_id	*cl_implid;
 	/* nfs 4.1+ state protection modes: */
-	unsigned long		cl_sp4_flags;
-#define NFS_SP4_MACH_CRED_MINIMAL  1	/* Minimal sp4_mach_cred - state ops
+	अचिन्हित दीर्घ		cl_sp4_flags;
+#घोषणा NFS_SP4_MACH_CRED_MINIMAL  1	/* Minimal sp4_mach_cred - state ops
 					 * must use machine cred */
-#define NFS_SP4_MACH_CRED_CLEANUP  2	/* CLOSE and LOCKU */
-#define NFS_SP4_MACH_CRED_SECINFO  3	/* SECINFO and SECINFO_NO_NAME */
-#define NFS_SP4_MACH_CRED_STATEID  4	/* TEST_STATEID and FREE_STATEID */
-#define NFS_SP4_MACH_CRED_WRITE    5	/* WRITE */
-#define NFS_SP4_MACH_CRED_COMMIT   6	/* COMMIT */
-#define NFS_SP4_MACH_CRED_PNFS_CLEANUP  7 /* LAYOUTRETURN */
-#if IS_ENABLED(CONFIG_NFS_V4_1)
-	wait_queue_head_t	cl_lock_waitq;
-#endif /* CONFIG_NFS_V4_1 */
-#endif /* CONFIG_NFS_V4 */
+#घोषणा NFS_SP4_MACH_CRED_CLEANUP  2	/* CLOSE and LOCKU */
+#घोषणा NFS_SP4_MACH_CRED_SECINFO  3	/* SECINFO and SECINFO_NO_NAME */
+#घोषणा NFS_SP4_MACH_CRED_STATEID  4	/* TEST_STATEID and FREE_STATEID */
+#घोषणा NFS_SP4_MACH_CRED_WRITE    5	/* WRITE */
+#घोषणा NFS_SP4_MACH_CRED_COMMIT   6	/* COMMIT */
+#घोषणा NFS_SP4_MACH_CRED_PNFS_CLEANUP  7 /* LAYOUTRETURN */
+#अगर IS_ENABLED(CONFIG_NFS_V4_1)
+	रुको_queue_head_t	cl_lock_रुकोq;
+#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+#पूर्ण_अगर /* CONFIG_NFS_V4 */
 
 	/* Our own IP address, as a null-terminated string.
 	 * This is used to generate the mv0 callback address.
 	 */
-	char			cl_ipaddr[48];
+	अक्षर			cl_ipaddr[48];
 
-#ifdef CONFIG_NFS_FSCACHE
-	struct fscache_cookie	*fscache;	/* client index cache cookie */
-#endif
+#अगर_घोषित CONFIG_NFS_FSCACHE
+	काष्ठा fscache_cookie	*fscache;	/* client index cache cookie */
+#पूर्ण_अगर
 
-	struct net		*cl_net;
-	struct list_head	pending_cb_stateids;
-};
+	काष्ठा net		*cl_net;
+	काष्ठा list_head	pending_cb_stateids;
+पूर्ण;
 
 /*
  * NFS client parameters stored in the superblock.
  */
-struct nfs_server {
-	struct nfs_client *	nfs_client;	/* shared client and NFS4 state */
-	struct list_head	client_link;	/* List of other nfs_server structs
+काष्ठा nfs_server अणु
+	काष्ठा nfs_client *	nfs_client;	/* shared client and NFS4 state */
+	काष्ठा list_head	client_link;	/* List of other nfs_server काष्ठाs
 						 * that share the same client
 						 */
-	struct list_head	master_link;	/* link in master servers list */
-	struct rpc_clnt *	client;		/* RPC client handle */
-	struct rpc_clnt *	client_acl;	/* ACL RPC client handle */
-	struct nlm_host		*nlm_host;	/* NLM client handle */
-	struct nfs_iostats __percpu *io_stats;	/* I/O statistics */
-	atomic_long_t		writeback;	/* number of writeback pages */
-	unsigned int		flags;		/* various flags */
+	काष्ठा list_head	master_link;	/* link in master servers list */
+	काष्ठा rpc_clnt *	client;		/* RPC client handle */
+	काष्ठा rpc_clnt *	client_acl;	/* ACL RPC client handle */
+	काष्ठा nlm_host		*nlm_host;	/* NLM client handle */
+	काष्ठा nfs_iostats __percpu *io_stats;	/* I/O statistics */
+	atomic_दीर्घ_t		ग_लिखोback;	/* number of ग_लिखोback pages */
+	अचिन्हित पूर्णांक		flags;		/* various flags */
 
-/* The following are for internal use only. Also see uapi/linux/nfs_mount.h */
-#define NFS_MOUNT_LOOKUP_CACHE_NONEG	0x10000
-#define NFS_MOUNT_LOOKUP_CACHE_NONE	0x20000
-#define NFS_MOUNT_NORESVPORT		0x40000
-#define NFS_MOUNT_LEGACY_INTERFACE	0x80000
-#define NFS_MOUNT_LOCAL_FLOCK		0x100000
-#define NFS_MOUNT_LOCAL_FCNTL		0x200000
-#define NFS_MOUNT_SOFTERR		0x400000
-#define NFS_MOUNT_SOFTREVAL		0x800000
-#define NFS_MOUNT_WRITE_EAGER		0x01000000
-#define NFS_MOUNT_WRITE_WAIT		0x02000000
+/* The following are क्रम पूर्णांकernal use only. Also see uapi/linux/nfs_mount.h */
+#घोषणा NFS_MOUNT_LOOKUP_CACHE_NONEG	0x10000
+#घोषणा NFS_MOUNT_LOOKUP_CACHE_NONE	0x20000
+#घोषणा NFS_MOUNT_NORESVPORT		0x40000
+#घोषणा NFS_MOUNT_LEGACY_INTERFACE	0x80000
+#घोषणा NFS_MOUNT_LOCAL_FLOCK		0x100000
+#घोषणा NFS_MOUNT_LOCAL_FCNTL		0x200000
+#घोषणा NFS_MOUNT_SOFTERR		0x400000
+#घोषणा NFS_MOUNT_SOFTREVAL		0x800000
+#घोषणा NFS_MOUNT_WRITE_EAGER		0x01000000
+#घोषणा NFS_MOUNT_WRITE_WAIT		0x02000000
 
-	unsigned int		fattr_valid;	/* Valid attributes */
-	unsigned int		caps;		/* server capabilities */
-	unsigned int		rsize;		/* read size */
-	unsigned int		rpages;		/* read size (in pages) */
-	unsigned int		wsize;		/* write size */
-	unsigned int		wpages;		/* write size (in pages) */
-	unsigned int		wtmult;		/* server disk block size */
-	unsigned int		dtsize;		/* readdir size */
-	unsigned short		port;		/* "port=" setting */
-	unsigned int		bsize;		/* server block size */
-#ifdef CONFIG_NFS_V4_2
-	unsigned int		gxasize;	/* getxattr size */
-	unsigned int		sxasize;	/* setxattr size */
-	unsigned int		lxasize;	/* listxattr size */
-#endif
-	unsigned int		acregmin;	/* attr cache timeouts */
-	unsigned int		acregmax;
-	unsigned int		acdirmin;
-	unsigned int		acdirmax;
-	unsigned int		namelen;
-	unsigned int		options;	/* extra options enabled by mount */
-	unsigned int		clone_blksize;	/* granularity of a CLONE operation */
-#define NFS_OPTION_FSCACHE	0x00000001	/* - local caching enabled */
-#define NFS_OPTION_MIGRATION	0x00000002	/* - NFSv4 migration enabled */
+	अचिन्हित पूर्णांक		fattr_valid;	/* Valid attributes */
+	अचिन्हित पूर्णांक		caps;		/* server capabilities */
+	अचिन्हित पूर्णांक		rsize;		/* पढ़ो size */
+	अचिन्हित पूर्णांक		rpages;		/* पढ़ो size (in pages) */
+	अचिन्हित पूर्णांक		wsize;		/* ग_लिखो size */
+	अचिन्हित पूर्णांक		wpages;		/* ग_लिखो size (in pages) */
+	अचिन्हित पूर्णांक		wपंचांगult;		/* server disk block size */
+	अचिन्हित पूर्णांक		dtsize;		/* सूची_पढ़ो size */
+	अचिन्हित लघु		port;		/* "port=" setting */
+	अचिन्हित पूर्णांक		bsize;		/* server block size */
+#अगर_घोषित CONFIG_NFS_V4_2
+	अचिन्हित पूर्णांक		gxasize;	/* getxattr size */
+	अचिन्हित पूर्णांक		sxasize;	/* setxattr size */
+	अचिन्हित पूर्णांक		lxasize;	/* listxattr size */
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक		acregmin;	/* attr cache समयouts */
+	अचिन्हित पूर्णांक		acregmax;
+	अचिन्हित पूर्णांक		acdirmin;
+	अचिन्हित पूर्णांक		acdirmax;
+	अचिन्हित पूर्णांक		namelen;
+	अचिन्हित पूर्णांक		options;	/* extra options enabled by mount */
+	अचिन्हित पूर्णांक		clone_blksize;	/* granularity of a CLONE operation */
+#घोषणा NFS_OPTION_FSCACHE	0x00000001	/* - local caching enabled */
+#घोषणा NFS_OPTION_MIGRATION	0x00000002	/* - NFSv4 migration enabled */
 
-	enum nfs4_change_attr_type
+	क्रमागत nfs4_change_attr_type
 				change_attr_type;/* Description of change attribute */
 
-	struct nfs_fsid		fsid;
+	काष्ठा nfs_fsid		fsid;
 	__u64			maxfilesize;	/* maximum file size */
-	struct timespec64	time_delta;	/* smallest time granularity */
-	unsigned long		mount_time;	/* when this fs was mounted */
-	struct super_block	*super;		/* VFS super block */
+	काष्ठा बारpec64	समय_delta;	/* smallest समय granularity */
+	अचिन्हित दीर्घ		mount_समय;	/* when this fs was mounted */
+	काष्ठा super_block	*super;		/* VFS super block */
 	dev_t			s_dev;		/* superblock dev numbers */
-	struct nfs_auth_info	auth_info;	/* parsed auth flavors */
+	काष्ठा nfs_auth_info	auth_info;	/* parsed auth flavors */
 
-#ifdef CONFIG_NFS_FSCACHE
-	struct nfs_fscache_key	*fscache_key;	/* unique key for superblock */
-	struct fscache_cookie	*fscache;	/* superblock cookie */
-#endif
+#अगर_घोषित CONFIG_NFS_FSCACHE
+	काष्ठा nfs_fscache_key	*fscache_key;	/* unique key क्रम superblock */
+	काष्ठा fscache_cookie	*fscache;	/* superblock cookie */
+#पूर्ण_अगर
 
 	u32			pnfs_blksize;	/* layout_blksize attr */
-#if IS_ENABLED(CONFIG_NFS_V4)
-	u32			attr_bitmask[3];/* V4 bitmask representing the set
+#अगर IS_ENABLED(CONFIG_NFS_V4)
+	u32			attr_biपंचांगask[3];/* V4 biपंचांगask representing the set
 						   of attributes supported on this
-						   filesystem */
-	u32			attr_bitmask_nl[3];
-						/* V4 bitmask representing the
+						   fileप्रणाली */
+	u32			attr_biपंचांगask_nl[3];
+						/* V4 biपंचांगask representing the
 						   set of attributes supported
-						   on this filesystem excluding
+						   on this fileप्रणाली excluding
 						   the label support bit. */
-	u32			exclcreat_bitmask[3];
-						/* V4 bitmask representing the
+	u32			exclcreat_biपंचांगask[3];
+						/* V4 biपंचांगask representing the
 						   set of attributes supported
-						   on this filesystem for the
+						   on this fileप्रणाली क्रम the
 						   exclusive create. */
-	u32			cache_consistency_bitmask[3];
-						/* V4 bitmask representing the subset
-						   of change attribute, size, ctime
-						   and mtime attributes supported by
+	u32			cache_consistency_biपंचांगask[3];
+						/* V4 biपंचांगask representing the subset
+						   of change attribute, size, स_समय
+						   and mसमय attributes supported by
 						   the server */
-	u32			acl_bitmask;	/* V4 bitmask representing the ACEs
+	u32			acl_biपंचांगask;	/* V4 biपंचांगask representing the ACEs
 						   that are supported on this
-						   filesystem */
-	u32			fh_expire_type;	/* V4 bitmask representing file
-						   handle volatility type for
-						   this filesystem */
-	struct pnfs_layoutdriver_type  *pnfs_curr_ld; /* Active layout driver */
-	struct rpc_wait_queue	roc_rpcwaitq;
-	void			*pnfs_ld_data;	/* per mount point data */
+						   fileप्रणाली */
+	u32			fh_expire_type;	/* V4 biपंचांगask representing file
+						   handle volatility type क्रम
+						   this fileप्रणाली */
+	काष्ठा pnfs_layoutdriver_type  *pnfs_curr_ld; /* Active layout driver */
+	काष्ठा rpc_रुको_queue	roc_rpcरुकोq;
+	व्योम			*pnfs_ld_data;	/* per mount poपूर्णांक data */
 
-	/* the following fields are protected by nfs_client->cl_lock */
-	struct rb_root		state_owners;
-#endif
-	struct ida		openowner_id;
-	struct ida		lockowner_id;
-	struct list_head	state_owners_lru;
-	struct list_head	layouts;
-	struct list_head	delegations;
-	struct list_head	ss_copies;
+	/* the following fields are रक्षित by nfs_client->cl_lock */
+	काष्ठा rb_root		state_owners;
+#पूर्ण_अगर
+	काष्ठा ida		खोलोowner_id;
+	काष्ठा ida		lockowner_id;
+	काष्ठा list_head	state_owners_lru;
+	काष्ठा list_head	layouts;
+	काष्ठा list_head	delegations;
+	काष्ठा list_head	ss_copies;
 
-	unsigned long		mig_gen;
-	unsigned long		mig_status;
-#define NFS_MIG_IN_TRANSITION		(1)
-#define NFS_MIG_FAILED			(2)
-#define NFS_MIG_TSM_POSSIBLE		(3)
+	अचिन्हित दीर्घ		mig_gen;
+	अचिन्हित दीर्घ		mig_status;
+#घोषणा NFS_MIG_IN_TRANSITION		(1)
+#घोषणा NFS_MIG_FAILED			(2)
+#घोषणा NFS_MIG_TSM_POSSIBLE		(3)
 
-	void (*destroy)(struct nfs_server *);
+	व्योम (*destroy)(काष्ठा nfs_server *);
 
 	atomic_t active; /* Keep trace of any activity to this server */
 
 	/* mountd-related mount options */
-	struct sockaddr_storage	mountd_address;
-	size_t			mountd_addrlen;
+	काष्ठा sockaddr_storage	mountd_address;
+	माप_प्रकार			mountd_addrlen;
 	u32			mountd_version;
-	unsigned short		mountd_port;
-	unsigned short		mountd_protocol;
-	struct rpc_wait_queue	uoc_rpcwaitq;
+	अचिन्हित लघु		mountd_port;
+	अचिन्हित लघु		mountd_protocol;
+	काष्ठा rpc_रुको_queue	uoc_rpcरुकोq;
 
-	/* XDR related information */
-	unsigned int		read_hdrsize;
+	/* XDR related inक्रमmation */
+	अचिन्हित पूर्णांक		पढ़ो_hdrsize;
 
 	/* User namespace info */
-	const struct cred	*cred;
+	स्थिर काष्ठा cred	*cred;
 	bool			has_sec_mnt_opts;
-};
+पूर्ण;
 
 /* Server capabilities */
-#define NFS_CAP_READDIRPLUS	(1U << 0)
-#define NFS_CAP_HARDLINKS	(1U << 1)
-#define NFS_CAP_SYMLINKS	(1U << 2)
-#define NFS_CAP_ACLS		(1U << 3)
-#define NFS_CAP_ATOMIC_OPEN	(1U << 4)
-#define NFS_CAP_LGOPEN		(1U << 5)
-#define NFS_CAP_POSIX_LOCK	(1U << 14)
-#define NFS_CAP_UIDGID_NOMAP	(1U << 15)
-#define NFS_CAP_STATEID_NFSV41	(1U << 16)
-#define NFS_CAP_ATOMIC_OPEN_V1	(1U << 17)
-#define NFS_CAP_SECURITY_LABEL	(1U << 18)
-#define NFS_CAP_SEEK		(1U << 19)
-#define NFS_CAP_ALLOCATE	(1U << 20)
-#define NFS_CAP_DEALLOCATE	(1U << 21)
-#define NFS_CAP_LAYOUTSTATS	(1U << 22)
-#define NFS_CAP_CLONE		(1U << 23)
-#define NFS_CAP_COPY		(1U << 24)
-#define NFS_CAP_OFFLOAD_CANCEL	(1U << 25)
-#define NFS_CAP_LAYOUTERROR	(1U << 26)
-#define NFS_CAP_COPY_NOTIFY	(1U << 27)
-#define NFS_CAP_XATTR		(1U << 28)
-#define NFS_CAP_READ_PLUS	(1U << 29)
+#घोषणा NFS_CAP_READसूचीPLUS	(1U << 0)
+#घोषणा NFS_CAP_HARDLINKS	(1U << 1)
+#घोषणा NFS_CAP_SYMLINKS	(1U << 2)
+#घोषणा NFS_CAP_ACLS		(1U << 3)
+#घोषणा NFS_CAP_ATOMIC_OPEN	(1U << 4)
+#घोषणा NFS_CAP_LGOPEN		(1U << 5)
+#घोषणा NFS_CAP_POSIX_LOCK	(1U << 14)
+#घोषणा NFS_CAP_UIDGID_NOMAP	(1U << 15)
+#घोषणा NFS_CAP_STATEID_NFSV41	(1U << 16)
+#घोषणा NFS_CAP_ATOMIC_OPEN_V1	(1U << 17)
+#घोषणा NFS_CAP_SECURITY_LABEL	(1U << 18)
+#घोषणा NFS_CAP_SEEK		(1U << 19)
+#घोषणा NFS_CAP_ALLOCATE	(1U << 20)
+#घोषणा NFS_CAP_DEALLOCATE	(1U << 21)
+#घोषणा NFS_CAP_LAYOUTSTATS	(1U << 22)
+#घोषणा NFS_CAP_CLONE		(1U << 23)
+#घोषणा NFS_CAP_COPY		(1U << 24)
+#घोषणा NFS_CAP_OFFLOAD_CANCEL	(1U << 25)
+#घोषणा NFS_CAP_LAYOUTERROR	(1U << 26)
+#घोषणा NFS_CAP_COPY_NOTIFY	(1U << 27)
+#घोषणा NFS_CAP_XATTR		(1U << 28)
+#घोषणा NFS_CAP_READ_PLUS	(1U << 29)
 
-#endif
+#पूर्ण_अगर

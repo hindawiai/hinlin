@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2010 Texas Instruments Inc
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/string.h>
-#include <linux/wait.h>
-#include <linux/time.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
-#include <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
 
-#include <media/v4l2-device.h>
-#include <media/davinci/vpbe_types.h>
-#include <media/davinci/vpbe.h>
-#include <media/davinci/vpss.h>
-#include <media/davinci/vpbe_venc.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/davinci/vpbe_types.h>
+#समावेश <media/davinci/vpbe.h>
+#समावेश <media/davinci/vpss.h>
+#समावेश <media/davinci/vpbe_venc.h>
 
-#define VPBE_DEFAULT_OUTPUT	"Composite"
-#define VPBE_DEFAULT_MODE	"ntsc"
+#घोषणा VPBE_DEFAULT_OUTPUT	"Composite"
+#घोषणा VPBE_DEFAULT_MODE	"ntsc"
 
-static char *def_output = VPBE_DEFAULT_OUTPUT;
-static char *def_mode = VPBE_DEFAULT_MODE;
-static int debug;
+अटल अक्षर *def_output = VPBE_DEFAULT_OUTPUT;
+अटल अक्षर *def_mode = VPBE_DEFAULT_MODE;
+अटल पूर्णांक debug;
 
-module_param(def_output, charp, S_IRUGO);
-module_param(def_mode, charp, S_IRUGO);
-module_param(debug, int, 0644);
+module_param(def_output, अक्षरp, S_IRUGO);
+module_param(def_mode, अक्षरp, S_IRUGO);
+module_param(debug, पूर्णांक, 0644);
 
 MODULE_PARM_DESC(def_output, "vpbe output name (default:Composite)");
 MODULE_PARM_DESC(def_mode, "vpbe output mode name (default:ntsc");
@@ -42,20 +43,20 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Texas Instruments");
 
 /**
- * vpbe_current_encoder_info - Get config info for current encoder
+ * vpbe_current_encoder_info - Get config info क्रम current encoder
  * @vpbe_dev: vpbe device ptr
  *
  * Return ptr to current encoder config info
  */
-static struct encoder_config_info*
-vpbe_current_encoder_info(struct vpbe_device *vpbe_dev)
-{
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	int index = vpbe_dev->current_sd_index;
+अटल काष्ठा encoder_config_info*
+vpbe_current_encoder_info(काष्ठा vpbe_device *vpbe_dev)
+अणु
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	पूर्णांक index = vpbe_dev->current_sd_index;
 
-	return ((index == 0) ? &cfg->venc :
+	वापस ((index == 0) ? &cfg->venc :
 				&cfg->ext_encoders[index-1]);
-}
+पूर्ण
 
 /**
  * vpbe_find_encoder_sd_index - Given a name find encoder sd index
@@ -65,186 +66,186 @@ vpbe_current_encoder_info(struct vpbe_device *vpbe_dev)
  *
  * Return sd index of the encoder
  */
-static int vpbe_find_encoder_sd_index(struct vpbe_config *cfg,
-			     int index)
-{
-	char *encoder_name = cfg->outputs[index].subdev_name;
-	int i;
+अटल पूर्णांक vpbe_find_encoder_sd_index(काष्ठा vpbe_config *cfg,
+			     पूर्णांक index)
+अणु
+	अक्षर *encoder_name = cfg->outमाला_दो[index].subdev_name;
+	पूर्णांक i;
 
 	/* Venc is always first	*/
-	if (!strcmp(encoder_name, cfg->venc.module_name))
-		return 0;
+	अगर (!म_भेद(encoder_name, cfg->venc.module_name))
+		वापस 0;
 
-	for (i = 0; i < cfg->num_ext_encoders; i++) {
-		if (!strcmp(encoder_name,
+	क्रम (i = 0; i < cfg->num_ext_encoders; i++) अणु
+		अगर (!म_भेद(encoder_name,
 		     cfg->ext_encoders[i].module_name))
-			return i+1;
-	}
+			वापस i+1;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
- * vpbe_enum_outputs - enumerate outputs
+ * vpbe_क्रमागत_outमाला_दो - क्रमागतerate outमाला_दो
  * @vpbe_dev: vpbe device ptr
- * @output: ptr to v4l2_output structure
+ * @output: ptr to v4l2_output काष्ठाure
  *
- * Enumerates the outputs available at the vpbe display
- * returns the status, -EINVAL if end of output list
+ * Enumerates the outमाला_दो available at the vpbe display
+ * वापसs the status, -EINVAL अगर end of output list
  */
-static int vpbe_enum_outputs(struct vpbe_device *vpbe_dev,
-			     struct v4l2_output *output)
-{
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	unsigned int temp_index = output->index;
+अटल पूर्णांक vpbe_क्रमागत_outमाला_दो(काष्ठा vpbe_device *vpbe_dev,
+			     काष्ठा v4l2_output *output)
+अणु
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	अचिन्हित पूर्णांक temp_index = output->index;
 
-	if (temp_index >= cfg->num_outputs)
-		return -EINVAL;
+	अगर (temp_index >= cfg->num_outमाला_दो)
+		वापस -EINVAL;
 
-	*output = cfg->outputs[temp_index].output;
+	*output = cfg->outमाला_दो[temp_index].output;
 	output->index = temp_index;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vpbe_get_mode_info(struct vpbe_device *vpbe_dev, char *mode,
-			      int output_index)
-{
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	struct vpbe_enc_mode_info var;
-	int curr_output = output_index;
-	int i;
+अटल पूर्णांक vpbe_get_mode_info(काष्ठा vpbe_device *vpbe_dev, अक्षर *mode,
+			      पूर्णांक output_index)
+अणु
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	काष्ठा vpbe_enc_mode_info var;
+	पूर्णांक curr_output = output_index;
+	पूर्णांक i;
 
-	if (!mode)
-		return -EINVAL;
+	अगर (!mode)
+		वापस -EINVAL;
 
-	for (i = 0; i < cfg->outputs[curr_output].num_modes; i++) {
-		var = cfg->outputs[curr_output].modes[i];
-		if (!strcmp(mode, var.name)) {
+	क्रम (i = 0; i < cfg->outमाला_दो[curr_output].num_modes; i++) अणु
+		var = cfg->outमाला_दो[curr_output].modes[i];
+		अगर (!म_भेद(mode, var.name)) अणु
 			vpbe_dev->current_timings = var;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int vpbe_get_current_mode_info(struct vpbe_device *vpbe_dev,
-				      struct vpbe_enc_mode_info *mode_info)
-{
-	if (!mode_info)
-		return -EINVAL;
+अटल पूर्णांक vpbe_get_current_mode_info(काष्ठा vpbe_device *vpbe_dev,
+				      काष्ठा vpbe_enc_mode_info *mode_info)
+अणु
+	अगर (!mode_info)
+		वापस -EINVAL;
 
 	*mode_info = vpbe_dev->current_timings;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Get std by std id */
-static int vpbe_get_std_info(struct vpbe_device *vpbe_dev,
+अटल पूर्णांक vpbe_get_std_info(काष्ठा vpbe_device *vpbe_dev,
 			     v4l2_std_id std_id)
-{
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	struct vpbe_enc_mode_info var;
-	int curr_output = vpbe_dev->current_out_index;
-	int i;
+अणु
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	काष्ठा vpbe_enc_mode_info var;
+	पूर्णांक curr_output = vpbe_dev->current_out_index;
+	पूर्णांक i;
 
-	for (i = 0; i < vpbe_dev->cfg->outputs[curr_output].num_modes; i++) {
-		var = cfg->outputs[curr_output].modes[i];
-		if ((var.timings_type & VPBE_ENC_STD) &&
-		  (var.std_id & std_id)) {
+	क्रम (i = 0; i < vpbe_dev->cfg->outमाला_दो[curr_output].num_modes; i++) अणु
+		var = cfg->outमाला_दो[curr_output].modes[i];
+		अगर ((var.timings_type & VPBE_ENC_STD) &&
+		  (var.std_id & std_id)) अणु
 			vpbe_dev->current_timings = var;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int vpbe_get_std_info_by_name(struct vpbe_device *vpbe_dev,
-				char *std_name)
-{
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	struct vpbe_enc_mode_info var;
-	int curr_output = vpbe_dev->current_out_index;
-	int i;
+अटल पूर्णांक vpbe_get_std_info_by_name(काष्ठा vpbe_device *vpbe_dev,
+				अक्षर *std_name)
+अणु
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	काष्ठा vpbe_enc_mode_info var;
+	पूर्णांक curr_output = vpbe_dev->current_out_index;
+	पूर्णांक i;
 
-	for (i = 0; i < vpbe_dev->cfg->outputs[curr_output].num_modes; i++) {
-		var = cfg->outputs[curr_output].modes[i];
-		if (!strcmp(var.name, std_name)) {
+	क्रम (i = 0; i < vpbe_dev->cfg->outमाला_दो[curr_output].num_modes; i++) अणु
+		var = cfg->outमाला_दो[curr_output].modes[i];
+		अगर (!म_भेद(var.name, std_name)) अणु
 			vpbe_dev->current_timings = var;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * vpbe_set_output - Set output
  * @vpbe_dev: vpbe device ptr
  * @index: index of output
  *
- * Set vpbe output to the output specified by the index
+ * Set vpbe output to the output specअगरied by the index
  */
-static int vpbe_set_output(struct vpbe_device *vpbe_dev, int index)
-{
-	struct encoder_config_info *curr_enc_info =
+अटल पूर्णांक vpbe_set_output(काष्ठा vpbe_device *vpbe_dev, पूर्णांक index)
+अणु
+	काष्ठा encoder_config_info *curr_enc_info =
 			vpbe_current_encoder_info(vpbe_dev);
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	struct venc_platform_data *venc_device = vpbe_dev->venc_device;
-	int enc_out_index;
-	int sd_index;
-	int ret;
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	काष्ठा venc_platक्रमm_data *venc_device = vpbe_dev->venc_device;
+	पूर्णांक enc_out_index;
+	पूर्णांक sd_index;
+	पूर्णांक ret;
 
-	if (index >= cfg->num_outputs)
-		return -EINVAL;
+	अगर (index >= cfg->num_outमाला_दो)
+		वापस -EINVAL;
 
 	mutex_lock(&vpbe_dev->lock);
 
 	sd_index = vpbe_dev->current_sd_index;
-	enc_out_index = cfg->outputs[index].output.index;
+	enc_out_index = cfg->outमाला_दो[index].output.index;
 	/*
-	 * Currently we switch the encoder based on output selected
+	 * Currently we चयन the encoder based on output selected
 	 * by the application. If media controller is implemented later
 	 * there is will be an API added to setup_link between venc
-	 * and external encoder. So in that case below comparison always
-	 * match and encoder will not be switched. But if application
+	 * and बाह्यal encoder. So in that हाल below comparison always
+	 * match and encoder will not be चयनed. But अगर application
 	 * chose not to use media controller, then this provides current
-	 * way of switching encoder at the venc output.
+	 * way of चयनing encoder at the venc output.
 	 */
-	if (strcmp(curr_enc_info->module_name,
-		   cfg->outputs[index].subdev_name)) {
-		/* Need to switch the encoder at the output */
+	अगर (म_भेद(curr_enc_info->module_name,
+		   cfg->outमाला_दो[index].subdev_name)) अणु
+		/* Need to चयन the encoder at the output */
 		sd_index = vpbe_find_encoder_sd_index(cfg, index);
-		if (sd_index < 0) {
+		अगर (sd_index < 0) अणु
 			ret = -EINVAL;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
-		ret = venc_device->setup_if_config(cfg->outputs[index].if_params);
-		if (ret)
-			goto unlock;
-	}
+		ret = venc_device->setup_अगर_config(cfg->outमाला_दो[index].अगर_params);
+		अगर (ret)
+			जाओ unlock;
+	पूर्ण
 
 	/* Set output at the encoder */
 	ret = v4l2_subdev_call(vpbe_dev->encoders[sd_index], video,
 				       s_routing, 0, enc_out_index, 0);
-	if (ret)
-		goto unlock;
+	अगर (ret)
+		जाओ unlock;
 
 	/*
-	 * It is assumed that venc or external encoder will set a default
-	 * mode in the sub device. For external encoder or LCD pannel output,
-	 * we also need to set up the lcd port for the required mode. So setup
-	 * the lcd port for the default mode that is configured in the board
-	 * arch/arm/mach-davinci/board-dm355-evm.setup file for the external
+	 * It is assumed that venc or बाह्यal encoder will set a शेष
+	 * mode in the sub device. For बाह्यal encoder or LCD pannel output,
+	 * we also need to set up the lcd port क्रम the required mode. So setup
+	 * the lcd port क्रम the शेष mode that is configured in the board
+	 * arch/arm/mach-davinci/board-dm355-evm.setup file क्रम the बाह्यal
 	 * encoder.
 	 */
 	ret = vpbe_get_mode_info(vpbe_dev,
-				 cfg->outputs[index].default_mode, index);
-	if (!ret) {
-		struct osd_state *osd_device = vpbe_dev->osd_device;
+				 cfg->outमाला_दो[index].शेष_mode, index);
+	अगर (!ret) अणु
+		काष्ठा osd_state *osd_device = vpbe_dev->osd_device;
 
 		osd_device->ops.set_left_margin(osd_device,
 			vpbe_dev->current_timings.left_margin);
@@ -252,92 +253,92 @@ static int vpbe_set_output(struct vpbe_device *vpbe_dev, int index)
 		vpbe_dev->current_timings.upper_margin);
 		vpbe_dev->current_sd_index = sd_index;
 		vpbe_dev->current_out_index = index;
-	}
+	पूर्ण
 unlock:
 	mutex_unlock(&vpbe_dev->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vpbe_set_default_output(struct vpbe_device *vpbe_dev)
-{
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	int i;
+अटल पूर्णांक vpbe_set_शेष_output(काष्ठा vpbe_device *vpbe_dev)
+अणु
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	पूर्णांक i;
 
-	for (i = 0; i < cfg->num_outputs; i++) {
-		if (!strcmp(def_output,
-			    cfg->outputs[i].output.name)) {
-			int ret = vpbe_set_output(vpbe_dev, i);
+	क्रम (i = 0; i < cfg->num_outमाला_दो; i++) अणु
+		अगर (!म_भेद(def_output,
+			    cfg->outमाला_दो[i].output.name)) अणु
+			पूर्णांक ret = vpbe_set_output(vpbe_dev, i);
 
-			if (!ret)
+			अगर (!ret)
 				vpbe_dev->current_out_index = i;
-			return ret;
-		}
-	}
-	return 0;
-}
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * vpbe_get_output - Get output
  * @vpbe_dev: vpbe device ptr
  *
- * return current vpbe output to the the index
+ * वापस current vpbe output to the the index
  */
-static unsigned int vpbe_get_output(struct vpbe_device *vpbe_dev)
-{
-	return vpbe_dev->current_out_index;
-}
+अटल अचिन्हित पूर्णांक vpbe_get_output(काष्ठा vpbe_device *vpbe_dev)
+अणु
+	वापस vpbe_dev->current_out_index;
+पूर्ण
 
 /*
  * vpbe_s_dv_timings - Set the given preset timings in the encoder
  *
- * Sets the timings if supported by the current encoder. Return the status.
+ * Sets the timings अगर supported by the current encoder. Return the status.
  * 0 - success & -EINVAL on error
  */
-static int vpbe_s_dv_timings(struct vpbe_device *vpbe_dev,
-		    struct v4l2_dv_timings *dv_timings)
-{
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	int out_index = vpbe_dev->current_out_index;
-	struct vpbe_output *output = &cfg->outputs[out_index];
-	int sd_index = vpbe_dev->current_sd_index;
-	int ret, i;
+अटल पूर्णांक vpbe_s_dv_timings(काष्ठा vpbe_device *vpbe_dev,
+		    काष्ठा v4l2_dv_timings *dv_timings)
+अणु
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	पूर्णांक out_index = vpbe_dev->current_out_index;
+	काष्ठा vpbe_output *output = &cfg->outमाला_दो[out_index];
+	पूर्णांक sd_index = vpbe_dev->current_sd_index;
+	पूर्णांक ret, i;
 
 
-	if (!(cfg->outputs[out_index].output.capabilities &
+	अगर (!(cfg->outमाला_दो[out_index].output.capabilities &
 	    V4L2_OUT_CAP_DV_TIMINGS))
-		return -ENODATA;
+		वापस -ENODATA;
 
-	for (i = 0; i < output->num_modes; i++) {
-		if (output->modes[i].timings_type == VPBE_ENC_DV_TIMINGS &&
-		    !memcmp(&output->modes[i].dv_timings,
-				dv_timings, sizeof(*dv_timings)))
-			break;
-	}
-	if (i >= output->num_modes)
-		return -EINVAL;
+	क्रम (i = 0; i < output->num_modes; i++) अणु
+		अगर (output->modes[i].timings_type == VPBE_ENC_DV_TIMINGS &&
+		    !स_भेद(&output->modes[i].dv_timings,
+				dv_timings, माप(*dv_timings)))
+			अवरोध;
+	पूर्ण
+	अगर (i >= output->num_modes)
+		वापस -EINVAL;
 	vpbe_dev->current_timings = output->modes[i];
 	mutex_lock(&vpbe_dev->lock);
 
 	ret = v4l2_subdev_call(vpbe_dev->encoders[sd_index], video,
 					s_dv_timings, dv_timings);
-	if (!ret && vpbe_dev->amp) {
-		/* Call amplifier subdevice */
+	अगर (!ret && vpbe_dev->amp) अणु
+		/* Call amplअगरier subdevice */
 		ret = v4l2_subdev_call(vpbe_dev->amp, video,
 				s_dv_timings, dv_timings);
-	}
-	/* set the lcd controller output for the given mode */
-	if (!ret) {
-		struct osd_state *osd_device = vpbe_dev->osd_device;
+	पूर्ण
+	/* set the lcd controller output क्रम the given mode */
+	अगर (!ret) अणु
+		काष्ठा osd_state *osd_device = vpbe_dev->osd_device;
 
 		osd_device->ops.set_left_margin(osd_device,
 		vpbe_dev->current_timings.left_margin);
 		osd_device->ops.set_top_margin(osd_device,
 		vpbe_dev->current_timings.upper_margin);
-	}
+	पूर्ण
 	mutex_unlock(&vpbe_dev->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * vpbe_g_dv_timings - Get the timings in the current encoder
@@ -345,95 +346,95 @@ static int vpbe_s_dv_timings(struct vpbe_device *vpbe_dev,
  * Get the timings in the current encoder. Return the status. 0 - success
  * -EINVAL on error
  */
-static int vpbe_g_dv_timings(struct vpbe_device *vpbe_dev,
-		     struct v4l2_dv_timings *dv_timings)
-{
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	int out_index = vpbe_dev->current_out_index;
+अटल पूर्णांक vpbe_g_dv_timings(काष्ठा vpbe_device *vpbe_dev,
+		     काष्ठा v4l2_dv_timings *dv_timings)
+अणु
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	पूर्णांक out_index = vpbe_dev->current_out_index;
 
-	if (!(cfg->outputs[out_index].output.capabilities &
+	अगर (!(cfg->outमाला_दो[out_index].output.capabilities &
 		V4L2_OUT_CAP_DV_TIMINGS))
-		return -ENODATA;
+		वापस -ENODATA;
 
-	if (vpbe_dev->current_timings.timings_type &
-	  VPBE_ENC_DV_TIMINGS) {
+	अगर (vpbe_dev->current_timings.timings_type &
+	  VPBE_ENC_DV_TIMINGS) अणु
 		*dv_timings = vpbe_dev->current_timings.dv_timings;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
- * vpbe_enum_dv_timings - Enumerate the dv timings in the current encoder
+ * vpbe_क्रमागत_dv_timings - Enumerate the dv timings in the current encoder
  *
  * Get the timings in the current encoder. Return the status. 0 - success
  * -EINVAL on error
  */
-static int vpbe_enum_dv_timings(struct vpbe_device *vpbe_dev,
-			 struct v4l2_enum_dv_timings *timings)
-{
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	int out_index = vpbe_dev->current_out_index;
-	struct vpbe_output *output = &cfg->outputs[out_index];
-	int j = 0;
-	int i;
+अटल पूर्णांक vpbe_क्रमागत_dv_timings(काष्ठा vpbe_device *vpbe_dev,
+			 काष्ठा v4l2_क्रमागत_dv_timings *timings)
+अणु
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	पूर्णांक out_index = vpbe_dev->current_out_index;
+	काष्ठा vpbe_output *output = &cfg->outमाला_दो[out_index];
+	पूर्णांक j = 0;
+	पूर्णांक i;
 
-	if (!(output->output.capabilities & V4L2_OUT_CAP_DV_TIMINGS))
-		return -ENODATA;
+	अगर (!(output->output.capabilities & V4L2_OUT_CAP_DV_TIMINGS))
+		वापस -ENODATA;
 
-	for (i = 0; i < output->num_modes; i++) {
-		if (output->modes[i].timings_type == VPBE_ENC_DV_TIMINGS) {
-			if (j == timings->index)
-				break;
+	क्रम (i = 0; i < output->num_modes; i++) अणु
+		अगर (output->modes[i].timings_type == VPBE_ENC_DV_TIMINGS) अणु
+			अगर (j == timings->index)
+				अवरोध;
 			j++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (i == output->num_modes)
-		return -EINVAL;
+	अगर (i == output->num_modes)
+		वापस -EINVAL;
 	timings->timings = output->modes[i].dv_timings;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * vpbe_s_std - Set the given standard in the encoder
  *
- * Sets the standard if supported by the current encoder. Return the status.
+ * Sets the standard अगर supported by the current encoder. Return the status.
  * 0 - success & -EINVAL on error
  */
-static int vpbe_s_std(struct vpbe_device *vpbe_dev, v4l2_std_id std_id)
-{
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	int out_index = vpbe_dev->current_out_index;
-	int sd_index = vpbe_dev->current_sd_index;
-	int ret;
+अटल पूर्णांक vpbe_s_std(काष्ठा vpbe_device *vpbe_dev, v4l2_std_id std_id)
+अणु
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	पूर्णांक out_index = vpbe_dev->current_out_index;
+	पूर्णांक sd_index = vpbe_dev->current_sd_index;
+	पूर्णांक ret;
 
-	if (!(cfg->outputs[out_index].output.capabilities &
+	अगर (!(cfg->outमाला_दो[out_index].output.capabilities &
 		V4L2_OUT_CAP_STD))
-		return -ENODATA;
+		वापस -ENODATA;
 
 	ret = vpbe_get_std_info(vpbe_dev, std_id);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&vpbe_dev->lock);
 
 	ret = v4l2_subdev_call(vpbe_dev->encoders[sd_index], video,
 			       s_std_output, std_id);
-	/* set the lcd controller output for the given mode */
-	if (!ret) {
-		struct osd_state *osd_device = vpbe_dev->osd_device;
+	/* set the lcd controller output क्रम the given mode */
+	अगर (!ret) अणु
+		काष्ठा osd_state *osd_device = vpbe_dev->osd_device;
 
 		osd_device->ops.set_left_margin(osd_device,
 		vpbe_dev->current_timings.left_margin);
 		osd_device->ops.set_top_margin(osd_device,
 		vpbe_dev->current_timings.upper_margin);
-	}
+	पूर्ण
 	mutex_unlock(&vpbe_dev->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * vpbe_g_std - Get the standard in the current encoder
@@ -441,66 +442,66 @@ static int vpbe_s_std(struct vpbe_device *vpbe_dev, v4l2_std_id std_id)
  * Get the standard in the current encoder. Return the status. 0 - success
  * -EINVAL on error
  */
-static int vpbe_g_std(struct vpbe_device *vpbe_dev, v4l2_std_id *std_id)
-{
-	struct vpbe_enc_mode_info *cur_timings = &vpbe_dev->current_timings;
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	int out_index = vpbe_dev->current_out_index;
+अटल पूर्णांक vpbe_g_std(काष्ठा vpbe_device *vpbe_dev, v4l2_std_id *std_id)
+अणु
+	काष्ठा vpbe_enc_mode_info *cur_timings = &vpbe_dev->current_timings;
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	पूर्णांक out_index = vpbe_dev->current_out_index;
 
-	if (!(cfg->outputs[out_index].output.capabilities & V4L2_OUT_CAP_STD))
-		return -ENODATA;
+	अगर (!(cfg->outमाला_दो[out_index].output.capabilities & V4L2_OUT_CAP_STD))
+		वापस -ENODATA;
 
-	if (cur_timings->timings_type & VPBE_ENC_STD) {
+	अगर (cur_timings->timings_type & VPBE_ENC_STD) अणु
 		*std_id = cur_timings->std_id;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * vpbe_set_mode - Set mode in the current encoder using mode info
  *
  * Use the mode string to decide what timings to set in the encoder
  * This is typically useful when fbset command is used to change the current
- * timings by specifying a string to indicate the timings.
+ * timings by specअगरying a string to indicate the timings.
  */
-static int vpbe_set_mode(struct vpbe_device *vpbe_dev,
-			 struct vpbe_enc_mode_info *mode_info)
-{
-	struct vpbe_enc_mode_info *preset_mode = NULL;
-	struct vpbe_config *cfg = vpbe_dev->cfg;
-	struct v4l2_dv_timings dv_timings;
-	struct osd_state *osd_device;
-	int out_index = vpbe_dev->current_out_index;
-	int i;
+अटल पूर्णांक vpbe_set_mode(काष्ठा vpbe_device *vpbe_dev,
+			 काष्ठा vpbe_enc_mode_info *mode_info)
+अणु
+	काष्ठा vpbe_enc_mode_info *preset_mode = शून्य;
+	काष्ठा vpbe_config *cfg = vpbe_dev->cfg;
+	काष्ठा v4l2_dv_timings dv_timings;
+	काष्ठा osd_state *osd_device;
+	पूर्णांक out_index = vpbe_dev->current_out_index;
+	पूर्णांक i;
 
-	if (!mode_info || !mode_info->name)
-		return -EINVAL;
+	अगर (!mode_info || !mode_info->name)
+		वापस -EINVAL;
 
-	for (i = 0; i < cfg->outputs[out_index].num_modes; i++) {
-		if (!strcmp(mode_info->name,
-		     cfg->outputs[out_index].modes[i].name)) {
-			preset_mode = &cfg->outputs[out_index].modes[i];
+	क्रम (i = 0; i < cfg->outमाला_दो[out_index].num_modes; i++) अणु
+		अगर (!म_भेद(mode_info->name,
+		     cfg->outमाला_दो[out_index].modes[i].name)) अणु
+			preset_mode = &cfg->outमाला_दो[out_index].modes[i];
 			/*
 			 * it may be one of the 3 timings type. Check and
 			 * invoke right API
 			 */
-			if (preset_mode->timings_type & VPBE_ENC_STD)
-				return vpbe_s_std(vpbe_dev,
+			अगर (preset_mode->timings_type & VPBE_ENC_STD)
+				वापस vpbe_s_std(vpbe_dev,
 						 preset_mode->std_id);
-			if (preset_mode->timings_type &
-						VPBE_ENC_DV_TIMINGS) {
+			अगर (preset_mode->timings_type &
+						VPBE_ENC_DV_TIMINGS) अणु
 				dv_timings =
 					preset_mode->dv_timings;
-				return vpbe_s_dv_timings(vpbe_dev, &dv_timings);
-			}
-		}
-	}
+				वापस vpbe_s_dv_timings(vpbe_dev, &dv_timings);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Only custom timing should reach here */
-	if (!preset_mode)
-		return -EINVAL;
+	अगर (!preset_mode)
+		वापस -EINVAL;
 
 	mutex_lock(&vpbe_dev->lock);
 
@@ -512,33 +513,33 @@ static int vpbe_set_mode(struct vpbe_device *vpbe_dev,
 		vpbe_dev->current_timings.upper_margin);
 
 	mutex_unlock(&vpbe_dev->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vpbe_set_default_mode(struct vpbe_device *vpbe_dev)
-{
-	int ret;
+अटल पूर्णांक vpbe_set_शेष_mode(काष्ठा vpbe_device *vpbe_dev)
+अणु
+	पूर्णांक ret;
 
 	ret = vpbe_get_std_info_by_name(vpbe_dev, def_mode);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* set the default mode in the encoder */
-	return vpbe_set_mode(vpbe_dev, &vpbe_dev->current_timings);
-}
+	/* set the शेष mode in the encoder */
+	वापस vpbe_set_mode(vpbe_dev, &vpbe_dev->current_timings);
+पूर्ण
 
-static int platform_device_get(struct device *dev, void *data)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct vpbe_device *vpbe_dev = data;
+अटल पूर्णांक platक्रमm_device_get(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा vpbe_device *vpbe_dev = data;
 
-	if (strstr(pdev->name, "vpbe-osd"))
-		vpbe_dev->osd_device = platform_get_drvdata(pdev);
-	if (strstr(pdev->name, "vpbe-venc"))
+	अगर (म_माला(pdev->name, "vpbe-osd"))
+		vpbe_dev->osd_device = platक्रमm_get_drvdata(pdev);
+	अगर (म_माला(pdev->name, "vpbe-venc"))
 		vpbe_dev->venc_device = dev_get_platdata(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vpbe_initialize() - Initialize the vpbe display controller
@@ -546,200 +547,200 @@ static int platform_device_get(struct device *dev, void *data)
  * @vpbe_dev: vpbe device ptr
  *
  * Master frame buffer device drivers calls this to initialize vpbe
- * display controller. This will then registers v4l2 device and the sub
- * devices and sets a current encoder sub device for display. v4l2 display
+ * display controller. This will then रेजिस्टरs v4l2 device and the sub
+ * devices and sets a current encoder sub device क्रम display. v4l2 display
  * device driver is the master and frame buffer display device driver is
  * the slave. Frame buffer display driver checks the initialized during
- * probe and exit if not initialized. Returns status.
+ * probe and निकास अगर not initialized. Returns status.
  */
-static int vpbe_initialize(struct device *dev, struct vpbe_device *vpbe_dev)
-{
-	struct encoder_config_info *enc_info;
-	struct amp_config_info *amp_info;
-	struct v4l2_subdev **enc_subdev;
-	struct osd_state *osd_device;
-	struct i2c_adapter *i2c_adap;
-	int num_encoders;
-	int ret = 0;
-	int err;
-	int i;
+अटल पूर्णांक vpbe_initialize(काष्ठा device *dev, काष्ठा vpbe_device *vpbe_dev)
+अणु
+	काष्ठा encoder_config_info *enc_info;
+	काष्ठा amp_config_info *amp_info;
+	काष्ठा v4l2_subdev **enc_subdev;
+	काष्ठा osd_state *osd_device;
+	काष्ठा i2c_adapter *i2c_adap;
+	पूर्णांक num_encoders;
+	पूर्णांक ret = 0;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	/*
-	 * v4l2 abd FBDev frame buffer devices will get the vpbe_dev pointer
-	 * from the platform device by iteration of platform drivers and
+	 * v4l2 abd FBDev frame buffer devices will get the vpbe_dev poपूर्णांकer
+	 * from the platक्रमm device by iteration of platक्रमm drivers and
 	 * matching with device name
 	 */
-	if (!vpbe_dev || !dev) {
-		printk(KERN_ERR "Null device pointers.\n");
-		return -ENODEV;
-	}
+	अगर (!vpbe_dev || !dev) अणु
+		prपूर्णांकk(KERN_ERR "Null device pointers.\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	if (vpbe_dev->initialized)
-		return 0;
+	अगर (vpbe_dev->initialized)
+		वापस 0;
 
 	mutex_lock(&vpbe_dev->lock);
 
-	if (strcmp(vpbe_dev->cfg->module_name, "dm644x-vpbe-display") != 0) {
-		/* We have dac clock available for platform */
+	अगर (म_भेद(vpbe_dev->cfg->module_name, "dm644x-vpbe-display") != 0) अणु
+		/* We have dac घड़ी available क्रम platक्रमm */
 		vpbe_dev->dac_clk = clk_get(vpbe_dev->pdev, "vpss_dac");
-		if (IS_ERR(vpbe_dev->dac_clk)) {
+		अगर (IS_ERR(vpbe_dev->dac_clk)) अणु
 			ret =  PTR_ERR(vpbe_dev->dac_clk);
-			goto fail_mutex_unlock;
-		}
-		if (clk_prepare_enable(vpbe_dev->dac_clk)) {
+			जाओ fail_mutex_unlock;
+		पूर्ण
+		अगर (clk_prepare_enable(vpbe_dev->dac_clk)) अणु
 			ret =  -ENODEV;
 			clk_put(vpbe_dev->dac_clk);
-			goto fail_mutex_unlock;
-		}
-	}
+			जाओ fail_mutex_unlock;
+		पूर्ण
+	पूर्ण
 
-	/* first enable vpss clocks */
-	vpss_enable_clock(VPSS_VPBE_CLOCK, 1);
+	/* first enable vpss घड़ीs */
+	vpss_enable_घड़ी(VPSS_VPBE_CLOCK, 1);
 
-	/* First register a v4l2 device */
-	ret = v4l2_device_register(dev, &vpbe_dev->v4l2_dev);
-	if (ret) {
+	/* First रेजिस्टर a v4l2 device */
+	ret = v4l2_device_रेजिस्टर(dev, &vpbe_dev->v4l2_dev);
+	अगर (ret) अणु
 		v4l2_err(dev->driver,
 			"Unable to register v4l2 device.\n");
-		goto fail_clk_put;
-	}
+		जाओ fail_clk_put;
+	पूर्ण
 	v4l2_info(&vpbe_dev->v4l2_dev, "vpbe v4l2 device registered\n");
 
-	err = bus_for_each_dev(&platform_bus_type, NULL, vpbe_dev,
-			       platform_device_get);
-	if (err < 0) {
+	err = bus_क्रम_each_dev(&platक्रमm_bus_type, शून्य, vpbe_dev,
+			       platक्रमm_device_get);
+	अगर (err < 0) अणु
 		ret = err;
-		goto fail_dev_unregister;
-	}
+		जाओ fail_dev_unरेजिस्टर;
+	पूर्ण
 
 	vpbe_dev->venc = venc_sub_dev_init(&vpbe_dev->v4l2_dev,
 					   vpbe_dev->cfg->venc.module_name);
-	/* register venc sub device */
-	if (!vpbe_dev->venc) {
+	/* रेजिस्टर venc sub device */
+	अगर (!vpbe_dev->venc) अणु
 		v4l2_err(&vpbe_dev->v4l2_dev,
 			"vpbe unable to init venc sub device\n");
 		ret = -ENODEV;
-		goto fail_dev_unregister;
-	}
+		जाओ fail_dev_unरेजिस्टर;
+	पूर्ण
 	/* initialize osd device */
 	osd_device = vpbe_dev->osd_device;
-	if (osd_device->ops.initialize) {
+	अगर (osd_device->ops.initialize) अणु
 		err = osd_device->ops.initialize(osd_device);
-		if (err) {
+		अगर (err) अणु
 			v4l2_err(&vpbe_dev->v4l2_dev,
 				 "unable to initialize the OSD device");
 			ret = -ENOMEM;
-			goto fail_dev_unregister;
-		}
-	}
+			जाओ fail_dev_unरेजिस्टर;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Register any external encoders that are configured. At index 0 we
+	 * Register any बाह्यal encoders that are configured. At index 0 we
 	 * store venc sd index.
 	 */
 	num_encoders = vpbe_dev->cfg->num_ext_encoders + 1;
-	vpbe_dev->encoders = kmalloc_array(num_encoders,
-					   sizeof(*vpbe_dev->encoders),
+	vpbe_dev->encoders = kदो_स्मृति_array(num_encoders,
+					   माप(*vpbe_dev->encoders),
 					   GFP_KERNEL);
-	if (!vpbe_dev->encoders) {
+	अगर (!vpbe_dev->encoders) अणु
 		ret = -ENOMEM;
-		goto fail_dev_unregister;
-	}
+		जाओ fail_dev_unरेजिस्टर;
+	पूर्ण
 
 	i2c_adap = i2c_get_adapter(vpbe_dev->cfg->i2c_adapter_id);
-	for (i = 0; i < (vpbe_dev->cfg->num_ext_encoders + 1); i++) {
-		if (i == 0) {
+	क्रम (i = 0; i < (vpbe_dev->cfg->num_ext_encoders + 1); i++) अणु
+		अगर (i == 0) अणु
 			/* venc is at index 0 */
 			enc_subdev = &vpbe_dev->encoders[i];
 			*enc_subdev = vpbe_dev->venc;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		enc_info = &vpbe_dev->cfg->ext_encoders[i];
-		if (enc_info->is_i2c) {
+		अगर (enc_info->is_i2c) अणु
 			enc_subdev = &vpbe_dev->encoders[i];
 			*enc_subdev = v4l2_i2c_new_subdev_board(
 						&vpbe_dev->v4l2_dev, i2c_adap,
-						&enc_info->board_info, NULL);
-			if (*enc_subdev)
+						&enc_info->board_info, शून्य);
+			अगर (*enc_subdev)
 				v4l2_info(&vpbe_dev->v4l2_dev,
 					  "v4l2 sub device %s registered\n",
 					  enc_info->module_name);
-			else {
+			अन्यथा अणु
 				v4l2_err(&vpbe_dev->v4l2_dev, "encoder %s failed to register",
 					 enc_info->module_name);
 				ret = -ENODEV;
-				goto fail_kfree_encoders;
-			}
-		} else
+				जाओ fail_kमुक्त_encoders;
+			पूर्ण
+		पूर्ण अन्यथा
 			v4l2_warn(&vpbe_dev->v4l2_dev, "non-i2c encoders currently not supported");
-	}
-	/* Add amplifier subdevice for dm365 */
-	if ((strcmp(vpbe_dev->cfg->module_name, "dm365-vpbe-display") == 0) &&
-	   vpbe_dev->cfg->amp) {
+	पूर्ण
+	/* Add amplअगरier subdevice क्रम dm365 */
+	अगर ((म_भेद(vpbe_dev->cfg->module_name, "dm365-vpbe-display") == 0) &&
+	   vpbe_dev->cfg->amp) अणु
 		amp_info = vpbe_dev->cfg->amp;
-		if (amp_info->is_i2c) {
+		अगर (amp_info->is_i2c) अणु
 			vpbe_dev->amp = v4l2_i2c_new_subdev_board(
 			&vpbe_dev->v4l2_dev, i2c_adap,
-			&amp_info->board_info, NULL);
-			if (!vpbe_dev->amp) {
+			&amp_info->board_info, शून्य);
+			अगर (!vpbe_dev->amp) अणु
 				v4l2_err(&vpbe_dev->v4l2_dev,
 					 "amplifier %s failed to register",
 					 amp_info->module_name);
 				ret = -ENODEV;
-				goto fail_kfree_encoders;
-			}
+				जाओ fail_kमुक्त_encoders;
+			पूर्ण
 			v4l2_info(&vpbe_dev->v4l2_dev,
 					  "v4l2 sub device %s registered\n",
 					  amp_info->module_name);
-		} else {
-			    vpbe_dev->amp = NULL;
+		पूर्ण अन्यथा अणु
+			    vpbe_dev->amp = शून्य;
 			    v4l2_warn(&vpbe_dev->v4l2_dev, "non-i2c amplifiers currently not supported");
-		}
-	} else {
-	    vpbe_dev->amp = NULL;
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+	    vpbe_dev->amp = शून्य;
+	पूर्ण
 
-	/* set the current encoder and output to that of venc by default */
+	/* set the current encoder and output to that of venc by शेष */
 	vpbe_dev->current_sd_index = 0;
 	vpbe_dev->current_out_index = 0;
 
 	mutex_unlock(&vpbe_dev->lock);
 
-	printk(KERN_NOTICE "Setting default output to %s\n", def_output);
-	ret = vpbe_set_default_output(vpbe_dev);
-	if (ret) {
+	prपूर्णांकk(KERN_NOTICE "Setting default output to %s\n", def_output);
+	ret = vpbe_set_शेष_output(vpbe_dev);
+	अगर (ret) अणु
 		v4l2_err(&vpbe_dev->v4l2_dev, "Failed to set default output %s",
 			 def_output);
-		goto fail_kfree_amp;
-	}
+		जाओ fail_kमुक्त_amp;
+	पूर्ण
 
-	printk(KERN_NOTICE "Setting default mode to %s\n", def_mode);
-	ret = vpbe_set_default_mode(vpbe_dev);
-	if (ret) {
+	prपूर्णांकk(KERN_NOTICE "Setting default mode to %s\n", def_mode);
+	ret = vpbe_set_शेष_mode(vpbe_dev);
+	अगर (ret) अणु
 		v4l2_err(&vpbe_dev->v4l2_dev, "Failed to set default mode %s",
 			 def_mode);
-		goto fail_kfree_amp;
-	}
+		जाओ fail_kमुक्त_amp;
+	पूर्ण
 	vpbe_dev->initialized = 1;
-	/* TBD handling of bootargs for default output and mode */
-	return 0;
+	/* TBD handling of bootargs क्रम शेष output and mode */
+	वापस 0;
 
-fail_kfree_amp:
+fail_kमुक्त_amp:
 	mutex_lock(&vpbe_dev->lock);
-	kfree(vpbe_dev->amp);
-fail_kfree_encoders:
-	kfree(vpbe_dev->encoders);
-fail_dev_unregister:
-	v4l2_device_unregister(&vpbe_dev->v4l2_dev);
+	kमुक्त(vpbe_dev->amp);
+fail_kमुक्त_encoders:
+	kमुक्त(vpbe_dev->encoders);
+fail_dev_unरेजिस्टर:
+	v4l2_device_unरेजिस्टर(&vpbe_dev->v4l2_dev);
 fail_clk_put:
-	if (strcmp(vpbe_dev->cfg->module_name, "dm644x-vpbe-display") != 0) {
+	अगर (म_भेद(vpbe_dev->cfg->module_name, "dm644x-vpbe-display") != 0) अणु
 		clk_disable_unprepare(vpbe_dev->dac_clk);
 		clk_put(vpbe_dev->dac_clk);
-	}
+	पूर्ण
 fail_mutex_unlock:
 	mutex_unlock(&vpbe_dev->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * vpbe_deinitialize() - de-initialize the vpbe display controller
@@ -748,93 +749,93 @@ fail_mutex_unlock:
  *
  * vpbe_master and slave frame buffer devices calls this to de-initialize
  * the display controller. It is called when master and slave device
- * driver modules are removed and no longer requires the display controller.
+ * driver modules are हटाओd and no दीर्घer requires the display controller.
  */
-static void vpbe_deinitialize(struct device *dev, struct vpbe_device *vpbe_dev)
-{
-	v4l2_device_unregister(&vpbe_dev->v4l2_dev);
-	if (strcmp(vpbe_dev->cfg->module_name, "dm644x-vpbe-display") != 0) {
+अटल व्योम vpbe_deinitialize(काष्ठा device *dev, काष्ठा vpbe_device *vpbe_dev)
+अणु
+	v4l2_device_unरेजिस्टर(&vpbe_dev->v4l2_dev);
+	अगर (म_भेद(vpbe_dev->cfg->module_name, "dm644x-vpbe-display") != 0) अणु
 		clk_disable_unprepare(vpbe_dev->dac_clk);
 		clk_put(vpbe_dev->dac_clk);
-	}
+	पूर्ण
 
-	kfree(vpbe_dev->amp);
-	kfree(vpbe_dev->encoders);
+	kमुक्त(vpbe_dev->amp);
+	kमुक्त(vpbe_dev->encoders);
 	vpbe_dev->initialized = 0;
-	/* disable vpss clocks */
-	vpss_enable_clock(VPSS_VPBE_CLOCK, 0);
-}
+	/* disable vpss घड़ीs */
+	vpss_enable_घड़ी(VPSS_VPBE_CLOCK, 0);
+पूर्ण
 
-static const struct vpbe_device_ops vpbe_dev_ops = {
-	.enum_outputs = vpbe_enum_outputs,
+अटल स्थिर काष्ठा vpbe_device_ops vpbe_dev_ops = अणु
+	.क्रमागत_outमाला_दो = vpbe_क्रमागत_outमाला_दो,
 	.set_output = vpbe_set_output,
 	.get_output = vpbe_get_output,
 	.s_dv_timings = vpbe_s_dv_timings,
 	.g_dv_timings = vpbe_g_dv_timings,
-	.enum_dv_timings = vpbe_enum_dv_timings,
+	.क्रमागत_dv_timings = vpbe_क्रमागत_dv_timings,
 	.s_std = vpbe_s_std,
 	.g_std = vpbe_g_std,
 	.initialize = vpbe_initialize,
 	.deinitialize = vpbe_deinitialize,
 	.get_mode_info = vpbe_get_current_mode_info,
 	.set_mode = vpbe_set_mode,
-};
+पूर्ण;
 
-static int vpbe_probe(struct platform_device *pdev)
-{
-	struct vpbe_device *vpbe_dev;
-	struct vpbe_config *cfg;
+अटल पूर्णांक vpbe_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vpbe_device *vpbe_dev;
+	काष्ठा vpbe_config *cfg;
 
-	if (!pdev->dev.platform_data) {
+	अगर (!pdev->dev.platक्रमm_data) अणु
 		v4l2_err(pdev->dev.driver, "No platform data\n");
-		return -ENODEV;
-	}
-	cfg = pdev->dev.platform_data;
+		वापस -ENODEV;
+	पूर्ण
+	cfg = pdev->dev.platक्रमm_data;
 
-	if (!cfg->module_name[0] ||
+	अगर (!cfg->module_name[0] ||
 	    !cfg->osd.module_name[0] ||
-	    !cfg->venc.module_name[0]) {
+	    !cfg->venc.module_name[0]) अणु
 		v4l2_err(pdev->dev.driver, "vpbe display module names not defined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	vpbe_dev = kzalloc(sizeof(*vpbe_dev), GFP_KERNEL);
-	if (!vpbe_dev)
-		return -ENOMEM;
+	vpbe_dev = kzalloc(माप(*vpbe_dev), GFP_KERNEL);
+	अगर (!vpbe_dev)
+		वापस -ENOMEM;
 
 	vpbe_dev->cfg = cfg;
 	vpbe_dev->ops = vpbe_dev_ops;
 	vpbe_dev->pdev = &pdev->dev;
 
-	if (cfg->outputs->num_modes > 0)
-		vpbe_dev->current_timings = vpbe_dev->cfg->outputs[0].modes[0];
-	else {
-		kfree(vpbe_dev);
-		return -ENODEV;
-	}
+	अगर (cfg->outमाला_दो->num_modes > 0)
+		vpbe_dev->current_timings = vpbe_dev->cfg->outमाला_दो[0].modes[0];
+	अन्यथा अणु
+		kमुक्त(vpbe_dev);
+		वापस -ENODEV;
+	पूर्ण
 
-	/* set the driver data in platform device */
-	platform_set_drvdata(pdev, vpbe_dev);
+	/* set the driver data in platक्रमm device */
+	platक्रमm_set_drvdata(pdev, vpbe_dev);
 	mutex_init(&vpbe_dev->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vpbe_remove(struct platform_device *device)
-{
-	struct vpbe_device *vpbe_dev = platform_get_drvdata(device);
+अटल पूर्णांक vpbe_हटाओ(काष्ठा platक्रमm_device *device)
+अणु
+	काष्ठा vpbe_device *vpbe_dev = platक्रमm_get_drvdata(device);
 
-	kfree(vpbe_dev);
+	kमुक्त(vpbe_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver vpbe_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver vpbe_driver = अणु
+	.driver	= अणु
 		.name	= "vpbe_controller",
-	},
+	पूर्ण,
 	.probe = vpbe_probe,
-	.remove = vpbe_remove,
-};
+	.हटाओ = vpbe_हटाओ,
+पूर्ण;
 
-module_platform_driver(vpbe_driver);
+module_platक्रमm_driver(vpbe_driver);

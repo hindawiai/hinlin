@@ -1,155 +1,156 @@
-#include <linux/errno.h>
-#include <linux/ip.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/socket.h>
-#include <linux/types.h>
-#include <net/checksum.h>
-#include <net/ip.h>
-#include <net/ip6_fib.h>
-#include <net/lwtunnel.h>
-#include <net/protocol.h>
-#include <uapi/linux/ila.h>
-#include "ila.h"
+<शैली गुरु>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ip.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/types.h>
+#समावेश <net/checksum.h>
+#समावेश <net/ip.h>
+#समावेश <net/ip6_fib.h>
+#समावेश <net/lwtunnel.h>
+#समावेश <net/protocol.h>
+#समावेश <uapi/linux/ila.h>
+#समावेश "ila.h"
 
-void ila_init_saved_csum(struct ila_params *p)
-{
-	if (!p->locator_match.v64)
-		return;
+व्योम ila_init_saved_csum(काष्ठा ila_params *p)
+अणु
+	अगर (!p->locator_match.v64)
+		वापस;
 
-	p->csum_diff = compute_csum_diff8(
+	p->csum_dअगरf = compute_csum_dअगरf8(
 				(__be32 *)&p->locator,
 				(__be32 *)&p->locator_match);
-}
+पूर्ण
 
-static __wsum get_csum_diff_iaddr(struct ila_addr *iaddr, struct ila_params *p)
-{
-	if (p->locator_match.v64)
-		return p->csum_diff;
-	else
-		return compute_csum_diff8((__be32 *)&p->locator,
+अटल __wsum get_csum_dअगरf_iaddr(काष्ठा ila_addr *iaddr, काष्ठा ila_params *p)
+अणु
+	अगर (p->locator_match.v64)
+		वापस p->csum_dअगरf;
+	अन्यथा
+		वापस compute_csum_dअगरf8((__be32 *)&p->locator,
 					  (__be32 *)&iaddr->loc);
-}
+पूर्ण
 
-static __wsum get_csum_diff(struct ipv6hdr *ip6h, struct ila_params *p)
-{
-	return get_csum_diff_iaddr(ila_a2i(&ip6h->daddr), p);
-}
+अटल __wsum get_csum_dअगरf(काष्ठा ipv6hdr *ip6h, काष्ठा ila_params *p)
+अणु
+	वापस get_csum_dअगरf_iaddr(ila_a2i(&ip6h->daddr), p);
+पूर्ण
 
-static void ila_csum_do_neutral_fmt(struct ila_addr *iaddr,
-				    struct ila_params *p)
-{
-	__sum16 *adjust = (__force __sum16 *)&iaddr->ident.v16[3];
-	__wsum diff, fval;
+अटल व्योम ila_csum_करो_neutral_fmt(काष्ठा ila_addr *iaddr,
+				    काष्ठा ila_params *p)
+अणु
+	__sum16 *adjust = (__क्रमce __sum16 *)&iaddr->ident.v16[3];
+	__wsum dअगरf, fval;
 
-	diff = get_csum_diff_iaddr(iaddr, p);
+	dअगरf = get_csum_dअगरf_iaddr(iaddr, p);
 
-	fval = (__force __wsum)(ila_csum_neutral_set(iaddr->ident) ?
+	fval = (__क्रमce __wsum)(ila_csum_neutral_set(iaddr->ident) ?
 			CSUM_NEUTRAL_FLAG : ~CSUM_NEUTRAL_FLAG);
 
-	diff = csum_add(diff, fval);
+	dअगरf = csum_add(dअगरf, fval);
 
-	*adjust = ~csum_fold(csum_add(diff, csum_unfold(*adjust)));
+	*adjust = ~csum_fold(csum_add(dअगरf, csum_unfold(*adjust)));
 
-	/* Flip the csum-neutral bit. Either we are doing a SIR->ILA
+	/* Flip the csum-neutral bit. Either we are करोing a SIR->ILA
 	 * translation with ILA_CSUM_NEUTRAL_MAP as the csum_method
-	 * and the C-bit is not set, or we are doing an ILA-SIR
+	 * and the C-bit is not set, or we are करोing an ILA-SIR
 	 * tranlsation and the C-bit is set.
 	 */
 	iaddr->ident.csum_neutral ^= 1;
-}
+पूर्ण
 
-static void ila_csum_do_neutral_nofmt(struct ila_addr *iaddr,
-				      struct ila_params *p)
-{
-	__sum16 *adjust = (__force __sum16 *)&iaddr->ident.v16[3];
-	__wsum diff;
+अटल व्योम ila_csum_करो_neutral_nofmt(काष्ठा ila_addr *iaddr,
+				      काष्ठा ila_params *p)
+अणु
+	__sum16 *adjust = (__क्रमce __sum16 *)&iaddr->ident.v16[3];
+	__wsum dअगरf;
 
-	diff = get_csum_diff_iaddr(iaddr, p);
+	dअगरf = get_csum_dअगरf_iaddr(iaddr, p);
 
-	*adjust = ~csum_fold(csum_add(diff, csum_unfold(*adjust)));
-}
+	*adjust = ~csum_fold(csum_add(dअगरf, csum_unfold(*adjust)));
+पूर्ण
 
-static void ila_csum_adjust_transport(struct sk_buff *skb,
-				      struct ila_params *p)
-{
-	size_t nhoff = sizeof(struct ipv6hdr);
-	struct ipv6hdr *ip6h = ipv6_hdr(skb);
-	__wsum diff;
+अटल व्योम ila_csum_adjust_transport(काष्ठा sk_buff *skb,
+				      काष्ठा ila_params *p)
+अणु
+	माप_प्रकार nhoff = माप(काष्ठा ipv6hdr);
+	काष्ठा ipv6hdr *ip6h = ipv6_hdr(skb);
+	__wsum dअगरf;
 
-	switch (ip6h->nexthdr) {
-	case NEXTHDR_TCP:
-		if (likely(pskb_may_pull(skb, nhoff + sizeof(struct tcphdr)))) {
-			struct tcphdr *th = (struct tcphdr *)
+	चयन (ip6h->nexthdr) अणु
+	हाल NEXTHDR_TCP:
+		अगर (likely(pskb_may_pull(skb, nhoff + माप(काष्ठा tcphdr)))) अणु
+			काष्ठा tcphdr *th = (काष्ठा tcphdr *)
 					(skb_network_header(skb) + nhoff);
 
-			diff = get_csum_diff(ip6h, p);
-			inet_proto_csum_replace_by_diff(&th->check, skb,
-							diff, true);
-		}
-		break;
-	case NEXTHDR_UDP:
-		if (likely(pskb_may_pull(skb, nhoff + sizeof(struct udphdr)))) {
-			struct udphdr *uh = (struct udphdr *)
+			dअगरf = get_csum_dअगरf(ip6h, p);
+			inet_proto_csum_replace_by_dअगरf(&th->check, skb,
+							dअगरf, true);
+		पूर्ण
+		अवरोध;
+	हाल NEXTHDR_UDP:
+		अगर (likely(pskb_may_pull(skb, nhoff + माप(काष्ठा udphdr)))) अणु
+			काष्ठा udphdr *uh = (काष्ठा udphdr *)
 					(skb_network_header(skb) + nhoff);
 
-			if (uh->check || skb->ip_summed == CHECKSUM_PARTIAL) {
-				diff = get_csum_diff(ip6h, p);
-				inet_proto_csum_replace_by_diff(&uh->check, skb,
-								diff, true);
-				if (!uh->check)
+			अगर (uh->check || skb->ip_summed == CHECKSUM_PARTIAL) अणु
+				dअगरf = get_csum_dअगरf(ip6h, p);
+				inet_proto_csum_replace_by_dअगरf(&uh->check, skb,
+								dअगरf, true);
+				अगर (!uh->check)
 					uh->check = CSUM_MANGLED_0;
-			}
-		}
-		break;
-	case NEXTHDR_ICMP:
-		if (likely(pskb_may_pull(skb,
-					 nhoff + sizeof(struct icmp6hdr)))) {
-			struct icmp6hdr *ih = (struct icmp6hdr *)
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल NEXTHDR_ICMP:
+		अगर (likely(pskb_may_pull(skb,
+					 nhoff + माप(काष्ठा icmp6hdr)))) अणु
+			काष्ठा icmp6hdr *ih = (काष्ठा icmp6hdr *)
 					(skb_network_header(skb) + nhoff);
 
-			diff = get_csum_diff(ip6h, p);
-			inet_proto_csum_replace_by_diff(&ih->icmp6_cksum, skb,
-							diff, true);
-		}
-		break;
-	}
-}
+			dअगरf = get_csum_dअगरf(ip6h, p);
+			inet_proto_csum_replace_by_dअगरf(&ih->icmp6_cksum, skb,
+							dअगरf, true);
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void ila_update_ipv6_locator(struct sk_buff *skb, struct ila_params *p,
+व्योम ila_update_ipv6_locator(काष्ठा sk_buff *skb, काष्ठा ila_params *p,
 			     bool sir2ila)
-{
-	struct ipv6hdr *ip6h = ipv6_hdr(skb);
-	struct ila_addr *iaddr = ila_a2i(&ip6h->daddr);
+अणु
+	काष्ठा ipv6hdr *ip6h = ipv6_hdr(skb);
+	काष्ठा ila_addr *iaddr = ila_a2i(&ip6h->daddr);
 
-	switch (p->csum_mode) {
-	case ILA_CSUM_ADJUST_TRANSPORT:
+	चयन (p->csum_mode) अणु
+	हाल ILA_CSUM_ADJUST_TRANSPORT:
 		ila_csum_adjust_transport(skb, p);
-		break;
-	case ILA_CSUM_NEUTRAL_MAP:
-		if (sir2ila) {
-			if (WARN_ON(ila_csum_neutral_set(iaddr->ident))) {
+		अवरोध;
+	हाल ILA_CSUM_NEUTRAL_MAP:
+		अगर (sir2ila) अणु
+			अगर (WARN_ON(ila_csum_neutral_set(iaddr->ident))) अणु
 				/* Checksum flag should never be
-				 * set in a formatted SIR address.
+				 * set in a क्रमmatted SIR address.
 				 */
-				break;
-			}
-		} else if (!ila_csum_neutral_set(iaddr->ident)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!ila_csum_neutral_set(iaddr->ident)) अणु
 			/* ILA to SIR translation and C-bit isn't
 			 * set so we're good.
 			 */
-			break;
-		}
-		ila_csum_do_neutral_fmt(iaddr, p);
-		break;
-	case ILA_CSUM_NEUTRAL_MAP_AUTO:
-		ila_csum_do_neutral_nofmt(iaddr, p);
-		break;
-	case ILA_CSUM_NO_ACTION:
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		ila_csum_करो_neutral_fmt(iaddr, p);
+		अवरोध;
+	हाल ILA_CSUM_NEUTRAL_MAP_AUTO:
+		ila_csum_करो_neutral_nofmt(iaddr, p);
+		अवरोध;
+	हाल ILA_CSUM_NO_ACTION:
+		अवरोध;
+	पूर्ण
 
 	/* Now change destination address */
 	iaddr->loc = p->locator;
-}
+पूर्ण

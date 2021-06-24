@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Purna Chandra Mandal,<purna.mandal@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
-#include <dt-bindings/clock/microchip,pic32-clock.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <asm/traps.h>
+#समावेश <dt-bindings/घड़ी/microchip,pic32-घड़ी.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <यंत्र/traps.h>
 
-#include "clk-core.h"
+#समावेश "clk-core.h"
 
 /* FRC Postscaler */
-#define OSC_FRCDIV_MASK		0x07
-#define OSC_FRCDIV_SHIFT	24
+#घोषणा OSC_FRCDIV_MASK		0x07
+#घोषणा OSC_FRCDIV_SHIFT	24
 
 /* SPLL fields */
-#define PLL_ICLK_MASK		0x01
-#define PLL_ICLK_SHIFT		7
+#घोषणा PLL_ICLK_MASK		0x01
+#घोषणा PLL_ICLK_SHIFT		7
 
-#define DECLARE_PERIPHERAL_CLOCK(__clk_name, __reg, __flags)	\
-	{							\
+#घोषणा DECLARE_PERIPHERAL_CLOCK(__clk_name, __reg, __flags)	\
+	अणु							\
 		.ctrl_reg = (__reg),				\
-		.init_data = {					\
+		.init_data = अणु					\
 			.name = (__clk_name),			\
-			.parent_names = (const char *[]) {	\
+			.parent_names = (स्थिर अक्षर *[]) अणु	\
 				"sys_clk"			\
-			},					\
+			पूर्ण,					\
 			.num_parents = 1,			\
 			.ops = &pic32_pbclk_ops,		\
 			.flags = (__flags),			\
-		},						\
-	}
+		पूर्ण,						\
+	पूर्ण
 
-#define DECLARE_REFO_CLOCK(__clkid, __reg)				\
-	{								\
+#घोषणा DECLARE_REFO_CLOCK(__clkid, __reg)				\
+	अणु								\
 		.ctrl_reg = (__reg),					\
-		.init_data = {						\
+		.init_data = अणु						\
 			.name = "refo" #__clkid "_clk",			\
-			.parent_names = (const char *[]) {		\
+			.parent_names = (स्थिर अक्षर *[]) अणु		\
 				"sys_clk", "pb1_clk", "posc_clk",	\
 				"frc_clk", "lprc_clk", "sosc_clk",	\
 				"sys_pll", "refi" #__clkid "_clk",	\
 				"bfrc_clk",				\
-			},						\
+			पूर्ण,						\
 			.num_parents = 9,				\
 			.flags = CLK_SET_RATE_GATE | CLK_SET_PARENT_GATE,\
 			.ops = &pic32_roclk_ops,			\
-		},							\
-		.parent_map = (const u32[]) {				\
+		पूर्ण,							\
+		.parent_map = (स्थिर u32[]) अणु				\
 			0, 1, 2, 3, 4, 5, 7, 8, 9			\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-static const struct pic32_ref_osc_data ref_clks[] = {
+अटल स्थिर काष्ठा pic32_ref_osc_data ref_clks[] = अणु
 	DECLARE_REFO_CLOCK(1, 0x80),
 	DECLARE_REFO_CLOCK(2, 0xa0),
 	DECLARE_REFO_CLOCK(3, 0xc0),
 	DECLARE_REFO_CLOCK(4, 0xe0),
 	DECLARE_REFO_CLOCK(5, 0x100),
-};
+पूर्ण;
 
-static const struct pic32_periph_clk_data periph_clocks[] = {
+अटल स्थिर काष्ठा pic32_periph_clk_data periph_घड़ीs[] = अणु
 	DECLARE_PERIPHERAL_CLOCK("pb1_clk", 0x140, 0),
 	DECLARE_PERIPHERAL_CLOCK("pb2_clk", 0x150, CLK_IGNORE_UNUSED),
 	DECLARE_PERIPHERAL_CLOCK("pb3_clk", 0x160, 0),
@@ -74,122 +75,122 @@ static const struct pic32_periph_clk_data periph_clocks[] = {
 	DECLARE_PERIPHERAL_CLOCK("pb5_clk", 0x180, 0),
 	DECLARE_PERIPHERAL_CLOCK("pb6_clk", 0x190, 0),
 	DECLARE_PERIPHERAL_CLOCK("cpu_clk", 0x1a0, CLK_IGNORE_UNUSED),
-};
+पूर्ण;
 
-static const struct pic32_sys_clk_data sys_mux_clk = {
+अटल स्थिर काष्ठा pic32_sys_clk_data sys_mux_clk = अणु
 	.slew_reg = 0x1c0,
-	.slew_div = 2, /* step of div_4 -> div_2 -> no_div */
-	.init_data = {
+	.slew_भाग = 2, /* step of भाग_4 -> भाग_2 -> no_भाग */
+	.init_data = अणु
 		.name = "sys_clk",
-		.parent_names = (const char *[]) {
+		.parent_names = (स्थिर अक्षर *[]) अणु
 			"frcdiv_clk", "sys_pll", "posc_clk",
 			"sosc_clk", "lprc_clk", "frcdiv_clk",
-		},
+		पूर्ण,
 		.num_parents = 6,
 		.ops = &pic32_sclk_ops,
-	},
-	.parent_map = (const u32[]) {
+	पूर्ण,
+	.parent_map = (स्थिर u32[]) अणु
 		0, 1, 2, 4, 5, 7,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct pic32_sys_pll_data sys_pll = {
+अटल स्थिर काष्ठा pic32_sys_pll_data sys_pll = अणु
 	.ctrl_reg = 0x020,
 	.status_reg = 0x1d0,
 	.lock_mask = BIT(7),
-	.init_data = {
+	.init_data = अणु
 		.name = "sys_pll",
-		.parent_names = (const char *[]) {
+		.parent_names = (स्थिर अक्षर *[]) अणु
 			"spll_mux_clk"
-		},
+		पूर्ण,
 		.num_parents = 1,
 		.ops = &pic32_spll_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct pic32_sec_osc_data sosc_clk = {
+अटल स्थिर काष्ठा pic32_sec_osc_data sosc_clk = अणु
 	.status_reg = 0x1d0,
 	.enable_mask = BIT(1),
 	.status_mask = BIT(4),
 	.fixed_rate = 32768,
-	.init_data = {
+	.init_data = अणु
 		.name = "sosc_clk",
-		.parent_names = NULL,
+		.parent_names = शून्य,
 		.ops = &pic32_sosc_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int pic32mzda_critical_clks[] = {
+अटल पूर्णांक pic32mzda_critical_clks[] = अणु
 	PB2CLK, PB7CLK
-};
+पूर्ण;
 
-/* PIC32MZDA clock data */
-struct pic32mzda_clk_data {
-	struct clk *clks[MAXCLKS];
-	struct pic32_clk_common core;
-	struct clk_onecell_data onecell_data;
-	struct notifier_block failsafe_notifier;
-};
+/* PIC32MZDA घड़ी data */
+काष्ठा pic32mzda_clk_data अणु
+	काष्ठा clk *clks[MAXCLKS];
+	काष्ठा pic32_clk_common core;
+	काष्ठा clk_onecell_data onecell_data;
+	काष्ठा notअगरier_block failsafe_notअगरier;
+पूर्ण;
 
-static int pic32_fscm_nmi(struct notifier_block *nb,
-			  unsigned long action, void *data)
-{
-	struct pic32mzda_clk_data *cd;
+अटल पूर्णांक pic32_fscm_nmi(काष्ठा notअगरier_block *nb,
+			  अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	काष्ठा pic32mzda_clk_data *cd;
 
-	cd  = container_of(nb, struct pic32mzda_clk_data, failsafe_notifier);
+	cd  = container_of(nb, काष्ठा pic32mzda_clk_data, failsafe_notअगरier);
 
-	/* SYSCLK is now running from BFRCCLK. Report clock failure. */
-	if (readl(cd->core.iobase) & BIT(2))
+	/* SYSCLK is now running from BFRCCLK. Report घड़ी failure. */
+	अगर (पढ़ोl(cd->core.iobase) & BIT(2))
 		pr_alert("pic32-clk: FSCM detected clk failure.\n");
 
 	/* TODO: detect reason of failure and recover accordingly */
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static int pic32mzda_clk_probe(struct platform_device *pdev)
-{
-	const char *const pll_mux_parents[] = {"posc_clk", "frc_clk"};
-	struct device_node *np = pdev->dev.of_node;
-	struct pic32mzda_clk_data *cd;
-	struct pic32_clk_common *core;
-	struct clk *pll_mux_clk, *clk;
-	struct clk **clks;
-	int nr_clks, i, ret;
+अटल पूर्णांक pic32mzda_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर अक्षर *स्थिर pll_mux_parents[] = अणु"posc_clk", "frc_clk"पूर्ण;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा pic32mzda_clk_data *cd;
+	काष्ठा pic32_clk_common *core;
+	काष्ठा clk *pll_mux_clk, *clk;
+	काष्ठा clk **clks;
+	पूर्णांक nr_clks, i, ret;
 
-	cd = devm_kzalloc(&pdev->dev, sizeof(*cd), GFP_KERNEL);
-	if (!cd)
-		return -ENOMEM;
+	cd = devm_kzalloc(&pdev->dev, माप(*cd), GFP_KERNEL);
+	अगर (!cd)
+		वापस -ENOMEM;
 
 	core = &cd->core;
 	core->iobase = of_io_request_and_map(np, 0, of_node_full_name(np));
-	if (IS_ERR(core->iobase)) {
+	अगर (IS_ERR(core->iobase)) अणु
 		dev_err(&pdev->dev, "pic32-clk: failed to map registers\n");
-		return PTR_ERR(core->iobase);
-	}
+		वापस PTR_ERR(core->iobase);
+	पूर्ण
 
 	spin_lock_init(&core->reg_lock);
 	core->dev = &pdev->dev;
 	clks = &cd->clks[0];
 
-	/* register fixed rate clocks */
-	clks[POSCCLK] = clk_register_fixed_rate(&pdev->dev, "posc_clk", NULL,
+	/* रेजिस्टर fixed rate घड़ीs */
+	clks[POSCCLK] = clk_रेजिस्टर_fixed_rate(&pdev->dev, "posc_clk", शून्य,
 						0, 24000000);
-	clks[FRCCLK] =  clk_register_fixed_rate(&pdev->dev, "frc_clk", NULL,
+	clks[FRCCLK] =  clk_रेजिस्टर_fixed_rate(&pdev->dev, "frc_clk", शून्य,
 						0, 8000000);
-	clks[BFRCCLK] = clk_register_fixed_rate(&pdev->dev, "bfrc_clk", NULL,
+	clks[BFRCCLK] = clk_रेजिस्टर_fixed_rate(&pdev->dev, "bfrc_clk", शून्य,
 						0, 8000000);
-	clks[LPRCCLK] = clk_register_fixed_rate(&pdev->dev, "lprc_clk", NULL,
+	clks[LPRCCLK] = clk_रेजिस्टर_fixed_rate(&pdev->dev, "lprc_clk", शून्य,
 						0, 32000);
-	clks[UPLLCLK] = clk_register_fixed_rate(&pdev->dev, "usbphy_clk", NULL,
+	clks[UPLLCLK] = clk_रेजिस्टर_fixed_rate(&pdev->dev, "usbphy_clk", शून्य,
 						0, 24000000);
-	/* fixed rate (optional) clock */
-	if (of_find_property(np, "microchip,pic32mzda-sosc", NULL)) {
+	/* fixed rate (optional) घड़ी */
+	अगर (of_find_property(np, "microchip,pic32mzda-sosc", शून्य)) अणु
 		pr_info("pic32-clk: dt requests SOSC.\n");
-		clks[SOSCCLK] = pic32_sosc_clk_register(&sosc_clk, core);
-	}
-	/* divider clock */
-	clks[FRCDIVCLK] = clk_register_divider(&pdev->dev, "frcdiv_clk",
+		clks[SOSCCLK] = pic32_sosc_clk_रेजिस्टर(&sosc_clk, core);
+	पूर्ण
+	/* भागider घड़ी */
+	clks[FRCDIVCLK] = clk_रेजिस्टर_भागider(&pdev->dev, "frcdiv_clk",
 					       "frc_clk", 0,
 					       core->iobase,
 					       OSC_FRCDIV_SHIFT,
@@ -197,71 +198,71 @@ static int pic32mzda_clk_probe(struct platform_device *pdev)
 					       CLK_DIVIDER_POWER_OF_TWO,
 					       &core->reg_lock);
 	/* PLL ICLK mux */
-	pll_mux_clk = clk_register_mux(&pdev->dev, "spll_mux_clk",
+	pll_mux_clk = clk_रेजिस्टर_mux(&pdev->dev, "spll_mux_clk",
 				       pll_mux_parents, 2, 0,
 				       core->iobase + 0x020,
 				       PLL_ICLK_SHIFT, 1, 0, &core->reg_lock);
-	if (IS_ERR(pll_mux_clk))
+	अगर (IS_ERR(pll_mux_clk))
 		pr_err("spll_mux_clk: clk register failed\n");
 
 	/* PLL */
-	clks[PLLCLK] = pic32_spll_clk_register(&sys_pll, core);
-	/* SYSTEM clock */
-	clks[SCLK] = pic32_sys_clk_register(&sys_mux_clk, core);
-	/* Peripheral bus clocks */
-	for (nr_clks = PB1CLK, i = 0; nr_clks <= PB7CLK; i++, nr_clks++)
-		clks[nr_clks] = pic32_periph_clk_register(&periph_clocks[i],
+	clks[PLLCLK] = pic32_spll_clk_रेजिस्टर(&sys_pll, core);
+	/* SYSTEM घड़ी */
+	clks[SCLK] = pic32_sys_clk_रेजिस्टर(&sys_mux_clk, core);
+	/* Peripheral bus घड़ीs */
+	क्रम (nr_clks = PB1CLK, i = 0; nr_clks <= PB7CLK; i++, nr_clks++)
+		clks[nr_clks] = pic32_periph_clk_रेजिस्टर(&periph_घड़ीs[i],
 							  core);
-	/* Reference oscillator clock */
-	for (nr_clks = REF1CLK, i = 0; nr_clks <= REF5CLK; i++, nr_clks++)
-		clks[nr_clks] = pic32_refo_clk_register(&ref_clks[i], core);
+	/* Reference oscillator घड़ी */
+	क्रम (nr_clks = REF1CLK, i = 0; nr_clks <= REF5CLK; i++, nr_clks++)
+		clks[nr_clks] = pic32_refo_clk_रेजिस्टर(&ref_clks[i], core);
 
-	/* register clkdev */
-	for (i = 0; i < MAXCLKS; i++) {
-		if (IS_ERR(clks[i]))
-			continue;
-		clk_register_clkdev(clks[i], NULL, __clk_get_name(clks[i]));
-	}
+	/* रेजिस्टर clkdev */
+	क्रम (i = 0; i < MAXCLKS; i++) अणु
+		अगर (IS_ERR(clks[i]))
+			जारी;
+		clk_रेजिस्टर_clkdev(clks[i], शून्य, __clk_get_name(clks[i]));
+	पूर्ण
 
-	/* register clock provider */
+	/* रेजिस्टर घड़ी provider */
 	cd->onecell_data.clks = clks;
 	cd->onecell_data.clk_num = MAXCLKS;
 	ret = of_clk_add_provider(np, of_clk_src_onecell_get,
 				  &cd->onecell_data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* force enable critical clocks */
-	for (i = 0; i < ARRAY_SIZE(pic32mzda_critical_clks); i++) {
+	/* क्रमce enable critical घड़ीs */
+	क्रम (i = 0; i < ARRAY_SIZE(pic32mzda_critical_clks); i++) अणु
 		clk = clks[pic32mzda_critical_clks[i]];
-		if (clk_prepare_enable(clk))
+		अगर (clk_prepare_enable(clk))
 			dev_err(&pdev->dev, "clk_prepare_enable(%s) failed\n",
 				__clk_get_name(clk));
-	}
+	पूर्ण
 
-	/* register NMI for failsafe clock monitor */
-	cd->failsafe_notifier.notifier_call = pic32_fscm_nmi;
-	return register_nmi_notifier(&cd->failsafe_notifier);
-}
+	/* रेजिस्टर NMI क्रम failsafe घड़ी monitor */
+	cd->failsafe_notअगरier.notअगरier_call = pic32_fscm_nmi;
+	वापस रेजिस्टर_nmi_notअगरier(&cd->failsafe_notअगरier);
+पूर्ण
 
-static const struct of_device_id pic32mzda_clk_match_table[] = {
-	{ .compatible = "microchip,pic32mzda-clk", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id pic32mzda_clk_match_table[] = अणु
+	अणु .compatible = "microchip,pic32mzda-clk", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pic32mzda_clk_match_table);
 
-static struct platform_driver pic32mzda_clk_driver = {
+अटल काष्ठा platक्रमm_driver pic32mzda_clk_driver = अणु
 	.probe		= pic32mzda_clk_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "clk-pic32mzda",
 		.of_match_table = pic32mzda_clk_match_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init microchip_pic32mzda_clk_init(void)
-{
-	return platform_driver_register(&pic32mzda_clk_driver);
-}
+अटल पूर्णांक __init microchip_pic32mzda_clk_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&pic32mzda_clk_driver);
+पूर्ण
 core_initcall(microchip_pic32mzda_clk_init);
 
 MODULE_DESCRIPTION("Microchip PIC32MZDA Clock Driver");

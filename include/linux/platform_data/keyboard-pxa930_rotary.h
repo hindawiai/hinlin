@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_ARCH_PXA930_ROTARY_H
-#define __ASM_ARCH_PXA930_ROTARY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_ARCH_PXA930_ROTARY_H
+#घोषणा __ASM_ARCH_PXA930_ROTARY_H
 
 /* NOTE:
  *
- * rotary can be either interpreted as a ralative input event (e.g.
- * REL_WHEEL or REL_HWHEEL) or a specific key event (e.g. UP/DOWN
- * or LEFT/RIGHT), depending on if up_key & down_key are assigned
- * or rel_code is assigned a non-zero value. When all are non-zero,
- * up_key and down_key will be preferred.
+ * rotary can be either पूर्णांकerpreted as a ralative input event (e.g.
+ * REL_WHEEL or REL_HWHEEL) or a specअगरic key event (e.g. UP/DOWN
+ * or LEFT/RIGHT), depending on अगर up_key & करोwn_key are asचिन्हित
+ * or rel_code is asचिन्हित a non-zero value. When all are non-zero,
+ * up_key and करोwn_key will be preferred.
  */
-struct pxa930_rotary_platform_data {
-	int	up_key;
-	int	down_key;
-	int	rel_code;
-};
+काष्ठा pxa930_rotary_platक्रमm_data अणु
+	पूर्णांक	up_key;
+	पूर्णांक	करोwn_key;
+	पूर्णांक	rel_code;
+पूर्ण;
 
-void __init pxa930_set_rotarykey_info(struct pxa930_rotary_platform_data *info);
+व्योम __init pxa930_set_rotarykey_info(काष्ठा pxa930_rotary_platक्रमm_data *info);
 
-#endif /* __ASM_ARCH_PXA930_ROTARY_H */
+#पूर्ण_अगर /* __ASM_ARCH_PXA930_ROTARY_H */

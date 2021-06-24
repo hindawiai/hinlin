@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,165 +22,165 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/memory.h>
-#include <subdev/fb.h>
-#include <subdev/timer.h>
+#समावेश <core/memory.h>
+#समावेश <subdev/fb.h>
+#समावेश <subdev/समयr.h>
 
-void
-gf100_ltc_cbc_clear(struct nvkm_ltc *ltc, u32 start, u32 limit)
-{
-	struct nvkm_device *device = ltc->subdev.device;
+व्योम
+gf100_ltc_cbc_clear(काष्ठा nvkm_ltc *ltc, u32 start, u32 limit)
+अणु
+	काष्ठा nvkm_device *device = ltc->subdev.device;
 	nvkm_wr32(device, 0x17e8cc, start);
 	nvkm_wr32(device, 0x17e8d0, limit);
 	nvkm_wr32(device, 0x17e8c8, 0x00000004);
-}
+पूर्ण
 
-void
-gf100_ltc_cbc_wait(struct nvkm_ltc *ltc)
-{
-	struct nvkm_device *device = ltc->subdev.device;
-	int c, s;
-	for (c = 0; c < ltc->ltc_nr; c++) {
-		for (s = 0; s < ltc->lts_nr; s++) {
-			const u32 addr = 0x1410c8 + (c * 0x2000) + (s * 0x400);
+व्योम
+gf100_ltc_cbc_रुको(काष्ठा nvkm_ltc *ltc)
+अणु
+	काष्ठा nvkm_device *device = ltc->subdev.device;
+	पूर्णांक c, s;
+	क्रम (c = 0; c < ltc->ltc_nr; c++) अणु
+		क्रम (s = 0; s < ltc->lts_nr; s++) अणु
+			स्थिर u32 addr = 0x1410c8 + (c * 0x2000) + (s * 0x400);
 			nvkm_msec(device, 2000,
-				if (!nvkm_rd32(device, addr))
-					break;
+				अगर (!nvkm_rd32(device, addr))
+					अवरोध;
 			);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void
-gf100_ltc_zbc_clear_color(struct nvkm_ltc *ltc, int i, const u32 color[4])
-{
-	struct nvkm_device *device = ltc->subdev.device;
+व्योम
+gf100_ltc_zbc_clear_color(काष्ठा nvkm_ltc *ltc, पूर्णांक i, स्थिर u32 color[4])
+अणु
+	काष्ठा nvkm_device *device = ltc->subdev.device;
 	nvkm_mask(device, 0x17ea44, 0x0000000f, i);
 	nvkm_wr32(device, 0x17ea48, color[0]);
 	nvkm_wr32(device, 0x17ea4c, color[1]);
 	nvkm_wr32(device, 0x17ea50, color[2]);
 	nvkm_wr32(device, 0x17ea54, color[3]);
-}
+पूर्ण
 
-void
-gf100_ltc_zbc_clear_depth(struct nvkm_ltc *ltc, int i, const u32 depth)
-{
-	struct nvkm_device *device = ltc->subdev.device;
+व्योम
+gf100_ltc_zbc_clear_depth(काष्ठा nvkm_ltc *ltc, पूर्णांक i, स्थिर u32 depth)
+अणु
+	काष्ठा nvkm_device *device = ltc->subdev.device;
 	nvkm_mask(device, 0x17ea44, 0x0000000f, i);
 	nvkm_wr32(device, 0x17ea58, depth);
-}
+पूर्ण
 
-const struct nvkm_bitfield
-gf100_ltc_lts_intr_name[] = {
-	{ 0x00000001, "IDLE_ERROR_IQ" },
-	{ 0x00000002, "IDLE_ERROR_CBC" },
-	{ 0x00000004, "IDLE_ERROR_TSTG" },
-	{ 0x00000008, "IDLE_ERROR_DSTG" },
-	{ 0x00000010, "EVICTED_CB" },
-	{ 0x00000020, "ILLEGAL_COMPSTAT" },
-	{ 0x00000040, "BLOCKLINEAR_CB" },
-	{ 0x00000100, "ECC_SEC_ERROR" },
-	{ 0x00000200, "ECC_DED_ERROR" },
-	{ 0x00000400, "DEBUG" },
-	{ 0x00000800, "ATOMIC_TO_Z" },
-	{ 0x00001000, "ILLEGAL_ATOMIC" },
-	{ 0x00002000, "BLKACTIVITY_ERR" },
-	{}
-};
+स्थिर काष्ठा nvkm_bitfield
+gf100_ltc_lts_पूर्णांकr_name[] = अणु
+	अणु 0x00000001, "IDLE_ERROR_IQ" पूर्ण,
+	अणु 0x00000002, "IDLE_ERROR_CBC" पूर्ण,
+	अणु 0x00000004, "IDLE_ERROR_TSTG" पूर्ण,
+	अणु 0x00000008, "IDLE_ERROR_DSTG" पूर्ण,
+	अणु 0x00000010, "EVICTED_CB" पूर्ण,
+	अणु 0x00000020, "ILLEGAL_COMPSTAT" पूर्ण,
+	अणु 0x00000040, "BLOCKLINEAR_CB" पूर्ण,
+	अणु 0x00000100, "ECC_SEC_ERROR" पूर्ण,
+	अणु 0x00000200, "ECC_DED_ERROR" पूर्ण,
+	अणु 0x00000400, "DEBUG" पूर्ण,
+	अणु 0x00000800, "ATOMIC_TO_Z" पूर्ण,
+	अणु 0x00001000, "ILLEGAL_ATOMIC" पूर्ण,
+	अणु 0x00002000, "BLKACTIVITY_ERR" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void
-gf100_ltc_lts_intr(struct nvkm_ltc *ltc, int c, int s)
-{
-	struct nvkm_subdev *subdev = &ltc->subdev;
-	struct nvkm_device *device = subdev->device;
+अटल व्योम
+gf100_ltc_lts_पूर्णांकr(काष्ठा nvkm_ltc *ltc, पूर्णांक c, पूर्णांक s)
+अणु
+	काष्ठा nvkm_subdev *subdev = &ltc->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 base = 0x141000 + (c * 0x2000) + (s * 0x400);
-	u32 intr = nvkm_rd32(device, base + 0x020);
-	u32 stat = intr & 0x0000ffff;
-	char msg[128];
+	u32 पूर्णांकr = nvkm_rd32(device, base + 0x020);
+	u32 stat = पूर्णांकr & 0x0000ffff;
+	अक्षर msg[128];
 
-	if (stat) {
-		nvkm_snprintbf(msg, sizeof(msg), gf100_ltc_lts_intr_name, stat);
+	अगर (stat) अणु
+		nvkm_snprपूर्णांकbf(msg, माप(msg), gf100_ltc_lts_पूर्णांकr_name, stat);
 		nvkm_error(subdev, "LTC%d_LTS%d: %08x [%s]\n", c, s, stat, msg);
-	}
+	पूर्ण
 
-	nvkm_wr32(device, base + 0x020, intr);
-}
+	nvkm_wr32(device, base + 0x020, पूर्णांकr);
+पूर्ण
 
-void
-gf100_ltc_intr(struct nvkm_ltc *ltc)
-{
-	struct nvkm_device *device = ltc->subdev.device;
+व्योम
+gf100_ltc_पूर्णांकr(काष्ठा nvkm_ltc *ltc)
+अणु
+	काष्ठा nvkm_device *device = ltc->subdev.device;
 	u32 mask;
 
 	mask = nvkm_rd32(device, 0x00017c);
-	while (mask) {
+	जबतक (mask) अणु
 		u32 s, c = __ffs(mask);
-		for (s = 0; s < ltc->lts_nr; s++)
-			gf100_ltc_lts_intr(ltc, c, s);
+		क्रम (s = 0; s < ltc->lts_nr; s++)
+			gf100_ltc_lts_पूर्णांकr(ltc, c, s);
 		mask &= ~(1 << c);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-gf100_ltc_invalidate(struct nvkm_ltc *ltc)
-{
-	struct nvkm_device *device = ltc->subdev.device;
+व्योम
+gf100_ltc_invalidate(काष्ठा nvkm_ltc *ltc)
+अणु
+	काष्ठा nvkm_device *device = ltc->subdev.device;
 	s64 taken;
 
 	nvkm_wr32(device, 0x70004, 0x00000001);
-	taken = nvkm_wait_msec(device, 2000, 0x70004, 0x00000003, 0x00000000);
+	taken = nvkm_रुको_msec(device, 2000, 0x70004, 0x00000003, 0x00000000);
 
-	if (taken > 0)
+	अगर (taken > 0)
 		nvkm_debug(&ltc->subdev, "LTC invalidate took %lld ns\n", taken);
-}
+पूर्ण
 
-void
-gf100_ltc_flush(struct nvkm_ltc *ltc)
-{
-	struct nvkm_device *device = ltc->subdev.device;
+व्योम
+gf100_ltc_flush(काष्ठा nvkm_ltc *ltc)
+अणु
+	काष्ठा nvkm_device *device = ltc->subdev.device;
 	s64 taken;
 
 	nvkm_wr32(device, 0x70010, 0x00000001);
-	taken = nvkm_wait_msec(device, 2000, 0x70010, 0x00000003, 0x00000000);
+	taken = nvkm_रुको_msec(device, 2000, 0x70010, 0x00000003, 0x00000000);
 
-	if (taken > 0)
+	अगर (taken > 0)
 		nvkm_debug(&ltc->subdev, "LTC flush took %lld ns\n", taken);
-}
+पूर्ण
 
 /* TODO: Figure out tag memory details and drop the over-cautious allocation.
  */
-int
-gf100_ltc_oneinit_tag_ram(struct nvkm_ltc *ltc)
-{
-	struct nvkm_device *device = ltc->subdev.device;
-	struct nvkm_fb *fb = device->fb;
-	struct nvkm_ram *ram = fb->ram;
+पूर्णांक
+gf100_ltc_oneinit_tag_ram(काष्ठा nvkm_ltc *ltc)
+अणु
+	काष्ठा nvkm_device *device = ltc->subdev.device;
+	काष्ठा nvkm_fb *fb = device->fb;
+	काष्ठा nvkm_ram *ram = fb->ram;
 	u32 bits = (nvkm_rd32(device, 0x100c80) & 0x00001000) ? 16 : 17;
 	u32 tag_size, tag_margin, tag_align;
-	int ret;
+	पूर्णांक ret;
 
-	/* No VRAM, no tags for now. */
-	if (!ram) {
+	/* No VRAM, no tags क्रम now. */
+	अगर (!ram) अणु
 		ltc->num_tags = 0;
-		goto mm_init;
-	}
+		जाओ mm_init;
+	पूर्ण
 
-	/* tags for 1/4 of VRAM should be enough (8192/4 per GiB of VRAM) */
+	/* tags क्रम 1/4 of VRAM should be enough (8192/4 per GiB of VRAM) */
 	ltc->num_tags = (ram->size >> 17) / 4;
-	if (ltc->num_tags > (1 << bits))
+	अगर (ltc->num_tags > (1 << bits))
 		ltc->num_tags = 1 << bits; /* we have 16/17 bits in PTE */
 	ltc->num_tags = (ltc->num_tags + 63) & ~63; /* round up to 64 */
 
 	tag_align = ltc->ltc_nr * 0x800;
 	tag_margin = (tag_align < 0x6000) ? 0x6000 : tag_align;
 
-	/* 4 part 4 sub: 0x2000 bytes for 56 tags */
-	/* 3 part 4 sub: 0x6000 bytes for 168 tags */
+	/* 4 part 4 sub: 0x2000 bytes क्रम 56 tags */
+	/* 3 part 4 sub: 0x6000 bytes क्रम 168 tags */
 	/*
 	 * About 147 bytes per tag. Let's be safe and allocate x2, which makes
-	 * 0x4980 bytes for 64 tags, and round up to 0x6000 bytes for 64 tags.
+	 * 0x4980 bytes क्रम 64 tags, and round up to 0x6000 bytes क्रम 64 tags.
 	 *
 	 * For 4 GiB of memory we'll have 8192 tags which makes 3 MiB, < 0.1 %.
 	 */
@@ -188,69 +189,69 @@ gf100_ltc_oneinit_tag_ram(struct nvkm_ltc *ltc)
 
 	ret = nvkm_ram_get(device, NVKM_RAM_MM_NORMAL, 0x01, 12, tag_size,
 			   true, true, &ltc->tag_ram);
-	if (ret) {
+	अगर (ret) अणु
 		ltc->num_tags = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		u64 tag_base = nvkm_memory_addr(ltc->tag_ram) + tag_margin;
 
 		tag_base += tag_align - 1;
-		do_div(tag_base, tag_align);
+		करो_भाग(tag_base, tag_align);
 
 		ltc->tag_base = tag_base;
-	}
+	पूर्ण
 
 mm_init:
 	nvkm_mm_fini(&fb->tags.mm);
-	return nvkm_mm_init(&fb->tags.mm, 0, 0, ltc->num_tags, 1);
-}
+	वापस nvkm_mm_init(&fb->tags.mm, 0, 0, ltc->num_tags, 1);
+पूर्ण
 
-int
-gf100_ltc_oneinit(struct nvkm_ltc *ltc)
-{
-	struct nvkm_device *device = ltc->subdev.device;
-	const u32 parts = nvkm_rd32(device, 0x022438);
-	const u32  mask = nvkm_rd32(device, 0x022554);
-	const u32 slice = nvkm_rd32(device, 0x17e8dc) >> 28;
-	int i;
+पूर्णांक
+gf100_ltc_oneinit(काष्ठा nvkm_ltc *ltc)
+अणु
+	काष्ठा nvkm_device *device = ltc->subdev.device;
+	स्थिर u32 parts = nvkm_rd32(device, 0x022438);
+	स्थिर u32  mask = nvkm_rd32(device, 0x022554);
+	स्थिर u32 slice = nvkm_rd32(device, 0x17e8dc) >> 28;
+	पूर्णांक i;
 
-	for (i = 0; i < parts; i++) {
-		if (!(mask & (1 << i)))
+	क्रम (i = 0; i < parts; i++) अणु
+		अगर (!(mask & (1 << i)))
 			ltc->ltc_nr++;
-	}
+	पूर्ण
 	ltc->lts_nr = slice;
 
-	return gf100_ltc_oneinit_tag_ram(ltc);
-}
+	वापस gf100_ltc_oneinit_tag_ram(ltc);
+पूर्ण
 
-static void
-gf100_ltc_init(struct nvkm_ltc *ltc)
-{
-	struct nvkm_device *device = ltc->subdev.device;
+अटल व्योम
+gf100_ltc_init(काष्ठा nvkm_ltc *ltc)
+अणु
+	काष्ठा nvkm_device *device = ltc->subdev.device;
 	u32 lpg128 = !(nvkm_rd32(device, 0x100c80) & 0x00000001);
 
 	nvkm_mask(device, 0x17e820, 0x00100000, 0x00000000); /* INTR_EN &= ~0x10 */
 	nvkm_wr32(device, 0x17e8d8, ltc->ltc_nr);
 	nvkm_wr32(device, 0x17e8d4, ltc->tag_base);
 	nvkm_mask(device, 0x17e8c0, 0x00000002, lpg128 ? 0x00000002 : 0x00000000);
-}
+पूर्ण
 
-static const struct nvkm_ltc_func
-gf100_ltc = {
+अटल स्थिर काष्ठा nvkm_ltc_func
+gf100_ltc = अणु
 	.oneinit = gf100_ltc_oneinit,
 	.init = gf100_ltc_init,
-	.intr = gf100_ltc_intr,
+	.पूर्णांकr = gf100_ltc_पूर्णांकr,
 	.cbc_clear = gf100_ltc_cbc_clear,
-	.cbc_wait = gf100_ltc_cbc_wait,
+	.cbc_रुको = gf100_ltc_cbc_रुको,
 	.zbc = 16,
 	.zbc_clear_color = gf100_ltc_zbc_clear_color,
 	.zbc_clear_depth = gf100_ltc_zbc_clear_depth,
 	.invalidate = gf100_ltc_invalidate,
 	.flush = gf100_ltc_flush,
-};
+पूर्ण;
 
-int
-gf100_ltc_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_ltc **pltc)
-{
-	return nvkm_ltc_new_(&gf100_ltc, device, type, inst, pltc);
-}
+पूर्णांक
+gf100_ltc_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_ltc **pltc)
+अणु
+	वापस nvkm_ltc_new_(&gf100_ltc, device, type, inst, pltc);
+पूर्ण

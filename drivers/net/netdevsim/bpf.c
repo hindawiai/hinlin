@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2017 Netronome Systems, Inc.
  *
@@ -13,96 +14,96 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
-#include <linux/bpf.h>
-#include <linux/bpf_verifier.h>
-#include <linux/debugfs.h>
-#include <linux/kernel.h>
-#include <linux/mutex.h>
-#include <linux/rtnetlink.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/bpf_verअगरier.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <net/pkt_cls.h>
 
-#include "netdevsim.h"
+#समावेश "netdevsim.h"
 
-#define pr_vlog(env, fmt, ...)	\
-	bpf_verifier_log_write(env, "[netdevsim] " fmt, ##__VA_ARGS__)
+#घोषणा pr_vlog(env, fmt, ...)	\
+	bpf_verअगरier_log_ग_लिखो(env, "[netdevsim] " fmt, ##__VA_ARGS__)
 
-struct nsim_bpf_bound_prog {
-	struct nsim_dev *nsim_dev;
-	struct bpf_prog *prog;
-	struct dentry *ddir;
-	const char *state;
+काष्ठा nsim_bpf_bound_prog अणु
+	काष्ठा nsim_dev *nsim_dev;
+	काष्ठा bpf_prog *prog;
+	काष्ठा dentry *ddir;
+	स्थिर अक्षर *state;
 	bool is_loaded;
-	struct list_head l;
-};
+	काष्ठा list_head l;
+पूर्ण;
 
-#define NSIM_BPF_MAX_KEYS		2
+#घोषणा NSIM_BPF_MAX_KEYS		2
 
-struct nsim_bpf_bound_map {
-	struct netdevsim *ns;
-	struct bpf_offloaded_map *map;
-	struct mutex mutex;
-	struct nsim_map_entry {
-		void *key;
-		void *value;
-	} entry[NSIM_BPF_MAX_KEYS];
-	struct list_head l;
-};
+काष्ठा nsim_bpf_bound_map अणु
+	काष्ठा netdevsim *ns;
+	काष्ठा bpf_offloaded_map *map;
+	काष्ठा mutex mutex;
+	काष्ठा nsim_map_entry अणु
+		व्योम *key;
+		व्योम *value;
+	पूर्ण entry[NSIM_BPF_MAX_KEYS];
+	काष्ठा list_head l;
+पूर्ण;
 
-static int nsim_bpf_string_show(struct seq_file *file, void *data)
-{
-	const char **str = file->private;
+अटल पूर्णांक nsim_bpf_string_show(काष्ठा seq_file *file, व्योम *data)
+अणु
+	स्थिर अक्षर **str = file->निजी;
 
-	if (*str)
-		seq_printf(file, "%s\n", *str);
+	अगर (*str)
+		seq_म_लिखो(file, "%s\n", *str);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(nsim_bpf_string);
 
-static int
-nsim_bpf_verify_insn(struct bpf_verifier_env *env, int insn_idx, int prev_insn)
-{
-	struct nsim_bpf_bound_prog *state;
-	int ret = 0;
+अटल पूर्णांक
+nsim_bpf_verअगरy_insn(काष्ठा bpf_verअगरier_env *env, पूर्णांक insn_idx, पूर्णांक prev_insn)
+अणु
+	काष्ठा nsim_bpf_bound_prog *state;
+	पूर्णांक ret = 0;
 
 	state = env->prog->aux->offload->dev_priv;
-	if (state->nsim_dev->bpf_bind_verifier_delay && !insn_idx)
-		msleep(state->nsim_dev->bpf_bind_verifier_delay);
+	अगर (state->nsim_dev->bpf_bind_verअगरier_delay && !insn_idx)
+		msleep(state->nsim_dev->bpf_bind_verअगरier_delay);
 
-	if (insn_idx == env->prog->len - 1) {
+	अगर (insn_idx == env->prog->len - 1) अणु
 		pr_vlog(env, "Hello from netdevsim!\n");
 
-		if (!state->nsim_dev->bpf_bind_verifier_accept)
+		अगर (!state->nsim_dev->bpf_bind_verअगरier_accept)
 			ret = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nsim_bpf_finalize(struct bpf_verifier_env *env)
-{
-	return 0;
-}
+अटल पूर्णांक nsim_bpf_finalize(काष्ठा bpf_verअगरier_env *env)
+अणु
+	वापस 0;
+पूर्ण
 
-static bool nsim_xdp_offload_active(struct netdevsim *ns)
-{
-	return ns->xdp_hw.prog;
-}
+अटल bool nsim_xdp_offload_active(काष्ठा netdevsim *ns)
+अणु
+	वापस ns->xdp_hw.prog;
+पूर्ण
 
-static void nsim_prog_set_loaded(struct bpf_prog *prog, bool loaded)
-{
-	struct nsim_bpf_bound_prog *state;
+अटल व्योम nsim_prog_set_loaded(काष्ठा bpf_prog *prog, bool loaded)
+अणु
+	काष्ठा nsim_bpf_bound_prog *state;
 
-	if (!prog || !prog->aux->offload)
-		return;
+	अगर (!prog || !prog->aux->offload)
+		वापस;
 
 	state = prog->aux->offload->dev_priv;
 	state->is_loaded = loaded;
-}
+पूर्ण
 
-static int
-nsim_bpf_offload(struct netdevsim *ns, struct bpf_prog *prog, bool oldprog)
-{
+अटल पूर्णांक
+nsim_bpf_offload(काष्ठा netdevsim *ns, काष्ठा bpf_prog *prog, bool oldprog)
+अणु
 	nsim_prog_set_loaded(ns->bpf_offloaded, false);
 
 	WARN(!!ns->bpf_offloaded != oldprog,
@@ -112,132 +113,132 @@ nsim_bpf_offload(struct netdevsim *ns, struct bpf_prog *prog, bool oldprog)
 	ns->bpf_offloaded_id = prog ? prog->aux->id : 0;
 	nsim_prog_set_loaded(prog, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int nsim_bpf_setup_tc_block_cb(enum tc_setup_type type,
-			       void *type_data, void *cb_priv)
-{
-	struct tc_cls_bpf_offload *cls_bpf = type_data;
-	struct bpf_prog *prog = cls_bpf->prog;
-	struct netdevsim *ns = cb_priv;
-	struct bpf_prog *oldprog;
+पूर्णांक nsim_bpf_setup_tc_block_cb(क्रमागत tc_setup_type type,
+			       व्योम *type_data, व्योम *cb_priv)
+अणु
+	काष्ठा tc_cls_bpf_offload *cls_bpf = type_data;
+	काष्ठा bpf_prog *prog = cls_bpf->prog;
+	काष्ठा netdevsim *ns = cb_priv;
+	काष्ठा bpf_prog *oldprog;
 
-	if (type != TC_SETUP_CLSBPF) {
+	अगर (type != TC_SETUP_CLSBPF) अणु
 		NSIM_EA(cls_bpf->common.extack,
 			"only offload of BPF classifiers supported");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!tc_cls_can_offload_and_chain0(ns->netdev, &cls_bpf->common))
-		return -EOPNOTSUPP;
+	अगर (!tc_cls_can_offload_and_chain0(ns->netdev, &cls_bpf->common))
+		वापस -EOPNOTSUPP;
 
-	if (cls_bpf->common.protocol != htons(ETH_P_ALL)) {
+	अगर (cls_bpf->common.protocol != htons(ETH_P_ALL)) अणु
 		NSIM_EA(cls_bpf->common.extack,
 			"only ETH_P_ALL supported as filter protocol");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!ns->bpf_tc_accept) {
+	अगर (!ns->bpf_tc_accept) अणु
 		NSIM_EA(cls_bpf->common.extack,
 			"netdevsim configured to reject BPF TC offload");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 	/* Note: progs without skip_sw will probably not be dev bound */
-	if (prog && !prog->aux->offload && !ns->bpf_tc_non_bound_accept) {
+	अगर (prog && !prog->aux->offload && !ns->bpf_tc_non_bound_accept) अणु
 		NSIM_EA(cls_bpf->common.extack,
 			"netdevsim configured to reject unbound programs");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (cls_bpf->command != TC_CLSBPF_OFFLOAD)
-		return -EOPNOTSUPP;
+	अगर (cls_bpf->command != TC_CLSBPF_OFFLOAD)
+		वापस -EOPNOTSUPP;
 
 	oldprog = cls_bpf->oldprog;
 
 	/* Don't remove if oldprog doesn't match driver's state */
-	if (ns->bpf_offloaded != oldprog) {
-		oldprog = NULL;
-		if (!cls_bpf->prog)
-			return 0;
-		if (ns->bpf_offloaded) {
+	अगर (ns->bpf_offloaded != oldprog) अणु
+		oldprog = शून्य;
+		अगर (!cls_bpf->prog)
+			वापस 0;
+		अगर (ns->bpf_offloaded) अणु
 			NSIM_EA(cls_bpf->common.extack,
 				"driver and netdev offload states mismatch");
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	return nsim_bpf_offload(ns, cls_bpf->prog, oldprog);
-}
+	वापस nsim_bpf_offload(ns, cls_bpf->prog, oldprog);
+पूर्ण
 
-int nsim_bpf_disable_tc(struct netdevsim *ns)
-{
-	if (ns->bpf_offloaded && !nsim_xdp_offload_active(ns))
-		return -EBUSY;
-	return 0;
-}
+पूर्णांक nsim_bpf_disable_tc(काष्ठा netdevsim *ns)
+अणु
+	अगर (ns->bpf_offloaded && !nsim_xdp_offload_active(ns))
+		वापस -EBUSY;
+	वापस 0;
+पूर्ण
 
-static int nsim_xdp_offload_prog(struct netdevsim *ns, struct netdev_bpf *bpf)
-{
-	if (!nsim_xdp_offload_active(ns) && !bpf->prog)
-		return 0;
-	if (!nsim_xdp_offload_active(ns) && bpf->prog && ns->bpf_offloaded) {
+अटल पूर्णांक nsim_xdp_offload_prog(काष्ठा netdevsim *ns, काष्ठा netdev_bpf *bpf)
+अणु
+	अगर (!nsim_xdp_offload_active(ns) && !bpf->prog)
+		वापस 0;
+	अगर (!nsim_xdp_offload_active(ns) && bpf->prog && ns->bpf_offloaded) अणु
 		NSIM_EA(bpf->extack, "TC program is already loaded");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return nsim_bpf_offload(ns, bpf->prog, nsim_xdp_offload_active(ns));
-}
+	वापस nsim_bpf_offload(ns, bpf->prog, nsim_xdp_offload_active(ns));
+पूर्ण
 
-static int
-nsim_xdp_set_prog(struct netdevsim *ns, struct netdev_bpf *bpf,
-		  struct xdp_attachment_info *xdp)
-{
-	int err;
+अटल पूर्णांक
+nsim_xdp_set_prog(काष्ठा netdevsim *ns, काष्ठा netdev_bpf *bpf,
+		  काष्ठा xdp_attachment_info *xdp)
+अणु
+	पूर्णांक err;
 
-	if (bpf->command == XDP_SETUP_PROG && !ns->bpf_xdpdrv_accept) {
+	अगर (bpf->command == XDP_SETUP_PROG && !ns->bpf_xdpdrv_accept) अणु
 		NSIM_EA(bpf->extack, "driver XDP disabled in DebugFS");
-		return -EOPNOTSUPP;
-	}
-	if (bpf->command == XDP_SETUP_PROG_HW && !ns->bpf_xdpoffload_accept) {
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	अगर (bpf->command == XDP_SETUP_PROG_HW && !ns->bpf_xdpoffload_accept) अणु
 		NSIM_EA(bpf->extack, "XDP offload disabled in DebugFS");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (bpf->command == XDP_SETUP_PROG_HW) {
+	अगर (bpf->command == XDP_SETUP_PROG_HW) अणु
 		err = nsim_xdp_offload_prog(ns, bpf);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	xdp_attachment_setup(xdp, bpf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nsim_bpf_create_prog(struct nsim_dev *nsim_dev,
-				struct bpf_prog *prog)
-{
-	struct nsim_bpf_bound_prog *state;
-	char name[16];
-	int ret;
+अटल पूर्णांक nsim_bpf_create_prog(काष्ठा nsim_dev *nsim_dev,
+				काष्ठा bpf_prog *prog)
+अणु
+	काष्ठा nsim_bpf_bound_prog *state;
+	अक्षर name[16];
+	पूर्णांक ret;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return -ENOMEM;
+	state = kzalloc(माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस -ENOMEM;
 
 	state->nsim_dev = nsim_dev;
 	state->prog = prog;
 	state->state = "verify";
 
 	/* Program id is not populated yet when we create the state. */
-	sprintf(name, "%u", nsim_dev->prog_id_gen++);
+	प्र_लिखो(name, "%u", nsim_dev->prog_id_gen++);
 	state->ddir = debugfs_create_dir(name, nsim_dev->ddir_bpf_bound_progs);
-	if (IS_ERR(state->ddir)) {
+	अगर (IS_ERR(state->ddir)) अणु
 		ret = PTR_ERR(state->ddir);
-		kfree(state);
-		return ret;
-	}
+		kमुक्त(state);
+		वापस ret;
+	पूर्ण
 
 	debugfs_create_u32("id", 0400, state->ddir, &prog->aux->id);
 	debugfs_create_file("state", 0400, state->ddir,
@@ -248,380 +249,380 @@ static int nsim_bpf_create_prog(struct nsim_dev *nsim_dev,
 
 	prog->aux->offload->dev_priv = state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nsim_bpf_verifier_prep(struct bpf_prog *prog)
-{
-	struct nsim_dev *nsim_dev =
+अटल पूर्णांक nsim_bpf_verअगरier_prep(काष्ठा bpf_prog *prog)
+अणु
+	काष्ठा nsim_dev *nsim_dev =
 			bpf_offload_dev_priv(prog->aux->offload->offdev);
 
-	if (!nsim_dev->bpf_bind_accept)
-		return -EOPNOTSUPP;
+	अगर (!nsim_dev->bpf_bind_accept)
+		वापस -EOPNOTSUPP;
 
-	return nsim_bpf_create_prog(nsim_dev, prog);
-}
+	वापस nsim_bpf_create_prog(nsim_dev, prog);
+पूर्ण
 
-static int nsim_bpf_translate(struct bpf_prog *prog)
-{
-	struct nsim_bpf_bound_prog *state = prog->aux->offload->dev_priv;
+अटल पूर्णांक nsim_bpf_translate(काष्ठा bpf_prog *prog)
+अणु
+	काष्ठा nsim_bpf_bound_prog *state = prog->aux->offload->dev_priv;
 
 	state->state = "xlated";
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nsim_bpf_destroy_prog(struct bpf_prog *prog)
-{
-	struct nsim_bpf_bound_prog *state;
+अटल व्योम nsim_bpf_destroy_prog(काष्ठा bpf_prog *prog)
+अणु
+	काष्ठा nsim_bpf_bound_prog *state;
 
 	state = prog->aux->offload->dev_priv;
 	WARN(state->is_loaded,
 	     "offload state destroyed while program still bound");
-	debugfs_remove_recursive(state->ddir);
+	debugfs_हटाओ_recursive(state->ddir);
 	list_del(&state->l);
-	kfree(state);
-}
+	kमुक्त(state);
+पूर्ण
 
-static const struct bpf_prog_offload_ops nsim_bpf_dev_ops = {
-	.insn_hook	= nsim_bpf_verify_insn,
+अटल स्थिर काष्ठा bpf_prog_offload_ops nsim_bpf_dev_ops = अणु
+	.insn_hook	= nsim_bpf_verअगरy_insn,
 	.finalize	= nsim_bpf_finalize,
-	.prepare	= nsim_bpf_verifier_prep,
+	.prepare	= nsim_bpf_verअगरier_prep,
 	.translate	= nsim_bpf_translate,
 	.destroy	= nsim_bpf_destroy_prog,
-};
+पूर्ण;
 
-static int nsim_setup_prog_checks(struct netdevsim *ns, struct netdev_bpf *bpf)
-{
-	if (bpf->prog && bpf->prog->aux->offload) {
+अटल पूर्णांक nsim_setup_prog_checks(काष्ठा netdevsim *ns, काष्ठा netdev_bpf *bpf)
+अणु
+	अगर (bpf->prog && bpf->prog->aux->offload) अणु
 		NSIM_EA(bpf->extack, "attempt to load offloaded prog to drv");
-		return -EINVAL;
-	}
-	if (ns->netdev->mtu > NSIM_XDP_MAX_MTU) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (ns->netdev->mtu > NSIM_XDP_MAX_MTU) अणु
 		NSIM_EA(bpf->extack, "MTU too large w/ XDP enabled");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-nsim_setup_prog_hw_checks(struct netdevsim *ns, struct netdev_bpf *bpf)
-{
-	struct nsim_bpf_bound_prog *state;
+अटल पूर्णांक
+nsim_setup_prog_hw_checks(काष्ठा netdevsim *ns, काष्ठा netdev_bpf *bpf)
+अणु
+	काष्ठा nsim_bpf_bound_prog *state;
 
-	if (!bpf->prog)
-		return 0;
+	अगर (!bpf->prog)
+		वापस 0;
 
-	if (!bpf->prog->aux->offload) {
+	अगर (!bpf->prog->aux->offload) अणु
 		NSIM_EA(bpf->extack, "xdpoffload of non-bound program");
-		return -EINVAL;
-	}
-	if (!bpf_offload_dev_match(bpf->prog, ns->netdev)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!bpf_offload_dev_match(bpf->prog, ns->netdev)) अणु
 		NSIM_EA(bpf->extack, "program bound to different dev");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	state = bpf->prog->aux->offload->dev_priv;
-	if (WARN_ON(strcmp(state->state, "xlated"))) {
+	अगर (WARN_ON(म_भेद(state->state, "xlated"))) अणु
 		NSIM_EA(bpf->extack, "offloading program in bad state");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static bool
-nsim_map_key_match(struct bpf_map *map, struct nsim_map_entry *e, void *key)
-{
-	return e->key && !memcmp(key, e->key, map->key_size);
-}
+अटल bool
+nsim_map_key_match(काष्ठा bpf_map *map, काष्ठा nsim_map_entry *e, व्योम *key)
+अणु
+	वापस e->key && !स_भेद(key, e->key, map->key_size);
+पूर्ण
 
-static int nsim_map_key_find(struct bpf_offloaded_map *offmap, void *key)
-{
-	struct nsim_bpf_bound_map *nmap = offmap->dev_priv;
-	unsigned int i;
+अटल पूर्णांक nsim_map_key_find(काष्ठा bpf_offloaded_map *offmap, व्योम *key)
+अणु
+	काष्ठा nsim_bpf_bound_map *nmap = offmap->dev_priv;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(nmap->entry); i++)
-		if (nsim_map_key_match(&offmap->map, &nmap->entry[i], key))
-			return i;
+	क्रम (i = 0; i < ARRAY_SIZE(nmap->entry); i++)
+		अगर (nsim_map_key_match(&offmap->map, &nmap->entry[i], key))
+			वापस i;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static int
-nsim_map_alloc_elem(struct bpf_offloaded_map *offmap, unsigned int idx)
-{
-	struct nsim_bpf_bound_map *nmap = offmap->dev_priv;
+अटल पूर्णांक
+nsim_map_alloc_elem(काष्ठा bpf_offloaded_map *offmap, अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा nsim_bpf_bound_map *nmap = offmap->dev_priv;
 
-	nmap->entry[idx].key = kmalloc(offmap->map.key_size, GFP_USER);
-	if (!nmap->entry[idx].key)
-		return -ENOMEM;
-	nmap->entry[idx].value = kmalloc(offmap->map.value_size, GFP_USER);
-	if (!nmap->entry[idx].value) {
-		kfree(nmap->entry[idx].key);
-		nmap->entry[idx].key = NULL;
-		return -ENOMEM;
-	}
+	nmap->entry[idx].key = kदो_स्मृति(offmap->map.key_size, GFP_USER);
+	अगर (!nmap->entry[idx].key)
+		वापस -ENOMEM;
+	nmap->entry[idx].value = kदो_स्मृति(offmap->map.value_size, GFP_USER);
+	अगर (!nmap->entry[idx].value) अणु
+		kमुक्त(nmap->entry[idx].key);
+		nmap->entry[idx].key = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nsim_map_get_next_key(struct bpf_offloaded_map *offmap,
-		      void *key, void *next_key)
-{
-	struct nsim_bpf_bound_map *nmap = offmap->dev_priv;
-	int idx = -ENOENT;
+अटल पूर्णांक
+nsim_map_get_next_key(काष्ठा bpf_offloaded_map *offmap,
+		      व्योम *key, व्योम *next_key)
+अणु
+	काष्ठा nsim_bpf_bound_map *nmap = offmap->dev_priv;
+	पूर्णांक idx = -ENOENT;
 
 	mutex_lock(&nmap->mutex);
 
-	if (key)
+	अगर (key)
 		idx = nsim_map_key_find(offmap, key);
-	if (idx == -ENOENT)
+	अगर (idx == -ENOENT)
 		idx = 0;
-	else
+	अन्यथा
 		idx++;
 
-	for (; idx < ARRAY_SIZE(nmap->entry); idx++) {
-		if (nmap->entry[idx].key) {
-			memcpy(next_key, nmap->entry[idx].key,
+	क्रम (; idx < ARRAY_SIZE(nmap->entry); idx++) अणु
+		अगर (nmap->entry[idx].key) अणु
+			स_नकल(next_key, nmap->entry[idx].key,
 			       offmap->map.key_size);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&nmap->mutex);
 
-	if (idx == ARRAY_SIZE(nmap->entry))
-		return -ENOENT;
-	return 0;
-}
+	अगर (idx == ARRAY_SIZE(nmap->entry))
+		वापस -ENOENT;
+	वापस 0;
+पूर्ण
 
-static int
-nsim_map_lookup_elem(struct bpf_offloaded_map *offmap, void *key, void *value)
-{
-	struct nsim_bpf_bound_map *nmap = offmap->dev_priv;
-	int idx;
+अटल पूर्णांक
+nsim_map_lookup_elem(काष्ठा bpf_offloaded_map *offmap, व्योम *key, व्योम *value)
+अणु
+	काष्ठा nsim_bpf_bound_map *nmap = offmap->dev_priv;
+	पूर्णांक idx;
 
 	mutex_lock(&nmap->mutex);
 
 	idx = nsim_map_key_find(offmap, key);
-	if (idx >= 0)
-		memcpy(value, nmap->entry[idx].value, offmap->map.value_size);
+	अगर (idx >= 0)
+		स_नकल(value, nmap->entry[idx].value, offmap->map.value_size);
 
 	mutex_unlock(&nmap->mutex);
 
-	return idx < 0 ? idx : 0;
-}
+	वापस idx < 0 ? idx : 0;
+पूर्ण
 
-static int
-nsim_map_update_elem(struct bpf_offloaded_map *offmap,
-		     void *key, void *value, u64 flags)
-{
-	struct nsim_bpf_bound_map *nmap = offmap->dev_priv;
-	int idx, err = 0;
+अटल पूर्णांक
+nsim_map_update_elem(काष्ठा bpf_offloaded_map *offmap,
+		     व्योम *key, व्योम *value, u64 flags)
+अणु
+	काष्ठा nsim_bpf_bound_map *nmap = offmap->dev_priv;
+	पूर्णांक idx, err = 0;
 
 	mutex_lock(&nmap->mutex);
 
 	idx = nsim_map_key_find(offmap, key);
-	if (idx < 0 && flags == BPF_EXIST) {
+	अगर (idx < 0 && flags == BPF_EXIST) अणु
 		err = idx;
-		goto exit_unlock;
-	}
-	if (idx >= 0 && flags == BPF_NOEXIST) {
+		जाओ निकास_unlock;
+	पूर्ण
+	अगर (idx >= 0 && flags == BPF_NOEXIST) अणु
 		err = -EEXIST;
-		goto exit_unlock;
-	}
+		जाओ निकास_unlock;
+	पूर्ण
 
-	if (idx < 0) {
-		for (idx = 0; idx < ARRAY_SIZE(nmap->entry); idx++)
-			if (!nmap->entry[idx].key)
-				break;
-		if (idx == ARRAY_SIZE(nmap->entry)) {
+	अगर (idx < 0) अणु
+		क्रम (idx = 0; idx < ARRAY_SIZE(nmap->entry); idx++)
+			अगर (!nmap->entry[idx].key)
+				अवरोध;
+		अगर (idx == ARRAY_SIZE(nmap->entry)) अणु
 			err = -E2BIG;
-			goto exit_unlock;
-		}
+			जाओ निकास_unlock;
+		पूर्ण
 
 		err = nsim_map_alloc_elem(offmap, idx);
-		if (err)
-			goto exit_unlock;
-	}
+		अगर (err)
+			जाओ निकास_unlock;
+	पूर्ण
 
-	memcpy(nmap->entry[idx].key, key, offmap->map.key_size);
-	memcpy(nmap->entry[idx].value, value, offmap->map.value_size);
-exit_unlock:
+	स_नकल(nmap->entry[idx].key, key, offmap->map.key_size);
+	स_नकल(nmap->entry[idx].value, value, offmap->map.value_size);
+निकास_unlock:
 	mutex_unlock(&nmap->mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int nsim_map_delete_elem(struct bpf_offloaded_map *offmap, void *key)
-{
-	struct nsim_bpf_bound_map *nmap = offmap->dev_priv;
-	int idx;
+अटल पूर्णांक nsim_map_delete_elem(काष्ठा bpf_offloaded_map *offmap, व्योम *key)
+अणु
+	काष्ठा nsim_bpf_bound_map *nmap = offmap->dev_priv;
+	पूर्णांक idx;
 
-	if (offmap->map.map_type == BPF_MAP_TYPE_ARRAY)
-		return -EINVAL;
+	अगर (offmap->map.map_type == BPF_MAP_TYPE_ARRAY)
+		वापस -EINVAL;
 
 	mutex_lock(&nmap->mutex);
 
 	idx = nsim_map_key_find(offmap, key);
-	if (idx >= 0) {
-		kfree(nmap->entry[idx].key);
-		kfree(nmap->entry[idx].value);
-		memset(&nmap->entry[idx], 0, sizeof(nmap->entry[idx]));
-	}
+	अगर (idx >= 0) अणु
+		kमुक्त(nmap->entry[idx].key);
+		kमुक्त(nmap->entry[idx].value);
+		स_रखो(&nmap->entry[idx], 0, माप(nmap->entry[idx]));
+	पूर्ण
 
 	mutex_unlock(&nmap->mutex);
 
-	return idx < 0 ? idx : 0;
-}
+	वापस idx < 0 ? idx : 0;
+पूर्ण
 
-static const struct bpf_map_dev_ops nsim_bpf_map_ops = {
+अटल स्थिर काष्ठा bpf_map_dev_ops nsim_bpf_map_ops = अणु
 	.map_get_next_key	= nsim_map_get_next_key,
 	.map_lookup_elem	= nsim_map_lookup_elem,
 	.map_update_elem	= nsim_map_update_elem,
 	.map_delete_elem	= nsim_map_delete_elem,
-};
+पूर्ण;
 
-static int
-nsim_bpf_map_alloc(struct netdevsim *ns, struct bpf_offloaded_map *offmap)
-{
-	struct nsim_bpf_bound_map *nmap;
-	int i, err;
+अटल पूर्णांक
+nsim_bpf_map_alloc(काष्ठा netdevsim *ns, काष्ठा bpf_offloaded_map *offmap)
+अणु
+	काष्ठा nsim_bpf_bound_map *nmap;
+	पूर्णांक i, err;
 
-	if (WARN_ON(offmap->map.map_type != BPF_MAP_TYPE_ARRAY &&
+	अगर (WARN_ON(offmap->map.map_type != BPF_MAP_TYPE_ARRAY &&
 		    offmap->map.map_type != BPF_MAP_TYPE_HASH))
-		return -EINVAL;
-	if (offmap->map.max_entries > NSIM_BPF_MAX_KEYS)
-		return -ENOMEM;
-	if (offmap->map.map_flags)
-		return -EINVAL;
+		वापस -EINVAL;
+	अगर (offmap->map.max_entries > NSIM_BPF_MAX_KEYS)
+		वापस -ENOMEM;
+	अगर (offmap->map.map_flags)
+		वापस -EINVAL;
 
-	nmap = kzalloc(sizeof(*nmap), GFP_USER);
-	if (!nmap)
-		return -ENOMEM;
+	nmap = kzalloc(माप(*nmap), GFP_USER);
+	अगर (!nmap)
+		वापस -ENOMEM;
 
 	offmap->dev_priv = nmap;
 	nmap->ns = ns;
 	nmap->map = offmap;
 	mutex_init(&nmap->mutex);
 
-	if (offmap->map.map_type == BPF_MAP_TYPE_ARRAY) {
-		for (i = 0; i < ARRAY_SIZE(nmap->entry); i++) {
+	अगर (offmap->map.map_type == BPF_MAP_TYPE_ARRAY) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(nmap->entry); i++) अणु
 			u32 *key;
 
 			err = nsim_map_alloc_elem(offmap, i);
-			if (err)
-				goto err_free;
+			अगर (err)
+				जाओ err_मुक्त;
 			key = nmap->entry[i].key;
 			*key = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	offmap->dev_ops = &nsim_bpf_map_ops;
 	list_add_tail(&nmap->l, &ns->nsim_dev->bpf_bound_maps);
 
-	return 0;
+	वापस 0;
 
-err_free:
-	while (--i >= 0) {
-		kfree(nmap->entry[i].key);
-		kfree(nmap->entry[i].value);
-	}
-	kfree(nmap);
-	return err;
-}
+err_मुक्त:
+	जबतक (--i >= 0) अणु
+		kमुक्त(nmap->entry[i].key);
+		kमुक्त(nmap->entry[i].value);
+	पूर्ण
+	kमुक्त(nmap);
+	वापस err;
+पूर्ण
 
-static void nsim_bpf_map_free(struct bpf_offloaded_map *offmap)
-{
-	struct nsim_bpf_bound_map *nmap = offmap->dev_priv;
-	unsigned int i;
+अटल व्योम nsim_bpf_map_मुक्त(काष्ठा bpf_offloaded_map *offmap)
+अणु
+	काष्ठा nsim_bpf_bound_map *nmap = offmap->dev_priv;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(nmap->entry); i++) {
-		kfree(nmap->entry[i].key);
-		kfree(nmap->entry[i].value);
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(nmap->entry); i++) अणु
+		kमुक्त(nmap->entry[i].key);
+		kमुक्त(nmap->entry[i].value);
+	पूर्ण
 	list_del_init(&nmap->l);
 	mutex_destroy(&nmap->mutex);
-	kfree(nmap);
-}
+	kमुक्त(nmap);
+पूर्ण
 
-int nsim_bpf(struct net_device *dev, struct netdev_bpf *bpf)
-{
-	struct netdevsim *ns = netdev_priv(dev);
-	int err;
+पूर्णांक nsim_bpf(काष्ठा net_device *dev, काष्ठा netdev_bpf *bpf)
+अणु
+	काष्ठा netdevsim *ns = netdev_priv(dev);
+	पूर्णांक err;
 
 	ASSERT_RTNL();
 
-	switch (bpf->command) {
-	case XDP_SETUP_PROG:
+	चयन (bpf->command) अणु
+	हाल XDP_SETUP_PROG:
 		err = nsim_setup_prog_checks(ns, bpf);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		return nsim_xdp_set_prog(ns, bpf, &ns->xdp);
-	case XDP_SETUP_PROG_HW:
+		वापस nsim_xdp_set_prog(ns, bpf, &ns->xdp);
+	हाल XDP_SETUP_PROG_HW:
 		err = nsim_setup_prog_hw_checks(ns, bpf);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		return nsim_xdp_set_prog(ns, bpf, &ns->xdp_hw);
-	case BPF_OFFLOAD_MAP_ALLOC:
-		if (!ns->bpf_map_accept)
-			return -EOPNOTSUPP;
+		वापस nsim_xdp_set_prog(ns, bpf, &ns->xdp_hw);
+	हाल BPF_OFFLOAD_MAP_ALLOC:
+		अगर (!ns->bpf_map_accept)
+			वापस -EOPNOTSUPP;
 
-		return nsim_bpf_map_alloc(ns, bpf->offmap);
-	case BPF_OFFLOAD_MAP_FREE:
-		nsim_bpf_map_free(bpf->offmap);
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस nsim_bpf_map_alloc(ns, bpf->offmap);
+	हाल BPF_OFFLOAD_MAP_FREE:
+		nsim_bpf_map_मुक्त(bpf->offmap);
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int nsim_bpf_dev_init(struct nsim_dev *nsim_dev)
-{
-	int err;
+पूर्णांक nsim_bpf_dev_init(काष्ठा nsim_dev *nsim_dev)
+अणु
+	पूर्णांक err;
 
 	INIT_LIST_HEAD(&nsim_dev->bpf_bound_progs);
 	INIT_LIST_HEAD(&nsim_dev->bpf_bound_maps);
 
 	nsim_dev->ddir_bpf_bound_progs = debugfs_create_dir("bpf_bound_progs",
 							    nsim_dev->ddir);
-	if (IS_ERR(nsim_dev->ddir_bpf_bound_progs))
-		return PTR_ERR(nsim_dev->ddir_bpf_bound_progs);
+	अगर (IS_ERR(nsim_dev->ddir_bpf_bound_progs))
+		वापस PTR_ERR(nsim_dev->ddir_bpf_bound_progs);
 
 	nsim_dev->bpf_dev = bpf_offload_dev_create(&nsim_bpf_dev_ops, nsim_dev);
 	err = PTR_ERR_OR_ZERO(nsim_dev->bpf_dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	nsim_dev->bpf_bind_accept = true;
 	debugfs_create_bool("bpf_bind_accept", 0600, nsim_dev->ddir,
 			    &nsim_dev->bpf_bind_accept);
 	debugfs_create_u32("bpf_bind_verifier_delay", 0600, nsim_dev->ddir,
-			   &nsim_dev->bpf_bind_verifier_delay);
-	nsim_dev->bpf_bind_verifier_accept = true;
+			   &nsim_dev->bpf_bind_verअगरier_delay);
+	nsim_dev->bpf_bind_verअगरier_accept = true;
 	debugfs_create_bool("bpf_bind_verifier_accept", 0600, nsim_dev->ddir,
-			    &nsim_dev->bpf_bind_verifier_accept);
-	return 0;
-}
+			    &nsim_dev->bpf_bind_verअगरier_accept);
+	वापस 0;
+पूर्ण
 
-void nsim_bpf_dev_exit(struct nsim_dev *nsim_dev)
-{
+व्योम nsim_bpf_dev_निकास(काष्ठा nsim_dev *nsim_dev)
+अणु
 	WARN_ON(!list_empty(&nsim_dev->bpf_bound_progs));
 	WARN_ON(!list_empty(&nsim_dev->bpf_bound_maps));
 	bpf_offload_dev_destroy(nsim_dev->bpf_dev);
-}
+पूर्ण
 
-int nsim_bpf_init(struct netdevsim *ns)
-{
-	struct dentry *ddir = ns->nsim_dev_port->ddir;
-	int err;
+पूर्णांक nsim_bpf_init(काष्ठा netdevsim *ns)
+अणु
+	काष्ठा dentry *ddir = ns->nsim_dev_port->ddir;
+	पूर्णांक err;
 
-	err = bpf_offload_dev_netdev_register(ns->nsim_dev->bpf_dev,
+	err = bpf_offload_dev_netdev_रेजिस्टर(ns->nsim_dev->bpf_dev,
 					      ns->netdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	debugfs_create_u32("bpf_offloaded_id", 0400, ddir,
 			   &ns->bpf_offloaded_id);
@@ -642,13 +643,13 @@ int nsim_bpf_init(struct netdevsim *ns)
 	debugfs_create_bool("bpf_map_accept", 0600, ddir,
 			    &ns->bpf_map_accept);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void nsim_bpf_uninit(struct netdevsim *ns)
-{
+व्योम nsim_bpf_uninit(काष्ठा netdevsim *ns)
+अणु
 	WARN_ON(ns->xdp.prog);
 	WARN_ON(ns->xdp_hw.prog);
 	WARN_ON(ns->bpf_offloaded);
-	bpf_offload_dev_netdev_unregister(ns->nsim_dev->bpf_dev, ns->netdev);
-}
+	bpf_offload_dev_netdev_unरेजिस्टर(ns->nsim_dev->bpf_dev, ns->netdev);
+पूर्ण

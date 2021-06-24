@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2009-2013 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,7 +27,7 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
  *
  * While no substantial code is shared, the prime code is inspired by
  * drm_prime.c, with
@@ -34,75 +35,75 @@
  *      Dave Airlie <airlied@redhat.com>
  *      Rob Clark <rob.clark@linaro.org>
  */
-/** @file ttm_ref_object.c
+/** @file tपंचांग_ref_object.c
  *
- * Base- and reference object implementation for the various
- * ttm objects. Implements reference counting, minimal security checks
- * and release on file close.
+ * Base- and reference object implementation क्रम the various
+ * tपंचांग objects. Implements reference counting, minimal security checks
+ * and release on file बंद.
  */
 
 
-#define pr_fmt(fmt) "[TTM] " fmt
+#घोषणा pr_fmt(fmt) "[TTM] " fmt
 
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/atomic.h>
-#include "ttm_object.h"
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/atomic.h>
+#समावेश "ttm_object.h"
 
 /**
- * struct ttm_object_file
+ * काष्ठा tपंचांग_object_file
  *
- * @tdev: Pointer to the ttm_object_device.
+ * @tdev: Poपूर्णांकer to the tपंचांग_object_device.
  *
  * @lock: Lock that protects the ref_list list and the
  * ref_hash hash tables.
  *
- * @ref_list: List of ttm_ref_objects to be destroyed at
+ * @ref_list: List of tपंचांग_ref_objects to be destroyed at
  * file release.
  *
- * @ref_hash: Hash tables of ref objects, one per ttm_ref_type,
- * for fast lookup of ref objects given a base object.
+ * @ref_hash: Hash tables of ref objects, one per tपंचांग_ref_type,
+ * क्रम fast lookup of ref objects given a base object.
  *
  * @refcount: reference/usage count
  */
-struct ttm_object_file {
-	struct ttm_object_device *tdev;
+काष्ठा tपंचांग_object_file अणु
+	काष्ठा tपंचांग_object_device *tdev;
 	spinlock_t lock;
-	struct list_head ref_list;
-	struct drm_open_hash ref_hash[TTM_REF_NUM];
-	struct kref refcount;
-};
+	काष्ठा list_head ref_list;
+	काष्ठा drm_खोलो_hash ref_hash[TTM_REF_NUM];
+	काष्ठा kref refcount;
+पूर्ण;
 
 /*
- * struct ttm_object_device
+ * काष्ठा tपंचांग_object_device
  *
  * @object_lock: lock that protects the object_hash hash table.
  *
- * @object_hash: hash table for fast lookup of object global names.
+ * @object_hash: hash table क्रम fast lookup of object global names.
  *
  * @object_count: Per device object count.
  *
- * This is the per-device data structure needed for ttm object management.
+ * This is the per-device data काष्ठाure needed क्रम tपंचांग object management.
  */
 
-struct ttm_object_device {
+काष्ठा tपंचांग_object_device अणु
 	spinlock_t object_lock;
-	struct drm_open_hash object_hash;
+	काष्ठा drm_खोलो_hash object_hash;
 	atomic_t object_count;
-	struct ttm_mem_global *mem_glob;
-	struct dma_buf_ops ops;
-	void (*dmabuf_release)(struct dma_buf *dma_buf);
-	size_t dma_buf_size;
-	struct idr idr;
-};
+	काष्ठा tपंचांग_mem_global *mem_glob;
+	काष्ठा dma_buf_ops ops;
+	व्योम (*dmabuf_release)(काष्ठा dma_buf *dma_buf);
+	माप_प्रकार dma_buf_size;
+	काष्ठा idr idr;
+पूर्ण;
 
 /*
- * struct ttm_ref_object
+ * काष्ठा tपंचांग_ref_object
  *
- * @hash: Hash entry for the per-file object reference hash.
+ * @hash: Hash entry क्रम the per-file object reference hash.
  *
- * @head: List entry for the per-file list of ref-objects.
+ * @head: List entry क्रम the per-file list of ref-objects.
  *
  * @kref: Ref count.
  *
@@ -111,63 +112,63 @@ struct ttm_object_device {
  * @ref_type: Type of ref object.
  *
  * This is similar to an idr object, but it also has a hash table entry
- * that allows lookup with a pointer to the referenced object as a key. In
+ * that allows lookup with a poपूर्णांकer to the referenced object as a key. In
  * that way, one can easily detect whether a base object is referenced by
- * a particular ttm_object_file. It also carries a ref count to avoid creating
- * multiple ref objects if a ttm_object_file references the same base
+ * a particular tपंचांग_object_file. It also carries a ref count to aव्योम creating
+ * multiple ref objects अगर a tपंचांग_object_file references the same base
  * object more than once.
  */
 
-struct ttm_ref_object {
-	struct rcu_head rcu_head;
-	struct drm_hash_item hash;
-	struct list_head head;
-	struct kref kref;
-	enum ttm_ref_type ref_type;
-	struct ttm_base_object *obj;
-	struct ttm_object_file *tfile;
-};
+काष्ठा tपंचांग_ref_object अणु
+	काष्ठा rcu_head rcu_head;
+	काष्ठा drm_hash_item hash;
+	काष्ठा list_head head;
+	काष्ठा kref kref;
+	क्रमागत tपंचांग_ref_type ref_type;
+	काष्ठा tपंचांग_base_object *obj;
+	काष्ठा tपंचांग_object_file *tfile;
+पूर्ण;
 
-static void ttm_prime_dmabuf_release(struct dma_buf *dma_buf);
+अटल व्योम tपंचांग_prime_dmabuf_release(काष्ठा dma_buf *dma_buf);
 
-static inline struct ttm_object_file *
-ttm_object_file_ref(struct ttm_object_file *tfile)
-{
+अटल अंतरभूत काष्ठा tपंचांग_object_file *
+tपंचांग_object_file_ref(काष्ठा tपंचांग_object_file *tfile)
+अणु
 	kref_get(&tfile->refcount);
-	return tfile;
-}
+	वापस tfile;
+पूर्ण
 
-static void ttm_object_file_destroy(struct kref *kref)
-{
-	struct ttm_object_file *tfile =
-		container_of(kref, struct ttm_object_file, refcount);
+अटल व्योम tपंचांग_object_file_destroy(काष्ठा kref *kref)
+अणु
+	काष्ठा tपंचांग_object_file *tfile =
+		container_of(kref, काष्ठा tपंचांग_object_file, refcount);
 
-	kfree(tfile);
-}
-
-
-static inline void ttm_object_file_unref(struct ttm_object_file **p_tfile)
-{
-	struct ttm_object_file *tfile = *p_tfile;
-
-	*p_tfile = NULL;
-	kref_put(&tfile->refcount, ttm_object_file_destroy);
-}
+	kमुक्त(tfile);
+पूर्ण
 
 
-int ttm_base_object_init(struct ttm_object_file *tfile,
-			 struct ttm_base_object *base,
+अटल अंतरभूत व्योम tपंचांग_object_file_unref(काष्ठा tपंचांग_object_file **p_tfile)
+अणु
+	काष्ठा tपंचांग_object_file *tfile = *p_tfile;
+
+	*p_tfile = शून्य;
+	kref_put(&tfile->refcount, tपंचांग_object_file_destroy);
+पूर्ण
+
+
+पूर्णांक tपंचांग_base_object_init(काष्ठा tपंचांग_object_file *tfile,
+			 काष्ठा tपंचांग_base_object *base,
 			 bool shareable,
-			 enum ttm_object_type object_type,
-			 void (*refcount_release) (struct ttm_base_object **),
-			 void (*ref_obj_release) (struct ttm_base_object *,
-						  enum ttm_ref_type ref_type))
-{
-	struct ttm_object_device *tdev = tfile->tdev;
-	int ret;
+			 क्रमागत tपंचांग_object_type object_type,
+			 व्योम (*refcount_release) (काष्ठा tपंचांग_base_object **),
+			 व्योम (*ref_obj_release) (काष्ठा tपंचांग_base_object *,
+						  क्रमागत tपंचांग_ref_type ref_type))
+अणु
+	काष्ठा tपंचांग_object_device *tdev = tfile->tdev;
+	पूर्णांक ret;
 
 	base->shareable = shareable;
-	base->tfile = ttm_object_file_ref(tfile);
+	base->tfile = tपंचांग_object_file_ref(tfile);
 	base->refcount_release = refcount_release;
 	base->ref_obj_release = ref_obj_release;
 	base->object_type = object_type;
@@ -177,216 +178,216 @@ int ttm_base_object_init(struct ttm_object_file *tfile,
 	ret = idr_alloc(&tdev->idr, base, 1, 0, GFP_NOWAIT);
 	spin_unlock(&tdev->object_lock);
 	idr_preload_end();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	base->handle = ret;
-	ret = ttm_ref_object_add(tfile, base, TTM_REF_USAGE, NULL, false);
-	if (unlikely(ret != 0))
-		goto out_err1;
+	ret = tपंचांग_ref_object_add(tfile, base, TTM_REF_USAGE, शून्य, false);
+	अगर (unlikely(ret != 0))
+		जाओ out_err1;
 
-	ttm_base_object_unref(&base);
+	tपंचांग_base_object_unref(&base);
 
-	return 0;
+	वापस 0;
 out_err1:
 	spin_lock(&tdev->object_lock);
-	idr_remove(&tdev->idr, base->handle);
+	idr_हटाओ(&tdev->idr, base->handle);
 	spin_unlock(&tdev->object_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ttm_release_base(struct kref *kref)
-{
-	struct ttm_base_object *base =
-	    container_of(kref, struct ttm_base_object, refcount);
-	struct ttm_object_device *tdev = base->tfile->tdev;
+अटल व्योम tपंचांग_release_base(काष्ठा kref *kref)
+अणु
+	काष्ठा tपंचांग_base_object *base =
+	    container_of(kref, काष्ठा tपंचांग_base_object, refcount);
+	काष्ठा tपंचांग_object_device *tdev = base->tfile->tdev;
 
 	spin_lock(&tdev->object_lock);
-	idr_remove(&tdev->idr, base->handle);
+	idr_हटाओ(&tdev->idr, base->handle);
 	spin_unlock(&tdev->object_lock);
 
 	/*
-	 * Note: We don't use synchronize_rcu() here because it's far
-	 * too slow. It's up to the user to free the object using
-	 * call_rcu() or ttm_base_object_kfree().
+	 * Note: We करोn't use synchronize_rcu() here because it's far
+	 * too slow. It's up to the user to मुक्त the object using
+	 * call_rcu() or tपंचांग_base_object_kमुक्त().
 	 */
 
-	ttm_object_file_unref(&base->tfile);
-	if (base->refcount_release)
+	tपंचांग_object_file_unref(&base->tfile);
+	अगर (base->refcount_release)
 		base->refcount_release(&base);
-}
+पूर्ण
 
-void ttm_base_object_unref(struct ttm_base_object **p_base)
-{
-	struct ttm_base_object *base = *p_base;
+व्योम tपंचांग_base_object_unref(काष्ठा tपंचांग_base_object **p_base)
+अणु
+	काष्ठा tपंचांग_base_object *base = *p_base;
 
-	*p_base = NULL;
+	*p_base = शून्य;
 
-	kref_put(&base->refcount, ttm_release_base);
-}
+	kref_put(&base->refcount, tपंचांग_release_base);
+पूर्ण
 
 /**
- * ttm_base_object_noref_lookup - look up a base object without reference
- * @tfile: The struct ttm_object_file the object is registered with.
+ * tपंचांग_base_object_noref_lookup - look up a base object without reference
+ * @tfile: The काष्ठा tपंचांग_object_file the object is रेजिस्टरed with.
  * @key: The object handle.
  *
- * This function looks up a ttm base object and returns a pointer to it
- * without refcounting the pointer. The returned pointer is only valid
- * until ttm_base_object_noref_release() is called, and the object
- * pointed to by the returned pointer may be doomed. Any persistent usage
+ * This function looks up a tपंचांग base object and वापसs a poपूर्णांकer to it
+ * without refcounting the poपूर्णांकer. The वापसed poपूर्णांकer is only valid
+ * until tपंचांग_base_object_noref_release() is called, and the object
+ * poपूर्णांकed to by the वापसed poपूर्णांकer may be करोomed. Any persistent usage
  * of the object requires a refcount to be taken using kref_get_unless_zero().
- * Iff this function returns successfully it needs to be paired with
- * ttm_base_object_noref_release() and no sleeping- or scheduling functions
+ * Iff this function वापसs successfully it needs to be paired with
+ * tपंचांग_base_object_noref_release() and no sleeping- or scheduling functions
  * may be called inbetween these function callse.
  *
- * Return: A pointer to the object if successful or NULL otherwise.
+ * Return: A poपूर्णांकer to the object अगर successful or शून्य otherwise.
  */
-struct ttm_base_object *
-ttm_base_object_noref_lookup(struct ttm_object_file *tfile, uint32_t key)
-{
-	struct drm_hash_item *hash;
-	struct drm_open_hash *ht = &tfile->ref_hash[TTM_REF_USAGE];
-	int ret;
+काष्ठा tपंचांग_base_object *
+tपंचांग_base_object_noref_lookup(काष्ठा tपंचांग_object_file *tfile, uपूर्णांक32_t key)
+अणु
+	काष्ठा drm_hash_item *hash;
+	काष्ठा drm_खोलो_hash *ht = &tfile->ref_hash[TTM_REF_USAGE];
+	पूर्णांक ret;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ret = drm_ht_find_item_rcu(ht, key, &hash);
-	if (ret) {
-		rcu_read_unlock();
-		return NULL;
-	}
+	अगर (ret) अणु
+		rcu_पढ़ो_unlock();
+		वापस शून्य;
+	पूर्ण
 
 	__release(RCU);
-	return drm_hash_entry(hash, struct ttm_ref_object, hash)->obj;
-}
-EXPORT_SYMBOL(ttm_base_object_noref_lookup);
+	वापस drm_hash_entry(hash, काष्ठा tपंचांग_ref_object, hash)->obj;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_base_object_noref_lookup);
 
-struct ttm_base_object *ttm_base_object_lookup(struct ttm_object_file *tfile,
-					       uint32_t key)
-{
-	struct ttm_base_object *base = NULL;
-	struct drm_hash_item *hash;
-	struct drm_open_hash *ht = &tfile->ref_hash[TTM_REF_USAGE];
-	int ret;
+काष्ठा tपंचांग_base_object *tपंचांग_base_object_lookup(काष्ठा tपंचांग_object_file *tfile,
+					       uपूर्णांक32_t key)
+अणु
+	काष्ठा tपंचांग_base_object *base = शून्य;
+	काष्ठा drm_hash_item *hash;
+	काष्ठा drm_खोलो_hash *ht = &tfile->ref_hash[TTM_REF_USAGE];
+	पूर्णांक ret;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ret = drm_ht_find_item_rcu(ht, key, &hash);
 
-	if (likely(ret == 0)) {
-		base = drm_hash_entry(hash, struct ttm_ref_object, hash)->obj;
-		if (!kref_get_unless_zero(&base->refcount))
-			base = NULL;
-	}
-	rcu_read_unlock();
+	अगर (likely(ret == 0)) अणु
+		base = drm_hash_entry(hash, काष्ठा tपंचांग_ref_object, hash)->obj;
+		अगर (!kref_get_unless_zero(&base->refcount))
+			base = शून्य;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return base;
-}
+	वापस base;
+पूर्ण
 
-struct ttm_base_object *
-ttm_base_object_lookup_for_ref(struct ttm_object_device *tdev, uint32_t key)
-{
-	struct ttm_base_object *base;
+काष्ठा tपंचांग_base_object *
+tपंचांग_base_object_lookup_क्रम_ref(काष्ठा tपंचांग_object_device *tdev, uपूर्णांक32_t key)
+अणु
+	काष्ठा tपंचांग_base_object *base;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	base = idr_find(&tdev->idr, key);
 
-	if (base && !kref_get_unless_zero(&base->refcount))
-		base = NULL;
-	rcu_read_unlock();
+	अगर (base && !kref_get_unless_zero(&base->refcount))
+		base = शून्य;
+	rcu_पढ़ो_unlock();
 
-	return base;
-}
+	वापस base;
+पूर्ण
 
 /**
- * ttm_ref_object_exists - Check whether a caller has a valid ref object
- * (has opened) a base object.
+ * tपंचांग_ref_object_exists - Check whether a caller has a valid ref object
+ * (has खोलोed) a base object.
  *
- * @tfile: Pointer to a struct ttm_object_file identifying the caller.
- * @base: Pointer to a struct base object.
+ * @tfile: Poपूर्णांकer to a काष्ठा tपंचांग_object_file identअगरying the caller.
+ * @base: Poपूर्णांकer to a काष्ठा base object.
  *
- * Checks wether the caller identified by @tfile has put a valid USAGE
- * reference object on the base object identified by @base.
+ * Checks wether the caller identअगरied by @tfile has put a valid USAGE
+ * reference object on the base object identअगरied by @base.
  */
-bool ttm_ref_object_exists(struct ttm_object_file *tfile,
-			   struct ttm_base_object *base)
-{
-	struct drm_open_hash *ht = &tfile->ref_hash[TTM_REF_USAGE];
-	struct drm_hash_item *hash;
-	struct ttm_ref_object *ref;
+bool tपंचांग_ref_object_exists(काष्ठा tपंचांग_object_file *tfile,
+			   काष्ठा tपंचांग_base_object *base)
+अणु
+	काष्ठा drm_खोलो_hash *ht = &tfile->ref_hash[TTM_REF_USAGE];
+	काष्ठा drm_hash_item *hash;
+	काष्ठा tपंचांग_ref_object *ref;
 
-	rcu_read_lock();
-	if (unlikely(drm_ht_find_item_rcu(ht, base->handle, &hash) != 0))
-		goto out_false;
+	rcu_पढ़ो_lock();
+	अगर (unlikely(drm_ht_find_item_rcu(ht, base->handle, &hash) != 0))
+		जाओ out_false;
 
 	/*
-	 * Verify that the ref object is really pointing to our base object.
-	 * Our base object could actually be dead, and the ref object pointing
+	 * Verअगरy that the ref object is really poपूर्णांकing to our base object.
+	 * Our base object could actually be dead, and the ref object poपूर्णांकing
 	 * to another base object with the same handle.
 	 */
-	ref = drm_hash_entry(hash, struct ttm_ref_object, hash);
-	if (unlikely(base != ref->obj))
-		goto out_false;
+	ref = drm_hash_entry(hash, काष्ठा tपंचांग_ref_object, hash);
+	अगर (unlikely(base != ref->obj))
+		जाओ out_false;
 
 	/*
-	 * Verify that the ref->obj pointer was actually valid!
+	 * Verअगरy that the ref->obj poपूर्णांकer was actually valid!
 	 */
 	rmb();
-	if (unlikely(kref_read(&ref->kref) == 0))
-		goto out_false;
+	अगर (unlikely(kref_पढ़ो(&ref->kref) == 0))
+		जाओ out_false;
 
-	rcu_read_unlock();
-	return true;
+	rcu_पढ़ो_unlock();
+	वापस true;
 
  out_false:
-	rcu_read_unlock();
-	return false;
-}
+	rcu_पढ़ो_unlock();
+	वापस false;
+पूर्ण
 
-int ttm_ref_object_add(struct ttm_object_file *tfile,
-		       struct ttm_base_object *base,
-		       enum ttm_ref_type ref_type, bool *existed,
+पूर्णांक tपंचांग_ref_object_add(काष्ठा tपंचांग_object_file *tfile,
+		       काष्ठा tपंचांग_base_object *base,
+		       क्रमागत tपंचांग_ref_type ref_type, bool *existed,
 		       bool require_existed)
-{
-	struct drm_open_hash *ht = &tfile->ref_hash[ref_type];
-	struct ttm_ref_object *ref;
-	struct drm_hash_item *hash;
-	struct ttm_mem_global *mem_glob = tfile->tdev->mem_glob;
-	struct ttm_operation_ctx ctx = {
-		.interruptible = false,
-		.no_wait_gpu = false
-	};
-	int ret = -EINVAL;
+अणु
+	काष्ठा drm_खोलो_hash *ht = &tfile->ref_hash[ref_type];
+	काष्ठा tपंचांग_ref_object *ref;
+	काष्ठा drm_hash_item *hash;
+	काष्ठा tपंचांग_mem_global *mem_glob = tfile->tdev->mem_glob;
+	काष्ठा tपंचांग_operation_ctx ctx = अणु
+		.पूर्णांकerruptible = false,
+		.no_रुको_gpu = false
+	पूर्ण;
+	पूर्णांक ret = -EINVAL;
 
-	if (base->tfile != tfile && !base->shareable)
-		return -EPERM;
+	अगर (base->tfile != tfile && !base->shareable)
+		वापस -EPERM;
 
-	if (existed != NULL)
+	अगर (existed != शून्य)
 		*existed = true;
 
-	while (ret == -EINVAL) {
-		rcu_read_lock();
+	जबतक (ret == -EINVAL) अणु
+		rcu_पढ़ो_lock();
 		ret = drm_ht_find_item_rcu(ht, base->handle, &hash);
 
-		if (ret == 0) {
-			ref = drm_hash_entry(hash, struct ttm_ref_object, hash);
-			if (kref_get_unless_zero(&ref->kref)) {
-				rcu_read_unlock();
-				break;
-			}
-		}
+		अगर (ret == 0) अणु
+			ref = drm_hash_entry(hash, काष्ठा tपंचांग_ref_object, hash);
+			अगर (kref_get_unless_zero(&ref->kref)) अणु
+				rcu_पढ़ो_unlock();
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		rcu_read_unlock();
-		if (require_existed)
-			return -EPERM;
+		rcu_पढ़ो_unlock();
+		अगर (require_existed)
+			वापस -EPERM;
 
-		ret = ttm_mem_global_alloc(mem_glob, sizeof(*ref),
+		ret = tपंचांग_mem_global_alloc(mem_glob, माप(*ref),
 					   &ctx);
-		if (unlikely(ret != 0))
-			return ret;
-		ref = kmalloc(sizeof(*ref), GFP_KERNEL);
-		if (unlikely(ref == NULL)) {
-			ttm_mem_global_free(mem_glob, sizeof(*ref));
-			return -ENOMEM;
-		}
+		अगर (unlikely(ret != 0))
+			वापस ret;
+		ref = kदो_स्मृति(माप(*ref), GFP_KERNEL);
+		अगर (unlikely(ref == शून्य)) अणु
+			tपंचांग_mem_global_मुक्त(mem_glob, माप(*ref));
+			वापस -ENOMEM;
+		पूर्ण
 
 		ref->hash.key = base->handle;
 		ref->obj = base;
@@ -397,325 +398,325 @@ int ttm_ref_object_add(struct ttm_object_file *tfile,
 		spin_lock(&tfile->lock);
 		ret = drm_ht_insert_item_rcu(ht, &ref->hash);
 
-		if (likely(ret == 0)) {
+		अगर (likely(ret == 0)) अणु
 			list_add_tail(&ref->head, &tfile->ref_list);
 			kref_get(&base->refcount);
 			spin_unlock(&tfile->lock);
-			if (existed != NULL)
+			अगर (existed != शून्य)
 				*existed = false;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		spin_unlock(&tfile->lock);
 		BUG_ON(ret != -EINVAL);
 
-		ttm_mem_global_free(mem_glob, sizeof(*ref));
-		kfree(ref);
-	}
+		tपंचांग_mem_global_मुक्त(mem_glob, माप(*ref));
+		kमुक्त(ref);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __releases(tfile->lock) __acquires(tfile->lock)
-ttm_ref_object_release(struct kref *kref)
-{
-	struct ttm_ref_object *ref =
-	    container_of(kref, struct ttm_ref_object, kref);
-	struct ttm_base_object *base = ref->obj;
-	struct ttm_object_file *tfile = ref->tfile;
-	struct drm_open_hash *ht;
-	struct ttm_mem_global *mem_glob = tfile->tdev->mem_glob;
+अटल व्योम __releases(tfile->lock) __acquires(tfile->lock)
+tपंचांग_ref_object_release(काष्ठा kref *kref)
+अणु
+	काष्ठा tपंचांग_ref_object *ref =
+	    container_of(kref, काष्ठा tपंचांग_ref_object, kref);
+	काष्ठा tपंचांग_base_object *base = ref->obj;
+	काष्ठा tपंचांग_object_file *tfile = ref->tfile;
+	काष्ठा drm_खोलो_hash *ht;
+	काष्ठा tपंचांग_mem_global *mem_glob = tfile->tdev->mem_glob;
 
 	ht = &tfile->ref_hash[ref->ref_type];
-	(void)drm_ht_remove_item_rcu(ht, &ref->hash);
+	(व्योम)drm_ht_हटाओ_item_rcu(ht, &ref->hash);
 	list_del(&ref->head);
 	spin_unlock(&tfile->lock);
 
-	if (ref->ref_type != TTM_REF_USAGE && base->ref_obj_release)
+	अगर (ref->ref_type != TTM_REF_USAGE && base->ref_obj_release)
 		base->ref_obj_release(base, ref->ref_type);
 
-	ttm_base_object_unref(&ref->obj);
-	ttm_mem_global_free(mem_glob, sizeof(*ref));
-	kfree_rcu(ref, rcu_head);
+	tपंचांग_base_object_unref(&ref->obj);
+	tपंचांग_mem_global_मुक्त(mem_glob, माप(*ref));
+	kमुक्त_rcu(ref, rcu_head);
 	spin_lock(&tfile->lock);
-}
+पूर्ण
 
-int ttm_ref_object_base_unref(struct ttm_object_file *tfile,
-			      unsigned long key, enum ttm_ref_type ref_type)
-{
-	struct drm_open_hash *ht = &tfile->ref_hash[ref_type];
-	struct ttm_ref_object *ref;
-	struct drm_hash_item *hash;
-	int ret;
+पूर्णांक tपंचांग_ref_object_base_unref(काष्ठा tपंचांग_object_file *tfile,
+			      अचिन्हित दीर्घ key, क्रमागत tपंचांग_ref_type ref_type)
+अणु
+	काष्ठा drm_खोलो_hash *ht = &tfile->ref_hash[ref_type];
+	काष्ठा tपंचांग_ref_object *ref;
+	काष्ठा drm_hash_item *hash;
+	पूर्णांक ret;
 
 	spin_lock(&tfile->lock);
 	ret = drm_ht_find_item(ht, key, &hash);
-	if (unlikely(ret != 0)) {
+	अगर (unlikely(ret != 0)) अणु
 		spin_unlock(&tfile->lock);
-		return -EINVAL;
-	}
-	ref = drm_hash_entry(hash, struct ttm_ref_object, hash);
-	kref_put(&ref->kref, ttm_ref_object_release);
+		वापस -EINVAL;
+	पूर्ण
+	ref = drm_hash_entry(hash, काष्ठा tपंचांग_ref_object, hash);
+	kref_put(&ref->kref, tपंचांग_ref_object_release);
 	spin_unlock(&tfile->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ttm_object_file_release(struct ttm_object_file **p_tfile)
-{
-	struct ttm_ref_object *ref;
-	struct list_head *list;
-	unsigned int i;
-	struct ttm_object_file *tfile = *p_tfile;
+व्योम tपंचांग_object_file_release(काष्ठा tपंचांग_object_file **p_tfile)
+अणु
+	काष्ठा tपंचांग_ref_object *ref;
+	काष्ठा list_head *list;
+	अचिन्हित पूर्णांक i;
+	काष्ठा tपंचांग_object_file *tfile = *p_tfile;
 
-	*p_tfile = NULL;
+	*p_tfile = शून्य;
 	spin_lock(&tfile->lock);
 
 	/*
 	 * Since we release the lock within the loop, we have to
-	 * restart it from the beginning each time.
+	 * restart it from the beginning each समय.
 	 */
 
-	while (!list_empty(&tfile->ref_list)) {
+	जबतक (!list_empty(&tfile->ref_list)) अणु
 		list = tfile->ref_list.next;
-		ref = list_entry(list, struct ttm_ref_object, head);
-		ttm_ref_object_release(&ref->kref);
-	}
+		ref = list_entry(list, काष्ठा tपंचांग_ref_object, head);
+		tपंचांग_ref_object_release(&ref->kref);
+	पूर्ण
 
 	spin_unlock(&tfile->lock);
-	for (i = 0; i < TTM_REF_NUM; ++i)
-		drm_ht_remove(&tfile->ref_hash[i]);
+	क्रम (i = 0; i < TTM_REF_NUM; ++i)
+		drm_ht_हटाओ(&tfile->ref_hash[i]);
 
-	ttm_object_file_unref(&tfile);
-}
+	tपंचांग_object_file_unref(&tfile);
+पूर्ण
 
-struct ttm_object_file *ttm_object_file_init(struct ttm_object_device *tdev,
-					     unsigned int hash_order)
-{
-	struct ttm_object_file *tfile = kmalloc(sizeof(*tfile), GFP_KERNEL);
-	unsigned int i;
-	unsigned int j = 0;
-	int ret;
+काष्ठा tपंचांग_object_file *tपंचांग_object_file_init(काष्ठा tपंचांग_object_device *tdev,
+					     अचिन्हित पूर्णांक hash_order)
+अणु
+	काष्ठा tपंचांग_object_file *tfile = kदो_स्मृति(माप(*tfile), GFP_KERNEL);
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक j = 0;
+	पूर्णांक ret;
 
-	if (unlikely(tfile == NULL))
-		return NULL;
+	अगर (unlikely(tfile == शून्य))
+		वापस शून्य;
 
 	spin_lock_init(&tfile->lock);
 	tfile->tdev = tdev;
 	kref_init(&tfile->refcount);
 	INIT_LIST_HEAD(&tfile->ref_list);
 
-	for (i = 0; i < TTM_REF_NUM; ++i) {
+	क्रम (i = 0; i < TTM_REF_NUM; ++i) अणु
 		ret = drm_ht_create(&tfile->ref_hash[i], hash_order);
-		if (ret) {
+		अगर (ret) अणु
 			j = i;
-			goto out_err;
-		}
-	}
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	return tfile;
+	वापस tfile;
 out_err:
-	for (i = 0; i < j; ++i)
-		drm_ht_remove(&tfile->ref_hash[i]);
+	क्रम (i = 0; i < j; ++i)
+		drm_ht_हटाओ(&tfile->ref_hash[i]);
 
-	kfree(tfile);
+	kमुक्त(tfile);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct ttm_object_device *
-ttm_object_device_init(struct ttm_mem_global *mem_glob,
-		       unsigned int hash_order,
-		       const struct dma_buf_ops *ops)
-{
-	struct ttm_object_device *tdev = kmalloc(sizeof(*tdev), GFP_KERNEL);
-	int ret;
+काष्ठा tपंचांग_object_device *
+tपंचांग_object_device_init(काष्ठा tपंचांग_mem_global *mem_glob,
+		       अचिन्हित पूर्णांक hash_order,
+		       स्थिर काष्ठा dma_buf_ops *ops)
+अणु
+	काष्ठा tपंचांग_object_device *tdev = kदो_स्मृति(माप(*tdev), GFP_KERNEL);
+	पूर्णांक ret;
 
-	if (unlikely(tdev == NULL))
-		return NULL;
+	अगर (unlikely(tdev == शून्य))
+		वापस शून्य;
 
 	tdev->mem_glob = mem_glob;
 	spin_lock_init(&tdev->object_lock);
 	atomic_set(&tdev->object_count, 0);
 	ret = drm_ht_create(&tdev->object_hash, hash_order);
-	if (ret != 0)
-		goto out_no_object_hash;
+	अगर (ret != 0)
+		जाओ out_no_object_hash;
 
 	idr_init(&tdev->idr);
 	tdev->ops = *ops;
 	tdev->dmabuf_release = tdev->ops.release;
-	tdev->ops.release = ttm_prime_dmabuf_release;
-	tdev->dma_buf_size = ttm_round_pot(sizeof(struct dma_buf)) +
-		ttm_round_pot(sizeof(struct file));
-	return tdev;
+	tdev->ops.release = tपंचांग_prime_dmabuf_release;
+	tdev->dma_buf_size = tपंचांग_round_pot(माप(काष्ठा dma_buf)) +
+		tपंचांग_round_pot(माप(काष्ठा file));
+	वापस tdev;
 
 out_no_object_hash:
-	kfree(tdev);
-	return NULL;
-}
+	kमुक्त(tdev);
+	वापस शून्य;
+पूर्ण
 
-void ttm_object_device_release(struct ttm_object_device **p_tdev)
-{
-	struct ttm_object_device *tdev = *p_tdev;
+व्योम tपंचांग_object_device_release(काष्ठा tपंचांग_object_device **p_tdev)
+अणु
+	काष्ठा tपंचांग_object_device *tdev = *p_tdev;
 
-	*p_tdev = NULL;
+	*p_tdev = शून्य;
 
 	WARN_ON_ONCE(!idr_is_empty(&tdev->idr));
 	idr_destroy(&tdev->idr);
-	drm_ht_remove(&tdev->object_hash);
+	drm_ht_हटाओ(&tdev->object_hash);
 
-	kfree(tdev);
-}
+	kमुक्त(tdev);
+पूर्ण
 
 /**
- * get_dma_buf_unless_doomed - get a dma_buf reference if possible.
+ * get_dma_buf_unless_करोomed - get a dma_buf reference अगर possible.
  *
- * @dmabuf: Non-refcounted pointer to a struct dma-buf.
+ * @dmabuf: Non-refcounted poपूर्णांकer to a काष्ठा dma-buf.
  *
- * Obtain a file reference from a lookup structure that doesn't refcount
+ * Obtain a file reference from a lookup काष्ठाure that करोesn't refcount
  * the file, but synchronizes with its release method to make sure it has
- * not been freed yet. See for example kref_get_unless_zero documentation.
- * Returns true if refcounting succeeds, false otherwise.
+ * not been मुक्तd yet. See क्रम example kref_get_unless_zero करोcumentation.
+ * Returns true अगर refcounting succeeds, false otherwise.
  *
- * Nobody really wants this as a public API yet, so let it mature here
- * for some time...
+ * Nobody really wants this as a खुला API yet, so let it mature here
+ * क्रम some समय...
  */
-static bool __must_check get_dma_buf_unless_doomed(struct dma_buf *dmabuf)
-{
-	return atomic_long_inc_not_zero(&dmabuf->file->f_count) != 0L;
-}
+अटल bool __must_check get_dma_buf_unless_करोomed(काष्ठा dma_buf *dmabuf)
+अणु
+	वापस atomic_दीर्घ_inc_not_zero(&dmabuf->file->f_count) != 0L;
+पूर्ण
 
 /**
- * ttm_prime_refcount_release - refcount release method for a prime object.
+ * tपंचांग_prime_refcount_release - refcount release method क्रम a prime object.
  *
- * @p_base: Pointer to ttm_base_object pointer.
+ * @p_base: Poपूर्णांकer to tपंचांग_base_object poपूर्णांकer.
  *
  * This is a wrapper that calls the refcount_release founction of the
- * underlying object. At the same time it cleans up the prime object.
+ * underlying object. At the same समय it cleans up the prime object.
  * This function is called when all references to the base object we
  * derive from are gone.
  */
-static void ttm_prime_refcount_release(struct ttm_base_object **p_base)
-{
-	struct ttm_base_object *base = *p_base;
-	struct ttm_prime_object *prime;
+अटल व्योम tपंचांग_prime_refcount_release(काष्ठा tपंचांग_base_object **p_base)
+अणु
+	काष्ठा tपंचांग_base_object *base = *p_base;
+	काष्ठा tपंचांग_prime_object *prime;
 
-	*p_base = NULL;
-	prime = container_of(base, struct ttm_prime_object, base);
-	BUG_ON(prime->dma_buf != NULL);
+	*p_base = शून्य;
+	prime = container_of(base, काष्ठा tपंचांग_prime_object, base);
+	BUG_ON(prime->dma_buf != शून्य);
 	mutex_destroy(&prime->mutex);
-	if (prime->refcount_release)
+	अगर (prime->refcount_release)
 		prime->refcount_release(&base);
-}
+पूर्ण
 
 /**
- * ttm_prime_dmabuf_release - Release method for the dma-bufs we export
+ * tपंचांग_prime_dmabuf_release - Release method क्रम the dma-bufs we export
  *
  * @dma_buf:
  *
  * This function first calls the dma_buf release method the driver
- * provides. Then it cleans up our dma_buf pointer used for lookup,
+ * provides. Then it cleans up our dma_buf poपूर्णांकer used क्रम lookup,
  * and finally releases the reference the dma_buf has on our base
  * object.
  */
-static void ttm_prime_dmabuf_release(struct dma_buf *dma_buf)
-{
-	struct ttm_prime_object *prime =
-		(struct ttm_prime_object *) dma_buf->priv;
-	struct ttm_base_object *base = &prime->base;
-	struct ttm_object_device *tdev = base->tfile->tdev;
+अटल व्योम tपंचांग_prime_dmabuf_release(काष्ठा dma_buf *dma_buf)
+अणु
+	काष्ठा tपंचांग_prime_object *prime =
+		(काष्ठा tपंचांग_prime_object *) dma_buf->priv;
+	काष्ठा tपंचांग_base_object *base = &prime->base;
+	काष्ठा tपंचांग_object_device *tdev = base->tfile->tdev;
 
-	if (tdev->dmabuf_release)
+	अगर (tdev->dmabuf_release)
 		tdev->dmabuf_release(dma_buf);
 	mutex_lock(&prime->mutex);
-	if (prime->dma_buf == dma_buf)
-		prime->dma_buf = NULL;
+	अगर (prime->dma_buf == dma_buf)
+		prime->dma_buf = शून्य;
 	mutex_unlock(&prime->mutex);
-	ttm_mem_global_free(tdev->mem_glob, tdev->dma_buf_size);
-	ttm_base_object_unref(&base);
-}
+	tपंचांग_mem_global_मुक्त(tdev->mem_glob, tdev->dma_buf_size);
+	tपंचांग_base_object_unref(&base);
+पूर्ण
 
 /**
- * ttm_prime_fd_to_handle - Get a base object handle from a prime fd
+ * tपंचांग_prime_fd_to_handle - Get a base object handle from a prime fd
  *
- * @tfile: A struct ttm_object_file identifying the caller.
+ * @tfile: A काष्ठा tपंचांग_object_file identअगरying the caller.
  * @fd: The prime / dmabuf fd.
- * @handle: The returned handle.
+ * @handle: The वापसed handle.
  *
- * This function returns a handle to an object that previously exported
- * a dma-buf. Note that we don't handle imports yet, because we simply
+ * This function वापसs a handle to an object that previously exported
+ * a dma-buf. Note that we करोn't handle imports yet, because we simply
  * have no consumers of that implementation.
  */
-int ttm_prime_fd_to_handle(struct ttm_object_file *tfile,
-			   int fd, u32 *handle)
-{
-	struct ttm_object_device *tdev = tfile->tdev;
-	struct dma_buf *dma_buf;
-	struct ttm_prime_object *prime;
-	struct ttm_base_object *base;
-	int ret;
+पूर्णांक tपंचांग_prime_fd_to_handle(काष्ठा tपंचांग_object_file *tfile,
+			   पूर्णांक fd, u32 *handle)
+अणु
+	काष्ठा tपंचांग_object_device *tdev = tfile->tdev;
+	काष्ठा dma_buf *dma_buf;
+	काष्ठा tपंचांग_prime_object *prime;
+	काष्ठा tपंचांग_base_object *base;
+	पूर्णांक ret;
 
 	dma_buf = dma_buf_get(fd);
-	if (IS_ERR(dma_buf))
-		return PTR_ERR(dma_buf);
+	अगर (IS_ERR(dma_buf))
+		वापस PTR_ERR(dma_buf);
 
-	if (dma_buf->ops != &tdev->ops)
-		return -ENOSYS;
+	अगर (dma_buf->ops != &tdev->ops)
+		वापस -ENOSYS;
 
-	prime = (struct ttm_prime_object *) dma_buf->priv;
+	prime = (काष्ठा tपंचांग_prime_object *) dma_buf->priv;
 	base = &prime->base;
 	*handle = base->handle;
-	ret = ttm_ref_object_add(tfile, base, TTM_REF_USAGE, NULL, false);
+	ret = tपंचांग_ref_object_add(tfile, base, TTM_REF_USAGE, शून्य, false);
 
 	dma_buf_put(dma_buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ttm_prime_handle_to_fd - Return a dma_buf fd from a ttm prime object
+ * tपंचांग_prime_handle_to_fd - Return a dma_buf fd from a tपंचांग prime object
  *
- * @tfile: Struct ttm_object_file identifying the caller.
+ * @tfile: Struct tपंचांग_object_file identअगरying the caller.
  * @handle: Handle to the object we're exporting from.
- * @flags: flags for dma-buf creation. We just pass them on.
- * @prime_fd: The returned file descriptor.
+ * @flags: flags क्रम dma-buf creation. We just pass them on.
+ * @prime_fd: The वापसed file descriptor.
  *
  */
-int ttm_prime_handle_to_fd(struct ttm_object_file *tfile,
-			   uint32_t handle, uint32_t flags,
-			   int *prime_fd)
-{
-	struct ttm_object_device *tdev = tfile->tdev;
-	struct ttm_base_object *base;
-	struct dma_buf *dma_buf;
-	struct ttm_prime_object *prime;
-	int ret;
+पूर्णांक tपंचांग_prime_handle_to_fd(काष्ठा tपंचांग_object_file *tfile,
+			   uपूर्णांक32_t handle, uपूर्णांक32_t flags,
+			   पूर्णांक *prime_fd)
+अणु
+	काष्ठा tपंचांग_object_device *tdev = tfile->tdev;
+	काष्ठा tपंचांग_base_object *base;
+	काष्ठा dma_buf *dma_buf;
+	काष्ठा tपंचांग_prime_object *prime;
+	पूर्णांक ret;
 
-	base = ttm_base_object_lookup(tfile, handle);
-	if (unlikely(base == NULL ||
-		     base->object_type != ttm_prime_type)) {
+	base = tपंचांग_base_object_lookup(tfile, handle);
+	अगर (unlikely(base == शून्य ||
+		     base->object_type != tपंचांग_prime_type)) अणु
 		ret = -ENOENT;
-		goto out_unref;
-	}
+		जाओ out_unref;
+	पूर्ण
 
-	prime = container_of(base, struct ttm_prime_object, base);
-	if (unlikely(!base->shareable)) {
+	prime = container_of(base, काष्ठा tपंचांग_prime_object, base);
+	अगर (unlikely(!base->shareable)) अणु
 		ret = -EPERM;
-		goto out_unref;
-	}
+		जाओ out_unref;
+	पूर्ण
 
-	ret = mutex_lock_interruptible(&prime->mutex);
-	if (unlikely(ret != 0)) {
+	ret = mutex_lock_पूर्णांकerruptible(&prime->mutex);
+	अगर (unlikely(ret != 0)) अणु
 		ret = -ERESTARTSYS;
-		goto out_unref;
-	}
+		जाओ out_unref;
+	पूर्ण
 
 	dma_buf = prime->dma_buf;
-	if (!dma_buf || !get_dma_buf_unless_doomed(dma_buf)) {
+	अगर (!dma_buf || !get_dma_buf_unless_करोomed(dma_buf)) अणु
 		DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
-		struct ttm_operation_ctx ctx = {
-			.interruptible = true,
-			.no_wait_gpu = false
-		};
+		काष्ठा tपंचांग_operation_ctx ctx = अणु
+			.पूर्णांकerruptible = true,
+			.no_रुको_gpu = false
+		पूर्ण;
 		exp_info.ops = &tdev->ops;
 		exp_info.size = prime->size;
 		exp_info.flags = flags;
@@ -724,71 +725,71 @@ int ttm_prime_handle_to_fd(struct ttm_object_file *tfile,
 		/*
 		 * Need to create a new dma_buf, with memory accounting.
 		 */
-		ret = ttm_mem_global_alloc(tdev->mem_glob, tdev->dma_buf_size,
+		ret = tपंचांग_mem_global_alloc(tdev->mem_glob, tdev->dma_buf_size,
 					   &ctx);
-		if (unlikely(ret != 0)) {
+		अगर (unlikely(ret != 0)) अणु
 			mutex_unlock(&prime->mutex);
-			goto out_unref;
-		}
+			जाओ out_unref;
+		पूर्ण
 
 		dma_buf = dma_buf_export(&exp_info);
-		if (IS_ERR(dma_buf)) {
+		अगर (IS_ERR(dma_buf)) अणु
 			ret = PTR_ERR(dma_buf);
-			ttm_mem_global_free(tdev->mem_glob,
+			tपंचांग_mem_global_मुक्त(tdev->mem_glob,
 					    tdev->dma_buf_size);
 			mutex_unlock(&prime->mutex);
-			goto out_unref;
-		}
+			जाओ out_unref;
+		पूर्ण
 
 		/*
 		 * dma_buf has taken the base object reference
 		 */
-		base = NULL;
+		base = शून्य;
 		prime->dma_buf = dma_buf;
-	}
+	पूर्ण
 	mutex_unlock(&prime->mutex);
 
 	ret = dma_buf_fd(dma_buf, flags);
-	if (ret >= 0) {
+	अगर (ret >= 0) अणु
 		*prime_fd = ret;
 		ret = 0;
-	} else
+	पूर्ण अन्यथा
 		dma_buf_put(dma_buf);
 
 out_unref:
-	if (base)
-		ttm_base_object_unref(&base);
-	return ret;
-}
+	अगर (base)
+		tपंचांग_base_object_unref(&base);
+	वापस ret;
+पूर्ण
 
 /**
- * ttm_prime_object_init - Initialize a ttm_prime_object
+ * tपंचांग_prime_object_init - Initialize a tपंचांग_prime_object
  *
- * @tfile: struct ttm_object_file identifying the caller
+ * @tfile: काष्ठा tपंचांग_object_file identअगरying the caller
  * @size: The size of the dma_bufs we export.
  * @prime: The object to be initialized.
- * @shareable: See ttm_base_object_init
- * @type: See ttm_base_object_init
- * @refcount_release: See ttm_base_object_init
- * @ref_obj_release: See ttm_base_object_init
+ * @shareable: See tपंचांग_base_object_init
+ * @type: See tपंचांग_base_object_init
+ * @refcount_release: See tपंचांग_base_object_init
+ * @ref_obj_release: See tपंचांग_base_object_init
  *
  * Initializes an object which is compatible with the drm_prime model
- * for data sharing between processes and devices.
+ * क्रम data sharing between processes and devices.
  */
-int ttm_prime_object_init(struct ttm_object_file *tfile, size_t size,
-			  struct ttm_prime_object *prime, bool shareable,
-			  enum ttm_object_type type,
-			  void (*refcount_release) (struct ttm_base_object **),
-			  void (*ref_obj_release) (struct ttm_base_object *,
-						   enum ttm_ref_type ref_type))
-{
+पूर्णांक tपंचांग_prime_object_init(काष्ठा tपंचांग_object_file *tfile, माप_प्रकार size,
+			  काष्ठा tपंचांग_prime_object *prime, bool shareable,
+			  क्रमागत tपंचांग_object_type type,
+			  व्योम (*refcount_release) (काष्ठा tपंचांग_base_object **),
+			  व्योम (*ref_obj_release) (काष्ठा tपंचांग_base_object *,
+						   क्रमागत tपंचांग_ref_type ref_type))
+अणु
 	mutex_init(&prime->mutex);
 	prime->size = PAGE_ALIGN(size);
 	prime->real_type = type;
-	prime->dma_buf = NULL;
+	prime->dma_buf = शून्य;
 	prime->refcount_release = refcount_release;
-	return ttm_base_object_init(tfile, &prime->base, shareable,
-				    ttm_prime_type,
-				    ttm_prime_refcount_release,
+	वापस tपंचांग_base_object_init(tfile, &prime->base, shareable,
+				    tपंचांग_prime_type,
+				    tपंचांग_prime_refcount_release,
 				    ref_obj_release);
-}
+पूर्ण

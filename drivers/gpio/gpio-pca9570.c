@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for PCA9570 I2C GPO expander
+ * Driver क्रम PCA9570 I2C GPO expander
  *
  * Copyright (C) 2020 Sungbo Eo <mans0n@gorani.run>
  *
@@ -9,95 +10,95 @@
  *	Andrew F. Davis <afd@ti.com>
  */
 
-#include <linux/gpio/driver.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/property.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/property.h>
 
 /**
- * struct pca9570 - GPIO driver data
+ * काष्ठा pca9570 - GPIO driver data
  * @chip: GPIO controller chip
- * @lock: Protects write sequences
- * @out: Buffer for device register
+ * @lock: Protects ग_लिखो sequences
+ * @out: Buffer क्रम device रेजिस्टर
  */
-struct pca9570 {
-	struct gpio_chip chip;
-	struct mutex lock;
+काष्ठा pca9570 अणु
+	काष्ठा gpio_chip chip;
+	काष्ठा mutex lock;
 	u8 out;
-};
+पूर्ण;
 
-static int pca9570_read(struct pca9570 *gpio, u8 *value)
-{
-	struct i2c_client *client = to_i2c_client(gpio->chip.parent);
-	int ret;
+अटल पूर्णांक pca9570_पढ़ो(काष्ठा pca9570 *gpio, u8 *value)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(gpio->chip.parent);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte(client);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_byte(client);
+	अगर (ret < 0)
+		वापस ret;
 
 	*value = ret;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pca9570_write(struct pca9570 *gpio, u8 value)
-{
-	struct i2c_client *client = to_i2c_client(gpio->chip.parent);
+अटल पूर्णांक pca9570_ग_लिखो(काष्ठा pca9570 *gpio, u8 value)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(gpio->chip.parent);
 
-	return i2c_smbus_write_byte(client, value);
-}
+	वापस i2c_smbus_ग_लिखो_byte(client, value);
+पूर्ण
 
-static int pca9570_get_direction(struct gpio_chip *chip,
-				 unsigned offset)
-{
+अटल पूर्णांक pca9570_get_direction(काष्ठा gpio_chip *chip,
+				 अचिन्हित offset)
+अणु
 	/* This device always output */
-	return GPIO_LINE_DIRECTION_OUT;
-}
+	वापस GPIO_LINE_सूचीECTION_OUT;
+पूर्ण
 
-static int pca9570_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct pca9570 *gpio = gpiochip_get_data(chip);
+अटल पूर्णांक pca9570_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा pca9570 *gpio = gpiochip_get_data(chip);
 	u8 buffer;
-	int ret;
+	पूर्णांक ret;
 
-	ret = pca9570_read(gpio, &buffer);
-	if (ret)
-		return ret;
+	ret = pca9570_पढ़ो(gpio, &buffer);
+	अगर (ret)
+		वापस ret;
 
-	return !!(buffer & BIT(offset));
-}
+	वापस !!(buffer & BIT(offset));
+पूर्ण
 
-static void pca9570_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	struct pca9570 *gpio = gpiochip_get_data(chip);
+अटल व्योम pca9570_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा pca9570 *gpio = gpiochip_get_data(chip);
 	u8 buffer;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&gpio->lock);
 
 	buffer = gpio->out;
-	if (value)
+	अगर (value)
 		buffer |= BIT(offset);
-	else
+	अन्यथा
 		buffer &= ~BIT(offset);
 
-	ret = pca9570_write(gpio, buffer);
-	if (ret)
-		goto out;
+	ret = pca9570_ग_लिखो(gpio, buffer);
+	अगर (ret)
+		जाओ out;
 
 	gpio->out = buffer;
 
 out:
 	mutex_unlock(&gpio->lock);
-}
+पूर्ण
 
-static int pca9570_probe(struct i2c_client *client)
-{
-	struct pca9570 *gpio;
+अटल पूर्णांक pca9570_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा pca9570 *gpio;
 
-	gpio = devm_kzalloc(&client->dev, sizeof(*gpio), GFP_KERNEL);
-	if (!gpio)
-		return -ENOMEM;
+	gpio = devm_kzalloc(&client->dev, माप(*gpio), GFP_KERNEL);
+	अगर (!gpio)
+		वापस -ENOMEM;
 
 	gpio->chip.label = client->name;
 	gpio->chip.parent = &client->dev;
@@ -106,39 +107,39 @@ static int pca9570_probe(struct i2c_client *client)
 	gpio->chip.get = pca9570_get;
 	gpio->chip.set = pca9570_set;
 	gpio->chip.base = -1;
-	gpio->chip.ngpio = (uintptr_t)device_get_match_data(&client->dev);
+	gpio->chip.ngpio = (uपूर्णांकptr_t)device_get_match_data(&client->dev);
 	gpio->chip.can_sleep = true;
 
 	mutex_init(&gpio->lock);
 
 	/* Read the current output level */
-	pca9570_read(gpio, &gpio->out);
+	pca9570_पढ़ो(gpio, &gpio->out);
 
 	i2c_set_clientdata(client, gpio);
 
-	return devm_gpiochip_add_data(&client->dev, &gpio->chip, gpio);
-}
+	वापस devm_gpiochip_add_data(&client->dev, &gpio->chip, gpio);
+पूर्ण
 
-static const struct i2c_device_id pca9570_id_table[] = {
-	{ "pca9570", 4 },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा i2c_device_id pca9570_id_table[] = अणु
+	अणु "pca9570", 4 पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, pca9570_id_table);
 
-static const struct of_device_id pca9570_of_match_table[] = {
-	{ .compatible = "nxp,pca9570", .data = (void *)4 },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id pca9570_of_match_table[] = अणु
+	अणु .compatible = "nxp,pca9570", .data = (व्योम *)4 पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pca9570_of_match_table);
 
-static struct i2c_driver pca9570_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver pca9570_driver = अणु
+	.driver = अणु
 		.name = "pca9570",
 		.of_match_table = pca9570_of_match_table,
-	},
+	पूर्ण,
 	.probe_new = pca9570_probe,
 	.id_table = pca9570_id_table,
-};
+पूर्ण;
 module_i2c_driver(pca9570_driver);
 
 MODULE_AUTHOR("Sungbo Eo <mans0n@gorani.run>");

@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Driver header for S5P HDMI chip.
+ * Driver header क्रम S5P HDMI chip.
  *
  * Copyright (c) 2011 Samsung Electronics, Co. Ltd
  * Contact: Tomasz Stanislawski <t.stanislaws@samsung.com>
  */
 
-#ifndef S5P_HDMI_H
-#define S5P_HDMI_H
+#अगर_अघोषित S5P_HDMI_H
+#घोषणा S5P_HDMI_H
 
-struct i2c_board_info;
+काष्ठा i2c_board_info;
 
 /**
- * @hdmiphy_bus: controller id for HDMIPHY bus
- * @hdmiphy_info: template for HDMIPHY I2C device
- * @mhl_bus: controller id for MHL control bus
- * @mhl_info: template for MHL I2C device
- * @hpd_gpio: GPIO for Hot-Plug-Detect pin
+ * @hdmiphy_bus: controller id क्रम HDMIPHY bus
+ * @hdmiphy_info: ढाँचा क्रम HDMIPHY I2C device
+ * @mhl_bus: controller id क्रम MHL control bus
+ * @mhl_info: ढाँचा क्रम MHL I2C device
+ * @hpd_gpio: GPIO क्रम Hot-Plug-Detect pin
  *
- * NULL pointer for *_info fields indicates that
+ * शून्य poपूर्णांकer क्रम *_info fields indicates that
  * the corresponding chip is not present
  */
-struct s5p_hdmi_platform_data {
-	int hdmiphy_bus;
-	struct i2c_board_info *hdmiphy_info;
-	int mhl_bus;
-	struct i2c_board_info *mhl_info;
-	int hpd_gpio;
-};
+काष्ठा s5p_hdmi_platक्रमm_data अणु
+	पूर्णांक hdmiphy_bus;
+	काष्ठा i2c_board_info *hdmiphy_info;
+	पूर्णांक mhl_bus;
+	काष्ठा i2c_board_info *mhl_info;
+	पूर्णांक hpd_gpio;
+पूर्ण;
 
-#endif /* S5P_HDMI_H */
+#पूर्ण_अगर /* S5P_HDMI_H */

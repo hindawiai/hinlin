@@ -1,258 +1,259 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  pvrusb2-dvb.c - linux-dvb api interface to the pvrusb2 driver.
+ *  pvrusb2-dvb.c - linux-dvb api पूर्णांकerface to the pvrusb2 driver.
  *
  *  Copyright (C) 2007, 2008 Michael Krufky <mkrufky@linuxtv.org>
  */
 
-#include <linux/kthread.h>
-#include <linux/freezer.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <media/dvbdev.h>
-#include "pvrusb2-debug.h"
-#include "pvrusb2-hdw-internal.h"
-#include "pvrusb2-hdw.h"
-#include "pvrusb2-io.h"
-#include "pvrusb2-dvb.h"
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <media/dvbdev.h>
+#समावेश "pvrusb2-debug.h"
+#समावेश "pvrusb2-hdw-internal.h"
+#समावेश "pvrusb2-hdw.h"
+#समावेश "pvrusb2-io.h"
+#समावेश "pvrusb2-dvb.h"
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-static int pvr2_dvb_feed_func(struct pvr2_dvb_adapter *adap)
-{
-	int ret;
-	unsigned int count;
-	struct pvr2_buffer *bp;
-	struct pvr2_stream *stream;
+अटल पूर्णांक pvr2_dvb_feed_func(काष्ठा pvr2_dvb_adapter *adap)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक count;
+	काष्ठा pvr2_buffer *bp;
+	काष्ठा pvr2_stream *stream;
 
 	pvr2_trace(PVR2_TRACE_DVB_FEED, "dvb feed thread started");
-	set_freezable();
+	set_मुक्तzable();
 
 	stream = adap->channel.stream->stream;
 
-	for (;;) {
-		if (kthread_should_stop()) break;
+	क्रम (;;) अणु
+		अगर (kthपढ़ो_should_stop()) अवरोध;
 
 		/* Not sure about this... */
-		try_to_freeze();
+		try_to_मुक्तze();
 
-		bp = pvr2_stream_get_ready_buffer(stream);
-		if (bp != NULL) {
+		bp = pvr2_stream_get_पढ़ोy_buffer(stream);
+		अगर (bp != शून्य) अणु
 			count = pvr2_buffer_get_count(bp);
-			if (count) {
+			अगर (count) अणु
 				dvb_dmx_swfilter(
 					&adap->demux,
 					adap->buffer_storage[
 					    pvr2_buffer_get_id(bp)],
 					count);
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = pvr2_buffer_get_status(bp);
-				if (ret < 0) break;
-			}
+				अगर (ret < 0) अवरोध;
+			पूर्ण
 			ret = pvr2_buffer_queue(bp);
-			if (ret < 0) break;
+			अगर (ret < 0) अवरोध;
 
 			/* Since we know we did something to a buffer,
-			   just go back and try again.  No point in
+			   just go back and try again.  No poपूर्णांक in
 			   blocking unless we really ran out of
 			   buffers to process. */
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 
 		/* Wait until more buffers become available or we're
-		   told not to wait any longer. */
-		ret = wait_event_interruptible(
-		    adap->buffer_wait_data,
-		    (pvr2_stream_get_ready_count(stream) > 0) ||
-		    kthread_should_stop());
-		if (ret < 0) break;
-	}
+		   told not to रुको any दीर्घer. */
+		ret = रुको_event_पूर्णांकerruptible(
+		    adap->buffer_रुको_data,
+		    (pvr2_stream_get_पढ़ोy_count(stream) > 0) ||
+		    kthपढ़ो_should_stop());
+		अगर (ret < 0) अवरोध;
+	पूर्ण
 
 	/* If we get here and ret is < 0, then an error has occurred.
 	   Probably would be a good idea to communicate that to DVB core... */
 
 	pvr2_trace(PVR2_TRACE_DVB_FEED, "dvb feed thread stopped");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pvr2_dvb_feed_thread(void *data)
-{
-	int stat = pvr2_dvb_feed_func(data);
+अटल पूर्णांक pvr2_dvb_feed_thपढ़ो(व्योम *data)
+अणु
+	पूर्णांक stat = pvr2_dvb_feed_func(data);
 	/* from videobuf-dvb.c: */
-	while (!kthread_should_stop()) {
+	जबतक (!kthपढ़ो_should_stop()) अणु
 		set_current_state(TASK_INTERRUPTIBLE);
 		schedule();
-	}
-	return stat;
-}
+	पूर्ण
+	वापस stat;
+पूर्ण
 
-static void pvr2_dvb_notify(struct pvr2_dvb_adapter *adap)
-{
-	wake_up(&adap->buffer_wait_data);
-}
+अटल व्योम pvr2_dvb_notअगरy(काष्ठा pvr2_dvb_adapter *adap)
+अणु
+	wake_up(&adap->buffer_रुको_data);
+पूर्ण
 
-static void pvr2_dvb_stream_end(struct pvr2_dvb_adapter *adap)
-{
-	unsigned int idx;
-	struct pvr2_stream *stream;
+अटल व्योम pvr2_dvb_stream_end(काष्ठा pvr2_dvb_adapter *adap)
+अणु
+	अचिन्हित पूर्णांक idx;
+	काष्ठा pvr2_stream *stream;
 
-	if (adap->thread) {
-		kthread_stop(adap->thread);
-		adap->thread = NULL;
-	}
+	अगर (adap->thपढ़ो) अणु
+		kthपढ़ो_stop(adap->thपढ़ो);
+		adap->thपढ़ो = शून्य;
+	पूर्ण
 
-	if (adap->channel.stream) {
+	अगर (adap->channel.stream) अणु
 		stream = adap->channel.stream->stream;
-	} else {
-		stream = NULL;
-	}
-	if (stream) {
+	पूर्ण अन्यथा अणु
+		stream = शून्य;
+	पूर्ण
+	अगर (stream) अणु
 		pvr2_hdw_set_streaming(adap->channel.hdw, 0);
-		pvr2_stream_set_callback(stream, NULL, NULL);
-		pvr2_stream_kill(stream);
+		pvr2_stream_set_callback(stream, शून्य, शून्य);
+		pvr2_stream_समाप्त(stream);
 		pvr2_stream_set_buffer_count(stream, 0);
-		pvr2_channel_claim_stream(&adap->channel, NULL);
-	}
+		pvr2_channel_claim_stream(&adap->channel, शून्य);
+	पूर्ण
 
-	if (adap->stream_run) {
-		for (idx = 0; idx < PVR2_DVB_BUFFER_COUNT; idx++) {
-			if (!(adap->buffer_storage[idx])) continue;
-			kfree(adap->buffer_storage[idx]);
-			adap->buffer_storage[idx] = NULL;
-		}
+	अगर (adap->stream_run) अणु
+		क्रम (idx = 0; idx < PVR2_DVB_BUFFER_COUNT; idx++) अणु
+			अगर (!(adap->buffer_storage[idx])) जारी;
+			kमुक्त(adap->buffer_storage[idx]);
+			adap->buffer_storage[idx] = शून्य;
+		पूर्ण
 		adap->stream_run = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pvr2_dvb_stream_do_start(struct pvr2_dvb_adapter *adap)
-{
-	struct pvr2_context *pvr = adap->channel.mc_head;
-	unsigned int idx;
-	int ret;
-	struct pvr2_buffer *bp;
-	struct pvr2_stream *stream = NULL;
+अटल पूर्णांक pvr2_dvb_stream_करो_start(काष्ठा pvr2_dvb_adapter *adap)
+अणु
+	काष्ठा pvr2_context *pvr = adap->channel.mc_head;
+	अचिन्हित पूर्णांक idx;
+	पूर्णांक ret;
+	काष्ठा pvr2_buffer *bp;
+	काष्ठा pvr2_stream *stream = शून्य;
 
-	if (adap->stream_run) return -EIO;
+	अगर (adap->stream_run) वापस -EIO;
 
 	ret = pvr2_channel_claim_stream(&adap->channel, &pvr->video_stream);
-	/* somebody else already has the stream */
-	if (ret < 0) return ret;
+	/* somebody अन्यथा alपढ़ोy has the stream */
+	अगर (ret < 0) वापस ret;
 
 	stream = adap->channel.stream->stream;
 
-	for (idx = 0; idx < PVR2_DVB_BUFFER_COUNT; idx++) {
-		adap->buffer_storage[idx] = kmalloc(PVR2_DVB_BUFFER_SIZE,
+	क्रम (idx = 0; idx < PVR2_DVB_BUFFER_COUNT; idx++) अणु
+		adap->buffer_storage[idx] = kदो_स्मृति(PVR2_DVB_BUFFER_SIZE,
 						    GFP_KERNEL);
-		if (!(adap->buffer_storage[idx])) return -ENOMEM;
-	}
+		अगर (!(adap->buffer_storage[idx])) वापस -ENOMEM;
+	पूर्ण
 
 	pvr2_stream_set_callback(pvr->video_stream.stream,
-				 (pvr2_stream_callback) pvr2_dvb_notify, adap);
+				 (pvr2_stream_callback) pvr2_dvb_notअगरy, adap);
 
 	ret = pvr2_stream_set_buffer_count(stream, PVR2_DVB_BUFFER_COUNT);
-	if (ret < 0) return ret;
+	अगर (ret < 0) वापस ret;
 
-	for (idx = 0; idx < PVR2_DVB_BUFFER_COUNT; idx++) {
+	क्रम (idx = 0; idx < PVR2_DVB_BUFFER_COUNT; idx++) अणु
 		bp = pvr2_stream_get_buffer(stream, idx);
 		pvr2_buffer_set_buffer(bp,
 				       adap->buffer_storage[idx],
 				       PVR2_DVB_BUFFER_SIZE);
-	}
+	पूर्ण
 
 	ret = pvr2_hdw_set_streaming(adap->channel.hdw, 1);
-	if (ret < 0) return ret;
+	अगर (ret < 0) वापस ret;
 
-	while ((bp = pvr2_stream_get_idle_buffer(stream)) != NULL) {
+	जबतक ((bp = pvr2_stream_get_idle_buffer(stream)) != शून्य) अणु
 		ret = pvr2_buffer_queue(bp);
-		if (ret < 0) return ret;
-	}
+		अगर (ret < 0) वापस ret;
+	पूर्ण
 
-	adap->thread = kthread_run(pvr2_dvb_feed_thread, adap, "pvrusb2-dvb");
+	adap->thपढ़ो = kthपढ़ो_run(pvr2_dvb_feed_thपढ़ो, adap, "pvrusb2-dvb");
 
-	if (IS_ERR(adap->thread)) {
-		ret = PTR_ERR(adap->thread);
-		adap->thread = NULL;
-		return ret;
-	}
+	अगर (IS_ERR(adap->thपढ़ो)) अणु
+		ret = PTR_ERR(adap->thपढ़ो);
+		adap->thपढ़ो = शून्य;
+		वापस ret;
+	पूर्ण
 
 	adap->stream_run = !0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pvr2_dvb_stream_start(struct pvr2_dvb_adapter *adap)
-{
-	int ret = pvr2_dvb_stream_do_start(adap);
-	if (ret < 0) pvr2_dvb_stream_end(adap);
-	return ret;
-}
+अटल पूर्णांक pvr2_dvb_stream_start(काष्ठा pvr2_dvb_adapter *adap)
+अणु
+	पूर्णांक ret = pvr2_dvb_stream_करो_start(adap);
+	अगर (ret < 0) pvr2_dvb_stream_end(adap);
+	वापस ret;
+पूर्ण
 
-static int pvr2_dvb_ctrl_feed(struct dvb_demux_feed *dvbdmxfeed, int onoff)
-{
-	struct pvr2_dvb_adapter *adap = dvbdmxfeed->demux->priv;
-	int ret = 0;
+अटल पूर्णांक pvr2_dvb_ctrl_feed(काष्ठा dvb_demux_feed *dvbdmxfeed, पूर्णांक onoff)
+अणु
+	काष्ठा pvr2_dvb_adapter *adap = dvbdmxfeed->demux->priv;
+	पूर्णांक ret = 0;
 
-	if (adap == NULL) return -ENODEV;
+	अगर (adap == शून्य) वापस -ENODEV;
 
 	mutex_lock(&adap->lock);
-	do {
-		if (onoff) {
-			if (!adap->feedcount) {
+	करो अणु
+		अगर (onoff) अणु
+			अगर (!adap->feedcount) अणु
 				pvr2_trace(PVR2_TRACE_DVB_FEED,
 					   "start feeding demux");
 				ret = pvr2_dvb_stream_start(adap);
-				if (ret < 0) break;
-			}
+				अगर (ret < 0) अवरोध;
+			पूर्ण
 			(adap->feedcount)++;
-		} else if (adap->feedcount > 0) {
+		पूर्ण अन्यथा अगर (adap->feedcount > 0) अणु
 			(adap->feedcount)--;
-			if (!adap->feedcount) {
+			अगर (!adap->feedcount) अणु
 				pvr2_trace(PVR2_TRACE_DVB_FEED,
 					   "stop feeding demux");
 				pvr2_dvb_stream_end(adap);
-			}
-		}
-	} while (0);
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (0);
 	mutex_unlock(&adap->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pvr2_dvb_start_feed(struct dvb_demux_feed *dvbdmxfeed)
-{
+अटल पूर्णांक pvr2_dvb_start_feed(काष्ठा dvb_demux_feed *dvbdmxfeed)
+अणु
 	pvr2_trace(PVR2_TRACE_DVB_FEED, "start pid: 0x%04x", dvbdmxfeed->pid);
-	return pvr2_dvb_ctrl_feed(dvbdmxfeed, 1);
-}
+	वापस pvr2_dvb_ctrl_feed(dvbdmxfeed, 1);
+पूर्ण
 
-static int pvr2_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
-{
+अटल पूर्णांक pvr2_dvb_stop_feed(काष्ठा dvb_demux_feed *dvbdmxfeed)
+अणु
 	pvr2_trace(PVR2_TRACE_DVB_FEED, "stop pid: 0x%04x", dvbdmxfeed->pid);
-	return pvr2_dvb_ctrl_feed(dvbdmxfeed, 0);
-}
+	वापस pvr2_dvb_ctrl_feed(dvbdmxfeed, 0);
+पूर्ण
 
-static int pvr2_dvb_bus_ctrl(struct dvb_frontend *fe, int acquire)
-{
-	struct pvr2_dvb_adapter *adap = fe->dvb->priv;
-	return pvr2_channel_limit_inputs(
+अटल पूर्णांक pvr2_dvb_bus_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक acquire)
+अणु
+	काष्ठा pvr2_dvb_adapter *adap = fe->dvb->priv;
+	वापस pvr2_channel_limit_inमाला_दो(
 	    &adap->channel,
 	    (acquire ? (1 << PVR2_CVAL_INPUT_DTV) : 0));
-}
+पूर्ण
 
-static int pvr2_dvb_adapter_init(struct pvr2_dvb_adapter *adap)
-{
-	int ret;
+अटल पूर्णांक pvr2_dvb_adapter_init(काष्ठा pvr2_dvb_adapter *adap)
+अणु
+	पूर्णांक ret;
 
-	ret = dvb_register_adapter(&adap->dvb_adap, "pvrusb2-dvb",
+	ret = dvb_रेजिस्टर_adapter(&adap->dvb_adap, "pvrusb2-dvb",
 				   THIS_MODULE/*&hdw->usb_dev->owner*/,
 				   &adap->channel.hdw->usb_dev->dev,
 				   adapter_nr);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 			   "dvb_register_adapter failed: error %d", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	adap->dvb_adap.priv = adap;
 
 	adap->demux.dmx.capabilities = DMX_TS_FILTERING |
@@ -263,210 +264,210 @@ static int pvr2_dvb_adapter_init(struct pvr2_dvb_adapter *adap)
 	adap->demux.feednum          = 256;
 	adap->demux.start_feed       = pvr2_dvb_start_feed;
 	adap->demux.stop_feed        = pvr2_dvb_stop_feed;
-	adap->demux.write_to_decoder = NULL;
+	adap->demux.ग_लिखो_to_decoder = शून्य;
 
 	ret = dvb_dmx_init(&adap->demux);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 			   "dvb_dmx_init failed: error %d", ret);
-		goto err_dmx;
-	}
+		जाओ err_dmx;
+	पूर्ण
 
 	adap->dmxdev.filternum       = adap->demux.filternum;
 	adap->dmxdev.demux           = &adap->demux.dmx;
 	adap->dmxdev.capabilities    = 0;
 
 	ret = dvb_dmxdev_init(&adap->dmxdev, &adap->dvb_adap);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 			   "dvb_dmxdev_init failed: error %d", ret);
-		goto err_dmx_dev;
-	}
+		जाओ err_dmx_dev;
+	पूर्ण
 
 	dvb_net_init(&adap->dvb_adap, &adap->dvb_net, &adap->demux.dmx);
 
-	return 0;
+	वापस 0;
 
 err_dmx_dev:
 	dvb_dmx_release(&adap->demux);
 err_dmx:
-	dvb_unregister_adapter(&adap->dvb_adap);
+	dvb_unरेजिस्टर_adapter(&adap->dvb_adap);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pvr2_dvb_adapter_exit(struct pvr2_dvb_adapter *adap)
-{
+अटल पूर्णांक pvr2_dvb_adapter_निकास(काष्ठा pvr2_dvb_adapter *adap)
+अणु
 	pvr2_trace(PVR2_TRACE_INFO, "unregistering DVB devices");
 	dvb_net_release(&adap->dvb_net);
-	adap->demux.dmx.close(&adap->demux.dmx);
+	adap->demux.dmx.बंद(&adap->demux.dmx);
 	dvb_dmxdev_release(&adap->dmxdev);
 	dvb_dmx_release(&adap->demux);
-	dvb_unregister_adapter(&adap->dvb_adap);
-	return 0;
-}
+	dvb_unरेजिस्टर_adapter(&adap->dvb_adap);
+	वापस 0;
+पूर्ण
 
-static int pvr2_dvb_frontend_init(struct pvr2_dvb_adapter *adap)
-{
-	struct pvr2_hdw *hdw = adap->channel.hdw;
-	const struct pvr2_dvb_props *dvb_props = hdw->hdw_desc->dvb_props;
-	int ret = 0;
+अटल पूर्णांक pvr2_dvb_frontend_init(काष्ठा pvr2_dvb_adapter *adap)
+अणु
+	काष्ठा pvr2_hdw *hdw = adap->channel.hdw;
+	स्थिर काष्ठा pvr2_dvb_props *dvb_props = hdw->hdw_desc->dvb_props;
+	पूर्णांक ret = 0;
 
-	if (dvb_props == NULL) {
+	अगर (dvb_props == शून्य) अणु
 		pvr2_trace(PVR2_TRACE_ERROR_LEGS, "fe_props not defined!");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = pvr2_channel_limit_inputs(
+	ret = pvr2_channel_limit_inमाला_दो(
 	    &adap->channel,
 	    (1 << PVR2_CVAL_INPUT_DTV));
-	if (ret) {
+	अगर (ret) अणु
 		pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 			   "failed to grab control of dtv input (code=%d)",
 		    ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (dvb_props->frontend_attach == NULL) {
+	अगर (dvb_props->frontend_attach == शून्य) अणु
 		pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 			   "frontend_attach not defined!");
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (dvb_props->frontend_attach(adap) == 0 && adap->fe[0]) {
-		if (dvb_register_frontend(&adap->dvb_adap, adap->fe[0])) {
+	अगर (dvb_props->frontend_attach(adap) == 0 && adap->fe[0]) अणु
+		अगर (dvb_रेजिस्टर_frontend(&adap->dvb_adap, adap->fe[0])) अणु
 			pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 				   "frontend registration failed!");
 			ret = -ENODEV;
-			goto fail_frontend0;
-		}
-		if (adap->fe[0]->ops.analog_ops.standby)
+			जाओ fail_frontend0;
+		पूर्ण
+		अगर (adap->fe[0]->ops.analog_ops.standby)
 			adap->fe[0]->ops.analog_ops.standby(adap->fe[0]);
 
 		pvr2_trace(PVR2_TRACE_INFO, "transferring fe[%d] ts_bus_ctrl() to pvr2_dvb_bus_ctrl()",
 			   adap->fe[0]->id);
 		adap->fe[0]->ops.ts_bus_ctrl = pvr2_dvb_bus_ctrl;
-	} else {
+	पूर्ण अन्यथा अणु
 		pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 			   "no frontend was attached!");
 		ret = -ENODEV;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (dvb_props->tuner_attach && dvb_props->tuner_attach(adap)) {
+	अगर (dvb_props->tuner_attach && dvb_props->tuner_attach(adap)) अणु
 		pvr2_trace(PVR2_TRACE_ERROR_LEGS, "tuner attach failed");
 		ret = -ENODEV;
-		goto fail_tuner;
-	}
+		जाओ fail_tuner;
+	पूर्ण
 
-	if (adap->fe[1]) {
+	अगर (adap->fe[1]) अणु
 		adap->fe[1]->id = 1;
 		adap->fe[1]->tuner_priv = adap->fe[0]->tuner_priv;
-		memcpy(&adap->fe[1]->ops.tuner_ops,
+		स_नकल(&adap->fe[1]->ops.tuner_ops,
 		       &adap->fe[0]->ops.tuner_ops,
-		       sizeof(struct dvb_tuner_ops));
+		       माप(काष्ठा dvb_tuner_ops));
 
-		if (dvb_register_frontend(&adap->dvb_adap, adap->fe[1])) {
+		अगर (dvb_रेजिस्टर_frontend(&adap->dvb_adap, adap->fe[1])) अणु
 			pvr2_trace(PVR2_TRACE_ERROR_LEGS,
 				   "frontend registration failed!");
 			ret = -ENODEV;
-			goto fail_frontend1;
-		}
+			जाओ fail_frontend1;
+		पूर्ण
 		/* MFE lock */
 		adap->dvb_adap.mfe_shared = 1;
 
-		if (adap->fe[1]->ops.analog_ops.standby)
+		अगर (adap->fe[1]->ops.analog_ops.standby)
 			adap->fe[1]->ops.analog_ops.standby(adap->fe[1]);
 
 		pvr2_trace(PVR2_TRACE_INFO, "transferring fe[%d] ts_bus_ctrl() to pvr2_dvb_bus_ctrl()",
 			   adap->fe[1]->id);
 		adap->fe[1]->ops.ts_bus_ctrl = pvr2_dvb_bus_ctrl;
-	}
-done:
-	pvr2_channel_limit_inputs(&adap->channel, 0);
-	return ret;
+	पूर्ण
+करोne:
+	pvr2_channel_limit_inमाला_दो(&adap->channel, 0);
+	वापस ret;
 
 fail_frontend1:
 	dvb_frontend_detach(adap->fe[1]);
-	adap->fe[1] = NULL;
+	adap->fe[1] = शून्य;
 fail_tuner:
-	dvb_unregister_frontend(adap->fe[0]);
+	dvb_unरेजिस्टर_frontend(adap->fe[0]);
 fail_frontend0:
 	dvb_frontend_detach(adap->fe[0]);
-	adap->fe[0] = NULL;
+	adap->fe[0] = शून्य;
 	dvb_module_release(adap->i2c_client_tuner);
 	dvb_module_release(adap->i2c_client_demod[1]);
 	dvb_module_release(adap->i2c_client_demod[0]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pvr2_dvb_frontend_exit(struct pvr2_dvb_adapter *adap)
-{
-	if (adap->fe[1]) {
-		dvb_unregister_frontend(adap->fe[1]);
+अटल पूर्णांक pvr2_dvb_frontend_निकास(काष्ठा pvr2_dvb_adapter *adap)
+अणु
+	अगर (adap->fe[1]) अणु
+		dvb_unरेजिस्टर_frontend(adap->fe[1]);
 		dvb_frontend_detach(adap->fe[1]);
-		adap->fe[1] = NULL;
-	}
-	if (adap->fe[0]) {
-		dvb_unregister_frontend(adap->fe[0]);
+		adap->fe[1] = शून्य;
+	पूर्ण
+	अगर (adap->fe[0]) अणु
+		dvb_unरेजिस्टर_frontend(adap->fe[0]);
 		dvb_frontend_detach(adap->fe[0]);
-		adap->fe[0] = NULL;
-	}
+		adap->fe[0] = शून्य;
+	पूर्ण
 
 	dvb_module_release(adap->i2c_client_tuner);
-	adap->i2c_client_tuner = NULL;
+	adap->i2c_client_tuner = शून्य;
 	dvb_module_release(adap->i2c_client_demod[1]);
-	adap->i2c_client_demod[1] = NULL;
+	adap->i2c_client_demod[1] = शून्य;
 	dvb_module_release(adap->i2c_client_demod[0]);
-	adap->i2c_client_demod[0] = NULL;
+	adap->i2c_client_demod[0] = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pvr2_dvb_destroy(struct pvr2_dvb_adapter *adap)
-{
+अटल व्योम pvr2_dvb_destroy(काष्ठा pvr2_dvb_adapter *adap)
+अणु
 	pvr2_dvb_stream_end(adap);
-	pvr2_dvb_frontend_exit(adap);
-	pvr2_dvb_adapter_exit(adap);
-	pvr2_channel_done(&adap->channel);
-	kfree(adap);
-}
+	pvr2_dvb_frontend_निकास(adap);
+	pvr2_dvb_adapter_निकास(adap);
+	pvr2_channel_करोne(&adap->channel);
+	kमुक्त(adap);
+पूर्ण
 
-static void pvr2_dvb_internal_check(struct pvr2_channel *chp)
-{
-	struct pvr2_dvb_adapter *adap;
-	adap = container_of(chp, struct pvr2_dvb_adapter, channel);
-	if (!adap->channel.mc_head->disconnect_flag) return;
+अटल व्योम pvr2_dvb_पूर्णांकernal_check(काष्ठा pvr2_channel *chp)
+अणु
+	काष्ठा pvr2_dvb_adapter *adap;
+	adap = container_of(chp, काष्ठा pvr2_dvb_adapter, channel);
+	अगर (!adap->channel.mc_head->disconnect_flag) वापस;
 	pvr2_dvb_destroy(adap);
-}
+पूर्ण
 
-struct pvr2_dvb_adapter *pvr2_dvb_create(struct pvr2_context *pvr)
-{
-	int ret = 0;
-	struct pvr2_dvb_adapter *adap;
-	if (!pvr->hdw->hdw_desc->dvb_props) {
-		/* Device lacks a digital interface so don't set up
+काष्ठा pvr2_dvb_adapter *pvr2_dvb_create(काष्ठा pvr2_context *pvr)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा pvr2_dvb_adapter *adap;
+	अगर (!pvr->hdw->hdw_desc->dvb_props) अणु
+		/* Device lacks a digital पूर्णांकerface so करोn't set up
 		   the DVB side of the driver either.  For now. */
-		return NULL;
-	}
-	adap = kzalloc(sizeof(*adap), GFP_KERNEL);
-	if (!adap) return adap;
+		वापस शून्य;
+	पूर्ण
+	adap = kzalloc(माप(*adap), GFP_KERNEL);
+	अगर (!adap) वापस adap;
 	pvr2_channel_init(&adap->channel, pvr);
-	adap->channel.check_func = pvr2_dvb_internal_check;
-	init_waitqueue_head(&adap->buffer_wait_data);
+	adap->channel.check_func = pvr2_dvb_पूर्णांकernal_check;
+	init_रुकोqueue_head(&adap->buffer_रुको_data);
 	mutex_init(&adap->lock);
 	ret = pvr2_dvb_adapter_init(adap);
-	if (ret < 0) goto fail1;
+	अगर (ret < 0) जाओ fail1;
 	ret = pvr2_dvb_frontend_init(adap);
-	if (ret < 0) goto fail2;
-	return adap;
+	अगर (ret < 0) जाओ fail2;
+	वापस adap;
 
 fail2:
-	pvr2_dvb_adapter_exit(adap);
+	pvr2_dvb_adapter_निकास(adap);
 fail1:
-	pvr2_channel_done(&adap->channel);
-	return NULL;
-}
+	pvr2_channel_करोne(&adap->channel);
+	वापस शून्य;
+पूर्ण
 

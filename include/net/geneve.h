@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_GENEVE_H
-#define __NET_GENEVE_H  1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_GENEVE_H
+#घोषणा __NET_GENEVE_H  1
 
-#include <net/udp_tunnel.h>
+#समावेश <net/udp_tunnel.h>
 
-#define GENEVE_UDP_PORT		6081
+#घोषणा GENEVE_UDP_PORT		6081
 
 /* Geneve Header:
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *  |Ver|  Opt Len  |O|C|    Rsvd.  |          Protocol Type        |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *  |        Virtual Network Identifier (VNI)       |    Reserved   |
+ *  |        Virtual Network Identअगरier (VNI)       |    Reserved   |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *  |                    Variable Length Options                    |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -23,54 +24,54 @@
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
-struct geneve_opt {
+काष्ठा geneve_opt अणु
 	__be16	opt_class;
 	u8	type;
-#ifdef __LITTLE_ENDIAN_BITFIELD
+#अगर_घोषित __LITTLE_ENDIAN_BITFIELD
 	u8	length:5;
 	u8	r3:1;
 	u8	r2:1;
 	u8	r1:1;
-#else
+#अन्यथा
 	u8	r1:1;
 	u8	r2:1;
 	u8	r3:1;
 	u8	length:5;
-#endif
+#पूर्ण_अगर
 	u8	opt_data[];
-};
+पूर्ण;
 
-#define GENEVE_CRIT_OPT_TYPE (1 << 7)
+#घोषणा GENEVE_CRIT_OPT_TYPE (1 << 7)
 
-struct genevehdr {
-#ifdef __LITTLE_ENDIAN_BITFIELD
+काष्ठा genevehdr अणु
+#अगर_घोषित __LITTLE_ENDIAN_BITFIELD
 	u8 opt_len:6;
 	u8 ver:2;
 	u8 rsvd1:6;
 	u8 critical:1;
 	u8 oam:1;
-#else
+#अन्यथा
 	u8 ver:2;
 	u8 opt_len:6;
 	u8 oam:1;
 	u8 critical:1;
 	u8 rsvd1:6;
-#endif
+#पूर्ण_अगर
 	__be16 proto_type;
 	u8 vni[3];
 	u8 rsvd2;
-	struct geneve_opt options[];
-};
+	काष्ठा geneve_opt options[];
+पूर्ण;
 
-static inline bool netif_is_geneve(const struct net_device *dev)
-{
-	return dev->rtnl_link_ops &&
-	       !strcmp(dev->rtnl_link_ops->kind, "geneve");
-}
+अटल अंतरभूत bool netअगर_is_geneve(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस dev->rtnl_link_ops &&
+	       !म_भेद(dev->rtnl_link_ops->kind, "geneve");
+पूर्ण
 
-#ifdef CONFIG_INET
-struct net_device *geneve_dev_create_fb(struct net *net, const char *name,
+#अगर_घोषित CONFIG_INET
+काष्ठा net_device *geneve_dev_create_fb(काष्ठा net *net, स्थिर अक्षर *name,
 					u8 name_assign_type, u16 dst_port);
-#endif /*ifdef CONFIG_INET */
+#पूर्ण_अगर /*अगरdef CONFIG_INET */
 
-#endif /*ifdef__NET_GENEVE_H */
+#पूर्ण_अगर /*अगरdef__NET_GENEVE_H */

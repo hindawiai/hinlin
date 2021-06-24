@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * SImple Tiler Allocator (SiTA): 2D and 1D allocation(reservation) algorithm
  *
@@ -7,7 +8,7 @@
  *
  * Copyright (C) 2012 Texas Instruments Incorporated - https://www.ti.com/
  *
- * This package is free software; you can redistribute it and/or modify
+ * This package is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
@@ -16,243 +17,243 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  */
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
-#include <linux/bitmap.h>
-#include <linux/slab.h>
-#include "tcm.h"
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/slab.h>
+#समावेश "tcm.h"
 
-static unsigned long mask[8];
+अटल अचिन्हित दीर्घ mask[8];
 /*
- * pos		position in bitmap
+ * pos		position in biपंचांगap
  * w		width in slots
  * h		height in slots
- * map		ptr to bitmap
+ * map		ptr to biपंचांगap
  * stride		slots in a row
  */
-static void free_slots(unsigned long pos, u16 w, u16 h,
-		unsigned long *map, u16 stride)
-{
-	int i;
+अटल व्योम मुक्त_slots(अचिन्हित दीर्घ pos, u16 w, u16 h,
+		अचिन्हित दीर्घ *map, u16 stride)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < h; i++, pos += stride)
-		bitmap_clear(map, pos, w);
-}
+	क्रम (i = 0; i < h; i++, pos += stride)
+		biपंचांगap_clear(map, pos, w);
+पूर्ण
 
 /*
  * w		width in slots
  * pos		ptr to position
- * map		ptr to bitmap
- * num_bits	number of bits in bitmap
+ * map		ptr to biपंचांगap
+ * num_bits	number of bits in biपंचांगap
  */
-static int r2l_b2t_1d(u16 w, unsigned long *pos, unsigned long *map,
-		size_t num_bits)
-{
-	unsigned long search_count = 0;
-	unsigned long bit;
+अटल पूर्णांक r2l_b2t_1d(u16 w, अचिन्हित दीर्घ *pos, अचिन्हित दीर्घ *map,
+		माप_प्रकार num_bits)
+अणु
+	अचिन्हित दीर्घ search_count = 0;
+	अचिन्हित दीर्घ bit;
 	bool area_found = false;
 
 	*pos = num_bits - w;
 
-	while (search_count < num_bits) {
+	जबतक (search_count < num_bits) अणु
 		bit = find_next_bit(map, num_bits, *pos);
 
-		if (bit - *pos >= w) {
-			/* found a long enough free area */
-			bitmap_set(map, *pos, w);
+		अगर (bit - *pos >= w) अणु
+			/* found a दीर्घ enough मुक्त area */
+			biपंचांगap_set(map, *pos, w);
 			area_found = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		search_count = num_bits - bit + w;
 		*pos = bit - w;
-	}
+	पूर्ण
 
-	return (area_found) ? 0 : -ENOMEM;
-}
+	वापस (area_found) ? 0 : -ENOMEM;
+पूर्ण
 
 /*
  * w = width in slots
  * h = height in slots
  * a = align in slots	(mask, 2^n-1, 0 is unaligned)
  * offset = offset in bytes from 4KiB
- * pos = position in bitmap for buffer
- * map = bitmap ptr
- * num_bits = size of bitmap
+ * pos = position in biपंचांगap क्रम buffer
+ * map = biपंचांगap ptr
+ * num_bits = size of biपंचांगap
  * stride = bits in one row of container
  */
-static int l2r_t2b(u16 w, u16 h, u16 a, s16 offset,
-		unsigned long *pos, unsigned long slot_bytes,
-		unsigned long *map, size_t num_bits, size_t slot_stride)
-{
-	int i;
-	unsigned long index;
-	bool area_free = false;
-	unsigned long slots_per_band = PAGE_SIZE / slot_bytes;
-	unsigned long bit_offset = (offset > 0) ? offset / slot_bytes : 0;
-	unsigned long curr_bit = bit_offset;
+अटल पूर्णांक l2r_t2b(u16 w, u16 h, u16 a, s16 offset,
+		अचिन्हित दीर्घ *pos, अचिन्हित दीर्घ slot_bytes,
+		अचिन्हित दीर्घ *map, माप_प्रकार num_bits, माप_प्रकार slot_stride)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ index;
+	bool area_मुक्त = false;
+	अचिन्हित दीर्घ slots_per_band = PAGE_SIZE / slot_bytes;
+	अचिन्हित दीर्घ bit_offset = (offset > 0) ? offset / slot_bytes : 0;
+	अचिन्हित दीर्घ curr_bit = bit_offset;
 
-	/* reset alignment to 1 if we are matching a specific offset */
-	/* adjust alignment - 1 to get to the format expected in bitmaps */
+	/* reset alignment to 1 अगर we are matching a specअगरic offset */
+	/* adjust alignment - 1 to get to the क्रमmat expected in biपंचांगaps */
 	a = (offset > 0) ? 0 : a - 1;
 
-	/* FIXME Return error if slots_per_band > stride */
+	/* FIXME Return error अगर slots_per_band > stride */
 
-	while (curr_bit < num_bits) {
-		*pos = bitmap_find_next_zero_area(map, num_bits, curr_bit, w,
+	जबतक (curr_bit < num_bits) अणु
+		*pos = biपंचांगap_find_next_zero_area(map, num_bits, curr_bit, w,
 				a);
 
-		/* skip forward if we are not at right offset */
-		if (bit_offset > 0 && (*pos % slots_per_band != bit_offset)) {
+		/* skip क्रमward अगर we are not at right offset */
+		अगर (bit_offset > 0 && (*pos % slots_per_band != bit_offset)) अणु
 			curr_bit = ALIGN(*pos, slots_per_band) + bit_offset;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* skip forward to next row if we overlap end of row */
-		if ((*pos % slot_stride) + w > slot_stride) {
+		/* skip क्रमward to next row अगर we overlap end of row */
+		अगर ((*pos % slot_stride) + w > slot_stride) अणु
 			curr_bit = ALIGN(*pos, slot_stride) + bit_offset;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* TODO: Handle overlapping 4K boundaries */
 
-		/* break out of look if we will go past end of container */
-		if ((*pos + slot_stride * h) > num_bits)
-			break;
+		/* अवरोध out of look अगर we will go past end of container */
+		अगर ((*pos + slot_stride * h) > num_bits)
+			अवरोध;
 
 		/* generate mask that represents out matching pattern */
-		bitmap_clear(mask, 0, slot_stride);
-		bitmap_set(mask, (*pos % BITS_PER_LONG), w);
+		biपंचांगap_clear(mask, 0, slot_stride);
+		biपंचांगap_set(mask, (*pos % BITS_PER_LONG), w);
 
-		/* assume the area is free until we find an overlap */
-		area_free = true;
+		/* assume the area is मुक्त until we find an overlap */
+		area_मुक्त = true;
 
-		/* check subsequent rows to see if complete area is free */
-		for (i = 1; i < h; i++) {
+		/* check subsequent rows to see अगर complete area is मुक्त */
+		क्रम (i = 1; i < h; i++) अणु
 			index = *pos / BITS_PER_LONG + i * 8;
-			if (bitmap_intersects(&map[index], mask,
-				(*pos % BITS_PER_LONG) + w)) {
-				area_free = false;
-				break;
-			}
-		}
+			अगर (biपंचांगap_पूर्णांकersects(&map[index], mask,
+				(*pos % BITS_PER_LONG) + w)) अणु
+				area_मुक्त = false;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (area_free)
-			break;
+		अगर (area_मुक्त)
+			अवरोध;
 
-		/* go forward past this match */
-		if (bit_offset > 0)
+		/* go क्रमward past this match */
+		अगर (bit_offset > 0)
 			curr_bit = ALIGN(*pos, slots_per_band) + bit_offset;
-		else
+		अन्यथा
 			curr_bit = *pos + a + 1;
-	}
+	पूर्ण
 
-	if (area_free) {
+	अगर (area_मुक्त) अणु
 		/* set area as in-use. iterate over rows */
-		for (i = 0, index = *pos; i < h; i++, index += slot_stride)
-			bitmap_set(map, index, w);
-	}
+		क्रम (i = 0, index = *pos; i < h; i++, index += slot_stride)
+			biपंचांगap_set(map, index, w);
+	पूर्ण
 
-	return (area_free) ? 0 : -ENOMEM;
-}
+	वापस (area_मुक्त) ? 0 : -ENOMEM;
+पूर्ण
 
-static s32 sita_reserve_1d(struct tcm *tcm, u32 num_slots,
-			   struct tcm_area *area)
-{
-	unsigned long pos;
-	int ret;
+अटल s32 sita_reserve_1d(काष्ठा tcm *tcm, u32 num_slots,
+			   काष्ठा tcm_area *area)
+अणु
+	अचिन्हित दीर्घ pos;
+	पूर्णांक ret;
 
 	spin_lock(&(tcm->lock));
-	ret = r2l_b2t_1d(num_slots, &pos, tcm->bitmap, tcm->map_size);
-	if (!ret) {
+	ret = r2l_b2t_1d(num_slots, &pos, tcm->biपंचांगap, tcm->map_size);
+	अगर (!ret) अणु
 		area->p0.x = pos % tcm->width;
 		area->p0.y = pos / tcm->width;
 		area->p1.x = (pos + num_slots - 1) % tcm->width;
 		area->p1.y = (pos + num_slots - 1) / tcm->width;
-	}
+	पूर्ण
 	spin_unlock(&(tcm->lock));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static s32 sita_reserve_2d(struct tcm *tcm, u16 h, u16 w, u16 align,
+अटल s32 sita_reserve_2d(काष्ठा tcm *tcm, u16 h, u16 w, u16 align,
 				s16 offset, u16 slot_bytes,
-				struct tcm_area *area)
-{
-	unsigned long pos;
-	int ret;
+				काष्ठा tcm_area *area)
+अणु
+	अचिन्हित दीर्घ pos;
+	पूर्णांक ret;
 
 	spin_lock(&(tcm->lock));
-	ret = l2r_t2b(w, h, align, offset, &pos, slot_bytes, tcm->bitmap,
+	ret = l2r_t2b(w, h, align, offset, &pos, slot_bytes, tcm->biपंचांगap,
 			tcm->map_size, tcm->width);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		area->p0.x = pos % tcm->width;
 		area->p0.y = pos / tcm->width;
 		area->p1.x = area->p0.x + w - 1;
 		area->p1.y = area->p0.y + h - 1;
-	}
+	पूर्ण
 	spin_unlock(&(tcm->lock));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sita_deinit(struct tcm *tcm)
-{
-	kfree(tcm);
-}
+अटल व्योम sita_deinit(काष्ठा tcm *tcm)
+अणु
+	kमुक्त(tcm);
+पूर्ण
 
-static s32 sita_free(struct tcm *tcm, struct tcm_area *area)
-{
-	unsigned long pos;
+अटल s32 sita_मुक्त(काष्ठा tcm *tcm, काष्ठा tcm_area *area)
+अणु
+	अचिन्हित दीर्घ pos;
 	u16 w, h;
 
 	pos = area->p0.x + area->p0.y * tcm->width;
-	if (area->is2d) {
+	अगर (area->is2d) अणु
 		w = area->p1.x - area->p0.x + 1;
 		h = area->p1.y - area->p0.y + 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		w = area->p1.x + area->p1.y * tcm->width - pos + 1;
 		h = 1;
-	}
+	पूर्ण
 
 	spin_lock(&(tcm->lock));
-	free_slots(pos, w, h, tcm->bitmap, tcm->width);
+	मुक्त_slots(pos, w, h, tcm->biपंचांगap, tcm->width);
 	spin_unlock(&(tcm->lock));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct tcm *sita_init(u16 width, u16 height)
-{
-	struct tcm *tcm;
-	size_t map_size = BITS_TO_LONGS(width*height) * sizeof(unsigned long);
+काष्ठा tcm *sita_init(u16 width, u16 height)
+अणु
+	काष्ठा tcm *tcm;
+	माप_प्रकार map_size = BITS_TO_LONGS(width*height) * माप(अचिन्हित दीर्घ);
 
-	if (width == 0 || height == 0)
-		return NULL;
+	अगर (width == 0 || height == 0)
+		वापस शून्य;
 
-	tcm = kzalloc(sizeof(*tcm) + map_size, GFP_KERNEL);
-	if (!tcm)
-		goto error;
+	tcm = kzalloc(माप(*tcm) + map_size, GFP_KERNEL);
+	अगर (!tcm)
+		जाओ error;
 
-	/* Updating the pointers to SiTA implementation APIs */
+	/* Updating the poपूर्णांकers to SiTA implementation APIs */
 	tcm->height = height;
 	tcm->width = width;
 	tcm->reserve_2d = sita_reserve_2d;
 	tcm->reserve_1d = sita_reserve_1d;
-	tcm->free = sita_free;
+	tcm->मुक्त = sita_मुक्त;
 	tcm->deinit = sita_deinit;
 
 	spin_lock_init(&tcm->lock);
-	tcm->bitmap = (unsigned long *)(tcm + 1);
-	bitmap_clear(tcm->bitmap, 0, width*height);
+	tcm->biपंचांगap = (अचिन्हित दीर्घ *)(tcm + 1);
+	biपंचांगap_clear(tcm->biपंचांगap, 0, width*height);
 
 	tcm->map_size = width*height;
 
-	return tcm;
+	वापस tcm;
 
 error:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

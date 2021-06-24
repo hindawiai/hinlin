@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef TOPDOWN_H
-#define TOPDOWN_H 1
-#include "evsel.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित TOPDOWN_H
+#घोषणा TOPDOWN_H 1
+#समावेश "evsel.h"
 
-bool arch_topdown_check_group(bool *warn);
-void arch_topdown_group_warn(void);
-bool arch_topdown_sample_read(struct evsel *leader);
+bool arch_topकरोwn_check_group(bool *warn);
+व्योम arch_topकरोwn_group_warn(व्योम);
+bool arch_topकरोwn_sample_पढ़ो(काष्ठा evsel *leader);
 
-int topdown_filter_events(const char **attr, char **str, bool use_group);
+पूर्णांक topकरोwn_filter_events(स्थिर अक्षर **attr, अक्षर **str, bool use_group);
 
-#endif
+#पूर्ण_अगर

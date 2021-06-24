@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -17,14 +18,14 @@
  *
  */
 
-#ifndef _VNIC_CQ_H_
-#define _VNIC_CQ_H_
+#अगर_अघोषित _VNIC_CQ_H_
+#घोषणा _VNIC_CQ_H_
 
-#include "cq_desc.h"
-#include "vnic_dev.h"
+#समावेश "cq_desc.h"
+#समावेश "vnic_dev.h"
 
 /* Completion queue control */
-struct vnic_cq_ctrl {
+काष्ठा vnic_cq_ctrl अणु
 	u64 ring_base;			/* 0x00 */
 	u32 ring_size;			/* 0x08 */
 	u32 pad0;
@@ -38,86 +39,86 @@ struct vnic_cq_ctrl {
 	u32 pad4;
 	u32 cq_tail_color;		/* 0x30 */
 	u32 pad5;
-	u32 interrupt_enable;		/* 0x38 */
+	u32 पूर्णांकerrupt_enable;		/* 0x38 */
 	u32 pad6;
 	u32 cq_entry_enable;		/* 0x40 */
 	u32 pad7;
 	u32 cq_message_enable;		/* 0x48 */
 	u32 pad8;
-	u32 interrupt_offset;		/* 0x50 */
+	u32 पूर्णांकerrupt_offset;		/* 0x50 */
 	u32 pad9;
 	u64 cq_message_addr;		/* 0x58 */
 	u32 pad10;
-};
+पूर्ण;
 
-struct vnic_rx_bytes_counter {
-	unsigned int small_pkt_bytes_cnt;
-	unsigned int large_pkt_bytes_cnt;
-};
+काष्ठा vnic_rx_bytes_counter अणु
+	अचिन्हित पूर्णांक small_pkt_bytes_cnt;
+	अचिन्हित पूर्णांक large_pkt_bytes_cnt;
+पूर्ण;
 
-struct vnic_cq {
-	unsigned int index;
-	struct vnic_dev *vdev;
-	struct vnic_cq_ctrl __iomem *ctrl;              /* memory-mapped */
-	struct vnic_dev_ring ring;
-	unsigned int to_clean;
-	unsigned int last_color;
-	unsigned int interrupt_offset;
-	struct vnic_rx_bytes_counter pkt_size_counter;
-	unsigned int cur_rx_coal_timeval;
-	unsigned int tobe_rx_coal_timeval;
-	ktime_t prev_ts;
-};
+काष्ठा vnic_cq अणु
+	अचिन्हित पूर्णांक index;
+	काष्ठा vnic_dev *vdev;
+	काष्ठा vnic_cq_ctrl __iomem *ctrl;              /* memory-mapped */
+	काष्ठा vnic_dev_ring ring;
+	अचिन्हित पूर्णांक to_clean;
+	अचिन्हित पूर्णांक last_color;
+	अचिन्हित पूर्णांक पूर्णांकerrupt_offset;
+	काष्ठा vnic_rx_bytes_counter pkt_size_counter;
+	अचिन्हित पूर्णांक cur_rx_coal_समयval;
+	अचिन्हित पूर्णांक tobe_rx_coal_समयval;
+	kसमय_प्रकार prev_ts;
+पूर्ण;
 
-static inline unsigned int vnic_cq_service(struct vnic_cq *cq,
-	unsigned int work_to_do,
-	int (*q_service)(struct vnic_dev *vdev, struct cq_desc *cq_desc,
-	u8 type, u16 q_number, u16 completed_index, void *opaque),
-	void *opaque)
-{
-	struct cq_desc *cq_desc;
-	unsigned int work_done = 0;
+अटल अंतरभूत अचिन्हित पूर्णांक vnic_cq_service(काष्ठा vnic_cq *cq,
+	अचिन्हित पूर्णांक work_to_करो,
+	पूर्णांक (*q_service)(काष्ठा vnic_dev *vdev, काष्ठा cq_desc *cq_desc,
+	u8 type, u16 q_number, u16 completed_index, व्योम *opaque),
+	व्योम *opaque)
+अणु
+	काष्ठा cq_desc *cq_desc;
+	अचिन्हित पूर्णांक work_करोne = 0;
 	u16 q_number, completed_index;
 	u8 type, color;
 
-	cq_desc = (struct cq_desc *)((u8 *)cq->ring.descs +
+	cq_desc = (काष्ठा cq_desc *)((u8 *)cq->ring.descs +
 		cq->ring.desc_size * cq->to_clean);
 	cq_desc_dec(cq_desc, &type, &color,
 		&q_number, &completed_index);
 
-	while (color != cq->last_color) {
+	जबतक (color != cq->last_color) अणु
 
-		if ((*q_service)(cq->vdev, cq_desc, type,
+		अगर ((*q_service)(cq->vdev, cq_desc, type,
 			q_number, completed_index, opaque))
-			break;
+			अवरोध;
 
 		cq->to_clean++;
-		if (cq->to_clean == cq->ring.desc_count) {
+		अगर (cq->to_clean == cq->ring.desc_count) अणु
 			cq->to_clean = 0;
 			cq->last_color = cq->last_color ? 0 : 1;
-		}
+		पूर्ण
 
-		cq_desc = (struct cq_desc *)((u8 *)cq->ring.descs +
+		cq_desc = (काष्ठा cq_desc *)((u8 *)cq->ring.descs +
 			cq->ring.desc_size * cq->to_clean);
 		cq_desc_dec(cq_desc, &type, &color,
 			&q_number, &completed_index);
 
-		work_done++;
-		if (work_done >= work_to_do)
-			break;
-	}
+		work_करोne++;
+		अगर (work_करोne >= work_to_करो)
+			अवरोध;
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-void vnic_cq_free(struct vnic_cq *cq);
-int vnic_cq_alloc(struct vnic_dev *vdev, struct vnic_cq *cq, unsigned int index,
-	unsigned int desc_count, unsigned int desc_size);
-void vnic_cq_init(struct vnic_cq *cq, unsigned int flow_control_enable,
-	unsigned int color_enable, unsigned int cq_head, unsigned int cq_tail,
-	unsigned int cq_tail_color, unsigned int interrupt_enable,
-	unsigned int cq_entry_enable, unsigned int message_enable,
-	unsigned int interrupt_offset, u64 message_addr);
-void vnic_cq_clean(struct vnic_cq *cq);
+व्योम vnic_cq_मुक्त(काष्ठा vnic_cq *cq);
+पूर्णांक vnic_cq_alloc(काष्ठा vnic_dev *vdev, काष्ठा vnic_cq *cq, अचिन्हित पूर्णांक index,
+	अचिन्हित पूर्णांक desc_count, अचिन्हित पूर्णांक desc_size);
+व्योम vnic_cq_init(काष्ठा vnic_cq *cq, अचिन्हित पूर्णांक flow_control_enable,
+	अचिन्हित पूर्णांक color_enable, अचिन्हित पूर्णांक cq_head, अचिन्हित पूर्णांक cq_tail,
+	अचिन्हित पूर्णांक cq_tail_color, अचिन्हित पूर्णांक पूर्णांकerrupt_enable,
+	अचिन्हित पूर्णांक cq_entry_enable, अचिन्हित पूर्णांक message_enable,
+	अचिन्हित पूर्णांक पूर्णांकerrupt_offset, u64 message_addr);
+व्योम vnic_cq_clean(काष्ठा vnic_cq *cq);
 
-#endif /* _VNIC_CQ_H_ */
+#पूर्ण_अगर /* _VNIC_CQ_H_ */

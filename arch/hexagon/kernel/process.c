@@ -1,190 +1,191 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Process creation support for Hexagon
+ * Process creation support क्रम Hexagon
  *
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/task.h>
-#include <linux/sched/task_stack.h>
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/tick.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
-#include <linux/tracehook.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/tick.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tracehook.h>
 
 /*
- * Program thread launch.  Often defined as a macro in processor.h,
+ * Program thपढ़ो launch.  Often defined as a macro in processor.h,
  * but we're shooting for a small footprint and it's not an inner-loop
- * performance-critical operation.
+ * perक्रमmance-critical operation.
  *
- * The Hexagon ABI specifies that R28 is zero'ed before program launch,
- * so that gets automatically done here.  If we ever stop doing that here,
+ * The Hexagon ABI specअगरies that R28 is zero'ed beक्रमe program launch,
+ * so that माला_लो स्वतःmatically करोne here.  If we ever stop करोing that here,
  * we'll probably want to define the ELF_PLAT_INIT macro.
  */
-void start_thread(struct pt_regs *regs, unsigned long pc, unsigned long sp)
-{
-	/* We want to zero all data-containing registers. Is this overkill? */
-	memset(regs, 0, sizeof(*regs));
-	/* We might want to also zero all Processor registers here */
+व्योम start_thपढ़ो(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc, अचिन्हित दीर्घ sp)
+अणु
+	/* We want to zero all data-containing रेजिस्टरs. Is this overसमाप्त? */
+	स_रखो(regs, 0, माप(*regs));
+	/* We might want to also zero all Processor रेजिस्टरs here */
 	pt_set_usermode(regs);
 	pt_set_elr(regs, pc);
 	pt_set_rte_sp(regs, sp);
-}
+पूर्ण
 
 /*
- *  Spin, or better still, do a hardware or VM wait instruction
- *  If hardware or VM offer wait termination even though interrupts
+ *  Spin, or better still, करो a hardware or VM रुको inकाष्ठाion
+ *  If hardware or VM offer रुको termination even though पूर्णांकerrupts
  *  are disabled.
  */
-void arch_cpu_idle(void)
-{
-	__vmwait();
-	/*  interrupts wake us up, but irqs are still disabled */
+व्योम arch_cpu_idle(व्योम)
+अणु
+	__vmरुको();
+	/*  पूर्णांकerrupts wake us up, but irqs are still disabled */
 	raw_local_irq_enable();
-}
+पूर्ण
 
 /*
- * Copy architecture-specific thread state
+ * Copy architecture-specअगरic thपढ़ो state
  */
-int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
-		struct task_struct *p, unsigned long tls)
-{
-	struct thread_info *ti = task_thread_info(p);
-	struct hexagon_switch_stack *ss;
-	struct pt_regs *childregs;
-	asmlinkage void ret_from_fork(void);
+पूर्णांक copy_thपढ़ो(अचिन्हित दीर्घ clone_flags, अचिन्हित दीर्घ usp, अचिन्हित दीर्घ arg,
+		काष्ठा task_काष्ठा *p, अचिन्हित दीर्घ tls)
+अणु
+	काष्ठा thपढ़ो_info *ti = task_thपढ़ो_info(p);
+	काष्ठा hexagon_चयन_stack *ss;
+	काष्ठा pt_regs *childregs;
+	यंत्रlinkage व्योम ret_from_विभाजन(व्योम);
 
-	childregs = (struct pt_regs *) (((unsigned long) ti + THREAD_SIZE) -
-					sizeof(*childregs));
+	childregs = (काष्ठा pt_regs *) (((अचिन्हित दीर्घ) ti + THREAD_SIZE) -
+					माप(*childregs));
 
 	ti->regs = childregs;
 
 	/*
-	 * Establish kernel stack pointer and initial PC for new thread
-	 * Note that unlike the usual situation, we do not copy the
+	 * Establish kernel stack poपूर्णांकer and initial PC क्रम new thपढ़ो
+	 * Note that unlike the usual situation, we करो not copy the
 	 * parent's callee-saved here; those are in pt_regs and whatever
-	 * we leave here will be overridden on return to userland.
+	 * we leave here will be overridden on वापस to userland.
 	 */
-	ss = (struct hexagon_switch_stack *) ((unsigned long) childregs -
-						    sizeof(*ss));
-	ss->lr = (unsigned long)ret_from_fork;
-	p->thread.switch_sp = ss;
-	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
-		memset(childregs, 0, sizeof(struct pt_regs));
+	ss = (काष्ठा hexagon_चयन_stack *) ((अचिन्हित दीर्घ) childregs -
+						    माप(*ss));
+	ss->lr = (अचिन्हित दीर्घ)ret_from_विभाजन;
+	p->thपढ़ो.चयन_sp = ss;
+	अगर (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) अणु
+		स_रखो(childregs, 0, माप(काष्ठा pt_regs));
 		/* r24 <- fn, r25 <- arg */
 		ss->r24 = usp;
 		ss->r25 = arg;
 		pt_set_kmode(childregs);
-		return 0;
-	}
-	memcpy(childregs, current_pt_regs(), sizeof(*childregs));
+		वापस 0;
+	पूर्ण
+	स_नकल(childregs, current_pt_regs(), माप(*childregs));
 	ss->r2524 = 0;
 
-	if (usp)
+	अगर (usp)
 		pt_set_rte_sp(childregs, usp);
 
-	/* Child sees zero return value */
+	/* Child sees zero वापस value */
 	childregs->r00 = 0;
 
 	/*
 	 * The clone syscall has the C signature:
-	 * int [r0] clone(int flags [r0],
-	 *           void *child_frame [r1],
-	 *           void *parent_tid [r2],
-	 *           void *child_tid [r3],
-	 *           void *thread_control_block [r4]);
+	 * पूर्णांक [r0] clone(पूर्णांक flags [r0],
+	 *           व्योम *child_frame [r1],
+	 *           व्योम *parent_tid [r2],
+	 *           व्योम *child_tid [r3],
+	 *           व्योम *thपढ़ो_control_block [r4]);
 	 * ugp is used to provide TLS support.
 	 */
-	if (clone_flags & CLONE_SETTLS)
+	अगर (clone_flags & CLONE_SETTLS)
 		childregs->ugp = tls;
 
 	/*
 	 * Parent sees new pid -- not necessary, not even possible at
-	 * this point in the fork process
+	 * this poपूर्णांक in the विभाजन process
 	 * Might also want to set things like ti->addr_limit
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Release any architecture-specific resources locked by thread
+ * Release any architecture-specअगरic resources locked by thपढ़ो
  */
-void release_thread(struct task_struct *dead_task)
-{
-}
+व्योम release_thपढ़ो(काष्ठा task_काष्ठा *dead_task)
+अणु
+पूर्ण
 
 /*
  * Some archs flush debug and FPU info here
  */
-void flush_thread(void)
-{
-}
+व्योम flush_thपढ़ो(व्योम)
+अणु
+पूर्ण
 
 /*
  * The "wait channel" terminology is archaic, but what we want
- * is an identification of the point at which the scheduler
- * was invoked by a blocked thread.
+ * is an identअगरication of the poपूर्णांक at which the scheduler
+ * was invoked by a blocked thपढ़ो.
  */
-unsigned long get_wchan(struct task_struct *p)
-{
-	unsigned long fp, pc;
-	unsigned long stack_page;
-	int count = 0;
-	if (!p || p == current || p->state == TASK_RUNNING)
-		return 0;
+अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p)
+अणु
+	अचिन्हित दीर्घ fp, pc;
+	अचिन्हित दीर्घ stack_page;
+	पूर्णांक count = 0;
+	अगर (!p || p == current || p->state == TASK_RUNNING)
+		वापस 0;
 
-	stack_page = (unsigned long)task_stack_page(p);
-	fp = ((struct hexagon_switch_stack *)p->thread.switch_sp)->fp;
-	do {
-		if (fp < (stack_page + sizeof(struct thread_info)) ||
+	stack_page = (अचिन्हित दीर्घ)task_stack_page(p);
+	fp = ((काष्ठा hexagon_चयन_stack *)p->thपढ़ो.चयन_sp)->fp;
+	करो अणु
+		अगर (fp < (stack_page + माप(काष्ठा thपढ़ो_info)) ||
 			fp >= (THREAD_SIZE - 8 + stack_page))
-			return 0;
-		pc = ((unsigned long *)fp)[1];
-		if (!in_sched_functions(pc))
-			return pc;
-		fp = *(unsigned long *) fp;
-	} while (count++ < 16);
+			वापस 0;
+		pc = ((अचिन्हित दीर्घ *)fp)[1];
+		अगर (!in_sched_functions(pc))
+			वापस pc;
+		fp = *(अचिन्हित दीर्घ *) fp;
+	पूर्ण जबतक (count++ < 16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Called on the exit path of event entry; see vm_entry.S
+ * Called on the निकास path of event entry; see vm_entry.S
  *
- * Interrupts will already be disabled.
+ * Interrupts will alपढ़ोy be disabled.
  *
- * Returns 0 if there's no need to re-check for more work.
+ * Returns 0 अगर there's no need to re-check क्रम more work.
  */
 
-int do_work_pending(struct pt_regs *regs, u32 thread_info_flags)
-{
-	if (!(thread_info_flags & _TIF_WORK_MASK)) {
-		return 0;
-	}  /* shortcut -- no work to be done */
+पूर्णांक करो_work_pending(काष्ठा pt_regs *regs, u32 thपढ़ो_info_flags)
+अणु
+	अगर (!(thपढ़ो_info_flags & _TIF_WORK_MASK)) अणु
+		वापस 0;
+	पूर्ण  /* लघुcut -- no work to be करोne */
 
 	local_irq_enable();
 
-	if (thread_info_flags & _TIF_NEED_RESCHED) {
+	अगर (thपढ़ो_info_flags & _TIF_NEED_RESCHED) अणु
 		schedule();
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (thread_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) {
-		do_signal(regs);
-		return 1;
-	}
+	अगर (thपढ़ो_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) अणु
+		करो_संकेत(regs);
+		वापस 1;
+	पूर्ण
 
-	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
-		tracehook_notify_resume(regs);
-		return 1;
-	}
+	अगर (thपढ़ो_info_flags & _TIF_NOTIFY_RESUME) अणु
+		tracehook_notअगरy_resume(regs);
+		वापस 1;
+	पूर्ण
 
 	/* Should not even reach here */
 	panic("%s: bad thread_info flags 0x%08x\n", __func__,
-		thread_info_flags);
-}
+		thपढ़ो_info_flags);
+पूर्ण

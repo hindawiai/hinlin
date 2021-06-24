@@ -1,465 +1,466 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * sleep.c - ACPI sleep support.
  *
- * Copyright (c) 2005 Alexey Starikovskiy <alexey.y.starikovskiy@intel.com>
- * Copyright (c) 2004 David Shaohua Li <shaohua.li@intel.com>
+ * Copyright (c) 2005 Alexey Starikovskiy <alexey.y.starikovskiy@पूर्णांकel.com>
+ * Copyright (c) 2004 David Shaohua Li <shaohua.li@पूर्णांकel.com>
  * Copyright (c) 2000-2003 Patrick Mochel
  * Copyright (c) 2003 Open Source Development Lab
  */
 
-#include <linux/delay.h>
-#include <linux/irq.h>
-#include <linux/dmi.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/suspend.h>
-#include <linux/reboot.h>
-#include <linux/acpi.h>
-#include <linux/module.h>
-#include <linux/syscore_ops.h>
-#include <asm/io.h>
-#include <trace/events/power.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <trace/events/घातer.h>
 
-#include "internal.h"
-#include "sleep.h"
+#समावेश "internal.h"
+#समावेश "sleep.h"
 
 /*
- * Some HW-full platforms do not have _S5, so they may need
- * to leverage efi power off for a shutdown.
+ * Some HW-full platक्रमms करो not have _S5, so they may need
+ * to leverage efi घातer off क्रम a shutकरोwn.
  */
 bool acpi_no_s5;
-static u8 sleep_states[ACPI_S_STATE_COUNT];
+अटल u8 sleep_states[ACPI_S_STATE_COUNT];
 
-static void acpi_sleep_tts_switch(u32 acpi_state)
-{
+अटल व्योम acpi_sleep_tts_चयन(u32 acpi_state)
+अणु
 	acpi_status status;
 
-	status = acpi_execute_simple_method(NULL, "\\_TTS", acpi_state);
-	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
+	status = acpi_execute_simple_method(शून्य, "\\_TTS", acpi_state);
+	अगर (ACPI_FAILURE(status) && status != AE_NOT_FOUND) अणु
 		/*
 		 * OS can't evaluate the _TTS object correctly. Some warning
-		 * message will be printed. But it won't break anything.
+		 * message will be prपूर्णांकed. But it won't अवरोध anything.
 		 */
-		printk(KERN_NOTICE "Failure in evaluating _TTS object\n");
-	}
-}
+		prपूर्णांकk(KERN_NOTICE "Failure in evaluating _TTS object\n");
+	पूर्ण
+पूर्ण
 
-static int tts_notify_reboot(struct notifier_block *this,
-			unsigned long code, void *x)
-{
-	acpi_sleep_tts_switch(ACPI_STATE_S5);
-	return NOTIFY_DONE;
-}
+अटल पूर्णांक tts_notअगरy_reboot(काष्ठा notअगरier_block *this,
+			अचिन्हित दीर्घ code, व्योम *x)
+अणु
+	acpi_sleep_tts_चयन(ACPI_STATE_S5);
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block tts_notifier = {
-	.notifier_call	= tts_notify_reboot,
-	.next		= NULL,
+अटल काष्ठा notअगरier_block tts_notअगरier = अणु
+	.notअगरier_call	= tts_notअगरy_reboot,
+	.next		= शून्य,
 	.priority	= 0,
-};
+पूर्ण;
 
-static int acpi_sleep_prepare(u32 acpi_state)
-{
-#ifdef CONFIG_ACPI_SLEEP
-	unsigned long acpi_wakeup_address;
+अटल पूर्णांक acpi_sleep_prepare(u32 acpi_state)
+अणु
+#अगर_घोषित CONFIG_ACPI_SLEEP
+	अचिन्हित दीर्घ acpi_wakeup_address;
 
-	/* do we have a wakeup address for S2 and S3? */
-	if (acpi_state == ACPI_STATE_S3) {
+	/* करो we have a wakeup address क्रम S2 and S3? */
+	अगर (acpi_state == ACPI_STATE_S3) अणु
 		acpi_wakeup_address = acpi_get_wakeup_address();
-		if (!acpi_wakeup_address)
-			return -EFAULT;
+		अगर (!acpi_wakeup_address)
+			वापस -EFAULT;
 		acpi_set_waking_vector(acpi_wakeup_address);
 
-	}
+	पूर्ण
 	ACPI_FLUSH_CPU_CACHE();
-#endif
-	printk(KERN_INFO PREFIX "Preparing to enter system sleep state S%d\n",
+#पूर्ण_अगर
+	prपूर्णांकk(KERN_INFO PREFIX "Preparing to enter system sleep state S%d\n",
 		acpi_state);
 	acpi_enable_wakeup_devices(acpi_state);
 	acpi_enter_sleep_state_prep(acpi_state);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 bool acpi_sleep_state_supported(u8 sleep_state)
-{
+अणु
 	acpi_status status;
 	u8 type_a, type_b;
 
 	status = acpi_get_sleep_type_data(sleep_state, &type_a, &type_b);
-	return ACPI_SUCCESS(status) && (!acpi_gbl_reduced_hardware
+	वापस ACPI_SUCCESS(status) && (!acpi_gbl_reduced_hardware
 		|| (acpi_gbl_FADT.sleep_control.address
 			&& acpi_gbl_FADT.sleep_status.address));
-}
+पूर्ण
 
-#ifdef CONFIG_ACPI_SLEEP
-static u32 acpi_target_sleep_state = ACPI_STATE_S0;
+#अगर_घोषित CONFIG_ACPI_SLEEP
+अटल u32 acpi_target_sleep_state = ACPI_STATE_S0;
 
-u32 acpi_target_system_state(void)
-{
-	return acpi_target_sleep_state;
-}
-EXPORT_SYMBOL_GPL(acpi_target_system_state);
+u32 acpi_target_प्रणाली_state(व्योम)
+अणु
+	वापस acpi_target_sleep_state;
+पूर्ण
+EXPORT_SYMBOL_GPL(acpi_target_प्रणाली_state);
 
-static bool pwr_btn_event_pending;
+अटल bool pwr_btn_event_pending;
 
 /*
- * The ACPI specification wants us to save NVS memory regions during hibernation
- * and to restore them during the subsequent resume.  Windows does that also for
- * suspend to RAM.  However, it is known that this mechanism does not work on
+ * The ACPI specअगरication wants us to save NVS memory regions during hibernation
+ * and to restore them during the subsequent resume.  Winकरोws करोes that also क्रम
+ * suspend to RAM.  However, it is known that this mechanism करोes not work on
  * all machines, so we allow the user to disable it with the help of the
  * 'acpi_sleep=nonvs' kernel command line option.
  */
-static bool nvs_nosave;
+अटल bool nvs_nosave;
 
-void __init acpi_nvs_nosave(void)
-{
+व्योम __init acpi_nvs_nosave(व्योम)
+अणु
 	nvs_nosave = true;
-}
+पूर्ण
 
 /*
- * The ACPI specification wants us to save NVS memory regions during hibernation
- * but says nothing about saving NVS during S3.  Not all versions of Windows
- * save NVS on S3 suspend either, and it is clear that not all systems need
- * NVS to be saved at S3 time.  To improve suspend/resume time, allow the
- * user to disable saving NVS on S3 if their system does not require it, but
- * continue to save/restore NVS for S4 as specified.
+ * The ACPI specअगरication wants us to save NVS memory regions during hibernation
+ * but says nothing about saving NVS during S3.  Not all versions of Winकरोws
+ * save NVS on S3 suspend either, and it is clear that not all प्रणालीs need
+ * NVS to be saved at S3 समय.  To improve suspend/resume समय, allow the
+ * user to disable saving NVS on S3 अगर their प्रणाली करोes not require it, but
+ * जारी to save/restore NVS क्रम S4 as specअगरied.
  */
-static bool nvs_nosave_s3;
+अटल bool nvs_nosave_s3;
 
-void __init acpi_nvs_nosave_s3(void)
-{
+व्योम __init acpi_nvs_nosave_s3(व्योम)
+अणु
 	nvs_nosave_s3 = true;
-}
+पूर्ण
 
-static int __init init_nvs_save_s3(const struct dmi_system_id *d)
-{
+अटल पूर्णांक __init init_nvs_save_s3(स्थिर काष्ठा dmi_प्रणाली_id *d)
+अणु
 	nvs_nosave_s3 = false;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * ACPI 1.0 wants us to execute _PTS before suspending devices, so we allow the
+ * ACPI 1.0 wants us to execute _PTS beक्रमe suspending devices, so we allow the
  * user to request that behavior by using the 'acpi_old_suspend_ordering'
  * kernel command line option that causes the following variable to be set.
  */
-static bool old_suspend_ordering;
+अटल bool old_suspend_ordering;
 
-void __init acpi_old_suspend_ordering(void)
-{
+व्योम __init acpi_old_suspend_ordering(व्योम)
+अणु
 	old_suspend_ordering = true;
-}
+पूर्ण
 
-static int __init init_old_suspend_ordering(const struct dmi_system_id *d)
-{
+अटल पूर्णांक __init init_old_suspend_ordering(स्थिर काष्ठा dmi_प्रणाली_id *d)
+अणु
 	acpi_old_suspend_ordering();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init init_nvs_nosave(const struct dmi_system_id *d)
-{
+अटल पूर्णांक __init init_nvs_nosave(स्थिर काष्ठा dmi_प्रणाली_id *d)
+अणु
 	acpi_nvs_nosave();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool acpi_sleep_default_s3;
+bool acpi_sleep_शेष_s3;
 
-static int __init init_default_s3(const struct dmi_system_id *d)
-{
-	acpi_sleep_default_s3 = true;
-	return 0;
-}
+अटल पूर्णांक __init init_शेष_s3(स्थिर काष्ठा dmi_प्रणाली_id *d)
+अणु
+	acpi_sleep_शेष_s3 = true;
+	वापस 0;
+पूर्ण
 
-static const struct dmi_system_id acpisleep_dmi_table[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id acpisleep_dmi_table[] __initस्थिर = अणु
+	अणु
 	.callback = init_old_suspend_ordering,
 	.ident = "Abit KN9 (nForce4 variant)",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_BOARD_VENDOR, "http://www.abit.com.tw/"),
 		DMI_MATCH(DMI_BOARD_NAME, "KN9 Series(NF-CK804)"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_old_suspend_ordering,
 	.ident = "HP xw4600 Workstation",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Hewlett-Packard"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "HP xw4600 Workstation"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_old_suspend_ordering,
 	.ident = "Asus Pundit P1-AH2 (M2N8L motherboard)",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_BOARD_VENDOR, "ASUSTek Computer INC."),
 		DMI_MATCH(DMI_BOARD_NAME, "M2N8L"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_old_suspend_ordering,
 	.ident = "Panasonic CF51-2L",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_BOARD_VENDOR,
 				"Matsushita Electric Industrial Co.,Ltd."),
 		DMI_MATCH(DMI_BOARD_NAME, "CF51-2L"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VGN-FW41E_H",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VGN-FW41E_H"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VGN-FW21E",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VGN-FW21E"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VGN-FW21M",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VGN-FW21M"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VPCEB17FX",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VPCEB17FX"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VGN-SR11M",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VGN-SR11M"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Everex StepNote Series",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Everex Systems, Inc."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "Everex StepNote Series"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VPCEB1Z1E",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VPCEB1Z1E"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VGN-NW130D",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VGN-NW130D"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VPCCW29FX",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VPCCW29FX"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Averatec AV1020-ED2",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "AVERATEC"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "1000 Series"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_old_suspend_ordering,
 	.ident = "Asus A8N-SLI DELUXE",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_BOARD_VENDOR, "ASUSTeK Computer INC."),
 		DMI_MATCH(DMI_BOARD_NAME, "A8N-SLI DELUXE"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_old_suspend_ordering,
 	.ident = "Asus A8N-SLI Premium",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_BOARD_VENDOR, "ASUSTeK Computer INC."),
 		DMI_MATCH(DMI_BOARD_NAME, "A8N-SLI Premium"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VGN-SR26GN_P",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VGN-SR26GN_P"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VPCEB1S1E",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VPCEB1S1E"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Sony Vaio VGN-FW520F",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "VGN-FW520F"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Asus K54C",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK Computer Inc."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "K54C"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_nosave,
 	.ident = "Asus K54HR",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK Computer Inc."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "K54HR"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 	.callback = init_nvs_save_s3,
 	.ident = "Asus 1025C",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK COMPUTER INC."),
 		DMI_MATCH(DMI_PRODUCT_NAME, "1025C"),
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	/*
 	 * https://bugzilla.kernel.org/show_bug.cgi?id=189431
-	 * Lenovo G50-45 is a platform later than 2012, but needs nvs memory
+	 * Lenovo G50-45 is a platक्रमm later than 2012, but needs nvs memory
 	 * saving during S3.
 	 */
-	{
+	अणु
 	.callback = init_nvs_save_s3,
 	.ident = "Lenovo G50-45",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "80E3"),
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	/*
-	 * ThinkPad X1 Tablet(2016) cannot do suspend-to-idle using
-	 * the Low Power S0 Idle firmware interface (see
+	 * ThinkPad X1 Tablet(2016) cannot करो suspend-to-idle using
+	 * the Low Power S0 Idle firmware पूर्णांकerface (see
 	 * https://bugzilla.kernel.org/show_bug.cgi?id=199057).
 	 */
-	{
-	.callback = init_default_s3,
+	अणु
+	.callback = init_शेष_s3,
 	.ident = "ThinkPad X1 Tablet(2016)",
-	.matches = {
+	.matches = अणु
 		DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 		DMI_MATCH(DMI_PRODUCT_NAME, "20GGA00L00"),
-		},
-	},
-	{},
-};
+		पूर्ण,
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static bool ignore_blacklist;
+अटल bool ignore_blacklist;
 
-void __init acpi_sleep_no_blacklist(void)
-{
+व्योम __init acpi_sleep_no_blacklist(व्योम)
+अणु
 	ignore_blacklist = true;
-}
+पूर्ण
 
-static void __init acpi_sleep_dmi_check(void)
-{
-	if (ignore_blacklist)
-		return;
+अटल व्योम __init acpi_sleep_dmi_check(व्योम)
+अणु
+	अगर (ignore_blacklist)
+		वापस;
 
-	if (dmi_get_bios_year() >= 2012)
+	अगर (dmi_get_bios_year() >= 2012)
 		acpi_nvs_nosave_s3();
 
-	dmi_check_system(acpisleep_dmi_table);
-}
+	dmi_check_प्रणाली(acpisleep_dmi_table);
+पूर्ण
 
 /**
- * acpi_pm_freeze - Disable the GPEs and suspend EC transactions.
+ * acpi_pm_मुक्तze - Disable the GPEs and suspend EC transactions.
  */
-static int acpi_pm_freeze(void)
-{
+अटल पूर्णांक acpi_pm_मुक्तze(व्योम)
+अणु
 	acpi_disable_all_gpes();
-	acpi_os_wait_events_complete();
+	acpi_os_रुको_events_complete();
 	acpi_ec_block_transactions();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * acpi_pre_suspend - Enable wakeup devices, "freeze" EC and save NVS.
  */
-static int acpi_pm_pre_suspend(void)
-{
-	acpi_pm_freeze();
-	return suspend_nvs_save();
-}
+अटल पूर्णांक acpi_pm_pre_suspend(व्योम)
+अणु
+	acpi_pm_मुक्तze();
+	वापस suspend_nvs_save();
+पूर्ण
 
 /**
- *	__acpi_pm_prepare - Prepare the platform to enter the target state.
+ *	__acpi_pm_prepare - Prepare the platक्रमm to enter the target state.
  *
- *	If necessary, set the firmware waking vector and do arch-specific
+ *	If necessary, set the firmware waking vector and करो arch-specअगरic
  *	nastiness to get the wakeup code to the waking vector.
  */
-static int __acpi_pm_prepare(void)
-{
-	int error = acpi_sleep_prepare(acpi_target_sleep_state);
-	if (error)
+अटल पूर्णांक __acpi_pm_prepare(व्योम)
+अणु
+	पूर्णांक error = acpi_sleep_prepare(acpi_target_sleep_state);
+	अगर (error)
 		acpi_target_sleep_state = ACPI_STATE_S0;
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- *	acpi_pm_prepare - Prepare the platform to enter the target sleep
+ *	acpi_pm_prepare - Prepare the platक्रमm to enter the target sleep
  *		state and disable the GPEs.
  */
-static int acpi_pm_prepare(void)
-{
-	int error = __acpi_pm_prepare();
-	if (!error)
+अटल पूर्णांक acpi_pm_prepare(व्योम)
+अणु
+	पूर्णांक error = __acpi_pm_prepare();
+	अगर (!error)
 		error = acpi_pm_pre_suspend();
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- *	acpi_pm_finish - Instruct the platform to leave a sleep state.
+ *	acpi_pm_finish - Inकाष्ठा the platक्रमm to leave a sleep state.
  *
- *	This is called after we wake back up (or if entering the sleep state
+ *	This is called after we wake back up (or अगर entering the sleep state
  *	failed).
  */
-static void acpi_pm_finish(void)
-{
-	struct acpi_device *pwr_btn_adev;
+अटल व्योम acpi_pm_finish(व्योम)
+अणु
+	काष्ठा acpi_device *pwr_btn_adev;
 	u32 acpi_state = acpi_target_sleep_state;
 
 	acpi_ec_unblock_transactions();
-	suspend_nvs_free();
+	suspend_nvs_मुक्त();
 
-	if (acpi_state == ACPI_STATE_S0)
-		return;
+	अगर (acpi_state == ACPI_STATE_S0)
+		वापस;
 
-	printk(KERN_INFO PREFIX "Waking up from system sleep state S%d\n",
+	prपूर्णांकk(KERN_INFO PREFIX "Waking up from system sleep state S%d\n",
 		acpi_state);
 	acpi_disable_wakeup_devices(acpi_state);
 	acpi_leave_sleep_state(acpi_state);
@@ -469,155 +470,155 @@ static void acpi_pm_finish(void)
 
 	acpi_target_sleep_state = ACPI_STATE_S0;
 
-	acpi_resume_power_resources();
+	acpi_resume_घातer_resources();
 
-	/* If we were woken with the fixed power button, provide a small
-	 * hint to userspace in the form of a wakeup event on the fixed power
-	 * button device (if it can be found).
+	/* If we were woken with the fixed घातer button, provide a small
+	 * hपूर्णांक to userspace in the क्रमm of a wakeup event on the fixed घातer
+	 * button device (अगर it can be found).
 	 *
 	 * We delay the event generation til now, as the PM layer requires
-	 * timekeeping to be running before we generate events. */
-	if (!pwr_btn_event_pending)
-		return;
+	 * समयkeeping to be running beक्रमe we generate events. */
+	अगर (!pwr_btn_event_pending)
+		वापस;
 
 	pwr_btn_event_pending = false;
 	pwr_btn_adev = acpi_dev_get_first_match_dev(ACPI_BUTTON_HID_POWERF,
-						    NULL, -1);
-	if (pwr_btn_adev) {
+						    शून्य, -1);
+	अगर (pwr_btn_adev) अणु
 		pm_wakeup_event(&pwr_btn_adev->dev, 0);
 		acpi_dev_put(pwr_btn_adev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * acpi_pm_start - Start system PM transition.
+ * acpi_pm_start - Start प्रणाली PM transition.
  */
-static void acpi_pm_start(u32 acpi_state)
-{
+अटल व्योम acpi_pm_start(u32 acpi_state)
+अणु
 	acpi_target_sleep_state = acpi_state;
-	acpi_sleep_tts_switch(acpi_target_sleep_state);
+	acpi_sleep_tts_चयन(acpi_target_sleep_state);
 	acpi_scan_lock_acquire();
-}
+पूर्ण
 
 /**
- * acpi_pm_end - Finish up system PM transition.
+ * acpi_pm_end - Finish up प्रणाली PM transition.
  */
-static void acpi_pm_end(void)
-{
-	acpi_turn_off_unused_power_resources(false);
+अटल व्योम acpi_pm_end(व्योम)
+अणु
+	acpi_turn_off_unused_घातer_resources(false);
 	acpi_scan_lock_release();
 	/*
-	 * This is necessary in case acpi_pm_finish() is not called during a
+	 * This is necessary in हाल acpi_pm_finish() is not called during a
 	 * failing transition to a sleep state.
 	 */
 	acpi_target_sleep_state = ACPI_STATE_S0;
-	acpi_sleep_tts_switch(acpi_target_sleep_state);
-}
-#else /* !CONFIG_ACPI_SLEEP */
-#define sleep_no_lps0	(1)
-#define acpi_target_sleep_state	ACPI_STATE_S0
-#define acpi_sleep_default_s3	(1)
-static inline void acpi_sleep_dmi_check(void) {}
-#endif /* CONFIG_ACPI_SLEEP */
+	acpi_sleep_tts_चयन(acpi_target_sleep_state);
+पूर्ण
+#अन्यथा /* !CONFIG_ACPI_SLEEP */
+#घोषणा sleep_no_lps0	(1)
+#घोषणा acpi_target_sleep_state	ACPI_STATE_S0
+#घोषणा acpi_sleep_शेष_s3	(1)
+अटल अंतरभूत व्योम acpi_sleep_dmi_check(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_ACPI_SLEEP */
 
-#ifdef CONFIG_SUSPEND
-static u32 acpi_suspend_states[] = {
+#अगर_घोषित CONFIG_SUSPEND
+अटल u32 acpi_suspend_states[] = अणु
 	[PM_SUSPEND_ON] = ACPI_STATE_S0,
 	[PM_SUSPEND_STANDBY] = ACPI_STATE_S1,
 	[PM_SUSPEND_MEM] = ACPI_STATE_S3,
 	[PM_SUSPEND_MAX] = ACPI_STATE_S5
-};
+पूर्ण;
 
 /**
- *	acpi_suspend_begin - Set the target system sleep state to the state
- *		associated with given @pm_state, if supported.
+ *	acpi_suspend_begin - Set the target प्रणाली sleep state to the state
+ *		associated with given @pm_state, अगर supported.
  */
-static int acpi_suspend_begin(suspend_state_t pm_state)
-{
+अटल पूर्णांक acpi_suspend_begin(suspend_state_t pm_state)
+अणु
 	u32 acpi_state = acpi_suspend_states[pm_state];
-	int error;
+	पूर्णांक error;
 
 	error = (nvs_nosave || nvs_nosave_s3) ? 0 : suspend_nvs_alloc();
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (!sleep_states[acpi_state]) {
+	अगर (!sleep_states[acpi_state]) अणु
 		pr_err("ACPI does not support sleep state S%u\n", acpi_state);
-		return -ENOSYS;
-	}
-	if (acpi_state > ACPI_STATE_S1)
+		वापस -ENOSYS;
+	पूर्ण
+	अगर (acpi_state > ACPI_STATE_S1)
 		pm_set_suspend_via_firmware();
 
 	acpi_pm_start(acpi_state);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	acpi_suspend_enter - Actually enter a sleep state.
  *	@pm_state: ignored
  *
- *	Flush caches and go to sleep. For STR we have to call arch-specific
+ *	Flush caches and go to sleep. For STR we have to call arch-specअगरic
  *	assembly, which in turn call acpi_enter_sleep_state().
  *	It's unfortunate, but it works. Please fix if you're feeling frisky.
  */
-static int acpi_suspend_enter(suspend_state_t pm_state)
-{
+अटल पूर्णांक acpi_suspend_enter(suspend_state_t pm_state)
+अणु
 	acpi_status status = AE_OK;
 	u32 acpi_state = acpi_target_sleep_state;
-	int error;
+	पूर्णांक error;
 
 	ACPI_FLUSH_CPU_CACHE();
 
 	trace_suspend_resume(TPS("acpi_suspend"), acpi_state, true);
-	switch (acpi_state) {
-	case ACPI_STATE_S1:
+	चयन (acpi_state) अणु
+	हाल ACPI_STATE_S1:
 		barrier();
 		status = acpi_enter_sleep_state(acpi_state);
-		break;
+		अवरोध;
 
-	case ACPI_STATE_S3:
-		if (!acpi_suspend_lowlevel)
-			return -ENOSYS;
+	हाल ACPI_STATE_S3:
+		अगर (!acpi_suspend_lowlevel)
+			वापस -ENOSYS;
 		error = acpi_suspend_lowlevel();
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 		pr_info(PREFIX "Low-level resume complete\n");
 		pm_set_resume_via_firmware();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	trace_suspend_resume(TPS("acpi_suspend"), acpi_state, false);
 
-	/* This violates the spec but is required for bug compatibility. */
-	acpi_write_bit_register(ACPI_BITREG_SCI_ENABLE, 1);
+	/* This violates the spec but is required क्रम bug compatibility. */
+	acpi_ग_लिखो_bit_रेजिस्टर(ACPI_BITREG_SCI_ENABLE, 1);
 
-	/* Reprogram control registers */
+	/* Reprogram control रेजिस्टरs */
 	acpi_leave_sleep_state_prep(acpi_state);
 
 	/* ACPI 3.0 specs (P62) says that it's the responsibility
 	 * of the OSPM to clear the status bit [ implying that the
 	 * POWER_BUTTON event should not reach userspace ]
 	 *
-	 * However, we do generate a small hint for userspace in the form of
-	 * a wakeup event. We flag this condition for now and generate the
+	 * However, we करो generate a small hपूर्णांक क्रम userspace in the क्रमm of
+	 * a wakeup event. We flag this condition क्रम now and generate the
 	 * event later, as we're currently too early in resume to be able to
 	 * generate wakeup events.
 	 */
-	if (ACPI_SUCCESS(status) && (acpi_state == ACPI_STATE_S3)) {
+	अगर (ACPI_SUCCESS(status) && (acpi_state == ACPI_STATE_S3)) अणु
 		acpi_event_status pwr_btn_status = ACPI_EVENT_FLAG_DISABLED;
 
 		acpi_get_event_status(ACPI_EVENT_POWER_BUTTON, &pwr_btn_status);
 
-		if (pwr_btn_status & ACPI_EVENT_FLAG_STATUS_SET) {
+		अगर (pwr_btn_status & ACPI_EVENT_FLAG_STATUS_SET) अणु
 			acpi_clear_event(ACPI_EVENT_POWER_BUTTON);
-			/* Flag for later */
+			/* Flag क्रम later */
 			pwr_btn_event_pending = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Disable and clear GPE status before interrupt is enabled. Some GPEs
-	 * (like wakeup GPE) haven't handler, this can avoid such GPE misfire.
-	 * acpi_leave_sleep_state will reenable specific GPEs later
+	 * Disable and clear GPE status beक्रमe पूर्णांकerrupt is enabled. Some GPEs
+	 * (like wakeup GPE) haven't handler, this can aव्योम such GPE misfire.
+	 * acpi_leave_sleep_state will reenable specअगरic GPEs later
 	 */
 	acpi_disable_all_gpes();
 	/* Allow EC transactions to happen. */
@@ -625,54 +626,54 @@ static int acpi_suspend_enter(suspend_state_t pm_state)
 
 	suspend_nvs_restore();
 
-	return ACPI_SUCCESS(status) ? 0 : -EFAULT;
-}
+	वापस ACPI_SUCCESS(status) ? 0 : -EFAULT;
+पूर्ण
 
-static int acpi_suspend_state_valid(suspend_state_t pm_state)
-{
+अटल पूर्णांक acpi_suspend_state_valid(suspend_state_t pm_state)
+अणु
 	u32 acpi_state;
 
-	switch (pm_state) {
-	case PM_SUSPEND_ON:
-	case PM_SUSPEND_STANDBY:
-	case PM_SUSPEND_MEM:
+	चयन (pm_state) अणु
+	हाल PM_SUSPEND_ON:
+	हाल PM_SUSPEND_STANDBY:
+	हाल PM_SUSPEND_MEM:
 		acpi_state = acpi_suspend_states[pm_state];
 
-		return sleep_states[acpi_state];
-	default:
-		return 0;
-	}
-}
+		वापस sleep_states[acpi_state];
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static const struct platform_suspend_ops acpi_suspend_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops acpi_suspend_ops = अणु
 	.valid = acpi_suspend_state_valid,
 	.begin = acpi_suspend_begin,
 	.prepare_late = acpi_pm_prepare,
 	.enter = acpi_suspend_enter,
 	.wake = acpi_pm_finish,
 	.end = acpi_pm_end,
-};
+पूर्ण;
 
 /**
- *	acpi_suspend_begin_old - Set the target system sleep state to the
- *		state associated with given @pm_state, if supported, and
- *		execute the _PTS control method.  This function is used if the
+ *	acpi_suspend_begin_old - Set the target प्रणाली sleep state to the
+ *		state associated with given @pm_state, अगर supported, and
+ *		execute the _PTS control method.  This function is used अगर the
  *		pre-ACPI 2.0 suspend ordering has been requested.
  */
-static int acpi_suspend_begin_old(suspend_state_t pm_state)
-{
-	int error = acpi_suspend_begin(pm_state);
-	if (!error)
+अटल पूर्णांक acpi_suspend_begin_old(suspend_state_t pm_state)
+अणु
+	पूर्णांक error = acpi_suspend_begin(pm_state);
+	अगर (!error)
 		error = __acpi_pm_prepare();
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * The following callbacks are used if the pre-ACPI 2.0 suspend ordering has
+ * The following callbacks are used अगर the pre-ACPI 2.0 suspend ordering has
  * been requested.
  */
-static const struct platform_suspend_ops acpi_suspend_ops_old = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops acpi_suspend_ops_old = अणु
 	.valid = acpi_suspend_state_valid,
 	.begin = acpi_suspend_begin_old,
 	.prepare_late = acpi_pm_pre_suspend,
@@ -680,261 +681,261 @@ static const struct platform_suspend_ops acpi_suspend_ops_old = {
 	.wake = acpi_pm_finish,
 	.end = acpi_pm_end,
 	.recover = acpi_pm_finish,
-};
+पूर्ण;
 
-static bool s2idle_wakeup;
+अटल bool s2idle_wakeup;
 
-int acpi_s2idle_begin(void)
-{
+पूर्णांक acpi_s2idle_begin(व्योम)
+अणु
 	acpi_scan_lock_acquire();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int acpi_s2idle_prepare(void)
-{
-	if (acpi_sci_irq_valid()) {
+पूर्णांक acpi_s2idle_prepare(व्योम)
+अणु
+	अगर (acpi_sci_irq_valid()) अणु
 		enable_irq_wake(acpi_sci_irq);
 		acpi_ec_set_gpe_wake_mask(ACPI_GPE_ENABLE);
-	}
+	पूर्ण
 
 	acpi_enable_wakeup_devices(ACPI_STATE_S0);
 
-	/* Change the configuration of GPEs to avoid spurious wakeup. */
+	/* Change the configuration of GPEs to aव्योम spurious wakeup. */
 	acpi_enable_all_wakeup_gpes();
-	acpi_os_wait_events_complete();
+	acpi_os_रुको_events_complete();
 
 	s2idle_wakeup = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool acpi_s2idle_wake(void)
-{
-	if (!acpi_sci_irq_valid())
-		return pm_wakeup_pending();
+bool acpi_s2idle_wake(व्योम)
+अणु
+	अगर (!acpi_sci_irq_valid())
+		वापस pm_wakeup_pending();
 
-	while (pm_wakeup_pending()) {
+	जबतक (pm_wakeup_pending()) अणु
 		/*
-		 * If IRQD_WAKEUP_ARMED is set for the SCI at this point, the
-		 * SCI has not triggered while suspended, so bail out (the
+		 * If IRQD_WAKEUP_ARMED is set क्रम the SCI at this poपूर्णांक, the
+		 * SCI has not triggered जबतक suspended, so bail out (the
 		 * wakeup is pending anyway and the SCI is not the source of
 		 * it).
 		 */
-		if (irqd_is_wakeup_armed(irq_get_irq_data(acpi_sci_irq))) {
+		अगर (irqd_is_wakeup_armed(irq_get_irq_data(acpi_sci_irq))) अणु
 			pm_pr_dbg("Wakeup unrelated to ACPI SCI\n");
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
 		/*
 		 * If the status bit of any enabled fixed event is set, the
 		 * wakeup is regarded as valid.
 		 */
-		if (acpi_any_fixed_event_status_set()) {
+		अगर (acpi_any_fixed_event_status_set()) अणु
 			pm_pr_dbg("ACPI fixed event wakeup\n");
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
 		/* Check wakeups from drivers sharing the SCI. */
-		if (acpi_check_wakeup_handlers()) {
+		अगर (acpi_check_wakeup_handlers()) अणु
 			pm_pr_dbg("ACPI custom handler wakeup\n");
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
 		/* Check non-EC GPE wakeups and dispatch the EC GPE. */
-		if (acpi_ec_dispatch_gpe()) {
+		अगर (acpi_ec_dispatch_gpe()) अणु
 			pm_pr_dbg("ACPI non-EC GPE wakeup\n");
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
 		/*
-		 * Cancel the SCI wakeup and process all pending events in case
+		 * Cancel the SCI wakeup and process all pending events in हाल
 		 * there are any wakeup ones in there.
 		 *
-		 * Note that if any non-EC GPEs are active at this point, the
+		 * Note that अगर any non-EC GPEs are active at this poपूर्णांक, the
 		 * SCI will retrigger after the rearming below, so no events
 		 * should be missed by canceling the wakeup here.
 		 */
-		pm_system_cancel_wakeup();
-		acpi_os_wait_events_complete();
+		pm_प्रणाली_cancel_wakeup();
+		acpi_os_रुको_events_complete();
 
 		/*
 		 * The SCI is in the "suspended" state now and it cannot produce
-		 * new wakeup events till the rearming below, so if any of them
+		 * new wakeup events till the rearming below, so अगर any of them
 		 * are pending here, they must be resulting from the processing
-		 * of EC events above or coming from somewhere else.
+		 * of EC events above or coming from somewhere अन्यथा.
 		 */
-		if (pm_wakeup_pending()) {
+		अगर (pm_wakeup_pending()) अणु
 			pm_pr_dbg("Wakeup after ACPI Notify sync\n");
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
 		rearm_wake_irq(acpi_sci_irq);
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void acpi_s2idle_restore(void)
-{
+व्योम acpi_s2idle_restore(व्योम)
+अणु
 	/*
-	 * Drain pending events before restoring the working-state configuration
+	 * Drain pending events beक्रमe restoring the working-state configuration
 	 * of GPEs.
 	 */
-	acpi_os_wait_events_complete(); /* synchronize GPE processing */
+	acpi_os_रुको_events_complete(); /* synchronize GPE processing */
 	acpi_ec_flush_work(); /* flush the EC driver's workqueues */
-	acpi_os_wait_events_complete(); /* synchronize Notify handling */
+	acpi_os_रुको_events_complete(); /* synchronize Notअगरy handling */
 
 	s2idle_wakeup = false;
 
-	acpi_enable_all_runtime_gpes();
+	acpi_enable_all_runसमय_gpes();
 
 	acpi_disable_wakeup_devices(ACPI_STATE_S0);
 
-	if (acpi_sci_irq_valid()) {
+	अगर (acpi_sci_irq_valid()) अणु
 		acpi_ec_set_gpe_wake_mask(ACPI_GPE_DISABLE);
 		disable_irq_wake(acpi_sci_irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void acpi_s2idle_end(void)
-{
+व्योम acpi_s2idle_end(व्योम)
+अणु
 	acpi_scan_lock_release();
-}
+पूर्ण
 
-static const struct platform_s2idle_ops acpi_s2idle_ops = {
+अटल स्थिर काष्ठा platक्रमm_s2idle_ops acpi_s2idle_ops = अणु
 	.begin = acpi_s2idle_begin,
 	.prepare = acpi_s2idle_prepare,
 	.wake = acpi_s2idle_wake,
 	.restore = acpi_s2idle_restore,
 	.end = acpi_s2idle_end,
-};
+पूर्ण;
 
-void __weak acpi_s2idle_setup(void)
-{
+व्योम __weak acpi_s2idle_setup(व्योम)
+अणु
 	s2idle_set_ops(&acpi_s2idle_ops);
-}
+पूर्ण
 
-static void acpi_sleep_suspend_setup(void)
-{
-	int i;
+अटल व्योम acpi_sleep_suspend_setup(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = ACPI_STATE_S1; i < ACPI_STATE_S4; i++)
-		if (acpi_sleep_state_supported(i))
+	क्रम (i = ACPI_STATE_S1; i < ACPI_STATE_S4; i++)
+		अगर (acpi_sleep_state_supported(i))
 			sleep_states[i] = 1;
 
 	suspend_set_ops(old_suspend_ordering ?
 		&acpi_suspend_ops_old : &acpi_suspend_ops);
 
 	acpi_s2idle_setup();
-}
+पूर्ण
 
-#else /* !CONFIG_SUSPEND */
-#define s2idle_wakeup		(false)
-static inline void acpi_sleep_suspend_setup(void) {}
-#endif /* !CONFIG_SUSPEND */
+#अन्यथा /* !CONFIG_SUSPEND */
+#घोषणा s2idle_wakeup		(false)
+अटल अंतरभूत व्योम acpi_sleep_suspend_setup(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* !CONFIG_SUSPEND */
 
-bool acpi_s2idle_wakeup(void)
-{
-	return s2idle_wakeup;
-}
+bool acpi_s2idle_wakeup(व्योम)
+अणु
+	वापस s2idle_wakeup;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static u32 saved_bm_rld;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल u32 saved_bm_rld;
 
-static int  acpi_save_bm_rld(void)
-{
-	acpi_read_bit_register(ACPI_BITREG_BUS_MASTER_RLD, &saved_bm_rld);
-	return 0;
-}
+अटल पूर्णांक  acpi_save_bm_rld(व्योम)
+अणु
+	acpi_पढ़ो_bit_रेजिस्टर(ACPI_BITREG_BUS_MASTER_RLD, &saved_bm_rld);
+	वापस 0;
+पूर्ण
 
-static void  acpi_restore_bm_rld(void)
-{
+अटल व्योम  acpi_restore_bm_rld(व्योम)
+अणु
 	u32 resumed_bm_rld = 0;
 
-	acpi_read_bit_register(ACPI_BITREG_BUS_MASTER_RLD, &resumed_bm_rld);
-	if (resumed_bm_rld == saved_bm_rld)
-		return;
+	acpi_पढ़ो_bit_रेजिस्टर(ACPI_BITREG_BUS_MASTER_RLD, &resumed_bm_rld);
+	अगर (resumed_bm_rld == saved_bm_rld)
+		वापस;
 
-	acpi_write_bit_register(ACPI_BITREG_BUS_MASTER_RLD, saved_bm_rld);
-}
+	acpi_ग_लिखो_bit_रेजिस्टर(ACPI_BITREG_BUS_MASTER_RLD, saved_bm_rld);
+पूर्ण
 
-static struct syscore_ops acpi_sleep_syscore_ops = {
+अटल काष्ठा syscore_ops acpi_sleep_syscore_ops = अणु
 	.suspend = acpi_save_bm_rld,
 	.resume = acpi_restore_bm_rld,
-};
+पूर्ण;
 
-static void acpi_sleep_syscore_init(void)
-{
-	register_syscore_ops(&acpi_sleep_syscore_ops);
-}
-#else
-static inline void acpi_sleep_syscore_init(void) {}
-#endif /* CONFIG_PM_SLEEP */
+अटल व्योम acpi_sleep_syscore_init(व्योम)
+अणु
+	रेजिस्टर_syscore_ops(&acpi_sleep_syscore_ops);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम acpi_sleep_syscore_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-#ifdef CONFIG_HIBERNATION
-static unsigned long s4_hardware_signature;
-static struct acpi_table_facs *facs;
-static bool nosigcheck;
+#अगर_घोषित CONFIG_HIBERNATION
+अटल अचिन्हित दीर्घ s4_hardware_signature;
+अटल काष्ठा acpi_table_facs *facs;
+अटल bool nosigcheck;
 
-void __init acpi_no_s4_hw_signature(void)
-{
+व्योम __init acpi_no_s4_hw_signature(व्योम)
+अणु
 	nosigcheck = true;
-}
+पूर्ण
 
-static int acpi_hibernation_begin(pm_message_t stage)
-{
-	if (!nvs_nosave) {
-		int error = suspend_nvs_alloc();
-		if (error)
-			return error;
-	}
+अटल पूर्णांक acpi_hibernation_begin(pm_message_t stage)
+अणु
+	अगर (!nvs_nosave) अणु
+		पूर्णांक error = suspend_nvs_alloc();
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	if (stage.event == PM_EVENT_HIBERNATE)
+	अगर (stage.event == PM_EVENT_HIBERNATE)
 		pm_set_suspend_via_firmware();
 
 	acpi_pm_start(ACPI_STATE_S4);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_hibernation_enter(void)
-{
+अटल पूर्णांक acpi_hibernation_enter(व्योम)
+अणु
 	acpi_status status = AE_OK;
 
 	ACPI_FLUSH_CPU_CACHE();
 
-	/* This shouldn't return.  If it returns, we have a problem */
+	/* This shouldn't वापस.  If it वापसs, we have a problem */
 	status = acpi_enter_sleep_state(ACPI_STATE_S4);
-	/* Reprogram control registers */
+	/* Reprogram control रेजिस्टरs */
 	acpi_leave_sleep_state_prep(ACPI_STATE_S4);
 
-	return ACPI_SUCCESS(status) ? 0 : -EFAULT;
-}
+	वापस ACPI_SUCCESS(status) ? 0 : -EFAULT;
+पूर्ण
 
-static void acpi_hibernation_leave(void)
-{
+अटल व्योम acpi_hibernation_leave(व्योम)
+अणु
 	pm_set_resume_via_firmware();
 	/*
 	 * If ACPI is not enabled by the BIOS and the boot kernel, we need to
 	 * enable it here.
 	 */
 	acpi_enable();
-	/* Reprogram control registers */
+	/* Reprogram control रेजिस्टरs */
 	acpi_leave_sleep_state_prep(ACPI_STATE_S4);
 	/* Check the hardware signature */
-	if (facs && s4_hardware_signature != facs->hardware_signature)
+	अगर (facs && s4_hardware_signature != facs->hardware_signature)
 		pr_crit("ACPI: Hardware changed while hibernated, success doubtful!\n");
 	/* Restore the NVS memory area */
 	suspend_nvs_restore();
 	/* Allow EC transactions to happen. */
 	acpi_ec_unblock_transactions();
-}
+पूर्ण
 
-static void acpi_pm_thaw(void)
-{
+अटल व्योम acpi_pm_thaw(व्योम)
+अणु
 	acpi_ec_unblock_transactions();
-	acpi_enable_all_runtime_gpes();
-}
+	acpi_enable_all_runसमय_gpes();
+पूर्ण
 
-static const struct platform_hibernation_ops acpi_hibernation_ops = {
+अटल स्थिर काष्ठा platक्रमm_hibernation_ops acpi_hibernation_ops = अणु
 	.begin = acpi_hibernation_begin,
 	.end = acpi_pm_end,
 	.pre_snapshot = acpi_pm_prepare,
@@ -942,101 +943,101 @@ static const struct platform_hibernation_ops acpi_hibernation_ops = {
 	.prepare = acpi_pm_prepare,
 	.enter = acpi_hibernation_enter,
 	.leave = acpi_hibernation_leave,
-	.pre_restore = acpi_pm_freeze,
+	.pre_restore = acpi_pm_मुक्तze,
 	.restore_cleanup = acpi_pm_thaw,
-};
+पूर्ण;
 
 /**
- *	acpi_hibernation_begin_old - Set the target system sleep state to
+ *	acpi_hibernation_begin_old - Set the target प्रणाली sleep state to
  *		ACPI_STATE_S4 and execute the _PTS control method.  This
- *		function is used if the pre-ACPI 2.0 suspend ordering has been
+ *		function is used अगर the pre-ACPI 2.0 suspend ordering has been
  *		requested.
  */
-static int acpi_hibernation_begin_old(pm_message_t stage)
-{
-	int error;
+अटल पूर्णांक acpi_hibernation_begin_old(pm_message_t stage)
+अणु
+	पूर्णांक error;
 	/*
-	 * The _TTS object should always be evaluated before the _PTS object.
+	 * The _TTS object should always be evaluated beक्रमe the _PTS object.
 	 * When the old_suspended_ordering is true, the _PTS object is
 	 * evaluated in the acpi_sleep_prepare.
 	 */
-	acpi_sleep_tts_switch(ACPI_STATE_S4);
+	acpi_sleep_tts_चयन(ACPI_STATE_S4);
 
 	error = acpi_sleep_prepare(ACPI_STATE_S4);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (!nvs_nosave) {
+	अगर (!nvs_nosave) अणु
 		error = suspend_nvs_alloc();
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	if (stage.event == PM_EVENT_HIBERNATE)
+	अगर (stage.event == PM_EVENT_HIBERNATE)
 		pm_set_suspend_via_firmware();
 
 	acpi_target_sleep_state = ACPI_STATE_S4;
 	acpi_scan_lock_acquire();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The following callbacks are used if the pre-ACPI 2.0 suspend ordering has
+ * The following callbacks are used अगर the pre-ACPI 2.0 suspend ordering has
  * been requested.
  */
-static const struct platform_hibernation_ops acpi_hibernation_ops_old = {
+अटल स्थिर काष्ठा platक्रमm_hibernation_ops acpi_hibernation_ops_old = अणु
 	.begin = acpi_hibernation_begin_old,
 	.end = acpi_pm_end,
 	.pre_snapshot = acpi_pm_pre_suspend,
-	.prepare = acpi_pm_freeze,
+	.prepare = acpi_pm_मुक्तze,
 	.finish = acpi_pm_finish,
 	.enter = acpi_hibernation_enter,
 	.leave = acpi_hibernation_leave,
-	.pre_restore = acpi_pm_freeze,
+	.pre_restore = acpi_pm_मुक्तze,
 	.restore_cleanup = acpi_pm_thaw,
 	.recover = acpi_pm_finish,
-};
+पूर्ण;
 
-static void acpi_sleep_hibernate_setup(void)
-{
-	if (!acpi_sleep_state_supported(ACPI_STATE_S4))
-		return;
+अटल व्योम acpi_sleep_hibernate_setup(व्योम)
+अणु
+	अगर (!acpi_sleep_state_supported(ACPI_STATE_S4))
+		वापस;
 
 	hibernation_set_ops(old_suspend_ordering ?
 			&acpi_hibernation_ops_old : &acpi_hibernation_ops);
 	sleep_states[ACPI_STATE_S4] = 1;
-	if (nosigcheck)
-		return;
+	अगर (nosigcheck)
+		वापस;
 
-	acpi_get_table(ACPI_SIG_FACS, 1, (struct acpi_table_header **)&facs);
-	if (facs)
+	acpi_get_table(ACPI_SIG_FACS, 1, (काष्ठा acpi_table_header **)&facs);
+	अगर (facs)
 		s4_hardware_signature = facs->hardware_signature;
-}
-#else /* !CONFIG_HIBERNATION */
-static inline void acpi_sleep_hibernate_setup(void) {}
-#endif /* !CONFIG_HIBERNATION */
+पूर्ण
+#अन्यथा /* !CONFIG_HIBERNATION */
+अटल अंतरभूत व्योम acpi_sleep_hibernate_setup(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* !CONFIG_HIBERNATION */
 
-static void acpi_power_off_prepare(void)
-{
-	/* Prepare to power off the system */
+अटल व्योम acpi_घातer_off_prepare(व्योम)
+अणु
+	/* Prepare to घातer off the प्रणाली */
 	acpi_sleep_prepare(ACPI_STATE_S5);
 	acpi_disable_all_gpes();
-	acpi_os_wait_events_complete();
-}
+	acpi_os_रुको_events_complete();
+पूर्ण
 
-static void acpi_power_off(void)
-{
-	/* acpi_sleep_prepare(ACPI_STATE_S5) should have already been called */
-	printk(KERN_DEBUG "%s called\n", __func__);
+अटल व्योम acpi_घातer_off(व्योम)
+अणु
+	/* acpi_sleep_prepare(ACPI_STATE_S5) should have alपढ़ोy been called */
+	prपूर्णांकk(KERN_DEBUG "%s called\n", __func__);
 	local_irq_disable();
 	acpi_enter_sleep_state(ACPI_STATE_S5);
-}
+पूर्ण
 
-int __init acpi_sleep_init(void)
-{
-	char supported[ACPI_S_STATE_COUNT * 3 + 1];
-	char *pos = supported;
-	int i;
+पूर्णांक __init acpi_sleep_init(व्योम)
+अणु
+	अक्षर supported[ACPI_S_STATE_COUNT * 3 + 1];
+	अक्षर *pos = supported;
+	पूर्णांक i;
 
 	acpi_sleep_dmi_check();
 
@@ -1046,25 +1047,25 @@ int __init acpi_sleep_init(void)
 	acpi_sleep_suspend_setup();
 	acpi_sleep_hibernate_setup();
 
-	if (acpi_sleep_state_supported(ACPI_STATE_S5)) {
+	अगर (acpi_sleep_state_supported(ACPI_STATE_S5)) अणु
 		sleep_states[ACPI_STATE_S5] = 1;
-		pm_power_off_prepare = acpi_power_off_prepare;
-		pm_power_off = acpi_power_off;
-	} else {
+		pm_घातer_off_prepare = acpi_घातer_off_prepare;
+		pm_घातer_off = acpi_घातer_off;
+	पूर्ण अन्यथा अणु
 		acpi_no_s5 = true;
-	}
+	पूर्ण
 
 	supported[0] = 0;
-	for (i = 0; i < ACPI_S_STATE_COUNT; i++) {
-		if (sleep_states[i])
-			pos += sprintf(pos, " S%d", i);
-	}
+	क्रम (i = 0; i < ACPI_S_STATE_COUNT; i++) अणु
+		अगर (sleep_states[i])
+			pos += प्र_लिखो(pos, " S%d", i);
+	पूर्ण
 	pr_info(PREFIX "(supports%s)\n", supported);
 
 	/*
-	 * Register the tts_notifier to reboot notifier list so that the _TTS
-	 * object can also be evaluated when the system enters S5.
+	 * Register the tts_notअगरier to reboot notअगरier list so that the _TTS
+	 * object can also be evaluated when the प्रणाली enters S5.
 	 */
-	register_reboot_notifier(&tts_notifier);
-	return 0;
-}
+	रेजिस्टर_reboot_notअगरier(&tts_notअगरier);
+	वापस 0;
+पूर्ण

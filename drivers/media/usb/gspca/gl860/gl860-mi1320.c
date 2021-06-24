@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Subdriver for the GL860 chip with the MI1320 sensor
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Subdriver क्रम the GL860 chip with the MI1320 sensor
  * Author Olivier LORIN from own logs
  */
 
 /* Sensor : MI1320 */
 
-#include "gl860.h"
+#समावेश "gl860.h"
 
-static struct validx tbl_common[] = {
-	{0xba00, 0x00f0}, {0xba00, 0x00f1}, {0xba51, 0x0066}, {0xba02, 0x00f1},
-	{0xba05, 0x0067}, {0xba05, 0x00f1}, {0xbaa0, 0x0065}, {0xba00, 0x00f1},
-	{0xffff, 0xffff},
-	{0xba00, 0x00f0}, {0xba02, 0x00f1}, {0xbafa, 0x0028}, {0xba02, 0x00f1},
-	{0xba00, 0x00f0}, {0xba01, 0x00f1}, {0xbaf0, 0x0006}, {0xba0e, 0x00f1},
-	{0xba70, 0x0006}, {0xba0e, 0x00f1},
-	{0xffff, 0xffff},
-	{0xba74, 0x0006}, {0xba0e, 0x00f1},
-	{0xffff, 0xffff},
-	{0x0061, 0x0000}, {0x0068, 0x000d},
-};
+अटल काष्ठा validx tbl_common[] = अणु
+	अणु0xba00, 0x00f0पूर्ण, अणु0xba00, 0x00f1पूर्ण, अणु0xba51, 0x0066पूर्ण, अणु0xba02, 0x00f1पूर्ण,
+	अणु0xba05, 0x0067पूर्ण, अणु0xba05, 0x00f1पूर्ण, अणु0xbaa0, 0x0065पूर्ण, अणु0xba00, 0x00f1पूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0xba00, 0x00f0पूर्ण, अणु0xba02, 0x00f1पूर्ण, अणु0xbafa, 0x0028पूर्ण, अणु0xba02, 0x00f1पूर्ण,
+	अणु0xba00, 0x00f0पूर्ण, अणु0xba01, 0x00f1पूर्ण, अणु0xbaf0, 0x0006पूर्ण, अणु0xba0e, 0x00f1पूर्ण,
+	अणु0xba70, 0x0006पूर्ण, अणु0xba0e, 0x00f1पूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0xba74, 0x0006पूर्ण, अणु0xba0e, 0x00f1पूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x0061, 0x0000पूर्ण, अणु0x0068, 0x000dपूर्ण,
+पूर्ण;
 
-static struct validx tbl_init_at_startup[] = {
-	{0x0000, 0x0000}, {0x0010, 0x0010},
-	{35, 0xffff},
-	{0x0008, 0x00c0}, {0x0001, 0x00c1}, {0x0001, 0x00c2}, {0x0020, 0x0006},
-	{0x006a, 0x000d},
-};
+अटल काष्ठा validx tbl_init_at_startup[] = अणु
+	अणु0x0000, 0x0000पूर्ण, अणु0x0010, 0x0010पूर्ण,
+	अणु35, 0xffffपूर्ण,
+	अणु0x0008, 0x00c0पूर्ण, अणु0x0001, 0x00c1पूर्ण, अणु0x0001, 0x00c2पूर्ण, अणु0x0020, 0x0006पूर्ण,
+	अणु0x006a, 0x000dपूर्ण,
+पूर्ण;
 
-static struct validx tbl_sensor_settings_common[] = {
-	{0x0010, 0x0010}, {0x0003, 0x00c1}, {0x0042, 0x00c2}, {0x0040, 0x0000},
-	{0x006a, 0x0007}, {0x006a, 0x000d}, {0x0063, 0x0006},
-};
-static struct validx tbl_sensor_settings_1280[] = {
-	{0xba00, 0x00f0}, {0xba00, 0x00f1}, {0xba5a, 0x0066}, {0xba02, 0x00f1},
-	{0xba05, 0x0067}, {0xba05, 0x00f1}, {0xba20, 0x0065}, {0xba00, 0x00f1},
-};
-static struct validx tbl_sensor_settings_800[] = {
-	{0xba00, 0x00f0}, {0xba00, 0x00f1}, {0xba5a, 0x0066}, {0xba02, 0x00f1},
-	{0xba05, 0x0067}, {0xba05, 0x00f1}, {0xba20, 0x0065}, {0xba00, 0x00f1},
-};
-static struct validx tbl_sensor_settings_640[] = {
-	{0xba00, 0x00f0}, {0xba00, 0x00f1}, {0xbaa0, 0x0065}, {0xba00, 0x00f1},
-	{0xba51, 0x0066}, {0xba02, 0x00f1}, {0xba05, 0x0067}, {0xba05, 0x00f1},
-	{0xba20, 0x0065}, {0xba00, 0x00f1},
-};
-static struct validx tbl_post_unset_alt[] = {
-	{0xba00, 0x00f0}, {0xba00, 0x00f1}, {0xbaa0, 0x0065}, {0xba00, 0x00f1},
-	{0x0061, 0x0000}, {0x0068, 0x000d},
-};
+अटल काष्ठा validx tbl_sensor_settings_common[] = अणु
+	अणु0x0010, 0x0010पूर्ण, अणु0x0003, 0x00c1पूर्ण, अणु0x0042, 0x00c2पूर्ण, अणु0x0040, 0x0000पूर्ण,
+	अणु0x006a, 0x0007पूर्ण, अणु0x006a, 0x000dपूर्ण, अणु0x0063, 0x0006पूर्ण,
+पूर्ण;
+अटल काष्ठा validx tbl_sensor_settings_1280[] = अणु
+	अणु0xba00, 0x00f0पूर्ण, अणु0xba00, 0x00f1पूर्ण, अणु0xba5a, 0x0066पूर्ण, अणु0xba02, 0x00f1पूर्ण,
+	अणु0xba05, 0x0067पूर्ण, अणु0xba05, 0x00f1पूर्ण, अणु0xba20, 0x0065पूर्ण, अणु0xba00, 0x00f1पूर्ण,
+पूर्ण;
+अटल काष्ठा validx tbl_sensor_settings_800[] = अणु
+	अणु0xba00, 0x00f0पूर्ण, अणु0xba00, 0x00f1पूर्ण, अणु0xba5a, 0x0066पूर्ण, अणु0xba02, 0x00f1पूर्ण,
+	अणु0xba05, 0x0067पूर्ण, अणु0xba05, 0x00f1पूर्ण, अणु0xba20, 0x0065पूर्ण, अणु0xba00, 0x00f1पूर्ण,
+पूर्ण;
+अटल काष्ठा validx tbl_sensor_settings_640[] = अणु
+	अणु0xba00, 0x00f0पूर्ण, अणु0xba00, 0x00f1पूर्ण, अणु0xbaa0, 0x0065पूर्ण, अणु0xba00, 0x00f1पूर्ण,
+	अणु0xba51, 0x0066पूर्ण, अणु0xba02, 0x00f1पूर्ण, अणु0xba05, 0x0067पूर्ण, अणु0xba05, 0x00f1पूर्ण,
+	अणु0xba20, 0x0065पूर्ण, अणु0xba00, 0x00f1पूर्ण,
+पूर्ण;
+अटल काष्ठा validx tbl_post_unset_alt[] = अणु
+	अणु0xba00, 0x00f0पूर्ण, अणु0xba00, 0x00f1पूर्ण, अणु0xbaa0, 0x0065पूर्ण, अणु0xba00, 0x00f1पूर्ण,
+	अणु0x0061, 0x0000पूर्ण, अणु0x0068, 0x000dपूर्ण,
+पूर्ण;
 
-static u8 *tbl_1280[] = {
+अटल u8 *tbl_1280[] = अणु
 	"\x0d\x80\xf1\x08\x03\x04\xf1\x00" "\x04\x05\xf1\x02\x05\x00\xf1\xf1"
 	"\x06\x00\xf1\x0d\x20\x01\xf1\x00" "\x21\x84\xf1\x00\x0d\x00\xf1\x08"
 	"\xf0\x00\xf1\x01\x34\x00\xf1\x00" "\x9b\x43\xf1\x00\xa6\x05\xf1\x00"
@@ -60,9 +61,9 @@ static u8 *tbl_1280[] = {
 	"\xd2\x00\xf1\xcf\xcb\x00\xf1\x01"
 	,
 	"\xd3\x02\xd4\x28\xd5\x01\xd0\x02" "\xd1\x18\xd2\xc1"
-};
+पूर्ण;
 
-static u8 *tbl_800[] = {
+अटल u8 *tbl_800[] = अणु
 	"\x0d\x80\xf1\x08\x03\x03\xf1\xc0" "\x04\x05\xf1\x02\x05\x00\xf1\xf1"
 	"\x06\x00\xf1\x0d\x20\x01\xf1\x00" "\x21\x84\xf1\x00\x0d\x00\xf1\x08"
 	"\xf0\x00\xf1\x01\x34\x00\xf1\x00" "\x9b\x43\xf1\x00\xa6\x05\xf1\x00"
@@ -73,9 +74,9 @@ static u8 *tbl_800[] = {
 	"\xd2\x00\xf1\xcf\xcb\x00\xf1\x01"
 	,
 	"\xd3\x02\xd4\x18\xd5\x21\xd0\x02" "\xd1\x10\xd2\x59"
-};
+पूर्ण;
 
-static u8 *tbl_640[] = {
+अटल u8 *tbl_640[] = अणु
 	"\x0d\x80\xf1\x08\x03\x04\xf1\x04" "\x04\x05\xf1\x02\x07\x01\xf1\x7c"
 	"\x08\x00\xf1\x0e\x21\x80\xf1\x00" "\x0d\x00\xf1\x08\xf0\x00\xf1\x01"
 	"\x34\x10\xf1\x10\x3a\x43\xf1\x00" "\xa6\x05\xf1\x02\xa9\x04\xf1\x04"
@@ -86,93 +87,93 @@ static u8 *tbl_640[] = {
 	"\xd2\x00\xf1\x00\xcb\x00\xf1\x01"
 	,
 	"\xd3\x02\xd4\x10\xd5\x81\xd0\x02" "\xd1\x08\xd2\xe1"
-};
+पूर्ण;
 
-static s32 tbl_sat[] = {0x25, 0x1d, 0x15, 0x0d, 0x05, 0x4d, 0x55, 0x5d, 0x2d};
-static s32 tbl_bright[] = {0, 8, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70};
-static s32 tbl_backlight[] = {0x0e, 0x06, 0x02};
+अटल s32 tbl_sat[] = अणु0x25, 0x1d, 0x15, 0x0d, 0x05, 0x4d, 0x55, 0x5d, 0x2dपूर्ण;
+अटल s32 tbl_bright[] = अणु0, 8, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70पूर्ण;
+अटल s32 tbl_backlight[] = अणु0x0e, 0x06, 0x02पूर्ण;
 
-static s32 tbl_cntr1[] = {
-	0x90, 0x98, 0xa0, 0xa8, 0xb0, 0xb8, 0xc0, 0xc8, 0xd0, 0xe0, 0xf0};
-static s32 tbl_cntr2[] = {
-	0x70, 0x68, 0x60, 0x58, 0x50, 0x48, 0x40, 0x38, 0x30, 0x20, 0x10};
+अटल s32 tbl_cntr1[] = अणु
+	0x90, 0x98, 0xa0, 0xa8, 0xb0, 0xb8, 0xc0, 0xc8, 0xd0, 0xe0, 0xf0पूर्ण;
+अटल s32 tbl_cntr2[] = अणु
+	0x70, 0x68, 0x60, 0x58, 0x50, 0x48, 0x40, 0x38, 0x30, 0x20, 0x10पूर्ण;
 
-static u8 dat_wbalNL[] =
+अटल u8 dat_wbalNL[] =
 	"\xf0\x00\xf1\x01\x05\x00\xf1\x06" "\x3b\x04\xf1\x2a\x47\x10\xf1\x10"
 	"\x9d\x3c\xf1\xae\xaf\x10\xf1\x00" "\xf0\x00\xf1\x02\x2f\x91\xf1\x20"
 	"\x9c\x91\xf1\x20\x37\x03\xf1\x00" "\x9d\xc5\xf1\x0f\xf0\x00\xf1\x00";
 
-static u8 dat_wbalLL[] =
+अटल u8 dat_wbalLL[] =
 	"\xf0\x00\xf1\x01\x05\x00\xf1\x0c" "\x3b\x04\xf1\x2a\x47\x40\xf1\x40"
 	"\x9d\x20\xf1\xae\xaf\x10\xf1\x00" "\xf0\x00\xf1\x02\x2f\xd1\xf1\x00"
 	"\x9c\xd1\xf1\x00\x37\x03\xf1\x00" "\x9d\xc5\xf1\x3f\xf0\x00\xf1\x00";
 
-static u8 dat_wbalBL[] =
+अटल u8 dat_wbalBL[] =
 	"\xf0\x00\xf1\x01\x05\x00\xf1\x06" "\x47\x10\xf1\x30\x9d\x3c\xf1\xae"
 	"\xaf\x10\xf1\x00\xf0\x00\xf1\x02" "\x2f\x91\xf1\x20\x9c\x91\xf1\x20"
 	"\x37\x03\xf1\x00\x9d\xc5\xf1\x2f" "\xf0\x00\xf1\x00";
 
-static u8 dat_hvflip1[] = {0xf0, 0x00, 0xf1, 0x00};
+अटल u8 dat_hvflip1[] = अणु0xf0, 0x00, 0xf1, 0x00पूर्ण;
 
-static u8 dat_common00[] =
+अटल u8 dat_common00[] =
 	"\x00\x01\x07\x6a\x06\x63\x0d\x6a" "\xc0\x00\x10\x10\xc1\x03\xc2\x42"
 	"\xd8\x04\x58\x00\x04\x02";
-static u8 dat_common01[] =
+अटल u8 dat_common01[] =
 	"\x0d\x00\xf1\x0b\x0d\x00\xf1\x08" "\x35\x00\xf1\x22\x68\x00\xf1\x5d"
 	"\xf0\x00\xf1\x01\x06\x70\xf1\x0e" "\xf0\x00\xf1\x02\xdd\x18\xf1\xe0";
-static u8 dat_common02[] =
+अटल u8 dat_common02[] =
 	"\x05\x01\xf1\x84\x06\x00\xf1\x44" "\x07\x00\xf1\xbe\x08\x00\xf1\x1e"
 	"\x20\x01\xf1\x03\x21\x84\xf1\x00" "\x22\x0d\xf1\x0f\x24\x80\xf1\x00"
 	"\x34\x18\xf1\x2d\x35\x00\xf1\x22" "\x43\x83\xf1\x83\x59\x00\xf1\xff";
-static u8 dat_common03[] =
+अटल u8 dat_common03[] =
 	"\xf0\x00\xf1\x02\x39\x06\xf1\x8c" "\x3a\x06\xf1\x8c\x3b\x03\xf1\xda"
 	"\x3c\x05\xf1\x30\x57\x01\xf1\x0c" "\x58\x01\xf1\x42\x59\x01\xf1\x0c"
 	"\x5a\x01\xf1\x42\x5c\x13\xf1\x0e" "\x5d\x17\xf1\x12\x64\x1e\xf1\x1c";
-static u8 dat_common04[] =
+अटल u8 dat_common04[] =
 	"\xf0\x00\xf1\x02\x24\x5f\xf1\x20" "\x28\xea\xf1\x02\x5f\x41\xf1\x43";
-static u8 dat_common05[] =
+अटल u8 dat_common05[] =
 	"\x02\x00\xf1\xee\x03\x29\xf1\x1a" "\x04\x02\xf1\xa4\x09\x00\xf1\x68"
 	"\x0a\x00\xf1\x2a\x0b\x00\xf1\x04" "\x0c\x00\xf1\x93\x0d\x00\xf1\x82"
 	"\x0e\x00\xf1\x40\x0f\x00\xf1\x5f" "\x10\x00\xf1\x4e\x11\x00\xf1\x5b";
-static u8 dat_common06[] =
+अटल u8 dat_common06[] =
 	"\x15\x00\xf1\xc9\x16\x00\xf1\x5e" "\x17\x00\xf1\x9d\x18\x00\xf1\x06"
 	"\x19\x00\xf1\x89\x1a\x00\xf1\x12" "\x1b\x00\xf1\xa1\x1c\x00\xf1\xe4"
 	"\x1d\x00\xf1\x7a\x1e\x00\xf1\x64" "\xf6\x00\xf1\x5f";
-static u8 dat_common07[] =
+अटल u8 dat_common07[] =
 	"\xf0\x00\xf1\x01\x53\x09\xf1\x03" "\x54\x3d\xf1\x1c\x55\x99\xf1\x72"
 	"\x56\xc1\xf1\xb1\x57\xd8\xf1\xce" "\x58\xe0\xf1\x00\xdc\x0a\xf1\x03"
 	"\xdd\x45\xf1\x20\xde\xae\xf1\x82" "\xdf\xdc\xf1\xc9\xe0\xf6\xf1\xea"
 	"\xe1\xff\xf1\x00";
-static u8 dat_common08[] =
+अटल u8 dat_common08[] =
 	"\xf0\x00\xf1\x01\x80\x00\xf1\x06" "\x81\xf6\xf1\x08\x82\xfb\xf1\xf7"
 	"\x83\x00\xf1\xfe\xb6\x07\xf1\x03" "\xb7\x18\xf1\x0c\x84\xfb\xf1\x06"
 	"\x85\xfb\xf1\xf9\x86\x00\xf1\xff" "\xb8\x07\xf1\x04\xb9\x16\xf1\x0a";
-static u8 dat_common09[] =
+अटल u8 dat_common09[] =
 	"\x87\xfa\xf1\x05\x88\xfc\xf1\xf9" "\x89\x00\xf1\xff\xba\x06\xf1\x03"
 	"\xbb\x17\xf1\x09\x8a\xe8\xf1\x14" "\x8b\xf7\xf1\xf0\x8c\xfd\xf1\xfa"
 	"\x8d\x00\xf1\x00\xbc\x05\xf1\x01" "\xbd\x0c\xf1\x08\xbe\x00\xf1\x14";
-static u8 dat_common10[] =
+अटल u8 dat_common10[] =
 	"\x8e\xea\xf1\x13\x8f\xf7\xf1\xf2" "\x90\xfd\xf1\xfa\x91\x00\xf1\x00"
 	"\xbf\x05\xf1\x01\xc0\x0a\xf1\x08" "\xc1\x00\xf1\x0c\x92\xed\xf1\x0f"
 	"\x93\xf9\xf1\xf4\x94\xfe\xf1\xfb" "\x95\x00\xf1\x00\xc2\x04\xf1\x01"
 	"\xc3\x0a\xf1\x07\xc4\x00\xf1\x10";
-static u8 dat_common11[] =
+अटल u8 dat_common11[] =
 	"\xf0\x00\xf1\x01\x05\x00\xf1\x06" "\x25\x00\xf1\x55\x34\x10\xf1\x10"
 	"\x35\xf0\xf1\x10\x3a\x02\xf1\x03" "\x3b\x04\xf1\x2a\x9b\x43\xf1\x00"
 	"\xa4\x03\xf1\xc0\xa7\x02\xf1\x81";
 
-static int  mi1320_init_at_startup(struct gspca_dev *gspca_dev);
-static int  mi1320_configure_alt(struct gspca_dev *gspca_dev);
-static int  mi1320_init_pre_alt(struct gspca_dev *gspca_dev);
-static int  mi1320_init_post_alt(struct gspca_dev *gspca_dev);
-static void mi1320_post_unset_alt(struct gspca_dev *gspca_dev);
-static int  mi1320_sensor_settings(struct gspca_dev *gspca_dev);
-static int  mi1320_camera_settings(struct gspca_dev *gspca_dev);
+अटल पूर्णांक  mi1320_init_at_startup(काष्ठा gspca_dev *gspca_dev);
+अटल पूर्णांक  mi1320_configure_alt(काष्ठा gspca_dev *gspca_dev);
+अटल पूर्णांक  mi1320_init_pre_alt(काष्ठा gspca_dev *gspca_dev);
+अटल पूर्णांक  mi1320_init_post_alt(काष्ठा gspca_dev *gspca_dev);
+अटल व्योम mi1320_post_unset_alt(काष्ठा gspca_dev *gspca_dev);
+अटल पूर्णांक  mi1320_sensor_settings(काष्ठा gspca_dev *gspca_dev);
+अटल पूर्णांक  mi1320_camera_settings(काष्ठा gspca_dev *gspca_dev);
 /*==========================================================================*/
 
-void mi1320_init_settings(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+व्योम mi1320_init_settings(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
 	sd->vcur.backlight  =  0;
 	sd->vcur.brightness =  0;
@@ -203,16 +204,16 @@ void mi1320_init_settings(struct gspca_dev *gspca_dev)
 	sd->dev_configure_alt   = mi1320_configure_alt;
 	sd->dev_init_pre_alt    = mi1320_init_pre_alt;
 	sd->dev_post_unset_alt  = mi1320_post_unset_alt;
-}
+पूर्ण
 
 /*==========================================================================*/
 
-static void common(struct gspca_dev *gspca_dev)
-{
-	s32 n; /* reserved for FETCH functions */
+अटल व्योम common(काष्ठा gspca_dev *gspca_dev)
+अणु
+	s32 n; /* reserved क्रम FETCH functions */
 
 	ctrl_out(gspca_dev, 0x40, 3, 0x0000, 0x0200, 22, dat_common00);
-	ctrl_out(gspca_dev, 0x40, 1, 0x0041, 0x0000, 0, NULL);
+	ctrl_out(gspca_dev, 0x40, 1, 0x0041, 0x0000, 0, शून्य);
 	ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 32, dat_common01);
 	n = fetch_validx(gspca_dev, tbl_common, ARRAY_SIZE(tbl_common));
 	ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 48, dat_common02);
@@ -231,23 +232,23 @@ static void common(struct gspca_dev *gspca_dev)
 	ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 40, dat_common11);
 	keep_on_fetching_validx(gspca_dev, tbl_common,
 					ARRAY_SIZE(tbl_common), n);
-}
+पूर्ण
 
-static int mi1320_init_at_startup(struct gspca_dev *gspca_dev)
-{
+अटल पूर्णांक mi1320_init_at_startup(काष्ठा gspca_dev *gspca_dev)
+अणु
 	fetch_validx(gspca_dev, tbl_init_at_startup,
 				ARRAY_SIZE(tbl_init_at_startup));
 
 	common(gspca_dev);
 
-/*	ctrl_out(gspca_dev, 0x40, 11, 0x0000, 0x0000, 0, NULL); */
+/*	ctrl_out(gspca_dev, 0x40, 11, 0x0000, 0x0000, 0, शून्य); */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mi1320_init_pre_alt(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक mi1320_init_pre_alt(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
 	sd->mirrorMask = 0;
 
@@ -269,73 +270,73 @@ static int mi1320_init_pre_alt(struct gspca_dev *gspca_dev)
 
 	mi1320_init_post_alt(gspca_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mi1320_init_post_alt(struct gspca_dev *gspca_dev)
-{
+अटल पूर्णांक mi1320_init_post_alt(काष्ठा gspca_dev *gspca_dev)
+अणु
 	mi1320_camera_settings(gspca_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mi1320_sensor_settings(struct gspca_dev *gspca_dev)
-{
+अटल पूर्णांक mi1320_sensor_settings(काष्ठा gspca_dev *gspca_dev)
+अणु
 	s32 reso = gspca_dev->cam.cam_mode[(s32) gspca_dev->curr_mode].priv;
 
-	ctrl_out(gspca_dev, 0x40, 5, 0x0001, 0x0000, 0, NULL);
+	ctrl_out(gspca_dev, 0x40, 5, 0x0001, 0x0000, 0, शून्य);
 
 	fetch_validx(gspca_dev, tbl_sensor_settings_common,
 				ARRAY_SIZE(tbl_sensor_settings_common));
 
-	switch (reso) {
-	case IMAGE_1280:
+	चयन (reso) अणु
+	हाल IMAGE_1280:
 		fetch_validx(gspca_dev, tbl_sensor_settings_1280,
 					ARRAY_SIZE(tbl_sensor_settings_1280));
 		ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 64, tbl_1280[0]);
 		ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 40, tbl_1280[1]);
 		ctrl_out(gspca_dev, 0x40, 3, 0x0000, 0x0200, 12, tbl_1280[2]);
-		break;
+		अवरोध;
 
-	case IMAGE_800:
+	हाल IMAGE_800:
 		fetch_validx(gspca_dev, tbl_sensor_settings_800,
 					ARRAY_SIZE(tbl_sensor_settings_800));
 		ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 64, tbl_800[0]);
 		ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 40, tbl_800[1]);
 		ctrl_out(gspca_dev, 0x40, 3, 0x0000, 0x0200, 12, tbl_800[2]);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		fetch_validx(gspca_dev, tbl_sensor_settings_640,
 					ARRAY_SIZE(tbl_sensor_settings_640));
 		ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 60, tbl_640[0]);
 		ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 40, tbl_640[1]);
 		ctrl_out(gspca_dev, 0x40, 3, 0x0000, 0x0200, 12, tbl_640[2]);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mi1320_configure_alt(struct gspca_dev *gspca_dev)
-{
+अटल पूर्णांक mi1320_configure_alt(काष्ठा gspca_dev *gspca_dev)
+अणु
 	s32 reso = gspca_dev->cam.cam_mode[(s32) gspca_dev->curr_mode].priv;
 
-	switch (reso) {
-	case IMAGE_640:
+	चयन (reso) अणु
+	हाल IMAGE_640:
 		gspca_dev->alt = 3 + 1;
-		break;
+		अवरोध;
 
-	case IMAGE_800:
-	case IMAGE_1280:
+	हाल IMAGE_800:
+	हाल IMAGE_1280:
 		gspca_dev->alt = 1 + 1;
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mi1320_camera_settings(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक mi1320_camera_settings(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
 	s32 backlight = sd->vcur.backlight;
 	s32 bright = sd->vcur.brightness;
@@ -350,175 +351,175 @@ static int mi1320_camera_settings(struct gspca_dev *gspca_dev)
 	s32 freq   = (sd->vcur.AC50Hz > 0);
 	s32 i;
 
-	if (freq != sd->vold.AC50Hz) {
+	अगर (freq != sd->vold.AC50Hz) अणु
 		sd->vold.AC50Hz = freq;
 
 		freq = 2 * (freq == 0);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba02, 0x00f1, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00       , 0x005b, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba01 + freq, 0x00f1, 0, NULL);
-	}
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba02, 0x00f1, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00       , 0x005b, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba01 + freq, 0x00f1, 0, शून्य);
+	पूर्ण
 
-	if (wbal != sd->vold.whitebal) {
+	अगर (wbal != sd->vold.whitebal) अणु
 		sd->vold.whitebal = wbal;
-		if (wbal < 0 || wbal > sd->vmax.whitebal)
+		अगर (wbal < 0 || wbal > sd->vmax.whitebal)
 			wbal = 0;
 
-		for (i = 0; i < 2; i++) {
-			if (wbal == 0) { /* Normal light */
+		क्रम (i = 0; i < 2; i++) अणु
+			अगर (wbal == 0) अणु /* Normal light */
 				ctrl_out(gspca_dev, 0x40, 1,
-						0x0010, 0x0010, 0, NULL);
+						0x0010, 0x0010, 0, शून्य);
 				ctrl_out(gspca_dev, 0x40, 1,
-						0x0003, 0x00c1, 0, NULL);
+						0x0003, 0x00c1, 0, शून्य);
 				ctrl_out(gspca_dev, 0x40, 1,
-						0x0042, 0x00c2, 0, NULL);
+						0x0042, 0x00c2, 0, शून्य);
 				ctrl_out(gspca_dev, 0x40, 3,
 						0xba00, 0x0200, 48, dat_wbalNL);
-			}
+			पूर्ण
 
-			if (wbal == 1) { /* Low light */
+			अगर (wbal == 1) अणु /* Low light */
 				ctrl_out(gspca_dev, 0x40, 1,
-						0x0010, 0x0010, 0, NULL);
+						0x0010, 0x0010, 0, शून्य);
 				ctrl_out(gspca_dev, 0x40, 1,
-						0x0004, 0x00c1, 0, NULL);
+						0x0004, 0x00c1, 0, शून्य);
 				ctrl_out(gspca_dev, 0x40, 1,
-						0x0043, 0x00c2, 0, NULL);
+						0x0043, 0x00c2, 0, शून्य);
 				ctrl_out(gspca_dev, 0x40, 3,
 						0xba00, 0x0200, 48, dat_wbalLL);
-			}
+			पूर्ण
 
-			if (wbal == 2) { /* Back light */
+			अगर (wbal == 2) अणु /* Back light */
 				ctrl_out(gspca_dev, 0x40, 1,
-						0x0010, 0x0010, 0, NULL);
+						0x0010, 0x0010, 0, शून्य);
 				ctrl_out(gspca_dev, 0x40, 1,
-						0x0003, 0x00c1, 0, NULL);
+						0x0003, 0x00c1, 0, शून्य);
 				ctrl_out(gspca_dev, 0x40, 1,
-						0x0042, 0x00c2, 0, NULL);
+						0x0042, 0x00c2, 0, शून्य);
 				ctrl_out(gspca_dev, 0x40, 3,
 						0xba00, 0x0200, 44, dat_wbalBL);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (bright != sd->vold.brightness) {
+	अगर (bright != sd->vold.brightness) अणु
 		sd->vold.brightness = bright;
-		if (bright < 0 || bright > sd->vmax.brightness)
+		अगर (bright < 0 || bright > sd->vmax.brightness)
 			bright = 0;
 
 		bright = tbl_bright[bright];
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + bright, 0x0034, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + bright, 0x00f1, 0, NULL);
-	}
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + bright, 0x0034, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + bright, 0x00f1, 0, शून्य);
+	पूर्ण
 
-	if (sat != sd->vold.saturation) {
+	अगर (sat != sd->vold.saturation) अणु
 		sd->vold.saturation = sat;
-		if (sat < 0 || sat > sd->vmax.saturation)
+		अगर (sat < 0 || sat > sd->vmax.saturation)
 			sat = 0;
 
 		sat = tbl_sat[sat];
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00      , 0x0025, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + sat, 0x00f1, 0, NULL);
-	}
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00      , 0x0025, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + sat, 0x00f1, 0, शून्य);
+	पूर्ण
 
-	if (sharp != sd->vold.sharpness) {
+	अगर (sharp != sd->vold.sharpness) अणु
 		sd->vold.sharpness = sharp;
-		if (sharp < 0 || sharp > sd->vmax.sharpness)
+		अगर (sharp < 0 || sharp > sd->vmax.sharpness)
 			sharp = 0;
 
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00        , 0x0005, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + sharp, 0x00f1, 0, NULL);
-	}
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00        , 0x0005, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + sharp, 0x00f1, 0, शून्य);
+	पूर्ण
 
-	if (hue != sd->vold.hue) {
+	अगर (hue != sd->vold.hue) अणु
 		/* 0=normal  1=NB  2="sepia"  3=negative  4=other  5=other2 */
-		if (hue < 0 || hue > sd->vmax.hue)
+		अगर (hue < 0 || hue > sd->vmax.hue)
 			hue = 0;
-		if (hue == sd->vmax.hue)
+		अगर (hue == sd->vmax.hue)
 			sd->swapRB = 1;
-		else
+		अन्यथा
 			sd->swapRB = 0;
 
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba70, 0x00e2, 0, NULL);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba70, 0x00e2, 0, शून्य);
 		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + hue * (hue < 6), 0x00f1,
-							0, NULL);
-	}
+							0, शून्य);
+	पूर्ण
 
-	if (backlight != sd->vold.backlight) {
+	अगर (backlight != sd->vold.backlight) अणु
 		sd->vold.backlight = backlight;
-		if (backlight < 0 || backlight > sd->vmax.backlight)
+		अगर (backlight < 0 || backlight > sd->vmax.backlight)
 			backlight = 0;
 
 		backlight = tbl_backlight[backlight];
-		for (i = 0; i < 2; i++) {
-			ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, NULL);
-			ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, NULL);
-			ctrl_out(gspca_dev, 0x40, 1, 0xba74, 0x0006, 0, NULL);
+		क्रम (i = 0; i < 2; i++) अणु
+			ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, शून्य);
+			ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, शून्य);
+			ctrl_out(gspca_dev, 0x40, 1, 0xba74, 0x0006, 0, शून्य);
 			ctrl_out(gspca_dev, 0x40, 1, 0xba80 + backlight, 0x00f1,
-								0, NULL);
-		}
-	}
+								0, शून्य);
+		पूर्ण
+	पूर्ण
 
-	if (hue != sd->vold.hue) {
+	अगर (hue != sd->vold.hue) अणु
 		sd->vold.hue = hue;
 
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba70, 0x00e2, 0, NULL);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba70, 0x00e2, 0, शून्य);
 		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + hue * (hue < 6), 0x00f1,
-							0, NULL);
-	}
+							0, शून्य);
+	पूर्ण
 
-	if (mirror != sd->vold.mirror || flip != sd->vold.flip) {
-		u8 dat_hvflip2[4] = {0x20, 0x01, 0xf1, 0x00};
+	अगर (mirror != sd->vold.mirror || flip != sd->vold.flip) अणु
+		u8 dat_hvflip2[4] = अणु0x20, 0x01, 0xf1, 0x00पूर्ण;
 		sd->vold.mirror = mirror;
 		sd->vold.flip = flip;
 
 		dat_hvflip2[3] = flip + 2 * mirror;
 		ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 4, dat_hvflip1);
 		ctrl_out(gspca_dev, 0x40, 3, 0xba00, 0x0200, 4, dat_hvflip2);
-	}
+	पूर्ण
 
-	if (gam != sd->vold.gamma) {
+	अगर (gam != sd->vold.gamma) अणु
 		sd->vold.gamma = gam;
-		if (gam < 0 || gam > sd->vmax.gamma)
+		अगर (gam < 0 || gam > sd->vmax.gamma)
 			gam = 0;
 
 		gam = 2 * gam;
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba04      , 0x003b, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba02 + gam, 0x00f1, 0, NULL);
-	}
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba04      , 0x003b, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba02 + gam, 0x00f1, 0, शून्य);
+	पूर्ण
 
-	if (cntr != sd->vold.contrast) {
+	अगर (cntr != sd->vold.contrast) अणु
 		sd->vold.contrast = cntr;
-		if (cntr < 0 || cntr > sd->vmax.contrast)
+		अगर (cntr < 0 || cntr > sd->vmax.contrast)
 			cntr = 0;
 
-		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, NULL);
-		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, NULL);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba00, 0x00f0, 0, शून्य);
+		ctrl_out(gspca_dev, 0x40, 1, 0xba01, 0x00f1, 0, शून्य);
 		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + tbl_cntr1[cntr], 0x0035,
-							0, NULL);
+							0, शून्य);
 		ctrl_out(gspca_dev, 0x40, 1, 0xba00 + tbl_cntr2[cntr], 0x00f1,
-							0, NULL);
-	}
+							0, शून्य);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mi1320_post_unset_alt(struct gspca_dev *gspca_dev)
-{
-	ctrl_out(gspca_dev, 0x40, 5, 0x0000, 0x0000, 0, NULL);
+अटल व्योम mi1320_post_unset_alt(काष्ठा gspca_dev *gspca_dev)
+अणु
+	ctrl_out(gspca_dev, 0x40, 5, 0x0000, 0x0000, 0, शून्य);
 
 	fetch_validx(gspca_dev, tbl_post_unset_alt,
 				ARRAY_SIZE(tbl_post_unset_alt));
-}
+पूर्ण

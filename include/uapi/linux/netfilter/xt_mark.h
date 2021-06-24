@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_MARK_H
-#define _XT_MARK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_MARK_H
+#घोषणा _XT_MARK_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct xt_mark_tginfo2 {
+काष्ठा xt_mark_tginfo2 अणु
 	__u32 mark, mask;
-};
+पूर्ण;
 
-struct xt_mark_mtinfo1 {
+काष्ठा xt_mark_mtinfo1 अणु
 	__u32 mark, mask;
 	__u8 invert;
-};
+पूर्ण;
 
-#endif /*_XT_MARK_H*/
+#पूर्ण_अगर /*_XT_MARK_H*/

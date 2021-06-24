@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,42 +23,42 @@
  */
 
 
-#ifndef KFD_PM4_OPCODES_H
-#define KFD_PM4_OPCODES_H
+#अगर_अघोषित KFD_PM4_OPCODES_H
+#घोषणा KFD_PM4_OPCODES_H
 
-enum it_opcode_type {
+क्रमागत it_opcode_type अणु
 	IT_NOP                               = 0x10,
 	IT_SET_BASE                          = 0x11,
 	IT_CLEAR_STATE                       = 0x12,
 	IT_INDEX_BUFFER_SIZE                 = 0x13,
-	IT_DISPATCH_DIRECT                   = 0x15,
-	IT_DISPATCH_INDIRECT                 = 0x16,
+	IT_DISPATCH_सूचीECT                   = 0x15,
+	IT_DISPATCH_INसूचीECT                 = 0x16,
 	IT_ATOMIC_GDS                        = 0x1D,
 	IT_OCCLUSION_QUERY                   = 0x1F,
 	IT_SET_PREDICATION                   = 0x20,
 	IT_REG_RMW                           = 0x21,
 	IT_COND_EXEC                         = 0x22,
 	IT_PRED_EXEC                         = 0x23,
-	IT_DRAW_INDIRECT                     = 0x24,
-	IT_DRAW_INDEX_INDIRECT               = 0x25,
+	IT_DRAW_INसूचीECT                     = 0x24,
+	IT_DRAW_INDEX_INसूचीECT               = 0x25,
 	IT_INDEX_BASE                        = 0x26,
 	IT_DRAW_INDEX_2                      = 0x27,
 	IT_CONTEXT_CONTROL                   = 0x28,
 	IT_INDEX_TYPE                        = 0x2A,
-	IT_DRAW_INDIRECT_MULTI               = 0x2C,
+	IT_DRAW_INसूचीECT_MULTI               = 0x2C,
 	IT_DRAW_INDEX_AUTO                   = 0x2D,
 	IT_NUM_INSTANCES                     = 0x2F,
 	IT_DRAW_INDEX_MULTI_AUTO             = 0x30,
-	IT_INDIRECT_BUFFER_CNST              = 0x33,
+	IT_INसूचीECT_BUFFER_CNST              = 0x33,
 	IT_STRMOUT_BUFFER_UPDATE             = 0x34,
 	IT_DRAW_INDEX_OFFSET_2               = 0x35,
 	IT_DRAW_PREAMBLE                     = 0x36,
 	IT_WRITE_DATA                        = 0x37,
-	IT_DRAW_INDEX_INDIRECT_MULTI         = 0x38,
+	IT_DRAW_INDEX_INसूचीECT_MULTI         = 0x38,
 	IT_MEM_SEMAPHORE                     = 0x39,
 	IT_COPY_DW                           = 0x3B,
 	IT_WAIT_REG_MEM                      = 0x3C,
-	IT_INDIRECT_BUFFER                   = 0x3F,
+	IT_INसूचीECT_BUFFER                   = 0x3F,
 	IT_COPY_DATA                         = 0x40,
 	IT_PFP_SYNC_ME                       = 0x42,
 	IT_SURFACE_SYNC                      = 0x43,
@@ -76,7 +77,7 @@ enum it_opcode_type {
 	IT_LOAD_CONTEXT_REG                  = 0x61,
 	IT_SET_CONFIG_REG                    = 0x68,
 	IT_SET_CONTEXT_REG                   = 0x69,
-	IT_SET_CONTEXT_REG_INDIRECT          = 0x73,
+	IT_SET_CONTEXT_REG_INसूचीECT          = 0x73,
 	IT_SET_SH_REG                        = 0x76,
 	IT_SET_SH_REG_OFFSET                 = 0x77,
 	IT_SET_QUEUE_REG                     = 0x78,
@@ -97,11 +98,11 @@ enum it_opcode_type {
 	IT_UNMAP_QUEUES                      = 0xA3,
 	IT_QUERY_STATUS                      = 0xA4,
 	IT_RUN_LIST                          = 0xA5,
-};
+पूर्ण;
 
-#define PM4_TYPE_0 0
-#define PM4_TYPE_2 2
-#define PM4_TYPE_3 3
+#घोषणा PM4_TYPE_0 0
+#घोषणा PM4_TYPE_2 2
+#घोषणा PM4_TYPE_3 3
 
-#endif /* KFD_PM4_OPCODES_H */
+#पूर्ण_अगर /* KFD_PM4_OPCODES_H */
 

@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Test module for in-kernel kprobe event creation and generation.
+ * Test module क्रम in-kernel kprobe event creation and generation.
  *
  * Copyright (C) 2019 Tom Zanussi <zanussi@kernel.org>
  */
 
-#include <linux/module.h>
-#include <linux/trace_events.h>
+#समावेश <linux/module.h>
+#समावेश <linux/trace_events.h>
 
 /*
- * This module is a simple test of basic functionality for in-kernel
+ * This module is a simple test of basic functionality क्रम in-kernel
  * kprobe/kretprobe event creation.  The first test uses
  * kprobe_event_gen_cmd_start(), kprobe_event_add_fields() and
  * kprobe_event_gen_cmd_end() to create a kprobe event, which is then
@@ -26,31 +27,31 @@
  * You should see many instances of the "gen_kprobe_test" and
  * "gen_kretprobe_test" events in the trace buffer.
  *
- * To remove the events, remove the module:
+ * To हटाओ the events, हटाओ the module:
  *
  * # rmmod kprobe_event_gen_test
  *
  */
 
-static struct trace_event_file *gen_kprobe_test;
-static struct trace_event_file *gen_kretprobe_test;
+अटल काष्ठा trace_event_file *gen_kprobe_test;
+अटल काष्ठा trace_event_file *gen_kretprobe_test;
 
 /*
  * Test to make sure we can create a kprobe event, then add more
  * fields.
  */
-static int __init test_gen_kprobe_cmd(void)
-{
-	struct dynevent_cmd cmd;
-	char *buf;
-	int ret;
+अटल पूर्णांक __init test_gen_kprobe_cmd(व्योम)
+अणु
+	काष्ठा dynevent_cmd cmd;
+	अक्षर *buf;
+	पूर्णांक ret;
 
 	/* Create a buffer to hold the generated command */
 	buf = kzalloc(MAX_DYNEVENT_CMD_LEN, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	/* Before generating the command, initialize the cmd object */
+	/* Beक्रमe generating the command, initialize the cmd object */
 	kprobe_event_cmd_init(&cmd, buf, MAX_DYNEVENT_CMD_LEN);
 
 	/*
@@ -60,68 +61,68 @@ static int __init test_gen_kprobe_cmd(void)
 	ret = kprobe_event_gen_cmd_start(&cmd, "gen_kprobe_test",
 					 "do_sys_open",
 					 "dfd=%ax", "filename=%dx");
-	if (ret)
-		goto free;
+	अगर (ret)
+		जाओ मुक्त;
 
 	/* Use kprobe_event_add_fields to add the rest of the fields */
 
 	ret = kprobe_event_add_fields(&cmd, "flags=%cx", "mode=+4($stack)");
-	if (ret)
-		goto free;
+	अगर (ret)
+		जाओ मुक्त;
 
 	/*
 	 * This actually creates the event.
 	 */
 	ret = kprobe_event_gen_cmd_end(&cmd);
-	if (ret)
-		goto free;
+	अगर (ret)
+		जाओ मुक्त;
 
 	/*
 	 * Now get the gen_kprobe_test event file.  We need to prevent
 	 * the instance and event from disappearing from underneath
-	 * us, which trace_get_event_file() does (though in this case
+	 * us, which trace_get_event_file() करोes (though in this हाल
 	 * we're using the top-level instance which never goes away).
 	 */
-	gen_kprobe_test = trace_get_event_file(NULL, "kprobes",
+	gen_kprobe_test = trace_get_event_file(शून्य, "kprobes",
 					       "gen_kprobe_test");
-	if (IS_ERR(gen_kprobe_test)) {
+	अगर (IS_ERR(gen_kprobe_test)) अणु
 		ret = PTR_ERR(gen_kprobe_test);
-		goto delete;
-	}
+		जाओ delete;
+	पूर्ण
 
 	/* Enable the event or you won't see anything */
 	ret = trace_array_set_clr_event(gen_kprobe_test->tr,
 					"kprobes", "gen_kprobe_test", true);
-	if (ret) {
+	अगर (ret) अणु
 		trace_put_event_file(gen_kprobe_test);
-		goto delete;
-	}
+		जाओ delete;
+	पूर्ण
  out:
-	return ret;
+	वापस ret;
  delete:
 	/* We got an error after creating the event, delete it */
 	ret = kprobe_event_delete("gen_kprobe_test");
- free:
-	kfree(buf);
+ मुक्त:
+	kमुक्त(buf);
 
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
 /*
  * Test to make sure we can create a kretprobe event.
  */
-static int __init test_gen_kretprobe_cmd(void)
-{
-	struct dynevent_cmd cmd;
-	char *buf;
-	int ret;
+अटल पूर्णांक __init test_gen_kretprobe_cmd(व्योम)
+अणु
+	काष्ठा dynevent_cmd cmd;
+	अक्षर *buf;
+	पूर्णांक ret;
 
 	/* Create a buffer to hold the generated command */
 	buf = kzalloc(MAX_DYNEVENT_CMD_LEN, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	/* Before generating the command, initialize the cmd object */
+	/* Beक्रमe generating the command, initialize the cmd object */
 	kprobe_event_cmd_init(&cmd, buf, MAX_DYNEVENT_CMD_LEN);
 
 	/*
@@ -130,71 +131,71 @@ static int __init test_gen_kretprobe_cmd(void)
 	ret = kretprobe_event_gen_cmd_start(&cmd, "gen_kretprobe_test",
 					    "do_sys_open",
 					    "$retval");
-	if (ret)
-		goto free;
+	अगर (ret)
+		जाओ मुक्त;
 
 	/*
 	 * This actually creates the event.
 	 */
 	ret = kretprobe_event_gen_cmd_end(&cmd);
-	if (ret)
-		goto free;
+	अगर (ret)
+		जाओ मुक्त;
 
 	/*
 	 * Now get the gen_kretprobe_test event file.  We need to
 	 * prevent the instance and event from disappearing from
-	 * underneath us, which trace_get_event_file() does (though in
-	 * this case we're using the top-level instance which never
+	 * underneath us, which trace_get_event_file() करोes (though in
+	 * this हाल we're using the top-level instance which never
 	 * goes away).
 	 */
-	gen_kretprobe_test = trace_get_event_file(NULL, "kprobes",
+	gen_kretprobe_test = trace_get_event_file(शून्य, "kprobes",
 						  "gen_kretprobe_test");
-	if (IS_ERR(gen_kretprobe_test)) {
+	अगर (IS_ERR(gen_kretprobe_test)) अणु
 		ret = PTR_ERR(gen_kretprobe_test);
-		goto delete;
-	}
+		जाओ delete;
+	पूर्ण
 
 	/* Enable the event or you won't see anything */
 	ret = trace_array_set_clr_event(gen_kretprobe_test->tr,
 					"kprobes", "gen_kretprobe_test", true);
-	if (ret) {
+	अगर (ret) अणु
 		trace_put_event_file(gen_kretprobe_test);
-		goto delete;
-	}
+		जाओ delete;
+	पूर्ण
  out:
-	return ret;
+	वापस ret;
  delete:
 	/* We got an error after creating the event, delete it */
 	ret = kprobe_event_delete("gen_kretprobe_test");
- free:
-	kfree(buf);
+ मुक्त:
+	kमुक्त(buf);
 
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static int __init kprobe_event_gen_test_init(void)
-{
-	int ret;
+अटल पूर्णांक __init kprobe_event_gen_test_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = test_gen_kprobe_cmd();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = test_gen_kretprobe_cmd();
-	if (ret) {
+	अगर (ret) अणु
 		WARN_ON(trace_array_set_clr_event(gen_kretprobe_test->tr,
 						  "kprobes",
 						  "gen_kretprobe_test", false));
 		trace_put_event_file(gen_kretprobe_test);
 		WARN_ON(kprobe_event_delete("gen_kretprobe_test"));
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit kprobe_event_gen_test_exit(void)
-{
-	/* Disable the event or you can't remove it */
+अटल व्योम __निकास kprobe_event_gen_test_निकास(व्योम)
+अणु
+	/* Disable the event or you can't हटाओ it */
 	WARN_ON(trace_array_set_clr_event(gen_kprobe_test->tr,
 					  "kprobes",
 					  "gen_kprobe_test", false));
@@ -202,10 +203,10 @@ static void __exit kprobe_event_gen_test_exit(void)
 	/* Now give the file and instance back */
 	trace_put_event_file(gen_kprobe_test);
 
-	/* Now unregister and free the event */
+	/* Now unरेजिस्टर and मुक्त the event */
 	WARN_ON(kprobe_event_delete("gen_kprobe_test"));
 
-	/* Disable the event or you can't remove it */
+	/* Disable the event or you can't हटाओ it */
 	WARN_ON(trace_array_set_clr_event(gen_kprobe_test->tr,
 					  "kprobes",
 					  "gen_kretprobe_test", false));
@@ -213,12 +214,12 @@ static void __exit kprobe_event_gen_test_exit(void)
 	/* Now give the file and instance back */
 	trace_put_event_file(gen_kretprobe_test);
 
-	/* Now unregister and free the event */
+	/* Now unरेजिस्टर and मुक्त the event */
 	WARN_ON(kprobe_event_delete("gen_kretprobe_test"));
-}
+पूर्ण
 
 module_init(kprobe_event_gen_test_init)
-module_exit(kprobe_event_gen_test_exit)
+module_निकास(kprobe_event_gen_test_निकास)
 
 MODULE_AUTHOR("Tom Zanussi");
 MODULE_DESCRIPTION("kprobe event generation test");

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * USB 10M/100M ethernet adapter
  *
@@ -7,29 +8,29 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/stddef.h>
-#include <linux/init.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/mii.h>
-#include <linux/usb.h>
-#include <linux/crc32.h>
-#include <linux/usb/usbnet.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/init.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/usb/usbnet.h>
+#समावेश <linux/slab.h>
 
-#define CH9200_VID		0x1A86
-#define CH9200_PID_E092		0xE092
+#घोषणा CH9200_VID		0x1A86
+#घोषणा CH9200_PID_E092		0xE092
 
-#define CTRL_TIMEOUT_MS		1000
+#घोषणा CTRL_TIMEOUT_MS		1000
 
-#define CONTROL_TIMEOUT_MS 1000
+#घोषणा CONTROL_TIMEOUT_MS 1000
 
-#define REQUEST_READ	0x0E
-#define REQUEST_WRITE	0x0F
+#घोषणा REQUEST_READ	0x0E
+#घोषणा REQUEST_WRITE	0x0F
 
 /* Address space:
  * 00-63 : MII
@@ -38,181 +39,181 @@
  * Note: all accesses must be 16-bit
  */
 
-#define MAC_REG_CTRL 64
-#define MAC_REG_STATUS 66
-#define MAC_REG_INTERRUPT_MASK 68
-#define MAC_REG_PHY_COMMAND 70
-#define MAC_REG_PHY_DATA 72
-#define MAC_REG_STATION_L 74
-#define MAC_REG_STATION_M 76
-#define MAC_REG_STATION_H 78
-#define MAC_REG_HASH_L 80
-#define MAC_REG_HASH_M1 82
-#define MAC_REG_HASH_M2 84
-#define MAC_REG_HASH_H 86
-#define MAC_REG_THRESHOLD 88
-#define MAC_REG_FIFO_DEPTH 90
-#define MAC_REG_PAUSE 92
-#define MAC_REG_FLOW_CONTROL 94
+#घोषणा MAC_REG_CTRL 64
+#घोषणा MAC_REG_STATUS 66
+#घोषणा MAC_REG_INTERRUPT_MASK 68
+#घोषणा MAC_REG_PHY_COMMAND 70
+#घोषणा MAC_REG_PHY_DATA 72
+#घोषणा MAC_REG_STATION_L 74
+#घोषणा MAC_REG_STATION_M 76
+#घोषणा MAC_REG_STATION_H 78
+#घोषणा MAC_REG_HASH_L 80
+#घोषणा MAC_REG_HASH_M1 82
+#घोषणा MAC_REG_HASH_M2 84
+#घोषणा MAC_REG_HASH_H 86
+#घोषणा MAC_REG_THRESHOLD 88
+#घोषणा MAC_REG_FIFO_DEPTH 90
+#घोषणा MAC_REG_PAUSE 92
+#घोषणा MAC_REG_FLOW_CONTROL 94
 
-/* Control register bits
+/* Control रेजिस्टर bits
  *
  * Note: bits 13 and 15 are reserved
  */
-#define LOOPBACK		(0x01 << 14)
-#define BASE100X		(0x01 << 12)
-#define MBPS_10			(0x01 << 11)
-#define DUPLEX_MODE		(0x01 << 10)
-#define PAUSE_FRAME		(0x01 << 9)
-#define PROMISCUOUS		(0x01 << 8)
-#define MULTICAST		(0x01 << 7)
-#define BROADCAST		(0x01 << 6)
-#define HASH			(0x01 << 5)
-#define APPEND_PAD		(0x01 << 4)
-#define APPEND_CRC		(0x01 << 3)
-#define TRANSMITTER_ACTION	(0x01 << 2)
-#define RECEIVER_ACTION		(0x01 << 1)
-#define DMA_ACTION		(0x01 << 0)
+#घोषणा LOOPBACK		(0x01 << 14)
+#घोषणा BASE100X		(0x01 << 12)
+#घोषणा MBPS_10			(0x01 << 11)
+#घोषणा DUPLEX_MODE		(0x01 << 10)
+#घोषणा PAUSE_FRAME		(0x01 << 9)
+#घोषणा PROMISCUOUS		(0x01 << 8)
+#घोषणा MULTICAST		(0x01 << 7)
+#घोषणा BROADCAST		(0x01 << 6)
+#घोषणा HASH			(0x01 << 5)
+#घोषणा APPEND_PAD		(0x01 << 4)
+#घोषणा APPEND_CRC		(0x01 << 3)
+#घोषणा TRANSMITTER_ACTION	(0x01 << 2)
+#घोषणा RECEIVER_ACTION		(0x01 << 1)
+#घोषणा DMA_ACTION		(0x01 << 0)
 
-/* Status register bits
+/* Status रेजिस्टर bits
  *
  * Note: bits 7-15 are reserved
  */
-#define ALIGNMENT		(0x01 << 6)
-#define FIFO_OVER_RUN		(0x01 << 5)
-#define FIFO_UNDER_RUN		(0x01 << 4)
-#define RX_ERROR		(0x01 << 3)
-#define RX_COMPLETE		(0x01 << 2)
-#define TX_ERROR		(0x01 << 1)
-#define TX_COMPLETE		(0x01 << 0)
+#घोषणा ALIGNMENT		(0x01 << 6)
+#घोषणा FIFO_OVER_RUN		(0x01 << 5)
+#घोषणा FIFO_UNDER_RUN		(0x01 << 4)
+#घोषणा RX_ERROR		(0x01 << 3)
+#घोषणा RX_COMPLETE		(0x01 << 2)
+#घोषणा TX_ERROR		(0x01 << 1)
+#घोषणा TX_COMPLETE		(0x01 << 0)
 
-/* FIFO depth register bits
+/* FIFO depth रेजिस्टर bits
  *
  * Note: bits 6 and 14 are reserved
  */
 
-#define ETH_TXBD		(0x01 << 15)
-#define ETN_TX_FIFO_DEPTH	(0x01 << 8)
-#define ETH_RXBD		(0x01 << 7)
-#define ETH_RX_FIFO_DEPTH	(0x01 << 0)
+#घोषणा ETH_TXBD		(0x01 << 15)
+#घोषणा ETN_TX_FIFO_DEPTH	(0x01 << 8)
+#घोषणा ETH_RXBD		(0x01 << 7)
+#घोषणा ETH_RX_FIFO_DEPTH	(0x01 << 0)
 
-static int control_read(struct usbnet *dev,
-			unsigned char request, unsigned short value,
-			unsigned short index, void *data, unsigned short size,
-			int timeout)
-{
-	unsigned char *buf = NULL;
-	unsigned char request_type;
-	int err = 0;
+अटल पूर्णांक control_पढ़ो(काष्ठा usbnet *dev,
+			अचिन्हित अक्षर request, अचिन्हित लघु value,
+			अचिन्हित लघु index, व्योम *data, अचिन्हित लघु size,
+			पूर्णांक समयout)
+अणु
+	अचिन्हित अक्षर *buf = शून्य;
+	अचिन्हित अक्षर request_type;
+	पूर्णांक err = 0;
 
-	if (request == REQUEST_READ)
-		request_type = (USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_OTHER);
-	else
-		request_type = (USB_DIR_IN | USB_TYPE_VENDOR |
+	अगर (request == REQUEST_READ)
+		request_type = (USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_OTHER);
+	अन्यथा
+		request_type = (USB_सूची_IN | USB_TYPE_VENDOR |
 				USB_RECIP_DEVICE);
 
 	netdev_dbg(dev->net, "%s() index=0x%02x size=%d\n",
 		   __func__, index, size);
 
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf) {
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buf) अणु
 		err = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	err = usb_control_msg(dev->udev,
 			      usb_rcvctrlpipe(dev->udev, 0),
 			      request, request_type, value, index, buf, size,
-			      timeout);
-	if (err == size)
-		memcpy(data, buf, size);
-	else if (err >= 0)
+			      समयout);
+	अगर (err == size)
+		स_नकल(data, buf, size);
+	अन्यथा अगर (err >= 0)
 		err = -EINVAL;
-	kfree(buf);
+	kमुक्त(buf);
 
 err_out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int control_write(struct usbnet *dev, unsigned char request,
-			 unsigned short value, unsigned short index,
-			 void *data, unsigned short size, int timeout)
-{
-	unsigned char *buf = NULL;
-	unsigned char request_type;
-	int err = 0;
+अटल पूर्णांक control_ग_लिखो(काष्ठा usbnet *dev, अचिन्हित अक्षर request,
+			 अचिन्हित लघु value, अचिन्हित लघु index,
+			 व्योम *data, अचिन्हित लघु size, पूर्णांक समयout)
+अणु
+	अचिन्हित अक्षर *buf = शून्य;
+	अचिन्हित अक्षर request_type;
+	पूर्णांक err = 0;
 
-	if (request == REQUEST_WRITE)
-		request_type = (USB_DIR_OUT | USB_TYPE_VENDOR |
+	अगर (request == REQUEST_WRITE)
+		request_type = (USB_सूची_OUT | USB_TYPE_VENDOR |
 				USB_RECIP_OTHER);
-	else
-		request_type = (USB_DIR_OUT | USB_TYPE_VENDOR |
+	अन्यथा
+		request_type = (USB_सूची_OUT | USB_TYPE_VENDOR |
 				USB_RECIP_DEVICE);
 
 	netdev_dbg(dev->net, "%s() index=0x%02x size=%d\n",
 		   __func__, index, size);
 
-	if (data) {
+	अगर (data) अणु
 		buf = kmemdup(data, size, GFP_KERNEL);
-		if (!buf) {
+		अगर (!buf) अणु
 			err = -ENOMEM;
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
 	err = usb_control_msg(dev->udev,
 			      usb_sndctrlpipe(dev->udev, 0),
 			      request, request_type, value, index, buf, size,
-			      timeout);
-	if (err >= 0 && err < size)
+			      समयout);
+	अगर (err >= 0 && err < size)
 		err = -EINVAL;
-	kfree(buf);
+	kमुक्त(buf);
 
-	return 0;
+	वापस 0;
 
 err_out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ch9200_mdio_read(struct net_device *netdev, int phy_id, int loc)
-{
-	struct usbnet *dev = netdev_priv(netdev);
-	unsigned char buff[2];
+अटल पूर्णांक ch9200_mdio_पढ़ो(काष्ठा net_device *netdev, पूर्णांक phy_id, पूर्णांक loc)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
+	अचिन्हित अक्षर buff[2];
 
 	netdev_dbg(netdev, "%s phy_id:%02x loc:%02x\n",
 		   __func__, phy_id, loc);
 
-	if (phy_id != 0)
-		return -ENODEV;
+	अगर (phy_id != 0)
+		वापस -ENODEV;
 
-	control_read(dev, REQUEST_READ, 0, loc * 2, buff, 0x02,
+	control_पढ़ो(dev, REQUEST_READ, 0, loc * 2, buff, 0x02,
 		     CONTROL_TIMEOUT_MS);
 
-	return (buff[0] | buff[1] << 8);
-}
+	वापस (buff[0] | buff[1] << 8);
+पूर्ण
 
-static void ch9200_mdio_write(struct net_device *netdev,
-			      int phy_id, int loc, int val)
-{
-	struct usbnet *dev = netdev_priv(netdev);
-	unsigned char buff[2];
+अटल व्योम ch9200_mdio_ग_लिखो(काष्ठा net_device *netdev,
+			      पूर्णांक phy_id, पूर्णांक loc, पूर्णांक val)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
+	अचिन्हित अक्षर buff[2];
 
 	netdev_dbg(netdev, "%s() phy_id=%02x loc:%02x\n",
 		   __func__, phy_id, loc);
 
-	if (phy_id != 0)
-		return;
+	अगर (phy_id != 0)
+		वापस;
 
-	buff[0] = (unsigned char)val;
-	buff[1] = (unsigned char)(val >> 8);
+	buff[0] = (अचिन्हित अक्षर)val;
+	buff[1] = (अचिन्हित अक्षर)(val >> 8);
 
-	control_write(dev, REQUEST_WRITE, 0, loc * 2, buff, 0x02,
+	control_ग_लिखो(dev, REQUEST_WRITE, 0, loc * 2, buff, 0x02,
 		      CONTROL_TIMEOUT_MS);
-}
+पूर्ण
 
-static int ch9200_link_reset(struct usbnet *dev)
-{
-	struct ethtool_cmd ecmd;
+अटल पूर्णांक ch9200_link_reset(काष्ठा usbnet *dev)
+अणु
+	काष्ठा ethtool_cmd ecmd;
 
 	mii_check_media(&dev->mii, 1, 1);
 	mii_ethtool_gset(&dev->mii, &ecmd);
@@ -220,48 +221,48 @@ static int ch9200_link_reset(struct usbnet *dev)
 	netdev_dbg(dev->net, "%s() speed:%d duplex:%d\n",
 		   __func__, ecmd.speed, ecmd.duplex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ch9200_status(struct usbnet *dev, struct urb *urb)
-{
-	int link;
-	unsigned char *buf;
+अटल व्योम ch9200_status(काष्ठा usbnet *dev, काष्ठा urb *urb)
+अणु
+	पूर्णांक link;
+	अचिन्हित अक्षर *buf;
 
-	if (urb->actual_length < 16)
-		return;
+	अगर (urb->actual_length < 16)
+		वापस;
 
 	buf = urb->transfer_buffer;
 	link = !!(buf[0] & 0x01);
 
-	if (link) {
-		netif_carrier_on(dev->net);
+	अगर (link) अणु
+		netअगर_carrier_on(dev->net);
 		usbnet_defer_kevent(dev, EVENT_LINK_RESET);
-	} else {
-		netif_carrier_off(dev->net);
-	}
-}
+	पूर्ण अन्यथा अणु
+		netअगर_carrier_off(dev->net);
+	पूर्ण
+पूर्ण
 
-static struct sk_buff *ch9200_tx_fixup(struct usbnet *dev, struct sk_buff *skb,
+अटल काष्ठा sk_buff *ch9200_tx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb,
 				       gfp_t flags)
-{
-	int i = 0;
-	int len = 0;
-	int tx_overhead = 0;
+अणु
+	पूर्णांक i = 0;
+	पूर्णांक len = 0;
+	पूर्णांक tx_overhead = 0;
 
 	tx_overhead = 0x40;
 
 	len = skb->len;
-	if (skb_cow_head(skb, tx_overhead)) {
-		dev_kfree_skb_any(skb);
-		return NULL;
-	}
+	अगर (skb_cow_head(skb, tx_overhead)) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस शून्य;
+	पूर्ण
 
 	__skb_push(skb, tx_overhead);
-	/* usbnet adds padding if length is a multiple of packet size
-	 * if so, adjust length value in header
+	/* usbnet adds padding अगर length is a multiple of packet size
+	 * अगर so, adjust length value in header
 	 */
-	if ((skb->len % dev->maxpacket) == 0)
+	अगर ((skb->len % dev->maxpacket) == 0)
 		len++;
 
 	skb->data[0] = len;
@@ -269,7 +270,7 @@ static struct sk_buff *ch9200_tx_fixup(struct usbnet *dev, struct sk_buff *skb,
 	skb->data[2] = 0x00;
 	skb->data[3] = 0x80;
 
-	for (i = 4; i < 48; i++)
+	क्रम (i = 4; i < 48; i++)
 		skb->data[i] = 0x00;
 
 	skb->data[48] = len;
@@ -277,49 +278,49 @@ static struct sk_buff *ch9200_tx_fixup(struct usbnet *dev, struct sk_buff *skb,
 	skb->data[50] = 0x00;
 	skb->data[51] = 0x80;
 
-	for (i = 52; i < 64; i++)
+	क्रम (i = 52; i < 64; i++)
 		skb->data[i] = 0x00;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int ch9200_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
-{
-	int len = 0;
-	int rx_overhead = 0;
+अटल पूर्णांक ch9200_rx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक len = 0;
+	पूर्णांक rx_overhead = 0;
 
 	rx_overhead = 64;
 
-	if (unlikely(skb->len < rx_overhead)) {
+	अगर (unlikely(skb->len < rx_overhead)) अणु
 		dev_err(&dev->udev->dev, "unexpected tiny rx frame\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	len = (skb->data[skb->len - 16] | skb->data[skb->len - 15] << 8);
 	skb_trim(skb, len);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int get_mac_address(struct usbnet *dev, unsigned char *data)
-{
-	int err = 0;
-	unsigned char mac_addr[0x06];
-	int rd_mac_len = 0;
+अटल पूर्णांक get_mac_address(काष्ठा usbnet *dev, अचिन्हित अक्षर *data)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित अक्षर mac_addr[0x06];
+	पूर्णांक rd_mac_len = 0;
 
 	netdev_dbg(dev->net, "%s:\n\tusbnet VID:%0x PID:%0x\n", __func__,
-		   le16_to_cpu(dev->udev->descriptor.idVendor),
+		   le16_to_cpu(dev->udev->descriptor.idVenकरोr),
 		   le16_to_cpu(dev->udev->descriptor.idProduct));
 
-	memset(mac_addr, 0, sizeof(mac_addr));
-	rd_mac_len = control_read(dev, REQUEST_READ, 0,
+	स_रखो(mac_addr, 0, माप(mac_addr));
+	rd_mac_len = control_पढ़ो(dev, REQUEST_READ, 0,
 				  MAC_REG_STATION_L, mac_addr, 0x02,
 				  CONTROL_TIMEOUT_MS);
-	rd_mac_len += control_read(dev, REQUEST_READ, 0, MAC_REG_STATION_M,
+	rd_mac_len += control_पढ़ो(dev, REQUEST_READ, 0, MAC_REG_STATION_M,
 				   mac_addr + 2, 0x02, CONTROL_TIMEOUT_MS);
-	rd_mac_len += control_read(dev, REQUEST_READ, 0, MAC_REG_STATION_H,
+	rd_mac_len += control_पढ़ो(dev, REQUEST_READ, 0, MAC_REG_STATION_H,
 				   mac_addr + 4, 0x02, CONTROL_TIMEOUT_MS);
-	if (rd_mac_len != ETH_ALEN)
+	अगर (rd_mac_len != ETH_ALEN)
 		err = -EINVAL;
 
 	data[0] = mac_addr[5];
@@ -329,21 +330,21 @@ static int get_mac_address(struct usbnet *dev, unsigned char *data)
 	data[4] = mac_addr[1];
 	data[5] = mac_addr[0];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ch9200_bind(struct usbnet *dev, struct usb_interface *intf)
-{
-	int retval = 0;
-	unsigned char data[2];
+अटल पूर्णांक ch9200_bind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	पूर्णांक retval = 0;
+	अचिन्हित अक्षर data[2];
 
-	retval = usbnet_get_endpoints(dev, intf);
-	if (retval)
-		return retval;
+	retval = usbnet_get_endpoपूर्णांकs(dev, पूर्णांकf);
+	अगर (retval)
+		वापस retval;
 
 	dev->mii.dev = dev->net;
-	dev->mii.mdio_read = ch9200_mdio_read;
-	dev->mii.mdio_write = ch9200_mdio_write;
+	dev->mii.mdio_पढ़ो = ch9200_mdio_पढ़ो;
+	dev->mii.mdio_ग_लिखो = ch9200_mdio_ग_लिखो;
 	dev->mii.reg_num_mask = 0x1f;
 
 	dev->mii.phy_id_mask = 0x1f;
@@ -354,41 +355,41 @@ static int ch9200_bind(struct usbnet *dev, struct usb_interface *intf)
 
 	data[0] = 0x01;
 	data[1] = 0x0F;
-	retval = control_write(dev, REQUEST_WRITE, 0, MAC_REG_THRESHOLD, data,
+	retval = control_ग_लिखो(dev, REQUEST_WRITE, 0, MAC_REG_THRESHOLD, data,
 			       0x02, CONTROL_TIMEOUT_MS);
 
 	data[0] = 0xA0;
 	data[1] = 0x90;
-	retval = control_write(dev, REQUEST_WRITE, 0, MAC_REG_FIFO_DEPTH, data,
+	retval = control_ग_लिखो(dev, REQUEST_WRITE, 0, MAC_REG_FIFO_DEPTH, data,
 			       0x02, CONTROL_TIMEOUT_MS);
 
 	data[0] = 0x30;
 	data[1] = 0x00;
-	retval = control_write(dev, REQUEST_WRITE, 0, MAC_REG_PAUSE, data,
+	retval = control_ग_लिखो(dev, REQUEST_WRITE, 0, MAC_REG_PAUSE, data,
 			       0x02, CONTROL_TIMEOUT_MS);
 
 	data[0] = 0x17;
 	data[1] = 0xD8;
-	retval = control_write(dev, REQUEST_WRITE, 0, MAC_REG_FLOW_CONTROL,
+	retval = control_ग_लिखो(dev, REQUEST_WRITE, 0, MAC_REG_FLOW_CONTROL,
 			       data, 0x02, CONTROL_TIMEOUT_MS);
 
-	/* Undocumented register */
+	/* Unकरोcumented रेजिस्टर */
 	data[0] = 0x01;
 	data[1] = 0x00;
-	retval = control_write(dev, REQUEST_WRITE, 0, 254, data, 0x02,
+	retval = control_ग_लिखो(dev, REQUEST_WRITE, 0, 254, data, 0x02,
 			       CONTROL_TIMEOUT_MS);
 
 	data[0] = 0x5F;
 	data[1] = 0x0D;
-	retval = control_write(dev, REQUEST_WRITE, 0, MAC_REG_CTRL, data, 0x02,
+	retval = control_ग_लिखो(dev, REQUEST_WRITE, 0, MAC_REG_CTRL, data, 0x02,
 			       CONTROL_TIMEOUT_MS);
 
 	retval = get_mac_address(dev, dev->net->dev_addr);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static const struct driver_info ch9200_info = {
+अटल स्थिर काष्ठा driver_info ch9200_info = अणु
 	.description = "CH9200 USB to Network Adaptor",
 	.flags = FLAG_ETHER,
 	.bind = ch9200_bind,
@@ -397,26 +398,26 @@ static const struct driver_info ch9200_info = {
 	.status = ch9200_status,
 	.link_reset = ch9200_link_reset,
 	.reset = ch9200_link_reset,
-};
+पूर्ण;
 
-static const struct usb_device_id ch9200_products[] = {
-	{
+अटल स्थिर काष्ठा usb_device_id ch9200_products[] = अणु
+	अणु
 	 USB_DEVICE(0x1A86, 0xE092),
-	 .driver_info = (unsigned long)&ch9200_info,
-	 },
-	{},
-};
+	 .driver_info = (अचिन्हित दीर्घ)&ch9200_info,
+	 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, ch9200_products);
 
-static struct usb_driver ch9200_driver = {
+अटल काष्ठा usb_driver ch9200_driver = अणु
 	.name = "ch9200",
 	.id_table = ch9200_products,
 	.probe = usbnet_probe,
 	.disconnect = usbnet_disconnect,
 	.suspend = usbnet_suspend,
 	.resume = usbnet_resume,
-};
+पूर्ण;
 
 module_usb_driver(ch9200_driver);
 

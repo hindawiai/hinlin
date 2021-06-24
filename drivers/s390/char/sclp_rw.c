@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * driver: reading from and writing to system console on S/390 via SCLP
+ * driver: पढ़ोing from and writing to प्रणाली console on S/390 via SCLP
  *
  * Copyright IBM Corp. 1999, 2009
  *
@@ -8,139 +9,139 @@
  *	      Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#include <linux/kmod.h>
-#include <linux/types.h>
-#include <linux/err.h>
-#include <linux/string.h>
-#include <linux/spinlock.h>
-#include <linux/ctype.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/types.h>
+#समावेश <linux/err.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/uaccess.h>
 
-#include "sclp.h"
-#include "sclp_rw.h"
+#समावेश "sclp.h"
+#समावेश "sclp_rw.h"
 
 /*
- * The room for the SCCB (only for writing) is not equal to a pages size
- * (as it is specified as the maximum size in the SCLP documentation)
- * because of the additional data structure described above.
+ * The room क्रम the SCCB (only क्रम writing) is not equal to a pages size
+ * (as it is specअगरied as the maximum size in the SCLP करोcumentation)
+ * because of the additional data काष्ठाure described above.
  */
-#define MAX_SCCB_ROOM (PAGE_SIZE - sizeof(struct sclp_buffer))
+#घोषणा MAX_SCCB_ROOM (PAGE_SIZE - माप(काष्ठा sclp_buffer))
 
-static void sclp_rw_pm_event(struct sclp_register *reg,
-			     enum sclp_pm_event sclp_pm_event)
-{
+अटल व्योम sclp_rw_pm_event(काष्ठा sclp_रेजिस्टर *reg,
+			     क्रमागत sclp_pm_event sclp_pm_event)
+अणु
 	sclp_console_pm_event(sclp_pm_event);
-}
+पूर्ण
 
-/* Event type structure for write message and write priority message */
-static struct sclp_register sclp_rw_event = {
+/* Event type काष्ठाure क्रम ग_लिखो message and ग_लिखो priority message */
+अटल काष्ठा sclp_रेजिस्टर sclp_rw_event = अणु
 	.send_mask = EVTYP_MSG_MASK,
 	.pm_event_fn = sclp_rw_pm_event,
-};
+पूर्ण;
 
 /*
- * Setup a sclp write buffer. Gets a page as input (4K) and returns
- * a pointer to a struct sclp_buffer structure that is located at the
+ * Setup a sclp ग_लिखो buffer. Gets a page as input (4K) and वापसs
+ * a poपूर्णांकer to a काष्ठा sclp_buffer काष्ठाure that is located at the
  * end of the input page. This reduces the buffer space by a few
- * bytes but simplifies things.
+ * bytes but simplअगरies things.
  */
-struct sclp_buffer *
-sclp_make_buffer(void *page, unsigned short columns, unsigned short htab)
-{
-	struct sclp_buffer *buffer;
-	struct sccb_header *sccb;
+काष्ठा sclp_buffer *
+sclp_make_buffer(व्योम *page, अचिन्हित लघु columns, अचिन्हित लघु htab)
+अणु
+	काष्ठा sclp_buffer *buffer;
+	काष्ठा sccb_header *sccb;
 
-	sccb = (struct sccb_header *) page;
+	sccb = (काष्ठा sccb_header *) page;
 	/*
-	 * We keep the struct sclp_buffer structure at the end
+	 * We keep the काष्ठा sclp_buffer काष्ठाure at the end
 	 * of the sccb page.
 	 */
-	buffer = ((struct sclp_buffer *) ((addr_t) sccb + PAGE_SIZE)) - 1;
+	buffer = ((काष्ठा sclp_buffer *) ((addr_t) sccb + PAGE_SIZE)) - 1;
 	buffer->sccb = sccb;
 	buffer->retry_count = 0;
 	buffer->messages = 0;
-	buffer->char_sum = 0;
-	buffer->current_line = NULL;
+	buffer->अक्षर_sum = 0;
+	buffer->current_line = शून्य;
 	buffer->current_length = 0;
 	buffer->columns = columns;
 	buffer->htab = htab;
 
 	/* initialize sccb */
-	memset(sccb, 0, sizeof(struct sccb_header));
-	sccb->length = sizeof(struct sccb_header);
+	स_रखो(sccb, 0, माप(काष्ठा sccb_header));
+	sccb->length = माप(काष्ठा sccb_header);
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
 /*
- * Return a pointer to the original page that has been used to create
+ * Return a poपूर्णांकer to the original page that has been used to create
  * the buffer.
  */
-void *
-sclp_unmake_buffer(struct sclp_buffer *buffer)
-{
-	return buffer->sccb;
-}
+व्योम *
+sclp_unmake_buffer(काष्ठा sclp_buffer *buffer)
+अणु
+	वापस buffer->sccb;
+पूर्ण
 
 /*
  * Initialize a new message the end of the provided buffer with
- * enough room for max_len characters. Return 0 on success.
+ * enough room क्रम max_len अक्षरacters. Return 0 on success.
  */
-static int
-sclp_initialize_mto(struct sclp_buffer *buffer, int max_len)
-{
-	struct sccb_header *sccb;
-	struct msg_buf *msg;
-	struct mdb *mdb;
-	struct go *go;
-	struct mto *mto;
-	int msg_size;
+अटल पूर्णांक
+sclp_initialize_mto(काष्ठा sclp_buffer *buffer, पूर्णांक max_len)
+अणु
+	काष्ठा sccb_header *sccb;
+	काष्ठा msg_buf *msg;
+	काष्ठा mdb *mdb;
+	काष्ठा go *go;
+	काष्ठा mto *mto;
+	पूर्णांक msg_size;
 
 	/* max size of new message including message text  */
-	msg_size = sizeof(struct msg_buf) + max_len;
+	msg_size = माप(काष्ठा msg_buf) + max_len;
 
-	/* check if current buffer sccb can contain the mto */
+	/* check अगर current buffer sccb can contain the mto */
 	sccb = buffer->sccb;
-	if ((MAX_SCCB_ROOM - sccb->length) < msg_size)
-		return -ENOMEM;
+	अगर ((MAX_SCCB_ROOM - sccb->length) < msg_size)
+		वापस -ENOMEM;
 
-	msg = (struct msg_buf *)((addr_t) sccb + sccb->length);
-	memset(msg, 0, sizeof(struct msg_buf));
-	msg->header.length = sizeof(struct msg_buf);
+	msg = (काष्ठा msg_buf *)((addr_t) sccb + sccb->length);
+	स_रखो(msg, 0, माप(काष्ठा msg_buf));
+	msg->header.length = माप(काष्ठा msg_buf);
 	msg->header.type = EVTYP_MSG;
 
 	mdb = &msg->mdb;
-	mdb->header.length = sizeof(struct mdb);
+	mdb->header.length = माप(काष्ठा mdb);
 	mdb->header.type = 1;
 	mdb->header.tag = 0xD4C4C240;	/* ebcdic "MDB " */
 	mdb->header.revision_code = 1;
 
 	go = &mdb->go;
-	go->length = sizeof(struct go);
+	go->length = माप(काष्ठा go);
 	go->type = 1;
 
 	mto = &mdb->mto;
-	mto->length = sizeof(struct mto);
+	mto->length = माप(काष्ठा mto);
 	mto->type = 4;	/* message text object */
 	mto->line_type_flags = LNTPFLGS_ENDTEXT; /* end text */
 
-	/* set pointer to first byte after struct mto. */
+	/* set poपूर्णांकer to first byte after काष्ठा mto. */
 	buffer->current_msg = msg;
-	buffer->current_line = (char *) (mto + 1);
+	buffer->current_line = (अक्षर *) (mto + 1);
 	buffer->current_length = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Finalize message initialized by sclp_initialize_mto(),
  * updating the sizes of MTO, enclosing MDB, event buffer and SCCB.
  */
-static void
-sclp_finalize_mto(struct sclp_buffer *buffer)
-{
-	struct sccb_header *sccb;
-	struct msg_buf *msg;
+अटल व्योम
+sclp_finalize_mto(काष्ठा sclp_buffer *buffer)
+अणु
+	काष्ठा sccb_header *sccb;
+	काष्ठा msg_buf *msg;
 
 	/*
 	 * update values of sizes
@@ -155,296 +156,296 @@ sclp_finalize_mto(struct sclp_buffer *buffer)
 
 	/*
 	 * count number of buffered messages (= number of Message Text
-	 * Objects) and number of buffered characters
-	 * for the SCCB currently used for buffering and at all
+	 * Objects) and number of buffered अक्षरacters
+	 * क्रम the SCCB currently used क्रम buffering and at all
 	 */
 	buffer->messages++;
-	buffer->char_sum += buffer->current_length;
+	buffer->अक्षर_sum += buffer->current_length;
 
-	buffer->current_line = NULL;
+	buffer->current_line = शून्य;
 	buffer->current_length = 0;
-	buffer->current_msg = NULL;
-}
+	buffer->current_msg = शून्य;
+पूर्ण
 
 /*
- * processing of a message including escape characters,
- * returns number of characters written to the output sccb
- * ("processed" means that is not guaranteed that the character have already
- *  been sent to the SCLP but that it will be done at least next time the SCLP
+ * processing of a message including escape अक्षरacters,
+ * वापसs number of अक्षरacters written to the output sccb
+ * ("processed" means that is not guaranteed that the अक्षरacter have alपढ़ोy
+ *  been sent to the SCLP but that it will be करोne at least next समय the SCLP
  *  is not busy)
  */
-int
-sclp_write(struct sclp_buffer *buffer, const unsigned char *msg, int count)
-{
-	int spaces, i_msg;
-	int rc;
+पूर्णांक
+sclp_ग_लिखो(काष्ठा sclp_buffer *buffer, स्थिर अचिन्हित अक्षर *msg, पूर्णांक count)
+अणु
+	पूर्णांक spaces, i_msg;
+	पूर्णांक rc;
 
 	/*
-	 * parse msg for escape sequences (\t,\v ...) and put formated
-	 * msg into an mto (created by sclp_initialize_mto).
+	 * parse msg क्रम escape sequences (\ट,\ख ...) and put क्रमmated
+	 * msg पूर्णांकo an mto (created by sclp_initialize_mto).
 	 *
-	 * We have to do this work ourselfs because there is no support for
-	 * these characters on the native machine and only partial support
-	 * under VM (Why does VM interpret \n but the native machine doesn't ?)
+	 * We have to करो this work ourselfs because there is no support क्रम
+	 * these अक्षरacters on the native machine and only partial support
+	 * under VM (Why करोes VM पूर्णांकerpret \न but the native machine करोesn't ?)
 	 *
 	 * Depending on i/o-control setting the message is always written
-	 * immediately or we wait for a final new line maybe coming with the
-	 * next message. Besides we avoid a buffer overrun by writing its
+	 * immediately or we रुको क्रम a final new line maybe coming with the
+	 * next message. Besides we aव्योम a buffer overrun by writing its
 	 * content.
 	 *
 	 * RESTRICTIONS:
 	 *
-	 * \r and \b work within one line because we are not able to modify
-	 * previous output that have already been accepted by the SCLP.
+	 * \ल and \म work within one line because we are not able to modअगरy
+	 * previous output that have alपढ़ोy been accepted by the SCLP.
 	 *
-	 * \t combined with following \r is not correctly represented because
-	 * \t is expanded to some spaces but \r does not know about a
-	 * previous \t and decreases the current position by one column.
+	 * \ट combined with following \ल is not correctly represented because
+	 * \ट is expanded to some spaces but \ल करोes not know about a
+	 * previous \ट and decreases the current position by one column.
 	 * This is in order to a slim and quick implementation.
 	 */
-	for (i_msg = 0; i_msg < count; i_msg++) {
-		switch (msg[i_msg]) {
-		case '\n':	/* new line, line feed (ASCII)	*/
-			/* check if new mto needs to be created */
-			if (buffer->current_line == NULL) {
+	क्रम (i_msg = 0; i_msg < count; i_msg++) अणु
+		चयन (msg[i_msg]) अणु
+		हाल '\n':	/* new line, line feed (ASCII)	*/
+			/* check अगर new mto needs to be created */
+			अगर (buffer->current_line == शून्य) अणु
 				rc = sclp_initialize_mto(buffer, 0);
-				if (rc)
-					return i_msg;
-			}
+				अगर (rc)
+					वापस i_msg;
+			पूर्ण
 			sclp_finalize_mto(buffer);
-			break;
-		case '\a':	/* bell, one for several times	*/
+			अवरोध;
+		हाल '\a':	/* bell, one क्रम several बार	*/
 			/* set SCLP sound alarm bit in General Object */
-			if (buffer->current_line == NULL) {
+			अगर (buffer->current_line == शून्य) अणु
 				rc = sclp_initialize_mto(buffer,
 							 buffer->columns);
-				if (rc)
-					return i_msg;
-			}
+				अगर (rc)
+					वापस i_msg;
+			पूर्ण
 			buffer->current_msg->mdb.go.general_msg_flags |=
 				GNRLMSGFLGS_SNDALRM;
-			break;
-		case '\t':	/* horizontal tabulator	 */
-			/* check if new mto needs to be created */
-			if (buffer->current_line == NULL) {
+			अवरोध;
+		हाल '\t':	/* horizontal tabulator	 */
+			/* check अगर new mto needs to be created */
+			अगर (buffer->current_line == शून्य) अणु
 				rc = sclp_initialize_mto(buffer,
 							 buffer->columns);
-				if (rc)
-					return i_msg;
-			}
+				अगर (rc)
+					वापस i_msg;
+			पूर्ण
 			/* "go to (next htab-boundary + 1, same line)" */
-			do {
-				if (buffer->current_length >= buffer->columns)
-					break;
+			करो अणु
+				अगर (buffer->current_length >= buffer->columns)
+					अवरोध;
 				/* ok, add a blank */
 				*buffer->current_line++ = 0x40;
 				buffer->current_length++;
-			} while (buffer->current_length % buffer->htab);
-			break;
-		case '\f':	/* form feed  */
-		case '\v':	/* vertical tabulator  */
+			पूर्ण जबतक (buffer->current_length % buffer->htab);
+			अवरोध;
+		हाल '\f':	/* क्रमm feed  */
+		हाल '\v':	/* vertical tabulator  */
 			/* "go to (actual column, actual line + 1)" */
 			/* = new line, leading spaces */
-			if (buffer->current_line != NULL) {
+			अगर (buffer->current_line != शून्य) अणु
 				spaces = buffer->current_length;
 				sclp_finalize_mto(buffer);
 				rc = sclp_initialize_mto(buffer,
 							 buffer->columns);
-				if (rc)
-					return i_msg;
-				memset(buffer->current_line, 0x40, spaces);
+				अगर (rc)
+					वापस i_msg;
+				स_रखो(buffer->current_line, 0x40, spaces);
 				buffer->current_line += spaces;
 				buffer->current_length = spaces;
-			} else {
-				/* one an empty line this is the same as \n */
+			पूर्ण अन्यथा अणु
+				/* one an empty line this is the same as \न */
 				rc = sclp_initialize_mto(buffer,
 							 buffer->columns);
-				if (rc)
-					return i_msg;
+				अगर (rc)
+					वापस i_msg;
 				sclp_finalize_mto(buffer);
-			}
-			break;
-		case '\b':	/* backspace  */
+			पूर्ण
+			अवरोध;
+		हाल '\b':	/* backspace  */
 			/* "go to (actual column - 1, actual line)" */
 			/* decrement counter indicating position, */
-			/* do not remove last character */
-			if (buffer->current_line != NULL &&
-			    buffer->current_length > 0) {
+			/* करो not हटाओ last अक्षरacter */
+			अगर (buffer->current_line != शून्य &&
+			    buffer->current_length > 0) अणु
 				buffer->current_length--;
 				buffer->current_line--;
-			}
-			break;
-		case 0x00:	/* end of string  */
+			पूर्ण
+			अवरोध;
+		हाल 0x00:	/* end of string  */
 			/* transfer current line to SCCB */
-			if (buffer->current_line != NULL)
+			अगर (buffer->current_line != शून्य)
 				sclp_finalize_mto(buffer);
 			/* skip the rest of the message including the 0 byte */
 			i_msg = count - 1;
-			break;
-		default:	/* no escape character	*/
-			/* do not output unprintable characters */
-			if (!isprint(msg[i_msg]))
-				break;
-			/* check if new mto needs to be created */
-			if (buffer->current_line == NULL) {
+			अवरोध;
+		शेष:	/* no escape अक्षरacter	*/
+			/* करो not output unprपूर्णांकable अक्षरacters */
+			अगर (!है_छाप(msg[i_msg]))
+				अवरोध;
+			/* check अगर new mto needs to be created */
+			अगर (buffer->current_line == शून्य) अणु
 				rc = sclp_initialize_mto(buffer,
 							 buffer->columns);
-				if (rc)
-					return i_msg;
-			}
+				अगर (rc)
+					वापस i_msg;
+			पूर्ण
 			*buffer->current_line++ = sclp_ascebc(msg[i_msg]);
 			buffer->current_length++;
-			break;
-		}
-		/* check if current mto is full */
-		if (buffer->current_line != NULL &&
+			अवरोध;
+		पूर्ण
+		/* check अगर current mto is full */
+		अगर (buffer->current_line != शून्य &&
 		    buffer->current_length >= buffer->columns)
 			sclp_finalize_mto(buffer);
-	}
+	पूर्ण
 
-	/* return number of processed characters */
-	return i_msg;
-}
+	/* वापस number of processed अक्षरacters */
+	वापस i_msg;
+पूर्ण
 
 /*
- * Return the number of free bytes in the sccb
+ * Return the number of मुक्त bytes in the sccb
  */
-int
-sclp_buffer_space(struct sclp_buffer *buffer)
-{
-	struct sccb_header *sccb;
-	int count;
+पूर्णांक
+sclp_buffer_space(काष्ठा sclp_buffer *buffer)
+अणु
+	काष्ठा sccb_header *sccb;
+	पूर्णांक count;
 
 	sccb = buffer->sccb;
 	count = MAX_SCCB_ROOM - sccb->length;
-	if (buffer->current_line != NULL)
-		count -= sizeof(struct msg_buf) + buffer->current_length;
-	return count;
-}
+	अगर (buffer->current_line != शून्य)
+		count -= माप(काष्ठा msg_buf) + buffer->current_length;
+	वापस count;
+पूर्ण
 
 /*
- * Return number of characters in buffer
+ * Return number of अक्षरacters in buffer
  */
-int
-sclp_chars_in_buffer(struct sclp_buffer *buffer)
-{
-	int count;
+पूर्णांक
+sclp_अक्षरs_in_buffer(काष्ठा sclp_buffer *buffer)
+अणु
+	पूर्णांक count;
 
-	count = buffer->char_sum;
-	if (buffer->current_line != NULL)
+	count = buffer->अक्षर_sum;
+	अगर (buffer->current_line != शून्य)
 		count += buffer->current_length;
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
  * called by sclp_console_init and/or sclp_tty_init
  */
-int
-sclp_rw_init(void)
-{
-	static int init_done = 0;
-	int rc;
+पूर्णांक
+sclp_rw_init(व्योम)
+अणु
+	अटल पूर्णांक init_करोne = 0;
+	पूर्णांक rc;
 
-	if (init_done)
-		return 0;
+	अगर (init_करोne)
+		वापस 0;
 
-	rc = sclp_register(&sclp_rw_event);
-	if (rc == 0)
-		init_done = 1;
-	return rc;
-}
+	rc = sclp_रेजिस्टर(&sclp_rw_event);
+	अगर (rc == 0)
+		init_करोne = 1;
+	वापस rc;
+पूर्ण
 
-#define SCLP_BUFFER_MAX_RETRY		1
+#घोषणा SCLP_BUFFER_MAX_RETRY		1
 
 /*
- * second half of Write Event Data-function that has to be done after
- * interruption indicating completion of Service Call.
+ * second half of Write Event Data-function that has to be करोne after
+ * पूर्णांकerruption indicating completion of Service Call.
  */
-static void
-sclp_writedata_callback(struct sclp_req *request, void *data)
-{
-	int rc;
-	struct sclp_buffer *buffer;
-	struct sccb_header *sccb;
+अटल व्योम
+sclp_ग_लिखोdata_callback(काष्ठा sclp_req *request, व्योम *data)
+अणु
+	पूर्णांक rc;
+	काष्ठा sclp_buffer *buffer;
+	काष्ठा sccb_header *sccb;
 
-	buffer = (struct sclp_buffer *) data;
+	buffer = (काष्ठा sclp_buffer *) data;
 	sccb = buffer->sccb;
 
-	if (request->status == SCLP_REQ_FAILED) {
-		if (buffer->callback != NULL)
+	अगर (request->status == SCLP_REQ_FAILED) अणु
+		अगर (buffer->callback != शून्य)
 			buffer->callback(buffer, -EIO);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* check SCLP response code and choose suitable action	*/
-	switch (sccb->response_code) {
-	case 0x0020 :
+	चयन (sccb->response_code) अणु
+	हाल 0x0020 :
 		/* Normal completion, buffer processed, message(s) sent */
 		rc = 0;
-		break;
+		अवरोध;
 
-	case 0x0340: /* Contained SCLP equipment check */
-		if (++buffer->retry_count > SCLP_BUFFER_MAX_RETRY) {
+	हाल 0x0340: /* Contained SCLP equipment check */
+		अगर (++buffer->retry_count > SCLP_BUFFER_MAX_RETRY) अणु
 			rc = -EIO;
-			break;
-		}
-		/* remove processed buffers and requeue rest */
-		if (sclp_remove_processed((struct sccb_header *) sccb) > 0) {
+			अवरोध;
+		पूर्ण
+		/* हटाओ processed buffers and requeue rest */
+		अगर (sclp_हटाओ_processed((काष्ठा sccb_header *) sccb) > 0) अणु
 			/* not all buffers were processed */
 			sccb->response_code = 0x0000;
 			buffer->request.status = SCLP_REQ_FILLED;
 			rc = sclp_add_request(request);
-			if (rc == 0)
-				return;
-		} else
+			अगर (rc == 0)
+				वापस;
+		पूर्ण अन्यथा
 			rc = 0;
-		break;
+		अवरोध;
 
-	case 0x0040: /* SCLP equipment check */
-	case 0x05f0: /* Target resource in improper state */
-		if (++buffer->retry_count > SCLP_BUFFER_MAX_RETRY) {
+	हाल 0x0040: /* SCLP equipment check */
+	हाल 0x05f0: /* Target resource in improper state */
+		अगर (++buffer->retry_count > SCLP_BUFFER_MAX_RETRY) अणु
 			rc = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/* retry request */
 		sccb->response_code = 0x0000;
 		buffer->request.status = SCLP_REQ_FILLED;
 		rc = sclp_add_request(request);
-		if (rc == 0)
-			return;
-		break;
-	default:
-		if (sccb->response_code == 0x71f0)
+		अगर (rc == 0)
+			वापस;
+		अवरोध;
+	शेष:
+		अगर (sccb->response_code == 0x71f0)
 			rc = -ENOMEM;
-		else
+		अन्यथा
 			rc = -EINVAL;
-		break;
-	}
-	if (buffer->callback != NULL)
+		अवरोध;
+	पूर्ण
+	अगर (buffer->callback != शून्य)
 		buffer->callback(buffer, rc);
-}
+पूर्ण
 
 /*
- * Setup the request structure in the struct sclp_buffer to do SCLP Write
+ * Setup the request काष्ठाure in the काष्ठा sclp_buffer to करो SCLP Write
  * Event Data and pass the request to the core SCLP loop. Return zero on
  * success, non-zero otherwise.
  */
-int
-sclp_emit_buffer(struct sclp_buffer *buffer,
-		 void (*callback)(struct sclp_buffer *, int))
-{
-	/* add current line if there is one */
-	if (buffer->current_line != NULL)
+पूर्णांक
+sclp_emit_buffer(काष्ठा sclp_buffer *buffer,
+		 व्योम (*callback)(काष्ठा sclp_buffer *, पूर्णांक))
+अणु
+	/* add current line अगर there is one */
+	अगर (buffer->current_line != शून्य)
 		sclp_finalize_mto(buffer);
 
 	/* Are there messages in the output buffer ? */
-	if (buffer->messages == 0)
-		return -EIO;
+	अगर (buffer->messages == 0)
+		वापस -EIO;
 
 	buffer->request.command = SCLP_CMDW_WRITE_EVENT_DATA;
 	buffer->request.status = SCLP_REQ_FILLED;
-	buffer->request.callback = sclp_writedata_callback;
+	buffer->request.callback = sclp_ग_लिखोdata_callback;
 	buffer->request.callback_data = buffer;
 	buffer->request.sccb = buffer->sccb;
 	buffer->callback = callback;
-	return sclp_add_request(&buffer->request);
-}
+	वापस sclp_add_request(&buffer->request);
+पूर्ण

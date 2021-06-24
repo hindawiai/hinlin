@@ -1,270 +1,271 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Freescale UPM NAND driver.
+ * Freescale UPM न_अंकD driver.
  *
- * Copyright © 2007-2008  MontaVista Software, Inc.
+ * Copyright तऊ 2007-2008  MontaVista Software, Inc.
  *
  * Author: Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/partitions.h>
-#include <linux/mtd/mtd.h>
-#include <linux/of_platform.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <asm/fsl_lbc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/fsl_lbc.h>
 
-struct fsl_upm_nand {
-	struct nand_controller base;
-	struct device *dev;
-	struct nand_chip chip;
-	struct fsl_upm upm;
-	uint8_t upm_addr_offset;
-	uint8_t upm_cmd_offset;
-	void __iomem *io_base;
-	struct gpio_desc *rnb_gpio[NAND_MAX_CHIPS];
-	uint32_t mchip_offsets[NAND_MAX_CHIPS];
-	uint32_t mchip_count;
-	uint32_t mchip_number;
-};
+काष्ठा fsl_upm_nand अणु
+	काष्ठा nand_controller base;
+	काष्ठा device *dev;
+	काष्ठा nand_chip chip;
+	काष्ठा fsl_upm upm;
+	uपूर्णांक8_t upm_addr_offset;
+	uपूर्णांक8_t upm_cmd_offset;
+	व्योम __iomem *io_base;
+	काष्ठा gpio_desc *rnb_gpio[न_अंकD_MAX_CHIPS];
+	uपूर्णांक32_t mchip_offsets[न_अंकD_MAX_CHIPS];
+	uपूर्णांक32_t mchip_count;
+	uपूर्णांक32_t mchip_number;
+पूर्ण;
 
-static inline struct fsl_upm_nand *to_fsl_upm_nand(struct mtd_info *mtdinfo)
-{
-	return container_of(mtd_to_nand(mtdinfo), struct fsl_upm_nand,
+अटल अंतरभूत काष्ठा fsl_upm_nand *to_fsl_upm_nand(काष्ठा mtd_info *mtdinfo)
+अणु
+	वापस container_of(mtd_to_nand(mtdinfo), काष्ठा fsl_upm_nand,
 			    chip);
-}
+पूर्ण
 
-static int fun_chip_init(struct fsl_upm_nand *fun,
-			 const struct device_node *upm_np,
-			 const struct resource *io_res)
-{
-	struct mtd_info *mtd = nand_to_mtd(&fun->chip);
-	int ret;
-	struct device_node *flash_np;
+अटल पूर्णांक fun_chip_init(काष्ठा fsl_upm_nand *fun,
+			 स्थिर काष्ठा device_node *upm_np,
+			 स्थिर काष्ठा resource *io_res)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(&fun->chip);
+	पूर्णांक ret;
+	काष्ठा device_node *flash_np;
 
-	fun->chip.ecc.engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
-	fun->chip.ecc.algo = NAND_ECC_ALGO_HAMMING;
+	fun->chip.ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
+	fun->chip.ecc.algo = न_अंकD_ECC_ALGO_HAMMING;
 	fun->chip.controller = &fun->base;
 	mtd->dev.parent = fun->dev;
 
-	flash_np = of_get_next_child(upm_np, NULL);
-	if (!flash_np)
-		return -ENODEV;
+	flash_np = of_get_next_child(upm_np, शून्य);
+	अगर (!flash_np)
+		वापस -ENODEV;
 
 	nand_set_flash_node(&fun->chip, flash_np);
-	mtd->name = devm_kasprintf(fun->dev, GFP_KERNEL, "0x%llx.%pOFn",
+	mtd->name = devm_kaप्र_लिखो(fun->dev, GFP_KERNEL, "0x%llx.%pOFn",
 				   (u64)io_res->start,
 				   flash_np);
-	if (!mtd->name) {
+	अगर (!mtd->name) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = nand_scan(&fun->chip, fun->mchip_count);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	ret = mtd_device_register(mtd, NULL, 0);
+	ret = mtd_device_रेजिस्टर(mtd, शून्य, 0);
 err:
 	of_node_put(flash_np);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int func_exec_instr(struct nand_chip *chip,
-			   const struct nand_op_instr *instr)
-{
-	struct fsl_upm_nand *fun = to_fsl_upm_nand(nand_to_mtd(chip));
+अटल पूर्णांक func_exec_instr(काष्ठा nand_chip *chip,
+			   स्थिर काष्ठा nand_op_instr *instr)
+अणु
+	काष्ठा fsl_upm_nand *fun = to_fsl_upm_nand(nand_to_mtd(chip));
 	u32 mar, reg_offs = fun->mchip_offsets[fun->mchip_number];
-	unsigned int i;
-	const u8 *out;
+	अचिन्हित पूर्णांक i;
+	स्थिर u8 *out;
 	u8 *in;
 
-	switch (instr->type) {
-	case NAND_OP_CMD_INSTR:
+	चयन (instr->type) अणु
+	हाल न_अंकD_OP_CMD_INSTR:
 		fsl_upm_start_pattern(&fun->upm, fun->upm_cmd_offset);
 		mar = (instr->ctx.cmd.opcode << (32 - fun->upm.width)) |
 		      reg_offs;
 		fsl_upm_run_pattern(&fun->upm, fun->io_base + reg_offs, mar);
 		fsl_upm_end_pattern(&fun->upm);
-		return 0;
+		वापस 0;
 
-	case NAND_OP_ADDR_INSTR:
+	हाल न_अंकD_OP_ADDR_INSTR:
 		fsl_upm_start_pattern(&fun->upm, fun->upm_addr_offset);
-		for (i = 0; i < instr->ctx.addr.naddrs; i++) {
+		क्रम (i = 0; i < instr->ctx.addr.naddrs; i++) अणु
 			mar = (instr->ctx.addr.addrs[i] << (32 - fun->upm.width)) |
 			      reg_offs;
 			fsl_upm_run_pattern(&fun->upm, fun->io_base + reg_offs, mar);
-		}
+		पूर्ण
 		fsl_upm_end_pattern(&fun->upm);
-		return 0;
+		वापस 0;
 
-	case NAND_OP_DATA_IN_INSTR:
+	हाल न_अंकD_OP_DATA_IN_INSTR:
 		in = instr->ctx.data.buf.in;
-		for (i = 0; i < instr->ctx.data.len; i++)
+		क्रम (i = 0; i < instr->ctx.data.len; i++)
 			in[i] = in_8(fun->io_base + reg_offs);
-		return 0;
+		वापस 0;
 
-	case NAND_OP_DATA_OUT_INSTR:
+	हाल न_अंकD_OP_DATA_OUT_INSTR:
 		out = instr->ctx.data.buf.out;
-		for (i = 0; i < instr->ctx.data.len; i++)
+		क्रम (i = 0; i < instr->ctx.data.len; i++)
 			out_8(fun->io_base + reg_offs, out[i]);
-		return 0;
+		वापस 0;
 
-	case NAND_OP_WAITRDY_INSTR:
-		if (!fun->rnb_gpio[fun->mchip_number])
-			return nand_soft_waitrdy(chip, instr->ctx.waitrdy.timeout_ms);
+	हाल न_अंकD_OP_WAITRDY_INSTR:
+		अगर (!fun->rnb_gpio[fun->mchip_number])
+			वापस nand_soft_रुकोrdy(chip, instr->ctx.रुकोrdy.समयout_ms);
 
-		return nand_gpio_waitrdy(chip, fun->rnb_gpio[fun->mchip_number],
-					 instr->ctx.waitrdy.timeout_ms);
+		वापस nand_gpio_रुकोrdy(chip, fun->rnb_gpio[fun->mchip_number],
+					 instr->ctx.रुकोrdy.समयout_ms);
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fun_exec_op(struct nand_chip *chip, const struct nand_operation *op,
+अटल पूर्णांक fun_exec_op(काष्ठा nand_chip *chip, स्थिर काष्ठा nand_operation *op,
 		       bool check_only)
-{
-	struct fsl_upm_nand *fun = to_fsl_upm_nand(nand_to_mtd(chip));
-	unsigned int i;
-	int ret;
+अणु
+	काष्ठा fsl_upm_nand *fun = to_fsl_upm_nand(nand_to_mtd(chip));
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	if (op->cs > NAND_MAX_CHIPS)
-		return -EINVAL;
+	अगर (op->cs > न_अंकD_MAX_CHIPS)
+		वापस -EINVAL;
 
-	if (check_only)
-		return 0;
+	अगर (check_only)
+		वापस 0;
 
 	fun->mchip_number = op->cs;
 
-	for (i = 0; i < op->ninstrs; i++) {
+	क्रम (i = 0; i < op->ninstrs; i++) अणु
 		ret = func_exec_instr(chip, &op->instrs[i]);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (op->instrs[i].delay_ns)
+		अगर (op->instrs[i].delay_ns)
 			ndelay(op->instrs[i].delay_ns);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nand_controller_ops fun_ops = {
+अटल स्थिर काष्ठा nand_controller_ops fun_ops = अणु
 	.exec_op = fun_exec_op,
-};
+पूर्ण;
 
-static int fun_probe(struct platform_device *ofdev)
-{
-	struct fsl_upm_nand *fun;
-	struct resource *io_res;
-	const __be32 *prop;
-	int ret;
-	int size;
-	int i;
+अटल पूर्णांक fun_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा fsl_upm_nand *fun;
+	काष्ठा resource *io_res;
+	स्थिर __be32 *prop;
+	पूर्णांक ret;
+	पूर्णांक size;
+	पूर्णांक i;
 
-	fun = devm_kzalloc(&ofdev->dev, sizeof(*fun), GFP_KERNEL);
-	if (!fun)
-		return -ENOMEM;
+	fun = devm_kzalloc(&ofdev->dev, माप(*fun), GFP_KERNEL);
+	अगर (!fun)
+		वापस -ENOMEM;
 
-	io_res = platform_get_resource(ofdev, IORESOURCE_MEM, 0);
+	io_res = platक्रमm_get_resource(ofdev, IORESOURCE_MEM, 0);
 	fun->io_base = devm_ioremap_resource(&ofdev->dev, io_res);
-	if (IS_ERR(fun->io_base))
-		return PTR_ERR(fun->io_base);
+	अगर (IS_ERR(fun->io_base))
+		वापस PTR_ERR(fun->io_base);
 
 	ret = fsl_upm_find(io_res->start, &fun->upm);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&ofdev->dev, "can't find UPM\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	prop = of_get_property(ofdev->dev.of_node, "fsl,upm-addr-offset",
 			       &size);
-	if (!prop || size != sizeof(uint32_t)) {
+	अगर (!prop || size != माप(uपूर्णांक32_t)) अणु
 		dev_err(&ofdev->dev, "can't get UPM address offset\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	fun->upm_addr_offset = *prop;
 
 	prop = of_get_property(ofdev->dev.of_node, "fsl,upm-cmd-offset", &size);
-	if (!prop || size != sizeof(uint32_t)) {
+	अगर (!prop || size != माप(uपूर्णांक32_t)) अणु
 		dev_err(&ofdev->dev, "can't get UPM command offset\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	fun->upm_cmd_offset = *prop;
 
 	prop = of_get_property(ofdev->dev.of_node,
 			       "fsl,upm-addr-line-cs-offsets", &size);
-	if (prop && (size / sizeof(uint32_t)) > 0) {
-		fun->mchip_count = size / sizeof(uint32_t);
-		if (fun->mchip_count >= NAND_MAX_CHIPS) {
+	अगर (prop && (size / माप(uपूर्णांक32_t)) > 0) अणु
+		fun->mchip_count = size / माप(uपूर्णांक32_t);
+		अगर (fun->mchip_count >= न_अंकD_MAX_CHIPS) अणु
 			dev_err(&ofdev->dev, "too much multiple chips\n");
-			return -EINVAL;
-		}
-		for (i = 0; i < fun->mchip_count; i++)
+			वापस -EINVAL;
+		पूर्ण
+		क्रम (i = 0; i < fun->mchip_count; i++)
 			fun->mchip_offsets[i] = be32_to_cpu(prop[i]);
-	} else {
+	पूर्ण अन्यथा अणु
 		fun->mchip_count = 1;
-	}
+	पूर्ण
 
-	for (i = 0; i < fun->mchip_count; i++) {
+	क्रम (i = 0; i < fun->mchip_count; i++) अणु
 		fun->rnb_gpio[i] = devm_gpiod_get_index_optional(&ofdev->dev,
-								 NULL, i,
+								 शून्य, i,
 								 GPIOD_IN);
-		if (IS_ERR(fun->rnb_gpio[i])) {
+		अगर (IS_ERR(fun->rnb_gpio[i])) अणु
 			dev_err(&ofdev->dev, "RNB gpio #%d is invalid\n", i);
-			return PTR_ERR(fun->rnb_gpio[i]);
-		}
-	}
+			वापस PTR_ERR(fun->rnb_gpio[i]);
+		पूर्ण
+	पूर्ण
 
 	nand_controller_init(&fun->base);
 	fun->base.ops = &fun_ops;
 	fun->dev = &ofdev->dev;
 
 	ret = fun_chip_init(fun, ofdev->dev.of_node, io_res);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dev_set_drvdata(&ofdev->dev, fun);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fun_remove(struct platform_device *ofdev)
-{
-	struct fsl_upm_nand *fun = dev_get_drvdata(&ofdev->dev);
-	struct nand_chip *chip = &fun->chip;
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int ret;
+अटल पूर्णांक fun_हटाओ(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा fsl_upm_nand *fun = dev_get_drvdata(&ofdev->dev);
+	काष्ठा nand_chip *chip = &fun->chip;
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक ret;
 
-	ret = mtd_device_unregister(mtd);
+	ret = mtd_device_unरेजिस्टर(mtd);
 	WARN_ON(ret);
 	nand_cleanup(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id of_fun_match[] = {
-	{ .compatible = "fsl,upm-nand" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_fun_match[] = अणु
+	अणु .compatible = "fsl,upm-nand" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_fun_match);
 
-static struct platform_driver of_fun_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver of_fun_driver = अणु
+	.driver = अणु
 		.name = "fsl,upm-nand",
 		.of_match_table = of_fun_match,
-	},
+	पूर्ण,
 	.probe		= fun_probe,
-	.remove		= fun_remove,
-};
+	.हटाओ		= fun_हटाओ,
+पूर्ण;
 
-module_platform_driver(of_fun_driver);
+module_platक्रमm_driver(of_fun_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Anton Vorontsov <avorontsov@ru.mvista.com>");

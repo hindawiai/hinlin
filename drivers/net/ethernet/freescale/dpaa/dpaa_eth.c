@@ -1,16 +1,17 @@
+<शैली गुरु>
 /* Copyright 2008 - 2016 Freescale Semiconductor Inc.
  * Copyright 2020 NXP
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *	 notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
+ *     * Redistributions in binary क्रमm must reproduce the above copyright
  *	 notice, this list of conditions and the following disclaimer in the
- *	 documentation and/or other materials provided with the distribution.
+ *	 करोcumentation and/or other materials provided with the distribution.
  *     * Neither the name of Freescale Semiconductor nor the
- *	 names of its contributors may be used to endorse or promote products
- *	 derived from this software without specific prior written permission.
+ *	 names of its contributors may be used to enकरोrse or promote products
+ *	 derived from this software without specअगरic prior written permission.
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") as published by the Free Software
@@ -21,7 +22,7 @@
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL Freescale Semiconductor BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -29,69 +30,69 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/of_mdio.h>
-#include <linux/of_net.h>
-#include <linux/io.h>
-#include <linux/if_arp.h>
-#include <linux/if_vlan.h>
-#include <linux/icmp.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/udp.h>
-#include <linux/tcp.h>
-#include <linux/net.h>
-#include <linux/skbuff.h>
-#include <linux/etherdevice.h>
-#include <linux/if_ether.h>
-#include <linux/highmem.h>
-#include <linux/percpu.h>
-#include <linux/dma-mapping.h>
-#include <linux/sort.h>
-#include <linux/phy_fixed.h>
-#include <linux/bpf.h>
-#include <linux/bpf_trace.h>
-#include <soc/fsl/bman.h>
-#include <soc/fsl/qman.h>
-#include "fman.h"
-#include "fman_port.h"
-#include "mac.h"
-#include "dpaa_eth.h"
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_net.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/net.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/percpu.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/phy_fixed.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/bpf_trace.h>
+#समावेश <soc/fsl/bman.h>
+#समावेश <soc/fsl/qman.h>
+#समावेश "fman.h"
+#समावेश "fman_port.h"
+#समावेश "mac.h"
+#समावेश "dpaa_eth.h"
 
 /* CREATE_TRACE_POINTS only needs to be defined once. Other dpaa files
- * using trace events only need to #include <trace/events/sched.h>
+ * using trace events only need to #समावेश <trace/events/sched.h>
  */
-#define CREATE_TRACE_POINTS
-#include "dpaa_eth_trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "dpaa_eth_trace.h"
 
-static int debug = -1;
-module_param(debug, int, 0444);
+अटल पूर्णांक debug = -1;
+module_param(debug, पूर्णांक, 0444);
 MODULE_PARM_DESC(debug, "Module/Driver verbosity level (0=none,...,16=all)");
 
-static u16 tx_timeout = 1000;
-module_param(tx_timeout, ushort, 0444);
-MODULE_PARM_DESC(tx_timeout, "The Tx timeout in ms");
+अटल u16 tx_समयout = 1000;
+module_param(tx_समयout, uलघु, 0444);
+MODULE_PARM_DESC(tx_समयout, "The Tx timeout in ms");
 
-#define FM_FD_STAT_RX_ERRORS						\
+#घोषणा FM_FD_STAT_RX_ERRORS						\
 	(FM_FD_ERR_DMA | FM_FD_ERR_PHYSICAL	| \
 	 FM_FD_ERR_SIZE | FM_FD_ERR_CLS_DISCARD | \
 	 FM_FD_ERR_EXTRACTION | FM_FD_ERR_NO_SCHEME	| \
 	 FM_FD_ERR_PRS_TIMEOUT | FM_FD_ERR_PRS_ILL_INSTRUCT | \
 	 FM_FD_ERR_PRS_HDR_ERR)
 
-#define FM_FD_STAT_TX_ERRORS \
+#घोषणा FM_FD_STAT_TX_ERRORS \
 	(FM_FD_ERR_UNSUPPORTED_FORMAT | \
 	 FM_FD_ERR_LENGTH | FM_FD_ERR_DMA)
 
-#define DPAA_MSG_DEFAULT (NETIF_MSG_DRV | NETIF_MSG_PROBE | \
+#घोषणा DPAA_MSG_DEFAULT (NETIF_MSG_DRV | NETIF_MSG_PROBE | \
 			  NETIF_MSG_LINK | NETIF_MSG_IFUP | \
 			  NETIF_MSG_IFDOWN | NETIF_MSG_HW)
 
-#define DPAA_INGRESS_CS_THRESHOLD 0x10000000
+#घोषणा DPAA_INGRESS_CS_THRESHOLD 0x10000000
 /* Ingress congestion threshold on FMan ports
  * The size in bytes of the ingress tail-drop threshold on FMan ports.
  * Traffic piling up above this value will be rejected by QMan and discarded
@@ -99,146 +100,146 @@ MODULE_PARM_DESC(tx_timeout, "The Tx timeout in ms");
  */
 
 /* Size in bytes of the FQ taildrop threshold */
-#define DPAA_FQ_TD 0x200000
+#घोषणा DPAA_FQ_TD 0x200000
 
-#define DPAA_CS_THRESHOLD_1G 0x06000000
+#घोषणा DPAA_CS_THRESHOLD_1G 0x06000000
 /* Egress congestion threshold on 1G ports, range 0x1000 .. 0x10000000
- * The size in bytes of the egress Congestion State notification threshold on
- * 1G ports. The 1G dTSECs can quite easily be flooded by cores doing Tx in a
+ * The size in bytes of the egress Congestion State notअगरication threshold on
+ * 1G ports. The 1G dTSECs can quite easily be flooded by cores करोing Tx in a
  * tight loop (e.g. by sending UDP datagrams at "while(1) speed"),
  * and the larger the frame size, the more acute the problem.
  * So we have to find a balance between these factors:
- * - avoiding the device staying congested for a prolonged time (risking
- *   the netdev watchdog to fire - see also the tx_timeout module param);
- * - affecting performance of protocols such as TCP, which otherwise
- *   behave well under the congestion notification mechanism;
- * - preventing the Tx cores from tightly-looping (as if the congestion
+ * - aव्योमing the device staying congested क्रम a proदीर्घed समय (risking
+ *   the netdev watchकरोg to fire - see also the tx_समयout module param);
+ * - affecting perक्रमmance of protocols such as TCP, which otherwise
+ *   behave well under the congestion notअगरication mechanism;
+ * - preventing the Tx cores from tightly-looping (as अगर the congestion
  *   threshold was too low to be effective);
- * - running out of memory if the CS threshold is set too high.
+ * - running out of memory अगर the CS threshold is set too high.
  */
 
-#define DPAA_CS_THRESHOLD_10G 0x10000000
-/* The size in bytes of the egress Congestion State notification threshold on
+#घोषणा DPAA_CS_THRESHOLD_10G 0x10000000
+/* The size in bytes of the egress Congestion State notअगरication threshold on
  * 10G ports, range 0x1000 .. 0x10000000
  */
 
 /* Largest value that the FQD's OAL field can hold */
-#define FSL_QMAN_MAX_OAL	127
+#घोषणा FSL_QMAN_MAX_OAL	127
 
-/* Default alignment for start of data in an Rx FD */
-#ifdef CONFIG_DPAA_ERRATUM_A050385
-/* aligning data start to 64 avoids DMA transaction splits, unless the buffer
+/* Default alignment क्रम start of data in an Rx FD */
+#अगर_घोषित CONFIG_DPAA_ERRATUM_A050385
+/* aligning data start to 64 aव्योमs DMA transaction splits, unless the buffer
  * is crossing a 4k page boundary
  */
-#define DPAA_FD_DATA_ALIGNMENT  (fman_has_errata_a050385() ? 64 : 16)
-/* aligning to 256 avoids DMA transaction splits caused by 4k page boundary
+#घोषणा DPAA_FD_DATA_ALIGNMENT  (fman_has_errata_a050385() ? 64 : 16)
+/* aligning to 256 aव्योमs DMA transaction splits caused by 4k page boundary
  * crossings; also, all SG fragments except the last must have a size multiple
- * of 256 to avoid DMA transaction splits
+ * of 256 to aव्योम DMA transaction splits
  */
-#define DPAA_A050385_ALIGN 256
-#define DPAA_FD_RX_DATA_ALIGNMENT (fman_has_errata_a050385() ? \
+#घोषणा DPAA_A050385_ALIGN 256
+#घोषणा DPAA_FD_RX_DATA_ALIGNMENT (fman_has_errata_a050385() ? \
 				   DPAA_A050385_ALIGN : 16)
-#else
-#define DPAA_FD_DATA_ALIGNMENT  16
-#define DPAA_FD_RX_DATA_ALIGNMENT DPAA_FD_DATA_ALIGNMENT
-#endif
+#अन्यथा
+#घोषणा DPAA_FD_DATA_ALIGNMENT  16
+#घोषणा DPAA_FD_RX_DATA_ALIGNMENT DPAA_FD_DATA_ALIGNMENT
+#पूर्ण_अगर
 
-/* The DPAA requires 256 bytes reserved and mapped for the SGT */
-#define DPAA_SGT_SIZE 256
+/* The DPAA requires 256 bytes reserved and mapped क्रम the SGT */
+#घोषणा DPAA_SGT_SIZE 256
 
-/* Values for the L3R field of the FM Parse Results
+/* Values क्रम the L3R field of the FM Parse Results
  */
 /* L3 Type field: First IP Present IPv4 */
-#define FM_L3_PARSE_RESULT_IPV4	0x8000
+#घोषणा FM_L3_PARSE_RESULT_IPV4	0x8000
 /* L3 Type field: First IP Present IPv6 */
-#define FM_L3_PARSE_RESULT_IPV6	0x4000
-/* Values for the L4R field of the FM Parse Results */
+#घोषणा FM_L3_PARSE_RESULT_IPV6	0x4000
+/* Values क्रम the L4R field of the FM Parse Results */
 /* L4 Type field: UDP */
-#define FM_L4_PARSE_RESULT_UDP	0x40
+#घोषणा FM_L4_PARSE_RESULT_UDP	0x40
 /* L4 Type field: TCP */
-#define FM_L4_PARSE_RESULT_TCP	0x20
+#घोषणा FM_L4_PARSE_RESULT_TCP	0x20
 
 /* FD status field indicating whether the FM Parser has attempted to validate
  * the L4 csum of the frame.
- * Note that having this bit set doesn't necessarily imply that the checksum
+ * Note that having this bit set करोesn't necessarily imply that the checksum
  * is valid. One would have to check the parse results to find that out.
  */
-#define FM_FD_STAT_L4CV         0x00000004
+#घोषणा FM_FD_STAT_L4CV         0x00000004
 
-#define DPAA_SGT_MAX_ENTRIES 16 /* maximum number of entries in SG Table */
-#define DPAA_BUFF_RELEASE_MAX 8 /* maximum number of buffers released at once */
+#घोषणा DPAA_SGT_MAX_ENTRIES 16 /* maximum number of entries in SG Table */
+#घोषणा DPAA_BUFF_RELEASE_MAX 8 /* maximum number of buffers released at once */
 
-#define FSL_DPAA_BPID_INV		0xff
-#define FSL_DPAA_ETH_MAX_BUF_COUNT	128
-#define FSL_DPAA_ETH_REFILL_THRESHOLD	80
+#घोषणा FSL_DPAA_BPID_INV		0xff
+#घोषणा FSL_DPAA_ETH_MAX_BUF_COUNT	128
+#घोषणा FSL_DPAA_ETH_REFILL_THRESHOLD	80
 
-#define DPAA_TX_PRIV_DATA_SIZE	16
-#define DPAA_PARSE_RESULTS_SIZE sizeof(struct fman_prs_result)
-#define DPAA_TIME_STAMP_SIZE 8
-#define DPAA_HASH_RESULTS_SIZE 8
-#define DPAA_HWA_SIZE (DPAA_PARSE_RESULTS_SIZE + DPAA_TIME_STAMP_SIZE \
+#घोषणा DPAA_TX_PRIV_DATA_SIZE	16
+#घोषणा DPAA_PARSE_RESULTS_SIZE माप(काष्ठा fman_prs_result)
+#घोषणा DPAA_TIME_STAMP_SIZE 8
+#घोषणा DPAA_HASH_RESULTS_SIZE 8
+#घोषणा DPAA_HWA_SIZE (DPAA_PARSE_RESULTS_SIZE + DPAA_TIME_STAMP_SIZE \
 		       + DPAA_HASH_RESULTS_SIZE)
-#define DPAA_RX_PRIV_DATA_DEFAULT_SIZE (DPAA_TX_PRIV_DATA_SIZE + \
+#घोषणा DPAA_RX_PRIV_DATA_DEFAULT_SIZE (DPAA_TX_PRIV_DATA_SIZE + \
 					XDP_PACKET_HEADROOM - DPAA_HWA_SIZE)
-#ifdef CONFIG_DPAA_ERRATUM_A050385
-#define DPAA_RX_PRIV_DATA_A050385_SIZE (DPAA_A050385_ALIGN - DPAA_HWA_SIZE)
-#define DPAA_RX_PRIV_DATA_SIZE (fman_has_errata_a050385() ? \
+#अगर_घोषित CONFIG_DPAA_ERRATUM_A050385
+#घोषणा DPAA_RX_PRIV_DATA_A050385_SIZE (DPAA_A050385_ALIGN - DPAA_HWA_SIZE)
+#घोषणा DPAA_RX_PRIV_DATA_SIZE (fman_has_errata_a050385() ? \
 				DPAA_RX_PRIV_DATA_A050385_SIZE : \
 				DPAA_RX_PRIV_DATA_DEFAULT_SIZE)
-#else
-#define DPAA_RX_PRIV_DATA_SIZE DPAA_RX_PRIV_DATA_DEFAULT_SIZE
-#endif
+#अन्यथा
+#घोषणा DPAA_RX_PRIV_DATA_SIZE DPAA_RX_PRIV_DATA_DEFAULT_SIZE
+#पूर्ण_अगर
 
-#define DPAA_ETH_PCD_RXQ_NUM	128
+#घोषणा DPAA_ETH_PCD_RXQ_NUM	128
 
-#define DPAA_ENQUEUE_RETRIES	100000
+#घोषणा DPAA_ENQUEUE_RETRIES	100000
 
-enum port_type {RX, TX};
+क्रमागत port_type अणुRX, TXपूर्ण;
 
-struct fm_port_fqs {
-	struct dpaa_fq *tx_defq;
-	struct dpaa_fq *tx_errq;
-	struct dpaa_fq *rx_defq;
-	struct dpaa_fq *rx_errq;
-	struct dpaa_fq *rx_pcdq;
-};
+काष्ठा fm_port_fqs अणु
+	काष्ठा dpaa_fq *tx_defq;
+	काष्ठा dpaa_fq *tx_errq;
+	काष्ठा dpaa_fq *rx_defq;
+	काष्ठा dpaa_fq *rx_errq;
+	काष्ठा dpaa_fq *rx_pcdq;
+पूर्ण;
 
 /* All the dpa bps in use at any moment */
-static struct dpaa_bp *dpaa_bp_array[BM_MAX_NUM_OF_POOLS];
+अटल काष्ठा dpaa_bp *dpaa_bp_array[BM_MAX_NUM_OF_POOLS];
 
-#define DPAA_BP_RAW_SIZE 4096
+#घोषणा DPAA_BP_RAW_SIZE 4096
 
-#ifdef CONFIG_DPAA_ERRATUM_A050385
-#define dpaa_bp_size(raw_size) (SKB_WITH_OVERHEAD(raw_size) & \
+#अगर_घोषित CONFIG_DPAA_ERRATUM_A050385
+#घोषणा dpaa_bp_size(raw_size) (SKB_WITH_OVERHEAD(raw_size) & \
 				~(DPAA_A050385_ALIGN - 1))
-#else
-#define dpaa_bp_size(raw_size) SKB_WITH_OVERHEAD(raw_size)
-#endif
+#अन्यथा
+#घोषणा dpaa_bp_size(raw_size) SKB_WITH_OVERHEAD(raw_size)
+#पूर्ण_अगर
 
-static int dpaa_max_frm;
+अटल पूर्णांक dpaa_max_frm;
 
-static int dpaa_rx_extra_headroom;
+अटल पूर्णांक dpaa_rx_extra_headroom;
 
-#define dpaa_get_max_mtu()	\
+#घोषणा dpaa_get_max_mtu()	\
 	(dpaa_max_frm - (VLAN_ETH_HLEN + ETH_FCS_LEN))
 
-static int dpaa_netdev_init(struct net_device *net_dev,
-			    const struct net_device_ops *dpaa_ops,
-			    u16 tx_timeout)
-{
-	struct dpaa_priv *priv = netdev_priv(net_dev);
-	struct device *dev = net_dev->dev.parent;
-	struct dpaa_percpu_priv *percpu_priv;
-	const u8 *mac_addr;
-	int i, err;
+अटल पूर्णांक dpaa_netdev_init(काष्ठा net_device *net_dev,
+			    स्थिर काष्ठा net_device_ops *dpaa_ops,
+			    u16 tx_समयout)
+अणु
+	काष्ठा dpaa_priv *priv = netdev_priv(net_dev);
+	काष्ठा device *dev = net_dev->dev.parent;
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	स्थिर u8 *mac_addr;
+	पूर्णांक i, err;
 
-	/* Although we access another CPU's private data here
-	 * we do it at initialization so it is safe
+	/* Although we access another CPU's निजी data here
+	 * we करो it at initialization so it is safe
 	 */
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		percpu_priv = per_cpu_ptr(priv->percpu_priv, i);
 		percpu_priv->net_dev = net_dev;
-	}
+	पूर्ण
 
 	net_dev->netdev_ops = dpaa_ops;
 	mac_addr = priv->mac_dev->addr;
@@ -253,612 +254,612 @@ static int dpaa_netdev_init(struct net_device *net_dev,
 				 NETIF_F_LLTX | NETIF_F_RXHASH);
 
 	net_dev->hw_features |= NETIF_F_SG | NETIF_F_HIGHDMA;
-	/* The kernels enables GSO automatically, if we declare NETIF_F_SG.
-	 * For conformity, we'll still declare GSO explicitly.
+	/* The kernels enables GSO स्वतःmatically, अगर we declare NETIF_F_SG.
+	 * For conक्रमmity, we'll still declare GSO explicitly.
 	 */
 	net_dev->features |= NETIF_F_GSO;
 	net_dev->features |= NETIF_F_RXCSUM;
 
 	net_dev->priv_flags |= IFF_LIVE_ADDR_CHANGE;
-	/* we do not want shared skbs on TX */
+	/* we करो not want shared skbs on TX */
 	net_dev->priv_flags &= ~IFF_TX_SKB_SHARING;
 
 	net_dev->features |= net_dev->hw_features;
 	net_dev->vlan_features = net_dev->features;
 
-	if (is_valid_ether_addr(mac_addr)) {
-		memcpy(net_dev->perm_addr, mac_addr, net_dev->addr_len);
-		memcpy(net_dev->dev_addr, mac_addr, net_dev->addr_len);
-	} else {
-		eth_hw_addr_random(net_dev);
+	अगर (is_valid_ether_addr(mac_addr)) अणु
+		स_नकल(net_dev->perm_addr, mac_addr, net_dev->addr_len);
+		स_नकल(net_dev->dev_addr, mac_addr, net_dev->addr_len);
+	पूर्ण अन्यथा अणु
+		eth_hw_addr_अक्रमom(net_dev);
 		err = priv->mac_dev->change_addr(priv->mac_dev->fman_mac,
 			(enet_addr_t *)net_dev->dev_addr);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "Failed to set random MAC address\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		dev_info(dev, "Using random MAC address: %pM\n",
 			 net_dev->dev_addr);
-	}
+	पूर्ण
 
 	net_dev->ethtool_ops = &dpaa_ethtool_ops;
 
 	net_dev->needed_headroom = priv->tx_headroom;
-	net_dev->watchdog_timeo = msecs_to_jiffies(tx_timeout);
+	net_dev->watchकरोg_समयo = msecs_to_jअगरfies(tx_समयout);
 
 	/* start without the RUNNING flag, phylib controls it later */
-	netif_carrier_off(net_dev);
+	netअगर_carrier_off(net_dev);
 
-	err = register_netdev(net_dev);
-	if (err < 0) {
+	err = रेजिस्टर_netdev(net_dev);
+	अगर (err < 0) अणु
 		dev_err(dev, "register_netdev() = %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dpaa_stop(struct net_device *net_dev)
-{
-	struct mac_device *mac_dev;
-	struct dpaa_priv *priv;
-	int i, err, error;
+अटल पूर्णांक dpaa_stop(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा mac_device *mac_dev;
+	काष्ठा dpaa_priv *priv;
+	पूर्णांक i, err, error;
 
 	priv = netdev_priv(net_dev);
 	mac_dev = priv->mac_dev;
 
-	netif_tx_stop_all_queues(net_dev);
-	/* Allow the Fman (Tx) port to process in-flight frames before we
-	 * try switching it off.
+	netअगर_tx_stop_all_queues(net_dev);
+	/* Allow the Fman (Tx) port to process in-flight frames beक्रमe we
+	 * try चयनing it off.
 	 */
 	msleep(200);
 
 	err = mac_dev->stop(mac_dev);
-	if (err < 0)
-		netif_err(priv, ifdown, net_dev, "mac_dev->stop() = %d\n",
+	अगर (err < 0)
+		netअगर_err(priv, अगरकरोwn, net_dev, "mac_dev->stop() = %d\n",
 			  err);
 
-	for (i = 0; i < ARRAY_SIZE(mac_dev->port); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(mac_dev->port); i++) अणु
 		error = fman_port_disable(mac_dev->port[i]);
-		if (error)
+		अगर (error)
 			err = error;
-	}
+	पूर्ण
 
-	if (net_dev->phydev)
+	अगर (net_dev->phydev)
 		phy_disconnect(net_dev->phydev);
-	net_dev->phydev = NULL;
+	net_dev->phydev = शून्य;
 
 	msleep(200);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void dpaa_tx_timeout(struct net_device *net_dev, unsigned int txqueue)
-{
-	struct dpaa_percpu_priv *percpu_priv;
-	const struct dpaa_priv	*priv;
+अटल व्योम dpaa_tx_समयout(काष्ठा net_device *net_dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	स्थिर काष्ठा dpaa_priv	*priv;
 
 	priv = netdev_priv(net_dev);
 	percpu_priv = this_cpu_ptr(priv->percpu_priv);
 
-	netif_crit(priv, timer, net_dev, "Transmit timeout latency: %u ms\n",
-		   jiffies_to_msecs(jiffies - dev_trans_start(net_dev)));
+	netअगर_crit(priv, समयr, net_dev, "Transmit timeout latency: %u ms\n",
+		   jअगरfies_to_msecs(jअगरfies - dev_trans_start(net_dev)));
 
 	percpu_priv->stats.tx_errors++;
-}
+पूर्ण
 
-/* Calculates the statistics for the given device by adding the statistics
+/* Calculates the statistics क्रम the given device by adding the statistics
  * collected by each CPU.
  */
-static void dpaa_get_stats64(struct net_device *net_dev,
-			     struct rtnl_link_stats64 *s)
-{
-	int numstats = sizeof(struct rtnl_link_stats64) / sizeof(u64);
-	struct dpaa_priv *priv = netdev_priv(net_dev);
-	struct dpaa_percpu_priv *percpu_priv;
+अटल व्योम dpaa_get_stats64(काष्ठा net_device *net_dev,
+			     काष्ठा rtnl_link_stats64 *s)
+अणु
+	पूर्णांक numstats = माप(काष्ठा rtnl_link_stats64) / माप(u64);
+	काष्ठा dpaa_priv *priv = netdev_priv(net_dev);
+	काष्ठा dpaa_percpu_priv *percpu_priv;
 	u64 *netstats = (u64 *)s;
 	u64 *cpustats;
-	int i, j;
+	पूर्णांक i, j;
 
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		percpu_priv = per_cpu_ptr(priv->percpu_priv, i);
 
 		cpustats = (u64 *)&percpu_priv->stats;
 
 		/* add stats from all CPUs */
-		for (j = 0; j < numstats; j++)
+		क्रम (j = 0; j < numstats; j++)
 			netstats[j] += cpustats[j];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int dpaa_setup_tc(struct net_device *net_dev, enum tc_setup_type type,
-			 void *type_data)
-{
-	struct dpaa_priv *priv = netdev_priv(net_dev);
-	struct tc_mqprio_qopt *mqprio = type_data;
+अटल पूर्णांक dpaa_setup_tc(काष्ठा net_device *net_dev, क्रमागत tc_setup_type type,
+			 व्योम *type_data)
+अणु
+	काष्ठा dpaa_priv *priv = netdev_priv(net_dev);
+	काष्ठा tc_mqprio_qopt *mqprio = type_data;
 	u8 num_tc;
-	int i;
+	पूर्णांक i;
 
-	if (type != TC_SETUP_QDISC_MQPRIO)
-		return -EOPNOTSUPP;
+	अगर (type != TC_SETUP_QDISC_MQPRIO)
+		वापस -EOPNOTSUPP;
 
 	mqprio->hw = TC_MQPRIO_HW_OFFLOAD_TCS;
 	num_tc = mqprio->num_tc;
 
-	if (num_tc == priv->num_tc)
-		return 0;
+	अगर (num_tc == priv->num_tc)
+		वापस 0;
 
-	if (!num_tc) {
+	अगर (!num_tc) अणु
 		netdev_reset_tc(net_dev);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (num_tc > DPAA_TC_NUM) {
+	अगर (num_tc > DPAA_TC_NUM) अणु
 		netdev_err(net_dev, "Too many traffic classes: max %d supported.\n",
 			   DPAA_TC_NUM);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	netdev_set_num_tc(net_dev, num_tc);
 
-	for (i = 0; i < num_tc; i++)
+	क्रम (i = 0; i < num_tc; i++)
 		netdev_set_tc_queue(net_dev, i, DPAA_TC_TXQ_NUM,
 				    i * DPAA_TC_TXQ_NUM);
 
 out:
 	priv->num_tc = num_tc ? : 1;
-	netif_set_real_num_tx_queues(net_dev, priv->num_tc * DPAA_TC_TXQ_NUM);
-	return 0;
-}
+	netअगर_set_real_num_tx_queues(net_dev, priv->num_tc * DPAA_TC_TXQ_NUM);
+	वापस 0;
+पूर्ण
 
-static struct mac_device *dpaa_mac_dev_get(struct platform_device *pdev)
-{
-	struct dpaa_eth_data *eth_data;
-	struct device *dpaa_dev;
-	struct mac_device *mac_dev;
+अटल काष्ठा mac_device *dpaa_mac_dev_get(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dpaa_eth_data *eth_data;
+	काष्ठा device *dpaa_dev;
+	काष्ठा mac_device *mac_dev;
 
 	dpaa_dev = &pdev->dev;
-	eth_data = dpaa_dev->platform_data;
-	if (!eth_data) {
+	eth_data = dpaa_dev->platक्रमm_data;
+	अगर (!eth_data) अणु
 		dev_err(dpaa_dev, "eth_data missing\n");
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 	mac_dev = eth_data->mac_dev;
-	if (!mac_dev) {
+	अगर (!mac_dev) अणु
 		dev_err(dpaa_dev, "mac_dev missing\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return mac_dev;
-}
+	वापस mac_dev;
+पूर्ण
 
-static int dpaa_set_mac_address(struct net_device *net_dev, void *addr)
-{
-	const struct dpaa_priv *priv;
-	struct mac_device *mac_dev;
-	struct sockaddr old_addr;
-	int err;
+अटल पूर्णांक dpaa_set_mac_address(काष्ठा net_device *net_dev, व्योम *addr)
+अणु
+	स्थिर काष्ठा dpaa_priv *priv;
+	काष्ठा mac_device *mac_dev;
+	काष्ठा sockaddr old_addr;
+	पूर्णांक err;
 
 	priv = netdev_priv(net_dev);
 
-	memcpy(old_addr.sa_data, net_dev->dev_addr,  ETH_ALEN);
+	स_नकल(old_addr.sa_data, net_dev->dev_addr,  ETH_ALEN);
 
 	err = eth_mac_addr(net_dev, addr);
-	if (err < 0) {
-		netif_err(priv, drv, net_dev, "eth_mac_addr() = %d\n", err);
-		return err;
-	}
+	अगर (err < 0) अणु
+		netअगर_err(priv, drv, net_dev, "eth_mac_addr() = %d\n", err);
+		वापस err;
+	पूर्ण
 
 	mac_dev = priv->mac_dev;
 
 	err = mac_dev->change_addr(mac_dev->fman_mac,
 				   (enet_addr_t *)net_dev->dev_addr);
-	if (err < 0) {
-		netif_err(priv, drv, net_dev, "mac_dev->change_addr() = %d\n",
+	अगर (err < 0) अणु
+		netअगर_err(priv, drv, net_dev, "mac_dev->change_addr() = %d\n",
 			  err);
 		/* reverting to previous address */
 		eth_mac_addr(net_dev, &old_addr);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dpaa_set_rx_mode(struct net_device *net_dev)
-{
-	const struct dpaa_priv	*priv;
-	int err;
+अटल व्योम dpaa_set_rx_mode(काष्ठा net_device *net_dev)
+अणु
+	स्थिर काष्ठा dpaa_priv	*priv;
+	पूर्णांक err;
 
 	priv = netdev_priv(net_dev);
 
-	if (!!(net_dev->flags & IFF_PROMISC) != priv->mac_dev->promisc) {
+	अगर (!!(net_dev->flags & IFF_PROMISC) != priv->mac_dev->promisc) अणु
 		priv->mac_dev->promisc = !priv->mac_dev->promisc;
 		err = priv->mac_dev->set_promisc(priv->mac_dev->fman_mac,
 						 priv->mac_dev->promisc);
-		if (err < 0)
-			netif_err(priv, drv, net_dev,
+		अगर (err < 0)
+			netअगर_err(priv, drv, net_dev,
 				  "mac_dev->set_promisc() = %d\n",
 				  err);
-	}
+	पूर्ण
 
-	if (!!(net_dev->flags & IFF_ALLMULTI) != priv->mac_dev->allmulti) {
+	अगर (!!(net_dev->flags & IFF_ALLMULTI) != priv->mac_dev->allmulti) अणु
 		priv->mac_dev->allmulti = !priv->mac_dev->allmulti;
 		err = priv->mac_dev->set_allmulti(priv->mac_dev->fman_mac,
 						  priv->mac_dev->allmulti);
-		if (err < 0)
-			netif_err(priv, drv, net_dev,
+		अगर (err < 0)
+			netअगर_err(priv, drv, net_dev,
 				  "mac_dev->set_allmulti() = %d\n",
 				  err);
-	}
+	पूर्ण
 
 	err = priv->mac_dev->set_multi(net_dev, priv->mac_dev);
-	if (err < 0)
-		netif_err(priv, drv, net_dev, "mac_dev->set_multi() = %d\n",
+	अगर (err < 0)
+		netअगर_err(priv, drv, net_dev, "mac_dev->set_multi() = %d\n",
 			  err);
-}
+पूर्ण
 
-static struct dpaa_bp *dpaa_bpid2pool(int bpid)
-{
-	if (WARN_ON(bpid < 0 || bpid >= BM_MAX_NUM_OF_POOLS))
-		return NULL;
+अटल काष्ठा dpaa_bp *dpaa_bpid2pool(पूर्णांक bpid)
+अणु
+	अगर (WARN_ON(bpid < 0 || bpid >= BM_MAX_NUM_OF_POOLS))
+		वापस शून्य;
 
-	return dpaa_bp_array[bpid];
-}
+	वापस dpaa_bp_array[bpid];
+पूर्ण
 
-/* checks if this bpool is already allocated */
-static bool dpaa_bpid2pool_use(int bpid)
-{
-	if (dpaa_bpid2pool(bpid)) {
+/* checks अगर this bpool is alपढ़ोy allocated */
+अटल bool dpaa_bpid2pool_use(पूर्णांक bpid)
+अणु
+	अगर (dpaa_bpid2pool(bpid)) अणु
 		refcount_inc(&dpaa_bp_array[bpid]->refs);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* called only once per bpid by dpaa_bp_alloc_pool() */
-static void dpaa_bpid2pool_map(int bpid, struct dpaa_bp *dpaa_bp)
-{
+अटल व्योम dpaa_bpid2pool_map(पूर्णांक bpid, काष्ठा dpaa_bp *dpaa_bp)
+अणु
 	dpaa_bp_array[bpid] = dpaa_bp;
 	refcount_set(&dpaa_bp->refs, 1);
-}
+पूर्ण
 
-static int dpaa_bp_alloc_pool(struct dpaa_bp *dpaa_bp)
-{
-	int err;
+अटल पूर्णांक dpaa_bp_alloc_pool(काष्ठा dpaa_bp *dpaa_bp)
+अणु
+	पूर्णांक err;
 
-	if (dpaa_bp->size == 0 || dpaa_bp->config_count == 0) {
+	अगर (dpaa_bp->size == 0 || dpaa_bp->config_count == 0) अणु
 		pr_err("%s: Buffer pool is not properly initialized! Missing size or initial number of buffers\n",
 		       __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* If the pool is already specified, we only create one per bpid */
-	if (dpaa_bp->bpid != FSL_DPAA_BPID_INV &&
+	/* If the pool is alपढ़ोy specअगरied, we only create one per bpid */
+	अगर (dpaa_bp->bpid != FSL_DPAA_BPID_INV &&
 	    dpaa_bpid2pool_use(dpaa_bp->bpid))
-		return 0;
+		वापस 0;
 
-	if (dpaa_bp->bpid == FSL_DPAA_BPID_INV) {
+	अगर (dpaa_bp->bpid == FSL_DPAA_BPID_INV) अणु
 		dpaa_bp->pool = bman_new_pool();
-		if (!dpaa_bp->pool) {
+		अगर (!dpaa_bp->pool) अणु
 			pr_err("%s: bman_new_pool() failed\n",
 			       __func__);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		dpaa_bp->bpid = (u8)bman_get_bpid(dpaa_bp->pool);
-	}
+	पूर्ण
 
-	if (dpaa_bp->seed_cb) {
+	अगर (dpaa_bp->seed_cb) अणु
 		err = dpaa_bp->seed_cb(dpaa_bp);
-		if (err)
-			goto pool_seed_failed;
-	}
+		अगर (err)
+			जाओ pool_seed_failed;
+	पूर्ण
 
 	dpaa_bpid2pool_map(dpaa_bp->bpid, dpaa_bp);
 
-	return 0;
+	वापस 0;
 
 pool_seed_failed:
 	pr_err("%s: pool seeding failed\n", __func__);
-	bman_free_pool(dpaa_bp->pool);
+	bman_मुक्त_pool(dpaa_bp->pool);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* remove and free all the buffers from the given buffer pool */
-static void dpaa_bp_drain(struct dpaa_bp *bp)
-{
+/* हटाओ and मुक्त all the buffers from the given buffer pool */
+अटल व्योम dpaa_bp_drain(काष्ठा dpaa_bp *bp)
+अणु
 	u8 num = 8;
-	int ret;
+	पूर्णांक ret;
 
-	do {
-		struct bm_buffer bmb[8];
-		int i;
+	करो अणु
+		काष्ठा bm_buffer bmb[8];
+		पूर्णांक i;
 
 		ret = bman_acquire(bp->pool, bmb, num);
-		if (ret < 0) {
-			if (num == 8) {
+		अगर (ret < 0) अणु
+			अगर (num == 8) अणु
 				/* we have less than 8 buffers left;
 				 * drain them one by one
 				 */
 				num = 1;
 				ret = 1;
-				continue;
-			} else {
+				जारी;
+			पूर्ण अन्यथा अणु
 				/* Pool is fully drained */
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (bp->free_buf_cb)
-			for (i = 0; i < num; i++)
-				bp->free_buf_cb(bp, &bmb[i]);
-	} while (ret > 0);
-}
+		अगर (bp->मुक्त_buf_cb)
+			क्रम (i = 0; i < num; i++)
+				bp->मुक्त_buf_cb(bp, &bmb[i]);
+	पूर्ण जबतक (ret > 0);
+पूर्ण
 
-static void dpaa_bp_free(struct dpaa_bp *dpaa_bp)
-{
-	struct dpaa_bp *bp = dpaa_bpid2pool(dpaa_bp->bpid);
+अटल व्योम dpaa_bp_मुक्त(काष्ठा dpaa_bp *dpaa_bp)
+अणु
+	काष्ठा dpaa_bp *bp = dpaa_bpid2pool(dpaa_bp->bpid);
 
-	/* the mapping between bpid and dpaa_bp is done very late in the
-	 * allocation procedure; if something failed before the mapping, the bp
-	 * was not configured, therefore we don't need the below instructions
+	/* the mapping between bpid and dpaa_bp is करोne very late in the
+	 * allocation procedure; अगर something failed beक्रमe the mapping, the bp
+	 * was not configured, thereक्रमe we करोn't need the below inकाष्ठाions
 	 */
-	if (!bp)
-		return;
+	अगर (!bp)
+		वापस;
 
-	if (!refcount_dec_and_test(&bp->refs))
-		return;
+	अगर (!refcount_dec_and_test(&bp->refs))
+		वापस;
 
-	if (bp->free_buf_cb)
+	अगर (bp->मुक्त_buf_cb)
 		dpaa_bp_drain(bp);
 
-	dpaa_bp_array[bp->bpid] = NULL;
-	bman_free_pool(bp->pool);
-}
+	dpaa_bp_array[bp->bpid] = शून्य;
+	bman_मुक्त_pool(bp->pool);
+पूर्ण
 
-static void dpaa_bps_free(struct dpaa_priv *priv)
-{
-	dpaa_bp_free(priv->dpaa_bp);
-}
+अटल व्योम dpaa_bps_मुक्त(काष्ठा dpaa_priv *priv)
+अणु
+	dpaa_bp_मुक्त(priv->dpaa_bp);
+पूर्ण
 
-/* Use multiple WQs for FQ assignment:
+/* Use multiple WQs क्रम FQ assignment:
  *	- Tx Confirmation queues go to WQ1.
  *	- Rx Error and Tx Error queues go to WQ5 (giving them a better chance
- *	  to be scheduled, in case there are many more FQs in WQ6).
+ *	  to be scheduled, in हाल there are many more FQs in WQ6).
  *	- Rx Default goes to WQ6.
- *	- Tx queues go to different WQs depending on their priority. Equal
+ *	- Tx queues go to dअगरferent WQs depending on their priority. Equal
  *	  chunks of NR_CPUS queues go to WQ6 (lowest priority), WQ2, WQ1 and
  *	  WQ0 (highest priority).
- * This ensures that Tx-confirmed buffers are timely released. In particular,
- * it avoids congestion on the Tx Confirm FQs, which can pile up PFDRs if they
- * are greatly outnumbered by other FQs in the system, while
+ * This ensures that Tx-confirmed buffers are समयly released. In particular,
+ * it aव्योमs congestion on the Tx Confirm FQs, which can pile up PFDRs अगर they
+ * are greatly outnumbered by other FQs in the प्रणाली, जबतक
  * dequeue scheduling is round-robin.
  */
-static inline void dpaa_assign_wq(struct dpaa_fq *fq, int idx)
-{
-	switch (fq->fq_type) {
-	case FQ_TYPE_TX_CONFIRM:
-	case FQ_TYPE_TX_CONF_MQ:
+अटल अंतरभूत व्योम dpaa_assign_wq(काष्ठा dpaa_fq *fq, पूर्णांक idx)
+अणु
+	चयन (fq->fq_type) अणु
+	हाल FQ_TYPE_TX_CONFIRM:
+	हाल FQ_TYPE_TX_CONF_MQ:
 		fq->wq = 1;
-		break;
-	case FQ_TYPE_RX_ERROR:
-	case FQ_TYPE_TX_ERROR:
+		अवरोध;
+	हाल FQ_TYPE_RX_ERROR:
+	हाल FQ_TYPE_TX_ERROR:
 		fq->wq = 5;
-		break;
-	case FQ_TYPE_RX_DEFAULT:
-	case FQ_TYPE_RX_PCD:
+		अवरोध;
+	हाल FQ_TYPE_RX_DEFAULT:
+	हाल FQ_TYPE_RX_PCD:
 		fq->wq = 6;
-		break;
-	case FQ_TYPE_TX:
-		switch (idx / DPAA_TC_TXQ_NUM) {
-		case 0:
-			/* Low priority (best effort) */
+		अवरोध;
+	हाल FQ_TYPE_TX:
+		चयन (idx / DPAA_TC_TXQ_NUM) अणु
+		हाल 0:
+			/* Low priority (best efक्रमt) */
 			fq->wq = 6;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			/* Medium priority */
 			fq->wq = 2;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			/* High priority */
 			fq->wq = 1;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			/* Very high priority */
 			fq->wq = 0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WARN(1, "Too many TX FQs: more than %d!\n",
 			     DPAA_ETH_TXQ_NUM);
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		WARN(1, "Invalid FQ type %d for FQID %d!\n",
 		     fq->fq_type, fq->fqid);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct dpaa_fq *dpaa_fq_alloc(struct device *dev,
+अटल काष्ठा dpaa_fq *dpaa_fq_alloc(काष्ठा device *dev,
 				     u32 start, u32 count,
-				     struct list_head *list,
-				     enum dpaa_fq_type fq_type)
-{
-	struct dpaa_fq *dpaa_fq;
-	int i;
+				     काष्ठा list_head *list,
+				     क्रमागत dpaa_fq_type fq_type)
+अणु
+	काष्ठा dpaa_fq *dpaa_fq;
+	पूर्णांक i;
 
-	dpaa_fq = devm_kcalloc(dev, count, sizeof(*dpaa_fq),
+	dpaa_fq = devm_kसुस्मृति(dev, count, माप(*dpaa_fq),
 			       GFP_KERNEL);
-	if (!dpaa_fq)
-		return NULL;
+	अगर (!dpaa_fq)
+		वापस शून्य;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		dpaa_fq[i].fq_type = fq_type;
 		dpaa_fq[i].fqid = start ? start + i : 0;
 		list_add_tail(&dpaa_fq[i].list, list);
-	}
+	पूर्ण
 
-	for (i = 0; i < count; i++)
+	क्रम (i = 0; i < count; i++)
 		dpaa_assign_wq(dpaa_fq + i, i);
 
-	return dpaa_fq;
-}
+	वापस dpaa_fq;
+पूर्ण
 
-static int dpaa_alloc_all_fqs(struct device *dev, struct list_head *list,
-			      struct fm_port_fqs *port_fqs)
-{
-	struct dpaa_fq *dpaa_fq;
+अटल पूर्णांक dpaa_alloc_all_fqs(काष्ठा device *dev, काष्ठा list_head *list,
+			      काष्ठा fm_port_fqs *port_fqs)
+अणु
+	काष्ठा dpaa_fq *dpaa_fq;
 	u32 fq_base, fq_base_aligned, i;
 
 	dpaa_fq = dpaa_fq_alloc(dev, 0, 1, list, FQ_TYPE_RX_ERROR);
-	if (!dpaa_fq)
-		goto fq_alloc_failed;
+	अगर (!dpaa_fq)
+		जाओ fq_alloc_failed;
 
 	port_fqs->rx_errq = &dpaa_fq[0];
 
 	dpaa_fq = dpaa_fq_alloc(dev, 0, 1, list, FQ_TYPE_RX_DEFAULT);
-	if (!dpaa_fq)
-		goto fq_alloc_failed;
+	अगर (!dpaa_fq)
+		जाओ fq_alloc_failed;
 
 	port_fqs->rx_defq = &dpaa_fq[0];
 
-	/* the PCD FQIDs range needs to be aligned for correct operation */
-	if (qman_alloc_fqid_range(&fq_base, 2 * DPAA_ETH_PCD_RXQ_NUM))
-		goto fq_alloc_failed;
+	/* the PCD FQIDs range needs to be aligned क्रम correct operation */
+	अगर (qman_alloc_fqid_range(&fq_base, 2 * DPAA_ETH_PCD_RXQ_NUM))
+		जाओ fq_alloc_failed;
 
 	fq_base_aligned = ALIGN(fq_base, DPAA_ETH_PCD_RXQ_NUM);
 
-	for (i = fq_base; i < fq_base_aligned; i++)
+	क्रम (i = fq_base; i < fq_base_aligned; i++)
 		qman_release_fqid(i);
 
-	for (i = fq_base_aligned + DPAA_ETH_PCD_RXQ_NUM;
+	क्रम (i = fq_base_aligned + DPAA_ETH_PCD_RXQ_NUM;
 	     i < (fq_base + 2 * DPAA_ETH_PCD_RXQ_NUM); i++)
 		qman_release_fqid(i);
 
 	dpaa_fq = dpaa_fq_alloc(dev, fq_base_aligned, DPAA_ETH_PCD_RXQ_NUM,
 				list, FQ_TYPE_RX_PCD);
-	if (!dpaa_fq)
-		goto fq_alloc_failed;
+	अगर (!dpaa_fq)
+		जाओ fq_alloc_failed;
 
 	port_fqs->rx_pcdq = &dpaa_fq[0];
 
-	if (!dpaa_fq_alloc(dev, 0, DPAA_ETH_TXQ_NUM, list, FQ_TYPE_TX_CONF_MQ))
-		goto fq_alloc_failed;
+	अगर (!dpaa_fq_alloc(dev, 0, DPAA_ETH_TXQ_NUM, list, FQ_TYPE_TX_CONF_MQ))
+		जाओ fq_alloc_failed;
 
 	dpaa_fq = dpaa_fq_alloc(dev, 0, 1, list, FQ_TYPE_TX_ERROR);
-	if (!dpaa_fq)
-		goto fq_alloc_failed;
+	अगर (!dpaa_fq)
+		जाओ fq_alloc_failed;
 
 	port_fqs->tx_errq = &dpaa_fq[0];
 
 	dpaa_fq = dpaa_fq_alloc(dev, 0, 1, list, FQ_TYPE_TX_CONFIRM);
-	if (!dpaa_fq)
-		goto fq_alloc_failed;
+	अगर (!dpaa_fq)
+		जाओ fq_alloc_failed;
 
 	port_fqs->tx_defq = &dpaa_fq[0];
 
-	if (!dpaa_fq_alloc(dev, 0, DPAA_ETH_TXQ_NUM, list, FQ_TYPE_TX))
-		goto fq_alloc_failed;
+	अगर (!dpaa_fq_alloc(dev, 0, DPAA_ETH_TXQ_NUM, list, FQ_TYPE_TX))
+		जाओ fq_alloc_failed;
 
-	return 0;
+	वापस 0;
 
 fq_alloc_failed:
 	dev_err(dev, "dpaa_fq_alloc() failed\n");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static u32 rx_pool_channel;
-static DEFINE_SPINLOCK(rx_pool_channel_init);
+अटल u32 rx_pool_channel;
+अटल DEFINE_SPINLOCK(rx_pool_channel_init);
 
-static int dpaa_get_channel(void)
-{
+अटल पूर्णांक dpaa_get_channel(व्योम)
+अणु
 	spin_lock(&rx_pool_channel_init);
-	if (!rx_pool_channel) {
+	अगर (!rx_pool_channel) अणु
 		u32 pool;
-		int ret;
+		पूर्णांक ret;
 
 		ret = qman_alloc_pool(&pool);
 
-		if (!ret)
+		अगर (!ret)
 			rx_pool_channel = pool;
-	}
+	पूर्ण
 	spin_unlock(&rx_pool_channel_init);
-	if (!rx_pool_channel)
-		return -ENOMEM;
-	return rx_pool_channel;
-}
+	अगर (!rx_pool_channel)
+		वापस -ENOMEM;
+	वापस rx_pool_channel;
+पूर्ण
 
-static void dpaa_release_channel(void)
-{
+अटल व्योम dpaa_release_channel(व्योम)
+अणु
 	qman_release_pool(rx_pool_channel);
-}
+पूर्ण
 
-static void dpaa_eth_add_channel(u16 channel, struct device *dev)
-{
+अटल व्योम dpaa_eth_add_channel(u16 channel, काष्ठा device *dev)
+अणु
 	u32 pool = QM_SDQCR_CHANNELS_POOL_CONV(channel);
-	const cpumask_t *cpus = qman_affine_cpus();
-	struct qman_portal *portal;
-	int cpu;
+	स्थिर cpumask_t *cpus = qman_affine_cpus();
+	काष्ठा qman_portal *portal;
+	पूर्णांक cpu;
 
-	for_each_cpu_and(cpu, cpus, cpu_online_mask) {
+	क्रम_each_cpu_and(cpu, cpus, cpu_online_mask) अणु
 		portal = qman_get_affine_portal(cpu);
-		qman_p_static_dequeue_add(portal, pool);
+		qman_p_अटल_dequeue_add(portal, pool);
 		qman_start_using_portal(portal, dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Congestion group state change notification callback.
- * Stops the device's egress queues while they are congested and
- * wakes them upon exiting congested state.
+/* Congestion group state change notअगरication callback.
+ * Stops the device's egress queues जबतक they are congested and
+ * wakes them upon निकासing congested state.
  * Also updates some CGR-related stats.
  */
-static void dpaa_eth_cgscn(struct qman_portal *qm, struct qman_cgr *cgr,
-			   int congested)
-{
-	struct dpaa_priv *priv = (struct dpaa_priv *)container_of(cgr,
-		struct dpaa_priv, cgr_data.cgr);
+अटल व्योम dpaa_eth_cgscn(काष्ठा qman_portal *qm, काष्ठा qman_cgr *cgr,
+			   पूर्णांक congested)
+अणु
+	काष्ठा dpaa_priv *priv = (काष्ठा dpaa_priv *)container_of(cgr,
+		काष्ठा dpaa_priv, cgr_data.cgr);
 
-	if (congested) {
-		priv->cgr_data.congestion_start_jiffies = jiffies;
-		netif_tx_stop_all_queues(priv->net_dev);
+	अगर (congested) अणु
+		priv->cgr_data.congestion_start_jअगरfies = jअगरfies;
+		netअगर_tx_stop_all_queues(priv->net_dev);
 		priv->cgr_data.cgr_congested_count++;
-	} else {
-		priv->cgr_data.congested_jiffies +=
-			(jiffies - priv->cgr_data.congestion_start_jiffies);
-		netif_tx_wake_all_queues(priv->net_dev);
-	}
-}
+	पूर्ण अन्यथा अणु
+		priv->cgr_data.congested_jअगरfies +=
+			(jअगरfies - priv->cgr_data.congestion_start_jअगरfies);
+		netअगर_tx_wake_all_queues(priv->net_dev);
+	पूर्ण
+पूर्ण
 
-static int dpaa_eth_cgr_init(struct dpaa_priv *priv)
-{
-	struct qm_mcc_initcgr initcgr;
+अटल पूर्णांक dpaa_eth_cgr_init(काष्ठा dpaa_priv *priv)
+अणु
+	काष्ठा qm_mcc_initcgr initcgr;
 	u32 cs_th;
-	int err;
+	पूर्णांक err;
 
 	err = qman_alloc_cgrid(&priv->cgr_data.cgr.cgrid);
-	if (err < 0) {
-		if (netif_msg_drv(priv))
+	अगर (err < 0) अणु
+		अगर (netअगर_msg_drv(priv))
 			pr_err("%s: Error %d allocating CGR ID\n",
 			       __func__, err);
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 	priv->cgr_data.cgr.cb = dpaa_eth_cgscn;
 
-	/* Enable Congestion State Change Notifications and CS taildrop */
-	memset(&initcgr, 0, sizeof(initcgr));
+	/* Enable Congestion State Change Notअगरications and CS taildrop */
+	स_रखो(&initcgr, 0, माप(initcgr));
 	initcgr.we_mask = cpu_to_be16(QM_CGR_WE_CSCN_EN | QM_CGR_WE_CS_THRES);
 	initcgr.cgr.cscn_en = QM_CGR_EN;
 
-	/* Set different thresholds based on the MAC speed.
-	 * This may turn suboptimal if the MAC is reconfigured at a speed
-	 * lower than its max, e.g. if a dTSEC later negotiates a 100Mbps link.
-	 * In such cases, we ought to reconfigure the threshold, too.
+	/* Set dअगरferent thresholds based on the MAC speed.
+	 * This may turn suboptimal अगर the MAC is reconfigured at a speed
+	 * lower than its max, e.g. अगर a dTSEC later negotiates a 100Mbps link.
+	 * In such हालs, we ought to reconfigure the threshold, too.
 	 */
-	if (priv->mac_dev->if_support & SUPPORTED_10000baseT_Full)
+	अगर (priv->mac_dev->अगर_support & SUPPORTED_10000baseT_Full)
 		cs_th = DPAA_CS_THRESHOLD_10G;
-	else
+	अन्यथा
 		cs_th = DPAA_CS_THRESHOLD_1G;
 	qm_cgr_cs_thres_set64(&initcgr.cgr.cs_thres, cs_th, 1);
 
@@ -867,165 +868,165 @@ static int dpaa_eth_cgr_init(struct dpaa_priv *priv)
 
 	err = qman_create_cgr(&priv->cgr_data.cgr, QMAN_CGR_FLAG_USE_INIT,
 			      &initcgr);
-	if (err < 0) {
-		if (netif_msg_drv(priv))
+	अगर (err < 0) अणु
+		अगर (netअगर_msg_drv(priv))
 			pr_err("%s: Error %d creating CGR with ID %d\n",
 			       __func__, err, priv->cgr_data.cgr.cgrid);
 		qman_release_cgrid(priv->cgr_data.cgr.cgrid);
-		goto out_error;
-	}
-	if (netif_msg_drv(priv))
+		जाओ out_error;
+	पूर्ण
+	अगर (netअगर_msg_drv(priv))
 		pr_debug("Created CGR %d for netdev with hwaddr %pM on QMan channel %d\n",
 			 priv->cgr_data.cgr.cgrid, priv->mac_dev->addr,
 			 priv->cgr_data.cgr.chan);
 
 out_error:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline void dpaa_setup_ingress(const struct dpaa_priv *priv,
-				      struct dpaa_fq *fq,
-				      const struct qman_fq *template)
-{
-	fq->fq_base = *template;
+अटल अंतरभूत व्योम dpaa_setup_ingress(स्थिर काष्ठा dpaa_priv *priv,
+				      काष्ठा dpaa_fq *fq,
+				      स्थिर काष्ठा qman_fq *ढाँचा)
+अणु
+	fq->fq_base = *ढाँचा;
 	fq->net_dev = priv->net_dev;
 
 	fq->flags = QMAN_FQ_FLAG_NO_ENQUEUE;
 	fq->channel = priv->channel;
-}
+पूर्ण
 
-static inline void dpaa_setup_egress(const struct dpaa_priv *priv,
-				     struct dpaa_fq *fq,
-				     struct fman_port *port,
-				     const struct qman_fq *template)
-{
-	fq->fq_base = *template;
+अटल अंतरभूत व्योम dpaa_setup_egress(स्थिर काष्ठा dpaa_priv *priv,
+				     काष्ठा dpaa_fq *fq,
+				     काष्ठा fman_port *port,
+				     स्थिर काष्ठा qman_fq *ढाँचा)
+अणु
+	fq->fq_base = *ढाँचा;
 	fq->net_dev = priv->net_dev;
 
-	if (port) {
+	अगर (port) अणु
 		fq->flags = QMAN_FQ_FLAG_TO_DCPORTAL;
 		fq->channel = (u16)fman_port_get_qman_channel_id(port);
-	} else {
+	पूर्ण अन्यथा अणु
 		fq->flags = QMAN_FQ_FLAG_NO_MODIFY;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dpaa_fq_setup(struct dpaa_priv *priv,
-			  const struct dpaa_fq_cbs *fq_cbs,
-			  struct fman_port *tx_port)
-{
-	int egress_cnt = 0, conf_cnt = 0, num_portals = 0, portal_cnt = 0, cpu;
-	const cpumask_t *affine_cpus = qman_affine_cpus();
+अटल व्योम dpaa_fq_setup(काष्ठा dpaa_priv *priv,
+			  स्थिर काष्ठा dpaa_fq_cbs *fq_cbs,
+			  काष्ठा fman_port *tx_port)
+अणु
+	पूर्णांक egress_cnt = 0, conf_cnt = 0, num_portals = 0, portal_cnt = 0, cpu;
+	स्थिर cpumask_t *affine_cpus = qman_affine_cpus();
 	u16 channels[NR_CPUS];
-	struct dpaa_fq *fq;
+	काष्ठा dpaa_fq *fq;
 
-	for_each_cpu_and(cpu, affine_cpus, cpu_online_mask)
+	क्रम_each_cpu_and(cpu, affine_cpus, cpu_online_mask)
 		channels[num_portals++] = qman_affine_channel(cpu);
 
-	if (num_portals == 0)
+	अगर (num_portals == 0)
 		dev_err(priv->net_dev->dev.parent,
 			"No Qman software (affine) channels found\n");
 
 	/* Initialize each FQ in the list */
-	list_for_each_entry(fq, &priv->dpaa_fq_list, list) {
-		switch (fq->fq_type) {
-		case FQ_TYPE_RX_DEFAULT:
+	list_क्रम_each_entry(fq, &priv->dpaa_fq_list, list) अणु
+		चयन (fq->fq_type) अणु
+		हाल FQ_TYPE_RX_DEFAULT:
 			dpaa_setup_ingress(priv, fq, &fq_cbs->rx_defq);
-			break;
-		case FQ_TYPE_RX_ERROR:
+			अवरोध;
+		हाल FQ_TYPE_RX_ERROR:
 			dpaa_setup_ingress(priv, fq, &fq_cbs->rx_errq);
-			break;
-		case FQ_TYPE_RX_PCD:
-			if (!num_portals)
-				continue;
+			अवरोध;
+		हाल FQ_TYPE_RX_PCD:
+			अगर (!num_portals)
+				जारी;
 			dpaa_setup_ingress(priv, fq, &fq_cbs->rx_defq);
 			fq->channel = channels[portal_cnt++ % num_portals];
-			break;
-		case FQ_TYPE_TX:
+			अवरोध;
+		हाल FQ_TYPE_TX:
 			dpaa_setup_egress(priv, fq, tx_port,
 					  &fq_cbs->egress_ern);
 			/* If we have more Tx queues than the number of cores,
 			 * just ignore the extra ones.
 			 */
-			if (egress_cnt < DPAA_ETH_TXQ_NUM)
+			अगर (egress_cnt < DPAA_ETH_TXQ_NUM)
 				priv->egress_fqs[egress_cnt++] = &fq->fq_base;
-			break;
-		case FQ_TYPE_TX_CONF_MQ:
+			अवरोध;
+		हाल FQ_TYPE_TX_CONF_MQ:
 			priv->conf_fqs[conf_cnt++] = &fq->fq_base;
 			fallthrough;
-		case FQ_TYPE_TX_CONFIRM:
+		हाल FQ_TYPE_TX_CONFIRM:
 			dpaa_setup_ingress(priv, fq, &fq_cbs->tx_defq);
-			break;
-		case FQ_TYPE_TX_ERROR:
+			अवरोध;
+		हाल FQ_TYPE_TX_ERROR:
 			dpaa_setup_ingress(priv, fq, &fq_cbs->tx_errq);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_warn(priv->net_dev->dev.parent,
 				 "Unknown FQ type detected!\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	 /* Make sure all CPUs receive a corresponding Tx queue. */
-	while (egress_cnt < DPAA_ETH_TXQ_NUM) {
-		list_for_each_entry(fq, &priv->dpaa_fq_list, list) {
-			if (fq->fq_type != FQ_TYPE_TX)
-				continue;
+	जबतक (egress_cnt < DPAA_ETH_TXQ_NUM) अणु
+		list_क्रम_each_entry(fq, &priv->dpaa_fq_list, list) अणु
+			अगर (fq->fq_type != FQ_TYPE_TX)
+				जारी;
 			priv->egress_fqs[egress_cnt++] = &fq->fq_base;
-			if (egress_cnt == DPAA_ETH_TXQ_NUM)
-				break;
-		}
-	}
-}
+			अगर (egress_cnt == DPAA_ETH_TXQ_NUM)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline int dpaa_tx_fq_to_id(const struct dpaa_priv *priv,
-				   struct qman_fq *tx_fq)
-{
-	int i;
+अटल अंतरभूत पूर्णांक dpaa_tx_fq_to_id(स्थिर काष्ठा dpaa_priv *priv,
+				   काष्ठा qman_fq *tx_fq)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < DPAA_ETH_TXQ_NUM; i++)
-		if (priv->egress_fqs[i] == tx_fq)
-			return i;
+	क्रम (i = 0; i < DPAA_ETH_TXQ_NUM; i++)
+		अगर (priv->egress_fqs[i] == tx_fq)
+			वापस i;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int dpaa_fq_init(struct dpaa_fq *dpaa_fq, bool td_enable)
-{
-	const struct dpaa_priv	*priv;
-	struct qman_fq *confq = NULL;
-	struct qm_mcc_initfq initfq;
-	struct device *dev;
-	struct qman_fq *fq;
-	int queue_id;
-	int err;
+अटल पूर्णांक dpaa_fq_init(काष्ठा dpaa_fq *dpaa_fq, bool td_enable)
+अणु
+	स्थिर काष्ठा dpaa_priv	*priv;
+	काष्ठा qman_fq *confq = शून्य;
+	काष्ठा qm_mcc_initfq initfq;
+	काष्ठा device *dev;
+	काष्ठा qman_fq *fq;
+	पूर्णांक queue_id;
+	पूर्णांक err;
 
 	priv = netdev_priv(dpaa_fq->net_dev);
 	dev = dpaa_fq->net_dev->dev.parent;
 
-	if (dpaa_fq->fqid == 0)
+	अगर (dpaa_fq->fqid == 0)
 		dpaa_fq->flags |= QMAN_FQ_FLAG_DYNAMIC_FQID;
 
 	dpaa_fq->init = !(dpaa_fq->flags & QMAN_FQ_FLAG_NO_MODIFY);
 
 	err = qman_create_fq(dpaa_fq->fqid, dpaa_fq->flags, &dpaa_fq->fq_base);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "qman_create_fq() failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	fq = &dpaa_fq->fq_base;
 
-	if (dpaa_fq->init) {
-		memset(&initfq, 0, sizeof(initfq));
+	अगर (dpaa_fq->init) अणु
+		स_रखो(&initfq, 0, माप(initfq));
 
 		initfq.we_mask = cpu_to_be16(QM_INITFQ_WE_FQCTRL);
 		/* Note: we may get to keep an empty FQ in cache */
 		initfq.fqd.fq_ctrl = cpu_to_be16(QM_FQCTRL_PREFERINCACHE);
 
-		/* Try to reduce the number of portal interrupts for
+		/* Try to reduce the number of portal पूर्णांकerrupts क्रम
 		 * Tx Confirmation FQs.
 		 */
-		if (dpaa_fq->fq_type == FQ_TYPE_TX_CONFIRM)
+		अगर (dpaa_fq->fq_type == FQ_TYPE_TX_CONFIRM)
 			initfq.fqd.fq_ctrl |= cpu_to_be16(QM_FQCTRL_AVOIDBLOCK);
 
 		/* FQ placement */
@@ -1035,44 +1036,44 @@ static int dpaa_fq_init(struct dpaa_fq *dpaa_fq, bool td_enable)
 
 		/* Put all egress queues in a congestion group of their own.
 		 * Sensu stricto, the Tx confirmation queues are Rx FQs,
-		 * rather than Tx - but they nonetheless account for the
-		 * memory footprint on behalf of egress traffic. We therefore
-		 * place them in the netdev's CGR, along with the Tx FQs.
+		 * rather than Tx - but they nonetheless account क्रम the
+		 * memory footprपूर्णांक on behalf of egress traffic. We thereक्रमe
+		 * place them in the netdev's CGR, aदीर्घ with the Tx FQs.
 		 */
-		if (dpaa_fq->fq_type == FQ_TYPE_TX ||
+		अगर (dpaa_fq->fq_type == FQ_TYPE_TX ||
 		    dpaa_fq->fq_type == FQ_TYPE_TX_CONFIRM ||
-		    dpaa_fq->fq_type == FQ_TYPE_TX_CONF_MQ) {
+		    dpaa_fq->fq_type == FQ_TYPE_TX_CONF_MQ) अणु
 			initfq.we_mask |= cpu_to_be16(QM_INITFQ_WE_CGID);
 			initfq.fqd.fq_ctrl |= cpu_to_be16(QM_FQCTRL_CGE);
 			initfq.fqd.cgid = (u8)priv->cgr_data.cgr.cgrid;
 			/* Set a fixed overhead accounting, in an attempt to
 			 * reduce the impact of fixed-size skb shells and the
-			 * driver's needed headroom on system memory. This is
-			 * especially the case when the egress traffic is
+			 * driver's needed headroom on प्रणाली memory. This is
+			 * especially the हाल when the egress traffic is
 			 * composed of small datagrams.
-			 * Unfortunately, QMan's OAL value is capped to an
+			 * Unक्रमtunately, QMan's OAL value is capped to an
 			 * insufficient value, but even that is better than
 			 * no overhead accounting at all.
 			 */
 			initfq.we_mask |= cpu_to_be16(QM_INITFQ_WE_OAC);
 			qm_fqd_set_oac(&initfq.fqd, QM_OAC_CG);
 			qm_fqd_set_oal(&initfq.fqd,
-				       min(sizeof(struct sk_buff) +
+				       min(माप(काष्ठा sk_buff) +
 				       priv->tx_headroom,
-				       (size_t)FSL_QMAN_MAX_OAL));
-		}
+				       (माप_प्रकार)FSL_QMAN_MAX_OAL));
+		पूर्ण
 
-		if (td_enable) {
+		अगर (td_enable) अणु
 			initfq.we_mask |= cpu_to_be16(QM_INITFQ_WE_TDTHRESH);
 			qm_fqd_set_taildrop(&initfq.fqd, DPAA_FQ_TD, 1);
 			initfq.fqd.fq_ctrl = cpu_to_be16(QM_FQCTRL_TDE);
-		}
+		पूर्ण
 
-		if (dpaa_fq->fq_type == FQ_TYPE_TX) {
+		अगर (dpaa_fq->fq_type == FQ_TYPE_TX) अणु
 			queue_id = dpaa_tx_fq_to_id(priv, &dpaa_fq->fq_base);
-			if (queue_id >= 0)
+			अगर (queue_id >= 0)
 				confq = priv->conf_fqs[queue_id];
-			if (confq) {
+			अगर (confq) अणु
 				initfq.we_mask |=
 					cpu_to_be16(QM_INITFQ_WE_CONTEXTA);
 			/* ContextA: OVOM=1(use contextA2 bits instead of ICAD)
@@ -1080,34 +1081,34 @@ static int dpaa_fq_init(struct dpaa_fq *dpaa_fq, bool td_enable)
 			 *	     A0V=1 (contextA A0 field is valid)
 			 *	     B0V=1 (contextB field is valid)
 			 * ContextA A2: EBD=1 (deallocate buffers inside FMan)
-			 * ContextB B0(ASPID): 0 (absolute Virtual Storage ID)
+			 * ContextB B0(ASPID): 0 (असलolute Virtual Storage ID)
 			 */
 				qm_fqd_context_a_set64(&initfq.fqd,
 						       0x1e00000080000000ULL);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* Put all the ingress queues in our "ingress CGR". */
-		if (priv->use_ingress_cgr &&
+		अगर (priv->use_ingress_cgr &&
 		    (dpaa_fq->fq_type == FQ_TYPE_RX_DEFAULT ||
 		     dpaa_fq->fq_type == FQ_TYPE_RX_ERROR ||
-		     dpaa_fq->fq_type == FQ_TYPE_RX_PCD)) {
+		     dpaa_fq->fq_type == FQ_TYPE_RX_PCD)) अणु
 			initfq.we_mask |= cpu_to_be16(QM_INITFQ_WE_CGID);
 			initfq.fqd.fq_ctrl |= cpu_to_be16(QM_FQCTRL_CGE);
 			initfq.fqd.cgid = (u8)priv->ingress_cgr.cgrid;
-			/* Set a fixed overhead accounting, just like for the
+			/* Set a fixed overhead accounting, just like क्रम the
 			 * egress CGR.
 			 */
 			initfq.we_mask |= cpu_to_be16(QM_INITFQ_WE_OAC);
 			qm_fqd_set_oac(&initfq.fqd, QM_OAC_CG);
 			qm_fqd_set_oal(&initfq.fqd,
-				       min(sizeof(struct sk_buff) +
+				       min(माप(काष्ठा sk_buff) +
 				       priv->tx_headroom,
-				       (size_t)FSL_QMAN_MAX_OAL));
-		}
+				       (माप_प्रकार)FSL_QMAN_MAX_OAL));
+		पूर्ण
 
 		/* Initialization common to all ingress queues */
-		if (dpaa_fq->flags & QMAN_FQ_FLAG_NO_ENQUEUE) {
+		अगर (dpaa_fq->flags & QMAN_FQ_FLAG_NO_ENQUEUE) अणु
 			initfq.we_mask |= cpu_to_be16(QM_INITFQ_WE_CONTEXTA);
 			initfq.fqd.fq_ctrl |= cpu_to_be16(QM_FQCTRL_HOLDACTIVE |
 						QM_FQCTRL_CTXASTASHING);
@@ -1115,70 +1116,70 @@ static int dpaa_fq_init(struct dpaa_fq *dpaa_fq, bool td_enable)
 				QM_STASHING_EXCL_DATA | QM_STASHING_EXCL_CTX |
 				QM_STASHING_EXCL_ANNOTATION;
 			qm_fqd_set_stashing(&initfq.fqd, 1, 2,
-					    DIV_ROUND_UP(sizeof(struct qman_fq),
+					    DIV_ROUND_UP(माप(काष्ठा qman_fq),
 							 64));
-		}
+		पूर्ण
 
 		err = qman_init_fq(fq, QMAN_INITFQ_FLAG_SCHED, &initfq);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "qman_init_fq(%u) = %d\n",
 				qman_fq_fqid(fq), err);
 			qman_destroy_fq(fq);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	dpaa_fq->fqid = qman_fq_fqid(fq);
 
-	if (dpaa_fq->fq_type == FQ_TYPE_RX_DEFAULT ||
-	    dpaa_fq->fq_type == FQ_TYPE_RX_PCD) {
+	अगर (dpaa_fq->fq_type == FQ_TYPE_RX_DEFAULT ||
+	    dpaa_fq->fq_type == FQ_TYPE_RX_PCD) अणु
 		err = xdp_rxq_info_reg(&dpaa_fq->xdp_rxq, dpaa_fq->net_dev,
 				       dpaa_fq->fqid, 0);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "xdp_rxq_info_reg() = %d\n", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		err = xdp_rxq_info_reg_mem_model(&dpaa_fq->xdp_rxq,
-						 MEM_TYPE_PAGE_ORDER0, NULL);
-		if (err) {
+						 MEM_TYPE_PAGE_ORDER0, शून्य);
+		अगर (err) अणु
 			dev_err(dev, "xdp_rxq_info_reg_mem_model() = %d\n",
 				err);
 			xdp_rxq_info_unreg(&dpaa_fq->xdp_rxq);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dpaa_fq_free_entry(struct device *dev, struct qman_fq *fq)
-{
-	const struct dpaa_priv  *priv;
-	struct dpaa_fq *dpaa_fq;
-	int err, error;
+अटल पूर्णांक dpaa_fq_मुक्त_entry(काष्ठा device *dev, काष्ठा qman_fq *fq)
+अणु
+	स्थिर काष्ठा dpaa_priv  *priv;
+	काष्ठा dpaa_fq *dpaa_fq;
+	पूर्णांक err, error;
 
 	err = 0;
 
-	dpaa_fq = container_of(fq, struct dpaa_fq, fq_base);
+	dpaa_fq = container_of(fq, काष्ठा dpaa_fq, fq_base);
 	priv = netdev_priv(dpaa_fq->net_dev);
 
-	if (dpaa_fq->init) {
-		err = qman_retire_fq(fq, NULL);
-		if (err < 0 && netif_msg_drv(priv))
+	अगर (dpaa_fq->init) अणु
+		err = qman_retire_fq(fq, शून्य);
+		अगर (err < 0 && netअगर_msg_drv(priv))
 			dev_err(dev, "qman_retire_fq(%u) = %d\n",
 				qman_fq_fqid(fq), err);
 
 		error = qman_oos_fq(fq);
-		if (error < 0 && netif_msg_drv(priv)) {
+		अगर (error < 0 && netअगर_msg_drv(priv)) अणु
 			dev_err(dev, "qman_oos_fq(%u) = %d\n",
 				qman_fq_fqid(fq), error);
-			if (err >= 0)
+			अगर (err >= 0)
 				err = error;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if ((dpaa_fq->fq_type == FQ_TYPE_RX_DEFAULT ||
+	अगर ((dpaa_fq->fq_type == FQ_TYPE_RX_DEFAULT ||
 	     dpaa_fq->fq_type == FQ_TYPE_RX_PCD) &&
 	    xdp_rxq_info_is_reg(&dpaa_fq->xdp_rxq))
 		xdp_rxq_info_unreg(&dpaa_fq->xdp_rxq);
@@ -1186,196 +1187,196 @@ static int dpaa_fq_free_entry(struct device *dev, struct qman_fq *fq)
 	qman_destroy_fq(fq);
 	list_del(&dpaa_fq->list);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dpaa_fq_free(struct device *dev, struct list_head *list)
-{
-	struct dpaa_fq *dpaa_fq, *tmp;
-	int err, error;
+अटल पूर्णांक dpaa_fq_मुक्त(काष्ठा device *dev, काष्ठा list_head *list)
+अणु
+	काष्ठा dpaa_fq *dpaa_fq, *पंचांगp;
+	पूर्णांक err, error;
 
 	err = 0;
-	list_for_each_entry_safe(dpaa_fq, tmp, list, list) {
-		error = dpaa_fq_free_entry(dev, (struct qman_fq *)dpaa_fq);
-		if (error < 0 && err >= 0)
+	list_क्रम_each_entry_safe(dpaa_fq, पंचांगp, list, list) अणु
+		error = dpaa_fq_मुक्त_entry(dev, (काष्ठा qman_fq *)dpaa_fq);
+		अगर (error < 0 && err >= 0)
 			err = error;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dpaa_eth_init_tx_port(struct fman_port *port, struct dpaa_fq *errq,
-				 struct dpaa_fq *defq,
-				 struct dpaa_buffer_layout *buf_layout)
-{
-	struct fman_buffer_prefix_content buf_prefix_content;
-	struct fman_port_params params;
-	int err;
+अटल पूर्णांक dpaa_eth_init_tx_port(काष्ठा fman_port *port, काष्ठा dpaa_fq *errq,
+				 काष्ठा dpaa_fq *defq,
+				 काष्ठा dpaa_buffer_layout *buf_layout)
+अणु
+	काष्ठा fman_buffer_prefix_content buf_prefix_content;
+	काष्ठा fman_port_params params;
+	पूर्णांक err;
 
-	memset(&params, 0, sizeof(params));
-	memset(&buf_prefix_content, 0, sizeof(buf_prefix_content));
+	स_रखो(&params, 0, माप(params));
+	स_रखो(&buf_prefix_content, 0, माप(buf_prefix_content));
 
 	buf_prefix_content.priv_data_size = buf_layout->priv_data_size;
 	buf_prefix_content.pass_prs_result = true;
 	buf_prefix_content.pass_hash_result = true;
-	buf_prefix_content.pass_time_stamp = true;
+	buf_prefix_content.pass_समय_stamp = true;
 	buf_prefix_content.data_align = DPAA_FD_DATA_ALIGNMENT;
 
-	params.specific_params.non_rx_params.err_fqid = errq->fqid;
-	params.specific_params.non_rx_params.dflt_fqid = defq->fqid;
+	params.specअगरic_params.non_rx_params.err_fqid = errq->fqid;
+	params.specअगरic_params.non_rx_params.dflt_fqid = defq->fqid;
 
 	err = fman_port_config(port, &params);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: fman_port_config failed\n", __func__);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = fman_port_cfg_buf_prefix_content(port, &buf_prefix_content);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: fman_port_cfg_buf_prefix_content failed\n",
 		       __func__);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = fman_port_init(port);
-	if (err)
+	अगर (err)
 		pr_err("%s: fm_port_init failed\n", __func__);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dpaa_eth_init_rx_port(struct fman_port *port, struct dpaa_bp *bp,
-				 struct dpaa_fq *errq,
-				 struct dpaa_fq *defq, struct dpaa_fq *pcdq,
-				 struct dpaa_buffer_layout *buf_layout)
-{
-	struct fman_buffer_prefix_content buf_prefix_content;
-	struct fman_port_rx_params *rx_p;
-	struct fman_port_params params;
-	int err;
+अटल पूर्णांक dpaa_eth_init_rx_port(काष्ठा fman_port *port, काष्ठा dpaa_bp *bp,
+				 काष्ठा dpaa_fq *errq,
+				 काष्ठा dpaa_fq *defq, काष्ठा dpaa_fq *pcdq,
+				 काष्ठा dpaa_buffer_layout *buf_layout)
+अणु
+	काष्ठा fman_buffer_prefix_content buf_prefix_content;
+	काष्ठा fman_port_rx_params *rx_p;
+	काष्ठा fman_port_params params;
+	पूर्णांक err;
 
-	memset(&params, 0, sizeof(params));
-	memset(&buf_prefix_content, 0, sizeof(buf_prefix_content));
+	स_रखो(&params, 0, माप(params));
+	स_रखो(&buf_prefix_content, 0, माप(buf_prefix_content));
 
 	buf_prefix_content.priv_data_size = buf_layout->priv_data_size;
 	buf_prefix_content.pass_prs_result = true;
 	buf_prefix_content.pass_hash_result = true;
-	buf_prefix_content.pass_time_stamp = true;
+	buf_prefix_content.pass_समय_stamp = true;
 	buf_prefix_content.data_align = DPAA_FD_RX_DATA_ALIGNMENT;
 
-	rx_p = &params.specific_params.rx_params;
+	rx_p = &params.specअगरic_params.rx_params;
 	rx_p->err_fqid = errq->fqid;
 	rx_p->dflt_fqid = defq->fqid;
-	if (pcdq) {
+	अगर (pcdq) अणु
 		rx_p->pcd_base_fqid = pcdq->fqid;
 		rx_p->pcd_fqs_count = DPAA_ETH_PCD_RXQ_NUM;
-	}
+	पूर्ण
 
 	rx_p->ext_buf_pools.num_of_pools_used = 1;
 	rx_p->ext_buf_pools.ext_buf_pool[0].id =  bp->bpid;
 	rx_p->ext_buf_pools.ext_buf_pool[0].size = (u16)bp->size;
 
 	err = fman_port_config(port, &params);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: fman_port_config failed\n", __func__);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = fman_port_cfg_buf_prefix_content(port, &buf_prefix_content);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: fman_port_cfg_buf_prefix_content failed\n",
 		       __func__);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = fman_port_init(port);
-	if (err)
+	अगर (err)
 		pr_err("%s: fm_port_init failed\n", __func__);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dpaa_eth_init_ports(struct mac_device *mac_dev,
-			       struct dpaa_bp *bp,
-			       struct fm_port_fqs *port_fqs,
-			       struct dpaa_buffer_layout *buf_layout,
-			       struct device *dev)
-{
-	struct fman_port *rxport = mac_dev->port[RX];
-	struct fman_port *txport = mac_dev->port[TX];
-	int err;
+अटल पूर्णांक dpaa_eth_init_ports(काष्ठा mac_device *mac_dev,
+			       काष्ठा dpaa_bp *bp,
+			       काष्ठा fm_port_fqs *port_fqs,
+			       काष्ठा dpaa_buffer_layout *buf_layout,
+			       काष्ठा device *dev)
+अणु
+	काष्ठा fman_port *rxport = mac_dev->port[RX];
+	काष्ठा fman_port *txport = mac_dev->port[TX];
+	पूर्णांक err;
 
 	err = dpaa_eth_init_tx_port(txport, port_fqs->tx_errq,
 				    port_fqs->tx_defq, &buf_layout[TX]);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = dpaa_eth_init_rx_port(rxport, bp, port_fqs->rx_errq,
 				    port_fqs->rx_defq, port_fqs->rx_pcdq,
 				    &buf_layout[RX]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dpaa_bman_release(const struct dpaa_bp *dpaa_bp,
-			     struct bm_buffer *bmb, int cnt)
-{
-	int err;
+अटल पूर्णांक dpaa_bman_release(स्थिर काष्ठा dpaa_bp *dpaa_bp,
+			     काष्ठा bm_buffer *bmb, पूर्णांक cnt)
+अणु
+	पूर्णांक err;
 
 	err = bman_release(dpaa_bp->pool, bmb, cnt);
-	/* Should never occur, address anyway to avoid leaking the buffers */
-	if (WARN_ON(err) && dpaa_bp->free_buf_cb)
-		while (cnt-- > 0)
-			dpaa_bp->free_buf_cb(dpaa_bp, &bmb[cnt]);
+	/* Should never occur, address anyway to aव्योम leaking the buffers */
+	अगर (WARN_ON(err) && dpaa_bp->मुक्त_buf_cb)
+		जबतक (cnt-- > 0)
+			dpaa_bp->मुक्त_buf_cb(dpaa_bp, &bmb[cnt]);
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static void dpaa_release_sgt_members(struct qm_sg_entry *sgt)
-{
-	struct bm_buffer bmb[DPAA_BUFF_RELEASE_MAX];
-	struct dpaa_bp *dpaa_bp;
-	int i = 0, j;
+अटल व्योम dpaa_release_sgt_members(काष्ठा qm_sg_entry *sgt)
+अणु
+	काष्ठा bm_buffer bmb[DPAA_BUFF_RELEASE_MAX];
+	काष्ठा dpaa_bp *dpaa_bp;
+	पूर्णांक i = 0, j;
 
-	memset(bmb, 0, sizeof(bmb));
+	स_रखो(bmb, 0, माप(bmb));
 
-	do {
+	करो अणु
 		dpaa_bp = dpaa_bpid2pool(sgt[i].bpid);
-		if (!dpaa_bp)
-			return;
+		अगर (!dpaa_bp)
+			वापस;
 
 		j = 0;
-		do {
+		करो अणु
 			WARN_ON(qm_sg_entry_is_ext(&sgt[i]));
 
 			bm_buffer_set64(&bmb[j], qm_sg_entry_get64(&sgt[i]));
 
 			j++; i++;
-		} while (j < ARRAY_SIZE(bmb) &&
+		पूर्ण जबतक (j < ARRAY_SIZE(bmb) &&
 				!qm_sg_entry_is_final(&sgt[i - 1]) &&
 				sgt[i - 1].bpid == sgt[i].bpid);
 
 		dpaa_bman_release(dpaa_bp, bmb, j);
-	} while (!qm_sg_entry_is_final(&sgt[i - 1]));
-}
+	पूर्ण जबतक (!qm_sg_entry_is_final(&sgt[i - 1]));
+पूर्ण
 
-static void dpaa_fd_release(const struct net_device *net_dev,
-			    const struct qm_fd *fd)
-{
-	struct qm_sg_entry *sgt;
-	struct dpaa_bp *dpaa_bp;
-	struct bm_buffer bmb;
+अटल व्योम dpaa_fd_release(स्थिर काष्ठा net_device *net_dev,
+			    स्थिर काष्ठा qm_fd *fd)
+अणु
+	काष्ठा qm_sg_entry *sgt;
+	काष्ठा dpaa_bp *dpaa_bp;
+	काष्ठा bm_buffer bmb;
 	dma_addr_t addr;
-	void *vaddr;
+	व्योम *vaddr;
 
 	bmb.data = 0;
 	bm_buffer_set64(&bmb, qm_fd_addr(fd));
 
 	dpaa_bp = dpaa_bpid2pool(fd->bpid);
-	if (!dpaa_bp)
-		return;
+	अगर (!dpaa_bp)
+		वापस;
 
-	if (qm_fd_get_format(fd) == qm_fd_sg) {
+	अगर (qm_fd_get_क्रमmat(fd) == qm_fd_sg) अणु
 		vaddr = phys_to_virt(qm_fd_addr(fd));
 		sgt = vaddr + qm_fd_get_offset(fd);
 
@@ -1387,283 +1388,283 @@ static void dpaa_fd_release(const struct net_device *net_dev,
 		addr = dma_map_page(dpaa_bp->priv->rx_dma_dev,
 				    virt_to_page(vaddr), 0, DPAA_BP_RAW_SIZE,
 				    DMA_FROM_DEVICE);
-		if (dma_mapping_error(dpaa_bp->priv->rx_dma_dev, addr)) {
+		अगर (dma_mapping_error(dpaa_bp->priv->rx_dma_dev, addr)) अणु
 			netdev_err(net_dev, "DMA mapping failed\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		bm_buffer_set64(&bmb, addr);
-	}
+	पूर्ण
 
 	dpaa_bman_release(dpaa_bp, &bmb, 1);
-}
+पूर्ण
 
-static void count_ern(struct dpaa_percpu_priv *percpu_priv,
-		      const union qm_mr_entry *msg)
-{
-	switch (msg->ern.rc & QM_MR_RC_MASK) {
-	case QM_MR_RC_CGR_TAILDROP:
+अटल व्योम count_ern(काष्ठा dpaa_percpu_priv *percpu_priv,
+		      स्थिर जोड़ qm_mr_entry *msg)
+अणु
+	चयन (msg->ern.rc & QM_MR_RC_MASK) अणु
+	हाल QM_MR_RC_CGR_TAILDROP:
 		percpu_priv->ern_cnt.cg_tdrop++;
-		break;
-	case QM_MR_RC_WRED:
+		अवरोध;
+	हाल QM_MR_RC_WRED:
 		percpu_priv->ern_cnt.wred++;
-		break;
-	case QM_MR_RC_ERROR:
+		अवरोध;
+	हाल QM_MR_RC_ERROR:
 		percpu_priv->ern_cnt.err_cond++;
-		break;
-	case QM_MR_RC_ORPWINDOW_EARLY:
-		percpu_priv->ern_cnt.early_window++;
-		break;
-	case QM_MR_RC_ORPWINDOW_LATE:
-		percpu_priv->ern_cnt.late_window++;
-		break;
-	case QM_MR_RC_FQ_TAILDROP:
+		अवरोध;
+	हाल QM_MR_RC_ORPWINDOW_EARLY:
+		percpu_priv->ern_cnt.early_winकरोw++;
+		अवरोध;
+	हाल QM_MR_RC_ORPWINDOW_LATE:
+		percpu_priv->ern_cnt.late_winकरोw++;
+		अवरोध;
+	हाल QM_MR_RC_FQ_TAILDROP:
 		percpu_priv->ern_cnt.fq_tdrop++;
-		break;
-	case QM_MR_RC_ORPWINDOW_RETIRED:
+		अवरोध;
+	हाल QM_MR_RC_ORPWINDOW_RETIRED:
 		percpu_priv->ern_cnt.fq_retired++;
-		break;
-	case QM_MR_RC_ORP_ZERO:
+		अवरोध;
+	हाल QM_MR_RC_ORP_ZERO:
 		percpu_priv->ern_cnt.orp_zero++;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* Turn on HW checksum computation for this outgoing frame.
+/* Turn on HW checksum computation क्रम this outgoing frame.
  * If the current protocol is not something we support in this regard
- * (or if the stack has already computed the SW checksum), we do nothing.
+ * (or अगर the stack has alपढ़ोy computed the SW checksum), we करो nothing.
  *
- * Returns 0 if all goes well (or HW csum doesn't apply), and a negative value
+ * Returns 0 अगर all goes well (or HW csum करोesn't apply), and a negative value
  * otherwise.
  *
- * Note that this function may modify the fd->cmd field and the skb data buffer
+ * Note that this function may modअगरy the fd->cmd field and the skb data buffer
  * (the Parse Results area).
  */
-static int dpaa_enable_tx_csum(struct dpaa_priv *priv,
-			       struct sk_buff *skb,
-			       struct qm_fd *fd,
-			       void *parse_results)
-{
-	struct fman_prs_result *parse_result;
+अटल पूर्णांक dpaa_enable_tx_csum(काष्ठा dpaa_priv *priv,
+			       काष्ठा sk_buff *skb,
+			       काष्ठा qm_fd *fd,
+			       व्योम *parse_results)
+अणु
+	काष्ठा fman_prs_result *parse_result;
 	u16 ethertype = ntohs(skb->protocol);
-	struct ipv6hdr *ipv6h = NULL;
-	struct iphdr *iph;
-	int retval = 0;
+	काष्ठा ipv6hdr *ipv6h = शून्य;
+	काष्ठा iphdr *iph;
+	पूर्णांक retval = 0;
 	u8 l4_proto;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL)
-		return 0;
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
+		वापस 0;
 
-	/* Note: L3 csum seems to be already computed in sw, but we can't choose
+	/* Note: L3 csum seems to be alपढ़ोy computed in sw, but we can't choose
 	 * L4 alone from the FM configuration anyway.
 	 */
 
 	/* Fill in some fields of the Parse Results array, so the FMan
-	 * can find them as if they came from the FMan Parser.
+	 * can find them as अगर they came from the FMan Parser.
 	 */
-	parse_result = (struct fman_prs_result *)parse_results;
+	parse_result = (काष्ठा fman_prs_result *)parse_results;
 
 	/* If we're dealing with VLAN, get the real Ethernet type */
-	if (ethertype == ETH_P_8021Q) {
+	अगर (ethertype == ETH_P_8021Q) अणु
 		/* We can't always assume the MAC header is set correctly
 		 * by the stack, so reset to beginning of skb->data
 		 */
 		skb_reset_mac_header(skb);
 		ethertype = ntohs(vlan_eth_hdr(skb)->h_vlan_encapsulated_proto);
-	}
+	पूर्ण
 
 	/* Fill in the relevant L3 parse result fields
-	 * and read the L4 protocol type
+	 * and पढ़ो the L4 protocol type
 	 */
-	switch (ethertype) {
-	case ETH_P_IP:
+	चयन (ethertype) अणु
+	हाल ETH_P_IP:
 		parse_result->l3r = cpu_to_be16(FM_L3_PARSE_RESULT_IPV4);
 		iph = ip_hdr(skb);
 		WARN_ON(!iph);
 		l4_proto = iph->protocol;
-		break;
-	case ETH_P_IPV6:
+		अवरोध;
+	हाल ETH_P_IPV6:
 		parse_result->l3r = cpu_to_be16(FM_L3_PARSE_RESULT_IPV6);
 		ipv6h = ipv6_hdr(skb);
 		WARN_ON(!ipv6h);
 		l4_proto = ipv6h->nexthdr;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* We shouldn't even be here */
-		if (net_ratelimit())
-			netif_alert(priv, tx_err, priv->net_dev,
+		अगर (net_ratelimit())
+			netअगर_alert(priv, tx_err, priv->net_dev,
 				    "Can't compute HW csum for L3 proto 0x%x\n",
 				    ntohs(skb->protocol));
 		retval = -EIO;
-		goto return_error;
-	}
+		जाओ वापस_error;
+	पूर्ण
 
 	/* Fill in the relevant L4 parse result fields */
-	switch (l4_proto) {
-	case IPPROTO_UDP:
+	चयन (l4_proto) अणु
+	हाल IPPROTO_UDP:
 		parse_result->l4r = FM_L4_PARSE_RESULT_UDP;
-		break;
-	case IPPROTO_TCP:
+		अवरोध;
+	हाल IPPROTO_TCP:
 		parse_result->l4r = FM_L4_PARSE_RESULT_TCP;
-		break;
-	default:
-		if (net_ratelimit())
-			netif_alert(priv, tx_err, priv->net_dev,
+		अवरोध;
+	शेष:
+		अगर (net_ratelimit())
+			netअगर_alert(priv, tx_err, priv->net_dev,
 				    "Can't compute HW csum for L4 proto 0x%x\n",
 				    l4_proto);
 		retval = -EIO;
-		goto return_error;
-	}
+		जाओ वापस_error;
+	पूर्ण
 
 	/* At index 0 is IPOffset_1 as defined in the Parse Results */
 	parse_result->ip_off[0] = (u8)skb_network_offset(skb);
 	parse_result->l4_off = (u8)skb_transport_offset(skb);
 
-	/* Enable L3 (and L4, if TCP or UDP) HW checksum. */
+	/* Enable L3 (and L4, अगर TCP or UDP) HW checksum. */
 	fd->cmd |= cpu_to_be32(FM_FD_CMD_RPD | FM_FD_CMD_DTC);
 
-	/* On P1023 and similar platforms fd->cmd interpretation could
+	/* On P1023 and similar platक्रमms fd->cmd पूर्णांकerpretation could
 	 * be disabled by setting CONTEXT_A bit ICMD; currently this bit
-	 * is not set so we do not need to check; in the future, if/when
+	 * is not set so we करो not need to check; in the future, अगर/when
 	 * using context_a we need to check this bit
 	 */
 
-return_error:
-	return retval;
-}
+वापस_error:
+	वापस retval;
+पूर्ण
 
-static int dpaa_bp_add_8_bufs(const struct dpaa_bp *dpaa_bp)
-{
-	struct net_device *net_dev = dpaa_bp->priv->net_dev;
-	struct bm_buffer bmb[8];
+अटल पूर्णांक dpaa_bp_add_8_bufs(स्थिर काष्ठा dpaa_bp *dpaa_bp)
+अणु
+	काष्ठा net_device *net_dev = dpaa_bp->priv->net_dev;
+	काष्ठा bm_buffer bmb[8];
 	dma_addr_t addr;
-	struct page *p;
+	काष्ठा page *p;
 	u8 i;
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		p = dev_alloc_pages(0);
-		if (unlikely(!p)) {
+		अगर (unlikely(!p)) अणु
 			netdev_err(net_dev, "dev_alloc_pages() failed\n");
-			goto release_previous_buffs;
-		}
+			जाओ release_previous_buffs;
+		पूर्ण
 
 		addr = dma_map_page(dpaa_bp->priv->rx_dma_dev, p, 0,
 				    DPAA_BP_RAW_SIZE, DMA_FROM_DEVICE);
-		if (unlikely(dma_mapping_error(dpaa_bp->priv->rx_dma_dev,
-					       addr))) {
+		अगर (unlikely(dma_mapping_error(dpaa_bp->priv->rx_dma_dev,
+					       addr))) अणु
 			netdev_err(net_dev, "DMA map failed\n");
-			goto release_previous_buffs;
-		}
+			जाओ release_previous_buffs;
+		पूर्ण
 
 		bmb[i].data = 0;
 		bm_buffer_set64(&bmb[i], addr);
-	}
+	पूर्ण
 
 release_bufs:
-	return dpaa_bman_release(dpaa_bp, bmb, i);
+	वापस dpaa_bman_release(dpaa_bp, bmb, i);
 
 release_previous_buffs:
 	WARN_ONCE(1, "dpaa_eth: failed to add buffers on Rx\n");
 
 	bm_buffer_set64(&bmb[i], 0);
-	/* Avoid releasing a completely null buffer; bman_release() requires
+	/* Aव्योम releasing a completely null buffer; bman_release() requires
 	 * at least one buffer.
 	 */
-	if (likely(i))
-		goto release_bufs;
+	अगर (likely(i))
+		जाओ release_bufs;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dpaa_bp_seed(struct dpaa_bp *dpaa_bp)
-{
-	int i;
+अटल पूर्णांक dpaa_bp_seed(काष्ठा dpaa_bp *dpaa_bp)
+अणु
+	पूर्णांक i;
 
-	/* Give each CPU an allotment of "config_count" buffers */
-	for_each_possible_cpu(i) {
-		int *count_ptr = per_cpu_ptr(dpaa_bp->percpu_count, i);
-		int j;
+	/* Give each CPU an alloपंचांगent of "config_count" buffers */
+	क्रम_each_possible_cpu(i) अणु
+		पूर्णांक *count_ptr = per_cpu_ptr(dpaa_bp->percpu_count, i);
+		पूर्णांक j;
 
 		/* Although we access another CPU's counters here
-		 * we do it at boot time so it is safe
+		 * we करो it at boot समय so it is safe
 		 */
-		for (j = 0; j < dpaa_bp->config_count; j += 8)
+		क्रम (j = 0; j < dpaa_bp->config_count; j += 8)
 			*count_ptr += dpaa_bp_add_8_bufs(dpaa_bp);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Add buffers/(pages) for Rx processing whenever bpool count falls below
+/* Add buffers/(pages) क्रम Rx processing whenever bpool count falls below
  * REFILL_THRESHOLD.
  */
-static int dpaa_eth_refill_bpool(struct dpaa_bp *dpaa_bp, int *countptr)
-{
-	int count = *countptr;
-	int new_bufs;
+अटल पूर्णांक dpaa_eth_refill_bpool(काष्ठा dpaa_bp *dpaa_bp, पूर्णांक *countptr)
+अणु
+	पूर्णांक count = *countptr;
+	पूर्णांक new_bufs;
 
-	if (unlikely(count < FSL_DPAA_ETH_REFILL_THRESHOLD)) {
-		do {
+	अगर (unlikely(count < FSL_DPAA_ETH_REFILL_THRESHOLD)) अणु
+		करो अणु
 			new_bufs = dpaa_bp_add_8_bufs(dpaa_bp);
-			if (unlikely(!new_bufs)) {
-				/* Avoid looping forever if we've temporarily
+			अगर (unlikely(!new_bufs)) अणु
+				/* Aव्योम looping क्रमever अगर we've temporarily
 				 * run out of memory. We'll try again at the
 				 * next NAPI cycle.
 				 */
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			count += new_bufs;
-		} while (count < FSL_DPAA_ETH_MAX_BUF_COUNT);
+		पूर्ण जबतक (count < FSL_DPAA_ETH_MAX_BUF_COUNT);
 
 		*countptr = count;
-		if (unlikely(count < FSL_DPAA_ETH_MAX_BUF_COUNT))
-			return -ENOMEM;
-	}
+		अगर (unlikely(count < FSL_DPAA_ETH_MAX_BUF_COUNT))
+			वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dpaa_eth_refill_bpools(struct dpaa_priv *priv)
-{
-	struct dpaa_bp *dpaa_bp;
-	int *countptr;
+अटल पूर्णांक dpaa_eth_refill_bpools(काष्ठा dpaa_priv *priv)
+अणु
+	काष्ठा dpaa_bp *dpaa_bp;
+	पूर्णांक *countptr;
 
 	dpaa_bp = priv->dpaa_bp;
-	if (!dpaa_bp)
-		return -EINVAL;
+	अगर (!dpaa_bp)
+		वापस -EINVAL;
 	countptr = this_cpu_ptr(dpaa_bp->percpu_count);
 
-	return dpaa_eth_refill_bpool(dpaa_bp, countptr);
-}
+	वापस dpaa_eth_refill_bpool(dpaa_bp, countptr);
+पूर्ण
 
-/* Cleanup function for outgoing frame descriptors that were built on Tx path,
+/* Cleanup function क्रम outgoing frame descriptors that were built on Tx path,
  * either contiguous frames or scatter/gather ones.
- * Skb freeing is not handled here.
+ * Skb मुक्तing is not handled here.
  *
  * This function may be called on error paths in the Tx function, so guard
- * against cases when not all fd relevant fields were filled in. To avoid
- * reading the invalid transmission timestamp for the error paths set ts to
+ * against हालs when not all fd relevant fields were filled in. To aव्योम
+ * पढ़ोing the invalid transmission बारtamp क्रम the error paths set ts to
  * false.
  *
- * Return the skb backpointer, since for S/G frames the buffer containing it
- * gets freed here.
+ * Return the skb backpoपूर्णांकer, since क्रम S/G frames the buffer containing it
+ * माला_लो मुक्तd here.
  *
- * No skb backpointer is set when transmitting XDP frames. Cleanup the buffer
- * and return NULL in this case.
+ * No skb backpoपूर्णांकer is set when transmitting XDP frames. Cleanup the buffer
+ * and वापस शून्य in this हाल.
  */
-static struct sk_buff *dpaa_cleanup_tx_fd(const struct dpaa_priv *priv,
-					  const struct qm_fd *fd, bool ts)
-{
-	const enum dma_data_direction dma_dir = DMA_TO_DEVICE;
-	struct device *dev = priv->net_dev->dev.parent;
-	struct skb_shared_hwtstamps shhwtstamps;
+अटल काष्ठा sk_buff *dpaa_cleanup_tx_fd(स्थिर काष्ठा dpaa_priv *priv,
+					  स्थिर काष्ठा qm_fd *fd, bool ts)
+अणु
+	स्थिर क्रमागत dma_data_direction dma_dir = DMA_TO_DEVICE;
+	काष्ठा device *dev = priv->net_dev->dev.parent;
+	काष्ठा skb_shared_hwtstamps shhwtstamps;
 	dma_addr_t addr = qm_fd_addr(fd);
-	void *vaddr = phys_to_virt(addr);
-	const struct qm_sg_entry *sgt;
-	struct dpaa_eth_swbp *swbp;
-	struct sk_buff *skb;
+	व्योम *vaddr = phys_to_virt(addr);
+	स्थिर काष्ठा qm_sg_entry *sgt;
+	काष्ठा dpaa_eth_swbp *swbp;
+	काष्ठा sk_buff *skb;
 	u64 ns;
-	int i;
+	पूर्णांक i;
 
-	if (unlikely(qm_fd_get_format(fd) == qm_fd_sg)) {
+	अगर (unlikely(qm_fd_get_क्रमmat(fd) == qm_fd_sg)) अणु
 		dma_unmap_page(priv->tx_dma_dev, addr,
 			       qm_fd_get_offset(fd) + DPAA_SGT_SIZE,
 			       dma_dir);
@@ -1677,136 +1678,136 @@ static struct sk_buff *dpaa_cleanup_tx_fd(const struct dpaa_priv *priv,
 		dma_unmap_single(priv->tx_dma_dev, qm_sg_addr(&sgt[0]),
 				 qm_sg_entry_get_len(&sgt[0]), dma_dir);
 
-		/* remaining pages were mapped with skb_frag_dma_map() */
-		for (i = 1; (i < DPAA_SGT_MAX_ENTRIES) &&
-		     !qm_sg_entry_is_final(&sgt[i - 1]); i++) {
+		/* reमुख्यing pages were mapped with skb_frag_dma_map() */
+		क्रम (i = 1; (i < DPAA_SGT_MAX_ENTRIES) &&
+		     !qm_sg_entry_is_final(&sgt[i - 1]); i++) अणु
 			WARN_ON(qm_sg_entry_is_ext(&sgt[i]));
 
 			dma_unmap_page(priv->tx_dma_dev, qm_sg_addr(&sgt[i]),
 				       qm_sg_entry_get_len(&sgt[i]), dma_dir);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dma_unmap_single(priv->tx_dma_dev, addr,
 				 qm_fd_get_offset(fd) + qm_fd_get_length(fd),
 				 dma_dir);
-	}
+	पूर्ण
 
-	swbp = (struct dpaa_eth_swbp *)vaddr;
+	swbp = (काष्ठा dpaa_eth_swbp *)vaddr;
 	skb = swbp->skb;
 
-	/* No skb backpointer is set when running XDP. An xdp_frame
-	 * backpointer is saved instead.
+	/* No skb backpoपूर्णांकer is set when running XDP. An xdp_frame
+	 * backpoपूर्णांकer is saved instead.
 	 */
-	if (!skb) {
-		xdp_return_frame(swbp->xdpf);
-		return NULL;
-	}
+	अगर (!skb) अणु
+		xdp_वापस_frame(swbp->xdpf);
+		वापस शून्य;
+	पूर्ण
 
-	/* DMA unmapping is required before accessing the HW provided info */
-	if (ts && priv->tx_tstamp &&
-	    skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) {
-		memset(&shhwtstamps, 0, sizeof(shhwtstamps));
+	/* DMA unmapping is required beक्रमe accessing the HW provided info */
+	अगर (ts && priv->tx_tstamp &&
+	    skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) अणु
+		स_रखो(&shhwtstamps, 0, माप(shhwtstamps));
 
-		if (!fman_port_get_tstamp(priv->mac_dev->port[TX], vaddr,
-					  &ns)) {
-			shhwtstamps.hwtstamp = ns_to_ktime(ns);
+		अगर (!fman_port_get_tstamp(priv->mac_dev->port[TX], vaddr,
+					  &ns)) अणु
+			shhwtstamps.hwtstamp = ns_to_kसमय(ns);
 			skb_tstamp_tx(skb, &shhwtstamps);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_warn(dev, "fman_port_get_tstamp failed!\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (qm_fd_get_format(fd) == qm_fd_sg)
-		/* Free the page that we allocated on Tx for the SGT */
-		free_pages((unsigned long)vaddr, 0);
+	अगर (qm_fd_get_क्रमmat(fd) == qm_fd_sg)
+		/* Free the page that we allocated on Tx क्रम the SGT */
+		मुक्त_pages((अचिन्हित दीर्घ)vaddr, 0);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static u8 rx_csum_offload(const struct dpaa_priv *priv, const struct qm_fd *fd)
-{
-	/* The parser has run and performed L4 checksum validation.
+अटल u8 rx_csum_offload(स्थिर काष्ठा dpaa_priv *priv, स्थिर काष्ठा qm_fd *fd)
+अणु
+	/* The parser has run and perक्रमmed L4 checksum validation.
 	 * We know there were no parser errors (and implicitly no
 	 * L4 csum error), otherwise we wouldn't be here.
 	 */
-	if ((priv->net_dev->features & NETIF_F_RXCSUM) &&
+	अगर ((priv->net_dev->features & NETIF_F_RXCSUM) &&
 	    (be32_to_cpu(fd->status) & FM_FD_STAT_L4CV))
-		return CHECKSUM_UNNECESSARY;
+		वापस CHECKSUM_UNNECESSARY;
 
 	/* We're here because either the parser didn't run or the L4 checksum
-	 * was not verified. This may include the case of a UDP frame with
+	 * was not verअगरied. This may include the हाल of a UDP frame with
 	 * checksum zero or an L4 proto other than TCP/UDP
 	 */
-	return CHECKSUM_NONE;
-}
+	वापस CHECKSUM_NONE;
+पूर्ण
 
-#define PTR_IS_ALIGNED(x, a) (IS_ALIGNED((unsigned long)(x), (a)))
+#घोषणा PTR_IS_ALIGNED(x, a) (IS_ALIGNED((अचिन्हित दीर्घ)(x), (a)))
 
 /* Build a linear skb around the received buffer.
  * We are guaranteed there is enough room at the end of the data buffer to
  * accommodate the shared info area of the skb.
  */
-static struct sk_buff *contig_fd_to_skb(const struct dpaa_priv *priv,
-					const struct qm_fd *fd)
-{
-	ssize_t fd_off = qm_fd_get_offset(fd);
+अटल काष्ठा sk_buff *contig_fd_to_skb(स्थिर काष्ठा dpaa_priv *priv,
+					स्थिर काष्ठा qm_fd *fd)
+अणु
+	sमाप_प्रकार fd_off = qm_fd_get_offset(fd);
 	dma_addr_t addr = qm_fd_addr(fd);
-	struct dpaa_bp *dpaa_bp;
-	struct sk_buff *skb;
-	void *vaddr;
+	काष्ठा dpaa_bp *dpaa_bp;
+	काष्ठा sk_buff *skb;
+	व्योम *vaddr;
 
 	vaddr = phys_to_virt(addr);
-	WARN_ON(!IS_ALIGNED((unsigned long)vaddr, SMP_CACHE_BYTES));
+	WARN_ON(!IS_ALIGNED((अचिन्हित दीर्घ)vaddr, SMP_CACHE_BYTES));
 
 	dpaa_bp = dpaa_bpid2pool(fd->bpid);
-	if (!dpaa_bp)
-		goto free_buffer;
+	अगर (!dpaa_bp)
+		जाओ मुक्त_buffer;
 
 	skb = build_skb(vaddr, dpaa_bp->size +
-			SKB_DATA_ALIGN(sizeof(struct skb_shared_info)));
-	if (WARN_ONCE(!skb, "Build skb failure on Rx\n"))
-		goto free_buffer;
+			SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)));
+	अगर (WARN_ONCE(!skb, "Build skb failure on Rx\n"))
+		जाओ मुक्त_buffer;
 	skb_reserve(skb, fd_off);
 	skb_put(skb, qm_fd_get_length(fd));
 
 	skb->ip_summed = rx_csum_offload(priv, fd);
 
-	return skb;
+	वापस skb;
 
-free_buffer:
-	free_pages((unsigned long)vaddr, 0);
-	return NULL;
-}
+मुक्त_buffer:
+	मुक्त_pages((अचिन्हित दीर्घ)vaddr, 0);
+	वापस शून्य;
+पूर्ण
 
 /* Build an skb with the data of the first S/G entry in the linear portion and
  * the rest of the frame as skb fragments.
  *
  * The page fragment holding the S/G Table is recycled here.
  */
-static struct sk_buff *sg_fd_to_skb(const struct dpaa_priv *priv,
-				    const struct qm_fd *fd)
-{
-	ssize_t fd_off = qm_fd_get_offset(fd);
+अटल काष्ठा sk_buff *sg_fd_to_skb(स्थिर काष्ठा dpaa_priv *priv,
+				    स्थिर काष्ठा qm_fd *fd)
+अणु
+	sमाप_प्रकार fd_off = qm_fd_get_offset(fd);
 	dma_addr_t addr = qm_fd_addr(fd);
-	const struct qm_sg_entry *sgt;
-	struct page *page, *head_page;
-	struct dpaa_bp *dpaa_bp;
-	void *vaddr, *sg_vaddr;
-	int frag_off, frag_len;
-	struct sk_buff *skb;
+	स्थिर काष्ठा qm_sg_entry *sgt;
+	काष्ठा page *page, *head_page;
+	काष्ठा dpaa_bp *dpaa_bp;
+	व्योम *vaddr, *sg_vaddr;
+	पूर्णांक frag_off, frag_len;
+	काष्ठा sk_buff *skb;
 	dma_addr_t sg_addr;
-	int page_offset;
-	unsigned int sz;
-	int *count_ptr;
-	int i, j;
+	पूर्णांक page_offset;
+	अचिन्हित पूर्णांक sz;
+	पूर्णांक *count_ptr;
+	पूर्णांक i, j;
 
 	vaddr = phys_to_virt(addr);
-	WARN_ON(!IS_ALIGNED((unsigned long)vaddr, SMP_CACHE_BYTES));
+	WARN_ON(!IS_ALIGNED((अचिन्हित दीर्घ)vaddr, SMP_CACHE_BYTES));
 
 	/* Iterate through the SGT entries and add data buffers to the skb */
 	sgt = vaddr + fd_off;
-	skb = NULL;
-	for (i = 0; i < DPAA_SGT_MAX_ENTRIES; i++) {
+	skb = शून्य;
+	क्रम (i = 0; i < DPAA_SGT_MAX_ENTRIES; i++) अणु
 		/* Extension bit is not supported */
 		WARN_ON(qm_sg_entry_is_ext(&sgt[i]));
 
@@ -1819,25 +1820,25 @@ static struct sk_buff *sg_fd_to_skb(const struct dpaa_priv *priv,
 
 		/* We may use multiple Rx pools */
 		dpaa_bp = dpaa_bpid2pool(sgt[i].bpid);
-		if (!dpaa_bp)
-			goto free_buffers;
+		अगर (!dpaa_bp)
+			जाओ मुक्त_buffers;
 
-		if (!skb) {
+		अगर (!skb) अणु
 			sz = dpaa_bp->size +
-				SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
+				SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info));
 			skb = build_skb(sg_vaddr, sz);
-			if (WARN_ON(!skb))
-				goto free_buffers;
+			अगर (WARN_ON(!skb))
+				जाओ मुक्त_buffers;
 
 			skb->ip_summed = rx_csum_offload(priv, fd);
 
-			/* Make sure forwarded skbs will have enough space
-			 * on Tx, if extra headers are added.
+			/* Make sure क्रमwarded skbs will have enough space
+			 * on Tx, अगर extra headers are added.
 			 */
 			WARN_ON(fd_off != priv->rx_headroom);
 			skb_reserve(skb, fd_off);
 			skb_put(skb, qm_sg_entry_get_len(&sgt[i]));
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Not the first S/G entry; all data from buffer will
 			 * be added in an skb fragment; fragment index is offset
 			 * by one since first S/G entry was incorporated in the
@@ -1849,98 +1850,98 @@ static struct sk_buff *sg_fd_to_skb(const struct dpaa_priv *priv,
 			head_page = virt_to_head_page(sg_vaddr);
 
 			/* Compute offset in (possibly tail) page */
-			page_offset = ((unsigned long)sg_vaddr &
+			page_offset = ((अचिन्हित दीर्घ)sg_vaddr &
 					(PAGE_SIZE - 1)) +
 				(page_address(page) - page_address(head_page));
 			/* page_offset only refers to the beginning of sgt[i];
-			 * but the buffer itself may have an internal offset.
+			 * but the buffer itself may have an पूर्णांकernal offset.
 			 */
 			frag_off = qm_sg_entry_get_off(&sgt[i]) + page_offset;
 			frag_len = qm_sg_entry_get_len(&sgt[i]);
-			/* skb_add_rx_frag() does no checking on the page; if
+			/* skb_add_rx_frag() करोes no checking on the page; अगर
 			 * we pass it a tail page, we'll end up with
 			 * bad page accounting and eventually with segafults.
 			 */
 			skb_add_rx_frag(skb, i - 1, head_page, frag_off,
 					frag_len, dpaa_bp->size);
-		}
+		पूर्ण
 
-		/* Update the pool count for the current {cpu x bpool} */
+		/* Update the pool count क्रम the current अणुcpu x bpoolपूर्ण */
 		count_ptr = this_cpu_ptr(dpaa_bp->percpu_count);
 		(*count_ptr)--;
 
-		if (qm_sg_entry_is_final(&sgt[i]))
-			break;
-	}
+		अगर (qm_sg_entry_is_final(&sgt[i]))
+			अवरोध;
+	पूर्ण
 	WARN_ONCE(i == DPAA_SGT_MAX_ENTRIES, "No final bit on SGT\n");
 
-	/* free the SG table buffer */
-	free_pages((unsigned long)vaddr, 0);
+	/* मुक्त the SG table buffer */
+	मुक्त_pages((अचिन्हित दीर्घ)vaddr, 0);
 
-	return skb;
+	वापस skb;
 
-free_buffers:
-	/* free all the SG entries */
-	for (j = 0; j < DPAA_SGT_MAX_ENTRIES ; j++) {
+मुक्त_buffers:
+	/* मुक्त all the SG entries */
+	क्रम (j = 0; j < DPAA_SGT_MAX_ENTRIES ; j++) अणु
 		sg_addr = qm_sg_addr(&sgt[j]);
 		sg_vaddr = phys_to_virt(sg_addr);
 		/* all pages 0..i were unmaped */
-		if (j > i)
+		अगर (j > i)
 			dma_unmap_page(priv->rx_dma_dev, qm_sg_addr(&sgt[j]),
 				       DPAA_BP_RAW_SIZE, DMA_FROM_DEVICE);
-		free_pages((unsigned long)sg_vaddr, 0);
+		मुक्त_pages((अचिन्हित दीर्घ)sg_vaddr, 0);
 		/* counters 0..i-1 were decremented */
-		if (j >= i) {
+		अगर (j >= i) अणु
 			dpaa_bp = dpaa_bpid2pool(sgt[j].bpid);
-			if (dpaa_bp) {
+			अगर (dpaa_bp) अणु
 				count_ptr = this_cpu_ptr(dpaa_bp->percpu_count);
 				(*count_ptr)--;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (qm_sg_entry_is_final(&sgt[j]))
-			break;
-	}
-	/* free the SGT fragment */
-	free_pages((unsigned long)vaddr, 0);
+		अगर (qm_sg_entry_is_final(&sgt[j]))
+			अवरोध;
+	पूर्ण
+	/* मुक्त the SGT fragment */
+	मुक्त_pages((अचिन्हित दीर्घ)vaddr, 0);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int skb_to_contig_fd(struct dpaa_priv *priv,
-			    struct sk_buff *skb, struct qm_fd *fd,
-			    int *offset)
-{
-	struct net_device *net_dev = priv->net_dev;
-	enum dma_data_direction dma_dir;
-	struct dpaa_eth_swbp *swbp;
-	unsigned char *buff_start;
+अटल पूर्णांक skb_to_contig_fd(काष्ठा dpaa_priv *priv,
+			    काष्ठा sk_buff *skb, काष्ठा qm_fd *fd,
+			    पूर्णांक *offset)
+अणु
+	काष्ठा net_device *net_dev = priv->net_dev;
+	क्रमागत dma_data_direction dma_dir;
+	काष्ठा dpaa_eth_swbp *swbp;
+	अचिन्हित अक्षर *buff_start;
 	dma_addr_t addr;
-	int err;
+	पूर्णांक err;
 
 	/* We are guaranteed to have at least tx_headroom bytes
-	 * available, so just use that for offset.
+	 * available, so just use that क्रम offset.
 	 */
 	fd->bpid = FSL_DPAA_BPID_INV;
 	buff_start = skb->data - priv->tx_headroom;
 	dma_dir = DMA_TO_DEVICE;
 
-	swbp = (struct dpaa_eth_swbp *)buff_start;
+	swbp = (काष्ठा dpaa_eth_swbp *)buff_start;
 	swbp->skb = skb;
 
 	/* Enable L3/L4 hardware checksum computation.
 	 *
-	 * We must do this before dma_map_single(DMA_TO_DEVICE), because we may
-	 * need to write into the skb.
+	 * We must करो this beक्रमe dma_map_single(DMA_TO_DEVICE), because we may
+	 * need to ग_लिखो पूर्णांकo the skb.
 	 */
 	err = dpaa_enable_tx_csum(priv, skb, fd,
 				  buff_start + DPAA_TX_PRIV_DATA_SIZE);
-	if (unlikely(err < 0)) {
-		if (net_ratelimit())
-			netif_err(priv, tx_err, net_dev, "HW csum error: %d\n",
+	अगर (unlikely(err < 0)) अणु
+		अगर (net_ratelimit())
+			netअगर_err(priv, tx_err, net_dev, "HW csum error: %d\n",
 				  err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Fill in the rest of the FD fields */
 	qm_fd_set_contig(fd, priv->tx_headroom, skb->len);
@@ -1949,80 +1950,80 @@ static int skb_to_contig_fd(struct dpaa_priv *priv,
 	/* Map the entire buffer size that may be seen by FMan, but no more */
 	addr = dma_map_single(priv->tx_dma_dev, buff_start,
 			      priv->tx_headroom + skb->len, dma_dir);
-	if (unlikely(dma_mapping_error(priv->tx_dma_dev, addr))) {
-		if (net_ratelimit())
-			netif_err(priv, tx_err, net_dev, "dma_map_single() failed\n");
-		return -EINVAL;
-	}
+	अगर (unlikely(dma_mapping_error(priv->tx_dma_dev, addr))) अणु
+		अगर (net_ratelimit())
+			netअगर_err(priv, tx_err, net_dev, "dma_map_single() failed\n");
+		वापस -EINVAL;
+	पूर्ण
 	qm_fd_addr_set64(fd, addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int skb_to_sg_fd(struct dpaa_priv *priv,
-			struct sk_buff *skb, struct qm_fd *fd)
-{
-	const enum dma_data_direction dma_dir = DMA_TO_DEVICE;
-	const int nr_frags = skb_shinfo(skb)->nr_frags;
-	struct net_device *net_dev = priv->net_dev;
-	struct dpaa_eth_swbp *swbp;
-	struct qm_sg_entry *sgt;
-	void *buff_start;
+अटल पूर्णांक skb_to_sg_fd(काष्ठा dpaa_priv *priv,
+			काष्ठा sk_buff *skb, काष्ठा qm_fd *fd)
+अणु
+	स्थिर क्रमागत dma_data_direction dma_dir = DMA_TO_DEVICE;
+	स्थिर पूर्णांक nr_frags = skb_shinfo(skb)->nr_frags;
+	काष्ठा net_device *net_dev = priv->net_dev;
+	काष्ठा dpaa_eth_swbp *swbp;
+	काष्ठा qm_sg_entry *sgt;
+	व्योम *buff_start;
 	skb_frag_t *frag;
 	dma_addr_t addr;
-	size_t frag_len;
-	struct page *p;
-	int i, j, err;
+	माप_प्रकार frag_len;
+	काष्ठा page *p;
+	पूर्णांक i, j, err;
 
 	/* get a page to store the SGTable */
 	p = dev_alloc_pages(0);
-	if (unlikely(!p)) {
+	अगर (unlikely(!p)) अणु
 		netdev_err(net_dev, "dev_alloc_pages() failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	buff_start = page_address(p);
 
 	/* Enable L3/L4 hardware checksum computation.
 	 *
-	 * We must do this before dma_map_single(DMA_TO_DEVICE), because we may
-	 * need to write into the skb.
+	 * We must करो this beक्रमe dma_map_single(DMA_TO_DEVICE), because we may
+	 * need to ग_लिखो पूर्णांकo the skb.
 	 */
 	err = dpaa_enable_tx_csum(priv, skb, fd,
 				  buff_start + DPAA_TX_PRIV_DATA_SIZE);
-	if (unlikely(err < 0)) {
-		if (net_ratelimit())
-			netif_err(priv, tx_err, net_dev, "HW csum error: %d\n",
+	अगर (unlikely(err < 0)) अणु
+		अगर (net_ratelimit())
+			netअगर_err(priv, tx_err, net_dev, "HW csum error: %d\n",
 				  err);
-		goto csum_failed;
-	}
+		जाओ csum_failed;
+	पूर्ण
 
 	/* SGT[0] is used by the linear part */
-	sgt = (struct qm_sg_entry *)(buff_start + priv->tx_headroom);
+	sgt = (काष्ठा qm_sg_entry *)(buff_start + priv->tx_headroom);
 	frag_len = skb_headlen(skb);
 	qm_sg_entry_set_len(&sgt[0], frag_len);
 	sgt[0].bpid = FSL_DPAA_BPID_INV;
 	sgt[0].offset = 0;
 	addr = dma_map_single(priv->tx_dma_dev, skb->data,
 			      skb_headlen(skb), dma_dir);
-	if (unlikely(dma_mapping_error(priv->tx_dma_dev, addr))) {
+	अगर (unlikely(dma_mapping_error(priv->tx_dma_dev, addr))) अणु
 		netdev_err(priv->net_dev, "DMA mapping failed\n");
 		err = -EINVAL;
-		goto sg0_map_failed;
-	}
+		जाओ sg0_map_failed;
+	पूर्ण
 	qm_sg_entry_set64(&sgt[0], addr);
 
 	/* populate the rest of SGT entries */
-	for (i = 0; i < nr_frags; i++) {
+	क्रम (i = 0; i < nr_frags; i++) अणु
 		frag = &skb_shinfo(skb)->frags[i];
 		frag_len = skb_frag_size(frag);
 		WARN_ON(!skb_frag_page(frag));
 		addr = skb_frag_dma_map(priv->tx_dma_dev, frag, 0,
 					frag_len, dma_dir);
-		if (unlikely(dma_mapping_error(priv->tx_dma_dev, addr))) {
+		अगर (unlikely(dma_mapping_error(priv->tx_dma_dev, addr))) अणु
 			netdev_err(priv->net_dev, "DMA mapping failed\n");
 			err = -EINVAL;
-			goto sg_map_failed;
-		}
+			जाओ sg_map_failed;
+		पूर्ण
 
 		qm_sg_entry_set_len(&sgt[i + 1], frag_len);
 		sgt[i + 1].bpid = FSL_DPAA_BPID_INV;
@@ -2030,7 +2031,7 @@ static int skb_to_sg_fd(struct dpaa_priv *priv,
 
 		/* keep the offset in the address */
 		qm_sg_entry_set64(&sgt[i + 1], addr);
-	}
+	पूर्ण
 
 	/* Set the final bit in the last used entry of the SGT */
 	qm_sg_entry_set_f(&sgt[nr_frags], frag_len);
@@ -2039,114 +2040,114 @@ static int skb_to_sg_fd(struct dpaa_priv *priv,
 	qm_fd_set_sg(fd, priv->tx_headroom, skb->len);
 
 	/* DMA map the SGT page */
-	swbp = (struct dpaa_eth_swbp *)buff_start;
+	swbp = (काष्ठा dpaa_eth_swbp *)buff_start;
 	swbp->skb = skb;
 
 	addr = dma_map_page(priv->tx_dma_dev, p, 0,
 			    priv->tx_headroom + DPAA_SGT_SIZE, dma_dir);
-	if (unlikely(dma_mapping_error(priv->tx_dma_dev, addr))) {
+	अगर (unlikely(dma_mapping_error(priv->tx_dma_dev, addr))) अणु
 		netdev_err(priv->net_dev, "DMA mapping failed\n");
 		err = -EINVAL;
-		goto sgt_map_failed;
-	}
+		जाओ sgt_map_failed;
+	पूर्ण
 
 	fd->bpid = FSL_DPAA_BPID_INV;
 	fd->cmd |= cpu_to_be32(FM_FD_CMD_FCO);
 	qm_fd_addr_set64(fd, addr);
 
-	return 0;
+	वापस 0;
 
 sgt_map_failed:
 sg_map_failed:
-	for (j = 0; j < i; j++)
+	क्रम (j = 0; j < i; j++)
 		dma_unmap_page(priv->tx_dma_dev, qm_sg_addr(&sgt[j]),
 			       qm_sg_entry_get_len(&sgt[j]), dma_dir);
 sg0_map_failed:
 csum_failed:
-	free_pages((unsigned long)buff_start, 0);
+	मुक्त_pages((अचिन्हित दीर्घ)buff_start, 0);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int dpaa_xmit(struct dpaa_priv *priv,
-			    struct rtnl_link_stats64 *percpu_stats,
-			    int queue,
-			    struct qm_fd *fd)
-{
-	struct qman_fq *egress_fq;
-	int err, i;
+अटल अंतरभूत पूर्णांक dpaa_xmit(काष्ठा dpaa_priv *priv,
+			    काष्ठा rtnl_link_stats64 *percpu_stats,
+			    पूर्णांक queue,
+			    काष्ठा qm_fd *fd)
+अणु
+	काष्ठा qman_fq *egress_fq;
+	पूर्णांक err, i;
 
 	egress_fq = priv->egress_fqs[queue];
-	if (fd->bpid == FSL_DPAA_BPID_INV)
+	अगर (fd->bpid == FSL_DPAA_BPID_INV)
 		fd->cmd |= cpu_to_be32(qman_fq_fqid(priv->conf_fqs[queue]));
 
 	/* Trace this Tx fd */
 	trace_dpaa_tx_fd(priv->net_dev, egress_fq, fd);
 
-	for (i = 0; i < DPAA_ENQUEUE_RETRIES; i++) {
+	क्रम (i = 0; i < DPAA_ENQUEUE_RETRIES; i++) अणु
 		err = qman_enqueue(egress_fq, fd);
-		if (err != -EBUSY)
-			break;
-	}
+		अगर (err != -EBUSY)
+			अवरोध;
+	पूर्ण
 
-	if (unlikely(err < 0)) {
-		percpu_stats->tx_fifo_errors++;
-		return err;
-	}
+	अगर (unlikely(err < 0)) अणु
+		percpu_stats->tx_fअगरo_errors++;
+		वापस err;
+	पूर्ण
 
 	percpu_stats->tx_packets++;
 	percpu_stats->tx_bytes += qm_fd_get_length(fd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_DPAA_ERRATUM_A050385
-static int dpaa_a050385_wa_skb(struct net_device *net_dev, struct sk_buff **s)
-{
-	struct dpaa_priv *priv = netdev_priv(net_dev);
-	struct sk_buff *new_skb, *skb = *s;
-	unsigned char *start, i;
+#अगर_घोषित CONFIG_DPAA_ERRATUM_A050385
+अटल पूर्णांक dpaa_a050385_wa_skb(काष्ठा net_device *net_dev, काष्ठा sk_buff **s)
+अणु
+	काष्ठा dpaa_priv *priv = netdev_priv(net_dev);
+	काष्ठा sk_buff *new_skb, *skb = *s;
+	अचिन्हित अक्षर *start, i;
 
 	/* check linear buffer alignment */
-	if (!PTR_IS_ALIGNED(skb->data, DPAA_A050385_ALIGN))
-		goto workaround;
+	अगर (!PTR_IS_ALIGNED(skb->data, DPAA_A050385_ALIGN))
+		जाओ workaround;
 
 	/* linear buffers just need to have an aligned start */
-	if (!skb_is_nonlinear(skb))
-		return 0;
+	अगर (!skb_is_nonlinear(skb))
+		वापस 0;
 
-	/* linear data size for nonlinear skbs needs to be aligned */
-	if (!IS_ALIGNED(skb_headlen(skb), DPAA_A050385_ALIGN))
-		goto workaround;
+	/* linear data size क्रम nonlinear skbs needs to be aligned */
+	अगर (!IS_ALIGNED(skb_headlen(skb), DPAA_A050385_ALIGN))
+		जाओ workaround;
 
-	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 		/* all fragments need to have aligned start addresses */
-		if (!IS_ALIGNED(skb_frag_off(frag), DPAA_A050385_ALIGN))
-			goto workaround;
+		अगर (!IS_ALIGNED(skb_frag_off(frag), DPAA_A050385_ALIGN))
+			जाओ workaround;
 
 		/* all but last fragment need to have aligned sizes */
-		if (!IS_ALIGNED(skb_frag_size(frag), DPAA_A050385_ALIGN) &&
+		अगर (!IS_ALIGNED(skb_frag_size(frag), DPAA_A050385_ALIGN) &&
 		    (i < skb_shinfo(skb)->nr_frags - 1))
-			goto workaround;
-	}
+			जाओ workaround;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 workaround:
-	/* copy all the skb content into a new linear buffer */
+	/* copy all the skb content पूर्णांकo a new linear buffer */
 	new_skb = netdev_alloc_skb(net_dev, skb->len + DPAA_A050385_ALIGN - 1 +
 						priv->tx_headroom);
-	if (!new_skb)
-		return -ENOMEM;
+	अगर (!new_skb)
+		वापस -ENOMEM;
 
-	/* NET_SKB_PAD bytes already reserved, adding up to tx_headroom */
+	/* NET_SKB_PAD bytes alपढ़ोy reserved, adding up to tx_headroom */
 	skb_reserve(new_skb, priv->tx_headroom - NET_SKB_PAD);
 
-	/* Workaround for DPAA_A050385 requires data start to be aligned */
+	/* Workaround क्रम DPAA_A050385 requires data start to be aligned */
 	start = PTR_ALIGN(new_skb->data, DPAA_A050385_ALIGN);
-	if (start - new_skb->data)
+	अगर (start - new_skb->data)
 		skb_reserve(new_skb, start - new_skb->data);
 
 	skb_put(new_skb, skb->len);
@@ -2154,90 +2155,90 @@ workaround:
 	skb_copy_header(new_skb, skb);
 	new_skb->dev = skb->dev;
 
-	/* Copy relevant timestamp info from the old skb to the new */
-	if (priv->tx_tstamp) {
+	/* Copy relevant बारtamp info from the old skb to the new */
+	अगर (priv->tx_tstamp) अणु
 		skb_shinfo(new_skb)->tx_flags = skb_shinfo(skb)->tx_flags;
 		skb_shinfo(new_skb)->hwtstamps = skb_shinfo(skb)->hwtstamps;
 		skb_shinfo(new_skb)->tskey = skb_shinfo(skb)->tskey;
-		if (skb->sk)
+		अगर (skb->sk)
 			skb_set_owner_w(new_skb, skb->sk);
-	}
+	पूर्ण
 
 	/* We move the headroom when we align it so we have to reset the
 	 * network and transport header offsets relative to the new data
-	 * pointer. The checksum offload relies on these offsets.
+	 * poपूर्णांकer. The checksum offload relies on these offsets.
 	 */
 	skb_set_network_header(new_skb, skb_network_offset(skb));
 	skb_set_transport_header(new_skb, skb_transport_offset(skb));
 
-	dev_kfree_skb(skb);
+	dev_kमुक्त_skb(skb);
 	*s = new_skb;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dpaa_a050385_wa_xdpf(struct dpaa_priv *priv,
-				struct xdp_frame **init_xdpf)
-{
-	struct xdp_frame *new_xdpf, *xdpf = *init_xdpf;
-	void *new_buff, *aligned_data;
-	struct page *p;
-	u32 data_shift;
-	int headroom;
+अटल पूर्णांक dpaa_a050385_wa_xdpf(काष्ठा dpaa_priv *priv,
+				काष्ठा xdp_frame **init_xdpf)
+अणु
+	काष्ठा xdp_frame *new_xdpf, *xdpf = *init_xdpf;
+	व्योम *new_buff, *aligned_data;
+	काष्ठा page *p;
+	u32 data_shअगरt;
+	पूर्णांक headroom;
 
 	/* Check the data alignment and make sure the headroom is large
-	 * enough to store the xdpf backpointer. Use an aligned headroom
+	 * enough to store the xdpf backpoपूर्णांकer. Use an aligned headroom
 	 * value.
 	 *
-	 * Due to alignment constraints, we give XDP access to the full 256
+	 * Due to alignment स्थिरraपूर्णांकs, we give XDP access to the full 256
 	 * byte frame headroom. If the XDP program uses all of it, copy the
-	 * data to a new buffer and make room for storing the backpointer.
+	 * data to a new buffer and make room क्रम storing the backpoपूर्णांकer.
 	 */
-	if (PTR_IS_ALIGNED(xdpf->data, DPAA_FD_DATA_ALIGNMENT) &&
-	    xdpf->headroom >= priv->tx_headroom) {
+	अगर (PTR_IS_ALIGNED(xdpf->data, DPAA_FD_DATA_ALIGNMENT) &&
+	    xdpf->headroom >= priv->tx_headroom) अणु
 		xdpf->headroom = priv->tx_headroom;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Try to move the data inside the buffer just enough to align it and
-	 * store the xdpf backpointer. If the available headroom isn't large
+	 * store the xdpf backpoपूर्णांकer. If the available headroom isn't large
 	 * enough, resort to allocating a new buffer and copying the data.
 	 */
 	aligned_data = PTR_ALIGN_DOWN(xdpf->data, DPAA_FD_DATA_ALIGNMENT);
-	data_shift = xdpf->data - aligned_data;
+	data_shअगरt = xdpf->data - aligned_data;
 
 	/* The XDP frame's headroom needs to be large enough to accommodate
-	 * shifting the data as well as storing the xdpf backpointer.
+	 * shअगरting the data as well as storing the xdpf backpoपूर्णांकer.
 	 */
-	if (xdpf->headroom  >= data_shift + priv->tx_headroom) {
-		memmove(aligned_data, xdpf->data, xdpf->len);
+	अगर (xdpf->headroom  >= data_shअगरt + priv->tx_headroom) अणु
+		स_हटाओ(aligned_data, xdpf->data, xdpf->len);
 		xdpf->data = aligned_data;
 		xdpf->headroom = priv->tx_headroom;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* The new xdp_frame is stored in the new buffer. Reserve enough space
-	 * in the headroom for storing it along with the driver's private
+	 * in the headroom क्रम storing it aदीर्घ with the driver's निजी
 	 * info. The headroom needs to be aligned to DPAA_FD_DATA_ALIGNMENT to
 	 * guarantee the data's alignment in the buffer.
 	 */
-	headroom = ALIGN(sizeof(*new_xdpf) + priv->tx_headroom,
+	headroom = ALIGN(माप(*new_xdpf) + priv->tx_headroom,
 			 DPAA_FD_DATA_ALIGNMENT);
 
-	/* Assure the extended headroom and data don't overflow the buffer,
-	 * while maintaining the mandatory tailroom.
+	/* Assure the extended headroom and data करोn't overflow the buffer,
+	 * जबतक मुख्यtaining the mandatory tailroom.
 	 */
-	if (headroom + xdpf->len > DPAA_BP_RAW_SIZE -
-			SKB_DATA_ALIGN(sizeof(struct skb_shared_info)))
-		return -ENOMEM;
+	अगर (headroom + xdpf->len > DPAA_BP_RAW_SIZE -
+			SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)))
+		वापस -ENOMEM;
 
 	p = dev_alloc_pages(0);
-	if (unlikely(!p))
-		return -ENOMEM;
+	अगर (unlikely(!p))
+		वापस -ENOMEM;
 
 	/* Copy the data to the new buffer at a properly aligned offset */
 	new_buff = page_address(p);
-	memcpy(new_buff + headroom, xdpf->data, xdpf->len);
+	स_नकल(new_buff + headroom, xdpf->data, xdpf->len);
 
 	/* Create an XDP frame around the new buffer in a similar fashion
 	 * to xdp_convert_buff_to_frame.
@@ -2250,25 +2251,25 @@ static int dpaa_a050385_wa_xdpf(struct dpaa_priv *priv,
 	new_xdpf->mem.type = MEM_TYPE_PAGE_ORDER0;
 
 	/* Release the initial buffer */
-	xdp_return_frame_rx_napi(xdpf);
+	xdp_वापस_frame_rx_napi(xdpf);
 
 	*init_xdpf = new_xdpf;
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static netdev_tx_t
-dpaa_start_xmit(struct sk_buff *skb, struct net_device *net_dev)
-{
-	const int queue_mapping = skb_get_queue_mapping(skb);
+अटल netdev_tx_t
+dpaa_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *net_dev)
+अणु
+	स्थिर पूर्णांक queue_mapping = skb_get_queue_mapping(skb);
 	bool nonlinear = skb_is_nonlinear(skb);
-	struct rtnl_link_stats64 *percpu_stats;
-	struct dpaa_percpu_priv *percpu_priv;
-	struct netdev_queue *txq;
-	struct dpaa_priv *priv;
-	struct qm_fd fd;
-	int offset = 0;
-	int err = 0;
+	काष्ठा rtnl_link_stats64 *percpu_stats;
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	काष्ठा netdev_queue *txq;
+	काष्ठा dpaa_priv *priv;
+	काष्ठा qm_fd fd;
+	पूर्णांक offset = 0;
+	पूर्णांक err = 0;
 
 	priv = netdev_priv(net_dev);
 	percpu_priv = this_cpu_ptr(priv->percpu_priv);
@@ -2276,242 +2277,242 @@ dpaa_start_xmit(struct sk_buff *skb, struct net_device *net_dev)
 
 	qm_fd_clear_fd(&fd);
 
-	if (!nonlinear) {
-		/* We're going to store the skb backpointer at the beginning
-		 * of the data buffer, so we need a privately owned skb
+	अगर (!nonlinear) अणु
+		/* We're going to store the skb backpoपूर्णांकer at the beginning
+		 * of the data buffer, so we need a निजीly owned skb
 		 *
 		 * We've made sure skb is not shared in dev->priv_flags,
-		 * we need to verify the skb head is not cloned
+		 * we need to verअगरy the skb head is not cloned
 		 */
-		if (skb_cow_head(skb, priv->tx_headroom))
-			goto enomem;
+		अगर (skb_cow_head(skb, priv->tx_headroom))
+			जाओ enomem;
 
 		WARN_ON(skb_is_nonlinear(skb));
-	}
+	पूर्ण
 
 	/* MAX_SKB_FRAGS is equal or larger than our dpaa_SGT_MAX_ENTRIES;
-	 * make sure we don't feed FMan with more fragments than it supports.
+	 * make sure we करोn't feed FMan with more fragments than it supports.
 	 */
-	if (unlikely(nonlinear &&
-		     (skb_shinfo(skb)->nr_frags >= DPAA_SGT_MAX_ENTRIES))) {
+	अगर (unlikely(nonlinear &&
+		     (skb_shinfo(skb)->nr_frags >= DPAA_SGT_MAX_ENTRIES))) अणु
 		/* If the egress skb contains more fragments than we support
 		 * we have no choice but to linearize it ourselves.
 		 */
-		if (__skb_linearize(skb))
-			goto enomem;
+		अगर (__skb_linearize(skb))
+			जाओ enomem;
 
 		nonlinear = skb_is_nonlinear(skb);
-	}
+	पूर्ण
 
-#ifdef CONFIG_DPAA_ERRATUM_A050385
-	if (unlikely(fman_has_errata_a050385())) {
-		if (dpaa_a050385_wa_skb(net_dev, &skb))
-			goto enomem;
+#अगर_घोषित CONFIG_DPAA_ERRATUM_A050385
+	अगर (unlikely(fman_has_errata_a050385())) अणु
+		अगर (dpaa_a050385_wa_skb(net_dev, &skb))
+			जाओ enomem;
 		nonlinear = skb_is_nonlinear(skb);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (nonlinear) {
+	अगर (nonlinear) अणु
 		/* Just create a S/G fd based on the skb */
 		err = skb_to_sg_fd(priv, skb, &fd);
 		percpu_priv->tx_frag_skbuffs++;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Create a contig FD from this skb */
 		err = skb_to_contig_fd(priv, skb, &fd, &offset);
-	}
-	if (unlikely(err < 0))
-		goto skb_to_fd_failed;
+	पूर्ण
+	अगर (unlikely(err < 0))
+		जाओ skb_to_fd_failed;
 
 	txq = netdev_get_tx_queue(net_dev, queue_mapping);
 
-	/* LLTX requires to do our own update of trans_start */
-	txq->trans_start = jiffies;
+	/* LLTX requires to करो our own update of trans_start */
+	txq->trans_start = jअगरfies;
 
-	if (priv->tx_tstamp && skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) {
+	अगर (priv->tx_tstamp && skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) अणु
 		fd.cmd |= cpu_to_be32(FM_FD_CMD_UPD);
 		skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
-	}
+	पूर्ण
 
-	if (likely(dpaa_xmit(priv, percpu_stats, queue_mapping, &fd) == 0))
-		return NETDEV_TX_OK;
+	अगर (likely(dpaa_xmit(priv, percpu_stats, queue_mapping, &fd) == 0))
+		वापस NETDEV_TX_OK;
 
 	dpaa_cleanup_tx_fd(priv, &fd, false);
 skb_to_fd_failed:
 enomem:
 	percpu_stats->tx_errors++;
-	dev_kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void dpaa_rx_error(struct net_device *net_dev,
-			  const struct dpaa_priv *priv,
-			  struct dpaa_percpu_priv *percpu_priv,
-			  const struct qm_fd *fd,
+अटल व्योम dpaa_rx_error(काष्ठा net_device *net_dev,
+			  स्थिर काष्ठा dpaa_priv *priv,
+			  काष्ठा dpaa_percpu_priv *percpu_priv,
+			  स्थिर काष्ठा qm_fd *fd,
 			  u32 fqid)
-{
-	if (net_ratelimit())
-		netif_err(priv, hw, net_dev, "Err FD status = 0x%08x\n",
+अणु
+	अगर (net_ratelimit())
+		netअगर_err(priv, hw, net_dev, "Err FD status = 0x%08x\n",
 			  be32_to_cpu(fd->status) & FM_FD_STAT_RX_ERRORS);
 
 	percpu_priv->stats.rx_errors++;
 
-	if (be32_to_cpu(fd->status) & FM_FD_ERR_DMA)
+	अगर (be32_to_cpu(fd->status) & FM_FD_ERR_DMA)
 		percpu_priv->rx_errors.dme++;
-	if (be32_to_cpu(fd->status) & FM_FD_ERR_PHYSICAL)
+	अगर (be32_to_cpu(fd->status) & FM_FD_ERR_PHYSICAL)
 		percpu_priv->rx_errors.fpe++;
-	if (be32_to_cpu(fd->status) & FM_FD_ERR_SIZE)
+	अगर (be32_to_cpu(fd->status) & FM_FD_ERR_SIZE)
 		percpu_priv->rx_errors.fse++;
-	if (be32_to_cpu(fd->status) & FM_FD_ERR_PRS_HDR_ERR)
+	अगर (be32_to_cpu(fd->status) & FM_FD_ERR_PRS_HDR_ERR)
 		percpu_priv->rx_errors.phe++;
 
 	dpaa_fd_release(net_dev, fd);
-}
+पूर्ण
 
-static void dpaa_tx_error(struct net_device *net_dev,
-			  const struct dpaa_priv *priv,
-			  struct dpaa_percpu_priv *percpu_priv,
-			  const struct qm_fd *fd,
+अटल व्योम dpaa_tx_error(काष्ठा net_device *net_dev,
+			  स्थिर काष्ठा dpaa_priv *priv,
+			  काष्ठा dpaa_percpu_priv *percpu_priv,
+			  स्थिर काष्ठा qm_fd *fd,
 			  u32 fqid)
-{
-	struct sk_buff *skb;
+अणु
+	काष्ठा sk_buff *skb;
 
-	if (net_ratelimit())
-		netif_warn(priv, hw, net_dev, "FD status = 0x%08x\n",
+	अगर (net_ratelimit())
+		netअगर_warn(priv, hw, net_dev, "FD status = 0x%08x\n",
 			   be32_to_cpu(fd->status) & FM_FD_STAT_TX_ERRORS);
 
 	percpu_priv->stats.tx_errors++;
 
 	skb = dpaa_cleanup_tx_fd(priv, fd, false);
-	dev_kfree_skb(skb);
-}
+	dev_kमुक्त_skb(skb);
+पूर्ण
 
-static int dpaa_eth_poll(struct napi_struct *napi, int budget)
-{
-	struct dpaa_napi_portal *np =
-			container_of(napi, struct dpaa_napi_portal, napi);
-	int cleaned;
+अटल पूर्णांक dpaa_eth_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा dpaa_napi_portal *np =
+			container_of(napi, काष्ठा dpaa_napi_portal, napi);
+	पूर्णांक cleaned;
 
 	np->xdp_act = 0;
 
 	cleaned = qman_p_poll_dqrr(np->p, budget);
 
-	if (cleaned < budget) {
-		napi_complete_done(napi, cleaned);
+	अगर (cleaned < budget) अणु
+		napi_complete_करोne(napi, cleaned);
 		qman_p_irqsource_add(np->p, QM_PIRQ_DQRI);
-	} else if (np->down) {
+	पूर्ण अन्यथा अगर (np->करोwn) अणु
 		qman_p_irqsource_add(np->p, QM_PIRQ_DQRI);
-	}
+	पूर्ण
 
-	if (np->xdp_act & XDP_REDIRECT)
-		xdp_do_flush();
+	अगर (np->xdp_act & XDP_REसूचीECT)
+		xdp_करो_flush();
 
-	return cleaned;
-}
+	वापस cleaned;
+पूर्ण
 
-static void dpaa_tx_conf(struct net_device *net_dev,
-			 const struct dpaa_priv *priv,
-			 struct dpaa_percpu_priv *percpu_priv,
-			 const struct qm_fd *fd,
+अटल व्योम dpaa_tx_conf(काष्ठा net_device *net_dev,
+			 स्थिर काष्ठा dpaa_priv *priv,
+			 काष्ठा dpaa_percpu_priv *percpu_priv,
+			 स्थिर काष्ठा qm_fd *fd,
 			 u32 fqid)
-{
-	struct sk_buff	*skb;
+अणु
+	काष्ठा sk_buff	*skb;
 
-	if (unlikely(be32_to_cpu(fd->status) & FM_FD_STAT_TX_ERRORS)) {
-		if (net_ratelimit())
-			netif_warn(priv, hw, net_dev, "FD status = 0x%08x\n",
+	अगर (unlikely(be32_to_cpu(fd->status) & FM_FD_STAT_TX_ERRORS)) अणु
+		अगर (net_ratelimit())
+			netअगर_warn(priv, hw, net_dev, "FD status = 0x%08x\n",
 				   be32_to_cpu(fd->status) &
 				   FM_FD_STAT_TX_ERRORS);
 
 		percpu_priv->stats.tx_errors++;
-	}
+	पूर्ण
 
 	percpu_priv->tx_confirm++;
 
 	skb = dpaa_cleanup_tx_fd(priv, fd, true);
 
 	consume_skb(skb);
-}
+पूर्ण
 
-static inline int dpaa_eth_napi_schedule(struct dpaa_percpu_priv *percpu_priv,
-					 struct qman_portal *portal, bool sched_napi)
-{
-	if (sched_napi) {
+अटल अंतरभूत पूर्णांक dpaa_eth_napi_schedule(काष्ठा dpaa_percpu_priv *percpu_priv,
+					 काष्ठा qman_portal *portal, bool sched_napi)
+अणु
+	अगर (sched_napi) अणु
 		/* Disable QMan IRQ and invoke NAPI */
-		qman_p_irqsource_remove(portal, QM_PIRQ_DQRI);
+		qman_p_irqsource_हटाओ(portal, QM_PIRQ_DQRI);
 
 		percpu_priv->np.p = portal;
 		napi_schedule(&percpu_priv->np.napi);
-		percpu_priv->in_interrupt++;
-		return 1;
-	}
-	return 0;
-}
+		percpu_priv->in_पूर्णांकerrupt++;
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static enum qman_cb_dqrr_result rx_error_dqrr(struct qman_portal *portal,
-					      struct qman_fq *fq,
-					      const struct qm_dqrr_entry *dq,
+अटल क्रमागत qman_cb_dqrr_result rx_error_dqrr(काष्ठा qman_portal *portal,
+					      काष्ठा qman_fq *fq,
+					      स्थिर काष्ठा qm_dqrr_entry *dq,
 					      bool sched_napi)
-{
-	struct dpaa_fq *dpaa_fq = container_of(fq, struct dpaa_fq, fq_base);
-	struct dpaa_percpu_priv *percpu_priv;
-	struct net_device *net_dev;
-	struct dpaa_bp *dpaa_bp;
-	struct dpaa_priv *priv;
+अणु
+	काष्ठा dpaa_fq *dpaa_fq = container_of(fq, काष्ठा dpaa_fq, fq_base);
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	काष्ठा net_device *net_dev;
+	काष्ठा dpaa_bp *dpaa_bp;
+	काष्ठा dpaa_priv *priv;
 
 	net_dev = dpaa_fq->net_dev;
 	priv = netdev_priv(net_dev);
 	dpaa_bp = dpaa_bpid2pool(dq->fd.bpid);
-	if (!dpaa_bp)
-		return qman_cb_dqrr_consume;
+	अगर (!dpaa_bp)
+		वापस qman_cb_dqrr_consume;
 
 	percpu_priv = this_cpu_ptr(priv->percpu_priv);
 
-	if (dpaa_eth_napi_schedule(percpu_priv, portal, sched_napi))
-		return qman_cb_dqrr_stop;
+	अगर (dpaa_eth_napi_schedule(percpu_priv, portal, sched_napi))
+		वापस qman_cb_dqrr_stop;
 
 	dpaa_eth_refill_bpools(priv);
 	dpaa_rx_error(net_dev, priv, percpu_priv, &dq->fd, fq->fqid);
 
-	return qman_cb_dqrr_consume;
-}
+	वापस qman_cb_dqrr_consume;
+पूर्ण
 
-static int dpaa_xdp_xmit_frame(struct net_device *net_dev,
-			       struct xdp_frame *xdpf)
-{
-	struct dpaa_priv *priv = netdev_priv(net_dev);
-	struct rtnl_link_stats64 *percpu_stats;
-	struct dpaa_percpu_priv *percpu_priv;
-	struct dpaa_eth_swbp *swbp;
-	struct netdev_queue *txq;
-	void *buff_start;
-	struct qm_fd fd;
+अटल पूर्णांक dpaa_xdp_xmit_frame(काष्ठा net_device *net_dev,
+			       काष्ठा xdp_frame *xdpf)
+अणु
+	काष्ठा dpaa_priv *priv = netdev_priv(net_dev);
+	काष्ठा rtnl_link_stats64 *percpu_stats;
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	काष्ठा dpaa_eth_swbp *swbp;
+	काष्ठा netdev_queue *txq;
+	व्योम *buff_start;
+	काष्ठा qm_fd fd;
 	dma_addr_t addr;
-	int err;
+	पूर्णांक err;
 
 	percpu_priv = this_cpu_ptr(priv->percpu_priv);
 	percpu_stats = &percpu_priv->stats;
 
-#ifdef CONFIG_DPAA_ERRATUM_A050385
-	if (unlikely(fman_has_errata_a050385())) {
-		if (dpaa_a050385_wa_xdpf(priv, &xdpf)) {
+#अगर_घोषित CONFIG_DPAA_ERRATUM_A050385
+	अगर (unlikely(fman_has_errata_a050385())) अणु
+		अगर (dpaa_a050385_wa_xdpf(priv, &xdpf)) अणु
 			err = -ENOMEM;
-			goto out_error;
-		}
-	}
-#endif
+			जाओ out_error;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	if (xdpf->headroom < DPAA_TX_PRIV_DATA_SIZE) {
+	अगर (xdpf->headroom < DPAA_TX_PRIV_DATA_SIZE) अणु
 		err = -EINVAL;
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
 	buff_start = xdpf->data - xdpf->headroom;
 
-	/* Leave empty the skb backpointer at the start of the buffer.
-	 * Save the XDP frame for easy cleanup on confirmation.
+	/* Leave empty the skb backpoपूर्णांकer at the start of the buffer.
+	 * Save the XDP frame क्रम easy cleanup on confirmation.
 	 */
-	swbp = (struct dpaa_eth_swbp *)buff_start;
-	swbp->skb = NULL;
+	swbp = (काष्ठा dpaa_eth_swbp *)buff_start;
+	swbp->skb = शून्य;
 	swbp->xdpf = xdpf;
 
 	qm_fd_clear_fd(&fd);
@@ -2522,49 +2523,49 @@ static int dpaa_xdp_xmit_frame(struct net_device *net_dev,
 	addr = dma_map_single(priv->tx_dma_dev, buff_start,
 			      xdpf->headroom + xdpf->len,
 			      DMA_TO_DEVICE);
-	if (unlikely(dma_mapping_error(priv->tx_dma_dev, addr))) {
+	अगर (unlikely(dma_mapping_error(priv->tx_dma_dev, addr))) अणु
 		err = -EINVAL;
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
 	qm_fd_addr_set64(&fd, addr);
 
 	/* Bump the trans_start */
 	txq = netdev_get_tx_queue(net_dev, smp_processor_id());
-	txq->trans_start = jiffies;
+	txq->trans_start = jअगरfies;
 
 	err = dpaa_xmit(priv, percpu_stats, smp_processor_id(), &fd);
-	if (err) {
+	अगर (err) अणु
 		dma_unmap_single(priv->tx_dma_dev, addr,
 				 qm_fd_get_offset(&fd) + qm_fd_get_length(&fd),
 				 DMA_TO_DEVICE);
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_error:
 	percpu_stats->tx_errors++;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u32 dpaa_run_xdp(struct dpaa_priv *priv, struct qm_fd *fd, void *vaddr,
-			struct dpaa_fq *dpaa_fq, unsigned int *xdp_meta_len)
-{
-	ssize_t fd_off = qm_fd_get_offset(fd);
-	struct bpf_prog *xdp_prog;
-	struct xdp_frame *xdpf;
-	struct xdp_buff xdp;
+अटल u32 dpaa_run_xdp(काष्ठा dpaa_priv *priv, काष्ठा qm_fd *fd, व्योम *vaddr,
+			काष्ठा dpaa_fq *dpaa_fq, अचिन्हित पूर्णांक *xdp_meta_len)
+अणु
+	sमाप_प्रकार fd_off = qm_fd_get_offset(fd);
+	काष्ठा bpf_prog *xdp_prog;
+	काष्ठा xdp_frame *xdpf;
+	काष्ठा xdp_buff xdp;
 	u32 xdp_act;
-	int err;
+	पूर्णांक err;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	xdp_prog = READ_ONCE(priv->xdp_prog);
-	if (!xdp_prog) {
-		rcu_read_unlock();
-		return XDP_PASS;
-	}
+	अगर (!xdp_prog) अणु
+		rcu_पढ़ो_unlock();
+		वापस XDP_PASS;
+	पूर्ण
 
 	xdp_init_buff(&xdp, DPAA_BP_RAW_SIZE - DPAA_TX_PRIV_DATA_SIZE,
 		      &dpaa_fq->xdp_rxq);
@@ -2572,112 +2573,112 @@ static u32 dpaa_run_xdp(struct dpaa_priv *priv, struct qm_fd *fd, void *vaddr,
 			 XDP_PACKET_HEADROOM, qm_fd_get_length(fd), true);
 
 	/* We reserve a fixed headroom of 256 bytes under the erratum and we
-	 * offer it all to XDP programs to use. If no room is left for the
-	 * xdpf backpointer on TX, we will need to copy the data.
+	 * offer it all to XDP programs to use. If no room is left क्रम the
+	 * xdpf backpoपूर्णांकer on TX, we will need to copy the data.
 	 * Disable metadata support since data realignments might be required
-	 * and the information can be lost.
+	 * and the inक्रमmation can be lost.
 	 */
-#ifdef CONFIG_DPAA_ERRATUM_A050385
-	if (unlikely(fman_has_errata_a050385())) {
+#अगर_घोषित CONFIG_DPAA_ERRATUM_A050385
+	अगर (unlikely(fman_has_errata_a050385())) अणु
 		xdp_set_data_meta_invalid(&xdp);
 		xdp.data_hard_start = vaddr;
 		xdp.frame_sz = DPAA_BP_RAW_SIZE;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	xdp_act = bpf_prog_run_xdp(xdp_prog, &xdp);
 
 	/* Update the length and the offset of the FD */
 	qm_fd_set_contig(fd, xdp.data - vaddr, xdp.data_end - xdp.data);
 
-	switch (xdp_act) {
-	case XDP_PASS:
-#ifdef CONFIG_DPAA_ERRATUM_A050385
+	चयन (xdp_act) अणु
+	हाल XDP_PASS:
+#अगर_घोषित CONFIG_DPAA_ERRATUM_A050385
 		*xdp_meta_len = xdp_data_meta_unsupported(&xdp) ? 0 :
 				xdp.data - xdp.data_meta;
-#else
+#अन्यथा
 		*xdp_meta_len = xdp.data - xdp.data_meta;
-#endif
-		break;
-	case XDP_TX:
+#पूर्ण_अगर
+		अवरोध;
+	हाल XDP_TX:
 		/* We can access the full headroom when sending the frame
 		 * back out
 		 */
 		xdp.data_hard_start = vaddr;
 		xdp.frame_sz = DPAA_BP_RAW_SIZE;
 		xdpf = xdp_convert_buff_to_frame(&xdp);
-		if (unlikely(!xdpf)) {
-			free_pages((unsigned long)vaddr, 0);
-			break;
-		}
+		अगर (unlikely(!xdpf)) अणु
+			मुक्त_pages((अचिन्हित दीर्घ)vaddr, 0);
+			अवरोध;
+		पूर्ण
 
-		if (dpaa_xdp_xmit_frame(priv->net_dev, xdpf))
-			xdp_return_frame_rx_napi(xdpf);
+		अगर (dpaa_xdp_xmit_frame(priv->net_dev, xdpf))
+			xdp_वापस_frame_rx_napi(xdpf);
 
-		break;
-	case XDP_REDIRECT:
+		अवरोध;
+	हाल XDP_REसूचीECT:
 		/* Allow redirect to use the full headroom */
 		xdp.data_hard_start = vaddr;
 		xdp.frame_sz = DPAA_BP_RAW_SIZE;
 
-		err = xdp_do_redirect(priv->net_dev, &xdp, xdp_prog);
-		if (err) {
+		err = xdp_करो_redirect(priv->net_dev, &xdp, xdp_prog);
+		अगर (err) अणु
 			trace_xdp_exception(priv->net_dev, xdp_prog, xdp_act);
-			free_pages((unsigned long)vaddr, 0);
-		}
-		break;
-	default:
+			मुक्त_pages((अचिन्हित दीर्घ)vaddr, 0);
+		पूर्ण
+		अवरोध;
+	शेष:
 		bpf_warn_invalid_xdp_action(xdp_act);
 		fallthrough;
-	case XDP_ABORTED:
+	हाल XDP_ABORTED:
 		trace_xdp_exception(priv->net_dev, xdp_prog, xdp_act);
 		fallthrough;
-	case XDP_DROP:
+	हाल XDP_DROP:
 		/* Free the buffer */
-		free_pages((unsigned long)vaddr, 0);
-		break;
-	}
+		मुक्त_pages((अचिन्हित दीर्घ)vaddr, 0);
+		अवरोध;
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return xdp_act;
-}
+	वापस xdp_act;
+पूर्ण
 
-static enum qman_cb_dqrr_result rx_default_dqrr(struct qman_portal *portal,
-						struct qman_fq *fq,
-						const struct qm_dqrr_entry *dq,
+अटल क्रमागत qman_cb_dqrr_result rx_शेष_dqrr(काष्ठा qman_portal *portal,
+						काष्ठा qman_fq *fq,
+						स्थिर काष्ठा qm_dqrr_entry *dq,
 						bool sched_napi)
-{
+अणु
 	bool ts_valid = false, hash_valid = false;
-	struct skb_shared_hwtstamps *shhwtstamps;
-	unsigned int skb_len, xdp_meta_len = 0;
-	struct rtnl_link_stats64 *percpu_stats;
-	struct dpaa_percpu_priv *percpu_priv;
-	const struct qm_fd *fd = &dq->fd;
+	काष्ठा skb_shared_hwtstamps *shhwtstamps;
+	अचिन्हित पूर्णांक skb_len, xdp_meta_len = 0;
+	काष्ठा rtnl_link_stats64 *percpu_stats;
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	स्थिर काष्ठा qm_fd *fd = &dq->fd;
 	dma_addr_t addr = qm_fd_addr(fd);
-	struct dpaa_napi_portal *np;
-	enum qm_fd_format fd_format;
-	struct net_device *net_dev;
+	काष्ठा dpaa_napi_portal *np;
+	क्रमागत qm_fd_क्रमmat fd_क्रमmat;
+	काष्ठा net_device *net_dev;
 	u32 fd_status, hash_offset;
-	struct qm_sg_entry *sgt;
-	struct dpaa_bp *dpaa_bp;
-	struct dpaa_fq *dpaa_fq;
-	struct dpaa_priv *priv;
-	struct sk_buff *skb;
-	int *count_ptr;
+	काष्ठा qm_sg_entry *sgt;
+	काष्ठा dpaa_bp *dpaa_bp;
+	काष्ठा dpaa_fq *dpaa_fq;
+	काष्ठा dpaa_priv *priv;
+	काष्ठा sk_buff *skb;
+	पूर्णांक *count_ptr;
 	u32 xdp_act;
-	void *vaddr;
+	व्योम *vaddr;
 	u32 hash;
 	u64 ns;
 
-	dpaa_fq = container_of(fq, struct dpaa_fq, fq_base);
+	dpaa_fq = container_of(fq, काष्ठा dpaa_fq, fq_base);
 	fd_status = be32_to_cpu(fd->status);
-	fd_format = qm_fd_get_format(fd);
+	fd_क्रमmat = qm_fd_get_क्रमmat(fd);
 	net_dev = dpaa_fq->net_dev;
 	priv = netdev_priv(net_dev);
 	dpaa_bp = dpaa_bpid2pool(dq->fd.bpid);
-	if (!dpaa_bp)
-		return qman_cb_dqrr_consume;
+	अगर (!dpaa_bp)
+		वापस qman_cb_dqrr_consume;
 
 	/* Trace the Rx fd */
 	trace_dpaa_rx_fd(net_dev, fq, &dq->fd);
@@ -2686,28 +2687,28 @@ static enum qman_cb_dqrr_result rx_default_dqrr(struct qman_portal *portal,
 	percpu_stats = &percpu_priv->stats;
 	np = &percpu_priv->np;
 
-	if (unlikely(dpaa_eth_napi_schedule(percpu_priv, portal, sched_napi)))
-		return qman_cb_dqrr_stop;
+	अगर (unlikely(dpaa_eth_napi_schedule(percpu_priv, portal, sched_napi)))
+		वापस qman_cb_dqrr_stop;
 
 	/* Make sure we didn't run out of buffers */
-	if (unlikely(dpaa_eth_refill_bpools(priv))) {
+	अगर (unlikely(dpaa_eth_refill_bpools(priv))) अणु
 		/* Unable to refill the buffer pool due to insufficient
-		 * system memory. Just release the frame back into the pool,
+		 * प्रणाली memory. Just release the frame back पूर्णांकo the pool,
 		 * otherwise we'll soon end up with an empty buffer pool.
 		 */
 		dpaa_fd_release(net_dev, &dq->fd);
-		return qman_cb_dqrr_consume;
-	}
+		वापस qman_cb_dqrr_consume;
+	पूर्ण
 
-	if (unlikely(fd_status & FM_FD_STAT_RX_ERRORS) != 0) {
-		if (net_ratelimit())
-			netif_warn(priv, hw, net_dev, "FD status = 0x%08x\n",
+	अगर (unlikely(fd_status & FM_FD_STAT_RX_ERRORS) != 0) अणु
+		अगर (net_ratelimit())
+			netअगर_warn(priv, hw, net_dev, "FD status = 0x%08x\n",
 				   fd_status & FM_FD_STAT_RX_ERRORS);
 
 		percpu_stats->rx_errors++;
 		dpaa_fd_release(net_dev, fd);
-		return qman_cb_dqrr_consume;
-	}
+		वापस qman_cb_dqrr_consume;
+	पूर्ण
 
 	dma_unmap_page(dpaa_bp->priv->rx_dma_dev, addr, DPAA_BP_RAW_SIZE,
 		       DMA_FROM_DEVICE);
@@ -2717,123 +2718,123 @@ static enum qman_cb_dqrr_result rx_default_dqrr(struct qman_portal *portal,
 	prefetch(vaddr + qm_fd_get_offset(fd));
 
 	/* The only FD types that we may receive are contig and S/G */
-	WARN_ON((fd_format != qm_fd_contig) && (fd_format != qm_fd_sg));
+	WARN_ON((fd_क्रमmat != qm_fd_contig) && (fd_क्रमmat != qm_fd_sg));
 
-	/* Account for either the contig buffer or the SGT buffer (depending on
-	 * which case we were in) having been removed from the pool.
+	/* Account क्रम either the contig buffer or the SGT buffer (depending on
+	 * which हाल we were in) having been हटाओd from the pool.
 	 */
 	count_ptr = this_cpu_ptr(dpaa_bp->percpu_count);
 	(*count_ptr)--;
 
-	/* Extract the timestamp stored in the headroom before running XDP */
-	if (priv->rx_tstamp) {
-		if (!fman_port_get_tstamp(priv->mac_dev->port[RX], vaddr, &ns))
+	/* Extract the बारtamp stored in the headroom beक्रमe running XDP */
+	अगर (priv->rx_tstamp) अणु
+		अगर (!fman_port_get_tstamp(priv->mac_dev->port[RX], vaddr, &ns))
 			ts_valid = true;
-		else
+		अन्यथा
 			WARN_ONCE(1, "fman_port_get_tstamp failed!\n");
-	}
+	पूर्ण
 
-	/* Extract the hash stored in the headroom before running XDP */
-	if (net_dev->features & NETIF_F_RXHASH && priv->keygen_in_use &&
+	/* Extract the hash stored in the headroom beक्रमe running XDP */
+	अगर (net_dev->features & NETIF_F_RXHASH && priv->keygen_in_use &&
 	    !fman_port_get_hash_result_offset(priv->mac_dev->port[RX],
-					      &hash_offset)) {
+					      &hash_offset)) अणु
 		hash = be32_to_cpu(*(u32 *)(vaddr + hash_offset));
 		hash_valid = true;
-	}
+	पूर्ण
 
-	if (likely(fd_format == qm_fd_contig)) {
-		xdp_act = dpaa_run_xdp(priv, (struct qm_fd *)fd, vaddr,
+	अगर (likely(fd_क्रमmat == qm_fd_contig)) अणु
+		xdp_act = dpaa_run_xdp(priv, (काष्ठा qm_fd *)fd, vaddr,
 				       dpaa_fq, &xdp_meta_len);
 		np->xdp_act |= xdp_act;
-		if (xdp_act != XDP_PASS) {
+		अगर (xdp_act != XDP_PASS) अणु
 			percpu_stats->rx_packets++;
 			percpu_stats->rx_bytes += qm_fd_get_length(fd);
-			return qman_cb_dqrr_consume;
-		}
+			वापस qman_cb_dqrr_consume;
+		पूर्ण
 		skb = contig_fd_to_skb(priv, fd);
-	} else {
-		/* XDP doesn't support S/G frames. Return the fragments to the
+	पूर्ण अन्यथा अणु
+		/* XDP करोesn't support S/G frames. Return the fragments to the
 		 * buffer pool and release the SGT.
 		 */
-		if (READ_ONCE(priv->xdp_prog)) {
+		अगर (READ_ONCE(priv->xdp_prog)) अणु
 			WARN_ONCE(1, "S/G frames not supported under XDP\n");
 			sgt = vaddr + qm_fd_get_offset(fd);
 			dpaa_release_sgt_members(sgt);
-			free_pages((unsigned long)vaddr, 0);
-			return qman_cb_dqrr_consume;
-		}
+			मुक्त_pages((अचिन्हित दीर्घ)vaddr, 0);
+			वापस qman_cb_dqrr_consume;
+		पूर्ण
 		skb = sg_fd_to_skb(priv, fd);
-	}
-	if (!skb)
-		return qman_cb_dqrr_consume;
+	पूर्ण
+	अगर (!skb)
+		वापस qman_cb_dqrr_consume;
 
-	if (xdp_meta_len)
+	अगर (xdp_meta_len)
 		skb_metadata_set(skb, xdp_meta_len);
 
-	/* Set the previously extracted timestamp */
-	if (ts_valid) {
+	/* Set the previously extracted बारtamp */
+	अगर (ts_valid) अणु
 		shhwtstamps = skb_hwtstamps(skb);
-		memset(shhwtstamps, 0, sizeof(*shhwtstamps));
-		shhwtstamps->hwtstamp = ns_to_ktime(ns);
-	}
+		स_रखो(shhwtstamps, 0, माप(*shhwtstamps));
+		shhwtstamps->hwtstamp = ns_to_kसमय(ns);
+	पूर्ण
 
 	skb->protocol = eth_type_trans(skb, net_dev);
 
 	/* Set the previously extracted hash */
-	if (hash_valid) {
-		enum pkt_hash_types type;
+	अगर (hash_valid) अणु
+		क्रमागत pkt_hash_types type;
 
-		/* if L4 exists, it was used in the hash generation */
+		/* अगर L4 exists, it was used in the hash generation */
 		type = be32_to_cpu(fd->status) & FM_FD_STAT_L4CV ?
 			PKT_HASH_TYPE_L4 : PKT_HASH_TYPE_L3;
 		skb_set_hash(skb, hash, type);
-	}
+	पूर्ण
 
 	skb_len = skb->len;
 
-	if (unlikely(netif_receive_skb(skb) == NET_RX_DROP)) {
+	अगर (unlikely(netअगर_receive_skb(skb) == NET_RX_DROP)) अणु
 		percpu_stats->rx_dropped++;
-		return qman_cb_dqrr_consume;
-	}
+		वापस qman_cb_dqrr_consume;
+	पूर्ण
 
 	percpu_stats->rx_packets++;
 	percpu_stats->rx_bytes += skb_len;
 
-	return qman_cb_dqrr_consume;
-}
+	वापस qman_cb_dqrr_consume;
+पूर्ण
 
-static enum qman_cb_dqrr_result conf_error_dqrr(struct qman_portal *portal,
-						struct qman_fq *fq,
-						const struct qm_dqrr_entry *dq,
+अटल क्रमागत qman_cb_dqrr_result conf_error_dqrr(काष्ठा qman_portal *portal,
+						काष्ठा qman_fq *fq,
+						स्थिर काष्ठा qm_dqrr_entry *dq,
 						bool sched_napi)
-{
-	struct dpaa_percpu_priv *percpu_priv;
-	struct net_device *net_dev;
-	struct dpaa_priv *priv;
+अणु
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	काष्ठा net_device *net_dev;
+	काष्ठा dpaa_priv *priv;
 
-	net_dev = ((struct dpaa_fq *)fq)->net_dev;
+	net_dev = ((काष्ठा dpaa_fq *)fq)->net_dev;
 	priv = netdev_priv(net_dev);
 
 	percpu_priv = this_cpu_ptr(priv->percpu_priv);
 
-	if (dpaa_eth_napi_schedule(percpu_priv, portal, sched_napi))
-		return qman_cb_dqrr_stop;
+	अगर (dpaa_eth_napi_schedule(percpu_priv, portal, sched_napi))
+		वापस qman_cb_dqrr_stop;
 
 	dpaa_tx_error(net_dev, priv, percpu_priv, &dq->fd, fq->fqid);
 
-	return qman_cb_dqrr_consume;
-}
+	वापस qman_cb_dqrr_consume;
+पूर्ण
 
-static enum qman_cb_dqrr_result conf_dflt_dqrr(struct qman_portal *portal,
-					       struct qman_fq *fq,
-					       const struct qm_dqrr_entry *dq,
+अटल क्रमागत qman_cb_dqrr_result conf_dflt_dqrr(काष्ठा qman_portal *portal,
+					       काष्ठा qman_fq *fq,
+					       स्थिर काष्ठा qm_dqrr_entry *dq,
 					       bool sched_napi)
-{
-	struct dpaa_percpu_priv *percpu_priv;
-	struct net_device *net_dev;
-	struct dpaa_priv *priv;
+अणु
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	काष्ठा net_device *net_dev;
+	काष्ठा dpaa_priv *priv;
 
-	net_dev = ((struct dpaa_fq *)fq)->net_dev;
+	net_dev = ((काष्ठा dpaa_fq *)fq)->net_dev;
 	priv = netdev_priv(net_dev);
 
 	/* Trace the fd */
@@ -2841,417 +2842,417 @@ static enum qman_cb_dqrr_result conf_dflt_dqrr(struct qman_portal *portal,
 
 	percpu_priv = this_cpu_ptr(priv->percpu_priv);
 
-	if (dpaa_eth_napi_schedule(percpu_priv, portal, sched_napi))
-		return qman_cb_dqrr_stop;
+	अगर (dpaa_eth_napi_schedule(percpu_priv, portal, sched_napi))
+		वापस qman_cb_dqrr_stop;
 
 	dpaa_tx_conf(net_dev, priv, percpu_priv, &dq->fd, fq->fqid);
 
-	return qman_cb_dqrr_consume;
-}
+	वापस qman_cb_dqrr_consume;
+पूर्ण
 
-static void egress_ern(struct qman_portal *portal,
-		       struct qman_fq *fq,
-		       const union qm_mr_entry *msg)
-{
-	const struct qm_fd *fd = &msg->ern.fd;
-	struct dpaa_percpu_priv *percpu_priv;
-	const struct dpaa_priv *priv;
-	struct net_device *net_dev;
-	struct sk_buff *skb;
+अटल व्योम egress_ern(काष्ठा qman_portal *portal,
+		       काष्ठा qman_fq *fq,
+		       स्थिर जोड़ qm_mr_entry *msg)
+अणु
+	स्थिर काष्ठा qm_fd *fd = &msg->ern.fd;
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	स्थिर काष्ठा dpaa_priv *priv;
+	काष्ठा net_device *net_dev;
+	काष्ठा sk_buff *skb;
 
-	net_dev = ((struct dpaa_fq *)fq)->net_dev;
+	net_dev = ((काष्ठा dpaa_fq *)fq)->net_dev;
 	priv = netdev_priv(net_dev);
 	percpu_priv = this_cpu_ptr(priv->percpu_priv);
 
 	percpu_priv->stats.tx_dropped++;
-	percpu_priv->stats.tx_fifo_errors++;
+	percpu_priv->stats.tx_fअगरo_errors++;
 	count_ern(percpu_priv, msg);
 
 	skb = dpaa_cleanup_tx_fd(priv, fd, false);
-	dev_kfree_skb_any(skb);
-}
+	dev_kमुक्त_skb_any(skb);
+पूर्ण
 
-static const struct dpaa_fq_cbs dpaa_fq_cbs = {
-	.rx_defq = { .cb = { .dqrr = rx_default_dqrr } },
-	.tx_defq = { .cb = { .dqrr = conf_dflt_dqrr } },
-	.rx_errq = { .cb = { .dqrr = rx_error_dqrr } },
-	.tx_errq = { .cb = { .dqrr = conf_error_dqrr } },
-	.egress_ern = { .cb = { .ern = egress_ern } }
-};
+अटल स्थिर काष्ठा dpaa_fq_cbs dpaa_fq_cbs = अणु
+	.rx_defq = अणु .cb = अणु .dqrr = rx_शेष_dqrr पूर्ण पूर्ण,
+	.tx_defq = अणु .cb = अणु .dqrr = conf_dflt_dqrr पूर्ण पूर्ण,
+	.rx_errq = अणु .cb = अणु .dqrr = rx_error_dqrr पूर्ण पूर्ण,
+	.tx_errq = अणु .cb = अणु .dqrr = conf_error_dqrr पूर्ण पूर्ण,
+	.egress_ern = अणु .cb = अणु .ern = egress_ern पूर्ण पूर्ण
+पूर्ण;
 
-static void dpaa_eth_napi_enable(struct dpaa_priv *priv)
-{
-	struct dpaa_percpu_priv *percpu_priv;
-	int i;
+अटल व्योम dpaa_eth_napi_enable(काष्ठा dpaa_priv *priv)
+अणु
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	पूर्णांक i;
 
-	for_each_online_cpu(i) {
+	क्रम_each_online_cpu(i) अणु
 		percpu_priv = per_cpu_ptr(priv->percpu_priv, i);
 
-		percpu_priv->np.down = false;
+		percpu_priv->np.करोwn = false;
 		napi_enable(&percpu_priv->np.napi);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dpaa_eth_napi_disable(struct dpaa_priv *priv)
-{
-	struct dpaa_percpu_priv *percpu_priv;
-	int i;
+अटल व्योम dpaa_eth_napi_disable(काष्ठा dpaa_priv *priv)
+अणु
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	पूर्णांक i;
 
-	for_each_online_cpu(i) {
+	क्रम_each_online_cpu(i) अणु
 		percpu_priv = per_cpu_ptr(priv->percpu_priv, i);
 
-		percpu_priv->np.down = true;
+		percpu_priv->np.करोwn = true;
 		napi_disable(&percpu_priv->np.napi);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dpaa_adjust_link(struct net_device *net_dev)
-{
-	struct mac_device *mac_dev;
-	struct dpaa_priv *priv;
+अटल व्योम dpaa_adjust_link(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा mac_device *mac_dev;
+	काष्ठा dpaa_priv *priv;
 
 	priv = netdev_priv(net_dev);
 	mac_dev = priv->mac_dev;
 	mac_dev->adjust_link(mac_dev);
-}
+पूर्ण
 
-/* The Aquantia PHYs are capable of performing rate adaptation */
-#define PHY_VEND_AQUANTIA	0x03a1b400
+/* The Aquantia PHYs are capable of perक्रमming rate adaptation */
+#घोषणा PHY_VEND_AQUANTIA	0x03a1b400
 
-static int dpaa_phy_init(struct net_device *net_dev)
-{
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
-	struct mac_device *mac_dev;
-	struct phy_device *phy_dev;
-	struct dpaa_priv *priv;
+अटल पूर्णांक dpaa_phy_init(काष्ठा net_device *net_dev)
+अणु
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
+	काष्ठा mac_device *mac_dev;
+	काष्ठा phy_device *phy_dev;
+	काष्ठा dpaa_priv *priv;
 
 	priv = netdev_priv(net_dev);
 	mac_dev = priv->mac_dev;
 
 	phy_dev = of_phy_connect(net_dev, mac_dev->phy_node,
 				 &dpaa_adjust_link, 0,
-				 mac_dev->phy_if);
-	if (!phy_dev) {
-		netif_err(priv, ifup, net_dev, "init_phy() failed\n");
-		return -ENODEV;
-	}
+				 mac_dev->phy_अगर);
+	अगर (!phy_dev) अणु
+		netअगर_err(priv, अगरup, net_dev, "init_phy() failed\n");
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Unless the PHY is capable of rate adaptation */
-	if (mac_dev->phy_if != PHY_INTERFACE_MODE_XGMII ||
-	    ((phy_dev->drv->phy_id & GENMASK(31, 10)) != PHY_VEND_AQUANTIA)) {
-		/* remove any features not supported by the controller */
+	अगर (mac_dev->phy_अगर != PHY_INTERFACE_MODE_XGMII ||
+	    ((phy_dev->drv->phy_id & GENMASK(31, 10)) != PHY_VEND_AQUANTIA)) अणु
+		/* हटाओ any features not supported by the controller */
 		ethtool_convert_legacy_u32_to_link_mode(mask,
-							mac_dev->if_support);
+							mac_dev->अगर_support);
 		linkmode_and(phy_dev->supported, phy_dev->supported, mask);
-	}
+	पूर्ण
 
-	phy_support_asym_pause(phy_dev);
+	phy_support_asym_छोड़ो(phy_dev);
 
 	mac_dev->phy_dev = phy_dev;
 	net_dev->phydev = phy_dev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dpaa_open(struct net_device *net_dev)
-{
-	struct mac_device *mac_dev;
-	struct dpaa_priv *priv;
-	int err, i;
+अटल पूर्णांक dpaa_खोलो(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा mac_device *mac_dev;
+	काष्ठा dpaa_priv *priv;
+	पूर्णांक err, i;
 
 	priv = netdev_priv(net_dev);
 	mac_dev = priv->mac_dev;
 	dpaa_eth_napi_enable(priv);
 
 	err = dpaa_phy_init(net_dev);
-	if (err)
-		goto phy_init_failed;
+	अगर (err)
+		जाओ phy_init_failed;
 
-	for (i = 0; i < ARRAY_SIZE(mac_dev->port); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(mac_dev->port); i++) अणु
 		err = fman_port_enable(mac_dev->port[i]);
-		if (err)
-			goto mac_start_failed;
-	}
+		अगर (err)
+			जाओ mac_start_failed;
+	पूर्ण
 
 	err = priv->mac_dev->start(mac_dev);
-	if (err < 0) {
-		netif_err(priv, ifup, net_dev, "mac_dev->start() = %d\n", err);
-		goto mac_start_failed;
-	}
+	अगर (err < 0) अणु
+		netअगर_err(priv, अगरup, net_dev, "mac_dev->start() = %d\n", err);
+		जाओ mac_start_failed;
+	पूर्ण
 
-	netif_tx_start_all_queues(net_dev);
+	netअगर_tx_start_all_queues(net_dev);
 
-	return 0;
+	वापस 0;
 
 mac_start_failed:
-	for (i = 0; i < ARRAY_SIZE(mac_dev->port); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(mac_dev->port); i++)
 		fman_port_disable(mac_dev->port[i]);
 
 phy_init_failed:
 	dpaa_eth_napi_disable(priv);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dpaa_eth_stop(struct net_device *net_dev)
-{
-	struct dpaa_priv *priv;
-	int err;
+अटल पूर्णांक dpaa_eth_stop(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा dpaa_priv *priv;
+	पूर्णांक err;
 
 	err = dpaa_stop(net_dev);
 
 	priv = netdev_priv(net_dev);
 	dpaa_eth_napi_disable(priv);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool xdp_validate_mtu(struct dpaa_priv *priv, int mtu)
-{
-	int max_contig_data = priv->dpaa_bp->size - priv->rx_headroom;
+अटल bool xdp_validate_mtu(काष्ठा dpaa_priv *priv, पूर्णांक mtu)
+अणु
+	पूर्णांक max_contig_data = priv->dpaa_bp->size - priv->rx_headroom;
 
-	/* We do not support S/G fragments when XDP is enabled.
+	/* We करो not support S/G fragments when XDP is enabled.
 	 * Limit the MTU in relation to the buffer size.
 	 */
-	if (mtu + VLAN_ETH_HLEN + ETH_FCS_LEN > max_contig_data) {
+	अगर (mtu + VLAN_ETH_HLEN + ETH_FCS_LEN > max_contig_data) अणु
 		dev_warn(priv->net_dev->dev.parent,
 			 "The maximum MTU for XDP is %d\n",
 			 max_contig_data - VLAN_ETH_HLEN - ETH_FCS_LEN);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int dpaa_change_mtu(struct net_device *net_dev, int new_mtu)
-{
-	struct dpaa_priv *priv = netdev_priv(net_dev);
+अटल पूर्णांक dpaa_change_mtu(काष्ठा net_device *net_dev, पूर्णांक new_mtu)
+अणु
+	काष्ठा dpaa_priv *priv = netdev_priv(net_dev);
 
-	if (priv->xdp_prog && !xdp_validate_mtu(priv, new_mtu))
-		return -EINVAL;
+	अगर (priv->xdp_prog && !xdp_validate_mtu(priv, new_mtu))
+		वापस -EINVAL;
 
 	net_dev->mtu = new_mtu;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dpaa_setup_xdp(struct net_device *net_dev, struct netdev_bpf *bpf)
-{
-	struct dpaa_priv *priv = netdev_priv(net_dev);
-	struct bpf_prog *old_prog;
-	int err;
+अटल पूर्णांक dpaa_setup_xdp(काष्ठा net_device *net_dev, काष्ठा netdev_bpf *bpf)
+अणु
+	काष्ठा dpaa_priv *priv = netdev_priv(net_dev);
+	काष्ठा bpf_prog *old_prog;
+	पूर्णांक err;
 	bool up;
 
 	/* S/G fragments are not supported in XDP-mode */
-	if (bpf->prog && !xdp_validate_mtu(priv, net_dev->mtu)) {
+	अगर (bpf->prog && !xdp_validate_mtu(priv, net_dev->mtu)) अणु
 		NL_SET_ERR_MSG_MOD(bpf->extack, "MTU too large for XDP");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	up = netif_running(net_dev);
+	up = netअगर_running(net_dev);
 
-	if (up)
+	अगर (up)
 		dpaa_eth_stop(net_dev);
 
 	old_prog = xchg(&priv->xdp_prog, bpf->prog);
-	if (old_prog)
+	अगर (old_prog)
 		bpf_prog_put(old_prog);
 
-	if (up) {
-		err = dpaa_open(net_dev);
-		if (err) {
+	अगर (up) अणु
+		err = dpaa_खोलो(net_dev);
+		अगर (err) अणु
 			NL_SET_ERR_MSG_MOD(bpf->extack, "dpaa_open() failed");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dpaa_xdp(struct net_device *net_dev, struct netdev_bpf *xdp)
-{
-	switch (xdp->command) {
-	case XDP_SETUP_PROG:
-		return dpaa_setup_xdp(net_dev, xdp);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक dpaa_xdp(काष्ठा net_device *net_dev, काष्ठा netdev_bpf *xdp)
+अणु
+	चयन (xdp->command) अणु
+	हाल XDP_SETUP_PROG:
+		वापस dpaa_setup_xdp(net_dev, xdp);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int dpaa_xdp_xmit(struct net_device *net_dev, int n,
-			 struct xdp_frame **frames, u32 flags)
-{
-	struct xdp_frame *xdpf;
-	int i, nxmit = 0;
+अटल पूर्णांक dpaa_xdp_xmit(काष्ठा net_device *net_dev, पूर्णांक n,
+			 काष्ठा xdp_frame **frames, u32 flags)
+अणु
+	काष्ठा xdp_frame *xdpf;
+	पूर्णांक i, nxmit = 0;
 
-	if (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
-		return -EINVAL;
+	अगर (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
+		वापस -EINVAL;
 
-	if (!netif_running(net_dev))
-		return -ENETDOWN;
+	अगर (!netअगर_running(net_dev))
+		वापस -ENETDOWN;
 
-	for (i = 0; i < n; i++) {
+	क्रम (i = 0; i < n; i++) अणु
 		xdpf = frames[i];
-		if (dpaa_xdp_xmit_frame(net_dev, xdpf))
-			break;
+		अगर (dpaa_xdp_xmit_frame(net_dev, xdpf))
+			अवरोध;
 		nxmit++;
-	}
+	पूर्ण
 
-	return nxmit;
-}
+	वापस nxmit;
+पूर्ण
 
-static int dpaa_ts_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-	struct dpaa_priv *priv = netdev_priv(dev);
-	struct hwtstamp_config config;
+अटल पूर्णांक dpaa_ts_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा dpaa_priv *priv = netdev_priv(dev);
+	काष्ठा hwtstamp_config config;
 
-	if (copy_from_user(&config, rq->ifr_data, sizeof(config)))
-		return -EFAULT;
+	अगर (copy_from_user(&config, rq->अगरr_data, माप(config)))
+		वापस -EFAULT;
 
-	switch (config.tx_type) {
-	case HWTSTAMP_TX_OFF:
-		/* Couldn't disable rx/tx timestamping separately.
+	चयन (config.tx_type) अणु
+	हाल HWTSTAMP_TX_OFF:
+		/* Couldn't disable rx/tx बारtamping separately.
 		 * Do nothing here.
 		 */
 		priv->tx_tstamp = false;
-		break;
-	case HWTSTAMP_TX_ON:
+		अवरोध;
+	हाल HWTSTAMP_TX_ON:
 		priv->mac_dev->set_tstamp(priv->mac_dev->fman_mac, true);
 		priv->tx_tstamp = true;
-		break;
-	default:
-		return -ERANGE;
-	}
+		अवरोध;
+	शेष:
+		वापस -दुस्फल;
+	पूर्ण
 
-	if (config.rx_filter == HWTSTAMP_FILTER_NONE) {
-		/* Couldn't disable rx/tx timestamping separately.
+	अगर (config.rx_filter == HWTSTAMP_FILTER_NONE) अणु
+		/* Couldn't disable rx/tx बारtamping separately.
 		 * Do nothing here.
 		 */
 		priv->rx_tstamp = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		priv->mac_dev->set_tstamp(priv->mac_dev->fman_mac, true);
 		priv->rx_tstamp = true;
-		/* TS is set for all frame types, not only those requested */
+		/* TS is set क्रम all frame types, not only those requested */
 		config.rx_filter = HWTSTAMP_FILTER_ALL;
-	}
+	पूर्ण
 
-	return copy_to_user(rq->ifr_data, &config, sizeof(config)) ?
+	वापस copy_to_user(rq->अगरr_data, &config, माप(config)) ?
 			-EFAULT : 0;
-}
+पूर्ण
 
-static int dpaa_ioctl(struct net_device *net_dev, struct ifreq *rq, int cmd)
-{
-	int ret = -EINVAL;
+अटल पूर्णांक dpaa_ioctl(काष्ठा net_device *net_dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (cmd == SIOCGMIIREG) {
-		if (net_dev->phydev)
-			return phy_mii_ioctl(net_dev->phydev, rq, cmd);
-	}
+	अगर (cmd == SIOCGMIIREG) अणु
+		अगर (net_dev->phydev)
+			वापस phy_mii_ioctl(net_dev->phydev, rq, cmd);
+	पूर्ण
 
-	if (cmd == SIOCSHWTSTAMP)
-		return dpaa_ts_ioctl(net_dev, rq, cmd);
+	अगर (cmd == SIOCSHWTSTAMP)
+		वापस dpaa_ts_ioctl(net_dev, rq, cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct net_device_ops dpaa_ops = {
-	.ndo_open = dpaa_open,
-	.ndo_start_xmit = dpaa_start_xmit,
-	.ndo_stop = dpaa_eth_stop,
-	.ndo_tx_timeout = dpaa_tx_timeout,
-	.ndo_get_stats64 = dpaa_get_stats64,
-	.ndo_change_carrier = fixed_phy_change_carrier,
-	.ndo_set_mac_address = dpaa_set_mac_address,
-	.ndo_validate_addr = eth_validate_addr,
-	.ndo_set_rx_mode = dpaa_set_rx_mode,
-	.ndo_do_ioctl = dpaa_ioctl,
-	.ndo_setup_tc = dpaa_setup_tc,
-	.ndo_change_mtu = dpaa_change_mtu,
-	.ndo_bpf = dpaa_xdp,
-	.ndo_xdp_xmit = dpaa_xdp_xmit,
-};
+अटल स्थिर काष्ठा net_device_ops dpaa_ops = अणु
+	.nकरो_खोलो = dpaa_खोलो,
+	.nकरो_start_xmit = dpaa_start_xmit,
+	.nकरो_stop = dpaa_eth_stop,
+	.nकरो_tx_समयout = dpaa_tx_समयout,
+	.nकरो_get_stats64 = dpaa_get_stats64,
+	.nकरो_change_carrier = fixed_phy_change_carrier,
+	.nकरो_set_mac_address = dpaa_set_mac_address,
+	.nकरो_validate_addr = eth_validate_addr,
+	.nकरो_set_rx_mode = dpaa_set_rx_mode,
+	.nकरो_करो_ioctl = dpaa_ioctl,
+	.nकरो_setup_tc = dpaa_setup_tc,
+	.nकरो_change_mtu = dpaa_change_mtu,
+	.nकरो_bpf = dpaa_xdp,
+	.nकरो_xdp_xmit = dpaa_xdp_xmit,
+पूर्ण;
 
-static int dpaa_napi_add(struct net_device *net_dev)
-{
-	struct dpaa_priv *priv = netdev_priv(net_dev);
-	struct dpaa_percpu_priv *percpu_priv;
-	int cpu;
+अटल पूर्णांक dpaa_napi_add(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा dpaa_priv *priv = netdev_priv(net_dev);
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		percpu_priv = per_cpu_ptr(priv->percpu_priv, cpu);
 
-		netif_napi_add(net_dev, &percpu_priv->np.napi,
+		netअगर_napi_add(net_dev, &percpu_priv->np.napi,
 			       dpaa_eth_poll, NAPI_POLL_WEIGHT);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dpaa_napi_del(struct net_device *net_dev)
-{
-	struct dpaa_priv *priv = netdev_priv(net_dev);
-	struct dpaa_percpu_priv *percpu_priv;
-	int cpu;
+अटल व्योम dpaa_napi_del(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा dpaa_priv *priv = netdev_priv(net_dev);
+	काष्ठा dpaa_percpu_priv *percpu_priv;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		percpu_priv = per_cpu_ptr(priv->percpu_priv, cpu);
 
-		netif_napi_del(&percpu_priv->np.napi);
-	}
-}
+		netअगर_napi_del(&percpu_priv->np.napi);
+	पूर्ण
+पूर्ण
 
-static inline void dpaa_bp_free_pf(const struct dpaa_bp *bp,
-				   struct bm_buffer *bmb)
-{
+अटल अंतरभूत व्योम dpaa_bp_मुक्त_pf(स्थिर काष्ठा dpaa_bp *bp,
+				   काष्ठा bm_buffer *bmb)
+अणु
 	dma_addr_t addr = bm_buf_addr(bmb);
 
 	dma_unmap_page(bp->priv->rx_dma_dev, addr, DPAA_BP_RAW_SIZE,
 		       DMA_FROM_DEVICE);
 
-	skb_free_frag(phys_to_virt(addr));
-}
+	skb_मुक्त_frag(phys_to_virt(addr));
+पूर्ण
 
-/* Alloc the dpaa_bp struct and configure default values */
-static struct dpaa_bp *dpaa_bp_alloc(struct device *dev)
-{
-	struct dpaa_bp *dpaa_bp;
+/* Alloc the dpaa_bp काष्ठा and configure शेष values */
+अटल काष्ठा dpaa_bp *dpaa_bp_alloc(काष्ठा device *dev)
+अणु
+	काष्ठा dpaa_bp *dpaa_bp;
 
-	dpaa_bp = devm_kzalloc(dev, sizeof(*dpaa_bp), GFP_KERNEL);
-	if (!dpaa_bp)
-		return ERR_PTR(-ENOMEM);
+	dpaa_bp = devm_kzalloc(dev, माप(*dpaa_bp), GFP_KERNEL);
+	अगर (!dpaa_bp)
+		वापस ERR_PTR(-ENOMEM);
 
 	dpaa_bp->bpid = FSL_DPAA_BPID_INV;
 	dpaa_bp->percpu_count = devm_alloc_percpu(dev, *dpaa_bp->percpu_count);
-	if (!dpaa_bp->percpu_count)
-		return ERR_PTR(-ENOMEM);
+	अगर (!dpaa_bp->percpu_count)
+		वापस ERR_PTR(-ENOMEM);
 
 	dpaa_bp->config_count = FSL_DPAA_ETH_MAX_BUF_COUNT;
 
 	dpaa_bp->seed_cb = dpaa_bp_seed;
-	dpaa_bp->free_buf_cb = dpaa_bp_free_pf;
+	dpaa_bp->मुक्त_buf_cb = dpaa_bp_मुक्त_pf;
 
-	return dpaa_bp;
-}
+	वापस dpaa_bp;
+पूर्ण
 
 /* Place all ingress FQs (Rx Default, Rx Error) in a dedicated CGR.
- * We won't be sending congestion notifications to FMan; for now, we just use
+ * We won't be sending congestion notअगरications to FMan; क्रम now, we just use
  * this CGR to generate enqueue rejections to FMan in order to drop the frames
- * before they reach our ingress queues and eat up memory.
+ * beक्रमe they reach our ingress queues and eat up memory.
  */
-static int dpaa_ingress_cgr_init(struct dpaa_priv *priv)
-{
-	struct qm_mcc_initcgr initcgr;
+अटल पूर्णांक dpaa_ingress_cgr_init(काष्ठा dpaa_priv *priv)
+अणु
+	काष्ठा qm_mcc_initcgr initcgr;
 	u32 cs_th;
-	int err;
+	पूर्णांक err;
 
 	err = qman_alloc_cgrid(&priv->ingress_cgr.cgrid);
-	if (err < 0) {
-		if (netif_msg_drv(priv))
+	अगर (err < 0) अणु
+		अगर (netअगर_msg_drv(priv))
 			pr_err("Error %d allocating CGR ID\n", err);
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
-	/* Enable CS TD, but disable Congestion State Change Notifications. */
-	memset(&initcgr, 0, sizeof(initcgr));
+	/* Enable CS TD, but disable Congestion State Change Notअगरications. */
+	स_रखो(&initcgr, 0, माप(initcgr));
 	initcgr.we_mask = cpu_to_be16(QM_CGR_WE_CS_THRES);
 	initcgr.cgr.cscn_en = QM_CGR_EN;
 	cs_th = DPAA_INGRESS_CS_THRESHOLD;
@@ -3265,104 +3266,104 @@ static int dpaa_ingress_cgr_init(struct dpaa_priv *priv)
 	 */
 	err = qman_create_cgr(&priv->ingress_cgr, QMAN_CGR_FLAG_USE_INIT,
 			      &initcgr);
-	if (err < 0) {
-		if (netif_msg_drv(priv))
+	अगर (err < 0) अणु
+		अगर (netअगर_msg_drv(priv))
 			pr_err("Error %d creating ingress CGR with ID %d\n",
 			       err, priv->ingress_cgr.cgrid);
 		qman_release_cgrid(priv->ingress_cgr.cgrid);
-		goto out_error;
-	}
-	if (netif_msg_drv(priv))
+		जाओ out_error;
+	पूर्ण
+	अगर (netअगर_msg_drv(priv))
 		pr_debug("Created ingress CGR %d for netdev with hwaddr %pM\n",
 			 priv->ingress_cgr.cgrid, priv->mac_dev->addr);
 
 	priv->use_ingress_cgr = true;
 
 out_error:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u16 dpaa_get_headroom(struct dpaa_buffer_layout *bl,
-			     enum port_type port)
-{
+अटल u16 dpaa_get_headroom(काष्ठा dpaa_buffer_layout *bl,
+			     क्रमागत port_type port)
+अणु
 	u16 headroom;
 
 	/* The frame headroom must accommodate:
-	 * - the driver private data area
-	 * - parse results, hash results, timestamp if selected
-	 * If either hash results or time stamp are selected, both will
+	 * - the driver निजी data area
+	 * - parse results, hash results, बारtamp अगर selected
+	 * If either hash results or समय stamp are selected, both will
 	 * be copied to/from the frame headroom, as TS is located between PR and
 	 * HR in the IC and IC copy size has a granularity of 16bytes
-	 * (see description of FMBM_RICP and FMBM_TICP registers in DPAARM)
+	 * (see description of FMBM_RICP and FMBM_TICP रेजिस्टरs in DPAARM)
 	 *
 	 * Also make sure the headroom is a multiple of data_align bytes
 	 */
 	headroom = (u16)(bl[port].priv_data_size + DPAA_HWA_SIZE);
 
-	if (port == RX) {
-#ifdef CONFIG_DPAA_ERRATUM_A050385
-		if (unlikely(fman_has_errata_a050385()))
+	अगर (port == RX) अणु
+#अगर_घोषित CONFIG_DPAA_ERRATUM_A050385
+		अगर (unlikely(fman_has_errata_a050385()))
 			headroom = XDP_PACKET_HEADROOM;
-#endif
+#पूर्ण_अगर
 
-		return ALIGN(headroom, DPAA_FD_RX_DATA_ALIGNMENT);
-	} else {
-		return ALIGN(headroom, DPAA_FD_DATA_ALIGNMENT);
-	}
-}
+		वापस ALIGN(headroom, DPAA_FD_RX_DATA_ALIGNMENT);
+	पूर्ण अन्यथा अणु
+		वापस ALIGN(headroom, DPAA_FD_DATA_ALIGNMENT);
+	पूर्ण
+पूर्ण
 
-static int dpaa_eth_probe(struct platform_device *pdev)
-{
-	struct net_device *net_dev = NULL;
-	struct dpaa_bp *dpaa_bp = NULL;
-	struct dpaa_fq *dpaa_fq, *tmp;
-	struct dpaa_priv *priv = NULL;
-	struct fm_port_fqs port_fqs;
-	struct mac_device *mac_dev;
-	int err = 0, channel;
-	struct device *dev;
+अटल पूर्णांक dpaa_eth_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *net_dev = शून्य;
+	काष्ठा dpaa_bp *dpaa_bp = शून्य;
+	काष्ठा dpaa_fq *dpaa_fq, *पंचांगp;
+	काष्ठा dpaa_priv *priv = शून्य;
+	काष्ठा fm_port_fqs port_fqs;
+	काष्ठा mac_device *mac_dev;
+	पूर्णांक err = 0, channel;
+	काष्ठा device *dev;
 
 	dev = &pdev->dev;
 
 	err = bman_is_probed();
-	if (!err)
-		return -EPROBE_DEFER;
-	if (err < 0) {
+	अगर (!err)
+		वापस -EPROBE_DEFER;
+	अगर (err < 0) अणु
 		dev_err(dev, "failing probe due to bman probe error\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	err = qman_is_probed();
-	if (!err)
-		return -EPROBE_DEFER;
-	if (err < 0) {
+	अगर (!err)
+		वापस -EPROBE_DEFER;
+	अगर (err < 0) अणु
 		dev_err(dev, "failing probe due to qman probe error\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	err = bman_portals_probed();
-	if (!err)
-		return -EPROBE_DEFER;
-	if (err < 0) {
+	अगर (!err)
+		वापस -EPROBE_DEFER;
+	अगर (err < 0) अणु
 		dev_err(dev,
 			"failing probe due to bman portals probe error\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	err = qman_portals_probed();
-	if (!err)
-		return -EPROBE_DEFER;
-	if (err < 0) {
+	अगर (!err)
+		वापस -EPROBE_DEFER;
+	अगर (err < 0) अणु
 		dev_err(dev,
 			"failing probe due to qman portals probe error\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Allocate this early, so we can store relevant information in
-	 * the private area
+	/* Allocate this early, so we can store relevant inक्रमmation in
+	 * the निजी area
 	 */
-	net_dev = alloc_etherdev_mq(sizeof(*priv), DPAA_ETH_TXQ_NUM);
-	if (!net_dev) {
+	net_dev = alloc_etherdev_mq(माप(*priv), DPAA_ETH_TXQ_NUM);
+	अगर (!net_dev) अणु
 		dev_err(dev, "alloc_etherdev_mq() failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Do this here, so we can be verbose early */
 	SET_NETDEV_DEV(net_dev, dev->parent);
@@ -3371,30 +3372,30 @@ static int dpaa_eth_probe(struct platform_device *pdev)
 	priv = netdev_priv(net_dev);
 	priv->net_dev = net_dev;
 
-	priv->msg_enable = netif_msg_init(debug, DPAA_MSG_DEFAULT);
+	priv->msg_enable = netअगर_msg_init(debug, DPAA_MSG_DEFAULT);
 
 	mac_dev = dpaa_mac_dev_get(pdev);
-	if (IS_ERR(mac_dev)) {
+	अगर (IS_ERR(mac_dev)) अणु
 		netdev_err(net_dev, "dpaa_mac_dev_get() failed\n");
 		err = PTR_ERR(mac_dev);
-		goto free_netdev;
-	}
+		जाओ मुक्त_netdev;
+	पूर्ण
 
-	/* Devices used for DMA mapping */
+	/* Devices used क्रम DMA mapping */
 	priv->rx_dma_dev = fman_port_get_device(mac_dev->port[RX]);
 	priv->tx_dma_dev = fman_port_get_device(mac_dev->port[TX]);
 	err = dma_coerce_mask_and_coherent(priv->rx_dma_dev, DMA_BIT_MASK(40));
-	if (!err)
+	अगर (!err)
 		err = dma_coerce_mask_and_coherent(priv->tx_dma_dev,
 						   DMA_BIT_MASK(40));
-	if (err) {
+	अगर (err) अणु
 		netdev_err(net_dev, "dma_coerce_mask_and_coherent() failed\n");
-		goto free_netdev;
-	}
+		जाओ मुक्त_netdev;
+	पूर्ण
 
 	/* If fsl_fm_max_frm is set to a higher value than the all-common 1500,
 	 * we choose conservatively and let the user explicitly set a higher
-	 * MTU via ifconfig. Otherwise, the user may end up with different MTUs
+	 * MTU via अगरconfig. Otherwise, the user may end up with dअगरferent MTUs
 	 * in the same LAN.
 	 * If on the other hand fsl_fm_max_frm has been chosen below 1500,
 	 * start with the maximum allowed.
@@ -3409,39 +3410,39 @@ static int dpaa_eth_probe(struct platform_device *pdev)
 
 	/* bp init */
 	dpaa_bp = dpaa_bp_alloc(dev);
-	if (IS_ERR(dpaa_bp)) {
+	अगर (IS_ERR(dpaa_bp)) अणु
 		err = PTR_ERR(dpaa_bp);
-		goto free_dpaa_bps;
-	}
-	/* the raw size of the buffers used for reception */
+		जाओ मुक्त_dpaa_bps;
+	पूर्ण
+	/* the raw size of the buffers used क्रम reception */
 	dpaa_bp->raw_size = DPAA_BP_RAW_SIZE;
-	/* avoid runtime computations by keeping the usable size here */
+	/* aव्योम runसमय computations by keeping the usable size here */
 	dpaa_bp->size = dpaa_bp_size(dpaa_bp->raw_size);
 	dpaa_bp->priv = priv;
 
 	err = dpaa_bp_alloc_pool(dpaa_bp);
-	if (err < 0)
-		goto free_dpaa_bps;
+	अगर (err < 0)
+		जाओ मुक्त_dpaa_bps;
 	priv->dpaa_bp = dpaa_bp;
 
 	INIT_LIST_HEAD(&priv->dpaa_fq_list);
 
-	memset(&port_fqs, 0, sizeof(port_fqs));
+	स_रखो(&port_fqs, 0, माप(port_fqs));
 
 	err = dpaa_alloc_all_fqs(dev, &priv->dpaa_fq_list, &port_fqs);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "dpaa_alloc_all_fqs() failed\n");
-		goto free_dpaa_bps;
-	}
+		जाओ मुक्त_dpaa_bps;
+	पूर्ण
 
 	priv->mac_dev = mac_dev;
 
 	channel = dpaa_get_channel();
-	if (channel < 0) {
+	अगर (channel < 0) अणु
 		dev_err(dev, "dpaa_get_channel() failed\n");
 		err = channel;
-		goto free_dpaa_bps;
-	}
+		जाओ मुक्त_dpaa_bps;
+	पूर्ण
 
 	priv->channel = (u16)channel;
 
@@ -3452,104 +3453,104 @@ static int dpaa_eth_probe(struct platform_device *pdev)
 
 	dpaa_fq_setup(priv, &dpaa_fq_cbs, priv->mac_dev->port[TX]);
 
-	/* Create a congestion group for this netdev, with
+	/* Create a congestion group क्रम this netdev, with
 	 * dynamically-allocated CGR ID.
-	 * Must be executed after probing the MAC, but before
+	 * Must be executed after probing the MAC, but beक्रमe
 	 * assigning the egress FQs to the CGRs.
 	 */
 	err = dpaa_eth_cgr_init(priv);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "Error initializing CGR\n");
-		goto free_dpaa_bps;
-	}
+		जाओ मुक्त_dpaa_bps;
+	पूर्ण
 
 	err = dpaa_ingress_cgr_init(priv);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "Error initializing ingress CGR\n");
-		goto delete_egress_cgr;
-	}
+		जाओ delete_egress_cgr;
+	पूर्ण
 
-	/* Add the FQs to the interface, and make them active */
-	list_for_each_entry_safe(dpaa_fq, tmp, &priv->dpaa_fq_list, list) {
+	/* Add the FQs to the पूर्णांकerface, and make them active */
+	list_क्रम_each_entry_safe(dpaa_fq, पंचांगp, &priv->dpaa_fq_list, list) अणु
 		err = dpaa_fq_init(dpaa_fq, false);
-		if (err < 0)
-			goto free_dpaa_fqs;
-	}
+		अगर (err < 0)
+			जाओ मुक्त_dpaa_fqs;
+	पूर्ण
 
 	priv->tx_headroom = dpaa_get_headroom(priv->buf_layout, TX);
 	priv->rx_headroom = dpaa_get_headroom(priv->buf_layout, RX);
 
-	/* All real interfaces need their ports initialized */
+	/* All real पूर्णांकerfaces need their ports initialized */
 	err = dpaa_eth_init_ports(mac_dev, dpaa_bp, &port_fqs,
 				  &priv->buf_layout[0], dev);
-	if (err)
-		goto free_dpaa_fqs;
+	अगर (err)
+		जाओ मुक्त_dpaa_fqs;
 
-	/* Rx traffic distribution based on keygen hashing defaults to on */
+	/* Rx traffic distribution based on keygen hashing शेषs to on */
 	priv->keygen_in_use = true;
 
 	priv->percpu_priv = devm_alloc_percpu(dev, *priv->percpu_priv);
-	if (!priv->percpu_priv) {
+	अगर (!priv->percpu_priv) अणु
 		dev_err(dev, "devm_alloc_percpu() failed\n");
 		err = -ENOMEM;
-		goto free_dpaa_fqs;
-	}
+		जाओ मुक्त_dpaa_fqs;
+	पूर्ण
 
 	priv->num_tc = 1;
-	netif_set_real_num_tx_queues(net_dev, priv->num_tc * DPAA_TC_TXQ_NUM);
+	netअगर_set_real_num_tx_queues(net_dev, priv->num_tc * DPAA_TC_TXQ_NUM);
 
 	/* Initialize NAPI */
 	err = dpaa_napi_add(net_dev);
-	if (err < 0)
-		goto delete_dpaa_napi;
+	अगर (err < 0)
+		जाओ delete_dpaa_napi;
 
-	err = dpaa_netdev_init(net_dev, &dpaa_ops, tx_timeout);
-	if (err < 0)
-		goto delete_dpaa_napi;
+	err = dpaa_netdev_init(net_dev, &dpaa_ops, tx_समयout);
+	अगर (err < 0)
+		जाओ delete_dpaa_napi;
 
 	dpaa_eth_sysfs_init(&net_dev->dev);
 
-	netif_info(priv, probe, net_dev, "Probed interface %s\n",
+	netअगर_info(priv, probe, net_dev, "Probed interface %s\n",
 		   net_dev->name);
 
-	return 0;
+	वापस 0;
 
 delete_dpaa_napi:
 	dpaa_napi_del(net_dev);
-free_dpaa_fqs:
-	dpaa_fq_free(dev, &priv->dpaa_fq_list);
+मुक्त_dpaa_fqs:
+	dpaa_fq_मुक्त(dev, &priv->dpaa_fq_list);
 	qman_delete_cgr_safe(&priv->ingress_cgr);
 	qman_release_cgrid(priv->ingress_cgr.cgrid);
 delete_egress_cgr:
 	qman_delete_cgr_safe(&priv->cgr_data.cgr);
 	qman_release_cgrid(priv->cgr_data.cgr.cgrid);
-free_dpaa_bps:
-	dpaa_bps_free(priv);
-free_netdev:
-	dev_set_drvdata(dev, NULL);
-	free_netdev(net_dev);
+मुक्त_dpaa_bps:
+	dpaa_bps_मुक्त(priv);
+मुक्त_netdev:
+	dev_set_drvdata(dev, शून्य);
+	मुक्त_netdev(net_dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dpaa_remove(struct platform_device *pdev)
-{
-	struct net_device *net_dev;
-	struct dpaa_priv *priv;
-	struct device *dev;
-	int err;
+अटल पूर्णांक dpaa_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *net_dev;
+	काष्ठा dpaa_priv *priv;
+	काष्ठा device *dev;
+	पूर्णांक err;
 
 	dev = &pdev->dev;
 	net_dev = dev_get_drvdata(dev);
 
 	priv = netdev_priv(net_dev);
 
-	dpaa_eth_sysfs_remove(dev);
+	dpaa_eth_sysfs_हटाओ(dev);
 
-	dev_set_drvdata(dev, NULL);
-	unregister_netdev(net_dev);
+	dev_set_drvdata(dev, शून्य);
+	unरेजिस्टर_netdev(net_dev);
 
-	err = dpaa_fq_free(dev, &priv->dpaa_fq_list);
+	err = dpaa_fq_मुक्त(dev, &priv->dpaa_fq_list);
 
 	qman_delete_cgr_safe(&priv->ingress_cgr);
 	qman_release_cgrid(priv->ingress_cgr.cgrid);
@@ -3558,34 +3559,34 @@ static int dpaa_remove(struct platform_device *pdev)
 
 	dpaa_napi_del(net_dev);
 
-	dpaa_bps_free(priv);
+	dpaa_bps_मुक्त(priv);
 
-	free_netdev(net_dev);
+	मुक्त_netdev(net_dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct platform_device_id dpaa_devtype[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id dpaa_devtype[] = अणु
+	अणु
 		.name = "dpaa-ethernet",
 		.driver_data = 0,
-	}, {
-	}
-};
-MODULE_DEVICE_TABLE(platform, dpaa_devtype);
+	पूर्ण, अणु
+	पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, dpaa_devtype);
 
-static struct platform_driver dpaa_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver dpaa_driver = अणु
+	.driver = अणु
 		.name = KBUILD_MODNAME,
-	},
+	पूर्ण,
 	.id_table = dpaa_devtype,
 	.probe = dpaa_eth_probe,
-	.remove = dpaa_remove
-};
+	.हटाओ = dpaa_हटाओ
+पूर्ण;
 
-static int __init dpaa_load(void)
-{
-	int err;
+अटल पूर्णांक __init dpaa_load(व्योम)
+अणु
+	पूर्णांक err;
 
 	pr_debug("FSL DPAA Ethernet driver\n");
 
@@ -3593,24 +3594,24 @@ static int __init dpaa_load(void)
 	dpaa_rx_extra_headroom = fman_get_rx_extra_headroom();
 	dpaa_max_frm = fman_get_max_frm();
 
-	err = platform_driver_register(&dpaa_driver);
-	if (err < 0)
+	err = platक्रमm_driver_रेजिस्टर(&dpaa_driver);
+	अगर (err < 0)
 		pr_err("Error, platform_driver_register() = %d\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 module_init(dpaa_load);
 
-static void __exit dpaa_unload(void)
-{
-	platform_driver_unregister(&dpaa_driver);
+अटल व्योम __निकास dpaa_unload(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&dpaa_driver);
 
 	/* Only one channel is used and needs to be released after all
-	 * interfaces are removed
+	 * पूर्णांकerfaces are हटाओd
 	 */
 	dpaa_release_channel();
-}
-module_exit(dpaa_unload);
+पूर्ण
+module_निकास(dpaa_unload);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("FSL DPAA Ethernet driver");

@@ -1,131 +1,132 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Access to user system call parameters and results
+ * Access to user प्रणाली call parameters and results
  *
  * Copyright (C) 2008 Red Hat, Inc.  All rights reserved.
  *
- * See asm-generic/syscall.h for descriptions of what we must do here.
+ * See यंत्र-generic/syscall.h क्रम descriptions of what we must करो here.
  */
 
-#ifndef _ASM_SYSCALL_H
-#define _ASM_SYSCALL_H	1
+#अगर_अघोषित _ASM_SYSCALL_H
+#घोषणा _ASM_SYSCALL_H	1
 
-#include <uapi/linux/audit.h>
-#include <linux/sched.h>
-#include <linux/thread_info.h>
+#समावेश <uapi/linux/audit.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/thपढ़ो_info.h>
 
 /* ftrace syscalls requires exporting the sys_call_table */
-extern const unsigned long sys_call_table[];
-extern const unsigned long compat_sys_call_table[];
+बाह्य स्थिर अचिन्हित दीर्घ sys_call_table[];
+बाह्य स्थिर अचिन्हित दीर्घ compat_sys_call_table[];
 
-static inline int syscall_get_nr(struct task_struct *task, struct pt_regs *regs)
-{
+अटल अंतरभूत पूर्णांक syscall_get_nr(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
+अणु
 	/*
-	 * Note that we are returning an int here. That means 0xffffffff, ie.
-	 * 32-bit negative 1, will be interpreted as -1 on a 64-bit kernel.
-	 * This is important for seccomp so that compat tasks can set r0 = -1
+	 * Note that we are वापसing an पूर्णांक here. That means 0xffffffff, ie.
+	 * 32-bit negative 1, will be पूर्णांकerpreted as -1 on a 64-bit kernel.
+	 * This is important क्रम seccomp so that compat tasks can set r0 = -1
 	 * to reject the syscall.
 	 */
-	if (trap_is_syscall(regs))
-		return regs->gpr[0];
-	else
-		return -1;
-}
+	अगर (trap_is_syscall(regs))
+		वापस regs->gpr[0];
+	अन्यथा
+		वापस -1;
+पूर्ण
 
-static inline void syscall_rollback(struct task_struct *task,
-				    struct pt_regs *regs)
-{
+अटल अंतरभूत व्योम syscall_rollback(काष्ठा task_काष्ठा *task,
+				    काष्ठा pt_regs *regs)
+अणु
 	regs->gpr[3] = regs->orig_gpr3;
-}
+पूर्ण
 
-static inline long syscall_get_error(struct task_struct *task,
-				     struct pt_regs *regs)
-{
-	if (trap_is_scv(regs)) {
-		unsigned long error = regs->gpr[3];
+अटल अंतरभूत दीर्घ syscall_get_error(काष्ठा task_काष्ठा *task,
+				     काष्ठा pt_regs *regs)
+अणु
+	अगर (trap_is_scv(regs)) अणु
+		अचिन्हित दीर्घ error = regs->gpr[3];
 
-		return IS_ERR_VALUE(error) ? error : 0;
-	} else {
+		वापस IS_ERR_VALUE(error) ? error : 0;
+	पूर्ण अन्यथा अणु
 		/*
-		 * If the system call failed,
+		 * If the प्रणाली call failed,
 		 * regs->gpr[3] contains a positive ERRORCODE.
 		 */
-		return (regs->ccr & 0x10000000UL) ? -regs->gpr[3] : 0;
-	}
-}
+		वापस (regs->ccr & 0x10000000UL) ? -regs->gpr[3] : 0;
+	पूर्ण
+पूर्ण
 
-static inline long syscall_get_return_value(struct task_struct *task,
-					    struct pt_regs *regs)
-{
-	return regs->gpr[3];
-}
+अटल अंतरभूत दीर्घ syscall_get_वापस_value(काष्ठा task_काष्ठा *task,
+					    काष्ठा pt_regs *regs)
+अणु
+	वापस regs->gpr[3];
+पूर्ण
 
-static inline void syscall_set_return_value(struct task_struct *task,
-					    struct pt_regs *regs,
-					    int error, long val)
-{
-	if (trap_is_scv(regs)) {
-		regs->gpr[3] = (long) error ?: val;
-	} else {
+अटल अंतरभूत व्योम syscall_set_वापस_value(काष्ठा task_काष्ठा *task,
+					    काष्ठा pt_regs *regs,
+					    पूर्णांक error, दीर्घ val)
+अणु
+	अगर (trap_is_scv(regs)) अणु
+		regs->gpr[3] = (दीर्घ) error ?: val;
+	पूर्ण अन्यथा अणु
 		/*
-		 * In the general case it's not obvious that we must deal with
-		 * CCR here, as the syscall exit path will also do that for us.
-		 * However there are some places, eg. the signal code, which
-		 * check ccr to decide if the value in r3 is actually an error.
+		 * In the general हाल it's not obvious that we must deal with
+		 * CCR here, as the syscall निकास path will also करो that क्रम us.
+		 * However there are some places, eg. the संकेत code, which
+		 * check ccr to decide अगर the value in r3 is actually an error.
 		 */
-		if (error) {
+		अगर (error) अणु
 			regs->ccr |= 0x10000000L;
 			regs->gpr[3] = error;
-		} else {
+		पूर्ण अन्यथा अणु
 			regs->ccr &= ~0x10000000L;
 			regs->gpr[3] = val;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline void syscall_get_arguments(struct task_struct *task,
-					 struct pt_regs *regs,
-					 unsigned long *args)
-{
-	unsigned long val, mask = -1UL;
-	unsigned int n = 6;
+अटल अंतरभूत व्योम syscall_get_arguments(काष्ठा task_काष्ठा *task,
+					 काष्ठा pt_regs *regs,
+					 अचिन्हित दीर्घ *args)
+अणु
+	अचिन्हित दीर्घ val, mask = -1UL;
+	अचिन्हित पूर्णांक n = 6;
 
-#ifdef CONFIG_COMPAT
-	if (test_tsk_thread_flag(task, TIF_32BIT))
+#अगर_घोषित CONFIG_COMPAT
+	अगर (test_tsk_thपढ़ो_flag(task, TIF_32BIT))
 		mask = 0xffffffff;
-#endif
-	while (n--) {
-		if (n == 0)
+#पूर्ण_अगर
+	जबतक (n--) अणु
+		अगर (n == 0)
 			val = regs->orig_gpr3;
-		else
+		अन्यथा
 			val = regs->gpr[3 + n];
 
 		args[n] = val & mask;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void syscall_set_arguments(struct task_struct *task,
-					 struct pt_regs *regs,
-					 const unsigned long *args)
-{
-	memcpy(&regs->gpr[3], args, 6 * sizeof(args[0]));
+अटल अंतरभूत व्योम syscall_set_arguments(काष्ठा task_काष्ठा *task,
+					 काष्ठा pt_regs *regs,
+					 स्थिर अचिन्हित दीर्घ *args)
+अणु
+	स_नकल(&regs->gpr[3], args, 6 * माप(args[0]));
 
-	/* Also copy the first argument into orig_gpr3 */
+	/* Also copy the first argument पूर्णांकo orig_gpr3 */
 	regs->orig_gpr3 = args[0];
-}
+पूर्ण
 
-static inline int syscall_get_arch(struct task_struct *task)
-{
-	int arch;
+अटल अंतरभूत पूर्णांक syscall_get_arch(काष्ठा task_काष्ठा *task)
+अणु
+	पूर्णांक arch;
 
-	if (IS_ENABLED(CONFIG_PPC64) && !test_tsk_thread_flag(task, TIF_32BIT))
+	अगर (IS_ENABLED(CONFIG_PPC64) && !test_tsk_thपढ़ो_flag(task, TIF_32BIT))
 		arch = AUDIT_ARCH_PPC64;
-	else
+	अन्यथा
 		arch = AUDIT_ARCH_PPC;
 
-#ifdef __LITTLE_ENDIAN__
+#अगर_घोषित __LITTLE_ENDIAN__
 	arch |= __AUDIT_ARCH_LE;
-#endif
-	return arch;
-}
-#endif	/* _ASM_SYSCALL_H */
+#पूर्ण_अगर
+	वापस arch;
+पूर्ण
+#पूर्ण_अगर	/* _ASM_SYSCALL_H */

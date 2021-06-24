@@ -1,91 +1,92 @@
-#define KBUILD_MODNAME "foo"
-#include <uapi/linux/bpf.h>
-#include <uapi/linux/if_ether.h>
-#include <uapi/linux/if_packet.h>
-#include <uapi/linux/ip.h>
-#include <uapi/linux/in.h>
-#include <uapi/linux/tcp.h>
-#include <uapi/linux/filter.h>
-#include <uapi/linux/pkt_cls.h>
-#include <bpf/bpf_helpers.h>
-#include "bpf_legacy.h"
+<शैली गुरु>
+#घोषणा KBUILD_MODNAME "foo"
+#समावेश <uapi/linux/bpf.h>
+#समावेश <uapi/linux/अगर_ether.h>
+#समावेश <uapi/linux/अगर_packet.h>
+#समावेश <uapi/linux/ip.h>
+#समावेश <uapi/linux/in.h>
+#समावेश <uapi/linux/tcp.h>
+#समावेश <uapi/linux/filter.h>
+#समावेश <uapi/linux/pkt_cls.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश "bpf_legacy.h"
 
 /* compiler workaround */
-#define _htonl __builtin_bswap32
+#घोषणा _htonl __builtin_bswap32
 
-static inline void set_dst_mac(struct __sk_buff *skb, char *mac)
-{
+अटल अंतरभूत व्योम set_dst_mac(काष्ठा __sk_buff *skb, अक्षर *mac)
+अणु
 	bpf_skb_store_bytes(skb, 0, mac, ETH_ALEN, 1);
-}
+पूर्ण
 
-#define IP_CSUM_OFF (ETH_HLEN + offsetof(struct iphdr, check))
-#define TOS_OFF (ETH_HLEN + offsetof(struct iphdr, tos))
+#घोषणा IP_CSUM_OFF (ETH_HLEN + दुरत्व(काष्ठा iphdr, check))
+#घोषणा TOS_OFF (ETH_HLEN + दुरत्व(काष्ठा iphdr, tos))
 
-static inline void set_ip_tos(struct __sk_buff *skb, __u8 new_tos)
-{
+अटल अंतरभूत व्योम set_ip_tos(काष्ठा __sk_buff *skb, __u8 new_tos)
+अणु
 	__u8 old_tos = load_byte(skb, TOS_OFF);
 
 	bpf_l3_csum_replace(skb, IP_CSUM_OFF, htons(old_tos), htons(new_tos), 2);
-	bpf_skb_store_bytes(skb, TOS_OFF, &new_tos, sizeof(new_tos), 0);
-}
+	bpf_skb_store_bytes(skb, TOS_OFF, &new_tos, माप(new_tos), 0);
+पूर्ण
 
-#define TCP_CSUM_OFF (ETH_HLEN + sizeof(struct iphdr) + offsetof(struct tcphdr, check))
-#define IP_SRC_OFF (ETH_HLEN + offsetof(struct iphdr, saddr))
+#घोषणा TCP_CSUM_OFF (ETH_HLEN + माप(काष्ठा iphdr) + दुरत्व(काष्ठा tcphdr, check))
+#घोषणा IP_SRC_OFF (ETH_HLEN + दुरत्व(काष्ठा iphdr, saddr))
 
-#define IS_PSEUDO 0x10
+#घोषणा IS_PSEUDO 0x10
 
-static inline void set_tcp_ip_src(struct __sk_buff *skb, __u32 new_ip)
-{
+अटल अंतरभूत व्योम set_tcp_ip_src(काष्ठा __sk_buff *skb, __u32 new_ip)
+अणु
 	__u32 old_ip = _htonl(load_word(skb, IP_SRC_OFF));
 
-	bpf_l4_csum_replace(skb, TCP_CSUM_OFF, old_ip, new_ip, IS_PSEUDO | sizeof(new_ip));
-	bpf_l3_csum_replace(skb, IP_CSUM_OFF, old_ip, new_ip, sizeof(new_ip));
-	bpf_skb_store_bytes(skb, IP_SRC_OFF, &new_ip, sizeof(new_ip), 0);
-}
+	bpf_l4_csum_replace(skb, TCP_CSUM_OFF, old_ip, new_ip, IS_PSEUDO | माप(new_ip));
+	bpf_l3_csum_replace(skb, IP_CSUM_OFF, old_ip, new_ip, माप(new_ip));
+	bpf_skb_store_bytes(skb, IP_SRC_OFF, &new_ip, माप(new_ip), 0);
+पूर्ण
 
-#define TCP_DPORT_OFF (ETH_HLEN + sizeof(struct iphdr) + offsetof(struct tcphdr, dest))
-static inline void set_tcp_dest_port(struct __sk_buff *skb, __u16 new_port)
-{
+#घोषणा TCP_DPORT_OFF (ETH_HLEN + माप(काष्ठा iphdr) + दुरत्व(काष्ठा tcphdr, dest))
+अटल अंतरभूत व्योम set_tcp_dest_port(काष्ठा __sk_buff *skb, __u16 new_port)
+अणु
 	__u16 old_port = htons(load_half(skb, TCP_DPORT_OFF));
 
-	bpf_l4_csum_replace(skb, TCP_CSUM_OFF, old_port, new_port, sizeof(new_port));
-	bpf_skb_store_bytes(skb, TCP_DPORT_OFF, &new_port, sizeof(new_port), 0);
-}
+	bpf_l4_csum_replace(skb, TCP_CSUM_OFF, old_port, new_port, माप(new_port));
+	bpf_skb_store_bytes(skb, TCP_DPORT_OFF, &new_port, माप(new_port), 0);
+पूर्ण
 
 SEC("classifier")
-int bpf_prog1(struct __sk_buff *skb)
-{
-	__u8 proto = load_byte(skb, ETH_HLEN + offsetof(struct iphdr, protocol));
-	long *value;
+पूर्णांक bpf_prog1(काष्ठा __sk_buff *skb)
+अणु
+	__u8 proto = load_byte(skb, ETH_HLEN + दुरत्व(काष्ठा iphdr, protocol));
+	दीर्घ *value;
 
-	if (proto == IPPROTO_TCP) {
+	अगर (proto == IPPROTO_TCP) अणु
 		set_ip_tos(skb, 8);
 		set_tcp_ip_src(skb, 0xA010101);
 		set_tcp_dest_port(skb, 5001);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 SEC("redirect_xmit")
-int _redirect_xmit(struct __sk_buff *skb)
-{
-	return bpf_redirect(skb->ifindex + 1, 0);
-}
+पूर्णांक _redirect_xmit(काष्ठा __sk_buff *skb)
+अणु
+	वापस bpf_redirect(skb->अगरindex + 1, 0);
+पूर्ण
 SEC("redirect_recv")
-int _redirect_recv(struct __sk_buff *skb)
-{
-	return bpf_redirect(skb->ifindex + 1, 1);
-}
+पूर्णांक _redirect_recv(काष्ठा __sk_buff *skb)
+अणु
+	वापस bpf_redirect(skb->अगरindex + 1, 1);
+पूर्ण
 SEC("clone_redirect_xmit")
-int _clone_redirect_xmit(struct __sk_buff *skb)
-{
-	bpf_clone_redirect(skb, skb->ifindex + 1, 0);
-	return TC_ACT_SHOT;
-}
+पूर्णांक _clone_redirect_xmit(काष्ठा __sk_buff *skb)
+अणु
+	bpf_clone_redirect(skb, skb->अगरindex + 1, 0);
+	वापस TC_ACT_SHOT;
+पूर्ण
 SEC("clone_redirect_recv")
-int _clone_redirect_recv(struct __sk_buff *skb)
-{
-	bpf_clone_redirect(skb, skb->ifindex + 1, 1);
-	return TC_ACT_SHOT;
-}
-char _license[] SEC("license") = "GPL";
+पूर्णांक _clone_redirect_recv(काष्ठा __sk_buff *skb)
+अणु
+	bpf_clone_redirect(skb, skb->अगरindex + 1, 1);
+	वापस TC_ACT_SHOT;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Address translation interface via ACPI DSM.
+ * Address translation पूर्णांकerface via ACPI DSM.
  * Copyright (C) 2018 Intel Corporation
  */
 
-#ifndef _LINUX_ADXL_H
-#define _LINUX_ADXL_H
+#अगर_अघोषित _LINUX_ADXL_H
+#घोषणा _LINUX_ADXL_H
 
-const char * const *adxl_get_component_names(void);
-int adxl_decode(u64 addr, u64 component_values[]);
+स्थिर अक्षर * स्थिर *adxl_get_component_names(व्योम);
+पूर्णांक adxl_decode(u64 addr, u64 component_values[]);
 
-#endif /* _LINUX_ADXL_H */
+#पूर्ण_अगर /* _LINUX_ADXL_H */

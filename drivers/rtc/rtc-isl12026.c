@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * An I2C driver for the Intersil ISL 12026
+ * An I2C driver क्रम the Intersil ISL 12026
  *
  * Copyright (c) 2018 Cavium, Inc.
  */
-#include <linux/bcd.h>
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/nvmem-provider.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/rtc.h>
-#include <linux/slab.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/slab.h>
 
-/* register offsets */
-#define ISL12026_REG_PWR	0x14
+/* रेजिस्टर offsets */
+#घोषणा ISL12026_REG_PWR	0x14
 # define ISL12026_REG_PWR_BSW	BIT(6)
 # define ISL12026_REG_PWR_SBIB	BIT(7)
-#define ISL12026_REG_SC		0x30
-#define ISL12026_REG_HR		0x32
-# define ISL12026_REG_HR_MIL	BIT(7)	/* military or 24 hour time */
-#define ISL12026_REG_SR		0x3f
+#घोषणा ISL12026_REG_SC		0x30
+#घोषणा ISL12026_REG_HR		0x32
+# define ISL12026_REG_HR_MIL	BIT(7)	/* military or 24 hour समय */
+#घोषणा ISL12026_REG_SR		0x3f
 # define ISL12026_REG_SR_RTCF	BIT(0)
 # define ISL12026_REG_SR_WEL	BIT(1)
 # define ISL12026_REG_SR_RWEL	BIT(2)
@@ -30,57 +31,57 @@
 # define ISL12026_REG_SR_OSCF	BIT(4)
 
 /* The EEPROM array responds at i2c address 0x57 */
-#define ISL12026_EEPROM_ADDR	0x57
+#घोषणा ISL12026_EEPROM_ADDR	0x57
 
-#define ISL12026_PAGESIZE 16
-#define ISL12026_NVMEM_WRITE_TIME 20
+#घोषणा ISL12026_PAGESIZE 16
+#घोषणा ISL12026_NVMEM_WRITE_TIME 20
 
-struct isl12026 {
-	struct rtc_device *rtc;
-	struct i2c_client *nvm_client;
-};
+काष्ठा isl12026 अणु
+	काष्ठा rtc_device *rtc;
+	काष्ठा i2c_client *nvm_client;
+पूर्ण;
 
-static int isl12026_read_reg(struct i2c_client *client, int reg)
-{
-	u8 addr[] = {0, reg};
+अटल पूर्णांक isl12026_पढ़ो_reg(काष्ठा i2c_client *client, पूर्णांक reg)
+अणु
+	u8 addr[] = अणु0, regपूर्ण;
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
-	struct i2c_msg msgs[] = {
-		{
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु
 			.addr	= client->addr,
 			.flags	= 0,
-			.len	= sizeof(addr),
+			.len	= माप(addr),
 			.buf	= addr
-		}, {
+		पूर्ण, अणु
 			.addr	= client->addr,
 			.flags	= I2C_M_RD,
 			.len	= 1,
 			.buf	= &val
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	if (ret != ARRAY_SIZE(msgs)) {
+	अगर (ret != ARRAY_SIZE(msgs)) अणु
 		dev_err(&client->dev, "read reg error, ret=%d\n", ret);
 		ret = ret < 0 ? ret : -EIO;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = val;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int isl12026_arm_write(struct i2c_client *client)
-{
-	int ret;
+अटल पूर्णांक isl12026_arm_ग_लिखो(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक ret;
 	u8 op[3];
-	struct i2c_msg msg = {
+	काष्ठा i2c_msg msg = अणु
 		.addr	= client->addr,
 		.flags	= 0,
 		.len	= 1,
 		.buf	= op
-	};
+	पूर्ण;
 
 	/* Set SR.WEL */
 	op[0] = 0;
@@ -88,221 +89,221 @@ static int isl12026_arm_write(struct i2c_client *client)
 	op[2] = ISL12026_REG_SR_WEL;
 	msg.len = 3;
 	ret = i2c_transfer(client->adapter, &msg, 1);
-	if (ret != 1) {
+	अगर (ret != 1) अणु
 		dev_err(&client->dev, "write error SR.WEL, ret=%d\n", ret);
 		ret = ret < 0 ? ret : -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Set SR.WEL and SR.RWEL */
 	op[2] = ISL12026_REG_SR_WEL | ISL12026_REG_SR_RWEL;
 	msg.len = 3;
 	ret = i2c_transfer(client->adapter, &msg, 1);
-	if (ret != 1) {
+	अगर (ret != 1) अणु
 		dev_err(&client->dev,
 			"write error SR.WEL|SR.RWEL, ret=%d\n", ret);
 		ret = ret < 0 ? ret : -EIO;
-		goto out;
-	} else {
+		जाओ out;
+	पूर्ण अन्यथा अणु
 		ret = 0;
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int isl12026_disarm_write(struct i2c_client *client)
-{
-	int ret;
-	u8 op[3] = {0, ISL12026_REG_SR, 0};
-	struct i2c_msg msg = {
+अटल पूर्णांक isl12026_disarm_ग_लिखो(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक ret;
+	u8 op[3] = अणु0, ISL12026_REG_SR, 0पूर्ण;
+	काष्ठा i2c_msg msg = अणु
 		.addr	= client->addr,
 		.flags	= 0,
-		.len	= sizeof(op),
+		.len	= माप(op),
 		.buf	= op
-	};
+	पूर्ण;
 
 	ret = i2c_transfer(client->adapter, &msg, 1);
-	if (ret != 1) {
+	अगर (ret != 1) अणु
 		dev_err(&client->dev,
 			"write error SR, ret=%d\n", ret);
 		ret = ret < 0 ? ret : -EIO;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int isl12026_write_reg(struct i2c_client *client, int reg, u8 val)
-{
-	int ret;
-	u8 op[3] = {0, reg, val};
-	struct i2c_msg msg = {
+अटल पूर्णांक isl12026_ग_लिखो_reg(काष्ठा i2c_client *client, पूर्णांक reg, u8 val)
+अणु
+	पूर्णांक ret;
+	u8 op[3] = अणु0, reg, valपूर्ण;
+	काष्ठा i2c_msg msg = अणु
 		.addr	= client->addr,
 		.flags	= 0,
-		.len	= sizeof(op),
+		.len	= माप(op),
 		.buf	= op
-	};
+	पूर्ण;
 
-	ret = isl12026_arm_write(client);
-	if (ret)
-		return ret;
+	ret = isl12026_arm_ग_लिखो(client);
+	अगर (ret)
+		वापस ret;
 
 	ret = i2c_transfer(client->adapter, &msg, 1);
-	if (ret != 1) {
+	अगर (ret != 1) अणु
 		dev_err(&client->dev, "write error CCR, ret=%d\n", ret);
 		ret = ret < 0 ? ret : -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	msleep(ISL12026_NVMEM_WRITE_TIME);
 
-	ret = isl12026_disarm_write(client);
+	ret = isl12026_disarm_ग_लिखो(client);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int isl12026_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	int ret;
+अटल पूर्णांक isl12026_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	पूर्णांक ret;
 	u8 op[10];
-	struct i2c_msg msg = {
+	काष्ठा i2c_msg msg = अणु
 		.addr	= client->addr,
 		.flags	= 0,
-		.len	= sizeof(op),
+		.len	= माप(op),
 		.buf	= op
-	};
+	पूर्ण;
 
-	ret = isl12026_arm_write(client);
-	if (ret)
-		return ret;
+	ret = isl12026_arm_ग_लिखो(client);
+	अगर (ret)
+		वापस ret;
 
-	/* Set the CCR registers */
+	/* Set the CCR रेजिस्टरs */
 	op[0] = 0;
 	op[1] = ISL12026_REG_SC;
-	op[2] = bin2bcd(tm->tm_sec); /* SC */
-	op[3] = bin2bcd(tm->tm_min); /* MN */
-	op[4] = bin2bcd(tm->tm_hour) | ISL12026_REG_HR_MIL; /* HR */
-	op[5] = bin2bcd(tm->tm_mday); /* DT */
-	op[6] = bin2bcd(tm->tm_mon + 1); /* MO */
-	op[7] = bin2bcd(tm->tm_year % 100); /* YR */
-	op[8] = bin2bcd(tm->tm_wday & 7); /* DW */
-	op[9] = bin2bcd(tm->tm_year >= 100 ? 20 : 19); /* Y2K */
+	op[2] = bin2bcd(पंचांग->पंचांग_sec); /* SC */
+	op[3] = bin2bcd(पंचांग->पंचांग_min); /* MN */
+	op[4] = bin2bcd(पंचांग->पंचांग_hour) | ISL12026_REG_HR_MIL; /* HR */
+	op[5] = bin2bcd(पंचांग->पंचांग_mday); /* DT */
+	op[6] = bin2bcd(पंचांग->पंचांग_mon + 1); /* MO */
+	op[7] = bin2bcd(पंचांग->पंचांग_year % 100); /* YR */
+	op[8] = bin2bcd(पंचांग->पंचांग_wday & 7); /* DW */
+	op[9] = bin2bcd(पंचांग->पंचांग_year >= 100 ? 20 : 19); /* Y2K */
 	ret = i2c_transfer(client->adapter, &msg, 1);
-	if (ret != 1) {
+	अगर (ret != 1) अणु
 		dev_err(&client->dev, "write error CCR, ret=%d\n", ret);
 		ret = ret < 0 ? ret : -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = isl12026_disarm_write(client);
+	ret = isl12026_disarm_ग_लिखो(client);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int isl12026_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक isl12026_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 	u8 ccr[8];
 	u8 addr[2];
 	u8 sr;
-	int ret;
-	struct i2c_msg msgs[] = {
-		{
+	पूर्णांक ret;
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु
 			.addr	= client->addr,
 			.flags	= 0,
-			.len	= sizeof(addr),
+			.len	= माप(addr),
 			.buf	= addr
-		}, {
+		पूर्ण, अणु
 			.addr	= client->addr,
 			.flags	= I2C_M_RD,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	/* First, read SR */
+	/* First, पढ़ो SR */
 	addr[0] = 0;
 	addr[1] = ISL12026_REG_SR;
 	msgs[1].len = 1;
 	msgs[1].buf = &sr;
 
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	if (ret != ARRAY_SIZE(msgs)) {
+	अगर (ret != ARRAY_SIZE(msgs)) अणु
 		dev_err(&client->dev, "read error, ret=%d\n", ret);
 		ret = ret < 0 ? ret : -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (sr & ISL12026_REG_SR_RTCF)
+	अगर (sr & ISL12026_REG_SR_RTCF)
 		dev_warn(&client->dev, "Real-Time Clock Failure on read\n");
-	if (sr & ISL12026_REG_SR_OSCF)
+	अगर (sr & ISL12026_REG_SR_OSCF)
 		dev_warn(&client->dev, "Oscillator Failure on read\n");
 
 	/* Second, CCR regs */
 	addr[0] = 0;
 	addr[1] = ISL12026_REG_SC;
-	msgs[1].len = sizeof(ccr);
+	msgs[1].len = माप(ccr);
 	msgs[1].buf = ccr;
 
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	if (ret != ARRAY_SIZE(msgs)) {
+	अगर (ret != ARRAY_SIZE(msgs)) अणु
 		dev_err(&client->dev, "read error, ret=%d\n", ret);
 		ret = ret < 0 ? ret : -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	tm->tm_sec = bcd2bin(ccr[0] & 0x7F);
-	tm->tm_min = bcd2bin(ccr[1] & 0x7F);
-	if (ccr[2] & ISL12026_REG_HR_MIL)
-		tm->tm_hour = bcd2bin(ccr[2] & 0x3F);
-	else
-		tm->tm_hour = bcd2bin(ccr[2] & 0x1F) +
+	पंचांग->पंचांग_sec = bcd2bin(ccr[0] & 0x7F);
+	पंचांग->पंचांग_min = bcd2bin(ccr[1] & 0x7F);
+	अगर (ccr[2] & ISL12026_REG_HR_MIL)
+		पंचांग->पंचांग_hour = bcd2bin(ccr[2] & 0x3F);
+	अन्यथा
+		पंचांग->पंचांग_hour = bcd2bin(ccr[2] & 0x1F) +
 			((ccr[2] & 0x20) ? 12 : 0);
-	tm->tm_mday = bcd2bin(ccr[3] & 0x3F);
-	tm->tm_mon = bcd2bin(ccr[4] & 0x1F) - 1;
-	tm->tm_year = bcd2bin(ccr[5]);
-	if (bcd2bin(ccr[7]) == 20)
-		tm->tm_year += 100;
-	tm->tm_wday = ccr[6] & 0x07;
+	पंचांग->पंचांग_mday = bcd2bin(ccr[3] & 0x3F);
+	पंचांग->पंचांग_mon = bcd2bin(ccr[4] & 0x1F) - 1;
+	पंचांग->पंचांग_year = bcd2bin(ccr[5]);
+	अगर (bcd2bin(ccr[7]) == 20)
+		पंचांग->पंचांग_year += 100;
+	पंचांग->पंचांग_wday = ccr[6] & 0x07;
 
 	ret = 0;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct rtc_class_ops isl12026_rtc_ops = {
-	.read_time	= isl12026_rtc_read_time,
-	.set_time	= isl12026_rtc_set_time,
-};
+अटल स्थिर काष्ठा rtc_class_ops isl12026_rtc_ops = अणु
+	.पढ़ो_समय	= isl12026_rtc_पढ़ो_समय,
+	.set_समय	= isl12026_rtc_set_समय,
+पूर्ण;
 
-static int isl12026_nvm_read(void *p, unsigned int offset,
-			     void *val, size_t bytes)
-{
-	struct isl12026 *priv = p;
-	int ret;
+अटल पूर्णांक isl12026_nvm_पढ़ो(व्योम *p, अचिन्हित पूर्णांक offset,
+			     व्योम *val, माप_प्रकार bytes)
+अणु
+	काष्ठा isl12026 *priv = p;
+	पूर्णांक ret;
 	u8 addr[2];
-	struct i2c_msg msgs[] = {
-		{
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु
 			.addr	= priv->nvm_client->addr,
 			.flags	= 0,
-			.len	= sizeof(addr),
+			.len	= माप(addr),
 			.buf	= addr
-		}, {
+		पूर्ण, अणु
 			.addr	= priv->nvm_client->addr,
 			.flags	= I2C_M_RD,
 			.buf	= val
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
 	/*
 	 * offset and bytes checked and limited by nvmem core, so
 	 * proceed without further checks.
 	 */
-	ret = mutex_lock_interruptible(&priv->rtc->ops_lock);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&priv->rtc->ops_lock);
+	अगर (ret)
+		वापस ret;
 
-	/* 2 bytes of address, most significant first */
+	/* 2 bytes of address, most signअगरicant first */
 	addr[0] = offset >> 8;
 	addr[1] = offset;
 	msgs[1].len = bytes;
@@ -310,190 +311,190 @@ static int isl12026_nvm_read(void *p, unsigned int offset,
 
 	mutex_unlock(&priv->rtc->ops_lock);
 
-	if (ret != ARRAY_SIZE(msgs)) {
+	अगर (ret != ARRAY_SIZE(msgs)) अणु
 		dev_err(&priv->nvm_client->dev,
 			"nvmem read error, ret=%d\n", ret);
-		return ret < 0 ? ret : -EIO;
-	}
+		वापस ret < 0 ? ret : -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isl12026_nvm_write(void *p, unsigned int offset,
-			      void *val, size_t bytes)
-{
-	struct isl12026 *priv = p;
-	int ret;
+अटल पूर्णांक isl12026_nvm_ग_लिखो(व्योम *p, अचिन्हित पूर्णांक offset,
+			      व्योम *val, माप_प्रकार bytes)
+अणु
+	काष्ठा isl12026 *priv = p;
+	पूर्णांक ret;
 	u8 *v = val;
-	size_t chunk_size, num_written;
+	माप_प्रकार chunk_size, num_written;
 	u8 payload[ISL12026_PAGESIZE + 2]; /* page + 2 address bytes */
-	struct i2c_msg msgs[] = {
-		{
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु
 			.addr	= priv->nvm_client->addr,
 			.flags	= 0,
 			.buf	= payload
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
 	/*
 	 * offset and bytes checked and limited by nvmem core, so
 	 * proceed without further checks.
 	 */
-	ret = mutex_lock_interruptible(&priv->rtc->ops_lock);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&priv->rtc->ops_lock);
+	अगर (ret)
+		वापस ret;
 
 	num_written = 0;
-	while (bytes) {
-		chunk_size = round_down(offset, ISL12026_PAGESIZE) +
+	जबतक (bytes) अणु
+		chunk_size = round_करोwn(offset, ISL12026_PAGESIZE) +
 			ISL12026_PAGESIZE - offset;
 		chunk_size = min(bytes, chunk_size);
 		/*
-		 * 2 bytes of address, most significant first, followed
+		 * 2 bytes of address, most signअगरicant first, followed
 		 * by page data bytes
 		 */
-		memcpy(payload + 2, v + num_written, chunk_size);
+		स_नकल(payload + 2, v + num_written, chunk_size);
 		payload[0] = offset >> 8;
 		payload[1] = offset;
 		msgs[0].len = chunk_size + 2;
 		ret = i2c_transfer(priv->nvm_client->adapter,
 				   msgs, ARRAY_SIZE(msgs));
-		if (ret != ARRAY_SIZE(msgs)) {
+		अगर (ret != ARRAY_SIZE(msgs)) अणु
 			dev_err(&priv->nvm_client->dev,
 				"nvmem write error, ret=%d\n", ret);
 			ret = ret < 0 ? ret : -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ret = 0;
 		bytes -= chunk_size;
 		offset += chunk_size;
 		num_written += chunk_size;
 		msleep(ISL12026_NVMEM_WRITE_TIME);
-	}
+	पूर्ण
 
 	mutex_unlock(&priv->rtc->ops_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void isl12026_force_power_modes(struct i2c_client *client)
-{
-	int ret;
-	int pwr, requested_pwr;
+अटल व्योम isl12026_क्रमce_घातer_modes(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक ret;
+	पूर्णांक pwr, requested_pwr;
 	u32 bsw_val, sbib_val;
 	bool set_bsw, set_sbib;
 
 	/*
-	 * If we can read the of_property, set the specified value.
-	 * If there is an error reading the of_property (likely
-	 * because it does not exist), keep the current value.
+	 * If we can पढ़ो the of_property, set the specअगरied value.
+	 * If there is an error पढ़ोing the of_property (likely
+	 * because it करोes not exist), keep the current value.
 	 */
-	ret = of_property_read_u32(client->dev.of_node,
+	ret = of_property_पढ़ो_u32(client->dev.of_node,
 				   "isil,pwr-bsw", &bsw_val);
 	set_bsw = (ret == 0);
 
-	ret = of_property_read_u32(client->dev.of_node,
+	ret = of_property_पढ़ो_u32(client->dev.of_node,
 				   "isil,pwr-sbib", &sbib_val);
 	set_sbib = (ret == 0);
 
-	/* Check if PWR.BSW and/or PWR.SBIB need specified values */
-	if (!set_bsw && !set_sbib)
-		return;
+	/* Check अगर PWR.BSW and/or PWR.SBIB need specअगरied values */
+	अगर (!set_bsw && !set_sbib)
+		वापस;
 
-	pwr = isl12026_read_reg(client, ISL12026_REG_PWR);
-	if (pwr < 0) {
+	pwr = isl12026_पढ़ो_reg(client, ISL12026_REG_PWR);
+	अगर (pwr < 0) अणु
 		dev_warn(&client->dev, "Error: Failed to read PWR %d\n", pwr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	requested_pwr = pwr;
 
-	if (set_bsw) {
-		if (bsw_val)
+	अगर (set_bsw) अणु
+		अगर (bsw_val)
 			requested_pwr |= ISL12026_REG_PWR_BSW;
-		else
+		अन्यथा
 			requested_pwr &= ~ISL12026_REG_PWR_BSW;
-	} /* else keep current BSW */
+	पूर्ण /* अन्यथा keep current BSW */
 
-	if (set_sbib) {
-		if (sbib_val)
+	अगर (set_sbib) अणु
+		अगर (sbib_val)
 			requested_pwr |= ISL12026_REG_PWR_SBIB;
-		else
+		अन्यथा
 			requested_pwr &= ~ISL12026_REG_PWR_SBIB;
-	} /* else keep current SBIB */
+	पूर्ण /* अन्यथा keep current SBIB */
 
-	if (pwr >= 0 && pwr != requested_pwr) {
+	अगर (pwr >= 0 && pwr != requested_pwr) अणु
 		dev_dbg(&client->dev, "PWR: %02x\n", pwr);
 		dev_dbg(&client->dev, "Updating PWR to: %02x\n", requested_pwr);
-		isl12026_write_reg(client, ISL12026_REG_PWR, requested_pwr);
-	}
-}
+		isl12026_ग_लिखो_reg(client, ISL12026_REG_PWR, requested_pwr);
+	पूर्ण
+पूर्ण
 
-static int isl12026_probe_new(struct i2c_client *client)
-{
-	struct isl12026 *priv;
-	int ret;
-	struct nvmem_config nvm_cfg = {
+अटल पूर्णांक isl12026_probe_new(काष्ठा i2c_client *client)
+अणु
+	काष्ठा isl12026 *priv;
+	पूर्णांक ret;
+	काष्ठा nvmem_config nvm_cfg = अणु
 		.name = "isl12026-",
 		.base_dev = &client->dev,
 		.stride = 1,
 		.word_size = 1,
 		.size = 512,
-		.reg_read = isl12026_nvm_read,
-		.reg_write = isl12026_nvm_write,
-	};
+		.reg_पढ़ो = isl12026_nvm_पढ़ो,
+		.reg_ग_लिखो = isl12026_nvm_ग_लिखो,
+	पूर्ण;
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
+		वापस -ENODEV;
 
-	priv = devm_kzalloc(&client->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&client->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, priv);
 
-	isl12026_force_power_modes(client);
+	isl12026_क्रमce_घातer_modes(client);
 
 	priv->nvm_client = i2c_new_dummy_device(client->adapter, ISL12026_EEPROM_ADDR);
-	if (IS_ERR(priv->nvm_client))
-		return PTR_ERR(priv->nvm_client);
+	अगर (IS_ERR(priv->nvm_client))
+		वापस PTR_ERR(priv->nvm_client);
 
 	priv->rtc = devm_rtc_allocate_device(&client->dev);
 	ret = PTR_ERR_OR_ZERO(priv->rtc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	priv->rtc->ops = &isl12026_rtc_ops;
 	nvm_cfg.priv = priv;
-	ret = devm_rtc_nvmem_register(priv->rtc, &nvm_cfg);
-	if (ret)
-		return ret;
+	ret = devm_rtc_nvmem_रेजिस्टर(priv->rtc, &nvm_cfg);
+	अगर (ret)
+		वापस ret;
 
-	return devm_rtc_register_device(priv->rtc);
-}
+	वापस devm_rtc_रेजिस्टर_device(priv->rtc);
+पूर्ण
 
-static int isl12026_remove(struct i2c_client *client)
-{
-	struct isl12026 *priv = i2c_get_clientdata(client);
+अटल पूर्णांक isl12026_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा isl12026 *priv = i2c_get_clientdata(client);
 
-	i2c_unregister_device(priv->nvm_client);
-	return 0;
-}
+	i2c_unरेजिस्टर_device(priv->nvm_client);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id isl12026_dt_match[] = {
-	{ .compatible = "isil,isl12026" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id isl12026_dt_match[] = अणु
+	अणु .compatible = "isil,isl12026" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, isl12026_dt_match);
 
-static struct i2c_driver isl12026_driver = {
-	.driver		= {
+अटल काष्ठा i2c_driver isl12026_driver = अणु
+	.driver		= अणु
 		.name	= "rtc-isl12026",
 		.of_match_table = isl12026_dt_match,
-	},
+	पूर्ण,
 	.probe_new	= isl12026_probe_new,
-	.remove		= isl12026_remove,
-};
+	.हटाओ		= isl12026_हटाओ,
+पूर्ण;
 
 module_i2c_driver(isl12026_driver);
 

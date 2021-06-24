@@ -1,225 +1,226 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Freescale i.MX23/i.MX28 Data Co-Processor driver
  *
  * Copyright (C) 2013 Marek Vasut <marex@denx.de>
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/kthread.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/stmp_device.h>
-#include <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sपंचांगp_device.h>
+#समावेश <linux/clk.h>
 
-#include <crypto/aes.h>
-#include <crypto/sha1.h>
-#include <crypto/sha2.h>
-#include <crypto/internal/hash.h>
-#include <crypto/internal/skcipher.h>
-#include <crypto/scatterwalk.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/sha1.h>
+#समावेश <crypto/sha2.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <crypto/scatterwalk.h>
 
-#define DCP_MAX_CHANS	4
-#define DCP_BUF_SZ	PAGE_SIZE
-#define DCP_SHA_PAY_SZ  64
+#घोषणा DCP_MAX_CHANS	4
+#घोषणा DCP_BUF_SZ	PAGE_SIZE
+#घोषणा DCP_SHA_PAY_SZ  64
 
-#define DCP_ALIGNMENT	64
+#घोषणा DCP_ALIGNMENT	64
 
 /*
  * Null hashes to align with hw behavior on imx6sl and ull
- * these are flipped for consistency with hw output
+ * these are flipped क्रम consistency with hw output
  */
-static const uint8_t sha1_null_hash[] =
+अटल स्थिर uपूर्णांक8_t sha1_null_hash[] =
 	"\x09\x07\xd8\xaf\x90\x18\x60\x95\xef\xbf"
 	"\x55\x32\x0d\x4b\x6b\x5e\xee\xa3\x39\xda";
 
-static const uint8_t sha256_null_hash[] =
+अटल स्थिर uपूर्णांक8_t sha256_null_hash[] =
 	"\x55\xb8\x52\x78\x1b\x99\x95\xa4"
 	"\x4c\x93\x9b\x64\xe4\x41\xae\x27"
 	"\x24\xb9\x6f\x99\xc8\xf4\xfb\x9a"
 	"\x14\x1c\xfc\x98\x42\xc4\xb0\xe3";
 
 /* DCP DMA descriptor. */
-struct dcp_dma_desc {
-	uint32_t	next_cmd_addr;
-	uint32_t	control0;
-	uint32_t	control1;
-	uint32_t	source;
-	uint32_t	destination;
-	uint32_t	size;
-	uint32_t	payload;
-	uint32_t	status;
-};
+काष्ठा dcp_dma_desc अणु
+	uपूर्णांक32_t	next_cmd_addr;
+	uपूर्णांक32_t	control0;
+	uपूर्णांक32_t	control1;
+	uपूर्णांक32_t	source;
+	uपूर्णांक32_t	destination;
+	uपूर्णांक32_t	size;
+	uपूर्णांक32_t	payload;
+	uपूर्णांक32_t	status;
+पूर्ण;
 
-/* Coherent aligned block for bounce buffering. */
-struct dcp_coherent_block {
-	uint8_t			aes_in_buf[DCP_BUF_SZ];
-	uint8_t			aes_out_buf[DCP_BUF_SZ];
-	uint8_t			sha_in_buf[DCP_BUF_SZ];
-	uint8_t			sha_out_buf[DCP_SHA_PAY_SZ];
+/* Coherent aligned block क्रम bounce buffering. */
+काष्ठा dcp_coherent_block अणु
+	uपूर्णांक8_t			aes_in_buf[DCP_BUF_SZ];
+	uपूर्णांक8_t			aes_out_buf[DCP_BUF_SZ];
+	uपूर्णांक8_t			sha_in_buf[DCP_BUF_SZ];
+	uपूर्णांक8_t			sha_out_buf[DCP_SHA_PAY_SZ];
 
-	uint8_t			aes_key[2 * AES_KEYSIZE_128];
+	uपूर्णांक8_t			aes_key[2 * AES_KEYSIZE_128];
 
-	struct dcp_dma_desc	desc[DCP_MAX_CHANS];
-};
+	काष्ठा dcp_dma_desc	desc[DCP_MAX_CHANS];
+पूर्ण;
 
-struct dcp {
-	struct device			*dev;
-	void __iomem			*base;
+काष्ठा dcp अणु
+	काष्ठा device			*dev;
+	व्योम __iomem			*base;
 
-	uint32_t			caps;
+	uपूर्णांक32_t			caps;
 
-	struct dcp_coherent_block	*coh;
+	काष्ठा dcp_coherent_block	*coh;
 
-	struct completion		completion[DCP_MAX_CHANS];
+	काष्ठा completion		completion[DCP_MAX_CHANS];
 	spinlock_t			lock[DCP_MAX_CHANS];
-	struct task_struct		*thread[DCP_MAX_CHANS];
-	struct crypto_queue		queue[DCP_MAX_CHANS];
-	struct clk			*dcp_clk;
-};
+	काष्ठा task_काष्ठा		*thपढ़ो[DCP_MAX_CHANS];
+	काष्ठा crypto_queue		queue[DCP_MAX_CHANS];
+	काष्ठा clk			*dcp_clk;
+पूर्ण;
 
-enum dcp_chan {
+क्रमागत dcp_chan अणु
 	DCP_CHAN_HASH_SHA	= 0,
 	DCP_CHAN_CRYPTO		= 2,
-};
+पूर्ण;
 
-struct dcp_async_ctx {
+काष्ठा dcp_async_ctx अणु
 	/* Common context */
-	enum dcp_chan	chan;
-	uint32_t	fill;
+	क्रमागत dcp_chan	chan;
+	uपूर्णांक32_t	fill;
 
-	/* SHA Hash-specific context */
-	struct mutex			mutex;
-	uint32_t			alg;
-	unsigned int			hot:1;
+	/* SHA Hash-specअगरic context */
+	काष्ठा mutex			mutex;
+	uपूर्णांक32_t			alg;
+	अचिन्हित पूर्णांक			hot:1;
 
-	/* Crypto-specific context */
-	struct crypto_skcipher		*fallback;
-	unsigned int			key_len;
-	uint8_t				key[AES_KEYSIZE_128];
-};
+	/* Crypto-specअगरic context */
+	काष्ठा crypto_skcipher		*fallback;
+	अचिन्हित पूर्णांक			key_len;
+	uपूर्णांक8_t				key[AES_KEYSIZE_128];
+पूर्ण;
 
-struct dcp_aes_req_ctx {
-	unsigned int	enc:1;
-	unsigned int	ecb:1;
-	struct skcipher_request fallback_req;	// keep at the end
-};
+काष्ठा dcp_aes_req_ctx अणु
+	अचिन्हित पूर्णांक	enc:1;
+	अचिन्हित पूर्णांक	ecb:1;
+	काष्ठा skcipher_request fallback_req;	// keep at the end
+पूर्ण;
 
-struct dcp_sha_req_ctx {
-	unsigned int	init:1;
-	unsigned int	fini:1;
-};
+काष्ठा dcp_sha_req_ctx अणु
+	अचिन्हित पूर्णांक	init:1;
+	अचिन्हित पूर्णांक	fini:1;
+पूर्ण;
 
-struct dcp_export_state {
-	struct dcp_sha_req_ctx req_ctx;
-	struct dcp_async_ctx async_ctx;
-};
+काष्ठा dcp_export_state अणु
+	काष्ठा dcp_sha_req_ctx req_ctx;
+	काष्ठा dcp_async_ctx async_ctx;
+पूर्ण;
 
 /*
  * There can even be only one instance of the MXS DCP due to the
  * design of Linux Crypto API.
  */
-static struct dcp *global_sdcp;
+अटल काष्ठा dcp *global_sdcp;
 
-/* DCP register layout. */
-#define MXS_DCP_CTRL				0x00
-#define MXS_DCP_CTRL_GATHER_RESIDUAL_WRITES	(1 << 23)
-#define MXS_DCP_CTRL_ENABLE_CONTEXT_CACHING	(1 << 22)
+/* DCP रेजिस्टर layout. */
+#घोषणा MXS_DCP_CTRL				0x00
+#घोषणा MXS_DCP_CTRL_GATHER_RESIDUAL_WRITES	(1 << 23)
+#घोषणा MXS_DCP_CTRL_ENABLE_CONTEXT_CACHING	(1 << 22)
 
-#define MXS_DCP_STAT				0x10
-#define MXS_DCP_STAT_CLR			0x18
-#define MXS_DCP_STAT_IRQ_MASK			0xf
+#घोषणा MXS_DCP_STAT				0x10
+#घोषणा MXS_DCP_STAT_CLR			0x18
+#घोषणा MXS_DCP_STAT_IRQ_MASK			0xf
 
-#define MXS_DCP_CHANNELCTRL			0x20
-#define MXS_DCP_CHANNELCTRL_ENABLE_CHANNEL_MASK	0xff
+#घोषणा MXS_DCP_CHANNELCTRL			0x20
+#घोषणा MXS_DCP_CHANNELCTRL_ENABLE_CHANNEL_MASK	0xff
 
-#define MXS_DCP_CAPABILITY1			0x40
-#define MXS_DCP_CAPABILITY1_SHA256		(4 << 16)
-#define MXS_DCP_CAPABILITY1_SHA1		(1 << 16)
-#define MXS_DCP_CAPABILITY1_AES128		(1 << 0)
+#घोषणा MXS_DCP_CAPABILITY1			0x40
+#घोषणा MXS_DCP_CAPABILITY1_SHA256		(4 << 16)
+#घोषणा MXS_DCP_CAPABILITY1_SHA1		(1 << 16)
+#घोषणा MXS_DCP_CAPABILITY1_AES128		(1 << 0)
 
-#define MXS_DCP_CONTEXT				0x50
+#घोषणा MXS_DCP_CONTEXT				0x50
 
-#define MXS_DCP_CH_N_CMDPTR(n)			(0x100 + ((n) * 0x40))
+#घोषणा MXS_DCP_CH_N_CMDPTR(n)			(0x100 + ((n) * 0x40))
 
-#define MXS_DCP_CH_N_SEMA(n)			(0x110 + ((n) * 0x40))
+#घोषणा MXS_DCP_CH_N_SEMA(n)			(0x110 + ((n) * 0x40))
 
-#define MXS_DCP_CH_N_STAT(n)			(0x120 + ((n) * 0x40))
-#define MXS_DCP_CH_N_STAT_CLR(n)		(0x128 + ((n) * 0x40))
+#घोषणा MXS_DCP_CH_N_STAT(n)			(0x120 + ((n) * 0x40))
+#घोषणा MXS_DCP_CH_N_STAT_CLR(n)		(0x128 + ((n) * 0x40))
 
 /* DMA descriptor bits. */
-#define MXS_DCP_CONTROL0_HASH_TERM		(1 << 13)
-#define MXS_DCP_CONTROL0_HASH_INIT		(1 << 12)
-#define MXS_DCP_CONTROL0_PAYLOAD_KEY		(1 << 11)
-#define MXS_DCP_CONTROL0_CIPHER_ENCRYPT		(1 << 8)
-#define MXS_DCP_CONTROL0_CIPHER_INIT		(1 << 9)
-#define MXS_DCP_CONTROL0_ENABLE_HASH		(1 << 6)
-#define MXS_DCP_CONTROL0_ENABLE_CIPHER		(1 << 5)
-#define MXS_DCP_CONTROL0_DECR_SEMAPHORE		(1 << 1)
-#define MXS_DCP_CONTROL0_INTERRUPT		(1 << 0)
+#घोषणा MXS_DCP_CONTROL0_HASH_TERM		(1 << 13)
+#घोषणा MXS_DCP_CONTROL0_HASH_INIT		(1 << 12)
+#घोषणा MXS_DCP_CONTROL0_PAYLOAD_KEY		(1 << 11)
+#घोषणा MXS_DCP_CONTROL0_CIPHER_ENCRYPT		(1 << 8)
+#घोषणा MXS_DCP_CONTROL0_CIPHER_INIT		(1 << 9)
+#घोषणा MXS_DCP_CONTROL0_ENABLE_HASH		(1 << 6)
+#घोषणा MXS_DCP_CONTROL0_ENABLE_CIPHER		(1 << 5)
+#घोषणा MXS_DCP_CONTROL0_DECR_SEMAPHORE		(1 << 1)
+#घोषणा MXS_DCP_CONTROL0_INTERRUPT		(1 << 0)
 
-#define MXS_DCP_CONTROL1_HASH_SELECT_SHA256	(2 << 16)
-#define MXS_DCP_CONTROL1_HASH_SELECT_SHA1	(0 << 16)
-#define MXS_DCP_CONTROL1_CIPHER_MODE_CBC	(1 << 4)
-#define MXS_DCP_CONTROL1_CIPHER_MODE_ECB	(0 << 4)
-#define MXS_DCP_CONTROL1_CIPHER_SELECT_AES128	(0 << 0)
+#घोषणा MXS_DCP_CONTROL1_HASH_SELECT_SHA256	(2 << 16)
+#घोषणा MXS_DCP_CONTROL1_HASH_SELECT_SHA1	(0 << 16)
+#घोषणा MXS_DCP_CONTROL1_CIPHER_MODE_CBC	(1 << 4)
+#घोषणा MXS_DCP_CONTROL1_CIPHER_MODE_ECB	(0 << 4)
+#घोषणा MXS_DCP_CONTROL1_CIPHER_SELECT_AES128	(0 << 0)
 
-static int mxs_dcp_start_dma(struct dcp_async_ctx *actx)
-{
-	struct dcp *sdcp = global_sdcp;
-	const int chan = actx->chan;
-	uint32_t stat;
-	unsigned long ret;
-	struct dcp_dma_desc *desc = &sdcp->coh->desc[actx->chan];
+अटल पूर्णांक mxs_dcp_start_dma(काष्ठा dcp_async_ctx *actx)
+अणु
+	काष्ठा dcp *sdcp = global_sdcp;
+	स्थिर पूर्णांक chan = actx->chan;
+	uपूर्णांक32_t stat;
+	अचिन्हित दीर्घ ret;
+	काष्ठा dcp_dma_desc *desc = &sdcp->coh->desc[actx->chan];
 
-	dma_addr_t desc_phys = dma_map_single(sdcp->dev, desc, sizeof(*desc),
+	dma_addr_t desc_phys = dma_map_single(sdcp->dev, desc, माप(*desc),
 					      DMA_TO_DEVICE);
 
 	reinit_completion(&sdcp->completion[chan]);
 
-	/* Clear status register. */
-	writel(0xffffffff, sdcp->base + MXS_DCP_CH_N_STAT_CLR(chan));
+	/* Clear status रेजिस्टर. */
+	ग_लिखोl(0xffffffff, sdcp->base + MXS_DCP_CH_N_STAT_CLR(chan));
 
 	/* Load the DMA descriptor. */
-	writel(desc_phys, sdcp->base + MXS_DCP_CH_N_CMDPTR(chan));
+	ग_लिखोl(desc_phys, sdcp->base + MXS_DCP_CH_N_CMDPTR(chan));
 
 	/* Increment the semaphore to start the DMA transfer. */
-	writel(1, sdcp->base + MXS_DCP_CH_N_SEMA(chan));
+	ग_लिखोl(1, sdcp->base + MXS_DCP_CH_N_SEMA(chan));
 
-	ret = wait_for_completion_timeout(&sdcp->completion[chan],
-					  msecs_to_jiffies(1000));
-	if (!ret) {
+	ret = रुको_क्रम_completion_समयout(&sdcp->completion[chan],
+					  msecs_to_jअगरfies(1000));
+	अगर (!ret) अणु
 		dev_err(sdcp->dev, "Channel %i timeout (DCP_STAT=0x%08x)\n",
-			chan, readl(sdcp->base + MXS_DCP_STAT));
-		return -ETIMEDOUT;
-	}
+			chan, पढ़ोl(sdcp->base + MXS_DCP_STAT));
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	stat = readl(sdcp->base + MXS_DCP_CH_N_STAT(chan));
-	if (stat & 0xff) {
+	stat = पढ़ोl(sdcp->base + MXS_DCP_CH_N_STAT(chan));
+	अगर (stat & 0xff) अणु
 		dev_err(sdcp->dev, "Channel %i error (CH_STAT=0x%08x)\n",
 			chan, stat);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dma_unmap_single(sdcp->dev, desc_phys, sizeof(*desc), DMA_TO_DEVICE);
+	dma_unmap_single(sdcp->dev, desc_phys, माप(*desc), DMA_TO_DEVICE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Encryption (AES128)
  */
-static int mxs_dcp_run_aes(struct dcp_async_ctx *actx,
-			   struct skcipher_request *req, int init)
-{
-	struct dcp *sdcp = global_sdcp;
-	struct dcp_dma_desc *desc = &sdcp->coh->desc[actx->chan];
-	struct dcp_aes_req_ctx *rctx = skcipher_request_ctx(req);
-	int ret;
+अटल पूर्णांक mxs_dcp_run_aes(काष्ठा dcp_async_ctx *actx,
+			   काष्ठा skcipher_request *req, पूर्णांक init)
+अणु
+	काष्ठा dcp *sdcp = global_sdcp;
+	काष्ठा dcp_dma_desc *desc = &sdcp->coh->desc[actx->chan];
+	काष्ठा dcp_aes_req_ctx *rctx = skcipher_request_ctx(req);
+	पूर्णांक ret;
 
 	dma_addr_t key_phys = dma_map_single(sdcp->dev, sdcp->coh->aes_key,
 					     2 * AES_KEYSIZE_128,
@@ -229,11 +230,11 @@ static int mxs_dcp_run_aes(struct dcp_async_ctx *actx,
 	dma_addr_t dst_phys = dma_map_single(sdcp->dev, sdcp->coh->aes_out_buf,
 					     DCP_BUF_SZ, DMA_FROM_DEVICE);
 
-	if (actx->fill % AES_BLOCK_SIZE) {
+	अगर (actx->fill % AES_BLOCK_SIZE) अणु
 		dev_err(sdcp->dev, "Invalid block size!\n");
 		ret = -EINVAL;
-		goto aes_done_run;
-	}
+		जाओ aes_करोne_run;
+	पूर्ण
 
 	/* Fill in the DMA descriptor. */
 	desc->control0 = MXS_DCP_CONTROL0_DECR_SEMAPHORE |
@@ -243,16 +244,16 @@ static int mxs_dcp_run_aes(struct dcp_async_ctx *actx,
 	/* Payload contains the key. */
 	desc->control0 |= MXS_DCP_CONTROL0_PAYLOAD_KEY;
 
-	if (rctx->enc)
+	अगर (rctx->enc)
 		desc->control0 |= MXS_DCP_CONTROL0_CIPHER_ENCRYPT;
-	if (init)
+	अगर (init)
 		desc->control0 |= MXS_DCP_CONTROL0_CIPHER_INIT;
 
 	desc->control1 = MXS_DCP_CONTROL1_CIPHER_SELECT_AES128;
 
-	if (rctx->ecb)
+	अगर (rctx->ecb)
 		desc->control1 |= MXS_DCP_CONTROL1_CIPHER_MODE_ECB;
-	else
+	अन्यथा
 		desc->control1 |= MXS_DCP_CONTROL1_CIPHER_MODE_CBC;
 
 	desc->next_cmd_addr = 0;
@@ -264,73 +265,73 @@ static int mxs_dcp_run_aes(struct dcp_async_ctx *actx,
 
 	ret = mxs_dcp_start_dma(actx);
 
-aes_done_run:
+aes_करोne_run:
 	dma_unmap_single(sdcp->dev, key_phys, 2 * AES_KEYSIZE_128,
 			 DMA_TO_DEVICE);
 	dma_unmap_single(sdcp->dev, src_phys, DCP_BUF_SZ, DMA_TO_DEVICE);
 	dma_unmap_single(sdcp->dev, dst_phys, DCP_BUF_SZ, DMA_FROM_DEVICE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mxs_dcp_aes_block_crypt(struct crypto_async_request *arq)
-{
-	struct dcp *sdcp = global_sdcp;
+अटल पूर्णांक mxs_dcp_aes_block_crypt(काष्ठा crypto_async_request *arq)
+अणु
+	काष्ठा dcp *sdcp = global_sdcp;
 
-	struct skcipher_request *req = skcipher_request_cast(arq);
-	struct dcp_async_ctx *actx = crypto_tfm_ctx(arq->tfm);
-	struct dcp_aes_req_ctx *rctx = skcipher_request_ctx(req);
+	काष्ठा skcipher_request *req = skcipher_request_cast(arq);
+	काष्ठा dcp_async_ctx *actx = crypto_tfm_ctx(arq->tfm);
+	काष्ठा dcp_aes_req_ctx *rctx = skcipher_request_ctx(req);
 
-	struct scatterlist *dst = req->dst;
-	struct scatterlist *src = req->src;
-	const int nents = sg_nents(req->src);
+	काष्ठा scatterlist *dst = req->dst;
+	काष्ठा scatterlist *src = req->src;
+	स्थिर पूर्णांक nents = sg_nents(req->src);
 
-	const int out_off = DCP_BUF_SZ;
-	uint8_t *in_buf = sdcp->coh->aes_in_buf;
-	uint8_t *out_buf = sdcp->coh->aes_out_buf;
+	स्थिर पूर्णांक out_off = DCP_BUF_SZ;
+	uपूर्णांक8_t *in_buf = sdcp->coh->aes_in_buf;
+	uपूर्णांक8_t *out_buf = sdcp->coh->aes_out_buf;
 
-	uint8_t *out_tmp, *src_buf, *dst_buf = NULL;
-	uint32_t dst_off = 0;
-	uint32_t last_out_len = 0;
+	uपूर्णांक8_t *out_पंचांगp, *src_buf, *dst_buf = शून्य;
+	uपूर्णांक32_t dst_off = 0;
+	uपूर्णांक32_t last_out_len = 0;
 
-	uint8_t *key = sdcp->coh->aes_key;
+	uपूर्णांक8_t *key = sdcp->coh->aes_key;
 
-	int ret = 0;
-	int split = 0;
-	unsigned int i, len, clen, rem = 0, tlen = 0;
-	int init = 0;
+	पूर्णांक ret = 0;
+	पूर्णांक split = 0;
+	अचिन्हित पूर्णांक i, len, clen, rem = 0, tlen = 0;
+	पूर्णांक init = 0;
 	bool limit_hit = false;
 
 	actx->fill = 0;
 
 	/* Copy the key from the temporary location. */
-	memcpy(key, actx->key, actx->key_len);
+	स_नकल(key, actx->key, actx->key_len);
 
-	if (!rctx->ecb) {
+	अगर (!rctx->ecb) अणु
 		/* Copy the CBC IV just past the key. */
-		memcpy(key + AES_KEYSIZE_128, req->iv, AES_KEYSIZE_128);
+		स_नकल(key + AES_KEYSIZE_128, req->iv, AES_KEYSIZE_128);
 		/* CBC needs the INIT set. */
 		init = 1;
-	} else {
-		memset(key + AES_KEYSIZE_128, 0, AES_KEYSIZE_128);
-	}
+	पूर्ण अन्यथा अणु
+		स_रखो(key + AES_KEYSIZE_128, 0, AES_KEYSIZE_128);
+	पूर्ण
 
-	for_each_sg(req->src, src, nents, i) {
+	क्रम_each_sg(req->src, src, nents, i) अणु
 		src_buf = sg_virt(src);
 		len = sg_dma_len(src);
 		tlen += len;
 		limit_hit = tlen > req->cryptlen;
 
-		if (limit_hit)
+		अगर (limit_hit)
 			len = req->cryptlen - (tlen - len);
 
-		do {
-			if (actx->fill + len > out_off)
+		करो अणु
+			अगर (actx->fill + len > out_off)
 				clen = out_off - actx->fill;
-			else
+			अन्यथा
 				clen = len;
 
-			memcpy(in_buf + actx->fill, src_buf, clen);
+			स_नकल(in_buf + actx->fill, src_buf, clen);
 			len -= clen;
 			src_buf += clen;
 			actx->fill += clen;
@@ -339,66 +340,66 @@ static int mxs_dcp_aes_block_crypt(struct crypto_async_request *arq)
 			 * If we filled the buffer or this is the last SG,
 			 * submit the buffer.
 			 */
-			if (actx->fill == out_off || sg_is_last(src) ||
-				limit_hit) {
+			अगर (actx->fill == out_off || sg_is_last(src) ||
+				limit_hit) अणु
 				ret = mxs_dcp_run_aes(actx, req, init);
-				if (ret)
-					return ret;
+				अगर (ret)
+					वापस ret;
 				init = 0;
 
-				out_tmp = out_buf;
+				out_पंचांगp = out_buf;
 				last_out_len = actx->fill;
-				while (dst && actx->fill) {
-					if (!split) {
+				जबतक (dst && actx->fill) अणु
+					अगर (!split) अणु
 						dst_buf = sg_virt(dst);
 						dst_off = 0;
-					}
+					पूर्ण
 					rem = min(sg_dma_len(dst) - dst_off,
 						  actx->fill);
 
-					memcpy(dst_buf + dst_off, out_tmp, rem);
-					out_tmp += rem;
+					स_नकल(dst_buf + dst_off, out_पंचांगp, rem);
+					out_पंचांगp += rem;
 					dst_off += rem;
 					actx->fill -= rem;
 
-					if (dst_off == sg_dma_len(dst)) {
+					अगर (dst_off == sg_dma_len(dst)) अणु
 						dst = sg_next(dst);
 						split = 0;
-					} else {
+					पूर्ण अन्यथा अणु
 						split = 1;
-					}
-				}
-			}
-		} while (len);
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण जबतक (len);
 
-		if (limit_hit)
-			break;
-	}
+		अगर (limit_hit)
+			अवरोध;
+	पूर्ण
 
-	/* Copy the IV for CBC for chaining */
-	if (!rctx->ecb) {
-		if (rctx->enc)
-			memcpy(req->iv, out_buf+(last_out_len-AES_BLOCK_SIZE),
+	/* Copy the IV क्रम CBC क्रम chaining */
+	अगर (!rctx->ecb) अणु
+		अगर (rctx->enc)
+			स_नकल(req->iv, out_buf+(last_out_len-AES_BLOCK_SIZE),
 				AES_BLOCK_SIZE);
-		else
-			memcpy(req->iv, in_buf+(last_out_len-AES_BLOCK_SIZE),
+		अन्यथा
+			स_नकल(req->iv, in_buf+(last_out_len-AES_BLOCK_SIZE),
 				AES_BLOCK_SIZE);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dcp_chan_thread_aes(void *data)
-{
-	struct dcp *sdcp = global_sdcp;
-	const int chan = DCP_CHAN_CRYPTO;
+अटल पूर्णांक dcp_chan_thपढ़ो_aes(व्योम *data)
+अणु
+	काष्ठा dcp *sdcp = global_sdcp;
+	स्थिर पूर्णांक chan = DCP_CHAN_CRYPTO;
 
-	struct crypto_async_request *backlog;
-	struct crypto_async_request *arq;
+	काष्ठा crypto_async_request *backlog;
+	काष्ठा crypto_async_request *arq;
 
-	int ret;
+	पूर्णांक ret;
 
-	while (!kthread_should_stop()) {
+	जबतक (!kthपढ़ो_should_stop()) अणु
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		spin_lock(&sdcp->lock[chan]);
@@ -406,31 +407,31 @@ static int dcp_chan_thread_aes(void *data)
 		arq = crypto_dequeue_request(&sdcp->queue[chan]);
 		spin_unlock(&sdcp->lock[chan]);
 
-		if (!backlog && !arq) {
+		अगर (!backlog && !arq) अणु
 			schedule();
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		set_current_state(TASK_RUNNING);
 
-		if (backlog)
+		अगर (backlog)
 			backlog->complete(backlog, -EINPROGRESS);
 
-		if (arq) {
+		अगर (arq) अणु
 			ret = mxs_dcp_aes_block_crypt(arq);
 			arq->complete(arq, ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mxs_dcp_block_fallback(struct skcipher_request *req, int enc)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct dcp_aes_req_ctx *rctx = skcipher_request_ctx(req);
-	struct dcp_async_ctx *ctx = crypto_skcipher_ctx(tfm);
-	int ret;
+अटल पूर्णांक mxs_dcp_block_fallback(काष्ठा skcipher_request *req, पूर्णांक enc)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा dcp_aes_req_ctx *rctx = skcipher_request_ctx(req);
+	काष्ठा dcp_async_ctx *ctx = crypto_skcipher_ctx(tfm);
+	पूर्णांक ret;
 
 	skcipher_request_set_tfm(&rctx->fallback_req, ctx->fallback);
 	skcipher_request_set_callback(&rctx->fallback_req, req->base.flags,
@@ -438,24 +439,24 @@ static int mxs_dcp_block_fallback(struct skcipher_request *req, int enc)
 	skcipher_request_set_crypt(&rctx->fallback_req, req->src, req->dst,
 				   req->cryptlen, req->iv);
 
-	if (enc)
+	अगर (enc)
 		ret = crypto_skcipher_encrypt(&rctx->fallback_req);
-	else
+	अन्यथा
 		ret = crypto_skcipher_decrypt(&rctx->fallback_req);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mxs_dcp_aes_enqueue(struct skcipher_request *req, int enc, int ecb)
-{
-	struct dcp *sdcp = global_sdcp;
-	struct crypto_async_request *arq = &req->base;
-	struct dcp_async_ctx *actx = crypto_tfm_ctx(arq->tfm);
-	struct dcp_aes_req_ctx *rctx = skcipher_request_ctx(req);
-	int ret;
+अटल पूर्णांक mxs_dcp_aes_enqueue(काष्ठा skcipher_request *req, पूर्णांक enc, पूर्णांक ecb)
+अणु
+	काष्ठा dcp *sdcp = global_sdcp;
+	काष्ठा crypto_async_request *arq = &req->base;
+	काष्ठा dcp_async_ctx *actx = crypto_tfm_ctx(arq->tfm);
+	काष्ठा dcp_aes_req_ctx *rctx = skcipher_request_ctx(req);
+	पूर्णांक ret;
 
-	if (unlikely(actx->key_len != AES_KEYSIZE_128))
-		return mxs_dcp_block_fallback(req, enc);
+	अगर (unlikely(actx->key_len != AES_KEYSIZE_128))
+		वापस mxs_dcp_block_fallback(req, enc);
 
 	rctx->enc = enc;
 	rctx->ecb = ecb;
@@ -465,46 +466,46 @@ static int mxs_dcp_aes_enqueue(struct skcipher_request *req, int enc, int ecb)
 	ret = crypto_enqueue_request(&sdcp->queue[actx->chan], &req->base);
 	spin_unlock(&sdcp->lock[actx->chan]);
 
-	wake_up_process(sdcp->thread[actx->chan]);
+	wake_up_process(sdcp->thपढ़ो[actx->chan]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mxs_dcp_aes_ecb_decrypt(struct skcipher_request *req)
-{
-	return mxs_dcp_aes_enqueue(req, 0, 1);
-}
+अटल पूर्णांक mxs_dcp_aes_ecb_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस mxs_dcp_aes_enqueue(req, 0, 1);
+पूर्ण
 
-static int mxs_dcp_aes_ecb_encrypt(struct skcipher_request *req)
-{
-	return mxs_dcp_aes_enqueue(req, 1, 1);
-}
+अटल पूर्णांक mxs_dcp_aes_ecb_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस mxs_dcp_aes_enqueue(req, 1, 1);
+पूर्ण
 
-static int mxs_dcp_aes_cbc_decrypt(struct skcipher_request *req)
-{
-	return mxs_dcp_aes_enqueue(req, 0, 0);
-}
+अटल पूर्णांक mxs_dcp_aes_cbc_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस mxs_dcp_aes_enqueue(req, 0, 0);
+पूर्ण
 
-static int mxs_dcp_aes_cbc_encrypt(struct skcipher_request *req)
-{
-	return mxs_dcp_aes_enqueue(req, 1, 0);
-}
+अटल पूर्णांक mxs_dcp_aes_cbc_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस mxs_dcp_aes_enqueue(req, 1, 0);
+पूर्ण
 
-static int mxs_dcp_aes_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			      unsigned int len)
-{
-	struct dcp_async_ctx *actx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक mxs_dcp_aes_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			      अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा dcp_async_ctx *actx = crypto_skcipher_ctx(tfm);
 
 	/*
-	 * AES 128 is supposed by the hardware, store key into temporary
-	 * buffer and exit. We must use the temporary buffer here, since
+	 * AES 128 is supposed by the hardware, store key पूर्णांकo temporary
+	 * buffer and निकास. We must use the temporary buffer here, since
 	 * there can still be an operation in progress.
 	 */
 	actx->key_len = len;
-	if (len == AES_KEYSIZE_128) {
-		memcpy(actx->key, key, len);
-		return 0;
-	}
+	अगर (len == AES_KEYSIZE_128) अणु
+		स_नकल(actx->key, key, len);
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * If the requested AES key size is not supported by the hardware,
@@ -514,44 +515,44 @@ static int mxs_dcp_aes_setkey(struct crypto_skcipher *tfm, const u8 *key,
 	crypto_skcipher_clear_flags(actx->fallback, CRYPTO_TFM_REQ_MASK);
 	crypto_skcipher_set_flags(actx->fallback,
 				  tfm->base.crt_flags & CRYPTO_TFM_REQ_MASK);
-	return crypto_skcipher_setkey(actx->fallback, key, len);
-}
+	वापस crypto_skcipher_setkey(actx->fallback, key, len);
+पूर्ण
 
-static int mxs_dcp_aes_fallback_init_tfm(struct crypto_skcipher *tfm)
-{
-	const char *name = crypto_tfm_alg_name(crypto_skcipher_tfm(tfm));
-	struct dcp_async_ctx *actx = crypto_skcipher_ctx(tfm);
-	struct crypto_skcipher *blk;
+अटल पूर्णांक mxs_dcp_aes_fallback_init_tfm(काष्ठा crypto_skcipher *tfm)
+अणु
+	स्थिर अक्षर *name = crypto_tfm_alg_name(crypto_skcipher_tfm(tfm));
+	काष्ठा dcp_async_ctx *actx = crypto_skcipher_ctx(tfm);
+	काष्ठा crypto_skcipher *blk;
 
 	blk = crypto_alloc_skcipher(name, 0, CRYPTO_ALG_NEED_FALLBACK);
-	if (IS_ERR(blk))
-		return PTR_ERR(blk);
+	अगर (IS_ERR(blk))
+		वापस PTR_ERR(blk);
 
 	actx->fallback = blk;
-	crypto_skcipher_set_reqsize(tfm, sizeof(struct dcp_aes_req_ctx) +
+	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा dcp_aes_req_ctx) +
 					 crypto_skcipher_reqsize(blk));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mxs_dcp_aes_fallback_exit_tfm(struct crypto_skcipher *tfm)
-{
-	struct dcp_async_ctx *actx = crypto_skcipher_ctx(tfm);
+अटल व्योम mxs_dcp_aes_fallback_निकास_tfm(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा dcp_async_ctx *actx = crypto_skcipher_ctx(tfm);
 
-	crypto_free_skcipher(actx->fallback);
-}
+	crypto_मुक्त_skcipher(actx->fallback);
+पूर्ण
 
 /*
  * Hashing (SHA1/SHA256)
  */
-static int mxs_dcp_run_sha(struct ahash_request *req)
-{
-	struct dcp *sdcp = global_sdcp;
-	int ret;
+अटल पूर्णांक mxs_dcp_run_sha(काष्ठा ahash_request *req)
+अणु
+	काष्ठा dcp *sdcp = global_sdcp;
+	पूर्णांक ret;
 
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct dcp_async_ctx *actx = crypto_ahash_ctx(tfm);
-	struct dcp_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct dcp_dma_desc *desc = &sdcp->coh->desc[actx->chan];
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा dcp_async_ctx *actx = crypto_ahash_ctx(tfm);
+	काष्ठा dcp_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा dcp_dma_desc *desc = &sdcp->coh->desc[actx->chan];
 
 	dma_addr_t digest_phys = 0;
 	dma_addr_t buf_phys = dma_map_single(sdcp->dev, sdcp->coh->sha_in_buf,
@@ -561,7 +562,7 @@ static int mxs_dcp_run_sha(struct ahash_request *req)
 	desc->control0 = MXS_DCP_CONTROL0_DECR_SEMAPHORE |
 		    MXS_DCP_CONTROL0_INTERRUPT |
 		    MXS_DCP_CONTROL0_ENABLE_HASH;
-	if (rctx->init)
+	अगर (rctx->init)
 		desc->control0 |= MXS_DCP_CONTROL0_HASH_INIT;
 
 	desc->control1 = actx->alg;
@@ -575,65 +576,65 @@ static int mxs_dcp_run_sha(struct ahash_request *req)
 	/*
 	 * Align driver with hw behavior when generating null hashes
 	 */
-	if (rctx->init && rctx->fini && desc->size == 0) {
-		struct hash_alg_common *halg = crypto_hash_alg_common(tfm);
-		const uint8_t *sha_buf =
+	अगर (rctx->init && rctx->fini && desc->size == 0) अणु
+		काष्ठा hash_alg_common *halg = crypto_hash_alg_common(tfm);
+		स्थिर uपूर्णांक8_t *sha_buf =
 			(actx->alg == MXS_DCP_CONTROL1_HASH_SELECT_SHA1) ?
 			sha1_null_hash : sha256_null_hash;
-		memcpy(sdcp->coh->sha_out_buf, sha_buf, halg->digestsize);
+		स_नकल(sdcp->coh->sha_out_buf, sha_buf, halg->digestsize);
 		ret = 0;
-		goto done_run;
-	}
+		जाओ करोne_run;
+	पूर्ण
 
-	/* Set HASH_TERM bit for last transfer block. */
-	if (rctx->fini) {
+	/* Set HASH_TERM bit क्रम last transfer block. */
+	अगर (rctx->fini) अणु
 		digest_phys = dma_map_single(sdcp->dev, sdcp->coh->sha_out_buf,
 					     DCP_SHA_PAY_SZ, DMA_FROM_DEVICE);
 		desc->control0 |= MXS_DCP_CONTROL0_HASH_TERM;
 		desc->payload = digest_phys;
-	}
+	पूर्ण
 
 	ret = mxs_dcp_start_dma(actx);
 
-	if (rctx->fini)
+	अगर (rctx->fini)
 		dma_unmap_single(sdcp->dev, digest_phys, DCP_SHA_PAY_SZ,
 				 DMA_FROM_DEVICE);
 
-done_run:
+करोne_run:
 	dma_unmap_single(sdcp->dev, buf_phys, DCP_BUF_SZ, DMA_TO_DEVICE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dcp_sha_req_to_buf(struct crypto_async_request *arq)
-{
-	struct dcp *sdcp = global_sdcp;
+अटल पूर्णांक dcp_sha_req_to_buf(काष्ठा crypto_async_request *arq)
+अणु
+	काष्ठा dcp *sdcp = global_sdcp;
 
-	struct ahash_request *req = ahash_request_cast(arq);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct dcp_async_ctx *actx = crypto_ahash_ctx(tfm);
-	struct dcp_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct hash_alg_common *halg = crypto_hash_alg_common(tfm);
+	काष्ठा ahash_request *req = ahash_request_cast(arq);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा dcp_async_ctx *actx = crypto_ahash_ctx(tfm);
+	काष्ठा dcp_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा hash_alg_common *halg = crypto_hash_alg_common(tfm);
 
-	uint8_t *in_buf = sdcp->coh->sha_in_buf;
-	uint8_t *out_buf = sdcp->coh->sha_out_buf;
+	uपूर्णांक8_t *in_buf = sdcp->coh->sha_in_buf;
+	uपूर्णांक8_t *out_buf = sdcp->coh->sha_out_buf;
 
-	struct scatterlist *src;
+	काष्ठा scatterlist *src;
 
-	unsigned int i, len, clen, oft = 0;
-	int ret;
+	अचिन्हित पूर्णांक i, len, clen, oft = 0;
+	पूर्णांक ret;
 
-	int fin = rctx->fini;
-	if (fin)
+	पूर्णांक fin = rctx->fini;
+	अगर (fin)
 		rctx->fini = 0;
 
 	src = req->src;
 	len = req->nbytes;
 
-	while (len) {
-		if (actx->fill + len > DCP_BUF_SZ)
+	जबतक (len) अणु
+		अगर (actx->fill + len > DCP_BUF_SZ)
 			clen = DCP_BUF_SZ - actx->fill;
-		else
+		अन्यथा
 			clen = len;
 
 		scatterwalk_map_and_copy(in_buf + actx->fill, src, oft, clen,
@@ -647,46 +648,46 @@ static int dcp_sha_req_to_buf(struct crypto_async_request *arq)
 		 * If we filled the buffer and still have some
 		 * more data, submit the buffer.
 		 */
-		if (len && actx->fill == DCP_BUF_SZ) {
+		अगर (len && actx->fill == DCP_BUF_SZ) अणु
 			ret = mxs_dcp_run_sha(req);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			actx->fill = 0;
 			rctx->init = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (fin) {
+	अगर (fin) अणु
 		rctx->fini = 1;
 
 		/* Submit whatever is left. */
-		if (!req->result)
-			return -EINVAL;
+		अगर (!req->result)
+			वापस -EINVAL;
 
 		ret = mxs_dcp_run_sha(req);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		actx->fill = 0;
 
 		/* For some reason the result is flipped */
-		for (i = 0; i < halg->digestsize; i++)
+		क्रम (i = 0; i < halg->digestsize; i++)
 			req->result[i] = out_buf[halg->digestsize - i - 1];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcp_chan_thread_sha(void *data)
-{
-	struct dcp *sdcp = global_sdcp;
-	const int chan = DCP_CHAN_HASH_SHA;
+अटल पूर्णांक dcp_chan_thपढ़ो_sha(व्योम *data)
+अणु
+	काष्ठा dcp *sdcp = global_sdcp;
+	स्थिर पूर्णांक chan = DCP_CHAN_HASH_SHA;
 
-	struct crypto_async_request *backlog;
-	struct crypto_async_request *arq;
-	int ret;
+	काष्ठा crypto_async_request *backlog;
+	काष्ठा crypto_async_request *arq;
+	पूर्णांक ret;
 
-	while (!kthread_should_stop()) {
+	जबतक (!kthपढ़ो_should_stop()) अणु
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		spin_lock(&sdcp->lock[chan]);
@@ -694,41 +695,41 @@ static int dcp_chan_thread_sha(void *data)
 		arq = crypto_dequeue_request(&sdcp->queue[chan]);
 		spin_unlock(&sdcp->lock[chan]);
 
-		if (!backlog && !arq) {
+		अगर (!backlog && !arq) अणु
 			schedule();
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		set_current_state(TASK_RUNNING);
 
-		if (backlog)
+		अगर (backlog)
 			backlog->complete(backlog, -EINPROGRESS);
 
-		if (arq) {
+		अगर (arq) अणु
 			ret = dcp_sha_req_to_buf(arq);
 			arq->complete(arq, ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcp_sha_init(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct dcp_async_ctx *actx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक dcp_sha_init(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा dcp_async_ctx *actx = crypto_ahash_ctx(tfm);
 
-	struct hash_alg_common *halg = crypto_hash_alg_common(tfm);
+	काष्ठा hash_alg_common *halg = crypto_hash_alg_common(tfm);
 
 	/*
 	 * Start hashing session. The code below only inits the
 	 * hashing session context, nothing more.
 	 */
-	memset(actx, 0, sizeof(*actx));
+	स_रखो(actx, 0, माप(*actx));
 
-	if (strcmp(halg->base.cra_name, "sha1") == 0)
+	अगर (म_भेद(halg->base.cra_name, "sha1") == 0)
 		actx->alg = MXS_DCP_CONTROL1_HASH_SELECT_SHA1;
-	else
+	अन्यथा
 		actx->alg = MXS_DCP_CONTROL1_HASH_SELECT_SHA256;
 
 	actx->fill = 0;
@@ -737,115 +738,115 @@ static int dcp_sha_init(struct ahash_request *req)
 
 	mutex_init(&actx->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcp_sha_update_fx(struct ahash_request *req, int fini)
-{
-	struct dcp *sdcp = global_sdcp;
+अटल पूर्णांक dcp_sha_update_fx(काष्ठा ahash_request *req, पूर्णांक fini)
+अणु
+	काष्ठा dcp *sdcp = global_sdcp;
 
-	struct dcp_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct dcp_async_ctx *actx = crypto_ahash_ctx(tfm);
+	काष्ठा dcp_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा dcp_async_ctx *actx = crypto_ahash_ctx(tfm);
 
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * Ignore requests that have no data in them and are not
 	 * the trailing requests in the stream of requests.
 	 */
-	if (!req->nbytes && !fini)
-		return 0;
+	अगर (!req->nbytes && !fini)
+		वापस 0;
 
 	mutex_lock(&actx->mutex);
 
 	rctx->fini = fini;
 
-	if (!actx->hot) {
+	अगर (!actx->hot) अणु
 		actx->hot = 1;
 		rctx->init = 1;
-	}
+	पूर्ण
 
 	spin_lock(&sdcp->lock[actx->chan]);
 	ret = crypto_enqueue_request(&sdcp->queue[actx->chan], &req->base);
 	spin_unlock(&sdcp->lock[actx->chan]);
 
-	wake_up_process(sdcp->thread[actx->chan]);
+	wake_up_process(sdcp->thपढ़ो[actx->chan]);
 	mutex_unlock(&actx->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dcp_sha_update(struct ahash_request *req)
-{
-	return dcp_sha_update_fx(req, 0);
-}
+अटल पूर्णांक dcp_sha_update(काष्ठा ahash_request *req)
+अणु
+	वापस dcp_sha_update_fx(req, 0);
+पूर्ण
 
-static int dcp_sha_final(struct ahash_request *req)
-{
-	ahash_request_set_crypt(req, NULL, req->result, 0);
+अटल पूर्णांक dcp_sha_final(काष्ठा ahash_request *req)
+अणु
+	ahash_request_set_crypt(req, शून्य, req->result, 0);
 	req->nbytes = 0;
-	return dcp_sha_update_fx(req, 1);
-}
+	वापस dcp_sha_update_fx(req, 1);
+पूर्ण
 
-static int dcp_sha_finup(struct ahash_request *req)
-{
-	return dcp_sha_update_fx(req, 1);
-}
+अटल पूर्णांक dcp_sha_finup(काष्ठा ahash_request *req)
+अणु
+	वापस dcp_sha_update_fx(req, 1);
+पूर्ण
 
-static int dcp_sha_digest(struct ahash_request *req)
-{
-	int ret;
+अटल पूर्णांक dcp_sha_digest(काष्ठा ahash_request *req)
+अणु
+	पूर्णांक ret;
 
 	ret = dcp_sha_init(req);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return dcp_sha_finup(req);
-}
+	वापस dcp_sha_finup(req);
+पूर्ण
 
-static int dcp_sha_import(struct ahash_request *req, const void *in)
-{
-	struct dcp_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct dcp_async_ctx *actx = crypto_ahash_ctx(tfm);
-	const struct dcp_export_state *export = in;
+अटल पूर्णांक dcp_sha_import(काष्ठा ahash_request *req, स्थिर व्योम *in)
+अणु
+	काष्ठा dcp_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा dcp_async_ctx *actx = crypto_ahash_ctx(tfm);
+	स्थिर काष्ठा dcp_export_state *export = in;
 
-	memset(rctx, 0, sizeof(struct dcp_sha_req_ctx));
-	memset(actx, 0, sizeof(struct dcp_async_ctx));
-	memcpy(rctx, &export->req_ctx, sizeof(struct dcp_sha_req_ctx));
-	memcpy(actx, &export->async_ctx, sizeof(struct dcp_async_ctx));
+	स_रखो(rctx, 0, माप(काष्ठा dcp_sha_req_ctx));
+	स_रखो(actx, 0, माप(काष्ठा dcp_async_ctx));
+	स_नकल(rctx, &export->req_ctx, माप(काष्ठा dcp_sha_req_ctx));
+	स_नकल(actx, &export->async_ctx, माप(काष्ठा dcp_async_ctx));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcp_sha_export(struct ahash_request *req, void *out)
-{
-	struct dcp_sha_req_ctx *rctx_state = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct dcp_async_ctx *actx_state = crypto_ahash_ctx(tfm);
-	struct dcp_export_state *export = out;
+अटल पूर्णांक dcp_sha_export(काष्ठा ahash_request *req, व्योम *out)
+अणु
+	काष्ठा dcp_sha_req_ctx *rctx_state = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा dcp_async_ctx *actx_state = crypto_ahash_ctx(tfm);
+	काष्ठा dcp_export_state *export = out;
 
-	memcpy(&export->req_ctx, rctx_state, sizeof(struct dcp_sha_req_ctx));
-	memcpy(&export->async_ctx, actx_state, sizeof(struct dcp_async_ctx));
+	स_नकल(&export->req_ctx, rctx_state, माप(काष्ठा dcp_sha_req_ctx));
+	स_नकल(&export->async_ctx, actx_state, माप(काष्ठा dcp_async_ctx));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcp_sha_cra_init(struct crypto_tfm *tfm)
-{
+अटल पूर्णांक dcp_sha_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
 	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-				 sizeof(struct dcp_sha_req_ctx));
-	return 0;
-}
+				 माप(काष्ठा dcp_sha_req_ctx));
+	वापस 0;
+पूर्ण
 
-static void dcp_sha_cra_exit(struct crypto_tfm *tfm)
-{
-}
+अटल व्योम dcp_sha_cra_निकास(काष्ठा crypto_tfm *tfm)
+अणु
+पूर्ण
 
 /* AES 128 ECB and AES 128 CBC */
-static struct skcipher_alg dcp_aes_algs[] = {
-	{
+अटल काष्ठा skcipher_alg dcp_aes_algs[] = अणु
+	अणु
 		.base.cra_name		= "ecb(aes)",
 		.base.cra_driver_name	= "ecb-aes-dcp",
 		.base.cra_priority	= 400,
@@ -853,7 +854,7 @@ static struct skcipher_alg dcp_aes_algs[] = {
 		.base.cra_flags		= CRYPTO_ALG_ASYNC |
 					  CRYPTO_ALG_NEED_FALLBACK,
 		.base.cra_blocksize	= AES_BLOCK_SIZE,
-		.base.cra_ctxsize	= sizeof(struct dcp_async_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा dcp_async_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= AES_MIN_KEY_SIZE,
@@ -862,8 +863,8 @@ static struct skcipher_alg dcp_aes_algs[] = {
 		.encrypt		= mxs_dcp_aes_ecb_encrypt,
 		.decrypt		= mxs_dcp_aes_ecb_decrypt,
 		.init			= mxs_dcp_aes_fallback_init_tfm,
-		.exit			= mxs_dcp_aes_fallback_exit_tfm,
-	}, {
+		.निकास			= mxs_dcp_aes_fallback_निकास_tfm,
+	पूर्ण, अणु
 		.base.cra_name		= "cbc(aes)",
 		.base.cra_driver_name	= "cbc-aes-dcp",
 		.base.cra_priority	= 400,
@@ -871,7 +872,7 @@ static struct skcipher_alg dcp_aes_algs[] = {
 		.base.cra_flags		= CRYPTO_ALG_ASYNC |
 					  CRYPTO_ALG_NEED_FALLBACK,
 		.base.cra_blocksize	= AES_BLOCK_SIZE,
-		.base.cra_ctxsize	= sizeof(struct dcp_async_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा dcp_async_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= AES_MIN_KEY_SIZE,
@@ -881,12 +882,12 @@ static struct skcipher_alg dcp_aes_algs[] = {
 		.decrypt		= mxs_dcp_aes_cbc_decrypt,
 		.ivsize			= AES_BLOCK_SIZE,
 		.init			= mxs_dcp_aes_fallback_init_tfm,
-		.exit			= mxs_dcp_aes_fallback_exit_tfm,
-	},
-};
+		.निकास			= mxs_dcp_aes_fallback_निकास_tfm,
+	पूर्ण,
+पूर्ण;
 
 /* SHA1 */
-static struct ahash_alg dcp_sha1_alg = {
+अटल काष्ठा ahash_alg dcp_sha1_alg = अणु
 	.init	= dcp_sha_init,
 	.update	= dcp_sha_update,
 	.final	= dcp_sha_final,
@@ -894,26 +895,26 @@ static struct ahash_alg dcp_sha1_alg = {
 	.digest	= dcp_sha_digest,
 	.import = dcp_sha_import,
 	.export = dcp_sha_export,
-	.halg	= {
+	.halg	= अणु
 		.digestsize	= SHA1_DIGEST_SIZE,
-		.statesize	= sizeof(struct dcp_export_state),
-		.base		= {
+		.statesize	= माप(काष्ठा dcp_export_state),
+		.base		= अणु
 			.cra_name		= "sha1",
 			.cra_driver_name	= "sha1-dcp",
 			.cra_priority		= 400,
 			.cra_alignmask		= 63,
 			.cra_flags		= CRYPTO_ALG_ASYNC,
 			.cra_blocksize		= SHA1_BLOCK_SIZE,
-			.cra_ctxsize		= sizeof(struct dcp_async_ctx),
+			.cra_ctxsize		= माप(काष्ठा dcp_async_ctx),
 			.cra_module		= THIS_MODULE,
 			.cra_init		= dcp_sha_cra_init,
-			.cra_exit		= dcp_sha_cra_exit,
-		},
-	},
-};
+			.cra_निकास		= dcp_sha_cra_निकास,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /* SHA256 */
-static struct ahash_alg dcp_sha256_alg = {
+अटल काष्ठा ahash_alg dcp_sha256_alg = अणु
 	.init	= dcp_sha_init,
 	.update	= dcp_sha_update,
 	.final	= dcp_sha_final,
@@ -921,261 +922,261 @@ static struct ahash_alg dcp_sha256_alg = {
 	.digest	= dcp_sha_digest,
 	.import = dcp_sha_import,
 	.export = dcp_sha_export,
-	.halg	= {
+	.halg	= अणु
 		.digestsize	= SHA256_DIGEST_SIZE,
-		.statesize	= sizeof(struct dcp_export_state),
-		.base		= {
+		.statesize	= माप(काष्ठा dcp_export_state),
+		.base		= अणु
 			.cra_name		= "sha256",
 			.cra_driver_name	= "sha256-dcp",
 			.cra_priority		= 400,
 			.cra_alignmask		= 63,
 			.cra_flags		= CRYPTO_ALG_ASYNC,
 			.cra_blocksize		= SHA256_BLOCK_SIZE,
-			.cra_ctxsize		= sizeof(struct dcp_async_ctx),
+			.cra_ctxsize		= माप(काष्ठा dcp_async_ctx),
 			.cra_module		= THIS_MODULE,
 			.cra_init		= dcp_sha_cra_init,
-			.cra_exit		= dcp_sha_cra_exit,
-		},
-	},
-};
+			.cra_निकास		= dcp_sha_cra_निकास,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static irqreturn_t mxs_dcp_irq(int irq, void *context)
-{
-	struct dcp *sdcp = context;
-	uint32_t stat;
-	int i;
+अटल irqवापस_t mxs_dcp_irq(पूर्णांक irq, व्योम *context)
+अणु
+	काष्ठा dcp *sdcp = context;
+	uपूर्णांक32_t stat;
+	पूर्णांक i;
 
-	stat = readl(sdcp->base + MXS_DCP_STAT);
+	stat = पढ़ोl(sdcp->base + MXS_DCP_STAT);
 	stat &= MXS_DCP_STAT_IRQ_MASK;
-	if (!stat)
-		return IRQ_NONE;
+	अगर (!stat)
+		वापस IRQ_NONE;
 
-	/* Clear the interrupts. */
-	writel(stat, sdcp->base + MXS_DCP_STAT_CLR);
+	/* Clear the पूर्णांकerrupts. */
+	ग_लिखोl(stat, sdcp->base + MXS_DCP_STAT_CLR);
 
 	/* Complete the DMA requests that finished. */
-	for (i = 0; i < DCP_MAX_CHANS; i++)
-		if (stat & (1 << i))
+	क्रम (i = 0; i < DCP_MAX_CHANS; i++)
+		अगर (stat & (1 << i))
 			complete(&sdcp->completion[i]);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mxs_dcp_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct dcp *sdcp = NULL;
-	int i, ret;
-	int dcp_vmi_irq, dcp_irq;
+अटल पूर्णांक mxs_dcp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा dcp *sdcp = शून्य;
+	पूर्णांक i, ret;
+	पूर्णांक dcp_vmi_irq, dcp_irq;
 
-	if (global_sdcp) {
+	अगर (global_sdcp) अणु
 		dev_err(dev, "Only one DCP instance allowed!\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	dcp_vmi_irq = platform_get_irq(pdev, 0);
-	if (dcp_vmi_irq < 0)
-		return dcp_vmi_irq;
+	dcp_vmi_irq = platक्रमm_get_irq(pdev, 0);
+	अगर (dcp_vmi_irq < 0)
+		वापस dcp_vmi_irq;
 
-	dcp_irq = platform_get_irq(pdev, 1);
-	if (dcp_irq < 0)
-		return dcp_irq;
+	dcp_irq = platक्रमm_get_irq(pdev, 1);
+	अगर (dcp_irq < 0)
+		वापस dcp_irq;
 
-	sdcp = devm_kzalloc(dev, sizeof(*sdcp), GFP_KERNEL);
-	if (!sdcp)
-		return -ENOMEM;
+	sdcp = devm_kzalloc(dev, माप(*sdcp), GFP_KERNEL);
+	अगर (!sdcp)
+		वापस -ENOMEM;
 
 	sdcp->dev = dev;
-	sdcp->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(sdcp->base))
-		return PTR_ERR(sdcp->base);
+	sdcp->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(sdcp->base))
+		वापस PTR_ERR(sdcp->base);
 
 
 	ret = devm_request_irq(dev, dcp_vmi_irq, mxs_dcp_irq, 0,
 			       "dcp-vmi-irq", sdcp);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to claim DCP VMI IRQ!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = devm_request_irq(dev, dcp_irq, mxs_dcp_irq, 0,
 			       "dcp-irq", sdcp);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to claim DCP IRQ!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Allocate coherent helper block. */
-	sdcp->coh = devm_kzalloc(dev, sizeof(*sdcp->coh) + DCP_ALIGNMENT,
+	sdcp->coh = devm_kzalloc(dev, माप(*sdcp->coh) + DCP_ALIGNMENT,
 				   GFP_KERNEL);
-	if (!sdcp->coh)
-		return -ENOMEM;
+	अगर (!sdcp->coh)
+		वापस -ENOMEM;
 
-	/* Re-align the structure so it fits the DCP constraints. */
+	/* Re-align the काष्ठाure so it fits the DCP स्थिरraपूर्णांकs. */
 	sdcp->coh = PTR_ALIGN(sdcp->coh, DCP_ALIGNMENT);
 
-	/* DCP clock is optional, only used on some SOCs */
+	/* DCP घड़ी is optional, only used on some SOCs */
 	sdcp->dcp_clk = devm_clk_get(dev, "dcp");
-	if (IS_ERR(sdcp->dcp_clk)) {
-		if (sdcp->dcp_clk != ERR_PTR(-ENOENT))
-			return PTR_ERR(sdcp->dcp_clk);
-		sdcp->dcp_clk = NULL;
-	}
+	अगर (IS_ERR(sdcp->dcp_clk)) अणु
+		अगर (sdcp->dcp_clk != ERR_PTR(-ENOENT))
+			वापस PTR_ERR(sdcp->dcp_clk);
+		sdcp->dcp_clk = शून्य;
+	पूर्ण
 	ret = clk_prepare_enable(sdcp->dcp_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Restart the DCP block. */
-	ret = stmp_reset_block(sdcp->base);
-	if (ret) {
+	ret = sपंचांगp_reset_block(sdcp->base);
+	अगर (ret) अणु
 		dev_err(dev, "Failed reset\n");
-		goto err_disable_unprepare_clk;
-	}
+		जाओ err_disable_unprepare_clk;
+	पूर्ण
 
-	/* Initialize control register. */
-	writel(MXS_DCP_CTRL_GATHER_RESIDUAL_WRITES |
+	/* Initialize control रेजिस्टर. */
+	ग_लिखोl(MXS_DCP_CTRL_GATHER_RESIDUAL_WRITES |
 	       MXS_DCP_CTRL_ENABLE_CONTEXT_CACHING | 0xf,
 	       sdcp->base + MXS_DCP_CTRL);
 
 	/* Enable all DCP DMA channels. */
-	writel(MXS_DCP_CHANNELCTRL_ENABLE_CHANNEL_MASK,
+	ग_लिखोl(MXS_DCP_CHANNELCTRL_ENABLE_CHANNEL_MASK,
 	       sdcp->base + MXS_DCP_CHANNELCTRL);
 
 	/*
-	 * We do not enable context switching. Give the context buffer a
-	 * pointer to an illegal address so if context switching is
-	 * inadvertantly enabled, the DCP will return an error instead of
+	 * We करो not enable context चयनing. Give the context buffer a
+	 * poपूर्णांकer to an illegal address so अगर context चयनing is
+	 * inadvertantly enabled, the DCP will वापस an error instead of
 	 * trashing good memory. The DCP DMA cannot access ROM, so any ROM
-	 * address will do.
+	 * address will करो.
 	 */
-	writel(0xffff0000, sdcp->base + MXS_DCP_CONTEXT);
-	for (i = 0; i < DCP_MAX_CHANS; i++)
-		writel(0xffffffff, sdcp->base + MXS_DCP_CH_N_STAT_CLR(i));
-	writel(0xffffffff, sdcp->base + MXS_DCP_STAT_CLR);
+	ग_लिखोl(0xffff0000, sdcp->base + MXS_DCP_CONTEXT);
+	क्रम (i = 0; i < DCP_MAX_CHANS; i++)
+		ग_लिखोl(0xffffffff, sdcp->base + MXS_DCP_CH_N_STAT_CLR(i));
+	ग_लिखोl(0xffffffff, sdcp->base + MXS_DCP_STAT_CLR);
 
 	global_sdcp = sdcp;
 
-	platform_set_drvdata(pdev, sdcp);
+	platक्रमm_set_drvdata(pdev, sdcp);
 
-	for (i = 0; i < DCP_MAX_CHANS; i++) {
+	क्रम (i = 0; i < DCP_MAX_CHANS; i++) अणु
 		spin_lock_init(&sdcp->lock[i]);
 		init_completion(&sdcp->completion[i]);
 		crypto_init_queue(&sdcp->queue[i], 50);
-	}
+	पूर्ण
 
-	/* Create the SHA and AES handler threads. */
-	sdcp->thread[DCP_CHAN_HASH_SHA] = kthread_run(dcp_chan_thread_sha,
-						      NULL, "mxs_dcp_chan/sha");
-	if (IS_ERR(sdcp->thread[DCP_CHAN_HASH_SHA])) {
+	/* Create the SHA and AES handler thपढ़ोs. */
+	sdcp->thपढ़ो[DCP_CHAN_HASH_SHA] = kthपढ़ो_run(dcp_chan_thपढ़ो_sha,
+						      शून्य, "mxs_dcp_chan/sha");
+	अगर (IS_ERR(sdcp->thपढ़ो[DCP_CHAN_HASH_SHA])) अणु
 		dev_err(dev, "Error starting SHA thread!\n");
-		ret = PTR_ERR(sdcp->thread[DCP_CHAN_HASH_SHA]);
-		goto err_disable_unprepare_clk;
-	}
+		ret = PTR_ERR(sdcp->thपढ़ो[DCP_CHAN_HASH_SHA]);
+		जाओ err_disable_unprepare_clk;
+	पूर्ण
 
-	sdcp->thread[DCP_CHAN_CRYPTO] = kthread_run(dcp_chan_thread_aes,
-						    NULL, "mxs_dcp_chan/aes");
-	if (IS_ERR(sdcp->thread[DCP_CHAN_CRYPTO])) {
+	sdcp->thपढ़ो[DCP_CHAN_CRYPTO] = kthपढ़ो_run(dcp_chan_thपढ़ो_aes,
+						    शून्य, "mxs_dcp_chan/aes");
+	अगर (IS_ERR(sdcp->thपढ़ो[DCP_CHAN_CRYPTO])) अणु
 		dev_err(dev, "Error starting SHA thread!\n");
-		ret = PTR_ERR(sdcp->thread[DCP_CHAN_CRYPTO]);
-		goto err_destroy_sha_thread;
-	}
+		ret = PTR_ERR(sdcp->thपढ़ो[DCP_CHAN_CRYPTO]);
+		जाओ err_destroy_sha_thपढ़ो;
+	पूर्ण
 
 	/* Register the various crypto algorithms. */
-	sdcp->caps = readl(sdcp->base + MXS_DCP_CAPABILITY1);
+	sdcp->caps = पढ़ोl(sdcp->base + MXS_DCP_CAPABILITY1);
 
-	if (sdcp->caps & MXS_DCP_CAPABILITY1_AES128) {
-		ret = crypto_register_skciphers(dcp_aes_algs,
+	अगर (sdcp->caps & MXS_DCP_CAPABILITY1_AES128) अणु
+		ret = crypto_रेजिस्टर_skciphers(dcp_aes_algs,
 						ARRAY_SIZE(dcp_aes_algs));
-		if (ret) {
-			/* Failed to register algorithm. */
+		अगर (ret) अणु
+			/* Failed to रेजिस्टर algorithm. */
 			dev_err(dev, "Failed to register AES crypto!\n");
-			goto err_destroy_aes_thread;
-		}
-	}
+			जाओ err_destroy_aes_thपढ़ो;
+		पूर्ण
+	पूर्ण
 
-	if (sdcp->caps & MXS_DCP_CAPABILITY1_SHA1) {
-		ret = crypto_register_ahash(&dcp_sha1_alg);
-		if (ret) {
+	अगर (sdcp->caps & MXS_DCP_CAPABILITY1_SHA1) अणु
+		ret = crypto_रेजिस्टर_ahash(&dcp_sha1_alg);
+		अगर (ret) अणु
 			dev_err(dev, "Failed to register %s hash!\n",
 				dcp_sha1_alg.halg.base.cra_name);
-			goto err_unregister_aes;
-		}
-	}
+			जाओ err_unरेजिस्टर_aes;
+		पूर्ण
+	पूर्ण
 
-	if (sdcp->caps & MXS_DCP_CAPABILITY1_SHA256) {
-		ret = crypto_register_ahash(&dcp_sha256_alg);
-		if (ret) {
+	अगर (sdcp->caps & MXS_DCP_CAPABILITY1_SHA256) अणु
+		ret = crypto_रेजिस्टर_ahash(&dcp_sha256_alg);
+		अगर (ret) अणु
 			dev_err(dev, "Failed to register %s hash!\n",
 				dcp_sha256_alg.halg.base.cra_name);
-			goto err_unregister_sha1;
-		}
-	}
+			जाओ err_unरेजिस्टर_sha1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_unregister_sha1:
-	if (sdcp->caps & MXS_DCP_CAPABILITY1_SHA1)
-		crypto_unregister_ahash(&dcp_sha1_alg);
+err_unरेजिस्टर_sha1:
+	अगर (sdcp->caps & MXS_DCP_CAPABILITY1_SHA1)
+		crypto_unरेजिस्टर_ahash(&dcp_sha1_alg);
 
-err_unregister_aes:
-	if (sdcp->caps & MXS_DCP_CAPABILITY1_AES128)
-		crypto_unregister_skciphers(dcp_aes_algs, ARRAY_SIZE(dcp_aes_algs));
+err_unरेजिस्टर_aes:
+	अगर (sdcp->caps & MXS_DCP_CAPABILITY1_AES128)
+		crypto_unरेजिस्टर_skciphers(dcp_aes_algs, ARRAY_SIZE(dcp_aes_algs));
 
-err_destroy_aes_thread:
-	kthread_stop(sdcp->thread[DCP_CHAN_CRYPTO]);
+err_destroy_aes_thपढ़ो:
+	kthपढ़ो_stop(sdcp->thपढ़ो[DCP_CHAN_CRYPTO]);
 
-err_destroy_sha_thread:
-	kthread_stop(sdcp->thread[DCP_CHAN_HASH_SHA]);
+err_destroy_sha_thपढ़ो:
+	kthपढ़ो_stop(sdcp->thपढ़ो[DCP_CHAN_HASH_SHA]);
 
 err_disable_unprepare_clk:
 	clk_disable_unprepare(sdcp->dcp_clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mxs_dcp_remove(struct platform_device *pdev)
-{
-	struct dcp *sdcp = platform_get_drvdata(pdev);
+अटल पूर्णांक mxs_dcp_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dcp *sdcp = platक्रमm_get_drvdata(pdev);
 
-	if (sdcp->caps & MXS_DCP_CAPABILITY1_SHA256)
-		crypto_unregister_ahash(&dcp_sha256_alg);
+	अगर (sdcp->caps & MXS_DCP_CAPABILITY1_SHA256)
+		crypto_unरेजिस्टर_ahash(&dcp_sha256_alg);
 
-	if (sdcp->caps & MXS_DCP_CAPABILITY1_SHA1)
-		crypto_unregister_ahash(&dcp_sha1_alg);
+	अगर (sdcp->caps & MXS_DCP_CAPABILITY1_SHA1)
+		crypto_unरेजिस्टर_ahash(&dcp_sha1_alg);
 
-	if (sdcp->caps & MXS_DCP_CAPABILITY1_AES128)
-		crypto_unregister_skciphers(dcp_aes_algs, ARRAY_SIZE(dcp_aes_algs));
+	अगर (sdcp->caps & MXS_DCP_CAPABILITY1_AES128)
+		crypto_unरेजिस्टर_skciphers(dcp_aes_algs, ARRAY_SIZE(dcp_aes_algs));
 
-	kthread_stop(sdcp->thread[DCP_CHAN_HASH_SHA]);
-	kthread_stop(sdcp->thread[DCP_CHAN_CRYPTO]);
+	kthपढ़ो_stop(sdcp->thपढ़ो[DCP_CHAN_HASH_SHA]);
+	kthपढ़ो_stop(sdcp->thपढ़ो[DCP_CHAN_CRYPTO]);
 
 	clk_disable_unprepare(sdcp->dcp_clk);
 
-	platform_set_drvdata(pdev, NULL);
+	platक्रमm_set_drvdata(pdev, शून्य);
 
-	global_sdcp = NULL;
+	global_sdcp = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mxs_dcp_dt_ids[] = {
-	{ .compatible = "fsl,imx23-dcp", .data = NULL, },
-	{ .compatible = "fsl,imx28-dcp", .data = NULL, },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id mxs_dcp_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx23-dcp", .data = शून्य, पूर्ण,
+	अणु .compatible = "fsl,imx28-dcp", .data = शून्य, पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, mxs_dcp_dt_ids);
 
-static struct platform_driver mxs_dcp_driver = {
+अटल काष्ठा platक्रमm_driver mxs_dcp_driver = अणु
 	.probe	= mxs_dcp_probe,
-	.remove	= mxs_dcp_remove,
-	.driver	= {
+	.हटाओ	= mxs_dcp_हटाओ,
+	.driver	= अणु
 		.name		= "mxs-dcp",
 		.of_match_table	= mxs_dcp_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(mxs_dcp_driver);
+module_platक्रमm_driver(mxs_dcp_driver);
 
 MODULE_AUTHOR("Marek Vasut <marex@denx.de>");
 MODULE_DESCRIPTION("Freescale MXS DCP Driver");

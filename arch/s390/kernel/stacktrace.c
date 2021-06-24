@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Stack trace management functions
  *
@@ -6,56 +7,56 @@
  *  Author(s): Heiko Carstens <heiko.carstens@de.ibm.com>
  */
 
-#include <linux/stacktrace.h>
-#include <asm/stacktrace.h>
-#include <asm/unwind.h>
-#include <asm/kprobes.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <यंत्र/stacktrace.h>
+#समावेश <यंत्र/unwind.h>
+#समावेश <यंत्र/kprobes.h>
 
-void arch_stack_walk(stack_trace_consume_fn consume_entry, void *cookie,
-		     struct task_struct *task, struct pt_regs *regs)
-{
-	struct unwind_state state;
-	unsigned long addr;
+व्योम arch_stack_walk(stack_trace_consume_fn consume_entry, व्योम *cookie,
+		     काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा unwind_state state;
+	अचिन्हित दीर्घ addr;
 
-	unwind_for_each_frame(&state, task, regs, 0) {
-		addr = unwind_get_return_address(&state);
-		if (!addr || !consume_entry(cookie, addr))
-			break;
-	}
-}
+	unwind_क्रम_each_frame(&state, task, regs, 0) अणु
+		addr = unwind_get_वापस_address(&state);
+		अगर (!addr || !consume_entry(cookie, addr))
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-int arch_stack_walk_reliable(stack_trace_consume_fn consume_entry,
-			     void *cookie, struct task_struct *task)
-{
-	struct unwind_state state;
-	unsigned long addr;
+पूर्णांक arch_stack_walk_reliable(stack_trace_consume_fn consume_entry,
+			     व्योम *cookie, काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा unwind_state state;
+	अचिन्हित दीर्घ addr;
 
-	unwind_for_each_frame(&state, task, NULL, 0) {
-		if (state.stack_info.type != STACK_TYPE_TASK)
-			return -EINVAL;
+	unwind_क्रम_each_frame(&state, task, शून्य, 0) अणु
+		अगर (state.stack_info.type != STACK_TYPE_TASK)
+			वापस -EINVAL;
 
-		if (state.regs)
-			return -EINVAL;
+		अगर (state.regs)
+			वापस -EINVAL;
 
-		addr = unwind_get_return_address(&state);
-		if (!addr)
-			return -EINVAL;
+		addr = unwind_get_वापस_address(&state);
+		अगर (!addr)
+			वापस -EINVAL;
 
-#ifdef CONFIG_KPROBES
+#अगर_घोषित CONFIG_KPROBES
 		/*
 		 * Mark stacktraces with kretprobed functions on them
 		 * as unreliable.
 		 */
-		if (state.ip == (unsigned long)kretprobe_trampoline)
-			return -EINVAL;
-#endif
+		अगर (state.ip == (अचिन्हित दीर्घ)kretprobe_trampoline)
+			वापस -EINVAL;
+#पूर्ण_अगर
 
-		if (!consume_entry(cookie, addr))
-			return -EINVAL;
-	}
+		अगर (!consume_entry(cookie, addr))
+			वापस -EINVAL;
+	पूर्ण
 
-	/* Check for stack corruption */
-	if (unwind_error(&state))
-		return -EINVAL;
-	return 0;
-}
+	/* Check क्रम stack corruption */
+	अगर (unwind_error(&state))
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण

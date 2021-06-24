@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,142 +22,142 @@
  *
  */
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#include "amdgpu.h"
-#include "amdgpu_ih.h"
-#include "soc15.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_ih.h"
+#समावेश "soc15.h"
 
-#include "oss/osssys_4_0_offset.h"
-#include "oss/osssys_4_0_sh_mask.h"
+#समावेश "oss/osssys_4_0_offset.h"
+#समावेश "oss/osssys_4_0_sh_mask.h"
 
-#include "soc15_common.h"
-#include "vega10_ih.h"
+#समावेश "soc15_common.h"
+#समावेश "vega10_ih.h"
 
-#define MAX_REARM_RETRY 10
+#घोषणा MAX_REARM_RETRY 10
 
-static void vega10_ih_set_interrupt_funcs(struct amdgpu_device *adev);
+अटल व्योम vega10_ih_set_पूर्णांकerrupt_funcs(काष्ठा amdgpu_device *adev);
 
 /**
- * vega10_ih_init_register_offset - Initialize register offset for ih rings
+ * vega10_ih_init_रेजिस्टर_offset - Initialize रेजिस्टर offset क्रम ih rings
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Initialize register offset ih rings (VEGA10).
+ * Initialize रेजिस्टर offset ih rings (VEGA10).
  */
-static void vega10_ih_init_register_offset(struct amdgpu_device *adev)
-{
-	struct amdgpu_ih_regs *ih_regs;
+अटल व्योम vega10_ih_init_रेजिस्टर_offset(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ih_regs *ih_regs;
 
-	if (adev->irq.ih.ring_size) {
+	अगर (adev->irq.ih.ring_size) अणु
 		ih_regs = &adev->irq.ih.ih_regs;
 		ih_regs->ih_rb_base = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_BASE);
 		ih_regs->ih_rb_base_hi = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_BASE_HI);
 		ih_regs->ih_rb_cntl = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_CNTL);
 		ih_regs->ih_rb_wptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_WPTR);
 		ih_regs->ih_rb_rptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_RPTR);
-		ih_regs->ih_doorbell_rptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_DOORBELL_RPTR);
+		ih_regs->ih_करोorbell_rptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_DOORBELL_RPTR);
 		ih_regs->ih_rb_wptr_addr_lo = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_WPTR_ADDR_LO);
 		ih_regs->ih_rb_wptr_addr_hi = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_WPTR_ADDR_HI);
 		ih_regs->psp_reg_id = PSP_REG_IH_RB_CNTL;
-	}
+	पूर्ण
 
-	if (adev->irq.ih1.ring_size) {
+	अगर (adev->irq.ih1.ring_size) अणु
 		ih_regs = &adev->irq.ih1.ih_regs;
 		ih_regs->ih_rb_base = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_BASE_RING1);
 		ih_regs->ih_rb_base_hi = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_BASE_HI_RING1);
 		ih_regs->ih_rb_cntl = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_CNTL_RING1);
 		ih_regs->ih_rb_wptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_WPTR_RING1);
 		ih_regs->ih_rb_rptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_RPTR_RING1);
-		ih_regs->ih_doorbell_rptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_DOORBELL_RPTR_RING1);
+		ih_regs->ih_करोorbell_rptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_DOORBELL_RPTR_RING1);
 		ih_regs->psp_reg_id = PSP_REG_IH_RB_CNTL_RING1;
-	}
+	पूर्ण
 
-	if (adev->irq.ih2.ring_size) {
+	अगर (adev->irq.ih2.ring_size) अणु
 		ih_regs = &adev->irq.ih2.ih_regs;
 		ih_regs->ih_rb_base = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_BASE_RING2);
 		ih_regs->ih_rb_base_hi = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_BASE_HI_RING2);
 		ih_regs->ih_rb_cntl = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_CNTL_RING2);
 		ih_regs->ih_rb_wptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_WPTR_RING2);
 		ih_regs->ih_rb_rptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_RB_RPTR_RING2);
-		ih_regs->ih_doorbell_rptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_DOORBELL_RPTR_RING2);
+		ih_regs->ih_करोorbell_rptr = SOC15_REG_OFFSET(OSSSYS, 0, mmIH_DOORBELL_RPTR_RING2);
 		ih_regs->psp_reg_id = PSP_REG_IH_RB_CNTL_RING2;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * vega10_ih_toggle_ring_interrupts - toggle the interrupt ring buffer
+ * vega10_ih_toggle_ring_पूर्णांकerrupts - toggle the पूर्णांकerrupt ring buffer
  *
- * @adev: amdgpu_device pointer
- * @ih: amdgpu_ih_ring pointet
- * @enable: true - enable the interrupts, false - disable the interrupts
+ * @adev: amdgpu_device poपूर्णांकer
+ * @ih: amdgpu_ih_ring poपूर्णांकet
+ * @enable: true - enable the पूर्णांकerrupts, false - disable the पूर्णांकerrupts
  *
- * Toggle the interrupt ring buffer (VEGA10)
+ * Toggle the पूर्णांकerrupt ring buffer (VEGA10)
  */
-static int vega10_ih_toggle_ring_interrupts(struct amdgpu_device *adev,
-					    struct amdgpu_ih_ring *ih,
+अटल पूर्णांक vega10_ih_toggle_ring_पूर्णांकerrupts(काष्ठा amdgpu_device *adev,
+					    काष्ठा amdgpu_ih_ring *ih,
 					    bool enable)
-{
-	struct amdgpu_ih_regs *ih_regs;
-	uint32_t tmp;
+अणु
+	काष्ठा amdgpu_ih_regs *ih_regs;
+	uपूर्णांक32_t पंचांगp;
 
 	ih_regs = &ih->ih_regs;
 
-	tmp = RREG32(ih_regs->ih_rb_cntl);
-	tmp = REG_SET_FIELD(tmp, IH_RB_CNTL, RB_ENABLE, (enable ? 1 : 0));
-	/* enable_intr field is only valid in ring0 */
-	if (ih == &adev->irq.ih)
-		tmp = REG_SET_FIELD(tmp, IH_RB_CNTL, ENABLE_INTR, (enable ? 1 : 0));
-	if (amdgpu_sriov_vf(adev)) {
-		if (psp_reg_program(&adev->psp, ih_regs->psp_reg_id, tmp)) {
+	पंचांगp = RREG32(ih_regs->ih_rb_cntl);
+	पंचांगp = REG_SET_FIELD(पंचांगp, IH_RB_CNTL, RB_ENABLE, (enable ? 1 : 0));
+	/* enable_पूर्णांकr field is only valid in ring0 */
+	अगर (ih == &adev->irq.ih)
+		पंचांगp = REG_SET_FIELD(पंचांगp, IH_RB_CNTL, ENABLE_INTR, (enable ? 1 : 0));
+	अगर (amdgpu_sriov_vf(adev)) अणु
+		अगर (psp_reg_program(&adev->psp, ih_regs->psp_reg_id, पंचांगp)) अणु
 			dev_err(adev->dev, "PSP program IH_RB_CNTL failed!\n");
-			return -ETIMEDOUT;
-		}
-	} else {
-		WREG32(ih_regs->ih_rb_cntl, tmp);
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		WREG32(ih_regs->ih_rb_cntl, पंचांगp);
+	पूर्ण
 
-	if (enable) {
+	अगर (enable) अणु
 		ih->enabled = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* set rptr, wptr to 0 */
 		WREG32(ih_regs->ih_rb_rptr, 0);
 		WREG32(ih_regs->ih_rb_wptr, 0);
 		ih->enabled = false;
 		ih->rptr = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * vega10_ih_toggle_interrupts - Toggle all the available interrupt ring buffers
+ * vega10_ih_toggle_पूर्णांकerrupts - Toggle all the available पूर्णांकerrupt ring buffers
  *
- * @adev: amdgpu_device pointer
- * @enable: enable or disable interrupt ring buffers
+ * @adev: amdgpu_device poपूर्णांकer
+ * @enable: enable or disable पूर्णांकerrupt ring buffers
  *
- * Toggle all the available interrupt ring buffers (VEGA10).
+ * Toggle all the available पूर्णांकerrupt ring buffers (VEGA10).
  */
-static int vega10_ih_toggle_interrupts(struct amdgpu_device *adev, bool enable)
-{
-	struct amdgpu_ih_ring *ih[] = {&adev->irq.ih, &adev->irq.ih1, &adev->irq.ih2};
-	int i;
-	int r;
+अटल पूर्णांक vega10_ih_toggle_पूर्णांकerrupts(काष्ठा amdgpu_device *adev, bool enable)
+अणु
+	काष्ठा amdgpu_ih_ring *ih[] = अणु&adev->irq.ih, &adev->irq.ih1, &adev->irq.ih2पूर्ण;
+	पूर्णांक i;
+	पूर्णांक r;
 
-	for (i = 0; i < ARRAY_SIZE(ih); i++) {
-		if (ih[i]->ring_size) {
-			r = vega10_ih_toggle_ring_interrupts(adev, ih[i], enable);
-			if (r)
-				return r;
-		}
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(ih); i++) अणु
+		अगर (ih[i]->ring_size) अणु
+			r = vega10_ih_toggle_ring_पूर्णांकerrupts(adev, ih[i], enable);
+			अगर (r)
+				वापस r;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static uint32_t vega10_ih_rb_cntl(struct amdgpu_ih_ring *ih, uint32_t ih_rb_cntl)
-{
-	int rb_bufsz = order_base_2(ih->ring_size / 4);
+अटल uपूर्णांक32_t vega10_ih_rb_cntl(काष्ठा amdgpu_ih_ring *ih, uपूर्णांक32_t ih_rb_cntl)
+अणु
+	पूर्णांक rb_bufsz = order_base_2(ih->ring_size / 4);
 
 	ih_rb_cntl = REG_SET_FIELD(ih_rb_cntl, IH_RB_CNTL,
 				   MC_SPACE, ih->use_bus_addr ? 1 : 4);
@@ -165,7 +166,7 @@ static uint32_t vega10_ih_rb_cntl(struct amdgpu_ih_ring *ih, uint32_t ih_rb_cntl
 	ih_rb_cntl = REG_SET_FIELD(ih_rb_cntl, IH_RB_CNTL,
 				   WPTR_OVERFLOW_ENABLE, 1);
 	ih_rb_cntl = REG_SET_FIELD(ih_rb_cntl, IH_RB_CNTL, RB_SIZE, rb_bufsz);
-	/* Ring Buffer write pointer writeback. If enabled, IH_RB_WPTR register
+	/* Ring Buffer ग_लिखो poपूर्णांकer ग_लिखोback. If enabled, IH_RB_WPTR रेजिस्टर
 	 * value is written to memory
 	 */
 	ih_rb_cntl = REG_SET_FIELD(ih_rb_cntl, IH_RB_CNTL,
@@ -174,41 +175,41 @@ static uint32_t vega10_ih_rb_cntl(struct amdgpu_ih_ring *ih, uint32_t ih_rb_cntl
 	ih_rb_cntl = REG_SET_FIELD(ih_rb_cntl, IH_RB_CNTL, MC_RO, 0);
 	ih_rb_cntl = REG_SET_FIELD(ih_rb_cntl, IH_RB_CNTL, MC_VMID, 0);
 
-	return ih_rb_cntl;
-}
+	वापस ih_rb_cntl;
+पूर्ण
 
-static uint32_t vega10_ih_doorbell_rptr(struct amdgpu_ih_ring *ih)
-{
-	u32 ih_doorbell_rtpr = 0;
+अटल uपूर्णांक32_t vega10_ih_करोorbell_rptr(काष्ठा amdgpu_ih_ring *ih)
+अणु
+	u32 ih_करोorbell_rtpr = 0;
 
-	if (ih->use_doorbell) {
-		ih_doorbell_rtpr = REG_SET_FIELD(ih_doorbell_rtpr,
+	अगर (ih->use_करोorbell) अणु
+		ih_करोorbell_rtpr = REG_SET_FIELD(ih_करोorbell_rtpr,
 						 IH_DOORBELL_RPTR, OFFSET,
-						 ih->doorbell_index);
-		ih_doorbell_rtpr = REG_SET_FIELD(ih_doorbell_rtpr,
+						 ih->करोorbell_index);
+		ih_करोorbell_rtpr = REG_SET_FIELD(ih_करोorbell_rtpr,
 						 IH_DOORBELL_RPTR,
 						 ENABLE, 1);
-	} else {
-		ih_doorbell_rtpr = REG_SET_FIELD(ih_doorbell_rtpr,
+	पूर्ण अन्यथा अणु
+		ih_करोorbell_rtpr = REG_SET_FIELD(ih_करोorbell_rtpr,
 						 IH_DOORBELL_RPTR,
 						 ENABLE, 0);
-	}
-	return ih_doorbell_rtpr;
-}
+	पूर्ण
+	वापस ih_करोorbell_rtpr;
+पूर्ण
 
 /**
  * vega10_ih_enable_ring - enable an ih ring buffer
  *
- * @adev: amdgpu_device pointer
- * @ih: amdgpu_ih_ring pointer
+ * @adev: amdgpu_device poपूर्णांकer
+ * @ih: amdgpu_ih_ring poपूर्णांकer
  *
  * Enable an ih ring buffer (VEGA10)
  */
-static int vega10_ih_enable_ring(struct amdgpu_device *adev,
-				 struct amdgpu_ih_ring *ih)
-{
-	struct amdgpu_ih_regs *ih_regs;
-	uint32_t tmp;
+अटल पूर्णांक vega10_ih_enable_ring(काष्ठा amdgpu_device *adev,
+				 काष्ठा amdgpu_ih_ring *ih)
+अणु
+	काष्ठा amdgpu_ih_regs *ih_regs;
+	uपूर्णांक32_t पंचांगp;
 
 	ih_regs = &ih->ih_regs;
 
@@ -216,302 +217,302 @@ static int vega10_ih_enable_ring(struct amdgpu_device *adev,
 	WREG32(ih_regs->ih_rb_base, ih->gpu_addr >> 8);
 	WREG32(ih_regs->ih_rb_base_hi, (ih->gpu_addr >> 40) & 0xff);
 
-	tmp = RREG32(ih_regs->ih_rb_cntl);
-	tmp = vega10_ih_rb_cntl(ih, tmp);
-	if (ih == &adev->irq.ih)
-		tmp = REG_SET_FIELD(tmp, IH_RB_CNTL, RPTR_REARM, !!adev->irq.msi_enabled);
-	if (ih == &adev->irq.ih1)
-		tmp = REG_SET_FIELD(tmp, IH_RB_CNTL, RB_FULL_DRAIN_ENABLE, 1);
-	if (amdgpu_sriov_vf(adev)) {
-		if (psp_reg_program(&adev->psp, ih_regs->psp_reg_id, tmp)) {
+	पंचांगp = RREG32(ih_regs->ih_rb_cntl);
+	पंचांगp = vega10_ih_rb_cntl(ih, पंचांगp);
+	अगर (ih == &adev->irq.ih)
+		पंचांगp = REG_SET_FIELD(पंचांगp, IH_RB_CNTL, RPTR_REARM, !!adev->irq.msi_enabled);
+	अगर (ih == &adev->irq.ih1)
+		पंचांगp = REG_SET_FIELD(पंचांगp, IH_RB_CNTL, RB_FULL_DRAIN_ENABLE, 1);
+	अगर (amdgpu_sriov_vf(adev)) अणु
+		अगर (psp_reg_program(&adev->psp, ih_regs->psp_reg_id, पंचांगp)) अणु
 			dev_err(adev->dev, "PSP program IH_RB_CNTL failed!\n");
-			return -ETIMEDOUT;
-		}
-	} else {
-		WREG32(ih_regs->ih_rb_cntl, tmp);
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		WREG32(ih_regs->ih_rb_cntl, पंचांगp);
+	पूर्ण
 
-	if (ih == &adev->irq.ih) {
-		/* set the ih ring 0 writeback address whether it's enabled or not */
+	अगर (ih == &adev->irq.ih) अणु
+		/* set the ih ring 0 ग_लिखोback address whether it's enabled or not */
 		WREG32(ih_regs->ih_rb_wptr_addr_lo, lower_32_bits(ih->wptr_addr));
 		WREG32(ih_regs->ih_rb_wptr_addr_hi, upper_32_bits(ih->wptr_addr) & 0xFFFF);
-	}
+	पूर्ण
 
 	/* set rptr, wptr to 0 */
 	WREG32(ih_regs->ih_rb_wptr, 0);
 	WREG32(ih_regs->ih_rb_rptr, 0);
 
-	WREG32(ih_regs->ih_doorbell_rptr, vega10_ih_doorbell_rptr(ih));
+	WREG32(ih_regs->ih_करोorbell_rptr, vega10_ih_करोorbell_rptr(ih));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * vega10_ih_irq_init - init and enable the interrupt ring
+ * vega10_ih_irq_init - init and enable the पूर्णांकerrupt ring
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Allocate a ring buffer for the interrupt controller,
- * enable the RLC, disable interrupts, enable the IH
+ * Allocate a ring buffer क्रम the पूर्णांकerrupt controller,
+ * enable the RLC, disable पूर्णांकerrupts, enable the IH
  * ring buffer and enable it (VI).
  * Called at device load and reume.
- * Returns 0 for success, errors for failure.
+ * Returns 0 क्रम success, errors क्रम failure.
  */
-static int vega10_ih_irq_init(struct amdgpu_device *adev)
-{
-	struct amdgpu_ih_ring *ih[] = {&adev->irq.ih, &adev->irq.ih1, &adev->irq.ih2};
+अटल पूर्णांक vega10_ih_irq_init(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ih_ring *ih[] = अणु&adev->irq.ih, &adev->irq.ih1, &adev->irq.ih2पूर्ण;
 	u32 ih_chicken;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	/* disable irqs */
-	ret = vega10_ih_toggle_interrupts(adev, false);
-	if (ret)
-		return ret;
+	ret = vega10_ih_toggle_पूर्णांकerrupts(adev, false);
+	अगर (ret)
+		वापस ret;
 
 	adev->nbio.funcs->ih_control(adev);
 
-	if (adev->asic_type == CHIP_RENOIR) {
+	अगर (adev->asic_type == CHIP_RENOIR) अणु
 		ih_chicken = RREG32_SOC15(OSSSYS, 0, mmIH_CHICKEN);
-		if (adev->irq.ih.use_bus_addr) {
+		अगर (adev->irq.ih.use_bus_addr) अणु
 			ih_chicken = REG_SET_FIELD(ih_chicken, IH_CHICKEN,
 						   MC_SPACE_GPA_ENABLE, 1);
-		}
+		पूर्ण
 		WREG32_SOC15(OSSSYS, 0, mmIH_CHICKEN, ih_chicken);
-	}
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(ih); i++) {
-		if (ih[i]->ring_size) {
+	क्रम (i = 0; i < ARRAY_SIZE(ih); i++) अणु
+		अगर (ih[i]->ring_size) अणु
 			ret = vega10_ih_enable_ring(adev, ih[i]);
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
 	pci_set_master(adev->pdev);
 
-	/* enable interrupts */
-	ret = vega10_ih_toggle_interrupts(adev, true);
-	if (ret)
-		return ret;
+	/* enable पूर्णांकerrupts */
+	ret = vega10_ih_toggle_पूर्णांकerrupts(adev, true);
+	अगर (ret)
+		वापस ret;
 
-	if (adev->irq.ih_soft.ring_size)
+	अगर (adev->irq.ih_soft.ring_size)
 		adev->irq.ih_soft.enabled = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * vega10_ih_irq_disable - disable interrupts
+ * vega10_ih_irq_disable - disable पूर्णांकerrupts
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Disable interrupts on the hw (VEGA10).
+ * Disable पूर्णांकerrupts on the hw (VEGA10).
  */
-static void vega10_ih_irq_disable(struct amdgpu_device *adev)
-{
-	vega10_ih_toggle_interrupts(adev, false);
+अटल व्योम vega10_ih_irq_disable(काष्ठा amdgpu_device *adev)
+अणु
+	vega10_ih_toggle_पूर्णांकerrupts(adev, false);
 
 	/* Wait and acknowledge irq */
 	mdelay(1);
-}
+पूर्ण
 
 /**
  * vega10_ih_get_wptr - get the IH ring buffer wptr
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @ih: IH ring buffer to fetch wptr
  *
- * Get the IH ring buffer wptr from either the register
- * or the writeback memory buffer (VEGA10).  Also check for
+ * Get the IH ring buffer wptr from either the रेजिस्टर
+ * or the ग_लिखोback memory buffer (VEGA10).  Also check क्रम
  * ring buffer overflow and deal with it.
  * Returns the value of the wptr.
  */
-static u32 vega10_ih_get_wptr(struct amdgpu_device *adev,
-			      struct amdgpu_ih_ring *ih)
-{
-	u32 wptr, tmp;
-	struct amdgpu_ih_regs *ih_regs;
+अटल u32 vega10_ih_get_wptr(काष्ठा amdgpu_device *adev,
+			      काष्ठा amdgpu_ih_ring *ih)
+अणु
+	u32 wptr, पंचांगp;
+	काष्ठा amdgpu_ih_regs *ih_regs;
 
-	if (ih == &adev->irq.ih) {
-		/* Only ring0 supports writeback. On other rings fall back
-		 * to register-based code with overflow checking below.
+	अगर (ih == &adev->irq.ih) अणु
+		/* Only ring0 supports ग_लिखोback. On other rings fall back
+		 * to रेजिस्टर-based code with overflow checking below.
 		 */
 		wptr = le32_to_cpu(*ih->wptr_cpu);
 
-		if (!REG_GET_FIELD(wptr, IH_RB_WPTR, RB_OVERFLOW))
-			goto out;
-	}
+		अगर (!REG_GET_FIELD(wptr, IH_RB_WPTR, RB_OVERFLOW))
+			जाओ out;
+	पूर्ण
 
 	ih_regs = &ih->ih_regs;
 
-	/* Double check that the overflow wasn't already cleared. */
+	/* Double check that the overflow wasn't alपढ़ोy cleared. */
 	wptr = RREG32_NO_KIQ(ih_regs->ih_rb_wptr);
-	if (!REG_GET_FIELD(wptr, IH_RB_WPTR, RB_OVERFLOW))
-		goto out;
+	अगर (!REG_GET_FIELD(wptr, IH_RB_WPTR, RB_OVERFLOW))
+		जाओ out;
 
 	wptr = REG_SET_FIELD(wptr, IH_RB_WPTR, RB_OVERFLOW, 0);
 
-	/* When a ring buffer overflow happen start parsing interrupt
+	/* When a ring buffer overflow happen start parsing पूर्णांकerrupt
 	 * from the last not overwritten vector (wptr + 32). Hopefully
 	 * this should allow us to catchup.
 	 */
-	tmp = (wptr + 32) & ih->ptr_mask;
+	पंचांगp = (wptr + 32) & ih->ptr_mask;
 	dev_warn(adev->dev, "IH ring buffer overflow "
 		 "(0x%08X, 0x%08X, 0x%08X)\n",
-		 wptr, ih->rptr, tmp);
-	ih->rptr = tmp;
+		 wptr, ih->rptr, पंचांगp);
+	ih->rptr = पंचांगp;
 
-	tmp = RREG32_NO_KIQ(ih_regs->ih_rb_cntl);
-	tmp = REG_SET_FIELD(tmp, IH_RB_CNTL, WPTR_OVERFLOW_CLEAR, 1);
-	WREG32_NO_KIQ(ih_regs->ih_rb_cntl, tmp);
+	पंचांगp = RREG32_NO_KIQ(ih_regs->ih_rb_cntl);
+	पंचांगp = REG_SET_FIELD(पंचांगp, IH_RB_CNTL, WPTR_OVERFLOW_CLEAR, 1);
+	WREG32_NO_KIQ(ih_regs->ih_rb_cntl, पंचांगp);
 
 out:
-	return (wptr & ih->ptr_mask);
-}
+	वापस (wptr & ih->ptr_mask);
+पूर्ण
 
 /**
- * vega10_ih_irq_rearm - rearm IRQ if lost
+ * vega10_ih_irq_rearm - rearm IRQ अगर lost
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @ih: IH ring to match
  *
  */
-static void vega10_ih_irq_rearm(struct amdgpu_device *adev,
-			       struct amdgpu_ih_ring *ih)
-{
-	uint32_t v = 0;
-	uint32_t i = 0;
-	struct amdgpu_ih_regs *ih_regs;
+अटल व्योम vega10_ih_irq_rearm(काष्ठा amdgpu_device *adev,
+			       काष्ठा amdgpu_ih_ring *ih)
+अणु
+	uपूर्णांक32_t v = 0;
+	uपूर्णांक32_t i = 0;
+	काष्ठा amdgpu_ih_regs *ih_regs;
 
 	ih_regs = &ih->ih_regs;
-	/* Rearm IRQ / re-wwrite doorbell if doorbell write is lost */
-	for (i = 0; i < MAX_REARM_RETRY; i++) {
+	/* Rearm IRQ / re-wग_लिखो करोorbell अगर करोorbell ग_लिखो is lost */
+	क्रम (i = 0; i < MAX_REARM_RETRY; i++) अणु
 		v = RREG32_NO_KIQ(ih_regs->ih_rb_rptr);
-		if ((v < ih->ring_size) && (v != ih->rptr))
-			WDOORBELL32(ih->doorbell_index, ih->rptr);
-		else
-			break;
-	}
-}
+		अगर ((v < ih->ring_size) && (v != ih->rptr))
+			WDOORBELL32(ih->करोorbell_index, ih->rptr);
+		अन्यथा
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * vega10_ih_set_rptr - set the IH ring buffer rptr
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @ih: IH ring buffer to set rptr
  *
  * Set the IH ring buffer rptr.
  */
-static void vega10_ih_set_rptr(struct amdgpu_device *adev,
-			       struct amdgpu_ih_ring *ih)
-{
-	struct amdgpu_ih_regs *ih_regs;
+अटल व्योम vega10_ih_set_rptr(काष्ठा amdgpu_device *adev,
+			       काष्ठा amdgpu_ih_ring *ih)
+अणु
+	काष्ठा amdgpu_ih_regs *ih_regs;
 
-	if (ih->use_doorbell) {
-		/* XXX check if swapping is necessary on BE */
+	अगर (ih->use_करोorbell) अणु
+		/* XXX check अगर swapping is necessary on BE */
 		*ih->rptr_cpu = ih->rptr;
-		WDOORBELL32(ih->doorbell_index, ih->rptr);
+		WDOORBELL32(ih->करोorbell_index, ih->rptr);
 
-		if (amdgpu_sriov_vf(adev))
+		अगर (amdgpu_sriov_vf(adev))
 			vega10_ih_irq_rearm(adev, ih);
-	} else {
+	पूर्ण अन्यथा अणु
 		ih_regs = &ih->ih_regs;
 		WREG32(ih_regs->ih_rb_rptr, ih->rptr);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * vega10_ih_self_irq - dispatch work for ring 1 and 2
+ * vega10_ih_self_irq - dispatch work क्रम ring 1 and 2
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @source: irq source
  * @entry: IV with WPTR update
  *
  * Update the WPTR from the IV and schedule work to handle the entries.
  */
-static int vega10_ih_self_irq(struct amdgpu_device *adev,
-			      struct amdgpu_irq_src *source,
-			      struct amdgpu_iv_entry *entry)
-{
-	switch (entry->ring_id) {
-	case 1:
+अटल पूर्णांक vega10_ih_self_irq(काष्ठा amdgpu_device *adev,
+			      काष्ठा amdgpu_irq_src *source,
+			      काष्ठा amdgpu_iv_entry *entry)
+अणु
+	चयन (entry->ring_id) अणु
+	हाल 1:
 		schedule_work(&adev->irq.ih1_work);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		schedule_work(&adev->irq.ih2_work);
-		break;
-	default: break;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष: अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct amdgpu_irq_src_funcs vega10_ih_self_irq_funcs = {
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs vega10_ih_self_irq_funcs = अणु
 	.process = vega10_ih_self_irq,
-};
+पूर्ण;
 
-static void vega10_ih_set_self_irq_funcs(struct amdgpu_device *adev)
-{
+अटल व्योम vega10_ih_set_self_irq_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->irq.self_irq.num_types = 0;
 	adev->irq.self_irq.funcs = &vega10_ih_self_irq_funcs;
-}
+पूर्ण
 
-static int vega10_ih_early_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vega10_ih_early_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	vega10_ih_set_interrupt_funcs(adev);
+	vega10_ih_set_पूर्णांकerrupt_funcs(adev);
 	vega10_ih_set_self_irq_funcs(adev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vega10_ih_sw_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int r;
+अटल पूर्णांक vega10_ih_sw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक r;
 
 	r = amdgpu_irq_add_id(adev, SOC15_IH_CLIENTID_IH, 0,
 			      &adev->irq.self_irq);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_ih_ring_init(adev, &adev->irq.ih, 256 * 1024, true);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	adev->irq.ih.use_doorbell = true;
-	adev->irq.ih.doorbell_index = adev->doorbell_index.ih << 1;
+	adev->irq.ih.use_करोorbell = true;
+	adev->irq.ih.करोorbell_index = adev->करोorbell_index.ih << 1;
 
-	if (!(adev->flags & AMD_IS_APU)) {
+	अगर (!(adev->flags & AMD_IS_APU)) अणु
 		r = amdgpu_ih_ring_init(adev, &adev->irq.ih1, PAGE_SIZE, true);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 
-		adev->irq.ih1.use_doorbell = true;
-		adev->irq.ih1.doorbell_index = (adev->doorbell_index.ih + 1) << 1;
+		adev->irq.ih1.use_करोorbell = true;
+		adev->irq.ih1.करोorbell_index = (adev->करोorbell_index.ih + 1) << 1;
 
 		r = amdgpu_ih_ring_init(adev, &adev->irq.ih2, PAGE_SIZE, true);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 
-		adev->irq.ih2.use_doorbell = true;
-		adev->irq.ih2.doorbell_index = (adev->doorbell_index.ih + 2) << 1;
-	}
-	/* initialize ih control registers offset */
-	vega10_ih_init_register_offset(adev);
+		adev->irq.ih2.use_करोorbell = true;
+		adev->irq.ih2.करोorbell_index = (adev->करोorbell_index.ih + 2) << 1;
+	पूर्ण
+	/* initialize ih control रेजिस्टरs offset */
+	vega10_ih_init_रेजिस्टर_offset(adev);
 
 	r = amdgpu_ih_ring_init(adev, &adev->irq.ih_soft, PAGE_SIZE, true);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_irq_init(adev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int vega10_ih_sw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vega10_ih_sw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	amdgpu_irq_fini(adev);
 	amdgpu_ih_ring_fini(adev, &adev->irq.ih_soft);
@@ -519,75 +520,75 @@ static int vega10_ih_sw_fini(void *handle)
 	amdgpu_ih_ring_fini(adev, &adev->irq.ih1);
 	amdgpu_ih_ring_fini(adev, &adev->irq.ih);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vega10_ih_hw_init(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vega10_ih_hw_init(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	r = vega10_ih_irq_init(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vega10_ih_hw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vega10_ih_hw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	vega10_ih_irq_disable(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vega10_ih_suspend(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vega10_ih_suspend(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return vega10_ih_hw_fini(adev);
-}
+	वापस vega10_ih_hw_fini(adev);
+पूर्ण
 
-static int vega10_ih_resume(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vega10_ih_resume(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return vega10_ih_hw_init(adev);
-}
+	वापस vega10_ih_hw_init(adev);
+पूर्ण
 
-static bool vega10_ih_is_idle(void *handle)
-{
-	/* todo */
-	return true;
-}
+अटल bool vega10_ih_is_idle(व्योम *handle)
+अणु
+	/* toकरो */
+	वापस true;
+पूर्ण
 
-static int vega10_ih_wait_for_idle(void *handle)
-{
-	/* todo */
-	return -ETIMEDOUT;
-}
+अटल पूर्णांक vega10_ih_रुको_क्रम_idle(व्योम *handle)
+अणु
+	/* toकरो */
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int vega10_ih_soft_reset(void *handle)
-{
-	/* todo */
+अटल पूर्णांक vega10_ih_soft_reset(व्योम *handle)
+अणु
+	/* toकरो */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vega10_ih_update_clockgating_state(struct amdgpu_device *adev,
+अटल व्योम vega10_ih_update_घड़ीgating_state(काष्ठा amdgpu_device *adev,
 					       bool enable)
-{
-	uint32_t data, def, field_val;
+अणु
+	uपूर्णांक32_t data, def, field_val;
 
-	if (adev->cg_flags & AMD_CG_SUPPORT_IH_CG) {
+	अगर (adev->cg_flags & AMD_CG_SUPPORT_IH_CG) अणु
 		def = data = RREG32_SOC15(OSSSYS, 0, mmIH_CLK_CTRL);
 		field_val = enable ? 0 : 1;
 		/**
-		 * Vega10/12 and RAVEN don't have IH_BUFFER_MEM_CLK_SOFT_OVERRIDE field.
+		 * Vega10/12 and RAVEN करोn't have IH_BUFFER_MEM_CLK_SOFT_OVERRIDE field.
 		 */
-		if (adev->asic_type == CHIP_RENOIR)
+		अगर (adev->asic_type == CHIP_RENOIR)
 			data = REG_SET_FIELD(data, IH_CLK_CTRL,
 				     IH_BUFFER_MEM_CLK_SOFT_OVERRIDE, field_val);
 
@@ -601,32 +602,32 @@ static void vega10_ih_update_clockgating_state(struct amdgpu_device *adev,
 				     DYN_CLK_SOFT_OVERRIDE, field_val);
 		data = REG_SET_FIELD(data, IH_CLK_CTRL,
 				     REG_CLK_SOFT_OVERRIDE, field_val);
-		if (def != data)
+		अगर (def != data)
 			WREG32_SOC15(OSSSYS, 0, mmIH_CLK_CTRL, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int vega10_ih_set_clockgating_state(void *handle,
-					  enum amd_clockgating_state state)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक vega10_ih_set_घड़ीgating_state(व्योम *handle,
+					  क्रमागत amd_घड़ीgating_state state)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	vega10_ih_update_clockgating_state(adev,
+	vega10_ih_update_घड़ीgating_state(adev,
 				state == AMD_CG_STATE_GATE);
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int vega10_ih_set_powergating_state(void *handle,
-					  enum amd_powergating_state state)
-{
-	return 0;
-}
+अटल पूर्णांक vega10_ih_set_घातergating_state(व्योम *handle,
+					  क्रमागत amd_घातergating_state state)
+अणु
+	वापस 0;
+पूर्ण
 
-const struct amd_ip_funcs vega10_ih_ip_funcs = {
+स्थिर काष्ठा amd_ip_funcs vega10_ih_ip_funcs = अणु
 	.name = "vega10_ih",
 	.early_init = vega10_ih_early_init,
-	.late_init = NULL,
+	.late_init = शून्य,
 	.sw_init = vega10_ih_sw_init,
 	.sw_fini = vega10_ih_sw_fini,
 	.hw_init = vega10_ih_hw_init,
@@ -634,28 +635,28 @@ const struct amd_ip_funcs vega10_ih_ip_funcs = {
 	.suspend = vega10_ih_suspend,
 	.resume = vega10_ih_resume,
 	.is_idle = vega10_ih_is_idle,
-	.wait_for_idle = vega10_ih_wait_for_idle,
+	.रुको_क्रम_idle = vega10_ih_रुको_क्रम_idle,
 	.soft_reset = vega10_ih_soft_reset,
-	.set_clockgating_state = vega10_ih_set_clockgating_state,
-	.set_powergating_state = vega10_ih_set_powergating_state,
-};
+	.set_घड़ीgating_state = vega10_ih_set_घड़ीgating_state,
+	.set_घातergating_state = vega10_ih_set_घातergating_state,
+पूर्ण;
 
-static const struct amdgpu_ih_funcs vega10_ih_funcs = {
+अटल स्थिर काष्ठा amdgpu_ih_funcs vega10_ih_funcs = अणु
 	.get_wptr = vega10_ih_get_wptr,
 	.decode_iv = amdgpu_ih_decode_iv_helper,
 	.set_rptr = vega10_ih_set_rptr
-};
+पूर्ण;
 
-static void vega10_ih_set_interrupt_funcs(struct amdgpu_device *adev)
-{
+अटल व्योम vega10_ih_set_पूर्णांकerrupt_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->irq.ih_funcs = &vega10_ih_funcs;
-}
+पूर्ण
 
-const struct amdgpu_ip_block_version vega10_ih_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version vega10_ih_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_IH,
 	.major = 4,
 	.minor = 0,
 	.rev = 0,
 	.funcs = &vega10_ih_ip_funcs,
-};
+पूर्ण;

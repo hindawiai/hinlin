@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Glue Code for the AVX assembler implementation of the Cast6 Cipher
+ * Glue Code क्रम the AVX assembler implementation of the Cast6 Cipher
  *
  * Copyright (C) 2012 Johannes Goetzfried
- *     <Johannes.Goetzfried@informatik.stud.uni-erlangen.de>
+ *     <Johannes.Goetzfried@inक्रमmatik.stud.uni-erlangen.de>
  *
- * Copyright © 2013 Jussi Kivilinna <jussi.kivilinna@iki.fi>
+ * Copyright तऊ 2013 Jussi Kivilinna <jussi.kivilinna@iki.fi>
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/crypto.h>
-#include <linux/err.h>
-#include <crypto/algapi.h>
-#include <crypto/cast6.h>
-#include <crypto/internal/simd.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/err.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/cast6.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
 
-#include "ecb_cbc_helpers.h"
+#समावेश "ecb_cbc_helpers.h"
 
-#define CAST6_PARALLEL_BLOCKS 8
+#घोषणा CAST6_PARALLEL_BLOCKS 8
 
-asmlinkage void cast6_ecb_enc_8way(const void *ctx, u8 *dst, const u8 *src);
-asmlinkage void cast6_ecb_dec_8way(const void *ctx, u8 *dst, const u8 *src);
+यंत्रlinkage व्योम cast6_ecb_enc_8way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
+यंत्रlinkage व्योम cast6_ecb_dec_8way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 
-asmlinkage void cast6_cbc_dec_8way(const void *ctx, u8 *dst, const u8 *src);
+यंत्रlinkage व्योम cast6_cbc_dec_8way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 
-static int cast6_setkey_skcipher(struct crypto_skcipher *tfm,
-				 const u8 *key, unsigned int keylen)
-{
-	return cast6_setkey(&tfm->base, key, keylen);
-}
+अटल पूर्णांक cast6_setkey_skcipher(काष्ठा crypto_skcipher *tfm,
+				 स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
+अणु
+	वापस cast6_setkey(&tfm->base, key, keylen);
+पूर्ण
 
-static int ecb_encrypt(struct skcipher_request *req)
-{
+अटल पूर्णांक ecb_encrypt(काष्ठा skcipher_request *req)
+अणु
 	ECB_WALK_START(req, CAST6_BLOCK_SIZE, CAST6_PARALLEL_BLOCKS);
 	ECB_BLOCK(CAST6_PARALLEL_BLOCKS, cast6_ecb_enc_8way);
 	ECB_BLOCK(1, __cast6_encrypt);
 	ECB_WALK_END();
-}
+पूर्ण
 
-static int ecb_decrypt(struct skcipher_request *req)
-{
+अटल पूर्णांक ecb_decrypt(काष्ठा skcipher_request *req)
+अणु
 	ECB_WALK_START(req, CAST6_BLOCK_SIZE, CAST6_PARALLEL_BLOCKS);
 	ECB_BLOCK(CAST6_PARALLEL_BLOCKS, cast6_ecb_dec_8way);
 	ECB_BLOCK(1, __cast6_decrypt);
 	ECB_WALK_END();
-}
+पूर्ण
 
-static int cbc_encrypt(struct skcipher_request *req)
-{
+अटल पूर्णांक cbc_encrypt(काष्ठा skcipher_request *req)
+अणु
 	CBC_WALK_START(req, CAST6_BLOCK_SIZE, -1);
 	CBC_ENC_BLOCK(__cast6_encrypt);
 	CBC_WALK_END();
-}
+पूर्ण
 
-static int cbc_decrypt(struct skcipher_request *req)
-{
+अटल पूर्णांक cbc_decrypt(काष्ठा skcipher_request *req)
+अणु
 	CBC_WALK_START(req, CAST6_BLOCK_SIZE, CAST6_PARALLEL_BLOCKS);
 	CBC_DEC_BLOCK(CAST6_PARALLEL_BLOCKS, cast6_cbc_dec_8way);
 	CBC_DEC_BLOCK(1, __cast6_decrypt);
 	CBC_WALK_END();
-}
+पूर्ण
 
-static struct skcipher_alg cast6_algs[] = {
-	{
+अटल काष्ठा skcipher_alg cast6_algs[] = अणु
+	अणु
 		.base.cra_name		= "__ecb(cast6)",
 		.base.cra_driver_name	= "__ecb-cast6-avx",
 		.base.cra_priority	= 200,
 		.base.cra_flags		= CRYPTO_ALG_INTERNAL,
 		.base.cra_blocksize	= CAST6_BLOCK_SIZE,
-		.base.cra_ctxsize	= sizeof(struct cast6_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा cast6_ctx),
 		.base.cra_module	= THIS_MODULE,
 		.min_keysize		= CAST6_MIN_KEY_SIZE,
 		.max_keysize		= CAST6_MAX_KEY_SIZE,
 		.setkey			= cast6_setkey_skcipher,
 		.encrypt		= ecb_encrypt,
 		.decrypt		= ecb_decrypt,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "__cbc(cast6)",
 		.base.cra_driver_name	= "__cbc-cast6-avx",
 		.base.cra_priority	= 200,
 		.base.cra_flags		= CRYPTO_ALG_INTERNAL,
 		.base.cra_blocksize	= CAST6_BLOCK_SIZE,
-		.base.cra_ctxsize	= sizeof(struct cast6_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा cast6_ctx),
 		.base.cra_module	= THIS_MODULE,
 		.min_keysize		= CAST6_MIN_KEY_SIZE,
 		.max_keysize		= CAST6_MAX_KEY_SIZE,
@@ -90,34 +91,34 @@ static struct skcipher_alg cast6_algs[] = {
 		.setkey			= cast6_setkey_skcipher,
 		.encrypt		= cbc_encrypt,
 		.decrypt		= cbc_decrypt,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct simd_skcipher_alg *cast6_simd_algs[ARRAY_SIZE(cast6_algs)];
+अटल काष्ठा simd_skcipher_alg *cast6_simd_algs[ARRAY_SIZE(cast6_algs)];
 
-static int __init cast6_init(void)
-{
-	const char *feature_name;
+अटल पूर्णांक __init cast6_init(व्योम)
+अणु
+	स्थिर अक्षर *feature_name;
 
-	if (!cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM,
-				&feature_name)) {
+	अगर (!cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM,
+				&feature_name)) अणु
 		pr_info("CPU feature '%s' is not supported.\n", feature_name);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return simd_register_skciphers_compat(cast6_algs,
+	वापस simd_रेजिस्टर_skciphers_compat(cast6_algs,
 					      ARRAY_SIZE(cast6_algs),
 					      cast6_simd_algs);
-}
+पूर्ण
 
-static void __exit cast6_exit(void)
-{
-	simd_unregister_skciphers(cast6_algs, ARRAY_SIZE(cast6_algs),
+अटल व्योम __निकास cast6_निकास(व्योम)
+अणु
+	simd_unरेजिस्टर_skciphers(cast6_algs, ARRAY_SIZE(cast6_algs),
 				  cast6_simd_algs);
-}
+पूर्ण
 
 module_init(cast6_init);
-module_exit(cast6_exit);
+module_निकास(cast6_निकास);
 
 MODULE_DESCRIPTION("Cast6 Cipher Algorithm, AVX optimized");
 MODULE_LICENSE("GPL");

@@ -1,269 +1,270 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/compiler.h>
-#include <linux/hrtimer.h>
-#include <linux/time.h>
-#include <asm/io.h>
-#include <asm/barrier.h>
-#include <asm/bug.h>
-#include <asm/page.h>
-#include <asm/unistd.h>
-#include <asm/vdso_datapage.h>
-#include <asm/vdso_timer_info.h>
-#include <asm/asm-offsets.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/समय.स>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/bug.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/vdso_datapage.h>
+#समावेश <यंत्र/vdso_समयr_info.h>
+#समावेश <यंत्र/यंत्र-offsets.h>
 
-#define X(x) #x
-#define Y(x) X(x)
+#घोषणा X(x) #x
+#घोषणा Y(x) X(x)
 
-extern struct vdso_data *__get_datapage(void);
-extern struct vdso_data *__get_timerpage(void);
+बाह्य काष्ठा vdso_data *__get_datapage(व्योम);
+बाह्य काष्ठा vdso_data *__get_समयrpage(व्योम);
 
-static notrace unsigned int __vdso_read_begin(const struct vdso_data *vdata)
-{
+अटल notrace अचिन्हित पूर्णांक __vdso_पढ़ो_begin(स्थिर काष्ठा vdso_data *vdata)
+अणु
 	u32 seq;
 repeat:
 	seq = READ_ONCE(vdata->seq_count);
-	if (seq & 1) {
+	अगर (seq & 1) अणु
 		cpu_relax();
-		goto repeat;
-	}
-	return seq;
-}
+		जाओ repeat;
+	पूर्ण
+	वापस seq;
+पूर्ण
 
-static notrace unsigned int vdso_read_begin(const struct vdso_data *vdata)
-{
-	unsigned int seq;
+अटल notrace अचिन्हित पूर्णांक vdso_पढ़ो_begin(स्थिर काष्ठा vdso_data *vdata)
+अणु
+	अचिन्हित पूर्णांक seq;
 
-	seq = __vdso_read_begin(vdata);
+	seq = __vdso_पढ़ो_begin(vdata);
 
-	smp_rmb();		/* Pairs with smp_wmb in vdso_write_end */
-	return seq;
-}
+	smp_rmb();		/* Pairs with smp_wmb in vdso_ग_लिखो_end */
+	वापस seq;
+पूर्ण
 
-static notrace int vdso_read_retry(const struct vdso_data *vdata, u32 start)
-{
-	smp_rmb();		/* Pairs with smp_wmb in vdso_write_begin */
-	return vdata->seq_count != start;
-}
+अटल notrace पूर्णांक vdso_पढ़ो_retry(स्थिर काष्ठा vdso_data *vdata, u32 start)
+अणु
+	smp_rmb();		/* Pairs with smp_wmb in vdso_ग_लिखो_begin */
+	वापस vdata->seq_count != start;
+पूर्ण
 
-static notrace long clock_gettime_fallback(clockid_t _clkid,
-					   struct __kernel_old_timespec *_ts)
-{
-	register struct __kernel_old_timespec *ts asm("$r1") = _ts;
-	register clockid_t clkid asm("$r0") = _clkid;
-	register long ret asm("$r0");
+अटल notrace दीर्घ घड़ी_समय_लो_fallback(घड़ीid_t _clkid,
+					   काष्ठा __kernel_old_बारpec *_ts)
+अणु
+	रेजिस्टर काष्ठा __kernel_old_बारpec *ts यंत्र("$r1") = _ts;
+	रेजिस्टर घड़ीid_t clkid यंत्र("$r0") = _clkid;
+	रेजिस्टर दीर्घ ret यंत्र("$r0");
 
-	asm volatile ("movi	$r15, %3\n"
+	यंत्र अस्थिर ("movi	$r15, %3\n"
 		      "syscall 	0x0\n"
 		      :"=r" (ret)
-		      :"r"(clkid), "r"(ts), "i"(__NR_clock_gettime)
+		      :"r"(clkid), "r"(ts), "i"(__NR_घड़ी_समय_लो)
 		      :"$r15", "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static notrace int do_realtime_coarse(struct __kernel_old_timespec *ts,
-				      struct vdso_data *vdata)
-{
+अटल notrace पूर्णांक करो_realसमय_coarse(काष्ठा __kernel_old_बारpec *ts,
+				      काष्ठा vdso_data *vdata)
+अणु
 	u32 seq;
 
-	do {
-		seq = vdso_read_begin(vdata);
+	करो अणु
+		seq = vdso_पढ़ो_begin(vdata);
 
-		ts->tv_sec = vdata->xtime_coarse_sec;
-		ts->tv_nsec = vdata->xtime_coarse_nsec;
+		ts->tv_sec = vdata->xसमय_coarse_sec;
+		ts->tv_nsec = vdata->xसमय_coarse_nsec;
 
-	} while (vdso_read_retry(vdata, seq));
-	return 0;
-}
+	पूर्ण जबतक (vdso_पढ़ो_retry(vdata, seq));
+	वापस 0;
+पूर्ण
 
-static notrace int do_monotonic_coarse(struct __kernel_old_timespec *ts,
-				       struct vdso_data *vdata)
-{
+अटल notrace पूर्णांक करो_monotonic_coarse(काष्ठा __kernel_old_बारpec *ts,
+				       काष्ठा vdso_data *vdata)
+अणु
 	u32 seq;
 	u64 ns;
 
-	do {
-		seq = vdso_read_begin(vdata);
+	करो अणु
+		seq = vdso_पढ़ो_begin(vdata);
 
-		ts->tv_sec = vdata->xtime_coarse_sec + vdata->wtm_clock_sec;
-		ns = vdata->xtime_coarse_nsec + vdata->wtm_clock_nsec;
+		ts->tv_sec = vdata->xसमय_coarse_sec + vdata->wपंचांग_घड़ी_sec;
+		ns = vdata->xसमय_coarse_nsec + vdata->wपंचांग_घड़ी_nsec;
 
-	} while (vdso_read_retry(vdata, seq));
+	पूर्ण जबतक (vdso_पढ़ो_retry(vdata, seq));
 
-	ts->tv_sec += __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
+	ts->tv_sec += __iter_भाग_u64_rem(ns, NSEC_PER_SEC, &ns);
 	ts->tv_nsec = ns;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static notrace inline u64 vgetsns(struct vdso_data *vdso)
-{
+अटल notrace अंतरभूत u64 vमाला_लोns(काष्ठा vdso_data *vdso)
+अणु
 	u32 cycle_now;
 	u32 cycle_delta;
-	u32 *timer_cycle_base;
+	u32 *समयr_cycle_base;
 
-	timer_cycle_base =
-	    (u32 *) ((char *)__get_timerpage() + vdso->cycle_count_offset);
-	cycle_now = readl_relaxed(timer_cycle_base);
-	if (true == vdso->cycle_count_down)
-		cycle_now = ~(*timer_cycle_base);
+	समयr_cycle_base =
+	    (u32 *) ((अक्षर *)__get_समयrpage() + vdso->cycle_count_offset);
+	cycle_now = पढ़ोl_relaxed(समयr_cycle_base);
+	अगर (true == vdso->cycle_count_करोwn)
+		cycle_now = ~(*समयr_cycle_base);
 	cycle_delta = cycle_now - (u32) vdso->cs_cycle_last;
-	return ((u64) cycle_delta & vdso->cs_mask) * vdso->cs_mult;
-}
+	वापस ((u64) cycle_delta & vdso->cs_mask) * vdso->cs_mult;
+पूर्ण
 
-static notrace int do_realtime(struct __kernel_old_timespec *ts, struct vdso_data *vdata)
-{
-	unsigned count;
+अटल notrace पूर्णांक करो_realसमय(काष्ठा __kernel_old_बारpec *ts, काष्ठा vdso_data *vdata)
+अणु
+	अचिन्हित count;
 	u64 ns;
-	do {
-		count = vdso_read_begin(vdata);
-		ts->tv_sec = vdata->xtime_clock_sec;
-		ns = vdata->xtime_clock_nsec;
-		ns += vgetsns(vdata);
-		ns >>= vdata->cs_shift;
-	} while (vdso_read_retry(vdata, count));
+	करो अणु
+		count = vdso_पढ़ो_begin(vdata);
+		ts->tv_sec = vdata->xसमय_घड़ी_sec;
+		ns = vdata->xसमय_घड़ी_nsec;
+		ns += vमाला_लोns(vdata);
+		ns >>= vdata->cs_shअगरt;
+	पूर्ण जबतक (vdso_पढ़ो_retry(vdata, count));
 
-	ts->tv_sec += __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
+	ts->tv_sec += __iter_भाग_u64_rem(ns, NSEC_PER_SEC, &ns);
 	ts->tv_nsec = ns;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static notrace int do_monotonic(struct __kernel_old_timespec *ts, struct vdso_data *vdata)
-{
+अटल notrace पूर्णांक करो_monotonic(काष्ठा __kernel_old_बारpec *ts, काष्ठा vdso_data *vdata)
+अणु
 	u64 ns;
 	u32 seq;
 
-	do {
-		seq = vdso_read_begin(vdata);
+	करो अणु
+		seq = vdso_पढ़ो_begin(vdata);
 
-		ts->tv_sec = vdata->xtime_clock_sec;
-		ns = vdata->xtime_clock_nsec;
-		ns += vgetsns(vdata);
-		ns >>= vdata->cs_shift;
+		ts->tv_sec = vdata->xसमय_घड़ी_sec;
+		ns = vdata->xसमय_घड़ी_nsec;
+		ns += vमाला_लोns(vdata);
+		ns >>= vdata->cs_shअगरt;
 
-		ts->tv_sec += vdata->wtm_clock_sec;
-		ns += vdata->wtm_clock_nsec;
+		ts->tv_sec += vdata->wपंचांग_घड़ी_sec;
+		ns += vdata->wपंचांग_घड़ी_nsec;
 
-	} while (vdso_read_retry(vdata, seq));
+	पूर्ण जबतक (vdso_पढ़ो_retry(vdata, seq));
 
-	ts->tv_sec += __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
+	ts->tv_sec += __iter_भाग_u64_rem(ns, NSEC_PER_SEC, &ns);
 	ts->tv_nsec = ns;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-notrace int __vdso_clock_gettime(clockid_t clkid, struct __kernel_old_timespec *ts)
-{
-	struct vdso_data *vdata;
-	int ret = -1;
+notrace पूर्णांक __vdso_घड़ी_समय_लो(घड़ीid_t clkid, काष्ठा __kernel_old_बारpec *ts)
+अणु
+	काष्ठा vdso_data *vdata;
+	पूर्णांक ret = -1;
 
 	vdata = __get_datapage();
-	if (vdata->cycle_count_offset == EMPTY_REG_OFFSET)
-		return clock_gettime_fallback(clkid, ts);
+	अगर (vdata->cycle_count_offset == EMPTY_REG_OFFSET)
+		वापस घड़ी_समय_लो_fallback(clkid, ts);
 
-	switch (clkid) {
-	case CLOCK_REALTIME_COARSE:
-		ret = do_realtime_coarse(ts, vdata);
-		break;
-	case CLOCK_MONOTONIC_COARSE:
-		ret = do_monotonic_coarse(ts, vdata);
-		break;
-	case CLOCK_REALTIME:
-		ret = do_realtime(ts, vdata);
-		break;
-	case CLOCK_MONOTONIC:
-		ret = do_monotonic(ts, vdata);
-		break;
-	default:
-		break;
-	}
+	चयन (clkid) अणु
+	हाल CLOCK_REALTIME_COARSE:
+		ret = करो_realसमय_coarse(ts, vdata);
+		अवरोध;
+	हाल CLOCK_MONOTONIC_COARSE:
+		ret = करो_monotonic_coarse(ts, vdata);
+		अवरोध;
+	हाल CLOCK_REALTIME:
+		ret = करो_realसमय(ts, vdata);
+		अवरोध;
+	हाल CLOCK_MONOTONIC:
+		ret = करो_monotonic(ts, vdata);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (ret)
-		ret = clock_gettime_fallback(clkid, ts);
+	अगर (ret)
+		ret = घड़ी_समय_लो_fallback(clkid, ts);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static notrace int clock_getres_fallback(clockid_t _clk_id,
-					  struct __kernel_old_timespec *_res)
-{
-	register clockid_t clk_id asm("$r0") = _clk_id;
-	register struct __kernel_old_timespec *res asm("$r1") = _res;
-	register int ret asm("$r0");
+अटल notrace पूर्णांक घड़ी_getres_fallback(घड़ीid_t _clk_id,
+					  काष्ठा __kernel_old_बारpec *_res)
+अणु
+	रेजिस्टर घड़ीid_t clk_id यंत्र("$r0") = _clk_id;
+	रेजिस्टर काष्ठा __kernel_old_बारpec *res यंत्र("$r1") = _res;
+	रेजिस्टर पूर्णांक ret यंत्र("$r0");
 
-	asm volatile ("movi	$r15, %3\n"
+	यंत्र अस्थिर ("movi	$r15, %3\n"
 		      "syscall	0x0\n"
 		      :"=r" (ret)
-		      :"r"(clk_id), "r"(res), "i"(__NR_clock_getres)
+		      :"r"(clk_id), "r"(res), "i"(__NR_घड़ी_getres)
 		      :"$r15", "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-notrace int __vdso_clock_getres(clockid_t clk_id, struct __kernel_old_timespec *res)
-{
-	struct vdso_data *vdata = __get_datapage();
+notrace पूर्णांक __vdso_घड़ी_getres(घड़ीid_t clk_id, काष्ठा __kernel_old_बारpec *res)
+अणु
+	काष्ठा vdso_data *vdata = __get_datapage();
 
-	if (res == NULL)
-		return 0;
-	switch (clk_id) {
-	case CLOCK_REALTIME:
-	case CLOCK_MONOTONIC:
-	case CLOCK_MONOTONIC_RAW:
+	अगर (res == शून्य)
+		वापस 0;
+	चयन (clk_id) अणु
+	हाल CLOCK_REALTIME:
+	हाल CLOCK_MONOTONIC:
+	हाल CLOCK_MONOTONIC_RAW:
 		res->tv_sec = 0;
-		res->tv_nsec = vdata->hrtimer_res;
-		break;
-	case CLOCK_REALTIME_COARSE:
-	case CLOCK_MONOTONIC_COARSE:
+		res->tv_nsec = vdata->hrसमयr_res;
+		अवरोध;
+	हाल CLOCK_REALTIME_COARSE:
+	हाल CLOCK_MONOTONIC_COARSE:
 		res->tv_sec = 0;
 		res->tv_nsec = CLOCK_COARSE_RES;
-		break;
-	default:
-		return clock_getres_fallback(clk_id, res);
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस घड़ी_getres_fallback(clk_id, res);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static notrace inline int gettimeofday_fallback(struct __kernel_old_timeval *_tv,
-						struct timezone *_tz)
-{
-	register struct __kernel_old_timeval *tv asm("$r0") = _tv;
-	register struct timezone *tz asm("$r1") = _tz;
-	register int ret asm("$r0");
+अटल notrace अंतरभूत पूर्णांक समय_लोofday_fallback(काष्ठा __kernel_old_समयval *_tv,
+						काष्ठा समयzone *_tz)
+अणु
+	रेजिस्टर काष्ठा __kernel_old_समयval *tv यंत्र("$r0") = _tv;
+	रेजिस्टर काष्ठा समयzone *tz यंत्र("$r1") = _tz;
+	रेजिस्टर पूर्णांक ret यंत्र("$r0");
 
-	asm volatile ("movi	$r15, %3\n"
+	यंत्र अस्थिर ("movi	$r15, %3\n"
 		      "syscall	0x0\n"
 		      :"=r" (ret)
-		      :"r"(tv), "r"(tz), "i"(__NR_gettimeofday)
+		      :"r"(tv), "r"(tz), "i"(__NR_समय_लोofday)
 		      :"$r15", "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-notrace int __vdso_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz)
-{
-	struct __kernel_old_timespec ts;
-	struct vdso_data *vdata;
-	int ret;
+notrace पूर्णांक __vdso_समय_लोofday(काष्ठा __kernel_old_समयval *tv, काष्ठा समयzone *tz)
+अणु
+	काष्ठा __kernel_old_बारpec ts;
+	काष्ठा vdso_data *vdata;
+	पूर्णांक ret;
 
 	vdata = __get_datapage();
 
-	if (vdata->cycle_count_offset == EMPTY_REG_OFFSET)
-		return gettimeofday_fallback(tv, tz);
+	अगर (vdata->cycle_count_offset == EMPTY_REG_OFFSET)
+		वापस समय_लोofday_fallback(tv, tz);
 
-	ret = do_realtime(&ts, vdata);
+	ret = करो_realसमय(&ts, vdata);
 
-	if (tv) {
+	अगर (tv) अणु
 		tv->tv_sec = ts.tv_sec;
 		tv->tv_usec = ts.tv_nsec / 1000;
-	}
-	if (tz) {
+	पूर्ण
+	अगर (tz) अणु
 		tz->tz_minuteswest = vdata->tz_minuteswest;
-		tz->tz_dsttime = vdata->tz_dsttime;
-	}
+		tz->tz_dstसमय = vdata->tz_dstसमय;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

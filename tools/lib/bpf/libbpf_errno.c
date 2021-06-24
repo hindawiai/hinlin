@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 
 /*
  * Copyright (C) 2013-2015 Alexei Starovoitov <ast@kernel.org>
@@ -7,20 +8,20 @@
  * Copyright (C) 2017 Nicira, Inc.
  */
 
-#undef _GNU_SOURCE
-#include <stdio.h>
-#include <string.h>
+#अघोषित _GNU_SOURCE
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
 
-#include "libbpf.h"
+#समावेश "libbpf.h"
 
-/* make sure libbpf doesn't use kernel-only integer typedefs */
-#pragma GCC poison u8 u16 u32 u64 s8 s16 s32 s64
+/* make sure libbpf करोesn't use kernel-only पूर्णांकeger प्रकारs */
+#आशय GCC poison u8 u16 u32 u64 s8 s16 s32 s64
 
-#define ERRNO_OFFSET(e)		((e) - __LIBBPF_ERRNO__START)
-#define ERRCODE_OFFSET(c)	ERRNO_OFFSET(LIBBPF_ERRNO__##c)
-#define NR_ERRNO	(__LIBBPF_ERRNO__END - __LIBBPF_ERRNO__START)
+#घोषणा ERRNO_OFFSET(e)		((e) - __LIBBPF_ERRNO__START)
+#घोषणा ERRCODE_OFFSET(c)	ERRNO_OFFSET(LIBBPF_ERRNO__##c)
+#घोषणा NR_ERRNO	(__LIBBPF_ERRNO__END - __LIBBPF_ERRNO__START)
 
-static const char *libbpf_strerror_table[NR_ERRNO] = {
+अटल स्थिर अक्षर *libbpf_म_त्रुटि_table[NR_ERRNO] = अणु
 	[ERRCODE_OFFSET(LIBELF)]	= "Something wrong in libelf",
 	[ERRCODE_OFFSET(FORMAT)]	= "BPF object format invalid",
 	[ERRCODE_OFFSET(KVERSION)]	= "'version' section incorrect or lost",
@@ -34,33 +35,33 @@ static const char *libbpf_strerror_table[NR_ERRNO] = {
 	[ERRCODE_OFFSET(WRNGPID)]	= "Wrong pid in netlink message",
 	[ERRCODE_OFFSET(INVSEQ)]	= "Invalid netlink sequence",
 	[ERRCODE_OFFSET(NLPARSE)]	= "Incorrect netlink message parsing",
-};
+पूर्ण;
 
-int libbpf_strerror(int err, char *buf, size_t size)
-{
-	if (!buf || !size)
-		return -1;
+पूर्णांक libbpf_म_त्रुटि(पूर्णांक err, अक्षर *buf, माप_प्रकार size)
+अणु
+	अगर (!buf || !size)
+		वापस -1;
 
 	err = err > 0 ? err : -err;
 
-	if (err < __LIBBPF_ERRNO__START) {
-		int ret;
+	अगर (err < __LIBBPF_ERRNO__START) अणु
+		पूर्णांक ret;
 
-		ret = strerror_r(err, buf, size);
+		ret = म_त्रुटि_r(err, buf, size);
 		buf[size - 1] = '\0';
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (err < __LIBBPF_ERRNO__END) {
-		const char *msg;
+	अगर (err < __LIBBPF_ERRNO__END) अणु
+		स्थिर अक्षर *msg;
 
-		msg = libbpf_strerror_table[ERRNO_OFFSET(err)];
-		snprintf(buf, size, "%s", msg);
+		msg = libbpf_म_त्रुटि_table[ERRNO_OFFSET(err)];
+		snम_लिखो(buf, size, "%s", msg);
 		buf[size - 1] = '\0';
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	snprintf(buf, size, "Unknown libbpf error %d", err);
+	snम_लिखो(buf, size, "Unknown libbpf error %d", err);
 	buf[size - 1] = '\0';
-	return -1;
-}
+	वापस -1;
+पूर्ण

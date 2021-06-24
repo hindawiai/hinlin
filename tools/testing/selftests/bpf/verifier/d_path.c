@@ -1,6 +1,7 @@
-{
+<शैली गुरु>
+अणु
 	"d_path accept",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_1, BPF_REG_1, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -10,15 +11,15 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_d_path),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACING,
 	.expected_attach_type = BPF_TRACE_FENTRY,
 	.kfunc = "dentry_open",
-},
-{
+पूर्ण,
+अणु
 	"d_path reject",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_1, BPF_REG_1, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -28,10 +29,10 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_d_path),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "helper call is not allowed in probe",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACING,
 	.expected_attach_type = BPF_TRACE_FENTRY,
 	.kfunc = "d_path",
-},
+पूर्ण,

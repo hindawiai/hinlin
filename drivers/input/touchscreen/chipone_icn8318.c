@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for ChipOne icn8318 i2c touchscreen controller
+ * Driver क्रम ChipOne icn8318 i2c touchscreen controller
  *
  * Copyright (c) 2015 Red Hat Inc.
  *
@@ -8,268 +9,268 @@
  * Hans de Goede <hdegoede@redhat.com>
  */
 
-#include <linux/gpio/consumer.h>
-#include <linux/interrupt.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/input/mt.h>
-#include <linux/input/touchscreen.h>
-#include <linux/module.h>
-#include <linux/of.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/input/touchscreen.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
 
-#define ICN8318_REG_POWER		4
-#define ICN8318_REG_TOUCHDATA		16
+#घोषणा ICN8318_REG_POWER		4
+#घोषणा ICN8318_REG_TOUCHDATA		16
 
-#define ICN8318_POWER_ACTIVE		0
-#define ICN8318_POWER_MONITOR		1
-#define ICN8318_POWER_HIBERNATE		2
+#घोषणा ICN8318_POWER_ACTIVE		0
+#घोषणा ICN8318_POWER_MONITOR		1
+#घोषणा ICN8318_POWER_HIBERNATE		2
 
-#define ICN8318_MAX_TOUCHES		5
+#घोषणा ICN8318_MAX_TOUCHES		5
 
-struct icn8318_touch {
+काष्ठा icn8318_touch अणु
 	__u8 slot;
 	__be16 x;
 	__be16 y;
 	__u8 pressure;	/* Seems more like finger width then pressure really */
 	__u8 event;
-/* The difference between 2 and 3 is unclear */
-#define ICN8318_EVENT_NO_DATA	1 /* No finger seen yet since wakeup */
-#define ICN8318_EVENT_UPDATE1	2 /* New or updated coordinates */
-#define ICN8318_EVENT_UPDATE2	3 /* New or updated coordinates */
-#define ICN8318_EVENT_END	4 /* Finger lifted */
-} __packed;
+/* The dअगरference between 2 and 3 is unclear */
+#घोषणा ICN8318_EVENT_NO_DATA	1 /* No finger seen yet since wakeup */
+#घोषणा ICN8318_EVENT_UPDATE1	2 /* New or updated coordinates */
+#घोषणा ICN8318_EVENT_UPDATE2	3 /* New or updated coordinates */
+#घोषणा ICN8318_EVENT_END	4 /* Finger lअगरted */
+पूर्ण __packed;
 
-struct icn8318_touch_data {
+काष्ठा icn8318_touch_data अणु
 	__u8 softbutton;
 	__u8 touch_count;
-	struct icn8318_touch touches[ICN8318_MAX_TOUCHES];
-} __packed;
+	काष्ठा icn8318_touch touches[ICN8318_MAX_TOUCHES];
+पूर्ण __packed;
 
-struct icn8318_data {
-	struct i2c_client *client;
-	struct input_dev *input;
-	struct gpio_desc *wake_gpio;
-	struct touchscreen_properties prop;
-};
+काष्ठा icn8318_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा input_dev *input;
+	काष्ठा gpio_desc *wake_gpio;
+	काष्ठा touchscreen_properties prop;
+पूर्ण;
 
-static int icn8318_read_touch_data(struct i2c_client *client,
-				   struct icn8318_touch_data *touch_data)
-{
+अटल पूर्णांक icn8318_पढ़ो_touch_data(काष्ठा i2c_client *client,
+				   काष्ठा icn8318_touch_data *touch_data)
+अणु
 	u8 reg = ICN8318_REG_TOUCHDATA;
-	struct i2c_msg msg[2] = {
-		{
+	काष्ठा i2c_msg msg[2] = अणु
+		अणु
 			.addr = client->addr,
 			.len = 1,
 			.buf = &reg
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr = client->addr,
 			.flags = I2C_M_RD,
-			.len = sizeof(struct icn8318_touch_data),
+			.len = माप(काष्ठा icn8318_touch_data),
 			.buf = (u8 *)touch_data
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	return i2c_transfer(client->adapter, msg, 2);
-}
+	वापस i2c_transfer(client->adapter, msg, 2);
+पूर्ण
 
-static inline bool icn8318_touch_active(u8 event)
-{
-	return (event == ICN8318_EVENT_UPDATE1) ||
+अटल अंतरभूत bool icn8318_touch_active(u8 event)
+अणु
+	वापस (event == ICN8318_EVENT_UPDATE1) ||
 	       (event == ICN8318_EVENT_UPDATE2);
-}
+पूर्ण
 
-static irqreturn_t icn8318_irq(int irq, void *dev_id)
-{
-	struct icn8318_data *data = dev_id;
-	struct device *dev = &data->client->dev;
-	struct icn8318_touch_data touch_data;
-	int i, ret;
+अटल irqवापस_t icn8318_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा icn8318_data *data = dev_id;
+	काष्ठा device *dev = &data->client->dev;
+	काष्ठा icn8318_touch_data touch_data;
+	पूर्णांक i, ret;
 
-	ret = icn8318_read_touch_data(data->client, &touch_data);
-	if (ret < 0) {
+	ret = icn8318_पढ़ो_touch_data(data->client, &touch_data);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Error reading touch data: %d\n", ret);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (touch_data.softbutton) {
+	अगर (touch_data.softbutton) अणु
 		/*
 		 * Other data is invalid when a softbutton is pressed.
 		 * This needs some extra devicetree bindings to map the icn8318
 		 * softbutton codes to evdev codes. Currently no known devices
 		 * use this.
 		 */
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (touch_data.touch_count > ICN8318_MAX_TOUCHES) {
+	अगर (touch_data.touch_count > ICN8318_MAX_TOUCHES) अणु
 		dev_warn(dev, "Too much touches %d > %d\n",
 			 touch_data.touch_count, ICN8318_MAX_TOUCHES);
 		touch_data.touch_count = ICN8318_MAX_TOUCHES;
-	}
+	पूर्ण
 
-	for (i = 0; i < touch_data.touch_count; i++) {
-		struct icn8318_touch *touch = &touch_data.touches[i];
+	क्रम (i = 0; i < touch_data.touch_count; i++) अणु
+		काष्ठा icn8318_touch *touch = &touch_data.touches[i];
 		bool act = icn8318_touch_active(touch->event);
 
 		input_mt_slot(data->input, touch->slot);
 		input_mt_report_slot_state(data->input, MT_TOOL_FINGER, act);
-		if (!act)
-			continue;
+		अगर (!act)
+			जारी;
 
 		touchscreen_report_pos(data->input, &data->prop,
 				       be16_to_cpu(touch->x),
 				       be16_to_cpu(touch->y), true);
-	}
+	पूर्ण
 
 	input_mt_sync_frame(data->input);
 	input_sync(data->input);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int icn8318_start(struct input_dev *dev)
-{
-	struct icn8318_data *data = input_get_drvdata(dev);
+अटल पूर्णांक icn8318_start(काष्ठा input_dev *dev)
+अणु
+	काष्ठा icn8318_data *data = input_get_drvdata(dev);
 
 	enable_irq(data->client->irq);
 	gpiod_set_value_cansleep(data->wake_gpio, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void icn8318_stop(struct input_dev *dev)
-{
-	struct icn8318_data *data = input_get_drvdata(dev);
+अटल व्योम icn8318_stop(काष्ठा input_dev *dev)
+अणु
+	काष्ठा icn8318_data *data = input_get_drvdata(dev);
 
 	disable_irq(data->client->irq);
-	i2c_smbus_write_byte_data(data->client, ICN8318_REG_POWER,
+	i2c_smbus_ग_लिखो_byte_data(data->client, ICN8318_REG_POWER,
 				  ICN8318_POWER_HIBERNATE);
 	gpiod_set_value_cansleep(data->wake_gpio, 0);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int icn8318_suspend(struct device *dev)
-{
-	struct icn8318_data *data = i2c_get_clientdata(to_i2c_client(dev));
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक icn8318_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा icn8318_data *data = i2c_get_clientdata(to_i2c_client(dev));
 
 	mutex_lock(&data->input->mutex);
-	if (input_device_enabled(data->input))
+	अगर (input_device_enabled(data->input))
 		icn8318_stop(data->input);
 	mutex_unlock(&data->input->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int icn8318_resume(struct device *dev)
-{
-	struct icn8318_data *data = i2c_get_clientdata(to_i2c_client(dev));
+अटल पूर्णांक icn8318_resume(काष्ठा device *dev)
+अणु
+	काष्ठा icn8318_data *data = i2c_get_clientdata(to_i2c_client(dev));
 
 	mutex_lock(&data->input->mutex);
-	if (input_device_enabled(data->input))
+	अगर (input_device_enabled(data->input))
 		icn8318_start(data->input);
 	mutex_unlock(&data->input->mutex);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(icn8318_pm_ops, icn8318_suspend, icn8318_resume);
+अटल SIMPLE_DEV_PM_OPS(icn8318_pm_ops, icn8318_suspend, icn8318_resume);
 
-static int icn8318_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct icn8318_data *data;
-	struct input_dev *input;
-	int error;
+अटल पूर्णांक icn8318_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा icn8318_data *data;
+	काष्ठा input_dev *input;
+	पूर्णांक error;
 
-	if (!client->irq) {
+	अगर (!client->irq) अणु
 		dev_err(dev, "Error no irq specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->wake_gpio = devm_gpiod_get(dev, "wake", GPIOD_OUT_LOW);
-	if (IS_ERR(data->wake_gpio)) {
+	अगर (IS_ERR(data->wake_gpio)) अणु
 		error = PTR_ERR(data->wake_gpio);
-		if (error != -EPROBE_DEFER)
+		अगर (error != -EPROBE_DEFER)
 			dev_err(dev, "Error getting wake gpio: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	input = devm_input_allocate_device(dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	input->name = client->name;
 	input->id.bustype = BUS_I2C;
-	input->open = icn8318_start;
-	input->close = icn8318_stop;
+	input->खोलो = icn8318_start;
+	input->बंद = icn8318_stop;
 	input->dev.parent = dev;
 
 	input_set_capability(input, EV_ABS, ABS_MT_POSITION_X);
 	input_set_capability(input, EV_ABS, ABS_MT_POSITION_Y);
 
 	touchscreen_parse_properties(input, true, &data->prop);
-	if (!input_abs_get_max(input, ABS_MT_POSITION_X) ||
-	    !input_abs_get_max(input, ABS_MT_POSITION_Y)) {
+	अगर (!input_असल_get_max(input, ABS_MT_POSITION_X) ||
+	    !input_असल_get_max(input, ABS_MT_POSITION_Y)) अणु
 		dev_err(dev, "Error touchscreen-size-x and/or -y missing\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	error = input_mt_init_slots(input, ICN8318_MAX_TOUCHES,
-				    INPUT_MT_DIRECT | INPUT_MT_DROP_UNUSED);
-	if (error)
-		return error;
+				    INPUT_MT_सूचीECT | INPUT_MT_DROP_UNUSED);
+	अगर (error)
+		वापस error;
 
 	data->client = client;
 	data->input = input;
 	input_set_drvdata(input, data);
 
-	error = devm_request_threaded_irq(dev, client->irq, NULL, icn8318_irq,
+	error = devm_request_thपढ़ोed_irq(dev, client->irq, शून्य, icn8318_irq,
 					  IRQF_ONESHOT, client->name, data);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "Error requesting irq: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	/* Stop device till opened */
+	/* Stop device till खोलोed */
 	icn8318_stop(data->input);
 
-	error = input_register_device(input);
-	if (error)
-		return error;
+	error = input_रेजिस्टर_device(input);
+	अगर (error)
+		वापस error;
 
 	i2c_set_clientdata(client, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id icn8318_of_match[] = {
-	{ .compatible = "chipone,icn8318" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id icn8318_of_match[] = अणु
+	अणु .compatible = "chipone,icn8318" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, icn8318_of_match);
 
-/* This is useless for OF-enabled devices, but it is needed by I2C subsystem */
-static const struct i2c_device_id icn8318_i2c_id[] = {
-	{ },
-};
+/* This is useless क्रम OF-enabled devices, but it is needed by I2C subप्रणाली */
+अटल स्थिर काष्ठा i2c_device_id icn8318_i2c_id[] = अणु
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, icn8318_i2c_id);
 
-static struct i2c_driver icn8318_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver icn8318_driver = अणु
+	.driver = अणु
 		.name	= "chipone_icn8318",
 		.pm	= &icn8318_pm_ops,
 		.of_match_table = icn8318_of_match,
-	},
+	पूर्ण,
 	.probe = icn8318_probe,
 	.id_table = icn8318_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(icn8318_driver);
 

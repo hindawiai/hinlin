@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c)  2018 Intel Corporation */
 
-/* ethtool support for igc */
-#include <linux/if_vlan.h>
-#include <linux/pm_runtime.h>
-#include <linux/mdio.h>
+/* ethtool support क्रम igc */
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/mdपन.स>
 
-#include "igc.h"
-#include "igc_diag.h"
+#समावेश "igc.h"
+#समावेश "igc_diag.h"
 
-/* forward declaration */
-struct igc_stats {
-	char stat_string[ETH_GSTRING_LEN];
-	int sizeof_stat;
-	int stat_offset;
-};
+/* क्रमward declaration */
+काष्ठा igc_stats अणु
+	अक्षर stat_string[ETH_GSTRING_LEN];
+	पूर्णांक माप_stat;
+	पूर्णांक stat_offset;
+पूर्ण;
 
-#define IGC_STAT(_name, _stat) { \
+#घोषणा IGC_STAT(_name, _stat) अणु \
 	.stat_string = _name, \
-	.sizeof_stat = sizeof_field(struct igc_adapter, _stat), \
-	.stat_offset = offsetof(struct igc_adapter, _stat) \
-}
+	.माप_stat = माप_field(काष्ठा igc_adapter, _stat), \
+	.stat_offset = दुरत्व(काष्ठा igc_adapter, _stat) \
+पूर्ण
 
-static const struct igc_stats igc_gstrings_stats[] = {
+अटल स्थिर काष्ठा igc_stats igc_gstrings_stats[] = अणु
 	IGC_STAT("rx_packets", stats.gprc),
 	IGC_STAT("tx_packets", stats.gptc),
 	IGC_STAT("rx_bytes", stats.gorc),
@@ -43,7 +44,7 @@ static const struct igc_stats igc_gstrings_stats[] = {
 	IGC_STAT("tx_deferred_ok", stats.dc),
 	IGC_STAT("tx_single_coll_ok", stats.scc),
 	IGC_STAT("tx_multi_coll_ok", stats.mcc),
-	IGC_STAT("tx_timeout_count", tx_timeout_count),
+	IGC_STAT("tx_timeout_count", tx_समयout_count),
 	IGC_STAT("rx_long_length_errors", stats.roc),
 	IGC_STAT("rx_short_length_errors", stats.ruc),
 	IGC_STAT("rx_align_errors", stats.algnerrc),
@@ -54,7 +55,7 @@ static const struct igc_stats igc_gstrings_stats[] = {
 	IGC_STAT("tx_flow_control_xon", stats.xontxc),
 	IGC_STAT("tx_flow_control_xoff", stats.xofftxc),
 	IGC_STAT("rx_long_byte_count", stats.gorc),
-	IGC_STAT("tx_dma_out_of_sync", stats.doosync),
+	IGC_STAT("tx_dma_out_of_sync", stats.करोosync),
 	IGC_STAT("tx_smbus", stats.mgptc),
 	IGC_STAT("rx_smbus", stats.mgprc),
 	IGC_STAT("dropped_smbus", stats.mgpdc),
@@ -62,116 +63,116 @@ static const struct igc_stats igc_gstrings_stats[] = {
 	IGC_STAT("os2bmc_tx_by_bmc", stats.b2ospc),
 	IGC_STAT("os2bmc_tx_by_host", stats.o2bspc),
 	IGC_STAT("os2bmc_rx_by_host", stats.b2ogprc),
-	IGC_STAT("tx_hwtstamp_timeouts", tx_hwtstamp_timeouts),
+	IGC_STAT("tx_hwtstamp_timeouts", tx_hwtstamp_समयouts),
 	IGC_STAT("tx_hwtstamp_skipped", tx_hwtstamp_skipped),
 	IGC_STAT("rx_hwtstamp_cleared", rx_hwtstamp_cleared),
 	IGC_STAT("tx_lpi_counter", stats.tlpic),
 	IGC_STAT("rx_lpi_counter", stats.rlpic),
-};
+पूर्ण;
 
-#define IGC_NETDEV_STAT(_net_stat) { \
-	.stat_string = __stringify(_net_stat), \
-	.sizeof_stat = sizeof_field(struct rtnl_link_stats64, _net_stat), \
-	.stat_offset = offsetof(struct rtnl_link_stats64, _net_stat) \
-}
+#घोषणा IGC_NETDEV_STAT(_net_stat) अणु \
+	.stat_string = __stringअगरy(_net_stat), \
+	.माप_stat = माप_field(काष्ठा rtnl_link_stats64, _net_stat), \
+	.stat_offset = दुरत्व(काष्ठा rtnl_link_stats64, _net_stat) \
+पूर्ण
 
-static const struct igc_stats igc_gstrings_net_stats[] = {
+अटल स्थिर काष्ठा igc_stats igc_gstrings_net_stats[] = अणु
 	IGC_NETDEV_STAT(rx_errors),
 	IGC_NETDEV_STAT(tx_errors),
 	IGC_NETDEV_STAT(tx_dropped),
 	IGC_NETDEV_STAT(rx_length_errors),
 	IGC_NETDEV_STAT(rx_over_errors),
 	IGC_NETDEV_STAT(rx_frame_errors),
-	IGC_NETDEV_STAT(rx_fifo_errors),
-	IGC_NETDEV_STAT(tx_fifo_errors),
+	IGC_NETDEV_STAT(rx_fअगरo_errors),
+	IGC_NETDEV_STAT(tx_fअगरo_errors),
 	IGC_NETDEV_STAT(tx_heartbeat_errors)
-};
+पूर्ण;
 
-enum igc_diagnostics_results {
+क्रमागत igc_diagnostics_results अणु
 	TEST_REG = 0,
 	TEST_EEP,
 	TEST_IRQ,
 	TEST_LOOP,
 	TEST_LINK
-};
+पूर्ण;
 
-static const char igc_gstrings_test[][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर igc_gstrings_test[][ETH_GSTRING_LEN] = अणु
 	[TEST_REG]  = "Register test  (offline)",
 	[TEST_EEP]  = "Eeprom test    (offline)",
 	[TEST_IRQ]  = "Interrupt test (offline)",
 	[TEST_LOOP] = "Loopback test  (offline)",
 	[TEST_LINK] = "Link test   (on/offline)"
-};
+पूर्ण;
 
-#define IGC_TEST_LEN (sizeof(igc_gstrings_test) / ETH_GSTRING_LEN)
+#घोषणा IGC_TEST_LEN (माप(igc_gstrings_test) / ETH_GSTRING_LEN)
 
-#define IGC_GLOBAL_STATS_LEN	\
-	(sizeof(igc_gstrings_stats) / sizeof(struct igc_stats))
-#define IGC_NETDEV_STATS_LEN	\
-	(sizeof(igc_gstrings_net_stats) / sizeof(struct igc_stats))
-#define IGC_RX_QUEUE_STATS_LEN \
-	(sizeof(struct igc_rx_queue_stats) / sizeof(u64))
-#define IGC_TX_QUEUE_STATS_LEN 3 /* packets, bytes, restart_queue */
-#define IGC_QUEUE_STATS_LEN \
-	((((struct igc_adapter *)netdev_priv(netdev))->num_rx_queues * \
+#घोषणा IGC_GLOBAL_STATS_LEN	\
+	(माप(igc_gstrings_stats) / माप(काष्ठा igc_stats))
+#घोषणा IGC_NETDEV_STATS_LEN	\
+	(माप(igc_gstrings_net_stats) / माप(काष्ठा igc_stats))
+#घोषणा IGC_RX_QUEUE_STATS_LEN \
+	(माप(काष्ठा igc_rx_queue_stats) / माप(u64))
+#घोषणा IGC_TX_QUEUE_STATS_LEN 3 /* packets, bytes, restart_queue */
+#घोषणा IGC_QUEUE_STATS_LEN \
+	((((काष्ठा igc_adapter *)netdev_priv(netdev))->num_rx_queues * \
 	  IGC_RX_QUEUE_STATS_LEN) + \
-	 (((struct igc_adapter *)netdev_priv(netdev))->num_tx_queues * \
+	 (((काष्ठा igc_adapter *)netdev_priv(netdev))->num_tx_queues * \
 	  IGC_TX_QUEUE_STATS_LEN))
-#define IGC_STATS_LEN \
+#घोषणा IGC_STATS_LEN \
 	(IGC_GLOBAL_STATS_LEN + IGC_NETDEV_STATS_LEN + IGC_QUEUE_STATS_LEN)
 
-static const char igc_priv_flags_strings[][ETH_GSTRING_LEN] = {
-#define IGC_PRIV_FLAGS_LEGACY_RX	BIT(0)
+अटल स्थिर अक्षर igc_priv_flags_strings[][ETH_GSTRING_LEN] = अणु
+#घोषणा IGC_PRIV_FLAGS_LEGACY_RX	BIT(0)
 	"legacy-rx",
-};
+पूर्ण;
 
-#define IGC_PRIV_FLAGS_STR_LEN ARRAY_SIZE(igc_priv_flags_strings)
+#घोषणा IGC_PRIV_FLAGS_STR_LEN ARRAY_SIZE(igc_priv_flags_strings)
 
-static void igc_ethtool_get_drvinfo(struct net_device *netdev,
-				    struct ethtool_drvinfo *drvinfo)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_ethtool_get_drvinfo(काष्ठा net_device *netdev,
+				    काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u16 nvm_version = 0;
 	u16 gphy_version;
 
-	strscpy(drvinfo->driver, igc_driver_name, sizeof(drvinfo->driver));
+	strscpy(drvinfo->driver, igc_driver_name, माप(drvinfo->driver));
 
-	/* NVM image version is reported as firmware version for i225 device */
-	hw->nvm.ops.read(hw, IGC_NVM_DEV_STARTER, 1, &nvm_version);
+	/* NVM image version is reported as firmware version क्रम i225 device */
+	hw->nvm.ops.पढ़ो(hw, IGC_NVM_DEV_STARTER, 1, &nvm_version);
 
 	/* gPHY firmware version is reported as PHY FW version */
-	gphy_version = igc_read_phy_fw_version(hw);
+	gphy_version = igc_पढ़ो_phy_fw_version(hw);
 
-	scnprintf(adapter->fw_version,
-		  sizeof(adapter->fw_version),
+	scnम_लिखो(adapter->fw_version,
+		  माप(adapter->fw_version),
 		  "%x:%x",
 		  nvm_version,
 		  gphy_version);
 
 	strscpy(drvinfo->fw_version, adapter->fw_version,
-		sizeof(drvinfo->fw_version));
+		माप(drvinfo->fw_version));
 
 	strscpy(drvinfo->bus_info, pci_name(adapter->pdev),
-		sizeof(drvinfo->bus_info));
+		माप(drvinfo->bus_info));
 
 	drvinfo->n_priv_flags = IGC_PRIV_FLAGS_STR_LEN;
-}
+पूर्ण
 
-static int igc_ethtool_get_regs_len(struct net_device *netdev)
-{
-	return IGC_REGS_LEN * sizeof(u32);
-}
+अटल पूर्णांक igc_ethtool_get_regs_len(काष्ठा net_device *netdev)
+अणु
+	वापस IGC_REGS_LEN * माप(u32);
+पूर्ण
 
-static void igc_ethtool_get_regs(struct net_device *netdev,
-				 struct ethtool_regs *regs, void *p)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_ethtool_get_regs(काष्ठा net_device *netdev,
+				 काष्ठा ethtool_regs *regs, व्योम *p)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 *regs_buff = p;
 	u8 i;
 
-	memset(p, 0, IGC_REGS_LEN * sizeof(u32));
+	स_रखो(p, 0, IGC_REGS_LEN * माप(u32));
 
 	regs->version = (2u << 24) | (hw->revision_id << 16) | hw->device_id;
 
@@ -186,8 +187,8 @@ static void igc_ethtool_get_regs(struct net_device *netdev,
 	regs_buff[5] = rd32(IGC_EECD);
 
 	/* Interrupt */
-	/* Reading EICS for EICR because they read the
-	 * same but EICS does not clear on read
+	/* Reading EICS क्रम EICR because they पढ़ो the
+	 * same but EICS करोes not clear on पढ़ो
 	 */
 	regs_buff[6] = rd32(IGC_EICS);
 	regs_buff[7] = rd32(IGC_EICS);
@@ -195,8 +196,8 @@ static void igc_ethtool_get_regs(struct net_device *netdev,
 	regs_buff[9] = rd32(IGC_EIMC);
 	regs_buff[10] = rd32(IGC_EIAC);
 	regs_buff[11] = rd32(IGC_EIAM);
-	/* Reading ICS for ICR because they read the
-	 * same but ICS does not clear on read
+	/* Reading ICS क्रम ICR because they पढ़ो the
+	 * same but ICS करोes not clear on पढ़ो
 	 */
 	regs_buff[12] = rd32(IGC_ICS);
 	regs_buff[13] = rd32(IGC_ICS);
@@ -290,304 +291,304 @@ static void igc_ethtool_get_regs(struct net_device *netdev,
 	regs_buff[89] = adapter->stats.scvpc;
 	regs_buff[90] = adapter->stats.hrmpc;
 
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[91 + i] = rd32(IGC_SRRCTL(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[95 + i] = rd32(IGC_PSRTYPE(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[99 + i] = rd32(IGC_RDBAL(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[103 + i] = rd32(IGC_RDBAH(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[107 + i] = rd32(IGC_RDLEN(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[111 + i] = rd32(IGC_RDH(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[115 + i] = rd32(IGC_RDT(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[119 + i] = rd32(IGC_RXDCTL(i));
 
-	for (i = 0; i < 10; i++)
+	क्रम (i = 0; i < 10; i++)
 		regs_buff[123 + i] = rd32(IGC_EITR(i));
-	for (i = 0; i < 16; i++)
+	क्रम (i = 0; i < 16; i++)
 		regs_buff[139 + i] = rd32(IGC_RAL(i));
-	for (i = 0; i < 16; i++)
+	क्रम (i = 0; i < 16; i++)
 		regs_buff[145 + i] = rd32(IGC_RAH(i));
 
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[149 + i] = rd32(IGC_TDBAL(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[152 + i] = rd32(IGC_TDBAH(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[156 + i] = rd32(IGC_TDLEN(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[160 + i] = rd32(IGC_TDH(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[164 + i] = rd32(IGC_TDT(i));
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		regs_buff[168 + i] = rd32(IGC_TXDCTL(i));
 
-	/* XXX: Due to a bug few lines above, RAL and RAH registers are
-	 * overwritten. To preserve the ABI, we write these registers again in
+	/* XXX: Due to a bug few lines above, RAL and RAH रेजिस्टरs are
+	 * overwritten. To preserve the ABI, we ग_लिखो these रेजिस्टरs again in
 	 * regs_buff.
 	 */
-	for (i = 0; i < 16; i++)
+	क्रम (i = 0; i < 16; i++)
 		regs_buff[172 + i] = rd32(IGC_RAL(i));
-	for (i = 0; i < 16; i++)
+	क्रम (i = 0; i < 16; i++)
 		regs_buff[188 + i] = rd32(IGC_RAH(i));
 
 	regs_buff[204] = rd32(IGC_VLANPQF);
 
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		regs_buff[205 + i] = rd32(IGC_ETQF(i));
 
 	regs_buff[213] = adapter->stats.tlpic;
 	regs_buff[214] = adapter->stats.rlpic;
-}
+पूर्ण
 
-static void igc_ethtool_get_wol(struct net_device *netdev,
-				struct ethtool_wolinfo *wol)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igc_ethtool_get_wol(काष्ठा net_device *netdev,
+				काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
 	wol->wolopts = 0;
 
-	if (!(adapter->flags & IGC_FLAG_WOL_SUPPORTED))
-		return;
+	अगर (!(adapter->flags & IGC_FLAG_WOL_SUPPORTED))
+		वापस;
 
 	wol->supported = WAKE_UCAST | WAKE_MCAST |
 			 WAKE_BCAST | WAKE_MAGIC |
 			 WAKE_PHY;
 
-	/* apply any specific unsupported masks here */
-	switch (adapter->hw.device_id) {
-	default:
-		break;
-	}
+	/* apply any specअगरic unsupported masks here */
+	चयन (adapter->hw.device_id) अणु
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (adapter->wol & IGC_WUFC_EX)
+	अगर (adapter->wol & IGC_WUFC_EX)
 		wol->wolopts |= WAKE_UCAST;
-	if (adapter->wol & IGC_WUFC_MC)
+	अगर (adapter->wol & IGC_WUFC_MC)
 		wol->wolopts |= WAKE_MCAST;
-	if (adapter->wol & IGC_WUFC_BC)
+	अगर (adapter->wol & IGC_WUFC_BC)
 		wol->wolopts |= WAKE_BCAST;
-	if (adapter->wol & IGC_WUFC_MAG)
+	अगर (adapter->wol & IGC_WUFC_MAG)
 		wol->wolopts |= WAKE_MAGIC;
-	if (adapter->wol & IGC_WUFC_LNKC)
+	अगर (adapter->wol & IGC_WUFC_LNKC)
 		wol->wolopts |= WAKE_PHY;
-}
+पूर्ण
 
-static int igc_ethtool_set_wol(struct net_device *netdev,
-			       struct ethtool_wolinfo *wol)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igc_ethtool_set_wol(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	if (wol->wolopts & (WAKE_ARP | WAKE_MAGICSECURE | WAKE_FILTER))
-		return -EOPNOTSUPP;
+	अगर (wol->wolopts & (WAKE_ARP | WAKE_MAGICSECURE | WAKE_FILTER))
+		वापस -EOPNOTSUPP;
 
-	if (!(adapter->flags & IGC_FLAG_WOL_SUPPORTED))
-		return wol->wolopts ? -EOPNOTSUPP : 0;
+	अगर (!(adapter->flags & IGC_FLAG_WOL_SUPPORTED))
+		वापस wol->wolopts ? -EOPNOTSUPP : 0;
 
 	/* these settings will always override what we currently have */
 	adapter->wol = 0;
 
-	if (wol->wolopts & WAKE_UCAST)
+	अगर (wol->wolopts & WAKE_UCAST)
 		adapter->wol |= IGC_WUFC_EX;
-	if (wol->wolopts & WAKE_MCAST)
+	अगर (wol->wolopts & WAKE_MCAST)
 		adapter->wol |= IGC_WUFC_MC;
-	if (wol->wolopts & WAKE_BCAST)
+	अगर (wol->wolopts & WAKE_BCAST)
 		adapter->wol |= IGC_WUFC_BC;
-	if (wol->wolopts & WAKE_MAGIC)
+	अगर (wol->wolopts & WAKE_MAGIC)
 		adapter->wol |= IGC_WUFC_MAG;
-	if (wol->wolopts & WAKE_PHY)
+	अगर (wol->wolopts & WAKE_PHY)
 		adapter->wol |= IGC_WUFC_LNKC;
 	device_set_wakeup_enable(&adapter->pdev->dev, adapter->wol);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 igc_ethtool_get_msglevel(struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल u32 igc_ethtool_get_msglevel(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	return adapter->msg_enable;
-}
+	वापस adapter->msg_enable;
+पूर्ण
 
-static void igc_ethtool_set_msglevel(struct net_device *netdev, u32 data)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igc_ethtool_set_msglevel(काष्ठा net_device *netdev, u32 data)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
 	adapter->msg_enable = data;
-}
+पूर्ण
 
-static int igc_ethtool_nway_reset(struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igc_ethtool_nway_reset(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	if (netif_running(netdev))
+	अगर (netअगर_running(netdev))
 		igc_reinit_locked(adapter);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 igc_ethtool_get_link(struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_mac_info *mac = &adapter->hw.mac;
+अटल u32 igc_ethtool_get_link(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_mac_info *mac = &adapter->hw.mac;
 
-	/* If the link is not reported up to netdev, interrupts are disabled,
+	/* If the link is not reported up to netdev, पूर्णांकerrupts are disabled,
 	 * and so the physical link state may have changed since we last
 	 * looked. Set get_link_status to make sure that the true link
-	 * state is interrogated, rather than pulling a cached and possibly
+	 * state is पूर्णांकerrogated, rather than pulling a cached and possibly
 	 * stale link state from the driver.
 	 */
-	if (!netif_carrier_ok(netdev))
+	अगर (!netअगर_carrier_ok(netdev))
 		mac->get_link_status = 1;
 
-	return igc_has_link(adapter);
-}
+	वापस igc_has_link(adapter);
+पूर्ण
 
-static int igc_ethtool_get_eeprom_len(struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igc_ethtool_get_eeprom_len(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	return adapter->hw.nvm.word_size * 2;
-}
+	वापस adapter->hw.nvm.word_size * 2;
+पूर्ण
 
-static int igc_ethtool_get_eeprom(struct net_device *netdev,
-				  struct ethtool_eeprom *eeprom, u8 *bytes)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
-	int first_word, last_word;
+अटल पूर्णांक igc_ethtool_get_eeprom(काष्ठा net_device *netdev,
+				  काष्ठा ethtool_eeprom *eeprom, u8 *bytes)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक first_word, last_word;
 	u16 *eeprom_buff;
-	int ret_val = 0;
+	पूर्णांक ret_val = 0;
 	u16 i;
 
-	if (eeprom->len == 0)
-		return -EINVAL;
+	अगर (eeprom->len == 0)
+		वापस -EINVAL;
 
-	eeprom->magic = hw->vendor_id | (hw->device_id << 16);
+	eeprom->magic = hw->venकरोr_id | (hw->device_id << 16);
 
 	first_word = eeprom->offset >> 1;
 	last_word = (eeprom->offset + eeprom->len - 1) >> 1;
 
-	eeprom_buff = kmalloc_array(last_word - first_word + 1, sizeof(u16),
+	eeprom_buff = kदो_स्मृति_array(last_word - first_word + 1, माप(u16),
 				    GFP_KERNEL);
-	if (!eeprom_buff)
-		return -ENOMEM;
+	अगर (!eeprom_buff)
+		वापस -ENOMEM;
 
-	if (hw->nvm.type == igc_nvm_eeprom_spi) {
-		ret_val = hw->nvm.ops.read(hw, first_word,
+	अगर (hw->nvm.type == igc_nvm_eeprom_spi) अणु
+		ret_val = hw->nvm.ops.पढ़ो(hw, first_word,
 					   last_word - first_word + 1,
 					   eeprom_buff);
-	} else {
-		for (i = 0; i < last_word - first_word + 1; i++) {
-			ret_val = hw->nvm.ops.read(hw, first_word + i, 1,
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < last_word - first_word + 1; i++) अणु
+			ret_val = hw->nvm.ops.पढ़ो(hw, first_word + i, 1,
 						   &eeprom_buff[i]);
-			if (ret_val)
-				break;
-		}
-	}
+			अगर (ret_val)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Device's eeprom is always little-endian, word addressable */
-	for (i = 0; i < last_word - first_word + 1; i++)
+	क्रम (i = 0; i < last_word - first_word + 1; i++)
 		le16_to_cpus(&eeprom_buff[i]);
 
-	memcpy(bytes, (u8 *)eeprom_buff + (eeprom->offset & 1),
+	स_नकल(bytes, (u8 *)eeprom_buff + (eeprom->offset & 1),
 	       eeprom->len);
-	kfree(eeprom_buff);
+	kमुक्त(eeprom_buff);
 
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
-static int igc_ethtool_set_eeprom(struct net_device *netdev,
-				  struct ethtool_eeprom *eeprom, u8 *bytes)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
-	int max_len, first_word, last_word, ret_val = 0;
+अटल पूर्णांक igc_ethtool_set_eeprom(काष्ठा net_device *netdev,
+				  काष्ठा ethtool_eeprom *eeprom, u8 *bytes)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक max_len, first_word, last_word, ret_val = 0;
 	u16 *eeprom_buff;
-	void *ptr;
+	व्योम *ptr;
 	u16 i;
 
-	if (eeprom->len == 0)
-		return -EOPNOTSUPP;
+	अगर (eeprom->len == 0)
+		वापस -EOPNOTSUPP;
 
-	if (hw->mac.type >= igc_i225 &&
-	    !igc_get_flash_presence_i225(hw)) {
-		return -EOPNOTSUPP;
-	}
+	अगर (hw->mac.type >= igc_i225 &&
+	    !igc_get_flash_presence_i225(hw)) अणु
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (eeprom->magic != (hw->vendor_id | (hw->device_id << 16)))
-		return -EFAULT;
+	अगर (eeprom->magic != (hw->venकरोr_id | (hw->device_id << 16)))
+		वापस -EFAULT;
 
 	max_len = hw->nvm.word_size * 2;
 
 	first_word = eeprom->offset >> 1;
 	last_word = (eeprom->offset + eeprom->len - 1) >> 1;
-	eeprom_buff = kmalloc(max_len, GFP_KERNEL);
-	if (!eeprom_buff)
-		return -ENOMEM;
+	eeprom_buff = kदो_स्मृति(max_len, GFP_KERNEL);
+	अगर (!eeprom_buff)
+		वापस -ENOMEM;
 
-	ptr = (void *)eeprom_buff;
+	ptr = (व्योम *)eeprom_buff;
 
-	if (eeprom->offset & 1) {
-		/* need read/modify/write of first changed EEPROM word
-		 * only the second byte of the word is being modified
+	अगर (eeprom->offset & 1) अणु
+		/* need पढ़ो/modअगरy/ग_लिखो of first changed EEPROM word
+		 * only the second byte of the word is being modअगरied
 		 */
-		ret_val = hw->nvm.ops.read(hw, first_word, 1,
+		ret_val = hw->nvm.ops.पढ़ो(hw, first_word, 1,
 					    &eeprom_buff[0]);
 		ptr++;
-	}
-	if (((eeprom->offset + eeprom->len) & 1) && ret_val == 0) {
-		/* need read/modify/write of last changed EEPROM word
-		 * only the first byte of the word is being modified
+	पूर्ण
+	अगर (((eeprom->offset + eeprom->len) & 1) && ret_val == 0) अणु
+		/* need पढ़ो/modअगरy/ग_लिखो of last changed EEPROM word
+		 * only the first byte of the word is being modअगरied
 		 */
-		ret_val = hw->nvm.ops.read(hw, last_word, 1,
+		ret_val = hw->nvm.ops.पढ़ो(hw, last_word, 1,
 				   &eeprom_buff[last_word - first_word]);
-	}
+	पूर्ण
 
 	/* Device's eeprom is always little-endian, word addressable */
-	for (i = 0; i < last_word - first_word + 1; i++)
+	क्रम (i = 0; i < last_word - first_word + 1; i++)
 		le16_to_cpus(&eeprom_buff[i]);
 
-	memcpy(ptr, bytes, eeprom->len);
+	स_नकल(ptr, bytes, eeprom->len);
 
-	for (i = 0; i < last_word - first_word + 1; i++)
+	क्रम (i = 0; i < last_word - first_word + 1; i++)
 		eeprom_buff[i] = cpu_to_le16(eeprom_buff[i]);
 
-	ret_val = hw->nvm.ops.write(hw, first_word,
+	ret_val = hw->nvm.ops.ग_लिखो(hw, first_word,
 				    last_word - first_word + 1, eeprom_buff);
 
-	/* Update the checksum if nvm write succeeded */
-	if (ret_val == 0)
+	/* Update the checksum अगर nvm ग_लिखो succeeded */
+	अगर (ret_val == 0)
 		hw->nvm.ops.update(hw);
 
-	kfree(eeprom_buff);
-	return ret_val;
-}
+	kमुक्त(eeprom_buff);
+	वापस ret_val;
+पूर्ण
 
-static void igc_ethtool_get_ringparam(struct net_device *netdev,
-				      struct ethtool_ringparam *ring)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igc_ethtool_get_ringparam(काष्ठा net_device *netdev,
+				      काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
 	ring->rx_max_pending = IGC_MAX_RXD;
 	ring->tx_max_pending = IGC_MAX_TXD;
 	ring->rx_pending = adapter->rx_ring_count;
 	ring->tx_pending = adapter->tx_ring_count;
-}
+पूर्ण
 
-static int igc_ethtool_set_ringparam(struct net_device *netdev,
-				     struct ethtool_ringparam *ring)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_ring *temp_ring;
+अटल पूर्णांक igc_ethtool_set_ringparam(काष्ठा net_device *netdev,
+				     काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_ring *temp_ring;
 	u16 new_rx_count, new_tx_count;
-	int i, err = 0;
+	पूर्णांक i, err = 0;
 
-	if (ring->rx_mini_pending || ring->rx_jumbo_pending)
-		return -EINVAL;
+	अगर (ring->rx_mini_pending || ring->rx_jumbo_pending)
+		वापस -EINVAL;
 
 	new_rx_count = min_t(u32, ring->rx_pending, IGC_MAX_RXD);
 	new_rx_count = max_t(u16, new_rx_count, IGC_MIN_RXD);
@@ -597,585 +598,585 @@ static int igc_ethtool_set_ringparam(struct net_device *netdev,
 	new_tx_count = max_t(u16, new_tx_count, IGC_MIN_TXD);
 	new_tx_count = ALIGN(new_tx_count, REQ_TX_DESCRIPTOR_MULTIPLE);
 
-	if (new_tx_count == adapter->tx_ring_count &&
-	    new_rx_count == adapter->rx_ring_count) {
-		/* nothing to do */
-		return 0;
-	}
+	अगर (new_tx_count == adapter->tx_ring_count &&
+	    new_rx_count == adapter->rx_ring_count) अणु
+		/* nothing to करो */
+		वापस 0;
+	पूर्ण
 
-	while (test_and_set_bit(__IGC_RESETTING, &adapter->state))
+	जबतक (test_and_set_bit(__IGC_RESETTING, &adapter->state))
 		usleep_range(1000, 2000);
 
-	if (!netif_running(adapter->netdev)) {
-		for (i = 0; i < adapter->num_tx_queues; i++)
+	अगर (!netअगर_running(adapter->netdev)) अणु
+		क्रम (i = 0; i < adapter->num_tx_queues; i++)
 			adapter->tx_ring[i]->count = new_tx_count;
-		for (i = 0; i < adapter->num_rx_queues; i++)
+		क्रम (i = 0; i < adapter->num_rx_queues; i++)
 			adapter->rx_ring[i]->count = new_rx_count;
 		adapter->tx_ring_count = new_tx_count;
 		adapter->rx_ring_count = new_rx_count;
-		goto clear_reset;
-	}
+		जाओ clear_reset;
+	पूर्ण
 
-	if (adapter->num_tx_queues > adapter->num_rx_queues)
-		temp_ring = vmalloc(array_size(sizeof(struct igc_ring),
+	अगर (adapter->num_tx_queues > adapter->num_rx_queues)
+		temp_ring = vदो_स्मृति(array_size(माप(काष्ठा igc_ring),
 					       adapter->num_tx_queues));
-	else
-		temp_ring = vmalloc(array_size(sizeof(struct igc_ring),
+	अन्यथा
+		temp_ring = vदो_स्मृति(array_size(माप(काष्ठा igc_ring),
 					       adapter->num_rx_queues));
 
-	if (!temp_ring) {
+	अगर (!temp_ring) अणु
 		err = -ENOMEM;
-		goto clear_reset;
-	}
+		जाओ clear_reset;
+	पूर्ण
 
-	igc_down(adapter);
+	igc_करोwn(adapter);
 
-	/* We can't just free everything and then setup again,
-	 * because the ISRs in MSI-X mode get passed pointers
-	 * to the Tx and Rx ring structs.
+	/* We can't just मुक्त everything and then setup again,
+	 * because the ISRs in MSI-X mode get passed poपूर्णांकers
+	 * to the Tx and Rx ring काष्ठाs.
 	 */
-	if (new_tx_count != adapter->tx_ring_count) {
-		for (i = 0; i < adapter->num_tx_queues; i++) {
-			memcpy(&temp_ring[i], adapter->tx_ring[i],
-			       sizeof(struct igc_ring));
+	अगर (new_tx_count != adapter->tx_ring_count) अणु
+		क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+			स_नकल(&temp_ring[i], adapter->tx_ring[i],
+			       माप(काष्ठा igc_ring));
 
 			temp_ring[i].count = new_tx_count;
 			err = igc_setup_tx_resources(&temp_ring[i]);
-			if (err) {
-				while (i) {
+			अगर (err) अणु
+				जबतक (i) अणु
 					i--;
-					igc_free_tx_resources(&temp_ring[i]);
-				}
-				goto err_setup;
-			}
-		}
+					igc_मुक्त_tx_resources(&temp_ring[i]);
+				पूर्ण
+				जाओ err_setup;
+			पूर्ण
+		पूर्ण
 
-		for (i = 0; i < adapter->num_tx_queues; i++) {
-			igc_free_tx_resources(adapter->tx_ring[i]);
+		क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+			igc_मुक्त_tx_resources(adapter->tx_ring[i]);
 
-			memcpy(adapter->tx_ring[i], &temp_ring[i],
-			       sizeof(struct igc_ring));
-		}
+			स_नकल(adapter->tx_ring[i], &temp_ring[i],
+			       माप(काष्ठा igc_ring));
+		पूर्ण
 
 		adapter->tx_ring_count = new_tx_count;
-	}
+	पूर्ण
 
-	if (new_rx_count != adapter->rx_ring_count) {
-		for (i = 0; i < adapter->num_rx_queues; i++) {
-			memcpy(&temp_ring[i], adapter->rx_ring[i],
-			       sizeof(struct igc_ring));
+	अगर (new_rx_count != adapter->rx_ring_count) अणु
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+			स_नकल(&temp_ring[i], adapter->rx_ring[i],
+			       माप(काष्ठा igc_ring));
 
 			temp_ring[i].count = new_rx_count;
 			err = igc_setup_rx_resources(&temp_ring[i]);
-			if (err) {
-				while (i) {
+			अगर (err) अणु
+				जबतक (i) अणु
 					i--;
-					igc_free_rx_resources(&temp_ring[i]);
-				}
-				goto err_setup;
-			}
-		}
+					igc_मुक्त_rx_resources(&temp_ring[i]);
+				पूर्ण
+				जाओ err_setup;
+			पूर्ण
+		पूर्ण
 
-		for (i = 0; i < adapter->num_rx_queues; i++) {
-			igc_free_rx_resources(adapter->rx_ring[i]);
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+			igc_मुक्त_rx_resources(adapter->rx_ring[i]);
 
-			memcpy(adapter->rx_ring[i], &temp_ring[i],
-			       sizeof(struct igc_ring));
-		}
+			स_नकल(adapter->rx_ring[i], &temp_ring[i],
+			       माप(काष्ठा igc_ring));
+		पूर्ण
 
 		adapter->rx_ring_count = new_rx_count;
-	}
+	पूर्ण
 err_setup:
 	igc_up(adapter);
-	vfree(temp_ring);
+	vमुक्त(temp_ring);
 clear_reset:
 	clear_bit(__IGC_RESETTING, &adapter->state);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void igc_ethtool_get_pauseparam(struct net_device *netdev,
-				       struct ethtool_pauseparam *pause)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_ethtool_get_छोड़ोparam(काष्ठा net_device *netdev,
+				       काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
 
-	pause->autoneg =
-		(adapter->fc_autoneg ? AUTONEG_ENABLE : AUTONEG_DISABLE);
+	छोड़ो->स्वतःneg =
+		(adapter->fc_स्वतःneg ? AUTONEG_ENABLE : AUTONEG_DISABLE);
 
-	if (hw->fc.current_mode == igc_fc_rx_pause) {
-		pause->rx_pause = 1;
-	} else if (hw->fc.current_mode == igc_fc_tx_pause) {
-		pause->tx_pause = 1;
-	} else if (hw->fc.current_mode == igc_fc_full) {
-		pause->rx_pause = 1;
-		pause->tx_pause = 1;
-	}
-}
+	अगर (hw->fc.current_mode == igc_fc_rx_छोड़ो) अणु
+		छोड़ो->rx_छोड़ो = 1;
+	पूर्ण अन्यथा अगर (hw->fc.current_mode == igc_fc_tx_छोड़ो) अणु
+		छोड़ो->tx_छोड़ो = 1;
+	पूर्ण अन्यथा अगर (hw->fc.current_mode == igc_fc_full) अणु
+		छोड़ो->rx_छोड़ो = 1;
+		छोड़ो->tx_छोड़ो = 1;
+	पूर्ण
+पूर्ण
 
-static int igc_ethtool_set_pauseparam(struct net_device *netdev,
-				      struct ethtool_pauseparam *pause)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
-	int retval = 0;
+अटल पूर्णांक igc_ethtool_set_छोड़ोparam(काष्ठा net_device *netdev,
+				      काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक retval = 0;
 
-	adapter->fc_autoneg = pause->autoneg;
+	adapter->fc_स्वतःneg = छोड़ो->स्वतःneg;
 
-	while (test_and_set_bit(__IGC_RESETTING, &adapter->state))
+	जबतक (test_and_set_bit(__IGC_RESETTING, &adapter->state))
 		usleep_range(1000, 2000);
 
-	if (adapter->fc_autoneg == AUTONEG_ENABLE) {
-		hw->fc.requested_mode = igc_fc_default;
-		if (netif_running(adapter->netdev)) {
-			igc_down(adapter);
+	अगर (adapter->fc_स्वतःneg == AUTONEG_ENABLE) अणु
+		hw->fc.requested_mode = igc_fc_शेष;
+		अगर (netअगर_running(adapter->netdev)) अणु
+			igc_करोwn(adapter);
 			igc_up(adapter);
-		} else {
+		पूर्ण अन्यथा अणु
 			igc_reset(adapter);
-		}
-	} else {
-		if (pause->rx_pause && pause->tx_pause)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (छोड़ो->rx_छोड़ो && छोड़ो->tx_छोड़ो)
 			hw->fc.requested_mode = igc_fc_full;
-		else if (pause->rx_pause && !pause->tx_pause)
-			hw->fc.requested_mode = igc_fc_rx_pause;
-		else if (!pause->rx_pause && pause->tx_pause)
-			hw->fc.requested_mode = igc_fc_tx_pause;
-		else if (!pause->rx_pause && !pause->tx_pause)
+		अन्यथा अगर (छोड़ो->rx_छोड़ो && !छोड़ो->tx_छोड़ो)
+			hw->fc.requested_mode = igc_fc_rx_छोड़ो;
+		अन्यथा अगर (!छोड़ो->rx_छोड़ो && छोड़ो->tx_छोड़ो)
+			hw->fc.requested_mode = igc_fc_tx_छोड़ो;
+		अन्यथा अगर (!छोड़ो->rx_छोड़ो && !छोड़ो->tx_छोड़ो)
 			hw->fc.requested_mode = igc_fc_none;
 
 		hw->fc.current_mode = hw->fc.requested_mode;
 
 		retval = ((hw->phy.media_type == igc_media_type_copper) ?
-			  igc_force_mac_fc(hw) : igc_setup_link(hw));
-	}
+			  igc_क्रमce_mac_fc(hw) : igc_setup_link(hw));
+	पूर्ण
 
 	clear_bit(__IGC_RESETTING, &adapter->state);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void igc_ethtool_get_strings(struct net_device *netdev, u32 stringset,
+अटल व्योम igc_ethtool_get_strings(काष्ठा net_device *netdev, u32 stringset,
 				    u8 *data)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 	u8 *p = data;
-	int i;
+	पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_TEST:
-		memcpy(data, *igc_gstrings_test,
+	चयन (stringset) अणु
+	हाल ETH_SS_TEST:
+		स_नकल(data, *igc_gstrings_test,
 		       IGC_TEST_LEN * ETH_GSTRING_LEN);
-		break;
-	case ETH_SS_STATS:
-		for (i = 0; i < IGC_GLOBAL_STATS_LEN; i++) {
-			memcpy(p, igc_gstrings_stats[i].stat_string,
+		अवरोध;
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < IGC_GLOBAL_STATS_LEN; i++) अणु
+			स_नकल(p, igc_gstrings_stats[i].stat_string,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
-		for (i = 0; i < IGC_NETDEV_STATS_LEN; i++) {
-			memcpy(p, igc_gstrings_net_stats[i].stat_string,
+		पूर्ण
+		क्रम (i = 0; i < IGC_NETDEV_STATS_LEN; i++) अणु
+			स_नकल(p, igc_gstrings_net_stats[i].stat_string,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
-		for (i = 0; i < adapter->num_tx_queues; i++) {
-			sprintf(p, "tx_queue_%u_packets", i);
+		पूर्ण
+		क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+			प्र_लिखो(p, "tx_queue_%u_packets", i);
 			p += ETH_GSTRING_LEN;
-			sprintf(p, "tx_queue_%u_bytes", i);
+			प्र_लिखो(p, "tx_queue_%u_bytes", i);
 			p += ETH_GSTRING_LEN;
-			sprintf(p, "tx_queue_%u_restart", i);
+			प्र_लिखो(p, "tx_queue_%u_restart", i);
 			p += ETH_GSTRING_LEN;
-		}
-		for (i = 0; i < adapter->num_rx_queues; i++) {
-			sprintf(p, "rx_queue_%u_packets", i);
+		पूर्ण
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+			प्र_लिखो(p, "rx_queue_%u_packets", i);
 			p += ETH_GSTRING_LEN;
-			sprintf(p, "rx_queue_%u_bytes", i);
+			प्र_लिखो(p, "rx_queue_%u_bytes", i);
 			p += ETH_GSTRING_LEN;
-			sprintf(p, "rx_queue_%u_drops", i);
+			प्र_लिखो(p, "rx_queue_%u_drops", i);
 			p += ETH_GSTRING_LEN;
-			sprintf(p, "rx_queue_%u_csum_err", i);
+			प्र_लिखो(p, "rx_queue_%u_csum_err", i);
 			p += ETH_GSTRING_LEN;
-			sprintf(p, "rx_queue_%u_alloc_failed", i);
+			प्र_लिखो(p, "rx_queue_%u_alloc_failed", i);
 			p += ETH_GSTRING_LEN;
-		}
+		पूर्ण
 		/* BUG_ON(p - data != IGC_STATS_LEN * ETH_GSTRING_LEN); */
-		break;
-	case ETH_SS_PRIV_FLAGS:
-		memcpy(data, igc_priv_flags_strings,
+		अवरोध;
+	हाल ETH_SS_PRIV_FLAGS:
+		स_नकल(data, igc_priv_flags_strings,
 		       IGC_PRIV_FLAGS_STR_LEN * ETH_GSTRING_LEN);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int igc_ethtool_get_sset_count(struct net_device *netdev, int sset)
-{
-	switch (sset) {
-	case ETH_SS_STATS:
-		return IGC_STATS_LEN;
-	case ETH_SS_TEST:
-		return IGC_TEST_LEN;
-	case ETH_SS_PRIV_FLAGS:
-		return IGC_PRIV_FLAGS_STR_LEN;
-	default:
-		return -ENOTSUPP;
-	}
-}
+अटल पूर्णांक igc_ethtool_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		वापस IGC_STATS_LEN;
+	हाल ETH_SS_TEST:
+		वापस IGC_TEST_LEN;
+	हाल ETH_SS_PRIV_FLAGS:
+		वापस IGC_PRIV_FLAGS_STR_LEN;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void igc_ethtool_get_stats(struct net_device *netdev,
-				  struct ethtool_stats *stats, u64 *data)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct rtnl_link_stats64 *net_stats = &adapter->stats64;
-	unsigned int start;
-	struct igc_ring *ring;
-	int i, j;
-	char *p;
+अटल व्योम igc_ethtool_get_stats(काष्ठा net_device *netdev,
+				  काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा rtnl_link_stats64 *net_stats = &adapter->stats64;
+	अचिन्हित पूर्णांक start;
+	काष्ठा igc_ring *ring;
+	पूर्णांक i, j;
+	अक्षर *p;
 
 	spin_lock(&adapter->stats64_lock);
 	igc_update_stats(adapter);
 
-	for (i = 0; i < IGC_GLOBAL_STATS_LEN; i++) {
-		p = (char *)adapter + igc_gstrings_stats[i].stat_offset;
-		data[i] = (igc_gstrings_stats[i].sizeof_stat ==
-			sizeof(u64)) ? *(u64 *)p : *(u32 *)p;
-	}
-	for (j = 0; j < IGC_NETDEV_STATS_LEN; j++, i++) {
-		p = (char *)net_stats + igc_gstrings_net_stats[j].stat_offset;
-		data[i] = (igc_gstrings_net_stats[j].sizeof_stat ==
-			sizeof(u64)) ? *(u64 *)p : *(u32 *)p;
-	}
-	for (j = 0; j < adapter->num_tx_queues; j++) {
+	क्रम (i = 0; i < IGC_GLOBAL_STATS_LEN; i++) अणु
+		p = (अक्षर *)adapter + igc_gstrings_stats[i].stat_offset;
+		data[i] = (igc_gstrings_stats[i].माप_stat ==
+			माप(u64)) ? *(u64 *)p : *(u32 *)p;
+	पूर्ण
+	क्रम (j = 0; j < IGC_NETDEV_STATS_LEN; j++, i++) अणु
+		p = (अक्षर *)net_stats + igc_gstrings_net_stats[j].stat_offset;
+		data[i] = (igc_gstrings_net_stats[j].माप_stat ==
+			माप(u64)) ? *(u64 *)p : *(u32 *)p;
+	पूर्ण
+	क्रम (j = 0; j < adapter->num_tx_queues; j++) अणु
 		u64	restart2;
 
 		ring = adapter->tx_ring[j];
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->tx_syncp);
 			data[i]   = ring->tx_stats.packets;
 			data[i + 1] = ring->tx_stats.bytes;
 			data[i + 2] = ring->tx_stats.restart_queue;
-		} while (u64_stats_fetch_retry_irq(&ring->tx_syncp, start));
-		do {
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->tx_syncp, start));
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->tx_syncp2);
 			restart2  = ring->tx_stats.restart_queue2;
-		} while (u64_stats_fetch_retry_irq(&ring->tx_syncp2, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->tx_syncp2, start));
 		data[i + 2] += restart2;
 
 		i += IGC_TX_QUEUE_STATS_LEN;
-	}
-	for (j = 0; j < adapter->num_rx_queues; j++) {
+	पूर्ण
+	क्रम (j = 0; j < adapter->num_rx_queues; j++) अणु
 		ring = adapter->rx_ring[j];
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->rx_syncp);
 			data[i]   = ring->rx_stats.packets;
 			data[i + 1] = ring->rx_stats.bytes;
 			data[i + 2] = ring->rx_stats.drops;
 			data[i + 3] = ring->rx_stats.csum_err;
 			data[i + 4] = ring->rx_stats.alloc_failed;
-		} while (u64_stats_fetch_retry_irq(&ring->rx_syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->rx_syncp, start));
 		i += IGC_RX_QUEUE_STATS_LEN;
-	}
+	पूर्ण
 	spin_unlock(&adapter->stats64_lock);
-}
+पूर्ण
 
-static int igc_ethtool_get_coalesce(struct net_device *netdev,
-				    struct ethtool_coalesce *ec)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igc_ethtool_get_coalesce(काष्ठा net_device *netdev,
+				    काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	if (adapter->rx_itr_setting <= 3)
+	अगर (adapter->rx_itr_setting <= 3)
 		ec->rx_coalesce_usecs = adapter->rx_itr_setting;
-	else
+	अन्यथा
 		ec->rx_coalesce_usecs = adapter->rx_itr_setting >> 2;
 
-	if (!(adapter->flags & IGC_FLAG_QUEUE_PAIRS)) {
-		if (adapter->tx_itr_setting <= 3)
+	अगर (!(adapter->flags & IGC_FLAG_QUEUE_PAIRS)) अणु
+		अगर (adapter->tx_itr_setting <= 3)
 			ec->tx_coalesce_usecs = adapter->tx_itr_setting;
-		else
+		अन्यथा
 			ec->tx_coalesce_usecs = adapter->tx_itr_setting >> 2;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_ethtool_set_coalesce(struct net_device *netdev,
-				    struct ethtool_coalesce *ec)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	int i;
+अटल पूर्णांक igc_ethtool_set_coalesce(काष्ठा net_device *netdev,
+				    काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक i;
 
-	if (ec->rx_coalesce_usecs > IGC_MAX_ITR_USECS ||
+	अगर (ec->rx_coalesce_usecs > IGC_MAX_ITR_USECS ||
 	    (ec->rx_coalesce_usecs > 3 &&
 	     ec->rx_coalesce_usecs < IGC_MIN_ITR_USECS) ||
 	    ec->rx_coalesce_usecs == 2)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (ec->tx_coalesce_usecs > IGC_MAX_ITR_USECS ||
+	अगर (ec->tx_coalesce_usecs > IGC_MAX_ITR_USECS ||
 	    (ec->tx_coalesce_usecs > 3 &&
 	     ec->tx_coalesce_usecs < IGC_MIN_ITR_USECS) ||
 	    ec->tx_coalesce_usecs == 2)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if ((adapter->flags & IGC_FLAG_QUEUE_PAIRS) && ec->tx_coalesce_usecs)
-		return -EINVAL;
+	अगर ((adapter->flags & IGC_FLAG_QUEUE_PAIRS) && ec->tx_coalesce_usecs)
+		वापस -EINVAL;
 
 	/* If ITR is disabled, disable DMAC */
-	if (ec->rx_coalesce_usecs == 0) {
-		if (adapter->flags & IGC_FLAG_DMAC)
+	अगर (ec->rx_coalesce_usecs == 0) अणु
+		अगर (adapter->flags & IGC_FLAG_DMAC)
 			adapter->flags &= ~IGC_FLAG_DMAC;
-	}
+	पूर्ण
 
 	/* convert to rate of irq's per second */
-	if (ec->rx_coalesce_usecs && ec->rx_coalesce_usecs <= 3)
+	अगर (ec->rx_coalesce_usecs && ec->rx_coalesce_usecs <= 3)
 		adapter->rx_itr_setting = ec->rx_coalesce_usecs;
-	else
+	अन्यथा
 		adapter->rx_itr_setting = ec->rx_coalesce_usecs << 2;
 
 	/* convert to rate of irq's per second */
-	if (adapter->flags & IGC_FLAG_QUEUE_PAIRS)
+	अगर (adapter->flags & IGC_FLAG_QUEUE_PAIRS)
 		adapter->tx_itr_setting = adapter->rx_itr_setting;
-	else if (ec->tx_coalesce_usecs && ec->tx_coalesce_usecs <= 3)
+	अन्यथा अगर (ec->tx_coalesce_usecs && ec->tx_coalesce_usecs <= 3)
 		adapter->tx_itr_setting = ec->tx_coalesce_usecs;
-	else
+	अन्यथा
 		adapter->tx_itr_setting = ec->tx_coalesce_usecs << 2;
 
-	for (i = 0; i < adapter->num_q_vectors; i++) {
-		struct igc_q_vector *q_vector = adapter->q_vector[i];
+	क्रम (i = 0; i < adapter->num_q_vectors; i++) अणु
+		काष्ठा igc_q_vector *q_vector = adapter->q_vector[i];
 
 		q_vector->tx.work_limit = adapter->tx_work_limit;
-		if (q_vector->rx.ring)
+		अगर (q_vector->rx.ring)
 			q_vector->itr_val = adapter->rx_itr_setting;
-		else
+		अन्यथा
 			q_vector->itr_val = adapter->tx_itr_setting;
-		if (q_vector->itr_val && q_vector->itr_val <= 3)
+		अगर (q_vector->itr_val && q_vector->itr_val <= 3)
 			q_vector->itr_val = IGC_START_ITR;
 		q_vector->set_itr = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define ETHER_TYPE_FULL_MASK ((__force __be16)~0)
-static int igc_ethtool_get_nfc_rule(struct igc_adapter *adapter,
-				    struct ethtool_rxnfc *cmd)
-{
-	struct ethtool_rx_flow_spec *fsp = &cmd->fs;
-	struct igc_nfc_rule *rule = NULL;
+#घोषणा ETHER_TYPE_FULL_MASK ((__क्रमce __be16)~0)
+अटल पूर्णांक igc_ethtool_get_nfc_rule(काष्ठा igc_adapter *adapter,
+				    काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा ethtool_rx_flow_spec *fsp = &cmd->fs;
+	काष्ठा igc_nfc_rule *rule = शून्य;
 
 	cmd->data = IGC_MAX_RXNFC_RULES;
 
 	mutex_lock(&adapter->nfc_rule_lock);
 
 	rule = igc_get_nfc_rule(adapter, fsp->location);
-	if (!rule)
-		goto out;
+	अगर (!rule)
+		जाओ out;
 
 	fsp->flow_type = ETHER_FLOW;
 	fsp->ring_cookie = rule->action;
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_ETHER_TYPE) {
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_ETHER_TYPE) अणु
 		fsp->h_u.ether_spec.h_proto = htons(rule->filter.etype);
 		fsp->m_u.ether_spec.h_proto = ETHER_TYPE_FULL_MASK;
-	}
+	पूर्ण
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_VLAN_TCI) {
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_VLAN_TCI) अणु
 		fsp->flow_type |= FLOW_EXT;
 		fsp->h_ext.vlan_tci = htons(rule->filter.vlan_tci);
 		fsp->m_ext.vlan_tci = htons(VLAN_PRIO_MASK);
-	}
+	पूर्ण
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_DST_MAC_ADDR) {
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_DST_MAC_ADDR) अणु
 		ether_addr_copy(fsp->h_u.ether_spec.h_dest,
 				rule->filter.dst_addr);
 		eth_broadcast_addr(fsp->m_u.ether_spec.h_dest);
-	}
+	पूर्ण
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_SRC_MAC_ADDR) {
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_SRC_MAC_ADDR) अणु
 		ether_addr_copy(fsp->h_u.ether_spec.h_source,
 				rule->filter.src_addr);
 		eth_broadcast_addr(fsp->m_u.ether_spec.h_source);
-	}
+	पूर्ण
 
 	mutex_unlock(&adapter->nfc_rule_lock);
-	return 0;
+	वापस 0;
 
 out:
 	mutex_unlock(&adapter->nfc_rule_lock);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int igc_ethtool_get_nfc_rules(struct igc_adapter *adapter,
-				     struct ethtool_rxnfc *cmd,
+अटल पूर्णांक igc_ethtool_get_nfc_rules(काष्ठा igc_adapter *adapter,
+				     काष्ठा ethtool_rxnfc *cmd,
 				     u32 *rule_locs)
-{
-	struct igc_nfc_rule *rule;
-	int cnt = 0;
+अणु
+	काष्ठा igc_nfc_rule *rule;
+	पूर्णांक cnt = 0;
 
 	cmd->data = IGC_MAX_RXNFC_RULES;
 
 	mutex_lock(&adapter->nfc_rule_lock);
 
-	list_for_each_entry(rule, &adapter->nfc_rule_list, list) {
-		if (cnt == cmd->rule_cnt) {
+	list_क्रम_each_entry(rule, &adapter->nfc_rule_list, list) अणु
+		अगर (cnt == cmd->rule_cnt) अणु
 			mutex_unlock(&adapter->nfc_rule_lock);
-			return -EMSGSIZE;
-		}
+			वापस -EMSGSIZE;
+		पूर्ण
 		rule_locs[cnt] = rule->location;
 		cnt++;
-	}
+	पूर्ण
 
 	mutex_unlock(&adapter->nfc_rule_lock);
 
 	cmd->rule_cnt = cnt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_ethtool_get_rss_hash_opts(struct igc_adapter *adapter,
-					 struct ethtool_rxnfc *cmd)
-{
+अटल पूर्णांक igc_ethtool_get_rss_hash_opts(काष्ठा igc_adapter *adapter,
+					 काष्ठा ethtool_rxnfc *cmd)
+अणु
 	cmd->data = 0;
 
-	/* Report default options for RSS on igc */
-	switch (cmd->flow_type) {
-	case TCP_V4_FLOW:
+	/* Report शेष options क्रम RSS on igc */
+	चयन (cmd->flow_type) अणु
+	हाल TCP_V4_FLOW:
 		cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	case UDP_V4_FLOW:
-		if (adapter->flags & IGC_FLAG_RSS_FIELD_IPV4_UDP)
+	हाल UDP_V4_FLOW:
+		अगर (adapter->flags & IGC_FLAG_RSS_FIELD_IPV4_UDP)
 			cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	case SCTP_V4_FLOW:
-	case AH_ESP_V4_FLOW:
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
-	case IPV4_FLOW:
+	हाल SCTP_V4_FLOW:
+	हाल AH_ESP_V4_FLOW:
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
+	हाल IPV4_FLOW:
 		cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-		break;
-	case TCP_V6_FLOW:
+		अवरोध;
+	हाल TCP_V6_FLOW:
 		cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	case UDP_V6_FLOW:
-		if (adapter->flags & IGC_FLAG_RSS_FIELD_IPV6_UDP)
+	हाल UDP_V6_FLOW:
+		अगर (adapter->flags & IGC_FLAG_RSS_FIELD_IPV6_UDP)
 			cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	case SCTP_V6_FLOW:
-	case AH_ESP_V6_FLOW:
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-	case IPV6_FLOW:
+	हाल SCTP_V6_FLOW:
+	हाल AH_ESP_V6_FLOW:
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+	हाल IPV6_FLOW:
 		cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_ethtool_get_rxnfc(struct net_device *dev,
-				 struct ethtool_rxnfc *cmd, u32 *rule_locs)
-{
-	struct igc_adapter *adapter = netdev_priv(dev);
+अटल पूर्णांक igc_ethtool_get_rxnfc(काष्ठा net_device *dev,
+				 काष्ठा ethtool_rxnfc *cmd, u32 *rule_locs)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(dev);
 
-	switch (cmd->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		cmd->data = adapter->num_rx_queues;
-		return 0;
-	case ETHTOOL_GRXCLSRLCNT:
+		वापस 0;
+	हाल ETHTOOL_GRXCLSRLCNT:
 		cmd->rule_cnt = adapter->nfc_rule_count;
-		return 0;
-	case ETHTOOL_GRXCLSRULE:
-		return igc_ethtool_get_nfc_rule(adapter, cmd);
-	case ETHTOOL_GRXCLSRLALL:
-		return igc_ethtool_get_nfc_rules(adapter, cmd, rule_locs);
-	case ETHTOOL_GRXFH:
-		return igc_ethtool_get_rss_hash_opts(adapter, cmd);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस 0;
+	हाल ETHTOOL_GRXCLSRULE:
+		वापस igc_ethtool_get_nfc_rule(adapter, cmd);
+	हाल ETHTOOL_GRXCLSRLALL:
+		वापस igc_ethtool_get_nfc_rules(adapter, cmd, rule_locs);
+	हाल ETHTOOL_GRXFH:
+		वापस igc_ethtool_get_rss_hash_opts(adapter, cmd);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-#define UDP_RSS_FLAGS (IGC_FLAG_RSS_FIELD_IPV4_UDP | \
+#घोषणा UDP_RSS_FLAGS (IGC_FLAG_RSS_FIELD_IPV4_UDP | \
 		       IGC_FLAG_RSS_FIELD_IPV6_UDP)
-static int igc_ethtool_set_rss_hash_opt(struct igc_adapter *adapter,
-					struct ethtool_rxnfc *nfc)
-{
+अटल पूर्णांक igc_ethtool_set_rss_hash_opt(काष्ठा igc_adapter *adapter,
+					काष्ठा ethtool_rxnfc *nfc)
+अणु
 	u32 flags = adapter->flags;
 
-	/* RSS does not support anything other than hashing
+	/* RSS करोes not support anything other than hashing
 	 * to queues on src and dst IPs and ports
 	 */
-	if (nfc->data & ~(RXH_IP_SRC | RXH_IP_DST |
+	अगर (nfc->data & ~(RXH_IP_SRC | RXH_IP_DST |
 			  RXH_L4_B_0_1 | RXH_L4_B_2_3))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	switch (nfc->flow_type) {
-	case TCP_V4_FLOW:
-	case TCP_V6_FLOW:
-		if (!(nfc->data & RXH_IP_SRC) ||
+	चयन (nfc->flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल TCP_V6_FLOW:
+		अगर (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST) ||
 		    !(nfc->data & RXH_L4_B_0_1) ||
 		    !(nfc->data & RXH_L4_B_2_3))
-			return -EINVAL;
-		break;
-	case UDP_V4_FLOW:
-		if (!(nfc->data & RXH_IP_SRC) ||
+			वापस -EINVAL;
+		अवरोध;
+	हाल UDP_V4_FLOW:
+		अगर (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST))
-			return -EINVAL;
-		switch (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
-		case 0:
+			वापस -EINVAL;
+		चयन (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
+		हाल 0:
 			flags &= ~IGC_FLAG_RSS_FIELD_IPV4_UDP;
-			break;
-		case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+			अवरोध;
+		हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 			flags |= IGC_FLAG_RSS_FIELD_IPV4_UDP;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case UDP_V6_FLOW:
-		if (!(nfc->data & RXH_IP_SRC) ||
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल UDP_V6_FLOW:
+		अगर (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST))
-			return -EINVAL;
-		switch (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
-		case 0:
+			वापस -EINVAL;
+		चयन (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
+		हाल 0:
 			flags &= ~IGC_FLAG_RSS_FIELD_IPV6_UDP;
-			break;
-		case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+			अवरोध;
+		हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 			flags |= IGC_FLAG_RSS_FIELD_IPV6_UDP;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case AH_ESP_V4_FLOW:
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
-	case SCTP_V4_FLOW:
-	case AH_ESP_V6_FLOW:
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-	case SCTP_V6_FLOW:
-		if (!(nfc->data & RXH_IP_SRC) ||
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल AH_ESP_V4_FLOW:
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
+	हाल SCTP_V4_FLOW:
+	हाल AH_ESP_V6_FLOW:
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+	हाल SCTP_V6_FLOW:
+		अगर (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST) ||
 		    (nfc->data & RXH_L4_B_0_1) ||
 		    (nfc->data & RXH_L4_B_2_3))
-			return -EINVAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* if we changed something we need to update flags */
-	if (flags != adapter->flags) {
-		struct igc_hw *hw = &adapter->hw;
+	/* अगर we changed something we need to update flags */
+	अगर (flags != adapter->flags) अणु
+		काष्ठा igc_hw *hw = &adapter->hw;
 		u32 mrqc = rd32(IGC_MRQC);
 
-		if ((flags & UDP_RSS_FLAGS) &&
+		अगर ((flags & UDP_RSS_FLAGS) &&
 		    !(adapter->flags & UDP_RSS_FLAGS))
 			netdev_err(adapter->netdev,
 				   "Enabling UDP RSS: fragmented packets may arrive out of order to the stack above\n");
 
 		adapter->flags = flags;
 
-		/* Perform hash on these packet types */
+		/* Perक्रमm hash on these packet types */
 		mrqc |= IGC_MRQC_RSS_FIELD_IPV4 |
 			IGC_MRQC_RSS_FIELD_IPV4_TCP |
 			IGC_MRQC_RSS_FIELD_IPV6 |
@@ -1184,333 +1185,333 @@ static int igc_ethtool_set_rss_hash_opt(struct igc_adapter *adapter,
 		mrqc &= ~(IGC_MRQC_RSS_FIELD_IPV4_UDP |
 			  IGC_MRQC_RSS_FIELD_IPV6_UDP);
 
-		if (flags & IGC_FLAG_RSS_FIELD_IPV4_UDP)
+		अगर (flags & IGC_FLAG_RSS_FIELD_IPV4_UDP)
 			mrqc |= IGC_MRQC_RSS_FIELD_IPV4_UDP;
 
-		if (flags & IGC_FLAG_RSS_FIELD_IPV6_UDP)
+		अगर (flags & IGC_FLAG_RSS_FIELD_IPV6_UDP)
 			mrqc |= IGC_MRQC_RSS_FIELD_IPV6_UDP;
 
 		wr32(IGC_MRQC, mrqc);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void igc_ethtool_init_nfc_rule(struct igc_nfc_rule *rule,
-				      const struct ethtool_rx_flow_spec *fsp)
-{
+अटल व्योम igc_ethtool_init_nfc_rule(काष्ठा igc_nfc_rule *rule,
+				      स्थिर काष्ठा ethtool_rx_flow_spec *fsp)
+अणु
 	INIT_LIST_HEAD(&rule->list);
 
 	rule->action = fsp->ring_cookie;
 	rule->location = fsp->location;
 
-	if ((fsp->flow_type & FLOW_EXT) && fsp->m_ext.vlan_tci) {
+	अगर ((fsp->flow_type & FLOW_EXT) && fsp->m_ext.vlan_tci) अणु
 		rule->filter.vlan_tci = ntohs(fsp->h_ext.vlan_tci);
 		rule->filter.match_flags |= IGC_FILTER_FLAG_VLAN_TCI;
-	}
+	पूर्ण
 
-	if (fsp->m_u.ether_spec.h_proto == ETHER_TYPE_FULL_MASK) {
+	अगर (fsp->m_u.ether_spec.h_proto == ETHER_TYPE_FULL_MASK) अणु
 		rule->filter.etype = ntohs(fsp->h_u.ether_spec.h_proto);
 		rule->filter.match_flags = IGC_FILTER_FLAG_ETHER_TYPE;
-	}
+	पूर्ण
 
 	/* Both source and destination address filters only support the full
 	 * mask.
 	 */
-	if (is_broadcast_ether_addr(fsp->m_u.ether_spec.h_source)) {
+	अगर (is_broadcast_ether_addr(fsp->m_u.ether_spec.h_source)) अणु
 		rule->filter.match_flags |= IGC_FILTER_FLAG_SRC_MAC_ADDR;
 		ether_addr_copy(rule->filter.src_addr,
 				fsp->h_u.ether_spec.h_source);
-	}
+	पूर्ण
 
-	if (is_broadcast_ether_addr(fsp->m_u.ether_spec.h_dest)) {
+	अगर (is_broadcast_ether_addr(fsp->m_u.ether_spec.h_dest)) अणु
 		rule->filter.match_flags |= IGC_FILTER_FLAG_DST_MAC_ADDR;
 		ether_addr_copy(rule->filter.dst_addr,
 				fsp->h_u.ether_spec.h_dest);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * igc_ethtool_check_nfc_rule() - Check if NFC rule is valid
- * @adapter: Pointer to adapter
+ * igc_ethtool_check_nfc_rule() - Check अगर NFC rule is valid
+ * @adapter: Poपूर्णांकer to adapter
  * @rule: Rule under evaluation
  *
- * The driver doesn't support rules with multiple matches so if more than
+ * The driver करोesn't support rules with multiple matches so अगर more than
  * one bit in filter flags is set, @rule is considered invalid.
  *
- * Also, if there is already another rule with the same filter in a different
+ * Also, अगर there is alपढ़ोy another rule with the same filter in a dअगरferent
  * location, @rule is considered invalid.
  *
  * Context: Expects adapter->nfc_rule_lock to be held by caller.
  *
- * Return: 0 in case of success, negative errno code otherwise.
+ * Return: 0 in हाल of success, negative त्रुटि_सं code otherwise.
  */
-static int igc_ethtool_check_nfc_rule(struct igc_adapter *adapter,
-				      struct igc_nfc_rule *rule)
-{
-	struct net_device *dev = adapter->netdev;
+अटल पूर्णांक igc_ethtool_check_nfc_rule(काष्ठा igc_adapter *adapter,
+				      काष्ठा igc_nfc_rule *rule)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
 	u8 flags = rule->filter.match_flags;
-	struct igc_nfc_rule *tmp;
+	काष्ठा igc_nfc_rule *पंचांगp;
 
-	if (!flags) {
+	अगर (!flags) अणु
 		netdev_dbg(dev, "Rule with no match\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (flags & (flags - 1)) {
+	अगर (flags & (flags - 1)) अणु
 		netdev_dbg(dev, "Rule with multiple matches not supported\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	list_for_each_entry(tmp, &adapter->nfc_rule_list, list) {
-		if (!memcmp(&rule->filter, &tmp->filter,
-			    sizeof(rule->filter)) &&
-		    tmp->location != rule->location) {
+	list_क्रम_each_entry(पंचांगp, &adapter->nfc_rule_list, list) अणु
+		अगर (!स_भेद(&rule->filter, &पंचांगp->filter,
+			    माप(rule->filter)) &&
+		    पंचांगp->location != rule->location) अणु
 			netdev_dbg(dev, "Rule already exists\n");
-			return -EEXIST;
-		}
-	}
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_ethtool_add_nfc_rule(struct igc_adapter *adapter,
-				    struct ethtool_rxnfc *cmd)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct ethtool_rx_flow_spec *fsp =
-		(struct ethtool_rx_flow_spec *)&cmd->fs;
-	struct igc_nfc_rule *rule, *old_rule;
-	int err;
+अटल पूर्णांक igc_ethtool_add_nfc_rule(काष्ठा igc_adapter *adapter,
+				    काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा ethtool_rx_flow_spec *fsp =
+		(काष्ठा ethtool_rx_flow_spec *)&cmd->fs;
+	काष्ठा igc_nfc_rule *rule, *old_rule;
+	पूर्णांक err;
 
-	if (!(netdev->hw_features & NETIF_F_NTUPLE)) {
+	अगर (!(netdev->hw_features & NETIF_F_NTUPLE)) अणु
 		netdev_dbg(netdev, "N-tuple filters disabled\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if ((fsp->flow_type & ~FLOW_EXT) != ETHER_FLOW) {
+	अगर ((fsp->flow_type & ~FLOW_EXT) != ETHER_FLOW) अणु
 		netdev_dbg(netdev, "Only ethernet flow type is supported\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if ((fsp->flow_type & FLOW_EXT) &&
-	    fsp->m_ext.vlan_tci != htons(VLAN_PRIO_MASK)) {
+	अगर ((fsp->flow_type & FLOW_EXT) &&
+	    fsp->m_ext.vlan_tci != htons(VLAN_PRIO_MASK)) अणु
 		netdev_dbg(netdev, "VLAN mask not supported\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (fsp->ring_cookie >= adapter->num_rx_queues) {
+	अगर (fsp->ring_cookie >= adapter->num_rx_queues) अणु
 		netdev_dbg(netdev, "Invalid action\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (fsp->location >= IGC_MAX_RXNFC_RULES) {
+	अगर (fsp->location >= IGC_MAX_RXNFC_RULES) अणु
 		netdev_dbg(netdev, "Invalid location\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	rule = kzalloc(sizeof(*rule), GFP_KERNEL);
-	if (!rule)
-		return -ENOMEM;
+	rule = kzalloc(माप(*rule), GFP_KERNEL);
+	अगर (!rule)
+		वापस -ENOMEM;
 
 	igc_ethtool_init_nfc_rule(rule, fsp);
 
 	mutex_lock(&adapter->nfc_rule_lock);
 
 	err = igc_ethtool_check_nfc_rule(adapter, rule);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
 	old_rule = igc_get_nfc_rule(adapter, fsp->location);
-	if (old_rule)
+	अगर (old_rule)
 		igc_del_nfc_rule(adapter, old_rule);
 
 	err = igc_add_nfc_rule(adapter, rule);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
 	mutex_unlock(&adapter->nfc_rule_lock);
-	return 0;
+	वापस 0;
 
 err:
 	mutex_unlock(&adapter->nfc_rule_lock);
-	kfree(rule);
-	return err;
-}
+	kमुक्त(rule);
+	वापस err;
+पूर्ण
 
-static int igc_ethtool_del_nfc_rule(struct igc_adapter *adapter,
-				    struct ethtool_rxnfc *cmd)
-{
-	struct ethtool_rx_flow_spec *fsp =
-		(struct ethtool_rx_flow_spec *)&cmd->fs;
-	struct igc_nfc_rule *rule;
+अटल पूर्णांक igc_ethtool_del_nfc_rule(काष्ठा igc_adapter *adapter,
+				    काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा ethtool_rx_flow_spec *fsp =
+		(काष्ठा ethtool_rx_flow_spec *)&cmd->fs;
+	काष्ठा igc_nfc_rule *rule;
 
 	mutex_lock(&adapter->nfc_rule_lock);
 
 	rule = igc_get_nfc_rule(adapter, fsp->location);
-	if (!rule) {
+	अगर (!rule) अणु
 		mutex_unlock(&adapter->nfc_rule_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	igc_del_nfc_rule(adapter, rule);
 
 	mutex_unlock(&adapter->nfc_rule_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_ethtool_set_rxnfc(struct net_device *dev,
-				 struct ethtool_rxnfc *cmd)
-{
-	struct igc_adapter *adapter = netdev_priv(dev);
+अटल पूर्णांक igc_ethtool_set_rxnfc(काष्ठा net_device *dev,
+				 काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(dev);
 
-	switch (cmd->cmd) {
-	case ETHTOOL_SRXFH:
-		return igc_ethtool_set_rss_hash_opt(adapter, cmd);
-	case ETHTOOL_SRXCLSRLINS:
-		return igc_ethtool_add_nfc_rule(adapter, cmd);
-	case ETHTOOL_SRXCLSRLDEL:
-		return igc_ethtool_del_nfc_rule(adapter, cmd);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_SRXFH:
+		वापस igc_ethtool_set_rss_hash_opt(adapter, cmd);
+	हाल ETHTOOL_SRXCLSRLINS:
+		वापस igc_ethtool_add_nfc_rule(adapter, cmd);
+	हाल ETHTOOL_SRXCLSRLDEL:
+		वापस igc_ethtool_del_nfc_rule(adapter, cmd);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-void igc_write_rss_indir_tbl(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+व्योम igc_ग_लिखो_rss_indir_tbl(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 reg = IGC_RETA(0);
-	u32 shift = 0;
-	int i = 0;
+	u32 shअगरt = 0;
+	पूर्णांक i = 0;
 
-	while (i < IGC_RETA_SIZE) {
+	जबतक (i < IGC_RETA_SIZE) अणु
 		u32 val = 0;
-		int j;
+		पूर्णांक j;
 
-		for (j = 3; j >= 0; j--) {
+		क्रम (j = 3; j >= 0; j--) अणु
 			val <<= 8;
 			val |= adapter->rss_indir_tbl[i + j];
-		}
+		पूर्ण
 
-		wr32(reg, val << shift);
+		wr32(reg, val << shअगरt);
 		reg += 4;
 		i += 4;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u32 igc_ethtool_get_rxfh_indir_size(struct net_device *netdev)
-{
-	return IGC_RETA_SIZE;
-}
+अटल u32 igc_ethtool_get_rxfh_indir_size(काष्ठा net_device *netdev)
+अणु
+	वापस IGC_RETA_SIZE;
+पूर्ण
 
-static int igc_ethtool_get_rxfh(struct net_device *netdev, u32 *indir, u8 *key,
+अटल पूर्णांक igc_ethtool_get_rxfh(काष्ठा net_device *netdev, u32 *indir, u8 *key,
 				u8 *hfunc)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	int i;
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक i;
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
-	if (!indir)
-		return 0;
-	for (i = 0; i < IGC_RETA_SIZE; i++)
+	अगर (!indir)
+		वापस 0;
+	क्रम (i = 0; i < IGC_RETA_SIZE; i++)
 		indir[i] = adapter->rss_indir_tbl[i];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_ethtool_set_rxfh(struct net_device *netdev, const u32 *indir,
-				const u8 *key, const u8 hfunc)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igc_ethtool_set_rxfh(काष्ठा net_device *netdev, स्थिर u32 *indir,
+				स्थिर u8 *key, स्थिर u8 hfunc)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 	u32 num_queues;
-	int i;
+	पूर्णांक i;
 
-	/* We do not allow change in unsupported parameters */
-	if (key ||
+	/* We करो not allow change in unsupported parameters */
+	अगर (key ||
 	    (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP))
-		return -EOPNOTSUPP;
-	if (!indir)
-		return 0;
+		वापस -EOPNOTSUPP;
+	अगर (!indir)
+		वापस 0;
 
 	num_queues = adapter->rss_queues;
 
-	/* Verify user input. */
-	for (i = 0; i < IGC_RETA_SIZE; i++)
-		if (indir[i] >= num_queues)
-			return -EINVAL;
+	/* Verअगरy user input. */
+	क्रम (i = 0; i < IGC_RETA_SIZE; i++)
+		अगर (indir[i] >= num_queues)
+			वापस -EINVAL;
 
-	for (i = 0; i < IGC_RETA_SIZE; i++)
+	क्रम (i = 0; i < IGC_RETA_SIZE; i++)
 		adapter->rss_indir_tbl[i] = indir[i];
 
-	igc_write_rss_indir_tbl(adapter);
+	igc_ग_लिखो_rss_indir_tbl(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void igc_ethtool_get_channels(struct net_device *netdev,
-				     struct ethtool_channels *ch)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igc_ethtool_get_channels(काष्ठा net_device *netdev,
+				     काष्ठा ethtool_channels *ch)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
 	/* Report maximum channels */
 	ch->max_combined = igc_get_max_rss_queues(adapter);
 
-	/* Report info for other vector */
-	if (adapter->flags & IGC_FLAG_HAS_MSIX) {
+	/* Report info क्रम other vector */
+	अगर (adapter->flags & IGC_FLAG_HAS_MSIX) अणु
 		ch->max_other = NON_Q_VECTORS;
 		ch->other_count = NON_Q_VECTORS;
-	}
+	पूर्ण
 
 	ch->combined_count = adapter->rss_queues;
-}
+पूर्ण
 
-static int igc_ethtool_set_channels(struct net_device *netdev,
-				    struct ethtool_channels *ch)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	unsigned int count = ch->combined_count;
-	unsigned int max_combined = 0;
+अटल पूर्णांक igc_ethtool_set_channels(काष्ठा net_device *netdev,
+				    काष्ठा ethtool_channels *ch)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	अचिन्हित पूर्णांक count = ch->combined_count;
+	अचिन्हित पूर्णांक max_combined = 0;
 
-	/* Verify they are not requesting separate vectors */
-	if (!count || ch->rx_count || ch->tx_count)
-		return -EINVAL;
+	/* Verअगरy they are not requesting separate vectors */
+	अगर (!count || ch->rx_count || ch->tx_count)
+		वापस -EINVAL;
 
-	/* Verify other_count is valid and has not been changed */
-	if (ch->other_count != NON_Q_VECTORS)
-		return -EINVAL;
+	/* Verअगरy other_count is valid and has not been changed */
+	अगर (ch->other_count != NON_Q_VECTORS)
+		वापस -EINVAL;
 
-	/* Verify the number of channels doesn't exceed hw limits */
+	/* Verअगरy the number of channels करोesn't exceed hw limits */
 	max_combined = igc_get_max_rss_queues(adapter);
-	if (count > max_combined)
-		return -EINVAL;
+	अगर (count > max_combined)
+		वापस -EINVAL;
 
-	if (count != adapter->rss_queues) {
+	अगर (count != adapter->rss_queues) अणु
 		adapter->rss_queues = count;
 		igc_set_flag_queue_pairs(adapter, max_combined);
 
-		/* Hardware has to reinitialize queues and interrupts to
+		/* Hardware has to reinitialize queues and पूर्णांकerrupts to
 		 * match the new configuration.
 		 */
-		return igc_reinit_queues(adapter);
-	}
+		वापस igc_reinit_queues(adapter);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_ethtool_get_ts_info(struct net_device *dev,
-				   struct ethtool_ts_info *info)
-{
-	struct igc_adapter *adapter = netdev_priv(dev);
+अटल पूर्णांक igc_ethtool_get_ts_info(काष्ठा net_device *dev,
+				   काष्ठा ethtool_ts_info *info)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(dev);
 
-	if (adapter->ptp_clock)
-		info->phc_index = ptp_clock_index(adapter->ptp_clock);
-	else
+	अगर (adapter->ptp_घड़ी)
+		info->phc_index = ptp_घड़ी_index(adapter->ptp_घड़ी);
+	अन्यथा
 		info->phc_index = -1;
 
-	switch (adapter->hw.mac.type) {
-	case igc_i225:
-		info->so_timestamping =
+	चयन (adapter->hw.mac.type) अणु
+	हाल igc_i225:
+		info->so_बारtamping =
 			SOF_TIMESTAMPING_TX_SOFTWARE |
 			SOF_TIMESTAMPING_RX_SOFTWARE |
 			SOF_TIMESTAMPING_SOFTWARE |
@@ -1525,51 +1526,51 @@ static int igc_ethtool_get_ts_info(struct net_device *dev,
 		info->rx_filters = BIT(HWTSTAMP_FILTER_NONE);
 		info->rx_filters |= BIT(HWTSTAMP_FILTER_ALL);
 
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static u32 igc_ethtool_get_priv_flags(struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल u32 igc_ethtool_get_priv_flags(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 	u32 priv_flags = 0;
 
-	if (adapter->flags & IGC_FLAG_RX_LEGACY)
+	अगर (adapter->flags & IGC_FLAG_RX_LEGACY)
 		priv_flags |= IGC_PRIV_FLAGS_LEGACY_RX;
 
-	return priv_flags;
-}
+	वापस priv_flags;
+पूर्ण
 
-static int igc_ethtool_set_priv_flags(struct net_device *netdev, u32 priv_flags)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	unsigned int flags = adapter->flags;
+अटल पूर्णांक igc_ethtool_set_priv_flags(काष्ठा net_device *netdev, u32 priv_flags)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	अचिन्हित पूर्णांक flags = adapter->flags;
 
 	flags &= ~IGC_FLAG_RX_LEGACY;
-	if (priv_flags & IGC_PRIV_FLAGS_LEGACY_RX)
+	अगर (priv_flags & IGC_PRIV_FLAGS_LEGACY_RX)
 		flags |= IGC_FLAG_RX_LEGACY;
 
-	if (flags != adapter->flags) {
+	अगर (flags != adapter->flags) अणु
 		adapter->flags = flags;
 
-		/* reset interface to repopulate queues */
-		if (netif_running(netdev))
+		/* reset पूर्णांकerface to repopulate queues */
+		अगर (netअगर_running(netdev))
 			igc_reinit_locked(adapter);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_ethtool_get_eee(struct net_device *netdev,
-			       struct ethtool_eee *edata)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
+अटल पूर्णांक igc_ethtool_get_eee(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_eee *edata)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 eeer;
 
-	if (hw->dev_spec._base.eee_enable)
+	अगर (hw->dev_spec._base.eee_enable)
 		edata->advertised =
 			mmd_eee_adv_to_ethtool_adv_t(adapter->eee_advert);
 
@@ -1579,10 +1580,10 @@ static int igc_ethtool_get_eee(struct net_device *netdev,
 	eeer = rd32(IGC_EEER);
 
 	/* EEE status on negotiated link */
-	if (eeer & IGC_EEER_EEE_NEG)
+	अगर (eeer & IGC_EEER_EEE_NEG)
 		edata->eee_active = true;
 
-	if (eeer & IGC_EEER_TX_LPI_EN)
+	अगर (eeer & IGC_EEER_TX_LPI_EN)
 		edata->tx_lpi_enabled = true;
 
 	edata->eee_enabled = hw->dev_spec._base.eee_enable;
@@ -1590,90 +1591,90 @@ static int igc_ethtool_get_eee(struct net_device *netdev,
 	edata->advertised = SUPPORTED_Autoneg;
 	edata->lp_advertised = SUPPORTED_Autoneg;
 
-	/* Report correct negotiated EEE status for devices that
+	/* Report correct negotiated EEE status क्रम devices that
 	 * wrongly report EEE at half-duplex
 	 */
-	if (adapter->link_duplex == HALF_DUPLEX) {
+	अगर (adapter->link_duplex == HALF_DUPLEX) अणु
 		edata->eee_enabled = false;
 		edata->eee_active = false;
 		edata->tx_lpi_enabled = false;
 		edata->advertised &= ~edata->advertised;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_ethtool_set_eee(struct net_device *netdev,
-			       struct ethtool_eee *edata)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
-	struct ethtool_eee eee_curr;
+अटल पूर्णांक igc_ethtool_set_eee(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_eee *edata)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
+	काष्ठा ethtool_eee eee_curr;
 	s32 ret_val;
 
-	memset(&eee_curr, 0, sizeof(struct ethtool_eee));
+	स_रखो(&eee_curr, 0, माप(काष्ठा ethtool_eee));
 
 	ret_val = igc_ethtool_get_eee(netdev, &eee_curr);
-	if (ret_val) {
+	अगर (ret_val) अणु
 		netdev_err(netdev,
 			   "Problem setting EEE advertisement options\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (eee_curr.eee_enabled) {
-		if (eee_curr.tx_lpi_enabled != edata->tx_lpi_enabled) {
+	अगर (eee_curr.eee_enabled) अणु
+		अगर (eee_curr.tx_lpi_enabled != edata->tx_lpi_enabled) अणु
 			netdev_err(netdev,
 				   "Setting EEE tx-lpi is not supported\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* Tx LPI timer is not implemented currently */
-		if (edata->tx_lpi_timer) {
+		/* Tx LPI समयr is not implemented currently */
+		अगर (edata->tx_lpi_समयr) अणु
 			netdev_err(netdev,
 				   "Setting EEE Tx LPI timer is not supported\n");
-			return -EINVAL;
-		}
-	} else if (!edata->eee_enabled) {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अगर (!edata->eee_enabled) अणु
 		netdev_err(netdev,
 			   "Setting EEE options are not supported with EEE disabled\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	adapter->eee_advert = ethtool_adv_to_mmd_eee_adv_t(edata->advertised);
-	if (hw->dev_spec._base.eee_enable != edata->eee_enabled) {
+	अगर (hw->dev_spec._base.eee_enable != edata->eee_enabled) अणु
 		hw->dev_spec._base.eee_enable = edata->eee_enabled;
 		adapter->flags |= IGC_FLAG_EEE;
 
 		/* reset link */
-		if (netif_running(netdev))
+		अगर (netअगर_running(netdev))
 			igc_reinit_locked(adapter);
-		else
+		अन्यथा
 			igc_reset(adapter);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_ethtool_begin(struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igc_ethtool_begin(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	pm_runtime_get_sync(&adapter->pdev->dev);
-	return 0;
-}
+	pm_runसमय_get_sync(&adapter->pdev->dev);
+	वापस 0;
+पूर्ण
 
-static void igc_ethtool_complete(struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igc_ethtool_complete(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	pm_runtime_put(&adapter->pdev->dev);
-}
+	pm_runसमय_put(&adapter->pdev->dev);
+पूर्ण
 
-static int igc_ethtool_get_link_ksettings(struct net_device *netdev,
-					  struct ethtool_link_ksettings *cmd)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
+अटल पूर्णांक igc_ethtool_get_link_ksettings(काष्ठा net_device *netdev,
+					  काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 status;
 	u32 speed;
 
@@ -1693,127 +1694,127 @@ static int igc_ethtool_get_link_ksettings(struct net_device *netdev,
 	cmd->base.phy_address = hw->phy.addr;
 
 	/* advertising link modes */
-	if (hw->phy.autoneg_advertised & ADVERTISE_10_HALF)
+	अगर (hw->phy.स्वतःneg_advertised & ADVERTISE_10_HALF)
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, 10baseT_Half);
-	if (hw->phy.autoneg_advertised & ADVERTISE_10_FULL)
+	अगर (hw->phy.स्वतःneg_advertised & ADVERTISE_10_FULL)
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, 10baseT_Full);
-	if (hw->phy.autoneg_advertised & ADVERTISE_100_HALF)
+	अगर (hw->phy.स्वतःneg_advertised & ADVERTISE_100_HALF)
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, 100baseT_Half);
-	if (hw->phy.autoneg_advertised & ADVERTISE_100_FULL)
+	अगर (hw->phy.स्वतःneg_advertised & ADVERTISE_100_FULL)
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, 100baseT_Full);
-	if (hw->phy.autoneg_advertised & ADVERTISE_1000_FULL)
+	अगर (hw->phy.स्वतःneg_advertised & ADVERTISE_1000_FULL)
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, 1000baseT_Full);
-	if (hw->phy.autoneg_advertised & ADVERTISE_2500_FULL)
+	अगर (hw->phy.स्वतःneg_advertised & ADVERTISE_2500_FULL)
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, 2500baseT_Full);
 
-	/* set autoneg settings */
-	if (hw->mac.autoneg == 1) {
+	/* set स्वतःneg settings */
+	अगर (hw->mac.स्वतःneg == 1) अणु
 		ethtool_link_ksettings_add_link_mode(cmd, supported, Autoneg);
 		ethtool_link_ksettings_add_link_mode(cmd, advertising,
 						     Autoneg);
-	}
+	पूर्ण
 
-	/* Set pause flow control settings */
+	/* Set छोड़ो flow control settings */
 	ethtool_link_ksettings_add_link_mode(cmd, supported, Pause);
 
-	switch (hw->fc.requested_mode) {
-	case igc_fc_full:
+	चयन (hw->fc.requested_mode) अणु
+	हाल igc_fc_full:
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, Pause);
-		break;
-	case igc_fc_rx_pause:
+		अवरोध;
+	हाल igc_fc_rx_छोड़ो:
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, Pause);
 		ethtool_link_ksettings_add_link_mode(cmd, advertising,
 						     Asym_Pause);
-		break;
-	case igc_fc_tx_pause:
+		अवरोध;
+	हाल igc_fc_tx_छोड़ो:
 		ethtool_link_ksettings_add_link_mode(cmd, advertising,
 						     Asym_Pause);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	status = pm_runtime_suspended(&adapter->pdev->dev) ?
+	status = pm_runसमय_suspended(&adapter->pdev->dev) ?
 		 0 : rd32(IGC_STATUS);
 
-	if (status & IGC_STATUS_LU) {
-		if (status & IGC_STATUS_SPEED_1000) {
+	अगर (status & IGC_STATUS_LU) अणु
+		अगर (status & IGC_STATUS_SPEED_1000) अणु
 			/* For I225, STATUS will indicate 1G speed in both
 			 * 1 Gbps and 2.5 Gbps link modes.
 			 * An additional bit is used
-			 * to differentiate between 1 Gbps and 2.5 Gbps.
+			 * to dअगरferentiate between 1 Gbps and 2.5 Gbps.
 			 */
-			if (hw->mac.type == igc_i225 &&
-			    (status & IGC_STATUS_SPEED_2500)) {
+			अगर (hw->mac.type == igc_i225 &&
+			    (status & IGC_STATUS_SPEED_2500)) अणु
 				speed = SPEED_2500;
-			} else {
+			पूर्ण अन्यथा अणु
 				speed = SPEED_1000;
-			}
-		} else if (status & IGC_STATUS_SPEED_100) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (status & IGC_STATUS_SPEED_100) अणु
 			speed = SPEED_100;
-		} else {
+		पूर्ण अन्यथा अणु
 			speed = SPEED_10;
-		}
-		if ((status & IGC_STATUS_FD) ||
+		पूर्ण
+		अगर ((status & IGC_STATUS_FD) ||
 		    hw->phy.media_type != igc_media_type_copper)
 			cmd->base.duplex = DUPLEX_FULL;
-		else
+		अन्यथा
 			cmd->base.duplex = DUPLEX_HALF;
-	} else {
+	पूर्ण अन्यथा अणु
 		speed = SPEED_UNKNOWN;
 		cmd->base.duplex = DUPLEX_UNKNOWN;
-	}
+	पूर्ण
 	cmd->base.speed = speed;
-	if (hw->mac.autoneg)
-		cmd->base.autoneg = AUTONEG_ENABLE;
-	else
-		cmd->base.autoneg = AUTONEG_DISABLE;
+	अगर (hw->mac.स्वतःneg)
+		cmd->base.स्वतःneg = AUTONEG_ENABLE;
+	अन्यथा
+		cmd->base.स्वतःneg = AUTONEG_DISABLE;
 
 	/* MDI-X => 2; MDI =>1; Invalid =>0 */
-	if (hw->phy.media_type == igc_media_type_copper)
+	अगर (hw->phy.media_type == igc_media_type_copper)
 		cmd->base.eth_tp_mdix = hw->phy.is_mdix ? ETH_TP_MDI_X :
 						      ETH_TP_MDI;
-	else
+	अन्यथा
 		cmd->base.eth_tp_mdix = ETH_TP_MDI_INVALID;
 
-	if (hw->phy.mdix == AUTO_ALL_MODES)
+	अगर (hw->phy.mdix == AUTO_ALL_MODES)
 		cmd->base.eth_tp_mdix_ctrl = ETH_TP_MDI_AUTO;
-	else
+	अन्यथा
 		cmd->base.eth_tp_mdix_ctrl = hw->phy.mdix;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-igc_ethtool_set_link_ksettings(struct net_device *netdev,
-			       const struct ethtool_link_ksettings *cmd)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct net_device *dev = adapter->netdev;
-	struct igc_hw *hw = &adapter->hw;
+अटल पूर्णांक
+igc_ethtool_set_link_ksettings(काष्ठा net_device *netdev,
+			       स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा net_device *dev = adapter->netdev;
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 advertising;
 
-	/* When adapter in resetting mode, autoneg/speed/duplex
+	/* When adapter in resetting mode, स्वतःneg/speed/duplex
 	 * cannot be changed
 	 */
-	if (igc_check_reset_block(hw)) {
+	अगर (igc_check_reset_block(hw)) अणु
 		netdev_err(dev, "Cannot change link characteristics when reset is active\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* MDI setting is only allowed when autoneg enabled because
-	 * some hardware doesn't allow MDI setting when speed or
-	 * duplex is forced.
+	/* MDI setting is only allowed when स्वतःneg enabled because
+	 * some hardware करोesn't allow MDI setting when speed or
+	 * duplex is क्रमced.
 	 */
-	if (cmd->base.eth_tp_mdix_ctrl) {
-		if (cmd->base.eth_tp_mdix_ctrl != ETH_TP_MDI_AUTO &&
-		    cmd->base.autoneg != AUTONEG_ENABLE) {
+	अगर (cmd->base.eth_tp_mdix_ctrl) अणु
+		अगर (cmd->base.eth_tp_mdix_ctrl != ETH_TP_MDI_AUTO &&
+		    cmd->base.स्वतःneg != AUTONEG_ENABLE) अणु
 			netdev_err(dev, "Forcing MDI/MDI-X state is not supported when link speed and/or duplex are forced\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	while (test_and_set_bit(__IGC_RESETTING, &adapter->state))
+	जबतक (test_and_set_bit(__IGC_RESETTING, &adapter->state))
 		usleep_range(1000, 2000);
 
 	ethtool_convert_link_mode_to_legacy_u32(&advertising,
@@ -1822,101 +1823,101 @@ igc_ethtool_set_link_ksettings(struct net_device *netdev,
 	 * We have to check this and convert it to ADVERTISE_2500_FULL
 	 * (aka ETHTOOL_LINK_MODE_2500baseX_Full_BIT) explicitly.
 	 */
-	if (ethtool_link_ksettings_test_link_mode(cmd, advertising, 2500baseT_Full))
+	अगर (ethtool_link_ksettings_test_link_mode(cmd, advertising, 2500baseT_Full))
 		advertising |= ADVERTISE_2500_FULL;
 
-	if (cmd->base.autoneg == AUTONEG_ENABLE) {
-		hw->mac.autoneg = 1;
-		hw->phy.autoneg_advertised = advertising;
-		if (adapter->fc_autoneg)
-			hw->fc.requested_mode = igc_fc_default;
-	} else {
+	अगर (cmd->base.स्वतःneg == AUTONEG_ENABLE) अणु
+		hw->mac.स्वतःneg = 1;
+		hw->phy.स्वतःneg_advertised = advertising;
+		अगर (adapter->fc_स्वतःneg)
+			hw->fc.requested_mode = igc_fc_शेष;
+	पूर्ण अन्यथा अणु
 		netdev_info(dev, "Force mode currently not supported\n");
-	}
+	पूर्ण
 
 	/* MDI-X => 2; MDI => 1; Auto => 3 */
-	if (cmd->base.eth_tp_mdix_ctrl) {
-		/* fix up the value for auto (3 => 0) as zero is mapped
-		 * internally to auto
+	अगर (cmd->base.eth_tp_mdix_ctrl) अणु
+		/* fix up the value क्रम स्वतः (3 => 0) as zero is mapped
+		 * पूर्णांकernally to स्वतः
 		 */
-		if (cmd->base.eth_tp_mdix_ctrl == ETH_TP_MDI_AUTO)
+		अगर (cmd->base.eth_tp_mdix_ctrl == ETH_TP_MDI_AUTO)
 			hw->phy.mdix = AUTO_ALL_MODES;
-		else
+		अन्यथा
 			hw->phy.mdix = cmd->base.eth_tp_mdix_ctrl;
-	}
+	पूर्ण
 
 	/* reset the link */
-	if (netif_running(adapter->netdev)) {
-		igc_down(adapter);
+	अगर (netअगर_running(adapter->netdev)) अणु
+		igc_करोwn(adapter);
 		igc_up(adapter);
-	} else {
+	पूर्ण अन्यथा अणु
 		igc_reset(adapter);
-	}
+	पूर्ण
 
 	clear_bit(__IGC_RESETTING, &adapter->state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void igc_ethtool_diag_test(struct net_device *netdev,
-				  struct ethtool_test *eth_test, u64 *data)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	bool if_running = netif_running(netdev);
+अटल व्योम igc_ethtool_diag_test(काष्ठा net_device *netdev,
+				  काष्ठा ethtool_test *eth_test, u64 *data)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	bool अगर_running = netअगर_running(netdev);
 
-	if (eth_test->flags == ETH_TEST_FL_OFFLINE) {
+	अगर (eth_test->flags == ETH_TEST_FL_OFFLINE) अणु
 		netdev_info(adapter->netdev, "Offline testing starting");
 		set_bit(__IGC_TESTING, &adapter->state);
 
-		/* Link test performed before hardware reset so autoneg doesn't
-		 * interfere with test result
+		/* Link test perक्रमmed beक्रमe hardware reset so स्वतःneg करोesn't
+		 * पूर्णांकerfere with test result
 		 */
-		if (!igc_link_test(adapter, &data[TEST_LINK]))
+		अगर (!igc_link_test(adapter, &data[TEST_LINK]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
-		if (if_running)
-			igc_close(netdev);
-		else
+		अगर (अगर_running)
+			igc_बंद(netdev);
+		अन्यथा
 			igc_reset(adapter);
 
 		netdev_info(adapter->netdev, "Register testing starting");
-		if (!igc_reg_test(adapter, &data[TEST_REG]))
+		अगर (!igc_reg_test(adapter, &data[TEST_REG]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
 		igc_reset(adapter);
 
 		netdev_info(adapter->netdev, "EEPROM testing starting");
-		if (!igc_eeprom_test(adapter, &data[TEST_EEP]))
+		अगर (!igc_eeprom_test(adapter, &data[TEST_EEP]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
 		igc_reset(adapter);
 
-		/* loopback and interrupt tests
+		/* loopback and पूर्णांकerrupt tests
 		 * will be implemented in the future
 		 */
 		data[TEST_LOOP] = 0;
 		data[TEST_IRQ] = 0;
 
 		clear_bit(__IGC_TESTING, &adapter->state);
-		if (if_running)
-			igc_open(netdev);
-	} else {
+		अगर (अगर_running)
+			igc_खोलो(netdev);
+	पूर्ण अन्यथा अणु
 		netdev_info(adapter->netdev, "Online testing starting");
 
-		/* register, eeprom, intr and loopback tests not run online */
+		/* रेजिस्टर, eeprom, पूर्णांकr and loopback tests not run online */
 		data[TEST_REG] = 0;
 		data[TEST_EEP] = 0;
 		data[TEST_IRQ] = 0;
 		data[TEST_LOOP] = 0;
 
-		if (!igc_link_test(adapter, &data[TEST_LINK]))
+		अगर (!igc_link_test(adapter, &data[TEST_LINK]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
-	}
+	पूर्ण
 
-	msleep_interruptible(4 * 1000);
-}
+	msleep_पूर्णांकerruptible(4 * 1000);
+पूर्ण
 
-static const struct ethtool_ops igc_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops igc_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS,
 	.get_drvinfo		= igc_ethtool_get_drvinfo,
 	.get_regs_len		= igc_ethtool_get_regs_len,
@@ -1932,8 +1933,8 @@ static const struct ethtool_ops igc_ethtool_ops = {
 	.set_eeprom		= igc_ethtool_set_eeprom,
 	.get_ringparam		= igc_ethtool_get_ringparam,
 	.set_ringparam		= igc_ethtool_set_ringparam,
-	.get_pauseparam		= igc_ethtool_get_pauseparam,
-	.set_pauseparam		= igc_ethtool_set_pauseparam,
+	.get_छोड़ोparam		= igc_ethtool_get_छोड़ोparam,
+	.set_छोड़ोparam		= igc_ethtool_set_छोड़ोparam,
 	.get_strings		= igc_ethtool_get_strings,
 	.get_sset_count		= igc_ethtool_get_sset_count,
 	.get_ethtool_stats	= igc_ethtool_get_stats,
@@ -1956,9 +1957,9 @@ static const struct ethtool_ops igc_ethtool_ops = {
 	.get_link_ksettings	= igc_ethtool_get_link_ksettings,
 	.set_link_ksettings	= igc_ethtool_set_link_ksettings,
 	.self_test		= igc_ethtool_diag_test,
-};
+पूर्ण;
 
-void igc_ethtool_set_ops(struct net_device *netdev)
-{
+व्योम igc_ethtool_set_ops(काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = &igc_ethtool_ops;
-}
+पूर्ण

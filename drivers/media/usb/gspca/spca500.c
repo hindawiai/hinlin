@@ -1,243 +1,244 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * SPCA500 chip based cameras initialization data
  *
- * V4L2 by Jean-Francois Moine <http://moinejf.free.fr>
+ * V4L2 by Jean-Francois Moine <http://moinejf.मुक्त.fr>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#define MODULE_NAME "spca500"
+#घोषणा MODULE_NAME "spca500"
 
-#include "gspca.h"
-#include "jpeg.h"
+#समावेश "gspca.h"
+#समावेश "jpeg.h"
 
 MODULE_AUTHOR("Michel Xhaard <mxhaard@users.sourceforge.net>");
 MODULE_DESCRIPTION("GSPCA/SPCA500 USB Camera Driver");
 MODULE_LICENSE("GPL");
 
-#define QUALITY 85
+#घोषणा QUALITY 85
 
-/* specific webcam descriptor */
-struct sd {
-	struct gspca_dev gspca_dev;		/* !! must be the first item */
+/* specअगरic webcam descriptor */
+काष्ठा sd अणु
+	काष्ठा gspca_dev gspca_dev;		/* !! must be the first item */
 
-	char subtype;
-#define AgfaCl20 0
-#define AiptekPocketDV 1
-#define BenqDC1016 2
-#define CreativePCCam300 3
-#define DLinkDSC350 4
-#define Gsmartmini 5
-#define IntelPocketPCCamera 6
-#define KodakEZ200 7
-#define LogitechClickSmart310 8
-#define LogitechClickSmart510 9
-#define LogitechTraveler 10
-#define MustekGsmart300 11
-#define Optimedia 12
-#define PalmPixDC85 13
-#define ToptroIndus 14
+	अक्षर subtype;
+#घोषणा AgfaCl20 0
+#घोषणा AiptekPocketDV 1
+#घोषणा BenqDC1016 2
+#घोषणा CreativePCCam300 3
+#घोषणा DLinkDSC350 4
+#घोषणा Gsmarपंचांगini 5
+#घोषणा IntelPocketPCCamera 6
+#घोषणा KodakEZ200 7
+#घोषणा LogitechClickSmart310 8
+#घोषणा LogitechClickSmart510 9
+#घोषणा LogitechTraveler 10
+#घोषणा MustekGsmart300 11
+#घोषणा Opसमयdia 12
+#घोषणा PalmPixDC85 13
+#घोषणा ToptroIndus 14
 
 	u8 jpeg_hdr[JPEG_HDR_SZ];
-};
+पूर्ण;
 
-static const struct v4l2_pix_format vga_mode[] = {
-	{320, 240, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
+अटल स्थिर काष्ठा v4l2_pix_क्रमmat vga_mode[] = अणु
+	अणु320, 240, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
 		.bytesperline = 320,
 		.sizeimage = 320 * 240 * 3 / 8 + 590,
 		.colorspace = V4L2_COLORSPACE_JPEG,
-		.priv = 1},
-	{640, 480, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
+		.priv = 1पूर्ण,
+	अणु640, 480, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
 		.bytesperline = 640,
 		.sizeimage = 640 * 480 * 3 / 8 + 590,
 		.colorspace = V4L2_COLORSPACE_JPEG,
-		.priv = 0},
-};
+		.priv = 0पूर्ण,
+पूर्ण;
 
-static const struct v4l2_pix_format sif_mode[] = {
-	{176, 144, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
+अटल स्थिर काष्ठा v4l2_pix_क्रमmat sअगर_mode[] = अणु
+	अणु176, 144, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
 		.bytesperline = 176,
 		.sizeimage = 176 * 144 * 3 / 8 + 590,
 		.colorspace = V4L2_COLORSPACE_JPEG,
-		.priv = 1},
-	{352, 288, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
+		.priv = 1पूर्ण,
+	अणु352, 288, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
 		.bytesperline = 352,
 		.sizeimage = 352 * 288 * 3 / 8 + 590,
 		.colorspace = V4L2_COLORSPACE_JPEG,
-		.priv = 0},
-};
+		.priv = 0पूर्ण,
+पूर्ण;
 
-/* Frame packet header offsets for the spca500 */
-#define SPCA500_OFFSET_PADDINGLB 2
-#define SPCA500_OFFSET_PADDINGHB 3
-#define SPCA500_OFFSET_MODE      4
-#define SPCA500_OFFSET_IMGWIDTH  5
-#define SPCA500_OFFSET_IMGHEIGHT 6
-#define SPCA500_OFFSET_IMGMODE   7
-#define SPCA500_OFFSET_QTBLINDEX 8
-#define SPCA500_OFFSET_FRAMSEQ   9
-#define SPCA500_OFFSET_CDSPINFO  10
-#define SPCA500_OFFSET_GPIO      11
-#define SPCA500_OFFSET_AUGPIO    12
-#define SPCA500_OFFSET_DATA      16
+/* Frame packet header offsets क्रम the spca500 */
+#घोषणा SPCA500_OFFSET_PADDINGLB 2
+#घोषणा SPCA500_OFFSET_PADDINGHB 3
+#घोषणा SPCA500_OFFSET_MODE      4
+#घोषणा SPCA500_OFFSET_IMGWIDTH  5
+#घोषणा SPCA500_OFFSET_IMGHEIGHT 6
+#घोषणा SPCA500_OFFSET_IMGMODE   7
+#घोषणा SPCA500_OFFSET_QTBLINDEX 8
+#घोषणा SPCA500_OFFSET_FRAMSEQ   9
+#घोषणा SPCA500_OFFSET_CDSPINFO  10
+#घोषणा SPCA500_OFFSET_GPIO      11
+#घोषणा SPCA500_OFFSET_AUGPIO    12
+#घोषणा SPCA500_OFFSET_DATA      16
 
 
-static const __u16 spca500_visual_defaults[][3] = {
-	{0x00, 0x0003, 0x816b},	/* SSI not active sync with vsync,
+अटल स्थिर __u16 spca500_visual_शेषs[][3] = अणु
+	अणु0x00, 0x0003, 0x816bपूर्ण,	/* SSI not active sync with vsync,
 				 * hue (H byte) = 0,
 				 * saturation/hue enable,
 				 * brightness/contrast enable.
 				 */
-	{0x00, 0x0000, 0x8167},	/* brightness = 0 */
-	{0x00, 0x0020, 0x8168},	/* contrast = 0 */
-	{0x00, 0x0003, 0x816b},	/* SSI not active sync with vsync,
+	अणु0x00, 0x0000, 0x8167पूर्ण,	/* brightness = 0 */
+	अणु0x00, 0x0020, 0x8168पूर्ण,	/* contrast = 0 */
+	अणु0x00, 0x0003, 0x816bपूर्ण,	/* SSI not active sync with vsync,
 				 * hue (H byte) = 0, saturation/hue enable,
 				 * brightness/contrast enable.
 				 * was 0x0003, now 0x0000.
 				 */
-	{0x00, 0x0000, 0x816a},	/* hue (L byte) = 0 */
-	{0x00, 0x0020, 0x8169},	/* saturation = 0x20 */
-	{0x00, 0x0050, 0x8157},	/* edge gain high threshold */
-	{0x00, 0x0030, 0x8158},	/* edge gain low threshold */
-	{0x00, 0x0028, 0x8159},	/* edge bandwidth high threshold */
-	{0x00, 0x000a, 0x815a},	/* edge bandwidth low threshold */
-	{0x00, 0x0001, 0x8202},	/* clock rate compensation = 1/25 sec/frame */
-	{0x0c, 0x0004, 0x0000},
-	/* set interface */
-	{}
-};
-static const __u16 Clicksmart510_defaults[][3] = {
-	{0x00, 0x00, 0x8211},
-	{0x00, 0x01, 0x82c0},
-	{0x00, 0x10, 0x82cb},
-	{0x00, 0x0f, 0x800d},
-	{0x00, 0x82, 0x8225},
-	{0x00, 0x21, 0x8228},
-	{0x00, 0x00, 0x8203},
-	{0x00, 0x00, 0x8204},
-	{0x00, 0x08, 0x8205},
-	{0x00, 0xf8, 0x8206},
-	{0x00, 0x28, 0x8207},
-	{0x00, 0xa0, 0x8208},
-	{0x00, 0x08, 0x824a},
-	{0x00, 0x08, 0x8214},
-	{0x00, 0x80, 0x82c1},
-	{0x00, 0x00, 0x82c2},
-	{0x00, 0x00, 0x82ca},
-	{0x00, 0x80, 0x82c1},
-	{0x00, 0x04, 0x82c2},
-	{0x00, 0x00, 0x82ca},
-	{0x00, 0xfc, 0x8100},
-	{0x00, 0xfc, 0x8105},
-	{0x00, 0x30, 0x8101},
-	{0x00, 0x00, 0x8102},
-	{0x00, 0x00, 0x8103},
-	{0x00, 0x66, 0x8107},
-	{0x00, 0x00, 0x816b},
-	{0x00, 0x00, 0x8155},
-	{0x00, 0x01, 0x8156},
-	{0x00, 0x60, 0x8157},
-	{0x00, 0x40, 0x8158},
-	{0x00, 0x0a, 0x8159},
-	{0x00, 0x06, 0x815a},
-	{0x00, 0x00, 0x813f},
-	{0x00, 0x00, 0x8200},
-	{0x00, 0x19, 0x8201},
-	{0x00, 0x00, 0x82c1},
-	{0x00, 0xa0, 0x82c2},
-	{0x00, 0x00, 0x82ca},
-	{0x00, 0x00, 0x8117},
-	{0x00, 0x00, 0x8118},
-	{0x00, 0x65, 0x8119},
-	{0x00, 0x00, 0x811a},
-	{0x00, 0x00, 0x811b},
-	{0x00, 0x55, 0x811c},
-	{0x00, 0x65, 0x811d},
-	{0x00, 0x55, 0x811e},
-	{0x00, 0x16, 0x811f},
-	{0x00, 0x19, 0x8120},
-	{0x00, 0x80, 0x8103},
-	{0x00, 0x83, 0x816b},
-	{0x00, 0x25, 0x8168},
-	{0x00, 0x01, 0x820f},
-	{0x00, 0xff, 0x8115},
-	{0x00, 0x48, 0x8116},
-	{0x00, 0x50, 0x8151},
-	{0x00, 0x40, 0x8152},
-	{0x00, 0x78, 0x8153},
-	{0x00, 0x40, 0x8154},
-	{0x00, 0x00, 0x8167},
-	{0x00, 0x20, 0x8168},
-	{0x00, 0x00, 0x816a},
-	{0x00, 0x03, 0x816b},
-	{0x00, 0x20, 0x8169},
-	{0x00, 0x60, 0x8157},
-	{0x00, 0x00, 0x8190},
-	{0x00, 0x00, 0x81a1},
-	{0x00, 0x00, 0x81b2},
-	{0x00, 0x27, 0x8191},
-	{0x00, 0x27, 0x81a2},
-	{0x00, 0x27, 0x81b3},
-	{0x00, 0x4b, 0x8192},
-	{0x00, 0x4b, 0x81a3},
-	{0x00, 0x4b, 0x81b4},
-	{0x00, 0x66, 0x8193},
-	{0x00, 0x66, 0x81a4},
-	{0x00, 0x66, 0x81b5},
-	{0x00, 0x79, 0x8194},
-	{0x00, 0x79, 0x81a5},
-	{0x00, 0x79, 0x81b6},
-	{0x00, 0x8a, 0x8195},
-	{0x00, 0x8a, 0x81a6},
-	{0x00, 0x8a, 0x81b7},
-	{0x00, 0x9b, 0x8196},
-	{0x00, 0x9b, 0x81a7},
-	{0x00, 0x9b, 0x81b8},
-	{0x00, 0xa6, 0x8197},
-	{0x00, 0xa6, 0x81a8},
-	{0x00, 0xa6, 0x81b9},
-	{0x00, 0xb2, 0x8198},
-	{0x00, 0xb2, 0x81a9},
-	{0x00, 0xb2, 0x81ba},
-	{0x00, 0xbe, 0x8199},
-	{0x00, 0xbe, 0x81aa},
-	{0x00, 0xbe, 0x81bb},
-	{0x00, 0xc8, 0x819a},
-	{0x00, 0xc8, 0x81ab},
-	{0x00, 0xc8, 0x81bc},
-	{0x00, 0xd2, 0x819b},
-	{0x00, 0xd2, 0x81ac},
-	{0x00, 0xd2, 0x81bd},
-	{0x00, 0xdb, 0x819c},
-	{0x00, 0xdb, 0x81ad},
-	{0x00, 0xdb, 0x81be},
-	{0x00, 0xe4, 0x819d},
-	{0x00, 0xe4, 0x81ae},
-	{0x00, 0xe4, 0x81bf},
-	{0x00, 0xed, 0x819e},
-	{0x00, 0xed, 0x81af},
-	{0x00, 0xed, 0x81c0},
-	{0x00, 0xf7, 0x819f},
-	{0x00, 0xf7, 0x81b0},
-	{0x00, 0xf7, 0x81c1},
-	{0x00, 0xff, 0x81a0},
-	{0x00, 0xff, 0x81b1},
-	{0x00, 0xff, 0x81c2},
-	{0x00, 0x03, 0x8156},
-	{0x00, 0x00, 0x8211},
-	{0x00, 0x20, 0x8168},
-	{0x00, 0x01, 0x8202},
-	{0x00, 0x30, 0x8101},
-	{0x00, 0x00, 0x8111},
-	{0x00, 0x00, 0x8112},
-	{0x00, 0x00, 0x8113},
-	{0x00, 0x00, 0x8114},
-	{}
-};
+	अणु0x00, 0x0000, 0x816aपूर्ण,	/* hue (L byte) = 0 */
+	अणु0x00, 0x0020, 0x8169पूर्ण,	/* saturation = 0x20 */
+	अणु0x00, 0x0050, 0x8157पूर्ण,	/* edge gain high threshold */
+	अणु0x00, 0x0030, 0x8158पूर्ण,	/* edge gain low threshold */
+	अणु0x00, 0x0028, 0x8159पूर्ण,	/* edge bandwidth high threshold */
+	अणु0x00, 0x000a, 0x815aपूर्ण,	/* edge bandwidth low threshold */
+	अणु0x00, 0x0001, 0x8202पूर्ण,	/* घड़ी rate compensation = 1/25 sec/frame */
+	अणु0x0c, 0x0004, 0x0000पूर्ण,
+	/* set पूर्णांकerface */
+	अणुपूर्ण
+पूर्ण;
+अटल स्थिर __u16 Clicksmart510_शेषs[][3] = अणु
+	अणु0x00, 0x00, 0x8211पूर्ण,
+	अणु0x00, 0x01, 0x82c0पूर्ण,
+	अणु0x00, 0x10, 0x82cbपूर्ण,
+	अणु0x00, 0x0f, 0x800dपूर्ण,
+	अणु0x00, 0x82, 0x8225पूर्ण,
+	अणु0x00, 0x21, 0x8228पूर्ण,
+	अणु0x00, 0x00, 0x8203पूर्ण,
+	अणु0x00, 0x00, 0x8204पूर्ण,
+	अणु0x00, 0x08, 0x8205पूर्ण,
+	अणु0x00, 0xf8, 0x8206पूर्ण,
+	अणु0x00, 0x28, 0x8207पूर्ण,
+	अणु0x00, 0xa0, 0x8208पूर्ण,
+	अणु0x00, 0x08, 0x824aपूर्ण,
+	अणु0x00, 0x08, 0x8214पूर्ण,
+	अणु0x00, 0x80, 0x82c1पूर्ण,
+	अणु0x00, 0x00, 0x82c2पूर्ण,
+	अणु0x00, 0x00, 0x82caपूर्ण,
+	अणु0x00, 0x80, 0x82c1पूर्ण,
+	अणु0x00, 0x04, 0x82c2पूर्ण,
+	अणु0x00, 0x00, 0x82caपूर्ण,
+	अणु0x00, 0xfc, 0x8100पूर्ण,
+	अणु0x00, 0xfc, 0x8105पूर्ण,
+	अणु0x00, 0x30, 0x8101पूर्ण,
+	अणु0x00, 0x00, 0x8102पूर्ण,
+	अणु0x00, 0x00, 0x8103पूर्ण,
+	अणु0x00, 0x66, 0x8107पूर्ण,
+	अणु0x00, 0x00, 0x816bपूर्ण,
+	अणु0x00, 0x00, 0x8155पूर्ण,
+	अणु0x00, 0x01, 0x8156पूर्ण,
+	अणु0x00, 0x60, 0x8157पूर्ण,
+	अणु0x00, 0x40, 0x8158पूर्ण,
+	अणु0x00, 0x0a, 0x8159पूर्ण,
+	अणु0x00, 0x06, 0x815aपूर्ण,
+	अणु0x00, 0x00, 0x813fपूर्ण,
+	अणु0x00, 0x00, 0x8200पूर्ण,
+	अणु0x00, 0x19, 0x8201पूर्ण,
+	अणु0x00, 0x00, 0x82c1पूर्ण,
+	अणु0x00, 0xa0, 0x82c2पूर्ण,
+	अणु0x00, 0x00, 0x82caपूर्ण,
+	अणु0x00, 0x00, 0x8117पूर्ण,
+	अणु0x00, 0x00, 0x8118पूर्ण,
+	अणु0x00, 0x65, 0x8119पूर्ण,
+	अणु0x00, 0x00, 0x811aपूर्ण,
+	अणु0x00, 0x00, 0x811bपूर्ण,
+	अणु0x00, 0x55, 0x811cपूर्ण,
+	अणु0x00, 0x65, 0x811dपूर्ण,
+	अणु0x00, 0x55, 0x811eपूर्ण,
+	अणु0x00, 0x16, 0x811fपूर्ण,
+	अणु0x00, 0x19, 0x8120पूर्ण,
+	अणु0x00, 0x80, 0x8103पूर्ण,
+	अणु0x00, 0x83, 0x816bपूर्ण,
+	अणु0x00, 0x25, 0x8168पूर्ण,
+	अणु0x00, 0x01, 0x820fपूर्ण,
+	अणु0x00, 0xff, 0x8115पूर्ण,
+	अणु0x00, 0x48, 0x8116पूर्ण,
+	अणु0x00, 0x50, 0x8151पूर्ण,
+	अणु0x00, 0x40, 0x8152पूर्ण,
+	अणु0x00, 0x78, 0x8153पूर्ण,
+	अणु0x00, 0x40, 0x8154पूर्ण,
+	अणु0x00, 0x00, 0x8167पूर्ण,
+	अणु0x00, 0x20, 0x8168पूर्ण,
+	अणु0x00, 0x00, 0x816aपूर्ण,
+	अणु0x00, 0x03, 0x816bपूर्ण,
+	अणु0x00, 0x20, 0x8169पूर्ण,
+	अणु0x00, 0x60, 0x8157पूर्ण,
+	अणु0x00, 0x00, 0x8190पूर्ण,
+	अणु0x00, 0x00, 0x81a1पूर्ण,
+	अणु0x00, 0x00, 0x81b2पूर्ण,
+	अणु0x00, 0x27, 0x8191पूर्ण,
+	अणु0x00, 0x27, 0x81a2पूर्ण,
+	अणु0x00, 0x27, 0x81b3पूर्ण,
+	अणु0x00, 0x4b, 0x8192पूर्ण,
+	अणु0x00, 0x4b, 0x81a3पूर्ण,
+	अणु0x00, 0x4b, 0x81b4पूर्ण,
+	अणु0x00, 0x66, 0x8193पूर्ण,
+	अणु0x00, 0x66, 0x81a4पूर्ण,
+	अणु0x00, 0x66, 0x81b5पूर्ण,
+	अणु0x00, 0x79, 0x8194पूर्ण,
+	अणु0x00, 0x79, 0x81a5पूर्ण,
+	अणु0x00, 0x79, 0x81b6पूर्ण,
+	अणु0x00, 0x8a, 0x8195पूर्ण,
+	अणु0x00, 0x8a, 0x81a6पूर्ण,
+	अणु0x00, 0x8a, 0x81b7पूर्ण,
+	अणु0x00, 0x9b, 0x8196पूर्ण,
+	अणु0x00, 0x9b, 0x81a7पूर्ण,
+	अणु0x00, 0x9b, 0x81b8पूर्ण,
+	अणु0x00, 0xa6, 0x8197पूर्ण,
+	अणु0x00, 0xa6, 0x81a8पूर्ण,
+	अणु0x00, 0xa6, 0x81b9पूर्ण,
+	अणु0x00, 0xb2, 0x8198पूर्ण,
+	अणु0x00, 0xb2, 0x81a9पूर्ण,
+	अणु0x00, 0xb2, 0x81baपूर्ण,
+	अणु0x00, 0xbe, 0x8199पूर्ण,
+	अणु0x00, 0xbe, 0x81aaपूर्ण,
+	अणु0x00, 0xbe, 0x81bbपूर्ण,
+	अणु0x00, 0xc8, 0x819aपूर्ण,
+	अणु0x00, 0xc8, 0x81abपूर्ण,
+	अणु0x00, 0xc8, 0x81bcपूर्ण,
+	अणु0x00, 0xd2, 0x819bपूर्ण,
+	अणु0x00, 0xd2, 0x81acपूर्ण,
+	अणु0x00, 0xd2, 0x81bdपूर्ण,
+	अणु0x00, 0xdb, 0x819cपूर्ण,
+	अणु0x00, 0xdb, 0x81adपूर्ण,
+	अणु0x00, 0xdb, 0x81beपूर्ण,
+	अणु0x00, 0xe4, 0x819dपूर्ण,
+	अणु0x00, 0xe4, 0x81aeपूर्ण,
+	अणु0x00, 0xe4, 0x81bfपूर्ण,
+	अणु0x00, 0xed, 0x819eपूर्ण,
+	अणु0x00, 0xed, 0x81afपूर्ण,
+	अणु0x00, 0xed, 0x81c0पूर्ण,
+	अणु0x00, 0xf7, 0x819fपूर्ण,
+	अणु0x00, 0xf7, 0x81b0पूर्ण,
+	अणु0x00, 0xf7, 0x81c1पूर्ण,
+	अणु0x00, 0xff, 0x81a0पूर्ण,
+	अणु0x00, 0xff, 0x81b1पूर्ण,
+	अणु0x00, 0xff, 0x81c2पूर्ण,
+	अणु0x00, 0x03, 0x8156पूर्ण,
+	अणु0x00, 0x00, 0x8211पूर्ण,
+	अणु0x00, 0x20, 0x8168पूर्ण,
+	अणु0x00, 0x01, 0x8202पूर्ण,
+	अणु0x00, 0x30, 0x8101पूर्ण,
+	अणु0x00, 0x00, 0x8111पूर्ण,
+	अणु0x00, 0x00, 0x8112पूर्ण,
+	अणु0x00, 0x00, 0x8113पूर्ण,
+	अणु0x00, 0x00, 0x8114पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const __u8 qtable_creative_pccam[2][64] = {
-	{				/* Q-table Y-components */
+अटल स्थिर __u8 qtable_creative_pccam[2][64] = अणु
+	अणु				/* Q-table Y-components */
 	 0x05, 0x03, 0x03, 0x05, 0x07, 0x0c, 0x0f, 0x12,
 	 0x04, 0x04, 0x04, 0x06, 0x08, 0x11, 0x12, 0x11,
 	 0x04, 0x04, 0x05, 0x07, 0x0c, 0x11, 0x15, 0x11,
@@ -245,8 +246,8 @@ static const __u8 qtable_creative_pccam[2][64] = {
 	 0x05, 0x07, 0x0b, 0x11, 0x14, 0x21, 0x1f, 0x17,
 	 0x07, 0x0b, 0x11, 0x13, 0x18, 0x1f, 0x22, 0x1c,
 	 0x0f, 0x13, 0x17, 0x1a, 0x1f, 0x24, 0x24, 0x1e,
-	 0x16, 0x1c, 0x1d, 0x1d, 0x22, 0x1e, 0x1f, 0x1e},
-	{				/* Q-table C-components */
+	 0x16, 0x1c, 0x1d, 0x1d, 0x22, 0x1e, 0x1f, 0x1eपूर्ण,
+	अणु				/* Q-table C-components */
 	 0x05, 0x05, 0x07, 0x0e, 0x1e, 0x1e, 0x1e, 0x1e,
 	 0x05, 0x06, 0x08, 0x14, 0x1e, 0x1e, 0x1e, 0x1e,
 	 0x07, 0x08, 0x11, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e,
@@ -254,11 +255,11 @@ static const __u8 qtable_creative_pccam[2][64] = {
 	 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e,
 	 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e,
 	 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e,
-	 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e}
-};
+	 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1eपूर्ण
+पूर्ण;
 
-static const __u8 qtable_kodak_ez200[2][64] = {
-	{				/* Q-table Y-components */
+अटल स्थिर __u8 qtable_kodak_ez200[2][64] = अणु
+	अणु				/* Q-table Y-components */
 	 0x02, 0x01, 0x01, 0x02, 0x02, 0x04, 0x05, 0x06,
 	 0x01, 0x01, 0x01, 0x02, 0x03, 0x06, 0x06, 0x06,
 	 0x01, 0x01, 0x02, 0x02, 0x04, 0x06, 0x07, 0x06,
@@ -266,8 +267,8 @@ static const __u8 qtable_kodak_ez200[2][64] = {
 	 0x02, 0x02, 0x04, 0x06, 0x07, 0x0b, 0x0a, 0x08,
 	 0x02, 0x04, 0x06, 0x06, 0x08, 0x0a, 0x0b, 0x09,
 	 0x05, 0x06, 0x08, 0x09, 0x0a, 0x0c, 0x0c, 0x0a,
-	 0x07, 0x09, 0x0a, 0x0a, 0x0b, 0x0a, 0x0a, 0x0a},
-	{				/* Q-table C-components */
+	 0x07, 0x09, 0x0a, 0x0a, 0x0b, 0x0a, 0x0a, 0x0aपूर्ण,
+	अणु				/* Q-table C-components */
 	 0x02, 0x02, 0x02, 0x05, 0x0a, 0x0a, 0x0a, 0x0a,
 	 0x02, 0x02, 0x03, 0x07, 0x0a, 0x0a, 0x0a, 0x0a,
 	 0x02, 0x03, 0x06, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,
@@ -275,11 +276,11 @@ static const __u8 qtable_kodak_ez200[2][64] = {
 	 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,
 	 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,
 	 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,
-	 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a}
-};
+	 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0aपूर्ण
+पूर्ण;
 
-static const __u8 qtable_pocketdv[2][64] = {
-	{		/* Q-table Y-components start registers 0x8800 */
+अटल स्थिर __u8 qtable_pocketdv[2][64] = अणु
+	अणु		/* Q-table Y-components start रेजिस्टरs 0x8800 */
 	 0x06, 0x04, 0x04, 0x06, 0x0a, 0x10, 0x14, 0x18,
 	 0x05, 0x05, 0x06, 0x08, 0x0a, 0x17, 0x18, 0x16,
 	 0x06, 0x05, 0x06, 0x0a, 0x10, 0x17, 0x1c, 0x16,
@@ -288,8 +289,8 @@ static const __u8 qtable_pocketdv[2][64] = {
 	 0x0a, 0x0e, 0x16, 0x1a, 0x20, 0x2a, 0x2d, 0x25,
 	 0x14, 0x1a, 0x1f, 0x23, 0x29, 0x30, 0x30, 0x28,
 	 0x1d, 0x25, 0x26, 0x27, 0x2d, 0x28, 0x29, 0x28,
-	 },
-	{		/* Q-table C-components start registers 0x8840 */
+	 पूर्ण,
+	अणु		/* Q-table C-components start रेजिस्टरs 0x8840 */
 	 0x07, 0x07, 0x0a, 0x13, 0x28, 0x28, 0x28, 0x28,
 	 0x07, 0x08, 0x0a, 0x1a, 0x28, 0x28, 0x28, 0x28,
 	 0x0a, 0x0a, 0x16, 0x28, 0x28, 0x28, 0x28, 0x28,
@@ -297,129 +298,129 @@ static const __u8 qtable_pocketdv[2][64] = {
 	 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28,
 	 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28,
 	 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28,
-	 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28}
-};
+	 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28पूर्ण
+पूर्ण;
 
-/* read 'len' bytes to gspca_dev->usb_buf */
-static void reg_r(struct gspca_dev *gspca_dev,
+/* पढ़ो 'len' bytes to gspca_dev->usb_buf */
+अटल व्योम reg_r(काष्ठा gspca_dev *gspca_dev,
 		  __u16 index,
 		  __u16 length)
-{
+अणु
 	usb_control_msg(gspca_dev->dev,
 			usb_rcvctrlpipe(gspca_dev->dev, 0),
 			0,
-			USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			0,		/* value */
 			index, gspca_dev->usb_buf, length, 500);
-}
+पूर्ण
 
-static int reg_w(struct gspca_dev *gspca_dev,
+अटल पूर्णांक reg_w(काष्ठा gspca_dev *gspca_dev,
 		     __u16 req, __u16 index, __u16 value)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	gspca_dbg(gspca_dev, D_USBO, "reg write: [0x%02x] = 0x%02x\n",
 		  index, value);
 	ret = usb_control_msg(gspca_dev->dev,
 			usb_sndctrlpipe(gspca_dev->dev, 0),
 			req,
-			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-			value, index, NULL, 0, 500);
-	if (ret < 0)
+			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			value, index, शून्य, 0, 500);
+	अगर (ret < 0)
 		pr_err("reg write: error %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* returns: negative is error, pos or zero is data */
-static int reg_r_12(struct gspca_dev *gspca_dev,
+/* वापसs: negative is error, pos or zero is data */
+अटल पूर्णांक reg_r_12(काष्ठा gspca_dev *gspca_dev,
 			__u16 req,	/* bRequest */
 			__u16 index,	/* wIndex */
 			__u16 length)	/* wLength (1 or 2 only) */
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	gspca_dev->usb_buf[1] = 0;
 	ret = usb_control_msg(gspca_dev->dev,
 			usb_rcvctrlpipe(gspca_dev->dev, 0),
 			req,
-			USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			0,		/* value */
 			index,
 			gspca_dev->usb_buf, length,
-			500);		/* timeout */
-	if (ret < 0) {
+			500);		/* समयout */
+	अगर (ret < 0) अणु
 		pr_err("reg_r_12 err %d\n", ret);
-		return ret;
-	}
-	return (gspca_dev->usb_buf[1] << 8) + gspca_dev->usb_buf[0];
-}
+		वापस ret;
+	पूर्ण
+	वापस (gspca_dev->usb_buf[1] << 8) + gspca_dev->usb_buf[0];
+पूर्ण
 
 /*
- * Simple function to wait for a given 8-bit value to be returned from
- * a reg_read call.
- * Returns: negative is error or timeout, zero is success.
+ * Simple function to रुको क्रम a given 8-bit value to be वापसed from
+ * a reg_पढ़ो call.
+ * Returns: negative is error or समयout, zero is success.
  */
-static int reg_r_wait(struct gspca_dev *gspca_dev,
+अटल पूर्णांक reg_r_रुको(काष्ठा gspca_dev *gspca_dev,
 			__u16 reg, __u16 index, __u16 value)
-{
-	int ret, cnt = 20;
+अणु
+	पूर्णांक ret, cnt = 20;
 
-	while (--cnt > 0) {
+	जबतक (--cnt > 0) अणु
 		ret = reg_r_12(gspca_dev, reg, index, 1);
-		if (ret == value)
-			return 0;
+		अगर (ret == value)
+			वापस 0;
 		msleep(50);
-	}
-	return -EIO;
-}
+	पूर्ण
+	वापस -EIO;
+पूर्ण
 
-static int write_vector(struct gspca_dev *gspca_dev,
-			const __u16 data[][3])
-{
-	int ret, i = 0;
+अटल पूर्णांक ग_लिखो_vector(काष्ठा gspca_dev *gspca_dev,
+			स्थिर __u16 data[][3])
+अणु
+	पूर्णांक ret, i = 0;
 
-	while (data[i][0] != 0 || data[i][1] != 0 || data[i][2] != 0) {
+	जबतक (data[i][0] != 0 || data[i][1] != 0 || data[i][2] != 0) अणु
 		ret = reg_w(gspca_dev, data[i][0], data[i][2], data[i][1]);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		i++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int spca50x_setup_qtable(struct gspca_dev *gspca_dev,
-				unsigned int request,
-				unsigned int ybase,
-				unsigned int cbase,
-				const __u8 qtable[2][64])
-{
-	int i, err;
+अटल पूर्णांक spca50x_setup_qtable(काष्ठा gspca_dev *gspca_dev,
+				अचिन्हित पूर्णांक request,
+				अचिन्हित पूर्णांक ybase,
+				अचिन्हित पूर्णांक cbase,
+				स्थिर __u8 qtable[2][64])
+अणु
+	पूर्णांक i, err;
 
 	/* loop over y components */
-	for (i = 0; i < 64; i++) {
+	क्रम (i = 0; i < 64; i++) अणु
 		err = reg_w(gspca_dev, request, ybase + i, qtable[0][i]);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	/* loop over c components */
-	for (i = 0; i < 64; i++) {
+	क्रम (i = 0; i < 64; i++) अणु
 		err = reg_w(gspca_dev, request, cbase + i, qtable[1][i]);
-		if (err < 0)
-			return err;
-	}
-	return 0;
-}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void spca500_ping310(struct gspca_dev *gspca_dev)
-{
+अटल व्योम spca500_ping310(काष्ठा gspca_dev *gspca_dev)
+अणु
 	reg_r(gspca_dev, 0x0d04, 2);
 	gspca_dbg(gspca_dev, D_STREAM, "ClickSmart310 ping 0x0d04 0x%02x 0x%02x\n",
 		  gspca_dev->usb_buf[0], gspca_dev->usb_buf[1]);
-}
+पूर्ण
 
-static void spca500_clksmart310_init(struct gspca_dev *gspca_dev)
-{
+अटल व्योम spca500_clksmart310_init(काष्ठा gspca_dev *gspca_dev)
+अणु
 	reg_r(gspca_dev, 0x0d05, 2);
 	gspca_dbg(gspca_dev, D_STREAM, "ClickSmart310 init 0x0d05 0x%02x 0x%02x\n",
 		  gspca_dev->usb_buf[0], gspca_dev->usb_buf[1]);
@@ -436,16 +437,16 @@ static void spca500_clksmart310_init(struct gspca_dev *gspca_dev)
 	reg_w(gspca_dev, 0x00, 0x8151, 0x4a);
 	reg_w(gspca_dev, 0x00, 0x8153, 0x78);
 	reg_w(gspca_dev, 0x00, 0x0d01, 0x04);
-						/* 00 for adjust shutter */
+						/* 00 क्रम adjust shutter */
 	reg_w(gspca_dev, 0x00, 0x0d02, 0x01);
 	reg_w(gspca_dev, 0x00, 0x8169, 0x25);
 	reg_w(gspca_dev, 0x00, 0x0d01, 0x02);
-}
+पूर्ण
 
-static void spca500_setmode(struct gspca_dev *gspca_dev,
+अटल व्योम spca500_seपंचांगode(काष्ठा gspca_dev *gspca_dev,
 			__u8 xmult, __u8 ymult)
-{
-	int mode;
+अणु
+	पूर्णांक mode;
 
 	/* set x multiplier */
 	reg_w(gspca_dev, 0, 0x8001, xmult);
@@ -453,48 +454,48 @@ static void spca500_setmode(struct gspca_dev *gspca_dev,
 	/* set y multiplier */
 	reg_w(gspca_dev, 0, 0x8002, ymult);
 
-	/* use compressed mode, VGA, with mode specific subsample */
-	mode = gspca_dev->cam.cam_mode[(int) gspca_dev->curr_mode].priv;
+	/* use compressed mode, VGA, with mode specअगरic subsample */
+	mode = gspca_dev->cam.cam_mode[(पूर्णांक) gspca_dev->curr_mode].priv;
 	reg_w(gspca_dev, 0, 0x8003, mode << 4);
-}
+पूर्ण
 
-static int spca500_full_reset(struct gspca_dev *gspca_dev)
-{
-	int err;
+अटल पूर्णांक spca500_full_reset(काष्ठा gspca_dev *gspca_dev)
+अणु
+	पूर्णांक err;
 
 	/* send the reset command */
 	err = reg_w(gspca_dev, 0xe0, 0x0001, 0x0000);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* wait for the reset to complete */
-	err = reg_r_wait(gspca_dev, 0x06, 0x0000, 0x0000);
-	if (err < 0)
-		return err;
+	/* रुको क्रम the reset to complete */
+	err = reg_r_रुको(gspca_dev, 0x06, 0x0000, 0x0000);
+	अगर (err < 0)
+		वापस err;
 	err = reg_w(gspca_dev, 0xe0, 0x0000, 0x0000);
-	if (err < 0)
-		return err;
-	err = reg_r_wait(gspca_dev, 0x06, 0, 0);
-	if (err < 0) {
+	अगर (err < 0)
+		वापस err;
+	err = reg_r_रुको(gspca_dev, 0x06, 0, 0);
+	अगर (err < 0) अणु
 		gspca_err(gspca_dev, "reg_r_wait() failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	/* all ok */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Synchro the Bridge with sensor */
 /* Maybe that will work on all spca500 chip */
-/* because i only own a clicksmart310 try for that chip */
+/* because i only own a clicksmart310 try क्रम that chip */
 /* using spca50x_set_packet_size() cause an Ooops here */
-/* usb_set_interface from kernel 2.6.x clear all the urb stuff */
+/* usb_set_पूर्णांकerface from kernel 2.6.x clear all the urb stuff */
 /* up-port the same feature as in 2.4.x kernel */
-static int spca500_synch310(struct gspca_dev *gspca_dev)
-{
-	if (usb_set_interface(gspca_dev->dev, gspca_dev->iface, 0) < 0) {
+अटल पूर्णांक spca500_synch310(काष्ठा gspca_dev *gspca_dev)
+अणु
+	अगर (usb_set_पूर्णांकerface(gspca_dev->dev, gspca_dev->अगरace, 0) < 0) अणु
 		gspca_err(gspca_dev, "Set packet size: set interface error\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	spca500_ping310(gspca_dev);
 
 	reg_r(gspca_dev, 0x0d00, 1);
@@ -503,21 +504,21 @@ static int spca500_synch310(struct gspca_dev *gspca_dev)
 	gspca_dbg(gspca_dev, D_PACK, "ClickSmart310 sync alt: %d\n",
 		  gspca_dev->alt);
 
-	/* Windoze use pipe with altsetting 6 why 7 here */
-	if (usb_set_interface(gspca_dev->dev,
-				gspca_dev->iface,
-				gspca_dev->alt) < 0) {
+	/* Winकरोze use pipe with altsetting 6 why 7 here */
+	अगर (usb_set_पूर्णांकerface(gspca_dev->dev,
+				gspca_dev->अगरace,
+				gspca_dev->alt) < 0) अणु
 		gspca_err(gspca_dev, "Set packet size: set interface error\n");
-		goto error;
-	}
-	return 0;
+		जाओ error;
+	पूर्ण
+	वापस 0;
 error:
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static void spca500_reinit(struct gspca_dev *gspca_dev)
-{
-	int err;
+अटल व्योम spca500_reinit(काष्ठा gspca_dev *gspca_dev)
+अणु
+	पूर्णांक err;
 	__u8 Data;
 
 	/* some unknown command from Aiptek pocket dv and family300 */
@@ -531,7 +532,7 @@ static void spca500_reinit(struct gspca_dev *gspca_dev)
 
 	err = spca50x_setup_qtable(gspca_dev, 0x00, 0x8800, 0x8840,
 				 qtable_pocketdv);
-	if (err < 0)
+	अगर (err < 0)
 		gspca_err(gspca_dev, "spca50x_setup_qtable failed on init\n");
 
 	/* set qtable index */
@@ -540,58 +541,58 @@ static void spca500_reinit(struct gspca_dev *gspca_dev)
 	reg_w(gspca_dev, 0x00, 0x800a, 0x00);
 	/* Set agc transfer: synced between frames */
 	reg_w(gspca_dev, 0x00, 0x820f, 0x01);
-	/* Init SDRAM - needed for SDRAM access */
+	/* Init SDRAM - needed क्रम SDRAM access */
 	reg_w(gspca_dev, 0x00, 0x870a, 0x04);
 	/*Start init sequence or stream */
 	reg_w(gspca_dev, 0, 0x8003, 0x00);
-	/* switch to video camera mode */
+	/* चयन to video camera mode */
 	reg_w(gspca_dev, 0x00, 0x8000, 0x0004);
 	msleep(2000);
-	if (reg_r_wait(gspca_dev, 0, 0x8000, 0x44) != 0) {
+	अगर (reg_r_रुको(gspca_dev, 0, 0x8000, 0x44) != 0) अणु
 		reg_r(gspca_dev, 0x816b, 1);
 		Data = gspca_dev->usb_buf[0];
 		reg_w(gspca_dev, 0x00, 0x816b, Data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* this function is called at probe time */
-static int sd_config(struct gspca_dev *gspca_dev,
-			const struct usb_device_id *id)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	struct cam *cam;
+/* this function is called at probe समय */
+अटल पूर्णांक sd_config(काष्ठा gspca_dev *gspca_dev,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	काष्ठा cam *cam;
 
 	cam = &gspca_dev->cam;
 	sd->subtype = id->driver_info;
-	if (sd->subtype != LogitechClickSmart310) {
+	अगर (sd->subtype != LogitechClickSmart310) अणु
 		cam->cam_mode = vga_mode;
 		cam->nmodes = ARRAY_SIZE(vga_mode);
-	} else {
-		cam->cam_mode = sif_mode;
-		cam->nmodes = ARRAY_SIZE(sif_mode);
-	}
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		cam->cam_mode = sअगर_mode;
+		cam->nmodes = ARRAY_SIZE(sअगर_mode);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* this function is called at probe and resume time */
-static int sd_init(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+/* this function is called at probe and resume समय */
+अटल पूर्णांक sd_init(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
 	/* initialisation of spca500 based cameras is deferred */
 	gspca_dbg(gspca_dev, D_STREAM, "SPCA500 init\n");
-	if (sd->subtype == LogitechClickSmart310)
+	अगर (sd->subtype == LogitechClickSmart310)
 		spca500_clksmart310_init(gspca_dev);
-/*	else
+/*	अन्यथा
 		spca500_initialise(gspca_dev); */
 	gspca_dbg(gspca_dev, D_STREAM, "SPCA500 init done\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sd_start(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int err;
+अटल पूर्णांक sd_start(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक err;
 	__u8 Data;
 	__u8 xmult, ymult;
 
@@ -601,13 +602,13 @@ static int sd_start(struct gspca_dev *gspca_dev)
 			0x22);		/* JPEG 411 */
 	jpeg_set_qual(sd->jpeg_hdr, QUALITY);
 
-	if (sd->subtype == LogitechClickSmart310) {
+	अगर (sd->subtype == LogitechClickSmart310) अणु
 		xmult = 0x16;
 		ymult = 0x12;
-	} else {
+	पूर्ण अन्यथा अणु
 		xmult = 0x28;
 		ymult = 0x1e;
-	}
+	पूर्ण
 
 	/* is there a sensor here ? */
 	reg_r(gspca_dev, 0x8a04, 1);
@@ -617,9 +618,9 @@ static int sd_start(struct gspca_dev *gspca_dev)
 		  gspca_dev->curr_mode, xmult, ymult);
 
 	/* setup qtable */
-	switch (sd->subtype) {
-	case LogitechClickSmart310:
-		 spca500_setmode(gspca_dev, xmult, ymult);
+	चयन (sd->subtype) अणु
+	हाल LogitechClickSmart310:
+		 spca500_seपंचांगode(gspca_dev, xmult, ymult);
 
 		/* enable drop packet */
 		reg_w(gspca_dev, 0x00, 0x850a, 0x0001);
@@ -627,15 +628,15 @@ static int sd_start(struct gspca_dev *gspca_dev)
 		err = spca50x_setup_qtable(gspca_dev,
 					   0x00, 0x8800, 0x8840,
 					   qtable_creative_pccam);
-		if (err < 0)
+		अगर (err < 0)
 			gspca_err(gspca_dev, "spca50x_setup_qtable failed\n");
-		/* Init SDRAM - needed for SDRAM access */
+		/* Init SDRAM - needed क्रम SDRAM access */
 		reg_w(gspca_dev, 0x00, 0x870a, 0x04);
 
-		/* switch to video camera mode */
+		/* चयन to video camera mode */
 		reg_w(gspca_dev, 0x00, 0x8000, 0x0004);
 		msleep(500);
-		if (reg_r_wait(gspca_dev, 0, 0x8000, 0x44) != 0)
+		अगर (reg_r_रुको(gspca_dev, 0, 0x8000, 0x44) != 0)
 			gspca_err(gspca_dev, "reg_r_wait() failed\n");
 
 		reg_r(gspca_dev, 0x816b, 1);
@@ -644,73 +645,73 @@ static int sd_start(struct gspca_dev *gspca_dev)
 
 		spca500_synch310(gspca_dev);
 
-		write_vector(gspca_dev, spca500_visual_defaults);
-		spca500_setmode(gspca_dev, xmult, ymult);
+		ग_लिखो_vector(gspca_dev, spca500_visual_शेषs);
+		spca500_seपंचांगode(gspca_dev, xmult, ymult);
 		/* enable drop packet */
 		err = reg_w(gspca_dev, 0x00, 0x850a, 0x0001);
-		if (err < 0)
+		अगर (err < 0)
 			gspca_err(gspca_dev, "failed to enable drop packet\n");
 		reg_w(gspca_dev, 0x00, 0x8880, 3);
 		err = spca50x_setup_qtable(gspca_dev,
 					   0x00, 0x8800, 0x8840,
 					   qtable_creative_pccam);
-		if (err < 0)
+		अगर (err < 0)
 			gspca_err(gspca_dev, "spca50x_setup_qtable failed\n");
 
-		/* Init SDRAM - needed for SDRAM access */
+		/* Init SDRAM - needed क्रम SDRAM access */
 		reg_w(gspca_dev, 0x00, 0x870a, 0x04);
 
-		/* switch to video camera mode */
+		/* चयन to video camera mode */
 		reg_w(gspca_dev, 0x00, 0x8000, 0x0004);
 
-		if (reg_r_wait(gspca_dev, 0, 0x8000, 0x44) != 0)
+		अगर (reg_r_रुको(gspca_dev, 0, 0x8000, 0x44) != 0)
 			gspca_err(gspca_dev, "reg_r_wait() failed\n");
 
 		reg_r(gspca_dev, 0x816b, 1);
 		Data = gspca_dev->usb_buf[0];
 		reg_w(gspca_dev, 0x00, 0x816b, Data);
-		break;
-	case CreativePCCam300:		/* Creative PC-CAM 300 640x480 CCD */
-	case IntelPocketPCCamera:	/* FIXME: Temporary fix for
+		अवरोध;
+	हाल CreativePCCam300:		/* Creative PC-CAM 300 640x480 CCD */
+	हाल IntelPocketPCCamera:	/* FIXME: Temporary fix क्रम
 					 *	Intel Pocket PC Camera
 					 *	- NWG (Sat 29th March 2003) */
 
-		/* do a full reset */
+		/* करो a full reset */
 		err = spca500_full_reset(gspca_dev);
-		if (err < 0)
+		अगर (err < 0)
 			gspca_err(gspca_dev, "spca500_full_reset failed\n");
 
 		/* enable drop packet */
 		err = reg_w(gspca_dev, 0x00, 0x850a, 0x0001);
-		if (err < 0)
+		अगर (err < 0)
 			gspca_err(gspca_dev, "failed to enable drop packet\n");
 		reg_w(gspca_dev, 0x00, 0x8880, 3);
 		err = spca50x_setup_qtable(gspca_dev,
 					   0x00, 0x8800, 0x8840,
 					   qtable_creative_pccam);
-		if (err < 0)
+		अगर (err < 0)
 			gspca_err(gspca_dev, "spca50x_setup_qtable failed\n");
 
-		spca500_setmode(gspca_dev, xmult, ymult);
+		spca500_seपंचांगode(gspca_dev, xmult, ymult);
 		reg_w(gspca_dev, 0x20, 0x0001, 0x0004);
 
-		/* switch to video camera mode */
+		/* चयन to video camera mode */
 		reg_w(gspca_dev, 0x00, 0x8000, 0x0004);
 
-		if (reg_r_wait(gspca_dev, 0, 0x8000, 0x44) != 0)
+		अगर (reg_r_रुको(gspca_dev, 0, 0x8000, 0x44) != 0)
 			gspca_err(gspca_dev, "reg_r_wait() failed\n");
 
 		reg_r(gspca_dev, 0x816b, 1);
 		Data = gspca_dev->usb_buf[0];
 		reg_w(gspca_dev, 0x00, 0x816b, Data);
 
-/*		write_vector(gspca_dev, spca500_visual_defaults); */
-		break;
-	case KodakEZ200:		/* Kodak EZ200 */
+/*		ग_लिखो_vector(gspca_dev, spca500_visual_शेषs); */
+		अवरोध;
+	हाल KodakEZ200:		/* Kodak EZ200 */
 
-		/* do a full reset */
+		/* करो a full reset */
 		err = spca500_full_reset(gspca_dev);
-		if (err < 0)
+		अगर (err < 0)
 			gspca_err(gspca_dev, "spca500_full_reset failed\n");
 		/* enable drop packet */
 		reg_w(gspca_dev, 0x00, 0x850a, 0x0001);
@@ -718,34 +719,34 @@ static int sd_start(struct gspca_dev *gspca_dev)
 		err = spca50x_setup_qtable(gspca_dev,
 					   0x00, 0x8800, 0x8840,
 					   qtable_kodak_ez200);
-		if (err < 0)
+		अगर (err < 0)
 			gspca_err(gspca_dev, "spca50x_setup_qtable failed\n");
-		spca500_setmode(gspca_dev, xmult, ymult);
+		spca500_seपंचांगode(gspca_dev, xmult, ymult);
 
 		reg_w(gspca_dev, 0x20, 0x0001, 0x0004);
 
-		/* switch to video camera mode */
+		/* चयन to video camera mode */
 		reg_w(gspca_dev, 0x00, 0x8000, 0x0004);
 
-		if (reg_r_wait(gspca_dev, 0, 0x8000, 0x44) != 0)
+		अगर (reg_r_रुको(gspca_dev, 0, 0x8000, 0x44) != 0)
 			gspca_err(gspca_dev, "reg_r_wait() failed\n");
 
 		reg_r(gspca_dev, 0x816b, 1);
 		Data = gspca_dev->usb_buf[0];
 		reg_w(gspca_dev, 0x00, 0x816b, Data);
 
-/*		write_vector(gspca_dev, spca500_visual_defaults); */
-		break;
+/*		ग_लिखो_vector(gspca_dev, spca500_visual_शेषs); */
+		अवरोध;
 
-	case BenqDC1016:
-	case DLinkDSC350:		/* FamilyCam 300 */
-	case AiptekPocketDV:		/* Aiptek PocketDV */
-	case Gsmartmini:		/*Mustek Gsmart Mini */
-	case MustekGsmart300:		/* Mustek Gsmart 300 */
-	case PalmPixDC85:
-	case Optimedia:
-	case ToptroIndus:
-	case AgfaCl20:
+	हाल BenqDC1016:
+	हाल DLinkDSC350:		/* FamilyCam 300 */
+	हाल AiptekPocketDV:		/* Aiptek PocketDV */
+	हाल Gsmarपंचांगini:		/*Mustek Gsmart Mini */
+	हाल MustekGsmart300:		/* Mustek Gsmart 300 */
+	हाल PalmPixDC85:
+	हाल Opसमयdia:
+	हाल ToptroIndus:
+	हाल AgfaCl20:
 		spca500_reinit(gspca_dev);
 		reg_w(gspca_dev, 0x00, 0x0d01, 0x01);
 		/* enable drop packet */
@@ -753,7 +754,7 @@ static int sd_start(struct gspca_dev *gspca_dev)
 
 		err = spca50x_setup_qtable(gspca_dev,
 				   0x00, 0x8800, 0x8840, qtable_pocketdv);
-		if (err < 0)
+		अगर (err < 0)
 			gspca_err(gspca_dev, "spca50x_setup_qtable failed\n");
 		reg_w(gspca_dev, 0x00, 0x8880, 2);
 
@@ -761,21 +762,21 @@ static int sd_start(struct gspca_dev *gspca_dev)
 		reg_w(gspca_dev, 0x00, 0x800a, 0x00);
 		/* Set agc transfer: synced between frames */
 		reg_w(gspca_dev, 0x00, 0x820f, 0x01);
-		/* Init SDRAM - needed for SDRAM access */
+		/* Init SDRAM - needed क्रम SDRAM access */
 		reg_w(gspca_dev, 0x00, 0x870a, 0x04);
 
-		spca500_setmode(gspca_dev, xmult, ymult);
-		/* switch to video camera mode */
+		spca500_seपंचांगode(gspca_dev, xmult, ymult);
+		/* चयन to video camera mode */
 		reg_w(gspca_dev, 0x00, 0x8000, 0x0004);
 
-		reg_r_wait(gspca_dev, 0, 0x8000, 0x44);
+		reg_r_रुको(gspca_dev, 0, 0x8000, 0x44);
 
 		reg_r(gspca_dev, 0x816b, 1);
 		Data = gspca_dev->usb_buf[0];
 		reg_w(gspca_dev, 0x00, 0x816b, Data);
-		break;
-	case LogitechTraveler:
-	case LogitechClickSmart510:
+		अवरोध;
+	हाल LogitechTraveler:
+	हाल LogitechClickSmart510:
 		reg_w(gspca_dev, 0x02, 0x00, 0x00);
 		/* enable drop packet */
 		reg_w(gspca_dev, 0x00, 0x850a, 0x0001);
@@ -783,53 +784,53 @@ static int sd_start(struct gspca_dev *gspca_dev)
 		err = spca50x_setup_qtable(gspca_dev,
 					0x00, 0x8800,
 					0x8840, qtable_creative_pccam);
-		if (err < 0)
+		अगर (err < 0)
 			gspca_err(gspca_dev, "spca50x_setup_qtable failed\n");
 		reg_w(gspca_dev, 0x00, 0x8880, 3);
 		reg_w(gspca_dev, 0x00, 0x800a, 0x00);
-		/* Init SDRAM - needed for SDRAM access */
+		/* Init SDRAM - needed क्रम SDRAM access */
 		reg_w(gspca_dev, 0x00, 0x870a, 0x04);
 
-		spca500_setmode(gspca_dev, xmult, ymult);
+		spca500_seपंचांगode(gspca_dev, xmult, ymult);
 
-		/* switch to video camera mode */
+		/* चयन to video camera mode */
 		reg_w(gspca_dev, 0x00, 0x8000, 0x0004);
-		reg_r_wait(gspca_dev, 0, 0x8000, 0x44);
+		reg_r_रुको(gspca_dev, 0, 0x8000, 0x44);
 
 		reg_r(gspca_dev, 0x816b, 1);
 		Data = gspca_dev->usb_buf[0];
 		reg_w(gspca_dev, 0x00, 0x816b, Data);
-		write_vector(gspca_dev, Clicksmart510_defaults);
-		break;
-	}
-	return 0;
-}
+		ग_लिखो_vector(gspca_dev, Clicksmart510_शेषs);
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void sd_stopN(struct gspca_dev *gspca_dev)
-{
+अटल व्योम sd_stopN(काष्ठा gspca_dev *gspca_dev)
+अणु
 	reg_w(gspca_dev, 0, 0x8003, 0x00);
 
-	/* switch to video camera mode */
+	/* चयन to video camera mode */
 	reg_w(gspca_dev, 0x00, 0x8000, 0x0004);
 	reg_r(gspca_dev, 0x8000, 1);
 	gspca_dbg(gspca_dev, D_STREAM, "stop SPCA500 done reg8000: 0x%2x\n",
 		  gspca_dev->usb_buf[0]);
-}
+पूर्ण
 
-static void sd_pkt_scan(struct gspca_dev *gspca_dev,
+अटल व्योम sd_pkt_scan(काष्ठा gspca_dev *gspca_dev,
 			u8 *data,			/* isoc packet */
-			int len)			/* iso packet length */
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int i;
-	static __u8 ffd9[] = {0xff, 0xd9};
+			पूर्णांक len)			/* iso packet length */
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक i;
+	अटल __u8 ffd9[] = अणु0xff, 0xd9पूर्ण;
 
 /* frames are jpeg 4.1.1 without 0xff escape */
-	if (data[0] == 0xff) {
-		if (data[1] != 0x01) {	/* drop packet */
+	अगर (data[0] == 0xff) अणु
+		अगर (data[1] != 0x01) अणु	/* drop packet */
 /*			gspca_dev->last_packet_type = DISCARD_PACKET; */
-			return;
-		}
+			वापस;
+		पूर्ण
 		gspca_frame_add(gspca_dev, LAST_PACKET,
 					ffd9, 2);
 
@@ -839,74 +840,74 @@ static void sd_pkt_scan(struct gspca_dev *gspca_dev,
 
 		data += SPCA500_OFFSET_DATA;
 		len -= SPCA500_OFFSET_DATA;
-	} else {
+	पूर्ण अन्यथा अणु
 		data += 1;
 		len -= 1;
-	}
+	पूर्ण
 
 	/* add 0x00 after 0xff */
 	i = 0;
-	do {
-		if (data[i] == 0xff) {
+	करो अणु
+		अगर (data[i] == 0xff) अणु
 			gspca_frame_add(gspca_dev, INTER_PACKET,
 					data, i + 1);
 			len -= i;
 			data += i;
 			*data = 0x00;
 			i = 0;
-		}
+		पूर्ण
 		i++;
-	} while (i < len);
+	पूर्ण जबतक (i < len);
 	gspca_frame_add(gspca_dev, INTER_PACKET, data, len);
-}
+पूर्ण
 
-static void setbrightness(struct gspca_dev *gspca_dev, s32 val)
-{
+अटल व्योम setbrightness(काष्ठा gspca_dev *gspca_dev, s32 val)
+अणु
 	reg_w(gspca_dev, 0x00, 0x8167,
 			(__u8) (val - 128));
-}
+पूर्ण
 
-static void setcontrast(struct gspca_dev *gspca_dev, s32 val)
-{
+अटल व्योम setcontrast(काष्ठा gspca_dev *gspca_dev, s32 val)
+अणु
 	reg_w(gspca_dev, 0x00, 0x8168, val);
-}
+पूर्ण
 
-static void setcolors(struct gspca_dev *gspca_dev, s32 val)
-{
+अटल व्योम setcolors(काष्ठा gspca_dev *gspca_dev, s32 val)
+अणु
 	reg_w(gspca_dev, 0x00, 0x8169, val);
-}
+पूर्ण
 
-static int sd_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct gspca_dev *gspca_dev =
-		container_of(ctrl->handler, struct gspca_dev, ctrl_handler);
+अटल पूर्णांक sd_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा gspca_dev *gspca_dev =
+		container_of(ctrl->handler, काष्ठा gspca_dev, ctrl_handler);
 
 	gspca_dev->usb_err = 0;
 
-	if (!gspca_dev->streaming)
-		return 0;
+	अगर (!gspca_dev->streaming)
+		वापस 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_BRIGHTNESS:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_BRIGHTNESS:
 		setbrightness(gspca_dev, ctrl->val);
-		break;
-	case V4L2_CID_CONTRAST:
+		अवरोध;
+	हाल V4L2_CID_CONTRAST:
 		setcontrast(gspca_dev, ctrl->val);
-		break;
-	case V4L2_CID_SATURATION:
+		अवरोध;
+	हाल V4L2_CID_SATURATION:
 		setcolors(gspca_dev, ctrl->val);
-		break;
-	}
-	return gspca_dev->usb_err;
-}
+		अवरोध;
+	पूर्ण
+	वापस gspca_dev->usb_err;
+पूर्ण
 
-static const struct v4l2_ctrl_ops sd_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops sd_ctrl_ops = अणु
 	.s_ctrl = sd_s_ctrl,
-};
+पूर्ण;
 
-static int sd_init_controls(struct gspca_dev *gspca_dev)
-{
-	struct v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
+अटल पूर्णांक sd_init_controls(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
 
 	gspca_dev->vdev.ctrl_handler = hdl;
 	v4l2_ctrl_handler_init(hdl, 3);
@@ -917,15 +918,15 @@ static int sd_init_controls(struct gspca_dev *gspca_dev)
 	v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_SATURATION, 0, 63, 1, 31);
 
-	if (hdl->error) {
+	अगर (hdl->error) अणु
 		pr_err("Could not initialize controls\n");
-		return hdl->error;
-	}
-	return 0;
-}
+		वापस hdl->error;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* sub-driver description */
-static const struct sd_desc sd_desc = {
+अटल स्थिर काष्ठा sd_desc sd_desc = अणु
 	.name = MODULE_NAME,
 	.config = sd_config,
 	.init = sd_init,
@@ -933,47 +934,47 @@ static const struct sd_desc sd_desc = {
 	.start = sd_start,
 	.stopN = sd_stopN,
 	.pkt_scan = sd_pkt_scan,
-};
+पूर्ण;
 
 /* -- module initialisation -- */
-static const struct usb_device_id device_table[] = {
-	{USB_DEVICE(0x040a, 0x0300), .driver_info = KodakEZ200},
-	{USB_DEVICE(0x041e, 0x400a), .driver_info = CreativePCCam300},
-	{USB_DEVICE(0x046d, 0x0890), .driver_info = LogitechTraveler},
-	{USB_DEVICE(0x046d, 0x0900), .driver_info = LogitechClickSmart310},
-	{USB_DEVICE(0x046d, 0x0901), .driver_info = LogitechClickSmart510},
-	{USB_DEVICE(0x04a5, 0x300c), .driver_info = BenqDC1016},
-	{USB_DEVICE(0x04fc, 0x7333), .driver_info = PalmPixDC85},
-	{USB_DEVICE(0x055f, 0xc200), .driver_info = MustekGsmart300},
-	{USB_DEVICE(0x055f, 0xc220), .driver_info = Gsmartmini},
-	{USB_DEVICE(0x06bd, 0x0404), .driver_info = AgfaCl20},
-	{USB_DEVICE(0x06be, 0x0800), .driver_info = Optimedia},
-	{USB_DEVICE(0x084d, 0x0003), .driver_info = DLinkDSC350},
-	{USB_DEVICE(0x08ca, 0x0103), .driver_info = AiptekPocketDV},
-	{USB_DEVICE(0x2899, 0x012c), .driver_info = ToptroIndus},
-	{USB_DEVICE(0x8086, 0x0630), .driver_info = IntelPocketPCCamera},
-	{}
-};
+अटल स्थिर काष्ठा usb_device_id device_table[] = अणु
+	अणुUSB_DEVICE(0x040a, 0x0300), .driver_info = KodakEZ200पूर्ण,
+	अणुUSB_DEVICE(0x041e, 0x400a), .driver_info = CreativePCCam300पूर्ण,
+	अणुUSB_DEVICE(0x046d, 0x0890), .driver_info = LogitechTravelerपूर्ण,
+	अणुUSB_DEVICE(0x046d, 0x0900), .driver_info = LogitechClickSmart310पूर्ण,
+	अणुUSB_DEVICE(0x046d, 0x0901), .driver_info = LogitechClickSmart510पूर्ण,
+	अणुUSB_DEVICE(0x04a5, 0x300c), .driver_info = BenqDC1016पूर्ण,
+	अणुUSB_DEVICE(0x04fc, 0x7333), .driver_info = PalmPixDC85पूर्ण,
+	अणुUSB_DEVICE(0x055f, 0xc200), .driver_info = MustekGsmart300पूर्ण,
+	अणुUSB_DEVICE(0x055f, 0xc220), .driver_info = Gsmarपंचांगiniपूर्ण,
+	अणुUSB_DEVICE(0x06bd, 0x0404), .driver_info = AgfaCl20पूर्ण,
+	अणुUSB_DEVICE(0x06be, 0x0800), .driver_info = Opसमयdiaपूर्ण,
+	अणुUSB_DEVICE(0x084d, 0x0003), .driver_info = DLinkDSC350पूर्ण,
+	अणुUSB_DEVICE(0x08ca, 0x0103), .driver_info = AiptekPocketDVपूर्ण,
+	अणुUSB_DEVICE(0x2899, 0x012c), .driver_info = ToptroIndusपूर्ण,
+	अणुUSB_DEVICE(0x8086, 0x0630), .driver_info = IntelPocketPCCameraपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, device_table);
 
 /* -- device connect -- */
-static int sd_probe(struct usb_interface *intf,
-			const struct usb_device_id *id)
-{
-	return gspca_dev_probe(intf, id, &sd_desc, sizeof(struct sd),
+अटल पूर्णांक sd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	वापस gspca_dev_probe(पूर्णांकf, id, &sd_desc, माप(काष्ठा sd),
 				THIS_MODULE);
-}
+पूर्ण
 
-static struct usb_driver sd_driver = {
+अटल काष्ठा usb_driver sd_driver = अणु
 	.name = MODULE_NAME,
 	.id_table = device_table,
 	.probe = sd_probe,
 	.disconnect = gspca_disconnect,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend = gspca_suspend,
 	.resume = gspca_resume,
 	.reset_resume = gspca_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_usb_driver(sd_driver);

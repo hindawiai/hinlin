@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM signal
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM संकेत
 
-#if !defined(_TRACE_SIGNAL_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_SIGNAL_H
+#अगर !defined(_TRACE_SIGNAL_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_SIGNAL_H
 
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#define TP_STORE_SIGINFO(__entry, info)				\
-	do {							\
-		if (info == SEND_SIG_NOINFO) {			\
-			__entry->errno	= 0;			\
+#घोषणा TP_STORE_SIGINFO(__entry, info)				\
+	करो अणु							\
+		अगर (info == SEND_SIG_NOINFO) अणु			\
+			__entry->त्रुटि_सं	= 0;			\
 			__entry->code	= SI_USER;		\
-		} else if (info == SEND_SIG_PRIV) {		\
-			__entry->errno	= 0;			\
+		पूर्ण अन्यथा अगर (info == SEND_SIG_PRIV) अणु		\
+			__entry->त्रुटि_सं	= 0;			\
 			__entry->code	= SI_KERNEL;		\
-		} else {					\
-			__entry->errno	= info->si_errno;	\
+		पूर्ण अन्यथा अणु					\
+			__entry->त्रुटि_सं	= info->si_त्रुटि_सं;	\
 			__entry->code	= info->si_code;	\
-		}						\
-	} while (0)
+		पूर्ण						\
+	पूर्ण जबतक (0)
 
-#ifndef TRACE_HEADER_MULTI_READ
-enum {
+#अगर_अघोषित TRACE_HEADER_MULTI_READ
+क्रमागत अणु
 	TRACE_SIGNAL_DELIVERED,
 	TRACE_SIGNAL_IGNORED,
 	TRACE_SIGNAL_ALREADY_PENDING,
 	TRACE_SIGNAL_OVERFLOW_FAIL,
 	TRACE_SIGNAL_LOSE_INFO,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
 /**
- * signal_generate - called when a signal is generated
- * @sig: signal number
- * @info: pointer to struct siginfo
- * @task: pointer to struct task_struct
- * @group: shared or private
+ * संकेत_generate - called when a संकेत is generated
+ * @sig: संकेत number
+ * @info: poपूर्णांकer to काष्ठा siginfo
+ * @task: poपूर्णांकer to काष्ठा task_काष्ठा
+ * @group: shared or निजी
  * @result: TRACE_SIGNAL_*
  *
  * Current process sends a 'sig' signal to 'task' process with
@@ -47,79 +48,79 @@ enum {
  * SEND_SIG_NOINFO means that si_code is SI_USER, and SEND_SIG_PRIV
  * means that si_code is SI_KERNEL.
  */
-TRACE_EVENT(signal_generate,
+TRACE_EVENT(संकेत_generate,
 
-	TP_PROTO(int sig, struct kernel_siginfo *info, struct task_struct *task,
-			int group, int result),
+	TP_PROTO(पूर्णांक sig, काष्ठा kernel_siginfo *info, काष्ठा task_काष्ठा *task,
+			पूर्णांक group, पूर्णांक result),
 
 	TP_ARGS(sig, info, task, group, result),
 
 	TP_STRUCT__entry(
-		__field(	int,	sig			)
-		__field(	int,	errno			)
-		__field(	int,	code			)
-		__array(	char,	comm,	TASK_COMM_LEN	)
+		__field(	पूर्णांक,	sig			)
+		__field(	पूर्णांक,	त्रुटि_सं			)
+		__field(	पूर्णांक,	code			)
+		__array(	अक्षर,	comm,	TASK_COMM_LEN	)
 		__field(	pid_t,	pid			)
-		__field(	int,	group			)
-		__field(	int,	result			)
+		__field(	पूर्णांक,	group			)
+		__field(	पूर्णांक,	result			)
 	),
 
 	TP_fast_assign(
 		__entry->sig	= sig;
 		TP_STORE_SIGINFO(__entry, info);
-		memcpy(__entry->comm, task->comm, TASK_COMM_LEN);
+		स_नकल(__entry->comm, task->comm, TASK_COMM_LEN);
 		__entry->pid	= task->pid;
 		__entry->group	= group;
 		__entry->result	= result;
 	),
 
-	TP_printk("sig=%d errno=%d code=%d comm=%s pid=%d grp=%d res=%d",
-		  __entry->sig, __entry->errno, __entry->code,
+	TP_prपूर्णांकk("sig=%d errno=%d code=%d comm=%s pid=%d grp=%d res=%d",
+		  __entry->sig, __entry->त्रुटि_सं, __entry->code,
 		  __entry->comm, __entry->pid, __entry->group,
 		  __entry->result)
 );
 
 /**
- * signal_deliver - called when a signal is delivered
- * @sig: signal number
- * @info: pointer to struct siginfo
- * @ka: pointer to struct k_sigaction
+ * संकेत_deliver - called when a संकेत is delivered
+ * @sig: संकेत number
+ * @info: poपूर्णांकer to काष्ठा siginfo
+ * @ka: poपूर्णांकer to काष्ठा k_sigaction
  *
  * A 'sig' signal is delivered to current process with 'info' siginfo,
- * and it will be handled by 'ka'. ka->sa.sa_handler can be SIG_IGN or
- * SIG_DFL.
- * Note that some signals reported by signal_generate tracepoint can be
- * lost, ignored or modified (by debugger) before hitting this tracepoint.
- * This means, this can show which signals are actually delivered, but
- * matching generated signals and delivered signals may not be correct.
+ * and it will be handled by 'ka'. ka->sa.sa_handler can be संक_छोड़ो or
+ * संक_पूर्व.
+ * Note that some संकेतs reported by संकेत_generate tracepoपूर्णांक can be
+ * lost, ignored or modअगरied (by debugger) beक्रमe hitting this tracepoपूर्णांक.
+ * This means, this can show which संकेतs are actually delivered, but
+ * matching generated संकेतs and delivered संकेतs may not be correct.
  */
-TRACE_EVENT(signal_deliver,
+TRACE_EVENT(संकेत_deliver,
 
-	TP_PROTO(int sig, struct kernel_siginfo *info, struct k_sigaction *ka),
+	TP_PROTO(पूर्णांक sig, काष्ठा kernel_siginfo *info, काष्ठा k_sigaction *ka),
 
 	TP_ARGS(sig, info, ka),
 
 	TP_STRUCT__entry(
-		__field(	int,		sig		)
-		__field(	int,		errno		)
-		__field(	int,		code		)
-		__field(	unsigned long,	sa_handler	)
-		__field(	unsigned long,	sa_flags	)
+		__field(	पूर्णांक,		sig		)
+		__field(	पूर्णांक,		त्रुटि_सं		)
+		__field(	पूर्णांक,		code		)
+		__field(	अचिन्हित दीर्घ,	sa_handler	)
+		__field(	अचिन्हित दीर्घ,	sa_flags	)
 	),
 
 	TP_fast_assign(
 		__entry->sig	= sig;
 		TP_STORE_SIGINFO(__entry, info);
-		__entry->sa_handler	= (unsigned long)ka->sa.sa_handler;
+		__entry->sa_handler	= (अचिन्हित दीर्घ)ka->sa.sa_handler;
 		__entry->sa_flags	= ka->sa.sa_flags;
 	),
 
-	TP_printk("sig=%d errno=%d code=%d sa_handler=%lx sa_flags=%lx",
-		  __entry->sig, __entry->errno, __entry->code,
+	TP_prपूर्णांकk("sig=%d errno=%d code=%d sa_handler=%lx sa_flags=%lx",
+		  __entry->sig, __entry->त्रुटि_सं, __entry->code,
 		  __entry->sa_handler, __entry->sa_flags)
 );
 
-#endif /* _TRACE_SIGNAL_H */
+#पूर्ण_अगर /* _TRACE_SIGNAL_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

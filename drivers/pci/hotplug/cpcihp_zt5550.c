@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * cpcihp_zt5550.c
  *
@@ -8,197 +9,197 @@
  * Copyright 2001 Intel San Luis Obispo
  * Copyright 2000,2001 MontaVista Software Inc.
  *
- * Send feedback to <scottm@somanetworks.com>
+ * Send feedback to <scotपंचांग@somanetworks.com>
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/pci.h>
-#include <linux/interrupt.h>
-#include <linux/signal.h>	/* IRQF_SHARED */
-#include "cpci_hotplug.h"
-#include "cpcihp_zt5550.h"
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/संकेत.स>	/* IRQF_SHARED */
+#समावेश "cpci_hotplug.h"
+#समावेश "cpcihp_zt5550.h"
 
-#define DRIVER_VERSION	"0.2"
-#define DRIVER_AUTHOR	"Scott Murray <scottm@somanetworks.com>"
-#define DRIVER_DESC	"ZT5550 CompactPCI Hot Plug Driver"
+#घोषणा DRIVER_VERSION	"0.2"
+#घोषणा DRIVER_AUTHOR	"Scott Murray <scottm@somanetworks.com>"
+#घोषणा DRIVER_DESC	"ZT5550 CompactPCI Hot Plug Driver"
 
-#define MY_NAME	"cpcihp_zt5550"
+#घोषणा MY_NAME	"cpcihp_zt5550"
 
-#define dbg(format, arg...)					\
-	do {							\
-		if (debug)					\
-			printk(KERN_DEBUG "%s: " format "\n",	\
+#घोषणा dbg(क्रमmat, arg...)					\
+	करो अणु							\
+		अगर (debug)					\
+			prपूर्णांकk(KERN_DEBUG "%s: " क्रमmat "\n",	\
 				MY_NAME, ## arg);		\
-	} while (0)
-#define err(format, arg...) printk(KERN_ERR "%s: " format "\n", MY_NAME, ## arg)
-#define info(format, arg...) printk(KERN_INFO "%s: " format "\n", MY_NAME, ## arg)
-#define warn(format, arg...) printk(KERN_WARNING "%s: " format "\n", MY_NAME, ## arg)
+	पूर्ण जबतक (0)
+#घोषणा err(क्रमmat, arg...) prपूर्णांकk(KERN_ERR "%s: " क्रमmat "\n", MY_NAME, ## arg)
+#घोषणा info(क्रमmat, arg...) prपूर्णांकk(KERN_INFO "%s: " क्रमmat "\n", MY_NAME, ## arg)
+#घोषणा warn(क्रमmat, arg...) prपूर्णांकk(KERN_WARNING "%s: " क्रमmat "\n", MY_NAME, ## arg)
 
 /* local variables */
-static bool debug;
-static bool poll;
-static struct cpci_hp_controller_ops zt5550_hpc_ops;
-static struct cpci_hp_controller zt5550_hpc;
+अटल bool debug;
+अटल bool poll;
+अटल काष्ठा cpci_hp_controller_ops zt5550_hpc_ops;
+अटल काष्ठा cpci_hp_controller zt5550_hpc;
 
 /* Primary cPCI bus bridge device */
-static struct pci_dev *bus0_dev;
-static struct pci_bus *bus0;
+अटल काष्ठा pci_dev *bus0_dev;
+अटल काष्ठा pci_bus *bus0;
 
 /* Host controller device */
-static struct pci_dev *hc_dev;
+अटल काष्ठा pci_dev *hc_dev;
 
-/* Host controller register addresses */
-static void __iomem *hc_registers;
-static void __iomem *csr_hc_index;
-static void __iomem *csr_hc_data;
-static void __iomem *csr_int_status;
-static void __iomem *csr_int_mask;
+/* Host controller रेजिस्टर addresses */
+अटल व्योम __iomem *hc_रेजिस्टरs;
+अटल व्योम __iomem *csr_hc_index;
+अटल व्योम __iomem *csr_hc_data;
+अटल व्योम __iomem *csr_पूर्णांक_status;
+अटल व्योम __iomem *csr_पूर्णांक_mask;
 
 
-static int zt5550_hc_config(struct pci_dev *pdev)
-{
-	int ret;
+अटल पूर्णांक zt5550_hc_config(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक ret;
 
 	/* Since we know that no boards exist with two HC chips, treat it as an error */
-	if (hc_dev) {
+	अगर (hc_dev) अणु
 		err("too many host controller devices?");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	ret = pci_enable_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		err("cannot enable %s\n", pci_name(pdev));
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	hc_dev = pdev;
 	dbg("hc_dev = %p", hc_dev);
-	dbg("pci resource start %llx", (unsigned long long)pci_resource_start(hc_dev, 1));
-	dbg("pci resource len %llx", (unsigned long long)pci_resource_len(hc_dev, 1));
+	dbg("pci resource start %llx", (अचिन्हित दीर्घ दीर्घ)pci_resource_start(hc_dev, 1));
+	dbg("pci resource len %llx", (अचिन्हित दीर्घ दीर्घ)pci_resource_len(hc_dev, 1));
 
-	if (!request_mem_region(pci_resource_start(hc_dev, 1),
-				pci_resource_len(hc_dev, 1), MY_NAME)) {
+	अगर (!request_mem_region(pci_resource_start(hc_dev, 1),
+				pci_resource_len(hc_dev, 1), MY_NAME)) अणु
 		err("cannot reserve MMIO region");
 		ret = -ENOMEM;
-		goto exit_disable_device;
-	}
+		जाओ निकास_disable_device;
+	पूर्ण
 
-	hc_registers =
+	hc_रेजिस्टरs =
 	    ioremap(pci_resource_start(hc_dev, 1), pci_resource_len(hc_dev, 1));
-	if (!hc_registers) {
+	अगर (!hc_रेजिस्टरs) अणु
 		err("cannot remap MMIO region %llx @ %llx",
-			(unsigned long long)pci_resource_len(hc_dev, 1),
-			(unsigned long long)pci_resource_start(hc_dev, 1));
+			(अचिन्हित दीर्घ दीर्घ)pci_resource_len(hc_dev, 1),
+			(अचिन्हित दीर्घ दीर्घ)pci_resource_start(hc_dev, 1));
 		ret = -ENODEV;
-		goto exit_release_region;
-	}
+		जाओ निकास_release_region;
+	पूर्ण
 
-	csr_hc_index = hc_registers + CSR_HCINDEX;
-	csr_hc_data = hc_registers + CSR_HCDATA;
-	csr_int_status = hc_registers + CSR_INTSTAT;
-	csr_int_mask = hc_registers + CSR_INTMASK;
+	csr_hc_index = hc_रेजिस्टरs + CSR_HCINDEX;
+	csr_hc_data = hc_रेजिस्टरs + CSR_HCDATA;
+	csr_पूर्णांक_status = hc_रेजिस्टरs + CSR_INTSTAT;
+	csr_पूर्णांक_mask = hc_रेजिस्टरs + CSR_INTMASK;
 
 	/*
-	 * Disable host control, fault and serial interrupts
+	 * Disable host control, fault and serial पूर्णांकerrupts
 	 */
 	dbg("disabling host control, fault and serial interrupts");
-	writeb((u8) HC_INT_MASK_REG, csr_hc_index);
-	writeb((u8) ALL_INDEXED_INTS_MASK, csr_hc_data);
+	ग_लिखोb((u8) HC_INT_MASK_REG, csr_hc_index);
+	ग_लिखोb((u8) ALL_INDEXED_INTS_MASK, csr_hc_data);
 	dbg("disabled host control, fault and serial interrupts");
 
 	/*
-	 * Disable timer0, timer1 and ENUM interrupts
+	 * Disable समयr0, समयr1 and ENUM पूर्णांकerrupts
 	 */
 	dbg("disabling timer0, timer1 and ENUM interrupts");
-	writeb((u8) ALL_DIRECT_INTS_MASK, csr_int_mask);
+	ग_लिखोb((u8) ALL_सूचीECT_INTS_MASK, csr_पूर्णांक_mask);
 	dbg("disabled timer0, timer1 and ENUM interrupts");
-	return 0;
+	वापस 0;
 
-exit_release_region:
+निकास_release_region:
 	release_mem_region(pci_resource_start(hc_dev, 1),
 			   pci_resource_len(hc_dev, 1));
-exit_disable_device:
+निकास_disable_device:
 	pci_disable_device(hc_dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zt5550_hc_cleanup(void)
-{
-	if (!hc_dev)
-		return -ENODEV;
+अटल पूर्णांक zt5550_hc_cleanup(व्योम)
+अणु
+	अगर (!hc_dev)
+		वापस -ENODEV;
 
-	iounmap(hc_registers);
+	iounmap(hc_रेजिस्टरs);
 	release_mem_region(pci_resource_start(hc_dev, 1),
 			   pci_resource_len(hc_dev, 1));
 	pci_disable_device(hc_dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zt5550_hc_query_enum(void)
-{
+अटल पूर्णांक zt5550_hc_query_क्रमागत(व्योम)
+अणु
 	u8 value;
 
 	value = inb_p(ENUM_PORT);
-	return ((value & ENUM_MASK) == ENUM_MASK);
-}
+	वापस ((value & ENUM_MASK) == ENUM_MASK);
+पूर्ण
 
-static int zt5550_hc_check_irq(void *dev_id)
-{
-	int ret;
+अटल पूर्णांक zt5550_hc_check_irq(व्योम *dev_id)
+अणु
+	पूर्णांक ret;
 	u8 reg;
 
 	ret = 0;
-	if (dev_id == zt5550_hpc.dev_id) {
-		reg = readb(csr_int_status);
-		if (reg)
+	अगर (dev_id == zt5550_hpc.dev_id) अणु
+		reg = पढ़ोb(csr_पूर्णांक_status);
+		अगर (reg)
 			ret = 1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int zt5550_hc_enable_irq(void)
-{
+अटल पूर्णांक zt5550_hc_enable_irq(व्योम)
+अणु
 	u8 reg;
 
-	if (hc_dev == NULL)
-		return -ENODEV;
+	अगर (hc_dev == शून्य)
+		वापस -ENODEV;
 
-	reg = readb(csr_int_mask);
+	reg = पढ़ोb(csr_पूर्णांक_mask);
 	reg = reg & ~ENUM_INT_MASK;
-	writeb(reg, csr_int_mask);
-	return 0;
-}
+	ग_लिखोb(reg, csr_पूर्णांक_mask);
+	वापस 0;
+पूर्ण
 
-static int zt5550_hc_disable_irq(void)
-{
+अटल पूर्णांक zt5550_hc_disable_irq(व्योम)
+अणु
 	u8 reg;
 
-	if (hc_dev == NULL)
-		return -ENODEV;
+	अगर (hc_dev == शून्य)
+		वापस -ENODEV;
 
-	reg = readb(csr_int_mask);
+	reg = पढ़ोb(csr_पूर्णांक_mask);
 	reg = reg | ENUM_INT_MASK;
-	writeb(reg, csr_int_mask);
-	return 0;
-}
+	ग_लिखोb(reg, csr_पूर्णांक_mask);
+	वापस 0;
+पूर्ण
 
-static int zt5550_hc_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	int status;
+अटल पूर्णांक zt5550_hc_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	पूर्णांक status;
 
 	status = zt5550_hc_config(pdev);
-	if (status != 0)
-		return status;
+	अगर (status != 0)
+		वापस status;
 
 	dbg("returned from zt5550_hc_config");
 
-	memset(&zt5550_hpc, 0, sizeof(struct cpci_hp_controller));
-	zt5550_hpc_ops.query_enum = zt5550_hc_query_enum;
+	स_रखो(&zt5550_hpc, 0, माप(काष्ठा cpci_hp_controller));
+	zt5550_hpc_ops.query_क्रमागत = zt5550_hc_query_क्रमागत;
 	zt5550_hpc.ops = &zt5550_hpc_ops;
-	if (!poll) {
+	अगर (!poll) अणु
 		zt5550_hpc.irq = hc_dev->irq;
 		zt5550_hpc.irq_flags = IRQF_SHARED;
 		zt5550_hpc.dev_id = hc_dev;
@@ -206,99 +207,99 @@ static int zt5550_hc_init_one(struct pci_dev *pdev, const struct pci_device_id *
 		zt5550_hpc_ops.enable_irq = zt5550_hc_enable_irq;
 		zt5550_hpc_ops.disable_irq = zt5550_hc_disable_irq;
 		zt5550_hpc_ops.check_irq = zt5550_hc_check_irq;
-	} else {
+	पूर्ण अन्यथा अणु
 		info("using ENUM# polling mode");
-	}
+	पूर्ण
 
-	status = cpci_hp_register_controller(&zt5550_hpc);
-	if (status != 0) {
+	status = cpci_hp_रेजिस्टर_controller(&zt5550_hpc);
+	अगर (status != 0) अणु
 		err("could not register cPCI hotplug controller");
-		goto init_hc_error;
-	}
+		जाओ init_hc_error;
+	पूर्ण
 	dbg("registered controller");
 
-	/* Look for first device matching cPCI bus's bridge vendor and device IDs */
+	/* Look क्रम first device matching cPCI bus's bridge venकरोr and device IDs */
 	bus0_dev = pci_get_device(PCI_VENDOR_ID_DEC,
-				  PCI_DEVICE_ID_DEC_21154, NULL);
-	if (!bus0_dev) {
+				  PCI_DEVICE_ID_DEC_21154, शून्य);
+	अगर (!bus0_dev) अणु
 		status = -ENODEV;
-		goto init_register_error;
-	}
+		जाओ init_रेजिस्टर_error;
+	पूर्ण
 	bus0 = bus0_dev->subordinate;
 	pci_dev_put(bus0_dev);
 
-	status = cpci_hp_register_bus(bus0, 0x0a, 0x0f);
-	if (status != 0) {
+	status = cpci_hp_रेजिस्टर_bus(bus0, 0x0a, 0x0f);
+	अगर (status != 0) अणु
 		err("could not register cPCI hotplug bus");
-		goto init_register_error;
-	}
+		जाओ init_रेजिस्टर_error;
+	पूर्ण
 	dbg("registered bus");
 
 	status = cpci_hp_start();
-	if (status != 0) {
+	अगर (status != 0) अणु
 		err("could not started cPCI hotplug system");
-		cpci_hp_unregister_bus(bus0);
-		goto init_register_error;
-	}
+		cpci_hp_unरेजिस्टर_bus(bus0);
+		जाओ init_रेजिस्टर_error;
+	पूर्ण
 	dbg("started cpci hp system");
 
-	return 0;
-init_register_error:
-	cpci_hp_unregister_controller(&zt5550_hpc);
+	वापस 0;
+init_रेजिस्टर_error:
+	cpci_hp_unरेजिस्टर_controller(&zt5550_hpc);
 init_hc_error:
 	err("status = %d", status);
 	zt5550_hc_cleanup();
-	return status;
+	वापस status;
 
-}
+पूर्ण
 
-static void zt5550_hc_remove_one(struct pci_dev *pdev)
-{
+अटल व्योम zt5550_hc_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
 	cpci_hp_stop();
-	cpci_hp_unregister_bus(bus0);
-	cpci_hp_unregister_controller(&zt5550_hpc);
+	cpci_hp_unरेजिस्टर_bus(bus0);
+	cpci_hp_unरेजिस्टर_controller(&zt5550_hpc);
 	zt5550_hc_cleanup();
-}
+पूर्ण
 
 
-static const struct pci_device_id zt5550_hc_pci_tbl[] = {
-	{ PCI_VENDOR_ID_ZIATECH, PCI_DEVICE_ID_ZIATECH_5550_HC, PCI_ANY_ID, PCI_ANY_ID, },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id zt5550_hc_pci_tbl[] = अणु
+	अणु PCI_VENDOR_ID_ZIATECH, PCI_DEVICE_ID_ZIATECH_5550_HC, PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, zt5550_hc_pci_tbl);
 
-static struct pci_driver zt5550_hc_driver = {
+अटल काष्ठा pci_driver zt5550_hc_driver = अणु
 	.name		= "zt5550_hc",
 	.id_table	= zt5550_hc_pci_tbl,
 	.probe		= zt5550_hc_init_one,
-	.remove		= zt5550_hc_remove_one,
-};
+	.हटाओ		= zt5550_hc_हटाओ_one,
+पूर्ण;
 
-static int __init zt5550_init(void)
-{
-	struct resource *r;
-	int rc;
+अटल पूर्णांक __init zt5550_init(व्योम)
+अणु
+	काष्ठा resource *r;
+	पूर्णांक rc;
 
 	info(DRIVER_DESC " version: " DRIVER_VERSION);
 	r = request_region(ENUM_PORT, 1, "#ENUM hotswap signal register");
-	if (!r)
-		return -EBUSY;
+	अगर (!r)
+		वापस -EBUSY;
 
-	rc = pci_register_driver(&zt5550_hc_driver);
-	if (rc < 0)
+	rc = pci_रेजिस्टर_driver(&zt5550_hc_driver);
+	अगर (rc < 0)
 		release_region(ENUM_PORT, 1);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit
-zt5550_exit(void)
-{
-	pci_unregister_driver(&zt5550_hc_driver);
+अटल व्योम __निकास
+zt5550_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&zt5550_hc_driver);
 	release_region(ENUM_PORT, 1);
-}
+पूर्ण
 
 module_init(zt5550_init);
-module_exit(zt5550_exit);
+module_निकास(zt5550_निकास);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);

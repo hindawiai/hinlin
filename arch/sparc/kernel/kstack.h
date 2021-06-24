@@ -1,84 +1,85 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _KSTACK_H
-#define _KSTACK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _KSTACK_H
+#घोषणा _KSTACK_H
 
-#include <linux/thread_info.h>
-#include <linux/sched.h>
-#include <asm/ptrace.h>
-#include <asm/irq.h>
+#समावेश <linux/thपढ़ो_info.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/irq.h>
 
-/* SP must be STACK_BIAS adjusted already.  */
-static inline bool kstack_valid(struct thread_info *tp, unsigned long sp)
-{
-	unsigned long base = (unsigned long) tp;
+/* SP must be STACK_BIAS adjusted alपढ़ोy.  */
+अटल अंतरभूत bool kstack_valid(काष्ठा thपढ़ो_info *tp, अचिन्हित दीर्घ sp)
+अणु
+	अचिन्हित दीर्घ base = (अचिन्हित दीर्घ) tp;
 
-	/* Stack pointer must be 16-byte aligned.  */
-	if (sp & (16UL - 1))
-		return false;
+	/* Stack poपूर्णांकer must be 16-byte aligned.  */
+	अगर (sp & (16UL - 1))
+		वापस false;
 
-	if (sp >= (base + sizeof(struct thread_info)) &&
-	    sp <= (base + THREAD_SIZE - sizeof(struct sparc_stackf)))
-		return true;
+	अगर (sp >= (base + माप(काष्ठा thपढ़ो_info)) &&
+	    sp <= (base + THREAD_SIZE - माप(काष्ठा sparc_stackf)))
+		वापस true;
 
-	if (hardirq_stack[tp->cpu]) {
-		base = (unsigned long) hardirq_stack[tp->cpu];
-		if (sp >= base &&
-		    sp <= (base + THREAD_SIZE - sizeof(struct sparc_stackf)))
-			return true;
-		base = (unsigned long) softirq_stack[tp->cpu];
-		if (sp >= base &&
-		    sp <= (base + THREAD_SIZE - sizeof(struct sparc_stackf)))
-			return true;
-	}
-	return false;
-}
+	अगर (hardirq_stack[tp->cpu]) अणु
+		base = (अचिन्हित दीर्घ) hardirq_stack[tp->cpu];
+		अगर (sp >= base &&
+		    sp <= (base + THREAD_SIZE - माप(काष्ठा sparc_stackf)))
+			वापस true;
+		base = (अचिन्हित दीर्घ) softirq_stack[tp->cpu];
+		अगर (sp >= base &&
+		    sp <= (base + THREAD_SIZE - माप(काष्ठा sparc_stackf)))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-/* Does "regs" point to a valid pt_regs trap frame?  */
-static inline bool kstack_is_trap_frame(struct thread_info *tp, struct pt_regs *regs)
-{
-	unsigned long base = (unsigned long) tp;
-	unsigned long addr = (unsigned long) regs;
+/* Does "regs" poपूर्णांक to a valid pt_regs trap frame?  */
+अटल अंतरभूत bool kstack_is_trap_frame(काष्ठा thपढ़ो_info *tp, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ base = (अचिन्हित दीर्घ) tp;
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) regs;
 
-	if (addr >= base &&
-	    addr <= (base + THREAD_SIZE - sizeof(*regs)))
-		goto check_magic;
+	अगर (addr >= base &&
+	    addr <= (base + THREAD_SIZE - माप(*regs)))
+		जाओ check_magic;
 
-	if (hardirq_stack[tp->cpu]) {
-		base = (unsigned long) hardirq_stack[tp->cpu];
-		if (addr >= base &&
-		    addr <= (base + THREAD_SIZE - sizeof(*regs)))
-			goto check_magic;
-		base = (unsigned long) softirq_stack[tp->cpu];
-		if (addr >= base &&
-		    addr <= (base + THREAD_SIZE - sizeof(*regs)))
-			goto check_magic;
-	}
-	return false;
+	अगर (hardirq_stack[tp->cpu]) अणु
+		base = (अचिन्हित दीर्घ) hardirq_stack[tp->cpu];
+		अगर (addr >= base &&
+		    addr <= (base + THREAD_SIZE - माप(*regs)))
+			जाओ check_magic;
+		base = (अचिन्हित दीर्घ) softirq_stack[tp->cpu];
+		अगर (addr >= base &&
+		    addr <= (base + THREAD_SIZE - माप(*regs)))
+			जाओ check_magic;
+	पूर्ण
+	वापस false;
 
 check_magic:
-	if ((regs->magic & ~0x1ff) == PT_REGS_MAGIC)
-		return true;
-	return false;
+	अगर ((regs->magic & ~0x1ff) == PT_REGS_MAGIC)
+		वापस true;
+	वापस false;
 
-}
+पूर्ण
 
-static inline __attribute__((always_inline)) void *set_hardirq_stack(void)
-{
-	void *orig_sp, *sp = hardirq_stack[smp_processor_id()];
+अटल अंतरभूत __attribute__((always_अंतरभूत)) व्योम *set_hardirq_stack(व्योम)
+अणु
+	व्योम *orig_sp, *sp = hardirq_stack[smp_processor_id()];
 
-	__asm__ __volatile__("mov %%sp, %0" : "=r" (orig_sp));
-	if (orig_sp < sp ||
-	    orig_sp > (sp + THREAD_SIZE)) {
+	__यंत्र__ __अस्थिर__("mov %%sp, %0" : "=r" (orig_sp));
+	अगर (orig_sp < sp ||
+	    orig_sp > (sp + THREAD_SIZE)) अणु
 		sp += THREAD_SIZE - 192 - STACK_BIAS;
-		__asm__ __volatile__("mov %0, %%sp" : : "r" (sp));
-	}
+		__यंत्र__ __अस्थिर__("mov %0, %%sp" : : "r" (sp));
+	पूर्ण
 
-	return orig_sp;
-}
+	वापस orig_sp;
+पूर्ण
 
-static inline __attribute__((always_inline)) void restore_hardirq_stack(void *orig_sp)
-{
-	__asm__ __volatile__("mov %0, %%sp" : : "r" (orig_sp));
-}
+अटल अंतरभूत __attribute__((always_अंतरभूत)) व्योम restore_hardirq_stack(व्योम *orig_sp)
+अणु
+	__यंत्र__ __अस्थिर__("mov %0, %%sp" : : "r" (orig_sp));
+पूर्ण
 
-#endif /* _KSTACK_H */
+#पूर्ण_अगर /* _KSTACK_H */

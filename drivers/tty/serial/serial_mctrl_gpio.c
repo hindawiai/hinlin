@@ -1,142 +1,143 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Helpers for controlling modem lines via GPIO
+ * Helpers क्रम controlling modem lines via GPIO
  *
  * Copyright (C) 2014 Paratronic S.A.
  */
 
-#include <linux/err.h>
-#include <linux/device.h>
-#include <linux/irq.h>
-#include <linux/gpio/consumer.h>
-#include <linux/termios.h>
-#include <linux/serial_core.h>
-#include <linux/module.h>
-#include <linux/property.h>
+#समावेश <linux/err.h>
+#समावेश <linux/device.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/termios.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/module.h>
+#समावेश <linux/property.h>
 
-#include "serial_mctrl_gpio.h"
+#समावेश "serial_mctrl_gpio.h"
 
-struct mctrl_gpios {
-	struct uart_port *port;
-	struct gpio_desc *gpio[UART_GPIO_MAX];
-	int irq[UART_GPIO_MAX];
-	unsigned int mctrl_prev;
+काष्ठा mctrl_gpios अणु
+	काष्ठा uart_port *port;
+	काष्ठा gpio_desc *gpio[UART_GPIO_MAX];
+	पूर्णांक irq[UART_GPIO_MAX];
+	अचिन्हित पूर्णांक mctrl_prev;
 	bool mctrl_on;
-};
+पूर्ण;
 
-static const struct {
-	const char *name;
-	unsigned int mctrl;
-	enum gpiod_flags flags;
-} mctrl_gpios_desc[UART_GPIO_MAX] = {
-	{ "cts", TIOCM_CTS, GPIOD_IN, },
-	{ "dsr", TIOCM_DSR, GPIOD_IN, },
-	{ "dcd", TIOCM_CD,  GPIOD_IN, },
-	{ "rng", TIOCM_RNG, GPIOD_IN, },
-	{ "rts", TIOCM_RTS, GPIOD_OUT_LOW, },
-	{ "dtr", TIOCM_DTR, GPIOD_OUT_LOW, },
-};
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक mctrl;
+	क्रमागत gpiod_flags flags;
+पूर्ण mctrl_gpios_desc[UART_GPIO_MAX] = अणु
+	अणु "cts", TIOCM_CTS, GPIOD_IN, पूर्ण,
+	अणु "dsr", TIOCM_DSR, GPIOD_IN, पूर्ण,
+	अणु "dcd", TIOCM_CD,  GPIOD_IN, पूर्ण,
+	अणु "rng", TIOCM_RNG, GPIOD_IN, पूर्ण,
+	अणु "rts", TIOCM_RTS, GPIOD_OUT_LOW, पूर्ण,
+	अणु "dtr", TIOCM_DTR, GPIOD_OUT_LOW, पूर्ण,
+पूर्ण;
 
-static bool mctrl_gpio_flags_is_dir_out(unsigned int idx)
-{
-	return mctrl_gpios_desc[idx].flags & GPIOD_FLAGS_BIT_DIR_OUT;
-}
+अटल bool mctrl_gpio_flags_is_dir_out(अचिन्हित पूर्णांक idx)
+अणु
+	वापस mctrl_gpios_desc[idx].flags & GPIOD_FLAGS_BIT_सूची_OUT;
+पूर्ण
 
-void mctrl_gpio_set(struct mctrl_gpios *gpios, unsigned int mctrl)
-{
-	enum mctrl_gpio_idx i;
-	struct gpio_desc *desc_array[UART_GPIO_MAX];
+व्योम mctrl_gpio_set(काष्ठा mctrl_gpios *gpios, अचिन्हित पूर्णांक mctrl)
+अणु
+	क्रमागत mctrl_gpio_idx i;
+	काष्ठा gpio_desc *desc_array[UART_GPIO_MAX];
 	DECLARE_BITMAP(values, UART_GPIO_MAX);
-	unsigned int count = 0;
+	अचिन्हित पूर्णांक count = 0;
 
-	if (gpios == NULL)
-		return;
+	अगर (gpios == शून्य)
+		वापस;
 
-	for (i = 0; i < UART_GPIO_MAX; i++)
-		if (gpios->gpio[i] && mctrl_gpio_flags_is_dir_out(i)) {
+	क्रम (i = 0; i < UART_GPIO_MAX; i++)
+		अगर (gpios->gpio[i] && mctrl_gpio_flags_is_dir_out(i)) अणु
 			desc_array[count] = gpios->gpio[i];
 			__assign_bit(count, values,
 				     mctrl & mctrl_gpios_desc[i].mctrl);
 			count++;
-		}
-	gpiod_set_array_value(count, desc_array, NULL, values);
-}
+		पूर्ण
+	gpiod_set_array_value(count, desc_array, शून्य, values);
+पूर्ण
 EXPORT_SYMBOL_GPL(mctrl_gpio_set);
 
-struct gpio_desc *mctrl_gpio_to_gpiod(struct mctrl_gpios *gpios,
-				      enum mctrl_gpio_idx gidx)
-{
-	if (gpios == NULL)
-		return NULL;
+काष्ठा gpio_desc *mctrl_gpio_to_gpiod(काष्ठा mctrl_gpios *gpios,
+				      क्रमागत mctrl_gpio_idx gidx)
+अणु
+	अगर (gpios == शून्य)
+		वापस शून्य;
 
-	return gpios->gpio[gidx];
-}
+	वापस gpios->gpio[gidx];
+पूर्ण
 EXPORT_SYMBOL_GPL(mctrl_gpio_to_gpiod);
 
-unsigned int mctrl_gpio_get(struct mctrl_gpios *gpios, unsigned int *mctrl)
-{
-	enum mctrl_gpio_idx i;
+अचिन्हित पूर्णांक mctrl_gpio_get(काष्ठा mctrl_gpios *gpios, अचिन्हित पूर्णांक *mctrl)
+अणु
+	क्रमागत mctrl_gpio_idx i;
 
-	if (gpios == NULL)
-		return *mctrl;
+	अगर (gpios == शून्य)
+		वापस *mctrl;
 
-	for (i = 0; i < UART_GPIO_MAX; i++) {
-		if (gpios->gpio[i] && !mctrl_gpio_flags_is_dir_out(i)) {
-			if (gpiod_get_value(gpios->gpio[i]))
+	क्रम (i = 0; i < UART_GPIO_MAX; i++) अणु
+		अगर (gpios->gpio[i] && !mctrl_gpio_flags_is_dir_out(i)) अणु
+			अगर (gpiod_get_value(gpios->gpio[i]))
 				*mctrl |= mctrl_gpios_desc[i].mctrl;
-			else
+			अन्यथा
 				*mctrl &= ~mctrl_gpios_desc[i].mctrl;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return *mctrl;
-}
+	वापस *mctrl;
+पूर्ण
 EXPORT_SYMBOL_GPL(mctrl_gpio_get);
 
-unsigned int
-mctrl_gpio_get_outputs(struct mctrl_gpios *gpios, unsigned int *mctrl)
-{
-	enum mctrl_gpio_idx i;
+अचिन्हित पूर्णांक
+mctrl_gpio_get_outमाला_दो(काष्ठा mctrl_gpios *gpios, अचिन्हित पूर्णांक *mctrl)
+अणु
+	क्रमागत mctrl_gpio_idx i;
 
-	if (gpios == NULL)
-		return *mctrl;
+	अगर (gpios == शून्य)
+		वापस *mctrl;
 
-	for (i = 0; i < UART_GPIO_MAX; i++) {
-		if (gpios->gpio[i] && mctrl_gpio_flags_is_dir_out(i)) {
-			if (gpiod_get_value(gpios->gpio[i]))
+	क्रम (i = 0; i < UART_GPIO_MAX; i++) अणु
+		अगर (gpios->gpio[i] && mctrl_gpio_flags_is_dir_out(i)) अणु
+			अगर (gpiod_get_value(gpios->gpio[i]))
 				*mctrl |= mctrl_gpios_desc[i].mctrl;
-			else
+			अन्यथा
 				*mctrl &= ~mctrl_gpios_desc[i].mctrl;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return *mctrl;
-}
-EXPORT_SYMBOL_GPL(mctrl_gpio_get_outputs);
+	वापस *mctrl;
+पूर्ण
+EXPORT_SYMBOL_GPL(mctrl_gpio_get_outमाला_दो);
 
-struct mctrl_gpios *mctrl_gpio_init_noauto(struct device *dev, unsigned int idx)
-{
-	struct mctrl_gpios *gpios;
-	enum mctrl_gpio_idx i;
+काष्ठा mctrl_gpios *mctrl_gpio_init_noस्वतः(काष्ठा device *dev, अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा mctrl_gpios *gpios;
+	क्रमागत mctrl_gpio_idx i;
 
-	gpios = devm_kzalloc(dev, sizeof(*gpios), GFP_KERNEL);
-	if (!gpios)
-		return ERR_PTR(-ENOMEM);
+	gpios = devm_kzalloc(dev, माप(*gpios), GFP_KERNEL);
+	अगर (!gpios)
+		वापस ERR_PTR(-ENOMEM);
 
-	for (i = 0; i < UART_GPIO_MAX; i++) {
-		char *gpio_str;
+	क्रम (i = 0; i < UART_GPIO_MAX; i++) अणु
+		अक्षर *gpio_str;
 		bool present;
 
-		/* Check if GPIO property exists and continue if not */
-		gpio_str = kasprintf(GFP_KERNEL, "%s-gpios",
+		/* Check अगर GPIO property exists and जारी अगर not */
+		gpio_str = kaप्र_लिखो(GFP_KERNEL, "%s-gpios",
 				     mctrl_gpios_desc[i].name);
-		if (!gpio_str)
-			continue;
+		अगर (!gpio_str)
+			जारी;
 
 		present = device_property_present(dev, gpio_str);
-		kfree(gpio_str);
-		if (!present)
-			continue;
+		kमुक्त(gpio_str);
+		अगर (!present)
+			जारी;
 
 		gpios->gpio[i] =
 			devm_gpiod_get_index_optional(dev,
@@ -144,75 +145,75 @@ struct mctrl_gpios *mctrl_gpio_init_noauto(struct device *dev, unsigned int idx)
 						      idx,
 						      mctrl_gpios_desc[i].flags);
 
-		if (IS_ERR(gpios->gpio[i]))
-			return ERR_CAST(gpios->gpio[i]);
-	}
+		अगर (IS_ERR(gpios->gpio[i]))
+			वापस ERR_CAST(gpios->gpio[i]);
+	पूर्ण
 
-	return gpios;
-}
-EXPORT_SYMBOL_GPL(mctrl_gpio_init_noauto);
+	वापस gpios;
+पूर्ण
+EXPORT_SYMBOL_GPL(mctrl_gpio_init_noस्वतः);
 
-#define MCTRL_ANY_DELTA (TIOCM_RI | TIOCM_DSR | TIOCM_CD | TIOCM_CTS)
-static irqreturn_t mctrl_gpio_irq_handle(int irq, void *context)
-{
-	struct mctrl_gpios *gpios = context;
-	struct uart_port *port = gpios->port;
+#घोषणा MCTRL_ANY_DELTA (TIOCM_RI | TIOCM_DSR | TIOCM_CD | TIOCM_CTS)
+अटल irqवापस_t mctrl_gpio_irq_handle(पूर्णांक irq, व्योम *context)
+अणु
+	काष्ठा mctrl_gpios *gpios = context;
+	काष्ठा uart_port *port = gpios->port;
 	u32 mctrl = gpios->mctrl_prev;
-	u32 mctrl_diff;
-	unsigned long flags;
+	u32 mctrl_dअगरf;
+	अचिन्हित दीर्घ flags;
 
 	mctrl_gpio_get(gpios, &mctrl);
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	mctrl_diff = mctrl ^ gpios->mctrl_prev;
+	mctrl_dअगरf = mctrl ^ gpios->mctrl_prev;
 	gpios->mctrl_prev = mctrl;
 
-	if (mctrl_diff & MCTRL_ANY_DELTA && port->state != NULL) {
-		if ((mctrl_diff & mctrl) & TIOCM_RI)
+	अगर (mctrl_dअगरf & MCTRL_ANY_DELTA && port->state != शून्य) अणु
+		अगर ((mctrl_dअगरf & mctrl) & TIOCM_RI)
 			port->icount.rng++;
 
-		if ((mctrl_diff & mctrl) & TIOCM_DSR)
+		अगर ((mctrl_dअगरf & mctrl) & TIOCM_DSR)
 			port->icount.dsr++;
 
-		if (mctrl_diff & TIOCM_CD)
+		अगर (mctrl_dअगरf & TIOCM_CD)
 			uart_handle_dcd_change(port, mctrl & TIOCM_CD);
 
-		if (mctrl_diff & TIOCM_CTS)
+		अगर (mctrl_dअगरf & TIOCM_CTS)
 			uart_handle_cts_change(port, mctrl & TIOCM_CTS);
 
-		wake_up_interruptible(&port->state->port.delta_msr_wait);
-	}
+		wake_up_पूर्णांकerruptible(&port->state->port.delta_msr_रुको);
+	पूर्ण
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-struct mctrl_gpios *mctrl_gpio_init(struct uart_port *port, unsigned int idx)
-{
-	struct mctrl_gpios *gpios;
-	enum mctrl_gpio_idx i;
+काष्ठा mctrl_gpios *mctrl_gpio_init(काष्ठा uart_port *port, अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा mctrl_gpios *gpios;
+	क्रमागत mctrl_gpio_idx i;
 
-	gpios = mctrl_gpio_init_noauto(port->dev, idx);
-	if (IS_ERR(gpios))
-		return gpios;
+	gpios = mctrl_gpio_init_noस्वतः(port->dev, idx);
+	अगर (IS_ERR(gpios))
+		वापस gpios;
 
 	gpios->port = port;
 
-	for (i = 0; i < UART_GPIO_MAX; ++i) {
-		int ret;
+	क्रम (i = 0; i < UART_GPIO_MAX; ++i) अणु
+		पूर्णांक ret;
 
-		if (!gpios->gpio[i] || mctrl_gpio_flags_is_dir_out(i))
-			continue;
+		अगर (!gpios->gpio[i] || mctrl_gpio_flags_is_dir_out(i))
+			जारी;
 
 		ret = gpiod_to_irq(gpios->gpio[i]);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(port->dev,
 				"failed to find corresponding irq for %s (idx=%d, err=%d)\n",
 				mctrl_gpios_desc[i].name, idx, ret);
-			return ERR_PTR(ret);
-		}
+			वापस ERR_PTR(ret);
+		पूर्ण
 		gpios->irq[i] = ret;
 
 		/* irqs should only be enabled in .enable_ms */
@@ -222,81 +223,81 @@ struct mctrl_gpios *mctrl_gpio_init(struct uart_port *port, unsigned int idx)
 				       mctrl_gpio_irq_handle,
 				       IRQ_TYPE_EDGE_BOTH, dev_name(port->dev),
 				       gpios);
-		if (ret) {
+		अगर (ret) अणु
 			/* alternatively implement polling */
 			dev_err(port->dev,
 				"failed to request irq for %s (idx=%d, err=%d)\n",
 				mctrl_gpios_desc[i].name, idx, ret);
-			return ERR_PTR(ret);
-		}
-	}
+			वापस ERR_PTR(ret);
+		पूर्ण
+	पूर्ण
 
-	return gpios;
-}
+	वापस gpios;
+पूर्ण
 EXPORT_SYMBOL_GPL(mctrl_gpio_init);
 
-void mctrl_gpio_free(struct device *dev, struct mctrl_gpios *gpios)
-{
-	enum mctrl_gpio_idx i;
+व्योम mctrl_gpio_मुक्त(काष्ठा device *dev, काष्ठा mctrl_gpios *gpios)
+अणु
+	क्रमागत mctrl_gpio_idx i;
 
-	if (gpios == NULL)
-		return;
+	अगर (gpios == शून्य)
+		वापस;
 
-	for (i = 0; i < UART_GPIO_MAX; i++) {
-		if (gpios->irq[i])
-			devm_free_irq(gpios->port->dev, gpios->irq[i], gpios);
+	क्रम (i = 0; i < UART_GPIO_MAX; i++) अणु
+		अगर (gpios->irq[i])
+			devm_मुक्त_irq(gpios->port->dev, gpios->irq[i], gpios);
 
-		if (gpios->gpio[i])
+		अगर (gpios->gpio[i])
 			devm_gpiod_put(dev, gpios->gpio[i]);
-	}
-	devm_kfree(dev, gpios);
-}
-EXPORT_SYMBOL_GPL(mctrl_gpio_free);
+	पूर्ण
+	devm_kमुक्त(dev, gpios);
+पूर्ण
+EXPORT_SYMBOL_GPL(mctrl_gpio_मुक्त);
 
-void mctrl_gpio_enable_ms(struct mctrl_gpios *gpios)
-{
-	enum mctrl_gpio_idx i;
+व्योम mctrl_gpio_enable_ms(काष्ठा mctrl_gpios *gpios)
+अणु
+	क्रमागत mctrl_gpio_idx i;
 
-	if (gpios == NULL)
-		return;
+	अगर (gpios == शून्य)
+		वापस;
 
-	/* .enable_ms may be called multiple times */
-	if (gpios->mctrl_on)
-		return;
+	/* .enable_ms may be called multiple बार */
+	अगर (gpios->mctrl_on)
+		वापस;
 
 	gpios->mctrl_on = true;
 
 	/* get initial status of modem lines GPIOs */
 	mctrl_gpio_get(gpios, &gpios->mctrl_prev);
 
-	for (i = 0; i < UART_GPIO_MAX; ++i) {
-		if (!gpios->irq[i])
-			continue;
+	क्रम (i = 0; i < UART_GPIO_MAX; ++i) अणु
+		अगर (!gpios->irq[i])
+			जारी;
 
 		enable_irq(gpios->irq[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(mctrl_gpio_enable_ms);
 
-void mctrl_gpio_disable_ms(struct mctrl_gpios *gpios)
-{
-	enum mctrl_gpio_idx i;
+व्योम mctrl_gpio_disable_ms(काष्ठा mctrl_gpios *gpios)
+अणु
+	क्रमागत mctrl_gpio_idx i;
 
-	if (gpios == NULL)
-		return;
+	अगर (gpios == शून्य)
+		वापस;
 
-	if (!gpios->mctrl_on)
-		return;
+	अगर (!gpios->mctrl_on)
+		वापस;
 
 	gpios->mctrl_on = false;
 
-	for (i = 0; i < UART_GPIO_MAX; ++i) {
-		if (!gpios->irq[i])
-			continue;
+	क्रम (i = 0; i < UART_GPIO_MAX; ++i) अणु
+		अगर (!gpios->irq[i])
+			जारी;
 
 		disable_irq(gpios->irq[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(mctrl_gpio_disable_ms);
 
 MODULE_LICENSE("GPL");

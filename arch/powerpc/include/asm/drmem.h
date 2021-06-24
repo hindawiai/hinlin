@@ -1,121 +1,122 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * drmem.h: Power specific logical memory block representation
+ * drस्मृति.स: Power specअगरic logical memory block representation
  *
  * Copyright 2017 IBM Corporation
  */
 
-#ifndef _ASM_POWERPC_LMB_H
-#define _ASM_POWERPC_LMB_H
+#अगर_अघोषित _ASM_POWERPC_LMB_H
+#घोषणा _ASM_POWERPC_LMB_H
 
-#include <linux/sched.h>
+#समावेश <linux/sched.h>
 
-struct drmem_lmb {
+काष्ठा drmem_lmb अणु
 	u64     base_addr;
 	u32     drc_index;
 	u32     aa_index;
 	u32     flags;
-};
+पूर्ण;
 
-struct drmem_lmb_info {
-	struct drmem_lmb        *lmbs;
-	int                     n_lmbs;
+काष्ठा drmem_lmb_info अणु
+	काष्ठा drmem_lmb        *lmbs;
+	पूर्णांक                     n_lmbs;
 	u64                     lmb_size;
-};
+पूर्ण;
 
-extern struct drmem_lmb_info *drmem_info;
+बाह्य काष्ठा drmem_lmb_info *drmem_info;
 
-static inline struct drmem_lmb *drmem_lmb_next(struct drmem_lmb *lmb,
-					       const struct drmem_lmb *start)
-{
+अटल अंतरभूत काष्ठा drmem_lmb *drmem_lmb_next(काष्ठा drmem_lmb *lmb,
+					       स्थिर काष्ठा drmem_lmb *start)
+अणु
 	/*
 	 * DLPAR code paths can take several milliseconds per element
-	 * when interacting with firmware. Ensure that we don't
+	 * when पूर्णांकeracting with firmware. Ensure that we करोn't
 	 * unfairly monopolize the CPU.
 	 */
-	if (((++lmb - start) % 16) == 0)
+	अगर (((++lmb - start) % 16) == 0)
 		cond_resched();
 
-	return lmb;
-}
+	वापस lmb;
+पूर्ण
 
-#define for_each_drmem_lmb_in_range(lmb, start, end)		\
-	for ((lmb) = (start); (lmb) < (end); lmb = drmem_lmb_next(lmb, start))
+#घोषणा क्रम_each_drmem_lmb_in_range(lmb, start, end)		\
+	क्रम ((lmb) = (start); (lmb) < (end); lmb = drmem_lmb_next(lmb, start))
 
-#define for_each_drmem_lmb(lmb)					\
-	for_each_drmem_lmb_in_range((lmb),			\
+#घोषणा क्रम_each_drmem_lmb(lmb)					\
+	क्रम_each_drmem_lmb_in_range((lmb),			\
 		&drmem_info->lmbs[0],				\
 		&drmem_info->lmbs[drmem_info->n_lmbs])
 
 /*
- * The of_drconf_cell_v1 struct defines the layout of the LMB data
- * specified in the ibm,dynamic-memory device tree property.
- * The property itself is a 32-bit value specifying the number of
+ * The of_drconf_cell_v1 काष्ठा defines the layout of the LMB data
+ * specअगरied in the ibm,dynamic-memory device tree property.
+ * The property itself is a 32-bit value specअगरying the number of
  * LMBs followed by an array of of_drconf_cell_v1 entries, one
  * per LMB.
  */
-struct of_drconf_cell_v1 {
+काष्ठा of_drconf_cell_v1 अणु
 	__be64	base_addr;
 	__be32	drc_index;
 	__be32	reserved;
 	__be32	aa_index;
 	__be32	flags;
-};
+पूर्ण;
 
 /*
  * Version 2 of the ibm,dynamic-memory property is defined as a
- * 32-bit value specifying the number of LMB sets followed by an
+ * 32-bit value specअगरying the number of LMB sets followed by an
  * array of of_drconf_cell_v2 entries, one per LMB set.
  */
-struct of_drconf_cell_v2 {
+काष्ठा of_drconf_cell_v2 अणु
 	u32	seq_lmbs;
 	u64	base_addr;
 	u32	drc_index;
 	u32	aa_index;
 	u32	flags;
-} __packed;
+पूर्ण __packed;
 
-#define DRCONF_MEM_ASSIGNED	0x00000008
-#define DRCONF_MEM_AI_INVALID	0x00000040
-#define DRCONF_MEM_RESERVED	0x00000080
-#define DRCONF_MEM_HOTREMOVABLE	0x00000100
+#घोषणा DRCONF_MEM_ASSIGNED	0x00000008
+#घोषणा DRCONF_MEM_AI_INVALID	0x00000040
+#घोषणा DRCONF_MEM_RESERVED	0x00000080
+#घोषणा DRCONF_MEM_HOTREMOVABLE	0x00000100
 
-static inline u64 drmem_lmb_size(void)
-{
-	return drmem_info->lmb_size;
-}
+अटल अंतरभूत u64 drmem_lmb_size(व्योम)
+अणु
+	वापस drmem_info->lmb_size;
+पूर्ण
 
-#define DRMEM_LMB_RESERVED	0x80000000
+#घोषणा DRMEM_LMB_RESERVED	0x80000000
 
-static inline void drmem_mark_lmb_reserved(struct drmem_lmb *lmb)
-{
+अटल अंतरभूत व्योम drmem_mark_lmb_reserved(काष्ठा drmem_lmb *lmb)
+अणु
 	lmb->flags |= DRMEM_LMB_RESERVED;
-}
+पूर्ण
 
-static inline void drmem_remove_lmb_reservation(struct drmem_lmb *lmb)
-{
+अटल अंतरभूत व्योम drmem_हटाओ_lmb_reservation(काष्ठा drmem_lmb *lmb)
+अणु
 	lmb->flags &= ~DRMEM_LMB_RESERVED;
-}
+पूर्ण
 
-static inline bool drmem_lmb_reserved(struct drmem_lmb *lmb)
-{
-	return lmb->flags & DRMEM_LMB_RESERVED;
-}
+अटल अंतरभूत bool drmem_lmb_reserved(काष्ठा drmem_lmb *lmb)
+अणु
+	वापस lmb->flags & DRMEM_LMB_RESERVED;
+पूर्ण
 
-u64 drmem_lmb_memory_max(void);
-int walk_drmem_lmbs(struct device_node *dn, void *data,
-		    int (*func)(struct drmem_lmb *, const __be32 **, void *));
-int drmem_update_dt(void);
+u64 drmem_lmb_memory_max(व्योम);
+पूर्णांक walk_drmem_lmbs(काष्ठा device_node *dn, व्योम *data,
+		    पूर्णांक (*func)(काष्ठा drmem_lmb *, स्थिर __be32 **, व्योम *));
+पूर्णांक drmem_update_dt(व्योम);
 
-#ifdef CONFIG_PPC_PSERIES
-int __init
-walk_drmem_lmbs_early(unsigned long node, void *data,
-		      int (*func)(struct drmem_lmb *, const __be32 **, void *));
-#endif
+#अगर_घोषित CONFIG_PPC_PSERIES
+पूर्णांक __init
+walk_drmem_lmbs_early(अचिन्हित दीर्घ node, व्योम *data,
+		      पूर्णांक (*func)(काष्ठा drmem_lmb *, स्थिर __be32 **, व्योम *));
+#पूर्ण_अगर
 
-static inline void invalidate_lmb_associativity_index(struct drmem_lmb *lmb)
-{
+अटल अंतरभूत व्योम invalidate_lmb_associativity_index(काष्ठा drmem_lmb *lmb)
+अणु
 	lmb->aa_index = 0xffffffff;
-}
+पूर्ण
 
-#endif /* _ASM_POWERPC_LMB_H */
+#पूर्ण_अगर /* _ASM_POWERPC_LMB_H */

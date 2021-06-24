@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * HMS Profinet Client Driver
  *
  * Copyright (C) 2018 Arcx Inc
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
 
 /* move to <linux/fieldbus_dev.h> when taking this out of staging */
-#include "../fieldbus_dev.h"
+#समावेश "../fieldbus_dev.h"
 
 /* move to <linux/anybuss-client.h> when taking this out of staging */
-#include "anybuss-client.h"
+#समावेश "anybuss-client.h"
 
-#define PROFI_DPRAM_SIZE	512
+#घोषणा PROFI_DPRAM_SIZE	512
 
 /*
  * ---------------------------------------------------------------
  * Anybus Profinet mailbox messages - definitions
  * ---------------------------------------------------------------
- * note that we're depending on the layout of these structures being
+ * note that we're depending on the layout of these काष्ठाures being
  * exactly as advertised.
  */
 
-struct msg_mac_addr {
+काष्ठा msg_mac_addr अणु
 	u8 addr[6];
-};
+पूर्ण;
 
-struct profi_priv {
-	struct fieldbus_dev fbdev;
-	struct anybuss_client *client;
-	struct mutex enable_lock; /* serializes card enable */
-	bool power_on;
-};
+काष्ठा profi_priv अणु
+	काष्ठा fieldbus_dev fbdev;
+	काष्ठा anybuss_client *client;
+	काष्ठा mutex enable_lock; /* serializes card enable */
+	bool घातer_on;
+पूर्ण;
 
-static ssize_t
-profi_read_area(struct fieldbus_dev *fbdev, char __user *buf, size_t size,
+अटल sमाप_प्रकार
+profi_पढ़ो_area(काष्ठा fieldbus_dev *fbdev, अक्षर __user *buf, माप_प्रकार size,
 		loff_t *offset)
-{
-	struct profi_priv *priv = container_of(fbdev, struct profi_priv, fbdev);
+अणु
+	काष्ठा profi_priv *priv = container_of(fbdev, काष्ठा profi_priv, fbdev);
 
-	return anybuss_read_output(priv->client, buf, size, offset);
-}
+	वापस anybuss_पढ़ो_output(priv->client, buf, size, offset);
+पूर्ण
 
-static ssize_t
-profi_write_area(struct fieldbus_dev *fbdev, const char __user *buf,
-		 size_t size, loff_t *offset)
-{
-	struct profi_priv *priv = container_of(fbdev, struct profi_priv, fbdev);
+अटल sमाप_प्रकार
+profi_ग_लिखो_area(काष्ठा fieldbus_dev *fbdev, स्थिर अक्षर __user *buf,
+		 माप_प्रकार size, loff_t *offset)
+अणु
+	काष्ठा profi_priv *priv = container_of(fbdev, काष्ठा profi_priv, fbdev);
 
-	return anybuss_write_input(priv->client, buf, size, offset);
-}
+	वापस anybuss_ग_लिखो_input(priv->client, buf, size, offset);
+पूर्ण
 
-static int profi_id_get(struct fieldbus_dev *fbdev, char *buf,
-			size_t max_size)
-{
-	struct profi_priv *priv = container_of(fbdev, struct profi_priv, fbdev);
-	struct msg_mac_addr response;
-	int ret;
+अटल पूर्णांक profi_id_get(काष्ठा fieldbus_dev *fbdev, अक्षर *buf,
+			माप_प्रकार max_size)
+अणु
+	काष्ठा profi_priv *priv = container_of(fbdev, काष्ठा profi_priv, fbdev);
+	काष्ठा msg_mac_addr response;
+	पूर्णांक ret;
 
 	ret = anybuss_recv_msg(priv->client, 0x0010, &response,
-			       sizeof(response));
-	if (ret < 0)
-		return ret;
-	return snprintf(buf, max_size, "%pM\n", response.addr);
-}
+			       माप(response));
+	अगर (ret < 0)
+		वापस ret;
+	वापस snम_लिखो(buf, max_size, "%pM\n", response.addr);
+पूर्ण
 
-static bool profi_enable_get(struct fieldbus_dev *fbdev)
-{
-	struct profi_priv *priv = container_of(fbdev, struct profi_priv, fbdev);
-	bool power_on;
+अटल bool profi_enable_get(काष्ठा fieldbus_dev *fbdev)
+अणु
+	काष्ठा profi_priv *priv = container_of(fbdev, काष्ठा profi_priv, fbdev);
+	bool घातer_on;
 
 	mutex_lock(&priv->enable_lock);
-	power_on = priv->power_on;
+	घातer_on = priv->घातer_on;
 	mutex_unlock(&priv->enable_lock);
 
-	return power_on;
-}
+	वापस घातer_on;
+पूर्ण
 
-static int __profi_enable(struct profi_priv *priv)
-{
-	int ret;
-	struct anybuss_client *client = priv->client;
+अटल पूर्णांक __profi_enable(काष्ठा profi_priv *priv)
+अणु
+	पूर्णांक ret;
+	काष्ठा anybuss_client *client = priv->client;
 	/* Initialization Sequence, Generic Anybus Mode */
-	const struct anybuss_memcfg mem_cfg = {
+	स्थिर काष्ठा anybuss_memcfg mem_cfg = अणु
 		.input_io = 220,
 		.input_dpram = PROFI_DPRAM_SIZE,
 		.input_total = PROFI_DPRAM_SIZE,
@@ -94,131 +95,131 @@ static int __profi_enable(struct profi_priv *priv)
 		.output_dpram = PROFI_DPRAM_SIZE,
 		.output_total = PROFI_DPRAM_SIZE,
 		.offl_mode = FIELDBUS_DEV_OFFL_MODE_CLEAR,
-	};
+	पूर्ण;
 
 	/*
-	 * switch anybus off then on, this ensures we can do a complete
-	 * configuration cycle in case anybus was already on.
+	 * चयन anybus off then on, this ensures we can करो a complete
+	 * configuration cycle in हाल anybus was alपढ़ोy on.
 	 */
-	anybuss_set_power(client, false);
-	ret = anybuss_set_power(client, true);
-	if (ret)
-		goto err;
+	anybuss_set_घातer(client, false);
+	ret = anybuss_set_घातer(client, true);
+	अगर (ret)
+		जाओ err;
 	ret = anybuss_start_init(client, &mem_cfg);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 	ret = anybuss_finish_init(client);
-	if (ret)
-		goto err;
-	priv->power_on = true;
-	return 0;
+	अगर (ret)
+		जाओ err;
+	priv->घातer_on = true;
+	वापस 0;
 
 err:
-	anybuss_set_power(client, false);
-	priv->power_on = false;
-	return ret;
-}
+	anybuss_set_घातer(client, false);
+	priv->घातer_on = false;
+	वापस ret;
+पूर्ण
 
-static int __profi_disable(struct profi_priv *priv)
-{
-	struct anybuss_client *client = priv->client;
+अटल पूर्णांक __profi_disable(काष्ठा profi_priv *priv)
+अणु
+	काष्ठा anybuss_client *client = priv->client;
 
-	anybuss_set_power(client, false);
-	priv->power_on = false;
-	return 0;
-}
+	anybuss_set_घातer(client, false);
+	priv->घातer_on = false;
+	वापस 0;
+पूर्ण
 
-static int profi_simple_enable(struct fieldbus_dev *fbdev, bool enable)
-{
-	int ret;
-	struct profi_priv *priv = container_of(fbdev, struct profi_priv, fbdev);
+अटल पूर्णांक profi_simple_enable(काष्ठा fieldbus_dev *fbdev, bool enable)
+अणु
+	पूर्णांक ret;
+	काष्ठा profi_priv *priv = container_of(fbdev, काष्ठा profi_priv, fbdev);
 
 	mutex_lock(&priv->enable_lock);
-	if (enable)
+	अगर (enable)
 		ret = __profi_enable(priv);
-	else
+	अन्यथा
 		ret = __profi_disable(priv);
 	mutex_unlock(&priv->enable_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void profi_on_area_updated(struct anybuss_client *client)
-{
-	struct profi_priv *priv = anybuss_get_drvdata(client);
+अटल व्योम profi_on_area_updated(काष्ठा anybuss_client *client)
+अणु
+	काष्ठा profi_priv *priv = anybuss_get_drvdata(client);
 
 	fieldbus_dev_area_updated(&priv->fbdev);
-}
+पूर्ण
 
-static void profi_on_online_changed(struct anybuss_client *client, bool online)
-{
-	struct profi_priv *priv = anybuss_get_drvdata(client);
+अटल व्योम profi_on_online_changed(काष्ठा anybuss_client *client, bool online)
+अणु
+	काष्ठा profi_priv *priv = anybuss_get_drvdata(client);
 
 	fieldbus_dev_online_changed(&priv->fbdev, online);
-}
+पूर्ण
 
-static int profinet_probe(struct anybuss_client *client)
-{
-	struct profi_priv *priv;
-	struct device *dev = &client->dev;
-	int err;
+अटल पूर्णांक profinet_probe(काष्ठा anybuss_client *client)
+अणु
+	काष्ठा profi_priv *priv;
+	काष्ठा device *dev = &client->dev;
+	पूर्णांक err;
 
 	client->on_area_updated = profi_on_area_updated;
 	client->on_online_changed = profi_on_online_changed;
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 	mutex_init(&priv->enable_lock);
 	priv->client = client;
-	priv->fbdev.read_area_sz = PROFI_DPRAM_SIZE;
-	priv->fbdev.write_area_sz = PROFI_DPRAM_SIZE;
+	priv->fbdev.पढ़ो_area_sz = PROFI_DPRAM_SIZE;
+	priv->fbdev.ग_लिखो_area_sz = PROFI_DPRAM_SIZE;
 	priv->fbdev.card_name = "HMS Profinet IRT (Anybus-S)";
 	priv->fbdev.fieldbus_type = FIELDBUS_DEV_TYPE_PROFINET;
-	priv->fbdev.read_area = profi_read_area;
-	priv->fbdev.write_area = profi_write_area;
+	priv->fbdev.पढ़ो_area = profi_पढ़ो_area;
+	priv->fbdev.ग_लिखो_area = profi_ग_लिखो_area;
 	priv->fbdev.fieldbus_id_get = profi_id_get;
 	priv->fbdev.enable_get = profi_enable_get;
 	priv->fbdev.simple_enable_set = profi_simple_enable;
 	priv->fbdev.parent = dev;
-	err = fieldbus_dev_register(&priv->fbdev);
-	if (err < 0)
-		return err;
+	err = fieldbus_dev_रेजिस्टर(&priv->fbdev);
+	अगर (err < 0)
+		वापस err;
 	dev_info(dev, "card detected, registered as %s",
 		 dev_name(priv->fbdev.dev));
 	anybuss_set_drvdata(client, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int profinet_remove(struct anybuss_client *client)
-{
-	struct profi_priv *priv = anybuss_get_drvdata(client);
+अटल पूर्णांक profinet_हटाओ(काष्ठा anybuss_client *client)
+अणु
+	काष्ठा profi_priv *priv = anybuss_get_drvdata(client);
 
-	fieldbus_dev_unregister(&priv->fbdev);
-	return 0;
-}
+	fieldbus_dev_unरेजिस्टर(&priv->fbdev);
+	वापस 0;
+पूर्ण
 
-static struct anybuss_client_driver profinet_driver = {
+अटल काष्ठा anybuss_client_driver profinet_driver = अणु
 	.probe = profinet_probe,
-	.remove = profinet_remove,
-	.driver		= {
+	.हटाओ = profinet_हटाओ,
+	.driver		= अणु
 		.name   = "hms-profinet",
 		.owner	= THIS_MODULE,
-	},
+	पूर्ण,
 	.anybus_id = 0x0089,
-};
+पूर्ण;
 
-static int __init profinet_init(void)
-{
-	return anybuss_client_driver_register(&profinet_driver);
-}
+अटल पूर्णांक __init profinet_init(व्योम)
+अणु
+	वापस anybuss_client_driver_रेजिस्टर(&profinet_driver);
+पूर्ण
 module_init(profinet_init);
 
-static void __exit profinet_exit(void)
-{
-	return anybuss_client_driver_unregister(&profinet_driver);
-}
-module_exit(profinet_exit);
+अटल व्योम __निकास profinet_निकास(व्योम)
+अणु
+	वापस anybuss_client_driver_unरेजिस्टर(&profinet_driver);
+पूर्ण
+module_निकास(profinet_निकास);
 
 MODULE_AUTHOR("Sven Van Asbroeck <TheSven73@gmail.com>");
 MODULE_DESCRIPTION("HMS Profinet IRT Driver (Anybus-S)");

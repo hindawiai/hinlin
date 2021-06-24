@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2020 Cloudflare
-#include "vmlinux.h"
-#include <bpf/bpf_helpers.h>
+#समावेश "vmlinux.h"
+#समावेश <bpf/bpf_helpers.h>
 
-struct {
-	__uint(type, BPF_MAP_TYPE_SOCKMAP);
-	__uint(max_entries, 1);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_SOCKMAP);
+	__uपूर्णांक(max_entries, 1);
 	__type(key, __u32);
 	__type(value, __u64);
-} map SEC(".maps");
+पूर्ण map SEC(".maps");
 
 SEC("sockops")
-int bpf_sockmap(struct bpf_sock_ops *skops)
-{
+पूर्णांक bpf_sockmap(काष्ठा bpf_sock_ops *skops)
+अणु
 	__u32 key = 0;
 
-	if (skops->sk)
+	अगर (skops->sk)
 		bpf_map_update_elem(&map, &key, skops->sk, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

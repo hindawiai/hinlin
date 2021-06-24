@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Silicon Labs C2 port core Linux support
+ *  Silicon Lअसल C2 port core Linux support
  *
- *  Copyright (c) 2007 Rodolfo Giometti <giometti@linux.it>
+ *  Copyright (c) 2007 Roकरोlfo Giometti <giometti@linux.it>
  *  Copyright (c) 2007 Eurotech S.p.A. <info@eurotech.it>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/ctype.h>
-#include <linux/delay.h>
-#include <linux/idr.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
-#include <linux/c2port.h>
+#समावेश <linux/c2port.h>
 
-#define DRIVER_NAME             "c2port"
-#define DRIVER_VERSION          "0.51.0"
+#घोषणा DRIVER_NAME             "c2port"
+#घोषणा DRIVER_VERSION          "0.51.0"
 
-static DEFINE_SPINLOCK(c2port_idr_lock);
-static DEFINE_IDR(c2port_idr);
+अटल DEFINE_SPINLOCK(c2port_idr_lock);
+अटल DEFINE_IDR(c2port_idr);
 
 /*
  * Local variables
  */
 
-static struct class *c2port_class;
+अटल काष्ठा class *c2port_class;
 
 /*
- * C2 registers & commands defines
+ * C2 रेजिस्टरs & commands defines
  */
 
-/* C2 registers */
-#define C2PORT_DEVICEID		0x00
-#define C2PORT_REVID		0x01
-#define C2PORT_FPCTL		0x02
-#define C2PORT_FPDAT		0xB4
+/* C2 रेजिस्टरs */
+#घोषणा C2PORT_DEVICEID		0x00
+#घोषणा C2PORT_REVID		0x01
+#घोषणा C2PORT_FPCTL		0x02
+#घोषणा C2PORT_FPDAT		0xB4
 
-/* C2 interface commands */
-#define C2PORT_GET_VERSION	0x01
-#define C2PORT_DEVICE_ERASE	0x03
-#define C2PORT_BLOCK_READ	0x06
-#define C2PORT_BLOCK_WRITE	0x07
-#define C2PORT_PAGE_ERASE	0x08
+/* C2 पूर्णांकerface commands */
+#घोषणा C2PORT_GET_VERSION	0x01
+#घोषणा C2PORT_DEVICE_ERASE	0x03
+#घोषणा C2PORT_BLOCK_READ	0x06
+#घोषणा C2PORT_BLOCK_WRITE	0x07
+#घोषणा C2PORT_PAGE_ERASE	0x08
 
-/* C2 status return codes */
-#define C2PORT_INVALID_COMMAND	0x00
-#define C2PORT_COMMAND_FAILED	0x02
-#define C2PORT_COMMAND_OK	0x0d
+/* C2 status वापस codes */
+#घोषणा C2PORT_INVALID_COMMAND	0x00
+#घोषणा C2PORT_COMMAND_FAILED	0x02
+#घोषणा C2PORT_COMMAND_OK	0x0d
 
 /*
- * C2 port low level signal managements
+ * C2 port low level संकेत managements
  */
 
-static void c2port_reset(struct c2port_device *dev)
-{
-	struct c2port_ops *ops = dev->ops;
+अटल व्योम c2port_reset(काष्ठा c2port_device *dev)
+अणु
+	काष्ठा c2port_ops *ops = dev->ops;
 
-	/* To reset the device we have to keep clock line low for at least
+	/* To reset the device we have to keep घड़ी line low क्रम at least
 	 * 20us.
 	 */
 	local_irq_disable();
@@ -72,16 +73,16 @@ static void c2port_reset(struct c2port_device *dev)
 	local_irq_enable();
 
 	udelay(1);
-}
+पूर्ण
 
-static void c2port_strobe_ck(struct c2port_device *dev)
-{
-	struct c2port_ops *ops = dev->ops;
+अटल व्योम c2port_strobe_ck(काष्ठा c2port_device *dev)
+अणु
+	काष्ठा c2port_ops *ops = dev->ops;
 
-	/* During hi-low-hi transition we disable local IRQs to avoid
-	 * interructions since C2 port specification says that it must be
-	 * shorter than 5us, otherwise the microcontroller may consider
-	 * it as a reset signal!
+	/* During hi-low-hi transition we disable local IRQs to aव्योम
+	 * पूर्णांकerructions since C2 port specअगरication says that it must be
+	 * लघुer than 5us, otherwise the microcontroller may consider
+	 * it as a reset संकेत!
 	 */
 	local_irq_disable();
 	ops->c2ck_set(dev, 0);
@@ -90,16 +91,16 @@ static void c2port_strobe_ck(struct c2port_device *dev)
 	local_irq_enable();
 
 	udelay(1);
-}
+पूर्ण
 
 /*
  * C2 port basic functions
  */
 
-static void c2port_write_ar(struct c2port_device *dev, u8 addr)
-{
-	struct c2port_ops *ops = dev->ops;
-	int i;
+अटल व्योम c2port_ग_लिखो_ar(काष्ठा c2port_device *dev, u8 addr)
+अणु
+	काष्ठा c2port_ops *ops = dev->ops;
+	पूर्णांक i;
 
 	/* START field */
 	c2port_strobe_ck(dev);
@@ -112,22 +113,22 @@ static void c2port_write_ar(struct c2port_device *dev, u8 addr)
 	c2port_strobe_ck(dev);
 
 	/* ADDRESS field */
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		ops->c2d_set(dev, addr & 0x01);
 		c2port_strobe_ck(dev);
 
 		addr >>= 1;
-	}
+	पूर्ण
 
 	/* STOP field */
 	ops->c2d_dir(dev, 1);
 	c2port_strobe_ck(dev);
-}
+पूर्ण
 
-static int c2port_read_ar(struct c2port_device *dev, u8 *addr)
-{
-	struct c2port_ops *ops = dev->ops;
-	int i;
+अटल पूर्णांक c2port_पढ़ो_ar(काष्ठा c2port_device *dev, u8 *addr)
+अणु
+	काष्ठा c2port_ops *ops = dev->ops;
+	पूर्णांक i;
 
 	/* START field */
 	c2port_strobe_ck(dev);
@@ -142,24 +143,24 @@ static int c2port_read_ar(struct c2port_device *dev, u8 *addr)
 	/* ADDRESS field */
 	ops->c2d_dir(dev, 1);
 	*addr = 0;
-	for (i = 0; i < 8; i++) {
-		*addr >>= 1;	/* shift in 8-bit ADDRESS field LSB first */
+	क्रम (i = 0; i < 8; i++) अणु
+		*addr >>= 1;	/* shअगरt in 8-bit ADDRESS field LSB first */
 
 		c2port_strobe_ck(dev);
-		if (ops->c2d_get(dev))
+		अगर (ops->c2d_get(dev))
 			*addr |= 0x80;
-	}
+	पूर्ण
 
 	/* STOP field */
 	c2port_strobe_ck(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int c2port_write_dr(struct c2port_device *dev, u8 data)
-{
-	struct c2port_ops *ops = dev->ops;
-	int timeout, i;
+अटल पूर्णांक c2port_ग_लिखो_dr(काष्ठा c2port_device *dev, u8 data)
+अणु
+	काष्ठा c2port_ops *ops = dev->ops;
+	पूर्णांक समयout, i;
 
 	/* START field */
 	c2port_strobe_ck(dev);
@@ -178,36 +179,36 @@ static int c2port_write_dr(struct c2port_device *dev, u8 data)
 	c2port_strobe_ck(dev);
 
 	/* DATA field */
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		ops->c2d_set(dev, data & 0x01);
 		c2port_strobe_ck(dev);
 
 		data >>= 1;
-	}
+	पूर्ण
 
 	/* WAIT field */
 	ops->c2d_dir(dev, 1);
-	timeout = 20;
-	do {
+	समयout = 20;
+	करो अणु
 		c2port_strobe_ck(dev);
-		if (ops->c2d_get(dev))
-			break;
+		अगर (ops->c2d_get(dev))
+			अवरोध;
 
 		udelay(1);
-	} while (--timeout > 0);
-	if (timeout == 0)
-		return -EIO;
+	पूर्ण जबतक (--समयout > 0);
+	अगर (समयout == 0)
+		वापस -EIO;
 
 	/* STOP field */
 	c2port_strobe_ck(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int c2port_read_dr(struct c2port_device *dev, u8 *data)
-{
-	struct c2port_ops *ops = dev->ops;
-	int timeout, i;
+अटल पूर्णांक c2port_पढ़ो_dr(काष्ठा c2port_device *dev, u8 *data)
+अणु
+	काष्ठा c2port_ops *ops = dev->ops;
+	पूर्णांक समयout, i;
 
 	/* START field */
 	c2port_strobe_ck(dev);
@@ -227,164 +228,164 @@ static int c2port_read_dr(struct c2port_device *dev, u8 *data)
 
 	/* WAIT field */
 	ops->c2d_dir(dev, 1);
-	timeout = 20;
-	do {
+	समयout = 20;
+	करो अणु
 		c2port_strobe_ck(dev);
-		if (ops->c2d_get(dev))
-			break;
+		अगर (ops->c2d_get(dev))
+			अवरोध;
 
 		udelay(1);
-	} while (--timeout > 0);
-	if (timeout == 0)
-		return -EIO;
+	पूर्ण जबतक (--समयout > 0);
+	अगर (समयout == 0)
+		वापस -EIO;
 
 	/* DATA field */
 	*data = 0;
-	for (i = 0; i < 8; i++) {
-		*data >>= 1;	/* shift in 8-bit DATA field LSB first */
+	क्रम (i = 0; i < 8; i++) अणु
+		*data >>= 1;	/* shअगरt in 8-bit DATA field LSB first */
 
 		c2port_strobe_ck(dev);
-		if (ops->c2d_get(dev))
+		अगर (ops->c2d_get(dev))
 			*data |= 0x80;
-	}
+	पूर्ण
 
 	/* STOP field */
 	c2port_strobe_ck(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int c2port_poll_in_busy(struct c2port_device *dev)
-{
+अटल पूर्णांक c2port_poll_in_busy(काष्ठा c2port_device *dev)
+अणु
 	u8 addr;
-	int ret, timeout = 20;
+	पूर्णांक ret, समयout = 20;
 
-	do {
-		ret = (c2port_read_ar(dev, &addr));
-		if (ret < 0)
-			return -EIO;
+	करो अणु
+		ret = (c2port_पढ़ो_ar(dev, &addr));
+		अगर (ret < 0)
+			वापस -EIO;
 
-		if (!(addr & 0x02))
-			break;
+		अगर (!(addr & 0x02))
+			अवरोध;
 
 		udelay(1);
-	} while (--timeout > 0);
-	if (timeout == 0)
-		return -EIO;
+	पूर्ण जबतक (--समयout > 0);
+	अगर (समयout == 0)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int c2port_poll_out_ready(struct c2port_device *dev)
-{
+अटल पूर्णांक c2port_poll_out_पढ़ोy(काष्ठा c2port_device *dev)
+अणु
 	u8 addr;
-	int ret, timeout = 10000; /* erase flash needs long time... */
+	पूर्णांक ret, समयout = 10000; /* erase flash needs दीर्घ समय... */
 
-	do {
-		ret = (c2port_read_ar(dev, &addr));
-		if (ret < 0)
-			return -EIO;
+	करो अणु
+		ret = (c2port_पढ़ो_ar(dev, &addr));
+		अगर (ret < 0)
+			वापस -EIO;
 
-		if (addr & 0x01)
-			break;
+		अगर (addr & 0x01)
+			अवरोध;
 
 		udelay(1);
-	} while (--timeout > 0);
-	if (timeout == 0)
-		return -EIO;
+	पूर्ण जबतक (--समयout > 0);
+	अगर (समयout == 0)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * sysfs methods
  */
 
-static ssize_t c2port_show_name(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार c2port_show_name(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", c2dev->name);
-}
-static DEVICE_ATTR(name, 0444, c2port_show_name, NULL);
+	वापस प्र_लिखो(buf, "%s\n", c2dev->name);
+पूर्ण
+अटल DEVICE_ATTR(name, 0444, c2port_show_name, शून्य);
 
-static ssize_t c2port_show_flash_blocks_num(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
-	struct c2port_ops *ops = c2dev->ops;
+अटल sमाप_प्रकार c2port_show_flash_blocks_num(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
+	काष्ठा c2port_ops *ops = c2dev->ops;
 
-	return sprintf(buf, "%d\n", ops->blocks_num);
-}
-static DEVICE_ATTR(flash_blocks_num, 0444, c2port_show_flash_blocks_num, NULL);
+	वापस प्र_लिखो(buf, "%d\n", ops->blocks_num);
+पूर्ण
+अटल DEVICE_ATTR(flash_blocks_num, 0444, c2port_show_flash_blocks_num, शून्य);
 
-static ssize_t c2port_show_flash_block_size(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
-	struct c2port_ops *ops = c2dev->ops;
+अटल sमाप_प्रकार c2port_show_flash_block_size(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
+	काष्ठा c2port_ops *ops = c2dev->ops;
 
-	return sprintf(buf, "%d\n", ops->block_size);
-}
-static DEVICE_ATTR(flash_block_size, 0444, c2port_show_flash_block_size, NULL);
+	वापस प्र_लिखो(buf, "%d\n", ops->block_size);
+पूर्ण
+अटल DEVICE_ATTR(flash_block_size, 0444, c2port_show_flash_block_size, शून्य);
 
-static ssize_t c2port_show_flash_size(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
-	struct c2port_ops *ops = c2dev->ops;
+अटल sमाप_प्रकार c2port_show_flash_size(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
+	काष्ठा c2port_ops *ops = c2dev->ops;
 
-	return sprintf(buf, "%d\n", ops->blocks_num * ops->block_size);
-}
-static DEVICE_ATTR(flash_size, 0444, c2port_show_flash_size, NULL);
+	वापस प्र_लिखो(buf, "%d\n", ops->blocks_num * ops->block_size);
+पूर्ण
+अटल DEVICE_ATTR(flash_size, 0444, c2port_show_flash_size, शून्य);
 
-static ssize_t access_show(struct device *dev, struct device_attribute *attr,
-			   char *buf)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार access_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", c2dev->access);
-}
+	वापस प्र_लिखो(buf, "%d\n", c2dev->access);
+पूर्ण
 
-static ssize_t access_store(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
-	struct c2port_ops *ops = c2dev->ops;
-	int status, ret;
+अटल sमाप_प्रकार access_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
+	काष्ठा c2port_ops *ops = c2dev->ops;
+	पूर्णांक status, ret;
 
-	ret = sscanf(buf, "%d", &status);
-	if (ret != 1)
-		return -EINVAL;
+	ret = माला_पूछो(buf, "%d", &status);
+	अगर (ret != 1)
+		वापस -EINVAL;
 
 	mutex_lock(&c2dev->mutex);
 
 	c2dev->access = !!status;
 
-	/* If access is "on" clock should be HIGH _before_ setting the line
+	/* If access is "on" घड़ी should be HIGH _beक्रमe_ setting the line
 	 * as output and data line should be set as INPUT anyway */
-	if (c2dev->access)
+	अगर (c2dev->access)
 		ops->c2ck_set(c2dev, 1);
 	ops->access(c2dev, c2dev->access);
-	if (c2dev->access)
+	अगर (c2dev->access)
 		ops->c2d_dir(c2dev, 1);
 
 	mutex_unlock(&c2dev->mutex);
 
-	return count;
-}
-static DEVICE_ATTR_RW(access);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(access);
 
-static ssize_t c2port_store_reset(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार c2port_store_reset(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
 
 	/* Check the device access status */
-	if (!c2dev->access)
-		return -EBUSY;
+	अगर (!c2dev->access)
+		वापस -EBUSY;
 
 	mutex_lock(&c2dev->mutex);
 
@@ -393,469 +394,469 @@ static ssize_t c2port_store_reset(struct device *dev,
 
 	mutex_unlock(&c2dev->mutex);
 
-	return count;
-}
-static DEVICE_ATTR(reset, 0200, NULL, c2port_store_reset);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR(reset, 0200, शून्य, c2port_store_reset);
 
-static ssize_t __c2port_show_dev_id(struct c2port_device *dev, char *buf)
-{
+अटल sमाप_प्रकार __c2port_show_dev_id(काष्ठा c2port_device *dev, अक्षर *buf)
+अणु
 	u8 data;
-	int ret;
+	पूर्णांक ret;
 
-	/* Select DEVICEID register for C2 data register accesses */
-	c2port_write_ar(dev, C2PORT_DEVICEID);
+	/* Select DEVICEID रेजिस्टर क्रम C2 data रेजिस्टर accesses */
+	c2port_ग_लिखो_ar(dev, C2PORT_DEVICEID);
 
-	/* Read and return the device ID register */
-	ret = c2port_read_dr(dev, &data);
-	if (ret < 0)
-		return ret;
+	/* Read and वापस the device ID रेजिस्टर */
+	ret = c2port_पढ़ो_dr(dev, &data);
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%d\n", data);
-}
+	वापस प्र_लिखो(buf, "%d\n", data);
+पूर्ण
 
-static ssize_t c2port_show_dev_id(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
-	ssize_t ret;
+अटल sमाप_प्रकार c2port_show_dev_id(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
+	sमाप_प्रकार ret;
 
 	/* Check the device access status */
-	if (!c2dev->access)
-		return -EBUSY;
+	अगर (!c2dev->access)
+		वापस -EBUSY;
 
 	mutex_lock(&c2dev->mutex);
 	ret = __c2port_show_dev_id(c2dev, buf);
 	mutex_unlock(&c2dev->mutex);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(dev, "cannot read from %s\n", c2dev->name);
 
-	return ret;
-}
-static DEVICE_ATTR(dev_id, 0444, c2port_show_dev_id, NULL);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR(dev_id, 0444, c2port_show_dev_id, शून्य);
 
-static ssize_t __c2port_show_rev_id(struct c2port_device *dev, char *buf)
-{
+अटल sमाप_प्रकार __c2port_show_rev_id(काष्ठा c2port_device *dev, अक्षर *buf)
+अणु
 	u8 data;
-	int ret;
+	पूर्णांक ret;
 
-	/* Select REVID register for C2 data register accesses */
-	c2port_write_ar(dev, C2PORT_REVID);
+	/* Select REVID रेजिस्टर क्रम C2 data रेजिस्टर accesses */
+	c2port_ग_लिखो_ar(dev, C2PORT_REVID);
 
-	/* Read and return the revision ID register */
-	ret = c2port_read_dr(dev, &data);
-	if (ret < 0)
-		return ret;
+	/* Read and वापस the revision ID रेजिस्टर */
+	ret = c2port_पढ़ो_dr(dev, &data);
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%d\n", data);
-}
+	वापस प्र_लिखो(buf, "%d\n", data);
+पूर्ण
 
-static ssize_t c2port_show_rev_id(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
-	ssize_t ret;
+अटल sमाप_प्रकार c2port_show_rev_id(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
+	sमाप_प्रकार ret;
 
 	/* Check the device access status */
-	if (!c2dev->access)
-		return -EBUSY;
+	अगर (!c2dev->access)
+		वापस -EBUSY;
 
 	mutex_lock(&c2dev->mutex);
 	ret = __c2port_show_rev_id(c2dev, buf);
 	mutex_unlock(&c2dev->mutex);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(c2dev->dev, "cannot read from %s\n", c2dev->name);
 
-	return ret;
-}
-static DEVICE_ATTR(rev_id, 0444, c2port_show_rev_id, NULL);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR(rev_id, 0444, c2port_show_rev_id, शून्य);
 
-static ssize_t c2port_show_flash_access(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार c2port_show_flash_access(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", c2dev->flash_access);
-}
+	वापस प्र_लिखो(buf, "%d\n", c2dev->flash_access);
+पूर्ण
 
-static ssize_t __c2port_store_flash_access(struct c2port_device *dev,
-						int status)
-{
-	int ret;
+अटल sमाप_प्रकार __c2port_store_flash_access(काष्ठा c2port_device *dev,
+						पूर्णांक status)
+अणु
+	पूर्णांक ret;
 
 	/* Check the device access status */
-	if (!dev->access)
-		return -EBUSY;
+	अगर (!dev->access)
+		वापस -EBUSY;
 
 	dev->flash_access = !!status;
 
-	/* If flash_access is off we have nothing to do... */
-	if (dev->flash_access == 0)
-		return 0;
+	/* If flash_access is off we have nothing to करो... */
+	अगर (dev->flash_access == 0)
+		वापस 0;
 
-	/* Target the C2 flash programming control register for C2 data
-	 * register access */
-	c2port_write_ar(dev, C2PORT_FPCTL);
+	/* Target the C2 flash programming control रेजिस्टर क्रम C2 data
+	 * रेजिस्टर access */
+	c2port_ग_लिखो_ar(dev, C2PORT_FPCTL);
 
 	/* Write the first keycode to enable C2 Flash programming */
-	ret = c2port_write_dr(dev, 0x02);
-	if (ret < 0)
-		return ret;
+	ret = c2port_ग_लिखो_dr(dev, 0x02);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Write the second keycode to enable C2 Flash programming */
-	ret = c2port_write_dr(dev, 0x01);
-	if (ret < 0)
-		return ret;
+	ret = c2port_ग_लिखो_dr(dev, 0x01);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Delay for at least 20ms to ensure the target is ready for
+	/* Delay क्रम at least 20ms to ensure the target is पढ़ोy क्रम
 	 * C2 flash programming */
 	mdelay(25);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t c2port_store_flash_access(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
-	int status;
-	ssize_t ret;
+अटल sमाप_प्रकार c2port_store_flash_access(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
+	पूर्णांक status;
+	sमाप_प्रकार ret;
 
-	ret = sscanf(buf, "%d", &status);
-	if (ret != 1)
-		return -EINVAL;
+	ret = माला_पूछो(buf, "%d", &status);
+	अगर (ret != 1)
+		वापस -EINVAL;
 
 	mutex_lock(&c2dev->mutex);
 	ret = __c2port_store_flash_access(c2dev, status);
 	mutex_unlock(&c2dev->mutex);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(c2dev->dev, "cannot enable %s flash programming\n",
 			c2dev->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return count;
-}
-static DEVICE_ATTR(flash_access, 0644, c2port_show_flash_access,
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR(flash_access, 0644, c2port_show_flash_access,
 		   c2port_store_flash_access);
 
-static ssize_t __c2port_write_flash_erase(struct c2port_device *dev)
-{
+अटल sमाप_प्रकार __c2port_ग_लिखो_flash_erase(काष्ठा c2port_device *dev)
+अणु
 	u8 status;
-	int ret;
+	पूर्णांक ret;
 
-	/* Target the C2 flash programming data register for C2 data register
+	/* Target the C2 flash programming data रेजिस्टर क्रम C2 data रेजिस्टर
 	 * access.
 	 */
-	c2port_write_ar(dev, C2PORT_FPDAT);
+	c2port_ग_लिखो_ar(dev, C2PORT_FPDAT);
 
 	/* Send device erase command */
-	c2port_write_dr(dev, C2PORT_DEVICE_ERASE);
+	c2port_ग_लिखो_dr(dev, C2PORT_DEVICE_ERASE);
 
-	/* Wait for input acknowledge */
+	/* Wait क्रम input acknowledge */
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Should check status before starting FLASH access sequence */
+	/* Should check status beक्रमe starting FLASH access sequence */
 
-	/* Wait for status information */
-	ret = c2port_poll_out_ready(dev);
-	if (ret < 0)
-		return ret;
+	/* Wait क्रम status inक्रमmation */
+	ret = c2port_poll_out_पढ़ोy(dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Read flash programming interface status */
-	ret = c2port_read_dr(dev, &status);
-	if (ret < 0)
-		return ret;
-	if (status != C2PORT_COMMAND_OK)
-		return -EBUSY;
+	/* Read flash programming पूर्णांकerface status */
+	ret = c2port_पढ़ो_dr(dev, &status);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (status != C2PORT_COMMAND_OK)
+		वापस -EBUSY;
 
 	/* Send a three-byte arming sequence to enable the device erase.
 	 * If the sequence is not received correctly, the command will be
 	 * ignored.
 	 * Sequence is: 0xde, 0xad, 0xa5.
 	 */
-	c2port_write_dr(dev, 0xde);
+	c2port_ग_लिखो_dr(dev, 0xde);
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
-	c2port_write_dr(dev, 0xad);
+	अगर (ret < 0)
+		वापस ret;
+	c2port_ग_लिखो_dr(dev, 0xad);
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
-	c2port_write_dr(dev, 0xa5);
+	अगर (ret < 0)
+		वापस ret;
+	c2port_ग_लिखो_dr(dev, 0xa5);
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = c2port_poll_out_ready(dev);
-	if (ret < 0)
-		return ret;
+	ret = c2port_poll_out_पढ़ोy(dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t c2port_store_flash_erase(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(dev);
-	int ret;
+अटल sमाप_प्रकार c2port_store_flash_erase(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	/* Check the device and flash access status */
-	if (!c2dev->access || !c2dev->flash_access)
-		return -EBUSY;
+	अगर (!c2dev->access || !c2dev->flash_access)
+		वापस -EBUSY;
 
 	mutex_lock(&c2dev->mutex);
-	ret = __c2port_write_flash_erase(c2dev);
+	ret = __c2port_ग_लिखो_flash_erase(c2dev);
 	mutex_unlock(&c2dev->mutex);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(c2dev->dev, "cannot erase %s flash\n", c2dev->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return count;
-}
-static DEVICE_ATTR(flash_erase, 0200, NULL, c2port_store_flash_erase);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR(flash_erase, 0200, शून्य, c2port_store_flash_erase);
 
-static ssize_t __c2port_read_flash_data(struct c2port_device *dev,
-				char *buffer, loff_t offset, size_t count)
-{
-	struct c2port_ops *ops = dev->ops;
-	u8 status, nread = 128;
-	int i, ret;
+अटल sमाप_प्रकार __c2port_पढ़ो_flash_data(काष्ठा c2port_device *dev,
+				अक्षर *buffer, loff_t offset, माप_प्रकार count)
+अणु
+	काष्ठा c2port_ops *ops = dev->ops;
+	u8 status, nपढ़ो = 128;
+	पूर्णांक i, ret;
 
-	/* Check for flash end */
-	if (offset >= ops->block_size * ops->blocks_num)
-		return 0;
+	/* Check क्रम flash end */
+	अगर (offset >= ops->block_size * ops->blocks_num)
+		वापस 0;
 
-	if (ops->block_size * ops->blocks_num - offset < nread)
-		nread = ops->block_size * ops->blocks_num - offset;
-	if (count < nread)
-		nread = count;
-	if (nread == 0)
-		return nread;
+	अगर (ops->block_size * ops->blocks_num - offset < nपढ़ो)
+		nपढ़ो = ops->block_size * ops->blocks_num - offset;
+	अगर (count < nपढ़ो)
+		nपढ़ो = count;
+	अगर (nपढ़ो == 0)
+		वापस nपढ़ो;
 
-	/* Target the C2 flash programming data register for C2 data register
+	/* Target the C2 flash programming data रेजिस्टर क्रम C2 data रेजिस्टर
 	 * access */
-	c2port_write_ar(dev, C2PORT_FPDAT);
+	c2port_ग_लिखो_ar(dev, C2PORT_FPDAT);
 
-	/* Send flash block read command */
-	c2port_write_dr(dev, C2PORT_BLOCK_READ);
+	/* Send flash block पढ़ो command */
+	c2port_ग_लिखो_dr(dev, C2PORT_BLOCK_READ);
 
-	/* Wait for input acknowledge */
+	/* Wait क्रम input acknowledge */
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Should check status before starting FLASH access sequence */
+	/* Should check status beक्रमe starting FLASH access sequence */
 
-	/* Wait for status information */
-	ret = c2port_poll_out_ready(dev);
-	if (ret < 0)
-		return ret;
+	/* Wait क्रम status inक्रमmation */
+	ret = c2port_poll_out_पढ़ोy(dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Read flash programming interface status */
-	ret = c2port_read_dr(dev, &status);
-	if (ret < 0)
-		return ret;
-	if (status != C2PORT_COMMAND_OK)
-		return -EBUSY;
+	/* Read flash programming पूर्णांकerface status */
+	ret = c2port_पढ़ो_dr(dev, &status);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (status != C2PORT_COMMAND_OK)
+		वापस -EBUSY;
 
 	/* Send address high byte */
-	c2port_write_dr(dev, offset >> 8);
+	c2port_ग_लिखो_dr(dev, offset >> 8);
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Send address low byte */
-	c2port_write_dr(dev, offset & 0x00ff);
+	c2port_ग_लिखो_dr(dev, offset & 0x00ff);
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Send address block size */
-	c2port_write_dr(dev, nread);
+	c2port_ग_लिखो_dr(dev, nपढ़ो);
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Should check status before reading FLASH block */
+	/* Should check status beक्रमe पढ़ोing FLASH block */
 
-	/* Wait for status information */
-	ret = c2port_poll_out_ready(dev);
-	if (ret < 0)
-		return ret;
+	/* Wait क्रम status inक्रमmation */
+	ret = c2port_poll_out_पढ़ोy(dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Read flash programming interface status */
-	ret = c2port_read_dr(dev, &status);
-	if (ret < 0)
-		return ret;
-	if (status != C2PORT_COMMAND_OK)
-		return -EBUSY;
+	/* Read flash programming पूर्णांकerface status */
+	ret = c2port_पढ़ो_dr(dev, &status);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (status != C2PORT_COMMAND_OK)
+		वापस -EBUSY;
 
 	/* Read flash block */
-	for (i = 0; i < nread; i++) {
-		ret = c2port_poll_out_ready(dev);
-		if (ret < 0)
-			return ret;
+	क्रम (i = 0; i < nपढ़ो; i++) अणु
+		ret = c2port_poll_out_पढ़ोy(dev);
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = c2port_read_dr(dev, buffer+i);
-		if (ret < 0)
-			return ret;
-	}
+		ret = c2port_पढ़ो_dr(dev, buffer+i);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return nread;
-}
+	वापस nपढ़ो;
+पूर्ण
 
-static ssize_t c2port_read_flash_data(struct file *filp, struct kobject *kobj,
-				struct bin_attribute *attr,
-				char *buffer, loff_t offset, size_t count)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(kobj_to_dev(kobj));
-	ssize_t ret;
+अटल sमाप_प्रकार c2port_पढ़ो_flash_data(काष्ठा file *filp, काष्ठा kobject *kobj,
+				काष्ठा bin_attribute *attr,
+				अक्षर *buffer, loff_t offset, माप_प्रकार count)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(kobj_to_dev(kobj));
+	sमाप_प्रकार ret;
 
 	/* Check the device and flash access status */
-	if (!c2dev->access || !c2dev->flash_access)
-		return -EBUSY;
+	अगर (!c2dev->access || !c2dev->flash_access)
+		वापस -EBUSY;
 
 	mutex_lock(&c2dev->mutex);
-	ret = __c2port_read_flash_data(c2dev, buffer, offset, count);
+	ret = __c2port_पढ़ो_flash_data(c2dev, buffer, offset, count);
 	mutex_unlock(&c2dev->mutex);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(c2dev->dev, "cannot read %s flash\n", c2dev->name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t __c2port_write_flash_data(struct c2port_device *dev,
-				char *buffer, loff_t offset, size_t count)
-{
-	struct c2port_ops *ops = dev->ops;
-	u8 status, nwrite = 128;
-	int i, ret;
+अटल sमाप_प्रकार __c2port_ग_लिखो_flash_data(काष्ठा c2port_device *dev,
+				अक्षर *buffer, loff_t offset, माप_प्रकार count)
+अणु
+	काष्ठा c2port_ops *ops = dev->ops;
+	u8 status, nग_लिखो = 128;
+	पूर्णांक i, ret;
 
-	if (nwrite > count)
-		nwrite = count;
-	if (ops->block_size * ops->blocks_num - offset < nwrite)
-		nwrite = ops->block_size * ops->blocks_num - offset;
+	अगर (nग_लिखो > count)
+		nग_लिखो = count;
+	अगर (ops->block_size * ops->blocks_num - offset < nग_लिखो)
+		nग_लिखो = ops->block_size * ops->blocks_num - offset;
 
-	/* Check for flash end */
-	if (offset >= ops->block_size * ops->blocks_num)
-		return -EINVAL;
+	/* Check क्रम flash end */
+	अगर (offset >= ops->block_size * ops->blocks_num)
+		वापस -EINVAL;
 
-	/* Target the C2 flash programming data register for C2 data register
+	/* Target the C2 flash programming data रेजिस्टर क्रम C2 data रेजिस्टर
 	 * access */
-	c2port_write_ar(dev, C2PORT_FPDAT);
+	c2port_ग_लिखो_ar(dev, C2PORT_FPDAT);
 
-	/* Send flash block write command */
-	c2port_write_dr(dev, C2PORT_BLOCK_WRITE);
+	/* Send flash block ग_लिखो command */
+	c2port_ग_लिखो_dr(dev, C2PORT_BLOCK_WRITE);
 
-	/* Wait for input acknowledge */
+	/* Wait क्रम input acknowledge */
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Should check status before starting FLASH access sequence */
+	/* Should check status beक्रमe starting FLASH access sequence */
 
-	/* Wait for status information */
-	ret = c2port_poll_out_ready(dev);
-	if (ret < 0)
-		return ret;
+	/* Wait क्रम status inक्रमmation */
+	ret = c2port_poll_out_पढ़ोy(dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Read flash programming interface status */
-	ret = c2port_read_dr(dev, &status);
-	if (ret < 0)
-		return ret;
-	if (status != C2PORT_COMMAND_OK)
-		return -EBUSY;
+	/* Read flash programming पूर्णांकerface status */
+	ret = c2port_पढ़ो_dr(dev, &status);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (status != C2PORT_COMMAND_OK)
+		वापस -EBUSY;
 
 	/* Send address high byte */
-	c2port_write_dr(dev, offset >> 8);
+	c2port_ग_लिखो_dr(dev, offset >> 8);
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Send address low byte */
-	c2port_write_dr(dev, offset & 0x00ff);
+	c2port_ग_लिखो_dr(dev, offset & 0x00ff);
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Send address block size */
-	c2port_write_dr(dev, nwrite);
+	c2port_ग_लिखो_dr(dev, nग_लिखो);
 	ret = c2port_poll_in_busy(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Should check status before writing FLASH block */
+	/* Should check status beक्रमe writing FLASH block */
 
-	/* Wait for status information */
-	ret = c2port_poll_out_ready(dev);
-	if (ret < 0)
-		return ret;
+	/* Wait क्रम status inक्रमmation */
+	ret = c2port_poll_out_पढ़ोy(dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Read flash programming interface status */
-	ret = c2port_read_dr(dev, &status);
-	if (ret < 0)
-		return ret;
-	if (status != C2PORT_COMMAND_OK)
-		return -EBUSY;
+	/* Read flash programming पूर्णांकerface status */
+	ret = c2port_पढ़ो_dr(dev, &status);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (status != C2PORT_COMMAND_OK)
+		वापस -EBUSY;
 
 	/* Write flash block */
-	for (i = 0; i < nwrite; i++) {
-		ret = c2port_write_dr(dev, *(buffer+i));
-		if (ret < 0)
-			return ret;
+	क्रम (i = 0; i < nग_लिखो; i++) अणु
+		ret = c2port_ग_लिखो_dr(dev, *(buffer+i));
+		अगर (ret < 0)
+			वापस ret;
 
 		ret = c2port_poll_in_busy(dev);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-	}
+	पूर्ण
 
-	/* Wait for last flash write to complete */
-	ret = c2port_poll_out_ready(dev);
-	if (ret < 0)
-		return ret;
+	/* Wait क्रम last flash ग_लिखो to complete */
+	ret = c2port_poll_out_पढ़ोy(dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	return nwrite;
-}
+	वापस nग_लिखो;
+पूर्ण
 
-static ssize_t c2port_write_flash_data(struct file *filp, struct kobject *kobj,
-				struct bin_attribute *attr,
-				char *buffer, loff_t offset, size_t count)
-{
-	struct c2port_device *c2dev = dev_get_drvdata(kobj_to_dev(kobj));
-	int ret;
+अटल sमाप_प्रकार c2port_ग_लिखो_flash_data(काष्ठा file *filp, काष्ठा kobject *kobj,
+				काष्ठा bin_attribute *attr,
+				अक्षर *buffer, loff_t offset, माप_प्रकार count)
+अणु
+	काष्ठा c2port_device *c2dev = dev_get_drvdata(kobj_to_dev(kobj));
+	पूर्णांक ret;
 
 	/* Check the device access status */
-	if (!c2dev->access || !c2dev->flash_access)
-		return -EBUSY;
+	अगर (!c2dev->access || !c2dev->flash_access)
+		वापस -EBUSY;
 
 	mutex_lock(&c2dev->mutex);
-	ret = __c2port_write_flash_data(c2dev, buffer, offset, count);
+	ret = __c2port_ग_लिखो_flash_data(c2dev, buffer, offset, count);
 	mutex_unlock(&c2dev->mutex);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(c2dev->dev, "cannot write %s flash\n", c2dev->name);
 
-	return ret;
-}
-/* size is computed at run-time */
-static BIN_ATTR(flash_data, 0644, c2port_read_flash_data,
-		c2port_write_flash_data, 0);
+	वापस ret;
+पूर्ण
+/* size is computed at run-समय */
+अटल BIN_ATTR(flash_data, 0644, c2port_पढ़ो_flash_data,
+		c2port_ग_लिखो_flash_data, 0);
 
 /*
  * Class attributes
  */
-static struct attribute *c2port_attrs[] = {
+अटल काष्ठा attribute *c2port_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_flash_blocks_num.attr,
 	&dev_attr_flash_block_size.attr,
@@ -866,42 +867,42 @@ static struct attribute *c2port_attrs[] = {
 	&dev_attr_rev_id.attr,
 	&dev_attr_flash_access.attr,
 	&dev_attr_flash_erase.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct bin_attribute *c2port_bin_attrs[] = {
+अटल काष्ठा bin_attribute *c2port_bin_attrs[] = अणु
 	&bin_attr_flash_data,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group c2port_group = {
+अटल स्थिर काष्ठा attribute_group c2port_group = अणु
 	.attrs = c2port_attrs,
 	.bin_attrs = c2port_bin_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *c2port_groups[] = {
+अटल स्थिर काष्ठा attribute_group *c2port_groups[] = अणु
 	&c2port_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*
  * Exported functions
  */
 
-struct c2port_device *c2port_device_register(char *name,
-					struct c2port_ops *ops, void *devdata)
-{
-	struct c2port_device *c2dev;
-	int ret;
+काष्ठा c2port_device *c2port_device_रेजिस्टर(अक्षर *name,
+					काष्ठा c2port_ops *ops, व्योम *devdata)
+अणु
+	काष्ठा c2port_device *c2dev;
+	पूर्णांक ret;
 
-	if (unlikely(!ops) || unlikely(!ops->access) || \
+	अगर (unlikely(!ops) || unlikely(!ops->access) || \
 		unlikely(!ops->c2d_dir) || unlikely(!ops->c2ck_set) || \
 		unlikely(!ops->c2d_get) || unlikely(!ops->c2d_set))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	c2dev = kzalloc(sizeof(struct c2port_device), GFP_KERNEL);
-	if (unlikely(!c2dev))
-		return ERR_PTR(-ENOMEM);
+	c2dev = kzalloc(माप(काष्ठा c2port_device), GFP_KERNEL);
+	अगर (unlikely(!c2dev))
+		वापस ERR_PTR(-ENOMEM);
 
 	idr_preload(GFP_KERNEL);
 	spin_lock_irq(&c2port_idr_lock);
@@ -909,25 +910,25 @@ struct c2port_device *c2port_device_register(char *name,
 	spin_unlock_irq(&c2port_idr_lock);
 	idr_preload_end();
 
-	if (ret < 0)
-		goto error_idr_alloc;
+	अगर (ret < 0)
+		जाओ error_idr_alloc;
 	c2dev->id = ret;
 
 	bin_attr_flash_data.size = ops->blocks_num * ops->block_size;
 
-	c2dev->dev = device_create(c2port_class, NULL, 0, c2dev,
+	c2dev->dev = device_create(c2port_class, शून्य, 0, c2dev,
 				   "c2port%d", c2dev->id);
-	if (IS_ERR(c2dev->dev)) {
+	अगर (IS_ERR(c2dev->dev)) अणु
 		ret = PTR_ERR(c2dev->dev);
-		goto error_device_create;
-	}
+		जाओ error_device_create;
+	पूर्ण
 	dev_set_drvdata(c2dev->dev, c2dev);
 
-	strncpy(c2dev->name, name, C2PORT_NAME_LEN - 1);
+	म_नकलन(c2dev->name, name, C2PORT_NAME_LEN - 1);
 	c2dev->ops = ops;
 	mutex_init(&c2dev->mutex);
 
-	/* By default C2 port access is off */
+	/* By शेष C2 port access is off */
 	c2dev->access = c2dev->flash_access = 0;
 	ops->access(c2dev, 0);
 
@@ -937,63 +938,63 @@ struct c2port_device *c2port_device_register(char *name,
 				name, ops->blocks_num, ops->block_size,
 				ops->blocks_num * ops->block_size);
 
-	return c2dev;
+	वापस c2dev;
 
 error_device_create:
 	spin_lock_irq(&c2port_idr_lock);
-	idr_remove(&c2port_idr, c2dev->id);
+	idr_हटाओ(&c2port_idr, c2dev->id);
 	spin_unlock_irq(&c2port_idr_lock);
 
 error_idr_alloc:
-	kfree(c2dev);
+	kमुक्त(c2dev);
 
-	return ERR_PTR(ret);
-}
-EXPORT_SYMBOL(c2port_device_register);
+	वापस ERR_PTR(ret);
+पूर्ण
+EXPORT_SYMBOL(c2port_device_रेजिस्टर);
 
-void c2port_device_unregister(struct c2port_device *c2dev)
-{
-	if (!c2dev)
-		return;
+व्योम c2port_device_unरेजिस्टर(काष्ठा c2port_device *c2dev)
+अणु
+	अगर (!c2dev)
+		वापस;
 
 	dev_info(c2dev->dev, "C2 port %s removed\n", c2dev->name);
 
 	spin_lock_irq(&c2port_idr_lock);
-	idr_remove(&c2port_idr, c2dev->id);
+	idr_हटाओ(&c2port_idr, c2dev->id);
 	spin_unlock_irq(&c2port_idr_lock);
 
 	device_destroy(c2port_class, c2dev->id);
 
-	kfree(c2dev);
-}
-EXPORT_SYMBOL(c2port_device_unregister);
+	kमुक्त(c2dev);
+पूर्ण
+EXPORT_SYMBOL(c2port_device_unरेजिस्टर);
 
 /*
  * Module stuff
  */
 
-static int __init c2port_init(void)
-{
-	printk(KERN_INFO "Silicon Labs C2 port support v. " DRIVER_VERSION
+अटल पूर्णांक __init c2port_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "Silicon Labs C2 port support v. " DRIVER_VERSION
 		" - (C) 2007 Rodolfo Giometti\n");
 
 	c2port_class = class_create(THIS_MODULE, "c2port");
-	if (IS_ERR(c2port_class)) {
-		printk(KERN_ERR "c2port: failed to allocate class\n");
-		return PTR_ERR(c2port_class);
-	}
+	अगर (IS_ERR(c2port_class)) अणु
+		prपूर्णांकk(KERN_ERR "c2port: failed to allocate class\n");
+		वापस PTR_ERR(c2port_class);
+	पूर्ण
 	c2port_class->dev_groups = c2port_groups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit c2port_exit(void)
-{
+अटल व्योम __निकास c2port_निकास(व्योम)
+अणु
 	class_destroy(c2port_class);
-}
+पूर्ण
 
 module_init(c2port_init);
-module_exit(c2port_exit);
+module_निकास(c2port_निकास);
 
 MODULE_AUTHOR("Rodolfo Giometti <giometti@linux.it>");
 MODULE_DESCRIPTION("Silicon Labs C2 port support v. " DRIVER_VERSION);

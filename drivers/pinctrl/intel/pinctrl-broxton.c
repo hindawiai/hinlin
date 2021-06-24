@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Broxton SoC pinctrl/GPIO driver
  *
  * Copyright (C) 2015, 2016 Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define BXT_PAD_OWN	0x020
-#define BXT_PADCFGLOCK	0x060
-#define BXT_HOSTSW_OWN	0x080
-#define BXT_GPI_IS	0x100
-#define BXT_GPI_IE	0x110
+#घोषणा BXT_PAD_OWN	0x020
+#घोषणा BXT_PADCFGLOCK	0x060
+#घोषणा BXT_HOSTSW_OWN	0x080
+#घोषणा BXT_GPI_IS	0x100
+#घोषणा BXT_GPI_IE	0x110
 
-#define BXT_COMMUNITY(s, e)				\
-	{						\
-		.padown_offset = BXT_PAD_OWN,		\
+#घोषणा BXT_COMMUNITY(s, e)				\
+	अणु						\
+		.paकरोwn_offset = BXT_PAD_OWN,		\
 		.padcfglock_offset = BXT_PADCFGLOCK,	\
 		.hostown_offset = BXT_HOSTSW_OWN,	\
 		.is_offset = BXT_GPI_IS,		\
@@ -30,10 +31,10 @@
 		.gpp_size = 32,                         \
 		.pin_base = (s),			\
 		.npins = ((e) - (s) + 1),		\
-	}
+	पूर्ण
 
 /* BXT */
-static const struct pinctrl_pin_desc bxt_north_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc bxt_north_pins[] = अणु
 	PINCTRL_PIN(0, "GPIO_0"),
 	PINCTRL_PIN(1, "GPIO_1"),
 	PINCTRL_PIN(2, "GPIO_2"),
@@ -117,21 +118,21 @@ static const struct pinctrl_pin_desc bxt_north_pins[] = {
 	PINCTRL_PIN(80, "JTAGX"),
 	PINCTRL_PIN(81, "CX_PRDY_B"),
 	PINCTRL_PIN(82, "TDO"),
-};
+पूर्ण;
 
-static const unsigned int bxt_north_pwm0_pins[] = { 34 };
-static const unsigned int bxt_north_pwm1_pins[] = { 35 };
-static const unsigned int bxt_north_pwm2_pins[] = { 36 };
-static const unsigned int bxt_north_pwm3_pins[] = { 37 };
-static const unsigned int bxt_north_uart0_pins[] = { 38, 39, 40, 41 };
-static const unsigned int bxt_north_uart1_pins[] = { 42, 43, 44, 45 };
-static const unsigned int bxt_north_uart2_pins[] = { 46, 47, 48, 49 };
-static const unsigned int bxt_north_uart0b_pins[] = { 50, 51, 52, 53 };
-static const unsigned int bxt_north_uart1b_pins[] = { 54, 55, 56, 57 };
-static const unsigned int bxt_north_uart2b_pins[] = { 58, 59, 60, 61 };
-static const unsigned int bxt_north_uart3_pins[] = { 58, 59, 60, 61 };
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_pwm0_pins[] = अणु 34 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_pwm1_pins[] = अणु 35 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_pwm2_pins[] = अणु 36 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_pwm3_pins[] = अणु 37 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_uart0_pins[] = अणु 38, 39, 40, 41 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_uart1_pins[] = अणु 42, 43, 44, 45 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_uart2_pins[] = अणु 46, 47, 48, 49 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_uart0b_pins[] = अणु 50, 51, 52, 53 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_uart1b_pins[] = अणु 54, 55, 56, 57 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_uart2b_pins[] = अणु 58, 59, 60, 61 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_north_uart3_pins[] = अणु 58, 59, 60, 61 पूर्ण;
 
-static const struct intel_pingroup bxt_north_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup bxt_north_groups[] = अणु
 	PIN_GROUP("pwm0_grp", bxt_north_pwm0_pins, 1),
 	PIN_GROUP("pwm1_grp", bxt_north_pwm1_pins, 1),
 	PIN_GROUP("pwm2_grp", bxt_north_pwm2_pins, 1),
@@ -143,24 +144,24 @@ static const struct intel_pingroup bxt_north_groups[] = {
 	PIN_GROUP("uart1b_grp", bxt_north_uart1b_pins, 2),
 	PIN_GROUP("uart2b_grp", bxt_north_uart2b_pins, 2),
 	PIN_GROUP("uart3_grp", bxt_north_uart3_pins, 3),
-};
+पूर्ण;
 
-static const char * const bxt_north_pwm0_groups[] = { "pwm0_grp" };
-static const char * const bxt_north_pwm1_groups[] = { "pwm1_grp" };
-static const char * const bxt_north_pwm2_groups[] = { "pwm2_grp" };
-static const char * const bxt_north_pwm3_groups[] = { "pwm3_grp" };
-static const char * const bxt_north_uart0_groups[] = {
+अटल स्थिर अक्षर * स्थिर bxt_north_pwm0_groups[] = अणु "pwm0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_north_pwm1_groups[] = अणु "pwm1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_north_pwm2_groups[] = अणु "pwm2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_north_pwm3_groups[] = अणु "pwm3_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_north_uart0_groups[] = अणु
 	"uart0_grp", "uart0b_grp",
-};
-static const char * const bxt_north_uart1_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_north_uart1_groups[] = अणु
 	"uart1_grp", "uart1b_grp",
-};
-static const char * const bxt_north_uart2_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_north_uart2_groups[] = अणु
 	"uart2_grp", "uart2b_grp",
-};
-static const char * const bxt_north_uart3_groups[] = { "uart3_grp" };
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_north_uart3_groups[] = अणु "uart3_grp" पूर्ण;
 
-static const struct intel_function bxt_north_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function bxt_north_functions[] = अणु
 	FUNCTION("pwm0", bxt_north_pwm0_groups),
 	FUNCTION("pwm1", bxt_north_pwm1_groups),
 	FUNCTION("pwm2", bxt_north_pwm2_groups),
@@ -169,13 +170,13 @@ static const struct intel_function bxt_north_functions[] = {
 	FUNCTION("uart1", bxt_north_uart1_groups),
 	FUNCTION("uart2", bxt_north_uart2_groups),
 	FUNCTION("uart3", bxt_north_uart3_groups),
-};
+पूर्ण;
 
-static const struct intel_community bxt_north_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community bxt_north_communities[] = अणु
 	BXT_COMMUNITY(0, 82),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data bxt_north_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data bxt_north_soc_data = अणु
 	.uid = "1",
 	.pins = bxt_north_pins,
 	.npins = ARRAY_SIZE(bxt_north_pins),
@@ -185,9 +186,9 @@ static const struct intel_pinctrl_soc_data bxt_north_soc_data = {
 	.nfunctions = ARRAY_SIZE(bxt_north_functions),
 	.communities = bxt_north_communities,
 	.ncommunities = ARRAY_SIZE(bxt_north_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc bxt_northwest_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc bxt_northwest_pins[] = अणु
 	PINCTRL_PIN(0, "PMC_SPI_FS0"),
 	PINCTRL_PIN(1, "PMC_SPI_FS1"),
 	PINCTRL_PIN(2, "PMC_SPI_FS2"),
@@ -260,39 +261,39 @@ static const struct pinctrl_pin_desc bxt_northwest_pins[] = {
 	PINCTRL_PIN(69, "GP_SSP_2_FS2"),
 	PINCTRL_PIN(70, "GP_SSP_2_RXD"),
 	PINCTRL_PIN(71, "GP_SSP_2_TXD"),
-};
+पूर्ण;
 
-static const unsigned int bxt_northwest_ssp0_pins[] = { 53, 54, 55, 56, 57, 58 };
-static const unsigned int bxt_northwest_ssp1_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक bxt_northwest_ssp0_pins[] = अणु 53, 54, 55, 56, 57, 58 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_northwest_ssp1_pins[] = अणु
 	59, 60, 61, 62, 63, 64, 65
-};
-static const unsigned int bxt_northwest_ssp2_pins[] = { 66, 67, 68, 69, 70, 71 };
-static const unsigned int bxt_northwest_uart3_pins[] = { 67, 68, 69, 70 };
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_northwest_ssp2_pins[] = अणु 66, 67, 68, 69, 70, 71 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_northwest_uart3_pins[] = अणु 67, 68, 69, 70 पूर्ण;
 
-static const struct intel_pingroup bxt_northwest_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup bxt_northwest_groups[] = अणु
 	PIN_GROUP("ssp0_grp", bxt_northwest_ssp0_pins, 1),
 	PIN_GROUP("ssp1_grp", bxt_northwest_ssp1_pins, 1),
 	PIN_GROUP("ssp2_grp", bxt_northwest_ssp2_pins, 1),
 	PIN_GROUP("uart3_grp", bxt_northwest_uart3_pins, 2),
-};
+पूर्ण;
 
-static const char * const bxt_northwest_ssp0_groups[] = { "ssp0_grp" };
-static const char * const bxt_northwest_ssp1_groups[] = { "ssp1_grp" };
-static const char * const bxt_northwest_ssp2_groups[] = { "ssp2_grp" };
-static const char * const bxt_northwest_uart3_groups[] = { "uart3_grp" };
+अटल स्थिर अक्षर * स्थिर bxt_northwest_ssp0_groups[] = अणु "ssp0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_northwest_ssp1_groups[] = अणु "ssp1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_northwest_ssp2_groups[] = अणु "ssp2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_northwest_uart3_groups[] = अणु "uart3_grp" पूर्ण;
 
-static const struct intel_function bxt_northwest_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function bxt_northwest_functions[] = अणु
 	FUNCTION("ssp0", bxt_northwest_ssp0_groups),
 	FUNCTION("ssp1", bxt_northwest_ssp1_groups),
 	FUNCTION("ssp2", bxt_northwest_ssp2_groups),
 	FUNCTION("uart3", bxt_northwest_uart3_groups),
-};
+पूर्ण;
 
-static const struct intel_community bxt_northwest_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community bxt_northwest_communities[] = अणु
 	BXT_COMMUNITY(0, 71),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data bxt_northwest_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data bxt_northwest_soc_data = अणु
 	.uid = "2",
 	.pins = bxt_northwest_pins,
 	.npins = ARRAY_SIZE(bxt_northwest_pins),
@@ -302,9 +303,9 @@ static const struct intel_pinctrl_soc_data bxt_northwest_soc_data = {
 	.nfunctions = ARRAY_SIZE(bxt_northwest_functions),
 	.communities = bxt_northwest_communities,
 	.ncommunities = ARRAY_SIZE(bxt_northwest_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc bxt_west_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc bxt_west_pins[] = अणु
 	PINCTRL_PIN(0, "LPSS_I2C0_SDA"),
 	PINCTRL_PIN(1, "LPSS_I2C0_SCL"),
 	PINCTRL_PIN(2, "LPSS_I2C1_SDA"),
@@ -347,21 +348,21 @@ static const struct pinctrl_pin_desc bxt_west_pins[] = {
 	PINCTRL_PIN(39, "OSC_CLK_OUT_1"),
 	PINCTRL_PIN(40, "OSC_CLK_OUT_2"),
 	PINCTRL_PIN(41, "OSC_CLK_OUT_3"),
-};
+पूर्ण;
 
-static const unsigned int bxt_west_i2c0_pins[] = { 0, 1 };
-static const unsigned int bxt_west_i2c1_pins[] = { 2, 3 };
-static const unsigned int bxt_west_i2c2_pins[] = { 4, 5 };
-static const unsigned int bxt_west_i2c3_pins[] = { 6, 7 };
-static const unsigned int bxt_west_i2c4_pins[] = { 8, 9 };
-static const unsigned int bxt_west_i2c5_pins[] = { 10, 11 };
-static const unsigned int bxt_west_i2c6_pins[] = { 12, 13 };
-static const unsigned int bxt_west_i2c7_pins[] = { 14, 15 };
-static const unsigned int bxt_west_i2c5b_pins[] = { 16, 17 };
-static const unsigned int bxt_west_i2c6b_pins[] = { 18, 19 };
-static const unsigned int bxt_west_i2c7b_pins[] = { 20, 21 };
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c0_pins[] = अणु 0, 1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c1_pins[] = अणु 2, 3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c2_pins[] = अणु 4, 5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c3_pins[] = अणु 6, 7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c4_pins[] = अणु 8, 9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c5_pins[] = अणु 10, 11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c6_pins[] = अणु 12, 13 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c7_pins[] = अणु 14, 15 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c5b_pins[] = अणु 16, 17 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c6b_pins[] = अणु 18, 19 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_west_i2c7b_pins[] = अणु 20, 21 पूर्ण;
 
-static const struct intel_pingroup bxt_west_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup bxt_west_groups[] = अणु
 	PIN_GROUP("i2c0_grp", bxt_west_i2c0_pins, 1),
 	PIN_GROUP("i2c1_grp", bxt_west_i2c1_pins, 1),
 	PIN_GROUP("i2c2_grp", bxt_west_i2c2_pins, 1),
@@ -373,18 +374,18 @@ static const struct intel_pingroup bxt_west_groups[] = {
 	PIN_GROUP("i2c5b_grp", bxt_west_i2c5b_pins, 2),
 	PIN_GROUP("i2c6b_grp", bxt_west_i2c6b_pins, 2),
 	PIN_GROUP("i2c7b_grp", bxt_west_i2c7b_pins, 2),
-};
+पूर्ण;
 
-static const char * const bxt_west_i2c0_groups[] = { "i2c0_grp" };
-static const char * const bxt_west_i2c1_groups[] = { "i2c1_grp" };
-static const char * const bxt_west_i2c2_groups[] = { "i2c2_grp" };
-static const char * const bxt_west_i2c3_groups[] = { "i2c3_grp" };
-static const char * const bxt_west_i2c4_groups[] = { "i2c4_grp" };
-static const char * const bxt_west_i2c5_groups[] = { "i2c5_grp", "i2c5b_grp" };
-static const char * const bxt_west_i2c6_groups[] = { "i2c6_grp", "i2c6b_grp" };
-static const char * const bxt_west_i2c7_groups[] = { "i2c7_grp", "i2c7b_grp" };
+अटल स्थिर अक्षर * स्थिर bxt_west_i2c0_groups[] = अणु "i2c0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_west_i2c1_groups[] = अणु "i2c1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_west_i2c2_groups[] = अणु "i2c2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_west_i2c3_groups[] = अणु "i2c3_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_west_i2c4_groups[] = अणु "i2c4_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_west_i2c5_groups[] = अणु "i2c5_grp", "i2c5b_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_west_i2c6_groups[] = अणु "i2c6_grp", "i2c6b_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_west_i2c7_groups[] = अणु "i2c7_grp", "i2c7b_grp" पूर्ण;
 
-static const struct intel_function bxt_west_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function bxt_west_functions[] = अणु
 	FUNCTION("i2c0", bxt_west_i2c0_groups),
 	FUNCTION("i2c1", bxt_west_i2c1_groups),
 	FUNCTION("i2c2", bxt_west_i2c2_groups),
@@ -393,13 +394,13 @@ static const struct intel_function bxt_west_functions[] = {
 	FUNCTION("i2c5", bxt_west_i2c5_groups),
 	FUNCTION("i2c6", bxt_west_i2c6_groups),
 	FUNCTION("i2c7", bxt_west_i2c7_groups),
-};
+पूर्ण;
 
-static const struct intel_community bxt_west_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community bxt_west_communities[] = अणु
 	BXT_COMMUNITY(0, 41),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data bxt_west_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data bxt_west_soc_data = अणु
 	.uid = "3",
 	.pins = bxt_west_pins,
 	.npins = ARRAY_SIZE(bxt_west_pins),
@@ -409,9 +410,9 @@ static const struct intel_pinctrl_soc_data bxt_west_soc_data = {
 	.nfunctions = ARRAY_SIZE(bxt_west_functions),
 	.communities = bxt_west_communities,
 	.ncommunities = ARRAY_SIZE(bxt_west_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc bxt_southwest_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc bxt_southwest_pins[] = अणु
 	PINCTRL_PIN(0, "EMMC0_CLK"),
 	PINCTRL_PIN(1, "EMMC0_D0"),
 	PINCTRL_PIN(2, "EMMC0_D1"),
@@ -443,39 +444,39 @@ static const struct pinctrl_pin_desc bxt_southwest_pins[] = {
 	PINCTRL_PIN(28, "SDCARD_PWR_DOWN_B"),
 	PINCTRL_PIN(29, "SDCARD_LVL_SEL"),
 	PINCTRL_PIN(30, "SDCARD_LVL_WP"),
-};
+पूर्ण;
 
-static const unsigned int bxt_southwest_emmc0_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक bxt_southwest_emmc0_pins[] = अणु
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 26,
-};
-static const unsigned int bxt_southwest_sdio_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_southwest_sdio_pins[] = अणु
 	10, 11, 12, 13, 14, 15, 27,
-};
-static const unsigned int bxt_southwest_sdcard_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bxt_southwest_sdcard_pins[] = अणु
 	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30,
-};
+पूर्ण;
 
-static const struct intel_pingroup bxt_southwest_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup bxt_southwest_groups[] = अणु
 	PIN_GROUP("emmc0_grp", bxt_southwest_emmc0_pins, 1),
 	PIN_GROUP("sdio_grp", bxt_southwest_sdio_pins, 1),
 	PIN_GROUP("sdcard_grp", bxt_southwest_sdcard_pins, 1),
-};
+पूर्ण;
 
-static const char * const bxt_southwest_emmc0_groups[] = { "emmc0_grp" };
-static const char * const bxt_southwest_sdio_groups[] = { "sdio_grp" };
-static const char * const bxt_southwest_sdcard_groups[] = { "sdcard_grp" };
+अटल स्थिर अक्षर * स्थिर bxt_southwest_emmc0_groups[] = अणु "emmc0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_southwest_sdio_groups[] = अणु "sdio_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर bxt_southwest_sdcard_groups[] = अणु "sdcard_grp" पूर्ण;
 
-static const struct intel_function bxt_southwest_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function bxt_southwest_functions[] = अणु
 	FUNCTION("emmc0", bxt_southwest_emmc0_groups),
 	FUNCTION("sdio", bxt_southwest_sdio_groups),
 	FUNCTION("sdcard", bxt_southwest_sdcard_groups),
-};
+पूर्ण;
 
-static const struct intel_community bxt_southwest_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community bxt_southwest_communities[] = अणु
 	BXT_COMMUNITY(0, 30),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data bxt_southwest_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data bxt_southwest_soc_data = अणु
 	.uid = "4",
 	.pins = bxt_southwest_pins,
 	.npins = ARRAY_SIZE(bxt_southwest_pins),
@@ -485,9 +486,9 @@ static const struct intel_pinctrl_soc_data bxt_southwest_soc_data = {
 	.nfunctions = ARRAY_SIZE(bxt_southwest_functions),
 	.communities = bxt_southwest_communities,
 	.ncommunities = ARRAY_SIZE(bxt_southwest_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc bxt_south_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc bxt_south_pins[] = अणु
 	PINCTRL_PIN(0, "HV_DDI0_DDC_SDA"),
 	PINCTRL_PIN(1, "HV_DDI0_DDC_SCL"),
 	PINCTRL_PIN(2, "HV_DDI1_DDC_SDA"),
@@ -508,31 +509,31 @@ static const struct pinctrl_pin_desc bxt_south_pins[] = {
 	PINCTRL_PIN(17, "USB_OC1_B"),
 	PINCTRL_PIN(18, "MEX_WAKE0_B"),
 	PINCTRL_PIN(19, "MEX_WAKE1_B"),
-};
+पूर्ण;
 
-static const struct intel_community bxt_south_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community bxt_south_communities[] = अणु
 	BXT_COMMUNITY(0, 19),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data bxt_south_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data bxt_south_soc_data = अणु
 	.uid = "5",
 	.pins = bxt_south_pins,
 	.npins = ARRAY_SIZE(bxt_south_pins),
 	.communities = bxt_south_communities,
 	.ncommunities = ARRAY_SIZE(bxt_south_communities),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data *bxt_pinctrl_soc_data[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *bxt_pinctrl_soc_data[] = अणु
 	&bxt_north_soc_data,
 	&bxt_northwest_soc_data,
 	&bxt_west_soc_data,
 	&bxt_southwest_soc_data,
 	&bxt_south_soc_data,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /* APL */
-static const struct pinctrl_pin_desc apl_north_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc apl_north_pins[] = अणु
 	PINCTRL_PIN(0, "GPIO_0"),
 	PINCTRL_PIN(1, "GPIO_1"),
 	PINCTRL_PIN(2, "GPIO_2"),
@@ -611,17 +612,17 @@ static const struct pinctrl_pin_desc apl_north_pins[] = {
 	PINCTRL_PIN(75, "SVID0_ALERT_B"),
 	PINCTRL_PIN(76, "SVID0_DATA"),
 	PINCTRL_PIN(77, "SVID0_CLK"),
-};
+पूर्ण;
 
-static const unsigned int apl_north_pwm0_pins[] = { 34 };
-static const unsigned int apl_north_pwm1_pins[] = { 35 };
-static const unsigned int apl_north_pwm2_pins[] = { 36 };
-static const unsigned int apl_north_pwm3_pins[] = { 37 };
-static const unsigned int apl_north_uart0_pins[] = { 38, 39, 40, 41 };
-static const unsigned int apl_north_uart1_pins[] = { 42, 43, 44, 45 };
-static const unsigned int apl_north_uart2_pins[] = { 46, 47, 48, 49 };
+अटल स्थिर अचिन्हित पूर्णांक apl_north_pwm0_pins[] = अणु 34 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_north_pwm1_pins[] = अणु 35 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_north_pwm2_pins[] = अणु 36 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_north_pwm3_pins[] = अणु 37 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_north_uart0_pins[] = अणु 38, 39, 40, 41 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_north_uart1_pins[] = अणु 42, 43, 44, 45 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_north_uart2_pins[] = अणु 46, 47, 48, 49 पूर्ण;
 
-static const struct intel_pingroup apl_north_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup apl_north_groups[] = अणु
 	PIN_GROUP("pwm0_grp", apl_north_pwm0_pins, 1),
 	PIN_GROUP("pwm1_grp", apl_north_pwm1_pins, 1),
 	PIN_GROUP("pwm2_grp", apl_north_pwm2_pins, 1),
@@ -629,17 +630,17 @@ static const struct intel_pingroup apl_north_groups[] = {
 	PIN_GROUP("uart0_grp", apl_north_uart0_pins, 1),
 	PIN_GROUP("uart1_grp", apl_north_uart1_pins, 1),
 	PIN_GROUP("uart2_grp", apl_north_uart2_pins, 1),
-};
+पूर्ण;
 
-static const char * const apl_north_pwm0_groups[] = { "pwm0_grp" };
-static const char * const apl_north_pwm1_groups[] = { "pwm1_grp" };
-static const char * const apl_north_pwm2_groups[] = { "pwm2_grp" };
-static const char * const apl_north_pwm3_groups[] = { "pwm3_grp" };
-static const char * const apl_north_uart0_groups[] = { "uart0_grp" };
-static const char * const apl_north_uart1_groups[] = { "uart1_grp" };
-static const char * const apl_north_uart2_groups[] = { "uart2_grp" };
+अटल स्थिर अक्षर * स्थिर apl_north_pwm0_groups[] = अणु "pwm0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_north_pwm1_groups[] = अणु "pwm1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_north_pwm2_groups[] = अणु "pwm2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_north_pwm3_groups[] = अणु "pwm3_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_north_uart0_groups[] = अणु "uart0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_north_uart1_groups[] = अणु "uart1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_north_uart2_groups[] = अणु "uart2_grp" पूर्ण;
 
-static const struct intel_function apl_north_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function apl_north_functions[] = अणु
 	FUNCTION("pwm0", apl_north_pwm0_groups),
 	FUNCTION("pwm1", apl_north_pwm1_groups),
 	FUNCTION("pwm2", apl_north_pwm2_groups),
@@ -647,13 +648,13 @@ static const struct intel_function apl_north_functions[] = {
 	FUNCTION("uart0", apl_north_uart0_groups),
 	FUNCTION("uart1", apl_north_uart1_groups),
 	FUNCTION("uart2", apl_north_uart2_groups),
-};
+पूर्ण;
 
-static const struct intel_community apl_north_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community apl_north_communities[] = अणु
 	BXT_COMMUNITY(0, 77),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data apl_north_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data apl_north_soc_data = अणु
 	.uid = "1",
 	.pins = apl_north_pins,
 	.npins = ARRAY_SIZE(apl_north_pins),
@@ -663,9 +664,9 @@ static const struct intel_pinctrl_soc_data apl_north_soc_data = {
 	.nfunctions = ARRAY_SIZE(apl_north_functions),
 	.communities = apl_north_communities,
 	.ncommunities = ARRAY_SIZE(apl_north_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc apl_northwest_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc apl_northwest_pins[] = अणु
 	PINCTRL_PIN(0, "HV_DDI0_DDC_SDA"),
 	PINCTRL_PIN(1, "HV_DDI0_DDC_SCL"),
 	PINCTRL_PIN(2, "HV_DDI1_DDC_SDA"),
@@ -743,37 +744,37 @@ static const struct pinctrl_pin_desc apl_northwest_pins[] = {
 	PINCTRL_PIN(74, "GP_SSP_2_FS2"),
 	PINCTRL_PIN(75, "GP_SSP_2_RXD"),
 	PINCTRL_PIN(76, "GP_SSP_2_TXD"),
-};
+पूर्ण;
 
-static const unsigned int apl_northwest_ssp0_pins[] = { 61, 62, 63, 64, 65 };
-static const unsigned int apl_northwest_ssp1_pins[] = { 66, 67, 68, 69, 70 };
-static const unsigned int apl_northwest_ssp2_pins[] = { 71, 72, 73, 74, 75, 76 };
-static const unsigned int apl_northwest_uart3_pins[] = { 67, 68, 69, 70 };
+अटल स्थिर अचिन्हित पूर्णांक apl_northwest_ssp0_pins[] = अणु 61, 62, 63, 64, 65 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_northwest_ssp1_pins[] = अणु 66, 67, 68, 69, 70 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_northwest_ssp2_pins[] = अणु 71, 72, 73, 74, 75, 76 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_northwest_uart3_pins[] = अणु 67, 68, 69, 70 पूर्ण;
 
-static const struct intel_pingroup apl_northwest_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup apl_northwest_groups[] = अणु
 	PIN_GROUP("ssp0_grp", apl_northwest_ssp0_pins, 1),
 	PIN_GROUP("ssp1_grp", apl_northwest_ssp1_pins, 1),
 	PIN_GROUP("ssp2_grp", apl_northwest_ssp2_pins, 1),
 	PIN_GROUP("uart3_grp", apl_northwest_uart3_pins, 2),
-};
+पूर्ण;
 
-static const char * const apl_northwest_ssp0_groups[] = { "ssp0_grp" };
-static const char * const apl_northwest_ssp1_groups[] = { "ssp1_grp" };
-static const char * const apl_northwest_ssp2_groups[] = { "ssp2_grp" };
-static const char * const apl_northwest_uart3_groups[] = { "uart3_grp" };
+अटल स्थिर अक्षर * स्थिर apl_northwest_ssp0_groups[] = अणु "ssp0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_northwest_ssp1_groups[] = अणु "ssp1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_northwest_ssp2_groups[] = अणु "ssp2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_northwest_uart3_groups[] = अणु "uart3_grp" पूर्ण;
 
-static const struct intel_function apl_northwest_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function apl_northwest_functions[] = अणु
 	FUNCTION("ssp0", apl_northwest_ssp0_groups),
 	FUNCTION("ssp1", apl_northwest_ssp1_groups),
 	FUNCTION("ssp2", apl_northwest_ssp2_groups),
 	FUNCTION("uart3", apl_northwest_uart3_groups),
-};
+पूर्ण;
 
-static const struct intel_community apl_northwest_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community apl_northwest_communities[] = अणु
 	BXT_COMMUNITY(0, 76),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data apl_northwest_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data apl_northwest_soc_data = अणु
 	.uid = "2",
 	.pins = apl_northwest_pins,
 	.npins = ARRAY_SIZE(apl_northwest_pins),
@@ -783,9 +784,9 @@ static const struct intel_pinctrl_soc_data apl_northwest_soc_data = {
 	.nfunctions = ARRAY_SIZE(apl_northwest_functions),
 	.communities = apl_northwest_communities,
 	.ncommunities = ARRAY_SIZE(apl_northwest_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc apl_west_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc apl_west_pins[] = अणु
 	PINCTRL_PIN(0, "LPSS_I2C0_SDA"),
 	PINCTRL_PIN(1, "LPSS_I2C0_SCL"),
 	PINCTRL_PIN(2, "LPSS_I2C1_SDA"),
@@ -833,19 +834,19 @@ static const struct pinctrl_pin_desc apl_west_pins[] = {
 	PINCTRL_PIN(44, "PMU_WAKE_B"),
 	PINCTRL_PIN(45, "SUS_STAT_B"),
 	PINCTRL_PIN(46, "SUSPWRDNACK"),
-};
+पूर्ण;
 
-static const unsigned int apl_west_i2c0_pins[] = { 0, 1 };
-static const unsigned int apl_west_i2c1_pins[] = { 2, 3 };
-static const unsigned int apl_west_i2c2_pins[] = { 4, 5 };
-static const unsigned int apl_west_i2c3_pins[] = { 6, 7 };
-static const unsigned int apl_west_i2c4_pins[] = { 8, 9 };
-static const unsigned int apl_west_i2c5_pins[] = { 10, 11 };
-static const unsigned int apl_west_i2c6_pins[] = { 12, 13 };
-static const unsigned int apl_west_i2c7_pins[] = { 14, 15 };
-static const unsigned int apl_west_uart2_pins[] = { 20, 21, 22, 34 };
+अटल स्थिर अचिन्हित पूर्णांक apl_west_i2c0_pins[] = अणु 0, 1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_west_i2c1_pins[] = अणु 2, 3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_west_i2c2_pins[] = अणु 4, 5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_west_i2c3_pins[] = अणु 6, 7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_west_i2c4_pins[] = अणु 8, 9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_west_i2c5_pins[] = अणु 10, 11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_west_i2c6_pins[] = अणु 12, 13 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_west_i2c7_pins[] = अणु 14, 15 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_west_uart2_pins[] = अणु 20, 21, 22, 34 पूर्ण;
 
-static const struct intel_pingroup apl_west_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup apl_west_groups[] = अणु
 	PIN_GROUP("i2c0_grp", apl_west_i2c0_pins, 1),
 	PIN_GROUP("i2c1_grp", apl_west_i2c1_pins, 1),
 	PIN_GROUP("i2c2_grp", apl_west_i2c2_pins, 1),
@@ -855,19 +856,19 @@ static const struct intel_pingroup apl_west_groups[] = {
 	PIN_GROUP("i2c6_grp", apl_west_i2c6_pins, 1),
 	PIN_GROUP("i2c7_grp", apl_west_i2c7_pins, 1),
 	PIN_GROUP("uart2_grp", apl_west_uart2_pins, 3),
-};
+पूर्ण;
 
-static const char * const apl_west_i2c0_groups[] = { "i2c0_grp" };
-static const char * const apl_west_i2c1_groups[] = { "i2c1_grp" };
-static const char * const apl_west_i2c2_groups[] = { "i2c2_grp" };
-static const char * const apl_west_i2c3_groups[] = { "i2c3_grp" };
-static const char * const apl_west_i2c4_groups[] = { "i2c4_grp" };
-static const char * const apl_west_i2c5_groups[] = { "i2c5_grp" };
-static const char * const apl_west_i2c6_groups[] = { "i2c6_grp" };
-static const char * const apl_west_i2c7_groups[] = { "i2c7_grp" };
-static const char * const apl_west_uart2_groups[] = { "uart2_grp" };
+अटल स्थिर अक्षर * स्थिर apl_west_i2c0_groups[] = अणु "i2c0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_west_i2c1_groups[] = अणु "i2c1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_west_i2c2_groups[] = अणु "i2c2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_west_i2c3_groups[] = अणु "i2c3_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_west_i2c4_groups[] = अणु "i2c4_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_west_i2c5_groups[] = अणु "i2c5_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_west_i2c6_groups[] = अणु "i2c6_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_west_i2c7_groups[] = अणु "i2c7_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_west_uart2_groups[] = अणु "uart2_grp" पूर्ण;
 
-static const struct intel_function apl_west_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function apl_west_functions[] = अणु
 	FUNCTION("i2c0", apl_west_i2c0_groups),
 	FUNCTION("i2c1", apl_west_i2c1_groups),
 	FUNCTION("i2c2", apl_west_i2c2_groups),
@@ -877,13 +878,13 @@ static const struct intel_function apl_west_functions[] = {
 	FUNCTION("i2c6", apl_west_i2c6_groups),
 	FUNCTION("i2c7", apl_west_i2c7_groups),
 	FUNCTION("uart2", apl_west_uart2_groups),
-};
+पूर्ण;
 
-static const struct intel_community apl_west_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community apl_west_communities[] = अणु
 	BXT_COMMUNITY(0, 46),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data apl_west_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data apl_west_soc_data = अणु
 	.uid = "3",
 	.pins = apl_west_pins,
 	.npins = ARRAY_SIZE(apl_west_pins),
@@ -893,9 +894,9 @@ static const struct intel_pinctrl_soc_data apl_west_soc_data = {
 	.nfunctions = ARRAY_SIZE(apl_west_functions),
 	.communities = apl_west_communities,
 	.ncommunities = ARRAY_SIZE(apl_west_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc apl_southwest_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc apl_southwest_pins[] = अणु
 	PINCTRL_PIN(0, "PCIE_WAKE0_B"),
 	PINCTRL_PIN(1, "PCIE_WAKE1_B"),
 	PINCTRL_PIN(2, "PCIE_WAKE2_B"),
@@ -939,43 +940,43 @@ static const struct pinctrl_pin_desc apl_southwest_pins[] = {
 	PINCTRL_PIN(40, "LPC_AD3"),
 	PINCTRL_PIN(41, "LPC_CLKRUNB"),
 	PINCTRL_PIN(42, "LPC_FRAMEB"),
-};
+पूर्ण;
 
-static const unsigned int apl_southwest_emmc0_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक apl_southwest_emmc0_pins[] = अणु
 	4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 29,
-};
-static const unsigned int apl_southwest_sdio_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_southwest_sdio_pins[] = अणु
 	14, 15, 16, 17, 18, 19, 30,
-};
-static const unsigned int apl_southwest_sdcard_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_southwest_sdcard_pins[] = अणु
 	20, 21, 22, 23, 24, 25, 26, 27, 28,
-};
-static const unsigned int apl_southwest_i2c7_pins[] = { 32, 33 };
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक apl_southwest_i2c7_pins[] = अणु 32, 33 पूर्ण;
 
-static const struct intel_pingroup apl_southwest_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup apl_southwest_groups[] = अणु
 	PIN_GROUP("emmc0_grp", apl_southwest_emmc0_pins, 1),
 	PIN_GROUP("sdio_grp", apl_southwest_sdio_pins, 1),
 	PIN_GROUP("sdcard_grp", apl_southwest_sdcard_pins, 1),
 	PIN_GROUP("i2c7_grp", apl_southwest_i2c7_pins, 2),
-};
+पूर्ण;
 
-static const char * const apl_southwest_emmc0_groups[] = { "emmc0_grp" };
-static const char * const apl_southwest_sdio_groups[] = { "sdio_grp" };
-static const char * const apl_southwest_sdcard_groups[] = { "sdcard_grp" };
-static const char * const apl_southwest_i2c7_groups[] = { "i2c7_grp" };
+अटल स्थिर अक्षर * स्थिर apl_southwest_emmc0_groups[] = अणु "emmc0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_southwest_sdio_groups[] = अणु "sdio_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_southwest_sdcard_groups[] = अणु "sdcard_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर apl_southwest_i2c7_groups[] = अणु "i2c7_grp" पूर्ण;
 
-static const struct intel_function apl_southwest_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function apl_southwest_functions[] = अणु
 	FUNCTION("emmc0", apl_southwest_emmc0_groups),
 	FUNCTION("sdio", apl_southwest_sdio_groups),
 	FUNCTION("sdcard", apl_southwest_sdcard_groups),
 	FUNCTION("i2c7", apl_southwest_i2c7_groups),
-};
+पूर्ण;
 
-static const struct intel_community apl_southwest_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community apl_southwest_communities[] = अणु
 	BXT_COMMUNITY(0, 42),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data apl_southwest_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data apl_southwest_soc_data = अणु
 	.uid = "4",
 	.pins = apl_southwest_pins,
 	.npins = ARRAY_SIZE(apl_southwest_pins),
@@ -985,52 +986,52 @@ static const struct intel_pinctrl_soc_data apl_southwest_soc_data = {
 	.nfunctions = ARRAY_SIZE(apl_southwest_functions),
 	.communities = apl_southwest_communities,
 	.ncommunities = ARRAY_SIZE(apl_southwest_communities),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data *apl_pinctrl_soc_data[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *apl_pinctrl_soc_data[] = अणु
 	&apl_north_soc_data,
 	&apl_northwest_soc_data,
 	&apl_west_soc_data,
 	&apl_southwest_soc_data,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct acpi_device_id bxt_pinctrl_acpi_match[] = {
-	{ "INT3452", (kernel_ulong_t)apl_pinctrl_soc_data },
-	{ "INT34D1", (kernel_ulong_t)bxt_pinctrl_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id bxt_pinctrl_acpi_match[] = अणु
+	अणु "INT3452", (kernel_uदीर्घ_t)apl_pinctrl_soc_data पूर्ण,
+	अणु "INT34D1", (kernel_uदीर्घ_t)bxt_pinctrl_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, bxt_pinctrl_acpi_match);
 
-static const struct platform_device_id bxt_pinctrl_platform_ids[] = {
-	{ "apollolake-pinctrl", (kernel_ulong_t)apl_pinctrl_soc_data },
-	{ "broxton-pinctrl", (kernel_ulong_t)bxt_pinctrl_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा platक्रमm_device_id bxt_pinctrl_platक्रमm_ids[] = अणु
+	अणु "apollolake-pinctrl", (kernel_uदीर्घ_t)apl_pinctrl_soc_data पूर्ण,
+	अणु "broxton-pinctrl", (kernel_uदीर्घ_t)bxt_pinctrl_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static INTEL_PINCTRL_PM_OPS(bxt_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(bxt_pinctrl_pm_ops);
 
-static struct platform_driver bxt_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_uid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver bxt_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_uid,
+	.driver = अणु
 		.name = "broxton-pinctrl",
 		.acpi_match_table = bxt_pinctrl_acpi_match,
 		.pm = &bxt_pinctrl_pm_ops,
-	},
-	.id_table = bxt_pinctrl_platform_ids,
-};
+	पूर्ण,
+	.id_table = bxt_pinctrl_platक्रमm_ids,
+पूर्ण;
 
-static int __init bxt_pinctrl_init(void)
-{
-	return platform_driver_register(&bxt_pinctrl_driver);
-}
+अटल पूर्णांक __init bxt_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&bxt_pinctrl_driver);
+पूर्ण
 subsys_initcall(bxt_pinctrl_init);
 
-static void __exit bxt_pinctrl_exit(void)
-{
-	platform_driver_unregister(&bxt_pinctrl_driver);
-}
-module_exit(bxt_pinctrl_exit);
+अटल व्योम __निकास bxt_pinctrl_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&bxt_pinctrl_driver);
+पूर्ण
+module_निकास(bxt_pinctrl_निकास);
 
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Broxton SoC pinctrl/GPIO driver");

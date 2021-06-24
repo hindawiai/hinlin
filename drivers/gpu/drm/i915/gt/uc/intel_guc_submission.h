@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2014-2019 Intel Corporation
+ * Copyright तऊ 2014-2019 Intel Corporation
  */
 
-#ifndef _INTEL_GUC_SUBMISSION_H_
-#define _INTEL_GUC_SUBMISSION_H_
+#अगर_अघोषित _INTEL_GUC_SUBMISSION_H_
+#घोषणा _INTEL_GUC_SUBMISSION_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include "intel_guc.h"
+#समावेश "intel_guc.h"
 
-struct intel_engine_cs;
+काष्ठा पूर्णांकel_engine_cs;
 
-void intel_guc_submission_init_early(struct intel_guc *guc);
-int intel_guc_submission_init(struct intel_guc *guc);
-void intel_guc_submission_enable(struct intel_guc *guc);
-void intel_guc_submission_disable(struct intel_guc *guc);
-void intel_guc_submission_fini(struct intel_guc *guc);
-int intel_guc_preempt_work_create(struct intel_guc *guc);
-void intel_guc_preempt_work_destroy(struct intel_guc *guc);
-int intel_guc_submission_setup(struct intel_engine_cs *engine);
-bool intel_engine_in_guc_submission_mode(const struct intel_engine_cs *engine);
+व्योम पूर्णांकel_guc_submission_init_early(काष्ठा पूर्णांकel_guc *guc);
+पूर्णांक पूर्णांकel_guc_submission_init(काष्ठा पूर्णांकel_guc *guc);
+व्योम पूर्णांकel_guc_submission_enable(काष्ठा पूर्णांकel_guc *guc);
+व्योम पूर्णांकel_guc_submission_disable(काष्ठा पूर्णांकel_guc *guc);
+व्योम पूर्णांकel_guc_submission_fini(काष्ठा पूर्णांकel_guc *guc);
+पूर्णांक पूर्णांकel_guc_preempt_work_create(काष्ठा पूर्णांकel_guc *guc);
+व्योम पूर्णांकel_guc_preempt_work_destroy(काष्ठा पूर्णांकel_guc *guc);
+पूर्णांक पूर्णांकel_guc_submission_setup(काष्ठा पूर्णांकel_engine_cs *engine);
+bool पूर्णांकel_engine_in_guc_submission_mode(स्थिर काष्ठा पूर्णांकel_engine_cs *engine);
 
-static inline bool intel_guc_submission_is_supported(struct intel_guc *guc)
-{
-	/* XXX: GuC submission is unavailable for now */
-	return false;
-}
+अटल अंतरभूत bool पूर्णांकel_guc_submission_is_supported(काष्ठा पूर्णांकel_guc *guc)
+अणु
+	/* XXX: GuC submission is unavailable क्रम now */
+	वापस false;
+पूर्ण
 
-static inline bool intel_guc_submission_is_wanted(struct intel_guc *guc)
-{
-	return guc->submission_selected;
-}
+अटल अंतरभूत bool पूर्णांकel_guc_submission_is_wanted(काष्ठा पूर्णांकel_guc *guc)
+अणु
+	वापस guc->submission_selected;
+पूर्ण
 
-static inline bool intel_guc_submission_is_used(struct intel_guc *guc)
-{
-	return intel_guc_is_used(guc) && intel_guc_submission_is_wanted(guc);
-}
+अटल अंतरभूत bool पूर्णांकel_guc_submission_is_used(काष्ठा पूर्णांकel_guc *guc)
+अणु
+	वापस पूर्णांकel_guc_is_used(guc) && पूर्णांकel_guc_submission_is_wanted(guc);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

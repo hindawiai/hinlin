@@ -1,20 +1,21 @@
-#ifndef __MEM2NODE_H
-#define __MEM2NODE_H
+<शैली गुरु>
+#अगर_अघोषित __MEM2NODE_H
+#घोषणा __MEM2NODE_H
 
-#include <linux/rbtree.h>
-#include <linux/types.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/types.h>
 
-struct perf_env;
-struct phys_entry;
+काष्ठा perf_env;
+काष्ठा phys_entry;
 
-struct mem2node {
-	struct rb_root		 root;
-	struct phys_entry	*entries;
-	int			 cnt;
-};
+काष्ठा mem2node अणु
+	काष्ठा rb_root		 root;
+	काष्ठा phys_entry	*entries;
+	पूर्णांक			 cnt;
+पूर्ण;
 
-int  mem2node__init(struct mem2node *map, struct perf_env *env);
-void mem2node__exit(struct mem2node *map);
-int  mem2node__node(struct mem2node *map, u64 addr);
+पूर्णांक  mem2node__init(काष्ठा mem2node *map, काष्ठा perf_env *env);
+व्योम mem2node__निकास(काष्ठा mem2node *map);
+पूर्णांक  mem2node__node(काष्ठा mem2node *map, u64 addr);
 
-#endif /* __MEM2NODE_H */
+#पूर्ण_अगर /* __MEM2NODE_H */

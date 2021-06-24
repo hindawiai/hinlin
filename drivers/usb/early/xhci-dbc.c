@@ -1,238 +1,239 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * xhci-dbc.c - xHCI debug capability early driver
  *
  * Copyright (C) 2016 Intel Corporation
  *
- * Author: Lu Baolu <baolu.lu@linux.intel.com>
+ * Author: Lu Baolu <baolu.lu@linux.पूर्णांकel.com>
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
 
-#include <linux/console.h>
-#include <linux/pci_regs.h>
-#include <linux/pci_ids.h>
-#include <linux/memblock.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <asm/pci-direct.h>
-#include <asm/fixmap.h>
-#include <linux/bcd.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/kthread.h>
-#include <linux/usb/xhci-dbgp.h>
+#समावेश <linux/console.h>
+#समावेश <linux/pci_regs.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <यंत्र/pci-direct.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/usb/xhci-dbgp.h>
 
-#include "../host/xhci.h"
-#include "xhci-dbc.h"
+#समावेश "../host/xhci.h"
+#समावेश "xhci-dbc.h"
 
-static struct xdbc_state xdbc;
-static bool early_console_keep;
+अटल काष्ठा xdbc_state xdbc;
+अटल bool early_console_keep;
 
-#ifdef XDBC_TRACE
-#define	xdbc_trace	trace_printk
-#else
-static inline void xdbc_trace(const char *fmt, ...) { }
-#endif /* XDBC_TRACE */
+#अगर_घोषित XDBC_TRACE
+#घोषणा	xdbc_trace	trace_prपूर्णांकk
+#अन्यथा
+अटल अंतरभूत व्योम xdbc_trace(स्थिर अक्षर *fmt, ...) अणु पूर्ण
+#पूर्ण_अगर /* XDBC_TRACE */
 
-static void __iomem * __init xdbc_map_pci_mmio(u32 bus, u32 dev, u32 func)
-{
+अटल व्योम __iomem * __init xdbc_map_pci_mmio(u32 bus, u32 dev, u32 func)
+अणु
 	u64 val64, sz64, mask64;
-	void __iomem *base;
+	व्योम __iomem *base;
 	u32 val, sz;
 	u8 byte;
 
-	val = read_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0);
-	write_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0, ~0);
-	sz = read_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0);
-	write_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0, val);
+	val = पढ़ो_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0);
+	ग_लिखो_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0, ~0);
+	sz = पढ़ो_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0);
+	ग_लिखो_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0, val);
 
-	if (val == 0xffffffff || sz == 0xffffffff) {
+	अगर (val == 0xffffffff || sz == 0xffffffff) अणु
 		pr_notice("invalid mmio bar\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	val64	= val & PCI_BASE_ADDRESS_MEM_MASK;
 	sz64	= sz & PCI_BASE_ADDRESS_MEM_MASK;
 	mask64	= PCI_BASE_ADDRESS_MEM_MASK;
 
-	if ((val & PCI_BASE_ADDRESS_MEM_TYPE_MASK) == PCI_BASE_ADDRESS_MEM_TYPE_64) {
-		val = read_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0 + 4);
-		write_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0 + 4, ~0);
-		sz = read_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0 + 4);
-		write_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0 + 4, val);
+	अगर ((val & PCI_BASE_ADDRESS_MEM_TYPE_MASK) == PCI_BASE_ADDRESS_MEM_TYPE_64) अणु
+		val = पढ़ो_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0 + 4);
+		ग_लिखो_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0 + 4, ~0);
+		sz = पढ़ो_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0 + 4);
+		ग_लिखो_pci_config(bus, dev, func, PCI_BASE_ADDRESS_0 + 4, val);
 
 		val64	|= (u64)val << 32;
 		sz64	|= (u64)sz << 32;
 		mask64	|= ~0ULL << 32;
-	}
+	पूर्ण
 
 	sz64 &= mask64;
 
-	if (!sz64) {
+	अगर (!sz64) अणु
 		pr_notice("invalid mmio address\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	sz64 = 1ULL << __ffs64(sz64);
 
-	/* Check if the mem space is enabled: */
-	byte = read_pci_config_byte(bus, dev, func, PCI_COMMAND);
-	if (!(byte & PCI_COMMAND_MEMORY)) {
+	/* Check अगर the mem space is enabled: */
+	byte = पढ़ो_pci_config_byte(bus, dev, func, PCI_COMMAND);
+	अगर (!(byte & PCI_COMMAND_MEMORY)) अणु
 		byte |= PCI_COMMAND_MEMORY;
-		write_pci_config_byte(bus, dev, func, PCI_COMMAND, byte);
-	}
+		ग_लिखो_pci_config_byte(bus, dev, func, PCI_COMMAND, byte);
+	पूर्ण
 
 	xdbc.xhci_start = val64;
 	xdbc.xhci_length = sz64;
 	base = early_ioremap(val64, sz64);
 
-	return base;
-}
+	वापस base;
+पूर्ण
 
-static void * __init xdbc_get_page(dma_addr_t *dma_addr)
-{
-	void *virt;
+अटल व्योम * __init xdbc_get_page(dma_addr_t *dma_addr)
+अणु
+	व्योम *virt;
 
 	virt = memblock_alloc(PAGE_SIZE, PAGE_SIZE);
-	if (!virt)
-		return NULL;
+	अगर (!virt)
+		वापस शून्य;
 
-	if (dma_addr)
+	अगर (dma_addr)
 		*dma_addr = (dma_addr_t)__pa(virt);
 
-	return virt;
-}
+	वापस virt;
+पूर्ण
 
-static u32 __init xdbc_find_dbgp(int xdbc_num, u32 *b, u32 *d, u32 *f)
-{
+अटल u32 __init xdbc_find_dbgp(पूर्णांक xdbc_num, u32 *b, u32 *d, u32 *f)
+अणु
 	u32 bus, dev, func, class;
 
-	for (bus = 0; bus < XDBC_PCI_MAX_BUSES; bus++) {
-		for (dev = 0; dev < XDBC_PCI_MAX_DEVICES; dev++) {
-			for (func = 0; func < XDBC_PCI_MAX_FUNCTION; func++) {
+	क्रम (bus = 0; bus < XDBC_PCI_MAX_BUSES; bus++) अणु
+		क्रम (dev = 0; dev < XDBC_PCI_MAX_DEVICES; dev++) अणु
+			क्रम (func = 0; func < XDBC_PCI_MAX_FUNCTION; func++) अणु
 
-				class = read_pci_config(bus, dev, func, PCI_CLASS_REVISION);
-				if ((class >> 8) != PCI_CLASS_SERIAL_USB_XHCI)
-					continue;
+				class = पढ़ो_pci_config(bus, dev, func, PCI_CLASS_REVISION);
+				अगर ((class >> 8) != PCI_CLASS_SERIAL_USB_XHCI)
+					जारी;
 
-				if (xdbc_num-- != 0)
-					continue;
+				अगर (xdbc_num-- != 0)
+					जारी;
 
 				*b = bus;
 				*d = dev;
 				*f = func;
 
-				return 0;
-			}
-		}
-	}
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int handshake(void __iomem *ptr, u32 mask, u32 done, int wait, int delay)
-{
+अटल पूर्णांक handshake(व्योम __iomem *ptr, u32 mask, u32 करोne, पूर्णांक रुको, पूर्णांक delay)
+अणु
 	u32 result;
 
-	return readl_poll_timeout_atomic(ptr, result,
-					 ((result & mask) == done),
-					 delay, wait);
-}
+	वापस पढ़ोl_poll_समयout_atomic(ptr, result,
+					 ((result & mask) == करोne),
+					 delay, रुको);
+पूर्ण
 
-static void __init xdbc_bios_handoff(void)
-{
-	int offset, timeout;
+अटल व्योम __init xdbc_bios_hanकरोff(व्योम)
+अणु
+	पूर्णांक offset, समयout;
 	u32 val;
 
 	offset = xhci_find_next_ext_cap(xdbc.xhci_base, 0, XHCI_EXT_CAPS_LEGACY);
-	val = readl(xdbc.xhci_base + offset);
+	val = पढ़ोl(xdbc.xhci_base + offset);
 
-	if (val & XHCI_HC_BIOS_OWNED) {
-		writel(val | XHCI_HC_OS_OWNED, xdbc.xhci_base + offset);
-		timeout = handshake(xdbc.xhci_base + offset, XHCI_HC_BIOS_OWNED, 0, 5000, 10);
+	अगर (val & XHCI_HC_BIOS_OWNED) अणु
+		ग_लिखोl(val | XHCI_HC_OS_OWNED, xdbc.xhci_base + offset);
+		समयout = handshake(xdbc.xhci_base + offset, XHCI_HC_BIOS_OWNED, 0, 5000, 10);
 
-		if (timeout) {
+		अगर (समयout) अणु
 			pr_notice("failed to hand over xHCI control from BIOS\n");
-			writel(val & ~XHCI_HC_BIOS_OWNED, xdbc.xhci_base + offset);
-		}
-	}
+			ग_लिखोl(val & ~XHCI_HC_BIOS_OWNED, xdbc.xhci_base + offset);
+		पूर्ण
+	पूर्ण
 
 	/* Disable BIOS SMIs and clear all SMI events: */
-	val = readl(xdbc.xhci_base + offset + XHCI_LEGACY_CONTROL_OFFSET);
+	val = पढ़ोl(xdbc.xhci_base + offset + XHCI_LEGACY_CONTROL_OFFSET);
 	val &= XHCI_LEGACY_DISABLE_SMI;
 	val |= XHCI_LEGACY_SMI_EVENTS;
-	writel(val, xdbc.xhci_base + offset + XHCI_LEGACY_CONTROL_OFFSET);
-}
+	ग_लिखोl(val, xdbc.xhci_base + offset + XHCI_LEGACY_CONTROL_OFFSET);
+पूर्ण
 
-static int __init
-xdbc_alloc_ring(struct xdbc_segment *seg, struct xdbc_ring *ring)
-{
+अटल पूर्णांक __init
+xdbc_alloc_ring(काष्ठा xdbc_segment *seg, काष्ठा xdbc_ring *ring)
+अणु
 	seg->trbs = xdbc_get_page(&seg->dma);
-	if (!seg->trbs)
-		return -ENOMEM;
+	अगर (!seg->trbs)
+		वापस -ENOMEM;
 
 	ring->segment = seg;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init xdbc_free_ring(struct xdbc_ring *ring)
-{
-	struct xdbc_segment *seg = ring->segment;
+अटल व्योम __init xdbc_मुक्त_ring(काष्ठा xdbc_ring *ring)
+अणु
+	काष्ठा xdbc_segment *seg = ring->segment;
 
-	if (!seg)
-		return;
+	अगर (!seg)
+		वापस;
 
-	memblock_free(seg->dma, PAGE_SIZE);
-	ring->segment = NULL;
-}
+	memblock_मुक्त(seg->dma, PAGE_SIZE);
+	ring->segment = शून्य;
+पूर्ण
 
-static void xdbc_reset_ring(struct xdbc_ring *ring)
-{
-	struct xdbc_segment *seg = ring->segment;
-	struct xdbc_trb *link_trb;
+अटल व्योम xdbc_reset_ring(काष्ठा xdbc_ring *ring)
+अणु
+	काष्ठा xdbc_segment *seg = ring->segment;
+	काष्ठा xdbc_trb *link_trb;
 
-	memset(seg->trbs, 0, PAGE_SIZE);
+	स_रखो(seg->trbs, 0, PAGE_SIZE);
 
 	ring->enqueue = seg->trbs;
 	ring->dequeue = seg->trbs;
 	ring->cycle_state = 1;
 
-	if (ring != &xdbc.evt_ring) {
+	अगर (ring != &xdbc.evt_ring) अणु
 		link_trb = &seg->trbs[XDBC_TRBS_PER_SEGMENT - 1];
 		link_trb->field[0] = cpu_to_le32(lower_32_bits(seg->dma));
 		link_trb->field[1] = cpu_to_le32(upper_32_bits(seg->dma));
 		link_trb->field[3] = cpu_to_le32(TRB_TYPE(TRB_LINK)) | cpu_to_le32(LINK_TOGGLE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void xdbc_put_utf16(u16 *s, const char *c, size_t size)
-{
-	int i;
+अटल अंतरभूत व्योम xdbc_put_utf16(u16 *s, स्थिर अक्षर *c, माप_प्रकार size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < size; i++)
+	क्रम (i = 0; i < size; i++)
 		s[i] = cpu_to_le16(c[i]);
-}
+पूर्ण
 
-static void xdbc_mem_init(void)
-{
-	struct xdbc_ep_context *ep_in, *ep_out;
-	struct usb_string_descriptor *s_desc;
-	struct xdbc_erst_entry *entry;
-	struct xdbc_strings *strings;
-	struct xdbc_context *ctx;
-	unsigned int max_burst;
+अटल व्योम xdbc_mem_init(व्योम)
+अणु
+	काष्ठा xdbc_ep_context *ep_in, *ep_out;
+	काष्ठा usb_string_descriptor *s_desc;
+	काष्ठा xdbc_erst_entry *entry;
+	काष्ठा xdbc_strings *strings;
+	काष्ठा xdbc_context *ctx;
+	अचिन्हित पूर्णांक max_burst;
 	u32 string_length;
-	int index = 0;
+	पूर्णांक index = 0;
 	u32 dev_info;
 
 	xdbc_reset_ring(&xdbc.evt_ring);
 	xdbc_reset_ring(&xdbc.in_ring);
 	xdbc_reset_ring(&xdbc.out_ring);
-	memset(xdbc.table_base, 0, PAGE_SIZE);
-	memset(xdbc.out_buf, 0, PAGE_SIZE);
+	स_रखो(xdbc.table_base, 0, PAGE_SIZE);
+	स_रखो(xdbc.out_buf, 0, PAGE_SIZE);
 
 	/* Initialize event ring segment table: */
 	xdbc.erst_size	= 16;
@@ -240,16 +241,16 @@ static void xdbc_mem_init(void)
 	xdbc.erst_dma	= xdbc.table_dma + index * XDBC_TABLE_ENTRY_SIZE;
 
 	index += XDBC_ERST_ENTRY_NUM;
-	entry = (struct xdbc_erst_entry *)xdbc.erst_base;
+	entry = (काष्ठा xdbc_erst_entry *)xdbc.erst_base;
 
 	entry->seg_addr		= cpu_to_le64(xdbc.evt_seg.dma);
 	entry->seg_size		= cpu_to_le32(XDBC_TRBS_PER_SEGMENT);
 	entry->__reserved_0	= 0;
 
-	/* Initialize ERST registers: */
-	writel(1, &xdbc.xdbc_reg->ersts);
-	xdbc_write64(xdbc.erst_dma, &xdbc.xdbc_reg->erstba);
-	xdbc_write64(xdbc.evt_seg.dma, &xdbc.xdbc_reg->erdp);
+	/* Initialize ERST रेजिस्टरs: */
+	ग_लिखोl(1, &xdbc.xdbc_reg->ersts);
+	xdbc_ग_लिखो64(xdbc.erst_dma, &xdbc.xdbc_reg->erstba);
+	xdbc_ग_लिखो64(xdbc.evt_seg.dma, &xdbc.xdbc_reg->erdp);
 
 	/* Debug capability contexts: */
 	xdbc.dbcc_size	= 64 * 3;
@@ -259,37 +260,37 @@ static void xdbc_mem_init(void)
 	index += XDBC_DBCC_ENTRY_NUM;
 
 	/* Popluate the strings: */
-	xdbc.string_size = sizeof(struct xdbc_strings);
+	xdbc.string_size = माप(काष्ठा xdbc_strings);
 	xdbc.string_base = xdbc.table_base + index * XDBC_TABLE_ENTRY_SIZE;
 	xdbc.string_dma	 = xdbc.table_dma + index * XDBC_TABLE_ENTRY_SIZE;
-	strings		 = (struct xdbc_strings *)xdbc.string_base;
+	strings		 = (काष्ठा xdbc_strings *)xdbc.string_base;
 
 	index += XDBC_STRING_ENTRY_NUM;
 
 	/* Serial string: */
-	s_desc			= (struct usb_string_descriptor *)strings->serial;
-	s_desc->bLength		= (strlen(XDBC_STRING_SERIAL) + 1) * 2;
+	s_desc			= (काष्ठा usb_string_descriptor *)strings->serial;
+	s_desc->bLength		= (म_माप(XDBC_STRING_SERIAL) + 1) * 2;
 	s_desc->bDescriptorType	= USB_DT_STRING;
 
-	xdbc_put_utf16(s_desc->wData, XDBC_STRING_SERIAL, strlen(XDBC_STRING_SERIAL));
+	xdbc_put_utf16(s_desc->wData, XDBC_STRING_SERIAL, म_माप(XDBC_STRING_SERIAL));
 	string_length = s_desc->bLength;
 	string_length <<= 8;
 
 	/* Product string: */
-	s_desc			= (struct usb_string_descriptor *)strings->product;
-	s_desc->bLength		= (strlen(XDBC_STRING_PRODUCT) + 1) * 2;
+	s_desc			= (काष्ठा usb_string_descriptor *)strings->product;
+	s_desc->bLength		= (म_माप(XDBC_STRING_PRODUCT) + 1) * 2;
 	s_desc->bDescriptorType	= USB_DT_STRING;
 
-	xdbc_put_utf16(s_desc->wData, XDBC_STRING_PRODUCT, strlen(XDBC_STRING_PRODUCT));
+	xdbc_put_utf16(s_desc->wData, XDBC_STRING_PRODUCT, म_माप(XDBC_STRING_PRODUCT));
 	string_length += s_desc->bLength;
 	string_length <<= 8;
 
 	/* Manufacture string: */
-	s_desc			= (struct usb_string_descriptor *)strings->manufacturer;
-	s_desc->bLength		= (strlen(XDBC_STRING_MANUFACTURER) + 1) * 2;
+	s_desc			= (काष्ठा usb_string_descriptor *)strings->manufacturer;
+	s_desc->bLength		= (म_माप(XDBC_STRING_MANUFACTURER) + 1) * 2;
 	s_desc->bDescriptorType	= USB_DT_STRING;
 
-	xdbc_put_utf16(s_desc->wData, XDBC_STRING_MANUFACTURER, strlen(XDBC_STRING_MANUFACTURER));
+	xdbc_put_utf16(s_desc->wData, XDBC_STRING_MANUFACTURER, म_माप(XDBC_STRING_MANUFACTURER));
 	string_length += s_desc->bLength;
 	string_length <<= 8;
 
@@ -302,7 +303,7 @@ static void xdbc_mem_init(void)
 	string_length += 4;
 
 	/* Populate info Context: */
-	ctx = (struct xdbc_context *)xdbc.dbcc_base;
+	ctx = (काष्ठा xdbc_context *)xdbc.dbcc_base;
 
 	ctx->info.string0	= cpu_to_le64(xdbc.string_dma);
 	ctx->info.manufacturer	= cpu_to_le64(xdbc.string_dma + XDBC_MAX_STRING_LENGTH);
@@ -310,79 +311,79 @@ static void xdbc_mem_init(void)
 	ctx->info.serial	= cpu_to_le64(xdbc.string_dma + XDBC_MAX_STRING_LENGTH * 3);
 	ctx->info.length	= cpu_to_le32(string_length);
 
-	/* Populate bulk out endpoint context: */
-	max_burst = DEBUG_MAX_BURST(readl(&xdbc.xdbc_reg->control));
-	ep_out = (struct xdbc_ep_context *)&ctx->out;
+	/* Populate bulk out endpoपूर्णांक context: */
+	max_burst = DEBUG_MAX_BURST(पढ़ोl(&xdbc.xdbc_reg->control));
+	ep_out = (काष्ठा xdbc_ep_context *)&ctx->out;
 
 	ep_out->ep_info1	= 0;
 	ep_out->ep_info2	= cpu_to_le32(EP_TYPE(BULK_OUT_EP) | MAX_PACKET(1024) | MAX_BURST(max_burst));
 	ep_out->deq		= cpu_to_le64(xdbc.out_seg.dma | xdbc.out_ring.cycle_state);
 
-	/* Populate bulk in endpoint context: */
-	ep_in = (struct xdbc_ep_context *)&ctx->in;
+	/* Populate bulk in endpoपूर्णांक context: */
+	ep_in = (काष्ठा xdbc_ep_context *)&ctx->in;
 
 	ep_in->ep_info1		= 0;
 	ep_in->ep_info2		= cpu_to_le32(EP_TYPE(BULK_IN_EP) | MAX_PACKET(1024) | MAX_BURST(max_burst));
 	ep_in->deq		= cpu_to_le64(xdbc.in_seg.dma | xdbc.in_ring.cycle_state);
 
-	/* Set DbC context and info registers: */
-	xdbc_write64(xdbc.dbcc_dma, &xdbc.xdbc_reg->dccp);
+	/* Set DbC context and info रेजिस्टरs: */
+	xdbc_ग_लिखो64(xdbc.dbcc_dma, &xdbc.xdbc_reg->dccp);
 
 	dev_info = cpu_to_le32((XDBC_VENDOR_ID << 16) | XDBC_PROTOCOL);
-	writel(dev_info, &xdbc.xdbc_reg->devinfo1);
+	ग_लिखोl(dev_info, &xdbc.xdbc_reg->devinfo1);
 
 	dev_info = cpu_to_le32((XDBC_DEVICE_REV << 16) | XDBC_PRODUCT_ID);
-	writel(dev_info, &xdbc.xdbc_reg->devinfo2);
+	ग_लिखोl(dev_info, &xdbc.xdbc_reg->devinfo2);
 
 	xdbc.in_buf = xdbc.out_buf + XDBC_MAX_PACKET;
 	xdbc.in_dma = xdbc.out_dma + XDBC_MAX_PACKET;
-}
+पूर्ण
 
-static void xdbc_do_reset_debug_port(u32 id, u32 count)
-{
-	void __iomem *ops_reg;
-	void __iomem *portsc;
+अटल व्योम xdbc_करो_reset_debug_port(u32 id, u32 count)
+अणु
+	व्योम __iomem *ops_reg;
+	व्योम __iomem *portsc;
 	u32 val, cap_length;
-	int i;
+	पूर्णांक i;
 
-	cap_length = readl(xdbc.xhci_base) & 0xff;
+	cap_length = पढ़ोl(xdbc.xhci_base) & 0xff;
 	ops_reg = xdbc.xhci_base + cap_length;
 
 	id--;
-	for (i = id; i < (id + count); i++) {
+	क्रम (i = id; i < (id + count); i++) अणु
 		portsc = ops_reg + 0x400 + i * 0x10;
-		val = readl(portsc);
-		if (!(val & PORT_CONNECT))
-			writel(val | PORT_RESET, portsc);
-	}
-}
+		val = पढ़ोl(portsc);
+		अगर (!(val & PORT_CONNECT))
+			ग_लिखोl(val | PORT_RESET, portsc);
+	पूर्ण
+पूर्ण
 
-static void xdbc_reset_debug_port(void)
-{
+अटल व्योम xdbc_reset_debug_port(व्योम)
+अणु
 	u32 val, port_offset, port_count;
-	int offset = 0;
+	पूर्णांक offset = 0;
 
-	do {
+	करो अणु
 		offset = xhci_find_next_ext_cap(xdbc.xhci_base, offset, XHCI_EXT_CAPS_PROTOCOL);
-		if (!offset)
-			break;
+		अगर (!offset)
+			अवरोध;
 
-		val = readl(xdbc.xhci_base + offset);
-		if (XHCI_EXT_PORT_MAJOR(val) != 0x3)
-			continue;
+		val = पढ़ोl(xdbc.xhci_base + offset);
+		अगर (XHCI_EXT_PORT_MAJOR(val) != 0x3)
+			जारी;
 
-		val = readl(xdbc.xhci_base + offset + 8);
+		val = पढ़ोl(xdbc.xhci_base + offset + 8);
 		port_offset = XHCI_EXT_PORT_OFF(val);
 		port_count = XHCI_EXT_PORT_COUNT(val);
 
-		xdbc_do_reset_debug_port(port_offset, port_count);
-	} while (1);
-}
+		xdbc_करो_reset_debug_port(port_offset, port_count);
+	पूर्ण जबतक (1);
+पूर्ण
 
-static void
-xdbc_queue_trb(struct xdbc_ring *ring, u32 field1, u32 field2, u32 field3, u32 field4)
-{
-	struct xdbc_trb *trb, *link_trb;
+अटल व्योम
+xdbc_queue_trb(काष्ठा xdbc_ring *ring, u32 field1, u32 field2, u32 field3, u32 field4)
+अणु
+	काष्ठा xdbc_trb *trb, *link_trb;
 
 	trb = ring->enqueue;
 	trb->field[0] = cpu_to_le32(field1);
@@ -391,607 +392,607 @@ xdbc_queue_trb(struct xdbc_ring *ring, u32 field1, u32 field2, u32 field3, u32 f
 	trb->field[3] = cpu_to_le32(field4);
 
 	++(ring->enqueue);
-	if (ring->enqueue >= &ring->segment->trbs[TRBS_PER_SEGMENT - 1]) {
+	अगर (ring->enqueue >= &ring->segment->trbs[TRBS_PER_SEGMENT - 1]) अणु
 		link_trb = ring->enqueue;
-		if (ring->cycle_state)
+		अगर (ring->cycle_state)
 			link_trb->field[3] |= cpu_to_le32(TRB_CYCLE);
-		else
+		अन्यथा
 			link_trb->field[3] &= cpu_to_le32(~TRB_CYCLE);
 
 		ring->enqueue = ring->segment->trbs;
 		ring->cycle_state ^= 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xdbc_ring_doorbell(int target)
-{
-	writel(DOOR_BELL_TARGET(target), &xdbc.xdbc_reg->doorbell);
-}
+अटल व्योम xdbc_ring_करोorbell(पूर्णांक target)
+अणु
+	ग_लिखोl(DOOR_BELL_TARGET(target), &xdbc.xdbc_reg->करोorbell);
+पूर्ण
 
-static int xdbc_start(void)
-{
+अटल पूर्णांक xdbc_start(व्योम)
+अणु
 	u32 ctrl, status;
-	int ret;
+	पूर्णांक ret;
 
-	ctrl = readl(&xdbc.xdbc_reg->control);
-	writel(ctrl | CTRL_DBC_ENABLE | CTRL_PORT_ENABLE, &xdbc.xdbc_reg->control);
+	ctrl = पढ़ोl(&xdbc.xdbc_reg->control);
+	ग_लिखोl(ctrl | CTRL_DBC_ENABLE | CTRL_PORT_ENABLE, &xdbc.xdbc_reg->control);
 	ret = handshake(&xdbc.xdbc_reg->control, CTRL_DBC_ENABLE, CTRL_DBC_ENABLE, 100000, 100);
-	if (ret) {
+	अगर (ret) अणु
 		xdbc_trace("failed to initialize hardware\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Reset port to avoid bus hang: */
-	if (xdbc.vendor == PCI_VENDOR_ID_INTEL)
+	/* Reset port to aव्योम bus hang: */
+	अगर (xdbc.venकरोr == PCI_VENDOR_ID_INTEL)
 		xdbc_reset_debug_port();
 
-	/* Wait for port connection: */
+	/* Wait क्रम port connection: */
 	ret = handshake(&xdbc.xdbc_reg->portsc, PORTSC_CONN_STATUS, PORTSC_CONN_STATUS, 5000000, 100);
-	if (ret) {
+	अगर (ret) अणु
 		xdbc_trace("waiting for connection timed out\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Wait for debug device to be configured: */
+	/* Wait क्रम debug device to be configured: */
 	ret = handshake(&xdbc.xdbc_reg->control, CTRL_DBC_RUN, CTRL_DBC_RUN, 5000000, 100);
-	if (ret) {
+	अगर (ret) अणु
 		xdbc_trace("waiting for device configuration timed out\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Check port number: */
-	status = readl(&xdbc.xdbc_reg->status);
-	if (!DCST_DEBUG_PORT(status)) {
+	status = पढ़ोl(&xdbc.xdbc_reg->status);
+	अगर (!DCST_DEBUG_PORT(status)) अणु
 		xdbc_trace("invalid root hub port number\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	xdbc.port_number = DCST_DEBUG_PORT(status);
 
 	xdbc_trace("DbC is running now, control 0x%08x port ID %d\n",
-		   readl(&xdbc.xdbc_reg->control), xdbc.port_number);
+		   पढ़ोl(&xdbc.xdbc_reg->control), xdbc.port_number);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xdbc_bulk_transfer(void *data, int size, bool read)
-{
-	struct xdbc_ring *ring;
-	struct xdbc_trb *trb;
+अटल पूर्णांक xdbc_bulk_transfer(व्योम *data, पूर्णांक size, bool पढ़ो)
+अणु
+	काष्ठा xdbc_ring *ring;
+	काष्ठा xdbc_trb *trb;
 	u32 length, control;
 	u32 cycle;
 	u64 addr;
 
-	if (size > XDBC_MAX_PACKET) {
+	अगर (size > XDBC_MAX_PACKET) अणु
 		xdbc_trace("bad parameter, size %d\n", size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!(xdbc.flags & XDBC_FLAGS_INITIALIZED) ||
+	अगर (!(xdbc.flags & XDBC_FLAGS_INITIALIZED) ||
 	    !(xdbc.flags & XDBC_FLAGS_CONFIGURED) ||
-	    (!read && (xdbc.flags & XDBC_FLAGS_OUT_STALL)) ||
-	    (read && (xdbc.flags & XDBC_FLAGS_IN_STALL))) {
+	    (!पढ़ो && (xdbc.flags & XDBC_FLAGS_OUT_STALL)) ||
+	    (पढ़ो && (xdbc.flags & XDBC_FLAGS_IN_STALL))) अणु
 
 		xdbc_trace("connection not ready, flags %08x\n", xdbc.flags);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	ring = (read ? &xdbc.in_ring : &xdbc.out_ring);
+	ring = (पढ़ो ? &xdbc.in_ring : &xdbc.out_ring);
 	trb = ring->enqueue;
 	cycle = ring->cycle_state;
 	length = TRB_LEN(size);
 	control = TRB_TYPE(TRB_NORMAL) | TRB_IOC;
 
-	if (cycle)
+	अगर (cycle)
 		control &= cpu_to_le32(~TRB_CYCLE);
-	else
+	अन्यथा
 		control |= cpu_to_le32(TRB_CYCLE);
 
-	if (read) {
-		memset(xdbc.in_buf, 0, XDBC_MAX_PACKET);
+	अगर (पढ़ो) अणु
+		स_रखो(xdbc.in_buf, 0, XDBC_MAX_PACKET);
 		addr = xdbc.in_dma;
 		xdbc.flags |= XDBC_FLAGS_IN_PROCESS;
-	} else {
-		memset(xdbc.out_buf, 0, XDBC_MAX_PACKET);
-		memcpy(xdbc.out_buf, data, size);
+	पूर्ण अन्यथा अणु
+		स_रखो(xdbc.out_buf, 0, XDBC_MAX_PACKET);
+		स_नकल(xdbc.out_buf, data, size);
 		addr = xdbc.out_dma;
 		xdbc.flags |= XDBC_FLAGS_OUT_PROCESS;
-	}
+	पूर्ण
 
 	xdbc_queue_trb(ring, lower_32_bits(addr), upper_32_bits(addr), length, control);
 
 	/*
-	 * Add a barrier between writes of trb fields and flipping
+	 * Add a barrier between ग_लिखोs of trb fields and flipping
 	 * the cycle bit:
 	 */
 	wmb();
-	if (cycle)
+	अगर (cycle)
 		trb->field[3] |= cpu_to_le32(cycle);
-	else
+	अन्यथा
 		trb->field[3] &= cpu_to_le32(~TRB_CYCLE);
 
-	xdbc_ring_doorbell(read ? IN_EP_DOORBELL : OUT_EP_DOORBELL);
+	xdbc_ring_करोorbell(पढ़ो ? IN_EP_DOORBELL : OUT_EP_DOORBELL);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int xdbc_handle_external_reset(void)
-{
-	int ret = 0;
+अटल पूर्णांक xdbc_handle_बाह्यal_reset(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
 	xdbc.flags = 0;
-	writel(0, &xdbc.xdbc_reg->control);
+	ग_लिखोl(0, &xdbc.xdbc_reg->control);
 	ret = handshake(&xdbc.xdbc_reg->control, CTRL_DBC_ENABLE, 0, 100000, 10);
-	if (ret)
-		goto reset_out;
+	अगर (ret)
+		जाओ reset_out;
 
 	xdbc_mem_init();
 
 	ret = xdbc_start();
-	if (ret < 0)
-		goto reset_out;
+	अगर (ret < 0)
+		जाओ reset_out;
 
 	xdbc_trace("dbc recovered\n");
 
 	xdbc.flags |= XDBC_FLAGS_INITIALIZED | XDBC_FLAGS_CONFIGURED;
 
-	xdbc_bulk_transfer(NULL, XDBC_MAX_PACKET, true);
+	xdbc_bulk_transfer(शून्य, XDBC_MAX_PACKET, true);
 
-	return 0;
+	वापस 0;
 
 reset_out:
 	xdbc_trace("failed to recover from external reset\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init xdbc_early_setup(void)
-{
-	int ret;
+अटल पूर्णांक __init xdbc_early_setup(व्योम)
+अणु
+	पूर्णांक ret;
 
-	writel(0, &xdbc.xdbc_reg->control);
+	ग_लिखोl(0, &xdbc.xdbc_reg->control);
 	ret = handshake(&xdbc.xdbc_reg->control, CTRL_DBC_ENABLE, 0, 100000, 100);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Allocate the table page: */
 	xdbc.table_base = xdbc_get_page(&xdbc.table_dma);
-	if (!xdbc.table_base)
-		return -ENOMEM;
+	अगर (!xdbc.table_base)
+		वापस -ENOMEM;
 
 	/* Get and store the transfer buffer: */
 	xdbc.out_buf = xdbc_get_page(&xdbc.out_dma);
-	if (!xdbc.out_buf)
-		return -ENOMEM;
+	अगर (!xdbc.out_buf)
+		वापस -ENOMEM;
 
 	/* Allocate the event ring: */
 	ret = xdbc_alloc_ring(&xdbc.evt_seg, &xdbc.evt_ring);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Allocate IN/OUT endpoint transfer rings: */
+	/* Allocate IN/OUT endpoपूर्णांक transfer rings: */
 	ret = xdbc_alloc_ring(&xdbc.in_seg, &xdbc.in_ring);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = xdbc_alloc_ring(&xdbc.out_seg, &xdbc.out_ring);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	xdbc_mem_init();
 
 	ret = xdbc_start();
-	if (ret < 0) {
-		writel(0, &xdbc.xdbc_reg->control);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		ग_लिखोl(0, &xdbc.xdbc_reg->control);
+		वापस ret;
+	पूर्ण
 
 	xdbc.flags |= XDBC_FLAGS_INITIALIZED | XDBC_FLAGS_CONFIGURED;
 
-	xdbc_bulk_transfer(NULL, XDBC_MAX_PACKET, true);
+	xdbc_bulk_transfer(शून्य, XDBC_MAX_PACKET, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init early_xdbc_parse_parameter(char *s)
-{
-	unsigned long dbgp_num = 0;
+पूर्णांक __init early_xdbc_parse_parameter(अक्षर *s)
+अणु
+	अचिन्हित दीर्घ dbgp_num = 0;
 	u32 bus, dev, func, offset;
-	int ret;
+	पूर्णांक ret;
 
-	if (!early_pci_allowed())
-		return -EPERM;
+	अगर (!early_pci_allowed())
+		वापस -EPERM;
 
-	if (strstr(s, "keep"))
+	अगर (म_माला(s, "keep"))
 		early_console_keep = true;
 
-	if (xdbc.xdbc_reg)
-		return 0;
+	अगर (xdbc.xdbc_reg)
+		वापस 0;
 
-	if (*s && kstrtoul(s, 0, &dbgp_num))
+	अगर (*s && kम_से_अदीर्घ(s, 0, &dbgp_num))
 		dbgp_num = 0;
 
 	pr_notice("dbgp_num: %lu\n", dbgp_num);
 
 	/* Locate the host controller: */
 	ret = xdbc_find_dbgp(dbgp_num, &bus, &dev, &func);
-	if (ret) {
+	अगर (ret) अणु
 		pr_notice("failed to locate xhci host\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	xdbc.vendor	= read_pci_config_16(bus, dev, func, PCI_VENDOR_ID);
-	xdbc.device	= read_pci_config_16(bus, dev, func, PCI_DEVICE_ID);
+	xdbc.venकरोr	= पढ़ो_pci_config_16(bus, dev, func, PCI_VENDOR_ID);
+	xdbc.device	= पढ़ो_pci_config_16(bus, dev, func, PCI_DEVICE_ID);
 	xdbc.bus	= bus;
 	xdbc.dev	= dev;
 	xdbc.func	= func;
 
 	/* Map the IO memory: */
 	xdbc.xhci_base = xdbc_map_pci_mmio(bus, dev, func);
-	if (!xdbc.xhci_base)
-		return -EINVAL;
+	अगर (!xdbc.xhci_base)
+		वापस -EINVAL;
 
-	/* Locate DbC registers: */
+	/* Locate DbC रेजिस्टरs: */
 	offset = xhci_find_next_ext_cap(xdbc.xhci_base, 0, XHCI_EXT_CAPS_DEBUG);
-	if (!offset) {
+	अगर (!offset) अणु
 		pr_notice("xhci host doesn't support debug capability\n");
 		early_iounmap(xdbc.xhci_base, xdbc.xhci_length);
-		xdbc.xhci_base = NULL;
+		xdbc.xhci_base = शून्य;
 		xdbc.xhci_length = 0;
 
-		return -ENODEV;
-	}
-	xdbc.xdbc_reg = (struct xdbc_regs __iomem *)(xdbc.xhci_base + offset);
+		वापस -ENODEV;
+	पूर्ण
+	xdbc.xdbc_reg = (काष्ठा xdbc_regs __iomem *)(xdbc.xhci_base + offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init early_xdbc_setup_hardware(void)
-{
-	int ret;
+पूर्णांक __init early_xdbc_setup_hardware(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!xdbc.xdbc_reg)
-		return -ENODEV;
+	अगर (!xdbc.xdbc_reg)
+		वापस -ENODEV;
 
-	xdbc_bios_handoff();
+	xdbc_bios_hanकरोff();
 
 	raw_spin_lock_init(&xdbc.lock);
 
 	ret = xdbc_early_setup();
-	if (ret) {
+	अगर (ret) अणु
 		pr_notice("failed to setup the connection to host\n");
 
-		xdbc_free_ring(&xdbc.evt_ring);
-		xdbc_free_ring(&xdbc.out_ring);
-		xdbc_free_ring(&xdbc.in_ring);
+		xdbc_मुक्त_ring(&xdbc.evt_ring);
+		xdbc_मुक्त_ring(&xdbc.out_ring);
+		xdbc_मुक्त_ring(&xdbc.in_ring);
 
-		if (xdbc.table_dma)
-			memblock_free(xdbc.table_dma, PAGE_SIZE);
+		अगर (xdbc.table_dma)
+			memblock_मुक्त(xdbc.table_dma, PAGE_SIZE);
 
-		if (xdbc.out_dma)
-			memblock_free(xdbc.out_dma, PAGE_SIZE);
+		अगर (xdbc.out_dma)
+			memblock_मुक्त(xdbc.out_dma, PAGE_SIZE);
 
-		xdbc.table_base = NULL;
-		xdbc.out_buf = NULL;
-	}
+		xdbc.table_base = शून्य;
+		xdbc.out_buf = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void xdbc_handle_port_status(struct xdbc_trb *evt_trb)
-{
+अटल व्योम xdbc_handle_port_status(काष्ठा xdbc_trb *evt_trb)
+अणु
 	u32 port_reg;
 
-	port_reg = readl(&xdbc.xdbc_reg->portsc);
-	if (port_reg & PORTSC_CONN_CHANGE) {
+	port_reg = पढ़ोl(&xdbc.xdbc_reg->portsc);
+	अगर (port_reg & PORTSC_CONN_CHANGE) अणु
 		xdbc_trace("connect status change event\n");
 
 		/* Check whether cable unplugged: */
-		if (!(port_reg & PORTSC_CONN_STATUS)) {
+		अगर (!(port_reg & PORTSC_CONN_STATUS)) अणु
 			xdbc.flags = 0;
 			xdbc_trace("cable unplugged\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (port_reg & PORTSC_RESET_CHANGE)
+	अगर (port_reg & PORTSC_RESET_CHANGE)
 		xdbc_trace("port reset change event\n");
 
-	if (port_reg & PORTSC_LINK_CHANGE)
+	अगर (port_reg & PORTSC_LINK_CHANGE)
 		xdbc_trace("port link status change event\n");
 
-	if (port_reg & PORTSC_CONFIG_CHANGE)
+	अगर (port_reg & PORTSC_CONFIG_CHANGE)
 		xdbc_trace("config error change\n");
 
 	/* Write back the value to clear RW1C bits: */
-	writel(port_reg, &xdbc.xdbc_reg->portsc);
-}
+	ग_लिखोl(port_reg, &xdbc.xdbc_reg->portsc);
+पूर्ण
 
-static void xdbc_handle_tx_event(struct xdbc_trb *evt_trb)
-{
+अटल व्योम xdbc_handle_tx_event(काष्ठा xdbc_trb *evt_trb)
+अणु
 	u32 comp_code;
-	int ep_id;
+	पूर्णांक ep_id;
 
 	comp_code	= GET_COMP_CODE(le32_to_cpu(evt_trb->field[2]));
 	ep_id		= TRB_TO_EP_ID(le32_to_cpu(evt_trb->field[3]));
 
-	switch (comp_code) {
-	case COMP_SUCCESS:
-	case COMP_SHORT_PACKET:
-		break;
-	case COMP_TRB_ERROR:
-	case COMP_BABBLE_DETECTED_ERROR:
-	case COMP_USB_TRANSACTION_ERROR:
-	case COMP_STALL_ERROR:
-	default:
-		if (ep_id == XDBC_EPID_OUT || ep_id == XDBC_EPID_OUT_INTEL)
+	चयन (comp_code) अणु
+	हाल COMP_SUCCESS:
+	हाल COMP_SHORT_PACKET:
+		अवरोध;
+	हाल COMP_TRB_ERROR:
+	हाल COMP_BABBLE_DETECTED_ERROR:
+	हाल COMP_USB_TRANSACTION_ERROR:
+	हाल COMP_STALL_ERROR:
+	शेष:
+		अगर (ep_id == XDBC_EPID_OUT || ep_id == XDBC_EPID_OUT_INTEL)
 			xdbc.flags |= XDBC_FLAGS_OUT_STALL;
-		if (ep_id == XDBC_EPID_IN || ep_id == XDBC_EPID_IN_INTEL)
+		अगर (ep_id == XDBC_EPID_IN || ep_id == XDBC_EPID_IN_INTEL)
 			xdbc.flags |= XDBC_FLAGS_IN_STALL;
 
 		xdbc_trace("endpoint %d stalled\n", ep_id);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ep_id == XDBC_EPID_IN || ep_id == XDBC_EPID_IN_INTEL) {
+	अगर (ep_id == XDBC_EPID_IN || ep_id == XDBC_EPID_IN_INTEL) अणु
 		xdbc.flags &= ~XDBC_FLAGS_IN_PROCESS;
-		xdbc_bulk_transfer(NULL, XDBC_MAX_PACKET, true);
-	} else if (ep_id == XDBC_EPID_OUT || ep_id == XDBC_EPID_OUT_INTEL) {
+		xdbc_bulk_transfer(शून्य, XDBC_MAX_PACKET, true);
+	पूर्ण अन्यथा अगर (ep_id == XDBC_EPID_OUT || ep_id == XDBC_EPID_OUT_INTEL) अणु
 		xdbc.flags &= ~XDBC_FLAGS_OUT_PROCESS;
-	} else {
+	पूर्ण अन्यथा अणु
 		xdbc_trace("invalid endpoint id %d\n", ep_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xdbc_handle_events(void)
-{
-	struct xdbc_trb *evt_trb;
+अटल व्योम xdbc_handle_events(व्योम)
+अणु
+	काष्ठा xdbc_trb *evt_trb;
 	bool update_erdp = false;
 	u32 reg;
 	u8 cmd;
 
-	cmd = read_pci_config_byte(xdbc.bus, xdbc.dev, xdbc.func, PCI_COMMAND);
-	if (!(cmd & PCI_COMMAND_MASTER)) {
+	cmd = पढ़ो_pci_config_byte(xdbc.bus, xdbc.dev, xdbc.func, PCI_COMMAND);
+	अगर (!(cmd & PCI_COMMAND_MASTER)) अणु
 		cmd |= PCI_COMMAND_MASTER | PCI_COMMAND_MEMORY;
-		write_pci_config_byte(xdbc.bus, xdbc.dev, xdbc.func, PCI_COMMAND, cmd);
-	}
+		ग_लिखो_pci_config_byte(xdbc.bus, xdbc.dev, xdbc.func, PCI_COMMAND, cmd);
+	पूर्ण
 
-	if (!(xdbc.flags & XDBC_FLAGS_INITIALIZED))
-		return;
+	अगर (!(xdbc.flags & XDBC_FLAGS_INITIALIZED))
+		वापस;
 
-	/* Handle external reset events: */
-	reg = readl(&xdbc.xdbc_reg->control);
-	if (!(reg & CTRL_DBC_ENABLE)) {
-		if (xdbc_handle_external_reset()) {
+	/* Handle बाह्यal reset events: */
+	reg = पढ़ोl(&xdbc.xdbc_reg->control);
+	अगर (!(reg & CTRL_DBC_ENABLE)) अणु
+		अगर (xdbc_handle_बाह्यal_reset()) अणु
 			xdbc_trace("failed to recover connection\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	/* Handle configure-exit event: */
-	reg = readl(&xdbc.xdbc_reg->control);
-	if (reg & CTRL_DBC_RUN_CHANGE) {
-		writel(reg, &xdbc.xdbc_reg->control);
-		if (reg & CTRL_DBC_RUN)
+	/* Handle configure-निकास event: */
+	reg = पढ़ोl(&xdbc.xdbc_reg->control);
+	अगर (reg & CTRL_DBC_RUN_CHANGE) अणु
+		ग_लिखोl(reg, &xdbc.xdbc_reg->control);
+		अगर (reg & CTRL_DBC_RUN)
 			xdbc.flags |= XDBC_FLAGS_CONFIGURED;
-		else
+		अन्यथा
 			xdbc.flags &= ~XDBC_FLAGS_CONFIGURED;
-	}
+	पूर्ण
 
-	/* Handle endpoint stall event: */
-	reg = readl(&xdbc.xdbc_reg->control);
-	if (reg & CTRL_HALT_IN_TR) {
+	/* Handle endpoपूर्णांक stall event: */
+	reg = पढ़ोl(&xdbc.xdbc_reg->control);
+	अगर (reg & CTRL_HALT_IN_TR) अणु
 		xdbc.flags |= XDBC_FLAGS_IN_STALL;
-	} else {
+	पूर्ण अन्यथा अणु
 		xdbc.flags &= ~XDBC_FLAGS_IN_STALL;
-		if (!(xdbc.flags & XDBC_FLAGS_IN_PROCESS))
-			xdbc_bulk_transfer(NULL, XDBC_MAX_PACKET, true);
-	}
+		अगर (!(xdbc.flags & XDBC_FLAGS_IN_PROCESS))
+			xdbc_bulk_transfer(शून्य, XDBC_MAX_PACKET, true);
+	पूर्ण
 
-	if (reg & CTRL_HALT_OUT_TR)
+	अगर (reg & CTRL_HALT_OUT_TR)
 		xdbc.flags |= XDBC_FLAGS_OUT_STALL;
-	else
+	अन्यथा
 		xdbc.flags &= ~XDBC_FLAGS_OUT_STALL;
 
 	/* Handle the events in the event ring: */
 	evt_trb = xdbc.evt_ring.dequeue;
-	while ((le32_to_cpu(evt_trb->field[3]) & TRB_CYCLE) == xdbc.evt_ring.cycle_state) {
+	जबतक ((le32_to_cpu(evt_trb->field[3]) & TRB_CYCLE) == xdbc.evt_ring.cycle_state) अणु
 		/*
-		 * Add a barrier between reading the cycle flag and any
-		 * reads of the event's flags/data below:
+		 * Add a barrier between पढ़ोing the cycle flag and any
+		 * पढ़ोs of the event's flags/data below:
 		 */
 		rmb();
 
-		switch ((le32_to_cpu(evt_trb->field[3]) & TRB_TYPE_BITMASK)) {
-		case TRB_TYPE(TRB_PORT_STATUS):
+		चयन ((le32_to_cpu(evt_trb->field[3]) & TRB_TYPE_BITMASK)) अणु
+		हाल TRB_TYPE(TRB_PORT_STATUS):
 			xdbc_handle_port_status(evt_trb);
-			break;
-		case TRB_TYPE(TRB_TRANSFER):
+			अवरोध;
+		हाल TRB_TYPE(TRB_TRANSFER):
 			xdbc_handle_tx_event(evt_trb);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		++(xdbc.evt_ring.dequeue);
-		if (xdbc.evt_ring.dequeue == &xdbc.evt_seg.trbs[TRBS_PER_SEGMENT]) {
+		अगर (xdbc.evt_ring.dequeue == &xdbc.evt_seg.trbs[TRBS_PER_SEGMENT]) अणु
 			xdbc.evt_ring.dequeue = xdbc.evt_seg.trbs;
 			xdbc.evt_ring.cycle_state ^= 1;
-		}
+		पूर्ण
 
 		evt_trb = xdbc.evt_ring.dequeue;
 		update_erdp = true;
-	}
+	पूर्ण
 
-	/* Update event ring dequeue pointer: */
-	if (update_erdp)
-		xdbc_write64(__pa(xdbc.evt_ring.dequeue), &xdbc.xdbc_reg->erdp);
-}
+	/* Update event ring dequeue poपूर्णांकer: */
+	अगर (update_erdp)
+		xdbc_ग_लिखो64(__pa(xdbc.evt_ring.dequeue), &xdbc.xdbc_reg->erdp);
+पूर्ण
 
-static int xdbc_bulk_write(const char *bytes, int size)
-{
-	int ret, timeout = 0;
-	unsigned long flags;
+अटल पूर्णांक xdbc_bulk_ग_लिखो(स्थिर अक्षर *bytes, पूर्णांक size)
+अणु
+	पूर्णांक ret, समयout = 0;
+	अचिन्हित दीर्घ flags;
 
 retry:
-	if (in_nmi()) {
-		if (!raw_spin_trylock_irqsave(&xdbc.lock, flags))
-			return -EAGAIN;
-	} else {
+	अगर (in_nmi()) अणु
+		अगर (!raw_spin_trylock_irqsave(&xdbc.lock, flags))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		raw_spin_lock_irqsave(&xdbc.lock, flags);
-	}
+	पूर्ण
 
 	xdbc_handle_events();
 
 	/* Check completion of the previous request: */
-	if ((xdbc.flags & XDBC_FLAGS_OUT_PROCESS) && (timeout < 2000000)) {
+	अगर ((xdbc.flags & XDBC_FLAGS_OUT_PROCESS) && (समयout < 2000000)) अणु
 		raw_spin_unlock_irqrestore(&xdbc.lock, flags);
 		udelay(100);
-		timeout += 100;
-		goto retry;
-	}
+		समयout += 100;
+		जाओ retry;
+	पूर्ण
 
-	if (xdbc.flags & XDBC_FLAGS_OUT_PROCESS) {
+	अगर (xdbc.flags & XDBC_FLAGS_OUT_PROCESS) अणु
 		raw_spin_unlock_irqrestore(&xdbc.lock, flags);
 		xdbc_trace("previous transfer not completed yet\n");
 
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	ret = xdbc_bulk_transfer((void *)bytes, size, false);
+	ret = xdbc_bulk_transfer((व्योम *)bytes, size, false);
 	raw_spin_unlock_irqrestore(&xdbc.lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void early_xdbc_write(struct console *con, const char *str, u32 n)
-{
-	static char buf[XDBC_MAX_PACKET];
-	int chunk, ret;
-	int use_cr = 0;
+अटल व्योम early_xdbc_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *str, u32 n)
+अणु
+	अटल अक्षर buf[XDBC_MAX_PACKET];
+	पूर्णांक chunk, ret;
+	पूर्णांक use_cr = 0;
 
-	if (!xdbc.xdbc_reg)
-		return;
-	memset(buf, 0, XDBC_MAX_PACKET);
-	while (n > 0) {
-		for (chunk = 0; chunk < XDBC_MAX_PACKET && n > 0; str++, chunk++, n--) {
+	अगर (!xdbc.xdbc_reg)
+		वापस;
+	स_रखो(buf, 0, XDBC_MAX_PACKET);
+	जबतक (n > 0) अणु
+		क्रम (chunk = 0; chunk < XDBC_MAX_PACKET && n > 0; str++, chunk++, n--) अणु
 
-			if (!use_cr && *str == '\n') {
+			अगर (!use_cr && *str == '\n') अणु
 				use_cr = 1;
 				buf[chunk] = '\r';
 				str--;
 				n++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (use_cr)
+			अगर (use_cr)
 				use_cr = 0;
 			buf[chunk] = *str;
-		}
+		पूर्ण
 
-		if (chunk > 0) {
-			ret = xdbc_bulk_write(buf, chunk);
-			if (ret < 0)
+		अगर (chunk > 0) अणु
+			ret = xdbc_bulk_ग_लिखो(buf, chunk);
+			अगर (ret < 0)
 				xdbc_trace("missed message {%s}\n", buf);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static struct console early_xdbc_console = {
+अटल काष्ठा console early_xdbc_console = अणु
 	.name		= "earlyxdbc",
-	.write		= early_xdbc_write,
+	.ग_लिखो		= early_xdbc_ग_लिखो,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
-};
+पूर्ण;
 
-void __init early_xdbc_register_console(void)
-{
-	if (early_console)
-		return;
+व्योम __init early_xdbc_रेजिस्टर_console(व्योम)
+अणु
+	अगर (early_console)
+		वापस;
 
 	early_console = &early_xdbc_console;
-	if (early_console_keep)
+	अगर (early_console_keep)
 		early_console->flags &= ~CON_BOOT;
-	else
+	अन्यथा
 		early_console->flags |= CON_BOOT;
-	register_console(early_console);
-}
+	रेजिस्टर_console(early_console);
+पूर्ण
 
-static void xdbc_unregister_console(void)
-{
-	if (early_xdbc_console.flags & CON_ENABLED)
-		unregister_console(&early_xdbc_console);
-}
+अटल व्योम xdbc_unरेजिस्टर_console(व्योम)
+अणु
+	अगर (early_xdbc_console.flags & CON_ENABLED)
+		unरेजिस्टर_console(&early_xdbc_console);
+पूर्ण
 
-static int xdbc_scrub_function(void *ptr)
-{
-	unsigned long flags;
+अटल पूर्णांक xdbc_scrub_function(व्योम *ptr)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	while (true) {
+	जबतक (true) अणु
 		raw_spin_lock_irqsave(&xdbc.lock, flags);
 		xdbc_handle_events();
 
-		if (!(xdbc.flags & XDBC_FLAGS_INITIALIZED)) {
+		अगर (!(xdbc.flags & XDBC_FLAGS_INITIALIZED)) अणु
 			raw_spin_unlock_irqrestore(&xdbc.lock, flags);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		raw_spin_unlock_irqrestore(&xdbc.lock, flags);
-		schedule_timeout_interruptible(1);
-	}
+		schedule_समयout_पूर्णांकerruptible(1);
+	पूर्ण
 
-	xdbc_unregister_console();
-	writel(0, &xdbc.xdbc_reg->control);
+	xdbc_unरेजिस्टर_console();
+	ग_लिखोl(0, &xdbc.xdbc_reg->control);
 	xdbc_trace("dbc scrub function exits\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init xdbc_init(void)
-{
-	unsigned long flags;
-	void __iomem *base;
-	int ret = 0;
+अटल पूर्णांक __init xdbc_init(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	व्योम __iomem *base;
+	पूर्णांक ret = 0;
 	u32 offset;
 
-	if (!(xdbc.flags & XDBC_FLAGS_INITIALIZED))
-		return 0;
+	अगर (!(xdbc.flags & XDBC_FLAGS_INITIALIZED))
+		वापस 0;
 
 	/*
-	 * It's time to shut down the DbC, so that the debug
+	 * It's समय to shut करोwn the DbC, so that the debug
 	 * port can be reused by the host controller:
 	 */
-	if (early_xdbc_console.index == -1 ||
-	    (early_xdbc_console.flags & CON_BOOT)) {
+	अगर (early_xdbc_console.index == -1 ||
+	    (early_xdbc_console.flags & CON_BOOT)) अणु
 		xdbc_trace("hardware not used anymore\n");
-		goto free_and_quit;
-	}
+		जाओ मुक्त_and_quit;
+	पूर्ण
 
 	base = ioremap(xdbc.xhci_start, xdbc.xhci_length);
-	if (!base) {
+	अगर (!base) अणु
 		xdbc_trace("failed to remap the io address\n");
 		ret = -ENOMEM;
-		goto free_and_quit;
-	}
+		जाओ मुक्त_and_quit;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&xdbc.lock, flags);
 	early_iounmap(xdbc.xhci_base, xdbc.xhci_length);
 	xdbc.xhci_base = base;
 	offset = xhci_find_next_ext_cap(xdbc.xhci_base, 0, XHCI_EXT_CAPS_DEBUG);
-	xdbc.xdbc_reg = (struct xdbc_regs __iomem *)(xdbc.xhci_base + offset);
+	xdbc.xdbc_reg = (काष्ठा xdbc_regs __iomem *)(xdbc.xhci_base + offset);
 	raw_spin_unlock_irqrestore(&xdbc.lock, flags);
 
-	kthread_run(xdbc_scrub_function, NULL, "%s", "xdbc");
+	kthपढ़ो_run(xdbc_scrub_function, शून्य, "%s", "xdbc");
 
-	return 0;
+	वापस 0;
 
-free_and_quit:
-	xdbc_free_ring(&xdbc.evt_ring);
-	xdbc_free_ring(&xdbc.out_ring);
-	xdbc_free_ring(&xdbc.in_ring);
-	memblock_free(xdbc.table_dma, PAGE_SIZE);
-	memblock_free(xdbc.out_dma, PAGE_SIZE);
-	writel(0, &xdbc.xdbc_reg->control);
+मुक्त_and_quit:
+	xdbc_मुक्त_ring(&xdbc.evt_ring);
+	xdbc_मुक्त_ring(&xdbc.out_ring);
+	xdbc_मुक्त_ring(&xdbc.in_ring);
+	memblock_मुक्त(xdbc.table_dma, PAGE_SIZE);
+	memblock_मुक्त(xdbc.out_dma, PAGE_SIZE);
+	ग_लिखोl(0, &xdbc.xdbc_reg->control);
 	early_iounmap(xdbc.xhci_base, xdbc.xhci_length);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 subsys_initcall(xdbc_init);

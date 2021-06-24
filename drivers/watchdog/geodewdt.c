@@ -1,289 +1,290 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Watchdog timer for machines with the CS5535/CS5536 companion chip
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Watchकरोg समयr क्रम machines with the CS5535/CS5536 companion chip
  *
  * Copyright (C) 2006-2007, Advanced Micro Devices, Inc.
  * Copyright (C) 2009  Andres Salomon <dilinger@collabora.co.uk>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/miscdevice.h>
-#include <linux/watchdog.h>
-#include <linux/fs.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/uaccess.h>
 
-#include <linux/cs5535.h>
+#समावेश <linux/cs5535.h>
 
-#define GEODEWDT_HZ 500
-#define GEODEWDT_SCALE 6
-#define GEODEWDT_MAX_SECONDS 131
+#घोषणा GEODEWDT_HZ 500
+#घोषणा GEODEWDT_SCALE 6
+#घोषणा GEODEWDT_MAX_SECONDS 131
 
-#define WDT_FLAGS_OPEN 1
-#define WDT_FLAGS_ORPHAN 2
+#घोषणा WDT_FLAGS_OPEN 1
+#घोषणा WDT_FLAGS_ORPHAN 2
 
-#define DRV_NAME "geodewdt"
-#define WATCHDOG_NAME "Geode GX/LX WDT"
-#define WATCHDOG_TIMEOUT 60
+#घोषणा DRV_NAME "geodewdt"
+#घोषणा WATCHDOG_NAME "Geode GX/LX WDT"
+#घोषणा WATCHDOG_TIMEOUT 60
 
-static int timeout = WATCHDOG_TIMEOUT;
-module_param(timeout, int, 0);
-MODULE_PARM_DESC(timeout,
+अटल पूर्णांक समयout = WATCHDOG_TIMEOUT;
+module_param(समयout, पूर्णांक, 0);
+MODULE_PARM_DESC(समयout,
 	"Watchdog timeout in seconds. 1<= timeout <=131, default="
 				__MODULE_STRING(WATCHDOG_TIMEOUT) ".");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 	"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static struct platform_device *geodewdt_platform_device;
-static unsigned long wdt_flags;
-static struct cs5535_mfgpt_timer *wdt_timer;
-static int safe_close;
+अटल काष्ठा platक्रमm_device *geodewdt_platक्रमm_device;
+अटल अचिन्हित दीर्घ wdt_flags;
+अटल काष्ठा cs5535_mfgpt_समयr *wdt_समयr;
+अटल पूर्णांक safe_बंद;
 
-static void geodewdt_ping(void)
-{
+अटल व्योम geodewdt_ping(व्योम)
+अणु
 	/* Stop the counter */
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_SETUP, 0);
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_SETUP, 0);
 
 	/* Reset the counter */
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_COUNTER, 0);
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_COUNTER, 0);
 
 	/* Enable the counter */
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_SETUP, MFGPT_SETUP_CNTEN);
-}
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_SETUP, MFGPT_SETUP_CNTEN);
+पूर्ण
 
-static void geodewdt_disable(void)
-{
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_SETUP, 0);
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_COUNTER, 0);
-}
+अटल व्योम geodewdt_disable(व्योम)
+अणु
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_SETUP, 0);
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_COUNTER, 0);
+पूर्ण
 
-static int geodewdt_set_heartbeat(int val)
-{
-	if (val < 1 || val > GEODEWDT_MAX_SECONDS)
-		return -EINVAL;
+अटल पूर्णांक geodewdt_set_heartbeat(पूर्णांक val)
+अणु
+	अगर (val < 1 || val > GEODEWDT_MAX_SECONDS)
+		वापस -EINVAL;
 
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_SETUP, 0);
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_CMP2, val * GEODEWDT_HZ);
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_COUNTER, 0);
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_SETUP, MFGPT_SETUP_CNTEN);
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_SETUP, 0);
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_CMP2, val * GEODEWDT_HZ);
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_COUNTER, 0);
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_SETUP, MFGPT_SETUP_CNTEN);
 
-	timeout = val;
-	return 0;
-}
+	समयout = val;
+	वापस 0;
+पूर्ण
 
-static int geodewdt_open(struct inode *inode, struct file *file)
-{
-	if (test_and_set_bit(WDT_FLAGS_OPEN, &wdt_flags))
-		return -EBUSY;
+अटल पूर्णांक geodewdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_and_set_bit(WDT_FLAGS_OPEN, &wdt_flags))
+		वापस -EBUSY;
 
-	if (!test_and_clear_bit(WDT_FLAGS_ORPHAN, &wdt_flags))
+	अगर (!test_and_clear_bit(WDT_FLAGS_ORPHAN, &wdt_flags))
 		__module_get(THIS_MODULE);
 
 	geodewdt_ping();
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int geodewdt_release(struct inode *inode, struct file *file)
-{
-	if (safe_close) {
+अटल पूर्णांक geodewdt_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (safe_बंद) अणु
 		geodewdt_disable();
 		module_put(THIS_MODULE);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_crit("Unexpected close - watchdog is not stopping\n");
 		geodewdt_ping();
 
 		set_bit(WDT_FLAGS_ORPHAN, &wdt_flags);
-	}
+	पूर्ण
 
 	clear_bit(WDT_FLAGS_OPEN, &wdt_flags);
-	safe_close = 0;
-	return 0;
-}
+	safe_बंद = 0;
+	वापस 0;
+पूर्ण
 
-static ssize_t geodewdt_write(struct file *file, const char __user *data,
-				size_t len, loff_t *ppos)
-{
-	if (len) {
-		if (!nowayout) {
-			size_t i;
-			safe_close = 0;
+अटल sमाप_प्रकार geodewdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+				माप_प्रकार len, loff_t *ppos)
+अणु
+	अगर (len) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
+			safe_बंद = 0;
 
-			for (i = 0; i != len; i++) {
-				char c;
+			क्रम (i = 0; i != len; i++) अणु
+				अक्षर c;
 
-				if (get_user(c, data + i))
-					return -EFAULT;
+				अगर (get_user(c, data + i))
+					वापस -EFAULT;
 
-				if (c == 'V')
-					safe_close = 1;
-			}
-		}
+				अगर (c == 'V')
+					safe_बंद = 1;
+			पूर्ण
+		पूर्ण
 
 		geodewdt_ping();
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static long geodewdt_ioctl(struct file *file, unsigned int cmd,
-				unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	int interval;
+अटल दीर्घ geodewdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+				अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	पूर्णांक पूर्णांकerval;
 
-	static const struct watchdog_info ident = {
+	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 		.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING
 		| WDIOF_MAGICCLOSE,
 		.firmware_version =     1,
 		.identity =             WATCHDOG_NAME,
-	};
+	पूर्ण;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		return copy_to_user(argp, &ident,
-				    sizeof(ident)) ? -EFAULT : 0;
-	case WDIOC_GETSTATUS:
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(0, p);
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		वापस copy_to_user(argp, &ident,
+				    माप(ident)) ? -EFAULT : 0;
+	हाल WDIOC_GETSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(0, p);
 
-	case WDIOC_SETOPTIONS:
-	{
-		int options, ret = -EINVAL;
+	हाल WDIOC_SETOPTIONS:
+	अणु
+		पूर्णांक options, ret = -EINVAL;
 
-		if (get_user(options, p))
-			return -EFAULT;
+		अगर (get_user(options, p))
+			वापस -EFAULT;
 
-		if (options & WDIOS_DISABLECARD) {
+		अगर (options & WDIOS_DISABLECARD) अणु
 			geodewdt_disable();
 			ret = 0;
-		}
+		पूर्ण
 
-		if (options & WDIOS_ENABLECARD) {
+		अगर (options & WDIOS_ENABLECARD) अणु
 			geodewdt_ping();
 			ret = 0;
-		}
+		पूर्ण
 
-		return ret;
-	}
-	case WDIOC_KEEPALIVE:
+		वापस ret;
+	पूर्ण
+	हाल WDIOC_KEEPALIVE:
 		geodewdt_ping();
-		return 0;
+		वापस 0;
 
-	case WDIOC_SETTIMEOUT:
-		if (get_user(interval, p))
-			return -EFAULT;
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(पूर्णांकerval, p))
+			वापस -EFAULT;
 
-		if (geodewdt_set_heartbeat(interval))
-			return -EINVAL;
+		अगर (geodewdt_set_heartbeat(पूर्णांकerval))
+			वापस -EINVAL;
 		fallthrough;
-	case WDIOC_GETTIMEOUT:
-		return put_user(timeout, p);
+	हाल WDIOC_GETTIMEOUT:
+		वापस put_user(समयout, p);
 
-	default:
-		return -ENOTTY;
-	}
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations geodewdt_fops = {
+अटल स्थिर काष्ठा file_operations geodewdt_fops = अणु
 	.owner          = THIS_MODULE,
 	.llseek         = no_llseek,
-	.write          = geodewdt_write,
+	.ग_लिखो          = geodewdt_ग_लिखो,
 	.unlocked_ioctl = geodewdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open           = geodewdt_open,
+	.खोलो           = geodewdt_खोलो,
 	.release        = geodewdt_release,
-};
+पूर्ण;
 
-static struct miscdevice geodewdt_miscdev = {
+अटल काष्ठा miscdevice geodewdt_miscdev = अणु
 	.minor = WATCHDOG_MINOR,
 	.name = "watchdog",
 	.fops = &geodewdt_fops,
-};
+पूर्ण;
 
-static int __init geodewdt_probe(struct platform_device *dev)
-{
-	int ret;
+अटल पूर्णांक __init geodewdt_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक ret;
 
-	wdt_timer = cs5535_mfgpt_alloc_timer(MFGPT_TIMER_ANY, MFGPT_DOMAIN_WORKING);
-	if (!wdt_timer) {
+	wdt_समयr = cs5535_mfgpt_alloc_समयr(MFGPT_TIMER_ANY, MFGPT_DOMAIN_WORKING);
+	अगर (!wdt_समयr) अणु
 		pr_err("No timers were available\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Set up the timer */
+	/* Set up the समयr */
 
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_SETUP,
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_SETUP,
 			  GEODEWDT_SCALE | (3 << 8));
 
 	/* Set up comparator 2 to reset when the event fires */
-	cs5535_mfgpt_toggle_event(wdt_timer, MFGPT_CMP2, MFGPT_EVENT_RESET, 1);
+	cs5535_mfgpt_toggle_event(wdt_समयr, MFGPT_CMP2, MFGPT_EVENT_RESET, 1);
 
-	/* Set up the initial timeout */
+	/* Set up the initial समयout */
 
-	cs5535_mfgpt_write(wdt_timer, MFGPT_REG_CMP2,
-		timeout * GEODEWDT_HZ);
+	cs5535_mfgpt_ग_लिखो(wdt_समयr, MFGPT_REG_CMP2,
+		समयout * GEODEWDT_HZ);
 
-	ret = misc_register(&geodewdt_miscdev);
+	ret = misc_रेजिस्टर(&geodewdt_miscdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int geodewdt_remove(struct platform_device *dev)
-{
-	misc_deregister(&geodewdt_miscdev);
-	return 0;
-}
+अटल पूर्णांक geodewdt_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	misc_deरेजिस्टर(&geodewdt_miscdev);
+	वापस 0;
+पूर्ण
 
-static void geodewdt_shutdown(struct platform_device *dev)
-{
+अटल व्योम geodewdt_shutकरोwn(काष्ठा platक्रमm_device *dev)
+अणु
 	geodewdt_disable();
-}
+पूर्ण
 
-static struct platform_driver geodewdt_driver = {
-	.remove		= geodewdt_remove,
-	.shutdown	= geodewdt_shutdown,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver geodewdt_driver = अणु
+	.हटाओ		= geodewdt_हटाओ,
+	.shutकरोwn	= geodewdt_shutकरोwn,
+	.driver		= अणु
 		.name	= DRV_NAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init geodewdt_init(void)
-{
-	int ret;
+अटल पूर्णांक __init geodewdt_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	geodewdt_platform_device = platform_device_register_simple(DRV_NAME,
-								-1, NULL, 0);
-	if (IS_ERR(geodewdt_platform_device))
-		return PTR_ERR(geodewdt_platform_device);
+	geodewdt_platक्रमm_device = platक्रमm_device_रेजिस्टर_simple(DRV_NAME,
+								-1, शून्य, 0);
+	अगर (IS_ERR(geodewdt_platक्रमm_device))
+		वापस PTR_ERR(geodewdt_platक्रमm_device);
 
-	ret = platform_driver_probe(&geodewdt_driver, geodewdt_probe);
-	if (ret)
-		goto err;
+	ret = platक्रमm_driver_probe(&geodewdt_driver, geodewdt_probe);
+	अगर (ret)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 err:
-	platform_device_unregister(geodewdt_platform_device);
-	return ret;
-}
+	platक्रमm_device_unरेजिस्टर(geodewdt_platक्रमm_device);
+	वापस ret;
+पूर्ण
 
-static void __exit geodewdt_exit(void)
-{
-	platform_device_unregister(geodewdt_platform_device);
-	platform_driver_unregister(&geodewdt_driver);
-}
+अटल व्योम __निकास geodewdt_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(geodewdt_platक्रमm_device);
+	platक्रमm_driver_unरेजिस्टर(&geodewdt_driver);
+पूर्ण
 
 module_init(geodewdt_init);
-module_exit(geodewdt_exit);
+module_निकास(geodewdt_निकास);
 
 MODULE_AUTHOR("Advanced Micro Devices, Inc");
 MODULE_DESCRIPTION("Geode GX/LX Watchdog Driver");

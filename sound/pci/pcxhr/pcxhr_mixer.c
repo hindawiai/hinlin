@@ -1,179 +1,180 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-#define __NO_VERSION__
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+#घोषणा __NO_VERSION__
 /*
- * Driver for Digigram pcxhr compatible soundcards
+ * Driver क्रम Digigram pcxhr compatible soundcards
  *
  * mixer callbacks
  *
  * Copyright (c) 2004 by Digigram <alsa@digigram.com>
  */
 
-#include <linux/time.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
-#include <sound/core.h>
-#include "pcxhr.h"
-#include "pcxhr_hwdep.h"
-#include "pcxhr_core.h"
-#include <sound/control.h>
-#include <sound/tlv.h>
-#include <sound/asoundef.h>
-#include "pcxhr_mixer.h"
-#include "pcxhr_mix22.h"
+#समावेश <linux/समय.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
+#समावेश <sound/core.h>
+#समावेश "pcxhr.h"
+#समावेश "pcxhr_hwdep.h"
+#समावेश "pcxhr_core.h"
+#समावेश <sound/control.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/asoundef.h>
+#समावेश "pcxhr_mixer.h"
+#समावेश "pcxhr_mix22.h"
 
-#define PCXHR_LINE_CAPTURE_LEVEL_MIN   0	/* -112.0 dB */
-#define PCXHR_LINE_CAPTURE_LEVEL_MAX   255	/* +15.5 dB */
-#define PCXHR_LINE_CAPTURE_ZERO_LEVEL  224	/* 0.0 dB ( 0 dBu -> 0 dBFS ) */
+#घोषणा PCXHR_LINE_CAPTURE_LEVEL_MIN   0	/* -112.0 dB */
+#घोषणा PCXHR_LINE_CAPTURE_LEVEL_MAX   255	/* +15.5 dB */
+#घोषणा PCXHR_LINE_CAPTURE_ZERO_LEVEL  224	/* 0.0 dB ( 0 dBu -> 0 dBFS ) */
 
-#define PCXHR_LINE_PLAYBACK_LEVEL_MIN  0	/* -104.0 dB */
-#define PCXHR_LINE_PLAYBACK_LEVEL_MAX  128	/* +24.0 dB */
-#define PCXHR_LINE_PLAYBACK_ZERO_LEVEL 104	/* 0.0 dB ( 0 dBFS -> 0 dBu ) */
+#घोषणा PCXHR_LINE_PLAYBACK_LEVEL_MIN  0	/* -104.0 dB */
+#घोषणा PCXHR_LINE_PLAYBACK_LEVEL_MAX  128	/* +24.0 dB */
+#घोषणा PCXHR_LINE_PLAYBACK_ZERO_LEVEL 104	/* 0.0 dB ( 0 dBFS -> 0 dBu ) */
 
-static const DECLARE_TLV_DB_SCALE(db_scale_analog_capture, -11200, 50, 1550);
-static const DECLARE_TLV_DB_SCALE(db_scale_analog_playback, -10400, 100, 2400);
+अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_analog_capture, -11200, 50, 1550);
+अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_analog_playback, -10400, 100, 2400);
 
-static const DECLARE_TLV_DB_SCALE(db_scale_a_hr222_capture, -11150, 50, 1600);
-static const DECLARE_TLV_DB_SCALE(db_scale_a_hr222_playback, -2550, 50, 2400);
+अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_a_hr222_capture, -11150, 50, 1600);
+अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_a_hr222_playback, -2550, 50, 2400);
 
-static int pcxhr_update_analog_audio_level(struct snd_pcxhr *chip,
-					   int is_capture, int channel)
-{
-	int err, vol;
-	struct pcxhr_rmh rmh;
+अटल पूर्णांक pcxhr_update_analog_audio_level(काष्ठा snd_pcxhr *chip,
+					   पूर्णांक is_capture, पूर्णांक channel)
+अणु
+	पूर्णांक err, vol;
+	काष्ठा pcxhr_rmh rmh;
 
 	pcxhr_init_rmh(&rmh, CMD_ACCESS_IO_WRITE);
-	if (is_capture) {
+	अगर (is_capture) अणु
 		rmh.cmd[0] |= IO_NUM_REG_IN_ANA_LEVEL;
 		rmh.cmd[2] = chip->analog_capture_volume[channel];
-	} else {
+	पूर्ण अन्यथा अणु
 		rmh.cmd[0] |= IO_NUM_REG_OUT_ANA_LEVEL;
-		if (chip->analog_playback_active[channel])
+		अगर (chip->analog_playback_active[channel])
 			vol = chip->analog_playback_volume[channel];
-		else
+		अन्यथा
 			vol = PCXHR_LINE_PLAYBACK_LEVEL_MIN;
 		/* playback analog levels are inversed */
 		rmh.cmd[2] = PCXHR_LINE_PLAYBACK_LEVEL_MAX - vol;
-	}
+	पूर्ण
 	rmh.cmd[1]  = 1 << ((2 * chip->chip_idx) + channel);	/* audio mask */
 	rmh.cmd_len = 3;
 	err = pcxhr_send_msg(chip->mgr, &rmh);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_dbg(chip->card->dev,
 			"error update_analog_audio_level card(%d)"
 			   " is_capture(%d) err(%x)\n",
 			   chip->chip_idx, is_capture, err);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * analog level control
  */
-static int pcxhr_analog_vol_info(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_info *uinfo)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक pcxhr_analog_vol_info(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	if (kcontrol->private_value == 0) {	/* playback */
-	    if (chip->mgr->is_hr_stereo) {
-		uinfo->value.integer.min =
+	अगर (kcontrol->निजी_value == 0) अणु	/* playback */
+	    अगर (chip->mgr->is_hr_stereo) अणु
+		uinfo->value.पूर्णांकeger.min =
 			HR222_LINE_PLAYBACK_LEVEL_MIN;	/* -25 dB */
-		uinfo->value.integer.max =
+		uinfo->value.पूर्णांकeger.max =
 			HR222_LINE_PLAYBACK_LEVEL_MAX;	/* +24 dB */
-	    } else {
-		uinfo->value.integer.min =
+	    पूर्ण अन्यथा अणु
+		uinfo->value.पूर्णांकeger.min =
 			PCXHR_LINE_PLAYBACK_LEVEL_MIN;	/*-104 dB */
-		uinfo->value.integer.max =
+		uinfo->value.पूर्णांकeger.max =
 			PCXHR_LINE_PLAYBACK_LEVEL_MAX;	/* +24 dB */
-	    }
-	} else {				/* capture */
-	    if (chip->mgr->is_hr_stereo) {
-		uinfo->value.integer.min =
+	    पूर्ण
+	पूर्ण अन्यथा अणु				/* capture */
+	    अगर (chip->mgr->is_hr_stereo) अणु
+		uinfo->value.पूर्णांकeger.min =
 			HR222_LINE_CAPTURE_LEVEL_MIN;	/*-112 dB */
-		uinfo->value.integer.max =
+		uinfo->value.पूर्णांकeger.max =
 			HR222_LINE_CAPTURE_LEVEL_MAX;	/* +15.5 dB */
-	    } else {
-		uinfo->value.integer.min =
+	    पूर्ण अन्यथा अणु
+		uinfo->value.पूर्णांकeger.min =
 			PCXHR_LINE_CAPTURE_LEVEL_MIN;	/*-112 dB */
-		uinfo->value.integer.max =
+		uinfo->value.पूर्णांकeger.max =
 			PCXHR_LINE_CAPTURE_LEVEL_MAX;	/* +15.5 dB */
-	    }
-	}
-	return 0;
-}
+	    पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int pcxhr_analog_vol_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक pcxhr_analog_vol_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
 	mutex_lock(&chip->mgr->mixer_mutex);
-	if (kcontrol->private_value == 0) {	/* playback */
-	  ucontrol->value.integer.value[0] = chip->analog_playback_volume[0];
-	  ucontrol->value.integer.value[1] = chip->analog_playback_volume[1];
-	} else {				/* capture */
-	  ucontrol->value.integer.value[0] = chip->analog_capture_volume[0];
-	  ucontrol->value.integer.value[1] = chip->analog_capture_volume[1];
-	}
+	अगर (kcontrol->निजी_value == 0) अणु	/* playback */
+	  ucontrol->value.पूर्णांकeger.value[0] = chip->analog_playback_volume[0];
+	  ucontrol->value.पूर्णांकeger.value[1] = chip->analog_playback_volume[1];
+	पूर्ण अन्यथा अणु				/* capture */
+	  ucontrol->value.पूर्णांकeger.value[0] = chip->analog_capture_volume[0];
+	  ucontrol->value.पूर्णांकeger.value[1] = chip->analog_capture_volume[1];
+	पूर्ण
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcxhr_analog_vol_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	int changed = 0;
-	int is_capture, i;
+अटल पूर्णांक pcxhr_analog_vol_put(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक changed = 0;
+	पूर्णांक is_capture, i;
 
 	mutex_lock(&chip->mgr->mixer_mutex);
-	is_capture = (kcontrol->private_value != 0);
-	for (i = 0; i < 2; i++) {
-		int  new_volume = ucontrol->value.integer.value[i];
-		int *stored_volume = is_capture ?
+	is_capture = (kcontrol->निजी_value != 0);
+	क्रम (i = 0; i < 2; i++) अणु
+		पूर्णांक  new_volume = ucontrol->value.पूर्णांकeger.value[i];
+		पूर्णांक *stored_volume = is_capture ?
 			&chip->analog_capture_volume[i] :
 			&chip->analog_playback_volume[i];
-		if (is_capture) {
-			if (chip->mgr->is_hr_stereo) {
-				if (new_volume < HR222_LINE_CAPTURE_LEVEL_MIN ||
+		अगर (is_capture) अणु
+			अगर (chip->mgr->is_hr_stereo) अणु
+				अगर (new_volume < HR222_LINE_CAPTURE_LEVEL_MIN ||
 				    new_volume > HR222_LINE_CAPTURE_LEVEL_MAX)
-					continue;
-			} else {
-				if (new_volume < PCXHR_LINE_CAPTURE_LEVEL_MIN ||
+					जारी;
+			पूर्ण अन्यथा अणु
+				अगर (new_volume < PCXHR_LINE_CAPTURE_LEVEL_MIN ||
 				    new_volume > PCXHR_LINE_CAPTURE_LEVEL_MAX)
-					continue;
-			}
-		} else {
-			if (chip->mgr->is_hr_stereo) {
-				if (new_volume < HR222_LINE_PLAYBACK_LEVEL_MIN ||
+					जारी;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (chip->mgr->is_hr_stereo) अणु
+				अगर (new_volume < HR222_LINE_PLAYBACK_LEVEL_MIN ||
 				    new_volume > HR222_LINE_PLAYBACK_LEVEL_MAX)
-					continue;
-			} else {
-				if (new_volume < PCXHR_LINE_PLAYBACK_LEVEL_MIN ||
+					जारी;
+			पूर्ण अन्यथा अणु
+				अगर (new_volume < PCXHR_LINE_PLAYBACK_LEVEL_MIN ||
 				    new_volume > PCXHR_LINE_PLAYBACK_LEVEL_MAX)
-					continue;
-			}
-		}
-		if (*stored_volume != new_volume) {
+					जारी;
+			पूर्ण
+		पूर्ण
+		अगर (*stored_volume != new_volume) अणु
 			*stored_volume = new_volume;
 			changed = 1;
-			if (chip->mgr->is_hr_stereo)
+			अगर (chip->mgr->is_hr_stereo)
 				hr222_update_analog_audio_level(chip,
 								is_capture, i);
-			else
+			अन्यथा
 				pcxhr_update_analog_audio_level(chip,
 								is_capture, i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new pcxhr_control_analog_level = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_analog_level = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access =	(SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			 SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 	/* name will be filled later */
@@ -181,82 +182,82 @@ static const struct snd_kcontrol_new pcxhr_control_analog_level = {
 	.get =		pcxhr_analog_vol_get,
 	.put =		pcxhr_analog_vol_put,
 	/* tlv will be filled later */
-};
+पूर्ण;
 
 /* shared */
 
-#define pcxhr_sw_info		snd_ctl_boolean_stereo_info
+#घोषणा pcxhr_sw_info		snd_ctl_boolean_stereo_info
 
-static int pcxhr_audio_sw_get(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक pcxhr_audio_sw_get(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
 
 	mutex_lock(&chip->mgr->mixer_mutex);
-	ucontrol->value.integer.value[0] = chip->analog_playback_active[0];
-	ucontrol->value.integer.value[1] = chip->analog_playback_active[1];
+	ucontrol->value.पूर्णांकeger.value[0] = chip->analog_playback_active[0];
+	ucontrol->value.पूर्णांकeger.value[1] = chip->analog_playback_active[1];
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcxhr_audio_sw_put(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	int i, changed = 0;
+अटल पूर्णांक pcxhr_audio_sw_put(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक i, changed = 0;
 	mutex_lock(&chip->mgr->mixer_mutex);
-	for(i = 0; i < 2; i++) {
-		if (chip->analog_playback_active[i] !=
-		    ucontrol->value.integer.value[i]) {
+	क्रम(i = 0; i < 2; i++) अणु
+		अगर (chip->analog_playback_active[i] !=
+		    ucontrol->value.पूर्णांकeger.value[i]) अणु
 			chip->analog_playback_active[i] =
-				!!ucontrol->value.integer.value[i];
+				!!ucontrol->value.पूर्णांकeger.value[i];
 			changed = 1;
 			/* update playback levels */
-			if (chip->mgr->is_hr_stereo)
+			अगर (chip->mgr->is_hr_stereo)
 				hr222_update_analog_audio_level(chip, 0, i);
-			else
+			अन्यथा
 				pcxhr_update_analog_audio_level(chip, 0, i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new pcxhr_control_output_switch = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_output_चयन = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =		"Master Playback Switch",
 	.info =		pcxhr_sw_info,		/* shared */
 	.get =		pcxhr_audio_sw_get,
 	.put =		pcxhr_audio_sw_put
-};
+पूर्ण;
 
 
-#define PCXHR_DIGITAL_LEVEL_MIN		0x000	/* -110 dB */
-#define PCXHR_DIGITAL_LEVEL_MAX		0x1ff	/* +18 dB */
-#define PCXHR_DIGITAL_ZERO_LEVEL	0x1b7	/*  0 dB */
+#घोषणा PCXHR_DIGITAL_LEVEL_MIN		0x000	/* -110 dB */
+#घोषणा PCXHR_DIGITAL_LEVEL_MAX		0x1ff	/* +18 dB */
+#घोषणा PCXHR_DIGITAL_ZERO_LEVEL	0x1b7	/*  0 dB */
 
-static const DECLARE_TLV_DB_SCALE(db_scale_digital, -10975, 25, 1800);
+अटल स्थिर DECLARE_TLV_DB_SCALE(db_scale_digital, -10975, 25, 1800);
 
-#define MORE_THAN_ONE_STREAM_LEVEL	0x000001
-#define VALID_STREAM_PAN_LEVEL_MASK	0x800000
-#define VALID_STREAM_LEVEL_MASK		0x400000
-#define VALID_STREAM_LEVEL_1_MASK	0x200000
-#define VALID_STREAM_LEVEL_2_MASK	0x100000
+#घोषणा MORE_THAN_ONE_STREAM_LEVEL	0x000001
+#घोषणा VALID_STREAM_PAN_LEVEL_MASK	0x800000
+#घोषणा VALID_STREAM_LEVEL_MASK		0x400000
+#घोषणा VALID_STREAM_LEVEL_1_MASK	0x200000
+#घोषणा VALID_STREAM_LEVEL_2_MASK	0x100000
 
-static int pcxhr_update_playback_stream_level(struct snd_pcxhr* chip, int idx)
-{
-	int err;
-	struct pcxhr_rmh rmh;
-	struct pcxhr_pipe *pipe = &chip->playback_pipe;
-	int left, right;
+अटल पूर्णांक pcxhr_update_playback_stream_level(काष्ठा snd_pcxhr* chip, पूर्णांक idx)
+अणु
+	पूर्णांक err;
+	काष्ठा pcxhr_rmh rmh;
+	काष्ठा pcxhr_pipe *pipe = &chip->playback_pipe;
+	पूर्णांक left, right;
 
-	if (chip->digital_playback_active[idx][0])
+	अगर (chip->digital_playback_active[idx][0])
 		left = chip->digital_playback_volume[idx][0];
-	else
+	अन्यथा
 		left = PCXHR_DIGITAL_LEVEL_MIN;
-	if (chip->digital_playback_active[idx][1])
+	अगर (chip->digital_playback_active[idx][1])
 		right = chip->digital_playback_volume[idx][1];
-	else
+	अन्यथा
 		right = PCXHR_DIGITAL_LEVEL_MIN;
 
 	pcxhr_init_rmh(&rmh, CMD_STREAM_OUT_LEVEL_ADJUST);
@@ -271,134 +272,134 @@ static int pcxhr_update_playback_stream_level(struct snd_pcxhr* chip, int idx)
 	rmh.cmd_len = 4;
 
 	err = pcxhr_send_msg(chip->mgr, &rmh);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_dbg(chip->card->dev, "error update_playback_stream_level "
 			   "card(%d) err(%x)\n", chip->chip_idx, err);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define AUDIO_IO_HAS_MUTE_LEVEL		0x400000
-#define AUDIO_IO_HAS_MUTE_MONITOR_1	0x200000
-#define VALID_AUDIO_IO_DIGITAL_LEVEL	0x000001
-#define VALID_AUDIO_IO_MONITOR_LEVEL	0x000002
-#define VALID_AUDIO_IO_MUTE_LEVEL	0x000004
-#define VALID_AUDIO_IO_MUTE_MONITOR_1	0x000008
+#घोषणा AUDIO_IO_HAS_MUTE_LEVEL		0x400000
+#घोषणा AUDIO_IO_HAS_MUTE_MONITOR_1	0x200000
+#घोषणा VALID_AUDIO_IO_DIGITAL_LEVEL	0x000001
+#घोषणा VALID_AUDIO_IO_MONITOR_LEVEL	0x000002
+#घोषणा VALID_AUDIO_IO_MUTE_LEVEL	0x000004
+#घोषणा VALID_AUDIO_IO_MUTE_MONITOR_1	0x000008
 
-static int pcxhr_update_audio_pipe_level(struct snd_pcxhr *chip,
-					 int capture, int channel)
-{
-	int err;
-	struct pcxhr_rmh rmh;
-	struct pcxhr_pipe *pipe;
+अटल पूर्णांक pcxhr_update_audio_pipe_level(काष्ठा snd_pcxhr *chip,
+					 पूर्णांक capture, पूर्णांक channel)
+अणु
+	पूर्णांक err;
+	काष्ठा pcxhr_rmh rmh;
+	काष्ठा pcxhr_pipe *pipe;
 
-	if (capture)
+	अगर (capture)
 		pipe = &chip->capture_pipe[0];
-	else
+	अन्यथा
 		pipe = &chip->playback_pipe;
 
 	pcxhr_init_rmh(&rmh, CMD_AUDIO_LEVEL_ADJUST);
 	/* add channel mask */
 	pcxhr_set_pipe_cmd_params(&rmh, capture, 0, 0,
 				  1 << (channel + pipe->first_audio));
-	/* TODO : if mask (3 << pipe->first_audio) is used, left and right
+	/* TODO : अगर mask (3 << pipe->first_audio) is used, left and right
 	 * channel will be programmed to the same params */
-	if (capture) {
+	अगर (capture) अणु
 		rmh.cmd[0] |= VALID_AUDIO_IO_DIGITAL_LEVEL;
 		/* VALID_AUDIO_IO_MUTE_LEVEL not yet handled
 		 * (capture pipe level) */
 		rmh.cmd[2] = chip->digital_capture_volume[channel];
-	} else {
+	पूर्ण अन्यथा अणु
 		rmh.cmd[0] |=	VALID_AUDIO_IO_MONITOR_LEVEL |
 				VALID_AUDIO_IO_MUTE_MONITOR_1;
 		/* VALID_AUDIO_IO_DIGITAL_LEVEL and VALID_AUDIO_IO_MUTE_LEVEL
 		 * not yet handled (playback pipe level)
 		 */
 		rmh.cmd[2] = chip->monitoring_volume[channel] << 10;
-		if (chip->monitoring_active[channel] == 0)
+		अगर (chip->monitoring_active[channel] == 0)
 			rmh.cmd[2] |= AUDIO_IO_HAS_MUTE_MONITOR_1;
-	}
+	पूर्ण
 	rmh.cmd_len = 3;
 
 	err = pcxhr_send_msg(chip->mgr, &rmh);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_dbg(chip->card->dev,
 			"error update_audio_level(%d) err=%x\n",
 			   chip->chip_idx, err);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /* shared */
-static int pcxhr_digital_vol_info(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक pcxhr_digital_vol_info(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.integer.min = PCXHR_DIGITAL_LEVEL_MIN;   /* -109.5 dB */
-	uinfo->value.integer.max = PCXHR_DIGITAL_LEVEL_MAX;   /*   18.0 dB */
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = PCXHR_DIGITAL_LEVEL_MIN;   /* -109.5 dB */
+	uinfo->value.पूर्णांकeger.max = PCXHR_DIGITAL_LEVEL_MAX;   /*   18.0 dB */
+	वापस 0;
+पूर्ण
 
 
-static int pcxhr_pcm_vol_get(struct snd_kcontrol *kcontrol,
-			     struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);	/* index */
-	int *stored_volume;
-	int is_capture = kcontrol->private_value;
+अटल पूर्णांक pcxhr_pcm_vol_get(काष्ठा snd_kcontrol *kcontrol,
+			     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);	/* index */
+	पूर्णांक *stored_volume;
+	पूर्णांक is_capture = kcontrol->निजी_value;
 
 	mutex_lock(&chip->mgr->mixer_mutex);
-	if (is_capture)		/* digital capture */
+	अगर (is_capture)		/* digital capture */
 		stored_volume = chip->digital_capture_volume;
-	else			/* digital playback */
+	अन्यथा			/* digital playback */
 		stored_volume = chip->digital_playback_volume[idx];
-	ucontrol->value.integer.value[0] = stored_volume[0];
-	ucontrol->value.integer.value[1] = stored_volume[1];
+	ucontrol->value.पूर्णांकeger.value[0] = stored_volume[0];
+	ucontrol->value.पूर्णांकeger.value[1] = stored_volume[1];
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcxhr_pcm_vol_put(struct snd_kcontrol *kcontrol,
-			     struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);	/* index */
-	int changed = 0;
-	int is_capture = kcontrol->private_value;
-	int *stored_volume;
-	int i;
+अटल पूर्णांक pcxhr_pcm_vol_put(काष्ठा snd_kcontrol *kcontrol,
+			     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);	/* index */
+	पूर्णांक changed = 0;
+	पूर्णांक is_capture = kcontrol->निजी_value;
+	पूर्णांक *stored_volume;
+	पूर्णांक i;
 
 	mutex_lock(&chip->mgr->mixer_mutex);
-	if (is_capture)		/* digital capture */
+	अगर (is_capture)		/* digital capture */
 		stored_volume = chip->digital_capture_volume;
-	else			/* digital playback */
+	अन्यथा			/* digital playback */
 		stored_volume = chip->digital_playback_volume[idx];
-	for (i = 0; i < 2; i++) {
-		int vol = ucontrol->value.integer.value[i];
-		if (vol < PCXHR_DIGITAL_LEVEL_MIN ||
+	क्रम (i = 0; i < 2; i++) अणु
+		पूर्णांक vol = ucontrol->value.पूर्णांकeger.value[i];
+		अगर (vol < PCXHR_DIGITAL_LEVEL_MIN ||
 		    vol > PCXHR_DIGITAL_LEVEL_MAX)
-			continue;
-		if (stored_volume[i] != vol) {
+			जारी;
+		अगर (stored_volume[i] != vol) अणु
 			stored_volume[i] = vol;
 			changed = 1;
-			if (is_capture)	/* update capture volume */
+			अगर (is_capture)	/* update capture volume */
 				pcxhr_update_audio_pipe_level(chip, 1, i);
-		}
-	}
-	if (!is_capture && changed)	/* update playback volume */
+		पूर्ण
+	पूर्ण
+	अगर (!is_capture && changed)	/* update playback volume */
 		pcxhr_update_playback_stream_level(chip, idx);
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new snd_pcxhr_pcm_vol =
-{
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new snd_pcxhr_pcm_vol =
+अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access =	(SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			 SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 	/* name will be filled later */
@@ -406,214 +407,214 @@ static const struct snd_kcontrol_new snd_pcxhr_pcm_vol =
 	.info =		pcxhr_digital_vol_info,		/* shared */
 	.get =		pcxhr_pcm_vol_get,
 	.put =		pcxhr_pcm_vol_put,
-	.tlv = { .p = db_scale_digital },
-};
+	.tlv = अणु .p = db_scale_digital पूर्ण,
+पूर्ण;
 
 
-static int pcxhr_pcm_sw_get(struct snd_kcontrol *kcontrol,
-			    struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
+अटल पूर्णांक pcxhr_pcm_sw_get(काष्ठा snd_kcontrol *kcontrol,
+			    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
 
 	mutex_lock(&chip->mgr->mixer_mutex);
-	ucontrol->value.integer.value[0] = chip->digital_playback_active[idx][0];
-	ucontrol->value.integer.value[1] = chip->digital_playback_active[idx][1];
+	ucontrol->value.पूर्णांकeger.value[0] = chip->digital_playback_active[idx][0];
+	ucontrol->value.पूर्णांकeger.value[1] = chip->digital_playback_active[idx][1];
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcxhr_pcm_sw_put(struct snd_kcontrol *kcontrol,
-			    struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	int changed = 0;
-	int idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
-	int i, j;
+अटल पूर्णांक pcxhr_pcm_sw_put(काष्ठा snd_kcontrol *kcontrol,
+			    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक changed = 0;
+	पूर्णांक idx = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id); /* index */
+	पूर्णांक i, j;
 
 	mutex_lock(&chip->mgr->mixer_mutex);
 	j = idx;
-	for (i = 0; i < 2; i++) {
-		if (chip->digital_playback_active[j][i] !=
-		    ucontrol->value.integer.value[i]) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (chip->digital_playback_active[j][i] !=
+		    ucontrol->value.पूर्णांकeger.value[i]) अणु
 			chip->digital_playback_active[j][i] =
-				!!ucontrol->value.integer.value[i];
+				!!ucontrol->value.पूर्णांकeger.value[i];
 			changed = 1;
-		}
-	}
-	if (changed)
+		पूर्ण
+	पूर्ण
+	अगर (changed)
 		pcxhr_update_playback_stream_level(chip, idx);
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new pcxhr_control_pcm_switch = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_pcm_चयन = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =		"PCM Playback Switch",
 	.count =	PCXHR_PLAYBACK_STREAMS,
 	.info =		pcxhr_sw_info,		/* shared */
 	.get =		pcxhr_pcm_sw_get,
 	.put =		pcxhr_pcm_sw_put
-};
+पूर्ण;
 
 
 /*
  * monitoring level control
  */
 
-static int pcxhr_monitor_vol_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक pcxhr_monitor_vol_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
 	mutex_lock(&chip->mgr->mixer_mutex);
-	ucontrol->value.integer.value[0] = chip->monitoring_volume[0];
-	ucontrol->value.integer.value[1] = chip->monitoring_volume[1];
+	ucontrol->value.पूर्णांकeger.value[0] = chip->monitoring_volume[0];
+	ucontrol->value.पूर्णांकeger.value[1] = chip->monitoring_volume[1];
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcxhr_monitor_vol_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	int changed = 0;
-	int i;
+अटल पूर्णांक pcxhr_monitor_vol_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक changed = 0;
+	पूर्णांक i;
 
 	mutex_lock(&chip->mgr->mixer_mutex);
-	for (i = 0; i < 2; i++) {
-		if (chip->monitoring_volume[i] !=
-		    ucontrol->value.integer.value[i]) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (chip->monitoring_volume[i] !=
+		    ucontrol->value.पूर्णांकeger.value[i]) अणु
 			chip->monitoring_volume[i] =
-				ucontrol->value.integer.value[i];
-			if (chip->monitoring_active[i])
+				ucontrol->value.पूर्णांकeger.value[i];
+			अगर (chip->monitoring_active[i])
 				/* update monitoring volume and mute */
-				/* do only when monitoring is unmuted */
+				/* करो only when monitoring is unmuted */
 				pcxhr_update_audio_pipe_level(chip, 0, i);
 			changed = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new pcxhr_control_monitor_vol = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_monitor_vol = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access =	(SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			 SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 	.name =         "Monitoring Playback Volume",
 	.info =		pcxhr_digital_vol_info,		/* shared */
 	.get =		pcxhr_monitor_vol_get,
 	.put =		pcxhr_monitor_vol_put,
-	.tlv = { .p = db_scale_digital },
-};
+	.tlv = अणु .p = db_scale_digital पूर्ण,
+पूर्ण;
 
 /*
- * monitoring switch control
+ * monitoring चयन control
  */
 
-static int pcxhr_monitor_sw_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक pcxhr_monitor_sw_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
 	mutex_lock(&chip->mgr->mixer_mutex);
-	ucontrol->value.integer.value[0] = chip->monitoring_active[0];
-	ucontrol->value.integer.value[1] = chip->monitoring_active[1];
+	ucontrol->value.पूर्णांकeger.value[0] = chip->monitoring_active[0];
+	ucontrol->value.पूर्णांकeger.value[1] = chip->monitoring_active[1];
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcxhr_monitor_sw_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	int changed = 0;
-	int i;
+अटल पूर्णांक pcxhr_monitor_sw_put(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक changed = 0;
+	पूर्णांक i;
 
 	mutex_lock(&chip->mgr->mixer_mutex);
-	for (i = 0; i < 2; i++) {
-		if (chip->monitoring_active[i] !=
-		    ucontrol->value.integer.value[i]) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (chip->monitoring_active[i] !=
+		    ucontrol->value.पूर्णांकeger.value[i]) अणु
 			chip->monitoring_active[i] =
-				!!ucontrol->value.integer.value[i];
+				!!ucontrol->value.पूर्णांकeger.value[i];
 			changed |= (1<<i); /* mask 0x01 and 0x02 */
-		}
-	}
-	if (changed & 0x01)
+		पूर्ण
+	पूर्ण
+	अगर (changed & 0x01)
 		/* update left monitoring volume and mute */
 		pcxhr_update_audio_pipe_level(chip, 0, 0);
-	if (changed & 0x02)
+	अगर (changed & 0x02)
 		/* update right monitoring volume and mute */
 		pcxhr_update_audio_pipe_level(chip, 0, 1);
 
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return (changed != 0);
-}
+	वापस (changed != 0);
+पूर्ण
 
-static const struct snd_kcontrol_new pcxhr_control_monitor_sw = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_monitor_sw = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Monitoring Playback Switch",
 	.info =         pcxhr_sw_info,		/* shared */
 	.get =          pcxhr_monitor_sw_get,
 	.put =          pcxhr_monitor_sw_put
-};
+पूर्ण;
 
 
 
 /*
  * audio source select
  */
-#define PCXHR_SOURCE_AUDIO01_UER	0x000100
-#define PCXHR_SOURCE_AUDIO01_SYNC	0x000200
-#define PCXHR_SOURCE_AUDIO23_UER	0x000400
-#define PCXHR_SOURCE_AUDIO45_UER	0x001000
-#define PCXHR_SOURCE_AUDIO67_UER	0x040000
+#घोषणा PCXHR_SOURCE_AUDIO01_UER	0x000100
+#घोषणा PCXHR_SOURCE_AUDIO01_SYNC	0x000200
+#घोषणा PCXHR_SOURCE_AUDIO23_UER	0x000400
+#घोषणा PCXHR_SOURCE_AUDIO45_UER	0x001000
+#घोषणा PCXHR_SOURCE_AUDIO67_UER	0x040000
 
-static int pcxhr_set_audio_source(struct snd_pcxhr* chip)
-{
-	struct pcxhr_rmh rmh;
-	unsigned int mask, reg;
-	unsigned int codec;
-	int err, changed;
+अटल पूर्णांक pcxhr_set_audio_source(काष्ठा snd_pcxhr* chip)
+अणु
+	काष्ठा pcxhr_rmh rmh;
+	अचिन्हित पूर्णांक mask, reg;
+	अचिन्हित पूर्णांक codec;
+	पूर्णांक err, changed;
 
-	switch (chip->chip_idx) {
-	case 0 : mask = PCXHR_SOURCE_AUDIO01_UER; codec = CS8420_01_CS; break;
-	case 1 : mask = PCXHR_SOURCE_AUDIO23_UER; codec = CS8420_23_CS; break;
-	case 2 : mask = PCXHR_SOURCE_AUDIO45_UER; codec = CS8420_45_CS; break;
-	case 3 : mask = PCXHR_SOURCE_AUDIO67_UER; codec = CS8420_67_CS; break;
-	default: return -EINVAL;
-	}
-	if (chip->audio_capture_source != 0) {
+	चयन (chip->chip_idx) अणु
+	हाल 0 : mask = PCXHR_SOURCE_AUDIO01_UER; codec = CS8420_01_CS; अवरोध;
+	हाल 1 : mask = PCXHR_SOURCE_AUDIO23_UER; codec = CS8420_23_CS; अवरोध;
+	हाल 2 : mask = PCXHR_SOURCE_AUDIO45_UER; codec = CS8420_45_CS; अवरोध;
+	हाल 3 : mask = PCXHR_SOURCE_AUDIO67_UER; codec = CS8420_67_CS; अवरोध;
+	शेष: वापस -EINVAL;
+	पूर्ण
+	अगर (chip->audio_capture_source != 0) अणु
 		reg = mask;	/* audio source from digital plug */
-	} else {
+	पूर्ण अन्यथा अणु
 		reg = 0;	/* audio source from analog plug */
-	}
+	पूर्ण
 	/* set the input source */
-	pcxhr_write_io_num_reg_cont(chip->mgr, mask, reg, &changed);
+	pcxhr_ग_लिखो_io_num_reg_cont(chip->mgr, mask, reg, &changed);
 	/* resync them (otherwise channel inversion possible) */
-	if (changed) {
+	अगर (changed) अणु
 		pcxhr_init_rmh(&rmh, CMD_RESYNC_AUDIO_INPUTS);
 		rmh.cmd[0] |= (1 << chip->chip_idx);
 		err = pcxhr_send_msg(chip->mgr, &rmh);
-		if (err)
-			return err;
-	}
-	if (chip->mgr->board_aes_in_192k) {
-		int i;
-		unsigned int src_config = 0xC0;
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (chip->mgr->board_aes_in_192k) अणु
+		पूर्णांक i;
+		अचिन्हित पूर्णांक src_config = 0xC0;
 		/* update all src configs with one call */
-		for (i = 0; (i < 4) && (i < chip->mgr->capture_chips); i++) {
-			if (chip->mgr->chip[i]->audio_capture_source == 2)
+		क्रम (i = 0; (i < 4) && (i < chip->mgr->capture_chips); i++) अणु
+			अगर (chip->mgr->chip[i]->audio_capture_source == 2)
 				src_config |= (1 << (3 - i));
-		}
+		पूर्ण
 		/* set codec SRC on off */
 		pcxhr_init_rmh(&rmh, CMD_ACCESS_IO_WRITE);
 		rmh.cmd_len = 2;
 		rmh.cmd[0] |= IO_NUM_REG_CONFIG_SRC;
 		rmh.cmd[1] = src_config;
 		err = pcxhr_send_msg(chip->mgr, &rmh);
-	} else {
-		int use_src = 0;
-		if (chip->audio_capture_source == 2)
+	पूर्ण अन्यथा अणु
+		पूर्णांक use_src = 0;
+		अगर (chip->audio_capture_source == 2)
 			use_src = 1;
 		/* set codec SRC on off */
 		pcxhr_init_rmh(&rmh, CMD_ACCESS_IO_WRITE);
@@ -623,79 +624,79 @@ static int pcxhr_set_audio_source(struct snd_pcxhr* chip)
 		rmh.cmd[2] = ((CS8420_DATA_FLOW_CTL & CHIP_SIG_AND_MAP_SPI) |
 			      (use_src ? 0x41 : 0x54));
 		err = pcxhr_send_msg(chip->mgr, &rmh);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		rmh.cmd[2] = ((CS8420_CLOCK_SRC_CTL & CHIP_SIG_AND_MAP_SPI) |
 			      (use_src ? 0x41 : 0x49));
 		err = pcxhr_send_msg(chip->mgr, &rmh);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int pcxhr_audio_src_info(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_info *uinfo)
-{
-	static const char *texts[5] = {
+अटल पूर्णांक pcxhr_audio_src_info(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर *texts[5] = अणु
 		"Line", "Digital", "Digi+SRC", "Mic", "Line+Mic"
-	};
-	int i;
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्ण;
+	पूर्णांक i;
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
 
 	i = 2;			/* no SRC, no Mic available */
-	if (chip->mgr->board_has_aes1) {
+	अगर (chip->mgr->board_has_aes1) अणु
 		i = 3;		/* SRC available */
-		if (chip->mgr->board_has_mic)
+		अगर (chip->mgr->board_has_mic)
 			i = 5;	/* Mic and MicroMix available */
-	}
-	return snd_ctl_enum_info(uinfo, 1, i, texts);
-}
+	पूर्ण
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, i, texts);
+पूर्ण
 
-static int pcxhr_audio_src_get(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	ucontrol->value.enumerated.item[0] = chip->audio_capture_source;
-	return 0;
-}
+अटल पूर्णांक pcxhr_audio_src_get(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	ucontrol->value.क्रमागतerated.item[0] = chip->audio_capture_source;
+	वापस 0;
+पूर्ण
 
-static int pcxhr_audio_src_put(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	int ret = 0;
-	int i = 2;		/* no SRC, no Mic available */
-	if (chip->mgr->board_has_aes1) {
+अटल पूर्णांक pcxhr_audio_src_put(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक ret = 0;
+	पूर्णांक i = 2;		/* no SRC, no Mic available */
+	अगर (chip->mgr->board_has_aes1) अणु
 		i = 3;		/* SRC available */
-		if (chip->mgr->board_has_mic)
+		अगर (chip->mgr->board_has_mic)
 			i = 5;	/* Mic and MicroMix available */
-	}
-	if (ucontrol->value.enumerated.item[0] >= i)
-		return -EINVAL;
+	पूर्ण
+	अगर (ucontrol->value.क्रमागतerated.item[0] >= i)
+		वापस -EINVAL;
 	mutex_lock(&chip->mgr->mixer_mutex);
-	if (chip->audio_capture_source != ucontrol->value.enumerated.item[0]) {
-		chip->audio_capture_source = ucontrol->value.enumerated.item[0];
-		if (chip->mgr->is_hr_stereo)
+	अगर (chip->audio_capture_source != ucontrol->value.क्रमागतerated.item[0]) अणु
+		chip->audio_capture_source = ucontrol->value.क्रमागतerated.item[0];
+		अगर (chip->mgr->is_hr_stereo)
 			hr222_set_audio_source(chip);
-		else
+		अन्यथा
 			pcxhr_set_audio_source(chip);
 		ret = 1;
-	}
+	पूर्ण
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct snd_kcontrol_new pcxhr_control_audio_src = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_audio_src = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =		"Capture Source",
 	.info =		pcxhr_audio_src_info,
 	.get =		pcxhr_audio_src_get,
 	.put =		pcxhr_audio_src_put,
-};
+पूर्ण;
 
 
 /*
- * clock type selection
- * enum pcxhr_clock_type {
+ * घड़ी type selection
+ * क्रमागत pcxhr_घड़ी_प्रकारype अणु
  *	PCXHR_CLOCK_TYPE_INTERNAL = 0,
  *	PCXHR_CLOCK_TYPE_WORD_CLOCK,
  *	PCXHR_CLOCK_TYPE_AES_SYNC,
@@ -708,258 +709,258 @@ static const struct snd_kcontrol_new pcxhr_control_audio_src = {
  *	HR22_CLOCK_TYPE_AES_SYNC,
  *	HR22_CLOCK_TYPE_AES_1,
  *	HR22_CLOCK_TYPE_MAX = HR22_CLOCK_TYPE_AES_1,
- * };
+ * पूर्ण;
  */
 
-static int pcxhr_clock_type_info(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_info *uinfo)
-{
-	static const char *textsPCXHR[7] = {
+अटल पूर्णांक pcxhr_घड़ी_प्रकारype_info(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर *textsPCXHR[7] = अणु
 		"Internal", "WordClock", "AES Sync",
 		"AES 1", "AES 2", "AES 3", "AES 4"
-	};
-	static const char *textsHR22[3] = {
+	पूर्ण;
+	अटल स्थिर अक्षर *textsHR22[3] = अणु
 		"Internal", "AES Sync", "AES 1"
-	};
-	const char **texts;
-	struct pcxhr_mgr *mgr = snd_kcontrol_chip(kcontrol);
-	int clock_items = 2;	/* at least Internal and AES Sync clock */
-	if (mgr->board_has_aes1) {
-		clock_items += mgr->capture_chips;	/* add AES x */
-		if (!mgr->is_hr_stereo)
-			clock_items += 1;		/* add word clock */
-	}
-	if (mgr->is_hr_stereo) {
+	पूर्ण;
+	स्थिर अक्षर **texts;
+	काष्ठा pcxhr_mgr *mgr = snd_kcontrol_chip(kcontrol);
+	पूर्णांक घड़ी_items = 2;	/* at least Internal and AES Sync घड़ी */
+	अगर (mgr->board_has_aes1) अणु
+		घड़ी_items += mgr->capture_chips;	/* add AES x */
+		अगर (!mgr->is_hr_stereo)
+			घड़ी_items += 1;		/* add word घड़ी */
+	पूर्ण
+	अगर (mgr->is_hr_stereo) अणु
 		texts = textsHR22;
-		snd_BUG_ON(clock_items > (HR22_CLOCK_TYPE_MAX+1));
-	} else {
+		snd_BUG_ON(घड़ी_items > (HR22_CLOCK_TYPE_MAX+1));
+	पूर्ण अन्यथा अणु
 		texts = textsPCXHR;
-		snd_BUG_ON(clock_items > (PCXHR_CLOCK_TYPE_MAX+1));
-	}
-	return snd_ctl_enum_info(uinfo, 1, clock_items, texts);
-}
+		snd_BUG_ON(घड़ी_items > (PCXHR_CLOCK_TYPE_MAX+1));
+	पूर्ण
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, घड़ी_items, texts);
+पूर्ण
 
-static int pcxhr_clock_type_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct pcxhr_mgr *mgr = snd_kcontrol_chip(kcontrol);
-	ucontrol->value.enumerated.item[0] = mgr->use_clock_type;
-	return 0;
-}
+अटल पूर्णांक pcxhr_घड़ी_प्रकारype_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा pcxhr_mgr *mgr = snd_kcontrol_chip(kcontrol);
+	ucontrol->value.क्रमागतerated.item[0] = mgr->use_घड़ी_प्रकारype;
+	वापस 0;
+पूर्ण
 
-static int pcxhr_clock_type_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct pcxhr_mgr *mgr = snd_kcontrol_chip(kcontrol);
-	int rate, ret = 0;
-	unsigned int clock_items = 2; /* at least Internal and AES Sync clock */
-	if (mgr->board_has_aes1) {
-		clock_items += mgr->capture_chips;	/* add AES x */
-		if (!mgr->is_hr_stereo)
-			clock_items += 1;		/* add word clock */
-	}
-	if (ucontrol->value.enumerated.item[0] >= clock_items)
-		return -EINVAL;
+अटल पूर्णांक pcxhr_घड़ी_प्रकारype_put(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा pcxhr_mgr *mgr = snd_kcontrol_chip(kcontrol);
+	पूर्णांक rate, ret = 0;
+	अचिन्हित पूर्णांक घड़ी_items = 2; /* at least Internal and AES Sync घड़ी */
+	अगर (mgr->board_has_aes1) अणु
+		घड़ी_items += mgr->capture_chips;	/* add AES x */
+		अगर (!mgr->is_hr_stereo)
+			घड़ी_items += 1;		/* add word घड़ी */
+	पूर्ण
+	अगर (ucontrol->value.क्रमागतerated.item[0] >= घड़ी_items)
+		वापस -EINVAL;
 	mutex_lock(&mgr->mixer_mutex);
-	if (mgr->use_clock_type != ucontrol->value.enumerated.item[0]) {
+	अगर (mgr->use_घड़ी_प्रकारype != ucontrol->value.क्रमागतerated.item[0]) अणु
 		mutex_lock(&mgr->setup_mutex);
-		mgr->use_clock_type = ucontrol->value.enumerated.item[0];
+		mgr->use_घड़ी_प्रकारype = ucontrol->value.क्रमागतerated.item[0];
 		rate = 0;
-		if (mgr->use_clock_type != PCXHR_CLOCK_TYPE_INTERNAL) {
-			pcxhr_get_external_clock(mgr, mgr->use_clock_type,
+		अगर (mgr->use_घड़ी_प्रकारype != PCXHR_CLOCK_TYPE_INTERNAL) अणु
+			pcxhr_get_बाह्यal_घड़ी(mgr, mgr->use_घड़ी_प्रकारype,
 						 &rate);
-		} else {
+		पूर्ण अन्यथा अणु
 			rate = mgr->sample_rate;
-			if (!rate)
+			अगर (!rate)
 				rate = 48000;
-		}
-		if (rate) {
-			pcxhr_set_clock(mgr, rate);
-			if (mgr->sample_rate)
+		पूर्ण
+		अगर (rate) अणु
+			pcxhr_set_घड़ी(mgr, rate);
+			अगर (mgr->sample_rate)
 				mgr->sample_rate = rate;
-		}
+		पूर्ण
 		mutex_unlock(&mgr->setup_mutex);
-		ret = 1; /* return 1 even if the set was not done. ok ? */
-	}
+		ret = 1; /* वापस 1 even अगर the set was not करोne. ok ? */
+	पूर्ण
 	mutex_unlock(&mgr->mixer_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct snd_kcontrol_new pcxhr_control_clock_type = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_घड़ी_प्रकारype = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =		"Clock Mode",
-	.info =		pcxhr_clock_type_info,
-	.get =		pcxhr_clock_type_get,
-	.put =		pcxhr_clock_type_put,
-};
+	.info =		pcxhr_घड़ी_प्रकारype_info,
+	.get =		pcxhr_घड़ी_प्रकारype_get,
+	.put =		pcxhr_घड़ी_प्रकारype_put,
+पूर्ण;
 
 /*
- * clock rate control
- * specific control that scans the sample rates on the external plugs
+ * घड़ी rate control
+ * specअगरic control that scans the sample rates on the बाह्यal plugs
  */
-static int pcxhr_clock_rate_info(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_info *uinfo)
-{
-	struct pcxhr_mgr *mgr = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक pcxhr_घड़ी_rate_info(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	काष्ठा pcxhr_mgr *mgr = snd_kcontrol_chip(kcontrol);
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 3 + mgr->capture_chips;
-	uinfo->value.integer.min = 0;		/* clock not present */
-	uinfo->value.integer.max = 192000;	/* max sample rate 192 kHz */
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;		/* घड़ी not present */
+	uinfo->value.पूर्णांकeger.max = 192000;	/* max sample rate 192 kHz */
+	वापस 0;
+पूर्ण
 
-static int pcxhr_clock_rate_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct pcxhr_mgr *mgr = snd_kcontrol_chip(kcontrol);
-	int i, err, rate;
+अटल पूर्णांक pcxhr_घड़ी_rate_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा pcxhr_mgr *mgr = snd_kcontrol_chip(kcontrol);
+	पूर्णांक i, err, rate;
 
 	mutex_lock(&mgr->mixer_mutex);
-	for(i = 0; i < 3 + mgr->capture_chips; i++) {
-		if (i == PCXHR_CLOCK_TYPE_INTERNAL)
+	क्रम(i = 0; i < 3 + mgr->capture_chips; i++) अणु
+		अगर (i == PCXHR_CLOCK_TYPE_INTERNAL)
 			rate = mgr->sample_rate_real;
-		else {
-			err = pcxhr_get_external_clock(mgr, i, &rate);
-			if (err)
-				break;
-		}
-		ucontrol->value.integer.value[i] = rate;
-	}
+		अन्यथा अणु
+			err = pcxhr_get_बाह्यal_घड़ी(mgr, i, &rate);
+			अगर (err)
+				अवरोध;
+		पूर्ण
+		ucontrol->value.पूर्णांकeger.value[i] = rate;
+	पूर्ण
 	mutex_unlock(&mgr->mixer_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_kcontrol_new pcxhr_control_clock_rate = {
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_घड़ी_rate = अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.iface =	SNDRV_CTL_ELEM_IFACE_CARD,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_CARD,
 	.name =		"Clock Rates",
-	.info =		pcxhr_clock_rate_info,
-	.get =		pcxhr_clock_rate_get,
-};
+	.info =		pcxhr_घड़ी_rate_info,
+	.get =		pcxhr_घड़ी_rate_get,
+पूर्ण;
 
 /*
  * IEC958 status bits
  */
-static int pcxhr_iec958_info(struct snd_kcontrol *kcontrol,
-			     struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक pcxhr_iec958_info(काष्ठा snd_kcontrol *kcontrol,
+			     काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcxhr_iec958_capture_byte(struct snd_pcxhr *chip,
-				     int aes_idx, unsigned char *aes_bits)
-{
-	int i, err;
-	unsigned char temp;
-	struct pcxhr_rmh rmh;
+अटल पूर्णांक pcxhr_iec958_capture_byte(काष्ठा snd_pcxhr *chip,
+				     पूर्णांक aes_idx, अचिन्हित अक्षर *aes_bits)
+अणु
+	पूर्णांक i, err;
+	अचिन्हित अक्षर temp;
+	काष्ठा pcxhr_rmh rmh;
 
 	pcxhr_init_rmh(&rmh, CMD_ACCESS_IO_READ);
 	rmh.cmd[0] |= IO_NUM_UER_CHIP_REG;
-	switch (chip->chip_idx) {
-	  /* instead of CS8420_01_CS use CS8416_01_CS for AES SYNC plug */
-	case 0:	rmh.cmd[1] = CS8420_01_CS; break;
-	case 1:	rmh.cmd[1] = CS8420_23_CS; break;
-	case 2:	rmh.cmd[1] = CS8420_45_CS; break;
-	case 3:	rmh.cmd[1] = CS8420_67_CS; break;
-	default: return -EINVAL;
-	}
-	if (chip->mgr->board_aes_in_192k) {
-		switch (aes_idx) {
-		case 0:	rmh.cmd[2] = CS8416_CSB0; break;
-		case 1:	rmh.cmd[2] = CS8416_CSB1; break;
-		case 2:	rmh.cmd[2] = CS8416_CSB2; break;
-		case 3:	rmh.cmd[2] = CS8416_CSB3; break;
-		case 4:	rmh.cmd[2] = CS8416_CSB4; break;
-		default: return -EINVAL;
-		}
-	} else {
-		switch (aes_idx) {
-		  /* instead of CS8420_CSB0 use CS8416_CSBx for AES SYNC plug */
-		case 0:	rmh.cmd[2] = CS8420_CSB0; break;
-		case 1:	rmh.cmd[2] = CS8420_CSB1; break;
-		case 2:	rmh.cmd[2] = CS8420_CSB2; break;
-		case 3:	rmh.cmd[2] = CS8420_CSB3; break;
-		case 4:	rmh.cmd[2] = CS8420_CSB4; break;
-		default: return -EINVAL;
-		}
-	}
-	/* size and code the chip id for the fpga */
+	चयन (chip->chip_idx) अणु
+	  /* instead of CS8420_01_CS use CS8416_01_CS क्रम AES SYNC plug */
+	हाल 0:	rmh.cmd[1] = CS8420_01_CS; अवरोध;
+	हाल 1:	rmh.cmd[1] = CS8420_23_CS; अवरोध;
+	हाल 2:	rmh.cmd[1] = CS8420_45_CS; अवरोध;
+	हाल 3:	rmh.cmd[1] = CS8420_67_CS; अवरोध;
+	शेष: वापस -EINVAL;
+	पूर्ण
+	अगर (chip->mgr->board_aes_in_192k) अणु
+		चयन (aes_idx) अणु
+		हाल 0:	rmh.cmd[2] = CS8416_CSB0; अवरोध;
+		हाल 1:	rmh.cmd[2] = CS8416_CSB1; अवरोध;
+		हाल 2:	rmh.cmd[2] = CS8416_CSB2; अवरोध;
+		हाल 3:	rmh.cmd[2] = CS8416_CSB3; अवरोध;
+		हाल 4:	rmh.cmd[2] = CS8416_CSB4; अवरोध;
+		शेष: वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (aes_idx) अणु
+		  /* instead of CS8420_CSB0 use CS8416_CSBx क्रम AES SYNC plug */
+		हाल 0:	rmh.cmd[2] = CS8420_CSB0; अवरोध;
+		हाल 1:	rmh.cmd[2] = CS8420_CSB1; अवरोध;
+		हाल 2:	rmh.cmd[2] = CS8420_CSB2; अवरोध;
+		हाल 3:	rmh.cmd[2] = CS8420_CSB3; अवरोध;
+		हाल 4:	rmh.cmd[2] = CS8420_CSB4; अवरोध;
+		शेष: वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	/* size and code the chip id क्रम the fpga */
 	rmh.cmd[1] &= 0x0fffff;
-	/* chip signature + map for spi read */
+	/* chip signature + map क्रम spi पढ़ो */
 	rmh.cmd[2] &= CHIP_SIG_AND_MAP_SPI;
 	rmh.cmd_len = 3;
 	err = pcxhr_send_msg(chip->mgr, &rmh);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (chip->mgr->board_aes_in_192k) {
-		temp = (unsigned char)rmh.stat[1];
-	} else {
+	अगर (chip->mgr->board_aes_in_192k) अणु
+		temp = (अचिन्हित अक्षर)rmh.stat[1];
+	पूर्ण अन्यथा अणु
 		temp = 0;
 		/* reversed bit order (not with CS8416_01_CS) */
-		for (i = 0; i < 8; i++) {
+		क्रम (i = 0; i < 8; i++) अणु
 			temp <<= 1;
-			if (rmh.stat[1] & (1 << i))
+			अगर (rmh.stat[1] & (1 << i))
 				temp |= 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	dev_dbg(chip->card->dev, "read iec958 AES %d byte %d = 0x%x\n",
 		    chip->chip_idx, aes_idx, temp);
 	*aes_bits = temp;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcxhr_iec958_get(struct snd_kcontrol *kcontrol,
-			    struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	unsigned char aes_bits;
-	int i, err;
+अटल पूर्णांक pcxhr_iec958_get(काष्ठा snd_kcontrol *kcontrol,
+			    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	अचिन्हित अक्षर aes_bits;
+	पूर्णांक i, err;
 
 	mutex_lock(&chip->mgr->mixer_mutex);
-	for(i = 0; i < 5; i++) {
-		if (kcontrol->private_value == 0)	/* playback */
+	क्रम(i = 0; i < 5; i++) अणु
+		अगर (kcontrol->निजी_value == 0)	/* playback */
 			aes_bits = chip->aes_bits[i];
-		else {				/* capture */
-			if (chip->mgr->is_hr_stereo)
+		अन्यथा अणु				/* capture */
+			अगर (chip->mgr->is_hr_stereo)
 				err = hr222_iec958_capture_byte(chip, i,
 								&aes_bits);
-			else
+			अन्यथा
 				err = pcxhr_iec958_capture_byte(chip, i,
 								&aes_bits);
-			if (err)
-				break;
-		}
+			अगर (err)
+				अवरोध;
+		पूर्ण
 		ucontrol->value.iec958.status[i] = aes_bits;
-	}
+	पूर्ण
 	mutex_unlock(&chip->mgr->mixer_mutex);
-        return 0;
-}
+        वापस 0;
+पूर्ण
 
-static int pcxhr_iec958_mask_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	int i;
-	for (i = 0; i < 5; i++)
+अटल पूर्णांक pcxhr_iec958_mask_get(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < 5; i++)
 		ucontrol->value.iec958.status[i] = 0xff;
-        return 0;
-}
+        वापस 0;
+पूर्ण
 
-static int pcxhr_iec958_update_byte(struct snd_pcxhr *chip,
-				    int aes_idx, unsigned char aes_bits)
-{
-	int i, err, cmd;
-	unsigned char new_bits = aes_bits;
-	unsigned char old_bits = chip->aes_bits[aes_idx];
-	struct pcxhr_rmh rmh;
+अटल पूर्णांक pcxhr_iec958_update_byte(काष्ठा snd_pcxhr *chip,
+				    पूर्णांक aes_idx, अचिन्हित अक्षर aes_bits)
+अणु
+	पूर्णांक i, err, cmd;
+	अचिन्हित अक्षर new_bits = aes_bits;
+	अचिन्हित अक्षर old_bits = chip->aes_bits[aes_idx];
+	काष्ठा pcxhr_rmh rmh;
 
-	for (i = 0; i < 8; i++) {
-		if ((old_bits & 0x01) != (new_bits & 0x01)) {
+	क्रम (i = 0; i < 8; i++) अणु
+		अगर ((old_bits & 0x01) != (new_bits & 0x01)) अणु
 			cmd = chip->chip_idx & 0x03;      /* chip index 0..3 */
-			if (chip->chip_idx > 3)
-				/* new bit used if chip_idx>3 (PCX1222HR) */
+			अगर (chip->chip_idx > 3)
+				/* new bit used अगर chip_idx>3 (PCX1222HR) */
 				cmd |= 1 << 22;
 			cmd |= ((aes_idx << 3) + i) << 2; /* add bit offset */
 			cmd |= (new_bits & 0x01) << 23;   /* add bit value */
@@ -971,276 +972,276 @@ static int pcxhr_iec958_update_byte(struct snd_pcxhr *chip,
 				"write iec958 AES %d byte %d bit %d (cmd %x)\n",
 				    chip->chip_idx, aes_idx, i, cmd);
 			err = pcxhr_send_msg(chip->mgr, &rmh);
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 		old_bits >>= 1;
 		new_bits >>= 1;
-	}
+	पूर्ण
 	chip->aes_bits[aes_idx] = aes_bits;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcxhr_iec958_put(struct snd_kcontrol *kcontrol,
-			    struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
-	int i, changed = 0;
+अटल पूर्णांक pcxhr_iec958_put(काष्ठा snd_kcontrol *kcontrol,
+			    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_pcxhr *chip = snd_kcontrol_chip(kcontrol);
+	पूर्णांक i, changed = 0;
 
 	/* playback */
 	mutex_lock(&chip->mgr->mixer_mutex);
-	for (i = 0; i < 5; i++) {
-		if (ucontrol->value.iec958.status[i] != chip->aes_bits[i]) {
-			if (chip->mgr->is_hr_stereo)
+	क्रम (i = 0; i < 5; i++) अणु
+		अगर (ucontrol->value.iec958.status[i] != chip->aes_bits[i]) अणु
+			अगर (chip->mgr->is_hr_stereo)
 				hr222_iec958_update_byte(chip, i,
 					ucontrol->value.iec958.status[i]);
-			else
+			अन्यथा
 				pcxhr_iec958_update_byte(chip, i,
 					ucontrol->value.iec958.status[i]);
 			changed = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&chip->mgr->mixer_mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new pcxhr_control_playback_iec958_mask = {
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_playback_iec958_mask = अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,MASK),
 	.info =		pcxhr_iec958_info,
 	.get =		pcxhr_iec958_mask_get
-};
-static const struct snd_kcontrol_new pcxhr_control_playback_iec958 = {
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_playback_iec958 = अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         SNDRV_CTL_NAME_IEC958("",PLAYBACK,DEFAULT),
 	.info =         pcxhr_iec958_info,
 	.get =          pcxhr_iec958_get,
 	.put =          pcxhr_iec958_put,
-	.private_value = 0 /* playback */
-};
+	.निजी_value = 0 /* playback */
+पूर्ण;
 
-static const struct snd_kcontrol_new pcxhr_control_capture_iec958_mask = {
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_capture_iec958_mask = अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",CAPTURE,MASK),
 	.info =		pcxhr_iec958_info,
 	.get =		pcxhr_iec958_mask_get
-};
-static const struct snd_kcontrol_new pcxhr_control_capture_iec958 = {
+पूर्ण;
+अटल स्थिर काष्ठा snd_kcontrol_new pcxhr_control_capture_iec958 = अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =         SNDRV_CTL_NAME_IEC958("",CAPTURE,DEFAULT),
 	.info =         pcxhr_iec958_info,
 	.get =          pcxhr_iec958_get,
-	.private_value = 1 /* capture */
-};
+	.निजी_value = 1 /* capture */
+पूर्ण;
 
-static void pcxhr_init_audio_levels(struct snd_pcxhr *chip)
-{
-	int i;
+अटल व्योम pcxhr_init_audio_levels(काष्ठा snd_pcxhr *chip)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
-		if (chip->nb_streams_play) {
-			int j;
-			/* at boot time the digital volumes are unmuted 0dB */
-			for (j = 0; j < PCXHR_PLAYBACK_STREAMS; j++) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (chip->nb_streams_play) अणु
+			पूर्णांक j;
+			/* at boot समय the digital volumes are unmuted 0dB */
+			क्रम (j = 0; j < PCXHR_PLAYBACK_STREAMS; j++) अणु
 				chip->digital_playback_active[j][i] = 1;
 				chip->digital_playback_volume[j][i] =
 					PCXHR_DIGITAL_ZERO_LEVEL;
-			}
+			पूर्ण
 			/* after boot, only two bits are set on the uer
-			 * interface
+			 * पूर्णांकerface
 			 */
 			chip->aes_bits[0] = (IEC958_AES0_PROFESSIONAL |
 					     IEC958_AES0_PRO_FS_48000);
-#ifdef CONFIG_SND_DEBUG
-			/* analog volumes for playback
+#अगर_घोषित CONFIG_SND_DEBUG
+			/* analog volumes क्रम playback
 			 * (is LEVEL_MIN after boot)
 			 */
 			chip->analog_playback_active[i] = 1;
-			if (chip->mgr->is_hr_stereo)
+			अगर (chip->mgr->is_hr_stereo)
 				chip->analog_playback_volume[i] =
 					HR222_LINE_PLAYBACK_ZERO_LEVEL;
-			else {
+			अन्यथा अणु
 				chip->analog_playback_volume[i] =
 					PCXHR_LINE_PLAYBACK_ZERO_LEVEL;
 				pcxhr_update_analog_audio_level(chip, 0, i);
-			}
-#endif
+			पूर्ण
+#पूर्ण_अगर
 			/* stereo cards need to be initialised after boot */
-			if (chip->mgr->is_hr_stereo)
+			अगर (chip->mgr->is_hr_stereo)
 				hr222_update_analog_audio_level(chip, 0, i);
-		}
-		if (chip->nb_streams_capt) {
-			/* at boot time the digital volumes are unmuted 0dB */
+		पूर्ण
+		अगर (chip->nb_streams_capt) अणु
+			/* at boot समय the digital volumes are unmuted 0dB */
 			chip->digital_capture_volume[i] =
 				PCXHR_DIGITAL_ZERO_LEVEL;
 			chip->analog_capture_active = 1;
-#ifdef CONFIG_SND_DEBUG
-			/* analog volumes for playback
+#अगर_घोषित CONFIG_SND_DEBUG
+			/* analog volumes क्रम playback
 			 * (is LEVEL_MIN after boot)
 			 */
-			if (chip->mgr->is_hr_stereo)
+			अगर (chip->mgr->is_hr_stereo)
 				chip->analog_capture_volume[i] =
 					HR222_LINE_CAPTURE_ZERO_LEVEL;
-			else {
+			अन्यथा अणु
 				chip->analog_capture_volume[i] =
 					PCXHR_LINE_CAPTURE_ZERO_LEVEL;
 				pcxhr_update_analog_audio_level(chip, 1, i);
-			}
-#endif
+			पूर्ण
+#पूर्ण_अगर
 			/* stereo cards need to be initialised after boot */
-			if (chip->mgr->is_hr_stereo)
+			अगर (chip->mgr->is_hr_stereo)
 				hr222_update_analog_audio_level(chip, 1, i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 
-int pcxhr_create_mixer(struct pcxhr_mgr *mgr)
-{
-	struct snd_pcxhr *chip;
-	int err, i;
+पूर्णांक pcxhr_create_mixer(काष्ठा pcxhr_mgr *mgr)
+अणु
+	काष्ठा snd_pcxhr *chip;
+	पूर्णांक err, i;
 
 	mutex_init(&mgr->mixer_mutex); /* can be in another place */
 
-	for (i = 0; i < mgr->num_cards; i++) {
-		struct snd_kcontrol_new temp;
+	क्रम (i = 0; i < mgr->num_cards; i++) अणु
+		काष्ठा snd_kcontrol_new temp;
 		chip = mgr->chip[i];
 
-		if (chip->nb_streams_play) {
+		अगर (chip->nb_streams_play) अणु
 			/* analog output level control */
 			temp = pcxhr_control_analog_level;
 			temp.name = "Master Playback Volume";
-			temp.private_value = 0; /* playback */
-			if (mgr->is_hr_stereo)
+			temp.निजी_value = 0; /* playback */
+			अगर (mgr->is_hr_stereo)
 				temp.tlv.p = db_scale_a_hr222_playback;
-			else
+			अन्यथा
 				temp.tlv.p = db_scale_analog_playback;
 			err = snd_ctl_add(chip->card,
 					  snd_ctl_new1(&temp, chip));
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
 			/* output mute controls */
 			err = snd_ctl_add(chip->card,
-				snd_ctl_new1(&pcxhr_control_output_switch,
+				snd_ctl_new1(&pcxhr_control_output_चयन,
 					     chip));
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
 			temp = snd_pcxhr_pcm_vol;
 			temp.name = "PCM Playback Volume";
 			temp.count = PCXHR_PLAYBACK_STREAMS;
-			temp.private_value = 0; /* playback */
+			temp.निजी_value = 0; /* playback */
 			err = snd_ctl_add(chip->card,
 					  snd_ctl_new1(&temp, chip));
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
 			err = snd_ctl_add(chip->card,
-				snd_ctl_new1(&pcxhr_control_pcm_switch, chip));
-			if (err < 0)
-				return err;
+				snd_ctl_new1(&pcxhr_control_pcm_चयन, chip));
+			अगर (err < 0)
+				वापस err;
 
 			/* IEC958 controls */
 			err = snd_ctl_add(chip->card,
 				snd_ctl_new1(&pcxhr_control_playback_iec958_mask,
 					     chip));
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
 			err = snd_ctl_add(chip->card,
 				snd_ctl_new1(&pcxhr_control_playback_iec958,
 					     chip));
-			if (err < 0)
-				return err;
-		}
-		if (chip->nb_streams_capt) {
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+		अगर (chip->nb_streams_capt) अणु
 			/* analog input level control */
 			temp = pcxhr_control_analog_level;
 			temp.name = "Line Capture Volume";
-			temp.private_value = 1; /* capture */
-			if (mgr->is_hr_stereo)
+			temp.निजी_value = 1; /* capture */
+			अगर (mgr->is_hr_stereo)
 				temp.tlv.p = db_scale_a_hr222_capture;
-			else
+			अन्यथा
 				temp.tlv.p = db_scale_analog_capture;
 
 			err = snd_ctl_add(chip->card,
 					  snd_ctl_new1(&temp, chip));
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
 			temp = snd_pcxhr_pcm_vol;
 			temp.name = "PCM Capture Volume";
 			temp.count = 1;
-			temp.private_value = 1; /* capture */
+			temp.निजी_value = 1; /* capture */
 
 			err = snd_ctl_add(chip->card,
 					  snd_ctl_new1(&temp, chip));
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
 			/* Audio source */
 			err = snd_ctl_add(chip->card,
 				snd_ctl_new1(&pcxhr_control_audio_src, chip));
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
 			/* IEC958 controls */
 			err = snd_ctl_add(chip->card,
 				snd_ctl_new1(&pcxhr_control_capture_iec958_mask,
 					     chip));
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
 			err = snd_ctl_add(chip->card,
 				snd_ctl_new1(&pcxhr_control_capture_iec958,
 					     chip));
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
-			if (mgr->is_hr_stereo) {
+			अगर (mgr->is_hr_stereo) अणु
 				err = hr222_add_mic_controls(chip);
-				if (err < 0)
-					return err;
-			}
-		}
-		/* monitoring only if playback and capture device available */
-		if (chip->nb_streams_capt > 0 && chip->nb_streams_play > 0) {
+				अगर (err < 0)
+					वापस err;
+			पूर्ण
+		पूर्ण
+		/* monitoring only अगर playback and capture device available */
+		अगर (chip->nb_streams_capt > 0 && chip->nb_streams_play > 0) अणु
 			/* monitoring */
 			err = snd_ctl_add(chip->card,
 				snd_ctl_new1(&pcxhr_control_monitor_vol, chip));
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 
 			err = snd_ctl_add(chip->card,
 				snd_ctl_new1(&pcxhr_control_monitor_sw, chip));
-			if (err < 0)
-				return err;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 
-		if (i == 0) {
-			/* clock mode only one control per pcxhr */
+		अगर (i == 0) अणु
+			/* घड़ी mode only one control per pcxhr */
 			err = snd_ctl_add(chip->card,
-				snd_ctl_new1(&pcxhr_control_clock_type, mgr));
-			if (err < 0)
-				return err;
+				snd_ctl_new1(&pcxhr_control_घड़ी_प्रकारype, mgr));
+			अगर (err < 0)
+				वापस err;
 			/* non standard control used to scan
-			 * the external clock presence/frequencies
+			 * the बाह्यal घड़ी presence/frequencies
 			 */
 			err = snd_ctl_add(chip->card,
-				snd_ctl_new1(&pcxhr_control_clock_rate, mgr));
-			if (err < 0)
-				return err;
-		}
+				snd_ctl_new1(&pcxhr_control_घड़ी_rate, mgr));
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 
-		/* init values for the mixer data */
+		/* init values क्रम the mixer data */
 		pcxhr_init_audio_levels(chip);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

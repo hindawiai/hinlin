@@ -1,305 +1,306 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Synchronous Compression operations
  *
  * Copyright 2015 LG Electronics Inc.
  * Copyright (c) 2016, Intel Corporation
- * Author: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
+ * Author: Giovanni Cabiddu <giovanni.cabiddu@पूर्णांकel.com>
  */
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/crypto.h>
-#include <linux/compiler.h>
-#include <linux/vmalloc.h>
-#include <crypto/algapi.h>
-#include <linux/cryptouser.h>
-#include <net/netlink.h>
-#include <linux/scatterlist.h>
-#include <crypto/scatterwalk.h>
-#include <crypto/internal/acompress.h>
-#include <crypto/internal/scompress.h>
-#include "internal.h"
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/crypto.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <crypto/algapi.h>
+#समावेश <linux/cryptouser.h>
+#समावेश <net/netlink.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <crypto/scatterwalk.h>
+#समावेश <crypto/पूर्णांकernal/acompress.h>
+#समावेश <crypto/पूर्णांकernal/scompress.h>
+#समावेश "internal.h"
 
-struct scomp_scratch {
+काष्ठा scomp_scratch अणु
 	spinlock_t	lock;
-	void		*src;
-	void		*dst;
-};
+	व्योम		*src;
+	व्योम		*dst;
+पूर्ण;
 
-static DEFINE_PER_CPU(struct scomp_scratch, scomp_scratch) = {
+अटल DEFINE_PER_CPU(काष्ठा scomp_scratch, scomp_scratch) = अणु
 	.lock = __SPIN_LOCK_UNLOCKED(scomp_scratch.lock),
-};
+पूर्ण;
 
-static const struct crypto_type crypto_scomp_type;
-static int scomp_scratch_users;
-static DEFINE_MUTEX(scomp_lock);
+अटल स्थिर काष्ठा crypto_type crypto_scomp_type;
+अटल पूर्णांक scomp_scratch_users;
+अटल DEFINE_MUTEX(scomp_lock);
 
-#ifdef CONFIG_NET
-static int crypto_scomp_report(struct sk_buff *skb, struct crypto_alg *alg)
-{
-	struct crypto_report_comp rscomp;
+#अगर_घोषित CONFIG_NET
+अटल पूर्णांक crypto_scomp_report(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा crypto_report_comp rscomp;
 
-	memset(&rscomp, 0, sizeof(rscomp));
+	स_रखो(&rscomp, 0, माप(rscomp));
 
-	strscpy(rscomp.type, "scomp", sizeof(rscomp.type));
+	strscpy(rscomp.type, "scomp", माप(rscomp.type));
 
-	return nla_put(skb, CRYPTOCFGA_REPORT_COMPRESS,
-		       sizeof(rscomp), &rscomp);
-}
-#else
-static int crypto_scomp_report(struct sk_buff *skb, struct crypto_alg *alg)
-{
-	return -ENOSYS;
-}
-#endif
+	वापस nla_put(skb, CRYPTOCFGA_REPORT_COMPRESS,
+		       माप(rscomp), &rscomp);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक crypto_scomp_report(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर
 
-static void crypto_scomp_show(struct seq_file *m, struct crypto_alg *alg)
+अटल व्योम crypto_scomp_show(काष्ठा seq_file *m, काष्ठा crypto_alg *alg)
 	__maybe_unused;
 
-static void crypto_scomp_show(struct seq_file *m, struct crypto_alg *alg)
-{
-	seq_puts(m, "type         : scomp\n");
-}
+अटल व्योम crypto_scomp_show(काष्ठा seq_file *m, काष्ठा crypto_alg *alg)
+अणु
+	seq_माला_दो(m, "type         : scomp\n");
+पूर्ण
 
-static void crypto_scomp_free_scratches(void)
-{
-	struct scomp_scratch *scratch;
-	int i;
+अटल व्योम crypto_scomp_मुक्त_scratches(व्योम)
+अणु
+	काष्ठा scomp_scratch *scratch;
+	पूर्णांक i;
 
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		scratch = per_cpu_ptr(&scomp_scratch, i);
 
-		vfree(scratch->src);
-		vfree(scratch->dst);
-		scratch->src = NULL;
-		scratch->dst = NULL;
-	}
-}
+		vमुक्त(scratch->src);
+		vमुक्त(scratch->dst);
+		scratch->src = शून्य;
+		scratch->dst = शून्य;
+	पूर्ण
+पूर्ण
 
-static int crypto_scomp_alloc_scratches(void)
-{
-	struct scomp_scratch *scratch;
-	int i;
+अटल पूर्णांक crypto_scomp_alloc_scratches(व्योम)
+अणु
+	काष्ठा scomp_scratch *scratch;
+	पूर्णांक i;
 
-	for_each_possible_cpu(i) {
-		void *mem;
+	क्रम_each_possible_cpu(i) अणु
+		व्योम *mem;
 
 		scratch = per_cpu_ptr(&scomp_scratch, i);
 
-		mem = vmalloc_node(SCOMP_SCRATCH_SIZE, cpu_to_node(i));
-		if (!mem)
-			goto error;
+		mem = vदो_स्मृति_node(SCOMP_SCRATCH_SIZE, cpu_to_node(i));
+		अगर (!mem)
+			जाओ error;
 		scratch->src = mem;
-		mem = vmalloc_node(SCOMP_SCRATCH_SIZE, cpu_to_node(i));
-		if (!mem)
-			goto error;
+		mem = vदो_स्मृति_node(SCOMP_SCRATCH_SIZE, cpu_to_node(i));
+		अगर (!mem)
+			जाओ error;
 		scratch->dst = mem;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 error:
-	crypto_scomp_free_scratches();
-	return -ENOMEM;
-}
+	crypto_scomp_मुक्त_scratches();
+	वापस -ENOMEM;
+पूर्ण
 
-static int crypto_scomp_init_tfm(struct crypto_tfm *tfm)
-{
-	int ret = 0;
+अटल पूर्णांक crypto_scomp_init_tfm(काष्ठा crypto_tfm *tfm)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&scomp_lock);
-	if (!scomp_scratch_users++)
+	अगर (!scomp_scratch_users++)
 		ret = crypto_scomp_alloc_scratches();
 	mutex_unlock(&scomp_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scomp_acomp_comp_decomp(struct acomp_req *req, int dir)
-{
-	struct crypto_acomp *tfm = crypto_acomp_reqtfm(req);
-	void **tfm_ctx = acomp_tfm_ctx(tfm);
-	struct crypto_scomp *scomp = *tfm_ctx;
-	void **ctx = acomp_request_ctx(req);
-	struct scomp_scratch *scratch;
-	int ret;
+अटल पूर्णांक scomp_acomp_comp_decomp(काष्ठा acomp_req *req, पूर्णांक dir)
+अणु
+	काष्ठा crypto_acomp *tfm = crypto_acomp_reqtfm(req);
+	व्योम **tfm_ctx = acomp_tfm_ctx(tfm);
+	काष्ठा crypto_scomp *scomp = *tfm_ctx;
+	व्योम **ctx = acomp_request_ctx(req);
+	काष्ठा scomp_scratch *scratch;
+	पूर्णांक ret;
 
-	if (!req->src || !req->slen || req->slen > SCOMP_SCRATCH_SIZE)
-		return -EINVAL;
+	अगर (!req->src || !req->slen || req->slen > SCOMP_SCRATCH_SIZE)
+		वापस -EINVAL;
 
-	if (req->dst && !req->dlen)
-		return -EINVAL;
+	अगर (req->dst && !req->dlen)
+		वापस -EINVAL;
 
-	if (!req->dlen || req->dlen > SCOMP_SCRATCH_SIZE)
+	अगर (!req->dlen || req->dlen > SCOMP_SCRATCH_SIZE)
 		req->dlen = SCOMP_SCRATCH_SIZE;
 
 	scratch = raw_cpu_ptr(&scomp_scratch);
 	spin_lock(&scratch->lock);
 
 	scatterwalk_map_and_copy(scratch->src, req->src, 0, req->slen, 0);
-	if (dir)
+	अगर (dir)
 		ret = crypto_scomp_compress(scomp, scratch->src, req->slen,
 					    scratch->dst, &req->dlen, *ctx);
-	else
+	अन्यथा
 		ret = crypto_scomp_decompress(scomp, scratch->src, req->slen,
 					      scratch->dst, &req->dlen, *ctx);
-	if (!ret) {
-		if (!req->dst) {
-			req->dst = sgl_alloc(req->dlen, GFP_ATOMIC, NULL);
-			if (!req->dst) {
+	अगर (!ret) अणु
+		अगर (!req->dst) अणु
+			req->dst = sgl_alloc(req->dlen, GFP_ATOMIC, शून्य);
+			अगर (!req->dst) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 		scatterwalk_map_and_copy(scratch->dst, req->dst, 0, req->dlen,
 					 1);
-	}
+	पूर्ण
 out:
 	spin_unlock(&scratch->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scomp_acomp_compress(struct acomp_req *req)
-{
-	return scomp_acomp_comp_decomp(req, 1);
-}
+अटल पूर्णांक scomp_acomp_compress(काष्ठा acomp_req *req)
+अणु
+	वापस scomp_acomp_comp_decomp(req, 1);
+पूर्ण
 
-static int scomp_acomp_decompress(struct acomp_req *req)
-{
-	return scomp_acomp_comp_decomp(req, 0);
-}
+अटल पूर्णांक scomp_acomp_decompress(काष्ठा acomp_req *req)
+अणु
+	वापस scomp_acomp_comp_decomp(req, 0);
+पूर्ण
 
-static void crypto_exit_scomp_ops_async(struct crypto_tfm *tfm)
-{
-	struct crypto_scomp **ctx = crypto_tfm_ctx(tfm);
+अटल व्योम crypto_निकास_scomp_ops_async(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा crypto_scomp **ctx = crypto_tfm_ctx(tfm);
 
-	crypto_free_scomp(*ctx);
+	crypto_मुक्त_scomp(*ctx);
 
 	mutex_lock(&scomp_lock);
-	if (!--scomp_scratch_users)
-		crypto_scomp_free_scratches();
+	अगर (!--scomp_scratch_users)
+		crypto_scomp_मुक्त_scratches();
 	mutex_unlock(&scomp_lock);
-}
+पूर्ण
 
-int crypto_init_scomp_ops_async(struct crypto_tfm *tfm)
-{
-	struct crypto_alg *calg = tfm->__crt_alg;
-	struct crypto_acomp *crt = __crypto_acomp_tfm(tfm);
-	struct crypto_scomp **ctx = crypto_tfm_ctx(tfm);
-	struct crypto_scomp *scomp;
+पूर्णांक crypto_init_scomp_ops_async(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा crypto_alg *calg = tfm->__crt_alg;
+	काष्ठा crypto_acomp *crt = __crypto_acomp_tfm(tfm);
+	काष्ठा crypto_scomp **ctx = crypto_tfm_ctx(tfm);
+	काष्ठा crypto_scomp *scomp;
 
-	if (!crypto_mod_get(calg))
-		return -EAGAIN;
+	अगर (!crypto_mod_get(calg))
+		वापस -EAGAIN;
 
 	scomp = crypto_create_tfm(calg, &crypto_scomp_type);
-	if (IS_ERR(scomp)) {
+	अगर (IS_ERR(scomp)) अणु
 		crypto_mod_put(calg);
-		return PTR_ERR(scomp);
-	}
+		वापस PTR_ERR(scomp);
+	पूर्ण
 
 	*ctx = scomp;
-	tfm->exit = crypto_exit_scomp_ops_async;
+	tfm->निकास = crypto_निकास_scomp_ops_async;
 
 	crt->compress = scomp_acomp_compress;
 	crt->decompress = scomp_acomp_decompress;
-	crt->dst_free = sgl_free;
-	crt->reqsize = sizeof(void *);
+	crt->dst_मुक्त = sgl_मुक्त;
+	crt->reqsize = माप(व्योम *);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct acomp_req *crypto_acomp_scomp_alloc_ctx(struct acomp_req *req)
-{
-	struct crypto_acomp *acomp = crypto_acomp_reqtfm(req);
-	struct crypto_tfm *tfm = crypto_acomp_tfm(acomp);
-	struct crypto_scomp **tfm_ctx = crypto_tfm_ctx(tfm);
-	struct crypto_scomp *scomp = *tfm_ctx;
-	void *ctx;
+काष्ठा acomp_req *crypto_acomp_scomp_alloc_ctx(काष्ठा acomp_req *req)
+अणु
+	काष्ठा crypto_acomp *acomp = crypto_acomp_reqtfm(req);
+	काष्ठा crypto_tfm *tfm = crypto_acomp_tfm(acomp);
+	काष्ठा crypto_scomp **tfm_ctx = crypto_tfm_ctx(tfm);
+	काष्ठा crypto_scomp *scomp = *tfm_ctx;
+	व्योम *ctx;
 
 	ctx = crypto_scomp_alloc_ctx(scomp);
-	if (IS_ERR(ctx)) {
-		kfree(req);
-		return NULL;
-	}
+	अगर (IS_ERR(ctx)) अणु
+		kमुक्त(req);
+		वापस शून्य;
+	पूर्ण
 
 	*req->__ctx = ctx;
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
-void crypto_acomp_scomp_free_ctx(struct acomp_req *req)
-{
-	struct crypto_acomp *acomp = crypto_acomp_reqtfm(req);
-	struct crypto_tfm *tfm = crypto_acomp_tfm(acomp);
-	struct crypto_scomp **tfm_ctx = crypto_tfm_ctx(tfm);
-	struct crypto_scomp *scomp = *tfm_ctx;
-	void *ctx = *req->__ctx;
+व्योम crypto_acomp_scomp_मुक्त_ctx(काष्ठा acomp_req *req)
+अणु
+	काष्ठा crypto_acomp *acomp = crypto_acomp_reqtfm(req);
+	काष्ठा crypto_tfm *tfm = crypto_acomp_tfm(acomp);
+	काष्ठा crypto_scomp **tfm_ctx = crypto_tfm_ctx(tfm);
+	काष्ठा crypto_scomp *scomp = *tfm_ctx;
+	व्योम *ctx = *req->__ctx;
 
-	if (ctx)
-		crypto_scomp_free_ctx(scomp, ctx);
-}
+	अगर (ctx)
+		crypto_scomp_मुक्त_ctx(scomp, ctx);
+पूर्ण
 
-static const struct crypto_type crypto_scomp_type = {
+अटल स्थिर काष्ठा crypto_type crypto_scomp_type = अणु
 	.extsize = crypto_alg_extsize,
 	.init_tfm = crypto_scomp_init_tfm,
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 	.show = crypto_scomp_show,
-#endif
+#पूर्ण_अगर
 	.report = crypto_scomp_report,
 	.maskclear = ~CRYPTO_ALG_TYPE_MASK,
 	.maskset = CRYPTO_ALG_TYPE_MASK,
 	.type = CRYPTO_ALG_TYPE_SCOMPRESS,
-	.tfmsize = offsetof(struct crypto_scomp, base),
-};
+	.tfmsize = दुरत्व(काष्ठा crypto_scomp, base),
+पूर्ण;
 
-int crypto_register_scomp(struct scomp_alg *alg)
-{
-	struct crypto_alg *base = &alg->base;
+पूर्णांक crypto_रेजिस्टर_scomp(काष्ठा scomp_alg *alg)
+अणु
+	काष्ठा crypto_alg *base = &alg->base;
 
 	base->cra_type = &crypto_scomp_type;
 	base->cra_flags &= ~CRYPTO_ALG_TYPE_MASK;
 	base->cra_flags |= CRYPTO_ALG_TYPE_SCOMPRESS;
 
-	return crypto_register_alg(base);
-}
-EXPORT_SYMBOL_GPL(crypto_register_scomp);
+	वापस crypto_रेजिस्टर_alg(base);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_scomp);
 
-void crypto_unregister_scomp(struct scomp_alg *alg)
-{
-	crypto_unregister_alg(&alg->base);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_scomp);
+व्योम crypto_unरेजिस्टर_scomp(काष्ठा scomp_alg *alg)
+अणु
+	crypto_unरेजिस्टर_alg(&alg->base);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_scomp);
 
-int crypto_register_scomps(struct scomp_alg *algs, int count)
-{
-	int i, ret;
+पूर्णांक crypto_रेजिस्टर_scomps(काष्ठा scomp_alg *algs, पूर्णांक count)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < count; i++) {
-		ret = crypto_register_scomp(&algs[i]);
-		if (ret)
-			goto err;
-	}
+	क्रम (i = 0; i < count; i++) अणु
+		ret = crypto_रेजिस्टर_scomp(&algs[i]);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	for (--i; i >= 0; --i)
-		crypto_unregister_scomp(&algs[i]);
+	क्रम (--i; i >= 0; --i)
+		crypto_unरेजिस्टर_scomp(&algs[i]);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(crypto_register_scomps);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_scomps);
 
-void crypto_unregister_scomps(struct scomp_alg *algs, int count)
-{
-	int i;
+व्योम crypto_unरेजिस्टर_scomps(काष्ठा scomp_alg *algs, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = count - 1; i >= 0; --i)
-		crypto_unregister_scomp(&algs[i]);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_scomps);
+	क्रम (i = count - 1; i >= 0; --i)
+		crypto_unरेजिस्टर_scomp(&algs[i]);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_scomps);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Synchronous compression type");

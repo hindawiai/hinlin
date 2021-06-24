@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Module for modifying the secmark field of the skb, for use by
- * security subsystems.
+ * Module क्रम modअगरying the secmark field of the skb, क्रम use by
+ * security subप्रणालीs.
  *
  * Based on the nfmark match by:
  * (C) 1999-2001 Marc Boucher <marc@mbsi.ca>
  *
  * (C) 2006,2008 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/module.h>
-#include <linux/security.h>
-#include <linux/skbuff.h>
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter/xt_SECMARK.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/module.h>
+#समावेश <linux/security.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter/xt_SECMARK.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("James Morris <jmorris@redhat.com>");
@@ -21,171 +22,171 @@ MODULE_DESCRIPTION("Xtables: packet security mark modification");
 MODULE_ALIAS("ipt_SECMARK");
 MODULE_ALIAS("ip6t_SECMARK");
 
-static u8 mode;
+अटल u8 mode;
 
-static unsigned int
-secmark_tg(struct sk_buff *skb, const struct xt_secmark_target_info_v1 *info)
-{
+अटल अचिन्हित पूर्णांक
+secmark_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_secmark_target_info_v1 *info)
+अणु
 	u32 secmark = 0;
 
-	switch (mode) {
-	case SECMARK_MODE_SEL:
+	चयन (mode) अणु
+	हाल SECMARK_MODE_SEL:
 		secmark = info->secid;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	skb->secmark = secmark;
-	return XT_CONTINUE;
-}
+	वापस XT_CONTINUE;
+पूर्ण
 
-static int checkentry_lsm(struct xt_secmark_target_info_v1 *info)
-{
-	int err;
+अटल पूर्णांक checkentry_lsm(काष्ठा xt_secmark_target_info_v1 *info)
+अणु
+	पूर्णांक err;
 
 	info->secctx[SECMARK_SECCTX_MAX - 1] = '\0';
 	info->secid = 0;
 
-	err = security_secctx_to_secid(info->secctx, strlen(info->secctx),
+	err = security_secctx_to_secid(info->secctx, म_माप(info->secctx),
 				       &info->secid);
-	if (err) {
-		if (err == -EINVAL)
+	अगर (err) अणु
+		अगर (err == -EINVAL)
 			pr_info_ratelimited("invalid security context \'%s\'\n",
 					    info->secctx);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (!info->secid) {
+	अगर (!info->secid) अणु
 		pr_info_ratelimited("unable to map security context \'%s\'\n",
 				    info->secctx);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	err = security_secmark_relabel_packet(info->secid);
-	if (err) {
+	अगर (err) अणु
 		pr_info_ratelimited("unable to obtain relabeling permission\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	security_secmark_refcount_inc();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-secmark_tg_check(const char *table, struct xt_secmark_target_info_v1 *info)
-{
-	int err;
+अटल पूर्णांक
+secmark_tg_check(स्थिर अक्षर *table, काष्ठा xt_secmark_target_info_v1 *info)
+अणु
+	पूर्णांक err;
 
-	if (strcmp(table, "mangle") != 0 &&
-	    strcmp(table, "security") != 0) {
+	अगर (म_भेद(table, "mangle") != 0 &&
+	    म_भेद(table, "security") != 0) अणु
 		pr_info_ratelimited("only valid in \'mangle\' or \'security\' table, not \'%s\'\n",
 				    table);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (mode && mode != info->mode) {
+	अगर (mode && mode != info->mode) अणु
 		pr_info_ratelimited("mode already set to %hu cannot mix with rules for mode %hu\n",
 				    mode, info->mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (info->mode) {
-	case SECMARK_MODE_SEL:
-		break;
-	default:
+	चयन (info->mode) अणु
+	हाल SECMARK_MODE_SEL:
+		अवरोध;
+	शेष:
 		pr_info_ratelimited("invalid mode: %hu\n", info->mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = checkentry_lsm(info);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!mode)
+	अगर (!mode)
 		mode = info->mode;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void secmark_tg_destroy(const struct xt_tgdtor_param *par)
-{
-	switch (mode) {
-	case SECMARK_MODE_SEL:
+अटल व्योम secmark_tg_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
+अणु
+	चयन (mode) अणु
+	हाल SECMARK_MODE_SEL:
 		security_secmark_refcount_dec();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int secmark_tg_check_v0(const struct xt_tgchk_param *par)
-{
-	struct xt_secmark_target_info *info = par->targinfo;
-	struct xt_secmark_target_info_v1 newinfo = {
+अटल पूर्णांक secmark_tg_check_v0(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	काष्ठा xt_secmark_target_info *info = par->targinfo;
+	काष्ठा xt_secmark_target_info_v1 newinfo = अणु
 		.mode	= info->mode,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	memcpy(newinfo.secctx, info->secctx, SECMARK_SECCTX_MAX);
+	स_नकल(newinfo.secctx, info->secctx, SECMARK_SECCTX_MAX);
 
 	ret = secmark_tg_check(par->table, &newinfo);
 	info->secid = newinfo.secid;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int
-secmark_tg_v0(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct xt_secmark_target_info *info = par->targinfo;
-	struct xt_secmark_target_info_v1 newinfo = {
+अटल अचिन्हित पूर्णांक
+secmark_tg_v0(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_secmark_target_info *info = par->targinfo;
+	काष्ठा xt_secmark_target_info_v1 newinfo = अणु
 		.secid	= info->secid,
-	};
+	पूर्ण;
 
-	return secmark_tg(skb, &newinfo);
-}
+	वापस secmark_tg(skb, &newinfo);
+पूर्ण
 
-static int secmark_tg_check_v1(const struct xt_tgchk_param *par)
-{
-	return secmark_tg_check(par->table, par->targinfo);
-}
+अटल पूर्णांक secmark_tg_check_v1(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	वापस secmark_tg_check(par->table, par->targinfo);
+पूर्ण
 
-static unsigned int
-secmark_tg_v1(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	return secmark_tg(skb, par->targinfo);
-}
+अटल अचिन्हित पूर्णांक
+secmark_tg_v1(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	वापस secmark_tg(skb, par->targinfo);
+पूर्ण
 
-static struct xt_target secmark_tg_reg[] __read_mostly = {
-	{
+अटल काष्ठा xt_target secmark_tg_reg[] __पढ़ो_mostly = अणु
+	अणु
 		.name		= "SECMARK",
 		.revision	= 0,
 		.family		= NFPROTO_UNSPEC,
 		.checkentry	= secmark_tg_check_v0,
 		.destroy	= secmark_tg_destroy,
 		.target		= secmark_tg_v0,
-		.targetsize	= sizeof(struct xt_secmark_target_info),
+		.tarमाला_लोize	= माप(काष्ठा xt_secmark_target_info),
 		.me		= THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "SECMARK",
 		.revision	= 1,
 		.family		= NFPROTO_UNSPEC,
 		.checkentry	= secmark_tg_check_v1,
 		.destroy	= secmark_tg_destroy,
 		.target		= secmark_tg_v1,
-		.targetsize	= sizeof(struct xt_secmark_target_info_v1),
-		.usersize	= offsetof(struct xt_secmark_target_info_v1, secid),
+		.tarमाला_लोize	= माप(काष्ठा xt_secmark_target_info_v1),
+		.usersize	= दुरत्व(काष्ठा xt_secmark_target_info_v1, secid),
 		.me		= THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init secmark_tg_init(void)
-{
-	return xt_register_targets(secmark_tg_reg, ARRAY_SIZE(secmark_tg_reg));
-}
+अटल पूर्णांक __init secmark_tg_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_tarमाला_लो(secmark_tg_reg, ARRAY_SIZE(secmark_tg_reg));
+पूर्ण
 
-static void __exit secmark_tg_exit(void)
-{
-	xt_unregister_targets(secmark_tg_reg, ARRAY_SIZE(secmark_tg_reg));
-}
+अटल व्योम __निकास secmark_tg_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_tarमाला_लो(secmark_tg_reg, ARRAY_SIZE(secmark_tg_reg));
+पूर्ण
 
 module_init(secmark_tg_init);
-module_exit(secmark_tg_exit);
+module_निकास(secmark_tg_निकास);

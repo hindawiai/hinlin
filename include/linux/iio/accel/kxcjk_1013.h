@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * KXCJK-1013 3-axis accelerometer Interface
  * Copyright (c) 2014, Intel Corporation.
  */
 
-#ifndef __IIO_KXCJK_1013_H__
-#define __IIO_KXCJK_1013_H__
+#अगर_अघोषित __IIO_KXCJK_1013_H__
+#घोषणा __IIO_KXCJK_1013_H__
 
-#include <linux/iio/iio.h>
+#समावेश <linux/iio/iपन.स>
 
-struct kxcjk_1013_platform_data {
-	bool active_high_intr;
-	struct iio_mount_matrix orientation;
-};
+काष्ठा kxcjk_1013_platक्रमm_data अणु
+	bool active_high_पूर्णांकr;
+	काष्ठा iio_mount_matrix orientation;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

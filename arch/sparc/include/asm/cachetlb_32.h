@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC_CACHETLB_H
-#define _SPARC_CACHETLB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC_CACHETLB_H
+#घोषणा _SPARC_CACHETLB_H
 
-struct mm_struct;
-struct vm_area_struct;
+काष्ठा mm_काष्ठा;
+काष्ठा vm_area_काष्ठा;
 
-struct sparc32_cachetlb_ops {
-	void (*cache_all)(void);
-	void (*cache_mm)(struct mm_struct *);
-	void (*cache_range)(struct vm_area_struct *, unsigned long,
-			    unsigned long);
-	void (*cache_page)(struct vm_area_struct *, unsigned long);
+काष्ठा sparc32_cachetlb_ops अणु
+	व्योम (*cache_all)(व्योम);
+	व्योम (*cache_mm)(काष्ठा mm_काष्ठा *);
+	व्योम (*cache_range)(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ,
+			    अचिन्हित दीर्घ);
+	व्योम (*cache_page)(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ);
 
-	void (*tlb_all)(void);
-	void (*tlb_mm)(struct mm_struct *);
-	void (*tlb_range)(struct vm_area_struct *, unsigned long,
-			  unsigned long);
-	void (*tlb_page)(struct vm_area_struct *, unsigned long);
+	व्योम (*tlb_all)(व्योम);
+	व्योम (*tlb_mm)(काष्ठा mm_काष्ठा *);
+	व्योम (*tlb_range)(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ,
+			  अचिन्हित दीर्घ);
+	व्योम (*tlb_page)(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ);
 
-	void (*page_to_ram)(unsigned long);
-	void (*sig_insns)(struct mm_struct *, unsigned long);
-	void (*page_for_dma)(unsigned long);
-};
-extern const struct sparc32_cachetlb_ops *sparc32_cachetlb_ops;
-#ifdef CONFIG_SMP
-extern const struct sparc32_cachetlb_ops *local_ops;
-#endif
+	व्योम (*page_to_ram)(अचिन्हित दीर्घ);
+	व्योम (*sig_insns)(काष्ठा mm_काष्ठा *, अचिन्हित दीर्घ);
+	व्योम (*page_क्रम_dma)(अचिन्हित दीर्घ);
+पूर्ण;
+बाह्य स्थिर काष्ठा sparc32_cachetlb_ops *sparc32_cachetlb_ops;
+#अगर_घोषित CONFIG_SMP
+बाह्य स्थिर काष्ठा sparc32_cachetlb_ops *local_ops;
+#पूर्ण_अगर
 
-#endif /* SPARC_CACHETLB_H */
+#पूर्ण_अगर /* SPARC_CACHETLB_H */

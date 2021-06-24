@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2014 Broadcom
+ * Copyright तऊ 2014 Broadcom
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,10 +22,10 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef VC4_QPU_DEFINES_H
-#define VC4_QPU_DEFINES_H
+#अगर_अघोषित VC4_QPU_DEFINES_H
+#घोषणा VC4_QPU_DEFINES_H
 
-enum qpu_op_add {
+क्रमागत qpu_op_add अणु
 	QPU_A_NOP,
 	QPU_A_FADD,
 	QPU_A_FSUB,
@@ -49,9 +50,9 @@ enum qpu_op_add {
 	QPU_A_CLZ,
 	QPU_A_V8ADDS = 30,
 	QPU_A_V8SUBS = 31,
-};
+पूर्ण;
 
-enum qpu_op_mul {
+क्रमागत qpu_op_mul अणु
 	QPU_M_NOP,
 	QPU_M_FMUL,
 	QPU_M_MUL24,
@@ -60,10 +61,10 @@ enum qpu_op_mul {
 	QPU_M_V8MAX,
 	QPU_M_V8ADDS,
 	QPU_M_V8SUBS,
-};
+पूर्ण;
 
-enum qpu_raddr {
-	QPU_R_FRAG_PAYLOAD_ZW = 15, /* W for A file, Z for B file */
+क्रमागत qpu_raddr अणु
+	QPU_R_FRAG_PAYLOAD_ZW = 15, /* W क्रम A file, Z क्रम B file */
 	/* 0-31 are the plain regfile a or b fields */
 	QPU_R_UNIF = 32,
 	QPU_R_VARY = 35,
@@ -75,9 +76,9 @@ enum qpu_raddr {
 	QPU_R_VPM_LD_BUSY,
 	QPU_R_VPM_LD_WAIT,
 	QPU_R_MUTEX_ACQUIRE,
-};
+पूर्ण;
 
-enum qpu_waddr {
+क्रमागत qpu_waddr अणु
 	/* 0-31 are the plain regfile a or b fields */
 	QPU_W_ACC0 = 32, /* aka r0 */
 	QPU_W_ACC1,
@@ -88,7 +89,7 @@ enum qpu_waddr {
 	QPU_W_HOST_INT,
 	QPU_W_NOP,
 	QPU_W_UNIFORMS_ADDRESS,
-	QPU_W_QUAD_XY, /* X for regfile a, Y for regfile b */
+	QPU_W_QUAD_XY, /* X क्रम regfile a, Y क्रम regfile b */
 	QPU_W_MS_FLAGS = 42,
 	QPU_W_REV_FLAG = 42,
 	QPU_W_TLB_STENCIL_SETUP = 43,
@@ -97,8 +98,8 @@ enum qpu_waddr {
 	QPU_W_TLB_COLOR_ALL,
 	QPU_W_TLB_ALPHA_MASK,
 	QPU_W_VPM,
-	QPU_W_VPMVCD_SETUP, /* LD for regfile a, ST for regfile b */
-	QPU_W_VPM_ADDR, /* LD for regfile a, ST for regfile b */
+	QPU_W_VPMVCD_SETUP, /* LD क्रम regfile a, ST क्रम regfile b */
+	QPU_W_VPM_ADDR, /* LD क्रम regfile a, ST क्रम regfile b */
 	QPU_W_MUTEX_RELEASE,
 	QPU_W_SFU_RECIP,
 	QPU_W_SFU_RECIPSQRT,
@@ -112,9 +113,9 @@ enum qpu_waddr {
 	QPU_W_TMU1_T,
 	QPU_W_TMU1_R,
 	QPU_W_TMU1_B,
-};
+पूर्ण;
 
-enum qpu_sig_bits {
+क्रमागत qpu_sig_bits अणु
 	QPU_SIG_SW_BREAKPOINT,
 	QPU_SIG_NONE,
 	QPU_SIG_THREAD_SWITCH,
@@ -131,9 +132,9 @@ enum qpu_sig_bits {
 	QPU_SIG_SMALL_IMM,
 	QPU_SIG_LOAD_IMM,
 	QPU_SIG_BRANCH
-};
+पूर्ण;
 
-enum qpu_mux {
+क्रमागत qpu_mux अणु
 	/* hardware mux values */
 	QPU_MUX_R0,
 	QPU_MUX_R1,
@@ -146,9 +147,9 @@ enum qpu_mux {
 
 	/* non-hardware mux values */
 	QPU_MUX_IMM,
-};
+पूर्ण;
 
-enum qpu_cond {
+क्रमागत qpu_cond अणु
 	QPU_COND_NEVER,
 	QPU_COND_ALWAYS,
 	QPU_COND_ZS,
@@ -157,9 +158,9 @@ enum qpu_cond {
 	QPU_COND_NC,
 	QPU_COND_CS,
 	QPU_COND_CC,
-};
+पूर्ण;
 
-enum qpu_pack_mul {
+क्रमागत qpu_pack_mul अणु
 	QPU_PACK_MUL_NOP,
 	/* replicated to each 8 bits of the 32-bit dst. */
 	QPU_PACK_MUL_8888 = 3,
@@ -167,33 +168,33 @@ enum qpu_pack_mul {
 	QPU_PACK_MUL_8B,
 	QPU_PACK_MUL_8C,
 	QPU_PACK_MUL_8D,
-};
+पूर्ण;
 
-enum qpu_pack_a {
+क्रमागत qpu_pack_a अणु
 	QPU_PACK_A_NOP,
-	/* convert to 16 bit float if float input, or to int16. */
+	/* convert to 16 bit भग्न अगर भग्न input, or to पूर्णांक16. */
 	QPU_PACK_A_16A,
 	QPU_PACK_A_16B,
 	/* replicated to each 8 bits of the 32-bit dst. */
 	QPU_PACK_A_8888,
-	/* Convert to 8-bit unsigned int. */
+	/* Convert to 8-bit अचिन्हित पूर्णांक. */
 	QPU_PACK_A_8A,
 	QPU_PACK_A_8B,
 	QPU_PACK_A_8C,
 	QPU_PACK_A_8D,
 
-	/* Saturating variants of the previous instructions. */
-	QPU_PACK_A_32_SAT, /* int-only */
-	QPU_PACK_A_16A_SAT, /* int or float */
+	/* Saturating variants of the previous inकाष्ठाions. */
+	QPU_PACK_A_32_SAT, /* पूर्णांक-only */
+	QPU_PACK_A_16A_SAT, /* पूर्णांक or भग्न */
 	QPU_PACK_A_16B_SAT,
 	QPU_PACK_A_8888_SAT,
 	QPU_PACK_A_8A_SAT,
 	QPU_PACK_A_8B_SAT,
 	QPU_PACK_A_8C_SAT,
 	QPU_PACK_A_8D_SAT,
-};
+पूर्ण;
 
-enum qpu_unpack_r4 {
+क्रमागत qpu_unpack_r4 अणु
 	QPU_UNPACK_R4_NOP,
 	QPU_UNPACK_R4_F16A_TO_F32,
 	QPU_UNPACK_R4_F16B_TO_F32,
@@ -202,78 +203,78 @@ enum qpu_unpack_r4 {
 	QPU_UNPACK_R4_8B,
 	QPU_UNPACK_R4_8C,
 	QPU_UNPACK_R4_8D,
-};
+पूर्ण;
 
-#define QPU_MASK(high, low) \
-	((((uint64_t)1 << ((high) - (low) + 1)) - 1) << (low))
+#घोषणा QPU_MASK(high, low) \
+	((((uपूर्णांक64_t)1 << ((high) - (low) + 1)) - 1) << (low))
 
-#define QPU_GET_FIELD(word, field) \
-	((uint32_t)(((word)  & field ## _MASK) >> field ## _SHIFT))
+#घोषणा QPU_GET_FIELD(word, field) \
+	((uपूर्णांक32_t)(((word)  & field ## _MASK) >> field ## _SHIFT))
 
-#define QPU_SIG_SHIFT                   60
-#define QPU_SIG_MASK                    QPU_MASK(63, 60)
+#घोषणा QPU_SIG_SHIFT                   60
+#घोषणा QPU_SIG_MASK                    QPU_MASK(63, 60)
 
-#define QPU_UNPACK_SHIFT                57
-#define QPU_UNPACK_MASK                 QPU_MASK(59, 57)
+#घोषणा QPU_UNPACK_SHIFT                57
+#घोषणा QPU_UNPACK_MASK                 QPU_MASK(59, 57)
 
 /**
  * If set, the pack field means PACK_MUL or R4 packing, instead of normal
  * regfile a packing.
  */
-#define QPU_PM                          ((uint64_t)1 << 56)
+#घोषणा QPU_PM                          ((uपूर्णांक64_t)1 << 56)
 
-#define QPU_PACK_SHIFT                  52
-#define QPU_PACK_MASK                   QPU_MASK(55, 52)
+#घोषणा QPU_PACK_SHIFT                  52
+#घोषणा QPU_PACK_MASK                   QPU_MASK(55, 52)
 
-#define QPU_COND_ADD_SHIFT              49
-#define QPU_COND_ADD_MASK               QPU_MASK(51, 49)
-#define QPU_COND_MUL_SHIFT              46
-#define QPU_COND_MUL_MASK               QPU_MASK(48, 46)
+#घोषणा QPU_COND_ADD_SHIFT              49
+#घोषणा QPU_COND_ADD_MASK               QPU_MASK(51, 49)
+#घोषणा QPU_COND_MUL_SHIFT              46
+#घोषणा QPU_COND_MUL_MASK               QPU_MASK(48, 46)
 
-#define QPU_BRANCH_COND_SHIFT           52
-#define QPU_BRANCH_COND_MASK            QPU_MASK(55, 52)
+#घोषणा QPU_BRANCH_COND_SHIFT           52
+#घोषणा QPU_BRANCH_COND_MASK            QPU_MASK(55, 52)
 
-#define QPU_BRANCH_REL                  ((uint64_t)1 << 51)
-#define QPU_BRANCH_REG                  ((uint64_t)1 << 50)
+#घोषणा QPU_BRANCH_REL                  ((uपूर्णांक64_t)1 << 51)
+#घोषणा QPU_BRANCH_REG                  ((uपूर्णांक64_t)1 << 50)
 
-#define QPU_BRANCH_RADDR_A_SHIFT        45
-#define QPU_BRANCH_RADDR_A_MASK         QPU_MASK(49, 45)
+#घोषणा QPU_BRANCH_RADDR_A_SHIFT        45
+#घोषणा QPU_BRANCH_RADDR_A_MASK         QPU_MASK(49, 45)
 
-#define QPU_SF                          ((uint64_t)1 << 45)
+#घोषणा QPU_SF                          ((uपूर्णांक64_t)1 << 45)
 
-#define QPU_WADDR_ADD_SHIFT             38
-#define QPU_WADDR_ADD_MASK              QPU_MASK(43, 38)
-#define QPU_WADDR_MUL_SHIFT             32
-#define QPU_WADDR_MUL_MASK              QPU_MASK(37, 32)
+#घोषणा QPU_WADDR_ADD_SHIFT             38
+#घोषणा QPU_WADDR_ADD_MASK              QPU_MASK(43, 38)
+#घोषणा QPU_WADDR_MUL_SHIFT             32
+#घोषणा QPU_WADDR_MUL_MASK              QPU_MASK(37, 32)
 
-#define QPU_OP_MUL_SHIFT                29
-#define QPU_OP_MUL_MASK                 QPU_MASK(31, 29)
+#घोषणा QPU_OP_MUL_SHIFT                29
+#घोषणा QPU_OP_MUL_MASK                 QPU_MASK(31, 29)
 
-#define QPU_RADDR_A_SHIFT               18
-#define QPU_RADDR_A_MASK                QPU_MASK(23, 18)
-#define QPU_RADDR_B_SHIFT               12
-#define QPU_RADDR_B_MASK                QPU_MASK(17, 12)
-#define QPU_SMALL_IMM_SHIFT             12
-#define QPU_SMALL_IMM_MASK              QPU_MASK(17, 12)
+#घोषणा QPU_RADDR_A_SHIFT               18
+#घोषणा QPU_RADDR_A_MASK                QPU_MASK(23, 18)
+#घोषणा QPU_RADDR_B_SHIFT               12
+#घोषणा QPU_RADDR_B_MASK                QPU_MASK(17, 12)
+#घोषणा QPU_SMALL_IMM_SHIFT             12
+#घोषणा QPU_SMALL_IMM_MASK              QPU_MASK(17, 12)
 
-#define QPU_ADD_A_SHIFT                 9
-#define QPU_ADD_A_MASK                  QPU_MASK(11, 9)
-#define QPU_ADD_B_SHIFT                 6
-#define QPU_ADD_B_MASK                  QPU_MASK(8, 6)
-#define QPU_MUL_A_SHIFT                 3
-#define QPU_MUL_A_MASK                  QPU_MASK(5, 3)
-#define QPU_MUL_B_SHIFT                 0
-#define QPU_MUL_B_MASK                  QPU_MASK(2, 0)
+#घोषणा QPU_ADD_A_SHIFT                 9
+#घोषणा QPU_ADD_A_MASK                  QPU_MASK(11, 9)
+#घोषणा QPU_ADD_B_SHIFT                 6
+#घोषणा QPU_ADD_B_MASK                  QPU_MASK(8, 6)
+#घोषणा QPU_MUL_A_SHIFT                 3
+#घोषणा QPU_MUL_A_MASK                  QPU_MASK(5, 3)
+#घोषणा QPU_MUL_B_SHIFT                 0
+#घोषणा QPU_MUL_B_MASK                  QPU_MASK(2, 0)
 
-#define QPU_WS                          ((uint64_t)1 << 44)
+#घोषणा QPU_WS                          ((uपूर्णांक64_t)1 << 44)
 
-#define QPU_OP_ADD_SHIFT                24
-#define QPU_OP_ADD_MASK                 QPU_MASK(28, 24)
+#घोषणा QPU_OP_ADD_SHIFT                24
+#घोषणा QPU_OP_ADD_MASK                 QPU_MASK(28, 24)
 
-#define QPU_LOAD_IMM_SHIFT              0
-#define QPU_LOAD_IMM_MASK               QPU_MASK(31, 0)
+#घोषणा QPU_LOAD_IMM_SHIFT              0
+#घोषणा QPU_LOAD_IMM_MASK               QPU_MASK(31, 0)
 
-#define QPU_BRANCH_TARGET_SHIFT         0
-#define QPU_BRANCH_TARGET_MASK          QPU_MASK(31, 0)
+#घोषणा QPU_BRANCH_TARGET_SHIFT         0
+#घोषणा QPU_BRANCH_TARGET_MASK          QPU_MASK(31, 0)
 
-#endif /* VC4_QPU_DEFINES_H */
+#पूर्ण_अगर /* VC4_QPU_DEFINES_H */

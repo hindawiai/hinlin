@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /* Copyright (C) 2006-2017 Oracle Corporation */
 
-#include <linux/vbox_err.h>
-#include "vbox_drv.h"
-#include "vboxvideo_guest.h"
-#include "vboxvideo_vbe.h"
-#include "hgsmi_channels.h"
-#include "hgsmi_ch_setup.h"
+#समावेश <linux/vbox_err.h>
+#समावेश "vbox_drv.h"
+#समावेश "vboxvideo_guest.h"
+#समावेश "vboxvideo_vbe.h"
+#समावेश "hgsmi_channels.h"
+#समावेश "hgsmi_ch_setup.h"
 
 /**
- * Inform the host of the location of the host flags in VRAM via an HGSMI cmd.
- * Return: 0 or negative errno value.
+ * Inक्रमm the host of the location of the host flags in VRAM via an HGSMI cmd.
+ * Return: 0 or negative त्रुटि_सं value.
  * @ctx:        The context of the guest heap to use.
- * @location:   The offset chosen for the flags within guest VRAM.
+ * @location:   The offset chosen क्रम the flags within guest VRAM.
  */
-int hgsmi_report_flags_location(struct gen_pool *ctx, u32 location)
-{
-	struct hgsmi_buffer_location *p;
+पूर्णांक hgsmi_report_flags_location(काष्ठा gen_pool *ctx, u32 location)
+अणु
+	काष्ठा hgsmi_buffer_location *p;
 
-	p = hgsmi_buffer_alloc(ctx, sizeof(*p), HGSMI_CH_HGSMI,
+	p = hgsmi_buffer_alloc(ctx, माप(*p), HGSMI_CH_HGSMI,
 			       HGSMI_CC_HOST_FLAGS_LOCATION);
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
 	p->buf_location = location;
-	p->buf_len = sizeof(struct hgsmi_host_flags);
+	p->buf_len = माप(काष्ठा hgsmi_host_flags);
 
 	hgsmi_buffer_submit(ctx, p);
-	hgsmi_buffer_free(ctx, p);
+	hgsmi_buffer_मुक्त(ctx, p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * Notify the host of HGSMI-related guest capabilities via an HGSMI command.
- * Return: 0 or negative errno value.
+ * Notअगरy the host of HGSMI-related guest capabilities via an HGSMI command.
+ * Return: 0 or negative त्रुटि_सं value.
  * @ctx:        The context of the guest heap to use.
  * @caps:       The capabilities to report, see vbva_caps.
  */
-int hgsmi_send_caps_info(struct gen_pool *ctx, u32 caps)
-{
-	struct vbva_caps *p;
+पूर्णांक hgsmi_send_caps_info(काष्ठा gen_pool *ctx, u32 caps)
+अणु
+	काष्ठा vbva_caps *p;
 
-	p = hgsmi_buffer_alloc(ctx, sizeof(*p), HGSMI_CH_VBVA, VBVA_INFO_CAPS);
-	if (!p)
-		return -ENOMEM;
+	p = hgsmi_buffer_alloc(ctx, माप(*p), HGSMI_CH_VBVA, VBVA_INFO_CAPS);
+	अगर (!p)
+		वापस -ENOMEM;
 
 	p->rc = VERR_NOT_IMPLEMENTED;
 	p->caps = caps;
@@ -53,38 +54,38 @@ int hgsmi_send_caps_info(struct gen_pool *ctx, u32 caps)
 
 	WARN_ON_ONCE(p->rc < 0);
 
-	hgsmi_buffer_free(ctx, p);
+	hgsmi_buffer_मुक्त(ctx, p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hgsmi_test_query_conf(struct gen_pool *ctx)
-{
+पूर्णांक hgsmi_test_query_conf(काष्ठा gen_pool *ctx)
+अणु
 	u32 value = 0;
-	int ret;
+	पूर्णांक ret;
 
 	ret = hgsmi_query_conf(ctx, U32_MAX, &value);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return value == U32_MAX ? 0 : -EIO;
-}
+	वापस value == U32_MAX ? 0 : -EIO;
+पूर्ण
 
 /**
- * Query the host for an HGSMI configuration parameter via an HGSMI command.
- * Return: 0 or negative errno value.
+ * Query the host क्रम an HGSMI configuration parameter via an HGSMI command.
+ * Return: 0 or negative त्रुटि_सं value.
  * @ctx:        The context containing the heap used.
  * @index:      The index of the parameter to query.
  * @value_ret:  Where to store the value of the parameter on success.
  */
-int hgsmi_query_conf(struct gen_pool *ctx, u32 index, u32 *value_ret)
-{
-	struct vbva_conf32 *p;
+पूर्णांक hgsmi_query_conf(काष्ठा gen_pool *ctx, u32 index, u32 *value_ret)
+अणु
+	काष्ठा vbva_conf32 *p;
 
-	p = hgsmi_buffer_alloc(ctx, sizeof(*p), HGSMI_CH_VBVA,
+	p = hgsmi_buffer_alloc(ctx, माप(*p), HGSMI_CH_VBVA,
 			       VBVA_QUERY_CONF32);
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
 	p->index = index;
 	p->value = U32_MAX;
@@ -93,52 +94,52 @@ int hgsmi_query_conf(struct gen_pool *ctx, u32 index, u32 *value_ret)
 
 	*value_ret = p->value;
 
-	hgsmi_buffer_free(ctx, p);
+	hgsmi_buffer_मुक्त(ctx, p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * Pass the host a new mouse pointer shape via an HGSMI command.
- * Return: 0 or negative errno value.
+ * Pass the host a new mouse poपूर्णांकer shape via an HGSMI command.
+ * Return: 0 or negative त्रुटि_सं value.
  * @ctx:        The context containing the heap to be used.
  * @flags:      Cursor flags.
  * @hot_x:      Horizontal position of the hot spot.
  * @hot_y:      Vertical position of the hot spot.
  * @width:      Width in pixels of the cursor.
  * @height:     Height in pixels of the cursor.
- * @pixels:     Pixel data, @see VMMDevReqMousePointer for the format.
+ * @pixels:     Pixel data, @see VMMDevReqMousePoपूर्णांकer क्रम the क्रमmat.
  * @len:        Size in bytes of the pixel data.
  */
-int hgsmi_update_pointer_shape(struct gen_pool *ctx, u32 flags,
+पूर्णांक hgsmi_update_poपूर्णांकer_shape(काष्ठा gen_pool *ctx, u32 flags,
 			       u32 hot_x, u32 hot_y, u32 width, u32 height,
 			       u8 *pixels, u32 len)
-{
-	struct vbva_mouse_pointer_shape *p;
+अणु
+	काष्ठा vbva_mouse_poपूर्णांकer_shape *p;
 	u32 pixel_len = 0;
-	int rc;
+	पूर्णांक rc;
 
-	if (flags & VBOX_MOUSE_POINTER_SHAPE) {
+	अगर (flags & VBOX_MOUSE_POINTER_SHAPE) अणु
 		/*
-		 * Size of the pointer data:
-		 * sizeof (AND mask) + sizeof (XOR_MASK)
+		 * Size of the poपूर्णांकer data:
+		 * माप (AND mask) + माप (XOR_MASK)
 		 */
 		pixel_len = ((((width + 7) / 8) * height + 3) & ~3) +
 			 width * 4 * height;
-		if (pixel_len > len)
-			return -EINVAL;
+		अगर (pixel_len > len)
+			वापस -EINVAL;
 
 		/*
-		 * If shape is supplied, then always create the pointer visible.
+		 * If shape is supplied, then always create the poपूर्णांकer visible.
 		 * See comments in 'vboxUpdatePointerShape'
 		 */
 		flags |= VBOX_MOUSE_POINTER_VISIBLE;
-	}
+	पूर्ण
 
-	p = hgsmi_buffer_alloc(ctx, sizeof(*p) + pixel_len, HGSMI_CH_VBVA,
+	p = hgsmi_buffer_alloc(ctx, माप(*p) + pixel_len, HGSMI_CH_VBVA,
 			       VBVA_MOUSE_POINTER_SHAPE);
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
 	p->result = VINF_SUCCESS;
 	p->flags = flags;
@@ -146,35 +147,35 @@ int hgsmi_update_pointer_shape(struct gen_pool *ctx, u32 flags,
 	p->hot_y = hot_y;
 	p->width = width;
 	p->height = height;
-	if (pixel_len)
-		memcpy(p->data, pixels, pixel_len);
+	अगर (pixel_len)
+		स_नकल(p->data, pixels, pixel_len);
 
 	hgsmi_buffer_submit(ctx, p);
 
-	switch (p->result) {
-	case VINF_SUCCESS:
+	चयन (p->result) अणु
+	हाल VINF_SUCCESS:
 		rc = 0;
-		break;
-	case VERR_NO_MEMORY:
+		अवरोध;
+	हाल VERR_NO_MEMORY:
 		rc = -ENOMEM;
-		break;
-	case VERR_NOT_SUPPORTED:
+		अवरोध;
+	हाल VERR_NOT_SUPPORTED:
 		rc = -EBUSY;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -EINVAL;
-	}
+	पूर्ण
 
-	hgsmi_buffer_free(ctx, p);
+	hgsmi_buffer_मुक्त(ctx, p);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * Report the guest cursor position.  The host may wish to use this information
+ * Report the guest cursor position.  The host may wish to use this inक्रमmation
  * to re-position its own cursor (though this is currently unlikely).  The
- * current host cursor position is returned.
- * Return: 0 or negative errno value.
+ * current host cursor position is वापसed.
+ * Return: 0 or negative त्रुटि_सं value.
  * @ctx:              The context containing the heap used.
  * @report_position:  Are we reporting a position?
  * @x:                Guest cursor X position.
@@ -182,15 +183,15 @@ int hgsmi_update_pointer_shape(struct gen_pool *ctx, u32 flags,
  * @x_host:           Host cursor X position is stored here.  Optional.
  * @y_host:           Host cursor Y position is stored here.  Optional.
  */
-int hgsmi_cursor_position(struct gen_pool *ctx, bool report_position,
+पूर्णांक hgsmi_cursor_position(काष्ठा gen_pool *ctx, bool report_position,
 			  u32 x, u32 y, u32 *x_host, u32 *y_host)
-{
-	struct vbva_cursor_position *p;
+अणु
+	काष्ठा vbva_cursor_position *p;
 
-	p = hgsmi_buffer_alloc(ctx, sizeof(*p), HGSMI_CH_VBVA,
+	p = hgsmi_buffer_alloc(ctx, माप(*p), HGSMI_CH_VBVA,
 			       VBVA_CURSOR_POSITION);
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
 	p->report_position = report_position;
 	p->x = x;
@@ -201,7 +202,7 @@ int hgsmi_cursor_position(struct gen_pool *ctx, bool report_position,
 	*x_host = p->x;
 	*y_host = p->y;
 
-	hgsmi_buffer_free(ctx, p);
+	hgsmi_buffer_मुक्त(ctx, p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

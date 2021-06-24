@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#include "i915_active.h"
-#include "intel_context.h"
-#include "intel_context_param.h"
-#include "intel_ring.h"
+#समावेश "i915_active.h"
+#समावेश "intel_context.h"
+#समावेश "intel_context_param.h"
+#समावेश "intel_ring.h"
 
-int intel_context_set_ring_size(struct intel_context *ce, long sz)
-{
-	int err;
+पूर्णांक पूर्णांकel_context_set_ring_size(काष्ठा पूर्णांकel_context *ce, दीर्घ sz)
+अणु
+	पूर्णांक err;
 
-	if (intel_context_lock_pinned(ce))
-		return -EINTR;
+	अगर (पूर्णांकel_context_lock_pinned(ce))
+		वापस -EINTR;
 
-	err = i915_active_wait(&ce->active);
-	if (err < 0)
-		goto unlock;
+	err = i915_active_रुको(&ce->active);
+	अगर (err < 0)
+		जाओ unlock;
 
-	if (intel_context_is_pinned(ce)) {
+	अगर (पूर्णांकel_context_is_pinned(ce)) अणु
 		err = -EBUSY; /* In active use, come back later! */
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	if (test_bit(CONTEXT_ALLOC_BIT, &ce->flags)) {
-		struct intel_ring *ring;
+	अगर (test_bit(CONTEXT_ALLOC_BIT, &ce->flags)) अणु
+		काष्ठा पूर्णांकel_ring *ring;
 
 		/* Replace the existing ringbuffer */
-		ring = intel_engine_create_ring(ce->engine, sz);
-		if (IS_ERR(ring)) {
+		ring = पूर्णांकel_engine_create_ring(ce->engine, sz);
+		अगर (IS_ERR(ring)) अणु
 			err = PTR_ERR(ring);
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
-		intel_ring_put(ce->ring);
+		पूर्णांकel_ring_put(ce->ring);
 		ce->ring = ring;
 
 		/* Context image will be updated on next pin */
-	} else {
-		ce->ring = __intel_context_ring_size(sz);
-	}
+	पूर्ण अन्यथा अणु
+		ce->ring = __पूर्णांकel_context_ring_size(sz);
+	पूर्ण
 
 unlock:
-	intel_context_unlock_pinned(ce);
-	return err;
-}
+	पूर्णांकel_context_unlock_pinned(ce);
+	वापस err;
+पूर्ण
 
-long intel_context_get_ring_size(struct intel_context *ce)
-{
-	long sz = (unsigned long)READ_ONCE(ce->ring);
+दीर्घ पूर्णांकel_context_get_ring_size(काष्ठा पूर्णांकel_context *ce)
+अणु
+	दीर्घ sz = (अचिन्हित दीर्घ)READ_ONCE(ce->ring);
 
-	if (test_bit(CONTEXT_ALLOC_BIT, &ce->flags)) {
-		if (intel_context_lock_pinned(ce))
-			return -EINTR;
+	अगर (test_bit(CONTEXT_ALLOC_BIT, &ce->flags)) अणु
+		अगर (पूर्णांकel_context_lock_pinned(ce))
+			वापस -EINTR;
 
 		sz = ce->ring->size;
-		intel_context_unlock_pinned(ce);
-	}
+		पूर्णांकel_context_unlock_pinned(ce);
+	पूर्ण
 
-	return sz;
-}
+	वापस sz;
+पूर्ण

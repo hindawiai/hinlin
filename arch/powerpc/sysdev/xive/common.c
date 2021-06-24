@@ -1,545 +1,546 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2016,2017 IBM Corporation.
  */
 
-#define pr_fmt(fmt) "xive: " fmt
+#घोषणा pr_fmt(fmt) "xive: " fmt
 
-#include <linux/types.h>
-#include <linux/threads.h>
-#include <linux/kernel.h>
-#include <linux/irq.h>
-#include <linux/debugfs.h>
-#include <linux/smp.h>
-#include <linux/interrupt.h>
-#include <linux/seq_file.h>
-#include <linux/init.h>
-#include <linux/cpu.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/msi.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/types.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <asm/debugfs.h>
-#include <asm/prom.h>
-#include <asm/io.h>
-#include <asm/smp.h>
-#include <asm/machdep.h>
-#include <asm/irq.h>
-#include <asm/errno.h>
-#include <asm/xive.h>
-#include <asm/xive-regs.h>
-#include <asm/xmon.h>
+#समावेश <यंत्र/debugfs.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <यंत्र/xive.h>
+#समावेश <यंत्र/xive-regs.h>
+#समावेश <यंत्र/xmon.h>
 
-#include "xive-internal.h"
+#समावेश "xive-internal.h"
 
-#undef DEBUG_FLUSH
-#undef DEBUG_ALL
+#अघोषित DEBUG_FLUSH
+#अघोषित DEBUG_ALL
 
-#ifdef DEBUG_ALL
-#define DBG_VERBOSE(fmt, ...)	pr_devel("cpu %d - " fmt, \
+#अगर_घोषित DEBUG_ALL
+#घोषणा DBG_VERBOSE(fmt, ...)	pr_devel("cpu %d - " fmt, \
 					 smp_processor_id(), ## __VA_ARGS__)
-#else
-#define DBG_VERBOSE(fmt...)	do { } while(0)
-#endif
+#अन्यथा
+#घोषणा DBG_VERBOSE(fmt...)	करो अणु पूर्ण जबतक(0)
+#पूर्ण_अगर
 
 bool __xive_enabled;
 EXPORT_SYMBOL_GPL(__xive_enabled);
 bool xive_cmdline_disabled;
 
-/* We use only one priority for now */
-static u8 xive_irq_priority;
+/* We use only one priority क्रम now */
+अटल u8 xive_irq_priority;
 
 /* TIMA exported to KVM */
-void __iomem *xive_tima;
+व्योम __iomem *xive_tima;
 EXPORT_SYMBOL_GPL(xive_tima);
 u32 xive_tima_offset;
 
 /* Backend ops */
-static const struct xive_ops *xive_ops;
+अटल स्थिर काष्ठा xive_ops *xive_ops;
 
-/* Our global interrupt domain */
-static struct irq_domain *xive_irq_domain;
+/* Our global पूर्णांकerrupt करोमुख्य */
+अटल काष्ठा irq_करोमुख्य *xive_irq_करोमुख्य;
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 /* The IPIs use the same logical irq number when on the same chip */
-static struct xive_ipi_desc {
-	unsigned int irq;
-	char name[16];
-} *xive_ipis;
+अटल काष्ठा xive_ipi_desc अणु
+	अचिन्हित पूर्णांक irq;
+	अक्षर name[16];
+पूर्ण *xive_ipis;
 
 /*
- * Use early_cpu_to_node() for hot-plugged CPUs
+ * Use early_cpu_to_node() क्रम hot-plugged CPUs
  */
-static unsigned int xive_ipi_cpu_to_irq(unsigned int cpu)
-{
-	return xive_ipis[early_cpu_to_node(cpu)].irq;
-}
-#endif
+अटल अचिन्हित पूर्णांक xive_ipi_cpu_to_irq(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस xive_ipis[early_cpu_to_node(cpu)].irq;
+पूर्ण
+#पूर्ण_अगर
 
-/* Xive state for each CPU */
-static DEFINE_PER_CPU(struct xive_cpu *, xive_cpu);
+/* Xive state क्रम each CPU */
+अटल DEFINE_PER_CPU(काष्ठा xive_cpu *, xive_cpu);
 
 /* An invalid CPU target */
-#define XIVE_INVALID_TARGET	(-1)
+#घोषणा XIVE_INVALID_TARGET	(-1)
 
 /*
- * Read the next entry in a queue, return its content if it's valid
- * or 0 if there is no new entry.
+ * Read the next entry in a queue, वापस its content अगर it's valid
+ * or 0 अगर there is no new entry.
  *
- * The queue pointer is moved forward unless "just_peek" is set
+ * The queue poपूर्णांकer is moved क्रमward unless "just_peek" is set
  */
-static u32 xive_read_eq(struct xive_q *q, bool just_peek)
-{
+अटल u32 xive_पढ़ो_eq(काष्ठा xive_q *q, bool just_peek)
+अणु
 	u32 cur;
 
-	if (!q->qpage)
-		return 0;
+	अगर (!q->qpage)
+		वापस 0;
 	cur = be32_to_cpup(q->qpage + q->idx);
 
 	/* Check valid bit (31) vs current toggle polarity */
-	if ((cur >> 31) == q->toggle)
-		return 0;
+	अगर ((cur >> 31) == q->toggle)
+		वापस 0;
 
 	/* If consuming from the queue ... */
-	if (!just_peek) {
+	अगर (!just_peek) अणु
 		/* Next entry */
 		q->idx = (q->idx + 1) & q->msk;
 
 		/* Wrap around: flip valid toggle */
-		if (q->idx == 0)
+		अगर (q->idx == 0)
 			q->toggle ^= 1;
-	}
+	पूर्ण
 	/* Mask out the valid bit (31) */
-	return cur & 0x7fffffff;
-}
+	वापस cur & 0x7fffffff;
+पूर्ण
 
 /*
- * Scans all the queue that may have interrupts in them
+ * Scans all the queue that may have पूर्णांकerrupts in them
  * (based on "pending_prio") in priority order until an
- * interrupt is found or all the queues are empty.
+ * पूर्णांकerrupt is found or all the queues are empty.
  *
  * Then updates the CPPR (Current Processor Priority
- * Register) based on the most favored interrupt found
- * (0xff if none) and return what was found (0 if none).
+ * Register) based on the most favored पूर्णांकerrupt found
+ * (0xff अगर none) and वापस what was found (0 अगर none).
  *
- * If just_peek is set, return the most favored pending
- * interrupt if any but don't update the queue pointers.
+ * If just_peek is set, वापस the most favored pending
+ * पूर्णांकerrupt अगर any but करोn't update the queue poपूर्णांकers.
  *
  * Note: This function can operate generically on any number
  * of queues (up to 8). The current implementation of the XIVE
  * driver only uses a single queue however.
  *
  * Note2: This will also "flush" "the pending_count" of a queue
- * into the "count" when that queue is observed to be empty.
- * This is used to keep track of the amount of interrupts
- * targetting a queue. When an interrupt is moved away from
+ * पूर्णांकo the "count" when that queue is observed to be empty.
+ * This is used to keep track of the amount of पूर्णांकerrupts
+ * targetting a queue. When an पूर्णांकerrupt is moved away from
  * a queue, we only decrement that queue count once the queue
- * has been observed empty to avoid races.
+ * has been observed empty to aव्योम races.
  */
-static u32 xive_scan_interrupts(struct xive_cpu *xc, bool just_peek)
-{
+अटल u32 xive_scan_पूर्णांकerrupts(काष्ठा xive_cpu *xc, bool just_peek)
+अणु
 	u32 irq = 0;
 	u8 prio = 0;
 
 	/* Find highest pending priority */
-	while (xc->pending_prio != 0) {
-		struct xive_q *q;
+	जबतक (xc->pending_prio != 0) अणु
+		काष्ठा xive_q *q;
 
 		prio = ffs(xc->pending_prio) - 1;
 		DBG_VERBOSE("scan_irq: trying prio %d\n", prio);
 
 		/* Try to fetch */
-		irq = xive_read_eq(&xc->queue[prio], just_peek);
+		irq = xive_पढ़ो_eq(&xc->queue[prio], just_peek);
 
 		/* Found something ? That's it */
-		if (irq) {
-			if (just_peek || irq_to_desc(irq))
-				break;
+		अगर (irq) अणु
+			अगर (just_peek || irq_to_desc(irq))
+				अवरोध;
 			/*
-			 * We should never get here; if we do then we must
-			 * have failed to synchronize the interrupt properly
-			 * when shutting it down.
+			 * We should never get here; अगर we करो then we must
+			 * have failed to synchronize the पूर्णांकerrupt properly
+			 * when shutting it करोwn.
 			 */
 			pr_crit("xive: got interrupt %d without descriptor, dropping\n",
 				irq);
 			WARN_ON(1);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Clear pending bits */
 		xc->pending_prio &= ~(1 << prio);
 
 		/*
-		 * Check if the queue count needs adjusting due to
-		 * interrupts being moved away. See description of
+		 * Check अगर the queue count needs adjusting due to
+		 * पूर्णांकerrupts being moved away. See description of
 		 * xive_dec_target_count()
 		 */
 		q = &xc->queue[prio];
-		if (atomic_read(&q->pending_count)) {
-			int p = atomic_xchg(&q->pending_count, 0);
-			if (p) {
-				WARN_ON(p > atomic_read(&q->count));
+		अगर (atomic_पढ़ो(&q->pending_count)) अणु
+			पूर्णांक p = atomic_xchg(&q->pending_count, 0);
+			अगर (p) अणु
+				WARN_ON(p > atomic_पढ़ो(&q->count));
 				atomic_sub(p, &q->count);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* If nothing was found, set CPPR to 0xff */
-	if (irq == 0)
+	अगर (irq == 0)
 		prio = 0xff;
 
-	/* Update HW CPPR to match if necessary */
-	if (prio != xc->cppr) {
+	/* Update HW CPPR to match अगर necessary */
+	अगर (prio != xc->cppr) अणु
 		DBG_VERBOSE("scan_irq: adjusting CPPR to %d\n", prio);
 		xc->cppr = prio;
 		out_8(xive_tima + xive_tima_offset + TM_CPPR, prio);
-	}
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
 /*
- * This is used to perform the magic loads from an ESB
+ * This is used to perक्रमm the magic loads from an ESB
  * described in xive-regs.h
  */
-static notrace u8 xive_esb_read(struct xive_irq_data *xd, u32 offset)
-{
+अटल notrace u8 xive_esb_पढ़ो(काष्ठा xive_irq_data *xd, u32 offset)
+अणु
 	u64 val;
 
-	if (offset == XIVE_ESB_SET_PQ_10 && xd->flags & XIVE_IRQ_FLAG_STORE_EOI)
+	अगर (offset == XIVE_ESB_SET_PQ_10 && xd->flags & XIVE_IRQ_FLAG_STORE_EOI)
 		offset |= XIVE_ESB_LD_ST_MO;
 
-	if ((xd->flags & XIVE_IRQ_FLAG_H_INT_ESB) && xive_ops->esb_rw)
+	अगर ((xd->flags & XIVE_IRQ_FLAG_H_INT_ESB) && xive_ops->esb_rw)
 		val = xive_ops->esb_rw(xd->hw_irq, offset, 0, 0);
-	else
+	अन्यथा
 		val = in_be64(xd->eoi_mmio + offset);
 
-	return (u8)val;
-}
+	वापस (u8)val;
+पूर्ण
 
-static void xive_esb_write(struct xive_irq_data *xd, u32 offset, u64 data)
-{
-	if ((xd->flags & XIVE_IRQ_FLAG_H_INT_ESB) && xive_ops->esb_rw)
+अटल व्योम xive_esb_ग_लिखो(काष्ठा xive_irq_data *xd, u32 offset, u64 data)
+अणु
+	अगर ((xd->flags & XIVE_IRQ_FLAG_H_INT_ESB) && xive_ops->esb_rw)
 		xive_ops->esb_rw(xd->hw_irq, offset, data, 1);
-	else
+	अन्यथा
 		out_be64(xd->eoi_mmio + offset, data);
-}
+पूर्ण
 
-#ifdef CONFIG_XMON
-static notrace void xive_dump_eq(const char *name, struct xive_q *q)
-{
+#अगर_घोषित CONFIG_XMON
+अटल notrace व्योम xive_dump_eq(स्थिर अक्षर *name, काष्ठा xive_q *q)
+अणु
 	u32 i0, i1, idx;
 
-	if (!q->qpage)
-		return;
+	अगर (!q->qpage)
+		वापस;
 	idx = q->idx;
 	i0 = be32_to_cpup(q->qpage + idx);
 	idx = (idx + 1) & q->msk;
 	i1 = be32_to_cpup(q->qpage + idx);
-	xmon_printf("%s idx=%d T=%d %08x %08x ...", name,
+	xmon_म_लिखो("%s idx=%d T=%d %08x %08x ...", name,
 		     q->idx, q->toggle, i0, i1);
-}
+पूर्ण
 
-notrace void xmon_xive_do_dump(int cpu)
-{
-	struct xive_cpu *xc = per_cpu(xive_cpu, cpu);
+notrace व्योम xmon_xive_करो_dump(पूर्णांक cpu)
+अणु
+	काष्ठा xive_cpu *xc = per_cpu(xive_cpu, cpu);
 
-	xmon_printf("CPU %d:", cpu);
-	if (xc) {
-		xmon_printf("pp=%02x CPPR=%02x ", xc->pending_prio, xc->cppr);
+	xmon_म_लिखो("CPU %d:", cpu);
+	अगर (xc) अणु
+		xmon_म_लिखो("pp=%02x CPPR=%02x ", xc->pending_prio, xc->cppr);
 
-#ifdef CONFIG_SMP
-		{
-			u64 val = xive_esb_read(&xc->ipi_data, XIVE_ESB_GET);
+#अगर_घोषित CONFIG_SMP
+		अणु
+			u64 val = xive_esb_पढ़ो(&xc->ipi_data, XIVE_ESB_GET);
 
-			xmon_printf("IPI=0x%08x PQ=%c%c ", xc->hw_ipi,
+			xmon_म_लिखो("IPI=0x%08x PQ=%c%c ", xc->hw_ipi,
 				    val & XIVE_ESB_VAL_P ? 'P' : '-',
 				    val & XIVE_ESB_VAL_Q ? 'Q' : '-');
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 		xive_dump_eq("EQ", &xc->queue[xive_irq_priority]);
-	}
-	xmon_printf("\n");
-}
+	पूर्ण
+	xmon_म_लिखो("\n");
+पूर्ण
 
-static struct irq_data *xive_get_irq_data(u32 hw_irq)
-{
-	unsigned int irq = irq_find_mapping(xive_irq_domain, hw_irq);
+अटल काष्ठा irq_data *xive_get_irq_data(u32 hw_irq)
+अणु
+	अचिन्हित पूर्णांक irq = irq_find_mapping(xive_irq_करोमुख्य, hw_irq);
 
-	return irq ? irq_get_irq_data(irq) : NULL;
-}
+	वापस irq ? irq_get_irq_data(irq) : शून्य;
+पूर्ण
 
-int xmon_xive_get_irq_config(u32 hw_irq, struct irq_data *d)
-{
-	int rc;
+पूर्णांक xmon_xive_get_irq_config(u32 hw_irq, काष्ठा irq_data *d)
+अणु
+	पूर्णांक rc;
 	u32 target;
 	u8 prio;
 	u32 lirq;
 
 	rc = xive_ops->get_irq_config(hw_irq, &target, &prio, &lirq);
-	if (rc) {
-		xmon_printf("IRQ 0x%08x : no config rc=%d\n", hw_irq, rc);
-		return rc;
-	}
+	अगर (rc) अणु
+		xmon_म_लिखो("IRQ 0x%08x : no config rc=%d\n", hw_irq, rc);
+		वापस rc;
+	पूर्ण
 
-	xmon_printf("IRQ 0x%08x : target=0x%x prio=%02x lirq=0x%x ",
+	xmon_म_लिखो("IRQ 0x%08x : target=0x%x prio=%02x lirq=0x%x ",
 		    hw_irq, target, prio, lirq);
 
-	if (!d)
+	अगर (!d)
 		d = xive_get_irq_data(hw_irq);
 
-	if (d) {
-		struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
-		u64 val = xive_esb_read(xd, XIVE_ESB_GET);
+	अगर (d) अणु
+		काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+		u64 val = xive_esb_पढ़ो(xd, XIVE_ESB_GET);
 
-		xmon_printf("flags=%c%c%c PQ=%c%c",
+		xmon_म_लिखो("flags=%c%c%c PQ=%c%c",
 			    xd->flags & XIVE_IRQ_FLAG_STORE_EOI ? 'S' : ' ',
 			    xd->flags & XIVE_IRQ_FLAG_LSI ? 'L' : ' ',
 			    xd->flags & XIVE_IRQ_FLAG_H_INT_ESB ? 'H' : ' ',
 			    val & XIVE_ESB_VAL_P ? 'P' : '-',
 			    val & XIVE_ESB_VAL_Q ? 'Q' : '-');
-	}
+	पूर्ण
 
-	xmon_printf("\n");
-	return 0;
-}
+	xmon_म_लिखो("\n");
+	वापस 0;
+पूर्ण
 
-void xmon_xive_get_irq_all(void)
-{
-	unsigned int i;
-	struct irq_desc *desc;
+व्योम xmon_xive_get_irq_all(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा irq_desc *desc;
 
-	for_each_irq_desc(i, desc) {
-		struct irq_data *d = irq_desc_get_irq_data(desc);
-		unsigned int hwirq = (unsigned int)irqd_to_hwirq(d);
+	क्रम_each_irq_desc(i, desc) अणु
+		काष्ठा irq_data *d = irq_desc_get_irq_data(desc);
+		अचिन्हित पूर्णांक hwirq = (अचिन्हित पूर्णांक)irqd_to_hwirq(d);
 
-		if (d->domain == xive_irq_domain)
+		अगर (d->करोमुख्य == xive_irq_करोमुख्य)
 			xmon_xive_get_irq_config(hwirq, d);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif /* CONFIG_XMON */
+#पूर्ण_अगर /* CONFIG_XMON */
 
-static unsigned int xive_get_irq(void)
-{
-	struct xive_cpu *xc = __this_cpu_read(xive_cpu);
+अटल अचिन्हित पूर्णांक xive_get_irq(व्योम)
+अणु
+	काष्ठा xive_cpu *xc = __this_cpu_पढ़ो(xive_cpu);
 	u32 irq;
 
 	/*
-	 * This can be called either as a result of a HW interrupt or
+	 * This can be called either as a result of a HW पूर्णांकerrupt or
 	 * as a "replay" because EOI decided there was still something
 	 * in one of the queues.
 	 *
-	 * First we perform an ACK cycle in order to update our mask
+	 * First we perक्रमm an ACK cycle in order to update our mask
 	 * of pending priorities. This will also have the effect of
-	 * updating the CPPR to the most favored pending interrupts.
+	 * updating the CPPR to the most favored pending पूर्णांकerrupts.
 	 *
-	 * In the future, if we have a way to differentiate a first
-	 * entry (on HW interrupt) from a replay triggered by EOI,
+	 * In the future, अगर we have a way to dअगरferentiate a first
+	 * entry (on HW पूर्णांकerrupt) from a replay triggered by EOI,
 	 * we could skip this on replays unless we soft-mask tells us
-	 * that a new HW interrupt occurred.
+	 * that a new HW पूर्णांकerrupt occurred.
 	 */
 	xive_ops->update_pending(xc);
 
 	DBG_VERBOSE("get_irq: pending=%02x\n", xc->pending_prio);
 
-	/* Scan our queue(s) for interrupts */
-	irq = xive_scan_interrupts(xc, false);
+	/* Scan our queue(s) क्रम पूर्णांकerrupts */
+	irq = xive_scan_पूर्णांकerrupts(xc, false);
 
 	DBG_VERBOSE("get_irq: got irq 0x%x, new pending=0x%02x\n",
 	    irq, xc->pending_prio);
 
-	/* Return pending interrupt if any */
-	if (irq == XIVE_BAD_IRQ)
-		return 0;
-	return irq;
-}
+	/* Return pending पूर्णांकerrupt अगर any */
+	अगर (irq == XIVE_BAD_IRQ)
+		वापस 0;
+	वापस irq;
+पूर्ण
 
 /*
- * After EOI'ing an interrupt, we need to re-check the queue
- * to see if another interrupt is pending since multiple
- * interrupts can coalesce into a single notification to the
+ * After EOI'ing an पूर्णांकerrupt, we need to re-check the queue
+ * to see अगर another पूर्णांकerrupt is pending since multiple
+ * पूर्णांकerrupts can coalesce पूर्णांकo a single notअगरication to the
  * CPU.
  *
  * If we find that there is indeed more in there, we call
- * force_external_irq_replay() to make Linux synthetize an
- * external interrupt on the next call to local_irq_restore().
+ * क्रमce_बाह्यal_irq_replay() to make Linux synthetize an
+ * बाह्यal पूर्णांकerrupt on the next call to local_irq_restore().
  */
-static void xive_do_queue_eoi(struct xive_cpu *xc)
-{
-	if (xive_scan_interrupts(xc, true) != 0) {
+अटल व्योम xive_करो_queue_eoi(काष्ठा xive_cpu *xc)
+अणु
+	अगर (xive_scan_पूर्णांकerrupts(xc, true) != 0) अणु
 		DBG_VERBOSE("eoi: pending=0x%02x\n", xc->pending_prio);
-		force_external_irq_replay();
-	}
-}
+		क्रमce_बाह्यal_irq_replay();
+	पूर्ण
+पूर्ण
 
 /*
- * EOI an interrupt at the source. There are several methods
- * to do this depending on the HW version and source type
+ * EOI an पूर्णांकerrupt at the source. There are several methods
+ * to करो this depending on the HW version and source type
  */
-static void xive_do_source_eoi(struct xive_irq_data *xd)
-{
+अटल व्योम xive_करो_source_eoi(काष्ठा xive_irq_data *xd)
+अणु
 	u8 eoi_val;
 
 	xd->stale_p = false;
 
 	/* If the XIVE supports the new "store EOI facility, use it */
-	if (xd->flags & XIVE_IRQ_FLAG_STORE_EOI) {
-		xive_esb_write(xd, XIVE_ESB_STORE_EOI, 0);
-		return;
-	}
+	अगर (xd->flags & XIVE_IRQ_FLAG_STORE_EOI) अणु
+		xive_esb_ग_लिखो(xd, XIVE_ESB_STORE_EOI, 0);
+		वापस;
+	पूर्ण
 
 	/*
 	 * For LSIs, we use the "EOI cycle" special load rather than
-	 * PQ bits, as they are automatically re-triggered in HW when
+	 * PQ bits, as they are स्वतःmatically re-triggered in HW when
 	 * still pending.
 	 */
-	if (xd->flags & XIVE_IRQ_FLAG_LSI) {
-		xive_esb_read(xd, XIVE_ESB_LOAD_EOI);
-		return;
-	}
+	अगर (xd->flags & XIVE_IRQ_FLAG_LSI) अणु
+		xive_esb_पढ़ो(xd, XIVE_ESB_LOAD_EOI);
+		वापस;
+	पूर्ण
 
 	/*
-	 * Otherwise, we use the special MMIO that does a clear of
-	 * both P and Q and returns the old Q. This allows us to then
-	 * do a re-trigger if Q was set rather than synthesizing an
-	 * interrupt in software
+	 * Otherwise, we use the special MMIO that करोes a clear of
+	 * both P and Q and वापसs the old Q. This allows us to then
+	 * करो a re-trigger अगर Q was set rather than synthesizing an
+	 * पूर्णांकerrupt in software
 	 */
-	eoi_val = xive_esb_read(xd, XIVE_ESB_SET_PQ_00);
+	eoi_val = xive_esb_पढ़ो(xd, XIVE_ESB_SET_PQ_00);
 	DBG_VERBOSE("eoi_val=%x\n", eoi_val);
 
-	/* Re-trigger if needed */
-	if ((eoi_val & XIVE_ESB_VAL_Q) && xd->trig_mmio)
+	/* Re-trigger अगर needed */
+	अगर ((eoi_val & XIVE_ESB_VAL_Q) && xd->trig_mmio)
 		out_be64(xd->trig_mmio, 0);
-}
+पूर्ण
 
 /* irq_chip eoi callback, called with irq descriptor lock held */
-static void xive_irq_eoi(struct irq_data *d)
-{
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
-	struct xive_cpu *xc = __this_cpu_read(xive_cpu);
+अटल व्योम xive_irq_eoi(काष्ठा irq_data *d)
+अणु
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+	काष्ठा xive_cpu *xc = __this_cpu_पढ़ो(xive_cpu);
 
 	DBG_VERBOSE("eoi_irq: irq=%d [0x%lx] pending=%02x\n",
 		    d->irq, irqd_to_hwirq(d), xc->pending_prio);
 
 	/*
-	 * EOI the source if it hasn't been disabled and hasn't
+	 * EOI the source अगर it hasn't been disabled and hasn't
 	 * been passed-through to a KVM guest
 	 */
-	if (!irqd_irq_disabled(d) && !irqd_is_forwarded_to_vcpu(d) &&
+	अगर (!irqd_irq_disabled(d) && !irqd_is_क्रमwarded_to_vcpu(d) &&
 	    !(xd->flags & XIVE_IRQ_FLAG_NO_EOI))
-		xive_do_source_eoi(xd);
-	else
+		xive_करो_source_eoi(xd);
+	अन्यथा
 		xd->stale_p = true;
 
 	/*
-	 * Clear saved_p to indicate that it's no longer occupying
+	 * Clear saved_p to indicate that it's no दीर्घer occupying
 	 * a queue slot on the target queue
 	 */
 	xd->saved_p = false;
 
-	/* Check for more work in the queue */
-	xive_do_queue_eoi(xc);
-}
+	/* Check क्रम more work in the queue */
+	xive_करो_queue_eoi(xc);
+पूर्ण
 
 /*
- * Helper used to mask and unmask an interrupt source.
+ * Helper used to mask and unmask an पूर्णांकerrupt source.
  */
-static void xive_do_source_set_mask(struct xive_irq_data *xd,
+अटल व्योम xive_करो_source_set_mask(काष्ठा xive_irq_data *xd,
 				    bool mask)
-{
+अणु
 	u64 val;
 
 	/*
-	 * If the interrupt had P set, it may be in a queue.
+	 * If the पूर्णांकerrupt had P set, it may be in a queue.
 	 *
-	 * We need to make sure we don't re-enable it until it
+	 * We need to make sure we करोn't re-enable it until it
 	 * has been fetched from that queue and EOId. We keep
 	 * a copy of that P state and use it to restore the
 	 * ESB accordingly on unmask.
 	 */
-	if (mask) {
-		val = xive_esb_read(xd, XIVE_ESB_SET_PQ_01);
-		if (!xd->stale_p && !!(val & XIVE_ESB_VAL_P))
+	अगर (mask) अणु
+		val = xive_esb_पढ़ो(xd, XIVE_ESB_SET_PQ_01);
+		अगर (!xd->stale_p && !!(val & XIVE_ESB_VAL_P))
 			xd->saved_p = true;
 		xd->stale_p = false;
-	} else if (xd->saved_p) {
-		xive_esb_read(xd, XIVE_ESB_SET_PQ_10);
+	पूर्ण अन्यथा अगर (xd->saved_p) अणु
+		xive_esb_पढ़ो(xd, XIVE_ESB_SET_PQ_10);
 		xd->saved_p = false;
-	} else {
-		xive_esb_read(xd, XIVE_ESB_SET_PQ_00);
+	पूर्ण अन्यथा अणु
+		xive_esb_पढ़ो(xd, XIVE_ESB_SET_PQ_00);
 		xd->stale_p = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Try to chose "cpu" as a new interrupt target. Increments
- * the queue accounting for that target if it's not already
+ * Try to chose "cpu" as a new पूर्णांकerrupt target. Increments
+ * the queue accounting क्रम that target अगर it's not alपढ़ोy
  * full.
  */
-static bool xive_try_pick_target(int cpu)
-{
-	struct xive_cpu *xc = per_cpu(xive_cpu, cpu);
-	struct xive_q *q = &xc->queue[xive_irq_priority];
-	int max;
+अटल bool xive_try_pick_target(पूर्णांक cpu)
+अणु
+	काष्ठा xive_cpu *xc = per_cpu(xive_cpu, cpu);
+	काष्ठा xive_q *q = &xc->queue[xive_irq_priority];
+	पूर्णांक max;
 
 	/*
-	 * Calculate max number of interrupts in that queue.
+	 * Calculate max number of पूर्णांकerrupts in that queue.
 	 *
-	 * We leave a gap of 1 just in case...
+	 * We leave a gap of 1 just in हाल...
 	 */
 	max = (q->msk + 1) - 1;
-	return !!atomic_add_unless(&q->count, 1, max);
-}
+	वापस !!atomic_add_unless(&q->count, 1, max);
+पूर्ण
 
 /*
- * Un-account an interrupt for a target CPU. We don't directly
- * decrement q->count since the interrupt might still be present
+ * Un-account an पूर्णांकerrupt क्रम a target CPU. We करोn't directly
+ * decrement q->count since the पूर्णांकerrupt might still be present
  * in the queue.
  *
  * Instead increment a separate counter "pending_count" which
  * will be substracted from "count" later when that CPU observes
  * the queue to be empty.
  */
-static void xive_dec_target_count(int cpu)
-{
-	struct xive_cpu *xc = per_cpu(xive_cpu, cpu);
-	struct xive_q *q = &xc->queue[xive_irq_priority];
+अटल व्योम xive_dec_target_count(पूर्णांक cpu)
+अणु
+	काष्ठा xive_cpu *xc = per_cpu(xive_cpu, cpu);
+	काष्ठा xive_q *q = &xc->queue[xive_irq_priority];
 
-	if (WARN_ON(cpu < 0 || !xc)) {
+	अगर (WARN_ON(cpu < 0 || !xc)) अणु
 		pr_err("%s: cpu=%d xc=%p\n", __func__, cpu, xc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * We increment the "pending count" which will be used
 	 * to decrement the target queue count whenever it's next
-	 * processed and found empty. This ensure that we don't
-	 * decrement while we still have the interrupt there
+	 * processed and found empty. This ensure that we करोn't
+	 * decrement जबतक we still have the पूर्णांकerrupt there
 	 * occupying a slot.
 	 */
 	atomic_inc(&q->pending_count);
-}
+पूर्ण
 
 /* Find a tentative CPU target in a CPU mask */
-static int xive_find_target_in_mask(const struct cpumask *mask,
-				    unsigned int fuzz)
-{
-	int cpu, first, num, i;
+अटल पूर्णांक xive_find_target_in_mask(स्थिर काष्ठा cpumask *mask,
+				    अचिन्हित पूर्णांक fuzz)
+अणु
+	पूर्णांक cpu, first, num, i;
 
-	/* Pick up a starting point CPU in the mask based on  fuzz */
-	num = min_t(int, cpumask_weight(mask), nr_cpu_ids);
+	/* Pick up a starting poपूर्णांक CPU in the mask based on  fuzz */
+	num = min_t(पूर्णांक, cpumask_weight(mask), nr_cpu_ids);
 	first = fuzz % num;
 
 	/* Locate it */
 	cpu = cpumask_first(mask);
-	for (i = 0; i < first && cpu < nr_cpu_ids; i++)
+	क्रम (i = 0; i < first && cpu < nr_cpu_ids; i++)
 		cpu = cpumask_next(cpu, mask);
 
 	/* Sanity check */
-	if (WARN_ON(cpu >= nr_cpu_ids))
+	अगर (WARN_ON(cpu >= nr_cpu_ids))
 		cpu = cpumask_first(cpu_online_mask);
 
 	/* Remember first one to handle wrap-around */
@@ -549,95 +550,95 @@ static int xive_find_target_in_mask(const struct cpumask *mask,
 	 * Now go through the entire mask until we find a valid
 	 * target.
 	 */
-	do {
+	करो अणु
 		/*
-		 * We re-check online as the fallback case passes us
+		 * We re-check online as the fallback हाल passes us
 		 * an untested affinity mask
 		 */
-		if (cpu_online(cpu) && xive_try_pick_target(cpu))
-			return cpu;
+		अगर (cpu_online(cpu) && xive_try_pick_target(cpu))
+			वापस cpu;
 		cpu = cpumask_next(cpu, mask);
 		/* Wrap around */
-		if (cpu >= nr_cpu_ids)
+		अगर (cpu >= nr_cpu_ids)
 			cpu = cpumask_first(mask);
-	} while (cpu != first);
+	पूर्ण जबतक (cpu != first);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
- * Pick a target CPU for an interrupt. This is done at
- * startup or if the affinity is changed in a way that
+ * Pick a target CPU क्रम an पूर्णांकerrupt. This is करोne at
+ * startup or अगर the affinity is changed in a way that
  * invalidates the current target.
  */
-static int xive_pick_irq_target(struct irq_data *d,
-				const struct cpumask *affinity)
-{
-	static unsigned int fuzz;
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+अटल पूर्णांक xive_pick_irq_target(काष्ठा irq_data *d,
+				स्थिर काष्ठा cpumask *affinity)
+अणु
+	अटल अचिन्हित पूर्णांक fuzz;
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
 	cpumask_var_t mask;
-	int cpu = -1;
+	पूर्णांक cpu = -1;
 
 	/*
 	 * If we have chip IDs, first we try to build a mask of
 	 * CPUs matching the CPU and find a target in there
 	 */
-	if (xd->src_chip != XIVE_INVALID_CHIP_ID &&
-		zalloc_cpumask_var(&mask, GFP_ATOMIC)) {
+	अगर (xd->src_chip != XIVE_INVALID_CHIP_ID &&
+		zalloc_cpumask_var(&mask, GFP_ATOMIC)) अणु
 		/* Build a mask of matching chip IDs */
-		for_each_cpu_and(cpu, affinity, cpu_online_mask) {
-			struct xive_cpu *xc = per_cpu(xive_cpu, cpu);
-			if (xc->chip_id == xd->src_chip)
+		क्रम_each_cpu_and(cpu, affinity, cpu_online_mask) अणु
+			काष्ठा xive_cpu *xc = per_cpu(xive_cpu, cpu);
+			अगर (xc->chip_id == xd->src_chip)
 				cpumask_set_cpu(cpu, mask);
-		}
+		पूर्ण
 		/* Try to find a target */
-		if (cpumask_empty(mask))
+		अगर (cpumask_empty(mask))
 			cpu = -1;
-		else
+		अन्यथा
 			cpu = xive_find_target_in_mask(mask, fuzz++);
-		free_cpumask_var(mask);
-		if (cpu >= 0)
-			return cpu;
+		मुक्त_cpumask_var(mask);
+		अगर (cpu >= 0)
+			वापस cpu;
 		fuzz--;
-	}
+	पूर्ण
 
 	/* No chip IDs, fallback to using the affinity mask */
-	return xive_find_target_in_mask(affinity, fuzz++);
-}
+	वापस xive_find_target_in_mask(affinity, fuzz++);
+पूर्ण
 
-static unsigned int xive_irq_startup(struct irq_data *d)
-{
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
-	unsigned int hw_irq = (unsigned int)irqd_to_hwirq(d);
-	int target, rc;
+अटल अचिन्हित पूर्णांक xive_irq_startup(काष्ठा irq_data *d)
+अणु
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+	अचिन्हित पूर्णांक hw_irq = (अचिन्हित पूर्णांक)irqd_to_hwirq(d);
+	पूर्णांक target, rc;
 
 	xd->saved_p = false;
 	xd->stale_p = false;
 	pr_devel("xive_irq_startup: irq %d [0x%x] data @%p\n",
 		 d->irq, hw_irq, d);
 
-#ifdef CONFIG_PCI_MSI
+#अगर_घोषित CONFIG_PCI_MSI
 	/*
-	 * The generic MSI code returns with the interrupt disabled on the
-	 * card, using the MSI mask bits. Firmware doesn't appear to unmask
-	 * at that level, so we do it here by hand.
+	 * The generic MSI code वापसs with the पूर्णांकerrupt disabled on the
+	 * card, using the MSI mask bits. Firmware करोesn't appear to unmask
+	 * at that level, so we करो it here by hand.
 	 */
-	if (irq_data_get_msi_desc(d))
+	अगर (irq_data_get_msi_desc(d))
 		pci_msi_unmask_irq(d);
-#endif
+#पूर्ण_अगर
 
 	/* Pick a target */
 	target = xive_pick_irq_target(d, irq_data_get_affinity_mask(d));
-	if (target == XIVE_INVALID_TARGET) {
-		/* Try again breaking affinity */
+	अगर (target == XIVE_INVALID_TARGET) अणु
+		/* Try again अवरोधing affinity */
 		target = xive_pick_irq_target(d, cpu_online_mask);
-		if (target == XIVE_INVALID_TARGET)
-			return -ENXIO;
+		अगर (target == XIVE_INVALID_TARGET)
+			वापस -ENXIO;
 		pr_warn("irq %d started with broken affinity\n", d->irq);
-	}
+	पूर्ण
 
 	/* Sanity check */
-	if (WARN_ON(target == XIVE_INVALID_TARGET ||
+	अगर (WARN_ON(target == XIVE_INVALID_TARGET ||
 		    target >= nr_cpu_ids))
 		target = smp_processor_id();
 
@@ -650,32 +651,32 @@ static unsigned int xive_irq_startup(struct irq_data *d)
 	rc = xive_ops->configure_irq(hw_irq,
 				     get_hard_smp_processor_id(target),
 				     xive_irq_priority, d->irq);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/* Unmask the ESB */
-	xive_do_source_set_mask(xd, false);
+	xive_करो_source_set_mask(xd, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* called with irq descriptor lock held */
-static void xive_irq_shutdown(struct irq_data *d)
-{
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
-	unsigned int hw_irq = (unsigned int)irqd_to_hwirq(d);
+अटल व्योम xive_irq_shutकरोwn(काष्ठा irq_data *d)
+अणु
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+	अचिन्हित पूर्णांक hw_irq = (अचिन्हित पूर्णांक)irqd_to_hwirq(d);
 
 	pr_devel("xive_irq_shutdown: irq %d [0x%x] data @%p\n",
 		 d->irq, hw_irq, d);
 
-	if (WARN_ON(xd->target == XIVE_INVALID_TARGET))
-		return;
+	अगर (WARN_ON(xd->target == XIVE_INVALID_TARGET))
+		वापस;
 
-	/* Mask the interrupt at the source */
-	xive_do_source_set_mask(xd, true);
+	/* Mask the पूर्णांकerrupt at the source */
+	xive_करो_source_set_mask(xd, true);
 
 	/*
-	 * Mask the interrupt in HW in the IVT/EAS and set the number
+	 * Mask the पूर्णांकerrupt in HW in the IVT/EAS and set the number
 	 * to be the "bad" IRQ number
 	 */
 	xive_ops->configure_irq(hw_irq,
@@ -684,293 +685,293 @@ static void xive_irq_shutdown(struct irq_data *d)
 
 	xive_dec_target_count(xd->target);
 	xd->target = XIVE_INVALID_TARGET;
-}
+पूर्ण
 
-static void xive_irq_unmask(struct irq_data *d)
-{
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+अटल व्योम xive_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
 
 	pr_devel("xive_irq_unmask: irq %d data @%p\n", d->irq, xd);
 
-	xive_do_source_set_mask(xd, false);
-}
+	xive_करो_source_set_mask(xd, false);
+पूर्ण
 
-static void xive_irq_mask(struct irq_data *d)
-{
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+अटल व्योम xive_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
 
 	pr_devel("xive_irq_mask: irq %d data @%p\n", d->irq, xd);
 
-	xive_do_source_set_mask(xd, true);
-}
+	xive_करो_source_set_mask(xd, true);
+पूर्ण
 
-static int xive_irq_set_affinity(struct irq_data *d,
-				 const struct cpumask *cpumask,
-				 bool force)
-{
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
-	unsigned int hw_irq = (unsigned int)irqd_to_hwirq(d);
+अटल पूर्णांक xive_irq_set_affinity(काष्ठा irq_data *d,
+				 स्थिर काष्ठा cpumask *cpumask,
+				 bool क्रमce)
+अणु
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+	अचिन्हित पूर्णांक hw_irq = (अचिन्हित पूर्णांक)irqd_to_hwirq(d);
 	u32 target, old_target;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	pr_devel("xive_irq_set_affinity: irq %d\n", d->irq);
 
 	/* Is this valid ? */
-	if (cpumask_any_and(cpumask, cpu_online_mask) >= nr_cpu_ids)
-		return -EINVAL;
+	अगर (cpumask_any_and(cpumask, cpu_online_mask) >= nr_cpu_ids)
+		वापस -EINVAL;
 
 	/* Don't do anything if the interrupt isn't started */
-	if (!irqd_is_started(d))
-		return IRQ_SET_MASK_OK;
+	अगर (!irqd_is_started(d))
+		वापस IRQ_SET_MASK_OK;
 
 	/*
-	 * If existing target is already in the new mask, and is
-	 * online then do nothing.
+	 * If existing target is alपढ़ोy in the new mask, and is
+	 * online then करो nothing.
 	 */
-	if (xd->target != XIVE_INVALID_TARGET &&
+	अगर (xd->target != XIVE_INVALID_TARGET &&
 	    cpu_online(xd->target) &&
 	    cpumask_test_cpu(xd->target, cpumask))
-		return IRQ_SET_MASK_OK;
+		वापस IRQ_SET_MASK_OK;
 
 	/* Pick a new target */
 	target = xive_pick_irq_target(d, cpumask);
 
 	/* No target found */
-	if (target == XIVE_INVALID_TARGET)
-		return -ENXIO;
+	अगर (target == XIVE_INVALID_TARGET)
+		वापस -ENXIO;
 
 	/* Sanity check */
-	if (WARN_ON(target >= nr_cpu_ids))
+	अगर (WARN_ON(target >= nr_cpu_ids))
 		target = smp_processor_id();
 
 	old_target = xd->target;
 
 	/*
-	 * Only configure the irq if it's not currently passed-through to
+	 * Only configure the irq अगर it's not currently passed-through to
 	 * a KVM guest
 	 */
-	if (!irqd_is_forwarded_to_vcpu(d))
+	अगर (!irqd_is_क्रमwarded_to_vcpu(d))
 		rc = xive_ops->configure_irq(hw_irq,
 					     get_hard_smp_processor_id(target),
 					     xive_irq_priority, d->irq);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		pr_err("Error %d reconfiguring irq %d\n", rc, d->irq);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	pr_devel("  target: 0x%x\n", target);
 	xd->target = target;
 
 	/* Give up previous target */
-	if (old_target != XIVE_INVALID_TARGET)
+	अगर (old_target != XIVE_INVALID_TARGET)
 	    xive_dec_target_count(old_target);
 
-	return IRQ_SET_MASK_OK;
-}
+	वापस IRQ_SET_MASK_OK;
+पूर्ण
 
-static int xive_irq_set_type(struct irq_data *d, unsigned int flow_type)
-{
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+अटल पूर्णांक xive_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक flow_type)
+अणु
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
 
 	/*
 	 * We only support these. This has really no effect other than setting
 	 * the corresponding descriptor bits mind you but those will in turn
-	 * affect the resend function when re-enabling an edge interrupt.
+	 * affect the resend function when re-enabling an edge पूर्णांकerrupt.
 	 *
-	 * Set set the default to edge as explained in map().
+	 * Set set the शेष to edge as explained in map().
 	 */
-	if (flow_type == IRQ_TYPE_DEFAULT || flow_type == IRQ_TYPE_NONE)
+	अगर (flow_type == IRQ_TYPE_DEFAULT || flow_type == IRQ_TYPE_NONE)
 		flow_type = IRQ_TYPE_EDGE_RISING;
 
-	if (flow_type != IRQ_TYPE_EDGE_RISING &&
+	अगर (flow_type != IRQ_TYPE_EDGE_RISING &&
 	    flow_type != IRQ_TYPE_LEVEL_LOW)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	irqd_set_trigger_type(d, flow_type);
 
 	/*
 	 * Double check it matches what the FW thinks
 	 *
-	 * NOTE: We don't know yet if the PAPR interface will provide
-	 * the LSI vs MSI information apart from the device-tree so
-	 * this check might have to move into an optional backend call
-	 * that is specific to the native backend
+	 * NOTE: We करोn't know yet अगर the PAPR पूर्णांकerface will provide
+	 * the LSI vs MSI inक्रमmation apart from the device-tree so
+	 * this check might have to move पूर्णांकo an optional backend call
+	 * that is specअगरic to the native backend
 	 */
-	if ((flow_type == IRQ_TYPE_LEVEL_LOW) !=
-	    !!(xd->flags & XIVE_IRQ_FLAG_LSI)) {
+	अगर ((flow_type == IRQ_TYPE_LEVEL_LOW) !=
+	    !!(xd->flags & XIVE_IRQ_FLAG_LSI)) अणु
 		pr_warn("Interrupt %d (HW 0x%x) type mismatch, Linux says %s, FW says %s\n",
 			d->irq, (u32)irqd_to_hwirq(d),
 			(flow_type == IRQ_TYPE_LEVEL_LOW) ? "Level" : "Edge",
 			(xd->flags & XIVE_IRQ_FLAG_LSI) ? "Level" : "Edge");
-	}
+	पूर्ण
 
-	return IRQ_SET_MASK_OK_NOCOPY;
-}
+	वापस IRQ_SET_MASK_OK_NOCOPY;
+पूर्ण
 
-static int xive_irq_retrigger(struct irq_data *d)
-{
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+अटल पूर्णांक xive_irq_retrigger(काष्ठा irq_data *d)
+अणु
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
 
-	/* This should be only for MSIs */
-	if (WARN_ON(xd->flags & XIVE_IRQ_FLAG_LSI))
-		return 0;
+	/* This should be only क्रम MSIs */
+	अगर (WARN_ON(xd->flags & XIVE_IRQ_FLAG_LSI))
+		वापस 0;
 
 	/*
-	 * To perform a retrigger, we first set the PQ bits to
-	 * 11, then perform an EOI.
+	 * To perक्रमm a retrigger, we first set the PQ bits to
+	 * 11, then perक्रमm an EOI.
 	 */
-	xive_esb_read(xd, XIVE_ESB_SET_PQ_11);
-	xive_do_source_eoi(xd);
+	xive_esb_पढ़ो(xd, XIVE_ESB_SET_PQ_11);
+	xive_करो_source_eoi(xd);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Caller holds the irq descriptor lock, so this won't be called
- * concurrently with xive_get_irqchip_state on the same interrupt.
+ * concurrently with xive_get_irqchip_state on the same पूर्णांकerrupt.
  */
-static int xive_irq_set_vcpu_affinity(struct irq_data *d, void *state)
-{
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(d);
-	unsigned int hw_irq = (unsigned int)irqd_to_hwirq(d);
-	int rc;
+अटल पूर्णांक xive_irq_set_vcpu_affinity(काष्ठा irq_data *d, व्योम *state)
+अणु
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(d);
+	अचिन्हित पूर्णांक hw_irq = (अचिन्हित पूर्णांक)irqd_to_hwirq(d);
+	पूर्णांक rc;
 	u8 pq;
 
 	/*
-	 * This is called by KVM with state non-NULL for enabling
-	 * pass-through or NULL for disabling it
+	 * This is called by KVM with state non-शून्य क्रम enabling
+	 * pass-through or शून्य क्रम disabling it
 	 */
-	if (state) {
-		irqd_set_forwarded_to_vcpu(d);
+	अगर (state) अणु
+		irqd_set_क्रमwarded_to_vcpu(d);
 
 		/* Set it to PQ=10 state to prevent further sends */
-		pq = xive_esb_read(xd, XIVE_ESB_SET_PQ_10);
-		if (!xd->stale_p) {
+		pq = xive_esb_पढ़ो(xd, XIVE_ESB_SET_PQ_10);
+		अगर (!xd->stale_p) अणु
 			xd->saved_p = !!(pq & XIVE_ESB_VAL_P);
 			xd->stale_p = !xd->saved_p;
-		}
+		पूर्ण
 
-		/* No target ? nothing to do */
-		if (xd->target == XIVE_INVALID_TARGET) {
+		/* No target ? nothing to करो */
+		अगर (xd->target == XIVE_INVALID_TARGET) अणु
 			/*
-			 * An untargetted interrupt should have been
+			 * An untargetted पूर्णांकerrupt should have been
 			 * also masked at the source
 			 */
 			WARN_ON(xd->saved_p);
 
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/*
 		 * If P was set, adjust state to PQ=11 to indicate
-		 * that a resend is needed for the interrupt to reach
+		 * that a resend is needed क्रम the पूर्णांकerrupt to reach
 		 * the guest. Also remember the value of P.
 		 *
 		 * This also tells us that it's in flight to a host queue
-		 * or has already been fetched but hasn't been EOIed yet
+		 * or has alपढ़ोy been fetched but hasn't been EOIed yet
 		 * by the host. This it's potentially using up a host
-		 * queue slot. This is important to know because as long
-		 * as this is the case, we must not hard-unmask it when
-		 * "returning" that interrupt to the host.
+		 * queue slot. This is important to know because as दीर्घ
+		 * as this is the हाल, we must not hard-unmask it when
+		 * "returning" that पूर्णांकerrupt to the host.
 		 *
 		 * This saved_p is cleared by the host EOI, when we know
-		 * for sure the queue slot is no longer in use.
+		 * क्रम sure the queue slot is no दीर्घer in use.
 		 */
-		if (xd->saved_p) {
-			xive_esb_read(xd, XIVE_ESB_SET_PQ_11);
+		अगर (xd->saved_p) अणु
+			xive_esb_पढ़ो(xd, XIVE_ESB_SET_PQ_11);
 
 			/*
-			 * Sync the XIVE source HW to ensure the interrupt
-			 * has gone through the EAS before we change its
+			 * Sync the XIVE source HW to ensure the पूर्णांकerrupt
+			 * has gone through the EAS beक्रमe we change its
 			 * target to the guest. That should guarantee us
-			 * that we *will* eventually get an EOI for it on
-			 * the host. Otherwise there would be a small window
-			 * for P to be seen here but the interrupt going
+			 * that we *will* eventually get an EOI क्रम it on
+			 * the host. Otherwise there would be a small winकरोw
+			 * क्रम P to be seen here but the पूर्णांकerrupt going
 			 * to the guest queue.
 			 */
-			if (xive_ops->sync_source)
+			अगर (xive_ops->sync_source)
 				xive_ops->sync_source(hw_irq);
-		}
-	} else {
-		irqd_clr_forwarded_to_vcpu(d);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		irqd_clr_क्रमwarded_to_vcpu(d);
 
-		/* No host target ? hard mask and return */
-		if (xd->target == XIVE_INVALID_TARGET) {
-			xive_do_source_set_mask(xd, true);
-			return 0;
-		}
+		/* No host target ? hard mask and वापस */
+		अगर (xd->target == XIVE_INVALID_TARGET) अणु
+			xive_करो_source_set_mask(xd, true);
+			वापस 0;
+		पूर्ण
 
 		/*
-		 * Sync the XIVE source HW to ensure the interrupt
-		 * has gone through the EAS before we change its
+		 * Sync the XIVE source HW to ensure the पूर्णांकerrupt
+		 * has gone through the EAS beक्रमe we change its
 		 * target to the host.
 		 */
-		if (xive_ops->sync_source)
+		अगर (xive_ops->sync_source)
 			xive_ops->sync_source(hw_irq);
 
 		/*
-		 * By convention we are called with the interrupt in
+		 * By convention we are called with the पूर्णांकerrupt in
 		 * a PQ=10 or PQ=11 state, ie, it won't fire and will
 		 * have latched in Q whether there's a pending HW
-		 * interrupt or not.
+		 * पूर्णांकerrupt or not.
 		 *
 		 * First reconfigure the target.
 		 */
 		rc = xive_ops->configure_irq(hw_irq,
 					     get_hard_smp_processor_id(xd->target),
 					     xive_irq_priority, d->irq);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		/*
-		 * Then if saved_p is not set, effectively re-enable the
-		 * interrupt with an EOI. If it is set, we know there is
+		 * Then अगर saved_p is not set, effectively re-enable the
+		 * पूर्णांकerrupt with an EOI. If it is set, we know there is
 		 * still a message in a host queue somewhere that will be
 		 * EOId eventually.
 		 *
-		 * Note: We don't check irqd_irq_disabled(). Effectively,
-		 * we *will* let the irq get through even if masked if the
+		 * Note: We करोn't check irqd_irq_disabled(). Effectively,
+		 * we *will* let the irq get through even अगर masked अगर the
 		 * HW is still firing it in order to deal with the whole
-		 * saved_p business properly. If the interrupt triggers
-		 * while masked, the generic code will re-mask it anyway.
+		 * saved_p business properly. If the पूर्णांकerrupt triggers
+		 * जबतक masked, the generic code will re-mask it anyway.
 		 */
-		if (!xd->saved_p)
-			xive_do_source_eoi(xd);
+		अगर (!xd->saved_p)
+			xive_करो_source_eoi(xd);
 
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Called with irq descriptor lock held. */
-static int xive_get_irqchip_state(struct irq_data *data,
-				  enum irqchip_irq_state which, bool *state)
-{
-	struct xive_irq_data *xd = irq_data_get_irq_handler_data(data);
+अटल पूर्णांक xive_get_irqchip_state(काष्ठा irq_data *data,
+				  क्रमागत irqchip_irq_state which, bool *state)
+अणु
+	काष्ठा xive_irq_data *xd = irq_data_get_irq_handler_data(data);
 	u8 pq;
 
-	switch (which) {
-	case IRQCHIP_STATE_ACTIVE:
-		pq = xive_esb_read(xd, XIVE_ESB_GET);
+	चयन (which) अणु
+	हाल IRQCHIP_STATE_ACTIVE:
+		pq = xive_esb_पढ़ो(xd, XIVE_ESB_GET);
 
 		/*
 		 * The esb value being all 1's means we couldn't get
-		 * the PQ state of the interrupt through mmio. It may
-		 * happen, for example when querying a PHB interrupt
-		 * while the PHB is in an error state. We consider the
-		 * interrupt to be inactive in that case.
+		 * the PQ state of the पूर्णांकerrupt through mmio. It may
+		 * happen, क्रम example when querying a PHB पूर्णांकerrupt
+		 * जबतक the PHB is in an error state. We consider the
+		 * पूर्णांकerrupt to be inactive in that हाल.
 		 */
 		*state = (pq != XIVE_ESB_INVALID) && !xd->stale_p &&
 			(xd->saved_p || !!(pq & XIVE_ESB_VAL_P));
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static struct irq_chip xive_irq_chip = {
+अटल काष्ठा irq_chip xive_irq_chip = अणु
 	.name = "XIVE-IRQ",
 	.irq_startup = xive_irq_startup,
-	.irq_shutdown = xive_irq_shutdown,
+	.irq_shutकरोwn = xive_irq_shutकरोwn,
 	.irq_eoi = xive_irq_eoi,
 	.irq_mask = xive_irq_mask,
 	.irq_unmask = xive_irq_unmask,
@@ -979,74 +980,74 @@ static struct irq_chip xive_irq_chip = {
 	.irq_retrigger = xive_irq_retrigger,
 	.irq_set_vcpu_affinity = xive_irq_set_vcpu_affinity,
 	.irq_get_irqchip_state = xive_get_irqchip_state,
-};
+पूर्ण;
 
-bool is_xive_irq(struct irq_chip *chip)
-{
-	return chip == &xive_irq_chip;
-}
+bool is_xive_irq(काष्ठा irq_chip *chip)
+अणु
+	वापस chip == &xive_irq_chip;
+पूर्ण
 EXPORT_SYMBOL_GPL(is_xive_irq);
 
-void xive_cleanup_irq_data(struct xive_irq_data *xd)
-{
-	if (xd->eoi_mmio) {
+व्योम xive_cleanup_irq_data(काष्ठा xive_irq_data *xd)
+अणु
+	अगर (xd->eoi_mmio) अणु
 		iounmap(xd->eoi_mmio);
-		if (xd->eoi_mmio == xd->trig_mmio)
-			xd->trig_mmio = NULL;
-		xd->eoi_mmio = NULL;
-	}
-	if (xd->trig_mmio) {
+		अगर (xd->eoi_mmio == xd->trig_mmio)
+			xd->trig_mmio = शून्य;
+		xd->eoi_mmio = शून्य;
+	पूर्ण
+	अगर (xd->trig_mmio) अणु
 		iounmap(xd->trig_mmio);
-		xd->trig_mmio = NULL;
-	}
-}
+		xd->trig_mmio = शून्य;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(xive_cleanup_irq_data);
 
-static int xive_irq_alloc_data(unsigned int virq, irq_hw_number_t hw)
-{
-	struct xive_irq_data *xd;
-	int rc;
+अटल पूर्णांक xive_irq_alloc_data(अचिन्हित पूर्णांक virq, irq_hw_number_t hw)
+अणु
+	काष्ठा xive_irq_data *xd;
+	पूर्णांक rc;
 
-	xd = kzalloc(sizeof(struct xive_irq_data), GFP_KERNEL);
-	if (!xd)
-		return -ENOMEM;
+	xd = kzalloc(माप(काष्ठा xive_irq_data), GFP_KERNEL);
+	अगर (!xd)
+		वापस -ENOMEM;
 	rc = xive_ops->populate_irq_data(hw, xd);
-	if (rc) {
-		kfree(xd);
-		return rc;
-	}
+	अगर (rc) अणु
+		kमुक्त(xd);
+		वापस rc;
+	पूर्ण
 	xd->target = XIVE_INVALID_TARGET;
 	irq_set_handler_data(virq, xd);
 
 	/*
-	 * Turn OFF by default the interrupt being mapped. A side
+	 * Turn OFF by शेष the पूर्णांकerrupt being mapped. A side
 	 * effect of this check is the mapping the ESB page of the
-	 * interrupt in the Linux address space. This prevents page
+	 * पूर्णांकerrupt in the Linux address space. This prevents page
 	 * fault issues in the crash handler which masks all
-	 * interrupts.
+	 * पूर्णांकerrupts.
 	 */
-	xive_esb_read(xd, XIVE_ESB_SET_PQ_01);
+	xive_esb_पढ़ो(xd, XIVE_ESB_SET_PQ_01);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xive_irq_free_data(unsigned int virq)
-{
-	struct xive_irq_data *xd = irq_get_handler_data(virq);
+अटल व्योम xive_irq_मुक्त_data(अचिन्हित पूर्णांक virq)
+अणु
+	काष्ठा xive_irq_data *xd = irq_get_handler_data(virq);
 
-	if (!xd)
-		return;
-	irq_set_handler_data(virq, NULL);
+	अगर (!xd)
+		वापस;
+	irq_set_handler_data(virq, शून्य);
 	xive_cleanup_irq_data(xd);
-	kfree(xd);
-}
+	kमुक्त(xd);
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-static void xive_cause_ipi(int cpu)
-{
-	struct xive_cpu *xc;
-	struct xive_irq_data *xd;
+अटल व्योम xive_cause_ipi(पूर्णांक cpu)
+अणु
+	काष्ठा xive_cpu *xc;
+	काष्ठा xive_irq_data *xd;
 
 	xc = per_cpu(xive_cpu, cpu);
 
@@ -1054,189 +1055,189 @@ static void xive_cause_ipi(int cpu)
 		    smp_processor_id(), cpu, xc->hw_ipi);
 
 	xd = &xc->ipi_data;
-	if (WARN_ON(!xd->trig_mmio))
-		return;
+	अगर (WARN_ON(!xd->trig_mmio))
+		वापस;
 	out_be64(xd->trig_mmio, 0);
-}
+पूर्ण
 
-static irqreturn_t xive_muxed_ipi_action(int irq, void *dev_id)
-{
-	return smp_ipi_demux();
-}
+अटल irqवापस_t xive_muxed_ipi_action(पूर्णांक irq, व्योम *dev_id)
+अणु
+	वापस smp_ipi_demux();
+पूर्ण
 
-static void xive_ipi_eoi(struct irq_data *d)
-{
-	struct xive_cpu *xc = __this_cpu_read(xive_cpu);
+अटल व्योम xive_ipi_eoi(काष्ठा irq_data *d)
+अणु
+	काष्ठा xive_cpu *xc = __this_cpu_पढ़ो(xive_cpu);
 
 	/* Handle possible race with unplug and drop stale IPIs */
-	if (!xc)
-		return;
+	अगर (!xc)
+		वापस;
 
 	DBG_VERBOSE("IPI eoi: irq=%d [0x%lx] (HW IRQ 0x%x) pending=%02x\n",
 		    d->irq, irqd_to_hwirq(d), xc->hw_ipi, xc->pending_prio);
 
-	xive_do_source_eoi(&xc->ipi_data);
-	xive_do_queue_eoi(xc);
-}
+	xive_करो_source_eoi(&xc->ipi_data);
+	xive_करो_queue_eoi(xc);
+पूर्ण
 
-static void xive_ipi_do_nothing(struct irq_data *d)
-{
+अटल व्योम xive_ipi_करो_nothing(काष्ठा irq_data *d)
+अणु
 	/*
-	 * Nothing to do, we never mask/unmask IPIs, but the callback
-	 * has to exist for the struct irq_chip.
+	 * Nothing to करो, we never mask/unmask IPIs, but the callback
+	 * has to exist क्रम the काष्ठा irq_chip.
 	 */
-}
+पूर्ण
 
-static struct irq_chip xive_ipi_chip = {
+अटल काष्ठा irq_chip xive_ipi_chip = अणु
 	.name = "XIVE-IPI",
 	.irq_eoi = xive_ipi_eoi,
-	.irq_mask = xive_ipi_do_nothing,
-	.irq_unmask = xive_ipi_do_nothing,
-};
+	.irq_mask = xive_ipi_करो_nothing,
+	.irq_unmask = xive_ipi_करो_nothing,
+पूर्ण;
 
 /*
- * IPIs are marked per-cpu. We use separate HW interrupts under the
- * hood but associated with the same "linux" interrupt
+ * IPIs are marked per-cpu. We use separate HW पूर्णांकerrupts under the
+ * hood but associated with the same "linux" पूर्णांकerrupt
  */
-struct xive_ipi_alloc_info {
+काष्ठा xive_ipi_alloc_info अणु
 	irq_hw_number_t hwirq;
-};
+पूर्ण;
 
-static int xive_ipi_irq_domain_alloc(struct irq_domain *domain, unsigned int virq,
-				     unsigned int nr_irqs, void *arg)
-{
-	struct xive_ipi_alloc_info *info = arg;
-	int i;
+अटल पूर्णांक xive_ipi_irq_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+				     अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
+अणु
+	काष्ठा xive_ipi_alloc_info *info = arg;
+	पूर्णांक i;
 
-	for (i = 0; i < nr_irqs; i++) {
-		irq_domain_set_info(domain, virq + i, info->hwirq + i, &xive_ipi_chip,
-				    domain->host_data, handle_percpu_irq,
-				    NULL, NULL);
-	}
-	return 0;
-}
+	क्रम (i = 0; i < nr_irqs; i++) अणु
+		irq_करोमुख्य_set_info(करोमुख्य, virq + i, info->hwirq + i, &xive_ipi_chip,
+				    करोमुख्य->host_data, handle_percpu_irq,
+				    शून्य, शून्य);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops xive_ipi_irq_domain_ops = {
-	.alloc  = xive_ipi_irq_domain_alloc,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops xive_ipi_irq_करोमुख्य_ops = अणु
+	.alloc  = xive_ipi_irq_करोमुख्य_alloc,
+पूर्ण;
 
-static int __init xive_request_ipi(void)
-{
-	struct fwnode_handle *fwnode;
-	struct irq_domain *ipi_domain;
-	unsigned int node;
-	int ret = -ENOMEM;
+अटल पूर्णांक __init xive_request_ipi(व्योम)
+अणु
+	काष्ठा fwnode_handle *fwnode;
+	काष्ठा irq_करोमुख्य *ipi_करोमुख्य;
+	अचिन्हित पूर्णांक node;
+	पूर्णांक ret = -ENOMEM;
 
-	fwnode = irq_domain_alloc_named_fwnode("XIVE-IPI");
-	if (!fwnode)
-		goto out;
+	fwnode = irq_करोमुख्य_alloc_named_fwnode("XIVE-IPI");
+	अगर (!fwnode)
+		जाओ out;
 
-	ipi_domain = irq_domain_create_linear(fwnode, nr_node_ids,
-					      &xive_ipi_irq_domain_ops, NULL);
-	if (!ipi_domain)
-		goto out_free_fwnode;
+	ipi_करोमुख्य = irq_करोमुख्य_create_linear(fwnode, nr_node_ids,
+					      &xive_ipi_irq_करोमुख्य_ops, शून्य);
+	अगर (!ipi_करोमुख्य)
+		जाओ out_मुक्त_fwnode;
 
-	xive_ipis = kcalloc(nr_node_ids, sizeof(*xive_ipis), GFP_KERNEL | __GFP_NOFAIL);
-	if (!xive_ipis)
-		goto out_free_domain;
+	xive_ipis = kसुस्मृति(nr_node_ids, माप(*xive_ipis), GFP_KERNEL | __GFP_NOFAIL);
+	अगर (!xive_ipis)
+		जाओ out_मुक्त_करोमुख्य;
 
-	for_each_node(node) {
-		struct xive_ipi_desc *xid = &xive_ipis[node];
-		struct xive_ipi_alloc_info info = { node };
+	क्रम_each_node(node) अणु
+		काष्ठा xive_ipi_desc *xid = &xive_ipis[node];
+		काष्ठा xive_ipi_alloc_info info = अणु node पूर्ण;
 
 		/* Skip nodes without CPUs */
-		if (cpumask_empty(cpumask_of_node(node)))
-			continue;
+		अगर (cpumask_empty(cpumask_of_node(node)))
+			जारी;
 
 		/*
-		 * Map one IPI interrupt per node for all cpus of that node.
-		 * Since the HW interrupt number doesn't have any meaning,
+		 * Map one IPI पूर्णांकerrupt per node क्रम all cpus of that node.
+		 * Since the HW पूर्णांकerrupt number करोesn't have any meaning,
 		 * simply use the node number.
 		 */
-		xid->irq = irq_domain_alloc_irqs(ipi_domain, 1, node, &info);
-		if (xid->irq < 0) {
+		xid->irq = irq_करोमुख्य_alloc_irqs(ipi_करोमुख्य, 1, node, &info);
+		अगर (xid->irq < 0) अणु
 			ret = xid->irq;
-			goto out_free_xive_ipis;
-		}
+			जाओ out_मुक्त_xive_ipis;
+		पूर्ण
 
-		snprintf(xid->name, sizeof(xid->name), "IPI-%d", node);
+		snम_लिखो(xid->name, माप(xid->name), "IPI-%d", node);
 
 		ret = request_irq(xid->irq, xive_muxed_ipi_action,
-				  IRQF_PERCPU | IRQF_NO_THREAD, xid->name, NULL);
+				  IRQF_PERCPU | IRQF_NO_THREAD, xid->name, शून्य);
 
 		WARN(ret < 0, "Failed to request IPI %d: %d\n", xid->irq, ret);
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
-out_free_xive_ipis:
-	kfree(xive_ipis);
-out_free_domain:
-	irq_domain_remove(ipi_domain);
-out_free_fwnode:
-	irq_domain_free_fwnode(fwnode);
+out_मुक्त_xive_ipis:
+	kमुक्त(xive_ipis);
+out_मुक्त_करोमुख्य:
+	irq_करोमुख्य_हटाओ(ipi_करोमुख्य);
+out_मुक्त_fwnode:
+	irq_करोमुख्य_मुक्त_fwnode(fwnode);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xive_setup_cpu_ipi(unsigned int cpu)
-{
-	unsigned int xive_ipi_irq = xive_ipi_cpu_to_irq(cpu);
-	struct xive_cpu *xc;
-	int rc;
+अटल पूर्णांक xive_setup_cpu_ipi(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित पूर्णांक xive_ipi_irq = xive_ipi_cpu_to_irq(cpu);
+	काष्ठा xive_cpu *xc;
+	पूर्णांक rc;
 
 	pr_debug("Setting up IPI for CPU %d\n", cpu);
 
 	xc = per_cpu(xive_cpu, cpu);
 
-	/* Check if we are already setup */
-	if (xc->hw_ipi != XIVE_BAD_IRQ)
-		return 0;
+	/* Check अगर we are alपढ़ोy setup */
+	अगर (xc->hw_ipi != XIVE_BAD_IRQ)
+		वापस 0;
 
 	/* Grab an IPI from the backend, this will populate xc->hw_ipi */
-	if (xive_ops->get_ipi(cpu, xc))
-		return -EIO;
+	अगर (xive_ops->get_ipi(cpu, xc))
+		वापस -EIO;
 
 	/*
-	 * Populate the IRQ data in the xive_cpu structure and
+	 * Populate the IRQ data in the xive_cpu काष्ठाure and
 	 * configure the HW / enable the IPIs.
 	 */
 	rc = xive_ops->populate_irq_data(xc->hw_ipi, &xc->ipi_data);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("Failed to populate IPI data on CPU %d\n", cpu);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	rc = xive_ops->configure_irq(xc->hw_ipi,
 				     get_hard_smp_processor_id(cpu),
 				     xive_irq_priority, xive_ipi_irq);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("Failed to map IPI CPU %d\n", cpu);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	pr_devel("CPU %d HW IPI %x, virq %d, trig_mmio=%p\n", cpu,
 	    xc->hw_ipi, xive_ipi_irq, xc->ipi_data.trig_mmio);
 
 	/* Unmask it */
-	xive_do_source_set_mask(&xc->ipi_data, false);
+	xive_करो_source_set_mask(&xc->ipi_data, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xive_cleanup_cpu_ipi(unsigned int cpu, struct xive_cpu *xc)
-{
-	unsigned int xive_ipi_irq = xive_ipi_cpu_to_irq(cpu);
+अटल व्योम xive_cleanup_cpu_ipi(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc)
+अणु
+	अचिन्हित पूर्णांक xive_ipi_irq = xive_ipi_cpu_to_irq(cpu);
 
-	/* Disable the IPI and free the IRQ data */
+	/* Disable the IPI and मुक्त the IRQ data */
 
-	/* Already cleaned up ? */
-	if (xc->hw_ipi == XIVE_BAD_IRQ)
-		return;
+	/* Alपढ़ोy cleaned up ? */
+	अगर (xc->hw_ipi == XIVE_BAD_IRQ)
+		वापस;
 
 	/* Mask the IPI */
-	xive_do_source_set_mask(&xc->ipi_data, true);
+	xive_करो_source_set_mask(&xc->ipi_data, true);
 
 	/*
-	 * Note: We don't call xive_cleanup_irq_data() to free
+	 * Note: We करोn't call xive_cleanup_irq_data() to मुक्त
 	 * the mappings as this is called from an IPI on kexec
 	 * which is not a safe environment to call iounmap()
 	 */
@@ -1247,285 +1248,285 @@ static void xive_cleanup_cpu_ipi(unsigned int cpu, struct xive_cpu *xc)
 
 	/* Free the IPIs in the backend */
 	xive_ops->put_ipi(cpu, xc);
-}
+पूर्ण
 
-void __init xive_smp_probe(void)
-{
+व्योम __init xive_smp_probe(व्योम)
+अणु
 	smp_ops->cause_ipi = xive_cause_ipi;
 
 	/* Register the IPI */
 	xive_request_ipi();
 
-	/* Allocate and setup IPI for the boot CPU */
+	/* Allocate and setup IPI क्रम the boot CPU */
 	xive_setup_cpu_ipi(smp_processor_id());
-}
+पूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static int xive_irq_domain_map(struct irq_domain *h, unsigned int virq,
+अटल पूर्णांक xive_irq_करोमुख्य_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
 			       irq_hw_number_t hw)
-{
-	int rc;
+अणु
+	पूर्णांक rc;
 
 	/*
-	 * Mark interrupts as edge sensitive by default so that resend
-	 * actually works. Will fix that up below if needed.
+	 * Mark पूर्णांकerrupts as edge sensitive by शेष so that resend
+	 * actually works. Will fix that up below अगर needed.
 	 */
 	irq_clear_status_flags(virq, IRQ_LEVEL);
 
 	rc = xive_irq_alloc_data(virq, hw);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	irq_set_chip_and_handler(virq, &xive_irq_chip, handle_fasteoi_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xive_irq_domain_unmap(struct irq_domain *d, unsigned int virq)
-{
-	xive_irq_free_data(virq);
-}
+अटल व्योम xive_irq_करोमुख्य_unmap(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक virq)
+अणु
+	xive_irq_मुक्त_data(virq);
+पूर्ण
 
-static int xive_irq_domain_xlate(struct irq_domain *h, struct device_node *ct,
-				 const u32 *intspec, unsigned int intsize,
-				 irq_hw_number_t *out_hwirq, unsigned int *out_flags)
+अटल पूर्णांक xive_irq_करोमुख्य_xlate(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *ct,
+				 स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
+				 irq_hw_number_t *out_hwirq, अचिन्हित पूर्णांक *out_flags)
 
-{
-	*out_hwirq = intspec[0];
+अणु
+	*out_hwirq = पूर्णांकspec[0];
 
 	/*
-	 * If intsize is at least 2, we look for the type in the second cell,
-	 * we assume the LSB indicates a level interrupt.
+	 * If पूर्णांकsize is at least 2, we look क्रम the type in the second cell,
+	 * we assume the LSB indicates a level पूर्णांकerrupt.
 	 */
-	if (intsize > 1) {
-		if (intspec[1] & 1)
+	अगर (पूर्णांकsize > 1) अणु
+		अगर (पूर्णांकspec[1] & 1)
 			*out_flags = IRQ_TYPE_LEVEL_LOW;
-		else
+		अन्यथा
 			*out_flags = IRQ_TYPE_EDGE_RISING;
-	} else
+	पूर्ण अन्यथा
 		*out_flags = IRQ_TYPE_LEVEL_LOW;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xive_irq_domain_match(struct irq_domain *h, struct device_node *node,
-				 enum irq_domain_bus_token bus_token)
-{
-	return xive_ops->match(node);
-}
+अटल पूर्णांक xive_irq_करोमुख्य_match(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *node,
+				 क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
+	वापस xive_ops->match(node);
+पूर्ण
 
-#ifdef CONFIG_GENERIC_IRQ_DEBUGFS
-static const char * const esb_names[] = { "RESET", "OFF", "PENDING", "QUEUED" };
+#अगर_घोषित CONFIG_GENERIC_IRQ_DEBUGFS
+अटल स्थिर अक्षर * स्थिर esb_names[] = अणु "RESET", "OFF", "PENDING", "QUEUED" पूर्ण;
 
-static const struct {
+अटल स्थिर काष्ठा अणु
 	u64  mask;
-	char *name;
-} xive_irq_flags[] = {
-	{ XIVE_IRQ_FLAG_STORE_EOI, "STORE_EOI" },
-	{ XIVE_IRQ_FLAG_LSI,       "LSI"       },
-	{ XIVE_IRQ_FLAG_H_INT_ESB, "H_INT_ESB" },
-	{ XIVE_IRQ_FLAG_NO_EOI,    "NO_EOI"    },
-};
+	अक्षर *name;
+पूर्ण xive_irq_flags[] = अणु
+	अणु XIVE_IRQ_FLAG_STORE_EOI, "STORE_EOI" पूर्ण,
+	अणु XIVE_IRQ_FLAG_LSI,       "LSI"       पूर्ण,
+	अणु XIVE_IRQ_FLAG_H_INT_ESB, "H_INT_ESB" पूर्ण,
+	अणु XIVE_IRQ_FLAG_NO_EOI,    "NO_EOI"    पूर्ण,
+पूर्ण;
 
-static void xive_irq_domain_debug_show(struct seq_file *m, struct irq_domain *d,
-				       struct irq_data *irqd, int ind)
-{
-	struct xive_irq_data *xd;
+अटल व्योम xive_irq_करोमुख्य_debug_show(काष्ठा seq_file *m, काष्ठा irq_करोमुख्य *d,
+				       काष्ठा irq_data *irqd, पूर्णांक ind)
+अणु
+	काष्ठा xive_irq_data *xd;
 	u64 val;
-	int i;
+	पूर्णांक i;
 
-	/* No IRQ domain level information. To be done */
-	if (!irqd)
-		return;
+	/* No IRQ करोमुख्य level inक्रमmation. To be करोne */
+	अगर (!irqd)
+		वापस;
 
-	if (!is_xive_irq(irq_data_get_irq_chip(irqd)))
-		return;
+	अगर (!is_xive_irq(irq_data_get_irq_chip(irqd)))
+		वापस;
 
-	seq_printf(m, "%*sXIVE:\n", ind, "");
+	seq_म_लिखो(m, "%*sXIVE:\n", ind, "");
 	ind++;
 
 	xd = irq_data_get_irq_handler_data(irqd);
-	if (!xd) {
-		seq_printf(m, "%*snot assigned\n", ind, "");
-		return;
-	}
+	अगर (!xd) अणु
+		seq_म_लिखो(m, "%*snot assigned\n", ind, "");
+		वापस;
+	पूर्ण
 
-	val = xive_esb_read(xd, XIVE_ESB_GET);
-	seq_printf(m, "%*sESB:      %s\n", ind, "", esb_names[val & 0x3]);
-	seq_printf(m, "%*sPstate:   %s %s\n", ind, "", xd->stale_p ? "stale" : "",
+	val = xive_esb_पढ़ो(xd, XIVE_ESB_GET);
+	seq_म_लिखो(m, "%*sESB:      %s\n", ind, "", esb_names[val & 0x3]);
+	seq_म_लिखो(m, "%*sPstate:   %s %s\n", ind, "", xd->stale_p ? "stale" : "",
 		   xd->saved_p ? "saved" : "");
-	seq_printf(m, "%*sTarget:   %d\n", ind, "", xd->target);
-	seq_printf(m, "%*sChip:     %d\n", ind, "", xd->src_chip);
-	seq_printf(m, "%*sTrigger:  0x%016llx\n", ind, "", xd->trig_page);
-	seq_printf(m, "%*sEOI:      0x%016llx\n", ind, "", xd->eoi_page);
-	seq_printf(m, "%*sFlags:    0x%llx\n", ind, "", xd->flags);
-	for (i = 0; i < ARRAY_SIZE(xive_irq_flags); i++) {
-		if (xd->flags & xive_irq_flags[i].mask)
-			seq_printf(m, "%*s%s\n", ind + 12, "", xive_irq_flags[i].name);
-	}
-}
-#endif
+	seq_म_लिखो(m, "%*sTarget:   %d\n", ind, "", xd->target);
+	seq_म_लिखो(m, "%*sChip:     %d\n", ind, "", xd->src_chip);
+	seq_म_लिखो(m, "%*sTrigger:  0x%016llx\n", ind, "", xd->trig_page);
+	seq_म_लिखो(m, "%*sEOI:      0x%016llx\n", ind, "", xd->eoi_page);
+	seq_म_लिखो(m, "%*sFlags:    0x%llx\n", ind, "", xd->flags);
+	क्रम (i = 0; i < ARRAY_SIZE(xive_irq_flags); i++) अणु
+		अगर (xd->flags & xive_irq_flags[i].mask)
+			seq_म_लिखो(m, "%*s%s\n", ind + 12, "", xive_irq_flags[i].name);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static const struct irq_domain_ops xive_irq_domain_ops = {
-	.match = xive_irq_domain_match,
-	.map = xive_irq_domain_map,
-	.unmap = xive_irq_domain_unmap,
-	.xlate = xive_irq_domain_xlate,
-#ifdef CONFIG_GENERIC_IRQ_DEBUGFS
-	.debug_show = xive_irq_domain_debug_show,
-#endif
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops xive_irq_करोमुख्य_ops = अणु
+	.match = xive_irq_करोमुख्य_match,
+	.map = xive_irq_करोमुख्य_map,
+	.unmap = xive_irq_करोमुख्य_unmap,
+	.xlate = xive_irq_करोमुख्य_xlate,
+#अगर_घोषित CONFIG_GENERIC_IRQ_DEBUGFS
+	.debug_show = xive_irq_करोमुख्य_debug_show,
+#पूर्ण_अगर
+पूर्ण;
 
-static void __init xive_init_host(struct device_node *np)
-{
-	xive_irq_domain = irq_domain_add_nomap(np, XIVE_MAX_IRQ,
-					       &xive_irq_domain_ops, NULL);
-	if (WARN_ON(xive_irq_domain == NULL))
-		return;
-	irq_set_default_host(xive_irq_domain);
-}
+अटल व्योम __init xive_init_host(काष्ठा device_node *np)
+अणु
+	xive_irq_करोमुख्य = irq_करोमुख्य_add_nomap(np, XIVE_MAX_IRQ,
+					       &xive_irq_करोमुख्य_ops, शून्य);
+	अगर (WARN_ON(xive_irq_करोमुख्य == शून्य))
+		वापस;
+	irq_set_शेष_host(xive_irq_करोमुख्य);
+पूर्ण
 
-static void xive_cleanup_cpu_queues(unsigned int cpu, struct xive_cpu *xc)
-{
-	if (xc->queue[xive_irq_priority].qpage)
+अटल व्योम xive_cleanup_cpu_queues(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc)
+अणु
+	अगर (xc->queue[xive_irq_priority].qpage)
 		xive_ops->cleanup_queue(cpu, xc, xive_irq_priority);
-}
+पूर्ण
 
-static int xive_setup_cpu_queues(unsigned int cpu, struct xive_cpu *xc)
-{
-	int rc = 0;
+अटल पूर्णांक xive_setup_cpu_queues(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc)
+अणु
+	पूर्णांक rc = 0;
 
-	/* We setup 1 queues for now with a 64k page */
-	if (!xc->queue[xive_irq_priority].qpage)
+	/* We setup 1 queues क्रम now with a 64k page */
+	अगर (!xc->queue[xive_irq_priority].qpage)
 		rc = xive_ops->setup_queue(cpu, xc, xive_irq_priority);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int xive_prepare_cpu(unsigned int cpu)
-{
-	struct xive_cpu *xc;
+अटल पूर्णांक xive_prepare_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा xive_cpu *xc;
 
 	xc = per_cpu(xive_cpu, cpu);
-	if (!xc) {
-		xc = kzalloc_node(sizeof(struct xive_cpu),
+	अगर (!xc) अणु
+		xc = kzalloc_node(माप(काष्ठा xive_cpu),
 				  GFP_KERNEL, cpu_to_node(cpu));
-		if (!xc)
-			return -ENOMEM;
+		अगर (!xc)
+			वापस -ENOMEM;
 		xc->hw_ipi = XIVE_BAD_IRQ;
 		xc->chip_id = XIVE_INVALID_CHIP_ID;
-		if (xive_ops->prepare_cpu)
+		अगर (xive_ops->prepare_cpu)
 			xive_ops->prepare_cpu(cpu, xc);
 
 		per_cpu(xive_cpu, cpu) = xc;
-	}
+	पूर्ण
 
-	/* Setup EQs if not already */
-	return xive_setup_cpu_queues(cpu, xc);
-}
+	/* Setup EQs अगर not alपढ़ोy */
+	वापस xive_setup_cpu_queues(cpu, xc);
+पूर्ण
 
-static void xive_setup_cpu(void)
-{
-	struct xive_cpu *xc = __this_cpu_read(xive_cpu);
+अटल व्योम xive_setup_cpu(व्योम)
+अणु
+	काष्ठा xive_cpu *xc = __this_cpu_पढ़ो(xive_cpu);
 
-	/* The backend might have additional things to do */
-	if (xive_ops->setup_cpu)
+	/* The backend might have additional things to करो */
+	अगर (xive_ops->setup_cpu)
 		xive_ops->setup_cpu(smp_processor_id(), xc);
 
-	/* Set CPPR to 0xff to enable flow of interrupts */
+	/* Set CPPR to 0xff to enable flow of पूर्णांकerrupts */
 	xc->cppr = 0xff;
 	out_8(xive_tima + xive_tima_offset + TM_CPPR, 0xff);
-}
+पूर्ण
 
-#ifdef CONFIG_SMP
-void xive_smp_setup_cpu(void)
-{
+#अगर_घोषित CONFIG_SMP
+व्योम xive_smp_setup_cpu(व्योम)
+अणु
 	pr_devel("SMP setup CPU %d\n", smp_processor_id());
 
-	/* This will have already been done on the boot CPU */
-	if (smp_processor_id() != boot_cpuid)
+	/* This will have alपढ़ोy been करोne on the boot CPU */
+	अगर (smp_processor_id() != boot_cpuid)
 		xive_setup_cpu();
 
-}
+पूर्ण
 
-int xive_smp_prepare_cpu(unsigned int cpu)
-{
-	int rc;
+पूर्णांक xive_smp_prepare_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक rc;
 
 	/* Allocate per-CPU data and queues */
 	rc = xive_prepare_cpu(cpu);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Allocate and setup IPI for the new CPU */
-	return xive_setup_cpu_ipi(cpu);
-}
+	/* Allocate and setup IPI क्रम the new CPU */
+	वापस xive_setup_cpu_ipi(cpu);
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static void xive_flush_cpu_queue(unsigned int cpu, struct xive_cpu *xc)
-{
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल व्योम xive_flush_cpu_queue(अचिन्हित पूर्णांक cpu, काष्ठा xive_cpu *xc)
+अणु
 	u32 irq;
 
 	/* We assume local irqs are disabled */
 	WARN_ON(!irqs_disabled());
 
-	/* Check what's already in the CPU queue */
-	while ((irq = xive_scan_interrupts(xc, false)) != 0) {
+	/* Check what's alपढ़ोy in the CPU queue */
+	जबतक ((irq = xive_scan_पूर्णांकerrupts(xc, false)) != 0) अणु
 		/*
-		 * We need to re-route that interrupt to its new destination.
+		 * We need to re-route that पूर्णांकerrupt to its new destination.
 		 * First get and lock the descriptor
 		 */
-		struct irq_desc *desc = irq_to_desc(irq);
-		struct irq_data *d = irq_desc_get_irq_data(desc);
-		struct xive_irq_data *xd;
+		काष्ठा irq_desc *desc = irq_to_desc(irq);
+		काष्ठा irq_data *d = irq_desc_get_irq_data(desc);
+		काष्ठा xive_irq_data *xd;
 
 		/*
 		 * Ignore anything that isn't a XIVE irq and ignore
 		 * IPIs, so can just be dropped.
 		 */
-		if (d->domain != xive_irq_domain)
-			continue;
+		अगर (d->करोमुख्य != xive_irq_करोमुख्य)
+			जारी;
 
 		/*
-		 * The IRQ should have already been re-routed, it's just a
+		 * The IRQ should have alपढ़ोy been re-routed, it's just a
 		 * stale in the old queue, so re-trigger it in order to make
 		 * it reach is new destination.
 		 */
-#ifdef DEBUG_FLUSH
+#अगर_घोषित DEBUG_FLUSH
 		pr_info("CPU %d: Got irq %d while offline, re-sending...\n",
 			cpu, irq);
-#endif
+#पूर्ण_अगर
 		raw_spin_lock(&desc->lock);
 		xd = irq_desc_get_handler_data(desc);
 
 		/*
-		 * Clear saved_p to indicate that it's no longer pending
+		 * Clear saved_p to indicate that it's no दीर्घer pending
 		 */
 		xd->saved_p = false;
 
 		/*
-		 * For LSIs, we EOI, this will cause a resend if it's
-		 * still asserted. Otherwise do an MSI retrigger.
+		 * For LSIs, we EOI, this will cause a resend अगर it's
+		 * still निश्चितed. Otherwise करो an MSI retrigger.
 		 */
-		if (xd->flags & XIVE_IRQ_FLAG_LSI)
-			xive_do_source_eoi(xd);
-		else
+		अगर (xd->flags & XIVE_IRQ_FLAG_LSI)
+			xive_करो_source_eoi(xd);
+		अन्यथा
 			xive_irq_retrigger(d);
 
 		raw_spin_unlock(&desc->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void xive_smp_disable_cpu(void)
-{
-	struct xive_cpu *xc = __this_cpu_read(xive_cpu);
-	unsigned int cpu = smp_processor_id();
+व्योम xive_smp_disable_cpu(व्योम)
+अणु
+	काष्ठा xive_cpu *xc = __this_cpu_पढ़ो(xive_cpu);
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
-	/* Migrate interrupts away from the CPU */
+	/* Migrate पूर्णांकerrupts away from the CPU */
 	irq_migrate_all_off_this_cpu();
 
-	/* Set CPPR to 0 to disable flow of interrupts */
+	/* Set CPPR to 0 to disable flow of पूर्णांकerrupts */
 	xc->cppr = 0;
 	out_8(xive_tima + xive_tima_offset + TM_CPPR, 0);
 
@@ -1535,50 +1536,50 @@ void xive_smp_disable_cpu(void)
 	/* Re-enable CPPR  */
 	xc->cppr = 0xff;
 	out_8(xive_tima + xive_tima_offset + TM_CPPR, 0xff);
-}
+पूर्ण
 
-void xive_flush_interrupt(void)
-{
-	struct xive_cpu *xc = __this_cpu_read(xive_cpu);
-	unsigned int cpu = smp_processor_id();
+व्योम xive_flush_पूर्णांकerrupt(व्योम)
+अणु
+	काष्ठा xive_cpu *xc = __this_cpu_पढ़ो(xive_cpu);
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
-	/* Called if an interrupt occurs while the CPU is hot unplugged */
+	/* Called अगर an पूर्णांकerrupt occurs जबतक the CPU is hot unplugged */
 	xive_flush_cpu_queue(cpu, xc);
-}
+पूर्ण
 
-#endif /* CONFIG_HOTPLUG_CPU */
+#पूर्ण_अगर /* CONFIG_HOTPLUG_CPU */
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-void xive_teardown_cpu(void)
-{
-	struct xive_cpu *xc = __this_cpu_read(xive_cpu);
-	unsigned int cpu = smp_processor_id();
+व्योम xive_tearकरोwn_cpu(व्योम)
+अणु
+	काष्ठा xive_cpu *xc = __this_cpu_पढ़ो(xive_cpu);
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
-	/* Set CPPR to 0 to disable flow of interrupts */
+	/* Set CPPR to 0 to disable flow of पूर्णांकerrupts */
 	xc->cppr = 0;
 	out_8(xive_tima + xive_tima_offset + TM_CPPR, 0);
 
-	if (xive_ops->teardown_cpu)
-		xive_ops->teardown_cpu(cpu, xc);
+	अगर (xive_ops->tearकरोwn_cpu)
+		xive_ops->tearकरोwn_cpu(cpu, xc);
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	/* Get rid of IPI */
 	xive_cleanup_cpu_ipi(cpu, xc);
-#endif
+#पूर्ण_अगर
 
-	/* Disable and free the queues */
+	/* Disable and मुक्त the queues */
 	xive_cleanup_cpu_queues(cpu, xc);
-}
+पूर्ण
 
-void xive_shutdown(void)
-{
-	xive_ops->shutdown();
-}
+व्योम xive_shutकरोwn(व्योम)
+अणु
+	xive_ops->shutकरोwn();
+पूर्ण
 
-bool __init xive_core_init(struct device_node *np, const struct xive_ops *ops,
-			   void __iomem *area, u32 offset, u8 max_prio)
-{
+bool __init xive_core_init(काष्ठा device_node *np, स्थिर काष्ठा xive_ops *ops,
+			   व्योम __iomem *area, u32 offset, u8 max_prio)
+अणु
 	xive_tima = area;
 	xive_tima_offset = offset;
 	xive_ops = ops;
@@ -1595,129 +1596,129 @@ bool __init xive_core_init(struct device_node *np, const struct xive_ops *ops,
 	/* Allocate per-CPU data and queues */
 	xive_prepare_cpu(smp_processor_id());
 
-	/* Get ready for interrupts */
+	/* Get पढ़ोy क्रम पूर्णांकerrupts */
 	xive_setup_cpu();
 
 	pr_info("Interrupt handling initialized with %s backend\n",
 		xive_ops->name);
 	pr_info("Using priority %d for all interrupts\n", max_prio);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-__be32 *xive_queue_page_alloc(unsigned int cpu, u32 queue_shift)
-{
-	unsigned int alloc_order;
-	struct page *pages;
+__be32 *xive_queue_page_alloc(अचिन्हित पूर्णांक cpu, u32 queue_shअगरt)
+अणु
+	अचिन्हित पूर्णांक alloc_order;
+	काष्ठा page *pages;
 	__be32 *qpage;
 
-	alloc_order = xive_alloc_order(queue_shift);
+	alloc_order = xive_alloc_order(queue_shअगरt);
 	pages = alloc_pages_node(cpu_to_node(cpu), GFP_KERNEL, alloc_order);
-	if (!pages)
-		return ERR_PTR(-ENOMEM);
+	अगर (!pages)
+		वापस ERR_PTR(-ENOMEM);
 	qpage = (__be32 *)page_address(pages);
-	memset(qpage, 0, 1 << queue_shift);
+	स_रखो(qpage, 0, 1 << queue_shअगरt);
 
-	return qpage;
-}
+	वापस qpage;
+पूर्ण
 
-static int __init xive_off(char *arg)
-{
+अटल पूर्णांक __init xive_off(अक्षर *arg)
+अणु
 	xive_cmdline_disabled = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 __setup("xive=off", xive_off);
 
-static void xive_debug_show_cpu(struct seq_file *m, int cpu)
-{
-	struct xive_cpu *xc = per_cpu(xive_cpu, cpu);
+अटल व्योम xive_debug_show_cpu(काष्ठा seq_file *m, पूर्णांक cpu)
+अणु
+	काष्ठा xive_cpu *xc = per_cpu(xive_cpu, cpu);
 
-	seq_printf(m, "CPU %d:", cpu);
-	if (xc) {
-		seq_printf(m, "pp=%02x CPPR=%02x ", xc->pending_prio, xc->cppr);
+	seq_म_लिखो(m, "CPU %d:", cpu);
+	अगर (xc) अणु
+		seq_म_लिखो(m, "pp=%02x CPPR=%02x ", xc->pending_prio, xc->cppr);
 
-#ifdef CONFIG_SMP
-		{
-			u64 val = xive_esb_read(&xc->ipi_data, XIVE_ESB_GET);
+#अगर_घोषित CONFIG_SMP
+		अणु
+			u64 val = xive_esb_पढ़ो(&xc->ipi_data, XIVE_ESB_GET);
 
-			seq_printf(m, "IPI=0x%08x PQ=%c%c ", xc->hw_ipi,
+			seq_म_लिखो(m, "IPI=0x%08x PQ=%c%c ", xc->hw_ipi,
 				   val & XIVE_ESB_VAL_P ? 'P' : '-',
 				   val & XIVE_ESB_VAL_Q ? 'Q' : '-');
-		}
-#endif
-		{
-			struct xive_q *q = &xc->queue[xive_irq_priority];
+		पूर्ण
+#पूर्ण_अगर
+		अणु
+			काष्ठा xive_q *q = &xc->queue[xive_irq_priority];
 			u32 i0, i1, idx;
 
-			if (q->qpage) {
+			अगर (q->qpage) अणु
 				idx = q->idx;
 				i0 = be32_to_cpup(q->qpage + idx);
 				idx = (idx + 1) & q->msk;
 				i1 = be32_to_cpup(q->qpage + idx);
-				seq_printf(m, "EQ idx=%d T=%d %08x %08x ...",
+				seq_म_लिखो(m, "EQ idx=%d T=%d %08x %08x ...",
 					   q->idx, q->toggle, i0, i1);
-			}
-		}
-	}
-	seq_puts(m, "\n");
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	seq_माला_दो(m, "\n");
+पूर्ण
 
-static void xive_debug_show_irq(struct seq_file *m, struct irq_data *d)
-{
-	unsigned int hw_irq = (unsigned int)irqd_to_hwirq(d);
-	int rc;
+अटल व्योम xive_debug_show_irq(काष्ठा seq_file *m, काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक hw_irq = (अचिन्हित पूर्णांक)irqd_to_hwirq(d);
+	पूर्णांक rc;
 	u32 target;
 	u8 prio;
 	u32 lirq;
-	struct xive_irq_data *xd;
+	काष्ठा xive_irq_data *xd;
 	u64 val;
 
 	rc = xive_ops->get_irq_config(hw_irq, &target, &prio, &lirq);
-	if (rc) {
-		seq_printf(m, "IRQ 0x%08x : no config rc=%d\n", hw_irq, rc);
-		return;
-	}
+	अगर (rc) अणु
+		seq_म_लिखो(m, "IRQ 0x%08x : no config rc=%d\n", hw_irq, rc);
+		वापस;
+	पूर्ण
 
-	seq_printf(m, "IRQ 0x%08x : target=0x%x prio=%02x lirq=0x%x ",
+	seq_म_लिखो(m, "IRQ 0x%08x : target=0x%x prio=%02x lirq=0x%x ",
 		   hw_irq, target, prio, lirq);
 
 	xd = irq_data_get_irq_handler_data(d);
-	val = xive_esb_read(xd, XIVE_ESB_GET);
-	seq_printf(m, "flags=%c%c%c PQ=%c%c",
+	val = xive_esb_पढ़ो(xd, XIVE_ESB_GET);
+	seq_म_लिखो(m, "flags=%c%c%c PQ=%c%c",
 		   xd->flags & XIVE_IRQ_FLAG_STORE_EOI ? 'S' : ' ',
 		   xd->flags & XIVE_IRQ_FLAG_LSI ? 'L' : ' ',
 		   xd->flags & XIVE_IRQ_FLAG_H_INT_ESB ? 'H' : ' ',
 		   val & XIVE_ESB_VAL_P ? 'P' : '-',
 		   val & XIVE_ESB_VAL_Q ? 'Q' : '-');
-	seq_puts(m, "\n");
-}
+	seq_माला_दो(m, "\n");
+पूर्ण
 
-static int xive_core_debug_show(struct seq_file *m, void *private)
-{
-	unsigned int i;
-	struct irq_desc *desc;
-	int cpu;
+अटल पूर्णांक xive_core_debug_show(काष्ठा seq_file *m, व्योम *निजी)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा irq_desc *desc;
+	पूर्णांक cpu;
 
-	if (xive_ops->debug_show)
-		xive_ops->debug_show(m, private);
+	अगर (xive_ops->debug_show)
+		xive_ops->debug_show(m, निजी);
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		xive_debug_show_cpu(m, cpu);
 
-	for_each_irq_desc(i, desc) {
-		struct irq_data *d = irq_desc_get_irq_data(desc);
+	क्रम_each_irq_desc(i, desc) अणु
+		काष्ठा irq_data *d = irq_desc_get_irq_data(desc);
 
-		if (d->domain == xive_irq_domain)
+		अगर (d->करोमुख्य == xive_irq_करोमुख्य)
 			xive_debug_show_irq(m, d);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(xive_core_debug);
 
-int xive_core_debug_init(void)
-{
-	if (xive_enabled())
-		debugfs_create_file("xive", 0400, powerpc_debugfs_root,
-				    NULL, &xive_core_debug_fops);
-	return 0;
-}
+पूर्णांक xive_core_debug_init(व्योम)
+अणु
+	अगर (xive_enabled())
+		debugfs_create_file("xive", 0400, घातerpc_debugfs_root,
+				    शून्य, &xive_core_debug_fops);
+	वापस 0;
+पूर्ण

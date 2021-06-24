@@ -1,253 +1,254 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  hosts.c Copyright (C) 1992 Drew Eckhardt
  *          Copyright (C) 1993, 1994, 1995 Eric Youngdale
  *          Copyright (C) 2002-2003 Christoph Hellwig
  *
- *  mid to lowlevel SCSI driver interface
+ *  mid to lowlevel SCSI driver पूर्णांकerface
  *      Initial versions: Drew Eckhardt
  *      Subsequent revisions: Eric Youngdale
  *
- *  <drew@colorado.edu>
+ *  <drew@coloraकरो.edu>
  *
- *  Jiffies wrap fixes (host->resetting), 3 Dec 1998 Andrea Arcangeli
+ *  Jअगरfies wrap fixes (host->resetting), 3 Dec 1998 Andrea Arcangeli
  *  Added QLOGIC QLA1280 SCSI controller kernel host support. 
  *     August 4, 1999 Fred Lewis, Intel DuPont
  *
- *  Updated to reflect the new initialization scheme for the higher 
+ *  Updated to reflect the new initialization scheme क्रम the higher 
  *  level of scsi drivers (sd/sr/st)
- *  September 17, 2000 Torben Mathiasen <tmm@image.dk>
+ *  September 17, 2000 Torben Mathiasen <पंचांगm@image.dk>
  *
- *  Restructured scsi_host lists and associated functions.
+ *  Reकाष्ठाured scsi_host lists and associated functions.
  *  September 04, 2002 Mike Anderson (andmike@us.ibm.com)
  */
 
-#include <linux/module.h>
-#include <linux/blkdev.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/kthread.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/init.h>
-#include <linux/completion.h>
-#include <linux/transport_class.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/idr.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_transport.h>
-#include <scsi/scsi_cmnd.h>
+#समावेश <linux/module.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/transport_class.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/idr.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_transport.h>
+#समावेश <scsi/scsi_cmnd.h>
 
-#include "scsi_priv.h"
-#include "scsi_logging.h"
+#समावेश "scsi_priv.h"
+#समावेश "scsi_logging.h"
 
 
-static int shost_eh_deadline = -1;
+अटल पूर्णांक shost_eh_deadline = -1;
 
-module_param_named(eh_deadline, shost_eh_deadline, int, S_IRUGO|S_IWUSR);
+module_param_named(eh_deadline, shost_eh_deadline, पूर्णांक, S_IRUGO|S_IWUSR);
 MODULE_PARM_DESC(eh_deadline,
-		 "SCSI EH timeout in seconds (should be between 0 and 2^31-1)");
+		 "SCSI EH समयout in seconds (should be between 0 and 2^31-1)");
 
-static DEFINE_IDA(host_index_ida);
+अटल DEFINE_IDA(host_index_ida);
 
 
-static void scsi_host_cls_release(struct device *dev)
-{
+अटल व्योम scsi_host_cls_release(काष्ठा device *dev)
+अणु
 	put_device(&class_to_shost(dev)->shost_gendev);
-}
+पूर्ण
 
-static struct class shost_class = {
+अटल काष्ठा class shost_class = अणु
 	.name		= "scsi_host",
 	.dev_release	= scsi_host_cls_release,
-};
+पूर्ण;
 
 /**
  *	scsi_host_set_state - Take the given host through the host state model.
  *	@shost:	scsi host to change the state of.
  *	@state:	state to change to.
  *
- *	Returns zero if unsuccessful or an error if the requested
+ *	Returns zero अगर unsuccessful or an error अगर the requested
  *	transition is illegal.
  **/
-int scsi_host_set_state(struct Scsi_Host *shost, enum scsi_host_state state)
-{
-	enum scsi_host_state oldstate = shost->shost_state;
+पूर्णांक scsi_host_set_state(काष्ठा Scsi_Host *shost, क्रमागत scsi_host_state state)
+अणु
+	क्रमागत scsi_host_state oldstate = shost->shost_state;
 
-	if (state == oldstate)
-		return 0;
+	अगर (state == oldstate)
+		वापस 0;
 
-	switch (state) {
-	case SHOST_CREATED:
+	चयन (state) अणु
+	हाल SHOST_CREATED:
 		/* There are no legal states that come back to
 		 * created.  This is the manually initialised start
 		 * state */
-		goto illegal;
+		जाओ illegal;
 
-	case SHOST_RUNNING:
-		switch (oldstate) {
-		case SHOST_CREATED:
-		case SHOST_RECOVERY:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SHOST_RUNNING:
+		चयन (oldstate) अणु
+		हाल SHOST_CREATED:
+		हाल SHOST_RECOVERY:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SHOST_RECOVERY:
-		switch (oldstate) {
-		case SHOST_RUNNING:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SHOST_RECOVERY:
+		चयन (oldstate) अणु
+		हाल SHOST_RUNNING:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SHOST_CANCEL:
-		switch (oldstate) {
-		case SHOST_CREATED:
-		case SHOST_RUNNING:
-		case SHOST_CANCEL_RECOVERY:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SHOST_CANCEL:
+		चयन (oldstate) अणु
+		हाल SHOST_CREATED:
+		हाल SHOST_RUNNING:
+		हाल SHOST_CANCEL_RECOVERY:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SHOST_DEL:
-		switch (oldstate) {
-		case SHOST_CANCEL:
-		case SHOST_DEL_RECOVERY:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SHOST_DEL:
+		चयन (oldstate) अणु
+		हाल SHOST_CANCEL:
+		हाल SHOST_DEL_RECOVERY:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SHOST_CANCEL_RECOVERY:
-		switch (oldstate) {
-		case SHOST_CANCEL:
-		case SHOST_RECOVERY:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल SHOST_CANCEL_RECOVERY:
+		चयन (oldstate) अणु
+		हाल SHOST_CANCEL:
+		हाल SHOST_RECOVERY:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case SHOST_DEL_RECOVERY:
-		switch (oldstate) {
-		case SHOST_CANCEL_RECOVERY:
-			break;
-		default:
-			goto illegal;
-		}
-		break;
-	}
+	हाल SHOST_DEL_RECOVERY:
+		चयन (oldstate) अणु
+		हाल SHOST_CANCEL_RECOVERY:
+			अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 	shost->shost_state = state;
-	return 0;
+	वापस 0;
 
  illegal:
 	SCSI_LOG_ERROR_RECOVERY(1,
-				shost_printk(KERN_ERR, shost,
+				shost_prपूर्णांकk(KERN_ERR, shost,
 					     "Illegal host state transition"
 					     "%s->%s\n",
 					     scsi_host_state_name(oldstate),
 					     scsi_host_state_name(state)));
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
- * scsi_remove_host - remove a scsi host
- * @shost:	a pointer to a scsi host to remove
+ * scsi_हटाओ_host - हटाओ a scsi host
+ * @shost:	a poपूर्णांकer to a scsi host to हटाओ
  **/
-void scsi_remove_host(struct Scsi_Host *shost)
-{
-	unsigned long flags;
+व्योम scsi_हटाओ_host(काष्ठा Scsi_Host *shost)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	mutex_lock(&shost->scan_mutex);
 	spin_lock_irqsave(shost->host_lock, flags);
-	if (scsi_host_set_state(shost, SHOST_CANCEL))
-		if (scsi_host_set_state(shost, SHOST_CANCEL_RECOVERY)) {
+	अगर (scsi_host_set_state(shost, SHOST_CANCEL))
+		अगर (scsi_host_set_state(shost, SHOST_CANCEL_RECOVERY)) अणु
 			spin_unlock_irqrestore(shost->host_lock, flags);
 			mutex_unlock(&shost->scan_mutex);
-			return;
-		}
+			वापस;
+		पूर्ण
 	spin_unlock_irqrestore(shost->host_lock, flags);
 
-	scsi_autopm_get_host(shost);
-	flush_workqueue(shost->tmf_work_q);
-	scsi_forget_host(shost);
+	scsi_स्वतःpm_get_host(shost);
+	flush_workqueue(shost->पंचांगf_work_q);
+	scsi_क्रमget_host(shost);
 	mutex_unlock(&shost->scan_mutex);
 	scsi_proc_host_rm(shost);
 
 	spin_lock_irqsave(shost->host_lock, flags);
-	if (scsi_host_set_state(shost, SHOST_DEL))
+	अगर (scsi_host_set_state(shost, SHOST_DEL))
 		BUG_ON(scsi_host_set_state(shost, SHOST_DEL_RECOVERY));
 	spin_unlock_irqrestore(shost->host_lock, flags);
 
-	transport_unregister_device(&shost->shost_gendev);
-	device_unregister(&shost->shost_dev);
+	transport_unरेजिस्टर_device(&shost->shost_gendev);
+	device_unरेजिस्टर(&shost->shost_dev);
 	device_del(&shost->shost_gendev);
-}
-EXPORT_SYMBOL(scsi_remove_host);
+पूर्ण
+EXPORT_SYMBOL(scsi_हटाओ_host);
 
 /**
  * scsi_add_host_with_dma - add a scsi host with dma device
- * @shost:	scsi host pointer to add
- * @dev:	a struct device of type scsi class
- * @dma_dev:	dma device for the host
+ * @shost:	scsi host poपूर्णांकer to add
+ * @dev:	a काष्ठा device of type scsi class
+ * @dma_dev:	dma device क्रम the host
  *
  * Note: You rarely need to worry about this unless you're in a
- * virtualised host environments, so use the simpler scsi_add_host()
+ * भवised host environments, so use the simpler scsi_add_host()
  * function instead.
  *
  * Return value: 
- * 	0 on success / != 0 for error
+ * 	0 on success / != 0 क्रम error
  **/
-int scsi_add_host_with_dma(struct Scsi_Host *shost, struct device *dev,
-			   struct device *dma_dev)
-{
-	struct scsi_host_template *sht = shost->hostt;
-	int error = -EINVAL;
+पूर्णांक scsi_add_host_with_dma(काष्ठा Scsi_Host *shost, काष्ठा device *dev,
+			   काष्ठा device *dma_dev)
+अणु
+	काष्ठा scsi_host_ढाँचा *sht = shost->hostt;
+	पूर्णांक error = -EINVAL;
 
-	shost_printk(KERN_INFO, shost, "%s\n",
+	shost_prपूर्णांकk(KERN_INFO, shost, "%s\n",
 			sht->info ? sht->info(shost) : sht->name);
 
-	if (!shost->can_queue) {
-		shost_printk(KERN_ERR, shost,
+	अगर (!shost->can_queue) अणु
+		shost_prपूर्णांकk(KERN_ERR, shost,
 			     "can_queue = 0 no longer supported\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	error = scsi_init_sense_cache(shost);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
 	error = scsi_mq_setup_tags(shost);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
-	if (!shost->shost_gendev.parent)
-		shost->shost_gendev.parent = dev ? dev : &platform_bus;
-	if (!dma_dev)
+	अगर (!shost->shost_gendev.parent)
+		shost->shost_gendev.parent = dev ? dev : &platक्रमm_bus;
+	अगर (!dma_dev)
 		dma_dev = shost->shost_gendev.parent;
 
 	shost->dma_dev = dma_dev;
 
 	/*
 	 * Increase usage count temporarily here so that calling
-	 * scsi_autopm_put_host() will trigger runtime idle if there is
-	 * nothing else preventing suspending the device.
+	 * scsi_स्वतःpm_put_host() will trigger runसमय idle अगर there is
+	 * nothing अन्यथा preventing suspending the device.
 	 */
-	pm_runtime_get_noresume(&shost->shost_gendev);
-	pm_runtime_set_active(&shost->shost_gendev);
-	pm_runtime_enable(&shost->shost_gendev);
+	pm_runसमय_get_noresume(&shost->shost_gendev);
+	pm_runसमय_set_active(&shost->shost_gendev);
+	pm_runसमय_enable(&shost->shost_gendev);
 	device_enable_async_suspend(&shost->shost_gendev);
 
 	error = device_add(&shost->shost_gendev);
-	if (error)
-		goto out_disable_runtime_pm;
+	अगर (error)
+		जाओ out_disable_runसमय_pm;
 
 	scsi_host_set_state(shost, SHOST_RUNNING);
 	get_device(shost->shost_gendev.parent);
@@ -256,41 +257,41 @@ int scsi_add_host_with_dma(struct Scsi_Host *shost, struct device *dev,
 
 	get_device(&shost->shost_gendev);
 	error = device_add(&shost->shost_dev);
-	if (error)
-		goto out_del_gendev;
+	अगर (error)
+		जाओ out_del_gendev;
 
-	if (shost->transportt->host_size) {
+	अगर (shost->transportt->host_size) अणु
 		shost->shost_data = kzalloc(shost->transportt->host_size,
 					 GFP_KERNEL);
-		if (shost->shost_data == NULL) {
+		अगर (shost->shost_data == शून्य) अणु
 			error = -ENOMEM;
-			goto out_del_dev;
-		}
-	}
+			जाओ out_del_dev;
+		पूर्ण
+	पूर्ण
 
-	if (shost->transportt->create_work_queue) {
-		snprintf(shost->work_q_name, sizeof(shost->work_q_name),
+	अगर (shost->transportt->create_work_queue) अणु
+		snम_लिखो(shost->work_q_name, माप(shost->work_q_name),
 			 "scsi_wq_%d", shost->host_no);
 		shost->work_q = alloc_workqueue("%s",
 			WQ_SYSFS | __WQ_LEGACY | WQ_MEM_RECLAIM | WQ_UNBOUND,
 			1, shost->work_q_name);
 
-		if (!shost->work_q) {
+		अगर (!shost->work_q) अणु
 			error = -EINVAL;
-			goto out_del_dev;
-		}
-	}
+			जाओ out_del_dev;
+		पूर्ण
+	पूर्ण
 
 	error = scsi_sysfs_add_host(shost);
-	if (error)
-		goto out_del_dev;
+	अगर (error)
+		जाओ out_del_dev;
 
 	scsi_proc_host_add(shost);
-	scsi_autopm_put_host(shost);
-	return error;
+	scsi_स्वतःpm_put_host(shost);
+	वापस error;
 
 	/*
-	 * Any host allocation in this function will be freed in
+	 * Any host allocation in this function will be मुक्तd in
 	 * scsi_host_dev_release().
 	 */
  out_del_dev:
@@ -302,115 +303,115 @@ int scsi_add_host_with_dma(struct Scsi_Host *shost, struct device *dev,
 	 */
 	put_device(&shost->shost_dev);
 	device_del(&shost->shost_gendev);
- out_disable_runtime_pm:
+ out_disable_runसमय_pm:
 	device_disable_async_suspend(&shost->shost_gendev);
-	pm_runtime_disable(&shost->shost_gendev);
-	pm_runtime_set_suspended(&shost->shost_gendev);
-	pm_runtime_put_noidle(&shost->shost_gendev);
+	pm_runसमय_disable(&shost->shost_gendev);
+	pm_runसमय_set_suspended(&shost->shost_gendev);
+	pm_runसमय_put_noidle(&shost->shost_gendev);
  fail:
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL(scsi_add_host_with_dma);
 
-static void scsi_host_dev_release(struct device *dev)
-{
-	struct Scsi_Host *shost = dev_to_shost(dev);
-	struct device *parent = dev->parent;
+अटल व्योम scsi_host_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा Scsi_Host *shost = dev_to_shost(dev);
+	काष्ठा device *parent = dev->parent;
 
 	scsi_proc_hostdir_rm(shost->hostt);
 
-	/* Wait for functions invoked through call_rcu(&shost->rcu, ...) */
+	/* Wait क्रम functions invoked through call_rcu(&shost->rcu, ...) */
 	rcu_barrier();
 
-	if (shost->tmf_work_q)
-		destroy_workqueue(shost->tmf_work_q);
-	if (shost->ehandler)
-		kthread_stop(shost->ehandler);
-	if (shost->work_q)
+	अगर (shost->पंचांगf_work_q)
+		destroy_workqueue(shost->पंचांगf_work_q);
+	अगर (shost->ehandler)
+		kthपढ़ो_stop(shost->ehandler);
+	अगर (shost->work_q)
 		destroy_workqueue(shost->work_q);
 
-	if (shost->shost_state == SHOST_CREATED) {
+	अगर (shost->shost_state == SHOST_CREATED) अणु
 		/*
-		 * Free the shost_dev device name here if scsi_host_alloc()
+		 * Free the shost_dev device name here अगर scsi_host_alloc()
 		 * and scsi_host_put() have been called but neither
-		 * scsi_host_add() nor scsi_host_remove() has been called.
-		 * This avoids that the memory allocated for the shost_dev
+		 * scsi_host_add() nor scsi_host_हटाओ() has been called.
+		 * This aव्योमs that the memory allocated क्रम the shost_dev
 		 * name is leaked.
 		 */
-		kfree(dev_name(&shost->shost_dev));
-	}
+		kमुक्त(dev_name(&shost->shost_dev));
+	पूर्ण
 
-	if (shost->tag_set.tags)
+	अगर (shost->tag_set.tags)
 		scsi_mq_destroy_tags(shost);
 
-	kfree(shost->shost_data);
+	kमुक्त(shost->shost_data);
 
-	ida_simple_remove(&host_index_ida, shost->host_no);
+	ida_simple_हटाओ(&host_index_ida, shost->host_no);
 
-	if (shost->shost_state != SHOST_CREATED)
+	अगर (shost->shost_state != SHOST_CREATED)
 		put_device(parent);
-	kfree(shost);
-}
+	kमुक्त(shost);
+पूर्ण
 
-static struct device_type scsi_host_type = {
+अटल काष्ठा device_type scsi_host_type = अणु
 	.name =		"scsi_host",
 	.release =	scsi_host_dev_release,
-};
+पूर्ण;
 
 /**
- * scsi_host_alloc - register a scsi host adapter instance.
- * @sht:	pointer to scsi host template
- * @privsize:	extra bytes to allocate for driver
+ * scsi_host_alloc - रेजिस्टर a scsi host adapter instance.
+ * @sht:	poपूर्णांकer to scsi host ढाँचा
+ * @privsize:	extra bytes to allocate क्रम driver
  *
  * Note:
- * 	Allocate a new Scsi_Host and perform basic initialization.
+ * 	Allocate a new Scsi_Host and perक्रमm basic initialization.
  * 	The host is not published to the scsi midlayer until scsi_add_host
  * 	is called.
  *
  * Return value:
- * 	Pointer to a new Scsi_Host
+ * 	Poपूर्णांकer to a new Scsi_Host
  **/
-struct Scsi_Host *scsi_host_alloc(struct scsi_host_template *sht, int privsize)
-{
-	struct Scsi_Host *shost;
-	int index;
+काष्ठा Scsi_Host *scsi_host_alloc(काष्ठा scsi_host_ढाँचा *sht, पूर्णांक privsize)
+अणु
+	काष्ठा Scsi_Host *shost;
+	पूर्णांक index;
 
-	shost = kzalloc(sizeof(struct Scsi_Host) + privsize, GFP_KERNEL);
-	if (!shost)
-		return NULL;
+	shost = kzalloc(माप(काष्ठा Scsi_Host) + privsize, GFP_KERNEL);
+	अगर (!shost)
+		वापस शून्य;
 
-	shost->host_lock = &shost->default_lock;
+	shost->host_lock = &shost->शेष_lock;
 	spin_lock_init(shost->host_lock);
 	shost->shost_state = SHOST_CREATED;
 	INIT_LIST_HEAD(&shost->__devices);
-	INIT_LIST_HEAD(&shost->__targets);
+	INIT_LIST_HEAD(&shost->__tarमाला_लो);
 	INIT_LIST_HEAD(&shost->eh_cmd_q);
 	INIT_LIST_HEAD(&shost->starved_list);
-	init_waitqueue_head(&shost->host_wait);
+	init_रुकोqueue_head(&shost->host_रुको);
 	mutex_init(&shost->scan_mutex);
 
 	index = ida_simple_get(&host_index_ida, 0, 0, GFP_KERNEL);
-	if (index < 0) {
-		kfree(shost);
-		return NULL;
-	}
+	अगर (index < 0) अणु
+		kमुक्त(shost);
+		वापस शून्य;
+	पूर्ण
 	shost->host_no = index;
 
 	shost->dma_channel = 0xff;
 
-	/* These three are default values which can be overridden */
+	/* These three are शेष values which can be overridden */
 	shost->max_channel = 0;
 	shost->max_id = 8;
 	shost->max_lun = 8;
 
-	/* Give each shost a default transportt */
-	shost->transportt = &blank_transport_template;
+	/* Give each shost a शेष transportt */
+	shost->transportt = &blank_transport_ढाँचा;
 
 	/*
 	 * All drivers right now should be able to handle 12 byte
-	 * commands.  Every so often there are requests for 16 byte
-	 * commands, but individual low-level drivers need to certify that
-	 * they actually do something sensible with such commands.
+	 * commands.  Every so often there are requests क्रम 16 byte
+	 * commands, but inभागidual low-level drivers need to certअगरy that
+	 * they actually करो something sensible with such commands.
 	 */
 	shost->max_cmd_len = 12;
 	shost->hostt = sht;
@@ -419,53 +420,53 @@ struct Scsi_Host *scsi_host_alloc(struct scsi_host_template *sht, int privsize)
 	shost->sg_tablesize = sht->sg_tablesize;
 	shost->sg_prot_tablesize = sht->sg_prot_tablesize;
 	shost->cmd_per_lun = sht->cmd_per_lun;
-	shost->no_write_same = sht->no_write_same;
+	shost->no_ग_लिखो_same = sht->no_ग_लिखो_same;
 	shost->host_tagset = sht->host_tagset;
 
-	if (shost_eh_deadline == -1 || !sht->eh_host_reset_handler)
+	अगर (shost_eh_deadline == -1 || !sht->eh_host_reset_handler)
 		shost->eh_deadline = -1;
-	else if ((ulong) shost_eh_deadline * HZ > INT_MAX) {
-		shost_printk(KERN_WARNING, shost,
+	अन्यथा अगर ((uदीर्घ) shost_eh_deadline * HZ > पूर्णांक_उच्च) अणु
+		shost_prपूर्णांकk(KERN_WARNING, shost,
 			     "eh_deadline %u too large, setting to %u\n",
-			     shost_eh_deadline, INT_MAX / HZ);
-		shost->eh_deadline = INT_MAX;
-	} else
+			     shost_eh_deadline, पूर्णांक_उच्च / HZ);
+		shost->eh_deadline = पूर्णांक_उच्च;
+	पूर्ण अन्यथा
 		shost->eh_deadline = shost_eh_deadline * HZ;
 
-	if (sht->supported_mode == MODE_UNKNOWN)
-		/* means we didn't set it ... default to INITIATOR */
+	अगर (sht->supported_mode == MODE_UNKNOWN)
+		/* means we didn't set it ... शेष to INITIATOR */
 		shost->active_mode = MODE_INITIATOR;
-	else
+	अन्यथा
 		shost->active_mode = sht->supported_mode;
 
-	if (sht->max_host_blocked)
+	अगर (sht->max_host_blocked)
 		shost->max_host_blocked = sht->max_host_blocked;
-	else
+	अन्यथा
 		shost->max_host_blocked = SCSI_DEFAULT_HOST_BLOCKED;
 
 	/*
 	 * If the driver imposes no hard sector transfer limit, start at
 	 * machine infinity initially.
 	 */
-	if (sht->max_sectors)
+	अगर (sht->max_sectors)
 		shost->max_sectors = sht->max_sectors;
-	else
+	अन्यथा
 		shost->max_sectors = SCSI_DEFAULT_MAX_SECTORS;
 
-	if (sht->max_segment_size)
+	अगर (sht->max_segment_size)
 		shost->max_segment_size = sht->max_segment_size;
-	else
+	अन्यथा
 		shost->max_segment_size = BLK_MAX_SEGMENT_SIZE;
 
 	/*
-	 * assume a 4GB boundary, if not set
+	 * assume a 4GB boundary, अगर not set
 	 */
-	if (sht->dma_boundary)
+	अगर (sht->dma_boundary)
 		shost->dma_boundary = sht->dma_boundary;
-	else
+	अन्यथा
 		shost->dma_boundary = 0xffffffff;
 
-	if (sht->virt_boundary_mask)
+	अगर (sht->virt_boundary_mask)
 		shost->virt_boundary_mask = sht->virt_boundary_mask;
 
 	device_initialize(&shost->shost_gendev);
@@ -479,242 +480,242 @@ struct Scsi_Host *scsi_host_alloc(struct scsi_host_template *sht, int privsize)
 	dev_set_name(&shost->shost_dev, "host%d", shost->host_no);
 	shost->shost_dev.groups = scsi_sysfs_shost_attr_groups;
 
-	shost->ehandler = kthread_run(scsi_error_handler, shost,
+	shost->ehandler = kthपढ़ो_run(scsi_error_handler, shost,
 			"scsi_eh_%d", shost->host_no);
-	if (IS_ERR(shost->ehandler)) {
-		shost_printk(KERN_WARNING, shost,
+	अगर (IS_ERR(shost->ehandler)) अणु
+		shost_prपूर्णांकk(KERN_WARNING, shost,
 			"error handler thread failed to spawn, error = %ld\n",
 			PTR_ERR(shost->ehandler));
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	shost->tmf_work_q = alloc_workqueue("scsi_tmf_%d",
+	shost->पंचांगf_work_q = alloc_workqueue("scsi_tmf_%d",
 					WQ_UNBOUND | WQ_MEM_RECLAIM | WQ_SYSFS,
 					   1, shost->host_no);
-	if (!shost->tmf_work_q) {
-		shost_printk(KERN_WARNING, shost,
+	अगर (!shost->पंचांगf_work_q) अणु
+		shost_prपूर्णांकk(KERN_WARNING, shost,
 			     "failed to create tmf workq\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	scsi_proc_hostdir_add(shost->hostt);
-	return shost;
+	वापस shost;
  fail:
 	/*
 	 * Host state is still SHOST_CREATED and that is enough to release
-	 * ->shost_gendev. scsi_host_dev_release() will free
+	 * ->shost_gendev. scsi_host_dev_release() will मुक्त
 	 * dev_name(&shost->shost_dev).
 	 */
 	put_device(&shost->shost_gendev);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(scsi_host_alloc);
 
-static int __scsi_host_match(struct device *dev, const void *data)
-{
-	struct Scsi_Host *p;
-	const unsigned short *hostnum = data;
+अटल पूर्णांक __scsi_host_match(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	काष्ठा Scsi_Host *p;
+	स्थिर अचिन्हित लघु *hostnum = data;
 
 	p = class_to_shost(dev);
-	return p->host_no == *hostnum;
-}
+	वापस p->host_no == *hostnum;
+पूर्ण
 
 /**
  * scsi_host_lookup - get a reference to a Scsi_Host by host no
  * @hostnum:	host number to locate
  *
  * Return value:
- *	A pointer to located Scsi_Host or NULL.
+ *	A poपूर्णांकer to located Scsi_Host or शून्य.
  *
- *	The caller must do a scsi_host_put() to drop the reference
+ *	The caller must करो a scsi_host_put() to drop the reference
  *	that scsi_host_get() took. The put_device() below dropped
  *	the reference from class_find_device().
  **/
-struct Scsi_Host *scsi_host_lookup(unsigned short hostnum)
-{
-	struct device *cdev;
-	struct Scsi_Host *shost = NULL;
+काष्ठा Scsi_Host *scsi_host_lookup(अचिन्हित लघु hostnum)
+अणु
+	काष्ठा device *cdev;
+	काष्ठा Scsi_Host *shost = शून्य;
 
-	cdev = class_find_device(&shost_class, NULL, &hostnum,
+	cdev = class_find_device(&shost_class, शून्य, &hostnum,
 				 __scsi_host_match);
-	if (cdev) {
+	अगर (cdev) अणु
 		shost = scsi_host_get(class_to_shost(cdev));
 		put_device(cdev);
-	}
-	return shost;
-}
+	पूर्ण
+	वापस shost;
+पूर्ण
 EXPORT_SYMBOL(scsi_host_lookup);
 
 /**
  * scsi_host_get - inc a Scsi_Host ref count
- * @shost:	Pointer to Scsi_Host to inc.
+ * @shost:	Poपूर्णांकer to Scsi_Host to inc.
  **/
-struct Scsi_Host *scsi_host_get(struct Scsi_Host *shost)
-{
-	if ((shost->shost_state == SHOST_DEL) ||
+काष्ठा Scsi_Host *scsi_host_get(काष्ठा Scsi_Host *shost)
+अणु
+	अगर ((shost->shost_state == SHOST_DEL) ||
 		!get_device(&shost->shost_gendev))
-		return NULL;
-	return shost;
-}
+		वापस शून्य;
+	वापस shost;
+पूर्ण
 EXPORT_SYMBOL(scsi_host_get);
 
-static bool scsi_host_check_in_flight(struct request *rq, void *data,
+अटल bool scsi_host_check_in_flight(काष्ठा request *rq, व्योम *data,
 				      bool reserved)
-{
-	int *count = data;
-	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
+अणु
+	पूर्णांक *count = data;
+	काष्ठा scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
 
-	if (test_bit(SCMD_STATE_INFLIGHT, &cmd->state))
+	अगर (test_bit(SCMD_STATE_INFLIGHT, &cmd->state))
 		(*count)++;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * scsi_host_busy - Return the host busy counter
- * @shost:	Pointer to Scsi_Host to inc.
+ * @shost:	Poपूर्णांकer to Scsi_Host to inc.
  **/
-int scsi_host_busy(struct Scsi_Host *shost)
-{
-	int cnt = 0;
+पूर्णांक scsi_host_busy(काष्ठा Scsi_Host *shost)
+अणु
+	पूर्णांक cnt = 0;
 
 	blk_mq_tagset_busy_iter(&shost->tag_set,
 				scsi_host_check_in_flight, &cnt);
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 EXPORT_SYMBOL(scsi_host_busy);
 
 /**
  * scsi_host_put - dec a Scsi_Host ref count
- * @shost:	Pointer to Scsi_Host to dec.
+ * @shost:	Poपूर्णांकer to Scsi_Host to dec.
  **/
-void scsi_host_put(struct Scsi_Host *shost)
-{
+व्योम scsi_host_put(काष्ठा Scsi_Host *shost)
+अणु
 	put_device(&shost->shost_gendev);
-}
+पूर्ण
 EXPORT_SYMBOL(scsi_host_put);
 
-int scsi_init_hosts(void)
-{
-	return class_register(&shost_class);
-}
+पूर्णांक scsi_init_hosts(व्योम)
+अणु
+	वापस class_रेजिस्टर(&shost_class);
+पूर्ण
 
-void scsi_exit_hosts(void)
-{
-	class_unregister(&shost_class);
+व्योम scsi_निकास_hosts(व्योम)
+अणु
+	class_unरेजिस्टर(&shost_class);
 	ida_destroy(&host_index_ida);
-}
+पूर्ण
 
-int scsi_is_host_device(const struct device *dev)
-{
-	return dev->type == &scsi_host_type;
-}
+पूर्णांक scsi_is_host_device(स्थिर काष्ठा device *dev)
+अणु
+	वापस dev->type == &scsi_host_type;
+पूर्ण
 EXPORT_SYMBOL(scsi_is_host_device);
 
 /**
  * scsi_queue_work - Queue work to the Scsi_Host workqueue.
- * @shost:	Pointer to Scsi_Host.
- * @work:	Work to queue for execution.
+ * @shost:	Poपूर्णांकer to Scsi_Host.
+ * @work:	Work to queue क्रम execution.
  *
  * Return value:
- * 	1 - work queued for execution
- *	0 - work is already queued
- *	-EINVAL - work queue doesn't exist
+ * 	1 - work queued क्रम execution
+ *	0 - work is alपढ़ोy queued
+ *	-EINVAL - work queue करोesn't exist
  **/
-int scsi_queue_work(struct Scsi_Host *shost, struct work_struct *work)
-{
-	if (unlikely(!shost->work_q)) {
-		shost_printk(KERN_ERR, shost,
+पूर्णांक scsi_queue_work(काष्ठा Scsi_Host *shost, काष्ठा work_काष्ठा *work)
+अणु
+	अगर (unlikely(!shost->work_q)) अणु
+		shost_prपूर्णांकk(KERN_ERR, shost,
 			"ERROR: Scsi host '%s' attempted to queue scsi-work, "
 			"when no workqueue created.\n", shost->hostt->name);
 		dump_stack();
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return queue_work(shost->work_q, work);
-}
+	वापस queue_work(shost->work_q, work);
+पूर्ण
 EXPORT_SYMBOL_GPL(scsi_queue_work);
 
 /**
  * scsi_flush_work - Flush a Scsi_Host's workqueue.
- * @shost:	Pointer to Scsi_Host.
+ * @shost:	Poपूर्णांकer to Scsi_Host.
  **/
-void scsi_flush_work(struct Scsi_Host *shost)
-{
-	if (!shost->work_q) {
-		shost_printk(KERN_ERR, shost,
+व्योम scsi_flush_work(काष्ठा Scsi_Host *shost)
+अणु
+	अगर (!shost->work_q) अणु
+		shost_prपूर्णांकk(KERN_ERR, shost,
 			"ERROR: Scsi host '%s' attempted to flush scsi-work, "
 			"when no workqueue created.\n", shost->hostt->name);
 		dump_stack();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	flush_workqueue(shost->work_q);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(scsi_flush_work);
 
-static bool complete_all_cmds_iter(struct request *rq, void *data, bool rsvd)
-{
-	struct scsi_cmnd *scmd = blk_mq_rq_to_pdu(rq);
-	int status = *(int *)data;
+अटल bool complete_all_cmds_iter(काष्ठा request *rq, व्योम *data, bool rsvd)
+अणु
+	काष्ठा scsi_cmnd *scmd = blk_mq_rq_to_pdu(rq);
+	पूर्णांक status = *(पूर्णांक *)data;
 
 	scsi_dma_unmap(scmd);
 	scmd->result = status << 16;
-	scmd->scsi_done(scmd);
-	return true;
-}
+	scmd->scsi_करोne(scmd);
+	वापस true;
+पूर्ण
 
 /**
  * scsi_host_complete_all_commands - Terminate all running commands
  * @shost:	Scsi Host on which commands should be terminated
- * @status:	Status to be set for the terminated commands
+ * @status:	Status to be set क्रम the terminated commands
  *
- * There is no protection against modification of the number
+ * There is no protection against modअगरication of the number
  * of outstanding commands. It is the responsibility of the
  * caller to ensure that concurrent I/O submission and/or
  * completion is stopped when calling this function.
  */
-void scsi_host_complete_all_commands(struct Scsi_Host *shost, int status)
-{
+व्योम scsi_host_complete_all_commands(काष्ठा Scsi_Host *shost, पूर्णांक status)
+अणु
 	blk_mq_tagset_busy_iter(&shost->tag_set, complete_all_cmds_iter,
 				&status);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(scsi_host_complete_all_commands);
 
-struct scsi_host_busy_iter_data {
-	bool (*fn)(struct scsi_cmnd *, void *, bool);
-	void *priv;
-};
+काष्ठा scsi_host_busy_iter_data अणु
+	bool (*fn)(काष्ठा scsi_cmnd *, व्योम *, bool);
+	व्योम *priv;
+पूर्ण;
 
-static bool __scsi_host_busy_iter_fn(struct request *req, void *priv,
+अटल bool __scsi_host_busy_iter_fn(काष्ठा request *req, व्योम *priv,
 				   bool reserved)
-{
-	struct scsi_host_busy_iter_data *iter_data = priv;
-	struct scsi_cmnd *sc = blk_mq_rq_to_pdu(req);
+अणु
+	काष्ठा scsi_host_busy_iter_data *iter_data = priv;
+	काष्ठा scsi_cmnd *sc = blk_mq_rq_to_pdu(req);
 
-	return iter_data->fn(sc, iter_data->priv, reserved);
-}
+	वापस iter_data->fn(sc, iter_data->priv, reserved);
+पूर्ण
 
 /**
  * scsi_host_busy_iter - Iterate over all busy commands
- * @shost:	Pointer to Scsi_Host.
+ * @shost:	Poपूर्णांकer to Scsi_Host.
  * @fn:		Function to call on each busy command
- * @priv:	Data pointer passed to @fn
+ * @priv:	Data poपूर्णांकer passed to @fn
  *
  * If locking against concurrent command completions is required
  * ithas to be provided by the caller
  **/
-void scsi_host_busy_iter(struct Scsi_Host *shost,
-			 bool (*fn)(struct scsi_cmnd *, void *, bool),
-			 void *priv)
-{
-	struct scsi_host_busy_iter_data iter_data = {
+व्योम scsi_host_busy_iter(काष्ठा Scsi_Host *shost,
+			 bool (*fn)(काष्ठा scsi_cmnd *, व्योम *, bool),
+			 व्योम *priv)
+अणु
+	काष्ठा scsi_host_busy_iter_data iter_data = अणु
 		.fn = fn,
 		.priv = priv,
-	};
+	पूर्ण;
 
 	blk_mq_tagset_busy_iter(&shost->tag_set, __scsi_host_busy_iter_fn,
 				&iter_data);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(scsi_host_busy_iter);

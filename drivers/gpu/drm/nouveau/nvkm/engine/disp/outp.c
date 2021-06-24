@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,276 +22,276 @@
  *
  * Authors: Ben Skeggs
  */
-#include "outp.h"
-#include "ior.h"
+#समावेश "outp.h"
+#समावेश "ior.h"
 
-#include <subdev/bios.h>
-#include <subdev/bios/dcb.h>
-#include <subdev/i2c.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/dcb.h>
+#समावेश <subdev/i2c.h>
 
-void
-nvkm_outp_route(struct nvkm_disp *disp)
-{
-	struct nvkm_outp *outp;
-	struct nvkm_ior *ior;
+व्योम
+nvkm_outp_route(काष्ठा nvkm_disp *disp)
+अणु
+	काष्ठा nvkm_outp *outp;
+	काष्ठा nvkm_ior *ior;
 
-	list_for_each_entry(ior, &disp->ior, head) {
-		if ((outp = ior->arm.outp) && ior->arm.outp != ior->asy.outp) {
+	list_क्रम_each_entry(ior, &disp->ior, head) अणु
+		अगर ((outp = ior->arm.outp) && ior->arm.outp != ior->asy.outp) अणु
 			OUTP_DBG(outp, "release %s", ior->name);
-			if (ior->func->route.set)
-				ior->func->route.set(outp, NULL);
-			ior->arm.outp = NULL;
-		}
-	}
+			अगर (ior->func->route.set)
+				ior->func->route.set(outp, शून्य);
+			ior->arm.outp = शून्य;
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(ior, &disp->ior, head) {
-		if ((outp = ior->asy.outp)) {
+	list_क्रम_each_entry(ior, &disp->ior, head) अणु
+		अगर ((outp = ior->asy.outp)) अणु
 			OUTP_DBG(outp, "acquire %s", ior->name);
-			if (ior->asy.outp != ior->arm.outp) {
-				if (ior->func->route.set)
+			अगर (ior->asy.outp != ior->arm.outp) अणु
+				अगर (ior->func->route.set)
 					ior->func->route.set(outp, ior);
 				ior->arm.outp = ior->asy.outp;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static enum nvkm_ior_proto
-nvkm_outp_xlat(struct nvkm_outp *outp, enum nvkm_ior_type *type)
-{
-	switch (outp->info.location) {
-	case 0:
-		switch (outp->info.type) {
-		case DCB_OUTPUT_ANALOG: *type = DAC; return  CRT;
-		case DCB_OUTPUT_TV    : *type = DAC; return   TV;
-		case DCB_OUTPUT_TMDS  : *type = SOR; return TMDS;
-		case DCB_OUTPUT_LVDS  : *type = SOR; return LVDS;
-		case DCB_OUTPUT_DP    : *type = SOR; return   DP;
-		default:
-			break;
-		}
-		break;
-	case 1:
-		switch (outp->info.type) {
-		case DCB_OUTPUT_TMDS: *type = PIOR; return TMDS;
-		case DCB_OUTPUT_DP  : *type = PIOR; return TMDS; /* not a bug */
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
+अटल क्रमागत nvkm_ior_proto
+nvkm_outp_xlat(काष्ठा nvkm_outp *outp, क्रमागत nvkm_ior_type *type)
+अणु
+	चयन (outp->info.location) अणु
+	हाल 0:
+		चयन (outp->info.type) अणु
+		हाल DCB_OUTPUT_ANALOG: *type = DAC; वापस  CRT;
+		हाल DCB_OUTPUT_TV    : *type = DAC; वापस   TV;
+		हाल DCB_OUTPUT_TMDS  : *type = SOR; वापस TMDS;
+		हाल DCB_OUTPUT_LVDS  : *type = SOR; वापस LVDS;
+		हाल DCB_OUTPUT_DP    : *type = SOR; वापस   DP;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 1:
+		चयन (outp->info.type) अणु
+		हाल DCB_OUTPUT_TMDS: *type = PIOR; वापस TMDS;
+		हाल DCB_OUTPUT_DP  : *type = PIOR; वापस TMDS; /* not a bug */
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	WARN_ON(1);
-	return UNKNOWN;
-}
+	वापस UNKNOWN;
+पूर्ण
 
-void
-nvkm_outp_release(struct nvkm_outp *outp, u8 user)
-{
-	struct nvkm_ior *ior = outp->ior;
+व्योम
+nvkm_outp_release(काष्ठा nvkm_outp *outp, u8 user)
+अणु
+	काष्ठा nvkm_ior *ior = outp->ior;
 	OUTP_TRACE(outp, "release %02x &= %02x %p", outp->acquired, ~user, ior);
-	if (ior) {
+	अगर (ior) अणु
 		outp->acquired &= ~user;
-		if (!outp->acquired) {
-			if (outp->func->release && outp->ior)
+		अगर (!outp->acquired) अणु
+			अगर (outp->func->release && outp->ior)
 				outp->func->release(outp);
-			outp->ior->asy.outp = NULL;
-			outp->ior = NULL;
-		}
-	}
-}
+			outp->ior->asy.outp = शून्य;
+			outp->ior = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline int
-nvkm_outp_acquire_ior(struct nvkm_outp *outp, u8 user, struct nvkm_ior *ior)
-{
+अटल अंतरभूत पूर्णांक
+nvkm_outp_acquire_ior(काष्ठा nvkm_outp *outp, u8 user, काष्ठा nvkm_ior *ior)
+अणु
 	outp->ior = ior;
 	outp->ior->asy.outp = outp;
 	outp->ior->asy.link = outp->info.sorconf.link;
 	outp->acquired |= user;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int
-nvkm_outp_acquire_hda(struct nvkm_outp *outp, enum nvkm_ior_type type,
+अटल अंतरभूत पूर्णांक
+nvkm_outp_acquire_hda(काष्ठा nvkm_outp *outp, क्रमागत nvkm_ior_type type,
 		      u8 user, bool hda)
-{
-	struct nvkm_ior *ior;
+अणु
+	काष्ठा nvkm_ior *ior;
 
 	/* Failing that, a completely unused OR is the next best thing. */
-	list_for_each_entry(ior, &outp->disp->ior, head) {
-		if (!ior->identity && !!ior->func->hda.hpd == hda &&
+	list_क्रम_each_entry(ior, &outp->disp->ior, head) अणु
+		अगर (!ior->identity && !!ior->func->hda.hpd == hda &&
 		    !ior->asy.outp && ior->type == type && !ior->arm.outp &&
 		    (ior->func->route.set || ior->id == __ffs(outp->info.or)))
-			return nvkm_outp_acquire_ior(outp, user, ior);
-	}
+			वापस nvkm_outp_acquire_ior(outp, user, ior);
+	पूर्ण
 
-	/* Last resort is to assign an OR that's already active on HW,
+	/* Last resort is to assign an OR that's alपढ़ोy active on HW,
 	 * but will be released during the next modeset.
 	 */
-	list_for_each_entry(ior, &outp->disp->ior, head) {
-		if (!ior->identity && !!ior->func->hda.hpd == hda &&
+	list_क्रम_each_entry(ior, &outp->disp->ior, head) अणु
+		अगर (!ior->identity && !!ior->func->hda.hpd == hda &&
 		    !ior->asy.outp && ior->type == type &&
 		    (ior->func->route.set || ior->id == __ffs(outp->info.or)))
-			return nvkm_outp_acquire_ior(outp, user, ior);
-	}
+			वापस nvkm_outp_acquire_ior(outp, user, ior);
+	पूर्ण
 
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
-int
-nvkm_outp_acquire(struct nvkm_outp *outp, u8 user, bool hda)
-{
-	struct nvkm_ior *ior = outp->ior;
-	enum nvkm_ior_proto proto;
-	enum nvkm_ior_type type;
+पूर्णांक
+nvkm_outp_acquire(काष्ठा nvkm_outp *outp, u8 user, bool hda)
+अणु
+	काष्ठा nvkm_ior *ior = outp->ior;
+	क्रमागत nvkm_ior_proto proto;
+	क्रमागत nvkm_ior_type type;
 
 	OUTP_TRACE(outp, "acquire %02x |= %02x %p", outp->acquired, user, ior);
-	if (ior) {
+	अगर (ior) अणु
 		outp->acquired |= user;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Lookup a compatible, and unused, OR to assign to the device. */
 	proto = nvkm_outp_xlat(outp, &type);
-	if (proto == UNKNOWN)
-		return -ENOSYS;
+	अगर (proto == UNKNOWN)
+		वापस -ENOSYS;
 
 	/* Deal with panels requiring identity-mapped SOR assignment. */
-	if (outp->identity) {
+	अगर (outp->identity) अणु
 		ior = nvkm_ior_find(outp->disp, SOR, ffs(outp->info.or) - 1);
-		if (WARN_ON(!ior))
-			return -ENOSPC;
-		return nvkm_outp_acquire_ior(outp, user, ior);
-	}
+		अगर (WARN_ON(!ior))
+			वापस -ENOSPC;
+		वापस nvkm_outp_acquire_ior(outp, user, ior);
+	पूर्ण
 
 	/* First preference is to reuse the OR that is currently armed
-	 * on HW, if any, in order to prevent unnecessary switching.
+	 * on HW, अगर any, in order to prevent unnecessary चयनing.
 	 */
-	list_for_each_entry(ior, &outp->disp->ior, head) {
-		if (!ior->identity && !ior->asy.outp && ior->arm.outp == outp) {
-			/*XXX: For various complicated reasons, we can't outright switch
-			 *     the boot-time OR on the first modeset without some fairly
+	list_क्रम_each_entry(ior, &outp->disp->ior, head) अणु
+		अगर (!ior->identity && !ior->asy.outp && ior->arm.outp == outp) अणु
+			/*XXX: For various complicated reasons, we can't outright चयन
+			 *     the boot-समय OR on the first modeset without some fairly
 			 *     invasive changes.
 			 *
-			 *     The systems that were fixed by modifying the OR selection
-			 *     code to account for HDA support shouldn't regress here as
+			 *     The प्रणालीs that were fixed by modअगरying the OR selection
+			 *     code to account क्रम HDA support shouldn't regress here as
 			 *     the HDA-enabled ORs match the relevant output's pad macro
 			 *     index, and the firmware seems to select an OR this way.
 			 *
-			 *     This warning is to make it obvious if that proves wrong.
+			 *     This warning is to make it obvious अगर that proves wrong.
 			 */
 			WARN_ON(hda && !ior->func->hda.hpd);
-			return nvkm_outp_acquire_ior(outp, user, ior);
-		}
-	}
+			वापस nvkm_outp_acquire_ior(outp, user, ior);
+		पूर्ण
+	पूर्ण
 
-	/* If we don't need HDA, first try to acquire an OR that doesn't
-	 * support it to leave free the ones that do.
+	/* If we करोn't need HDA, first try to acquire an OR that doesn't
+	 * support it to leave मुक्त the ones that करो.
 	 */
-	if (!hda) {
-		if (!nvkm_outp_acquire_hda(outp, type, user, false))
-			return 0;
+	अगर (!hda) अणु
+		अगर (!nvkm_outp_acquire_hda(outp, type, user, false))
+			वापस 0;
 
 		/* Use a HDA-supporting SOR anyway. */
-		return nvkm_outp_acquire_hda(outp, type, user, true);
-	}
+		वापस nvkm_outp_acquire_hda(outp, type, user, true);
+	पूर्ण
 
 	/* We want HDA, try to acquire an OR that supports it. */
-	if (!nvkm_outp_acquire_hda(outp, type, user, true))
-		return 0;
+	अगर (!nvkm_outp_acquire_hda(outp, type, user, true))
+		वापस 0;
 
-	/* There weren't any free ORs that support HDA, grab one that
-	 * doesn't and at least allow display to work still.
+	/* There weren't any मुक्त ORs that support HDA, grab one that
+	 * करोesn't and at least allow display to work still.
 	 */
-	return nvkm_outp_acquire_hda(outp, type, user, false);
-}
+	वापस nvkm_outp_acquire_hda(outp, type, user, false);
+पूर्ण
 
-void
-nvkm_outp_fini(struct nvkm_outp *outp)
-{
-	if (outp->func->fini)
+व्योम
+nvkm_outp_fini(काष्ठा nvkm_outp *outp)
+अणु
+	अगर (outp->func->fini)
 		outp->func->fini(outp);
-}
+पूर्ण
 
-static void
-nvkm_outp_init_route(struct nvkm_outp *outp)
-{
-	struct nvkm_disp *disp = outp->disp;
-	enum nvkm_ior_proto proto;
-	enum nvkm_ior_type type;
-	struct nvkm_ior *ior;
-	int id, link;
+अटल व्योम
+nvkm_outp_init_route(काष्ठा nvkm_outp *outp)
+अणु
+	काष्ठा nvkm_disp *disp = outp->disp;
+	क्रमागत nvkm_ior_proto proto;
+	क्रमागत nvkm_ior_type type;
+	काष्ठा nvkm_ior *ior;
+	पूर्णांक id, link;
 
 	/* Find any OR from the class that is able to support this device. */
 	proto = nvkm_outp_xlat(outp, &type);
-	if (proto == UNKNOWN)
-		return;
+	अगर (proto == UNKNOWN)
+		वापस;
 
 	ior = nvkm_ior_find(disp, type, -1);
-	if (!ior) {
+	अगर (!ior) अणु
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Determine the specific OR, if any, this device is attached to. */
-	if (ior->func->route.get) {
+	/* Determine the specअगरic OR, अगर any, this device is attached to. */
+	अगर (ior->func->route.get) अणु
 		id = ior->func->route.get(outp, &link);
-		if (id < 0) {
+		अगर (id < 0) अणु
 			OUTP_DBG(outp, "no route");
-			return;
-		}
-	} else {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Prior to DCB 4.1, this is hardwired like so. */
 		id   = ffs(outp->info.or) - 1;
 		link = (ior->type == SOR) ? outp->info.sorconf.link : 0;
-	}
+	पूर्ण
 
 	ior = nvkm_ior_find(disp, type, id);
-	if (!ior) {
+	अगर (!ior) अणु
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Determine if the OR is already configured for this device. */
+	/* Determine अगर the OR is alपढ़ोy configured क्रम this device. */
 	ior->func->state(ior, &ior->arm);
-	if (!ior->arm.head || ior->arm.proto != proto) {
+	अगर (!ior->arm.head || ior->arm.proto != proto) अणु
 		OUTP_DBG(outp, "no heads (%x %d %d)", ior->arm.head,
 			 ior->arm.proto, proto);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	OUTP_DBG(outp, "on %s link %x", ior->name, ior->arm.link);
 	ior->arm.outp = outp;
-}
+पूर्ण
 
-void
-nvkm_outp_init(struct nvkm_outp *outp)
-{
+व्योम
+nvkm_outp_init(काष्ठा nvkm_outp *outp)
+अणु
 	nvkm_outp_init_route(outp);
-	if (outp->func->init)
+	अगर (outp->func->init)
 		outp->func->init(outp);
-}
+पूर्ण
 
-void
-nvkm_outp_del(struct nvkm_outp **poutp)
-{
-	struct nvkm_outp *outp = *poutp;
-	if (outp && !WARN_ON(!outp->func)) {
-		if (outp->func->dtor)
+व्योम
+nvkm_outp_del(काष्ठा nvkm_outp **poutp)
+अणु
+	काष्ठा nvkm_outp *outp = *poutp;
+	अगर (outp && !WARN_ON(!outp->func)) अणु
+		अगर (outp->func->dtor)
 			*poutp = outp->func->dtor(outp);
-		kfree(*poutp);
-		*poutp = NULL;
-	}
-}
+		kमुक्त(*poutp);
+		*poutp = शून्य;
+	पूर्ण
+पूर्ण
 
-int
-nvkm_outp_ctor(const struct nvkm_outp_func *func, struct nvkm_disp *disp,
-	       int index, struct dcb_output *dcbE, struct nvkm_outp *outp)
-{
-	struct nvkm_i2c *i2c = disp->engine.subdev.device->i2c;
-	enum nvkm_ior_proto proto;
-	enum nvkm_ior_type type;
+पूर्णांक
+nvkm_outp_ctor(स्थिर काष्ठा nvkm_outp_func *func, काष्ठा nvkm_disp *disp,
+	       पूर्णांक index, काष्ठा dcb_output *dcbE, काष्ठा nvkm_outp *outp)
+अणु
+	काष्ठा nvkm_i2c *i2c = disp->engine.subdev.device->i2c;
+	क्रमागत nvkm_ior_proto proto;
+	क्रमागत nvkm_ior_type type;
 
 	outp->func = func;
 	outp->disp = disp;
@@ -307,21 +308,21 @@ nvkm_outp_ctor(const struct nvkm_outp_func *func, struct nvkm_disp *disp,
 
 	/* Cull output paths we can't map to an output resource. */
 	proto = nvkm_outp_xlat(outp, &type);
-	if (proto == UNKNOWN)
-		return -ENODEV;
+	अगर (proto == UNKNOWN)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_outp_func
-nvkm_outp = {
-};
+अटल स्थिर काष्ठा nvkm_outp_func
+nvkm_outp = अणु
+पूर्ण;
 
-int
-nvkm_outp_new(struct nvkm_disp *disp, int index, struct dcb_output *dcbE,
-	      struct nvkm_outp **poutp)
-{
-	if (!(*poutp = kzalloc(sizeof(**poutp), GFP_KERNEL)))
-		return -ENOMEM;
-	return nvkm_outp_ctor(&nvkm_outp, disp, index, dcbE, *poutp);
-}
+पूर्णांक
+nvkm_outp_new(काष्ठा nvkm_disp *disp, पूर्णांक index, काष्ठा dcb_output *dcbE,
+	      काष्ठा nvkm_outp **poutp)
+अणु
+	अगर (!(*poutp = kzalloc(माप(**poutp), GFP_KERNEL)))
+		वापस -ENOMEM;
+	वापस nvkm_outp_ctor(&nvkm_outp, disp, index, dcbE, *poutp);
+पूर्ण

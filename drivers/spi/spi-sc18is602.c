@@ -1,264 +1,265 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * NXP SC18IS602/603 SPI driver
  *
  * Copyright (C) Guenter Roeck <linux@roeck-us.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/spi/spi.h>
-#include <linux/i2c.h>
-#include <linux/delay.h>
-#include <linux/pm_runtime.h>
-#include <linux/of_device.h>
-#include <linux/of.h>
-#include <linux/platform_data/sc18is602.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_data/sc18is602.h>
+#समावेश <linux/gpio/consumer.h>
 
-enum chips { sc18is602, sc18is602b, sc18is603 };
+क्रमागत chips अणु sc18is602, sc18is602b, sc18is603 पूर्ण;
 
-#define SC18IS602_BUFSIZ		200
-#define SC18IS602_CLOCK			7372000
+#घोषणा SC18IS602_बफ_मान		200
+#घोषणा SC18IS602_CLOCK			7372000
 
-#define SC18IS602_MODE_CPHA		BIT(2)
-#define SC18IS602_MODE_CPOL		BIT(3)
-#define SC18IS602_MODE_LSB_FIRST	BIT(5)
-#define SC18IS602_MODE_CLOCK_DIV_4	0x0
-#define SC18IS602_MODE_CLOCK_DIV_16	0x1
-#define SC18IS602_MODE_CLOCK_DIV_64	0x2
-#define SC18IS602_MODE_CLOCK_DIV_128	0x3
+#घोषणा SC18IS602_MODE_CPHA		BIT(2)
+#घोषणा SC18IS602_MODE_CPOL		BIT(3)
+#घोषणा SC18IS602_MODE_LSB_FIRST	BIT(5)
+#घोषणा SC18IS602_MODE_CLOCK_DIV_4	0x0
+#घोषणा SC18IS602_MODE_CLOCK_DIV_16	0x1
+#घोषणा SC18IS602_MODE_CLOCK_DIV_64	0x2
+#घोषणा SC18IS602_MODE_CLOCK_DIV_128	0x3
 
-struct sc18is602 {
-	struct spi_master	*master;
-	struct device		*dev;
+काष्ठा sc18is602 अणु
+	काष्ठा spi_master	*master;
+	काष्ठा device		*dev;
 	u8			ctrl;
 	u32			freq;
 	u32			speed;
 
 	/* I2C data */
-	struct i2c_client	*client;
-	enum chips		id;
-	u8			buffer[SC18IS602_BUFSIZ + 1];
-	int			tlen;	/* Data queued for tx in buffer */
-	int			rindex;	/* Receive data index in buffer */
+	काष्ठा i2c_client	*client;
+	क्रमागत chips		id;
+	u8			buffer[SC18IS602_बफ_मान + 1];
+	पूर्णांक			tlen;	/* Data queued क्रम tx in buffer */
+	पूर्णांक			rindex;	/* Receive data index in buffer */
 
-	struct gpio_desc	*reset;
-};
+	काष्ठा gpio_desc	*reset;
+पूर्ण;
 
-static int sc18is602_wait_ready(struct sc18is602 *hw, int len)
-{
-	int i, err;
-	int usecs = 1000000 * len / hw->speed + 1;
+अटल पूर्णांक sc18is602_रुको_पढ़ोy(काष्ठा sc18is602 *hw, पूर्णांक len)
+अणु
+	पूर्णांक i, err;
+	पूर्णांक usecs = 1000000 * len / hw->speed + 1;
 	u8 dummy[1];
 
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 		err = i2c_master_recv(hw->client, dummy, 1);
-		if (err >= 0)
-			return 0;
+		अगर (err >= 0)
+			वापस 0;
 		usleep_range(usecs, usecs * 2);
-	}
-	return -ETIMEDOUT;
-}
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int sc18is602_txrx(struct sc18is602 *hw, struct spi_message *msg,
-			  struct spi_transfer *t, bool do_transfer)
-{
-	unsigned int len = t->len;
-	int ret;
+अटल पूर्णांक sc18is602_txrx(काष्ठा sc18is602 *hw, काष्ठा spi_message *msg,
+			  काष्ठा spi_transfer *t, bool करो_transfer)
+अणु
+	अचिन्हित पूर्णांक len = t->len;
+	पूर्णांक ret;
 
-	if (hw->tlen == 0) {
+	अगर (hw->tlen == 0) अणु
 		/* First byte (I2C command) is chip select */
 		hw->buffer[0] = 1 << msg->spi->chip_select;
 		hw->tlen = 1;
 		hw->rindex = 0;
-	}
+	पूर्ण
 	/*
 	 * We can not immediately send data to the chip, since each I2C message
 	 * resembles a full SPI message (from CS active to CS inactive).
-	 * Enqueue messages up to the first read or until do_transfer is true.
+	 * Enqueue messages up to the first पढ़ो or until करो_transfer is true.
 	 */
-	if (t->tx_buf) {
-		memcpy(&hw->buffer[hw->tlen], t->tx_buf, len);
+	अगर (t->tx_buf) अणु
+		स_नकल(&hw->buffer[hw->tlen], t->tx_buf, len);
 		hw->tlen += len;
-		if (t->rx_buf)
-			do_transfer = true;
-		else
+		अगर (t->rx_buf)
+			करो_transfer = true;
+		अन्यथा
 			hw->rindex = hw->tlen - 1;
-	} else if (t->rx_buf) {
+	पूर्ण अन्यथा अगर (t->rx_buf) अणु
 		/*
-		 * For receive-only transfers we still need to perform a dummy
-		 * write to receive data from the SPI chip.
+		 * For receive-only transfers we still need to perक्रमm a dummy
+		 * ग_लिखो to receive data from the SPI chip.
 		 * Read data starts at the end of transmit data (minus 1 to
-		 * account for CS).
+		 * account क्रम CS).
 		 */
 		hw->rindex = hw->tlen - 1;
-		memset(&hw->buffer[hw->tlen], 0, len);
+		स_रखो(&hw->buffer[hw->tlen], 0, len);
 		hw->tlen += len;
-		do_transfer = true;
-	}
+		करो_transfer = true;
+	पूर्ण
 
-	if (do_transfer && hw->tlen > 1) {
-		ret = sc18is602_wait_ready(hw, SC18IS602_BUFSIZ);
-		if (ret < 0)
-			return ret;
+	अगर (करो_transfer && hw->tlen > 1) अणु
+		ret = sc18is602_रुको_पढ़ोy(hw, SC18IS602_बफ_मान);
+		अगर (ret < 0)
+			वापस ret;
 		ret = i2c_master_send(hw->client, hw->buffer, hw->tlen);
-		if (ret < 0)
-			return ret;
-		if (ret != hw->tlen)
-			return -EIO;
+		अगर (ret < 0)
+			वापस ret;
+		अगर (ret != hw->tlen)
+			वापस -EIO;
 
-		if (t->rx_buf) {
-			int rlen = hw->rindex + len;
+		अगर (t->rx_buf) अणु
+			पूर्णांक rlen = hw->rindex + len;
 
-			ret = sc18is602_wait_ready(hw, hw->tlen);
-			if (ret < 0)
-				return ret;
+			ret = sc18is602_रुको_पढ़ोy(hw, hw->tlen);
+			अगर (ret < 0)
+				वापस ret;
 			ret = i2c_master_recv(hw->client, hw->buffer, rlen);
-			if (ret < 0)
-				return ret;
-			if (ret != rlen)
-				return -EIO;
-			memcpy(t->rx_buf, &hw->buffer[hw->rindex], len);
-		}
+			अगर (ret < 0)
+				वापस ret;
+			अगर (ret != rlen)
+				वापस -EIO;
+			स_नकल(t->rx_buf, &hw->buffer[hw->rindex], len);
+		पूर्ण
 		hw->tlen = 0;
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static int sc18is602_setup_transfer(struct sc18is602 *hw, u32 hz, u8 mode)
-{
+अटल पूर्णांक sc18is602_setup_transfer(काष्ठा sc18is602 *hw, u32 hz, u8 mode)
+अणु
 	u8 ctrl = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (mode & SPI_CPHA)
+	अगर (mode & SPI_CPHA)
 		ctrl |= SC18IS602_MODE_CPHA;
-	if (mode & SPI_CPOL)
+	अगर (mode & SPI_CPOL)
 		ctrl |= SC18IS602_MODE_CPOL;
-	if (mode & SPI_LSB_FIRST)
+	अगर (mode & SPI_LSB_FIRST)
 		ctrl |= SC18IS602_MODE_LSB_FIRST;
 
-	/* Find the closest clock speed */
-	if (hz >= hw->freq / 4) {
+	/* Find the बंदst घड़ी speed */
+	अगर (hz >= hw->freq / 4) अणु
 		ctrl |= SC18IS602_MODE_CLOCK_DIV_4;
 		hw->speed = hw->freq / 4;
-	} else if (hz >= hw->freq / 16) {
+	पूर्ण अन्यथा अगर (hz >= hw->freq / 16) अणु
 		ctrl |= SC18IS602_MODE_CLOCK_DIV_16;
 		hw->speed = hw->freq / 16;
-	} else if (hz >= hw->freq / 64) {
+	पूर्ण अन्यथा अगर (hz >= hw->freq / 64) अणु
 		ctrl |= SC18IS602_MODE_CLOCK_DIV_64;
 		hw->speed = hw->freq / 64;
-	} else {
+	पूर्ण अन्यथा अणु
 		ctrl |= SC18IS602_MODE_CLOCK_DIV_128;
 		hw->speed = hw->freq / 128;
-	}
+	पूर्ण
 
 	/*
-	 * Don't do anything if the control value did not change. The initial
-	 * value of 0xff for hw->ctrl ensures that the correct mode will be set
+	 * Don't करो anything अगर the control value did not change. The initial
+	 * value of 0xff क्रम hw->ctrl ensures that the correct mode will be set
 	 * with the first call to this function.
 	 */
-	if (ctrl == hw->ctrl)
-		return 0;
+	अगर (ctrl == hw->ctrl)
+		वापस 0;
 
-	ret = i2c_smbus_write_byte_data(hw->client, 0xf0, ctrl);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_ग_लिखो_byte_data(hw->client, 0xf0, ctrl);
+	अगर (ret < 0)
+		वापस ret;
 
 	hw->ctrl = ctrl;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sc18is602_check_transfer(struct spi_device *spi,
-				    struct spi_transfer *t, int tlen)
-{
-	if (t && t->len + tlen > SC18IS602_BUFSIZ + 1)
-		return -EINVAL;
+अटल पूर्णांक sc18is602_check_transfer(काष्ठा spi_device *spi,
+				    काष्ठा spi_transfer *t, पूर्णांक tlen)
+अणु
+	अगर (t && t->len + tlen > SC18IS602_बफ_मान + 1)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sc18is602_transfer_one(struct spi_master *master,
-				  struct spi_message *m)
-{
-	struct sc18is602 *hw = spi_master_get_devdata(master);
-	struct spi_device *spi = m->spi;
-	struct spi_transfer *t;
-	int status = 0;
+अटल पूर्णांक sc18is602_transfer_one(काष्ठा spi_master *master,
+				  काष्ठा spi_message *m)
+अणु
+	काष्ठा sc18is602 *hw = spi_master_get_devdata(master);
+	काष्ठा spi_device *spi = m->spi;
+	काष्ठा spi_transfer *t;
+	पूर्णांक status = 0;
 
 	hw->tlen = 0;
-	list_for_each_entry(t, &m->transfers, transfer_list) {
-		bool do_transfer;
+	list_क्रम_each_entry(t, &m->transfers, transfer_list) अणु
+		bool करो_transfer;
 
 		status = sc18is602_check_transfer(spi, t, hw->tlen);
-		if (status < 0)
-			break;
+		अगर (status < 0)
+			अवरोध;
 
 		status = sc18is602_setup_transfer(hw, t->speed_hz, spi->mode);
-		if (status < 0)
-			break;
+		अगर (status < 0)
+			अवरोध;
 
-		do_transfer = t->cs_change || list_is_last(&t->transfer_list,
+		करो_transfer = t->cs_change || list_is_last(&t->transfer_list,
 							   &m->transfers);
 
-		if (t->len) {
-			status = sc18is602_txrx(hw, m, t, do_transfer);
-			if (status < 0)
-				break;
+		अगर (t->len) अणु
+			status = sc18is602_txrx(hw, m, t, करो_transfer);
+			अगर (status < 0)
+				अवरोध;
 			m->actual_length += status;
-		}
+		पूर्ण
 		status = 0;
 
 		spi_transfer_delay_exec(t);
-	}
+	पूर्ण
 	m->status = status;
 	spi_finalize_current_message(master);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static size_t sc18is602_max_transfer_size(struct spi_device *spi)
-{
-	return SC18IS602_BUFSIZ;
-}
+अटल माप_प्रकार sc18is602_max_transfer_size(काष्ठा spi_device *spi)
+अणु
+	वापस SC18IS602_बफ_मान;
+पूर्ण
 
-static int sc18is602_setup(struct spi_device *spi)
-{
-	struct sc18is602 *hw = spi_master_get_devdata(spi->master);
+अटल पूर्णांक sc18is602_setup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा sc18is602 *hw = spi_master_get_devdata(spi->master);
 
-	/* SC18IS602 does not support CS2 */
-	if (hw->id == sc18is602 && spi->chip_select == 2)
-		return -ENXIO;
+	/* SC18IS602 करोes not support CS2 */
+	अगर (hw->id == sc18is602 && spi->chip_select == 2)
+		वापस -ENXIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sc18is602_probe(struct i2c_client *client,
-			   const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct device_node *np = dev->of_node;
-	struct sc18is602_platform_data *pdata = dev_get_platdata(dev);
-	struct sc18is602 *hw;
-	struct spi_master *master;
+अटल पूर्णांक sc18is602_probe(काष्ठा i2c_client *client,
+			   स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा sc18is602_platक्रमm_data *pdata = dev_get_platdata(dev);
+	काष्ठा sc18is602 *hw;
+	काष्ठा spi_master *master;
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
 				     I2C_FUNC_SMBUS_WRITE_BYTE_DATA))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	master = devm_spi_alloc_master(dev, sizeof(struct sc18is602));
-	if (!master)
-		return -ENOMEM;
+	master = devm_spi_alloc_master(dev, माप(काष्ठा sc18is602));
+	अगर (!master)
+		वापस -ENOMEM;
 
 	hw = spi_master_get_devdata(master);
 	i2c_set_clientdata(client, hw);
 
-	/* assert reset and then release */
+	/* निश्चित reset and then release */
 	hw->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(hw->reset))
-		return PTR_ERR(hw->reset);
+	अगर (IS_ERR(hw->reset))
+		वापस PTR_ERR(hw->reset);
 	gpiod_set_value_cansleep(hw->reset, 0);
 
 	hw->master = master;
@@ -266,33 +267,33 @@ static int sc18is602_probe(struct i2c_client *client,
 	hw->dev = dev;
 	hw->ctrl = 0xff;
 
-	if (client->dev.of_node)
-		hw->id = (enum chips)of_device_get_match_data(&client->dev);
-	else
+	अगर (client->dev.of_node)
+		hw->id = (क्रमागत chips)of_device_get_match_data(&client->dev);
+	अन्यथा
 		hw->id = id->driver_data;
 
-	switch (hw->id) {
-	case sc18is602:
-	case sc18is602b:
+	चयन (hw->id) अणु
+	हाल sc18is602:
+	हाल sc18is602b:
 		master->num_chipselect = 4;
 		hw->freq = SC18IS602_CLOCK;
-		break;
-	case sc18is603:
+		अवरोध;
+	हाल sc18is603:
 		master->num_chipselect = 2;
-		if (pdata) {
-			hw->freq = pdata->clock_frequency;
-		} else {
-			const __be32 *val;
-			int len;
+		अगर (pdata) अणु
+			hw->freq = pdata->घड़ी_frequency;
+		पूर्ण अन्यथा अणु
+			स्थिर __be32 *val;
+			पूर्णांक len;
 
 			val = of_get_property(np, "clock-frequency", &len);
-			if (val && len >= sizeof(__be32))
+			अगर (val && len >= माप(__be32))
 				hw->freq = be32_to_cpup(val);
-		}
-		if (!hw->freq)
+		पूर्ण
+		अगर (!hw->freq)
 			hw->freq = SC18IS602_CLOCK;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	master->bus_num = np ? -1 : client->adapter->nr;
 	master->mode_bits = SPI_CPHA | SPI_CPOL | SPI_LSB_FIRST;
 	master->bits_per_word_mask = SPI_BPW_MASK(8);
@@ -304,42 +305,42 @@ static int sc18is602_probe(struct i2c_client *client,
 	master->min_speed_hz = hw->freq / 128;
 	master->max_speed_hz = hw->freq / 4;
 
-	return devm_spi_register_master(dev, master);
-}
+	वापस devm_spi_रेजिस्टर_master(dev, master);
+पूर्ण
 
-static const struct i2c_device_id sc18is602_id[] = {
-	{ "sc18is602", sc18is602 },
-	{ "sc18is602b", sc18is602b },
-	{ "sc18is603", sc18is603 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id sc18is602_id[] = अणु
+	अणु "sc18is602", sc18is602 पूर्ण,
+	अणु "sc18is602b", sc18is602b पूर्ण,
+	अणु "sc18is603", sc18is603 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, sc18is602_id);
 
-static const struct of_device_id sc18is602_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sc18is602_of_match[] = अणु
+	अणु
 		.compatible = "nxp,sc18is602",
-		.data = (void *)sc18is602
-	},
-	{
+		.data = (व्योम *)sc18is602
+	पूर्ण,
+	अणु
 		.compatible = "nxp,sc18is602b",
-		.data = (void *)sc18is602b
-	},
-	{
+		.data = (व्योम *)sc18is602b
+	पूर्ण,
+	अणु
 		.compatible = "nxp,sc18is603",
-		.data = (void *)sc18is603
-	},
-	{ },
-};
+		.data = (व्योम *)sc18is603
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sc18is602_of_match);
 
-static struct i2c_driver sc18is602_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver sc18is602_driver = अणु
+	.driver = अणु
 		.name = "sc18is602",
 		.of_match_table = of_match_ptr(sc18is602_of_match),
-	},
+	पूर्ण,
 	.probe = sc18is602_probe,
 	.id_table = sc18is602_id,
-};
+पूर्ण;
 
 module_i2c_driver(sc18is602_driver);
 

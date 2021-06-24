@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * card driver for models with PCM1796 DACs (Xonar D2/D2X/HDAV1.3/ST/STX)
+ * card driver क्रम models with PCM1796 DACs (Xonar D2/D2X/HDAV1.3/ST/STX)
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
@@ -18,7 +19,7 @@
  *
  *   GPIO 2 -> M0 of CS5381
  *   GPIO 3 -> M1 of CS5381
- *   GPIO 5 <- external power present (D2X only)
+ *   GPIO 5 <- बाह्यal घातer present (D2X only)
  *   GPIO 7 -> ALT
  *   GPIO 8 -> enable output to speakers
  *
@@ -39,9 +40,9 @@
  *
  * CMI8788:
  *
- *   I²C <-> PCM1796 (addr 1001100) (front)
+ *   IतऑC <-> PCM1796 (addr 1001100) (front)
  *
- *   GPI 0 <- external power present
+ *   GPI 0 <- बाह्यal घातer present
  *
  *   GPIO 0 -> enable HDMI (0) or speaker (1) output
  *   GPIO 2 -> M0 of CS5381
@@ -75,7 +76,7 @@
  *   GPIO 4 <- 0
  *   GPIO 5 <- 0
  *
- *   I²C <-> PCM1796 (addr 1001101) (surround)
+ *   IतऑC <-> PCM1796 (addr 1001101) (surround)
  *       <-> PCM1796 (addr 1001110) (center/LFE)
  *       <-> PCM1796 (addr 1001111) (back)
  *
@@ -85,7 +86,7 @@
  *   GPIO 4 <- 0
  *   GPIO 5 <- 1
  *
- *   I²C <-> CS4362A (addr 0011000) (surround, center/LFE, back)
+ *   IतऑC <-> CS4362A (addr 0011000) (surround, center/LFE, back)
  */
 
 /*
@@ -94,12 +95,12 @@
  *
  * CMI8788:
  *
- *   I²C <-> PCM1792A (addr 1001100)
+ *   IतऑC <-> PCM1792A (addr 1001100)
  *       <-> CS2000 (addr 1001110) (ST only)
  *
  *   ADC1 MCLK -> REF_CLK of CS2000 (ST only)
  *
- *   GPI 0 <- external power present (STX only)
+ *   GPI 0 <- बाह्यal घातer present (STX only)
  *
  *   GPIO 0 -> enable output to speakers
  *   GPIO 1 -> route HP to front panel (0) or rear jack (1)
@@ -137,13 +138,13 @@
  *
  * CMI8788:
  *
- *   I²C <-> PCM1796 (addr 1001100) (front)
+ *   IतऑC <-> PCM1796 (addr 1001100) (front)
  *       <-> CS4362A (addr 0011000) (surround, center/LFE, back)
  *       <-> CS2000 (addr 1001110)
  *
  *   ADC1 MCLK -> REF_CLK of CS2000
  *
- *   GPI 0 <- external power present
+ *   GPI 0 <- बाह्यal घातer present
  *
  *   GPIO 0 -> enable output
  *   GPIO 1 -> route HP to front panel (0) or rear jack (1)
@@ -167,173 +168,173 @@
  *   GPO 1 -> route mic-in from input jack (0) or front panel header (1)
  */
 
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/mutex.h>
-#include <sound/ac97_codec.h>
-#include <sound/control.h>
-#include <sound/core.h>
-#include <sound/info.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/tlv.h>
-#include "xonar.h"
-#include "cm9780.h"
-#include "pcm1796.h"
-#include "cs2000.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mutex.h>
+#समावेश <sound/ac97_codec.h>
+#समावेश <sound/control.h>
+#समावेश <sound/core.h>
+#समावेश <sound/info.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/tlv.h>
+#समावेश "xonar.h"
+#समावेश "cm9780.h"
+#समावेश "pcm1796.h"
+#समावेश "cs2000.h"
 
 
-#define GPIO_D2X_EXT_POWER	0x0020
-#define GPIO_D2_ALT		0x0080
-#define GPIO_D2_OUTPUT_ENABLE	0x0100
+#घोषणा GPIO_D2X_EXT_POWER	0x0020
+#घोषणा GPIO_D2_ALT		0x0080
+#घोषणा GPIO_D2_OUTPUT_ENABLE	0x0100
 
-#define GPI_EXT_POWER		0x01
-#define GPIO_INPUT_ROUTE	0x0100
+#घोषणा GPI_EXT_POWER		0x01
+#घोषणा GPIO_INPUT_ROUTE	0x0100
 
-#define GPIO_HDAV_OUTPUT_ENABLE	0x0001
-#define GPIO_HDAV_MAGIC		0x00c0
+#घोषणा GPIO_HDAV_OUTPUT_ENABLE	0x0001
+#घोषणा GPIO_HDAV_MAGIC		0x00c0
 
-#define GPIO_DB_MASK		0x0030
-#define GPIO_DB_H6		0x0000
+#घोषणा GPIO_DB_MASK		0x0030
+#घोषणा GPIO_DB_H6		0x0000
 
-#define GPIO_ST_OUTPUT_ENABLE	0x0001
-#define GPIO_ST_HP_REAR		0x0002
-#define GPIO_ST_MAGIC		0x0040
-#define GPIO_ST_HP		0x0080
+#घोषणा GPIO_ST_OUTPUT_ENABLE	0x0001
+#घोषणा GPIO_ST_HP_REAR		0x0002
+#घोषणा GPIO_ST_MAGIC		0x0040
+#घोषणा GPIO_ST_HP		0x0080
 
-#define GPIO_XENSE_OUTPUT_ENABLE	(0x0001 | 0x0010 | 0x0020)
-#define GPIO_XENSE_SPEAKERS		0x0080
+#घोषणा GPIO_XENSE_OUTPUT_ENABLE	(0x0001 | 0x0010 | 0x0020)
+#घोषणा GPIO_XENSE_SPEAKERS		0x0080
 
-#define I2C_DEVICE_PCM1796(i)	(0x98 + ((i) << 1))	/* 10011, ii, /W=0 */
-#define I2C_DEVICE_CS2000	0x9c			/* 100111, 0, /W=0 */
+#घोषणा I2C_DEVICE_PCM1796(i)	(0x98 + ((i) << 1))	/* 10011, ii, /W=0 */
+#घोषणा I2C_DEVICE_CS2000	0x9c			/* 100111, 0, /W=0 */
 
-#define PCM1796_REG_BASE	16
+#घोषणा PCM1796_REG_BASE	16
 
 
-struct xonar_pcm179x {
-	struct xonar_generic generic;
-	unsigned int dacs;
+काष्ठा xonar_pcm179x अणु
+	काष्ठा xonar_generic generic;
+	अचिन्हित पूर्णांक dacs;
 	u8 pcm1796_regs[4][5];
-	unsigned int current_rate;
+	अचिन्हित पूर्णांक current_rate;
 	bool h6;
 	bool hp_active;
 	s8 hp_gain_offset;
 	bool has_cs2000;
 	u8 cs2000_regs[0x1f];
 	bool broken_i2c;
-};
+पूर्ण;
 
-struct xonar_hdav {
-	struct xonar_pcm179x pcm179x;
-	struct xonar_hdmi hdmi;
-};
+काष्ठा xonar_hdav अणु
+	काष्ठा xonar_pcm179x pcm179x;
+	काष्ठा xonar_hdmi hdmi;
+पूर्ण;
 
 
-static inline void pcm1796_write_spi(struct oxygen *chip, unsigned int codec,
+अटल अंतरभूत व्योम pcm1796_ग_लिखो_spi(काष्ठा oxygen *chip, अचिन्हित पूर्णांक codec,
 				     u8 reg, u8 value)
-{
+अणु
 	/* maps ALSA channel pair number to SPI output */
-	static const u8 codec_map[4] = {
+	अटल स्थिर u8 codec_map[4] = अणु
 		0, 1, 2, 4
-	};
-	oxygen_write_spi(chip, OXYGEN_SPI_TRIGGER  |
+	पूर्ण;
+	oxygen_ग_लिखो_spi(chip, OXYGEN_SPI_TRIGGER  |
 			 OXYGEN_SPI_DATA_LENGTH_2 |
 			 OXYGEN_SPI_CLOCK_160 |
 			 (codec_map[codec] << OXYGEN_SPI_CODEC_SHIFT) |
 			 OXYGEN_SPI_CEN_LATCH_CLOCK_HI,
 			 (reg << 8) | value);
-}
+पूर्ण
 
-static inline void pcm1796_write_i2c(struct oxygen *chip, unsigned int codec,
+अटल अंतरभूत व्योम pcm1796_ग_लिखो_i2c(काष्ठा oxygen *chip, अचिन्हित पूर्णांक codec,
 				     u8 reg, u8 value)
-{
-	oxygen_write_i2c(chip, I2C_DEVICE_PCM1796(codec), reg, value);
-}
+अणु
+	oxygen_ग_लिखो_i2c(chip, I2C_DEVICE_PCM1796(codec), reg, value);
+पूर्ण
 
-static void pcm1796_write(struct oxygen *chip, unsigned int codec,
+अटल व्योम pcm1796_ग_लिखो(काष्ठा oxygen *chip, अचिन्हित पूर्णांक codec,
 			  u8 reg, u8 value)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
-	if ((chip->model.function_flags & OXYGEN_FUNCTION_2WIRE_SPI_MASK) ==
+	अगर ((chip->model.function_flags & OXYGEN_FUNCTION_2WIRE_SPI_MASK) ==
 	    OXYGEN_FUNCTION_SPI)
-		pcm1796_write_spi(chip, codec, reg, value);
-	else
-		pcm1796_write_i2c(chip, codec, reg, value);
-	if ((unsigned int)(reg - PCM1796_REG_BASE)
+		pcm1796_ग_लिखो_spi(chip, codec, reg, value);
+	अन्यथा
+		pcm1796_ग_लिखो_i2c(chip, codec, reg, value);
+	अगर ((अचिन्हित पूर्णांक)(reg - PCM1796_REG_BASE)
 	    < ARRAY_SIZE(data->pcm1796_regs[codec]))
 		data->pcm1796_regs[codec][reg - PCM1796_REG_BASE] = value;
-}
+पूर्ण
 
-static void pcm1796_write_cached(struct oxygen *chip, unsigned int codec,
+अटल व्योम pcm1796_ग_लिखो_cached(काष्ठा oxygen *chip, अचिन्हित पूर्णांक codec,
 				 u8 reg, u8 value)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
-	if (value != data->pcm1796_regs[codec][reg - PCM1796_REG_BASE])
-		pcm1796_write(chip, codec, reg, value);
-}
+	अगर (value != data->pcm1796_regs[codec][reg - PCM1796_REG_BASE])
+		pcm1796_ग_लिखो(chip, codec, reg, value);
+पूर्ण
 
-static void cs2000_write(struct oxygen *chip, u8 reg, u8 value)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम cs2000_ग_लिखो(काष्ठा oxygen *chip, u8 reg, u8 value)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
-	oxygen_write_i2c(chip, I2C_DEVICE_CS2000, reg, value);
+	oxygen_ग_लिखो_i2c(chip, I2C_DEVICE_CS2000, reg, value);
 	data->cs2000_regs[reg] = value;
-}
+पूर्ण
 
-static void cs2000_write_cached(struct oxygen *chip, u8 reg, u8 value)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम cs2000_ग_लिखो_cached(काष्ठा oxygen *chip, u8 reg, u8 value)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
-	if (value != data->cs2000_regs[reg])
-		cs2000_write(chip, reg, value);
-}
+	अगर (value != data->cs2000_regs[reg])
+		cs2000_ग_लिखो(chip, reg, value);
+पूर्ण
 
-static void pcm1796_registers_init(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
-	unsigned int i;
+अटल व्योम pcm1796_रेजिस्टरs_init(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
+	अचिन्हित पूर्णांक i;
 	s8 gain_offset;
 
 	msleep(1);
 	gain_offset = data->hp_active ? data->hp_gain_offset : 0;
-	for (i = 0; i < data->dacs; ++i) {
-		/* set ATLD before ATL/ATR */
-		pcm1796_write(chip, i, 18,
+	क्रम (i = 0; i < data->dacs; ++i) अणु
+		/* set ATLD beक्रमe ATL/ATR */
+		pcm1796_ग_लिखो(chip, i, 18,
 			      data->pcm1796_regs[0][18 - PCM1796_REG_BASE]);
-		pcm1796_write(chip, i, 16, chip->dac_volume[i * 2]
+		pcm1796_ग_लिखो(chip, i, 16, chip->dac_volume[i * 2]
 			      + gain_offset);
-		pcm1796_write(chip, i, 17, chip->dac_volume[i * 2 + 1]
+		pcm1796_ग_लिखो(chip, i, 17, chip->dac_volume[i * 2 + 1]
 			      + gain_offset);
-		pcm1796_write(chip, i, 19,
+		pcm1796_ग_लिखो(chip, i, 19,
 			      data->pcm1796_regs[0][19 - PCM1796_REG_BASE]);
-		pcm1796_write(chip, i, 20,
+		pcm1796_ग_लिखो(chip, i, 20,
 			      data->pcm1796_regs[0][20 - PCM1796_REG_BASE]);
-		pcm1796_write(chip, i, 21, 0);
+		pcm1796_ग_लिखो(chip, i, 21, 0);
 		gain_offset = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pcm1796_init(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम pcm1796_init(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
 	data->pcm1796_regs[0][18 - PCM1796_REG_BASE] =
 		PCM1796_FMT_24_I2S | PCM1796_ATLD;
-	if (!data->broken_i2c)
+	अगर (!data->broken_i2c)
 		data->pcm1796_regs[0][18 - PCM1796_REG_BASE] |= PCM1796_MUTE;
 	data->pcm1796_regs[0][19 - PCM1796_REG_BASE] =
 		PCM1796_FLT_SHARP | PCM1796_ATS_1;
 	data->pcm1796_regs[0][20 - PCM1796_REG_BASE] =
 		data->h6 ? PCM1796_OS_64 : PCM1796_OS_128;
-	pcm1796_registers_init(chip);
+	pcm1796_रेजिस्टरs_init(chip);
 	data->current_rate = 48000;
-}
+पूर्ण
 
-static void xonar_d2_init(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम xonar_d2_init(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
 	data->generic.anti_pop_delay = 300;
 	data->generic.output_enable_bit = GPIO_D2_OUTPUT_ENABLE;
@@ -351,34 +352,34 @@ static void xonar_d2_init(struct oxygen *chip)
 
 	snd_component_add(chip->card, "PCM1796");
 	snd_component_add(chip->card, "CS5381");
-}
+पूर्ण
 
-static void xonar_d2x_init(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम xonar_d2x_init(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
-	data->generic.ext_power_reg = OXYGEN_GPIO_DATA;
-	data->generic.ext_power_int_reg = OXYGEN_GPIO_INTERRUPT_MASK;
-	data->generic.ext_power_bit = GPIO_D2X_EXT_POWER;
+	data->generic.ext_घातer_reg = OXYGEN_GPIO_DATA;
+	data->generic.ext_घातer_पूर्णांक_reg = OXYGEN_GPIO_INTERRUPT_MASK;
+	data->generic.ext_घातer_bit = GPIO_D2X_EXT_POWER;
 	oxygen_clear_bits16(chip, OXYGEN_GPIO_CONTROL, GPIO_D2X_EXT_POWER);
-	xonar_init_ext_power(chip);
+	xonar_init_ext_घातer(chip);
 	xonar_d2_init(chip);
-}
+पूर्ण
 
-static void xonar_hdav_init(struct oxygen *chip)
-{
-	struct xonar_hdav *data = chip->model_data;
+अटल व्योम xonar_hdav_init(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_hdav *data = chip->model_data;
 
-	oxygen_write16(chip, OXYGEN_2WIRE_BUS_STATUS,
+	oxygen_ग_लिखो16(chip, OXYGEN_2WIRE_BUS_STATUS,
 		       OXYGEN_2WIRE_LENGTH_8 |
 		       OXYGEN_2WIRE_INTERRUPT_MASK |
 		       OXYGEN_2WIRE_SPEED_STANDARD);
 
 	data->pcm179x.generic.anti_pop_delay = 100;
 	data->pcm179x.generic.output_enable_bit = GPIO_HDAV_OUTPUT_ENABLE;
-	data->pcm179x.generic.ext_power_reg = OXYGEN_GPI_DATA;
-	data->pcm179x.generic.ext_power_int_reg = OXYGEN_GPI_INTERRUPT_MASK;
-	data->pcm179x.generic.ext_power_bit = GPI_EXT_POWER;
+	data->pcm179x.generic.ext_घातer_reg = OXYGEN_GPI_DATA;
+	data->pcm179x.generic.ext_घातer_पूर्णांक_reg = OXYGEN_GPI_INTERRUPT_MASK;
+	data->pcm179x.generic.ext_घातer_bit = GPI_EXT_POWER;
 	data->pcm179x.dacs = chip->model.dac_channels_mixer / 2;
 	data->pcm179x.h6 = chip->model.dac_channels_mixer > 2;
 
@@ -389,25 +390,25 @@ static void xonar_hdav_init(struct oxygen *chip)
 	oxygen_clear_bits16(chip, OXYGEN_GPIO_DATA, GPIO_INPUT_ROUTE);
 
 	xonar_init_cs53x1(chip);
-	xonar_init_ext_power(chip);
+	xonar_init_ext_घातer(chip);
 	xonar_hdmi_init(chip, &data->hdmi);
 	xonar_enable_output(chip);
 
 	snd_component_add(chip->card, "PCM1796");
 	snd_component_add(chip->card, "CS5381");
-}
+पूर्ण
 
-static void xonar_st_init_i2c(struct oxygen *chip)
-{
-	oxygen_write16(chip, OXYGEN_2WIRE_BUS_STATUS,
+अटल व्योम xonar_st_init_i2c(काष्ठा oxygen *chip)
+अणु
+	oxygen_ग_लिखो16(chip, OXYGEN_2WIRE_BUS_STATUS,
 		       OXYGEN_2WIRE_LENGTH_8 |
 		       OXYGEN_2WIRE_INTERRUPT_MASK |
 		       OXYGEN_2WIRE_SPEED_STANDARD);
-}
+पूर्ण
 
-static void xonar_st_init_common(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम xonar_st_init_common(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
 	data->generic.output_enable_bit = GPIO_ST_OUTPUT_ENABLE;
 	data->dacs = chip->model.dac_channels_mixer / 2;
@@ -427,36 +428,36 @@ static void xonar_st_init_common(struct oxygen *chip)
 
 	snd_component_add(chip->card, "PCM1792A");
 	snd_component_add(chip->card, "CS5381");
-}
+पूर्ण
 
-static void cs2000_registers_init(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम cs2000_रेजिस्टरs_init(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
-	cs2000_write(chip, CS2000_GLOBAL_CFG, CS2000_FREEZE);
-	cs2000_write(chip, CS2000_DEV_CTRL, 0);
-	cs2000_write(chip, CS2000_DEV_CFG_1,
+	cs2000_ग_लिखो(chip, CS2000_GLOBAL_CFG, CS2000_FREEZE);
+	cs2000_ग_लिखो(chip, CS2000_DEV_CTRL, 0);
+	cs2000_ग_लिखो(chip, CS2000_DEV_CFG_1,
 		     CS2000_R_MOD_SEL_1 |
 		     (0 << CS2000_R_SEL_SHIFT) |
 		     CS2000_AUX_OUT_SRC_REF_CLK |
 		     CS2000_EN_DEV_CFG_1);
-	cs2000_write(chip, CS2000_DEV_CFG_2,
+	cs2000_ग_लिखो(chip, CS2000_DEV_CFG_2,
 		     (0 << CS2000_LOCK_CLK_SHIFT) |
 		     CS2000_FRAC_N_SRC_STATIC);
-	cs2000_write(chip, CS2000_RATIO_0 + 0, 0x00); /* 1.0 */
-	cs2000_write(chip, CS2000_RATIO_0 + 1, 0x10);
-	cs2000_write(chip, CS2000_RATIO_0 + 2, 0x00);
-	cs2000_write(chip, CS2000_RATIO_0 + 3, 0x00);
-	cs2000_write(chip, CS2000_FUN_CFG_1,
+	cs2000_ग_लिखो(chip, CS2000_RATIO_0 + 0, 0x00); /* 1.0 */
+	cs2000_ग_लिखो(chip, CS2000_RATIO_0 + 1, 0x10);
+	cs2000_ग_लिखो(chip, CS2000_RATIO_0 + 2, 0x00);
+	cs2000_ग_लिखो(chip, CS2000_RATIO_0 + 3, 0x00);
+	cs2000_ग_लिखो(chip, CS2000_FUN_CFG_1,
 		     data->cs2000_regs[CS2000_FUN_CFG_1]);
-	cs2000_write(chip, CS2000_FUN_CFG_2, 0);
-	cs2000_write(chip, CS2000_GLOBAL_CFG, CS2000_EN_DEV_CFG_2);
+	cs2000_ग_लिखो(chip, CS2000_FUN_CFG_2, 0);
+	cs2000_ग_लिखो(chip, CS2000_GLOBAL_CFG, CS2000_EN_DEV_CFG_2);
 	msleep(3); /* PLL lock delay */
-}
+पूर्ण
 
-static void xonar_st_init(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम xonar_st_init(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
 	data->generic.anti_pop_delay = 100;
 	data->h6 = chip->model.dac_channels_mixer > 2;
@@ -464,7 +465,7 @@ static void xonar_st_init(struct oxygen *chip)
 	data->cs2000_regs[CS2000_FUN_CFG_1] = CS2000_REF_CLK_DIV_1;
 	data->broken_i2c = true;
 
-	oxygen_write16(chip, OXYGEN_I2S_A_FORMAT,
+	oxygen_ग_लिखो16(chip, OXYGEN_I2S_A_FORMAT,
 		       OXYGEN_RATE_48000 |
 		       OXYGEN_I2S_FORMAT_I2S |
 		       OXYGEN_I2S_MCLK(data->h6 ? MCLK_256 : MCLK_512) |
@@ -473,39 +474,39 @@ static void xonar_st_init(struct oxygen *chip)
 		       OXYGEN_I2S_BCLK_64);
 
 	xonar_st_init_i2c(chip);
-	cs2000_registers_init(chip);
+	cs2000_रेजिस्टरs_init(chip);
 	xonar_st_init_common(chip);
 
 	snd_component_add(chip->card, "CS2000");
-}
+पूर्ण
 
-static void xonar_stx_init(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम xonar_stx_init(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
 	xonar_st_init_i2c(chip);
 	data->generic.anti_pop_delay = 800;
-	data->generic.ext_power_reg = OXYGEN_GPI_DATA;
-	data->generic.ext_power_int_reg = OXYGEN_GPI_INTERRUPT_MASK;
-	data->generic.ext_power_bit = GPI_EXT_POWER;
-	xonar_init_ext_power(chip);
+	data->generic.ext_घातer_reg = OXYGEN_GPI_DATA;
+	data->generic.ext_घातer_पूर्णांक_reg = OXYGEN_GPI_INTERRUPT_MASK;
+	data->generic.ext_घातer_bit = GPI_EXT_POWER;
+	xonar_init_ext_घातer(chip);
 	xonar_st_init_common(chip);
-}
+पूर्ण
 
-static void xonar_xense_init(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम xonar_xense_init(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
-	data->generic.ext_power_reg = OXYGEN_GPI_DATA;
-	data->generic.ext_power_int_reg = OXYGEN_GPI_INTERRUPT_MASK;
-	data->generic.ext_power_bit = GPI_EXT_POWER;
-	xonar_init_ext_power(chip);
+	data->generic.ext_घातer_reg = OXYGEN_GPI_DATA;
+	data->generic.ext_घातer_पूर्णांक_reg = OXYGEN_GPI_INTERRUPT_MASK;
+	data->generic.ext_घातer_bit = GPI_EXT_POWER;
+	xonar_init_ext_घातer(chip);
 
 	data->generic.anti_pop_delay = 100;
 	data->has_cs2000 = true;
 	data->cs2000_regs[CS2000_FUN_CFG_1] = CS2000_REF_CLK_DIV_1;
 
-	oxygen_write16(chip, OXYGEN_I2S_A_FORMAT,
+	oxygen_ग_लिखो16(chip, OXYGEN_I2S_A_FORMAT,
 		OXYGEN_RATE_48000 |
 		OXYGEN_I2S_FORMAT_I2S |
 		OXYGEN_I2S_MCLK(MCLK_512) |
@@ -514,7 +515,7 @@ static void xonar_xense_init(struct oxygen *chip)
 		OXYGEN_I2S_BCLK_64);
 
 	xonar_st_init_i2c(chip);
-	cs2000_registers_init(chip);
+	cs2000_रेजिस्टरs_init(chip);
 
 	data->generic.output_enable_bit = GPIO_XENSE_OUTPUT_ENABLE;
 	data->dacs = 1;
@@ -535,643 +536,643 @@ static void xonar_xense_init(struct oxygen *chip)
 	snd_component_add(chip->card, "PCM1796");
 	snd_component_add(chip->card, "CS5381");
 	snd_component_add(chip->card, "CS2000");
-}
+पूर्ण
 
-static void xonar_d2_cleanup(struct oxygen *chip)
-{
+अटल व्योम xonar_d2_cleanup(काष्ठा oxygen *chip)
+अणु
 	xonar_disable_output(chip);
-}
+पूर्ण
 
-static void xonar_hdav_cleanup(struct oxygen *chip)
-{
+अटल व्योम xonar_hdav_cleanup(काष्ठा oxygen *chip)
+अणु
 	xonar_hdmi_cleanup(chip);
 	xonar_disable_output(chip);
 	msleep(2);
-}
+पूर्ण
 
-static void xonar_st_cleanup(struct oxygen *chip)
-{
+अटल व्योम xonar_st_cleanup(काष्ठा oxygen *chip)
+अणु
 	xonar_disable_output(chip);
-}
+पूर्ण
 
-static void xonar_d2_suspend(struct oxygen *chip)
-{
+अटल व्योम xonar_d2_suspend(काष्ठा oxygen *chip)
+अणु
 	xonar_d2_cleanup(chip);
-}
+पूर्ण
 
-static void xonar_hdav_suspend(struct oxygen *chip)
-{
+अटल व्योम xonar_hdav_suspend(काष्ठा oxygen *chip)
+अणु
 	xonar_hdav_cleanup(chip);
-}
+पूर्ण
 
-static void xonar_st_suspend(struct oxygen *chip)
-{
+अटल व्योम xonar_st_suspend(काष्ठा oxygen *chip)
+अणु
 	xonar_st_cleanup(chip);
-}
+पूर्ण
 
-static void xonar_d2_resume(struct oxygen *chip)
-{
-	pcm1796_registers_init(chip);
+अटल व्योम xonar_d2_resume(काष्ठा oxygen *chip)
+अणु
+	pcm1796_रेजिस्टरs_init(chip);
 	xonar_enable_output(chip);
-}
+पूर्ण
 
-static void xonar_hdav_resume(struct oxygen *chip)
-{
-	struct xonar_hdav *data = chip->model_data;
+अटल व्योम xonar_hdav_resume(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_hdav *data = chip->model_data;
 
-	pcm1796_registers_init(chip);
+	pcm1796_रेजिस्टरs_init(chip);
 	xonar_hdmi_resume(chip, &data->hdmi);
 	xonar_enable_output(chip);
-}
+पूर्ण
 
-static void xonar_stx_resume(struct oxygen *chip)
-{
-	pcm1796_registers_init(chip);
+अटल व्योम xonar_stx_resume(काष्ठा oxygen *chip)
+अणु
+	pcm1796_रेजिस्टरs_init(chip);
 	xonar_enable_output(chip);
-}
+पूर्ण
 
-static void xonar_st_resume(struct oxygen *chip)
-{
-	cs2000_registers_init(chip);
+अटल व्योम xonar_st_resume(काष्ठा oxygen *chip)
+अणु
+	cs2000_रेजिस्टरs_init(chip);
 	xonar_stx_resume(chip);
-}
+पूर्ण
 
-static void update_pcm1796_oversampling(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
-	unsigned int i;
+अटल व्योम update_pcm1796_oversampling(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
+	अचिन्हित पूर्णांक i;
 	u8 reg;
 
-	if (data->current_rate <= 48000 && !data->h6)
+	अगर (data->current_rate <= 48000 && !data->h6)
 		reg = PCM1796_OS_128;
-	else
+	अन्यथा
 		reg = PCM1796_OS_64;
-	for (i = 0; i < data->dacs; ++i)
-		pcm1796_write_cached(chip, i, 20, reg);
-}
+	क्रम (i = 0; i < data->dacs; ++i)
+		pcm1796_ग_लिखो_cached(chip, i, 20, reg);
+पूर्ण
 
-static void update_pcm1796_deemph(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
-	unsigned int i;
+अटल व्योम update_pcm1796_deemph(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
+	अचिन्हित पूर्णांक i;
 	u8 reg;
 
 	reg = data->pcm1796_regs[0][18 - PCM1796_REG_BASE] & ~PCM1796_DMF_MASK;
-	if (data->current_rate == 48000)
+	अगर (data->current_rate == 48000)
 		reg |= PCM1796_DMF_48;
-	else if (data->current_rate == 44100)
+	अन्यथा अगर (data->current_rate == 44100)
 		reg |= PCM1796_DMF_441;
-	else if (data->current_rate == 32000)
+	अन्यथा अगर (data->current_rate == 32000)
 		reg |= PCM1796_DMF_32;
-	for (i = 0; i < data->dacs; ++i)
-		pcm1796_write_cached(chip, i, 18, reg);
-}
+	क्रम (i = 0; i < data->dacs; ++i)
+		pcm1796_ग_लिखो_cached(chip, i, 18, reg);
+पूर्ण
 
-static void set_pcm1796_params(struct oxygen *chip,
-			       struct snd_pcm_hw_params *params)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम set_pcm1796_params(काष्ठा oxygen *chip,
+			       काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
 	msleep(1);
 	data->current_rate = params_rate(params);
 	update_pcm1796_oversampling(chip);
 	update_pcm1796_deemph(chip);
-}
+पूर्ण
 
-static void update_pcm1796_volume(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
-	unsigned int i;
+अटल व्योम update_pcm1796_volume(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
+	अचिन्हित पूर्णांक i;
 	s8 gain_offset;
 
 	gain_offset = data->hp_active ? data->hp_gain_offset : 0;
-	for (i = 0; i < data->dacs; ++i) {
-		pcm1796_write_cached(chip, i, 16, chip->dac_volume[i * 2]
+	क्रम (i = 0; i < data->dacs; ++i) अणु
+		pcm1796_ग_लिखो_cached(chip, i, 16, chip->dac_volume[i * 2]
 				     + gain_offset);
-		pcm1796_write_cached(chip, i, 17, chip->dac_volume[i * 2 + 1]
+		pcm1796_ग_लिखो_cached(chip, i, 17, chip->dac_volume[i * 2 + 1]
 				     + gain_offset);
 		gain_offset = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void update_pcm1796_mute(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
-	unsigned int i;
+अटल व्योम update_pcm1796_mute(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
+	अचिन्हित पूर्णांक i;
 	u8 value;
 
 	value = data->pcm1796_regs[0][18 - PCM1796_REG_BASE];
-	if (chip->dac_mute)
+	अगर (chip->dac_mute)
 		value |= PCM1796_MUTE;
-	else
+	अन्यथा
 		value &= ~PCM1796_MUTE;
-	for (i = 0; i < data->dacs; ++i)
-		pcm1796_write_cached(chip, i, 18, value);
-}
+	क्रम (i = 0; i < data->dacs; ++i)
+		pcm1796_ग_लिखो_cached(chip, i, 18, value);
+पूर्ण
 
-static void update_cs2000_rate(struct oxygen *chip, unsigned int rate)
-{
-	struct xonar_pcm179x *data = chip->model_data;
+अटल व्योम update_cs2000_rate(काष्ठा oxygen *chip, अचिन्हित पूर्णांक rate)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 	u8 rate_mclk, reg;
 
-	switch (rate) {
-	case 32000:
-	case 64000:
+	चयन (rate) अणु
+	हाल 32000:
+	हाल 64000:
 		rate_mclk = OXYGEN_RATE_32000;
-		break;
-	case 44100:
-	case 88200:
-	case 176400:
+		अवरोध;
+	हाल 44100:
+	हाल 88200:
+	हाल 176400:
 		rate_mclk = OXYGEN_RATE_44100;
-		break;
-	default:
-	case 48000:
-	case 96000:
-	case 192000:
+		अवरोध;
+	शेष:
+	हाल 48000:
+	हाल 96000:
+	हाल 192000:
 		rate_mclk = OXYGEN_RATE_48000;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (rate <= 96000 && (rate > 48000 || data->h6)) {
+	अगर (rate <= 96000 && (rate > 48000 || data->h6)) अणु
 		rate_mclk |= OXYGEN_I2S_MCLK(MCLK_256);
 		reg = CS2000_REF_CLK_DIV_1;
-	} else {
+	पूर्ण अन्यथा अणु
 		rate_mclk |= OXYGEN_I2S_MCLK(MCLK_512);
 		reg = CS2000_REF_CLK_DIV_2;
-	}
+	पूर्ण
 
-	oxygen_write16_masked(chip, OXYGEN_I2S_A_FORMAT, rate_mclk,
+	oxygen_ग_लिखो16_masked(chip, OXYGEN_I2S_A_FORMAT, rate_mclk,
 			      OXYGEN_I2S_RATE_MASK | OXYGEN_I2S_MCLK_MASK);
-	cs2000_write_cached(chip, CS2000_FUN_CFG_1, reg);
+	cs2000_ग_लिखो_cached(chip, CS2000_FUN_CFG_1, reg);
 	msleep(3); /* PLL lock delay */
-}
+पूर्ण
 
-static void set_st_params(struct oxygen *chip,
-			  struct snd_pcm_hw_params *params)
-{
+अटल व्योम set_st_params(काष्ठा oxygen *chip,
+			  काष्ठा snd_pcm_hw_params *params)
+अणु
 	update_cs2000_rate(chip, params_rate(params));
 	set_pcm1796_params(chip, params);
-}
+पूर्ण
 
-static void set_hdav_params(struct oxygen *chip,
-			    struct snd_pcm_hw_params *params)
-{
-	struct xonar_hdav *data = chip->model_data;
+अटल व्योम set_hdav_params(काष्ठा oxygen *chip,
+			    काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा xonar_hdav *data = chip->model_data;
 
 	set_pcm1796_params(chip, params);
 	xonar_set_hdmi_params(chip, &data->hdmi, params);
-}
+पूर्ण
 
-static const struct snd_kcontrol_new alt_switch = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new alt_चयन = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Analog Loopback Switch",
 	.info = snd_ctl_boolean_mono_info,
-	.get = xonar_gpio_bit_switch_get,
-	.put = xonar_gpio_bit_switch_put,
-	.private_value = GPIO_D2_ALT,
-};
+	.get = xonar_gpio_bit_चयन_get,
+	.put = xonar_gpio_bit_चयन_put,
+	.निजी_value = GPIO_D2_ALT,
+पूर्ण;
 
-static int rolloff_info(struct snd_kcontrol *ctl,
-			struct snd_ctl_elem_info *info)
-{
-	static const char *const names[2] = {
+अटल पूर्णांक rolloff_info(काष्ठा snd_kcontrol *ctl,
+			काष्ठा snd_ctl_elem_info *info)
+अणु
+	अटल स्थिर अक्षर *स्थिर names[2] = अणु
 		"Sharp Roll-off", "Slow Roll-off"
-	};
+	पूर्ण;
 
-	return snd_ctl_enum_info(info, 1, 2, names);
-}
+	वापस snd_ctl_क्रमागत_info(info, 1, 2, names);
+पूर्ण
 
-static int rolloff_get(struct snd_kcontrol *ctl,
-		       struct snd_ctl_elem_value *value)
-{
-	struct oxygen *chip = ctl->private_data;
-	struct xonar_pcm179x *data = chip->model_data;
+अटल पूर्णांक rolloff_get(काष्ठा snd_kcontrol *ctl,
+		       काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा oxygen *chip = ctl->निजी_data;
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
-	value->value.enumerated.item[0] =
+	value->value.क्रमागतerated.item[0] =
 		(data->pcm1796_regs[0][19 - PCM1796_REG_BASE] &
 		 PCM1796_FLT_MASK) != PCM1796_FLT_SHARP;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rolloff_put(struct snd_kcontrol *ctl,
-		       struct snd_ctl_elem_value *value)
-{
-	struct oxygen *chip = ctl->private_data;
-	struct xonar_pcm179x *data = chip->model_data;
-	unsigned int i;
-	int changed;
+अटल पूर्णांक rolloff_put(काष्ठा snd_kcontrol *ctl,
+		       काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा oxygen *chip = ctl->निजी_data;
+	काष्ठा xonar_pcm179x *data = chip->model_data;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक changed;
 	u8 reg;
 
 	mutex_lock(&chip->mutex);
 	reg = data->pcm1796_regs[0][19 - PCM1796_REG_BASE];
 	reg &= ~PCM1796_FLT_MASK;
-	if (!value->value.enumerated.item[0])
+	अगर (!value->value.क्रमागतerated.item[0])
 		reg |= PCM1796_FLT_SHARP;
-	else
+	अन्यथा
 		reg |= PCM1796_FLT_SLOW;
 	changed = reg != data->pcm1796_regs[0][19 - PCM1796_REG_BASE];
-	if (changed) {
-		for (i = 0; i < data->dacs; ++i)
-			pcm1796_write(chip, i, 19, reg);
-	}
+	अगर (changed) अणु
+		क्रम (i = 0; i < data->dacs; ++i)
+			pcm1796_ग_लिखो(chip, i, 19, reg);
+	पूर्ण
 	mutex_unlock(&chip->mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new rolloff_control = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new rolloff_control = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "DAC Filter Playback Enum",
 	.info = rolloff_info,
 	.get = rolloff_get,
 	.put = rolloff_put,
-};
+पूर्ण;
 
-static int deemph_get(struct snd_kcontrol *ctl,
-		       struct snd_ctl_elem_value *value)
-{
-	struct oxygen *chip = ctl->private_data;
-	struct xonar_pcm179x *data = chip->model_data;
+अटल पूर्णांक deemph_get(काष्ठा snd_kcontrol *ctl,
+		       काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा oxygen *chip = ctl->निजी_data;
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
-	value->value.integer.value[0] =
+	value->value.पूर्णांकeger.value[0] =
 		!!(data->pcm1796_regs[0][18 - PCM1796_REG_BASE] & PCM1796_DME);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deemph_put(struct snd_kcontrol *ctl,
-		       struct snd_ctl_elem_value *value)
-{
-	struct oxygen *chip = ctl->private_data;
-	struct xonar_pcm179x *data = chip->model_data;
-	unsigned int i;
-	int changed;
+अटल पूर्णांक deemph_put(काष्ठा snd_kcontrol *ctl,
+		       काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा oxygen *chip = ctl->निजी_data;
+	काष्ठा xonar_pcm179x *data = chip->model_data;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक changed;
 	u8 reg;
 
 	mutex_lock(&chip->mutex);
 	reg = data->pcm1796_regs[0][18 - PCM1796_REG_BASE];
-	if (!value->value.integer.value[0])
+	अगर (!value->value.पूर्णांकeger.value[0])
 		reg &= ~PCM1796_DME;
-	else
+	अन्यथा
 		reg |= PCM1796_DME;
 	changed = reg != data->pcm1796_regs[0][18 - PCM1796_REG_BASE];
-	if (changed) {
-		for (i = 0; i < data->dacs; ++i)
-			pcm1796_write(chip, i, 18, reg);
-	}
+	अगर (changed) अणु
+		क्रम (i = 0; i < data->dacs; ++i)
+			pcm1796_ग_लिखो(chip, i, 18, reg);
+	पूर्ण
 	mutex_unlock(&chip->mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new deemph_control = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new deemph_control = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "De-emphasis Playback Switch",
 	.info = snd_ctl_boolean_mono_info,
 	.get = deemph_get,
 	.put = deemph_put,
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new hdav_hdmi_control = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new hdav_hdmi_control = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "HDMI Playback Switch",
 	.info = snd_ctl_boolean_mono_info,
-	.get = xonar_gpio_bit_switch_get,
-	.put = xonar_gpio_bit_switch_put,
-	.private_value = GPIO_HDAV_OUTPUT_ENABLE | XONAR_GPIO_BIT_INVERT,
-};
+	.get = xonar_gpio_bit_चयन_get,
+	.put = xonar_gpio_bit_चयन_put,
+	.निजी_value = GPIO_HDAV_OUTPUT_ENABLE | XONAR_GPIO_BIT_INVERT,
+पूर्ण;
 
-static int st_output_switch_info(struct snd_kcontrol *ctl,
-				 struct snd_ctl_elem_info *info)
-{
-	static const char *const names[3] = {
+अटल पूर्णांक st_output_चयन_info(काष्ठा snd_kcontrol *ctl,
+				 काष्ठा snd_ctl_elem_info *info)
+अणु
+	अटल स्थिर अक्षर *स्थिर names[3] = अणु
 		"Speakers", "Headphones", "FP Headphones"
-	};
+	पूर्ण;
 
-	return snd_ctl_enum_info(info, 1, 3, names);
-}
+	वापस snd_ctl_क्रमागत_info(info, 1, 3, names);
+पूर्ण
 
-static int st_output_switch_get(struct snd_kcontrol *ctl,
-				struct snd_ctl_elem_value *value)
-{
-	struct oxygen *chip = ctl->private_data;
+अटल पूर्णांक st_output_चयन_get(काष्ठा snd_kcontrol *ctl,
+				काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा oxygen *chip = ctl->निजी_data;
 	u16 gpio;
 
-	gpio = oxygen_read16(chip, OXYGEN_GPIO_DATA);
-	if (!(gpio & GPIO_ST_HP))
-		value->value.enumerated.item[0] = 0;
-	else if (gpio & GPIO_ST_HP_REAR)
-		value->value.enumerated.item[0] = 1;
-	else
-		value->value.enumerated.item[0] = 2;
-	return 0;
-}
+	gpio = oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA);
+	अगर (!(gpio & GPIO_ST_HP))
+		value->value.क्रमागतerated.item[0] = 0;
+	अन्यथा अगर (gpio & GPIO_ST_HP_REAR)
+		value->value.क्रमागतerated.item[0] = 1;
+	अन्यथा
+		value->value.क्रमागतerated.item[0] = 2;
+	वापस 0;
+पूर्ण
 
 
-static int st_output_switch_put(struct snd_kcontrol *ctl,
-				struct snd_ctl_elem_value *value)
-{
-	struct oxygen *chip = ctl->private_data;
-	struct xonar_pcm179x *data = chip->model_data;
+अटल पूर्णांक st_output_चयन_put(काष्ठा snd_kcontrol *ctl,
+				काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा oxygen *chip = ctl->निजी_data;
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 	u16 gpio_old, gpio;
 
 	mutex_lock(&chip->mutex);
-	gpio_old = oxygen_read16(chip, OXYGEN_GPIO_DATA);
+	gpio_old = oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA);
 	gpio = gpio_old;
-	switch (value->value.enumerated.item[0]) {
-	case 0:
+	चयन (value->value.क्रमागतerated.item[0]) अणु
+	हाल 0:
 		gpio &= ~(GPIO_ST_HP | GPIO_ST_HP_REAR);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		gpio |= GPIO_ST_HP | GPIO_ST_HP_REAR;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		gpio = (gpio | GPIO_ST_HP) & ~GPIO_ST_HP_REAR;
-		break;
-	}
-	oxygen_write16(chip, OXYGEN_GPIO_DATA, gpio);
+		अवरोध;
+	पूर्ण
+	oxygen_ग_लिखो16(chip, OXYGEN_GPIO_DATA, gpio);
 	data->hp_active = gpio & GPIO_ST_HP;
 	update_pcm1796_volume(chip);
 	mutex_unlock(&chip->mutex);
-	return gpio != gpio_old;
-}
+	वापस gpio != gpio_old;
+पूर्ण
 
-static int st_hp_volume_offset_info(struct snd_kcontrol *ctl,
-				    struct snd_ctl_elem_info *info)
-{
-	static const char *const names[4] = {
+अटल पूर्णांक st_hp_volume_offset_info(काष्ठा snd_kcontrol *ctl,
+				    काष्ठा snd_ctl_elem_info *info)
+अणु
+	अटल स्थिर अक्षर *स्थिर names[4] = अणु
 		"< 32 ohms", "32-64 ohms", "64-300 ohms", "300-600 ohms"
-	};
+	पूर्ण;
 
-	return snd_ctl_enum_info(info, 1, 4, names);
-}
+	वापस snd_ctl_क्रमागत_info(info, 1, 4, names);
+पूर्ण
 
-static int st_hp_volume_offset_get(struct snd_kcontrol *ctl,
-				   struct snd_ctl_elem_value *value)
-{
-	struct oxygen *chip = ctl->private_data;
-	struct xonar_pcm179x *data = chip->model_data;
+अटल पूर्णांक st_hp_volume_offset_get(काष्ठा snd_kcontrol *ctl,
+				   काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा oxygen *chip = ctl->निजी_data;
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 
 	mutex_lock(&chip->mutex);
-	if (data->hp_gain_offset < 2*-12)
-		value->value.enumerated.item[0] = 0;
-	else if (data->hp_gain_offset < 2*-6)
-		value->value.enumerated.item[0] = 1;
-	else if (data->hp_gain_offset < 0)
-		value->value.enumerated.item[0] = 2;
-	else
-		value->value.enumerated.item[0] = 3;
+	अगर (data->hp_gain_offset < 2*-12)
+		value->value.क्रमागतerated.item[0] = 0;
+	अन्यथा अगर (data->hp_gain_offset < 2*-6)
+		value->value.क्रमागतerated.item[0] = 1;
+	अन्यथा अगर (data->hp_gain_offset < 0)
+		value->value.क्रमागतerated.item[0] = 2;
+	अन्यथा
+		value->value.क्रमागतerated.item[0] = 3;
 	mutex_unlock(&chip->mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int st_hp_volume_offset_put(struct snd_kcontrol *ctl,
-				   struct snd_ctl_elem_value *value)
-{
-	static const s8 offsets[] = { 2*-18, 2*-12, 2*-6, 0 };
-	struct oxygen *chip = ctl->private_data;
-	struct xonar_pcm179x *data = chip->model_data;
+अटल पूर्णांक st_hp_volume_offset_put(काष्ठा snd_kcontrol *ctl,
+				   काष्ठा snd_ctl_elem_value *value)
+अणु
+	अटल स्थिर s8 offsets[] = अणु 2*-18, 2*-12, 2*-6, 0 पूर्ण;
+	काष्ठा oxygen *chip = ctl->निजी_data;
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 	s8 offset;
-	int changed;
+	पूर्णांक changed;
 
-	if (value->value.enumerated.item[0] > 3)
-		return -EINVAL;
-	offset = offsets[value->value.enumerated.item[0]];
+	अगर (value->value.क्रमागतerated.item[0] > 3)
+		वापस -EINVAL;
+	offset = offsets[value->value.क्रमागतerated.item[0]];
 	mutex_lock(&chip->mutex);
 	changed = offset != data->hp_gain_offset;
-	if (changed) {
+	अगर (changed) अणु
 		data->hp_gain_offset = offset;
 		update_pcm1796_volume(chip);
-	}
+	पूर्ण
 	mutex_unlock(&chip->mutex);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new st_controls[] = {
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new st_controls[] = अणु
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Analog Output",
-		.info = st_output_switch_info,
-		.get = st_output_switch_get,
-		.put = st_output_switch_put,
-	},
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.info = st_output_चयन_info,
+		.get = st_output_चयन_get,
+		.put = st_output_चयन_put,
+	पूर्ण,
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Headphones Impedance Playback Enum",
 		.info = st_hp_volume_offset_info,
 		.get = st_hp_volume_offset_get,
 		.put = st_hp_volume_offset_put,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int xense_output_switch_get(struct snd_kcontrol *ctl,
-				   struct snd_ctl_elem_value *value)
-{
-	struct oxygen *chip = ctl->private_data;
+अटल पूर्णांक xense_output_चयन_get(काष्ठा snd_kcontrol *ctl,
+				   काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा oxygen *chip = ctl->निजी_data;
 	u16 gpio;
 
-	gpio = oxygen_read16(chip, OXYGEN_GPIO_DATA);
-	if (gpio & GPIO_XENSE_SPEAKERS)
-		value->value.enumerated.item[0] = 0;
-	else if (!(gpio & GPIO_XENSE_SPEAKERS) && (gpio & GPIO_ST_HP_REAR))
-		value->value.enumerated.item[0] = 1;
-	else
-		value->value.enumerated.item[0] = 2;
-	return 0;
-}
+	gpio = oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA);
+	अगर (gpio & GPIO_XENSE_SPEAKERS)
+		value->value.क्रमागतerated.item[0] = 0;
+	अन्यथा अगर (!(gpio & GPIO_XENSE_SPEAKERS) && (gpio & GPIO_ST_HP_REAR))
+		value->value.क्रमागतerated.item[0] = 1;
+	अन्यथा
+		value->value.क्रमागतerated.item[0] = 2;
+	वापस 0;
+पूर्ण
 
-static int xense_output_switch_put(struct snd_kcontrol *ctl,
-				   struct snd_ctl_elem_value *value)
-{
-	struct oxygen *chip = ctl->private_data;
-	struct xonar_pcm179x *data = chip->model_data;
+अटल पूर्णांक xense_output_चयन_put(काष्ठा snd_kcontrol *ctl,
+				   काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा oxygen *chip = ctl->निजी_data;
+	काष्ठा xonar_pcm179x *data = chip->model_data;
 	u16 gpio_old, gpio;
 
 	mutex_lock(&chip->mutex);
-	gpio_old = oxygen_read16(chip, OXYGEN_GPIO_DATA);
+	gpio_old = oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA);
 	gpio = gpio_old;
-	switch (value->value.enumerated.item[0]) {
-	case 0:
+	चयन (value->value.क्रमागतerated.item[0]) अणु
+	हाल 0:
 		gpio |= GPIO_XENSE_SPEAKERS | GPIO_ST_HP_REAR;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		gpio = (gpio | GPIO_ST_HP_REAR) & ~GPIO_XENSE_SPEAKERS;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		gpio &= ~(GPIO_XENSE_SPEAKERS | GPIO_ST_HP_REAR);
-		break;
-	}
-	oxygen_write16(chip, OXYGEN_GPIO_DATA, gpio);
+		अवरोध;
+	पूर्ण
+	oxygen_ग_लिखो16(chip, OXYGEN_GPIO_DATA, gpio);
 	data->hp_active = !(gpio & GPIO_XENSE_SPEAKERS);
 	update_pcm1796_volume(chip);
 	mutex_unlock(&chip->mutex);
-	return gpio != gpio_old;
-}
+	वापस gpio != gpio_old;
+पूर्ण
 
-static const struct snd_kcontrol_new xense_controls[] = {
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new xense_controls[] = अणु
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Analog Output",
-		.info = st_output_switch_info,
-		.get = xense_output_switch_get,
-		.put = xense_output_switch_put,
-	},
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.info = st_output_चयन_info,
+		.get = xense_output_चयन_get,
+		.put = xense_output_चयन_put,
+	पूर्ण,
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Headphones Impedance Playback Enum",
 		.info = st_hp_volume_offset_info,
 		.get = st_hp_volume_offset_get,
 		.put = st_hp_volume_offset_put,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void xonar_line_mic_ac97_switch(struct oxygen *chip,
-				       unsigned int reg, unsigned int mute)
-{
-	if (reg == AC97_LINE) {
+अटल व्योम xonar_line_mic_ac97_चयन(काष्ठा oxygen *chip,
+				       अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक mute)
+अणु
+	अगर (reg == AC97_LINE) अणु
 		spin_lock_irq(&chip->reg_lock);
-		oxygen_write16_masked(chip, OXYGEN_GPIO_DATA,
+		oxygen_ग_लिखो16_masked(chip, OXYGEN_GPIO_DATA,
 				      mute ? GPIO_INPUT_ROUTE : 0,
 				      GPIO_INPUT_ROUTE);
 		spin_unlock_irq(&chip->reg_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const DECLARE_TLV_DB_SCALE(pcm1796_db_scale, -6000, 50, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(pcm1796_db_scale, -6000, 50, 0);
 
-static int xonar_d2_control_filter(struct snd_kcontrol_new *template)
-{
-	if (!strncmp(template->name, "CD Capture ", 11))
+अटल पूर्णांक xonar_d2_control_filter(काष्ठा snd_kcontrol_new *ढाँचा)
+अणु
+	अगर (!म_भेदन(ढाँचा->name, "CD Capture ", 11))
 		/* CD in is actually connected to the video in pin */
-		template->private_value ^= AC97_CD ^ AC97_VIDEO;
-	return 0;
-}
+		ढाँचा->निजी_value ^= AC97_CD ^ AC97_VIDEO;
+	वापस 0;
+पूर्ण
 
-static int xonar_st_h6_control_filter(struct snd_kcontrol_new *template)
-{
-	if (!strncmp(template->name, "Master Playback ", 16))
-		/* no volume/mute, as I²C to the third DAC does not work */
-		return 1;
-	return 0;
-}
+अटल पूर्णांक xonar_st_h6_control_filter(काष्ठा snd_kcontrol_new *ढाँचा)
+अणु
+	अगर (!म_भेदन(ढाँचा->name, "Master Playback ", 16))
+		/* no volume/mute, as IतऑC to the third DAC करोes not work */
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int add_pcm1796_controls(struct oxygen *chip)
-{
-	struct xonar_pcm179x *data = chip->model_data;
-	int err;
+अटल पूर्णांक add_pcm1796_controls(काष्ठा oxygen *chip)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
+	पूर्णांक err;
 
-	if (!data->broken_i2c) {
+	अगर (!data->broken_i2c) अणु
 		err = snd_ctl_add(chip->card,
 				  snd_ctl_new1(&rolloff_control, chip));
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 		err = snd_ctl_add(chip->card,
 				  snd_ctl_new1(&deemph_control, chip));
-		if (err < 0)
-			return err;
-	}
-	return 0;
-}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int xonar_d2_mixer_init(struct oxygen *chip)
-{
-	int err;
+अटल पूर्णांक xonar_d2_mixer_init(काष्ठा oxygen *chip)
+अणु
+	पूर्णांक err;
 
-	err = snd_ctl_add(chip->card, snd_ctl_new1(&alt_switch, chip));
-	if (err < 0)
-		return err;
+	err = snd_ctl_add(chip->card, snd_ctl_new1(&alt_चयन, chip));
+	अगर (err < 0)
+		वापस err;
 	err = add_pcm1796_controls(chip);
-	if (err < 0)
-		return err;
-	return 0;
-}
+	अगर (err < 0)
+		वापस err;
+	वापस 0;
+पूर्ण
 
-static int xonar_hdav_mixer_init(struct oxygen *chip)
-{
-	int err;
+अटल पूर्णांक xonar_hdav_mixer_init(काष्ठा oxygen *chip)
+अणु
+	पूर्णांक err;
 
 	err = snd_ctl_add(chip->card, snd_ctl_new1(&hdav_hdmi_control, chip));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	err = add_pcm1796_controls(chip);
-	if (err < 0)
-		return err;
-	return 0;
-}
+	अगर (err < 0)
+		वापस err;
+	वापस 0;
+पूर्ण
 
-static int xonar_st_mixer_init(struct oxygen *chip)
-{
-	unsigned int i;
-	int err;
+अटल पूर्णांक xonar_st_mixer_init(काष्ठा oxygen *chip)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = 0; i < ARRAY_SIZE(st_controls); ++i) {
+	क्रम (i = 0; i < ARRAY_SIZE(st_controls); ++i) अणु
 		err = snd_ctl_add(chip->card,
 				  snd_ctl_new1(&st_controls[i], chip));
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 	err = add_pcm1796_controls(chip);
-	if (err < 0)
-		return err;
-	return 0;
-}
+	अगर (err < 0)
+		वापस err;
+	वापस 0;
+पूर्ण
 
-static int xonar_xense_mixer_init(struct oxygen *chip)
-{
-	unsigned int i;
-	int err;
+अटल पूर्णांक xonar_xense_mixer_init(काष्ठा oxygen *chip)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = 0; i < ARRAY_SIZE(xense_controls); ++i) {
+	क्रम (i = 0; i < ARRAY_SIZE(xense_controls); ++i) अणु
 		err = snd_ctl_add(chip->card,
 		snd_ctl_new1(&xense_controls[i], chip));
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 	err = add_pcm1796_controls(chip);
-	if (err < 0)
-		return err;
-	return 0;
-}
+	अगर (err < 0)
+		वापस err;
+	वापस 0;
+पूर्ण
 
-static void dump_pcm1796_registers(struct oxygen *chip,
-				   struct snd_info_buffer *buffer)
-{
-	struct xonar_pcm179x *data = chip->model_data;
-	unsigned int dac, i;
+अटल व्योम dump_pcm1796_रेजिस्टरs(काष्ठा oxygen *chip,
+				   काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
+	अचिन्हित पूर्णांक dac, i;
 
-	for (dac = 0; dac < data->dacs; ++dac) {
-		snd_iprintf(buffer, "\nPCM1796 %u:", dac + 1);
-		for (i = 0; i < 5; ++i)
-			snd_iprintf(buffer, " %02x",
+	क्रम (dac = 0; dac < data->dacs; ++dac) अणु
+		snd_iम_लिखो(buffer, "\nPCM1796 %u:", dac + 1);
+		क्रम (i = 0; i < 5; ++i)
+			snd_iम_लिखो(buffer, " %02x",
 				    data->pcm1796_regs[dac][i]);
-	}
-	snd_iprintf(buffer, "\n");
-}
+	पूर्ण
+	snd_iम_लिखो(buffer, "\n");
+पूर्ण
 
-static void dump_cs2000_registers(struct oxygen *chip,
-				  struct snd_info_buffer *buffer)
-{
-	struct xonar_pcm179x *data = chip->model_data;
-	unsigned int i;
+अटल व्योम dump_cs2000_रेजिस्टरs(काष्ठा oxygen *chip,
+				  काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा xonar_pcm179x *data = chip->model_data;
+	अचिन्हित पूर्णांक i;
 
-	if (data->has_cs2000) {
-		snd_iprintf(buffer, "\nCS2000:\n00:   ");
-		for (i = 1; i < 0x10; ++i)
-			snd_iprintf(buffer, " %02x", data->cs2000_regs[i]);
-		snd_iprintf(buffer, "\n10:");
-		for (i = 0x10; i < 0x1f; ++i)
-			snd_iprintf(buffer, " %02x", data->cs2000_regs[i]);
-		snd_iprintf(buffer, "\n");
-	}
-}
+	अगर (data->has_cs2000) अणु
+		snd_iम_लिखो(buffer, "\nCS2000:\n00:   ");
+		क्रम (i = 1; i < 0x10; ++i)
+			snd_iम_लिखो(buffer, " %02x", data->cs2000_regs[i]);
+		snd_iम_लिखो(buffer, "\n10:");
+		क्रम (i = 0x10; i < 0x1f; ++i)
+			snd_iम_लिखो(buffer, " %02x", data->cs2000_regs[i]);
+		snd_iम_लिखो(buffer, "\n");
+	पूर्ण
+पूर्ण
 
-static void dump_st_registers(struct oxygen *chip,
-			      struct snd_info_buffer *buffer)
-{
-	dump_pcm1796_registers(chip, buffer);
-	dump_cs2000_registers(chip, buffer);
-}
+अटल व्योम dump_st_रेजिस्टरs(काष्ठा oxygen *chip,
+			      काष्ठा snd_info_buffer *buffer)
+अणु
+	dump_pcm1796_रेजिस्टरs(chip, buffer);
+	dump_cs2000_रेजिस्टरs(chip, buffer);
+पूर्ण
 
-static const struct oxygen_model model_xonar_d2 = {
-	.longname = "Asus Virtuoso 200",
+अटल स्थिर काष्ठा oxygen_model model_xonar_d2 = अणु
+	.दीर्घname = "Asus Virtuoso 200",
 	.chip = "AV200",
 	.init = xonar_d2_init,
 	.control_filter = xonar_d2_control_filter,
@@ -1183,9 +1184,9 @@ static const struct oxygen_model model_xonar_d2 = {
 	.set_adc_params = xonar_set_cs53x1_params,
 	.update_dac_volume = update_pcm1796_volume,
 	.update_dac_mute = update_pcm1796_mute,
-	.dump_registers = dump_pcm1796_registers,
+	.dump_रेजिस्टरs = dump_pcm1796_रेजिस्टरs,
 	.dac_tlv = pcm1796_db_scale,
-	.model_data_size = sizeof(struct xonar_pcm179x),
+	.model_data_size = माप(काष्ठा xonar_pcm179x),
 	.device_config = PLAYBACK_0_TO_I2S |
 			 PLAYBACK_1_TO_SPDIF |
 			 CAPTURE_0_FROM_I2S_2 |
@@ -1202,12 +1203,12 @@ static const struct oxygen_model model_xonar_d2 = {
 			  OXYGEN_FUNCTION_ENABLE_SPI_4_5,
 	.dac_mclks = OXYGEN_MCLKS(512, 128, 128),
 	.adc_mclks = OXYGEN_MCLKS(256, 128, 128),
-	.dac_i2s_format = OXYGEN_I2S_FORMAT_I2S,
-	.adc_i2s_format = OXYGEN_I2S_FORMAT_LJUST,
-};
+	.dac_i2s_क्रमmat = OXYGEN_I2S_FORMAT_I2S,
+	.adc_i2s_क्रमmat = OXYGEN_I2S_FORMAT_LJUST,
+पूर्ण;
 
-static const struct oxygen_model model_xonar_hdav = {
-	.longname = "Asus Virtuoso 200",
+अटल स्थिर काष्ठा oxygen_model model_xonar_hdav = अणु
+	.दीर्घname = "Asus Virtuoso 200",
 	.chip = "AV200",
 	.init = xonar_hdav_init,
 	.mixer_init = xonar_hdav_mixer_init,
@@ -1220,10 +1221,10 @@ static const struct oxygen_model model_xonar_hdav = {
 	.update_dac_volume = update_pcm1796_volume,
 	.update_dac_mute = update_pcm1796_mute,
 	.uart_input = xonar_hdmi_uart_input,
-	.ac97_switch = xonar_line_mic_ac97_switch,
-	.dump_registers = dump_pcm1796_registers,
+	.ac97_चयन = xonar_line_mic_ac97_चयन,
+	.dump_रेजिस्टरs = dump_pcm1796_रेजिस्टरs,
 	.dac_tlv = pcm1796_db_scale,
-	.model_data_size = sizeof(struct xonar_hdav),
+	.model_data_size = माप(काष्ठा xonar_hdav),
 	.device_config = PLAYBACK_0_TO_I2S |
 			 PLAYBACK_1_TO_SPDIF |
 			 CAPTURE_0_FROM_I2S_2 |
@@ -1236,12 +1237,12 @@ static const struct oxygen_model model_xonar_hdav = {
 	.function_flags = OXYGEN_FUNCTION_2WIRE,
 	.dac_mclks = OXYGEN_MCLKS(512, 128, 128),
 	.adc_mclks = OXYGEN_MCLKS(256, 128, 128),
-	.dac_i2s_format = OXYGEN_I2S_FORMAT_I2S,
-	.adc_i2s_format = OXYGEN_I2S_FORMAT_LJUST,
-};
+	.dac_i2s_क्रमmat = OXYGEN_I2S_FORMAT_I2S,
+	.adc_i2s_क्रमmat = OXYGEN_I2S_FORMAT_LJUST,
+पूर्ण;
 
-static const struct oxygen_model model_xonar_st = {
-	.longname = "Asus Virtuoso 100",
+अटल स्थिर काष्ठा oxygen_model model_xonar_st = अणु
+	.दीर्घname = "Asus Virtuoso 100",
 	.chip = "AV200",
 	.init = xonar_st_init,
 	.mixer_init = xonar_st_mixer_init,
@@ -1252,10 +1253,10 @@ static const struct oxygen_model model_xonar_st = {
 	.set_adc_params = xonar_set_cs53x1_params,
 	.update_dac_volume = update_pcm1796_volume,
 	.update_dac_mute = update_pcm1796_mute,
-	.ac97_switch = xonar_line_mic_ac97_switch,
-	.dump_registers = dump_st_registers,
+	.ac97_चयन = xonar_line_mic_ac97_चयन,
+	.dump_रेजिस्टरs = dump_st_रेजिस्टरs,
 	.dac_tlv = pcm1796_db_scale,
-	.model_data_size = sizeof(struct xonar_pcm179x),
+	.model_data_size = माप(काष्ठा xonar_pcm179x),
 	.device_config = PLAYBACK_0_TO_I2S |
 			 PLAYBACK_1_TO_SPDIF |
 			 CAPTURE_0_FROM_I2S_2 |
@@ -1268,88 +1269,88 @@ static const struct oxygen_model model_xonar_st = {
 	.function_flags = OXYGEN_FUNCTION_2WIRE,
 	.dac_mclks = OXYGEN_MCLKS(512, 128, 128),
 	.adc_mclks = OXYGEN_MCLKS(256, 128, 128),
-	.dac_i2s_format = OXYGEN_I2S_FORMAT_I2S,
-	.adc_i2s_format = OXYGEN_I2S_FORMAT_LJUST,
-};
+	.dac_i2s_क्रमmat = OXYGEN_I2S_FORMAT_I2S,
+	.adc_i2s_क्रमmat = OXYGEN_I2S_FORMAT_LJUST,
+पूर्ण;
 
-int get_xonar_pcm179x_model(struct oxygen *chip,
-			    const struct pci_device_id *id)
-{
-	switch (id->subdevice) {
-	case 0x8269:
+पूर्णांक get_xonar_pcm179x_model(काष्ठा oxygen *chip,
+			    स्थिर काष्ठा pci_device_id *id)
+अणु
+	चयन (id->subdevice) अणु
+	हाल 0x8269:
 		chip->model = model_xonar_d2;
-		chip->model.shortname = "Xonar D2";
-		break;
-	case 0x82b7:
+		chip->model.लघुname = "Xonar D2";
+		अवरोध;
+	हाल 0x82b7:
 		chip->model = model_xonar_d2;
-		chip->model.shortname = "Xonar D2X";
+		chip->model.लघुname = "Xonar D2X";
 		chip->model.init = xonar_d2x_init;
-		break;
-	case 0x8314:
+		अवरोध;
+	हाल 0x8314:
 		chip->model = model_xonar_hdav;
 		oxygen_clear_bits16(chip, OXYGEN_GPIO_CONTROL, GPIO_DB_MASK);
-		switch (oxygen_read16(chip, OXYGEN_GPIO_DATA) & GPIO_DB_MASK) {
-		default:
-			chip->model.shortname = "Xonar HDAV1.3";
-			break;
-		case GPIO_DB_H6:
-			chip->model.shortname = "Xonar HDAV1.3+H6";
+		चयन (oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA) & GPIO_DB_MASK) अणु
+		शेष:
+			chip->model.लघुname = "Xonar HDAV1.3";
+			अवरोध;
+		हाल GPIO_DB_H6:
+			chip->model.लघुname = "Xonar HDAV1.3+H6";
 			chip->model.dac_channels_mixer = 8;
 			chip->model.dac_mclks = OXYGEN_MCLKS(256, 128, 128);
-			break;
-		}
-		break;
-	case 0x835d:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 0x835d:
 		chip->model = model_xonar_st;
 		oxygen_clear_bits16(chip, OXYGEN_GPIO_CONTROL, GPIO_DB_MASK);
-		switch (oxygen_read16(chip, OXYGEN_GPIO_DATA) & GPIO_DB_MASK) {
-		default:
-			chip->model.shortname = "Xonar ST";
-			break;
-		case GPIO_DB_H6:
-			chip->model.shortname = "Xonar ST+H6";
+		चयन (oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA) & GPIO_DB_MASK) अणु
+		शेष:
+			chip->model.लघुname = "Xonar ST";
+			अवरोध;
+		हाल GPIO_DB_H6:
+			chip->model.लघुname = "Xonar ST+H6";
 			chip->model.control_filter = xonar_st_h6_control_filter;
 			chip->model.dac_channels_pcm = 8;
 			chip->model.dac_channels_mixer = 8;
 			chip->model.dac_volume_min = 255;
 			chip->model.dac_mclks = OXYGEN_MCLKS(256, 128, 128);
-			break;
-		}
-		break;
-	case 0x835c:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 0x835c:
 		chip->model = model_xonar_st;
-		chip->model.shortname = "Xonar STX";
+		chip->model.लघुname = "Xonar STX";
 		chip->model.init = xonar_stx_init;
 		chip->model.resume = xonar_stx_resume;
 		chip->model.set_dac_params = set_pcm1796_params;
-		break;
-	case 0x85f4:
+		अवरोध;
+	हाल 0x85f4:
 		chip->model = model_xonar_st;
 		oxygen_clear_bits16(chip, OXYGEN_GPIO_CONTROL, GPIO_DB_MASK);
-		switch (oxygen_read16(chip, OXYGEN_GPIO_DATA) & GPIO_DB_MASK) {
-		default:
-			chip->model.shortname = "Xonar STX II";
-			break;
-		case GPIO_DB_H6:
-			chip->model.shortname = "Xonar STX II+H6";
+		चयन (oxygen_पढ़ो16(chip, OXYGEN_GPIO_DATA) & GPIO_DB_MASK) अणु
+		शेष:
+			chip->model.लघुname = "Xonar STX II";
+			अवरोध;
+		हाल GPIO_DB_H6:
+			chip->model.लघुname = "Xonar STX II+H6";
 			chip->model.dac_channels_pcm = 8;
 			chip->model.dac_channels_mixer = 8;
 			chip->model.dac_mclks = OXYGEN_MCLKS(256, 128, 128);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		chip->model.init = xonar_stx_init;
 		chip->model.resume = xonar_stx_resume;
 		chip->model.set_dac_params = set_pcm1796_params;
-		break;
-	case 0x8428:
+		अवरोध;
+	हाल 0x8428:
 		chip->model = model_xonar_st;
-		chip->model.shortname = "Xonar Xense";
+		chip->model.लघुname = "Xonar Xense";
 		chip->model.chip = "AV100";
 		chip->model.init = xonar_xense_init;
 		chip->model.mixer_init = xonar_xense_mixer_init;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण

@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	IPV6 GSO/GRO offload support
  *	Linux INET6 implementation
  *
  *      IPV6 Extension Header GSO/GRO support
  */
-#include <net/protocol.h>
-#include "ip6_offload.h"
+#समावेश <net/protocol.h>
+#समावेश "ip6_offload.h"
 
-static const struct net_offload rthdr_offload = {
+अटल स्थिर काष्ठा net_offload rthdr_offload = अणु
 	.flags		=	INET6_PROTO_GSO_EXTHDR,
-};
+पूर्ण;
 
-static const struct net_offload dstopt_offload = {
+अटल स्थिर काष्ठा net_offload dstopt_offload = अणु
 	.flags		=	INET6_PROTO_GSO_EXTHDR,
-};
+पूर्ण;
 
-int __init ipv6_exthdrs_offload_init(void)
-{
-	int ret;
+पूर्णांक __init ipv6_exthdrs_offload_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = inet6_add_offload(&rthdr_offload, IPPROTO_ROUTING);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = inet6_add_offload(&dstopt_offload, IPPROTO_DSTOPTS);
-	if (ret)
-		goto out_rt;
+	अगर (ret)
+		जाओ out_rt;
 
 out:
-	return ret;
+	वापस ret;
 
 out_rt:
 	inet6_del_offload(&rthdr_offload, IPPROTO_ROUTING);
-	goto out;
-}
+	जाओ out;
+पूर्ण

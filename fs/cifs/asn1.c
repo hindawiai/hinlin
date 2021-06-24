@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * The ASB.1/BER parsing code is derived from ip_nat_snmp_basic.c which was in
  * turn derived from the gxsnmp package by Gregory McLean & Jochen Friedrich
@@ -6,15 +7,15 @@
  * Copyright (c) 2000 RP Internet (www.rpi.net.au).
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include "cifspdu.h"
-#include "cifsglob.h"
-#include "cifs_debug.h"
-#include "cifsproto.h"
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश "cifspdu.h"
+#समावेश "cifsglob.h"
+#समावेश "cifs_debug.h"
+#समावेश "cifsproto.h"
 
 /*****************************************************************************
  *
@@ -23,590 +24,590 @@
  *****************************************************************************/
 
 /* Class */
-#define ASN1_UNI	0	/* Universal */
-#define ASN1_APL	1	/* Application */
-#define ASN1_CTX	2	/* Context */
-#define ASN1_PRV	3	/* Private */
+#घोषणा ASN1_UNI	0	/* Universal */
+#घोषणा ASN1_APL	1	/* Application */
+#घोषणा ASN1_CTX	2	/* Context */
+#घोषणा ASN1_PRV	3	/* Private */
 
 /* Tag */
-#define ASN1_EOC	0	/* End Of Contents or N/A */
-#define ASN1_BOL	1	/* Boolean */
-#define ASN1_INT	2	/* Integer */
-#define ASN1_BTS	3	/* Bit String */
-#define ASN1_OTS	4	/* Octet String */
-#define ASN1_NUL	5	/* Null */
-#define ASN1_OJI	6	/* Object Identifier  */
-#define ASN1_OJD	7	/* Object Description */
-#define ASN1_EXT	8	/* External */
-#define ASN1_ENUM	10	/* Enumerated */
-#define ASN1_SEQ	16	/* Sequence */
-#define ASN1_SET	17	/* Set */
-#define ASN1_NUMSTR	18	/* Numerical String */
-#define ASN1_PRNSTR	19	/* Printable String */
-#define ASN1_TEXSTR	20	/* Teletext String */
-#define ASN1_VIDSTR	21	/* Video String */
-#define ASN1_IA5STR	22	/* IA5 String */
-#define ASN1_UNITIM	23	/* Universal Time */
-#define ASN1_GENTIM	24	/* General Time */
-#define ASN1_GRASTR	25	/* Graphical String */
-#define ASN1_VISSTR	26	/* Visible String */
-#define ASN1_GENSTR	27	/* General String */
+#घोषणा ASN1_EOC	0	/* End Of Contents or N/A */
+#घोषणा ASN1_BOL	1	/* Boolean */
+#घोषणा ASN1_INT	2	/* Integer */
+#घोषणा ASN1_BTS	3	/* Bit String */
+#घोषणा ASN1_OTS	4	/* Octet String */
+#घोषणा ASN1_NUL	5	/* Null */
+#घोषणा ASN1_OJI	6	/* Object Identअगरier  */
+#घोषणा ASN1_OJD	7	/* Object Description */
+#घोषणा ASN1_EXT	8	/* External */
+#घोषणा ASN1_ENUM	10	/* Enumerated */
+#घोषणा ASN1_SEQ	16	/* Sequence */
+#घोषणा ASN1_SET	17	/* Set */
+#घोषणा ASN1_NUMSTR	18	/* Numerical String */
+#घोषणा ASN1_PRNSTR	19	/* Prपूर्णांकable String */
+#घोषणा ASN1_TEXSTR	20	/* Teletext String */
+#घोषणा ASN1_VIDSTR	21	/* Video String */
+#घोषणा ASN1_IA5STR	22	/* IA5 String */
+#घोषणा ASN1_UNITIM	23	/* Universal Time */
+#घोषणा ASN1_GENTIM	24	/* General Time */
+#घोषणा ASN1_GRASTR	25	/* Graphical String */
+#घोषणा ASN1_VISSTR	26	/* Visible String */
+#घोषणा ASN1_GENSTR	27	/* General String */
 
-/* Primitive / Constructed methods*/
-#define ASN1_PRI	0	/* Primitive */
-#define ASN1_CON	1	/* Constructed */
+/* Primitive / Conकाष्ठाed methods*/
+#घोषणा ASN1_PRI	0	/* Primitive */
+#घोषणा ASN1_CON	1	/* Conकाष्ठाed */
 
 /*
  * Error codes.
  */
-#define ASN1_ERR_NOERROR		0
-#define ASN1_ERR_DEC_EMPTY		2
-#define ASN1_ERR_DEC_EOC_MISMATCH	3
-#define ASN1_ERR_DEC_LENGTH_MISMATCH	4
-#define ASN1_ERR_DEC_BADVALUE		5
+#घोषणा ASN1_ERR_NOERROR		0
+#घोषणा ASN1_ERR_DEC_EMPTY		2
+#घोषणा ASN1_ERR_DEC_EOC_MISMATCH	3
+#घोषणा ASN1_ERR_DEC_LENGTH_MISMATCH	4
+#घोषणा ASN1_ERR_DEC_BADVALUE		5
 
-#define SPNEGO_OID_LEN 7
-#define NTLMSSP_OID_LEN  10
-#define KRB5_OID_LEN  7
-#define KRB5U2U_OID_LEN  8
-#define MSKRB5_OID_LEN  7
-static unsigned long SPNEGO_OID[7] = { 1, 3, 6, 1, 5, 5, 2 };
-static unsigned long NTLMSSP_OID[10] = { 1, 3, 6, 1, 4, 1, 311, 2, 2, 10 };
-static unsigned long KRB5_OID[7] = { 1, 2, 840, 113554, 1, 2, 2 };
-static unsigned long KRB5U2U_OID[8] = { 1, 2, 840, 113554, 1, 2, 2, 3 };
-static unsigned long MSKRB5_OID[7] = { 1, 2, 840, 48018, 1, 2, 2 };
+#घोषणा SPNEGO_OID_LEN 7
+#घोषणा NTLMSSP_OID_LEN  10
+#घोषणा KRB5_OID_LEN  7
+#घोषणा KRB5U2U_OID_LEN  8
+#घोषणा MSKRB5_OID_LEN  7
+अटल अचिन्हित दीर्घ SPNEGO_OID[7] = अणु 1, 3, 6, 1, 5, 5, 2 पूर्ण;
+अटल अचिन्हित दीर्घ NTLMSSP_OID[10] = अणु 1, 3, 6, 1, 4, 1, 311, 2, 2, 10 पूर्ण;
+अटल अचिन्हित दीर्घ KRB5_OID[7] = अणु 1, 2, 840, 113554, 1, 2, 2 पूर्ण;
+अटल अचिन्हित दीर्घ KRB5U2U_OID[8] = अणु 1, 2, 840, 113554, 1, 2, 2, 3 पूर्ण;
+अटल अचिन्हित दीर्घ MSKRB5_OID[7] = अणु 1, 2, 840, 48018, 1, 2, 2 पूर्ण;
 
 /*
  * ASN.1 context.
  */
-struct asn1_ctx {
-	int error;		/* Error condition */
-	unsigned char *pointer;	/* Octet just to be decoded */
-	unsigned char *begin;	/* First octet */
-	unsigned char *end;	/* Octet after last octet */
-};
+काष्ठा asn1_ctx अणु
+	पूर्णांक error;		/* Error condition */
+	अचिन्हित अक्षर *poपूर्णांकer;	/* Octet just to be decoded */
+	अचिन्हित अक्षर *begin;	/* First octet */
+	अचिन्हित अक्षर *end;	/* Octet after last octet */
+पूर्ण;
 
 /*
  * Octet string (not null terminated)
  */
-struct asn1_octstr {
-	unsigned char *data;
-	unsigned int len;
-};
+काष्ठा asn1_octstr अणु
+	अचिन्हित अक्षर *data;
+	अचिन्हित पूर्णांक len;
+पूर्ण;
 
-static void
-asn1_open(struct asn1_ctx *ctx, unsigned char *buf, unsigned int len)
-{
+अटल व्योम
+asn1_खोलो(काष्ठा asn1_ctx *ctx, अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक len)
+अणु
 	ctx->begin = buf;
 	ctx->end = buf + len;
-	ctx->pointer = buf;
+	ctx->poपूर्णांकer = buf;
 	ctx->error = ASN1_ERR_NOERROR;
-}
+पूर्ण
 
-static unsigned char
-asn1_octet_decode(struct asn1_ctx *ctx, unsigned char *ch)
-{
-	if (ctx->pointer >= ctx->end) {
+अटल अचिन्हित अक्षर
+asn1_octet_decode(काष्ठा asn1_ctx *ctx, अचिन्हित अक्षर *ch)
+अणु
+	अगर (ctx->poपूर्णांकer >= ctx->end) अणु
 		ctx->error = ASN1_ERR_DEC_EMPTY;
-		return 0;
-	}
-	*ch = *(ctx->pointer)++;
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+	*ch = *(ctx->poपूर्णांकer)++;
+	वापस 1;
+पूर्ण
 
-#if 0 /* will be needed later by spnego decoding/encoding of ntlmssp */
-static unsigned char
-asn1_enum_decode(struct asn1_ctx *ctx, __le32 *val)
-{
-	unsigned char ch;
+#अगर 0 /* will be needed later by spnego decoding/encoding of ntlmssp */
+अटल अचिन्हित अक्षर
+asn1_क्रमागत_decode(काष्ठा asn1_ctx *ctx, __le32 *val)
+अणु
+	अचिन्हित अक्षर ch;
 
-	if (ctx->pointer >= ctx->end) {
+	अगर (ctx->poपूर्णांकer >= ctx->end) अणु
 		ctx->error = ASN1_ERR_DEC_EMPTY;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ch = *(ctx->pointer)++; /* ch has 0xa, ptr points to length octet */
-	if ((ch) == ASN1_ENUM)  /* if ch value is ENUM, 0xa */
-		*val = *(++(ctx->pointer)); /* value has enum value */
-	else
-		return 0;
+	ch = *(ctx->poपूर्णांकer)++; /* ch has 0xa, ptr poपूर्णांकs to length octet */
+	अगर ((ch) == ASN1_ENUM)  /* अगर ch value is ENUM, 0xa */
+		*val = *(++(ctx->poपूर्णांकer)); /* value has क्रमागत value */
+	अन्यथा
+		वापस 0;
 
-	ctx->pointer++;
-	return 1;
-}
-#endif
+	ctx->poपूर्णांकer++;
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर
 
-static unsigned char
-asn1_tag_decode(struct asn1_ctx *ctx, unsigned int *tag)
-{
-	unsigned char ch;
+अटल अचिन्हित अक्षर
+asn1_tag_decode(काष्ठा asn1_ctx *ctx, अचिन्हित पूर्णांक *tag)
+अणु
+	अचिन्हित अक्षर ch;
 
 	*tag = 0;
 
-	do {
-		if (!asn1_octet_decode(ctx, &ch))
-			return 0;
+	करो अणु
+		अगर (!asn1_octet_decode(ctx, &ch))
+			वापस 0;
 		*tag <<= 7;
 		*tag |= ch & 0x7F;
-	} while ((ch & 0x80) == 0x80);
-	return 1;
-}
+	पूर्ण जबतक ((ch & 0x80) == 0x80);
+	वापस 1;
+पूर्ण
 
-static unsigned char
-asn1_id_decode(struct asn1_ctx *ctx,
-	       unsigned int *cls, unsigned int *con, unsigned int *tag)
-{
-	unsigned char ch;
+अटल अचिन्हित अक्षर
+asn1_id_decode(काष्ठा asn1_ctx *ctx,
+	       अचिन्हित पूर्णांक *cls, अचिन्हित पूर्णांक *con, अचिन्हित पूर्णांक *tag)
+अणु
+	अचिन्हित अक्षर ch;
 
-	if (!asn1_octet_decode(ctx, &ch))
-		return 0;
+	अगर (!asn1_octet_decode(ctx, &ch))
+		वापस 0;
 
 	*cls = (ch & 0xC0) >> 6;
 	*con = (ch & 0x20) >> 5;
 	*tag = (ch & 0x1F);
 
-	if (*tag == 0x1F) {
-		if (!asn1_tag_decode(ctx, tag))
-			return 0;
-	}
-	return 1;
-}
+	अगर (*tag == 0x1F) अणु
+		अगर (!asn1_tag_decode(ctx, tag))
+			वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static unsigned char
-asn1_length_decode(struct asn1_ctx *ctx, unsigned int *def, unsigned int *len)
-{
-	unsigned char ch, cnt;
+अटल अचिन्हित अक्षर
+asn1_length_decode(काष्ठा asn1_ctx *ctx, अचिन्हित पूर्णांक *def, अचिन्हित पूर्णांक *len)
+अणु
+	अचिन्हित अक्षर ch, cnt;
 
-	if (!asn1_octet_decode(ctx, &ch))
-		return 0;
+	अगर (!asn1_octet_decode(ctx, &ch))
+		वापस 0;
 
-	if (ch == 0x80)
+	अगर (ch == 0x80)
 		*def = 0;
-	else {
+	अन्यथा अणु
 		*def = 1;
 
-		if (ch < 0x80)
+		अगर (ch < 0x80)
 			*len = ch;
-		else {
-			cnt = (unsigned char) (ch & 0x7F);
+		अन्यथा अणु
+			cnt = (अचिन्हित अक्षर) (ch & 0x7F);
 			*len = 0;
 
-			while (cnt > 0) {
-				if (!asn1_octet_decode(ctx, &ch))
-					return 0;
+			जबतक (cnt > 0) अणु
+				अगर (!asn1_octet_decode(ctx, &ch))
+					वापस 0;
 				*len <<= 8;
 				*len |= ch;
 				cnt--;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* don't trust len bigger than ctx buffer */
-	if (*len > ctx->end - ctx->pointer)
-		return 0;
+	/* करोn't trust len bigger than ctx buffer */
+	अगर (*len > ctx->end - ctx->poपूर्णांकer)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static unsigned char
-asn1_header_decode(struct asn1_ctx *ctx,
-		   unsigned char **eoc,
-		   unsigned int *cls, unsigned int *con, unsigned int *tag)
-{
-	unsigned int def = 0;
-	unsigned int len = 0;
+अटल अचिन्हित अक्षर
+asn1_header_decode(काष्ठा asn1_ctx *ctx,
+		   अचिन्हित अक्षर **eoc,
+		   अचिन्हित पूर्णांक *cls, अचिन्हित पूर्णांक *con, अचिन्हित पूर्णांक *tag)
+अणु
+	अचिन्हित पूर्णांक def = 0;
+	अचिन्हित पूर्णांक len = 0;
 
-	if (!asn1_id_decode(ctx, cls, con, tag))
-		return 0;
+	अगर (!asn1_id_decode(ctx, cls, con, tag))
+		वापस 0;
 
-	if (!asn1_length_decode(ctx, &def, &len))
-		return 0;
+	अगर (!asn1_length_decode(ctx, &def, &len))
+		वापस 0;
 
-	/* primitive shall be definite, indefinite shall be constructed */
-	if (*con == ASN1_PRI && !def)
-		return 0;
+	/* primitive shall be definite, indefinite shall be स्थिरructed */
+	अगर (*con == ASN1_PRI && !def)
+		वापस 0;
 
-	if (def)
-		*eoc = ctx->pointer + len;
-	else
-		*eoc = NULL;
-	return 1;
-}
+	अगर (def)
+		*eoc = ctx->poपूर्णांकer + len;
+	अन्यथा
+		*eoc = शून्य;
+	वापस 1;
+पूर्ण
 
-static unsigned char
-asn1_eoc_decode(struct asn1_ctx *ctx, unsigned char *eoc)
-{
-	unsigned char ch;
+अटल अचिन्हित अक्षर
+asn1_eoc_decode(काष्ठा asn1_ctx *ctx, अचिन्हित अक्षर *eoc)
+अणु
+	अचिन्हित अक्षर ch;
 
-	if (eoc == NULL) {
-		if (!asn1_octet_decode(ctx, &ch))
-			return 0;
+	अगर (eoc == शून्य) अणु
+		अगर (!asn1_octet_decode(ctx, &ch))
+			वापस 0;
 
-		if (ch != 0x00) {
+		अगर (ch != 0x00) अणु
 			ctx->error = ASN1_ERR_DEC_EOC_MISMATCH;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		if (!asn1_octet_decode(ctx, &ch))
-			return 0;
+		अगर (!asn1_octet_decode(ctx, &ch))
+			वापस 0;
 
-		if (ch != 0x00) {
+		अगर (ch != 0x00) अणु
 			ctx->error = ASN1_ERR_DEC_EOC_MISMATCH;
-			return 0;
-		}
-		return 1;
-	} else {
-		if (ctx->pointer != eoc) {
+			वापस 0;
+		पूर्ण
+		वापस 1;
+	पूर्ण अन्यथा अणु
+		अगर (ctx->poपूर्णांकer != eoc) अणु
 			ctx->error = ASN1_ERR_DEC_LENGTH_MISMATCH;
-			return 0;
-		}
-		return 1;
-	}
-}
+			वापस 0;
+		पूर्ण
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-/* static unsigned char asn1_null_decode(struct asn1_ctx *ctx,
-				      unsigned char *eoc)
-{
-	ctx->pointer = eoc;
-	return 1;
-}
+/* अटल अचिन्हित अक्षर asn1_null_decode(काष्ठा asn1_ctx *ctx,
+				      अचिन्हित अक्षर *eoc)
+अणु
+	ctx->poपूर्णांकer = eoc;
+	वापस 1;
+पूर्ण
 
-static unsigned char asn1_long_decode(struct asn1_ctx *ctx,
-				      unsigned char *eoc, long *integer)
-{
-	unsigned char ch;
-	unsigned int len;
+अटल अचिन्हित अक्षर asn1_दीर्घ_decode(काष्ठा asn1_ctx *ctx,
+				      अचिन्हित अक्षर *eoc, दीर्घ *पूर्णांकeger)
+अणु
+	अचिन्हित अक्षर ch;
+	अचिन्हित पूर्णांक len;
 
-	if (!asn1_octet_decode(ctx, &ch))
-		return 0;
+	अगर (!asn1_octet_decode(ctx, &ch))
+		वापस 0;
 
-	*integer = (signed char) ch;
+	*पूर्णांकeger = (चिन्हित अक्षर) ch;
 	len = 1;
 
-	while (ctx->pointer < eoc) {
-		if (++len > sizeof(long)) {
+	जबतक (ctx->poपूर्णांकer < eoc) अणु
+		अगर (++len > माप(दीर्घ)) अणु
 			ctx->error = ASN1_ERR_DEC_BADVALUE;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		if (!asn1_octet_decode(ctx, &ch))
-			return 0;
+		अगर (!asn1_octet_decode(ctx, &ch))
+			वापस 0;
 
-		*integer <<= 8;
-		*integer |= ch;
-	}
-	return 1;
-}
+		*पूर्णांकeger <<= 8;
+		*पूर्णांकeger |= ch;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static unsigned char asn1_uint_decode(struct asn1_ctx *ctx,
-				      unsigned char *eoc,
-				      unsigned int *integer)
-{
-	unsigned char ch;
-	unsigned int len;
+अटल अचिन्हित अक्षर asn1_uपूर्णांक_decode(काष्ठा asn1_ctx *ctx,
+				      अचिन्हित अक्षर *eoc,
+				      अचिन्हित पूर्णांक *पूर्णांकeger)
+अणु
+	अचिन्हित अक्षर ch;
+	अचिन्हित पूर्णांक len;
 
-	if (!asn1_octet_decode(ctx, &ch))
-		return 0;
+	अगर (!asn1_octet_decode(ctx, &ch))
+		वापस 0;
 
-	*integer = ch;
-	if (ch == 0)
+	*पूर्णांकeger = ch;
+	अगर (ch == 0)
 		len = 0;
-	else
+	अन्यथा
 		len = 1;
 
-	while (ctx->pointer < eoc) {
-		if (++len > sizeof(unsigned int)) {
+	जबतक (ctx->poपूर्णांकer < eoc) अणु
+		अगर (++len > माप(अचिन्हित पूर्णांक)) अणु
 			ctx->error = ASN1_ERR_DEC_BADVALUE;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		if (!asn1_octet_decode(ctx, &ch))
-			return 0;
+		अगर (!asn1_octet_decode(ctx, &ch))
+			वापस 0;
 
-		*integer <<= 8;
-		*integer |= ch;
-	}
-	return 1;
-}
+		*पूर्णांकeger <<= 8;
+		*पूर्णांकeger |= ch;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static unsigned char asn1_ulong_decode(struct asn1_ctx *ctx,
-				       unsigned char *eoc,
-				       unsigned long *integer)
-{
-	unsigned char ch;
-	unsigned int len;
+अटल अचिन्हित अक्षर asn1_uदीर्घ_decode(काष्ठा asn1_ctx *ctx,
+				       अचिन्हित अक्षर *eoc,
+				       अचिन्हित दीर्घ *पूर्णांकeger)
+अणु
+	अचिन्हित अक्षर ch;
+	अचिन्हित पूर्णांक len;
 
-	if (!asn1_octet_decode(ctx, &ch))
-		return 0;
+	अगर (!asn1_octet_decode(ctx, &ch))
+		वापस 0;
 
-	*integer = ch;
-	if (ch == 0)
+	*पूर्णांकeger = ch;
+	अगर (ch == 0)
 		len = 0;
-	else
+	अन्यथा
 		len = 1;
 
-	while (ctx->pointer < eoc) {
-		if (++len > sizeof(unsigned long)) {
+	जबतक (ctx->poपूर्णांकer < eoc) अणु
+		अगर (++len > माप(अचिन्हित दीर्घ)) अणु
 			ctx->error = ASN1_ERR_DEC_BADVALUE;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		if (!asn1_octet_decode(ctx, &ch))
-			return 0;
+		अगर (!asn1_octet_decode(ctx, &ch))
+			वापस 0;
 
-		*integer <<= 8;
-		*integer |= ch;
-	}
-	return 1;
-}
+		*पूर्णांकeger <<= 8;
+		*पूर्णांकeger |= ch;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static unsigned char
-asn1_octets_decode(struct asn1_ctx *ctx,
-		   unsigned char *eoc,
-		   unsigned char **octets, unsigned int *len)
-{
-	unsigned char *ptr;
+अटल अचिन्हित अक्षर
+asn1_octets_decode(काष्ठा asn1_ctx *ctx,
+		   अचिन्हित अक्षर *eoc,
+		   अचिन्हित अक्षर **octets, अचिन्हित पूर्णांक *len)
+अणु
+	अचिन्हित अक्षर *ptr;
 
 	*len = 0;
 
-	*octets = kmalloc(eoc - ctx->pointer, GFP_ATOMIC);
-	if (*octets == NULL) {
-		return 0;
-	}
+	*octets = kदो_स्मृति(eoc - ctx->poपूर्णांकer, GFP_ATOMIC);
+	अगर (*octets == शून्य) अणु
+		वापस 0;
+	पूर्ण
 
 	ptr = *octets;
-	while (ctx->pointer < eoc) {
-		if (!asn1_octet_decode(ctx, (unsigned char *) ptr++)) {
-			kfree(*octets);
-			*octets = NULL;
-			return 0;
-		}
+	जबतक (ctx->poपूर्णांकer < eoc) अणु
+		अगर (!asn1_octet_decode(ctx, (अचिन्हित अक्षर *) ptr++)) अणु
+			kमुक्त(*octets);
+			*octets = शून्य;
+			वापस 0;
+		पूर्ण
 		(*len)++;
-	}
-	return 1;
-} */
+	पूर्ण
+	वापस 1;
+पूर्ण */
 
-static unsigned char
-asn1_subid_decode(struct asn1_ctx *ctx, unsigned long *subid)
-{
-	unsigned char ch;
+अटल अचिन्हित अक्षर
+asn1_subid_decode(काष्ठा asn1_ctx *ctx, अचिन्हित दीर्घ *subid)
+अणु
+	अचिन्हित अक्षर ch;
 
 	*subid = 0;
 
-	do {
-		if (!asn1_octet_decode(ctx, &ch))
-			return 0;
+	करो अणु
+		अगर (!asn1_octet_decode(ctx, &ch))
+			वापस 0;
 
 		*subid <<= 7;
 		*subid |= ch & 0x7F;
-	} while ((ch & 0x80) == 0x80);
-	return 1;
-}
+	पूर्ण जबतक ((ch & 0x80) == 0x80);
+	वापस 1;
+पूर्ण
 
-static int
-asn1_oid_decode(struct asn1_ctx *ctx,
-		unsigned char *eoc, unsigned long **oid, unsigned int *len)
-{
-	unsigned long subid;
-	unsigned int size;
-	unsigned long *optr;
+अटल पूर्णांक
+asn1_oid_decode(काष्ठा asn1_ctx *ctx,
+		अचिन्हित अक्षर *eoc, अचिन्हित दीर्घ **oid, अचिन्हित पूर्णांक *len)
+अणु
+	अचिन्हित दीर्घ subid;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित दीर्घ *optr;
 
-	size = eoc - ctx->pointer + 1;
+	size = eoc - ctx->poपूर्णांकer + 1;
 
 	/* first subid actually encodes first two subids */
-	if (size < 2 || size > UINT_MAX/sizeof(unsigned long))
-		return 0;
+	अगर (size < 2 || size > अच_पूर्णांक_उच्च/माप(अचिन्हित दीर्घ))
+		वापस 0;
 
-	*oid = kmalloc_array(size, sizeof(unsigned long), GFP_ATOMIC);
-	if (*oid == NULL)
-		return 0;
+	*oid = kदो_स्मृति_array(size, माप(अचिन्हित दीर्घ), GFP_ATOMIC);
+	अगर (*oid == शून्य)
+		वापस 0;
 
 	optr = *oid;
 
-	if (!asn1_subid_decode(ctx, &subid)) {
-		kfree(*oid);
-		*oid = NULL;
-		return 0;
-	}
+	अगर (!asn1_subid_decode(ctx, &subid)) अणु
+		kमुक्त(*oid);
+		*oid = शून्य;
+		वापस 0;
+	पूर्ण
 
-	if (subid < 40) {
+	अगर (subid < 40) अणु
 		optr[0] = 0;
 		optr[1] = subid;
-	} else if (subid < 80) {
+	पूर्ण अन्यथा अगर (subid < 80) अणु
 		optr[0] = 1;
 		optr[1] = subid - 40;
-	} else {
+	पूर्ण अन्यथा अणु
 		optr[0] = 2;
 		optr[1] = subid - 80;
-	}
+	पूर्ण
 
 	*len = 2;
 	optr += 2;
 
-	while (ctx->pointer < eoc) {
-		if (++(*len) > size) {
+	जबतक (ctx->poपूर्णांकer < eoc) अणु
+		अगर (++(*len) > size) अणु
 			ctx->error = ASN1_ERR_DEC_BADVALUE;
-			kfree(*oid);
-			*oid = NULL;
-			return 0;
-		}
+			kमुक्त(*oid);
+			*oid = शून्य;
+			वापस 0;
+		पूर्ण
 
-		if (!asn1_subid_decode(ctx, optr++)) {
-			kfree(*oid);
-			*oid = NULL;
-			return 0;
-		}
-	}
-	return 1;
-}
+		अगर (!asn1_subid_decode(ctx, optr++)) अणु
+			kमुक्त(*oid);
+			*oid = शून्य;
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int
-compare_oid(unsigned long *oid1, unsigned int oid1len,
-	    unsigned long *oid2, unsigned int oid2len)
-{
-	unsigned int i;
+अटल पूर्णांक
+compare_oid(अचिन्हित दीर्घ *oid1, अचिन्हित पूर्णांक oid1len,
+	    अचिन्हित दीर्घ *oid2, अचिन्हित पूर्णांक oid2len)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (oid1len != oid2len)
-		return 0;
-	else {
-		for (i = 0; i < oid1len; i++) {
-			if (oid1[i] != oid2[i])
-				return 0;
-		}
-		return 1;
-	}
-}
+	अगर (oid1len != oid2len)
+		वापस 0;
+	अन्यथा अणु
+		क्रम (i = 0; i < oid1len; i++) अणु
+			अगर (oid1[i] != oid2[i])
+				वापस 0;
+		पूर्ण
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-	/* BB check for endian conversion issues here */
+	/* BB check क्रम endian conversion issues here */
 
-int
-decode_negTokenInit(unsigned char *security_blob, int length,
-		    struct TCP_Server_Info *server)
-{
-	struct asn1_ctx ctx;
-	unsigned char *end;
-	unsigned char *sequence_end;
-	unsigned long *oid = NULL;
-	unsigned int cls, con, tag, oidlen, rc;
+पूर्णांक
+decode_negTokenInit(अचिन्हित अक्षर *security_blob, पूर्णांक length,
+		    काष्ठा TCP_Server_Info *server)
+अणु
+	काष्ठा asn1_ctx ctx;
+	अचिन्हित अक्षर *end;
+	अचिन्हित अक्षर *sequence_end;
+	अचिन्हित दीर्घ *oid = शून्य;
+	अचिन्हित पूर्णांक cls, con, tag, oidlen, rc;
 
-	/* cifs_dump_mem(" Received SecBlob ", security_blob, length); */
+	/* cअगरs_dump_mem(" Received SecBlob ", security_blob, length); */
 
-	asn1_open(&ctx, security_blob, length);
+	asn1_खोलो(&ctx, security_blob, length);
 
 	/* GSSAPI header */
-	if (asn1_header_decode(&ctx, &end, &cls, &con, &tag) == 0) {
-		cifs_dbg(FYI, "Error decoding negTokenInit header\n");
-		return 0;
-	} else if ((cls != ASN1_APL) || (con != ASN1_CON)
-		   || (tag != ASN1_EOC)) {
-		cifs_dbg(FYI, "cls = %d con = %d tag = %d\n", cls, con, tag);
-		return 0;
-	}
+	अगर (asn1_header_decode(&ctx, &end, &cls, &con, &tag) == 0) अणु
+		cअगरs_dbg(FYI, "Error decoding negTokenInit header\n");
+		वापस 0;
+	पूर्ण अन्यथा अगर ((cls != ASN1_APL) || (con != ASN1_CON)
+		   || (tag != ASN1_EOC)) अणु
+		cअगरs_dbg(FYI, "cls = %d con = %d tag = %d\n", cls, con, tag);
+		वापस 0;
+	पूर्ण
 
-	/* Check for SPNEGO OID -- remember to free obj->oid */
+	/* Check क्रम SPNEGO OID -- remember to मुक्त obj->oid */
 	rc = asn1_header_decode(&ctx, &end, &cls, &con, &tag);
-	if (rc) {
-		if ((tag == ASN1_OJI) && (con == ASN1_PRI) &&
-		    (cls == ASN1_UNI)) {
+	अगर (rc) अणु
+		अगर ((tag == ASN1_OJI) && (con == ASN1_PRI) &&
+		    (cls == ASN1_UNI)) अणु
 			rc = asn1_oid_decode(&ctx, end, &oid, &oidlen);
-			if (rc) {
+			अगर (rc) अणु
 				rc = compare_oid(oid, oidlen, SPNEGO_OID,
 						 SPNEGO_OID_LEN);
-				kfree(oid);
-			}
-		} else
+				kमुक्त(oid);
+			पूर्ण
+		पूर्ण अन्यथा
 			rc = 0;
-	}
+	पूर्ण
 
 	/* SPNEGO OID not present or garbled -- bail out */
-	if (!rc) {
-		cifs_dbg(FYI, "Error decoding negTokenInit header\n");
-		return 0;
-	}
+	अगर (!rc) अणु
+		cअगरs_dbg(FYI, "Error decoding negTokenInit header\n");
+		वापस 0;
+	पूर्ण
 
 	/* SPNEGO */
-	if (asn1_header_decode(&ctx, &end, &cls, &con, &tag) == 0) {
-		cifs_dbg(FYI, "Error decoding negTokenInit\n");
-		return 0;
-	} else if ((cls != ASN1_CTX) || (con != ASN1_CON)
-		   || (tag != ASN1_EOC)) {
-		cifs_dbg(FYI, "cls = %d con = %d tag = %d end = %p exit 0\n",
+	अगर (asn1_header_decode(&ctx, &end, &cls, &con, &tag) == 0) अणु
+		cअगरs_dbg(FYI, "Error decoding negTokenInit\n");
+		वापस 0;
+	पूर्ण अन्यथा अगर ((cls != ASN1_CTX) || (con != ASN1_CON)
+		   || (tag != ASN1_EOC)) अणु
+		cअगरs_dbg(FYI, "cls = %d con = %d tag = %d end = %p exit 0\n",
 			 cls, con, tag, end);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* negTokenInit */
-	if (asn1_header_decode(&ctx, &end, &cls, &con, &tag) == 0) {
-		cifs_dbg(FYI, "Error decoding negTokenInit\n");
-		return 0;
-	} else if ((cls != ASN1_UNI) || (con != ASN1_CON)
-		   || (tag != ASN1_SEQ)) {
-		cifs_dbg(FYI, "cls = %d con = %d tag = %d end = %p exit 1\n",
+	अगर (asn1_header_decode(&ctx, &end, &cls, &con, &tag) == 0) अणु
+		cअगरs_dbg(FYI, "Error decoding negTokenInit\n");
+		वापस 0;
+	पूर्ण अन्यथा अगर ((cls != ASN1_UNI) || (con != ASN1_CON)
+		   || (tag != ASN1_SEQ)) अणु
+		cअगरs_dbg(FYI, "cls = %d con = %d tag = %d end = %p exit 1\n",
 			 cls, con, tag, end);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* sequence */
-	if (asn1_header_decode(&ctx, &end, &cls, &con, &tag) == 0) {
-		cifs_dbg(FYI, "Error decoding 2nd part of negTokenInit\n");
-		return 0;
-	} else if ((cls != ASN1_CTX) || (con != ASN1_CON)
-		   || (tag != ASN1_EOC)) {
-		cifs_dbg(FYI, "cls = %d con = %d tag = %d end = %p exit 0\n",
+	अगर (asn1_header_decode(&ctx, &end, &cls, &con, &tag) == 0) अणु
+		cअगरs_dbg(FYI, "Error decoding 2nd part of negTokenInit\n");
+		वापस 0;
+	पूर्ण अन्यथा अगर ((cls != ASN1_CTX) || (con != ASN1_CON)
+		   || (tag != ASN1_EOC)) अणु
+		cअगरs_dbg(FYI, "cls = %d con = %d tag = %d end = %p exit 0\n",
 			 cls, con, tag, end);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* sequence of */
-	if (asn1_header_decode
-	    (&ctx, &sequence_end, &cls, &con, &tag) == 0) {
-		cifs_dbg(FYI, "Error decoding 2nd part of negTokenInit\n");
-		return 0;
-	} else if ((cls != ASN1_UNI) || (con != ASN1_CON)
-		   || (tag != ASN1_SEQ)) {
-		cifs_dbg(FYI, "cls = %d con = %d tag = %d sequence_end = %p exit 1\n",
+	अगर (asn1_header_decode
+	    (&ctx, &sequence_end, &cls, &con, &tag) == 0) अणु
+		cअगरs_dbg(FYI, "Error decoding 2nd part of negTokenInit\n");
+		वापस 0;
+	पूर्ण अन्यथा अगर ((cls != ASN1_UNI) || (con != ASN1_CON)
+		   || (tag != ASN1_SEQ)) अणु
+		cअगरs_dbg(FYI, "cls = %d con = %d tag = %d sequence_end = %p exit 1\n",
 			 cls, con, tag, sequence_end);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* list of security mechanisms */
-	while (!asn1_eoc_decode(&ctx, sequence_end)) {
+	जबतक (!asn1_eoc_decode(&ctx, sequence_end)) अणु
 		rc = asn1_header_decode(&ctx, &end, &cls, &con, &tag);
-		if (!rc) {
-			cifs_dbg(FYI, "Error decoding negTokenInit hdr exit2\n");
-			return 0;
-		}
-		if ((tag == ASN1_OJI) && (con == ASN1_PRI)) {
-			if (asn1_oid_decode(&ctx, end, &oid, &oidlen)) {
+		अगर (!rc) अणु
+			cअगरs_dbg(FYI, "Error decoding negTokenInit hdr exit2\n");
+			वापस 0;
+		पूर्ण
+		अगर ((tag == ASN1_OJI) && (con == ASN1_PRI)) अणु
+			अगर (asn1_oid_decode(&ctx, end, &oid, &oidlen)) अणु
 
-				cifs_dbg(FYI, "OID len = %d oid = 0x%lx 0x%lx 0x%lx 0x%lx\n",
+				cअगरs_dbg(FYI, "OID len = %d oid = 0x%lx 0x%lx 0x%lx 0x%lx\n",
 					 oidlen, *oid, *(oid + 1), *(oid + 2),
 					 *(oid + 3));
 
-				if (compare_oid(oid, oidlen, MSKRB5_OID,
+				अगर (compare_oid(oid, oidlen, MSKRB5_OID,
 						MSKRB5_OID_LEN))
 					server->sec_mskerberos = true;
-				else if (compare_oid(oid, oidlen, KRB5U2U_OID,
+				अन्यथा अगर (compare_oid(oid, oidlen, KRB5U2U_OID,
 						     KRB5U2U_OID_LEN))
 					server->sec_kerberosu2u = true;
-				else if (compare_oid(oid, oidlen, KRB5_OID,
+				अन्यथा अगर (compare_oid(oid, oidlen, KRB5_OID,
 						     KRB5_OID_LEN))
 					server->sec_kerberos = true;
-				else if (compare_oid(oid, oidlen, NTLMSSP_OID,
+				अन्यथा अगर (compare_oid(oid, oidlen, NTLMSSP_OID,
 						     NTLMSSP_OID_LEN))
 					server->sec_ntlmssp = true;
 
-				kfree(oid);
-			}
-		} else {
-			cifs_dbg(FYI, "Should be an oid what is going on?\n");
-		}
-	}
+				kमुक्त(oid);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			cअगरs_dbg(FYI, "Should be an oid what is going on?\n");
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * We currently ignore anything at the end of the SPNEGO blob after
 	 * the mechTypes have been parsed, since none of that info is
 	 * used at the moment.
 	 */
-	return 1;
-}
+	वापस 1;
+पूर्ण

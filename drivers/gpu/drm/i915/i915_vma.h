@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,307 +23,307 @@
  *
  */
 
-#ifndef __I915_VMA_H__
-#define __I915_VMA_H__
+#अगर_अघोषित __I915_VMA_H__
+#घोषणा __I915_VMA_H__
 
-#include <linux/io-mapping.h>
-#include <linux/rbtree.h>
+#समावेश <linux/io-mapping.h>
+#समावेश <linux/rbtree.h>
 
-#include <drm/drm_mm.h>
+#समावेश <drm/drm_mm.h>
 
-#include "gt/intel_ggtt_fencing.h"
-#include "gem/i915_gem_object.h"
+#समावेश "gt/intel_ggtt_fencing.h"
+#समावेश "gem/i915_gem_object.h"
 
-#include "i915_gem_gtt.h"
+#समावेश "i915_gem_gtt.h"
 
-#include "i915_active.h"
-#include "i915_request.h"
-#include "i915_vma_types.h"
+#समावेश "i915_active.h"
+#समावेश "i915_request.h"
+#समावेश "i915_vma_types.h"
 
-struct i915_vma *
-i915_vma_instance(struct drm_i915_gem_object *obj,
-		  struct i915_address_space *vm,
-		  const struct i915_ggtt_view *view);
+काष्ठा i915_vma *
+i915_vma_instance(काष्ठा drm_i915_gem_object *obj,
+		  काष्ठा i915_address_space *vm,
+		  स्थिर काष्ठा i915_ggtt_view *view);
 
-void i915_vma_unpin_and_release(struct i915_vma **p_vma, unsigned int flags);
-#define I915_VMA_RELEASE_MAP BIT(0)
+व्योम i915_vma_unpin_and_release(काष्ठा i915_vma **p_vma, अचिन्हित पूर्णांक flags);
+#घोषणा I915_VMA_RELEASE_MAP BIT(0)
 
-static inline bool i915_vma_is_active(const struct i915_vma *vma)
-{
-	return !i915_active_is_idle(&vma->active);
-}
+अटल अंतरभूत bool i915_vma_is_active(स्थिर काष्ठा i915_vma *vma)
+अणु
+	वापस !i915_active_is_idle(&vma->active);
+पूर्ण
 
-/* do not reserve memory to prevent deadlocks */
-#define __EXEC_OBJECT_NO_RESERVE BIT(31)
+/* करो not reserve memory to prevent deadlocks */
+#घोषणा __EXEC_OBJECT_NO_RESERVE BIT(31)
 
-int __must_check __i915_vma_move_to_active(struct i915_vma *vma,
-					   struct i915_request *rq);
-int __must_check i915_vma_move_to_active(struct i915_vma *vma,
-					 struct i915_request *rq,
-					 unsigned int flags);
+पूर्णांक __must_check __i915_vma_move_to_active(काष्ठा i915_vma *vma,
+					   काष्ठा i915_request *rq);
+पूर्णांक __must_check i915_vma_move_to_active(काष्ठा i915_vma *vma,
+					 काष्ठा i915_request *rq,
+					 अचिन्हित पूर्णांक flags);
 
-#define __i915_vma_flags(v) ((unsigned long *)&(v)->flags.counter)
+#घोषणा __i915_vma_flags(v) ((अचिन्हित दीर्घ *)&(v)->flags.counter)
 
-static inline bool i915_vma_is_ggtt(const struct i915_vma *vma)
-{
-	return test_bit(I915_VMA_GGTT_BIT, __i915_vma_flags(vma));
-}
+अटल अंतरभूत bool i915_vma_is_ggtt(स्थिर काष्ठा i915_vma *vma)
+अणु
+	वापस test_bit(I915_VMA_GGTT_BIT, __i915_vma_flags(vma));
+पूर्ण
 
-static inline bool i915_vma_has_ggtt_write(const struct i915_vma *vma)
-{
-	return test_bit(I915_VMA_GGTT_WRITE_BIT, __i915_vma_flags(vma));
-}
+अटल अंतरभूत bool i915_vma_has_ggtt_ग_लिखो(स्थिर काष्ठा i915_vma *vma)
+अणु
+	वापस test_bit(I915_VMA_GGTT_WRITE_BIT, __i915_vma_flags(vma));
+पूर्ण
 
-static inline void i915_vma_set_ggtt_write(struct i915_vma *vma)
-{
+अटल अंतरभूत व्योम i915_vma_set_ggtt_ग_लिखो(काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(!i915_vma_is_ggtt(vma));
 	set_bit(I915_VMA_GGTT_WRITE_BIT, __i915_vma_flags(vma));
-}
+पूर्ण
 
-static inline bool i915_vma_unset_ggtt_write(struct i915_vma *vma)
-{
-	return test_and_clear_bit(I915_VMA_GGTT_WRITE_BIT,
+अटल अंतरभूत bool i915_vma_unset_ggtt_ग_लिखो(काष्ठा i915_vma *vma)
+अणु
+	वापस test_and_clear_bit(I915_VMA_GGTT_WRITE_BIT,
 				  __i915_vma_flags(vma));
-}
+पूर्ण
 
-void i915_vma_flush_writes(struct i915_vma *vma);
+व्योम i915_vma_flush_ग_लिखोs(काष्ठा i915_vma *vma);
 
-static inline bool i915_vma_is_map_and_fenceable(const struct i915_vma *vma)
-{
-	return test_bit(I915_VMA_CAN_FENCE_BIT, __i915_vma_flags(vma));
-}
+अटल अंतरभूत bool i915_vma_is_map_and_fenceable(स्थिर काष्ठा i915_vma *vma)
+अणु
+	वापस test_bit(I915_VMA_CAN_FENCE_BIT, __i915_vma_flags(vma));
+पूर्ण
 
-static inline bool i915_vma_set_userfault(struct i915_vma *vma)
-{
+अटल अंतरभूत bool i915_vma_set_userfault(काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(!i915_vma_is_map_and_fenceable(vma));
-	return test_and_set_bit(I915_VMA_USERFAULT_BIT, __i915_vma_flags(vma));
-}
+	वापस test_and_set_bit(I915_VMA_USERFAULT_BIT, __i915_vma_flags(vma));
+पूर्ण
 
-static inline void i915_vma_unset_userfault(struct i915_vma *vma)
-{
-	return clear_bit(I915_VMA_USERFAULT_BIT, __i915_vma_flags(vma));
-}
+अटल अंतरभूत व्योम i915_vma_unset_userfault(काष्ठा i915_vma *vma)
+अणु
+	वापस clear_bit(I915_VMA_USERFAULT_BIT, __i915_vma_flags(vma));
+पूर्ण
 
-static inline bool i915_vma_has_userfault(const struct i915_vma *vma)
-{
-	return test_bit(I915_VMA_USERFAULT_BIT, __i915_vma_flags(vma));
-}
+अटल अंतरभूत bool i915_vma_has_userfault(स्थिर काष्ठा i915_vma *vma)
+अणु
+	वापस test_bit(I915_VMA_USERFAULT_BIT, __i915_vma_flags(vma));
+पूर्ण
 
-static inline bool i915_vma_is_closed(const struct i915_vma *vma)
-{
-	return !list_empty(&vma->closed_link);
-}
+अटल अंतरभूत bool i915_vma_is_बंदd(स्थिर काष्ठा i915_vma *vma)
+अणु
+	वापस !list_empty(&vma->बंदd_link);
+पूर्ण
 
-static inline u32 i915_ggtt_offset(const struct i915_vma *vma)
-{
+अटल अंतरभूत u32 i915_ggtt_offset(स्थिर काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(!i915_vma_is_ggtt(vma));
 	GEM_BUG_ON(!drm_mm_node_allocated(&vma->node));
 	GEM_BUG_ON(upper_32_bits(vma->node.start));
 	GEM_BUG_ON(upper_32_bits(vma->node.start + vma->node.size - 1));
-	return lower_32_bits(vma->node.start);
-}
+	वापस lower_32_bits(vma->node.start);
+पूर्ण
 
-static inline u32 i915_ggtt_pin_bias(struct i915_vma *vma)
-{
-	return i915_vm_to_ggtt(vma->vm)->pin_bias;
-}
+अटल अंतरभूत u32 i915_ggtt_pin_bias(काष्ठा i915_vma *vma)
+अणु
+	वापस i915_vm_to_ggtt(vma->vm)->pin_bias;
+पूर्ण
 
-static inline struct i915_vma *i915_vma_get(struct i915_vma *vma)
-{
+अटल अंतरभूत काष्ठा i915_vma *i915_vma_get(काष्ठा i915_vma *vma)
+अणु
 	i915_gem_object_get(vma->obj);
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-static inline struct i915_vma *i915_vma_tryget(struct i915_vma *vma)
-{
-	if (likely(kref_get_unless_zero(&vma->obj->base.refcount)))
-		return vma;
+अटल अंतरभूत काष्ठा i915_vma *i915_vma_tryget(काष्ठा i915_vma *vma)
+अणु
+	अगर (likely(kref_get_unless_zero(&vma->obj->base.refcount)))
+		वापस vma;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline void i915_vma_put(struct i915_vma *vma)
-{
+अटल अंतरभूत व्योम i915_vma_put(काष्ठा i915_vma *vma)
+अणु
 	i915_gem_object_put(vma->obj);
-}
+पूर्ण
 
-static __always_inline ptrdiff_t ptrdiff(const void *a, const void *b)
-{
-	return a - b;
-}
+अटल __always_अंतरभूत सूचक_भेद_प्रकार ptrdअगरf(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	वापस a - b;
+पूर्ण
 
-static inline long
-i915_vma_compare(struct i915_vma *vma,
-		 struct i915_address_space *vm,
-		 const struct i915_ggtt_view *view)
-{
-	ptrdiff_t cmp;
+अटल अंतरभूत दीर्घ
+i915_vma_compare(काष्ठा i915_vma *vma,
+		 काष्ठा i915_address_space *vm,
+		 स्थिर काष्ठा i915_ggtt_view *view)
+अणु
+	सूचक_भेद_प्रकार cmp;
 
 	GEM_BUG_ON(view && !i915_is_ggtt(vm));
 
-	cmp = ptrdiff(vma->vm, vm);
-	if (cmp)
-		return cmp;
+	cmp = ptrdअगरf(vma->vm, vm);
+	अगर (cmp)
+		वापस cmp;
 
 	BUILD_BUG_ON(I915_GGTT_VIEW_NORMAL != 0);
 	cmp = vma->ggtt_view.type;
-	if (!view)
-		return cmp;
+	अगर (!view)
+		वापस cmp;
 
 	cmp -= view->type;
-	if (cmp)
-		return cmp;
+	अगर (cmp)
+		वापस cmp;
 
-	assert_i915_gem_gtt_types();
+	निश्चित_i915_gem_gtt_types();
 
 	/* ggtt_view.type also encodes its size so that we both distinguish
-	 * different views using it as a "type" and also use a compact (no
-	 * accessing of uninitialised padding bytes) memcmp without storing
+	 * dअगरferent views using it as a "type" and also use a compact (no
+	 * accessing of uninitialised padding bytes) स_भेद without storing
 	 * an extra parameter or adding more code.
 	 *
-	 * To ensure that the memcmp is valid for all branches of the union,
+	 * To ensure that the स_भेद is valid क्रम all branches of the जोड़,
 	 * even though the code looks like it is just comparing one branch,
-	 * we assert above that all branches have the same address, and that
+	 * we निश्चित above that all branches have the same address, and that
 	 * each branch has a unique type/size.
 	 */
 	BUILD_BUG_ON(I915_GGTT_VIEW_NORMAL >= I915_GGTT_VIEW_PARTIAL);
 	BUILD_BUG_ON(I915_GGTT_VIEW_PARTIAL >= I915_GGTT_VIEW_ROTATED);
 	BUILD_BUG_ON(I915_GGTT_VIEW_ROTATED >= I915_GGTT_VIEW_REMAPPED);
-	BUILD_BUG_ON(offsetof(typeof(*view), rotated) !=
-		     offsetof(typeof(*view), partial));
-	BUILD_BUG_ON(offsetof(typeof(*view), rotated) !=
-		     offsetof(typeof(*view), remapped));
-	return memcmp(&vma->ggtt_view.partial, &view->partial, view->type);
-}
+	BUILD_BUG_ON(दुरत्व(typeof(*view), rotated) !=
+		     दुरत्व(typeof(*view), partial));
+	BUILD_BUG_ON(दुरत्व(typeof(*view), rotated) !=
+		     दुरत्व(typeof(*view), remapped));
+	वापस स_भेद(&vma->ggtt_view.partial, &view->partial, view->type);
+पूर्ण
 
-struct i915_vma_work *i915_vma_work(void);
-int i915_vma_bind(struct i915_vma *vma,
-		  enum i915_cache_level cache_level,
+काष्ठा i915_vma_work *i915_vma_work(व्योम);
+पूर्णांक i915_vma_bind(काष्ठा i915_vma *vma,
+		  क्रमागत i915_cache_level cache_level,
 		  u32 flags,
-		  struct i915_vma_work *work);
+		  काष्ठा i915_vma_work *work);
 
-bool i915_gem_valid_gtt_space(struct i915_vma *vma, unsigned long color);
-bool i915_vma_misplaced(const struct i915_vma *vma,
+bool i915_gem_valid_gtt_space(काष्ठा i915_vma *vma, अचिन्हित दीर्घ color);
+bool i915_vma_misplaced(स्थिर काष्ठा i915_vma *vma,
 			u64 size, u64 alignment, u64 flags);
-void __i915_vma_set_map_and_fenceable(struct i915_vma *vma);
-void i915_vma_revoke_mmap(struct i915_vma *vma);
-void __i915_vma_evict(struct i915_vma *vma);
-int __i915_vma_unbind(struct i915_vma *vma);
-int __must_check i915_vma_unbind(struct i915_vma *vma);
-void i915_vma_unlink_ctx(struct i915_vma *vma);
-void i915_vma_close(struct i915_vma *vma);
-void i915_vma_reopen(struct i915_vma *vma);
+व्योम __i915_vma_set_map_and_fenceable(काष्ठा i915_vma *vma);
+व्योम i915_vma_revoke_mmap(काष्ठा i915_vma *vma);
+व्योम __i915_vma_evict(काष्ठा i915_vma *vma);
+पूर्णांक __i915_vma_unbind(काष्ठा i915_vma *vma);
+पूर्णांक __must_check i915_vma_unbind(काष्ठा i915_vma *vma);
+व्योम i915_vma_unlink_ctx(काष्ठा i915_vma *vma);
+व्योम i915_vma_बंद(काष्ठा i915_vma *vma);
+व्योम i915_vma_reखोलो(काष्ठा i915_vma *vma);
 
-static inline struct i915_vma *__i915_vma_get(struct i915_vma *vma)
-{
-	if (kref_get_unless_zero(&vma->ref))
-		return vma;
+अटल अंतरभूत काष्ठा i915_vma *__i915_vma_get(काष्ठा i915_vma *vma)
+अणु
+	अगर (kref_get_unless_zero(&vma->ref))
+		वापस vma;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void i915_vma_release(struct kref *ref);
-static inline void __i915_vma_put(struct i915_vma *vma)
-{
+व्योम i915_vma_release(काष्ठा kref *ref);
+अटल अंतरभूत व्योम __i915_vma_put(काष्ठा i915_vma *vma)
+अणु
 	kref_put(&vma->ref, i915_vma_release);
-}
+पूर्ण
 
-#define assert_vma_held(vma) dma_resv_assert_held((vma)->resv)
+#घोषणा निश्चित_vma_held(vma) dma_resv_निश्चित_held((vma)->resv)
 
-static inline void i915_vma_lock(struct i915_vma *vma)
-{
-	dma_resv_lock(vma->resv, NULL);
-}
+अटल अंतरभूत व्योम i915_vma_lock(काष्ठा i915_vma *vma)
+अणु
+	dma_resv_lock(vma->resv, शून्य);
+पूर्ण
 
-static inline void i915_vma_unlock(struct i915_vma *vma)
-{
+अटल अंतरभूत व्योम i915_vma_unlock(काष्ठा i915_vma *vma)
+अणु
 	dma_resv_unlock(vma->resv);
-}
+पूर्ण
 
-int __must_check
-i915_vma_pin_ww(struct i915_vma *vma, struct i915_gem_ww_ctx *ww,
+पूर्णांक __must_check
+i915_vma_pin_ww(काष्ठा i915_vma *vma, काष्ठा i915_gem_ww_ctx *ww,
 		u64 size, u64 alignment, u64 flags);
 
-static inline int __must_check
-i915_vma_pin(struct i915_vma *vma, u64 size, u64 alignment, u64 flags)
-{
-	struct i915_gem_ww_ctx ww;
-	int err;
+अटल अंतरभूत पूर्णांक __must_check
+i915_vma_pin(काष्ठा i915_vma *vma, u64 size, u64 alignment, u64 flags)
+अणु
+	काष्ठा i915_gem_ww_ctx ww;
+	पूर्णांक err;
 
 	i915_gem_ww_ctx_init(&ww, true);
 retry:
 	err = i915_gem_object_lock(vma->obj, &ww);
-	if (!err)
+	अगर (!err)
 		err = i915_vma_pin_ww(vma, &ww, size, alignment, flags);
-	if (err == -EDEADLK) {
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int i915_ggtt_pin(struct i915_vma *vma, struct i915_gem_ww_ctx *ww,
-		  u32 align, unsigned int flags);
+पूर्णांक i915_ggtt_pin(काष्ठा i915_vma *vma, काष्ठा i915_gem_ww_ctx *ww,
+		  u32 align, अचिन्हित पूर्णांक flags);
 
-static inline int i915_vma_pin_count(const struct i915_vma *vma)
-{
-	return atomic_read(&vma->flags) & I915_VMA_PIN_MASK;
-}
+अटल अंतरभूत पूर्णांक i915_vma_pin_count(स्थिर काष्ठा i915_vma *vma)
+अणु
+	वापस atomic_पढ़ो(&vma->flags) & I915_VMA_PIN_MASK;
+पूर्ण
 
-static inline bool i915_vma_is_pinned(const struct i915_vma *vma)
-{
-	return i915_vma_pin_count(vma);
-}
+अटल अंतरभूत bool i915_vma_is_pinned(स्थिर काष्ठा i915_vma *vma)
+अणु
+	वापस i915_vma_pin_count(vma);
+पूर्ण
 
-static inline void __i915_vma_pin(struct i915_vma *vma)
-{
+अटल अंतरभूत व्योम __i915_vma_pin(काष्ठा i915_vma *vma)
+अणु
 	atomic_inc(&vma->flags);
 	GEM_BUG_ON(!i915_vma_is_pinned(vma));
-}
+पूर्ण
 
-static inline void __i915_vma_unpin(struct i915_vma *vma)
-{
+अटल अंतरभूत व्योम __i915_vma_unpin(काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(!i915_vma_is_pinned(vma));
 	atomic_dec(&vma->flags);
-}
+पूर्ण
 
-static inline void i915_vma_unpin(struct i915_vma *vma)
-{
+अटल अंतरभूत व्योम i915_vma_unpin(काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(!drm_mm_node_allocated(&vma->node));
 	__i915_vma_unpin(vma);
-}
+पूर्ण
 
-static inline bool i915_vma_is_bound(const struct i915_vma *vma,
-				     unsigned int where)
-{
-	return atomic_read(&vma->flags) & where;
-}
+अटल अंतरभूत bool i915_vma_is_bound(स्थिर काष्ठा i915_vma *vma,
+				     अचिन्हित पूर्णांक where)
+अणु
+	वापस atomic_पढ़ो(&vma->flags) & where;
+पूर्ण
 
-static inline bool i915_node_color_differs(const struct drm_mm_node *node,
-					   unsigned long color)
-{
-	return drm_mm_node_allocated(node) && node->color != color;
-}
+अटल अंतरभूत bool i915_node_color_dअगरfers(स्थिर काष्ठा drm_mm_node *node,
+					   अचिन्हित दीर्घ color)
+अणु
+	वापस drm_mm_node_allocated(node) && node->color != color;
+पूर्ण
 
 /**
  * i915_vma_pin_iomap - calls ioremap_wc to map the GGTT VMA via the aperture
  * @vma: VMA to iomap
  *
  * The passed in VMA has to be pinned in the global GTT mappable region.
- * An extra pinning of the VMA is acquired for the return iomapping,
+ * An extra pinning of the VMA is acquired क्रम the वापस iomapping,
  * the caller must call i915_vma_unpin_iomap to relinquish the pinning
- * after the iomapping is no longer required.
+ * after the iomapping is no दीर्घer required.
  *
- * Returns a valid iomapped pointer or ERR_PTR.
+ * Returns a valid iomapped poपूर्णांकer or ERR_PTR.
  */
-void __iomem *i915_vma_pin_iomap(struct i915_vma *vma);
-#define IO_ERR_PTR(x) ((void __iomem *)ERR_PTR(x))
+व्योम __iomem *i915_vma_pin_iomap(काष्ठा i915_vma *vma);
+#घोषणा IO_ERR_PTR(x) ((व्योम __iomem *)ERR_PTR(x))
 
 /**
- * i915_vma_unpin_iomap - unpins the mapping returned from i915_vma_iomap
+ * i915_vma_unpin_iomap - unpins the mapping वापसed from i915_vma_iomap
  * @vma: VMA to unpin
  *
  * Unpins the previously iomapped VMA from i915_vma_pin_iomap().
@@ -330,20 +331,20 @@ void __iomem *i915_vma_pin_iomap(struct i915_vma *vma);
  * This function is only valid to be called on a VMA previously
  * iomapped by the caller with i915_vma_pin_iomap().
  */
-void i915_vma_unpin_iomap(struct i915_vma *vma);
+व्योम i915_vma_unpin_iomap(काष्ठा i915_vma *vma);
 
-static inline struct page *i915_vma_first_page(struct i915_vma *vma)
-{
+अटल अंतरभूत काष्ठा page *i915_vma_first_page(काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(!vma->pages);
-	return sg_page(vma->pages->sgl);
-}
+	वापस sg_page(vma->pages->sgl);
+पूर्ण
 
 /**
  * i915_vma_pin_fence - pin fencing state
- * @vma: vma to pin fencing for
+ * @vma: vma to pin fencing क्रम
  *
  * This pins the fencing state (whether tiled or untiled) to make sure the
- * vma (and its object) is ready to be used as a scanout target. Fencing
+ * vma (and its object) is पढ़ोy to be used as a scanout target. Fencing
  * status must be synchronize first by calling i915_vma_get_fence():
  *
  * The resulting fence pin reference must be released again with
@@ -351,55 +352,55 @@ static inline struct page *i915_vma_first_page(struct i915_vma *vma)
  *
  * Returns:
  *
- * True if the vma has a fence, false otherwise.
+ * True अगर the vma has a fence, false otherwise.
  */
-int __must_check i915_vma_pin_fence(struct i915_vma *vma);
-void i915_vma_revoke_fence(struct i915_vma *vma);
+पूर्णांक __must_check i915_vma_pin_fence(काष्ठा i915_vma *vma);
+व्योम i915_vma_revoke_fence(काष्ठा i915_vma *vma);
 
-int __i915_vma_pin_fence(struct i915_vma *vma);
+पूर्णांक __i915_vma_pin_fence(काष्ठा i915_vma *vma);
 
-static inline void __i915_vma_unpin_fence(struct i915_vma *vma)
-{
-	GEM_BUG_ON(atomic_read(&vma->fence->pin_count) <= 0);
+अटल अंतरभूत व्योम __i915_vma_unpin_fence(काष्ठा i915_vma *vma)
+अणु
+	GEM_BUG_ON(atomic_पढ़ो(&vma->fence->pin_count) <= 0);
 	atomic_dec(&vma->fence->pin_count);
-}
+पूर्ण
 
 /**
  * i915_vma_unpin_fence - unpin fencing state
- * @vma: vma to unpin fencing for
+ * @vma: vma to unpin fencing क्रम
  *
  * This releases the fence pin reference acquired through
  * i915_vma_pin_fence. It will handle both objects with and without an
- * attached fence correctly, callers do not need to distinguish this.
+ * attached fence correctly, callers करो not need to distinguish this.
  */
-static inline void
-i915_vma_unpin_fence(struct i915_vma *vma)
-{
-	if (vma->fence)
+अटल अंतरभूत व्योम
+i915_vma_unpin_fence(काष्ठा i915_vma *vma)
+अणु
+	अगर (vma->fence)
 		__i915_vma_unpin_fence(vma);
-}
+पूर्ण
 
-void i915_vma_parked(struct intel_gt *gt);
+व्योम i915_vma_parked(काष्ठा पूर्णांकel_gt *gt);
 
-static inline bool i915_vma_is_scanout(const struct i915_vma *vma)
-{
-	return test_bit(I915_VMA_SCANOUT_BIT, __i915_vma_flags(vma));
-}
+अटल अंतरभूत bool i915_vma_is_scanout(स्थिर काष्ठा i915_vma *vma)
+अणु
+	वापस test_bit(I915_VMA_SCANOUT_BIT, __i915_vma_flags(vma));
+पूर्ण
 
-static inline void i915_vma_mark_scanout(struct i915_vma *vma)
-{
+अटल अंतरभूत व्योम i915_vma_mark_scanout(काष्ठा i915_vma *vma)
+अणु
 	set_bit(I915_VMA_SCANOUT_BIT, __i915_vma_flags(vma));
-}
+पूर्ण
 
-static inline void i915_vma_clear_scanout(struct i915_vma *vma)
-{
+अटल अंतरभूत व्योम i915_vma_clear_scanout(काष्ठा i915_vma *vma)
+अणु
 	clear_bit(I915_VMA_SCANOUT_BIT, __i915_vma_flags(vma));
-}
+पूर्ण
 
-#define for_each_until(cond) if (cond) break; else
+#घोषणा क्रम_each_until(cond) अगर (cond) अवरोध; अन्यथा
 
 /**
- * for_each_ggtt_vma - Iterate over the GGTT VMA belonging to an object.
+ * क्रम_each_ggtt_vma - Iterate over the GGTT VMA beदीर्घing to an object.
  * @V: the #i915_vma iterator
  * @OBJ: the #drm_i915_gem_object
  *
@@ -407,23 +408,23 @@ static inline void i915_vma_clear_scanout(struct i915_vma *vma)
  * vma_create(), so we can stop our walk as soon as we see a ppgtt VMA,
  * or the list is empty ofc.
  */
-#define for_each_ggtt_vma(V, OBJ) \
-	list_for_each_entry(V, &(OBJ)->vma.list, obj_link)		\
-		for_each_until(!i915_vma_is_ggtt(V))
+#घोषणा क्रम_each_ggtt_vma(V, OBJ) \
+	list_क्रम_each_entry(V, &(OBJ)->vma.list, obj_link)		\
+		क्रम_each_until(!i915_vma_is_ggtt(V))
 
-struct i915_vma *i915_vma_alloc(void);
-void i915_vma_free(struct i915_vma *vma);
+काष्ठा i915_vma *i915_vma_alloc(व्योम);
+व्योम i915_vma_मुक्त(काष्ठा i915_vma *vma);
 
-struct i915_vma *i915_vma_make_unshrinkable(struct i915_vma *vma);
-void i915_vma_make_shrinkable(struct i915_vma *vma);
-void i915_vma_make_purgeable(struct i915_vma *vma);
+काष्ठा i915_vma *i915_vma_make_unshrinkable(काष्ठा i915_vma *vma);
+व्योम i915_vma_make_shrinkable(काष्ठा i915_vma *vma);
+व्योम i915_vma_make_purgeable(काष्ठा i915_vma *vma);
 
-int i915_vma_wait_for_bind(struct i915_vma *vma);
+पूर्णांक i915_vma_रुको_क्रम_bind(काष्ठा i915_vma *vma);
 
-static inline int i915_vma_sync(struct i915_vma *vma)
-{
-	/* Wait for the asynchronous bindings and pending GPU reads */
-	return i915_active_wait(&vma->active);
-}
+अटल अंतरभूत पूर्णांक i915_vma_sync(काष्ठा i915_vma *vma)
+अणु
+	/* Wait क्रम the asynchronous bindings and pending GPU पढ़ोs */
+	वापस i915_active_रुको(&vma->active);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

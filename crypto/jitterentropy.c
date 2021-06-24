@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Non-physical true random number generator based on timing jitter --
+ * Non-physical true अक्रमom number generator based on timing jitter --
  * Jitter RNG standalone code.
  *
  * Copyright Stephan Mueller <smueller@chronox.de>, 2015 - 2020
@@ -7,35 +8,35 @@
  * Design
  * ======
  *
- * See https://www.chronox.de/jent.html
+ * See https://www.chronox.de/jent.hपंचांगl
  *
  * License
  * =======
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, and the entire permission notice in its entirety,
  *    including the disclaimer of warranties.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior
+ *    करोcumentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to enकरोrse or promote
+ *    products derived from this software without specअगरic prior
  *    written permission.
  *
  * ALTERNATIVELY, this product may be distributed under the terms of
- * the GNU General Public License, in which case the provisions of the GPL2 are
+ * the GNU General Public License, in which हाल the provisions of the GPL2 are
  * required INSTEAD OF the above restrictions.  (This clause is
- * necessary due to a potential bad interaction between the GPL and
+ * necessary due to a potential bad पूर्णांकeraction between the GPL and
  * the restrictions contained in a BSD-style copyright.)
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, ALL OF
  * WHICH ARE HEREBY DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
  * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -47,77 +48,77 @@
 
 /*
  * This Jitterentropy RNG is based on the jitterentropy library
- * version 2.2.0 provided at https://www.chronox.de/jent.html
+ * version 2.2.0 provided at https://www.chronox.de/jent.hपंचांगl
  */
 
-#ifdef __OPTIMIZE__
- #error "The CPU Jitter random number generator must not be compiled with optimizations. See documentation. Use the compiler switch -O0 for compiling jitterentropy.c."
-#endif
+#अगर_घोषित __OPTIMIZE__
+ #त्रुटि "The CPU Jitter random number generator must not be compiled with optimizations. See documentation. Use the compiler switch -O0 for compiling jitterentropy.c."
+#पूर्ण_अगर
 
-typedef	unsigned long long	__u64;
-typedef	long long		__s64;
-typedef	unsigned int		__u32;
-#define NULL    ((void *) 0)
+प्रकार	अचिन्हित दीर्घ दीर्घ	__u64;
+प्रकार	दीर्घ दीर्घ		__s64;
+प्रकार	अचिन्हित पूर्णांक		__u32;
+#घोषणा शून्य    ((व्योम *) 0)
 
 /* The entropy pool */
-struct rand_data {
-	/* all data values that are vital to maintain the security
+काष्ठा अक्रम_data अणु
+	/* all data values that are vital to मुख्यtain the security
 	 * of the RNG are marked as SENSITIVE. A user must not
-	 * access that information while the RNG executes its loops to
-	 * calculate the next random value. */
-	__u64 data;		/* SENSITIVE Actual random number */
-	__u64 old_data;		/* SENSITIVE Previous random number */
-	__u64 prev_time;	/* SENSITIVE Previous time stamp */
-#define DATA_SIZE_BITS ((sizeof(__u64)) * 8)
+	 * access that inक्रमmation जबतक the RNG executes its loops to
+	 * calculate the next अक्रमom value. */
+	__u64 data;		/* SENSITIVE Actual अक्रमom number */
+	__u64 old_data;		/* SENSITIVE Previous अक्रमom number */
+	__u64 prev_समय;	/* SENSITIVE Previous समय stamp */
+#घोषणा DATA_SIZE_BITS ((माप(__u64)) * 8)
 	__u64 last_delta;	/* SENSITIVE stuck test */
 	__s64 last_delta2;	/* SENSITIVE stuck test */
-	unsigned int osr;	/* Oversample rate */
-#define JENT_MEMORY_BLOCKS 64
-#define JENT_MEMORY_BLOCKSIZE 32
-#define JENT_MEMORY_ACCESSLOOPS 128
-#define JENT_MEMORY_SIZE (JENT_MEMORY_BLOCKS*JENT_MEMORY_BLOCKSIZE)
-	unsigned char *mem;	/* Memory access location with size of
+	अचिन्हित पूर्णांक osr;	/* Oversample rate */
+#घोषणा JENT_MEMORY_BLOCKS 64
+#घोषणा JENT_MEMORY_BLOCKSIZE 32
+#घोषणा JENT_MEMORY_ACCESSLOOPS 128
+#घोषणा JENT_MEMORY_SIZE (JENT_MEMORY_BLOCKS*JENT_MEMORY_BLOCKSIZE)
+	अचिन्हित अक्षर *mem;	/* Memory access location with size of
 				 * memblocks * memblocksize */
-	unsigned int memlocation; /* Pointer to byte in *mem */
-	unsigned int memblocks;	/* Number of memory blocks in *mem */
-	unsigned int memblocksize; /* Size of one memory block in bytes */
-	unsigned int memaccessloops; /* Number of memory accesses per random
+	अचिन्हित पूर्णांक memlocation; /* Poपूर्णांकer to byte in *mem */
+	अचिन्हित पूर्णांक memblocks;	/* Number of memory blocks in *mem */
+	अचिन्हित पूर्णांक memblocksize; /* Size of one memory block in bytes */
+	अचिन्हित पूर्णांक memaccessloops; /* Number of memory accesses per अक्रमom
 				      * bit generation */
 
 	/* Repetition Count Test */
-	int rct_count;			/* Number of stuck values */
+	पूर्णांक rct_count;			/* Number of stuck values */
 
-	/* Adaptive Proportion Test for a significance level of 2^-30 */
-#define JENT_APT_CUTOFF		325	/* Taken from SP800-90B sec 4.4.2 */
-#define JENT_APT_WINDOW_SIZE	512	/* Data window size */
-	/* LSB of time stamp to process */
-#define JENT_APT_LSB		16
-#define JENT_APT_WORD_MASK	(JENT_APT_LSB - 1)
-	unsigned int apt_observations;	/* Number of collected observations */
-	unsigned int apt_count;		/* APT counter */
-	unsigned int apt_base;		/* APT base reference */
-	unsigned int apt_base_set:1;	/* APT base reference set? */
+	/* Adaptive Proportion Test क्रम a signअगरicance level of 2^-30 */
+#घोषणा JENT_APT_CUTOFF		325	/* Taken from SP800-90B sec 4.4.2 */
+#घोषणा JENT_APT_WINDOW_SIZE	512	/* Data winकरोw size */
+	/* LSB of समय stamp to process */
+#घोषणा JENT_APT_LSB		16
+#घोषणा JENT_APT_WORD_MASK	(JENT_APT_LSB - 1)
+	अचिन्हित पूर्णांक apt_observations;	/* Number of collected observations */
+	अचिन्हित पूर्णांक apt_count;		/* APT counter */
+	अचिन्हित पूर्णांक apt_base;		/* APT base reference */
+	अचिन्हित पूर्णांक apt_base_set:1;	/* APT base reference set? */
 
-	unsigned int health_failure:1;	/* Permanent health failure */
-};
+	अचिन्हित पूर्णांक health_failure:1;	/* Permanent health failure */
+पूर्ण;
 
 /* Flags that can be used to initialize the RNG */
-#define JENT_DISABLE_MEMORY_ACCESS (1<<2) /* Disable memory access for more
-					   * entropy, saves MEMORY_SIZE RAM for
+#घोषणा JENT_DISABLE_MEMORY_ACCESS (1<<2) /* Disable memory access क्रम more
+					   * entropy, saves MEMORY_SIZE RAM क्रम
 					   * entropy collector */
 
-/* -- error codes for init function -- */
-#define JENT_ENOTIME		1 /* Timer service not available */
-#define JENT_ECOARSETIME	2 /* Timer too coarse for RNG */
-#define JENT_ENOMONOTONIC	3 /* Timer is not monotonic increasing */
-#define JENT_EVARVAR		5 /* Timer does not produce variations of
-				   * variations (2nd derivation of time is
+/* -- error codes क्रम init function -- */
+#घोषणा JENT_ENOTIME		1 /* Timer service not available */
+#घोषणा JENT_ECOARSETIME	2 /* Timer too coarse क्रम RNG */
+#घोषणा JENT_ENOMONOTONIC	3 /* Timer is not monotonic increasing */
+#घोषणा JENT_EVARVAR		5 /* Timer करोes not produce variations of
+				   * variations (2nd derivation of समय is
 				   * zero). */
-#define JENT_ESTUCK		8 /* Too many stuck results during init. */
-#define JENT_EHEALTH		9 /* Health test failed during initialization */
-#define JENT_ERCT		10 /* RCT failed during initialization */
+#घोषणा JENT_ESTUCK		8 /* Too many stuck results during init. */
+#घोषणा JENT_EHEALTH		9 /* Health test failed during initialization */
+#घोषणा JENT_ERCT		10 /* RCT failed during initialization */
 
-#include "jitterentropy.h"
+#समावेश "jitterentropy.h"
 
 /***************************************************************************
  * Adaptive Proportion Test
@@ -130,56 +131,56 @@ struct rand_data {
  *
  * @ec [in] Reference to entropy collector
  */
-static void jent_apt_reset(struct rand_data *ec, unsigned int delta_masked)
-{
+अटल व्योम jent_apt_reset(काष्ठा अक्रम_data *ec, अचिन्हित पूर्णांक delta_masked)
+अणु
 	/* Reset APT counter */
 	ec->apt_count = 0;
 	ec->apt_base = delta_masked;
 	ec->apt_observations = 0;
-}
+पूर्ण
 
 /**
- * Insert a new entropy event into APT
+ * Insert a new entropy event पूर्णांकo APT
  *
  * @ec [in] Reference to entropy collector
- * @delta_masked [in] Masked time delta to process
+ * @delta_masked [in] Masked समय delta to process
  */
-static void jent_apt_insert(struct rand_data *ec, unsigned int delta_masked)
-{
+अटल व्योम jent_apt_insert(काष्ठा अक्रम_data *ec, अचिन्हित पूर्णांक delta_masked)
+अणु
 	/* Initialize the base reference */
-	if (!ec->apt_base_set) {
+	अगर (!ec->apt_base_set) अणु
 		ec->apt_base = delta_masked;
 		ec->apt_base_set = 1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (delta_masked == ec->apt_base) {
+	अगर (delta_masked == ec->apt_base) अणु
 		ec->apt_count++;
 
-		if (ec->apt_count >= JENT_APT_CUTOFF)
+		अगर (ec->apt_count >= JENT_APT_CUTOFF)
 			ec->health_failure = 1;
-	}
+	पूर्ण
 
 	ec->apt_observations++;
 
-	if (ec->apt_observations >= JENT_APT_WINDOW_SIZE)
+	अगर (ec->apt_observations >= JENT_APT_WINDOW_SIZE)
 		jent_apt_reset(ec, delta_masked);
-}
+पूर्ण
 
 /***************************************************************************
  * Stuck Test and its use as Repetition Count Test
  *
  * The Jitter RNG uses an enhanced version of the Repetition Count Test
- * (RCT) specified in SP800-90B section 4.4.1. Instead of counting identical
+ * (RCT) specअगरied in SP800-90B section 4.4.1. Instead of counting identical
  * back-to-back values, the input to the RCT is the counting of the stuck
  * values during the generation of one Jitter RNG output block.
  *
- * The RCT is applied with an alpha of 2^{-30} compliant to FIPS 140-2 IG 9.8.
+ * The RCT is applied with an alpha of 2^अणु-30पूर्ण compliant to FIPS 140-2 IG 9.8.
  *
  * During the counting operation, the Jitter RNG always calculates the RCT
  * cut-off value of C. If that value exceeds the allowed cut-off value,
  * the Jitter RNG output block will be calculated completely but discarded at
- * the end. The caller of the Jitter RNG is informed with an error code.
+ * the end. The caller of the Jitter RNG is inक्रमmed with an error code.
  ***************************************************************************/
 
 /**
@@ -188,16 +189,16 @@ static void jent_apt_insert(struct rand_data *ec, unsigned int delta_masked)
  * @ec [in] Reference to entropy collector
  * @stuck [in] Indicator whether the value is stuck
  */
-static void jent_rct_insert(struct rand_data *ec, int stuck)
-{
+अटल व्योम jent_rct_insert(काष्ठा अक्रम_data *ec, पूर्णांक stuck)
+अणु
 	/*
-	 * If we have a count less than zero, a previous RCT round identified
-	 * a failure. We will not overwrite it.
+	 * If we have a count less than zero, a previous RCT round identअगरied
+	 * a failure. We will not overग_लिखो it.
 	 */
-	if (ec->rct_count < 0)
-		return;
+	अगर (ec->rct_count < 0)
+		वापस;
 
-	if (stuck) {
+	अगर (stuck) अणु
 		ec->rct_count++;
 
 		/*
@@ -205,420 +206,420 @@ static void jent_rct_insert(struct rand_data *ec, int stuck)
 		 * alpha = 2^-30 as recommended in FIPS 140-2 IG 9.8.
 		 * In addition, we require an entropy value H of 1/OSR as this
 		 * is the minimum entropy required to provide full entropy.
-		 * Note, we collect 64 * OSR deltas for inserting them into
-		 * the entropy pool which should then have (close to) 64 bits
+		 * Note, we collect 64 * OSR deltas क्रम inserting them पूर्णांकo
+		 * the entropy pool which should then have (बंद to) 64 bits
 		 * of entropy.
 		 *
-		 * Note, ec->rct_count (which equals to value B in the pseudo
+		 * Note, ec->rct_count (which equals to value B in the pseuकरो
 		 * code of SP800-90B section 4.4.1) starts with zero. Hence
 		 * we need to subtract one from the cutoff value as calculated
 		 * following SP800-90B.
 		 */
-		if ((unsigned int)ec->rct_count >= (31 * ec->osr)) {
+		अगर ((अचिन्हित पूर्णांक)ec->rct_count >= (31 * ec->osr)) अणु
 			ec->rct_count = -1;
 			ec->health_failure = 1;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ec->rct_count = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * Is there an RCT health test failure?
  *
  * @ec [in] Reference to entropy collector
  *
- * @return
+ * @वापस
  * 	0 No health test failure
  * 	1 Permanent health test failure
  */
-static int jent_rct_failure(struct rand_data *ec)
-{
-	if (ec->rct_count < 0)
-		return 1;
-	return 0;
-}
+अटल पूर्णांक jent_rct_failure(काष्ठा अक्रम_data *ec)
+अणु
+	अगर (ec->rct_count < 0)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static inline __u64 jent_delta(__u64 prev, __u64 next)
-{
-#define JENT_UINT64_MAX		(__u64)(~((__u64) 0))
-	return (prev < next) ? (next - prev) :
+अटल अंतरभूत __u64 jent_delta(__u64 prev, __u64 next)
+अणु
+#घोषणा JENT_UINT64_MAX		(__u64)(~((__u64) 0))
+	वापस (prev < next) ? (next - prev) :
 			       (JENT_UINT64_MAX - prev + 1 + next);
-}
+पूर्ण
 
 /**
  * Stuck test by checking the:
- * 	1st derivative of the jitter measurement (time delta)
- * 	2nd derivative of the jitter measurement (delta of time deltas)
- * 	3rd derivative of the jitter measurement (delta of delta of time deltas)
+ * 	1st derivative of the jitter measurement (समय delta)
+ * 	2nd derivative of the jitter measurement (delta of समय deltas)
+ * 	3rd derivative of the jitter measurement (delta of delta of समय deltas)
  *
  * All values must always be non-zero.
  *
  * @ec [in] Reference to entropy collector
- * @current_delta [in] Jitter time delta
+ * @current_delta [in] Jitter समय delta
  *
- * @return
+ * @वापस
  * 	0 jitter measurement not stuck (good bit)
  * 	1 jitter measurement stuck (reject bit)
  */
-static int jent_stuck(struct rand_data *ec, __u64 current_delta)
-{
+अटल पूर्णांक jent_stuck(काष्ठा अक्रम_data *ec, __u64 current_delta)
+अणु
 	__u64 delta2 = jent_delta(ec->last_delta, current_delta);
 	__u64 delta3 = jent_delta(ec->last_delta2, delta2);
-	unsigned int delta_masked = current_delta & JENT_APT_WORD_MASK;
+	अचिन्हित पूर्णांक delta_masked = current_delta & JENT_APT_WORD_MASK;
 
 	ec->last_delta = current_delta;
 	ec->last_delta2 = delta2;
 
 	/*
-	 * Insert the result of the comparison of two back-to-back time
+	 * Insert the result of the comparison of two back-to-back समय
 	 * deltas.
 	 */
 	jent_apt_insert(ec, delta_masked);
 
-	if (!current_delta || !delta2 || !delta3) {
+	अगर (!current_delta || !delta2 || !delta3) अणु
 		/* RCT with a stuck bit */
 		jent_rct_insert(ec, 1);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* RCT with a non-stuck bit */
 	jent_rct_insert(ec, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * Report any health test failures
  *
  * @ec [in] Reference to entropy collector
  *
- * @return
+ * @वापस
  * 	0 No health test failure
  * 	1 Permanent health test failure
  */
-static int jent_health_failure(struct rand_data *ec)
-{
+अटल पूर्णांक jent_health_failure(काष्ठा अक्रम_data *ec)
+अणु
 	/* Test is only enabled in FIPS mode */
-	if (!jent_fips_enabled())
-		return 0;
+	अगर (!jent_fips_enabled())
+		वापस 0;
 
-	return ec->health_failure;
-}
+	वापस ec->health_failure;
+पूर्ण
 
 /***************************************************************************
  * Noise sources
  ***************************************************************************/
 
 /**
- * Update of the loop count used for the next round of
+ * Update of the loop count used क्रम the next round of
  * an entropy collection.
  *
  * Input:
- * @ec entropy collector struct -- may be NULL
- * @bits is the number of low bits of the timer to consider
- * @min is the number of bits we shift the timer value to the right at
+ * @ec entropy collector काष्ठा -- may be शून्य
+ * @bits is the number of low bits of the समयr to consider
+ * @min is the number of bits we shअगरt the समयr value to the right at
  *	the end to make sure we have a guaranteed minimum value
  *
- * @return Newly calculated loop counter
+ * @वापस Newly calculated loop counter
  */
-static __u64 jent_loop_shuffle(struct rand_data *ec,
-			       unsigned int bits, unsigned int min)
-{
-	__u64 time = 0;
+अटल __u64 jent_loop_shuffle(काष्ठा अक्रम_data *ec,
+			       अचिन्हित पूर्णांक bits, अचिन्हित पूर्णांक min)
+अणु
+	__u64 समय = 0;
 	__u64 shuffle = 0;
-	unsigned int i = 0;
-	unsigned int mask = (1<<bits) - 1;
+	अचिन्हित पूर्णांक i = 0;
+	अचिन्हित पूर्णांक mask = (1<<bits) - 1;
 
-	jent_get_nstime(&time);
+	jent_get_nsसमय(&समय);
 	/*
-	 * Mix the current state of the random number into the shuffle
+	 * Mix the current state of the अक्रमom number पूर्णांकo the shuffle
 	 * calculation to balance that shuffle a bit more.
 	 */
-	if (ec)
-		time ^= ec->data;
+	अगर (ec)
+		समय ^= ec->data;
 	/*
-	 * We fold the time value as much as possible to ensure that as many
-	 * bits of the time stamp are included as possible.
+	 * We fold the समय value as much as possible to ensure that as many
+	 * bits of the समय stamp are included as possible.
 	 */
-	for (i = 0; ((DATA_SIZE_BITS + bits - 1) / bits) > i; i++) {
-		shuffle ^= time & mask;
-		time = time >> bits;
-	}
+	क्रम (i = 0; ((DATA_SIZE_BITS + bits - 1) / bits) > i; i++) अणु
+		shuffle ^= समय & mask;
+		समय = समय >> bits;
+	पूर्ण
 
 	/*
 	 * We add a lower boundary value to ensure we have a minimum
 	 * RNG loop count.
 	 */
-	return (shuffle + (1<<min));
-}
+	वापस (shuffle + (1<<min));
+पूर्ण
 
 /**
  * CPU Jitter noise source -- this is the noise source based on the CPU
- *			      execution time jitter
+ *			      execution समय jitter
  *
- * This function injects the individual bits of the time value into the
+ * This function injects the inभागidual bits of the समय value पूर्णांकo the
  * entropy pool using an LFSR.
  *
- * The code is deliberately inefficient with respect to the bit shifting
+ * The code is deliberately inefficient with respect to the bit shअगरting
  * and shall stay that way. This function is the root cause why the code
  * shall be compiled without optimization. This function not only acts as
  * folding operation, but this function's execution is used to measure
- * the CPU execution time jitter. Any change to the loop in this function
- * implies that careful retesting must be done.
+ * the CPU execution समय jitter. Any change to the loop in this function
+ * implies that careful retesting must be करोne.
  *
- * @ec [in] entropy collector struct
- * @time [in] time stamp to be injected
- * @loop_cnt [in] if a value not equal to 0 is set, use the given value as
- *		  number of loops to perform the folding
- * @stuck [in] Is the time stamp identified as stuck?
+ * @ec [in] entropy collector काष्ठा
+ * @समय [in] समय stamp to be injected
+ * @loop_cnt [in] अगर a value not equal to 0 is set, use the given value as
+ *		  number of loops to perक्रमm the folding
+ * @stuck [in] Is the समय stamp identअगरied as stuck?
  *
  * Output:
  * updated ec->data
  *
- * @return Number of loops the folding operation is performed
+ * @वापस Number of loops the folding operation is perक्रमmed
  */
-static void jent_lfsr_time(struct rand_data *ec, __u64 time, __u64 loop_cnt,
-			   int stuck)
-{
-	unsigned int i;
+अटल व्योम jent_lfsr_समय(काष्ठा अक्रम_data *ec, __u64 समय, __u64 loop_cnt,
+			   पूर्णांक stuck)
+अणु
+	अचिन्हित पूर्णांक i;
 	__u64 j = 0;
 	__u64 new = 0;
-#define MAX_FOLD_LOOP_BIT 4
-#define MIN_FOLD_LOOP_BIT 0
+#घोषणा MAX_FOLD_LOOP_BIT 4
+#घोषणा MIN_FOLD_LOOP_BIT 0
 	__u64 fold_loop_cnt =
 		jent_loop_shuffle(ec, MAX_FOLD_LOOP_BIT, MIN_FOLD_LOOP_BIT);
 
 	/*
 	 * testing purposes -- allow test app to set the counter, not
-	 * needed during runtime
+	 * needed during runसमय
 	 */
-	if (loop_cnt)
+	अगर (loop_cnt)
 		fold_loop_cnt = loop_cnt;
-	for (j = 0; j < fold_loop_cnt; j++) {
+	क्रम (j = 0; j < fold_loop_cnt; j++) अणु
 		new = ec->data;
-		for (i = 1; (DATA_SIZE_BITS) >= i; i++) {
-			__u64 tmp = time << (DATA_SIZE_BITS - i);
+		क्रम (i = 1; (DATA_SIZE_BITS) >= i; i++) अणु
+			__u64 पंचांगp = समय << (DATA_SIZE_BITS - i);
 
-			tmp = tmp >> (DATA_SIZE_BITS - 1);
+			पंचांगp = पंचांगp >> (DATA_SIZE_BITS - 1);
 
 			/*
 			* Fibonacci LSFR with polynomial of
 			*  x^64 + x^61 + x^56 + x^31 + x^28 + x^23 + 1 which is
 			*  primitive according to
-			*   http://poincare.matf.bg.ac.rs/~ezivkovm/publications/primpol1.pdf
-			* (the shift values are the polynomial values minus one
+			*   http://poincare.matf.bg.ac.rs/~ezivkovm/खुलाations/primpol1.pdf
+			* (the shअगरt values are the polynomial values minus one
 			* due to counting bits from 0 to 63). As the current
 			* position is always the LSB, the polynomial only needs
-			* to shift data in from the left without wrap.
+			* to shअगरt data in from the left without wrap.
 			*/
-			tmp ^= ((new >> 63) & 1);
-			tmp ^= ((new >> 60) & 1);
-			tmp ^= ((new >> 55) & 1);
-			tmp ^= ((new >> 30) & 1);
-			tmp ^= ((new >> 27) & 1);
-			tmp ^= ((new >> 22) & 1);
+			पंचांगp ^= ((new >> 63) & 1);
+			पंचांगp ^= ((new >> 60) & 1);
+			पंचांगp ^= ((new >> 55) & 1);
+			पंचांगp ^= ((new >> 30) & 1);
+			पंचांगp ^= ((new >> 27) & 1);
+			पंचांगp ^= ((new >> 22) & 1);
 			new <<= 1;
-			new ^= tmp;
-		}
-	}
+			new ^= पंचांगp;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * If the time stamp is stuck, do not finally insert the value into
-	 * the entropy pool. Although this operation should not do any harm
-	 * even when the time stamp has no entropy, SP800-90B requires that
+	 * If the समय stamp is stuck, करो not finally insert the value पूर्णांकo
+	 * the entropy pool. Although this operation should not करो any harm
+	 * even when the समय stamp has no entropy, SP800-90B requires that
 	 * any conditioning operation (SP800-90B considers the LFSR to be a
 	 * conditioning operation) to have an identical amount of input
 	 * data according to section 3.1.5.
 	 */
-	if (!stuck)
+	अगर (!stuck)
 		ec->data = new;
-}
+पूर्ण
 
 /**
  * Memory Access noise source -- this is a noise source based on variations in
- *				 memory access times
+ *				 memory access बार
  *
- * This function performs memory accesses which will add to the timing
- * variations due to an unknown amount of CPU wait states that need to be
+ * This function perक्रमms memory accesses which will add to the timing
+ * variations due to an unknown amount of CPU रुको states that need to be
  * added when accessing memory. The memory size should be larger than the L1
- * caches as outlined in the documentation and the associated testing.
+ * caches as outlined in the करोcumentation and the associated testing.
  *
  * The L1 cache has a very high bandwidth, albeit its access rate is  usually
- * slower than accessing CPU registers. Therefore, L1 accesses only add minimal
- * variations as the CPU has hardly to wait. Starting with L2, significant
- * variations are added because L2 typically does not belong to the CPU any more
- * and therefore a wider range of CPU wait states is necessary for accesses.
- * L3 and real memory accesses have even a wider range of wait states. However,
+ * slower than accessing CPU रेजिस्टरs. Thereक्रमe, L1 accesses only add minimal
+ * variations as the CPU has hardly to रुको. Starting with L2, signअगरicant
+ * variations are added because L2 typically करोes not beदीर्घ to the CPU any more
+ * and thereक्रमe a wider range of CPU रुको states is necessary क्रम accesses.
+ * L3 and real memory accesses have even a wider range of रुको states. However,
  * to reliably access either L3 or memory, the ec->mem memory must be quite
  * large which is usually not desirable.
  *
- * @ec [in] Reference to the entropy collector with the memory access data -- if
- *	    the reference to the memory block to be accessed is NULL, this noise
+ * @ec [in] Reference to the entropy collector with the memory access data -- अगर
+ *	    the reference to the memory block to be accessed is शून्य, this noise
  *	    source is disabled
- * @loop_cnt [in] if a value not equal to 0 is set, use the given value
- *		  number of loops to perform the LFSR
+ * @loop_cnt [in] अगर a value not equal to 0 is set, use the given value
+ *		  number of loops to perक्रमm the LFSR
  */
-static void jent_memaccess(struct rand_data *ec, __u64 loop_cnt)
-{
-	unsigned int wrap = 0;
+अटल व्योम jent_memaccess(काष्ठा अक्रम_data *ec, __u64 loop_cnt)
+अणु
+	अचिन्हित पूर्णांक wrap = 0;
 	__u64 i = 0;
-#define MAX_ACC_LOOP_BIT 7
-#define MIN_ACC_LOOP_BIT 0
+#घोषणा MAX_ACC_LOOP_BIT 7
+#घोषणा MIN_ACC_LOOP_BIT 0
 	__u64 acc_loop_cnt =
 		jent_loop_shuffle(ec, MAX_ACC_LOOP_BIT, MIN_ACC_LOOP_BIT);
 
-	if (NULL == ec || NULL == ec->mem)
-		return;
+	अगर (शून्य == ec || शून्य == ec->mem)
+		वापस;
 	wrap = ec->memblocksize * ec->memblocks;
 
 	/*
 	 * testing purposes -- allow test app to set the counter, not
-	 * needed during runtime
+	 * needed during runसमय
 	 */
-	if (loop_cnt)
+	अगर (loop_cnt)
 		acc_loop_cnt = loop_cnt;
 
-	for (i = 0; i < (ec->memaccessloops + acc_loop_cnt); i++) {
-		unsigned char *tmpval = ec->mem + ec->memlocation;
+	क्रम (i = 0; i < (ec->memaccessloops + acc_loop_cnt); i++) अणु
+		अचिन्हित अक्षर *पंचांगpval = ec->mem + ec->memlocation;
 		/*
 		 * memory access: just add 1 to one byte,
-		 * wrap at 255 -- memory access implies read
-		 * from and write to memory location
+		 * wrap at 255 -- memory access implies पढ़ो
+		 * from and ग_लिखो to memory location
 		 */
-		*tmpval = (*tmpval + 1) & 0xff;
+		*पंचांगpval = (*पंचांगpval + 1) & 0xff;
 		/*
-		 * Addition of memblocksize - 1 to pointer
+		 * Addition of memblocksize - 1 to poपूर्णांकer
 		 * with wrap around logic to ensure that every
 		 * memory location is hit evenly
 		 */
 		ec->memlocation = ec->memlocation + ec->memblocksize - 1;
 		ec->memlocation = ec->memlocation % wrap;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /***************************************************************************
  * Start of entropy processing logic
  ***************************************************************************/
 /**
- * This is the heart of the entropy generation: calculate time deltas and
- * use the CPU jitter in the time deltas. The jitter is injected into the
+ * This is the heart of the entropy generation: calculate समय deltas and
+ * use the CPU jitter in the समय deltas. The jitter is injected पूर्णांकo the
  * entropy pool.
  *
- * WARNING: ensure that ->prev_time is primed before using the output
- *	    of this function! This can be done by calling this function
+ * WARNING: ensure that ->prev_समय is primed beक्रमe using the output
+ *	    of this function! This can be करोne by calling this function
  *	    and not using its result.
  *
  * @ec [in] Reference to entropy collector
  *
- * @return result of stuck test
+ * @वापस result of stuck test
  */
-static int jent_measure_jitter(struct rand_data *ec)
-{
-	__u64 time = 0;
+अटल पूर्णांक jent_measure_jitter(काष्ठा अक्रम_data *ec)
+अणु
+	__u64 समय = 0;
 	__u64 current_delta = 0;
-	int stuck;
+	पूर्णांक stuck;
 
-	/* Invoke one noise source before time measurement to add variations */
+	/* Invoke one noise source beक्रमe समय measurement to add variations */
 	jent_memaccess(ec, 0);
 
 	/*
-	 * Get time stamp and calculate time delta to previous
+	 * Get समय stamp and calculate समय delta to previous
 	 * invocation to measure the timing variations
 	 */
-	jent_get_nstime(&time);
-	current_delta = jent_delta(ec->prev_time, time);
-	ec->prev_time = time;
+	jent_get_nsसमय(&समय);
+	current_delta = jent_delta(ec->prev_समय, समय);
+	ec->prev_समय = समय;
 
 	/* Check whether we have a stuck measurement. */
 	stuck = jent_stuck(ec, current_delta);
 
 	/* Now call the next noise sources which also injects the data */
-	jent_lfsr_time(ec, current_delta, 0, stuck);
+	jent_lfsr_समय(ec, current_delta, 0, stuck);
 
-	return stuck;
-}
+	वापस stuck;
+पूर्ण
 
 /**
- * Generator of one 64 bit random number
- * Function fills rand_data->data
+ * Generator of one 64 bit अक्रमom number
+ * Function fills अक्रम_data->data
  *
  * @ec [in] Reference to entropy collector
  */
-static void jent_gen_entropy(struct rand_data *ec)
-{
-	unsigned int k = 0;
+अटल व्योम jent_gen_entropy(काष्ठा अक्रम_data *ec)
+अणु
+	अचिन्हित पूर्णांक k = 0;
 
-	/* priming of the ->prev_time value */
+	/* priming of the ->prev_समय value */
 	jent_measure_jitter(ec);
 
-	while (1) {
+	जबतक (1) अणु
 		/* If a stuck measurement is received, repeat measurement */
-		if (jent_measure_jitter(ec))
-			continue;
+		अगर (jent_measure_jitter(ec))
+			जारी;
 
 		/*
 		 * We multiply the loop value with ->osr to obtain the
 		 * oversampling rate requested by the caller
 		 */
-		if (++k >= (DATA_SIZE_BITS * ec->osr))
-			break;
-	}
-}
+		अगर (++k >= (DATA_SIZE_BITS * ec->osr))
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * Entry function: Obtain entropy for the caller.
+ * Entry function: Obtain entropy क्रम the caller.
  *
  * This function invokes the entropy gathering logic as often to generate
  * as many bytes as requested by the caller. The entropy gathering logic
  * creates 64 bit per invocation.
  *
  * This function truncates the last 64 bit entropy value output to the exact
- * size specified by the caller.
+ * size specअगरied by the caller.
  *
  * @ec [in] Reference to entropy collector
- * @data [in] pointer to buffer for storing random data -- buffer must already
+ * @data [in] poपूर्णांकer to buffer क्रम storing अक्रमom data -- buffer must alपढ़ोy
  *	      exist
- * @len [in] size of the buffer, specifying also the requested number of random
+ * @len [in] size of the buffer, specअगरying also the requested number of अक्रमom
  *	     in bytes
  *
- * @return 0 when request is fulfilled or an error
+ * @वापस 0 when request is fulfilled or an error
  *
  * The following error codes can occur:
- *	-1	entropy_collector is NULL
+ *	-1	entropy_collector is शून्य
  *	-2	RCT failed
  *	-3	APT test failed
  */
-int jent_read_entropy(struct rand_data *ec, unsigned char *data,
-		      unsigned int len)
-{
-	unsigned char *p = data;
+पूर्णांक jent_पढ़ो_entropy(काष्ठा अक्रम_data *ec, अचिन्हित अक्षर *data,
+		      अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *p = data;
 
-	if (!ec)
-		return -1;
+	अगर (!ec)
+		वापस -1;
 
-	while (len > 0) {
-		unsigned int tocopy;
+	जबतक (len > 0) अणु
+		अचिन्हित पूर्णांक tocopy;
 
 		jent_gen_entropy(ec);
 
-		if (jent_health_failure(ec)) {
-			int ret;
+		अगर (jent_health_failure(ec)) अणु
+			पूर्णांक ret;
 
-			if (jent_rct_failure(ec))
+			अगर (jent_rct_failure(ec))
 				ret = -2;
-			else
+			अन्यथा
 				ret = -3;
 
 			/*
 			 * Re-initialize the noise source
 			 *
-			 * If the health test fails, the Jitter RNG remains
-			 * in failure state and will return a health failure
+			 * If the health test fails, the Jitter RNG reमुख्यs
+			 * in failure state and will वापस a health failure
 			 * during next invocation.
 			 */
-			if (jent_entropy_init())
-				return ret;
+			अगर (jent_entropy_init())
+				वापस ret;
 
 			/* Set APT to initial state */
 			jent_apt_reset(ec, 0);
@@ -634,147 +635,147 @@ int jent_read_entropy(struct rand_data *ec, unsigned char *data,
 			 * Return the health test failure status to the
 			 * caller as the generated value is not appropriate.
 			 */
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if ((DATA_SIZE_BITS / 8) < len)
+		अगर ((DATA_SIZE_BITS / 8) < len)
 			tocopy = (DATA_SIZE_BITS / 8);
-		else
+		अन्यथा
 			tocopy = len;
-		jent_memcpy(p, &ec->data, tocopy);
+		jent_स_नकल(p, &ec->data, tocopy);
 
 		len -= tocopy;
 		p += tocopy;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /***************************************************************************
  * Initialization logic
  ***************************************************************************/
 
-struct rand_data *jent_entropy_collector_alloc(unsigned int osr,
-					       unsigned int flags)
-{
-	struct rand_data *entropy_collector;
+काष्ठा अक्रम_data *jent_entropy_collector_alloc(अचिन्हित पूर्णांक osr,
+					       अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा अक्रम_data *entropy_collector;
 
-	entropy_collector = jent_zalloc(sizeof(struct rand_data));
-	if (!entropy_collector)
-		return NULL;
+	entropy_collector = jent_zalloc(माप(काष्ठा अक्रम_data));
+	अगर (!entropy_collector)
+		वापस शून्य;
 
-	if (!(flags & JENT_DISABLE_MEMORY_ACCESS)) {
-		/* Allocate memory for adding variations based on memory
+	अगर (!(flags & JENT_DISABLE_MEMORY_ACCESS)) अणु
+		/* Allocate memory क्रम adding variations based on memory
 		 * access
 		 */
 		entropy_collector->mem = jent_zalloc(JENT_MEMORY_SIZE);
-		if (!entropy_collector->mem) {
-			jent_zfree(entropy_collector);
-			return NULL;
-		}
+		अगर (!entropy_collector->mem) अणु
+			jent_zमुक्त(entropy_collector);
+			वापस शून्य;
+		पूर्ण
 		entropy_collector->memblocksize = JENT_MEMORY_BLOCKSIZE;
 		entropy_collector->memblocks = JENT_MEMORY_BLOCKS;
 		entropy_collector->memaccessloops = JENT_MEMORY_ACCESSLOOPS;
-	}
+	पूर्ण
 
-	/* verify and set the oversampling rate */
-	if (osr == 0)
+	/* verअगरy and set the oversampling rate */
+	अगर (osr == 0)
 		osr = 1; /* minimum sampling rate is 1 */
 	entropy_collector->osr = osr;
 
 	/* fill the data pad with non-zero values */
 	jent_gen_entropy(entropy_collector);
 
-	return entropy_collector;
-}
+	वापस entropy_collector;
+पूर्ण
 
-void jent_entropy_collector_free(struct rand_data *entropy_collector)
-{
-	jent_zfree(entropy_collector->mem);
-	entropy_collector->mem = NULL;
-	jent_zfree(entropy_collector);
-}
+व्योम jent_entropy_collector_मुक्त(काष्ठा अक्रम_data *entropy_collector)
+अणु
+	jent_zमुक्त(entropy_collector->mem);
+	entropy_collector->mem = शून्य;
+	jent_zमुक्त(entropy_collector);
+पूर्ण
 
-int jent_entropy_init(void)
-{
-	int i;
+पूर्णांक jent_entropy_init(व्योम)
+अणु
+	पूर्णांक i;
 	__u64 delta_sum = 0;
 	__u64 old_delta = 0;
-	unsigned int nonstuck = 0;
-	int time_backwards = 0;
-	int count_mod = 0;
-	int count_stuck = 0;
-	struct rand_data ec = { 0 };
+	अचिन्हित पूर्णांक nonstuck = 0;
+	पूर्णांक समय_backwards = 0;
+	पूर्णांक count_mod = 0;
+	पूर्णांक count_stuck = 0;
+	काष्ठा अक्रम_data ec = अणु 0 पूर्ण;
 
-	/* Required for RCT */
+	/* Required क्रम RCT */
 	ec.osr = 1;
 
-	/* We could perform statistical tests here, but the problem is
-	 * that we only have a few loop counts to do testing. These
+	/* We could perक्रमm statistical tests here, but the problem is
+	 * that we only have a few loop counts to करो testing. These
 	 * loop counts may show some slight skew and we produce
 	 * false positives.
 	 *
-	 * Moreover, only old systems show potentially problematic
+	 * Moreover, only old प्रणालीs show potentially problematic
 	 * jitter entropy that could potentially be caught here. But
-	 * the RNG is intended for hardware that is available or widely
-	 * used, but not old systems that are long out of favor. Thus,
+	 * the RNG is पूर्णांकended क्रम hardware that is available or widely
+	 * used, but not old प्रणालीs that are दीर्घ out of favor. Thus,
 	 * no statistical tests.
 	 */
 
 	/*
-	 * We could add a check for system capabilities such as clock_getres or
-	 * check for CONFIG_X86_TSC, but it does not make much sense as the
-	 * following sanity checks verify that we have a high-resolution
-	 * timer.
+	 * We could add a check क्रम प्रणाली capabilities such as घड़ी_getres or
+	 * check क्रम CONFIG_X86_TSC, but it करोes not make much sense as the
+	 * following sanity checks verअगरy that we have a high-resolution
+	 * समयr.
 	 */
 	/*
-	 * TESTLOOPCOUNT needs some loops to identify edge systems. 100 is
+	 * TESTLOOPCOUNT needs some loops to identअगरy edge प्रणालीs. 100 is
 	 * definitely too little.
 	 *
 	 * SP800-90B requires at least 1024 initial test cycles.
 	 */
-#define TESTLOOPCOUNT 1024
-#define CLEARCACHE 100
-	for (i = 0; (TESTLOOPCOUNT + CLEARCACHE) > i; i++) {
-		__u64 time = 0;
-		__u64 time2 = 0;
+#घोषणा TESTLOOPCOUNT 1024
+#घोषणा CLEARCACHE 100
+	क्रम (i = 0; (TESTLOOPCOUNT + CLEARCACHE) > i; i++) अणु
+		__u64 समय = 0;
+		__u64 समय2 = 0;
 		__u64 delta = 0;
-		unsigned int lowdelta = 0;
-		int stuck;
+		अचिन्हित पूर्णांक lowdelta = 0;
+		पूर्णांक stuck;
 
 		/* Invoke core entropy collection logic */
-		jent_get_nstime(&time);
-		ec.prev_time = time;
-		jent_lfsr_time(&ec, time, 0, 0);
-		jent_get_nstime(&time2);
+		jent_get_nsसमय(&समय);
+		ec.prev_समय = समय;
+		jent_lfsr_समय(&ec, समय, 0, 0);
+		jent_get_nsसमय(&समय2);
 
-		/* test whether timer works */
-		if (!time || !time2)
-			return JENT_ENOTIME;
-		delta = jent_delta(time, time2);
+		/* test whether समयr works */
+		अगर (!समय || !समय2)
+			वापस JENT_ENOTIME;
+		delta = jent_delta(समय, समय2);
 		/*
-		 * test whether timer is fine grained enough to provide
-		 * delta even when called shortly after each other -- this
-		 * implies that we also have a high resolution timer
+		 * test whether समयr is fine grained enough to provide
+		 * delta even when called लघुly after each other -- this
+		 * implies that we also have a high resolution समयr
 		 */
-		if (!delta)
-			return JENT_ECOARSETIME;
+		अगर (!delta)
+			वापस JENT_ECOARSETIME;
 
 		stuck = jent_stuck(&ec, delta);
 
 		/*
-		 * up to here we did not modify any variable that will be
-		 * evaluated later, but we already performed some work. Thus we
-		 * already have had an impact on the caches, branch prediction,
-		 * etc. with the goal to clear it to get the worst case
+		 * up to here we did not modअगरy any variable that will be
+		 * evaluated later, but we alपढ़ोy perक्रमmed some work. Thus we
+		 * alपढ़ोy have had an impact on the caches, branch prediction,
+		 * etc. with the goal to clear it to get the worst हाल
 		 * measurements.
 		 */
-		if (i < CLEARCACHE)
-			continue;
+		अगर (i < CLEARCACHE)
+			जारी;
 
-		if (stuck)
+		अगर (stuck)
 			count_stuck++;
-		else {
+		अन्यथा अणु
 			nonstuck++;
 
 			/*
@@ -783,74 +784,74 @@ int jent_entropy_init(void)
 			 * With the check below that count_stuck must be less
 			 * than 10% of the overall generated raw entropy values
 			 * it is guaranteed that the APT is invoked at
-			 * floor((TESTLOOPCOUNT * 0.9) / 64) == 14 times.
+			 * न्यूनमान((TESTLOOPCOUNT * 0.9) / 64) == 14 बार.
 			 */
-			if ((nonstuck % JENT_APT_WINDOW_SIZE) == 0) {
+			अगर ((nonstuck % JENT_APT_WINDOW_SIZE) == 0) अणु
 				jent_apt_reset(&ec,
 					       delta & JENT_APT_WORD_MASK);
-				if (jent_health_failure(&ec))
-					return JENT_EHEALTH;
-			}
-		}
+				अगर (jent_health_failure(&ec))
+					वापस JENT_EHEALTH;
+			पूर्ण
+		पूर्ण
 
 		/* Validate RCT */
-		if (jent_rct_failure(&ec))
-			return JENT_ERCT;
+		अगर (jent_rct_failure(&ec))
+			वापस JENT_ERCT;
 
-		/* test whether we have an increasing timer */
-		if (!(time2 > time))
-			time_backwards++;
+		/* test whether we have an increasing समयr */
+		अगर (!(समय2 > समय))
+			समय_backwards++;
 
 		/* use 32 bit value to ensure compilation on 32 bit arches */
-		lowdelta = time2 - time;
-		if (!(lowdelta % 100))
+		lowdelta = समय2 - समय;
+		अगर (!(lowdelta % 100))
 			count_mod++;
 
 		/*
-		 * ensure that we have a varying delta timer which is necessary
-		 * for the calculation of entropy -- perform this check
+		 * ensure that we have a varying delta समयr which is necessary
+		 * क्रम the calculation of entropy -- perक्रमm this check
 		 * only after the first loop is executed as we need to prime
 		 * the old_data value
 		 */
-		if (delta > old_delta)
+		अगर (delta > old_delta)
 			delta_sum += (delta - old_delta);
-		else
+		अन्यथा
 			delta_sum += (old_delta - delta);
 		old_delta = delta;
-	}
+	पूर्ण
 
 	/*
-	 * we allow up to three times the time running backwards.
-	 * CLOCK_REALTIME is affected by adjtime and NTP operations. Thus,
-	 * if such an operation just happens to interfere with our test, it
-	 * should not fail. The value of 3 should cover the NTP case being
-	 * performed during our test run.
+	 * we allow up to three बार the समय running backwards.
+	 * CLOCK_REALTIME is affected by adjसमय and NTP operations. Thus,
+	 * अगर such an operation just happens to पूर्णांकerfere with our test, it
+	 * should not fail. The value of 3 should cover the NTP हाल being
+	 * perक्रमmed during our test run.
 	 */
-	if (time_backwards > 3)
-		return JENT_ENOMONOTONIC;
+	अगर (समय_backwards > 3)
+		वापस JENT_ENOMONOTONIC;
 
 	/*
-	 * Variations of deltas of time must on average be larger
+	 * Variations of deltas of समय must on average be larger
 	 * than 1 to ensure the entropy estimation
 	 * implied with 1 is preserved
 	 */
-	if ((delta_sum) <= 1)
-		return JENT_EVARVAR;
+	अगर ((delta_sum) <= 1)
+		वापस JENT_EVARVAR;
 
 	/*
-	 * Ensure that we have variations in the time stamp below 10 for at
-	 * least 10% of all checks -- on some platforms, the counter increments
+	 * Ensure that we have variations in the समय stamp below 10 क्रम at
+	 * least 10% of all checks -- on some platक्रमms, the counter increments
 	 * in multiples of 100, but not always
 	 */
-	if ((TESTLOOPCOUNT/10 * 9) < count_mod)
-		return JENT_ECOARSETIME;
+	अगर ((TESTLOOPCOUNT/10 * 9) < count_mod)
+		वापस JENT_ECOARSETIME;
 
 	/*
 	 * If we have more than 90% stuck results, then this Jitter RNG is
 	 * likely to not work well.
 	 */
-	if ((TESTLOOPCOUNT/10 * 9) < count_stuck)
-		return JENT_ESTUCK;
+	अगर ((TESTLOOPCOUNT/10 * 9) < count_stuck)
+		वापस JENT_ESTUCK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

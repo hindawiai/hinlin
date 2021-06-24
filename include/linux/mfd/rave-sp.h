@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 
 /*
- * Core definitions for RAVE SP MFD driver.
+ * Core definitions क्रम RAVE SP MFD driver.
  *
  * Copyright (C) 2017 Zodiac Inflight Innovations
  */
 
-#ifndef _LINUX_RAVE_SP_H_
-#define _LINUX_RAVE_SP_H_
+#अगर_अघोषित _LINUX_RAVE_SP_H_
+#घोषणा _LINUX_RAVE_SP_H_
 
-#include <linux/notifier.h>
+#समावेश <linux/notअगरier.h>
 
-enum rave_sp_command {
+क्रमागत rave_sp_command अणु
 	RAVE_SP_CMD_GET_FIRMWARE_VERSION	= 0x20,
 	RAVE_SP_CMD_GET_BOOTLOADER_VERSION	= 0x21,
 	RAVE_SP_CMD_BOOT_SOURCE			= 0x26,
@@ -32,31 +33,31 @@ enum rave_sp_command {
 	RAVE_SP_CMD_CONTROL_EVENTS		= 0xBB,
 
 	RAVE_SP_EVNT_BASE			= 0xE0,
-};
+पूर्ण;
 
-struct rave_sp;
+काष्ठा rave_sp;
 
-static inline unsigned long rave_sp_action_pack(u8 event, u8 value)
-{
-	return ((unsigned long)value << 8) | event;
-}
+अटल अंतरभूत अचिन्हित दीर्घ rave_sp_action_pack(u8 event, u8 value)
+अणु
+	वापस ((अचिन्हित दीर्घ)value << 8) | event;
+पूर्ण
 
-static inline u8 rave_sp_action_unpack_event(unsigned long action)
-{
-	return action;
-}
+अटल अंतरभूत u8 rave_sp_action_unpack_event(अचिन्हित दीर्घ action)
+अणु
+	वापस action;
+पूर्ण
 
-static inline u8 rave_sp_action_unpack_value(unsigned long action)
-{
-	return action >> 8;
-}
+अटल अंतरभूत u8 rave_sp_action_unpack_value(अचिन्हित दीर्घ action)
+अणु
+	वापस action >> 8;
+पूर्ण
 
-int rave_sp_exec(struct rave_sp *sp,
-		 void *__data,  size_t data_size,
-		 void *reply_data, size_t reply_data_size);
+पूर्णांक rave_sp_exec(काष्ठा rave_sp *sp,
+		 व्योम *__data,  माप_प्रकार data_size,
+		 व्योम *reply_data, माप_प्रकार reply_data_size);
 
-struct device;
-int devm_rave_sp_register_event_notifier(struct device *dev,
-					 struct notifier_block *nb);
+काष्ठा device;
+पूर्णांक devm_rave_sp_रेजिस्टर_event_notअगरier(काष्ठा device *dev,
+					 काष्ठा notअगरier_block *nb);
 
-#endif /* _LINUX_RAVE_SP_H_ */
+#पूर्ण_अगर /* _LINUX_RAVE_SP_H_ */

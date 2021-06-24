@@ -1,157 +1,158 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/arm-smccc.h>
-#include <linux/kernel.h>
-#include <linux/smp.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/arm-smccc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/smp.h>
 
-#include <asm/cp15.h>
-#include <asm/cputype.h>
-#include <asm/proc-fns.h>
-#include <asm/system_misc.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/proc-fns.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#ifdef CONFIG_HARDEN_BRANCH_PREDICTOR
+#अगर_घोषित CONFIG_HARDEN_BRANCH_PREDICTOR
 DEFINE_PER_CPU(harden_branch_predictor_fn_t, harden_branch_predictor_fn);
 
-extern void cpu_v7_iciallu_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm);
-extern void cpu_v7_bpiall_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm);
-extern void cpu_v7_smc_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm);
-extern void cpu_v7_hvc_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm);
+बाह्य व्योम cpu_v7_iciallu_चयन_mm(phys_addr_t pgd_phys, काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम cpu_v7_bpiall_चयन_mm(phys_addr_t pgd_phys, काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम cpu_v7_smc_चयन_mm(phys_addr_t pgd_phys, काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम cpu_v7_hvc_चयन_mm(phys_addr_t pgd_phys, काष्ठा mm_काष्ठा *mm);
 
-static void harden_branch_predictor_bpiall(void)
-{
-	write_sysreg(0, BPIALL);
-}
+अटल व्योम harden_branch_predictor_bpiall(व्योम)
+अणु
+	ग_लिखो_sysreg(0, BPIALL);
+पूर्ण
 
-static void harden_branch_predictor_iciallu(void)
-{
-	write_sysreg(0, ICIALLU);
-}
+अटल व्योम harden_branch_predictor_iciallu(व्योम)
+अणु
+	ग_लिखो_sysreg(0, ICIALLU);
+पूर्ण
 
-static void __maybe_unused call_smc_arch_workaround_1(void)
-{
-	arm_smccc_1_1_smc(ARM_SMCCC_ARCH_WORKAROUND_1, NULL);
-}
+अटल व्योम __maybe_unused call_smc_arch_workaround_1(व्योम)
+अणु
+	arm_smccc_1_1_smc(ARM_SMCCC_ARCH_WORKAROUND_1, शून्य);
+पूर्ण
 
-static void __maybe_unused call_hvc_arch_workaround_1(void)
-{
-	arm_smccc_1_1_hvc(ARM_SMCCC_ARCH_WORKAROUND_1, NULL);
-}
+अटल व्योम __maybe_unused call_hvc_arch_workaround_1(व्योम)
+अणु
+	arm_smccc_1_1_hvc(ARM_SMCCC_ARCH_WORKAROUND_1, शून्य);
+पूर्ण
 
-static void cpu_v7_spectre_init(void)
-{
-	const char *spectre_v2_method = NULL;
-	int cpu = smp_processor_id();
+अटल व्योम cpu_v7_spectre_init(व्योम)
+अणु
+	स्थिर अक्षर *spectre_v2_method = शून्य;
+	पूर्णांक cpu = smp_processor_id();
 
-	if (per_cpu(harden_branch_predictor_fn, cpu))
-		return;
+	अगर (per_cpu(harden_branch_predictor_fn, cpu))
+		वापस;
 
-	switch (read_cpuid_part()) {
-	case ARM_CPU_PART_CORTEX_A8:
-	case ARM_CPU_PART_CORTEX_A9:
-	case ARM_CPU_PART_CORTEX_A12:
-	case ARM_CPU_PART_CORTEX_A17:
-	case ARM_CPU_PART_CORTEX_A73:
-	case ARM_CPU_PART_CORTEX_A75:
+	चयन (पढ़ो_cpuid_part()) अणु
+	हाल ARM_CPU_PART_CORTEX_A8:
+	हाल ARM_CPU_PART_CORTEX_A9:
+	हाल ARM_CPU_PART_CORTEX_A12:
+	हाल ARM_CPU_PART_CORTEX_A17:
+	हाल ARM_CPU_PART_CORTEX_A73:
+	हाल ARM_CPU_PART_CORTEX_A75:
 		per_cpu(harden_branch_predictor_fn, cpu) =
 			harden_branch_predictor_bpiall;
 		spectre_v2_method = "BPIALL";
-		break;
+		अवरोध;
 
-	case ARM_CPU_PART_CORTEX_A15:
-	case ARM_CPU_PART_BRAHMA_B15:
+	हाल ARM_CPU_PART_CORTEX_A15:
+	हाल ARM_CPU_PART_BRAHMA_B15:
 		per_cpu(harden_branch_predictor_fn, cpu) =
 			harden_branch_predictor_iciallu;
 		spectre_v2_method = "ICIALLU";
-		break;
+		अवरोध;
 
-#ifdef CONFIG_ARM_PSCI
-	case ARM_CPU_PART_BRAHMA_B53:
+#अगर_घोषित CONFIG_ARM_PSCI
+	हाल ARM_CPU_PART_BRAHMA_B53:
 		/* Requires no workaround */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Other ARM CPUs require no workaround */
-		if (read_cpuid_implementor() == ARM_CPU_IMP_ARM)
-			break;
+		अगर (पढ़ो_cpuid_implementor() == ARM_CPU_IMP_ARM)
+			अवरोध;
 		fallthrough;
 		/* Cortex A57/A72 require firmware workaround */
-	case ARM_CPU_PART_CORTEX_A57:
-	case ARM_CPU_PART_CORTEX_A72: {
-		struct arm_smccc_res res;
+	हाल ARM_CPU_PART_CORTEX_A57:
+	हाल ARM_CPU_PART_CORTEX_A72: अणु
+		काष्ठा arm_smccc_res res;
 
 		arm_smccc_1_1_invoke(ARM_SMCCC_ARCH_FEATURES_FUNC_ID,
 				     ARM_SMCCC_ARCH_WORKAROUND_1, &res);
-		if ((int)res.a0 != 0)
-			return;
+		अगर ((पूर्णांक)res.a0 != 0)
+			वापस;
 
-		switch (arm_smccc_1_1_get_conduit()) {
-		case SMCCC_CONDUIT_HVC:
+		चयन (arm_smccc_1_1_get_conduit()) अणु
+		हाल SMCCC_CONDUIT_HVC:
 			per_cpu(harden_branch_predictor_fn, cpu) =
 				call_hvc_arch_workaround_1;
-			cpu_do_switch_mm = cpu_v7_hvc_switch_mm;
+			cpu_करो_चयन_mm = cpu_v7_hvc_चयन_mm;
 			spectre_v2_method = "hypervisor";
-			break;
+			अवरोध;
 
-		case SMCCC_CONDUIT_SMC:
+		हाल SMCCC_CONDUIT_SMC:
 			per_cpu(harden_branch_predictor_fn, cpu) =
 				call_smc_arch_workaround_1;
-			cpu_do_switch_mm = cpu_v7_smc_switch_mm;
+			cpu_करो_चयन_mm = cpu_v7_smc_चयन_mm;
 			spectre_v2_method = "firmware";
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
-#endif
-	}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	if (spectre_v2_method)
+	अगर (spectre_v2_method)
 		pr_info("CPU%u: Spectre v2: using %s workaround\n",
 			smp_processor_id(), spectre_v2_method);
-}
-#else
-static void cpu_v7_spectre_init(void)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल व्योम cpu_v7_spectre_init(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static __maybe_unused bool cpu_v7_check_auxcr_set(bool *warned,
-						  u32 mask, const char *msg)
-{
+अटल __maybe_unused bool cpu_v7_check_auxcr_set(bool *warned,
+						  u32 mask, स्थिर अक्षर *msg)
+अणु
 	u32 aux_cr;
 
-	asm("mrc p15, 0, %0, c1, c0, 1" : "=r" (aux_cr));
+	यंत्र("mrc p15, 0, %0, c1, c0, 1" : "=r" (aux_cr));
 
-	if ((aux_cr & mask) != mask) {
-		if (!*warned)
+	अगर ((aux_cr & mask) != mask) अणु
+		अगर (!*warned)
 			pr_err("CPU%u: %s", smp_processor_id(), msg);
 		*warned = true;
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static DEFINE_PER_CPU(bool, spectre_warned);
+अटल DEFINE_PER_CPU(bool, spectre_warned);
 
-static bool check_spectre_auxcr(bool *warned, u32 bit)
-{
-	return IS_ENABLED(CONFIG_HARDEN_BRANCH_PREDICTOR) &&
+अटल bool check_spectre_auxcr(bool *warned, u32 bit)
+अणु
+	वापस IS_ENABLED(CONFIG_HARDEN_BRANCH_PREDICTOR) &&
 		cpu_v7_check_auxcr_set(warned, bit,
 				       "Spectre v2: firmware did not set auxiliary control register IBE bit, system vulnerable\n");
-}
+पूर्ण
 
-void cpu_v7_ca8_ibe(void)
-{
-	if (check_spectre_auxcr(this_cpu_ptr(&spectre_warned), BIT(6)))
+व्योम cpu_v7_ca8_ibe(व्योम)
+अणु
+	अगर (check_spectre_auxcr(this_cpu_ptr(&spectre_warned), BIT(6)))
 		cpu_v7_spectre_init();
-}
+पूर्ण
 
-void cpu_v7_ca15_ibe(void)
-{
-	if (check_spectre_auxcr(this_cpu_ptr(&spectre_warned), BIT(0)))
+व्योम cpu_v7_ca15_ibe(व्योम)
+अणु
+	अगर (check_spectre_auxcr(this_cpu_ptr(&spectre_warned), BIT(0)))
 		cpu_v7_spectre_init();
-}
+पूर्ण
 
-void cpu_v7_bugs_init(void)
-{
+व्योम cpu_v7_bugs_init(व्योम)
+अणु
 	cpu_v7_spectre_init();
-}
+पूर्ण

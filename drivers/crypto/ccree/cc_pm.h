@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2012-2019 ARM Limited (or its affiliates). */
 
-/* \file cc_pm.h
+/* \पile cc_pm.h
  */
 
-#ifndef __CC_POWER_MGR_H__
-#define __CC_POWER_MGR_H__
+#अगर_अघोषित __CC_POWER_MGR_H__
+#घोषणा __CC_POWER_MGR_H__
 
-#include "cc_driver.h"
+#समावेश "cc_driver.h"
 
-#define CC_SUSPEND_TIMEOUT 3000
+#घोषणा CC_SUSPEND_TIMEOUT 3000
 
-#if defined(CONFIG_PM)
+#अगर defined(CONFIG_PM)
 
-extern const struct dev_pm_ops ccree_pm;
+बाह्य स्थिर काष्ठा dev_pm_ops ccree_pm;
 
-int cc_pm_get(struct device *dev);
-void cc_pm_put_suspend(struct device *dev);
+पूर्णांक cc_pm_get(काष्ठा device *dev);
+व्योम cc_pm_put_suspend(काष्ठा device *dev);
 
-#else
+#अन्यथा
 
-static inline int cc_pm_get(struct device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक cc_pm_get(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void cc_pm_put_suspend(struct device *dev) {}
+अटल अंतरभूत व्योम cc_pm_put_suspend(काष्ठा device *dev) अणुपूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /*__POWER_MGR_H__*/
+#पूर्ण_अगर /*__POWER_MGR_H__*/

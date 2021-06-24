@@ -1,179 +1,180 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h>
-#include <linux/string.h>
-#include <linux/pci.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/mutex.h>
-#include <linux/if_ether.h>
-#include <linux/ctype.h>
-#include <linux/dmi.h>
-#include <linux/of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/dmi.h>
+#समावेश <linux/of.h>
 
-#define PHUB_STATUS 0x00		/* Status Register offset */
-#define PHUB_CONTROL 0x04		/* Control Register offset */
-#define PHUB_TIMEOUT 0x05		/* Time out value for Status Register */
-#define PCH_PHUB_ROM_WRITE_ENABLE 0x01	/* Enabling for writing ROM */
-#define PCH_PHUB_ROM_WRITE_DISABLE 0x00	/* Disabling for writing ROM */
-#define PCH_PHUB_MAC_START_ADDR_EG20T 0x14  /* MAC data area start address
+#घोषणा PHUB_STATUS 0x00		/* Status Register offset */
+#घोषणा PHUB_CONTROL 0x04		/* Control Register offset */
+#घोषणा PHUB_TIMEOUT 0x05		/* Time out value क्रम Status Register */
+#घोषणा PCH_PHUB_ROM_WRITE_ENABLE 0x01	/* Enabling क्रम writing ROM */
+#घोषणा PCH_PHUB_ROM_WRITE_DISABLE 0x00	/* Disabling क्रम writing ROM */
+#घोषणा PCH_PHUB_MAC_START_ADDR_EG20T 0x14  /* MAC data area start address
 					       offset */
-#define PCH_PHUB_MAC_START_ADDR_ML7223 0x20C  /* MAC data area start address
+#घोषणा PCH_PHUB_MAC_START_ADDR_ML7223 0x20C  /* MAC data area start address
 						 offset */
-#define PCH_PHUB_ROM_START_ADDR_EG20T 0x80 /* ROM data area start address offset
+#घोषणा PCH_PHUB_ROM_START_ADDR_EG20T 0x80 /* ROM data area start address offset
 					      (Intel EG20T PCH)*/
-#define PCH_PHUB_ROM_START_ADDR_ML7213 0x400 /* ROM data area start address
+#घोषणा PCH_PHUB_ROM_START_ADDR_ML7213 0x400 /* ROM data area start address
 						offset(LAPIS Semicon ML7213)
 					      */
-#define PCH_PHUB_ROM_START_ADDR_ML7223 0x400 /* ROM data area start address
+#घोषणा PCH_PHUB_ROM_START_ADDR_ML7223 0x400 /* ROM data area start address
 						offset(LAPIS Semicon ML7223)
 					      */
 
-/* MAX number of INT_REDUCE_CONTROL registers */
-#define MAX_NUM_INT_REDUCE_CONTROL_REG 128
-#define PCI_DEVICE_ID_PCH1_PHUB 0x8801
-#define PCH_MINOR_NOS 1
-#define CLKCFG_CAN_50MHZ 0x12000000
-#define CLKCFG_CANCLK_MASK 0xFF000000
-#define CLKCFG_UART_MASK			0xFFFFFF
+/* MAX number of INT_REDUCE_CONTROL रेजिस्टरs */
+#घोषणा MAX_NUM_INT_REDUCE_CONTROL_REG 128
+#घोषणा PCI_DEVICE_ID_PCH1_PHUB 0x8801
+#घोषणा PCH_MINOR_NOS 1
+#घोषणा CLKCFG_CAN_50MHZ 0x12000000
+#घोषणा CLKCFG_CANCLK_MASK 0xFF000000
+#घोषणा CLKCFG_UART_MASK			0xFFFFFF
 
 /* CM-iTC */
-#define CLKCFG_UART_48MHZ			(1 << 16)
-#define CLKCFG_UART_25MHZ			(2 << 16)
-#define CLKCFG_BAUDDIV				(2 << 20)
-#define CLKCFG_PLL2VCO				(8 << 9)
-#define CLKCFG_UARTCLKSEL			(1 << 18)
+#घोषणा CLKCFG_UART_48MHZ			(1 << 16)
+#घोषणा CLKCFG_UART_25MHZ			(2 << 16)
+#घोषणा CLKCFG_BAUDDIV				(2 << 20)
+#घोषणा CLKCFG_PLL2VCO				(8 << 9)
+#घोषणा CLKCFG_UARTCLKSEL			(1 << 18)
 
-/* Macros for ML7213 */
-#define PCI_DEVICE_ID_ROHM_ML7213_PHUB		0x801A
+/* Macros क्रम ML7213 */
+#घोषणा PCI_DEVICE_ID_ROHM_ML7213_PHUB		0x801A
 
-/* Macros for ML7223 */
-#define PCI_DEVICE_ID_ROHM_ML7223_mPHUB	0x8012 /* for Bus-m */
-#define PCI_DEVICE_ID_ROHM_ML7223_nPHUB	0x8002 /* for Bus-n */
+/* Macros क्रम ML7223 */
+#घोषणा PCI_DEVICE_ID_ROHM_ML7223_mPHUB	0x8012 /* क्रम Bus-m */
+#घोषणा PCI_DEVICE_ID_ROHM_ML7223_nPHUB	0x8002 /* क्रम Bus-n */
 
-/* Macros for ML7831 */
-#define PCI_DEVICE_ID_ROHM_ML7831_PHUB 0x8801
+/* Macros क्रम ML7831 */
+#घोषणा PCI_DEVICE_ID_ROHM_ML7831_PHUB 0x8801
 
 /* SROM ACCESS Macro */
-#define PCH_WORD_ADDR_MASK (~((1 << 2) - 1))
+#घोषणा PCH_WORD_ADDR_MASK (~((1 << 2) - 1))
 
 /* Registers address offset */
-#define PCH_PHUB_ID_REG				0x0000
-#define PCH_PHUB_QUEUE_PRI_VAL_REG		0x0004
-#define PCH_PHUB_RC_QUEUE_MAXSIZE_REG		0x0008
-#define PCH_PHUB_BRI_QUEUE_MAXSIZE_REG		0x000C
-#define PCH_PHUB_COMP_RESP_TIMEOUT_REG		0x0010
-#define PCH_PHUB_BUS_SLAVE_CONTROL_REG		0x0014
-#define PCH_PHUB_DEADLOCK_AVOID_TYPE_REG	0x0018
-#define PCH_PHUB_INTPIN_REG_WPERMIT_REG0	0x0020
-#define PCH_PHUB_INTPIN_REG_WPERMIT_REG1	0x0024
-#define PCH_PHUB_INTPIN_REG_WPERMIT_REG2	0x0028
-#define PCH_PHUB_INTPIN_REG_WPERMIT_REG3	0x002C
-#define PCH_PHUB_INT_REDUCE_CONTROL_REG_BASE	0x0040
-#define CLKCFG_REG_OFFSET			0x500
-#define FUNCSEL_REG_OFFSET			0x508
+#घोषणा PCH_PHUB_ID_REG				0x0000
+#घोषणा PCH_PHUB_QUEUE_PRI_VAL_REG		0x0004
+#घोषणा PCH_PHUB_RC_QUEUE_MAXSIZE_REG		0x0008
+#घोषणा PCH_PHUB_BRI_QUEUE_MAXSIZE_REG		0x000C
+#घोषणा PCH_PHUB_COMP_RESP_TIMEOUT_REG		0x0010
+#घोषणा PCH_PHUB_BUS_SLAVE_CONTROL_REG		0x0014
+#घोषणा PCH_PHUB_DEADLOCK_AVOID_TYPE_REG	0x0018
+#घोषणा PCH_PHUB_INTPIN_REG_WPERMIT_REG0	0x0020
+#घोषणा PCH_PHUB_INTPIN_REG_WPERMIT_REG1	0x0024
+#घोषणा PCH_PHUB_INTPIN_REG_WPERMIT_REG2	0x0028
+#घोषणा PCH_PHUB_INTPIN_REG_WPERMIT_REG3	0x002C
+#घोषणा PCH_PHUB_INT_REDUCE_CONTROL_REG_BASE	0x0040
+#घोषणा CLKCFG_REG_OFFSET			0x500
+#घोषणा FUNCSEL_REG_OFFSET			0x508
 
-#define PCH_PHUB_OROM_SIZE 15360
+#घोषणा PCH_PHUB_OROM_SIZE 15360
 
 /**
- * struct pch_phub_reg - PHUB register structure
- * @phub_id_reg:			PHUB_ID register val
- * @q_pri_val_reg:			QUEUE_PRI_VAL register val
- * @rc_q_maxsize_reg:			RC_QUEUE_MAXSIZE register val
- * @bri_q_maxsize_reg:			BRI_QUEUE_MAXSIZE register val
- * @comp_resp_timeout_reg:		COMP_RESP_TIMEOUT register val
- * @bus_slave_control_reg:		BUS_SLAVE_CONTROL_REG register val
- * @deadlock_avoid_type_reg:		DEADLOCK_AVOID_TYPE register val
- * @intpin_reg_wpermit_reg0:		INTPIN_REG_WPERMIT register 0 val
- * @intpin_reg_wpermit_reg1:		INTPIN_REG_WPERMIT register 1 val
- * @intpin_reg_wpermit_reg2:		INTPIN_REG_WPERMIT register 2 val
- * @intpin_reg_wpermit_reg3:		INTPIN_REG_WPERMIT register 3 val
- * @int_reduce_control_reg:		INT_REDUCE_CONTROL registers val
- * @clkcfg_reg:				CLK CFG register val
- * @funcsel_reg:			Function select register value
+ * काष्ठा pch_phub_reg - PHUB रेजिस्टर काष्ठाure
+ * @phub_id_reg:			PHUB_ID रेजिस्टर val
+ * @q_pri_val_reg:			QUEUE_PRI_VAL रेजिस्टर val
+ * @rc_q_maxsize_reg:			RC_QUEUE_MAXSIZE रेजिस्टर val
+ * @bri_q_maxsize_reg:			BRI_QUEUE_MAXSIZE रेजिस्टर val
+ * @comp_resp_समयout_reg:		COMP_RESP_TIMEOUT रेजिस्टर val
+ * @bus_slave_control_reg:		BUS_SLAVE_CONTROL_REG रेजिस्टर val
+ * @deadlock_aव्योम_type_reg:		DEADLOCK_AVOID_TYPE रेजिस्टर val
+ * @पूर्णांकpin_reg_wpermit_reg0:		INTPIN_REG_WPERMIT रेजिस्टर 0 val
+ * @पूर्णांकpin_reg_wpermit_reg1:		INTPIN_REG_WPERMIT रेजिस्टर 1 val
+ * @पूर्णांकpin_reg_wpermit_reg2:		INTPIN_REG_WPERMIT रेजिस्टर 2 val
+ * @पूर्णांकpin_reg_wpermit_reg3:		INTPIN_REG_WPERMIT रेजिस्टर 3 val
+ * @पूर्णांक_reduce_control_reg:		INT_REDUCE_CONTROL रेजिस्टरs val
+ * @clkcfg_reg:				CLK CFG रेजिस्टर val
+ * @funcsel_reg:			Function select रेजिस्टर value
  * @pch_phub_base_address:		Register base address
- * @pch_phub_extrom_base_address:	external rom base address
+ * @pch_phub_extrom_base_address:	बाह्यal rom base address
  * @pch_mac_start_address:		MAC address area start address
  * @pch_opt_rom_start_address:		Option ROM start address
  * @ioh_type:				Save IOH type
- * @pdev:				pointer to pci device struct
+ * @pdev:				poपूर्णांकer to pci device काष्ठा
  */
-struct pch_phub_reg {
+काष्ठा pch_phub_reg अणु
 	u32 phub_id_reg;
 	u32 q_pri_val_reg;
 	u32 rc_q_maxsize_reg;
 	u32 bri_q_maxsize_reg;
-	u32 comp_resp_timeout_reg;
+	u32 comp_resp_समयout_reg;
 	u32 bus_slave_control_reg;
-	u32 deadlock_avoid_type_reg;
-	u32 intpin_reg_wpermit_reg0;
-	u32 intpin_reg_wpermit_reg1;
-	u32 intpin_reg_wpermit_reg2;
-	u32 intpin_reg_wpermit_reg3;
-	u32 int_reduce_control_reg[MAX_NUM_INT_REDUCE_CONTROL_REG];
+	u32 deadlock_aव्योम_type_reg;
+	u32 पूर्णांकpin_reg_wpermit_reg0;
+	u32 पूर्णांकpin_reg_wpermit_reg1;
+	u32 पूर्णांकpin_reg_wpermit_reg2;
+	u32 पूर्णांकpin_reg_wpermit_reg3;
+	u32 पूर्णांक_reduce_control_reg[MAX_NUM_INT_REDUCE_CONTROL_REG];
 	u32 clkcfg_reg;
 	u32 funcsel_reg;
-	void __iomem *pch_phub_base_address;
-	void __iomem *pch_phub_extrom_base_address;
+	व्योम __iomem *pch_phub_base_address;
+	व्योम __iomem *pch_phub_extrom_base_address;
 	u32 pch_mac_start_address;
 	u32 pch_opt_rom_start_address;
-	int ioh_type;
-	struct pci_dev *pdev;
-};
+	पूर्णांक ioh_type;
+	काष्ठा pci_dev *pdev;
+पूर्ण;
 
-/* SROM SPEC for MAC address assignment offset */
-static const int pch_phub_mac_offset[ETH_ALEN] = {0x3, 0x2, 0x1, 0x0, 0xb, 0xa};
+/* SROM SPEC क्रम MAC address assignment offset */
+अटल स्थिर पूर्णांक pch_phub_mac_offset[ETH_ALEN] = अणु0x3, 0x2, 0x1, 0x0, 0xb, 0xaपूर्ण;
 
-static DEFINE_MUTEX(pch_phub_mutex);
+अटल DEFINE_MUTEX(pch_phub_mutex);
 
 /**
- * pch_phub_read_modify_write_reg() - Reading modifying and writing register
- * @chip:		Pointer to the PHUB register structure
+ * pch_phub_पढ़ो_modअगरy_ग_लिखो_reg() - Reading modअगरying and writing रेजिस्टर
+ * @chip:		Poपूर्णांकer to the PHUB रेजिस्टर काष्ठाure
  * @reg_addr_offset:	Register offset address value.
  * @data:		Writing value.
  * @mask:		Mask value.
  */
-static void pch_phub_read_modify_write_reg(struct pch_phub_reg *chip,
-					   unsigned int reg_addr_offset,
-					   unsigned int data, unsigned int mask)
-{
-	void __iomem *reg_addr = chip->pch_phub_base_address + reg_addr_offset;
-	iowrite32(((ioread32(reg_addr) & ~mask)) | data, reg_addr);
-}
+अटल व्योम pch_phub_पढ़ो_modअगरy_ग_लिखो_reg(काष्ठा pch_phub_reg *chip,
+					   अचिन्हित पूर्णांक reg_addr_offset,
+					   अचिन्हित पूर्णांक data, अचिन्हित पूर्णांक mask)
+अणु
+	व्योम __iomem *reg_addr = chip->pch_phub_base_address + reg_addr_offset;
+	ioग_लिखो32(((ioपढ़ो32(reg_addr) & ~mask)) | data, reg_addr);
+पूर्ण
 
-/* pch_phub_save_reg_conf - saves register configuration */
-static void __maybe_unused pch_phub_save_reg_conf(struct pci_dev *pdev)
-{
-	unsigned int i;
-	struct pch_phub_reg *chip = pci_get_drvdata(pdev);
+/* pch_phub_save_reg_conf - saves रेजिस्टर configuration */
+अटल व्योम __maybe_unused pch_phub_save_reg_conf(काष्ठा pci_dev *pdev)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा pch_phub_reg *chip = pci_get_drvdata(pdev);
 
-	void __iomem *p = chip->pch_phub_base_address;
+	व्योम __iomem *p = chip->pch_phub_base_address;
 
-	chip->phub_id_reg = ioread32(p + PCH_PHUB_ID_REG);
-	chip->q_pri_val_reg = ioread32(p + PCH_PHUB_QUEUE_PRI_VAL_REG);
-	chip->rc_q_maxsize_reg = ioread32(p + PCH_PHUB_RC_QUEUE_MAXSIZE_REG);
-	chip->bri_q_maxsize_reg = ioread32(p + PCH_PHUB_BRI_QUEUE_MAXSIZE_REG);
-	chip->comp_resp_timeout_reg =
-				ioread32(p + PCH_PHUB_COMP_RESP_TIMEOUT_REG);
+	chip->phub_id_reg = ioपढ़ो32(p + PCH_PHUB_ID_REG);
+	chip->q_pri_val_reg = ioपढ़ो32(p + PCH_PHUB_QUEUE_PRI_VAL_REG);
+	chip->rc_q_maxsize_reg = ioपढ़ो32(p + PCH_PHUB_RC_QUEUE_MAXSIZE_REG);
+	chip->bri_q_maxsize_reg = ioपढ़ो32(p + PCH_PHUB_BRI_QUEUE_MAXSIZE_REG);
+	chip->comp_resp_समयout_reg =
+				ioपढ़ो32(p + PCH_PHUB_COMP_RESP_TIMEOUT_REG);
 	chip->bus_slave_control_reg =
-				ioread32(p + PCH_PHUB_BUS_SLAVE_CONTROL_REG);
-	chip->deadlock_avoid_type_reg =
-				ioread32(p + PCH_PHUB_DEADLOCK_AVOID_TYPE_REG);
-	chip->intpin_reg_wpermit_reg0 =
-				ioread32(p + PCH_PHUB_INTPIN_REG_WPERMIT_REG0);
-	chip->intpin_reg_wpermit_reg1 =
-				ioread32(p + PCH_PHUB_INTPIN_REG_WPERMIT_REG1);
-	chip->intpin_reg_wpermit_reg2 =
-				ioread32(p + PCH_PHUB_INTPIN_REG_WPERMIT_REG2);
-	chip->intpin_reg_wpermit_reg3 =
-				ioread32(p + PCH_PHUB_INTPIN_REG_WPERMIT_REG3);
+				ioपढ़ो32(p + PCH_PHUB_BUS_SLAVE_CONTROL_REG);
+	chip->deadlock_aव्योम_type_reg =
+				ioपढ़ो32(p + PCH_PHUB_DEADLOCK_AVOID_TYPE_REG);
+	chip->पूर्णांकpin_reg_wpermit_reg0 =
+				ioपढ़ो32(p + PCH_PHUB_INTPIN_REG_WPERMIT_REG0);
+	chip->पूर्णांकpin_reg_wpermit_reg1 =
+				ioपढ़ो32(p + PCH_PHUB_INTPIN_REG_WPERMIT_REG1);
+	chip->पूर्णांकpin_reg_wpermit_reg2 =
+				ioपढ़ो32(p + PCH_PHUB_INTPIN_REG_WPERMIT_REG2);
+	chip->पूर्णांकpin_reg_wpermit_reg3 =
+				ioपढ़ो32(p + PCH_PHUB_INTPIN_REG_WPERMIT_REG3);
 	dev_dbg(&pdev->dev, "%s : "
 		"chip->phub_id_reg=%x, "
 		"chip->q_pri_val_reg=%x, "
@@ -190,50 +191,50 @@ static void __maybe_unused pch_phub_save_reg_conf(struct pci_dev *pdev)
 		chip->q_pri_val_reg,
 		chip->rc_q_maxsize_reg,
 		chip->bri_q_maxsize_reg,
-		chip->comp_resp_timeout_reg,
+		chip->comp_resp_समयout_reg,
 		chip->bus_slave_control_reg,
-		chip->deadlock_avoid_type_reg,
-		chip->intpin_reg_wpermit_reg0,
-		chip->intpin_reg_wpermit_reg1,
-		chip->intpin_reg_wpermit_reg2,
-		chip->intpin_reg_wpermit_reg3);
-	for (i = 0; i < MAX_NUM_INT_REDUCE_CONTROL_REG; i++) {
-		chip->int_reduce_control_reg[i] =
-		    ioread32(p + PCH_PHUB_INT_REDUCE_CONTROL_REG_BASE + 4 * i);
+		chip->deadlock_aव्योम_type_reg,
+		chip->पूर्णांकpin_reg_wpermit_reg0,
+		chip->पूर्णांकpin_reg_wpermit_reg1,
+		chip->पूर्णांकpin_reg_wpermit_reg2,
+		chip->पूर्णांकpin_reg_wpermit_reg3);
+	क्रम (i = 0; i < MAX_NUM_INT_REDUCE_CONTROL_REG; i++) अणु
+		chip->पूर्णांक_reduce_control_reg[i] =
+		    ioपढ़ो32(p + PCH_PHUB_INT_REDUCE_CONTROL_REG_BASE + 4 * i);
 		dev_dbg(&pdev->dev, "%s : "
 			"chip->int_reduce_control_reg[%d]=%x\n",
-			__func__, i, chip->int_reduce_control_reg[i]);
-	}
-	chip->clkcfg_reg = ioread32(p + CLKCFG_REG_OFFSET);
-	if ((chip->ioh_type == 2) || (chip->ioh_type == 4))
-		chip->funcsel_reg = ioread32(p + FUNCSEL_REG_OFFSET);
-}
+			__func__, i, chip->पूर्णांक_reduce_control_reg[i]);
+	पूर्ण
+	chip->clkcfg_reg = ioपढ़ो32(p + CLKCFG_REG_OFFSET);
+	अगर ((chip->ioh_type == 2) || (chip->ioh_type == 4))
+		chip->funcsel_reg = ioपढ़ो32(p + FUNCSEL_REG_OFFSET);
+पूर्ण
 
-/* pch_phub_restore_reg_conf - restore register configuration */
-static void __maybe_unused pch_phub_restore_reg_conf(struct pci_dev *pdev)
-{
-	unsigned int i;
-	struct pch_phub_reg *chip = pci_get_drvdata(pdev);
-	void __iomem *p;
+/* pch_phub_restore_reg_conf - restore रेजिस्टर configuration */
+अटल व्योम __maybe_unused pch_phub_restore_reg_conf(काष्ठा pci_dev *pdev)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा pch_phub_reg *chip = pci_get_drvdata(pdev);
+	व्योम __iomem *p;
 	p = chip->pch_phub_base_address;
 
-	iowrite32(chip->phub_id_reg, p + PCH_PHUB_ID_REG);
-	iowrite32(chip->q_pri_val_reg, p + PCH_PHUB_QUEUE_PRI_VAL_REG);
-	iowrite32(chip->rc_q_maxsize_reg, p + PCH_PHUB_RC_QUEUE_MAXSIZE_REG);
-	iowrite32(chip->bri_q_maxsize_reg, p + PCH_PHUB_BRI_QUEUE_MAXSIZE_REG);
-	iowrite32(chip->comp_resp_timeout_reg,
+	ioग_लिखो32(chip->phub_id_reg, p + PCH_PHUB_ID_REG);
+	ioग_लिखो32(chip->q_pri_val_reg, p + PCH_PHUB_QUEUE_PRI_VAL_REG);
+	ioग_लिखो32(chip->rc_q_maxsize_reg, p + PCH_PHUB_RC_QUEUE_MAXSIZE_REG);
+	ioग_लिखो32(chip->bri_q_maxsize_reg, p + PCH_PHUB_BRI_QUEUE_MAXSIZE_REG);
+	ioग_लिखो32(chip->comp_resp_समयout_reg,
 					p + PCH_PHUB_COMP_RESP_TIMEOUT_REG);
-	iowrite32(chip->bus_slave_control_reg,
+	ioग_लिखो32(chip->bus_slave_control_reg,
 					p + PCH_PHUB_BUS_SLAVE_CONTROL_REG);
-	iowrite32(chip->deadlock_avoid_type_reg,
+	ioग_लिखो32(chip->deadlock_aव्योम_type_reg,
 					p + PCH_PHUB_DEADLOCK_AVOID_TYPE_REG);
-	iowrite32(chip->intpin_reg_wpermit_reg0,
+	ioग_लिखो32(chip->पूर्णांकpin_reg_wpermit_reg0,
 					p + PCH_PHUB_INTPIN_REG_WPERMIT_REG0);
-	iowrite32(chip->intpin_reg_wpermit_reg1,
+	ioग_लिखो32(chip->पूर्णांकpin_reg_wpermit_reg1,
 					p + PCH_PHUB_INTPIN_REG_WPERMIT_REG1);
-	iowrite32(chip->intpin_reg_wpermit_reg2,
+	ioग_लिखो32(chip->पूर्णांकpin_reg_wpermit_reg2,
 					p + PCH_PHUB_INTPIN_REG_WPERMIT_REG2);
-	iowrite32(chip->intpin_reg_wpermit_reg3,
+	ioग_लिखो32(chip->पूर्णांकpin_reg_wpermit_reg3,
 					p + PCH_PHUB_INTPIN_REG_WPERMIT_REG3);
 	dev_dbg(&pdev->dev, "%s : "
 		"chip->phub_id_reg=%x, "
@@ -251,568 +252,568 @@ static void __maybe_unused pch_phub_restore_reg_conf(struct pci_dev *pdev)
 		chip->q_pri_val_reg,
 		chip->rc_q_maxsize_reg,
 		chip->bri_q_maxsize_reg,
-		chip->comp_resp_timeout_reg,
+		chip->comp_resp_समयout_reg,
 		chip->bus_slave_control_reg,
-		chip->deadlock_avoid_type_reg,
-		chip->intpin_reg_wpermit_reg0,
-		chip->intpin_reg_wpermit_reg1,
-		chip->intpin_reg_wpermit_reg2,
-		chip->intpin_reg_wpermit_reg3);
-	for (i = 0; i < MAX_NUM_INT_REDUCE_CONTROL_REG; i++) {
-		iowrite32(chip->int_reduce_control_reg[i],
+		chip->deadlock_aव्योम_type_reg,
+		chip->पूर्णांकpin_reg_wpermit_reg0,
+		chip->पूर्णांकpin_reg_wpermit_reg1,
+		chip->पूर्णांकpin_reg_wpermit_reg2,
+		chip->पूर्णांकpin_reg_wpermit_reg3);
+	क्रम (i = 0; i < MAX_NUM_INT_REDUCE_CONTROL_REG; i++) अणु
+		ioग_लिखो32(chip->पूर्णांक_reduce_control_reg[i],
 			p + PCH_PHUB_INT_REDUCE_CONTROL_REG_BASE + 4 * i);
 		dev_dbg(&pdev->dev, "%s : "
 			"chip->int_reduce_control_reg[%d]=%x\n",
-			__func__, i, chip->int_reduce_control_reg[i]);
-	}
+			__func__, i, chip->पूर्णांक_reduce_control_reg[i]);
+	पूर्ण
 
-	iowrite32(chip->clkcfg_reg, p + CLKCFG_REG_OFFSET);
-	if ((chip->ioh_type == 2) || (chip->ioh_type == 4))
-		iowrite32(chip->funcsel_reg, p + FUNCSEL_REG_OFFSET);
-}
+	ioग_लिखो32(chip->clkcfg_reg, p + CLKCFG_REG_OFFSET);
+	अगर ((chip->ioh_type == 2) || (chip->ioh_type == 4))
+		ioग_लिखो32(chip->funcsel_reg, p + FUNCSEL_REG_OFFSET);
+पूर्ण
 
 /**
- * pch_phub_read_serial_rom() - Reading Serial ROM
- * @chip:		Pointer to the PHUB register structure
- * @offset_address:	Serial ROM offset address to read.
- * @data:		Read buffer for specified Serial ROM value.
+ * pch_phub_पढ़ो_serial_rom() - Reading Serial ROM
+ * @chip:		Poपूर्णांकer to the PHUB रेजिस्टर काष्ठाure
+ * @offset_address:	Serial ROM offset address to पढ़ो.
+ * @data:		Read buffer क्रम specअगरied Serial ROM value.
  */
-static void pch_phub_read_serial_rom(struct pch_phub_reg *chip,
-				     unsigned int offset_address, u8 *data)
-{
-	void __iomem *mem_addr = chip->pch_phub_extrom_base_address +
+अटल व्योम pch_phub_पढ़ो_serial_rom(काष्ठा pch_phub_reg *chip,
+				     अचिन्हित पूर्णांक offset_address, u8 *data)
+अणु
+	व्योम __iomem *mem_addr = chip->pch_phub_extrom_base_address +
 								offset_address;
 
-	*data = ioread8(mem_addr);
-}
+	*data = ioपढ़ो8(mem_addr);
+पूर्ण
 
 /**
- * pch_phub_write_serial_rom() - Writing Serial ROM
- * @chip:		Pointer to the PHUB register structure
+ * pch_phub_ग_लिखो_serial_rom() - Writing Serial ROM
+ * @chip:		Poपूर्णांकer to the PHUB रेजिस्टर काष्ठाure
  * @offset_address:	Serial ROM offset address.
- * @data:		Serial ROM value to write.
+ * @data:		Serial ROM value to ग_लिखो.
  */
-static int pch_phub_write_serial_rom(struct pch_phub_reg *chip,
-				     unsigned int offset_address, u8 data)
-{
-	void __iomem *mem_addr = chip->pch_phub_extrom_base_address +
+अटल पूर्णांक pch_phub_ग_लिखो_serial_rom(काष्ठा pch_phub_reg *chip,
+				     अचिन्हित पूर्णांक offset_address, u8 data)
+अणु
+	व्योम __iomem *mem_addr = chip->pch_phub_extrom_base_address +
 					(offset_address & PCH_WORD_ADDR_MASK);
-	int i;
-	unsigned int word_data;
-	unsigned int pos;
-	unsigned int mask;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक word_data;
+	अचिन्हित पूर्णांक pos;
+	अचिन्हित पूर्णांक mask;
 	pos = (offset_address % 4) * 8;
 	mask = ~(0xFF << pos);
 
-	iowrite32(PCH_PHUB_ROM_WRITE_ENABLE,
+	ioग_लिखो32(PCH_PHUB_ROM_WRITE_ENABLE,
 			chip->pch_phub_extrom_base_address + PHUB_CONTROL);
 
-	word_data = ioread32(mem_addr);
-	iowrite32((word_data & mask) | (u32)data << pos, mem_addr);
+	word_data = ioपढ़ो32(mem_addr);
+	ioग_लिखो32((word_data & mask) | (u32)data << pos, mem_addr);
 
 	i = 0;
-	while (ioread8(chip->pch_phub_extrom_base_address +
-						PHUB_STATUS) != 0x00) {
+	जबतक (ioपढ़ो8(chip->pch_phub_extrom_base_address +
+						PHUB_STATUS) != 0x00) अणु
 		msleep(1);
-		if (i == PHUB_TIMEOUT)
-			return -ETIMEDOUT;
+		अगर (i == PHUB_TIMEOUT)
+			वापस -ETIMEDOUT;
 		i++;
-	}
+	पूर्ण
 
-	iowrite32(PCH_PHUB_ROM_WRITE_DISABLE,
+	ioग_लिखो32(PCH_PHUB_ROM_WRITE_DISABLE,
 			chip->pch_phub_extrom_base_address + PHUB_CONTROL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pch_phub_read_serial_rom_val() - Read Serial ROM value
- * @chip:		Pointer to the PHUB register structure
+ * pch_phub_पढ़ो_serial_rom_val() - Read Serial ROM value
+ * @chip:		Poपूर्णांकer to the PHUB रेजिस्टर काष्ठाure
  * @offset_address:	Serial ROM address offset value.
- * @data:		Serial ROM value to read.
+ * @data:		Serial ROM value to पढ़ो.
  */
-static void pch_phub_read_serial_rom_val(struct pch_phub_reg *chip,
-					 unsigned int offset_address, u8 *data)
-{
-	unsigned int mem_addr;
+अटल व्योम pch_phub_पढ़ो_serial_rom_val(काष्ठा pch_phub_reg *chip,
+					 अचिन्हित पूर्णांक offset_address, u8 *data)
+अणु
+	अचिन्हित पूर्णांक mem_addr;
 
 	mem_addr = chip->pch_mac_start_address +
 			pch_phub_mac_offset[offset_address];
 
-	pch_phub_read_serial_rom(chip, mem_addr, data);
-}
+	pch_phub_पढ़ो_serial_rom(chip, mem_addr, data);
+पूर्ण
 
 /**
- * pch_phub_write_serial_rom_val() - writing Serial ROM value
- * @chip:		Pointer to the PHUB register structure
+ * pch_phub_ग_लिखो_serial_rom_val() - writing Serial ROM value
+ * @chip:		Poपूर्णांकer to the PHUB रेजिस्टर काष्ठाure
  * @offset_address:	Serial ROM address offset value.
  * @data:		Serial ROM value.
  */
-static int pch_phub_write_serial_rom_val(struct pch_phub_reg *chip,
-					 unsigned int offset_address, u8 data)
-{
-	int retval;
-	unsigned int mem_addr;
+अटल पूर्णांक pch_phub_ग_लिखो_serial_rom_val(काष्ठा pch_phub_reg *chip,
+					 अचिन्हित पूर्णांक offset_address, u8 data)
+अणु
+	पूर्णांक retval;
+	अचिन्हित पूर्णांक mem_addr;
 
 	mem_addr = chip->pch_mac_start_address +
 			pch_phub_mac_offset[offset_address];
 
-	retval = pch_phub_write_serial_rom(chip, mem_addr, data);
+	retval = pch_phub_ग_लिखो_serial_rom(chip, mem_addr, data);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-/* pch_phub_gbe_serial_rom_conf - makes Serial ROM header format configuration
- * for Gigabit Ethernet MAC address
+/* pch_phub_gbe_serial_rom_conf - makes Serial ROM header क्रमmat configuration
+ * क्रम Gigabit Ethernet MAC address
  */
-static int pch_phub_gbe_serial_rom_conf(struct pch_phub_reg *chip)
-{
-	int retval;
+अटल पूर्णांक pch_phub_gbe_serial_rom_conf(काष्ठा pch_phub_reg *chip)
+अणु
+	पूर्णांक retval;
 
-	retval = pch_phub_write_serial_rom(chip, 0x0b, 0xbc);
-	retval |= pch_phub_write_serial_rom(chip, 0x0a, 0x10);
-	retval |= pch_phub_write_serial_rom(chip, 0x09, 0x01);
-	retval |= pch_phub_write_serial_rom(chip, 0x08, 0x02);
+	retval = pch_phub_ग_लिखो_serial_rom(chip, 0x0b, 0xbc);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x0a, 0x10);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x09, 0x01);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x08, 0x02);
 
-	retval |= pch_phub_write_serial_rom(chip, 0x0f, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x0e, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x0d, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x0c, 0x80);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x0f, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x0e, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x0d, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x0c, 0x80);
 
-	retval |= pch_phub_write_serial_rom(chip, 0x13, 0xbc);
-	retval |= pch_phub_write_serial_rom(chip, 0x12, 0x10);
-	retval |= pch_phub_write_serial_rom(chip, 0x11, 0x01);
-	retval |= pch_phub_write_serial_rom(chip, 0x10, 0x18);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x13, 0xbc);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x12, 0x10);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x11, 0x01);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x10, 0x18);
 
-	retval |= pch_phub_write_serial_rom(chip, 0x1b, 0xbc);
-	retval |= pch_phub_write_serial_rom(chip, 0x1a, 0x10);
-	retval |= pch_phub_write_serial_rom(chip, 0x19, 0x01);
-	retval |= pch_phub_write_serial_rom(chip, 0x18, 0x19);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x1b, 0xbc);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x1a, 0x10);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x19, 0x01);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x18, 0x19);
 
-	retval |= pch_phub_write_serial_rom(chip, 0x23, 0xbc);
-	retval |= pch_phub_write_serial_rom(chip, 0x22, 0x10);
-	retval |= pch_phub_write_serial_rom(chip, 0x21, 0x01);
-	retval |= pch_phub_write_serial_rom(chip, 0x20, 0x3a);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x23, 0xbc);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x22, 0x10);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x21, 0x01);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x20, 0x3a);
 
-	retval |= pch_phub_write_serial_rom(chip, 0x27, 0x01);
-	retval |= pch_phub_write_serial_rom(chip, 0x26, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x25, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x24, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x27, 0x01);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x26, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x25, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x24, 0x00);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-/* pch_phub_gbe_serial_rom_conf_mp - makes SerialROM header format configuration
- * for Gigabit Ethernet MAC address
+/* pch_phub_gbe_serial_rom_conf_mp - makes SerialROM header क्रमmat configuration
+ * क्रम Gigabit Ethernet MAC address
  */
-static int pch_phub_gbe_serial_rom_conf_mp(struct pch_phub_reg *chip)
-{
-	int retval;
+अटल पूर्णांक pch_phub_gbe_serial_rom_conf_mp(काष्ठा pch_phub_reg *chip)
+अणु
+	पूर्णांक retval;
 	u32 offset_addr;
 
 	offset_addr = 0x200;
-	retval = pch_phub_write_serial_rom(chip, 0x03 + offset_addr, 0xbc);
-	retval |= pch_phub_write_serial_rom(chip, 0x02 + offset_addr, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x01 + offset_addr, 0x40);
-	retval |= pch_phub_write_serial_rom(chip, 0x00 + offset_addr, 0x02);
+	retval = pch_phub_ग_लिखो_serial_rom(chip, 0x03 + offset_addr, 0xbc);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x02 + offset_addr, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x01 + offset_addr, 0x40);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x00 + offset_addr, 0x02);
 
-	retval |= pch_phub_write_serial_rom(chip, 0x07 + offset_addr, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x06 + offset_addr, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x05 + offset_addr, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x04 + offset_addr, 0x80);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x07 + offset_addr, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x06 + offset_addr, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x05 + offset_addr, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x04 + offset_addr, 0x80);
 
-	retval |= pch_phub_write_serial_rom(chip, 0x0b + offset_addr, 0xbc);
-	retval |= pch_phub_write_serial_rom(chip, 0x0a + offset_addr, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x09 + offset_addr, 0x40);
-	retval |= pch_phub_write_serial_rom(chip, 0x08 + offset_addr, 0x18);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x0b + offset_addr, 0xbc);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x0a + offset_addr, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x09 + offset_addr, 0x40);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x08 + offset_addr, 0x18);
 
-	retval |= pch_phub_write_serial_rom(chip, 0x13 + offset_addr, 0xbc);
-	retval |= pch_phub_write_serial_rom(chip, 0x12 + offset_addr, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x11 + offset_addr, 0x40);
-	retval |= pch_phub_write_serial_rom(chip, 0x10 + offset_addr, 0x19);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x13 + offset_addr, 0xbc);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x12 + offset_addr, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x11 + offset_addr, 0x40);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x10 + offset_addr, 0x19);
 
-	retval |= pch_phub_write_serial_rom(chip, 0x1b + offset_addr, 0xbc);
-	retval |= pch_phub_write_serial_rom(chip, 0x1a + offset_addr, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x19 + offset_addr, 0x40);
-	retval |= pch_phub_write_serial_rom(chip, 0x18 + offset_addr, 0x3a);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x1b + offset_addr, 0xbc);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x1a + offset_addr, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x19 + offset_addr, 0x40);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x18 + offset_addr, 0x3a);
 
-	retval |= pch_phub_write_serial_rom(chip, 0x1f + offset_addr, 0x01);
-	retval |= pch_phub_write_serial_rom(chip, 0x1e + offset_addr, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x1d + offset_addr, 0x00);
-	retval |= pch_phub_write_serial_rom(chip, 0x1c + offset_addr, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x1f + offset_addr, 0x01);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x1e + offset_addr, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x1d + offset_addr, 0x00);
+	retval |= pch_phub_ग_लिखो_serial_rom(chip, 0x1c + offset_addr, 0x00);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /**
- * pch_phub_read_gbe_mac_addr() - Read Gigabit Ethernet MAC address
- * @chip:		Pointer to the PHUB register structure
+ * pch_phub_पढ़ो_gbe_mac_addr() - Read Gigabit Ethernet MAC address
+ * @chip:		Poपूर्णांकer to the PHUB रेजिस्टर काष्ठाure
  * @data:		Buffer of the Gigabit Ethernet MAC address value.
  */
-static void pch_phub_read_gbe_mac_addr(struct pch_phub_reg *chip, u8 *data)
-{
-	int i;
-	for (i = 0; i < ETH_ALEN; i++)
-		pch_phub_read_serial_rom_val(chip, i, &data[i]);
-}
+अटल व्योम pch_phub_पढ़ो_gbe_mac_addr(काष्ठा pch_phub_reg *chip, u8 *data)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < ETH_ALEN; i++)
+		pch_phub_पढ़ो_serial_rom_val(chip, i, &data[i]);
+पूर्ण
 
 /**
- * pch_phub_write_gbe_mac_addr() - Write MAC address
- * @chip:		Pointer to the PHUB register structure
+ * pch_phub_ग_लिखो_gbe_mac_addr() - Write MAC address
+ * @chip:		Poपूर्णांकer to the PHUB रेजिस्टर काष्ठाure
  * @data:		Gigabit Ethernet MAC address value.
  */
-static int pch_phub_write_gbe_mac_addr(struct pch_phub_reg *chip, u8 *data)
-{
-	int retval;
-	int i;
+अटल पूर्णांक pch_phub_ग_लिखो_gbe_mac_addr(काष्ठा pch_phub_reg *chip, u8 *data)
+अणु
+	पूर्णांक retval;
+	पूर्णांक i;
 
-	if ((chip->ioh_type == 1) || (chip->ioh_type == 5)) /* EG20T or ML7831*/
+	अगर ((chip->ioh_type == 1) || (chip->ioh_type == 5)) /* EG20T or ML7831*/
 		retval = pch_phub_gbe_serial_rom_conf(chip);
-	else	/* ML7223 */
+	अन्यथा	/* ML7223 */
 		retval = pch_phub_gbe_serial_rom_conf_mp(chip);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	for (i = 0; i < ETH_ALEN; i++) {
-		retval = pch_phub_write_serial_rom_val(chip, i, data[i]);
-		if (retval)
-			return retval;
-	}
+	क्रम (i = 0; i < ETH_ALEN; i++) अणु
+		retval = pch_phub_ग_लिखो_serial_rom_val(chip, i, data[i]);
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static ssize_t pch_phub_bin_read(struct file *filp, struct kobject *kobj,
-				 struct bin_attribute *attr, char *buf,
-				 loff_t off, size_t count)
-{
-	unsigned int rom_signature;
-	unsigned char rom_length;
-	unsigned int tmp;
-	unsigned int addr_offset;
-	unsigned int orom_size;
-	int ret;
-	int err;
-	ssize_t rom_size;
+अटल sमाप_प्रकार pch_phub_bin_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+				 काष्ठा bin_attribute *attr, अक्षर *buf,
+				 loff_t off, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक rom_signature;
+	अचिन्हित अक्षर rom_length;
+	अचिन्हित पूर्णांक पंचांगp;
+	अचिन्हित पूर्णांक addr_offset;
+	अचिन्हित पूर्णांक orom_size;
+	पूर्णांक ret;
+	पूर्णांक err;
+	sमाप_प्रकार rom_size;
 
-	struct pch_phub_reg *chip = dev_get_drvdata(kobj_to_dev(kobj));
+	काष्ठा pch_phub_reg *chip = dev_get_drvdata(kobj_to_dev(kobj));
 
-	ret = mutex_lock_interruptible(&pch_phub_mutex);
-	if (ret) {
+	ret = mutex_lock_पूर्णांकerruptible(&pch_phub_mutex);
+	अगर (ret) अणु
 		err = -ERESTARTSYS;
-		goto return_err_nomutex;
-	}
+		जाओ वापस_err_nomutex;
+	पूर्ण
 
 	/* Get Rom signature */
 	chip->pch_phub_extrom_base_address = pci_map_rom(chip->pdev, &rom_size);
-	if (!chip->pch_phub_extrom_base_address) {
+	अगर (!chip->pch_phub_extrom_base_address) अणु
 		err = -ENODATA;
-		goto exrom_map_err;
-	}
+		जाओ exrom_map_err;
+	पूर्ण
 
-	pch_phub_read_serial_rom(chip, chip->pch_opt_rom_start_address,
-				(unsigned char *)&rom_signature);
+	pch_phub_पढ़ो_serial_rom(chip, chip->pch_opt_rom_start_address,
+				(अचिन्हित अक्षर *)&rom_signature);
 	rom_signature &= 0xff;
-	pch_phub_read_serial_rom(chip, chip->pch_opt_rom_start_address + 1,
-				(unsigned char *)&tmp);
-	rom_signature |= (tmp & 0xff) << 8;
-	if (rom_signature == 0xAA55) {
-		pch_phub_read_serial_rom(chip,
+	pch_phub_पढ़ो_serial_rom(chip, chip->pch_opt_rom_start_address + 1,
+				(अचिन्हित अक्षर *)&पंचांगp);
+	rom_signature |= (पंचांगp & 0xff) << 8;
+	अगर (rom_signature == 0xAA55) अणु
+		pch_phub_पढ़ो_serial_rom(chip,
 					 chip->pch_opt_rom_start_address + 2,
 					 &rom_length);
 		orom_size = rom_length * 512;
-		if (orom_size < off) {
+		अगर (orom_size < off) अणु
 			addr_offset = 0;
-			goto return_ok;
-		}
-		if (orom_size < count) {
+			जाओ वापस_ok;
+		पूर्ण
+		अगर (orom_size < count) अणु
 			addr_offset = 0;
-			goto return_ok;
-		}
+			जाओ वापस_ok;
+		पूर्ण
 
-		for (addr_offset = 0; addr_offset < count; addr_offset++) {
-			pch_phub_read_serial_rom(chip,
+		क्रम (addr_offset = 0; addr_offset < count; addr_offset++) अणु
+			pch_phub_पढ़ो_serial_rom(chip,
 			    chip->pch_opt_rom_start_address + addr_offset + off,
 			    &buf[addr_offset]);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = -ENODATA;
-		goto return_err;
-	}
-return_ok:
+		जाओ वापस_err;
+	पूर्ण
+वापस_ok:
 	pci_unmap_rom(chip->pdev, chip->pch_phub_extrom_base_address);
 	mutex_unlock(&pch_phub_mutex);
-	return addr_offset;
+	वापस addr_offset;
 
-return_err:
+वापस_err:
 	pci_unmap_rom(chip->pdev, chip->pch_phub_extrom_base_address);
 exrom_map_err:
 	mutex_unlock(&pch_phub_mutex);
-return_err_nomutex:
-	return err;
-}
+वापस_err_nomutex:
+	वापस err;
+पूर्ण
 
-static ssize_t pch_phub_bin_write(struct file *filp, struct kobject *kobj,
-				  struct bin_attribute *attr,
-				  char *buf, loff_t off, size_t count)
-{
-	int err;
-	unsigned int addr_offset;
-	int ret;
-	ssize_t rom_size;
-	struct pch_phub_reg *chip = dev_get_drvdata(kobj_to_dev(kobj));
+अटल sमाप_प्रकार pch_phub_bin_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
+				  काष्ठा bin_attribute *attr,
+				  अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक addr_offset;
+	पूर्णांक ret;
+	sमाप_प्रकार rom_size;
+	काष्ठा pch_phub_reg *chip = dev_get_drvdata(kobj_to_dev(kobj));
 
-	ret = mutex_lock_interruptible(&pch_phub_mutex);
-	if (ret)
-		return -ERESTARTSYS;
+	ret = mutex_lock_पूर्णांकerruptible(&pch_phub_mutex);
+	अगर (ret)
+		वापस -ERESTARTSYS;
 
-	if (off > PCH_PHUB_OROM_SIZE) {
+	अगर (off > PCH_PHUB_OROM_SIZE) अणु
 		addr_offset = 0;
-		goto return_ok;
-	}
-	if (count > PCH_PHUB_OROM_SIZE) {
+		जाओ वापस_ok;
+	पूर्ण
+	अगर (count > PCH_PHUB_OROM_SIZE) अणु
 		addr_offset = 0;
-		goto return_ok;
-	}
+		जाओ वापस_ok;
+	पूर्ण
 
 	chip->pch_phub_extrom_base_address = pci_map_rom(chip->pdev, &rom_size);
-	if (!chip->pch_phub_extrom_base_address) {
+	अगर (!chip->pch_phub_extrom_base_address) अणु
 		err = -ENOMEM;
-		goto exrom_map_err;
-	}
+		जाओ exrom_map_err;
+	पूर्ण
 
-	for (addr_offset = 0; addr_offset < count; addr_offset++) {
-		if (PCH_PHUB_OROM_SIZE < off + addr_offset)
-			goto return_ok;
+	क्रम (addr_offset = 0; addr_offset < count; addr_offset++) अणु
+		अगर (PCH_PHUB_OROM_SIZE < off + addr_offset)
+			जाओ वापस_ok;
 
-		ret = pch_phub_write_serial_rom(chip,
+		ret = pch_phub_ग_लिखो_serial_rom(chip,
 			    chip->pch_opt_rom_start_address + addr_offset + off,
 			    buf[addr_offset]);
-		if (ret) {
+		अगर (ret) अणु
 			err = ret;
-			goto return_err;
-		}
-	}
+			जाओ वापस_err;
+		पूर्ण
+	पूर्ण
 
-return_ok:
+वापस_ok:
 	pci_unmap_rom(chip->pdev, chip->pch_phub_extrom_base_address);
 	mutex_unlock(&pch_phub_mutex);
-	return addr_offset;
+	वापस addr_offset;
 
-return_err:
+वापस_err:
 	pci_unmap_rom(chip->pdev, chip->pch_phub_extrom_base_address);
 
 exrom_map_err:
 	mutex_unlock(&pch_phub_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static ssize_t show_pch_mac(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
+अटल sमाप_प्रकार show_pch_mac(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
 	u8 mac[8];
-	struct pch_phub_reg *chip = dev_get_drvdata(dev);
-	ssize_t rom_size;
+	काष्ठा pch_phub_reg *chip = dev_get_drvdata(dev);
+	sमाप_प्रकार rom_size;
 
 	chip->pch_phub_extrom_base_address = pci_map_rom(chip->pdev, &rom_size);
-	if (!chip->pch_phub_extrom_base_address)
-		return -ENOMEM;
+	अगर (!chip->pch_phub_extrom_base_address)
+		वापस -ENOMEM;
 
-	pch_phub_read_gbe_mac_addr(chip, mac);
+	pch_phub_पढ़ो_gbe_mac_addr(chip, mac);
 	pci_unmap_rom(chip->pdev, chip->pch_phub_extrom_base_address);
 
-	return sprintf(buf, "%pM\n", mac);
-}
+	वापस प्र_लिखो(buf, "%pM\n", mac);
+पूर्ण
 
-static ssize_t store_pch_mac(struct device *dev, struct device_attribute *attr,
-			     const char *buf, size_t count)
-{
+अटल sमाप_प्रकार store_pch_mac(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	u8 mac[ETH_ALEN];
-	ssize_t rom_size;
-	struct pch_phub_reg *chip = dev_get_drvdata(dev);
-	int ret;
+	sमाप_प्रकार rom_size;
+	काष्ठा pch_phub_reg *chip = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (!mac_pton(buf, mac))
-		return -EINVAL;
+	अगर (!mac_pton(buf, mac))
+		वापस -EINVAL;
 
 	chip->pch_phub_extrom_base_address = pci_map_rom(chip->pdev, &rom_size);
-	if (!chip->pch_phub_extrom_base_address)
-		return -ENOMEM;
+	अगर (!chip->pch_phub_extrom_base_address)
+		वापस -ENOMEM;
 
-	ret = pch_phub_write_gbe_mac_addr(chip, mac);
+	ret = pch_phub_ग_लिखो_gbe_mac_addr(chip, mac);
 	pci_unmap_rom(chip->pdev, chip->pch_phub_extrom_base_address);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(pch_mac, S_IRUGO | S_IWUSR, show_pch_mac, store_pch_mac);
+अटल DEVICE_ATTR(pch_mac, S_IRUGO | S_IWUSR, show_pch_mac, store_pch_mac);
 
-static const struct bin_attribute pch_bin_attr = {
-	.attr = {
+अटल स्थिर काष्ठा bin_attribute pch_bin_attr = अणु
+	.attr = अणु
 		.name = "pch_firmware",
 		.mode = S_IRUGO | S_IWUSR,
-	},
+	पूर्ण,
 	.size = PCH_PHUB_OROM_SIZE + 1,
-	.read = pch_phub_bin_read,
-	.write = pch_phub_bin_write,
-};
+	.पढ़ो = pch_phub_bin_पढ़ो,
+	.ग_लिखो = pch_phub_bin_ग_लिखो,
+पूर्ण;
 
-static int pch_phub_probe(struct pci_dev *pdev,
-				    const struct pci_device_id *id)
-{
-	int ret;
-	struct pch_phub_reg *chip;
+अटल पूर्णांक pch_phub_probe(काष्ठा pci_dev *pdev,
+				    स्थिर काष्ठा pci_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा pch_phub_reg *chip;
 
-	chip = kzalloc(sizeof(struct pch_phub_reg), GFP_KERNEL);
-	if (chip == NULL)
-		return -ENOMEM;
+	chip = kzalloc(माप(काष्ठा pch_phub_reg), GFP_KERNEL);
+	अगर (chip == शून्य)
+		वापस -ENOMEM;
 
 	ret = pci_enable_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev,
 		"%s : pci_enable_device FAILED(ret=%d)", __func__, ret);
-		goto err_pci_enable_dev;
-	}
+		जाओ err_pci_enable_dev;
+	पूर्ण
 	dev_dbg(&pdev->dev, "%s : pci_enable_device returns %d\n", __func__,
 		ret);
 
 	ret = pci_request_regions(pdev, KBUILD_MODNAME);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev,
 		"%s : pci_request_regions FAILED(ret=%d)", __func__, ret);
-		goto err_req_regions;
-	}
+		जाओ err_req_regions;
+	पूर्ण
 	dev_dbg(&pdev->dev, "%s : "
 		"pci_request_regions returns %d\n", __func__, ret);
 
 	chip->pch_phub_base_address = pci_iomap(pdev, 1, 0);
 
 
-	if (chip->pch_phub_base_address == NULL) {
+	अगर (chip->pch_phub_base_address == शून्य) अणु
 		dev_err(&pdev->dev, "%s : pci_iomap FAILED", __func__);
 		ret = -ENOMEM;
-		goto err_pci_iomap;
-	}
+		जाओ err_pci_iomap;
+	पूर्ण
 	dev_dbg(&pdev->dev, "%s : pci_iomap SUCCESS and value "
 		"in pch_phub_base_address variable is %p\n", __func__,
 		chip->pch_phub_base_address);
 
-	chip->pdev = pdev; /* Save pci device struct */
+	chip->pdev = pdev; /* Save pci device काष्ठा */
 
-	if (id->driver_data == 1) { /* EG20T PCH */
-		const char *board_name;
-		unsigned int prefetch = 0x000affaa;
+	अगर (id->driver_data == 1) अणु /* EG20T PCH */
+		स्थिर अक्षर *board_name;
+		अचिन्हित पूर्णांक prefetch = 0x000affaa;
 
-		if (pdev->dev.of_node)
-			of_property_read_u32(pdev->dev.of_node,
+		अगर (pdev->dev.of_node)
+			of_property_पढ़ो_u32(pdev->dev.of_node,
 						  "intel,eg20t-prefetch",
 						  &prefetch);
 
 		ret = sysfs_create_file(&pdev->dev.kobj,
 					&dev_attr_pch_mac.attr);
-		if (ret)
-			goto err_sysfs_create;
+		अगर (ret)
+			जाओ err_sysfs_create;
 
 		ret = sysfs_create_bin_file(&pdev->dev.kobj, &pch_bin_attr);
-		if (ret)
-			goto exit_bin_attr;
+		अगर (ret)
+			जाओ निकास_bin_attr;
 
-		pch_phub_read_modify_write_reg(chip,
-					       (unsigned int)CLKCFG_REG_OFFSET,
+		pch_phub_पढ़ो_modअगरy_ग_लिखो_reg(chip,
+					       (अचिन्हित पूर्णांक)CLKCFG_REG_OFFSET,
 					       CLKCFG_CAN_50MHZ,
 					       CLKCFG_CANCLK_MASK);
 
-		/* quirk for CM-iTC board */
-		board_name = dmi_get_system_info(DMI_BOARD_NAME);
-		if (board_name && strstr(board_name, "CM-iTC"))
-			pch_phub_read_modify_write_reg(chip,
-						(unsigned int)CLKCFG_REG_OFFSET,
+		/* quirk क्रम CM-iTC board */
+		board_name = dmi_get_प्रणाली_info(DMI_BOARD_NAME);
+		अगर (board_name && म_माला(board_name, "CM-iTC"))
+			pch_phub_पढ़ो_modअगरy_ग_लिखो_reg(chip,
+						(अचिन्हित पूर्णांक)CLKCFG_REG_OFFSET,
 						CLKCFG_UART_48MHZ | CLKCFG_BAUDDIV |
 						CLKCFG_PLL2VCO | CLKCFG_UARTCLKSEL,
 						CLKCFG_UART_MASK);
 
 		/* set the prefech value */
-		iowrite32(prefetch, chip->pch_phub_base_address + 0x14);
-		/* set the interrupt delay value */
-		iowrite32(0x25, chip->pch_phub_base_address + 0x44);
+		ioग_लिखो32(prefetch, chip->pch_phub_base_address + 0x14);
+		/* set the पूर्णांकerrupt delay value */
+		ioग_लिखो32(0x25, chip->pch_phub_base_address + 0x44);
 		chip->pch_opt_rom_start_address = PCH_PHUB_ROM_START_ADDR_EG20T;
 		chip->pch_mac_start_address = PCH_PHUB_MAC_START_ADDR_EG20T;
 
-		/* quirk for MIPS Boston platform */
-		if (pdev->dev.of_node) {
-			if (of_machine_is_compatible("img,boston")) {
-				pch_phub_read_modify_write_reg(chip,
-					(unsigned int)CLKCFG_REG_OFFSET,
+		/* quirk क्रम MIPS Boston platक्रमm */
+		अगर (pdev->dev.of_node) अणु
+			अगर (of_machine_is_compatible("img,boston")) अणु
+				pch_phub_पढ़ो_modअगरy_ग_लिखो_reg(chip,
+					(अचिन्हित पूर्णांक)CLKCFG_REG_OFFSET,
 					CLKCFG_UART_25MHZ,
 					CLKCFG_UART_MASK);
-			}
-		}
-	} else if (id->driver_data == 2) { /* ML7213 IOH */
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (id->driver_data == 2) अणु /* ML7213 IOH */
 		ret = sysfs_create_bin_file(&pdev->dev.kobj, &pch_bin_attr);
-		if (ret)
-			goto err_sysfs_create;
+		अगर (ret)
+			जाओ err_sysfs_create;
 		/* set the prefech value
 		 * Device2(USB OHCI #1/ USB EHCI #1/ USB Device):a
 		 * Device4(SDIO #0,1,2):f
 		 * Device6(SATA 2):f
 		 * Device8(USB OHCI #0/ USB EHCI #0):a
 		 */
-		iowrite32(0x000affa0, chip->pch_phub_base_address + 0x14);
+		ioग_लिखो32(0x000affa0, chip->pch_phub_base_address + 0x14);
 		chip->pch_opt_rom_start_address =\
 						 PCH_PHUB_ROM_START_ADDR_ML7213;
-	} else if (id->driver_data == 3) { /* ML7223 IOH Bus-m*/
+	पूर्ण अन्यथा अगर (id->driver_data == 3) अणु /* ML7223 IOH Bus-m*/
 		/* set the prefech value
 		 * Device8(GbE)
 		 */
-		iowrite32(0x000a0000, chip->pch_phub_base_address + 0x14);
-		/* set the interrupt delay value */
-		iowrite32(0x25, chip->pch_phub_base_address + 0x140);
+		ioग_लिखो32(0x000a0000, chip->pch_phub_base_address + 0x14);
+		/* set the पूर्णांकerrupt delay value */
+		ioग_लिखो32(0x25, chip->pch_phub_base_address + 0x140);
 		chip->pch_opt_rom_start_address =\
 						 PCH_PHUB_ROM_START_ADDR_ML7223;
 		chip->pch_mac_start_address = PCH_PHUB_MAC_START_ADDR_ML7223;
-	} else if (id->driver_data == 4) { /* ML7223 IOH Bus-n*/
+	पूर्ण अन्यथा अगर (id->driver_data == 4) अणु /* ML7223 IOH Bus-n*/
 		ret = sysfs_create_file(&pdev->dev.kobj,
 					&dev_attr_pch_mac.attr);
-		if (ret)
-			goto err_sysfs_create;
+		अगर (ret)
+			जाओ err_sysfs_create;
 		ret = sysfs_create_bin_file(&pdev->dev.kobj, &pch_bin_attr);
-		if (ret)
-			goto exit_bin_attr;
+		अगर (ret)
+			जाओ निकास_bin_attr;
 		/* set the prefech value
 		 * Device2(USB OHCI #0,1,2,3/ USB EHCI #0):a
 		 * Device4(SDIO #0,1):f
 		 * Device6(SATA 2):f
 		 */
-		iowrite32(0x0000ffa0, chip->pch_phub_base_address + 0x14);
+		ioग_लिखो32(0x0000ffa0, chip->pch_phub_base_address + 0x14);
 		chip->pch_opt_rom_start_address =\
 						 PCH_PHUB_ROM_START_ADDR_ML7223;
 		chip->pch_mac_start_address = PCH_PHUB_MAC_START_ADDR_ML7223;
-	} else if (id->driver_data == 5) { /* ML7831 */
+	पूर्ण अन्यथा अगर (id->driver_data == 5) अणु /* ML7831 */
 		ret = sysfs_create_file(&pdev->dev.kobj,
 					&dev_attr_pch_mac.attr);
-		if (ret)
-			goto err_sysfs_create;
+		अगर (ret)
+			जाओ err_sysfs_create;
 
 		ret = sysfs_create_bin_file(&pdev->dev.kobj, &pch_bin_attr);
-		if (ret)
-			goto exit_bin_attr;
+		अगर (ret)
+			जाओ निकास_bin_attr;
 
 		/* set the prefech value */
-		iowrite32(0x000affaa, chip->pch_phub_base_address + 0x14);
-		/* set the interrupt delay value */
-		iowrite32(0x25, chip->pch_phub_base_address + 0x44);
+		ioग_लिखो32(0x000affaa, chip->pch_phub_base_address + 0x14);
+		/* set the पूर्णांकerrupt delay value */
+		ioग_लिखो32(0x25, chip->pch_phub_base_address + 0x44);
 		chip->pch_opt_rom_start_address = PCH_PHUB_ROM_START_ADDR_EG20T;
 		chip->pch_mac_start_address = PCH_PHUB_MAC_START_ADDR_EG20T;
-	}
+	पूर्ण
 
 	chip->ioh_type = id->driver_data;
 	pci_set_drvdata(pdev, chip);
 
-	return 0;
-exit_bin_attr:
-	sysfs_remove_file(&pdev->dev.kobj, &dev_attr_pch_mac.attr);
+	वापस 0;
+निकास_bin_attr:
+	sysfs_हटाओ_file(&pdev->dev.kobj, &dev_attr_pch_mac.attr);
 
 err_sysfs_create:
 	pci_iounmap(pdev, chip->pch_phub_base_address);
@@ -821,56 +822,56 @@ err_pci_iomap:
 err_req_regions:
 	pci_disable_device(pdev);
 err_pci_enable_dev:
-	kfree(chip);
+	kमुक्त(chip);
 	dev_err(&pdev->dev, "%s returns %d\n", __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void pch_phub_remove(struct pci_dev *pdev)
-{
-	struct pch_phub_reg *chip = pci_get_drvdata(pdev);
+अटल व्योम pch_phub_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pch_phub_reg *chip = pci_get_drvdata(pdev);
 
-	sysfs_remove_file(&pdev->dev.kobj, &dev_attr_pch_mac.attr);
-	sysfs_remove_bin_file(&pdev->dev.kobj, &pch_bin_attr);
+	sysfs_हटाओ_file(&pdev->dev.kobj, &dev_attr_pch_mac.attr);
+	sysfs_हटाओ_bin_file(&pdev->dev.kobj, &pch_bin_attr);
 	pci_iounmap(pdev, chip->pch_phub_base_address);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-	kfree(chip);
-}
+	kमुक्त(chip);
+पूर्ण
 
-static int __maybe_unused pch_phub_suspend(struct device *dev_d)
-{
+अटल पूर्णांक __maybe_unused pch_phub_suspend(काष्ठा device *dev_d)
+अणु
 	device_wakeup_disable(dev_d);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused pch_phub_resume(struct device *dev_d)
-{
+अटल पूर्णांक __maybe_unused pch_phub_resume(काष्ठा device *dev_d)
+अणु
 	device_wakeup_disable(dev_d);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pci_device_id pch_phub_pcidev_id[] = {
-	{ PCI_VDEVICE(INTEL, PCI_DEVICE_ID_PCH1_PHUB),       1,  },
-	{ PCI_VDEVICE(ROHM, PCI_DEVICE_ID_ROHM_ML7213_PHUB), 2,  },
-	{ PCI_VDEVICE(ROHM, PCI_DEVICE_ID_ROHM_ML7223_mPHUB), 3,  },
-	{ PCI_VDEVICE(ROHM, PCI_DEVICE_ID_ROHM_ML7223_nPHUB), 4,  },
-	{ PCI_VDEVICE(ROHM, PCI_DEVICE_ID_ROHM_ML7831_PHUB), 5,  },
-	{ }
-};
+अटल स्थिर काष्ठा pci_device_id pch_phub_pcidev_id[] = अणु
+	अणु PCI_VDEVICE(INTEL, PCI_DEVICE_ID_PCH1_PHUB),       1,  पूर्ण,
+	अणु PCI_VDEVICE(ROHM, PCI_DEVICE_ID_ROHM_ML7213_PHUB), 2,  पूर्ण,
+	अणु PCI_VDEVICE(ROHM, PCI_DEVICE_ID_ROHM_ML7223_mPHUB), 3,  पूर्ण,
+	अणु PCI_VDEVICE(ROHM, PCI_DEVICE_ID_ROHM_ML7223_nPHUB), 4,  पूर्ण,
+	अणु PCI_VDEVICE(ROHM, PCI_DEVICE_ID_ROHM_ML7831_PHUB), 5,  पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, pch_phub_pcidev_id);
 
-static SIMPLE_DEV_PM_OPS(pch_phub_pm_ops, pch_phub_suspend, pch_phub_resume);
+अटल SIMPLE_DEV_PM_OPS(pch_phub_pm_ops, pch_phub_suspend, pch_phub_resume);
 
-static struct pci_driver pch_phub_driver = {
+अटल काष्ठा pci_driver pch_phub_driver = अणु
 	.name = "pch_phub",
 	.id_table = pch_phub_pcidev_id,
 	.probe = pch_phub_probe,
-	.remove = pch_phub_remove,
+	.हटाओ = pch_phub_हटाओ,
 	.driver.pm = &pch_phub_pm_ops,
-};
+पूर्ण;
 
 module_pci_driver(pch_phub_driver);
 

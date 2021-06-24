@@ -1,158 +1,159 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Driver for Samsung Q10 and related laptops: controls the backlight
+ *  Driver क्रम Samsung Q10 and related laptops: controls the backlight
  *
  *  Copyright (c) 2011 Frederick van der Wyck <fvanderwyck@gmail.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/backlight.h>
-#include <linux/dmi.h>
-#include <linux/acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/acpi.h>
 
-#define SAMSUNGQ10_BL_MAX_INTENSITY 7
+#घोषणा SAMSUNGQ10_BL_MAX_INTENSITY 7
 
-static acpi_handle ec_handle;
+अटल acpi_handle ec_handle;
 
-static bool force;
-module_param(force, bool, 0);
-MODULE_PARM_DESC(force,
+अटल bool क्रमce;
+module_param(क्रमce, bool, 0);
+MODULE_PARM_DESC(क्रमce,
 		"Disable the DMI check and force the driver to be loaded");
 
-static int samsungq10_bl_set_intensity(struct backlight_device *bd)
-{
+अटल पूर्णांक samsungq10_bl_set_पूर्णांकensity(काष्ठा backlight_device *bd)
+अणु
 
 	acpi_status status;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < SAMSUNGQ10_BL_MAX_INTENSITY; i++) {
-		status = acpi_evaluate_object(ec_handle, "_Q63", NULL, NULL);
-		if (ACPI_FAILURE(status))
-			return -EIO;
-	}
-	for (i = 0; i < bd->props.brightness; i++) {
-		status = acpi_evaluate_object(ec_handle, "_Q64", NULL, NULL);
-		if (ACPI_FAILURE(status))
-			return -EIO;
-	}
+	क्रम (i = 0; i < SAMSUNGQ10_BL_MAX_INTENSITY; i++) अणु
+		status = acpi_evaluate_object(ec_handle, "_Q63", शून्य, शून्य);
+		अगर (ACPI_FAILURE(status))
+			वापस -EIO;
+	पूर्ण
+	क्रम (i = 0; i < bd->props.brightness; i++) अणु
+		status = acpi_evaluate_object(ec_handle, "_Q64", शून्य, शून्य);
+		अगर (ACPI_FAILURE(status))
+			वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct backlight_ops samsungq10_bl_ops = {
-	.update_status	= samsungq10_bl_set_intensity,
-};
+अटल स्थिर काष्ठा backlight_ops samsungq10_bl_ops = अणु
+	.update_status	= samsungq10_bl_set_पूर्णांकensity,
+पूर्ण;
 
-static int samsungq10_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक samsungq10_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 
-	struct backlight_properties props;
-	struct backlight_device *bd;
+	काष्ठा backlight_properties props;
+	काष्ठा backlight_device *bd;
 
-	memset(&props, 0, sizeof(struct backlight_properties));
+	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 	props.type = BACKLIGHT_PLATFORM;
 	props.max_brightness = SAMSUNGQ10_BL_MAX_INTENSITY;
-	bd = backlight_device_register("samsung", &pdev->dev, NULL,
+	bd = backlight_device_रेजिस्टर("samsung", &pdev->dev, शून्य,
 				       &samsungq10_bl_ops, &props);
-	if (IS_ERR(bd))
-		return PTR_ERR(bd);
+	अगर (IS_ERR(bd))
+		वापस PTR_ERR(bd);
 
-	platform_set_drvdata(pdev, bd);
+	platक्रमm_set_drvdata(pdev, bd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int samsungq10_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक samsungq10_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 
-	struct backlight_device *bd = platform_get_drvdata(pdev);
+	काष्ठा backlight_device *bd = platक्रमm_get_drvdata(pdev);
 
-	backlight_device_unregister(bd);
+	backlight_device_unरेजिस्टर(bd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver samsungq10_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver samsungq10_driver = अणु
+	.driver		= अणु
 		.name	= KBUILD_MODNAME,
-	},
+	पूर्ण,
 	.probe		= samsungq10_probe,
-	.remove		= samsungq10_remove,
-};
+	.हटाओ		= samsungq10_हटाओ,
+पूर्ण;
 
-static struct platform_device *samsungq10_device;
+अटल काष्ठा platक्रमm_device *samsungq10_device;
 
-static int __init dmi_check_callback(const struct dmi_system_id *id)
-{
-	printk(KERN_INFO KBUILD_MODNAME ": found model '%s'\n", id->ident);
-	return 1;
-}
+अटल पूर्णांक __init dmi_check_callback(स्थिर काष्ठा dmi_प्रणाली_id *id)
+अणु
+	prपूर्णांकk(KERN_INFO KBUILD_MODNAME ": found model '%s'\n", id->ident);
+	वापस 1;
+पूर्ण
 
-static const struct dmi_system_id samsungq10_dmi_table[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id samsungq10_dmi_table[] __initस्थिर = अणु
+	अणु
 		.ident = "Samsung Q10",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Samsung"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "SQ10"),
-		},
+		पूर्ण,
 		.callback = dmi_check_callback,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "Samsung Q20",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG Electronics"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "SENS Q20"),
-		},
+		पूर्ण,
 		.callback = dmi_check_callback,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "Samsung Q25",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG Electronics"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "NQ25"),
-		},
+		पूर्ण,
 		.callback = dmi_check_callback,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "Dell Latitude X200",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Dell Computer Corporation"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "X200"),
-		},
+		पूर्ण,
 		.callback = dmi_check_callback,
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(dmi, samsungq10_dmi_table);
 
-static int __init samsungq10_init(void)
-{
-	if (!force && !dmi_check_system(samsungq10_dmi_table))
-		return -ENODEV;
+अटल पूर्णांक __init samsungq10_init(व्योम)
+अणु
+	अगर (!क्रमce && !dmi_check_प्रणाली(samsungq10_dmi_table))
+		वापस -ENODEV;
 
 	ec_handle = ec_get_handle();
 
-	if (!ec_handle)
-		return -ENODEV;
+	अगर (!ec_handle)
+		वापस -ENODEV;
 
-	samsungq10_device = platform_create_bundle(&samsungq10_driver,
+	samsungq10_device = platक्रमm_create_bundle(&samsungq10_driver,
 						   samsungq10_probe,
-						   NULL, 0, NULL, 0);
+						   शून्य, 0, शून्य, 0);
 
-	return PTR_ERR_OR_ZERO(samsungq10_device);
-}
+	वापस PTR_ERR_OR_ZERO(samsungq10_device);
+पूर्ण
 
-static void __exit samsungq10_exit(void)
-{
-	platform_device_unregister(samsungq10_device);
-	platform_driver_unregister(&samsungq10_driver);
-}
+अटल व्योम __निकास samsungq10_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(samsungq10_device);
+	platक्रमm_driver_unरेजिस्टर(&samsungq10_driver);
+पूर्ण
 
 module_init(samsungq10_init);
-module_exit(samsungq10_exit);
+module_निकास(samsungq10_निकास);
 
 MODULE_AUTHOR("Frederick van der Wyck <fvanderwyck@gmail.com>");
 MODULE_DESCRIPTION("Samsung Q10 Driver");

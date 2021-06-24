@@ -1,542 +1,543 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  Probe for 8250/16550-type ISAPNP serial ports.
+ *  Probe क्रम 8250/16550-type ISAPNP serial ports.
  *
- *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
+ *  Based on drivers/अक्षर/serial.c, by Linus Torvalds, Theoकरोre Ts'o.
  *
  *  Copyright (C) 2001 Russell King, All Rights Reserved.
  *
  *  Ported to the Linux PnP Layer - (C) Adam Belay.
  */
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/pnp.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/serial_core.h>
-#include <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pnp.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/bitops.h>
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-#include "8250.h"
+#समावेश "8250.h"
 
-#define UNKNOWN_DEV 0x3000
-#define CIR_PORT	0x0800
+#घोषणा UNKNOWN_DEV 0x3000
+#घोषणा CIR_PORT	0x0800
 
-static const struct pnp_device_id pnp_dev_table[] = {
+अटल स्थिर काष्ठा pnp_device_id pnp_dev_table[] = अणु
 	/* Archtek America Corp. */
 	/* Archtek SmartLink Modem 3334BT Plug & Play */
-	{	"AAC000F",		0	},
+	अणु	"AAC000F",		0	पूर्ण,
 	/* Anchor Datacomm BV */
 	/* SXPro 144 External Data Fax Modem Plug & Play */
-	{	"ADC0001",		0	},
+	अणु	"ADC0001",		0	पूर्ण,
 	/* SXPro 288 External Data Fax Modem Plug & Play */
-	{	"ADC0002",		0	},
+	अणु	"ADC0002",		0	पूर्ण,
 	/* PROLiNK 1456VH ISA PnP K56flex Fax Modem */
-	{	"AEI0250",		0	},
+	अणु	"AEI0250",		0	पूर्ण,
 	/* Actiontec ISA PNP 56K X2 Fax Modem */
-	{	"AEI1240",		0	},
+	अणु	"AEI1240",		0	पूर्ण,
 	/* Rockwell 56K ACF II Fax+Data+Voice Modem */
-	{	"AKY1021",		0 /*SPCI_FL_NO_SHIRQ*/	},
+	अणु	"AKY1021",		0 /*SPCI_FL_NO_SHIRQ*/	पूर्ण,
 	/*
 	 * ALi Fast Infrared Controller
 	 * Native driver (ali-ircc) is broken so at least
 	 * it can be used with irtty-sir.
 	 */
-	{	"ALI5123",		0	},
+	अणु	"ALI5123",		0	पूर्ण,
 	/* AZT3005 PnP SOUND DEVICE */
-	{	"AZT4001",		0	},
+	अणु	"AZT4001",		0	पूर्ण,
 	/* Best Data Products Inc. Smart One 336F PnP Modem */
-	{	"BDP3336",		0	},
+	अणु	"BDP3336",		0	पूर्ण,
 	/*  Boca Research */
 	/* Boca Complete Ofc Communicator 14.4 Data-FAX */
-	{	"BRI0A49",		0	},
+	अणु	"BRI0A49",		0	पूर्ण,
 	/* Boca Research 33,600 ACF Modem */
-	{	"BRI1400",		0	},
+	अणु	"BRI1400",		0	पूर्ण,
 	/* Boca 33.6 Kbps Internal FD34FSVD */
-	{	"BRI3400",		0	},
+	अणु	"BRI3400",		0	पूर्ण,
 	/* Boca 33.6 Kbps Internal FD34FSVD */
-	{	"BRI0A49",		0	},
+	अणु	"BRI0A49",		0	पूर्ण,
 	/* Best Data Products Inc. Smart One 336F PnP Modem */
-	{	"BDP3336",		0	},
+	अणु	"BDP3336",		0	पूर्ण,
 	/* Computer Peripherals Inc */
 	/* EuroViVa CommCenter-33.6 SP PnP */
-	{	"CPI4050",		0	},
-	/* Creative Labs */
-	/* Creative Labs Phone Blaster 28.8 DSVD PnP Voice */
-	{	"CTL3001",		0	},
-	/* Creative Labs Modem Blaster 28.8 DSVD PnP Voice */
-	{	"CTL3011",		0	},
+	अणु	"CPI4050",		0	पूर्ण,
+	/* Creative Lअसल */
+	/* Creative Lअसल Phone Blaster 28.8 DSVD PnP Voice */
+	अणु	"CTL3001",		0	पूर्ण,
+	/* Creative Lअसल Modem Blaster 28.8 DSVD PnP Voice */
+	अणु	"CTL3011",		0	पूर्ण,
 	/* Davicom ISA 33.6K Modem */
-	{	"DAV0336",		0	},
+	अणु	"DAV0336",		0	पूर्ण,
 	/* Creative */
 	/* Creative Modem Blaster Flash56 DI5601-1 */
-	{	"DMB1032",		0	},
+	अणु	"DMB1032",		0	पूर्ण,
 	/* Creative Modem Blaster V.90 DI5660 */
-	{	"DMB2001",		0	},
+	अणु	"DMB2001",		0	पूर्ण,
 	/* E-Tech */
 	/* E-Tech CyberBULLET PC56RVP */
-	{	"ETT0002",		0	},
+	अणु	"ETT0002",		0	पूर्ण,
 	/* FUJITSU */
 	/* Fujitsu 33600 PnP-I2 R Plug & Play */
-	{	"FUJ0202",		0	},
+	अणु	"FUJ0202",		0	पूर्ण,
 	/* Fujitsu FMV-FX431 Plug & Play */
-	{	"FUJ0205",		0	},
+	अणु	"FUJ0205",		0	पूर्ण,
 	/* Fujitsu 33600 PnP-I4 R Plug & Play */
-	{	"FUJ0206",		0	},
+	अणु	"FUJ0206",		0	पूर्ण,
 	/* Fujitsu Fax Voice 33600 PNP-I5 R Plug & Play */
-	{	"FUJ0209",		0	},
+	अणु	"FUJ0209",		0	पूर्ण,
 	/* Archtek America Corp. */
 	/* Archtek SmartLink Modem 3334BT Plug & Play */
-	{	"GVC000F",		0	},
+	अणु	"GVC000F",		0	पूर्ण,
 	/* Archtek SmartLink Modem 3334BRV 33.6K Data Fax Voice */
-	{	"GVC0303",		0	},
+	अणु	"GVC0303",		0	पूर्ण,
 	/* Hayes */
 	/* Hayes Optima 288 V.34-V.FC + FAX + Voice Plug & Play */
-	{	"HAY0001",		0	},
+	अणु	"HAY0001",		0	पूर्ण,
 	/* Hayes Optima 336 V.34 + FAX + Voice PnP */
-	{	"HAY000C",		0	},
+	अणु	"HAY000C",		0	पूर्ण,
 	/* Hayes Optima 336B V.34 + FAX + Voice PnP */
-	{	"HAY000D",		0	},
+	अणु	"HAY000D",		0	पूर्ण,
 	/* Hayes Accura 56K Ext Fax Modem PnP */
-	{	"HAY5670",		0	},
+	अणु	"HAY5670",		0	पूर्ण,
 	/* Hayes Accura 56K Ext Fax Modem PnP */
-	{	"HAY5674",		0	},
+	अणु	"HAY5674",		0	पूर्ण,
 	/* Hayes Accura 56K Fax Modem PnP */
-	{	"HAY5675",		0	},
+	अणु	"HAY5675",		0	पूर्ण,
 	/* Hayes 288, V.34 + FAX */
-	{	"HAYF000",		0	},
+	अणु	"HAYF000",		0	पूर्ण,
 	/* Hayes Optima 288 V.34 + FAX + Voice, Plug & Play */
-	{	"HAYF001",		0	},
+	अणु	"HAYF001",		0	पूर्ण,
 	/* IBM */
 	/* IBM Thinkpad 701 Internal Modem Voice */
-	{	"IBM0033",		0	},
+	अणु	"IBM0033",		0	पूर्ण,
 	/* Intermec */
 	/* Intermec CV60 touchscreen port */
-	{	"PNP4972",		0	},
+	अणु	"PNP4972",		0	पूर्ण,
 	/* Intertex */
 	/* Intertex 28k8 33k6 Voice EXT PnP */
-	{	"IXDC801",		0	},
+	अणु	"IXDC801",		0	पूर्ण,
 	/* Intertex 33k6 56k Voice EXT PnP */
-	{	"IXDC901",		0	},
+	अणु	"IXDC901",		0	पूर्ण,
 	/* Intertex 28k8 33k6 Voice SP EXT PnP */
-	{	"IXDD801",		0	},
+	अणु	"IXDD801",		0	पूर्ण,
 	/* Intertex 33k6 56k Voice SP EXT PnP */
-	{	"IXDD901",		0	},
+	अणु	"IXDD901",		0	पूर्ण,
 	/* Intertex 28k8 33k6 Voice SP INT PnP */
-	{	"IXDF401",		0	},
+	अणु	"IXDF401",		0	पूर्ण,
 	/* Intertex 28k8 33k6 Voice SP EXT PnP */
-	{	"IXDF801",		0	},
+	अणु	"IXDF801",		0	पूर्ण,
 	/* Intertex 33k6 56k Voice SP EXT PnP */
-	{	"IXDF901",		0	},
+	अणु	"IXDF901",		0	पूर्ण,
 	/* Kortex International */
 	/* KORTEX 28800 Externe PnP */
-	{	"KOR4522",		0	},
+	अणु	"KOR4522",		0	पूर्ण,
 	/* KXPro 33.6 Vocal ASVD PnP */
-	{	"KORF661",		0	},
+	अणु	"KORF661",		0	पूर्ण,
 	/* Lasat */
 	/* LASAT Internet 33600 PnP */
-	{	"LAS4040",		0	},
+	अणु	"LAS4040",		0	पूर्ण,
 	/* Lasat Safire 560 PnP */
-	{	"LAS4540",		0	},
+	अणु	"LAS4540",		0	पूर्ण,
 	/* Lasat Safire 336  PnP */
-	{	"LAS5440",		0	},
+	अणु	"LAS5440",		0	पूर्ण,
 	/* Microcom, Inc. */
 	/* Microcom TravelPorte FAST V.34 Plug & Play */
-	{	"MNP0281",		0	},
+	अणु	"MNP0281",		0	पूर्ण,
 	/* Microcom DeskPorte V.34 FAST or FAST+ Plug & Play */
-	{	"MNP0336",		0	},
+	अणु	"MNP0336",		0	पूर्ण,
 	/* Microcom DeskPorte FAST EP 28.8 Plug & Play */
-	{	"MNP0339",		0	},
+	अणु	"MNP0339",		0	पूर्ण,
 	/* Microcom DeskPorte 28.8P Plug & Play */
-	{	"MNP0342",		0	},
+	अणु	"MNP0342",		0	पूर्ण,
 	/* Microcom DeskPorte FAST ES 28.8 Plug & Play */
-	{	"MNP0500",		0	},
+	अणु	"MNP0500",		0	पूर्ण,
 	/* Microcom DeskPorte FAST ES 28.8 Plug & Play */
-	{	"MNP0501",		0	},
+	अणु	"MNP0501",		0	पूर्ण,
 	/* Microcom DeskPorte 28.8S Internal Plug & Play */
-	{	"MNP0502",		0	},
+	अणु	"MNP0502",		0	पूर्ण,
 	/* Motorola */
 	/* Motorola BitSURFR Plug & Play */
-	{	"MOT1105",		0	},
+	अणु	"MOT1105",		0	पूर्ण,
 	/* Motorola TA210 Plug & Play */
-	{	"MOT1111",		0	},
+	अणु	"MOT1111",		0	पूर्ण,
 	/* Motorola HMTA 200 (ISDN) Plug & Play */
-	{	"MOT1114",		0	},
+	अणु	"MOT1114",		0	पूर्ण,
 	/* Motorola BitSURFR Plug & Play */
-	{	"MOT1115",		0	},
-	/* Motorola Lifestyle 28.8 Internal */
-	{	"MOT1190",		0	},
+	अणु	"MOT1115",		0	पूर्ण,
+	/* Motorola Lअगरestyle 28.8 Internal */
+	अणु	"MOT1190",		0	पूर्ण,
 	/* Motorola V.3400 Plug & Play */
-	{	"MOT1501",		0	},
-	/* Motorola Lifestyle 28.8 V.34 Plug & Play */
-	{	"MOT1502",		0	},
+	अणु	"MOT1501",		0	पूर्ण,
+	/* Motorola Lअगरestyle 28.8 V.34 Plug & Play */
+	अणु	"MOT1502",		0	पूर्ण,
 	/* Motorola Power 28.8 V.34 Plug & Play */
-	{	"MOT1505",		0	},
+	अणु	"MOT1505",		0	पूर्ण,
 	/* Motorola ModemSURFR External 28.8 Plug & Play */
-	{	"MOT1509",		0	},
+	अणु	"MOT1509",		0	पूर्ण,
 	/* Motorola Premier 33.6 Desktop Plug & Play */
-	{	"MOT150A",		0	},
+	अणु	"MOT150A",		0	पूर्ण,
 	/* Motorola VoiceSURFR 56K External PnP */
-	{	"MOT150F",		0	},
+	अणु	"MOT150F",		0	पूर्ण,
 	/* Motorola ModemSURFR 56K External PnP */
-	{	"MOT1510",		0	},
+	अणु	"MOT1510",		0	पूर्ण,
 	/* Motorola ModemSURFR 56K Internal PnP */
-	{	"MOT1550",		0	},
+	अणु	"MOT1550",		0	पूर्ण,
 	/* Motorola ModemSURFR Internal 28.8 Plug & Play */
-	{	"MOT1560",		0	},
+	अणु	"MOT1560",		0	पूर्ण,
 	/* Motorola Premier 33.6 Internal Plug & Play */
-	{	"MOT1580",		0	},
+	अणु	"MOT1580",		0	पूर्ण,
 	/* Motorola OnlineSURFR 28.8 Internal Plug & Play */
-	{	"MOT15B0",		0	},
+	अणु	"MOT15B0",		0	पूर्ण,
 	/* Motorola VoiceSURFR 56K Internal PnP */
-	{	"MOT15F0",		0	},
+	अणु	"MOT15F0",		0	पूर्ण,
 	/* Com 1 */
 	/*  Deskline K56 Phone System PnP */
-	{	"MVX00A1",		0	},
+	अणु	"MVX00A1",		0	पूर्ण,
 	/* PC Rider K56 Phone System PnP */
-	{	"MVX00F2",		0	},
+	अणु	"MVX00F2",		0	पूर्ण,
 	/* NEC 98NOTE SPEAKER PHONE FAX MODEM(33600bps) */
-	{	"nEC8241",		0	},
+	अणु	"nEC8241",		0	पूर्ण,
 	/* Pace 56 Voice Internal Plug & Play Modem */
-	{	"PMC2430",		0	},
+	अणु	"PMC2430",		0	पूर्ण,
 	/* Generic */
 	/* Generic standard PC COM port	 */
-	{	"PNP0500",		0	},
+	अणु	"PNP0500",		0	पूर्ण,
 	/* Generic 16550A-compatible COM port */
-	{	"PNP0501",		0	},
+	अणु	"PNP0501",		0	पूर्ण,
 	/* Compaq 14400 Modem */
-	{	"PNPC000",		0	},
+	अणु	"PNPC000",		0	पूर्ण,
 	/* Compaq 2400/9600 Modem */
-	{	"PNPC001",		0	},
+	अणु	"PNPC001",		0	पूर्ण,
 	/* Dial-Up Networking Serial Cable between 2 PCs */
-	{	"PNPC031",		0	},
+	अणु	"PNPC031",		0	पूर्ण,
 	/* Dial-Up Networking Parallel Cable between 2 PCs */
-	{	"PNPC032",		0	},
+	अणु	"PNPC032",		0	पूर्ण,
 	/* Standard 9600 bps Modem */
-	{	"PNPC100",		0	},
+	अणु	"PNPC100",		0	पूर्ण,
 	/* Standard 14400 bps Modem */
-	{	"PNPC101",		0	},
+	अणु	"PNPC101",		0	पूर्ण,
 	/*  Standard 28800 bps Modem*/
-	{	"PNPC102",		0	},
+	अणु	"PNPC102",		0	पूर्ण,
 	/*  Standard Modem*/
-	{	"PNPC103",		0	},
+	अणु	"PNPC103",		0	पूर्ण,
 	/*  Standard 9600 bps Modem*/
-	{	"PNPC104",		0	},
+	अणु	"PNPC104",		0	पूर्ण,
 	/*  Standard 14400 bps Modem*/
-	{	"PNPC105",		0	},
+	अणु	"PNPC105",		0	पूर्ण,
 	/*  Standard 28800 bps Modem*/
-	{	"PNPC106",		0	},
+	अणु	"PNPC106",		0	पूर्ण,
 	/*  Standard Modem */
-	{	"PNPC107",		0	},
+	अणु	"PNPC107",		0	पूर्ण,
 	/* Standard 9600 bps Modem */
-	{	"PNPC108",		0	},
+	अणु	"PNPC108",		0	पूर्ण,
 	/* Standard 14400 bps Modem */
-	{	"PNPC109",		0	},
+	अणु	"PNPC109",		0	पूर्ण,
 	/* Standard 28800 bps Modem */
-	{	"PNPC10A",		0	},
+	अणु	"PNPC10A",		0	पूर्ण,
 	/* Standard Modem */
-	{	"PNPC10B",		0	},
+	अणु	"PNPC10B",		0	पूर्ण,
 	/* Standard 9600 bps Modem */
-	{	"PNPC10C",		0	},
+	अणु	"PNPC10C",		0	पूर्ण,
 	/* Standard 14400 bps Modem */
-	{	"PNPC10D",		0	},
+	अणु	"PNPC10D",		0	पूर्ण,
 	/* Standard 28800 bps Modem */
-	{	"PNPC10E",		0	},
+	अणु	"PNPC10E",		0	पूर्ण,
 	/* Standard Modem */
-	{	"PNPC10F",		0	},
+	अणु	"PNPC10F",		0	पूर्ण,
 	/* Standard PCMCIA Card Modem */
-	{	"PNP2000",		0	},
+	अणु	"PNP2000",		0	पूर्ण,
 	/* Rockwell */
 	/* Modular Technology */
 	/* Rockwell 33.6 DPF Internal PnP */
 	/* Modular Technology 33.6 Internal PnP */
-	{	"ROK0030",		0	},
+	अणु	"ROK0030",		0	पूर्ण,
 	/* Kortex International */
 	/* KORTEX 14400 Externe PnP */
-	{	"ROK0100",		0	},
+	अणु	"ROK0100",		0	पूर्ण,
 	/* Rockwell 28.8 */
-	{	"ROK4120",		0	},
+	अणु	"ROK4120",		0	पूर्ण,
 	/* Viking Components, Inc */
 	/* Viking 28.8 INTERNAL Fax+Data+Voice PnP */
-	{	"ROK4920",		0	},
+	अणु	"ROK4920",		0	पूर्ण,
 	/* Rockwell */
 	/* British Telecom */
 	/* Modular Technology */
 	/* Rockwell 33.6 DPF External PnP */
 	/* BT Prologue 33.6 External PnP */
 	/* Modular Technology 33.6 External PnP */
-	{	"RSS00A0",		0	},
+	अणु	"RSS00A0",		0	पूर्ण,
 	/* Viking 56K FAX INT */
-	{	"RSS0262",		0	},
+	अणु	"RSS0262",		0	पूर्ण,
 	/* K56 par,VV,Voice,Speakphone,AudioSpan,PnP */
-	{       "RSS0250",              0       },
+	अणु       "RSS0250",              0       पूर्ण,
 	/* SupraExpress 28.8 Data/Fax PnP modem */
-	{	"SUP1310",		0	},
+	अणु	"SUP1310",		0	पूर्ण,
 	/* SupraExpress 336i PnP Voice Modem */
-	{	"SUP1381",		0	},
+	अणु	"SUP1381",		0	पूर्ण,
 	/* SupraExpress 33.6 Data/Fax PnP modem */
-	{	"SUP1421",		0	},
+	अणु	"SUP1421",		0	पूर्ण,
 	/* SupraExpress 33.6 Data/Fax PnP modem */
-	{	"SUP1590",		0	},
+	अणु	"SUP1590",		0	पूर्ण,
 	/* SupraExpress 336i Sp ASVD */
-	{	"SUP1620",		0	},
+	अणु	"SUP1620",		0	पूर्ण,
 	/* SupraExpress 33.6 Data/Fax PnP modem */
-	{	"SUP1760",		0	},
+	अणु	"SUP1760",		0	पूर्ण,
 	/* SupraExpress 56i Sp Intl */
-	{	"SUP2171",		0	},
+	अणु	"SUP2171",		0	पूर्ण,
 	/* Phoebe Micro */
 	/* Phoebe Micro 33.6 Data Fax 1433VQH Plug & Play */
-	{	"TEX0011",		0	},
+	अणु	"TEX0011",		0	पूर्ण,
 	/* Archtek America Corp. */
 	/* Archtek SmartLink Modem 3334BT Plug & Play */
-	{	"UAC000F",		0	},
+	अणु	"UAC000F",		0	पूर्ण,
 	/* 3Com Corp. */
 	/* Gateway Telepath IIvi 33.6 */
-	{	"USR0000",		0	},
+	अणु	"USR0000",		0	पूर्ण,
 	/* U.S. Robotics Sporster 33.6K Fax INT PnP */
-	{	"USR0002",		0	},
+	अणु	"USR0002",		0	पूर्ण,
 	/*  Sportster Vi 14.4 PnP FAX Voicemail */
-	{	"USR0004",		0	},
+	अणु	"USR0004",		0	पूर्ण,
 	/* U.S. Robotics 33.6K Voice INT PnP */
-	{	"USR0006",		0	},
+	अणु	"USR0006",		0	पूर्ण,
 	/* U.S. Robotics 33.6K Voice EXT PnP */
-	{	"USR0007",		0	},
+	अणु	"USR0007",		0	पूर्ण,
 	/* U.S. Robotics Courier V.Everything INT PnP */
-	{	"USR0009",		0	},
+	अणु	"USR0009",		0	पूर्ण,
 	/* U.S. Robotics 33.6K Voice INT PnP */
-	{	"USR2002",		0	},
+	अणु	"USR2002",		0	पूर्ण,
 	/* U.S. Robotics 56K Voice INT PnP */
-	{	"USR2070",		0	},
+	अणु	"USR2070",		0	पूर्ण,
 	/* U.S. Robotics 56K Voice EXT PnP */
-	{	"USR2080",		0	},
+	अणु	"USR2080",		0	पूर्ण,
 	/* U.S. Robotics 56K FAX INT */
-	{	"USR3031",		0	},
+	अणु	"USR3031",		0	पूर्ण,
 	/* U.S. Robotics 56K FAX INT */
-	{	"USR3050",		0	},
+	अणु	"USR3050",		0	पूर्ण,
 	/* U.S. Robotics 56K Voice INT PnP */
-	{	"USR3070",		0	},
+	अणु	"USR3070",		0	पूर्ण,
 	/* U.S. Robotics 56K Voice EXT PnP */
-	{	"USR3080",		0	},
+	अणु	"USR3080",		0	पूर्ण,
 	/* U.S. Robotics 56K Voice INT PnP */
-	{	"USR3090",		0	},
+	अणु	"USR3090",		0	पूर्ण,
 	/* U.S. Robotics 56K Message  */
-	{	"USR9100",		0	},
+	अणु	"USR9100",		0	पूर्ण,
 	/* U.S. Robotics 56K FAX EXT PnP*/
-	{	"USR9160",		0	},
+	अणु	"USR9160",		0	पूर्ण,
 	/* U.S. Robotics 56K FAX INT PnP*/
-	{	"USR9170",		0	},
+	अणु	"USR9170",		0	पूर्ण,
 	/* U.S. Robotics 56K Voice EXT PnP*/
-	{	"USR9180",		0	},
+	अणु	"USR9180",		0	पूर्ण,
 	/* U.S. Robotics 56K Voice INT PnP*/
-	{	"USR9190",		0	},
+	अणु	"USR9190",		0	पूर्ण,
 	/* Wacom tablets */
-	{	"WACFXXX",		0	},
+	अणु	"WACFXXX",		0	पूर्ण,
 	/* Compaq touchscreen */
-	{       "FPI2002",              0 },
+	अणु       "FPI2002",              0 पूर्ण,
 	/* Fujitsu Stylistic touchscreens */
-	{       "FUJ02B2",              0 },
-	{       "FUJ02B3",              0 },
+	अणु       "FUJ02B2",              0 पूर्ण,
+	अणु       "FUJ02B3",              0 पूर्ण,
 	/* Fujitsu Stylistic LT touchscreens */
-	{       "FUJ02B4",              0 },
+	अणु       "FUJ02B4",              0 पूर्ण,
 	/* Passive Fujitsu Stylistic touchscreens */
-	{       "FUJ02B6",              0 },
-	{       "FUJ02B7",              0 },
-	{       "FUJ02B8",              0 },
-	{       "FUJ02B9",              0 },
-	{       "FUJ02BC",              0 },
+	अणु       "FUJ02B6",              0 पूर्ण,
+	अणु       "FUJ02B7",              0 पूर्ण,
+	अणु       "FUJ02B8",              0 पूर्ण,
+	अणु       "FUJ02B9",              0 पूर्ण,
+	अणु       "FUJ02BC",              0 पूर्ण,
 	/* Fujitsu Wacom Tablet PC device */
-	{	"FUJ02E5",		0	},
+	अणु	"FUJ02E5",		0	पूर्ण,
 	/* Fujitsu P-series tablet PC device */
-	{	"FUJ02E6",		0	},
+	अणु	"FUJ02E6",		0	पूर्ण,
 	/* Fujitsu Wacom 2FGT Tablet PC device */
-	{	"FUJ02E7",		0	},
+	अणु	"FUJ02E7",		0	पूर्ण,
 	/* Fujitsu Wacom 1FGT Tablet PC device */
-	{	"FUJ02E9",		0	},
+	अणु	"FUJ02E9",		0	पूर्ण,
 	/*
 	 * LG C1 EXPRESS DUAL (C1-PB11A3) touch screen (actually a FUJ02E6
 	 * in disguise).
 	 */
-	{	"LTS0001",		0       },
+	अणु	"LTS0001",		0       पूर्ण,
 	/* Rockwell's (PORALiNK) 33600 INT PNP */
-	{	"WCI0003",		0	},
+	अणु	"WCI0003",		0	पूर्ण,
 	/* Unknown PnP modems */
-	{	"PNPCXXX",		UNKNOWN_DEV	},
+	अणु	"PNPCXXX",		UNKNOWN_DEV	पूर्ण,
 	/* More unknown PnP modems */
-	{	"PNPDXXX",		UNKNOWN_DEV	},
+	अणु	"PNPDXXX",		UNKNOWN_DEV	पूर्ण,
 	/*
 	 * Winbond CIR port, should not be probed. We should keep track of
 	 * it to prevent the legacy serial driver from probing it.
 	 */
-	{	"WEC1022",		CIR_PORT	},
+	अणु	"WEC1022",		CIR_PORT	पूर्ण,
 	/*
 	 * SMSC IrCC SIR/FIR port, should not be probed by serial driver as
 	 * well so its own driver can bind to it.
 	 */
-	{	"SMCF010",		CIR_PORT	},
-	{	"",			0	}
-};
+	अणु	"SMCF010",		CIR_PORT	पूर्ण,
+	अणु	"",			0	पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pnp, pnp_dev_table);
 
-static const char *modem_names[] = {
+अटल स्थिर अक्षर *modem_names[] = अणु
 	"MODEM", "Modem", "modem", "FAX", "Fax", "fax",
 	"56K", "56k", "K56", "33.6", "28.8", "14.4",
 	"33,600", "28,800", "14,400", "33.600", "28.800", "14.400",
-	"33600", "28800", "14400", "V.90", "V.34", "V.32", NULL
-};
+	"33600", "28800", "14400", "V.90", "V.34", "V.32", शून्य
+पूर्ण;
 
-static bool check_name(const char *name)
-{
-	const char **tmp;
+अटल bool check_name(स्थिर अक्षर *name)
+अणु
+	स्थिर अक्षर **पंचांगp;
 
-	for (tmp = modem_names; *tmp; tmp++)
-		if (strstr(name, *tmp))
-			return true;
+	क्रम (पंचांगp = modem_names; *पंचांगp; पंचांगp++)
+		अगर (म_माला(name, *पंचांगp))
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool check_resources(struct pnp_dev *dev)
-{
-	static const resource_size_t base[] = {0x2f8, 0x3f8, 0x2e8, 0x3e8};
-	unsigned int i;
+अटल bool check_resources(काष्ठा pnp_dev *dev)
+अणु
+	अटल स्थिर resource_माप_प्रकार base[] = अणु0x2f8, 0x3f8, 0x2e8, 0x3e8पूर्ण;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(base); i++) {
-		if (pnp_possible_config(dev, IORESOURCE_IO, base[i], 8))
-			return true;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(base); i++) अणु
+		अगर (pnp_possible_config(dev, IORESOURCE_IO, base[i], 8))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * Given a complete unknown PnP device, try to use some heuristics to
  * detect modems. Currently use such heuristic set:
  *     - dev->name or dev->bus->name must contain "modem" substring;
- *     - device must have only one IO region (8 byte long) with base address
+ *     - device must have only one IO region (8 byte दीर्घ) with base address
  *       0x2e8, 0x3e8, 0x2f8 or 0x3f8.
  *
  * Such detection looks very ugly, but can detect at least some of numerous
  * PnP modems, alternatively we must hardcode all modems in pnp_devices[]
  * table.
  */
-static int serial_pnp_guess_board(struct pnp_dev *dev)
-{
-	if (!(check_name(pnp_dev_name(dev)) ||
+अटल पूर्णांक serial_pnp_guess_board(काष्ठा pnp_dev *dev)
+अणु
+	अगर (!(check_name(pnp_dev_name(dev)) ||
 	    (dev->card && check_name(dev->card->name))))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	if (check_resources(dev))
-		return 0;
+	अगर (check_resources(dev))
+		वापस 0;
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int
-serial_pnp_probe(struct pnp_dev *dev, const struct pnp_device_id *dev_id)
-{
-	struct uart_8250_port uart, *port;
-	int ret, line, flags = dev_id->driver_data;
+अटल पूर्णांक
+serial_pnp_probe(काष्ठा pnp_dev *dev, स्थिर काष्ठा pnp_device_id *dev_id)
+अणु
+	काष्ठा uart_8250_port uart, *port;
+	पूर्णांक ret, line, flags = dev_id->driver_data;
 
-	if (flags & UNKNOWN_DEV) {
+	अगर (flags & UNKNOWN_DEV) अणु
 		ret = serial_pnp_guess_board(dev);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	memset(&uart, 0, sizeof(uart));
-	if (pnp_irq_valid(dev, 0))
+	स_रखो(&uart, 0, माप(uart));
+	अगर (pnp_irq_valid(dev, 0))
 		uart.port.irq = pnp_irq(dev, 0);
-	if ((flags & CIR_PORT) && pnp_port_valid(dev, 2)) {
+	अगर ((flags & CIR_PORT) && pnp_port_valid(dev, 2)) अणु
 		uart.port.iobase = pnp_port_start(dev, 2);
 		uart.port.iotype = UPIO_PORT;
-	} else if (pnp_port_valid(dev, 0)) {
+	पूर्ण अन्यथा अगर (pnp_port_valid(dev, 0)) अणु
 		uart.port.iobase = pnp_port_start(dev, 0);
 		uart.port.iotype = UPIO_PORT;
-	} else if (pnp_mem_valid(dev, 0)) {
+	पूर्ण अन्यथा अगर (pnp_mem_valid(dev, 0)) अणु
 		uart.port.mapbase = pnp_mem_start(dev, 0);
 		uart.port.iotype = UPIO_MEM;
 		uart.port.flags = UPF_IOREMAP;
-	} else
-		return -ENODEV;
+	पूर्ण अन्यथा
+		वापस -ENODEV;
 
 	dev_dbg(&dev->dev,
 		 "Setup PNP port: port %#lx, mem %#llx, irq %u, type %u\n",
-		 uart.port.iobase, (unsigned long long)uart.port.mapbase,
+		 uart.port.iobase, (अचिन्हित दीर्घ दीर्घ)uart.port.mapbase,
 		 uart.port.irq, uart.port.iotype);
 
-	if (flags & CIR_PORT) {
+	अगर (flags & CIR_PORT) अणु
 		uart.port.flags |= UPF_FIXED_PORT | UPF_FIXED_TYPE;
 		uart.port.type = PORT_8250_CIR;
-	}
+	पूर्ण
 
 	uart.port.flags |= UPF_SKIP_TEST | UPF_BOOT_AUTOCONF;
-	if (pnp_irq_flags(dev, 0) & IORESOURCE_IRQ_SHAREABLE)
+	अगर (pnp_irq_flags(dev, 0) & IORESOURCE_IRQ_SHAREABLE)
 		uart.port.flags |= UPF_SHARE_IRQ;
 	uart.port.uartclk = 1843200;
 	uart.port.dev = &dev->dev;
 
-	line = serial8250_register_8250_port(&uart);
-	if (line < 0 || (flags & CIR_PORT))
-		return -ENODEV;
+	line = serial8250_रेजिस्टर_8250_port(&uart);
+	अगर (line < 0 || (flags & CIR_PORT))
+		वापस -ENODEV;
 
 	port = serial8250_get_port(line);
-	if (uart_console(&port->port))
+	अगर (uart_console(&port->port))
 		dev->capabilities |= PNP_CONSOLE;
 
-	pnp_set_drvdata(dev, (void *)((long)line + 1));
-	return 0;
-}
+	pnp_set_drvdata(dev, (व्योम *)((दीर्घ)line + 1));
+	वापस 0;
+पूर्ण
 
-static void serial_pnp_remove(struct pnp_dev *dev)
-{
-	long line = (long)pnp_get_drvdata(dev);
+अटल व्योम serial_pnp_हटाओ(काष्ठा pnp_dev *dev)
+अणु
+	दीर्घ line = (दीर्घ)pnp_get_drvdata(dev);
 
 	dev->capabilities &= ~PNP_CONSOLE;
-	if (line)
-		serial8250_unregister_port(line - 1);
-}
+	अगर (line)
+		serial8250_unरेजिस्टर_port(line - 1);
+पूर्ण
 
-static int __maybe_unused serial_pnp_suspend(struct device *dev)
-{
-	long line = (long)dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused serial_pnp_suspend(काष्ठा device *dev)
+अणु
+	दीर्घ line = (दीर्घ)dev_get_drvdata(dev);
 
-	if (!line)
-		return -ENODEV;
+	अगर (!line)
+		वापस -ENODEV;
 	serial8250_suspend_port(line - 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused serial_pnp_resume(struct device *dev)
-{
-	long line = (long)dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused serial_pnp_resume(काष्ठा device *dev)
+अणु
+	दीर्घ line = (दीर्घ)dev_get_drvdata(dev);
 
-	if (!line)
-		return -ENODEV;
+	अगर (!line)
+		वापस -ENODEV;
 	serial8250_resume_port(line - 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(serial_pnp_pm_ops, serial_pnp_suspend, serial_pnp_resume);
+अटल SIMPLE_DEV_PM_OPS(serial_pnp_pm_ops, serial_pnp_suspend, serial_pnp_resume);
 
-static struct pnp_driver serial_pnp_driver = {
+अटल काष्ठा pnp_driver serial_pnp_driver = अणु
 	.name		= "serial",
 	.probe		= serial_pnp_probe,
-	.remove		= serial_pnp_remove,
-	.driver         = {
+	.हटाओ		= serial_pnp_हटाओ,
+	.driver         = अणु
 		.pm     = &serial_pnp_pm_ops,
-	},
+	पूर्ण,
 	.id_table	= pnp_dev_table,
-};
+पूर्ण;
 
-int serial8250_pnp_init(void)
-{
-	return pnp_register_driver(&serial_pnp_driver);
-}
+पूर्णांक serial8250_pnp_init(व्योम)
+अणु
+	वापस pnp_रेजिस्टर_driver(&serial_pnp_driver);
+पूर्ण
 
-void serial8250_pnp_exit(void)
-{
-	pnp_unregister_driver(&serial_pnp_driver);
-}
+व्योम serial8250_pnp_निकास(व्योम)
+अणु
+	pnp_unरेजिस्टर_driver(&serial_pnp_driver);
+पूर्ण
 

@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* Copyright (C) 2017-2018 Broadcom */
 
-#include "v3d_drv.h"
+#समावेश "v3d_drv.h"
 
-struct dma_fence *v3d_fence_create(struct v3d_dev *v3d, enum v3d_queue queue)
-{
-	struct v3d_fence *fence;
+काष्ठा dma_fence *v3d_fence_create(काष्ठा v3d_dev *v3d, क्रमागत v3d_queue queue)
+अणु
+	काष्ठा v3d_fence *fence;
 
-	fence = kzalloc(sizeof(*fence), GFP_KERNEL);
-	if (!fence)
-		return ERR_PTR(-ENOMEM);
+	fence = kzalloc(माप(*fence), GFP_KERNEL);
+	अगर (!fence)
+		वापस ERR_PTR(-ENOMEM);
 
 	fence->dev = &v3d->drm;
 	fence->queue = queue;
@@ -17,33 +18,33 @@ struct dma_fence *v3d_fence_create(struct v3d_dev *v3d, enum v3d_queue queue)
 	dma_fence_init(&fence->base, &v3d_fence_ops, &v3d->job_lock,
 		       v3d->queue[queue].fence_context, fence->seqno);
 
-	return &fence->base;
-}
+	वापस &fence->base;
+पूर्ण
 
-static const char *v3d_fence_get_driver_name(struct dma_fence *fence)
-{
-	return "v3d";
-}
+अटल स्थिर अक्षर *v3d_fence_get_driver_name(काष्ठा dma_fence *fence)
+अणु
+	वापस "v3d";
+पूर्ण
 
-static const char *v3d_fence_get_timeline_name(struct dma_fence *fence)
-{
-	struct v3d_fence *f = to_v3d_fence(fence);
+अटल स्थिर अक्षर *v3d_fence_get_समयline_name(काष्ठा dma_fence *fence)
+अणु
+	काष्ठा v3d_fence *f = to_v3d_fence(fence);
 
-	switch (f->queue) {
-	case V3D_BIN:
-		return "v3d-bin";
-	case V3D_RENDER:
-		return "v3d-render";
-	case V3D_TFU:
-		return "v3d-tfu";
-	case V3D_CSD:
-		return "v3d-csd";
-	default:
-		return NULL;
-	}
-}
+	चयन (f->queue) अणु
+	हाल V3D_BIN:
+		वापस "v3d-bin";
+	हाल V3D_RENDER:
+		वापस "v3d-render";
+	हाल V3D_TFU:
+		वापस "v3d-tfu";
+	हाल V3D_CSD:
+		वापस "v3d-csd";
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-const struct dma_fence_ops v3d_fence_ops = {
+स्थिर काष्ठा dma_fence_ops v3d_fence_ops = अणु
 	.get_driver_name = v3d_fence_get_driver_name,
-	.get_timeline_name = v3d_fence_get_timeline_name,
-};
+	.get_समयline_name = v3d_fence_get_समयline_name,
+पूर्ण;

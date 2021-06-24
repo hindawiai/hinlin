@@ -1,136 +1,137 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ARCH_M68K_CMPXCHG__
-#define __ARCH_M68K_CMPXCHG__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ARCH_M68K_CMPXCHG__
+#घोषणा __ARCH_M68K_CMPXCHG__
 
-#include <linux/irqflags.h>
+#समावेश <linux/irqflags.h>
 
-struct __xchg_dummy { unsigned long a[100]; };
-#define __xg(x) ((volatile struct __xchg_dummy *)(x))
+काष्ठा __xchg_dummy अणु अचिन्हित दीर्घ a[100]; पूर्ण;
+#घोषणा __xg(x) ((अस्थिर काष्ठा __xchg_dummy *)(x))
 
-extern unsigned long __invalid_xchg_size(unsigned long, volatile void *, int);
+बाह्य अचिन्हित दीर्घ __invalid_xchg_size(अचिन्हित दीर्घ, अस्थिर व्योम *, पूर्णांक);
 
-#ifndef CONFIG_RMW_INSNS
-static inline unsigned long __xchg(unsigned long x, volatile void * ptr, int size)
-{
-	unsigned long flags, tmp;
+#अगर_अघोषित CONFIG_RMW_INSNS
+अटल अंतरभूत अचिन्हित दीर्घ __xchg(अचिन्हित दीर्घ x, अस्थिर व्योम * ptr, पूर्णांक size)
+अणु
+	अचिन्हित दीर्घ flags, पंचांगp;
 
 	local_irq_save(flags);
 
-	switch (size) {
-	case 1:
-		tmp = *(u8 *)ptr;
+	चयन (size) अणु
+	हाल 1:
+		पंचांगp = *(u8 *)ptr;
 		*(u8 *)ptr = x;
-		x = tmp;
-		break;
-	case 2:
-		tmp = *(u16 *)ptr;
+		x = पंचांगp;
+		अवरोध;
+	हाल 2:
+		पंचांगp = *(u16 *)ptr;
 		*(u16 *)ptr = x;
-		x = tmp;
-		break;
-	case 4:
-		tmp = *(u32 *)ptr;
+		x = पंचांगp;
+		अवरोध;
+	हाल 4:
+		पंचांगp = *(u32 *)ptr;
 		*(u32 *)ptr = x;
-		x = tmp;
-		break;
-	default:
-		tmp = __invalid_xchg_size(x, ptr, size);
-		break;
-	}
+		x = पंचांगp;
+		अवरोध;
+	शेष:
+		पंचांगp = __invalid_xchg_size(x, ptr, size);
+		अवरोध;
+	पूर्ण
 
 	local_irq_restore(flags);
-	return x;
-}
-#else
-static inline unsigned long __xchg(unsigned long x, volatile void * ptr, int size)
-{
-	switch (size) {
-	case 1:
-		__asm__ __volatile__
+	वापस x;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत अचिन्हित दीर्घ __xchg(अचिन्हित दीर्घ x, अस्थिर व्योम * ptr, पूर्णांक size)
+अणु
+	चयन (size) अणु
+	हाल 1:
+		__यंत्र__ __अस्थिर__
 			("moveb %2,%0\n\t"
 			 "1:\n\t"
 			 "casb %0,%1,%2\n\t"
 			 "jne 1b"
 			 : "=&d" (x) : "d" (x), "m" (*__xg(ptr)) : "memory");
-		break;
-	case 2:
-		__asm__ __volatile__
+		अवरोध;
+	हाल 2:
+		__यंत्र__ __अस्थिर__
 			("movew %2,%0\n\t"
 			 "1:\n\t"
 			 "casw %0,%1,%2\n\t"
 			 "jne 1b"
 			 : "=&d" (x) : "d" (x), "m" (*__xg(ptr)) : "memory");
-		break;
-	case 4:
-		__asm__ __volatile__
+		अवरोध;
+	हाल 4:
+		__यंत्र__ __अस्थिर__
 			("movel %2,%0\n\t"
 			 "1:\n\t"
 			 "casl %0,%1,%2\n\t"
 			 "jne 1b"
 			 : "=&d" (x) : "d" (x), "m" (*__xg(ptr)) : "memory");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		x = __invalid_xchg_size(x, ptr, size);
-		break;
-	}
-	return x;
-}
-#endif
+		अवरोध;
+	पूर्ण
+	वापस x;
+पूर्ण
+#पूर्ण_अगर
 
-#define xchg(ptr,x) ({(__typeof__(*(ptr)))__xchg((unsigned long)(x),(ptr),sizeof(*(ptr)));})
+#घोषणा xchg(ptr,x) (अणु(__typeof__(*(ptr)))__xchg((अचिन्हित दीर्घ)(x),(ptr),माप(*(ptr)));पूर्ण)
 
-#include <asm-generic/cmpxchg-local.h>
+#समावेश <यंत्र-generic/cmpxchg-local.h>
 
-#define cmpxchg64_local(ptr, o, n) __cmpxchg64_local_generic((ptr), (o), (n))
+#घोषणा cmpxchg64_local(ptr, o, n) __cmpxchg64_local_generic((ptr), (o), (n))
 
-extern unsigned long __invalid_cmpxchg_size(volatile void *,
-					    unsigned long, unsigned long, int);
+बाह्य अचिन्हित दीर्घ __invalid_cmpxchg_size(अस्थिर व्योम *,
+					    अचिन्हित दीर्घ, अचिन्हित दीर्घ, पूर्णांक);
 
 /*
- * Atomic compare and exchange.  Compare OLD with MEM, if identical,
+ * Atomic compare and exchange.  Compare OLD with MEM, अगर identical,
  * store NEW in MEM.  Return the initial value in MEM.  Success is
  * indicated by comparing RETURN with OLD.
  */
-#ifdef CONFIG_RMW_INSNS
+#अगर_घोषित CONFIG_RMW_INSNS
 
-static inline unsigned long __cmpxchg(volatile void *p, unsigned long old,
-				      unsigned long new, int size)
-{
-	switch (size) {
-	case 1:
-		__asm__ __volatile__ ("casb %0,%2,%1"
-				      : "=d" (old), "=m" (*(char *)p)
-				      : "d" (new), "0" (old), "m" (*(char *)p));
-		break;
-	case 2:
-		__asm__ __volatile__ ("casw %0,%2,%1"
-				      : "=d" (old), "=m" (*(short *)p)
-				      : "d" (new), "0" (old), "m" (*(short *)p));
-		break;
-	case 4:
-		__asm__ __volatile__ ("casl %0,%2,%1"
-				      : "=d" (old), "=m" (*(int *)p)
-				      : "d" (new), "0" (old), "m" (*(int *)p));
-		break;
-	default:
+अटल अंतरभूत अचिन्हित दीर्घ __cmpxchg(अस्थिर व्योम *p, अचिन्हित दीर्घ old,
+				      अचिन्हित दीर्घ new, पूर्णांक size)
+अणु
+	चयन (size) अणु
+	हाल 1:
+		__यंत्र__ __अस्थिर__ ("casb %0,%2,%1"
+				      : "=d" (old), "=m" (*(अक्षर *)p)
+				      : "d" (new), "0" (old), "m" (*(अक्षर *)p));
+		अवरोध;
+	हाल 2:
+		__यंत्र__ __अस्थिर__ ("casw %0,%2,%1"
+				      : "=d" (old), "=m" (*(लघु *)p)
+				      : "d" (new), "0" (old), "m" (*(लघु *)p));
+		अवरोध;
+	हाल 4:
+		__यंत्र__ __अस्थिर__ ("casl %0,%2,%1"
+				      : "=d" (old), "=m" (*(पूर्णांक *)p)
+				      : "d" (new), "0" (old), "m" (*(पूर्णांक *)p));
+		अवरोध;
+	शेष:
 		old = __invalid_cmpxchg_size(p, old, new, size);
-		break;
-	}
-	return old;
-}
+		अवरोध;
+	पूर्ण
+	वापस old;
+पूर्ण
 
-#define cmpxchg(ptr, o, n)						    \
-	({(__typeof__(*(ptr)))__cmpxchg((ptr), (unsigned long)(o),	    \
-			(unsigned long)(n), sizeof(*(ptr)));})
-#define cmpxchg_local(ptr, o, n)					    \
-	({(__typeof__(*(ptr)))__cmpxchg((ptr), (unsigned long)(o),	    \
-			(unsigned long)(n), sizeof(*(ptr)));})
+#घोषणा cmpxchg(ptr, o, n)						    \
+	(अणु(__typeof__(*(ptr)))__cmpxchg((ptr), (अचिन्हित दीर्घ)(o),	    \
+			(अचिन्हित दीर्घ)(n), माप(*(ptr)));पूर्ण)
+#घोषणा cmpxchg_local(ptr, o, n)					    \
+	(अणु(__typeof__(*(ptr)))__cmpxchg((ptr), (अचिन्हित दीर्घ)(o),	    \
+			(अचिन्हित दीर्घ)(n), माप(*(ptr)));पूर्ण)
 
-#define cmpxchg64(ptr, o, n)	cmpxchg64_local((ptr), (o), (n))
+#घोषणा cmpxchg64(ptr, o, n)	cmpxchg64_local((ptr), (o), (n))
 
-#else
+#अन्यथा
 
-#include <asm-generic/cmpxchg.h>
+#समावेश <यंत्र-generic/cmpxchg.h>
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __ARCH_M68K_CMPXCHG__ */
+#पूर्ण_अगर /* __ARCH_M68K_CMPXCHG__ */

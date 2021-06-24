@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#include "ia_css_types.h"
-#include "assert_support.h"
-#include "ia_css_queue.h" /* sp2host_dequeue_irq_event() */
-#include "ia_css_eventq.h"
-#include "ia_css_event.h"	/* ia_css_event_encode()
+#समावेश "ia_css_types.h"
+#समावेश "assert_support.h"
+#समावेश "ia_css_queue.h" /* sp2host_dequeue_irq_event() */
+#समावेश "ia_css_eventq.h"
+#समावेश "ia_css_event.h"	/* ia_css_event_encode()
 				ia_css_event_decode()
 				*/
-int ia_css_eventq_recv(
+पूर्णांक ia_css_eventq_recv(
     ia_css_queue_t *eventq_handle,
-    uint8_t *payload)
-{
+    uपूर्णांक8_t *payload)
+अणु
 	u32 sp_event;
-	int error;
+	पूर्णांक error;
 
 	/* dequeue the IRQ event */
 	error = ia_css_queue_dequeue(eventq_handle, &sp_event);
 
 	/* check whether the IRQ event is available or not */
-	if (!error)
+	अगर (!error)
 		ia_css_event_decode(sp_event, payload);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * @brief The Host sends the event to the SP.
- * Refer to "sh_css_sp.h" for details.
+ * Refer to "sh_css_sp.h" क्रम details.
  */
-int ia_css_eventq_send(
+पूर्णांक ia_css_eventq_send(
     ia_css_queue_t *eventq_handle,
     u8 evt_id,
     u8 evt_payload_0,
     u8 evt_payload_1,
-    uint8_t evt_payload_2)
-{
-	u8 tmp[4];
+    uपूर्णांक8_t evt_payload_2)
+अणु
+	u8 पंचांगp[4];
 	u32 sw_event;
-	int error = -ENOSYS;
+	पूर्णांक error = -ENOSYS;
 
 	/*
-	 * Encode the queue type, the thread ID and
-	 * the queue ID into the event.
+	 * Encode the queue type, the thपढ़ो ID and
+	 * the queue ID पूर्णांकo the event.
 	 */
-	tmp[0] = evt_id;
-	tmp[1] = evt_payload_0;
-	tmp[2] = evt_payload_1;
-	tmp[3] = evt_payload_2;
-	ia_css_event_encode(tmp, 4, &sw_event);
+	पंचांगp[0] = evt_id;
+	पंचांगp[1] = evt_payload_0;
+	पंचांगp[2] = evt_payload_1;
+	पंचांगp[3] = evt_payload_2;
+	ia_css_event_encode(पंचांगp, 4, &sw_event);
 
-	/* queue the software event (busy-waiting) */
-	for ( ; ; ) {
+	/* queue the software event (busy-रुकोing) */
+	क्रम ( ; ; ) अणु
 		error = ia_css_queue_enqueue(eventq_handle, sw_event);
-		if (error != -ENOBUFS) {
+		अगर (error != -ENOBUFS) अणु
 			/* We were able to successfully send the event
-			   or had a real failure. return the status*/
-			break;
-		}
-		/* Wait for the queue to be not full and try again*/
+			   or had a real failure. वापस the status*/
+			अवरोध;
+		पूर्ण
+		/* Wait क्रम the queue to be not full and try again*/
 		udelay(1);
-	}
-	return error;
-}
+	पूर्ण
+	वापस error;
+पूर्ण

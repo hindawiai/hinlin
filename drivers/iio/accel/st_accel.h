@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * STMicroelectronics accelerometers driver
  *
@@ -8,13 +9,13 @@
  * v. 1.0.0
  */
 
-#ifndef ST_ACCEL_H
-#define ST_ACCEL_H
+#अगर_अघोषित ST_ACCEL_H
+#घोषणा ST_ACCEL_H
 
-#include <linux/types.h>
-#include <linux/iio/common/st_sensors.h>
+#समावेश <linux/types.h>
+#समावेश <linux/iio/common/st_sensors.h>
 
-enum st_accel_type {
+क्रमागत st_accel_type अणु
 	LSM303DLH,
 	LSM303DLHC,
 	LIS3DH,
@@ -37,57 +38,57 @@ enum st_accel_type {
 	LIS2DE12,
 	LIS2HH12,
 	ST_ACCEL_MAX,
-};
+पूर्ण;
 
-#define H3LIS331DL_ACCEL_DEV_NAME	"h3lis331dl_accel"
-#define LIS3LV02DL_ACCEL_DEV_NAME	"lis3lv02dl_accel"
-#define LSM303DLHC_ACCEL_DEV_NAME	"lsm303dlhc_accel"
-#define LIS3DH_ACCEL_DEV_NAME		"lis3dh"
-#define LSM330D_ACCEL_DEV_NAME		"lsm330d_accel"
-#define LSM330DL_ACCEL_DEV_NAME		"lsm330dl_accel"
-#define LSM330DLC_ACCEL_DEV_NAME	"lsm330dlc_accel"
-#define LIS331DL_ACCEL_DEV_NAME		"lis331dl_accel"
-#define LIS331DLH_ACCEL_DEV_NAME	"lis331dlh"
-#define LSM303DL_ACCEL_DEV_NAME		"lsm303dl_accel"
-#define LSM303DLH_ACCEL_DEV_NAME	"lsm303dlh_accel"
-#define LSM303DLM_ACCEL_DEV_NAME	"lsm303dlm_accel"
-#define LSM330_ACCEL_DEV_NAME		"lsm330_accel"
-#define LSM303AGR_ACCEL_DEV_NAME	"lsm303agr_accel"
-#define LIS2DH12_ACCEL_DEV_NAME		"lis2dh12_accel"
-#define LIS3L02DQ_ACCEL_DEV_NAME	"lis3l02dq"
-#define LNG2DM_ACCEL_DEV_NAME		"lng2dm"
-#define LIS2DW12_ACCEL_DEV_NAME		"lis2dw12"
-#define LIS3DHH_ACCEL_DEV_NAME		"lis3dhh"
-#define LIS3DE_ACCEL_DEV_NAME		"lis3de"
-#define LIS2DE12_ACCEL_DEV_NAME		"lis2de12"
-#define LIS2HH12_ACCEL_DEV_NAME		"lis2hh12"
+#घोषणा H3LIS331DL_ACCEL_DEV_NAME	"h3lis331dl_accel"
+#घोषणा LIS3LV02DL_ACCEL_DEV_NAME	"lis3lv02dl_accel"
+#घोषणा LSM303DLHC_ACCEL_DEV_NAME	"lsm303dlhc_accel"
+#घोषणा LIS3DH_ACCEL_DEV_NAME		"lis3dh"
+#घोषणा LSM330D_ACCEL_DEV_NAME		"lsm330d_accel"
+#घोषणा LSM330DL_ACCEL_DEV_NAME		"lsm330dl_accel"
+#घोषणा LSM330DLC_ACCEL_DEV_NAME	"lsm330dlc_accel"
+#घोषणा LIS331DL_ACCEL_DEV_NAME		"lis331dl_accel"
+#घोषणा LIS331DLH_ACCEL_DEV_NAME	"lis331dlh"
+#घोषणा LSM303DL_ACCEL_DEV_NAME		"lsm303dl_accel"
+#घोषणा LSM303DLH_ACCEL_DEV_NAME	"lsm303dlh_accel"
+#घोषणा LSM303DLM_ACCEL_DEV_NAME	"lsm303dlm_accel"
+#घोषणा LSM330_ACCEL_DEV_NAME		"lsm330_accel"
+#घोषणा LSM303AGR_ACCEL_DEV_NAME	"lsm303agr_accel"
+#घोषणा LIS2DH12_ACCEL_DEV_NAME		"lis2dh12_accel"
+#घोषणा LIS3L02DQ_ACCEL_DEV_NAME	"lis3l02dq"
+#घोषणा LNG2DM_ACCEL_DEV_NAME		"lng2dm"
+#घोषणा LIS2DW12_ACCEL_DEV_NAME		"lis2dw12"
+#घोषणा LIS3DHH_ACCEL_DEV_NAME		"lis3dhh"
+#घोषणा LIS3DE_ACCEL_DEV_NAME		"lis3de"
+#घोषणा LIS2DE12_ACCEL_DEV_NAME		"lis2de12"
+#घोषणा LIS2HH12_ACCEL_DEV_NAME		"lis2hh12"
 
 /**
-* struct st_sensors_platform_data - default accel platform data
-* @drdy_int_pin: default accel DRDY is available on INT1 pin.
+* काष्ठा st_sensors_platक्रमm_data - शेष accel platक्रमm data
+* @drdy_पूर्णांक_pin: शेष accel DRDY is available on INT1 pin.
 */
-static __maybe_unused const struct st_sensors_platform_data default_accel_pdata = {
-	.drdy_int_pin = 1,
-};
+अटल __maybe_unused स्थिर काष्ठा st_sensors_platक्रमm_data शेष_accel_pdata = अणु
+	.drdy_पूर्णांक_pin = 1,
+पूर्ण;
 
-const struct st_sensor_settings *st_accel_get_settings(const char *name);
-int st_accel_common_probe(struct iio_dev *indio_dev);
-void st_accel_common_remove(struct iio_dev *indio_dev);
+स्थिर काष्ठा st_sensor_settings *st_accel_get_settings(स्थिर अक्षर *name);
+पूर्णांक st_accel_common_probe(काष्ठा iio_dev *indio_dev);
+व्योम st_accel_common_हटाओ(काष्ठा iio_dev *indio_dev);
 
-#ifdef CONFIG_IIO_BUFFER
-int st_accel_allocate_ring(struct iio_dev *indio_dev);
-void st_accel_deallocate_ring(struct iio_dev *indio_dev);
-int st_accel_trig_set_state(struct iio_trigger *trig, bool state);
-#define ST_ACCEL_TRIGGER_SET_STATE (&st_accel_trig_set_state)
-#else /* CONFIG_IIO_BUFFER */
-static inline int st_accel_allocate_ring(struct iio_dev *indio_dev)
-{
-	return 0;
-}
-static inline void st_accel_deallocate_ring(struct iio_dev *indio_dev)
-{
-}
-#define ST_ACCEL_TRIGGER_SET_STATE NULL
-#endif /* CONFIG_IIO_BUFFER */
+#अगर_घोषित CONFIG_IIO_BUFFER
+पूर्णांक st_accel_allocate_ring(काष्ठा iio_dev *indio_dev);
+व्योम st_accel_deallocate_ring(काष्ठा iio_dev *indio_dev);
+पूर्णांक st_accel_trig_set_state(काष्ठा iio_trigger *trig, bool state);
+#घोषणा ST_ACCEL_TRIGGER_SET_STATE (&st_accel_trig_set_state)
+#अन्यथा /* CONFIG_IIO_BUFFER */
+अटल अंतरभूत पूर्णांक st_accel_allocate_ring(काष्ठा iio_dev *indio_dev)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम st_accel_deallocate_ring(काष्ठा iio_dev *indio_dev)
+अणु
+पूर्ण
+#घोषणा ST_ACCEL_TRIGGER_SET_STATE शून्य
+#पूर्ण_अगर /* CONFIG_IIO_BUFFER */
 
-#endif /* ST_ACCEL_H */
+#पूर्ण_अगर /* ST_ACCEL_H */

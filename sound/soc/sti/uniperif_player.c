@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) STMicroelectronics SA 2015
  * Authors: Arnaud Pouliquen <arnaud.pouliquen@st.com>
- *          for STMicroelectronics.
+ *          क्रम STMicroelectronics.
  */
 
-#include <linux/clk.h>
-#include <linux/mfd/syscon.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/mfd/syscon.h>
 
-#include <sound/asoundef.h>
-#include <sound/soc.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/soc.h>
 
-#include "uniperif.h"
+#समावेश "uniperif.h"
 
 /*
  * Some hardware-related definitions
  */
 
-/* sys config registers definitions */
-#define SYS_CFG_AUDIO_GLUE 0xA4
+/* sys config रेजिस्टरs definitions */
+#घोषणा SYS_CFG_AUDIO_GLUE 0xA4
 
 /*
- * Driver specific types.
+ * Driver specअगरic types.
  */
 
-#define UNIPERIF_PLAYER_CLK_ADJ_MIN  -999999
-#define UNIPERIF_PLAYER_CLK_ADJ_MAX  1000000
-#define UNIPERIF_PLAYER_I2S_OUT 1 /* player id connected to I2S/TDM TX bus */
+#घोषणा UNIPERIF_PLAYER_CLK_ADJ_MIN  -999999
+#घोषणा UNIPERIF_PLAYER_CLK_ADJ_MAX  1000000
+#घोषणा UNIPERIF_PLAYER_I2S_OUT 1 /* player id connected to I2S/TDM TX bus */
 
 /*
  * Note: snd_pcm_hardware is linked to DMA controller but is declared here to
- * integrate  DAI_CPU capability in term of rate and supported channels
+ * पूर्णांकegrate  DAI_CPU capability in term of rate and supported channels
  */
-static const struct snd_pcm_hardware uni_player_pcm_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware uni_player_pcm_hw = अणु
 	.info = SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_MMAP_VALID,
-	.formats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S16_LE,
+	.क्रमmats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S16_LE,
 
 	.rates = SNDRV_PCM_RATE_CONTINUOUS,
 	.rate_min = 8000,
@@ -51,77 +52,77 @@ static const struct snd_pcm_hardware uni_player_pcm_hw = {
 	.period_bytes_min = 128,
 	.period_bytes_max = 64 * PAGE_SIZE,
 	.buffer_bytes_max = 256 * PAGE_SIZE
-};
+पूर्ण;
 
 /*
  * uni_player_irq_handler
- * In case of error audio stream is stopped; stop action is protected via PCM
- * stream lock to avoid race condition with trigger callback.
+ * In हाल of error audio stream is stopped; stop action is रक्षित via PCM
+ * stream lock to aव्योम race condition with trigger callback.
  */
-static irqreturn_t uni_player_irq_handler(int irq, void *dev_id)
-{
-	irqreturn_t ret = IRQ_NONE;
-	struct uniperif *player = dev_id;
-	unsigned int status;
-	unsigned int tmp;
+अटल irqवापस_t uni_player_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	irqवापस_t ret = IRQ_NONE;
+	काष्ठा uniperअगर *player = dev_id;
+	अचिन्हित पूर्णांक status;
+	अचिन्हित पूर्णांक पंचांगp;
 
 	spin_lock(&player->irq_lock);
-	if (!player->substream)
-		goto irq_spin_unlock;
+	अगर (!player->substream)
+		जाओ irq_spin_unlock;
 
 	snd_pcm_stream_lock(player->substream);
-	if (player->state == UNIPERIF_STATE_STOPPED)
-		goto stream_unlock;
+	अगर (player->state == UNIPERIF_STATE_STOPPED)
+		जाओ stream_unlock;
 
-	/* Get interrupt status & clear them immediately */
+	/* Get पूर्णांकerrupt status & clear them immediately */
 	status = GET_UNIPERIF_ITS(player);
 	SET_UNIPERIF_ITS_BCLR(player, status);
 
-	/* Check for fifo error (underrun) */
-	if (unlikely(status & UNIPERIF_ITS_FIFO_ERROR_MASK(player))) {
+	/* Check क्रम fअगरo error (underrun) */
+	अगर (unlikely(status & UNIPERIF_ITS_FIFO_ERROR_MASK(player))) अणु
 		dev_err(player->dev, "FIFO underflow error detected\n");
 
-		/* Interrupt is just for information when underflow recovery */
-		if (player->underflow_enabled) {
+		/* Interrupt is just क्रम inक्रमmation when underflow recovery */
+		अगर (player->underflow_enabled) अणु
 			/* Update state to underflow */
 			player->state = UNIPERIF_STATE_UNDERFLOW;
 
-		} else {
-			/* Disable interrupt so doesn't continually fire */
+		पूर्ण अन्यथा अणु
+			/* Disable पूर्णांकerrupt so करोesn't continually fire */
 			SET_UNIPERIF_ITM_BCLR_FIFO_ERROR(player);
 
 			/* Stop the player */
 			snd_pcm_stop_xrun(player->substream);
-		}
+		पूर्ण
 
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	/* Check for dma error (overrun) */
-	if (unlikely(status & UNIPERIF_ITS_DMA_ERROR_MASK(player))) {
+	/* Check क्रम dma error (overrun) */
+	अगर (unlikely(status & UNIPERIF_ITS_DMA_ERROR_MASK(player))) अणु
 		dev_err(player->dev, "DMA error detected\n");
 
-		/* Disable interrupt so doesn't continually fire */
+		/* Disable पूर्णांकerrupt so करोesn't continually fire */
 		SET_UNIPERIF_ITM_BCLR_DMA_ERROR(player);
 
 		/* Stop the player */
 		snd_pcm_stop_xrun(player->substream);
 
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	/* Check for underflow recovery done */
-	if (unlikely(status & UNIPERIF_ITM_UNDERFLOW_REC_DONE_MASK(player))) {
-		if (!player->underflow_enabled) {
+	/* Check क्रम underflow recovery करोne */
+	अगर (unlikely(status & UNIPERIF_ITM_UNDERFLOW_REC_DONE_MASK(player))) अणु
+		अगर (!player->underflow_enabled) अणु
 			dev_err(player->dev,
 				"unexpected Underflow recovering\n");
 			ret = -EPERM;
-			goto stream_unlock;
-		}
+			जाओ stream_unlock;
+		पूर्ण
 		/* Read the underflow recovery duration */
-		tmp = GET_UNIPERIF_STATUS_1_UNDERFLOW_DURATION(player);
+		पंचांगp = GET_UNIPERIF_STATUS_1_UNDERFLOW_DURATION(player);
 		dev_dbg(player->dev, "Underflow recovered (%d LR clocks max)\n",
-			tmp);
+			पंचांगp);
 
 		/* Clear the underflow recovery duration */
 		SET_UNIPERIF_BIT_CONTROL_CLR_UNDERFLOW_DURATION(player);
@@ -130,31 +131,31 @@ static irqreturn_t uni_player_irq_handler(int irq, void *dev_id)
 		player->state = UNIPERIF_STATE_STARTED;
 
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	/* Check if underflow recovery failed */
-	if (unlikely(status &
-		     UNIPERIF_ITM_UNDERFLOW_REC_FAILED_MASK(player))) {
+	/* Check अगर underflow recovery failed */
+	अगर (unlikely(status &
+		     UNIPERIF_ITM_UNDERFLOW_REC_FAILED_MASK(player))) अणु
 		dev_err(player->dev, "Underflow recovery failed\n");
 
 		/* Stop the player */
 		snd_pcm_stop_xrun(player->substream);
 
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
 stream_unlock:
 	snd_pcm_stream_unlock(player->substream);
 irq_spin_unlock:
 	spin_unlock(&player->irq_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int uni_player_clk_set_rate(struct uniperif *player, unsigned long rate)
-{
-	int rate_adjusted, rate_achieved, delta, ret;
-	int adjustment = player->clk_adj;
+अटल पूर्णांक uni_player_clk_set_rate(काष्ठा uniperअगर *player, अचिन्हित दीर्घ rate)
+अणु
+	पूर्णांक rate_adjusted, rate_achieved, delta, ret;
+	पूर्णांक adjusपंचांगent = player->clk_adj;
 
 	/*
 	 *             a
@@ -167,131 +168,131 @@ static int uni_player_clk_set_rate(struct uniperif *player, unsigned long rate)
 	 *
 	 * where:
 	 *   f - nominal rate
-	 *   a - adjustment in ppm (parts per milion)
+	 *   a - adjusपंचांगent in ppm (parts per milion)
 	 *   F - rate to be set in synthesizer
-	 *   d - delta (difference) between f and F
+	 *   d - delta (dअगरference) between f and F
 	 */
-	if (adjustment < 0) {
-		/* div64_64 operates on unsigned values... */
+	अगर (adjusपंचांगent < 0) अणु
+		/* भाग64_64 operates on अचिन्हित values... */
 		delta = -1;
-		adjustment = -adjustment;
-	} else {
+		adjusपंचांगent = -adjusपंचांगent;
+	पूर्ण अन्यथा अणु
 		delta = 1;
-	}
+	पूर्ण
 	/* 500000 ppm is 0.5, which is used to round up values */
-	delta *= (int)div64_u64((uint64_t)rate *
-				(uint64_t)adjustment + 500000, 1000000);
+	delta *= (पूर्णांक)भाग64_u64((uपूर्णांक64_t)rate *
+				(uपूर्णांक64_t)adjusपंचांगent + 500000, 1000000);
 	rate_adjusted = rate + delta;
 
 	/* Adjusted rate should never be == 0 */
-	if (!rate_adjusted)
-		return -EINVAL;
+	अगर (!rate_adjusted)
+		वापस -EINVAL;
 
 	ret = clk_set_rate(player->clk, rate_adjusted);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	rate_achieved = clk_get_rate(player->clk);
-	if (!rate_achieved)
-		/* If value is 0 means that clock or parent not valid */
-		return -EINVAL;
+	अगर (!rate_achieved)
+		/* If value is 0 means that घड़ी or parent not valid */
+		वापस -EINVAL;
 
 	/*
-	 * Using ALSA's adjustment control, we can modify the rate to be up
+	 * Using ALSA's adjusपंचांगent control, we can modअगरy the rate to be up
 	 * to twice as much as requested, but no more
 	 */
 	delta = rate_achieved - rate;
-	if (delta < 0) {
-		/* div64_64 operates on unsigned values... */
+	अगर (delta < 0) अणु
+		/* भाग64_64 operates on अचिन्हित values... */
 		delta = -delta;
-		adjustment = -1;
-	} else {
-		adjustment = 1;
-	}
+		adjusपंचांगent = -1;
+	पूर्ण अन्यथा अणु
+		adjusपंचांगent = 1;
+	पूर्ण
 	/* Frequency/2 is added to round up result */
-	adjustment *= (int)div64_u64((uint64_t)delta * 1000000 + rate / 2,
+	adjusपंचांगent *= (पूर्णांक)भाग64_u64((uपूर्णांक64_t)delta * 1000000 + rate / 2,
 				     rate);
-	player->clk_adj = adjustment;
-	return 0;
-}
+	player->clk_adj = adjusपंचांगent;
+	वापस 0;
+पूर्ण
 
-static void uni_player_set_channel_status(struct uniperif *player,
-					  struct snd_pcm_runtime *runtime)
-{
-	int n;
-	unsigned int status;
+अटल व्योम uni_player_set_channel_status(काष्ठा uniperअगर *player,
+					  काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	पूर्णांक n;
+	अचिन्हित पूर्णांक status;
 
 	/*
 	 * Some AVRs and TVs require the channel status to contain a correct
-	 * sampling frequency. If no sample rate is already specified, then
+	 * sampling frequency. If no sample rate is alपढ़ोy specअगरied, then
 	 * set one.
 	 */
-	if (runtime) {
-		switch (runtime->rate) {
-		case 22050:
+	अगर (runसमय) अणु
+		चयन (runसमय->rate) अणु
+		हाल 22050:
 			player->stream_settings.iec958.status[3] =
 						IEC958_AES3_CON_FS_22050;
-			break;
-		case 44100:
+			अवरोध;
+		हाल 44100:
 			player->stream_settings.iec958.status[3] =
 						IEC958_AES3_CON_FS_44100;
-			break;
-		case 88200:
+			अवरोध;
+		हाल 88200:
 			player->stream_settings.iec958.status[3] =
 						IEC958_AES3_CON_FS_88200;
-			break;
-		case 176400:
+			अवरोध;
+		हाल 176400:
 			player->stream_settings.iec958.status[3] =
 						IEC958_AES3_CON_FS_176400;
-			break;
-		case 24000:
+			अवरोध;
+		हाल 24000:
 			player->stream_settings.iec958.status[3] =
 						IEC958_AES3_CON_FS_24000;
-			break;
-		case 48000:
+			अवरोध;
+		हाल 48000:
 			player->stream_settings.iec958.status[3] =
 						IEC958_AES3_CON_FS_48000;
-			break;
-		case 96000:
+			अवरोध;
+		हाल 96000:
 			player->stream_settings.iec958.status[3] =
 						IEC958_AES3_CON_FS_96000;
-			break;
-		case 192000:
+			अवरोध;
+		हाल 192000:
 			player->stream_settings.iec958.status[3] =
 						IEC958_AES3_CON_FS_192000;
-			break;
-		case 32000:
+			अवरोध;
+		हाल 32000:
 			player->stream_settings.iec958.status[3] =
 						IEC958_AES3_CON_FS_32000;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/* Mark as sampling frequency not indicated */
 			player->stream_settings.iec958.status[3] =
 						IEC958_AES3_CON_FS_NOTID;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Audio mode:
 	 * Use audio mode status to select PCM or encoded mode
 	 */
-	if (player->stream_settings.iec958.status[0] & IEC958_AES0_NONAUDIO)
+	अगर (player->stream_settings.iec958.status[0] & IEC958_AES0_NONAUDIO)
 		player->stream_settings.encoding_mode =
 			UNIPERIF_IEC958_ENCODING_MODE_ENCODED;
-	else
+	अन्यथा
 		player->stream_settings.encoding_mode =
 			UNIPERIF_IEC958_ENCODING_MODE_PCM;
 
-	if (player->stream_settings.encoding_mode ==
+	अगर (player->stream_settings.encoding_mode ==
 		UNIPERIF_IEC958_ENCODING_MODE_PCM)
 		/* Clear user validity bits */
 		SET_UNIPERIF_USER_VALIDITY_VALIDITY_LR(player, 0);
-	else
+	अन्यथा
 		/* Set user validity bits */
 		SET_UNIPERIF_USER_VALIDITY_VALIDITY_LR(player, 1);
 
 	/* Program the new channel status */
-	for (n = 0; n < 6; ++n) {
+	क्रम (n = 0; n < 6; ++n) अणु
 		status  =
 		player->stream_settings.iec958.status[0 + (n * 4)] & 0xf;
 		status |=
@@ -301,50 +302,50 @@ static void uni_player_set_channel_status(struct uniperif *player,
 		status |=
 		player->stream_settings.iec958.status[3 + (n * 4)] << 24;
 		SET_UNIPERIF_CHANNEL_STA_REGN(player, n, status);
-	}
+	पूर्ण
 
 	/* Update the channel status */
-	if (player->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
+	अगर (player->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
 		SET_UNIPERIF_CONFIG_CHL_STS_UPDATE(player);
-	else
+	अन्यथा
 		SET_UNIPERIF_BIT_CONTROL_CHL_STS_UPDATE(player);
-}
+पूर्ण
 
-static int uni_player_prepare_iec958(struct uniperif *player,
-				     struct snd_pcm_runtime *runtime)
-{
-	int clk_div;
+अटल पूर्णांक uni_player_prepare_iec958(काष्ठा uniperअगर *player,
+				     काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	पूर्णांक clk_भाग;
 
-	clk_div = player->mclk / runtime->rate;
+	clk_भाग = player->mclk / runसमय->rate;
 
 	/* Oversampling must be multiple of 128 as iec958 frame is 32-bits */
-	if ((clk_div % 128) || (clk_div <= 0)) {
+	अगर ((clk_भाग % 128) || (clk_भाग <= 0)) अणु
 		dev_err(player->dev, "%s: invalid clk_div %d\n",
-			__func__, clk_div);
-		return -EINVAL;
-	}
+			__func__, clk_भाग);
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (runtime->format) {
-	case SNDRV_PCM_FORMAT_S16_LE:
-		/* 16/16 memory format */
+	चयन (runसमय->क्रमmat) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
+		/* 16/16 memory क्रमmat */
 		SET_UNIPERIF_CONFIG_MEM_FMT_16_16(player);
 		/* 16-bits per sub-frame */
 		SET_UNIPERIF_I2S_FMT_NBIT_32(player);
 		/* Set 16-bit sample precision */
 		SET_UNIPERIF_I2S_FMT_DATA_SIZE_16(player);
-		break;
-	case SNDRV_PCM_FORMAT_S32_LE:
-		/* 16/0 memory format */
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S32_LE:
+		/* 16/0 memory क्रमmat */
 		SET_UNIPERIF_CONFIG_MEM_FMT_16_0(player);
 		/* 32-bits per sub-frame */
 		SET_UNIPERIF_I2S_FMT_NBIT_32(player);
 		/* Set 24-bit sample precision */
 		SET_UNIPERIF_I2S_FMT_DATA_SIZE_24(player);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(player->dev, "format not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Set parity to be calculated by the hardware */
 	SET_UNIPERIF_CONFIG_PARITY_CNTR_BY_HW(player);
@@ -365,7 +366,7 @@ static int uni_player_prepare_iec958(struct uniperif *player,
 
 	mutex_lock(&player->ctrl_lock);
 	/* Update the channel status */
-	uni_player_set_channel_status(player, runtime);
+	uni_player_set_channel_status(player, runसमय);
 	mutex_unlock(&player->ctrl_lock);
 
 	/* Clear the user validity user bits */
@@ -374,7 +375,7 @@ static int uni_player_prepare_iec958(struct uniperif *player,
 	/* Disable one-bit audio mode */
 	SET_UNIPERIF_CONFIG_ONE_BIT_AUD_DISABLE(player);
 
-	/* Enable consecutive frames repetition of Z preamble (not for HBRA) */
+	/* Enable consecutive frames repetition of Z preamble (not क्रम HBRA) */
 	SET_UNIPERIF_CONFIG_REPEAT_CHL_STS_ENABLE(player);
 
 	/* Change to SUF0_SUBF1 and left/right channels swap! */
@@ -383,145 +384,145 @@ static int uni_player_prepare_iec958(struct uniperif *player,
 	/* Set data output as MSB first */
 	SET_UNIPERIF_I2S_FMT_ORDER_MSB(player);
 
-	if (player->stream_settings.encoding_mode ==
+	अगर (player->stream_settings.encoding_mode ==
 				UNIPERIF_IEC958_ENCODING_MODE_ENCODED)
 		SET_UNIPERIF_CTRL_EXIT_STBY_ON_EOBLOCK_ON(player);
-	else
+	अन्यथा
 		SET_UNIPERIF_CTRL_EXIT_STBY_ON_EOBLOCK_OFF(player);
 
-	SET_UNIPERIF_I2S_FMT_NUM_CH(player, runtime->channels / 2);
+	SET_UNIPERIF_I2S_FMT_NUM_CH(player, runसमय->channels / 2);
 
 	/* Set rounding to off */
 	SET_UNIPERIF_CTRL_ROUNDING_OFF(player);
 
-	/* Set clock divisor */
-	SET_UNIPERIF_CTRL_DIVIDER(player, clk_div / 128);
+	/* Set घड़ी भागisor */
+	SET_UNIPERIF_CTRL_DIVIDER(player, clk_भाग / 128);
 
-	/* Set the spdif latency to not wait before starting player */
+	/* Set the spdअगर latency to not रुको beक्रमe starting player */
 	SET_UNIPERIF_CTRL_SPDIF_LAT_OFF(player);
 
 	/*
-	 * Ensure iec958 formatting is off. It will be enabled in function
-	 * uni_player_start() at the same time as the operation
+	 * Ensure iec958 क्रमmatting is off. It will be enabled in function
+	 * uni_player_start() at the same समय as the operation
 	 * mode is set to work around a silicon issue.
 	 */
-	if (player->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
+	अगर (player->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
 		SET_UNIPERIF_CTRL_SPDIF_FMT_OFF(player);
-	else
+	अन्यथा
 		SET_UNIPERIF_CTRL_SPDIF_FMT_ON(player);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uni_player_prepare_pcm(struct uniperif *player,
-				  struct snd_pcm_runtime *runtime)
-{
-	int output_frame_size, slot_width, clk_div;
+अटल पूर्णांक uni_player_prepare_pcm(काष्ठा uniperअगर *player,
+				  काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	पूर्णांक output_frame_size, slot_width, clk_भाग;
 
-	/* Force slot width to 32 in I2S mode (HW constraint) */
-	if ((player->daifmt & SND_SOC_DAIFMT_FORMAT_MASK) ==
+	/* Force slot width to 32 in I2S mode (HW स्थिरraपूर्णांक) */
+	अगर ((player->daअगरmt & SND_SOC_DAIFMT_FORMAT_MASK) ==
 		SND_SOC_DAIFMT_I2S)
 		slot_width = 32;
-	else
-		slot_width = snd_pcm_format_width(runtime->format);
+	अन्यथा
+		slot_width = snd_pcm_क्रमmat_width(runसमय->क्रमmat);
 
-	output_frame_size = slot_width * runtime->channels;
+	output_frame_size = slot_width * runसमय->channels;
 
-	clk_div = player->mclk / runtime->rate;
+	clk_भाग = player->mclk / runसमय->rate;
 	/*
-	 * For 32 bits subframe clk_div must be a multiple of 128,
-	 * for 16 bits must be a multiple of 64
+	 * For 32 bits subframe clk_भाग must be a multiple of 128,
+	 * क्रम 16 bits must be a multiple of 64
 	 */
-	if ((slot_width == 32) && (clk_div % 128)) {
+	अगर ((slot_width == 32) && (clk_भाग % 128)) अणु
 		dev_err(player->dev, "%s: invalid clk_div\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((slot_width == 16) && (clk_div % 64)) {
+	अगर ((slot_width == 16) && (clk_भाग % 64)) अणु
 		dev_err(player->dev, "%s: invalid clk_div\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Number of bits per subframe (which is one channel sample)
 	 * on output - Transfer 16 or 32 bits from FIFO
 	 */
-	switch (slot_width) {
-	case 32:
+	चयन (slot_width) अणु
+	हाल 32:
 		SET_UNIPERIF_I2S_FMT_NBIT_32(player);
 		SET_UNIPERIF_I2S_FMT_DATA_SIZE_32(player);
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		SET_UNIPERIF_I2S_FMT_NBIT_16(player);
 		SET_UNIPERIF_I2S_FMT_DATA_SIZE_16(player);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(player->dev, "subframe format not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Configure data memory format */
-	switch (runtime->format) {
-	case SNDRV_PCM_FORMAT_S16_LE:
+	/* Configure data memory क्रमmat */
+	चयन (runसमय->क्रमmat) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
 		/* One data word contains two samples */
 		SET_UNIPERIF_CONFIG_MEM_FMT_16_16(player);
-		break;
+		अवरोध;
 
-	case SNDRV_PCM_FORMAT_S32_LE:
+	हाल SNDRV_PCM_FORMAT_S32_LE:
 		/*
 		 * Actually "16 bits/0 bits" means "32/28/24/20/18/16 bits
-		 * on the left than zeros (if less than 32 bytes)"... ;-)
+		 * on the left than zeros (अगर less than 32 bytes)"... ;-)
 		 */
 		SET_UNIPERIF_CONFIG_MEM_FMT_16_0(player);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(player->dev, "format not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Set rounding to off */
 	SET_UNIPERIF_CTRL_ROUNDING_OFF(player);
 
-	/* Set clock divisor */
-	SET_UNIPERIF_CTRL_DIVIDER(player, clk_div / (2 * output_frame_size));
+	/* Set घड़ी भागisor */
+	SET_UNIPERIF_CTRL_DIVIDER(player, clk_भाग / (2 * output_frame_size));
 
 	/* Number of channelsmust be even*/
-	if ((runtime->channels % 2) || (runtime->channels < 2) ||
-	    (runtime->channels > 10)) {
+	अगर ((runसमय->channels % 2) || (runसमय->channels < 2) ||
+	    (runसमय->channels > 10)) अणु
 		dev_err(player->dev, "%s: invalid nb of channels\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	SET_UNIPERIF_I2S_FMT_NUM_CH(player, runtime->channels / 2);
+	SET_UNIPERIF_I2S_FMT_NUM_CH(player, runसमय->channels / 2);
 
-	/* Set 1-bit audio format to disabled */
+	/* Set 1-bit audio क्रमmat to disabled */
 	SET_UNIPERIF_CONFIG_ONE_BIT_AUD_DISABLE(player);
 
 	SET_UNIPERIF_I2S_FMT_ORDER_MSB(player);
 
-	/* No iec958 formatting as outputting to DAC  */
+	/* No iec958 क्रमmatting as outputting to DAC  */
 	SET_UNIPERIF_CTRL_SPDIF_FMT_OFF(player);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uni_player_prepare_tdm(struct uniperif *player,
-				  struct snd_pcm_runtime *runtime)
-{
-	int tdm_frame_size; /* unip tdm frame size in bytes */
-	int user_frame_size; /* user tdm frame size in bytes */
-	/* default unip TDM_WORD_POS_X_Y */
-	unsigned int word_pos[4] = {
-		0x04060002, 0x0C0E080A, 0x14161012, 0x1C1E181A};
-	int freq, ret;
+अटल पूर्णांक uni_player_prepare_tdm(काष्ठा uniperअगर *player,
+				  काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	पूर्णांक tdm_frame_size; /* unip tdm frame size in bytes */
+	पूर्णांक user_frame_size; /* user tdm frame size in bytes */
+	/* शेष unip TDM_WORD_POS_X_Y */
+	अचिन्हित पूर्णांक word_pos[4] = अणु
+		0x04060002, 0x0C0E080A, 0x14161012, 0x1C1E181Aपूर्ण;
+	पूर्णांक freq, ret;
 
 	tdm_frame_size =
 		sti_uniperiph_get_unip_tdm_frame_size(player);
 	user_frame_size =
-		sti_uniperiph_get_user_frame_size(runtime);
+		sti_uniperiph_get_user_frame_size(runसमय);
 
-	/* fix 16/0 format */
+	/* fix 16/0 क्रमmat */
 	SET_UNIPERIF_CONFIG_MEM_FMT_16_0(player);
 	SET_UNIPERIF_I2S_FMT_DATA_SIZE_32(player);
 
@@ -534,46 +535,46 @@ static int uni_player_prepare_tdm(struct uniperif *player,
 	/* Enable the tdm functionality */
 	SET_UNIPERIF_TDM_ENABLE_TDM_ENABLE(player);
 
-	/* number of 8 bits timeslots avail in unip tdm frame */
+	/* number of 8 bits बारlots avail in unip tdm frame */
 	SET_UNIPERIF_TDM_FS_REF_DIV_NUM_TIMESLOT(player, tdm_frame_size);
 
-	/* set the timeslot allocation for words in FIFO */
+	/* set the बारlot allocation क्रम words in FIFO */
 	sti_uniperiph_get_tdm_word_pos(player, word_pos);
 	SET_UNIPERIF_TDM_WORD_POS(player, 1_2, word_pos[WORD_1_2]);
 	SET_UNIPERIF_TDM_WORD_POS(player, 3_4, word_pos[WORD_3_4]);
 	SET_UNIPERIF_TDM_WORD_POS(player, 5_6, word_pos[WORD_5_6]);
 	SET_UNIPERIF_TDM_WORD_POS(player, 7_8, word_pos[WORD_7_8]);
 
-	/* set unip clk rate (not done vai set_sysclk ops) */
-	freq = runtime->rate * tdm_frame_size * 8;
+	/* set unip clk rate (not करोne vai set_sysclk ops) */
+	freq = runसमय->rate * tdm_frame_size * 8;
 	mutex_lock(&player->ctrl_lock);
 	ret = uni_player_clk_set_rate(player, freq);
-	if (!ret)
+	अगर (!ret)
 		player->mclk = freq;
 	mutex_unlock(&player->ctrl_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * ALSA uniperipheral iec958 controls
  */
-static int  uni_player_ctl_iec958_info(struct snd_kcontrol *kcontrol,
-				       struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक  uni_player_ctl_iec958_info(काष्ठा snd_kcontrol *kcontrol,
+				       काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uni_player_ctl_iec958_get(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *player = priv->dai_data.uni;
-	struct snd_aes_iec958 *iec958 = &player->stream_settings.iec958;
+अटल पूर्णांक uni_player_ctl_iec958_get(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *player = priv->dai_data.uni;
+	काष्ठा snd_aes_iec958 *iec958 = &player->stream_settings.iec958;
 
 	mutex_lock(&player->ctrl_lock);
 	ucontrol->value.iec958.status[0] = iec958->status[0];
@@ -581,17 +582,17 @@ static int uni_player_ctl_iec958_get(struct snd_kcontrol *kcontrol,
 	ucontrol->value.iec958.status[2] = iec958->status[2];
 	ucontrol->value.iec958.status[3] = iec958->status[3];
 	mutex_unlock(&player->ctrl_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uni_player_ctl_iec958_put(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *player = priv->dai_data.uni;
-	struct snd_aes_iec958 *iec958 =  &player->stream_settings.iec958;
-	unsigned long flags;
+अटल पूर्णांक uni_player_ctl_iec958_put(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *player = priv->dai_data.uni;
+	काष्ठा snd_aes_iec958 *iec958 =  &player->stream_settings.iec958;
+	अचिन्हित दीर्घ flags;
 
 	mutex_lock(&player->ctrl_lock);
 	iec958->status[0] = ucontrol->value.iec958.status[0];
@@ -600,101 +601,101 @@ static int uni_player_ctl_iec958_put(struct snd_kcontrol *kcontrol,
 	iec958->status[3] = ucontrol->value.iec958.status[3];
 
 	spin_lock_irqsave(&player->irq_lock, flags);
-	if (player->substream && player->substream->runtime)
+	अगर (player->substream && player->substream->runसमय)
 		uni_player_set_channel_status(player,
-					      player->substream->runtime);
-	else
-		uni_player_set_channel_status(player, NULL);
+					      player->substream->runसमय);
+	अन्यथा
+		uni_player_set_channel_status(player, शून्य);
 
 	spin_unlock_irqrestore(&player->irq_lock, flags);
 	mutex_unlock(&player->ctrl_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct snd_kcontrol_new uni_player_iec958_ctl = {
-	.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+अटल काष्ठा snd_kcontrol_new uni_player_iec958_ctl = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
 	.name = SNDRV_CTL_NAME_IEC958("", PLAYBACK, DEFAULT),
 	.info = uni_player_ctl_iec958_info,
 	.get = uni_player_ctl_iec958_get,
 	.put = uni_player_ctl_iec958_put,
-};
+पूर्ण;
 
 /*
- * uniperif rate adjustement control
+ * uniperअगर rate adjustement control
  */
-static int snd_sti_clk_adjustment_info(struct snd_kcontrol *kcontrol,
-				       struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_sti_clk_adjusपंचांगent_info(काष्ठा snd_kcontrol *kcontrol,
+				       काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = UNIPERIF_PLAYER_CLK_ADJ_MIN;
-	uinfo->value.integer.max = UNIPERIF_PLAYER_CLK_ADJ_MAX;
-	uinfo->value.integer.step = 1;
+	uinfo->value.पूर्णांकeger.min = UNIPERIF_PLAYER_CLK_ADJ_MIN;
+	uinfo->value.पूर्णांकeger.max = UNIPERIF_PLAYER_CLK_ADJ_MAX;
+	uinfo->value.पूर्णांकeger.step = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_sti_clk_adjustment_get(struct snd_kcontrol *kcontrol,
-				      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *player = priv->dai_data.uni;
+अटल पूर्णांक snd_sti_clk_adjusपंचांगent_get(काष्ठा snd_kcontrol *kcontrol,
+				      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *player = priv->dai_data.uni;
 
 	mutex_lock(&player->ctrl_lock);
-	ucontrol->value.integer.value[0] = player->clk_adj;
+	ucontrol->value.पूर्णांकeger.value[0] = player->clk_adj;
 	mutex_unlock(&player->ctrl_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_sti_clk_adjustment_put(struct snd_kcontrol *kcontrol,
-				      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *player = priv->dai_data.uni;
-	int ret = 0;
+अटल पूर्णांक snd_sti_clk_adjusपंचांगent_put(काष्ठा snd_kcontrol *kcontrol,
+				      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *player = priv->dai_data.uni;
+	पूर्णांक ret = 0;
 
-	if ((ucontrol->value.integer.value[0] < UNIPERIF_PLAYER_CLK_ADJ_MIN) ||
-	    (ucontrol->value.integer.value[0] > UNIPERIF_PLAYER_CLK_ADJ_MAX))
-		return -EINVAL;
+	अगर ((ucontrol->value.पूर्णांकeger.value[0] < UNIPERIF_PLAYER_CLK_ADJ_MIN) ||
+	    (ucontrol->value.पूर्णांकeger.value[0] > UNIPERIF_PLAYER_CLK_ADJ_MAX))
+		वापस -EINVAL;
 
 	mutex_lock(&player->ctrl_lock);
-	player->clk_adj = ucontrol->value.integer.value[0];
+	player->clk_adj = ucontrol->value.पूर्णांकeger.value[0];
 
-	if (player->mclk)
+	अगर (player->mclk)
 		ret = uni_player_clk_set_rate(player, player->mclk);
 	mutex_unlock(&player->ctrl_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct snd_kcontrol_new uni_player_clk_adj_ctl = {
-	.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+अटल काष्ठा snd_kcontrol_new uni_player_clk_adj_ctl = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
 	.name = "PCM Playback Oversampling Freq. Adjustment",
-	.info = snd_sti_clk_adjustment_info,
-	.get = snd_sti_clk_adjustment_get,
-	.put = snd_sti_clk_adjustment_put,
-};
+	.info = snd_sti_clk_adjusपंचांगent_info,
+	.get = snd_sti_clk_adjusपंचांगent_get,
+	.put = snd_sti_clk_adjusपंचांगent_put,
+पूर्ण;
 
-static struct snd_kcontrol_new *snd_sti_pcm_ctl[] = {
+अटल काष्ठा snd_kcontrol_new *snd_sti_pcm_ctl[] = अणु
 	&uni_player_clk_adj_ctl,
-};
+पूर्ण;
 
-static struct snd_kcontrol_new *snd_sti_iec_ctl[] = {
+अटल काष्ठा snd_kcontrol_new *snd_sti_iec_ctl[] = अणु
 	&uni_player_iec958_ctl,
 	&uni_player_clk_adj_ctl,
-};
+पूर्ण;
 
-static int uni_player_startup(struct snd_pcm_substream *substream,
-			      struct snd_soc_dai *dai)
-{
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *player = priv->dai_data.uni;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक uni_player_startup(काष्ठा snd_pcm_substream *substream,
+			      काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *player = priv->dai_data.uni;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&player->irq_lock, flags);
 	player->substream = substream;
@@ -702,353 +703,353 @@ static int uni_player_startup(struct snd_pcm_substream *substream,
 
 	player->clk_adj = 0;
 
-	if (!UNIPERIF_TYPE_IS_TDM(player))
-		return 0;
+	अगर (!UNIPERIF_TYPE_IS_TDM(player))
+		वापस 0;
 
-	/* refine hw constraint in tdm mode */
-	ret = snd_pcm_hw_rule_add(substream->runtime, 0,
+	/* refine hw स्थिरraपूर्णांक in tdm mode */
+	ret = snd_pcm_hw_rule_add(substream->runसमय, 0,
 				  SNDRV_PCM_HW_PARAM_CHANNELS,
 				  sti_uniperiph_fix_tdm_chan,
 				  player, SNDRV_PCM_HW_PARAM_CHANNELS,
 				  -1);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return snd_pcm_hw_rule_add(substream->runtime, 0,
+	वापस snd_pcm_hw_rule_add(substream->runसमय, 0,
 				   SNDRV_PCM_HW_PARAM_FORMAT,
-				   sti_uniperiph_fix_tdm_format,
+				   sti_uniperiph_fix_tdm_क्रमmat,
 				   player, SNDRV_PCM_HW_PARAM_FORMAT,
 				   -1);
-}
+पूर्ण
 
-static int uni_player_set_sysclk(struct snd_soc_dai *dai, int clk_id,
-				 unsigned int freq, int dir)
-{
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *player = priv->dai_data.uni;
-	int ret;
+अटल पूर्णांक uni_player_set_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
+				 अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *player = priv->dai_data.uni;
+	पूर्णांक ret;
 
-	if (UNIPERIF_TYPE_IS_TDM(player) || (dir == SND_SOC_CLOCK_IN))
-		return 0;
+	अगर (UNIPERIF_TYPE_IS_TDM(player) || (dir == SND_SOC_CLOCK_IN))
+		वापस 0;
 
-	if (clk_id != 0)
-		return -EINVAL;
+	अगर (clk_id != 0)
+		वापस -EINVAL;
 
 	mutex_lock(&player->ctrl_lock);
 	ret = uni_player_clk_set_rate(player, freq);
-	if (!ret)
+	अगर (!ret)
 		player->mclk = freq;
 	mutex_unlock(&player->ctrl_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int uni_player_prepare(struct snd_pcm_substream *substream,
-			      struct snd_soc_dai *dai)
-{
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *player = priv->dai_data.uni;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int transfer_size, trigger_limit;
-	int ret;
+अटल पूर्णांक uni_player_prepare(काष्ठा snd_pcm_substream *substream,
+			      काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *player = priv->dai_data.uni;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक transfer_size, trigger_limit;
+	पूर्णांक ret;
 
 	/* The player should be stopped */
-	if (player->state != UNIPERIF_STATE_STOPPED) {
+	अगर (player->state != UNIPERIF_STATE_STOPPED) अणु
 		dev_err(player->dev, "%s: invalid player state %d\n", __func__,
 			player->state);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Calculate transfer size (in fifo cells and bytes) for frame count */
-	if (player->type == SND_ST_UNIPERIF_TYPE_TDM) {
+	/* Calculate transfer size (in fअगरo cells and bytes) क्रम frame count */
+	अगर (player->type == SND_ST_UNIPERIF_TYPE_TDM) अणु
 		/* transfer size = user frame size (in 32 bits FIFO cell) */
 		transfer_size =
-			sti_uniperiph_get_user_frame_size(runtime) / 4;
-	} else {
-		transfer_size = runtime->channels * UNIPERIF_FIFO_FRAMES;
-	}
+			sti_uniperiph_get_user_frame_size(runसमय) / 4;
+	पूर्ण अन्यथा अणु
+		transfer_size = runसमय->channels * UNIPERIF_FIFO_FRAMES;
+	पूर्ण
 
-	/* Calculate number of empty cells available before asserting DREQ */
-	if (player->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0) {
+	/* Calculate number of empty cells available beक्रमe निश्चितing DREQ */
+	अगर (player->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0) अणु
 		trigger_limit = UNIPERIF_FIFO_SIZE - transfer_size;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Since SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0
-		 * FDMA_TRIGGER_LIMIT also controls when the state switches
+		 * FDMA_TRIGGER_LIMIT also controls when the state चयनes
 		 * from OFF or STANDBY to AUDIO DATA.
 		 */
 		trigger_limit = transfer_size;
-	}
+	पूर्ण
 
 	/* Trigger limit must be an even number */
-	if ((!trigger_limit % 2) || (trigger_limit != 1 && transfer_size % 2) ||
-	    (trigger_limit > UNIPERIF_CONFIG_DMA_TRIG_LIMIT_MASK(player))) {
+	अगर ((!trigger_limit % 2) || (trigger_limit != 1 && transfer_size % 2) ||
+	    (trigger_limit > UNIPERIF_CONFIG_DMA_TRIG_LIMIT_MASK(player))) अणु
 		dev_err(player->dev, "invalid trigger limit %d\n",
 			trigger_limit);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	SET_UNIPERIF_CONFIG_DMA_TRIG_LIMIT(player, trigger_limit);
 
 	/* Uniperipheral setup depends on player type */
-	switch (player->type) {
-	case SND_ST_UNIPERIF_TYPE_HDMI:
-		ret = uni_player_prepare_iec958(player, runtime);
-		break;
-	case SND_ST_UNIPERIF_TYPE_PCM:
-		ret = uni_player_prepare_pcm(player, runtime);
-		break;
-	case SND_ST_UNIPERIF_TYPE_SPDIF:
-		ret = uni_player_prepare_iec958(player, runtime);
-		break;
-	case SND_ST_UNIPERIF_TYPE_TDM:
-		ret = uni_player_prepare_tdm(player, runtime);
-		break;
-	default:
+	चयन (player->type) अणु
+	हाल SND_ST_UNIPERIF_TYPE_HDMI:
+		ret = uni_player_prepare_iec958(player, runसमय);
+		अवरोध;
+	हाल SND_ST_UNIPERIF_TYPE_PCM:
+		ret = uni_player_prepare_pcm(player, runसमय);
+		अवरोध;
+	हाल SND_ST_UNIPERIF_TYPE_SPDIF:
+		ret = uni_player_prepare_iec958(player, runसमय);
+		अवरोध;
+	हाल SND_ST_UNIPERIF_TYPE_TDM:
+		ret = uni_player_prepare_tdm(player, runसमय);
+		अवरोध;
+	शेष:
 		dev_err(player->dev, "invalid player type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (player->daifmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
+	चयन (player->daअगरmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
 		SET_UNIPERIF_I2S_FMT_LR_POL_LOW(player);
 		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_RISING(player);
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF:
 		SET_UNIPERIF_I2S_FMT_LR_POL_HIG(player);
 		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_RISING(player);
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
 		SET_UNIPERIF_I2S_FMT_LR_POL_LOW(player);
 		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_FALLING(player);
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
 		SET_UNIPERIF_I2S_FMT_LR_POL_HIG(player);
 		SET_UNIPERIF_I2S_FMT_SCLK_EDGE_FALLING(player);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (player->daifmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+	चयन (player->daअगरmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		SET_UNIPERIF_I2S_FMT_ALIGN_LEFT(player);
 		SET_UNIPERIF_I2S_FMT_PADDING_I2S_MODE(player);
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		SET_UNIPERIF_I2S_FMT_ALIGN_LEFT(player);
 		SET_UNIPERIF_I2S_FMT_PADDING_SONY_MODE(player);
-		break;
-	case SND_SOC_DAIFMT_RIGHT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_RIGHT_J:
 		SET_UNIPERIF_I2S_FMT_ALIGN_RIGHT(player);
 		SET_UNIPERIF_I2S_FMT_PADDING_SONY_MODE(player);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(player->dev, "format not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	SET_UNIPERIF_I2S_FMT_NO_OF_SAMPLES_TO_READ(player, 0);
 
 
-	return sti_uniperiph_reset(player);
-}
+	वापस sti_uniperiph_reset(player);
+पूर्ण
 
-static int uni_player_start(struct uniperif *player)
-{
-	int ret;
+अटल पूर्णांक uni_player_start(काष्ठा uniperअगर *player)
+अणु
+	पूर्णांक ret;
 
 	/* The player should be stopped */
-	if (player->state != UNIPERIF_STATE_STOPPED) {
+	अगर (player->state != UNIPERIF_STATE_STOPPED) अणु
 		dev_err(player->dev, "%s: invalid player state\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = clk_prepare_enable(player->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(player->dev, "%s: Failed to enable clock\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Clear any pending interrupts */
+	/* Clear any pending पूर्णांकerrupts */
 	SET_UNIPERIF_ITS_BCLR(player, GET_UNIPERIF_ITS(player));
 
-	/* Set the interrupt mask */
+	/* Set the पूर्णांकerrupt mask */
 	SET_UNIPERIF_ITM_BSET_DMA_ERROR(player);
 	SET_UNIPERIF_ITM_BSET_FIFO_ERROR(player);
 
-	/* Enable underflow recovery interrupts */
-	if (player->underflow_enabled) {
+	/* Enable underflow recovery पूर्णांकerrupts */
+	अगर (player->underflow_enabled) अणु
 		SET_UNIPERIF_ITM_BSET_UNDERFLOW_REC_DONE(player);
 		SET_UNIPERIF_ITM_BSET_UNDERFLOW_REC_FAILED(player);
-	}
+	पूर्ण
 
 	ret = sti_uniperiph_reset(player);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		clk_disable_unprepare(player->clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Does not use IEC61937 features of the uniperipheral hardware.
-	 * Instead it performs IEC61937 in software and inserts it directly
-	 * into the audio data stream. As such, when encoded mode is selected,
-	 * linear pcm mode is still used, but with the differences of the
-	 * channel status bits set for encoded mode and the validity bits set.
+	 * Instead it perक्रमms IEC61937 in software and inserts it directly
+	 * पूर्णांकo the audio data stream. As such, when encoded mode is selected,
+	 * linear pcm mode is still used, but with the dअगरferences of the
+	 * channel status bits set क्रम encoded mode and the validity bits set.
 	 */
 	SET_UNIPERIF_CTRL_OPERATION_PCM_DATA(player);
 
 	/*
-	 * If iec958 formatting is required for hdmi or spdif, then it must be
+	 * If iec958 क्रमmatting is required क्रम hdmi or spdअगर, then it must be
 	 * enabled after the operation mode is set. If set prior to this, it
 	 * will not take affect and hang the player.
 	 */
-	if (player->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
-		if (UNIPERIF_TYPE_IS_IEC958(player))
+	अगर (player->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
+		अगर (UNIPERIF_TYPE_IS_IEC958(player))
 			SET_UNIPERIF_CTRL_SPDIF_FMT_ON(player);
 
-	/* Force channel status update (no update if clk disable) */
-	if (player->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
+	/* Force channel status update (no update अगर clk disable) */
+	अगर (player->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
 		SET_UNIPERIF_CONFIG_CHL_STS_UPDATE(player);
-	else
+	अन्यथा
 		SET_UNIPERIF_BIT_CONTROL_CHL_STS_UPDATE(player);
 
 	/* Update state to started */
 	player->state = UNIPERIF_STATE_STARTED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uni_player_stop(struct uniperif *player)
-{
-	int ret;
+अटल पूर्णांक uni_player_stop(काष्ठा uniperअगर *player)
+अणु
+	पूर्णांक ret;
 
 	/* The player should not be in stopped state */
-	if (player->state == UNIPERIF_STATE_STOPPED) {
+	अगर (player->state == UNIPERIF_STATE_STOPPED) अणु
 		dev_err(player->dev, "%s: invalid player state\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Turn the player off */
 	SET_UNIPERIF_CTRL_OPERATION_OFF(player);
 
 	ret = sti_uniperiph_reset(player);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Disable interrupts */
+	/* Disable पूर्णांकerrupts */
 	SET_UNIPERIF_ITM_BCLR(player, GET_UNIPERIF_ITM(player));
 
-	/* Disable clock */
+	/* Disable घड़ी */
 	clk_disable_unprepare(player->clk);
 
-	/* Update state to stopped and return */
+	/* Update state to stopped and वापस */
 	player->state = UNIPERIF_STATE_STOPPED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int uni_player_resume(struct uniperif *player)
-{
-	int ret;
+पूर्णांक uni_player_resume(काष्ठा uniperअगर *player)
+अणु
+	पूर्णांक ret;
 
-	/* Select the frequency synthesizer clock */
-	if (player->clk_sel) {
-		ret = regmap_field_write(player->clk_sel, 1);
-		if (ret) {
+	/* Select the frequency synthesizer घड़ी */
+	अगर (player->clk_sel) अणु
+		ret = regmap_field_ग_लिखो(player->clk_sel, 1);
+		अगर (ret) अणु
 			dev_err(player->dev,
 				"%s: Failed to select freq synth clock\n",
 				__func__);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	SET_UNIPERIF_CONFIG_BACK_STALL_REQ_DISABLE(player);
 	SET_UNIPERIF_CTRL_ROUNDING_OFF(player);
 	SET_UNIPERIF_CTRL_SPDIF_LAT_OFF(player);
 	SET_UNIPERIF_CONFIG_IDLE_MOD_DISABLE(player);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(uni_player_resume);
 
-static int uni_player_trigger(struct snd_pcm_substream *substream,
-			      int cmd, struct snd_soc_dai *dai)
-{
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *player = priv->dai_data.uni;
+अटल पूर्णांक uni_player_trigger(काष्ठा snd_pcm_substream *substream,
+			      पूर्णांक cmd, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *player = priv->dai_data.uni;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-		return uni_player_start(player);
-	case SNDRV_PCM_TRIGGER_STOP:
-		return uni_player_stop(player);
-	case SNDRV_PCM_TRIGGER_RESUME:
-		return uni_player_resume(player);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+		वापस uni_player_start(player);
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		वापस uni_player_stop(player);
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+		वापस uni_player_resume(player);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void uni_player_shutdown(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *dai)
-{
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *player = priv->dai_data.uni;
-	unsigned long flags;
+अटल व्योम uni_player_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *player = priv->dai_data.uni;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&player->irq_lock, flags);
-	if (player->state != UNIPERIF_STATE_STOPPED)
+	अगर (player->state != UNIPERIF_STATE_STOPPED)
 		/* Stop the player */
 		uni_player_stop(player);
 
-	player->substream = NULL;
+	player->substream = शून्य;
 	spin_unlock_irqrestore(&player->irq_lock, flags);
-}
+पूर्ण
 
-static int uni_player_parse_dt_audio_glue(struct platform_device *pdev,
-					  struct uniperif *player)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct regmap *regmap;
-	struct reg_field regfield[2] = {
+अटल पूर्णांक uni_player_parse_dt_audio_glue(काष्ठा platक्रमm_device *pdev,
+					  काष्ठा uniperअगर *player)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा regmap *regmap;
+	काष्ठा reg_field regfield[2] = अणु
 		/* PCM_CLK_SEL */
 		REG_FIELD(SYS_CFG_AUDIO_GLUE,
 			  8 + player->id,
 			  8 + player->id),
 		/* PCMP_VALID_SEL */
 		REG_FIELD(SYS_CFG_AUDIO_GLUE, 0, 1)
-	};
+	पूर्ण;
 
 	regmap = syscon_regmap_lookup_by_phandle(node, "st,syscfg");
 
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&pdev->dev, "sti-audio-clk-glue syscf not found\n");
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
 	player->clk_sel = regmap_field_alloc(regmap, regfield[0]);
 	player->valid_sel = regmap_field_alloc(regmap, regfield[1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops uni_player_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops uni_player_dai_ops = अणु
 		.startup = uni_player_startup,
-		.shutdown = uni_player_shutdown,
+		.shutकरोwn = uni_player_shutकरोwn,
 		.prepare = uni_player_prepare,
 		.trigger = uni_player_trigger,
 		.hw_params = sti_uniperiph_dai_hw_params,
 		.set_fmt = sti_uniperiph_dai_set_fmt,
 		.set_sysclk = uni_player_set_sysclk,
 		.set_tdm_slot = sti_uniperiph_set_tdm_slot
-};
+पूर्ण;
 
-int uni_player_init(struct platform_device *pdev,
-		    struct uniperif *player)
-{
-	int ret = 0;
+पूर्णांक uni_player_init(काष्ठा platक्रमm_device *pdev,
+		    काष्ठा uniperअगर *player)
+अणु
+	पूर्णांक ret = 0;
 
 	player->dev = &pdev->dev;
 	player->state = UNIPERIF_STATE_STOPPED;
@@ -1057,75 +1058,75 @@ int uni_player_init(struct platform_device *pdev,
 	/* Get PCM_CLK_SEL & PCMP_VALID_SEL from audio-glue-ctrl SoC reg */
 	ret = uni_player_parse_dt_audio_glue(pdev, player);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(player->dev, "Failed to parse DeviceTree\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Underflow recovery is only supported on later ip revisions */
-	if (player->ver >= SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
+	अगर (player->ver >= SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0)
 		player->underflow_enabled = 1;
 
-	if (UNIPERIF_TYPE_IS_TDM(player))
+	अगर (UNIPERIF_TYPE_IS_TDM(player))
 		player->hw = &uni_tdm_hw;
-	else
+	अन्यथा
 		player->hw = &uni_player_pcm_hw;
 
-	/* Get uniperif resource */
+	/* Get uniperअगर resource */
 	player->clk = of_clk_get(pdev->dev.of_node, 0);
-	if (IS_ERR(player->clk)) {
+	अगर (IS_ERR(player->clk)) अणु
 		dev_err(player->dev, "Failed to get clock\n");
-		return PTR_ERR(player->clk);
-	}
+		वापस PTR_ERR(player->clk);
+	पूर्ण
 
-	/* Select the frequency synthesizer clock */
-	if (player->clk_sel) {
-		ret = regmap_field_write(player->clk_sel, 1);
-		if (ret) {
+	/* Select the frequency synthesizer घड़ी */
+	अगर (player->clk_sel) अणु
+		ret = regmap_field_ग_लिखो(player->clk_sel, 1);
+		अगर (ret) अणु
 			dev_err(player->dev,
 				"%s: Failed to select freq synth clock\n",
 				__func__);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* connect to I2S/TDM TX bus */
-	if (player->valid_sel &&
-	    (player->id == UNIPERIF_PLAYER_I2S_OUT)) {
-		ret = regmap_field_write(player->valid_sel, player->id);
-		if (ret) {
+	अगर (player->valid_sel &&
+	    (player->id == UNIPERIF_PLAYER_I2S_OUT)) अणु
+		ret = regmap_field_ग_लिखो(player->valid_sel, player->id);
+		अगर (ret) अणु
 			dev_err(player->dev,
 				"%s: unable to connect to tdm bus\n", __func__);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, player->irq,
 			       uni_player_irq_handler, IRQF_SHARED,
 			       dev_name(&pdev->dev), player);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(player->dev, "unable to request IRQ %d\n", player->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mutex_init(&player->ctrl_lock);
 	spin_lock_init(&player->irq_lock);
 
-	/* Ensure that disabled by default */
+	/* Ensure that disabled by शेष */
 	SET_UNIPERIF_CONFIG_BACK_STALL_REQ_DISABLE(player);
 	SET_UNIPERIF_CTRL_ROUNDING_OFF(player);
 	SET_UNIPERIF_CTRL_SPDIF_LAT_OFF(player);
 	SET_UNIPERIF_CONFIG_IDLE_MOD_DISABLE(player);
 
-	if (UNIPERIF_TYPE_IS_IEC958(player)) {
-		/* Set default iec958 status bits  */
+	अगर (UNIPERIF_TYPE_IS_IEC958(player)) अणु
+		/* Set शेष iec958 status bits  */
 
 		/* Consumer, PCM, copyright, 2ch, mode 0 */
 		player->stream_settings.iec958.status[0] = 0x00;
 		/* Broadcast reception category */
 		player->stream_settings.iec958.status[1] =
 					IEC958_AES1_CON_GENERAL;
-		/* Do not take into account source or channel number */
+		/* Do not take पूर्णांकo account source or channel number */
 		player->stream_settings.iec958.status[2] =
 					IEC958_AES2_CON_SOURCE_UNSPEC;
 		/* Sampling frequency not indicated */
@@ -1138,11 +1139,11 @@ int uni_player_init(struct platform_device *pdev,
 
 		player->num_ctrls = ARRAY_SIZE(snd_sti_iec_ctl);
 		player->snd_ctrls = snd_sti_iec_ctl[0];
-	} else {
+	पूर्ण अन्यथा अणु
 		player->num_ctrls = ARRAY_SIZE(snd_sti_pcm_ctl);
 		player->snd_ctrls = snd_sti_pcm_ctl[0];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(uni_player_init);

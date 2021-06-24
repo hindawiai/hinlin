@@ -1,66 +1,67 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  */
 
 /*
- * This file has definitions related to Host and AMD-TEE Trusted OS interface.
+ * This file has definitions related to Host and AMD-TEE Trusted OS पूर्णांकerface.
  * These definitions must match the definitions on the TEE side.
  */
 
-#ifndef AMDTEE_IF_H
-#define AMDTEE_IF_H
+#अगर_अघोषित AMDTEE_IF_H
+#घोषणा AMDTEE_IF_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*****************************************************************************
  ** TEE Param
  ******************************************************************************/
-#define TEE_MAX_PARAMS		4
+#घोषणा TEE_MAX_PARAMS		4
 
 /**
- * struct memref - memory reference structure
+ * काष्ठा memref - memory reference काष्ठाure
  * @buf_id:    buffer ID of the buffer mapped by TEE_CMD_ID_MAP_SHARED_MEM
  * @offset:    offset in bytes from beginning of the buffer
  * @size:      data size in bytes
  */
-struct memref {
+काष्ठा memref अणु
 	u32 buf_id;
 	u32 offset;
 	u32 size;
-};
+पूर्ण;
 
-struct value {
+काष्ठा value अणु
 	u32 a;
 	u32 b;
-};
+पूर्ण;
 
 /*
- * Parameters passed to open_session or invoke_command
+ * Parameters passed to खोलो_session or invoke_command
  */
-union tee_op_param {
-	struct memref mref;
-	struct value val;
-};
+जोड़ tee_op_param अणु
+	काष्ठा memref mref;
+	काष्ठा value val;
+पूर्ण;
 
-struct tee_operation {
+काष्ठा tee_operation अणु
 	u32 param_types;
-	union tee_op_param params[TEE_MAX_PARAMS];
-};
+	जोड़ tee_op_param params[TEE_MAX_PARAMS];
+पूर्ण;
 
-/* Must be same as in GP TEE specification */
-#define TEE_OP_PARAM_TYPE_NONE                  0
-#define TEE_OP_PARAM_TYPE_VALUE_INPUT           1
-#define TEE_OP_PARAM_TYPE_VALUE_OUTPUT          2
-#define TEE_OP_PARAM_TYPE_VALUE_INOUT           3
-#define TEE_OP_PARAM_TYPE_INVALID               4
-#define TEE_OP_PARAM_TYPE_MEMREF_INPUT          5
-#define TEE_OP_PARAM_TYPE_MEMREF_OUTPUT         6
-#define TEE_OP_PARAM_TYPE_MEMREF_INOUT          7
+/* Must be same as in GP TEE specअगरication */
+#घोषणा TEE_OP_PARAM_TYPE_NONE                  0
+#घोषणा TEE_OP_PARAM_TYPE_VALUE_INPUT           1
+#घोषणा TEE_OP_PARAM_TYPE_VALUE_OUTPUT          2
+#घोषणा TEE_OP_PARAM_TYPE_VALUE_INOUT           3
+#घोषणा TEE_OP_PARAM_TYPE_INVALID               4
+#घोषणा TEE_OP_PARAM_TYPE_MEMREF_INPUT          5
+#घोषणा TEE_OP_PARAM_TYPE_MEMREF_OUTPUT         6
+#घोषणा TEE_OP_PARAM_TYPE_MEMREF_INOUT          7
 
-#define TEE_PARAM_TYPE_GET(t, i)        (((t) >> ((i) * 4)) & 0xF)
-#define TEE_PARAM_TYPES(t0, t1, t2, t3) \
+#घोषणा TEE_PARAM_TYPE_GET(t, i)        (((t) >> ((i) * 4)) & 0xF)
+#घोषणा TEE_PARAM_TYPES(t0, t1, t2, t3) \
 	((t0) | ((t1) << 4) | ((t2) << 8) | ((t3) << 12))
 
 /*****************************************************************************
@@ -69,115 +70,115 @@ struct tee_operation {
 
 /*
  * The shared memory between rich world and secure world may be physically
- * non-contiguous. Below structures are meant to describe a shared memory region
+ * non-contiguous. Below काष्ठाures are meant to describe a shared memory region
  * via scatter/gather (sg) list
  */
 
 /**
- * struct tee_sg_desc - sg descriptor for a physically contiguous buffer
+ * काष्ठा tee_sg_desc - sg descriptor क्रम a physically contiguous buffer
  * @low_addr: [in] bits[31:0] of buffer's physical address. Must be 4KB aligned
  * @hi_addr:  [in] bits[63:32] of the buffer's physical address
  * @size:     [in] size in bytes (must be multiple of 4KB)
  */
-struct tee_sg_desc {
+काष्ठा tee_sg_desc अणु
 	u32 low_addr;
 	u32 hi_addr;
 	u32 size;
-};
+पूर्ण;
 
 /**
- * struct tee_sg_list - structure describing a scatter/gather list
+ * काष्ठा tee_sg_list - काष्ठाure describing a scatter/gather list
  * @count:   [in] number of sg descriptors
  * @size:    [in] total size of all buffers in the list. Must be multiple of 4KB
  * @buf:     [in] list of sg buffer descriptors
  */
-#define TEE_MAX_SG_DESC 64
-struct tee_sg_list {
+#घोषणा TEE_MAX_SG_DESC 64
+काष्ठा tee_sg_list अणु
 	u32 count;
 	u32 size;
-	struct tee_sg_desc buf[TEE_MAX_SG_DESC];
-};
+	काष्ठा tee_sg_desc buf[TEE_MAX_SG_DESC];
+पूर्ण;
 
 /**
- * struct tee_cmd_map_shared_mem - command to map shared memory
- * @buf_id:    [out] return buffer ID value
+ * काष्ठा tee_cmd_map_shared_mem - command to map shared memory
+ * @buf_id:    [out] वापस buffer ID value
  * @sg_list:   [in] list describing memory to be mapped
  */
-struct tee_cmd_map_shared_mem {
+काष्ठा tee_cmd_map_shared_mem अणु
 	u32 buf_id;
-	struct tee_sg_list sg_list;
-};
+	काष्ठा tee_sg_list sg_list;
+पूर्ण;
 
 /**
- * struct tee_cmd_unmap_shared_mem - command to unmap shared memory
+ * काष्ठा tee_cmd_unmap_shared_mem - command to unmap shared memory
  * @buf_id:    [in] buffer ID of memory to be unmapped
  */
-struct tee_cmd_unmap_shared_mem {
+काष्ठा tee_cmd_unmap_shared_mem अणु
 	u32 buf_id;
-};
+पूर्ण;
 
 /**
- * struct tee_cmd_load_ta - load Trusted Application (TA) binary into TEE
+ * काष्ठा tee_cmd_load_ta - load Trusted Application (TA) binary पूर्णांकo TEE
  * @low_addr:    [in] bits [31:0] of the physical address of the TA binary
  * @hi_addr:     [in] bits [63:32] of the physical address of the TA binary
  * @size:        [in] size of TA binary in bytes
- * @ta_handle:   [out] return handle of the loaded TA
+ * @ta_handle:   [out] वापस handle of the loaded TA
  */
-struct tee_cmd_load_ta {
+काष्ठा tee_cmd_load_ta अणु
 	u32 low_addr;
 	u32 hi_addr;
 	u32 size;
 	u32 ta_handle;
-};
+पूर्ण;
 
 /**
- * struct tee_cmd_unload_ta - command to unload TA binary from TEE environment
+ * काष्ठा tee_cmd_unload_ta - command to unload TA binary from TEE environment
  * @ta_handle:    [in] handle of the loaded TA to be unloaded
  */
-struct tee_cmd_unload_ta {
+काष्ठा tee_cmd_unload_ta अणु
 	u32 ta_handle;
-};
+पूर्ण;
 
 /**
- * struct tee_cmd_open_session - command to call TA_OpenSessionEntryPoint in TA
+ * काष्ठा tee_cmd_खोलो_session - command to call TA_OpenSessionEntryPoपूर्णांक in TA
  * @ta_handle:      [in] handle of the loaded TA
- * @session_info:   [out] pointer to TA allocated session data
+ * @session_info:   [out] poपूर्णांकer to TA allocated session data
  * @op:             [in/out] operation parameters
- * @return_origin:  [out] origin of return code after TEE processing
+ * @वापस_origin:  [out] origin of वापस code after TEE processing
  */
-struct tee_cmd_open_session {
+काष्ठा tee_cmd_खोलो_session अणु
 	u32 ta_handle;
 	u32 session_info;
-	struct tee_operation op;
-	u32 return_origin;
-};
+	काष्ठा tee_operation op;
+	u32 वापस_origin;
+पूर्ण;
 
 /**
- * struct tee_cmd_close_session - command to call TA_CloseSessionEntryPoint()
+ * काष्ठा tee_cmd_बंद_session - command to call TA_CloseSessionEntryPoपूर्णांक()
  *                                in TA
  * @ta_handle:      [in] handle of the loaded TA
- * @session_info:   [in] pointer to TA allocated session data
+ * @session_info:   [in] poपूर्णांकer to TA allocated session data
  */
-struct tee_cmd_close_session {
+काष्ठा tee_cmd_बंद_session अणु
 	u32 ta_handle;
 	u32 session_info;
-};
+पूर्ण;
 
 /**
- * struct tee_cmd_invoke_cmd - command to call TA_InvokeCommandEntryPoint() in
+ * काष्ठा tee_cmd_invoke_cmd - command to call TA_InvokeCommandEntryPoपूर्णांक() in
  *                             TA
  * @ta_handle:     [in] handle of the loaded TA
  * @cmd_id:        [in] TA command ID
- * @session_info:  [in] pointer to TA allocated session data
+ * @session_info:  [in] poपूर्णांकer to TA allocated session data
  * @op:            [in/out] operation parameters
- * @return_origin: [out] origin of return code after TEE processing
+ * @वापस_origin: [out] origin of वापस code after TEE processing
  */
-struct tee_cmd_invoke_cmd {
+काष्ठा tee_cmd_invoke_cmd अणु
 	u32 ta_handle;
 	u32 cmd_id;
 	u32 session_info;
-	struct tee_operation op;
-	u32 return_origin;
-};
+	काष्ठा tee_operation op;
+	u32 वापस_origin;
+पूर्ण;
 
-#endif /*AMDTEE_IF_H*/
+#पूर्ण_अगर /*AMDTEE_IF_H*/

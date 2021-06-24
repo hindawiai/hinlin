@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- *   fs/cifs/ioctl.c
+ *   fs/cअगरs/ioctl.c
  *
  *   vfs operations that deal with io control
  *
  *   Copyright (C) International Business Machines  Corp., 2005,2013
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -14,238 +15,238 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   the GNU Lesser General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, write to the Free Software
+ *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <linux/fs.h>
-#include <linux/file.h>
-#include <linux/mount.h>
-#include <linux/mm.h>
-#include <linux/pagemap.h>
-#include "cifspdu.h"
-#include "cifsglob.h"
-#include "cifsproto.h"
-#include "cifs_debug.h"
-#include "cifsfs.h"
-#include "cifs_ioctl.h"
-#include "smb2proto.h"
-#include "smb2glob.h"
-#include <linux/btrfs.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/file.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pagemap.h>
+#समावेश "cifspdu.h"
+#समावेश "cifsglob.h"
+#समावेश "cifsproto.h"
+#समावेश "cifs_debug.h"
+#समावेश "cifsfs.h"
+#समावेश "cifs_ioctl.h"
+#समावेश "smb2proto.h"
+#समावेश "smb2glob.h"
+#समावेश <linux/btrfs.h>
 
-static long cifs_ioctl_query_info(unsigned int xid, struct file *filep,
-				  unsigned long p)
-{
-	struct inode *inode = file_inode(filep);
-	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
-	struct cifs_tcon *tcon = cifs_sb_master_tcon(cifs_sb);
-	struct dentry *dentry = filep->f_path.dentry;
-	const unsigned char *path;
-	void *page = alloc_dentry_path();
-	__le16 *utf16_path = NULL, root_path;
-	int rc = 0;
+अटल दीर्घ cअगरs_ioctl_query_info(अचिन्हित पूर्णांक xid, काष्ठा file *filep,
+				  अचिन्हित दीर्घ p)
+अणु
+	काष्ठा inode *inode = file_inode(filep);
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
+	काष्ठा cअगरs_tcon *tcon = cअगरs_sb_master_tcon(cअगरs_sb);
+	काष्ठा dentry *dentry = filep->f_path.dentry;
+	स्थिर अचिन्हित अक्षर *path;
+	व्योम *page = alloc_dentry_path();
+	__le16 *utf16_path = शून्य, root_path;
+	पूर्णांक rc = 0;
 
 	path = build_path_from_dentry(dentry, page);
-	if (IS_ERR(path)) {
-		free_dentry_path(page);
-		return PTR_ERR(path);
-	}
+	अगर (IS_ERR(path)) अणु
+		मुक्त_dentry_path(page);
+		वापस PTR_ERR(path);
+	पूर्ण
 
-	cifs_dbg(FYI, "%s %s\n", __func__, path);
+	cअगरs_dbg(FYI, "%s %s\n", __func__, path);
 
-	if (!path[0]) {
+	अगर (!path[0]) अणु
 		root_path = 0;
 		utf16_path = &root_path;
-	} else {
-		utf16_path = cifs_convert_path_to_utf16(path + 1, cifs_sb);
-		if (!utf16_path) {
+	पूर्ण अन्यथा अणु
+		utf16_path = cअगरs_convert_path_to_utf16(path + 1, cअगरs_sb);
+		अगर (!utf16_path) अणु
 			rc = -ENOMEM;
-			goto ici_exit;
-		}
-	}
+			जाओ ici_निकास;
+		पूर्ण
+	पूर्ण
 
-	if (tcon->ses->server->ops->ioctl_query_info)
+	अगर (tcon->ses->server->ops->ioctl_query_info)
 		rc = tcon->ses->server->ops->ioctl_query_info(
-				xid, tcon, cifs_sb, utf16_path,
-				filep->private_data ? 0 : 1, p);
-	else
+				xid, tcon, cअगरs_sb, utf16_path,
+				filep->निजी_data ? 0 : 1, p);
+	अन्यथा
 		rc = -EOPNOTSUPP;
 
- ici_exit:
-	if (utf16_path != &root_path)
-		kfree(utf16_path);
-	free_dentry_path(page);
-	return rc;
-}
+ ici_निकास:
+	अगर (utf16_path != &root_path)
+		kमुक्त(utf16_path);
+	मुक्त_dentry_path(page);
+	वापस rc;
+पूर्ण
 
-static long cifs_ioctl_copychunk(unsigned int xid, struct file *dst_file,
-			unsigned long srcfd)
-{
-	int rc;
-	struct fd src_file;
-	struct inode *src_inode;
+अटल दीर्घ cअगरs_ioctl_copychunk(अचिन्हित पूर्णांक xid, काष्ठा file *dst_file,
+			अचिन्हित दीर्घ srcfd)
+अणु
+	पूर्णांक rc;
+	काष्ठा fd src_file;
+	काष्ठा inode *src_inode;
 
-	cifs_dbg(FYI, "ioctl copychunk range\n");
-	/* the destination must be opened for writing */
-	if (!(dst_file->f_mode & FMODE_WRITE)) {
-		cifs_dbg(FYI, "file target not open for write\n");
-		return -EINVAL;
-	}
+	cअगरs_dbg(FYI, "ioctl copychunk range\n");
+	/* the destination must be खोलोed क्रम writing */
+	अगर (!(dst_file->f_mode & FMODE_WRITE)) अणु
+		cअगरs_dbg(FYI, "file target not open for write\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	/* check if target volume is readonly and take reference */
-	rc = mnt_want_write_file(dst_file);
-	if (rc) {
-		cifs_dbg(FYI, "mnt_want_write failed with rc %d\n", rc);
-		return rc;
-	}
+	/* check अगर target volume is पढ़ोonly and take reference */
+	rc = mnt_want_ग_लिखो_file(dst_file);
+	अगर (rc) अणु
+		cअगरs_dbg(FYI, "mnt_want_write failed with rc %d\n", rc);
+		वापस rc;
+	पूर्ण
 
 	src_file = fdget(srcfd);
-	if (!src_file.file) {
+	अगर (!src_file.file) अणु
 		rc = -EBADF;
-		goto out_drop_write;
-	}
+		जाओ out_drop_ग_लिखो;
+	पूर्ण
 
-	if (src_file.file->f_op->unlocked_ioctl != cifs_ioctl) {
+	अगर (src_file.file->f_op->unlocked_ioctl != cअगरs_ioctl) अणु
 		rc = -EBADF;
-		cifs_dbg(VFS, "src file seems to be from a different filesystem type\n");
-		goto out_fput;
-	}
+		cअगरs_dbg(VFS, "src file seems to be from a different filesystem type\n");
+		जाओ out_fput;
+	पूर्ण
 
 	src_inode = file_inode(src_file.file);
 	rc = -EINVAL;
-	if (S_ISDIR(src_inode->i_mode))
-		goto out_fput;
+	अगर (S_ISसूची(src_inode->i_mode))
+		जाओ out_fput;
 
-	rc = cifs_file_copychunk_range(xid, src_file.file, 0, dst_file, 0,
+	rc = cअगरs_file_copychunk_range(xid, src_file.file, 0, dst_file, 0,
 					src_inode->i_size, 0);
-	if (rc > 0)
+	अगर (rc > 0)
 		rc = 0;
 out_fput:
 	fdput(src_file);
-out_drop_write:
-	mnt_drop_write_file(dst_file);
-	return rc;
-}
+out_drop_ग_लिखो:
+	mnt_drop_ग_लिखो_file(dst_file);
+	वापस rc;
+पूर्ण
 
-static long smb_mnt_get_fsinfo(unsigned int xid, struct cifs_tcon *tcon,
-				void __user *arg)
-{
-	int rc = 0;
-	struct smb_mnt_fs_info *fsinf;
+अटल दीर्घ smb_mnt_get_fsinfo(अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+				व्योम __user *arg)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा smb_mnt_fs_info *fsinf;
 
-	fsinf = kzalloc(sizeof(struct smb_mnt_fs_info), GFP_KERNEL);
-	if (fsinf == NULL)
-		return -ENOMEM;
+	fsinf = kzalloc(माप(काष्ठा smb_mnt_fs_info), GFP_KERNEL);
+	अगर (fsinf == शून्य)
+		वापस -ENOMEM;
 
 	fsinf->version = 1;
 	fsinf->protocol_id = tcon->ses->server->vals->protocol_id;
-	fsinf->device_characteristics =
+	fsinf->device_अक्षरacteristics =
 			le32_to_cpu(tcon->fsDevInfo.DeviceCharacteristics);
 	fsinf->device_type = le32_to_cpu(tcon->fsDevInfo.DeviceType);
 	fsinf->fs_attributes = le32_to_cpu(tcon->fsAttrInfo.Attributes);
 	fsinf->max_path_component =
 		le32_to_cpu(tcon->fsAttrInfo.MaxPathNameComponentLength);
 	fsinf->vol_serial_number = tcon->vol_serial_number;
-	fsinf->vol_create_time = le64_to_cpu(tcon->vol_create_time);
+	fsinf->vol_create_समय = le64_to_cpu(tcon->vol_create_समय);
 	fsinf->share_flags = tcon->share_flags;
 	fsinf->share_caps = le32_to_cpu(tcon->capabilities);
 	fsinf->sector_flags = tcon->ss_flags;
 	fsinf->optimal_sector_size = tcon->perf_sector_size;
 	fsinf->max_bytes_chunk = tcon->max_bytes_chunk;
 	fsinf->maximal_access = tcon->maximal_access;
-	fsinf->cifs_posix_caps = le64_to_cpu(tcon->fsUnixInfo.Capability);
+	fsinf->cअगरs_posix_caps = le64_to_cpu(tcon->fsUnixInfo.Capability);
 
-	if (copy_to_user(arg, fsinf, sizeof(struct smb_mnt_fs_info)))
+	अगर (copy_to_user(arg, fsinf, माप(काष्ठा smb_mnt_fs_info)))
 		rc = -EFAULT;
 
-	kfree(fsinf);
-	return rc;
-}
+	kमुक्त(fsinf);
+	वापस rc;
+पूर्ण
 
-static int cifs_shutdown(struct super_block *sb, unsigned long arg)
-{
-	struct cifs_sb_info *sbi = CIFS_SB(sb);
+अटल पूर्णांक cअगरs_shutकरोwn(काष्ठा super_block *sb, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा cअगरs_sb_info *sbi = CIFS_SB(sb);
 	__u32 flags;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	if (get_user(flags, (__u32 __user *)arg))
-		return -EFAULT;
+	अगर (get_user(flags, (__u32 __user *)arg))
+		वापस -EFAULT;
 
-	if (flags > CIFS_GOING_FLAGS_NOLOGFLUSH)
-		return -EINVAL;
+	अगर (flags > CIFS_GOING_FLAGS_NOLOGFLUSH)
+		वापस -EINVAL;
 
-	if (cifs_forced_shutdown(sbi))
-		return 0;
+	अगर (cअगरs_क्रमced_shutकरोwn(sbi))
+		वापस 0;
 
-	cifs_dbg(VFS, "shut down requested (%d)", flags);
-/*	trace_cifs_shutdown(sb, flags);*/
+	cअगरs_dbg(VFS, "shut down requested (%d)", flags);
+/*	trace_cअगरs_shutकरोwn(sb, flags);*/
 
 	/*
 	 * see:
-	 *   https://man7.org/linux/man-pages/man2/ioctl_xfs_goingdown.2.html
-	 * for more information and description of original intent of the flags
+	 *   https://man7.org/linux/man-pages/man2/ioctl_xfs_goingकरोwn.2.hपंचांगl
+	 * क्रम more inक्रमmation and description of original पूर्णांकent of the flags
 	 */
-	switch (flags) {
+	चयन (flags) अणु
 	/*
-	 * We could add support later for default flag which requires:
+	 * We could add support later क्रम शेष flag which requires:
 	 *     "Flush all dirty data and metadata to disk"
-	 * would need to call syncfs or equivalent to flush page cache for
-	 * the mount and then issue fsync to server (if nostrictsync not set)
+	 * would need to call syncfs or equivalent to flush page cache क्रम
+	 * the mount and then issue fsync to server (अगर nostrictsync not set)
 	 */
-	case CIFS_GOING_FLAGS_DEFAULT:
-		cifs_dbg(FYI, "shutdown with default flag not supported\n");
-		return -EINVAL;
+	हाल CIFS_GOING_FLAGS_DEFAULT:
+		cअगरs_dbg(FYI, "shutdown with default flag not supported\n");
+		वापस -EINVAL;
 	/*
-	 * FLAGS_LOGFLUSH is easy since it asks to write out metadata (not
-	 * data) but metadata writes are not cached on the client, so can treat
+	 * FLAGS_LOGFLUSH is easy since it asks to ग_लिखो out metadata (not
+	 * data) but metadata ग_लिखोs are not cached on the client, so can treat
 	 * it similarly to NOLOGFLUSH
 	 */
-	case CIFS_GOING_FLAGS_LOGFLUSH:
-	case CIFS_GOING_FLAGS_NOLOGFLUSH:
-		sbi->mnt_cifs_flags |= CIFS_MOUNT_SHUTDOWN;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	हाल CIFS_GOING_FLAGS_LOGFLUSH:
+	हाल CIFS_GOING_FLAGS_NOLOGFLUSH:
+		sbi->mnt_cअगरs_flags |= CIFS_MOUNT_SHUTDOWN;
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int cifs_dump_full_key(struct cifs_tcon *tcon, struct smb3_full_key_debug_info __user *in)
-{
-	struct smb3_full_key_debug_info out;
-	struct cifs_ses *ses;
-	int rc = 0;
+अटल पूर्णांक cअगरs_dump_full_key(काष्ठा cअगरs_tcon *tcon, काष्ठा smb3_full_key_debug_info __user *in)
+अणु
+	काष्ठा smb3_full_key_debug_info out;
+	काष्ठा cअगरs_ses *ses;
+	पूर्णांक rc = 0;
 	bool found = false;
 	u8 __user *end;
 
-	if (!smb3_encryption_required(tcon)) {
+	अगर (!smb3_encryption_required(tcon)) अणु
 		rc = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* copy user input into our output buffer */
-	if (copy_from_user(&out, in, sizeof(out))) {
+	/* copy user input पूर्णांकo our output buffer */
+	अगर (copy_from_user(&out, in, माप(out))) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!out.session_id) {
-		/* if ses id is 0, use current user session */
+	अगर (!out.session_id) अणु
+		/* अगर ses id is 0, use current user session */
 		ses = tcon->ses;
-	} else {
-		/* otherwise if a session id is given, look for it in all our sessions */
-		struct cifs_ses *ses_it = NULL;
-		struct TCP_Server_Info *server_it = NULL;
+	पूर्ण अन्यथा अणु
+		/* otherwise अगर a session id is given, look क्रम it in all our sessions */
+		काष्ठा cअगरs_ses *ses_it = शून्य;
+		काष्ठा TCP_Server_Info *server_it = शून्य;
 
-		spin_lock(&cifs_tcp_ses_lock);
-		list_for_each_entry(server_it, &cifs_tcp_ses_list, tcp_ses_list) {
-			list_for_each_entry(ses_it, &server_it->smb_ses_list, smb_ses_list) {
-				if (ses_it->Suid == out.session_id) {
+		spin_lock(&cअगरs_tcp_ses_lock);
+		list_क्रम_each_entry(server_it, &cअगरs_tcp_ses_list, tcp_ses_list) अणु
+			list_क्रम_each_entry(ses_it, &server_it->smb_ses_list, smb_ses_list) अणु
+				अगर (ses_it->Suid == out.session_id) अणु
 					ses = ses_it;
 					/*
 					 * since we are using the session outside the crit
@@ -254,261 +255,261 @@ static int cifs_dump_full_key(struct cifs_tcon *tcon, struct smb3_full_key_debug
 					 */
 					ses->ses_count++;
 					found = true;
-					goto search_end;
-				}
-			}
-		}
+					जाओ search_end;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 search_end:
-		spin_unlock(&cifs_tcp_ses_lock);
-		if (!found) {
+		spin_unlock(&cअगरs_tcp_ses_lock);
+		अगर (!found) अणु
 			rc = -ENOENT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	switch (ses->server->cipher_type) {
-	case SMB2_ENCRYPTION_AES128_CCM:
-	case SMB2_ENCRYPTION_AES128_GCM:
+	चयन (ses->server->cipher_type) अणु
+	हाल SMB2_ENCRYPTION_AES128_CCM:
+	हाल SMB2_ENCRYPTION_AES128_GCM:
 		out.session_key_length = CIFS_SESS_KEY_SIZE;
 		out.server_in_key_length = out.server_out_key_length = SMB3_GCM128_CRYPTKEY_SIZE;
-		break;
-	case SMB2_ENCRYPTION_AES256_CCM:
-	case SMB2_ENCRYPTION_AES256_GCM:
+		अवरोध;
+	हाल SMB2_ENCRYPTION_AES256_CCM:
+	हाल SMB2_ENCRYPTION_AES256_GCM:
 		out.session_key_length = CIFS_SESS_KEY_SIZE;
 		out.server_in_key_length = out.server_out_key_length = SMB3_GCM256_CRYPTKEY_SIZE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* check if user buffer is big enough to store all the keys */
-	if (out.in_size < sizeof(out) + out.session_key_length + out.server_in_key_length
-	    + out.server_out_key_length) {
+	/* check अगर user buffer is big enough to store all the keys */
+	अगर (out.in_size < माप(out) + out.session_key_length + out.server_in_key_length
+	    + out.server_out_key_length) अणु
 		rc = -ENOBUFS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	out.session_id = ses->Suid;
 	out.cipher_type = le16_to_cpu(ses->server->cipher_type);
 
-	/* overwrite user input with our output */
-	if (copy_to_user(in, &out, sizeof(out))) {
+	/* overग_लिखो user input with our output */
+	अगर (copy_to_user(in, &out, माप(out))) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* append all the keys at the end of the user buffer */
 	end = in->data;
-	if (copy_to_user(end, ses->auth_key.response, out.session_key_length)) {
+	अगर (copy_to_user(end, ses->auth_key.response, out.session_key_length)) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	end += out.session_key_length;
 
-	if (copy_to_user(end, ses->smb3encryptionkey, out.server_in_key_length)) {
+	अगर (copy_to_user(end, ses->smb3encryptionkey, out.server_in_key_length)) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	end += out.server_in_key_length;
 
-	if (copy_to_user(end, ses->smb3decryptionkey, out.server_out_key_length)) {
+	अगर (copy_to_user(end, ses->smb3decryptionkey, out.server_out_key_length)) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	if (found)
-		cifs_put_smb_ses(ses);
-	return rc;
-}
+	अगर (found)
+		cअगरs_put_smb_ses(ses);
+	वापस rc;
+पूर्ण
 
-long cifs_ioctl(struct file *filep, unsigned int command, unsigned long arg)
-{
-	struct inode *inode = file_inode(filep);
-	struct smb3_key_debug_info pkey_inf;
-	int rc = -ENOTTY; /* strange error - but the precedent */
-	unsigned int xid;
-	struct cifsFileInfo *pSMBFile = filep->private_data;
-	struct cifs_tcon *tcon;
-	struct tcon_link *tlink;
-	struct cifs_sb_info *cifs_sb;
+दीर्घ cअगरs_ioctl(काष्ठा file *filep, अचिन्हित पूर्णांक command, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा inode *inode = file_inode(filep);
+	काष्ठा smb3_key_debug_info pkey_inf;
+	पूर्णांक rc = -ENOTTY; /* strange error - but the precedent */
+	अचिन्हित पूर्णांक xid;
+	काष्ठा cअगरsFileInfo *pSMBFile = filep->निजी_data;
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_sb_info *cअगरs_sb;
 	__u64	ExtAttrBits = 0;
 	__u64   caps;
 
 	xid = get_xid();
 
-	cifs_dbg(FYI, "cifs ioctl 0x%x\n", command);
-	switch (command) {
-		case FS_IOC_GETFLAGS:
-			if (pSMBFile == NULL)
-				break;
+	cअगरs_dbg(FYI, "cifs ioctl 0x%x\n", command);
+	चयन (command) अणु
+		हाल FS_IOC_GETFLAGS:
+			अगर (pSMBFile == शून्य)
+				अवरोध;
 			tcon = tlink_tcon(pSMBFile->tlink);
 			caps = le64_to_cpu(tcon->fsUnixInfo.Capability);
-#ifdef CONFIG_CIFS_POSIX
-			if (CIFS_UNIX_EXTATTR_CAP & caps) {
+#अगर_घोषित CONFIG_CIFS_POSIX
+			अगर (CIFS_UNIX_EXTATTR_CAP & caps) अणु
 				__u64	ExtAttrMask = 0;
 				rc = CIFSGetExtAttr(xid, tcon,
 						    pSMBFile->fid.netfid,
 						    &ExtAttrBits, &ExtAttrMask);
-				if (rc == 0)
+				अगर (rc == 0)
 					rc = put_user(ExtAttrBits &
 						FS_FL_USER_VISIBLE,
-						(int __user *)arg);
-				if (rc != EOPNOTSUPP)
-					break;
-			}
-#endif /* CONFIG_CIFS_POSIX */
+						(पूर्णांक __user *)arg);
+				अगर (rc != EOPNOTSUPP)
+					अवरोध;
+			पूर्ण
+#पूर्ण_अगर /* CONFIG_CIFS_POSIX */
 			rc = 0;
-			if (CIFS_I(inode)->cifsAttrs & ATTR_COMPRESSED) {
+			अगर (CIFS_I(inode)->cअगरsAttrs & ATTR_COMPRESSED) अणु
 				/* add in the compressed bit */
 				ExtAttrBits = FS_COMPR_FL;
 				rc = put_user(ExtAttrBits & FS_FL_USER_VISIBLE,
-					      (int __user *)arg);
-			}
-			break;
-		case FS_IOC_SETFLAGS:
-			if (pSMBFile == NULL)
-				break;
+					      (पूर्णांक __user *)arg);
+			पूर्ण
+			अवरोध;
+		हाल FS_IOC_SETFLAGS:
+			अगर (pSMBFile == शून्य)
+				अवरोध;
 			tcon = tlink_tcon(pSMBFile->tlink);
 			caps = le64_to_cpu(tcon->fsUnixInfo.Capability);
 
-			if (get_user(ExtAttrBits, (int __user *)arg)) {
+			अगर (get_user(ExtAttrBits, (पूर्णांक __user *)arg)) अणु
 				rc = -EFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/*
-			 * if (CIFS_UNIX_EXTATTR_CAP & caps)
+			 * अगर (CIFS_UNIX_EXTATTR_CAP & caps)
 			 *	rc = CIFSSetExtAttr(xid, tcon,
 			 *		       pSMBFile->fid.netfid,
 			 *		       extAttrBits,
 			 *		       &ExtAttrMask);
-			 * if (rc != EOPNOTSUPP)
-			 *	break;
+			 * अगर (rc != EOPNOTSUPP)
+			 *	अवरोध;
 			 */
 
 			/* Currently only flag we can set is compressed flag */
-			if ((ExtAttrBits & FS_COMPR_FL) == 0)
-				break;
+			अगर ((ExtAttrBits & FS_COMPR_FL) == 0)
+				अवरोध;
 
 			/* Try to set compress flag */
-			if (tcon->ses->server->ops->set_compression) {
+			अगर (tcon->ses->server->ops->set_compression) अणु
 				rc = tcon->ses->server->ops->set_compression(
 							xid, tcon, pSMBFile);
-				cifs_dbg(FYI, "set compress flag rc %d\n", rc);
-			}
-			break;
-		case CIFS_IOC_COPYCHUNK_FILE:
-			rc = cifs_ioctl_copychunk(xid, filep, arg);
-			break;
-		case CIFS_QUERY_INFO:
-			rc = cifs_ioctl_query_info(xid, filep, arg);
-			break;
-		case CIFS_IOC_SET_INTEGRITY:
-			if (pSMBFile == NULL)
-				break;
+				cअगरs_dbg(FYI, "set compress flag rc %d\n", rc);
+			पूर्ण
+			अवरोध;
+		हाल CIFS_IOC_COPYCHUNK_खाता:
+			rc = cअगरs_ioctl_copychunk(xid, filep, arg);
+			अवरोध;
+		हाल CIFS_QUERY_INFO:
+			rc = cअगरs_ioctl_query_info(xid, filep, arg);
+			अवरोध;
+		हाल CIFS_IOC_SET_INTEGRITY:
+			अगर (pSMBFile == शून्य)
+				अवरोध;
 			tcon = tlink_tcon(pSMBFile->tlink);
-			if (tcon->ses->server->ops->set_integrity)
-				rc = tcon->ses->server->ops->set_integrity(xid,
+			अगर (tcon->ses->server->ops->set_पूर्णांकegrity)
+				rc = tcon->ses->server->ops->set_पूर्णांकegrity(xid,
 						tcon, pSMBFile);
-			else
+			अन्यथा
 				rc = -EOPNOTSUPP;
-			break;
-		case CIFS_IOC_GET_MNT_INFO:
-			if (pSMBFile == NULL)
-				break;
+			अवरोध;
+		हाल CIFS_IOC_GET_MNT_INFO:
+			अगर (pSMBFile == शून्य)
+				अवरोध;
 			tcon = tlink_tcon(pSMBFile->tlink);
-			rc = smb_mnt_get_fsinfo(xid, tcon, (void __user *)arg);
-			break;
-		case CIFS_ENUMERATE_SNAPSHOTS:
-			if (pSMBFile == NULL)
-				break;
-			if (arg == 0) {
+			rc = smb_mnt_get_fsinfo(xid, tcon, (व्योम __user *)arg);
+			अवरोध;
+		हाल CIFS_ENUMERATE_SNAPSHOTS:
+			अगर (pSMBFile == शून्य)
+				अवरोध;
+			अगर (arg == 0) अणु
 				rc = -EINVAL;
-				goto cifs_ioc_exit;
-			}
+				जाओ cअगरs_ioc_निकास;
+			पूर्ण
 			tcon = tlink_tcon(pSMBFile->tlink);
-			if (tcon->ses->server->ops->enum_snapshots)
-				rc = tcon->ses->server->ops->enum_snapshots(xid, tcon,
-						pSMBFile, (void __user *)arg);
-			else
+			अगर (tcon->ses->server->ops->क्रमागत_snapshots)
+				rc = tcon->ses->server->ops->क्रमागत_snapshots(xid, tcon,
+						pSMBFile, (व्योम __user *)arg);
+			अन्यथा
 				rc = -EOPNOTSUPP;
-			break;
-		case CIFS_DUMP_KEY:
+			अवरोध;
+		हाल CIFS_DUMP_KEY:
 			/*
 			 * Dump encryption keys. This is an old ioctl that only
-			 * handles AES-128-{CCM,GCM}.
+			 * handles AES-128-अणुCCM,GCMपूर्ण.
 			 */
-			if (pSMBFile == NULL)
-				break;
-			if (!capable(CAP_SYS_ADMIN)) {
+			अगर (pSMBFile == शून्य)
+				अवरोध;
+			अगर (!capable(CAP_SYS_ADMIN)) अणु
 				rc = -EACCES;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			tcon = tlink_tcon(pSMBFile->tlink);
-			if (!smb3_encryption_required(tcon)) {
+			अगर (!smb3_encryption_required(tcon)) अणु
 				rc = -EOPNOTSUPP;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			pkey_inf.cipher_type =
 				le16_to_cpu(tcon->ses->server->cipher_type);
 			pkey_inf.Suid = tcon->ses->Suid;
-			memcpy(pkey_inf.auth_key, tcon->ses->auth_key.response,
+			स_नकल(pkey_inf.auth_key, tcon->ses->auth_key.response,
 					16 /* SMB2_NTLMV2_SESSKEY_SIZE */);
-			memcpy(pkey_inf.smb3decryptionkey,
+			स_नकल(pkey_inf.smb3decryptionkey,
 			      tcon->ses->smb3decryptionkey, SMB3_SIGN_KEY_SIZE);
-			memcpy(pkey_inf.smb3encryptionkey,
+			स_नकल(pkey_inf.smb3encryptionkey,
 			      tcon->ses->smb3encryptionkey, SMB3_SIGN_KEY_SIZE);
-			if (copy_to_user((void __user *)arg, &pkey_inf,
-					sizeof(struct smb3_key_debug_info)))
+			अगर (copy_to_user((व्योम __user *)arg, &pkey_inf,
+					माप(काष्ठा smb3_key_debug_info)))
 				rc = -EFAULT;
-			else
+			अन्यथा
 				rc = 0;
-			break;
-		case CIFS_DUMP_FULL_KEY:
+			अवरोध;
+		हाल CIFS_DUMP_FULL_KEY:
 			/*
 			 * Dump encryption keys (handles any key sizes)
 			 */
-			if (pSMBFile == NULL)
-				break;
-			if (!capable(CAP_SYS_ADMIN)) {
+			अगर (pSMBFile == शून्य)
+				अवरोध;
+			अगर (!capable(CAP_SYS_ADMIN)) अणु
 				rc = -EACCES;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			tcon = tlink_tcon(pSMBFile->tlink);
-			rc = cifs_dump_full_key(tcon, (void __user *)arg);
-			break;
-		case CIFS_IOC_NOTIFY:
-			if (!S_ISDIR(inode->i_mode)) {
-				/* Notify can only be done on directories */
+			rc = cअगरs_dump_full_key(tcon, (व्योम __user *)arg);
+			अवरोध;
+		हाल CIFS_IOC_NOTIFY:
+			अगर (!S_ISसूची(inode->i_mode)) अणु
+				/* Notअगरy can only be करोne on directories */
 				rc = -EOPNOTSUPP;
-				break;
-			}
-			cifs_sb = CIFS_SB(inode->i_sb);
-			tlink = cifs_sb_tlink(cifs_sb);
-			if (IS_ERR(tlink)) {
+				अवरोध;
+			पूर्ण
+			cअगरs_sb = CIFS_SB(inode->i_sb);
+			tlink = cअगरs_sb_tlink(cअगरs_sb);
+			अगर (IS_ERR(tlink)) अणु
 				rc = PTR_ERR(tlink);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			tcon = tlink_tcon(tlink);
-			if (tcon && tcon->ses->server->ops->notify) {
-				rc = tcon->ses->server->ops->notify(xid,
-						filep, (void __user *)arg);
-				cifs_dbg(FYI, "ioctl notify rc %d\n", rc);
-			} else
+			अगर (tcon && tcon->ses->server->ops->notअगरy) अणु
+				rc = tcon->ses->server->ops->notअगरy(xid,
+						filep, (व्योम __user *)arg);
+				cअगरs_dbg(FYI, "ioctl notify rc %d\n", rc);
+			पूर्ण अन्यथा
 				rc = -EOPNOTSUPP;
-			cifs_put_tlink(tlink);
-			break;
-		case CIFS_IOC_SHUTDOWN:
-			rc = cifs_shutdown(inode->i_sb, arg);
-			break;
-		default:
-			cifs_dbg(FYI, "unsupported ioctl\n");
-			break;
-	}
-cifs_ioc_exit:
-	free_xid(xid);
-	return rc;
-}
+			cअगरs_put_tlink(tlink);
+			अवरोध;
+		हाल CIFS_IOC_SHUTDOWN:
+			rc = cअगरs_shutकरोwn(inode->i_sb, arg);
+			अवरोध;
+		शेष:
+			cअगरs_dbg(FYI, "unsupported ioctl\n");
+			अवरोध;
+	पूर्ण
+cअगरs_ioc_निकास:
+	मुक्त_xid(xid);
+	वापस rc;
+पूर्ण

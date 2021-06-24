@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019  Arm Limited
  * Original author: Dave Martin <Dave.Martin@arm.com>
  */
 
-#ifndef ASSEMBLER_H
-#define ASSEMBLER_H
+#अगर_अघोषित ASSEMBLER_H
+#घोषणा ASSEMBLER_H
 
-#define NT_GNU_PROPERTY_TYPE_0	5
-#define GNU_PROPERTY_AARCH64_FEATURE_1_AND	0xc0000000
+#घोषणा NT_GNU_PROPERTY_TYPE_0	5
+#घोषणा GNU_PROPERTY_AARCH64_FEATURE_1_AND	0xc0000000
 
-/* Bits for GNU_PROPERTY_AARCH64_FEATURE_1_BTI */
-#define GNU_PROPERTY_AARCH64_FEATURE_1_BTI	(1U << 0)
-#define GNU_PROPERTY_AARCH64_FEATURE_1_PAC	(1U << 1)
+/* Bits क्रम GNU_PROPERTY_AARCH64_FEATURE_1_BTI */
+#घोषणा GNU_PROPERTY_AARCH64_FEATURE_1_BTI	(1U << 0)
+#घोषणा GNU_PROPERTY_AARCH64_FEATURE_1_PAC	(1U << 1)
 
 
 .macro startfn name:req
-	.globl \name
-\name:
+	.globl \नame
+\नame:
 	.macro endfn
-		.size \name, . - \name
-		.type \name, @function
+		.size \नame, . - \नame
+		.type \नame, @function
 		.purgem endfn
 	.endm
 .endm
@@ -28,21 +29,21 @@
 .macro emit_aarch64_feature_1_and
 	.pushsection .note.gnu.property, "a"
 	.align	3
-	.long	2f - 1f
-	.long	6f - 3f
-	.long	NT_GNU_PROPERTY_TYPE_0
+	.दीर्घ	2f - 1f
+	.दीर्घ	6f - 3f
+	.दीर्घ	NT_GNU_PROPERTY_TYPE_0
 1:	.string	"GNU"
 2:
 	.align	3
-3:	.long	GNU_PROPERTY_AARCH64_FEATURE_1_AND
-	.long	5f - 4f
+3:	.दीर्घ	GNU_PROPERTY_AARCH64_FEATURE_1_AND
+	.दीर्घ	5f - 4f
 4:
-#if BTI
-	.long	GNU_PROPERTY_AARCH64_FEATURE_1_PAC | \
+#अगर BTI
+	.दीर्घ	GNU_PROPERTY_AARCH64_FEATURE_1_PAC | \
 		GNU_PROPERTY_AARCH64_FEATURE_1_BTI
-#else
-	.long	0
-#endif
+#अन्यथा
+	.दीर्घ	0
+#पूर्ण_अगर
 5:
 	.align	3
 6:
@@ -50,31 +51,31 @@
 .endm
 
 .macro paciasp
-	hint	0x19
+	hपूर्णांक	0x19
 .endm
 
 .macro autiasp
-	hint	0x1d
+	hपूर्णांक	0x1d
 .endm
 
 .macro __bti_
-	hint	0x20
+	hपूर्णांक	0x20
 .endm
 
 .macro __bti_c
-	hint	0x22
+	hपूर्णांक	0x22
 .endm
 
 .macro __bti_j
-	hint	0x24
+	hपूर्णांक	0x24
 .endm
 
 .macro __bti_jc
-	hint	0x26
+	hपूर्णांक	0x26
 .endm
 
 .macro bti what=
 	__bti_\what
 .endm
 
-#endif /* ! ASSEMBLER_H */
+#पूर्ण_अगर /* ! ASSEMBLER_H */

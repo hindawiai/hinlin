@@ -1,1710 +1,1711 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * net/sched/act_api.c	Packet action API.
  *
  * Author:	Jamal Hadi Salim
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/skbuff.h>
-#include <linux/init.h>
-#include <linux/kmod.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <net/net_namespace.h>
-#include <net/sock.h>
-#include <net/sch_generic.h>
-#include <net/pkt_cls.h>
-#include <net/act_api.h>
-#include <net/netlink.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/sock.h>
+#समावेश <net/sch_generic.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <net/act_api.h>
+#समावेश <net/netlink.h>
 
-#ifdef CONFIG_INET
+#अगर_घोषित CONFIG_INET
 DEFINE_STATIC_KEY_FALSE(tcf_frag_xmit_count);
 EXPORT_SYMBOL_GPL(tcf_frag_xmit_count);
-#endif
+#पूर्ण_अगर
 
-int tcf_dev_queue_xmit(struct sk_buff *skb, int (*xmit)(struct sk_buff *skb))
-{
-#ifdef CONFIG_INET
-	if (static_branch_unlikely(&tcf_frag_xmit_count))
-		return sch_frag_xmit_hook(skb, xmit);
-#endif
+पूर्णांक tcf_dev_queue_xmit(काष्ठा sk_buff *skb, पूर्णांक (*xmit)(काष्ठा sk_buff *skb))
+अणु
+#अगर_घोषित CONFIG_INET
+	अगर (अटल_branch_unlikely(&tcf_frag_xmit_count))
+		वापस sch_frag_xmit_hook(skb, xmit);
+#पूर्ण_अगर
 
-	return xmit(skb);
-}
+	वापस xmit(skb);
+पूर्ण
 EXPORT_SYMBOL_GPL(tcf_dev_queue_xmit);
 
-static void tcf_action_goto_chain_exec(const struct tc_action *a,
-				       struct tcf_result *res)
-{
-	const struct tcf_chain *chain = rcu_dereference_bh(a->goto_chain);
+अटल व्योम tcf_action_जाओ_chain_exec(स्थिर काष्ठा tc_action *a,
+				       काष्ठा tcf_result *res)
+अणु
+	स्थिर काष्ठा tcf_chain *chain = rcu_dereference_bh(a->जाओ_chain);
 
-	res->goto_tp = rcu_dereference_bh(chain->filter_chain);
-}
+	res->जाओ_tp = rcu_dereference_bh(chain->filter_chain);
+पूर्ण
 
-static void tcf_free_cookie_rcu(struct rcu_head *p)
-{
-	struct tc_cookie *cookie = container_of(p, struct tc_cookie, rcu);
+अटल व्योम tcf_मुक्त_cookie_rcu(काष्ठा rcu_head *p)
+अणु
+	काष्ठा tc_cookie *cookie = container_of(p, काष्ठा tc_cookie, rcu);
 
-	kfree(cookie->data);
-	kfree(cookie);
-}
+	kमुक्त(cookie->data);
+	kमुक्त(cookie);
+पूर्ण
 
-static void tcf_set_action_cookie(struct tc_cookie __rcu **old_cookie,
-				  struct tc_cookie *new_cookie)
-{
-	struct tc_cookie *old;
+अटल व्योम tcf_set_action_cookie(काष्ठा tc_cookie __rcu **old_cookie,
+				  काष्ठा tc_cookie *new_cookie)
+अणु
+	काष्ठा tc_cookie *old;
 
-	old = xchg((__force struct tc_cookie **)old_cookie, new_cookie);
-	if (old)
-		call_rcu(&old->rcu, tcf_free_cookie_rcu);
-}
+	old = xchg((__क्रमce काष्ठा tc_cookie **)old_cookie, new_cookie);
+	अगर (old)
+		call_rcu(&old->rcu, tcf_मुक्त_cookie_rcu);
+पूर्ण
 
-int tcf_action_check_ctrlact(int action, struct tcf_proto *tp,
-			     struct tcf_chain **newchain,
-			     struct netlink_ext_ack *extack)
-{
-	int opcode = TC_ACT_EXT_OPCODE(action), ret = -EINVAL;
+पूर्णांक tcf_action_check_ctrlact(पूर्णांक action, काष्ठा tcf_proto *tp,
+			     काष्ठा tcf_chain **newchain,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक opcode = TC_ACT_EXT_OPCODE(action), ret = -EINVAL;
 	u32 chain_index;
 
-	if (!opcode)
+	अगर (!opcode)
 		ret = action > TC_ACT_VALUE_MAX ? -EINVAL : 0;
-	else if (opcode <= TC_ACT_EXT_OPCODE_MAX || action == TC_ACT_UNSPEC)
+	अन्यथा अगर (opcode <= TC_ACT_EXT_OPCODE_MAX || action == TC_ACT_UNSPEC)
 		ret = 0;
-	if (ret) {
+	अगर (ret) अणु
 		NL_SET_ERR_MSG(extack, "invalid control action");
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (TC_ACT_EXT_CMP(action, TC_ACT_GOTO_CHAIN)) {
+	अगर (TC_ACT_EXT_CMP(action, TC_ACT_GOTO_CHAIN)) अणु
 		chain_index = action & TC_ACT_EXT_VAL_MASK;
-		if (!tp || !newchain) {
+		अगर (!tp || !newchain) अणु
 			ret = -EINVAL;
 			NL_SET_ERR_MSG(extack,
 				       "can't goto NULL proto/chain");
-			goto end;
-		}
+			जाओ end;
+		पूर्ण
 		*newchain = tcf_chain_get_by_act(tp->chain->block, chain_index);
-		if (!*newchain) {
+		अगर (!*newchain) अणु
 			ret = -ENOMEM;
 			NL_SET_ERR_MSG(extack,
 				       "can't allocate goto_chain");
-		}
-	}
+		पूर्ण
+	पूर्ण
 end:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(tcf_action_check_ctrlact);
 
-struct tcf_chain *tcf_action_set_ctrlact(struct tc_action *a, int action,
-					 struct tcf_chain *goto_chain)
-{
+काष्ठा tcf_chain *tcf_action_set_ctrlact(काष्ठा tc_action *a, पूर्णांक action,
+					 काष्ठा tcf_chain *जाओ_chain)
+अणु
 	a->tcfa_action = action;
-	goto_chain = rcu_replace_pointer(a->goto_chain, goto_chain, 1);
-	return goto_chain;
-}
+	जाओ_chain = rcu_replace_poपूर्णांकer(a->जाओ_chain, जाओ_chain, 1);
+	वापस जाओ_chain;
+पूर्ण
 EXPORT_SYMBOL(tcf_action_set_ctrlact);
 
-/* XXX: For standalone actions, we don't need a RCU grace period either, because
- * actions are always connected to filters and filters are already destroyed in
- * RCU callbacks, so after a RCU grace period actions are already disconnected
+/* XXX: For standalone actions, we करोn't need a RCU grace period either, because
+ * actions are always connected to filters and filters are alपढ़ोy destroyed in
+ * RCU callbacks, so after a RCU grace period actions are alपढ़ोy disconnected
  * from filters. Readers later can not find us.
  */
-static void free_tcf(struct tc_action *p)
-{
-	struct tcf_chain *chain = rcu_dereference_protected(p->goto_chain, 1);
+अटल व्योम मुक्त_tcf(काष्ठा tc_action *p)
+अणु
+	काष्ठा tcf_chain *chain = rcu_dereference_रक्षित(p->जाओ_chain, 1);
 
-	free_percpu(p->cpu_bstats);
-	free_percpu(p->cpu_bstats_hw);
-	free_percpu(p->cpu_qstats);
+	मुक्त_percpu(p->cpu_bstats);
+	मुक्त_percpu(p->cpu_bstats_hw);
+	मुक्त_percpu(p->cpu_qstats);
 
-	tcf_set_action_cookie(&p->act_cookie, NULL);
-	if (chain)
+	tcf_set_action_cookie(&p->act_cookie, शून्य);
+	अगर (chain)
 		tcf_chain_put_by_act(chain);
 
-	kfree(p);
-}
+	kमुक्त(p);
+पूर्ण
 
-static void tcf_action_cleanup(struct tc_action *p)
-{
-	if (p->ops->cleanup)
+अटल व्योम tcf_action_cleanup(काष्ठा tc_action *p)
+अणु
+	अगर (p->ops->cleanup)
 		p->ops->cleanup(p);
 
-	gen_kill_estimator(&p->tcfa_rate_est);
-	free_tcf(p);
-}
+	gen_समाप्त_estimator(&p->tcfa_rate_est);
+	मुक्त_tcf(p);
+पूर्ण
 
-static int __tcf_action_put(struct tc_action *p, bool bind)
-{
-	struct tcf_idrinfo *idrinfo = p->idrinfo;
+अटल पूर्णांक __tcf_action_put(काष्ठा tc_action *p, bool bind)
+अणु
+	काष्ठा tcf_idrinfo *idrinfo = p->idrinfo;
 
-	if (refcount_dec_and_mutex_lock(&p->tcfa_refcnt, &idrinfo->lock)) {
-		if (bind)
+	अगर (refcount_dec_and_mutex_lock(&p->tcfa_refcnt, &idrinfo->lock)) अणु
+		अगर (bind)
 			atomic_dec(&p->tcfa_bindcnt);
-		idr_remove(&idrinfo->action_idr, p->tcfa_index);
+		idr_हटाओ(&idrinfo->action_idr, p->tcfa_index);
 		mutex_unlock(&idrinfo->lock);
 
 		tcf_action_cleanup(p);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (bind)
+	अगर (bind)
 		atomic_dec(&p->tcfa_bindcnt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __tcf_idr_release(struct tc_action *p, bool bind, bool strict)
-{
-	int ret = 0;
+अटल पूर्णांक __tcf_idr_release(काष्ठा tc_action *p, bool bind, bool strict)
+अणु
+	पूर्णांक ret = 0;
 
 	/* Release with strict==1 and bind==0 is only called through act API
-	 * interface (classifiers always bind). Only case when action with
+	 * पूर्णांकerface (classअगरiers always bind). Only हाल when action with
 	 * positive reference count and zero bind count can exist is when it was
-	 * also created with act API (unbinding last classifier will destroy the
-	 * action if it was created by classifier). So only case when bind count
+	 * also created with act API (unbinding last classअगरier will destroy the
+	 * action अगर it was created by classअगरier). So only हाल when bind count
 	 * can be changed after initial check is when unbound action is
-	 * destroyed by act API while classifier binds to action with same id
+	 * destroyed by act API जबतक classअगरier binds to action with same id
 	 * concurrently. This result either creation of new action(same behavior
-	 * as before), or reusing existing action if concurrent process
-	 * increments reference count before action is deleted. Both scenarios
+	 * as beक्रमe), or reusing existing action अगर concurrent process
+	 * increments reference count beक्रमe action is deleted. Both scenarios
 	 * are acceptable.
 	 */
-	if (p) {
-		if (!bind && strict && atomic_read(&p->tcfa_bindcnt) > 0)
-			return -EPERM;
+	अगर (p) अणु
+		अगर (!bind && strict && atomic_पढ़ो(&p->tcfa_bindcnt) > 0)
+			वापस -EPERM;
 
-		if (__tcf_action_put(p, bind))
+		अगर (__tcf_action_put(p, bind))
 			ret = ACT_P_DELETED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tcf_idr_release(struct tc_action *a, bool bind)
-{
-	const struct tc_action_ops *ops = a->ops;
-	int ret;
+पूर्णांक tcf_idr_release(काष्ठा tc_action *a, bool bind)
+अणु
+	स्थिर काष्ठा tc_action_ops *ops = a->ops;
+	पूर्णांक ret;
 
 	ret = __tcf_idr_release(a, bind, false);
-	if (ret == ACT_P_DELETED)
+	अगर (ret == ACT_P_DELETED)
 		module_put(ops->owner);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(tcf_idr_release);
 
-static size_t tcf_action_shared_attrs_size(const struct tc_action *act)
-{
-	struct tc_cookie *act_cookie;
+अटल माप_प्रकार tcf_action_shared_attrs_size(स्थिर काष्ठा tc_action *act)
+अणु
+	काष्ठा tc_cookie *act_cookie;
 	u32 cookie_len = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	act_cookie = rcu_dereference(act->act_cookie);
 
-	if (act_cookie)
+	अगर (act_cookie)
 		cookie_len = nla_total_size(act_cookie->len);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return  nla_total_size(0) /* action number nested */
+	वापस  nla_total_size(0) /* action number nested */
 		+ nla_total_size(IFNAMSIZ) /* TCA_ACT_KIND */
 		+ cookie_len /* TCA_ACT_COOKIE */
-		+ nla_total_size(sizeof(struct nla_bitfield32)) /* TCA_ACT_HW_STATS */
+		+ nla_total_size(माप(काष्ठा nla_bitfield32)) /* TCA_ACT_HW_STATS */
 		+ nla_total_size(0) /* TCA_ACT_STATS nested */
-		+ nla_total_size(sizeof(struct nla_bitfield32)) /* TCA_ACT_FLAGS */
+		+ nla_total_size(माप(काष्ठा nla_bitfield32)) /* TCA_ACT_FLAGS */
 		/* TCA_STATS_BASIC */
-		+ nla_total_size_64bit(sizeof(struct gnet_stats_basic))
+		+ nla_total_size_64bit(माप(काष्ठा gnet_stats_basic))
 		/* TCA_STATS_PKT64 */
-		+ nla_total_size_64bit(sizeof(u64))
+		+ nla_total_size_64bit(माप(u64))
 		/* TCA_STATS_QUEUE */
-		+ nla_total_size_64bit(sizeof(struct gnet_stats_queue))
+		+ nla_total_size_64bit(माप(काष्ठा gnet_stats_queue))
 		+ nla_total_size(0) /* TCA_OPTIONS nested */
-		+ nla_total_size(sizeof(struct tcf_t)); /* TCA_GACT_TM */
-}
+		+ nla_total_size(माप(काष्ठा tcf_t)); /* TCA_GACT_TM */
+पूर्ण
 
-static size_t tcf_action_full_attrs_size(size_t sz)
-{
-	return NLMSG_HDRLEN                     /* struct nlmsghdr */
-		+ sizeof(struct tcamsg)
+अटल माप_प्रकार tcf_action_full_attrs_size(माप_प्रकार sz)
+अणु
+	वापस NLMSG_HDRLEN                     /* काष्ठा nlmsghdr */
+		+ माप(काष्ठा tcamsg)
 		+ nla_total_size(0)             /* TCA_ACT_TAB nested */
 		+ sz;
-}
+पूर्ण
 
-static size_t tcf_action_fill_size(const struct tc_action *act)
-{
-	size_t sz = tcf_action_shared_attrs_size(act);
+अटल माप_प्रकार tcf_action_fill_size(स्थिर काष्ठा tc_action *act)
+अणु
+	माप_प्रकार sz = tcf_action_shared_attrs_size(act);
 
-	if (act->ops->get_fill_size)
-		return act->ops->get_fill_size(act) + sz;
-	return sz;
-}
+	अगर (act->ops->get_fill_size)
+		वापस act->ops->get_fill_size(act) + sz;
+	वापस sz;
+पूर्ण
 
-static int
-tcf_action_dump_terse(struct sk_buff *skb, struct tc_action *a, bool from_act)
-{
-	unsigned char *b = skb_tail_pointer(skb);
-	struct tc_cookie *cookie;
+अटल पूर्णांक
+tcf_action_dump_terse(काष्ठा sk_buff *skb, काष्ठा tc_action *a, bool from_act)
+अणु
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	काष्ठा tc_cookie *cookie;
 
-	if (nla_put_string(skb, TCA_KIND, a->ops->kind))
-		goto nla_put_failure;
-	if (tcf_action_copy_stats(skb, a, 0))
-		goto nla_put_failure;
-	if (from_act && nla_put_u32(skb, TCA_ACT_INDEX, a->tcfa_index))
-		goto nla_put_failure;
+	अगर (nla_put_string(skb, TCA_KIND, a->ops->kind))
+		जाओ nla_put_failure;
+	अगर (tcf_action_copy_stats(skb, a, 0))
+		जाओ nla_put_failure;
+	अगर (from_act && nla_put_u32(skb, TCA_ACT_INDEX, a->tcfa_index))
+		जाओ nla_put_failure;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	cookie = rcu_dereference(a->act_cookie);
-	if (cookie) {
-		if (nla_put(skb, TCA_ACT_COOKIE, cookie->len, cookie->data)) {
-			rcu_read_unlock();
-			goto nla_put_failure;
-		}
-	}
-	rcu_read_unlock();
+	अगर (cookie) अणु
+		अगर (nla_put(skb, TCA_ACT_COOKIE, cookie->len, cookie->data)) अणु
+			rcu_पढ़ो_unlock();
+			जाओ nla_put_failure;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nlmsg_trim(skb, b);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int tcf_dump_walker(struct tcf_idrinfo *idrinfo, struct sk_buff *skb,
-			   struct netlink_callback *cb)
-{
-	int err = 0, index = -1, s_i = 0, n_i = 0;
+अटल पूर्णांक tcf_dump_walker(काष्ठा tcf_idrinfo *idrinfo, काष्ठा sk_buff *skb,
+			   काष्ठा netlink_callback *cb)
+अणु
+	पूर्णांक err = 0, index = -1, s_i = 0, n_i = 0;
 	u32 act_flags = cb->args[2];
-	unsigned long jiffy_since = cb->args[3];
-	struct nlattr *nest;
-	struct idr *idr = &idrinfo->action_idr;
-	struct tc_action *p;
-	unsigned long id = 1;
-	unsigned long tmp;
+	अचिन्हित दीर्घ jअगरfy_since = cb->args[3];
+	काष्ठा nlattr *nest;
+	काष्ठा idr *idr = &idrinfo->action_idr;
+	काष्ठा tc_action *p;
+	अचिन्हित दीर्घ id = 1;
+	अचिन्हित दीर्घ पंचांगp;
 
 	mutex_lock(&idrinfo->lock);
 
 	s_i = cb->args[0];
 
-	idr_for_each_entry_ul(idr, p, tmp, id) {
+	idr_क्रम_each_entry_ul(idr, p, पंचांगp, id) अणु
 		index++;
-		if (index < s_i)
-			continue;
-		if (IS_ERR(p))
-			continue;
+		अगर (index < s_i)
+			जारी;
+		अगर (IS_ERR(p))
+			जारी;
 
-		if (jiffy_since &&
-		    time_after(jiffy_since,
-			       (unsigned long)p->tcfa_tm.lastuse))
-			continue;
+		अगर (jअगरfy_since &&
+		    समय_after(jअगरfy_since,
+			       (अचिन्हित दीर्घ)p->tcfa_पंचांग.lastuse))
+			जारी;
 
 		nest = nla_nest_start_noflag(skb, n_i);
-		if (!nest) {
+		अगर (!nest) अणु
 			index--;
-			goto nla_put_failure;
-		}
+			जाओ nla_put_failure;
+		पूर्ण
 		err = (act_flags & TCA_ACT_FLAG_TERSE_DUMP) ?
 			tcf_action_dump_terse(skb, p, true) :
 			tcf_action_dump_1(skb, p, 0, 0);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			index--;
 			nlmsg_trim(skb, nest);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		nla_nest_end(skb, nest);
 		n_i++;
-		if (!(act_flags & TCA_ACT_FLAG_LARGE_DUMP_ON) &&
+		अगर (!(act_flags & TCA_ACT_FLAG_LARGE_DUMP_ON) &&
 		    n_i >= TCA_ACT_MAX_PRIO)
-			goto done;
-	}
-done:
-	if (index >= 0)
+			जाओ करोne;
+	पूर्ण
+करोne:
+	अगर (index >= 0)
 		cb->args[0] = index + 1;
 
 	mutex_unlock(&idrinfo->lock);
-	if (n_i) {
-		if (act_flags & TCA_ACT_FLAG_LARGE_DUMP_ON)
+	अगर (n_i) अणु
+		अगर (act_flags & TCA_ACT_FLAG_LARGE_DUMP_ON)
 			cb->args[1] = n_i;
-	}
-	return n_i;
+	पूर्ण
+	वापस n_i;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	goto done;
-}
+	जाओ करोne;
+पूर्ण
 
-static int tcf_idr_release_unsafe(struct tc_action *p)
-{
-	if (atomic_read(&p->tcfa_bindcnt) > 0)
-		return -EPERM;
+अटल पूर्णांक tcf_idr_release_unsafe(काष्ठा tc_action *p)
+अणु
+	अगर (atomic_पढ़ो(&p->tcfa_bindcnt) > 0)
+		वापस -EPERM;
 
-	if (refcount_dec_and_test(&p->tcfa_refcnt)) {
-		idr_remove(&p->idrinfo->action_idr, p->tcfa_index);
+	अगर (refcount_dec_and_test(&p->tcfa_refcnt)) अणु
+		idr_हटाओ(&p->idrinfo->action_idr, p->tcfa_index);
 		tcf_action_cleanup(p);
-		return ACT_P_DELETED;
-	}
+		वापस ACT_P_DELETED;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcf_del_walker(struct tcf_idrinfo *idrinfo, struct sk_buff *skb,
-			  const struct tc_action_ops *ops)
-{
-	struct nlattr *nest;
-	int n_i = 0;
-	int ret = -EINVAL;
-	struct idr *idr = &idrinfo->action_idr;
-	struct tc_action *p;
-	unsigned long id = 1;
-	unsigned long tmp;
+अटल पूर्णांक tcf_del_walker(काष्ठा tcf_idrinfo *idrinfo, काष्ठा sk_buff *skb,
+			  स्थिर काष्ठा tc_action_ops *ops)
+अणु
+	काष्ठा nlattr *nest;
+	पूर्णांक n_i = 0;
+	पूर्णांक ret = -EINVAL;
+	काष्ठा idr *idr = &idrinfo->action_idr;
+	काष्ठा tc_action *p;
+	अचिन्हित दीर्घ id = 1;
+	अचिन्हित दीर्घ पंचांगp;
 
 	nest = nla_nest_start_noflag(skb, 0);
-	if (nest == NULL)
-		goto nla_put_failure;
-	if (nla_put_string(skb, TCA_KIND, ops->kind))
-		goto nla_put_failure;
+	अगर (nest == शून्य)
+		जाओ nla_put_failure;
+	अगर (nla_put_string(skb, TCA_KIND, ops->kind))
+		जाओ nla_put_failure;
 
 	mutex_lock(&idrinfo->lock);
-	idr_for_each_entry_ul(idr, p, tmp, id) {
-		if (IS_ERR(p))
-			continue;
+	idr_क्रम_each_entry_ul(idr, p, पंचांगp, id) अणु
+		अगर (IS_ERR(p))
+			जारी;
 		ret = tcf_idr_release_unsafe(p);
-		if (ret == ACT_P_DELETED) {
+		अगर (ret == ACT_P_DELETED) अणु
 			module_put(ops->owner);
 			n_i++;
-		} else if (ret < 0) {
+		पूर्ण अन्यथा अगर (ret < 0) अणु
 			mutex_unlock(&idrinfo->lock);
-			goto nla_put_failure;
-		}
-	}
+			जाओ nla_put_failure;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&idrinfo->lock);
 
-	if (nla_put_u32(skb, TCA_FCNT, n_i))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, TCA_FCNT, n_i))
+		जाओ nla_put_failure;
 	nla_nest_end(skb, nest);
 
-	return n_i;
+	वापस n_i;
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tcf_generic_walker(struct tc_action_net *tn, struct sk_buff *skb,
-		       struct netlink_callback *cb, int type,
-		       const struct tc_action_ops *ops,
-		       struct netlink_ext_ack *extack)
-{
-	struct tcf_idrinfo *idrinfo = tn->idrinfo;
+पूर्णांक tcf_generic_walker(काष्ठा tc_action_net *tn, काष्ठा sk_buff *skb,
+		       काष्ठा netlink_callback *cb, पूर्णांक type,
+		       स्थिर काष्ठा tc_action_ops *ops,
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tcf_idrinfo *idrinfo = tn->idrinfo;
 
-	if (type == RTM_DELACTION) {
-		return tcf_del_walker(idrinfo, skb, ops);
-	} else if (type == RTM_GETACTION) {
-		return tcf_dump_walker(idrinfo, skb, cb);
-	} else {
+	अगर (type == RTM_DELACTION) अणु
+		वापस tcf_del_walker(idrinfo, skb, ops);
+	पूर्ण अन्यथा अगर (type == RTM_GETACTION) अणु
+		वापस tcf_dump_walker(idrinfo, skb, cb);
+	पूर्ण अन्यथा अणु
 		WARN(1, "tcf_generic_walker: unknown command %d\n", type);
 		NL_SET_ERR_MSG(extack, "tcf_generic_walker: unknown command");
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(tcf_generic_walker);
 
-int tcf_idr_search(struct tc_action_net *tn, struct tc_action **a, u32 index)
-{
-	struct tcf_idrinfo *idrinfo = tn->idrinfo;
-	struct tc_action *p;
+पूर्णांक tcf_idr_search(काष्ठा tc_action_net *tn, काष्ठा tc_action **a, u32 index)
+अणु
+	काष्ठा tcf_idrinfo *idrinfo = tn->idrinfo;
+	काष्ठा tc_action *p;
 
 	mutex_lock(&idrinfo->lock);
 	p = idr_find(&idrinfo->action_idr, index);
-	if (IS_ERR(p))
-		p = NULL;
-	else if (p)
+	अगर (IS_ERR(p))
+		p = शून्य;
+	अन्यथा अगर (p)
 		refcount_inc(&p->tcfa_refcnt);
 	mutex_unlock(&idrinfo->lock);
 
-	if (p) {
+	अगर (p) अणु
 		*a = p;
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL(tcf_idr_search);
 
-static int tcf_idr_delete_index(struct tcf_idrinfo *idrinfo, u32 index)
-{
-	struct tc_action *p;
-	int ret = 0;
+अटल पूर्णांक tcf_idr_delete_index(काष्ठा tcf_idrinfo *idrinfo, u32 index)
+अणु
+	काष्ठा tc_action *p;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&idrinfo->lock);
 	p = idr_find(&idrinfo->action_idr, index);
-	if (!p) {
+	अगर (!p) अणु
 		mutex_unlock(&idrinfo->lock);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	if (!atomic_read(&p->tcfa_bindcnt)) {
-		if (refcount_dec_and_test(&p->tcfa_refcnt)) {
-			struct module *owner = p->ops->owner;
+	अगर (!atomic_पढ़ो(&p->tcfa_bindcnt)) अणु
+		अगर (refcount_dec_and_test(&p->tcfa_refcnt)) अणु
+			काष्ठा module *owner = p->ops->owner;
 
-			WARN_ON(p != idr_remove(&idrinfo->action_idr,
+			WARN_ON(p != idr_हटाओ(&idrinfo->action_idr,
 						p->tcfa_index));
 			mutex_unlock(&idrinfo->lock);
 
 			tcf_action_cleanup(p);
 			module_put(owner);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		ret = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EPERM;
-	}
+	पूर्ण
 
 	mutex_unlock(&idrinfo->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tcf_idr_create(struct tc_action_net *tn, u32 index, struct nlattr *est,
-		   struct tc_action **a, const struct tc_action_ops *ops,
-		   int bind, bool cpustats, u32 flags)
-{
-	struct tc_action *p = kzalloc(ops->size, GFP_KERNEL);
-	struct tcf_idrinfo *idrinfo = tn->idrinfo;
-	int err = -ENOMEM;
+पूर्णांक tcf_idr_create(काष्ठा tc_action_net *tn, u32 index, काष्ठा nlattr *est,
+		   काष्ठा tc_action **a, स्थिर काष्ठा tc_action_ops *ops,
+		   पूर्णांक bind, bool cpustats, u32 flags)
+अणु
+	काष्ठा tc_action *p = kzalloc(ops->size, GFP_KERNEL);
+	काष्ठा tcf_idrinfo *idrinfo = tn->idrinfo;
+	पूर्णांक err = -ENOMEM;
 
-	if (unlikely(!p))
-		return -ENOMEM;
+	अगर (unlikely(!p))
+		वापस -ENOMEM;
 	refcount_set(&p->tcfa_refcnt, 1);
-	if (bind)
+	अगर (bind)
 		atomic_set(&p->tcfa_bindcnt, 1);
 
-	if (cpustats) {
-		p->cpu_bstats = netdev_alloc_pcpu_stats(struct gnet_stats_basic_cpu);
-		if (!p->cpu_bstats)
-			goto err1;
-		p->cpu_bstats_hw = netdev_alloc_pcpu_stats(struct gnet_stats_basic_cpu);
-		if (!p->cpu_bstats_hw)
-			goto err2;
-		p->cpu_qstats = alloc_percpu(struct gnet_stats_queue);
-		if (!p->cpu_qstats)
-			goto err3;
-	}
+	अगर (cpustats) अणु
+		p->cpu_bstats = netdev_alloc_pcpu_stats(काष्ठा gnet_stats_basic_cpu);
+		अगर (!p->cpu_bstats)
+			जाओ err1;
+		p->cpu_bstats_hw = netdev_alloc_pcpu_stats(काष्ठा gnet_stats_basic_cpu);
+		अगर (!p->cpu_bstats_hw)
+			जाओ err2;
+		p->cpu_qstats = alloc_percpu(काष्ठा gnet_stats_queue);
+		अगर (!p->cpu_qstats)
+			जाओ err3;
+	पूर्ण
 	spin_lock_init(&p->tcfa_lock);
 	p->tcfa_index = index;
-	p->tcfa_tm.install = jiffies;
-	p->tcfa_tm.lastuse = jiffies;
-	p->tcfa_tm.firstuse = 0;
+	p->tcfa_पंचांग.install = jअगरfies;
+	p->tcfa_पंचांग.lastuse = jअगरfies;
+	p->tcfa_पंचांग.firstuse = 0;
 	p->tcfa_flags = flags;
-	if (est) {
+	अगर (est) अणु
 		err = gen_new_estimator(&p->tcfa_bstats, p->cpu_bstats,
 					&p->tcfa_rate_est,
-					&p->tcfa_lock, NULL, est);
-		if (err)
-			goto err4;
-	}
+					&p->tcfa_lock, शून्य, est);
+		अगर (err)
+			जाओ err4;
+	पूर्ण
 
 	p->idrinfo = idrinfo;
 	__module_get(ops->owner);
 	p->ops = ops;
 	*a = p;
-	return 0;
+	वापस 0;
 err4:
-	free_percpu(p->cpu_qstats);
+	मुक्त_percpu(p->cpu_qstats);
 err3:
-	free_percpu(p->cpu_bstats_hw);
+	मुक्त_percpu(p->cpu_bstats_hw);
 err2:
-	free_percpu(p->cpu_bstats);
+	मुक्त_percpu(p->cpu_bstats);
 err1:
-	kfree(p);
-	return err;
-}
+	kमुक्त(p);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(tcf_idr_create);
 
-int tcf_idr_create_from_flags(struct tc_action_net *tn, u32 index,
-			      struct nlattr *est, struct tc_action **a,
-			      const struct tc_action_ops *ops, int bind,
+पूर्णांक tcf_idr_create_from_flags(काष्ठा tc_action_net *tn, u32 index,
+			      काष्ठा nlattr *est, काष्ठा tc_action **a,
+			      स्थिर काष्ठा tc_action_ops *ops, पूर्णांक bind,
 			      u32 flags)
-{
+अणु
 	/* Set cpustats according to actions flags. */
-	return tcf_idr_create(tn, index, est, a, ops, bind,
+	वापस tcf_idr_create(tn, index, est, a, ops, bind,
 			      !(flags & TCA_ACT_FLAGS_NO_PERCPU_STATS), flags);
-}
+पूर्ण
 EXPORT_SYMBOL(tcf_idr_create_from_flags);
 
 /* Cleanup idr index that was allocated but not initialized. */
 
-void tcf_idr_cleanup(struct tc_action_net *tn, u32 index)
-{
-	struct tcf_idrinfo *idrinfo = tn->idrinfo;
+व्योम tcf_idr_cleanup(काष्ठा tc_action_net *tn, u32 index)
+अणु
+	काष्ठा tcf_idrinfo *idrinfo = tn->idrinfo;
 
 	mutex_lock(&idrinfo->lock);
 	/* Remove ERR_PTR(-EBUSY) allocated by tcf_idr_check_alloc */
-	WARN_ON(!IS_ERR(idr_remove(&idrinfo->action_idr, index)));
+	WARN_ON(!IS_ERR(idr_हटाओ(&idrinfo->action_idr, index)));
 	mutex_unlock(&idrinfo->lock);
-}
+पूर्ण
 EXPORT_SYMBOL(tcf_idr_cleanup);
 
-/* Check if action with specified index exists. If actions is found, increments
- * its reference and bind counters, and return 1. Otherwise insert temporary
- * error pointer (to prevent concurrent users from inserting actions with same
- * index) and return 0.
+/* Check अगर action with specअगरied index exists. If actions is found, increments
+ * its reference and bind counters, and वापस 1. Otherwise insert temporary
+ * error poपूर्णांकer (to prevent concurrent users from inserting actions with same
+ * index) and वापस 0.
  */
 
-int tcf_idr_check_alloc(struct tc_action_net *tn, u32 *index,
-			struct tc_action **a, int bind)
-{
-	struct tcf_idrinfo *idrinfo = tn->idrinfo;
-	struct tc_action *p;
-	int ret;
+पूर्णांक tcf_idr_check_alloc(काष्ठा tc_action_net *tn, u32 *index,
+			काष्ठा tc_action **a, पूर्णांक bind)
+अणु
+	काष्ठा tcf_idrinfo *idrinfo = tn->idrinfo;
+	काष्ठा tc_action *p;
+	पूर्णांक ret;
 
 again:
 	mutex_lock(&idrinfo->lock);
-	if (*index) {
+	अगर (*index) अणु
 		p = idr_find(&idrinfo->action_idr, *index);
-		if (IS_ERR(p)) {
+		अगर (IS_ERR(p)) अणु
 			/* This means that another process allocated
-			 * index but did not assign the pointer yet.
+			 * index but did not assign the poपूर्णांकer yet.
 			 */
 			mutex_unlock(&idrinfo->lock);
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 
-		if (p) {
+		अगर (p) अणु
 			refcount_inc(&p->tcfa_refcnt);
-			if (bind)
+			अगर (bind)
 				atomic_inc(&p->tcfa_bindcnt);
 			*a = p;
 			ret = 1;
-		} else {
-			*a = NULL;
-			ret = idr_alloc_u32(&idrinfo->action_idr, NULL, index,
+		पूर्ण अन्यथा अणु
+			*a = शून्य;
+			ret = idr_alloc_u32(&idrinfo->action_idr, शून्य, index,
 					    *index, GFP_KERNEL);
-			if (!ret)
+			अगर (!ret)
 				idr_replace(&idrinfo->action_idr,
 					    ERR_PTR(-EBUSY), *index);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		*index = 1;
-		*a = NULL;
-		ret = idr_alloc_u32(&idrinfo->action_idr, NULL, index,
-				    UINT_MAX, GFP_KERNEL);
-		if (!ret)
+		*a = शून्य;
+		ret = idr_alloc_u32(&idrinfo->action_idr, शून्य, index,
+				    अच_पूर्णांक_उच्च, GFP_KERNEL);
+		अगर (!ret)
 			idr_replace(&idrinfo->action_idr, ERR_PTR(-EBUSY),
 				    *index);
-	}
+	पूर्ण
 	mutex_unlock(&idrinfo->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(tcf_idr_check_alloc);
 
-void tcf_idrinfo_destroy(const struct tc_action_ops *ops,
-			 struct tcf_idrinfo *idrinfo)
-{
-	struct idr *idr = &idrinfo->action_idr;
-	struct tc_action *p;
-	int ret;
-	unsigned long id = 1;
-	unsigned long tmp;
+व्योम tcf_idrinfo_destroy(स्थिर काष्ठा tc_action_ops *ops,
+			 काष्ठा tcf_idrinfo *idrinfo)
+अणु
+	काष्ठा idr *idr = &idrinfo->action_idr;
+	काष्ठा tc_action *p;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ id = 1;
+	अचिन्हित दीर्घ पंचांगp;
 
-	idr_for_each_entry_ul(idr, p, tmp, id) {
+	idr_क्रम_each_entry_ul(idr, p, पंचांगp, id) अणु
 		ret = __tcf_idr_release(p, false, true);
-		if (ret == ACT_P_DELETED)
+		अगर (ret == ACT_P_DELETED)
 			module_put(ops->owner);
-		else if (ret < 0)
-			return;
-	}
+		अन्यथा अगर (ret < 0)
+			वापस;
+	पूर्ण
 	idr_destroy(&idrinfo->action_idr);
-}
+पूर्ण
 EXPORT_SYMBOL(tcf_idrinfo_destroy);
 
-static LIST_HEAD(act_base);
-static DEFINE_RWLOCK(act_mod_lock);
+अटल LIST_HEAD(act_base);
+अटल DEFINE_RWLOCK(act_mod_lock);
 
-int tcf_register_action(struct tc_action_ops *act,
-			struct pernet_operations *ops)
-{
-	struct tc_action_ops *a;
-	int ret;
+पूर्णांक tcf_रेजिस्टर_action(काष्ठा tc_action_ops *act,
+			काष्ठा pernet_operations *ops)
+अणु
+	काष्ठा tc_action_ops *a;
+	पूर्णांक ret;
 
-	if (!act->act || !act->dump || !act->init || !act->walk || !act->lookup)
-		return -EINVAL;
+	अगर (!act->act || !act->dump || !act->init || !act->walk || !act->lookup)
+		वापस -EINVAL;
 
-	/* We have to register pernet ops before making the action ops visible,
+	/* We have to रेजिस्टर pernet ops beक्रमe making the action ops visible,
 	 * otherwise tcf_action_init_1() could get a partially initialized
 	 * netns.
 	 */
-	ret = register_pernet_subsys(ops);
-	if (ret)
-		return ret;
+	ret = रेजिस्टर_pernet_subsys(ops);
+	अगर (ret)
+		वापस ret;
 
-	write_lock(&act_mod_lock);
-	list_for_each_entry(a, &act_base, head) {
-		if (act->id == a->id || (strcmp(act->kind, a->kind) == 0)) {
-			write_unlock(&act_mod_lock);
-			unregister_pernet_subsys(ops);
-			return -EEXIST;
-		}
-	}
+	ग_लिखो_lock(&act_mod_lock);
+	list_क्रम_each_entry(a, &act_base, head) अणु
+		अगर (act->id == a->id || (म_भेद(act->kind, a->kind) == 0)) अणु
+			ग_लिखो_unlock(&act_mod_lock);
+			unरेजिस्टर_pernet_subsys(ops);
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
 	list_add_tail(&act->head, &act_base);
-	write_unlock(&act_mod_lock);
+	ग_लिखो_unlock(&act_mod_lock);
 
-	return 0;
-}
-EXPORT_SYMBOL(tcf_register_action);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(tcf_रेजिस्टर_action);
 
-int tcf_unregister_action(struct tc_action_ops *act,
-			  struct pernet_operations *ops)
-{
-	struct tc_action_ops *a;
-	int err = -ENOENT;
+पूर्णांक tcf_unरेजिस्टर_action(काष्ठा tc_action_ops *act,
+			  काष्ठा pernet_operations *ops)
+अणु
+	काष्ठा tc_action_ops *a;
+	पूर्णांक err = -ENOENT;
 
-	write_lock(&act_mod_lock);
-	list_for_each_entry(a, &act_base, head) {
-		if (a == act) {
+	ग_लिखो_lock(&act_mod_lock);
+	list_क्रम_each_entry(a, &act_base, head) अणु
+		अगर (a == act) अणु
 			list_del(&act->head);
 			err = 0;
-			break;
-		}
-	}
-	write_unlock(&act_mod_lock);
-	if (!err)
-		unregister_pernet_subsys(ops);
-	return err;
-}
-EXPORT_SYMBOL(tcf_unregister_action);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock(&act_mod_lock);
+	अगर (!err)
+		unरेजिस्टर_pernet_subsys(ops);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(tcf_unरेजिस्टर_action);
 
 /* lookup by name */
-static struct tc_action_ops *tc_lookup_action_n(char *kind)
-{
-	struct tc_action_ops *a, *res = NULL;
+अटल काष्ठा tc_action_ops *tc_lookup_action_n(अक्षर *kind)
+अणु
+	काष्ठा tc_action_ops *a, *res = शून्य;
 
-	if (kind) {
-		read_lock(&act_mod_lock);
-		list_for_each_entry(a, &act_base, head) {
-			if (strcmp(kind, a->kind) == 0) {
-				if (try_module_get(a->owner))
+	अगर (kind) अणु
+		पढ़ो_lock(&act_mod_lock);
+		list_क्रम_each_entry(a, &act_base, head) अणु
+			अगर (म_भेद(kind, a->kind) == 0) अणु
+				अगर (try_module_get(a->owner))
 					res = a;
-				break;
-			}
-		}
-		read_unlock(&act_mod_lock);
-	}
-	return res;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		पढ़ो_unlock(&act_mod_lock);
+	पूर्ण
+	वापस res;
+पूर्ण
 
 /* lookup by nlattr */
-static struct tc_action_ops *tc_lookup_action(struct nlattr *kind)
-{
-	struct tc_action_ops *a, *res = NULL;
+अटल काष्ठा tc_action_ops *tc_lookup_action(काष्ठा nlattr *kind)
+अणु
+	काष्ठा tc_action_ops *a, *res = शून्य;
 
-	if (kind) {
-		read_lock(&act_mod_lock);
-		list_for_each_entry(a, &act_base, head) {
-			if (nla_strcmp(kind, a->kind) == 0) {
-				if (try_module_get(a->owner))
+	अगर (kind) अणु
+		पढ़ो_lock(&act_mod_lock);
+		list_क्रम_each_entry(a, &act_base, head) अणु
+			अगर (nla_म_भेद(kind, a->kind) == 0) अणु
+				अगर (try_module_get(a->owner))
 					res = a;
-				break;
-			}
-		}
-		read_unlock(&act_mod_lock);
-	}
-	return res;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		पढ़ो_unlock(&act_mod_lock);
+	पूर्ण
+	वापस res;
+पूर्ण
 
 /*TCA_ACT_MAX_PRIO is 32, there count up to 32 */
-#define TCA_ACT_MAX_PRIO_MASK 0x1FF
-int tcf_action_exec(struct sk_buff *skb, struct tc_action **actions,
-		    int nr_actions, struct tcf_result *res)
-{
+#घोषणा TCA_ACT_MAX_PRIO_MASK 0x1FF
+पूर्णांक tcf_action_exec(काष्ठा sk_buff *skb, काष्ठा tc_action **actions,
+		    पूर्णांक nr_actions, काष्ठा tcf_result *res)
+अणु
 	u32 jmp_prgcnt = 0;
 	u32 jmp_ttl = TCA_ACT_MAX_PRIO; /*matches actions per filter */
-	int i;
-	int ret = TC_ACT_OK;
+	पूर्णांक i;
+	पूर्णांक ret = TC_ACT_OK;
 
-	if (skb_skip_tc_classify(skb))
-		return TC_ACT_OK;
+	अगर (skb_skip_tc_classअगरy(skb))
+		वापस TC_ACT_OK;
 
 restart_act_graph:
-	for (i = 0; i < nr_actions; i++) {
-		const struct tc_action *a = actions[i];
+	क्रम (i = 0; i < nr_actions; i++) अणु
+		स्थिर काष्ठा tc_action *a = actions[i];
 
-		if (jmp_prgcnt > 0) {
+		अगर (jmp_prgcnt > 0) अणु
 			jmp_prgcnt -= 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 repeat:
 		ret = a->ops->act(skb, a, res);
-		if (ret == TC_ACT_REPEAT)
-			goto repeat;	/* we need a ttl - JHS */
+		अगर (ret == TC_ACT_REPEAT)
+			जाओ repeat;	/* we need a ttl - JHS */
 
-		if (TC_ACT_EXT_CMP(ret, TC_ACT_JUMP)) {
+		अगर (TC_ACT_EXT_CMP(ret, TC_ACT_JUMP)) अणु
 			jmp_prgcnt = ret & TCA_ACT_MAX_PRIO_MASK;
-			if (!jmp_prgcnt || (jmp_prgcnt > nr_actions)) {
+			अगर (!jmp_prgcnt || (jmp_prgcnt > nr_actions)) अणु
 				/* faulty opcode, stop pipeline */
-				return TC_ACT_OK;
-			} else {
+				वापस TC_ACT_OK;
+			पूर्ण अन्यथा अणु
 				jmp_ttl -= 1;
-				if (jmp_ttl > 0)
-					goto restart_act_graph;
-				else /* faulty graph, stop pipeline */
-					return TC_ACT_OK;
-			}
-		} else if (TC_ACT_EXT_CMP(ret, TC_ACT_GOTO_CHAIN)) {
-			if (unlikely(!rcu_access_pointer(a->goto_chain))) {
+				अगर (jmp_ttl > 0)
+					जाओ restart_act_graph;
+				अन्यथा /* faulty graph, stop pipeline */
+					वापस TC_ACT_OK;
+			पूर्ण
+		पूर्ण अन्यथा अगर (TC_ACT_EXT_CMP(ret, TC_ACT_GOTO_CHAIN)) अणु
+			अगर (unlikely(!rcu_access_poपूर्णांकer(a->जाओ_chain))) अणु
 				net_warn_ratelimited("can't go to NULL chain!\n");
-				return TC_ACT_SHOT;
-			}
-			tcf_action_goto_chain_exec(a, res);
-		}
+				वापस TC_ACT_SHOT;
+			पूर्ण
+			tcf_action_जाओ_chain_exec(a, res);
+		पूर्ण
 
-		if (ret != TC_ACT_PIPE)
-			break;
-	}
+		अगर (ret != TC_ACT_PIPE)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(tcf_action_exec);
 
-int tcf_action_destroy(struct tc_action *actions[], int bind)
-{
-	const struct tc_action_ops *ops;
-	struct tc_action *a;
-	int ret = 0, i;
+पूर्णांक tcf_action_destroy(काष्ठा tc_action *actions[], पूर्णांक bind)
+अणु
+	स्थिर काष्ठा tc_action_ops *ops;
+	काष्ठा tc_action *a;
+	पूर्णांक ret = 0, i;
 
-	for (i = 0; i < TCA_ACT_MAX_PRIO && actions[i]; i++) {
+	क्रम (i = 0; i < TCA_ACT_MAX_PRIO && actions[i]; i++) अणु
 		a = actions[i];
-		actions[i] = NULL;
+		actions[i] = शून्य;
 		ops = a->ops;
 		ret = __tcf_idr_release(a, bind, true);
-		if (ret == ACT_P_DELETED)
+		अगर (ret == ACT_P_DELETED)
 			module_put(ops->owner);
-		else if (ret < 0)
-			return ret;
-	}
-	return ret;
-}
+		अन्यथा अगर (ret < 0)
+			वापस ret;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int tcf_action_put(struct tc_action *p)
-{
-	return __tcf_action_put(p, false);
-}
+अटल पूर्णांक tcf_action_put(काष्ठा tc_action *p)
+अणु
+	वापस __tcf_action_put(p, false);
+पूर्ण
 
-/* Put all actions in this array, skip those NULL's. */
-static void tcf_action_put_many(struct tc_action *actions[])
-{
-	int i;
+/* Put all actions in this array, skip those शून्य's. */
+अटल व्योम tcf_action_put_many(काष्ठा tc_action *actions[])
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < TCA_ACT_MAX_PRIO; i++) {
-		struct tc_action *a = actions[i];
-		const struct tc_action_ops *ops;
+	क्रम (i = 0; i < TCA_ACT_MAX_PRIO; i++) अणु
+		काष्ठा tc_action *a = actions[i];
+		स्थिर काष्ठा tc_action_ops *ops;
 
-		if (!a)
-			continue;
+		अगर (!a)
+			जारी;
 		ops = a->ops;
-		if (tcf_action_put(a))
+		अगर (tcf_action_put(a))
 			module_put(ops->owner);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int
-tcf_action_dump_old(struct sk_buff *skb, struct tc_action *a, int bind, int ref)
-{
-	return a->ops->dump(skb, a, bind, ref);
-}
+पूर्णांक
+tcf_action_dump_old(काष्ठा sk_buff *skb, काष्ठा tc_action *a, पूर्णांक bind, पूर्णांक ref)
+अणु
+	वापस a->ops->dump(skb, a, bind, ref);
+पूर्ण
 
-int
-tcf_action_dump_1(struct sk_buff *skb, struct tc_action *a, int bind, int ref)
-{
-	int err = -EINVAL;
-	unsigned char *b = skb_tail_pointer(skb);
-	struct nlattr *nest;
+पूर्णांक
+tcf_action_dump_1(काष्ठा sk_buff *skb, काष्ठा tc_action *a, पूर्णांक bind, पूर्णांक ref)
+अणु
+	पूर्णांक err = -EINVAL;
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	काष्ठा nlattr *nest;
 
-	if (tcf_action_dump_terse(skb, a, false))
-		goto nla_put_failure;
+	अगर (tcf_action_dump_terse(skb, a, false))
+		जाओ nla_put_failure;
 
-	if (a->hw_stats != TCA_ACT_HW_STATS_ANY &&
+	अगर (a->hw_stats != TCA_ACT_HW_STATS_ANY &&
 	    nla_put_bitfield32(skb, TCA_ACT_HW_STATS,
 			       a->hw_stats, TCA_ACT_HW_STATS_ANY))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (a->used_hw_stats_valid &&
+	अगर (a->used_hw_stats_valid &&
 	    nla_put_bitfield32(skb, TCA_ACT_USED_HW_STATS,
 			       a->used_hw_stats, TCA_ACT_HW_STATS_ANY))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (a->tcfa_flags &&
+	अगर (a->tcfa_flags &&
 	    nla_put_bitfield32(skb, TCA_ACT_FLAGS,
 			       a->tcfa_flags, a->tcfa_flags))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (nest == NULL)
-		goto nla_put_failure;
+	अगर (nest == शून्य)
+		जाओ nla_put_failure;
 	err = tcf_action_dump_old(skb, a, bind, ref);
-	if (err > 0) {
+	अगर (err > 0) अणु
 		nla_nest_end(skb, nest);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 nla_put_failure:
 	nlmsg_trim(skb, b);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL(tcf_action_dump_1);
 
-int tcf_action_dump(struct sk_buff *skb, struct tc_action *actions[],
-		    int bind, int ref, bool terse)
-{
-	struct tc_action *a;
-	int err = -EINVAL, i;
-	struct nlattr *nest;
+पूर्णांक tcf_action_dump(काष्ठा sk_buff *skb, काष्ठा tc_action *actions[],
+		    पूर्णांक bind, पूर्णांक ref, bool terse)
+अणु
+	काष्ठा tc_action *a;
+	पूर्णांक err = -EINVAL, i;
+	काष्ठा nlattr *nest;
 
-	for (i = 0; i < TCA_ACT_MAX_PRIO && actions[i]; i++) {
+	क्रम (i = 0; i < TCA_ACT_MAX_PRIO && actions[i]; i++) अणु
 		a = actions[i];
 		nest = nla_nest_start_noflag(skb, i + 1);
-		if (nest == NULL)
-			goto nla_put_failure;
+		अगर (nest == शून्य)
+			जाओ nla_put_failure;
 		err = terse ? tcf_action_dump_terse(skb, a, false) :
 			tcf_action_dump_1(skb, a, bind, ref);
-		if (err < 0)
-			goto errout;
+		अगर (err < 0)
+			जाओ errout;
 		nla_nest_end(skb, nest);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	err = -EINVAL;
 errout:
 	nla_nest_cancel(skb, nest);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct tc_cookie *nla_memdup_cookie(struct nlattr **tb)
-{
-	struct tc_cookie *c = kzalloc(sizeof(*c), GFP_KERNEL);
-	if (!c)
-		return NULL;
+अटल काष्ठा tc_cookie *nla_memdup_cookie(काष्ठा nlattr **tb)
+अणु
+	काष्ठा tc_cookie *c = kzalloc(माप(*c), GFP_KERNEL);
+	अगर (!c)
+		वापस शून्य;
 
 	c->data = nla_memdup(tb[TCA_ACT_COOKIE], GFP_KERNEL);
-	if (!c->data) {
-		kfree(c);
-		return NULL;
-	}
+	अगर (!c->data) अणु
+		kमुक्त(c);
+		वापस शून्य;
+	पूर्ण
 	c->len = nla_len(tb[TCA_ACT_COOKIE]);
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static u8 tcf_action_hw_stats_get(struct nlattr *hw_stats_attr)
-{
-	struct nla_bitfield32 hw_stats_bf;
+अटल u8 tcf_action_hw_stats_get(काष्ठा nlattr *hw_stats_attr)
+अणु
+	काष्ठा nla_bitfield32 hw_stats_bf;
 
-	/* If the user did not pass the attr, that means he does
-	 * not care about the type. Return "any" in that case
+	/* If the user did not pass the attr, that means he करोes
+	 * not care about the type. Return "any" in that हाल
 	 * which is setting on all supported types.
 	 */
-	if (!hw_stats_attr)
-		return TCA_ACT_HW_STATS_ANY;
+	अगर (!hw_stats_attr)
+		वापस TCA_ACT_HW_STATS_ANY;
 	hw_stats_bf = nla_get_bitfield32(hw_stats_attr);
-	return hw_stats_bf.value;
-}
+	वापस hw_stats_bf.value;
+पूर्ण
 
-static const struct nla_policy tcf_action_policy[TCA_ACT_MAX + 1] = {
-	[TCA_ACT_KIND]		= { .type = NLA_STRING },
-	[TCA_ACT_INDEX]		= { .type = NLA_U32 },
-	[TCA_ACT_COOKIE]	= { .type = NLA_BINARY,
-				    .len = TC_COOKIE_MAX_SIZE },
-	[TCA_ACT_OPTIONS]	= { .type = NLA_NESTED },
+अटल स्थिर काष्ठा nla_policy tcf_action_policy[TCA_ACT_MAX + 1] = अणु
+	[TCA_ACT_KIND]		= अणु .type = NLA_STRING पूर्ण,
+	[TCA_ACT_INDEX]		= अणु .type = NLA_U32 पूर्ण,
+	[TCA_ACT_COOKIE]	= अणु .type = NLA_BINARY,
+				    .len = TC_COOKIE_MAX_SIZE पूर्ण,
+	[TCA_ACT_OPTIONS]	= अणु .type = NLA_NESTED पूर्ण,
 	[TCA_ACT_FLAGS]		= NLA_POLICY_BITFIELD32(TCA_ACT_FLAGS_NO_PERCPU_STATS),
 	[TCA_ACT_HW_STATS]	= NLA_POLICY_BITFIELD32(TCA_ACT_HW_STATS_ANY),
-};
+पूर्ण;
 
-void tcf_idr_insert_many(struct tc_action *actions[])
-{
-	int i;
+व्योम tcf_idr_insert_many(काष्ठा tc_action *actions[])
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < TCA_ACT_MAX_PRIO; i++) {
-		struct tc_action *a = actions[i];
-		struct tcf_idrinfo *idrinfo;
+	क्रम (i = 0; i < TCA_ACT_MAX_PRIO; i++) अणु
+		काष्ठा tc_action *a = actions[i];
+		काष्ठा tcf_idrinfo *idrinfo;
 
-		if (!a)
-			continue;
+		अगर (!a)
+			जारी;
 		idrinfo = a->idrinfo;
 		mutex_lock(&idrinfo->lock);
-		/* Replace ERR_PTR(-EBUSY) allocated by tcf_idr_check_alloc if
+		/* Replace ERR_PTR(-EBUSY) allocated by tcf_idr_check_alloc अगर
 		 * it is just created, otherwise this is just a nop.
 		 */
 		idr_replace(&idrinfo->action_idr, a, a->tcfa_index);
 		mutex_unlock(&idrinfo->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct tc_action_ops *tc_action_load_ops(char *name, struct nlattr *nla,
+काष्ठा tc_action_ops *tc_action_load_ops(अक्षर *name, काष्ठा nlattr *nla,
 					 bool rtnl_held,
-					 struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[TCA_ACT_MAX + 1];
-	struct tc_action_ops *a_o;
-	char act_name[IFNAMSIZ];
-	struct nlattr *kind;
-	int err;
+					 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[TCA_ACT_MAX + 1];
+	काष्ठा tc_action_ops *a_o;
+	अक्षर act_name[IFNAMSIZ];
+	काष्ठा nlattr *kind;
+	पूर्णांक err;
 
-	if (name == NULL) {
+	अगर (name == शून्य) अणु
 		err = nla_parse_nested_deprecated(tb, TCA_ACT_MAX, nla,
 						  tcf_action_policy, extack);
-		if (err < 0)
-			return ERR_PTR(err);
+		अगर (err < 0)
+			वापस ERR_PTR(err);
 		err = -EINVAL;
 		kind = tb[TCA_ACT_KIND];
-		if (!kind) {
+		अगर (!kind) अणु
 			NL_SET_ERR_MSG(extack, "TC action kind must be specified");
-			return ERR_PTR(err);
-		}
-		if (nla_strscpy(act_name, kind, IFNAMSIZ) < 0) {
+			वापस ERR_PTR(err);
+		पूर्ण
+		अगर (nla_strscpy(act_name, kind, IFNAMSIZ) < 0) अणु
 			NL_SET_ERR_MSG(extack, "TC action name too long");
-			return ERR_PTR(err);
-		}
-	} else {
-		if (strlcpy(act_name, name, IFNAMSIZ) >= IFNAMSIZ) {
+			वापस ERR_PTR(err);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (strlcpy(act_name, name, IFNAMSIZ) >= IFNAMSIZ) अणु
 			NL_SET_ERR_MSG(extack, "TC action name too long");
-			return ERR_PTR(-EINVAL);
-		}
-	}
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
+	पूर्ण
 
 	a_o = tc_lookup_action_n(act_name);
-	if (a_o == NULL) {
-#ifdef CONFIG_MODULES
-		if (rtnl_held)
+	अगर (a_o == शून्य) अणु
+#अगर_घोषित CONFIG_MODULES
+		अगर (rtnl_held)
 			rtnl_unlock();
 		request_module("act_%s", act_name);
-		if (rtnl_held)
+		अगर (rtnl_held)
 			rtnl_lock();
 
 		a_o = tc_lookup_action_n(act_name);
 
 		/* We dropped the RTNL semaphore in order to
-		 * perform the module load.  So, even if we
+		 * perक्रमm the module load.  So, even अगर we
 		 * succeeded in loading the module we have to
 		 * tell the caller to replay the request.  We
 		 * indicate this using -EAGAIN.
 		 */
-		if (a_o != NULL) {
+		अगर (a_o != शून्य) अणु
 			module_put(a_o->owner);
-			return ERR_PTR(-EAGAIN);
-		}
-#endif
+			वापस ERR_PTR(-EAGAIN);
+		पूर्ण
+#पूर्ण_अगर
 		NL_SET_ERR_MSG(extack, "Failed to load TC action module");
-		return ERR_PTR(-ENOENT);
-	}
+		वापस ERR_PTR(-ENOENT);
+	पूर्ण
 
-	return a_o;
-}
+	वापस a_o;
+पूर्ण
 
-struct tc_action *tcf_action_init_1(struct net *net, struct tcf_proto *tp,
-				    struct nlattr *nla, struct nlattr *est,
-				    char *name, int ovr, int bind,
-				    struct tc_action_ops *a_o, int *init_res,
+काष्ठा tc_action *tcf_action_init_1(काष्ठा net *net, काष्ठा tcf_proto *tp,
+				    काष्ठा nlattr *nla, काष्ठा nlattr *est,
+				    अक्षर *name, पूर्णांक ovr, पूर्णांक bind,
+				    काष्ठा tc_action_ops *a_o, पूर्णांक *init_res,
 				    bool rtnl_held,
-				    struct netlink_ext_ack *extack)
-{
-	struct nla_bitfield32 flags = { 0, 0 };
+				    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nla_bitfield32 flags = अणु 0, 0 पूर्ण;
 	u8 hw_stats = TCA_ACT_HW_STATS_ANY;
-	struct nlattr *tb[TCA_ACT_MAX + 1];
-	struct tc_cookie *cookie = NULL;
-	struct tc_action *a;
-	int err;
+	काष्ठा nlattr *tb[TCA_ACT_MAX + 1];
+	काष्ठा tc_cookie *cookie = शून्य;
+	काष्ठा tc_action *a;
+	पूर्णांक err;
 
-	/* backward compatibility for policer */
-	if (name == NULL) {
+	/* backward compatibility क्रम policer */
+	अगर (name == शून्य) अणु
 		err = nla_parse_nested_deprecated(tb, TCA_ACT_MAX, nla,
 						  tcf_action_policy, extack);
-		if (err < 0)
-			return ERR_PTR(err);
-		if (tb[TCA_ACT_COOKIE]) {
+		अगर (err < 0)
+			वापस ERR_PTR(err);
+		अगर (tb[TCA_ACT_COOKIE]) अणु
 			cookie = nla_memdup_cookie(tb);
-			if (!cookie) {
+			अगर (!cookie) अणु
 				NL_SET_ERR_MSG(extack, "No memory to generate TC cookie");
 				err = -ENOMEM;
-				goto err_out;
-			}
-		}
+				जाओ err_out;
+			पूर्ण
+		पूर्ण
 		hw_stats = tcf_action_hw_stats_get(tb[TCA_ACT_HW_STATS]);
-		if (tb[TCA_ACT_FLAGS])
+		अगर (tb[TCA_ACT_FLAGS])
 			flags = nla_get_bitfield32(tb[TCA_ACT_FLAGS]);
 
 		err = a_o->init(net, tb[TCA_ACT_OPTIONS], est, &a, ovr, bind,
 				rtnl_held, tp, flags.value, extack);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = a_o->init(net, nla, est, &a, ovr, bind, rtnl_held,
 				tp, flags.value, extack);
-	}
-	if (err < 0)
-		goto err_out;
+	पूर्ण
+	अगर (err < 0)
+		जाओ err_out;
 	*init_res = err;
 
-	if (!name && tb[TCA_ACT_COOKIE])
+	अगर (!name && tb[TCA_ACT_COOKIE])
 		tcf_set_action_cookie(&a->act_cookie, cookie);
 
-	if (!name)
+	अगर (!name)
 		a->hw_stats = hw_stats;
 
-	return a;
+	वापस a;
 
 err_out:
-	if (cookie) {
-		kfree(cookie->data);
-		kfree(cookie);
-	}
-	return ERR_PTR(err);
-}
+	अगर (cookie) अणु
+		kमुक्त(cookie->data);
+		kमुक्त(cookie);
+	पूर्ण
+	वापस ERR_PTR(err);
+पूर्ण
 
 /* Returns numbers of initialized actions or negative error. */
 
-int tcf_action_init(struct net *net, struct tcf_proto *tp, struct nlattr *nla,
-		    struct nlattr *est, char *name, int ovr, int bind,
-		    struct tc_action *actions[], int init_res[], size_t *attr_size,
-		    bool rtnl_held, struct netlink_ext_ack *extack)
-{
-	struct tc_action_ops *ops[TCA_ACT_MAX_PRIO] = {};
-	struct nlattr *tb[TCA_ACT_MAX_PRIO + 1];
-	struct tc_action *act;
-	size_t sz = 0;
-	int err;
-	int i;
+पूर्णांक tcf_action_init(काष्ठा net *net, काष्ठा tcf_proto *tp, काष्ठा nlattr *nla,
+		    काष्ठा nlattr *est, अक्षर *name, पूर्णांक ovr, पूर्णांक bind,
+		    काष्ठा tc_action *actions[], पूर्णांक init_res[], माप_प्रकार *attr_size,
+		    bool rtnl_held, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_ops *ops[TCA_ACT_MAX_PRIO] = अणुपूर्ण;
+	काष्ठा nlattr *tb[TCA_ACT_MAX_PRIO + 1];
+	काष्ठा tc_action *act;
+	माप_प्रकार sz = 0;
+	पूर्णांक err;
+	पूर्णांक i;
 
-	err = nla_parse_nested_deprecated(tb, TCA_ACT_MAX_PRIO, nla, NULL,
+	err = nla_parse_nested_deprecated(tb, TCA_ACT_MAX_PRIO, nla, शून्य,
 					  extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	for (i = 1; i <= TCA_ACT_MAX_PRIO && tb[i]; i++) {
-		struct tc_action_ops *a_o;
+	क्रम (i = 1; i <= TCA_ACT_MAX_PRIO && tb[i]; i++) अणु
+		काष्ठा tc_action_ops *a_o;
 
 		a_o = tc_action_load_ops(name, tb[i], rtnl_held, extack);
-		if (IS_ERR(a_o)) {
+		अगर (IS_ERR(a_o)) अणु
 			err = PTR_ERR(a_o);
-			goto err_mod;
-		}
+			जाओ err_mod;
+		पूर्ण
 		ops[i - 1] = a_o;
-	}
+	पूर्ण
 
-	for (i = 1; i <= TCA_ACT_MAX_PRIO && tb[i]; i++) {
+	क्रम (i = 1; i <= TCA_ACT_MAX_PRIO && tb[i]; i++) अणु
 		act = tcf_action_init_1(net, tp, tb[i], est, name, ovr, bind,
 					ops[i - 1], &init_res[i - 1], rtnl_held,
 					extack);
-		if (IS_ERR(act)) {
+		अगर (IS_ERR(act)) अणु
 			err = PTR_ERR(act);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		sz += tcf_action_fill_size(act);
 		/* Start from index 0 */
 		actions[i - 1] = act;
-	}
+	पूर्ण
 
-	/* We have to commit them all together, because if any error happened in
+	/* We have to commit them all together, because अगर any error happened in
 	 * between, we could not handle the failure gracefully.
 	 */
 	tcf_idr_insert_many(actions);
 
 	*attr_size = tcf_action_full_attrs_size(sz);
 	err = i - 1;
-	goto err_mod;
+	जाओ err_mod;
 
 err:
 	tcf_action_destroy(actions, bind);
 err_mod:
-	for (i = 0; i < TCA_ACT_MAX_PRIO; i++) {
-		if (ops[i])
+	क्रम (i = 0; i < TCA_ACT_MAX_PRIO; i++) अणु
+		अगर (ops[i])
 			module_put(ops[i]->owner);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-void tcf_action_update_stats(struct tc_action *a, u64 bytes, u64 packets,
+व्योम tcf_action_update_stats(काष्ठा tc_action *a, u64 bytes, u64 packets,
 			     u64 drops, bool hw)
-{
-	if (a->cpu_bstats) {
+अणु
+	अगर (a->cpu_bstats) अणु
 		_bstats_cpu_update(this_cpu_ptr(a->cpu_bstats), bytes, packets);
 
 		this_cpu_ptr(a->cpu_qstats)->drops += drops;
 
-		if (hw)
+		अगर (hw)
 			_bstats_cpu_update(this_cpu_ptr(a->cpu_bstats_hw),
 					   bytes, packets);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	_bstats_update(&a->tcfa_bstats, bytes, packets);
 	a->tcfa_qstats.drops += drops;
-	if (hw)
+	अगर (hw)
 		_bstats_update(&a->tcfa_bstats_hw, bytes, packets);
-}
+पूर्ण
 EXPORT_SYMBOL(tcf_action_update_stats);
 
-int tcf_action_copy_stats(struct sk_buff *skb, struct tc_action *p,
-			  int compat_mode)
-{
-	int err = 0;
-	struct gnet_dump d;
+पूर्णांक tcf_action_copy_stats(काष्ठा sk_buff *skb, काष्ठा tc_action *p,
+			  पूर्णांक compat_mode)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा gnet_dump d;
 
-	if (p == NULL)
-		goto errout;
+	अगर (p == शून्य)
+		जाओ errout;
 
-	/* compat_mode being true specifies a call that is supposed
+	/* compat_mode being true specअगरies a call that is supposed
 	 * to add additional backward compatibility statistic TLVs.
 	 */
-	if (compat_mode) {
-		if (p->type == TCA_OLD_COMPAT)
+	अगर (compat_mode) अणु
+		अगर (p->type == TCA_OLD_COMPAT)
 			err = gnet_stats_start_copy_compat(skb, 0,
 							   TCA_STATS,
 							   TCA_XSTATS,
 							   &p->tcfa_lock, &d,
 							   TCA_PAD);
-		else
-			return 0;
-	} else
+		अन्यथा
+			वापस 0;
+	पूर्ण अन्यथा
 		err = gnet_stats_start_copy(skb, TCA_ACT_STATS,
 					    &p->tcfa_lock, &d, TCA_ACT_PAD);
 
-	if (err < 0)
-		goto errout;
+	अगर (err < 0)
+		जाओ errout;
 
-	if (gnet_stats_copy_basic(NULL, &d, p->cpu_bstats, &p->tcfa_bstats) < 0 ||
-	    gnet_stats_copy_basic_hw(NULL, &d, p->cpu_bstats_hw,
+	अगर (gnet_stats_copy_basic(शून्य, &d, p->cpu_bstats, &p->tcfa_bstats) < 0 ||
+	    gnet_stats_copy_basic_hw(शून्य, &d, p->cpu_bstats_hw,
 				     &p->tcfa_bstats_hw) < 0 ||
 	    gnet_stats_copy_rate_est(&d, &p->tcfa_rate_est) < 0 ||
 	    gnet_stats_copy_queue(&d, p->cpu_qstats,
 				  &p->tcfa_qstats,
 				  p->tcfa_qstats.qlen) < 0)
-		goto errout;
+		जाओ errout;
 
-	if (gnet_stats_finish_copy(&d) < 0)
-		goto errout;
+	अगर (gnet_stats_finish_copy(&d) < 0)
+		जाओ errout;
 
-	return 0;
+	वापस 0;
 
 errout:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int tca_get_fill(struct sk_buff *skb, struct tc_action *actions[],
-			u32 portid, u32 seq, u16 flags, int event, int bind,
-			int ref)
-{
-	struct tcamsg *t;
-	struct nlmsghdr *nlh;
-	unsigned char *b = skb_tail_pointer(skb);
-	struct nlattr *nest;
+अटल पूर्णांक tca_get_fill(काष्ठा sk_buff *skb, काष्ठा tc_action *actions[],
+			u32 portid, u32 seq, u16 flags, पूर्णांक event, पूर्णांक bind,
+			पूर्णांक ref)
+अणु
+	काष्ठा tcamsg *t;
+	काष्ठा nlmsghdr *nlh;
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	काष्ठा nlattr *nest;
 
-	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*t), flags);
-	if (!nlh)
-		goto out_nlmsg_trim;
+	nlh = nlmsg_put(skb, portid, seq, event, माप(*t), flags);
+	अगर (!nlh)
+		जाओ out_nlmsg_trim;
 	t = nlmsg_data(nlh);
 	t->tca_family = AF_UNSPEC;
 	t->tca__pad1 = 0;
 	t->tca__pad2 = 0;
 
 	nest = nla_nest_start_noflag(skb, TCA_ACT_TAB);
-	if (!nest)
-		goto out_nlmsg_trim;
+	अगर (!nest)
+		जाओ out_nlmsg_trim;
 
-	if (tcf_action_dump(skb, actions, bind, ref, false) < 0)
-		goto out_nlmsg_trim;
+	अगर (tcf_action_dump(skb, actions, bind, ref, false) < 0)
+		जाओ out_nlmsg_trim;
 
 	nla_nest_end(skb, nest);
 
-	nlh->nlmsg_len = skb_tail_pointer(skb) - b;
-	return skb->len;
+	nlh->nlmsg_len = skb_tail_poपूर्णांकer(skb) - b;
+	वापस skb->len;
 
 out_nlmsg_trim:
 	nlmsg_trim(skb, b);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int
-tcf_get_notify(struct net *net, u32 portid, struct nlmsghdr *n,
-	       struct tc_action *actions[], int event,
-	       struct netlink_ext_ack *extack)
-{
-	struct sk_buff *skb;
+अटल पूर्णांक
+tcf_get_notअगरy(काष्ठा net *net, u32 portid, काष्ठा nlmsghdr *n,
+	       काष्ठा tc_action *actions[], पूर्णांक event,
+	       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
-	if (!skb)
-		return -ENOBUFS;
-	if (tca_get_fill(skb, actions, portid, n->nlmsg_seq, 0, event,
-			 0, 1) <= 0) {
+	अगर (!skb)
+		वापस -ENOBUFS;
+	अगर (tca_get_fill(skb, actions, portid, n->nlmsg_seq, 0, event,
+			 0, 1) <= 0) अणु
 		NL_SET_ERR_MSG(extack, "Failed to fill netlink attributes while adding TC action");
-		kfree_skb(skb);
-		return -EINVAL;
-	}
+		kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 
-	return rtnl_unicast(skb, net, portid);
-}
+	वापस rtnl_unicast(skb, net, portid);
+पूर्ण
 
-static struct tc_action *tcf_action_get_1(struct net *net, struct nlattr *nla,
-					  struct nlmsghdr *n, u32 portid,
-					  struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[TCA_ACT_MAX + 1];
-	const struct tc_action_ops *ops;
-	struct tc_action *a;
-	int index;
-	int err;
+अटल काष्ठा tc_action *tcf_action_get_1(काष्ठा net *net, काष्ठा nlattr *nla,
+					  काष्ठा nlmsghdr *n, u32 portid,
+					  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[TCA_ACT_MAX + 1];
+	स्थिर काष्ठा tc_action_ops *ops;
+	काष्ठा tc_action *a;
+	पूर्णांक index;
+	पूर्णांक err;
 
 	err = nla_parse_nested_deprecated(tb, TCA_ACT_MAX, nla,
 					  tcf_action_policy, extack);
-	if (err < 0)
-		goto err_out;
+	अगर (err < 0)
+		जाओ err_out;
 
 	err = -EINVAL;
-	if (tb[TCA_ACT_INDEX] == NULL ||
-	    nla_len(tb[TCA_ACT_INDEX]) < sizeof(index)) {
+	अगर (tb[TCA_ACT_INDEX] == शून्य ||
+	    nla_len(tb[TCA_ACT_INDEX]) < माप(index)) अणु
 		NL_SET_ERR_MSG(extack, "Invalid TC action index value");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	index = nla_get_u32(tb[TCA_ACT_INDEX]);
 
 	err = -EINVAL;
 	ops = tc_lookup_action(tb[TCA_ACT_KIND]);
-	if (!ops) { /* could happen in batch of actions */
+	अगर (!ops) अणु /* could happen in batch of actions */
 		NL_SET_ERR_MSG(extack, "Specified TC action kind not found");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	err = -ENOENT;
-	if (ops->lookup(net, &a, index) == 0) {
+	अगर (ops->lookup(net, &a, index) == 0) अणु
 		NL_SET_ERR_MSG(extack, "TC action with specified index not found");
-		goto err_mod;
-	}
+		जाओ err_mod;
+	पूर्ण
 
 	module_put(ops->owner);
-	return a;
+	वापस a;
 
 err_mod:
 	module_put(ops->owner);
 err_out:
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static int tca_action_flush(struct net *net, struct nlattr *nla,
-			    struct nlmsghdr *n, u32 portid,
-			    struct netlink_ext_ack *extack)
-{
-	struct sk_buff *skb;
-	unsigned char *b;
-	struct nlmsghdr *nlh;
-	struct tcamsg *t;
-	struct netlink_callback dcb;
-	struct nlattr *nest;
-	struct nlattr *tb[TCA_ACT_MAX + 1];
-	const struct tc_action_ops *ops;
-	struct nlattr *kind;
-	int err = -ENOMEM;
+अटल पूर्णांक tca_action_flush(काष्ठा net *net, काष्ठा nlattr *nla,
+			    काष्ठा nlmsghdr *n, u32 portid,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *b;
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा tcamsg *t;
+	काष्ठा netlink_callback dcb;
+	काष्ठा nlattr *nest;
+	काष्ठा nlattr *tb[TCA_ACT_MAX + 1];
+	स्थिर काष्ठा tc_action_ops *ops;
+	काष्ठा nlattr *kind;
+	पूर्णांक err = -ENOMEM;
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
-	if (!skb)
-		return err;
+	अगर (!skb)
+		वापस err;
 
-	b = skb_tail_pointer(skb);
+	b = skb_tail_poपूर्णांकer(skb);
 
 	err = nla_parse_nested_deprecated(tb, TCA_ACT_MAX, nla,
 					  tcf_action_policy, extack);
-	if (err < 0)
-		goto err_out;
+	अगर (err < 0)
+		जाओ err_out;
 
 	err = -EINVAL;
 	kind = tb[TCA_ACT_KIND];
 	ops = tc_lookup_action(kind);
-	if (!ops) { /*some idjot trying to flush unknown action */
+	अगर (!ops) अणु /*some idjot trying to flush unknown action */
 		NL_SET_ERR_MSG(extack, "Cannot flush unknown TC action");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	nlh = nlmsg_put(skb, portid, n->nlmsg_seq, RTM_DELACTION,
-			sizeof(*t), 0);
-	if (!nlh) {
+			माप(*t), 0);
+	अगर (!nlh) अणु
 		NL_SET_ERR_MSG(extack, "Failed to create TC action flush notification");
-		goto out_module_put;
-	}
+		जाओ out_module_put;
+	पूर्ण
 	t = nlmsg_data(nlh);
 	t->tca_family = AF_UNSPEC;
 	t->tca__pad1 = 0;
 	t->tca__pad2 = 0;
 
 	nest = nla_nest_start_noflag(skb, TCA_ACT_TAB);
-	if (!nest) {
+	अगर (!nest) अणु
 		NL_SET_ERR_MSG(extack, "Failed to add new netlink message");
-		goto out_module_put;
-	}
+		जाओ out_module_put;
+	पूर्ण
 
 	err = ops->walk(net, skb, &dcb, RTM_DELACTION, ops, extack);
-	if (err <= 0) {
+	अगर (err <= 0) अणु
 		nla_nest_cancel(skb, nest);
-		goto out_module_put;
-	}
+		जाओ out_module_put;
+	पूर्ण
 
 	nla_nest_end(skb, nest);
 
-	nlh->nlmsg_len = skb_tail_pointer(skb) - b;
+	nlh->nlmsg_len = skb_tail_poपूर्णांकer(skb) - b;
 	nlh->nlmsg_flags |= NLM_F_ROOT;
 	module_put(ops->owner);
 	err = rtnetlink_send(skb, net, portid, RTNLGRP_TC,
 			     n->nlmsg_flags & NLM_F_ECHO);
-	if (err > 0)
-		return 0;
-	if (err < 0)
+	अगर (err > 0)
+		वापस 0;
+	अगर (err < 0)
 		NL_SET_ERR_MSG(extack, "Failed to send TC action flush notification");
 
-	return err;
+	वापस err;
 
 out_module_put:
 	module_put(ops->owner);
 err_out:
-	kfree_skb(skb);
-	return err;
-}
+	kमुक्त_skb(skb);
+	वापस err;
+पूर्ण
 
-static int tcf_action_delete(struct net *net, struct tc_action *actions[])
-{
-	int i;
+अटल पूर्णांक tcf_action_delete(काष्ठा net *net, काष्ठा tc_action *actions[])
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < TCA_ACT_MAX_PRIO && actions[i]; i++) {
-		struct tc_action *a = actions[i];
-		const struct tc_action_ops *ops = a->ops;
+	क्रम (i = 0; i < TCA_ACT_MAX_PRIO && actions[i]; i++) अणु
+		काष्ठा tc_action *a = actions[i];
+		स्थिर काष्ठा tc_action_ops *ops = a->ops;
 		/* Actions can be deleted concurrently so we must save their
 		 * type and id to search again after reference is released.
 		 */
-		struct tcf_idrinfo *idrinfo = a->idrinfo;
+		काष्ठा tcf_idrinfo *idrinfo = a->idrinfo;
 		u32 act_index = a->tcfa_index;
 
-		actions[i] = NULL;
-		if (tcf_action_put(a)) {
+		actions[i] = शून्य;
+		अगर (tcf_action_put(a)) अणु
 			/* last reference, action was deleted concurrently */
 			module_put(ops->owner);
-		} else  {
-			int ret;
+		पूर्ण अन्यथा  अणु
+			पूर्णांक ret;
 
-			/* now do the delete */
+			/* now करो the delete */
 			ret = tcf_idr_delete_index(idrinfo, act_index);
-			if (ret < 0)
-				return ret;
-		}
-	}
-	return 0;
-}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-tcf_del_notify(struct net *net, struct nlmsghdr *n, struct tc_action *actions[],
-	       u32 portid, size_t attr_size, struct netlink_ext_ack *extack)
-{
-	int ret;
-	struct sk_buff *skb;
+अटल पूर्णांक
+tcf_del_notअगरy(काष्ठा net *net, काष्ठा nlmsghdr *n, काष्ठा tc_action *actions[],
+	       u32 portid, माप_प्रकार attr_size, काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक ret;
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(attr_size <= NLMSG_GOODSIZE ? NLMSG_GOODSIZE : attr_size,
 			GFP_KERNEL);
-	if (!skb)
-		return -ENOBUFS;
+	अगर (!skb)
+		वापस -ENOBUFS;
 
-	if (tca_get_fill(skb, actions, portid, n->nlmsg_seq, 0, RTM_DELACTION,
-			 0, 2) <= 0) {
+	अगर (tca_get_fill(skb, actions, portid, n->nlmsg_seq, 0, RTM_DELACTION,
+			 0, 2) <= 0) अणु
 		NL_SET_ERR_MSG(extack, "Failed to fill netlink TC action attributes");
-		kfree_skb(skb);
-		return -EINVAL;
-	}
+		kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 
-	/* now do the delete */
+	/* now करो the delete */
 	ret = tcf_action_delete(net, actions);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		NL_SET_ERR_MSG(extack, "Failed to delete TC action");
-		kfree_skb(skb);
-		return ret;
-	}
+		kमुक्त_skb(skb);
+		वापस ret;
+	पूर्ण
 
 	ret = rtnetlink_send(skb, net, portid, RTNLGRP_TC,
 			     n->nlmsg_flags & NLM_F_ECHO);
-	if (ret > 0)
-		return 0;
-	return ret;
-}
+	अगर (ret > 0)
+		वापस 0;
+	वापस ret;
+पूर्ण
 
-static int
-tca_action_gd(struct net *net, struct nlattr *nla, struct nlmsghdr *n,
-	      u32 portid, int event, struct netlink_ext_ack *extack)
-{
-	int i, ret;
-	struct nlattr *tb[TCA_ACT_MAX_PRIO + 1];
-	struct tc_action *act;
-	size_t attr_size = 0;
-	struct tc_action *actions[TCA_ACT_MAX_PRIO] = {};
+अटल पूर्णांक
+tca_action_gd(काष्ठा net *net, काष्ठा nlattr *nla, काष्ठा nlmsghdr *n,
+	      u32 portid, पूर्णांक event, काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा nlattr *tb[TCA_ACT_MAX_PRIO + 1];
+	काष्ठा tc_action *act;
+	माप_प्रकार attr_size = 0;
+	काष्ठा tc_action *actions[TCA_ACT_MAX_PRIO] = अणुपूर्ण;
 
-	ret = nla_parse_nested_deprecated(tb, TCA_ACT_MAX_PRIO, nla, NULL,
+	ret = nla_parse_nested_deprecated(tb, TCA_ACT_MAX_PRIO, nla, शून्य,
 					  extack);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (event == RTM_DELACTION && n->nlmsg_flags & NLM_F_ROOT) {
-		if (tb[1])
-			return tca_action_flush(net, tb[1], n, portid, extack);
+	अगर (event == RTM_DELACTION && n->nlmsg_flags & NLM_F_ROOT) अणु
+		अगर (tb[1])
+			वापस tca_action_flush(net, tb[1], n, portid, extack);
 
 		NL_SET_ERR_MSG(extack, "Invalid netlink attributes while flushing TC action");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 1; i <= TCA_ACT_MAX_PRIO && tb[i]; i++) {
+	क्रम (i = 1; i <= TCA_ACT_MAX_PRIO && tb[i]; i++) अणु
 		act = tcf_action_get_1(net, tb[i], n, portid, extack);
-		if (IS_ERR(act)) {
+		अगर (IS_ERR(act)) अणु
 			ret = PTR_ERR(act);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		attr_size += tcf_action_fill_size(act);
 		actions[i - 1] = act;
-	}
+	पूर्ण
 
 	attr_size = tcf_action_full_attrs_size(attr_size);
 
-	if (event == RTM_GETACTION)
-		ret = tcf_get_notify(net, portid, n, actions, event, extack);
-	else { /* delete */
-		ret = tcf_del_notify(net, n, actions, portid, attr_size, extack);
-		if (ret)
-			goto err;
-		return 0;
-	}
+	अगर (event == RTM_GETACTION)
+		ret = tcf_get_notअगरy(net, portid, n, actions, event, extack);
+	अन्यथा अणु /* delete */
+		ret = tcf_del_notअगरy(net, n, actions, portid, attr_size, extack);
+		अगर (ret)
+			जाओ err;
+		वापस 0;
+	पूर्ण
 err:
 	tcf_action_put_many(actions);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-tcf_add_notify(struct net *net, struct nlmsghdr *n, struct tc_action *actions[],
-	       u32 portid, size_t attr_size, struct netlink_ext_ack *extack)
-{
-	struct sk_buff *skb;
-	int err = 0;
+अटल पूर्णांक
+tcf_add_notअगरy(काष्ठा net *net, काष्ठा nlmsghdr *n, काष्ठा tc_action *actions[],
+	       u32 portid, माप_प्रकार attr_size, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = 0;
 
 	skb = alloc_skb(attr_size <= NLMSG_GOODSIZE ? NLMSG_GOODSIZE : attr_size,
 			GFP_KERNEL);
-	if (!skb)
-		return -ENOBUFS;
+	अगर (!skb)
+		वापस -ENOBUFS;
 
-	if (tca_get_fill(skb, actions, portid, n->nlmsg_seq, n->nlmsg_flags,
-			 RTM_NEWACTION, 0, 0) <= 0) {
+	अगर (tca_get_fill(skb, actions, portid, n->nlmsg_seq, n->nlmsg_flags,
+			 RTM_NEWACTION, 0, 0) <= 0) अणु
 		NL_SET_ERR_MSG(extack, "Failed to fill netlink attributes while adding TC action");
-		kfree_skb(skb);
-		return -EINVAL;
-	}
+		kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 
 	err = rtnetlink_send(skb, net, portid, RTNLGRP_TC,
 			     n->nlmsg_flags & NLM_F_ECHO);
-	if (err > 0)
+	अगर (err > 0)
 		err = 0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tcf_action_add(struct net *net, struct nlattr *nla,
-			  struct nlmsghdr *n, u32 portid, int ovr,
-			  struct netlink_ext_ack *extack)
-{
-	size_t attr_size = 0;
-	int loop, ret, i;
-	struct tc_action *actions[TCA_ACT_MAX_PRIO] = {};
-	int init_res[TCA_ACT_MAX_PRIO] = {};
+अटल पूर्णांक tcf_action_add(काष्ठा net *net, काष्ठा nlattr *nla,
+			  काष्ठा nlmsghdr *n, u32 portid, पूर्णांक ovr,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	माप_प्रकार attr_size = 0;
+	पूर्णांक loop, ret, i;
+	काष्ठा tc_action *actions[TCA_ACT_MAX_PRIO] = अणुपूर्ण;
+	पूर्णांक init_res[TCA_ACT_MAX_PRIO] = अणुपूर्ण;
 
-	for (loop = 0; loop < 10; loop++) {
-		ret = tcf_action_init(net, NULL, nla, NULL, NULL, ovr, 0,
+	क्रम (loop = 0; loop < 10; loop++) अणु
+		ret = tcf_action_init(net, शून्य, nla, शून्य, शून्य, ovr, 0,
 				      actions, init_res, &attr_size, true, extack);
-		if (ret != -EAGAIN)
-			break;
-	}
+		अगर (ret != -EAGAIN)
+			अवरोध;
+	पूर्ण
 
-	if (ret < 0)
-		return ret;
-	ret = tcf_add_notify(net, n, actions, portid, attr_size, extack);
+	अगर (ret < 0)
+		वापस ret;
+	ret = tcf_add_notअगरy(net, n, actions, portid, attr_size, extack);
 
 	/* only put existing actions */
-	for (i = 0; i < TCA_ACT_MAX_PRIO; i++)
-		if (init_res[i] == ACT_P_CREATED)
-			actions[i] = NULL;
+	क्रम (i = 0; i < TCA_ACT_MAX_PRIO; i++)
+		अगर (init_res[i] == ACT_P_CREATED)
+			actions[i] = शून्य;
 	tcf_action_put_many(actions);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nla_policy tcaa_policy[TCA_ROOT_MAX + 1] = {
+अटल स्थिर काष्ठा nla_policy tcaa_policy[TCA_ROOT_MAX + 1] = अणु
 	[TCA_ROOT_FLAGS] = NLA_POLICY_BITFIELD32(TCA_ACT_FLAG_LARGE_DUMP_ON |
 						 TCA_ACT_FLAG_TERSE_DUMP),
-	[TCA_ROOT_TIME_DELTA]      = { .type = NLA_U32 },
-};
+	[TCA_ROOT_TIME_DELTA]      = अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int tc_ctl_action(struct sk_buff *skb, struct nlmsghdr *n,
-			 struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct nlattr *tca[TCA_ROOT_MAX + 1];
+अटल पूर्णांक tc_ctl_action(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *n,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा nlattr *tca[TCA_ROOT_MAX + 1];
 	u32 portid = NETLINK_CB(skb).portid;
-	int ret = 0, ovr = 0;
+	पूर्णांक ret = 0, ovr = 0;
 
-	if ((n->nlmsg_type != RTM_GETACTION) &&
+	अगर ((n->nlmsg_type != RTM_GETACTION) &&
 	    !netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+		वापस -EPERM;
 
-	ret = nlmsg_parse_deprecated(n, sizeof(struct tcamsg), tca,
-				     TCA_ROOT_MAX, NULL, extack);
-	if (ret < 0)
-		return ret;
+	ret = nlmsg_parse_deprecated(n, माप(काष्ठा tcamsg), tca,
+				     TCA_ROOT_MAX, शून्य, extack);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (tca[TCA_ACT_TAB] == NULL) {
+	अगर (tca[TCA_ACT_TAB] == शून्य) अणु
 		NL_SET_ERR_MSG(extack, "Netlink action attributes missing");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* n->nlmsg_flags & NLM_F_CREATE */
-	switch (n->nlmsg_type) {
-	case RTM_NEWACTION:
+	चयन (n->nlmsg_type) अणु
+	हाल RTM_NEWACTION:
 		/* we are going to assume all other flags
-		 * imply create only if it doesn't exist
+		 * imply create only अगर it करोesn't exist
 		 * Note that CREATE | EXCL implies that
-		 * but since we want avoid ambiguity (eg when flags
+		 * but since we want aव्योम ambiguity (eg when flags
 		 * is zero) then just set this
 		 */
-		if (n->nlmsg_flags & NLM_F_REPLACE)
+		अगर (n->nlmsg_flags & NLM_F_REPLACE)
 			ovr = 1;
 		ret = tcf_action_add(net, tca[TCA_ACT_TAB], n, portid, ovr,
 				     extack);
-		break;
-	case RTM_DELACTION:
+		अवरोध;
+	हाल RTM_DELACTION:
 		ret = tca_action_gd(net, tca[TCA_ACT_TAB], n,
 				    portid, RTM_DELACTION, extack);
-		break;
-	case RTM_GETACTION:
+		अवरोध;
+	हाल RTM_GETACTION:
 		ret = tca_action_gd(net, tca[TCA_ACT_TAB], n,
 				    portid, RTM_GETACTION, extack);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct nlattr *find_dump_kind(struct nlattr **nla)
-{
-	struct nlattr *tb1, *tb2[TCA_ACT_MAX + 1];
-	struct nlattr *tb[TCA_ACT_MAX_PRIO + 1];
-	struct nlattr *kind;
+अटल काष्ठा nlattr *find_dump_kind(काष्ठा nlattr **nla)
+अणु
+	काष्ठा nlattr *tb1, *tb2[TCA_ACT_MAX + 1];
+	काष्ठा nlattr *tb[TCA_ACT_MAX_PRIO + 1];
+	काष्ठा nlattr *kind;
 
 	tb1 = nla[TCA_ACT_TAB];
-	if (tb1 == NULL)
-		return NULL;
+	अगर (tb1 == शून्य)
+		वापस शून्य;
 
-	if (nla_parse_deprecated(tb, TCA_ACT_MAX_PRIO, nla_data(tb1), NLMSG_ALIGN(nla_len(tb1)), NULL, NULL) < 0)
-		return NULL;
+	अगर (nla_parse_deprecated(tb, TCA_ACT_MAX_PRIO, nla_data(tb1), NLMSG_ALIGN(nla_len(tb1)), शून्य, शून्य) < 0)
+		वापस शून्य;
 
-	if (tb[1] == NULL)
-		return NULL;
-	if (nla_parse_nested_deprecated(tb2, TCA_ACT_MAX, tb[1], tcf_action_policy, NULL) < 0)
-		return NULL;
+	अगर (tb[1] == शून्य)
+		वापस शून्य;
+	अगर (nla_parse_nested_deprecated(tb2, TCA_ACT_MAX, tb[1], tcf_action_policy, शून्य) < 0)
+		वापस शून्य;
 	kind = tb2[TCA_ACT_KIND];
 
-	return kind;
-}
+	वापस kind;
+पूर्ण
 
-static int tc_dump_action(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct net *net = sock_net(skb->sk);
-	struct nlmsghdr *nlh;
-	unsigned char *b = skb_tail_pointer(skb);
-	struct nlattr *nest;
-	struct tc_action_ops *a_o;
-	int ret = 0;
-	struct tcamsg *t = (struct tcamsg *) nlmsg_data(cb->nlh);
-	struct nlattr *tb[TCA_ROOT_MAX + 1];
-	struct nlattr *count_attr = NULL;
-	unsigned long jiffy_since = 0;
-	struct nlattr *kind = NULL;
-	struct nla_bitfield32 bf;
+अटल पूर्णांक tc_dump_action(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा nlmsghdr *nlh;
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	काष्ठा nlattr *nest;
+	काष्ठा tc_action_ops *a_o;
+	पूर्णांक ret = 0;
+	काष्ठा tcamsg *t = (काष्ठा tcamsg *) nlmsg_data(cb->nlh);
+	काष्ठा nlattr *tb[TCA_ROOT_MAX + 1];
+	काष्ठा nlattr *count_attr = शून्य;
+	अचिन्हित दीर्घ jअगरfy_since = 0;
+	काष्ठा nlattr *kind = शून्य;
+	काष्ठा nla_bitfield32 bf;
 	u32 msecs_since = 0;
 	u32 act_count = 0;
 
-	ret = nlmsg_parse_deprecated(cb->nlh, sizeof(struct tcamsg), tb,
+	ret = nlmsg_parse_deprecated(cb->nlh, माप(काष्ठा tcamsg), tb,
 				     TCA_ROOT_MAX, tcaa_policy, cb->extack);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	kind = find_dump_kind(tb);
-	if (kind == NULL) {
+	अगर (kind == शून्य) अणु
 		pr_info("tc_dump_action: action bad kind\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	a_o = tc_lookup_action(kind);
-	if (a_o == NULL)
-		return 0;
+	अगर (a_o == शून्य)
+		वापस 0;
 
 	cb->args[2] = 0;
-	if (tb[TCA_ROOT_FLAGS]) {
+	अगर (tb[TCA_ROOT_FLAGS]) अणु
 		bf = nla_get_bitfield32(tb[TCA_ROOT_FLAGS]);
 		cb->args[2] = bf.value;
-	}
+	पूर्ण
 
-	if (tb[TCA_ROOT_TIME_DELTA]) {
+	अगर (tb[TCA_ROOT_TIME_DELTA]) अणु
 		msecs_since = nla_get_u32(tb[TCA_ROOT_TIME_DELTA]);
-	}
+	पूर्ण
 
 	nlh = nlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
-			cb->nlh->nlmsg_type, sizeof(*t), 0);
-	if (!nlh)
-		goto out_module_put;
+			cb->nlh->nlmsg_type, माप(*t), 0);
+	अगर (!nlh)
+		जाओ out_module_put;
 
-	if (msecs_since)
-		jiffy_since = jiffies - msecs_to_jiffies(msecs_since);
+	अगर (msecs_since)
+		jअगरfy_since = jअगरfies - msecs_to_jअगरfies(msecs_since);
 
 	t = nlmsg_data(nlh);
 	t->tca_family = AF_UNSPEC;
 	t->tca__pad1 = 0;
 	t->tca__pad2 = 0;
-	cb->args[3] = jiffy_since;
-	count_attr = nla_reserve(skb, TCA_ROOT_COUNT, sizeof(u32));
-	if (!count_attr)
-		goto out_module_put;
+	cb->args[3] = jअगरfy_since;
+	count_attr = nla_reserve(skb, TCA_ROOT_COUNT, माप(u32));
+	अगर (!count_attr)
+		जाओ out_module_put;
 
 	nest = nla_nest_start_noflag(skb, TCA_ACT_TAB);
-	if (nest == NULL)
-		goto out_module_put;
+	अगर (nest == शून्य)
+		जाओ out_module_put;
 
-	ret = a_o->walk(net, skb, cb, RTM_GETACTION, a_o, NULL);
-	if (ret < 0)
-		goto out_module_put;
+	ret = a_o->walk(net, skb, cb, RTM_GETACTION, a_o, शून्य);
+	अगर (ret < 0)
+		जाओ out_module_put;
 
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		nla_nest_end(skb, nest);
 		ret = skb->len;
 		act_count = cb->args[1];
-		memcpy(nla_data(count_attr), &act_count, sizeof(u32));
+		स_नकल(nla_data(count_attr), &act_count, माप(u32));
 		cb->args[1] = 0;
-	} else
+	पूर्ण अन्यथा
 		nlmsg_trim(skb, b);
 
-	nlh->nlmsg_len = skb_tail_pointer(skb) - b;
-	if (NETLINK_CB(cb->skb).portid && ret)
+	nlh->nlmsg_len = skb_tail_poपूर्णांकer(skb) - b;
+	अगर (NETLINK_CB(cb->skb).portid && ret)
 		nlh->nlmsg_flags |= NLM_F_MULTI;
 	module_put(a_o->owner);
-	return skb->len;
+	वापस skb->len;
 
 out_module_put:
 	module_put(a_o->owner);
 	nlmsg_trim(skb, b);
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static int __init tc_action_init(void)
-{
-	rtnl_register(PF_UNSPEC, RTM_NEWACTION, tc_ctl_action, NULL, 0);
-	rtnl_register(PF_UNSPEC, RTM_DELACTION, tc_ctl_action, NULL, 0);
-	rtnl_register(PF_UNSPEC, RTM_GETACTION, tc_ctl_action, tc_dump_action,
+अटल पूर्णांक __init tc_action_init(व्योम)
+अणु
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_NEWACTION, tc_ctl_action, शून्य, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_DELACTION, tc_ctl_action, शून्य, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETACTION, tc_ctl_action, tc_dump_action,
 		      0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(tc_action_init);

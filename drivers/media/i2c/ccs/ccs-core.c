@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * drivers/media/i2c/ccs/ccs-core.c
  *
- * Generic driver for MIPI CCS/SMIA/SMIA++ compliant camera sensors
+ * Generic driver क्रम MIPI CCS/SMIA/SMIA++ compliant camera sensors
  *
  * Copyright (C) 2020 Intel Corporation
  * Copyright (C) 2010--2012 Nokia Corporation
- * Contact: Sakari Ailus <sakari.ailus@linux.intel.com>
+ * Contact: Sakari Ailus <sakari.ailus@linux.पूर्णांकel.com>
  *
  * Based on smiapp driver by Vimarsh Zutshi
  * Based on jt8ev1.c by Vimarsh Zutshi
  * Based on smia-sensor.c by Tuukka Toivonen <tuukkat76@gmail.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/firmware.h>
-#include <linux/gpio.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/pm_runtime.h>
-#include <linux/property.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <linux/smiapp.h>
-#include <linux/v4l2-mediabus.h>
-#include <media/v4l2-fwnode.h>
-#include <media/v4l2-device.h>
-#include <uapi/linux/ccs.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/property.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/smiapp.h>
+#समावेश <linux/v4l2-mediabus.h>
+#समावेश <media/v4l2-fwnode.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <uapi/linux/ccs.h>
 
-#include "ccs.h"
+#समावेश "ccs.h"
 
-#define CCS_ALIGN_DIM(dim, flags)	\
+#घोषणा CCS_ALIGN_DIM(dim, flags)	\
 	((flags) & V4L2_SEL_FLAG_GE	\
 	 ? ALIGN((dim), 2)		\
 	 : (dim) & ~1)
 
-static struct ccs_limit_offset {
+अटल काष्ठा ccs_limit_offset अणु
 	u16	lim;
 	u16	info;
-} ccs_limit_offsets[CCS_L_LAST + 1];
+पूर्ण ccs_limit_offsets[CCS_L_LAST + 1];
 
 /*
  * ccs_module_idents - supported camera modules
  */
-static const struct ccs_module_ident ccs_module_idents[] = {
+अटल स्थिर काष्ठा ccs_module_ident ccs_module_idents[] = अणु
 	CCS_IDENT_L(0x01, 0x022b, -1, "vs6555"),
 	CCS_IDENT_L(0x01, 0x022e, -1, "vw6558"),
 	CCS_IDENT_L(0x07, 0x7698, -1, "ovm7698"),
@@ -57,68 +58,68 @@ static const struct ccs_module_ident ccs_module_idents[] = {
 	CCS_IDENT_LQ(0x0c, 0x560f, -1, "jt8ew9", &smiapp_jt8ew9_quirk),
 	CCS_IDENT_LQ(0x10, 0x4141, -1, "jt8ev1", &smiapp_jt8ev1_quirk),
 	CCS_IDENT_LQ(0x10, 0x4241, -1, "imx125es", &smiapp_imx125es_quirk),
-};
+पूर्ण;
 
-#define CCS_DEVICE_FLAG_IS_SMIA		BIT(0)
+#घोषणा CCS_DEVICE_FLAG_IS_SMIA		BIT(0)
 
-struct ccs_device {
-	unsigned char flags;
-};
+काष्ठा ccs_device अणु
+	अचिन्हित अक्षर flags;
+पूर्ण;
 
-static const char * const ccs_regulators[] = { "vcore", "vio", "vana" };
+अटल स्थिर अक्षर * स्थिर ccs_regulators[] = अणु "vcore", "vio", "vana" पूर्ण;
 
 /*
  *
- * Dynamic Capability Identification
+ * Dynamic Capability Identअगरication
  *
  */
 
-static void ccs_assign_limit(void *ptr, unsigned int width, u32 val)
-{
-	switch (width) {
-	case sizeof(u8):
+अटल व्योम ccs_assign_limit(व्योम *ptr, अचिन्हित पूर्णांक width, u32 val)
+अणु
+	चयन (width) अणु
+	हाल माप(u8):
 		*(u8 *)ptr = val;
-		break;
-	case sizeof(u16):
+		अवरोध;
+	हाल माप(u16):
 		*(u16 *)ptr = val;
-		break;
-	case sizeof(u32):
+		अवरोध;
+	हाल माप(u32):
 		*(u32 *)ptr = val;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int ccs_limit_ptr(struct ccs_sensor *sensor, unsigned int limit,
-			 unsigned int offset, void **__ptr)
-{
-	const struct ccs_limit *linfo;
+अटल पूर्णांक ccs_limit_ptr(काष्ठा ccs_sensor *sensor, अचिन्हित पूर्णांक limit,
+			 अचिन्हित पूर्णांक offset, व्योम **__ptr)
+अणु
+	स्थिर काष्ठा ccs_limit *linfo;
 
-	if (WARN_ON(limit >= CCS_L_LAST))
-		return -EINVAL;
+	अगर (WARN_ON(limit >= CCS_L_LAST))
+		वापस -EINVAL;
 
 	linfo = &ccs_limits[ccs_limit_offsets[limit].info];
 
-	if (WARN_ON(!sensor->ccs_limits) ||
+	अगर (WARN_ON(!sensor->ccs_limits) ||
 	    WARN_ON(offset + ccs_reg_width(linfo->reg) >
 		    ccs_limit_offsets[limit + 1].lim))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	*__ptr = sensor->ccs_limits + ccs_limit_offsets[limit].lim + offset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ccs_replace_limit(struct ccs_sensor *sensor,
-		       unsigned int limit, unsigned int offset, u32 val)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	const struct ccs_limit *linfo;
-	void *ptr;
-	int ret;
+व्योम ccs_replace_limit(काष्ठा ccs_sensor *sensor,
+		       अचिन्हित पूर्णांक limit, अचिन्हित पूर्णांक offset, u32 val)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	स्थिर काष्ठा ccs_limit *linfo;
+	व्योम *ptr;
+	पूर्णांक ret;
 
 	ret = ccs_limit_ptr(sensor, limit, offset, &ptr);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
 	linfo = &ccs_limits[ccs_limit_offsets[limit].info];
 
@@ -126,123 +127,123 @@ void ccs_replace_limit(struct ccs_sensor *sensor,
 		linfo->reg, linfo->name, offset, val, val);
 
 	ccs_assign_limit(ptr, ccs_reg_width(linfo->reg), val);
-}
+पूर्ण
 
-u32 ccs_get_limit(struct ccs_sensor *sensor, unsigned int limit,
-		  unsigned int offset)
-{
-	void *ptr;
+u32 ccs_get_limit(काष्ठा ccs_sensor *sensor, अचिन्हित पूर्णांक limit,
+		  अचिन्हित पूर्णांक offset)
+अणु
+	व्योम *ptr;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = ccs_limit_ptr(sensor, limit, offset, &ptr);
-	if (ret)
-		return 0;
+	अगर (ret)
+		वापस 0;
 
-	switch (ccs_reg_width(ccs_limits[ccs_limit_offsets[limit].info].reg)) {
-	case sizeof(u8):
+	चयन (ccs_reg_width(ccs_limits[ccs_limit_offsets[limit].info].reg)) अणु
+	हाल माप(u8):
 		val = *(u8 *)ptr;
-		break;
-	case sizeof(u16):
+		अवरोध;
+	हाल माप(u16):
 		val = *(u16 *)ptr;
-		break;
-	case sizeof(u32):
+		अवरोध;
+	हाल माप(u32):
 		val = *(u32 *)ptr;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return ccs_reg_conv(sensor, ccs_limits[limit].reg, val);
-}
+	वापस ccs_reg_conv(sensor, ccs_limits[limit].reg, val);
+पूर्ण
 
-static int ccs_read_all_limits(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	void *ptr, *alloc, *end;
-	unsigned int i, l;
-	int ret;
+अटल पूर्णांक ccs_पढ़ो_all_limits(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	व्योम *ptr, *alloc, *end;
+	अचिन्हित पूर्णांक i, l;
+	पूर्णांक ret;
 
-	kfree(sensor->ccs_limits);
-	sensor->ccs_limits = NULL;
+	kमुक्त(sensor->ccs_limits);
+	sensor->ccs_limits = शून्य;
 
 	alloc = kzalloc(ccs_limit_offsets[CCS_L_LAST].lim, GFP_KERNEL);
-	if (!alloc)
-		return -ENOMEM;
+	अगर (!alloc)
+		वापस -ENOMEM;
 
 	end = alloc + ccs_limit_offsets[CCS_L_LAST].lim;
 
-	for (i = 0, l = 0, ptr = alloc; ccs_limits[i].size; i++) {
+	क्रम (i = 0, l = 0, ptr = alloc; ccs_limits[i].size; i++) अणु
 		u32 reg = ccs_limits[i].reg;
-		unsigned int width = ccs_reg_width(reg);
-		unsigned int j;
+		अचिन्हित पूर्णांक width = ccs_reg_width(reg);
+		अचिन्हित पूर्णांक j;
 
-		if (l == CCS_L_LAST) {
+		अगर (l == CCS_L_LAST) अणु
 			dev_err(&client->dev,
 				"internal error --- end of limit array\n");
 			ret = -EINVAL;
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 
-		for (j = 0; j < ccs_limits[i].size / width;
-		     j++, reg += width, ptr += width) {
+		क्रम (j = 0; j < ccs_limits[i].size / width;
+		     j++, reg += width, ptr += width) अणु
 			u32 val;
 
-			ret = ccs_read_addr_noconv(sensor, reg, &val);
-			if (ret)
-				goto out_err;
+			ret = ccs_पढ़ो_addr_noconv(sensor, reg, &val);
+			अगर (ret)
+				जाओ out_err;
 
-			if (ptr + width > end) {
+			अगर (ptr + width > end) अणु
 				dev_err(&client->dev,
 					"internal error --- no room for regs\n");
 				ret = -EINVAL;
-				goto out_err;
-			}
+				जाओ out_err;
+			पूर्ण
 
-			if (!val && j)
-				break;
+			अगर (!val && j)
+				अवरोध;
 
 			ccs_assign_limit(ptr, width, val);
 
 			dev_dbg(&client->dev, "0x%8.8x \"%s\" = %u, 0x%x\n",
 				reg, ccs_limits[i].name, val, val);
-		}
+		पूर्ण
 
-		if (ccs_limits[i].flags & CCS_L_FL_SAME_REG)
-			continue;
+		अगर (ccs_limits[i].flags & CCS_L_FL_SAME_REG)
+			जारी;
 
 		l++;
 		ptr = alloc + ccs_limit_offsets[l].lim;
-	}
+	पूर्ण
 
-	if (l != CCS_L_LAST) {
+	अगर (l != CCS_L_LAST) अणु
 		dev_err(&client->dev,
 			"internal error --- insufficient limits\n");
 		ret = -EINVAL;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	sensor->ccs_limits = alloc;
 
-	if (CCS_LIM(sensor, SCALER_N_MIN) < 16)
+	अगर (CCS_LIM(sensor, SCALER_N_MIN) < 16)
 		ccs_replace_limit(sensor, CCS_L_SCALER_N_MIN, 0, 16);
 
-	return 0;
+	वापस 0;
 
 out_err:
-	kfree(alloc);
+	kमुक्त(alloc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ccs_read_frame_fmt(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+अटल पूर्णांक ccs_पढ़ो_frame_fmt(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
 	u8 fmt_model_type, fmt_model_subtype, ncol_desc, nrow_desc;
-	unsigned int i;
-	int pixel_count = 0;
-	int line_count = 0;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक pixel_count = 0;
+	पूर्णांक line_count = 0;
 
 	fmt_model_type = CCS_LIM(sensor, FRAME_FORMAT_MODEL_TYPE);
 	fmt_model_subtype = CCS_LIM(sensor, FRAME_FORMAT_MODEL_SUBTYPE);
@@ -262,14 +263,14 @@ static int ccs_read_frame_fmt(struct ccs_sensor *sensor)
 	dev_dbg(&client->dev, "%u column and %u row descriptors\n",
 		ncol_desc, nrow_desc);
 
-	for (i = 0; i < ncol_desc + nrow_desc; i++) {
+	क्रम (i = 0; i < ncol_desc + nrow_desc; i++) अणु
 		u32 desc;
 		u32 pixelcode;
 		u32 pixels;
-		char *which;
-		char *what;
+		अक्षर *which;
+		अक्षर *what;
 
-		if (fmt_model_type == CCS_FRAME_FORMAT_MODEL_TYPE_2_BYTE) {
+		अगर (fmt_model_type == CCS_FRAME_FORMAT_MODEL_TYPE_2_BYTE) अणु
 			desc = CCS_LIM_AT(sensor, FRAME_FORMAT_DESCRIPTOR, i);
 
 			pixelcode =
@@ -277,8 +278,8 @@ static int ccs_read_frame_fmt(struct ccs_sensor *sensor)
 				 & CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_MASK)
 				>> CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_SHIFT;
 			pixels = desc & CCS_FRAME_FORMAT_DESCRIPTOR_PIXELS_MASK;
-		} else if (fmt_model_type
-			   == CCS_FRAME_FORMAT_MODEL_TYPE_4_BYTE) {
+		पूर्ण अन्यथा अगर (fmt_model_type
+			   == CCS_FRAME_FORMAT_MODEL_TYPE_4_BYTE) अणु
 			desc = CCS_LIM_AT(sensor, FRAME_FORMAT_DESCRIPTOR_4, i);
 
 			pixelcode =
@@ -287,215 +288,215 @@ static int ccs_read_frame_fmt(struct ccs_sensor *sensor)
 				>> CCS_FRAME_FORMAT_DESCRIPTOR_4_PCODE_SHIFT;
 			pixels = desc &
 				CCS_FRAME_FORMAT_DESCRIPTOR_4_PIXELS_MASK;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_dbg(&client->dev,
 				"invalid frame format model type %d\n",
 				fmt_model_type);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (i < ncol_desc)
+		अगर (i < ncol_desc)
 			which = "columns";
-		else
+		अन्यथा
 			which = "rows";
 
-		switch (pixelcode) {
-		case CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_EMBEDDED:
+		चयन (pixelcode) अणु
+		हाल CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_EMBEDDED:
 			what = "embedded";
-			break;
-		case CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_DUMMY_PIXEL:
+			अवरोध;
+		हाल CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_DUMMY_PIXEL:
 			what = "dummy";
-			break;
-		case CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_BLACK_PIXEL:
+			अवरोध;
+		हाल CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_BLACK_PIXEL:
 			what = "black";
-			break;
-		case CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_DARK_PIXEL:
+			अवरोध;
+		हाल CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_DARK_PIXEL:
 			what = "dark";
-			break;
-		case CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_VISIBLE_PIXEL:
+			अवरोध;
+		हाल CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_VISIBLE_PIXEL:
 			what = "visible";
-			break;
-		default:
+			अवरोध;
+		शेष:
 			what = "invalid";
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dev_dbg(&client->dev,
 			"%s pixels: %d %s (pixelcode %u)\n",
 			what, pixels, which, pixelcode);
 
-		if (i < ncol_desc) {
-			if (pixelcode ==
+		अगर (i < ncol_desc) अणु
+			अगर (pixelcode ==
 			    CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_VISIBLE_PIXEL)
 				sensor->visible_pixel_start = pixel_count;
 			pixel_count += pixels;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Handle row descriptors */
-		switch (pixelcode) {
-		case CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_EMBEDDED:
-			if (sensor->embedded_end)
-				break;
+		चयन (pixelcode) अणु
+		हाल CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_EMBEDDED:
+			अगर (sensor->embedded_end)
+				अवरोध;
 			sensor->embedded_start = line_count;
 			sensor->embedded_end = line_count + pixels;
-			break;
-		case CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_VISIBLE_PIXEL:
+			अवरोध;
+		हाल CCS_FRAME_FORMAT_DESCRIPTOR_PCODE_VISIBLE_PIXEL:
 			sensor->image_start = line_count;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		line_count += pixels;
-	}
+	पूर्ण
 
-	if (sensor->embedded_end > sensor->image_start) {
+	अगर (sensor->embedded_end > sensor->image_start) अणु
 		dev_dbg(&client->dev,
 			"adjusting image start line to %u (was %u)\n",
 			sensor->embedded_end, sensor->image_start);
 		sensor->image_start = sensor->embedded_end;
-	}
+	पूर्ण
 
 	dev_dbg(&client->dev, "embedded data from lines %d to %d\n",
 		sensor->embedded_start, sensor->embedded_end);
 	dev_dbg(&client->dev, "image data starts at line %d\n",
 		sensor->image_start);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ccs_pll_configure(struct ccs_sensor *sensor)
-{
-	struct ccs_pll *pll = &sensor->pll;
-	int rval;
+अटल पूर्णांक ccs_pll_configure(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा ccs_pll *pll = &sensor->pll;
+	पूर्णांक rval;
 
-	rval = ccs_write(sensor, VT_PIX_CLK_DIV, pll->vt_bk.pix_clk_div);
-	if (rval < 0)
-		return rval;
+	rval = ccs_ग_लिखो(sensor, VT_PIX_CLK_DIV, pll->vt_bk.pix_clk_भाग);
+	अगर (rval < 0)
+		वापस rval;
 
-	rval = ccs_write(sensor, VT_SYS_CLK_DIV, pll->vt_bk.sys_clk_div);
-	if (rval < 0)
-		return rval;
+	rval = ccs_ग_लिखो(sensor, VT_SYS_CLK_DIV, pll->vt_bk.sys_clk_भाग);
+	अगर (rval < 0)
+		वापस rval;
 
-	rval = ccs_write(sensor, PRE_PLL_CLK_DIV, pll->vt_fr.pre_pll_clk_div);
-	if (rval < 0)
-		return rval;
+	rval = ccs_ग_लिखो(sensor, PRE_PLL_CLK_DIV, pll->vt_fr.pre_pll_clk_भाग);
+	अगर (rval < 0)
+		वापस rval;
 
-	rval = ccs_write(sensor, PLL_MULTIPLIER, pll->vt_fr.pll_multiplier);
-	if (rval < 0)
-		return rval;
+	rval = ccs_ग_लिखो(sensor, PLL_MULTIPLIER, pll->vt_fr.pll_multiplier);
+	अगर (rval < 0)
+		वापस rval;
 
-	if (!(CCS_LIM(sensor, PHY_CTRL_CAPABILITY) &
-	      CCS_PHY_CTRL_CAPABILITY_AUTO_PHY_CTL)) {
-		/* Lane op clock ratio does not apply here. */
-		rval = ccs_write(sensor, REQUESTED_LINK_RATE,
+	अगर (!(CCS_LIM(sensor, PHY_CTRL_CAPABILITY) &
+	      CCS_PHY_CTRL_CAPABILITY_AUTO_PHY_CTL)) अणु
+		/* Lane op घड़ी ratio करोes not apply here. */
+		rval = ccs_ग_लिखो(sensor, REQUESTED_LINK_RATE,
 				 DIV_ROUND_UP(pll->op_bk.sys_clk_freq_hz,
 					      1000000 / 256 / 256) *
 				 (pll->flags & CCS_PLL_FLAG_LANE_SPEED_MODEL ?
 				  sensor->pll.csi2.lanes : 1) <<
 				 (pll->flags & CCS_PLL_FLAG_OP_SYS_DDR ?
 				  1 : 0));
-		if (rval < 0)
-			return rval;
-	}
+		अगर (rval < 0)
+			वापस rval;
+	पूर्ण
 
-	if (sensor->pll.flags & CCS_PLL_FLAG_NO_OP_CLOCKS)
-		return 0;
+	अगर (sensor->pll.flags & CCS_PLL_FLAG_NO_OP_CLOCKS)
+		वापस 0;
 
-	rval = ccs_write(sensor, OP_PIX_CLK_DIV, pll->op_bk.pix_clk_div);
-	if (rval < 0)
-		return rval;
+	rval = ccs_ग_लिखो(sensor, OP_PIX_CLK_DIV, pll->op_bk.pix_clk_भाग);
+	अगर (rval < 0)
+		वापस rval;
 
-	rval = ccs_write(sensor, OP_SYS_CLK_DIV, pll->op_bk.sys_clk_div);
-	if (rval < 0)
-		return rval;
+	rval = ccs_ग_लिखो(sensor, OP_SYS_CLK_DIV, pll->op_bk.sys_clk_भाग);
+	अगर (rval < 0)
+		वापस rval;
 
-	if (!(pll->flags & CCS_PLL_FLAG_DUAL_PLL))
-		return 0;
+	अगर (!(pll->flags & CCS_PLL_FLAG_DUAL_PLL))
+		वापस 0;
 
-	rval = ccs_write(sensor, PLL_MODE, CCS_PLL_MODE_DUAL);
-	if (rval < 0)
-		return rval;
+	rval = ccs_ग_लिखो(sensor, PLL_MODE, CCS_PLL_MODE_DUAL);
+	अगर (rval < 0)
+		वापस rval;
 
-	rval = ccs_write(sensor, OP_PRE_PLL_CLK_DIV,
-			 pll->op_fr.pre_pll_clk_div);
-	if (rval < 0)
-		return rval;
+	rval = ccs_ग_लिखो(sensor, OP_PRE_PLL_CLK_DIV,
+			 pll->op_fr.pre_pll_clk_भाग);
+	अगर (rval < 0)
+		वापस rval;
 
-	return ccs_write(sensor, OP_PLL_MULTIPLIER, pll->op_fr.pll_multiplier);
-}
+	वापस ccs_ग_लिखो(sensor, OP_PLL_MULTIPLIER, pll->op_fr.pll_multiplier);
+पूर्ण
 
-static int ccs_pll_try(struct ccs_sensor *sensor, struct ccs_pll *pll)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	struct ccs_pll_limits lim = {
-		.vt_fr = {
-			.min_pre_pll_clk_div = CCS_LIM(sensor, MIN_PRE_PLL_CLK_DIV),
-			.max_pre_pll_clk_div = CCS_LIM(sensor, MAX_PRE_PLL_CLK_DIV),
+अटल पूर्णांक ccs_pll_try(काष्ठा ccs_sensor *sensor, काष्ठा ccs_pll *pll)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	काष्ठा ccs_pll_limits lim = अणु
+		.vt_fr = अणु
+			.min_pre_pll_clk_भाग = CCS_LIM(sensor, MIN_PRE_PLL_CLK_DIV),
+			.max_pre_pll_clk_भाग = CCS_LIM(sensor, MAX_PRE_PLL_CLK_DIV),
 			.min_pll_ip_clk_freq_hz = CCS_LIM(sensor, MIN_PLL_IP_CLK_FREQ_MHZ),
 			.max_pll_ip_clk_freq_hz = CCS_LIM(sensor, MAX_PLL_IP_CLK_FREQ_MHZ),
 			.min_pll_multiplier = CCS_LIM(sensor, MIN_PLL_MULTIPLIER),
 			.max_pll_multiplier = CCS_LIM(sensor, MAX_PLL_MULTIPLIER),
 			.min_pll_op_clk_freq_hz = CCS_LIM(sensor, MIN_PLL_OP_CLK_FREQ_MHZ),
 			.max_pll_op_clk_freq_hz = CCS_LIM(sensor, MAX_PLL_OP_CLK_FREQ_MHZ),
-		},
-		.op_fr = {
-			.min_pre_pll_clk_div = CCS_LIM(sensor, MIN_OP_PRE_PLL_CLK_DIV),
-			.max_pre_pll_clk_div = CCS_LIM(sensor, MAX_OP_PRE_PLL_CLK_DIV),
+		पूर्ण,
+		.op_fr = अणु
+			.min_pre_pll_clk_भाग = CCS_LIM(sensor, MIN_OP_PRE_PLL_CLK_DIV),
+			.max_pre_pll_clk_भाग = CCS_LIM(sensor, MAX_OP_PRE_PLL_CLK_DIV),
 			.min_pll_ip_clk_freq_hz = CCS_LIM(sensor, MIN_OP_PLL_IP_CLK_FREQ_MHZ),
 			.max_pll_ip_clk_freq_hz = CCS_LIM(sensor, MAX_OP_PLL_IP_CLK_FREQ_MHZ),
 			.min_pll_multiplier = CCS_LIM(sensor, MIN_OP_PLL_MULTIPLIER),
 			.max_pll_multiplier = CCS_LIM(sensor, MAX_OP_PLL_MULTIPLIER),
 			.min_pll_op_clk_freq_hz = CCS_LIM(sensor, MIN_OP_PLL_OP_CLK_FREQ_MHZ),
 			.max_pll_op_clk_freq_hz = CCS_LIM(sensor, MAX_OP_PLL_OP_CLK_FREQ_MHZ),
-		},
-		.op_bk = {
-			 .min_sys_clk_div = CCS_LIM(sensor, MIN_OP_SYS_CLK_DIV),
-			 .max_sys_clk_div = CCS_LIM(sensor, MAX_OP_SYS_CLK_DIV),
-			 .min_pix_clk_div = CCS_LIM(sensor, MIN_OP_PIX_CLK_DIV),
-			 .max_pix_clk_div = CCS_LIM(sensor, MAX_OP_PIX_CLK_DIV),
+		पूर्ण,
+		.op_bk = अणु
+			 .min_sys_clk_भाग = CCS_LIM(sensor, MIN_OP_SYS_CLK_DIV),
+			 .max_sys_clk_भाग = CCS_LIM(sensor, MAX_OP_SYS_CLK_DIV),
+			 .min_pix_clk_भाग = CCS_LIM(sensor, MIN_OP_PIX_CLK_DIV),
+			 .max_pix_clk_भाग = CCS_LIM(sensor, MAX_OP_PIX_CLK_DIV),
 			 .min_sys_clk_freq_hz = CCS_LIM(sensor, MIN_OP_SYS_CLK_FREQ_MHZ),
 			 .max_sys_clk_freq_hz = CCS_LIM(sensor, MAX_OP_SYS_CLK_FREQ_MHZ),
 			 .min_pix_clk_freq_hz = CCS_LIM(sensor, MIN_OP_PIX_CLK_FREQ_MHZ),
 			 .max_pix_clk_freq_hz = CCS_LIM(sensor, MAX_OP_PIX_CLK_FREQ_MHZ),
-		 },
-		.vt_bk = {
-			 .min_sys_clk_div = CCS_LIM(sensor, MIN_VT_SYS_CLK_DIV),
-			 .max_sys_clk_div = CCS_LIM(sensor, MAX_VT_SYS_CLK_DIV),
-			 .min_pix_clk_div = CCS_LIM(sensor, MIN_VT_PIX_CLK_DIV),
-			 .max_pix_clk_div = CCS_LIM(sensor, MAX_VT_PIX_CLK_DIV),
+		 पूर्ण,
+		.vt_bk = अणु
+			 .min_sys_clk_भाग = CCS_LIM(sensor, MIN_VT_SYS_CLK_DIV),
+			 .max_sys_clk_भाग = CCS_LIM(sensor, MAX_VT_SYS_CLK_DIV),
+			 .min_pix_clk_भाग = CCS_LIM(sensor, MIN_VT_PIX_CLK_DIV),
+			 .max_pix_clk_भाग = CCS_LIM(sensor, MAX_VT_PIX_CLK_DIV),
 			 .min_sys_clk_freq_hz = CCS_LIM(sensor, MIN_VT_SYS_CLK_FREQ_MHZ),
 			 .max_sys_clk_freq_hz = CCS_LIM(sensor, MAX_VT_SYS_CLK_FREQ_MHZ),
 			 .min_pix_clk_freq_hz = CCS_LIM(sensor, MIN_VT_PIX_CLK_FREQ_MHZ),
 			 .max_pix_clk_freq_hz = CCS_LIM(sensor, MAX_VT_PIX_CLK_FREQ_MHZ),
-		 },
+		 पूर्ण,
 		.min_line_length_pck_bin = CCS_LIM(sensor, MIN_LINE_LENGTH_PCK_BIN),
 		.min_line_length_pck = CCS_LIM(sensor, MIN_LINE_LENGTH_PCK),
-	};
+	पूर्ण;
 
-	return ccs_pll_calculate(&client->dev, &lim, pll);
-}
+	वापस ccs_pll_calculate(&client->dev, &lim, pll);
+पूर्ण
 
-static int ccs_pll_update(struct ccs_sensor *sensor)
-{
-	struct ccs_pll *pll = &sensor->pll;
-	int rval;
+अटल पूर्णांक ccs_pll_update(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा ccs_pll *pll = &sensor->pll;
+	पूर्णांक rval;
 
 	pll->binning_horizontal = sensor->binning_horizontal;
 	pll->binning_vertical = sensor->binning_vertical;
 	pll->link_freq =
-		sensor->link_freq->qmenu_int[sensor->link_freq->val];
+		sensor->link_freq->qmenu_पूर्णांक[sensor->link_freq->val];
 	pll->scale_m = sensor->scale_m;
-	pll->bits_per_pixel = sensor->csi_format->compressed;
+	pll->bits_per_pixel = sensor->csi_क्रमmat->compressed;
 
 	rval = ccs_pll_try(sensor, pll);
-	if (rval < 0)
-		return rval;
+	अगर (rval < 0)
+		वापस rval;
 
-	__v4l2_ctrl_s_ctrl_int64(sensor->pixel_rate_parray,
+	__v4l2_ctrl_s_ctrl_पूर्णांक64(sensor->pixel_rate_parray,
 				 pll->pixel_rate_pixel_array);
-	__v4l2_ctrl_s_ctrl_int64(sensor->pixel_rate_csi, pll->pixel_rate_csi);
+	__v4l2_ctrl_s_ctrl_पूर्णांक64(sensor->pixel_rate_csi, pll->pixel_rate_csi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
@@ -504,344 +505,344 @@ static int ccs_pll_update(struct ccs_sensor *sensor)
  *
  */
 
-static void __ccs_update_exposure_limits(struct ccs_sensor *sensor)
-{
-	struct v4l2_ctrl *ctrl = sensor->exposure;
-	int max;
+अटल व्योम __ccs_update_exposure_limits(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा v4l2_ctrl *ctrl = sensor->exposure;
+	पूर्णांक max;
 
 	max = sensor->pixel_array->crop[CCS_PA_PAD_SRC].height
 		+ sensor->vblank->val
 		- CCS_LIM(sensor, COARSE_INTEGRATION_TIME_MAX_MARGIN);
 
-	__v4l2_ctrl_modify_range(ctrl, ctrl->minimum, max, ctrl->step, max);
-}
+	__v4l2_ctrl_modअगरy_range(ctrl, ctrl->minimum, max, ctrl->step, max);
+पूर्ण
 
 /*
  * Order matters.
  *
  * 1. Bits-per-pixel, descending.
  * 2. Bits-per-pixel compressed, descending.
- * 3. Pixel order, same as in pixel_order_str. Formats for all four pixel
+ * 3. Pixel order, same as in pixel_order_str. Formats क्रम all four pixel
  *    orders must be defined.
  */
-static const struct ccs_csi_data_format ccs_csi_data_formats[] = {
-	{ MEDIA_BUS_FMT_SGRBG16_1X16, 16, 16, CCS_PIXEL_ORDER_GRBG, },
-	{ MEDIA_BUS_FMT_SRGGB16_1X16, 16, 16, CCS_PIXEL_ORDER_RGGB, },
-	{ MEDIA_BUS_FMT_SBGGR16_1X16, 16, 16, CCS_PIXEL_ORDER_BGGR, },
-	{ MEDIA_BUS_FMT_SGBRG16_1X16, 16, 16, CCS_PIXEL_ORDER_GBRG, },
-	{ MEDIA_BUS_FMT_SGRBG14_1X14, 14, 14, CCS_PIXEL_ORDER_GRBG, },
-	{ MEDIA_BUS_FMT_SRGGB14_1X14, 14, 14, CCS_PIXEL_ORDER_RGGB, },
-	{ MEDIA_BUS_FMT_SBGGR14_1X14, 14, 14, CCS_PIXEL_ORDER_BGGR, },
-	{ MEDIA_BUS_FMT_SGBRG14_1X14, 14, 14, CCS_PIXEL_ORDER_GBRG, },
-	{ MEDIA_BUS_FMT_SGRBG12_1X12, 12, 12, CCS_PIXEL_ORDER_GRBG, },
-	{ MEDIA_BUS_FMT_SRGGB12_1X12, 12, 12, CCS_PIXEL_ORDER_RGGB, },
-	{ MEDIA_BUS_FMT_SBGGR12_1X12, 12, 12, CCS_PIXEL_ORDER_BGGR, },
-	{ MEDIA_BUS_FMT_SGBRG12_1X12, 12, 12, CCS_PIXEL_ORDER_GBRG, },
-	{ MEDIA_BUS_FMT_SGRBG10_1X10, 10, 10, CCS_PIXEL_ORDER_GRBG, },
-	{ MEDIA_BUS_FMT_SRGGB10_1X10, 10, 10, CCS_PIXEL_ORDER_RGGB, },
-	{ MEDIA_BUS_FMT_SBGGR10_1X10, 10, 10, CCS_PIXEL_ORDER_BGGR, },
-	{ MEDIA_BUS_FMT_SGBRG10_1X10, 10, 10, CCS_PIXEL_ORDER_GBRG, },
-	{ MEDIA_BUS_FMT_SGRBG10_DPCM8_1X8, 10, 8, CCS_PIXEL_ORDER_GRBG, },
-	{ MEDIA_BUS_FMT_SRGGB10_DPCM8_1X8, 10, 8, CCS_PIXEL_ORDER_RGGB, },
-	{ MEDIA_BUS_FMT_SBGGR10_DPCM8_1X8, 10, 8, CCS_PIXEL_ORDER_BGGR, },
-	{ MEDIA_BUS_FMT_SGBRG10_DPCM8_1X8, 10, 8, CCS_PIXEL_ORDER_GBRG, },
-	{ MEDIA_BUS_FMT_SGRBG8_1X8, 8, 8, CCS_PIXEL_ORDER_GRBG, },
-	{ MEDIA_BUS_FMT_SRGGB8_1X8, 8, 8, CCS_PIXEL_ORDER_RGGB, },
-	{ MEDIA_BUS_FMT_SBGGR8_1X8, 8, 8, CCS_PIXEL_ORDER_BGGR, },
-	{ MEDIA_BUS_FMT_SGBRG8_1X8, 8, 8, CCS_PIXEL_ORDER_GBRG, },
-};
+अटल स्थिर काष्ठा ccs_csi_data_क्रमmat ccs_csi_data_क्रमmats[] = अणु
+	अणु MEDIA_BUS_FMT_SGRBG16_1X16, 16, 16, CCS_PIXEL_ORDER_GRBG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SRGGB16_1X16, 16, 16, CCS_PIXEL_ORDER_RGGB, पूर्ण,
+	अणु MEDIA_BUS_FMT_SBGGR16_1X16, 16, 16, CCS_PIXEL_ORDER_BGGR, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGBRG16_1X16, 16, 16, CCS_PIXEL_ORDER_GBRG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGRBG14_1X14, 14, 14, CCS_PIXEL_ORDER_GRBG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SRGGB14_1X14, 14, 14, CCS_PIXEL_ORDER_RGGB, पूर्ण,
+	अणु MEDIA_BUS_FMT_SBGGR14_1X14, 14, 14, CCS_PIXEL_ORDER_BGGR, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGBRG14_1X14, 14, 14, CCS_PIXEL_ORDER_GBRG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGRBG12_1X12, 12, 12, CCS_PIXEL_ORDER_GRBG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SRGGB12_1X12, 12, 12, CCS_PIXEL_ORDER_RGGB, पूर्ण,
+	अणु MEDIA_BUS_FMT_SBGGR12_1X12, 12, 12, CCS_PIXEL_ORDER_BGGR, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGBRG12_1X12, 12, 12, CCS_PIXEL_ORDER_GBRG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGRBG10_1X10, 10, 10, CCS_PIXEL_ORDER_GRBG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SRGGB10_1X10, 10, 10, CCS_PIXEL_ORDER_RGGB, पूर्ण,
+	अणु MEDIA_BUS_FMT_SBGGR10_1X10, 10, 10, CCS_PIXEL_ORDER_BGGR, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGBRG10_1X10, 10, 10, CCS_PIXEL_ORDER_GBRG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGRBG10_DPCM8_1X8, 10, 8, CCS_PIXEL_ORDER_GRBG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SRGGB10_DPCM8_1X8, 10, 8, CCS_PIXEL_ORDER_RGGB, पूर्ण,
+	अणु MEDIA_BUS_FMT_SBGGR10_DPCM8_1X8, 10, 8, CCS_PIXEL_ORDER_BGGR, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGBRG10_DPCM8_1X8, 10, 8, CCS_PIXEL_ORDER_GBRG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGRBG8_1X8, 8, 8, CCS_PIXEL_ORDER_GRBG, पूर्ण,
+	अणु MEDIA_BUS_FMT_SRGGB8_1X8, 8, 8, CCS_PIXEL_ORDER_RGGB, पूर्ण,
+	अणु MEDIA_BUS_FMT_SBGGR8_1X8, 8, 8, CCS_PIXEL_ORDER_BGGR, पूर्ण,
+	अणु MEDIA_BUS_FMT_SGBRG8_1X8, 8, 8, CCS_PIXEL_ORDER_GBRG, पूर्ण,
+पूर्ण;
 
-static const char *pixel_order_str[] = { "GRBG", "RGGB", "BGGR", "GBRG" };
+अटल स्थिर अक्षर *pixel_order_str[] = अणु "GRBG", "RGGB", "BGGR", "GBRG" पूर्ण;
 
-#define to_csi_format_idx(fmt) (((unsigned long)(fmt)			\
-				 - (unsigned long)ccs_csi_data_formats) \
-				/ sizeof(*ccs_csi_data_formats))
+#घोषणा to_csi_क्रमmat_idx(fmt) (((अचिन्हित दीर्घ)(fmt)			\
+				 - (अचिन्हित दीर्घ)ccs_csi_data_क्रमmats) \
+				/ माप(*ccs_csi_data_क्रमmats))
 
-static u32 ccs_pixel_order(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	int flip = 0;
+अटल u32 ccs_pixel_order(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	पूर्णांक flip = 0;
 
-	if (sensor->hflip) {
-		if (sensor->hflip->val)
+	अगर (sensor->hflip) अणु
+		अगर (sensor->hflip->val)
 			flip |= CCS_IMAGE_ORIENTATION_HORIZONTAL_MIRROR;
 
-		if (sensor->vflip->val)
+		अगर (sensor->vflip->val)
 			flip |= CCS_IMAGE_ORIENTATION_VERTICAL_FLIP;
-	}
+	पूर्ण
 
 	flip ^= sensor->hvflip_inv_mask;
 
 	dev_dbg(&client->dev, "flip %d\n", flip);
-	return sensor->default_pixel_order ^ flip;
-}
+	वापस sensor->शेष_pixel_order ^ flip;
+पूर्ण
 
-static void ccs_update_mbus_formats(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	unsigned int csi_format_idx =
-		to_csi_format_idx(sensor->csi_format) & ~3;
-	unsigned int internal_csi_format_idx =
-		to_csi_format_idx(sensor->internal_csi_format) & ~3;
-	unsigned int pixel_order = ccs_pixel_order(sensor);
+अटल व्योम ccs_update_mbus_क्रमmats(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	अचिन्हित पूर्णांक csi_क्रमmat_idx =
+		to_csi_क्रमmat_idx(sensor->csi_क्रमmat) & ~3;
+	अचिन्हित पूर्णांक पूर्णांकernal_csi_क्रमmat_idx =
+		to_csi_क्रमmat_idx(sensor->पूर्णांकernal_csi_क्रमmat) & ~3;
+	अचिन्हित पूर्णांक pixel_order = ccs_pixel_order(sensor);
 
-	if (WARN_ON_ONCE(max(internal_csi_format_idx, csi_format_idx) +
-			 pixel_order >= ARRAY_SIZE(ccs_csi_data_formats)))
-		return;
+	अगर (WARN_ON_ONCE(max(पूर्णांकernal_csi_क्रमmat_idx, csi_क्रमmat_idx) +
+			 pixel_order >= ARRAY_SIZE(ccs_csi_data_क्रमmats)))
+		वापस;
 
 	sensor->mbus_frame_fmts =
-		sensor->default_mbus_frame_fmts << pixel_order;
-	sensor->csi_format =
-		&ccs_csi_data_formats[csi_format_idx + pixel_order];
-	sensor->internal_csi_format =
-		&ccs_csi_data_formats[internal_csi_format_idx
+		sensor->शेष_mbus_frame_fmts << pixel_order;
+	sensor->csi_क्रमmat =
+		&ccs_csi_data_क्रमmats[csi_क्रमmat_idx + pixel_order];
+	sensor->पूर्णांकernal_csi_क्रमmat =
+		&ccs_csi_data_क्रमmats[पूर्णांकernal_csi_क्रमmat_idx
 					 + pixel_order];
 
 	dev_dbg(&client->dev, "new pixel order %s\n",
 		pixel_order_str[pixel_order]);
-}
+पूर्ण
 
-static const char * const ccs_test_patterns[] = {
+अटल स्थिर अक्षर * स्थिर ccs_test_patterns[] = अणु
 	"Disabled",
 	"Solid Colour",
 	"Eight Vertical Colour Bars",
 	"Colour Bars With Fade to Grey",
 	"Pseudorandom Sequence (PN9)",
-};
+पूर्ण;
 
-static int ccs_set_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct ccs_sensor *sensor =
-		container_of(ctrl->handler, struct ccs_subdev, ctrl_handler)
+अटल पूर्णांक ccs_set_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा ccs_sensor *sensor =
+		container_of(ctrl->handler, काष्ठा ccs_subdev, ctrl_handler)
 			->sensor;
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	int pm_status;
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	पूर्णांक pm_status;
 	u32 orient = 0;
-	unsigned int i;
-	int exposure;
-	int rval;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक exposure;
+	पूर्णांक rval;
 
-	switch (ctrl->id) {
-	case V4L2_CID_HFLIP:
-	case V4L2_CID_VFLIP:
-		if (sensor->streaming)
-			return -EBUSY;
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_HFLIP:
+	हाल V4L2_CID_VFLIP:
+		अगर (sensor->streaming)
+			वापस -EBUSY;
 
-		if (sensor->hflip->val)
+		अगर (sensor->hflip->val)
 			orient |= CCS_IMAGE_ORIENTATION_HORIZONTAL_MIRROR;
 
-		if (sensor->vflip->val)
+		अगर (sensor->vflip->val)
 			orient |= CCS_IMAGE_ORIENTATION_VERTICAL_FLIP;
 
 		orient ^= sensor->hvflip_inv_mask;
 
-		ccs_update_mbus_formats(sensor);
+		ccs_update_mbus_क्रमmats(sensor);
 
-		break;
-	case V4L2_CID_VBLANK:
+		अवरोध;
+	हाल V4L2_CID_VBLANK:
 		exposure = sensor->exposure->val;
 
 		__ccs_update_exposure_limits(sensor);
 
-		if (exposure > sensor->exposure->maximum) {
+		अगर (exposure > sensor->exposure->maximum) अणु
 			sensor->exposure->val =	sensor->exposure->maximum;
 			rval = ccs_set_ctrl(sensor->exposure);
-			if (rval < 0)
-				return rval;
-		}
+			अगर (rval < 0)
+				वापस rval;
+		पूर्ण
 
-		break;
-	case V4L2_CID_LINK_FREQ:
-		if (sensor->streaming)
-			return -EBUSY;
+		अवरोध;
+	हाल V4L2_CID_LINK_FREQ:
+		अगर (sensor->streaming)
+			वापस -EBUSY;
 
 		rval = ccs_pll_update(sensor);
-		if (rval)
-			return rval;
+		अगर (rval)
+			वापस rval;
 
-		return 0;
-	case V4L2_CID_TEST_PATTERN:
-		for (i = 0; i < ARRAY_SIZE(sensor->test_data); i++)
+		वापस 0;
+	हाल V4L2_CID_TEST_PATTERN:
+		क्रम (i = 0; i < ARRAY_SIZE(sensor->test_data); i++)
 			v4l2_ctrl_activate(
 				sensor->test_data[i],
 				ctrl->val ==
 				V4L2_SMIAPP_TEST_PATTERN_MODE_SOLID_COLOUR);
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	pm_status = pm_runtime_get_if_active(&client->dev, true);
-	if (!pm_status)
-		return 0;
+	pm_status = pm_runसमय_get_अगर_active(&client->dev, true);
+	अगर (!pm_status)
+		वापस 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_ANALOGUE_GAIN:
-		rval = ccs_write(sensor, ANALOG_GAIN_CODE_GLOBAL, ctrl->val);
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_ANALOGUE_GAIN:
+		rval = ccs_ग_लिखो(sensor, ANALOG_GAIN_CODE_GLOBAL, ctrl->val);
 
-		break;
+		अवरोध;
 
-	case V4L2_CID_CCS_ANALOGUE_LINEAR_GAIN:
-		rval = ccs_write(sensor, ANALOG_LINEAR_GAIN_GLOBAL, ctrl->val);
+	हाल V4L2_CID_CCS_ANALOGUE_LINEAR_GAIN:
+		rval = ccs_ग_लिखो(sensor, ANALOG_LINEAR_GAIN_GLOBAL, ctrl->val);
 
-		break;
+		अवरोध;
 
-	case V4L2_CID_CCS_ANALOGUE_EXPONENTIAL_GAIN:
-		rval = ccs_write(sensor, ANALOG_EXPONENTIAL_GAIN_GLOBAL,
+	हाल V4L2_CID_CCS_ANALOGUE_EXPONENTIAL_GAIN:
+		rval = ccs_ग_लिखो(sensor, ANALOG_EXPONENTIAL_GAIN_GLOBAL,
 				 ctrl->val);
 
-		break;
+		अवरोध;
 
-	case V4L2_CID_DIGITAL_GAIN:
-		if (CCS_LIM(sensor, DIGITAL_GAIN_CAPABILITY) ==
-		    CCS_DIGITAL_GAIN_CAPABILITY_GLOBAL) {
-			rval = ccs_write(sensor, DIGITAL_GAIN_GLOBAL,
+	हाल V4L2_CID_DIGITAL_GAIN:
+		अगर (CCS_LIM(sensor, DIGITAL_GAIN_CAPABILITY) ==
+		    CCS_DIGITAL_GAIN_CAPABILITY_GLOBAL) अणु
+			rval = ccs_ग_लिखो(sensor, DIGITAL_GAIN_GLOBAL,
 					 ctrl->val);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		rval = ccs_write_addr(sensor,
+		rval = ccs_ग_लिखो_addr(sensor,
 				      SMIAPP_REG_U16_DIGITAL_GAIN_GREENR,
 				      ctrl->val);
-		if (rval)
-			break;
+		अगर (rval)
+			अवरोध;
 
-		rval = ccs_write_addr(sensor,
+		rval = ccs_ग_लिखो_addr(sensor,
 				      SMIAPP_REG_U16_DIGITAL_GAIN_RED,
 				      ctrl->val);
-		if (rval)
-			break;
+		अगर (rval)
+			अवरोध;
 
-		rval = ccs_write_addr(sensor,
+		rval = ccs_ग_लिखो_addr(sensor,
 				      SMIAPP_REG_U16_DIGITAL_GAIN_BLUE,
 				      ctrl->val);
-		if (rval)
-			break;
+		अगर (rval)
+			अवरोध;
 
-		rval = ccs_write_addr(sensor,
+		rval = ccs_ग_लिखो_addr(sensor,
 				      SMIAPP_REG_U16_DIGITAL_GAIN_GREENB,
 				      ctrl->val);
 
-		break;
-	case V4L2_CID_EXPOSURE:
-		rval = ccs_write(sensor, COARSE_INTEGRATION_TIME, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_EXPOSURE:
+		rval = ccs_ग_लिखो(sensor, COARSE_INTEGRATION_TIME, ctrl->val);
 
-		break;
-	case V4L2_CID_HFLIP:
-	case V4L2_CID_VFLIP:
-		rval = ccs_write(sensor, IMAGE_ORIENTATION, orient);
+		अवरोध;
+	हाल V4L2_CID_HFLIP:
+	हाल V4L2_CID_VFLIP:
+		rval = ccs_ग_लिखो(sensor, IMAGE_ORIENTATION, orient);
 
-		break;
-	case V4L2_CID_VBLANK:
-		rval = ccs_write(sensor, FRAME_LENGTH_LINES,
+		अवरोध;
+	हाल V4L2_CID_VBLANK:
+		rval = ccs_ग_लिखो(sensor, FRAME_LENGTH_LINES,
 				 sensor->pixel_array->crop[
 					 CCS_PA_PAD_SRC].height
 				 + ctrl->val);
 
-		break;
-	case V4L2_CID_HBLANK:
-		rval = ccs_write(sensor, LINE_LENGTH_PCK,
+		अवरोध;
+	हाल V4L2_CID_HBLANK:
+		rval = ccs_ग_लिखो(sensor, LINE_LENGTH_PCK,
 				 sensor->pixel_array->crop[CCS_PA_PAD_SRC].width
 				 + ctrl->val);
 
-		break;
-	case V4L2_CID_TEST_PATTERN:
-		rval = ccs_write(sensor, TEST_PATTERN_MODE, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_TEST_PATTERN:
+		rval = ccs_ग_लिखो(sensor, TEST_PATTERN_MODE, ctrl->val);
 
-		break;
-	case V4L2_CID_TEST_PATTERN_RED:
-		rval = ccs_write(sensor, TEST_DATA_RED, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_TEST_PATTERN_RED:
+		rval = ccs_ग_लिखो(sensor, TEST_DATA_RED, ctrl->val);
 
-		break;
-	case V4L2_CID_TEST_PATTERN_GREENR:
-		rval = ccs_write(sensor, TEST_DATA_GREENR, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_TEST_PATTERN_GREENR:
+		rval = ccs_ग_लिखो(sensor, TEST_DATA_GREENR, ctrl->val);
 
-		break;
-	case V4L2_CID_TEST_PATTERN_BLUE:
-		rval = ccs_write(sensor, TEST_DATA_BLUE, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_TEST_PATTERN_BLUE:
+		rval = ccs_ग_लिखो(sensor, TEST_DATA_BLUE, ctrl->val);
 
-		break;
-	case V4L2_CID_TEST_PATTERN_GREENB:
-		rval = ccs_write(sensor, TEST_DATA_GREENB, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_TEST_PATTERN_GREENB:
+		rval = ccs_ग_लिखो(sensor, TEST_DATA_GREENB, ctrl->val);
 
-		break;
-	case V4L2_CID_CCS_SHADING_CORRECTION:
-		rval = ccs_write(sensor, SHADING_CORRECTION_EN,
+		अवरोध;
+	हाल V4L2_CID_CCS_SHADING_CORRECTION:
+		rval = ccs_ग_लिखो(sensor, SHADING_CORRECTION_EN,
 				 ctrl->val ? CCS_SHADING_CORRECTION_EN_ENABLE :
 				 0);
 
-		if (!rval && sensor->luminance_level)
+		अगर (!rval && sensor->luminance_level)
 			v4l2_ctrl_activate(sensor->luminance_level, ctrl->val);
 
-		break;
-	case V4L2_CID_CCS_LUMINANCE_CORRECTION_LEVEL:
-		rval = ccs_write(sensor, LUMINANCE_CORRECTION_LEVEL, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_CCS_LUMIन_अंकCE_CORRECTION_LEVEL:
+		rval = ccs_ग_लिखो(sensor, LUMIन_अंकCE_CORRECTION_LEVEL, ctrl->val);
 
-		break;
-	case V4L2_CID_PIXEL_RATE:
-		/* For v4l2_ctrl_s_ctrl_int64() used internally. */
+		अवरोध;
+	हाल V4L2_CID_PIXEL_RATE:
+		/* For v4l2_ctrl_s_ctrl_पूर्णांक64() used पूर्णांकernally. */
 		rval = 0;
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rval = -EINVAL;
-	}
+	पूर्ण
 
-	if (pm_status > 0) {
-		pm_runtime_mark_last_busy(&client->dev);
-		pm_runtime_put_autosuspend(&client->dev);
-	}
+	अगर (pm_status > 0) अणु
+		pm_runसमय_mark_last_busy(&client->dev);
+		pm_runसमय_put_स्वतःsuspend(&client->dev);
+	पूर्ण
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static const struct v4l2_ctrl_ops ccs_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops ccs_ctrl_ops = अणु
 	.s_ctrl = ccs_set_ctrl,
-};
+पूर्ण;
 
-static int ccs_init_controls(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	int rval;
+अटल पूर्णांक ccs_init_controls(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	पूर्णांक rval;
 
 	rval = v4l2_ctrl_handler_init(&sensor->pixel_array->ctrl_handler, 17);
-	if (rval)
-		return rval;
+	अगर (rval)
+		वापस rval;
 
 	sensor->pixel_array->ctrl_handler.lock = &sensor->mutex;
 
-	switch (CCS_LIM(sensor, ANALOG_GAIN_CAPABILITY)) {
-	case CCS_ANALOG_GAIN_CAPABILITY_GLOBAL: {
-		struct {
-			const char *name;
+	चयन (CCS_LIM(sensor, ANALOG_GAIN_CAPABILITY)) अणु
+	हाल CCS_ANALOG_GAIN_CAPABILITY_GLOBAL: अणु
+		काष्ठा अणु
+			स्थिर अक्षर *name;
 			u32 id;
 			s32 value;
-		} const gain_ctrls[] = {
-			{ "Analogue Gain m0", V4L2_CID_CCS_ANALOGUE_GAIN_M0,
-			  CCS_LIM(sensor, ANALOG_GAIN_M0), },
-			{ "Analogue Gain c0", V4L2_CID_CCS_ANALOGUE_GAIN_C0,
-			  CCS_LIM(sensor, ANALOG_GAIN_C0), },
-			{ "Analogue Gain m1", V4L2_CID_CCS_ANALOGUE_GAIN_M1,
-			  CCS_LIM(sensor, ANALOG_GAIN_M1), },
-			{ "Analogue Gain c1", V4L2_CID_CCS_ANALOGUE_GAIN_C1,
-			  CCS_LIM(sensor, ANALOG_GAIN_C1), },
-		};
-		struct v4l2_ctrl_config ctrl_cfg = {
+		पूर्ण स्थिर gain_ctrls[] = अणु
+			अणु "Analogue Gain m0", V4L2_CID_CCS_ANALOGUE_GAIN_M0,
+			  CCS_LIM(sensor, ANALOG_GAIN_M0), पूर्ण,
+			अणु "Analogue Gain c0", V4L2_CID_CCS_ANALOGUE_GAIN_C0,
+			  CCS_LIM(sensor, ANALOG_GAIN_C0), पूर्ण,
+			अणु "Analogue Gain m1", V4L2_CID_CCS_ANALOGUE_GAIN_M1,
+			  CCS_LIM(sensor, ANALOG_GAIN_M1), पूर्ण,
+			अणु "Analogue Gain c1", V4L2_CID_CCS_ANALOGUE_GAIN_C1,
+			  CCS_LIM(sensor, ANALOG_GAIN_C1), पूर्ण,
+		पूर्ण;
+		काष्ठा v4l2_ctrl_config ctrl_cfg = अणु
 			.type = V4L2_CTRL_TYPE_INTEGER,
 			.ops = &ccs_ctrl_ops,
 			.flags = V4L2_CTRL_FLAG_READ_ONLY,
 			.step = 1,
-		};
-		unsigned int i;
+		पूर्ण;
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; i < ARRAY_SIZE(gain_ctrls); i++) {
+		क्रम (i = 0; i < ARRAY_SIZE(gain_ctrls); i++) अणु
 			ctrl_cfg.name = gain_ctrls[i].name;
 			ctrl_cfg.id = gain_ctrls[i].id;
 			ctrl_cfg.min = ctrl_cfg.max = ctrl_cfg.def =
 				gain_ctrls[i].value;
 
 			v4l2_ctrl_new_custom(&sensor->pixel_array->ctrl_handler,
-					     &ctrl_cfg, NULL);
-		}
+					     &ctrl_cfg, शून्य);
+		पूर्ण
 
 		v4l2_ctrl_new_std(&sensor->pixel_array->ctrl_handler,
 				  &ccs_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
@@ -850,16 +851,16 @@ static int ccs_init_controls(struct ccs_sensor *sensor)
 				  max(CCS_LIM(sensor, ANALOG_GAIN_CODE_STEP),
 				      1U),
 				  CCS_LIM(sensor, ANALOG_GAIN_CODE_MIN));
-	}
-		break;
+	पूर्ण
+		अवरोध;
 
-	case CCS_ANALOG_GAIN_CAPABILITY_ALTERNATE_GLOBAL: {
-		struct {
-			const char *name;
+	हाल CCS_ANALOG_GAIN_CAPABILITY_ALTERNATE_GLOBAL: अणु
+		काष्ठा अणु
+			स्थिर अक्षर *name;
 			u32 id;
 			u16 min, max, step;
-		} const gain_ctrls[] = {
-			{
+		पूर्ण स्थिर gain_ctrls[] = अणु
+			अणु
 				"Analogue Linear Gain",
 				V4L2_CID_CCS_ANALOGUE_LINEAR_GAIN,
 				CCS_LIM(sensor, ANALOG_LINEAR_GAIN_MIN),
@@ -867,8 +868,8 @@ static int ccs_init_controls(struct ccs_sensor *sensor)
 				max(CCS_LIM(sensor,
 					    ANALOG_LINEAR_GAIN_STEP_SIZE),
 				    1U),
-			},
-			{
+			पूर्ण,
+			अणु
 				"Analogue Exponential Gain",
 				V4L2_CID_CCS_ANALOGUE_EXPONENTIAL_GAIN,
 				CCS_LIM(sensor, ANALOG_EXPONENTIAL_GAIN_MIN),
@@ -876,15 +877,15 @@ static int ccs_init_controls(struct ccs_sensor *sensor)
 				max(CCS_LIM(sensor,
 					    ANALOG_EXPONENTIAL_GAIN_STEP_SIZE),
 				    1U),
-			},
-		};
-		struct v4l2_ctrl_config ctrl_cfg = {
+			पूर्ण,
+		पूर्ण;
+		काष्ठा v4l2_ctrl_config ctrl_cfg = अणु
 			.type = V4L2_CTRL_TYPE_INTEGER,
 			.ops = &ccs_ctrl_ops,
-		};
-		unsigned int i;
+		पूर्ण;
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; i < ARRAY_SIZE(gain_ctrls); i++) {
+		क्रम (i = 0; i < ARRAY_SIZE(gain_ctrls); i++) अणु
 			ctrl_cfg.name = gain_ctrls[i].name;
 			ctrl_cfg.min = ctrl_cfg.def = gain_ctrls[i].min;
 			ctrl_cfg.max = gain_ctrls[i].max;
@@ -892,45 +893,45 @@ static int ccs_init_controls(struct ccs_sensor *sensor)
 			ctrl_cfg.id = gain_ctrls[i].id;
 
 			v4l2_ctrl_new_custom(&sensor->pixel_array->ctrl_handler,
-					     &ctrl_cfg, NULL);
-		}
-	}
-	}
+					     &ctrl_cfg, शून्य);
+		पूर्ण
+	पूर्ण
+	पूर्ण
 
-	if (CCS_LIM(sensor, SHADING_CORRECTION_CAPABILITY) &
+	अगर (CCS_LIM(sensor, SHADING_CORRECTION_CAPABILITY) &
 	    (CCS_SHADING_CORRECTION_CAPABILITY_COLOR_SHADING |
-	     CCS_SHADING_CORRECTION_CAPABILITY_LUMINANCE_CORRECTION)) {
-		const struct v4l2_ctrl_config ctrl_cfg = {
+	     CCS_SHADING_CORRECTION_CAPABILITY_LUMIन_अंकCE_CORRECTION)) अणु
+		स्थिर काष्ठा v4l2_ctrl_config ctrl_cfg = अणु
 			.name = "Shading Correction",
 			.type = V4L2_CTRL_TYPE_BOOLEAN,
 			.id = V4L2_CID_CCS_SHADING_CORRECTION,
 			.ops = &ccs_ctrl_ops,
 			.max = 1,
 			.step = 1,
-		};
+		पूर्ण;
 
 		v4l2_ctrl_new_custom(&sensor->pixel_array->ctrl_handler,
-				     &ctrl_cfg, NULL);
-	}
+				     &ctrl_cfg, शून्य);
+	पूर्ण
 
-	if (CCS_LIM(sensor, SHADING_CORRECTION_CAPABILITY) &
-	    CCS_SHADING_CORRECTION_CAPABILITY_LUMINANCE_CORRECTION) {
-		const struct v4l2_ctrl_config ctrl_cfg = {
+	अगर (CCS_LIM(sensor, SHADING_CORRECTION_CAPABILITY) &
+	    CCS_SHADING_CORRECTION_CAPABILITY_LUMIन_अंकCE_CORRECTION) अणु
+		स्थिर काष्ठा v4l2_ctrl_config ctrl_cfg = अणु
 			.name = "Luminance Correction Level",
 			.type = V4L2_CTRL_TYPE_BOOLEAN,
-			.id = V4L2_CID_CCS_LUMINANCE_CORRECTION_LEVEL,
+			.id = V4L2_CID_CCS_LUMIन_अंकCE_CORRECTION_LEVEL,
 			.ops = &ccs_ctrl_ops,
 			.max = 255,
 			.step = 1,
 			.def = 128,
-		};
+		पूर्ण;
 
 		sensor->luminance_level =
 			v4l2_ctrl_new_custom(&sensor->pixel_array->ctrl_handler,
-					     &ctrl_cfg, NULL);
-	}
+					     &ctrl_cfg, शून्य);
+	पूर्ण
 
-	if (CCS_LIM(sensor, DIGITAL_GAIN_CAPABILITY) ==
+	अगर (CCS_LIM(sensor, DIGITAL_GAIN_CAPABILITY) ==
 	    CCS_DIGITAL_GAIN_CAPABILITY_GLOBAL ||
 	    CCS_LIM(sensor, DIGITAL_GAIN_CAPABILITY) ==
 	    SMIAPP_DIGITAL_GAIN_CAPABILITY_PER_CHANNEL)
@@ -958,31 +959,31 @@ static int ccs_init_controls(struct ccs_sensor *sensor)
 		&sensor->pixel_array->ctrl_handler, &ccs_ctrl_ops,
 		V4L2_CID_VBLANK, 0, 1, 1, 0);
 
-	if (sensor->vblank)
+	अगर (sensor->vblank)
 		sensor->vblank->flags |= V4L2_CTRL_FLAG_UPDATE;
 
 	sensor->hblank = v4l2_ctrl_new_std(
 		&sensor->pixel_array->ctrl_handler, &ccs_ctrl_ops,
 		V4L2_CID_HBLANK, 0, 1, 1, 0);
 
-	if (sensor->hblank)
+	अगर (sensor->hblank)
 		sensor->hblank->flags |= V4L2_CTRL_FLAG_UPDATE;
 
 	sensor->pixel_rate_parray = v4l2_ctrl_new_std(
 		&sensor->pixel_array->ctrl_handler, &ccs_ctrl_ops,
-		V4L2_CID_PIXEL_RATE, 1, INT_MAX, 1, 1);
+		V4L2_CID_PIXEL_RATE, 1, पूर्णांक_उच्च, 1, 1);
 
 	v4l2_ctrl_new_std_menu_items(&sensor->pixel_array->ctrl_handler,
 				     &ccs_ctrl_ops, V4L2_CID_TEST_PATTERN,
 				     ARRAY_SIZE(ccs_test_patterns) - 1,
 				     0, 0, ccs_test_patterns);
 
-	if (sensor->pixel_array->ctrl_handler.error) {
+	अगर (sensor->pixel_array->ctrl_handler.error) अणु
 		dev_err(&client->dev,
 			"pixel array controls initialization failed (%d)\n",
 			sensor->pixel_array->ctrl_handler.error);
-		return sensor->pixel_array->ctrl_handler.error;
-	}
+		वापस sensor->pixel_array->ctrl_handler.error;
+	पूर्ण
 
 	sensor->pixel_array->sd.ctrl_handler =
 		&sensor->pixel_array->ctrl_handler;
@@ -990,248 +991,248 @@ static int ccs_init_controls(struct ccs_sensor *sensor)
 	v4l2_ctrl_cluster(2, &sensor->hflip);
 
 	rval = v4l2_ctrl_handler_init(&sensor->src->ctrl_handler, 0);
-	if (rval)
-		return rval;
+	अगर (rval)
+		वापस rval;
 
 	sensor->src->ctrl_handler.lock = &sensor->mutex;
 
 	sensor->pixel_rate_csi = v4l2_ctrl_new_std(
 		&sensor->src->ctrl_handler, &ccs_ctrl_ops,
-		V4L2_CID_PIXEL_RATE, 1, INT_MAX, 1, 1);
+		V4L2_CID_PIXEL_RATE, 1, पूर्णांक_उच्च, 1, 1);
 
-	if (sensor->src->ctrl_handler.error) {
+	अगर (sensor->src->ctrl_handler.error) अणु
 		dev_err(&client->dev,
 			"src controls initialization failed (%d)\n",
 			sensor->src->ctrl_handler.error);
-		return sensor->src->ctrl_handler.error;
-	}
+		वापस sensor->src->ctrl_handler.error;
+	पूर्ण
 
 	sensor->src->sd.ctrl_handler = &sensor->src->ctrl_handler;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * For controls that require information on available media bus codes
+ * For controls that require inक्रमmation on available media bus codes
  * and linke frequencies.
  */
-static int ccs_init_late_controls(struct ccs_sensor *sensor)
-{
-	unsigned long *valid_link_freqs = &sensor->valid_link_freqs[
-		sensor->csi_format->compressed - sensor->compressed_min_bpp];
-	unsigned int i;
+अटल पूर्णांक ccs_init_late_controls(काष्ठा ccs_sensor *sensor)
+अणु
+	अचिन्हित दीर्घ *valid_link_freqs = &sensor->valid_link_freqs[
+		sensor->csi_क्रमmat->compressed - sensor->compressed_min_bpp];
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(sensor->test_data); i++) {
-		int max_value = (1 << sensor->csi_format->width) - 1;
+	क्रम (i = 0; i < ARRAY_SIZE(sensor->test_data); i++) अणु
+		पूर्णांक max_value = (1 << sensor->csi_क्रमmat->width) - 1;
 
 		sensor->test_data[i] = v4l2_ctrl_new_std(
 				&sensor->pixel_array->ctrl_handler,
 				&ccs_ctrl_ops, V4L2_CID_TEST_PATTERN_RED + i,
 				0, max_value, 1, max_value);
-	}
+	पूर्ण
 
-	sensor->link_freq = v4l2_ctrl_new_int_menu(
+	sensor->link_freq = v4l2_ctrl_new_पूर्णांक_menu(
 		&sensor->src->ctrl_handler, &ccs_ctrl_ops,
 		V4L2_CID_LINK_FREQ, __fls(*valid_link_freqs),
-		__ffs(*valid_link_freqs), sensor->hwcfg.op_sys_clock);
+		__ffs(*valid_link_freqs), sensor->hwcfg.op_sys_घड़ी);
 
-	return sensor->src->ctrl_handler.error;
-}
+	वापस sensor->src->ctrl_handler.error;
+पूर्ण
 
-static void ccs_free_controls(struct ccs_sensor *sensor)
-{
-	unsigned int i;
+अटल व्योम ccs_मुक्त_controls(काष्ठा ccs_sensor *sensor)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < sensor->ssds_used; i++)
-		v4l2_ctrl_handler_free(&sensor->ssds[i].ctrl_handler);
-}
+	क्रम (i = 0; i < sensor->ssds_used; i++)
+		v4l2_ctrl_handler_मुक्त(&sensor->ssds[i].ctrl_handler);
+पूर्ण
 
-static int ccs_get_mbus_formats(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	struct ccs_pll *pll = &sensor->pll;
+अटल पूर्णांक ccs_get_mbus_क्रमmats(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	काष्ठा ccs_pll *pll = &sensor->pll;
 	u8 compressed_max_bpp = 0;
-	unsigned int type, n;
-	unsigned int i, pixel_order;
-	int rval;
+	अचिन्हित पूर्णांक type, n;
+	अचिन्हित पूर्णांक i, pixel_order;
+	पूर्णांक rval;
 
 	type = CCS_LIM(sensor, DATA_FORMAT_MODEL_TYPE);
 
 	dev_dbg(&client->dev, "data_format_model_type %d\n", type);
 
-	rval = ccs_read(sensor, PIXEL_ORDER, &pixel_order);
-	if (rval)
-		return rval;
+	rval = ccs_पढ़ो(sensor, PIXEL_ORDER, &pixel_order);
+	अगर (rval)
+		वापस rval;
 
-	if (pixel_order >= ARRAY_SIZE(pixel_order_str)) {
+	अगर (pixel_order >= ARRAY_SIZE(pixel_order_str)) अणु
 		dev_dbg(&client->dev, "bad pixel order %d\n", pixel_order);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(&client->dev, "pixel order %d (%s)\n", pixel_order,
 		pixel_order_str[pixel_order]);
 
-	switch (type) {
-	case CCS_DATA_FORMAT_MODEL_TYPE_NORMAL:
+	चयन (type) अणु
+	हाल CCS_DATA_FORMAT_MODEL_TYPE_NORMAL:
 		n = SMIAPP_DATA_FORMAT_MODEL_TYPE_NORMAL_N;
-		break;
-	case CCS_DATA_FORMAT_MODEL_TYPE_EXTENDED:
+		अवरोध;
+	हाल CCS_DATA_FORMAT_MODEL_TYPE_EXTENDED:
 		n = CCS_LIM_DATA_FORMAT_DESCRIPTOR_MAX_N + 1;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	sensor->default_pixel_order = pixel_order;
+	sensor->शेष_pixel_order = pixel_order;
 	sensor->mbus_frame_fmts = 0;
 
-	for (i = 0; i < n; i++) {
-		unsigned int fmt, j;
+	क्रम (i = 0; i < n; i++) अणु
+		अचिन्हित पूर्णांक fmt, j;
 
 		fmt = CCS_LIM_AT(sensor, DATA_FORMAT_DESCRIPTOR, i);
 
 		dev_dbg(&client->dev, "%u: bpp %u, compressed %u\n",
 			i, fmt >> 8, (u8)fmt);
 
-		for (j = 0; j < ARRAY_SIZE(ccs_csi_data_formats); j++) {
-			const struct ccs_csi_data_format *f =
-				&ccs_csi_data_formats[j];
+		क्रम (j = 0; j < ARRAY_SIZE(ccs_csi_data_क्रमmats); j++) अणु
+			स्थिर काष्ठा ccs_csi_data_क्रमmat *f =
+				&ccs_csi_data_क्रमmats[j];
 
-			if (f->pixel_order != CCS_PIXEL_ORDER_GRBG)
-				continue;
+			अगर (f->pixel_order != CCS_PIXEL_ORDER_GRBG)
+				जारी;
 
-			if (f->width != fmt >>
+			अगर (f->width != fmt >>
 			    CCS_DATA_FORMAT_DESCRIPTOR_UNCOMPRESSED_SHIFT ||
 			    f->compressed !=
 			    (fmt & CCS_DATA_FORMAT_DESCRIPTOR_COMPRESSED_MASK))
-				continue;
+				जारी;
 
 			dev_dbg(&client->dev, "jolly good! %d\n", j);
 
-			sensor->default_mbus_frame_fmts |= 1 << j;
-		}
-	}
+			sensor->शेष_mbus_frame_fmts |= 1 << j;
+		पूर्ण
+	पूर्ण
 
-	/* Figure out which BPP values can be used with which formats. */
+	/* Figure out which BPP values can be used with which क्रमmats. */
 	pll->binning_horizontal = 1;
 	pll->binning_vertical = 1;
 	pll->scale_m = sensor->scale_m;
 
-	for (i = 0; i < ARRAY_SIZE(ccs_csi_data_formats); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(ccs_csi_data_क्रमmats); i++) अणु
 		sensor->compressed_min_bpp =
-			min(ccs_csi_data_formats[i].compressed,
+			min(ccs_csi_data_क्रमmats[i].compressed,
 			    sensor->compressed_min_bpp);
 		compressed_max_bpp =
-			max(ccs_csi_data_formats[i].compressed,
+			max(ccs_csi_data_क्रमmats[i].compressed,
 			    compressed_max_bpp);
-	}
+	पूर्ण
 
-	sensor->valid_link_freqs = devm_kcalloc(
+	sensor->valid_link_freqs = devm_kसुस्मृति(
 		&client->dev,
 		compressed_max_bpp - sensor->compressed_min_bpp + 1,
-		sizeof(*sensor->valid_link_freqs), GFP_KERNEL);
-	if (!sensor->valid_link_freqs)
-		return -ENOMEM;
+		माप(*sensor->valid_link_freqs), GFP_KERNEL);
+	अगर (!sensor->valid_link_freqs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ARRAY_SIZE(ccs_csi_data_formats); i++) {
-		const struct ccs_csi_data_format *f =
-			&ccs_csi_data_formats[i];
-		unsigned long *valid_link_freqs =
+	क्रम (i = 0; i < ARRAY_SIZE(ccs_csi_data_क्रमmats); i++) अणु
+		स्थिर काष्ठा ccs_csi_data_क्रमmat *f =
+			&ccs_csi_data_क्रमmats[i];
+		अचिन्हित दीर्घ *valid_link_freqs =
 			&sensor->valid_link_freqs[
 				f->compressed - sensor->compressed_min_bpp];
-		unsigned int j;
+		अचिन्हित पूर्णांक j;
 
-		if (!(sensor->default_mbus_frame_fmts & 1 << i))
-			continue;
+		अगर (!(sensor->शेष_mbus_frame_fmts & 1 << i))
+			जारी;
 
 		pll->bits_per_pixel = f->compressed;
 
-		for (j = 0; sensor->hwcfg.op_sys_clock[j]; j++) {
-			pll->link_freq = sensor->hwcfg.op_sys_clock[j];
+		क्रम (j = 0; sensor->hwcfg.op_sys_घड़ी[j]; j++) अणु
+			pll->link_freq = sensor->hwcfg.op_sys_घड़ी[j];
 
 			rval = ccs_pll_try(sensor, pll);
 			dev_dbg(&client->dev, "link freq %u Hz, bpp %u %s\n",
 				pll->link_freq, pll->bits_per_pixel,
 				rval ? "not ok" : "ok");
-			if (rval)
-				continue;
+			अगर (rval)
+				जारी;
 
 			set_bit(j, valid_link_freqs);
-		}
+		पूर्ण
 
-		if (!*valid_link_freqs) {
+		अगर (!*valid_link_freqs) अणु
 			dev_info(&client->dev,
 				 "no valid link frequencies for %u bpp\n",
 				 f->compressed);
-			sensor->default_mbus_frame_fmts &= ~BIT(i);
-			continue;
-		}
+			sensor->शेष_mbus_frame_fmts &= ~BIT(i);
+			जारी;
+		पूर्ण
 
-		if (!sensor->csi_format
-		    || f->width > sensor->csi_format->width
-		    || (f->width == sensor->csi_format->width
-			&& f->compressed > sensor->csi_format->compressed)) {
-			sensor->csi_format = f;
-			sensor->internal_csi_format = f;
-		}
-	}
+		अगर (!sensor->csi_क्रमmat
+		    || f->width > sensor->csi_क्रमmat->width
+		    || (f->width == sensor->csi_क्रमmat->width
+			&& f->compressed > sensor->csi_क्रमmat->compressed)) अणु
+			sensor->csi_क्रमmat = f;
+			sensor->पूर्णांकernal_csi_क्रमmat = f;
+		पूर्ण
+	पूर्ण
 
-	if (!sensor->csi_format) {
+	अगर (!sensor->csi_क्रमmat) अणु
 		dev_err(&client->dev, "no supported mbus code found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ccs_update_mbus_formats(sensor);
+	ccs_update_mbus_क्रमmats(sensor);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ccs_update_blanking(struct ccs_sensor *sensor)
-{
-	struct v4l2_ctrl *vblank = sensor->vblank;
-	struct v4l2_ctrl *hblank = sensor->hblank;
+अटल व्योम ccs_update_blanking(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा v4l2_ctrl *vblank = sensor->vblank;
+	काष्ठा v4l2_ctrl *hblank = sensor->hblank;
 	u16 min_fll, max_fll, min_llp, max_llp, min_lbp;
-	int min, max;
+	पूर्णांक min, max;
 
-	if (sensor->binning_vertical > 1 || sensor->binning_horizontal > 1) {
+	अगर (sensor->binning_vertical > 1 || sensor->binning_horizontal > 1) अणु
 		min_fll = CCS_LIM(sensor, MIN_FRAME_LENGTH_LINES_BIN);
 		max_fll = CCS_LIM(sensor, MAX_FRAME_LENGTH_LINES_BIN);
 		min_llp = CCS_LIM(sensor, MIN_LINE_LENGTH_PCK_BIN);
 		max_llp = CCS_LIM(sensor, MAX_LINE_LENGTH_PCK_BIN);
 		min_lbp = CCS_LIM(sensor, MIN_LINE_BLANKING_PCK_BIN);
-	} else {
+	पूर्ण अन्यथा अणु
 		min_fll = CCS_LIM(sensor, MIN_FRAME_LENGTH_LINES);
 		max_fll = CCS_LIM(sensor, MAX_FRAME_LENGTH_LINES);
 		min_llp = CCS_LIM(sensor, MIN_LINE_LENGTH_PCK);
 		max_llp = CCS_LIM(sensor, MAX_LINE_LENGTH_PCK);
 		min_lbp = CCS_LIM(sensor, MIN_LINE_BLANKING_PCK);
-	}
+	पूर्ण
 
-	min = max_t(int,
+	min = max_t(पूर्णांक,
 		    CCS_LIM(sensor, MIN_FRAME_BLANKING_LINES),
 		    min_fll - sensor->pixel_array->crop[CCS_PA_PAD_SRC].height);
 	max = max_fll -	sensor->pixel_array->crop[CCS_PA_PAD_SRC].height;
 
-	__v4l2_ctrl_modify_range(vblank, min, max, vblank->step, min);
+	__v4l2_ctrl_modअगरy_range(vblank, min, max, vblank->step, min);
 
-	min = max_t(int,
+	min = max_t(पूर्णांक,
 		    min_llp - sensor->pixel_array->crop[CCS_PA_PAD_SRC].width,
 		    min_lbp);
 	max = max_llp - sensor->pixel_array->crop[CCS_PA_PAD_SRC].width;
 
-	__v4l2_ctrl_modify_range(hblank, min, max, hblank->step, min);
+	__v4l2_ctrl_modअगरy_range(hblank, min, max, hblank->step, min);
 
 	__ccs_update_exposure_limits(sensor);
-}
+पूर्ण
 
-static int ccs_pll_blanking_update(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	int rval;
+अटल पूर्णांक ccs_pll_blanking_update(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	पूर्णांक rval;
 
 	rval = ccs_pll_update(sensor);
-	if (rval < 0)
-		return rval;
+	अगर (rval < 0)
+		वापस rval;
 
 	/* Output from pixel array, including blanking */
 	ccs_update_blanking(sensor);
@@ -1246,8 +1247,8 @@ static int ccs_pll_blanking_update(struct ccs_sensor *sensor)
 		 (sensor->pixel_array->crop[CCS_PA_PAD_SRC].height
 		  + sensor->vblank->val) / 100));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *
@@ -1255,146 +1256,146 @@ static int ccs_pll_blanking_update(struct ccs_sensor *sensor)
  *
  */
 
-static int ccs_read_nvm_page(struct ccs_sensor *sensor, u32 p, u8 *nvm,
+अटल पूर्णांक ccs_पढ़ो_nvm_page(काष्ठा ccs_sensor *sensor, u32 p, u8 *nvm,
 			     u8 *status)
-{
-	unsigned int i;
-	int rval;
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक rval;
 	u32 s;
 
 	*status = 0;
 
-	rval = ccs_write(sensor, DATA_TRANSFER_IF_1_PAGE_SELECT, p);
-	if (rval)
-		return rval;
+	rval = ccs_ग_लिखो(sensor, DATA_TRANSFER_IF_1_PAGE_SELECT, p);
+	अगर (rval)
+		वापस rval;
 
-	rval = ccs_write(sensor, DATA_TRANSFER_IF_1_CTRL,
+	rval = ccs_ग_लिखो(sensor, DATA_TRANSFER_IF_1_CTRL,
 			 CCS_DATA_TRANSFER_IF_1_CTRL_ENABLE);
-	if (rval)
-		return rval;
+	अगर (rval)
+		वापस rval;
 
-	rval = ccs_read(sensor, DATA_TRANSFER_IF_1_STATUS, &s);
-	if (rval)
-		return rval;
+	rval = ccs_पढ़ो(sensor, DATA_TRANSFER_IF_1_STATUS, &s);
+	अगर (rval)
+		वापस rval;
 
-	if (s & CCS_DATA_TRANSFER_IF_1_STATUS_IMPROPER_IF_USAGE) {
+	अगर (s & CCS_DATA_TRANSFER_IF_1_STATUS_IMPROPER_IF_USAGE) अणु
 		*status = s;
-		return -ENODATA;
-	}
+		वापस -ENODATA;
+	पूर्ण
 
-	if (CCS_LIM(sensor, DATA_TRANSFER_IF_CAPABILITY) &
-	    CCS_DATA_TRANSFER_IF_CAPABILITY_POLLING) {
-		for (i = 1000; i > 0; i--) {
-			if (s & CCS_DATA_TRANSFER_IF_1_STATUS_READ_IF_READY)
-				break;
+	अगर (CCS_LIM(sensor, DATA_TRANSFER_IF_CAPABILITY) &
+	    CCS_DATA_TRANSFER_IF_CAPABILITY_POLLING) अणु
+		क्रम (i = 1000; i > 0; i--) अणु
+			अगर (s & CCS_DATA_TRANSFER_IF_1_STATUS_READ_IF_READY)
+				अवरोध;
 
-			rval = ccs_read(sensor, DATA_TRANSFER_IF_1_STATUS, &s);
-			if (rval)
-				return rval;
-		}
+			rval = ccs_पढ़ो(sensor, DATA_TRANSFER_IF_1_STATUS, &s);
+			अगर (rval)
+				वापस rval;
+		पूर्ण
 
-		if (!i)
-			return -ETIMEDOUT;
-	}
+		अगर (!i)
+			वापस -ETIMEDOUT;
+	पूर्ण
 
-	for (i = 0; i <= CCS_LIM_DATA_TRANSFER_IF_1_DATA_MAX_P; i++) {
+	क्रम (i = 0; i <= CCS_LIM_DATA_TRANSFER_IF_1_DATA_MAX_P; i++) अणु
 		u32 v;
 
-		rval = ccs_read(sensor, DATA_TRANSFER_IF_1_DATA(i), &v);
-		if (rval)
-			return rval;
+		rval = ccs_पढ़ो(sensor, DATA_TRANSFER_IF_1_DATA(i), &v);
+		अगर (rval)
+			वापस rval;
 
 		*nvm++ = v;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ccs_read_nvm(struct ccs_sensor *sensor, unsigned char *nvm,
-			size_t nvm_size)
-{
+अटल पूर्णांक ccs_पढ़ो_nvm(काष्ठा ccs_sensor *sensor, अचिन्हित अक्षर *nvm,
+			माप_प्रकार nvm_size)
+अणु
 	u8 status = 0;
 	u32 p;
-	int rval = 0, rval2;
+	पूर्णांक rval = 0, rval2;
 
-	for (p = 0; p < nvm_size / (CCS_LIM_DATA_TRANSFER_IF_1_DATA_MAX_P + 1)
-		     && !rval; p++) {
-		rval = ccs_read_nvm_page(sensor, p, nvm, &status);
+	क्रम (p = 0; p < nvm_size / (CCS_LIM_DATA_TRANSFER_IF_1_DATA_MAX_P + 1)
+		     && !rval; p++) अणु
+		rval = ccs_पढ़ो_nvm_page(sensor, p, nvm, &status);
 		nvm += CCS_LIM_DATA_TRANSFER_IF_1_DATA_MAX_P + 1;
-	}
+	पूर्ण
 
-	if (rval == -ENODATA &&
+	अगर (rval == -ENODATA &&
 	    status & CCS_DATA_TRANSFER_IF_1_STATUS_IMPROPER_IF_USAGE)
 		rval = 0;
 
-	rval2 = ccs_write(sensor, DATA_TRANSFER_IF_1_CTRL, 0);
-	if (rval < 0)
-		return rval;
-	else
-		return rval2 ?: p * (CCS_LIM_DATA_TRANSFER_IF_1_DATA_MAX_P + 1);
-}
+	rval2 = ccs_ग_लिखो(sensor, DATA_TRANSFER_IF_1_CTRL, 0);
+	अगर (rval < 0)
+		वापस rval;
+	अन्यथा
+		वापस rval2 ?: p * (CCS_LIM_DATA_TRANSFER_IF_1_DATA_MAX_P + 1);
+पूर्ण
 
 /*
  *
  * SMIA++ CCI address control
  *
  */
-static int ccs_change_cci_addr(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	int rval;
+अटल पूर्णांक ccs_change_cci_addr(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	पूर्णांक rval;
 	u32 val;
 
 	client->addr = sensor->hwcfg.i2c_addr_dfl;
 
-	rval = ccs_write(sensor, CCI_ADDRESS_CTRL,
+	rval = ccs_ग_लिखो(sensor, CCI_ADDRESS_CTRL,
 			 sensor->hwcfg.i2c_addr_alt << 1);
-	if (rval)
-		return rval;
+	अगर (rval)
+		वापस rval;
 
 	client->addr = sensor->hwcfg.i2c_addr_alt;
 
-	/* verify addr change went ok */
-	rval = ccs_read(sensor, CCI_ADDRESS_CTRL, &val);
-	if (rval)
-		return rval;
+	/* verअगरy addr change went ok */
+	rval = ccs_पढ़ो(sensor, CCI_ADDRESS_CTRL, &val);
+	अगर (rval)
+		वापस rval;
 
-	if (val != sensor->hwcfg.i2c_addr_alt << 1)
-		return -ENODEV;
+	अगर (val != sensor->hwcfg.i2c_addr_alt << 1)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *
  * SMIA++ Mode Control
  *
  */
-static int ccs_setup_flash_strobe(struct ccs_sensor *sensor)
-{
-	struct ccs_flash_strobe_parms *strobe_setup;
-	unsigned int ext_freq = sensor->hwcfg.ext_clk;
-	u32 tmp;
-	u32 strobe_adjustment;
+अटल पूर्णांक ccs_setup_flash_strobe(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा ccs_flash_strobe_parms *strobe_setup;
+	अचिन्हित पूर्णांक ext_freq = sensor->hwcfg.ext_clk;
+	u32 पंचांगp;
+	u32 strobe_adjusपंचांगent;
 	u32 strobe_width_high_rs;
-	int rval;
+	पूर्णांक rval;
 
 	strobe_setup = sensor->hwcfg.strobe_setup;
 
 	/*
-	 * How to calculate registers related to strobe length. Please
-	 * do not change, or if you do at least know what you're
-	 * doing. :-)
+	 * How to calculate रेजिस्टरs related to strobe length. Please
+	 * करो not change, or अगर you करो at least know what you're
+	 * करोing. :-)
 	 *
-	 * Sakari Ailus <sakari.ailus@linux.intel.com> 2010-10-25
+	 * Sakari Ailus <sakari.ailus@linux.पूर्णांकel.com> 2010-10-25
 	 *
 	 * flash_strobe_length [us] / 10^6 = (tFlash_strobe_width_ctrl
-	 *	/ EXTCLK freq [Hz]) * flash_strobe_adjustment
+	 *	/ EXTCLK freq [Hz]) * flash_strobe_adjusपंचांगent
 	 *
 	 * tFlash_strobe_width_ctrl E N, [1 - 0xffff]
-	 * flash_strobe_adjustment E N, [1 - 0xff]
+	 * flash_strobe_adjusपंचांगent E N, [1 - 0xff]
 	 *
-	 * The formula above is written as below to keep it on one
+	 * The क्रमmula above is written as below to keep it on one
 	 * line:
 	 *
 	 * l / 10^6 = w / e * a
@@ -1407,13 +1408,13 @@ static int ccs_setup_flash_strobe(struct ccs_sensor *sensor)
 	 *
 	 * x = l * e / 10^6
 	 *
-	 * The strobe width must be at least as long as requested,
+	 * The strobe width must be at least as दीर्घ as requested,
 	 * thus rounding upwards is needed.
 	 *
 	 * x = (l * e + 10^6 - 1) / 10^6
 	 * -----------------------------
 	 *
-	 * Maximum possible accuracy is wanted at all times. Thus keep
+	 * Maximum possible accuracy is wanted at all बार. Thus keep
 	 * a as small as possible.
 	 *
 	 * Calculate a, assuming maximum w, with rounding upwards:
@@ -1430,7 +1431,7 @@ static int ccs_setup_flash_strobe(struct ccs_sensor *sensor)
 	 *
 	 * x E [1, (2^16 - 1) * (2^8 - 1)]
 	 *
-	 * Substituting maximum x to the original formula (with rounding),
+	 * Substituting maximum x to the original क्रमmula (with rounding),
 	 * the maximum l is thus
 	 *
 	 * (2^16 - 1) * (2^8 - 1) * 10^6 = l * e + 10^6 - 1
@@ -1443,335 +1444,335 @@ static int ccs_setup_flash_strobe(struct ccs_sensor *sensor)
 	 *
 	 * Then,
 	 *
-	 * flash_strobe_adjustment = ((flash_strobe_length *
+	 * flash_strobe_adjusपंचांगent = ((flash_strobe_length *
 	 *	EXTCLK freq + 10^6 - 1) / 10^6 + (2^16 - 1) - 1) / (2^16 - 1)
 	 *
 	 * tFlash_strobe_width_ctrl = ((flash_strobe_length *
 	 *	EXTCLK freq + 10^6 - 1) / 10^6 +
-	 *	flash_strobe_adjustment - 1) / flash_strobe_adjustment
+	 *	flash_strobe_adjusपंचांगent - 1) / flash_strobe_adjusपंचांगent
 	 */
-	tmp = div_u64(1000000ULL * ((1 << 16) - 1) * ((1 << 8) - 1) -
+	पंचांगp = भाग_u64(1000000ULL * ((1 << 16) - 1) * ((1 << 8) - 1) -
 		      1000000 + 1, ext_freq);
 	strobe_setup->strobe_width_high_us =
-		clamp_t(u32, strobe_setup->strobe_width_high_us, 1, tmp);
+		clamp_t(u32, strobe_setup->strobe_width_high_us, 1, पंचांगp);
 
-	tmp = div_u64(((u64)strobe_setup->strobe_width_high_us * (u64)ext_freq +
+	पंचांगp = भाग_u64(((u64)strobe_setup->strobe_width_high_us * (u64)ext_freq +
 			1000000 - 1), 1000000ULL);
-	strobe_adjustment = (tmp + (1 << 16) - 1 - 1) / ((1 << 16) - 1);
-	strobe_width_high_rs = (tmp + strobe_adjustment - 1) /
-				strobe_adjustment;
+	strobe_adjusपंचांगent = (पंचांगp + (1 << 16) - 1 - 1) / ((1 << 16) - 1);
+	strobe_width_high_rs = (पंचांगp + strobe_adjusपंचांगent - 1) /
+				strobe_adjusपंचांगent;
 
-	rval = ccs_write(sensor, FLASH_MODE_RS, strobe_setup->mode);
-	if (rval < 0)
-		goto out;
+	rval = ccs_ग_लिखो(sensor, FLASH_MODE_RS, strobe_setup->mode);
+	अगर (rval < 0)
+		जाओ out;
 
-	rval = ccs_write(sensor, FLASH_STROBE_ADJUSTMENT, strobe_adjustment);
-	if (rval < 0)
-		goto out;
+	rval = ccs_ग_लिखो(sensor, FLASH_STROBE_ADJUSTMENT, strobe_adjusपंचांगent);
+	अगर (rval < 0)
+		जाओ out;
 
-	rval = ccs_write(sensor, TFLASH_STROBE_WIDTH_HIGH_RS_CTRL,
+	rval = ccs_ग_लिखो(sensor, TFLASH_STROBE_WIDTH_HIGH_RS_CTRL,
 			 strobe_width_high_rs);
-	if (rval < 0)
-		goto out;
+	अगर (rval < 0)
+		जाओ out;
 
-	rval = ccs_write(sensor, TFLASH_STROBE_DELAY_RS_CTRL,
+	rval = ccs_ग_लिखो(sensor, TFLASH_STROBE_DELAY_RS_CTRL,
 			 strobe_setup->strobe_delay);
-	if (rval < 0)
-		goto out;
+	अगर (rval < 0)
+		जाओ out;
 
-	rval = ccs_write(sensor, FLASH_STROBE_START_POINT,
-			 strobe_setup->stobe_start_point);
-	if (rval < 0)
-		goto out;
+	rval = ccs_ग_लिखो(sensor, FLASH_STROBE_START_POINT,
+			 strobe_setup->stobe_start_poपूर्णांक);
+	अगर (rval < 0)
+		जाओ out;
 
-	rval = ccs_write(sensor, FLASH_TRIGGER_RS, strobe_setup->trigger);
+	rval = ccs_ग_लिखो(sensor, FLASH_TRIGGER_RS, strobe_setup->trigger);
 
 out:
 	sensor->hwcfg.strobe_setup->trigger = 0;
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Power management
  */
 
-static int ccs_write_msr_regs(struct ccs_sensor *sensor)
-{
-	int rval;
+अटल पूर्णांक ccs_ग_लिखो_msr_regs(काष्ठा ccs_sensor *sensor)
+अणु
+	पूर्णांक rval;
 
-	rval = ccs_write_data_regs(sensor,
+	rval = ccs_ग_लिखो_data_regs(sensor,
 				   sensor->sdata.sensor_manufacturer_regs,
 				   sensor->sdata.num_sensor_manufacturer_regs);
-	if (rval)
-		return rval;
+	अगर (rval)
+		वापस rval;
 
-	return ccs_write_data_regs(sensor,
+	वापस ccs_ग_लिखो_data_regs(sensor,
 				   sensor->mdata.module_manufacturer_regs,
 				   sensor->mdata.num_module_manufacturer_regs);
-}
+पूर्ण
 
-static int ccs_update_phy_ctrl(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+अटल पूर्णांक ccs_update_phy_ctrl(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
 	u8 val;
 
-	if (!sensor->ccs_limits)
-		return 0;
+	अगर (!sensor->ccs_limits)
+		वापस 0;
 
-	if (CCS_LIM(sensor, PHY_CTRL_CAPABILITY) &
-	    CCS_PHY_CTRL_CAPABILITY_AUTO_PHY_CTL) {
+	अगर (CCS_LIM(sensor, PHY_CTRL_CAPABILITY) &
+	    CCS_PHY_CTRL_CAPABILITY_AUTO_PHY_CTL) अणु
 		val = CCS_PHY_CTRL_AUTO;
-	} else if (CCS_LIM(sensor, PHY_CTRL_CAPABILITY) &
-		   CCS_PHY_CTRL_CAPABILITY_UI_PHY_CTL) {
+	पूर्ण अन्यथा अगर (CCS_LIM(sensor, PHY_CTRL_CAPABILITY) &
+		   CCS_PHY_CTRL_CAPABILITY_UI_PHY_CTL) अणु
 		val = CCS_PHY_CTRL_UI;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&client->dev, "manual PHY control not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return ccs_write(sensor, PHY_CTRL, val);
-}
+	वापस ccs_ग_लिखो(sensor, PHY_CTRL, val);
+पूर्ण
 
-static int ccs_power_on(struct device *dev)
-{
-	struct v4l2_subdev *subdev = dev_get_drvdata(dev);
-	struct ccs_subdev *ssd = to_ccs_subdev(subdev);
+अटल पूर्णांक ccs_घातer_on(काष्ठा device *dev)
+अणु
+	काष्ठा v4l2_subdev *subdev = dev_get_drvdata(dev);
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(subdev);
 	/*
 	 * The sub-device related to the I2C device is always the
 	 * source one, i.e. ssds[0].
 	 */
-	struct ccs_sensor *sensor =
-		container_of(ssd, struct ccs_sensor, ssds[0]);
-	const struct ccs_device *ccsdev = device_get_match_data(dev);
-	int rval;
+	काष्ठा ccs_sensor *sensor =
+		container_of(ssd, काष्ठा ccs_sensor, ssds[0]);
+	स्थिर काष्ठा ccs_device *ccsdev = device_get_match_data(dev);
+	पूर्णांक rval;
 
 	rval = regulator_bulk_enable(ARRAY_SIZE(ccs_regulators),
 				     sensor->regulators);
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(dev, "failed to enable vana regulator\n");
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
-	if (sensor->reset || sensor->xshutdown || sensor->ext_clk) {
-		unsigned int sleep;
+	अगर (sensor->reset || sensor->xshutकरोwn || sensor->ext_clk) अणु
+		अचिन्हित पूर्णांक sleep;
 
 		rval = clk_prepare_enable(sensor->ext_clk);
-		if (rval < 0) {
+		अगर (rval < 0) अणु
 			dev_dbg(dev, "failed to enable xclk\n");
-			goto out_xclk_fail;
-		}
+			जाओ out_xclk_fail;
+		पूर्ण
 
 		gpiod_set_value(sensor->reset, 0);
-		gpiod_set_value(sensor->xshutdown, 1);
+		gpiod_set_value(sensor->xshutकरोwn, 1);
 
-		if (ccsdev->flags & CCS_DEVICE_FLAG_IS_SMIA)
+		अगर (ccsdev->flags & CCS_DEVICE_FLAG_IS_SMIA)
 			sleep = SMIAPP_RESET_DELAY(sensor->hwcfg.ext_clk);
-		else
+		अन्यथा
 			sleep = 5000;
 
 		usleep_range(sleep, sleep);
-	}
+	पूर्ण
 
 	/*
 	 * Failures to respond to the address change command have been noticed.
-	 * Those failures seem to be caused by the sensor requiring a longer
-	 * boot time than advertised. An additional 10ms delay seems to work
-	 * around the issue, but the SMIA++ I2C write retry hack makes the delay
+	 * Those failures seem to be caused by the sensor requiring a दीर्घer
+	 * boot समय than advertised. An additional 10ms delay seems to work
+	 * around the issue, but the SMIA++ I2C ग_लिखो retry hack makes the delay
 	 * unnecessary. The failures need to be investigated to find a proper
-	 * fix, and a delay will likely need to be added here if the I2C write
-	 * retry hack is reverted before the root cause of the boot time issue
+	 * fix, and a delay will likely need to be added here अगर the I2C ग_लिखो
+	 * retry hack is reverted beक्रमe the root cause of the boot समय issue
 	 * is found.
 	 */
 
-	if (!sensor->reset && !sensor->xshutdown) {
+	अगर (!sensor->reset && !sensor->xshutकरोwn) अणु
 		u8 retry = 100;
 		u32 reset;
 
-		rval = ccs_write(sensor, SOFTWARE_RESET, CCS_SOFTWARE_RESET_ON);
-		if (rval < 0) {
+		rval = ccs_ग_लिखो(sensor, SOFTWARE_RESET, CCS_SOFTWARE_RESET_ON);
+		अगर (rval < 0) अणु
 			dev_err(dev, "software reset failed\n");
-			goto out_cci_addr_fail;
-		}
+			जाओ out_cci_addr_fail;
+		पूर्ण
 
-		do {
-			rval = ccs_read(sensor, SOFTWARE_RESET, &reset);
+		करो अणु
+			rval = ccs_पढ़ो(sensor, SOFTWARE_RESET, &reset);
 			reset = !rval && reset == CCS_SOFTWARE_RESET_OFF;
-			if (reset)
-				break;
+			अगर (reset)
+				अवरोध;
 
 			usleep_range(1000, 2000);
-		} while (--retry);
+		पूर्ण जबतक (--retry);
 
-		if (!reset)
-			return -EIO;
-	}
+		अगर (!reset)
+			वापस -EIO;
+	पूर्ण
 
-	if (sensor->hwcfg.i2c_addr_alt) {
+	अगर (sensor->hwcfg.i2c_addr_alt) अणु
 		rval = ccs_change_cci_addr(sensor);
-		if (rval) {
+		अगर (rval) अणु
 			dev_err(dev, "cci address change error\n");
-			goto out_cci_addr_fail;
-		}
-	}
+			जाओ out_cci_addr_fail;
+		पूर्ण
+	पूर्ण
 
-	rval = ccs_write(sensor, COMPRESSION_MODE,
+	rval = ccs_ग_लिखो(sensor, COMPRESSION_MODE,
 			 CCS_COMPRESSION_MODE_DPCM_PCM_SIMPLE);
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(dev, "compression mode set failed\n");
-		goto out_cci_addr_fail;
-	}
+		जाओ out_cci_addr_fail;
+	पूर्ण
 
-	rval = ccs_write(sensor, EXTCLK_FREQUENCY_MHZ,
+	rval = ccs_ग_लिखो(sensor, EXTCLK_FREQUENCY_MHZ,
 			 sensor->hwcfg.ext_clk / (1000000 / (1 << 8)));
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(dev, "extclk frequency set failed\n");
-		goto out_cci_addr_fail;
-	}
+		जाओ out_cci_addr_fail;
+	पूर्ण
 
-	rval = ccs_write(sensor, CSI_LANE_MODE, sensor->hwcfg.lanes - 1);
-	if (rval) {
+	rval = ccs_ग_लिखो(sensor, CSI_LANE_MODE, sensor->hwcfg.lanes - 1);
+	अगर (rval) अणु
 		dev_err(dev, "csi lane mode set failed\n");
-		goto out_cci_addr_fail;
-	}
+		जाओ out_cci_addr_fail;
+	पूर्ण
 
-	rval = ccs_write(sensor, FAST_STANDBY_CTRL,
+	rval = ccs_ग_लिखो(sensor, FAST_STANDBY_CTRL,
 			 CCS_FAST_STANDBY_CTRL_FRAME_TRUNCATION);
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(dev, "fast standby set failed\n");
-		goto out_cci_addr_fail;
-	}
+		जाओ out_cci_addr_fail;
+	पूर्ण
 
-	rval = ccs_write(sensor, CSI_SIGNALING_MODE,
-			 sensor->hwcfg.csi_signalling_mode);
-	if (rval) {
+	rval = ccs_ग_लिखो(sensor, CSI_SIGNALING_MODE,
+			 sensor->hwcfg.csi_संकेतling_mode);
+	अगर (rval) अणु
 		dev_err(dev, "csi signalling mode set failed\n");
-		goto out_cci_addr_fail;
-	}
+		जाओ out_cci_addr_fail;
+	पूर्ण
 
 	rval = ccs_update_phy_ctrl(sensor);
-	if (rval < 0)
-		goto out_cci_addr_fail;
+	अगर (rval < 0)
+		जाओ out_cci_addr_fail;
 
-	rval = ccs_write_msr_regs(sensor);
-	if (rval)
-		goto out_cci_addr_fail;
+	rval = ccs_ग_लिखो_msr_regs(sensor);
+	अगर (rval)
+		जाओ out_cci_addr_fail;
 
-	rval = ccs_call_quirk(sensor, post_poweron);
-	if (rval) {
+	rval = ccs_call_quirk(sensor, post_घातeron);
+	अगर (rval) अणु
 		dev_err(dev, "post_poweron quirks failed\n");
-		goto out_cci_addr_fail;
-	}
+		जाओ out_cci_addr_fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_cci_addr_fail:
 	gpiod_set_value(sensor->reset, 1);
-	gpiod_set_value(sensor->xshutdown, 0);
+	gpiod_set_value(sensor->xshutकरोwn, 0);
 	clk_disable_unprepare(sensor->ext_clk);
 
 out_xclk_fail:
 	regulator_bulk_disable(ARRAY_SIZE(ccs_regulators),
 			       sensor->regulators);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int ccs_power_off(struct device *dev)
-{
-	struct v4l2_subdev *subdev = dev_get_drvdata(dev);
-	struct ccs_subdev *ssd = to_ccs_subdev(subdev);
-	struct ccs_sensor *sensor =
-		container_of(ssd, struct ccs_sensor, ssds[0]);
+अटल पूर्णांक ccs_घातer_off(काष्ठा device *dev)
+अणु
+	काष्ठा v4l2_subdev *subdev = dev_get_drvdata(dev);
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(subdev);
+	काष्ठा ccs_sensor *sensor =
+		container_of(ssd, काष्ठा ccs_sensor, ssds[0]);
 
 	/*
-	 * Currently power/clock to lens are enable/disabled separately
-	 * but they are essentially the same signals. So if the sensor is
-	 * powered off while the lens is powered on the sensor does not
-	 * really see a power off and next time the cci address change
-	 * will fail. So do a soft reset explicitly here.
+	 * Currently घातer/घड़ी to lens are enable/disabled separately
+	 * but they are essentially the same संकेतs. So अगर the sensor is
+	 * घातered off जबतक the lens is घातered on the sensor करोes not
+	 * really see a घातer off and next समय the cci address change
+	 * will fail. So करो a soft reset explicitly here.
 	 */
-	if (sensor->hwcfg.i2c_addr_alt)
-		ccs_write(sensor, SOFTWARE_RESET, CCS_SOFTWARE_RESET_ON);
+	अगर (sensor->hwcfg.i2c_addr_alt)
+		ccs_ग_लिखो(sensor, SOFTWARE_RESET, CCS_SOFTWARE_RESET_ON);
 
 	gpiod_set_value(sensor->reset, 1);
-	gpiod_set_value(sensor->xshutdown, 0);
+	gpiod_set_value(sensor->xshutकरोwn, 0);
 	clk_disable_unprepare(sensor->ext_clk);
 	usleep_range(5000, 5000);
 	regulator_bulk_disable(ARRAY_SIZE(ccs_regulators),
 			       sensor->regulators);
 	sensor->streaming = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Video stream management
  */
 
-static int ccs_start_streaming(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	unsigned int binning_mode;
-	int rval;
+अटल पूर्णांक ccs_start_streaming(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	अचिन्हित पूर्णांक binning_mode;
+	पूर्णांक rval;
 
 	mutex_lock(&sensor->mutex);
 
-	rval = ccs_write(sensor, CSI_DATA_FORMAT,
-			 (sensor->csi_format->width << 8) |
-			 sensor->csi_format->compressed);
-	if (rval)
-		goto out;
+	rval = ccs_ग_लिखो(sensor, CSI_DATA_FORMAT,
+			 (sensor->csi_क्रमmat->width << 8) |
+			 sensor->csi_क्रमmat->compressed);
+	अगर (rval)
+		जाओ out;
 
 	/* Binning configuration */
-	if (sensor->binning_horizontal == 1 &&
-	    sensor->binning_vertical == 1) {
+	अगर (sensor->binning_horizontal == 1 &&
+	    sensor->binning_vertical == 1) अणु
 		binning_mode = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		u8 binning_type =
 			(sensor->binning_horizontal << 4)
 			| sensor->binning_vertical;
 
-		rval = ccs_write(sensor, BINNING_TYPE, binning_type);
-		if (rval < 0)
-			goto out;
+		rval = ccs_ग_लिखो(sensor, BINNING_TYPE, binning_type);
+		अगर (rval < 0)
+			जाओ out;
 
 		binning_mode = 1;
-	}
-	rval = ccs_write(sensor, BINNING_MODE, binning_mode);
-	if (rval < 0)
-		goto out;
+	पूर्ण
+	rval = ccs_ग_लिखो(sensor, BINNING_MODE, binning_mode);
+	अगर (rval < 0)
+		जाओ out;
 
 	/* Set up PLL */
 	rval = ccs_pll_configure(sensor);
-	if (rval)
-		goto out;
+	अगर (rval)
+		जाओ out;
 
 	/* Analog crop start coordinates */
-	rval = ccs_write(sensor, X_ADDR_START,
+	rval = ccs_ग_लिखो(sensor, X_ADDR_START,
 			 sensor->pixel_array->crop[CCS_PA_PAD_SRC].left);
-	if (rval < 0)
-		goto out;
+	अगर (rval < 0)
+		जाओ out;
 
-	rval = ccs_write(sensor, Y_ADDR_START,
+	rval = ccs_ग_लिखो(sensor, Y_ADDR_START,
 			 sensor->pixel_array->crop[CCS_PA_PAD_SRC].top);
-	if (rval < 0)
-		goto out;
+	अगर (rval < 0)
+		जाओ out;
 
 	/* Analog crop end coordinates */
-	rval = ccs_write(
+	rval = ccs_ग_लिखो(
 		sensor, X_ADDR_END,
 		sensor->pixel_array->crop[CCS_PA_PAD_SRC].left
 		+ sensor->pixel_array->crop[CCS_PA_PAD_SRC].width - 1);
-	if (rval < 0)
-		goto out;
+	अगर (rval < 0)
+		जाओ out;
 
-	rval = ccs_write(
+	rval = ccs_ग_लिखो(
 		sensor, Y_ADDR_END,
 		sensor->pixel_array->crop[CCS_PA_PAD_SRC].top
 		+ sensor->pixel_array->crop[CCS_PA_PAD_SRC].height - 1);
-	if (rval < 0)
-		goto out;
+	अगर (rval < 0)
+		जाओ out;
 
 	/*
 	 * Output from pixel array, including blanking, is set using
@@ -1779,488 +1780,488 @@ static int ccs_start_streaming(struct ccs_sensor *sensor)
 	 */
 
 	/* Digital crop */
-	if (CCS_LIM(sensor, DIGITAL_CROP_CAPABILITY)
-	    == CCS_DIGITAL_CROP_CAPABILITY_INPUT_CROP) {
-		rval = ccs_write(
+	अगर (CCS_LIM(sensor, DIGITAL_CROP_CAPABILITY)
+	    == CCS_DIGITAL_CROP_CAPABILITY_INPUT_CROP) अणु
+		rval = ccs_ग_लिखो(
 			sensor, DIGITAL_CROP_X_OFFSET,
 			sensor->scaler->crop[CCS_PAD_SINK].left);
-		if (rval < 0)
-			goto out;
+		अगर (rval < 0)
+			जाओ out;
 
-		rval = ccs_write(
+		rval = ccs_ग_लिखो(
 			sensor, DIGITAL_CROP_Y_OFFSET,
 			sensor->scaler->crop[CCS_PAD_SINK].top);
-		if (rval < 0)
-			goto out;
+		अगर (rval < 0)
+			जाओ out;
 
-		rval = ccs_write(
+		rval = ccs_ग_लिखो(
 			sensor, DIGITAL_CROP_IMAGE_WIDTH,
 			sensor->scaler->crop[CCS_PAD_SINK].width);
-		if (rval < 0)
-			goto out;
+		अगर (rval < 0)
+			जाओ out;
 
-		rval = ccs_write(
+		rval = ccs_ग_लिखो(
 			sensor, DIGITAL_CROP_IMAGE_HEIGHT,
 			sensor->scaler->crop[CCS_PAD_SINK].height);
-		if (rval < 0)
-			goto out;
-	}
+		अगर (rval < 0)
+			जाओ out;
+	पूर्ण
 
 	/* Scaling */
-	if (CCS_LIM(sensor, SCALING_CAPABILITY)
-	    != CCS_SCALING_CAPABILITY_NONE) {
-		rval = ccs_write(sensor, SCALING_MODE, sensor->scaling_mode);
-		if (rval < 0)
-			goto out;
+	अगर (CCS_LIM(sensor, SCALING_CAPABILITY)
+	    != CCS_SCALING_CAPABILITY_NONE) अणु
+		rval = ccs_ग_लिखो(sensor, SCALING_MODE, sensor->scaling_mode);
+		अगर (rval < 0)
+			जाओ out;
 
-		rval = ccs_write(sensor, SCALE_M, sensor->scale_m);
-		if (rval < 0)
-			goto out;
-	}
+		rval = ccs_ग_लिखो(sensor, SCALE_M, sensor->scale_m);
+		अगर (rval < 0)
+			जाओ out;
+	पूर्ण
 
 	/* Output size from sensor */
-	rval = ccs_write(sensor, X_OUTPUT_SIZE,
+	rval = ccs_ग_लिखो(sensor, X_OUTPUT_SIZE,
 			 sensor->src->crop[CCS_PAD_SRC].width);
-	if (rval < 0)
-		goto out;
-	rval = ccs_write(sensor, Y_OUTPUT_SIZE,
+	अगर (rval < 0)
+		जाओ out;
+	rval = ccs_ग_लिखो(sensor, Y_OUTPUT_SIZE,
 			 sensor->src->crop[CCS_PAD_SRC].height);
-	if (rval < 0)
-		goto out;
+	अगर (rval < 0)
+		जाओ out;
 
-	if (CCS_LIM(sensor, FLASH_MODE_CAPABILITY) &
+	अगर (CCS_LIM(sensor, FLASH_MODE_CAPABILITY) &
 	    (CCS_FLASH_MODE_CAPABILITY_SINGLE_STROBE |
 	     SMIAPP_FLASH_MODE_CAPABILITY_MULTIPLE_STROBE) &&
-	    sensor->hwcfg.strobe_setup != NULL &&
-	    sensor->hwcfg.strobe_setup->trigger != 0) {
+	    sensor->hwcfg.strobe_setup != शून्य &&
+	    sensor->hwcfg.strobe_setup->trigger != 0) अणु
 		rval = ccs_setup_flash_strobe(sensor);
-		if (rval)
-			goto out;
-	}
+		अगर (rval)
+			जाओ out;
+	पूर्ण
 
 	rval = ccs_call_quirk(sensor, pre_streamon);
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(&client->dev, "pre_streamon quirks failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rval = ccs_write(sensor, MODE_SELECT, CCS_MODE_SELECT_STREAMING);
+	rval = ccs_ग_लिखो(sensor, MODE_SELECT, CCS_MODE_SELECT_STREAMING);
 
 out:
 	mutex_unlock(&sensor->mutex);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int ccs_stop_streaming(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	int rval;
+अटल पूर्णांक ccs_stop_streaming(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	पूर्णांक rval;
 
 	mutex_lock(&sensor->mutex);
-	rval = ccs_write(sensor, MODE_SELECT, CCS_MODE_SELECT_SOFTWARE_STANDBY);
-	if (rval)
-		goto out;
+	rval = ccs_ग_लिखो(sensor, MODE_SELECT, CCS_MODE_SELECT_SOFTWARE_STANDBY);
+	अगर (rval)
+		जाओ out;
 
 	rval = ccs_call_quirk(sensor, post_streamoff);
-	if (rval)
+	अगर (rval)
 		dev_err(&client->dev, "post_streamoff quirks failed\n");
 
 out:
 	mutex_unlock(&sensor->mutex);
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev video operations
  */
 
-static int ccs_pm_get_init(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	int rval;
+अटल पूर्णांक ccs_pm_get_init(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	पूर्णांक rval;
 
-	rval = pm_runtime_get_sync(&client->dev);
-	if (rval < 0) {
-		pm_runtime_put_noidle(&client->dev);
+	rval = pm_runसमय_get_sync(&client->dev);
+	अगर (rval < 0) अणु
+		pm_runसमय_put_noidle(&client->dev);
 
-		return rval;
-	} else if (!rval) {
+		वापस rval;
+	पूर्ण अन्यथा अगर (!rval) अणु
 		rval = v4l2_ctrl_handler_setup(&sensor->pixel_array->
 					       ctrl_handler);
-		if (rval)
-			return rval;
+		अगर (rval)
+			वापस rval;
 
-		return v4l2_ctrl_handler_setup(&sensor->src->ctrl_handler);
-	}
+		वापस v4l2_ctrl_handler_setup(&sensor->src->ctrl_handler);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ccs_set_stream(struct v4l2_subdev *subdev, int enable)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	int rval;
+अटल पूर्णांक ccs_set_stream(काष्ठा v4l2_subdev *subdev, पूर्णांक enable)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	पूर्णांक rval;
 
-	if (sensor->streaming == enable)
-		return 0;
+	अगर (sensor->streaming == enable)
+		वापस 0;
 
-	if (!enable) {
+	अगर (!enable) अणु
 		ccs_stop_streaming(sensor);
 		sensor->streaming = false;
-		pm_runtime_mark_last_busy(&client->dev);
-		pm_runtime_put_autosuspend(&client->dev);
+		pm_runसमय_mark_last_busy(&client->dev);
+		pm_runसमय_put_स्वतःsuspend(&client->dev);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	rval = ccs_pm_get_init(sensor);
-	if (rval)
-		return rval;
+	अगर (rval)
+		वापस rval;
 
 	sensor->streaming = true;
 
 	rval = ccs_start_streaming(sensor);
-	if (rval < 0) {
+	अगर (rval < 0) अणु
 		sensor->streaming = false;
-		pm_runtime_mark_last_busy(&client->dev);
-		pm_runtime_put_autosuspend(&client->dev);
-	}
+		pm_runसमय_mark_last_busy(&client->dev);
+		pm_runसमय_put_स्वतःsuspend(&client->dev);
+	पूर्ण
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int ccs_enum_mbus_code(struct v4l2_subdev *subdev,
-			      struct v4l2_subdev_pad_config *cfg,
-			      struct v4l2_subdev_mbus_code_enum *code)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(subdev);
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	unsigned int i;
-	int idx = -1;
-	int rval = -EINVAL;
+अटल पूर्णांक ccs_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
+			      काष्ठा v4l2_subdev_pad_config *cfg,
+			      काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(subdev);
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	अचिन्हित पूर्णांक i;
+	पूर्णांक idx = -1;
+	पूर्णांक rval = -EINVAL;
 
 	mutex_lock(&sensor->mutex);
 
 	dev_err(&client->dev, "subdev %s, pad %d, index %d\n",
 		subdev->name, code->pad, code->index);
 
-	if (subdev != &sensor->src->sd || code->pad != CCS_PAD_SRC) {
-		if (code->index)
-			goto out;
+	अगर (subdev != &sensor->src->sd || code->pad != CCS_PAD_SRC) अणु
+		अगर (code->index)
+			जाओ out;
 
-		code->code = sensor->internal_csi_format->code;
+		code->code = sensor->पूर्णांकernal_csi_क्रमmat->code;
 		rval = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(ccs_csi_data_formats); i++) {
-		if (sensor->mbus_frame_fmts & (1 << i))
+	क्रम (i = 0; i < ARRAY_SIZE(ccs_csi_data_क्रमmats); i++) अणु
+		अगर (sensor->mbus_frame_fmts & (1 << i))
 			idx++;
 
-		if (idx == code->index) {
-			code->code = ccs_csi_data_formats[i].code;
+		अगर (idx == code->index) अणु
+			code->code = ccs_csi_data_क्रमmats[i].code;
 			dev_err(&client->dev, "found index %d, i %d, code %x\n",
 				code->index, i, code->code);
 			rval = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
 	mutex_unlock(&sensor->mutex);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static u32 __ccs_get_mbus_code(struct v4l2_subdev *subdev, unsigned int pad)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
+अटल u32 __ccs_get_mbus_code(काष्ठा v4l2_subdev *subdev, अचिन्हित पूर्णांक pad)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
 
-	if (subdev == &sensor->src->sd && pad == CCS_PAD_SRC)
-		return sensor->csi_format->code;
-	else
-		return sensor->internal_csi_format->code;
-}
+	अगर (subdev == &sensor->src->sd && pad == CCS_PAD_SRC)
+		वापस sensor->csi_क्रमmat->code;
+	अन्यथा
+		वापस sensor->पूर्णांकernal_csi_क्रमmat->code;
+पूर्ण
 
-static int __ccs_get_format(struct v4l2_subdev *subdev,
-			    struct v4l2_subdev_pad_config *cfg,
-			    struct v4l2_subdev_format *fmt)
-{
-	struct ccs_subdev *ssd = to_ccs_subdev(subdev);
+अटल पूर्णांक __ccs_get_क्रमmat(काष्ठा v4l2_subdev *subdev,
+			    काष्ठा v4l2_subdev_pad_config *cfg,
+			    काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(subdev);
 
-	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
-		fmt->format = *v4l2_subdev_get_try_format(subdev, cfg,
+	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+		fmt->क्रमmat = *v4l2_subdev_get_try_क्रमmat(subdev, cfg,
 							  fmt->pad);
-	} else {
-		struct v4l2_rect *r;
+	पूर्ण अन्यथा अणु
+		काष्ठा v4l2_rect *r;
 
-		if (fmt->pad == ssd->source_pad)
+		अगर (fmt->pad == ssd->source_pad)
 			r = &ssd->crop[ssd->source_pad];
-		else
+		अन्यथा
 			r = &ssd->sink_fmt;
 
-		fmt->format.code = __ccs_get_mbus_code(subdev, fmt->pad);
-		fmt->format.width = r->width;
-		fmt->format.height = r->height;
-		fmt->format.field = V4L2_FIELD_NONE;
-	}
+		fmt->क्रमmat.code = __ccs_get_mbus_code(subdev, fmt->pad);
+		fmt->क्रमmat.width = r->width;
+		fmt->क्रमmat.height = r->height;
+		fmt->क्रमmat.field = V4L2_FIELD_NONE;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ccs_get_format(struct v4l2_subdev *subdev,
-			  struct v4l2_subdev_pad_config *cfg,
-			  struct v4l2_subdev_format *fmt)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	int rval;
+अटल पूर्णांक ccs_get_क्रमmat(काष्ठा v4l2_subdev *subdev,
+			  काष्ठा v4l2_subdev_pad_config *cfg,
+			  काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	पूर्णांक rval;
 
 	mutex_lock(&sensor->mutex);
-	rval = __ccs_get_format(subdev, cfg, fmt);
+	rval = __ccs_get_क्रमmat(subdev, cfg, fmt);
 	mutex_unlock(&sensor->mutex);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static void ccs_get_crop_compose(struct v4l2_subdev *subdev,
-				 struct v4l2_subdev_pad_config *cfg,
-				 struct v4l2_rect **crops,
-				 struct v4l2_rect **comps, int which)
-{
-	struct ccs_subdev *ssd = to_ccs_subdev(subdev);
-	unsigned int i;
+अटल व्योम ccs_get_crop_compose(काष्ठा v4l2_subdev *subdev,
+				 काष्ठा v4l2_subdev_pad_config *cfg,
+				 काष्ठा v4l2_rect **crops,
+				 काष्ठा v4l2_rect **comps, पूर्णांक which)
+अणु
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(subdev);
+	अचिन्हित पूर्णांक i;
 
-	if (which == V4L2_SUBDEV_FORMAT_ACTIVE) {
-		if (crops)
-			for (i = 0; i < subdev->entity.num_pads; i++)
+	अगर (which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
+		अगर (crops)
+			क्रम (i = 0; i < subdev->entity.num_pads; i++)
 				crops[i] = &ssd->crop[i];
-		if (comps)
+		अगर (comps)
 			*comps = &ssd->compose;
-	} else {
-		if (crops) {
-			for (i = 0; i < subdev->entity.num_pads; i++)
+	पूर्ण अन्यथा अणु
+		अगर (crops) अणु
+			क्रम (i = 0; i < subdev->entity.num_pads; i++)
 				crops[i] = v4l2_subdev_get_try_crop(subdev,
 								    cfg, i);
-		}
-		if (comps)
+		पूर्ण
+		अगर (comps)
 			*comps = v4l2_subdev_get_try_compose(subdev, cfg,
 							     CCS_PAD_SINK);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Changes require propagation only on sink pad. */
-static void ccs_propagate(struct v4l2_subdev *subdev,
-			  struct v4l2_subdev_pad_config *cfg, int which,
-			  int target)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	struct ccs_subdev *ssd = to_ccs_subdev(subdev);
-	struct v4l2_rect *comp, *crops[CCS_PADS];
+अटल व्योम ccs_propagate(काष्ठा v4l2_subdev *subdev,
+			  काष्ठा v4l2_subdev_pad_config *cfg, पूर्णांक which,
+			  पूर्णांक target)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(subdev);
+	काष्ठा v4l2_rect *comp, *crops[CCS_PADS];
 
 	ccs_get_crop_compose(subdev, cfg, crops, &comp, which);
 
-	switch (target) {
-	case V4L2_SEL_TGT_CROP:
+	चयन (target) अणु
+	हाल V4L2_SEL_TGT_CROP:
 		comp->width = crops[CCS_PAD_SINK]->width;
 		comp->height = crops[CCS_PAD_SINK]->height;
-		if (which == V4L2_SUBDEV_FORMAT_ACTIVE) {
-			if (ssd == sensor->scaler) {
+		अगर (which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
+			अगर (ssd == sensor->scaler) अणु
 				sensor->scale_m = CCS_LIM(sensor, SCALER_N_MIN);
 				sensor->scaling_mode =
 					CCS_SCALING_MODE_NO_SCALING;
-			} else if (ssd == sensor->binner) {
+			पूर्ण अन्यथा अगर (ssd == sensor->binner) अणु
 				sensor->binning_horizontal = 1;
 				sensor->binning_vertical = 1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		fallthrough;
-	case V4L2_SEL_TGT_COMPOSE:
+	हाल V4L2_SEL_TGT_COMPOSE:
 		*crops[CCS_PAD_SRC] = *comp;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct ccs_csi_data_format
-*ccs_validate_csi_data_format(struct ccs_sensor *sensor, u32 code)
-{
-	unsigned int i;
+अटल स्थिर काष्ठा ccs_csi_data_क्रमmat
+*ccs_validate_csi_data_क्रमmat(काष्ठा ccs_sensor *sensor, u32 code)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ccs_csi_data_formats); i++) {
-		if (sensor->mbus_frame_fmts & (1 << i) &&
-		    ccs_csi_data_formats[i].code == code)
-			return &ccs_csi_data_formats[i];
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(ccs_csi_data_क्रमmats); i++) अणु
+		अगर (sensor->mbus_frame_fmts & (1 << i) &&
+		    ccs_csi_data_क्रमmats[i].code == code)
+			वापस &ccs_csi_data_क्रमmats[i];
+	पूर्ण
 
-	return sensor->csi_format;
-}
+	वापस sensor->csi_क्रमmat;
+पूर्ण
 
-static int ccs_set_format_source(struct v4l2_subdev *subdev,
-				 struct v4l2_subdev_pad_config *cfg,
-				 struct v4l2_subdev_format *fmt)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	const struct ccs_csi_data_format *csi_format,
-		*old_csi_format = sensor->csi_format;
-	unsigned long *valid_link_freqs;
-	u32 code = fmt->format.code;
-	unsigned int i;
-	int rval;
+अटल पूर्णांक ccs_set_क्रमmat_source(काष्ठा v4l2_subdev *subdev,
+				 काष्ठा v4l2_subdev_pad_config *cfg,
+				 काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	स्थिर काष्ठा ccs_csi_data_क्रमmat *csi_क्रमmat,
+		*old_csi_क्रमmat = sensor->csi_क्रमmat;
+	अचिन्हित दीर्घ *valid_link_freqs;
+	u32 code = fmt->क्रमmat.code;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक rval;
 
-	rval = __ccs_get_format(subdev, cfg, fmt);
-	if (rval)
-		return rval;
+	rval = __ccs_get_क्रमmat(subdev, cfg, fmt);
+	अगर (rval)
+		वापस rval;
 
 	/*
 	 * Media bus code is changeable on src subdev's source pad. On
-	 * other source pads we just get format here.
+	 * other source pads we just get क्रमmat here.
 	 */
-	if (subdev != &sensor->src->sd)
-		return 0;
+	अगर (subdev != &sensor->src->sd)
+		वापस 0;
 
-	csi_format = ccs_validate_csi_data_format(sensor, code);
+	csi_क्रमmat = ccs_validate_csi_data_क्रमmat(sensor, code);
 
-	fmt->format.code = csi_format->code;
+	fmt->क्रमmat.code = csi_क्रमmat->code;
 
-	if (fmt->which != V4L2_SUBDEV_FORMAT_ACTIVE)
-		return 0;
+	अगर (fmt->which != V4L2_SUBDEV_FORMAT_ACTIVE)
+		वापस 0;
 
-	sensor->csi_format = csi_format;
+	sensor->csi_क्रमmat = csi_क्रमmat;
 
-	if (csi_format->width != old_csi_format->width)
-		for (i = 0; i < ARRAY_SIZE(sensor->test_data); i++)
-			__v4l2_ctrl_modify_range(
+	अगर (csi_क्रमmat->width != old_csi_क्रमmat->width)
+		क्रम (i = 0; i < ARRAY_SIZE(sensor->test_data); i++)
+			__v4l2_ctrl_modअगरy_range(
 				sensor->test_data[i], 0,
-				(1 << csi_format->width) - 1, 1, 0);
+				(1 << csi_क्रमmat->width) - 1, 1, 0);
 
-	if (csi_format->compressed == old_csi_format->compressed)
-		return 0;
+	अगर (csi_क्रमmat->compressed == old_csi_क्रमmat->compressed)
+		वापस 0;
 
 	valid_link_freqs =
-		&sensor->valid_link_freqs[sensor->csi_format->compressed
+		&sensor->valid_link_freqs[sensor->csi_क्रमmat->compressed
 					  - sensor->compressed_min_bpp];
 
-	__v4l2_ctrl_modify_range(
+	__v4l2_ctrl_modअगरy_range(
 		sensor->link_freq, 0,
 		__fls(*valid_link_freqs), ~*valid_link_freqs,
 		__ffs(*valid_link_freqs));
 
-	return ccs_pll_update(sensor);
-}
+	वापस ccs_pll_update(sensor);
+पूर्ण
 
-static int ccs_set_format(struct v4l2_subdev *subdev,
-			  struct v4l2_subdev_pad_config *cfg,
-			  struct v4l2_subdev_format *fmt)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	struct ccs_subdev *ssd = to_ccs_subdev(subdev);
-	struct v4l2_rect *crops[CCS_PADS];
+अटल पूर्णांक ccs_set_क्रमmat(काष्ठा v4l2_subdev *subdev,
+			  काष्ठा v4l2_subdev_pad_config *cfg,
+			  काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(subdev);
+	काष्ठा v4l2_rect *crops[CCS_PADS];
 
 	mutex_lock(&sensor->mutex);
 
-	if (fmt->pad == ssd->source_pad) {
-		int rval;
+	अगर (fmt->pad == ssd->source_pad) अणु
+		पूर्णांक rval;
 
-		rval = ccs_set_format_source(subdev, cfg, fmt);
+		rval = ccs_set_क्रमmat_source(subdev, cfg, fmt);
 
 		mutex_unlock(&sensor->mutex);
 
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
 	/* Sink pad. Width and height are changeable here. */
-	fmt->format.code = __ccs_get_mbus_code(subdev, fmt->pad);
-	fmt->format.width &= ~1;
-	fmt->format.height &= ~1;
-	fmt->format.field = V4L2_FIELD_NONE;
+	fmt->क्रमmat.code = __ccs_get_mbus_code(subdev, fmt->pad);
+	fmt->क्रमmat.width &= ~1;
+	fmt->क्रमmat.height &= ~1;
+	fmt->क्रमmat.field = V4L2_FIELD_NONE;
 
-	fmt->format.width =
-		clamp(fmt->format.width,
+	fmt->क्रमmat.width =
+		clamp(fmt->क्रमmat.width,
 		      CCS_LIM(sensor, MIN_X_OUTPUT_SIZE),
 		      CCS_LIM(sensor, MAX_X_OUTPUT_SIZE));
-	fmt->format.height =
-		clamp(fmt->format.height,
+	fmt->क्रमmat.height =
+		clamp(fmt->क्रमmat.height,
 		      CCS_LIM(sensor, MIN_Y_OUTPUT_SIZE),
 		      CCS_LIM(sensor, MAX_Y_OUTPUT_SIZE));
 
-	ccs_get_crop_compose(subdev, cfg, crops, NULL, fmt->which);
+	ccs_get_crop_compose(subdev, cfg, crops, शून्य, fmt->which);
 
 	crops[ssd->sink_pad]->left = 0;
 	crops[ssd->sink_pad]->top = 0;
-	crops[ssd->sink_pad]->width = fmt->format.width;
-	crops[ssd->sink_pad]->height = fmt->format.height;
-	if (fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+	crops[ssd->sink_pad]->width = fmt->क्रमmat.width;
+	crops[ssd->sink_pad]->height = fmt->क्रमmat.height;
+	अगर (fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE)
 		ssd->sink_fmt = *crops[ssd->sink_pad];
 	ccs_propagate(subdev, cfg, fmt->which, V4L2_SEL_TGT_CROP);
 
 	mutex_unlock(&sensor->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Calculate goodness of scaled image size compared to expected image
  * size and flags provided.
  */
-#define SCALING_GOODNESS		100000
-#define SCALING_GOODNESS_EXTREME	100000000
-static int scaling_goodness(struct v4l2_subdev *subdev, int w, int ask_w,
-			    int h, int ask_h, u32 flags)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	struct i2c_client *client = v4l2_get_subdevdata(subdev);
-	int val = 0;
+#घोषणा SCALING_GOODNESS		100000
+#घोषणा SCALING_GOODNESS_EXTREME	100000000
+अटल पूर्णांक scaling_goodness(काष्ठा v4l2_subdev *subdev, पूर्णांक w, पूर्णांक ask_w,
+			    पूर्णांक h, पूर्णांक ask_h, u32 flags)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(subdev);
+	पूर्णांक val = 0;
 
 	w &= ~1;
 	ask_w &= ~1;
 	h &= ~1;
 	ask_h &= ~1;
 
-	if (flags & V4L2_SEL_FLAG_GE) {
-		if (w < ask_w)
+	अगर (flags & V4L2_SEL_FLAG_GE) अणु
+		अगर (w < ask_w)
 			val -= SCALING_GOODNESS;
-		if (h < ask_h)
+		अगर (h < ask_h)
 			val -= SCALING_GOODNESS;
-	}
+	पूर्ण
 
-	if (flags & V4L2_SEL_FLAG_LE) {
-		if (w > ask_w)
+	अगर (flags & V4L2_SEL_FLAG_LE) अणु
+		अगर (w > ask_w)
 			val -= SCALING_GOODNESS;
-		if (h > ask_h)
+		अगर (h > ask_h)
 			val -= SCALING_GOODNESS;
-	}
+	पूर्ण
 
-	val -= abs(w - ask_w);
-	val -= abs(h - ask_h);
+	val -= असल(w - ask_w);
+	val -= असल(h - ask_h);
 
-	if (w < CCS_LIM(sensor, MIN_X_OUTPUT_SIZE))
+	अगर (w < CCS_LIM(sensor, MIN_X_OUTPUT_SIZE))
 		val -= SCALING_GOODNESS_EXTREME;
 
 	dev_dbg(&client->dev, "w %d ask_w %d h %d ask_h %d goodness %d\n",
 		w, ask_w, h, ask_h, val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void ccs_set_compose_binner(struct v4l2_subdev *subdev,
-				   struct v4l2_subdev_pad_config *cfg,
-				   struct v4l2_subdev_selection *sel,
-				   struct v4l2_rect **crops,
-				   struct v4l2_rect *comp)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	unsigned int i;
-	unsigned int binh = 1, binv = 1;
-	int best = scaling_goodness(
+अटल व्योम ccs_set_compose_binner(काष्ठा v4l2_subdev *subdev,
+				   काष्ठा v4l2_subdev_pad_config *cfg,
+				   काष्ठा v4l2_subdev_selection *sel,
+				   काष्ठा v4l2_rect **crops,
+				   काष्ठा v4l2_rect *comp)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक binh = 1, binv = 1;
+	पूर्णांक best = scaling_goodness(
 		subdev,
 		crops[CCS_PAD_SINK]->width, sel->r.width,
 		crops[CCS_PAD_SINK]->height, sel->r.height, sel->flags);
 
-	for (i = 0; i < sensor->nbinning_subtypes; i++) {
-		int this = scaling_goodness(
+	क्रम (i = 0; i < sensor->nbinning_subtypes; i++) अणु
+		पूर्णांक this = scaling_goodness(
 			subdev,
 			crops[CCS_PAD_SINK]->width
 			/ sensor->binning_subtypes[i].horizontal,
@@ -2269,23 +2270,23 @@ static void ccs_set_compose_binner(struct v4l2_subdev *subdev,
 			/ sensor->binning_subtypes[i].vertical,
 			sel->r.height, sel->flags);
 
-		if (this > best) {
+		अगर (this > best) अणु
 			binh = sensor->binning_subtypes[i].horizontal;
 			binv = sensor->binning_subtypes[i].vertical;
 			best = this;
-		}
-	}
-	if (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
+		पूर्ण
+	पूर्ण
+	अगर (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
 		sensor->binning_vertical = binv;
 		sensor->binning_horizontal = binh;
-	}
+	पूर्ण
 
 	sel->r.width = (crops[CCS_PAD_SINK]->width / binh) & ~1;
 	sel->r.height = (crops[CCS_PAD_SINK]->height / binv) & ~1;
-}
+पूर्ण
 
 /*
- * Calculate best scaling ratio and mode for given output resolution.
+ * Calculate best scaling ratio and mode क्रम given output resolution.
  *
  * Try all of these: horizontal ratio, vertical ratio and smallest
  * size possible (horizontally).
@@ -2293,25 +2294,25 @@ static void ccs_set_compose_binner(struct v4l2_subdev *subdev,
  * Also try whether horizontal scaler or full scaler gives a better
  * result.
  */
-static void ccs_set_compose_scaler(struct v4l2_subdev *subdev,
-				   struct v4l2_subdev_pad_config *cfg,
-				   struct v4l2_subdev_selection *sel,
-				   struct v4l2_rect **crops,
-				   struct v4l2_rect *comp)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(subdev);
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
+अटल व्योम ccs_set_compose_scaler(काष्ठा v4l2_subdev *subdev,
+				   काष्ठा v4l2_subdev_pad_config *cfg,
+				   काष्ठा v4l2_subdev_selection *sel,
+				   काष्ठा v4l2_rect **crops,
+				   काष्ठा v4l2_rect *comp)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(subdev);
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
 	u32 min, max, a, b, max_m;
 	u32 scale_m = CCS_LIM(sensor, SCALER_N_MIN);
-	int mode = CCS_SCALING_MODE_HORIZONTAL;
+	पूर्णांक mode = CCS_SCALING_MODE_HORIZONTAL;
 	u32 try[4];
 	u32 ntry = 0;
-	unsigned int i;
-	int best = INT_MIN;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक best = पूर्णांक_न्यून;
 
-	sel->r.width = min_t(unsigned int, sel->r.width,
+	sel->r.width = min_t(अचिन्हित पूर्णांक, sel->r.width,
 			     crops[CCS_PAD_SINK]->width);
-	sel->r.height = min_t(unsigned int, sel->r.height,
+	sel->r.height = min_t(अचिन्हित पूर्णांक, sel->r.height,
 			      crops[CCS_PAD_SINK]->height);
 
 	a = crops[CCS_PAD_SINK]->width
@@ -2336,21 +2337,21 @@ static void ccs_set_compose_scaler(struct v4l2_subdev *subdev,
 
 	try[ntry] = min;
 	ntry++;
-	if (min != max) {
+	अगर (min != max) अणु
 		try[ntry] = max;
 		ntry++;
-	}
-	if (max != max_m) {
+	पूर्ण
+	अगर (max != max_m) अणु
 		try[ntry] = min + 1;
 		ntry++;
-		if (min != max) {
+		अगर (min != max) अणु
 			try[ntry] = max + 1;
 			ntry++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < ntry; i++) {
-		int this = scaling_goodness(
+	क्रम (i = 0; i < ntry; i++) अणु
+		पूर्णांक this = scaling_goodness(
 			subdev,
 			crops[CCS_PAD_SINK]->width
 			/ try[i] * CCS_LIM(sensor, SCALER_N_MIN),
@@ -2361,15 +2362,15 @@ static void ccs_set_compose_scaler(struct v4l2_subdev *subdev,
 
 		dev_dbg(&client->dev, "trying factor %d (%d)\n", try[i], i);
 
-		if (this > best) {
+		अगर (this > best) अणु
 			scale_m = try[i];
 			mode = CCS_SCALING_MODE_HORIZONTAL;
 			best = this;
-		}
+		पूर्ण
 
-		if (CCS_LIM(sensor, SCALING_CAPABILITY)
+		अगर (CCS_LIM(sensor, SCALING_CAPABILITY)
 		    == CCS_SCALING_CAPABILITY_HORIZONTAL)
-			continue;
+			जारी;
 
 		this = scaling_goodness(
 			subdev, crops[CCS_PAD_SINK]->width
@@ -2382,231 +2383,231 @@ static void ccs_set_compose_scaler(struct v4l2_subdev *subdev,
 			sel->r.height,
 			sel->flags);
 
-		if (this > best) {
+		अगर (this > best) अणु
 			scale_m = try[i];
 			mode = SMIAPP_SCALING_MODE_BOTH;
 			best = this;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	sel->r.width =
 		(crops[CCS_PAD_SINK]->width
 		 / scale_m
 		 * CCS_LIM(sensor, SCALER_N_MIN)) & ~1;
-	if (mode == SMIAPP_SCALING_MODE_BOTH)
+	अगर (mode == SMIAPP_SCALING_MODE_BOTH)
 		sel->r.height =
 			(crops[CCS_PAD_SINK]->height
 			 / scale_m
 			 * CCS_LIM(sensor, SCALER_N_MIN))
 			& ~1;
-	else
+	अन्यथा
 		sel->r.height = crops[CCS_PAD_SINK]->height;
 
-	if (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
+	अगर (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
 		sensor->scale_m = scale_m;
 		sensor->scaling_mode = mode;
-	}
-}
+	पूर्ण
+पूर्ण
 /* We're only called on source pads. This function sets scaling. */
-static int ccs_set_compose(struct v4l2_subdev *subdev,
-			   struct v4l2_subdev_pad_config *cfg,
-			   struct v4l2_subdev_selection *sel)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	struct ccs_subdev *ssd = to_ccs_subdev(subdev);
-	struct v4l2_rect *comp, *crops[CCS_PADS];
+अटल पूर्णांक ccs_set_compose(काष्ठा v4l2_subdev *subdev,
+			   काष्ठा v4l2_subdev_pad_config *cfg,
+			   काष्ठा v4l2_subdev_selection *sel)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(subdev);
+	काष्ठा v4l2_rect *comp, *crops[CCS_PADS];
 
 	ccs_get_crop_compose(subdev, cfg, crops, &comp, sel->which);
 
 	sel->r.top = 0;
 	sel->r.left = 0;
 
-	if (ssd == sensor->binner)
+	अगर (ssd == sensor->binner)
 		ccs_set_compose_binner(subdev, cfg, sel, crops, comp);
-	else
+	अन्यथा
 		ccs_set_compose_scaler(subdev, cfg, sel, crops, comp);
 
 	*comp = sel->r;
 	ccs_propagate(subdev, cfg, sel->which, V4L2_SEL_TGT_COMPOSE);
 
-	if (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE)
-		return ccs_pll_blanking_update(sensor);
+	अगर (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+		वापस ccs_pll_blanking_update(sensor);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __ccs_sel_supported(struct v4l2_subdev *subdev,
-			       struct v4l2_subdev_selection *sel)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	struct ccs_subdev *ssd = to_ccs_subdev(subdev);
+अटल पूर्णांक __ccs_sel_supported(काष्ठा v4l2_subdev *subdev,
+			       काष्ठा v4l2_subdev_selection *sel)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(subdev);
 
 	/* We only implement crop in three places. */
-	switch (sel->target) {
-	case V4L2_SEL_TGT_CROP:
-	case V4L2_SEL_TGT_CROP_BOUNDS:
-		if (ssd == sensor->pixel_array && sel->pad == CCS_PA_PAD_SRC)
-			return 0;
-		if (ssd == sensor->src && sel->pad == CCS_PAD_SRC)
-			return 0;
-		if (ssd == sensor->scaler && sel->pad == CCS_PAD_SINK &&
+	चयन (sel->target) अणु
+	हाल V4L2_SEL_TGT_CROP:
+	हाल V4L2_SEL_TGT_CROP_BOUNDS:
+		अगर (ssd == sensor->pixel_array && sel->pad == CCS_PA_PAD_SRC)
+			वापस 0;
+		अगर (ssd == sensor->src && sel->pad == CCS_PAD_SRC)
+			वापस 0;
+		अगर (ssd == sensor->scaler && sel->pad == CCS_PAD_SINK &&
 		    CCS_LIM(sensor, DIGITAL_CROP_CAPABILITY)
 		    == CCS_DIGITAL_CROP_CAPABILITY_INPUT_CROP)
-			return 0;
-		return -EINVAL;
-	case V4L2_SEL_TGT_NATIVE_SIZE:
-		if (ssd == sensor->pixel_array && sel->pad == CCS_PA_PAD_SRC)
-			return 0;
-		return -EINVAL;
-	case V4L2_SEL_TGT_COMPOSE:
-	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
-		if (sel->pad == ssd->source_pad)
-			return -EINVAL;
-		if (ssd == sensor->binner)
-			return 0;
-		if (ssd == sensor->scaler && CCS_LIM(sensor, SCALING_CAPABILITY)
+			वापस 0;
+		वापस -EINVAL;
+	हाल V4L2_SEL_TGT_NATIVE_SIZE:
+		अगर (ssd == sensor->pixel_array && sel->pad == CCS_PA_PAD_SRC)
+			वापस 0;
+		वापस -EINVAL;
+	हाल V4L2_SEL_TGT_COMPOSE:
+	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
+		अगर (sel->pad == ssd->source_pad)
+			वापस -EINVAL;
+		अगर (ssd == sensor->binner)
+			वापस 0;
+		अगर (ssd == sensor->scaler && CCS_LIM(sensor, SCALING_CAPABILITY)
 		    != CCS_SCALING_CAPABILITY_NONE)
-			return 0;
+			वापस 0;
 		fallthrough;
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int ccs_set_crop(struct v4l2_subdev *subdev,
-			struct v4l2_subdev_pad_config *cfg,
-			struct v4l2_subdev_selection *sel)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	struct ccs_subdev *ssd = to_ccs_subdev(subdev);
-	struct v4l2_rect *src_size, *crops[CCS_PADS];
-	struct v4l2_rect _r;
+अटल पूर्णांक ccs_set_crop(काष्ठा v4l2_subdev *subdev,
+			काष्ठा v4l2_subdev_pad_config *cfg,
+			काष्ठा v4l2_subdev_selection *sel)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(subdev);
+	काष्ठा v4l2_rect *src_size, *crops[CCS_PADS];
+	काष्ठा v4l2_rect _r;
 
-	ccs_get_crop_compose(subdev, cfg, crops, NULL, sel->which);
+	ccs_get_crop_compose(subdev, cfg, crops, शून्य, sel->which);
 
-	if (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
-		if (sel->pad == ssd->sink_pad)
+	अगर (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
+		अगर (sel->pad == ssd->sink_pad)
 			src_size = &ssd->sink_fmt;
-		else
+		अन्यथा
 			src_size = &ssd->compose;
-	} else {
-		if (sel->pad == ssd->sink_pad) {
+	पूर्ण अन्यथा अणु
+		अगर (sel->pad == ssd->sink_pad) अणु
 			_r.left = 0;
 			_r.top = 0;
-			_r.width = v4l2_subdev_get_try_format(subdev, cfg,
+			_r.width = v4l2_subdev_get_try_क्रमmat(subdev, cfg,
 							      sel->pad)
 				->width;
-			_r.height = v4l2_subdev_get_try_format(subdev, cfg,
+			_r.height = v4l2_subdev_get_try_क्रमmat(subdev, cfg,
 							       sel->pad)
 				->height;
 			src_size = &_r;
-		} else {
+		पूर्ण अन्यथा अणु
 			src_size = v4l2_subdev_get_try_compose(
 				subdev, cfg, ssd->sink_pad);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ssd == sensor->src && sel->pad == CCS_PAD_SRC) {
+	अगर (ssd == sensor->src && sel->pad == CCS_PAD_SRC) अणु
 		sel->r.left = 0;
 		sel->r.top = 0;
-	}
+	पूर्ण
 
 	sel->r.width = min(sel->r.width, src_size->width);
 	sel->r.height = min(sel->r.height, src_size->height);
 
-	sel->r.left = min_t(int, sel->r.left, src_size->width - sel->r.width);
-	sel->r.top = min_t(int, sel->r.top, src_size->height - sel->r.height);
+	sel->r.left = min_t(पूर्णांक, sel->r.left, src_size->width - sel->r.width);
+	sel->r.top = min_t(पूर्णांक, sel->r.top, src_size->height - sel->r.height);
 
 	*crops[sel->pad] = sel->r;
 
-	if (ssd != sensor->pixel_array && sel->pad == CCS_PAD_SINK)
+	अगर (ssd != sensor->pixel_array && sel->pad == CCS_PAD_SINK)
 		ccs_propagate(subdev, cfg, sel->which, V4L2_SEL_TGT_CROP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ccs_get_native_size(struct ccs_subdev *ssd, struct v4l2_rect *r)
-{
+अटल व्योम ccs_get_native_size(काष्ठा ccs_subdev *ssd, काष्ठा v4l2_rect *r)
+अणु
 	r->top = 0;
 	r->left = 0;
 	r->width = CCS_LIM(ssd->sensor, X_ADDR_MAX) + 1;
 	r->height = CCS_LIM(ssd->sensor, Y_ADDR_MAX) + 1;
-}
+पूर्ण
 
-static int __ccs_get_selection(struct v4l2_subdev *subdev,
-			       struct v4l2_subdev_pad_config *cfg,
-			       struct v4l2_subdev_selection *sel)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	struct ccs_subdev *ssd = to_ccs_subdev(subdev);
-	struct v4l2_rect *comp, *crops[CCS_PADS];
-	struct v4l2_rect sink_fmt;
-	int ret;
+अटल पूर्णांक __ccs_get_selection(काष्ठा v4l2_subdev *subdev,
+			       काष्ठा v4l2_subdev_pad_config *cfg,
+			       काष्ठा v4l2_subdev_selection *sel)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(subdev);
+	काष्ठा v4l2_rect *comp, *crops[CCS_PADS];
+	काष्ठा v4l2_rect sink_fmt;
+	पूर्णांक ret;
 
 	ret = __ccs_sel_supported(subdev, sel);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ccs_get_crop_compose(subdev, cfg, crops, &comp, sel->which);
 
-	if (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
+	अगर (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
 		sink_fmt = ssd->sink_fmt;
-	} else {
-		struct v4l2_mbus_framefmt *fmt =
-			v4l2_subdev_get_try_format(subdev, cfg, ssd->sink_pad);
+	पूर्ण अन्यथा अणु
+		काष्ठा v4l2_mbus_framefmt *fmt =
+			v4l2_subdev_get_try_क्रमmat(subdev, cfg, ssd->sink_pad);
 
 		sink_fmt.left = 0;
 		sink_fmt.top = 0;
 		sink_fmt.width = fmt->width;
 		sink_fmt.height = fmt->height;
-	}
+	पूर्ण
 
-	switch (sel->target) {
-	case V4L2_SEL_TGT_CROP_BOUNDS:
-	case V4L2_SEL_TGT_NATIVE_SIZE:
-		if (ssd == sensor->pixel_array)
+	चयन (sel->target) अणु
+	हाल V4L2_SEL_TGT_CROP_BOUNDS:
+	हाल V4L2_SEL_TGT_NATIVE_SIZE:
+		अगर (ssd == sensor->pixel_array)
 			ccs_get_native_size(ssd, &sel->r);
-		else if (sel->pad == ssd->sink_pad)
+		अन्यथा अगर (sel->pad == ssd->sink_pad)
 			sel->r = sink_fmt;
-		else
+		अन्यथा
 			sel->r = *comp;
-		break;
-	case V4L2_SEL_TGT_CROP:
-	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+		अवरोध;
+	हाल V4L2_SEL_TGT_CROP:
+	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
 		sel->r = *crops[sel->pad];
-		break;
-	case V4L2_SEL_TGT_COMPOSE:
+		अवरोध;
+	हाल V4L2_SEL_TGT_COMPOSE:
 		sel->r = *comp;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ccs_get_selection(struct v4l2_subdev *subdev,
-			     struct v4l2_subdev_pad_config *cfg,
-			     struct v4l2_subdev_selection *sel)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	int rval;
+अटल पूर्णांक ccs_get_selection(काष्ठा v4l2_subdev *subdev,
+			     काष्ठा v4l2_subdev_pad_config *cfg,
+			     काष्ठा v4l2_subdev_selection *sel)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	पूर्णांक rval;
 
 	mutex_lock(&sensor->mutex);
 	rval = __ccs_get_selection(subdev, cfg, sel);
 	mutex_unlock(&sensor->mutex);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int ccs_set_selection(struct v4l2_subdev *subdev,
-			     struct v4l2_subdev_pad_config *cfg,
-			     struct v4l2_subdev_selection *sel)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	int ret;
+अटल पूर्णांक ccs_set_selection(काष्ठा v4l2_subdev *subdev,
+			     काष्ठा v4l2_subdev_pad_config *cfg,
+			     काष्ठा v4l2_subdev_selection *sel)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	पूर्णांक ret;
 
 	ret = __ccs_sel_supported(subdev, sel);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&sensor->mutex);
 
@@ -2615,183 +2616,183 @@ static int ccs_set_selection(struct v4l2_subdev *subdev,
 	sel->r.width = CCS_ALIGN_DIM(sel->r.width, sel->flags);
 	sel->r.height =	CCS_ALIGN_DIM(sel->r.height, sel->flags);
 
-	sel->r.width = max_t(unsigned int, CCS_LIM(sensor, MIN_X_OUTPUT_SIZE),
+	sel->r.width = max_t(अचिन्हित पूर्णांक, CCS_LIM(sensor, MIN_X_OUTPUT_SIZE),
 			     sel->r.width);
-	sel->r.height = max_t(unsigned int, CCS_LIM(sensor, MIN_Y_OUTPUT_SIZE),
+	sel->r.height = max_t(अचिन्हित पूर्णांक, CCS_LIM(sensor, MIN_Y_OUTPUT_SIZE),
 			      sel->r.height);
 
-	switch (sel->target) {
-	case V4L2_SEL_TGT_CROP:
+	चयन (sel->target) अणु
+	हाल V4L2_SEL_TGT_CROP:
 		ret = ccs_set_crop(subdev, cfg, sel);
-		break;
-	case V4L2_SEL_TGT_COMPOSE:
+		अवरोध;
+	हाल V4L2_SEL_TGT_COMPOSE:
 		ret = ccs_set_compose(subdev, cfg, sel);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	mutex_unlock(&sensor->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ccs_get_skip_frames(struct v4l2_subdev *subdev, u32 *frames)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
+अटल पूर्णांक ccs_get_skip_frames(काष्ठा v4l2_subdev *subdev, u32 *frames)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
 
 	*frames = sensor->frame_skip;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ccs_get_skip_top_lines(struct v4l2_subdev *subdev, u32 *lines)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
+अटल पूर्णांक ccs_get_skip_top_lines(काष्ठा v4l2_subdev *subdev, u32 *lines)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
 
 	*lines = sensor->image_start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * sysfs attributes
  */
 
-static ssize_t
-ccs_sysfs_nvm_read(struct device *dev, struct device_attribute *attr,
-		   char *buf)
-{
-	struct v4l2_subdev *subdev = i2c_get_clientdata(to_i2c_client(dev));
-	struct i2c_client *client = v4l2_get_subdevdata(subdev);
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	int rval;
+अटल sमाप_प्रकार
+ccs_sysfs_nvm_पढ़ो(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		   अक्षर *buf)
+अणु
+	काष्ठा v4l2_subdev *subdev = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(subdev);
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	पूर्णांक rval;
 
-	if (!sensor->dev_init_done)
-		return -EBUSY;
+	अगर (!sensor->dev_init_करोne)
+		वापस -EBUSY;
 
 	rval = ccs_pm_get_init(sensor);
-	if (rval < 0)
-		return -ENODEV;
+	अगर (rval < 0)
+		वापस -ENODEV;
 
-	rval = ccs_read_nvm(sensor, buf, PAGE_SIZE);
-	if (rval < 0) {
-		pm_runtime_put(&client->dev);
+	rval = ccs_पढ़ो_nvm(sensor, buf, PAGE_SIZE);
+	अगर (rval < 0) अणु
+		pm_runसमय_put(&client->dev);
 		dev_err(&client->dev, "nvm read failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	pm_runtime_mark_last_busy(&client->dev);
-	pm_runtime_put_autosuspend(&client->dev);
+	pm_runसमय_mark_last_busy(&client->dev);
+	pm_runसमय_put_स्वतःsuspend(&client->dev);
 
 	/*
 	 * NVM is still way below a PAGE_SIZE, so we can safely
-	 * assume this for now.
+	 * assume this क्रम now.
 	 */
-	return rval;
-}
-static DEVICE_ATTR(nvm, S_IRUGO, ccs_sysfs_nvm_read, NULL);
+	वापस rval;
+पूर्ण
+अटल DEVICE_ATTR(nvm, S_IRUGO, ccs_sysfs_nvm_पढ़ो, शून्य);
 
-static ssize_t
-ccs_sysfs_ident_read(struct device *dev, struct device_attribute *attr,
-		     char *buf)
-{
-	struct v4l2_subdev *subdev = i2c_get_clientdata(to_i2c_client(dev));
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	struct ccs_module_info *minfo = &sensor->minfo;
+अटल sमाप_प्रकार
+ccs_sysfs_ident_पढ़ो(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		     अक्षर *buf)
+अणु
+	काष्ठा v4l2_subdev *subdev = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	काष्ठा ccs_module_info *minfo = &sensor->minfo;
 
-	if (minfo->mipi_manufacturer_id)
-		return snprintf(buf, PAGE_SIZE, "%4.4x%4.4x%2.2x\n",
+	अगर (minfo->mipi_manufacturer_id)
+		वापस snम_लिखो(buf, PAGE_SIZE, "%4.4x%4.4x%2.2x\n",
 				minfo->mipi_manufacturer_id, minfo->model_id,
 				minfo->revision_number) + 1;
-	else
-		return snprintf(buf, PAGE_SIZE, "%2.2x%4.4x%2.2x\n",
+	अन्यथा
+		वापस snम_लिखो(buf, PAGE_SIZE, "%2.2x%4.4x%2.2x\n",
 				minfo->smia_manufacturer_id, minfo->model_id,
 				minfo->revision_number) + 1;
-}
+पूर्ण
 
-static DEVICE_ATTR(ident, S_IRUGO, ccs_sysfs_ident_read, NULL);
+अटल DEVICE_ATTR(ident, S_IRUGO, ccs_sysfs_ident_पढ़ो, शून्य);
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev core operations
  */
 
-static int ccs_identify_module(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	struct ccs_module_info *minfo = &sensor->minfo;
-	unsigned int i;
+अटल पूर्णांक ccs_identअगरy_module(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	काष्ठा ccs_module_info *minfo = &sensor->minfo;
+	अचिन्हित पूर्णांक i;
 	u32 rev;
-	int rval = 0;
+	पूर्णांक rval = 0;
 
 	/* Module info */
-	rval = ccs_read(sensor, MODULE_MANUFACTURER_ID,
+	rval = ccs_पढ़ो(sensor, MODULE_MANUFACTURER_ID,
 			&minfo->mipi_manufacturer_id);
-	if (!rval && !minfo->mipi_manufacturer_id)
-		rval = ccs_read_addr_8only(sensor,
+	अगर (!rval && !minfo->mipi_manufacturer_id)
+		rval = ccs_पढ़ो_addr_8only(sensor,
 					   SMIAPP_REG_U8_MANUFACTURER_ID,
 					   &minfo->smia_manufacturer_id);
-	if (!rval)
-		rval = ccs_read_addr_8only(sensor, CCS_R_MODULE_MODEL_ID,
+	अगर (!rval)
+		rval = ccs_पढ़ो_addr_8only(sensor, CCS_R_MODULE_MODEL_ID,
 					   &minfo->model_id);
-	if (!rval)
-		rval = ccs_read_addr_8only(sensor,
+	अगर (!rval)
+		rval = ccs_पढ़ो_addr_8only(sensor,
 					   CCS_R_MODULE_REVISION_NUMBER_MAJOR,
 					   &rev);
-	if (!rval) {
-		rval = ccs_read_addr_8only(sensor,
+	अगर (!rval) अणु
+		rval = ccs_पढ़ो_addr_8only(sensor,
 					   CCS_R_MODULE_REVISION_NUMBER_MINOR,
 					   &minfo->revision_number);
 		minfo->revision_number |= rev << 8;
-	}
-	if (!rval)
-		rval = ccs_read_addr_8only(sensor, CCS_R_MODULE_DATE_YEAR,
+	पूर्ण
+	अगर (!rval)
+		rval = ccs_पढ़ो_addr_8only(sensor, CCS_R_MODULE_DATE_YEAR,
 					   &minfo->module_year);
-	if (!rval)
-		rval = ccs_read_addr_8only(sensor, CCS_R_MODULE_DATE_MONTH,
+	अगर (!rval)
+		rval = ccs_पढ़ो_addr_8only(sensor, CCS_R_MODULE_DATE_MONTH,
 					   &minfo->module_month);
-	if (!rval)
-		rval = ccs_read_addr_8only(sensor, CCS_R_MODULE_DATE_DAY,
+	अगर (!rval)
+		rval = ccs_पढ़ो_addr_8only(sensor, CCS_R_MODULE_DATE_DAY,
 					   &minfo->module_day);
 
 	/* Sensor info */
-	if (!rval)
-		rval = ccs_read(sensor, SENSOR_MANUFACTURER_ID,
+	अगर (!rval)
+		rval = ccs_पढ़ो(sensor, SENSOR_MANUFACTURER_ID,
 				&minfo->sensor_mipi_manufacturer_id);
-	if (!rval && !minfo->sensor_mipi_manufacturer_id)
-		rval = ccs_read_addr_8only(sensor,
+	अगर (!rval && !minfo->sensor_mipi_manufacturer_id)
+		rval = ccs_पढ़ो_addr_8only(sensor,
 					   CCS_R_SENSOR_MANUFACTURER_ID,
 					   &minfo->sensor_smia_manufacturer_id);
-	if (!rval)
-		rval = ccs_read_addr_8only(sensor,
+	अगर (!rval)
+		rval = ccs_पढ़ो_addr_8only(sensor,
 					   CCS_R_SENSOR_MODEL_ID,
 					   &minfo->sensor_model_id);
-	if (!rval)
-		rval = ccs_read_addr_8only(sensor,
+	अगर (!rval)
+		rval = ccs_पढ़ो_addr_8only(sensor,
 					   CCS_R_SENSOR_REVISION_NUMBER,
 					   &minfo->sensor_revision_number);
-	if (!rval)
-		rval = ccs_read_addr_8only(sensor,
+	अगर (!rval)
+		rval = ccs_पढ़ो_addr_8only(sensor,
 					   CCS_R_SENSOR_FIRMWARE_VERSION,
 					   &minfo->sensor_firmware_version);
 
 	/* SMIA */
-	if (!rval)
-		rval = ccs_read(sensor, MIPI_CCS_VERSION, &minfo->ccs_version);
-	if (!rval && !minfo->ccs_version)
-		rval = ccs_read_addr_8only(sensor, SMIAPP_REG_U8_SMIA_VERSION,
+	अगर (!rval)
+		rval = ccs_पढ़ो(sensor, MIPI_CCS_VERSION, &minfo->ccs_version);
+	अगर (!rval && !minfo->ccs_version)
+		rval = ccs_पढ़ो_addr_8only(sensor, SMIAPP_REG_U8_SMIA_VERSION,
 					   &minfo->smia_version);
-	if (!rval && !minfo->ccs_version)
-		rval = ccs_read_addr_8only(sensor, SMIAPP_REG_U8_SMIAPP_VERSION,
+	अगर (!rval && !minfo->ccs_version)
+		rval = ccs_पढ़ो_addr_8only(sensor, SMIAPP_REG_U8_SMIAPP_VERSION,
 					   &minfo->smiapp_version);
 
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(&client->dev, "sensor detection failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (minfo->mipi_manufacturer_id)
+	अगर (minfo->mipi_manufacturer_id)
 		dev_dbg(&client->dev, "MIPI CCS module 0x%4.4x-0x%4.4x\n",
 			minfo->mipi_manufacturer_id, minfo->model_id);
-	else
+	अन्यथा
 		dev_dbg(&client->dev, "SMIA module 0x%2.2x-0x%4.4x\n",
 			minfo->smia_manufacturer_id, minfo->model_id);
 
@@ -2800,11 +2801,11 @@ static int ccs_identify_module(struct ccs_sensor *sensor)
 		minfo->revision_number, minfo->module_year, minfo->module_month,
 		minfo->module_day);
 
-	if (minfo->sensor_mipi_manufacturer_id)
+	अगर (minfo->sensor_mipi_manufacturer_id)
 		dev_dbg(&client->dev, "MIPI CCS sensor 0x%4.4x-0x%4.4x\n",
 			minfo->sensor_mipi_manufacturer_id,
 			minfo->sensor_model_id);
-	else
+	अन्यथा
 		dev_dbg(&client->dev, "SMIA sensor 0x%2.2x-0x%4.4x\n",
 			minfo->sensor_smia_manufacturer_id,
 			minfo->sensor_model_id);
@@ -2813,166 +2814,166 @@ static int ccs_identify_module(struct ccs_sensor *sensor)
 		"sensor revision 0x%2.2x firmware version 0x%2.2x\n",
 		minfo->sensor_revision_number, minfo->sensor_firmware_version);
 
-	if (minfo->ccs_version) {
+	अगर (minfo->ccs_version) अणु
 		dev_dbg(&client->dev, "MIPI CCS version %u.%u",
 			(minfo->ccs_version & CCS_MIPI_CCS_VERSION_MAJOR_MASK)
 			>> CCS_MIPI_CCS_VERSION_MAJOR_SHIFT,
 			(minfo->ccs_version & CCS_MIPI_CCS_VERSION_MINOR_MASK));
 		minfo->name = CCS_NAME;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&client->dev,
 			"smia version %2.2d smiapp version %2.2d\n",
 			minfo->smia_version, minfo->smiapp_version);
 		minfo->name = SMIAPP_NAME;
-	}
+	पूर्ण
 
 	/*
 	 * Some modules have bad data in the lvalues below. Hope the
 	 * rvalues have better stuff. The lvalues are module
 	 * parameters whereas the rvalues are sensor parameters.
 	 */
-	if (minfo->sensor_smia_manufacturer_id &&
-	    !minfo->smia_manufacturer_id && !minfo->model_id) {
+	अगर (minfo->sensor_smia_manufacturer_id &&
+	    !minfo->smia_manufacturer_id && !minfo->model_id) अणु
 		minfo->smia_manufacturer_id =
 			minfo->sensor_smia_manufacturer_id;
 		minfo->model_id = minfo->sensor_model_id;
 		minfo->revision_number = minfo->sensor_revision_number;
-	}
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(ccs_module_idents); i++) {
-		if (ccs_module_idents[i].mipi_manufacturer_id &&
+	क्रम (i = 0; i < ARRAY_SIZE(ccs_module_idents); i++) अणु
+		अगर (ccs_module_idents[i].mipi_manufacturer_id &&
 		    ccs_module_idents[i].mipi_manufacturer_id
 		    != minfo->mipi_manufacturer_id)
-			continue;
-		if (ccs_module_idents[i].smia_manufacturer_id &&
+			जारी;
+		अगर (ccs_module_idents[i].smia_manufacturer_id &&
 		    ccs_module_idents[i].smia_manufacturer_id
 		    != minfo->smia_manufacturer_id)
-			continue;
-		if (ccs_module_idents[i].model_id != minfo->model_id)
-			continue;
-		if (ccs_module_idents[i].flags
-		    & CCS_MODULE_IDENT_FLAG_REV_LE) {
-			if (ccs_module_idents[i].revision_number_major
+			जारी;
+		अगर (ccs_module_idents[i].model_id != minfo->model_id)
+			जारी;
+		अगर (ccs_module_idents[i].flags
+		    & CCS_MODULE_IDENT_FLAG_REV_LE) अणु
+			अगर (ccs_module_idents[i].revision_number_major
 			    < (minfo->revision_number >> 8))
-				continue;
-		} else {
-			if (ccs_module_idents[i].revision_number_major
+				जारी;
+		पूर्ण अन्यथा अणु
+			अगर (ccs_module_idents[i].revision_number_major
 			    != (minfo->revision_number >> 8))
-				continue;
-		}
+				जारी;
+		पूर्ण
 
 		minfo->name = ccs_module_idents[i].name;
 		minfo->quirk = ccs_module_idents[i].quirk;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (i >= ARRAY_SIZE(ccs_module_idents))
+	अगर (i >= ARRAY_SIZE(ccs_module_idents))
 		dev_warn(&client->dev,
 			 "no quirks for this module; let's hope it's fully compliant\n");
 
 	dev_dbg(&client->dev, "the sensor is called %s\n", minfo->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_ops ccs_ops;
-static const struct v4l2_subdev_internal_ops ccs_internal_ops;
-static const struct media_entity_operations ccs_entity_ops;
+अटल स्थिर काष्ठा v4l2_subdev_ops ccs_ops;
+अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops ccs_पूर्णांकernal_ops;
+अटल स्थिर काष्ठा media_entity_operations ccs_entity_ops;
 
-static int ccs_register_subdev(struct ccs_sensor *sensor,
-			       struct ccs_subdev *ssd,
-			       struct ccs_subdev *sink_ssd,
+अटल पूर्णांक ccs_रेजिस्टर_subdev(काष्ठा ccs_sensor *sensor,
+			       काष्ठा ccs_subdev *ssd,
+			       काष्ठा ccs_subdev *sink_ssd,
 			       u16 source_pad, u16 sink_pad, u32 link_flags)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
-	int rval;
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+	पूर्णांक rval;
 
-	if (!sink_ssd)
-		return 0;
+	अगर (!sink_ssd)
+		वापस 0;
 
 	rval = media_entity_pads_init(&ssd->sd.entity, ssd->npads, ssd->pads);
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(&client->dev, "media_entity_pads_init failed\n");
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
-	rval = v4l2_device_register_subdev(sensor->src->sd.v4l2_dev, &ssd->sd);
-	if (rval) {
+	rval = v4l2_device_रेजिस्टर_subdev(sensor->src->sd.v4l2_dev, &ssd->sd);
+	अगर (rval) अणु
 		dev_err(&client->dev, "v4l2_device_register_subdev failed\n");
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
 	rval = media_create_pad_link(&ssd->sd.entity, source_pad,
 				     &sink_ssd->sd.entity, sink_pad,
 				     link_flags);
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(&client->dev, "media_create_pad_link failed\n");
-		v4l2_device_unregister_subdev(&ssd->sd);
-		return rval;
-	}
+		v4l2_device_unरेजिस्टर_subdev(&ssd->sd);
+		वापस rval;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ccs_unregistered(struct v4l2_subdev *subdev)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	unsigned int i;
+अटल व्योम ccs_unरेजिस्टरed(काष्ठा v4l2_subdev *subdev)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	अचिन्हित पूर्णांक i;
 
-	for (i = 1; i < sensor->ssds_used; i++)
-		v4l2_device_unregister_subdev(&sensor->ssds[i].sd);
-}
+	क्रम (i = 1; i < sensor->ssds_used; i++)
+		v4l2_device_unरेजिस्टर_subdev(&sensor->ssds[i].sd);
+पूर्ण
 
-static int ccs_registered(struct v4l2_subdev *subdev)
-{
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	int rval;
+अटल पूर्णांक ccs_रेजिस्टरed(काष्ठा v4l2_subdev *subdev)
+अणु
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	पूर्णांक rval;
 
-	if (sensor->scaler) {
-		rval = ccs_register_subdev(sensor, sensor->binner,
+	अगर (sensor->scaler) अणु
+		rval = ccs_रेजिस्टर_subdev(sensor, sensor->binner,
 					   sensor->scaler,
 					   CCS_PAD_SRC, CCS_PAD_SINK,
 					   MEDIA_LNK_FL_ENABLED |
 					   MEDIA_LNK_FL_IMMUTABLE);
-		if (rval < 0)
-			return rval;
-	}
+		अगर (rval < 0)
+			वापस rval;
+	पूर्ण
 
-	rval = ccs_register_subdev(sensor, sensor->pixel_array, sensor->binner,
+	rval = ccs_रेजिस्टर_subdev(sensor, sensor->pixel_array, sensor->binner,
 				   CCS_PA_PAD_SRC, CCS_PAD_SINK,
 				   MEDIA_LNK_FL_ENABLED |
 				   MEDIA_LNK_FL_IMMUTABLE);
-	if (rval)
-		goto out_err;
+	अगर (rval)
+		जाओ out_err;
 
-	return 0;
+	वापस 0;
 
 out_err:
-	ccs_unregistered(subdev);
+	ccs_unरेजिस्टरed(subdev);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static void ccs_cleanup(struct ccs_sensor *sensor)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+अटल व्योम ccs_cleanup(काष्ठा ccs_sensor *sensor)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
 
-	device_remove_file(&client->dev, &dev_attr_nvm);
-	device_remove_file(&client->dev, &dev_attr_ident);
+	device_हटाओ_file(&client->dev, &dev_attr_nvm);
+	device_हटाओ_file(&client->dev, &dev_attr_ident);
 
-	ccs_free_controls(sensor);
-}
+	ccs_मुक्त_controls(sensor);
+पूर्ण
 
-static void ccs_create_subdev(struct ccs_sensor *sensor,
-			      struct ccs_subdev *ssd, const char *name,
-			      unsigned short num_pads, u32 function)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
+अटल व्योम ccs_create_subdev(काष्ठा ccs_sensor *sensor,
+			      काष्ठा ccs_subdev *ssd, स्थिर अक्षर *name,
+			      अचिन्हित लघु num_pads, u32 function)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&sensor->src->sd);
 
-	if (!ssd)
-		return;
+	अगर (!ssd)
+		वापस;
 
-	if (ssd != sensor->src)
+	अगर (ssd != sensor->src)
 		v4l2_subdev_init(&ssd->sd, &ccs_ops);
 
 	ssd->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
@@ -2990,427 +2991,427 @@ static void ccs_create_subdev(struct ccs_sensor *sensor,
 	ssd->compose.height = ssd->sink_fmt.height;
 	ssd->crop[ssd->source_pad] = ssd->compose;
 	ssd->pads[ssd->source_pad].flags = MEDIA_PAD_FL_SOURCE;
-	if (ssd != sensor->pixel_array) {
+	अगर (ssd != sensor->pixel_array) अणु
 		ssd->crop[ssd->sink_pad] = ssd->compose;
 		ssd->pads[ssd->sink_pad].flags = MEDIA_PAD_FL_SINK;
-	}
+	पूर्ण
 
 	ssd->sd.entity.ops = &ccs_entity_ops;
 
-	if (ssd == sensor->src)
-		return;
+	अगर (ssd == sensor->src)
+		वापस;
 
-	ssd->sd.internal_ops = &ccs_internal_ops;
+	ssd->sd.पूर्णांकernal_ops = &ccs_पूर्णांकernal_ops;
 	ssd->sd.owner = THIS_MODULE;
 	ssd->sd.dev = &client->dev;
 	v4l2_set_subdevdata(&ssd->sd, client);
-}
+पूर्ण
 
-static int ccs_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
-{
-	struct ccs_subdev *ssd = to_ccs_subdev(sd);
-	struct ccs_sensor *sensor = ssd->sensor;
-	unsigned int i;
+अटल पूर्णांक ccs_खोलो(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
+अणु
+	काष्ठा ccs_subdev *ssd = to_ccs_subdev(sd);
+	काष्ठा ccs_sensor *sensor = ssd->sensor;
+	अचिन्हित पूर्णांक i;
 
 	mutex_lock(&sensor->mutex);
 
-	for (i = 0; i < ssd->npads; i++) {
-		struct v4l2_mbus_framefmt *try_fmt =
-			v4l2_subdev_get_try_format(sd, fh->pad, i);
-		struct v4l2_rect *try_crop =
+	क्रम (i = 0; i < ssd->npads; i++) अणु
+		काष्ठा v4l2_mbus_framefmt *try_fmt =
+			v4l2_subdev_get_try_क्रमmat(sd, fh->pad, i);
+		काष्ठा v4l2_rect *try_crop =
 			v4l2_subdev_get_try_crop(sd, fh->pad, i);
-		struct v4l2_rect *try_comp;
+		काष्ठा v4l2_rect *try_comp;
 
 		ccs_get_native_size(ssd, try_crop);
 
 		try_fmt->width = try_crop->width;
 		try_fmt->height = try_crop->height;
-		try_fmt->code = sensor->internal_csi_format->code;
+		try_fmt->code = sensor->पूर्णांकernal_csi_क्रमmat->code;
 		try_fmt->field = V4L2_FIELD_NONE;
 
-		if (ssd != sensor->pixel_array)
-			continue;
+		अगर (ssd != sensor->pixel_array)
+			जारी;
 
 		try_comp = v4l2_subdev_get_try_compose(sd, fh->pad, i);
 		*try_comp = *try_crop;
-	}
+	पूर्ण
 
 	mutex_unlock(&sensor->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_video_ops ccs_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops ccs_video_ops = अणु
 	.s_stream = ccs_set_stream,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_pad_ops ccs_pad_ops = {
-	.enum_mbus_code = ccs_enum_mbus_code,
-	.get_fmt = ccs_get_format,
-	.set_fmt = ccs_set_format,
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops ccs_pad_ops = अणु
+	.क्रमागत_mbus_code = ccs_क्रमागत_mbus_code,
+	.get_fmt = ccs_get_क्रमmat,
+	.set_fmt = ccs_set_क्रमmat,
 	.get_selection = ccs_get_selection,
 	.set_selection = ccs_set_selection,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_sensor_ops ccs_sensor_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_sensor_ops ccs_sensor_ops = अणु
 	.g_skip_frames = ccs_get_skip_frames,
 	.g_skip_top_lines = ccs_get_skip_top_lines,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops ccs_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops ccs_ops = अणु
 	.video = &ccs_video_ops,
 	.pad = &ccs_pad_ops,
 	.sensor = &ccs_sensor_ops,
-};
+पूर्ण;
 
-static const struct media_entity_operations ccs_entity_ops = {
+अटल स्थिर काष्ठा media_entity_operations ccs_entity_ops = अणु
 	.link_validate = v4l2_subdev_link_validate,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_internal_ops ccs_internal_src_ops = {
-	.registered = ccs_registered,
-	.unregistered = ccs_unregistered,
-	.open = ccs_open,
-};
+अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops ccs_पूर्णांकernal_src_ops = अणु
+	.रेजिस्टरed = ccs_रेजिस्टरed,
+	.unरेजिस्टरed = ccs_unरेजिस्टरed,
+	.खोलो = ccs_खोलो,
+पूर्ण;
 
-static const struct v4l2_subdev_internal_ops ccs_internal_ops = {
-	.open = ccs_open,
-};
+अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops ccs_पूर्णांकernal_ops = अणु
+	.खोलो = ccs_खोलो,
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * I2C Driver
  */
 
-static int __maybe_unused ccs_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct v4l2_subdev *subdev = i2c_get_clientdata(client);
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
+अटल पूर्णांक __maybe_unused ccs_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा v4l2_subdev *subdev = i2c_get_clientdata(client);
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
 	bool streaming = sensor->streaming;
-	int rval;
+	पूर्णांक rval;
 
-	rval = pm_runtime_get_sync(dev);
-	if (rval < 0) {
-		pm_runtime_put_noidle(dev);
+	rval = pm_runसमय_get_sync(dev);
+	अगर (rval < 0) अणु
+		pm_runसमय_put_noidle(dev);
 
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (sensor->streaming)
+	अगर (sensor->streaming)
 		ccs_stop_streaming(sensor);
 
-	/* save state for resume */
+	/* save state क्रम resume */
 	sensor->streaming = streaming;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ccs_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct v4l2_subdev *subdev = i2c_get_clientdata(client);
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	int rval = 0;
+अटल पूर्णांक __maybe_unused ccs_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा v4l2_subdev *subdev = i2c_get_clientdata(client);
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	पूर्णांक rval = 0;
 
-	pm_runtime_put(dev);
+	pm_runसमय_put(dev);
 
-	if (sensor->streaming)
+	अगर (sensor->streaming)
 		rval = ccs_start_streaming(sensor);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int ccs_get_hwconfig(struct ccs_sensor *sensor, struct device *dev)
-{
-	struct ccs_hwconfig *hwcfg = &sensor->hwcfg;
-	struct v4l2_fwnode_endpoint bus_cfg = { .bus_type = V4L2_MBUS_UNKNOWN };
-	struct fwnode_handle *ep;
-	struct fwnode_handle *fwnode = dev_fwnode(dev);
+अटल पूर्णांक ccs_get_hwconfig(काष्ठा ccs_sensor *sensor, काष्ठा device *dev)
+अणु
+	काष्ठा ccs_hwconfig *hwcfg = &sensor->hwcfg;
+	काष्ठा v4l2_fwnode_endpoपूर्णांक bus_cfg = अणु .bus_type = V4L2_MBUS_UNKNOWN पूर्ण;
+	काष्ठा fwnode_handle *ep;
+	काष्ठा fwnode_handle *fwnode = dev_fwnode(dev);
 	u32 rotation;
-	int i;
-	int rval;
+	पूर्णांक i;
+	पूर्णांक rval;
 
-	ep = fwnode_graph_get_endpoint_by_id(fwnode, 0, 0,
+	ep = fwnode_graph_get_endpoपूर्णांक_by_id(fwnode, 0, 0,
 					     FWNODE_GRAPH_ENDPOINT_NEXT);
-	if (!ep)
-		return -ENODEV;
+	अगर (!ep)
+		वापस -ENODEV;
 
 	/*
-	 * Note that we do need to rely on detecting the bus type between CSI-2
+	 * Note that we करो need to rely on detecting the bus type between CSI-2
 	 * D-PHY and CCP2 as the old bindings did not require it.
 	 */
-	rval = v4l2_fwnode_endpoint_alloc_parse(ep, &bus_cfg);
-	if (rval)
-		goto out_err;
+	rval = v4l2_fwnode_endpoपूर्णांक_alloc_parse(ep, &bus_cfg);
+	अगर (rval)
+		जाओ out_err;
 
-	switch (bus_cfg.bus_type) {
-	case V4L2_MBUS_CSI2_DPHY:
-		hwcfg->csi_signalling_mode = CCS_CSI_SIGNALING_MODE_CSI_2_DPHY;
+	चयन (bus_cfg.bus_type) अणु
+	हाल V4L2_MBUS_CSI2_DPHY:
+		hwcfg->csi_संकेतling_mode = CCS_CSI_SIGNALING_MODE_CSI_2_DPHY;
 		hwcfg->lanes = bus_cfg.bus.mipi_csi2.num_data_lanes;
-		break;
-	case V4L2_MBUS_CSI2_CPHY:
-		hwcfg->csi_signalling_mode = CCS_CSI_SIGNALING_MODE_CSI_2_CPHY;
+		अवरोध;
+	हाल V4L2_MBUS_CSI2_CPHY:
+		hwcfg->csi_संकेतling_mode = CCS_CSI_SIGNALING_MODE_CSI_2_CPHY;
 		hwcfg->lanes = bus_cfg.bus.mipi_csi2.num_data_lanes;
-		break;
-	case V4L2_MBUS_CSI1:
-	case V4L2_MBUS_CCP2:
-		hwcfg->csi_signalling_mode = (bus_cfg.bus.mipi_csi1.strobe) ?
+		अवरोध;
+	हाल V4L2_MBUS_CSI1:
+	हाल V4L2_MBUS_CCP2:
+		hwcfg->csi_संकेतling_mode = (bus_cfg.bus.mipi_csi1.strobe) ?
 		SMIAPP_CSI_SIGNALLING_MODE_CCP2_DATA_STROBE :
 		SMIAPP_CSI_SIGNALLING_MODE_CCP2_DATA_CLOCK;
 		hwcfg->lanes = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "unsupported bus %u\n", bus_cfg.bus_type);
 		rval = -EINVAL;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	dev_dbg(dev, "lanes %u\n", hwcfg->lanes);
 
-	rval = fwnode_property_read_u32(fwnode, "rotation", &rotation);
-	if (!rval) {
-		switch (rotation) {
-		case 180:
+	rval = fwnode_property_पढ़ो_u32(fwnode, "rotation", &rotation);
+	अगर (!rval) अणु
+		चयन (rotation) अणु
+		हाल 180:
 			hwcfg->module_board_orient =
 				CCS_MODULE_BOARD_ORIENT_180;
 			fallthrough;
-		case 0:
-			break;
-		default:
+		हाल 0:
+			अवरोध;
+		शेष:
 			dev_err(dev, "invalid rotation %u\n", rotation);
 			rval = -EINVAL;
-			goto out_err;
-		}
-	}
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	rval = fwnode_property_read_u32(dev_fwnode(dev), "clock-frequency",
+	rval = fwnode_property_पढ़ो_u32(dev_fwnode(dev), "clock-frequency",
 					&hwcfg->ext_clk);
-	if (rval)
+	अगर (rval)
 		dev_info(dev, "can't get clock-frequency\n");
 
 	dev_dbg(dev, "clk %d, mode %d\n", hwcfg->ext_clk,
-		hwcfg->csi_signalling_mode);
+		hwcfg->csi_संकेतling_mode);
 
-	if (!bus_cfg.nr_of_link_frequencies) {
+	अगर (!bus_cfg.nr_of_link_frequencies) अणु
 		dev_warn(dev, "no link frequencies defined\n");
 		rval = -EINVAL;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	hwcfg->op_sys_clock = devm_kcalloc(
+	hwcfg->op_sys_घड़ी = devm_kसुस्मृति(
 		dev, bus_cfg.nr_of_link_frequencies + 1 /* guardian */,
-		sizeof(*hwcfg->op_sys_clock), GFP_KERNEL);
-	if (!hwcfg->op_sys_clock) {
+		माप(*hwcfg->op_sys_घड़ी), GFP_KERNEL);
+	अगर (!hwcfg->op_sys_घड़ी) अणु
 		rval = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	for (i = 0; i < bus_cfg.nr_of_link_frequencies; i++) {
-		hwcfg->op_sys_clock[i] = bus_cfg.link_frequencies[i];
-		dev_dbg(dev, "freq %d: %lld\n", i, hwcfg->op_sys_clock[i]);
-	}
+	क्रम (i = 0; i < bus_cfg.nr_of_link_frequencies; i++) अणु
+		hwcfg->op_sys_घड़ी[i] = bus_cfg.link_frequencies[i];
+		dev_dbg(dev, "freq %d: %lld\n", i, hwcfg->op_sys_घड़ी[i]);
+	पूर्ण
 
-	v4l2_fwnode_endpoint_free(&bus_cfg);
+	v4l2_fwnode_endpoपूर्णांक_मुक्त(&bus_cfg);
 	fwnode_handle_put(ep);
 
-	return 0;
+	वापस 0;
 
 out_err:
-	v4l2_fwnode_endpoint_free(&bus_cfg);
+	v4l2_fwnode_endpoपूर्णांक_मुक्त(&bus_cfg);
 	fwnode_handle_put(ep);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int ccs_probe(struct i2c_client *client)
-{
-	struct ccs_sensor *sensor;
-	const struct firmware *fw;
-	char filename[40];
-	unsigned int i;
-	int rval;
+अटल पूर्णांक ccs_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा ccs_sensor *sensor;
+	स्थिर काष्ठा firmware *fw;
+	अक्षर filename[40];
+	अचिन्हित पूर्णांक i;
+	पूर्णांक rval;
 
-	sensor = devm_kzalloc(&client->dev, sizeof(*sensor), GFP_KERNEL);
-	if (sensor == NULL)
-		return -ENOMEM;
+	sensor = devm_kzalloc(&client->dev, माप(*sensor), GFP_KERNEL);
+	अगर (sensor == शून्य)
+		वापस -ENOMEM;
 
 	rval = ccs_get_hwconfig(sensor, &client->dev);
-	if (rval)
-		return rval;
+	अगर (rval)
+		वापस rval;
 
 	sensor->src = &sensor->ssds[sensor->ssds_used];
 
 	v4l2_i2c_subdev_init(&sensor->src->sd, client, &ccs_ops);
-	sensor->src->sd.internal_ops = &ccs_internal_src_ops;
+	sensor->src->sd.पूर्णांकernal_ops = &ccs_पूर्णांकernal_src_ops;
 
-	sensor->regulators = devm_kcalloc(&client->dev,
+	sensor->regulators = devm_kसुस्मृति(&client->dev,
 					  ARRAY_SIZE(ccs_regulators),
-					  sizeof(*sensor->regulators),
+					  माप(*sensor->regulators),
 					  GFP_KERNEL);
-	if (!sensor->regulators)
-		return -ENOMEM;
+	अगर (!sensor->regulators)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ARRAY_SIZE(ccs_regulators); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(ccs_regulators); i++)
 		sensor->regulators[i].supply = ccs_regulators[i];
 
 	rval = devm_regulator_bulk_get(&client->dev, ARRAY_SIZE(ccs_regulators),
 				       sensor->regulators);
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(&client->dev, "could not get regulators\n");
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
-	sensor->ext_clk = devm_clk_get(&client->dev, NULL);
-	if (PTR_ERR(sensor->ext_clk) == -ENOENT) {
+	sensor->ext_clk = devm_clk_get(&client->dev, शून्य);
+	अगर (PTR_ERR(sensor->ext_clk) == -ENOENT) अणु
 		dev_info(&client->dev, "no clock defined, continuing...\n");
-		sensor->ext_clk = NULL;
-	} else if (IS_ERR(sensor->ext_clk)) {
+		sensor->ext_clk = शून्य;
+	पूर्ण अन्यथा अगर (IS_ERR(sensor->ext_clk)) अणु
 		dev_err(&client->dev, "could not get clock (%ld)\n",
 			PTR_ERR(sensor->ext_clk));
-		return -EPROBE_DEFER;
-	}
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
-	if (sensor->ext_clk) {
-		if (sensor->hwcfg.ext_clk) {
-			unsigned long rate;
+	अगर (sensor->ext_clk) अणु
+		अगर (sensor->hwcfg.ext_clk) अणु
+			अचिन्हित दीर्घ rate;
 
 			rval = clk_set_rate(sensor->ext_clk,
 					    sensor->hwcfg.ext_clk);
-			if (rval < 0) {
+			अगर (rval < 0) अणु
 				dev_err(&client->dev,
 					"unable to set clock freq to %u\n",
 					sensor->hwcfg.ext_clk);
-				return rval;
-			}
+				वापस rval;
+			पूर्ण
 
 			rate = clk_get_rate(sensor->ext_clk);
-			if (rate != sensor->hwcfg.ext_clk) {
+			अगर (rate != sensor->hwcfg.ext_clk) अणु
 				dev_err(&client->dev,
 					"can't set clock freq, asked for %u but got %lu\n",
 					sensor->hwcfg.ext_clk, rate);
-				return -EINVAL;
-			}
-		} else {
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			sensor->hwcfg.ext_clk = clk_get_rate(sensor->ext_clk);
 			dev_dbg(&client->dev, "obtained clock freq %u\n",
 				sensor->hwcfg.ext_clk);
-		}
-	} else if (sensor->hwcfg.ext_clk) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (sensor->hwcfg.ext_clk) अणु
 		dev_dbg(&client->dev, "assuming clock freq %u\n",
 			sensor->hwcfg.ext_clk);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&client->dev, "unable to obtain clock freq\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!sensor->hwcfg.ext_clk) {
+	अगर (!sensor->hwcfg.ext_clk) अणु
 		dev_err(&client->dev, "cannot work with xclk frequency 0\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sensor->reset = devm_gpiod_get_optional(&client->dev, "reset",
 						GPIOD_OUT_HIGH);
-	if (IS_ERR(sensor->reset))
-		return PTR_ERR(sensor->reset);
+	अगर (IS_ERR(sensor->reset))
+		वापस PTR_ERR(sensor->reset);
 	/* Support old users that may have used "xshutdown" property. */
-	if (!sensor->reset)
-		sensor->xshutdown = devm_gpiod_get_optional(&client->dev,
+	अगर (!sensor->reset)
+		sensor->xshutकरोwn = devm_gpiod_get_optional(&client->dev,
 							    "xshutdown",
 							    GPIOD_OUT_LOW);
-	if (IS_ERR(sensor->xshutdown))
-		return PTR_ERR(sensor->xshutdown);
+	अगर (IS_ERR(sensor->xshutकरोwn))
+		वापस PTR_ERR(sensor->xshutकरोwn);
 
-	rval = ccs_power_on(&client->dev);
-	if (rval < 0)
-		return rval;
+	rval = ccs_घातer_on(&client->dev);
+	अगर (rval < 0)
+		वापस rval;
 
 	mutex_init(&sensor->mutex);
 
-	rval = ccs_identify_module(sensor);
-	if (rval) {
+	rval = ccs_identअगरy_module(sensor);
+	अगर (rval) अणु
 		rval = -ENODEV;
-		goto out_power_off;
-	}
+		जाओ out_घातer_off;
+	पूर्ण
 
-	rval = snprintf(filename, sizeof(filename),
+	rval = snम_लिखो(filename, माप(filename),
 			"ccs/ccs-sensor-%4.4x-%4.4x-%4.4x.fw",
 			sensor->minfo.sensor_mipi_manufacturer_id,
 			sensor->minfo.sensor_model_id,
 			sensor->minfo.sensor_revision_number);
-	if (rval >= sizeof(filename)) {
+	अगर (rval >= माप(filename)) अणु
 		rval = -ENOMEM;
-		goto out_power_off;
-	}
+		जाओ out_घातer_off;
+	पूर्ण
 
 	rval = request_firmware(&fw, filename, &client->dev);
-	if (!rval) {
+	अगर (!rval) अणु
 		ccs_data_parse(&sensor->sdata, fw->data, fw->size, &client->dev,
 			       true);
 		release_firmware(fw);
-	}
+	पूर्ण
 
-	rval = snprintf(filename, sizeof(filename),
+	rval = snम_लिखो(filename, माप(filename),
 			"ccs/ccs-module-%4.4x-%4.4x-%4.4x.fw",
 			sensor->minfo.mipi_manufacturer_id,
 			sensor->minfo.model_id,
 			sensor->minfo.revision_number);
-	if (rval >= sizeof(filename)) {
+	अगर (rval >= माप(filename)) अणु
 		rval = -ENOMEM;
-		goto out_release_sdata;
-	}
+		जाओ out_release_sdata;
+	पूर्ण
 
 	rval = request_firmware(&fw, filename, &client->dev);
-	if (!rval) {
+	अगर (!rval) अणु
 		ccs_data_parse(&sensor->mdata, fw->data, fw->size, &client->dev,
 			       true);
 		release_firmware(fw);
-	}
+	पूर्ण
 
-	rval = ccs_read_all_limits(sensor);
-	if (rval)
-		goto out_release_mdata;
+	rval = ccs_पढ़ो_all_limits(sensor);
+	अगर (rval)
+		जाओ out_release_mdata;
 
-	rval = ccs_read_frame_fmt(sensor);
-	if (rval) {
+	rval = ccs_पढ़ो_frame_fmt(sensor);
+	अगर (rval) अणु
 		rval = -ENODEV;
-		goto out_free_ccs_limits;
-	}
+		जाओ out_मुक्त_ccs_limits;
+	पूर्ण
 
 	rval = ccs_update_phy_ctrl(sensor);
-	if (rval < 0)
-		goto out_free_ccs_limits;
+	अगर (rval < 0)
+		जाओ out_मुक्त_ccs_limits;
 
 	/*
 	 * Handle Sensor Module orientation on the board.
 	 *
-	 * The application of H-FLIP and V-FLIP on the sensor is modified by
+	 * The application of H-FLIP and V-FLIP on the sensor is modअगरied by
 	 * the sensor orientation on the board.
 	 *
-	 * For CCS_BOARD_SENSOR_ORIENT_180 the default behaviour is to set
-	 * both H-FLIP and V-FLIP for normal operation which also implies
-	 * that a set/unset operation for user space HFLIP and VFLIP v4l2
-	 * controls will need to be internally inverted.
+	 * For CCS_BOARD_SENSOR_ORIENT_180 the शेष behaviour is to set
+	 * both H-FLIP and V-FLIP क्रम normal operation which also implies
+	 * that a set/unset operation क्रम user space HFLIP and VFLIP v4l2
+	 * controls will need to be पूर्णांकernally inverted.
 	 *
 	 * Rotation also changes the bayer pattern.
 	 */
-	if (sensor->hwcfg.module_board_orient ==
+	अगर (sensor->hwcfg.module_board_orient ==
 	    CCS_MODULE_BOARD_ORIENT_180)
 		sensor->hvflip_inv_mask =
 			CCS_IMAGE_ORIENTATION_HORIZONTAL_MIRROR |
 			CCS_IMAGE_ORIENTATION_VERTICAL_FLIP;
 
 	rval = ccs_call_quirk(sensor, limits);
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(&client->dev, "limits quirks failed\n");
-		goto out_free_ccs_limits;
-	}
+		जाओ out_मुक्त_ccs_limits;
+	पूर्ण
 
-	if (CCS_LIM(sensor, BINNING_CAPABILITY)) {
+	अगर (CCS_LIM(sensor, BINNING_CAPABILITY)) अणु
 		sensor->nbinning_subtypes =
 			min_t(u8, CCS_LIM(sensor, BINNING_SUB_TYPES),
 			      CCS_LIM_BINNING_SUB_TYPE_MAX_N);
 
-		for (i = 0; i < sensor->nbinning_subtypes; i++) {
+		क्रम (i = 0; i < sensor->nbinning_subtypes; i++) अणु
 			sensor->binning_subtypes[i].horizontal =
 				CCS_LIM_AT(sensor, BINNING_SUB_TYPE, i) >>
 				CCS_BINNING_SUB_TYPE_COLUMN_SHIFT;
@@ -3421,41 +3422,41 @@ static int ccs_probe(struct i2c_client *client)
 			dev_dbg(&client->dev, "binning %xx%x\n",
 				sensor->binning_subtypes[i].horizontal,
 				sensor->binning_subtypes[i].vertical);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	sensor->binning_horizontal = 1;
 	sensor->binning_vertical = 1;
 
-	if (device_create_file(&client->dev, &dev_attr_ident) != 0) {
+	अगर (device_create_file(&client->dev, &dev_attr_ident) != 0) अणु
 		dev_err(&client->dev, "sysfs ident entry creation failed\n");
 		rval = -ENOENT;
-		goto out_free_ccs_limits;
-	}
+		जाओ out_मुक्त_ccs_limits;
+	पूर्ण
 
-	if (sensor->minfo.smiapp_version &&
+	अगर (sensor->minfo.smiapp_version &&
 	    CCS_LIM(sensor, DATA_TRANSFER_IF_CAPABILITY) &
-	    CCS_DATA_TRANSFER_IF_CAPABILITY_SUPPORTED) {
-		if (device_create_file(&client->dev, &dev_attr_nvm) != 0) {
+	    CCS_DATA_TRANSFER_IF_CAPABILITY_SUPPORTED) अणु
+		अगर (device_create_file(&client->dev, &dev_attr_nvm) != 0) अणु
 			dev_err(&client->dev, "sysfs nvm entry failed\n");
 			rval = -EBUSY;
-			goto out_cleanup;
-		}
-	}
+			जाओ out_cleanup;
+		पूर्ण
+	पूर्ण
 
-	if (!CCS_LIM(sensor, MIN_OP_SYS_CLK_DIV) ||
+	अगर (!CCS_LIM(sensor, MIN_OP_SYS_CLK_DIV) ||
 	    !CCS_LIM(sensor, MAX_OP_SYS_CLK_DIV) ||
 	    !CCS_LIM(sensor, MIN_OP_PIX_CLK_DIV) ||
-	    !CCS_LIM(sensor, MAX_OP_PIX_CLK_DIV)) {
-		/* No OP clock branch */
+	    !CCS_LIM(sensor, MAX_OP_PIX_CLK_DIV)) अणु
+		/* No OP घड़ी branch */
 		sensor->pll.flags |= CCS_PLL_FLAG_NO_OP_CLOCKS;
-	} else if (CCS_LIM(sensor, SCALING_CAPABILITY)
+	पूर्ण अन्यथा अगर (CCS_LIM(sensor, SCALING_CAPABILITY)
 		   != CCS_SCALING_CAPABILITY_NONE ||
 		   CCS_LIM(sensor, DIGITAL_CROP_CAPABILITY)
-		   == CCS_DIGITAL_CROP_CAPABILITY_INPUT_CROP) {
+		   == CCS_DIGITAL_CROP_CAPABILITY_INPUT_CROP) अणु
 		/* We have a scaler or digital crop. */
 		sensor->scaler = &sensor->ssds[sensor->ssds_used];
 		sensor->ssds_used++;
-	}
+	पूर्ण
 	sensor->binner = &sensor->ssds[sensor->ssds_used];
 	sensor->ssds_used++;
 	sensor->pixel_array = &sensor->ssds[sensor->ssds_used];
@@ -3466,57 +3467,57 @@ static int ccs_probe(struct i2c_client *client)
 	/* prepare PLL configuration input values */
 	sensor->pll.bus_type = CCS_PLL_BUS_TYPE_CSI2_DPHY;
 	sensor->pll.csi2.lanes = sensor->hwcfg.lanes;
-	if (CCS_LIM(sensor, CLOCK_CALCULATION) &
-	    CCS_CLOCK_CALCULATION_LANE_SPEED) {
+	अगर (CCS_LIM(sensor, CLOCK_CALCULATION) &
+	    CCS_CLOCK_CALCULATION_LANE_SPEED) अणु
 		sensor->pll.flags |= CCS_PLL_FLAG_LANE_SPEED_MODEL;
-		if (CCS_LIM(sensor, CLOCK_CALCULATION) &
-		    CCS_CLOCK_CALCULATION_LINK_DECOUPLED) {
+		अगर (CCS_LIM(sensor, CLOCK_CALCULATION) &
+		    CCS_CLOCK_CALCULATION_LINK_DECOUPLED) अणु
 			sensor->pll.vt_lanes =
 				CCS_LIM(sensor, NUM_OF_VT_LANES) + 1;
 			sensor->pll.op_lanes =
 				CCS_LIM(sensor, NUM_OF_OP_LANES) + 1;
 			sensor->pll.flags |= CCS_PLL_FLAG_LINK_DECOUPLED;
-		} else {
+		पूर्ण अन्यथा अणु
 			sensor->pll.vt_lanes = sensor->pll.csi2.lanes;
 			sensor->pll.op_lanes = sensor->pll.csi2.lanes;
-		}
-	}
-	if (CCS_LIM(sensor, CLOCK_TREE_PLL_CAPABILITY) &
+		पूर्ण
+	पूर्ण
+	अगर (CCS_LIM(sensor, CLOCK_TREE_PLL_CAPABILITY) &
 	    CCS_CLOCK_TREE_PLL_CAPABILITY_EXT_DIVIDER)
 		sensor->pll.flags |= CCS_PLL_FLAG_EXT_IP_PLL_DIVIDER;
-	if (CCS_LIM(sensor, CLOCK_TREE_PLL_CAPABILITY) &
+	अगर (CCS_LIM(sensor, CLOCK_TREE_PLL_CAPABILITY) &
 	    CCS_CLOCK_TREE_PLL_CAPABILITY_FLEXIBLE_OP_PIX_CLK_DIV)
 		sensor->pll.flags |= CCS_PLL_FLAG_FLEXIBLE_OP_PIX_CLK_DIV;
-	if (CCS_LIM(sensor, FIFO_SUPPORT_CAPABILITY) &
+	अगर (CCS_LIM(sensor, FIFO_SUPPORT_CAPABILITY) &
 	    CCS_FIFO_SUPPORT_CAPABILITY_DERATING)
 		sensor->pll.flags |= CCS_PLL_FLAG_FIFO_DERATING;
-	if (CCS_LIM(sensor, FIFO_SUPPORT_CAPABILITY) &
+	अगर (CCS_LIM(sensor, FIFO_SUPPORT_CAPABILITY) &
 	    CCS_FIFO_SUPPORT_CAPABILITY_DERATING_OVERRATING)
 		sensor->pll.flags |= CCS_PLL_FLAG_FIFO_DERATING |
 				     CCS_PLL_FLAG_FIFO_OVERRATING;
-	if (CCS_LIM(sensor, CLOCK_TREE_PLL_CAPABILITY) &
-	    CCS_CLOCK_TREE_PLL_CAPABILITY_DUAL_PLL) {
-		if (CCS_LIM(sensor, CLOCK_TREE_PLL_CAPABILITY) &
-		    CCS_CLOCK_TREE_PLL_CAPABILITY_SINGLE_PLL) {
+	अगर (CCS_LIM(sensor, CLOCK_TREE_PLL_CAPABILITY) &
+	    CCS_CLOCK_TREE_PLL_CAPABILITY_DUAL_PLL) अणु
+		अगर (CCS_LIM(sensor, CLOCK_TREE_PLL_CAPABILITY) &
+		    CCS_CLOCK_TREE_PLL_CAPABILITY_SINGLE_PLL) अणु
 			u32 v;
 
-			/* Use sensor default in PLL mode selection */
-			rval = ccs_read(sensor, PLL_MODE, &v);
-			if (rval)
-				goto out_cleanup;
+			/* Use sensor शेष in PLL mode selection */
+			rval = ccs_पढ़ो(sensor, PLL_MODE, &v);
+			अगर (rval)
+				जाओ out_cleanup;
 
-			if (v == CCS_PLL_MODE_DUAL)
+			अगर (v == CCS_PLL_MODE_DUAL)
 				sensor->pll.flags |= CCS_PLL_FLAG_DUAL_PLL;
-		} else {
+		पूर्ण अन्यथा अणु
 			sensor->pll.flags |= CCS_PLL_FLAG_DUAL_PLL;
-		}
-		if (CCS_LIM(sensor, CLOCK_CALCULATION) &
+		पूर्ण
+		अगर (CCS_LIM(sensor, CLOCK_CALCULATION) &
 		    CCS_CLOCK_CALCULATION_DUAL_PLL_OP_SYS_DDR)
 			sensor->pll.flags |= CCS_PLL_FLAG_OP_SYS_DDR;
-		if (CCS_LIM(sensor, CLOCK_CALCULATION) &
+		अगर (CCS_LIM(sensor, CLOCK_CALCULATION) &
 		    CCS_CLOCK_CALCULATION_DUAL_PLL_OP_PIX_DDR)
 			sensor->pll.flags |= CCS_PLL_FLAG_OP_PIX_DDR;
-	}
+	पूर्ण
 	sensor->pll.op_bits_per_lane = CCS_LIM(sensor, OP_BITS_PER_LANE);
 	sensor->pll.ext_clk_freq_hz = sensor->hwcfg.ext_clk;
 	sensor->pll.scale_n = CCS_LIM(sensor, SCALER_N_MIN);
@@ -3529,62 +3530,62 @@ static int ccs_probe(struct i2c_client *client)
 			  MEDIA_ENT_F_CAM_SENSOR);
 
 	rval = ccs_init_controls(sensor);
-	if (rval < 0)
-		goto out_cleanup;
+	अगर (rval < 0)
+		जाओ out_cleanup;
 
 	rval = ccs_call_quirk(sensor, init);
-	if (rval)
-		goto out_cleanup;
+	अगर (rval)
+		जाओ out_cleanup;
 
-	rval = ccs_get_mbus_formats(sensor);
-	if (rval) {
+	rval = ccs_get_mbus_क्रमmats(sensor);
+	अगर (rval) अणु
 		rval = -ENODEV;
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	rval = ccs_init_late_controls(sensor);
-	if (rval) {
+	अगर (rval) अणु
 		rval = -ENODEV;
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	mutex_lock(&sensor->mutex);
 	rval = ccs_pll_blanking_update(sensor);
 	mutex_unlock(&sensor->mutex);
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(&client->dev, "update mode failed\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	sensor->streaming = false;
-	sensor->dev_init_done = true;
+	sensor->dev_init_करोne = true;
 
 	rval = media_entity_pads_init(&sensor->src->sd.entity, 2,
 				 sensor->src->pads);
-	if (rval < 0)
-		goto out_media_entity_cleanup;
+	अगर (rval < 0)
+		जाओ out_media_entity_cleanup;
 
-	rval = ccs_write_msr_regs(sensor);
-	if (rval)
-		goto out_media_entity_cleanup;
+	rval = ccs_ग_लिखो_msr_regs(sensor);
+	अगर (rval)
+		जाओ out_media_entity_cleanup;
 
-	pm_runtime_set_active(&client->dev);
-	pm_runtime_get_noresume(&client->dev);
-	pm_runtime_enable(&client->dev);
+	pm_runसमय_set_active(&client->dev);
+	pm_runसमय_get_noresume(&client->dev);
+	pm_runसमय_enable(&client->dev);
 
-	rval = v4l2_async_register_subdev_sensor(&sensor->src->sd);
-	if (rval < 0)
-		goto out_disable_runtime_pm;
+	rval = v4l2_async_रेजिस्टर_subdev_sensor(&sensor->src->sd);
+	अगर (rval < 0)
+		जाओ out_disable_runसमय_pm;
 
-	pm_runtime_set_autosuspend_delay(&client->dev, 1000);
-	pm_runtime_use_autosuspend(&client->dev);
-	pm_runtime_put_autosuspend(&client->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&client->dev, 1000);
+	pm_runसमय_use_स्वतःsuspend(&client->dev);
+	pm_runसमय_put_स्वतःsuspend(&client->dev);
 
-	return 0;
+	वापस 0;
 
-out_disable_runtime_pm:
-	pm_runtime_put_noidle(&client->dev);
-	pm_runtime_disable(&client->dev);
+out_disable_runसमय_pm:
+	pm_runसमय_put_noidle(&client->dev);
+	pm_runसमय_disable(&client->dev);
 
 out_media_entity_cleanup:
 	media_entity_cleanup(&sensor->src->sd.entity);
@@ -3593,117 +3594,117 @@ out_cleanup:
 	ccs_cleanup(sensor);
 
 out_release_mdata:
-	kvfree(sensor->mdata.backing);
+	kvमुक्त(sensor->mdata.backing);
 
 out_release_sdata:
-	kvfree(sensor->sdata.backing);
+	kvमुक्त(sensor->sdata.backing);
 
-out_free_ccs_limits:
-	kfree(sensor->ccs_limits);
+out_मुक्त_ccs_limits:
+	kमुक्त(sensor->ccs_limits);
 
-out_power_off:
-	ccs_power_off(&client->dev);
+out_घातer_off:
+	ccs_घातer_off(&client->dev);
 	mutex_destroy(&sensor->mutex);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int ccs_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *subdev = i2c_get_clientdata(client);
-	struct ccs_sensor *sensor = to_ccs_sensor(subdev);
-	unsigned int i;
+अटल पूर्णांक ccs_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *subdev = i2c_get_clientdata(client);
+	काष्ठा ccs_sensor *sensor = to_ccs_sensor(subdev);
+	अचिन्हित पूर्णांक i;
 
-	v4l2_async_unregister_subdev(subdev);
+	v4l2_async_unरेजिस्टर_subdev(subdev);
 
-	pm_runtime_disable(&client->dev);
-	if (!pm_runtime_status_suspended(&client->dev))
-		ccs_power_off(&client->dev);
-	pm_runtime_set_suspended(&client->dev);
+	pm_runसमय_disable(&client->dev);
+	अगर (!pm_runसमय_status_suspended(&client->dev))
+		ccs_घातer_off(&client->dev);
+	pm_runसमय_set_suspended(&client->dev);
 
-	for (i = 0; i < sensor->ssds_used; i++) {
-		v4l2_device_unregister_subdev(&sensor->ssds[i].sd);
+	क्रम (i = 0; i < sensor->ssds_used; i++) अणु
+		v4l2_device_unरेजिस्टर_subdev(&sensor->ssds[i].sd);
 		media_entity_cleanup(&sensor->ssds[i].sd.entity);
-	}
+	पूर्ण
 	ccs_cleanup(sensor);
 	mutex_destroy(&sensor->mutex);
-	kfree(sensor->ccs_limits);
-	kvfree(sensor->sdata.backing);
-	kvfree(sensor->mdata.backing);
+	kमुक्त(sensor->ccs_limits);
+	kvमुक्त(sensor->sdata.backing);
+	kvमुक्त(sensor->mdata.backing);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ccs_device smia_device = {
+अटल स्थिर काष्ठा ccs_device smia_device = अणु
 	.flags = CCS_DEVICE_FLAG_IS_SMIA,
-};
+पूर्ण;
 
-static const struct ccs_device ccs_device = {};
+अटल स्थिर काष्ठा ccs_device ccs_device = अणुपूर्ण;
 
-static const struct acpi_device_id ccs_acpi_table[] = {
-	{ .id = "MIPI0200", .driver_data = (unsigned long)&ccs_device },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id ccs_acpi_table[] = अणु
+	अणु .id = "MIPI0200", .driver_data = (अचिन्हित दीर्घ)&ccs_device पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, ccs_acpi_table);
 
-static const struct of_device_id ccs_of_table[] = {
-	{ .compatible = "mipi-ccs-1.1", .data = &ccs_device },
-	{ .compatible = "mipi-ccs-1.0", .data = &ccs_device },
-	{ .compatible = "mipi-ccs", .data = &ccs_device },
-	{ .compatible = "nokia,smia", .data = &smia_device },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id ccs_of_table[] = अणु
+	अणु .compatible = "mipi-ccs-1.1", .data = &ccs_device पूर्ण,
+	अणु .compatible = "mipi-ccs-1.0", .data = &ccs_device पूर्ण,
+	अणु .compatible = "mipi-ccs", .data = &ccs_device पूर्ण,
+	अणु .compatible = "nokia,smia", .data = &smia_device पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ccs_of_table);
 
-static const struct dev_pm_ops ccs_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops ccs_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(ccs_suspend, ccs_resume)
-	SET_RUNTIME_PM_OPS(ccs_power_off, ccs_power_on, NULL)
-};
+	SET_RUNTIME_PM_OPS(ccs_घातer_off, ccs_घातer_on, शून्य)
+पूर्ण;
 
-static struct i2c_driver ccs_i2c_driver = {
-	.driver	= {
+अटल काष्ठा i2c_driver ccs_i2c_driver = अणु
+	.driver	= अणु
 		.acpi_match_table = ccs_acpi_table,
 		.of_match_table = ccs_of_table,
 		.name = CCS_NAME,
 		.pm = &ccs_pm_ops,
-	},
+	पूर्ण,
 	.probe_new = ccs_probe,
-	.remove	= ccs_remove,
-};
+	.हटाओ	= ccs_हटाओ,
+पूर्ण;
 
-static int ccs_module_init(void)
-{
-	unsigned int i, l;
+अटल पूर्णांक ccs_module_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i, l;
 
-	for (i = 0, l = 0; ccs_limits[i].size && l < CCS_L_LAST; i++) {
-		if (!(ccs_limits[i].flags & CCS_L_FL_SAME_REG)) {
+	क्रम (i = 0, l = 0; ccs_limits[i].size && l < CCS_L_LAST; i++) अणु
+		अगर (!(ccs_limits[i].flags & CCS_L_FL_SAME_REG)) अणु
 			ccs_limit_offsets[l + 1].lim =
 				ALIGN(ccs_limit_offsets[l].lim +
 				      ccs_limits[i].size,
 				      ccs_reg_width(ccs_limits[i + 1].reg));
 			ccs_limit_offsets[l].info = i;
 			l++;
-		} else {
+		पूर्ण अन्यथा अणु
 			ccs_limit_offsets[l].lim += ccs_limits[i].size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (WARN_ON(ccs_limits[i].size))
-		return -EINVAL;
+	अगर (WARN_ON(ccs_limits[i].size))
+		वापस -EINVAL;
 
-	if (WARN_ON(l != CCS_L_LAST))
-		return -EINVAL;
+	अगर (WARN_ON(l != CCS_L_LAST))
+		वापस -EINVAL;
 
-	return i2c_register_driver(THIS_MODULE, &ccs_i2c_driver);
-}
+	वापस i2c_रेजिस्टर_driver(THIS_MODULE, &ccs_i2c_driver);
+पूर्ण
 
-static void ccs_module_cleanup(void)
-{
+अटल व्योम ccs_module_cleanup(व्योम)
+अणु
 	i2c_del_driver(&ccs_i2c_driver);
-}
+पूर्ण
 
 module_init(ccs_module_init);
-module_exit(ccs_module_cleanup);
+module_निकास(ccs_module_cleanup);
 
 MODULE_AUTHOR("Sakari Ailus <sakari.ailus@linux.intel.com>");
 MODULE_DESCRIPTION("Generic MIPI CCS/SMIA/SMIA++ camera sensor driver");

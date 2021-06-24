@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __IDE_DISK_H
-#define __IDE_DISK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __IDE_DISK_H
+#घोषणा __IDE_DISK_H
 
-#include "ide-gd.h"
+#समावेश "ide-gd.h"
 
-#ifdef CONFIG_IDE_GD_ATA
+#अगर_घोषित CONFIG_IDE_GD_ATA
 /* ide-disk.c */
-extern const struct ide_disk_ops ide_ata_disk_ops;
+बाह्य स्थिर काष्ठा ide_disk_ops ide_ata_disk_ops;
 ide_decl_devset(address);
 ide_decl_devset(multcount);
 ide_decl_devset(nowerr);
@@ -14,17 +15,17 @@ ide_decl_devset(wcache);
 ide_decl_devset(acoustic);
 
 /* ide-disk_ioctl.c */
-int ide_disk_ioctl(ide_drive_t *, struct block_device *, fmode_t, unsigned int,
-		   unsigned long);
+पूर्णांक ide_disk_ioctl(ide_drive_t *, काष्ठा block_device *, भ_शेषe_t, अचिन्हित पूर्णांक,
+		   अचिन्हित दीर्घ);
 
-#ifdef CONFIG_IDE_PROC_FS
+#अगर_घोषित CONFIG_IDE_PROC_FS
 /* ide-disk_proc.c */
-extern ide_proc_entry_t ide_disk_proc[];
-extern const struct ide_proc_devset ide_disk_settings[];
-#endif
-#else
-#define ide_disk_proc		NULL
-#define ide_disk_settings	NULL
-#endif
+बाह्य ide_proc_entry_t ide_disk_proc[];
+बाह्य स्थिर काष्ठा ide_proc_devset ide_disk_settings[];
+#पूर्ण_अगर
+#अन्यथा
+#घोषणा ide_disk_proc		शून्य
+#घोषणा ide_disk_settings	शून्य
+#पूर्ण_अगर
 
-#endif /* __IDE_DISK_H */
+#पूर्ण_अगर /* __IDE_DISK_H */

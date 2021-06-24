@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * arch/arm/mach-tegra/gpio.c
  *
@@ -9,57 +10,57 @@
  *	Erik Gilling <konkers@google.com>
  */
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/gpio/driver.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/module.h>
-#include <linux/irqdomain.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/pm.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/pm.h>
 
-#define GPIO_BANK(x)		((x) >> 5)
-#define GPIO_PORT(x)		(((x) >> 3) & 0x3)
-#define GPIO_BIT(x)		((x) & 0x7)
+#घोषणा GPIO_BANK(x)		((x) >> 5)
+#घोषणा GPIO_PORT(x)		(((x) >> 3) & 0x3)
+#घोषणा GPIO_BIT(x)		((x) & 0x7)
 
-#define GPIO_REG(tgi, x)	(GPIO_BANK(x) * tgi->soc->bank_stride + \
+#घोषणा GPIO_REG(tgi, x)	(GPIO_BANK(x) * tgi->soc->bank_stride + \
 					GPIO_PORT(x) * 4)
 
-#define GPIO_CNF(t, x)		(GPIO_REG(t, x) + 0x00)
-#define GPIO_OE(t, x)		(GPIO_REG(t, x) + 0x10)
-#define GPIO_OUT(t, x)		(GPIO_REG(t, x) + 0X20)
-#define GPIO_IN(t, x)		(GPIO_REG(t, x) + 0x30)
-#define GPIO_INT_STA(t, x)	(GPIO_REG(t, x) + 0x40)
-#define GPIO_INT_ENB(t, x)	(GPIO_REG(t, x) + 0x50)
-#define GPIO_INT_LVL(t, x)	(GPIO_REG(t, x) + 0x60)
-#define GPIO_INT_CLR(t, x)	(GPIO_REG(t, x) + 0x70)
-#define GPIO_DBC_CNT(t, x)	(GPIO_REG(t, x) + 0xF0)
+#घोषणा GPIO_CNF(t, x)		(GPIO_REG(t, x) + 0x00)
+#घोषणा GPIO_OE(t, x)		(GPIO_REG(t, x) + 0x10)
+#घोषणा GPIO_OUT(t, x)		(GPIO_REG(t, x) + 0X20)
+#घोषणा GPIO_IN(t, x)		(GPIO_REG(t, x) + 0x30)
+#घोषणा GPIO_INT_STA(t, x)	(GPIO_REG(t, x) + 0x40)
+#घोषणा GPIO_INT_ENB(t, x)	(GPIO_REG(t, x) + 0x50)
+#घोषणा GPIO_INT_LVL(t, x)	(GPIO_REG(t, x) + 0x60)
+#घोषणा GPIO_INT_CLR(t, x)	(GPIO_REG(t, x) + 0x70)
+#घोषणा GPIO_DBC_CNT(t, x)	(GPIO_REG(t, x) + 0xF0)
 
 
-#define GPIO_MSK_CNF(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x00)
-#define GPIO_MSK_OE(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x10)
-#define GPIO_MSK_OUT(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0X20)
-#define GPIO_MSK_DBC_EN(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x30)
-#define GPIO_MSK_INT_STA(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x40)
-#define GPIO_MSK_INT_ENB(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x50)
-#define GPIO_MSK_INT_LVL(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x60)
+#घोषणा GPIO_MSK_CNF(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x00)
+#घोषणा GPIO_MSK_OE(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x10)
+#घोषणा GPIO_MSK_OUT(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0X20)
+#घोषणा GPIO_MSK_DBC_EN(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x30)
+#घोषणा GPIO_MSK_INT_STA(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x40)
+#घोषणा GPIO_MSK_INT_ENB(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x50)
+#घोषणा GPIO_MSK_INT_LVL(t, x)	(GPIO_REG(t, x) + t->soc->upper_offset + 0x60)
 
-#define GPIO_INT_LVL_MASK		0x010101
-#define GPIO_INT_LVL_EDGE_RISING	0x000101
-#define GPIO_INT_LVL_EDGE_FALLING	0x000100
-#define GPIO_INT_LVL_EDGE_BOTH		0x010100
-#define GPIO_INT_LVL_LEVEL_HIGH		0x000001
-#define GPIO_INT_LVL_LEVEL_LOW		0x000000
+#घोषणा GPIO_INT_LVL_MASK		0x010101
+#घोषणा GPIO_INT_LVL_EDGE_RISING	0x000101
+#घोषणा GPIO_INT_LVL_EDGE_FALLING	0x000100
+#घोषणा GPIO_INT_LVL_EDGE_BOTH		0x010100
+#घोषणा GPIO_INT_LVL_LEVEL_HIGH		0x000001
+#घोषणा GPIO_INT_LVL_LEVEL_LOW		0x000000
 
-struct tegra_gpio_info;
+काष्ठा tegra_gpio_info;
 
-struct tegra_gpio_bank {
-	unsigned int bank;
+काष्ठा tegra_gpio_bank अणु
+	अचिन्हित पूर्णांक bank;
 
 	/*
 	 * IRQ-core code uses raw locking, and thus, nested locking also
@@ -67,484 +68,484 @@ struct tegra_gpio_bank {
 	 */
 	raw_spinlock_t lvl_lock[4];
 
-	/* Lock for updating debounce count register */
+	/* Lock क्रम updating debounce count रेजिस्टर */
 	spinlock_t dbc_lock[4];
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 	u32 cnf[4];
 	u32 out[4];
 	u32 oe[4];
-	u32 int_enb[4];
-	u32 int_lvl[4];
+	u32 पूर्णांक_enb[4];
+	u32 पूर्णांक_lvl[4];
 	u32 wake_enb[4];
 	u32 dbc_enb[4];
-#endif
+#पूर्ण_अगर
 	u32 dbc_cnt[4];
-};
+पूर्ण;
 
-struct tegra_gpio_soc_config {
+काष्ठा tegra_gpio_soc_config अणु
 	bool debounce_supported;
 	u32 bank_stride;
 	u32 upper_offset;
-};
+पूर्ण;
 
-struct tegra_gpio_info {
-	struct device				*dev;
-	void __iomem				*regs;
-	struct tegra_gpio_bank			*bank_info;
-	const struct tegra_gpio_soc_config	*soc;
-	struct gpio_chip			gc;
-	struct irq_chip				ic;
+काष्ठा tegra_gpio_info अणु
+	काष्ठा device				*dev;
+	व्योम __iomem				*regs;
+	काष्ठा tegra_gpio_bank			*bank_info;
+	स्थिर काष्ठा tegra_gpio_soc_config	*soc;
+	काष्ठा gpio_chip			gc;
+	काष्ठा irq_chip				ic;
 	u32					bank_count;
-	unsigned int				*irqs;
-};
+	अचिन्हित पूर्णांक				*irqs;
+पूर्ण;
 
-static inline void tegra_gpio_writel(struct tegra_gpio_info *tgi,
+अटल अंतरभूत व्योम tegra_gpio_ग_लिखोl(काष्ठा tegra_gpio_info *tgi,
 				     u32 val, u32 reg)
-{
-	writel_relaxed(val, tgi->regs + reg);
-}
+अणु
+	ग_लिखोl_relaxed(val, tgi->regs + reg);
+पूर्ण
 
-static inline u32 tegra_gpio_readl(struct tegra_gpio_info *tgi, u32 reg)
-{
-	return readl_relaxed(tgi->regs + reg);
-}
+अटल अंतरभूत u32 tegra_gpio_पढ़ोl(काष्ठा tegra_gpio_info *tgi, u32 reg)
+अणु
+	वापस पढ़ोl_relaxed(tgi->regs + reg);
+पूर्ण
 
-static unsigned int tegra_gpio_compose(unsigned int bank, unsigned int port,
-				       unsigned int bit)
-{
-	return (bank << 5) | ((port & 0x3) << 3) | (bit & 0x7);
-}
+अटल अचिन्हित पूर्णांक tegra_gpio_compose(अचिन्हित पूर्णांक bank, अचिन्हित पूर्णांक port,
+				       अचिन्हित पूर्णांक bit)
+अणु
+	वापस (bank << 5) | ((port & 0x3) << 3) | (bit & 0x7);
+पूर्ण
 
-static void tegra_gpio_mask_write(struct tegra_gpio_info *tgi, u32 reg,
-				  unsigned int gpio, u32 value)
-{
+अटल व्योम tegra_gpio_mask_ग_लिखो(काष्ठा tegra_gpio_info *tgi, u32 reg,
+				  अचिन्हित पूर्णांक gpio, u32 value)
+अणु
 	u32 val;
 
 	val = 0x100 << GPIO_BIT(gpio);
-	if (value)
+	अगर (value)
 		val |= 1 << GPIO_BIT(gpio);
-	tegra_gpio_writel(tgi, val, reg);
-}
+	tegra_gpio_ग_लिखोl(tgi, val, reg);
+पूर्ण
 
-static void tegra_gpio_enable(struct tegra_gpio_info *tgi, unsigned int gpio)
-{
-	tegra_gpio_mask_write(tgi, GPIO_MSK_CNF(tgi, gpio), gpio, 1);
-}
+अटल व्योम tegra_gpio_enable(काष्ठा tegra_gpio_info *tgi, अचिन्हित पूर्णांक gpio)
+अणु
+	tegra_gpio_mask_ग_लिखो(tgi, GPIO_MSK_CNF(tgi, gpio), gpio, 1);
+पूर्ण
 
-static void tegra_gpio_disable(struct tegra_gpio_info *tgi, unsigned int gpio)
-{
-	tegra_gpio_mask_write(tgi, GPIO_MSK_CNF(tgi, gpio), gpio, 0);
-}
+अटल व्योम tegra_gpio_disable(काष्ठा tegra_gpio_info *tgi, अचिन्हित पूर्णांक gpio)
+अणु
+	tegra_gpio_mask_ग_लिखो(tgi, GPIO_MSK_CNF(tgi, gpio), gpio, 0);
+पूर्ण
 
-static int tegra_gpio_request(struct gpio_chip *chip, unsigned int offset)
-{
-	return pinctrl_gpio_request(chip->base + offset);
-}
+अटल पूर्णांक tegra_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	वापस pinctrl_gpio_request(chip->base + offset);
+पूर्ण
 
-static void tegra_gpio_free(struct gpio_chip *chip, unsigned int offset)
-{
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
+अटल व्योम tegra_gpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
 
-	pinctrl_gpio_free(chip->base + offset);
+	pinctrl_gpio_मुक्त(chip->base + offset);
 	tegra_gpio_disable(tgi, offset);
-}
+पूर्ण
 
-static void tegra_gpio_set(struct gpio_chip *chip, unsigned int offset,
-			   int value)
-{
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
+अटल व्योम tegra_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+			   पूर्णांक value)
+अणु
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
 
-	tegra_gpio_mask_write(tgi, GPIO_MSK_OUT(tgi, offset), offset, value);
-}
+	tegra_gpio_mask_ग_लिखो(tgi, GPIO_MSK_OUT(tgi, offset), offset, value);
+पूर्ण
 
-static int tegra_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
-	unsigned int bval = BIT(GPIO_BIT(offset));
+अटल पूर्णांक tegra_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक bval = BIT(GPIO_BIT(offset));
 
-	/* If gpio is in output mode then read from the out value */
-	if (tegra_gpio_readl(tgi, GPIO_OE(tgi, offset)) & bval)
-		return !!(tegra_gpio_readl(tgi, GPIO_OUT(tgi, offset)) & bval);
+	/* If gpio is in output mode then पढ़ो from the out value */
+	अगर (tegra_gpio_पढ़ोl(tgi, GPIO_OE(tgi, offset)) & bval)
+		वापस !!(tegra_gpio_पढ़ोl(tgi, GPIO_OUT(tgi, offset)) & bval);
 
-	return !!(tegra_gpio_readl(tgi, GPIO_IN(tgi, offset)) & bval);
-}
+	वापस !!(tegra_gpio_पढ़ोl(tgi, GPIO_IN(tgi, offset)) & bval);
+पूर्ण
 
-static int tegra_gpio_direction_input(struct gpio_chip *chip,
-				      unsigned int offset)
-{
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
-	int ret;
+अटल पूर्णांक tegra_gpio_direction_input(काष्ठा gpio_chip *chip,
+				      अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
+	पूर्णांक ret;
 
-	tegra_gpio_mask_write(tgi, GPIO_MSK_OE(tgi, offset), offset, 0);
+	tegra_gpio_mask_ग_लिखो(tgi, GPIO_MSK_OE(tgi, offset), offset, 0);
 	tegra_gpio_enable(tgi, offset);
 
 	ret = pinctrl_gpio_direction_input(chip->base + offset);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(tgi->dev,
 			"Failed to set pinctrl input direction of GPIO %d: %d",
 			 chip->base + offset, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tegra_gpio_direction_output(struct gpio_chip *chip,
-				       unsigned int offset,
-				       int value)
-{
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
-	int ret;
+अटल पूर्णांक tegra_gpio_direction_output(काष्ठा gpio_chip *chip,
+				       अचिन्हित पूर्णांक offset,
+				       पूर्णांक value)
+अणु
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
+	पूर्णांक ret;
 
 	tegra_gpio_set(chip, offset, value);
-	tegra_gpio_mask_write(tgi, GPIO_MSK_OE(tgi, offset), offset, 1);
+	tegra_gpio_mask_ग_लिखो(tgi, GPIO_MSK_OE(tgi, offset), offset, 1);
 	tegra_gpio_enable(tgi, offset);
 
 	ret = pinctrl_gpio_direction_output(chip->base + offset);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(tgi->dev,
 			"Failed to set pinctrl output direction of GPIO %d: %d",
 			 chip->base + offset, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tegra_gpio_get_direction(struct gpio_chip *chip,
-				    unsigned int offset)
-{
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
+अटल पूर्णांक tegra_gpio_get_direction(काष्ठा gpio_chip *chip,
+				    अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
 	u32 pin_mask = BIT(GPIO_BIT(offset));
 	u32 cnf, oe;
 
-	cnf = tegra_gpio_readl(tgi, GPIO_CNF(tgi, offset));
-	if (!(cnf & pin_mask))
-		return -EINVAL;
+	cnf = tegra_gpio_पढ़ोl(tgi, GPIO_CNF(tgi, offset));
+	अगर (!(cnf & pin_mask))
+		वापस -EINVAL;
 
-	oe = tegra_gpio_readl(tgi, GPIO_OE(tgi, offset));
+	oe = tegra_gpio_पढ़ोl(tgi, GPIO_OE(tgi, offset));
 
-	if (oe & pin_mask)
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (oe & pin_mask)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int tegra_gpio_set_debounce(struct gpio_chip *chip, unsigned int offset,
-				   unsigned int debounce)
-{
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
-	struct tegra_gpio_bank *bank = &tgi->bank_info[GPIO_BANK(offset)];
-	unsigned int debounce_ms = DIV_ROUND_UP(debounce, 1000);
-	unsigned long flags;
-	unsigned int port;
+अटल पूर्णांक tegra_gpio_set_debounce(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+				   अचिन्हित पूर्णांक debounce)
+अणु
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
+	काष्ठा tegra_gpio_bank *bank = &tgi->bank_info[GPIO_BANK(offset)];
+	अचिन्हित पूर्णांक debounce_ms = DIV_ROUND_UP(debounce, 1000);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक port;
 
-	if (!debounce_ms) {
-		tegra_gpio_mask_write(tgi, GPIO_MSK_DBC_EN(tgi, offset),
+	अगर (!debounce_ms) अणु
+		tegra_gpio_mask_ग_लिखो(tgi, GPIO_MSK_DBC_EN(tgi, offset),
 				      offset, 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	debounce_ms = min(debounce_ms, 255U);
 	port = GPIO_PORT(offset);
 
-	/* There is only one debounce count register per port and hence
-	 * set the maximum of current and requested debounce time.
+	/* There is only one debounce count रेजिस्टर per port and hence
+	 * set the maximum of current and requested debounce समय.
 	 */
 	spin_lock_irqsave(&bank->dbc_lock[port], flags);
-	if (bank->dbc_cnt[port] < debounce_ms) {
-		tegra_gpio_writel(tgi, debounce_ms, GPIO_DBC_CNT(tgi, offset));
+	अगर (bank->dbc_cnt[port] < debounce_ms) अणु
+		tegra_gpio_ग_लिखोl(tgi, debounce_ms, GPIO_DBC_CNT(tgi, offset));
 		bank->dbc_cnt[port] = debounce_ms;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&bank->dbc_lock[port], flags);
 
-	tegra_gpio_mask_write(tgi, GPIO_MSK_DBC_EN(tgi, offset), offset, 1);
+	tegra_gpio_mask_ग_लिखो(tgi, GPIO_MSK_DBC_EN(tgi, offset), offset, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_gpio_set_config(struct gpio_chip *chip, unsigned int offset,
-				 unsigned long config)
-{
+अटल पूर्णांक tegra_gpio_set_config(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+				 अचिन्हित दीर्घ config)
+अणु
 	u32 debounce;
 
-	if (pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE)
-		return -ENOTSUPP;
+	अगर (pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE)
+		वापस -ENOTSUPP;
 
 	debounce = pinconf_to_config_argument(config);
-	return tegra_gpio_set_debounce(chip, offset, debounce);
-}
+	वापस tegra_gpio_set_debounce(chip, offset, debounce);
+पूर्ण
 
-static void tegra_gpio_irq_ack(struct irq_data *d)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
-	unsigned int gpio = d->hwirq;
+अटल व्योम tegra_gpio_irq_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक gpio = d->hwirq;
 
-	tegra_gpio_writel(tgi, 1 << GPIO_BIT(gpio), GPIO_INT_CLR(tgi, gpio));
-}
+	tegra_gpio_ग_लिखोl(tgi, 1 << GPIO_BIT(gpio), GPIO_INT_CLR(tgi, gpio));
+पूर्ण
 
-static void tegra_gpio_irq_mask(struct irq_data *d)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
-	unsigned int gpio = d->hwirq;
+अटल व्योम tegra_gpio_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक gpio = d->hwirq;
 
-	tegra_gpio_mask_write(tgi, GPIO_MSK_INT_ENB(tgi, gpio), gpio, 0);
-}
+	tegra_gpio_mask_ग_लिखो(tgi, GPIO_MSK_INT_ENB(tgi, gpio), gpio, 0);
+पूर्ण
 
-static void tegra_gpio_irq_unmask(struct irq_data *d)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
-	unsigned int gpio = d->hwirq;
+अटल व्योम tegra_gpio_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक gpio = d->hwirq;
 
-	tegra_gpio_mask_write(tgi, GPIO_MSK_INT_ENB(tgi, gpio), gpio, 1);
-}
+	tegra_gpio_mask_ग_लिखो(tgi, GPIO_MSK_INT_ENB(tgi, gpio), gpio, 1);
+पूर्ण
 
-static int tegra_gpio_irq_set_type(struct irq_data *d, unsigned int type)
-{
-	unsigned int gpio = d->hwirq, port = GPIO_PORT(gpio), lvl_type;
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
-	struct tegra_gpio_bank *bank;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक tegra_gpio_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	अचिन्हित पूर्णांक gpio = d->hwirq, port = GPIO_PORT(gpio), lvl_type;
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
+	काष्ठा tegra_gpio_bank *bank;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 	u32 val;
 
 	bank = &tgi->bank_info[GPIO_BANK(d->hwirq)];
 
-	switch (type & IRQ_TYPE_SENSE_MASK) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type & IRQ_TYPE_SENSE_MASK) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		lvl_type = GPIO_INT_LVL_EDGE_RISING;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_FALLING:
+	हाल IRQ_TYPE_EDGE_FALLING:
 		lvl_type = GPIO_INT_LVL_EDGE_FALLING;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_BOTH:
+	हाल IRQ_TYPE_EDGE_BOTH:
 		lvl_type = GPIO_INT_LVL_EDGE_BOTH;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_HIGH:
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		lvl_type = GPIO_INT_LVL_LEVEL_HIGH;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_LOW:
+	हाल IRQ_TYPE_LEVEL_LOW:
 		lvl_type = GPIO_INT_LVL_LEVEL_LOW;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&bank->lvl_lock[port], flags);
 
-	val = tegra_gpio_readl(tgi, GPIO_INT_LVL(tgi, gpio));
+	val = tegra_gpio_पढ़ोl(tgi, GPIO_INT_LVL(tgi, gpio));
 	val &= ~(GPIO_INT_LVL_MASK << GPIO_BIT(gpio));
 	val |= lvl_type << GPIO_BIT(gpio);
-	tegra_gpio_writel(tgi, val, GPIO_INT_LVL(tgi, gpio));
+	tegra_gpio_ग_लिखोl(tgi, val, GPIO_INT_LVL(tgi, gpio));
 
 	raw_spin_unlock_irqrestore(&bank->lvl_lock[port], flags);
 
-	tegra_gpio_mask_write(tgi, GPIO_MSK_OE(tgi, gpio), gpio, 0);
+	tegra_gpio_mask_ग_लिखो(tgi, GPIO_MSK_OE(tgi, gpio), gpio, 0);
 	tegra_gpio_enable(tgi, gpio);
 
 	ret = gpiochip_lock_as_irq(&tgi->gc, gpio);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(tgi->dev,
 			"unable to lock Tegra GPIO %u as IRQ\n", gpio);
 		tegra_gpio_disable(tgi, gpio);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
+	अगर (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
 		irq_set_handler_locked(d, handle_level_irq);
-	else if (type & (IRQ_TYPE_EDGE_FALLING | IRQ_TYPE_EDGE_RISING))
+	अन्यथा अगर (type & (IRQ_TYPE_EDGE_FALLING | IRQ_TYPE_EDGE_RISING))
 		irq_set_handler_locked(d, handle_edge_irq);
 
-	if (d->parent_data)
+	अगर (d->parent_data)
 		ret = irq_chip_set_type_parent(d, type);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void tegra_gpio_irq_shutdown(struct irq_data *d)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
-	unsigned int gpio = d->hwirq;
+अटल व्योम tegra_gpio_irq_shutकरोwn(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक gpio = d->hwirq;
 
 	tegra_gpio_irq_mask(d);
 	gpiochip_unlock_as_irq(&tgi->gc, gpio);
-}
+पूर्ण
 
-static void tegra_gpio_irq_handler(struct irq_desc *desc)
-{
-	struct tegra_gpio_info *tgi = irq_desc_get_handler_data(desc);
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct irq_domain *domain = tgi->gc.irq.domain;
-	unsigned int irq = irq_desc_get_irq(desc);
-	struct tegra_gpio_bank *bank = NULL;
-	unsigned int port, pin, gpio, i;
+अटल व्योम tegra_gpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा tegra_gpio_info *tgi = irq_desc_get_handler_data(desc);
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा irq_करोमुख्य *करोमुख्य = tgi->gc.irq.करोमुख्य;
+	अचिन्हित पूर्णांक irq = irq_desc_get_irq(desc);
+	काष्ठा tegra_gpio_bank *bank = शून्य;
+	अचिन्हित पूर्णांक port, pin, gpio, i;
 	bool unmasked = false;
-	unsigned long sta;
+	अचिन्हित दीर्घ sta;
 	u32 lvl;
 
-	for (i = 0; i < tgi->bank_count; i++) {
-		if (tgi->irqs[i] == irq) {
+	क्रम (i = 0; i < tgi->bank_count; i++) अणु
+		अगर (tgi->irqs[i] == irq) अणु
 			bank = &tgi->bank_info[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (WARN_ON(bank == NULL))
-		return;
+	अगर (WARN_ON(bank == शून्य))
+		वापस;
 
 	chained_irq_enter(chip, desc);
 
-	for (port = 0; port < 4; port++) {
+	क्रम (port = 0; port < 4; port++) अणु
 		gpio = tegra_gpio_compose(bank->bank, port, 0);
-		sta = tegra_gpio_readl(tgi, GPIO_INT_STA(tgi, gpio)) &
-			tegra_gpio_readl(tgi, GPIO_INT_ENB(tgi, gpio));
-		lvl = tegra_gpio_readl(tgi, GPIO_INT_LVL(tgi, gpio));
+		sta = tegra_gpio_पढ़ोl(tgi, GPIO_INT_STA(tgi, gpio)) &
+			tegra_gpio_पढ़ोl(tgi, GPIO_INT_ENB(tgi, gpio));
+		lvl = tegra_gpio_पढ़ोl(tgi, GPIO_INT_LVL(tgi, gpio));
 
-		for_each_set_bit(pin, &sta, 8) {
-			tegra_gpio_writel(tgi, 1 << pin,
+		क्रम_each_set_bit(pin, &sta, 8) अणु
+			tegra_gpio_ग_लिखोl(tgi, 1 << pin,
 					  GPIO_INT_CLR(tgi, gpio));
 
-			/* if gpio is edge triggered, clear condition
-			 * before executing the handler so that we don't
+			/* अगर gpio is edge triggered, clear condition
+			 * beक्रमe executing the handler so that we करोn't
 			 * miss edges
 			 */
-			if (!unmasked && lvl & (0x100 << pin)) {
+			अगर (!unmasked && lvl & (0x100 << pin)) अणु
 				unmasked = true;
-				chained_irq_exit(chip, desc);
-			}
+				chained_irq_निकास(chip, desc);
+			पूर्ण
 
-			irq = irq_find_mapping(domain, gpio + pin);
-			if (WARN_ON(irq == 0))
-				continue;
+			irq = irq_find_mapping(करोमुख्य, gpio + pin);
+			अगर (WARN_ON(irq == 0))
+				जारी;
 
 			generic_handle_irq(irq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!unmasked)
-		chained_irq_exit(chip, desc);
-}
+	अगर (!unmasked)
+		chained_irq_निकास(chip, desc);
+पूर्ण
 
-static int tegra_gpio_child_to_parent_hwirq(struct gpio_chip *chip,
-					    unsigned int hwirq,
-					    unsigned int type,
-					    unsigned int *parent_hwirq,
-					    unsigned int *parent_type)
-{
+अटल पूर्णांक tegra_gpio_child_to_parent_hwirq(काष्ठा gpio_chip *chip,
+					    अचिन्हित पूर्णांक hwirq,
+					    अचिन्हित पूर्णांक type,
+					    अचिन्हित पूर्णांक *parent_hwirq,
+					    अचिन्हित पूर्णांक *parent_type)
+अणु
 	*parent_hwirq = chip->irq.child_offset_to_irq(chip, hwirq);
 	*parent_type = type;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *tegra_gpio_populate_parent_fwspec(struct gpio_chip *chip,
-					       unsigned int parent_hwirq,
-					       unsigned int parent_type)
-{
-	struct irq_fwspec *fwspec;
+अटल व्योम *tegra_gpio_populate_parent_fwspec(काष्ठा gpio_chip *chip,
+					       अचिन्हित पूर्णांक parent_hwirq,
+					       अचिन्हित पूर्णांक parent_type)
+अणु
+	काष्ठा irq_fwspec *fwspec;
 
-	fwspec = kmalloc(sizeof(*fwspec), GFP_KERNEL);
-	if (!fwspec)
-		return NULL;
+	fwspec = kदो_स्मृति(माप(*fwspec), GFP_KERNEL);
+	अगर (!fwspec)
+		वापस शून्य;
 
-	fwspec->fwnode = chip->irq.parent_domain->fwnode;
+	fwspec->fwnode = chip->irq.parent_करोमुख्य->fwnode;
 	fwspec->param_count = 3;
 	fwspec->param[0] = 0;
 	fwspec->param[1] = parent_hwirq;
 	fwspec->param[2] = parent_type;
 
-	return fwspec;
-}
+	वापस fwspec;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int tegra_gpio_resume(struct device *dev)
-{
-	struct tegra_gpio_info *tgi = dev_get_drvdata(dev);
-	unsigned int b, p;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक tegra_gpio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा tegra_gpio_info *tgi = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक b, p;
 
-	for (b = 0; b < tgi->bank_count; b++) {
-		struct tegra_gpio_bank *bank = &tgi->bank_info[b];
+	क्रम (b = 0; b < tgi->bank_count; b++) अणु
+		काष्ठा tegra_gpio_bank *bank = &tgi->bank_info[b];
 
-		for (p = 0; p < ARRAY_SIZE(bank->oe); p++) {
-			unsigned int gpio = (b << 5) | (p << 3);
+		क्रम (p = 0; p < ARRAY_SIZE(bank->oe); p++) अणु
+			अचिन्हित पूर्णांक gpio = (b << 5) | (p << 3);
 
-			tegra_gpio_writel(tgi, bank->cnf[p],
+			tegra_gpio_ग_लिखोl(tgi, bank->cnf[p],
 					  GPIO_CNF(tgi, gpio));
 
-			if (tgi->soc->debounce_supported) {
-				tegra_gpio_writel(tgi, bank->dbc_cnt[p],
+			अगर (tgi->soc->debounce_supported) अणु
+				tegra_gpio_ग_लिखोl(tgi, bank->dbc_cnt[p],
 						  GPIO_DBC_CNT(tgi, gpio));
-				tegra_gpio_writel(tgi, bank->dbc_enb[p],
+				tegra_gpio_ग_लिखोl(tgi, bank->dbc_enb[p],
 						  GPIO_MSK_DBC_EN(tgi, gpio));
-			}
+			पूर्ण
 
-			tegra_gpio_writel(tgi, bank->out[p],
+			tegra_gpio_ग_लिखोl(tgi, bank->out[p],
 					  GPIO_OUT(tgi, gpio));
-			tegra_gpio_writel(tgi, bank->oe[p],
+			tegra_gpio_ग_लिखोl(tgi, bank->oe[p],
 					  GPIO_OE(tgi, gpio));
-			tegra_gpio_writel(tgi, bank->int_lvl[p],
+			tegra_gpio_ग_लिखोl(tgi, bank->पूर्णांक_lvl[p],
 					  GPIO_INT_LVL(tgi, gpio));
-			tegra_gpio_writel(tgi, bank->int_enb[p],
+			tegra_gpio_ग_लिखोl(tgi, bank->पूर्णांक_enb[p],
 					  GPIO_INT_ENB(tgi, gpio));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_gpio_suspend(struct device *dev)
-{
-	struct tegra_gpio_info *tgi = dev_get_drvdata(dev);
-	unsigned int b, p;
+अटल पूर्णांक tegra_gpio_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा tegra_gpio_info *tgi = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक b, p;
 
-	for (b = 0; b < tgi->bank_count; b++) {
-		struct tegra_gpio_bank *bank = &tgi->bank_info[b];
+	क्रम (b = 0; b < tgi->bank_count; b++) अणु
+		काष्ठा tegra_gpio_bank *bank = &tgi->bank_info[b];
 
-		for (p = 0; p < ARRAY_SIZE(bank->oe); p++) {
-			unsigned int gpio = (b << 5) | (p << 3);
+		क्रम (p = 0; p < ARRAY_SIZE(bank->oe); p++) अणु
+			अचिन्हित पूर्णांक gpio = (b << 5) | (p << 3);
 
-			bank->cnf[p] = tegra_gpio_readl(tgi,
+			bank->cnf[p] = tegra_gpio_पढ़ोl(tgi,
 							GPIO_CNF(tgi, gpio));
-			bank->out[p] = tegra_gpio_readl(tgi,
+			bank->out[p] = tegra_gpio_पढ़ोl(tgi,
 							GPIO_OUT(tgi, gpio));
-			bank->oe[p] = tegra_gpio_readl(tgi,
+			bank->oe[p] = tegra_gpio_पढ़ोl(tgi,
 						       GPIO_OE(tgi, gpio));
-			if (tgi->soc->debounce_supported) {
-				bank->dbc_enb[p] = tegra_gpio_readl(tgi,
+			अगर (tgi->soc->debounce_supported) अणु
+				bank->dbc_enb[p] = tegra_gpio_पढ़ोl(tgi,
 						GPIO_MSK_DBC_EN(tgi, gpio));
 				bank->dbc_enb[p] = (bank->dbc_enb[p] << 8) |
 							bank->dbc_enb[p];
-			}
+			पूर्ण
 
-			bank->int_enb[p] = tegra_gpio_readl(tgi,
+			bank->पूर्णांक_enb[p] = tegra_gpio_पढ़ोl(tgi,
 						GPIO_INT_ENB(tgi, gpio));
-			bank->int_lvl[p] = tegra_gpio_readl(tgi,
+			bank->पूर्णांक_lvl[p] = tegra_gpio_पढ़ोl(tgi,
 						GPIO_INT_LVL(tgi, gpio));
 
-			/* Enable gpio irq for wake up source */
-			tegra_gpio_writel(tgi, bank->wake_enb[p],
+			/* Enable gpio irq क्रम wake up source */
+			tegra_gpio_ग_लिखोl(tgi, bank->wake_enb[p],
 					  GPIO_INT_ENB(tgi, gpio));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_gpio_irq_set_wake(struct irq_data *d, unsigned int enable)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
-	struct tegra_gpio_bank *bank;
-	unsigned int gpio = d->hwirq;
+अटल पूर्णांक tegra_gpio_irq_set_wake(काष्ठा irq_data *d, अचिन्हित पूर्णांक enable)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
+	काष्ठा tegra_gpio_bank *bank;
+	अचिन्हित पूर्णांक gpio = d->hwirq;
 	u32 port, bit, mask;
-	int err;
+	पूर्णांक err;
 
 	bank = &tgi->bank_info[GPIO_BANK(d->hwirq)];
 
@@ -553,137 +554,137 @@ static int tegra_gpio_irq_set_wake(struct irq_data *d, unsigned int enable)
 	mask = BIT(bit);
 
 	err = irq_set_irq_wake(tgi->irqs[bank->bank], enable);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (d->parent_data) {
+	अगर (d->parent_data) अणु
 		err = irq_chip_set_wake_parent(d, enable);
-		if (err) {
+		अगर (err) अणु
 			irq_set_irq_wake(tgi->irqs[bank->bank], !enable);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (enable)
+	अगर (enable)
 		bank->wake_enb[port] |= mask;
-	else
+	अन्यथा
 		bank->wake_enb[port] &= ~mask;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int tegra_gpio_irq_set_affinity(struct irq_data *data,
-				       const struct cpumask *dest,
-				       bool force)
-{
-	if (data->parent_data)
-		return irq_chip_set_affinity_parent(data, dest, force);
+अटल पूर्णांक tegra_gpio_irq_set_affinity(काष्ठा irq_data *data,
+				       स्थिर काष्ठा cpumask *dest,
+				       bool क्रमce)
+अणु
+	अगर (data->parent_data)
+		वापस irq_chip_set_affinity_parent(data, dest, क्रमce);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int tegra_gpio_irq_request_resources(struct irq_data *d)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
+अटल पूर्णांक tegra_gpio_irq_request_resources(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
 
 	tegra_gpio_enable(tgi, d->hwirq);
 
-	return gpiochip_reqres_irq(chip, d->hwirq);
-}
+	वापस gpiochip_reqres_irq(chip, d->hwirq);
+पूर्ण
 
-static void tegra_gpio_irq_release_resources(struct irq_data *d)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	struct tegra_gpio_info *tgi = gpiochip_get_data(chip);
+अटल व्योम tegra_gpio_irq_release_resources(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	काष्ठा tegra_gpio_info *tgi = gpiochip_get_data(chip);
 
 	gpiochip_relres_irq(chip, d->hwirq);
 	tegra_gpio_enable(tgi, d->hwirq);
-}
+पूर्ण
 
-#ifdef	CONFIG_DEBUG_FS
+#अगर_घोषित	CONFIG_DEBUG_FS
 
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
 
-static int tegra_dbg_gpio_show(struct seq_file *s, void *unused)
-{
-	struct tegra_gpio_info *tgi = dev_get_drvdata(s->private);
-	unsigned int i, j;
+अटल पूर्णांक tegra_dbg_gpio_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा tegra_gpio_info *tgi = dev_get_drvdata(s->निजी);
+	अचिन्हित पूर्णांक i, j;
 
-	for (i = 0; i < tgi->bank_count; i++) {
-		for (j = 0; j < 4; j++) {
-			unsigned int gpio = tegra_gpio_compose(i, j, 0);
+	क्रम (i = 0; i < tgi->bank_count; i++) अणु
+		क्रम (j = 0; j < 4; j++) अणु
+			अचिन्हित पूर्णांक gpio = tegra_gpio_compose(i, j, 0);
 
-			seq_printf(s,
+			seq_म_लिखो(s,
 				"%u:%u %02x %02x %02x %02x %02x %02x %06x\n",
 				i, j,
-				tegra_gpio_readl(tgi, GPIO_CNF(tgi, gpio)),
-				tegra_gpio_readl(tgi, GPIO_OE(tgi, gpio)),
-				tegra_gpio_readl(tgi, GPIO_OUT(tgi, gpio)),
-				tegra_gpio_readl(tgi, GPIO_IN(tgi, gpio)),
-				tegra_gpio_readl(tgi, GPIO_INT_STA(tgi, gpio)),
-				tegra_gpio_readl(tgi, GPIO_INT_ENB(tgi, gpio)),
-				tegra_gpio_readl(tgi, GPIO_INT_LVL(tgi, gpio)));
-		}
-	}
-	return 0;
-}
+				tegra_gpio_पढ़ोl(tgi, GPIO_CNF(tgi, gpio)),
+				tegra_gpio_पढ़ोl(tgi, GPIO_OE(tgi, gpio)),
+				tegra_gpio_पढ़ोl(tgi, GPIO_OUT(tgi, gpio)),
+				tegra_gpio_पढ़ोl(tgi, GPIO_IN(tgi, gpio)),
+				tegra_gpio_पढ़ोl(tgi, GPIO_INT_STA(tgi, gpio)),
+				tegra_gpio_पढ़ोl(tgi, GPIO_INT_ENB(tgi, gpio)),
+				tegra_gpio_पढ़ोl(tgi, GPIO_INT_LVL(tgi, gpio)));
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void tegra_gpio_debuginit(struct tegra_gpio_info *tgi)
-{
-	debugfs_create_devm_seqfile(tgi->dev, "tegra_gpio", NULL,
+अटल व्योम tegra_gpio_debuginit(काष्ठा tegra_gpio_info *tgi)
+अणु
+	debugfs_create_devm_seqfile(tgi->dev, "tegra_gpio", शून्य,
 				    tegra_dbg_gpio_show);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void tegra_gpio_debuginit(struct tegra_gpio_info *tgi)
-{
-}
+अटल अंतरभूत व्योम tegra_gpio_debuginit(काष्ठा tegra_gpio_info *tgi)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static const struct dev_pm_ops tegra_gpio_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops tegra_gpio_pm_ops = अणु
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(tegra_gpio_suspend, tegra_gpio_resume)
-};
+पूर्ण;
 
-static const struct of_device_id tegra_pmc_of_match[] = {
-	{ .compatible = "nvidia,tegra210-pmc", },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id tegra_pmc_of_match[] = अणु
+	अणु .compatible = "nvidia,tegra210-pmc", पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 
-static int tegra_gpio_probe(struct platform_device *pdev)
-{
-	struct tegra_gpio_bank *bank;
-	struct tegra_gpio_info *tgi;
-	struct gpio_irq_chip *irq;
-	struct device_node *np;
-	unsigned int i, j;
-	int ret;
+अटल पूर्णांक tegra_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tegra_gpio_bank *bank;
+	काष्ठा tegra_gpio_info *tgi;
+	काष्ठा gpio_irq_chip *irq;
+	काष्ठा device_node *np;
+	अचिन्हित पूर्णांक i, j;
+	पूर्णांक ret;
 
-	tgi = devm_kzalloc(&pdev->dev, sizeof(*tgi), GFP_KERNEL);
-	if (!tgi)
-		return -ENODEV;
+	tgi = devm_kzalloc(&pdev->dev, माप(*tgi), GFP_KERNEL);
+	अगर (!tgi)
+		वापस -ENODEV;
 
 	tgi->soc = of_device_get_match_data(&pdev->dev);
 	tgi->dev = &pdev->dev;
 
-	ret = platform_irq_count(pdev);
-	if (ret < 0)
-		return ret;
+	ret = platक्रमm_irq_count(pdev);
+	अगर (ret < 0)
+		वापस ret;
 
 	tgi->bank_count = ret;
 
-	if (!tgi->bank_count) {
+	अगर (!tgi->bank_count) अणु
 		dev_err(&pdev->dev, "Missing IRQ resource\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	tgi->gc.label			= "tegra-gpio";
 	tgi->gc.request			= tegra_gpio_request;
-	tgi->gc.free			= tegra_gpio_free;
+	tgi->gc.मुक्त			= tegra_gpio_मुक्त;
 	tgi->gc.direction_input		= tegra_gpio_direction_input;
 	tgi->gc.get			= tegra_gpio_get;
 	tgi->gc.direction_output	= tegra_gpio_direction_output;
@@ -699,43 +700,43 @@ static int tegra_gpio_probe(struct platform_device *pdev)
 	tgi->ic.irq_mask		= tegra_gpio_irq_mask;
 	tgi->ic.irq_unmask		= tegra_gpio_irq_unmask;
 	tgi->ic.irq_set_type		= tegra_gpio_irq_set_type;
-	tgi->ic.irq_shutdown		= tegra_gpio_irq_shutdown;
-#ifdef CONFIG_PM_SLEEP
+	tgi->ic.irq_shutकरोwn		= tegra_gpio_irq_shutकरोwn;
+#अगर_घोषित CONFIG_PM_SLEEP
 	tgi->ic.irq_set_wake		= tegra_gpio_irq_set_wake;
-#endif
+#पूर्ण_अगर
 	tgi->ic.irq_request_resources	= tegra_gpio_irq_request_resources;
 	tgi->ic.irq_release_resources	= tegra_gpio_irq_release_resources;
 
-	platform_set_drvdata(pdev, tgi);
+	platक्रमm_set_drvdata(pdev, tgi);
 
-	if (tgi->soc->debounce_supported)
+	अगर (tgi->soc->debounce_supported)
 		tgi->gc.set_config = tegra_gpio_set_config;
 
-	tgi->bank_info = devm_kcalloc(&pdev->dev, tgi->bank_count,
-				      sizeof(*tgi->bank_info), GFP_KERNEL);
-	if (!tgi->bank_info)
-		return -ENOMEM;
+	tgi->bank_info = devm_kसुस्मृति(&pdev->dev, tgi->bank_count,
+				      माप(*tgi->bank_info), GFP_KERNEL);
+	अगर (!tgi->bank_info)
+		वापस -ENOMEM;
 
-	tgi->irqs = devm_kcalloc(&pdev->dev, tgi->bank_count,
-				 sizeof(*tgi->irqs), GFP_KERNEL);
-	if (!tgi->irqs)
-		return -ENOMEM;
+	tgi->irqs = devm_kसुस्मृति(&pdev->dev, tgi->bank_count,
+				 माप(*tgi->irqs), GFP_KERNEL);
+	अगर (!tgi->irqs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < tgi->bank_count; i++) {
-		ret = platform_get_irq(pdev, i);
-		if (ret < 0)
-			return ret;
+	क्रम (i = 0; i < tgi->bank_count; i++) अणु
+		ret = platक्रमm_get_irq(pdev, i);
+		अगर (ret < 0)
+			वापस ret;
 
 		bank = &tgi->bank_info[i];
 		bank->bank = i;
 
 		tgi->irqs[i] = ret;
 
-		for (j = 0; j < 4; j++) {
+		क्रम (j = 0; j < 4; j++) अणु
 			raw_spin_lock_init(&bank->lvl_lock[j]);
 			spin_lock_init(&bank->dbc_lock[j]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	irq = &tgi->gc.irq;
 	irq->chip = &tgi->ic;
@@ -743,77 +744,77 @@ static int tegra_gpio_probe(struct platform_device *pdev)
 	irq->child_to_parent_hwirq = tegra_gpio_child_to_parent_hwirq;
 	irq->populate_parent_alloc_arg = tegra_gpio_populate_parent_fwspec;
 	irq->handler = handle_simple_irq;
-	irq->default_type = IRQ_TYPE_NONE;
+	irq->शेष_type = IRQ_TYPE_NONE;
 	irq->parent_handler = tegra_gpio_irq_handler;
 	irq->parent_handler_data = tgi;
 	irq->num_parents = tgi->bank_count;
 	irq->parents = tgi->irqs;
 
-	np = of_find_matching_node(NULL, tegra_pmc_of_match);
-	if (np) {
-		irq->parent_domain = irq_find_host(np);
+	np = of_find_matching_node(शून्य, tegra_pmc_of_match);
+	अगर (np) अणु
+		irq->parent_करोमुख्य = irq_find_host(np);
 		of_node_put(np);
 
-		if (!irq->parent_domain)
-			return -EPROBE_DEFER;
+		अगर (!irq->parent_करोमुख्य)
+			वापस -EPROBE_DEFER;
 
 		tgi->ic.irq_set_affinity = tegra_gpio_irq_set_affinity;
-	}
+	पूर्ण
 
-	tgi->regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(tgi->regs))
-		return PTR_ERR(tgi->regs);
+	tgi->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(tgi->regs))
+		वापस PTR_ERR(tgi->regs);
 
-	for (i = 0; i < tgi->bank_count; i++) {
-		for (j = 0; j < 4; j++) {
-			int gpio = tegra_gpio_compose(i, j, 0);
+	क्रम (i = 0; i < tgi->bank_count; i++) अणु
+		क्रम (j = 0; j < 4; j++) अणु
+			पूर्णांक gpio = tegra_gpio_compose(i, j, 0);
 
-			tegra_gpio_writel(tgi, 0x00, GPIO_INT_ENB(tgi, gpio));
-		}
-	}
+			tegra_gpio_ग_लिखोl(tgi, 0x00, GPIO_INT_ENB(tgi, gpio));
+		पूर्ण
+	पूर्ण
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &tgi->gc, tgi);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	tegra_gpio_debuginit(tgi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct tegra_gpio_soc_config tegra20_gpio_config = {
+अटल स्थिर काष्ठा tegra_gpio_soc_config tegra20_gpio_config = अणु
 	.bank_stride = 0x80,
 	.upper_offset = 0x800,
-};
+पूर्ण;
 
-static const struct tegra_gpio_soc_config tegra30_gpio_config = {
+अटल स्थिर काष्ठा tegra_gpio_soc_config tegra30_gpio_config = अणु
 	.bank_stride = 0x100,
 	.upper_offset = 0x80,
-};
+पूर्ण;
 
-static const struct tegra_gpio_soc_config tegra210_gpio_config = {
+अटल स्थिर काष्ठा tegra_gpio_soc_config tegra210_gpio_config = अणु
 	.debounce_supported = true,
 	.bank_stride = 0x100,
 	.upper_offset = 0x80,
-};
+पूर्ण;
 
-static const struct of_device_id tegra_gpio_of_match[] = {
-	{ .compatible = "nvidia,tegra210-gpio", .data = &tegra210_gpio_config },
-	{ .compatible = "nvidia,tegra30-gpio", .data = &tegra30_gpio_config },
-	{ .compatible = "nvidia,tegra20-gpio", .data = &tegra20_gpio_config },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id tegra_gpio_of_match[] = अणु
+	अणु .compatible = "nvidia,tegra210-gpio", .data = &tegra210_gpio_config पूर्ण,
+	अणु .compatible = "nvidia,tegra30-gpio", .data = &tegra30_gpio_config पूर्ण,
+	अणु .compatible = "nvidia,tegra20-gpio", .data = &tegra20_gpio_config पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tegra_gpio_of_match);
 
-static struct platform_driver tegra_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tegra_gpio_driver = अणु
+	.driver = अणु
 		.name = "tegra-gpio",
 		.pm = &tegra_gpio_pm_ops,
 		.of_match_table = tegra_gpio_of_match,
-	},
+	पूर्ण,
 	.probe = tegra_gpio_probe,
-};
-module_platform_driver(tegra_gpio_driver);
+पूर्ण;
+module_platक्रमm_driver(tegra_gpio_driver);
 
 MODULE_DESCRIPTION("NVIDIA Tegra GPIO controller driver");
 MODULE_AUTHOR("Laxman Dewangan <ldewangan@nvidia.com>");

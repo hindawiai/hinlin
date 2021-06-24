@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only) */
 /* Copyright(c) 2014 - 2020 Intel Corporation */
-#ifndef _ICP_QAT_HW_H_
-#define _ICP_QAT_HW_H_
+#अगर_अघोषित _ICP_QAT_HW_H_
+#घोषणा _ICP_QAT_HW_H_
 
-enum icp_qat_hw_ae_id {
+क्रमागत icp_qat_hw_ae_id अणु
 	ICP_QAT_HW_AE_0 = 0,
 	ICP_QAT_HW_AE_1 = 1,
 	ICP_QAT_HW_AE_2 = 2,
@@ -17,9 +18,9 @@ enum icp_qat_hw_ae_id {
 	ICP_QAT_HW_AE_10 = 10,
 	ICP_QAT_HW_AE_11 = 11,
 	ICP_QAT_HW_AE_DELIMITER = 12
-};
+पूर्ण;
 
-enum icp_qat_hw_qat_id {
+क्रमागत icp_qat_hw_qat_id अणु
 	ICP_QAT_HW_QAT_0 = 0,
 	ICP_QAT_HW_QAT_1 = 1,
 	ICP_QAT_HW_QAT_2 = 2,
@@ -27,10 +28,10 @@ enum icp_qat_hw_qat_id {
 	ICP_QAT_HW_QAT_4 = 4,
 	ICP_QAT_HW_QAT_5 = 5,
 	ICP_QAT_HW_QAT_DELIMITER = 6
-};
+पूर्ण;
 
-enum icp_qat_hw_auth_algo {
-	ICP_QAT_HW_AUTH_ALGO_NULL = 0,
+क्रमागत icp_qat_hw_auth_algo अणु
+	ICP_QAT_HW_AUTH_ALGO_शून्य = 0,
 	ICP_QAT_HW_AUTH_ALGO_SHA1 = 1,
 	ICP_QAT_HW_AUTH_ALGO_MD5 = 2,
 	ICP_QAT_HW_AUTH_ALGO_SHA224 = 3,
@@ -51,26 +52,26 @@ enum icp_qat_hw_auth_algo {
 	ICP_QAT_HW_AUTH_RESERVED_3 = 18,
 	ICP_QAT_HW_AUTH_ALGO_SHA3_512 = 19,
 	ICP_QAT_HW_AUTH_ALGO_DELIMITER = 20
-};
+पूर्ण;
 
-enum icp_qat_hw_auth_mode {
+क्रमागत icp_qat_hw_auth_mode अणु
 	ICP_QAT_HW_AUTH_MODE0 = 0,
 	ICP_QAT_HW_AUTH_MODE1 = 1,
 	ICP_QAT_HW_AUTH_MODE2 = 2,
 	ICP_QAT_HW_AUTH_MODE_DELIMITER = 3
-};
+पूर्ण;
 
-struct icp_qat_hw_auth_config {
+काष्ठा icp_qat_hw_auth_config अणु
 	__u32 config;
 	__u32 reserved;
-};
+पूर्ण;
 
-struct icp_qat_hw_ucs_cipher_config {
+काष्ठा icp_qat_hw_ucs_cipher_config अणु
 	__u32 val;
 	__u32 reserved[3];
-};
+पूर्ण;
 
-enum icp_qat_slice_mask {
+क्रमागत icp_qat_slice_mask अणु
 	ICP_ACCEL_MASK_CIPHER_SLICE = BIT(0),
 	ICP_ACCEL_MASK_AUTH_SLICE = BIT(1),
 	ICP_ACCEL_MASK_PKE_SLICE = BIT(2),
@@ -78,9 +79,9 @@ enum icp_qat_slice_mask {
 	ICP_ACCEL_MASK_LZS_SLICE = BIT(4),
 	ICP_ACCEL_MASK_EIA3_SLICE = BIT(5),
 	ICP_ACCEL_MASK_SHA3_SLICE = BIT(6),
-};
+पूर्ण;
 
-enum icp_qat_capabilities_mask {
+क्रमागत icp_qat_capabilities_mask अणु
 	ICP_ACCEL_CAPABILITIES_CRYPTO_SYMMETRIC = BIT(0),
 	ICP_ACCEL_CAPABILITIES_CRYPTO_ASYMMETRIC = BIT(1),
 	ICP_ACCEL_CAPABILITIES_CIPHER = BIT(2),
@@ -93,19 +94,19 @@ enum icp_qat_capabilities_mask {
 	ICP_ACCEL_CAPABILITIES_SHA3 = BIT(9),
 	/* Bits 10-25 are currently reserved */
 	ICP_ACCEL_CAPABILITIES_AES_V2 = BIT(26)
-};
+पूर्ण;
 
-#define QAT_AUTH_MODE_BITPOS 4
-#define QAT_AUTH_MODE_MASK 0xF
-#define QAT_AUTH_ALGO_BITPOS 0
-#define QAT_AUTH_ALGO_MASK 0xF
-#define QAT_AUTH_CMP_BITPOS 8
-#define QAT_AUTH_CMP_MASK 0x7F
-#define QAT_AUTH_SHA3_PADDING_BITPOS 16
-#define QAT_AUTH_SHA3_PADDING_MASK 0x1
-#define QAT_AUTH_ALGO_SHA3_BITPOS 22
-#define QAT_AUTH_ALGO_SHA3_MASK 0x3
-#define ICP_QAT_HW_AUTH_CONFIG_BUILD(mode, algo, cmp_len) \
+#घोषणा QAT_AUTH_MODE_BITPOS 4
+#घोषणा QAT_AUTH_MODE_MASK 0xF
+#घोषणा QAT_AUTH_ALGO_BITPOS 0
+#घोषणा QAT_AUTH_ALGO_MASK 0xF
+#घोषणा QAT_AUTH_CMP_BITPOS 8
+#घोषणा QAT_AUTH_CMP_MASK 0x7F
+#घोषणा QAT_AUTH_SHA3_PADDING_BITPOS 16
+#घोषणा QAT_AUTH_SHA3_PADDING_MASK 0x1
+#घोषणा QAT_AUTH_ALGO_SHA3_BITPOS 22
+#घोषणा QAT_AUTH_ALGO_SHA3_MASK 0x3
+#घोषणा ICP_QAT_HW_AUTH_CONFIG_BUILD(mode, algo, cmp_len) \
 	(((mode & QAT_AUTH_MODE_MASK) << QAT_AUTH_MODE_BITPOS) | \
 	((algo & QAT_AUTH_ALGO_MASK) << QAT_AUTH_ALGO_BITPOS) | \
 	(((algo >> 4) & QAT_AUTH_ALGO_SHA3_MASK) << \
@@ -115,82 +116,82 @@ enum icp_qat_capabilities_mask {
 	& QAT_AUTH_SHA3_PADDING_MASK) << QAT_AUTH_SHA3_PADDING_BITPOS) | \
 	((cmp_len & QAT_AUTH_CMP_MASK) << QAT_AUTH_CMP_BITPOS))
 
-struct icp_qat_hw_auth_counter {
+काष्ठा icp_qat_hw_auth_counter अणु
 	__be32 counter;
 	__u32 reserved;
-};
+पूर्ण;
 
-#define QAT_AUTH_COUNT_MASK 0xFFFFFFFF
-#define QAT_AUTH_COUNT_BITPOS 0
-#define ICP_QAT_HW_AUTH_COUNT_BUILD(val) \
+#घोषणा QAT_AUTH_COUNT_MASK 0xFFFFFFFF
+#घोषणा QAT_AUTH_COUNT_BITPOS 0
+#घोषणा ICP_QAT_HW_AUTH_COUNT_BUILD(val) \
 	(((val) & QAT_AUTH_COUNT_MASK) << QAT_AUTH_COUNT_BITPOS)
 
-struct icp_qat_hw_auth_setup {
-	struct icp_qat_hw_auth_config auth_config;
-	struct icp_qat_hw_auth_counter auth_counter;
-};
+काष्ठा icp_qat_hw_auth_setup अणु
+	काष्ठा icp_qat_hw_auth_config auth_config;
+	काष्ठा icp_qat_hw_auth_counter auth_counter;
+पूर्ण;
 
-#define QAT_HW_DEFAULT_ALIGNMENT 8
-#define QAT_HW_ROUND_UP(val, n) (((val) + ((n) - 1)) & (~(n - 1)))
-#define ICP_QAT_HW_NULL_STATE1_SZ 32
-#define ICP_QAT_HW_MD5_STATE1_SZ 16
-#define ICP_QAT_HW_SHA1_STATE1_SZ 20
-#define ICP_QAT_HW_SHA224_STATE1_SZ 32
-#define ICP_QAT_HW_SHA256_STATE1_SZ 32
-#define ICP_QAT_HW_SHA3_256_STATE1_SZ 32
-#define ICP_QAT_HW_SHA384_STATE1_SZ 64
-#define ICP_QAT_HW_SHA512_STATE1_SZ 64
-#define ICP_QAT_HW_SHA3_512_STATE1_SZ 64
-#define ICP_QAT_HW_SHA3_224_STATE1_SZ 28
-#define ICP_QAT_HW_SHA3_384_STATE1_SZ 48
-#define ICP_QAT_HW_AES_XCBC_MAC_STATE1_SZ 16
-#define ICP_QAT_HW_AES_CBC_MAC_STATE1_SZ 16
-#define ICP_QAT_HW_AES_F9_STATE1_SZ 32
-#define ICP_QAT_HW_KASUMI_F9_STATE1_SZ 16
-#define ICP_QAT_HW_GALOIS_128_STATE1_SZ 16
-#define ICP_QAT_HW_SNOW_3G_UIA2_STATE1_SZ 8
-#define ICP_QAT_HW_ZUC_3G_EIA3_STATE1_SZ 8
-#define ICP_QAT_HW_NULL_STATE2_SZ 32
-#define ICP_QAT_HW_MD5_STATE2_SZ 16
-#define ICP_QAT_HW_SHA1_STATE2_SZ 20
-#define ICP_QAT_HW_SHA224_STATE2_SZ 32
-#define ICP_QAT_HW_SHA256_STATE2_SZ 32
-#define ICP_QAT_HW_SHA3_256_STATE2_SZ 0
-#define ICP_QAT_HW_SHA384_STATE2_SZ 64
-#define ICP_QAT_HW_SHA512_STATE2_SZ 64
-#define ICP_QAT_HW_SHA3_512_STATE2_SZ 0
-#define ICP_QAT_HW_SHA3_224_STATE2_SZ 0
-#define ICP_QAT_HW_SHA3_384_STATE2_SZ 0
-#define ICP_QAT_HW_AES_XCBC_MAC_KEY_SZ 16
-#define ICP_QAT_HW_AES_CBC_MAC_KEY_SZ 16
-#define ICP_QAT_HW_AES_CCM_CBC_E_CTR0_SZ 16
-#define ICP_QAT_HW_F9_IK_SZ 16
-#define ICP_QAT_HW_F9_FK_SZ 16
-#define ICP_QAT_HW_KASUMI_F9_STATE2_SZ (ICP_QAT_HW_F9_IK_SZ + \
+#घोषणा QAT_HW_DEFAULT_ALIGNMENT 8
+#घोषणा QAT_HW_ROUND_UP(val, n) (((val) + ((n) - 1)) & (~(n - 1)))
+#घोषणा ICP_QAT_HW_शून्य_STATE1_SZ 32
+#घोषणा ICP_QAT_HW_MD5_STATE1_SZ 16
+#घोषणा ICP_QAT_HW_SHA1_STATE1_SZ 20
+#घोषणा ICP_QAT_HW_SHA224_STATE1_SZ 32
+#घोषणा ICP_QAT_HW_SHA256_STATE1_SZ 32
+#घोषणा ICP_QAT_HW_SHA3_256_STATE1_SZ 32
+#घोषणा ICP_QAT_HW_SHA384_STATE1_SZ 64
+#घोषणा ICP_QAT_HW_SHA512_STATE1_SZ 64
+#घोषणा ICP_QAT_HW_SHA3_512_STATE1_SZ 64
+#घोषणा ICP_QAT_HW_SHA3_224_STATE1_SZ 28
+#घोषणा ICP_QAT_HW_SHA3_384_STATE1_SZ 48
+#घोषणा ICP_QAT_HW_AES_XCBC_MAC_STATE1_SZ 16
+#घोषणा ICP_QAT_HW_AES_CBC_MAC_STATE1_SZ 16
+#घोषणा ICP_QAT_HW_AES_F9_STATE1_SZ 32
+#घोषणा ICP_QAT_HW_KASUMI_F9_STATE1_SZ 16
+#घोषणा ICP_QAT_HW_GALOIS_128_STATE1_SZ 16
+#घोषणा ICP_QAT_HW_SNOW_3G_UIA2_STATE1_SZ 8
+#घोषणा ICP_QAT_HW_ZUC_3G_EIA3_STATE1_SZ 8
+#घोषणा ICP_QAT_HW_शून्य_STATE2_SZ 32
+#घोषणा ICP_QAT_HW_MD5_STATE2_SZ 16
+#घोषणा ICP_QAT_HW_SHA1_STATE2_SZ 20
+#घोषणा ICP_QAT_HW_SHA224_STATE2_SZ 32
+#घोषणा ICP_QAT_HW_SHA256_STATE2_SZ 32
+#घोषणा ICP_QAT_HW_SHA3_256_STATE2_SZ 0
+#घोषणा ICP_QAT_HW_SHA384_STATE2_SZ 64
+#घोषणा ICP_QAT_HW_SHA512_STATE2_SZ 64
+#घोषणा ICP_QAT_HW_SHA3_512_STATE2_SZ 0
+#घोषणा ICP_QAT_HW_SHA3_224_STATE2_SZ 0
+#घोषणा ICP_QAT_HW_SHA3_384_STATE2_SZ 0
+#घोषणा ICP_QAT_HW_AES_XCBC_MAC_KEY_SZ 16
+#घोषणा ICP_QAT_HW_AES_CBC_MAC_KEY_SZ 16
+#घोषणा ICP_QAT_HW_AES_CCM_CBC_E_CTR0_SZ 16
+#घोषणा ICP_QAT_HW_F9_IK_SZ 16
+#घोषणा ICP_QAT_HW_F9_FK_SZ 16
+#घोषणा ICP_QAT_HW_KASUMI_F9_STATE2_SZ (ICP_QAT_HW_F9_IK_SZ + \
 	ICP_QAT_HW_F9_FK_SZ)
-#define ICP_QAT_HW_AES_F9_STATE2_SZ ICP_QAT_HW_KASUMI_F9_STATE2_SZ
-#define ICP_QAT_HW_SNOW_3G_UIA2_STATE2_SZ 24
-#define ICP_QAT_HW_ZUC_3G_EIA3_STATE2_SZ 32
-#define ICP_QAT_HW_GALOIS_H_SZ 16
-#define ICP_QAT_HW_GALOIS_LEN_A_SZ 8
-#define ICP_QAT_HW_GALOIS_E_CTR0_SZ 16
+#घोषणा ICP_QAT_HW_AES_F9_STATE2_SZ ICP_QAT_HW_KASUMI_F9_STATE2_SZ
+#घोषणा ICP_QAT_HW_SNOW_3G_UIA2_STATE2_SZ 24
+#घोषणा ICP_QAT_HW_ZUC_3G_EIA3_STATE2_SZ 32
+#घोषणा ICP_QAT_HW_GALOIS_H_SZ 16
+#घोषणा ICP_QAT_HW_GALOIS_LEN_A_SZ 8
+#घोषणा ICP_QAT_HW_GALOIS_E_CTR0_SZ 16
 
-struct icp_qat_hw_auth_sha512 {
-	struct icp_qat_hw_auth_setup inner_setup;
+काष्ठा icp_qat_hw_auth_sha512 अणु
+	काष्ठा icp_qat_hw_auth_setup inner_setup;
 	__u8 state1[ICP_QAT_HW_SHA512_STATE1_SZ];
-	struct icp_qat_hw_auth_setup outer_setup;
+	काष्ठा icp_qat_hw_auth_setup outer_setup;
 	__u8 state2[ICP_QAT_HW_SHA512_STATE2_SZ];
-};
+पूर्ण;
 
-struct icp_qat_hw_auth_algo_blk {
-	struct icp_qat_hw_auth_sha512 sha;
-};
+काष्ठा icp_qat_hw_auth_algo_blk अणु
+	काष्ठा icp_qat_hw_auth_sha512 sha;
+पूर्ण;
 
-#define ICP_QAT_HW_GALOIS_LEN_A_BITPOS 0
-#define ICP_QAT_HW_GALOIS_LEN_A_MASK 0xFFFFFFFF
+#घोषणा ICP_QAT_HW_GALOIS_LEN_A_BITPOS 0
+#घोषणा ICP_QAT_HW_GALOIS_LEN_A_MASK 0xFFFFFFFF
 
-enum icp_qat_hw_cipher_algo {
-	ICP_QAT_HW_CIPHER_ALGO_NULL = 0,
+क्रमागत icp_qat_hw_cipher_algo अणु
+	ICP_QAT_HW_CIPHER_ALGO_शून्य = 0,
 	ICP_QAT_HW_CIPHER_ALGO_DES = 1,
 	ICP_QAT_HW_CIPHER_ALGO_3DES = 2,
 	ICP_QAT_HW_CIPHER_ALGO_AES128 = 3,
@@ -201,99 +202,99 @@ enum icp_qat_hw_cipher_algo {
 	ICP_QAT_HW_CIPHER_ALGO_SNOW_3G_UEA2 = 8,
 	ICP_QAT_HW_CIPHER_ALGO_ZUC_3G_128_EEA3 = 9,
 	ICP_QAT_HW_CIPHER_DELIMITER = 10
-};
+पूर्ण;
 
-enum icp_qat_hw_cipher_mode {
+क्रमागत icp_qat_hw_cipher_mode अणु
 	ICP_QAT_HW_CIPHER_ECB_MODE = 0,
 	ICP_QAT_HW_CIPHER_CBC_MODE = 1,
 	ICP_QAT_HW_CIPHER_CTR_MODE = 2,
 	ICP_QAT_HW_CIPHER_F8_MODE = 3,
 	ICP_QAT_HW_CIPHER_XTS_MODE = 6,
 	ICP_QAT_HW_CIPHER_MODE_DELIMITER = 7
-};
+पूर्ण;
 
-struct icp_qat_hw_cipher_config {
+काष्ठा icp_qat_hw_cipher_config अणु
 	__u32 val;
 	__u32 reserved;
-};
+पूर्ण;
 
-enum icp_qat_hw_cipher_dir {
+क्रमागत icp_qat_hw_cipher_dir अणु
 	ICP_QAT_HW_CIPHER_ENCRYPT = 0,
 	ICP_QAT_HW_CIPHER_DECRYPT = 1,
-};
+पूर्ण;
 
-enum icp_qat_hw_cipher_convert {
+क्रमागत icp_qat_hw_cipher_convert अणु
 	ICP_QAT_HW_CIPHER_NO_CONVERT = 0,
 	ICP_QAT_HW_CIPHER_KEY_CONVERT = 1,
-};
+पूर्ण;
 
-#define QAT_CIPHER_MODE_BITPOS 4
-#define QAT_CIPHER_MODE_MASK 0xF
-#define QAT_CIPHER_ALGO_BITPOS 0
-#define QAT_CIPHER_ALGO_MASK 0xF
-#define QAT_CIPHER_CONVERT_BITPOS 9
-#define QAT_CIPHER_CONVERT_MASK 0x1
-#define QAT_CIPHER_DIR_BITPOS 8
-#define QAT_CIPHER_DIR_MASK 0x1
-#define QAT_CIPHER_MODE_F8_KEY_SZ_MULT 2
-#define QAT_CIPHER_MODE_XTS_KEY_SZ_MULT 2
-#define ICP_QAT_HW_CIPHER_CONFIG_BUILD(mode, algo, convert, dir) \
+#घोषणा QAT_CIPHER_MODE_BITPOS 4
+#घोषणा QAT_CIPHER_MODE_MASK 0xF
+#घोषणा QAT_CIPHER_ALGO_BITPOS 0
+#घोषणा QAT_CIPHER_ALGO_MASK 0xF
+#घोषणा QAT_CIPHER_CONVERT_BITPOS 9
+#घोषणा QAT_CIPHER_CONVERT_MASK 0x1
+#घोषणा QAT_CIPHER_सूची_BITPOS 8
+#घोषणा QAT_CIPHER_सूची_MASK 0x1
+#घोषणा QAT_CIPHER_MODE_F8_KEY_SZ_MULT 2
+#घोषणा QAT_CIPHER_MODE_XTS_KEY_SZ_MULT 2
+#घोषणा ICP_QAT_HW_CIPHER_CONFIG_BUILD(mode, algo, convert, dir) \
 	(((mode & QAT_CIPHER_MODE_MASK) << QAT_CIPHER_MODE_BITPOS) | \
 	((algo & QAT_CIPHER_ALGO_MASK) << QAT_CIPHER_ALGO_BITPOS) | \
 	((convert & QAT_CIPHER_CONVERT_MASK) << QAT_CIPHER_CONVERT_BITPOS) | \
-	((dir & QAT_CIPHER_DIR_MASK) << QAT_CIPHER_DIR_BITPOS))
-#define ICP_QAT_HW_DES_BLK_SZ 8
-#define ICP_QAT_HW_3DES_BLK_SZ 8
-#define ICP_QAT_HW_NULL_BLK_SZ 8
-#define ICP_QAT_HW_AES_BLK_SZ 16
-#define ICP_QAT_HW_KASUMI_BLK_SZ 8
-#define ICP_QAT_HW_SNOW_3G_BLK_SZ 8
-#define ICP_QAT_HW_ZUC_3G_BLK_SZ 8
-#define ICP_QAT_HW_NULL_KEY_SZ 256
-#define ICP_QAT_HW_DES_KEY_SZ 8
-#define ICP_QAT_HW_3DES_KEY_SZ 24
-#define ICP_QAT_HW_AES_128_KEY_SZ 16
-#define ICP_QAT_HW_AES_192_KEY_SZ 24
-#define ICP_QAT_HW_AES_256_KEY_SZ 32
-#define ICP_QAT_HW_AES_128_F8_KEY_SZ (ICP_QAT_HW_AES_128_KEY_SZ * \
+	((dir & QAT_CIPHER_सूची_MASK) << QAT_CIPHER_सूची_BITPOS))
+#घोषणा ICP_QAT_HW_DES_BLK_SZ 8
+#घोषणा ICP_QAT_HW_3DES_BLK_SZ 8
+#घोषणा ICP_QAT_HW_शून्य_BLK_SZ 8
+#घोषणा ICP_QAT_HW_AES_BLK_SZ 16
+#घोषणा ICP_QAT_HW_KASUMI_BLK_SZ 8
+#घोषणा ICP_QAT_HW_SNOW_3G_BLK_SZ 8
+#घोषणा ICP_QAT_HW_ZUC_3G_BLK_SZ 8
+#घोषणा ICP_QAT_HW_शून्य_KEY_SZ 256
+#घोषणा ICP_QAT_HW_DES_KEY_SZ 8
+#घोषणा ICP_QAT_HW_3DES_KEY_SZ 24
+#घोषणा ICP_QAT_HW_AES_128_KEY_SZ 16
+#घोषणा ICP_QAT_HW_AES_192_KEY_SZ 24
+#घोषणा ICP_QAT_HW_AES_256_KEY_SZ 32
+#घोषणा ICP_QAT_HW_AES_128_F8_KEY_SZ (ICP_QAT_HW_AES_128_KEY_SZ * \
 	QAT_CIPHER_MODE_F8_KEY_SZ_MULT)
-#define ICP_QAT_HW_AES_192_F8_KEY_SZ (ICP_QAT_HW_AES_192_KEY_SZ * \
+#घोषणा ICP_QAT_HW_AES_192_F8_KEY_SZ (ICP_QAT_HW_AES_192_KEY_SZ * \
 	QAT_CIPHER_MODE_F8_KEY_SZ_MULT)
-#define ICP_QAT_HW_AES_256_F8_KEY_SZ (ICP_QAT_HW_AES_256_KEY_SZ * \
+#घोषणा ICP_QAT_HW_AES_256_F8_KEY_SZ (ICP_QAT_HW_AES_256_KEY_SZ * \
 	QAT_CIPHER_MODE_F8_KEY_SZ_MULT)
-#define ICP_QAT_HW_AES_128_XTS_KEY_SZ (ICP_QAT_HW_AES_128_KEY_SZ * \
+#घोषणा ICP_QAT_HW_AES_128_XTS_KEY_SZ (ICP_QAT_HW_AES_128_KEY_SZ * \
 	QAT_CIPHER_MODE_XTS_KEY_SZ_MULT)
-#define ICP_QAT_HW_AES_256_XTS_KEY_SZ (ICP_QAT_HW_AES_256_KEY_SZ * \
+#घोषणा ICP_QAT_HW_AES_256_XTS_KEY_SZ (ICP_QAT_HW_AES_256_KEY_SZ * \
 	QAT_CIPHER_MODE_XTS_KEY_SZ_MULT)
-#define ICP_QAT_HW_KASUMI_KEY_SZ 16
-#define ICP_QAT_HW_KASUMI_F8_KEY_SZ (ICP_QAT_HW_KASUMI_KEY_SZ * \
+#घोषणा ICP_QAT_HW_KASUMI_KEY_SZ 16
+#घोषणा ICP_QAT_HW_KASUMI_F8_KEY_SZ (ICP_QAT_HW_KASUMI_KEY_SZ * \
 	QAT_CIPHER_MODE_F8_KEY_SZ_MULT)
-#define ICP_QAT_HW_AES_128_XTS_KEY_SZ (ICP_QAT_HW_AES_128_KEY_SZ * \
+#घोषणा ICP_QAT_HW_AES_128_XTS_KEY_SZ (ICP_QAT_HW_AES_128_KEY_SZ * \
 	QAT_CIPHER_MODE_XTS_KEY_SZ_MULT)
-#define ICP_QAT_HW_AES_256_XTS_KEY_SZ (ICP_QAT_HW_AES_256_KEY_SZ * \
+#घोषणा ICP_QAT_HW_AES_256_XTS_KEY_SZ (ICP_QAT_HW_AES_256_KEY_SZ * \
 	QAT_CIPHER_MODE_XTS_KEY_SZ_MULT)
-#define ICP_QAT_HW_ARC4_KEY_SZ 256
-#define ICP_QAT_HW_SNOW_3G_UEA2_KEY_SZ 16
-#define ICP_QAT_HW_SNOW_3G_UEA2_IV_SZ 16
-#define ICP_QAT_HW_ZUC_3G_EEA3_KEY_SZ 16
-#define ICP_QAT_HW_ZUC_3G_EEA3_IV_SZ 16
-#define ICP_QAT_HW_MODE_F8_NUM_REG_TO_CLEAR 2
-#define INIT_SHRAM_CONSTANTS_TABLE_SZ 1024
+#घोषणा ICP_QAT_HW_ARC4_KEY_SZ 256
+#घोषणा ICP_QAT_HW_SNOW_3G_UEA2_KEY_SZ 16
+#घोषणा ICP_QAT_HW_SNOW_3G_UEA2_IV_SZ 16
+#घोषणा ICP_QAT_HW_ZUC_3G_EEA3_KEY_SZ 16
+#घोषणा ICP_QAT_HW_ZUC_3G_EEA3_IV_SZ 16
+#घोषणा ICP_QAT_HW_MODE_F8_NUM_REG_TO_CLEAR 2
+#घोषणा INIT_SHRAM_CONSTANTS_TABLE_SZ 1024
 
-struct icp_qat_hw_cipher_aes256_f8 {
-	struct icp_qat_hw_cipher_config cipher_config;
+काष्ठा icp_qat_hw_cipher_aes256_f8 अणु
+	काष्ठा icp_qat_hw_cipher_config cipher_config;
 	__u8 key[ICP_QAT_HW_AES_256_F8_KEY_SZ];
-};
+पूर्ण;
 
-struct icp_qat_hw_ucs_cipher_aes256_f8 {
-	struct icp_qat_hw_ucs_cipher_config cipher_config;
+काष्ठा icp_qat_hw_ucs_cipher_aes256_f8 अणु
+	काष्ठा icp_qat_hw_ucs_cipher_config cipher_config;
 	__u8 key[ICP_QAT_HW_AES_256_F8_KEY_SZ];
-};
+पूर्ण;
 
-struct icp_qat_hw_cipher_algo_blk {
-	union {
-		struct icp_qat_hw_cipher_aes256_f8 aes;
-		struct icp_qat_hw_ucs_cipher_aes256_f8 ucs_aes;
-	};
-} __aligned(64);
-#endif
+काष्ठा icp_qat_hw_cipher_algo_blk अणु
+	जोड़ अणु
+		काष्ठा icp_qat_hw_cipher_aes256_f8 aes;
+		काष्ठा icp_qat_hw_ucs_cipher_aes256_f8 ucs_aes;
+	पूर्ण;
+पूर्ण __aligned(64);
+#पूर्ण_अगर

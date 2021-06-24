@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XENFS_XENBUS_H
-#define _XENFS_XENBUS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XENFS_XENBUS_H
+#घोषणा _XENFS_XENBUS_H
 
-extern const struct file_operations xsd_kva_file_ops;
-extern const struct file_operations xsd_port_file_ops;
-extern const struct file_operations xensyms_ops;
+बाह्य स्थिर काष्ठा file_operations xsd_kva_file_ops;
+बाह्य स्थिर काष्ठा file_operations xsd_port_file_ops;
+बाह्य स्थिर काष्ठा file_operations xensyms_ops;
 
-#endif	/* _XENFS_XENBUS_H */
+#पूर्ण_अगर	/* _XENFS_XENBUS_H */

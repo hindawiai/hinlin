@@ -1,6 +1,7 @@
+<शैली गुरु>
 /*
- * Copyright © 2007 Anton Vorontsov <cbou@mail.ru>
- * Copyright © 2007 Eugeny Boger <eugenyboger@dgap.mipt.ru>
+ * Copyright तऊ 2007 Anton Vorontsov <cbou@mail.ru>
+ * Copyright तऊ 2007 Eugeny Boger <eugenyboger@dgap.mipt.ru>
  *
  * Author: Eugeny Boger <eugenyboger@dgap.mipt.ru>
  *
@@ -9,367 +10,367 @@
  * preserved in its entirety in all copies and derived works.
  */
 
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/power_supply.h>
-#include <linux/apm-emulation.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/apm-emulation.h>
 
 
-#define PSY_PROP(psy, prop, val) (power_supply_get_property(psy, \
+#घोषणा PSY_PROP(psy, prop, val) (घातer_supply_get_property(psy, \
 			 POWER_SUPPLY_PROP_##prop, val))
 
-#define _MPSY_PROP(prop, val) (power_supply_get_property(main_battery, \
+#घोषणा _MPSY_PROP(prop, val) (घातer_supply_get_property(मुख्य_battery, \
 							 prop, val))
 
-#define MPSY_PROP(prop, val) _MPSY_PROP(POWER_SUPPLY_PROP_##prop, val)
+#घोषणा MPSY_PROP(prop, val) _MPSY_PROP(POWER_SUPPLY_PROP_##prop, val)
 
-static DEFINE_MUTEX(apm_mutex);
-static struct power_supply *main_battery;
+अटल DEFINE_MUTEX(apm_mutex);
+अटल काष्ठा घातer_supply *मुख्य_battery;
 
-enum apm_source {
+क्रमागत apm_source अणु
 	SOURCE_ENERGY,
 	SOURCE_CHARGE,
 	SOURCE_VOLTAGE,
-};
+पूर्ण;
 
-struct find_bat_param {
-	struct power_supply *main;
-	struct power_supply *bat;
-	struct power_supply *max_charge_bat;
-	struct power_supply *max_energy_bat;
-	union power_supply_propval full;
-	int max_charge;
-	int max_energy;
-};
+काष्ठा find_bat_param अणु
+	काष्ठा घातer_supply *मुख्य;
+	काष्ठा घातer_supply *bat;
+	काष्ठा घातer_supply *max_अक्षरge_bat;
+	काष्ठा घातer_supply *max_energy_bat;
+	जोड़ घातer_supply_propval full;
+	पूर्णांक max_अक्षरge;
+	पूर्णांक max_energy;
+पूर्ण;
 
-static int __find_main_battery(struct device *dev, void *data)
-{
-	struct find_bat_param *bp = (struct find_bat_param *)data;
+अटल पूर्णांक __find_मुख्य_battery(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा find_bat_param *bp = (काष्ठा find_bat_param *)data;
 
 	bp->bat = dev_get_drvdata(dev);
 
-	if (bp->bat->desc->use_for_apm) {
+	अगर (bp->bat->desc->use_क्रम_apm) अणु
 		/* nice, we explicitly asked to report this battery. */
-		bp->main = bp->bat;
-		return 1;
-	}
+		bp->मुख्य = bp->bat;
+		वापस 1;
+	पूर्ण
 
-	if (!PSY_PROP(bp->bat, CHARGE_FULL_DESIGN, &bp->full) ||
-			!PSY_PROP(bp->bat, CHARGE_FULL, &bp->full)) {
-		if (bp->full.intval > bp->max_charge) {
-			bp->max_charge_bat = bp->bat;
-			bp->max_charge = bp->full.intval;
-		}
-	} else if (!PSY_PROP(bp->bat, ENERGY_FULL_DESIGN, &bp->full) ||
-			!PSY_PROP(bp->bat, ENERGY_FULL, &bp->full)) {
-		if (bp->full.intval > bp->max_energy) {
+	अगर (!PSY_PROP(bp->bat, CHARGE_FULL_DESIGN, &bp->full) ||
+			!PSY_PROP(bp->bat, CHARGE_FULL, &bp->full)) अणु
+		अगर (bp->full.पूर्णांकval > bp->max_अक्षरge) अणु
+			bp->max_अक्षरge_bat = bp->bat;
+			bp->max_अक्षरge = bp->full.पूर्णांकval;
+		पूर्ण
+	पूर्ण अन्यथा अगर (!PSY_PROP(bp->bat, ENERGY_FULL_DESIGN, &bp->full) ||
+			!PSY_PROP(bp->bat, ENERGY_FULL, &bp->full)) अणु
+		अगर (bp->full.पूर्णांकval > bp->max_energy) अणु
 			bp->max_energy_bat = bp->bat;
-			bp->max_energy = bp->full.intval;
-		}
-	}
-	return 0;
-}
+			bp->max_energy = bp->full.पूर्णांकval;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void find_main_battery(void)
-{
-	struct find_bat_param bp;
-	int error;
+अटल व्योम find_मुख्य_battery(व्योम)
+अणु
+	काष्ठा find_bat_param bp;
+	पूर्णांक error;
 
-	memset(&bp, 0, sizeof(struct find_bat_param));
-	main_battery = NULL;
-	bp.main = main_battery;
+	स_रखो(&bp, 0, माप(काष्ठा find_bat_param));
+	मुख्य_battery = शून्य;
+	bp.मुख्य = मुख्य_battery;
 
-	error = class_for_each_device(power_supply_class, NULL, &bp,
-				      __find_main_battery);
-	if (error) {
-		main_battery = bp.main;
-		return;
-	}
+	error = class_क्रम_each_device(घातer_supply_class, शून्य, &bp,
+				      __find_मुख्य_battery);
+	अगर (error) अणु
+		मुख्य_battery = bp.मुख्य;
+		वापस;
+	पूर्ण
 
-	if ((bp.max_energy_bat && bp.max_charge_bat) &&
-			(bp.max_energy_bat != bp.max_charge_bat)) {
+	अगर ((bp.max_energy_bat && bp.max_अक्षरge_bat) &&
+			(bp.max_energy_bat != bp.max_अक्षरge_bat)) अणु
 		/* try guess battery with more capacity */
-		if (!PSY_PROP(bp.max_charge_bat, VOLTAGE_MAX_DESIGN,
-			      &bp.full)) {
-			if (bp.max_energy > bp.max_charge * bp.full.intval)
-				main_battery = bp.max_energy_bat;
-			else
-				main_battery = bp.max_charge_bat;
-		} else if (!PSY_PROP(bp.max_energy_bat, VOLTAGE_MAX_DESIGN,
-								  &bp.full)) {
-			if (bp.max_charge > bp.max_energy / bp.full.intval)
-				main_battery = bp.max_charge_bat;
-			else
-				main_battery = bp.max_energy_bat;
-		} else {
+		अगर (!PSY_PROP(bp.max_अक्षरge_bat, VOLTAGE_MAX_DESIGN,
+			      &bp.full)) अणु
+			अगर (bp.max_energy > bp.max_अक्षरge * bp.full.पूर्णांकval)
+				मुख्य_battery = bp.max_energy_bat;
+			अन्यथा
+				मुख्य_battery = bp.max_अक्षरge_bat;
+		पूर्ण अन्यथा अगर (!PSY_PROP(bp.max_energy_bat, VOLTAGE_MAX_DESIGN,
+								  &bp.full)) अणु
+			अगर (bp.max_अक्षरge > bp.max_energy / bp.full.पूर्णांकval)
+				मुख्य_battery = bp.max_अक्षरge_bat;
+			अन्यथा
+				मुख्य_battery = bp.max_energy_bat;
+		पूर्ण अन्यथा अणु
 			/* give up, choice any */
-			main_battery = bp.max_energy_bat;
-		}
-	} else if (bp.max_charge_bat) {
-		main_battery = bp.max_charge_bat;
-	} else if (bp.max_energy_bat) {
-		main_battery = bp.max_energy_bat;
-	} else {
-		/* give up, try the last if any */
-		main_battery = bp.bat;
-	}
-}
+			मुख्य_battery = bp.max_energy_bat;
+		पूर्ण
+	पूर्ण अन्यथा अगर (bp.max_अक्षरge_bat) अणु
+		मुख्य_battery = bp.max_अक्षरge_bat;
+	पूर्ण अन्यथा अगर (bp.max_energy_bat) अणु
+		मुख्य_battery = bp.max_energy_bat;
+	पूर्ण अन्यथा अणु
+		/* give up, try the last अगर any */
+		मुख्य_battery = bp.bat;
+	पूर्ण
+पूर्ण
 
-static int do_calculate_time(int status, enum apm_source source)
-{
-	union power_supply_propval full;
-	union power_supply_propval empty;
-	union power_supply_propval cur;
-	union power_supply_propval I;
-	enum power_supply_property full_prop;
-	enum power_supply_property full_design_prop;
-	enum power_supply_property empty_prop;
-	enum power_supply_property empty_design_prop;
-	enum power_supply_property cur_avg_prop;
-	enum power_supply_property cur_now_prop;
+अटल पूर्णांक करो_calculate_समय(पूर्णांक status, क्रमागत apm_source source)
+अणु
+	जोड़ घातer_supply_propval full;
+	जोड़ घातer_supply_propval empty;
+	जोड़ घातer_supply_propval cur;
+	जोड़ घातer_supply_propval I;
+	क्रमागत घातer_supply_property full_prop;
+	क्रमागत घातer_supply_property full_design_prop;
+	क्रमागत घातer_supply_property empty_prop;
+	क्रमागत घातer_supply_property empty_design_prop;
+	क्रमागत घातer_supply_property cur_avg_prop;
+	क्रमागत घातer_supply_property cur_now_prop;
 
-	if (MPSY_PROP(CURRENT_AVG, &I)) {
-		/* if battery can't report average value, use momentary */
-		if (MPSY_PROP(CURRENT_NOW, &I))
-			return -1;
-	}
+	अगर (MPSY_PROP(CURRENT_AVG, &I)) अणु
+		/* अगर battery can't report average value, use momentary */
+		अगर (MPSY_PROP(CURRENT_NOW, &I))
+			वापस -1;
+	पूर्ण
 
-	if (!I.intval)
-		return 0;
+	अगर (!I.पूर्णांकval)
+		वापस 0;
 
-	switch (source) {
-	case SOURCE_CHARGE:
+	चयन (source) अणु
+	हाल SOURCE_CHARGE:
 		full_prop = POWER_SUPPLY_PROP_CHARGE_FULL;
 		full_design_prop = POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN;
 		empty_prop = POWER_SUPPLY_PROP_CHARGE_EMPTY;
 		empty_design_prop = POWER_SUPPLY_PROP_CHARGE_EMPTY;
 		cur_avg_prop = POWER_SUPPLY_PROP_CHARGE_AVG;
 		cur_now_prop = POWER_SUPPLY_PROP_CHARGE_NOW;
-		break;
-	case SOURCE_ENERGY:
+		अवरोध;
+	हाल SOURCE_ENERGY:
 		full_prop = POWER_SUPPLY_PROP_ENERGY_FULL;
 		full_design_prop = POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN;
 		empty_prop = POWER_SUPPLY_PROP_ENERGY_EMPTY;
 		empty_design_prop = POWER_SUPPLY_PROP_CHARGE_EMPTY;
 		cur_avg_prop = POWER_SUPPLY_PROP_ENERGY_AVG;
 		cur_now_prop = POWER_SUPPLY_PROP_ENERGY_NOW;
-		break;
-	case SOURCE_VOLTAGE:
+		अवरोध;
+	हाल SOURCE_VOLTAGE:
 		full_prop = POWER_SUPPLY_PROP_VOLTAGE_MAX;
 		full_design_prop = POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN;
 		empty_prop = POWER_SUPPLY_PROP_VOLTAGE_MIN;
 		empty_design_prop = POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN;
 		cur_avg_prop = POWER_SUPPLY_PROP_VOLTAGE_AVG;
 		cur_now_prop = POWER_SUPPLY_PROP_VOLTAGE_NOW;
-		break;
-	default:
-		printk(KERN_ERR "Unsupported source: %d\n", source);
-		return -1;
-	}
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "Unsupported source: %d\n", source);
+		वापस -1;
+	पूर्ण
 
-	if (_MPSY_PROP(full_prop, &full)) {
-		/* if battery can't report this property, use design value */
-		if (_MPSY_PROP(full_design_prop, &full))
-			return -1;
-	}
+	अगर (_MPSY_PROP(full_prop, &full)) अणु
+		/* अगर battery can't report this property, use design value */
+		अगर (_MPSY_PROP(full_design_prop, &full))
+			वापस -1;
+	पूर्ण
 
-	if (_MPSY_PROP(empty_prop, &empty)) {
-		/* if battery can't report this property, use design value */
-		if (_MPSY_PROP(empty_design_prop, &empty))
-			empty.intval = 0;
-	}
+	अगर (_MPSY_PROP(empty_prop, &empty)) अणु
+		/* अगर battery can't report this property, use design value */
+		अगर (_MPSY_PROP(empty_design_prop, &empty))
+			empty.पूर्णांकval = 0;
+	पूर्ण
 
-	if (_MPSY_PROP(cur_avg_prop, &cur)) {
-		/* if battery can't report average value, use momentary */
-		if (_MPSY_PROP(cur_now_prop, &cur))
-			return -1;
-	}
+	अगर (_MPSY_PROP(cur_avg_prop, &cur)) अणु
+		/* अगर battery can't report average value, use momentary */
+		अगर (_MPSY_PROP(cur_now_prop, &cur))
+			वापस -1;
+	पूर्ण
 
-	if (status == POWER_SUPPLY_STATUS_CHARGING)
-		return ((cur.intval - full.intval) * 60L) / I.intval;
-	else
-		return -((cur.intval - empty.intval) * 60L) / I.intval;
-}
+	अगर (status == POWER_SUPPLY_STATUS_CHARGING)
+		वापस ((cur.पूर्णांकval - full.पूर्णांकval) * 60L) / I.पूर्णांकval;
+	अन्यथा
+		वापस -((cur.पूर्णांकval - empty.पूर्णांकval) * 60L) / I.पूर्णांकval;
+पूर्ण
 
-static int calculate_time(int status)
-{
-	int time;
+अटल पूर्णांक calculate_समय(पूर्णांक status)
+अणु
+	पूर्णांक समय;
 
-	time = do_calculate_time(status, SOURCE_ENERGY);
-	if (time != -1)
-		return time;
+	समय = करो_calculate_समय(status, SOURCE_ENERGY);
+	अगर (समय != -1)
+		वापस समय;
 
-	time = do_calculate_time(status, SOURCE_CHARGE);
-	if (time != -1)
-		return time;
+	समय = करो_calculate_समय(status, SOURCE_CHARGE);
+	अगर (समय != -1)
+		वापस समय;
 
-	time = do_calculate_time(status, SOURCE_VOLTAGE);
-	if (time != -1)
-		return time;
+	समय = करो_calculate_समय(status, SOURCE_VOLTAGE);
+	अगर (समय != -1)
+		वापस समय;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int calculate_capacity(enum apm_source source)
-{
-	enum power_supply_property full_prop, empty_prop;
-	enum power_supply_property full_design_prop, empty_design_prop;
-	enum power_supply_property now_prop, avg_prop;
-	union power_supply_propval empty, full, cur;
-	int ret;
+अटल पूर्णांक calculate_capacity(क्रमागत apm_source source)
+अणु
+	क्रमागत घातer_supply_property full_prop, empty_prop;
+	क्रमागत घातer_supply_property full_design_prop, empty_design_prop;
+	क्रमागत घातer_supply_property now_prop, avg_prop;
+	जोड़ घातer_supply_propval empty, full, cur;
+	पूर्णांक ret;
 
-	switch (source) {
-	case SOURCE_CHARGE:
+	चयन (source) अणु
+	हाल SOURCE_CHARGE:
 		full_prop = POWER_SUPPLY_PROP_CHARGE_FULL;
 		empty_prop = POWER_SUPPLY_PROP_CHARGE_EMPTY;
 		full_design_prop = POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN;
 		empty_design_prop = POWER_SUPPLY_PROP_CHARGE_EMPTY_DESIGN;
 		now_prop = POWER_SUPPLY_PROP_CHARGE_NOW;
 		avg_prop = POWER_SUPPLY_PROP_CHARGE_AVG;
-		break;
-	case SOURCE_ENERGY:
+		अवरोध;
+	हाल SOURCE_ENERGY:
 		full_prop = POWER_SUPPLY_PROP_ENERGY_FULL;
 		empty_prop = POWER_SUPPLY_PROP_ENERGY_EMPTY;
 		full_design_prop = POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN;
 		empty_design_prop = POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN;
 		now_prop = POWER_SUPPLY_PROP_ENERGY_NOW;
 		avg_prop = POWER_SUPPLY_PROP_ENERGY_AVG;
-		break;
-	case SOURCE_VOLTAGE:
+		अवरोध;
+	हाल SOURCE_VOLTAGE:
 		full_prop = POWER_SUPPLY_PROP_VOLTAGE_MAX;
 		empty_prop = POWER_SUPPLY_PROP_VOLTAGE_MIN;
 		full_design_prop = POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN;
 		empty_design_prop = POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN;
 		now_prop = POWER_SUPPLY_PROP_VOLTAGE_NOW;
 		avg_prop = POWER_SUPPLY_PROP_VOLTAGE_AVG;
-		break;
-	default:
-		printk(KERN_ERR "Unsupported source: %d\n", source);
-		return -1;
-	}
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "Unsupported source: %d\n", source);
+		वापस -1;
+	पूर्ण
 
-	if (_MPSY_PROP(full_prop, &full)) {
-		/* if battery can't report this property, use design value */
-		if (_MPSY_PROP(full_design_prop, &full))
-			return -1;
-	}
+	अगर (_MPSY_PROP(full_prop, &full)) अणु
+		/* अगर battery can't report this property, use design value */
+		अगर (_MPSY_PROP(full_design_prop, &full))
+			वापस -1;
+	पूर्ण
 
-	if (_MPSY_PROP(avg_prop, &cur)) {
-		/* if battery can't report average value, use momentary */
-		if (_MPSY_PROP(now_prop, &cur))
-			return -1;
-	}
+	अगर (_MPSY_PROP(avg_prop, &cur)) अणु
+		/* अगर battery can't report average value, use momentary */
+		अगर (_MPSY_PROP(now_prop, &cur))
+			वापस -1;
+	पूर्ण
 
-	if (_MPSY_PROP(empty_prop, &empty)) {
-		/* if battery can't report this property, use design value */
-		if (_MPSY_PROP(empty_design_prop, &empty))
-			empty.intval = 0;
-	}
+	अगर (_MPSY_PROP(empty_prop, &empty)) अणु
+		/* अगर battery can't report this property, use design value */
+		अगर (_MPSY_PROP(empty_design_prop, &empty))
+			empty.पूर्णांकval = 0;
+	पूर्ण
 
-	if (full.intval - empty.intval)
-		ret =  ((cur.intval - empty.intval) * 100L) /
-		       (full.intval - empty.intval);
-	else
-		return -1;
+	अगर (full.पूर्णांकval - empty.पूर्णांकval)
+		ret =  ((cur.पूर्णांकval - empty.पूर्णांकval) * 100L) /
+		       (full.पूर्णांकval - empty.पूर्णांकval);
+	अन्यथा
+		वापस -1;
 
-	if (ret > 100)
-		return 100;
-	else if (ret < 0)
-		return 0;
+	अगर (ret > 100)
+		वापस 100;
+	अन्यथा अगर (ret < 0)
+		वापस 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void apm_battery_apm_get_power_status(struct apm_power_info *info)
-{
-	union power_supply_propval status;
-	union power_supply_propval capacity, time_to_full, time_to_empty;
+अटल व्योम apm_battery_apm_get_घातer_status(काष्ठा apm_घातer_info *info)
+अणु
+	जोड़ घातer_supply_propval status;
+	जोड़ घातer_supply_propval capacity, समय_प्रकारo_full, समय_प्रकारo_empty;
 
 	mutex_lock(&apm_mutex);
-	find_main_battery();
-	if (!main_battery) {
+	find_मुख्य_battery();
+	अगर (!मुख्य_battery) अणु
 		mutex_unlock(&apm_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* status */
 
-	if (MPSY_PROP(STATUS, &status))
-		status.intval = POWER_SUPPLY_STATUS_UNKNOWN;
+	अगर (MPSY_PROP(STATUS, &status))
+		status.पूर्णांकval = POWER_SUPPLY_STATUS_UNKNOWN;
 
 	/* ac line status */
 
-	if ((status.intval == POWER_SUPPLY_STATUS_CHARGING) ||
-	    (status.intval == POWER_SUPPLY_STATUS_NOT_CHARGING) ||
-	    (status.intval == POWER_SUPPLY_STATUS_FULL))
+	अगर ((status.पूर्णांकval == POWER_SUPPLY_STATUS_CHARGING) ||
+	    (status.पूर्णांकval == POWER_SUPPLY_STATUS_NOT_CHARGING) ||
+	    (status.पूर्णांकval == POWER_SUPPLY_STATUS_FULL))
 		info->ac_line_status = APM_AC_ONLINE;
-	else
+	अन्यथा
 		info->ac_line_status = APM_AC_OFFLINE;
 
-	/* battery life (i.e. capacity, in percents) */
+	/* battery lअगरe (i.e. capacity, in percents) */
 
-	if (MPSY_PROP(CAPACITY, &capacity) == 0) {
-		info->battery_life = capacity.intval;
-	} else {
+	अगर (MPSY_PROP(CAPACITY, &capacity) == 0) अणु
+		info->battery_lअगरe = capacity.पूर्णांकval;
+	पूर्ण अन्यथा अणु
 		/* try calculate using energy */
-		info->battery_life = calculate_capacity(SOURCE_ENERGY);
-		/* if failed try calculate using charge instead */
-		if (info->battery_life == -1)
-			info->battery_life = calculate_capacity(SOURCE_CHARGE);
-		if (info->battery_life == -1)
-			info->battery_life = calculate_capacity(SOURCE_VOLTAGE);
-	}
+		info->battery_lअगरe = calculate_capacity(SOURCE_ENERGY);
+		/* अगर failed try calculate using अक्षरge instead */
+		अगर (info->battery_lअगरe == -1)
+			info->battery_lअगरe = calculate_capacity(SOURCE_CHARGE);
+		अगर (info->battery_lअगरe == -1)
+			info->battery_lअगरe = calculate_capacity(SOURCE_VOLTAGE);
+	पूर्ण
 
-	/* charging status */
+	/* अक्षरging status */
 
-	if (status.intval == POWER_SUPPLY_STATUS_CHARGING) {
+	अगर (status.पूर्णांकval == POWER_SUPPLY_STATUS_CHARGING) अणु
 		info->battery_status = APM_BATTERY_STATUS_CHARGING;
-	} else {
-		if (info->battery_life > 50)
+	पूर्ण अन्यथा अणु
+		अगर (info->battery_lअगरe > 50)
 			info->battery_status = APM_BATTERY_STATUS_HIGH;
-		else if (info->battery_life > 5)
+		अन्यथा अगर (info->battery_lअगरe > 5)
 			info->battery_status = APM_BATTERY_STATUS_LOW;
-		else
+		अन्यथा
 			info->battery_status = APM_BATTERY_STATUS_CRITICAL;
-	}
+	पूर्ण
 	info->battery_flag = info->battery_status;
 
-	/* time */
+	/* समय */
 
 	info->units = APM_UNITS_MINS;
 
-	if (status.intval == POWER_SUPPLY_STATUS_CHARGING) {
-		if (!MPSY_PROP(TIME_TO_FULL_AVG, &time_to_full) ||
-				!MPSY_PROP(TIME_TO_FULL_NOW, &time_to_full))
-			info->time = time_to_full.intval / 60;
-		else
-			info->time = calculate_time(status.intval);
-	} else {
-		if (!MPSY_PROP(TIME_TO_EMPTY_AVG, &time_to_empty) ||
-			      !MPSY_PROP(TIME_TO_EMPTY_NOW, &time_to_empty))
-			info->time = time_to_empty.intval / 60;
-		else
-			info->time = calculate_time(status.intval);
-	}
+	अगर (status.पूर्णांकval == POWER_SUPPLY_STATUS_CHARGING) अणु
+		अगर (!MPSY_PROP(TIME_TO_FULL_AVG, &समय_प्रकारo_full) ||
+				!MPSY_PROP(TIME_TO_FULL_NOW, &समय_प्रकारo_full))
+			info->समय = समय_प्रकारo_full.पूर्णांकval / 60;
+		अन्यथा
+			info->समय = calculate_समय(status.पूर्णांकval);
+	पूर्ण अन्यथा अणु
+		अगर (!MPSY_PROP(TIME_TO_EMPTY_AVG, &समय_प्रकारo_empty) ||
+			      !MPSY_PROP(TIME_TO_EMPTY_NOW, &समय_प्रकारo_empty))
+			info->समय = समय_प्रकारo_empty.पूर्णांकval / 60;
+		अन्यथा
+			info->समय = calculate_समय(status.पूर्णांकval);
+	पूर्ण
 
 	mutex_unlock(&apm_mutex);
-}
+पूर्ण
 
-static int __init apm_battery_init(void)
-{
-	printk(KERN_INFO "APM Battery Driver\n");
+अटल पूर्णांक __init apm_battery_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "APM Battery Driver\n");
 
-	apm_get_power_status = apm_battery_apm_get_power_status;
-	return 0;
-}
+	apm_get_घातer_status = apm_battery_apm_get_घातer_status;
+	वापस 0;
+पूर्ण
 
-static void __exit apm_battery_exit(void)
-{
-	apm_get_power_status = NULL;
-}
+अटल व्योम __निकास apm_battery_निकास(व्योम)
+अणु
+	apm_get_घातer_status = शून्य;
+पूर्ण
 
 module_init(apm_battery_init);
-module_exit(apm_battery_exit);
+module_निकास(apm_battery_निकास);
 
 MODULE_AUTHOR("Eugeny Boger <eugenyboger@dgap.mipt.ru>");
 MODULE_DESCRIPTION("APM emulation driver for battery monitoring class");

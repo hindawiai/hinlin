@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -13,45 +14,45 @@
  *
  */
 
-#ifndef __UPC_H__
-#define __UPC_H__
+#अगर_अघोषित __UPC_H__
+#घोषणा __UPC_H__
 
-#include "device.h"
+#समावेश "device.h"
 
 /*---------------------  Export Definitions -------------------------*/
 
 /* For memory mapped IO */
 
-#define VNSvInPortB(dwIOAddress, pbyData) \
-	(*(pbyData) = ioread8(dwIOAddress))
+#घोषणा VNSvInPortB(dwIOAddress, pbyData) \
+	(*(pbyData) = ioपढ़ो8(dwIOAddress))
 
-#define VNSvInPortW(dwIOAddress, pwData) \
-	(*(pwData) = ioread16(dwIOAddress))
+#घोषणा VNSvInPortW(dwIOAddress, pwData) \
+	(*(pwData) = ioपढ़ो16(dwIOAddress))
 
-#define VNSvInPortD(dwIOAddress, pdwData) \
-	(*(pdwData) = ioread32(dwIOAddress))
+#घोषणा VNSvInPortD(dwIOAddress, pdwData) \
+	(*(pdwData) = ioपढ़ो32(dwIOAddress))
 
-#define VNSvOutPortB(dwIOAddress, byData) \
-	iowrite8((u8)(byData), dwIOAddress)
+#घोषणा VNSvOutPortB(dwIOAddress, byData) \
+	ioग_लिखो8((u8)(byData), dwIOAddress)
 
-#define VNSvOutPortW(dwIOAddress, wData) \
-	iowrite16((u16)(wData), dwIOAddress)
+#घोषणा VNSvOutPortW(dwIOAddress, wData) \
+	ioग_लिखो16((u16)(wData), dwIOAddress)
 
-#define VNSvOutPortD(dwIOAddress, dwData) \
-	iowrite32((u32)(dwData), dwIOAddress)
+#घोषणा VNSvOutPortD(dwIOAddress, dwData) \
+	ioग_लिखो32((u32)(dwData), dwIOAddress)
 
-#define PCAvDelayByIO(uDelayUnit)				\
-do {								\
-	unsigned char byData;					\
-	unsigned long ii;					\
+#घोषणा PCAvDelayByIO(uDelayUnit)				\
+करो अणु								\
+	अचिन्हित अक्षर byData;					\
+	अचिन्हित दीर्घ ii;					\
 								\
-	if (uDelayUnit <= 50) {					\
+	अगर (uDelayUnit <= 50) अणु					\
 		udelay(uDelayUnit);				\
-	} else {						\
-		for (ii = 0; ii < (uDelayUnit); ii++)		\
+	पूर्ण अन्यथा अणु						\
+		क्रम (ii = 0; ii < (uDelayUnit); ii++)		\
 			byData = inb(0x61);			\
-	}							\
-} while (0)
+	पूर्ण							\
+पूर्ण जबतक (0)
 
 /*---------------------  Export Classes  ----------------------------*/
 
@@ -59,4 +60,4 @@ do {								\
 
 /*---------------------  Export Functions  --------------------------*/
 
-#endif /* __UPC_H__ */
+#पूर्ण_अगर /* __UPC_H__ */

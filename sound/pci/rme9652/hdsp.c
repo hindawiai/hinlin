@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *   ALSA driver for RME Hammerfall DSP audio interface(s)
+ *   ALSA driver क्रम RME Hammerfall DSP audio पूर्णांकerface(s)
  *
  *      Copyright (c) 2002  Paul Davis
  *                          Marcus Andersson
  *                          Thomas Charbonnel
  */
 
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/math64.h>
-#include <linux/vmalloc.h>
-#include <linux/io.h>
-#include <linux/nospec.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
+#समावेश <linux/math64.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/nospec.h>
 
-#include <sound/core.h>
-#include <sound/control.h>
-#include <sound/pcm.h>
-#include <sound/info.h>
-#include <sound/asoundef.h>
-#include <sound/rawmidi.h>
-#include <sound/hwdep.h>
-#include <sound/initval.h>
-#include <sound/hdsp.h>
+#समावेश <sound/core.h>
+#समावेश <sound/control.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/info.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/rawmidi.h>
+#समावेश <sound/hwdep.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/hdsp.h>
 
-#include <asm/byteorder.h>
-#include <asm/current.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/current.h>
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable this card */
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable this card */
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for RME Hammerfall DSP interface.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for RME Hammerfall DSP interface.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable/disable specific Hammerfall DSP soundcards.");
 MODULE_AUTHOR("Paul Davis <paul@linuxaudiosystems.com>, Marcus Andersson, Thomas Charbonnel <thomas@undata.org>");
 MODULE_DESCRIPTION("RME Hammerfall DSP");
@@ -50,368 +51,368 @@ MODULE_FIRMWARE("multiface_firmware_rev11.bin");
 MODULE_FIRMWARE("digiface_firmware.bin");
 MODULE_FIRMWARE("digiface_firmware_rev11.bin");
 
-#define HDSP_MAX_CHANNELS        26
-#define HDSP_MAX_DS_CHANNELS     14
-#define HDSP_MAX_QS_CHANNELS     8
-#define DIGIFACE_SS_CHANNELS     26
-#define DIGIFACE_DS_CHANNELS     14
-#define MULTIFACE_SS_CHANNELS    18
-#define MULTIFACE_DS_CHANNELS    14
-#define H9652_SS_CHANNELS        26
-#define H9652_DS_CHANNELS        14
-/* This does not include possible Analog Extension Boards
+#घोषणा HDSP_MAX_CHANNELS        26
+#घोषणा HDSP_MAX_DS_CHANNELS     14
+#घोषणा HDSP_MAX_QS_CHANNELS     8
+#घोषणा DIGIFACE_SS_CHANNELS     26
+#घोषणा DIGIFACE_DS_CHANNELS     14
+#घोषणा MULTIFACE_SS_CHANNELS    18
+#घोषणा MULTIFACE_DS_CHANNELS    14
+#घोषणा H9652_SS_CHANNELS        26
+#घोषणा H9652_DS_CHANNELS        14
+/* This करोes not include possible Analog Extension Boards
    AEBs are detected at card initialization
 */
-#define H9632_SS_CHANNELS	 12
-#define H9632_DS_CHANNELS	 8
-#define H9632_QS_CHANNELS	 4
-#define RPM_CHANNELS             6
+#घोषणा H9632_SS_CHANNELS	 12
+#घोषणा H9632_DS_CHANNELS	 8
+#घोषणा H9632_QS_CHANNELS	 4
+#घोषणा RPM_CHANNELS             6
 
-/* Write registers. These are defined as byte-offsets from the iobase value.
+/* Write रेजिस्टरs. These are defined as byte-offsets from the iobase value.
  */
-#define HDSP_resetPointer               0
-#define HDSP_freqReg			0
-#define HDSP_outputBufferAddress	32
-#define HDSP_inputBufferAddress		36
-#define HDSP_controlRegister		64
-#define HDSP_interruptConfirmation	96
-#define HDSP_outputEnable	  	128
-#define HDSP_control2Reg		256
-#define HDSP_midiDataOut0  		352
-#define HDSP_midiDataOut1  		356
-#define HDSP_fifoData  			368
-#define HDSP_inputEnable	 	384
+#घोषणा HDSP_resetPoपूर्णांकer               0
+#घोषणा HDSP_freqReg			0
+#घोषणा HDSP_outputBufferAddress	32
+#घोषणा HDSP_inputBufferAddress		36
+#घोषणा HDSP_controlRegister		64
+#घोषणा HDSP_पूर्णांकerruptConfirmation	96
+#घोषणा HDSP_outputEnable	  	128
+#घोषणा HDSP_control2Reg		256
+#घोषणा HDSP_midiDataOut0  		352
+#घोषणा HDSP_midiDataOut1  		356
+#घोषणा HDSP_fअगरoData  			368
+#घोषणा HDSP_inputEnable	 	384
 
-/* Read registers. These are defined as byte-offsets from the iobase value
+/* Read रेजिस्टरs. These are defined as byte-offsets from the iobase value
  */
 
-#define HDSP_statusRegister    0
-#define HDSP_timecode        128
-#define HDSP_status2Register 192
-#define HDSP_midiDataIn0     360
-#define HDSP_midiDataIn1     364
-#define HDSP_midiStatusOut0  384
-#define HDSP_midiStatusOut1  388
-#define HDSP_midiStatusIn0   392
-#define HDSP_midiStatusIn1   396
-#define HDSP_fifoStatus      400
+#घोषणा HDSP_statusRegister    0
+#घोषणा HDSP_समयcode        128
+#घोषणा HDSP_status2Register 192
+#घोषणा HDSP_midiDataIn0     360
+#घोषणा HDSP_midiDataIn1     364
+#घोषणा HDSP_midiStatusOut0  384
+#घोषणा HDSP_midiStatusOut1  388
+#घोषणा HDSP_midiStatusIn0   392
+#घोषणा HDSP_midiStatusIn1   396
+#घोषणा HDSP_fअगरoStatus      400
 
-/* the meters are regular i/o-mapped registers, but offset
-   considerably from the rest. the peak registers are reset
-   when read; the least-significant 4 bits are full-scale counters;
-   the actual peak value is in the most-significant 24 bits.
+/* the meters are regular i/o-mapped रेजिस्टरs, but offset
+   considerably from the rest. the peak रेजिस्टरs are reset
+   when पढ़ो; the least-signअगरicant 4 bits are full-scale counters;
+   the actual peak value is in the most-signअगरicant 24 bits.
 */
 
-#define HDSP_playbackPeakLevel  4096  /* 26 * 32 bit values */
-#define HDSP_inputPeakLevel     4224  /* 26 * 32 bit values */
-#define HDSP_outputPeakLevel    4352  /* (26+2) * 32 bit values */
-#define HDSP_playbackRmsLevel   4612  /* 26 * 64 bit values */
-#define HDSP_inputRmsLevel      4868  /* 26 * 64 bit values */
+#घोषणा HDSP_playbackPeakLevel  4096  /* 26 * 32 bit values */
+#घोषणा HDSP_inputPeakLevel     4224  /* 26 * 32 bit values */
+#घोषणा HDSP_outputPeakLevel    4352  /* (26+2) * 32 bit values */
+#घोषणा HDSP_playbackRmsLevel   4612  /* 26 * 64 bit values */
+#घोषणा HDSP_inputRmsLevel      4868  /* 26 * 64 bit values */
 
 
-/* This is for H9652 cards
-   Peak values are read downward from the base
-   Rms values are read upward
-   There are rms values for the outputs too
-   26*3 values are read in ss mode
+/* This is क्रम H9652 cards
+   Peak values are पढ़ो करोwnward from the base
+   Rms values are पढ़ो upward
+   There are rms values क्रम the outमाला_दो too
+   26*3 values are पढ़ो in ss mode
    14*3 in ds mode, with no gap between values
 */
-#define HDSP_9652_peakBase	7164
-#define HDSP_9652_rmsBase	4096
+#घोषणा HDSP_9652_peakBase	7164
+#घोषणा HDSP_9652_rmsBase	4096
 
-/* c.f. the hdsp_9632_meters_t struct */
-#define HDSP_9632_metersBase	4096
+/* c.f. the hdsp_9632_meters_t काष्ठा */
+#घोषणा HDSP_9632_metersBase	4096
 
-#define HDSP_IO_EXTENT     7168
+#घोषणा HDSP_IO_EXTENT     7168
 
-/* control2 register bits */
+/* control2 रेजिस्टर bits */
 
-#define HDSP_TMS                0x01
-#define HDSP_TCK                0x02
-#define HDSP_TDI                0x04
-#define HDSP_JTAG               0x08
-#define HDSP_PWDN               0x10
-#define HDSP_PROGRAM	        0x020
-#define HDSP_CONFIG_MODE_0	0x040
-#define HDSP_CONFIG_MODE_1	0x080
-#define HDSP_VERSION_BIT	(0x100 | HDSP_S_LOAD)
-#define HDSP_BIGENDIAN_MODE     0x200
-#define HDSP_RD_MULTIPLE        0x400
-#define HDSP_9652_ENABLE_MIXER  0x800
-#define HDSP_S200		0x800
-#define HDSP_S300		(0x100 | HDSP_S200) /* dummy, purpose of 0x100 unknown */
-#define HDSP_CYCLIC_MODE	0x1000
-#define HDSP_TDO                0x10000000
+#घोषणा HDSP_TMS                0x01
+#घोषणा HDSP_TCK                0x02
+#घोषणा HDSP_TDI                0x04
+#घोषणा HDSP_JTAG               0x08
+#घोषणा HDSP_PWDN               0x10
+#घोषणा HDSP_PROGRAM	        0x020
+#घोषणा HDSP_CONFIG_MODE_0	0x040
+#घोषणा HDSP_CONFIG_MODE_1	0x080
+#घोषणा HDSP_VERSION_BIT	(0x100 | HDSP_S_LOAD)
+#घोषणा HDSP_BIGENDIAN_MODE     0x200
+#घोषणा HDSP_RD_MULTIPLE        0x400
+#घोषणा HDSP_9652_ENABLE_MIXER  0x800
+#घोषणा HDSP_S200		0x800
+#घोषणा HDSP_S300		(0x100 | HDSP_S200) /* dummy, purpose of 0x100 unknown */
+#घोषणा HDSP_CYCLIC_MODE	0x1000
+#घोषणा HDSP_TDO                0x10000000
 
-#define HDSP_S_PROGRAM	    (HDSP_CYCLIC_MODE|HDSP_PROGRAM|HDSP_CONFIG_MODE_0)
-#define HDSP_S_LOAD	    (HDSP_CYCLIC_MODE|HDSP_PROGRAM|HDSP_CONFIG_MODE_1)
+#घोषणा HDSP_S_PROGRAM	    (HDSP_CYCLIC_MODE|HDSP_PROGRAM|HDSP_CONFIG_MODE_0)
+#घोषणा HDSP_S_LOAD	    (HDSP_CYCLIC_MODE|HDSP_PROGRAM|HDSP_CONFIG_MODE_1)
 
 /* Control Register bits */
 
-#define HDSP_Start                (1<<0)  /* start engine */
-#define HDSP_Latency0             (1<<1)  /* buffer size = 2^n where n is defined by Latency{2,1,0} */
-#define HDSP_Latency1             (1<<2)  /* [ see above ] */
-#define HDSP_Latency2             (1<<3)  /* [ see above ] */
-#define HDSP_ClockModeMaster      (1<<4)  /* 1=Master, 0=Slave/Autosync */
-#define HDSP_AudioInterruptEnable (1<<5)  /* what do you think ? */
-#define HDSP_Frequency0           (1<<6)  /* 0=44.1kHz/88.2kHz/176.4kHz 1=48kHz/96kHz/192kHz */
-#define HDSP_Frequency1           (1<<7)  /* 0=32kHz/64kHz/128kHz */
-#define HDSP_DoubleSpeed          (1<<8)  /* 0=normal speed, 1=double speed */
-#define HDSP_SPDIFProfessional    (1<<9)  /* 0=consumer, 1=professional */
-#define HDSP_SPDIFEmphasis        (1<<10) /* 0=none, 1=on */
-#define HDSP_SPDIFNonAudio        (1<<11) /* 0=off, 1=on */
-#define HDSP_SPDIFOpticalOut      (1<<12) /* 1=use 1st ADAT connector for SPDIF, 0=do not */
-#define HDSP_SyncRef2             (1<<13)
-#define HDSP_SPDIFInputSelect0    (1<<14)
-#define HDSP_SPDIFInputSelect1    (1<<15)
-#define HDSP_SyncRef0             (1<<16)
-#define HDSP_SyncRef1             (1<<17)
-#define HDSP_AnalogExtensionBoard (1<<18) /* For H9632 cards */
-#define HDSP_XLRBreakoutCable     (1<<20) /* For H9632 cards */
-#define HDSP_Midi0InterruptEnable (1<<22)
-#define HDSP_Midi1InterruptEnable (1<<23)
-#define HDSP_LineOut              (1<<24)
-#define HDSP_ADGain0		  (1<<25) /* From here : H9632 specific */
-#define HDSP_ADGain1		  (1<<26)
-#define HDSP_DAGain0		  (1<<27)
-#define HDSP_DAGain1		  (1<<28)
-#define HDSP_PhoneGain0		  (1<<29)
-#define HDSP_PhoneGain1		  (1<<30)
-#define HDSP_QuadSpeed	  	  (1<<31)
+#घोषणा HDSP_Start                (1<<0)  /* start engine */
+#घोषणा HDSP_Latency0             (1<<1)  /* buffer size = 2^n where n is defined by Latencyअणु2,1,0पूर्ण */
+#घोषणा HDSP_Latency1             (1<<2)  /* [ see above ] */
+#घोषणा HDSP_Latency2             (1<<3)  /* [ see above ] */
+#घोषणा HDSP_ClockModeMaster      (1<<4)  /* 1=Master, 0=Slave/Autosync */
+#घोषणा HDSP_AudioInterruptEnable (1<<5)  /* what करो you think ? */
+#घोषणा HDSP_Frequency0           (1<<6)  /* 0=44.1kHz/88.2kHz/176.4kHz 1=48kHz/96kHz/192kHz */
+#घोषणा HDSP_Frequency1           (1<<7)  /* 0=32kHz/64kHz/128kHz */
+#घोषणा HDSP_DoubleSpeed          (1<<8)  /* 0=normal speed, 1=द्विगुन speed */
+#घोषणा HDSP_SPDIFProfessional    (1<<9)  /* 0=consumer, 1=professional */
+#घोषणा HDSP_SPDIFEmphasis        (1<<10) /* 0=none, 1=on */
+#घोषणा HDSP_SPDIFNonAudio        (1<<11) /* 0=off, 1=on */
+#घोषणा HDSP_SPDIFOpticalOut      (1<<12) /* 1=use 1st ADAT connector क्रम SPDIF, 0=करो not */
+#घोषणा HDSP_SyncRef2             (1<<13)
+#घोषणा HDSP_SPDIFInputSelect0    (1<<14)
+#घोषणा HDSP_SPDIFInputSelect1    (1<<15)
+#घोषणा HDSP_SyncRef0             (1<<16)
+#घोषणा HDSP_SyncRef1             (1<<17)
+#घोषणा HDSP_AnalogExtensionBoard (1<<18) /* For H9632 cards */
+#घोषणा HDSP_XLRBreakoutCable     (1<<20) /* For H9632 cards */
+#घोषणा HDSP_Midi0InterruptEnable (1<<22)
+#घोषणा HDSP_Midi1InterruptEnable (1<<23)
+#घोषणा HDSP_LineOut              (1<<24)
+#घोषणा HDSP_ADGain0		  (1<<25) /* From here : H9632 specअगरic */
+#घोषणा HDSP_ADGain1		  (1<<26)
+#घोषणा HDSP_DAGain0		  (1<<27)
+#घोषणा HDSP_DAGain1		  (1<<28)
+#घोषणा HDSP_PhoneGain0		  (1<<29)
+#घोषणा HDSP_PhoneGain1		  (1<<30)
+#घोषणा HDSP_QuadSpeed	  	  (1<<31)
 
-/* RPM uses some of the registers for special purposes */
-#define HDSP_RPM_Inp12            0x04A00
-#define HDSP_RPM_Inp12_Phon_6dB   0x00800  /* Dolby */
-#define HDSP_RPM_Inp12_Phon_0dB   0x00000  /* .. */
-#define HDSP_RPM_Inp12_Phon_n6dB  0x04000  /* inp_0 */
-#define HDSP_RPM_Inp12_Line_0dB   0x04200  /* Dolby+PRO */
-#define HDSP_RPM_Inp12_Line_n6dB  0x00200  /* PRO */
+/* RPM uses some of the रेजिस्टरs क्रम special purposes */
+#घोषणा HDSP_RPM_Inp12            0x04A00
+#घोषणा HDSP_RPM_Inp12_Phon_6dB   0x00800  /* Dolby */
+#घोषणा HDSP_RPM_Inp12_Phon_0dB   0x00000  /* .. */
+#घोषणा HDSP_RPM_Inp12_Phon_n6dB  0x04000  /* inp_0 */
+#घोषणा HDSP_RPM_Inp12_Line_0dB   0x04200  /* Dolby+PRO */
+#घोषणा HDSP_RPM_Inp12_Line_n6dB  0x00200  /* PRO */
 
-#define HDSP_RPM_Inp34            0x32000
-#define HDSP_RPM_Inp34_Phon_6dB   0x20000  /* SyncRef1 */
-#define HDSP_RPM_Inp34_Phon_0dB   0x00000  /* .. */
-#define HDSP_RPM_Inp34_Phon_n6dB  0x02000  /* SyncRef2 */
-#define HDSP_RPM_Inp34_Line_0dB   0x30000  /* SyncRef1+SyncRef0 */
-#define HDSP_RPM_Inp34_Line_n6dB  0x10000  /* SyncRef0 */
+#घोषणा HDSP_RPM_Inp34            0x32000
+#घोषणा HDSP_RPM_Inp34_Phon_6dB   0x20000  /* SyncRef1 */
+#घोषणा HDSP_RPM_Inp34_Phon_0dB   0x00000  /* .. */
+#घोषणा HDSP_RPM_Inp34_Phon_n6dB  0x02000  /* SyncRef2 */
+#घोषणा HDSP_RPM_Inp34_Line_0dB   0x30000  /* SyncRef1+SyncRef0 */
+#घोषणा HDSP_RPM_Inp34_Line_n6dB  0x10000  /* SyncRef0 */
 
-#define HDSP_RPM_Bypass           0x01000
+#घोषणा HDSP_RPM_Bypass           0x01000
 
-#define HDSP_RPM_Disconnect       0x00001
+#घोषणा HDSP_RPM_Disconnect       0x00001
 
-#define HDSP_ADGainMask       (HDSP_ADGain0|HDSP_ADGain1)
-#define HDSP_ADGainMinus10dBV  HDSP_ADGainMask
-#define HDSP_ADGainPlus4dBu   (HDSP_ADGain0)
-#define HDSP_ADGainLowGain     0
+#घोषणा HDSP_ADGainMask       (HDSP_ADGain0|HDSP_ADGain1)
+#घोषणा HDSP_ADGainMinus10dBV  HDSP_ADGainMask
+#घोषणा HDSP_ADGainPlus4dBu   (HDSP_ADGain0)
+#घोषणा HDSP_ADGainLowGain     0
 
-#define HDSP_DAGainMask         (HDSP_DAGain0|HDSP_DAGain1)
-#define HDSP_DAGainHighGain      HDSP_DAGainMask
-#define HDSP_DAGainPlus4dBu     (HDSP_DAGain0)
-#define HDSP_DAGainMinus10dBV    0
+#घोषणा HDSP_DAGainMask         (HDSP_DAGain0|HDSP_DAGain1)
+#घोषणा HDSP_DAGainHighGain      HDSP_DAGainMask
+#घोषणा HDSP_DAGainPlus4dBu     (HDSP_DAGain0)
+#घोषणा HDSP_DAGainMinus10dBV    0
 
-#define HDSP_PhoneGainMask      (HDSP_PhoneGain0|HDSP_PhoneGain1)
-#define HDSP_PhoneGain0dB        HDSP_PhoneGainMask
-#define HDSP_PhoneGainMinus6dB  (HDSP_PhoneGain0)
-#define HDSP_PhoneGainMinus12dB  0
+#घोषणा HDSP_PhoneGainMask      (HDSP_PhoneGain0|HDSP_PhoneGain1)
+#घोषणा HDSP_PhoneGain0dB        HDSP_PhoneGainMask
+#घोषणा HDSP_PhoneGainMinus6dB  (HDSP_PhoneGain0)
+#घोषणा HDSP_PhoneGainMinus12dB  0
 
-#define HDSP_LatencyMask    (HDSP_Latency0|HDSP_Latency1|HDSP_Latency2)
-#define HDSP_FrequencyMask  (HDSP_Frequency0|HDSP_Frequency1|HDSP_DoubleSpeed|HDSP_QuadSpeed)
+#घोषणा HDSP_LatencyMask    (HDSP_Latency0|HDSP_Latency1|HDSP_Latency2)
+#घोषणा HDSP_FrequencyMask  (HDSP_Frequency0|HDSP_Frequency1|HDSP_DoubleSpeed|HDSP_QuadSpeed)
 
-#define HDSP_SPDIFInputMask    (HDSP_SPDIFInputSelect0|HDSP_SPDIFInputSelect1)
-#define HDSP_SPDIFInputADAT1    0
-#define HDSP_SPDIFInputCoaxial (HDSP_SPDIFInputSelect0)
-#define HDSP_SPDIFInputCdrom   (HDSP_SPDIFInputSelect1)
-#define HDSP_SPDIFInputAES     (HDSP_SPDIFInputSelect0|HDSP_SPDIFInputSelect1)
+#घोषणा HDSP_SPDIFInputMask    (HDSP_SPDIFInputSelect0|HDSP_SPDIFInputSelect1)
+#घोषणा HDSP_SPDIFInputADAT1    0
+#घोषणा HDSP_SPDIFInputCoaxial (HDSP_SPDIFInputSelect0)
+#घोषणा HDSP_SPDIFInputCdrom   (HDSP_SPDIFInputSelect1)
+#घोषणा HDSP_SPDIFInputAES     (HDSP_SPDIFInputSelect0|HDSP_SPDIFInputSelect1)
 
-#define HDSP_SyncRefMask        (HDSP_SyncRef0|HDSP_SyncRef1|HDSP_SyncRef2)
-#define HDSP_SyncRef_ADAT1       0
-#define HDSP_SyncRef_ADAT2      (HDSP_SyncRef0)
-#define HDSP_SyncRef_ADAT3      (HDSP_SyncRef1)
-#define HDSP_SyncRef_SPDIF      (HDSP_SyncRef0|HDSP_SyncRef1)
-#define HDSP_SyncRef_WORD       (HDSP_SyncRef2)
-#define HDSP_SyncRef_ADAT_SYNC  (HDSP_SyncRef0|HDSP_SyncRef2)
+#घोषणा HDSP_SyncRefMask        (HDSP_SyncRef0|HDSP_SyncRef1|HDSP_SyncRef2)
+#घोषणा HDSP_SyncRef_ADAT1       0
+#घोषणा HDSP_SyncRef_ADAT2      (HDSP_SyncRef0)
+#घोषणा HDSP_SyncRef_ADAT3      (HDSP_SyncRef1)
+#घोषणा HDSP_SyncRef_SPDIF      (HDSP_SyncRef0|HDSP_SyncRef1)
+#घोषणा HDSP_SyncRef_WORD       (HDSP_SyncRef2)
+#घोषणा HDSP_SyncRef_ADAT_SYNC  (HDSP_SyncRef0|HDSP_SyncRef2)
 
 /* Sample Clock Sources */
 
-#define HDSP_CLOCK_SOURCE_AUTOSYNC           0
-#define HDSP_CLOCK_SOURCE_INTERNAL_32KHZ     1
-#define HDSP_CLOCK_SOURCE_INTERNAL_44_1KHZ   2
-#define HDSP_CLOCK_SOURCE_INTERNAL_48KHZ     3
-#define HDSP_CLOCK_SOURCE_INTERNAL_64KHZ     4
-#define HDSP_CLOCK_SOURCE_INTERNAL_88_2KHZ   5
-#define HDSP_CLOCK_SOURCE_INTERNAL_96KHZ     6
-#define HDSP_CLOCK_SOURCE_INTERNAL_128KHZ    7
-#define HDSP_CLOCK_SOURCE_INTERNAL_176_4KHZ  8
-#define HDSP_CLOCK_SOURCE_INTERNAL_192KHZ    9
+#घोषणा HDSP_CLOCK_SOURCE_AUTOSYNC           0
+#घोषणा HDSP_CLOCK_SOURCE_INTERNAL_32KHZ     1
+#घोषणा HDSP_CLOCK_SOURCE_INTERNAL_44_1KHZ   2
+#घोषणा HDSP_CLOCK_SOURCE_INTERNAL_48KHZ     3
+#घोषणा HDSP_CLOCK_SOURCE_INTERNAL_64KHZ     4
+#घोषणा HDSP_CLOCK_SOURCE_INTERNAL_88_2KHZ   5
+#घोषणा HDSP_CLOCK_SOURCE_INTERNAL_96KHZ     6
+#घोषणा HDSP_CLOCK_SOURCE_INTERNAL_128KHZ    7
+#घोषणा HDSP_CLOCK_SOURCE_INTERNAL_176_4KHZ  8
+#घोषणा HDSP_CLOCK_SOURCE_INTERNAL_192KHZ    9
 
-/* Preferred sync reference choices - used by "pref_sync_ref" control switch */
+/* Preferred sync reference choices - used by "pref_sync_ref" control चयन */
 
-#define HDSP_SYNC_FROM_WORD      0
-#define HDSP_SYNC_FROM_SPDIF     1
-#define HDSP_SYNC_FROM_ADAT1     2
-#define HDSP_SYNC_FROM_ADAT_SYNC 3
-#define HDSP_SYNC_FROM_ADAT2     4
-#define HDSP_SYNC_FROM_ADAT3     5
+#घोषणा HDSP_SYNC_FROM_WORD      0
+#घोषणा HDSP_SYNC_FROM_SPDIF     1
+#घोषणा HDSP_SYNC_FROM_ADAT1     2
+#घोषणा HDSP_SYNC_FROM_ADAT_SYNC 3
+#घोषणा HDSP_SYNC_FROM_ADAT2     4
+#घोषणा HDSP_SYNC_FROM_ADAT3     5
 
 /* SyncCheck status */
 
-#define HDSP_SYNC_CHECK_NO_LOCK 0
-#define HDSP_SYNC_CHECK_LOCK    1
-#define HDSP_SYNC_CHECK_SYNC	2
+#घोषणा HDSP_SYNC_CHECK_NO_LOCK 0
+#घोषणा HDSP_SYNC_CHECK_LOCK    1
+#घोषणा HDSP_SYNC_CHECK_SYNC	2
 
-/* AutoSync references - used by "autosync_ref" control switch */
+/* AutoSync references - used by "autosync_ref" control चयन */
 
-#define HDSP_AUTOSYNC_FROM_WORD      0
-#define HDSP_AUTOSYNC_FROM_ADAT_SYNC 1
-#define HDSP_AUTOSYNC_FROM_SPDIF     2
-#define HDSP_AUTOSYNC_FROM_NONE	     3
-#define HDSP_AUTOSYNC_FROM_ADAT1     4
-#define HDSP_AUTOSYNC_FROM_ADAT2     5
-#define HDSP_AUTOSYNC_FROM_ADAT3     6
+#घोषणा HDSP_AUTOSYNC_FROM_WORD      0
+#घोषणा HDSP_AUTOSYNC_FROM_ADAT_SYNC 1
+#घोषणा HDSP_AUTOSYNC_FROM_SPDIF     2
+#घोषणा HDSP_AUTOSYNC_FROM_NONE	     3
+#घोषणा HDSP_AUTOSYNC_FROM_ADAT1     4
+#घोषणा HDSP_AUTOSYNC_FROM_ADAT2     5
+#घोषणा HDSP_AUTOSYNC_FROM_ADAT3     6
 
 /* Possible sources of S/PDIF input */
 
-#define HDSP_SPDIFIN_OPTICAL  0	/* optical  (ADAT1) */
-#define HDSP_SPDIFIN_COAXIAL  1	/* coaxial (RCA) */
-#define HDSP_SPDIFIN_INTERNAL 2	/* internal (CDROM) */
-#define HDSP_SPDIFIN_AES      3 /* xlr for H9632 (AES)*/
+#घोषणा HDSP_SPDIFIN_OPTICAL  0	/* optical  (ADAT1) */
+#घोषणा HDSP_SPDIFIN_COAXIAL  1	/* coaxial (RCA) */
+#घोषणा HDSP_SPDIFIN_INTERNAL 2	/* पूर्णांकernal (CDROM) */
+#घोषणा HDSP_SPDIFIN_AES      3 /* xlr क्रम H9632 (AES)*/
 
-#define HDSP_Frequency32KHz    HDSP_Frequency0
-#define HDSP_Frequency44_1KHz  HDSP_Frequency1
-#define HDSP_Frequency48KHz    (HDSP_Frequency1|HDSP_Frequency0)
-#define HDSP_Frequency64KHz    (HDSP_DoubleSpeed|HDSP_Frequency0)
-#define HDSP_Frequency88_2KHz  (HDSP_DoubleSpeed|HDSP_Frequency1)
-#define HDSP_Frequency96KHz    (HDSP_DoubleSpeed|HDSP_Frequency1|HDSP_Frequency0)
+#घोषणा HDSP_Frequency32KHz    HDSP_Frequency0
+#घोषणा HDSP_Frequency44_1KHz  HDSP_Frequency1
+#घोषणा HDSP_Frequency48KHz    (HDSP_Frequency1|HDSP_Frequency0)
+#घोषणा HDSP_Frequency64KHz    (HDSP_DoubleSpeed|HDSP_Frequency0)
+#घोषणा HDSP_Frequency88_2KHz  (HDSP_DoubleSpeed|HDSP_Frequency1)
+#घोषणा HDSP_Frequency96KHz    (HDSP_DoubleSpeed|HDSP_Frequency1|HDSP_Frequency0)
 /* For H9632 cards */
-#define HDSP_Frequency128KHz   (HDSP_QuadSpeed|HDSP_DoubleSpeed|HDSP_Frequency0)
-#define HDSP_Frequency176_4KHz (HDSP_QuadSpeed|HDSP_DoubleSpeed|HDSP_Frequency1)
-#define HDSP_Frequency192KHz   (HDSP_QuadSpeed|HDSP_DoubleSpeed|HDSP_Frequency1|HDSP_Frequency0)
-/* RME says n = 104857600000000, but in the windows MADI driver, I see:
-	return 104857600000000 / rate; // 100 MHz
-	return 110100480000000 / rate; // 105 MHz
+#घोषणा HDSP_Frequency128KHz   (HDSP_QuadSpeed|HDSP_DoubleSpeed|HDSP_Frequency0)
+#घोषणा HDSP_Frequency176_4KHz (HDSP_QuadSpeed|HDSP_DoubleSpeed|HDSP_Frequency1)
+#घोषणा HDSP_Frequency192KHz   (HDSP_QuadSpeed|HDSP_DoubleSpeed|HDSP_Frequency1|HDSP_Frequency0)
+/* RME says n = 104857600000000, but in the winकरोws MADI driver, I see:
+	वापस 104857600000000 / rate; // 100 MHz
+	वापस 110100480000000 / rate; // 105 MHz
 */
-#define DDS_NUMERATOR 104857600000000ULL;  /*  =  2^20 * 10^8 */
+#घोषणा DDS_NUMERATOR 104857600000000ULL;  /*  =  2^20 * 10^8 */
 
-#define hdsp_encode_latency(x)       (((x)<<1) & HDSP_LatencyMask)
-#define hdsp_decode_latency(x)       (((x) & HDSP_LatencyMask)>>1)
+#घोषणा hdsp_encode_latency(x)       (((x)<<1) & HDSP_LatencyMask)
+#घोषणा hdsp_decode_latency(x)       (((x) & HDSP_LatencyMask)>>1)
 
-#define hdsp_encode_spdif_in(x) (((x)&0x3)<<14)
-#define hdsp_decode_spdif_in(x) (((x)>>14)&0x3)
+#घोषणा hdsp_encode_spdअगर_in(x) (((x)&0x3)<<14)
+#घोषणा hdsp_decode_spdअगर_in(x) (((x)>>14)&0x3)
 
 /* Status Register bits */
 
-#define HDSP_audioIRQPending    (1<<0)
-#define HDSP_Lock2              (1<<1)     /* this is for Digiface and H9652 */
-#define HDSP_spdifFrequency3	HDSP_Lock2 /* this is for H9632 only */
-#define HDSP_Lock1              (1<<2)
-#define HDSP_Lock0              (1<<3)
-#define HDSP_SPDIFSync          (1<<4)
-#define HDSP_TimecodeLock       (1<<5)
-#define HDSP_BufferPositionMask 0x000FFC0 /* Bit 6..15 : h/w buffer pointer */
-#define HDSP_Sync2              (1<<16)
-#define HDSP_Sync1              (1<<17)
-#define HDSP_Sync0              (1<<18)
-#define HDSP_DoubleSpeedStatus  (1<<19)
-#define HDSP_ConfigError        (1<<20)
-#define HDSP_DllError           (1<<21)
-#define HDSP_spdifFrequency0    (1<<22)
-#define HDSP_spdifFrequency1    (1<<23)
-#define HDSP_spdifFrequency2    (1<<24)
-#define HDSP_SPDIFErrorFlag     (1<<25)
-#define HDSP_BufferID           (1<<26)
-#define HDSP_TimecodeSync       (1<<27)
-#define HDSP_AEBO          	(1<<28) /* H9632 specific Analog Extension Boards */
-#define HDSP_AEBI		(1<<29) /* 0 = present, 1 = absent */
-#define HDSP_midi0IRQPending    (1<<30)
-#define HDSP_midi1IRQPending    (1<<31)
+#घोषणा HDSP_audioIRQPending    (1<<0)
+#घोषणा HDSP_Lock2              (1<<1)     /* this is क्रम Digअगरace and H9652 */
+#घोषणा HDSP_spdअगरFrequency3	HDSP_Lock2 /* this is क्रम H9632 only */
+#घोषणा HDSP_Lock1              (1<<2)
+#घोषणा HDSP_Lock0              (1<<3)
+#घोषणा HDSP_SPDIFSync          (1<<4)
+#घोषणा HDSP_TimecodeLock       (1<<5)
+#घोषणा HDSP_BufferPositionMask 0x000FFC0 /* Bit 6..15 : h/w buffer poपूर्णांकer */
+#घोषणा HDSP_Sync2              (1<<16)
+#घोषणा HDSP_Sync1              (1<<17)
+#घोषणा HDSP_Sync0              (1<<18)
+#घोषणा HDSP_DoubleSpeedStatus  (1<<19)
+#घोषणा HDSP_ConfigError        (1<<20)
+#घोषणा HDSP_DllError           (1<<21)
+#घोषणा HDSP_spdअगरFrequency0    (1<<22)
+#घोषणा HDSP_spdअगरFrequency1    (1<<23)
+#घोषणा HDSP_spdअगरFrequency2    (1<<24)
+#घोषणा HDSP_SPDIFErrorFlag     (1<<25)
+#घोषणा HDSP_BufferID           (1<<26)
+#घोषणा HDSP_TimecodeSync       (1<<27)
+#घोषणा HDSP_AEBO          	(1<<28) /* H9632 specअगरic Analog Extension Boards */
+#घोषणा HDSP_AEBI		(1<<29) /* 0 = present, 1 = असलent */
+#घोषणा HDSP_midi0IRQPending    (1<<30)
+#घोषणा HDSP_midi1IRQPending    (1<<31)
 
-#define HDSP_spdifFrequencyMask    (HDSP_spdifFrequency0|HDSP_spdifFrequency1|HDSP_spdifFrequency2)
-#define HDSP_spdifFrequencyMask_9632 (HDSP_spdifFrequency0|\
-				      HDSP_spdifFrequency1|\
-				      HDSP_spdifFrequency2|\
-				      HDSP_spdifFrequency3)
+#घोषणा HDSP_spdअगरFrequencyMask    (HDSP_spdअगरFrequency0|HDSP_spdअगरFrequency1|HDSP_spdअगरFrequency2)
+#घोषणा HDSP_spdअगरFrequencyMask_9632 (HDSP_spdअगरFrequency0|\
+				      HDSP_spdअगरFrequency1|\
+				      HDSP_spdअगरFrequency2|\
+				      HDSP_spdअगरFrequency3)
 
-#define HDSP_spdifFrequency32KHz   (HDSP_spdifFrequency0)
-#define HDSP_spdifFrequency44_1KHz (HDSP_spdifFrequency1)
-#define HDSP_spdifFrequency48KHz   (HDSP_spdifFrequency0|HDSP_spdifFrequency1)
+#घोषणा HDSP_spdअगरFrequency32KHz   (HDSP_spdअगरFrequency0)
+#घोषणा HDSP_spdअगरFrequency44_1KHz (HDSP_spdअगरFrequency1)
+#घोषणा HDSP_spdअगरFrequency48KHz   (HDSP_spdअगरFrequency0|HDSP_spdअगरFrequency1)
 
-#define HDSP_spdifFrequency64KHz   (HDSP_spdifFrequency2)
-#define HDSP_spdifFrequency88_2KHz (HDSP_spdifFrequency0|HDSP_spdifFrequency2)
-#define HDSP_spdifFrequency96KHz   (HDSP_spdifFrequency2|HDSP_spdifFrequency1)
+#घोषणा HDSP_spdअगरFrequency64KHz   (HDSP_spdअगरFrequency2)
+#घोषणा HDSP_spdअगरFrequency88_2KHz (HDSP_spdअगरFrequency0|HDSP_spdअगरFrequency2)
+#घोषणा HDSP_spdअगरFrequency96KHz   (HDSP_spdअगरFrequency2|HDSP_spdअगरFrequency1)
 
-/* This is for H9632 cards */
-#define HDSP_spdifFrequency128KHz   (HDSP_spdifFrequency0|\
-				     HDSP_spdifFrequency1|\
-				     HDSP_spdifFrequency2)
-#define HDSP_spdifFrequency176_4KHz HDSP_spdifFrequency3
-#define HDSP_spdifFrequency192KHz   (HDSP_spdifFrequency3|HDSP_spdifFrequency0)
+/* This is क्रम H9632 cards */
+#घोषणा HDSP_spdअगरFrequency128KHz   (HDSP_spdअगरFrequency0|\
+				     HDSP_spdअगरFrequency1|\
+				     HDSP_spdअगरFrequency2)
+#घोषणा HDSP_spdअगरFrequency176_4KHz HDSP_spdअगरFrequency3
+#घोषणा HDSP_spdअगरFrequency192KHz   (HDSP_spdअगरFrequency3|HDSP_spdअगरFrequency0)
 
 /* Status2 Register bits */
 
-#define HDSP_version0     (1<<0)
-#define HDSP_version1     (1<<1)
-#define HDSP_version2     (1<<2)
-#define HDSP_wc_lock      (1<<3)
-#define HDSP_wc_sync      (1<<4)
-#define HDSP_inp_freq0    (1<<5)
-#define HDSP_inp_freq1    (1<<6)
-#define HDSP_inp_freq2    (1<<7)
-#define HDSP_SelSyncRef0  (1<<8)
-#define HDSP_SelSyncRef1  (1<<9)
-#define HDSP_SelSyncRef2  (1<<10)
+#घोषणा HDSP_version0     (1<<0)
+#घोषणा HDSP_version1     (1<<1)
+#घोषणा HDSP_version2     (1<<2)
+#घोषणा HDSP_wc_lock      (1<<3)
+#घोषणा HDSP_wc_sync      (1<<4)
+#घोषणा HDSP_inp_freq0    (1<<5)
+#घोषणा HDSP_inp_freq1    (1<<6)
+#घोषणा HDSP_inp_freq2    (1<<7)
+#घोषणा HDSP_SelSyncRef0  (1<<8)
+#घोषणा HDSP_SelSyncRef1  (1<<9)
+#घोषणा HDSP_SelSyncRef2  (1<<10)
 
-#define HDSP_wc_valid (HDSP_wc_lock|HDSP_wc_sync)
+#घोषणा HDSP_wc_valid (HDSP_wc_lock|HDSP_wc_sync)
 
-#define HDSP_systemFrequencyMask (HDSP_inp_freq0|HDSP_inp_freq1|HDSP_inp_freq2)
-#define HDSP_systemFrequency32   (HDSP_inp_freq0)
-#define HDSP_systemFrequency44_1 (HDSP_inp_freq1)
-#define HDSP_systemFrequency48   (HDSP_inp_freq0|HDSP_inp_freq1)
-#define HDSP_systemFrequency64   (HDSP_inp_freq2)
-#define HDSP_systemFrequency88_2 (HDSP_inp_freq0|HDSP_inp_freq2)
-#define HDSP_systemFrequency96   (HDSP_inp_freq1|HDSP_inp_freq2)
-/* FIXME : more values for 9632 cards ? */
+#घोषणा HDSP_प्रणालीFrequencyMask (HDSP_inp_freq0|HDSP_inp_freq1|HDSP_inp_freq2)
+#घोषणा HDSP_प्रणालीFrequency32   (HDSP_inp_freq0)
+#घोषणा HDSP_प्रणालीFrequency44_1 (HDSP_inp_freq1)
+#घोषणा HDSP_प्रणालीFrequency48   (HDSP_inp_freq0|HDSP_inp_freq1)
+#घोषणा HDSP_प्रणालीFrequency64   (HDSP_inp_freq2)
+#घोषणा HDSP_प्रणालीFrequency88_2 (HDSP_inp_freq0|HDSP_inp_freq2)
+#घोषणा HDSP_प्रणालीFrequency96   (HDSP_inp_freq1|HDSP_inp_freq2)
+/* FIXME : more values क्रम 9632 cards ? */
 
-#define HDSP_SelSyncRefMask        (HDSP_SelSyncRef0|HDSP_SelSyncRef1|HDSP_SelSyncRef2)
-#define HDSP_SelSyncRef_ADAT1      0
-#define HDSP_SelSyncRef_ADAT2      (HDSP_SelSyncRef0)
-#define HDSP_SelSyncRef_ADAT3      (HDSP_SelSyncRef1)
-#define HDSP_SelSyncRef_SPDIF      (HDSP_SelSyncRef0|HDSP_SelSyncRef1)
-#define HDSP_SelSyncRef_WORD       (HDSP_SelSyncRef2)
-#define HDSP_SelSyncRef_ADAT_SYNC  (HDSP_SelSyncRef0|HDSP_SelSyncRef2)
+#घोषणा HDSP_SelSyncRefMask        (HDSP_SelSyncRef0|HDSP_SelSyncRef1|HDSP_SelSyncRef2)
+#घोषणा HDSP_SelSyncRef_ADAT1      0
+#घोषणा HDSP_SelSyncRef_ADAT2      (HDSP_SelSyncRef0)
+#घोषणा HDSP_SelSyncRef_ADAT3      (HDSP_SelSyncRef1)
+#घोषणा HDSP_SelSyncRef_SPDIF      (HDSP_SelSyncRef0|HDSP_SelSyncRef1)
+#घोषणा HDSP_SelSyncRef_WORD       (HDSP_SelSyncRef2)
+#घोषणा HDSP_SelSyncRef_ADAT_SYNC  (HDSP_SelSyncRef0|HDSP_SelSyncRef2)
 
 /* Card state flags */
 
-#define HDSP_InitializationComplete  (1<<0)
-#define HDSP_FirmwareLoaded	     (1<<1)
-#define HDSP_FirmwareCached	     (1<<2)
+#घोषणा HDSP_InitializationComplete  (1<<0)
+#घोषणा HDSP_FirmwareLoaded	     (1<<1)
+#घोषणा HDSP_FirmwareCached	     (1<<2)
 
-/* FIFO wait times, defined in terms of 1/10ths of msecs */
+/* FIFO रुको बार, defined in terms of 1/10ths of msecs */
 
-#define HDSP_LONG_WAIT	 5000
-#define HDSP_SHORT_WAIT  30
+#घोषणा HDSP_LONG_WAIT	 5000
+#घोषणा HDSP_SHORT_WAIT  30
 
-#define UNITY_GAIN                       32768
-#define MINUS_INFINITY_GAIN              0
+#घोषणा UNITY_GAIN                       32768
+#घोषणा MINUS_अनन्त_GAIN              0
 
 /* the size of a substream (1 mono data stream) */
 
-#define HDSP_CHANNEL_BUFFER_SAMPLES  (16*1024)
-#define HDSP_CHANNEL_BUFFER_BYTES    (4*HDSP_CHANNEL_BUFFER_SAMPLES)
+#घोषणा HDSP_CHANNEL_BUFFER_SAMPLES  (16*1024)
+#घोषणा HDSP_CHANNEL_BUFFER_BYTES    (4*HDSP_CHANNEL_BUFFER_SAMPLES)
 
-/* the size of the area we need to allocate for DMA transfers. the
+/* the size of the area we need to allocate क्रम DMA transfers. the
    size is the same regardless of the number of channels - the
-   Multiface still uses the same memory area.
+   Multअगरace still uses the same memory area.
 
    Note that we allocate 1 more channel than is apparently needed
-   because the h/w seems to write 1 byte beyond the end of the last
+   because the h/w seems to ग_लिखो 1 byte beyond the end of the last
    page. Sigh.
 */
 
-#define HDSP_DMA_AREA_BYTES ((HDSP_MAX_CHANNELS+1) * HDSP_CHANNEL_BUFFER_BYTES)
-#define HDSP_DMA_AREA_KILOBYTES (HDSP_DMA_AREA_BYTES/1024)
+#घोषणा HDSP_DMA_AREA_BYTES ((HDSP_MAX_CHANNELS+1) * HDSP_CHANNEL_BUFFER_BYTES)
+#घोषणा HDSP_DMA_AREA_KILOBYTES (HDSP_DMA_AREA_BYTES/1024)
 
-#define HDSP_FIRMWARE_SIZE	(24413 * 4)
+#घोषणा HDSP_FIRMWARE_SIZE	(24413 * 4)
 
-struct hdsp_9632_meters {
+काष्ठा hdsp_9632_meters अणु
     u32 input_peak[16];
     u32 playback_peak[16];
     u32 output_peak[16];
@@ -425,86 +426,86 @@ struct hdsp_9632_meters {
     u32 playback_rms_high[16];
     u32 output_rms_high[16];
     u32 xxx_rms_high[16];
-};
+पूर्ण;
 
-struct hdsp_midi {
-    struct hdsp             *hdsp;
-    int                      id;
-    struct snd_rawmidi           *rmidi;
-    struct snd_rawmidi_substream *input;
-    struct snd_rawmidi_substream *output;
-    char                     istimer; /* timer in use */
-    struct timer_list	     timer;
+काष्ठा hdsp_midi अणु
+    काष्ठा hdsp             *hdsp;
+    पूर्णांक                      id;
+    काष्ठा snd_rawmidi           *rmidi;
+    काष्ठा snd_rawmidi_substream *input;
+    काष्ठा snd_rawmidi_substream *output;
+    अक्षर                     isसमयr; /* समयr in use */
+    काष्ठा समयr_list	     समयr;
     spinlock_t               lock;
-    int			     pending;
-};
+    पूर्णांक			     pending;
+पूर्ण;
 
-struct hdsp {
+काष्ठा hdsp अणु
 	spinlock_t            lock;
-	struct snd_pcm_substream *capture_substream;
-	struct snd_pcm_substream *playback_substream;
-        struct hdsp_midi      midi[2];
-	struct work_struct    midi_work;
-	int		      use_midi_work;
-	int                   precise_ptr;
-	u32                   control_register;	     /* cached value */
-	u32                   control2_register;     /* cached value */
-	u32                   creg_spdif;
-	u32                   creg_spdif_stream;
-	int                   clock_source_locked;
-	char                 *card_name;	 /* digiface/multiface/rpm */
-	enum HDSP_IO_Type     io_type;               /* ditto, but for code use */
-        unsigned short        firmware_rev;
-	unsigned short	      state;		     /* stores state bits */
-	const struct firmware *firmware;
+	काष्ठा snd_pcm_substream *capture_substream;
+	काष्ठा snd_pcm_substream *playback_substream;
+        काष्ठा hdsp_midi      midi[2];
+	काष्ठा work_काष्ठा    midi_work;
+	पूर्णांक		      use_midi_work;
+	पूर्णांक                   precise_ptr;
+	u32                   control_रेजिस्टर;	     /* cached value */
+	u32                   control2_रेजिस्टर;     /* cached value */
+	u32                   creg_spdअगर;
+	u32                   creg_spdअगर_stream;
+	पूर्णांक                   घड़ी_source_locked;
+	अक्षर                 *card_name;	 /* digअगरace/multअगरace/rpm */
+	क्रमागत HDSP_IO_Type     io_type;               /* ditto, but क्रम code use */
+        अचिन्हित लघु        firmware_rev;
+	अचिन्हित लघु	      state;		     /* stores state bits */
+	स्थिर काष्ठा firmware *firmware;
 	u32                  *fw_uploaded;
-	size_t                period_bytes; 	     /* guess what this is */
-	unsigned char	      max_channels;
-	unsigned char	      qs_in_channels;	     /* quad speed mode for H9632 */
-	unsigned char         ds_in_channels;
-	unsigned char         ss_in_channels;	    /* different for multiface/digiface */
-	unsigned char	      qs_out_channels;
-	unsigned char         ds_out_channels;
-	unsigned char         ss_out_channels;
+	माप_प्रकार                period_bytes; 	     /* guess what this is */
+	अचिन्हित अक्षर	      max_channels;
+	अचिन्हित अक्षर	      qs_in_channels;	     /* quad speed mode क्रम H9632 */
+	अचिन्हित अक्षर         ds_in_channels;
+	अचिन्हित अक्षर         ss_in_channels;	    /* dअगरferent क्रम multअगरace/digअगरace */
+	अचिन्हित अक्षर	      qs_out_channels;
+	अचिन्हित अक्षर         ds_out_channels;
+	अचिन्हित अक्षर         ss_out_channels;
 	u32                   io_loopback;          /* output loopback channel states*/
 
-	struct snd_dma_buffer capture_dma_buf;
-	struct snd_dma_buffer playback_dma_buf;
-	unsigned char        *capture_buffer;	    /* suitably aligned address */
-	unsigned char        *playback_buffer;	    /* suitably aligned address */
+	काष्ठा snd_dma_buffer capture_dma_buf;
+	काष्ठा snd_dma_buffer playback_dma_buf;
+	अचिन्हित अक्षर        *capture_buffer;	    /* suitably aligned address */
+	अचिन्हित अक्षर        *playback_buffer;	    /* suitably aligned address */
 
 	pid_t                 capture_pid;
 	pid_t                 playback_pid;
-	int                   running;
-	int                   system_sample_rate;
-	const char           *channel_map;
-	int                   dev;
-	int                   irq;
-	unsigned long         port;
-        void __iomem         *iobase;
-	struct snd_card *card;
-	struct snd_pcm *pcm;
-	struct snd_hwdep          *hwdep;
-	struct pci_dev       *pci;
-	struct snd_kcontrol *spdif_ctl;
-        unsigned short        mixer_matrix[HDSP_MATRIX_MIXER_SIZE];
-	unsigned int          dds_value; /* last value written to freq register */
-};
+	पूर्णांक                   running;
+	पूर्णांक                   प्रणाली_sample_rate;
+	स्थिर अक्षर           *channel_map;
+	पूर्णांक                   dev;
+	पूर्णांक                   irq;
+	अचिन्हित दीर्घ         port;
+        व्योम __iomem         *iobase;
+	काष्ठा snd_card *card;
+	काष्ठा snd_pcm *pcm;
+	काष्ठा snd_hwdep          *hwdep;
+	काष्ठा pci_dev       *pci;
+	काष्ठा snd_kcontrol *spdअगर_ctl;
+        अचिन्हित लघु        mixer_matrix[HDSP_MATRIX_MIXER_SIZE];
+	अचिन्हित पूर्णांक          dds_value; /* last value written to freq रेजिस्टर */
+पूर्ण;
 
 /* These tables map the ALSA channels 1..N to the channels that we
    need to use in order to find the relevant channel buffer. RME
    refer to this kind of mapping as between "the ADAT channel and
    the DMA channel." We index it using the logical audio channel,
    and the value is the DMA channel (i.e. channel buffer number)
-   where the data for that channel can be read/written from/to.
+   where the data क्रम that channel can be पढ़ो/written from/to.
 */
 
-static const char channel_map_df_ss[HDSP_MAX_CHANNELS] = {
+अटल स्थिर अक्षर channel_map_df_ss[HDSP_MAX_CHANNELS] = अणु
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
 	18, 19, 20, 21, 22, 23, 24, 25
-};
+पूर्ण;
 
-static const char channel_map_mf_ss[HDSP_MAX_CHANNELS] = { /* Multiface */
+अटल स्थिर अक्षर channel_map_mf_ss[HDSP_MAX_CHANNELS] = अणु /* Multअगरace */
 	/* Analog */
 	0, 1, 2, 3, 4, 5, 6, 7,
 	/* ADAT 2 */
@@ -512,18 +513,18 @@ static const char channel_map_mf_ss[HDSP_MAX_CHANNELS] = { /* Multiface */
 	/* SPDIF */
 	24, 25,
 	-1, -1, -1, -1, -1, -1, -1, -1
-};
+पूर्ण;
 
-static const char channel_map_ds[HDSP_MAX_CHANNELS] = {
+अटल स्थिर अक्षर channel_map_ds[HDSP_MAX_CHANNELS] = अणु
 	/* ADAT channels are remapped */
 	1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23,
 	/* channels 12 and 13 are S/PDIF */
 	24, 25,
-	/* others don't exist */
+	/* others करोn't exist */
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
-};
+पूर्ण;
 
-static const char channel_map_H9632_ss[HDSP_MAX_CHANNELS] = {
+अटल स्थिर अक्षर channel_map_H9632_ss[HDSP_MAX_CHANNELS] = अणु
 	/* ADAT channels */
 	0, 1, 2, 3, 4, 5, 6, 7,
 	/* SPDIF */
@@ -532,12 +533,12 @@ static const char channel_map_H9632_ss[HDSP_MAX_CHANNELS] = {
 	10, 11,
 	/* AO4S-192 and AI4S-192 extension boards */
 	12, 13, 14, 15,
-	/* others don't exist */
+	/* others करोn't exist */
 	-1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1
-};
+पूर्ण;
 
-static const char channel_map_H9632_ds[HDSP_MAX_CHANNELS] = {
+अटल स्थिर अक्षर channel_map_H9632_ds[HDSP_MAX_CHANNELS] = अणु
 	/* ADAT */
 	1, 3, 5, 7,
 	/* SPDIF */
@@ -546,12 +547,12 @@ static const char channel_map_H9632_ds[HDSP_MAX_CHANNELS] = {
 	10, 11,
 	/* AO4S-192 and AI4S-192 extension boards */
 	12, 13, 14, 15,
-	/* others don't exist */
+	/* others करोn't exist */
 	-1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1
-};
+पूर्ण;
 
-static const char channel_map_H9632_qs[HDSP_MAX_CHANNELS] = {
+अटल स्थिर अक्षर channel_map_H9632_qs[HDSP_MAX_CHANNELS] = अणु
 	/* ADAT is disabled in this mode */
 	/* SPDIF */
 	8, 9,
@@ -559,359 +560,359 @@ static const char channel_map_H9632_qs[HDSP_MAX_CHANNELS] = {
 	10, 11,
 	/* AO4S-192 and AI4S-192 extension boards */
 	12, 13, 14, 15,
-	/* others don't exist */
+	/* others करोn't exist */
 	-1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1
-};
+पूर्ण;
 
-static int snd_hammerfall_get_buffer(struct pci_dev *pci, struct snd_dma_buffer *dmab, size_t size)
-{
-	return snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &pci->dev, size, dmab);
-}
+अटल पूर्णांक snd_hammerfall_get_buffer(काष्ठा pci_dev *pci, काष्ठा snd_dma_buffer *dmab, माप_प्रकार size)
+अणु
+	वापस snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &pci->dev, size, dmab);
+पूर्ण
 
-static void snd_hammerfall_free_buffer(struct snd_dma_buffer *dmab, struct pci_dev *pci)
-{
-	if (dmab->area)
-		snd_dma_free_pages(dmab);
-}
+अटल व्योम snd_hammerfall_मुक्त_buffer(काष्ठा snd_dma_buffer *dmab, काष्ठा pci_dev *pci)
+अणु
+	अगर (dmab->area)
+		snd_dma_मुक्त_pages(dmab);
+पूर्ण
 
 
-static const struct pci_device_id snd_hdsp_ids[] = {
-	{
-		.vendor = PCI_VENDOR_ID_XILINX,
+अटल स्थिर काष्ठा pci_device_id snd_hdsp_ids[] = अणु
+	अणु
+		.venकरोr = PCI_VENDOR_ID_XILINX,
 		.device = PCI_DEVICE_ID_XILINX_HAMMERFALL_DSP,
-		.subvendor = PCI_ANY_ID,
+		.subvenकरोr = PCI_ANY_ID,
 		.subdevice = PCI_ANY_ID,
-	}, /* RME Hammerfall-DSP */
-	{ 0, },
-};
+	पूर्ण, /* RME Hammerfall-DSP */
+	अणु 0, पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, snd_hdsp_ids);
 
 /* prototypes */
-static int snd_hdsp_create_alsa_devices(struct snd_card *card, struct hdsp *hdsp);
-static int snd_hdsp_create_pcm(struct snd_card *card, struct hdsp *hdsp);
-static int snd_hdsp_enable_io (struct hdsp *hdsp);
-static void snd_hdsp_initialize_midi_flush (struct hdsp *hdsp);
-static void snd_hdsp_initialize_channels (struct hdsp *hdsp);
-static int hdsp_fifo_wait(struct hdsp *hdsp, int count, int timeout);
-static int hdsp_autosync_ref(struct hdsp *hdsp);
-static int snd_hdsp_set_defaults(struct hdsp *hdsp);
-static void snd_hdsp_9652_enable_mixer (struct hdsp *hdsp);
+अटल पूर्णांक snd_hdsp_create_alsa_devices(काष्ठा snd_card *card, काष्ठा hdsp *hdsp);
+अटल पूर्णांक snd_hdsp_create_pcm(काष्ठा snd_card *card, काष्ठा hdsp *hdsp);
+अटल पूर्णांक snd_hdsp_enable_io (काष्ठा hdsp *hdsp);
+अटल व्योम snd_hdsp_initialize_midi_flush (काष्ठा hdsp *hdsp);
+अटल व्योम snd_hdsp_initialize_channels (काष्ठा hdsp *hdsp);
+अटल पूर्णांक hdsp_fअगरo_रुको(काष्ठा hdsp *hdsp, पूर्णांक count, पूर्णांक समयout);
+अटल पूर्णांक hdsp_स्वतःsync_ref(काष्ठा hdsp *hdsp);
+अटल पूर्णांक snd_hdsp_set_शेषs(काष्ठा hdsp *hdsp);
+अटल व्योम snd_hdsp_9652_enable_mixer (काष्ठा hdsp *hdsp);
 
-static int hdsp_playback_to_output_key (struct hdsp *hdsp, int in, int out)
-{
-	switch (hdsp->io_type) {
-	case Multiface:
-	case Digiface:
-	case RPM:
-	default:
-		if (hdsp->firmware_rev == 0xa)
-			return (64 * out) + (32 + (in));
-		else
-			return (52 * out) + (26 + (in));
-	case H9632:
-		return (32 * out) + (16 + (in));
-	case H9652:
-		return (52 * out) + (26 + (in));
-	}
-}
+अटल पूर्णांक hdsp_playback_to_output_key (काष्ठा hdsp *hdsp, पूर्णांक in, पूर्णांक out)
+अणु
+	चयन (hdsp->io_type) अणु
+	हाल Multअगरace:
+	हाल Digअगरace:
+	हाल RPM:
+	शेष:
+		अगर (hdsp->firmware_rev == 0xa)
+			वापस (64 * out) + (32 + (in));
+		अन्यथा
+			वापस (52 * out) + (26 + (in));
+	हाल H9632:
+		वापस (32 * out) + (16 + (in));
+	हाल H9652:
+		वापस (52 * out) + (26 + (in));
+	पूर्ण
+पूर्ण
 
-static int hdsp_input_to_output_key (struct hdsp *hdsp, int in, int out)
-{
-	switch (hdsp->io_type) {
-	case Multiface:
-	case Digiface:
-	case RPM:
-	default:
-		if (hdsp->firmware_rev == 0xa)
-			return (64 * out) + in;
-		else
-			return (52 * out) + in;
-	case H9632:
-		return (32 * out) + in;
-	case H9652:
-		return (52 * out) + in;
-	}
-}
+अटल पूर्णांक hdsp_input_to_output_key (काष्ठा hdsp *hdsp, पूर्णांक in, पूर्णांक out)
+अणु
+	चयन (hdsp->io_type) अणु
+	हाल Multअगरace:
+	हाल Digअगरace:
+	हाल RPM:
+	शेष:
+		अगर (hdsp->firmware_rev == 0xa)
+			वापस (64 * out) + in;
+		अन्यथा
+			वापस (52 * out) + in;
+	हाल H9632:
+		वापस (32 * out) + in;
+	हाल H9652:
+		वापस (52 * out) + in;
+	पूर्ण
+पूर्ण
 
-static void hdsp_write(struct hdsp *hdsp, int reg, int val)
-{
-	writel(val, hdsp->iobase + reg);
-}
+अटल व्योम hdsp_ग_लिखो(काष्ठा hdsp *hdsp, पूर्णांक reg, पूर्णांक val)
+अणु
+	ग_लिखोl(val, hdsp->iobase + reg);
+पूर्ण
 
-static unsigned int hdsp_read(struct hdsp *hdsp, int reg)
-{
-	return readl (hdsp->iobase + reg);
-}
+अटल अचिन्हित पूर्णांक hdsp_पढ़ो(काष्ठा hdsp *hdsp, पूर्णांक reg)
+अणु
+	वापस पढ़ोl (hdsp->iobase + reg);
+पूर्ण
 
-static int hdsp_check_for_iobox (struct hdsp *hdsp)
-{
-	int i;
+अटल पूर्णांक hdsp_check_क्रम_iobox (काष्ठा hdsp *hdsp)
+अणु
+	पूर्णांक i;
 
-	if (hdsp->io_type == H9652 || hdsp->io_type == H9632) return 0;
-	for (i = 0; i < 500; i++) {
-		if (0 == (hdsp_read(hdsp, HDSP_statusRegister) &
-					HDSP_ConfigError)) {
-			if (i) {
+	अगर (hdsp->io_type == H9652 || hdsp->io_type == H9632) वापस 0;
+	क्रम (i = 0; i < 500; i++) अणु
+		अगर (0 == (hdsp_पढ़ो(hdsp, HDSP_statusRegister) &
+					HDSP_ConfigError)) अणु
+			अगर (i) अणु
 				dev_dbg(hdsp->card->dev,
 					"IO box found after %d ms\n",
 						(20 * i));
-			}
-			return 0;
-		}
+			पूर्ण
+			वापस 0;
+		पूर्ण
 		msleep(20);
-	}
+	पूर्ण
 	dev_err(hdsp->card->dev, "no IO box connected!\n");
 	hdsp->state &= ~HDSP_FirmwareLoaded;
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int hdsp_wait_for_iobox(struct hdsp *hdsp, unsigned int loops,
-			       unsigned int delay)
-{
-	unsigned int i;
+अटल पूर्णांक hdsp_रुको_क्रम_iobox(काष्ठा hdsp *hdsp, अचिन्हित पूर्णांक loops,
+			       अचिन्हित पूर्णांक delay)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (hdsp->io_type == H9652 || hdsp->io_type == H9632)
-		return 0;
+	अगर (hdsp->io_type == H9652 || hdsp->io_type == H9632)
+		वापस 0;
 
-	for (i = 0; i != loops; ++i) {
-		if (hdsp_read(hdsp, HDSP_statusRegister) & HDSP_ConfigError)
+	क्रम (i = 0; i != loops; ++i) अणु
+		अगर (hdsp_पढ़ो(hdsp, HDSP_statusRegister) & HDSP_ConfigError)
 			msleep(delay);
-		else {
+		अन्यथा अणु
 			dev_dbg(hdsp->card->dev, "iobox found after %ums!\n",
 				   i * delay);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	dev_info(hdsp->card->dev, "no IO box connected!\n");
 	hdsp->state &= ~HDSP_FirmwareLoaded;
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int snd_hdsp_load_firmware_from_cache(struct hdsp *hdsp) {
+अटल पूर्णांक snd_hdsp_load_firmware_from_cache(काष्ठा hdsp *hdsp) अणु
 
-	int i;
-	unsigned long flags;
-	const u32 *cache;
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
+	स्थिर u32 *cache;
 
-	if (hdsp->fw_uploaded)
+	अगर (hdsp->fw_uploaded)
 		cache = hdsp->fw_uploaded;
-	else {
-		if (!hdsp->firmware)
-			return -ENODEV;
+	अन्यथा अणु
+		अगर (!hdsp->firmware)
+			वापस -ENODEV;
 		cache = (u32 *)hdsp->firmware->data;
-		if (!cache)
-			return -ENODEV;
-	}
+		अगर (!cache)
+			वापस -ENODEV;
+	पूर्ण
 
-	if ((hdsp_read (hdsp, HDSP_statusRegister) & HDSP_DllError) != 0) {
+	अगर ((hdsp_पढ़ो (hdsp, HDSP_statusRegister) & HDSP_DllError) != 0) अणु
 
 		dev_info(hdsp->card->dev, "loading firmware\n");
 
-		hdsp_write (hdsp, HDSP_control2Reg, HDSP_S_PROGRAM);
-		hdsp_write (hdsp, HDSP_fifoData, 0);
+		hdsp_ग_लिखो (hdsp, HDSP_control2Reg, HDSP_S_PROGRAM);
+		hdsp_ग_लिखो (hdsp, HDSP_fअगरoData, 0);
 
-		if (hdsp_fifo_wait (hdsp, 0, HDSP_LONG_WAIT)) {
+		अगर (hdsp_fअगरo_रुको (hdsp, 0, HDSP_LONG_WAIT)) अणु
 			dev_info(hdsp->card->dev,
 				 "timeout waiting for download preparation\n");
-			hdsp_write(hdsp, HDSP_control2Reg, HDSP_S200);
-			return -EIO;
-		}
+			hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S200);
+			वापस -EIO;
+		पूर्ण
 
-		hdsp_write (hdsp, HDSP_control2Reg, HDSP_S_LOAD);
+		hdsp_ग_लिखो (hdsp, HDSP_control2Reg, HDSP_S_LOAD);
 
-		for (i = 0; i < HDSP_FIRMWARE_SIZE / 4; ++i) {
-			hdsp_write(hdsp, HDSP_fifoData, cache[i]);
-			if (hdsp_fifo_wait (hdsp, 127, HDSP_LONG_WAIT)) {
+		क्रम (i = 0; i < HDSP_FIRMWARE_SIZE / 4; ++i) अणु
+			hdsp_ग_लिखो(hdsp, HDSP_fअगरoData, cache[i]);
+			अगर (hdsp_fअगरo_रुको (hdsp, 127, HDSP_LONG_WAIT)) अणु
 				dev_info(hdsp->card->dev,
 					 "timeout during firmware loading\n");
-				hdsp_write(hdsp, HDSP_control2Reg, HDSP_S200);
-				return -EIO;
-			}
-		}
+				hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S200);
+				वापस -EIO;
+			पूर्ण
+		पूर्ण
 
-		hdsp_fifo_wait(hdsp, 3, HDSP_LONG_WAIT);
-		hdsp_write(hdsp, HDSP_control2Reg, HDSP_S200);
+		hdsp_fअगरo_रुको(hdsp, 3, HDSP_LONG_WAIT);
+		hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S200);
 
 		ssleep(3);
-#ifdef SNDRV_BIG_ENDIAN
-		hdsp->control2_register = HDSP_BIGENDIAN_MODE;
-#else
-		hdsp->control2_register = 0;
-#endif
-		hdsp_write (hdsp, HDSP_control2Reg, hdsp->control2_register);
+#अगर_घोषित SNDRV_BIG_ENDIAN
+		hdsp->control2_रेजिस्टर = HDSP_BIGENDIAN_MODE;
+#अन्यथा
+		hdsp->control2_रेजिस्टर = 0;
+#पूर्ण_अगर
+		hdsp_ग_लिखो (hdsp, HDSP_control2Reg, hdsp->control2_रेजिस्टर);
 		dev_info(hdsp->card->dev, "finished firmware loading\n");
 
-	}
-	if (hdsp->state & HDSP_InitializationComplete) {
+	पूर्ण
+	अगर (hdsp->state & HDSP_InitializationComplete) अणु
 		dev_info(hdsp->card->dev,
 			 "firmware loaded from cache, restoring defaults\n");
 		spin_lock_irqsave(&hdsp->lock, flags);
-		snd_hdsp_set_defaults(hdsp);
+		snd_hdsp_set_शेषs(hdsp);
 		spin_unlock_irqrestore(&hdsp->lock, flags);
-	}
+	पूर्ण
 
 	hdsp->state |= HDSP_FirmwareLoaded;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hdsp_get_iobox_version (struct hdsp *hdsp)
-{
-	if ((hdsp_read (hdsp, HDSP_statusRegister) & HDSP_DllError) != 0) {
+अटल पूर्णांक hdsp_get_iobox_version (काष्ठा hdsp *hdsp)
+अणु
+	अगर ((hdsp_पढ़ो (hdsp, HDSP_statusRegister) & HDSP_DllError) != 0) अणु
 
-		hdsp_write(hdsp, HDSP_control2Reg, HDSP_S_LOAD);
-		hdsp_write(hdsp, HDSP_fifoData, 0);
+		hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S_LOAD);
+		hdsp_ग_लिखो(hdsp, HDSP_fअगरoData, 0);
 
-		if (hdsp_fifo_wait(hdsp, 0, HDSP_SHORT_WAIT) < 0) {
-			hdsp_write(hdsp, HDSP_control2Reg, HDSP_S300);
-			hdsp_write(hdsp, HDSP_control2Reg, HDSP_S_LOAD);
-		}
+		अगर (hdsp_fअगरo_रुको(hdsp, 0, HDSP_SHORT_WAIT) < 0) अणु
+			hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S300);
+			hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S_LOAD);
+		पूर्ण
 
-		hdsp_write(hdsp, HDSP_control2Reg, HDSP_S200 | HDSP_PROGRAM);
-		hdsp_write (hdsp, HDSP_fifoData, 0);
-		if (hdsp_fifo_wait(hdsp, 0, HDSP_SHORT_WAIT) < 0)
-			goto set_multi;
+		hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S200 | HDSP_PROGRAM);
+		hdsp_ग_लिखो (hdsp, HDSP_fअगरoData, 0);
+		अगर (hdsp_fअगरo_रुको(hdsp, 0, HDSP_SHORT_WAIT) < 0)
+			जाओ set_multi;
 
-		hdsp_write(hdsp, HDSP_control2Reg, HDSP_S_LOAD);
-		hdsp_write(hdsp, HDSP_fifoData, 0);
-		if (hdsp_fifo_wait(hdsp, 0, HDSP_SHORT_WAIT) == 0) {
-			hdsp->io_type = Digiface;
+		hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S_LOAD);
+		hdsp_ग_लिखो(hdsp, HDSP_fअगरoData, 0);
+		अगर (hdsp_fअगरo_रुको(hdsp, 0, HDSP_SHORT_WAIT) == 0) अणु
+			hdsp->io_type = Digअगरace;
 			dev_info(hdsp->card->dev, "Digiface found\n");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		hdsp_write(hdsp, HDSP_control2Reg, HDSP_S300);
-		hdsp_write(hdsp, HDSP_control2Reg, HDSP_S_LOAD);
-		hdsp_write(hdsp, HDSP_fifoData, 0);
-		if (hdsp_fifo_wait(hdsp, 0, HDSP_SHORT_WAIT) == 0)
-			goto set_multi;
+		hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S300);
+		hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S_LOAD);
+		hdsp_ग_लिखो(hdsp, HDSP_fअगरoData, 0);
+		अगर (hdsp_fअगरo_रुको(hdsp, 0, HDSP_SHORT_WAIT) == 0)
+			जाओ set_multi;
 
-		hdsp_write(hdsp, HDSP_control2Reg, HDSP_S300);
-		hdsp_write(hdsp, HDSP_control2Reg, HDSP_S_LOAD);
-		hdsp_write(hdsp, HDSP_fifoData, 0);
-		if (hdsp_fifo_wait(hdsp, 0, HDSP_SHORT_WAIT) < 0)
-			goto set_multi;
+		hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S300);
+		hdsp_ग_लिखो(hdsp, HDSP_control2Reg, HDSP_S_LOAD);
+		hdsp_ग_लिखो(hdsp, HDSP_fअगरoData, 0);
+		अगर (hdsp_fअगरo_रुको(hdsp, 0, HDSP_SHORT_WAIT) < 0)
+			जाओ set_multi;
 
 		hdsp->io_type = RPM;
 		dev_info(hdsp->card->dev, "RPM found\n");
-		return 0;
-	} else {
-		/* firmware was already loaded, get iobox type */
-		if (hdsp_read(hdsp, HDSP_status2Register) & HDSP_version2)
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		/* firmware was alपढ़ोy loaded, get iobox type */
+		अगर (hdsp_पढ़ो(hdsp, HDSP_status2Register) & HDSP_version2)
 			hdsp->io_type = RPM;
-		else if (hdsp_read(hdsp, HDSP_status2Register) & HDSP_version1)
-			hdsp->io_type = Multiface;
-		else
-			hdsp->io_type = Digiface;
-	}
-	return 0;
+		अन्यथा अगर (hdsp_पढ़ो(hdsp, HDSP_status2Register) & HDSP_version1)
+			hdsp->io_type = Multअगरace;
+		अन्यथा
+			hdsp->io_type = Digअगरace;
+	पूर्ण
+	वापस 0;
 
 set_multi:
-	hdsp->io_type = Multiface;
+	hdsp->io_type = Multअगरace;
 	dev_info(hdsp->card->dev, "Multiface found\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int hdsp_request_fw_loader(struct hdsp *hdsp);
+अटल पूर्णांक hdsp_request_fw_loader(काष्ठा hdsp *hdsp);
 
-static int hdsp_check_for_firmware (struct hdsp *hdsp, int load_on_demand)
-{
-	if (hdsp->io_type == H9652 || hdsp->io_type == H9632)
-		return 0;
-	if ((hdsp_read (hdsp, HDSP_statusRegister) & HDSP_DllError) != 0) {
+अटल पूर्णांक hdsp_check_क्रम_firmware (काष्ठा hdsp *hdsp, पूर्णांक load_on_demand)
+अणु
+	अगर (hdsp->io_type == H9652 || hdsp->io_type == H9632)
+		वापस 0;
+	अगर ((hdsp_पढ़ो (hdsp, HDSP_statusRegister) & HDSP_DllError) != 0) अणु
 		hdsp->state &= ~HDSP_FirmwareLoaded;
-		if (! load_on_demand)
-			return -EIO;
+		अगर (! load_on_demand)
+			वापस -EIO;
 		dev_err(hdsp->card->dev, "firmware not present.\n");
 		/* try to load firmware */
-		if (! (hdsp->state & HDSP_FirmwareCached)) {
-			if (! hdsp_request_fw_loader(hdsp))
-				return 0;
+		अगर (! (hdsp->state & HDSP_FirmwareCached)) अणु
+			अगर (! hdsp_request_fw_loader(hdsp))
+				वापस 0;
 			dev_err(hdsp->card->dev,
 				   "No firmware loaded nor cached, please upload firmware.\n");
-			return -EIO;
-		}
-		if (snd_hdsp_load_firmware_from_cache(hdsp) != 0) {
+			वापस -EIO;
+		पूर्ण
+		अगर (snd_hdsp_load_firmware_from_cache(hdsp) != 0) अणु
 			dev_err(hdsp->card->dev,
 				   "Firmware loading from cache failed, please upload manually.\n");
-			return -EIO;
-		}
-	}
-	return 0;
-}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-static int hdsp_fifo_wait(struct hdsp *hdsp, int count, int timeout)
-{
-	int i;
+अटल पूर्णांक hdsp_fअगरo_रुको(काष्ठा hdsp *hdsp, पूर्णांक count, पूर्णांक समयout)
+अणु
+	पूर्णांक i;
 
-	/* the fifoStatus registers reports on how many words
+	/* the fअगरoStatus रेजिस्टरs reports on how many words
 	   are available in the command FIFO.
 	*/
 
-	for (i = 0; i < timeout; i++) {
+	क्रम (i = 0; i < समयout; i++) अणु
 
-		if ((int)(hdsp_read (hdsp, HDSP_fifoStatus) & 0xff) <= count)
-			return 0;
+		अगर ((पूर्णांक)(hdsp_पढ़ो (hdsp, HDSP_fअगरoStatus) & 0xff) <= count)
+			वापस 0;
 
-		/* not very friendly, but we only do this during a firmware
+		/* not very मित्रly, but we only करो this during a firmware
 		   load and changing the mixer, so we just put up with it.
 		*/
 
 		udelay (100);
-	}
+	पूर्ण
 
 	dev_warn(hdsp->card->dev,
 		 "wait for FIFO status <= %d failed after %d iterations\n",
-		    count, timeout);
-	return -1;
-}
+		    count, समयout);
+	वापस -1;
+पूर्ण
 
-static int hdsp_read_gain (struct hdsp *hdsp, unsigned int addr)
-{
-	if (addr >= HDSP_MATRIX_MIXER_SIZE)
-		return 0;
+अटल पूर्णांक hdsp_पढ़ो_gain (काष्ठा hdsp *hdsp, अचिन्हित पूर्णांक addr)
+अणु
+	अगर (addr >= HDSP_MATRIX_MIXER_SIZE)
+		वापस 0;
 
-	return hdsp->mixer_matrix[addr];
-}
+	वापस hdsp->mixer_matrix[addr];
+पूर्ण
 
-static int hdsp_write_gain(struct hdsp *hdsp, unsigned int addr, unsigned short data)
-{
-	unsigned int ad;
+अटल पूर्णांक hdsp_ग_लिखो_gain(काष्ठा hdsp *hdsp, अचिन्हित पूर्णांक addr, अचिन्हित लघु data)
+अणु
+	अचिन्हित पूर्णांक ad;
 
-	if (addr >= HDSP_MATRIX_MIXER_SIZE)
-		return -1;
+	अगर (addr >= HDSP_MATRIX_MIXER_SIZE)
+		वापस -1;
 
-	if (hdsp->io_type == H9652 || hdsp->io_type == H9632) {
+	अगर (hdsp->io_type == H9652 || hdsp->io_type == H9632) अणु
 
 		/* from martin bjornsen:
 
-		   "You can only write dwords to the
+		   "You can only ग_लिखो dwords to the
 		   mixer memory which contain two
 		   mixer values in the low and high
-		   word. So if you want to change
-		   value 0 you have to read value 1
-		   from the cache and write both to
+		   word. So अगर you want to change
+		   value 0 you have to पढ़ो value 1
+		   from the cache and ग_लिखो both to
 		   the first dword in the mixer
 		   memory."
 		*/
 
-		if (hdsp->io_type == H9632 && addr >= 512)
-			return 0;
+		अगर (hdsp->io_type == H9632 && addr >= 512)
+			वापस 0;
 
-		if (hdsp->io_type == H9652 && addr >= 1352)
-			return 0;
+		अगर (hdsp->io_type == H9652 && addr >= 1352)
+			वापस 0;
 
 		hdsp->mixer_matrix[addr] = data;
 
 
 		/* `addr' addresses a 16-bit wide address, but
-		   the address space accessed via hdsp_write
+		   the address space accessed via hdsp_ग_लिखो
 		   uses byte offsets. put another way, addr
 		   varies from 0 to 1351, but to access the
 		   corresponding memory location, we need
@@ -919,605 +920,605 @@ static int hdsp_write_gain(struct hdsp *hdsp, unsigned int addr, unsigned short 
 		*/
 		ad = addr/2;
 
-		hdsp_write (hdsp, 4096 + (ad*4),
+		hdsp_ग_लिखो (hdsp, 4096 + (ad*4),
 			    (hdsp->mixer_matrix[(addr&0x7fe)+1] << 16) +
 			    hdsp->mixer_matrix[addr&0x7fe]);
 
-		return 0;
+		वापस 0;
 
-	} else {
+	पूर्ण अन्यथा अणु
 
 		ad = (addr << 16) + data;
 
-		if (hdsp_fifo_wait(hdsp, 127, HDSP_LONG_WAIT))
-			return -1;
+		अगर (hdsp_fअगरo_रुको(hdsp, 127, HDSP_LONG_WAIT))
+			वापस -1;
 
-		hdsp_write (hdsp, HDSP_fifoData, ad);
+		hdsp_ग_लिखो (hdsp, HDSP_fअगरoData, ad);
 		hdsp->mixer_matrix[addr] = data;
 
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_use_is_exclusive(struct hdsp *hdsp)
-{
-	unsigned long flags;
-	int ret = 1;
+अटल पूर्णांक snd_hdsp_use_is_exclusive(काष्ठा hdsp *hdsp)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 1;
 
 	spin_lock_irqsave(&hdsp->lock, flags);
-	if ((hdsp->playback_pid != hdsp->capture_pid) &&
+	अगर ((hdsp->playback_pid != hdsp->capture_pid) &&
 	    (hdsp->playback_pid >= 0) && (hdsp->capture_pid >= 0))
 		ret = 0;
 	spin_unlock_irqrestore(&hdsp->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hdsp_spdif_sample_rate(struct hdsp *hdsp)
-{
-	unsigned int status = hdsp_read(hdsp, HDSP_statusRegister);
-	unsigned int rate_bits = (status & HDSP_spdifFrequencyMask);
+अटल पूर्णांक hdsp_spdअगर_sample_rate(काष्ठा hdsp *hdsp)
+अणु
+	अचिन्हित पूर्णांक status = hdsp_पढ़ो(hdsp, HDSP_statusRegister);
+	अचिन्हित पूर्णांक rate_bits = (status & HDSP_spdअगरFrequencyMask);
 
-	/* For the 9632, the mask is different */
-	if (hdsp->io_type == H9632)
-		 rate_bits = (status & HDSP_spdifFrequencyMask_9632);
+	/* For the 9632, the mask is dअगरferent */
+	अगर (hdsp->io_type == H9632)
+		 rate_bits = (status & HDSP_spdअगरFrequencyMask_9632);
 
-	if (status & HDSP_SPDIFErrorFlag)
-		return 0;
+	अगर (status & HDSP_SPDIFErrorFlag)
+		वापस 0;
 
-	switch (rate_bits) {
-	case HDSP_spdifFrequency32KHz: return 32000;
-	case HDSP_spdifFrequency44_1KHz: return 44100;
-	case HDSP_spdifFrequency48KHz: return 48000;
-	case HDSP_spdifFrequency64KHz: return 64000;
-	case HDSP_spdifFrequency88_2KHz: return 88200;
-	case HDSP_spdifFrequency96KHz: return 96000;
-	case HDSP_spdifFrequency128KHz:
-		if (hdsp->io_type == H9632) return 128000;
-		break;
-	case HDSP_spdifFrequency176_4KHz:
-		if (hdsp->io_type == H9632) return 176400;
-		break;
-	case HDSP_spdifFrequency192KHz:
-		if (hdsp->io_type == H9632) return 192000;
-		break;
-	default:
-		break;
-	}
+	चयन (rate_bits) अणु
+	हाल HDSP_spdअगरFrequency32KHz: वापस 32000;
+	हाल HDSP_spdअगरFrequency44_1KHz: वापस 44100;
+	हाल HDSP_spdअगरFrequency48KHz: वापस 48000;
+	हाल HDSP_spdअगरFrequency64KHz: वापस 64000;
+	हाल HDSP_spdअगरFrequency88_2KHz: वापस 88200;
+	हाल HDSP_spdअगरFrequency96KHz: वापस 96000;
+	हाल HDSP_spdअगरFrequency128KHz:
+		अगर (hdsp->io_type == H9632) वापस 128000;
+		अवरोध;
+	हाल HDSP_spdअगरFrequency176_4KHz:
+		अगर (hdsp->io_type == H9632) वापस 176400;
+		अवरोध;
+	हाल HDSP_spdअगरFrequency192KHz:
+		अगर (hdsp->io_type == H9632) वापस 192000;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	dev_warn(hdsp->card->dev,
 		 "unknown spdif frequency status; bits = 0x%x, status = 0x%x\n",
 		 rate_bits, status);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hdsp_external_sample_rate(struct hdsp *hdsp)
-{
-	unsigned int status2 = hdsp_read(hdsp, HDSP_status2Register);
-	unsigned int rate_bits = status2 & HDSP_systemFrequencyMask;
+अटल पूर्णांक hdsp_बाह्यal_sample_rate(काष्ठा hdsp *hdsp)
+अणु
+	अचिन्हित पूर्णांक status2 = hdsp_पढ़ो(hdsp, HDSP_status2Register);
+	अचिन्हित पूर्णांक rate_bits = status2 & HDSP_प्रणालीFrequencyMask;
 
-	/* For the 9632 card, there seems to be no bit for indicating external
+	/* For the 9632 card, there seems to be no bit क्रम indicating बाह्यal
 	 * sample rate greater than 96kHz. The card reports the corresponding
-	 * single speed. So the best means seems to get spdif rate when
-	 * autosync reference is spdif */
-	if (hdsp->io_type == H9632 &&
-	    hdsp_autosync_ref(hdsp) == HDSP_AUTOSYNC_FROM_SPDIF)
-		 return hdsp_spdif_sample_rate(hdsp);
+	 * single speed. So the best means seems to get spdअगर rate when
+	 * स्वतःsync reference is spdअगर */
+	अगर (hdsp->io_type == H9632 &&
+	    hdsp_स्वतःsync_ref(hdsp) == HDSP_AUTOSYNC_FROM_SPDIF)
+		 वापस hdsp_spdअगर_sample_rate(hdsp);
 
-	switch (rate_bits) {
-	case HDSP_systemFrequency32:   return 32000;
-	case HDSP_systemFrequency44_1: return 44100;
-	case HDSP_systemFrequency48:   return 48000;
-	case HDSP_systemFrequency64:   return 64000;
-	case HDSP_systemFrequency88_2: return 88200;
-	case HDSP_systemFrequency96:   return 96000;
-	default:
-		return 0;
-	}
-}
+	चयन (rate_bits) अणु
+	हाल HDSP_प्रणालीFrequency32:   वापस 32000;
+	हाल HDSP_प्रणालीFrequency44_1: वापस 44100;
+	हाल HDSP_प्रणालीFrequency48:   वापस 48000;
+	हाल HDSP_प्रणालीFrequency64:   वापस 64000;
+	हाल HDSP_प्रणालीFrequency88_2: वापस 88200;
+	हाल HDSP_प्रणालीFrequency96:   वापस 96000;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void hdsp_compute_period_size(struct hdsp *hdsp)
-{
-	hdsp->period_bytes = 1 << ((hdsp_decode_latency(hdsp->control_register) + 8));
-}
+अटल व्योम hdsp_compute_period_size(काष्ठा hdsp *hdsp)
+अणु
+	hdsp->period_bytes = 1 << ((hdsp_decode_latency(hdsp->control_रेजिस्टर) + 8));
+पूर्ण
 
-static snd_pcm_uframes_t hdsp_hw_pointer(struct hdsp *hdsp)
-{
-	int position;
+अटल snd_pcm_uframes_t hdsp_hw_poपूर्णांकer(काष्ठा hdsp *hdsp)
+अणु
+	पूर्णांक position;
 
-	position = hdsp_read(hdsp, HDSP_statusRegister);
+	position = hdsp_पढ़ो(hdsp, HDSP_statusRegister);
 
-	if (!hdsp->precise_ptr)
-		return (position & HDSP_BufferID) ? (hdsp->period_bytes / 4) : 0;
+	अगर (!hdsp->precise_ptr)
+		वापस (position & HDSP_BufferID) ? (hdsp->period_bytes / 4) : 0;
 
 	position &= HDSP_BufferPositionMask;
 	position /= 4;
 	position &= (hdsp->period_bytes/2) - 1;
-	return position;
-}
+	वापस position;
+पूर्ण
 
-static void hdsp_reset_hw_pointer(struct hdsp *hdsp)
-{
-	hdsp_write (hdsp, HDSP_resetPointer, 0);
-	if (hdsp->io_type == H9632 && hdsp->firmware_rev >= 152)
-		/* HDSP_resetPointer = HDSP_freqReg, which is strange and
-		 * requires (?) to write again DDS value after a reset pointer
+अटल व्योम hdsp_reset_hw_poपूर्णांकer(काष्ठा hdsp *hdsp)
+अणु
+	hdsp_ग_लिखो (hdsp, HDSP_resetPoपूर्णांकer, 0);
+	अगर (hdsp->io_type == H9632 && hdsp->firmware_rev >= 152)
+		/* HDSP_resetPoपूर्णांकer = HDSP_freqReg, which is strange and
+		 * requires (?) to ग_लिखो again DDS value after a reset poपूर्णांकer
 		 * (at least, it works like this) */
-		hdsp_write (hdsp, HDSP_freqReg, hdsp->dds_value);
-}
+		hdsp_ग_लिखो (hdsp, HDSP_freqReg, hdsp->dds_value);
+पूर्ण
 
-static void hdsp_start_audio(struct hdsp *s)
-{
-	s->control_register |= (HDSP_AudioInterruptEnable | HDSP_Start);
-	hdsp_write(s, HDSP_controlRegister, s->control_register);
-}
+अटल व्योम hdsp_start_audio(काष्ठा hdsp *s)
+अणु
+	s->control_रेजिस्टर |= (HDSP_AudioInterruptEnable | HDSP_Start);
+	hdsp_ग_लिखो(s, HDSP_controlRegister, s->control_रेजिस्टर);
+पूर्ण
 
-static void hdsp_stop_audio(struct hdsp *s)
-{
-	s->control_register &= ~(HDSP_Start | HDSP_AudioInterruptEnable);
-	hdsp_write(s, HDSP_controlRegister, s->control_register);
-}
+अटल व्योम hdsp_stop_audio(काष्ठा hdsp *s)
+अणु
+	s->control_रेजिस्टर &= ~(HDSP_Start | HDSP_AudioInterruptEnable);
+	hdsp_ग_लिखो(s, HDSP_controlRegister, s->control_रेजिस्टर);
+पूर्ण
 
-static void hdsp_silence_playback(struct hdsp *hdsp)
-{
-	memset(hdsp->playback_buffer, 0, HDSP_DMA_AREA_BYTES);
-}
+अटल व्योम hdsp_silence_playback(काष्ठा hdsp *hdsp)
+अणु
+	स_रखो(hdsp->playback_buffer, 0, HDSP_DMA_AREA_BYTES);
+पूर्ण
 
-static int hdsp_set_interrupt_interval(struct hdsp *s, unsigned int frames)
-{
-	int n;
+अटल पूर्णांक hdsp_set_पूर्णांकerrupt_पूर्णांकerval(काष्ठा hdsp *s, अचिन्हित पूर्णांक frames)
+अणु
+	पूर्णांक n;
 
 	spin_lock_irq(&s->lock);
 
 	frames >>= 7;
 	n = 0;
-	while (frames) {
+	जबतक (frames) अणु
 		n++;
 		frames >>= 1;
-	}
+	पूर्ण
 
-	s->control_register &= ~HDSP_LatencyMask;
-	s->control_register |= hdsp_encode_latency(n);
+	s->control_रेजिस्टर &= ~HDSP_LatencyMask;
+	s->control_रेजिस्टर |= hdsp_encode_latency(n);
 
-	hdsp_write(s, HDSP_controlRegister, s->control_register);
+	hdsp_ग_लिखो(s, HDSP_controlRegister, s->control_रेजिस्टर);
 
 	hdsp_compute_period_size(s);
 
 	spin_unlock_irq(&s->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hdsp_set_dds_value(struct hdsp *hdsp, int rate)
-{
+अटल व्योम hdsp_set_dds_value(काष्ठा hdsp *hdsp, पूर्णांक rate)
+अणु
 	u64 n;
 
-	if (rate >= 112000)
+	अगर (rate >= 112000)
 		rate /= 4;
-	else if (rate >= 56000)
+	अन्यथा अगर (rate >= 56000)
 		rate /= 2;
 
 	n = DDS_NUMERATOR;
-	n = div_u64(n, rate);
-	/* n should be less than 2^32 for being written to FREQ register */
+	n = भाग_u64(n, rate);
+	/* n should be less than 2^32 क्रम being written to FREQ रेजिस्टर */
 	snd_BUG_ON(n >> 32);
-	/* HDSP_freqReg and HDSP_resetPointer are the same, so keep the DDS
-	   value to write it after a reset */
+	/* HDSP_freqReg and HDSP_resetPoपूर्णांकer are the same, so keep the DDS
+	   value to ग_लिखो it after a reset */
 	hdsp->dds_value = n;
-	hdsp_write(hdsp, HDSP_freqReg, hdsp->dds_value);
-}
+	hdsp_ग_लिखो(hdsp, HDSP_freqReg, hdsp->dds_value);
+पूर्ण
 
-static int hdsp_set_rate(struct hdsp *hdsp, int rate, int called_internally)
-{
-	int reject_if_open = 0;
-	int current_rate;
-	int rate_bits;
+अटल पूर्णांक hdsp_set_rate(काष्ठा hdsp *hdsp, पूर्णांक rate, पूर्णांक called_पूर्णांकernally)
+अणु
+	पूर्णांक reject_अगर_खोलो = 0;
+	पूर्णांक current_rate;
+	पूर्णांक rate_bits;
 
 	/* ASSUMPTION: hdsp->lock is either held, or
-	   there is no need for it (e.g. during module
+	   there is no need क्रम it (e.g. during module
 	   initialization).
 	*/
 
-	if (!(hdsp->control_register & HDSP_ClockModeMaster)) {
-		if (called_internally) {
+	अगर (!(hdsp->control_रेजिस्टर & HDSP_ClockModeMaster)) अणु
+		अगर (called_पूर्णांकernally) अणु
 			/* request from ctl or card initialization */
 			dev_err(hdsp->card->dev,
 				"device is not running as a clock master: cannot set sample rate.\n");
-			return -1;
-		} else {
-			/* hw_param request while in AutoSync mode */
-			int external_freq = hdsp_external_sample_rate(hdsp);
-			int spdif_freq = hdsp_spdif_sample_rate(hdsp);
+			वापस -1;
+		पूर्ण अन्यथा अणु
+			/* hw_param request जबतक in AutoSync mode */
+			पूर्णांक बाह्यal_freq = hdsp_बाह्यal_sample_rate(hdsp);
+			पूर्णांक spdअगर_freq = hdsp_spdअगर_sample_rate(hdsp);
 
-			if ((spdif_freq == external_freq*2) && (hdsp_autosync_ref(hdsp) >= HDSP_AUTOSYNC_FROM_ADAT1))
+			अगर ((spdअगर_freq == बाह्यal_freq*2) && (hdsp_स्वतःsync_ref(hdsp) >= HDSP_AUTOSYNC_FROM_ADAT1))
 				dev_info(hdsp->card->dev,
 					 "Detected ADAT in double speed mode\n");
-			else if (hdsp->io_type == H9632 && (spdif_freq == external_freq*4) && (hdsp_autosync_ref(hdsp) >= HDSP_AUTOSYNC_FROM_ADAT1))
+			अन्यथा अगर (hdsp->io_type == H9632 && (spdअगर_freq == बाह्यal_freq*4) && (hdsp_स्वतःsync_ref(hdsp) >= HDSP_AUTOSYNC_FROM_ADAT1))
 				dev_info(hdsp->card->dev,
 					 "Detected ADAT in quad speed mode\n");
-			else if (rate != external_freq) {
+			अन्यथा अगर (rate != बाह्यal_freq) अणु
 				dev_info(hdsp->card->dev,
 					 "No AutoSync source for requested rate\n");
-				return -1;
-			}
-		}
-	}
+				वापस -1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	current_rate = hdsp->system_sample_rate;
+	current_rate = hdsp->प्रणाली_sample_rate;
 
 	/* Changing from a "single speed" to a "double speed" rate is
-	   not allowed if any substreams are open. This is because
-	   such a change causes a shift in the location of
+	   not allowed अगर any substreams are खोलो. This is because
+	   such a change causes a shअगरt in the location of
 	   the DMA buffers and a reduction in the number of available
 	   buffers.
 
 	   Note that a similar but essentially insoluble problem
-	   exists for externally-driven rate changes. All we can do
-	   is to flag rate changes in the read/write routines.  */
+	   exists क्रम बाह्यally-driven rate changes. All we can करो
+	   is to flag rate changes in the पढ़ो/ग_लिखो routines.  */
 
-	if (rate > 96000 && hdsp->io_type != H9632)
-		return -EINVAL;
+	अगर (rate > 96000 && hdsp->io_type != H9632)
+		वापस -EINVAL;
 
-	switch (rate) {
-	case 32000:
-		if (current_rate > 48000)
-			reject_if_open = 1;
+	चयन (rate) अणु
+	हाल 32000:
+		अगर (current_rate > 48000)
+			reject_अगर_खोलो = 1;
 		rate_bits = HDSP_Frequency32KHz;
-		break;
-	case 44100:
-		if (current_rate > 48000)
-			reject_if_open = 1;
+		अवरोध;
+	हाल 44100:
+		अगर (current_rate > 48000)
+			reject_अगर_खोलो = 1;
 		rate_bits = HDSP_Frequency44_1KHz;
-		break;
-	case 48000:
-		if (current_rate > 48000)
-			reject_if_open = 1;
+		अवरोध;
+	हाल 48000:
+		अगर (current_rate > 48000)
+			reject_अगर_खोलो = 1;
 		rate_bits = HDSP_Frequency48KHz;
-		break;
-	case 64000:
-		if (current_rate <= 48000 || current_rate > 96000)
-			reject_if_open = 1;
+		अवरोध;
+	हाल 64000:
+		अगर (current_rate <= 48000 || current_rate > 96000)
+			reject_अगर_खोलो = 1;
 		rate_bits = HDSP_Frequency64KHz;
-		break;
-	case 88200:
-		if (current_rate <= 48000 || current_rate > 96000)
-			reject_if_open = 1;
+		अवरोध;
+	हाल 88200:
+		अगर (current_rate <= 48000 || current_rate > 96000)
+			reject_अगर_खोलो = 1;
 		rate_bits = HDSP_Frequency88_2KHz;
-		break;
-	case 96000:
-		if (current_rate <= 48000 || current_rate > 96000)
-			reject_if_open = 1;
+		अवरोध;
+	हाल 96000:
+		अगर (current_rate <= 48000 || current_rate > 96000)
+			reject_अगर_खोलो = 1;
 		rate_bits = HDSP_Frequency96KHz;
-		break;
-	case 128000:
-		if (current_rate < 128000)
-			reject_if_open = 1;
+		अवरोध;
+	हाल 128000:
+		अगर (current_rate < 128000)
+			reject_अगर_खोलो = 1;
 		rate_bits = HDSP_Frequency128KHz;
-		break;
-	case 176400:
-		if (current_rate < 128000)
-			reject_if_open = 1;
+		अवरोध;
+	हाल 176400:
+		अगर (current_rate < 128000)
+			reject_अगर_खोलो = 1;
 		rate_bits = HDSP_Frequency176_4KHz;
-		break;
-	case 192000:
-		if (current_rate < 128000)
-			reject_if_open = 1;
+		अवरोध;
+	हाल 192000:
+		अगर (current_rate < 128000)
+			reject_अगर_खोलो = 1;
 		rate_bits = HDSP_Frequency192KHz;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (reject_if_open && (hdsp->capture_pid >= 0 || hdsp->playback_pid >= 0)) {
+	अगर (reject_अगर_खोलो && (hdsp->capture_pid >= 0 || hdsp->playback_pid >= 0)) अणु
 		dev_warn(hdsp->card->dev,
 			 "cannot change speed mode (capture PID = %d, playback PID = %d)\n",
 			    hdsp->capture_pid,
 			    hdsp->playback_pid);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	hdsp->control_register &= ~HDSP_FrequencyMask;
-	hdsp->control_register |= rate_bits;
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
+	hdsp->control_रेजिस्टर &= ~HDSP_FrequencyMask;
+	hdsp->control_रेजिस्टर |= rate_bits;
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
 
-	/* For HDSP9632 rev 152, need to set DDS value in FREQ register */
-	if (hdsp->io_type == H9632 && hdsp->firmware_rev >= 152)
+	/* For HDSP9632 rev 152, need to set DDS value in FREQ रेजिस्टर */
+	अगर (hdsp->io_type == H9632 && hdsp->firmware_rev >= 152)
 		hdsp_set_dds_value(hdsp, rate);
 
-	if (rate >= 128000) {
+	अगर (rate >= 128000) अणु
 		hdsp->channel_map = channel_map_H9632_qs;
-	} else if (rate > 48000) {
-		if (hdsp->io_type == H9632)
+	पूर्ण अन्यथा अगर (rate > 48000) अणु
+		अगर (hdsp->io_type == H9632)
 			hdsp->channel_map = channel_map_H9632_ds;
-		else
+		अन्यथा
 			hdsp->channel_map = channel_map_ds;
-	} else {
-		switch (hdsp->io_type) {
-		case RPM:
-		case Multiface:
+	पूर्ण अन्यथा अणु
+		चयन (hdsp->io_type) अणु
+		हाल RPM:
+		हाल Multअगरace:
 			hdsp->channel_map = channel_map_mf_ss;
-			break;
-		case Digiface:
-		case H9652:
+			अवरोध;
+		हाल Digअगरace:
+		हाल H9652:
 			hdsp->channel_map = channel_map_df_ss;
-			break;
-		case H9632:
+			अवरोध;
+		हाल H9632:
 			hdsp->channel_map = channel_map_H9632_ss;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/* should never happen */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	hdsp->system_sample_rate = rate;
+	hdsp->प्रणाली_sample_rate = rate;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------------------
    MIDI
   ----------------------------------------------------------------------------*/
 
-static unsigned char snd_hdsp_midi_read_byte (struct hdsp *hdsp, int id)
-{
-	/* the hardware already does the relevant bit-mask with 0xff */
-	if (id)
-		return hdsp_read(hdsp, HDSP_midiDataIn1);
-	else
-		return hdsp_read(hdsp, HDSP_midiDataIn0);
-}
+अटल अचिन्हित अक्षर snd_hdsp_midi_पढ़ो_byte (काष्ठा hdsp *hdsp, पूर्णांक id)
+अणु
+	/* the hardware alपढ़ोy करोes the relevant bit-mask with 0xff */
+	अगर (id)
+		वापस hdsp_पढ़ो(hdsp, HDSP_midiDataIn1);
+	अन्यथा
+		वापस hdsp_पढ़ो(hdsp, HDSP_midiDataIn0);
+पूर्ण
 
-static void snd_hdsp_midi_write_byte (struct hdsp *hdsp, int id, int val)
-{
-	/* the hardware already does the relevant bit-mask with 0xff */
-	if (id)
-		hdsp_write(hdsp, HDSP_midiDataOut1, val);
-	else
-		hdsp_write(hdsp, HDSP_midiDataOut0, val);
-}
+अटल व्योम snd_hdsp_midi_ग_लिखो_byte (काष्ठा hdsp *hdsp, पूर्णांक id, पूर्णांक val)
+अणु
+	/* the hardware alपढ़ोy करोes the relevant bit-mask with 0xff */
+	अगर (id)
+		hdsp_ग_लिखो(hdsp, HDSP_midiDataOut1, val);
+	अन्यथा
+		hdsp_ग_लिखो(hdsp, HDSP_midiDataOut0, val);
+पूर्ण
 
-static int snd_hdsp_midi_input_available (struct hdsp *hdsp, int id)
-{
-	if (id)
-		return (hdsp_read(hdsp, HDSP_midiStatusIn1) & 0xff);
-	else
-		return (hdsp_read(hdsp, HDSP_midiStatusIn0) & 0xff);
-}
+अटल पूर्णांक snd_hdsp_midi_input_available (काष्ठा hdsp *hdsp, पूर्णांक id)
+अणु
+	अगर (id)
+		वापस (hdsp_पढ़ो(hdsp, HDSP_midiStatusIn1) & 0xff);
+	अन्यथा
+		वापस (hdsp_पढ़ो(hdsp, HDSP_midiStatusIn0) & 0xff);
+पूर्ण
 
-static int snd_hdsp_midi_output_possible (struct hdsp *hdsp, int id)
-{
-	int fifo_bytes_used;
+अटल पूर्णांक snd_hdsp_midi_output_possible (काष्ठा hdsp *hdsp, पूर्णांक id)
+अणु
+	पूर्णांक fअगरo_bytes_used;
 
-	if (id)
-		fifo_bytes_used = hdsp_read(hdsp, HDSP_midiStatusOut1) & 0xff;
-	else
-		fifo_bytes_used = hdsp_read(hdsp, HDSP_midiStatusOut0) & 0xff;
+	अगर (id)
+		fअगरo_bytes_used = hdsp_पढ़ो(hdsp, HDSP_midiStatusOut1) & 0xff;
+	अन्यथा
+		fअगरo_bytes_used = hdsp_पढ़ो(hdsp, HDSP_midiStatusOut0) & 0xff;
 
-	if (fifo_bytes_used < 128)
-		return  128 - fifo_bytes_used;
-	else
-		return 0;
-}
+	अगर (fअगरo_bytes_used < 128)
+		वापस  128 - fअगरo_bytes_used;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static void snd_hdsp_flush_midi_input (struct hdsp *hdsp, int id)
-{
-	while (snd_hdsp_midi_input_available (hdsp, id))
-		snd_hdsp_midi_read_byte (hdsp, id);
-}
+अटल व्योम snd_hdsp_flush_midi_input (काष्ठा hdsp *hdsp, पूर्णांक id)
+अणु
+	जबतक (snd_hdsp_midi_input_available (hdsp, id))
+		snd_hdsp_midi_पढ़ो_byte (hdsp, id);
+पूर्ण
 
-static int snd_hdsp_midi_output_write (struct hdsp_midi *hmidi)
-{
-	unsigned long flags;
-	int n_pending;
-	int to_write;
-	int i;
-	unsigned char buf[128];
+अटल पूर्णांक snd_hdsp_midi_output_ग_लिखो (काष्ठा hdsp_midi *hmidi)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक n_pending;
+	पूर्णांक to_ग_लिखो;
+	पूर्णांक i;
+	अचिन्हित अक्षर buf[128];
 
-	/* Output is not interrupt driven */
+	/* Output is not पूर्णांकerrupt driven */
 
 	spin_lock_irqsave (&hmidi->lock, flags);
-	if (hmidi->output) {
-		if (!snd_rawmidi_transmit_empty (hmidi->output)) {
-			if ((n_pending = snd_hdsp_midi_output_possible (hmidi->hdsp, hmidi->id)) > 0) {
-				if (n_pending > (int)sizeof (buf))
-					n_pending = sizeof (buf);
+	अगर (hmidi->output) अणु
+		अगर (!snd_rawmidi_transmit_empty (hmidi->output)) अणु
+			अगर ((n_pending = snd_hdsp_midi_output_possible (hmidi->hdsp, hmidi->id)) > 0) अणु
+				अगर (n_pending > (पूर्णांक)माप (buf))
+					n_pending = माप (buf);
 
-				if ((to_write = snd_rawmidi_transmit (hmidi->output, buf, n_pending)) > 0) {
-					for (i = 0; i < to_write; ++i)
-						snd_hdsp_midi_write_byte (hmidi->hdsp, hmidi->id, buf[i]);
-				}
-			}
-		}
-	}
+				अगर ((to_ग_लिखो = snd_rawmidi_transmit (hmidi->output, buf, n_pending)) > 0) अणु
+					क्रम (i = 0; i < to_ग_लिखो; ++i)
+						snd_hdsp_midi_ग_लिखो_byte (hmidi->hdsp, hmidi->id, buf[i]);
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore (&hmidi->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_midi_input_read (struct hdsp_midi *hmidi)
-{
-	unsigned char buf[128]; /* this buffer is designed to match the MIDI input FIFO size */
-	unsigned long flags;
-	int n_pending;
-	int i;
+अटल पूर्णांक snd_hdsp_midi_input_पढ़ो (काष्ठा hdsp_midi *hmidi)
+अणु
+	अचिन्हित अक्षर buf[128]; /* this buffer is deचिन्हित to match the MIDI input FIFO size */
+	अचिन्हित दीर्घ flags;
+	पूर्णांक n_pending;
+	पूर्णांक i;
 
 	spin_lock_irqsave (&hmidi->lock, flags);
-	if ((n_pending = snd_hdsp_midi_input_available (hmidi->hdsp, hmidi->id)) > 0) {
-		if (hmidi->input) {
-			if (n_pending > (int)sizeof (buf))
-				n_pending = sizeof (buf);
-			for (i = 0; i < n_pending; ++i)
-				buf[i] = snd_hdsp_midi_read_byte (hmidi->hdsp, hmidi->id);
-			if (n_pending)
+	अगर ((n_pending = snd_hdsp_midi_input_available (hmidi->hdsp, hmidi->id)) > 0) अणु
+		अगर (hmidi->input) अणु
+			अगर (n_pending > (पूर्णांक)माप (buf))
+				n_pending = माप (buf);
+			क्रम (i = 0; i < n_pending; ++i)
+				buf[i] = snd_hdsp_midi_पढ़ो_byte (hmidi->hdsp, hmidi->id);
+			अगर (n_pending)
 				snd_rawmidi_receive (hmidi->input, buf, n_pending);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* flush the MIDI input FIFO */
-			while (--n_pending)
-				snd_hdsp_midi_read_byte (hmidi->hdsp, hmidi->id);
-		}
-	}
+			जबतक (--n_pending)
+				snd_hdsp_midi_पढ़ो_byte (hmidi->hdsp, hmidi->id);
+		पूर्ण
+	पूर्ण
 	hmidi->pending = 0;
-	if (hmidi->id)
-		hmidi->hdsp->control_register |= HDSP_Midi1InterruptEnable;
-	else
-		hmidi->hdsp->control_register |= HDSP_Midi0InterruptEnable;
-	hdsp_write(hmidi->hdsp, HDSP_controlRegister, hmidi->hdsp->control_register);
+	अगर (hmidi->id)
+		hmidi->hdsp->control_रेजिस्टर |= HDSP_Midi1InterruptEnable;
+	अन्यथा
+		hmidi->hdsp->control_रेजिस्टर |= HDSP_Midi0InterruptEnable;
+	hdsp_ग_लिखो(hmidi->hdsp, HDSP_controlRegister, hmidi->hdsp->control_रेजिस्टर);
 	spin_unlock_irqrestore (&hmidi->lock, flags);
-	return snd_hdsp_midi_output_write (hmidi);
-}
+	वापस snd_hdsp_midi_output_ग_लिखो (hmidi);
+पूर्ण
 
-static void snd_hdsp_midi_input_trigger(struct snd_rawmidi_substream *substream, int up)
-{
-	struct hdsp *hdsp;
-	struct hdsp_midi *hmidi;
-	unsigned long flags;
+अटल व्योम snd_hdsp_midi_input_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
+अणु
+	काष्ठा hdsp *hdsp;
+	काष्ठा hdsp_midi *hmidi;
+	अचिन्हित दीर्घ flags;
 	u32 ie;
 
-	hmidi = (struct hdsp_midi *) substream->rmidi->private_data;
+	hmidi = (काष्ठा hdsp_midi *) substream->rmidi->निजी_data;
 	hdsp = hmidi->hdsp;
 	ie = hmidi->id ? HDSP_Midi1InterruptEnable : HDSP_Midi0InterruptEnable;
 	spin_lock_irqsave (&hdsp->lock, flags);
-	if (up) {
-		if (!(hdsp->control_register & ie)) {
+	अगर (up) अणु
+		अगर (!(hdsp->control_रेजिस्टर & ie)) अणु
 			snd_hdsp_flush_midi_input (hdsp, hmidi->id);
-			hdsp->control_register |= ie;
-		}
-	} else {
-		hdsp->control_register &= ~ie;
-	}
+			hdsp->control_रेजिस्टर |= ie;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		hdsp->control_रेजिस्टर &= ~ie;
+	पूर्ण
 
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
 	spin_unlock_irqrestore (&hdsp->lock, flags);
-}
+पूर्ण
 
-static void snd_hdsp_midi_output_timer(struct timer_list *t)
-{
-	struct hdsp_midi *hmidi = from_timer(hmidi, t, timer);
-	unsigned long flags;
+अटल व्योम snd_hdsp_midi_output_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा hdsp_midi *hmidi = from_समयr(hmidi, t, समयr);
+	अचिन्हित दीर्घ flags;
 
-	snd_hdsp_midi_output_write(hmidi);
+	snd_hdsp_midi_output_ग_लिखो(hmidi);
 	spin_lock_irqsave (&hmidi->lock, flags);
 
-	/* this does not bump hmidi->istimer, because the
-	   kernel automatically removed the timer when it
+	/* this करोes not bump hmidi->isसमयr, because the
+	   kernel स्वतःmatically हटाओd the समयr when it
 	   expired, and we are now adding it back, thus
-	   leaving istimer wherever it was set before.
+	   leaving isसमयr wherever it was set beक्रमe.
 	*/
 
-	if (hmidi->istimer)
-		mod_timer(&hmidi->timer, 1 + jiffies);
+	अगर (hmidi->isसमयr)
+		mod_समयr(&hmidi->समयr, 1 + jअगरfies);
 
 	spin_unlock_irqrestore (&hmidi->lock, flags);
-}
+पूर्ण
 
-static void snd_hdsp_midi_output_trigger(struct snd_rawmidi_substream *substream, int up)
-{
-	struct hdsp_midi *hmidi;
-	unsigned long flags;
+अटल व्योम snd_hdsp_midi_output_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
+अणु
+	काष्ठा hdsp_midi *hmidi;
+	अचिन्हित दीर्घ flags;
 
-	hmidi = (struct hdsp_midi *) substream->rmidi->private_data;
+	hmidi = (काष्ठा hdsp_midi *) substream->rmidi->निजी_data;
 	spin_lock_irqsave (&hmidi->lock, flags);
-	if (up) {
-		if (!hmidi->istimer) {
-			timer_setup(&hmidi->timer, snd_hdsp_midi_output_timer,
+	अगर (up) अणु
+		अगर (!hmidi->isसमयr) अणु
+			समयr_setup(&hmidi->समयr, snd_hdsp_midi_output_समयr,
 				    0);
-			mod_timer(&hmidi->timer, 1 + jiffies);
-			hmidi->istimer++;
-		}
-	} else {
-		if (hmidi->istimer && --hmidi->istimer <= 0)
-			del_timer (&hmidi->timer);
-	}
+			mod_समयr(&hmidi->समयr, 1 + jअगरfies);
+			hmidi->isसमयr++;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (hmidi->isसमयr && --hmidi->isसमयr <= 0)
+			del_समयr (&hmidi->समयr);
+	पूर्ण
 	spin_unlock_irqrestore (&hmidi->lock, flags);
-	if (up)
-		snd_hdsp_midi_output_write(hmidi);
-}
+	अगर (up)
+		snd_hdsp_midi_output_ग_लिखो(hmidi);
+पूर्ण
 
-static int snd_hdsp_midi_input_open(struct snd_rawmidi_substream *substream)
-{
-	struct hdsp_midi *hmidi;
+अटल पूर्णांक snd_hdsp_midi_input_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा hdsp_midi *hmidi;
 
-	hmidi = (struct hdsp_midi *) substream->rmidi->private_data;
+	hmidi = (काष्ठा hdsp_midi *) substream->rmidi->निजी_data;
 	spin_lock_irq (&hmidi->lock);
 	snd_hdsp_flush_midi_input (hmidi->hdsp, hmidi->id);
 	hmidi->input = substream;
 	spin_unlock_irq (&hmidi->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_midi_output_open(struct snd_rawmidi_substream *substream)
-{
-	struct hdsp_midi *hmidi;
+अटल पूर्णांक snd_hdsp_midi_output_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा hdsp_midi *hmidi;
 
-	hmidi = (struct hdsp_midi *) substream->rmidi->private_data;
+	hmidi = (काष्ठा hdsp_midi *) substream->rmidi->निजी_data;
 	spin_lock_irq (&hmidi->lock);
 	hmidi->output = substream;
 	spin_unlock_irq (&hmidi->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_midi_input_close(struct snd_rawmidi_substream *substream)
-{
-	struct hdsp_midi *hmidi;
+अटल पूर्णांक snd_hdsp_midi_input_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा hdsp_midi *hmidi;
 
 	snd_hdsp_midi_input_trigger (substream, 0);
 
-	hmidi = (struct hdsp_midi *) substream->rmidi->private_data;
+	hmidi = (काष्ठा hdsp_midi *) substream->rmidi->निजी_data;
 	spin_lock_irq (&hmidi->lock);
-	hmidi->input = NULL;
+	hmidi->input = शून्य;
 	spin_unlock_irq (&hmidi->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_midi_output_close(struct snd_rawmidi_substream *substream)
-{
-	struct hdsp_midi *hmidi;
+अटल पूर्णांक snd_hdsp_midi_output_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा hdsp_midi *hmidi;
 
 	snd_hdsp_midi_output_trigger (substream, 0);
 
-	hmidi = (struct hdsp_midi *) substream->rmidi->private_data;
+	hmidi = (काष्ठा hdsp_midi *) substream->rmidi->निजी_data;
 	spin_lock_irq (&hmidi->lock);
-	hmidi->output = NULL;
+	hmidi->output = शून्य;
 	spin_unlock_irq (&hmidi->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_rawmidi_ops snd_hdsp_midi_output =
-{
-	.open =		snd_hdsp_midi_output_open,
-	.close =	snd_hdsp_midi_output_close,
+अटल स्थिर काष्ठा snd_rawmidi_ops snd_hdsp_midi_output =
+अणु
+	.खोलो =		snd_hdsp_midi_output_खोलो,
+	.बंद =	snd_hdsp_midi_output_बंद,
 	.trigger =	snd_hdsp_midi_output_trigger,
-};
+पूर्ण;
 
-static const struct snd_rawmidi_ops snd_hdsp_midi_input =
-{
-	.open =		snd_hdsp_midi_input_open,
-	.close =	snd_hdsp_midi_input_close,
+अटल स्थिर काष्ठा snd_rawmidi_ops snd_hdsp_midi_input =
+अणु
+	.खोलो =		snd_hdsp_midi_input_खोलो,
+	.बंद =	snd_hdsp_midi_input_बंद,
 	.trigger =	snd_hdsp_midi_input_trigger,
-};
+पूर्ण;
 
-static int snd_hdsp_create_midi (struct snd_card *card, struct hdsp *hdsp, int id)
-{
-	char buf[40];
+अटल पूर्णांक snd_hdsp_create_midi (काष्ठा snd_card *card, काष्ठा hdsp *hdsp, पूर्णांक id)
+अणु
+	अक्षर buf[40];
 
 	hdsp->midi[id].id = id;
-	hdsp->midi[id].rmidi = NULL;
-	hdsp->midi[id].input = NULL;
-	hdsp->midi[id].output = NULL;
+	hdsp->midi[id].rmidi = शून्य;
+	hdsp->midi[id].input = शून्य;
+	hdsp->midi[id].output = शून्य;
 	hdsp->midi[id].hdsp = hdsp;
-	hdsp->midi[id].istimer = 0;
+	hdsp->midi[id].isसमयr = 0;
 	hdsp->midi[id].pending = 0;
 	spin_lock_init (&hdsp->midi[id].lock);
 
-	snprintf(buf, sizeof(buf), "%s MIDI %d", card->shortname, id + 1);
-	if (snd_rawmidi_new (card, buf, id, 1, 1, &hdsp->midi[id].rmidi) < 0)
-		return -1;
+	snम_लिखो(buf, माप(buf), "%s MIDI %d", card->लघुname, id + 1);
+	अगर (snd_rawmidi_new (card, buf, id, 1, 1, &hdsp->midi[id].rmidi) < 0)
+		वापस -1;
 
-	sprintf(hdsp->midi[id].rmidi->name, "HDSP MIDI %d", id+1);
-	hdsp->midi[id].rmidi->private_data = &hdsp->midi[id];
+	प्र_लिखो(hdsp->midi[id].rmidi->name, "HDSP MIDI %d", id+1);
+	hdsp->midi[id].rmidi->निजी_data = &hdsp->midi[id];
 
 	snd_rawmidi_set_ops (hdsp->midi[id].rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT, &snd_hdsp_midi_output);
 	snd_rawmidi_set_ops (hdsp->midi[id].rmidi, SNDRV_RAWMIDI_STREAM_INPUT, &snd_hdsp_midi_input);
@@ -1526,1067 +1527,1067 @@ static int snd_hdsp_create_midi (struct snd_card *card, struct hdsp *hdsp, int i
 		SNDRV_RAWMIDI_INFO_INPUT |
 		SNDRV_RAWMIDI_INFO_DUPLEX;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*-----------------------------------------------------------------------------
   Control Interface
   ----------------------------------------------------------------------------*/
 
-static u32 snd_hdsp_convert_from_aes(struct snd_aes_iec958 *aes)
-{
+अटल u32 snd_hdsp_convert_from_aes(काष्ठा snd_aes_iec958 *aes)
+अणु
 	u32 val = 0;
 	val |= (aes->status[0] & IEC958_AES0_PROFESSIONAL) ? HDSP_SPDIFProfessional : 0;
 	val |= (aes->status[0] & IEC958_AES0_NONAUDIO) ? HDSP_SPDIFNonAudio : 0;
-	if (val & HDSP_SPDIFProfessional)
+	अगर (val & HDSP_SPDIFProfessional)
 		val |= (aes->status[0] & IEC958_AES0_PRO_EMPHASIS_5015) ? HDSP_SPDIFEmphasis : 0;
-	else
+	अन्यथा
 		val |= (aes->status[0] & IEC958_AES0_CON_EMPHASIS_5015) ? HDSP_SPDIFEmphasis : 0;
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void snd_hdsp_convert_to_aes(struct snd_aes_iec958 *aes, u32 val)
-{
+अटल व्योम snd_hdsp_convert_to_aes(काष्ठा snd_aes_iec958 *aes, u32 val)
+अणु
 	aes->status[0] = ((val & HDSP_SPDIFProfessional) ? IEC958_AES0_PROFESSIONAL : 0) |
 			 ((val & HDSP_SPDIFNonAudio) ? IEC958_AES0_NONAUDIO : 0);
-	if (val & HDSP_SPDIFProfessional)
+	अगर (val & HDSP_SPDIFProfessional)
 		aes->status[0] |= (val & HDSP_SPDIFEmphasis) ? IEC958_AES0_PRO_EMPHASIS_5015 : 0;
-	else
+	अन्यथा
 		aes->status[0] |= (val & HDSP_SPDIFEmphasis) ? IEC958_AES0_CON_EMPHASIS_5015 : 0;
-}
+पूर्ण
 
-static int snd_hdsp_control_spdif_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_hdsp_control_spdअगर_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_control_spdif_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_control_spdअगर_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	snd_hdsp_convert_to_aes(&ucontrol->value.iec958, hdsp->creg_spdif);
-	return 0;
-}
+	snd_hdsp_convert_to_aes(&ucontrol->value.iec958, hdsp->creg_spdअगर);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_control_spdif_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
+अटल पूर्णांक snd_hdsp_control_spdअगर_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
 	u32 val;
 
 	val = snd_hdsp_convert_from_aes(&ucontrol->value.iec958);
 	spin_lock_irq(&hdsp->lock);
-	change = val != hdsp->creg_spdif;
-	hdsp->creg_spdif = val;
+	change = val != hdsp->creg_spdअगर;
+	hdsp->creg_spdअगर = val;
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int snd_hdsp_control_spdif_stream_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_hdsp_control_spdअगर_stream_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_control_spdif_stream_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_control_spdअगर_stream_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	snd_hdsp_convert_to_aes(&ucontrol->value.iec958, hdsp->creg_spdif_stream);
-	return 0;
-}
+	snd_hdsp_convert_to_aes(&ucontrol->value.iec958, hdsp->creg_spdअगर_stream);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_control_spdif_stream_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
+अटल पूर्णांक snd_hdsp_control_spdअगर_stream_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
 	u32 val;
 
 	val = snd_hdsp_convert_from_aes(&ucontrol->value.iec958);
 	spin_lock_irq(&hdsp->lock);
-	change = val != hdsp->creg_spdif_stream;
-	hdsp->creg_spdif_stream = val;
-	hdsp->control_register &= ~(HDSP_SPDIFProfessional | HDSP_SPDIFNonAudio | HDSP_SPDIFEmphasis);
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register |= val);
+	change = val != hdsp->creg_spdअगर_stream;
+	hdsp->creg_spdअगर_stream = val;
+	hdsp->control_रेजिस्टर &= ~(HDSP_SPDIFProfessional | HDSP_SPDIFNonAudio | HDSP_SPDIFEmphasis);
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर |= val);
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int snd_hdsp_control_spdif_mask_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_hdsp_control_spdअगर_mask_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_control_spdif_mask_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	ucontrol->value.iec958.status[0] = kcontrol->private_value;
-	return 0;
-}
+अटल पूर्णांक snd_hdsp_control_spdअगर_mask_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	ucontrol->value.iec958.status[0] = kcontrol->निजी_value;
+	वापस 0;
+पूर्ण
 
-#define HDSP_SPDIF_IN(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_SPDIF_IN(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
-  .info = snd_hdsp_info_spdif_in, \
-  .get = snd_hdsp_get_spdif_in, \
-  .put = snd_hdsp_put_spdif_in }
+  .info = snd_hdsp_info_spdअगर_in, \
+  .get = snd_hdsp_get_spdअगर_in, \
+  .put = snd_hdsp_put_spdअगर_in पूर्ण
 
-static unsigned int hdsp_spdif_in(struct hdsp *hdsp)
-{
-	return hdsp_decode_spdif_in(hdsp->control_register & HDSP_SPDIFInputMask);
-}
+अटल अचिन्हित पूर्णांक hdsp_spdअगर_in(काष्ठा hdsp *hdsp)
+अणु
+	वापस hdsp_decode_spdअगर_in(hdsp->control_रेजिस्टर & HDSP_SPDIFInputMask);
+पूर्ण
 
-static int hdsp_set_spdif_input(struct hdsp *hdsp, int in)
-{
-	hdsp->control_register &= ~HDSP_SPDIFInputMask;
-	hdsp->control_register |= hdsp_encode_spdif_in(in);
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-	return 0;
-}
+अटल पूर्णांक hdsp_set_spdअगर_input(काष्ठा hdsp *hdsp, पूर्णांक in)
+अणु
+	hdsp->control_रेजिस्टर &= ~HDSP_SPDIFInputMask;
+	hdsp->control_रेजिस्टर |= hdsp_encode_spdअगर_in(in);
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_info_spdif_in(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[4] = {
+अटल पूर्णांक snd_hdsp_info_spdअगर_in(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[4] = अणु
 		"Optical", "Coaxial", "Internal", "AES"
-	};
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्ण;
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	return snd_ctl_enum_info(uinfo, 1, (hdsp->io_type == H9632) ? 4 : 3,
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, (hdsp->io_type == H9632) ? 4 : 3,
 				 texts);
-}
+पूर्ण
 
-static int snd_hdsp_get_spdif_in(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_spdअगर_in(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_spdif_in(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_spdअगर_in(hdsp);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_spdif_in(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	unsigned int val;
+अटल पूर्णांक snd_hdsp_put_spdअगर_in(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	अचिन्हित पूर्णांक val;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.enumerated.item[0] % ((hdsp->io_type == H9632) ? 4 : 3);
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.क्रमागतerated.item[0] % ((hdsp->io_type == H9632) ? 4 : 3);
 	spin_lock_irq(&hdsp->lock);
-	change = val != hdsp_spdif_in(hdsp);
-	if (change)
-		hdsp_set_spdif_input(hdsp, val);
+	change = val != hdsp_spdअगर_in(hdsp);
+	अगर (change)
+		hdsp_set_spdअगर_input(hdsp, val);
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define HDSP_TOGGLE_SETTING(xname, xindex) \
-{   .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_TOGGLE_SETTING(xname, xindex) \
+अणु   .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
 	.name = xname, \
-	.private_value = xindex, \
+	.निजी_value = xindex, \
 	.info = snd_hdsp_info_toggle_setting, \
 	.get = snd_hdsp_get_toggle_setting, \
 	.put = snd_hdsp_put_toggle_setting \
-}
+पूर्ण
 
-static int hdsp_toggle_setting(struct hdsp *hdsp, u32 regmask)
-{
-	return (hdsp->control_register & regmask) ? 1 : 0;
-}
+अटल पूर्णांक hdsp_toggle_setting(काष्ठा hdsp *hdsp, u32 regmask)
+अणु
+	वापस (hdsp->control_रेजिस्टर & regmask) ? 1 : 0;
+पूर्ण
 
-static int hdsp_set_toggle_setting(struct hdsp *hdsp, u32 regmask, int out)
-{
-	if (out)
-		hdsp->control_register |= regmask;
-	else
-		hdsp->control_register &= ~regmask;
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
+अटल पूर्णांक hdsp_set_toggle_setting(काष्ठा hdsp *hdsp, u32 regmask, पूर्णांक out)
+अणु
+	अगर (out)
+		hdsp->control_रेजिस्टर |= regmask;
+	अन्यथा
+		hdsp->control_रेजिस्टर &= ~regmask;
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define snd_hdsp_info_toggle_setting		   snd_ctl_boolean_mono_info
+#घोषणा snd_hdsp_info_toggle_setting		   snd_ctl_boolean_mono_info
 
-static int snd_hdsp_get_toggle_setting(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	u32 regmask = kcontrol->private_value;
+अटल पूर्णांक snd_hdsp_get_toggle_setting(काष्ठा snd_kcontrol *kcontrol,
+		काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	u32 regmask = kcontrol->निजी_value;
 
 	spin_lock_irq(&hdsp->lock);
-	ucontrol->value.integer.value[0] = hdsp_toggle_setting(hdsp, regmask);
+	ucontrol->value.पूर्णांकeger.value[0] = hdsp_toggle_setting(hdsp, regmask);
 	spin_unlock_irq(&hdsp->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_toggle_setting(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	u32 regmask = kcontrol->private_value;
-	int change;
-	unsigned int val;
+अटल पूर्णांक snd_hdsp_put_toggle_setting(काष्ठा snd_kcontrol *kcontrol,
+		काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	u32 regmask = kcontrol->निजी_value;
+	पूर्णांक change;
+	अचिन्हित पूर्णांक val;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.integer.value[0] & 1;
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.पूर्णांकeger.value[0] & 1;
 	spin_lock_irq(&hdsp->lock);
-	change = (int) val != hdsp_toggle_setting(hdsp, regmask);
-	if (change)
+	change = (पूर्णांक) val != hdsp_toggle_setting(hdsp, regmask);
+	अगर (change)
 		hdsp_set_toggle_setting(hdsp, regmask, val);
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define HDSP_SPDIF_SAMPLE_RATE(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_SPDIF_SAMPLE_RATE(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .access = SNDRV_CTL_ELEM_ACCESS_READ, \
-  .info = snd_hdsp_info_spdif_sample_rate, \
-  .get = snd_hdsp_get_spdif_sample_rate \
-}
+  .info = snd_hdsp_info_spdअगर_sample_rate, \
+  .get = snd_hdsp_get_spdअगर_sample_rate \
+पूर्ण
 
-static int snd_hdsp_info_spdif_sample_rate(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {
+अटल पूर्णांक snd_hdsp_info_spdअगर_sample_rate(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु
 		"32000", "44100", "48000", "64000", "88200", "96000",
 		"None", "128000", "176400", "192000"
-	};
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्ण;
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	return snd_ctl_enum_info(uinfo, 1, (hdsp->io_type == H9632) ? 10 : 7,
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, (hdsp->io_type == H9632) ? 10 : 7,
 				 texts);
-}
+पूर्ण
 
-static int snd_hdsp_get_spdif_sample_rate(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_spdअगर_sample_rate(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	switch (hdsp_spdif_sample_rate(hdsp)) {
-	case 32000:
-		ucontrol->value.enumerated.item[0] = 0;
-		break;
-	case 44100:
-		ucontrol->value.enumerated.item[0] = 1;
-		break;
-	case 48000:
-		ucontrol->value.enumerated.item[0] = 2;
-		break;
-	case 64000:
-		ucontrol->value.enumerated.item[0] = 3;
-		break;
-	case 88200:
-		ucontrol->value.enumerated.item[0] = 4;
-		break;
-	case 96000:
-		ucontrol->value.enumerated.item[0] = 5;
-		break;
-	case 128000:
-		ucontrol->value.enumerated.item[0] = 7;
-		break;
-	case 176400:
-		ucontrol->value.enumerated.item[0] = 8;
-		break;
-	case 192000:
-		ucontrol->value.enumerated.item[0] = 9;
-		break;
-	default:
-		ucontrol->value.enumerated.item[0] = 6;
-	}
-	return 0;
-}
+	चयन (hdsp_spdअगर_sample_rate(hdsp)) अणु
+	हाल 32000:
+		ucontrol->value.क्रमागतerated.item[0] = 0;
+		अवरोध;
+	हाल 44100:
+		ucontrol->value.क्रमागतerated.item[0] = 1;
+		अवरोध;
+	हाल 48000:
+		ucontrol->value.क्रमागतerated.item[0] = 2;
+		अवरोध;
+	हाल 64000:
+		ucontrol->value.क्रमागतerated.item[0] = 3;
+		अवरोध;
+	हाल 88200:
+		ucontrol->value.क्रमागतerated.item[0] = 4;
+		अवरोध;
+	हाल 96000:
+		ucontrol->value.क्रमागतerated.item[0] = 5;
+		अवरोध;
+	हाल 128000:
+		ucontrol->value.क्रमागतerated.item[0] = 7;
+		अवरोध;
+	हाल 176400:
+		ucontrol->value.क्रमागतerated.item[0] = 8;
+		अवरोध;
+	हाल 192000:
+		ucontrol->value.क्रमागतerated.item[0] = 9;
+		अवरोध;
+	शेष:
+		ucontrol->value.क्रमागतerated.item[0] = 6;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define HDSP_SYSTEM_SAMPLE_RATE(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_SYSTEM_SAMPLE_RATE(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .access = SNDRV_CTL_ELEM_ACCESS_READ, \
-  .info = snd_hdsp_info_system_sample_rate, \
-  .get = snd_hdsp_get_system_sample_rate \
-}
+  .info = snd_hdsp_info_प्रणाली_sample_rate, \
+  .get = snd_hdsp_get_प्रणाली_sample_rate \
+पूर्ण
 
-static int snd_hdsp_info_system_sample_rate(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_hdsp_info_प्रणाली_sample_rate(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_get_system_sample_rate(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_प्रणाली_sample_rate(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp->system_sample_rate;
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp->प्रणाली_sample_rate;
+	वापस 0;
+पूर्ण
 
-#define HDSP_AUTOSYNC_SAMPLE_RATE(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_AUTOSYNC_SAMPLE_RATE(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .access = SNDRV_CTL_ELEM_ACCESS_READ, \
-  .info = snd_hdsp_info_autosync_sample_rate, \
-  .get = snd_hdsp_get_autosync_sample_rate \
-}
+  .info = snd_hdsp_info_स्वतःsync_sample_rate, \
+  .get = snd_hdsp_get_स्वतःsync_sample_rate \
+पूर्ण
 
-static int snd_hdsp_info_autosync_sample_rate(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	static const char * const texts[] = {
+अटल पूर्णांक snd_hdsp_info_स्वतःsync_sample_rate(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु
 		"32000", "44100", "48000", "64000", "88200", "96000",
 		"None", "128000", "176400", "192000"
-	};
+	पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, (hdsp->io_type == H9632) ? 10 : 7,
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, (hdsp->io_type == H9632) ? 10 : 7,
 				 texts);
-}
+पूर्ण
 
-static int snd_hdsp_get_autosync_sample_rate(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_स्वतःsync_sample_rate(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	switch (hdsp_external_sample_rate(hdsp)) {
-	case 32000:
-		ucontrol->value.enumerated.item[0] = 0;
-		break;
-	case 44100:
-		ucontrol->value.enumerated.item[0] = 1;
-		break;
-	case 48000:
-		ucontrol->value.enumerated.item[0] = 2;
-		break;
-	case 64000:
-		ucontrol->value.enumerated.item[0] = 3;
-		break;
-	case 88200:
-		ucontrol->value.enumerated.item[0] = 4;
-		break;
-	case 96000:
-		ucontrol->value.enumerated.item[0] = 5;
-		break;
-	case 128000:
-		ucontrol->value.enumerated.item[0] = 7;
-		break;
-	case 176400:
-		ucontrol->value.enumerated.item[0] = 8;
-		break;
-	case 192000:
-		ucontrol->value.enumerated.item[0] = 9;
-		break;
-	default:
-		ucontrol->value.enumerated.item[0] = 6;
-	}
-	return 0;
-}
+	चयन (hdsp_बाह्यal_sample_rate(hdsp)) अणु
+	हाल 32000:
+		ucontrol->value.क्रमागतerated.item[0] = 0;
+		अवरोध;
+	हाल 44100:
+		ucontrol->value.क्रमागतerated.item[0] = 1;
+		अवरोध;
+	हाल 48000:
+		ucontrol->value.क्रमागतerated.item[0] = 2;
+		अवरोध;
+	हाल 64000:
+		ucontrol->value.क्रमागतerated.item[0] = 3;
+		अवरोध;
+	हाल 88200:
+		ucontrol->value.क्रमागतerated.item[0] = 4;
+		अवरोध;
+	हाल 96000:
+		ucontrol->value.क्रमागतerated.item[0] = 5;
+		अवरोध;
+	हाल 128000:
+		ucontrol->value.क्रमागतerated.item[0] = 7;
+		अवरोध;
+	हाल 176400:
+		ucontrol->value.क्रमागतerated.item[0] = 8;
+		अवरोध;
+	हाल 192000:
+		ucontrol->value.क्रमागतerated.item[0] = 9;
+		अवरोध;
+	शेष:
+		ucontrol->value.क्रमागतerated.item[0] = 6;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define HDSP_SYSTEM_CLOCK_MODE(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_SYSTEM_CLOCK_MODE(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .access = SNDRV_CTL_ELEM_ACCESS_READ, \
-  .info = snd_hdsp_info_system_clock_mode, \
-  .get = snd_hdsp_get_system_clock_mode \
-}
+  .info = snd_hdsp_info_प्रणाली_घड़ी_mode, \
+  .get = snd_hdsp_get_प्रणाली_घड़ी_mode \
+पूर्ण
 
-static int hdsp_system_clock_mode(struct hdsp *hdsp)
-{
-	if (hdsp->control_register & HDSP_ClockModeMaster)
-		return 0;
-	else if (hdsp_external_sample_rate(hdsp) != hdsp->system_sample_rate)
-			return 0;
-	return 1;
-}
+अटल पूर्णांक hdsp_प्रणाली_घड़ी_mode(काष्ठा hdsp *hdsp)
+अणु
+	अगर (hdsp->control_रेजिस्टर & HDSP_ClockModeMaster)
+		वापस 0;
+	अन्यथा अगर (hdsp_बाह्यal_sample_rate(hdsp) != hdsp->प्रणाली_sample_rate)
+			वापस 0;
+	वापस 1;
+पूर्ण
 
-static int snd_hdsp_info_system_clock_mode(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {"Master", "Slave" };
+अटल पूर्णांक snd_hdsp_info_प्रणाली_घड़ी_mode(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु"Master", "Slave" पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, 2, texts);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 2, texts);
+पूर्ण
 
-static int snd_hdsp_get_system_clock_mode(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_प्रणाली_घड़ी_mode(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_system_clock_mode(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_प्रणाली_घड़ी_mode(hdsp);
+	वापस 0;
+पूर्ण
 
-#define HDSP_CLOCK_SOURCE(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_CLOCK_SOURCE(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
-  .info = snd_hdsp_info_clock_source, \
-  .get = snd_hdsp_get_clock_source, \
-  .put = snd_hdsp_put_clock_source \
-}
+  .info = snd_hdsp_info_घड़ी_source, \
+  .get = snd_hdsp_get_घड़ी_source, \
+  .put = snd_hdsp_put_घड़ी_source \
+पूर्ण
 
-static int hdsp_clock_source(struct hdsp *hdsp)
-{
-	if (hdsp->control_register & HDSP_ClockModeMaster) {
-		switch (hdsp->system_sample_rate) {
-		case 32000:
-			return 1;
-		case 44100:
-			return 2;
-		case 48000:
-			return 3;
-		case 64000:
-			return 4;
-		case 88200:
-			return 5;
-		case 96000:
-			return 6;
-		case 128000:
-			return 7;
-		case 176400:
-			return 8;
-		case 192000:
-			return 9;
-		default:
-			return 3;
-		}
-	} else {
-		return 0;
-	}
-}
+अटल पूर्णांक hdsp_घड़ी_source(काष्ठा hdsp *hdsp)
+अणु
+	अगर (hdsp->control_रेजिस्टर & HDSP_ClockModeMaster) अणु
+		चयन (hdsp->प्रणाली_sample_rate) अणु
+		हाल 32000:
+			वापस 1;
+		हाल 44100:
+			वापस 2;
+		हाल 48000:
+			वापस 3;
+		हाल 64000:
+			वापस 4;
+		हाल 88200:
+			वापस 5;
+		हाल 96000:
+			वापस 6;
+		हाल 128000:
+			वापस 7;
+		हाल 176400:
+			वापस 8;
+		हाल 192000:
+			वापस 9;
+		शेष:
+			वापस 3;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int hdsp_set_clock_source(struct hdsp *hdsp, int mode)
-{
-	int rate;
-	switch (mode) {
-	case HDSP_CLOCK_SOURCE_AUTOSYNC:
-		if (hdsp_external_sample_rate(hdsp) != 0) {
-		    if (!hdsp_set_rate(hdsp, hdsp_external_sample_rate(hdsp), 1)) {
-			hdsp->control_register &= ~HDSP_ClockModeMaster;
-			hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-			return 0;
-		    }
-		}
-		return -1;
-	case HDSP_CLOCK_SOURCE_INTERNAL_32KHZ:
+अटल पूर्णांक hdsp_set_घड़ी_source(काष्ठा hdsp *hdsp, पूर्णांक mode)
+अणु
+	पूर्णांक rate;
+	चयन (mode) अणु
+	हाल HDSP_CLOCK_SOURCE_AUTOSYNC:
+		अगर (hdsp_बाह्यal_sample_rate(hdsp) != 0) अणु
+		    अगर (!hdsp_set_rate(hdsp, hdsp_बाह्यal_sample_rate(hdsp), 1)) अणु
+			hdsp->control_रेजिस्टर &= ~HDSP_ClockModeMaster;
+			hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+			वापस 0;
+		    पूर्ण
+		पूर्ण
+		वापस -1;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_32KHZ:
 		rate = 32000;
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_44_1KHZ:
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_44_1KHZ:
 		rate = 44100;
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_48KHZ:
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_48KHZ:
 		rate = 48000;
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_64KHZ:
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_64KHZ:
 		rate = 64000;
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_88_2KHZ:
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_88_2KHZ:
 		rate = 88200;
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_96KHZ:
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_96KHZ:
 		rate = 96000;
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_128KHZ:
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_128KHZ:
 		rate = 128000;
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_176_4KHZ:
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_176_4KHZ:
 		rate = 176400;
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_192KHZ:
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_192KHZ:
 		rate = 192000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rate = 48000;
-	}
-	hdsp->control_register |= HDSP_ClockModeMaster;
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
+	पूर्ण
+	hdsp->control_रेजिस्टर |= HDSP_ClockModeMaster;
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
 	hdsp_set_rate(hdsp, rate, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_info_clock_source(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {
+अटल पूर्णांक snd_hdsp_info_घड़ी_source(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु
 		"AutoSync", "Internal 32.0 kHz", "Internal 44.1 kHz",
 		"Internal 48.0 kHz", "Internal 64.0 kHz", "Internal 88.2 kHz",
 		"Internal 96.0 kHz", "Internal 128 kHz", "Internal 176.4 kHz",
 		"Internal 192.0 KHz"
-	};
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्ण;
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	return snd_ctl_enum_info(uinfo, 1, (hdsp->io_type == H9632) ? 10 : 7,
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, (hdsp->io_type == H9632) ? 10 : 7,
 				 texts);
-}
+पूर्ण
 
-static int snd_hdsp_get_clock_source(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_घड़ी_source(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_clock_source(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_घड़ी_source(hdsp);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_clock_source(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	int val;
+अटल पूर्णांक snd_hdsp_put_घड़ी_source(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	पूर्णांक val;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.enumerated.item[0];
-	if (val < 0) val = 0;
-	if (hdsp->io_type == H9632) {
-		if (val > 9)
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.क्रमागतerated.item[0];
+	अगर (val < 0) val = 0;
+	अगर (hdsp->io_type == H9632) अणु
+		अगर (val > 9)
 			val = 9;
-	} else {
-		if (val > 6)
+	पूर्ण अन्यथा अणु
+		अगर (val > 6)
 			val = 6;
-	}
+	पूर्ण
 	spin_lock_irq(&hdsp->lock);
-	if (val != hdsp_clock_source(hdsp))
-		change = (hdsp_set_clock_source(hdsp, val) == 0) ? 1 : 0;
-	else
+	अगर (val != hdsp_घड़ी_source(hdsp))
+		change = (hdsp_set_घड़ी_source(hdsp, val) == 0) ? 1 : 0;
+	अन्यथा
 		change = 0;
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define snd_hdsp_info_clock_source_lock		snd_ctl_boolean_mono_info
+#घोषणा snd_hdsp_info_घड़ी_source_lock		snd_ctl_boolean_mono_info
 
-static int snd_hdsp_get_clock_source_lock(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_घड़ी_source_lock(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.integer.value[0] = hdsp->clock_source_locked;
-	return 0;
-}
+	ucontrol->value.पूर्णांकeger.value[0] = hdsp->घड़ी_source_locked;
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_clock_source_lock(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
+अटल पूर्णांक snd_hdsp_put_घड़ी_source_lock(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
 
-	change = (int)ucontrol->value.integer.value[0] != hdsp->clock_source_locked;
-	if (change)
-		hdsp->clock_source_locked = !!ucontrol->value.integer.value[0];
-	return change;
-}
+	change = (पूर्णांक)ucontrol->value.पूर्णांकeger.value[0] != hdsp->घड़ी_source_locked;
+	अगर (change)
+		hdsp->घड़ी_source_locked = !!ucontrol->value.पूर्णांकeger.value[0];
+	वापस change;
+पूर्ण
 
-#define HDSP_DA_GAIN(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_DA_GAIN(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .info = snd_hdsp_info_da_gain, \
   .get = snd_hdsp_get_da_gain, \
   .put = snd_hdsp_put_da_gain \
-}
+पूर्ण
 
-static int hdsp_da_gain(struct hdsp *hdsp)
-{
-	switch (hdsp->control_register & HDSP_DAGainMask) {
-	case HDSP_DAGainHighGain:
-		return 0;
-	case HDSP_DAGainPlus4dBu:
-		return 1;
-	case HDSP_DAGainMinus10dBV:
-		return 2;
-	default:
-		return 1;
-	}
-}
+अटल पूर्णांक hdsp_da_gain(काष्ठा hdsp *hdsp)
+अणु
+	चयन (hdsp->control_रेजिस्टर & HDSP_DAGainMask) अणु
+	हाल HDSP_DAGainHighGain:
+		वापस 0;
+	हाल HDSP_DAGainPlus4dBu:
+		वापस 1;
+	हाल HDSP_DAGainMinus10dBV:
+		वापस 2;
+	शेष:
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-static int hdsp_set_da_gain(struct hdsp *hdsp, int mode)
-{
-	hdsp->control_register &= ~HDSP_DAGainMask;
-	switch (mode) {
-	case 0:
-		hdsp->control_register |= HDSP_DAGainHighGain;
-		break;
-	case 1:
-		hdsp->control_register |= HDSP_DAGainPlus4dBu;
-		break;
-	case 2:
-		hdsp->control_register |= HDSP_DAGainMinus10dBV;
-		break;
-	default:
-		return -1;
+अटल पूर्णांक hdsp_set_da_gain(काष्ठा hdsp *hdsp, पूर्णांक mode)
+अणु
+	hdsp->control_रेजिस्टर &= ~HDSP_DAGainMask;
+	चयन (mode) अणु
+	हाल 0:
+		hdsp->control_रेजिस्टर |= HDSP_DAGainHighGain;
+		अवरोध;
+	हाल 1:
+		hdsp->control_रेजिस्टर |= HDSP_DAGainPlus4dBu;
+		अवरोध;
+	हाल 2:
+		hdsp->control_रेजिस्टर |= HDSP_DAGainMinus10dBV;
+		अवरोध;
+	शेष:
+		वापस -1;
 
-	}
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-	return 0;
-}
+	पूर्ण
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_info_da_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {"Hi Gain", "+4 dBu", "-10 dbV"};
+अटल पूर्णांक snd_hdsp_info_da_gain(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु"Hi Gain", "+4 dBu", "-10 dbV"पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, 3, texts);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 3, texts);
+पूर्ण
 
-static int snd_hdsp_get_da_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_da_gain(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_da_gain(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_da_gain(hdsp);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_da_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	int val;
+अटल पूर्णांक snd_hdsp_put_da_gain(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	पूर्णांक val;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.enumerated.item[0];
-	if (val < 0) val = 0;
-	if (val > 2) val = 2;
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.क्रमागतerated.item[0];
+	अगर (val < 0) val = 0;
+	अगर (val > 2) val = 2;
 	spin_lock_irq(&hdsp->lock);
-	if (val != hdsp_da_gain(hdsp))
+	अगर (val != hdsp_da_gain(hdsp))
 		change = (hdsp_set_da_gain(hdsp, val) == 0) ? 1 : 0;
-	else
+	अन्यथा
 		change = 0;
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define HDSP_AD_GAIN(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_AD_GAIN(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .info = snd_hdsp_info_ad_gain, \
   .get = snd_hdsp_get_ad_gain, \
   .put = snd_hdsp_put_ad_gain \
-}
+पूर्ण
 
-static int hdsp_ad_gain(struct hdsp *hdsp)
-{
-	switch (hdsp->control_register & HDSP_ADGainMask) {
-	case HDSP_ADGainMinus10dBV:
-		return 0;
-	case HDSP_ADGainPlus4dBu:
-		return 1;
-	case HDSP_ADGainLowGain:
-		return 2;
-	default:
-		return 1;
-	}
-}
+अटल पूर्णांक hdsp_ad_gain(काष्ठा hdsp *hdsp)
+अणु
+	चयन (hdsp->control_रेजिस्टर & HDSP_ADGainMask) अणु
+	हाल HDSP_ADGainMinus10dBV:
+		वापस 0;
+	हाल HDSP_ADGainPlus4dBu:
+		वापस 1;
+	हाल HDSP_ADGainLowGain:
+		वापस 2;
+	शेष:
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-static int hdsp_set_ad_gain(struct hdsp *hdsp, int mode)
-{
-	hdsp->control_register &= ~HDSP_ADGainMask;
-	switch (mode) {
-	case 0:
-		hdsp->control_register |= HDSP_ADGainMinus10dBV;
-		break;
-	case 1:
-		hdsp->control_register |= HDSP_ADGainPlus4dBu;
-		break;
-	case 2:
-		hdsp->control_register |= HDSP_ADGainLowGain;
-		break;
-	default:
-		return -1;
+अटल पूर्णांक hdsp_set_ad_gain(काष्ठा hdsp *hdsp, पूर्णांक mode)
+अणु
+	hdsp->control_रेजिस्टर &= ~HDSP_ADGainMask;
+	चयन (mode) अणु
+	हाल 0:
+		hdsp->control_रेजिस्टर |= HDSP_ADGainMinus10dBV;
+		अवरोध;
+	हाल 1:
+		hdsp->control_रेजिस्टर |= HDSP_ADGainPlus4dBu;
+		अवरोध;
+	हाल 2:
+		hdsp->control_रेजिस्टर |= HDSP_ADGainLowGain;
+		अवरोध;
+	शेष:
+		वापस -1;
 
-	}
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-	return 0;
-}
+	पूर्ण
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_info_ad_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {"-10 dBV", "+4 dBu", "Lo Gain"};
+अटल पूर्णांक snd_hdsp_info_ad_gain(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु"-10 dBV", "+4 dBu", "Lo Gain"पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, 3, texts);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 3, texts);
+पूर्ण
 
-static int snd_hdsp_get_ad_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_ad_gain(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_ad_gain(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_ad_gain(hdsp);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_ad_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	int val;
+अटल पूर्णांक snd_hdsp_put_ad_gain(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	पूर्णांक val;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.enumerated.item[0];
-	if (val < 0) val = 0;
-	if (val > 2) val = 2;
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.क्रमागतerated.item[0];
+	अगर (val < 0) val = 0;
+	अगर (val > 2) val = 2;
 	spin_lock_irq(&hdsp->lock);
-	if (val != hdsp_ad_gain(hdsp))
+	अगर (val != hdsp_ad_gain(hdsp))
 		change = (hdsp_set_ad_gain(hdsp, val) == 0) ? 1 : 0;
-	else
+	अन्यथा
 		change = 0;
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define HDSP_PHONE_GAIN(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_PHONE_GAIN(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .info = snd_hdsp_info_phone_gain, \
   .get = snd_hdsp_get_phone_gain, \
   .put = snd_hdsp_put_phone_gain \
-}
+पूर्ण
 
-static int hdsp_phone_gain(struct hdsp *hdsp)
-{
-	switch (hdsp->control_register & HDSP_PhoneGainMask) {
-	case HDSP_PhoneGain0dB:
-		return 0;
-	case HDSP_PhoneGainMinus6dB:
-		return 1;
-	case HDSP_PhoneGainMinus12dB:
-		return 2;
-	default:
-		return 0;
-	}
-}
+अटल पूर्णांक hdsp_phone_gain(काष्ठा hdsp *hdsp)
+अणु
+	चयन (hdsp->control_रेजिस्टर & HDSP_PhoneGainMask) अणु
+	हाल HDSP_PhoneGain0dB:
+		वापस 0;
+	हाल HDSP_PhoneGainMinus6dB:
+		वापस 1;
+	हाल HDSP_PhoneGainMinus12dB:
+		वापस 2;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int hdsp_set_phone_gain(struct hdsp *hdsp, int mode)
-{
-	hdsp->control_register &= ~HDSP_PhoneGainMask;
-	switch (mode) {
-	case 0:
-		hdsp->control_register |= HDSP_PhoneGain0dB;
-		break;
-	case 1:
-		hdsp->control_register |= HDSP_PhoneGainMinus6dB;
-		break;
-	case 2:
-		hdsp->control_register |= HDSP_PhoneGainMinus12dB;
-		break;
-	default:
-		return -1;
+अटल पूर्णांक hdsp_set_phone_gain(काष्ठा hdsp *hdsp, पूर्णांक mode)
+अणु
+	hdsp->control_रेजिस्टर &= ~HDSP_PhoneGainMask;
+	चयन (mode) अणु
+	हाल 0:
+		hdsp->control_रेजिस्टर |= HDSP_PhoneGain0dB;
+		अवरोध;
+	हाल 1:
+		hdsp->control_रेजिस्टर |= HDSP_PhoneGainMinus6dB;
+		अवरोध;
+	हाल 2:
+		hdsp->control_रेजिस्टर |= HDSP_PhoneGainMinus12dB;
+		अवरोध;
+	शेष:
+		वापस -1;
 
-	}
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-	return 0;
-}
+	पूर्ण
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_info_phone_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {"0 dB", "-6 dB", "-12 dB"};
+अटल पूर्णांक snd_hdsp_info_phone_gain(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु"0 dB", "-6 dB", "-12 dB"पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, 3, texts);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 3, texts);
+पूर्ण
 
-static int snd_hdsp_get_phone_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_phone_gain(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_phone_gain(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_phone_gain(hdsp);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_phone_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	int val;
+अटल पूर्णांक snd_hdsp_put_phone_gain(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	पूर्णांक val;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.enumerated.item[0];
-	if (val < 0) val = 0;
-	if (val > 2) val = 2;
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.क्रमागतerated.item[0];
+	अगर (val < 0) val = 0;
+	अगर (val > 2) val = 2;
 	spin_lock_irq(&hdsp->lock);
-	if (val != hdsp_phone_gain(hdsp))
+	अगर (val != hdsp_phone_gain(hdsp))
 		change = (hdsp_set_phone_gain(hdsp, val) == 0) ? 1 : 0;
-	else
+	अन्यथा
 		change = 0;
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define HDSP_PREF_SYNC_REF(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_PREF_SYNC_REF(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .info = snd_hdsp_info_pref_sync_ref, \
   .get = snd_hdsp_get_pref_sync_ref, \
   .put = snd_hdsp_put_pref_sync_ref \
-}
+पूर्ण
 
-static int hdsp_pref_sync_ref(struct hdsp *hdsp)
-{
+अटल पूर्णांक hdsp_pref_sync_ref(काष्ठा hdsp *hdsp)
+अणु
 	/* Notice that this looks at the requested sync source,
 	   not the one actually in use.
 	*/
 
-	switch (hdsp->control_register & HDSP_SyncRefMask) {
-	case HDSP_SyncRef_ADAT1:
-		return HDSP_SYNC_FROM_ADAT1;
-	case HDSP_SyncRef_ADAT2:
-		return HDSP_SYNC_FROM_ADAT2;
-	case HDSP_SyncRef_ADAT3:
-		return HDSP_SYNC_FROM_ADAT3;
-	case HDSP_SyncRef_SPDIF:
-		return HDSP_SYNC_FROM_SPDIF;
-	case HDSP_SyncRef_WORD:
-		return HDSP_SYNC_FROM_WORD;
-	case HDSP_SyncRef_ADAT_SYNC:
-		return HDSP_SYNC_FROM_ADAT_SYNC;
-	default:
-		return HDSP_SYNC_FROM_WORD;
-	}
-	return 0;
-}
+	चयन (hdsp->control_रेजिस्टर & HDSP_SyncRefMask) अणु
+	हाल HDSP_SyncRef_ADAT1:
+		वापस HDSP_SYNC_FROM_ADAT1;
+	हाल HDSP_SyncRef_ADAT2:
+		वापस HDSP_SYNC_FROM_ADAT2;
+	हाल HDSP_SyncRef_ADAT3:
+		वापस HDSP_SYNC_FROM_ADAT3;
+	हाल HDSP_SyncRef_SPDIF:
+		वापस HDSP_SYNC_FROM_SPDIF;
+	हाल HDSP_SyncRef_WORD:
+		वापस HDSP_SYNC_FROM_WORD;
+	हाल HDSP_SyncRef_ADAT_SYNC:
+		वापस HDSP_SYNC_FROM_ADAT_SYNC;
+	शेष:
+		वापस HDSP_SYNC_FROM_WORD;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int hdsp_set_pref_sync_ref(struct hdsp *hdsp, int pref)
-{
-	hdsp->control_register &= ~HDSP_SyncRefMask;
-	switch (pref) {
-	case HDSP_SYNC_FROM_ADAT1:
-		hdsp->control_register &= ~HDSP_SyncRefMask; /* clear SyncRef bits */
-		break;
-	case HDSP_SYNC_FROM_ADAT2:
-		hdsp->control_register |= HDSP_SyncRef_ADAT2;
-		break;
-	case HDSP_SYNC_FROM_ADAT3:
-		hdsp->control_register |= HDSP_SyncRef_ADAT3;
-		break;
-	case HDSP_SYNC_FROM_SPDIF:
-		hdsp->control_register |= HDSP_SyncRef_SPDIF;
-		break;
-	case HDSP_SYNC_FROM_WORD:
-		hdsp->control_register |= HDSP_SyncRef_WORD;
-		break;
-	case HDSP_SYNC_FROM_ADAT_SYNC:
-		hdsp->control_register |= HDSP_SyncRef_ADAT_SYNC;
-		break;
-	default:
-		return -1;
-	}
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-	return 0;
-}
+अटल पूर्णांक hdsp_set_pref_sync_ref(काष्ठा hdsp *hdsp, पूर्णांक pref)
+अणु
+	hdsp->control_रेजिस्टर &= ~HDSP_SyncRefMask;
+	चयन (pref) अणु
+	हाल HDSP_SYNC_FROM_ADAT1:
+		hdsp->control_रेजिस्टर &= ~HDSP_SyncRefMask; /* clear SyncRef bits */
+		अवरोध;
+	हाल HDSP_SYNC_FROM_ADAT2:
+		hdsp->control_रेजिस्टर |= HDSP_SyncRef_ADAT2;
+		अवरोध;
+	हाल HDSP_SYNC_FROM_ADAT3:
+		hdsp->control_रेजिस्टर |= HDSP_SyncRef_ADAT3;
+		अवरोध;
+	हाल HDSP_SYNC_FROM_SPDIF:
+		hdsp->control_रेजिस्टर |= HDSP_SyncRef_SPDIF;
+		अवरोध;
+	हाल HDSP_SYNC_FROM_WORD:
+		hdsp->control_रेजिस्टर |= HDSP_SyncRef_WORD;
+		अवरोध;
+	हाल HDSP_SYNC_FROM_ADAT_SYNC:
+		hdsp->control_रेजिस्टर |= HDSP_SyncRef_ADAT_SYNC;
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_info_pref_sync_ref(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {
+अटल पूर्णांक snd_hdsp_info_pref_sync_ref(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु
 		"Word", "IEC958", "ADAT1", "ADAT Sync", "ADAT2", "ADAT3"
-	};
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int num_items;
+	पूर्ण;
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक num_items;
 
-	switch (hdsp->io_type) {
-	case Digiface:
-	case H9652:
+	चयन (hdsp->io_type) अणु
+	हाल Digअगरace:
+	हाल H9652:
 		num_items = 6;
-		break;
-	case Multiface:
+		अवरोध;
+	हाल Multअगरace:
 		num_items = 4;
-		break;
-	case H9632:
+		अवरोध;
+	हाल H9632:
 		num_items = 3;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return snd_ctl_enum_info(uinfo, 1, num_items, texts);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, num_items, texts);
+पूर्ण
 
-static int snd_hdsp_get_pref_sync_ref(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_pref_sync_ref(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_pref_sync_ref(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_pref_sync_ref(hdsp);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_pref_sync_ref(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change, max;
-	unsigned int val;
+अटल पूर्णांक snd_hdsp_put_pref_sync_ref(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change, max;
+	अचिन्हित पूर्णांक val;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
 
-	switch (hdsp->io_type) {
-	case Digiface:
-	case H9652:
+	चयन (hdsp->io_type) अणु
+	हाल Digअगरace:
+	हाल H9652:
 		max = 6;
-		break;
-	case Multiface:
+		अवरोध;
+	हाल Multअगरace:
 		max = 4;
-		break;
-	case H9632:
+		अवरोध;
+	हाल H9632:
 		max = 3;
-		break;
-	default:
-		return -EIO;
-	}
+		अवरोध;
+	शेष:
+		वापस -EIO;
+	पूर्ण
 
-	val = ucontrol->value.enumerated.item[0] % max;
+	val = ucontrol->value.क्रमागतerated.item[0] % max;
 	spin_lock_irq(&hdsp->lock);
-	change = (int)val != hdsp_pref_sync_ref(hdsp);
+	change = (पूर्णांक)val != hdsp_pref_sync_ref(hdsp);
 	hdsp_set_pref_sync_ref(hdsp, val);
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define HDSP_AUTOSYNC_REF(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_AUTOSYNC_REF(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .access = SNDRV_CTL_ELEM_ACCESS_READ, \
-  .info = snd_hdsp_info_autosync_ref, \
-  .get = snd_hdsp_get_autosync_ref, \
-}
+  .info = snd_hdsp_info_स्वतःsync_ref, \
+  .get = snd_hdsp_get_स्वतःsync_ref, \
+पूर्ण
 
-static int hdsp_autosync_ref(struct hdsp *hdsp)
-{
-	/* This looks at the autosync selected sync reference */
-	unsigned int status2 = hdsp_read(hdsp, HDSP_status2Register);
+अटल पूर्णांक hdsp_स्वतःsync_ref(काष्ठा hdsp *hdsp)
+अणु
+	/* This looks at the स्वतःsync selected sync reference */
+	अचिन्हित पूर्णांक status2 = hdsp_पढ़ो(hdsp, HDSP_status2Register);
 
-	switch (status2 & HDSP_SelSyncRefMask) {
-	case HDSP_SelSyncRef_WORD:
-		return HDSP_AUTOSYNC_FROM_WORD;
-	case HDSP_SelSyncRef_ADAT_SYNC:
-		return HDSP_AUTOSYNC_FROM_ADAT_SYNC;
-	case HDSP_SelSyncRef_SPDIF:
-		return HDSP_AUTOSYNC_FROM_SPDIF;
-	case HDSP_SelSyncRefMask:
-		return HDSP_AUTOSYNC_FROM_NONE;
-	case HDSP_SelSyncRef_ADAT1:
-		return HDSP_AUTOSYNC_FROM_ADAT1;
-	case HDSP_SelSyncRef_ADAT2:
-		return HDSP_AUTOSYNC_FROM_ADAT2;
-	case HDSP_SelSyncRef_ADAT3:
-		return HDSP_AUTOSYNC_FROM_ADAT3;
-	default:
-		return HDSP_AUTOSYNC_FROM_WORD;
-	}
-	return 0;
-}
+	चयन (status2 & HDSP_SelSyncRefMask) अणु
+	हाल HDSP_SelSyncRef_WORD:
+		वापस HDSP_AUTOSYNC_FROM_WORD;
+	हाल HDSP_SelSyncRef_ADAT_SYNC:
+		वापस HDSP_AUTOSYNC_FROM_ADAT_SYNC;
+	हाल HDSP_SelSyncRef_SPDIF:
+		वापस HDSP_AUTOSYNC_FROM_SPDIF;
+	हाल HDSP_SelSyncRefMask:
+		वापस HDSP_AUTOSYNC_FROM_NONE;
+	हाल HDSP_SelSyncRef_ADAT1:
+		वापस HDSP_AUTOSYNC_FROM_ADAT1;
+	हाल HDSP_SelSyncRef_ADAT2:
+		वापस HDSP_AUTOSYNC_FROM_ADAT2;
+	हाल HDSP_SelSyncRef_ADAT3:
+		वापस HDSP_AUTOSYNC_FROM_ADAT3;
+	शेष:
+		वापस HDSP_AUTOSYNC_FROM_WORD;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_info_autosync_ref(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {
+अटल पूर्णांक snd_hdsp_info_स्वतःsync_ref(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु
 		"Word", "ADAT Sync", "IEC958", "None", "ADAT1", "ADAT2", "ADAT3"
-	};
+	पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, 7, texts);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 7, texts);
+पूर्ण
 
-static int snd_hdsp_get_autosync_ref(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_स्वतःsync_ref(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_autosync_ref(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_स्वतःsync_ref(hdsp);
+	वापस 0;
+पूर्ण
 
-#define HDSP_PRECISE_POINTER(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_CARD, \
+#घोषणा HDSP_PRECISE_POINTER(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_CARD, \
   .name = xname, \
   .index = xindex, \
-  .info = snd_hdsp_info_precise_pointer, \
-  .get = snd_hdsp_get_precise_pointer, \
-  .put = snd_hdsp_put_precise_pointer \
-}
+  .info = snd_hdsp_info_precise_poपूर्णांकer, \
+  .get = snd_hdsp_get_precise_poपूर्णांकer, \
+  .put = snd_hdsp_put_precise_poपूर्णांकer \
+पूर्ण
 
-static int hdsp_set_precise_pointer(struct hdsp *hdsp, int precise)
-{
-	if (precise)
+अटल पूर्णांक hdsp_set_precise_poपूर्णांकer(काष्ठा hdsp *hdsp, पूर्णांक precise)
+अणु
+	अगर (precise)
 		hdsp->precise_ptr = 1;
-	else
+	अन्यथा
 		hdsp->precise_ptr = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define snd_hdsp_info_precise_pointer		snd_ctl_boolean_mono_info
+#घोषणा snd_hdsp_info_precise_poपूर्णांकer		snd_ctl_boolean_mono_info
 
-static int snd_hdsp_get_precise_pointer(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_precise_poपूर्णांकer(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
 	spin_lock_irq(&hdsp->lock);
-	ucontrol->value.integer.value[0] = hdsp->precise_ptr;
+	ucontrol->value.पूर्णांकeger.value[0] = hdsp->precise_ptr;
 	spin_unlock_irq(&hdsp->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_precise_pointer(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	unsigned int val;
+अटल पूर्णांक snd_hdsp_put_precise_poपूर्णांकer(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	अचिन्हित पूर्णांक val;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.integer.value[0] & 1;
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.पूर्णांकeger.value[0] & 1;
 	spin_lock_irq(&hdsp->lock);
-	change = (int)val != hdsp->precise_ptr;
-	hdsp_set_precise_pointer(hdsp, val);
+	change = (पूर्णांक)val != hdsp->precise_ptr;
+	hdsp_set_precise_poपूर्णांकer(hdsp, val);
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define HDSP_USE_MIDI_WORK(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_CARD, \
+#घोषणा HDSP_USE_MIDI_WORK(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_CARD, \
   .name = xname, \
   .index = xindex, \
   .info = snd_hdsp_info_use_midi_work, \
   .get = snd_hdsp_get_use_midi_work, \
   .put = snd_hdsp_put_use_midi_work \
-}
+पूर्ण
 
-static int hdsp_set_use_midi_work(struct hdsp *hdsp, int use_work)
-{
-	if (use_work)
+अटल पूर्णांक hdsp_set_use_midi_work(काष्ठा hdsp *hdsp, पूर्णांक use_work)
+अणु
+	अगर (use_work)
 		hdsp->use_midi_work = 1;
-	else
+	अन्यथा
 		hdsp->use_midi_work = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define snd_hdsp_info_use_midi_work		snd_ctl_boolean_mono_info
+#घोषणा snd_hdsp_info_use_midi_work		snd_ctl_boolean_mono_info
 
-static int snd_hdsp_get_use_midi_work(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_use_midi_work(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
 	spin_lock_irq(&hdsp->lock);
-	ucontrol->value.integer.value[0] = hdsp->use_midi_work;
+	ucontrol->value.पूर्णांकeger.value[0] = hdsp->use_midi_work;
 	spin_unlock_irq(&hdsp->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_use_midi_work(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	unsigned int val;
+अटल पूर्णांक snd_hdsp_put_use_midi_work(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	अचिन्हित पूर्णांक val;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.integer.value[0] & 1;
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.पूर्णांकeger.value[0] & 1;
 	spin_lock_irq(&hdsp->lock);
-	change = (int)val != hdsp->use_midi_work;
+	change = (पूर्णांक)val != hdsp->use_midi_work;
 	hdsp_set_use_midi_work(hdsp, val);
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define HDSP_MIXER(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_HWDEP, \
+#घोषणा HDSP_MIXER(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_HWDEP, \
   .name = xname, \
   .index = xindex, \
   .device = 0, \
@@ -2595,331 +2596,331 @@ static int snd_hdsp_put_use_midi_work(struct snd_kcontrol *kcontrol, struct snd_
   .info = snd_hdsp_info_mixer, \
   .get = snd_hdsp_get_mixer, \
   .put = snd_hdsp_put_mixer \
-}
+पूर्ण
 
-static int snd_hdsp_info_mixer(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_hdsp_info_mixer(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 3;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 65536;
-	uinfo->value.integer.step = 1;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = 65536;
+	uinfo->value.पूर्णांकeger.step = 1;
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_get_mixer(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int source;
-	int destination;
-	int addr;
+अटल पूर्णांक snd_hdsp_get_mixer(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक source;
+	पूर्णांक destination;
+	पूर्णांक addr;
 
-	source = ucontrol->value.integer.value[0];
-	destination = ucontrol->value.integer.value[1];
+	source = ucontrol->value.पूर्णांकeger.value[0];
+	destination = ucontrol->value.पूर्णांकeger.value[1];
 
-	if (source >= hdsp->max_channels)
+	अगर (source >= hdsp->max_channels)
 		addr = hdsp_playback_to_output_key(hdsp,source-hdsp->max_channels,destination);
-	else
+	अन्यथा
 		addr = hdsp_input_to_output_key(hdsp,source, destination);
 
 	spin_lock_irq(&hdsp->lock);
-	ucontrol->value.integer.value[2] = hdsp_read_gain (hdsp, addr);
+	ucontrol->value.पूर्णांकeger.value[2] = hdsp_पढ़ो_gain (hdsp, addr);
 	spin_unlock_irq(&hdsp->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_mixer(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	int source;
-	int destination;
-	int gain;
-	int addr;
+अटल पूर्णांक snd_hdsp_put_mixer(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	पूर्णांक source;
+	पूर्णांक destination;
+	पूर्णांक gain;
+	पूर्णांक addr;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
 
-	source = ucontrol->value.integer.value[0];
-	destination = ucontrol->value.integer.value[1];
+	source = ucontrol->value.पूर्णांकeger.value[0];
+	destination = ucontrol->value.पूर्णांकeger.value[1];
 
-	if (source >= hdsp->max_channels)
+	अगर (source >= hdsp->max_channels)
 		addr = hdsp_playback_to_output_key(hdsp,source-hdsp->max_channels, destination);
-	else
+	अन्यथा
 		addr = hdsp_input_to_output_key(hdsp,source, destination);
 
-	gain = ucontrol->value.integer.value[2];
+	gain = ucontrol->value.पूर्णांकeger.value[2];
 
 	spin_lock_irq(&hdsp->lock);
-	change = gain != hdsp_read_gain(hdsp, addr);
-	if (change)
-		hdsp_write_gain(hdsp, addr, gain);
+	change = gain != hdsp_पढ़ो_gain(hdsp, addr);
+	अगर (change)
+		hdsp_ग_लिखो_gain(hdsp, addr, gain);
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define HDSP_WC_SYNC_CHECK(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_WC_SYNC_CHECK(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE, \
   .info = snd_hdsp_info_sync_check, \
   .get = snd_hdsp_get_wc_sync_check \
-}
+पूर्ण
 
-static int snd_hdsp_info_sync_check(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {"No Lock", "Lock", "Sync" };
+अटल पूर्णांक snd_hdsp_info_sync_check(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु"No Lock", "Lock", "Sync" पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, 3, texts);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 3, texts);
+पूर्ण
 
-static int hdsp_wc_sync_check(struct hdsp *hdsp)
-{
-	int status2 = hdsp_read(hdsp, HDSP_status2Register);
-	if (status2 & HDSP_wc_lock) {
-		if (status2 & HDSP_wc_sync)
-			return 2;
-		else
-			 return 1;
-	} else
-		return 0;
-	return 0;
-}
+अटल पूर्णांक hdsp_wc_sync_check(काष्ठा hdsp *hdsp)
+अणु
+	पूर्णांक status2 = hdsp_पढ़ो(hdsp, HDSP_status2Register);
+	अगर (status2 & HDSP_wc_lock) अणु
+		अगर (status2 & HDSP_wc_sync)
+			वापस 2;
+		अन्यथा
+			 वापस 1;
+	पूर्ण अन्यथा
+		वापस 0;
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_get_wc_sync_check(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_wc_sync_check(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_wc_sync_check(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_wc_sync_check(hdsp);
+	वापस 0;
+पूर्ण
 
-#define HDSP_SPDIF_SYNC_CHECK(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_SPDIF_SYNC_CHECK(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE, \
   .info = snd_hdsp_info_sync_check, \
-  .get = snd_hdsp_get_spdif_sync_check \
-}
+  .get = snd_hdsp_get_spdअगर_sync_check \
+पूर्ण
 
-static int hdsp_spdif_sync_check(struct hdsp *hdsp)
-{
-	int status = hdsp_read(hdsp, HDSP_statusRegister);
-	if (status & HDSP_SPDIFErrorFlag)
-		return 0;
-	else {
-		if (status & HDSP_SPDIFSync)
-			return 2;
-		else
-			return 1;
-	}
-	return 0;
-}
+अटल पूर्णांक hdsp_spdअगर_sync_check(काष्ठा hdsp *hdsp)
+अणु
+	पूर्णांक status = hdsp_पढ़ो(hdsp, HDSP_statusRegister);
+	अगर (status & HDSP_SPDIFErrorFlag)
+		वापस 0;
+	अन्यथा अणु
+		अगर (status & HDSP_SPDIFSync)
+			वापस 2;
+		अन्यथा
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_get_spdif_sync_check(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_spdअगर_sync_check(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_spdif_sync_check(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_spdअगर_sync_check(hdsp);
+	वापस 0;
+पूर्ण
 
-#define HDSP_ADATSYNC_SYNC_CHECK(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_ADATSYNC_SYNC_CHECK(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE, \
   .info = snd_hdsp_info_sync_check, \
   .get = snd_hdsp_get_adatsync_sync_check \
-}
+पूर्ण
 
-static int hdsp_adatsync_sync_check(struct hdsp *hdsp)
-{
-	int status = hdsp_read(hdsp, HDSP_statusRegister);
-	if (status & HDSP_TimecodeLock) {
-		if (status & HDSP_TimecodeSync)
-			return 2;
-		else
-			return 1;
-	} else
-		return 0;
-}
+अटल पूर्णांक hdsp_adatsync_sync_check(काष्ठा hdsp *hdsp)
+अणु
+	पूर्णांक status = hdsp_पढ़ो(hdsp, HDSP_statusRegister);
+	अगर (status & HDSP_TimecodeLock) अणु
+		अगर (status & HDSP_TimecodeSync)
+			वापस 2;
+		अन्यथा
+			वापस 1;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
-static int snd_hdsp_get_adatsync_sync_check(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_adatsync_sync_check(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_adatsync_sync_check(hdsp);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_adatsync_sync_check(hdsp);
+	वापस 0;
+पूर्ण
 
-#define HDSP_ADAT_SYNC_CHECK \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_ADAT_SYNC_CHECK \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .access = SNDRV_CTL_ELEM_ACCESS_READ | SNDRV_CTL_ELEM_ACCESS_VOLATILE, \
   .info = snd_hdsp_info_sync_check, \
   .get = snd_hdsp_get_adat_sync_check \
-}
+पूर्ण
 
-static int hdsp_adat_sync_check(struct hdsp *hdsp, int idx)
-{
-	int status = hdsp_read(hdsp, HDSP_statusRegister);
+अटल पूर्णांक hdsp_adat_sync_check(काष्ठा hdsp *hdsp, पूर्णांक idx)
+अणु
+	पूर्णांक status = hdsp_पढ़ो(hdsp, HDSP_statusRegister);
 
-	if (status & (HDSP_Lock0>>idx)) {
-		if (status & (HDSP_Sync0>>idx))
-			return 2;
-		else
-			return 1;
-	} else
-		return 0;
-}
+	अगर (status & (HDSP_Lock0>>idx)) अणु
+		अगर (status & (HDSP_Sync0>>idx))
+			वापस 2;
+		अन्यथा
+			वापस 1;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
-static int snd_hdsp_get_adat_sync_check(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	int offset;
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_adat_sync_check(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक offset;
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
 	offset = ucontrol->id.index - 1;
-	if (snd_BUG_ON(offset < 0))
-		return -EINVAL;
+	अगर (snd_BUG_ON(offset < 0))
+		वापस -EINVAL;
 
-	switch (hdsp->io_type) {
-	case Digiface:
-	case H9652:
-		if (offset >= 3)
-			return -EINVAL;
-		break;
-	case Multiface:
-	case H9632:
-		if (offset >= 1)
-			return -EINVAL;
-		break;
-	default:
-		return -EIO;
-	}
+	चयन (hdsp->io_type) अणु
+	हाल Digअगरace:
+	हाल H9652:
+		अगर (offset >= 3)
+			वापस -EINVAL;
+		अवरोध;
+	हाल Multअगरace:
+	हाल H9632:
+		अगर (offset >= 1)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EIO;
+	पूर्ण
 
-	ucontrol->value.enumerated.item[0] = hdsp_adat_sync_check(hdsp, offset);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_adat_sync_check(hdsp, offset);
+	वापस 0;
+पूर्ण
 
-#define HDSP_DDS_OFFSET(xname, xindex) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, \
+#घोषणा HDSP_DDS_OFFSET(xname, xindex) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, \
   .name = xname, \
   .index = xindex, \
   .info = snd_hdsp_info_dds_offset, \
   .get = snd_hdsp_get_dds_offset, \
   .put = snd_hdsp_put_dds_offset \
-}
+पूर्ण
 
-static int hdsp_dds_offset(struct hdsp *hdsp)
-{
+अटल पूर्णांक hdsp_dds_offset(काष्ठा hdsp *hdsp)
+अणु
 	u64 n;
-	unsigned int dds_value = hdsp->dds_value;
-	int system_sample_rate = hdsp->system_sample_rate;
+	अचिन्हित पूर्णांक dds_value = hdsp->dds_value;
+	पूर्णांक प्रणाली_sample_rate = hdsp->प्रणाली_sample_rate;
 
-	if (!dds_value)
-		return 0;
+	अगर (!dds_value)
+		वापस 0;
 
 	n = DDS_NUMERATOR;
 	/*
 	 * dds_value = n / rate
 	 * rate = n / dds_value
 	 */
-	n = div_u64(n, dds_value);
-	if (system_sample_rate >= 112000)
+	n = भाग_u64(n, dds_value);
+	अगर (प्रणाली_sample_rate >= 112000)
 		n *= 4;
-	else if (system_sample_rate >= 56000)
+	अन्यथा अगर (प्रणाली_sample_rate >= 56000)
 		n *= 2;
-	return ((int)n) - system_sample_rate;
-}
+	वापस ((पूर्णांक)n) - प्रणाली_sample_rate;
+पूर्ण
 
-static int hdsp_set_dds_offset(struct hdsp *hdsp, int offset_hz)
-{
-	int rate = hdsp->system_sample_rate + offset_hz;
+अटल पूर्णांक hdsp_set_dds_offset(काष्ठा hdsp *hdsp, पूर्णांक offset_hz)
+अणु
+	पूर्णांक rate = hdsp->प्रणाली_sample_rate + offset_hz;
 	hdsp_set_dds_value(hdsp, rate);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_info_dds_offset(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_hdsp_info_dds_offset(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = -5000;
-	uinfo->value.integer.max = 5000;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = -5000;
+	uinfo->value.पूर्णांकeger.max = 5000;
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_get_dds_offset(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_dds_offset(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.integer.value[0] = hdsp_dds_offset(hdsp);
-	return 0;
-}
+	ucontrol->value.पूर्णांकeger.value[0] = hdsp_dds_offset(hdsp);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_put_dds_offset(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	int val;
+अटल पूर्णांक snd_hdsp_put_dds_offset(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	पूर्णांक val;
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.integer.value[0];
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.पूर्णांकeger.value[0];
 	spin_lock_irq(&hdsp->lock);
-	if (val != hdsp_dds_offset(hdsp))
+	अगर (val != hdsp_dds_offset(hdsp))
 		change = (hdsp_set_dds_offset(hdsp, val) == 0) ? 1 : 0;
-	else
+	अन्यथा
 		change = 0;
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static const struct snd_kcontrol_new snd_hdsp_9632_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new snd_hdsp_9632_controls[] = अणु
 HDSP_DA_GAIN("DA Gain", 0),
 HDSP_AD_GAIN("AD Gain", 0),
 HDSP_PHONE_GAIN("Phones Gain", 0),
 HDSP_TOGGLE_SETTING("XLR Breakout Cable", HDSP_XLRBreakoutCable),
 HDSP_DDS_OFFSET("DDS Sample Rate Offset", 0)
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new snd_hdsp_controls[] = {
-{
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+अटल स्थिर काष्ठा snd_kcontrol_new snd_hdsp_controls[] = अणु
+अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,DEFAULT),
-	.info =		snd_hdsp_control_spdif_info,
-	.get =		snd_hdsp_control_spdif_get,
-	.put =		snd_hdsp_control_spdif_put,
-},
-{
+	.info =		snd_hdsp_control_spdअगर_info,
+	.get =		snd_hdsp_control_spdअगर_get,
+	.put =		snd_hdsp_control_spdअगर_put,
+पूर्ण,
+अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,PCM_STREAM),
-	.info =		snd_hdsp_control_spdif_stream_info,
-	.get =		snd_hdsp_control_spdif_stream_get,
-	.put =		snd_hdsp_control_spdif_stream_put,
-},
-{
+	.info =		snd_hdsp_control_spdअगर_stream_info,
+	.get =		snd_hdsp_control_spdअगर_stream_get,
+	.put =		snd_hdsp_control_spdअगर_stream_put,
+पूर्ण,
+अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,CON_MASK),
-	.info =		snd_hdsp_control_spdif_mask_info,
-	.get =		snd_hdsp_control_spdif_mask_get,
-	.private_value = IEC958_AES0_NONAUDIO |
+	.info =		snd_hdsp_control_spdअगर_mask_info,
+	.get =		snd_hdsp_control_spdअगर_mask_get,
+	.निजी_value = IEC958_AES0_NONAUDIO |
   			 IEC958_AES0_PROFESSIONAL |
 			 IEC958_AES0_CON_EMPHASIS,
-},
-{
+पूर्ण,
+अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,PRO_MASK),
-	.info =		snd_hdsp_control_spdif_mask_info,
-	.get =		snd_hdsp_control_spdif_mask_get,
-	.private_value = IEC958_AES0_NONAUDIO |
+	.info =		snd_hdsp_control_spdअगर_mask_info,
+	.get =		snd_hdsp_control_spdअगर_mask_get,
+	.निजी_value = IEC958_AES0_NONAUDIO |
 			 IEC958_AES0_PROFESSIONAL |
 			 IEC958_AES0_PRO_EMPHASIS,
-},
+पूर्ण,
 HDSP_MIXER("Mixer", 0),
 HDSP_SPDIF_IN("IEC958 Input Connector", 0),
 HDSP_TOGGLE_SETTING("IEC958 Output also on ADAT1", HDSP_SPDIFOpticalOut),
@@ -2928,13 +2929,13 @@ HDSP_TOGGLE_SETTING("IEC958 Emphasis Bit", HDSP_SPDIFEmphasis),
 HDSP_TOGGLE_SETTING("IEC958 Non-audio Bit", HDSP_SPDIFNonAudio),
 /* 'Sample Clock Source' complies with the alsa control naming scheme */
 HDSP_CLOCK_SOURCE("Sample Clock Source", 0),
-{
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Sample Clock Source Locking",
-	.info = snd_hdsp_info_clock_source_lock,
-	.get = snd_hdsp_get_clock_source_lock,
-	.put = snd_hdsp_put_clock_source_lock,
-},
+	.info = snd_hdsp_info_घड़ी_source_lock,
+	.get = snd_hdsp_get_घड़ी_source_lock,
+	.put = snd_hdsp_put_घड़ी_source_lock,
+पूर्ण,
 HDSP_SYSTEM_CLOCK_MODE("System Clock Mode", 0),
 HDSP_PREF_SYNC_REF("Preferred Sync Reference", 0),
 HDSP_AUTOSYNC_REF("AutoSync Reference", 0),
@@ -2948,831 +2949,831 @@ HDSP_ADATSYNC_SYNC_CHECK("ADAT Sync Lock Status", 0),
 HDSP_TOGGLE_SETTING("Line Out", HDSP_LineOut),
 HDSP_PRECISE_POINTER("Precise Pointer", 0),
 HDSP_USE_MIDI_WORK("Use Midi Tasklet", 0),
-};
+पूर्ण;
 
 
-static int hdsp_rpm_input12(struct hdsp *hdsp)
-{
-	switch (hdsp->control_register & HDSP_RPM_Inp12) {
-	case HDSP_RPM_Inp12_Phon_6dB:
-		return 0;
-	case HDSP_RPM_Inp12_Phon_n6dB:
-		return 2;
-	case HDSP_RPM_Inp12_Line_0dB:
-		return 3;
-	case HDSP_RPM_Inp12_Line_n6dB:
-		return 4;
-	}
-	return 1;
-}
+अटल पूर्णांक hdsp_rpm_input12(काष्ठा hdsp *hdsp)
+अणु
+	चयन (hdsp->control_रेजिस्टर & HDSP_RPM_Inp12) अणु
+	हाल HDSP_RPM_Inp12_Phon_6dB:
+		वापस 0;
+	हाल HDSP_RPM_Inp12_Phon_n6dB:
+		वापस 2;
+	हाल HDSP_RPM_Inp12_Line_0dB:
+		वापस 3;
+	हाल HDSP_RPM_Inp12_Line_n6dB:
+		वापस 4;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 
-static int snd_hdsp_get_rpm_input12(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_rpm_input12(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.enumerated.item[0] = hdsp_rpm_input12(hdsp);
-	return 0;
-}
-
-
-static int hdsp_set_rpm_input12(struct hdsp *hdsp, int mode)
-{
-	hdsp->control_register &= ~HDSP_RPM_Inp12;
-	switch (mode) {
-	case 0:
-		hdsp->control_register |= HDSP_RPM_Inp12_Phon_6dB;
-		break;
-	case 1:
-		break;
-	case 2:
-		hdsp->control_register |= HDSP_RPM_Inp12_Phon_n6dB;
-		break;
-	case 3:
-		hdsp->control_register |= HDSP_RPM_Inp12_Line_0dB;
-		break;
-	case 4:
-		hdsp->control_register |= HDSP_RPM_Inp12_Line_n6dB;
-		break;
-	default:
-		return -1;
-	}
-
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_rpm_input12(hdsp);
+	वापस 0;
+पूर्ण
 
 
-static int snd_hdsp_put_rpm_input12(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	int val;
+अटल पूर्णांक hdsp_set_rpm_input12(काष्ठा hdsp *hdsp, पूर्णांक mode)
+अणु
+	hdsp->control_रेजिस्टर &= ~HDSP_RPM_Inp12;
+	चयन (mode) अणु
+	हाल 0:
+		hdsp->control_रेजिस्टर |= HDSP_RPM_Inp12_Phon_6dB;
+		अवरोध;
+	हाल 1:
+		अवरोध;
+	हाल 2:
+		hdsp->control_रेजिस्टर |= HDSP_RPM_Inp12_Phon_n6dB;
+		अवरोध;
+	हाल 3:
+		hdsp->control_रेजिस्टर |= HDSP_RPM_Inp12_Line_0dB;
+		अवरोध;
+	हाल 4:
+		hdsp->control_रेजिस्टर |= HDSP_RPM_Inp12_Line_n6dB;
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.enumerated.item[0];
-	if (val < 0)
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	वापस 0;
+पूर्ण
+
+
+अटल पूर्णांक snd_hdsp_put_rpm_input12(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	पूर्णांक val;
+
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.क्रमागतerated.item[0];
+	अगर (val < 0)
 		val = 0;
-	if (val > 4)
+	अगर (val > 4)
 		val = 4;
 	spin_lock_irq(&hdsp->lock);
-	if (val != hdsp_rpm_input12(hdsp))
+	अगर (val != hdsp_rpm_input12(hdsp))
 		change = (hdsp_set_rpm_input12(hdsp, val) == 0) ? 1 : 0;
-	else
+	अन्यथा
 		change = 0;
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
 
-static int snd_hdsp_info_rpm_input(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {
+अटल पूर्णांक snd_hdsp_info_rpm_input(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु
 		"Phono +6dB", "Phono 0dB", "Phono -6dB", "Line 0dB", "Line -6dB"
-	};
+	पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, 5, texts);
-}
-
-
-static int hdsp_rpm_input34(struct hdsp *hdsp)
-{
-	switch (hdsp->control_register & HDSP_RPM_Inp34) {
-	case HDSP_RPM_Inp34_Phon_6dB:
-		return 0;
-	case HDSP_RPM_Inp34_Phon_n6dB:
-		return 2;
-	case HDSP_RPM_Inp34_Line_0dB:
-		return 3;
-	case HDSP_RPM_Inp34_Line_n6dB:
-		return 4;
-	}
-	return 1;
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 5, texts);
+पूर्ण
 
 
-static int snd_hdsp_get_rpm_input34(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-
-	ucontrol->value.enumerated.item[0] = hdsp_rpm_input34(hdsp);
-	return 0;
-}
-
-
-static int hdsp_set_rpm_input34(struct hdsp *hdsp, int mode)
-{
-	hdsp->control_register &= ~HDSP_RPM_Inp34;
-	switch (mode) {
-	case 0:
-		hdsp->control_register |= HDSP_RPM_Inp34_Phon_6dB;
-		break;
-	case 1:
-		break;
-	case 2:
-		hdsp->control_register |= HDSP_RPM_Inp34_Phon_n6dB;
-		break;
-	case 3:
-		hdsp->control_register |= HDSP_RPM_Inp34_Line_0dB;
-		break;
-	case 4:
-		hdsp->control_register |= HDSP_RPM_Inp34_Line_n6dB;
-		break;
-	default:
-		return -1;
-	}
-
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-	return 0;
-}
+अटल पूर्णांक hdsp_rpm_input34(काष्ठा hdsp *hdsp)
+अणु
+	चयन (hdsp->control_रेजिस्टर & HDSP_RPM_Inp34) अणु
+	हाल HDSP_RPM_Inp34_Phon_6dB:
+		वापस 0;
+	हाल HDSP_RPM_Inp34_Phon_n6dB:
+		वापस 2;
+	हाल HDSP_RPM_Inp34_Line_0dB:
+		वापस 3;
+	हाल HDSP_RPM_Inp34_Line_n6dB:
+		वापस 4;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 
-static int snd_hdsp_put_rpm_input34(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	int val;
+अटल पूर्णांक snd_hdsp_get_rpm_input34(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.enumerated.item[0];
-	if (val < 0)
+	ucontrol->value.क्रमागतerated.item[0] = hdsp_rpm_input34(hdsp);
+	वापस 0;
+पूर्ण
+
+
+अटल पूर्णांक hdsp_set_rpm_input34(काष्ठा hdsp *hdsp, पूर्णांक mode)
+अणु
+	hdsp->control_रेजिस्टर &= ~HDSP_RPM_Inp34;
+	चयन (mode) अणु
+	हाल 0:
+		hdsp->control_रेजिस्टर |= HDSP_RPM_Inp34_Phon_6dB;
+		अवरोध;
+	हाल 1:
+		अवरोध;
+	हाल 2:
+		hdsp->control_रेजिस्टर |= HDSP_RPM_Inp34_Phon_n6dB;
+		अवरोध;
+	हाल 3:
+		hdsp->control_रेजिस्टर |= HDSP_RPM_Inp34_Line_0dB;
+		अवरोध;
+	हाल 4:
+		hdsp->control_रेजिस्टर |= HDSP_RPM_Inp34_Line_n6dB;
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
+
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	वापस 0;
+पूर्ण
+
+
+अटल पूर्णांक snd_hdsp_put_rpm_input34(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	पूर्णांक val;
+
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.क्रमागतerated.item[0];
+	अगर (val < 0)
 		val = 0;
-	if (val > 4)
+	अगर (val > 4)
 		val = 4;
 	spin_lock_irq(&hdsp->lock);
-	if (val != hdsp_rpm_input34(hdsp))
+	अगर (val != hdsp_rpm_input34(hdsp))
 		change = (hdsp_set_rpm_input34(hdsp, val) == 0) ? 1 : 0;
-	else
+	अन्यथा
 		change = 0;
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
 
-/* RPM Bypass switch */
-static int hdsp_rpm_bypass(struct hdsp *hdsp)
-{
-	return (hdsp->control_register & HDSP_RPM_Bypass) ? 1 : 0;
-}
+/* RPM Bypass चयन */
+अटल पूर्णांक hdsp_rpm_bypass(काष्ठा hdsp *hdsp)
+अणु
+	वापस (hdsp->control_रेजिस्टर & HDSP_RPM_Bypass) ? 1 : 0;
+पूर्ण
 
 
-static int snd_hdsp_get_rpm_bypass(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_hdsp_get_rpm_bypass(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.integer.value[0] = hdsp_rpm_bypass(hdsp);
-	return 0;
-}
-
-
-static int hdsp_set_rpm_bypass(struct hdsp *hdsp, int on)
-{
-	if (on)
-		hdsp->control_register |= HDSP_RPM_Bypass;
-	else
-		hdsp->control_register &= ~HDSP_RPM_Bypass;
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-	return 0;
-}
+	ucontrol->value.पूर्णांकeger.value[0] = hdsp_rpm_bypass(hdsp);
+	वापस 0;
+पूर्ण
 
 
-static int snd_hdsp_put_rpm_bypass(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	unsigned int val;
+अटल पूर्णांक hdsp_set_rpm_bypass(काष्ठा hdsp *hdsp, पूर्णांक on)
+अणु
+	अगर (on)
+		hdsp->control_रेजिस्टर |= HDSP_RPM_Bypass;
+	अन्यथा
+		hdsp->control_रेजिस्टर &= ~HDSP_RPM_Bypass;
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	वापस 0;
+पूर्ण
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.integer.value[0] & 1;
+
+अटल पूर्णांक snd_hdsp_put_rpm_bypass(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	अचिन्हित पूर्णांक val;
+
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.पूर्णांकeger.value[0] & 1;
 	spin_lock_irq(&hdsp->lock);
-	change = (int)val != hdsp_rpm_bypass(hdsp);
+	change = (पूर्णांक)val != hdsp_rpm_bypass(hdsp);
 	hdsp_set_rpm_bypass(hdsp, val);
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
 
-static int snd_hdsp_info_rpm_bypass(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {"On", "Off"};
+अटल पूर्णांक snd_hdsp_info_rpm_bypass(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु"On", "Off"पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, 2, texts);
-}
-
-
-/* RPM Disconnect switch */
-static int hdsp_rpm_disconnect(struct hdsp *hdsp)
-{
-	return (hdsp->control_register & HDSP_RPM_Disconnect) ? 1 : 0;
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 2, texts);
+पूर्ण
 
 
-static int snd_hdsp_get_rpm_disconnect(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-
-	ucontrol->value.integer.value[0] = hdsp_rpm_disconnect(hdsp);
-	return 0;
-}
+/* RPM Disconnect चयन */
+अटल पूर्णांक hdsp_rpm_disconnect(काष्ठा hdsp *hdsp)
+अणु
+	वापस (hdsp->control_रेजिस्टर & HDSP_RPM_Disconnect) ? 1 : 0;
+पूर्ण
 
 
-static int hdsp_set_rpm_disconnect(struct hdsp *hdsp, int on)
-{
-	if (on)
-		hdsp->control_register |= HDSP_RPM_Disconnect;
-	else
-		hdsp->control_register &= ~HDSP_RPM_Disconnect;
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-	return 0;
-}
+अटल पूर्णांक snd_hdsp_get_rpm_disconnect(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+
+	ucontrol->value.पूर्णांकeger.value[0] = hdsp_rpm_disconnect(hdsp);
+	वापस 0;
+पूर्ण
 
 
-static int snd_hdsp_put_rpm_disconnect(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct hdsp *hdsp = snd_kcontrol_chip(kcontrol);
-	int change;
-	unsigned int val;
+अटल पूर्णांक hdsp_set_rpm_disconnect(काष्ठा hdsp *hdsp, पूर्णांक on)
+अणु
+	अगर (on)
+		hdsp->control_रेजिस्टर |= HDSP_RPM_Disconnect;
+	अन्यथा
+		hdsp->control_रेजिस्टर &= ~HDSP_RPM_Disconnect;
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	वापस 0;
+पूर्ण
 
-	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
-	val = ucontrol->value.integer.value[0] & 1;
+
+अटल पूर्णांक snd_hdsp_put_rpm_disconnect(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hdsp *hdsp = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
+	अचिन्हित पूर्णांक val;
+
+	अगर (!snd_hdsp_use_is_exclusive(hdsp))
+		वापस -EBUSY;
+	val = ucontrol->value.पूर्णांकeger.value[0] & 1;
 	spin_lock_irq(&hdsp->lock);
-	change = (int)val != hdsp_rpm_disconnect(hdsp);
+	change = (पूर्णांक)val != hdsp_rpm_disconnect(hdsp);
 	hdsp_set_rpm_disconnect(hdsp, val);
 	spin_unlock_irq(&hdsp->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int snd_hdsp_info_rpm_disconnect(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[] = {"On", "Off"};
+अटल पूर्णांक snd_hdsp_info_rpm_disconnect(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[] = अणु"On", "Off"पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, 2, texts);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 2, texts);
+पूर्ण
 
-static const struct snd_kcontrol_new snd_hdsp_rpm_controls[] = {
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new snd_hdsp_rpm_controls[] = अणु
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "RPM Bypass",
 		.get = snd_hdsp_get_rpm_bypass,
 		.put = snd_hdsp_put_rpm_bypass,
 		.info = snd_hdsp_info_rpm_bypass
-	},
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	पूर्ण,
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "RPM Disconnect",
 		.get = snd_hdsp_get_rpm_disconnect,
 		.put = snd_hdsp_put_rpm_disconnect,
 		.info = snd_hdsp_info_rpm_disconnect
-	},
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	पूर्ण,
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Input 1/2",
 		.get = snd_hdsp_get_rpm_input12,
 		.put = snd_hdsp_put_rpm_input12,
 		.info = snd_hdsp_info_rpm_input
-	},
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	पूर्ण,
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Input 3/4",
 		.get = snd_hdsp_get_rpm_input34,
 		.put = snd_hdsp_put_rpm_input34,
 		.info = snd_hdsp_info_rpm_input
-	},
+	पूर्ण,
 	HDSP_SYSTEM_SAMPLE_RATE("System Sample Rate", 0),
 	HDSP_MIXER("Mixer", 0)
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new snd_hdsp_96xx_aeb =
+अटल स्थिर काष्ठा snd_kcontrol_new snd_hdsp_96xx_aeb =
 	HDSP_TOGGLE_SETTING("Analog Extension Board",
 			HDSP_AnalogExtensionBoard);
-static struct snd_kcontrol_new snd_hdsp_adat_sync_check = HDSP_ADAT_SYNC_CHECK;
+अटल काष्ठा snd_kcontrol_new snd_hdsp_adat_sync_check = HDSP_ADAT_SYNC_CHECK;
 
 
-static bool hdsp_loopback_get(struct hdsp *const hdsp, const u8 channel)
-{
-	return hdsp->io_loopback & (1 << channel);
-}
+अटल bool hdsp_loopback_get(काष्ठा hdsp *स्थिर hdsp, स्थिर u8 channel)
+अणु
+	वापस hdsp->io_loopback & (1 << channel);
+पूर्ण
 
-static int hdsp_loopback_set(struct hdsp *const hdsp, const u8 channel, const bool enable)
-{
-	if (hdsp_loopback_get(hdsp, channel) == enable)
-		return 0;
+अटल पूर्णांक hdsp_loopback_set(काष्ठा hdsp *स्थिर hdsp, स्थिर u8 channel, स्थिर bool enable)
+अणु
+	अगर (hdsp_loopback_get(hdsp, channel) == enable)
+		वापस 0;
 
 	hdsp->io_loopback ^= (1 << channel);
 
-	hdsp_write(hdsp, HDSP_inputEnable + (4 * (hdsp->max_channels + channel)), enable);
+	hdsp_ग_लिखो(hdsp, HDSP_inputEnable + (4 * (hdsp->max_channels + channel)), enable);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int snd_hdsp_loopback_get(struct snd_kcontrol *const kcontrol,
-				 struct snd_ctl_elem_value *const ucontrol)
-{
-	struct hdsp *const hdsp = snd_kcontrol_chip(kcontrol);
-	const u8 channel = snd_ctl_get_ioff(kcontrol, &ucontrol->id);
+अटल पूर्णांक snd_hdsp_loopback_get(काष्ठा snd_kcontrol *स्थिर kcontrol,
+				 काष्ठा snd_ctl_elem_value *स्थिर ucontrol)
+अणु
+	काष्ठा hdsp *स्थिर hdsp = snd_kcontrol_chip(kcontrol);
+	स्थिर u8 channel = snd_ctl_get_ioff(kcontrol, &ucontrol->id);
 
-	if (channel >= hdsp->max_channels)
-		return -ENOENT;
+	अगर (channel >= hdsp->max_channels)
+		वापस -ENOENT;
 
-	ucontrol->value.integer.value[0] = hdsp_loopback_get(hdsp, channel);
+	ucontrol->value.पूर्णांकeger.value[0] = hdsp_loopback_get(hdsp, channel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_loopback_put(struct snd_kcontrol *const kcontrol,
-				 struct snd_ctl_elem_value *const ucontrol)
-{
-	struct hdsp *const hdsp = snd_kcontrol_chip(kcontrol);
-	const u8 channel = snd_ctl_get_ioff(kcontrol, &ucontrol->id);
-	const bool enable = ucontrol->value.integer.value[0] & 1;
+अटल पूर्णांक snd_hdsp_loopback_put(काष्ठा snd_kcontrol *स्थिर kcontrol,
+				 काष्ठा snd_ctl_elem_value *स्थिर ucontrol)
+अणु
+	काष्ठा hdsp *स्थिर hdsp = snd_kcontrol_chip(kcontrol);
+	स्थिर u8 channel = snd_ctl_get_ioff(kcontrol, &ucontrol->id);
+	स्थिर bool enable = ucontrol->value.पूर्णांकeger.value[0] & 1;
 
-	if (channel >= hdsp->max_channels)
-		return -ENOENT;
+	अगर (channel >= hdsp->max_channels)
+		वापस -ENOENT;
 
-	return hdsp_loopback_set(hdsp, channel, enable);
-}
+	वापस hdsp_loopback_set(hdsp, channel, enable);
+पूर्ण
 
-static struct snd_kcontrol_new snd_hdsp_loopback_control = {
-	.iface = SNDRV_CTL_ELEM_IFACE_HWDEP,
+अटल काष्ठा snd_kcontrol_new snd_hdsp_loopback_control = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_HWDEP,
 	.name = "Output Loopback",
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
 	.info = snd_ctl_boolean_mono_info,
 	.get = snd_hdsp_loopback_get,
 	.put = snd_hdsp_loopback_put
-};
+पूर्ण;
 
-static int snd_hdsp_create_controls(struct snd_card *card, struct hdsp *hdsp)
-{
-	unsigned int idx;
-	int err;
-	struct snd_kcontrol *kctl;
+अटल पूर्णांक snd_hdsp_create_controls(काष्ठा snd_card *card, काष्ठा hdsp *hdsp)
+अणु
+	अचिन्हित पूर्णांक idx;
+	पूर्णांक err;
+	काष्ठा snd_kcontrol *kctl;
 
-	if (hdsp->io_type == RPM) {
-		/* RPM Bypass, Disconnect and Input switches */
-		for (idx = 0; idx < ARRAY_SIZE(snd_hdsp_rpm_controls); idx++) {
+	अगर (hdsp->io_type == RPM) अणु
+		/* RPM Bypass, Disconnect and Input चयनes */
+		क्रम (idx = 0; idx < ARRAY_SIZE(snd_hdsp_rpm_controls); idx++) अणु
 			err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_hdsp_rpm_controls[idx], hdsp));
-			if (err < 0)
-				return err;
-		}
-		return 0;
-	}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	for (idx = 0; idx < ARRAY_SIZE(snd_hdsp_controls); idx++) {
-		if ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_hdsp_controls[idx], hdsp))) < 0)
-			return err;
-		if (idx == 1)	/* IEC958 (S/PDIF) Stream */
-			hdsp->spdif_ctl = kctl;
-	}
+	क्रम (idx = 0; idx < ARRAY_SIZE(snd_hdsp_controls); idx++) अणु
+		अगर ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_hdsp_controls[idx], hdsp))) < 0)
+			वापस err;
+		अगर (idx == 1)	/* IEC958 (S/PDIF) Stream */
+			hdsp->spdअगर_ctl = kctl;
+	पूर्ण
 
 	/* ADAT SyncCheck status */
 	snd_hdsp_adat_sync_check.name = "ADAT Lock Status";
 	snd_hdsp_adat_sync_check.index = 1;
-	if ((err = snd_ctl_add (card, kctl = snd_ctl_new1(&snd_hdsp_adat_sync_check, hdsp))))
-		return err;
-	if (hdsp->io_type == Digiface || hdsp->io_type == H9652) {
-		for (idx = 1; idx < 3; ++idx) {
+	अगर ((err = snd_ctl_add (card, kctl = snd_ctl_new1(&snd_hdsp_adat_sync_check, hdsp))))
+		वापस err;
+	अगर (hdsp->io_type == Digअगरace || hdsp->io_type == H9652) अणु
+		क्रम (idx = 1; idx < 3; ++idx) अणु
 			snd_hdsp_adat_sync_check.index = idx+1;
-			if ((err = snd_ctl_add (card, kctl = snd_ctl_new1(&snd_hdsp_adat_sync_check, hdsp))))
-				return err;
-		}
-	}
+			अगर ((err = snd_ctl_add (card, kctl = snd_ctl_new1(&snd_hdsp_adat_sync_check, hdsp))))
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	/* DA, AD and Phone gain and XLR breakout cable controls for H9632 cards */
-	if (hdsp->io_type == H9632) {
-		for (idx = 0; idx < ARRAY_SIZE(snd_hdsp_9632_controls); idx++) {
-			if ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_hdsp_9632_controls[idx], hdsp))) < 0)
-				return err;
-		}
-	}
+	/* DA, AD and Phone gain and XLR अवरोधout cable controls क्रम H9632 cards */
+	अगर (hdsp->io_type == H9632) अणु
+		क्रम (idx = 0; idx < ARRAY_SIZE(snd_hdsp_9632_controls); idx++) अणु
+			अगर ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_hdsp_9632_controls[idx], hdsp))) < 0)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	/* Output loopback controls for H9632 cards */
-	if (hdsp->io_type == H9632) {
+	/* Output loopback controls क्रम H9632 cards */
+	अगर (hdsp->io_type == H9632) अणु
 		snd_hdsp_loopback_control.count = hdsp->max_channels;
 		kctl = snd_ctl_new1(&snd_hdsp_loopback_control, hdsp);
-		if (kctl == NULL)
-			return -ENOMEM;
+		अगर (kctl == शून्य)
+			वापस -ENOMEM;
 		err = snd_ctl_add(card, kctl);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	/* AEB control for H96xx card */
-	if (hdsp->io_type == H9632 || hdsp->io_type == H9652) {
-		if ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_hdsp_96xx_aeb, hdsp))) < 0)
-				return err;
-	}
+	/* AEB control क्रम H96xx card */
+	अगर (hdsp->io_type == H9632 || hdsp->io_type == H9652) अणु
+		अगर ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_hdsp_96xx_aeb, hdsp))) < 0)
+				वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*------------------------------------------------------------
-   /proc interface
+   /proc पूर्णांकerface
  ------------------------------------------------------------*/
 
-static void
-snd_hdsp_proc_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
-{
-	struct hdsp *hdsp = entry->private_data;
-	unsigned int status;
-	unsigned int status2;
-	char *pref_sync_ref;
-	char *autosync_ref;
-	char *system_clock_mode;
-	char *clock_source;
-	int x;
+अटल व्योम
+snd_hdsp_proc_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा hdsp *hdsp = entry->निजी_data;
+	अचिन्हित पूर्णांक status;
+	अचिन्हित पूर्णांक status2;
+	अक्षर *pref_sync_ref;
+	अक्षर *स्वतःsync_ref;
+	अक्षर *प्रणाली_घड़ी_mode;
+	अक्षर *घड़ी_source;
+	पूर्णांक x;
 
-	status = hdsp_read(hdsp, HDSP_statusRegister);
-	status2 = hdsp_read(hdsp, HDSP_status2Register);
+	status = hdsp_पढ़ो(hdsp, HDSP_statusRegister);
+	status2 = hdsp_पढ़ो(hdsp, HDSP_status2Register);
 
-	snd_iprintf(buffer, "%s (Card #%d)\n", hdsp->card_name,
+	snd_iम_लिखो(buffer, "%s (Card #%d)\n", hdsp->card_name,
 		    hdsp->card->number + 1);
-	snd_iprintf(buffer, "Buffers: capture %p playback %p\n",
+	snd_iम_लिखो(buffer, "Buffers: capture %p playback %p\n",
 		    hdsp->capture_buffer, hdsp->playback_buffer);
-	snd_iprintf(buffer, "IRQ: %d Registers bus: 0x%lx VM: 0x%lx\n",
-		    hdsp->irq, hdsp->port, (unsigned long)hdsp->iobase);
-	snd_iprintf(buffer, "Control register: 0x%x\n", hdsp->control_register);
-	snd_iprintf(buffer, "Control2 register: 0x%x\n",
-		    hdsp->control2_register);
-	snd_iprintf(buffer, "Status register: 0x%x\n", status);
-	snd_iprintf(buffer, "Status2 register: 0x%x\n", status2);
+	snd_iम_लिखो(buffer, "IRQ: %d Registers bus: 0x%lx VM: 0x%lx\n",
+		    hdsp->irq, hdsp->port, (अचिन्हित दीर्घ)hdsp->iobase);
+	snd_iम_लिखो(buffer, "Control register: 0x%x\n", hdsp->control_रेजिस्टर);
+	snd_iम_लिखो(buffer, "Control2 register: 0x%x\n",
+		    hdsp->control2_रेजिस्टर);
+	snd_iम_लिखो(buffer, "Status register: 0x%x\n", status);
+	snd_iम_लिखो(buffer, "Status2 register: 0x%x\n", status2);
 
-	if (hdsp_check_for_iobox(hdsp)) {
-		snd_iprintf(buffer, "No I/O box connected.\n"
+	अगर (hdsp_check_क्रम_iobox(hdsp)) अणु
+		snd_iम_लिखो(buffer, "No I/O box connected.\n"
 			    "Please connect one and upload firmware.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (hdsp_check_for_firmware(hdsp, 0)) {
-		if (hdsp->state & HDSP_FirmwareCached) {
-			if (snd_hdsp_load_firmware_from_cache(hdsp) != 0) {
-				snd_iprintf(buffer, "Firmware loading from "
+	अगर (hdsp_check_क्रम_firmware(hdsp, 0)) अणु
+		अगर (hdsp->state & HDSP_FirmwareCached) अणु
+			अगर (snd_hdsp_load_firmware_from_cache(hdsp) != 0) अणु
+				snd_iम_लिखो(buffer, "Firmware loading from "
 					    "cache failed, "
 					    "please upload manually.\n");
-				return;
-			}
-		} else {
-			int err;
+				वापस;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			पूर्णांक err;
 
 			err = hdsp_request_fw_loader(hdsp);
-			if (err < 0) {
-				snd_iprintf(buffer,
+			अगर (err < 0) अणु
+				snd_iम_लिखो(buffer,
 					    "No firmware loaded nor cached, "
 					    "please upload firmware.\n");
-				return;
-			}
-		}
-	}
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	snd_iprintf(buffer, "FIFO status: %d\n", hdsp_read(hdsp, HDSP_fifoStatus) & 0xff);
-	snd_iprintf(buffer, "MIDI1 Output status: 0x%x\n", hdsp_read(hdsp, HDSP_midiStatusOut0));
-	snd_iprintf(buffer, "MIDI1 Input status: 0x%x\n", hdsp_read(hdsp, HDSP_midiStatusIn0));
-	snd_iprintf(buffer, "MIDI2 Output status: 0x%x\n", hdsp_read(hdsp, HDSP_midiStatusOut1));
-	snd_iprintf(buffer, "MIDI2 Input status: 0x%x\n", hdsp_read(hdsp, HDSP_midiStatusIn1));
-	snd_iprintf(buffer, "Use Midi Tasklet: %s\n", hdsp->use_midi_work ? "on" : "off");
+	snd_iम_लिखो(buffer, "FIFO status: %d\n", hdsp_पढ़ो(hdsp, HDSP_fअगरoStatus) & 0xff);
+	snd_iम_लिखो(buffer, "MIDI1 Output status: 0x%x\n", hdsp_पढ़ो(hdsp, HDSP_midiStatusOut0));
+	snd_iम_लिखो(buffer, "MIDI1 Input status: 0x%x\n", hdsp_पढ़ो(hdsp, HDSP_midiStatusIn0));
+	snd_iम_लिखो(buffer, "MIDI2 Output status: 0x%x\n", hdsp_पढ़ो(hdsp, HDSP_midiStatusOut1));
+	snd_iम_लिखो(buffer, "MIDI2 Input status: 0x%x\n", hdsp_पढ़ो(hdsp, HDSP_midiStatusIn1));
+	snd_iम_लिखो(buffer, "Use Midi Tasklet: %s\n", hdsp->use_midi_work ? "on" : "off");
 
-	snd_iprintf(buffer, "\n");
+	snd_iम_लिखो(buffer, "\n");
 
-	x = 1 << (6 + hdsp_decode_latency(hdsp->control_register & HDSP_LatencyMask));
+	x = 1 << (6 + hdsp_decode_latency(hdsp->control_रेजिस्टर & HDSP_LatencyMask));
 
-	snd_iprintf(buffer, "Buffer Size (Latency): %d samples (2 periods of %lu bytes)\n", x, (unsigned long) hdsp->period_bytes);
-	snd_iprintf(buffer, "Hardware pointer (frames): %ld\n", hdsp_hw_pointer(hdsp));
-	snd_iprintf(buffer, "Precise pointer: %s\n", hdsp->precise_ptr ? "on" : "off");
-	snd_iprintf(buffer, "Line out: %s\n", (hdsp->control_register & HDSP_LineOut) ? "on" : "off");
+	snd_iम_लिखो(buffer, "Buffer Size (Latency): %d samples (2 periods of %lu bytes)\n", x, (अचिन्हित दीर्घ) hdsp->period_bytes);
+	snd_iम_लिखो(buffer, "Hardware pointer (frames): %ld\n", hdsp_hw_poपूर्णांकer(hdsp));
+	snd_iम_लिखो(buffer, "Precise pointer: %s\n", hdsp->precise_ptr ? "on" : "off");
+	snd_iम_लिखो(buffer, "Line out: %s\n", (hdsp->control_रेजिस्टर & HDSP_LineOut) ? "on" : "off");
 
-	snd_iprintf(buffer, "Firmware version: %d\n", (status2&HDSP_version0)|(status2&HDSP_version1)<<1|(status2&HDSP_version2)<<2);
+	snd_iम_लिखो(buffer, "Firmware version: %d\n", (status2&HDSP_version0)|(status2&HDSP_version1)<<1|(status2&HDSP_version2)<<2);
 
-	snd_iprintf(buffer, "\n");
+	snd_iम_लिखो(buffer, "\n");
 
-	switch (hdsp_clock_source(hdsp)) {
-	case HDSP_CLOCK_SOURCE_AUTOSYNC:
-		clock_source = "AutoSync";
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_32KHZ:
-		clock_source = "Internal 32 kHz";
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_44_1KHZ:
-		clock_source = "Internal 44.1 kHz";
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_48KHZ:
-		clock_source = "Internal 48 kHz";
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_64KHZ:
-		clock_source = "Internal 64 kHz";
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_88_2KHZ:
-		clock_source = "Internal 88.2 kHz";
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_96KHZ:
-		clock_source = "Internal 96 kHz";
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_128KHZ:
-		clock_source = "Internal 128 kHz";
-		break;
-	case HDSP_CLOCK_SOURCE_INTERNAL_176_4KHZ:
-		clock_source = "Internal 176.4 kHz";
-		break;
-		case HDSP_CLOCK_SOURCE_INTERNAL_192KHZ:
-		clock_source = "Internal 192 kHz";
-		break;
-	default:
-		clock_source = "Error";
-	}
-	snd_iprintf (buffer, "Sample Clock Source: %s\n", clock_source);
+	चयन (hdsp_घड़ी_source(hdsp)) अणु
+	हाल HDSP_CLOCK_SOURCE_AUTOSYNC:
+		घड़ी_source = "AutoSync";
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_32KHZ:
+		घड़ी_source = "Internal 32 kHz";
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_44_1KHZ:
+		घड़ी_source = "Internal 44.1 kHz";
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_48KHZ:
+		घड़ी_source = "Internal 48 kHz";
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_64KHZ:
+		घड़ी_source = "Internal 64 kHz";
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_88_2KHZ:
+		घड़ी_source = "Internal 88.2 kHz";
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_96KHZ:
+		घड़ी_source = "Internal 96 kHz";
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_128KHZ:
+		घड़ी_source = "Internal 128 kHz";
+		अवरोध;
+	हाल HDSP_CLOCK_SOURCE_INTERNAL_176_4KHZ:
+		घड़ी_source = "Internal 176.4 kHz";
+		अवरोध;
+		हाल HDSP_CLOCK_SOURCE_INTERNAL_192KHZ:
+		घड़ी_source = "Internal 192 kHz";
+		अवरोध;
+	शेष:
+		घड़ी_source = "Error";
+	पूर्ण
+	snd_iम_लिखो (buffer, "Sample Clock Source: %s\n", घड़ी_source);
 
-	if (hdsp_system_clock_mode(hdsp))
-		system_clock_mode = "Slave";
-	else
-		system_clock_mode = "Master";
+	अगर (hdsp_प्रणाली_घड़ी_mode(hdsp))
+		प्रणाली_घड़ी_mode = "Slave";
+	अन्यथा
+		प्रणाली_घड़ी_mode = "Master";
 
-	switch (hdsp_pref_sync_ref (hdsp)) {
-	case HDSP_SYNC_FROM_WORD:
+	चयन (hdsp_pref_sync_ref (hdsp)) अणु
+	हाल HDSP_SYNC_FROM_WORD:
 		pref_sync_ref = "Word Clock";
-		break;
-	case HDSP_SYNC_FROM_ADAT_SYNC:
+		अवरोध;
+	हाल HDSP_SYNC_FROM_ADAT_SYNC:
 		pref_sync_ref = "ADAT Sync";
-		break;
-	case HDSP_SYNC_FROM_SPDIF:
+		अवरोध;
+	हाल HDSP_SYNC_FROM_SPDIF:
 		pref_sync_ref = "SPDIF";
-		break;
-	case HDSP_SYNC_FROM_ADAT1:
+		अवरोध;
+	हाल HDSP_SYNC_FROM_ADAT1:
 		pref_sync_ref = "ADAT1";
-		break;
-	case HDSP_SYNC_FROM_ADAT2:
+		अवरोध;
+	हाल HDSP_SYNC_FROM_ADAT2:
 		pref_sync_ref = "ADAT2";
-		break;
-	case HDSP_SYNC_FROM_ADAT3:
+		अवरोध;
+	हाल HDSP_SYNC_FROM_ADAT3:
 		pref_sync_ref = "ADAT3";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pref_sync_ref = "Word Clock";
-		break;
-	}
-	snd_iprintf (buffer, "Preferred Sync Reference: %s\n", pref_sync_ref);
+		अवरोध;
+	पूर्ण
+	snd_iम_लिखो (buffer, "Preferred Sync Reference: %s\n", pref_sync_ref);
 
-	switch (hdsp_autosync_ref (hdsp)) {
-	case HDSP_AUTOSYNC_FROM_WORD:
-		autosync_ref = "Word Clock";
-		break;
-	case HDSP_AUTOSYNC_FROM_ADAT_SYNC:
-		autosync_ref = "ADAT Sync";
-		break;
-	case HDSP_AUTOSYNC_FROM_SPDIF:
-		autosync_ref = "SPDIF";
-		break;
-	case HDSP_AUTOSYNC_FROM_NONE:
-		autosync_ref = "None";
-		break;
-	case HDSP_AUTOSYNC_FROM_ADAT1:
-		autosync_ref = "ADAT1";
-		break;
-	case HDSP_AUTOSYNC_FROM_ADAT2:
-		autosync_ref = "ADAT2";
-		break;
-	case HDSP_AUTOSYNC_FROM_ADAT3:
-		autosync_ref = "ADAT3";
-		break;
-	default:
-		autosync_ref = "---";
-		break;
-	}
-	snd_iprintf (buffer, "AutoSync Reference: %s\n", autosync_ref);
+	चयन (hdsp_स्वतःsync_ref (hdsp)) अणु
+	हाल HDSP_AUTOSYNC_FROM_WORD:
+		स्वतःsync_ref = "Word Clock";
+		अवरोध;
+	हाल HDSP_AUTOSYNC_FROM_ADAT_SYNC:
+		स्वतःsync_ref = "ADAT Sync";
+		अवरोध;
+	हाल HDSP_AUTOSYNC_FROM_SPDIF:
+		स्वतःsync_ref = "SPDIF";
+		अवरोध;
+	हाल HDSP_AUTOSYNC_FROM_NONE:
+		स्वतःsync_ref = "None";
+		अवरोध;
+	हाल HDSP_AUTOSYNC_FROM_ADAT1:
+		स्वतःsync_ref = "ADAT1";
+		अवरोध;
+	हाल HDSP_AUTOSYNC_FROM_ADAT2:
+		स्वतःsync_ref = "ADAT2";
+		अवरोध;
+	हाल HDSP_AUTOSYNC_FROM_ADAT3:
+		स्वतःsync_ref = "ADAT3";
+		अवरोध;
+	शेष:
+		स्वतःsync_ref = "---";
+		अवरोध;
+	पूर्ण
+	snd_iम_लिखो (buffer, "AutoSync Reference: %s\n", स्वतःsync_ref);
 
-	snd_iprintf (buffer, "AutoSync Frequency: %d\n", hdsp_external_sample_rate(hdsp));
+	snd_iम_लिखो (buffer, "AutoSync Frequency: %d\n", hdsp_बाह्यal_sample_rate(hdsp));
 
-	snd_iprintf (buffer, "System Clock Mode: %s\n", system_clock_mode);
+	snd_iम_लिखो (buffer, "System Clock Mode: %s\n", प्रणाली_घड़ी_mode);
 
-	snd_iprintf (buffer, "System Clock Frequency: %d\n", hdsp->system_sample_rate);
-	snd_iprintf (buffer, "System Clock Locked: %s\n", hdsp->clock_source_locked ? "Yes" : "No");
+	snd_iम_लिखो (buffer, "System Clock Frequency: %d\n", hdsp->प्रणाली_sample_rate);
+	snd_iम_लिखो (buffer, "System Clock Locked: %s\n", hdsp->घड़ी_source_locked ? "Yes" : "No");
 
-	snd_iprintf(buffer, "\n");
+	snd_iम_लिखो(buffer, "\n");
 
-	if (hdsp->io_type != RPM) {
-		switch (hdsp_spdif_in(hdsp)) {
-		case HDSP_SPDIFIN_OPTICAL:
-			snd_iprintf(buffer, "IEC958 input: Optical\n");
-			break;
-		case HDSP_SPDIFIN_COAXIAL:
-			snd_iprintf(buffer, "IEC958 input: Coaxial\n");
-			break;
-		case HDSP_SPDIFIN_INTERNAL:
-			snd_iprintf(buffer, "IEC958 input: Internal\n");
-			break;
-		case HDSP_SPDIFIN_AES:
-			snd_iprintf(buffer, "IEC958 input: AES\n");
-			break;
-		default:
-			snd_iprintf(buffer, "IEC958 input: ???\n");
-			break;
-		}
-	}
+	अगर (hdsp->io_type != RPM) अणु
+		चयन (hdsp_spdअगर_in(hdsp)) अणु
+		हाल HDSP_SPDIFIN_OPTICAL:
+			snd_iम_लिखो(buffer, "IEC958 input: Optical\n");
+			अवरोध;
+		हाल HDSP_SPDIFIN_COAXIAL:
+			snd_iम_लिखो(buffer, "IEC958 input: Coaxial\n");
+			अवरोध;
+		हाल HDSP_SPDIFIN_INTERNAL:
+			snd_iम_लिखो(buffer, "IEC958 input: Internal\n");
+			अवरोध;
+		हाल HDSP_SPDIFIN_AES:
+			snd_iम_लिखो(buffer, "IEC958 input: AES\n");
+			अवरोध;
+		शेष:
+			snd_iम_लिखो(buffer, "IEC958 input: ???\n");
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (RPM == hdsp->io_type) {
-		if (hdsp->control_register & HDSP_RPM_Bypass)
-			snd_iprintf(buffer, "RPM Bypass: disabled\n");
-		else
-			snd_iprintf(buffer, "RPM Bypass: enabled\n");
-		if (hdsp->control_register & HDSP_RPM_Disconnect)
-			snd_iprintf(buffer, "RPM disconnected\n");
-		else
-			snd_iprintf(buffer, "RPM connected\n");
+	अगर (RPM == hdsp->io_type) अणु
+		अगर (hdsp->control_रेजिस्टर & HDSP_RPM_Bypass)
+			snd_iम_लिखो(buffer, "RPM Bypass: disabled\n");
+		अन्यथा
+			snd_iम_लिखो(buffer, "RPM Bypass: enabled\n");
+		अगर (hdsp->control_रेजिस्टर & HDSP_RPM_Disconnect)
+			snd_iम_लिखो(buffer, "RPM disconnected\n");
+		अन्यथा
+			snd_iम_लिखो(buffer, "RPM connected\n");
 
-		switch (hdsp->control_register & HDSP_RPM_Inp12) {
-		case HDSP_RPM_Inp12_Phon_6dB:
-			snd_iprintf(buffer, "Input 1/2: Phono, 6dB\n");
-			break;
-		case HDSP_RPM_Inp12_Phon_0dB:
-			snd_iprintf(buffer, "Input 1/2: Phono, 0dB\n");
-			break;
-		case HDSP_RPM_Inp12_Phon_n6dB:
-			snd_iprintf(buffer, "Input 1/2: Phono, -6dB\n");
-			break;
-		case HDSP_RPM_Inp12_Line_0dB:
-			snd_iprintf(buffer, "Input 1/2: Line, 0dB\n");
-			break;
-		case HDSP_RPM_Inp12_Line_n6dB:
-			snd_iprintf(buffer, "Input 1/2: Line, -6dB\n");
-			break;
-		default:
-			snd_iprintf(buffer, "Input 1/2: ???\n");
-		}
+		चयन (hdsp->control_रेजिस्टर & HDSP_RPM_Inp12) अणु
+		हाल HDSP_RPM_Inp12_Phon_6dB:
+			snd_iम_लिखो(buffer, "Input 1/2: Phono, 6dB\n");
+			अवरोध;
+		हाल HDSP_RPM_Inp12_Phon_0dB:
+			snd_iम_लिखो(buffer, "Input 1/2: Phono, 0dB\n");
+			अवरोध;
+		हाल HDSP_RPM_Inp12_Phon_n6dB:
+			snd_iम_लिखो(buffer, "Input 1/2: Phono, -6dB\n");
+			अवरोध;
+		हाल HDSP_RPM_Inp12_Line_0dB:
+			snd_iम_लिखो(buffer, "Input 1/2: Line, 0dB\n");
+			अवरोध;
+		हाल HDSP_RPM_Inp12_Line_n6dB:
+			snd_iम_लिखो(buffer, "Input 1/2: Line, -6dB\n");
+			अवरोध;
+		शेष:
+			snd_iम_लिखो(buffer, "Input 1/2: ???\n");
+		पूर्ण
 
-		switch (hdsp->control_register & HDSP_RPM_Inp34) {
-		case HDSP_RPM_Inp34_Phon_6dB:
-			snd_iprintf(buffer, "Input 3/4: Phono, 6dB\n");
-			break;
-		case HDSP_RPM_Inp34_Phon_0dB:
-			snd_iprintf(buffer, "Input 3/4: Phono, 0dB\n");
-			break;
-		case HDSP_RPM_Inp34_Phon_n6dB:
-			snd_iprintf(buffer, "Input 3/4: Phono, -6dB\n");
-			break;
-		case HDSP_RPM_Inp34_Line_0dB:
-			snd_iprintf(buffer, "Input 3/4: Line, 0dB\n");
-			break;
-		case HDSP_RPM_Inp34_Line_n6dB:
-			snd_iprintf(buffer, "Input 3/4: Line, -6dB\n");
-			break;
-		default:
-			snd_iprintf(buffer, "Input 3/4: ???\n");
-		}
+		चयन (hdsp->control_रेजिस्टर & HDSP_RPM_Inp34) अणु
+		हाल HDSP_RPM_Inp34_Phon_6dB:
+			snd_iम_लिखो(buffer, "Input 3/4: Phono, 6dB\n");
+			अवरोध;
+		हाल HDSP_RPM_Inp34_Phon_0dB:
+			snd_iम_लिखो(buffer, "Input 3/4: Phono, 0dB\n");
+			अवरोध;
+		हाल HDSP_RPM_Inp34_Phon_n6dB:
+			snd_iम_लिखो(buffer, "Input 3/4: Phono, -6dB\n");
+			अवरोध;
+		हाल HDSP_RPM_Inp34_Line_0dB:
+			snd_iम_लिखो(buffer, "Input 3/4: Line, 0dB\n");
+			अवरोध;
+		हाल HDSP_RPM_Inp34_Line_n6dB:
+			snd_iम_लिखो(buffer, "Input 3/4: Line, -6dB\n");
+			अवरोध;
+		शेष:
+			snd_iम_लिखो(buffer, "Input 3/4: ???\n");
+		पूर्ण
 
-	} else {
-		if (hdsp->control_register & HDSP_SPDIFOpticalOut)
-			snd_iprintf(buffer, "IEC958 output: Coaxial & ADAT1\n");
-		else
-			snd_iprintf(buffer, "IEC958 output: Coaxial only\n");
+	पूर्ण अन्यथा अणु
+		अगर (hdsp->control_रेजिस्टर & HDSP_SPDIFOpticalOut)
+			snd_iम_लिखो(buffer, "IEC958 output: Coaxial & ADAT1\n");
+		अन्यथा
+			snd_iम_लिखो(buffer, "IEC958 output: Coaxial only\n");
 
-		if (hdsp->control_register & HDSP_SPDIFProfessional)
-			snd_iprintf(buffer, "IEC958 quality: Professional\n");
-		else
-			snd_iprintf(buffer, "IEC958 quality: Consumer\n");
+		अगर (hdsp->control_रेजिस्टर & HDSP_SPDIFProfessional)
+			snd_iम_लिखो(buffer, "IEC958 quality: Professional\n");
+		अन्यथा
+			snd_iम_लिखो(buffer, "IEC958 quality: Consumer\n");
 
-		if (hdsp->control_register & HDSP_SPDIFEmphasis)
-			snd_iprintf(buffer, "IEC958 emphasis: on\n");
-		else
-			snd_iprintf(buffer, "IEC958 emphasis: off\n");
+		अगर (hdsp->control_रेजिस्टर & HDSP_SPDIFEmphasis)
+			snd_iम_लिखो(buffer, "IEC958 emphasis: on\n");
+		अन्यथा
+			snd_iम_लिखो(buffer, "IEC958 emphasis: off\n");
 
-		if (hdsp->control_register & HDSP_SPDIFNonAudio)
-			snd_iprintf(buffer, "IEC958 NonAudio: on\n");
-		else
-			snd_iprintf(buffer, "IEC958 NonAudio: off\n");
-		x = hdsp_spdif_sample_rate(hdsp);
-		if (x != 0)
-			snd_iprintf(buffer, "IEC958 sample rate: %d\n", x);
-		else
-			snd_iprintf(buffer, "IEC958 sample rate: Error flag set\n");
-	}
-	snd_iprintf(buffer, "\n");
+		अगर (hdsp->control_रेजिस्टर & HDSP_SPDIFNonAudio)
+			snd_iम_लिखो(buffer, "IEC958 NonAudio: on\n");
+		अन्यथा
+			snd_iम_लिखो(buffer, "IEC958 NonAudio: off\n");
+		x = hdsp_spdअगर_sample_rate(hdsp);
+		अगर (x != 0)
+			snd_iम_लिखो(buffer, "IEC958 sample rate: %d\n", x);
+		अन्यथा
+			snd_iम_लिखो(buffer, "IEC958 sample rate: Error flag set\n");
+	पूर्ण
+	snd_iम_लिखो(buffer, "\n");
 
 	/* Sync Check */
 	x = status & HDSP_Sync0;
-	if (status & HDSP_Lock0)
-		snd_iprintf(buffer, "ADAT1: %s\n", x ? "Sync" : "Lock");
-	else
-		snd_iprintf(buffer, "ADAT1: No Lock\n");
+	अगर (status & HDSP_Lock0)
+		snd_iम_लिखो(buffer, "ADAT1: %s\n", x ? "Sync" : "Lock");
+	अन्यथा
+		snd_iम_लिखो(buffer, "ADAT1: No Lock\n");
 
-	switch (hdsp->io_type) {
-	case Digiface:
-	case H9652:
+	चयन (hdsp->io_type) अणु
+	हाल Digअगरace:
+	हाल H9652:
 		x = status & HDSP_Sync1;
-		if (status & HDSP_Lock1)
-			snd_iprintf(buffer, "ADAT2: %s\n", x ? "Sync" : "Lock");
-		else
-			snd_iprintf(buffer, "ADAT2: No Lock\n");
+		अगर (status & HDSP_Lock1)
+			snd_iम_लिखो(buffer, "ADAT2: %s\n", x ? "Sync" : "Lock");
+		अन्यथा
+			snd_iम_लिखो(buffer, "ADAT2: No Lock\n");
 		x = status & HDSP_Sync2;
-		if (status & HDSP_Lock2)
-			snd_iprintf(buffer, "ADAT3: %s\n", x ? "Sync" : "Lock");
-		else
-			snd_iprintf(buffer, "ADAT3: No Lock\n");
-		break;
-	default:
+		अगर (status & HDSP_Lock2)
+			snd_iम_लिखो(buffer, "ADAT3: %s\n", x ? "Sync" : "Lock");
+		अन्यथा
+			snd_iम_लिखो(buffer, "ADAT3: No Lock\n");
+		अवरोध;
+	शेष:
 		/* relax */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	x = status & HDSP_SPDIFSync;
-	if (status & HDSP_SPDIFErrorFlag)
-		snd_iprintf (buffer, "SPDIF: No Lock\n");
-	else
-		snd_iprintf (buffer, "SPDIF: %s\n", x ? "Sync" : "Lock");
+	अगर (status & HDSP_SPDIFErrorFlag)
+		snd_iम_लिखो (buffer, "SPDIF: No Lock\n");
+	अन्यथा
+		snd_iम_लिखो (buffer, "SPDIF: %s\n", x ? "Sync" : "Lock");
 
 	x = status2 & HDSP_wc_sync;
-	if (status2 & HDSP_wc_lock)
-		snd_iprintf (buffer, "Word Clock: %s\n", x ? "Sync" : "Lock");
-	else
-		snd_iprintf (buffer, "Word Clock: No Lock\n");
+	अगर (status2 & HDSP_wc_lock)
+		snd_iम_लिखो (buffer, "Word Clock: %s\n", x ? "Sync" : "Lock");
+	अन्यथा
+		snd_iम_लिखो (buffer, "Word Clock: No Lock\n");
 
 	x = status & HDSP_TimecodeSync;
-	if (status & HDSP_TimecodeLock)
-		snd_iprintf(buffer, "ADAT Sync: %s\n", x ? "Sync" : "Lock");
-	else
-		snd_iprintf(buffer, "ADAT Sync: No Lock\n");
+	अगर (status & HDSP_TimecodeLock)
+		snd_iम_लिखो(buffer, "ADAT Sync: %s\n", x ? "Sync" : "Lock");
+	अन्यथा
+		snd_iम_लिखो(buffer, "ADAT Sync: No Lock\n");
 
-	snd_iprintf(buffer, "\n");
+	snd_iम_लिखो(buffer, "\n");
 
-	/* Informations about H9632 specific controls */
-	if (hdsp->io_type == H9632) {
-		char *tmp;
+	/* Inक्रमmations about H9632 specअगरic controls */
+	अगर (hdsp->io_type == H9632) अणु
+		अक्षर *पंचांगp;
 
-		switch (hdsp_ad_gain(hdsp)) {
-		case 0:
-			tmp = "-10 dBV";
-			break;
-		case 1:
-			tmp = "+4 dBu";
-			break;
-		default:
-			tmp = "Lo Gain";
-			break;
-		}
-		snd_iprintf(buffer, "AD Gain : %s\n", tmp);
+		चयन (hdsp_ad_gain(hdsp)) अणु
+		हाल 0:
+			पंचांगp = "-10 dBV";
+			अवरोध;
+		हाल 1:
+			पंचांगp = "+4 dBu";
+			अवरोध;
+		शेष:
+			पंचांगp = "Lo Gain";
+			अवरोध;
+		पूर्ण
+		snd_iम_लिखो(buffer, "AD Gain : %s\n", पंचांगp);
 
-		switch (hdsp_da_gain(hdsp)) {
-		case 0:
-			tmp = "Hi Gain";
-			break;
-		case 1:
-			tmp = "+4 dBu";
-			break;
-		default:
-			tmp = "-10 dBV";
-			break;
-		}
-		snd_iprintf(buffer, "DA Gain : %s\n", tmp);
+		चयन (hdsp_da_gain(hdsp)) अणु
+		हाल 0:
+			पंचांगp = "Hi Gain";
+			अवरोध;
+		हाल 1:
+			पंचांगp = "+4 dBu";
+			अवरोध;
+		शेष:
+			पंचांगp = "-10 dBV";
+			अवरोध;
+		पूर्ण
+		snd_iम_लिखो(buffer, "DA Gain : %s\n", पंचांगp);
 
-		switch (hdsp_phone_gain(hdsp)) {
-		case 0:
-			tmp = "0 dB";
-			break;
-		case 1:
-			tmp = "-6 dB";
-			break;
-		default:
-			tmp = "-12 dB";
-			break;
-		}
-		snd_iprintf(buffer, "Phones Gain : %s\n", tmp);
+		चयन (hdsp_phone_gain(hdsp)) अणु
+		हाल 0:
+			पंचांगp = "0 dB";
+			अवरोध;
+		हाल 1:
+			पंचांगp = "-6 dB";
+			अवरोध;
+		शेष:
+			पंचांगp = "-12 dB";
+			अवरोध;
+		पूर्ण
+		snd_iम_लिखो(buffer, "Phones Gain : %s\n", पंचांगp);
 
-		snd_iprintf(buffer, "XLR Breakout Cable : %s\n",
+		snd_iम_लिखो(buffer, "XLR Breakout Cable : %s\n",
 			hdsp_toggle_setting(hdsp, HDSP_XLRBreakoutCable) ?
 			"yes" : "no");
 
-		if (hdsp->control_register & HDSP_AnalogExtensionBoard)
-			snd_iprintf(buffer, "AEB : on (ADAT1 internal)\n");
-		else
-			snd_iprintf(buffer, "AEB : off (ADAT1 external)\n");
-		snd_iprintf(buffer, "\n");
-	}
+		अगर (hdsp->control_रेजिस्टर & HDSP_AnalogExtensionBoard)
+			snd_iम_लिखो(buffer, "AEB : on (ADAT1 internal)\n");
+		अन्यथा
+			snd_iम_लिखो(buffer, "AEB : off (ADAT1 external)\n");
+		snd_iम_लिखो(buffer, "\n");
+	पूर्ण
 
-}
+पूर्ण
 
-static void snd_hdsp_proc_init(struct hdsp *hdsp)
-{
-	snd_card_ro_proc_new(hdsp->card, "hdsp", hdsp, snd_hdsp_proc_read);
-}
+अटल व्योम snd_hdsp_proc_init(काष्ठा hdsp *hdsp)
+अणु
+	snd_card_ro_proc_new(hdsp->card, "hdsp", hdsp, snd_hdsp_proc_पढ़ो);
+पूर्ण
 
-static void snd_hdsp_free_buffers(struct hdsp *hdsp)
-{
-	snd_hammerfall_free_buffer(&hdsp->capture_dma_buf, hdsp->pci);
-	snd_hammerfall_free_buffer(&hdsp->playback_dma_buf, hdsp->pci);
-}
+अटल व्योम snd_hdsp_मुक्त_buffers(काष्ठा hdsp *hdsp)
+अणु
+	snd_hammerfall_मुक्त_buffer(&hdsp->capture_dma_buf, hdsp->pci);
+	snd_hammerfall_मुक्त_buffer(&hdsp->playback_dma_buf, hdsp->pci);
+पूर्ण
 
-static int snd_hdsp_initialize_memory(struct hdsp *hdsp)
-{
-	unsigned long pb_bus, cb_bus;
+अटल पूर्णांक snd_hdsp_initialize_memory(काष्ठा hdsp *hdsp)
+अणु
+	अचिन्हित दीर्घ pb_bus, cb_bus;
 
-	if (snd_hammerfall_get_buffer(hdsp->pci, &hdsp->capture_dma_buf, HDSP_DMA_AREA_BYTES) < 0 ||
-	    snd_hammerfall_get_buffer(hdsp->pci, &hdsp->playback_dma_buf, HDSP_DMA_AREA_BYTES) < 0) {
-		if (hdsp->capture_dma_buf.area)
-			snd_dma_free_pages(&hdsp->capture_dma_buf);
+	अगर (snd_hammerfall_get_buffer(hdsp->pci, &hdsp->capture_dma_buf, HDSP_DMA_AREA_BYTES) < 0 ||
+	    snd_hammerfall_get_buffer(hdsp->pci, &hdsp->playback_dma_buf, HDSP_DMA_AREA_BYTES) < 0) अणु
+		अगर (hdsp->capture_dma_buf.area)
+			snd_dma_मुक्त_pages(&hdsp->capture_dma_buf);
 		dev_err(hdsp->card->dev,
 			"%s: no buffers available\n", hdsp->card_name);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Align to bus-space 64K boundary */
 
@@ -3781,487 +3782,487 @@ static int snd_hdsp_initialize_memory(struct hdsp *hdsp)
 
 	/* Tell the card where it is */
 
-	hdsp_write(hdsp, HDSP_inputBufferAddress, cb_bus);
-	hdsp_write(hdsp, HDSP_outputBufferAddress, pb_bus);
+	hdsp_ग_लिखो(hdsp, HDSP_inputBufferAddress, cb_bus);
+	hdsp_ग_लिखो(hdsp, HDSP_outputBufferAddress, pb_bus);
 
 	hdsp->capture_buffer = hdsp->capture_dma_buf.area + (cb_bus - hdsp->capture_dma_buf.addr);
 	hdsp->playback_buffer = hdsp->playback_dma_buf.area + (pb_bus - hdsp->playback_dma_buf.addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_set_defaults(struct hdsp *hdsp)
-{
-	unsigned int i;
+अटल पूर्णांक snd_hdsp_set_शेषs(काष्ठा hdsp *hdsp)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* ASSUMPTION: hdsp->lock is either held, or
 	   there is no need to hold it (e.g. during module
 	   initialization).
 	 */
 
-	/* set defaults:
+	/* set शेषs:
 
 	   SPDIF Input via Coax
-	   Master clock mode
+	   Master घड़ी mode
 	   maximum latency (7 => 2^7 = 8192 samples, 64Kbyte buffer,
 	                    which implies 2 4096 sample, 32Kbyte periods).
            Enable line out.
 	 */
 
-	hdsp->control_register = HDSP_ClockModeMaster |
+	hdsp->control_रेजिस्टर = HDSP_ClockModeMaster |
 		                 HDSP_SPDIFInputCoaxial |
 		                 hdsp_encode_latency(7) |
 		                 HDSP_LineOut;
 
 
-	hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
+	hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
 
-#ifdef SNDRV_BIG_ENDIAN
-	hdsp->control2_register = HDSP_BIGENDIAN_MODE;
-#else
-	hdsp->control2_register = 0;
-#endif
-	if (hdsp->io_type == H9652)
+#अगर_घोषित SNDRV_BIG_ENDIAN
+	hdsp->control2_रेजिस्टर = HDSP_BIGENDIAN_MODE;
+#अन्यथा
+	hdsp->control2_रेजिस्टर = 0;
+#पूर्ण_अगर
+	अगर (hdsp->io_type == H9652)
 	        snd_hdsp_9652_enable_mixer (hdsp);
-	else
-		hdsp_write (hdsp, HDSP_control2Reg, hdsp->control2_register);
+	अन्यथा
+		hdsp_ग_लिखो (hdsp, HDSP_control2Reg, hdsp->control2_रेजिस्टर);
 
-	hdsp_reset_hw_pointer(hdsp);
+	hdsp_reset_hw_poपूर्णांकer(hdsp);
 	hdsp_compute_period_size(hdsp);
 
 	/* silence everything */
 
-	for (i = 0; i < HDSP_MATRIX_MIXER_SIZE; ++i)
-		hdsp->mixer_matrix[i] = MINUS_INFINITY_GAIN;
+	क्रम (i = 0; i < HDSP_MATRIX_MIXER_SIZE; ++i)
+		hdsp->mixer_matrix[i] = MINUS_अनन्त_GAIN;
 
-	for (i = 0; i < ((hdsp->io_type == H9652 || hdsp->io_type == H9632) ? 1352 : HDSP_MATRIX_MIXER_SIZE); ++i) {
-		if (hdsp_write_gain (hdsp, i, MINUS_INFINITY_GAIN))
-			return -EIO;
-	}
+	क्रम (i = 0; i < ((hdsp->io_type == H9652 || hdsp->io_type == H9632) ? 1352 : HDSP_MATRIX_MIXER_SIZE); ++i) अणु
+		अगर (hdsp_ग_लिखो_gain (hdsp, i, MINUS_अनन्त_GAIN))
+			वापस -EIO;
+	पूर्ण
 
-	/* H9632 specific defaults */
-	if (hdsp->io_type == H9632) {
-		hdsp->control_register |= (HDSP_DAGainPlus4dBu | HDSP_ADGainPlus4dBu | HDSP_PhoneGain0dB);
-		hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
-	}
+	/* H9632 specअगरic शेषs */
+	अगर (hdsp->io_type == H9632) अणु
+		hdsp->control_रेजिस्टर |= (HDSP_DAGainPlus4dBu | HDSP_ADGainPlus4dBu | HDSP_PhoneGain0dB);
+		hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	पूर्ण
 
-	/* set a default rate so that the channel map is set up.
+	/* set a शेष rate so that the channel map is set up.
 	 */
 
 	hdsp_set_rate(hdsp, 48000, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hdsp_midi_work(struct work_struct *work)
-{
-	struct hdsp *hdsp = container_of(work, struct hdsp, midi_work);
+अटल व्योम hdsp_midi_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hdsp *hdsp = container_of(work, काष्ठा hdsp, midi_work);
 
-	if (hdsp->midi[0].pending)
-		snd_hdsp_midi_input_read (&hdsp->midi[0]);
-	if (hdsp->midi[1].pending)
-		snd_hdsp_midi_input_read (&hdsp->midi[1]);
-}
+	अगर (hdsp->midi[0].pending)
+		snd_hdsp_midi_input_पढ़ो (&hdsp->midi[0]);
+	अगर (hdsp->midi[1].pending)
+		snd_hdsp_midi_input_पढ़ो (&hdsp->midi[1]);
+पूर्ण
 
-static irqreturn_t snd_hdsp_interrupt(int irq, void *dev_id)
-{
-	struct hdsp *hdsp = (struct hdsp *) dev_id;
-	unsigned int status;
-	int audio;
-	int midi0;
-	int midi1;
-	unsigned int midi0status;
-	unsigned int midi1status;
-	int schedule = 0;
+अटल irqवापस_t snd_hdsp_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा hdsp *hdsp = (काष्ठा hdsp *) dev_id;
+	अचिन्हित पूर्णांक status;
+	पूर्णांक audio;
+	पूर्णांक midi0;
+	पूर्णांक midi1;
+	अचिन्हित पूर्णांक midi0status;
+	अचिन्हित पूर्णांक midi1status;
+	पूर्णांक schedule = 0;
 
-	status = hdsp_read(hdsp, HDSP_statusRegister);
+	status = hdsp_पढ़ो(hdsp, HDSP_statusRegister);
 
 	audio = status & HDSP_audioIRQPending;
 	midi0 = status & HDSP_midi0IRQPending;
 	midi1 = status & HDSP_midi1IRQPending;
 
-	if (!audio && !midi0 && !midi1)
-		return IRQ_NONE;
+	अगर (!audio && !midi0 && !midi1)
+		वापस IRQ_NONE;
 
-	hdsp_write(hdsp, HDSP_interruptConfirmation, 0);
+	hdsp_ग_लिखो(hdsp, HDSP_पूर्णांकerruptConfirmation, 0);
 
-	midi0status = hdsp_read (hdsp, HDSP_midiStatusIn0) & 0xff;
-	midi1status = hdsp_read (hdsp, HDSP_midiStatusIn1) & 0xff;
+	midi0status = hdsp_पढ़ो (hdsp, HDSP_midiStatusIn0) & 0xff;
+	midi1status = hdsp_पढ़ो (hdsp, HDSP_midiStatusIn1) & 0xff;
 
-	if (!(hdsp->state & HDSP_InitializationComplete))
-		return IRQ_HANDLED;
+	अगर (!(hdsp->state & HDSP_InitializationComplete))
+		वापस IRQ_HANDLED;
 
-	if (audio) {
-		if (hdsp->capture_substream)
+	अगर (audio) अणु
+		अगर (hdsp->capture_substream)
 			snd_pcm_period_elapsed(hdsp->pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream);
 
-		if (hdsp->playback_substream)
+		अगर (hdsp->playback_substream)
 			snd_pcm_period_elapsed(hdsp->pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream);
-	}
+	पूर्ण
 
-	if (midi0 && midi0status) {
-		if (hdsp->use_midi_work) {
-			/* we disable interrupts for this input until processing is done */
-			hdsp->control_register &= ~HDSP_Midi0InterruptEnable;
-			hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
+	अगर (midi0 && midi0status) अणु
+		अगर (hdsp->use_midi_work) अणु
+			/* we disable पूर्णांकerrupts क्रम this input until processing is करोne */
+			hdsp->control_रेजिस्टर &= ~HDSP_Midi0InterruptEnable;
+			hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
 			hdsp->midi[0].pending = 1;
 			schedule = 1;
-		} else {
-			snd_hdsp_midi_input_read (&hdsp->midi[0]);
-		}
-	}
-	if (hdsp->io_type != Multiface && hdsp->io_type != RPM && hdsp->io_type != H9632 && midi1 && midi1status) {
-		if (hdsp->use_midi_work) {
-			/* we disable interrupts for this input until processing is done */
-			hdsp->control_register &= ~HDSP_Midi1InterruptEnable;
-			hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register);
+		पूर्ण अन्यथा अणु
+			snd_hdsp_midi_input_पढ़ो (&hdsp->midi[0]);
+		पूर्ण
+	पूर्ण
+	अगर (hdsp->io_type != Multअगरace && hdsp->io_type != RPM && hdsp->io_type != H9632 && midi1 && midi1status) अणु
+		अगर (hdsp->use_midi_work) अणु
+			/* we disable पूर्णांकerrupts क्रम this input until processing is करोne */
+			hdsp->control_रेजिस्टर &= ~HDSP_Midi1InterruptEnable;
+			hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
 			hdsp->midi[1].pending = 1;
 			schedule = 1;
-		} else {
-			snd_hdsp_midi_input_read (&hdsp->midi[1]);
-		}
-	}
-	if (hdsp->use_midi_work && schedule)
-		queue_work(system_highpri_wq, &hdsp->midi_work);
-	return IRQ_HANDLED;
-}
+		पूर्ण अन्यथा अणु
+			snd_hdsp_midi_input_पढ़ो (&hdsp->midi[1]);
+		पूर्ण
+	पूर्ण
+	अगर (hdsp->use_midi_work && schedule)
+		queue_work(प्रणाली_highpri_wq, &hdsp->midi_work);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static snd_pcm_uframes_t snd_hdsp_hw_pointer(struct snd_pcm_substream *substream)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	return hdsp_hw_pointer(hdsp);
-}
+अटल snd_pcm_uframes_t snd_hdsp_hw_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	वापस hdsp_hw_poपूर्णांकer(hdsp);
+पूर्ण
 
-static char *hdsp_channel_buffer_location(struct hdsp *hdsp,
-					     int stream,
-					     int channel)
+अटल अक्षर *hdsp_channel_buffer_location(काष्ठा hdsp *hdsp,
+					     पूर्णांक stream,
+					     पूर्णांक channel)
 
-{
-	int mapped_channel;
+अणु
+	पूर्णांक mapped_channel;
 
-        if (snd_BUG_ON(channel < 0 || channel >= hdsp->max_channels))
-		return NULL;
+        अगर (snd_BUG_ON(channel < 0 || channel >= hdsp->max_channels))
+		वापस शून्य;
 
-	if ((mapped_channel = hdsp->channel_map[channel]) < 0)
-		return NULL;
+	अगर ((mapped_channel = hdsp->channel_map[channel]) < 0)
+		वापस शून्य;
 
-	if (stream == SNDRV_PCM_STREAM_CAPTURE)
-		return hdsp->capture_buffer + (mapped_channel * HDSP_CHANNEL_BUFFER_BYTES);
-	else
-		return hdsp->playback_buffer + (mapped_channel * HDSP_CHANNEL_BUFFER_BYTES);
-}
+	अगर (stream == SNDRV_PCM_STREAM_CAPTURE)
+		वापस hdsp->capture_buffer + (mapped_channel * HDSP_CHANNEL_BUFFER_BYTES);
+	अन्यथा
+		वापस hdsp->playback_buffer + (mapped_channel * HDSP_CHANNEL_BUFFER_BYTES);
+पूर्ण
 
-static int snd_hdsp_playback_copy(struct snd_pcm_substream *substream,
-				  int channel, unsigned long pos,
-				  void __user *src, unsigned long count)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	char *channel_buf;
+अटल पूर्णांक snd_hdsp_playback_copy(काष्ठा snd_pcm_substream *substream,
+				  पूर्णांक channel, अचिन्हित दीर्घ pos,
+				  व्योम __user *src, अचिन्हित दीर्घ count)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	अक्षर *channel_buf;
 
-	if (snd_BUG_ON(pos + count > HDSP_CHANNEL_BUFFER_BYTES))
-		return -EINVAL;
+	अगर (snd_BUG_ON(pos + count > HDSP_CHANNEL_BUFFER_BYTES))
+		वापस -EINVAL;
 
 	channel_buf = hdsp_channel_buffer_location (hdsp, substream->pstr->stream, channel);
-	if (snd_BUG_ON(!channel_buf))
-		return -EIO;
-	if (copy_from_user(channel_buf + pos, src, count))
-		return -EFAULT;
-	return 0;
-}
+	अगर (snd_BUG_ON(!channel_buf))
+		वापस -EIO;
+	अगर (copy_from_user(channel_buf + pos, src, count))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_playback_copy_kernel(struct snd_pcm_substream *substream,
-					 int channel, unsigned long pos,
-					 void *src, unsigned long count)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	char *channel_buf;
+अटल पूर्णांक snd_hdsp_playback_copy_kernel(काष्ठा snd_pcm_substream *substream,
+					 पूर्णांक channel, अचिन्हित दीर्घ pos,
+					 व्योम *src, अचिन्हित दीर्घ count)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	अक्षर *channel_buf;
 
 	channel_buf = hdsp_channel_buffer_location(hdsp, substream->pstr->stream, channel);
-	if (snd_BUG_ON(!channel_buf))
-		return -EIO;
-	memcpy(channel_buf + pos, src, count);
-	return 0;
-}
+	अगर (snd_BUG_ON(!channel_buf))
+		वापस -EIO;
+	स_नकल(channel_buf + pos, src, count);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_capture_copy(struct snd_pcm_substream *substream,
-				 int channel, unsigned long pos,
-				 void __user *dst, unsigned long count)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	char *channel_buf;
+अटल पूर्णांक snd_hdsp_capture_copy(काष्ठा snd_pcm_substream *substream,
+				 पूर्णांक channel, अचिन्हित दीर्घ pos,
+				 व्योम __user *dst, अचिन्हित दीर्घ count)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	अक्षर *channel_buf;
 
-	if (snd_BUG_ON(pos + count > HDSP_CHANNEL_BUFFER_BYTES))
-		return -EINVAL;
+	अगर (snd_BUG_ON(pos + count > HDSP_CHANNEL_BUFFER_BYTES))
+		वापस -EINVAL;
 
 	channel_buf = hdsp_channel_buffer_location (hdsp, substream->pstr->stream, channel);
-	if (snd_BUG_ON(!channel_buf))
-		return -EIO;
-	if (copy_to_user(dst, channel_buf + pos, count))
-		return -EFAULT;
-	return 0;
-}
+	अगर (snd_BUG_ON(!channel_buf))
+		वापस -EIO;
+	अगर (copy_to_user(dst, channel_buf + pos, count))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_capture_copy_kernel(struct snd_pcm_substream *substream,
-					int channel, unsigned long pos,
-					void *dst, unsigned long count)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	char *channel_buf;
+अटल पूर्णांक snd_hdsp_capture_copy_kernel(काष्ठा snd_pcm_substream *substream,
+					पूर्णांक channel, अचिन्हित दीर्घ pos,
+					व्योम *dst, अचिन्हित दीर्घ count)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	अक्षर *channel_buf;
 
 	channel_buf = hdsp_channel_buffer_location(hdsp, substream->pstr->stream, channel);
-	if (snd_BUG_ON(!channel_buf))
-		return -EIO;
-	memcpy(dst, channel_buf + pos, count);
-	return 0;
-}
+	अगर (snd_BUG_ON(!channel_buf))
+		वापस -EIO;
+	स_नकल(dst, channel_buf + pos, count);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_hw_silence(struct snd_pcm_substream *substream,
-			       int channel, unsigned long pos,
-			       unsigned long count)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	char *channel_buf;
+अटल पूर्णांक snd_hdsp_hw_silence(काष्ठा snd_pcm_substream *substream,
+			       पूर्णांक channel, अचिन्हित दीर्घ pos,
+			       अचिन्हित दीर्घ count)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	अक्षर *channel_buf;
 
 	channel_buf = hdsp_channel_buffer_location (hdsp, substream->pstr->stream, channel);
-	if (snd_BUG_ON(!channel_buf))
-		return -EIO;
-	memset(channel_buf + pos, 0, count);
-	return 0;
-}
+	अगर (snd_BUG_ON(!channel_buf))
+		वापस -EIO;
+	स_रखो(channel_buf + pos, 0, count);
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_reset(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	struct snd_pcm_substream *other;
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+अटल पूर्णांक snd_hdsp_reset(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_substream *other;
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		other = hdsp->capture_substream;
-	else
+	अन्यथा
 		other = hdsp->playback_substream;
-	if (hdsp->running)
-		runtime->status->hw_ptr = hdsp_hw_pointer(hdsp);
-	else
-		runtime->status->hw_ptr = 0;
-	if (other) {
-		struct snd_pcm_substream *s;
-		struct snd_pcm_runtime *oruntime = other->runtime;
-		snd_pcm_group_for_each_entry(s, substream) {
-			if (s == other) {
-				oruntime->status->hw_ptr = runtime->status->hw_ptr;
-				break;
-			}
-		}
-	}
-	return 0;
-}
+	अगर (hdsp->running)
+		runसमय->status->hw_ptr = hdsp_hw_poपूर्णांकer(hdsp);
+	अन्यथा
+		runसमय->status->hw_ptr = 0;
+	अगर (other) अणु
+		काष्ठा snd_pcm_substream *s;
+		काष्ठा snd_pcm_runसमय *orunसमय = other->runसमय;
+		snd_pcm_group_क्रम_each_entry(s, substream) अणु
+			अगर (s == other) अणु
+				orunसमय->status->hw_ptr = runसमय->status->hw_ptr;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_hw_params(struct snd_pcm_substream *substream,
-				 struct snd_pcm_hw_params *params)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	int err;
+अटल पूर्णांक snd_hdsp_hw_params(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	पूर्णांक err;
 	pid_t this_pid;
 	pid_t other_pid;
 
-	if (hdsp_check_for_iobox (hdsp))
-		return -EIO;
+	अगर (hdsp_check_क्रम_iobox (hdsp))
+		वापस -EIO;
 
-	if (hdsp_check_for_firmware(hdsp, 1))
-		return -EIO;
+	अगर (hdsp_check_क्रम_firmware(hdsp, 1))
+		वापस -EIO;
 
 	spin_lock_irq(&hdsp->lock);
 
-	if (substream->pstr->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		hdsp->control_register &= ~(HDSP_SPDIFProfessional | HDSP_SPDIFNonAudio | HDSP_SPDIFEmphasis);
-		hdsp_write(hdsp, HDSP_controlRegister, hdsp->control_register |= hdsp->creg_spdif_stream);
+	अगर (substream->pstr->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		hdsp->control_रेजिस्टर &= ~(HDSP_SPDIFProfessional | HDSP_SPDIFNonAudio | HDSP_SPDIFEmphasis);
+		hdsp_ग_लिखो(hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर |= hdsp->creg_spdअगर_stream);
 		this_pid = hdsp->playback_pid;
 		other_pid = hdsp->capture_pid;
-	} else {
+	पूर्ण अन्यथा अणु
 		this_pid = hdsp->capture_pid;
 		other_pid = hdsp->playback_pid;
-	}
+	पूर्ण
 
-	if ((other_pid > 0) && (this_pid != other_pid)) {
+	अगर ((other_pid > 0) && (this_pid != other_pid)) अणु
 
-		/* The other stream is open, and not by the same
+		/* The other stream is खोलो, and not by the same
 		   task as this one. Make sure that the parameters
 		   that matter are the same.
 		 */
 
-		if (params_rate(params) != hdsp->system_sample_rate) {
+		अगर (params_rate(params) != hdsp->प्रणाली_sample_rate) अणु
 			spin_unlock_irq(&hdsp->lock);
 			_snd_pcm_hw_param_setempty(params, SNDRV_PCM_HW_PARAM_RATE);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
-		if (params_period_size(params) != hdsp->period_bytes / 4) {
+		अगर (params_period_size(params) != hdsp->period_bytes / 4) अणु
 			spin_unlock_irq(&hdsp->lock);
 			_snd_pcm_hw_param_setempty(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
 		/* We're fine. */
 
 		spin_unlock_irq(&hdsp->lock);
- 		return 0;
+ 		वापस 0;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irq(&hdsp->lock);
-	}
+	पूर्ण
 
-	/* how to make sure that the rate matches an externally-set one ?
+	/* how to make sure that the rate matches an बाह्यally-set one ?
 	 */
 
 	spin_lock_irq(&hdsp->lock);
-	if (! hdsp->clock_source_locked) {
-		if ((err = hdsp_set_rate(hdsp, params_rate(params), 0)) < 0) {
+	अगर (! hdsp->घड़ी_source_locked) अणु
+		अगर ((err = hdsp_set_rate(hdsp, params_rate(params), 0)) < 0) अणु
 			spin_unlock_irq(&hdsp->lock);
 			_snd_pcm_hw_param_setempty(params, SNDRV_PCM_HW_PARAM_RATE);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irq(&hdsp->lock);
 
-	if ((err = hdsp_set_interrupt_interval(hdsp, params_period_size(params))) < 0) {
+	अगर ((err = hdsp_set_पूर्णांकerrupt_पूर्णांकerval(hdsp, params_period_size(params))) < 0) अणु
 		_snd_pcm_hw_param_setempty(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_channel_info(struct snd_pcm_substream *substream,
-				    struct snd_pcm_channel_info *info)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	unsigned int channel = info->channel;
+अटल पूर्णांक snd_hdsp_channel_info(काष्ठा snd_pcm_substream *substream,
+				    काष्ठा snd_pcm_channel_info *info)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	अचिन्हित पूर्णांक channel = info->channel;
 
-	if (snd_BUG_ON(channel >= hdsp->max_channels))
-		return -EINVAL;
+	अगर (snd_BUG_ON(channel >= hdsp->max_channels))
+		वापस -EINVAL;
 	channel = array_index_nospec(channel, hdsp->max_channels);
 
-	if (hdsp->channel_map[channel] < 0)
-		return -EINVAL;
+	अगर (hdsp->channel_map[channel] < 0)
+		वापस -EINVAL;
 
 	info->offset = hdsp->channel_map[channel] * HDSP_CHANNEL_BUFFER_BYTES;
 	info->first = 0;
 	info->step = 32;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_ioctl(struct snd_pcm_substream *substream,
-			     unsigned int cmd, void *arg)
-{
-	switch (cmd) {
-	case SNDRV_PCM_IOCTL1_RESET:
-		return snd_hdsp_reset(substream);
-	case SNDRV_PCM_IOCTL1_CHANNEL_INFO:
-		return snd_hdsp_channel_info(substream, arg);
-	default:
-		break;
-	}
+अटल पूर्णांक snd_hdsp_ioctl(काष्ठा snd_pcm_substream *substream,
+			     अचिन्हित पूर्णांक cmd, व्योम *arg)
+अणु
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_IOCTL1_RESET:
+		वापस snd_hdsp_reset(substream);
+	हाल SNDRV_PCM_IOCTL1_CHANNEL_INFO:
+		वापस snd_hdsp_channel_info(substream, arg);
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return snd_pcm_lib_ioctl(substream, cmd, arg);
-}
+	वापस snd_pcm_lib_ioctl(substream, cmd, arg);
+पूर्ण
 
-static int snd_hdsp_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	struct snd_pcm_substream *other;
-	int running;
+अटल पूर्णांक snd_hdsp_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_substream *other;
+	पूर्णांक running;
 
-	if (hdsp_check_for_iobox (hdsp))
-		return -EIO;
+	अगर (hdsp_check_क्रम_iobox (hdsp))
+		वापस -EIO;
 
-	if (hdsp_check_for_firmware(hdsp, 0)) /* no auto-loading in trigger */
-		return -EIO;
+	अगर (hdsp_check_क्रम_firmware(hdsp, 0)) /* no स्वतः-loading in trigger */
+		वापस -EIO;
 
 	spin_lock(&hdsp->lock);
 	running = hdsp->running;
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		running |= 1 << substream->stream;
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
 		running &= ~(1 << substream->stream);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		snd_BUG();
 		spin_unlock(&hdsp->lock);
-		return -EINVAL;
-	}
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		वापस -EINVAL;
+	पूर्ण
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		other = hdsp->capture_substream;
-	else
+	अन्यथा
 		other = hdsp->playback_substream;
 
-	if (other) {
-		struct snd_pcm_substream *s;
-		snd_pcm_group_for_each_entry(s, substream) {
-			if (s == other) {
-				snd_pcm_trigger_done(s, substream);
-				if (cmd == SNDRV_PCM_TRIGGER_START)
+	अगर (other) अणु
+		काष्ठा snd_pcm_substream *s;
+		snd_pcm_group_क्रम_each_entry(s, substream) अणु
+			अगर (s == other) अणु
+				snd_pcm_trigger_करोne(s, substream);
+				अगर (cmd == SNDRV_PCM_TRIGGER_START)
 					running |= 1 << s->stream;
-				else
+				अन्यथा
 					running &= ~(1 << s->stream);
-				goto _ok;
-			}
-		}
-		if (cmd == SNDRV_PCM_TRIGGER_START) {
-			if (!(running & (1 << SNDRV_PCM_STREAM_PLAYBACK)) &&
+				जाओ _ok;
+			पूर्ण
+		पूर्ण
+		अगर (cmd == SNDRV_PCM_TRIGGER_START) अणु
+			अगर (!(running & (1 << SNDRV_PCM_STREAM_PLAYBACK)) &&
 			    substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 				hdsp_silence_playback(hdsp);
-		} else {
-			if (running &&
+		पूर्ण अन्यथा अणु
+			अगर (running &&
 			    substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 				hdsp_silence_playback(hdsp);
-		}
-	} else {
-		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 				hdsp_silence_playback(hdsp);
-	}
+	पूर्ण
  _ok:
-	snd_pcm_trigger_done(substream, substream);
-	if (!hdsp->running && running)
+	snd_pcm_trigger_करोne(substream, substream);
+	अगर (!hdsp->running && running)
 		hdsp_start_audio(hdsp);
-	else if (hdsp->running && !running)
+	अन्यथा अगर (hdsp->running && !running)
 		hdsp_stop_audio(hdsp);
 	hdsp->running = running;
 	spin_unlock(&hdsp->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_prepare(struct snd_pcm_substream *substream)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	int result = 0;
+अटल पूर्णांक snd_hdsp_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	पूर्णांक result = 0;
 
-	if (hdsp_check_for_iobox (hdsp))
-		return -EIO;
+	अगर (hdsp_check_क्रम_iobox (hdsp))
+		वापस -EIO;
 
-	if (hdsp_check_for_firmware(hdsp, 1))
-		return -EIO;
+	अगर (hdsp_check_क्रम_firmware(hdsp, 1))
+		वापस -EIO;
 
 	spin_lock_irq(&hdsp->lock);
-	if (!hdsp->running)
-		hdsp_reset_hw_pointer(hdsp);
+	अगर (!hdsp->running)
+		hdsp_reset_hw_poपूर्णांकer(hdsp);
 	spin_unlock_irq(&hdsp->lock);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static const struct snd_pcm_hardware snd_hdsp_playback_subinfo =
-{
+अटल स्थिर काष्ठा snd_pcm_hardware snd_hdsp_playback_subinfo =
+अणु
 	.info =			(SNDRV_PCM_INFO_MMAP |
 				 SNDRV_PCM_INFO_MMAP_VALID |
 				 SNDRV_PCM_INFO_NONINTERLEAVED |
 				 SNDRV_PCM_INFO_SYNC_START |
 				 SNDRV_PCM_INFO_DOUBLE),
-#ifdef SNDRV_BIG_ENDIAN
-	.formats =		SNDRV_PCM_FMTBIT_S32_BE,
-#else
-	.formats =		SNDRV_PCM_FMTBIT_S32_LE,
-#endif
+#अगर_घोषित SNDRV_BIG_ENDIAN
+	.क्रमmats =		SNDRV_PCM_FMTBIT_S32_BE,
+#अन्यथा
+	.क्रमmats =		SNDRV_PCM_FMTBIT_S32_LE,
+#पूर्ण_अगर
 	.rates =		(SNDRV_PCM_RATE_32000 |
 				 SNDRV_PCM_RATE_44100 |
 				 SNDRV_PCM_RATE_48000 |
@@ -4277,20 +4278,20 @@ static const struct snd_pcm_hardware snd_hdsp_playback_subinfo =
 	.period_bytes_max =	(8192 * 4) * HDSP_MAX_CHANNELS,
 	.periods_min =		2,
 	.periods_max =		2,
-	.fifo_size =		0
-};
+	.fअगरo_size =		0
+पूर्ण;
 
-static const struct snd_pcm_hardware snd_hdsp_capture_subinfo =
-{
+अटल स्थिर काष्ठा snd_pcm_hardware snd_hdsp_capture_subinfo =
+अणु
 	.info =			(SNDRV_PCM_INFO_MMAP |
 				 SNDRV_PCM_INFO_MMAP_VALID |
 				 SNDRV_PCM_INFO_NONINTERLEAVED |
 				 SNDRV_PCM_INFO_SYNC_START),
-#ifdef SNDRV_BIG_ENDIAN
-	.formats =		SNDRV_PCM_FMTBIT_S32_BE,
-#else
-	.formats =		SNDRV_PCM_FMTBIT_S32_LE,
-#endif
+#अगर_घोषित SNDRV_BIG_ENDIAN
+	.क्रमmats =		SNDRV_PCM_FMTBIT_S32_BE,
+#अन्यथा
+	.क्रमmats =		SNDRV_PCM_FMTBIT_S32_LE,
+#पूर्ण_अगर
 	.rates =		(SNDRV_PCM_RATE_32000 |
 				 SNDRV_PCM_RATE_44100 |
 				 SNDRV_PCM_RATE_48000 |
@@ -4306,736 +4307,736 @@ static const struct snd_pcm_hardware snd_hdsp_capture_subinfo =
 	.period_bytes_max =	(8192 * 4) * HDSP_MAX_CHANNELS,
 	.periods_min =		2,
 	.periods_max =		2,
-	.fifo_size =		0
-};
+	.fअगरo_size =		0
+पूर्ण;
 
-static const unsigned int hdsp_period_sizes[] = { 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
+अटल स्थिर अचिन्हित पूर्णांक hdsp_period_sizes[] = अणु 64, 128, 256, 512, 1024, 2048, 4096, 8192 पूर्ण;
 
-static const struct snd_pcm_hw_constraint_list hdsp_hw_constraints_period_sizes = {
+अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list hdsp_hw_स्थिरraपूर्णांकs_period_sizes = अणु
 	.count = ARRAY_SIZE(hdsp_period_sizes),
 	.list = hdsp_period_sizes,
 	.mask = 0
-};
+पूर्ण;
 
-static const unsigned int hdsp_9632_sample_rates[] = { 32000, 44100, 48000, 64000, 88200, 96000, 128000, 176400, 192000 };
+अटल स्थिर अचिन्हित पूर्णांक hdsp_9632_sample_rates[] = अणु 32000, 44100, 48000, 64000, 88200, 96000, 128000, 176400, 192000 पूर्ण;
 
-static const struct snd_pcm_hw_constraint_list hdsp_hw_constraints_9632_sample_rates = {
+अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list hdsp_hw_स्थिरraपूर्णांकs_9632_sample_rates = अणु
 	.count = ARRAY_SIZE(hdsp_9632_sample_rates),
 	.list = hdsp_9632_sample_rates,
 	.mask = 0
-};
+पूर्ण;
 
-static int snd_hdsp_hw_rule_in_channels(struct snd_pcm_hw_params *params,
-					struct snd_pcm_hw_rule *rule)
-{
-	struct hdsp *hdsp = rule->private;
-	struct snd_interval *c = hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	if (hdsp->io_type == H9632) {
-		unsigned int list[3];
+अटल पूर्णांक snd_hdsp_hw_rule_in_channels(काष्ठा snd_pcm_hw_params *params,
+					काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा hdsp *hdsp = rule->निजी;
+	काष्ठा snd_पूर्णांकerval *c = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	अगर (hdsp->io_type == H9632) अणु
+		अचिन्हित पूर्णांक list[3];
 		list[0] = hdsp->qs_in_channels;
 		list[1] = hdsp->ds_in_channels;
 		list[2] = hdsp->ss_in_channels;
-		return snd_interval_list(c, 3, list, 0);
-	} else {
-		unsigned int list[2];
+		वापस snd_पूर्णांकerval_list(c, 3, list, 0);
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक list[2];
 		list[0] = hdsp->ds_in_channels;
 		list[1] = hdsp->ss_in_channels;
-		return snd_interval_list(c, 2, list, 0);
-	}
-}
+		वापस snd_पूर्णांकerval_list(c, 2, list, 0);
+	पूर्ण
+पूर्ण
 
-static int snd_hdsp_hw_rule_out_channels(struct snd_pcm_hw_params *params,
-					struct snd_pcm_hw_rule *rule)
-{
-	unsigned int list[3];
-	struct hdsp *hdsp = rule->private;
-	struct snd_interval *c = hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	if (hdsp->io_type == H9632) {
+अटल पूर्णांक snd_hdsp_hw_rule_out_channels(काष्ठा snd_pcm_hw_params *params,
+					काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	अचिन्हित पूर्णांक list[3];
+	काष्ठा hdsp *hdsp = rule->निजी;
+	काष्ठा snd_पूर्णांकerval *c = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	अगर (hdsp->io_type == H9632) अणु
 		list[0] = hdsp->qs_out_channels;
 		list[1] = hdsp->ds_out_channels;
 		list[2] = hdsp->ss_out_channels;
-		return snd_interval_list(c, 3, list, 0);
-	} else {
+		वापस snd_पूर्णांकerval_list(c, 3, list, 0);
+	पूर्ण अन्यथा अणु
 		list[0] = hdsp->ds_out_channels;
 		list[1] = hdsp->ss_out_channels;
-	}
-	return snd_interval_list(c, 2, list, 0);
-}
+	पूर्ण
+	वापस snd_पूर्णांकerval_list(c, 2, list, 0);
+पूर्ण
 
-static int snd_hdsp_hw_rule_in_channels_rate(struct snd_pcm_hw_params *params,
-					     struct snd_pcm_hw_rule *rule)
-{
-	struct hdsp *hdsp = rule->private;
-	struct snd_interval *c = hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	struct snd_interval *r = hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
-	if (r->min > 96000 && hdsp->io_type == H9632) {
-		struct snd_interval t = {
+अटल पूर्णांक snd_hdsp_hw_rule_in_channels_rate(काष्ठा snd_pcm_hw_params *params,
+					     काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा hdsp *hdsp = rule->निजी;
+	काष्ठा snd_पूर्णांकerval *c = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	काष्ठा snd_पूर्णांकerval *r = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
+	अगर (r->min > 96000 && hdsp->io_type == H9632) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = hdsp->qs_in_channels,
 			.max = hdsp->qs_in_channels,
-			.integer = 1,
-		};
-		return snd_interval_refine(c, &t);
-	} else if (r->min > 48000 && r->max <= 96000) {
-		struct snd_interval t = {
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(c, &t);
+	पूर्ण अन्यथा अगर (r->min > 48000 && r->max <= 96000) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = hdsp->ds_in_channels,
 			.max = hdsp->ds_in_channels,
-			.integer = 1,
-		};
-		return snd_interval_refine(c, &t);
-	} else if (r->max < 64000) {
-		struct snd_interval t = {
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(c, &t);
+	पूर्ण अन्यथा अगर (r->max < 64000) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = hdsp->ss_in_channels,
 			.max = hdsp->ss_in_channels,
-			.integer = 1,
-		};
-		return snd_interval_refine(c, &t);
-	}
-	return 0;
-}
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(c, &t);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_hw_rule_out_channels_rate(struct snd_pcm_hw_params *params,
-					     struct snd_pcm_hw_rule *rule)
-{
-	struct hdsp *hdsp = rule->private;
-	struct snd_interval *c = hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	struct snd_interval *r = hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
-	if (r->min > 96000 && hdsp->io_type == H9632) {
-		struct snd_interval t = {
+अटल पूर्णांक snd_hdsp_hw_rule_out_channels_rate(काष्ठा snd_pcm_hw_params *params,
+					     काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा hdsp *hdsp = rule->निजी;
+	काष्ठा snd_पूर्णांकerval *c = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	काष्ठा snd_पूर्णांकerval *r = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
+	अगर (r->min > 96000 && hdsp->io_type == H9632) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = hdsp->qs_out_channels,
 			.max = hdsp->qs_out_channels,
-			.integer = 1,
-		};
-		return snd_interval_refine(c, &t);
-	} else if (r->min > 48000 && r->max <= 96000) {
-		struct snd_interval t = {
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(c, &t);
+	पूर्ण अन्यथा अगर (r->min > 48000 && r->max <= 96000) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = hdsp->ds_out_channels,
 			.max = hdsp->ds_out_channels,
-			.integer = 1,
-		};
-		return snd_interval_refine(c, &t);
-	} else if (r->max < 64000) {
-		struct snd_interval t = {
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(c, &t);
+	पूर्ण अन्यथा अगर (r->max < 64000) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = hdsp->ss_out_channels,
 			.max = hdsp->ss_out_channels,
-			.integer = 1,
-		};
-		return snd_interval_refine(c, &t);
-	}
-	return 0;
-}
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(c, &t);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_hw_rule_rate_out_channels(struct snd_pcm_hw_params *params,
-					     struct snd_pcm_hw_rule *rule)
-{
-	struct hdsp *hdsp = rule->private;
-	struct snd_interval *c = hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	struct snd_interval *r = hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
-	if (c->min >= hdsp->ss_out_channels) {
-		struct snd_interval t = {
+अटल पूर्णांक snd_hdsp_hw_rule_rate_out_channels(काष्ठा snd_pcm_hw_params *params,
+					     काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा hdsp *hdsp = rule->निजी;
+	काष्ठा snd_पूर्णांकerval *c = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	काष्ठा snd_पूर्णांकerval *r = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
+	अगर (c->min >= hdsp->ss_out_channels) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = 32000,
 			.max = 48000,
-			.integer = 1,
-		};
-		return snd_interval_refine(r, &t);
-	} else if (c->max <= hdsp->qs_out_channels && hdsp->io_type == H9632) {
-		struct snd_interval t = {
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(r, &t);
+	पूर्ण अन्यथा अगर (c->max <= hdsp->qs_out_channels && hdsp->io_type == H9632) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = 128000,
 			.max = 192000,
-			.integer = 1,
-		};
-		return snd_interval_refine(r, &t);
-	} else if (c->max <= hdsp->ds_out_channels) {
-		struct snd_interval t = {
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(r, &t);
+	पूर्ण अन्यथा अगर (c->max <= hdsp->ds_out_channels) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = 64000,
 			.max = 96000,
-			.integer = 1,
-		};
-		return snd_interval_refine(r, &t);
-	}
-	return 0;
-}
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(r, &t);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_hw_rule_rate_in_channels(struct snd_pcm_hw_params *params,
-					     struct snd_pcm_hw_rule *rule)
-{
-	struct hdsp *hdsp = rule->private;
-	struct snd_interval *c = hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	struct snd_interval *r = hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
-	if (c->min >= hdsp->ss_in_channels) {
-		struct snd_interval t = {
+अटल पूर्णांक snd_hdsp_hw_rule_rate_in_channels(काष्ठा snd_pcm_hw_params *params,
+					     काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा hdsp *hdsp = rule->निजी;
+	काष्ठा snd_पूर्णांकerval *c = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	काष्ठा snd_पूर्णांकerval *r = hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
+	अगर (c->min >= hdsp->ss_in_channels) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = 32000,
 			.max = 48000,
-			.integer = 1,
-		};
-		return snd_interval_refine(r, &t);
-	} else if (c->max <= hdsp->qs_in_channels && hdsp->io_type == H9632) {
-		struct snd_interval t = {
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(r, &t);
+	पूर्ण अन्यथा अगर (c->max <= hdsp->qs_in_channels && hdsp->io_type == H9632) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = 128000,
 			.max = 192000,
-			.integer = 1,
-		};
-		return snd_interval_refine(r, &t);
-	} else if (c->max <= hdsp->ds_in_channels) {
-		struct snd_interval t = {
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(r, &t);
+	पूर्ण अन्यथा अगर (c->max <= hdsp->ds_in_channels) अणु
+		काष्ठा snd_पूर्णांकerval t = अणु
 			.min = 64000,
 			.max = 96000,
-			.integer = 1,
-		};
-		return snd_interval_refine(r, &t);
-	}
-	return 0;
-}
+			.पूर्णांकeger = 1,
+		पूर्ण;
+		वापस snd_पूर्णांकerval_refine(r, &t);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_playback_open(struct snd_pcm_substream *substream)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक snd_hdsp_playback_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
-	if (hdsp_check_for_iobox (hdsp))
-		return -EIO;
+	अगर (hdsp_check_क्रम_iobox (hdsp))
+		वापस -EIO;
 
-	if (hdsp_check_for_firmware(hdsp, 1))
-		return -EIO;
+	अगर (hdsp_check_क्रम_firmware(hdsp, 1))
+		वापस -EIO;
 
 	spin_lock_irq(&hdsp->lock);
 
 	snd_pcm_set_sync(substream);
 
-        runtime->hw = snd_hdsp_playback_subinfo;
-	runtime->dma_area = hdsp->playback_buffer;
-	runtime->dma_bytes = HDSP_DMA_AREA_BYTES;
+        runसमय->hw = snd_hdsp_playback_subinfo;
+	runसमय->dma_area = hdsp->playback_buffer;
+	runसमय->dma_bytes = HDSP_DMA_AREA_BYTES;
 
 	hdsp->playback_pid = current->pid;
 	hdsp->playback_substream = substream;
 
 	spin_unlock_irq(&hdsp->lock);
 
-	snd_pcm_hw_constraint_msbits(runtime, 0, 32, 24);
-	snd_pcm_hw_constraint_list(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, &hdsp_hw_constraints_period_sizes);
-	if (hdsp->clock_source_locked) {
-		runtime->hw.rate_min = runtime->hw.rate_max = hdsp->system_sample_rate;
-	} else if (hdsp->io_type == H9632) {
-		runtime->hw.rate_max = 192000;
-		runtime->hw.rates = SNDRV_PCM_RATE_KNOT;
-		snd_pcm_hw_constraint_list(runtime, 0, SNDRV_PCM_HW_PARAM_RATE, &hdsp_hw_constraints_9632_sample_rates);
-	}
-	if (hdsp->io_type == H9632) {
-		runtime->hw.channels_min = hdsp->qs_out_channels;
-		runtime->hw.channels_max = hdsp->ss_out_channels;
-	}
+	snd_pcm_hw_स्थिरraपूर्णांक_msbits(runसमय, 0, 32, 24);
+	snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, &hdsp_hw_स्थिरraपूर्णांकs_period_sizes);
+	अगर (hdsp->घड़ी_source_locked) अणु
+		runसमय->hw.rate_min = runसमय->hw.rate_max = hdsp->प्रणाली_sample_rate;
+	पूर्ण अन्यथा अगर (hdsp->io_type == H9632) अणु
+		runसमय->hw.rate_max = 192000;
+		runसमय->hw.rates = SNDRV_PCM_RATE_KNOT;
+		snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE, &hdsp_hw_स्थिरraपूर्णांकs_9632_sample_rates);
+	पूर्ण
+	अगर (hdsp->io_type == H9632) अणु
+		runसमय->hw.channels_min = hdsp->qs_out_channels;
+		runसमय->hw.channels_max = hdsp->ss_out_channels;
+	पूर्ण
 
-	snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
+	snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
 			     snd_hdsp_hw_rule_out_channels, hdsp,
 			     SNDRV_PCM_HW_PARAM_CHANNELS, -1);
-	snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
+	snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
 			     snd_hdsp_hw_rule_out_channels_rate, hdsp,
 			     SNDRV_PCM_HW_PARAM_RATE, -1);
-	snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
+	snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE,
 			     snd_hdsp_hw_rule_rate_out_channels, hdsp,
 			     SNDRV_PCM_HW_PARAM_CHANNELS, -1);
 
-	if (RPM != hdsp->io_type) {
-		hdsp->creg_spdif_stream = hdsp->creg_spdif;
-		hdsp->spdif_ctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-		snd_ctl_notify(hdsp->card, SNDRV_CTL_EVENT_MASK_VALUE |
-			SNDRV_CTL_EVENT_MASK_INFO, &hdsp->spdif_ctl->id);
-	}
-	return 0;
-}
+	अगर (RPM != hdsp->io_type) अणु
+		hdsp->creg_spdअगर_stream = hdsp->creg_spdअगर;
+		hdsp->spdअगर_ctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_INACTIVE;
+		snd_ctl_notअगरy(hdsp->card, SNDRV_CTL_EVENT_MASK_VALUE |
+			SNDRV_CTL_EVENT_MASK_INFO, &hdsp->spdअगर_ctl->id);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_playback_release(struct snd_pcm_substream *substream)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_hdsp_playback_release(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
 
 	spin_lock_irq(&hdsp->lock);
 
 	hdsp->playback_pid = -1;
-	hdsp->playback_substream = NULL;
+	hdsp->playback_substream = शून्य;
 
 	spin_unlock_irq(&hdsp->lock);
 
-	if (RPM != hdsp->io_type) {
-		hdsp->spdif_ctl->vd[0].access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-		snd_ctl_notify(hdsp->card, SNDRV_CTL_EVENT_MASK_VALUE |
-			SNDRV_CTL_EVENT_MASK_INFO, &hdsp->spdif_ctl->id);
-	}
-	return 0;
-}
+	अगर (RPM != hdsp->io_type) अणु
+		hdsp->spdअगर_ctl->vd[0].access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
+		snd_ctl_notअगरy(hdsp->card, SNDRV_CTL_EVENT_MASK_VALUE |
+			SNDRV_CTL_EVENT_MASK_INFO, &hdsp->spdअगर_ctl->id);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-static int snd_hdsp_capture_open(struct snd_pcm_substream *substream)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक snd_hdsp_capture_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
-	if (hdsp_check_for_iobox (hdsp))
-		return -EIO;
+	अगर (hdsp_check_क्रम_iobox (hdsp))
+		वापस -EIO;
 
-	if (hdsp_check_for_firmware(hdsp, 1))
-		return -EIO;
+	अगर (hdsp_check_क्रम_firmware(hdsp, 1))
+		वापस -EIO;
 
 	spin_lock_irq(&hdsp->lock);
 
 	snd_pcm_set_sync(substream);
 
-	runtime->hw = snd_hdsp_capture_subinfo;
-	runtime->dma_area = hdsp->capture_buffer;
-	runtime->dma_bytes = HDSP_DMA_AREA_BYTES;
+	runसमय->hw = snd_hdsp_capture_subinfo;
+	runसमय->dma_area = hdsp->capture_buffer;
+	runसमय->dma_bytes = HDSP_DMA_AREA_BYTES;
 
 	hdsp->capture_pid = current->pid;
 	hdsp->capture_substream = substream;
 
 	spin_unlock_irq(&hdsp->lock);
 
-	snd_pcm_hw_constraint_msbits(runtime, 0, 32, 24);
-	snd_pcm_hw_constraint_list(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, &hdsp_hw_constraints_period_sizes);
-	if (hdsp->io_type == H9632) {
-		runtime->hw.channels_min = hdsp->qs_in_channels;
-		runtime->hw.channels_max = hdsp->ss_in_channels;
-		runtime->hw.rate_max = 192000;
-		runtime->hw.rates = SNDRV_PCM_RATE_KNOT;
-		snd_pcm_hw_constraint_list(runtime, 0, SNDRV_PCM_HW_PARAM_RATE, &hdsp_hw_constraints_9632_sample_rates);
-	}
-	snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
+	snd_pcm_hw_स्थिरraपूर्णांक_msbits(runसमय, 0, 32, 24);
+	snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, &hdsp_hw_स्थिरraपूर्णांकs_period_sizes);
+	अगर (hdsp->io_type == H9632) अणु
+		runसमय->hw.channels_min = hdsp->qs_in_channels;
+		runसमय->hw.channels_max = hdsp->ss_in_channels;
+		runसमय->hw.rate_max = 192000;
+		runसमय->hw.rates = SNDRV_PCM_RATE_KNOT;
+		snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE, &hdsp_hw_स्थिरraपूर्णांकs_9632_sample_rates);
+	पूर्ण
+	snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
 			     snd_hdsp_hw_rule_in_channels, hdsp,
 			     SNDRV_PCM_HW_PARAM_CHANNELS, -1);
-	snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
+	snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
 			     snd_hdsp_hw_rule_in_channels_rate, hdsp,
 			     SNDRV_PCM_HW_PARAM_RATE, -1);
-	snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
+	snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE,
 			     snd_hdsp_hw_rule_rate_in_channels, hdsp,
 			     SNDRV_PCM_HW_PARAM_CHANNELS, -1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_capture_release(struct snd_pcm_substream *substream)
-{
-	struct hdsp *hdsp = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_hdsp_capture_release(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा hdsp *hdsp = snd_pcm_substream_chip(substream);
 
 	spin_lock_irq(&hdsp->lock);
 
 	hdsp->capture_pid = -1;
-	hdsp->capture_substream = NULL;
+	hdsp->capture_substream = शून्य;
 
 	spin_unlock_irq(&hdsp->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* helper functions for copying meter values */
-static inline int copy_u32_le(void __user *dest, void __iomem *src)
-{
-	u32 val = readl(src);
-	return copy_to_user(dest, &val, 4);
-}
+/* helper functions क्रम copying meter values */
+अटल अंतरभूत पूर्णांक copy_u32_le(व्योम __user *dest, व्योम __iomem *src)
+अणु
+	u32 val = पढ़ोl(src);
+	वापस copy_to_user(dest, &val, 4);
+पूर्ण
 
-static inline int copy_u64_le(void __user *dest, void __iomem *src_low, void __iomem *src_high)
-{
+अटल अंतरभूत पूर्णांक copy_u64_le(व्योम __user *dest, व्योम __iomem *src_low, व्योम __iomem *src_high)
+अणु
 	u32 rms_low, rms_high;
 	u64 rms;
-	rms_low = readl(src_low);
-	rms_high = readl(src_high);
+	rms_low = पढ़ोl(src_low);
+	rms_high = पढ़ोl(src_high);
 	rms = ((u64)rms_high << 32) | rms_low;
-	return copy_to_user(dest, &rms, 8);
-}
+	वापस copy_to_user(dest, &rms, 8);
+पूर्ण
 
-static inline int copy_u48_le(void __user *dest, void __iomem *src_low, void __iomem *src_high)
-{
+अटल अंतरभूत पूर्णांक copy_u48_le(व्योम __user *dest, व्योम __iomem *src_low, व्योम __iomem *src_high)
+अणु
 	u32 rms_low, rms_high;
 	u64 rms;
-	rms_low = readl(src_low) & 0xffffff00;
-	rms_high = readl(src_high) & 0xffffff00;
+	rms_low = पढ़ोl(src_low) & 0xffffff00;
+	rms_high = पढ़ोl(src_high) & 0xffffff00;
 	rms = ((u64)rms_high << 32) | rms_low;
-	return copy_to_user(dest, &rms, 8);
-}
+	वापस copy_to_user(dest, &rms, 8);
+पूर्ण
 
-static int hdsp_9652_get_peak(struct hdsp *hdsp, struct hdsp_peak_rms __user *peak_rms)
-{
-	int doublespeed = 0;
-	int i, j, channels, ofs;
+अटल पूर्णांक hdsp_9652_get_peak(काष्ठा hdsp *hdsp, काष्ठा hdsp_peak_rms __user *peak_rms)
+अणु
+	पूर्णांक द्विगुनspeed = 0;
+	पूर्णांक i, j, channels, ofs;
 
-	if (hdsp_read (hdsp, HDSP_statusRegister) & HDSP_DoubleSpeedStatus)
-		doublespeed = 1;
-	channels = doublespeed ? 14 : 26;
-	for (i = 0, j = 0; i < 26; ++i) {
-		if (doublespeed && (i & 4))
-			continue;
+	अगर (hdsp_पढ़ो (hdsp, HDSP_statusRegister) & HDSP_DoubleSpeedStatus)
+		द्विगुनspeed = 1;
+	channels = द्विगुनspeed ? 14 : 26;
+	क्रम (i = 0, j = 0; i < 26; ++i) अणु
+		अगर (द्विगुनspeed && (i & 4))
+			जारी;
 		ofs = HDSP_9652_peakBase - j * 4;
-		if (copy_u32_le(&peak_rms->input_peaks[i], hdsp->iobase + ofs))
-			return -EFAULT;
+		अगर (copy_u32_le(&peak_rms->input_peaks[i], hdsp->iobase + ofs))
+			वापस -EFAULT;
 		ofs -= channels * 4;
-		if (copy_u32_le(&peak_rms->playback_peaks[i], hdsp->iobase + ofs))
-			return -EFAULT;
+		अगर (copy_u32_le(&peak_rms->playback_peaks[i], hdsp->iobase + ofs))
+			वापस -EFAULT;
 		ofs -= channels * 4;
-		if (copy_u32_le(&peak_rms->output_peaks[i], hdsp->iobase + ofs))
-			return -EFAULT;
+		अगर (copy_u32_le(&peak_rms->output_peaks[i], hdsp->iobase + ofs))
+			वापस -EFAULT;
 		ofs = HDSP_9652_rmsBase + j * 8;
-		if (copy_u48_le(&peak_rms->input_rms[i], hdsp->iobase + ofs,
+		अगर (copy_u48_le(&peak_rms->input_rms[i], hdsp->iobase + ofs,
 				hdsp->iobase + ofs + 4))
-			return -EFAULT;
+			वापस -EFAULT;
 		ofs += channels * 8;
-		if (copy_u48_le(&peak_rms->playback_rms[i], hdsp->iobase + ofs,
+		अगर (copy_u48_le(&peak_rms->playback_rms[i], hdsp->iobase + ofs,
 				hdsp->iobase + ofs + 4))
-			return -EFAULT;
+			वापस -EFAULT;
 		ofs += channels * 8;
-		if (copy_u48_le(&peak_rms->output_rms[i], hdsp->iobase + ofs,
+		अगर (copy_u48_le(&peak_rms->output_rms[i], hdsp->iobase + ofs,
 				hdsp->iobase + ofs + 4))
-			return -EFAULT;
+			वापस -EFAULT;
 		j++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int hdsp_9632_get_peak(struct hdsp *hdsp, struct hdsp_peak_rms __user *peak_rms)
-{
-	int i, j;
-	struct hdsp_9632_meters __iomem *m;
-	int doublespeed = 0;
+अटल पूर्णांक hdsp_9632_get_peak(काष्ठा hdsp *hdsp, काष्ठा hdsp_peak_rms __user *peak_rms)
+अणु
+	पूर्णांक i, j;
+	काष्ठा hdsp_9632_meters __iomem *m;
+	पूर्णांक द्विगुनspeed = 0;
 
-	if (hdsp_read (hdsp, HDSP_statusRegister) & HDSP_DoubleSpeedStatus)
-		doublespeed = 1;
-	m = (struct hdsp_9632_meters __iomem *)(hdsp->iobase+HDSP_9632_metersBase);
-	for (i = 0, j = 0; i < 16; ++i, ++j) {
-		if (copy_u32_le(&peak_rms->input_peaks[i], &m->input_peak[j]))
-			return -EFAULT;
-		if (copy_u32_le(&peak_rms->playback_peaks[i], &m->playback_peak[j]))
-			return -EFAULT;
-		if (copy_u32_le(&peak_rms->output_peaks[i], &m->output_peak[j]))
-			return -EFAULT;
-		if (copy_u64_le(&peak_rms->input_rms[i], &m->input_rms_low[j],
+	अगर (hdsp_पढ़ो (hdsp, HDSP_statusRegister) & HDSP_DoubleSpeedStatus)
+		द्विगुनspeed = 1;
+	m = (काष्ठा hdsp_9632_meters __iomem *)(hdsp->iobase+HDSP_9632_metersBase);
+	क्रम (i = 0, j = 0; i < 16; ++i, ++j) अणु
+		अगर (copy_u32_le(&peak_rms->input_peaks[i], &m->input_peak[j]))
+			वापस -EFAULT;
+		अगर (copy_u32_le(&peak_rms->playback_peaks[i], &m->playback_peak[j]))
+			वापस -EFAULT;
+		अगर (copy_u32_le(&peak_rms->output_peaks[i], &m->output_peak[j]))
+			वापस -EFAULT;
+		अगर (copy_u64_le(&peak_rms->input_rms[i], &m->input_rms_low[j],
 				&m->input_rms_high[j]))
-			return -EFAULT;
-		if (copy_u64_le(&peak_rms->playback_rms[i], &m->playback_rms_low[j],
+			वापस -EFAULT;
+		अगर (copy_u64_le(&peak_rms->playback_rms[i], &m->playback_rms_low[j],
 				&m->playback_rms_high[j]))
-			return -EFAULT;
-		if (copy_u64_le(&peak_rms->output_rms[i], &m->output_rms_low[j],
+			वापस -EFAULT;
+		अगर (copy_u64_le(&peak_rms->output_rms[i], &m->output_rms_low[j],
 				&m->output_rms_high[j]))
-			return -EFAULT;
-		if (doublespeed && i == 3) i += 4;
-	}
-	return 0;
-}
+			वापस -EFAULT;
+		अगर (द्विगुनspeed && i == 3) i += 4;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int hdsp_get_peak(struct hdsp *hdsp, struct hdsp_peak_rms __user *peak_rms)
-{
-	int i;
+अटल पूर्णांक hdsp_get_peak(काष्ठा hdsp *hdsp, काष्ठा hdsp_peak_rms __user *peak_rms)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 26; i++) {
-		if (copy_u32_le(&peak_rms->playback_peaks[i],
+	क्रम (i = 0; i < 26; i++) अणु
+		अगर (copy_u32_le(&peak_rms->playback_peaks[i],
 				hdsp->iobase + HDSP_playbackPeakLevel + i * 4))
-			return -EFAULT;
-		if (copy_u32_le(&peak_rms->input_peaks[i],
+			वापस -EFAULT;
+		अगर (copy_u32_le(&peak_rms->input_peaks[i],
 				hdsp->iobase + HDSP_inputPeakLevel + i * 4))
-			return -EFAULT;
-	}
-	for (i = 0; i < 28; i++) {
-		if (copy_u32_le(&peak_rms->output_peaks[i],
+			वापस -EFAULT;
+	पूर्ण
+	क्रम (i = 0; i < 28; i++) अणु
+		अगर (copy_u32_le(&peak_rms->output_peaks[i],
 				hdsp->iobase + HDSP_outputPeakLevel + i * 4))
-			return -EFAULT;
-	}
-	for (i = 0; i < 26; ++i) {
-		if (copy_u64_le(&peak_rms->playback_rms[i],
+			वापस -EFAULT;
+	पूर्ण
+	क्रम (i = 0; i < 26; ++i) अणु
+		अगर (copy_u64_le(&peak_rms->playback_rms[i],
 				hdsp->iobase + HDSP_playbackRmsLevel + i * 8 + 4,
 				hdsp->iobase + HDSP_playbackRmsLevel + i * 8))
-			return -EFAULT;
-		if (copy_u64_le(&peak_rms->input_rms[i],
+			वापस -EFAULT;
+		अगर (copy_u64_le(&peak_rms->input_rms[i],
 				hdsp->iobase + HDSP_inputRmsLevel + i * 8 + 4,
 				hdsp->iobase + HDSP_inputRmsLevel + i * 8))
-			return -EFAULT;
-	}
-	return 0;
-}
+			वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_hwdep_ioctl(struct snd_hwdep *hw, struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct hdsp *hdsp = hw->private_data;
-	void __user *argp = (void __user *)arg;
-	int err;
+अटल पूर्णांक snd_hdsp_hwdep_ioctl(काष्ठा snd_hwdep *hw, काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा hdsp *hdsp = hw->निजी_data;
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक err;
 
-	switch (cmd) {
-	case SNDRV_HDSP_IOCTL_GET_PEAK_RMS: {
-		struct hdsp_peak_rms __user *peak_rms = (struct hdsp_peak_rms __user *)arg;
+	चयन (cmd) अणु
+	हाल SNDRV_HDSP_IOCTL_GET_PEAK_RMS: अणु
+		काष्ठा hdsp_peak_rms __user *peak_rms = (काष्ठा hdsp_peak_rms __user *)arg;
 
-		err = hdsp_check_for_iobox(hdsp);
-		if (err < 0)
-			return err;
+		err = hdsp_check_क्रम_iobox(hdsp);
+		अगर (err < 0)
+			वापस err;
 
-		err = hdsp_check_for_firmware(hdsp, 1);
-		if (err < 0)
-			return err;
+		err = hdsp_check_क्रम_firmware(hdsp, 1);
+		अगर (err < 0)
+			वापस err;
 
-		if (!(hdsp->state & HDSP_FirmwareLoaded)) {
+		अगर (!(hdsp->state & HDSP_FirmwareLoaded)) अणु
 			dev_err(hdsp->card->dev,
 				"firmware needs to be uploaded to the card.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (hdsp->io_type) {
-		case H9652:
-			return hdsp_9652_get_peak(hdsp, peak_rms);
-		case H9632:
-			return hdsp_9632_get_peak(hdsp, peak_rms);
-		default:
-			return hdsp_get_peak(hdsp, peak_rms);
-		}
-	}
-	case SNDRV_HDSP_IOCTL_GET_CONFIG_INFO: {
-		struct hdsp_config_info info;
-		unsigned long flags;
-		int i;
+		चयन (hdsp->io_type) अणु
+		हाल H9652:
+			वापस hdsp_9652_get_peak(hdsp, peak_rms);
+		हाल H9632:
+			वापस hdsp_9632_get_peak(hdsp, peak_rms);
+		शेष:
+			वापस hdsp_get_peak(hdsp, peak_rms);
+		पूर्ण
+	पूर्ण
+	हाल SNDRV_HDSP_IOCTL_GET_CONFIG_INFO: अणु
+		काष्ठा hdsp_config_info info;
+		अचिन्हित दीर्घ flags;
+		पूर्णांक i;
 
-		err = hdsp_check_for_iobox(hdsp);
-		if (err < 0)
-			return err;
+		err = hdsp_check_क्रम_iobox(hdsp);
+		अगर (err < 0)
+			वापस err;
 
-		err = hdsp_check_for_firmware(hdsp, 1);
-		if (err < 0)
-			return err;
+		err = hdsp_check_क्रम_firmware(hdsp, 1);
+		अगर (err < 0)
+			वापस err;
 
-		memset(&info, 0, sizeof(info));
+		स_रखो(&info, 0, माप(info));
 		spin_lock_irqsave(&hdsp->lock, flags);
-		info.pref_sync_ref = (unsigned char)hdsp_pref_sync_ref(hdsp);
-		info.wordclock_sync_check = (unsigned char)hdsp_wc_sync_check(hdsp);
-		if (hdsp->io_type != H9632)
-		    info.adatsync_sync_check = (unsigned char)hdsp_adatsync_sync_check(hdsp);
-		info.spdif_sync_check = (unsigned char)hdsp_spdif_sync_check(hdsp);
-		for (i = 0; i < ((hdsp->io_type != Multiface && hdsp->io_type != RPM && hdsp->io_type != H9632) ? 3 : 1); ++i)
-			info.adat_sync_check[i] = (unsigned char)hdsp_adat_sync_check(hdsp, i);
-		info.spdif_in = (unsigned char)hdsp_spdif_in(hdsp);
-		info.spdif_out = (unsigned char)hdsp_toggle_setting(hdsp,
+		info.pref_sync_ref = (अचिन्हित अक्षर)hdsp_pref_sync_ref(hdsp);
+		info.wordघड़ी_sync_check = (अचिन्हित अक्षर)hdsp_wc_sync_check(hdsp);
+		अगर (hdsp->io_type != H9632)
+		    info.adatsync_sync_check = (अचिन्हित अक्षर)hdsp_adatsync_sync_check(hdsp);
+		info.spdअगर_sync_check = (अचिन्हित अक्षर)hdsp_spdअगर_sync_check(hdsp);
+		क्रम (i = 0; i < ((hdsp->io_type != Multअगरace && hdsp->io_type != RPM && hdsp->io_type != H9632) ? 3 : 1); ++i)
+			info.adat_sync_check[i] = (अचिन्हित अक्षर)hdsp_adat_sync_check(hdsp, i);
+		info.spdअगर_in = (अचिन्हित अक्षर)hdsp_spdअगर_in(hdsp);
+		info.spdअगर_out = (अचिन्हित अक्षर)hdsp_toggle_setting(hdsp,
 				HDSP_SPDIFOpticalOut);
-		info.spdif_professional = (unsigned char)
+		info.spdअगर_professional = (अचिन्हित अक्षर)
 			hdsp_toggle_setting(hdsp, HDSP_SPDIFProfessional);
-		info.spdif_emphasis = (unsigned char)
+		info.spdअगर_emphasis = (अचिन्हित अक्षर)
 			hdsp_toggle_setting(hdsp, HDSP_SPDIFEmphasis);
-		info.spdif_nonaudio = (unsigned char)
+		info.spdअगर_nonaudio = (अचिन्हित अक्षर)
 			hdsp_toggle_setting(hdsp, HDSP_SPDIFNonAudio);
-		info.spdif_sample_rate = hdsp_spdif_sample_rate(hdsp);
-		info.system_sample_rate = hdsp->system_sample_rate;
-		info.autosync_sample_rate = hdsp_external_sample_rate(hdsp);
-		info.system_clock_mode = (unsigned char)hdsp_system_clock_mode(hdsp);
-		info.clock_source = (unsigned char)hdsp_clock_source(hdsp);
-		info.autosync_ref = (unsigned char)hdsp_autosync_ref(hdsp);
-		info.line_out = (unsigned char)
+		info.spdअगर_sample_rate = hdsp_spdअगर_sample_rate(hdsp);
+		info.प्रणाली_sample_rate = hdsp->प्रणाली_sample_rate;
+		info.स्वतःsync_sample_rate = hdsp_बाह्यal_sample_rate(hdsp);
+		info.प्रणाली_घड़ी_mode = (अचिन्हित अक्षर)hdsp_प्रणाली_घड़ी_mode(hdsp);
+		info.घड़ी_source = (अचिन्हित अक्षर)hdsp_घड़ी_source(hdsp);
+		info.स्वतःsync_ref = (अचिन्हित अक्षर)hdsp_स्वतःsync_ref(hdsp);
+		info.line_out = (अचिन्हित अक्षर)
 			hdsp_toggle_setting(hdsp, HDSP_LineOut);
-		if (hdsp->io_type == H9632) {
-			info.da_gain = (unsigned char)hdsp_da_gain(hdsp);
-			info.ad_gain = (unsigned char)hdsp_ad_gain(hdsp);
-			info.phone_gain = (unsigned char)hdsp_phone_gain(hdsp);
-			info.xlr_breakout_cable =
-				(unsigned char)hdsp_toggle_setting(hdsp,
+		अगर (hdsp->io_type == H9632) अणु
+			info.da_gain = (अचिन्हित अक्षर)hdsp_da_gain(hdsp);
+			info.ad_gain = (अचिन्हित अक्षर)hdsp_ad_gain(hdsp);
+			info.phone_gain = (अचिन्हित अक्षर)hdsp_phone_gain(hdsp);
+			info.xlr_अवरोधout_cable =
+				(अचिन्हित अक्षर)hdsp_toggle_setting(hdsp,
 					HDSP_XLRBreakoutCable);
 
-		} else if (hdsp->io_type == RPM) {
-			info.da_gain = (unsigned char) hdsp_rpm_input12(hdsp);
-			info.ad_gain = (unsigned char) hdsp_rpm_input34(hdsp);
-		}
-		if (hdsp->io_type == H9632 || hdsp->io_type == H9652)
+		पूर्ण अन्यथा अगर (hdsp->io_type == RPM) अणु
+			info.da_gain = (अचिन्हित अक्षर) hdsp_rpm_input12(hdsp);
+			info.ad_gain = (अचिन्हित अक्षर) hdsp_rpm_input34(hdsp);
+		पूर्ण
+		अगर (hdsp->io_type == H9632 || hdsp->io_type == H9652)
 			info.analog_extension_board =
-				(unsigned char)hdsp_toggle_setting(hdsp,
+				(अचिन्हित अक्षर)hdsp_toggle_setting(hdsp,
 					    HDSP_AnalogExtensionBoard);
 		spin_unlock_irqrestore(&hdsp->lock, flags);
-		if (copy_to_user(argp, &info, sizeof(info)))
-			return -EFAULT;
-		break;
-	}
-	case SNDRV_HDSP_IOCTL_GET_9632_AEB: {
-		struct hdsp_9632_aeb h9632_aeb;
+		अगर (copy_to_user(argp, &info, माप(info)))
+			वापस -EFAULT;
+		अवरोध;
+	पूर्ण
+	हाल SNDRV_HDSP_IOCTL_GET_9632_AEB: अणु
+		काष्ठा hdsp_9632_aeb h9632_aeb;
 
-		if (hdsp->io_type != H9632) return -EINVAL;
+		अगर (hdsp->io_type != H9632) वापस -EINVAL;
 		h9632_aeb.aebi = hdsp->ss_in_channels - H9632_SS_CHANNELS;
 		h9632_aeb.aebo = hdsp->ss_out_channels - H9632_SS_CHANNELS;
-		if (copy_to_user(argp, &h9632_aeb, sizeof(h9632_aeb)))
-			return -EFAULT;
-		break;
-	}
-	case SNDRV_HDSP_IOCTL_GET_VERSION: {
-		struct hdsp_version hdsp_version;
-		int err;
+		अगर (copy_to_user(argp, &h9632_aeb, माप(h9632_aeb)))
+			वापस -EFAULT;
+		अवरोध;
+	पूर्ण
+	हाल SNDRV_HDSP_IOCTL_GET_VERSION: अणु
+		काष्ठा hdsp_version hdsp_version;
+		पूर्णांक err;
 
-		if (hdsp->io_type == H9652 || hdsp->io_type == H9632) return -EINVAL;
-		if (hdsp->io_type == Undefined) {
-			if ((err = hdsp_get_iobox_version(hdsp)) < 0)
-				return err;
-		}
-		memset(&hdsp_version, 0, sizeof(hdsp_version));
+		अगर (hdsp->io_type == H9652 || hdsp->io_type == H9632) वापस -EINVAL;
+		अगर (hdsp->io_type == Undefined) अणु
+			अगर ((err = hdsp_get_iobox_version(hdsp)) < 0)
+				वापस err;
+		पूर्ण
+		स_रखो(&hdsp_version, 0, माप(hdsp_version));
 		hdsp_version.io_type = hdsp->io_type;
 		hdsp_version.firmware_rev = hdsp->firmware_rev;
-		if ((err = copy_to_user(argp, &hdsp_version, sizeof(hdsp_version))))
-		    	return -EFAULT;
-		break;
-	}
-	case SNDRV_HDSP_IOCTL_UPLOAD_FIRMWARE: {
-		struct hdsp_firmware firmware;
+		अगर ((err = copy_to_user(argp, &hdsp_version, माप(hdsp_version))))
+		    	वापस -EFAULT;
+		अवरोध;
+	पूर्ण
+	हाल SNDRV_HDSP_IOCTL_UPLOAD_FIRMWARE: अणु
+		काष्ठा hdsp_firmware firmware;
 		u32 __user *firmware_data;
-		int err;
+		पूर्णांक err;
 
-		if (hdsp->io_type == H9652 || hdsp->io_type == H9632) return -EINVAL;
+		अगर (hdsp->io_type == H9652 || hdsp->io_type == H9632) वापस -EINVAL;
 		/* SNDRV_HDSP_IOCTL_GET_VERSION must have been called */
-		if (hdsp->io_type == Undefined) return -EINVAL;
+		अगर (hdsp->io_type == Undefined) वापस -EINVAL;
 
-		if (hdsp->state & (HDSP_FirmwareCached | HDSP_FirmwareLoaded))
-			return -EBUSY;
+		अगर (hdsp->state & (HDSP_FirmwareCached | HDSP_FirmwareLoaded))
+			वापस -EBUSY;
 
 		dev_info(hdsp->card->dev,
 			 "initializing firmware upload\n");
-		if (copy_from_user(&firmware, argp, sizeof(firmware)))
-			return -EFAULT;
+		अगर (copy_from_user(&firmware, argp, माप(firmware)))
+			वापस -EFAULT;
 		firmware_data = (u32 __user *)firmware.firmware_data;
 
-		if (hdsp_check_for_iobox (hdsp))
-			return -EIO;
+		अगर (hdsp_check_क्रम_iobox (hdsp))
+			वापस -EIO;
 
-		if (!hdsp->fw_uploaded) {
-			hdsp->fw_uploaded = vmalloc(HDSP_FIRMWARE_SIZE);
-			if (!hdsp->fw_uploaded)
-				return -ENOMEM;
-		}
+		अगर (!hdsp->fw_uploaded) अणु
+			hdsp->fw_uploaded = vदो_स्मृति(HDSP_FIRMWARE_SIZE);
+			अगर (!hdsp->fw_uploaded)
+				वापस -ENOMEM;
+		पूर्ण
 
-		if (copy_from_user(hdsp->fw_uploaded, firmware_data,
-				   HDSP_FIRMWARE_SIZE)) {
-			vfree(hdsp->fw_uploaded);
-			hdsp->fw_uploaded = NULL;
-			return -EFAULT;
-		}
+		अगर (copy_from_user(hdsp->fw_uploaded, firmware_data,
+				   HDSP_FIRMWARE_SIZE)) अणु
+			vमुक्त(hdsp->fw_uploaded);
+			hdsp->fw_uploaded = शून्य;
+			वापस -EFAULT;
+		पूर्ण
 
 		hdsp->state |= HDSP_FirmwareCached;
 
-		if ((err = snd_hdsp_load_firmware_from_cache(hdsp)) < 0)
-			return err;
+		अगर ((err = snd_hdsp_load_firmware_from_cache(hdsp)) < 0)
+			वापस err;
 
-		if (!(hdsp->state & HDSP_InitializationComplete)) {
-			if ((err = snd_hdsp_enable_io(hdsp)) < 0)
-				return err;
+		अगर (!(hdsp->state & HDSP_InitializationComplete)) अणु
+			अगर ((err = snd_hdsp_enable_io(hdsp)) < 0)
+				वापस err;
 
 			snd_hdsp_initialize_channels(hdsp);
 			snd_hdsp_initialize_midi_flush(hdsp);
 
-			if ((err = snd_hdsp_create_alsa_devices(hdsp->card, hdsp)) < 0) {
+			अगर ((err = snd_hdsp_create_alsa_devices(hdsp->card, hdsp)) < 0) अणु
 				dev_err(hdsp->card->dev,
 					"error creating alsa devices\n");
-				return err;
-			}
-		}
-		break;
-	}
-	case SNDRV_HDSP_IOCTL_GET_MIXER: {
-		struct hdsp_mixer __user *mixer = (struct hdsp_mixer __user *)argp;
-		if (copy_to_user(mixer->matrix, hdsp->mixer_matrix, sizeof(unsigned short)*HDSP_MATRIX_MIXER_SIZE))
-			return -EFAULT;
-		break;
-	}
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+				वापस err;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल SNDRV_HDSP_IOCTL_GET_MIXER: अणु
+		काष्ठा hdsp_mixer __user *mixer = (काष्ठा hdsp_mixer __user *)argp;
+		अगर (copy_to_user(mixer->matrix, hdsp->mixer_matrix, माप(अचिन्हित लघु)*HDSP_MATRIX_MIXER_SIZE))
+			वापस -EFAULT;
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct snd_pcm_ops snd_hdsp_playback_ops = {
-	.open =		snd_hdsp_playback_open,
-	.close =	snd_hdsp_playback_release,
+अटल स्थिर काष्ठा snd_pcm_ops snd_hdsp_playback_ops = अणु
+	.खोलो =		snd_hdsp_playback_खोलो,
+	.बंद =	snd_hdsp_playback_release,
 	.ioctl =	snd_hdsp_ioctl,
 	.hw_params =	snd_hdsp_hw_params,
 	.prepare =	snd_hdsp_prepare,
 	.trigger =	snd_hdsp_trigger,
-	.pointer =	snd_hdsp_hw_pointer,
+	.poपूर्णांकer =	snd_hdsp_hw_poपूर्णांकer,
 	.copy_user =	snd_hdsp_playback_copy,
 	.copy_kernel =	snd_hdsp_playback_copy_kernel,
 	.fill_silence =	snd_hdsp_hw_silence,
-};
+पूर्ण;
 
-static const struct snd_pcm_ops snd_hdsp_capture_ops = {
-	.open =		snd_hdsp_capture_open,
-	.close =	snd_hdsp_capture_release,
+अटल स्थिर काष्ठा snd_pcm_ops snd_hdsp_capture_ops = अणु
+	.खोलो =		snd_hdsp_capture_खोलो,
+	.बंद =	snd_hdsp_capture_release,
 	.ioctl =	snd_hdsp_ioctl,
 	.hw_params =	snd_hdsp_hw_params,
 	.prepare =	snd_hdsp_prepare,
 	.trigger =	snd_hdsp_trigger,
-	.pointer =	snd_hdsp_hw_pointer,
+	.poपूर्णांकer =	snd_hdsp_hw_poपूर्णांकer,
 	.copy_user =	snd_hdsp_capture_copy,
 	.copy_kernel =	snd_hdsp_capture_copy_kernel,
-};
+पूर्ण;
 
-static int snd_hdsp_create_hwdep(struct snd_card *card, struct hdsp *hdsp)
-{
-	struct snd_hwdep *hw;
-	int err;
+अटल पूर्णांक snd_hdsp_create_hwdep(काष्ठा snd_card *card, काष्ठा hdsp *hdsp)
+अणु
+	काष्ठा snd_hwdep *hw;
+	पूर्णांक err;
 
-	if ((err = snd_hwdep_new(card, "HDSP hwdep", 0, &hw)) < 0)
-		return err;
+	अगर ((err = snd_hwdep_new(card, "HDSP hwdep", 0, &hw)) < 0)
+		वापस err;
 
 	hdsp->hwdep = hw;
-	hw->private_data = hdsp;
-	strcpy(hw->name, "HDSP hwdep interface");
+	hw->निजी_data = hdsp;
+	म_नकल(hw->name, "HDSP hwdep interface");
 
 	hw->ops.ioctl = snd_hdsp_hwdep_ioctl;
 	hw->ops.ioctl_compat = snd_hdsp_hwdep_ioctl;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_create_pcm(struct snd_card *card, struct hdsp *hdsp)
-{
-	struct snd_pcm *pcm;
-	int err;
+अटल पूर्णांक snd_hdsp_create_pcm(काष्ठा snd_card *card, काष्ठा hdsp *hdsp)
+अणु
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक err;
 
-	if ((err = snd_pcm_new(card, hdsp->card_name, 0, 1, 1, &pcm)) < 0)
-		return err;
+	अगर ((err = snd_pcm_new(card, hdsp->card_name, 0, 1, 1, &pcm)) < 0)
+		वापस err;
 
 	hdsp->pcm = pcm;
-	pcm->private_data = hdsp;
-	strcpy(pcm->name, hdsp->card_name);
+	pcm->निजी_data = hdsp;
+	म_नकल(pcm->name, hdsp->card_name);
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_hdsp_playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_hdsp_capture_ops);
 
 	pcm->info_flags = SNDRV_PCM_INFO_JOINT_DUPLEX;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_hdsp_9652_enable_mixer (struct hdsp *hdsp)
-{
-        hdsp->control2_register |= HDSP_9652_ENABLE_MIXER;
-	hdsp_write (hdsp, HDSP_control2Reg, hdsp->control2_register);
-}
+अटल व्योम snd_hdsp_9652_enable_mixer (काष्ठा hdsp *hdsp)
+अणु
+        hdsp->control2_रेजिस्टर |= HDSP_9652_ENABLE_MIXER;
+	hdsp_ग_लिखो (hdsp, HDSP_control2Reg, hdsp->control2_रेजिस्टर);
+पूर्ण
 
-static int snd_hdsp_enable_io (struct hdsp *hdsp)
-{
-	int i;
+अटल पूर्णांक snd_hdsp_enable_io (काष्ठा hdsp *hdsp)
+अणु
+	पूर्णांक i;
 
-	if (hdsp_fifo_wait (hdsp, 0, 100)) {
+	अगर (hdsp_fअगरo_रुको (hdsp, 0, 100)) अणु
 		dev_err(hdsp->card->dev,
 			"enable_io fifo_wait failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	for (i = 0; i < hdsp->max_channels; ++i) {
-		hdsp_write (hdsp, HDSP_inputEnable + (4 * i), 1);
-		hdsp_write (hdsp, HDSP_outputEnable + (4 * i), 1);
-	}
+	क्रम (i = 0; i < hdsp->max_channels; ++i) अणु
+		hdsp_ग_लिखो (hdsp, HDSP_inputEnable + (4 * i), 1);
+		hdsp_ग_लिखो (hdsp, HDSP_outputEnable + (4 * i), 1);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_hdsp_initialize_channels(struct hdsp *hdsp)
-{
-	int status, aebi_channels, aebo_channels, i;
+अटल व्योम snd_hdsp_initialize_channels(काष्ठा hdsp *hdsp)
+अणु
+	पूर्णांक status, aebi_channels, aebo_channels, i;
 
-	switch (hdsp->io_type) {
-	case Digiface:
+	चयन (hdsp->io_type) अणु
+	हाल Digअगरace:
 		hdsp->card_name = "RME Hammerfall DSP + Digiface";
 		hdsp->ss_in_channels = hdsp->ss_out_channels = DIGIFACE_SS_CHANNELS;
 		hdsp->ds_in_channels = hdsp->ds_out_channels = DIGIFACE_DS_CHANNELS;
-		break;
+		अवरोध;
 
-	case H9652:
+	हाल H9652:
 		hdsp->card_name = "RME Hammerfall HDSP 9652";
 		hdsp->ss_in_channels = hdsp->ss_out_channels = H9652_SS_CHANNELS;
 		hdsp->ds_in_channels = hdsp->ds_out_channels = H9652_DS_CHANNELS;
-		break;
+		अवरोध;
 
-	case H9632:
-		status = hdsp_read(hdsp, HDSP_statusRegister);
+	हाल H9632:
+		status = hdsp_पढ़ो(hdsp, HDSP_statusRegister);
 		/* HDSP_AEBx bits are low when AEB are connected */
 		aebi_channels = (status & HDSP_AEBI) ? 0 : 4;
 		aebo_channels = (status & HDSP_AEBO) ? 0 : 4;
@@ -5050,199 +5051,199 @@ static void snd_hdsp_initialize_channels(struct hdsp *hdsp)
 		 * only sets on a change we fake all bits (channels) as enabled.
 		 */
 		hdsp->io_loopback = 0xffffffff;
-		for (i = 0; i < hdsp->max_channels; ++i)
+		क्रम (i = 0; i < hdsp->max_channels; ++i)
 			hdsp_loopback_set(hdsp, i, false);
-		break;
+		अवरोध;
 
-	case Multiface:
+	हाल Multअगरace:
 		hdsp->card_name = "RME Hammerfall DSP + Multiface";
 		hdsp->ss_in_channels = hdsp->ss_out_channels = MULTIFACE_SS_CHANNELS;
 		hdsp->ds_in_channels = hdsp->ds_out_channels = MULTIFACE_DS_CHANNELS;
-		break;
+		अवरोध;
 
-	case RPM:
+	हाल RPM:
 		hdsp->card_name = "RME Hammerfall DSP + RPM";
 		hdsp->ss_in_channels = RPM_CHANNELS-1;
 		hdsp->ss_out_channels = RPM_CHANNELS;
 		hdsp->ds_in_channels = RPM_CHANNELS-1;
 		hdsp->ds_out_channels = RPM_CHANNELS;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
  		/* should never get here */
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void snd_hdsp_initialize_midi_flush (struct hdsp *hdsp)
-{
+अटल व्योम snd_hdsp_initialize_midi_flush (काष्ठा hdsp *hdsp)
+अणु
 	snd_hdsp_flush_midi_input (hdsp, 0);
 	snd_hdsp_flush_midi_input (hdsp, 1);
-}
+पूर्ण
 
-static int snd_hdsp_create_alsa_devices(struct snd_card *card, struct hdsp *hdsp)
-{
-	int err;
+अटल पूर्णांक snd_hdsp_create_alsa_devices(काष्ठा snd_card *card, काष्ठा hdsp *hdsp)
+अणु
+	पूर्णांक err;
 
-	if ((err = snd_hdsp_create_pcm(card, hdsp)) < 0) {
+	अगर ((err = snd_hdsp_create_pcm(card, hdsp)) < 0) अणु
 		dev_err(card->dev,
 			"Error creating pcm interface\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 
-	if ((err = snd_hdsp_create_midi(card, hdsp, 0)) < 0) {
+	अगर ((err = snd_hdsp_create_midi(card, hdsp, 0)) < 0) अणु
 		dev_err(card->dev,
 			"Error creating first midi interface\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (hdsp->io_type == Digiface || hdsp->io_type == H9652) {
-		if ((err = snd_hdsp_create_midi(card, hdsp, 1)) < 0) {
+	अगर (hdsp->io_type == Digअगरace || hdsp->io_type == H9652) अणु
+		अगर ((err = snd_hdsp_create_midi(card, hdsp, 1)) < 0) अणु
 			dev_err(card->dev,
 				"Error creating second midi interface\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if ((err = snd_hdsp_create_controls(card, hdsp)) < 0) {
+	अगर ((err = snd_hdsp_create_controls(card, hdsp)) < 0) अणु
 		dev_err(card->dev,
 			"Error creating ctl interface\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	snd_hdsp_proc_init(hdsp);
 
-	hdsp->system_sample_rate = -1;
+	hdsp->प्रणाली_sample_rate = -1;
 	hdsp->playback_pid = -1;
 	hdsp->capture_pid = -1;
-	hdsp->capture_substream = NULL;
-	hdsp->playback_substream = NULL;
+	hdsp->capture_substream = शून्य;
+	hdsp->playback_substream = शून्य;
 
-	if ((err = snd_hdsp_set_defaults(hdsp)) < 0) {
+	अगर ((err = snd_hdsp_set_शेषs(hdsp)) < 0) अणु
 		dev_err(card->dev,
 			"Error setting default values\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (!(hdsp->state & HDSP_InitializationComplete)) {
-		strcpy(card->shortname, "Hammerfall DSP");
-		sprintf(card->longname, "%s at 0x%lx, irq %d", hdsp->card_name,
+	अगर (!(hdsp->state & HDSP_InitializationComplete)) अणु
+		म_नकल(card->लघुname, "Hammerfall DSP");
+		प्र_लिखो(card->दीर्घname, "%s at 0x%lx, irq %d", hdsp->card_name,
 			hdsp->port, hdsp->irq);
 
-		if ((err = snd_card_register(card)) < 0) {
+		अगर ((err = snd_card_रेजिस्टर(card)) < 0) अणु
 			dev_err(card->dev,
 				"error registering card\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		hdsp->state |= HDSP_InitializationComplete;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* load firmware via hotplug fw loader */
-static int hdsp_request_fw_loader(struct hdsp *hdsp)
-{
-	const char *fwfile;
-	const struct firmware *fw;
-	int err;
+अटल पूर्णांक hdsp_request_fw_loader(काष्ठा hdsp *hdsp)
+अणु
+	स्थिर अक्षर *fwfile;
+	स्थिर काष्ठा firmware *fw;
+	पूर्णांक err;
 
-	if (hdsp->io_type == H9652 || hdsp->io_type == H9632)
-		return 0;
-	if (hdsp->io_type == Undefined) {
-		if ((err = hdsp_get_iobox_version(hdsp)) < 0)
-			return err;
-		if (hdsp->io_type == H9652 || hdsp->io_type == H9632)
-			return 0;
-	}
+	अगर (hdsp->io_type == H9652 || hdsp->io_type == H9632)
+		वापस 0;
+	अगर (hdsp->io_type == Undefined) अणु
+		अगर ((err = hdsp_get_iobox_version(hdsp)) < 0)
+			वापस err;
+		अगर (hdsp->io_type == H9652 || hdsp->io_type == H9632)
+			वापस 0;
+	पूर्ण
 
 	/* caution: max length of firmware filename is 30! */
-	switch (hdsp->io_type) {
-	case RPM:
+	चयन (hdsp->io_type) अणु
+	हाल RPM:
 		fwfile = "rpm_firmware.bin";
-		break;
-	case Multiface:
-		if (hdsp->firmware_rev == 0xa)
+		अवरोध;
+	हाल Multअगरace:
+		अगर (hdsp->firmware_rev == 0xa)
 			fwfile = "multiface_firmware.bin";
-		else
+		अन्यथा
 			fwfile = "multiface_firmware_rev11.bin";
-		break;
-	case Digiface:
-		if (hdsp->firmware_rev == 0xa)
+		अवरोध;
+	हाल Digअगरace:
+		अगर (hdsp->firmware_rev == 0xa)
 			fwfile = "digiface_firmware.bin";
-		else
+		अन्यथा
 			fwfile = "digiface_firmware_rev11.bin";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(hdsp->card->dev,
 			"invalid io_type %d\n", hdsp->io_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (request_firmware(&fw, fwfile, &hdsp->pci->dev)) {
+	अगर (request_firmware(&fw, fwfile, &hdsp->pci->dev)) अणु
 		dev_err(hdsp->card->dev,
 			"cannot load firmware %s\n", fwfile);
-		return -ENOENT;
-	}
-	if (fw->size < HDSP_FIRMWARE_SIZE) {
+		वापस -ENOENT;
+	पूर्ण
+	अगर (fw->size < HDSP_FIRMWARE_SIZE) अणु
 		dev_err(hdsp->card->dev,
 			"too short firmware size %d (expected %d)\n",
-			   (int)fw->size, HDSP_FIRMWARE_SIZE);
+			   (पूर्णांक)fw->size, HDSP_FIRMWARE_SIZE);
 		release_firmware(fw);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	hdsp->firmware = fw;
 
 	hdsp->state |= HDSP_FirmwareCached;
 
-	if ((err = snd_hdsp_load_firmware_from_cache(hdsp)) < 0)
-		return err;
+	अगर ((err = snd_hdsp_load_firmware_from_cache(hdsp)) < 0)
+		वापस err;
 
-	if (!(hdsp->state & HDSP_InitializationComplete)) {
-		if ((err = snd_hdsp_enable_io(hdsp)) < 0)
-			return err;
+	अगर (!(hdsp->state & HDSP_InitializationComplete)) अणु
+		अगर ((err = snd_hdsp_enable_io(hdsp)) < 0)
+			वापस err;
 
-		if ((err = snd_hdsp_create_hwdep(hdsp->card, hdsp)) < 0) {
+		अगर ((err = snd_hdsp_create_hwdep(hdsp->card, hdsp)) < 0) अणु
 			dev_err(hdsp->card->dev,
 				"error creating hwdep device\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		snd_hdsp_initialize_channels(hdsp);
 		snd_hdsp_initialize_midi_flush(hdsp);
-		if ((err = snd_hdsp_create_alsa_devices(hdsp->card, hdsp)) < 0) {
+		अगर ((err = snd_hdsp_create_alsa_devices(hdsp->card, hdsp)) < 0) अणु
 			dev_err(hdsp->card->dev,
 				"error creating alsa devices\n");
-			return err;
-		}
-	}
-	return 0;
-}
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_create(struct snd_card *card,
-			   struct hdsp *hdsp)
-{
-	struct pci_dev *pci = hdsp->pci;
-	int err;
-	int is_9652 = 0;
-	int is_9632 = 0;
+अटल पूर्णांक snd_hdsp_create(काष्ठा snd_card *card,
+			   काष्ठा hdsp *hdsp)
+अणु
+	काष्ठा pci_dev *pci = hdsp->pci;
+	पूर्णांक err;
+	पूर्णांक is_9652 = 0;
+	पूर्णांक is_9632 = 0;
 
 	hdsp->irq = -1;
 	hdsp->state = 0;
-	hdsp->midi[0].rmidi = NULL;
-	hdsp->midi[1].rmidi = NULL;
-	hdsp->midi[0].input = NULL;
-	hdsp->midi[1].input = NULL;
-	hdsp->midi[0].output = NULL;
-	hdsp->midi[1].output = NULL;
+	hdsp->midi[0].rmidi = शून्य;
+	hdsp->midi[1].rmidi = शून्य;
+	hdsp->midi[0].input = शून्य;
+	hdsp->midi[1].input = शून्य;
+	hdsp->midi[0].output = शून्य;
+	hdsp->midi[1].output = शून्य;
 	hdsp->midi[0].pending = 0;
 	hdsp->midi[1].pending = 0;
 	spin_lock_init(&hdsp->midi[0].lock);
 	spin_lock_init(&hdsp->midi[1].lock);
-	hdsp->iobase = NULL;
-	hdsp->control_register = 0;
-	hdsp->control2_register = 0;
+	hdsp->iobase = शून्य;
+	hdsp->control_रेजिस्टर = 0;
+	hdsp->control2_रेजिस्टर = 0;
 	hdsp->io_type = Undefined;
 	hdsp->max_channels = 26;
 
@@ -5252,53 +5253,53 @@ static int snd_hdsp_create(struct snd_card *card,
 
 	INIT_WORK(&hdsp->midi_work, hdsp_midi_work);
 
-	pci_read_config_word(hdsp->pci, PCI_CLASS_REVISION, &hdsp->firmware_rev);
+	pci_पढ़ो_config_word(hdsp->pci, PCI_CLASS_REVISION, &hdsp->firmware_rev);
 	hdsp->firmware_rev &= 0xff;
 
 	/* From Martin Bjoernsen :
-	    "It is important that the card's latency timer register in
+	    "It is important that the card's latency समयr रेजिस्टर in
 	    the PCI configuration space is set to a value much larger
 	    than 0 by the computer's BIOS or the driver.
-	    The windows driver always sets this 8 bit register [...]
-	    to its maximum 255 to avoid problems with some computers."
+	    The winकरोws driver always sets this 8 bit रेजिस्टर [...]
+	    to its maximum 255 to aव्योम problems with some computers."
 	*/
-	pci_write_config_byte(hdsp->pci, PCI_LATENCY_TIMER, 0xFF);
+	pci_ग_लिखो_config_byte(hdsp->pci, PCI_LATENCY_TIMER, 0xFF);
 
-	strcpy(card->driver, "H-DSP");
-	strcpy(card->mixername, "Xilinx FPGA");
+	म_नकल(card->driver, "H-DSP");
+	म_नकल(card->mixername, "Xilinx FPGA");
 
-	if (hdsp->firmware_rev < 0xa)
-		return -ENODEV;
-	else if (hdsp->firmware_rev < 0x64)
+	अगर (hdsp->firmware_rev < 0xa)
+		वापस -ENODEV;
+	अन्यथा अगर (hdsp->firmware_rev < 0x64)
 		hdsp->card_name = "RME Hammerfall DSP";
-	else if (hdsp->firmware_rev < 0x96) {
+	अन्यथा अगर (hdsp->firmware_rev < 0x96) अणु
 		hdsp->card_name = "RME HDSP 9652";
 		is_9652 = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		hdsp->card_name = "RME HDSP 9632";
 		hdsp->max_channels = 16;
 		is_9632 = 1;
-	}
+	पूर्ण
 
-	if ((err = pci_enable_device(pci)) < 0)
-		return err;
+	अगर ((err = pci_enable_device(pci)) < 0)
+		वापस err;
 
 	pci_set_master(hdsp->pci);
 
-	if ((err = pci_request_regions(pci, "hdsp")) < 0)
-		return err;
+	अगर ((err = pci_request_regions(pci, "hdsp")) < 0)
+		वापस err;
 	hdsp->port = pci_resource_start(pci, 0);
-	if ((hdsp->iobase = ioremap(hdsp->port, HDSP_IO_EXTENT)) == NULL) {
+	अगर ((hdsp->iobase = ioremap(hdsp->port, HDSP_IO_EXTENT)) == शून्य) अणु
 		dev_err(hdsp->card->dev, "unable to remap region 0x%lx-0x%lx\n",
 			hdsp->port, hdsp->port + HDSP_IO_EXTENT - 1);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (request_irq(pci->irq, snd_hdsp_interrupt, IRQF_SHARED,
-			KBUILD_MODNAME, hdsp)) {
+	अगर (request_irq(pci->irq, snd_hdsp_पूर्णांकerrupt, IRQF_SHARED,
+			KBUILD_MODNAME, hdsp)) अणु
 		dev_err(hdsp->card->dev, "unable to use IRQ %d\n", pci->irq);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	hdsp->irq = pci->irq;
 	card->sync_irq = hdsp->irq;
@@ -5306,155 +5307,155 @@ static int snd_hdsp_create(struct snd_card *card,
 	hdsp->use_midi_work = 1;
 	hdsp->dds_value = 0;
 
-	if ((err = snd_hdsp_initialize_memory(hdsp)) < 0)
-		return err;
+	अगर ((err = snd_hdsp_initialize_memory(hdsp)) < 0)
+		वापस err;
 
-	if (!is_9652 && !is_9632) {
-		/* we wait a maximum of 10 seconds to let freshly
-		 * inserted cardbus cards do their hardware init */
-		err = hdsp_wait_for_iobox(hdsp, 1000, 10);
+	अगर (!is_9652 && !is_9632) अणु
+		/* we रुको a maximum of 10 seconds to let freshly
+		 * inserted cardbus cards करो their hardware init */
+		err = hdsp_रुको_क्रम_iobox(hdsp, 1000, 10);
 
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
-		if ((hdsp_read (hdsp, HDSP_statusRegister) & HDSP_DllError) != 0) {
-			if ((err = hdsp_request_fw_loader(hdsp)) < 0)
-				/* we don't fail as this can happen
-				   if userspace is not ready for
+		अगर ((hdsp_पढ़ो (hdsp, HDSP_statusRegister) & HDSP_DllError) != 0) अणु
+			अगर ((err = hdsp_request_fw_loader(hdsp)) < 0)
+				/* we करोn't fail as this can happen
+				   अगर userspace is not पढ़ोy क्रम
 				   firmware upload
 				*/
 				dev_err(hdsp->card->dev,
 					"couldn't get firmware from userspace. try using hdsploader\n");
-			else
-				/* init is complete, we return */
-				return 0;
+			अन्यथा
+				/* init is complete, we वापस */
+				वापस 0;
 			/* we defer initialization */
 			dev_info(hdsp->card->dev,
 				 "card initialization pending : waiting for firmware\n");
-			if ((err = snd_hdsp_create_hwdep(card, hdsp)) < 0)
-				return err;
-			return 0;
-		} else {
+			अगर ((err = snd_hdsp_create_hwdep(card, hdsp)) < 0)
+				वापस err;
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			dev_info(hdsp->card->dev,
 				 "Firmware already present, initializing card.\n");
-			if (hdsp_read(hdsp, HDSP_status2Register) & HDSP_version2)
+			अगर (hdsp_पढ़ो(hdsp, HDSP_status2Register) & HDSP_version2)
 				hdsp->io_type = RPM;
-			else if (hdsp_read(hdsp, HDSP_status2Register) & HDSP_version1)
-				hdsp->io_type = Multiface;
-			else
-				hdsp->io_type = Digiface;
-		}
-	}
+			अन्यथा अगर (hdsp_पढ़ो(hdsp, HDSP_status2Register) & HDSP_version1)
+				hdsp->io_type = Multअगरace;
+			अन्यथा
+				hdsp->io_type = Digअगरace;
+		पूर्ण
+	पूर्ण
 
-	if ((err = snd_hdsp_enable_io(hdsp)) != 0)
-		return err;
+	अगर ((err = snd_hdsp_enable_io(hdsp)) != 0)
+		वापस err;
 
-	if (is_9652)
+	अगर (is_9652)
 	        hdsp->io_type = H9652;
 
-	if (is_9632)
+	अगर (is_9632)
 		hdsp->io_type = H9632;
 
-	if ((err = snd_hdsp_create_hwdep(card, hdsp)) < 0)
-		return err;
+	अगर ((err = snd_hdsp_create_hwdep(card, hdsp)) < 0)
+		वापस err;
 
 	snd_hdsp_initialize_channels(hdsp);
 	snd_hdsp_initialize_midi_flush(hdsp);
 
 	hdsp->state |= HDSP_FirmwareLoaded;
 
-	if ((err = snd_hdsp_create_alsa_devices(card, hdsp)) < 0)
-		return err;
+	अगर ((err = snd_hdsp_create_alsa_devices(card, hdsp)) < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hdsp_free(struct hdsp *hdsp)
-{
-	if (hdsp->port) {
-		/* stop the audio, and cancel all interrupts */
+अटल पूर्णांक snd_hdsp_मुक्त(काष्ठा hdsp *hdsp)
+अणु
+	अगर (hdsp->port) अणु
+		/* stop the audio, and cancel all पूर्णांकerrupts */
 		cancel_work_sync(&hdsp->midi_work);
-		hdsp->control_register &= ~(HDSP_Start|HDSP_AudioInterruptEnable|HDSP_Midi0InterruptEnable|HDSP_Midi1InterruptEnable);
-		hdsp_write (hdsp, HDSP_controlRegister, hdsp->control_register);
-	}
+		hdsp->control_रेजिस्टर &= ~(HDSP_Start|HDSP_AudioInterruptEnable|HDSP_Midi0InterruptEnable|HDSP_Midi1InterruptEnable);
+		hdsp_ग_लिखो (hdsp, HDSP_controlRegister, hdsp->control_रेजिस्टर);
+	पूर्ण
 
-	if (hdsp->irq >= 0)
-		free_irq(hdsp->irq, (void *)hdsp);
+	अगर (hdsp->irq >= 0)
+		मुक्त_irq(hdsp->irq, (व्योम *)hdsp);
 
-	snd_hdsp_free_buffers(hdsp);
+	snd_hdsp_मुक्त_buffers(hdsp);
 
 	release_firmware(hdsp->firmware);
-	vfree(hdsp->fw_uploaded);
+	vमुक्त(hdsp->fw_uploaded);
 	iounmap(hdsp->iobase);
 
-	if (hdsp->port)
+	अगर (hdsp->port)
 		pci_release_regions(hdsp->pci);
 
-	if (pci_is_enabled(hdsp->pci))
+	अगर (pci_is_enabled(hdsp->pci))
 		pci_disable_device(hdsp->pci);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_hdsp_card_free(struct snd_card *card)
-{
-	struct hdsp *hdsp = card->private_data;
+अटल व्योम snd_hdsp_card_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा hdsp *hdsp = card->निजी_data;
 
-	if (hdsp)
-		snd_hdsp_free(hdsp);
-}
+	अगर (hdsp)
+		snd_hdsp_मुक्त(hdsp);
+पूर्ण
 
-static int snd_hdsp_probe(struct pci_dev *pci,
-			  const struct pci_device_id *pci_id)
-{
-	static int dev;
-	struct hdsp *hdsp;
-	struct snd_card *card;
-	int err;
+अटल पूर्णांक snd_hdsp_probe(काष्ठा pci_dev *pci,
+			  स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	अटल पूर्णांक dev;
+	काष्ठा hdsp *hdsp;
+	काष्ठा snd_card *card;
+	पूर्णांक err;
 
-	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
-	if (!enable[dev]) {
+	अगर (dev >= SNDRV_CARDS)
+		वापस -ENODEV;
+	अगर (!enable[dev]) अणु
 		dev++;
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
-			   sizeof(struct hdsp), &card);
-	if (err < 0)
-		return err;
+			   माप(काष्ठा hdsp), &card);
+	अगर (err < 0)
+		वापस err;
 
-	hdsp = card->private_data;
-	card->private_free = snd_hdsp_card_free;
+	hdsp = card->निजी_data;
+	card->निजी_मुक्त = snd_hdsp_card_मुक्त;
 	hdsp->dev = dev;
 	hdsp->pci = pci;
 	err = snd_hdsp_create(card, hdsp);
-	if (err)
-		goto free_card;
+	अगर (err)
+		जाओ मुक्त_card;
 
-	strcpy(card->shortname, "Hammerfall DSP");
-	sprintf(card->longname, "%s at 0x%lx, irq %d", hdsp->card_name,
+	म_नकल(card->लघुname, "Hammerfall DSP");
+	प्र_लिखो(card->दीर्घname, "%s at 0x%lx, irq %d", hdsp->card_name,
 		hdsp->port, hdsp->irq);
-	err = snd_card_register(card);
-	if (err) {
-free_card:
-		snd_card_free(card);
-		return err;
-	}
+	err = snd_card_रेजिस्टर(card);
+	अगर (err) अणु
+मुक्त_card:
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 	pci_set_drvdata(pci, card);
 	dev++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_hdsp_remove(struct pci_dev *pci)
-{
-	snd_card_free(pci_get_drvdata(pci));
-}
+अटल व्योम snd_hdsp_हटाओ(काष्ठा pci_dev *pci)
+अणु
+	snd_card_मुक्त(pci_get_drvdata(pci));
+पूर्ण
 
-static struct pci_driver hdsp_driver = {
+अटल काष्ठा pci_driver hdsp_driver = अणु
 	.name =     KBUILD_MODNAME,
 	.id_table = snd_hdsp_ids,
 	.probe =    snd_hdsp_probe,
-	.remove = snd_hdsp_remove,
-};
+	.हटाओ = snd_hdsp_हटाओ,
+पूर्ण;
 
 module_pci_driver(hdsp_driver);

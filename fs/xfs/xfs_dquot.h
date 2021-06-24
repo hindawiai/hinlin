@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __XFS_DQUOT_H__
-#define __XFS_DQUOT_H__
+#अगर_अघोषित __XFS_DQUOT_H__
+#घोषणा __XFS_DQUOT_H__
 
 /*
- * Dquots are structures that hold quota information about a user or a group,
- * much like inodes are for files. In fact, dquots share many characteristics
+ * Dquots are काष्ठाures that hold quota inक्रमmation about a user or a group,
+ * much like inodes are क्रम files. In fact, dquots share many अक्षरacteristics
  * with inodes. However, dquots can also be a centralized resource, relative
- * to a collection of inodes. In this respect, dquots share some characteristics
+ * to a collection of inodes. In this respect, dquots share some अक्षरacteristics
  * of the superblock.
  * XFS dquots exploit both those in its algorithms. They make every attempt
- * to not be a bottleneck when quotas are on and have minimal impact, if any,
+ * to not be a bottleneck when quotas are on and have minimal impact, अगर any,
  * when quotas are off.
  */
 
-struct xfs_mount;
-struct xfs_trans;
+काष्ठा xfs_mount;
+काष्ठा xfs_trans;
 
-enum {
+क्रमागत अणु
 	XFS_QLOWSP_1_PCNT = 0,
 	XFS_QLOWSP_3_PCNT,
 	XFS_QLOWSP_5_PCNT,
 	XFS_QLOWSP_MAX
-};
+पूर्ण;
 
-struct xfs_dquot_res {
+काष्ठा xfs_dquot_res अणु
 	/* Total resources allocated and reserved. */
 	xfs_qcnt_t		reserved;
 
@@ -39,205 +40,205 @@ struct xfs_dquot_res {
 	xfs_qcnt_t		softlimit;
 
 	/*
-	 * For root dquots, this is the default grace period, in seconds.
+	 * For root dquots, this is the शेष grace period, in seconds.
 	 * Otherwise, this is when the quota grace period expires,
 	 * in seconds since the Unix epoch.
 	 */
-	time64_t		timer;
+	समय64_t		समयr;
 
 	/*
 	 * For root dquots, this is the maximum number of warnings that will
-	 * be issued for this quota type.  Otherwise, this is the number of
+	 * be issued क्रम this quota type.  Otherwise, this is the number of
 	 * warnings issued against this quota.  Note that none of this is
 	 * implemented.
 	 */
 	xfs_qwarncnt_t		warnings;
-};
+पूर्ण;
 
 /*
- * The incore dquot structure
+ * The incore dquot काष्ठाure
  */
-struct xfs_dquot {
-	struct list_head	q_lru;
-	struct xfs_mount	*q_mount;
+काष्ठा xfs_dquot अणु
+	काष्ठा list_head	q_lru;
+	काष्ठा xfs_mount	*q_mount;
 	xfs_dqtype_t		q_type;
-	uint16_t		q_flags;
+	uपूर्णांक16_t		q_flags;
 	xfs_dqid_t		q_id;
-	uint			q_nrefs;
-	int			q_bufoffset;
+	uपूर्णांक			q_nrefs;
+	पूर्णांक			q_bufoffset;
 	xfs_daddr_t		q_blkno;
 	xfs_fileoff_t		q_fileoffset;
 
-	struct xfs_dquot_res	q_blk;	/* regular blocks */
-	struct xfs_dquot_res	q_ino;	/* inodes */
-	struct xfs_dquot_res	q_rtb;	/* realtime blocks */
+	काष्ठा xfs_dquot_res	q_blk;	/* regular blocks */
+	काष्ठा xfs_dquot_res	q_ino;	/* inodes */
+	काष्ठा xfs_dquot_res	q_rtb;	/* realसमय blocks */
 
-	struct xfs_dq_logitem	q_logitem;
+	काष्ठा xfs_dq_logitem	q_logitem;
 
-	xfs_qcnt_t		q_prealloc_lo_wmark;
-	xfs_qcnt_t		q_prealloc_hi_wmark;
-	int64_t			q_low_space[XFS_QLOWSP_MAX];
-	struct mutex		q_qlock;
-	struct completion	q_flush;
+	xfs_qcnt_t		q_pपुनः_स्मृति_lo_wmark;
+	xfs_qcnt_t		q_pपुनः_स्मृति_hi_wmark;
+	पूर्णांक64_t			q_low_space[XFS_QLOWSP_MAX];
+	काष्ठा mutex		q_qlock;
+	काष्ठा completion	q_flush;
 	atomic_t		q_pincount;
-	struct wait_queue_head	q_pinwait;
-};
+	काष्ठा रुको_queue_head	q_pinरुको;
+पूर्ण;
 
 /*
- * Lock hierarchy for q_qlock:
- *	XFS_QLOCK_NORMAL is the implicit default,
+ * Lock hierarchy क्रम q_qlock:
+ *	XFS_QLOCK_NORMAL is the implicit शेष,
  *	XFS_QLOCK_NESTED is the dquot with the higher id in xfs_dqlock2
  */
-enum {
+क्रमागत अणु
 	XFS_QLOCK_NORMAL = 0,
 	XFS_QLOCK_NESTED,
-};
+पूर्ण;
 
 /*
  * Manage the q_flush completion queue embedded in the dquot. This completion
  * queue synchronizes processes attempting to flush the in-core dquot back to
  * disk.
  */
-static inline void xfs_dqflock(struct xfs_dquot *dqp)
-{
-	wait_for_completion(&dqp->q_flush);
-}
+अटल अंतरभूत व्योम xfs_dqflock(काष्ठा xfs_dquot *dqp)
+अणु
+	रुको_क्रम_completion(&dqp->q_flush);
+पूर्ण
 
-static inline bool xfs_dqflock_nowait(struct xfs_dquot *dqp)
-{
-	return try_wait_for_completion(&dqp->q_flush);
-}
+अटल अंतरभूत bool xfs_dqflock_noरुको(काष्ठा xfs_dquot *dqp)
+अणु
+	वापस try_रुको_क्रम_completion(&dqp->q_flush);
+पूर्ण
 
-static inline void xfs_dqfunlock(struct xfs_dquot *dqp)
-{
+अटल अंतरभूत व्योम xfs_dqfunlock(काष्ठा xfs_dquot *dqp)
+अणु
 	complete(&dqp->q_flush);
-}
+पूर्ण
 
-static inline int xfs_dqlock_nowait(struct xfs_dquot *dqp)
-{
-	return mutex_trylock(&dqp->q_qlock);
-}
+अटल अंतरभूत पूर्णांक xfs_dqlock_noरुको(काष्ठा xfs_dquot *dqp)
+अणु
+	वापस mutex_trylock(&dqp->q_qlock);
+पूर्ण
 
-static inline void xfs_dqlock(struct xfs_dquot *dqp)
-{
+अटल अंतरभूत व्योम xfs_dqlock(काष्ठा xfs_dquot *dqp)
+अणु
 	mutex_lock(&dqp->q_qlock);
-}
+पूर्ण
 
-static inline void xfs_dqunlock(struct xfs_dquot *dqp)
-{
+अटल अंतरभूत व्योम xfs_dqunlock(काष्ठा xfs_dquot *dqp)
+अणु
 	mutex_unlock(&dqp->q_qlock);
-}
+पूर्ण
 
-static inline int
-xfs_dquot_type(const struct xfs_dquot *dqp)
-{
-	return dqp->q_type & XFS_DQTYPE_REC_MASK;
-}
+अटल अंतरभूत पूर्णांक
+xfs_dquot_type(स्थिर काष्ठा xfs_dquot *dqp)
+अणु
+	वापस dqp->q_type & XFS_DQTYPE_REC_MASK;
+पूर्ण
 
-static inline int xfs_this_quota_on(struct xfs_mount *mp, xfs_dqtype_t type)
-{
-	switch (type) {
-	case XFS_DQTYPE_USER:
-		return XFS_IS_UQUOTA_ON(mp);
-	case XFS_DQTYPE_GROUP:
-		return XFS_IS_GQUOTA_ON(mp);
-	case XFS_DQTYPE_PROJ:
-		return XFS_IS_PQUOTA_ON(mp);
-	default:
-		return 0;
-	}
-}
+अटल अंतरभूत पूर्णांक xfs_this_quota_on(काष्ठा xfs_mount *mp, xfs_dqtype_t type)
+अणु
+	चयन (type) अणु
+	हाल XFS_DQTYPE_USER:
+		वापस XFS_IS_UQUOTA_ON(mp);
+	हाल XFS_DQTYPE_GROUP:
+		वापस XFS_IS_GQUOTA_ON(mp);
+	हाल XFS_DQTYPE_PROJ:
+		वापस XFS_IS_PQUOTA_ON(mp);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline struct xfs_dquot *xfs_inode_dquot(
-	struct xfs_inode	*ip,
+अटल अंतरभूत काष्ठा xfs_dquot *xfs_inode_dquot(
+	काष्ठा xfs_inode	*ip,
 	xfs_dqtype_t		type)
-{
-	switch (type) {
-	case XFS_DQTYPE_USER:
-		return ip->i_udquot;
-	case XFS_DQTYPE_GROUP:
-		return ip->i_gdquot;
-	case XFS_DQTYPE_PROJ:
-		return ip->i_pdquot;
-	default:
-		return NULL;
-	}
-}
+अणु
+	चयन (type) अणु
+	हाल XFS_DQTYPE_USER:
+		वापस ip->i_udquot;
+	हाल XFS_DQTYPE_GROUP:
+		वापस ip->i_gdquot;
+	हाल XFS_DQTYPE_PROJ:
+		वापस ip->i_pdquot;
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-/* Decide if the dquot's limits are actually being enforced. */
-static inline bool
-xfs_dquot_is_enforced(
-	const struct xfs_dquot	*dqp)
-{
-	switch (xfs_dquot_type(dqp)) {
-	case XFS_DQTYPE_USER:
-		return XFS_IS_UQUOTA_ENFORCED(dqp->q_mount);
-	case XFS_DQTYPE_GROUP:
-		return XFS_IS_GQUOTA_ENFORCED(dqp->q_mount);
-	case XFS_DQTYPE_PROJ:
-		return XFS_IS_PQUOTA_ENFORCED(dqp->q_mount);
-	}
+/* Decide अगर the dquot's limits are actually being enक्रमced. */
+अटल अंतरभूत bool
+xfs_dquot_is_enक्रमced(
+	स्थिर काष्ठा xfs_dquot	*dqp)
+अणु
+	चयन (xfs_dquot_type(dqp)) अणु
+	हाल XFS_DQTYPE_USER:
+		वापस XFS_IS_UQUOTA_ENFORCED(dqp->q_mount);
+	हाल XFS_DQTYPE_GROUP:
+		वापस XFS_IS_GQUOTA_ENFORCED(dqp->q_mount);
+	हाल XFS_DQTYPE_PROJ:
+		वापस XFS_IS_PQUOTA_ENFORCED(dqp->q_mount);
+	पूर्ण
 	ASSERT(0);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Check whether a dquot is under low free space conditions. We assume the quota
- * is enabled and enforced.
+ * Check whether a dquot is under low मुक्त space conditions. We assume the quota
+ * is enabled and enक्रमced.
  */
-static inline bool xfs_dquot_lowsp(struct xfs_dquot *dqp)
-{
-	int64_t freesp;
+अटल अंतरभूत bool xfs_dquot_lowsp(काष्ठा xfs_dquot *dqp)
+अणु
+	पूर्णांक64_t मुक्तsp;
 
-	freesp = dqp->q_blk.hardlimit - dqp->q_blk.reserved;
-	if (freesp < dqp->q_low_space[XFS_QLOWSP_1_PCNT])
-		return true;
+	मुक्तsp = dqp->q_blk.hardlimit - dqp->q_blk.reserved;
+	अगर (मुक्तsp < dqp->q_low_space[XFS_QLOWSP_1_PCNT])
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void xfs_dquot_to_disk(struct xfs_disk_dquot *ddqp, struct xfs_dquot *dqp);
+व्योम xfs_dquot_to_disk(काष्ठा xfs_disk_dquot *ddqp, काष्ठा xfs_dquot *dqp);
 
-#define XFS_DQ_IS_LOCKED(dqp)	(mutex_is_locked(&((dqp)->q_qlock)))
-#define XFS_DQ_IS_DIRTY(dqp)	((dqp)->q_flags & XFS_DQFLAG_DIRTY)
+#घोषणा XFS_DQ_IS_LOCKED(dqp)	(mutex_is_locked(&((dqp)->q_qlock)))
+#घोषणा XFS_DQ_IS_सूचीTY(dqp)	((dqp)->q_flags & XFS_DQFLAG_सूचीTY)
 
-void		xfs_qm_dqdestroy(struct xfs_dquot *dqp);
-int		xfs_qm_dqflush(struct xfs_dquot *dqp, struct xfs_buf **bpp);
-void		xfs_qm_dqunpin_wait(struct xfs_dquot *dqp);
-void		xfs_qm_adjust_dqtimers(struct xfs_dquot *d);
-void		xfs_qm_adjust_dqlimits(struct xfs_dquot *d);
-xfs_dqid_t	xfs_qm_id_for_quotatype(struct xfs_inode *ip,
+व्योम		xfs_qm_dqdestroy(काष्ठा xfs_dquot *dqp);
+पूर्णांक		xfs_qm_dqflush(काष्ठा xfs_dquot *dqp, काष्ठा xfs_buf **bpp);
+व्योम		xfs_qm_dqunpin_रुको(काष्ठा xfs_dquot *dqp);
+व्योम		xfs_qm_adjust_dqसमयrs(काष्ठा xfs_dquot *d);
+व्योम		xfs_qm_adjust_dqlimits(काष्ठा xfs_dquot *d);
+xfs_dqid_t	xfs_qm_id_क्रम_quotatype(काष्ठा xfs_inode *ip,
 				xfs_dqtype_t type);
-int		xfs_qm_dqget(struct xfs_mount *mp, xfs_dqid_t id,
+पूर्णांक		xfs_qm_dqget(काष्ठा xfs_mount *mp, xfs_dqid_t id,
 				xfs_dqtype_t type, bool can_alloc,
-				struct xfs_dquot **dqpp);
-int		xfs_qm_dqget_inode(struct xfs_inode *ip, xfs_dqtype_t type,
-				bool can_alloc, struct xfs_dquot **dqpp);
-int		xfs_qm_dqget_next(struct xfs_mount *mp, xfs_dqid_t id,
-				xfs_dqtype_t type, struct xfs_dquot **dqpp);
-int		xfs_qm_dqget_uncached(struct xfs_mount *mp,
+				काष्ठा xfs_dquot **dqpp);
+पूर्णांक		xfs_qm_dqget_inode(काष्ठा xfs_inode *ip, xfs_dqtype_t type,
+				bool can_alloc, काष्ठा xfs_dquot **dqpp);
+पूर्णांक		xfs_qm_dqget_next(काष्ठा xfs_mount *mp, xfs_dqid_t id,
+				xfs_dqtype_t type, काष्ठा xfs_dquot **dqpp);
+पूर्णांक		xfs_qm_dqget_uncached(काष्ठा xfs_mount *mp,
 				xfs_dqid_t id, xfs_dqtype_t type,
-				struct xfs_dquot **dqpp);
-void		xfs_qm_dqput(struct xfs_dquot *dqp);
+				काष्ठा xfs_dquot **dqpp);
+व्योम		xfs_qm_dqput(काष्ठा xfs_dquot *dqp);
 
-void		xfs_dqlock2(struct xfs_dquot *, struct xfs_dquot *);
+व्योम		xfs_dqlock2(काष्ठा xfs_dquot *, काष्ठा xfs_dquot *);
 
-void		xfs_dquot_set_prealloc_limits(struct xfs_dquot *);
+व्योम		xfs_dquot_set_pपुनः_स्मृति_limits(काष्ठा xfs_dquot *);
 
-static inline struct xfs_dquot *xfs_qm_dqhold(struct xfs_dquot *dqp)
-{
+अटल अंतरभूत काष्ठा xfs_dquot *xfs_qm_dqhold(काष्ठा xfs_dquot *dqp)
+अणु
 	xfs_dqlock(dqp);
 	dqp->q_nrefs++;
 	xfs_dqunlock(dqp);
-	return dqp;
-}
+	वापस dqp;
+पूर्ण
 
-typedef int (*xfs_qm_dqiterate_fn)(struct xfs_dquot *dq,
-		xfs_dqtype_t type, void *priv);
-int xfs_qm_dqiterate(struct xfs_mount *mp, xfs_dqtype_t type,
-		xfs_qm_dqiterate_fn iter_fn, void *priv);
+प्रकार पूर्णांक (*xfs_qm_dqiterate_fn)(काष्ठा xfs_dquot *dq,
+		xfs_dqtype_t type, व्योम *priv);
+पूर्णांक xfs_qm_dqiterate(काष्ठा xfs_mount *mp, xfs_dqtype_t type,
+		xfs_qm_dqiterate_fn iter_fn, व्योम *priv);
 
-time64_t xfs_dquot_set_timeout(struct xfs_mount *mp, time64_t timeout);
-time64_t xfs_dquot_set_grace_period(time64_t grace);
+समय64_t xfs_dquot_set_समयout(काष्ठा xfs_mount *mp, समय64_t समयout);
+समय64_t xfs_dquot_set_grace_period(समय64_t grace);
 
-#endif /* __XFS_DQUOT_H__ */
+#पूर्ण_अगर /* __XFS_DQUOT_H__ */

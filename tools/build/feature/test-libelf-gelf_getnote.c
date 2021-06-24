@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdlib.h>
-#include <gelf.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानककोष.स>
+#समावेश <gelf.h>
 
-int main(void)
-{
-	return gelf_getnote(NULL, 0, NULL, NULL, NULL);
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस gelf_getnote(शून्य, 0, शून्य, शून्य, शून्य);
+पूर्ण

@@ -1,314 +1,315 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Zynq UltraScale+ MPSoC PLL driver
  *
  *  Copyright (C) 2016-2018 Xilinx
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/slab.h>
-#include "clk-zynqmp.h"
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/slab.h>
+#समावेश "clk-zynqmp.h"
 
 /**
- * struct zynqmp_pll - PLL clock
- * @hw:		Handle between common and hardware-specific interfaces
- * @clk_id:	PLL clock ID
+ * काष्ठा zynqmp_pll - PLL घड़ी
+ * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @clk_id:	PLL घड़ी ID
  * @set_pll_mode:	Whether an IOCTL_SET_PLL_FRAC_MODE request be sent to ATF
  */
-struct zynqmp_pll {
-	struct clk_hw hw;
+काष्ठा zynqmp_pll अणु
+	काष्ठा clk_hw hw;
 	u32 clk_id;
 	bool set_pll_mode;
-};
+पूर्ण;
 
-#define to_zynqmp_pll(_hw)	container_of(_hw, struct zynqmp_pll, hw)
+#घोषणा to_zynqmp_pll(_hw)	container_of(_hw, काष्ठा zynqmp_pll, hw)
 
-#define PLL_FBDIV_MIN	25
-#define PLL_FBDIV_MAX	125
+#घोषणा PLL_FBDIV_MIN	25
+#घोषणा PLL_FBDIV_MAX	125
 
-#define PS_PLL_VCO_MIN 1500000000
-#define PS_PLL_VCO_MAX 3000000000UL
+#घोषणा PS_PLL_VCO_MIN 1500000000
+#घोषणा PS_PLL_VCO_MAX 3000000000UL
 
-enum pll_mode {
+क्रमागत pll_mode अणु
 	PLL_MODE_INT,
 	PLL_MODE_FRAC,
-};
+पूर्ण;
 
-#define FRAC_OFFSET 0x8
-#define PLLFCFG_FRAC_EN	BIT(31)
-#define FRAC_DIV  BIT(16)  /* 2^16 */
+#घोषणा FRAC_OFFSET 0x8
+#घोषणा PLLFCFG_FRAC_EN	BIT(31)
+#घोषणा FRAC_DIV  BIT(16)  /* 2^16 */
 
 /**
  * zynqmp_pll_get_mode() - Get mode of PLL
- * @hw:		Handle between common and hardware-specific interfaces
+ * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
  *
  * Return: Mode of PLL
  */
-static inline enum pll_mode zynqmp_pll_get_mode(struct clk_hw *hw)
-{
-	struct zynqmp_pll *clk = to_zynqmp_pll(hw);
+अटल अंतरभूत क्रमागत pll_mode zynqmp_pll_get_mode(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा zynqmp_pll *clk = to_zynqmp_pll(hw);
 	u32 clk_id = clk->clk_id;
-	const char *clk_name = clk_hw_get_name(hw);
+	स्थिर अक्षर *clk_name = clk_hw_get_name(hw);
 	u32 ret_payload[PAYLOAD_ARG_CNT];
-	int ret;
+	पूर्णांक ret;
 
 	ret = zynqmp_pm_get_pll_frac_mode(clk_id, ret_payload);
-	if (ret)
+	अगर (ret)
 		pr_warn_once("%s() PLL get frac mode failed for %s, ret = %d\n",
 			     __func__, clk_name, ret);
 
-	return ret_payload[1];
-}
+	वापस ret_payload[1];
+पूर्ण
 
 /**
  * zynqmp_pll_set_mode() - Set the PLL mode
- * @hw:		Handle between common and hardware-specific interfaces
+ * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
  * @on:		Flag to determine the mode
  */
-static inline void zynqmp_pll_set_mode(struct clk_hw *hw, bool on)
-{
-	struct zynqmp_pll *clk = to_zynqmp_pll(hw);
+अटल अंतरभूत व्योम zynqmp_pll_set_mode(काष्ठा clk_hw *hw, bool on)
+अणु
+	काष्ठा zynqmp_pll *clk = to_zynqmp_pll(hw);
 	u32 clk_id = clk->clk_id;
-	const char *clk_name = clk_hw_get_name(hw);
-	int ret;
+	स्थिर अक्षर *clk_name = clk_hw_get_name(hw);
+	पूर्णांक ret;
 	u32 mode;
 
-	if (on)
+	अगर (on)
 		mode = PLL_MODE_FRAC;
-	else
+	अन्यथा
 		mode = PLL_MODE_INT;
 
 	ret = zynqmp_pm_set_pll_frac_mode(clk_id, mode);
-	if (ret)
+	अगर (ret)
 		pr_warn_once("%s() PLL set frac mode failed for %s, ret = %d\n",
 			     __func__, clk_name, ret);
-	else
+	अन्यथा
 		clk->set_pll_mode = true;
-}
+पूर्ण
 
 /**
- * zynqmp_pll_round_rate() - Round a clock frequency
- * @hw:		Handle between common and hardware-specific interfaces
- * @rate:	Desired clock frequency
- * @prate:	Clock frequency of parent clock
+ * zynqmp_pll_round_rate() - Round a घड़ी frequency
+ * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @rate:	Desired घड़ी frequency
+ * @prate:	Clock frequency of parent घड़ी
  *
- * Return: Frequency closest to @rate the hardware can generate
+ * Return: Frequency बंदst to @rate the hardware can generate
  */
-static long zynqmp_pll_round_rate(struct clk_hw *hw, unsigned long rate,
-				  unsigned long *prate)
-{
-	u32 fbdiv;
-	long rate_div, f;
+अटल दीर्घ zynqmp_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				  अचिन्हित दीर्घ *prate)
+अणु
+	u32 fbभाग;
+	दीर्घ rate_भाग, f;
 
-	/* Enable the fractional mode if needed */
-	rate_div = (rate * FRAC_DIV) / *prate;
-	f = rate_div % FRAC_DIV;
-	if (f) {
-		if (rate > PS_PLL_VCO_MAX) {
-			fbdiv = rate / PS_PLL_VCO_MAX;
-			rate = rate / (fbdiv + 1);
-		}
-		if (rate < PS_PLL_VCO_MIN) {
-			fbdiv = DIV_ROUND_UP(PS_PLL_VCO_MIN, rate);
-			rate = rate * fbdiv;
-		}
-		return rate;
-	}
+	/* Enable the fractional mode अगर needed */
+	rate_भाग = (rate * FRAC_DIV) / *prate;
+	f = rate_भाग % FRAC_DIV;
+	अगर (f) अणु
+		अगर (rate > PS_PLL_VCO_MAX) अणु
+			fbभाग = rate / PS_PLL_VCO_MAX;
+			rate = rate / (fbभाग + 1);
+		पूर्ण
+		अगर (rate < PS_PLL_VCO_MIN) अणु
+			fbभाग = DIV_ROUND_UP(PS_PLL_VCO_MIN, rate);
+			rate = rate * fbभाग;
+		पूर्ण
+		वापस rate;
+	पूर्ण
 
-	fbdiv = DIV_ROUND_CLOSEST(rate, *prate);
-	fbdiv = clamp_t(u32, fbdiv, PLL_FBDIV_MIN, PLL_FBDIV_MAX);
-	return *prate * fbdiv;
-}
+	fbभाग = DIV_ROUND_CLOSEST(rate, *prate);
+	fbभाग = clamp_t(u32, fbभाग, PLL_FBDIV_MIN, PLL_FBDIV_MAX);
+	वापस *prate * fbभाग;
+पूर्ण
 
 /**
- * zynqmp_pll_recalc_rate() - Recalculate clock frequency
- * @hw:			Handle between common and hardware-specific interfaces
- * @parent_rate:	Clock frequency of parent clock
+ * zynqmp_pll_recalc_rate() - Recalculate घड़ी frequency
+ * @hw:			Handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @parent_rate:	Clock frequency of parent घड़ी
  *
- * Return: Current clock frequency
+ * Return: Current घड़ी frequency
  */
-static unsigned long zynqmp_pll_recalc_rate(struct clk_hw *hw,
-					    unsigned long parent_rate)
-{
-	struct zynqmp_pll *clk = to_zynqmp_pll(hw);
+अटल अचिन्हित दीर्घ zynqmp_pll_recalc_rate(काष्ठा clk_hw *hw,
+					    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा zynqmp_pll *clk = to_zynqmp_pll(hw);
 	u32 clk_id = clk->clk_id;
-	const char *clk_name = clk_hw_get_name(hw);
-	u32 fbdiv, data;
-	unsigned long rate, frac;
+	स्थिर अक्षर *clk_name = clk_hw_get_name(hw);
+	u32 fbभाग, data;
+	अचिन्हित दीर्घ rate, frac;
 	u32 ret_payload[PAYLOAD_ARG_CNT];
-	int ret;
+	पूर्णांक ret;
 
-	ret = zynqmp_pm_clock_getdivider(clk_id, &fbdiv);
-	if (ret)
+	ret = zynqmp_pm_घड़ी_getभागider(clk_id, &fbभाग);
+	अगर (ret)
 		pr_warn_once("%s() get divider failed for %s, ret = %d\n",
 			     __func__, clk_name, ret);
 
-	rate =  parent_rate * fbdiv;
-	if (zynqmp_pll_get_mode(hw) == PLL_MODE_FRAC) {
+	rate =  parent_rate * fbभाग;
+	अगर (zynqmp_pll_get_mode(hw) == PLL_MODE_FRAC) अणु
 		zynqmp_pm_get_pll_frac_data(clk_id, ret_payload);
 		data = ret_payload[1];
 		frac = (parent_rate * data) / FRAC_DIV;
 		rate = rate + frac;
-	}
+	पूर्ण
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
 /**
  * zynqmp_pll_set_rate() - Set rate of PLL
- * @hw:			Handle between common and hardware-specific interfaces
- * @rate:		Frequency of clock to be set
- * @parent_rate:	Clock frequency of parent clock
+ * @hw:			Handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @rate:		Frequency of घड़ी to be set
+ * @parent_rate:	Clock frequency of parent घड़ी
  *
- * Set PLL divider to set desired rate.
+ * Set PLL भागider to set desired rate.
  *
- * Returns:            rate which is set on success else error code
+ * Returns:            rate which is set on success अन्यथा error code
  */
-static int zynqmp_pll_set_rate(struct clk_hw *hw, unsigned long rate,
-			       unsigned long parent_rate)
-{
-	struct zynqmp_pll *clk = to_zynqmp_pll(hw);
+अटल पूर्णांक zynqmp_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा zynqmp_pll *clk = to_zynqmp_pll(hw);
 	u32 clk_id = clk->clk_id;
-	const char *clk_name = clk_hw_get_name(hw);
-	u32 fbdiv;
-	long rate_div, frac, m, f;
-	int ret;
+	स्थिर अक्षर *clk_name = clk_hw_get_name(hw);
+	u32 fbभाग;
+	दीर्घ rate_भाग, frac, m, f;
+	पूर्णांक ret;
 
-	rate_div = (rate * FRAC_DIV) / parent_rate;
-	f = rate_div % FRAC_DIV;
+	rate_भाग = (rate * FRAC_DIV) / parent_rate;
+	f = rate_भाग % FRAC_DIV;
 	zynqmp_pll_set_mode(hw, !!f);
 
-	if (f) {
-		m = rate_div / FRAC_DIV;
+	अगर (f) अणु
+		m = rate_भाग / FRAC_DIV;
 		m = clamp_t(u32, m, (PLL_FBDIV_MIN), (PLL_FBDIV_MAX));
 		rate = parent_rate * m;
 		frac = (parent_rate * f) / FRAC_DIV;
 
-		ret = zynqmp_pm_clock_setdivider(clk_id, m);
-		if (ret == -EUSERS)
+		ret = zynqmp_pm_घड़ी_setभागider(clk_id, m);
+		अगर (ret == -EUSERS)
 			WARN(1, "More than allowed devices are using the %s, which is forbidden\n",
 			     clk_name);
-		else if (ret)
+		अन्यथा अगर (ret)
 			pr_warn_once("%s() set divider failed for %s, ret = %d\n",
 				     __func__, clk_name, ret);
 		zynqmp_pm_set_pll_frac_data(clk_id, f);
 
-		return rate + frac;
-	}
+		वापस rate + frac;
+	पूर्ण
 
-	fbdiv = DIV_ROUND_CLOSEST(rate, parent_rate);
-	fbdiv = clamp_t(u32, fbdiv, PLL_FBDIV_MIN, PLL_FBDIV_MAX);
-	ret = zynqmp_pm_clock_setdivider(clk_id, fbdiv);
-	if (ret)
+	fbभाग = DIV_ROUND_CLOSEST(rate, parent_rate);
+	fbभाग = clamp_t(u32, fbभाग, PLL_FBDIV_MIN, PLL_FBDIV_MAX);
+	ret = zynqmp_pm_घड़ी_setभागider(clk_id, fbभाग);
+	अगर (ret)
 		pr_warn_once("%s() set divider failed for %s, ret = %d\n",
 			     __func__, clk_name, ret);
 
-	return parent_rate * fbdiv;
-}
+	वापस parent_rate * fbभाग;
+पूर्ण
 
 /**
- * zynqmp_pll_is_enabled() - Check if a clock is enabled
- * @hw:		Handle between common and hardware-specific interfaces
+ * zynqmp_pll_is_enabled() - Check अगर a घड़ी is enabled
+ * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
  *
- * Return: 1 if the clock is enabled, 0 otherwise
+ * Return: 1 अगर the घड़ी is enabled, 0 otherwise
  */
-static int zynqmp_pll_is_enabled(struct clk_hw *hw)
-{
-	struct zynqmp_pll *clk = to_zynqmp_pll(hw);
-	const char *clk_name = clk_hw_get_name(hw);
+अटल पूर्णांक zynqmp_pll_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा zynqmp_pll *clk = to_zynqmp_pll(hw);
+	स्थिर अक्षर *clk_name = clk_hw_get_name(hw);
 	u32 clk_id = clk->clk_id;
-	unsigned int state;
-	int ret;
+	अचिन्हित पूर्णांक state;
+	पूर्णांक ret;
 
-	ret = zynqmp_pm_clock_getstate(clk_id, &state);
-	if (ret) {
+	ret = zynqmp_pm_घड़ी_माला_लोtate(clk_id, &state);
+	अगर (ret) अणु
 		pr_warn_once("%s() clock get state failed for %s, ret = %d\n",
 			     __func__, clk_name, ret);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return state ? 1 : 0;
-}
+	वापस state ? 1 : 0;
+पूर्ण
 
 /**
- * zynqmp_pll_enable() - Enable clock
- * @hw:		Handle between common and hardware-specific interfaces
+ * zynqmp_pll_enable() - Enable घड़ी
+ * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
  *
- * Return: 0 on success else error code
+ * Return: 0 on success अन्यथा error code
  */
-static int zynqmp_pll_enable(struct clk_hw *hw)
-{
-	struct zynqmp_pll *clk = to_zynqmp_pll(hw);
-	const char *clk_name = clk_hw_get_name(hw);
+अटल पूर्णांक zynqmp_pll_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा zynqmp_pll *clk = to_zynqmp_pll(hw);
+	स्थिर अक्षर *clk_name = clk_hw_get_name(hw);
 	u32 clk_id = clk->clk_id;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * Don't skip enabling clock if there is an IOCTL_SET_PLL_FRAC_MODE request
+	 * Don't skip enabling घड़ी अगर there is an IOCTL_SET_PLL_FRAC_MODE request
 	 * that has been sent to ATF.
 	 */
-	if (zynqmp_pll_is_enabled(hw) && (!clk->set_pll_mode))
-		return 0;
+	अगर (zynqmp_pll_is_enabled(hw) && (!clk->set_pll_mode))
+		वापस 0;
 
 	clk->set_pll_mode = false;
 
-	ret = zynqmp_pm_clock_enable(clk_id);
-	if (ret)
+	ret = zynqmp_pm_घड़ी_enable(clk_id);
+	अगर (ret)
 		pr_warn_once("%s() clock enable failed for %s, ret = %d\n",
 			     __func__, clk_name, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * zynqmp_pll_disable() - Disable clock
- * @hw:		Handle between common and hardware-specific interfaces
+ * zynqmp_pll_disable() - Disable घड़ी
+ * @hw:		Handle between common and hardware-specअगरic पूर्णांकerfaces
  */
-static void zynqmp_pll_disable(struct clk_hw *hw)
-{
-	struct zynqmp_pll *clk = to_zynqmp_pll(hw);
-	const char *clk_name = clk_hw_get_name(hw);
+अटल व्योम zynqmp_pll_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा zynqmp_pll *clk = to_zynqmp_pll(hw);
+	स्थिर अक्षर *clk_name = clk_hw_get_name(hw);
 	u32 clk_id = clk->clk_id;
-	int ret;
+	पूर्णांक ret;
 
-	if (!zynqmp_pll_is_enabled(hw))
-		return;
+	अगर (!zynqmp_pll_is_enabled(hw))
+		वापस;
 
-	ret = zynqmp_pm_clock_disable(clk_id);
-	if (ret)
+	ret = zynqmp_pm_घड़ी_disable(clk_id);
+	अगर (ret)
 		pr_warn_once("%s() clock disable failed for %s, ret = %d\n",
 			     __func__, clk_name, ret);
-}
+पूर्ण
 
-static const struct clk_ops zynqmp_pll_ops = {
+अटल स्थिर काष्ठा clk_ops zynqmp_pll_ops = अणु
 	.enable = zynqmp_pll_enable,
 	.disable = zynqmp_pll_disable,
 	.is_enabled = zynqmp_pll_is_enabled,
 	.round_rate = zynqmp_pll_round_rate,
 	.recalc_rate = zynqmp_pll_recalc_rate,
 	.set_rate = zynqmp_pll_set_rate,
-};
+पूर्ण;
 
 /**
- * zynqmp_clk_register_pll() - Register PLL with the clock framework
+ * zynqmp_clk_रेजिस्टर_pll() - Register PLL with the घड़ी framework
  * @name:		PLL name
  * @clk_id:		Clock ID
- * @parents:		Name of this clock's parents
+ * @parents:		Name of this घड़ी's parents
  * @num_parents:	Number of parents
  * @nodes:		Clock topology node
  *
- * Return: clock hardware to the registered clock
+ * Return: घड़ी hardware to the रेजिस्टरed घड़ी
  */
-struct clk_hw *zynqmp_clk_register_pll(const char *name, u32 clk_id,
-				       const char * const *parents,
+काष्ठा clk_hw *zynqmp_clk_रेजिस्टर_pll(स्थिर अक्षर *name, u32 clk_id,
+				       स्थिर अक्षर * स्थिर *parents,
 				       u8 num_parents,
-				       const struct clock_topology *nodes)
-{
-	struct zynqmp_pll *pll;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+				       स्थिर काष्ठा घड़ी_प्रकारopology *nodes)
+अणु
+	काष्ठा zynqmp_pll *pll;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
 	init.name = name;
 	init.ops = &zynqmp_pll_ops;
@@ -316,23 +317,23 @@ struct clk_hw *zynqmp_clk_register_pll(const char *name, u32 clk_id,
 	init.parent_names = parents;
 	init.num_parents = 1;
 
-	pll = kzalloc(sizeof(*pll), GFP_KERNEL);
-	if (!pll)
-		return ERR_PTR(-ENOMEM);
+	pll = kzalloc(माप(*pll), GFP_KERNEL);
+	अगर (!pll)
+		वापस ERR_PTR(-ENOMEM);
 
 	pll->hw.init = &init;
 	pll->clk_id = clk_id;
 
 	hw = &pll->hw;
-	ret = clk_hw_register(NULL, hw);
-	if (ret) {
-		kfree(pll);
-		return ERR_PTR(ret);
-	}
+	ret = clk_hw_रेजिस्टर(शून्य, hw);
+	अगर (ret) अणु
+		kमुक्त(pll);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	clk_hw_set_rate_range(hw, PS_PLL_VCO_MIN, PS_PLL_VCO_MAX);
-	if (ret < 0)
+	अगर (ret < 0)
 		pr_err("%s:ERROR clk_set_rate_range failed %d\n", name, ret);
 
-	return hw;
-}
+	वापस hw;
+पूर्ण

@@ -1,234 +1,235 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __SOUND_INFO_H
-#define __SOUND_INFO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __SOUND_INFO_H
+#घोषणा __SOUND_INFO_H
 
 /*
- *  Header file for info interface
+ *  Header file क्रम info पूर्णांकerface
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <linux/poll.h>
-#include <linux/seq_file.h>
-#include <sound/core.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/seq_file.h>
+#समावेश <sound/core.h>
 
-/* buffer for information */
-struct snd_info_buffer {
-	char *buffer;		/* pointer to begin of buffer */
-	unsigned int curr;	/* current position in buffer */
-	unsigned int size;	/* current size */
-	unsigned int len;	/* total length of buffer */
-	int stop;		/* stop flag */
-	int error;		/* error code */
-};
+/* buffer क्रम inक्रमmation */
+काष्ठा snd_info_buffer अणु
+	अक्षर *buffer;		/* poपूर्णांकer to begin of buffer */
+	अचिन्हित पूर्णांक curr;	/* current position in buffer */
+	अचिन्हित पूर्णांक size;	/* current size */
+	अचिन्हित पूर्णांक len;	/* total length of buffer */
+	पूर्णांक stop;		/* stop flag */
+	पूर्णांक error;		/* error code */
+पूर्ण;
 
-#define SNDRV_INFO_CONTENT_TEXT		0
-#define SNDRV_INFO_CONTENT_DATA		1
+#घोषणा SNDRV_INFO_CONTENT_TEXT		0
+#घोषणा SNDRV_INFO_CONTENT_DATA		1
 
-struct snd_info_entry;
+काष्ठा snd_info_entry;
 
-struct snd_info_entry_text {
-	void (*read)(struct snd_info_entry *entry,
-		     struct snd_info_buffer *buffer);
-	void (*write)(struct snd_info_entry *entry,
-		      struct snd_info_buffer *buffer);
-};
+काष्ठा snd_info_entry_text अणु
+	व्योम (*पढ़ो)(काष्ठा snd_info_entry *entry,
+		     काष्ठा snd_info_buffer *buffer);
+	व्योम (*ग_लिखो)(काष्ठा snd_info_entry *entry,
+		      काष्ठा snd_info_buffer *buffer);
+पूर्ण;
 
-struct snd_info_entry_ops {
-	int (*open)(struct snd_info_entry *entry,
-		    unsigned short mode, void **file_private_data);
-	int (*release)(struct snd_info_entry *entry,
-		       unsigned short mode, void *file_private_data);
-	ssize_t (*read)(struct snd_info_entry *entry, void *file_private_data,
-			struct file *file, char __user *buf,
-			size_t count, loff_t pos);
-	ssize_t (*write)(struct snd_info_entry *entry, void *file_private_data,
-			 struct file *file, const char __user *buf,
-			 size_t count, loff_t pos);
-	loff_t (*llseek)(struct snd_info_entry *entry,
-			 void *file_private_data, struct file *file,
-			 loff_t offset, int orig);
-	__poll_t (*poll)(struct snd_info_entry *entry,
-			     void *file_private_data, struct file *file,
-			     poll_table *wait);
-	int (*ioctl)(struct snd_info_entry *entry, void *file_private_data,
-		     struct file *file, unsigned int cmd, unsigned long arg);
-	int (*mmap)(struct snd_info_entry *entry, void *file_private_data,
-		    struct inode *inode, struct file *file,
-		    struct vm_area_struct *vma);
-};
+काष्ठा snd_info_entry_ops अणु
+	पूर्णांक (*खोलो)(काष्ठा snd_info_entry *entry,
+		    अचिन्हित लघु mode, व्योम **file_निजी_data);
+	पूर्णांक (*release)(काष्ठा snd_info_entry *entry,
+		       अचिन्हित लघु mode, व्योम *file_निजी_data);
+	sमाप_प्रकार (*पढ़ो)(काष्ठा snd_info_entry *entry, व्योम *file_निजी_data,
+			काष्ठा file *file, अक्षर __user *buf,
+			माप_प्रकार count, loff_t pos);
+	sमाप_प्रकार (*ग_लिखो)(काष्ठा snd_info_entry *entry, व्योम *file_निजी_data,
+			 काष्ठा file *file, स्थिर अक्षर __user *buf,
+			 माप_प्रकार count, loff_t pos);
+	loff_t (*llseek)(काष्ठा snd_info_entry *entry,
+			 व्योम *file_निजी_data, काष्ठा file *file,
+			 loff_t offset, पूर्णांक orig);
+	__poll_t (*poll)(काष्ठा snd_info_entry *entry,
+			     व्योम *file_निजी_data, काष्ठा file *file,
+			     poll_table *रुको);
+	पूर्णांक (*ioctl)(काष्ठा snd_info_entry *entry, व्योम *file_निजी_data,
+		     काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+	पूर्णांक (*mmap)(काष्ठा snd_info_entry *entry, व्योम *file_निजी_data,
+		    काष्ठा inode *inode, काष्ठा file *file,
+		    काष्ठा vm_area_काष्ठा *vma);
+पूर्ण;
 
-struct snd_info_entry {
-	const char *name;
+काष्ठा snd_info_entry अणु
+	स्थिर अक्षर *name;
 	umode_t mode;
-	long size;
-	unsigned short content;
-	union {
-		struct snd_info_entry_text text;
-		const struct snd_info_entry_ops *ops;
-	} c;
-	struct snd_info_entry *parent;
-	struct module *module;
-	void *private_data;
-	void (*private_free)(struct snd_info_entry *entry);
-	struct proc_dir_entry *p;
-	struct mutex access;
-	struct list_head children;
-	struct list_head list;
-};
+	दीर्घ size;
+	अचिन्हित लघु content;
+	जोड़ अणु
+		काष्ठा snd_info_entry_text text;
+		स्थिर काष्ठा snd_info_entry_ops *ops;
+	पूर्ण c;
+	काष्ठा snd_info_entry *parent;
+	काष्ठा module *module;
+	व्योम *निजी_data;
+	व्योम (*निजी_मुक्त)(काष्ठा snd_info_entry *entry);
+	काष्ठा proc_dir_entry *p;
+	काष्ठा mutex access;
+	काष्ठा list_head children;
+	काष्ठा list_head list;
+पूर्ण;
 
-#if defined(CONFIG_SND_OSSEMUL) && defined(CONFIG_SND_PROC_FS)
-int snd_info_minor_register(void);
-#else
-#define snd_info_minor_register()	0
-#endif
+#अगर defined(CONFIG_SND_OSSEMUL) && defined(CONFIG_SND_PROC_FS)
+पूर्णांक snd_info_minor_रेजिस्टर(व्योम);
+#अन्यथा
+#घोषणा snd_info_minor_रेजिस्टर()	0
+#पूर्ण_अगर
 
 
-#ifdef CONFIG_SND_PROC_FS
+#अगर_घोषित CONFIG_SND_PROC_FS
 
-extern struct snd_info_entry *snd_seq_root;
-#ifdef CONFIG_SND_OSSEMUL
-extern struct snd_info_entry *snd_oss_root;
-void snd_card_info_read_oss(struct snd_info_buffer *buffer);
-#else
-#define snd_oss_root NULL
-static inline void snd_card_info_read_oss(struct snd_info_buffer *buffer) {}
-#endif
+बाह्य काष्ठा snd_info_entry *snd_seq_root;
+#अगर_घोषित CONFIG_SND_OSSEMUL
+बाह्य काष्ठा snd_info_entry *snd_oss_root;
+व्योम snd_card_info_पढ़ो_oss(काष्ठा snd_info_buffer *buffer);
+#अन्यथा
+#घोषणा snd_oss_root शून्य
+अटल अंतरभूत व्योम snd_card_info_पढ़ो_oss(काष्ठा snd_info_buffer *buffer) अणुपूर्ण
+#पूर्ण_अगर
 
 /**
- * snd_iprintf - printf on the procfs buffer
+ * snd_iम_लिखो - म_लिखो on the procfs buffer
  * @buf: the procfs buffer
- * @fmt: the printf format
+ * @fmt: the म_लिखो क्रमmat
  *
- * Outputs the string on the procfs buffer just like printf().
+ * Outमाला_दो the string on the procfs buffer just like म_लिखो().
  *
- * Return: zero for success, or a negative error code.
+ * Return: zero क्रम success, or a negative error code.
  */
-#define snd_iprintf(buf, fmt, args...) \
-	seq_printf((struct seq_file *)(buf)->buffer, fmt, ##args)
+#घोषणा snd_iम_लिखो(buf, fmt, args...) \
+	seq_म_लिखो((काष्ठा seq_file *)(buf)->buffer, fmt, ##args)
 
-int snd_info_init(void);
-int snd_info_done(void);
+पूर्णांक snd_info_init(व्योम);
+पूर्णांक snd_info_करोne(व्योम);
 
-int snd_info_get_line(struct snd_info_buffer *buffer, char *line, int len);
-const char *snd_info_get_str(char *dest, const char *src, int len);
-struct snd_info_entry *snd_info_create_module_entry(struct module *module,
-					       const char *name,
-					       struct snd_info_entry *parent);
-struct snd_info_entry *snd_info_create_card_entry(struct snd_card *card,
-					     const char *name,
-					     struct snd_info_entry *parent);
-void snd_info_free_entry(struct snd_info_entry *entry);
-int snd_info_store_text(struct snd_info_entry *entry);
-int snd_info_restore_text(struct snd_info_entry *entry);
+पूर्णांक snd_info_get_line(काष्ठा snd_info_buffer *buffer, अक्षर *line, पूर्णांक len);
+स्थिर अक्षर *snd_info_get_str(अक्षर *dest, स्थिर अक्षर *src, पूर्णांक len);
+काष्ठा snd_info_entry *snd_info_create_module_entry(काष्ठा module *module,
+					       स्थिर अक्षर *name,
+					       काष्ठा snd_info_entry *parent);
+काष्ठा snd_info_entry *snd_info_create_card_entry(काष्ठा snd_card *card,
+					     स्थिर अक्षर *name,
+					     काष्ठा snd_info_entry *parent);
+व्योम snd_info_मुक्त_entry(काष्ठा snd_info_entry *entry);
+पूर्णांक snd_info_store_text(काष्ठा snd_info_entry *entry);
+पूर्णांक snd_info_restore_text(काष्ठा snd_info_entry *entry);
 
-int snd_info_card_create(struct snd_card *card);
-int snd_info_card_register(struct snd_card *card);
-int snd_info_card_free(struct snd_card *card);
-void snd_info_card_disconnect(struct snd_card *card);
-void snd_info_card_id_change(struct snd_card *card);
-int snd_info_register(struct snd_info_entry *entry);
+पूर्णांक snd_info_card_create(काष्ठा snd_card *card);
+पूर्णांक snd_info_card_रेजिस्टर(काष्ठा snd_card *card);
+पूर्णांक snd_info_card_मुक्त(काष्ठा snd_card *card);
+व्योम snd_info_card_disconnect(काष्ठा snd_card *card);
+व्योम snd_info_card_id_change(काष्ठा snd_card *card);
+पूर्णांक snd_info_रेजिस्टर(काष्ठा snd_info_entry *entry);
 
-/* for card drivers */
-static inline int snd_card_proc_new(struct snd_card *card, const char *name,
-				    struct snd_info_entry **entryp)
-{
+/* क्रम card drivers */
+अटल अंतरभूत पूर्णांक snd_card_proc_new(काष्ठा snd_card *card, स्थिर अक्षर *name,
+				    काष्ठा snd_info_entry **entryp)
+अणु
 	*entryp = snd_info_create_card_entry(card, name, card->proc_root);
-	return *entryp ? 0 : -ENOMEM;
-}
+	वापस *entryp ? 0 : -ENOMEM;
+पूर्ण
 
-static inline void snd_info_set_text_ops(struct snd_info_entry *entry, 
-	void *private_data,
-	void (*read)(struct snd_info_entry *, struct snd_info_buffer *))
-{
-	entry->private_data = private_data;
-	entry->c.text.read = read;
-}
+अटल अंतरभूत व्योम snd_info_set_text_ops(काष्ठा snd_info_entry *entry, 
+	व्योम *निजी_data,
+	व्योम (*पढ़ो)(काष्ठा snd_info_entry *, काष्ठा snd_info_buffer *))
+अणु
+	entry->निजी_data = निजी_data;
+	entry->c.text.पढ़ो = पढ़ो;
+पूर्ण
 
-int snd_card_rw_proc_new(struct snd_card *card, const char *name,
-			 void *private_data,
-			 void (*read)(struct snd_info_entry *,
-				      struct snd_info_buffer *),
-			 void (*write)(struct snd_info_entry *entry,
-				       struct snd_info_buffer *buffer));
+पूर्णांक snd_card_rw_proc_new(काष्ठा snd_card *card, स्थिर अक्षर *name,
+			 व्योम *निजी_data,
+			 व्योम (*पढ़ो)(काष्ठा snd_info_entry *,
+				      काष्ठा snd_info_buffer *),
+			 व्योम (*ग_लिखो)(काष्ठा snd_info_entry *entry,
+				       काष्ठा snd_info_buffer *buffer));
 
-int snd_info_check_reserved_words(const char *str);
+पूर्णांक snd_info_check_reserved_words(स्थिर अक्षर *str);
 
-#else
+#अन्यथा
 
-#define snd_seq_root NULL
-#define snd_oss_root NULL
+#घोषणा snd_seq_root शून्य
+#घोषणा snd_oss_root शून्य
 
-static inline int snd_iprintf(struct snd_info_buffer *buffer, char *fmt, ...) { return 0; }
-static inline int snd_info_init(void) { return 0; }
-static inline int snd_info_done(void) { return 0; }
+अटल अंतरभूत पूर्णांक snd_iम_लिखो(काष्ठा snd_info_buffer *buffer, अक्षर *fmt, ...) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक snd_info_init(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक snd_info_करोne(व्योम) अणु वापस 0; पूर्ण
 
-static inline int snd_info_get_line(struct snd_info_buffer *buffer, char *line, int len) { return 0; }
-static inline char *snd_info_get_str(char *dest, char *src, int len) { return NULL; }
-static inline struct snd_info_entry *snd_info_create_module_entry(struct module *module, const char *name, struct snd_info_entry *parent) { return NULL; }
-static inline struct snd_info_entry *snd_info_create_card_entry(struct snd_card *card, const char *name, struct snd_info_entry *parent) { return NULL; }
-static inline void snd_info_free_entry(struct snd_info_entry *entry) { ; }
+अटल अंतरभूत पूर्णांक snd_info_get_line(काष्ठा snd_info_buffer *buffer, अक्षर *line, पूर्णांक len) अणु वापस 0; पूर्ण
+अटल अंतरभूत अक्षर *snd_info_get_str(अक्षर *dest, अक्षर *src, पूर्णांक len) अणु वापस शून्य; पूर्ण
+अटल अंतरभूत काष्ठा snd_info_entry *snd_info_create_module_entry(काष्ठा module *module, स्थिर अक्षर *name, काष्ठा snd_info_entry *parent) अणु वापस शून्य; पूर्ण
+अटल अंतरभूत काष्ठा snd_info_entry *snd_info_create_card_entry(काष्ठा snd_card *card, स्थिर अक्षर *name, काष्ठा snd_info_entry *parent) अणु वापस शून्य; पूर्ण
+अटल अंतरभूत व्योम snd_info_मुक्त_entry(काष्ठा snd_info_entry *entry) अणु ; पूर्ण
 
-static inline int snd_info_card_create(struct snd_card *card) { return 0; }
-static inline int snd_info_card_register(struct snd_card *card) { return 0; }
-static inline int snd_info_card_free(struct snd_card *card) { return 0; }
-static inline void snd_info_card_disconnect(struct snd_card *card) { }
-static inline void snd_info_card_id_change(struct snd_card *card) { }
-static inline int snd_info_register(struct snd_info_entry *entry) { return 0; }
+अटल अंतरभूत पूर्णांक snd_info_card_create(काष्ठा snd_card *card) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक snd_info_card_रेजिस्टर(काष्ठा snd_card *card) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक snd_info_card_मुक्त(काष्ठा snd_card *card) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम snd_info_card_disconnect(काष्ठा snd_card *card) अणु पूर्ण
+अटल अंतरभूत व्योम snd_info_card_id_change(काष्ठा snd_card *card) अणु पूर्ण
+अटल अंतरभूत पूर्णांक snd_info_रेजिस्टर(काष्ठा snd_info_entry *entry) अणु वापस 0; पूर्ण
 
-static inline int snd_card_proc_new(struct snd_card *card, const char *name,
-				    struct snd_info_entry **entryp) { return -EINVAL; }
-static inline void snd_info_set_text_ops(struct snd_info_entry *entry __attribute__((unused)),
-					 void *private_data,
-					 void (*read)(struct snd_info_entry *, struct snd_info_buffer *)) {}
-static inline int snd_card_rw_proc_new(struct snd_card *card, const char *name,
-				       void *private_data,
-				       void (*read)(struct snd_info_entry *,
-						    struct snd_info_buffer *),
-				       void (*write)(struct snd_info_entry *entry,
-						     struct snd_info_buffer *buffer))
-{
-	return 0;
-}
-static inline int snd_info_check_reserved_words(const char *str) { return 1; }
+अटल अंतरभूत पूर्णांक snd_card_proc_new(काष्ठा snd_card *card, स्थिर अक्षर *name,
+				    काष्ठा snd_info_entry **entryp) अणु वापस -EINVAL; पूर्ण
+अटल अंतरभूत व्योम snd_info_set_text_ops(काष्ठा snd_info_entry *entry __attribute__((unused)),
+					 व्योम *निजी_data,
+					 व्योम (*पढ़ो)(काष्ठा snd_info_entry *, काष्ठा snd_info_buffer *)) अणुपूर्ण
+अटल अंतरभूत पूर्णांक snd_card_rw_proc_new(काष्ठा snd_card *card, स्थिर अक्षर *name,
+				       व्योम *निजी_data,
+				       व्योम (*पढ़ो)(काष्ठा snd_info_entry *,
+						    काष्ठा snd_info_buffer *),
+				       व्योम (*ग_लिखो)(काष्ठा snd_info_entry *entry,
+						     काष्ठा snd_info_buffer *buffer))
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक snd_info_check_reserved_words(स्थिर अक्षर *str) अणु वापस 1; पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /**
- * snd_card_ro_proc_new - Create a read-only text proc file entry for the card
+ * snd_card_ro_proc_new - Create a पढ़ो-only text proc file entry क्रम the card
  * @card: the card instance
  * @name: the file name
- * @private_data: the arbitrary private data
- * @read: the read callback
+ * @निजी_data: the arbitrary निजी data
+ * @पढ़ो: the पढ़ो callback
  *
- * This proc file entry will be registered via snd_card_register() call, and
- * it will be removed automatically at the card removal, too.
+ * This proc file entry will be रेजिस्टरed via snd_card_रेजिस्टर() call, and
+ * it will be हटाओd स्वतःmatically at the card removal, too.
  */
-static inline int
-snd_card_ro_proc_new(struct snd_card *card, const char *name,
-		     void *private_data,
-		     void (*read)(struct snd_info_entry *,
-				  struct snd_info_buffer *))
-{
-	return snd_card_rw_proc_new(card, name, private_data, read, NULL);
-}
+अटल अंतरभूत पूर्णांक
+snd_card_ro_proc_new(काष्ठा snd_card *card, स्थिर अक्षर *name,
+		     व्योम *निजी_data,
+		     व्योम (*पढ़ो)(काष्ठा snd_info_entry *,
+				  काष्ठा snd_info_buffer *))
+अणु
+	वापस snd_card_rw_proc_new(card, name, निजी_data, पढ़ो, शून्य);
+पूर्ण
 
 /*
  * OSS info part
  */
 
-#if defined(CONFIG_SND_OSSEMUL) && defined(CONFIG_SND_PROC_FS)
+#अगर defined(CONFIG_SND_OSSEMUL) && defined(CONFIG_SND_PROC_FS)
 
-#define SNDRV_OSS_INFO_DEV_AUDIO	0
-#define SNDRV_OSS_INFO_DEV_SYNTH	1
-#define SNDRV_OSS_INFO_DEV_MIDI		2
-#define SNDRV_OSS_INFO_DEV_TIMERS	4
-#define SNDRV_OSS_INFO_DEV_MIXERS	5
+#घोषणा SNDRV_OSS_INFO_DEV_AUDIO	0
+#घोषणा SNDRV_OSS_INFO_DEV_SYNTH	1
+#घोषणा SNDRV_OSS_INFO_DEV_MIDI		2
+#घोषणा SNDRV_OSS_INFO_DEV_TIMERS	4
+#घोषणा SNDRV_OSS_INFO_DEV_MIXERS	5
 
-#define SNDRV_OSS_INFO_DEV_COUNT	6
+#घोषणा SNDRV_OSS_INFO_DEV_COUNT	6
 
-int snd_oss_info_register(int dev, int num, char *string);
-#define snd_oss_info_unregister(dev, num) snd_oss_info_register(dev, num, NULL)
+पूर्णांक snd_oss_info_रेजिस्टर(पूर्णांक dev, पूर्णांक num, अक्षर *string);
+#घोषणा snd_oss_info_unरेजिस्टर(dev, num) snd_oss_info_रेजिस्टर(dev, num, शून्य)
 
-#endif /* CONFIG_SND_OSSEMUL && CONFIG_SND_PROC_FS */
+#पूर्ण_अगर /* CONFIG_SND_OSSEMUL && CONFIG_SND_PROC_FS */
 
-#endif /* __SOUND_INFO_H */
+#पूर्ण_अगर /* __SOUND_INFO_H */

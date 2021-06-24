@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
-#ifndef __SOUND_HDSP_H
-#define __SOUND_HDSP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
+#अगर_अघोषित __SOUND_HDSP_H
+#घोषणा __SOUND_HDSP_H
 
 /*
  *   Copyright (C) 2003 Thomas Charbonnel (thomas@undata.org)
  *    
- *   This program is free software; you can redistribute it and/or modify
+ *   This program is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
@@ -13,92 +14,92 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
+ *   aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifdef __linux__
-#include <linux/types.h>
-#endif
+#अगर_घोषित __linux__
+#समावेश <linux/types.h>
+#पूर्ण_अगर
 
-#define HDSP_MATRIX_MIXER_SIZE 2048
+#घोषणा HDSP_MATRIX_MIXER_SIZE 2048
 
-enum HDSP_IO_Type {
-	Digiface,
-	Multiface,
+क्रमागत HDSP_IO_Type अणु
+	Digअगरace,
+	Multअगरace,
 	H9652,
 	H9632,
 	RPM,
 	Undefined,
-};
+पूर्ण;
 
-struct hdsp_peak_rms {
+काष्ठा hdsp_peak_rms अणु
 	__u32 input_peaks[26];
 	__u32 playback_peaks[26];
 	__u32 output_peaks[28];
 	__u64 input_rms[26];
 	__u64 playback_rms[26];
-	/* These are only used for H96xx cards */
+	/* These are only used क्रम H96xx cards */
 	__u64 output_rms[26];
-};
+पूर्ण;
 
-#define SNDRV_HDSP_IOCTL_GET_PEAK_RMS _IOR('H', 0x40, struct hdsp_peak_rms)
+#घोषणा SNDRV_HDSP_IOCTL_GET_PEAK_RMS _IOR('H', 0x40, काष्ठा hdsp_peak_rms)
 
-struct hdsp_config_info {
-	unsigned char pref_sync_ref;
-	unsigned char wordclock_sync_check;
-	unsigned char spdif_sync_check;
-	unsigned char adatsync_sync_check;
-	unsigned char adat_sync_check[3];
-	unsigned char spdif_in;
-	unsigned char spdif_out;
-	unsigned char spdif_professional;
-	unsigned char spdif_emphasis;
-	unsigned char spdif_nonaudio;
-	unsigned int spdif_sample_rate;
-	unsigned int system_sample_rate;
-	unsigned int autosync_sample_rate;
-	unsigned char system_clock_mode;
-	unsigned char clock_source;
-	unsigned char autosync_ref;
-	unsigned char line_out;
-	unsigned char passthru; 
-	unsigned char da_gain;
-	unsigned char ad_gain;
-	unsigned char phone_gain;
-	unsigned char xlr_breakout_cable;
-	unsigned char analog_extension_board;
-};
+काष्ठा hdsp_config_info अणु
+	अचिन्हित अक्षर pref_sync_ref;
+	अचिन्हित अक्षर wordघड़ी_sync_check;
+	अचिन्हित अक्षर spdअगर_sync_check;
+	अचिन्हित अक्षर adatsync_sync_check;
+	अचिन्हित अक्षर adat_sync_check[3];
+	अचिन्हित अक्षर spdअगर_in;
+	अचिन्हित अक्षर spdअगर_out;
+	अचिन्हित अक्षर spdअगर_professional;
+	अचिन्हित अक्षर spdअगर_emphasis;
+	अचिन्हित अक्षर spdअगर_nonaudio;
+	अचिन्हित पूर्णांक spdअगर_sample_rate;
+	अचिन्हित पूर्णांक प्रणाली_sample_rate;
+	अचिन्हित पूर्णांक स्वतःsync_sample_rate;
+	अचिन्हित अक्षर प्रणाली_घड़ी_mode;
+	अचिन्हित अक्षर घड़ी_source;
+	अचिन्हित अक्षर स्वतःsync_ref;
+	अचिन्हित अक्षर line_out;
+	अचिन्हित अक्षर passthru; 
+	अचिन्हित अक्षर da_gain;
+	अचिन्हित अक्षर ad_gain;
+	अचिन्हित अक्षर phone_gain;
+	अचिन्हित अक्षर xlr_अवरोधout_cable;
+	अचिन्हित अक्षर analog_extension_board;
+पूर्ण;
 
-#define SNDRV_HDSP_IOCTL_GET_CONFIG_INFO _IOR('H', 0x41, struct hdsp_config_info)
+#घोषणा SNDRV_HDSP_IOCTL_GET_CONFIG_INFO _IOR('H', 0x41, काष्ठा hdsp_config_info)
 
-struct hdsp_firmware {
-	void *firmware_data;	/* 24413 x 4 bytes */
-};
+काष्ठा hdsp_firmware अणु
+	व्योम *firmware_data;	/* 24413 x 4 bytes */
+पूर्ण;
 
-#define SNDRV_HDSP_IOCTL_UPLOAD_FIRMWARE _IOW('H', 0x42, struct hdsp_firmware)
+#घोषणा SNDRV_HDSP_IOCTL_UPLOAD_FIRMWARE _IOW('H', 0x42, काष्ठा hdsp_firmware)
 
-struct hdsp_version {
-	enum HDSP_IO_Type io_type;
-	unsigned short firmware_rev;
-};
+काष्ठा hdsp_version अणु
+	क्रमागत HDSP_IO_Type io_type;
+	अचिन्हित लघु firmware_rev;
+पूर्ण;
 
-#define SNDRV_HDSP_IOCTL_GET_VERSION _IOR('H', 0x43, struct hdsp_version)
+#घोषणा SNDRV_HDSP_IOCTL_GET_VERSION _IOR('H', 0x43, काष्ठा hdsp_version)
 
-struct hdsp_mixer {
-	unsigned short matrix[HDSP_MATRIX_MIXER_SIZE];
-};
+काष्ठा hdsp_mixer अणु
+	अचिन्हित लघु matrix[HDSP_MATRIX_MIXER_SIZE];
+पूर्ण;
 
-#define SNDRV_HDSP_IOCTL_GET_MIXER _IOR('H', 0x44, struct hdsp_mixer)
+#घोषणा SNDRV_HDSP_IOCTL_GET_MIXER _IOR('H', 0x44, काष्ठा hdsp_mixer)
 
-struct hdsp_9632_aeb {
-	int aebi;
-	int aebo;
-};
+काष्ठा hdsp_9632_aeb अणु
+	पूर्णांक aebi;
+	पूर्णांक aebo;
+पूर्ण;
 
-#define SNDRV_HDSP_IOCTL_GET_9632_AEB _IOR('H', 0x45, struct hdsp_9632_aeb)
+#घोषणा SNDRV_HDSP_IOCTL_GET_9632_AEB _IOR('H', 0x45, काष्ठा hdsp_9632_aeb)
 
-#endif /* __SOUND_HDSP_H */
+#पूर्ण_अगर /* __SOUND_HDSP_H */

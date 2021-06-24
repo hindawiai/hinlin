@@ -1,325 +1,326 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2006 Silicon Graphics, Inc.
  * Copyright (c) 2013 Red Hat, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_inode.h"
-#include "xfs_quota.h"
-#include "xfs_trans.h"
-#include "xfs_qm.h"
-#include "xfs_error.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_quota.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_qm.h"
+#समावेश "xfs_error.h"
 
-int
+पूर्णांक
 xfs_calc_dquots_per_chunk(
-	unsigned int		nbblks)	/* basic block units */
-{
+	अचिन्हित पूर्णांक		nbblks)	/* basic block units */
+अणु
 	ASSERT(nbblks > 0);
-	return BBTOB(nbblks) / sizeof(xfs_dqblk_t);
-}
+	वापस BBTOB(nbblks) / माप(xfs_dqblk_t);
+पूर्ण
 
 /*
- * Do some primitive error checking on ondisk dquot data structures.
+ * Do some primitive error checking on ondisk dquot data काष्ठाures.
  *
- * The xfs_dqblk structure /contains/ the xfs_disk_dquot structure;
- * we verify them separately because at some points we have only the
- * smaller xfs_disk_dquot structure available.
+ * The xfs_dqblk काष्ठाure /contains/ the xfs_disk_dquot काष्ठाure;
+ * we verअगरy them separately because at some poपूर्णांकs we have only the
+ * smaller xfs_disk_dquot काष्ठाure available.
  */
 
 xfs_failaddr_t
-xfs_dquot_verify(
-	struct xfs_mount	*mp,
-	struct xfs_disk_dquot	*ddq,
+xfs_dquot_verअगरy(
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_disk_dquot	*ddq,
 	xfs_dqid_t		id)	/* used only during quotacheck */
-{
+अणु
 	__u8			ddq_type;
 
 	/*
-	 * We can encounter an uninitialized dquot buffer for 2 reasons:
-	 * 1. If we crash while deleting the quotainode(s), and those blks got
-	 *    used for user data. This is because we take the path of regular
+	 * We can encounter an uninitialized dquot buffer क्रम 2 reasons:
+	 * 1. If we crash जबतक deleting the quotainode(s), and those blks got
+	 *    used क्रम user data. This is because we take the path of regular
 	 *    file deletion; however, the size field of quotainodes is never
 	 *    updated, so all the tricks that we play in itruncate_finish
-	 *    don't quite matter.
+	 *    करोn't quite matter.
 	 *
-	 * 2. We don't play the quota buffers when there's a quotaoff logitem.
+	 * 2. We करोn't play the quota buffers when there's a quotaoff logitem.
 	 *    But the allocation will be replayed so we'll end up with an
 	 *    uninitialized quota block.
 	 *
 	 * This is all fine; things are still consistent, and we haven't lost
-	 * any quota information. Just don't complain about bad dquot blks.
+	 * any quota inक्रमmation. Just करोn't complain about bad dquot blks.
 	 */
-	if (ddq->d_magic != cpu_to_be16(XFS_DQUOT_MAGIC))
-		return __this_address;
-	if (ddq->d_version != XFS_DQUOT_VERSION)
-		return __this_address;
+	अगर (ddq->d_magic != cpu_to_be16(XFS_DQUOT_MAGIC))
+		वापस __this_address;
+	अगर (ddq->d_version != XFS_DQUOT_VERSION)
+		वापस __this_address;
 
-	if (ddq->d_type & ~XFS_DQTYPE_ANY)
-		return __this_address;
+	अगर (ddq->d_type & ~XFS_DQTYPE_ANY)
+		वापस __this_address;
 	ddq_type = ddq->d_type & XFS_DQTYPE_REC_MASK;
-	if (ddq_type != XFS_DQTYPE_USER &&
+	अगर (ddq_type != XFS_DQTYPE_USER &&
 	    ddq_type != XFS_DQTYPE_PROJ &&
 	    ddq_type != XFS_DQTYPE_GROUP)
-		return __this_address;
+		वापस __this_address;
 
-	if ((ddq->d_type & XFS_DQTYPE_BIGTIME) &&
-	    !xfs_sb_version_hasbigtime(&mp->m_sb))
-		return __this_address;
+	अगर ((ddq->d_type & XFS_DQTYPE_BIGTIME) &&
+	    !xfs_sb_version_hasbigसमय(&mp->m_sb))
+		वापस __this_address;
 
-	if ((ddq->d_type & XFS_DQTYPE_BIGTIME) && !ddq->d_id)
-		return __this_address;
+	अगर ((ddq->d_type & XFS_DQTYPE_BIGTIME) && !ddq->d_id)
+		वापस __this_address;
 
-	if (id != -1 && id != be32_to_cpu(ddq->d_id))
-		return __this_address;
+	अगर (id != -1 && id != be32_to_cpu(ddq->d_id))
+		वापस __this_address;
 
-	if (!ddq->d_id)
-		return NULL;
+	अगर (!ddq->d_id)
+		वापस शून्य;
 
-	if (ddq->d_blk_softlimit &&
+	अगर (ddq->d_blk_softlimit &&
 	    be64_to_cpu(ddq->d_bcount) > be64_to_cpu(ddq->d_blk_softlimit) &&
-	    !ddq->d_btimer)
-		return __this_address;
+	    !ddq->d_bसमयr)
+		वापस __this_address;
 
-	if (ddq->d_ino_softlimit &&
+	अगर (ddq->d_ino_softlimit &&
 	    be64_to_cpu(ddq->d_icount) > be64_to_cpu(ddq->d_ino_softlimit) &&
-	    !ddq->d_itimer)
-		return __this_address;
+	    !ddq->d_iसमयr)
+		वापस __this_address;
 
-	if (ddq->d_rtb_softlimit &&
+	अगर (ddq->d_rtb_softlimit &&
 	    be64_to_cpu(ddq->d_rtbcount) > be64_to_cpu(ddq->d_rtb_softlimit) &&
-	    !ddq->d_rtbtimer)
-		return __this_address;
+	    !ddq->d_rtbसमयr)
+		वापस __this_address;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 xfs_failaddr_t
-xfs_dqblk_verify(
-	struct xfs_mount	*mp,
-	struct xfs_dqblk	*dqb,
+xfs_dqblk_verअगरy(
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_dqblk	*dqb,
 	xfs_dqid_t		id)	/* used only during quotacheck */
-{
-	if (xfs_sb_version_hascrc(&mp->m_sb) &&
+अणु
+	अगर (xfs_sb_version_hascrc(&mp->m_sb) &&
 	    !uuid_equal(&dqb->dd_uuid, &mp->m_sb.sb_meta_uuid))
-		return __this_address;
+		वापस __this_address;
 
-	return xfs_dquot_verify(mp, &dqb->dd_diskdq, id);
-}
+	वापस xfs_dquot_verअगरy(mp, &dqb->dd_diskdq, id);
+पूर्ण
 
 /*
- * Do some primitive error checking on ondisk dquot data structures.
+ * Do some primitive error checking on ondisk dquot data काष्ठाures.
  */
-void
+व्योम
 xfs_dqblk_repair(
-	struct xfs_mount	*mp,
-	struct xfs_dqblk	*dqb,
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_dqblk	*dqb,
 	xfs_dqid_t		id,
 	xfs_dqtype_t		type)
-{
+अणु
 	/*
 	 * Typically, a repair is only requested by quotacheck.
 	 */
 	ASSERT(id != -1);
-	memset(dqb, 0, sizeof(xfs_dqblk_t));
+	स_रखो(dqb, 0, माप(xfs_dqblk_t));
 
 	dqb->dd_diskdq.d_magic = cpu_to_be16(XFS_DQUOT_MAGIC);
 	dqb->dd_diskdq.d_version = XFS_DQUOT_VERSION;
 	dqb->dd_diskdq.d_type = type;
 	dqb->dd_diskdq.d_id = cpu_to_be32(id);
 
-	if (xfs_sb_version_hascrc(&mp->m_sb)) {
+	अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
 		uuid_copy(&dqb->dd_uuid, &mp->m_sb.sb_meta_uuid);
-		xfs_update_cksum((char *)dqb, sizeof(struct xfs_dqblk),
+		xfs_update_cksum((अक्षर *)dqb, माप(काष्ठा xfs_dqblk),
 				 XFS_DQUOT_CRC_OFF);
-	}
-}
+	पूर्ण
+पूर्ण
 
 STATIC bool
-xfs_dquot_buf_verify_crc(
-	struct xfs_mount	*mp,
-	struct xfs_buf		*bp,
-	bool			readahead)
-{
-	struct xfs_dqblk	*d = (struct xfs_dqblk *)bp->b_addr;
-	int			ndquots;
-	int			i;
+xfs_dquot_buf_verअगरy_crc(
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_buf		*bp,
+	bool			पढ़ोahead)
+अणु
+	काष्ठा xfs_dqblk	*d = (काष्ठा xfs_dqblk *)bp->b_addr;
+	पूर्णांक			ndquots;
+	पूर्णांक			i;
 
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
-		return true;
+	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
+		वापस true;
 
 	/*
-	 * if we are in log recovery, the quota subsystem has not been
-	 * initialised so we have no quotainfo structure. In that case, we need
+	 * अगर we are in log recovery, the quota subप्रणाली has not been
+	 * initialised so we have no quotainfo काष्ठाure. In that हाल, we need
 	 * to manually calculate the number of dquots in the buffer.
 	 */
-	if (mp->m_quotainfo)
+	अगर (mp->m_quotainfo)
 		ndquots = mp->m_quotainfo->qi_dqperchunk;
-	else
+	अन्यथा
 		ndquots = xfs_calc_dquots_per_chunk(bp->b_length);
 
-	for (i = 0; i < ndquots; i++, d++) {
-		if (!xfs_verify_cksum((char *)d, sizeof(struct xfs_dqblk),
-				 XFS_DQUOT_CRC_OFF)) {
-			if (!readahead)
-				xfs_buf_verifier_error(bp, -EFSBADCRC, __func__,
-					d, sizeof(*d), __this_address);
-			return false;
-		}
-	}
-	return true;
-}
+	क्रम (i = 0; i < ndquots; i++, d++) अणु
+		अगर (!xfs_verअगरy_cksum((अक्षर *)d, माप(काष्ठा xfs_dqblk),
+				 XFS_DQUOT_CRC_OFF)) अणु
+			अगर (!पढ़ोahead)
+				xfs_buf_verअगरier_error(bp, -EFSBADCRC, __func__,
+					d, माप(*d), __this_address);
+			वापस false;
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 
 STATIC xfs_failaddr_t
-xfs_dquot_buf_verify(
-	struct xfs_mount	*mp,
-	struct xfs_buf		*bp,
-	bool			readahead)
-{
-	struct xfs_dqblk	*dqb = bp->b_addr;
+xfs_dquot_buf_verअगरy(
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_buf		*bp,
+	bool			पढ़ोahead)
+अणु
+	काष्ठा xfs_dqblk	*dqb = bp->b_addr;
 	xfs_failaddr_t		fa;
 	xfs_dqid_t		id = 0;
-	int			ndquots;
-	int			i;
+	पूर्णांक			ndquots;
+	पूर्णांक			i;
 
 	/*
-	 * if we are in log recovery, the quota subsystem has not been
-	 * initialised so we have no quotainfo structure. In that case, we need
+	 * अगर we are in log recovery, the quota subप्रणाली has not been
+	 * initialised so we have no quotainfo काष्ठाure. In that हाल, we need
 	 * to manually calculate the number of dquots in the buffer.
 	 */
-	if (mp->m_quotainfo)
+	अगर (mp->m_quotainfo)
 		ndquots = mp->m_quotainfo->qi_dqperchunk;
-	else
+	अन्यथा
 		ndquots = xfs_calc_dquots_per_chunk(bp->b_length);
 
 	/*
-	 * On the first read of the buffer, verify that each dquot is valid.
-	 * We don't know what the id of the dquot is supposed to be, just that
+	 * On the first पढ़ो of the buffer, verअगरy that each dquot is valid.
+	 * We करोn't know what the id of the dquot is supposed to be, just that
 	 * they should be increasing monotonically within the buffer. If the
 	 * first id is corrupt, then it will fail on the second dquot in the
-	 * buffer so corruptions could point to the wrong dquot in this case.
+	 * buffer so corruptions could poपूर्णांक to the wrong dquot in this हाल.
 	 */
-	for (i = 0; i < ndquots; i++) {
-		struct xfs_disk_dquot	*ddq;
+	क्रम (i = 0; i < ndquots; i++) अणु
+		काष्ठा xfs_disk_dquot	*ddq;
 
 		ddq = &dqb[i].dd_diskdq;
 
-		if (i == 0)
+		अगर (i == 0)
 			id = be32_to_cpu(ddq->d_id);
 
-		fa = xfs_dqblk_verify(mp, &dqb[i], id + i);
-		if (fa) {
-			if (!readahead)
-				xfs_buf_verifier_error(bp, -EFSCORRUPTED,
+		fa = xfs_dqblk_verअगरy(mp, &dqb[i], id + i);
+		अगर (fa) अणु
+			अगर (!पढ़ोahead)
+				xfs_buf_verअगरier_error(bp, -EFSCORRUPTED,
 					__func__, &dqb[i],
-					sizeof(struct xfs_dqblk), fa);
-			return fa;
-		}
-	}
+					माप(काष्ठा xfs_dqblk), fa);
+			वापस fa;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static xfs_failaddr_t
-xfs_dquot_buf_verify_struct(
-	struct xfs_buf		*bp)
-{
-	struct xfs_mount	*mp = bp->b_mount;
+अटल xfs_failaddr_t
+xfs_dquot_buf_verअगरy_काष्ठा(
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_mount	*mp = bp->b_mount;
 
-	return xfs_dquot_buf_verify(mp, bp, false);
-}
+	वापस xfs_dquot_buf_verअगरy(mp, bp, false);
+पूर्ण
 
-static void
-xfs_dquot_buf_read_verify(
-	struct xfs_buf		*bp)
-{
-	struct xfs_mount	*mp = bp->b_mount;
+अटल व्योम
+xfs_dquot_buf_पढ़ो_verअगरy(
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_mount	*mp = bp->b_mount;
 
-	if (!xfs_dquot_buf_verify_crc(mp, bp, false))
-		return;
-	xfs_dquot_buf_verify(mp, bp, false);
-}
+	अगर (!xfs_dquot_buf_verअगरy_crc(mp, bp, false))
+		वापस;
+	xfs_dquot_buf_verअगरy(mp, bp, false);
+पूर्ण
 
 /*
- * readahead errors are silent and simply leave the buffer as !done so a real
- * read will then be run with the xfs_dquot_buf_ops verifier. See
- * xfs_inode_buf_verify() for why we use EIO and ~XBF_DONE here rather than
+ * पढ़ोahead errors are silent and simply leave the buffer as !करोne so a real
+ * पढ़ो will then be run with the xfs_dquot_buf_ops verअगरier. See
+ * xfs_inode_buf_verअगरy() क्रम why we use EIO and ~XBF_DONE here rather than
  * reporting the failure.
  */
-static void
-xfs_dquot_buf_readahead_verify(
-	struct xfs_buf	*bp)
-{
-	struct xfs_mount	*mp = bp->b_mount;
+अटल व्योम
+xfs_dquot_buf_पढ़ोahead_verअगरy(
+	काष्ठा xfs_buf	*bp)
+अणु
+	काष्ठा xfs_mount	*mp = bp->b_mount;
 
-	if (!xfs_dquot_buf_verify_crc(mp, bp, true) ||
-	    xfs_dquot_buf_verify(mp, bp, true) != NULL) {
+	अगर (!xfs_dquot_buf_verअगरy_crc(mp, bp, true) ||
+	    xfs_dquot_buf_verअगरy(mp, bp, true) != शून्य) अणु
 		xfs_buf_ioerror(bp, -EIO);
 		bp->b_flags &= ~XBF_DONE;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * we don't calculate the CRC here as that is done when the dquot is flushed to
- * the buffer after the update is done. This ensures that the dquot in the
+ * we करोn't calculate the CRC here as that is करोne when the dquot is flushed to
+ * the buffer after the update is करोne. This ensures that the dquot in the
  * buffer always has an up-to-date CRC value.
  */
-static void
-xfs_dquot_buf_write_verify(
-	struct xfs_buf		*bp)
-{
-	struct xfs_mount	*mp = bp->b_mount;
+अटल व्योम
+xfs_dquot_buf_ग_लिखो_verअगरy(
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_mount	*mp = bp->b_mount;
 
-	xfs_dquot_buf_verify(mp, bp, false);
-}
+	xfs_dquot_buf_verअगरy(mp, bp, false);
+पूर्ण
 
-const struct xfs_buf_ops xfs_dquot_buf_ops = {
+स्थिर काष्ठा xfs_buf_ops xfs_dquot_buf_ops = अणु
 	.name = "xfs_dquot",
-	.magic16 = { cpu_to_be16(XFS_DQUOT_MAGIC),
-		     cpu_to_be16(XFS_DQUOT_MAGIC) },
-	.verify_read = xfs_dquot_buf_read_verify,
-	.verify_write = xfs_dquot_buf_write_verify,
-	.verify_struct = xfs_dquot_buf_verify_struct,
-};
+	.magic16 = अणु cpu_to_be16(XFS_DQUOT_MAGIC),
+		     cpu_to_be16(XFS_DQUOT_MAGIC) पूर्ण,
+	.verअगरy_पढ़ो = xfs_dquot_buf_पढ़ो_verअगरy,
+	.verअगरy_ग_लिखो = xfs_dquot_buf_ग_लिखो_verअगरy,
+	.verअगरy_काष्ठा = xfs_dquot_buf_verअगरy_काष्ठा,
+पूर्ण;
 
-const struct xfs_buf_ops xfs_dquot_buf_ra_ops = {
+स्थिर काष्ठा xfs_buf_ops xfs_dquot_buf_ra_ops = अणु
 	.name = "xfs_dquot_ra",
-	.magic16 = { cpu_to_be16(XFS_DQUOT_MAGIC),
-		     cpu_to_be16(XFS_DQUOT_MAGIC) },
-	.verify_read = xfs_dquot_buf_readahead_verify,
-	.verify_write = xfs_dquot_buf_write_verify,
-};
+	.magic16 = अणु cpu_to_be16(XFS_DQUOT_MAGIC),
+		     cpu_to_be16(XFS_DQUOT_MAGIC) पूर्ण,
+	.verअगरy_पढ़ो = xfs_dquot_buf_पढ़ोahead_verअगरy,
+	.verअगरy_ग_लिखो = xfs_dquot_buf_ग_लिखो_verअगरy,
+पूर्ण;
 
-/* Convert an on-disk timer value into an incore timer value. */
-time64_t
+/* Convert an on-disk समयr value पूर्णांकo an incore समयr value. */
+समय64_t
 xfs_dquot_from_disk_ts(
-	struct xfs_disk_dquot	*ddq,
-	__be32			dtimer)
-{
-	uint32_t		t = be32_to_cpu(dtimer);
+	काष्ठा xfs_disk_dquot	*ddq,
+	__be32			dसमयr)
+अणु
+	uपूर्णांक32_t		t = be32_to_cpu(dसमयr);
 
-	if (t != 0 && (ddq->d_type & XFS_DQTYPE_BIGTIME))
-		return xfs_dq_bigtime_to_unix(t);
+	अगर (t != 0 && (ddq->d_type & XFS_DQTYPE_BIGTIME))
+		वापस xfs_dq_bigसमय_प्रकारo_unix(t);
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-/* Convert an incore timer value into an on-disk timer value. */
+/* Convert an incore समयr value पूर्णांकo an on-disk समयr value. */
 __be32
 xfs_dquot_to_disk_ts(
-	struct xfs_dquot	*dqp,
-	time64_t		timer)
-{
-	uint32_t		t = timer;
+	काष्ठा xfs_dquot	*dqp,
+	समय64_t		समयr)
+अणु
+	uपूर्णांक32_t		t = समयr;
 
-	if (timer != 0 && (dqp->q_type & XFS_DQTYPE_BIGTIME))
-		t = xfs_dq_unix_to_bigtime(timer);
+	अगर (समयr != 0 && (dqp->q_type & XFS_DQTYPE_BIGTIME))
+		t = xfs_dq_unix_to_bigसमय(समयr);
 
-	return cpu_to_be32(t);
-}
+	वापस cpu_to_be32(t);
+पूर्ण

@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  linux/arch/arm/include/asm/perf_event.h
+ *  linux/arch/arm/include/यंत्र/perf_event.h
  *
  *  Copyright (C) 2009 picoChip Designs Ltd, Jamie Iles
  */
 
-#ifndef __ARM_PERF_EVENT_H__
-#define __ARM_PERF_EVENT_H__
+#अगर_अघोषित __ARM_PERF_EVENT_H__
+#घोषणा __ARM_PERF_EVENT_H__
 
-#ifdef CONFIG_PERF_EVENTS
-struct pt_regs;
-extern unsigned long perf_instruction_pointer(struct pt_regs *regs);
-extern unsigned long perf_misc_flags(struct pt_regs *regs);
-#define perf_misc_flags(regs)	perf_misc_flags(regs)
-#endif
+#अगर_घोषित CONFIG_PERF_EVENTS
+काष्ठा pt_regs;
+बाह्य अचिन्हित दीर्घ perf_inकाष्ठाion_poपूर्णांकer(काष्ठा pt_regs *regs);
+बाह्य अचिन्हित दीर्घ perf_misc_flags(काष्ठा pt_regs *regs);
+#घोषणा perf_misc_flags(regs)	perf_misc_flags(regs)
+#पूर्ण_अगर
 
-#define perf_arch_fetch_caller_regs(regs, __ip) { \
+#घोषणा perf_arch_fetch_caller_regs(regs, __ip) अणु \
 	(regs)->ARM_pc = (__ip); \
-	(regs)->ARM_fp = (unsigned long) __builtin_frame_address(0); \
-	(regs)->ARM_sp = current_stack_pointer; \
+	(regs)->ARM_fp = (अचिन्हित दीर्घ) __builtin_frame_address(0); \
+	(regs)->ARM_sp = current_stack_poपूर्णांकer; \
 	(regs)->ARM_cpsr = SVC_MODE; \
-}
+पूर्ण
 
-#endif /* __ARM_PERF_EVENT_H__ */
+#पूर्ण_अगर /* __ARM_PERF_EVENT_H__ */

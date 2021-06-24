@@ -1,193 +1,194 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2003 - 2009 NetXen, Inc.
  * Copyright (C) 2009 - QLogic Corporation.
  * All rights reserved.
  */
 
-#include <linux/netdevice.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/if_vlan.h>
-#include <net/checksum.h>
-#include "netxen_nic.h"
-#include "netxen_nic_hw.h"
+#समावेश <linux/netdevice.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/checksum.h>
+#समावेश "netxen_nic.h"
+#समावेश "netxen_nic_hw.h"
 
-struct crb_addr_pair {
+काष्ठा crb_addr_pair अणु
 	u32 addr;
 	u32 data;
-};
+पूर्ण;
 
-#define NETXEN_MAX_CRB_XFORM 60
-static unsigned int crb_addr_xform[NETXEN_MAX_CRB_XFORM];
-#define NETXEN_ADDR_ERROR (0xffffffff)
+#घोषणा NETXEN_MAX_CRB_XFORM 60
+अटल अचिन्हित पूर्णांक crb_addr_xक्रमm[NETXEN_MAX_CRB_XFORM];
+#घोषणा NETXEN_ADDR_ERROR (0xffffffff)
 
-#define crb_addr_transform(name) \
-	crb_addr_xform[NETXEN_HW_PX_MAP_CRB_##name] = \
+#घोषणा crb_addr_transक्रमm(name) \
+	crb_addr_xक्रमm[NETXEN_HW_PX_MAP_CRB_##name] = \
 	NETXEN_HW_CRB_HUB_AGT_ADR_##name << 20
 
-#define NETXEN_NIC_XDMA_RESET 0x8000ff
+#घोषणा NETXEN_NIC_XDMA_RESET 0x8000ff
 
-static void
-netxen_post_rx_buffers_nodb(struct netxen_adapter *adapter,
-		struct nx_host_rds_ring *rds_ring);
-static int netxen_p3_has_mn(struct netxen_adapter *adapter);
+अटल व्योम
+netxen_post_rx_buffers_nodb(काष्ठा netxen_adapter *adapter,
+		काष्ठा nx_host_rds_ring *rds_ring);
+अटल पूर्णांक netxen_p3_has_mn(काष्ठा netxen_adapter *adapter);
 
-static void crb_addr_transform_setup(void)
-{
-	crb_addr_transform(XDMA);
-	crb_addr_transform(TIMR);
-	crb_addr_transform(SRE);
-	crb_addr_transform(SQN3);
-	crb_addr_transform(SQN2);
-	crb_addr_transform(SQN1);
-	crb_addr_transform(SQN0);
-	crb_addr_transform(SQS3);
-	crb_addr_transform(SQS2);
-	crb_addr_transform(SQS1);
-	crb_addr_transform(SQS0);
-	crb_addr_transform(RPMX7);
-	crb_addr_transform(RPMX6);
-	crb_addr_transform(RPMX5);
-	crb_addr_transform(RPMX4);
-	crb_addr_transform(RPMX3);
-	crb_addr_transform(RPMX2);
-	crb_addr_transform(RPMX1);
-	crb_addr_transform(RPMX0);
-	crb_addr_transform(ROMUSB);
-	crb_addr_transform(SN);
-	crb_addr_transform(QMN);
-	crb_addr_transform(QMS);
-	crb_addr_transform(PGNI);
-	crb_addr_transform(PGND);
-	crb_addr_transform(PGN3);
-	crb_addr_transform(PGN2);
-	crb_addr_transform(PGN1);
-	crb_addr_transform(PGN0);
-	crb_addr_transform(PGSI);
-	crb_addr_transform(PGSD);
-	crb_addr_transform(PGS3);
-	crb_addr_transform(PGS2);
-	crb_addr_transform(PGS1);
-	crb_addr_transform(PGS0);
-	crb_addr_transform(PS);
-	crb_addr_transform(PH);
-	crb_addr_transform(NIU);
-	crb_addr_transform(I2Q);
-	crb_addr_transform(EG);
-	crb_addr_transform(MN);
-	crb_addr_transform(MS);
-	crb_addr_transform(CAS2);
-	crb_addr_transform(CAS1);
-	crb_addr_transform(CAS0);
-	crb_addr_transform(CAM);
-	crb_addr_transform(C2C1);
-	crb_addr_transform(C2C0);
-	crb_addr_transform(SMB);
-	crb_addr_transform(OCM0);
-	crb_addr_transform(I2C0);
-}
+अटल व्योम crb_addr_transक्रमm_setup(व्योम)
+अणु
+	crb_addr_transक्रमm(XDMA);
+	crb_addr_transक्रमm(TIMR);
+	crb_addr_transक्रमm(SRE);
+	crb_addr_transक्रमm(SQN3);
+	crb_addr_transक्रमm(SQN2);
+	crb_addr_transक्रमm(SQN1);
+	crb_addr_transक्रमm(SQN0);
+	crb_addr_transक्रमm(SQS3);
+	crb_addr_transक्रमm(SQS2);
+	crb_addr_transक्रमm(SQS1);
+	crb_addr_transक्रमm(SQS0);
+	crb_addr_transक्रमm(RPMX7);
+	crb_addr_transक्रमm(RPMX6);
+	crb_addr_transक्रमm(RPMX5);
+	crb_addr_transक्रमm(RPMX4);
+	crb_addr_transक्रमm(RPMX3);
+	crb_addr_transक्रमm(RPMX2);
+	crb_addr_transक्रमm(RPMX1);
+	crb_addr_transक्रमm(RPMX0);
+	crb_addr_transक्रमm(ROMUSB);
+	crb_addr_transक्रमm(SN);
+	crb_addr_transक्रमm(QMN);
+	crb_addr_transक्रमm(QMS);
+	crb_addr_transक्रमm(PGNI);
+	crb_addr_transक्रमm(PGND);
+	crb_addr_transक्रमm(PGN3);
+	crb_addr_transक्रमm(PGN2);
+	crb_addr_transक्रमm(PGN1);
+	crb_addr_transक्रमm(PGN0);
+	crb_addr_transक्रमm(PGSI);
+	crb_addr_transक्रमm(PGSD);
+	crb_addr_transक्रमm(PGS3);
+	crb_addr_transक्रमm(PGS2);
+	crb_addr_transक्रमm(PGS1);
+	crb_addr_transक्रमm(PGS0);
+	crb_addr_transक्रमm(PS);
+	crb_addr_transक्रमm(PH);
+	crb_addr_transक्रमm(NIU);
+	crb_addr_transक्रमm(I2Q);
+	crb_addr_transक्रमm(EG);
+	crb_addr_transक्रमm(MN);
+	crb_addr_transक्रमm(MS);
+	crb_addr_transक्रमm(CAS2);
+	crb_addr_transक्रमm(CAS1);
+	crb_addr_transक्रमm(CAS0);
+	crb_addr_transक्रमm(CAM);
+	crb_addr_transक्रमm(C2C1);
+	crb_addr_transक्रमm(C2C0);
+	crb_addr_transक्रमm(SMB);
+	crb_addr_transक्रमm(OCM0);
+	crb_addr_transक्रमm(I2C0);
+पूर्ण
 
-void netxen_release_rx_buffers(struct netxen_adapter *adapter)
-{
-	struct netxen_recv_context *recv_ctx;
-	struct nx_host_rds_ring *rds_ring;
-	struct netxen_rx_buffer *rx_buf;
-	int i, ring;
+व्योम netxen_release_rx_buffers(काष्ठा netxen_adapter *adapter)
+अणु
+	काष्ठा netxen_recv_context *recv_ctx;
+	काष्ठा nx_host_rds_ring *rds_ring;
+	काष्ठा netxen_rx_buffer *rx_buf;
+	पूर्णांक i, ring;
 
 	recv_ctx = &adapter->recv_ctx;
-	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
 		rds_ring = &recv_ctx->rds_rings[ring];
-		for (i = 0; i < rds_ring->num_desc; ++i) {
+		क्रम (i = 0; i < rds_ring->num_desc; ++i) अणु
 			rx_buf = &(rds_ring->rx_buf_arr[i]);
-			if (rx_buf->state == NETXEN_BUFFER_FREE)
-				continue;
+			अगर (rx_buf->state == NETXEN_BUFFER_FREE)
+				जारी;
 			dma_unmap_single(&adapter->pdev->dev, rx_buf->dma,
 					 rds_ring->dma_size, DMA_FROM_DEVICE);
-			if (rx_buf->skb != NULL)
-				dev_kfree_skb_any(rx_buf->skb);
-		}
-	}
-}
+			अगर (rx_buf->skb != शून्य)
+				dev_kमुक्त_skb_any(rx_buf->skb);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void netxen_release_tx_buffers(struct netxen_adapter *adapter)
-{
-	struct netxen_cmd_buffer *cmd_buf;
-	struct netxen_skb_frag *buffrag;
-	int i, j;
-	struct nx_host_tx_ring *tx_ring = adapter->tx_ring;
+व्योम netxen_release_tx_buffers(काष्ठा netxen_adapter *adapter)
+अणु
+	काष्ठा netxen_cmd_buffer *cmd_buf;
+	काष्ठा netxen_skb_frag *buffrag;
+	पूर्णांक i, j;
+	काष्ठा nx_host_tx_ring *tx_ring = adapter->tx_ring;
 
 	spin_lock_bh(&adapter->tx_clean_lock);
 	cmd_buf = tx_ring->cmd_buf_arr;
-	for (i = 0; i < tx_ring->num_desc; i++) {
+	क्रम (i = 0; i < tx_ring->num_desc; i++) अणु
 		buffrag = cmd_buf->frag_array;
-		if (buffrag->dma) {
+		अगर (buffrag->dma) अणु
 			dma_unmap_single(&adapter->pdev->dev, buffrag->dma,
 					 buffrag->length, DMA_TO_DEVICE);
 			buffrag->dma = 0ULL;
-		}
-		for (j = 1; j < cmd_buf->frag_count; j++) {
+		पूर्ण
+		क्रम (j = 1; j < cmd_buf->frag_count; j++) अणु
 			buffrag++;
-			if (buffrag->dma) {
+			अगर (buffrag->dma) अणु
 				dma_unmap_page(&adapter->pdev->dev,
 					       buffrag->dma, buffrag->length,
 					       DMA_TO_DEVICE);
 				buffrag->dma = 0ULL;
-			}
-		}
-		if (cmd_buf->skb) {
-			dev_kfree_skb_any(cmd_buf->skb);
-			cmd_buf->skb = NULL;
-		}
+			पूर्ण
+		पूर्ण
+		अगर (cmd_buf->skb) अणु
+			dev_kमुक्त_skb_any(cmd_buf->skb);
+			cmd_buf->skb = शून्य;
+		पूर्ण
 		cmd_buf++;
-	}
+	पूर्ण
 	spin_unlock_bh(&adapter->tx_clean_lock);
-}
+पूर्ण
 
-void netxen_free_sw_resources(struct netxen_adapter *adapter)
-{
-	struct netxen_recv_context *recv_ctx;
-	struct nx_host_rds_ring *rds_ring;
-	struct nx_host_tx_ring *tx_ring;
-	int ring;
+व्योम netxen_मुक्त_sw_resources(काष्ठा netxen_adapter *adapter)
+अणु
+	काष्ठा netxen_recv_context *recv_ctx;
+	काष्ठा nx_host_rds_ring *rds_ring;
+	काष्ठा nx_host_tx_ring *tx_ring;
+	पूर्णांक ring;
 
 	recv_ctx = &adapter->recv_ctx;
 
-	if (recv_ctx->rds_rings == NULL)
-		goto skip_rds;
+	अगर (recv_ctx->rds_rings == शून्य)
+		जाओ skip_rds;
 
-	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
 		rds_ring = &recv_ctx->rds_rings[ring];
-		vfree(rds_ring->rx_buf_arr);
-		rds_ring->rx_buf_arr = NULL;
-	}
-	kfree(recv_ctx->rds_rings);
+		vमुक्त(rds_ring->rx_buf_arr);
+		rds_ring->rx_buf_arr = शून्य;
+	पूर्ण
+	kमुक्त(recv_ctx->rds_rings);
 
 skip_rds:
-	if (adapter->tx_ring == NULL)
-		return;
+	अगर (adapter->tx_ring == शून्य)
+		वापस;
 
 	tx_ring = adapter->tx_ring;
-	vfree(tx_ring->cmd_buf_arr);
-	kfree(tx_ring);
-	adapter->tx_ring = NULL;
-}
+	vमुक्त(tx_ring->cmd_buf_arr);
+	kमुक्त(tx_ring);
+	adapter->tx_ring = शून्य;
+पूर्ण
 
-int netxen_alloc_sw_resources(struct netxen_adapter *adapter)
-{
-	struct netxen_recv_context *recv_ctx;
-	struct nx_host_rds_ring *rds_ring;
-	struct nx_host_sds_ring *sds_ring;
-	struct nx_host_tx_ring *tx_ring;
-	struct netxen_rx_buffer *rx_buf;
-	int ring, i;
+पूर्णांक netxen_alloc_sw_resources(काष्ठा netxen_adapter *adapter)
+अणु
+	काष्ठा netxen_recv_context *recv_ctx;
+	काष्ठा nx_host_rds_ring *rds_ring;
+	काष्ठा nx_host_sds_ring *sds_ring;
+	काष्ठा nx_host_tx_ring *tx_ring;
+	काष्ठा netxen_rx_buffer *rx_buf;
+	पूर्णांक ring, i;
 
-	struct netxen_cmd_buffer *cmd_buf_arr;
-	struct net_device *netdev = adapter->netdev;
+	काष्ठा netxen_cmd_buffer *cmd_buf_arr;
+	काष्ठा net_device *netdev = adapter->netdev;
 
-	tx_ring = kzalloc(sizeof(struct nx_host_tx_ring), GFP_KERNEL);
-	if (tx_ring == NULL)
-		return -ENOMEM;
+	tx_ring = kzalloc(माप(काष्ठा nx_host_tx_ring), GFP_KERNEL);
+	अगर (tx_ring == शून्य)
+		वापस -ENOMEM;
 
 	adapter->tx_ring = tx_ring;
 
@@ -195,228 +196,228 @@ int netxen_alloc_sw_resources(struct netxen_adapter *adapter)
 	tx_ring->txq = netdev_get_tx_queue(netdev, 0);
 
 	cmd_buf_arr = vzalloc(TX_BUFF_RINGSIZE(tx_ring));
-	if (cmd_buf_arr == NULL)
-		goto err_out;
+	अगर (cmd_buf_arr == शून्य)
+		जाओ err_out;
 
 	tx_ring->cmd_buf_arr = cmd_buf_arr;
 
 	recv_ctx = &adapter->recv_ctx;
 
-	rds_ring = kcalloc(adapter->max_rds_rings,
-			   sizeof(struct nx_host_rds_ring), GFP_KERNEL);
-	if (rds_ring == NULL)
-		goto err_out;
+	rds_ring = kसुस्मृति(adapter->max_rds_rings,
+			   माप(काष्ठा nx_host_rds_ring), GFP_KERNEL);
+	अगर (rds_ring == शून्य)
+		जाओ err_out;
 
 	recv_ctx->rds_rings = rds_ring;
 
-	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
 		rds_ring = &recv_ctx->rds_rings[ring];
-		switch (ring) {
-		case RCV_RING_NORMAL:
+		चयन (ring) अणु
+		हाल RCV_RING_NORMAL:
 			rds_ring->num_desc = adapter->num_rxd;
-			if (adapter->ahw.cut_through) {
+			अगर (adapter->ahw.cut_through) अणु
 				rds_ring->dma_size =
 					NX_CT_DEFAULT_RX_BUF_LEN;
 				rds_ring->skb_size =
 					NX_CT_DEFAULT_RX_BUF_LEN;
-			} else {
-				if (NX_IS_REVISION_P3(adapter->ahw.revision_id))
+			पूर्ण अन्यथा अणु
+				अगर (NX_IS_REVISION_P3(adapter->ahw.revision_id))
 					rds_ring->dma_size =
 						NX_P3_RX_BUF_MAX_LEN;
-				else
+				अन्यथा
 					rds_ring->dma_size =
 						NX_P2_RX_BUF_MAX_LEN;
 				rds_ring->skb_size =
 					rds_ring->dma_size + NET_IP_ALIGN;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case RCV_RING_JUMBO:
+		हाल RCV_RING_JUMBO:
 			rds_ring->num_desc = adapter->num_jumbo_rxd;
-			if (NX_IS_REVISION_P3(adapter->ahw.revision_id))
+			अगर (NX_IS_REVISION_P3(adapter->ahw.revision_id))
 				rds_ring->dma_size =
 					NX_P3_RX_JUMBO_BUF_MAX_LEN;
-			else
+			अन्यथा
 				rds_ring->dma_size =
 					NX_P2_RX_JUMBO_BUF_MAX_LEN;
 
-			if (adapter->capabilities & NX_CAP0_HW_LRO)
+			अगर (adapter->capabilities & NX_CAP0_HW_LRO)
 				rds_ring->dma_size += NX_LRO_BUFFER_EXTRA;
 
 			rds_ring->skb_size =
 				rds_ring->dma_size + NET_IP_ALIGN;
-			break;
+			अवरोध;
 
-		case RCV_RING_LRO:
+		हाल RCV_RING_LRO:
 			rds_ring->num_desc = adapter->num_lro_rxd;
 			rds_ring->dma_size = NX_RX_LRO_BUFFER_LENGTH;
 			rds_ring->skb_size = rds_ring->dma_size + NET_IP_ALIGN;
-			break;
+			अवरोध;
 
-		}
+		पूर्ण
 		rds_ring->rx_buf_arr = vzalloc(RCV_BUFF_RINGSIZE(rds_ring));
-		if (rds_ring->rx_buf_arr == NULL)
-			/* free whatever was already allocated */
-			goto err_out;
+		अगर (rds_ring->rx_buf_arr == शून्य)
+			/* मुक्त whatever was alपढ़ोy allocated */
+			जाओ err_out;
 
-		INIT_LIST_HEAD(&rds_ring->free_list);
+		INIT_LIST_HEAD(&rds_ring->मुक्त_list);
 		/*
 		 * Now go through all of them, set reference handles
 		 * and put them in the queues.
 		 */
 		rx_buf = rds_ring->rx_buf_arr;
-		for (i = 0; i < rds_ring->num_desc; i++) {
+		क्रम (i = 0; i < rds_ring->num_desc; i++) अणु
 			list_add_tail(&rx_buf->list,
-					&rds_ring->free_list);
+					&rds_ring->मुक्त_list);
 			rx_buf->ref_handle = i;
 			rx_buf->state = NETXEN_BUFFER_FREE;
 			rx_buf++;
-		}
+		पूर्ण
 		spin_lock_init(&rds_ring->lock);
-	}
+	पूर्ण
 
-	for (ring = 0; ring < adapter->max_sds_rings; ring++) {
+	क्रम (ring = 0; ring < adapter->max_sds_rings; ring++) अणु
 		sds_ring = &recv_ctx->sds_rings[ring];
 		sds_ring->irq = adapter->msix_entries[ring].vector;
 		sds_ring->adapter = adapter;
 		sds_ring->num_desc = adapter->num_rxd;
 
-		for (i = 0; i < NUM_RCV_DESC_RINGS; i++)
-			INIT_LIST_HEAD(&sds_ring->free_list[i]);
-	}
+		क्रम (i = 0; i < NUM_RCV_DESC_RINGS; i++)
+			INIT_LIST_HEAD(&sds_ring->मुक्त_list[i]);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out:
-	netxen_free_sw_resources(adapter);
-	return -ENOMEM;
-}
+	netxen_मुक्त_sw_resources(adapter);
+	वापस -ENOMEM;
+पूर्ण
 
 /*
- * netxen_decode_crb_addr(0 - utility to translate from internal Phantom CRB
- * address to external PCI CRB address.
+ * netxen_decode_crb_addr(0 - utility to translate from पूर्णांकernal Phantom CRB
+ * address to बाह्यal PCI CRB address.
  */
-static u32 netxen_decode_crb_addr(u32 addr)
-{
-	int i;
+अटल u32 netxen_decode_crb_addr(u32 addr)
+अणु
+	पूर्णांक i;
 	u32 base_addr, offset, pci_base;
 
-	crb_addr_transform_setup();
+	crb_addr_transक्रमm_setup();
 
 	pci_base = NETXEN_ADDR_ERROR;
 	base_addr = addr & 0xfff00000;
 	offset = addr & 0x000fffff;
 
-	for (i = 0; i < NETXEN_MAX_CRB_XFORM; i++) {
-		if (crb_addr_xform[i] == base_addr) {
+	क्रम (i = 0; i < NETXEN_MAX_CRB_XFORM; i++) अणु
+		अगर (crb_addr_xक्रमm[i] == base_addr) अणु
 			pci_base = i << 20;
-			break;
-		}
-	}
-	if (pci_base == NETXEN_ADDR_ERROR)
-		return pci_base;
-	else
-		return pci_base + offset;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (pci_base == NETXEN_ADDR_ERROR)
+		वापस pci_base;
+	अन्यथा
+		वापस pci_base + offset;
+पूर्ण
 
-#define NETXEN_MAX_ROM_WAIT_USEC	100
+#घोषणा NETXEN_MAX_ROM_WAIT_USEC	100
 
-static int netxen_wait_rom_done(struct netxen_adapter *adapter)
-{
-	long timeout = 0;
-	long done = 0;
+अटल पूर्णांक netxen_रुको_rom_करोne(काष्ठा netxen_adapter *adapter)
+अणु
+	दीर्घ समयout = 0;
+	दीर्घ करोne = 0;
 
 	cond_resched();
 
-	while (done == 0) {
-		done = NXRD32(adapter, NETXEN_ROMUSB_GLB_STATUS);
-		done &= 2;
-		if (++timeout >= NETXEN_MAX_ROM_WAIT_USEC) {
+	जबतक (करोne == 0) अणु
+		करोne = NXRD32(adapter, NETXEN_ROMUSB_GLB_STATUS);
+		करोne &= 2;
+		अगर (++समयout >= NETXEN_MAX_ROM_WAIT_USEC) अणु
 			dev_err(&adapter->pdev->dev,
 				"Timeout reached  waiting for rom done");
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		udelay(1);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int do_rom_fast_read(struct netxen_adapter *adapter,
-			    int addr, int *valp)
-{
+अटल पूर्णांक करो_rom_fast_पढ़ो(काष्ठा netxen_adapter *adapter,
+			    पूर्णांक addr, पूर्णांक *valp)
+अणु
 	NXWR32(adapter, NETXEN_ROMUSB_ROM_ADDRESS, addr);
 	NXWR32(adapter, NETXEN_ROMUSB_ROM_DUMMY_BYTE_CNT, 0);
 	NXWR32(adapter, NETXEN_ROMUSB_ROM_ABYTE_CNT, 3);
 	NXWR32(adapter, NETXEN_ROMUSB_ROM_INSTR_OPCODE, 0xb);
-	if (netxen_wait_rom_done(adapter)) {
-		printk("Error waiting for rom done\n");
-		return -EIO;
-	}
+	अगर (netxen_रुको_rom_करोne(adapter)) अणु
+		prपूर्णांकk("Error waiting for rom done\n");
+		वापस -EIO;
+	पूर्ण
 	/* reset abyte_cnt and dummy_byte_cnt */
 	NXWR32(adapter, NETXEN_ROMUSB_ROM_ABYTE_CNT, 0);
 	udelay(10);
 	NXWR32(adapter, NETXEN_ROMUSB_ROM_DUMMY_BYTE_CNT, 0);
 
 	*valp = NXRD32(adapter, NETXEN_ROMUSB_ROM_RDATA);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_rom_fast_read_words(struct netxen_adapter *adapter, int addr,
-				  u8 *bytes, size_t size)
-{
-	int addridx;
-	int ret = 0;
+अटल पूर्णांक करो_rom_fast_पढ़ो_words(काष्ठा netxen_adapter *adapter, पूर्णांक addr,
+				  u8 *bytes, माप_प्रकार size)
+अणु
+	पूर्णांक addridx;
+	पूर्णांक ret = 0;
 
-	for (addridx = addr; addridx < (addr + size); addridx += 4) {
-		int v;
-		ret = do_rom_fast_read(adapter, addridx, &v);
-		if (ret != 0)
-			break;
+	क्रम (addridx = addr; addridx < (addr + size); addridx += 4) अणु
+		पूर्णांक v;
+		ret = करो_rom_fast_पढ़ो(adapter, addridx, &v);
+		अगर (ret != 0)
+			अवरोध;
 		*(__le32 *)bytes = cpu_to_le32(v);
 		bytes += 4;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-netxen_rom_fast_read_words(struct netxen_adapter *adapter, int addr,
-				u8 *bytes, size_t size)
-{
-	int ret;
+पूर्णांक
+netxen_rom_fast_पढ़ो_words(काष्ठा netxen_adapter *adapter, पूर्णांक addr,
+				u8 *bytes, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
 
 	ret = netxen_rom_lock(adapter);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = do_rom_fast_read_words(adapter, addr, bytes, size);
+	ret = करो_rom_fast_पढ़ो_words(adapter, addr, bytes, size);
 
 	netxen_rom_unlock(adapter);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int netxen_rom_fast_read(struct netxen_adapter *adapter, int addr, int *valp)
-{
-	int ret;
+पूर्णांक netxen_rom_fast_पढ़ो(काष्ठा netxen_adapter *adapter, पूर्णांक addr, पूर्णांक *valp)
+अणु
+	पूर्णांक ret;
 
-	if (netxen_rom_lock(adapter) != 0)
-		return -EIO;
+	अगर (netxen_rom_lock(adapter) != 0)
+		वापस -EIO;
 
-	ret = do_rom_fast_read(adapter, addr, valp);
+	ret = करो_rom_fast_पढ़ो(adapter, addr, valp);
 	netxen_rom_unlock(adapter);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define NETXEN_BOARDTYPE		0x4008
-#define NETXEN_BOARDNUM 		0x400c
-#define NETXEN_CHIPNUM			0x4010
+#घोषणा NETXEN_BOARDTYPE		0x4008
+#घोषणा NETXEN_BOARDNUM 		0x400c
+#घोषणा NETXEN_CHIPNUM			0x4010
 
-int netxen_pinit_from_rom(struct netxen_adapter *adapter)
-{
-	int addr, val;
-	int i, n, init_delay = 0;
-	struct crb_addr_pair *buf;
-	unsigned offset;
+पूर्णांक netxen_pinit_from_rom(काष्ठा netxen_adapter *adapter)
+अणु
+	पूर्णांक addr, val;
+	पूर्णांक i, n, init_delay = 0;
+	काष्ठा crb_addr_pair *buf;
+	अचिन्हित offset;
 	u32 off;
 
 	/* resetall */
@@ -424,119 +425,119 @@ int netxen_pinit_from_rom(struct netxen_adapter *adapter)
 	NXWR32(adapter, NETXEN_ROMUSB_GLB_SW_RESET, 0xfeffffff);
 	netxen_rom_unlock(adapter);
 
-	if (NX_IS_REVISION_P3(adapter->ahw.revision_id)) {
-		if (netxen_rom_fast_read(adapter, 0, &n) != 0 ||
+	अगर (NX_IS_REVISION_P3(adapter->ahw.revision_id)) अणु
+		अगर (netxen_rom_fast_पढ़ो(adapter, 0, &n) != 0 ||
 			(n != 0xcafecafe) ||
-			netxen_rom_fast_read(adapter, 4, &n) != 0) {
-			printk(KERN_ERR "%s: ERROR Reading crb_init area: "
+			netxen_rom_fast_पढ़ो(adapter, 4, &n) != 0) अणु
+			prपूर्णांकk(KERN_ERR "%s: ERROR Reading crb_init area: "
 					"n: %08x\n", netxen_nic_driver_name, n);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		offset = n & 0xffffU;
 		n = (n >> 16) & 0xffffU;
-	} else {
-		if (netxen_rom_fast_read(adapter, 0, &n) != 0 ||
-			!(n & 0x80000000)) {
-			printk(KERN_ERR "%s: ERROR Reading crb_init area: "
+	पूर्ण अन्यथा अणु
+		अगर (netxen_rom_fast_पढ़ो(adapter, 0, &n) != 0 ||
+			!(n & 0x80000000)) अणु
+			prपूर्णांकk(KERN_ERR "%s: ERROR Reading crb_init area: "
 					"n: %08x\n", netxen_nic_driver_name, n);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		offset = 1;
 		n &= ~0x80000000;
-	}
+	पूर्ण
 
-	if (n >= 1024) {
-		printk(KERN_ERR "%s:n=0x%x Error! NetXen card flash not"
+	अगर (n >= 1024) अणु
+		prपूर्णांकk(KERN_ERR "%s:n=0x%x Error! NetXen card flash not"
 		       " initialized.\n", __func__, n);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	buf = kcalloc(n, sizeof(struct crb_addr_pair), GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	buf = kसुस्मृति(n, माप(काष्ठा crb_addr_pair), GFP_KERNEL);
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
-	for (i = 0; i < n; i++) {
-		if (netxen_rom_fast_read(adapter, 8*i + 4*offset, &val) != 0 ||
-		netxen_rom_fast_read(adapter, 8*i + 4*offset + 4, &addr) != 0) {
-			kfree(buf);
-			return -EIO;
-		}
+	क्रम (i = 0; i < n; i++) अणु
+		अगर (netxen_rom_fast_पढ़ो(adapter, 8*i + 4*offset, &val) != 0 ||
+		netxen_rom_fast_पढ़ो(adapter, 8*i + 4*offset + 4, &addr) != 0) अणु
+			kमुक्त(buf);
+			वापस -EIO;
+		पूर्ण
 
 		buf[i].addr = addr;
 		buf[i].data = val;
 
-	}
+	पूर्ण
 
-	for (i = 0; i < n; i++) {
+	क्रम (i = 0; i < n; i++) अणु
 
 		off = netxen_decode_crb_addr(buf[i].addr);
-		if (off == NETXEN_ADDR_ERROR) {
-			printk(KERN_ERR"CRB init value out of range %x\n",
+		अगर (off == NETXEN_ADDR_ERROR) अणु
+			prपूर्णांकk(KERN_ERR"CRB init value out of range %x\n",
 					buf[i].addr);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		off += NETXEN_PCI_CRBSPACE;
 
-		if (off & 1)
-			continue;
+		अगर (off & 1)
+			जारी;
 
 		/* skipping cold reboot MAGIC */
-		if (off == NETXEN_CAM_RAM(0x1fc))
-			continue;
+		अगर (off == NETXEN_CAM_RAM(0x1fc))
+			जारी;
 
-		if (NX_IS_REVISION_P3(adapter->ahw.revision_id)) {
-			if (off == (NETXEN_CRB_I2C0 + 0x1c))
-				continue;
-			/* do not reset PCI */
-			if (off == (ROMUSB_GLB + 0xbc))
-				continue;
-			if (off == (ROMUSB_GLB + 0xa8))
-				continue;
-			if (off == (ROMUSB_GLB + 0xc8)) /* core clock */
-				continue;
-			if (off == (ROMUSB_GLB + 0x24)) /* MN clock */
-				continue;
-			if (off == (ROMUSB_GLB + 0x1c)) /* MS clock */
-				continue;
-			if ((off & 0x0ff00000) == NETXEN_CRB_DDR_NET)
-				continue;
-			if (off == (NETXEN_CRB_PEG_NET_1 + 0x18) &&
+		अगर (NX_IS_REVISION_P3(adapter->ahw.revision_id)) अणु
+			अगर (off == (NETXEN_CRB_I2C0 + 0x1c))
+				जारी;
+			/* करो not reset PCI */
+			अगर (off == (ROMUSB_GLB + 0xbc))
+				जारी;
+			अगर (off == (ROMUSB_GLB + 0xa8))
+				जारी;
+			अगर (off == (ROMUSB_GLB + 0xc8)) /* core घड़ी */
+				जारी;
+			अगर (off == (ROMUSB_GLB + 0x24)) /* MN घड़ी */
+				जारी;
+			अगर (off == (ROMUSB_GLB + 0x1c)) /* MS घड़ी */
+				जारी;
+			अगर ((off & 0x0ff00000) == NETXEN_CRB_DDR_NET)
+				जारी;
+			अगर (off == (NETXEN_CRB_PEG_NET_1 + 0x18) &&
 				!NX_IS_REVISION_P3P(adapter->ahw.revision_id))
 				buf[i].data = 0x1020;
-			/* skip the function enable register */
-			if (off == NETXEN_PCIE_REG(PCIE_SETUP_FUNCTION))
-				continue;
-			if (off == NETXEN_PCIE_REG(PCIE_SETUP_FUNCTION2))
-				continue;
-			if ((off & 0x0ff00000) == NETXEN_CRB_SMB)
-				continue;
-		}
+			/* skip the function enable रेजिस्टर */
+			अगर (off == NETXEN_PCIE_REG(PCIE_SETUP_FUNCTION))
+				जारी;
+			अगर (off == NETXEN_PCIE_REG(PCIE_SETUP_FUNCTION2))
+				जारी;
+			अगर ((off & 0x0ff00000) == NETXEN_CRB_SMB)
+				जारी;
+		पूर्ण
 
 		init_delay = 1;
-		/* After writing this register, HW needs time for CRB */
-		/* to quiet down (else crb_window returns 0xffffffff) */
-		if (off == NETXEN_ROMUSB_GLB_SW_RESET) {
+		/* After writing this रेजिस्टर, HW needs समय क्रम CRB */
+		/* to quiet करोwn (अन्यथा crb_winकरोw वापसs 0xffffffff) */
+		अगर (off == NETXEN_ROMUSB_GLB_SW_RESET) अणु
 			init_delay = 1000;
-			if (NX_IS_REVISION_P2(adapter->ahw.revision_id)) {
+			अगर (NX_IS_REVISION_P2(adapter->ahw.revision_id)) अणु
 				/* hold xdma in reset also */
 				buf[i].data = NETXEN_NIC_XDMA_RESET;
 				buf[i].data = 0x8000ff;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		NXWR32(adapter, off, buf[i].data);
 
 		msleep(init_delay);
-	}
-	kfree(buf);
+	पूर्ण
+	kमुक्त(buf);
 
 	/* disable_peg_cache_all */
 
 	/* unreset_net_cache */
-	if (NX_IS_REVISION_P2(adapter->ahw.revision_id)) {
+	अगर (NX_IS_REVISION_P2(adapter->ahw.revision_id)) अणु
 		val = NXRD32(adapter, NETXEN_ROMUSB_GLB_SW_RESET);
 		NXWR32(adapter, NETXEN_ROMUSB_GLB_SW_RESET, (val & 0xffffff0f));
-	}
+	पूर्ण
 
 	/* p2dn replyCount */
 	NXWR32(adapter, NETXEN_CRB_PEG_NET_D + 0xec, 0x1e);
@@ -559,354 +560,354 @@ int netxen_pinit_from_rom(struct netxen_adapter *adapter)
 	/* peg_clr 3 */
 	NXWR32(adapter, NETXEN_CRB_PEG_NET_3 + 0x8, 0);
 	NXWR32(adapter, NETXEN_CRB_PEG_NET_3 + 0xc, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct uni_table_desc *nx_get_table_desc(const u8 *unirom, int section)
-{
-	uint32_t i;
-	struct uni_table_desc *directory = (struct uni_table_desc *) &unirom[0];
+अटल काष्ठा uni_table_desc *nx_get_table_desc(स्थिर u8 *unirom, पूर्णांक section)
+अणु
+	uपूर्णांक32_t i;
+	काष्ठा uni_table_desc *directory = (काष्ठा uni_table_desc *) &unirom[0];
 	__le32 entries = cpu_to_le32(directory->num_entries);
 
-	for (i = 0; i < entries; i++) {
+	क्रम (i = 0; i < entries; i++) अणु
 
 		__le32 offs = cpu_to_le32(directory->findex) +
 				(i * cpu_to_le32(directory->entry_size));
 		__le32 tab_type = cpu_to_le32(*((u32 *)&unirom[offs] + 8));
 
-		if (tab_type == section)
-			return (struct uni_table_desc *) &unirom[offs];
-	}
+		अगर (tab_type == section)
+			वापस (काष्ठा uni_table_desc *) &unirom[offs];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#define	QLCNIC_FILEHEADER_SIZE	(14 * 4)
+#घोषणा	QLCNIC_खाताHEADER_SIZE	(14 * 4)
 
-static int
-netxen_nic_validate_header(struct netxen_adapter *adapter)
-{
-	const u8 *unirom = adapter->fw->data;
-	struct uni_table_desc *directory = (struct uni_table_desc *) &unirom[0];
+अटल पूर्णांक
+netxen_nic_validate_header(काष्ठा netxen_adapter *adapter)
+अणु
+	स्थिर u8 *unirom = adapter->fw->data;
+	काष्ठा uni_table_desc *directory = (काष्ठा uni_table_desc *) &unirom[0];
 	u32 fw_file_size = adapter->fw->size;
 	u32 tab_size;
 	__le32 entries;
 	__le32 entry_size;
 
-	if (fw_file_size < QLCNIC_FILEHEADER_SIZE)
-		return -EINVAL;
+	अगर (fw_file_size < QLCNIC_खाताHEADER_SIZE)
+		वापस -EINVAL;
 
 	entries = cpu_to_le32(directory->num_entries);
 	entry_size = cpu_to_le32(directory->entry_size);
 	tab_size = cpu_to_le32(directory->findex) + (entries * entry_size);
 
-	if (fw_file_size < tab_size)
-		return -EINVAL;
+	अगर (fw_file_size < tab_size)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-netxen_nic_validate_bootld(struct netxen_adapter *adapter)
-{
-	struct uni_table_desc *tab_desc;
-	struct uni_data_desc *descr;
-	const u8 *unirom = adapter->fw->data;
-	__le32 idx = cpu_to_le32(*((int *)&unirom[adapter->file_prd_off] +
+अटल पूर्णांक
+netxen_nic_validate_bootld(काष्ठा netxen_adapter *adapter)
+अणु
+	काष्ठा uni_table_desc *tab_desc;
+	काष्ठा uni_data_desc *descr;
+	स्थिर u8 *unirom = adapter->fw->data;
+	__le32 idx = cpu_to_le32(*((पूर्णांक *)&unirom[adapter->file_prd_off] +
 				NX_UNI_BOOTLD_IDX_OFF));
 	u32 offs;
 	u32 tab_size;
 	u32 data_size;
 
-	tab_desc = nx_get_table_desc(unirom, NX_UNI_DIR_SECT_BOOTLD);
+	tab_desc = nx_get_table_desc(unirom, NX_UNI_सूची_SECT_BOOTLD);
 
-	if (!tab_desc)
-		return -EINVAL;
+	अगर (!tab_desc)
+		वापस -EINVAL;
 
 	tab_size = cpu_to_le32(tab_desc->findex) +
 			(cpu_to_le32(tab_desc->entry_size) * (idx + 1));
 
-	if (adapter->fw->size < tab_size)
-		return -EINVAL;
+	अगर (adapter->fw->size < tab_size)
+		वापस -EINVAL;
 
 	offs = cpu_to_le32(tab_desc->findex) +
 		(cpu_to_le32(tab_desc->entry_size) * (idx));
-	descr = (struct uni_data_desc *)&unirom[offs];
+	descr = (काष्ठा uni_data_desc *)&unirom[offs];
 
 	data_size = cpu_to_le32(descr->findex) + cpu_to_le32(descr->size);
 
-	if (adapter->fw->size < data_size)
-		return -EINVAL;
+	अगर (adapter->fw->size < data_size)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-netxen_nic_validate_fw(struct netxen_adapter *adapter)
-{
-	struct uni_table_desc *tab_desc;
-	struct uni_data_desc *descr;
-	const u8 *unirom = adapter->fw->data;
-	__le32 idx = cpu_to_le32(*((int *)&unirom[adapter->file_prd_off] +
+अटल पूर्णांक
+netxen_nic_validate_fw(काष्ठा netxen_adapter *adapter)
+अणु
+	काष्ठा uni_table_desc *tab_desc;
+	काष्ठा uni_data_desc *descr;
+	स्थिर u8 *unirom = adapter->fw->data;
+	__le32 idx = cpu_to_le32(*((पूर्णांक *)&unirom[adapter->file_prd_off] +
 				NX_UNI_FIRMWARE_IDX_OFF));
 	u32 offs;
 	u32 tab_size;
 	u32 data_size;
 
-	tab_desc = nx_get_table_desc(unirom, NX_UNI_DIR_SECT_FW);
+	tab_desc = nx_get_table_desc(unirom, NX_UNI_सूची_SECT_FW);
 
-	if (!tab_desc)
-		return -EINVAL;
+	अगर (!tab_desc)
+		वापस -EINVAL;
 
 	tab_size = cpu_to_le32(tab_desc->findex) +
 			(cpu_to_le32(tab_desc->entry_size) * (idx + 1));
 
-	if (adapter->fw->size < tab_size)
-		return -EINVAL;
+	अगर (adapter->fw->size < tab_size)
+		वापस -EINVAL;
 
 	offs = cpu_to_le32(tab_desc->findex) +
 		(cpu_to_le32(tab_desc->entry_size) * (idx));
-	descr = (struct uni_data_desc *)&unirom[offs];
+	descr = (काष्ठा uni_data_desc *)&unirom[offs];
 	data_size = cpu_to_le32(descr->findex) + cpu_to_le32(descr->size);
 
-	if (adapter->fw->size < data_size)
-		return -EINVAL;
+	अगर (adapter->fw->size < data_size)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-netxen_nic_validate_product_offs(struct netxen_adapter *adapter)
-{
-	struct uni_table_desc *ptab_descr;
-	const u8 *unirom = adapter->fw->data;
-	int mn_present = (NX_IS_REVISION_P2(adapter->ahw.revision_id)) ?
+अटल पूर्णांक
+netxen_nic_validate_product_offs(काष्ठा netxen_adapter *adapter)
+अणु
+	काष्ठा uni_table_desc *ptab_descr;
+	स्थिर u8 *unirom = adapter->fw->data;
+	पूर्णांक mn_present = (NX_IS_REVISION_P2(adapter->ahw.revision_id)) ?
 			1 : netxen_p3_has_mn(adapter);
 	__le32 entries;
 	__le32 entry_size;
 	u32 tab_size;
 	u32 i;
 
-	ptab_descr = nx_get_table_desc(unirom, NX_UNI_DIR_SECT_PRODUCT_TBL);
-	if (ptab_descr == NULL)
-		return -EINVAL;
+	ptab_descr = nx_get_table_desc(unirom, NX_UNI_सूची_SECT_PRODUCT_TBL);
+	अगर (ptab_descr == शून्य)
+		वापस -EINVAL;
 
 	entries = cpu_to_le32(ptab_descr->num_entries);
 	entry_size = cpu_to_le32(ptab_descr->entry_size);
 	tab_size = cpu_to_le32(ptab_descr->findex) + (entries * entry_size);
 
-	if (adapter->fw->size < tab_size)
-		return -EINVAL;
+	अगर (adapter->fw->size < tab_size)
+		वापस -EINVAL;
 
 nomn:
-	for (i = 0; i < entries; i++) {
+	क्रम (i = 0; i < entries; i++) अणु
 
 		__le32 flags, file_chiprev, offs;
 		u8 chiprev = adapter->ahw.revision_id;
-		uint32_t flagbit;
+		uपूर्णांक32_t flagbit;
 
 		offs = cpu_to_le32(ptab_descr->findex) +
 				(i * cpu_to_le32(ptab_descr->entry_size));
-		flags = cpu_to_le32(*((int *)&unirom[offs] + NX_UNI_FLAGS_OFF));
-		file_chiprev = cpu_to_le32(*((int *)&unirom[offs] +
+		flags = cpu_to_le32(*((पूर्णांक *)&unirom[offs] + NX_UNI_FLAGS_OFF));
+		file_chiprev = cpu_to_le32(*((पूर्णांक *)&unirom[offs] +
 							NX_UNI_CHIP_REV_OFF));
 
 		flagbit = mn_present ? 1 : 2;
 
-		if ((chiprev == file_chiprev) &&
-					((1ULL << flagbit) & flags)) {
+		अगर ((chiprev == file_chiprev) &&
+					((1ULL << flagbit) & flags)) अणु
 			adapter->file_prd_off = offs;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (mn_present && NX_IS_REVISION_P3(adapter->ahw.revision_id)) {
+	अगर (mn_present && NX_IS_REVISION_P3(adapter->ahw.revision_id)) अणु
 		mn_present = 0;
-		goto nomn;
-	}
+		जाओ nomn;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int
-netxen_nic_validate_unified_romimage(struct netxen_adapter *adapter)
-{
-	if (netxen_nic_validate_header(adapter)) {
+अटल पूर्णांक
+netxen_nic_validate_unअगरied_romimage(काष्ठा netxen_adapter *adapter)
+अणु
+	अगर (netxen_nic_validate_header(adapter)) अणु
 		dev_err(&adapter->pdev->dev,
 				"unified image: header validation failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (netxen_nic_validate_product_offs(adapter)) {
+	अगर (netxen_nic_validate_product_offs(adapter)) अणु
 		dev_err(&adapter->pdev->dev,
 				"unified image: product validation failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (netxen_nic_validate_bootld(adapter)) {
+	अगर (netxen_nic_validate_bootld(adapter)) अणु
 		dev_err(&adapter->pdev->dev,
 				"unified image: bootld validation failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (netxen_nic_validate_fw(adapter)) {
+	अगर (netxen_nic_validate_fw(adapter)) अणु
 		dev_err(&adapter->pdev->dev,
 				"unified image: firmware validation failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct uni_data_desc *nx_get_data_desc(struct netxen_adapter *adapter,
+अटल काष्ठा uni_data_desc *nx_get_data_desc(काष्ठा netxen_adapter *adapter,
 			u32 section, u32 idx_offset)
-{
-	const u8 *unirom = adapter->fw->data;
-	int idx = cpu_to_le32(*((int *)&unirom[adapter->file_prd_off] +
+अणु
+	स्थिर u8 *unirom = adapter->fw->data;
+	पूर्णांक idx = cpu_to_le32(*((पूर्णांक *)&unirom[adapter->file_prd_off] +
 								idx_offset));
-	struct uni_table_desc *tab_desc;
+	काष्ठा uni_table_desc *tab_desc;
 	__le32 offs;
 
 	tab_desc = nx_get_table_desc(unirom, section);
 
-	if (tab_desc == NULL)
-		return NULL;
+	अगर (tab_desc == शून्य)
+		वापस शून्य;
 
 	offs = cpu_to_le32(tab_desc->findex) +
 			(cpu_to_le32(tab_desc->entry_size) * idx);
 
-	return (struct uni_data_desc *)&unirom[offs];
-}
+	वापस (काष्ठा uni_data_desc *)&unirom[offs];
+पूर्ण
 
-static u8 *
-nx_get_bootld_offs(struct netxen_adapter *adapter)
-{
+अटल u8 *
+nx_get_bootld_offs(काष्ठा netxen_adapter *adapter)
+अणु
 	u32 offs = NETXEN_BOOTLD_START;
 
-	if (adapter->fw_type == NX_UNIFIED_ROMIMAGE)
+	अगर (adapter->fw_type == NX_UNIFIED_ROMIMAGE)
 		offs = cpu_to_le32((nx_get_data_desc(adapter,
-					NX_UNI_DIR_SECT_BOOTLD,
+					NX_UNI_सूची_SECT_BOOTLD,
 					NX_UNI_BOOTLD_IDX_OFF))->findex);
 
-	return (u8 *)&adapter->fw->data[offs];
-}
+	वापस (u8 *)&adapter->fw->data[offs];
+पूर्ण
 
-static u8 *
-nx_get_fw_offs(struct netxen_adapter *adapter)
-{
+अटल u8 *
+nx_get_fw_offs(काष्ठा netxen_adapter *adapter)
+अणु
 	u32 offs = NETXEN_IMAGE_START;
 
-	if (adapter->fw_type == NX_UNIFIED_ROMIMAGE)
+	अगर (adapter->fw_type == NX_UNIFIED_ROMIMAGE)
 		offs = cpu_to_le32((nx_get_data_desc(adapter,
-					NX_UNI_DIR_SECT_FW,
+					NX_UNI_सूची_SECT_FW,
 					NX_UNI_FIRMWARE_IDX_OFF))->findex);
 
-	return (u8 *)&adapter->fw->data[offs];
-}
+	वापस (u8 *)&adapter->fw->data[offs];
+पूर्ण
 
-static __le32
-nx_get_fw_size(struct netxen_adapter *adapter)
-{
-	if (adapter->fw_type == NX_UNIFIED_ROMIMAGE)
-		return cpu_to_le32((nx_get_data_desc(adapter,
-					NX_UNI_DIR_SECT_FW,
+अटल __le32
+nx_get_fw_size(काष्ठा netxen_adapter *adapter)
+अणु
+	अगर (adapter->fw_type == NX_UNIFIED_ROMIMAGE)
+		वापस cpu_to_le32((nx_get_data_desc(adapter,
+					NX_UNI_सूची_SECT_FW,
 					NX_UNI_FIRMWARE_IDX_OFF))->size);
-	else
-		return cpu_to_le32(
+	अन्यथा
+		वापस cpu_to_le32(
 				*(u32 *)&adapter->fw->data[NX_FW_SIZE_OFFSET]);
-}
+पूर्ण
 
-static __le32
-nx_get_fw_version(struct netxen_adapter *adapter)
-{
-	struct uni_data_desc *fw_data_desc;
-	const struct firmware *fw = adapter->fw;
+अटल __le32
+nx_get_fw_version(काष्ठा netxen_adapter *adapter)
+अणु
+	काष्ठा uni_data_desc *fw_data_desc;
+	स्थिर काष्ठा firmware *fw = adapter->fw;
 	__le32 major, minor, sub;
-	const u8 *ver_str;
-	int i, ret = 0;
+	स्थिर u8 *ver_str;
+	पूर्णांक i, ret = 0;
 
-	if (adapter->fw_type == NX_UNIFIED_ROMIMAGE) {
+	अगर (adapter->fw_type == NX_UNIFIED_ROMIMAGE) अणु
 
 		fw_data_desc = nx_get_data_desc(adapter,
-				NX_UNI_DIR_SECT_FW, NX_UNI_FIRMWARE_IDX_OFF);
+				NX_UNI_सूची_SECT_FW, NX_UNI_FIRMWARE_IDX_OFF);
 		ver_str = fw->data + cpu_to_le32(fw_data_desc->findex) +
 				cpu_to_le32(fw_data_desc->size) - 17;
 
-		for (i = 0; i < 12; i++) {
-			if (!strncmp(&ver_str[i], "REV=", 4)) {
-				ret = sscanf(&ver_str[i+4], "%u.%u.%u ",
+		क्रम (i = 0; i < 12; i++) अणु
+			अगर (!म_भेदन(&ver_str[i], "REV=", 4)) अणु
+				ret = माला_पूछो(&ver_str[i+4], "%u.%u.%u ",
 							&major, &minor, &sub);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (ret != 3)
-			return 0;
+		अगर (ret != 3)
+			वापस 0;
 
-		return major + (minor << 8) + (sub << 16);
+		वापस major + (minor << 8) + (sub << 16);
 
-	} else
-		return cpu_to_le32(*(u32 *)&fw->data[NX_FW_VERSION_OFFSET]);
-}
+	पूर्ण अन्यथा
+		वापस cpu_to_le32(*(u32 *)&fw->data[NX_FW_VERSION_OFFSET]);
+पूर्ण
 
-static __le32
-nx_get_bios_version(struct netxen_adapter *adapter)
-{
-	const struct firmware *fw = adapter->fw;
+अटल __le32
+nx_get_bios_version(काष्ठा netxen_adapter *adapter)
+अणु
+	स्थिर काष्ठा firmware *fw = adapter->fw;
 	__le32 bios_ver, prd_off = adapter->file_prd_off;
 
-	if (adapter->fw_type == NX_UNIFIED_ROMIMAGE) {
+	अगर (adapter->fw_type == NX_UNIFIED_ROMIMAGE) अणु
 		bios_ver = cpu_to_le32(*((u32 *) (&fw->data[prd_off])
 						+ NX_UNI_BIOS_VERSION_OFF));
-		return (bios_ver << 16) + ((bios_ver >> 8) & 0xff00) +
+		वापस (bios_ver << 16) + ((bios_ver >> 8) & 0xff00) +
 							(bios_ver >> 24);
-	} else
-		return cpu_to_le32(*(u32 *)&fw->data[NX_BIOS_VERSION_OFFSET]);
+	पूर्ण अन्यथा
+		वापस cpu_to_le32(*(u32 *)&fw->data[NX_BIOS_VERSION_OFFSET]);
 
-}
+पूर्ण
 
-int
-netxen_need_fw_reset(struct netxen_adapter *adapter)
-{
+पूर्णांक
+netxen_need_fw_reset(काष्ठा netxen_adapter *adapter)
+अणु
 	u32 count, old_count;
 	u32 val, version, major, minor, build;
-	int i, timeout;
+	पूर्णांक i, समयout;
 	u8 fw_type;
 
-	/* NX2031 firmware doesn't support heartbit */
-	if (NX_IS_REVISION_P2(adapter->ahw.revision_id))
-		return 1;
+	/* NX2031 firmware करोesn't support heartbit */
+	अगर (NX_IS_REVISION_P2(adapter->ahw.revision_id))
+		वापस 1;
 
-	if (adapter->need_fw_reset)
-		return 1;
+	अगर (adapter->need_fw_reset)
+		वापस 1;
 
 	/* last attempt had failed */
-	if (NXRD32(adapter, CRB_CMDPEG_STATE) == PHAN_INITIALIZE_FAILED)
-		return 1;
+	अगर (NXRD32(adapter, CRB_CMDPEG_STATE) == PHAN_INITIALIZE_FAILED)
+		वापस 1;
 
 	old_count = NXRD32(adapter, NETXEN_PEG_ALIVE_COUNTER);
 
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 
-		timeout = msleep_interruptible(200);
-		if (timeout) {
+		समयout = msleep_पूर्णांकerruptible(200);
+		अगर (समयout) अणु
 			NXWR32(adapter, CRB_CMDPEG_STATE,
 					PHAN_INITIALIZE_FAILED);
-			return -EINTR;
-		}
+			वापस -EINTR;
+		पूर्ण
 
 		count = NXRD32(adapter, NETXEN_PEG_ALIVE_COUNTER);
-		if (count != old_count)
-			break;
-	}
+		अगर (count != old_count)
+			अवरोध;
+	पूर्ण
 
 	/* firmware is dead */
-	if (count == old_count)
-		return 1;
+	अगर (count == old_count)
+		वापस 1;
 
-	/* check if we have got newer or different file firmware */
-	if (adapter->fw) {
+	/* check अगर we have got newer or dअगरferent file firmware */
+	अगर (adapter->fw) अणु
 
 		val = nx_get_fw_version(adapter);
 
@@ -916,76 +917,76 @@ netxen_need_fw_reset(struct netxen_adapter *adapter)
 		minor = NXRD32(adapter, NETXEN_FW_VERSION_MINOR);
 		build = NXRD32(adapter, NETXEN_FW_VERSION_SUB);
 
-		if (version > NETXEN_VERSION_CODE(major, minor, build))
-			return 1;
+		अगर (version > NETXEN_VERSION_CODE(major, minor, build))
+			वापस 1;
 
-		if (version == NETXEN_VERSION_CODE(major, minor, build) &&
-			adapter->fw_type != NX_UNIFIED_ROMIMAGE) {
+		अगर (version == NETXEN_VERSION_CODE(major, minor, build) &&
+			adapter->fw_type != NX_UNIFIED_ROMIMAGE) अणु
 
 			val = NXRD32(adapter, NETXEN_MIU_MN_CONTROL);
 			fw_type = (val & 0x4) ?
 				NX_P3_CT_ROMIMAGE : NX_P3_MN_ROMIMAGE;
 
-			if (adapter->fw_type != fw_type)
-				return 1;
-		}
-	}
+			अगर (adapter->fw_type != fw_type)
+				वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define NETXEN_MIN_P3_FW_SUPP	NETXEN_VERSION_CODE(4, 0, 505)
+#घोषणा NETXEN_MIN_P3_FW_SUPP	NETXEN_VERSION_CODE(4, 0, 505)
 
-int
-netxen_check_flash_fw_compatibility(struct netxen_adapter *adapter)
-{
+पूर्णांक
+netxen_check_flash_fw_compatibility(काष्ठा netxen_adapter *adapter)
+अणु
 	u32 flash_fw_ver, min_fw_ver;
 
-	if (NX_IS_REVISION_P2(adapter->ahw.revision_id))
-		return 0;
+	अगर (NX_IS_REVISION_P2(adapter->ahw.revision_id))
+		वापस 0;
 
-	if (netxen_rom_fast_read(adapter,
-			NX_FW_VERSION_OFFSET, (int *)&flash_fw_ver)) {
+	अगर (netxen_rom_fast_पढ़ो(adapter,
+			NX_FW_VERSION_OFFSET, (पूर्णांक *)&flash_fw_ver)) अणु
 		dev_err(&adapter->pdev->dev, "Unable to read flash fw"
 			"version\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	flash_fw_ver = NETXEN_DECODE_VERSION(flash_fw_ver);
 	min_fw_ver = NETXEN_MIN_P3_FW_SUPP;
-	if (flash_fw_ver >= min_fw_ver)
-		return 0;
+	अगर (flash_fw_ver >= min_fw_ver)
+		वापस 0;
 
 	dev_info(&adapter->pdev->dev, "Flash fw[%d.%d.%d] is < min fw supported"
 		"[4.0.505]. Please update firmware on flash\n",
 		_major(flash_fw_ver), _minor(flash_fw_ver),
 		_build(flash_fw_ver));
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static char *fw_name[] = {
+अटल अक्षर *fw_name[] = अणु
 	NX_P2_MN_ROMIMAGE_NAME,
 	NX_P3_CT_ROMIMAGE_NAME,
 	NX_P3_MN_ROMIMAGE_NAME,
 	NX_UNIFIED_ROMIMAGE_NAME,
 	NX_FLASH_ROMIMAGE_NAME,
-};
+पूर्ण;
 
-int
-netxen_load_firmware(struct netxen_adapter *adapter)
-{
+पूर्णांक
+netxen_load_firmware(काष्ठा netxen_adapter *adapter)
+अणु
 	u64 *ptr64;
 	u32 i, flashaddr, size;
-	const struct firmware *fw = adapter->fw;
-	struct pci_dev *pdev = adapter->pdev;
+	स्थिर काष्ठा firmware *fw = adapter->fw;
+	काष्ठा pci_dev *pdev = adapter->pdev;
 
 	dev_info(&pdev->dev, "loading firmware from %s\n",
 			fw_name[adapter->fw_type]);
 
-	if (NX_IS_REVISION_P2(adapter->ahw.revision_id))
+	अगर (NX_IS_REVISION_P2(adapter->ahw.revision_id))
 		NXWR32(adapter, NETXEN_ROMUSB_GLB_CAS_RST, 1);
 
-	if (fw) {
+	अगर (fw) अणु
 		__le64 data;
 
 		size = (NETXEN_IMAGE_START - NETXEN_BOOTLD_START) / 8;
@@ -993,402 +994,402 @@ netxen_load_firmware(struct netxen_adapter *adapter)
 		ptr64 = (u64 *)nx_get_bootld_offs(adapter);
 		flashaddr = NETXEN_BOOTLD_START;
 
-		for (i = 0; i < size; i++) {
+		क्रम (i = 0; i < size; i++) अणु
 			data = cpu_to_le64(ptr64[i]);
 
-			if (adapter->pci_mem_write(adapter, flashaddr, data))
-				return -EIO;
+			अगर (adapter->pci_mem_ग_लिखो(adapter, flashaddr, data))
+				वापस -EIO;
 
 			flashaddr += 8;
-		}
+		पूर्ण
 
-		size = (__force u32)nx_get_fw_size(adapter) / 8;
+		size = (__क्रमce u32)nx_get_fw_size(adapter) / 8;
 
 		ptr64 = (u64 *)nx_get_fw_offs(adapter);
 		flashaddr = NETXEN_IMAGE_START;
 
-		for (i = 0; i < size; i++) {
+		क्रम (i = 0; i < size; i++) अणु
 			data = cpu_to_le64(ptr64[i]);
 
-			if (adapter->pci_mem_write(adapter,
+			अगर (adapter->pci_mem_ग_लिखो(adapter,
 						flashaddr, data))
-				return -EIO;
+				वापस -EIO;
 
 			flashaddr += 8;
-		}
+		पूर्ण
 
-		size = (__force u32)nx_get_fw_size(adapter) % 8;
-		if (size) {
+		size = (__क्रमce u32)nx_get_fw_size(adapter) % 8;
+		अगर (size) अणु
 			data = cpu_to_le64(ptr64[i]);
 
-			if (adapter->pci_mem_write(adapter,
+			अगर (adapter->pci_mem_ग_लिखो(adapter,
 						flashaddr, data))
-				return -EIO;
-		}
+				वापस -EIO;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		u64 data;
 		u32 hi, lo;
 
 		size = (NETXEN_IMAGE_START - NETXEN_BOOTLD_START) / 8;
 		flashaddr = NETXEN_BOOTLD_START;
 
-		for (i = 0; i < size; i++) {
-			if (netxen_rom_fast_read(adapter,
-					flashaddr, (int *)&lo) != 0)
-				return -EIO;
-			if (netxen_rom_fast_read(adapter,
-					flashaddr + 4, (int *)&hi) != 0)
-				return -EIO;
+		क्रम (i = 0; i < size; i++) अणु
+			अगर (netxen_rom_fast_पढ़ो(adapter,
+					flashaddr, (पूर्णांक *)&lo) != 0)
+				वापस -EIO;
+			अगर (netxen_rom_fast_पढ़ो(adapter,
+					flashaddr + 4, (पूर्णांक *)&hi) != 0)
+				वापस -EIO;
 
-			/* hi, lo are already in host endian byteorder */
+			/* hi, lo are alपढ़ोy in host endian byteorder */
 			data = (((u64)hi << 32) | lo);
 
-			if (adapter->pci_mem_write(adapter,
+			अगर (adapter->pci_mem_ग_लिखो(adapter,
 						flashaddr, data))
-				return -EIO;
+				वापस -EIO;
 
 			flashaddr += 8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	msleep(1);
 
-	if (NX_IS_REVISION_P3P(adapter->ahw.revision_id)) {
+	अगर (NX_IS_REVISION_P3P(adapter->ahw.revision_id)) अणु
 		NXWR32(adapter, NETXEN_CRB_PEG_NET_0 + 0x18, 0x1020);
 		NXWR32(adapter, NETXEN_ROMUSB_GLB_SW_RESET, 0x80001e);
-	} else if (NX_IS_REVISION_P3(adapter->ahw.revision_id))
+	पूर्ण अन्यथा अगर (NX_IS_REVISION_P3(adapter->ahw.revision_id))
 		NXWR32(adapter, NETXEN_ROMUSB_GLB_SW_RESET, 0x80001d);
-	else {
+	अन्यथा अणु
 		NXWR32(adapter, NETXEN_ROMUSB_GLB_CHIP_CLK_CTRL, 0x3fff);
 		NXWR32(adapter, NETXEN_ROMUSB_GLB_CAS_RST, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-netxen_validate_firmware(struct netxen_adapter *adapter)
-{
+अटल पूर्णांक
+netxen_validate_firmware(काष्ठा netxen_adapter *adapter)
+अणु
 	__le32 val;
 	__le32 flash_fw_ver;
 	u32 file_fw_ver, min_ver, bios;
-	struct pci_dev *pdev = adapter->pdev;
-	const struct firmware *fw = adapter->fw;
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	स्थिर काष्ठा firmware *fw = adapter->fw;
 	u8 fw_type = adapter->fw_type;
 	u32 crbinit_fix_fw;
 
-	if (fw_type == NX_UNIFIED_ROMIMAGE) {
-		if (netxen_nic_validate_unified_romimage(adapter))
-			return -EINVAL;
-	} else {
+	अगर (fw_type == NX_UNIFIED_ROMIMAGE) अणु
+		अगर (netxen_nic_validate_unअगरied_romimage(adapter))
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
 		val = cpu_to_le32(*(u32 *)&fw->data[NX_FW_MAGIC_OFFSET]);
-		if ((__force u32)val != NETXEN_BDINFO_MAGIC)
-			return -EINVAL;
+		अगर ((__क्रमce u32)val != NETXEN_BDINFO_MAGIC)
+			वापस -EINVAL;
 
-		if (fw->size < NX_FW_MIN_SIZE)
-			return -EINVAL;
-	}
+		अगर (fw->size < NX_FW_MIN_SIZE)
+			वापस -EINVAL;
+	पूर्ण
 
 	val = nx_get_fw_version(adapter);
 
-	if (NX_IS_REVISION_P3(adapter->ahw.revision_id))
+	अगर (NX_IS_REVISION_P3(adapter->ahw.revision_id))
 		min_ver = NETXEN_MIN_P3_FW_SUPP;
-	else
+	अन्यथा
 		min_ver = NETXEN_VERSION_CODE(3, 4, 216);
 
 	file_fw_ver = NETXEN_DECODE_VERSION(val);
 
-	if ((_major(file_fw_ver) > _NETXEN_NIC_LINUX_MAJOR) ||
-	    (file_fw_ver < min_ver)) {
+	अगर ((_major(file_fw_ver) > _NETXEN_NIC_LINUX_MAJOR) ||
+	    (file_fw_ver < min_ver)) अणु
 		dev_err(&pdev->dev,
 				"%s: firmware version %d.%d.%d unsupported\n",
 		fw_name[fw_type], _major(file_fw_ver), _minor(file_fw_ver),
 		 _build(file_fw_ver));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	val = nx_get_bios_version(adapter);
-	if (netxen_rom_fast_read(adapter, NX_BIOS_VERSION_OFFSET, (int *)&bios))
-		return -EIO;
-	if ((__force u32)val != bios) {
+	अगर (netxen_rom_fast_पढ़ो(adapter, NX_BIOS_VERSION_OFFSET, (पूर्णांक *)&bios))
+		वापस -EIO;
+	अगर ((__क्रमce u32)val != bios) अणु
 		dev_err(&pdev->dev, "%s: firmware bios is incompatible\n",
 				fw_name[fw_type]);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (netxen_rom_fast_read(adapter,
-			NX_FW_VERSION_OFFSET, (int *)&flash_fw_ver)) {
+	अगर (netxen_rom_fast_पढ़ो(adapter,
+			NX_FW_VERSION_OFFSET, (पूर्णांक *)&flash_fw_ver)) अणु
 		dev_err(&pdev->dev, "Unable to read flash fw version\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	flash_fw_ver = NETXEN_DECODE_VERSION(flash_fw_ver);
 
-	/* New fw from file is not allowed, if fw on flash is < 4.0.554 */
+	/* New fw from file is not allowed, अगर fw on flash is < 4.0.554 */
 	crbinit_fix_fw = NETXEN_VERSION_CODE(4, 0, 554);
-	if (file_fw_ver >= crbinit_fix_fw && flash_fw_ver < crbinit_fix_fw &&
-	    NX_IS_REVISION_P3(adapter->ahw.revision_id)) {
+	अगर (file_fw_ver >= crbinit_fix_fw && flash_fw_ver < crbinit_fix_fw &&
+	    NX_IS_REVISION_P3(adapter->ahw.revision_id)) अणु
 		dev_err(&pdev->dev, "Incompatibility detected between driver "
 			"and firmware version on flash. This configuration "
 			"is not recommended. Please update the firmware on "
 			"flash immediately\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* check if flashed firmware is newer only for no-mn and P2 case*/
-	if (!netxen_p3_has_mn(adapter) ||
-	    NX_IS_REVISION_P2(adapter->ahw.revision_id)) {
-		if (flash_fw_ver > file_fw_ver) {
+	/* check अगर flashed firmware is newer only क्रम no-mn and P2 हाल*/
+	अगर (!netxen_p3_has_mn(adapter) ||
+	    NX_IS_REVISION_P2(adapter->ahw.revision_id)) अणु
+		अगर (flash_fw_ver > file_fw_ver) अणु
 			dev_info(&pdev->dev, "%s: firmware is older than flash\n",
 				fw_name[fw_type]);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	NXWR32(adapter, NETXEN_CAM_RAM(0x1fc), NETXEN_BDINFO_MAGIC);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-nx_get_next_fwtype(struct netxen_adapter *adapter)
-{
+अटल व्योम
+nx_get_next_fwtype(काष्ठा netxen_adapter *adapter)
+अणु
 	u8 fw_type;
 
-	switch (adapter->fw_type) {
-	case NX_UNKNOWN_ROMIMAGE:
+	चयन (adapter->fw_type) अणु
+	हाल NX_UNKNOWN_ROMIMAGE:
 		fw_type = NX_UNIFIED_ROMIMAGE;
-		break;
+		अवरोध;
 
-	case NX_UNIFIED_ROMIMAGE:
-		if (NX_IS_REVISION_P3P(adapter->ahw.revision_id))
+	हाल NX_UNIFIED_ROMIMAGE:
+		अगर (NX_IS_REVISION_P3P(adapter->ahw.revision_id))
 			fw_type = NX_FLASH_ROMIMAGE;
-		else if (NX_IS_REVISION_P2(adapter->ahw.revision_id))
+		अन्यथा अगर (NX_IS_REVISION_P2(adapter->ahw.revision_id))
 			fw_type = NX_P2_MN_ROMIMAGE;
-		else if (netxen_p3_has_mn(adapter))
+		अन्यथा अगर (netxen_p3_has_mn(adapter))
 			fw_type = NX_P3_MN_ROMIMAGE;
-		else
+		अन्यथा
 			fw_type = NX_P3_CT_ROMIMAGE;
-		break;
+		अवरोध;
 
-	case NX_P3_MN_ROMIMAGE:
+	हाल NX_P3_MN_ROMIMAGE:
 		fw_type = NX_P3_CT_ROMIMAGE;
-		break;
+		अवरोध;
 
-	case NX_P2_MN_ROMIMAGE:
-	case NX_P3_CT_ROMIMAGE:
-	default:
+	हाल NX_P2_MN_ROMIMAGE:
+	हाल NX_P3_CT_ROMIMAGE:
+	शेष:
 		fw_type = NX_FLASH_ROMIMAGE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	adapter->fw_type = fw_type;
-}
+पूर्ण
 
-static int
-netxen_p3_has_mn(struct netxen_adapter *adapter)
-{
+अटल पूर्णांक
+netxen_p3_has_mn(काष्ठा netxen_adapter *adapter)
+अणु
 	u32 capability, flashed_ver;
 	capability = 0;
 
 	/* NX2031 always had MN */
-	if (NX_IS_REVISION_P2(adapter->ahw.revision_id))
-		return 1;
+	अगर (NX_IS_REVISION_P2(adapter->ahw.revision_id))
+		वापस 1;
 
-	netxen_rom_fast_read(adapter,
-			NX_FW_VERSION_OFFSET, (int *)&flashed_ver);
+	netxen_rom_fast_पढ़ो(adapter,
+			NX_FW_VERSION_OFFSET, (पूर्णांक *)&flashed_ver);
 	flashed_ver = NETXEN_DECODE_VERSION(flashed_ver);
 
-	if (flashed_ver >= NETXEN_VERSION_CODE(4, 0, 220)) {
+	अगर (flashed_ver >= NETXEN_VERSION_CODE(4, 0, 220)) अणु
 
 		capability = NXRD32(adapter, NX_PEG_TUNE_CAPABILITY);
-		if (capability & NX_PEG_TUNE_MN_PRESENT)
-			return 1;
-	}
-	return 0;
-}
+		अगर (capability & NX_PEG_TUNE_MN_PRESENT)
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void netxen_request_firmware(struct netxen_adapter *adapter)
-{
-	struct pci_dev *pdev = adapter->pdev;
-	int rc = 0;
+व्योम netxen_request_firmware(काष्ठा netxen_adapter *adapter)
+अणु
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	पूर्णांक rc = 0;
 
 	adapter->fw_type = NX_UNKNOWN_ROMIMAGE;
 
 next:
 	nx_get_next_fwtype(adapter);
 
-	if (adapter->fw_type == NX_FLASH_ROMIMAGE) {
-		adapter->fw = NULL;
-	} else {
+	अगर (adapter->fw_type == NX_FLASH_ROMIMAGE) अणु
+		adapter->fw = शून्य;
+	पूर्ण अन्यथा अणु
 		rc = request_firmware(&adapter->fw,
 				fw_name[adapter->fw_type], &pdev->dev);
-		if (rc != 0)
-			goto next;
+		अगर (rc != 0)
+			जाओ next;
 
 		rc = netxen_validate_firmware(adapter);
-		if (rc != 0) {
+		अगर (rc != 0) अणु
 			release_firmware(adapter->fw);
 			msleep(1);
-			goto next;
-		}
-	}
-}
+			जाओ next;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-void
-netxen_release_firmware(struct netxen_adapter *adapter)
-{
+व्योम
+netxen_release_firmware(काष्ठा netxen_adapter *adapter)
+अणु
 	release_firmware(adapter->fw);
-	adapter->fw = NULL;
-}
+	adapter->fw = शून्य;
+पूर्ण
 
-int netxen_init_dummy_dma(struct netxen_adapter *adapter)
-{
+पूर्णांक netxen_init_dummy_dma(काष्ठा netxen_adapter *adapter)
+अणु
 	u64 addr;
 	u32 hi, lo;
 
-	if (!NX_IS_REVISION_P2(adapter->ahw.revision_id))
-		return 0;
+	अगर (!NX_IS_REVISION_P2(adapter->ahw.revision_id))
+		वापस 0;
 
 	adapter->dummy_dma.addr = dma_alloc_coherent(&adapter->pdev->dev,
 						     NETXEN_HOST_DUMMY_DMA_SIZE,
 						     &adapter->dummy_dma.phys_addr,
 						     GFP_KERNEL);
-	if (adapter->dummy_dma.addr == NULL) {
+	अगर (adapter->dummy_dma.addr == शून्य) अणु
 		dev_err(&adapter->pdev->dev,
 			"ERROR: Could not allocate dummy DMA memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	addr = (uint64_t) adapter->dummy_dma.phys_addr;
+	addr = (uपूर्णांक64_t) adapter->dummy_dma.phys_addr;
 	hi = (addr >> 32) & 0xffffffff;
 	lo = addr & 0xffffffff;
 
 	NXWR32(adapter, CRB_HOST_DUMMY_BUF_ADDR_HI, hi);
 	NXWR32(adapter, CRB_HOST_DUMMY_BUF_ADDR_LO, lo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * NetXen DMA watchdog control:
+ * NetXen DMA watchकरोg control:
  *
- *	Bit 0		: enabled => R/O: 1 watchdog active, 0 inactive
- *	Bit 1		: disable_request => 1 req disable dma watchdog
- *	Bit 2		: enable_request =>  1 req enable dma watchdog
+ *	Bit 0		: enabled => R/O: 1 watchकरोg active, 0 inactive
+ *	Bit 1		: disable_request => 1 req disable dma watchकरोg
+ *	Bit 2		: enable_request =>  1 req enable dma watchकरोg
  *	Bit 3-31	: unused
  */
-void netxen_free_dummy_dma(struct netxen_adapter *adapter)
-{
-	int i = 100;
+व्योम netxen_मुक्त_dummy_dma(काष्ठा netxen_adapter *adapter)
+अणु
+	पूर्णांक i = 100;
 	u32 ctrl;
 
-	if (!NX_IS_REVISION_P2(adapter->ahw.revision_id))
-		return;
+	अगर (!NX_IS_REVISION_P2(adapter->ahw.revision_id))
+		वापस;
 
-	if (!adapter->dummy_dma.addr)
-		return;
+	अगर (!adapter->dummy_dma.addr)
+		वापस;
 
 	ctrl = NXRD32(adapter, NETXEN_DMA_WATCHDOG_CTRL);
-	if ((ctrl & 0x1) != 0) {
+	अगर ((ctrl & 0x1) != 0) अणु
 		NXWR32(adapter, NETXEN_DMA_WATCHDOG_CTRL, (ctrl | 0x2));
 
-		while ((ctrl & 0x1) != 0) {
+		जबतक ((ctrl & 0x1) != 0) अणु
 
 			msleep(50);
 
 			ctrl = NXRD32(adapter, NETXEN_DMA_WATCHDOG_CTRL);
 
-			if (--i == 0)
-				break;
-		}
-	}
+			अगर (--i == 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i) {
-		dma_free_coherent(&adapter->pdev->dev,
+	अगर (i) अणु
+		dma_मुक्त_coherent(&adapter->pdev->dev,
 				  NETXEN_HOST_DUMMY_DMA_SIZE,
 				  adapter->dummy_dma.addr,
 				  adapter->dummy_dma.phys_addr);
-		adapter->dummy_dma.addr = NULL;
-	} else
+		adapter->dummy_dma.addr = शून्य;
+	पूर्ण अन्यथा
 		dev_err(&adapter->pdev->dev, "dma_watchdog_shutdown failed\n");
-}
+पूर्ण
 
-int netxen_phantom_init(struct netxen_adapter *adapter, int pegtune_val)
-{
+पूर्णांक netxen_phantom_init(काष्ठा netxen_adapter *adapter, पूर्णांक pegtune_val)
+अणु
 	u32 val = 0;
-	int retries = 60;
+	पूर्णांक retries = 60;
 
-	if (pegtune_val)
-		return 0;
+	अगर (pegtune_val)
+		वापस 0;
 
-	do {
+	करो अणु
 		val = NXRD32(adapter, CRB_CMDPEG_STATE);
-		switch (val) {
-		case PHAN_INITIALIZE_COMPLETE:
-		case PHAN_INITIALIZE_ACK:
-			return 0;
-		case PHAN_INITIALIZE_FAILED:
-			goto out_err;
-		default:
-			break;
-		}
+		चयन (val) अणु
+		हाल PHAN_INITIALIZE_COMPLETE:
+		हाल PHAN_INITIALIZE_ACK:
+			वापस 0;
+		हाल PHAN_INITIALIZE_FAILED:
+			जाओ out_err;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		msleep(500);
 
-	} while (--retries);
+	पूर्ण जबतक (--retries);
 
 	NXWR32(adapter, CRB_CMDPEG_STATE, PHAN_INITIALIZE_FAILED);
 
 out_err:
 	dev_warn(&adapter->pdev->dev, "firmware init failed\n");
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int
-netxen_receive_peg_ready(struct netxen_adapter *adapter)
-{
+अटल पूर्णांक
+netxen_receive_peg_पढ़ोy(काष्ठा netxen_adapter *adapter)
+अणु
 	u32 val = 0;
-	int retries = 2000;
+	पूर्णांक retries = 2000;
 
-	do {
+	करो अणु
 		val = NXRD32(adapter, CRB_RCVPEG_STATE);
 
-		if (val == PHAN_PEG_RCV_INITIALIZED)
-			return 0;
+		अगर (val == PHAN_PEG_RCV_INITIALIZED)
+			वापस 0;
 
 		msleep(10);
 
-	} while (--retries);
+	पूर्ण जबतक (--retries);
 
 	pr_err("Receive Peg initialization not complete, state: 0x%x.\n", val);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-int netxen_init_firmware(struct netxen_adapter *adapter)
-{
-	int err;
+पूर्णांक netxen_init_firmware(काष्ठा netxen_adapter *adapter)
+अणु
+	पूर्णांक err;
 
-	err = netxen_receive_peg_ready(adapter);
-	if (err)
-		return err;
+	err = netxen_receive_peg_पढ़ोy(adapter);
+	अगर (err)
+		वापस err;
 
 	NXWR32(adapter, CRB_NIC_CAPABILITIES_HOST, INTR_SCHEME_PERPORT);
 	NXWR32(adapter, CRB_MPORT_MODE, MPORT_MULTI_FUNCTION_MODE);
 	NXWR32(adapter, CRB_CMDPEG_STATE, PHAN_INITIALIZE_ACK);
 
-	if (NX_IS_REVISION_P2(adapter->ahw.revision_id))
+	अगर (NX_IS_REVISION_P2(adapter->ahw.revision_id))
 		NXWR32(adapter, CRB_NIC_MSI_MODE_HOST, MSI_MODE_MULTIFUNC);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-netxen_handle_linkevent(struct netxen_adapter *adapter, nx_fw_msg_t *msg)
-{
+अटल व्योम
+netxen_handle_linkevent(काष्ठा netxen_adapter *adapter, nx_fw_msg_t *msg)
+अणु
 	u32 cable_OUI;
 	u16 cable_len;
 	u16 link_speed;
-	u8  link_status, module, duplex, autoneg;
-	struct net_device *netdev = adapter->netdev;
+	u8  link_status, module, duplex, स्वतःneg;
+	काष्ठा net_device *netdev = adapter->netdev;
 
 	adapter->has_link_events = 1;
 
@@ -1398,95 +1399,95 @@ netxen_handle_linkevent(struct netxen_adapter *adapter, nx_fw_msg_t *msg)
 
 	link_status = msg->body[2] & 0xff;
 	duplex = (msg->body[2] >> 16) & 0xff;
-	autoneg = (msg->body[2] >> 24) & 0xff;
+	स्वतःneg = (msg->body[2] >> 24) & 0xff;
 
 	module = (msg->body[2] >> 8) & 0xff;
-	if (module == LINKEVENT_MODULE_TWINAX_UNSUPPORTED_CABLE) {
-		printk(KERN_INFO "%s: unsupported cable: OUI 0x%x, length %d\n",
+	अगर (module == LINKEVENT_MODULE_TWINAX_UNSUPPORTED_CABLE) अणु
+		prपूर्णांकk(KERN_INFO "%s: unsupported cable: OUI 0x%x, length %d\n",
 				netdev->name, cable_OUI, cable_len);
-	} else if (module == LINKEVENT_MODULE_TWINAX_UNSUPPORTED_CABLELEN) {
-		printk(KERN_INFO "%s: unsupported cable length %d\n",
+	पूर्ण अन्यथा अगर (module == LINKEVENT_MODULE_TWINAX_UNSUPPORTED_CABLELEN) अणु
+		prपूर्णांकk(KERN_INFO "%s: unsupported cable length %d\n",
 				netdev->name, cable_len);
-	}
+	पूर्ण
 
 	/* update link parameters */
-	if (duplex == LINKEVENT_FULL_DUPLEX)
+	अगर (duplex == LINKEVENT_FULL_DUPLEX)
 		adapter->link_duplex = DUPLEX_FULL;
-	else
+	अन्यथा
 		adapter->link_duplex = DUPLEX_HALF;
 	adapter->module_type = module;
-	adapter->link_autoneg = autoneg;
+	adapter->link_स्वतःneg = स्वतःneg;
 	adapter->link_speed = link_speed;
 
 	netxen_advert_link_change(adapter, link_status);
-}
+पूर्ण
 
-static void
-netxen_handle_fw_message(int desc_cnt, int index,
-		struct nx_host_sds_ring *sds_ring)
-{
+अटल व्योम
+netxen_handle_fw_message(पूर्णांक desc_cnt, पूर्णांक index,
+		काष्ठा nx_host_sds_ring *sds_ring)
+अणु
 	nx_fw_msg_t msg;
-	struct status_desc *desc;
-	int i = 0, opcode;
+	काष्ठा status_desc *desc;
+	पूर्णांक i = 0, opcode;
 
-	while (desc_cnt > 0 && i < 8) {
+	जबतक (desc_cnt > 0 && i < 8) अणु
 		desc = &sds_ring->desc_head[index];
 		msg.words[i++] = le64_to_cpu(desc->status_desc_data[0]);
 		msg.words[i++] = le64_to_cpu(desc->status_desc_data[1]);
 
 		index = get_next_index(index, sds_ring->num_desc);
 		desc_cnt--;
-	}
+	पूर्ण
 
 	opcode = netxen_get_nic_msg_opcode(msg.body[0]);
-	switch (opcode) {
-	case NX_NIC_C2H_OPCODE_GET_LINKEVENT_RESPONSE:
+	चयन (opcode) अणु
+	हाल NX_NIC_C2H_OPCODE_GET_LINKEVENT_RESPONSE:
 		netxen_handle_linkevent(sds_ring->adapter, &msg);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int
-netxen_alloc_rx_skb(struct netxen_adapter *adapter,
-		struct nx_host_rds_ring *rds_ring,
-		struct netxen_rx_buffer *buffer)
-{
-	struct sk_buff *skb;
+अटल पूर्णांक
+netxen_alloc_rx_skb(काष्ठा netxen_adapter *adapter,
+		काष्ठा nx_host_rds_ring *rds_ring,
+		काष्ठा netxen_rx_buffer *buffer)
+अणु
+	काष्ठा sk_buff *skb;
 	dma_addr_t dma;
-	struct pci_dev *pdev = adapter->pdev;
+	काष्ठा pci_dev *pdev = adapter->pdev;
 
 	buffer->skb = netdev_alloc_skb(adapter->netdev, rds_ring->skb_size);
-	if (!buffer->skb)
-		return 1;
+	अगर (!buffer->skb)
+		वापस 1;
 
 	skb = buffer->skb;
 
-	if (!adapter->ahw.cut_through)
+	अगर (!adapter->ahw.cut_through)
 		skb_reserve(skb, 2);
 
 	dma = dma_map_single(&pdev->dev, skb->data, rds_ring->dma_size,
 			     DMA_FROM_DEVICE);
 
-	if (dma_mapping_error(&pdev->dev, dma)) {
-		dev_kfree_skb_any(skb);
-		buffer->skb = NULL;
-		return 1;
-	}
+	अगर (dma_mapping_error(&pdev->dev, dma)) अणु
+		dev_kमुक्त_skb_any(skb);
+		buffer->skb = शून्य;
+		वापस 1;
+	पूर्ण
 
 	buffer->skb = skb;
 	buffer->dma = dma;
 	buffer->state = NETXEN_BUFFER_BUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sk_buff *netxen_process_rxbuf(struct netxen_adapter *adapter,
-		struct nx_host_rds_ring *rds_ring, u16 index, u16 cksum)
-{
-	struct netxen_rx_buffer *buffer;
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *netxen_process_rxbuf(काष्ठा netxen_adapter *adapter,
+		काष्ठा nx_host_rds_ring *rds_ring, u16 index, u16 cksum)
+अणु
+	काष्ठा netxen_rx_buffer *buffer;
+	काष्ठा sk_buff *skb;
 
 	buffer = &rds_ring->rx_buf_arr[index];
 
@@ -1494,42 +1495,42 @@ static struct sk_buff *netxen_process_rxbuf(struct netxen_adapter *adapter,
 			 DMA_FROM_DEVICE);
 
 	skb = buffer->skb;
-	if (!skb)
-		goto no_skb;
+	अगर (!skb)
+		जाओ no_skb;
 
-	if (likely((adapter->netdev->features & NETIF_F_RXCSUM)
-	    && cksum == STATUS_CKSUM_OK)) {
+	अगर (likely((adapter->netdev->features & NETIF_F_RXCSUM)
+	    && cksum == STATUS_CKSUM_OK)) अणु
 		adapter->stats.csummed++;
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
-	} else
+	पूर्ण अन्यथा
 		skb->ip_summed = CHECKSUM_NONE;
 
-	buffer->skb = NULL;
+	buffer->skb = शून्य;
 no_skb:
 	buffer->state = NETXEN_BUFFER_FREE;
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct netxen_rx_buffer *
-netxen_process_rcv(struct netxen_adapter *adapter,
-		struct nx_host_sds_ring *sds_ring,
-		int ring, u64 sts_data0)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct netxen_recv_context *recv_ctx = &adapter->recv_ctx;
-	struct netxen_rx_buffer *buffer;
-	struct sk_buff *skb;
-	struct nx_host_rds_ring *rds_ring;
-	int index, length, cksum, pkt_offset;
+अटल काष्ठा netxen_rx_buffer *
+netxen_process_rcv(काष्ठा netxen_adapter *adapter,
+		काष्ठा nx_host_sds_ring *sds_ring,
+		पूर्णांक ring, u64 sts_data0)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा netxen_recv_context *recv_ctx = &adapter->recv_ctx;
+	काष्ठा netxen_rx_buffer *buffer;
+	काष्ठा sk_buff *skb;
+	काष्ठा nx_host_rds_ring *rds_ring;
+	पूर्णांक index, length, cksum, pkt_offset;
 
-	if (unlikely(ring >= adapter->max_rds_rings))
-		return NULL;
+	अगर (unlikely(ring >= adapter->max_rds_rings))
+		वापस शून्य;
 
 	rds_ring = &recv_ctx->rds_rings[ring];
 
 	index = netxen_get_sts_refhandle(sts_data0);
-	if (unlikely(index >= rds_ring->num_desc))
-		return NULL;
+	अगर (unlikely(index >= rds_ring->num_desc))
+		वापस शून्य;
 
 	buffer = &rds_ring->rx_buf_arr[index];
 
@@ -1538,16 +1539,16 @@ netxen_process_rcv(struct netxen_adapter *adapter,
 	pkt_offset = netxen_get_sts_pkt_offset(sts_data0);
 
 	skb = netxen_process_rxbuf(adapter, rds_ring, index, cksum);
-	if (!skb)
-		return buffer;
+	अगर (!skb)
+		वापस buffer;
 
-	if (length > rds_ring->skb_size)
+	अगर (length > rds_ring->skb_size)
 		skb_put(skb, rds_ring->skb_size);
-	else
+	अन्यथा
 		skb_put(skb, length);
 
 
-	if (pkt_offset)
+	अगर (pkt_offset)
 		skb_pull(skb, pkt_offset);
 
 	skb->protocol = eth_type_trans(skb, netdev);
@@ -1557,44 +1558,44 @@ netxen_process_rcv(struct netxen_adapter *adapter,
 	adapter->stats.rx_pkts++;
 	adapter->stats.rxbytes += length;
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-#define TCP_HDR_SIZE            20
-#define TCP_TS_OPTION_SIZE      12
-#define TCP_TS_HDR_SIZE         (TCP_HDR_SIZE + TCP_TS_OPTION_SIZE)
+#घोषणा TCP_HDR_SIZE            20
+#घोषणा TCP_TS_OPTION_SIZE      12
+#घोषणा TCP_TS_HDR_SIZE         (TCP_HDR_SIZE + TCP_TS_OPTION_SIZE)
 
-static struct netxen_rx_buffer *
-netxen_process_lro(struct netxen_adapter *adapter,
-		struct nx_host_sds_ring *sds_ring,
-		int ring, u64 sts_data0, u64 sts_data1)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct netxen_recv_context *recv_ctx = &adapter->recv_ctx;
-	struct netxen_rx_buffer *buffer;
-	struct sk_buff *skb;
-	struct nx_host_rds_ring *rds_ring;
-	struct iphdr *iph;
-	struct tcphdr *th;
-	bool push, timestamp;
-	int l2_hdr_offset, l4_hdr_offset;
-	int index;
+अटल काष्ठा netxen_rx_buffer *
+netxen_process_lro(काष्ठा netxen_adapter *adapter,
+		काष्ठा nx_host_sds_ring *sds_ring,
+		पूर्णांक ring, u64 sts_data0, u64 sts_data1)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा netxen_recv_context *recv_ctx = &adapter->recv_ctx;
+	काष्ठा netxen_rx_buffer *buffer;
+	काष्ठा sk_buff *skb;
+	काष्ठा nx_host_rds_ring *rds_ring;
+	काष्ठा iphdr *iph;
+	काष्ठा tcphdr *th;
+	bool push, बारtamp;
+	पूर्णांक l2_hdr_offset, l4_hdr_offset;
+	पूर्णांक index;
 	u16 lro_length, length, data_offset;
 	u32 seq_number;
 	u8 vhdr_len = 0;
 
-	if (unlikely(ring >= adapter->max_rds_rings))
-		return NULL;
+	अगर (unlikely(ring >= adapter->max_rds_rings))
+		वापस शून्य;
 
 	rds_ring = &recv_ctx->rds_rings[ring];
 
 	index = netxen_get_lro_sts_refhandle(sts_data0);
-	if (unlikely(index >= rds_ring->num_desc))
-		return NULL;
+	अगर (unlikely(index >= rds_ring->num_desc))
+		वापस शून्य;
 
 	buffer = &rds_ring->rx_buf_arr[index];
 
-	timestamp = netxen_get_lro_sts_timestamp(sts_data0);
+	बारtamp = netxen_get_lro_sts_बारtamp(sts_data0);
 	lro_length = netxen_get_lro_sts_length(sts_data0);
 	l2_hdr_offset = netxen_get_lro_sts_l2_hdr_offset(sts_data0);
 	l4_hdr_offset = netxen_get_lro_sts_l4_hdr_offset(sts_data0);
@@ -1602,12 +1603,12 @@ netxen_process_lro(struct netxen_adapter *adapter,
 	seq_number = netxen_get_lro_sts_seq_number(sts_data1);
 
 	skb = netxen_process_rxbuf(adapter, rds_ring, index, STATUS_CKSUM_OK);
-	if (!skb)
-		return buffer;
+	अगर (!skb)
+		वापस buffer;
 
-	if (timestamp)
+	अगर (बारtamp)
 		data_offset = l4_hdr_offset + TCP_TS_HDR_SIZE;
-	else
+	अन्यथा
 		data_offset = l4_hdr_offset + TCP_HDR_SIZE;
 
 	skb_put(skb, lro_length + data_offset);
@@ -1615,12 +1616,12 @@ netxen_process_lro(struct netxen_adapter *adapter,
 	skb_pull(skb, l2_hdr_offset);
 	skb->protocol = eth_type_trans(skb, netdev);
 
-	if (skb->protocol == htons(ETH_P_8021Q))
+	अगर (skb->protocol == htons(ETH_P_8021Q))
 		vhdr_len = VLAN_HLEN;
-	iph = (struct iphdr *)(skb->data + vhdr_len);
-	th = (struct tcphdr *)((skb->data + vhdr_len) + (iph->ihl << 2));
+	iph = (काष्ठा iphdr *)(skb->data + vhdr_len);
+	th = (काष्ठा tcphdr *)((skb->data + vhdr_len) + (iph->ihl << 2));
 
-	length = (iph->ihl << 2) + (th->doff << 2) + lro_length;
+	length = (iph->ihl << 2) + (th->करोff << 2) + lro_length;
 	csum_replace2(&iph->check, iph->tot_len, htons(length));
 	iph->tot_len = htons(length);
 	th->psh = push;
@@ -1628,202 +1629,202 @@ netxen_process_lro(struct netxen_adapter *adapter,
 
 	length = skb->len;
 
-	if (adapter->flags & NETXEN_FW_MSS_CAP)
+	अगर (adapter->flags & NETXEN_FW_MSS_CAP)
 		skb_shinfo(skb)->gso_size  =  netxen_get_lro_sts_mss(sts_data1);
 
-	netif_receive_skb(skb);
+	netअगर_receive_skb(skb);
 
 	adapter->stats.lro_pkts++;
 	adapter->stats.rxbytes += length;
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-#define netxen_merge_rx_buffers(list, head) \
-	do { list_splice_tail_init(list, head); } while (0);
+#घोषणा netxen_merge_rx_buffers(list, head) \
+	करो अणु list_splice_tail_init(list, head); पूर्ण जबतक (0);
 
-int
-netxen_process_rcv_ring(struct nx_host_sds_ring *sds_ring, int max)
-{
-	struct netxen_adapter *adapter = sds_ring->adapter;
+पूर्णांक
+netxen_process_rcv_ring(काष्ठा nx_host_sds_ring *sds_ring, पूर्णांक max)
+अणु
+	काष्ठा netxen_adapter *adapter = sds_ring->adapter;
 
-	struct list_head *cur;
+	काष्ठा list_head *cur;
 
-	struct status_desc *desc;
-	struct netxen_rx_buffer *rxbuf;
+	काष्ठा status_desc *desc;
+	काष्ठा netxen_rx_buffer *rxbuf;
 
 	u32 consumer = sds_ring->consumer;
 
-	int count = 0;
+	पूर्णांक count = 0;
 	u64 sts_data0, sts_data1;
-	int opcode, ring = 0, desc_cnt;
+	पूर्णांक opcode, ring = 0, desc_cnt;
 
-	while (count < max) {
+	जबतक (count < max) अणु
 		desc = &sds_ring->desc_head[consumer];
 		sts_data0 = le64_to_cpu(desc->status_desc_data[0]);
 
-		if (!(sts_data0 & STATUS_OWNER_HOST))
-			break;
+		अगर (!(sts_data0 & STATUS_OWNER_HOST))
+			अवरोध;
 
 		desc_cnt = netxen_get_sts_desc_cnt(sts_data0);
 
 		opcode = netxen_get_sts_opcode(sts_data0);
 
-		switch (opcode) {
-		case NETXEN_NIC_RXPKT_DESC:
-		case NETXEN_OLD_RXPKT_DESC:
-		case NETXEN_NIC_SYN_OFFLOAD:
+		चयन (opcode) अणु
+		हाल NETXEN_NIC_RXPKT_DESC:
+		हाल NETXEN_OLD_RXPKT_DESC:
+		हाल NETXEN_NIC_SYN_OFFLOAD:
 			ring = netxen_get_sts_type(sts_data0);
 			rxbuf = netxen_process_rcv(adapter, sds_ring,
 					ring, sts_data0);
-			break;
-		case NETXEN_NIC_LRO_DESC:
+			अवरोध;
+		हाल NETXEN_NIC_LRO_DESC:
 			ring = netxen_get_lro_sts_type(sts_data0);
 			sts_data1 = le64_to_cpu(desc->status_desc_data[1]);
 			rxbuf = netxen_process_lro(adapter, sds_ring,
 					ring, sts_data0, sts_data1);
-			break;
-		case NETXEN_NIC_RESPONSE_DESC:
+			अवरोध;
+		हाल NETXEN_NIC_RESPONSE_DESC:
 			netxen_handle_fw_message(desc_cnt, consumer, sds_ring);
-		default:
-			goto skip;
-		}
+		शेष:
+			जाओ skip;
+		पूर्ण
 
 		WARN_ON(desc_cnt > 1);
 
-		if (rxbuf)
-			list_add_tail(&rxbuf->list, &sds_ring->free_list[ring]);
+		अगर (rxbuf)
+			list_add_tail(&rxbuf->list, &sds_ring->मुक्त_list[ring]);
 
 skip:
-		for (; desc_cnt > 0; desc_cnt--) {
+		क्रम (; desc_cnt > 0; desc_cnt--) अणु
 			desc = &sds_ring->desc_head[consumer];
 			desc->status_desc_data[0] =
 				cpu_to_le64(STATUS_OWNER_PHANTOM);
 			consumer = get_next_index(consumer, sds_ring->num_desc);
-		}
+		पूर्ण
 		count++;
-	}
+	पूर्ण
 
-	for (ring = 0; ring < adapter->max_rds_rings; ring++) {
-		struct nx_host_rds_ring *rds_ring =
+	क्रम (ring = 0; ring < adapter->max_rds_rings; ring++) अणु
+		काष्ठा nx_host_rds_ring *rds_ring =
 			&adapter->recv_ctx.rds_rings[ring];
 
-		if (!list_empty(&sds_ring->free_list[ring])) {
-			list_for_each(cur, &sds_ring->free_list[ring]) {
+		अगर (!list_empty(&sds_ring->मुक्त_list[ring])) अणु
+			list_क्रम_each(cur, &sds_ring->मुक्त_list[ring]) अणु
 				rxbuf = list_entry(cur,
-						struct netxen_rx_buffer, list);
+						काष्ठा netxen_rx_buffer, list);
 				netxen_alloc_rx_skb(adapter, rds_ring, rxbuf);
-			}
+			पूर्ण
 			spin_lock(&rds_ring->lock);
-			netxen_merge_rx_buffers(&sds_ring->free_list[ring],
-						&rds_ring->free_list);
+			netxen_merge_rx_buffers(&sds_ring->मुक्त_list[ring],
+						&rds_ring->मुक्त_list);
 			spin_unlock(&rds_ring->lock);
-		}
+		पूर्ण
 
 		netxen_post_rx_buffers_nodb(adapter, rds_ring);
-	}
+	पूर्ण
 
-	if (count) {
+	अगर (count) अणु
 		sds_ring->consumer = consumer;
 		NXWRIO(adapter, sds_ring->crb_sts_consumer, consumer);
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* Process Command status ring */
-int netxen_process_cmd_ring(struct netxen_adapter *adapter)
-{
+पूर्णांक netxen_process_cmd_ring(काष्ठा netxen_adapter *adapter)
+अणु
 	u32 sw_consumer, hw_consumer;
-	int count = 0, i;
-	struct netxen_cmd_buffer *buffer;
-	struct pci_dev *pdev = adapter->pdev;
-	struct net_device *netdev = adapter->netdev;
-	struct netxen_skb_frag *frag;
-	int done = 0;
-	struct nx_host_tx_ring *tx_ring = adapter->tx_ring;
+	पूर्णांक count = 0, i;
+	काष्ठा netxen_cmd_buffer *buffer;
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा netxen_skb_frag *frag;
+	पूर्णांक करोne = 0;
+	काष्ठा nx_host_tx_ring *tx_ring = adapter->tx_ring;
 
-	if (!spin_trylock_bh(&adapter->tx_clean_lock))
-		return 1;
+	अगर (!spin_trylock_bh(&adapter->tx_clean_lock))
+		वापस 1;
 
 	sw_consumer = tx_ring->sw_consumer;
 	hw_consumer = le32_to_cpu(*(tx_ring->hw_consumer));
 
-	while (sw_consumer != hw_consumer) {
+	जबतक (sw_consumer != hw_consumer) अणु
 		buffer = &tx_ring->cmd_buf_arr[sw_consumer];
-		if (buffer->skb) {
+		अगर (buffer->skb) अणु
 			frag = &buffer->frag_array[0];
 			dma_unmap_single(&pdev->dev, frag->dma, frag->length,
 					 DMA_TO_DEVICE);
 			frag->dma = 0ULL;
-			for (i = 1; i < buffer->frag_count; i++) {
+			क्रम (i = 1; i < buffer->frag_count; i++) अणु
 				frag++;	/* Get the next frag */
 				dma_unmap_page(&pdev->dev, frag->dma,
 					       frag->length, DMA_TO_DEVICE);
 				frag->dma = 0ULL;
-			}
+			पूर्ण
 
 			adapter->stats.xmitfinished++;
-			dev_kfree_skb_any(buffer->skb);
-			buffer->skb = NULL;
-		}
+			dev_kमुक्त_skb_any(buffer->skb);
+			buffer->skb = शून्य;
+		पूर्ण
 
 		sw_consumer = get_next_index(sw_consumer, tx_ring->num_desc);
-		if (++count >= MAX_STATUS_HANDLE)
-			break;
-	}
+		अगर (++count >= MAX_STATUS_HANDLE)
+			अवरोध;
+	पूर्ण
 
 	tx_ring->sw_consumer = sw_consumer;
 
-	if (count && netif_running(netdev)) {
+	अगर (count && netअगर_running(netdev)) अणु
 		smp_mb();
 
-		if (netif_queue_stopped(netdev) && netif_carrier_ok(netdev))
-			if (netxen_tx_avail(tx_ring) > TX_STOP_THRESH)
-				netif_wake_queue(netdev);
-		adapter->tx_timeo_cnt = 0;
-	}
+		अगर (netअगर_queue_stopped(netdev) && netअगर_carrier_ok(netdev))
+			अगर (netxen_tx_avail(tx_ring) > TX_STOP_THRESH)
+				netअगर_wake_queue(netdev);
+		adapter->tx_समयo_cnt = 0;
+	पूर्ण
 	/*
-	 * If everything is freed up to consumer then check if the ring is full
-	 * If the ring is full then check if more needs to be freed and
+	 * If everything is मुक्तd up to consumer then check अगर the ring is full
+	 * If the ring is full then check अगर more needs to be मुक्तd and
 	 * schedule the call back again.
 	 *
-	 * This happens when there are 2 CPUs. One could be freeing and the
+	 * This happens when there are 2 CPUs. One could be मुक्तing and the
 	 * other filling it. If the ring is full when we get out of here and
-	 * the card has already interrupted the host then the host can miss the
-	 * interrupt.
+	 * the card has alपढ़ोy पूर्णांकerrupted the host then the host can miss the
+	 * पूर्णांकerrupt.
 	 *
 	 * There is still a possible race condition and the host could miss an
-	 * interrupt. The card has to take care of this.
+	 * पूर्णांकerrupt. The card has to take care of this.
 	 */
 	hw_consumer = le32_to_cpu(*(tx_ring->hw_consumer));
-	done = (sw_consumer == hw_consumer);
+	करोne = (sw_consumer == hw_consumer);
 	spin_unlock_bh(&adapter->tx_clean_lock);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-void
-netxen_post_rx_buffers(struct netxen_adapter *adapter, u32 ringid,
-	struct nx_host_rds_ring *rds_ring)
-{
-	struct rcv_desc *pdesc;
-	struct netxen_rx_buffer *buffer;
-	int producer, count = 0;
+व्योम
+netxen_post_rx_buffers(काष्ठा netxen_adapter *adapter, u32 ringid,
+	काष्ठा nx_host_rds_ring *rds_ring)
+अणु
+	काष्ठा rcv_desc *pdesc;
+	काष्ठा netxen_rx_buffer *buffer;
+	पूर्णांक producer, count = 0;
 	netxen_ctx_msg msg = 0;
-	struct list_head *head;
+	काष्ठा list_head *head;
 
 	producer = rds_ring->producer;
 
-	head = &rds_ring->free_list;
-	while (!list_empty(head)) {
+	head = &rds_ring->मुक्त_list;
+	जबतक (!list_empty(head)) अणु
 
-		buffer = list_entry(head->next, struct netxen_rx_buffer, list);
+		buffer = list_entry(head->next, काष्ठा netxen_rx_buffer, list);
 
-		if (!buffer->skb) {
-			if (netxen_alloc_rx_skb(adapter, rds_ring, buffer))
-				break;
-		}
+		अगर (!buffer->skb) अणु
+			अगर (netxen_alloc_rx_skb(adapter, rds_ring, buffer))
+				अवरोध;
+		पूर्ण
 
 		count++;
 		list_del(&buffer->list);
@@ -1835,18 +1836,18 @@ netxen_post_rx_buffers(struct netxen_adapter *adapter, u32 ringid,
 		pdesc->buffer_length = cpu_to_le32(rds_ring->dma_size);
 
 		producer = get_next_index(producer, rds_ring->num_desc);
-	}
+	पूर्ण
 
-	if (count) {
+	अगर (count) अणु
 		rds_ring->producer = producer;
 		NXWRIO(adapter, rds_ring->crb_rcv_producer,
 				(producer-1) & (rds_ring->num_desc-1));
 
-		if (NX_IS_REVISION_P2(adapter->ahw.revision_id)) {
+		अगर (NX_IS_REVISION_P2(adapter->ahw.revision_id)) अणु
 			/*
-			 * Write a doorbell msg to tell phanmon of change in
+			 * Write a करोorbell msg to tell phanmon of change in
 			 * receive ring producer
-			 * Only for firmware version < 4.0.0
+			 * Only क्रम firmware version < 4.0.0
 			 */
 			netxen_set_msg_peg_id(msg, NETXEN_RCV_PEG_DB_ID);
 			netxen_set_msg_privid(msg);
@@ -1857,33 +1858,33 @@ netxen_post_rx_buffers(struct netxen_adapter *adapter, u32 ringid,
 			netxen_set_msg_opcode(msg, NETXEN_RCV_PRODUCER(ringid));
 			NXWRIO(adapter, DB_NORMALIZE(adapter,
 					NETXEN_RCV_PRODUCER_OFFSET), msg);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void
-netxen_post_rx_buffers_nodb(struct netxen_adapter *adapter,
-		struct nx_host_rds_ring *rds_ring)
-{
-	struct rcv_desc *pdesc;
-	struct netxen_rx_buffer *buffer;
-	int producer, count = 0;
-	struct list_head *head;
+अटल व्योम
+netxen_post_rx_buffers_nodb(काष्ठा netxen_adapter *adapter,
+		काष्ठा nx_host_rds_ring *rds_ring)
+अणु
+	काष्ठा rcv_desc *pdesc;
+	काष्ठा netxen_rx_buffer *buffer;
+	पूर्णांक producer, count = 0;
+	काष्ठा list_head *head;
 
-	if (!spin_trylock(&rds_ring->lock))
-		return;
+	अगर (!spin_trylock(&rds_ring->lock))
+		वापस;
 
 	producer = rds_ring->producer;
 
-	head = &rds_ring->free_list;
-	while (!list_empty(head)) {
+	head = &rds_ring->मुक्त_list;
+	जबतक (!list_empty(head)) अणु
 
-		buffer = list_entry(head->next, struct netxen_rx_buffer, list);
+		buffer = list_entry(head->next, काष्ठा netxen_rx_buffer, list);
 
-		if (!buffer->skb) {
-			if (netxen_alloc_rx_skb(adapter, rds_ring, buffer))
-				break;
-		}
+		अगर (!buffer->skb) अणु
+			अगर (netxen_alloc_rx_skb(adapter, rds_ring, buffer))
+				अवरोध;
+		पूर्ण
 
 		count++;
 		list_del(&buffer->list);
@@ -1895,18 +1896,18 @@ netxen_post_rx_buffers_nodb(struct netxen_adapter *adapter,
 		pdesc->addr_buffer = cpu_to_le64(buffer->dma);
 
 		producer = get_next_index(producer, rds_ring->num_desc);
-	}
+	पूर्ण
 
-	if (count) {
+	अगर (count) अणु
 		rds_ring->producer = producer;
 		NXWRIO(adapter, rds_ring->crb_rcv_producer,
 				(producer - 1) & (rds_ring->num_desc - 1));
-	}
+	पूर्ण
 	spin_unlock(&rds_ring->lock);
-}
+पूर्ण
 
-void netxen_nic_clear_stats(struct netxen_adapter *adapter)
-{
-	memset(&adapter->stats, 0, sizeof(adapter->stats));
-}
+व्योम netxen_nic_clear_stats(काष्ठा netxen_adapter *adapter)
+अणु
+	स_रखो(&adapter->stats, 0, माप(adapter->stats));
+पूर्ण
 

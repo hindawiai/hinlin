@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
  * mcp251xfd - Microchip MCP251xFD Family CAN controller driver
  *
@@ -6,20 +7,20 @@
  *               Marc Kleine-Budde <kernel@pengutronix.de>
  */
 
-#ifndef _MCP251XFD_DUMP_H
-#define _MCP251XFD_DUMP_H
+#अगर_अघोषित _MCP251XFD_DUMP_H
+#घोषणा _MCP251XFD_DUMP_H
 
-#define MCP251XFD_DUMP_MAGIC 0x1825434d
+#घोषणा MCP251XFD_DUMP_MAGIC 0x1825434d
 
-enum mcp251xfd_dump_object_type {
+क्रमागत mcp251xfd_dump_object_type अणु
 	MCP251XFD_DUMP_OBJECT_TYPE_REG,
 	MCP251XFD_DUMP_OBJECT_TYPE_TEF,
 	MCP251XFD_DUMP_OBJECT_TYPE_RX,
 	MCP251XFD_DUMP_OBJECT_TYPE_TX,
 	MCP251XFD_DUMP_OBJECT_TYPE_END = -1,
-};
+पूर्ण;
 
-enum mcp251xfd_dump_object_ring_key {
+क्रमागत mcp251xfd_dump_object_ring_key अणु
 	MCP251XFD_DUMP_OBJECT_RING_KEY_HEAD,
 	MCP251XFD_DUMP_OBJECT_RING_KEY_TAIL,
 	MCP251XFD_DUMP_OBJECT_RING_KEY_BASE,
@@ -28,18 +29,18 @@ enum mcp251xfd_dump_object_ring_key {
 	MCP251XFD_DUMP_OBJECT_RING_KEY_OBJ_NUM,
 	MCP251XFD_DUMP_OBJECT_RING_KEY_OBJ_SIZE,
 	__MCP251XFD_DUMP_OBJECT_RING_KEY_MAX,
-};
+पूर्ण;
 
-struct mcp251xfd_dump_object_header {
+काष्ठा mcp251xfd_dump_object_header अणु
 	__le32 magic;
 	__le32 type;
 	__le32 offset;
 	__le32 len;
-};
+पूर्ण;
 
-struct mcp251xfd_dump_object_reg {
+काष्ठा mcp251xfd_dump_object_reg अणु
 	__le32 reg;
 	__le32 val;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * xfrm4_state.c
  *
  * Changes:
  * 	YOSHIFUJI Hideaki @USAGI
- * 		Split up af-specific portion
+ * 		Split up af-specअगरic portion
  *
  */
 
-#include <net/xfrm.h>
+#समावेश <net/xfrm.h>
 
-static struct xfrm_state_afinfo xfrm4_state_afinfo = {
+अटल काष्ठा xfrm_state_afinfo xfrm4_state_afinfo = अणु
 	.family			= AF_INET,
 	.proto			= IPPROTO_IPIP,
 	.output			= xfrm4_output,
 	.transport_finish	= xfrm4_transport_finish,
 	.local_error		= xfrm4_local_error,
-};
+पूर्ण;
 
-void __init xfrm4_state_init(void)
-{
-	xfrm_state_register_afinfo(&xfrm4_state_afinfo);
-}
+व्योम __init xfrm4_state_init(व्योम)
+अणु
+	xfrm_state_रेजिस्टर_afinfo(&xfrm4_state_afinfo);
+पूर्ण

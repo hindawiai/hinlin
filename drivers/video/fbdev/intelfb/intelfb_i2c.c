@@ -1,15 +1,16 @@
+<शैली गुरु>
 /**************************************************************************
 
  Copyright 2006 Dave Airlie <airlied@linux.ie>
 
 All Rights Reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
+Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+copy of this software and associated करोcumentation files (the "Software"),
 to deal in the Software without restriction, including without limitation
-on the rights to use, copy, modify, merge, publish, distribute, sub
+on the rights to use, copy, modअगरy, merge, publish, distribute, sub
 license, and/or sell copies of the Software, and to permit persons to whom
-the Software is furnished to do so, subject to the following conditions:
+the Software is furnished to करो so, subject to the following conditions:
 
 The above copyright notice and this permission notice (including the next
 paragraph) shall be included in all copies or substantial portions of the
@@ -25,157 +26,157 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/pci.h>
-#include <linux/fb.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/fb.h>
 
-#include <linux/i2c.h>
-#include <linux/i2c-algo-bit.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-algo-bit.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#include "intelfb.h"
-#include "intelfbhw.h"
+#समावेश "intelfb.h"
+#समावेश "intelfbhw.h"
 
-/* bit locations in the registers */
-#define SCL_DIR_MASK		0x0001
-#define SCL_DIR			0x0002
-#define SCL_VAL_MASK		0x0004
-#define SCL_VAL_OUT		0x0008
-#define SCL_VAL_IN		0x0010
-#define SDA_DIR_MASK		0x0100
-#define SDA_DIR			0x0200
-#define SDA_VAL_MASK		0x0400
-#define SDA_VAL_OUT		0x0800
-#define SDA_VAL_IN		0x1000
+/* bit locations in the रेजिस्टरs */
+#घोषणा SCL_सूची_MASK		0x0001
+#घोषणा SCL_सूची			0x0002
+#घोषणा SCL_VAL_MASK		0x0004
+#घोषणा SCL_VAL_OUT		0x0008
+#घोषणा SCL_VAL_IN		0x0010
+#घोषणा SDA_सूची_MASK		0x0100
+#घोषणा SDA_सूची			0x0200
+#घोषणा SDA_VAL_MASK		0x0400
+#घोषणा SDA_VAL_OUT		0x0800
+#घोषणा SDA_VAL_IN		0x1000
 
-static void intelfb_gpio_setscl(void *data, int state)
-{
-	struct intelfb_i2c_chan *chan = data;
-	struct intelfb_info *dinfo = chan->dinfo;
+अटल व्योम पूर्णांकelfb_gpio_setscl(व्योम *data, पूर्णांक state)
+अणु
+	काष्ठा पूर्णांकelfb_i2c_chan *chan = data;
+	काष्ठा पूर्णांकelfb_info *dinfo = chan->dinfo;
 	u32 val;
 
 	OUTREG(chan->reg, (state ? SCL_VAL_OUT : 0) |
-	       SCL_DIR | SCL_DIR_MASK | SCL_VAL_MASK);
+	       SCL_सूची | SCL_सूची_MASK | SCL_VAL_MASK);
 	val = INREG(chan->reg);
-}
+पूर्ण
 
-static void intelfb_gpio_setsda(void *data, int state)
-{
-	struct intelfb_i2c_chan *chan = data;
-	struct intelfb_info *dinfo = chan->dinfo;
+अटल व्योम पूर्णांकelfb_gpio_setsda(व्योम *data, पूर्णांक state)
+अणु
+	काष्ठा पूर्णांकelfb_i2c_chan *chan = data;
+	काष्ठा पूर्णांकelfb_info *dinfo = chan->dinfo;
 	u32 val;
 
 	OUTREG(chan->reg, (state ? SDA_VAL_OUT : 0) |
-	       SDA_DIR | SDA_DIR_MASK | SDA_VAL_MASK);
+	       SDA_सूची | SDA_सूची_MASK | SDA_VAL_MASK);
 	val = INREG(chan->reg);
-}
+पूर्ण
 
-static int intelfb_gpio_getscl(void *data)
-{
-	struct intelfb_i2c_chan *chan = data;
-	struct intelfb_info *dinfo = chan->dinfo;
+अटल पूर्णांक पूर्णांकelfb_gpio_माला_लोcl(व्योम *data)
+अणु
+	काष्ठा पूर्णांकelfb_i2c_chan *chan = data;
+	काष्ठा पूर्णांकelfb_info *dinfo = chan->dinfo;
 	u32 val;
 
-	OUTREG(chan->reg, SCL_DIR_MASK);
+	OUTREG(chan->reg, SCL_सूची_MASK);
 	OUTREG(chan->reg, 0);
 	val = INREG(chan->reg);
-	return ((val & SCL_VAL_IN) != 0);
-}
+	वापस ((val & SCL_VAL_IN) != 0);
+पूर्ण
 
-static int intelfb_gpio_getsda(void *data)
-{
-	struct intelfb_i2c_chan *chan = data;
-	struct intelfb_info *dinfo = chan->dinfo;
+अटल पूर्णांक पूर्णांकelfb_gpio_माला_लोda(व्योम *data)
+अणु
+	काष्ठा पूर्णांकelfb_i2c_chan *chan = data;
+	काष्ठा पूर्णांकelfb_info *dinfo = chan->dinfo;
 	u32 val;
 
-	OUTREG(chan->reg, SDA_DIR_MASK);
+	OUTREG(chan->reg, SDA_सूची_MASK);
 	OUTREG(chan->reg, 0);
 	val = INREG(chan->reg);
-	return ((val & SDA_VAL_IN) != 0);
-}
+	वापस ((val & SDA_VAL_IN) != 0);
+पूर्ण
 
-static int intelfb_setup_i2c_bus(struct intelfb_info *dinfo,
-				 struct intelfb_i2c_chan *chan,
-				 const u32 reg, const char *name,
-				 int class)
-{
-	int rc;
+अटल पूर्णांक पूर्णांकelfb_setup_i2c_bus(काष्ठा पूर्णांकelfb_info *dinfo,
+				 काष्ठा पूर्णांकelfb_i2c_chan *chan,
+				 स्थिर u32 reg, स्थिर अक्षर *name,
+				 पूर्णांक class)
+अणु
+	पूर्णांक rc;
 
 	chan->dinfo			= dinfo;
 	chan->reg			= reg;
-	snprintf(chan->adapter.name, sizeof(chan->adapter.name),
+	snम_लिखो(chan->adapter.name, माप(chan->adapter.name),
 		 "intelfb %s", name);
 	chan->adapter.class		= class;
 	chan->adapter.owner		= THIS_MODULE;
 	chan->adapter.algo_data		= &chan->algo;
 	chan->adapter.dev.parent	= &chan->dinfo->pdev->dev;
-	chan->algo.setsda		= intelfb_gpio_setsda;
-	chan->algo.setscl		= intelfb_gpio_setscl;
-	chan->algo.getsda		= intelfb_gpio_getsda;
-	chan->algo.getscl		= intelfb_gpio_getscl;
+	chan->algo.setsda		= पूर्णांकelfb_gpio_setsda;
+	chan->algo.setscl		= पूर्णांकelfb_gpio_setscl;
+	chan->algo.माला_लोda		= पूर्णांकelfb_gpio_माला_लोda;
+	chan->algo.माला_लोcl		= पूर्णांकelfb_gpio_माला_लोcl;
 	chan->algo.udelay		= 40;
-	chan->algo.timeout		= 20;
+	chan->algo.समयout		= 20;
 	chan->algo.data			= chan;
 
 	i2c_set_adapdata(&chan->adapter, chan);
 
 	/* Raise SCL and SDA */
-	intelfb_gpio_setsda(chan, 1);
-	intelfb_gpio_setscl(chan, 1);
+	पूर्णांकelfb_gpio_setsda(chan, 1);
+	पूर्णांकelfb_gpio_setscl(chan, 1);
 	udelay(20);
 
 	rc = i2c_bit_add_bus(&chan->adapter);
-	if (rc == 0)
+	अगर (rc == 0)
 		DBG_MSG("I2C bus %s registered.\n", name);
-	else
+	अन्यथा
 		WRN_MSG("Failed to register I2C bus %s.\n", name);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void intelfb_create_i2c_busses(struct intelfb_info *dinfo)
-{
-	int i = 0;
+व्योम पूर्णांकelfb_create_i2c_busses(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	पूर्णांक i = 0;
 
 	/* everyone has at least a single analog output */
-	dinfo->num_outputs = 1;
+	dinfo->num_outमाला_दो = 1;
 	dinfo->output[i].type = INTELFB_OUTPUT_ANALOG;
 
-	/* setup the DDC bus for analog output */
-	intelfb_setup_i2c_bus(dinfo, &dinfo->output[i].ddc_bus, GPIOA,
+	/* setup the DDC bus क्रम analog output */
+	पूर्णांकelfb_setup_i2c_bus(dinfo, &dinfo->output[i].ddc_bus, GPIOA,
 			      "CRTDDC_A", I2C_CLASS_DDC);
 	i++;
 
-	/* need to add the output busses for each device
+	/* need to add the output busses क्रम each device
 	   - this function is very incomplete
-	   - i915GM has LVDS and TVOUT for example
+	   - i915GM has LVDS and TVOUT क्रम example
 	*/
-	switch(dinfo->chipset) {
-	case INTEL_830M:
-	case INTEL_845G:
-	case INTEL_854:
-	case INTEL_855GM:
-	case INTEL_865G:
+	चयन(dinfo->chipset) अणु
+	हाल INTEL_830M:
+	हाल INTEL_845G:
+	हाल INTEL_854:
+	हाल INTEL_855GM:
+	हाल INTEL_865G:
 		dinfo->output[i].type = INTELFB_OUTPUT_DVO;
-		intelfb_setup_i2c_bus(dinfo, &dinfo->output[i].ddc_bus,
+		पूर्णांकelfb_setup_i2c_bus(dinfo, &dinfo->output[i].ddc_bus,
 				      GPIOD, "DVODDC_D", I2C_CLASS_DDC);
-		intelfb_setup_i2c_bus(dinfo, &dinfo->output[i].i2c_bus,
+		पूर्णांकelfb_setup_i2c_bus(dinfo, &dinfo->output[i].i2c_bus,
 				      GPIOE, "DVOI2C_E", 0);
 		i++;
-		break;
-	case INTEL_915G:
-	case INTEL_915GM:
+		अवरोध;
+	हाल INTEL_915G:
+	हाल INTEL_915GM:
 		/* has some LVDS + tv-out */
-	case INTEL_945G:
-	case INTEL_945GM:
-	case INTEL_945GME:
-	case INTEL_965G:
-	case INTEL_965GM:
+	हाल INTEL_945G:
+	हाल INTEL_945GM:
+	हाल INTEL_945GME:
+	हाल INTEL_965G:
+	हाल INTEL_965GM:
 		/* SDVO ports have a single control bus - 2 devices */
 		dinfo->output[i].type = INTELFB_OUTPUT_SDVO;
-		intelfb_setup_i2c_bus(dinfo, &dinfo->output[i].i2c_bus,
+		पूर्णांकelfb_setup_i2c_bus(dinfo, &dinfo->output[i].i2c_bus,
 				      GPIOE, "SDVOCTRL_E", 0);
 		/* TODO: initialize the SDVO */
 		/* I830SDVOInit(pScrn, i, DVOB); */
@@ -187,23 +188,23 @@ void intelfb_create_i2c_busses(struct intelfb_info *dinfo)
 		/* TODO: initialize the SDVO */
 		/* I830SDVOInit(pScrn, i, DVOC); */
 		i++;
-		break;
-	}
-	dinfo->num_outputs = i;
-}
+		अवरोध;
+	पूर्ण
+	dinfo->num_outमाला_दो = i;
+पूर्ण
 
-void intelfb_delete_i2c_busses(struct intelfb_info *dinfo)
-{
-	int i;
+व्योम पूर्णांकelfb_delete_i2c_busses(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_OUTPUTS; i++) {
-		if (dinfo->output[i].i2c_bus.dinfo) {
+	क्रम (i = 0; i < MAX_OUTPUTS; i++) अणु
+		अगर (dinfo->output[i].i2c_bus.dinfo) अणु
 			i2c_del_adapter(&dinfo->output[i].i2c_bus.adapter);
-			dinfo->output[i].i2c_bus.dinfo = NULL;
-		}
-		if (dinfo->output[i].ddc_bus.dinfo) {
+			dinfo->output[i].i2c_bus.dinfo = शून्य;
+		पूर्ण
+		अगर (dinfo->output[i].ddc_bus.dinfo) अणु
 			i2c_del_adapter(&dinfo->output[i].ddc_bus.adapter);
-			dinfo->output[i].ddc_bus.dinfo = NULL;
-		}
-	}
-}
+			dinfo->output[i].ddc_bus.dinfo = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण

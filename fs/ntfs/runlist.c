@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /**
  * runlist.c - NTFS runlist handling code.  Part of the Linux-NTFS project.
  *
  * Copyright (c) 2001-2007 Anton Altaparmakov
- * Copyright (c) 2002-2005 Richard Russon
+ * Copyright (c) 2002-2005 Riअक्षरd Russon
  */
 
-#include "debug.h"
-#include "dir.h"
-#include "endian.h"
-#include "malloc.h"
-#include "ntfs.h"
+#समावेश "debug.h"
+#समावेश "dir.h"
+#समावेश "endian.h"
+#समावेश "malloc.h"
+#समावेश "ntfs.h"
 
 /**
- * ntfs_rl_mm - runlist memmove
+ * ntfs_rl_mm - runlist स_हटाओ
  *
  * It is up to the caller to serialize access to the runlist @base.
  */
-static inline void ntfs_rl_mm(runlist_element *base, int dst, int src,
-		int size)
-{
-	if (likely((dst != src) && (size > 0)))
-		memmove(base + dst, base + src, size * sizeof(*base));
-}
+अटल अंतरभूत व्योम ntfs_rl_mm(runlist_element *base, पूर्णांक dst, पूर्णांक src,
+		पूर्णांक size)
+अणु
+	अगर (likely((dst != src) && (size > 0)))
+		स_हटाओ(base + dst, base + src, size * माप(*base));
+पूर्ण
 
 /**
  * ntfs_rl_mc - runlist memory copy
@@ -30,107 +31,107 @@ static inline void ntfs_rl_mm(runlist_element *base, int dst, int src,
  * It is up to the caller to serialize access to the runlists @dstbase and
  * @srcbase.
  */
-static inline void ntfs_rl_mc(runlist_element *dstbase, int dst,
-		runlist_element *srcbase, int src, int size)
-{
-	if (likely(size > 0))
-		memcpy(dstbase + dst, srcbase + src, size * sizeof(*dstbase));
-}
+अटल अंतरभूत व्योम ntfs_rl_mc(runlist_element *dstbase, पूर्णांक dst,
+		runlist_element *srcbase, पूर्णांक src, पूर्णांक size)
+अणु
+	अगर (likely(size > 0))
+		स_नकल(dstbase + dst, srcbase + src, size * माप(*dstbase));
+पूर्ण
 
 /**
- * ntfs_rl_realloc - Reallocate memory for runlists
+ * ntfs_rl_पुनः_स्मृति - Reallocate memory क्रम runlists
  * @rl:		original runlist
  * @old_size:	number of runlist elements in the original runlist @rl
- * @new_size:	number of runlist elements we need space for
+ * @new_size:	number of runlist elements we need space क्रम
  *
  * As the runlists grow, more memory will be required.  To prevent the
- * kernel having to allocate and reallocate large numbers of small bits of
- * memory, this function returns an entire page of memory.
+ * kernel having to allocate and पुनः_स्मृतिate large numbers of small bits of
+ * memory, this function वापसs an entire page of memory.
  *
  * It is up to the caller to serialize access to the runlist @rl.
  *
- * N.B.  If the new allocation doesn't require a different number of pages in
- *       memory, the function will return the original pointer.
+ * N.B.  If the new allocation करोesn't require a dअगरferent number of pages in
+ *       memory, the function will वापस the original poपूर्णांकer.
  *
- * On success, return a pointer to the newly allocated, or recycled, memory.
- * On error, return -errno. The following error codes are defined:
+ * On success, वापस a poपूर्णांकer to the newly allocated, or recycled, memory.
+ * On error, वापस -त्रुटि_सं. The following error codes are defined:
  *	-ENOMEM	- Not enough memory to allocate runlist array.
  *	-EINVAL	- Invalid parameters were passed in.
  */
-static inline runlist_element *ntfs_rl_realloc(runlist_element *rl,
-		int old_size, int new_size)
-{
+अटल अंतरभूत runlist_element *ntfs_rl_पुनः_स्मृति(runlist_element *rl,
+		पूर्णांक old_size, पूर्णांक new_size)
+अणु
 	runlist_element *new_rl;
 
-	old_size = PAGE_ALIGN(old_size * sizeof(*rl));
-	new_size = PAGE_ALIGN(new_size * sizeof(*rl));
-	if (old_size == new_size)
-		return rl;
+	old_size = PAGE_ALIGN(old_size * माप(*rl));
+	new_size = PAGE_ALIGN(new_size * माप(*rl));
+	अगर (old_size == new_size)
+		वापस rl;
 
-	new_rl = ntfs_malloc_nofs(new_size);
-	if (unlikely(!new_rl))
-		return ERR_PTR(-ENOMEM);
+	new_rl = ntfs_दो_स्मृति_nofs(new_size);
+	अगर (unlikely(!new_rl))
+		वापस ERR_PTR(-ENOMEM);
 
-	if (likely(rl != NULL)) {
-		if (unlikely(old_size > new_size))
+	अगर (likely(rl != शून्य)) अणु
+		अगर (unlikely(old_size > new_size))
 			old_size = new_size;
-		memcpy(new_rl, rl, old_size);
-		ntfs_free(rl);
-	}
-	return new_rl;
-}
+		स_नकल(new_rl, rl, old_size);
+		ntfs_मुक्त(rl);
+	पूर्ण
+	वापस new_rl;
+पूर्ण
 
 /**
- * ntfs_rl_realloc_nofail - Reallocate memory for runlists
+ * ntfs_rl_पुनः_स्मृति_nofail - Reallocate memory क्रम runlists
  * @rl:		original runlist
  * @old_size:	number of runlist elements in the original runlist @rl
- * @new_size:	number of runlist elements we need space for
+ * @new_size:	number of runlist elements we need space क्रम
  *
  * As the runlists grow, more memory will be required.  To prevent the
- * kernel having to allocate and reallocate large numbers of small bits of
- * memory, this function returns an entire page of memory.
+ * kernel having to allocate and पुनः_स्मृतिate large numbers of small bits of
+ * memory, this function वापसs an entire page of memory.
  *
  * This function guarantees that the allocation will succeed.  It will sleep
- * for as long as it takes to complete the allocation.
+ * क्रम as दीर्घ as it takes to complete the allocation.
  *
  * It is up to the caller to serialize access to the runlist @rl.
  *
- * N.B.  If the new allocation doesn't require a different number of pages in
- *       memory, the function will return the original pointer.
+ * N.B.  If the new allocation करोesn't require a dअगरferent number of pages in
+ *       memory, the function will वापस the original poपूर्णांकer.
  *
- * On success, return a pointer to the newly allocated, or recycled, memory.
- * On error, return -errno. The following error codes are defined:
+ * On success, वापस a poपूर्णांकer to the newly allocated, or recycled, memory.
+ * On error, वापस -त्रुटि_सं. The following error codes are defined:
  *	-ENOMEM	- Not enough memory to allocate runlist array.
  *	-EINVAL	- Invalid parameters were passed in.
  */
-static inline runlist_element *ntfs_rl_realloc_nofail(runlist_element *rl,
-		int old_size, int new_size)
-{
+अटल अंतरभूत runlist_element *ntfs_rl_पुनः_स्मृति_nofail(runlist_element *rl,
+		पूर्णांक old_size, पूर्णांक new_size)
+अणु
 	runlist_element *new_rl;
 
-	old_size = PAGE_ALIGN(old_size * sizeof(*rl));
-	new_size = PAGE_ALIGN(new_size * sizeof(*rl));
-	if (old_size == new_size)
-		return rl;
+	old_size = PAGE_ALIGN(old_size * माप(*rl));
+	new_size = PAGE_ALIGN(new_size * माप(*rl));
+	अगर (old_size == new_size)
+		वापस rl;
 
-	new_rl = ntfs_malloc_nofs_nofail(new_size);
+	new_rl = ntfs_दो_स्मृति_nofs_nofail(new_size);
 	BUG_ON(!new_rl);
 
-	if (likely(rl != NULL)) {
-		if (unlikely(old_size > new_size))
+	अगर (likely(rl != शून्य)) अणु
+		अगर (unlikely(old_size > new_size))
 			old_size = new_size;
-		memcpy(new_rl, rl, old_size);
-		ntfs_free(rl);
-	}
-	return new_rl;
-}
+		स_नकल(new_rl, rl, old_size);
+		ntfs_मुक्त(rl);
+	पूर्ण
+	वापस new_rl;
+पूर्ण
 
 /**
- * ntfs_are_rl_mergeable - test if two runlists can be joined together
+ * ntfs_are_rl_mergeable - test अगर two runlists can be joined together
  * @dst:	original runlist
- * @src:	new runlist to test for mergeability with @dst
+ * @src:	new runlist to test क्रम mergeability with @dst
  *
- * Test if two runlists can be joined together. For this, their VCNs and LCNs
+ * Test अगर two runlists can be joined together. For this, their VCNs and LCNs
  * must be adjacent.
  *
  * It is up to the caller to serialize access to the runlists @dst and @src.
@@ -138,93 +139,93 @@ static inline runlist_element *ntfs_rl_realloc_nofail(runlist_element *rl,
  * Return: true   Success, the runlists can be merged.
  *	   false  Failure, the runlists cannot be merged.
  */
-static inline bool ntfs_are_rl_mergeable(runlist_element *dst,
+अटल अंतरभूत bool ntfs_are_rl_mergeable(runlist_element *dst,
 		runlist_element *src)
-{
+अणु
 	BUG_ON(!dst);
 	BUG_ON(!src);
 
-	/* We can merge unmapped regions even if they are misaligned. */
-	if ((dst->lcn == LCN_RL_NOT_MAPPED) && (src->lcn == LCN_RL_NOT_MAPPED))
-		return true;
+	/* We can merge unmapped regions even अगर they are misaligned. */
+	अगर ((dst->lcn == LCN_RL_NOT_MAPPED) && (src->lcn == LCN_RL_NOT_MAPPED))
+		वापस true;
 	/* If the runs are misaligned, we cannot merge them. */
-	if ((dst->vcn + dst->length) != src->vcn)
-		return false;
+	अगर ((dst->vcn + dst->length) != src->vcn)
+		वापस false;
 	/* If both runs are non-sparse and contiguous, we can merge them. */
-	if ((dst->lcn >= 0) && (src->lcn >= 0) &&
+	अगर ((dst->lcn >= 0) && (src->lcn >= 0) &&
 			((dst->lcn + dst->length) == src->lcn))
-		return true;
+		वापस true;
 	/* If we are merging two holes, we can merge them. */
-	if ((dst->lcn == LCN_HOLE) && (src->lcn == LCN_HOLE))
-		return true;
+	अगर ((dst->lcn == LCN_HOLE) && (src->lcn == LCN_HOLE))
+		वापस true;
 	/* Cannot merge. */
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * __ntfs_rl_merge - merge two runlists without testing if they can be merged
+ * __ntfs_rl_merge - merge two runlists without testing अगर they can be merged
  * @dst:	original, destination runlist
  * @src:	new runlist to merge with @dst
  *
- * Merge the two runlists, writing into the destination runlist @dst. The
+ * Merge the two runlists, writing पूर्णांकo the destination runlist @dst. The
  * caller must make sure the runlists can be merged or this will corrupt the
  * destination runlist.
  *
  * It is up to the caller to serialize access to the runlists @dst and @src.
  */
-static inline void __ntfs_rl_merge(runlist_element *dst, runlist_element *src)
-{
+अटल अंतरभूत व्योम __ntfs_rl_merge(runlist_element *dst, runlist_element *src)
+अणु
 	dst->length += src->length;
-}
+पूर्ण
 
 /**
  * ntfs_rl_append - append a runlist after a given element
  * @dst:	original runlist to be worked on
  * @dsize:	number of elements in @dst (including end marker)
- * @src:	runlist to be inserted into @dst
+ * @src:	runlist to be inserted पूर्णांकo @dst
  * @ssize:	number of elements in @src (excluding end marker)
  * @loc:	append the new runlist @src after this element in @dst
  *
  * Append the runlist @src after element @loc in @dst.  Merge the right end of
- * the new runlist, if necessary. Adjust the size of the hole before the
+ * the new runlist, अगर necessary. Adjust the size of the hole beक्रमe the
  * appended runlist.
  *
  * It is up to the caller to serialize access to the runlists @dst and @src.
  *
- * On success, return a pointer to the new, combined, runlist. Note, both
- * runlists @dst and @src are deallocated before returning so you cannot use
- * the pointers for anything any more. (Strictly speaking the returned runlist
+ * On success, वापस a poपूर्णांकer to the new, combined, runlist. Note, both
+ * runlists @dst and @src are deallocated beक्रमe वापसing so you cannot use
+ * the poपूर्णांकers क्रम anything any more. (Strictly speaking the वापसed runlist
  * may be the same as @dst but this is irrelevant.)
  *
- * On error, return -errno. Both runlists are left unmodified. The following
+ * On error, वापस -त्रुटि_सं. Both runlists are left unmodअगरied. The following
  * error codes are defined:
  *	-ENOMEM	- Not enough memory to allocate runlist array.
  *	-EINVAL	- Invalid parameters were passed in.
  */
-static inline runlist_element *ntfs_rl_append(runlist_element *dst,
-		int dsize, runlist_element *src, int ssize, int loc)
-{
+अटल अंतरभूत runlist_element *ntfs_rl_append(runlist_element *dst,
+		पूर्णांक dsize, runlist_element *src, पूर्णांक ssize, पूर्णांक loc)
+अणु
 	bool right = false;	/* Right end of @src needs merging. */
-	int marker;		/* End of the inserted runs. */
+	पूर्णांक marker;		/* End of the inserted runs. */
 
 	BUG_ON(!dst);
 	BUG_ON(!src);
 
-	/* First, check if the right hand end needs merging. */
-	if ((loc + 1) < dsize)
+	/* First, check अगर the right hand end needs merging. */
+	अगर ((loc + 1) < dsize)
 		right = ntfs_are_rl_mergeable(src + ssize - 1, dst + loc + 1);
 
-	/* Space required: @dst size + @src size, less one if we merged. */
-	dst = ntfs_rl_realloc(dst, dsize, dsize + ssize - right);
-	if (IS_ERR(dst))
-		return dst;
+	/* Space required: @dst size + @src size, less one अगर we merged. */
+	dst = ntfs_rl_पुनः_स्मृति(dst, dsize, dsize + ssize - right);
+	अगर (IS_ERR(dst))
+		वापस dst;
 	/*
-	 * We are guaranteed to succeed from here so can start modifying the
+	 * We are guaranteed to succeed from here so can start modअगरying the
 	 * original runlists.
 	 */
 
-	/* First, merge the right hand end, if necessary. */
-	if (right)
+	/* First, merge the right hand end, अगर necessary. */
+	अगर (right)
 		__ntfs_rl_merge(src + ssize - 1, dst + loc + 1);
 
 	/* First run after the @src runs that have been inserted. */
@@ -238,42 +239,42 @@ static inline runlist_element *ntfs_rl_append(runlist_element *dst,
 	dst[loc].length = dst[loc + 1].vcn - dst[loc].vcn;
 
 	/* We may have changed the length of the file, so fix the end marker */
-	if (dst[marker].lcn == LCN_ENOENT)
+	अगर (dst[marker].lcn == LCN_ENOENT)
 		dst[marker].vcn = dst[marker - 1].vcn + dst[marker - 1].length;
 
-	return dst;
-}
+	वापस dst;
+पूर्ण
 
 /**
- * ntfs_rl_insert - insert a runlist into another
+ * ntfs_rl_insert - insert a runlist पूर्णांकo another
  * @dst:	original runlist to be worked on
  * @dsize:	number of elements in @dst (including end marker)
  * @src:	new runlist to be inserted
  * @ssize:	number of elements in @src (excluding end marker)
- * @loc:	insert the new runlist @src before this element in @dst
+ * @loc:	insert the new runlist @src beक्रमe this element in @dst
  *
- * Insert the runlist @src before element @loc in the runlist @dst. Merge the
- * left end of the new runlist, if necessary. Adjust the size of the hole
+ * Insert the runlist @src beक्रमe element @loc in the runlist @dst. Merge the
+ * left end of the new runlist, अगर necessary. Adjust the size of the hole
  * after the inserted runlist.
  *
  * It is up to the caller to serialize access to the runlists @dst and @src.
  *
- * On success, return a pointer to the new, combined, runlist. Note, both
- * runlists @dst and @src are deallocated before returning so you cannot use
- * the pointers for anything any more. (Strictly speaking the returned runlist
+ * On success, वापस a poपूर्णांकer to the new, combined, runlist. Note, both
+ * runlists @dst and @src are deallocated beक्रमe वापसing so you cannot use
+ * the poपूर्णांकers क्रम anything any more. (Strictly speaking the वापसed runlist
  * may be the same as @dst but this is irrelevant.)
  *
- * On error, return -errno. Both runlists are left unmodified. The following
+ * On error, वापस -त्रुटि_सं. Both runlists are left unmodअगरied. The following
  * error codes are defined:
  *	-ENOMEM	- Not enough memory to allocate runlist array.
  *	-EINVAL	- Invalid parameters were passed in.
  */
-static inline runlist_element *ntfs_rl_insert(runlist_element *dst,
-		int dsize, runlist_element *src, int ssize, int loc)
-{
+अटल अंतरभूत runlist_element *ntfs_rl_insert(runlist_element *dst,
+		पूर्णांक dsize, runlist_element *src, पूर्णांक ssize, पूर्णांक loc)
+अणु
 	bool left = false;	/* Left end of @src needs merging. */
 	bool disc = false;	/* Discontinuity between @dst and @src. */
-	int marker;		/* End of the inserted runs. */
+	पूर्णांक marker;		/* End of the inserted runs. */
 
 	BUG_ON(!dst);
 	BUG_ON(!src);
@@ -282,37 +283,37 @@ static inline runlist_element *ntfs_rl_insert(runlist_element *dst,
 	 * disc => Discontinuity between the end of @dst and the start of @src.
 	 *	   This means we might need to insert a "not mapped" run.
 	 */
-	if (loc == 0)
+	अगर (loc == 0)
 		disc = (src[0].vcn > 0);
-	else {
+	अन्यथा अणु
 		s64 merged_length;
 
 		left = ntfs_are_rl_mergeable(dst + loc - 1, src);
 
 		merged_length = dst[loc - 1].length;
-		if (left)
+		अगर (left)
 			merged_length += src->length;
 
 		disc = (src[0].vcn > dst[loc - 1].vcn + merged_length);
-	}
+	पूर्ण
 	/*
-	 * Space required: @dst size + @src size, less one if we merged, plus
-	 * one if there was a discontinuity.
+	 * Space required: @dst size + @src size, less one अगर we merged, plus
+	 * one अगर there was a discontinuity.
 	 */
-	dst = ntfs_rl_realloc(dst, dsize, dsize + ssize - left + disc);
-	if (IS_ERR(dst))
-		return dst;
+	dst = ntfs_rl_पुनः_स्मृति(dst, dsize, dsize + ssize - left + disc);
+	अगर (IS_ERR(dst))
+		वापस dst;
 	/*
-	 * We are guaranteed to succeed from here so can start modifying the
+	 * We are guaranteed to succeed from here so can start modअगरying the
 	 * original runlist.
 	 */
-	if (left)
+	अगर (left)
 		__ntfs_rl_merge(dst + loc - 1, src);
 	/*
 	 * First run after the @src runs that have been inserted.
 	 * Nominally,  @marker equals @loc + @ssize, i.e. location + number of
-	 * runs in @src.  However, if @left, then the first run in @src has
-	 * been merged with one in @dst.  And if @disc, then @dst and @src do
+	 * runs in @src.  However, अगर @left, then the first run in @src has
+	 * been merged with one in @dst.  And अगर @disc, then @dst and @src करो
 	 * not meet and we need an extra run to fill the gap.
 	 */
 	marker = loc + ssize - left + disc;
@@ -324,97 +325,97 @@ static inline runlist_element *ntfs_rl_insert(runlist_element *dst,
 	/* Adjust the VCN of the first run after the insertion... */
 	dst[marker].vcn = dst[marker - 1].vcn + dst[marker - 1].length;
 	/* ... and the length. */
-	if (dst[marker].lcn == LCN_HOLE || dst[marker].lcn == LCN_RL_NOT_MAPPED)
+	अगर (dst[marker].lcn == LCN_HOLE || dst[marker].lcn == LCN_RL_NOT_MAPPED)
 		dst[marker].length = dst[marker + 1].vcn - dst[marker].vcn;
 
 	/* Writing beyond the end of the file and there is a discontinuity. */
-	if (disc) {
-		if (loc > 0) {
+	अगर (disc) अणु
+		अगर (loc > 0) अणु
 			dst[loc].vcn = dst[loc - 1].vcn + dst[loc - 1].length;
 			dst[loc].length = dst[loc + 1].vcn - dst[loc].vcn;
-		} else {
+		पूर्ण अन्यथा अणु
 			dst[loc].vcn = 0;
 			dst[loc].length = dst[loc + 1].vcn;
-		}
+		पूर्ण
 		dst[loc].lcn = LCN_RL_NOT_MAPPED;
-	}
-	return dst;
-}
+	पूर्ण
+	वापस dst;
+पूर्ण
 
 /**
- * ntfs_rl_replace - overwrite a runlist element with another runlist
+ * ntfs_rl_replace - overग_लिखो a runlist element with another runlist
  * @dst:	original runlist to be worked on
  * @dsize:	number of elements in @dst (including end marker)
  * @src:	new runlist to be inserted
  * @ssize:	number of elements in @src (excluding end marker)
- * @loc:	index in runlist @dst to overwrite with @src
+ * @loc:	index in runlist @dst to overग_लिखो with @src
  *
  * Replace the runlist element @dst at @loc with @src. Merge the left and
- * right ends of the inserted runlist, if necessary.
+ * right ends of the inserted runlist, अगर necessary.
  *
  * It is up to the caller to serialize access to the runlists @dst and @src.
  *
- * On success, return a pointer to the new, combined, runlist. Note, both
- * runlists @dst and @src are deallocated before returning so you cannot use
- * the pointers for anything any more. (Strictly speaking the returned runlist
+ * On success, वापस a poपूर्णांकer to the new, combined, runlist. Note, both
+ * runlists @dst and @src are deallocated beक्रमe वापसing so you cannot use
+ * the poपूर्णांकers क्रम anything any more. (Strictly speaking the वापसed runlist
  * may be the same as @dst but this is irrelevant.)
  *
- * On error, return -errno. Both runlists are left unmodified. The following
+ * On error, वापस -त्रुटि_सं. Both runlists are left unmodअगरied. The following
  * error codes are defined:
  *	-ENOMEM	- Not enough memory to allocate runlist array.
  *	-EINVAL	- Invalid parameters were passed in.
  */
-static inline runlist_element *ntfs_rl_replace(runlist_element *dst,
-		int dsize, runlist_element *src, int ssize, int loc)
-{
-	signed delta;
+अटल अंतरभूत runlist_element *ntfs_rl_replace(runlist_element *dst,
+		पूर्णांक dsize, runlist_element *src, पूर्णांक ssize, पूर्णांक loc)
+अणु
+	चिन्हित delta;
 	bool left = false;	/* Left end of @src needs merging. */
 	bool right = false;	/* Right end of @src needs merging. */
-	int tail;		/* Start of tail of @dst. */
-	int marker;		/* End of the inserted runs. */
+	पूर्णांक tail;		/* Start of tail of @dst. */
+	पूर्णांक marker;		/* End of the inserted runs. */
 
 	BUG_ON(!dst);
 	BUG_ON(!src);
 
-	/* First, see if the left and right ends need merging. */
-	if ((loc + 1) < dsize)
+	/* First, see अगर the left and right ends need merging. */
+	अगर ((loc + 1) < dsize)
 		right = ntfs_are_rl_mergeable(src + ssize - 1, dst + loc + 1);
-	if (loc > 0)
+	अगर (loc > 0)
 		left = ntfs_are_rl_mergeable(dst + loc - 1, src);
 	/*
-	 * Allocate some space.  We will need less if the left, right, or both
-	 * ends get merged.  The -1 accounts for the run being replaced.
+	 * Allocate some space.  We will need less अगर the left, right, or both
+	 * ends get merged.  The -1 accounts क्रम the run being replaced.
 	 */
 	delta = ssize - 1 - left - right;
-	if (delta > 0) {
-		dst = ntfs_rl_realloc(dst, dsize, dsize + delta);
-		if (IS_ERR(dst))
-			return dst;
-	}
+	अगर (delta > 0) अणु
+		dst = ntfs_rl_पुनः_स्मृति(dst, dsize, dsize + delta);
+		अगर (IS_ERR(dst))
+			वापस dst;
+	पूर्ण
 	/*
-	 * We are guaranteed to succeed from here so can start modifying the
+	 * We are guaranteed to succeed from here so can start modअगरying the
 	 * original runlists.
 	 */
 
-	/* First, merge the left and right ends, if necessary. */
-	if (right)
+	/* First, merge the left and right ends, अगर necessary. */
+	अगर (right)
 		__ntfs_rl_merge(src + ssize - 1, dst + loc + 1);
-	if (left)
+	अगर (left)
 		__ntfs_rl_merge(dst + loc - 1, src);
 	/*
 	 * Offset of the tail of @dst.  This needs to be moved out of the way
-	 * to make space for the runs to be copied from @src, i.e. the first
+	 * to make space क्रम the runs to be copied from @src, i.e. the first
 	 * run of the tail of @dst.
 	 * Nominally, @tail equals @loc + 1, i.e. location, skipping the
-	 * replaced run.  However, if @right, then one of @dst's runs is
-	 * already merged into @src.
+	 * replaced run.  However, अगर @right, then one of @dst's runs is
+	 * alपढ़ोy merged पूर्णांकo @src.
 	 */
 	tail = loc + right + 1;
 	/*
 	 * First run after the @src runs that have been inserted, i.e. where
 	 * the tail of @dst needs to be moved to.
 	 * Nominally, @marker equals @loc + @ssize, i.e. location + number of
-	 * runs in @src.  However, if @left, then the first run in @src has
+	 * runs in @src.  However, अगर @left, then the first run in @src has
 	 * been merged with one in @dst.
 	 */
 	marker = loc + ssize - left;
@@ -424,47 +425,47 @@ static inline runlist_element *ntfs_rl_replace(runlist_element *dst,
 	ntfs_rl_mc(dst, loc, src, left, ssize - left);
 
 	/* We may have changed the length of the file, so fix the end marker. */
-	if (dsize - tail > 0 && dst[marker].lcn == LCN_ENOENT)
+	अगर (dsize - tail > 0 && dst[marker].lcn == LCN_ENOENT)
 		dst[marker].vcn = dst[marker - 1].vcn + dst[marker - 1].length;
-	return dst;
-}
+	वापस dst;
+पूर्ण
 
 /**
- * ntfs_rl_split - insert a runlist into the centre of a hole
+ * ntfs_rl_split - insert a runlist पूर्णांकo the centre of a hole
  * @dst:	original runlist to be worked on
  * @dsize:	number of elements in @dst (including end marker)
  * @src:	new runlist to be inserted
  * @ssize:	number of elements in @src (excluding end marker)
  * @loc:	index in runlist @dst at which to split and insert @src
  *
- * Split the runlist @dst at @loc into two and insert @new in between the two
+ * Split the runlist @dst at @loc पूर्णांकo two and insert @new in between the two
  * fragments. No merging of runlists is necessary. Adjust the size of the
  * holes either side.
  *
  * It is up to the caller to serialize access to the runlists @dst and @src.
  *
- * On success, return a pointer to the new, combined, runlist. Note, both
- * runlists @dst and @src are deallocated before returning so you cannot use
- * the pointers for anything any more. (Strictly speaking the returned runlist
+ * On success, वापस a poपूर्णांकer to the new, combined, runlist. Note, both
+ * runlists @dst and @src are deallocated beक्रमe वापसing so you cannot use
+ * the poपूर्णांकers क्रम anything any more. (Strictly speaking the वापसed runlist
  * may be the same as @dst but this is irrelevant.)
  *
- * On error, return -errno. Both runlists are left unmodified. The following
+ * On error, वापस -त्रुटि_सं. Both runlists are left unmodअगरied. The following
  * error codes are defined:
  *	-ENOMEM	- Not enough memory to allocate runlist array.
  *	-EINVAL	- Invalid parameters were passed in.
  */
-static inline runlist_element *ntfs_rl_split(runlist_element *dst, int dsize,
-		runlist_element *src, int ssize, int loc)
-{
+अटल अंतरभूत runlist_element *ntfs_rl_split(runlist_element *dst, पूर्णांक dsize,
+		runlist_element *src, पूर्णांक ssize, पूर्णांक loc)
+अणु
 	BUG_ON(!dst);
 	BUG_ON(!src);
 
 	/* Space required: @dst size + @src size + one new hole. */
-	dst = ntfs_rl_realloc(dst, dsize, dsize + ssize + 1);
-	if (IS_ERR(dst))
-		return dst;
+	dst = ntfs_rl_पुनः_स्मृति(dst, dsize, dsize + ssize + 1);
+	अगर (IS_ERR(dst))
+		वापस dst;
 	/*
-	 * We are guaranteed to succeed from here so can start modifying the
+	 * We are guaranteed to succeed from here so can start modअगरying the
 	 * original runlists.
 	 */
 
@@ -477,13 +478,13 @@ static inline runlist_element *ntfs_rl_split(runlist_element *dst, int dsize,
 	dst[loc+ssize+1].vcn    = dst[loc+ssize].vcn   + dst[loc+ssize].length;
 	dst[loc+ssize+1].length = dst[loc+ssize+2].vcn - dst[loc+ssize+1].vcn;
 
-	return dst;
-}
+	वापस dst;
+पूर्ण
 
 /**
- * ntfs_runlists_merge - merge two runlists into one
+ * ntfs_runlists_merge - merge two runlists पूर्णांकo one
  * @drl:	original runlist to be worked on
- * @srl:	new runlist to be merged into @drl
+ * @srl:	new runlist to be merged पूर्णांकo @drl
  *
  * First we sanity check the two runlists @srl and @drl to make sure that they
  * are sensible and can be merged. The runlist @srl must be either after the
@@ -491,7 +492,7 @@ static inline runlist_element *ntfs_rl_split(runlist_element *dst, int dsize,
  *
  * It is up to the caller to serialize access to the runlists @drl and @srl.
  *
- * Merging of runlists is necessary in two cases:
+ * Merging of runlists is necessary in two हालs:
  *   1. When attribute lists are used and a further extent is being mapped.
  *   2. When new clusters are allocated to fill a hole or extend a file.
  *
@@ -501,115 +502,115 @@ static inline runlist_element *ntfs_rl_split(runlist_element *dst, int dsize,
  *	- be appended at the end of a hole, or it can
  *	- replace the whole hole.
  * It can also be appended to the end of the runlist, which is just a variant
- * of the insert case.
+ * of the insert हाल.
  *
- * On success, return a pointer to the new, combined, runlist. Note, both
- * runlists @drl and @srl are deallocated before returning so you cannot use
- * the pointers for anything any more. (Strictly speaking the returned runlist
+ * On success, वापस a poपूर्णांकer to the new, combined, runlist. Note, both
+ * runlists @drl and @srl are deallocated beक्रमe वापसing so you cannot use
+ * the poपूर्णांकers क्रम anything any more. (Strictly speaking the वापसed runlist
  * may be the same as @dst but this is irrelevant.)
  *
- * On error, return -errno. Both runlists are left unmodified. The following
+ * On error, वापस -त्रुटि_सं. Both runlists are left unmodअगरied. The following
  * error codes are defined:
  *	-ENOMEM	- Not enough memory to allocate runlist array.
  *	-EINVAL	- Invalid parameters were passed in.
- *	-ERANGE	- The runlists overlap and cannot be merged.
+ *	-दुस्फल	- The runlists overlap and cannot be merged.
  */
 runlist_element *ntfs_runlists_merge(runlist_element *drl,
 		runlist_element *srl)
-{
-	int di, si;		/* Current index into @[ds]rl. */
-	int sstart;		/* First index with lcn > LCN_RL_NOT_MAPPED. */
-	int dins;		/* Index into @drl at which to insert @srl. */
-	int dend, send;		/* Last index into @[ds]rl. */
-	int dfinal, sfinal;	/* The last index into @[ds]rl with
+अणु
+	पूर्णांक di, si;		/* Current index पूर्णांकo @[ds]rl. */
+	पूर्णांक sstart;		/* First index with lcn > LCN_RL_NOT_MAPPED. */
+	पूर्णांक dins;		/* Index पूर्णांकo @drl at which to insert @srl. */
+	पूर्णांक dend, send;		/* Last index पूर्णांकo @[ds]rl. */
+	पूर्णांक dfinal, sfinal;	/* The last index पूर्णांकo @[ds]rl with
 				   lcn >= LCN_HOLE. */
-	int marker = 0;
+	पूर्णांक marker = 0;
 	VCN marker_vcn = 0;
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	ntfs_debug("dst:");
 	ntfs_debug_dump_runlist(drl);
 	ntfs_debug("src:");
 	ntfs_debug_dump_runlist(srl);
-#endif
+#पूर्ण_अगर
 
-	/* Check for silly calling... */
-	if (unlikely(!srl))
-		return drl;
-	if (IS_ERR(srl) || IS_ERR(drl))
-		return ERR_PTR(-EINVAL);
+	/* Check क्रम silly calling... */
+	अगर (unlikely(!srl))
+		वापस drl;
+	अगर (IS_ERR(srl) || IS_ERR(drl))
+		वापस ERR_PTR(-EINVAL);
 
-	/* Check for the case where the first mapping is being done now. */
-	if (unlikely(!drl)) {
+	/* Check क्रम the हाल where the first mapping is being करोne now. */
+	अगर (unlikely(!drl)) अणु
 		drl = srl;
-		/* Complete the source runlist if necessary. */
-		if (unlikely(drl[0].vcn)) {
+		/* Complete the source runlist अगर necessary. */
+		अगर (unlikely(drl[0].vcn)) अणु
 			/* Scan to the end of the source runlist. */
-			for (dend = 0; likely(drl[dend].length); dend++)
+			क्रम (dend = 0; likely(drl[dend].length); dend++)
 				;
 			dend++;
-			drl = ntfs_rl_realloc(drl, dend, dend + 1);
-			if (IS_ERR(drl))
-				return drl;
+			drl = ntfs_rl_पुनः_स्मृति(drl, dend, dend + 1);
+			अगर (IS_ERR(drl))
+				वापस drl;
 			/* Insert start element at the front of the runlist. */
 			ntfs_rl_mm(drl, 1, 0, dend);
 			drl[0].vcn = 0;
 			drl[0].lcn = LCN_RL_NOT_MAPPED;
 			drl[0].length = drl[1].vcn;
-		}
-		goto finished;
-	}
+		पूर्ण
+		जाओ finished;
+	पूर्ण
 
 	si = di = 0;
 
 	/* Skip any unmapped start element(s) in the source runlist. */
-	while (srl[si].length && srl[si].lcn < LCN_HOLE)
+	जबतक (srl[si].length && srl[si].lcn < LCN_HOLE)
 		si++;
 
 	/* Can't have an entirely unmapped source runlist. */
 	BUG_ON(!srl[si].length);
 
-	/* Record the starting points. */
+	/* Record the starting poपूर्णांकs. */
 	sstart = si;
 
 	/*
-	 * Skip forward in @drl until we reach the position where @srl needs to
+	 * Skip क्रमward in @drl until we reach the position where @srl needs to
 	 * be inserted. If we reach the end of @drl, @srl just needs to be
 	 * appended to @drl.
 	 */
-	for (; drl[di].length; di++) {
-		if (drl[di].vcn + drl[di].length > srl[sstart].vcn)
-			break;
-	}
+	क्रम (; drl[di].length; di++) अणु
+		अगर (drl[di].vcn + drl[di].length > srl[sstart].vcn)
+			अवरोध;
+	पूर्ण
 	dins = di;
 
-	/* Sanity check for illegal overlaps. */
-	if ((drl[di].vcn == srl[si].vcn) && (drl[di].lcn >= 0) &&
-			(srl[si].lcn >= 0)) {
-		ntfs_error(NULL, "Run lists overlap. Cannot merge!");
-		return ERR_PTR(-ERANGE);
-	}
+	/* Sanity check क्रम illegal overlaps. */
+	अगर ((drl[di].vcn == srl[si].vcn) && (drl[di].lcn >= 0) &&
+			(srl[si].lcn >= 0)) अणु
+		ntfs_error(शून्य, "Run lists overlap. Cannot merge!");
+		वापस ERR_PTR(-दुस्फल);
+	पूर्ण
 
 	/* Scan to the end of both runlists in order to know their sizes. */
-	for (send = si; srl[send].length; send++)
+	क्रम (send = si; srl[send].length; send++)
 		;
-	for (dend = di; drl[dend].length; dend++)
+	क्रम (dend = di; drl[dend].length; dend++)
 		;
 
-	if (srl[send].lcn == LCN_ENOENT)
+	अगर (srl[send].lcn == LCN_ENOENT)
 		marker_vcn = srl[marker = send].vcn;
 
 	/* Scan to the last element with lcn >= LCN_HOLE. */
-	for (sfinal = send; sfinal >= 0 && srl[sfinal].lcn < LCN_HOLE; sfinal--)
+	क्रम (sfinal = send; sfinal >= 0 && srl[sfinal].lcn < LCN_HOLE; sfinal--)
 		;
-	for (dfinal = dend; dfinal >= 0 && drl[dfinal].lcn < LCN_HOLE; dfinal--)
+	क्रम (dfinal = dend; dfinal >= 0 && drl[dfinal].lcn < LCN_HOLE; dfinal--)
 		;
 
-	{
+	अणु
 	bool start;
 	bool finish;
-	int ds = dend + 1;		/* Number of elements in drl & srl */
-	int ss = sfinal - sstart + 1;
+	पूर्णांक ds = dend + 1;		/* Number of elements in drl & srl */
+	पूर्णांक ss = sfinal - sstart + 1;
 
 	start  = ((drl[dins].lcn <  LCN_RL_NOT_MAPPED) ||    /* End of file   */
 		  (drl[dins].vcn == srl[sstart].vcn));	     /* Start of hole */
@@ -618,91 +619,91 @@ runlist_element *ntfs_runlists_merge(runlist_element *drl,
 		  (srl[send - 1].vcn + srl[send - 1].length)));
 
 	/* Or we will lose an end marker. */
-	if (finish && !drl[dins].length)
+	अगर (finish && !drl[dins].length)
 		ss++;
-	if (marker && (drl[dins].vcn + drl[dins].length > srl[send - 1].vcn))
+	अगर (marker && (drl[dins].vcn + drl[dins].length > srl[send - 1].vcn))
 		finish = false;
-#if 0
+#अगर 0
 	ntfs_debug("dfinal = %i, dend = %i", dfinal, dend);
 	ntfs_debug("sstart = %i, sfinal = %i, send = %i", sstart, sfinal, send);
 	ntfs_debug("start = %i, finish = %i", start, finish);
 	ntfs_debug("ds = %i, ss = %i, dins = %i", ds, ss, dins);
-#endif
-	if (start) {
-		if (finish)
+#पूर्ण_अगर
+	अगर (start) अणु
+		अगर (finish)
 			drl = ntfs_rl_replace(drl, ds, srl + sstart, ss, dins);
-		else
+		अन्यथा
 			drl = ntfs_rl_insert(drl, ds, srl + sstart, ss, dins);
-	} else {
-		if (finish)
+	पूर्ण अन्यथा अणु
+		अगर (finish)
 			drl = ntfs_rl_append(drl, ds, srl + sstart, ss, dins);
-		else
+		अन्यथा
 			drl = ntfs_rl_split(drl, ds, srl + sstart, ss, dins);
-	}
-	if (IS_ERR(drl)) {
-		ntfs_error(NULL, "Merge failed.");
-		return drl;
-	}
-	ntfs_free(srl);
-	if (marker) {
+	पूर्ण
+	अगर (IS_ERR(drl)) अणु
+		ntfs_error(शून्य, "Merge failed.");
+		वापस drl;
+	पूर्ण
+	ntfs_मुक्त(srl);
+	अगर (marker) अणु
 		ntfs_debug("Triggering marker code.");
-		for (ds = dend; drl[ds].length; ds++)
+		क्रम (ds = dend; drl[ds].length; ds++)
 			;
-		/* We only need to care if @srl ended after @drl. */
-		if (drl[ds].vcn <= marker_vcn) {
-			int slots = 0;
+		/* We only need to care अगर @srl ended after @drl. */
+		अगर (drl[ds].vcn <= marker_vcn) अणु
+			पूर्णांक slots = 0;
 
-			if (drl[ds].vcn == marker_vcn) {
+			अगर (drl[ds].vcn == marker_vcn) अणु
 				ntfs_debug("Old marker = 0x%llx, replacing "
 						"with LCN_ENOENT.",
-						(unsigned long long)
+						(अचिन्हित दीर्घ दीर्घ)
 						drl[ds].lcn);
 				drl[ds].lcn = LCN_ENOENT;
-				goto finished;
-			}
+				जाओ finished;
+			पूर्ण
 			/*
 			 * We need to create an unmapped runlist element in
-			 * @drl or extend an existing one before adding the
+			 * @drl or extend an existing one beक्रमe adding the
 			 * ENOENT terminator.
 			 */
-			if (drl[ds].lcn == LCN_ENOENT) {
+			अगर (drl[ds].lcn == LCN_ENOENT) अणु
 				ds--;
 				slots = 1;
-			}
-			if (drl[ds].lcn != LCN_RL_NOT_MAPPED) {
+			पूर्ण
+			अगर (drl[ds].lcn != LCN_RL_NOT_MAPPED) अणु
 				/* Add an unmapped runlist element. */
-				if (!slots) {
-					drl = ntfs_rl_realloc_nofail(drl, ds,
+				अगर (!slots) अणु
+					drl = ntfs_rl_पुनः_स्मृति_nofail(drl, ds,
 							ds + 2);
 					slots = 2;
-				}
+				पूर्ण
 				ds++;
-				/* Need to set vcn if it isn't set already. */
-				if (slots != 1)
+				/* Need to set vcn अगर it isn't set alपढ़ोy. */
+				अगर (slots != 1)
 					drl[ds].vcn = drl[ds - 1].vcn +
 							drl[ds - 1].length;
 				drl[ds].lcn = LCN_RL_NOT_MAPPED;
 				/* We now used up a slot. */
 				slots--;
-			}
+			पूर्ण
 			drl[ds].length = marker_vcn - drl[ds].vcn;
 			/* Finally add the ENOENT terminator. */
 			ds++;
-			if (!slots)
-				drl = ntfs_rl_realloc_nofail(drl, ds, ds + 1);
+			अगर (!slots)
+				drl = ntfs_rl_पुनः_स्मृति_nofail(drl, ds, ds + 1);
 			drl[ds].vcn = marker_vcn;
 			drl[ds].lcn = LCN_ENOENT;
 			drl[ds].length = (s64)0;
-		}
-	}
-	}
+		पूर्ण
+	पूर्ण
+	पूर्ण
 
 finished:
 	/* The merge was completed successfully. */
 	ntfs_debug("Merged runlist:");
 	ntfs_debug_dump_runlist(drl);
-	return drl;
-}
+	वापस drl;
+पूर्ण
 
 /**
  * ntfs_mapping_pairs_decompress - convert mapping pairs array to runlist
@@ -712,48 +713,48 @@ finished:
  *
  * It is up to the caller to serialize access to the runlist @old_rl.
  *
- * Decompress the attribute @attr's mapping pairs array into a runlist. On
- * success, return the decompressed runlist.
+ * Decompress the attribute @attr's mapping pairs array पूर्णांकo a runlist. On
+ * success, वापस the decompressed runlist.
  *
- * If @old_rl is not NULL, decompressed runlist is inserted into the
+ * If @old_rl is not शून्य, decompressed runlist is inserted पूर्णांकo the
  * appropriate place in @old_rl and the resultant, combined runlist is
- * returned. The original @old_rl is deallocated.
+ * वापसed. The original @old_rl is deallocated.
  *
- * On error, return -errno. @old_rl is left unmodified in that case.
+ * On error, वापस -त्रुटि_सं. @old_rl is left unmodअगरied in that हाल.
  *
  * The following error codes are defined:
  *	-ENOMEM	- Not enough memory to allocate runlist array.
  *	-EIO	- Corrupt runlist.
  *	-EINVAL	- Invalid parameters were passed in.
- *	-ERANGE	- The two runlists overlap.
+ *	-दुस्फल	- The two runlists overlap.
  *
  * FIXME: For now we take the conceptionally simplest approach of creating the
- * new runlist disregarding the already existing one and then splicing the
- * two into one, if that is possible (we check for overlap and discard the new
- * runlist if overlap present before returning ERR_PTR(-ERANGE)).
+ * new runlist disregarding the alपढ़ोy existing one and then splicing the
+ * two पूर्णांकo one, अगर that is possible (we check क्रम overlap and discard the new
+ * runlist अगर overlap present beक्रमe वापसing ERR_PTR(-दुस्फल)).
  */
-runlist_element *ntfs_mapping_pairs_decompress(const ntfs_volume *vol,
-		const ATTR_RECORD *attr, runlist_element *old_rl)
-{
+runlist_element *ntfs_mapping_pairs_decompress(स्थिर ntfs_volume *vol,
+		स्थिर ATTR_RECORD *attr, runlist_element *old_rl)
+अणु
 	VCN vcn;		/* Current vcn. */
 	LCN lcn;		/* Current lcn. */
 	s64 deltaxcn;		/* Change in [vl]cn. */
 	runlist_element *rl;	/* The output runlist. */
 	u8 *buf;		/* Current position in mapping pairs array. */
 	u8 *attr_end;		/* End of attribute. */
-	int rlsize;		/* Size of runlist buffer. */
+	पूर्णांक rlsize;		/* Size of runlist buffer. */
 	u16 rlpos;		/* Current runlist position in units of
 				   runlist_elements. */
 	u8 b;			/* Current byte offset in buf. */
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	/* Make sure attr exists and is non-resident. */
-	if (!attr || !attr->non_resident || sle64_to_cpu(
-			attr->data.non_resident.lowest_vcn) < (VCN)0) {
+	अगर (!attr || !attr->non_resident || sle64_to_cpu(
+			attr->data.non_resident.lowest_vcn) < (VCN)0) अणु
 		ntfs_error(vol->sb, "Invalid arguments.");
-		return ERR_PTR(-EINVAL);
-	}
-#endif
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
+#पूर्ण_अगर
 	/* Start at vcn = lowest_vcn and lcn 0. */
 	vcn = sle64_to_cpu(attr->data.non_resident.lowest_vcn);
 	lcn = 0;
@@ -761,142 +762,142 @@ runlist_element *ntfs_mapping_pairs_decompress(const ntfs_volume *vol,
 	buf = (u8*)attr + le16_to_cpu(
 			attr->data.non_resident.mapping_pairs_offset);
 	attr_end = (u8*)attr + le32_to_cpu(attr->length);
-	if (unlikely(buf < (u8*)attr || buf > attr_end)) {
+	अगर (unlikely(buf < (u8*)attr || buf > attr_end)) अणु
 		ntfs_error(vol->sb, "Corrupt attribute.");
-		return ERR_PTR(-EIO);
-	}
-	/* If the mapping pairs array is valid but empty, nothing to do. */
-	if (!vcn && !*buf)
-		return old_rl;
+		वापस ERR_PTR(-EIO);
+	पूर्ण
+	/* If the mapping pairs array is valid but empty, nothing to करो. */
+	अगर (!vcn && !*buf)
+		वापस old_rl;
 	/* Current position in runlist array. */
 	rlpos = 0;
 	/* Allocate first page and set current runlist size to one page. */
-	rl = ntfs_malloc_nofs(rlsize = PAGE_SIZE);
-	if (unlikely(!rl))
-		return ERR_PTR(-ENOMEM);
-	/* Insert unmapped starting element if necessary. */
-	if (vcn) {
+	rl = ntfs_दो_स्मृति_nofs(rlsize = PAGE_SIZE);
+	अगर (unlikely(!rl))
+		वापस ERR_PTR(-ENOMEM);
+	/* Insert unmapped starting element अगर necessary. */
+	अगर (vcn) अणु
 		rl->vcn = 0;
 		rl->lcn = LCN_RL_NOT_MAPPED;
 		rl->length = vcn;
 		rlpos++;
-	}
-	while (buf < attr_end && *buf) {
+	पूर्ण
+	जबतक (buf < attr_end && *buf) अणु
 		/*
-		 * Allocate more memory if needed, including space for the
-		 * not-mapped and terminator elements. ntfs_malloc_nofs()
+		 * Allocate more memory अगर needed, including space क्रम the
+		 * not-mapped and terminator elements. ntfs_दो_स्मृति_nofs()
 		 * operates on whole pages only.
 		 */
-		if (((rlpos + 3) * sizeof(*old_rl)) > rlsize) {
+		अगर (((rlpos + 3) * माप(*old_rl)) > rlsize) अणु
 			runlist_element *rl2;
 
-			rl2 = ntfs_malloc_nofs(rlsize + (int)PAGE_SIZE);
-			if (unlikely(!rl2)) {
-				ntfs_free(rl);
-				return ERR_PTR(-ENOMEM);
-			}
-			memcpy(rl2, rl, rlsize);
-			ntfs_free(rl);
+			rl2 = ntfs_दो_स्मृति_nofs(rlsize + (पूर्णांक)PAGE_SIZE);
+			अगर (unlikely(!rl2)) अणु
+				ntfs_मुक्त(rl);
+				वापस ERR_PTR(-ENOMEM);
+			पूर्ण
+			स_नकल(rl2, rl, rlsize);
+			ntfs_मुक्त(rl);
 			rl = rl2;
 			rlsize += PAGE_SIZE;
-		}
-		/* Enter the current vcn into the current runlist element. */
+		पूर्ण
+		/* Enter the current vcn पूर्णांकo the current runlist element. */
 		rl[rlpos].vcn = vcn;
 		/*
 		 * Get the change in vcn, i.e. the run length in clusters.
 		 * Doing it this way ensures that we signextend negative values.
-		 * A negative run length doesn't make any sense, but hey, I
-		 * didn't make up the NTFS specs and Windows NT4 treats the run
-		 * length as a signed value so that's how it is...
+		 * A negative run length करोesn't make any sense, but hey, I
+		 * didn't make up the NTFS specs and Winकरोws NT4 treats the run
+		 * length as a चिन्हित value so that's how it is...
 		 */
 		b = *buf & 0xf;
-		if (b) {
-			if (unlikely(buf + b > attr_end))
-				goto io_error;
-			for (deltaxcn = (s8)buf[b--]; b; b--)
+		अगर (b) अणु
+			अगर (unlikely(buf + b > attr_end))
+				जाओ io_error;
+			क्रम (deltaxcn = (s8)buf[b--]; b; b--)
 				deltaxcn = (deltaxcn << 8) + buf[b];
-		} else { /* The length entry is compulsory. */
+		पूर्ण अन्यथा अणु /* The length entry is compulsory. */
 			ntfs_error(vol->sb, "Missing length entry in mapping "
 					"pairs array.");
 			deltaxcn = (s64)-1;
-		}
+		पूर्ण
 		/*
 		 * Assume a negative length to indicate data corruption and
-		 * hence clean-up and return NULL.
+		 * hence clean-up and वापस शून्य.
 		 */
-		if (unlikely(deltaxcn < 0)) {
+		अगर (unlikely(deltaxcn < 0)) अणु
 			ntfs_error(vol->sb, "Invalid length in mapping pairs "
 					"array.");
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 		/*
-		 * Enter the current run length into the current runlist
+		 * Enter the current run length पूर्णांकo the current runlist
 		 * element.
 		 */
 		rl[rlpos].length = deltaxcn;
 		/* Increment the current vcn by the current run length. */
 		vcn += deltaxcn;
 		/*
-		 * There might be no lcn change at all, as is the case for
-		 * sparse clusters on NTFS 3.0+, in which case we set the lcn
+		 * There might be no lcn change at all, as is the हाल क्रम
+		 * sparse clusters on NTFS 3.0+, in which हाल we set the lcn
 		 * to LCN_HOLE.
 		 */
-		if (!(*buf & 0xf0))
+		अगर (!(*buf & 0xf0))
 			rl[rlpos].lcn = LCN_HOLE;
-		else {
+		अन्यथा अणु
 			/* Get the lcn change which really can be negative. */
 			u8 b2 = *buf & 0xf;
 			b = b2 + ((*buf >> 4) & 0xf);
-			if (buf + b > attr_end)
-				goto io_error;
-			for (deltaxcn = (s8)buf[b--]; b > b2; b--)
+			अगर (buf + b > attr_end)
+				जाओ io_error;
+			क्रम (deltaxcn = (s8)buf[b--]; b > b2; b--)
 				deltaxcn = (deltaxcn << 8) + buf[b];
 			/* Change the current lcn to its new value. */
 			lcn += deltaxcn;
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 			/*
 			 * On NTFS 1.2-, apparently can have lcn == -1 to
-			 * indicate a hole. But we haven't verified ourselves
+			 * indicate a hole. But we haven't verअगरied ourselves
 			 * whether it is really the lcn or the deltaxcn that is
-			 * -1. So if either is found give us a message so we
+			 * -1. So अगर either is found give us a message so we
 			 * can investigate it further!
 			 */
-			if (vol->major_ver < 3) {
-				if (unlikely(deltaxcn == (LCN)-1))
+			अगर (vol->major_ver < 3) अणु
+				अगर (unlikely(deltaxcn == (LCN)-1))
 					ntfs_error(vol->sb, "lcn delta == -1");
-				if (unlikely(lcn == (LCN)-1))
+				अगर (unlikely(lcn == (LCN)-1))
 					ntfs_error(vol->sb, "lcn == -1");
-			}
-#endif
+			पूर्ण
+#पूर्ण_अगर
 			/* Check lcn is not below -1. */
-			if (unlikely(lcn < (LCN)-1)) {
+			अगर (unlikely(lcn < (LCN)-1)) अणु
 				ntfs_error(vol->sb, "Invalid LCN < -1 in "
 						"mapping pairs array.");
-				goto err_out;
-			}
-			/* Enter the current lcn into the runlist element. */
+				जाओ err_out;
+			पूर्ण
+			/* Enter the current lcn पूर्णांकo the runlist element. */
 			rl[rlpos].lcn = lcn;
-		}
+		पूर्ण
 		/* Get to the next runlist element. */
 		rlpos++;
 		/* Increment the buffer position to the next mapping pair. */
 		buf += (*buf & 0xf) + ((*buf >> 4) & 0xf) + 1;
-	}
-	if (unlikely(buf >= attr_end))
-		goto io_error;
+	पूर्ण
+	अगर (unlikely(buf >= attr_end))
+		जाओ io_error;
 	/*
-	 * If there is a highest_vcn specified, it must be equal to the final
+	 * If there is a highest_vcn specअगरied, it must be equal to the final
 	 * vcn in the runlist - 1, or something has gone badly wrong.
 	 */
 	deltaxcn = sle64_to_cpu(attr->data.non_resident.highest_vcn);
-	if (unlikely(deltaxcn && vcn - 1 != deltaxcn)) {
+	अगर (unlikely(deltaxcn && vcn - 1 != deltaxcn)) अणु
 mpa_err:
 		ntfs_error(vol->sb, "Corrupt mapping pairs array in "
 				"non-resident attribute.");
-		goto err_out;
-	}
-	/* Setup not mapped runlist element if this is the base extent. */
-	if (!attr->data.non_resident.lowest_vcn) {
+		जाओ err_out;
+	पूर्ण
+	/* Setup not mapped runlist element अगर this is the base extent. */
+	अगर (!attr->data.non_resident.lowest_vcn) अणु
 		VCN max_cluster;
 
 		max_cluster = ((sle64_to_cpu(
@@ -907,187 +908,187 @@ mpa_err:
 		 * A highest_vcn of zero means this is a single extent
 		 * attribute so simply terminate the runlist with LCN_ENOENT).
 		 */
-		if (deltaxcn) {
+		अगर (deltaxcn) अणु
 			/*
-			 * If there is a difference between the highest_vcn and
+			 * If there is a dअगरference between the highest_vcn and
 			 * the highest cluster, the runlist is either corrupt
 			 * or, more likely, there are more extents following
 			 * this one.
 			 */
-			if (deltaxcn < max_cluster) {
+			अगर (deltaxcn < max_cluster) अणु
 				ntfs_debug("More extents to follow; deltaxcn "
 						"= 0x%llx, max_cluster = "
 						"0x%llx",
-						(unsigned long long)deltaxcn,
-						(unsigned long long)
+						(अचिन्हित दीर्घ दीर्घ)deltaxcn,
+						(अचिन्हित दीर्घ दीर्घ)
 						max_cluster);
 				rl[rlpos].vcn = vcn;
 				vcn += rl[rlpos].length = max_cluster -
 						deltaxcn;
 				rl[rlpos].lcn = LCN_RL_NOT_MAPPED;
 				rlpos++;
-			} else if (unlikely(deltaxcn > max_cluster)) {
+			पूर्ण अन्यथा अगर (unlikely(deltaxcn > max_cluster)) अणु
 				ntfs_error(vol->sb, "Corrupt attribute.  "
 						"deltaxcn = 0x%llx, "
 						"max_cluster = 0x%llx",
-						(unsigned long long)deltaxcn,
-						(unsigned long long)
+						(अचिन्हित दीर्घ दीर्घ)deltaxcn,
+						(अचिन्हित दीर्घ दीर्घ)
 						max_cluster);
-				goto mpa_err;
-			}
-		}
+				जाओ mpa_err;
+			पूर्ण
+		पूर्ण
 		rl[rlpos].lcn = LCN_ENOENT;
-	} else /* Not the base extent. There may be more extents to follow. */
+	पूर्ण अन्यथा /* Not the base extent. There may be more extents to follow. */
 		rl[rlpos].lcn = LCN_RL_NOT_MAPPED;
 
 	/* Setup terminating runlist element. */
 	rl[rlpos].vcn = vcn;
 	rl[rlpos].length = (s64)0;
-	/* If no existing runlist was specified, we are done. */
-	if (!old_rl) {
+	/* If no existing runlist was specअगरied, we are करोne. */
+	अगर (!old_rl) अणु
 		ntfs_debug("Mapping pairs array successfully decompressed:");
 		ntfs_debug_dump_runlist(rl);
-		return rl;
-	}
-	/* Now combine the new and old runlists checking for overlaps. */
+		वापस rl;
+	पूर्ण
+	/* Now combine the new and old runlists checking क्रम overlaps. */
 	old_rl = ntfs_runlists_merge(old_rl, rl);
-	if (!IS_ERR(old_rl))
-		return old_rl;
-	ntfs_free(rl);
+	अगर (!IS_ERR(old_rl))
+		वापस old_rl;
+	ntfs_मुक्त(rl);
 	ntfs_error(vol->sb, "Failed to merge runlists.");
-	return old_rl;
+	वापस old_rl;
 io_error:
 	ntfs_error(vol->sb, "Corrupt attribute.");
 err_out:
-	ntfs_free(rl);
-	return ERR_PTR(-EIO);
-}
+	ntfs_मुक्त(rl);
+	वापस ERR_PTR(-EIO);
+पूर्ण
 
 /**
- * ntfs_rl_vcn_to_lcn - convert a vcn into a lcn given a runlist
- * @rl:		runlist to use for conversion
+ * ntfs_rl_vcn_to_lcn - convert a vcn पूर्णांकo a lcn given a runlist
+ * @rl:		runlist to use क्रम conversion
  * @vcn:	vcn to convert
  *
- * Convert the virtual cluster number @vcn of an attribute into a logical
+ * Convert the भव cluster number @vcn of an attribute पूर्णांकo a logical
  * cluster number (lcn) of a device using the runlist @rl to map vcns to their
  * corresponding lcns.
  *
  * It is up to the caller to serialize access to the runlist @rl.
  *
- * Since lcns must be >= 0, we use negative return codes with special meaning:
+ * Since lcns must be >= 0, we use negative वापस codes with special meaning:
  *
  * Return code		Meaning / Description
  * ==================================================
  *  LCN_HOLE		Hole / not allocated on disk.
  *  LCN_RL_NOT_MAPPED	This is part of the runlist which has not been
- *			inserted into the runlist yet.
+ *			inserted पूर्णांकo the runlist yet.
  *  LCN_ENOENT		There is no such vcn in the attribute.
  *
- * Locking: - The caller must have locked the runlist (for reading or writing).
- *	    - This function does not touch the lock, nor does it modify the
+ * Locking: - The caller must have locked the runlist (क्रम पढ़ोing or writing).
+ *	    - This function करोes not touch the lock, nor करोes it modअगरy the
  *	      runlist.
  */
-LCN ntfs_rl_vcn_to_lcn(const runlist_element *rl, const VCN vcn)
-{
-	int i;
+LCN ntfs_rl_vcn_to_lcn(स्थिर runlist_element *rl, स्थिर VCN vcn)
+अणु
+	पूर्णांक i;
 
 	BUG_ON(vcn < 0);
 	/*
-	 * If rl is NULL, assume that we have found an unmapped runlist. The
-	 * caller can then attempt to map it and fail appropriately if
+	 * If rl is शून्य, assume that we have found an unmapped runlist. The
+	 * caller can then attempt to map it and fail appropriately अगर
 	 * necessary.
 	 */
-	if (unlikely(!rl))
-		return LCN_RL_NOT_MAPPED;
+	अगर (unlikely(!rl))
+		वापस LCN_RL_NOT_MAPPED;
 
 	/* Catch out of lower bounds vcn. */
-	if (unlikely(vcn < rl[0].vcn))
-		return LCN_ENOENT;
+	अगर (unlikely(vcn < rl[0].vcn))
+		वापस LCN_ENOENT;
 
-	for (i = 0; likely(rl[i].length); i++) {
-		if (unlikely(vcn < rl[i+1].vcn)) {
-			if (likely(rl[i].lcn >= (LCN)0))
-				return rl[i].lcn + (vcn - rl[i].vcn);
-			return rl[i].lcn;
-		}
-	}
+	क्रम (i = 0; likely(rl[i].length); i++) अणु
+		अगर (unlikely(vcn < rl[i+1].vcn)) अणु
+			अगर (likely(rl[i].lcn >= (LCN)0))
+				वापस rl[i].lcn + (vcn - rl[i].vcn);
+			वापस rl[i].lcn;
+		पूर्ण
+	पूर्ण
 	/*
 	 * The terminator element is setup to the correct value, i.e. one of
 	 * LCN_HOLE, LCN_RL_NOT_MAPPED, or LCN_ENOENT.
 	 */
-	if (likely(rl[i].lcn < (LCN)0))
-		return rl[i].lcn;
-	/* Just in case... We could replace this with BUG() some day. */
-	return LCN_ENOENT;
-}
+	अगर (likely(rl[i].lcn < (LCN)0))
+		वापस rl[i].lcn;
+	/* Just in हाल... We could replace this with BUG() some day. */
+	वापस LCN_ENOENT;
+पूर्ण
 
-#ifdef NTFS_RW
+#अगर_घोषित NTFS_RW
 
 /**
  * ntfs_rl_find_vcn_nolock - find a vcn in a runlist
  * @rl:		runlist to search
  * @vcn:	vcn to find
  *
- * Find the virtual cluster number @vcn in the runlist @rl and return the
+ * Find the भव cluster number @vcn in the runlist @rl and वापस the
  * address of the runlist element containing the @vcn on success.
  *
- * Return NULL if @rl is NULL or @vcn is in an unmapped part/out of bounds of
+ * Return शून्य अगर @rl is शून्य or @vcn is in an unmapped part/out of bounds of
  * the runlist.
  *
  * Locking: The runlist must be locked on entry.
  */
-runlist_element *ntfs_rl_find_vcn_nolock(runlist_element *rl, const VCN vcn)
-{
+runlist_element *ntfs_rl_find_vcn_nolock(runlist_element *rl, स्थिर VCN vcn)
+अणु
 	BUG_ON(vcn < 0);
-	if (unlikely(!rl || vcn < rl[0].vcn))
-		return NULL;
-	while (likely(rl->length)) {
-		if (unlikely(vcn < rl[1].vcn)) {
-			if (likely(rl->lcn >= LCN_HOLE))
-				return rl;
-			return NULL;
-		}
+	अगर (unlikely(!rl || vcn < rl[0].vcn))
+		वापस शून्य;
+	जबतक (likely(rl->length)) अणु
+		अगर (unlikely(vcn < rl[1].vcn)) अणु
+			अगर (likely(rl->lcn >= LCN_HOLE))
+				वापस rl;
+			वापस शून्य;
+		पूर्ण
 		rl++;
-	}
-	if (likely(rl->lcn == LCN_ENOENT))
-		return rl;
-	return NULL;
-}
+	पूर्ण
+	अगर (likely(rl->lcn == LCN_ENOENT))
+		वापस rl;
+	वापस शून्य;
+पूर्ण
 
 /**
- * ntfs_get_nr_significant_bytes - get number of bytes needed to store a number
- * @n:		number for which to get the number of bytes for
+ * ntfs_get_nr_signअगरicant_bytes - get number of bytes needed to store a number
+ * @n:		number क्रम which to get the number of bytes क्रम
  *
  * Return the number of bytes required to store @n unambiguously as
- * a signed number.
+ * a चिन्हित number.
  *
  * This is used in the context of the mapping pairs array to determine how
  * many bytes will be needed in the array to store a given logical cluster
- * number (lcn) or a specific run length.
+ * number (lcn) or a specअगरic run length.
  *
  * Return the number of bytes written.  This function cannot fail.
  */
-static inline int ntfs_get_nr_significant_bytes(const s64 n)
-{
+अटल अंतरभूत पूर्णांक ntfs_get_nr_signअगरicant_bytes(स्थिर s64 n)
+अणु
 	s64 l = n;
-	int i;
+	पूर्णांक i;
 	s8 j;
 
 	i = 0;
-	do {
+	करो अणु
 		l >>= 8;
 		i++;
-	} while (l != 0 && l != -1);
+	पूर्ण जबतक (l != 0 && l != -1);
 	j = (n >> 8 * (i - 1)) & 0xff;
 	/* If the sign bit is wrong, we need an extra byte. */
-	if ((n < 0 && j >= 0) || (n > 0 && j < 0))
+	अगर ((n < 0 && j >= 0) || (n > 0 && j < 0))
 		i++;
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /**
- * ntfs_get_size_for_mapping_pairs - get bytes needed for mapping pairs array
- * @vol:	ntfs volume (needed for the ntfs version)
+ * ntfs_get_size_क्रम_mapping_pairs - get bytes needed क्रम mapping pairs array
+ * @vol:	ntfs volume (needed क्रम the ntfs version)
  * @rl:		locked runlist to determine the size of the mapping pairs of
  * @first_vcn:	first vcn which to include in the mapping pairs array
  * @last_vcn:	last vcn which to include in the mapping pairs array
@@ -1096,184 +1097,184 @@ static inline int ntfs_get_nr_significant_bytes(const s64 n)
  * pairs array corresponding to the runlist @rl, starting at vcn @first_vcn and
  * finishing with vcn @last_vcn.
  *
- * A @last_vcn of -1 means end of runlist and in that case the size of the
+ * A @last_vcn of -1 means end of runlist and in that हाल the size of the
  * mapping pairs array corresponding to the runlist starting at vcn @first_vcn
  * and finishing at the end of the runlist is determined.
  *
- * This for example allows us to allocate a buffer of the right size when
+ * This क्रम example allows us to allocate a buffer of the right size when
  * building the mapping pairs array.
  *
- * If @rl is NULL, just return 1 (for the single terminator byte).
+ * If @rl is शून्य, just वापस 1 (क्रम the single terminator byte).
  *
- * Return the calculated size in bytes on success.  On error, return -errno.
+ * Return the calculated size in bytes on success.  On error, वापस -त्रुटि_सं.
  * The following error codes are defined:
  *	-EINVAL	- Run list contains unmapped elements.  Make sure to only pass
  *		  fully mapped runlists to this function.
  *	-EIO	- The runlist is corrupt.
  *
- * Locking: @rl must be locked on entry (either for reading or writing), it
- *	    remains locked throughout, and is left locked upon return.
+ * Locking: @rl must be locked on entry (either क्रम पढ़ोing or writing), it
+ *	    reमुख्यs locked throughout, and is left locked upon वापस.
  */
-int ntfs_get_size_for_mapping_pairs(const ntfs_volume *vol,
-		const runlist_element *rl, const VCN first_vcn,
-		const VCN last_vcn)
-{
+पूर्णांक ntfs_get_size_क्रम_mapping_pairs(स्थिर ntfs_volume *vol,
+		स्थिर runlist_element *rl, स्थिर VCN first_vcn,
+		स्थिर VCN last_vcn)
+अणु
 	LCN prev_lcn;
-	int rls;
+	पूर्णांक rls;
 	bool the_end = false;
 
 	BUG_ON(first_vcn < 0);
 	BUG_ON(last_vcn < -1);
 	BUG_ON(last_vcn >= 0 && first_vcn > last_vcn);
-	if (!rl) {
+	अगर (!rl) अणु
 		BUG_ON(first_vcn);
 		BUG_ON(last_vcn > 0);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	/* Skip to runlist element containing @first_vcn. */
-	while (rl->length && first_vcn >= rl[1].vcn)
+	जबतक (rl->length && first_vcn >= rl[1].vcn)
 		rl++;
-	if (unlikely((!rl->length && first_vcn > rl->vcn) ||
+	अगर (unlikely((!rl->length && first_vcn > rl->vcn) ||
 			first_vcn < rl->vcn))
-		return -EINVAL;
+		वापस -EINVAL;
 	prev_lcn = 0;
 	/* Always need the termining zero byte. */
 	rls = 1;
-	/* Do the first partial run if present. */
-	if (first_vcn > rl->vcn) {
+	/* Do the first partial run अगर present. */
+	अगर (first_vcn > rl->vcn) अणु
 		s64 delta, length = rl->length;
 
-		/* We know rl->length != 0 already. */
-		if (unlikely(length < 0 || rl->lcn < LCN_HOLE))
-			goto err_out;
+		/* We know rl->length != 0 alपढ़ोy. */
+		अगर (unlikely(length < 0 || rl->lcn < LCN_HOLE))
+			जाओ err_out;
 		/*
 		 * If @stop_vcn is given and finishes inside this run, cap the
 		 * run length.
 		 */
-		if (unlikely(last_vcn >= 0 && rl[1].vcn > last_vcn)) {
+		अगर (unlikely(last_vcn >= 0 && rl[1].vcn > last_vcn)) अणु
 			s64 s1 = last_vcn + 1;
-			if (unlikely(rl[1].vcn > s1))
+			अगर (unlikely(rl[1].vcn > s1))
 				length = s1 - rl->vcn;
 			the_end = true;
-		}
+		पूर्ण
 		delta = first_vcn - rl->vcn;
 		/* Header byte + length. */
-		rls += 1 + ntfs_get_nr_significant_bytes(length - delta);
+		rls += 1 + ntfs_get_nr_signअगरicant_bytes(length - delta);
 		/*
 		 * If the logical cluster number (lcn) denotes a hole and we
-		 * are on NTFS 3.0+, we don't store it at all, i.e. we need
+		 * are on NTFS 3.0+, we करोn't store it at all, i.e. we need
 		 * zero space.  On earlier NTFS versions we just store the lcn.
 		 * Note: this assumes that on NTFS 1.2-, holes are stored with
 		 * an lcn of -1 and not a delta_lcn of -1 (unless both are -1).
 		 */
-		if (likely(rl->lcn >= 0 || vol->major_ver < 3)) {
+		अगर (likely(rl->lcn >= 0 || vol->major_ver < 3)) अणु
 			prev_lcn = rl->lcn;
-			if (likely(rl->lcn >= 0))
+			अगर (likely(rl->lcn >= 0))
 				prev_lcn += delta;
 			/* Change in lcn. */
-			rls += ntfs_get_nr_significant_bytes(prev_lcn);
-		}
+			rls += ntfs_get_nr_signअगरicant_bytes(prev_lcn);
+		पूर्ण
 		/* Go to next runlist element. */
 		rl++;
-	}
+	पूर्ण
 	/* Do the full runs. */
-	for (; rl->length && !the_end; rl++) {
+	क्रम (; rl->length && !the_end; rl++) अणु
 		s64 length = rl->length;
 
-		if (unlikely(length < 0 || rl->lcn < LCN_HOLE))
-			goto err_out;
+		अगर (unlikely(length < 0 || rl->lcn < LCN_HOLE))
+			जाओ err_out;
 		/*
 		 * If @stop_vcn is given and finishes inside this run, cap the
 		 * run length.
 		 */
-		if (unlikely(last_vcn >= 0 && rl[1].vcn > last_vcn)) {
+		अगर (unlikely(last_vcn >= 0 && rl[1].vcn > last_vcn)) अणु
 			s64 s1 = last_vcn + 1;
-			if (unlikely(rl[1].vcn > s1))
+			अगर (unlikely(rl[1].vcn > s1))
 				length = s1 - rl->vcn;
 			the_end = true;
-		}
+		पूर्ण
 		/* Header byte + length. */
-		rls += 1 + ntfs_get_nr_significant_bytes(length);
+		rls += 1 + ntfs_get_nr_signअगरicant_bytes(length);
 		/*
 		 * If the logical cluster number (lcn) denotes a hole and we
-		 * are on NTFS 3.0+, we don't store it at all, i.e. we need
+		 * are on NTFS 3.0+, we करोn't store it at all, i.e. we need
 		 * zero space.  On earlier NTFS versions we just store the lcn.
 		 * Note: this assumes that on NTFS 1.2-, holes are stored with
 		 * an lcn of -1 and not a delta_lcn of -1 (unless both are -1).
 		 */
-		if (likely(rl->lcn >= 0 || vol->major_ver < 3)) {
+		अगर (likely(rl->lcn >= 0 || vol->major_ver < 3)) अणु
 			/* Change in lcn. */
-			rls += ntfs_get_nr_significant_bytes(rl->lcn -
+			rls += ntfs_get_nr_signअगरicant_bytes(rl->lcn -
 					prev_lcn);
 			prev_lcn = rl->lcn;
-		}
-	}
-	return rls;
+		पूर्ण
+	पूर्ण
+	वापस rls;
 err_out:
-	if (rl->lcn == LCN_RL_NOT_MAPPED)
+	अगर (rl->lcn == LCN_RL_NOT_MAPPED)
 		rls = -EINVAL;
-	else
+	अन्यथा
 		rls = -EIO;
-	return rls;
-}
+	वापस rls;
+पूर्ण
 
 /**
- * ntfs_write_significant_bytes - write the significant bytes of a number
- * @dst:	destination buffer to write to
- * @dst_max:	pointer to last byte of destination buffer for bounds checking
- * @n:		number whose significant bytes to write
+ * ntfs_ग_लिखो_signअगरicant_bytes - ग_लिखो the signअगरicant bytes of a number
+ * @dst:	destination buffer to ग_लिखो to
+ * @dst_max:	poपूर्णांकer to last byte of destination buffer क्रम bounds checking
+ * @n:		number whose signअगरicant bytes to ग_लिखो
  *
  * Store in @dst, the minimum bytes of the number @n which are required to
- * identify @n unambiguously as a signed number, taking care not to exceed
+ * identअगरy @n unambiguously as a चिन्हित number, taking care not to exceed
  * @dest_max, the maximum position within @dst to which we are allowed to
- * write.
+ * ग_लिखो.
  *
  * This is used when building the mapping pairs array of a runlist to compress
- * a given logical cluster number (lcn) or a specific run length to the minimum
+ * a given logical cluster number (lcn) or a specअगरic run length to the minimum
  * size possible.
  *
  * Return the number of bytes written on success.  On error, i.e. the
- * destination buffer @dst is too small, return -ENOSPC.
+ * destination buffer @dst is too small, वापस -ENOSPC.
  */
-static inline int ntfs_write_significant_bytes(s8 *dst, const s8 *dst_max,
-		const s64 n)
-{
+अटल अंतरभूत पूर्णांक ntfs_ग_लिखो_signअगरicant_bytes(s8 *dst, स्थिर s8 *dst_max,
+		स्थिर s64 n)
+अणु
 	s64 l = n;
-	int i;
+	पूर्णांक i;
 	s8 j;
 
 	i = 0;
-	do {
-		if (unlikely(dst > dst_max))
-			goto err_out;
+	करो अणु
+		अगर (unlikely(dst > dst_max))
+			जाओ err_out;
 		*dst++ = l & 0xffll;
 		l >>= 8;
 		i++;
-	} while (l != 0 && l != -1);
+	पूर्ण जबतक (l != 0 && l != -1);
 	j = (n >> 8 * (i - 1)) & 0xff;
 	/* If the sign bit is wrong, we need an extra byte. */
-	if (n < 0 && j >= 0) {
-		if (unlikely(dst > dst_max))
-			goto err_out;
+	अगर (n < 0 && j >= 0) अणु
+		अगर (unlikely(dst > dst_max))
+			जाओ err_out;
 		i++;
 		*dst = (s8)-1;
-	} else if (n > 0 && j < 0) {
-		if (unlikely(dst > dst_max))
-			goto err_out;
+	पूर्ण अन्यथा अगर (n > 0 && j < 0) अणु
+		अगर (unlikely(dst > dst_max))
+			जाओ err_out;
 		i++;
 		*dst = (s8)0;
-	}
-	return i;
+	पूर्ण
+	वापस i;
 err_out:
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
 /**
  * ntfs_mapping_pairs_build - build the mapping pairs array from a runlist
- * @vol:	ntfs volume (needed for the ntfs version)
- * @dst:	destination buffer to which to write the mapping pairs array
+ * @vol:	ntfs volume (needed क्रम the ntfs version)
+ * @dst:	destination buffer to which to ग_लिखो the mapping pairs array
  * @dst_len:	size of destination buffer @dst in bytes
- * @rl:		locked runlist for which to build the mapping pairs array
+ * @rl:		locked runlist क्रम which to build the mapping pairs array
  * @first_vcn:	first vcn which to include in the mapping pairs array
  * @last_vcn:	last vcn which to include in the mapping pairs array
  * @stop_vcn:	first vcn outside destination buffer on success or -ENOSPC
@@ -1281,38 +1282,38 @@ err_out:
  * Create the mapping pairs array from the locked runlist @rl, starting at vcn
  * @first_vcn and finishing with vcn @last_vcn and save the array in @dst.
  * @dst_len is the size of @dst in bytes and it should be at least equal to the
- * value obtained by calling ntfs_get_size_for_mapping_pairs().
+ * value obtained by calling ntfs_get_size_क्रम_mapping_pairs().
  *
- * A @last_vcn of -1 means end of runlist and in that case the mapping pairs
+ * A @last_vcn of -1 means end of runlist and in that हाल the mapping pairs
  * array corresponding to the runlist starting at vcn @first_vcn and finishing
  * at the end of the runlist is created.
  *
- * If @rl is NULL, just write a single terminator byte to @dst.
+ * If @rl is शून्य, just ग_लिखो a single terminator byte to @dst.
  *
- * On success or -ENOSPC error, if @stop_vcn is not NULL, *@stop_vcn is set to
+ * On success or -ENOSPC error, अगर @stop_vcn is not शून्य, *@stop_vcn is set to
  * the first vcn outside the destination buffer.  Note that on error, @dst has
  * been filled with all the mapping pairs that will fit, thus it can be treated
  * as partial success, in that a new attribute extent needs to be created or
  * the next extent has to be used and the mapping pairs build has to be
- * continued with @first_vcn set to *@stop_vcn.
+ * जारीd with @first_vcn set to *@stop_vcn.
  *
- * Return 0 on success and -errno on error.  The following error codes are
+ * Return 0 on success and -त्रुटि_सं on error.  The following error codes are
  * defined:
  *	-EINVAL	- Run list contains unmapped elements.  Make sure to only pass
  *		  fully mapped runlists to this function.
  *	-EIO	- The runlist is corrupt.
  *	-ENOSPC	- The destination buffer is too small.
  *
- * Locking: @rl must be locked on entry (either for reading or writing), it
- *	    remains locked throughout, and is left locked upon return.
+ * Locking: @rl must be locked on entry (either क्रम पढ़ोing or writing), it
+ *	    reमुख्यs locked throughout, and is left locked upon वापस.
  */
-int ntfs_mapping_pairs_build(const ntfs_volume *vol, s8 *dst,
-		const int dst_len, const runlist_element *rl,
-		const VCN first_vcn, const VCN last_vcn, VCN *const stop_vcn)
-{
+पूर्णांक ntfs_mapping_pairs_build(स्थिर ntfs_volume *vol, s8 *dst,
+		स्थिर पूर्णांक dst_len, स्थिर runlist_element *rl,
+		स्थिर VCN first_vcn, स्थिर VCN last_vcn, VCN *स्थिर stop_vcn)
+अणु
 	LCN prev_lcn;
 	s8 *dst_max, *dst_next;
-	int err = -ENOSPC;
+	पूर्णांक err = -ENOSPC;
 	bool the_end = false;
 	s8 len_len, lcn_len;
 
@@ -1320,147 +1321,147 @@ int ntfs_mapping_pairs_build(const ntfs_volume *vol, s8 *dst,
 	BUG_ON(last_vcn < -1);
 	BUG_ON(last_vcn >= 0 && first_vcn > last_vcn);
 	BUG_ON(dst_len < 1);
-	if (!rl) {
+	अगर (!rl) अणु
 		BUG_ON(first_vcn);
 		BUG_ON(last_vcn > 0);
-		if (stop_vcn)
+		अगर (stop_vcn)
 			*stop_vcn = 0;
 		/* Terminator byte. */
 		*dst = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/* Skip to runlist element containing @first_vcn. */
-	while (rl->length && first_vcn >= rl[1].vcn)
+	जबतक (rl->length && first_vcn >= rl[1].vcn)
 		rl++;
-	if (unlikely((!rl->length && first_vcn > rl->vcn) ||
+	अगर (unlikely((!rl->length && first_vcn > rl->vcn) ||
 			first_vcn < rl->vcn))
-		return -EINVAL;
+		वापस -EINVAL;
 	/*
-	 * @dst_max is used for bounds checking in
-	 * ntfs_write_significant_bytes().
+	 * @dst_max is used क्रम bounds checking in
+	 * ntfs_ग_लिखो_signअगरicant_bytes().
 	 */
 	dst_max = dst + dst_len - 1;
 	prev_lcn = 0;
-	/* Do the first partial run if present. */
-	if (first_vcn > rl->vcn) {
+	/* Do the first partial run अगर present. */
+	अगर (first_vcn > rl->vcn) अणु
 		s64 delta, length = rl->length;
 
-		/* We know rl->length != 0 already. */
-		if (unlikely(length < 0 || rl->lcn < LCN_HOLE))
-			goto err_out;
+		/* We know rl->length != 0 alपढ़ोy. */
+		अगर (unlikely(length < 0 || rl->lcn < LCN_HOLE))
+			जाओ err_out;
 		/*
 		 * If @stop_vcn is given and finishes inside this run, cap the
 		 * run length.
 		 */
-		if (unlikely(last_vcn >= 0 && rl[1].vcn > last_vcn)) {
+		अगर (unlikely(last_vcn >= 0 && rl[1].vcn > last_vcn)) अणु
 			s64 s1 = last_vcn + 1;
-			if (unlikely(rl[1].vcn > s1))
+			अगर (unlikely(rl[1].vcn > s1))
 				length = s1 - rl->vcn;
 			the_end = true;
-		}
+		पूर्ण
 		delta = first_vcn - rl->vcn;
 		/* Write length. */
-		len_len = ntfs_write_significant_bytes(dst + 1, dst_max,
+		len_len = ntfs_ग_लिखो_signअगरicant_bytes(dst + 1, dst_max,
 				length - delta);
-		if (unlikely(len_len < 0))
-			goto size_err;
+		अगर (unlikely(len_len < 0))
+			जाओ size_err;
 		/*
 		 * If the logical cluster number (lcn) denotes a hole and we
-		 * are on NTFS 3.0+, we don't store it at all, i.e. we need
-		 * zero space.  On earlier NTFS versions we just write the lcn
-		 * change.  FIXME: Do we need to write the lcn change or just
-		 * the lcn in that case?  Not sure as I have never seen this
-		 * case on NT4. - We assume that we just need to write the lcn
+		 * are on NTFS 3.0+, we करोn't store it at all, i.e. we need
+		 * zero space.  On earlier NTFS versions we just ग_लिखो the lcn
+		 * change.  FIXME: Do we need to ग_लिखो the lcn change or just
+		 * the lcn in that हाल?  Not sure as I have never seen this
+		 * हाल on NT4. - We assume that we just need to ग_लिखो the lcn
 		 * change until someone tells us otherwise... (AIA)
 		 */
-		if (likely(rl->lcn >= 0 || vol->major_ver < 3)) {
+		अगर (likely(rl->lcn >= 0 || vol->major_ver < 3)) अणु
 			prev_lcn = rl->lcn;
-			if (likely(rl->lcn >= 0))
+			अगर (likely(rl->lcn >= 0))
 				prev_lcn += delta;
 			/* Write change in lcn. */
-			lcn_len = ntfs_write_significant_bytes(dst + 1 +
+			lcn_len = ntfs_ग_लिखो_signअगरicant_bytes(dst + 1 +
 					len_len, dst_max, prev_lcn);
-			if (unlikely(lcn_len < 0))
-				goto size_err;
-		} else
+			अगर (unlikely(lcn_len < 0))
+				जाओ size_err;
+		पूर्ण अन्यथा
 			lcn_len = 0;
 		dst_next = dst + len_len + lcn_len + 1;
-		if (unlikely(dst_next > dst_max))
-			goto size_err;
+		अगर (unlikely(dst_next > dst_max))
+			जाओ size_err;
 		/* Update header byte. */
 		*dst = lcn_len << 4 | len_len;
 		/* Position at next mapping pairs array element. */
 		dst = dst_next;
 		/* Go to next runlist element. */
 		rl++;
-	}
+	पूर्ण
 	/* Do the full runs. */
-	for (; rl->length && !the_end; rl++) {
+	क्रम (; rl->length && !the_end; rl++) अणु
 		s64 length = rl->length;
 
-		if (unlikely(length < 0 || rl->lcn < LCN_HOLE))
-			goto err_out;
+		अगर (unlikely(length < 0 || rl->lcn < LCN_HOLE))
+			जाओ err_out;
 		/*
 		 * If @stop_vcn is given and finishes inside this run, cap the
 		 * run length.
 		 */
-		if (unlikely(last_vcn >= 0 && rl[1].vcn > last_vcn)) {
+		अगर (unlikely(last_vcn >= 0 && rl[1].vcn > last_vcn)) अणु
 			s64 s1 = last_vcn + 1;
-			if (unlikely(rl[1].vcn > s1))
+			अगर (unlikely(rl[1].vcn > s1))
 				length = s1 - rl->vcn;
 			the_end = true;
-		}
+		पूर्ण
 		/* Write length. */
-		len_len = ntfs_write_significant_bytes(dst + 1, dst_max,
+		len_len = ntfs_ग_लिखो_signअगरicant_bytes(dst + 1, dst_max,
 				length);
-		if (unlikely(len_len < 0))
-			goto size_err;
+		अगर (unlikely(len_len < 0))
+			जाओ size_err;
 		/*
 		 * If the logical cluster number (lcn) denotes a hole and we
-		 * are on NTFS 3.0+, we don't store it at all, i.e. we need
-		 * zero space.  On earlier NTFS versions we just write the lcn
-		 * change.  FIXME: Do we need to write the lcn change or just
-		 * the lcn in that case?  Not sure as I have never seen this
-		 * case on NT4. - We assume that we just need to write the lcn
+		 * are on NTFS 3.0+, we करोn't store it at all, i.e. we need
+		 * zero space.  On earlier NTFS versions we just ग_लिखो the lcn
+		 * change.  FIXME: Do we need to ग_लिखो the lcn change or just
+		 * the lcn in that हाल?  Not sure as I have never seen this
+		 * हाल on NT4. - We assume that we just need to ग_लिखो the lcn
 		 * change until someone tells us otherwise... (AIA)
 		 */
-		if (likely(rl->lcn >= 0 || vol->major_ver < 3)) {
+		अगर (likely(rl->lcn >= 0 || vol->major_ver < 3)) अणु
 			/* Write change in lcn. */
-			lcn_len = ntfs_write_significant_bytes(dst + 1 +
+			lcn_len = ntfs_ग_लिखो_signअगरicant_bytes(dst + 1 +
 					len_len, dst_max, rl->lcn - prev_lcn);
-			if (unlikely(lcn_len < 0))
-				goto size_err;
+			अगर (unlikely(lcn_len < 0))
+				जाओ size_err;
 			prev_lcn = rl->lcn;
-		} else
+		पूर्ण अन्यथा
 			lcn_len = 0;
 		dst_next = dst + len_len + lcn_len + 1;
-		if (unlikely(dst_next > dst_max))
-			goto size_err;
+		अगर (unlikely(dst_next > dst_max))
+			जाओ size_err;
 		/* Update header byte. */
 		*dst = lcn_len << 4 | len_len;
 		/* Position at next mapping pairs array element. */
 		dst = dst_next;
-	}
+	पूर्ण
 	/* Success. */
 	err = 0;
 size_err:
 	/* Set stop vcn. */
-	if (stop_vcn)
+	अगर (stop_vcn)
 		*stop_vcn = rl->vcn;
 	/* Add terminator byte. */
 	*dst = 0;
-	return err;
+	वापस err;
 err_out:
-	if (rl->lcn == LCN_RL_NOT_MAPPED)
+	अगर (rl->lcn == LCN_RL_NOT_MAPPED)
 		err = -EINVAL;
-	else
+	अन्यथा
 		err = -EIO;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ntfs_rl_truncate_nolock - truncate a runlist starting at a specified vcn
- * @vol:	ntfs volume (needed for error output)
+ * ntfs_rl_truncate_nolock - truncate a runlist starting at a specअगरied vcn
+ * @vol:	ntfs volume (needed क्रम error output)
  * @runlist:	runlist to truncate
  * @new_length:	the new length of the runlist in VCNs
  *
@@ -1468,71 +1469,71 @@ err_out:
  * holding the runlist elements to a length of @new_length VCNs.
  *
  * If @new_length lies within the runlist, the runlist elements with VCNs of
- * @new_length and above are discarded.  As a special case if @new_length is
- * zero, the runlist is discarded and set to NULL.
+ * @new_length and above are discarded.  As a special हाल अगर @new_length is
+ * zero, the runlist is discarded and set to शून्य.
  *
  * If @new_length lies beyond the runlist, a sparse runlist element is added to
- * the end of the runlist @runlist or if the last runlist element is a sparse
- * one already, this is extended.
+ * the end of the runlist @runlist or अगर the last runlist element is a sparse
+ * one alपढ़ोy, this is extended.
  *
- * Note, no checking is done for unmapped runlist elements.  It is assumed that
- * the caller has mapped any elements that need to be mapped already.
+ * Note, no checking is करोne क्रम unmapped runlist elements.  It is assumed that
+ * the caller has mapped any elements that need to be mapped alपढ़ोy.
  *
- * Return 0 on success and -errno on error.
+ * Return 0 on success and -त्रुटि_सं on error.
  *
- * Locking: The caller must hold @runlist->lock for writing.
+ * Locking: The caller must hold @runlist->lock क्रम writing.
  */
-int ntfs_rl_truncate_nolock(const ntfs_volume *vol, runlist *const runlist,
-		const s64 new_length)
-{
+पूर्णांक ntfs_rl_truncate_nolock(स्थिर ntfs_volume *vol, runlist *स्थिर runlist,
+		स्थिर s64 new_length)
+अणु
 	runlist_element *rl;
-	int old_size;
+	पूर्णांक old_size;
 
-	ntfs_debug("Entering for new_length 0x%llx.", (long long)new_length);
+	ntfs_debug("Entering for new_length 0x%llx.", (दीर्घ दीर्घ)new_length);
 	BUG_ON(!runlist);
 	BUG_ON(new_length < 0);
 	rl = runlist->rl;
-	if (!new_length) {
+	अगर (!new_length) अणु
 		ntfs_debug("Freeing runlist.");
-		runlist->rl = NULL;
-		if (rl)
-			ntfs_free(rl);
-		return 0;
-	}
-	if (unlikely(!rl)) {
+		runlist->rl = शून्य;
+		अगर (rl)
+			ntfs_मुक्त(rl);
+		वापस 0;
+	पूर्ण
+	अगर (unlikely(!rl)) अणु
 		/*
 		 * Create a runlist consisting of a sparse runlist element of
 		 * length @new_length followed by a terminator runlist element.
 		 */
-		rl = ntfs_malloc_nofs(PAGE_SIZE);
-		if (unlikely(!rl)) {
+		rl = ntfs_दो_स्मृति_nofs(PAGE_SIZE);
+		अगर (unlikely(!rl)) अणु
 			ntfs_error(vol->sb, "Not enough memory to allocate "
 					"runlist element buffer.");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		runlist->rl = rl;
 		rl[1].length = rl->vcn = 0;
 		rl->lcn = LCN_HOLE;
 		rl[1].vcn = rl->length = new_length;
 		rl[1].lcn = LCN_ENOENT;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	BUG_ON(new_length < rl->vcn);
 	/* Find @new_length in the runlist. */
-	while (likely(rl->length && new_length >= rl[1].vcn))
+	जबतक (likely(rl->length && new_length >= rl[1].vcn))
 		rl++;
 	/*
 	 * If not at the end of the runlist we need to shrink it.
 	 * If at the end of the runlist we need to expand it.
 	 */
-	if (rl->length) {
+	अगर (rl->length) अणु
 		runlist_element *trl;
 		bool is_end;
 
 		ntfs_debug("Shrinking runlist.");
 		/* Determine the runlist size. */
 		trl = rl + 1;
-		while (likely(trl->length))
+		जबतक (likely(trl->length))
 			trl++;
 		old_size = trl - runlist->rl + 1;
 		/* Truncate the run. */
@@ -1542,51 +1543,51 @@ int ntfs_rl_truncate_nolock(const ntfs_volume *vol, runlist *const runlist,
 		 * element a terminator.
 		 */
 		is_end = false;
-		if (rl->length) {
+		अगर (rl->length) अणु
 			rl++;
-			if (!rl->length)
+			अगर (!rl->length)
 				is_end = true;
 			rl->vcn = new_length;
 			rl->length = 0;
-		}
+		पूर्ण
 		rl->lcn = LCN_ENOENT;
-		/* Reallocate memory if necessary. */
-		if (!is_end) {
-			int new_size = rl - runlist->rl + 1;
-			rl = ntfs_rl_realloc(runlist->rl, old_size, new_size);
-			if (IS_ERR(rl))
+		/* Reallocate memory अगर necessary. */
+		अगर (!is_end) अणु
+			पूर्णांक new_size = rl - runlist->rl + 1;
+			rl = ntfs_rl_पुनः_स्मृति(runlist->rl, old_size, new_size);
+			अगर (IS_ERR(rl))
 				ntfs_warning(vol->sb, "Failed to shrink "
 						"runlist buffer.  This just "
 						"wastes a bit of memory "
 						"temporarily so we ignore it "
 						"and return success.");
-			else
+			अन्यथा
 				runlist->rl = rl;
-		}
-	} else if (likely(/* !rl->length && */ new_length > rl->vcn)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (likely(/* !rl->length && */ new_length > rl->vcn)) अणु
 		ntfs_debug("Expanding runlist.");
 		/*
 		 * If there is a previous runlist element and it is a sparse
 		 * one, extend it.  Otherwise need to add a new, sparse runlist
 		 * element.
 		 */
-		if ((rl > runlist->rl) && ((rl - 1)->lcn == LCN_HOLE))
+		अगर ((rl > runlist->rl) && ((rl - 1)->lcn == LCN_HOLE))
 			(rl - 1)->length = new_length - (rl - 1)->vcn;
-		else {
+		अन्यथा अणु
 			/* Determine the runlist size. */
 			old_size = rl - runlist->rl + 1;
-			/* Reallocate memory if necessary. */
-			rl = ntfs_rl_realloc(runlist->rl, old_size,
+			/* Reallocate memory अगर necessary. */
+			rl = ntfs_rl_पुनः_स्मृति(runlist->rl, old_size,
 					old_size + 1);
-			if (IS_ERR(rl)) {
+			अगर (IS_ERR(rl)) अणु
 				ntfs_error(vol->sb, "Failed to expand runlist "
 						"buffer, aborting.");
-				return PTR_ERR(rl);
-			}
+				वापस PTR_ERR(rl);
+			पूर्ण
 			runlist->rl = rl;
 			/*
 			 * Set @rl to the same runlist element in the new
-			 * runlist as before in the old runlist.
+			 * runlist as beक्रमe in the old runlist.
 			 */
 			rl += old_size - 1;
 			/* Add a new, sparse runlist element. */
@@ -1595,191 +1596,191 @@ int ntfs_rl_truncate_nolock(const ntfs_volume *vol, runlist *const runlist,
 			/* Add a new terminator runlist element. */
 			rl++;
 			rl->length = 0;
-		}
+		पूर्ण
 		rl->vcn = new_length;
 		rl->lcn = LCN_ENOENT;
-	} else /* if (unlikely(!rl->length && new_length == rl->vcn)) */ {
-		/* Runlist already has same size as requested. */
+	पूर्ण अन्यथा /* अगर (unlikely(!rl->length && new_length == rl->vcn)) */ अणु
+		/* Runlist alपढ़ोy has same size as requested. */
 		rl->lcn = LCN_ENOENT;
-	}
+	पूर्ण
 	ntfs_debug("Done.");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ntfs_rl_punch_nolock - punch a hole into a runlist
- * @vol:	ntfs volume (needed for error output)
- * @runlist:	runlist to punch a hole into
+ * ntfs_rl_punch_nolock - punch a hole पूर्णांकo a runlist
+ * @vol:	ntfs volume (needed क्रम error output)
+ * @runlist:	runlist to punch a hole पूर्णांकo
  * @start:	starting VCN of the hole to be created
  * @length:	size of the hole to be created in units of clusters
  *
- * Punch a hole into the runlist @runlist starting at VCN @start and of size
+ * Punch a hole पूर्णांकo the runlist @runlist starting at VCN @start and of size
  * @length clusters.
  *
- * Return 0 on success and -errno on error, in which case @runlist has not been
- * modified.
+ * Return 0 on success and -त्रुटि_सं on error, in which हाल @runlist has not been
+ * modअगरied.
  *
- * If @start and/or @start + @length are outside the runlist return error code
+ * If @start and/or @start + @length are outside the runlist वापस error code
  * -ENOENT.
  *
  * If the runlist contains unmapped or error elements between @start and @start
- * + @length return error code -EINVAL.
+ * + @length वापस error code -EINVAL.
  *
- * Locking: The caller must hold @runlist->lock for writing.
+ * Locking: The caller must hold @runlist->lock क्रम writing.
  */
-int ntfs_rl_punch_nolock(const ntfs_volume *vol, runlist *const runlist,
-		const VCN start, const s64 length)
-{
-	const VCN end = start + length;
+पूर्णांक ntfs_rl_punch_nolock(स्थिर ntfs_volume *vol, runlist *स्थिर runlist,
+		स्थिर VCN start, स्थिर s64 length)
+अणु
+	स्थिर VCN end = start + length;
 	s64 delta;
 	runlist_element *rl, *rl_end, *rl_real_end, *trl;
-	int old_size;
+	पूर्णांक old_size;
 	bool lcn_fixup = false;
 
 	ntfs_debug("Entering for start 0x%llx, length 0x%llx.",
-			(long long)start, (long long)length);
+			(दीर्घ दीर्घ)start, (दीर्घ दीर्घ)length);
 	BUG_ON(!runlist);
 	BUG_ON(start < 0);
 	BUG_ON(length < 0);
 	BUG_ON(end < 0);
 	rl = runlist->rl;
-	if (unlikely(!rl)) {
-		if (likely(!start && !length))
-			return 0;
-		return -ENOENT;
-	}
+	अगर (unlikely(!rl)) अणु
+		अगर (likely(!start && !length))
+			वापस 0;
+		वापस -ENOENT;
+	पूर्ण
 	/* Find @start in the runlist. */
-	while (likely(rl->length && start >= rl[1].vcn))
+	जबतक (likely(rl->length && start >= rl[1].vcn))
 		rl++;
 	rl_end = rl;
 	/* Find @end in the runlist. */
-	while (likely(rl_end->length && end >= rl_end[1].vcn)) {
-		/* Verify there are no unmapped or error elements. */
-		if (unlikely(rl_end->lcn < LCN_HOLE))
-			return -EINVAL;
+	जबतक (likely(rl_end->length && end >= rl_end[1].vcn)) अणु
+		/* Verअगरy there are no unmapped or error elements. */
+		अगर (unlikely(rl_end->lcn < LCN_HOLE))
+			वापस -EINVAL;
 		rl_end++;
-	}
+	पूर्ण
 	/* Check the last element. */
-	if (unlikely(rl_end->length && rl_end->lcn < LCN_HOLE))
-		return -EINVAL;
+	अगर (unlikely(rl_end->length && rl_end->lcn < LCN_HOLE))
+		वापस -EINVAL;
 	/* This covers @start being out of bounds, too. */
-	if (!rl_end->length && end > rl_end->vcn)
-		return -ENOENT;
-	if (!length)
-		return 0;
-	if (!rl->length)
-		return -ENOENT;
+	अगर (!rl_end->length && end > rl_end->vcn)
+		वापस -ENOENT;
+	अगर (!length)
+		वापस 0;
+	अगर (!rl->length)
+		वापस -ENOENT;
 	rl_real_end = rl_end;
 	/* Determine the runlist size. */
-	while (likely(rl_real_end->length))
+	जबतक (likely(rl_real_end->length))
 		rl_real_end++;
 	old_size = rl_real_end - runlist->rl + 1;
 	/* If @start is in a hole simply extend the hole. */
-	if (rl->lcn == LCN_HOLE) {
+	अगर (rl->lcn == LCN_HOLE) अणु
 		/*
 		 * If both @start and @end are in the same sparse run, we are
-		 * done.
+		 * करोne.
 		 */
-		if (end <= rl[1].vcn) {
+		अगर (end <= rl[1].vcn) अणु
 			ntfs_debug("Done (requested hole is already sparse).");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 extend_hole:
 		/* Extend the hole. */
 		rl->length = end - rl->vcn;
 		/* If @end is in a hole, merge it with the current one. */
-		if (rl_end->lcn == LCN_HOLE) {
+		अगर (rl_end->lcn == LCN_HOLE) अणु
 			rl_end++;
 			rl->length = rl_end->vcn - rl->vcn;
-		}
-		/* We have done the hole.  Now deal with the remaining tail. */
+		पूर्ण
+		/* We have करोne the hole.  Now deal with the reमुख्यing tail. */
 		rl++;
 		/* Cut out all runlist elements up to @end. */
-		if (rl < rl_end)
-			memmove(rl, rl_end, (rl_real_end - rl_end + 1) *
-					sizeof(*rl));
-		/* Adjust the beginning of the tail if necessary. */
-		if (end > rl->vcn) {
+		अगर (rl < rl_end)
+			स_हटाओ(rl, rl_end, (rl_real_end - rl_end + 1) *
+					माप(*rl));
+		/* Adjust the beginning of the tail अगर necessary. */
+		अगर (end > rl->vcn) अणु
 			delta = end - rl->vcn;
 			rl->vcn = end;
 			rl->length -= delta;
-			/* Only adjust the lcn if it is real. */
-			if (rl->lcn >= 0)
+			/* Only adjust the lcn अगर it is real. */
+			अगर (rl->lcn >= 0)
 				rl->lcn += delta;
-		}
+		पूर्ण
 shrink_allocation:
-		/* Reallocate memory if the allocation changed. */
-		if (rl < rl_end) {
-			rl = ntfs_rl_realloc(runlist->rl, old_size,
+		/* Reallocate memory अगर the allocation changed. */
+		अगर (rl < rl_end) अणु
+			rl = ntfs_rl_पुनः_स्मृति(runlist->rl, old_size,
 					old_size - (rl_end - rl));
-			if (IS_ERR(rl))
+			अगर (IS_ERR(rl))
 				ntfs_warning(vol->sb, "Failed to shrink "
 						"runlist buffer.  This just "
 						"wastes a bit of memory "
 						"temporarily so we ignore it "
 						"and return success.");
-			else
+			अन्यथा
 				runlist->rl = rl;
-		}
+		पूर्ण
 		ntfs_debug("Done (extend hole).");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/*
 	 * If @start is at the beginning of a run things are easier as there is
 	 * no need to split the first run.
 	 */
-	if (start == rl->vcn) {
+	अगर (start == rl->vcn) अणु
 		/*
 		 * @start is at the beginning of a run.
 		 *
 		 * If the previous run is sparse, extend its hole.
 		 *
-		 * If @end is not in the same run, switch the run to be sparse
+		 * If @end is not in the same run, चयन the run to be sparse
 		 * and extend the newly created hole.
 		 *
-		 * Thus both of these cases reduce the problem to the above
-		 * case of "@start is in a hole".
+		 * Thus both of these हालs reduce the problem to the above
+		 * हाल of "@start is in a hole".
 		 */
-		if (rl > runlist->rl && (rl - 1)->lcn == LCN_HOLE) {
+		अगर (rl > runlist->rl && (rl - 1)->lcn == LCN_HOLE) अणु
 			rl--;
-			goto extend_hole;
-		}
-		if (end >= rl[1].vcn) {
+			जाओ extend_hole;
+		पूर्ण
+		अगर (end >= rl[1].vcn) अणु
 			rl->lcn = LCN_HOLE;
-			goto extend_hole;
-		}
+			जाओ extend_hole;
+		पूर्ण
 		/*
-		 * The final case is when @end is in the same run as @start.
-		 * For this need to split the run into two.  One run for the
+		 * The final हाल is when @end is in the same run as @start.
+		 * For this need to split the run पूर्णांकo two.  One run क्रम the
 		 * sparse region between the beginning of the old run, i.e.
-		 * @start, and @end and one for the remaining non-sparse
+		 * @start, and @end and one क्रम the reमुख्यing non-sparse
 		 * region, i.e. between @end and the end of the old run.
 		 */
-		trl = ntfs_rl_realloc(runlist->rl, old_size, old_size + 1);
-		if (IS_ERR(trl))
-			goto enomem_out;
+		trl = ntfs_rl_पुनः_स्मृति(runlist->rl, old_size, old_size + 1);
+		अगर (IS_ERR(trl))
+			जाओ enomem_out;
 		old_size++;
-		if (runlist->rl != trl) {
+		अगर (runlist->rl != trl) अणु
 			rl = trl + (rl - runlist->rl);
 			rl_end = trl + (rl_end - runlist->rl);
 			rl_real_end = trl + (rl_real_end - runlist->rl);
 			runlist->rl = trl;
-		}
+		पूर्ण
 split_end:
-		/* Shift all the runs up by one. */
-		memmove(rl + 1, rl, (rl_real_end - rl + 1) * sizeof(*rl));
+		/* Shअगरt all the runs up by one. */
+		स_हटाओ(rl + 1, rl, (rl_real_end - rl + 1) * माप(*rl));
 		/* Finally, setup the two split runs. */
 		rl->lcn = LCN_HOLE;
 		rl->length = length;
 		rl++;
 		rl->vcn += length;
-		/* Only adjust the lcn if it is real. */
-		if (rl->lcn >= 0 || lcn_fixup)
+		/* Only adjust the lcn अगर it is real. */
+		अगर (rl->lcn >= 0 || lcn_fixup)
 			rl->lcn += length;
 		rl->length -= length;
 		ntfs_debug("Done (split one).");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/*
 	 * @start is neither in a hole nor at the beginning of a run.
 	 *
@@ -1788,90 +1789,90 @@ split_end:
 	 * to @end, and finally extending the beginning of the run @end is in
 	 * to be @start is all that is needed.
 	 */
-	if (rl_end->lcn == LCN_HOLE) {
+	अगर (rl_end->lcn == LCN_HOLE) अणु
 		/* Truncate the run containing @start. */
 		rl->length = start - rl->vcn;
 		rl++;
 		/* Cut out all runlist elements up to @end. */
-		if (rl < rl_end)
-			memmove(rl, rl_end, (rl_real_end - rl_end + 1) *
-					sizeof(*rl));
+		अगर (rl < rl_end)
+			स_हटाओ(rl, rl_end, (rl_real_end - rl_end + 1) *
+					माप(*rl));
 		/* Extend the beginning of the run @end is in to be @start. */
 		rl->vcn = start;
 		rl->length = rl[1].vcn - start;
-		goto shrink_allocation;
-	}
+		जाओ shrink_allocation;
+	पूर्ण
 	/* 
-	 * If @end is not in a hole there are still two cases to distinguish.
+	 * If @end is not in a hole there are still two हालs to distinguish.
 	 * Either @end is or is not in the same run as @start.
 	 *
-	 * The second case is easier as it can be reduced to an already solved
+	 * The second हाल is easier as it can be reduced to an alपढ़ोy solved
 	 * problem by truncating the run @start is in to end at @start - 1.
-	 * Then, if @end is in the next run need to split the run into a sparse
-	 * run followed by a non-sparse run (already covered above) and if @end
-	 * is not in the next run switching it to be sparse, again reduces the
-	 * problem to the already covered case of "@start is in a hole".
+	 * Then, अगर @end is in the next run need to split the run पूर्णांकo a sparse
+	 * run followed by a non-sparse run (alपढ़ोy covered above) and अगर @end
+	 * is not in the next run चयनing it to be sparse, again reduces the
+	 * problem to the alपढ़ोy covered हाल of "@start is in a hole".
 	 */
-	if (end >= rl[1].vcn) {
+	अगर (end >= rl[1].vcn) अणु
 		/*
 		 * If @end is not in the next run, reduce the problem to the
-		 * case of "@start is in a hole".
+		 * हाल of "@start is in a hole".
 		 */
-		if (rl[1].length && end >= rl[2].vcn) {
+		अगर (rl[1].length && end >= rl[2].vcn) अणु
 			/* Truncate the run containing @start. */
 			rl->length = start - rl->vcn;
 			rl++;
 			rl->vcn = start;
 			rl->lcn = LCN_HOLE;
-			goto extend_hole;
-		}
-		trl = ntfs_rl_realloc(runlist->rl, old_size, old_size + 1);
-		if (IS_ERR(trl))
-			goto enomem_out;
+			जाओ extend_hole;
+		पूर्ण
+		trl = ntfs_rl_पुनः_स्मृति(runlist->rl, old_size, old_size + 1);
+		अगर (IS_ERR(trl))
+			जाओ enomem_out;
 		old_size++;
-		if (runlist->rl != trl) {
+		अगर (runlist->rl != trl) अणु
 			rl = trl + (rl - runlist->rl);
 			rl_end = trl + (rl_end - runlist->rl);
 			rl_real_end = trl + (rl_real_end - runlist->rl);
 			runlist->rl = trl;
-		}
+		पूर्ण
 		/* Truncate the run containing @start. */
 		rl->length = start - rl->vcn;
 		rl++;
 		/*
-		 * @end is in the next run, reduce the problem to the case
+		 * @end is in the next run, reduce the problem to the हाल
 		 * where "@start is at the beginning of a run and @end is in
 		 * the same run as @start".
 		 */
 		delta = rl->vcn - start;
 		rl->vcn = start;
-		if (rl->lcn >= 0) {
+		अगर (rl->lcn >= 0) अणु
 			rl->lcn -= delta;
-			/* Need this in case the lcn just became negative. */
+			/* Need this in हाल the lcn just became negative. */
 			lcn_fixup = true;
-		}
+		पूर्ण
 		rl->length += delta;
-		goto split_end;
-	}
+		जाओ split_end;
+	पूर्ण
 	/*
-	 * The first case from above, i.e. @end is in the same run as @start.
-	 * We need to split the run into three.  One run for the non-sparse
-	 * region between the beginning of the old run and @start, one for the
-	 * sparse region between @start and @end, and one for the remaining
+	 * The first हाल from above, i.e. @end is in the same run as @start.
+	 * We need to split the run पूर्णांकo three.  One run क्रम the non-sparse
+	 * region between the beginning of the old run and @start, one क्रम the
+	 * sparse region between @start and @end, and one क्रम the reमुख्यing
 	 * non-sparse region, i.e. between @end and the end of the old run.
 	 */
-	trl = ntfs_rl_realloc(runlist->rl, old_size, old_size + 2);
-	if (IS_ERR(trl))
-		goto enomem_out;
+	trl = ntfs_rl_पुनः_स्मृति(runlist->rl, old_size, old_size + 2);
+	अगर (IS_ERR(trl))
+		जाओ enomem_out;
 	old_size += 2;
-	if (runlist->rl != trl) {
+	अगर (runlist->rl != trl) अणु
 		rl = trl + (rl - runlist->rl);
 		rl_end = trl + (rl_end - runlist->rl);
 		rl_real_end = trl + (rl_real_end - runlist->rl);
 		runlist->rl = trl;
-	}
-	/* Shift all the runs up by two. */
-	memmove(rl + 2, rl, (rl_real_end - rl + 1) * sizeof(*rl));
+	पूर्ण
+	/* Shअगरt all the runs up by two. */
+	स_हटाओ(rl + 2, rl, (rl_real_end - rl + 1) * माप(*rl));
 	/* Finally, setup the three split runs. */
 	rl->length = start - rl->vcn;
 	rl++;
@@ -1884,10 +1885,10 @@ split_end:
 	rl->lcn += delta;
 	rl->length -= delta;
 	ntfs_debug("Done (split both).");
-	return 0;
+	वापस 0;
 enomem_out:
 	ntfs_error(vol->sb, "Not enough memory to extend runlist buffer.");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-#endif /* NTFS_RW */
+#पूर्ण_अगर /* NTFS_RW */

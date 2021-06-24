@@ -1,35 +1,36 @@
+<शैली गुरु>
 /*
  * linux/arch/m68k/mm/sun3kmap.c
  *
  * Copyright (C) 2002 Sam Creasey <sammy@sammy.net>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <asm/page.h>
-#include <asm/io.h>
-#include <asm/sun3mmu.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/sun3mmu.h>
 
-#undef SUN3_KMAP_DEBUG
+#अघोषित SUN3_KMAP_DEBUG
 
-#ifdef SUN3_KMAP_DEBUG
-extern void print_pte_vaddr(unsigned long vaddr);
-#endif
+#अगर_घोषित SUN3_KMAP_DEBUG
+बाह्य व्योम prपूर्णांक_pte_vaddr(अचिन्हित दीर्घ vaddr);
+#पूर्ण_अगर
 
-extern void mmu_emu_map_pmeg (int context, int vaddr);
+बाह्य व्योम mmu_emu_map_pmeg (पूर्णांक context, पूर्णांक vaddr);
 
-static inline void do_page_mapin(unsigned long phys, unsigned long virt,
-				 unsigned long type)
-{
-	unsigned long pte;
+अटल अंतरभूत व्योम करो_page_mapin(अचिन्हित दीर्घ phys, अचिन्हित दीर्घ virt,
+				 अचिन्हित दीर्घ type)
+अणु
+	अचिन्हित दीर्घ pte;
 	pte_t ptep;
 
 	ptep = pfn_pte(phys >> PAGE_SHIFT, PAGE_KERNEL);
@@ -38,37 +39,37 @@ static inline void do_page_mapin(unsigned long phys, unsigned long virt,
 
 	sun3_put_pte(virt, pte);
 
-#ifdef SUN3_KMAP_DEBUG
+#अगर_घोषित SUN3_KMAP_DEBUG
 	pr_info("mapin:");
-	print_pte_vaddr(virt);
-#endif
+	prपूर्णांक_pte_vaddr(virt);
+#पूर्ण_अगर
 
-}
+पूर्ण
 
-static inline void do_pmeg_mapin(unsigned long phys, unsigned long virt,
-				 unsigned long type, int pages)
-{
+अटल अंतरभूत व्योम करो_pmeg_mapin(अचिन्हित दीर्घ phys, अचिन्हित दीर्घ virt,
+				 अचिन्हित दीर्घ type, पूर्णांक pages)
+अणु
 
-	if(sun3_get_segmap(virt & ~SUN3_PMEG_MASK) == SUN3_INVALID_PMEG)
+	अगर(sun3_get_segmap(virt & ~SUN3_PMEG_MASK) == SUN3_INVALID_PMEG)
 		mmu_emu_map_pmeg(sun3_get_context(), virt);
 
-	while(pages) {
-		do_page_mapin(phys, virt, type);
+	जबतक(pages) अणु
+		करो_page_mapin(phys, virt, type);
 		phys += PAGE_SIZE;
 		virt += PAGE_SIZE;
 		pages--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __iomem *sun3_ioremap(unsigned long phys, unsigned long size,
-		   unsigned long type)
-{
-	struct vm_struct *area;
-	unsigned long offset, virt, ret;
-	int pages;
+व्योम __iomem *sun3_ioremap(अचिन्हित दीर्घ phys, अचिन्हित दीर्घ size,
+		   अचिन्हित दीर्घ type)
+अणु
+	काष्ठा vm_काष्ठा *area;
+	अचिन्हित दीर्घ offset, virt, ret;
+	पूर्णांक pages;
 
-	if(!size)
-		return NULL;
+	अगर(!size)
+		वापस शून्य;
 
 	/* page align */
 	offset = phys & (PAGE_SIZE-1);
@@ -76,54 +77,54 @@ void __iomem *sun3_ioremap(unsigned long phys, unsigned long size,
 
 	size += offset;
 	size = PAGE_ALIGN(size);
-	if((area = get_vm_area(size, VM_IOREMAP)) == NULL)
-		return NULL;
+	अगर((area = get_vm_area(size, VM_IOREMAP)) == शून्य)
+		वापस शून्य;
 
-#ifdef SUN3_KMAP_DEBUG
+#अगर_घोषित SUN3_KMAP_DEBUG
 	pr_info("ioremap: got virt %p size %lx(%lx)\n", area->addr, size,
 		area->size);
-#endif
+#पूर्ण_अगर
 
 	pages = size / PAGE_SIZE;
-	virt = (unsigned long)area->addr;
+	virt = (अचिन्हित दीर्घ)area->addr;
 	ret = virt + offset;
 
-	while(pages) {
-		int seg_pages;
+	जबतक(pages) अणु
+		पूर्णांक seg_pages;
 
 		seg_pages = (SUN3_PMEG_SIZE - (virt & SUN3_PMEG_MASK)) / PAGE_SIZE;
-		if(seg_pages > pages)
+		अगर(seg_pages > pages)
 			seg_pages = pages;
 
-		do_pmeg_mapin(phys, virt, type, seg_pages);
+		करो_pmeg_mapin(phys, virt, type, seg_pages);
 
 		pages -= seg_pages;
 		phys += seg_pages * PAGE_SIZE;
 		virt += seg_pages * PAGE_SIZE;
-	}
+	पूर्ण
 
-	return (void __iomem *)ret;
+	वापस (व्योम __iomem *)ret;
 
-}
+पूर्ण
 EXPORT_SYMBOL(sun3_ioremap);
 
 
-void __iomem *__ioremap(unsigned long phys, unsigned long size, int cache)
-{
+व्योम __iomem *__ioremap(अचिन्हित दीर्घ phys, अचिन्हित दीर्घ size, पूर्णांक cache)
+अणु
 
-	return sun3_ioremap(phys, size, SUN3_PAGE_TYPE_IO);
+	वापस sun3_ioremap(phys, size, SUN3_PAGE_TYPE_IO);
 
-}
+पूर्ण
 EXPORT_SYMBOL(__ioremap);
 
-void iounmap(void __iomem *addr)
-{
-	vfree((void *)(PAGE_MASK & (unsigned long)addr));
-}
+व्योम iounmap(व्योम __iomem *addr)
+अणु
+	vमुक्त((व्योम *)(PAGE_MASK & (अचिन्हित दीर्घ)addr));
+पूर्ण
 EXPORT_SYMBOL(iounmap);
 
 /* sun3_map_test(addr, val) -- Reads a byte from addr, storing to val,
- * trapping the potential read fault.  Returns 0 if the access faulted,
+ * trapping the potential पढ़ो fault.  Returns 0 अगर the access faulted,
  * 1 on success.
  *
  * This function is primarily used to check addresses on the VME bus.
@@ -132,11 +133,11 @@ EXPORT_SYMBOL(iounmap);
  * SunOS, NetBSD, and Mach all implemented this check in such a manner,
  * so I figure we're allowed.
  */
-int sun3_map_test(unsigned long addr, char *val)
-{
-	int ret = 0;
+पूर्णांक sun3_map_test(अचिन्हित दीर्घ addr, अक्षर *val)
+अणु
+	पूर्णांक ret = 0;
 
-	__asm__ __volatile__
+	__यंत्र__ __अस्थिर__
 		(".globl _sun3_map_test_start\n"
 		 "_sun3_map_test_start:\n"
 		 "1: moveb (%2), (%0)\n"
@@ -156,6 +157,6 @@ int sun3_map_test(unsigned long addr, char *val)
 		 : "=a"(val), "=r"(ret)
 		 : "a"(addr));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sun3_map_test);

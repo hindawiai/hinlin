@@ -1,15 +1,16 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1997, 1999, 2001, 06 by Ralf Baechle
  * Copyright (C) 2001 MIPS Technologies, Inc.
  */
-#ifndef _ASM_REBOOT_H
-#define _ASM_REBOOT_H
+#अगर_अघोषित _ASM_REBOOT_H
+#घोषणा _ASM_REBOOT_H
 
-extern void (*_machine_restart)(char *command);
-extern void (*_machine_halt)(void);
+बाह्य व्योम (*_machine_restart)(अक्षर *command);
+बाह्य व्योम (*_machine_halt)(व्योम);
 
-#endif /* _ASM_REBOOT_H */
+#पूर्ण_अगर /* _ASM_REBOOT_H */

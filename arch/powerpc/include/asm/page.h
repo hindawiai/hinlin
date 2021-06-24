@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_POWERPC_PAGE_H
-#define _ASM_POWERPC_PAGE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_POWERPC_PAGE_H
+#घोषणा _ASM_POWERPC_PAGE_H
 
 /*
  * Copyright (C) 2001,2005 IBM Corporation.
  */
 
-#ifndef __ASSEMBLY__
-#include <linux/types.h>
-#include <linux/kernel.h>
-#else
-#include <asm/types.h>
-#endif
-#include <asm/asm-const.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#अन्यथा
+#समावेश <यंत्र/types.h>
+#पूर्ण_अगर
+#समावेश <यंत्र/यंत्र-स्थिर.h>
 
 /*
  * On regular PPC32 page size is 4K (but we support 4K/16K/64K/256K pages
@@ -20,40 +21,40 @@
  * page size. When using 64K pages however, whether we are really supporting
  * 64K pages in HW or not is irrelevant to those definitions.
  */
-#define PAGE_SHIFT		CONFIG_PPC_PAGE_SHIFT
-#define PAGE_SIZE		(ASM_CONST(1) << PAGE_SHIFT)
+#घोषणा PAGE_SHIFT		CONFIG_PPC_PAGE_SHIFT
+#घोषणा PAGE_SIZE		(ASM_CONST(1) << PAGE_SHIFT)
 
-#ifndef __ASSEMBLY__
-#ifndef CONFIG_HUGETLB_PAGE
-#define HPAGE_SHIFT PAGE_SHIFT
-#elif defined(CONFIG_PPC_BOOK3S_64)
-extern unsigned int hpage_shift;
-#define HPAGE_SHIFT hpage_shift
-#elif defined(CONFIG_PPC_8xx)
-#define HPAGE_SHIFT		19	/* 512k pages */
-#elif defined(CONFIG_PPC_FSL_BOOK3E)
-#define HPAGE_SHIFT		22	/* 4M pages */
-#endif
-#define HPAGE_SIZE		((1UL) << HPAGE_SHIFT)
-#define HPAGE_MASK		(~(HPAGE_SIZE - 1))
-#define HUGETLB_PAGE_ORDER	(HPAGE_SHIFT - PAGE_SHIFT)
-#define HUGE_MAX_HSTATE		(MMU_PAGE_COUNT-1)
-#endif
+#अगर_अघोषित __ASSEMBLY__
+#अगर_अघोषित CONFIG_HUGETLB_PAGE
+#घोषणा HPAGE_SHIFT PAGE_SHIFT
+#या_अगर defined(CONFIG_PPC_BOOK3S_64)
+बाह्य अचिन्हित पूर्णांक hpage_shअगरt;
+#घोषणा HPAGE_SHIFT hpage_shअगरt
+#या_अगर defined(CONFIG_PPC_8xx)
+#घोषणा HPAGE_SHIFT		19	/* 512k pages */
+#या_अगर defined(CONFIG_PPC_FSL_BOOK3E)
+#घोषणा HPAGE_SHIFT		22	/* 4M pages */
+#पूर्ण_अगर
+#घोषणा HPAGE_SIZE		((1UL) << HPAGE_SHIFT)
+#घोषणा HPAGE_MASK		(~(HPAGE_SIZE - 1))
+#घोषणा HUGETLB_PAGE_ORDER	(HPAGE_SHIFT - PAGE_SHIFT)
+#घोषणा HUGE_MAX_HSTATE		(MMU_PAGE_COUNT-1)
+#पूर्ण_अगर
 
 /*
- * Subtle: (1 << PAGE_SHIFT) is an int, not an unsigned long. So if we
- * assign PAGE_MASK to a larger type it gets extended the way we want
+ * Subtle: (1 << PAGE_SHIFT) is an पूर्णांक, not an अचिन्हित दीर्घ. So अगर we
+ * assign PAGE_MASK to a larger type it माला_लो extended the way we want
  * (i.e. with 1s in the high bits)
  */
-#define PAGE_MASK      (~((1 << PAGE_SHIFT) - 1))
+#घोषणा PAGE_MASK      (~((1 << PAGE_SHIFT) - 1))
 
 /*
- * KERNELBASE is the virtual address of the start of the kernel, it's often
+ * KERNELBASE is the भव address of the start of the kernel, it's often
  * the same as PAGE_OFFSET, but _might not be_.
  *
  * The kdump dump kernel is one example where KERNELBASE != PAGE_OFFSET.
  *
- * PAGE_OFFSET is the virtual address of the start of lowmem.
+ * PAGE_OFFSET is the भव address of the start of lowmem.
  *
  * PHYSICAL_START is the physical address of the start of the kernel.
  *
@@ -67,110 +68,110 @@ extern unsigned int hpage_shift;
  *
  * Also, KERNELBASE >= PAGE_OFFSET and PHYSICAL_START >= MEMORY_START
  *
- * There are two ways to determine a physical address from a virtual one:
+ * There are two ways to determine a physical address from a भव one:
  * va = pa + PAGE_OFFSET - MEMORY_START
  * va = pa + KERNELBASE - PHYSICAL_START
  *
  * If you want to know something's offset from the start of the kernel you
  * should subtract KERNELBASE.
  *
- * If you want to test if something's a kernel address, use is_kernel_addr().
+ * If you want to test अगर something's a kernel address, use is_kernel_addr().
  */
 
-#define KERNELBASE      ASM_CONST(CONFIG_KERNEL_START)
-#define PAGE_OFFSET	ASM_CONST(CONFIG_PAGE_OFFSET)
-#define LOAD_OFFSET	ASM_CONST((CONFIG_KERNEL_START-CONFIG_PHYSICAL_START))
+#घोषणा KERNELBASE      ASM_CONST(CONFIG_KERNEL_START)
+#घोषणा PAGE_OFFSET	ASM_CONST(CONFIG_PAGE_OFFSET)
+#घोषणा LOAD_OFFSET	ASM_CONST((CONFIG_KERNEL_START-CONFIG_PHYSICAL_START))
 
-#if defined(CONFIG_NONSTATIC_KERNEL)
-#ifndef __ASSEMBLY__
+#अगर defined(CONFIG_NONSTATIC_KERNEL)
+#अगर_अघोषित __ASSEMBLY__
 
-extern phys_addr_t memstart_addr;
-extern phys_addr_t kernstart_addr;
+बाह्य phys_addr_t memstart_addr;
+बाह्य phys_addr_t kernstart_addr;
 
-#if defined(CONFIG_RELOCATABLE) && defined(CONFIG_PPC32)
-extern long long virt_phys_offset;
-#endif
+#अगर defined(CONFIG_RELOCATABLE) && defined(CONFIG_PPC32)
+बाह्य दीर्घ दीर्घ virt_phys_offset;
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
-#define PHYSICAL_START	kernstart_addr
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#घोषणा PHYSICAL_START	kernstart_addr
 
-#else	/* !CONFIG_NONSTATIC_KERNEL */
-#define PHYSICAL_START	ASM_CONST(CONFIG_PHYSICAL_START)
-#endif
+#अन्यथा	/* !CONFIG_NONSTATIC_KERNEL */
+#घोषणा PHYSICAL_START	ASM_CONST(CONFIG_PHYSICAL_START)
+#पूर्ण_अगर
 
-/* See Description below for VIRT_PHYS_OFFSET */
-#if defined(CONFIG_PPC32) && defined(CONFIG_BOOKE)
-#ifdef CONFIG_RELOCATABLE
-#define VIRT_PHYS_OFFSET virt_phys_offset
-#else
-#define VIRT_PHYS_OFFSET (KERNELBASE - PHYSICAL_START)
-#endif
-#endif
+/* See Description below क्रम VIRT_PHYS_OFFSET */
+#अगर defined(CONFIG_PPC32) && defined(CONFIG_BOOKE)
+#अगर_घोषित CONFIG_RELOCATABLE
+#घोषणा VIRT_PHYS_OFFSET virt_phys_offset
+#अन्यथा
+#घोषणा VIRT_PHYS_OFFSET (KERNELBASE - PHYSICAL_START)
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC64
-#define MEMORY_START	0UL
-#elif defined(CONFIG_NONSTATIC_KERNEL)
-#define MEMORY_START	memstart_addr
-#else
-#define MEMORY_START	(PHYSICAL_START + PAGE_OFFSET - KERNELBASE)
-#endif
+#अगर_घोषित CONFIG_PPC64
+#घोषणा MEMORY_START	0UL
+#या_अगर defined(CONFIG_NONSTATIC_KERNEL)
+#घोषणा MEMORY_START	memstart_addr
+#अन्यथा
+#घोषणा MEMORY_START	(PHYSICAL_START + PAGE_OFFSET - KERNELBASE)
+#पूर्ण_अगर
 
-#ifdef CONFIG_FLATMEM
-#define ARCH_PFN_OFFSET		((unsigned long)(MEMORY_START >> PAGE_SHIFT))
-#ifndef __ASSEMBLY__
-extern unsigned long max_mapnr;
-static inline bool pfn_valid(unsigned long pfn)
-{
-	unsigned long min_pfn = ARCH_PFN_OFFSET;
+#अगर_घोषित CONFIG_FLATMEM
+#घोषणा ARCH_PFN_OFFSET		((अचिन्हित दीर्घ)(MEMORY_START >> PAGE_SHIFT))
+#अगर_अघोषित __ASSEMBLY__
+बाह्य अचिन्हित दीर्घ max_mapnr;
+अटल अंतरभूत bool pfn_valid(अचिन्हित दीर्घ pfn)
+अणु
+	अचिन्हित दीर्घ min_pfn = ARCH_PFN_OFFSET;
 
-	return pfn >= min_pfn && pfn < max_mapnr;
-}
-#endif
-#endif
+	वापस pfn >= min_pfn && pfn < max_mapnr;
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#define virt_to_pfn(kaddr)	(__pa(kaddr) >> PAGE_SHIFT)
-#define virt_to_page(kaddr)	pfn_to_page(virt_to_pfn(kaddr))
-#define pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
+#घोषणा virt_to_pfn(kaddr)	(__pa(kaddr) >> PAGE_SHIFT)
+#घोषणा virt_to_page(kaddr)	pfn_to_page(virt_to_pfn(kaddr))
+#घोषणा pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
 
-#define virt_addr_valid(kaddr)	pfn_valid(virt_to_pfn(kaddr))
+#घोषणा virt_addr_valid(kaddr)	pfn_valid(virt_to_pfn(kaddr))
 
 /*
  * On Book-E parts we need __va to parse the device tree and we can't
  * determine MEMORY_START until then.  However we can determine PHYSICAL_START
- * from information at hand (program counter, TLB lookup).
+ * from inक्रमmation at hand (program counter, TLB lookup).
  *
  * On BookE with RELOCATABLE && PPC32
  *
  *   With RELOCATABLE && PPC32,  we support loading the kernel at any physical
  *   address without any restriction on the page alignment.
  *
- *   We find the runtime address of _stext and relocate ourselves based on 
+ *   We find the runसमय address of _stext and relocate ourselves based on 
  *   the following calculation:
  *
- *  	  virtual_base = ALIGN_DOWN(KERNELBASE,256M) +
+ *  	  भव_base = ALIGN_DOWN(KERNELBASE,256M) +
  *  				MODULO(_stext.run,256M)
  *   and create the following mapping:
  *
  * 	  ALIGN_DOWN(_stext.run,256M) => ALIGN_DOWN(KERNELBASE,256M)
  *
  *   When we process relocations, we cannot depend on the
- *   existing equation for the __va()/__pa() translations:
+ *   existing equation क्रम the __va()/__pa() translations:
  *
  * 	   __va(x) = (x)  - PHYSICAL_START + KERNELBASE
  *
  *   Where:
  *   	 PHYSICAL_START = kernstart_addr = Physical address of _stext
- *  	 KERNELBASE = Compiled virtual address of _stext.
+ *  	 KERNELBASE = Compiled भव address of _stext.
  *
- *   This formula holds true iff, kernel load address is TLB page aligned.
+ *   This क्रमmula holds true अगरf, kernel load address is TLB page aligned.
  *
- *   In our case, we need to also account for the shift in the kernel Virtual 
+ *   In our हाल, we need to also account क्रम the shअगरt in the kernel Virtual 
  *   address.
  *
  *   E.g.,
  *
  *   Let the kernel be loaded at 64MB and KERNELBASE be 0xc0000000 (same as PAGE_OFFSET).
- *   In this case, we would be mapping 0 to 0xc0000000, and kernstart_addr = 64M
+ *   In this हाल, we would be mapping 0 to 0xc0000000, and kernstart_addr = 64M
  *
  *   Now __va(1MB) = (0x100000) - (0x4000000) + 0xc0000000
  *                 = 0xbc100000 , which is wrong.
@@ -178,17 +179,17 @@ static inline bool pfn_valid(unsigned long pfn)
  *   Rather, it should be : 0xc0000000 + 0x100000 = 0xc0100000
  *      	according to our mapping.
  *
- *   Hence we use the following formula to get the translations right:
+ *   Hence we use the following क्रमmula to get the translations right:
  *
  * 	  __va(x) = (x) - [ PHYSICAL_START - Effective KERNELBASE ]
  *
  * 	  Where :
  * 		PHYSICAL_START = dynamic load address.(kernstart_addr variable)
- * 		Effective KERNELBASE = virtual_base =
+ * 		Effective KERNELBASE = भव_base =
  * 				     = ALIGN_DOWN(KERNELBASE,256M) +
  * 						MODULO(PHYSICAL_START,256M)
  *
- * 	To make the cost of __va() / __pa() more light weight, we introduce
+ * 	To make the cost of __va() / __pa() more light weight, we पूर्णांकroduce
  * 	a new variable virt_phys_offset, which will hold :
  *
  * 	virt_phys_offset = Effective KERNELBASE - PHYSICAL_START
@@ -204,131 +205,131 @@ static inline bool pfn_valid(unsigned long pfn)
  * 	__pa(x) = x + PHYSICAL_START - Effective KERNELBASE
  * 		= x - virt_phys_offset
  * 		
- * On non-Book-E PPC64 PAGE_OFFSET and MEMORY_START are constants so use
- * the other definitions for __va & __pa.
+ * On non-Book-E PPC64 PAGE_OFFSET and MEMORY_START are स्थिरants so use
+ * the other definitions क्रम __va & __pa.
  */
-#if defined(CONFIG_PPC32) && defined(CONFIG_BOOKE)
-#define __va(x) ((void *)(unsigned long)((phys_addr_t)(x) + VIRT_PHYS_OFFSET))
-#define __pa(x) ((phys_addr_t)(unsigned long)(x) - VIRT_PHYS_OFFSET)
-#else
-#ifdef CONFIG_PPC64
+#अगर defined(CONFIG_PPC32) && defined(CONFIG_BOOKE)
+#घोषणा __va(x) ((व्योम *)(अचिन्हित दीर्घ)((phys_addr_t)(x) + VIRT_PHYS_OFFSET))
+#घोषणा __pa(x) ((phys_addr_t)(अचिन्हित दीर्घ)(x) - VIRT_PHYS_OFFSET)
+#अन्यथा
+#अगर_घोषित CONFIG_PPC64
 /*
- * gcc miscompiles (unsigned long)(&static_var) - PAGE_OFFSET
+ * gcc miscompiles (अचिन्हित दीर्घ)(&अटल_var) - PAGE_OFFSET
  * with -mcmodel=medium, so we use & and | instead of - and + on 64-bit.
  * This also results in better code generation.
  */
-#define __va(x)								\
-({									\
-	VIRTUAL_BUG_ON((unsigned long)(x) >= PAGE_OFFSET);		\
-	(void *)(unsigned long)((phys_addr_t)(x) | PAGE_OFFSET);	\
-})
+#घोषणा __va(x)								\
+(अणु									\
+	VIRTUAL_BUG_ON((अचिन्हित दीर्घ)(x) >= PAGE_OFFSET);		\
+	(व्योम *)(अचिन्हित दीर्घ)((phys_addr_t)(x) | PAGE_OFFSET);	\
+पूर्ण)
 
-#define __pa(x)								\
-({									\
-	VIRTUAL_BUG_ON((unsigned long)(x) < PAGE_OFFSET);		\
-	(unsigned long)(x) & 0x0fffffffffffffffUL;			\
-})
+#घोषणा __pa(x)								\
+(अणु									\
+	VIRTUAL_BUG_ON((अचिन्हित दीर्घ)(x) < PAGE_OFFSET);		\
+	(अचिन्हित दीर्घ)(x) & 0x0fffffffffffffffUL;			\
+पूर्ण)
 
-#else /* 32-bit, non book E */
-#define __va(x) ((void *)(unsigned long)((phys_addr_t)(x) + PAGE_OFFSET - MEMORY_START))
-#define __pa(x) ((unsigned long)(x) - PAGE_OFFSET + MEMORY_START)
-#endif
-#endif
+#अन्यथा /* 32-bit, non book E */
+#घोषणा __va(x) ((व्योम *)(अचिन्हित दीर्घ)((phys_addr_t)(x) + PAGE_OFFSET - MEMORY_START))
+#घोषणा __pa(x) ((अचिन्हित दीर्घ)(x) - PAGE_OFFSET + MEMORY_START)
+#पूर्ण_अगर
+#पूर्ण_अगर
 
 /*
- * Unfortunately the PLT is in the BSS in the PPC32 ELF ABI,
+ * Unक्रमtunately the PLT is in the BSS in the PPC32 ELF ABI,
  * and needs to be executable.  This means the whole heap ends
  * up being executable.
  */
-#define VM_DATA_DEFAULT_FLAGS32	VM_DATA_FLAGS_TSK_EXEC
-#define VM_DATA_DEFAULT_FLAGS64	VM_DATA_FLAGS_NON_EXEC
+#घोषणा VM_DATA_DEFAULT_FLAGS32	VM_DATA_FLAGS_TSK_EXEC
+#घोषणा VM_DATA_DEFAULT_FLAGS64	VM_DATA_FLAGS_NON_EXEC
 
-#ifdef __powerpc64__
-#include <asm/page_64.h>
-#else
-#include <asm/page_32.h>
-#endif
+#अगर_घोषित __घातerpc64__
+#समावेश <यंत्र/page_64.h>
+#अन्यथा
+#समावेश <यंत्र/page_32.h>
+#पूर्ण_अगर
 
 /*
- * Don't compare things with KERNELBASE or PAGE_OFFSET to test for
- * "kernelness", use is_kernel_addr() - it should do what you want.
+ * Don't compare things with KERNELBASE or PAGE_OFFSET to test क्रम
+ * "kernelness", use is_kernel_addr() - it should करो what you want.
  */
-#ifdef CONFIG_PPC_BOOK3E_64
-#define is_kernel_addr(x)	((x) >= 0x8000000000000000ul)
-#elif defined(CONFIG_PPC_BOOK3S_64)
-#define is_kernel_addr(x)	((x) >= PAGE_OFFSET)
-#else
-#define is_kernel_addr(x)	((x) >= TASK_SIZE)
-#endif
+#अगर_घोषित CONFIG_PPC_BOOK3E_64
+#घोषणा is_kernel_addr(x)	((x) >= 0x8000000000000000ul)
+#या_अगर defined(CONFIG_PPC_BOOK3S_64)
+#घोषणा is_kernel_addr(x)	((x) >= PAGE_OFFSET)
+#अन्यथा
+#घोषणा is_kernel_addr(x)	((x) >= TASK_SIZE)
+#पूर्ण_अगर
 
-#ifndef CONFIG_PPC_BOOK3S_64
+#अगर_अघोषित CONFIG_PPC_BOOK3S_64
 /*
  * Use the top bit of the higher-level page table entries to indicate whether
- * the entries we point to contain hugepages.  This works because we know that
+ * the entries we poपूर्णांक to contain hugepages.  This works because we know that
  * the page tables live in kernel space.  If we ever decide to support having
- * page tables at arbitrary addresses, this breaks and will have to change.
+ * page tables at arbitrary addresses, this अवरोधs and will have to change.
  */
-#ifdef CONFIG_PPC64
-#define PD_HUGE 0x8000000000000000UL
-#else
-#define PD_HUGE 0x80000000
-#endif
+#अगर_घोषित CONFIG_PPC64
+#घोषणा PD_HUGE 0x8000000000000000UL
+#अन्यथा
+#घोषणा PD_HUGE 0x80000000
+#पूर्ण_अगर
 
-#else	/* CONFIG_PPC_BOOK3S_64 */
+#अन्यथा	/* CONFIG_PPC_BOOK3S_64 */
 /*
  * Book3S 64 stores real addresses in the hugepd entries to
- * avoid overlaps with _PAGE_PRESENT and _PAGE_PTE.
+ * aव्योम overlaps with _PAGE_PRESENT and _PAGE_PTE.
  */
-#define HUGEPD_ADDR_MASK	(0x0ffffffffffffffful & ~HUGEPD_SHIFT_MASK)
-#endif /* CONFIG_PPC_BOOK3S_64 */
+#घोषणा HUGEPD_ADDR_MASK	(0x0ffffffffffffffful & ~HUGEPD_SHIFT_MASK)
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
 
 /*
- * Some number of bits at the level of the page table that points to
+ * Some number of bits at the level of the page table that poपूर्णांकs to
  * a hugepte are used to encode the size.  This masks those bits.
- * On 8xx, HW assistance requires 4k alignment for the hugepte.
+ * On 8xx, HW assistance requires 4k alignment क्रम the hugepte.
  */
-#ifdef CONFIG_PPC_8xx
-#define HUGEPD_SHIFT_MASK     0xfff
-#else
-#define HUGEPD_SHIFT_MASK     0x3f
-#endif
+#अगर_घोषित CONFIG_PPC_8xx
+#घोषणा HUGEPD_SHIFT_MASK     0xfff
+#अन्यथा
+#घोषणा HUGEPD_SHIFT_MASK     0x3f
+#पूर्ण_अगर
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#ifdef CONFIG_PPC_BOOK3S_64
-#include <asm/pgtable-be-types.h>
-#else
-#include <asm/pgtable-types.h>
-#endif
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+#समावेश <यंत्र/pgtable-be-types.h>
+#अन्यथा
+#समावेश <यंत्र/pgtable-types.h>
+#पूर्ण_अगर
 
 
-#ifndef CONFIG_HUGETLB_PAGE
-#define is_hugepd(pdep)		(0)
-#define pgd_huge(pgd)		(0)
-#endif /* CONFIG_HUGETLB_PAGE */
+#अगर_अघोषित CONFIG_HUGETLB_PAGE
+#घोषणा is_hugepd(pdep)		(0)
+#घोषणा pgd_huge(pgd)		(0)
+#पूर्ण_अगर /* CONFIG_HUGETLB_PAGE */
 
-struct page;
-extern void clear_user_page(void *page, unsigned long vaddr, struct page *pg);
-extern void copy_user_page(void *to, void *from, unsigned long vaddr,
-		struct page *p);
-extern int devmem_is_allowed(unsigned long pfn);
+काष्ठा page;
+बाह्य व्योम clear_user_page(व्योम *page, अचिन्हित दीर्घ vaddr, काष्ठा page *pg);
+बाह्य व्योम copy_user_page(व्योम *to, व्योम *from, अचिन्हित दीर्घ vaddr,
+		काष्ठा page *p);
+बाह्य पूर्णांक devmem_is_allowed(अचिन्हित दीर्घ pfn);
 
-#ifdef CONFIG_PPC_SMLPAR
-void arch_free_page(struct page *page, int order);
-#define HAVE_ARCH_FREE_PAGE
-#endif
+#अगर_घोषित CONFIG_PPC_SMLPAR
+व्योम arch_मुक्त_page(काष्ठा page *page, पूर्णांक order);
+#घोषणा HAVE_ARCH_FREE_PAGE
+#पूर्ण_अगर
 
-struct vm_area_struct;
+काष्ठा vm_area_काष्ठा;
 
-extern unsigned long kernstart_virt_addr;
+बाह्य अचिन्हित दीर्घ kernstart_virt_addr;
 
-static inline unsigned long kaslr_offset(void)
-{
-	return kernstart_virt_addr - KERNELBASE;
-}
+अटल अंतरभूत अचिन्हित दीर्घ kaslr_offset(व्योम)
+अणु
+	वापस kernstart_virt_addr - KERNELBASE;
+पूर्ण
 
-#include <asm-generic/memory_model.h>
-#endif /* __ASSEMBLY__ */
-#include <asm/slice.h>
+#समावेश <यंत्र-generic/memory_model.h>
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#समावेश <यंत्र/slice.h>
 
-#endif /* _ASM_POWERPC_PAGE_H */
+#पूर्ण_अगर /* _ASM_POWERPC_PAGE_H */

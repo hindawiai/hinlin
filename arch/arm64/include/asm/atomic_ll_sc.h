@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Based on arch/arm/include/asm/atomic.h
+ * Based on arch/arm/include/यंत्र/atomic.h
  *
  * Copyright (C) 1996 Russell King.
  * Copyright (C) 2002 Deep Blue Solutions Ltd.
  * Copyright (C) 2012 ARM Ltd.
  */
 
-#ifndef __ASM_ATOMIC_LL_SC_H
-#define __ASM_ATOMIC_LL_SC_H
+#अगर_अघोषित __ASM_ATOMIC_LL_SC_H
+#घोषणा __ASM_ATOMIC_LL_SC_H
 
-#include <linux/stringify.h>
+#समावेश <linux/stringअगरy.h>
 
-#ifdef CONFIG_ARM64_LSE_ATOMICS
-#define __LL_SC_FALLBACK(asm_ops)					\
+#अगर_घोषित CONFIG_ARM64_LSE_ATOMICS
+#घोषणा __LL_SC_FALLBACK(यंत्र_ops)					\
 "	b	3f\n"							\
 "	.subsection	1\n"						\
 "3:\n"									\
-asm_ops "\n"								\
+यंत्र_ops "\n"								\
 "	b	4f\n"							\
 "	.previous\n"							\
 "4:\n"
-#else
-#define __LL_SC_FALLBACK(asm_ops) asm_ops
-#endif
+#अन्यथा
+#घोषणा __LL_SC_FALLBACK(यंत्र_ops) यंत्र_ops
+#पूर्ण_अगर
 
-#ifndef CONFIG_CC_HAS_K_CONSTRAINT
-#define K
-#endif
+#अगर_अघोषित CONFIG_CC_HAS_K_CONSTRAINT
+#घोषणा K
+#पूर्ण_अगर
 
 /*
  * AArch64 UP and SMP safe atomic ops.  We use load exclusive and
@@ -35,69 +36,69 @@ asm_ops "\n"								\
  * to ensure that the update happens.
  */
 
-#define ATOMIC_OP(op, asm_op, constraint)				\
-static inline void							\
-__ll_sc_atomic_##op(int i, atomic_t *v)					\
-{									\
-	unsigned long tmp;						\
-	int result;							\
+#घोषणा ATOMIC_OP(op, यंत्र_op, स्थिरraपूर्णांक)				\
+अटल अंतरभूत व्योम							\
+__ll_sc_atomic_##op(पूर्णांक i, atomic_t *v)					\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
+	पूर्णांक result;							\
 									\
-	asm volatile("// atomic_" #op "\n"				\
+	यंत्र अस्थिर("// atomic_" #op "\n"				\
 	__LL_SC_FALLBACK(						\
 "	prfm	pstl1strm, %2\n"					\
 "1:	ldxr	%w0, %2\n"						\
-"	" #asm_op "	%w0, %w0, %w3\n"				\
+"	" #यंत्र_op "	%w0, %w0, %w3\n"				\
 "	stxr	%w1, %w0, %2\n"						\
 "	cbnz	%w1, 1b\n")						\
-	: "=&r" (result), "=&r" (tmp), "+Q" (v->counter)		\
-	: __stringify(constraint) "r" (i));				\
-}
+	: "=&r" (result), "=&r" (पंचांगp), "+Q" (v->counter)		\
+	: __stringअगरy(स्थिरraपूर्णांक) "r" (i));				\
+पूर्ण
 
-#define ATOMIC_OP_RETURN(name, mb, acq, rel, cl, op, asm_op, constraint)\
-static inline int							\
-__ll_sc_atomic_##op##_return##name(int i, atomic_t *v)			\
-{									\
-	unsigned long tmp;						\
-	int result;							\
+#घोषणा ATOMIC_OP_RETURN(name, mb, acq, rel, cl, op, यंत्र_op, स्थिरraपूर्णांक)\
+अटल अंतरभूत पूर्णांक							\
+__ll_sc_atomic_##op##_वापस##name(पूर्णांक i, atomic_t *v)			\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
+	पूर्णांक result;							\
 									\
-	asm volatile("// atomic_" #op "_return" #name "\n"		\
+	यंत्र अस्थिर("// atomic_" #op "_return" #name "\n"		\
 	__LL_SC_FALLBACK(						\
 "	prfm	pstl1strm, %2\n"					\
 "1:	ld" #acq "xr	%w0, %2\n"					\
-"	" #asm_op "	%w0, %w0, %w3\n"				\
+"	" #यंत्र_op "	%w0, %w0, %w3\n"				\
 "	st" #rel "xr	%w1, %w0, %2\n"					\
 "	cbnz	%w1, 1b\n"						\
 "	" #mb )								\
-	: "=&r" (result), "=&r" (tmp), "+Q" (v->counter)		\
-	: __stringify(constraint) "r" (i)				\
+	: "=&r" (result), "=&r" (पंचांगp), "+Q" (v->counter)		\
+	: __stringअगरy(स्थिरraपूर्णांक) "r" (i)				\
 	: cl);								\
 									\
-	return result;							\
-}
+	वापस result;							\
+पूर्ण
 
-#define ATOMIC_FETCH_OP(name, mb, acq, rel, cl, op, asm_op, constraint) \
-static inline int							\
-__ll_sc_atomic_fetch_##op##name(int i, atomic_t *v)			\
-{									\
-	unsigned long tmp;						\
-	int val, result;						\
+#घोषणा ATOMIC_FETCH_OP(name, mb, acq, rel, cl, op, यंत्र_op, स्थिरraपूर्णांक) \
+अटल अंतरभूत पूर्णांक							\
+__ll_sc_atomic_fetch_##op##name(पूर्णांक i, atomic_t *v)			\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
+	पूर्णांक val, result;						\
 									\
-	asm volatile("// atomic_fetch_" #op #name "\n"			\
+	यंत्र अस्थिर("// atomic_fetch_" #op #name "\n"			\
 	__LL_SC_FALLBACK(						\
 "	prfm	pstl1strm, %3\n"					\
 "1:	ld" #acq "xr	%w0, %3\n"					\
-"	" #asm_op "	%w1, %w0, %w4\n"				\
+"	" #यंत्र_op "	%w1, %w0, %w4\n"				\
 "	st" #rel "xr	%w2, %w1, %3\n"					\
 "	cbnz	%w2, 1b\n"						\
 "	" #mb )								\
-	: "=&r" (result), "=&r" (val), "=&r" (tmp), "+Q" (v->counter)	\
-	: __stringify(constraint) "r" (i)				\
+	: "=&r" (result), "=&r" (val), "=&r" (पंचांगp), "+Q" (v->counter)	\
+	: __stringअगरy(स्थिरraपूर्णांक) "r" (i)				\
 	: cl);								\
 									\
-	return result;							\
-}
+	वापस result;							\
+पूर्ण
 
-#define ATOMIC_OPS(...)							\
+#घोषणा ATOMIC_OPS(...)							\
 	ATOMIC_OP(__VA_ARGS__)						\
 	ATOMIC_OP_RETURN(        , dmb ish,  , l, "memory", __VA_ARGS__)\
 	ATOMIC_OP_RETURN(_relaxed,        ,  ,  ,         , __VA_ARGS__)\
@@ -111,8 +112,8 @@ __ll_sc_atomic_fetch_##op##name(int i, atomic_t *v)			\
 ATOMIC_OPS(add, add, I)
 ATOMIC_OPS(sub, sub, J)
 
-#undef ATOMIC_OPS
-#define ATOMIC_OPS(...)							\
+#अघोषित ATOMIC_OPS
+#घोषणा ATOMIC_OPS(...)							\
 	ATOMIC_OP(__VA_ARGS__)						\
 	ATOMIC_FETCH_OP (        , dmb ish,  , l, "memory", __VA_ARGS__)\
 	ATOMIC_FETCH_OP (_relaxed,        ,  ,  ,         , __VA_ARGS__)\
@@ -123,80 +124,80 @@ ATOMIC_OPS(and, and, K)
 ATOMIC_OPS(or, orr, K)
 ATOMIC_OPS(xor, eor, K)
 /*
- * GAS converts the mysterious and undocumented BIC (immediate) alias to
- * an AND (immediate) instruction with the immediate inverted. We don't
- * have a constraint for this, so fall back to register.
+ * GAS converts the mysterious and unकरोcumented BIC (immediate) alias to
+ * an AND (immediate) inकाष्ठाion with the immediate inverted. We करोn't
+ * have a स्थिरraपूर्णांक क्रम this, so fall back to रेजिस्टर.
  */
 ATOMIC_OPS(andnot, bic, )
 
-#undef ATOMIC_OPS
-#undef ATOMIC_FETCH_OP
-#undef ATOMIC_OP_RETURN
-#undef ATOMIC_OP
+#अघोषित ATOMIC_OPS
+#अघोषित ATOMIC_FETCH_OP
+#अघोषित ATOMIC_OP_RETURN
+#अघोषित ATOMIC_OP
 
-#define ATOMIC64_OP(op, asm_op, constraint)				\
-static inline void							\
+#घोषणा ATOMIC64_OP(op, यंत्र_op, स्थिरraपूर्णांक)				\
+अटल अंतरभूत व्योम							\
 __ll_sc_atomic64_##op(s64 i, atomic64_t *v)				\
-{									\
+अणु									\
 	s64 result;							\
-	unsigned long tmp;						\
+	अचिन्हित दीर्घ पंचांगp;						\
 									\
-	asm volatile("// atomic64_" #op "\n"				\
+	यंत्र अस्थिर("// atomic64_" #op "\n"				\
 	__LL_SC_FALLBACK(						\
 "	prfm	pstl1strm, %2\n"					\
 "1:	ldxr	%0, %2\n"						\
-"	" #asm_op "	%0, %0, %3\n"					\
+"	" #यंत्र_op "	%0, %0, %3\n"					\
 "	stxr	%w1, %0, %2\n"						\
 "	cbnz	%w1, 1b")						\
-	: "=&r" (result), "=&r" (tmp), "+Q" (v->counter)		\
-	: __stringify(constraint) "r" (i));				\
-}
+	: "=&r" (result), "=&r" (पंचांगp), "+Q" (v->counter)		\
+	: __stringअगरy(स्थिरraपूर्णांक) "r" (i));				\
+पूर्ण
 
-#define ATOMIC64_OP_RETURN(name, mb, acq, rel, cl, op, asm_op, constraint)\
-static inline long							\
-__ll_sc_atomic64_##op##_return##name(s64 i, atomic64_t *v)		\
-{									\
+#घोषणा ATOMIC64_OP_RETURN(name, mb, acq, rel, cl, op, यंत्र_op, स्थिरraपूर्णांक)\
+अटल अंतरभूत दीर्घ							\
+__ll_sc_atomic64_##op##_वापस##name(s64 i, atomic64_t *v)		\
+अणु									\
 	s64 result;							\
-	unsigned long tmp;						\
+	अचिन्हित दीर्घ पंचांगp;						\
 									\
-	asm volatile("// atomic64_" #op "_return" #name "\n"		\
+	यंत्र अस्थिर("// atomic64_" #op "_return" #name "\n"		\
 	__LL_SC_FALLBACK(						\
 "	prfm	pstl1strm, %2\n"					\
 "1:	ld" #acq "xr	%0, %2\n"					\
-"	" #asm_op "	%0, %0, %3\n"					\
+"	" #यंत्र_op "	%0, %0, %3\n"					\
 "	st" #rel "xr	%w1, %0, %2\n"					\
 "	cbnz	%w1, 1b\n"						\
 "	" #mb )								\
-	: "=&r" (result), "=&r" (tmp), "+Q" (v->counter)		\
-	: __stringify(constraint) "r" (i)				\
+	: "=&r" (result), "=&r" (पंचांगp), "+Q" (v->counter)		\
+	: __stringअगरy(स्थिरraपूर्णांक) "r" (i)				\
 	: cl);								\
 									\
-	return result;							\
-}
+	वापस result;							\
+पूर्ण
 
-#define ATOMIC64_FETCH_OP(name, mb, acq, rel, cl, op, asm_op, constraint)\
-static inline long							\
+#घोषणा ATOMIC64_FETCH_OP(name, mb, acq, rel, cl, op, यंत्र_op, स्थिरraपूर्णांक)\
+अटल अंतरभूत दीर्घ							\
 __ll_sc_atomic64_fetch_##op##name(s64 i, atomic64_t *v)		\
-{									\
+अणु									\
 	s64 result, val;						\
-	unsigned long tmp;						\
+	अचिन्हित दीर्घ पंचांगp;						\
 									\
-	asm volatile("// atomic64_fetch_" #op #name "\n"		\
+	यंत्र अस्थिर("// atomic64_fetch_" #op #name "\n"		\
 	__LL_SC_FALLBACK(						\
 "	prfm	pstl1strm, %3\n"					\
 "1:	ld" #acq "xr	%0, %3\n"					\
-"	" #asm_op "	%1, %0, %4\n"					\
+"	" #यंत्र_op "	%1, %0, %4\n"					\
 "	st" #rel "xr	%w2, %1, %3\n"					\
 "	cbnz	%w2, 1b\n"						\
 "	" #mb )								\
-	: "=&r" (result), "=&r" (val), "=&r" (tmp), "+Q" (v->counter)	\
-	: __stringify(constraint) "r" (i)				\
+	: "=&r" (result), "=&r" (val), "=&r" (पंचांगp), "+Q" (v->counter)	\
+	: __stringअगरy(स्थिरraपूर्णांक) "r" (i)				\
 	: cl);								\
 									\
-	return result;							\
-}
+	वापस result;							\
+पूर्ण
 
-#define ATOMIC64_OPS(...)						\
+#घोषणा ATOMIC64_OPS(...)						\
 	ATOMIC64_OP(__VA_ARGS__)					\
 	ATOMIC64_OP_RETURN(, dmb ish,  , l, "memory", __VA_ARGS__)	\
 	ATOMIC64_OP_RETURN(_relaxed,,  ,  ,         , __VA_ARGS__)	\
@@ -210,8 +211,8 @@ __ll_sc_atomic64_fetch_##op##name(s64 i, atomic64_t *v)		\
 ATOMIC64_OPS(add, add, I)
 ATOMIC64_OPS(sub, sub, J)
 
-#undef ATOMIC64_OPS
-#define ATOMIC64_OPS(...)						\
+#अघोषित ATOMIC64_OPS
+#घोषणा ATOMIC64_OPS(...)						\
 	ATOMIC64_OP(__VA_ARGS__)					\
 	ATOMIC64_FETCH_OP (, dmb ish,  , l, "memory", __VA_ARGS__)	\
 	ATOMIC64_FETCH_OP (_relaxed,,  ,  ,         , __VA_ARGS__)	\
@@ -222,24 +223,24 @@ ATOMIC64_OPS(and, and, L)
 ATOMIC64_OPS(or, orr, L)
 ATOMIC64_OPS(xor, eor, L)
 /*
- * GAS converts the mysterious and undocumented BIC (immediate) alias to
- * an AND (immediate) instruction with the immediate inverted. We don't
- * have a constraint for this, so fall back to register.
+ * GAS converts the mysterious and unकरोcumented BIC (immediate) alias to
+ * an AND (immediate) inकाष्ठाion with the immediate inverted. We करोn't
+ * have a स्थिरraपूर्णांक क्रम this, so fall back to रेजिस्टर.
  */
 ATOMIC64_OPS(andnot, bic, )
 
-#undef ATOMIC64_OPS
-#undef ATOMIC64_FETCH_OP
-#undef ATOMIC64_OP_RETURN
-#undef ATOMIC64_OP
+#अघोषित ATOMIC64_OPS
+#अघोषित ATOMIC64_FETCH_OP
+#अघोषित ATOMIC64_OP_RETURN
+#अघोषित ATOMIC64_OP
 
-static inline s64
-__ll_sc_atomic64_dec_if_positive(atomic64_t *v)
-{
+अटल अंतरभूत s64
+__ll_sc_atomic64_dec_अगर_positive(atomic64_t *v)
+अणु
 	s64 result;
-	unsigned long tmp;
+	अचिन्हित दीर्घ पंचांगp;
 
-	asm volatile("// atomic64_dec_if_positive\n"
+	यंत्र अस्थिर("// atomic64_dec_if_positive\n"
 	__LL_SC_FALLBACK(
 "	prfm	pstl1strm, %2\n"
 "1:	ldxr	%0, %2\n"
@@ -249,31 +250,31 @@ __ll_sc_atomic64_dec_if_positive(atomic64_t *v)
 "	cbnz	%w1, 1b\n"
 "	dmb	ish\n"
 "2:")
-	: "=&r" (result), "=&r" (tmp), "+Q" (v->counter)
+	: "=&r" (result), "=&r" (पंचांगp), "+Q" (v->counter)
 	:
 	: "cc", "memory");
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-#define __CMPXCHG_CASE(w, sfx, name, sz, mb, acq, rel, cl, constraint)	\
-static inline u##sz							\
-__ll_sc__cmpxchg_case_##name##sz(volatile void *ptr,			\
-					 unsigned long old,		\
+#घोषणा __CMPXCHG_CASE(w, sfx, name, sz, mb, acq, rel, cl, स्थिरraपूर्णांक)	\
+अटल अंतरभूत u##sz							\
+__ll_sc__cmpxchg_हाल_##name##sz(अस्थिर व्योम *ptr,			\
+					 अचिन्हित दीर्घ old,		\
 					 u##sz new)			\
-{									\
-	unsigned long tmp;						\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp;						\
 	u##sz oldval;							\
 									\
 	/*								\
 	 * Sub-word sizes require explicit casting so that the compare  \
-	 * part of the cmpxchg doesn't end up interpreting non-zero	\
-	 * upper bits of the register containing "old".			\
+	 * part of the cmpxchg करोesn't end up पूर्णांकerpreting non-zero	\
+	 * upper bits of the रेजिस्टर containing "old".			\
 	 */								\
-	if (sz < 32)							\
+	अगर (sz < 32)							\
 		old = (u##sz)old;					\
 									\
-	asm volatile(							\
+	यंत्र अस्थिर(							\
 	__LL_SC_FALLBACK(						\
 	"	prfm	pstl1strm, %[v]\n"				\
 	"1:	ld" #acq "xr" #sfx "\t%" #w "[oldval], %[v]\n"		\
@@ -283,18 +284,18 @@ __ll_sc__cmpxchg_case_##name##sz(volatile void *ptr,			\
 	"	cbnz	%w[tmp], 1b\n"					\
 	"	" #mb "\n"						\
 	"2:")								\
-	: [tmp] "=&r" (tmp), [oldval] "=&r" (oldval),			\
+	: [पंचांगp] "=&r" (पंचांगp), [oldval] "=&r" (oldval),			\
 	  [v] "+Q" (*(u##sz *)ptr)					\
-	: [old] __stringify(constraint) "r" (old), [new] "r" (new)	\
+	: [old] __stringअगरy(स्थिरraपूर्णांक) "r" (old), [new] "r" (new)	\
 	: cl);								\
 									\
-	return oldval;							\
-}
+	वापस oldval;							\
+पूर्ण
 
 /*
  * Earlier versions of GCC (no later than 8.1.0) appear to incorrectly
- * handle the 'K' constraint for the value 4294967295 - thus we use no
- * constraint for 32 bit operations.
+ * handle the 'K' स्थिरraपूर्णांक क्रम the value 4294967295 - thus we use no
+ * स्थिरraपूर्णांक क्रम 32 bit operations.
  */
 __CMPXCHG_CASE(w, b,     ,  8,        ,  ,  ,         , K)
 __CMPXCHG_CASE(w, h,     , 16,        ,  ,  ,         , K)
@@ -313,19 +314,19 @@ __CMPXCHG_CASE(w, h,  mb_, 16, dmb ish,  , l, "memory", K)
 __CMPXCHG_CASE(w,  ,  mb_, 32, dmb ish,  , l, "memory", K)
 __CMPXCHG_CASE( ,  ,  mb_, 64, dmb ish,  , l, "memory", L)
 
-#undef __CMPXCHG_CASE
+#अघोषित __CMPXCHG_CASE
 
-#define __CMPXCHG_DBL(name, mb, rel, cl)				\
-static inline long							\
-__ll_sc__cmpxchg_double##name(unsigned long old1,			\
-				      unsigned long old2,		\
-				      unsigned long new1,		\
-				      unsigned long new2,		\
-				      volatile void *ptr)		\
-{									\
-	unsigned long tmp, ret;						\
+#घोषणा __CMPXCHG_DBL(name, mb, rel, cl)				\
+अटल अंतरभूत दीर्घ							\
+__ll_sc__cmpxchg_द्विगुन##name(अचिन्हित दीर्घ old1,			\
+				      अचिन्हित दीर्घ old2,		\
+				      अचिन्हित दीर्घ new1,		\
+				      अचिन्हित दीर्घ new2,		\
+				      अस्थिर व्योम *ptr)		\
+अणु									\
+	अचिन्हित दीर्घ पंचांगp, ret;						\
 									\
-	asm volatile("// __cmpxchg_double" #name "\n"			\
+	यंत्र अस्थिर("// __cmpxchg_double" #name "\n"			\
 	__LL_SC_FALLBACK(						\
 	"	prfm	pstl1strm, %2\n"				\
 	"1:	ldxp	%0, %1, %2\n"					\
@@ -337,17 +338,17 @@ __ll_sc__cmpxchg_double##name(unsigned long old1,			\
 	"	cbnz	%w0, 1b\n"					\
 	"	" #mb "\n"						\
 	"2:")								\
-	: "=&r" (tmp), "=&r" (ret), "+Q" (*(unsigned long *)ptr)	\
+	: "=&r" (पंचांगp), "=&r" (ret), "+Q" (*(अचिन्हित दीर्घ *)ptr)	\
 	: "r" (old1), "r" (old2), "r" (new1), "r" (new2)		\
 	: cl);								\
 									\
-	return ret;							\
-}
+	वापस ret;							\
+पूर्ण
 
 __CMPXCHG_DBL(   ,        ,  ,         )
 __CMPXCHG_DBL(_mb, dmb ish, l, "memory")
 
-#undef __CMPXCHG_DBL
-#undef K
+#अघोषित __CMPXCHG_DBL
+#अघोषित K
 
-#endif	/* __ASM_ATOMIC_LL_SC_H */
+#पूर्ण_अगर	/* __ASM_ATOMIC_LL_SC_H */

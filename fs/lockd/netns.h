@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LOCKD_NETNS_H__
-#define __LOCKD_NETNS_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LOCKD_NETNS_H__
+#घोषणा __LOCKD_NETNS_H__
 
-#include <linux/fs.h>
-#include <net/netns/generic.h>
+#समावेश <linux/fs.h>
+#समावेश <net/netns/generic.h>
 
-struct lockd_net {
-	unsigned int nlmsvc_users;
-	unsigned long next_gc;
-	unsigned long nrhosts;
+काष्ठा lockd_net अणु
+	अचिन्हित पूर्णांक nlmsvc_users;
+	अचिन्हित दीर्घ next_gc;
+	अचिन्हित दीर्घ nrhosts;
 
-	struct delayed_work grace_period_end;
-	struct lock_manager lockd_manager;
+	काष्ठा delayed_work grace_period_end;
+	काष्ठा lock_manager lockd_manager;
 
-	struct list_head nsm_handles;
-};
+	काष्ठा list_head nsm_handles;
+पूर्ण;
 
-extern unsigned int lockd_net_id;
+बाह्य अचिन्हित पूर्णांक lockd_net_id;
 
-#endif
+#पूर्ण_अगर

@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-/* Driver for Theobroma Systems UCAN devices, Protocol Version 3
+/* Driver क्रम Theobroma Systems UCAN devices, Protocol Version 3
  *
  * Copyright (C) 2018 Theobroma Systems Design und Consulting GmbH
  *
  *
  * General Description:
  *
- * The USB Device uses three Endpoints:
+ * The USB Device uses three Endpoपूर्णांकs:
  *
- *   CONTROL Endpoint: Is used the setup the device (start, stop,
+ *   CONTROL Endpoपूर्णांक: Is used the setup the device (start, stop,
  *   info, configure).
  *
- *   IN Endpoint: The device sends CAN Frame Messages and Device
- *   Information using the IN endpoint.
+ *   IN Endpoपूर्णांक: The device sends CAN Frame Messages and Device
+ *   Inक्रमmation using the IN endpoपूर्णांक.
  *
- *   OUT Endpoint: The driver sends configuration requests, and CAN
- *   Frames on the out endpoint.
+ *   OUT Endpoपूर्णांक: The driver sends configuration requests, and CAN
+ *   Frames on the out endpoपूर्णांक.
  *
  * Error Handling:
  *
- *   If error reporting is turned on the device encodes error into CAN
+ *   If error reporting is turned on the device encodes error पूर्णांकo CAN
  *   error frames (see uapi/linux/can/error.h) and sends it using the
- *   IN Endpoint. The driver updates statistics and forward it.
+ *   IN Endpoपूर्णांक. The driver updates statistics and क्रमward it.
  */
 
-#include <linux/can.h>
-#include <linux/can/dev.h>
-#include <linux/can/error.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/signal.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
+#समावेश <linux/can.h>
+#समावेश <linux/can/dev.h>
+#समावेश <linux/can/error.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
 
-#define UCAN_DRIVER_NAME "ucan"
-#define UCAN_MAX_RX_URBS 8
-/* the CAN controller needs a while to enable/disable the bus */
-#define UCAN_USB_CTL_PIPE_TIMEOUT 1000
+#घोषणा UCAN_DRIVER_NAME "ucan"
+#घोषणा UCAN_MAX_RX_URBS 8
+/* the CAN controller needs a जबतक to enable/disable the bus */
+#घोषणा UCAN_USB_CTL_PIPE_TIMEOUT 1000
 /* this driver currently supports protocol version 3 only */
-#define UCAN_PROTOCOL_VERSION_MIN 3
-#define UCAN_PROTOCOL_VERSION_MAX 3
+#घोषणा UCAN_PROTOCOL_VERSION_MIN 3
+#घोषणा UCAN_PROTOCOL_VERSION_MAX 3
 
 /* UCAN Message Definitions
  * ------------------------
  *
  *  ucan_message_out_t and ucan_message_in_t define the messages
- *  transmitted on the OUT and IN endpoint.
+ *  transmitted on the OUT and IN endpoपूर्णांक.
  *
  *  Multibyte fields are transmitted with little endianness
  *
- *  INTR Endpoint: a single uint32_t storing the current space in the fifo
+ *  INTR Endpoपूर्णांक: a single uपूर्णांक32_t storing the current space in the fअगरo
  *
- *  OUT Endpoint: single message of type ucan_message_out_t is
- *    transmitted on the out endpoint
+ *  OUT Endpoपूर्णांक: single message of type ucan_message_out_t is
+ *    transmitted on the out endpoपूर्णांक
  *
- *  IN Endpoint: multiple messages ucan_message_in_t concateted in
+ *  IN Endpoपूर्णांक: multiple messages ucan_message_in_t concateted in
  *    the following way:
  *
- *	m[n].len <=> the length if message n(including the header in bytes)
+ *	m[n].len <=> the length अगर message n(including the header in bytes)
  *	m[n] is is aligned to a 4 byte boundary, hence
  *	  offset(m[0])	 := 0;
  *	  offset(m[n+1]) := offset(m[n]) + (m[n].len + 3) & 3
@@ -69,19 +70,19 @@
  */
 
 /* Device Global Commands */
-enum {
+क्रमागत अणु
 	UCAN_DEVICE_GET_FW_STRING = 0,
-};
+पूर्ण;
 
 /* UCAN Commands */
-enum {
+क्रमागत अणु
 	/* start the can transceiver - val defines the operation mode */
 	UCAN_COMMAND_START = 0,
 	/* cancel pending transmissions and stop the can transceiver */
 	UCAN_COMMAND_STOP = 1,
-	/* send can transceiver into low-power sleep mode */
+	/* send can transceiver पूर्णांकo low-घातer sleep mode */
 	UCAN_COMMAND_SLEEP = 2,
-	/* wake up can transceiver from low-power sleep mode */
+	/* wake up can transceiver from low-घातer sleep mode */
 	UCAN_COMMAND_WAKEUP = 3,
 	/* reset the can transceiver */
 	UCAN_COMMAND_RESET = 4,
@@ -95,60 +96,60 @@ enum {
 	UCAN_COMMAND_SET_BITTIMING = 7,
 	/* recover from bus-off state */
 	UCAN_COMMAND_RESTART = 8,
-};
+पूर्ण;
 
-/* UCAN_COMMAND_START and UCAN_COMMAND_GET_INFO operation modes (bitmap).
+/* UCAN_COMMAND_START and UCAN_COMMAND_GET_INFO operation modes (biपंचांगap).
  * Undefined bits must be set to 0.
  */
-enum {
+क्रमागत अणु
 	UCAN_MODE_LOOPBACK = BIT(0),
 	UCAN_MODE_SILENT = BIT(1),
 	UCAN_MODE_3_SAMPLES = BIT(2),
 	UCAN_MODE_ONE_SHOT = BIT(3),
 	UCAN_MODE_BERR_REPORT = BIT(4),
-};
+पूर्ण;
 
 /* UCAN_COMMAND_GET subcommands */
-enum {
+क्रमागत अणु
 	UCAN_COMMAND_GET_INFO = 0,
 	UCAN_COMMAND_GET_PROTOCOL_VERSION = 1,
-};
+पूर्ण;
 
 /* UCAN_COMMAND_FILTER subcommands */
-enum {
+क्रमागत अणु
 	UCAN_FILTER_CLEAR = 0,
 	UCAN_FILTER_DISABLE = 1,
 	UCAN_FILTER_ENABLE = 2,
-};
+पूर्ण;
 
-/* OUT endpoint message types */
-enum {
+/* OUT endpoपूर्णांक message types */
+क्रमागत अणु
 	UCAN_OUT_TX = 2,     /* transmit a CAN frame */
-};
+पूर्ण;
 
-/* IN endpoint message types */
-enum {
+/* IN endpoपूर्णांक message types */
+क्रमागत अणु
 	UCAN_IN_TX_COMPLETE = 1,  /* CAN frame transmission completed */
 	UCAN_IN_RX = 2,           /* CAN frame received */
-};
+पूर्ण;
 
-struct ucan_ctl_cmd_start {
+काष्ठा ucan_ctl_cmd_start अणु
 	__le16 mode;         /* OR-ing any of UCAN_MODE_* */
-} __packed;
+पूर्ण __packed;
 
-struct ucan_ctl_cmd_set_bittiming {
+काष्ठा ucan_ctl_cmd_set_bittiming अणु
 	__le32 tq;           /* Time quanta (TQ) in nanoseconds */
 	__le16 brp;          /* TQ Prescaler */
-	__le16 sample_point; /* Samplepoint on tenth percent */
+	__le16 sample_poपूर्णांक; /* Samplepoपूर्णांक on tenth percent */
 	u8 prop_seg;         /* Propagation segment in TQs */
 	u8 phase_seg1;       /* Phase buffer segment 1 in TQs */
 	u8 phase_seg2;       /* Phase buffer segment 2 in TQs */
 	u8 sjw;              /* Synchronisation jump width in TQs */
-} __packed;
+पूर्ण __packed;
 
-struct ucan_ctl_cmd_device_info {
-	__le32 freq;         /* Clock Frequency for tq generation */
-	u8 tx_fifo;          /* Size of the transmission fifo */
+काष्ठा ucan_ctl_cmd_device_info अणु
+	__le32 freq;         /* Clock Frequency क्रम tq generation */
+	u8 tx_fअगरo;          /* Size of the transmission fअगरo */
 	u8 sjw_max;          /* can_bittiming fields... */
 	u8 tseg1_min;
 	u8 tseg1_max;
@@ -160,298 +161,298 @@ struct ucan_ctl_cmd_device_info {
 	__le16 ctrlmodes;    /* supported control modes */
 	__le16 hwfilter;     /* Number of HW filter banks */
 	__le16 rxmboxes;     /* Number of receive Mailboxes */
-} __packed;
+पूर्ण __packed;
 
-struct ucan_ctl_cmd_get_protocol_version {
+काष्ठा ucan_ctl_cmd_get_protocol_version अणु
 	__le32 version;
-} __packed;
+पूर्ण __packed;
 
-union ucan_ctl_payload {
+जोड़ ucan_ctl_payload अणु
 	/* Setup Bittiming
 	 * bmRequest == UCAN_COMMAND_START
 	 */
-	struct ucan_ctl_cmd_start cmd_start;
+	काष्ठा ucan_ctl_cmd_start cmd_start;
 	/* Setup Bittiming
 	 * bmRequest == UCAN_COMMAND_SET_BITTIMING
 	 */
-	struct ucan_ctl_cmd_set_bittiming cmd_set_bittiming;
-	/* Get Device Information
+	काष्ठा ucan_ctl_cmd_set_bittiming cmd_set_bittiming;
+	/* Get Device Inक्रमmation
 	 * bmRequest == UCAN_COMMAND_GET; wValue = UCAN_COMMAND_GET_INFO
 	 */
-	struct ucan_ctl_cmd_device_info cmd_get_device_info;
+	काष्ठा ucan_ctl_cmd_device_info cmd_get_device_info;
 	/* Get Protocol Version
 	 * bmRequest == UCAN_COMMAND_GET;
 	 * wValue = UCAN_COMMAND_GET_PROTOCOL_VERSION
 	 */
-	struct ucan_ctl_cmd_get_protocol_version cmd_get_protocol_version;
+	काष्ठा ucan_ctl_cmd_get_protocol_version cmd_get_protocol_version;
 
 	u8 raw[128];
-} __packed;
+पूर्ण __packed;
 
-enum {
+क्रमागत अणु
 	UCAN_TX_COMPLETE_SUCCESS = BIT(0),
-};
+पूर्ण;
 
 /* Transmission Complete within ucan_message_in */
-struct ucan_tx_complete_entry_t {
+काष्ठा ucan_tx_complete_entry_t अणु
 	u8 echo_index;
 	u8 flags;
-} __packed __aligned(0x2);
+पूर्ण __packed __aligned(0x2);
 
-/* CAN Data message format within ucan_message_in/out */
-struct ucan_can_msg {
+/* CAN Data message क्रमmat within ucan_message_in/out */
+काष्ठा ucan_can_msg अणु
 	/* note DLC is computed by
-	 *    msg.len - sizeof (msg.len)
-	 *            - sizeof (msg.type)
-	 *            - sizeof (msg.can_msg.id)
+	 *    msg.len - माप (msg.len)
+	 *            - माप (msg.type)
+	 *            - माप (msg.can_msg.id)
 	 */
 	__le32 id;
 
-	union {
+	जोड़ अणु
 		u8 data[CAN_MAX_DLEN];  /* Data of CAN frames */
 		u8 dlc;                 /* RTR dlc */
-	};
-} __packed;
+	पूर्ण;
+पूर्ण __packed;
 
-/* OUT Endpoint, outbound messages */
-struct ucan_message_out {
+/* OUT Endpoपूर्णांक, outbound messages */
+काष्ठा ucan_message_out अणु
 	__le16 len; /* Length of the content include header */
-	u8 type;    /* UCAN_OUT_TX and friends */
+	u8 type;    /* UCAN_OUT_TX and मित्रs */
 	u8 subtype; /* command sub type */
 
-	union {
+	जोड़ अणु
 		/* Transmit CAN frame
 		 * (type == UCAN_TX) && ((msg.can_msg.id & CAN_RTR_FLAG) == 0)
 		 * subtype stores the echo id
 		 */
-		struct ucan_can_msg can_msg;
-	} msg;
-} __packed __aligned(0x4);
+		काष्ठा ucan_can_msg can_msg;
+	पूर्ण msg;
+पूर्ण __packed __aligned(0x4);
 
-/* IN Endpoint, inbound messages */
-struct ucan_message_in {
+/* IN Endpoपूर्णांक, inbound messages */
+काष्ठा ucan_message_in अणु
 	__le16 len; /* Length of the content include header */
-	u8 type;    /* UCAN_IN_RX and friends */
+	u8 type;    /* UCAN_IN_RX and मित्रs */
 	u8 subtype; /* command sub type */
 
-	union {
+	जोड़ अणु
 		/* CAN Frame received
 		 * (type == UCAN_IN_RX)
 		 * && ((msg.can_msg.id & CAN_RTR_FLAG) == 0)
 		 */
-		struct ucan_can_msg can_msg;
+		काष्ठा ucan_can_msg can_msg;
 
 		/* CAN transmission complete
 		 * (type == UCAN_IN_TX_COMPLETE)
 		 */
-		struct ucan_tx_complete_entry_t can_tx_complete_msg[0];
-	} __aligned(0x4) msg;
-} __packed __aligned(0x4);
+		काष्ठा ucan_tx_complete_entry_t can_tx_complete_msg[0];
+	पूर्ण __aligned(0x4) msg;
+पूर्ण __packed __aligned(0x4);
 
 /* Macros to calculate message lengths */
-#define UCAN_OUT_HDR_SIZE offsetof(struct ucan_message_out, msg)
+#घोषणा UCAN_OUT_HDR_SIZE दुरत्व(काष्ठा ucan_message_out, msg)
 
-#define UCAN_IN_HDR_SIZE offsetof(struct ucan_message_in, msg)
-#define UCAN_IN_LEN(member) (UCAN_OUT_HDR_SIZE + sizeof(member))
+#घोषणा UCAN_IN_HDR_SIZE दुरत्व(काष्ठा ucan_message_in, msg)
+#घोषणा UCAN_IN_LEN(member) (UCAN_OUT_HDR_SIZE + माप(member))
 
-struct ucan_priv;
+काष्ठा ucan_priv;
 
-/* Context Information for transmission URBs */
-struct ucan_urb_context {
-	struct ucan_priv *up;
+/* Context Inक्रमmation क्रम transmission URBs */
+काष्ठा ucan_urb_context अणु
+	काष्ठा ucan_priv *up;
 	u8 dlc;
 	bool allocated;
-};
+पूर्ण;
 
-/* Information reported by the USB device */
-struct ucan_device_info {
-	struct can_bittiming_const bittiming_const;
-	u8 tx_fifo;
-};
+/* Inक्रमmation reported by the USB device */
+काष्ठा ucan_device_info अणु
+	काष्ठा can_bittiming_स्थिर bittiming_स्थिर;
+	u8 tx_fअगरo;
+पूर्ण;
 
-/* Driver private data */
-struct ucan_priv {
+/* Driver निजी data */
+काष्ठा ucan_priv अणु
 	/* must be the first member */
-	struct can_priv can;
+	काष्ठा can_priv can;
 
-	/* linux USB device structures */
-	struct usb_device *udev;
-	struct usb_interface *intf;
-	struct net_device *netdev;
+	/* linux USB device काष्ठाures */
+	काष्ठा usb_device *udev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	काष्ठा net_device *netdev;
 
-	/* lock for can->echo_skb (used around
-	 * can_put/get/free_echo_skb
+	/* lock क्रम can->echo_skb (used around
+	 * can_put/get/मुक्त_echo_skb
 	 */
 	spinlock_t echo_skb_lock;
 
-	/* usb device information information */
-	u8 intf_index;
+	/* usb device inक्रमmation inक्रमmation */
+	u8 पूर्णांकf_index;
 	u8 in_ep_addr;
 	u8 out_ep_addr;
 	u16 in_ep_size;
 
 	/* transmission and reception buffers */
-	struct usb_anchor rx_urbs;
-	struct usb_anchor tx_urbs;
+	काष्ठा usb_anchor rx_urbs;
+	काष्ठा usb_anchor tx_urbs;
 
-	union ucan_ctl_payload *ctl_msg_buffer;
-	struct ucan_device_info device_info;
+	जोड़ ucan_ctl_payload *ctl_msg_buffer;
+	काष्ठा ucan_device_info device_info;
 
-	/* transmission control information and locks */
+	/* transmission control inक्रमmation and locks */
 	spinlock_t context_lock;
-	unsigned int available_tx_urbs;
-	struct ucan_urb_context *context_array;
-};
+	अचिन्हित पूर्णांक available_tx_urbs;
+	काष्ठा ucan_urb_context *context_array;
+पूर्ण;
 
-static u8 ucan_can_cc_dlc2len(struct ucan_can_msg *msg, u16 len)
-{
-	if (le32_to_cpu(msg->id) & CAN_RTR_FLAG)
-		return can_cc_dlc2len(msg->dlc);
-	else
-		return can_cc_dlc2len(len - (UCAN_IN_HDR_SIZE + sizeof(msg->id)));
-}
+अटल u8 ucan_can_cc_dlc2len(काष्ठा ucan_can_msg *msg, u16 len)
+अणु
+	अगर (le32_to_cpu(msg->id) & CAN_RTR_FLAG)
+		वापस can_cc_dlc2len(msg->dlc);
+	अन्यथा
+		वापस can_cc_dlc2len(len - (UCAN_IN_HDR_SIZE + माप(msg->id)));
+पूर्ण
 
-static void ucan_release_context_array(struct ucan_priv *up)
-{
-	if (!up->context_array)
-		return;
+अटल व्योम ucan_release_context_array(काष्ठा ucan_priv *up)
+अणु
+	अगर (!up->context_array)
+		वापस;
 
-	/* lock is not needed because, driver is currently opening or closing */
+	/* lock is not needed because, driver is currently खोलोing or closing */
 	up->available_tx_urbs = 0;
 
-	kfree(up->context_array);
-	up->context_array = NULL;
-}
+	kमुक्त(up->context_array);
+	up->context_array = शून्य;
+पूर्ण
 
-static int ucan_alloc_context_array(struct ucan_priv *up)
-{
-	int i;
+अटल पूर्णांक ucan_alloc_context_array(काष्ठा ucan_priv *up)
+अणु
+	पूर्णांक i;
 
-	/* release contexts if any */
+	/* release contexts अगर any */
 	ucan_release_context_array(up);
 
-	up->context_array = kcalloc(up->device_info.tx_fifo,
-				    sizeof(*up->context_array),
+	up->context_array = kसुस्मृति(up->device_info.tx_fअगरo,
+				    माप(*up->context_array),
 				    GFP_KERNEL);
-	if (!up->context_array) {
+	अगर (!up->context_array) अणु
 		netdev_err(up->netdev,
 			   "Not enough memory to allocate tx contexts\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < up->device_info.tx_fifo; i++) {
+	क्रम (i = 0; i < up->device_info.tx_fअगरo; i++) अणु
 		up->context_array[i].allocated = false;
 		up->context_array[i].up = up;
-	}
+	पूर्ण
 
-	/* lock is not needed because, driver is currently opening */
-	up->available_tx_urbs = up->device_info.tx_fifo;
+	/* lock is not needed because, driver is currently खोलोing */
+	up->available_tx_urbs = up->device_info.tx_fअगरo;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct ucan_urb_context *ucan_alloc_context(struct ucan_priv *up)
-{
-	int i;
-	unsigned long flags;
-	struct ucan_urb_context *ret = NULL;
+अटल काष्ठा ucan_urb_context *ucan_alloc_context(काष्ठा ucan_priv *up)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ucan_urb_context *ret = शून्य;
 
-	if (WARN_ON_ONCE(!up->context_array))
-		return NULL;
+	अगर (WARN_ON_ONCE(!up->context_array))
+		वापस शून्य;
 
 	/* execute context operation atomically */
 	spin_lock_irqsave(&up->context_lock, flags);
 
-	for (i = 0; i < up->device_info.tx_fifo; i++) {
-		if (!up->context_array[i].allocated) {
+	क्रम (i = 0; i < up->device_info.tx_fअगरo; i++) अणु
+		अगर (!up->context_array[i].allocated) अणु
 			/* update context */
 			ret = &up->context_array[i];
 			up->context_array[i].allocated = true;
 
-			/* stop queue if necessary */
+			/* stop queue अगर necessary */
 			up->available_tx_urbs--;
-			if (!up->available_tx_urbs)
-				netif_stop_queue(up->netdev);
+			अगर (!up->available_tx_urbs)
+				netअगर_stop_queue(up->netdev);
 
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&up->context_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool ucan_release_context(struct ucan_priv *up,
-				 struct ucan_urb_context *ctx)
-{
-	unsigned long flags;
+अटल bool ucan_release_context(काष्ठा ucan_priv *up,
+				 काष्ठा ucan_urb_context *ctx)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool ret = false;
 
-	if (WARN_ON_ONCE(!up->context_array))
-		return false;
+	अगर (WARN_ON_ONCE(!up->context_array))
+		वापस false;
 
 	/* execute context operation atomically */
 	spin_lock_irqsave(&up->context_lock, flags);
 
 	/* context was not allocated, maybe the device sent garbage */
-	if (ctx->allocated) {
+	अगर (ctx->allocated) अणु
 		ctx->allocated = false;
 
-		/* check if the queue needs to be woken */
-		if (!up->available_tx_urbs)
-			netif_wake_queue(up->netdev);
+		/* check अगर the queue needs to be woken */
+		अगर (!up->available_tx_urbs)
+			netअगर_wake_queue(up->netdev);
 		up->available_tx_urbs++;
 
 		ret = true;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&up->context_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ucan_ctrl_command_out(struct ucan_priv *up,
+अटल पूर्णांक ucan_ctrl_command_out(काष्ठा ucan_priv *up,
 				 u8 cmd, u16 subcmd, u16 datalen)
-{
-	return usb_control_msg(up->udev,
+अणु
+	वापस usb_control_msg(up->udev,
 			       usb_sndctrlpipe(up->udev, 0),
 			       cmd,
-			       USB_DIR_OUT | USB_TYPE_VENDOR |
+			       USB_सूची_OUT | USB_TYPE_VENDOR |
 						USB_RECIP_INTERFACE,
 			       subcmd,
-			       up->intf_index,
+			       up->पूर्णांकf_index,
 			       up->ctl_msg_buffer,
 			       datalen,
 			       UCAN_USB_CTL_PIPE_TIMEOUT);
-}
+पूर्ण
 
-static int ucan_device_request_in(struct ucan_priv *up,
+अटल पूर्णांक ucan_device_request_in(काष्ठा ucan_priv *up,
 				  u8 cmd, u16 subcmd, u16 datalen)
-{
-	return usb_control_msg(up->udev,
+अणु
+	वापस usb_control_msg(up->udev,
 			       usb_rcvctrlpipe(up->udev, 0),
 			       cmd,
-			       USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			       USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			       subcmd,
 			       0,
 			       up->ctl_msg_buffer,
 			       datalen,
 			       UCAN_USB_CTL_PIPE_TIMEOUT);
-}
+पूर्ण
 
-/* Parse the device information structure reported by the device and
- * setup private variables accordingly
+/* Parse the device inक्रमmation काष्ठाure reported by the device and
+ * setup निजी variables accordingly
  */
-static void ucan_parse_device_info(struct ucan_priv *up,
-				   struct ucan_ctl_cmd_device_info *device_info)
-{
-	struct can_bittiming_const *bittiming =
-		&up->device_info.bittiming_const;
+अटल व्योम ucan_parse_device_info(काष्ठा ucan_priv *up,
+				   काष्ठा ucan_ctl_cmd_device_info *device_info)
+अणु
+	काष्ठा can_bittiming_स्थिर *bittiming =
+		&up->device_info.bittiming_स्थिर;
 	u16 ctrlmodes;
 
 	/* store the data */
-	up->can.clock.freq = le32_to_cpu(device_info->freq);
-	up->device_info.tx_fifo = device_info->tx_fifo;
-	strcpy(bittiming->name, "ucan");
+	up->can.घड़ी.freq = le32_to_cpu(device_info->freq);
+	up->device_info.tx_fअगरo = device_info->tx_fअगरo;
+	म_नकल(bittiming->name, "ucan");
 	bittiming->tseg1_min = device_info->tseg1_min;
 	bittiming->tseg1_max = device_info->tseg1_max;
 	bittiming->tseg2_min = device_info->tseg2_min;
@@ -465,291 +466,291 @@ static void ucan_parse_device_info(struct ucan_priv *up,
 
 	up->can.ctrlmode_supported = 0;
 
-	if (ctrlmodes & UCAN_MODE_LOOPBACK)
+	अगर (ctrlmodes & UCAN_MODE_LOOPBACK)
 		up->can.ctrlmode_supported |= CAN_CTRLMODE_LOOPBACK;
-	if (ctrlmodes & UCAN_MODE_SILENT)
+	अगर (ctrlmodes & UCAN_MODE_SILENT)
 		up->can.ctrlmode_supported |= CAN_CTRLMODE_LISTENONLY;
-	if (ctrlmodes & UCAN_MODE_3_SAMPLES)
+	अगर (ctrlmodes & UCAN_MODE_3_SAMPLES)
 		up->can.ctrlmode_supported |= CAN_CTRLMODE_3_SAMPLES;
-	if (ctrlmodes & UCAN_MODE_ONE_SHOT)
+	अगर (ctrlmodes & UCAN_MODE_ONE_SHOT)
 		up->can.ctrlmode_supported |= CAN_CTRLMODE_ONE_SHOT;
-	if (ctrlmodes & UCAN_MODE_BERR_REPORT)
+	अगर (ctrlmodes & UCAN_MODE_BERR_REPORT)
 		up->can.ctrlmode_supported |= CAN_CTRLMODE_BERR_REPORTING;
-}
+पूर्ण
 
 /* Handle a CAN error frame that we have received from the device.
- * Returns true if the can state has changed.
+ * Returns true अगर the can state has changed.
  */
-static bool ucan_handle_error_frame(struct ucan_priv *up,
-				    struct ucan_message_in *m,
+अटल bool ucan_handle_error_frame(काष्ठा ucan_priv *up,
+				    काष्ठा ucan_message_in *m,
 				    canid_t canid)
-{
-	enum can_state new_state = up->can.state;
-	struct net_device_stats *net_stats = &up->netdev->stats;
-	struct can_device_stats *can_stats = &up->can.can_stats;
+अणु
+	क्रमागत can_state new_state = up->can.state;
+	काष्ठा net_device_stats *net_stats = &up->netdev->stats;
+	काष्ठा can_device_stats *can_stats = &up->can.can_stats;
 
-	if (canid & CAN_ERR_LOSTARB)
+	अगर (canid & CAN_ERR_LOSTARB)
 		can_stats->arbitration_lost++;
 
-	if (canid & CAN_ERR_BUSERROR)
+	अगर (canid & CAN_ERR_BUSERROR)
 		can_stats->bus_error++;
 
-	if (canid & CAN_ERR_ACK)
+	अगर (canid & CAN_ERR_ACK)
 		net_stats->tx_errors++;
 
-	if (canid & CAN_ERR_BUSOFF)
+	अगर (canid & CAN_ERR_BUSOFF)
 		new_state = CAN_STATE_BUS_OFF;
 
 	/* controller problems, details in data[1] */
-	if (canid & CAN_ERR_CRTL) {
+	अगर (canid & CAN_ERR_CRTL) अणु
 		u8 d1 = m->msg.can_msg.data[1];
 
-		if (d1 & CAN_ERR_CRTL_RX_OVERFLOW)
+		अगर (d1 & CAN_ERR_CRTL_RX_OVERFLOW)
 			net_stats->rx_over_errors++;
 
-		/* controller state bits: if multiple are set the worst wins */
-		if (d1 & CAN_ERR_CRTL_ACTIVE)
+		/* controller state bits: अगर multiple are set the worst wins */
+		अगर (d1 & CAN_ERR_CRTL_ACTIVE)
 			new_state = CAN_STATE_ERROR_ACTIVE;
 
-		if (d1 & (CAN_ERR_CRTL_RX_WARNING | CAN_ERR_CRTL_TX_WARNING))
+		अगर (d1 & (CAN_ERR_CRTL_RX_WARNING | CAN_ERR_CRTL_TX_WARNING))
 			new_state = CAN_STATE_ERROR_WARNING;
 
-		if (d1 & (CAN_ERR_CRTL_RX_PASSIVE | CAN_ERR_CRTL_TX_PASSIVE))
+		अगर (d1 & (CAN_ERR_CRTL_RX_PASSIVE | CAN_ERR_CRTL_TX_PASSIVE))
 			new_state = CAN_STATE_ERROR_PASSIVE;
-	}
+	पूर्ण
 
 	/* protocol error, details in data[2] */
-	if (canid & CAN_ERR_PROT) {
+	अगर (canid & CAN_ERR_PROT) अणु
 		u8 d2 = m->msg.can_msg.data[2];
 
-		if (d2 & CAN_ERR_PROT_TX)
+		अगर (d2 & CAN_ERR_PROT_TX)
 			net_stats->tx_errors++;
-		else
+		अन्यथा
 			net_stats->rx_errors++;
-	}
+	पूर्ण
 
-	/* no state change - we are done */
-	if (up->can.state == new_state)
-		return false;
+	/* no state change - we are करोne */
+	अगर (up->can.state == new_state)
+		वापस false;
 
-	/* we switched into a better state */
-	if (up->can.state > new_state) {
+	/* we चयनed पूर्णांकo a better state */
+	अगर (up->can.state > new_state) अणु
 		up->can.state = new_state;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	/* we switched into a worse state */
+	/* we चयनed पूर्णांकo a worse state */
 	up->can.state = new_state;
-	switch (new_state) {
-	case CAN_STATE_BUS_OFF:
+	चयन (new_state) अणु
+	हाल CAN_STATE_BUS_OFF:
 		can_stats->bus_off++;
 		can_bus_off(up->netdev);
-		break;
-	case CAN_STATE_ERROR_PASSIVE:
+		अवरोध;
+	हाल CAN_STATE_ERROR_PASSIVE:
 		can_stats->error_passive++;
-		break;
-	case CAN_STATE_ERROR_WARNING:
+		अवरोध;
+	हाल CAN_STATE_ERROR_WARNING:
 		can_stats->error_warning++;
-		break;
-	default:
-		break;
-	}
-	return true;
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-/* Callback on reception of a can frame via the IN endpoint
+/* Callback on reception of a can frame via the IN endpoपूर्णांक
  *
  * This function allocates an skb and transferres it to the Linux
  * network stack
  */
-static void ucan_rx_can_msg(struct ucan_priv *up, struct ucan_message_in *m)
-{
-	int len;
+अटल व्योम ucan_rx_can_msg(काष्ठा ucan_priv *up, काष्ठा ucan_message_in *m)
+अणु
+	पूर्णांक len;
 	canid_t canid;
-	struct can_frame *cf;
-	struct sk_buff *skb;
-	struct net_device_stats *stats = &up->netdev->stats;
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
+	काष्ठा net_device_stats *stats = &up->netdev->stats;
 
 	/* get the contents of the length field */
 	len = le16_to_cpu(m->len);
 
 	/* check sanity */
-	if (len < UCAN_IN_HDR_SIZE + sizeof(m->msg.can_msg.id)) {
+	अगर (len < UCAN_IN_HDR_SIZE + माप(m->msg.can_msg.id)) अणु
 		netdev_warn(up->netdev, "invalid input message len: %d\n", len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* handle error frames */
 	canid = le32_to_cpu(m->msg.can_msg.id);
-	if (canid & CAN_ERR_FLAG) {
+	अगर (canid & CAN_ERR_FLAG) अणु
 		bool busstate_changed = ucan_handle_error_frame(up, m, canid);
 
-		/* if berr-reporting is off only state changes get through */
-		if (!(up->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING) &&
+		/* अगर berr-reporting is off only state changes get through */
+		अगर (!(up->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING) &&
 		    !busstate_changed)
-			return;
-	} else {
+			वापस;
+	पूर्ण अन्यथा अणु
 		canid_t canid_mask;
-		/* compute the mask for canid */
+		/* compute the mask क्रम canid */
 		canid_mask = CAN_RTR_FLAG;
-		if (canid & CAN_EFF_FLAG)
+		अगर (canid & CAN_EFF_FLAG)
 			canid_mask |= CAN_EFF_MASK | CAN_EFF_FLAG;
-		else
+		अन्यथा
 			canid_mask |= CAN_SFF_MASK;
 
-		if (canid & ~canid_mask)
+		अगर (canid & ~canid_mask)
 			netdev_warn(up->netdev,
 				    "unexpected bits set (canid %x, mask %x)",
 				    canid, canid_mask);
 
 		canid &= canid_mask;
-	}
+	पूर्ण
 
 	/* allocate skb */
 	skb = alloc_can_skb(up->netdev, &cf);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	/* fill the can frame */
 	cf->can_id = canid;
 
-	/* compute DLC taking RTR_FLAG into account */
+	/* compute DLC taking RTR_FLAG पूर्णांकo account */
 	cf->len = ucan_can_cc_dlc2len(&m->msg.can_msg, len);
 
 	/* copy the payload of non RTR frames */
-	if (!(cf->can_id & CAN_RTR_FLAG) || (cf->can_id & CAN_ERR_FLAG))
-		memcpy(cf->data, m->msg.can_msg.data, cf->len);
+	अगर (!(cf->can_id & CAN_RTR_FLAG) || (cf->can_id & CAN_ERR_FLAG))
+		स_नकल(cf->data, m->msg.can_msg.data, cf->len);
 
-	/* don't count error frames as real packets */
+	/* करोn't count error frames as real packets */
 	stats->rx_packets++;
 	stats->rx_bytes += cf->len;
 
 	/* pass it to Linux */
-	netif_rx(skb);
-}
+	netअगर_rx(skb);
+पूर्ण
 
 /* callback indicating completed transmission */
-static void ucan_tx_complete_msg(struct ucan_priv *up,
-				 struct ucan_message_in *m)
-{
-	unsigned long flags;
+अटल व्योम ucan_tx_complete_msg(काष्ठा ucan_priv *up,
+				 काष्ठा ucan_message_in *m)
+अणु
+	अचिन्हित दीर्घ flags;
 	u16 count, i;
 	u8 echo_index, dlc;
 	u16 len = le16_to_cpu(m->len);
 
-	struct ucan_urb_context *context;
+	काष्ठा ucan_urb_context *context;
 
-	if (len < UCAN_IN_HDR_SIZE || (len % 2 != 0)) {
+	अगर (len < UCAN_IN_HDR_SIZE || (len % 2 != 0)) अणु
 		netdev_err(up->netdev, "invalid tx complete length\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	count = (len - UCAN_IN_HDR_SIZE) / 2;
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		/* we did not submit such echo ids */
 		echo_index = m->msg.can_tx_complete_msg[i].echo_index;
-		if (echo_index >= up->device_info.tx_fifo) {
+		अगर (echo_index >= up->device_info.tx_fअगरo) अणु
 			up->netdev->stats.tx_errors++;
 			netdev_err(up->netdev,
 				   "invalid echo_index %d received\n",
 				   echo_index);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* gather information from the context */
+		/* gather inक्रमmation from the context */
 		context = &up->context_array[echo_index];
 		dlc = READ_ONCE(context->dlc);
 
-		/* Release context and restart queue if necessary.
-		 * Also check if the context was allocated
+		/* Release context and restart queue अगर necessary.
+		 * Also check अगर the context was allocated
 		 */
-		if (!ucan_release_context(up, context))
-			continue;
+		अगर (!ucan_release_context(up, context))
+			जारी;
 
 		spin_lock_irqsave(&up->echo_skb_lock, flags);
-		if (m->msg.can_tx_complete_msg[i].flags &
-		    UCAN_TX_COMPLETE_SUCCESS) {
+		अगर (m->msg.can_tx_complete_msg[i].flags &
+		    UCAN_TX_COMPLETE_SUCCESS) अणु
 			/* update statistics */
 			up->netdev->stats.tx_packets++;
 			up->netdev->stats.tx_bytes += dlc;
-			can_get_echo_skb(up->netdev, echo_index, NULL);
-		} else {
+			can_get_echo_skb(up->netdev, echo_index, शून्य);
+		पूर्ण अन्यथा अणु
 			up->netdev->stats.tx_dropped++;
-			can_free_echo_skb(up->netdev, echo_index, NULL);
-		}
+			can_मुक्त_echo_skb(up->netdev, echo_index, शून्य);
+		पूर्ण
 		spin_unlock_irqrestore(&up->echo_skb_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* callback on reception of a USB message */
-static void ucan_read_bulk_callback(struct urb *urb)
-{
-	int ret;
-	int pos;
-	struct ucan_priv *up = urb->context;
-	struct net_device *netdev = up->netdev;
-	struct ucan_message_in *m;
+अटल व्योम ucan_पढ़ो_bulk_callback(काष्ठा urb *urb)
+अणु
+	पूर्णांक ret;
+	पूर्णांक pos;
+	काष्ठा ucan_priv *up = urb->context;
+	काष्ठा net_device *netdev = up->netdev;
+	काष्ठा ucan_message_in *m;
 
 	/* the device is not up and the driver should not receive any
 	 * data on the bulk in pipe
 	 */
-	if (WARN_ON(!up->context_array)) {
-		usb_free_coherent(up->udev,
+	अगर (WARN_ON(!up->context_array)) अणु
+		usb_मुक्त_coherent(up->udev,
 				  up->in_ep_size,
 				  urb->transfer_buffer,
 				  urb->transfer_dma);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* check URB status */
-	switch (urb->status) {
-	case 0:
-		break;
-	case -ENOENT:
-	case -EPIPE:
-	case -EPROTO:
-	case -ESHUTDOWN:
-	case -ETIME:
-		/* urb is not resubmitted -> free dma data */
-		usb_free_coherent(up->udev,
+	चयन (urb->status) अणु
+	हाल 0:
+		अवरोध;
+	हाल -ENOENT:
+	हाल -EPIPE:
+	हाल -EPROTO:
+	हाल -ESHUTDOWN:
+	हाल -ETIME:
+		/* urb is not resubmitted -> मुक्त dma data */
+		usb_मुक्त_coherent(up->udev,
 				  up->in_ep_size,
 				  urb->transfer_buffer,
 				  urb->transfer_dma);
 		netdev_dbg(up->netdev, "not resubmitting urb; status: %d\n",
 			   urb->status);
-		return;
-	default:
-		goto resubmit;
-	}
+		वापस;
+	शेष:
+		जाओ resubmit;
+	पूर्ण
 
 	/* sanity check */
-	if (!netif_device_present(netdev))
-		return;
+	अगर (!netअगर_device_present(netdev))
+		वापस;
 
 	/* iterate over input */
 	pos = 0;
-	while (pos < urb->actual_length) {
-		int len;
+	जबतक (pos < urb->actual_length) अणु
+		पूर्णांक len;
 
 		/* check sanity (length of header) */
-		if ((urb->actual_length - pos) < UCAN_IN_HDR_SIZE) {
+		अगर ((urb->actual_length - pos) < UCAN_IN_HDR_SIZE) अणु
 			netdev_warn(up->netdev,
 				    "invalid message (short; no hdr; l:%d)\n",
 				    urb->actual_length);
-			goto resubmit;
-		}
+			जाओ resubmit;
+		पूर्ण
 
 		/* setup the message address */
-		m = (struct ucan_message_in *)
+		m = (काष्ठा ucan_message_in *)
 			((u8 *)urb->transfer_buffer + pos);
 		len = le16_to_cpu(m->len);
 
 		/* check sanity (length of content) */
-		if (urb->actual_length - pos < len) {
+		अगर (urb->actual_length - pos < len) अणु
 			netdev_warn(up->netdev,
 				    "invalid message (short; no data; l:%d)\n",
 				    urb->actual_length);
-			print_hex_dump(KERN_WARNING,
+			prपूर्णांक_hex_dump(KERN_WARNING,
 				       "raw data: ",
 				       DUMP_PREFIX_ADDRESS,
 				       16,
@@ -758,280 +759,280 @@ static void ucan_read_bulk_callback(struct urb *urb)
 				       urb->actual_length,
 				       true);
 
-			goto resubmit;
-		}
+			जाओ resubmit;
+		पूर्ण
 
-		switch (m->type) {
-		case UCAN_IN_RX:
+		चयन (m->type) अणु
+		हाल UCAN_IN_RX:
 			ucan_rx_can_msg(up, m);
-			break;
-		case UCAN_IN_TX_COMPLETE:
+			अवरोध;
+		हाल UCAN_IN_TX_COMPLETE:
 			ucan_tx_complete_msg(up, m);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			netdev_warn(up->netdev,
 				    "invalid message (type; t:%d)\n",
 				    m->type);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* proceed to next message */
 		pos += len;
 		/* align to 4 byte boundary */
 		pos = round_up(pos, 4);
-	}
+	पूर्ण
 
 resubmit:
-	/* resubmit urb when done */
+	/* resubmit urb when करोne */
 	usb_fill_bulk_urb(urb, up->udev,
 			  usb_rcvbulkpipe(up->udev,
 					  up->in_ep_addr),
 			  urb->transfer_buffer,
 			  up->in_ep_size,
-			  ucan_read_bulk_callback,
+			  ucan_पढ़ो_bulk_callback,
 			  up);
 
 	usb_anchor_urb(urb, &up->rx_urbs);
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		netdev_err(up->netdev,
 			   "failed resubmitting read bulk urb: %d\n",
 			   ret);
 
 		usb_unanchor_urb(urb);
-		usb_free_coherent(up->udev,
+		usb_मुक्त_coherent(up->udev,
 				  up->in_ep_size,
 				  urb->transfer_buffer,
 				  urb->transfer_dma);
 
-		if (ret == -ENODEV)
-			netif_device_detach(netdev);
-	}
-}
+		अगर (ret == -ENODEV)
+			netअगर_device_detach(netdev);
+	पूर्ण
+पूर्ण
 
 /* callback after transmission of a USB message */
-static void ucan_write_bulk_callback(struct urb *urb)
-{
-	unsigned long flags;
-	struct ucan_priv *up;
-	struct ucan_urb_context *context = urb->context;
+अटल व्योम ucan_ग_लिखो_bulk_callback(काष्ठा urb *urb)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा ucan_priv *up;
+	काष्ठा ucan_urb_context *context = urb->context;
 
 	/* get the urb context */
-	if (WARN_ON_ONCE(!context))
-		return;
+	अगर (WARN_ON_ONCE(!context))
+		वापस;
 
-	/* free up our allocated buffer */
-	usb_free_coherent(urb->dev,
-			  sizeof(struct ucan_message_out),
+	/* मुक्त up our allocated buffer */
+	usb_मुक्त_coherent(urb->dev,
+			  माप(काष्ठा ucan_message_out),
 			  urb->transfer_buffer,
 			  urb->transfer_dma);
 
 	up = context->up;
-	if (WARN_ON_ONCE(!up))
-		return;
+	अगर (WARN_ON_ONCE(!up))
+		वापस;
 
 	/* sanity check */
-	if (!netif_device_present(up->netdev))
-		return;
+	अगर (!netअगर_device_present(up->netdev))
+		वापस;
 
 	/* transmission failed (USB - the device will not send a TX complete) */
-	if (urb->status) {
+	अगर (urb->status) अणु
 		netdev_warn(up->netdev,
 			    "failed to transmit USB message to device: %d\n",
 			     urb->status);
 
 		/* update counters an cleanup */
 		spin_lock_irqsave(&up->echo_skb_lock, flags);
-		can_free_echo_skb(up->netdev, context - up->context_array, NULL);
+		can_मुक्त_echo_skb(up->netdev, context - up->context_array, शून्य);
 		spin_unlock_irqrestore(&up->echo_skb_lock, flags);
 
 		up->netdev->stats.tx_dropped++;
 
-		/* release context and restart the queue if necessary */
-		if (!ucan_release_context(up, context))
+		/* release context and restart the queue अगर necessary */
+		अगर (!ucan_release_context(up, context))
 			netdev_err(up->netdev,
 				   "urb failed, failed to release context\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ucan_cleanup_rx_urbs(struct ucan_priv *up, struct urb **urbs)
-{
-	int i;
+अटल व्योम ucan_cleanup_rx_urbs(काष्ठा ucan_priv *up, काष्ठा urb **urbs)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < UCAN_MAX_RX_URBS; i++) {
-		if (urbs[i]) {
+	क्रम (i = 0; i < UCAN_MAX_RX_URBS; i++) अणु
+		अगर (urbs[i]) अणु
 			usb_unanchor_urb(urbs[i]);
-			usb_free_coherent(up->udev,
+			usb_मुक्त_coherent(up->udev,
 					  up->in_ep_size,
 					  urbs[i]->transfer_buffer,
 					  urbs[i]->transfer_dma);
-			usb_free_urb(urbs[i]);
-		}
-	}
+			usb_मुक्त_urb(urbs[i]);
+		पूर्ण
+	पूर्ण
 
-	memset(urbs, 0, sizeof(*urbs) * UCAN_MAX_RX_URBS);
-}
+	स_रखो(urbs, 0, माप(*urbs) * UCAN_MAX_RX_URBS);
+पूर्ण
 
-static int ucan_prepare_and_anchor_rx_urbs(struct ucan_priv *up,
-					   struct urb **urbs)
-{
-	int i;
+अटल पूर्णांक ucan_prepare_and_anchor_rx_urbs(काष्ठा ucan_priv *up,
+					   काष्ठा urb **urbs)
+अणु
+	पूर्णांक i;
 
-	memset(urbs, 0, sizeof(*urbs) * UCAN_MAX_RX_URBS);
+	स_रखो(urbs, 0, माप(*urbs) * UCAN_MAX_RX_URBS);
 
-	for (i = 0; i < UCAN_MAX_RX_URBS; i++) {
-		void *buf;
+	क्रम (i = 0; i < UCAN_MAX_RX_URBS; i++) अणु
+		व्योम *buf;
 
 		urbs[i] = usb_alloc_urb(0, GFP_KERNEL);
-		if (!urbs[i])
-			goto err;
+		अगर (!urbs[i])
+			जाओ err;
 
 		buf = usb_alloc_coherent(up->udev,
 					 up->in_ep_size,
 					 GFP_KERNEL, &urbs[i]->transfer_dma);
-		if (!buf) {
+		अगर (!buf) अणु
 			/* cleanup this urb */
-			usb_free_urb(urbs[i]);
-			urbs[i] = NULL;
-			goto err;
-		}
+			usb_मुक्त_urb(urbs[i]);
+			urbs[i] = शून्य;
+			जाओ err;
+		पूर्ण
 
 		usb_fill_bulk_urb(urbs[i], up->udev,
 				  usb_rcvbulkpipe(up->udev,
 						  up->in_ep_addr),
 				  buf,
 				  up->in_ep_size,
-				  ucan_read_bulk_callback,
+				  ucan_पढ़ो_bulk_callback,
 				  up);
 
 		urbs[i]->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
 		usb_anchor_urb(urbs[i], &up->rx_urbs);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 err:
 	/* cleanup other unsubmitted urbs */
 	ucan_cleanup_rx_urbs(up, urbs);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* Submits rx urbs with the semantic: Either submit all, or cleanup
- * everything. I case of errors submitted urbs are killed and all urbs in
- * the array are freed. I case of no errors every entry in the urb
- * array is set to NULL.
+ * everything. I हाल of errors submitted urbs are समाप्तed and all urbs in
+ * the array are मुक्तd. I हाल of no errors every entry in the urb
+ * array is set to शून्य.
  */
-static int ucan_submit_rx_urbs(struct ucan_priv *up, struct urb **urbs)
-{
-	int i, ret;
+अटल पूर्णांक ucan_submit_rx_urbs(काष्ठा ucan_priv *up, काष्ठा urb **urbs)
+अणु
+	पूर्णांक i, ret;
 
-	/* Iterate over all urbs to submit. On success remove the urb
+	/* Iterate over all urbs to submit. On success हटाओ the urb
 	 * from the list.
 	 */
-	for (i = 0; i < UCAN_MAX_RX_URBS; i++) {
+	क्रम (i = 0; i < UCAN_MAX_RX_URBS; i++) अणु
 		ret = usb_submit_urb(urbs[i], GFP_KERNEL);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(up->netdev,
 				   "could not submit urb; code: %d\n",
 				   ret);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		/* Anchor URB and drop reference, USB core will take
-		 * care of freeing it
+		 * care of मुक्तing it
 		 */
-		usb_free_urb(urbs[i]);
-		urbs[i] = NULL;
-	}
-	return 0;
+		usb_मुक्त_urb(urbs[i]);
+		urbs[i] = शून्य;
+	पूर्ण
+	वापस 0;
 
 err:
 	/* Cleanup unsubmitted urbs */
 	ucan_cleanup_rx_urbs(up, urbs);
 
-	/* Kill urbs that are already submitted */
-	usb_kill_anchored_urbs(&up->rx_urbs);
+	/* Kill urbs that are alपढ़ोy submitted */
+	usb_समाप्त_anchored_urbs(&up->rx_urbs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Open the network device */
-static int ucan_open(struct net_device *netdev)
-{
-	int ret, ret_cleanup;
+अटल पूर्णांक ucan_खोलो(काष्ठा net_device *netdev)
+अणु
+	पूर्णांक ret, ret_cleanup;
 	u16 ctrlmode;
-	struct urb *urbs[UCAN_MAX_RX_URBS];
-	struct ucan_priv *up = netdev_priv(netdev);
+	काष्ठा urb *urbs[UCAN_MAX_RX_URBS];
+	काष्ठा ucan_priv *up = netdev_priv(netdev);
 
 	ret = ucan_alloc_context_array(up);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Allocate and prepare IN URBS - allocated and anchored
-	 * urbs are stored in urbs[] for clean
+	 * urbs are stored in urbs[] क्रम clean
 	 */
 	ret = ucan_prepare_and_anchor_rx_urbs(up, urbs);
-	if (ret)
-		goto err_contexts;
+	अगर (ret)
+		जाओ err_contexts;
 
 	/* Check the control mode */
 	ctrlmode = 0;
-	if (up->can.ctrlmode & CAN_CTRLMODE_LOOPBACK)
+	अगर (up->can.ctrlmode & CAN_CTRLMODE_LOOPBACK)
 		ctrlmode |= UCAN_MODE_LOOPBACK;
-	if (up->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
+	अगर (up->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
 		ctrlmode |= UCAN_MODE_SILENT;
-	if (up->can.ctrlmode & CAN_CTRLMODE_3_SAMPLES)
+	अगर (up->can.ctrlmode & CAN_CTRLMODE_3_SAMPLES)
 		ctrlmode |= UCAN_MODE_3_SAMPLES;
-	if (up->can.ctrlmode & CAN_CTRLMODE_ONE_SHOT)
+	अगर (up->can.ctrlmode & CAN_CTRLMODE_ONE_SHOT)
 		ctrlmode |= UCAN_MODE_ONE_SHOT;
 
-	/* Enable this in any case - filtering is down within the
+	/* Enable this in any हाल - filtering is करोwn within the
 	 * receive path
 	 */
 	ctrlmode |= UCAN_MODE_BERR_REPORT;
 	up->ctl_msg_buffer->cmd_start.mode = cpu_to_le16(ctrlmode);
 
-	/* Driver is ready to receive data - start the USB device */
+	/* Driver is पढ़ोy to receive data - start the USB device */
 	ret = ucan_ctrl_command_out(up, UCAN_COMMAND_START, 0, 2);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		netdev_err(up->netdev,
 			   "could not start device, code: %d\n",
 			   ret);
-		goto err_reset;
-	}
+		जाओ err_reset;
+	पूर्ण
 
-	/* Call CAN layer open */
-	ret = open_candev(netdev);
-	if (ret)
-		goto err_stop;
+	/* Call CAN layer खोलो */
+	ret = खोलो_candev(netdev);
+	अगर (ret)
+		जाओ err_stop;
 
-	/* Driver is ready to receive data. Submit RX URBS */
+	/* Driver is पढ़ोy to receive data. Submit RX URBS */
 	ret = ucan_submit_rx_urbs(up, urbs);
-	if (ret)
-		goto err_stop;
+	अगर (ret)
+		जाओ err_stop;
 
 	up->can.state = CAN_STATE_ERROR_ACTIVE;
 
 	/* Start the network queue */
-	netif_start_queue(netdev);
+	netअगर_start_queue(netdev);
 
-	return 0;
+	वापस 0;
 
 err_stop:
-	/* The device have started already stop it */
+	/* The device have started alपढ़ोy stop it */
 	ret_cleanup = ucan_ctrl_command_out(up, UCAN_COMMAND_STOP, 0, 0);
-	if (ret_cleanup < 0)
+	अगर (ret_cleanup < 0)
 		netdev_err(up->netdev,
 			   "could not stop device, code: %d\n",
 			   ret_cleanup);
 
 err_reset:
-	/* The device might have received data, reset it for
+	/* The device might have received data, reset it क्रम
 	 * consistent state
 	 */
 	ret_cleanup = ucan_ctrl_command_out(up, UCAN_COMMAND_RESET, 0, 0);
-	if (ret_cleanup < 0)
+	अगर (ret_cleanup < 0)
 		netdev_err(up->netdev,
 			   "could not reset device, code: %d\n",
 			   ret_cleanup);
@@ -1041,49 +1042,49 @@ err_reset:
 
 err_contexts:
 	ucan_release_context_array(up);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct urb *ucan_prepare_tx_urb(struct ucan_priv *up,
-				       struct ucan_urb_context *context,
-				       struct can_frame *cf,
+अटल काष्ठा urb *ucan_prepare_tx_urb(काष्ठा ucan_priv *up,
+				       काष्ठा ucan_urb_context *context,
+				       काष्ठा can_frame *cf,
 				       u8 echo_index)
-{
-	int mlen;
-	struct urb *urb;
-	struct ucan_message_out *m;
+अणु
+	पूर्णांक mlen;
+	काष्ठा urb *urb;
+	काष्ठा ucan_message_out *m;
 
-	/* create a URB, and a buffer for it, and copy the data to the URB */
+	/* create a URB, and a buffer क्रम it, and copy the data to the URB */
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	if (!urb) {
+	अगर (!urb) अणु
 		netdev_err(up->netdev, "no memory left for URBs\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	m = usb_alloc_coherent(up->udev,
-			       sizeof(struct ucan_message_out),
+			       माप(काष्ठा ucan_message_out),
 			       GFP_ATOMIC,
 			       &urb->transfer_dma);
-	if (!m) {
+	अगर (!m) अणु
 		netdev_err(up->netdev, "no memory left for USB buffer\n");
-		usb_free_urb(urb);
-		return NULL;
-	}
+		usb_मुक्त_urb(urb);
+		वापस शून्य;
+	पूर्ण
 
 	/* build the USB message */
 	m->type = UCAN_OUT_TX;
 	m->msg.can_msg.id = cpu_to_le32(cf->can_id);
 
-	if (cf->can_id & CAN_RTR_FLAG) {
+	अगर (cf->can_id & CAN_RTR_FLAG) अणु
 		mlen = UCAN_OUT_HDR_SIZE +
-			offsetof(struct ucan_can_msg, dlc) +
-			sizeof(m->msg.can_msg.dlc);
+			दुरत्व(काष्ठा ucan_can_msg, dlc) +
+			माप(m->msg.can_msg.dlc);
 		m->msg.can_msg.dlc = cf->len;
-	} else {
+	पूर्ण अन्यथा अणु
 		mlen = UCAN_OUT_HDR_SIZE +
-			sizeof(m->msg.can_msg.id) + cf->len;
-		memcpy(m->msg.can_msg.data, cf->data, cf->len);
-	}
+			माप(m->msg.can_msg.id) + cf->len;
+		स_नकल(m->msg.can_msg.data, cf->data, cf->len);
+	पूर्ण
 	m->len = cpu_to_le16(mlen);
 
 	context->dlc = cf->len;
@@ -1094,46 +1095,46 @@ static struct urb *ucan_prepare_tx_urb(struct ucan_priv *up,
 	usb_fill_bulk_urb(urb, up->udev,
 			  usb_sndbulkpipe(up->udev,
 					  up->out_ep_addr),
-			  m, mlen, ucan_write_bulk_callback, context);
+			  m, mlen, ucan_ग_लिखो_bulk_callback, context);
 	urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	return urb;
-}
+	वापस urb;
+पूर्ण
 
-static void ucan_clean_up_tx_urb(struct ucan_priv *up, struct urb *urb)
-{
-	usb_free_coherent(up->udev, sizeof(struct ucan_message_out),
+अटल व्योम ucan_clean_up_tx_urb(काष्ठा ucan_priv *up, काष्ठा urb *urb)
+अणु
+	usb_मुक्त_coherent(up->udev, माप(काष्ठा ucan_message_out),
 			  urb->transfer_buffer, urb->transfer_dma);
-	usb_free_urb(urb);
-}
+	usb_मुक्त_urb(urb);
+पूर्ण
 
 /* callback when Linux needs to send a can frame */
-static netdev_tx_t ucan_start_xmit(struct sk_buff *skb,
-				   struct net_device *netdev)
-{
-	unsigned long flags;
-	int ret;
+अटल netdev_tx_t ucan_start_xmit(काष्ठा sk_buff *skb,
+				   काष्ठा net_device *netdev)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 	u8 echo_index;
-	struct urb *urb;
-	struct ucan_urb_context *context;
-	struct ucan_priv *up = netdev_priv(netdev);
-	struct can_frame *cf = (struct can_frame *)skb->data;
+	काष्ठा urb *urb;
+	काष्ठा ucan_urb_context *context;
+	काष्ठा ucan_priv *up = netdev_priv(netdev);
+	काष्ठा can_frame *cf = (काष्ठा can_frame *)skb->data;
 
 	/* check skb */
-	if (can_dropped_invalid_skb(netdev, skb))
-		return NETDEV_TX_OK;
+	अगर (can_dropped_invalid_skb(netdev, skb))
+		वापस NETDEV_TX_OK;
 
-	/* allocate a context and slow down tx path, if fifo state is low */
+	/* allocate a context and slow करोwn tx path, अगर fअगरo state is low */
 	context = ucan_alloc_context(up);
 	echo_index = context - up->context_array;
 
-	if (WARN_ON_ONCE(!context))
-		return NETDEV_TX_BUSY;
+	अगर (WARN_ON_ONCE(!context))
+		वापस NETDEV_TX_BUSY;
 
-	/* prepare urb for transmission */
+	/* prepare urb क्रम transmission */
 	urb = ucan_prepare_tx_urb(up, context, cf, echo_index);
-	if (!urb)
-		goto drop;
+	अगर (!urb)
+		जाओ drop;
 
 	/* put the skb on can loopback stack */
 	spin_lock_irqsave(&up->echo_skb_lock, flags);
@@ -1145,264 +1146,264 @@ static netdev_tx_t ucan_start_xmit(struct sk_buff *skb,
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
 
 	/* cleanup urb */
-	if (ret) {
+	अगर (ret) अणु
 		/* on error, clean up */
 		usb_unanchor_urb(urb);
 		ucan_clean_up_tx_urb(up, urb);
-		if (!ucan_release_context(up, context))
+		अगर (!ucan_release_context(up, context))
 			netdev_err(up->netdev,
 				   "xmit err: failed to release context\n");
 
-		/* remove the skb from the echo stack - this also
-		 * frees the skb
+		/* हटाओ the skb from the echo stack - this also
+		 * मुक्तs the skb
 		 */
 		spin_lock_irqsave(&up->echo_skb_lock, flags);
-		can_free_echo_skb(up->netdev, echo_index, NULL);
+		can_मुक्त_echo_skb(up->netdev, echo_index, शून्य);
 		spin_unlock_irqrestore(&up->echo_skb_lock, flags);
 
-		if (ret == -ENODEV) {
-			netif_device_detach(up->netdev);
-		} else {
+		अगर (ret == -ENODEV) अणु
+			netअगर_device_detach(up->netdev);
+		पूर्ण अन्यथा अणु
 			netdev_warn(up->netdev,
 				    "xmit err: failed to submit urb %d\n",
 				    ret);
 			up->netdev->stats.tx_dropped++;
-		}
-		return NETDEV_TX_OK;
-	}
+		पूर्ण
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	netif_trans_update(netdev);
+	netअगर_trans_update(netdev);
 
-	/* release ref, as we do not need the urb anymore */
-	usb_free_urb(urb);
+	/* release ref, as we करो not need the urb anymore */
+	usb_मुक्त_urb(urb);
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 drop:
-	if (!ucan_release_context(up, context))
+	अगर (!ucan_release_context(up, context))
 		netdev_err(up->netdev,
 			   "xmit drop: failed to release context\n");
-	dev_kfree_skb(skb);
+	dev_kमुक्त_skb(skb);
 	up->netdev->stats.tx_dropped++;
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-/* Device goes down
+/* Device goes करोwn
  *
  * Clean up used resources
  */
-static int ucan_close(struct net_device *netdev)
-{
-	int ret;
-	struct ucan_priv *up = netdev_priv(netdev);
+अटल पूर्णांक ucan_बंद(काष्ठा net_device *netdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा ucan_priv *up = netdev_priv(netdev);
 
 	up->can.state = CAN_STATE_STOPPED;
 
 	/* stop sending data */
-	usb_kill_anchored_urbs(&up->tx_urbs);
+	usb_समाप्त_anchored_urbs(&up->tx_urbs);
 
 	/* stop receiving data */
-	usb_kill_anchored_urbs(&up->rx_urbs);
+	usb_समाप्त_anchored_urbs(&up->rx_urbs);
 
 	/* stop and reset can device */
 	ret = ucan_ctrl_command_out(up, UCAN_COMMAND_STOP, 0, 0);
-	if (ret < 0)
+	अगर (ret < 0)
 		netdev_err(up->netdev,
 			   "could not stop device, code: %d\n",
 			   ret);
 
 	ret = ucan_ctrl_command_out(up, UCAN_COMMAND_RESET, 0, 0);
-	if (ret < 0)
+	अगर (ret < 0)
 		netdev_err(up->netdev,
 			   "could not reset device, code: %d\n",
 			   ret);
 
-	netif_stop_queue(netdev);
+	netअगर_stop_queue(netdev);
 
 	ucan_release_context_array(up);
 
-	close_candev(up->netdev);
-	return 0;
-}
+	बंद_candev(up->netdev);
+	वापस 0;
+पूर्ण
 
 /* CAN driver callbacks */
-static const struct net_device_ops ucan_netdev_ops = {
-	.ndo_open = ucan_open,
-	.ndo_stop = ucan_close,
-	.ndo_start_xmit = ucan_start_xmit,
-	.ndo_change_mtu = can_change_mtu,
-};
+अटल स्थिर काष्ठा net_device_ops ucan_netdev_ops = अणु
+	.nकरो_खोलो = ucan_खोलो,
+	.nकरो_stop = ucan_बंद,
+	.nकरो_start_xmit = ucan_start_xmit,
+	.nकरो_change_mtu = can_change_mtu,
+पूर्ण;
 
 /* Request to set bittiming
  *
  * This function generates an USB set bittiming message and transmits
  * it to the device
  */
-static int ucan_set_bittiming(struct net_device *netdev)
-{
-	int ret;
-	struct ucan_priv *up = netdev_priv(netdev);
-	struct ucan_ctl_cmd_set_bittiming *cmd_set_bittiming;
+अटल पूर्णांक ucan_set_bittiming(काष्ठा net_device *netdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा ucan_priv *up = netdev_priv(netdev);
+	काष्ठा ucan_ctl_cmd_set_bittiming *cmd_set_bittiming;
 
 	cmd_set_bittiming = &up->ctl_msg_buffer->cmd_set_bittiming;
 	cmd_set_bittiming->tq = cpu_to_le32(up->can.bittiming.tq);
 	cmd_set_bittiming->brp = cpu_to_le16(up->can.bittiming.brp);
-	cmd_set_bittiming->sample_point =
-	    cpu_to_le16(up->can.bittiming.sample_point);
+	cmd_set_bittiming->sample_poपूर्णांक =
+	    cpu_to_le16(up->can.bittiming.sample_poपूर्णांक);
 	cmd_set_bittiming->prop_seg = up->can.bittiming.prop_seg;
 	cmd_set_bittiming->phase_seg1 = up->can.bittiming.phase_seg1;
 	cmd_set_bittiming->phase_seg2 = up->can.bittiming.phase_seg2;
 	cmd_set_bittiming->sjw = up->can.bittiming.sjw;
 
 	ret = ucan_ctrl_command_out(up, UCAN_COMMAND_SET_BITTIMING, 0,
-				    sizeof(*cmd_set_bittiming));
-	return (ret < 0) ? ret : 0;
-}
+				    माप(*cmd_set_bittiming));
+	वापस (ret < 0) ? ret : 0;
+पूर्ण
 
 /* Restart the device to get it out of BUS-OFF state.
  * Called when the user runs "ip link set can1 type can restart".
  */
-static int ucan_set_mode(struct net_device *netdev, enum can_mode mode)
-{
-	int ret;
-	unsigned long flags;
-	struct ucan_priv *up = netdev_priv(netdev);
+अटल पूर्णांक ucan_set_mode(काष्ठा net_device *netdev, क्रमागत can_mode mode)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ucan_priv *up = netdev_priv(netdev);
 
-	switch (mode) {
-	case CAN_MODE_START:
+	चयन (mode) अणु
+	हाल CAN_MODE_START:
 		netdev_dbg(up->netdev, "restarting device\n");
 
 		ret = ucan_ctrl_command_out(up, UCAN_COMMAND_RESTART, 0, 0);
 		up->can.state = CAN_STATE_ERROR_ACTIVE;
 
-		/* check if queue can be restarted,
-		 * up->available_tx_urbs must be protected by the
+		/* check अगर queue can be restarted,
+		 * up->available_tx_urbs must be रक्षित by the
 		 * lock
 		 */
 		spin_lock_irqsave(&up->context_lock, flags);
 
-		if (up->available_tx_urbs > 0)
-			netif_wake_queue(up->netdev);
+		अगर (up->available_tx_urbs > 0)
+			netअगर_wake_queue(up->netdev);
 
 		spin_unlock_irqrestore(&up->context_lock, flags);
 
-		return ret;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस ret;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-/* Probe the device, reset it and gather general device information */
-static int ucan_probe(struct usb_interface *intf,
-		      const struct usb_device_id *id)
-{
-	int ret;
-	int i;
+/* Probe the device, reset it and gather general device inक्रमmation */
+अटल पूर्णांक ucan_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		      स्थिर काष्ठा usb_device_id *id)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 	u32 protocol_version;
-	struct usb_device *udev;
-	struct net_device *netdev;
-	struct usb_host_interface *iface_desc;
-	struct ucan_priv *up;
-	struct usb_endpoint_descriptor *ep;
+	काष्ठा usb_device *udev;
+	काष्ठा net_device *netdev;
+	काष्ठा usb_host_पूर्णांकerface *अगरace_desc;
+	काष्ठा ucan_priv *up;
+	काष्ठा usb_endpoपूर्णांक_descriptor *ep;
 	u16 in_ep_size;
 	u16 out_ep_size;
 	u8 in_ep_addr;
 	u8 out_ep_addr;
-	union ucan_ctl_payload *ctl_msg_buffer;
-	char firmware_str[sizeof(union ucan_ctl_payload) + 1];
+	जोड़ ucan_ctl_payload *ctl_msg_buffer;
+	अक्षर firmware_str[माप(जोड़ ucan_ctl_payload) + 1];
 
-	udev = interface_to_usbdev(intf);
+	udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
 
 	/* Stage 1 - Interface Parsing
 	 * ---------------------------
 	 *
-	 * Identifie the device USB interface descriptor and its
-	 * endpoints. Probing is aborted on errors.
+	 * Identअगरie the device USB पूर्णांकerface descriptor and its
+	 * endpoपूर्णांकs. Probing is पातed on errors.
 	 */
 
-	/* check if the interface is sane */
-	iface_desc = intf->cur_altsetting;
-	if (!iface_desc)
-		return -ENODEV;
+	/* check अगर the पूर्णांकerface is sane */
+	अगरace_desc = पूर्णांकf->cur_altsetting;
+	अगर (!अगरace_desc)
+		वापस -ENODEV;
 
 	dev_info(&udev->dev,
 		 "%s: probing device on interface #%d\n",
 		 UCAN_DRIVER_NAME,
-		 iface_desc->desc.bInterfaceNumber);
+		 अगरace_desc->desc.bInterfaceNumber);
 
-	/* interface sanity check */
-	if (iface_desc->desc.bNumEndpoints != 2) {
+	/* पूर्णांकerface sanity check */
+	अगर (अगरace_desc->desc.bNumEndpoपूर्णांकs != 2) अणु
 		dev_err(&udev->dev,
 			"%s: invalid EP count (%d)",
-			UCAN_DRIVER_NAME, iface_desc->desc.bNumEndpoints);
-		goto err_firmware_needs_update;
-	}
+			UCAN_DRIVER_NAME, अगरace_desc->desc.bNumEndpoपूर्णांकs);
+		जाओ err_firmware_needs_update;
+	पूर्ण
 
-	/* check interface endpoints */
+	/* check पूर्णांकerface endpoपूर्णांकs */
 	in_ep_addr = 0;
 	out_ep_addr = 0;
 	in_ep_size = 0;
 	out_ep_size = 0;
-	for (i = 0; i < iface_desc->desc.bNumEndpoints; i++) {
-		ep = &iface_desc->endpoint[i].desc;
+	क्रम (i = 0; i < अगरace_desc->desc.bNumEndpoपूर्णांकs; i++) अणु
+		ep = &अगरace_desc->endpoपूर्णांक[i].desc;
 
-		if (((ep->bEndpointAddress & USB_ENDPOINT_DIR_MASK) != 0) &&
+		अगर (((ep->bEndpoपूर्णांकAddress & USB_ENDPOINT_सूची_MASK) != 0) &&
 		    ((ep->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
-		     USB_ENDPOINT_XFER_BULK)) {
-			/* In Endpoint */
-			in_ep_addr = ep->bEndpointAddress;
+		     USB_ENDPOINT_XFER_BULK)) अणु
+			/* In Endpoपूर्णांक */
+			in_ep_addr = ep->bEndpoपूर्णांकAddress;
 			in_ep_addr &= USB_ENDPOINT_NUMBER_MASK;
 			in_ep_size = le16_to_cpu(ep->wMaxPacketSize);
-		} else if (((ep->bEndpointAddress & USB_ENDPOINT_DIR_MASK) ==
+		पूर्ण अन्यथा अगर (((ep->bEndpoपूर्णांकAddress & USB_ENDPOINT_सूची_MASK) ==
 			    0) &&
 			   ((ep->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
-			    USB_ENDPOINT_XFER_BULK)) {
-			/* Out Endpoint */
-			out_ep_addr = ep->bEndpointAddress;
+			    USB_ENDPOINT_XFER_BULK)) अणु
+			/* Out Endpoपूर्णांक */
+			out_ep_addr = ep->bEndpoपूर्णांकAddress;
 			out_ep_addr &= USB_ENDPOINT_NUMBER_MASK;
 			out_ep_size = le16_to_cpu(ep->wMaxPacketSize);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* check if interface is sane */
-	if (!in_ep_addr || !out_ep_addr) {
+	/* check अगर पूर्णांकerface is sane */
+	अगर (!in_ep_addr || !out_ep_addr) अणु
 		dev_err(&udev->dev, "%s: invalid endpoint configuration\n",
 			UCAN_DRIVER_NAME);
-		goto err_firmware_needs_update;
-	}
-	if (in_ep_size < sizeof(struct ucan_message_in)) {
+		जाओ err_firmware_needs_update;
+	पूर्ण
+	अगर (in_ep_size < माप(काष्ठा ucan_message_in)) अणु
 		dev_err(&udev->dev, "%s: invalid in_ep MaxPacketSize\n",
 			UCAN_DRIVER_NAME);
-		goto err_firmware_needs_update;
-	}
-	if (out_ep_size < sizeof(struct ucan_message_out)) {
+		जाओ err_firmware_needs_update;
+	पूर्ण
+	अगर (out_ep_size < माप(काष्ठा ucan_message_out)) अणु
 		dev_err(&udev->dev, "%s: invalid out_ep MaxPacketSize\n",
 			UCAN_DRIVER_NAME);
-		goto err_firmware_needs_update;
-	}
+		जाओ err_firmware_needs_update;
+	पूर्ण
 
-	/* Stage 2 - Device Identification
+	/* Stage 2 - Device Identअगरication
 	 * -------------------------------
 	 *
-	 * The device interface seems to be a ucan device. Do further
-	 * compatibility checks. On error probing is aborted, on
+	 * The device पूर्णांकerface seems to be a ucan device. Do further
+	 * compatibility checks. On error probing is पातed, on
 	 * success this stage leaves the ctl_msg_buffer with the
 	 * reported contents of a GET_INFO command (supported
-	 * bittimings, tx_fifo depth). This information is used in
-	 * Stage 3 for the final driver initialisation.
+	 * bittimings, tx_fअगरo depth). This inक्रमmation is used in
+	 * Stage 3 क्रम the final driver initialisation.
 	 */
 
-	/* Prepare Memory for control transferes */
+	/* Prepare Memory क्रम control transferes */
 	ctl_msg_buffer = devm_kzalloc(&udev->dev,
-				      sizeof(union ucan_ctl_payload),
+				      माप(जोड़ ucan_ctl_payload),
 				      GFP_KERNEL);
-	if (!ctl_msg_buffer) {
+	अगर (!ctl_msg_buffer) अणु
 		dev_err(&udev->dev,
 			"%s: failed to allocate control pipe memory\n",
 			UCAN_DRIVER_NAME);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* get protocol version
 	 *
@@ -1412,38 +1413,38 @@ static int ucan_probe(struct usb_interface *intf,
 	ret = usb_control_msg(udev,
 			      usb_rcvctrlpipe(udev, 0),
 			      UCAN_COMMAND_GET,
-			      USB_DIR_IN | USB_TYPE_VENDOR |
+			      USB_सूची_IN | USB_TYPE_VENDOR |
 					USB_RECIP_INTERFACE,
 			      UCAN_COMMAND_GET_PROTOCOL_VERSION,
-			      iface_desc->desc.bInterfaceNumber,
+			      अगरace_desc->desc.bInterfaceNumber,
 			      ctl_msg_buffer,
-			      sizeof(union ucan_ctl_payload),
+			      माप(जोड़ ucan_ctl_payload),
 			      UCAN_USB_CTL_PIPE_TIMEOUT);
 
-	/* older firmware version do not support this command - those
+	/* older firmware version करो not support this command - those
 	 * are not supported by this drive
 	 */
-	if (ret != 4) {
+	अगर (ret != 4) अणु
 		dev_err(&udev->dev,
 			"%s: could not read protocol version, ret=%d\n",
 			UCAN_DRIVER_NAME, ret);
-		if (ret >= 0)
+		अगर (ret >= 0)
 			ret = -EINVAL;
-		goto err_firmware_needs_update;
-	}
+		जाओ err_firmware_needs_update;
+	पूर्ण
 
 	/* this driver currently supports protocol version 3 only */
 	protocol_version =
 		le32_to_cpu(ctl_msg_buffer->cmd_get_protocol_version.version);
-	if (protocol_version < UCAN_PROTOCOL_VERSION_MIN ||
-	    protocol_version > UCAN_PROTOCOL_VERSION_MAX) {
+	अगर (protocol_version < UCAN_PROTOCOL_VERSION_MIN ||
+	    protocol_version > UCAN_PROTOCOL_VERSION_MAX) अणु
 		dev_err(&udev->dev,
 			"%s: device protocol version %d is not supported\n",
 			UCAN_DRIVER_NAME, protocol_version);
-		goto err_firmware_needs_update;
-	}
+		जाओ err_firmware_needs_update;
+	पूर्ण
 
-	/* request the device information and store it in ctl_msg_buffer
+	/* request the device inक्रमmation and store it in ctl_msg_buffer
 	 *
 	 * note: ucan_ctrl_command_* wrappers cannot be used yet
 	 * because `up` is initialised in Stage 3
@@ -1451,152 +1452,152 @@ static int ucan_probe(struct usb_interface *intf,
 	ret = usb_control_msg(udev,
 			      usb_rcvctrlpipe(udev, 0),
 			      UCAN_COMMAND_GET,
-			      USB_DIR_IN | USB_TYPE_VENDOR |
+			      USB_सूची_IN | USB_TYPE_VENDOR |
 					USB_RECIP_INTERFACE,
 			      UCAN_COMMAND_GET_INFO,
-			      iface_desc->desc.bInterfaceNumber,
+			      अगरace_desc->desc.bInterfaceNumber,
 			      ctl_msg_buffer,
-			      sizeof(ctl_msg_buffer->cmd_get_device_info),
+			      माप(ctl_msg_buffer->cmd_get_device_info),
 			      UCAN_USB_CTL_PIPE_TIMEOUT);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&udev->dev, "%s: failed to retrieve device info\n",
 			UCAN_DRIVER_NAME);
-		goto err_firmware_needs_update;
-	}
-	if (ret < sizeof(ctl_msg_buffer->cmd_get_device_info)) {
+		जाओ err_firmware_needs_update;
+	पूर्ण
+	अगर (ret < माप(ctl_msg_buffer->cmd_get_device_info)) अणु
 		dev_err(&udev->dev, "%s: device reported invalid device info\n",
 			UCAN_DRIVER_NAME);
-		goto err_firmware_needs_update;
-	}
-	if (ctl_msg_buffer->cmd_get_device_info.tx_fifo == 0) {
+		जाओ err_firmware_needs_update;
+	पूर्ण
+	अगर (ctl_msg_buffer->cmd_get_device_info.tx_fअगरo == 0) अणु
 		dev_err(&udev->dev,
 			"%s: device reported invalid tx-fifo size\n",
 			UCAN_DRIVER_NAME);
-		goto err_firmware_needs_update;
-	}
+		जाओ err_firmware_needs_update;
+	पूर्ण
 
 	/* Stage 3 - Driver Initialisation
 	 * -------------------------------
 	 *
-	 * Register device to Linux, prepare private structures and
+	 * Register device to Linux, prepare निजी काष्ठाures and
 	 * reset the device.
 	 */
 
 	/* allocate driver resources */
-	netdev = alloc_candev(sizeof(struct ucan_priv),
-			      ctl_msg_buffer->cmd_get_device_info.tx_fifo);
-	if (!netdev) {
+	netdev = alloc_candev(माप(काष्ठा ucan_priv),
+			      ctl_msg_buffer->cmd_get_device_info.tx_fअगरo);
+	अगर (!netdev) अणु
 		dev_err(&udev->dev,
 			"%s: cannot allocate candev\n", UCAN_DRIVER_NAME);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	up = netdev_priv(netdev);
 
 	/* initialize data */
 	up->udev = udev;
-	up->intf = intf;
+	up->पूर्णांकf = पूर्णांकf;
 	up->netdev = netdev;
-	up->intf_index = iface_desc->desc.bInterfaceNumber;
+	up->पूर्णांकf_index = अगरace_desc->desc.bInterfaceNumber;
 	up->in_ep_addr = in_ep_addr;
 	up->out_ep_addr = out_ep_addr;
 	up->in_ep_size = in_ep_size;
 	up->ctl_msg_buffer = ctl_msg_buffer;
-	up->context_array = NULL;
+	up->context_array = शून्य;
 	up->available_tx_urbs = 0;
 
 	up->can.state = CAN_STATE_STOPPED;
-	up->can.bittiming_const = &up->device_info.bittiming_const;
-	up->can.do_set_bittiming = ucan_set_bittiming;
-	up->can.do_set_mode = &ucan_set_mode;
+	up->can.bittiming_स्थिर = &up->device_info.bittiming_स्थिर;
+	up->can.करो_set_bittiming = ucan_set_bittiming;
+	up->can.करो_set_mode = &ucan_set_mode;
 	spin_lock_init(&up->context_lock);
 	spin_lock_init(&up->echo_skb_lock);
 	netdev->netdev_ops = &ucan_netdev_ops;
 
-	usb_set_intfdata(intf, up);
-	SET_NETDEV_DEV(netdev, &intf->dev);
+	usb_set_पूर्णांकfdata(पूर्णांकf, up);
+	SET_NETDEV_DEV(netdev, &पूर्णांकf->dev);
 
-	/* parse device information
+	/* parse device inक्रमmation
 	 * the data retrieved in Stage 2 is still available in
 	 * up->ctl_msg_buffer
 	 */
 	ucan_parse_device_info(up, &ctl_msg_buffer->cmd_get_device_info);
 
-	/* just print some device information - if available */
+	/* just prपूर्णांक some device inक्रमmation - अगर available */
 	ret = ucan_device_request_in(up, UCAN_DEVICE_GET_FW_STRING, 0,
-				     sizeof(union ucan_ctl_payload));
-	if (ret > 0) {
-		/* copy string while ensuring zero terminiation */
-		strncpy(firmware_str, up->ctl_msg_buffer->raw,
-			sizeof(union ucan_ctl_payload));
-		firmware_str[sizeof(union ucan_ctl_payload)] = '\0';
-	} else {
-		strcpy(firmware_str, "unknown");
-	}
+				     माप(जोड़ ucan_ctl_payload));
+	अगर (ret > 0) अणु
+		/* copy string जबतक ensuring zero terminiation */
+		म_नकलन(firmware_str, up->ctl_msg_buffer->raw,
+			माप(जोड़ ucan_ctl_payload));
+		firmware_str[माप(जोड़ ucan_ctl_payload)] = '\0';
+	पूर्ण अन्यथा अणु
+		म_नकल(firmware_str, "unknown");
+	पूर्ण
 
 	/* device is compatible, reset it */
 	ret = ucan_ctrl_command_out(up, UCAN_COMMAND_RESET, 0, 0);
-	if (ret < 0)
-		goto err_free_candev;
+	अगर (ret < 0)
+		जाओ err_मुक्त_candev;
 
 	init_usb_anchor(&up->rx_urbs);
 	init_usb_anchor(&up->tx_urbs);
 
 	up->can.state = CAN_STATE_STOPPED;
 
-	/* register the device */
-	ret = register_candev(netdev);
-	if (ret)
-		goto err_free_candev;
+	/* रेजिस्टर the device */
+	ret = रेजिस्टर_candev(netdev);
+	अगर (ret)
+		जाओ err_मुक्त_candev;
 
 	/* initialisation complete, log device info */
 	netdev_info(up->netdev, "registered device\n");
 	netdev_info(up->netdev, "firmware string: %s\n", firmware_str);
 
 	/* success */
-	return 0;
+	वापस 0;
 
-err_free_candev:
-	free_candev(netdev);
-	return ret;
+err_मुक्त_candev:
+	मुक्त_candev(netdev);
+	वापस ret;
 
 err_firmware_needs_update:
 	dev_err(&udev->dev,
 		"%s: probe failed; try to update the device firmware\n",
 		UCAN_DRIVER_NAME);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /* disconnect the device */
-static void ucan_disconnect(struct usb_interface *intf)
-{
-	struct ucan_priv *up = usb_get_intfdata(intf);
+अटल व्योम ucan_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा ucan_priv *up = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 
-	if (up) {
-		unregister_netdev(up->netdev);
-		free_candev(up->netdev);
-	}
-}
+	अगर (up) अणु
+		unरेजिस्टर_netdev(up->netdev);
+		मुक्त_candev(up->netdev);
+	पूर्ण
+पूर्ण
 
-static struct usb_device_id ucan_table[] = {
+अटल काष्ठा usb_device_id ucan_table[] = अणु
 	/* Mule (soldered onto compute modules) */
-	{USB_DEVICE_INTERFACE_NUMBER(0x2294, 0x425a, 0)},
+	अणुUSB_DEVICE_INTERFACE_NUMBER(0x2294, 0x425a, 0)पूर्ण,
 	/* Seal (standalone USB stick) */
-	{USB_DEVICE_INTERFACE_NUMBER(0x2294, 0x425b, 0)},
-	{} /* Terminating entry */
-};
+	अणुUSB_DEVICE_INTERFACE_NUMBER(0x2294, 0x425b, 0)पूर्ण,
+	अणुपूर्ण /* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, ucan_table);
 /* driver callbacks */
-static struct usb_driver ucan_driver = {
+अटल काष्ठा usb_driver ucan_driver = अणु
 	.name = UCAN_DRIVER_NAME,
 	.probe = ucan_probe,
 	.disconnect = ucan_disconnect,
 	.id_table = ucan_table,
-};
+पूर्ण;
 
 module_usb_driver(ucan_driver);
 

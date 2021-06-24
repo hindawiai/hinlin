@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2015-2017 Pengutronix, Uwe Kleine-König <kernel@pengutronix.de>
+ * Copyright (C) 2015-2017 Pengutronix, Uwe Kleine-Kथघnig <kernel@pengutronix.de>
  */
-#include <linux/kernel.h>
-#include <linux/kthread.h>
-#include <linux/siox.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/siox.h>
 
-#define to_siox_master(_dev)	container_of((_dev), struct siox_master, dev)
-struct siox_master {
+#घोषणा to_siox_master(_dev)	container_of((_dev), काष्ठा siox_master, dev)
+काष्ठा siox_master अणु
 	/* these fields should be initialized by the driver */
-	int busno;
-	int (*pushpull)(struct siox_master *smaster,
-			size_t setbuf_len, const u8 setbuf[],
-			size_t getbuf_len, u8 getbuf[]);
+	पूर्णांक busno;
+	पूर्णांक (*pushpull)(काष्ठा siox_master *smaster,
+			माप_प्रकार रखो_बफ_len, स्थिर u8 रखो_बफ[],
+			माप_प्रकार getbuf_len, u8 getbuf[]);
 
-	/* might be initialized by the driver, if 0 it is set to HZ / 40 */
-	unsigned long poll_interval; /* in jiffies */
+	/* might be initialized by the driver, अगर 0 it is set to HZ / 40 */
+	अचिन्हित दीर्घ poll_पूर्णांकerval; /* in jअगरfies */
 
-	/* framework private stuff */
-	struct mutex lock;
+	/* framework निजी stuff */
+	काष्ठा mutex lock;
 	bool active;
-	struct module *owner;
-	struct device dev;
-	unsigned int num_devices;
-	struct list_head devices;
+	काष्ठा module *owner;
+	काष्ठा device dev;
+	अचिन्हित पूर्णांक num_devices;
+	काष्ठा list_head devices;
 
-	size_t setbuf_len, getbuf_len;
-	size_t buf_len;
+	माप_प्रकार रखो_बफ_len, getbuf_len;
+	माप_प्रकार buf_len;
 	u8 *buf;
 	u8 status;
 
-	unsigned long last_poll;
-	struct task_struct *poll_thread;
-};
+	अचिन्हित दीर्घ last_poll;
+	काष्ठा task_काष्ठा *poll_thपढ़ो;
+पूर्ण;
 
-static inline void *siox_master_get_devdata(struct siox_master *smaster)
-{
-	return dev_get_drvdata(&smaster->dev);
-}
+अटल अंतरभूत व्योम *siox_master_get_devdata(काष्ठा siox_master *smaster)
+अणु
+	वापस dev_get_drvdata(&smaster->dev);
+पूर्ण
 
-struct siox_master *siox_master_alloc(struct device *dev, size_t size);
-static inline void siox_master_put(struct siox_master *smaster)
-{
+काष्ठा siox_master *siox_master_alloc(काष्ठा device *dev, माप_प्रकार size);
+अटल अंतरभूत व्योम siox_master_put(काष्ठा siox_master *smaster)
+अणु
 	put_device(&smaster->dev);
-}
+पूर्ण
 
-int siox_master_register(struct siox_master *smaster);
-void siox_master_unregister(struct siox_master *smaster);
+पूर्णांक siox_master_रेजिस्टर(काष्ठा siox_master *smaster);
+व्योम siox_master_unरेजिस्टर(काष्ठा siox_master *smaster);

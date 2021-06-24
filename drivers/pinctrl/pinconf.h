@@ -1,131 +1,132 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Internal interface between the core pin control system and the
+ * Internal पूर्णांकerface between the core pin control प्रणाली and the
  * pin config portions
  *
  * Copyright (C) 2011 ST-Ericsson SA
- * Written on behalf of Linaro for ST-Ericsson
+ * Written on behalf of Linaro क्रम ST-Ericsson
  * Based on bits of regulator core, gpio core and clk core
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
-#ifdef CONFIG_PINCONF
+#अगर_घोषित CONFIG_PINCONF
 
-int pinconf_check_ops(struct pinctrl_dev *pctldev);
-int pinconf_validate_map(const struct pinctrl_map *map, int i);
-int pinconf_map_to_setting(const struct pinctrl_map *map,
-			  struct pinctrl_setting *setting);
-void pinconf_free_setting(const struct pinctrl_setting *setting);
-int pinconf_apply_setting(const struct pinctrl_setting *setting);
+पूर्णांक pinconf_check_ops(काष्ठा pinctrl_dev *pctldev);
+पूर्णांक pinconf_validate_map(स्थिर काष्ठा pinctrl_map *map, पूर्णांक i);
+पूर्णांक pinconf_map_to_setting(स्थिर काष्ठा pinctrl_map *map,
+			  काष्ठा pinctrl_setting *setting);
+व्योम pinconf_मुक्त_setting(स्थिर काष्ठा pinctrl_setting *setting);
+पूर्णांक pinconf_apply_setting(स्थिर काष्ठा pinctrl_setting *setting);
 
-int pinconf_set_config(struct pinctrl_dev *pctldev, unsigned pin,
-		       unsigned long *configs, size_t nconfigs);
+पूर्णांक pinconf_set_config(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+		       अचिन्हित दीर्घ *configs, माप_प्रकार nconfigs);
 
 /*
- * You will only be interested in these if you're using PINCONF
- * so don't supply any stubs for these.
+ * You will only be पूर्णांकerested in these अगर you're using PINCONF
+ * so करोn't supply any stubs क्रम these.
  */
-int pin_config_get_for_pin(struct pinctrl_dev *pctldev, unsigned pin,
-			   unsigned long *config);
-int pin_config_group_get(const char *dev_name, const char *pin_group,
-			 unsigned long *config);
+पूर्णांक pin_config_get_क्रम_pin(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+			   अचिन्हित दीर्घ *config);
+पूर्णांक pin_config_group_get(स्थिर अक्षर *dev_name, स्थिर अक्षर *pin_group,
+			 अचिन्हित दीर्घ *config);
 
-#else
+#अन्यथा
 
-static inline int pinconf_check_ops(struct pinctrl_dev *pctldev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinconf_check_ops(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int pinconf_validate_map(const struct pinctrl_map *map, int i)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinconf_validate_map(स्थिर काष्ठा pinctrl_map *map, पूर्णांक i)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int pinconf_map_to_setting(const struct pinctrl_map *map,
-			  struct pinctrl_setting *setting)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinconf_map_to_setting(स्थिर काष्ठा pinctrl_map *map,
+			  काष्ठा pinctrl_setting *setting)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void pinconf_free_setting(const struct pinctrl_setting *setting)
-{
-}
+अटल अंतरभूत व्योम pinconf_मुक्त_setting(स्थिर काष्ठा pinctrl_setting *setting)
+अणु
+पूर्ण
 
-static inline int pinconf_apply_setting(const struct pinctrl_setting *setting)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinconf_apply_setting(स्थिर काष्ठा pinctrl_setting *setting)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int pinconf_set_config(struct pinctrl_dev *pctldev, unsigned pin,
-				     unsigned long *configs, size_t nconfigs)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत पूर्णांक pinconf_set_config(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+				     अचिन्हित दीर्घ *configs, माप_प्रकार nconfigs)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#if defined(CONFIG_PINCONF) && defined(CONFIG_DEBUG_FS)
+#अगर defined(CONFIG_PINCONF) && defined(CONFIG_DEBUG_FS)
 
-void pinconf_show_map(struct seq_file *s, const struct pinctrl_map *map);
-void pinconf_show_setting(struct seq_file *s,
-			  const struct pinctrl_setting *setting);
-void pinconf_init_device_debugfs(struct dentry *devroot,
-				 struct pinctrl_dev *pctldev);
+व्योम pinconf_show_map(काष्ठा seq_file *s, स्थिर काष्ठा pinctrl_map *map);
+व्योम pinconf_show_setting(काष्ठा seq_file *s,
+			  स्थिर काष्ठा pinctrl_setting *setting);
+व्योम pinconf_init_device_debugfs(काष्ठा dentry *devroot,
+				 काष्ठा pinctrl_dev *pctldev);
 
-#else
+#अन्यथा
 
-static inline void pinconf_show_map(struct seq_file *s,
-				    const struct pinctrl_map *map)
-{
-}
+अटल अंतरभूत व्योम pinconf_show_map(काष्ठा seq_file *s,
+				    स्थिर काष्ठा pinctrl_map *map)
+अणु
+पूर्ण
 
-static inline void pinconf_show_setting(struct seq_file *s,
-					const struct pinctrl_setting *setting)
-{
-}
+अटल अंतरभूत व्योम pinconf_show_setting(काष्ठा seq_file *s,
+					स्थिर काष्ठा pinctrl_setting *setting)
+अणु
+पूर्ण
 
-static inline void pinconf_init_device_debugfs(struct dentry *devroot,
-					       struct pinctrl_dev *pctldev)
-{
-}
+अटल अंतरभूत व्योम pinconf_init_device_debugfs(काष्ठा dentry *devroot,
+					       काष्ठा pinctrl_dev *pctldev)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
- * The following functions are available if the driver uses the generic
+ * The following functions are available अगर the driver uses the generic
  * pin config.
  */
 
-#if defined(CONFIG_GENERIC_PINCONF) && defined(CONFIG_DEBUG_FS)
+#अगर defined(CONFIG_GENERIC_PINCONF) && defined(CONFIG_DEBUG_FS)
 
-void pinconf_generic_dump_pins(struct pinctrl_dev *pctldev,
-			       struct seq_file *s, const char *gname,
-			       unsigned pin);
+व्योम pinconf_generic_dump_pins(काष्ठा pinctrl_dev *pctldev,
+			       काष्ठा seq_file *s, स्थिर अक्षर *gname,
+			       अचिन्हित pin);
 
-void pinconf_generic_dump_config(struct pinctrl_dev *pctldev,
-				 struct seq_file *s, unsigned long config);
-#else
+व्योम pinconf_generic_dump_config(काष्ठा pinctrl_dev *pctldev,
+				 काष्ठा seq_file *s, अचिन्हित दीर्घ config);
+#अन्यथा
 
-static inline void pinconf_generic_dump_pins(struct pinctrl_dev *pctldev,
-					     struct seq_file *s,
-					     const char *gname, unsigned pin)
-{
-	return;
-}
+अटल अंतरभूत व्योम pinconf_generic_dump_pins(काष्ठा pinctrl_dev *pctldev,
+					     काष्ठा seq_file *s,
+					     स्थिर अक्षर *gname, अचिन्हित pin)
+अणु
+	वापस;
+पूर्ण
 
-static inline void pinconf_generic_dump_config(struct pinctrl_dev *pctldev,
-					       struct seq_file *s,
-					       unsigned long config)
-{
-	return;
-}
-#endif
+अटल अंतरभूत व्योम pinconf_generic_dump_config(काष्ठा pinctrl_dev *pctldev,
+					       काष्ठा seq_file *s,
+					       अचिन्हित दीर्घ config)
+अणु
+	वापस;
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_GENERIC_PINCONF) && defined(CONFIG_OF)
-int pinconf_generic_parse_dt_config(struct device_node *np,
-				    struct pinctrl_dev *pctldev,
-				    unsigned long **configs,
-				    unsigned int *nconfigs);
-#endif
+#अगर defined(CONFIG_GENERIC_PINCONF) && defined(CONFIG_OF)
+पूर्णांक pinconf_generic_parse_dt_config(काष्ठा device_node *np,
+				    काष्ठा pinctrl_dev *pctldev,
+				    अचिन्हित दीर्घ **configs,
+				    अचिन्हित पूर्णांक *nconfigs);
+#पूर्ण_अगर

@@ -1,227 +1,228 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * VFIO-KVM bridge pseudo device
+ * VFIO-KVM bridge pseuकरो device
  *
  * Copyright (C) 2013 Red Hat, Inc.  All rights reserved.
  *     Author: Alex Williamson <alex.williamson@redhat.com>
  */
 
-#include <linux/errno.h>
-#include <linux/file.h>
-#include <linux/kvm_host.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/vfio.h>
-#include "vfio.h"
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/file.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/vfपन.स>
+#समावेश "vfio.h"
 
-#ifdef CONFIG_SPAPR_TCE_IOMMU
-#include <asm/kvm_ppc.h>
-#endif
+#अगर_घोषित CONFIG_SPAPR_TCE_IOMMU
+#समावेश <यंत्र/kvm_ppc.h>
+#पूर्ण_अगर
 
-struct kvm_vfio_group {
-	struct list_head node;
-	struct vfio_group *vfio_group;
-};
+काष्ठा kvm_vfio_group अणु
+	काष्ठा list_head node;
+	काष्ठा vfio_group *vfio_group;
+पूर्ण;
 
-struct kvm_vfio {
-	struct list_head group_list;
-	struct mutex lock;
+काष्ठा kvm_vfio अणु
+	काष्ठा list_head group_list;
+	काष्ठा mutex lock;
 	bool noncoherent;
-};
+पूर्ण;
 
-static struct vfio_group *kvm_vfio_group_get_external_user(struct file *filep)
-{
-	struct vfio_group *vfio_group;
-	struct vfio_group *(*fn)(struct file *);
+अटल काष्ठा vfio_group *kvm_vfio_group_get_बाह्यal_user(काष्ठा file *filep)
+अणु
+	काष्ठा vfio_group *vfio_group;
+	काष्ठा vfio_group *(*fn)(काष्ठा file *);
 
-	fn = symbol_get(vfio_group_get_external_user);
-	if (!fn)
-		return ERR_PTR(-EINVAL);
+	fn = symbol_get(vfio_group_get_बाह्यal_user);
+	अगर (!fn)
+		वापस ERR_PTR(-EINVAL);
 
 	vfio_group = fn(filep);
 
-	symbol_put(vfio_group_get_external_user);
+	symbol_put(vfio_group_get_बाह्यal_user);
 
-	return vfio_group;
-}
+	वापस vfio_group;
+पूर्ण
 
-static bool kvm_vfio_external_group_match_file(struct vfio_group *group,
-					       struct file *filep)
-{
-	bool ret, (*fn)(struct vfio_group *, struct file *);
+अटल bool kvm_vfio_बाह्यal_group_match_file(काष्ठा vfio_group *group,
+					       काष्ठा file *filep)
+अणु
+	bool ret, (*fn)(काष्ठा vfio_group *, काष्ठा file *);
 
-	fn = symbol_get(vfio_external_group_match_file);
-	if (!fn)
-		return false;
+	fn = symbol_get(vfio_बाह्यal_group_match_file);
+	अगर (!fn)
+		वापस false;
 
 	ret = fn(group, filep);
 
-	symbol_put(vfio_external_group_match_file);
+	symbol_put(vfio_बाह्यal_group_match_file);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void kvm_vfio_group_put_external_user(struct vfio_group *vfio_group)
-{
-	void (*fn)(struct vfio_group *);
+अटल व्योम kvm_vfio_group_put_बाह्यal_user(काष्ठा vfio_group *vfio_group)
+अणु
+	व्योम (*fn)(काष्ठा vfio_group *);
 
-	fn = symbol_get(vfio_group_put_external_user);
-	if (!fn)
-		return;
+	fn = symbol_get(vfio_group_put_बाह्यal_user);
+	अगर (!fn)
+		वापस;
 
 	fn(vfio_group);
 
-	symbol_put(vfio_group_put_external_user);
-}
+	symbol_put(vfio_group_put_बाह्यal_user);
+पूर्ण
 
-static void kvm_vfio_group_set_kvm(struct vfio_group *group, struct kvm *kvm)
-{
-	void (*fn)(struct vfio_group *, struct kvm *);
+अटल व्योम kvm_vfio_group_set_kvm(काष्ठा vfio_group *group, काष्ठा kvm *kvm)
+अणु
+	व्योम (*fn)(काष्ठा vfio_group *, काष्ठा kvm *);
 
 	fn = symbol_get(vfio_group_set_kvm);
-	if (!fn)
-		return;
+	अगर (!fn)
+		वापस;
 
 	fn(group, kvm);
 
 	symbol_put(vfio_group_set_kvm);
-}
+पूर्ण
 
-static bool kvm_vfio_group_is_coherent(struct vfio_group *vfio_group)
-{
-	long (*fn)(struct vfio_group *, unsigned long);
-	long ret;
+अटल bool kvm_vfio_group_is_coherent(काष्ठा vfio_group *vfio_group)
+अणु
+	दीर्घ (*fn)(काष्ठा vfio_group *, अचिन्हित दीर्घ);
+	दीर्घ ret;
 
-	fn = symbol_get(vfio_external_check_extension);
-	if (!fn)
-		return false;
+	fn = symbol_get(vfio_बाह्यal_check_extension);
+	अगर (!fn)
+		वापस false;
 
 	ret = fn(vfio_group, VFIO_DMA_CC_IOMMU);
 
-	symbol_put(vfio_external_check_extension);
+	symbol_put(vfio_बाह्यal_check_extension);
 
-	return ret > 0;
-}
+	वापस ret > 0;
+पूर्ण
 
-#ifdef CONFIG_SPAPR_TCE_IOMMU
-static int kvm_vfio_external_user_iommu_id(struct vfio_group *vfio_group)
-{
-	int (*fn)(struct vfio_group *);
-	int ret = -EINVAL;
+#अगर_घोषित CONFIG_SPAPR_TCE_IOMMU
+अटल पूर्णांक kvm_vfio_बाह्यal_user_iommu_id(काष्ठा vfio_group *vfio_group)
+अणु
+	पूर्णांक (*fn)(काष्ठा vfio_group *);
+	पूर्णांक ret = -EINVAL;
 
-	fn = symbol_get(vfio_external_user_iommu_id);
-	if (!fn)
-		return ret;
+	fn = symbol_get(vfio_बाह्यal_user_iommu_id);
+	अगर (!fn)
+		वापस ret;
 
 	ret = fn(vfio_group);
 
-	symbol_put(vfio_external_user_iommu_id);
+	symbol_put(vfio_बाह्यal_user_iommu_id);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct iommu_group *kvm_vfio_group_get_iommu_group(
-		struct vfio_group *group)
-{
-	int group_id = kvm_vfio_external_user_iommu_id(group);
+अटल काष्ठा iommu_group *kvm_vfio_group_get_iommu_group(
+		काष्ठा vfio_group *group)
+अणु
+	पूर्णांक group_id = kvm_vfio_बाह्यal_user_iommu_id(group);
 
-	if (group_id < 0)
-		return NULL;
+	अगर (group_id < 0)
+		वापस शून्य;
 
-	return iommu_group_get_by_id(group_id);
-}
+	वापस iommu_group_get_by_id(group_id);
+पूर्ण
 
-static void kvm_spapr_tce_release_vfio_group(struct kvm *kvm,
-		struct vfio_group *vfio_group)
-{
-	struct iommu_group *grp = kvm_vfio_group_get_iommu_group(vfio_group);
+अटल व्योम kvm_spapr_tce_release_vfio_group(काष्ठा kvm *kvm,
+		काष्ठा vfio_group *vfio_group)
+अणु
+	काष्ठा iommu_group *grp = kvm_vfio_group_get_iommu_group(vfio_group);
 
-	if (WARN_ON_ONCE(!grp))
-		return;
+	अगर (WARN_ON_ONCE(!grp))
+		वापस;
 
 	kvm_spapr_tce_release_iommu_group(kvm, grp);
 	iommu_group_put(grp);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Groups can use the same or different IOMMU domains.  If the same then
+ * Groups can use the same or dअगरferent IOMMU करोमुख्यs.  If the same then
  * adding a new group may change the coherency of groups we've previously
- * been told about.  We don't want to care about any of that so we retest
+ * been told about.  We करोn't want to care about any of that so we retest
  * each group and bail as soon as we find one that's noncoherent.  This
- * means we only ever [un]register_noncoherent_dma once for the whole device.
+ * means we only ever [un]रेजिस्टर_noncoherent_dma once क्रम the whole device.
  */
-static void kvm_vfio_update_coherency(struct kvm_device *dev)
-{
-	struct kvm_vfio *kv = dev->private;
+अटल व्योम kvm_vfio_update_coherency(काष्ठा kvm_device *dev)
+अणु
+	काष्ठा kvm_vfio *kv = dev->निजी;
 	bool noncoherent = false;
-	struct kvm_vfio_group *kvg;
+	काष्ठा kvm_vfio_group *kvg;
 
 	mutex_lock(&kv->lock);
 
-	list_for_each_entry(kvg, &kv->group_list, node) {
-		if (!kvm_vfio_group_is_coherent(kvg->vfio_group)) {
+	list_क्रम_each_entry(kvg, &kv->group_list, node) अणु
+		अगर (!kvm_vfio_group_is_coherent(kvg->vfio_group)) अणु
 			noncoherent = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (noncoherent != kv->noncoherent) {
+	अगर (noncoherent != kv->noncoherent) अणु
 		kv->noncoherent = noncoherent;
 
-		if (kv->noncoherent)
-			kvm_arch_register_noncoherent_dma(dev->kvm);
-		else
-			kvm_arch_unregister_noncoherent_dma(dev->kvm);
-	}
+		अगर (kv->noncoherent)
+			kvm_arch_रेजिस्टर_noncoherent_dma(dev->kvm);
+		अन्यथा
+			kvm_arch_unरेजिस्टर_noncoherent_dma(dev->kvm);
+	पूर्ण
 
 	mutex_unlock(&kv->lock);
-}
+पूर्ण
 
-static int kvm_vfio_set_group(struct kvm_device *dev, long attr, u64 arg)
-{
-	struct kvm_vfio *kv = dev->private;
-	struct vfio_group *vfio_group;
-	struct kvm_vfio_group *kvg;
-	int32_t __user *argp = (int32_t __user *)(unsigned long)arg;
-	struct fd f;
-	int32_t fd;
-	int ret;
+अटल पूर्णांक kvm_vfio_set_group(काष्ठा kvm_device *dev, दीर्घ attr, u64 arg)
+अणु
+	काष्ठा kvm_vfio *kv = dev->निजी;
+	काष्ठा vfio_group *vfio_group;
+	काष्ठा kvm_vfio_group *kvg;
+	पूर्णांक32_t __user *argp = (पूर्णांक32_t __user *)(अचिन्हित दीर्घ)arg;
+	काष्ठा fd f;
+	पूर्णांक32_t fd;
+	पूर्णांक ret;
 
-	switch (attr) {
-	case KVM_DEV_VFIO_GROUP_ADD:
-		if (get_user(fd, argp))
-			return -EFAULT;
+	चयन (attr) अणु
+	हाल KVM_DEV_VFIO_GROUP_ADD:
+		अगर (get_user(fd, argp))
+			वापस -EFAULT;
 
 		f = fdget(fd);
-		if (!f.file)
-			return -EBADF;
+		अगर (!f.file)
+			वापस -EBADF;
 
-		vfio_group = kvm_vfio_group_get_external_user(f.file);
+		vfio_group = kvm_vfio_group_get_बाह्यal_user(f.file);
 		fdput(f);
 
-		if (IS_ERR(vfio_group))
-			return PTR_ERR(vfio_group);
+		अगर (IS_ERR(vfio_group))
+			वापस PTR_ERR(vfio_group);
 
 		mutex_lock(&kv->lock);
 
-		list_for_each_entry(kvg, &kv->group_list, node) {
-			if (kvg->vfio_group == vfio_group) {
+		list_क्रम_each_entry(kvg, &kv->group_list, node) अणु
+			अगर (kvg->vfio_group == vfio_group) अणु
 				mutex_unlock(&kv->lock);
-				kvm_vfio_group_put_external_user(vfio_group);
-				return -EEXIST;
-			}
-		}
+				kvm_vfio_group_put_बाह्यal_user(vfio_group);
+				वापस -EEXIST;
+			पूर्ण
+		पूर्ण
 
-		kvg = kzalloc(sizeof(*kvg), GFP_KERNEL_ACCOUNT);
-		if (!kvg) {
+		kvg = kzalloc(माप(*kvg), GFP_KERNEL_ACCOUNT);
+		अगर (!kvg) अणु
 			mutex_unlock(&kv->lock);
-			kvm_vfio_group_put_external_user(vfio_group);
-			return -ENOMEM;
-		}
+			kvm_vfio_group_put_बाह्यal_user(vfio_group);
+			वापस -ENOMEM;
+		पूर्ण
 
 		list_add_tail(&kvg->node, &kv->group_list);
 		kvg->vfio_group = vfio_group;
@@ -234,37 +235,37 @@ static int kvm_vfio_set_group(struct kvm_device *dev, long attr, u64 arg)
 
 		kvm_vfio_update_coherency(dev);
 
-		return 0;
+		वापस 0;
 
-	case KVM_DEV_VFIO_GROUP_DEL:
-		if (get_user(fd, argp))
-			return -EFAULT;
+	हाल KVM_DEV_VFIO_GROUP_DEL:
+		अगर (get_user(fd, argp))
+			वापस -EFAULT;
 
 		f = fdget(fd);
-		if (!f.file)
-			return -EBADF;
+		अगर (!f.file)
+			वापस -EBADF;
 
 		ret = -ENOENT;
 
 		mutex_lock(&kv->lock);
 
-		list_for_each_entry(kvg, &kv->group_list, node) {
-			if (!kvm_vfio_external_group_match_file(kvg->vfio_group,
+		list_क्रम_each_entry(kvg, &kv->group_list, node) अणु
+			अगर (!kvm_vfio_बाह्यal_group_match_file(kvg->vfio_group,
 								f.file))
-				continue;
+				जारी;
 
 			list_del(&kvg->node);
 			kvm_arch_end_assignment(dev->kvm);
-#ifdef CONFIG_SPAPR_TCE_IOMMU
+#अगर_घोषित CONFIG_SPAPR_TCE_IOMMU
 			kvm_spapr_tce_release_vfio_group(dev->kvm,
 							 kvg->vfio_group);
-#endif
-			kvm_vfio_group_set_kvm(kvg->vfio_group, NULL);
-			kvm_vfio_group_put_external_user(kvg->vfio_group);
-			kfree(kvg);
+#पूर्ण_अगर
+			kvm_vfio_group_set_kvm(kvg->vfio_group, शून्य);
+			kvm_vfio_group_put_बाह्यal_user(kvg->vfio_group);
+			kमुक्त(kvg);
 			ret = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mutex_unlock(&kv->lock);
 
@@ -272,154 +273,154 @@ static int kvm_vfio_set_group(struct kvm_device *dev, long attr, u64 arg)
 
 		kvm_vfio_update_coherency(dev);
 
-		return ret;
+		वापस ret;
 
-#ifdef CONFIG_SPAPR_TCE_IOMMU
-	case KVM_DEV_VFIO_GROUP_SET_SPAPR_TCE: {
-		struct kvm_vfio_spapr_tce param;
-		struct kvm_vfio *kv = dev->private;
-		struct vfio_group *vfio_group;
-		struct kvm_vfio_group *kvg;
-		struct fd f;
-		struct iommu_group *grp;
+#अगर_घोषित CONFIG_SPAPR_TCE_IOMMU
+	हाल KVM_DEV_VFIO_GROUP_SET_SPAPR_TCE: अणु
+		काष्ठा kvm_vfio_spapr_tce param;
+		काष्ठा kvm_vfio *kv = dev->निजी;
+		काष्ठा vfio_group *vfio_group;
+		काष्ठा kvm_vfio_group *kvg;
+		काष्ठा fd f;
+		काष्ठा iommu_group *grp;
 
-		if (copy_from_user(&param, (void __user *)arg,
-				sizeof(struct kvm_vfio_spapr_tce)))
-			return -EFAULT;
+		अगर (copy_from_user(&param, (व्योम __user *)arg,
+				माप(काष्ठा kvm_vfio_spapr_tce)))
+			वापस -EFAULT;
 
 		f = fdget(param.groupfd);
-		if (!f.file)
-			return -EBADF;
+		अगर (!f.file)
+			वापस -EBADF;
 
-		vfio_group = kvm_vfio_group_get_external_user(f.file);
+		vfio_group = kvm_vfio_group_get_बाह्यal_user(f.file);
 		fdput(f);
 
-		if (IS_ERR(vfio_group))
-			return PTR_ERR(vfio_group);
+		अगर (IS_ERR(vfio_group))
+			वापस PTR_ERR(vfio_group);
 
 		grp = kvm_vfio_group_get_iommu_group(vfio_group);
-		if (WARN_ON_ONCE(!grp)) {
-			kvm_vfio_group_put_external_user(vfio_group);
-			return -EIO;
-		}
+		अगर (WARN_ON_ONCE(!grp)) अणु
+			kvm_vfio_group_put_बाह्यal_user(vfio_group);
+			वापस -EIO;
+		पूर्ण
 
 		ret = -ENOENT;
 
 		mutex_lock(&kv->lock);
 
-		list_for_each_entry(kvg, &kv->group_list, node) {
-			if (kvg->vfio_group != vfio_group)
-				continue;
+		list_क्रम_each_entry(kvg, &kv->group_list, node) अणु
+			अगर (kvg->vfio_group != vfio_group)
+				जारी;
 
 			ret = kvm_spapr_tce_attach_iommu_group(dev->kvm,
 					param.tablefd, grp);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mutex_unlock(&kv->lock);
 
 		iommu_group_put(grp);
-		kvm_vfio_group_put_external_user(vfio_group);
+		kvm_vfio_group_put_बाह्यal_user(vfio_group);
 
-		return ret;
-	}
-#endif /* CONFIG_SPAPR_TCE_IOMMU */
-	}
+		वापस ret;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_SPAPR_TCE_IOMMU */
+	पूर्ण
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static int kvm_vfio_set_attr(struct kvm_device *dev,
-			     struct kvm_device_attr *attr)
-{
-	switch (attr->group) {
-	case KVM_DEV_VFIO_GROUP:
-		return kvm_vfio_set_group(dev, attr->attr, attr->addr);
-	}
+अटल पूर्णांक kvm_vfio_set_attr(काष्ठा kvm_device *dev,
+			     काष्ठा kvm_device_attr *attr)
+अणु
+	चयन (attr->group) अणु
+	हाल KVM_DEV_VFIO_GROUP:
+		वापस kvm_vfio_set_group(dev, attr->attr, attr->addr);
+	पूर्ण
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static int kvm_vfio_has_attr(struct kvm_device *dev,
-			     struct kvm_device_attr *attr)
-{
-	switch (attr->group) {
-	case KVM_DEV_VFIO_GROUP:
-		switch (attr->attr) {
-		case KVM_DEV_VFIO_GROUP_ADD:
-		case KVM_DEV_VFIO_GROUP_DEL:
-#ifdef CONFIG_SPAPR_TCE_IOMMU
-		case KVM_DEV_VFIO_GROUP_SET_SPAPR_TCE:
-#endif
-			return 0;
-		}
+अटल पूर्णांक kvm_vfio_has_attr(काष्ठा kvm_device *dev,
+			     काष्ठा kvm_device_attr *attr)
+अणु
+	चयन (attr->group) अणु
+	हाल KVM_DEV_VFIO_GROUP:
+		चयन (attr->attr) अणु
+		हाल KVM_DEV_VFIO_GROUP_ADD:
+		हाल KVM_DEV_VFIO_GROUP_DEL:
+#अगर_घोषित CONFIG_SPAPR_TCE_IOMMU
+		हाल KVM_DEV_VFIO_GROUP_SET_SPAPR_TCE:
+#पूर्ण_अगर
+			वापस 0;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static void kvm_vfio_destroy(struct kvm_device *dev)
-{
-	struct kvm_vfio *kv = dev->private;
-	struct kvm_vfio_group *kvg, *tmp;
+अटल व्योम kvm_vfio_destroy(काष्ठा kvm_device *dev)
+अणु
+	काष्ठा kvm_vfio *kv = dev->निजी;
+	काष्ठा kvm_vfio_group *kvg, *पंचांगp;
 
-	list_for_each_entry_safe(kvg, tmp, &kv->group_list, node) {
-#ifdef CONFIG_SPAPR_TCE_IOMMU
+	list_क्रम_each_entry_safe(kvg, पंचांगp, &kv->group_list, node) अणु
+#अगर_घोषित CONFIG_SPAPR_TCE_IOMMU
 		kvm_spapr_tce_release_vfio_group(dev->kvm, kvg->vfio_group);
-#endif
-		kvm_vfio_group_set_kvm(kvg->vfio_group, NULL);
-		kvm_vfio_group_put_external_user(kvg->vfio_group);
+#पूर्ण_अगर
+		kvm_vfio_group_set_kvm(kvg->vfio_group, शून्य);
+		kvm_vfio_group_put_बाह्यal_user(kvg->vfio_group);
 		list_del(&kvg->node);
-		kfree(kvg);
+		kमुक्त(kvg);
 		kvm_arch_end_assignment(dev->kvm);
-	}
+	पूर्ण
 
 	kvm_vfio_update_coherency(dev);
 
-	kfree(kv);
-	kfree(dev); /* alloc by kvm_ioctl_create_device, free by .destroy */
-}
+	kमुक्त(kv);
+	kमुक्त(dev); /* alloc by kvm_ioctl_create_device, मुक्त by .destroy */
+पूर्ण
 
-static int kvm_vfio_create(struct kvm_device *dev, u32 type);
+अटल पूर्णांक kvm_vfio_create(काष्ठा kvm_device *dev, u32 type);
 
-static struct kvm_device_ops kvm_vfio_ops = {
+अटल काष्ठा kvm_device_ops kvm_vfio_ops = अणु
 	.name = "kvm-vfio",
 	.create = kvm_vfio_create,
 	.destroy = kvm_vfio_destroy,
 	.set_attr = kvm_vfio_set_attr,
 	.has_attr = kvm_vfio_has_attr,
-};
+पूर्ण;
 
-static int kvm_vfio_create(struct kvm_device *dev, u32 type)
-{
-	struct kvm_device *tmp;
-	struct kvm_vfio *kv;
+अटल पूर्णांक kvm_vfio_create(काष्ठा kvm_device *dev, u32 type)
+अणु
+	काष्ठा kvm_device *पंचांगp;
+	काष्ठा kvm_vfio *kv;
 
 	/* Only one VFIO "device" per VM */
-	list_for_each_entry(tmp, &dev->kvm->devices, vm_node)
-		if (tmp->ops == &kvm_vfio_ops)
-			return -EBUSY;
+	list_क्रम_each_entry(पंचांगp, &dev->kvm->devices, vm_node)
+		अगर (पंचांगp->ops == &kvm_vfio_ops)
+			वापस -EBUSY;
 
-	kv = kzalloc(sizeof(*kv), GFP_KERNEL_ACCOUNT);
-	if (!kv)
-		return -ENOMEM;
+	kv = kzalloc(माप(*kv), GFP_KERNEL_ACCOUNT);
+	अगर (!kv)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&kv->group_list);
 	mutex_init(&kv->lock);
 
-	dev->private = kv;
+	dev->निजी = kv;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvm_vfio_ops_init(void)
-{
-	return kvm_register_device_ops(&kvm_vfio_ops, KVM_DEV_TYPE_VFIO);
-}
+पूर्णांक kvm_vfio_ops_init(व्योम)
+अणु
+	वापस kvm_रेजिस्टर_device_ops(&kvm_vfio_ops, KVM_DEV_TYPE_VFIO);
+पूर्ण
 
-void kvm_vfio_ops_exit(void)
-{
-	kvm_unregister_device_ops(KVM_DEV_TYPE_VFIO);
-}
+व्योम kvm_vfio_ops_निकास(व्योम)
+अणु
+	kvm_unरेजिस्टर_device_ops(KVM_DEV_TYPE_VFIO);
+पूर्ण

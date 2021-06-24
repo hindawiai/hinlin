@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wl12xx
  *
@@ -7,38 +8,38 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#ifndef _LINUX_WL12XX_H
-#define _LINUX_WL12XX_H
+#अगर_अघोषित _LINUX_WL12XX_H
+#घोषणा _LINUX_WL12XX_H
 
-#include <linux/err.h>
+#समावेश <linux/err.h>
 
-struct wl1251_platform_data {
-	int power_gpio;
-	/* SDIO only: IRQ number if WLAN_IRQ line is used, 0 for SDIO IRQs */
-	int irq;
+काष्ठा wl1251_platक्रमm_data अणु
+	पूर्णांक घातer_gpio;
+	/* SDIO only: IRQ number अगर WLAN_IRQ line is used, 0 क्रम SDIO IRQs */
+	पूर्णांक irq;
 	bool use_eeprom;
-};
+पूर्ण;
 
-#ifdef CONFIG_WILINK_PLATFORM_DATA
+#अगर_घोषित CONFIG_WILINK_PLATFORM_DATA
 
-int wl1251_set_platform_data(const struct wl1251_platform_data *data);
+पूर्णांक wl1251_set_platक्रमm_data(स्थिर काष्ठा wl1251_platक्रमm_data *data);
 
-struct wl1251_platform_data *wl1251_get_platform_data(void);
+काष्ठा wl1251_platक्रमm_data *wl1251_get_platक्रमm_data(व्योम);
 
-#else
+#अन्यथा
 
-static inline
-int wl1251_set_platform_data(const struct wl1251_platform_data *data)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत
+पूर्णांक wl1251_set_platक्रमm_data(स्थिर काष्ठा wl1251_platक्रमm_data *data)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline
-struct wl1251_platform_data *wl1251_get_platform_data(void)
-{
-	return ERR_PTR(-ENODATA);
-}
+अटल अंतरभूत
+काष्ठा wl1251_platक्रमm_data *wl1251_get_platक्रमm_data(व्योम)
+अणु
+	वापस ERR_PTR(-ENODATA);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,822 +1,823 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * vivid-vid-common.c - common video support functions.
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/videodev2.h>
-#include <linux/v4l2-dv-timings.h>
-#include <media/v4l2-common.h>
-#include <media/v4l2-event.h>
-#include <media/v4l2-dv-timings.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/v4l2-dv-timings.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/v4l2-dv-timings.h>
 
-#include "vivid-core.h"
-#include "vivid-vid-common.h"
+#समावेश "vivid-core.h"
+#समावेश "vivid-vid-common.h"
 
-const struct v4l2_dv_timings_cap vivid_dv_timings_cap = {
+स्थिर काष्ठा v4l2_dv_timings_cap vivid_dv_timings_cap = अणु
 	.type = V4L2_DV_BT_656_1120,
-	/* keep this initialization for compatibility with GCC < 4.4.6 */
-	.reserved = { 0 },
+	/* keep this initialization क्रम compatibility with GCC < 4.4.6 */
+	.reserved = अणु 0 पूर्ण,
 	V4L2_INIT_BT_TIMINGS(16, MAX_WIDTH, 16, MAX_HEIGHT, 14000000, 775000000,
 		V4L2_DV_BT_STD_CEA861 | V4L2_DV_BT_STD_DMT |
 		V4L2_DV_BT_STD_CVT | V4L2_DV_BT_STD_GTF,
 		V4L2_DV_BT_CAP_PROGRESSIVE | V4L2_DV_BT_CAP_INTERLACED)
-};
+पूर्ण;
 
 /* ------------------------------------------------------------------
-	Basic structures
+	Basic काष्ठाures
    ------------------------------------------------------------------*/
 
-struct vivid_fmt vivid_formats[] = {
-	{
+काष्ठा vivid_fmt vivid_क्रमmats[] = अणु
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YUYV,
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 1,
 		.buffers = 1,
-		.data_offset = { PLANE0_DATA_OFFSET },
-	},
-	{
+		.data_offset = अणु PLANE0_DATA_OFFSET पूर्ण,
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_UYVY,
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YVYU,
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_VYUY,
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YUV422P,
-		.vdownsampling = { 1, 1, 1 },
-		.bit_depth = { 8, 4, 4 },
+		.vकरोwnsampling = अणु 1, 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 4, 4 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 3,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YUV420,
-		.vdownsampling = { 1, 2, 2 },
-		.bit_depth = { 8, 4, 4 },
+		.vकरोwnsampling = अणु 1, 2, 2 पूर्ण,
+		.bit_depth = अणु 8, 4, 4 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 3,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YVU420,
-		.vdownsampling = { 1, 2, 2 },
-		.bit_depth = { 8, 4, 4 },
+		.vकरोwnsampling = अणु 1, 2, 2 पूर्ण,
+		.bit_depth = अणु 8, 4, 4 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 3,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_NV12,
-		.vdownsampling = { 1, 2 },
-		.bit_depth = { 8, 8 },
+		.vकरोwnsampling = अणु 1, 2 पूर्ण,
+		.bit_depth = अणु 8, 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 2,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_NV21,
-		.vdownsampling = { 1, 2 },
-		.bit_depth = { 8, 8 },
+		.vकरोwnsampling = अणु 1, 2 पूर्ण,
+		.bit_depth = अणु 8, 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 2,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_NV16,
-		.vdownsampling = { 1, 1 },
-		.bit_depth = { 8, 8 },
+		.vकरोwnsampling = अणु 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 2,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_NV61,
-		.vdownsampling = { 1, 1 },
-		.bit_depth = { 8, 8 },
+		.vकरोwnsampling = अणु 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 2,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_NV24,
-		.vdownsampling = { 1, 1 },
-		.bit_depth = { 8, 16 },
+		.vकरोwnsampling = अणु 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 16 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 2,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_NV42,
-		.vdownsampling = { 1, 1 },
-		.bit_depth = { 8, 16 },
+		.vकरोwnsampling = अणु 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 16 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 2,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YUV555, /* uuuvvvvv ayyyyyuu */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0x8000,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YUV565, /* uuuvvvvv yyyyyuuu */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YUV444, /* uuuuvvvv aaaayyyy */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0xf000,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YUV32, /* ayuv */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0x000000ff,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_AYUV32,
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0x000000ff,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_XYUV32,
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_VUYA32,
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0xff000000,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_VUYX32,
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_GREY,
-		.vdownsampling = { 1 },
-		.bit_depth = { 8 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_LUMA,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_Y10,
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_LUMA,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_Y12,
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_LUMA,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_Y16,
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_LUMA,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_Y16_BE,
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_LUMA,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGB332, /* rrrgggbb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 8 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 8 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGB565, /* gggbbbbb rrrrrggg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
-	},
-	{
+		.can_करो_overlay = true,
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGB565X, /* rrrrrggg gggbbbbb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
-	},
-	{
+		.can_करो_overlay = true,
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGB444, /* ggggbbbb xxxxrrrr */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_XRGB444, /* ggggbbbb xxxxrrrr */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_ARGB444, /* ggggbbbb aaaarrrr */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0x00f0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGBX444, /* bbbbxxxx rrrrgggg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGBA444, /* bbbbaaaa rrrrgggg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0x00f0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_XBGR444, /* ggggrrrr xxxxbbbb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_ABGR444, /* ggggrrrr aaaabbbb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0x00f0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_BGRX444, /* rrrrxxxx bbbbgggg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_BGRA444, /* rrrraaaa bbbbgggg  */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0x00f0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGB555, /* gggbbbbb xrrrrrgg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
-	},
-	{
+		.can_करो_overlay = true,
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_XRGB555, /* gggbbbbb xrrrrrgg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
-	},
-	{
+		.can_करो_overlay = true,
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_ARGB555, /* gggbbbbb arrrrrgg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
+		.can_करो_overlay = true,
 		.alpha_mask = 0x8000,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGBX555, /* ggbbbbbx rrrrrggg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
-	},
-	{
+		.can_करो_overlay = true,
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGBA555, /* ggbbbbba rrrrrggg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
+		.can_करो_overlay = true,
 		.alpha_mask = 0x8000,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_XBGR555, /* gggrrrrr xbbbbbgg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
-	},
-	{
+		.can_करो_overlay = true,
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_ABGR555, /* gggrrrrr abbbbbgg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
+		.can_करो_overlay = true,
 		.alpha_mask = 0x8000,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_BGRX555, /* ggrrrrrx bbbbbggg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
-	},
-	{
+		.can_करो_overlay = true,
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_BGRA555, /* ggrrrrra bbbbbggg */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-		.can_do_overlay = true,
+		.can_करो_overlay = true,
 		.alpha_mask = 0x8000,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGB555X, /* xrrrrrgg gggbbbbb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_XRGB555X, /* xrrrrrgg gggbbbbb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_ARGB555X, /* arrrrrgg gggbbbbb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0x0080,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGB24, /* rgb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 24 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 24 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_BGR24, /* bgr */
-		.vdownsampling = { 1 },
-		.bit_depth = { 24 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 24 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_BGR666, /* bbbbbbgg ggggrrrr rrxxxxxx */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGB32, /* xrgb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_BGR32, /* bgrx */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_XRGB32, /* xrgb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_XBGR32, /* bgrx */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_ARGB32, /* argb */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0x000000ff,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_ABGR32, /* bgra */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0xff000000,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGBX32, /* rgbx */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_BGRX32, /* xbgr */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_RGBA32, /* rgba */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0x000000ff,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_BGRA32, /* abgr */
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
 		.alpha_mask = 0xff000000,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SBGGR8, /* Bayer BG/GR */
-		.vdownsampling = { 1 },
-		.bit_depth = { 8 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 8 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SGBRG8, /* Bayer GB/RG */
-		.vdownsampling = { 1 },
-		.bit_depth = { 8 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 8 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SGRBG8, /* Bayer GR/BG */
-		.vdownsampling = { 1 },
-		.bit_depth = { 8 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 8 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SRGGB8, /* Bayer RG/GB */
-		.vdownsampling = { 1 },
-		.bit_depth = { 8 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 8 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SBGGR10, /* Bayer BG/GR */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SGBRG10, /* Bayer GB/RG */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SGRBG10, /* Bayer GR/BG */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SRGGB10, /* Bayer RG/GB */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SBGGR12, /* Bayer BG/GR */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SGBRG12, /* Bayer GB/RG */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SGRBG12, /* Bayer GR/BG */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SRGGB12, /* Bayer RG/GB */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SBGGR16, /* Bayer BG/GR */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SGBRG16, /* Bayer GB/RG */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SGRBG16, /* Bayer GR/BG */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_SRGGB16, /* Bayer RG/GB */
-		.vdownsampling = { 1 },
-		.bit_depth = { 16 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 16 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_HSV24, /* HSV 24bits */
 		.color_enc = TGP_COLOR_ENC_HSV,
-		.vdownsampling = { 1 },
-		.bit_depth = { 24 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 24 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_HSV32, /* HSV 32bits */
 		.color_enc = TGP_COLOR_ENC_HSV,
-		.vdownsampling = { 1 },
-		.bit_depth = { 32 },
+		.vकरोwnsampling = अणु 1 पूर्ण,
+		.bit_depth = अणु 32 पूर्ण,
 		.planes   = 1,
 		.buffers = 1,
-	},
+	पूर्ण,
 
-	/* Multiplanar formats */
+	/* Multiplanar क्रमmats */
 
-	{
+	अणु
 		.fourcc   = V4L2_PIX_FMT_NV16M,
-		.vdownsampling = { 1, 1 },
-		.bit_depth = { 8, 8 },
+		.vकरोwnsampling = अणु 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 2,
 		.buffers = 2,
-		.data_offset = { PLANE0_DATA_OFFSET, 0 },
-	},
-	{
+		.data_offset = अणु PLANE0_DATA_OFFSET, 0 पूर्ण,
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_NV61M,
-		.vdownsampling = { 1, 1 },
-		.bit_depth = { 8, 8 },
+		.vकरोwnsampling = अणु 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 2,
 		.buffers = 2,
-		.data_offset = { 0, PLANE0_DATA_OFFSET },
-	},
-	{
+		.data_offset = अणु 0, PLANE0_DATA_OFFSET पूर्ण,
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YUV420M,
-		.vdownsampling = { 1, 2, 2 },
-		.bit_depth = { 8, 4, 4 },
+		.vकरोwnsampling = अणु 1, 2, 2 पूर्ण,
+		.bit_depth = अणु 8, 4, 4 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 3,
 		.buffers = 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YVU420M,
-		.vdownsampling = { 1, 2, 2 },
-		.bit_depth = { 8, 4, 4 },
+		.vकरोwnsampling = अणु 1, 2, 2 पूर्ण,
+		.bit_depth = अणु 8, 4, 4 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 3,
 		.buffers = 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_NV12M,
-		.vdownsampling = { 1, 2 },
-		.bit_depth = { 8, 8 },
+		.vकरोwnsampling = अणु 1, 2 पूर्ण,
+		.bit_depth = अणु 8, 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 2,
 		.buffers = 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_NV21M,
-		.vdownsampling = { 1, 2 },
-		.bit_depth = { 8, 8 },
+		.vकरोwnsampling = अणु 1, 2 पूर्ण,
+		.bit_depth = अणु 8, 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 2,
 		.buffers = 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YUV422M,
-		.vdownsampling = { 1, 1, 1 },
-		.bit_depth = { 8, 4, 4 },
+		.vकरोwnsampling = अणु 1, 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 4, 4 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 3,
 		.buffers = 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YVU422M,
-		.vdownsampling = { 1, 1, 1 },
-		.bit_depth = { 8, 4, 4 },
+		.vकरोwnsampling = अणु 1, 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 4, 4 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 3,
 		.buffers = 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YUV444M,
-		.vdownsampling = { 1, 1, 1 },
-		.bit_depth = { 8, 8, 8 },
+		.vकरोwnsampling = अणु 1, 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 8, 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 3,
 		.buffers = 3,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc   = V4L2_PIX_FMT_YVU444M,
-		.vdownsampling = { 1, 1, 1 },
-		.bit_depth = { 8, 8, 8 },
+		.vकरोwnsampling = अणु 1, 1, 1 पूर्ण,
+		.bit_depth = अणु 8, 8, 8 पूर्ण,
 		.color_enc = TGP_COLOR_ENC_YCBCR,
 		.planes   = 3,
 		.buffers = 3,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* There are this many multiplanar formats in the list */
-#define VIVID_MPLANAR_FORMATS 10
+/* There are this many multiplanar क्रमmats in the list */
+#घोषणा VIVID_MPLANAR_FORMATS 10
 
-const struct vivid_fmt *vivid_get_format(struct vivid_dev *dev, u32 pixelformat)
-{
-	const struct vivid_fmt *fmt;
-	unsigned k;
+स्थिर काष्ठा vivid_fmt *vivid_get_क्रमmat(काष्ठा vivid_dev *dev, u32 pixelक्रमmat)
+अणु
+	स्थिर काष्ठा vivid_fmt *fmt;
+	अचिन्हित k;
 
-	for (k = 0; k < ARRAY_SIZE(vivid_formats); k++) {
-		fmt = &vivid_formats[k];
-		if (fmt->fourcc == pixelformat)
-			if (fmt->buffers == 1 || dev->multiplanar)
-				return fmt;
-	}
+	क्रम (k = 0; k < ARRAY_SIZE(vivid_क्रमmats); k++) अणु
+		fmt = &vivid_क्रमmats[k];
+		अगर (fmt->fourcc == pixelक्रमmat)
+			अगर (fmt->buffers == 1 || dev->multiplanar)
+				वापस fmt;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-bool vivid_vid_can_loop(struct vivid_dev *dev)
-{
-	if (dev->src_rect.width != dev->sink_rect.width ||
+bool vivid_vid_can_loop(काष्ठा vivid_dev *dev)
+अणु
+	अगर (dev->src_rect.width != dev->sink_rect.width ||
 	    dev->src_rect.height != dev->sink_rect.height)
-		return false;
-	if (dev->fmt_cap->fourcc != dev->fmt_out->fourcc)
-		return false;
-	if (dev->field_cap != dev->field_out)
-		return false;
+		वापस false;
+	अगर (dev->fmt_cap->fourcc != dev->fmt_out->fourcc)
+		वापस false;
+	अगर (dev->field_cap != dev->field_out)
+		वापस false;
 	/*
 	 * While this can be supported, it is just too much work
 	 * to actually implement.
 	 */
-	if (dev->field_cap == V4L2_FIELD_SEQ_TB ||
+	अगर (dev->field_cap == V4L2_FIELD_SEQ_TB ||
 	    dev->field_cap == V4L2_FIELD_SEQ_BT)
-		return false;
-	if (vivid_is_svid_cap(dev) && vivid_is_svid_out(dev)) {
-		if (!(dev->std_cap[dev->input] & V4L2_STD_525_60) !=
+		वापस false;
+	अगर (vivid_is_svid_cap(dev) && vivid_is_svid_out(dev)) अणु
+		अगर (!(dev->std_cap[dev->input] & V4L2_STD_525_60) !=
 		    !(dev->std_out & V4L2_STD_525_60))
-			return false;
-		return true;
-	}
-	if (vivid_is_hdmi_cap(dev) && vivid_is_hdmi_out(dev))
-		return true;
-	return false;
-}
+			वापस false;
+		वापस true;
+	पूर्ण
+	अगर (vivid_is_hdmi_cap(dev) && vivid_is_hdmi_out(dev))
+		वापस true;
+	वापस false;
+पूर्ण
 
-void vivid_send_source_change(struct vivid_dev *dev, unsigned type)
-{
-	struct v4l2_event ev = {
+व्योम vivid_send_source_change(काष्ठा vivid_dev *dev, अचिन्हित type)
+अणु
+	काष्ठा v4l2_event ev = अणु
 		.type = V4L2_EVENT_SOURCE_CHANGE,
 		.u.src_change.changes = V4L2_EVENT_SRC_CH_RESOLUTION,
-	};
-	unsigned i;
+	पूर्ण;
+	अचिन्हित i;
 
-	for (i = 0; i < dev->num_inputs; i++) {
+	क्रम (i = 0; i < dev->num_inमाला_दो; i++) अणु
 		ev.id = i;
-		if (dev->input_type[i] == type) {
-			if (video_is_registered(&dev->vid_cap_dev) && dev->has_vid_cap)
+		अगर (dev->input_type[i] == type) अणु
+			अगर (video_is_रेजिस्टरed(&dev->vid_cap_dev) && dev->has_vid_cap)
 				v4l2_event_queue(&dev->vid_cap_dev, &ev);
-			if (video_is_registered(&dev->vbi_cap_dev) && dev->has_vbi_cap)
+			अगर (video_is_रेजिस्टरed(&dev->vbi_cap_dev) && dev->has_vbi_cap)
 				v4l2_event_queue(&dev->vbi_cap_dev, &ev);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Conversion function that converts a single-planar format to a
- * single-plane multiplanar format.
+ * Conversion function that converts a single-planar क्रमmat to a
+ * single-plane multiplanar क्रमmat.
  */
-void fmt_sp2mp(const struct v4l2_format *sp_fmt, struct v4l2_format *mp_fmt)
-{
-	struct v4l2_pix_format_mplane *mp = &mp_fmt->fmt.pix_mp;
-	struct v4l2_plane_pix_format *ppix = &mp->plane_fmt[0];
-	const struct v4l2_pix_format *pix = &sp_fmt->fmt.pix;
+व्योम fmt_sp2mp(स्थिर काष्ठा v4l2_क्रमmat *sp_fmt, काष्ठा v4l2_क्रमmat *mp_fmt)
+अणु
+	काष्ठा v4l2_pix_क्रमmat_mplane *mp = &mp_fmt->fmt.pix_mp;
+	काष्ठा v4l2_plane_pix_क्रमmat *ppix = &mp->plane_fmt[0];
+	स्थिर काष्ठा v4l2_pix_क्रमmat *pix = &sp_fmt->fmt.pix;
 	bool is_out = sp_fmt->type == V4L2_BUF_TYPE_VIDEO_OUTPUT;
 
-	memset(mp->reserved, 0, sizeof(mp->reserved));
+	स_रखो(mp->reserved, 0, माप(mp->reserved));
 	mp_fmt->type = is_out ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
 			   V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 	mp->width = pix->width;
 	mp->height = pix->height;
-	mp->pixelformat = pix->pixelformat;
+	mp->pixelक्रमmat = pix->pixelक्रमmat;
 	mp->field = pix->field;
 	mp->colorspace = pix->colorspace;
 	mp->xfer_func = pix->xfer_func;
@@ -827,26 +828,26 @@ void fmt_sp2mp(const struct v4l2_format *sp_fmt, struct v4l2_format *mp_fmt)
 	mp->flags = pix->flags;
 	ppix->sizeimage = pix->sizeimage;
 	ppix->bytesperline = pix->bytesperline;
-	memset(ppix->reserved, 0, sizeof(ppix->reserved));
-}
+	स_रखो(ppix->reserved, 0, माप(ppix->reserved));
+पूर्ण
 
-int fmt_sp2mp_func(struct file *file, void *priv,
-		struct v4l2_format *f, fmtfunc func)
-{
-	struct v4l2_format fmt;
-	struct v4l2_pix_format_mplane *mp = &fmt.fmt.pix_mp;
-	struct v4l2_plane_pix_format *ppix = &mp->plane_fmt[0];
-	struct v4l2_pix_format *pix = &f->fmt.pix;
-	int ret;
+पूर्णांक fmt_sp2mp_func(काष्ठा file *file, व्योम *priv,
+		काष्ठा v4l2_क्रमmat *f, fmtfunc func)
+अणु
+	काष्ठा v4l2_क्रमmat fmt;
+	काष्ठा v4l2_pix_क्रमmat_mplane *mp = &fmt.fmt.pix_mp;
+	काष्ठा v4l2_plane_pix_क्रमmat *ppix = &mp->plane_fmt[0];
+	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
+	पूर्णांक ret;
 
-	/* Converts to a mplane format */
+	/* Converts to a mplane क्रमmat */
 	fmt_sp2mp(f, &fmt);
-	/* Passes it to the generic mplane format function */
+	/* Passes it to the generic mplane क्रमmat function */
 	ret = func(file, priv, &fmt);
-	/* Copies back the mplane data to the single plane format */
+	/* Copies back the mplane data to the single plane क्रमmat */
 	pix->width = mp->width;
 	pix->height = mp->height;
-	pix->pixelformat = mp->pixelformat;
+	pix->pixelक्रमmat = mp->pixelक्रमmat;
 	pix->field = mp->field;
 	pix->colorspace = mp->colorspace;
 	pix->xfer_func = mp->xfer_func;
@@ -856,205 +857,205 @@ int fmt_sp2mp_func(struct file *file, void *priv,
 	pix->sizeimage = ppix->sizeimage;
 	pix->bytesperline = ppix->bytesperline;
 	pix->flags = mp->flags;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int vivid_vid_adjust_sel(unsigned flags, struct v4l2_rect *r)
-{
-	unsigned w = r->width;
-	unsigned h = r->height;
+पूर्णांक vivid_vid_adjust_sel(अचिन्हित flags, काष्ठा v4l2_rect *r)
+अणु
+	अचिन्हित w = r->width;
+	अचिन्हित h = r->height;
 
-	/* sanitize w and h in case someone passes ~0 as the value */
+	/* sanitize w and h in हाल someone passes ~0 as the value */
 	w &= 0xffff;
 	h &= 0xffff;
-	if (!(flags & V4L2_SEL_FLAG_LE)) {
+	अगर (!(flags & V4L2_SEL_FLAG_LE)) अणु
 		w++;
 		h++;
-		if (w < 2)
+		अगर (w < 2)
 			w = 2;
-		if (h < 2)
+		अगर (h < 2)
 			h = 2;
-	}
-	if (!(flags & V4L2_SEL_FLAG_GE)) {
-		if (w > MAX_WIDTH)
+	पूर्ण
+	अगर (!(flags & V4L2_SEL_FLAG_GE)) अणु
+		अगर (w > MAX_WIDTH)
 			w = MAX_WIDTH;
-		if (h > MAX_HEIGHT)
+		अगर (h > MAX_HEIGHT)
 			h = MAX_HEIGHT;
-	}
+	पूर्ण
 	w = w & ~1;
 	h = h & ~1;
-	if (w < 2 || h < 2)
-		return -ERANGE;
-	if (w > MAX_WIDTH || h > MAX_HEIGHT)
-		return -ERANGE;
-	if (r->top < 0)
+	अगर (w < 2 || h < 2)
+		वापस -दुस्फल;
+	अगर (w > MAX_WIDTH || h > MAX_HEIGHT)
+		वापस -दुस्फल;
+	अगर (r->top < 0)
 		r->top = 0;
-	if (r->left < 0)
+	अगर (r->left < 0)
 		r->left = 0;
-	/* sanitize left and top in case someone passes ~0 as the value */
+	/* sanitize left and top in हाल someone passes ~0 as the value */
 	r->left &= 0xfffe;
 	r->top &= 0xfffe;
-	if (r->left + w > MAX_WIDTH)
+	अगर (r->left + w > MAX_WIDTH)
 		r->left = MAX_WIDTH - w;
-	if (r->top + h > MAX_HEIGHT)
+	अगर (r->top + h > MAX_HEIGHT)
 		r->top = MAX_HEIGHT - h;
-	if ((flags & (V4L2_SEL_FLAG_GE | V4L2_SEL_FLAG_LE)) ==
+	अगर ((flags & (V4L2_SEL_FLAG_GE | V4L2_SEL_FLAG_LE)) ==
 			(V4L2_SEL_FLAG_GE | V4L2_SEL_FLAG_LE) &&
 	    (r->width != w || r->height != h))
-		return -ERANGE;
+		वापस -दुस्फल;
 	r->width = w;
 	r->height = h;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vivid_enum_fmt_vid(struct file *file, void  *priv,
-					struct v4l2_fmtdesc *f)
-{
-	struct vivid_dev *dev = video_drvdata(file);
-	const struct vivid_fmt *fmt;
+पूर्णांक vivid_क्रमागत_fmt_vid(काष्ठा file *file, व्योम  *priv,
+					काष्ठा v4l2_fmtdesc *f)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
+	स्थिर काष्ठा vivid_fmt *fmt;
 
-	if (f->index >= ARRAY_SIZE(vivid_formats) -
+	अगर (f->index >= ARRAY_SIZE(vivid_क्रमmats) -
 	    (dev->multiplanar ? 0 : VIVID_MPLANAR_FORMATS))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	fmt = &vivid_formats[f->index];
+	fmt = &vivid_क्रमmats[f->index];
 
-	f->pixelformat = fmt->fourcc;
+	f->pixelक्रमmat = fmt->fourcc;
 
-	if (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE &&
+	अगर (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE &&
 	    f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
-		return 0;
+		वापस 0;
 	/*
 	 * For capture devices, we support the CSC API.
 	 * We allow userspace to:
 	 * 1. set the colorspace
 	 * 2. set the xfer_func
-	 * 3. set the ycbcr_enc on YUV formats
-	 * 4. set the hsv_enc on HSV formats
-	 * 5. set the quantization on YUV and RGB formats
+	 * 3. set the ycbcr_enc on YUV क्रमmats
+	 * 4. set the hsv_enc on HSV क्रमmats
+	 * 5. set the quantization on YUV and RGB क्रमmats
 	 */
 	f->flags |= V4L2_FMT_FLAG_CSC_COLORSPACE;
 	f->flags |= V4L2_FMT_FLAG_CSC_XFER_FUNC;
 
-	if (fmt->color_enc == TGP_COLOR_ENC_YCBCR) {
+	अगर (fmt->color_enc == TGP_COLOR_ENC_YCBCR) अणु
 		f->flags |= V4L2_FMT_FLAG_CSC_YCBCR_ENC;
 		f->flags |= V4L2_FMT_FLAG_CSC_QUANTIZATION;
-	} else if (fmt->color_enc == TGP_COLOR_ENC_HSV) {
+	पूर्ण अन्यथा अगर (fmt->color_enc == TGP_COLOR_ENC_HSV) अणु
 		f->flags |= V4L2_FMT_FLAG_CSC_HSV_ENC;
-	} else if (fmt->color_enc == TGP_COLOR_ENC_RGB) {
+	पूर्ण अन्यथा अगर (fmt->color_enc == TGP_COLOR_ENC_RGB) अणु
 		f->flags |= V4L2_FMT_FLAG_CSC_QUANTIZATION;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vidioc_g_std(struct file *file, void *priv, v4l2_std_id *id)
-{
-	struct vivid_dev *dev = video_drvdata(file);
-	struct video_device *vdev = video_devdata(file);
+पूर्णांक vidioc_g_std(काष्ठा file *file, व्योम *priv, v4l2_std_id *id)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX) {
-		if (!vivid_is_sdtv_cap(dev))
-			return -ENODATA;
+	अगर (vdev->vfl_dir == VFL_सूची_RX) अणु
+		अगर (!vivid_is_sdtv_cap(dev))
+			वापस -ENODATA;
 		*id = dev->std_cap[dev->input];
-	} else {
-		if (!vivid_is_svid_out(dev))
-			return -ENODATA;
+	पूर्ण अन्यथा अणु
+		अगर (!vivid_is_svid_out(dev))
+			वापस -ENODATA;
 		*id = dev->std_out;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int vidioc_g_dv_timings(struct file *file, void *_fh,
-				    struct v4l2_dv_timings *timings)
-{
-	struct vivid_dev *dev = video_drvdata(file);
-	struct video_device *vdev = video_devdata(file);
+पूर्णांक vidioc_g_dv_timings(काष्ठा file *file, व्योम *_fh,
+				    काष्ठा v4l2_dv_timings *timings)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX) {
-		if (!vivid_is_hdmi_cap(dev))
-			return -ENODATA;
+	अगर (vdev->vfl_dir == VFL_सूची_RX) अणु
+		अगर (!vivid_is_hdmi_cap(dev))
+			वापस -ENODATA;
 		*timings = dev->dv_timings_cap[dev->input];
-	} else {
-		if (!vivid_is_hdmi_out(dev))
-			return -ENODATA;
+	पूर्ण अन्यथा अणु
+		अगर (!vivid_is_hdmi_out(dev))
+			वापस -ENODATA;
 		*timings = dev->dv_timings_out;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int vidioc_enum_dv_timings(struct file *file, void *_fh,
-				    struct v4l2_enum_dv_timings *timings)
-{
-	struct vivid_dev *dev = video_drvdata(file);
-	struct video_device *vdev = video_devdata(file);
+पूर्णांक vidioc_क्रमागत_dv_timings(काष्ठा file *file, व्योम *_fh,
+				    काष्ठा v4l2_क्रमागत_dv_timings *timings)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX) {
-		if (!vivid_is_hdmi_cap(dev))
-			return -ENODATA;
-	} else {
-		if (!vivid_is_hdmi_out(dev))
-			return -ENODATA;
-	}
-	return v4l2_enum_dv_timings_cap(timings, &vivid_dv_timings_cap,
-			NULL, NULL);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX) अणु
+		अगर (!vivid_is_hdmi_cap(dev))
+			वापस -ENODATA;
+	पूर्ण अन्यथा अणु
+		अगर (!vivid_is_hdmi_out(dev))
+			वापस -ENODATA;
+	पूर्ण
+	वापस v4l2_क्रमागत_dv_timings_cap(timings, &vivid_dv_timings_cap,
+			शून्य, शून्य);
+पूर्ण
 
-int vidioc_dv_timings_cap(struct file *file, void *_fh,
-				    struct v4l2_dv_timings_cap *cap)
-{
-	struct vivid_dev *dev = video_drvdata(file);
-	struct video_device *vdev = video_devdata(file);
+पूर्णांक vidioc_dv_timings_cap(काष्ठा file *file, व्योम *_fh,
+				    काष्ठा v4l2_dv_timings_cap *cap)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX) {
-		if (!vivid_is_hdmi_cap(dev))
-			return -ENODATA;
-	} else {
-		if (!vivid_is_hdmi_out(dev))
-			return -ENODATA;
-	}
+	अगर (vdev->vfl_dir == VFL_सूची_RX) अणु
+		अगर (!vivid_is_hdmi_cap(dev))
+			वापस -ENODATA;
+	पूर्ण अन्यथा अणु
+		अगर (!vivid_is_hdmi_out(dev))
+			वापस -ENODATA;
+	पूर्ण
 	*cap = vivid_dv_timings_cap;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vidioc_g_edid(struct file *file, void *_fh,
-			 struct v4l2_edid *edid)
-{
-	struct vivid_dev *dev = video_drvdata(file);
-	struct video_device *vdev = video_devdata(file);
-	struct cec_adapter *adap;
+पूर्णांक vidioc_g_edid(काष्ठा file *file, व्योम *_fh,
+			 काष्ठा v4l2_edid *edid)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा cec_adapter *adap;
 
-	memset(edid->reserved, 0, sizeof(edid->reserved));
-	if (vdev->vfl_dir == VFL_DIR_RX) {
-		if (edid->pad >= dev->num_inputs)
-			return -EINVAL;
-		if (dev->input_type[edid->pad] != HDMI)
-			return -EINVAL;
+	स_रखो(edid->reserved, 0, माप(edid->reserved));
+	अगर (vdev->vfl_dir == VFL_सूची_RX) अणु
+		अगर (edid->pad >= dev->num_inमाला_दो)
+			वापस -EINVAL;
+		अगर (dev->input_type[edid->pad] != HDMI)
+			वापस -EINVAL;
 		adap = dev->cec_rx_adap;
-	} else {
-		unsigned int bus_idx;
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक bus_idx;
 
-		if (edid->pad >= dev->num_outputs)
-			return -EINVAL;
-		if (dev->output_type[edid->pad] != HDMI)
-			return -EINVAL;
-		if (!dev->display_present[edid->pad])
-			return -ENODATA;
+		अगर (edid->pad >= dev->num_outमाला_दो)
+			वापस -EINVAL;
+		अगर (dev->output_type[edid->pad] != HDMI)
+			वापस -EINVAL;
+		अगर (!dev->display_present[edid->pad])
+			वापस -ENODATA;
 		bus_idx = dev->cec_output2bus_map[edid->pad];
 		adap = dev->cec_tx_adap[bus_idx];
-	}
-	if (edid->start_block == 0 && edid->blocks == 0) {
+	पूर्ण
+	अगर (edid->start_block == 0 && edid->blocks == 0) अणु
 		edid->blocks = dev->edid_blocks;
-		return 0;
-	}
-	if (dev->edid_blocks == 0)
-		return -ENODATA;
-	if (edid->start_block >= dev->edid_blocks)
-		return -EINVAL;
-	if (edid->blocks > dev->edid_blocks - edid->start_block)
+		वापस 0;
+	पूर्ण
+	अगर (dev->edid_blocks == 0)
+		वापस -ENODATA;
+	अगर (edid->start_block >= dev->edid_blocks)
+		वापस -EINVAL;
+	अगर (edid->blocks > dev->edid_blocks - edid->start_block)
 		edid->blocks = dev->edid_blocks - edid->start_block;
-	if (adap)
+	अगर (adap)
 		v4l2_set_edid_phys_addr(dev->edid, dev->edid_blocks * 128, adap->phys_addr);
-	memcpy(edid->edid, dev->edid + edid->start_block * 128, edid->blocks * 128);
-	return 0;
-}
+	स_नकल(edid->edid, dev->edid + edid->start_block * 128, edid->blocks * 128);
+	वापस 0;
+पूर्ण

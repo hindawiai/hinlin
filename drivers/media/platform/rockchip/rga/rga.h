@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
  * Author: Jacob Chen <jacob-chen@iotwrt.com>
  */
-#ifndef __RGA_H__
-#define __RGA_H__
+#अगर_अघोषित __RGA_H__
+#घोषणा __RGA_H__
 
-#include <linux/platform_device.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-device.h>
 
-#define RGA_NAME "rockchip-rga"
+#घोषणा RGA_NAME "rockchip-rga"
 
-struct rga_fmt {
+काष्ठा rga_fmt अणु
 	u32 fourcc;
-	int depth;
+	पूर्णांक depth;
 	u8 uv_factor;
-	u8 y_div;
-	u8 x_div;
+	u8 y_भाग;
+	u8 x_भाग;
 	u8 color_swap;
-	u8 hw_format;
-};
+	u8 hw_क्रमmat;
+पूर्ण;
 
-struct rga_frame {
+काष्ठा rga_frame अणु
 	/* Original dimensions */
 	u32 width;
 	u32 height;
 	u32 colorspace;
 
 	/* Crop */
-	struct v4l2_rect crop;
+	काष्ठा v4l2_rect crop;
 
-	/* Image format */
-	struct rga_fmt *fmt;
+	/* Image क्रमmat */
+	काष्ठा rga_fmt *fmt;
 
 	/* Variables that can calculated once and reused */
 	u32 stride;
 	u32 size;
-};
+पूर्ण;
 
-struct rockchip_rga_version {
+काष्ठा rockchip_rga_version अणु
 	u32 major;
 	u32 minor;
-};
+पूर्ण;
 
-struct rga_ctx {
-	struct v4l2_fh fh;
-	struct rockchip_rga *rga;
-	struct rga_frame in;
-	struct rga_frame out;
-	struct v4l2_ctrl_handler ctrl_handler;
+काष्ठा rga_ctx अणु
+	काष्ठा v4l2_fh fh;
+	काष्ठा rockchip_rga *rga;
+	काष्ठा rga_frame in;
+	काष्ठा rga_frame out;
+	काष्ठा v4l2_ctrl_handler ctrl_handler;
 
 	/* Control values */
 	u32 op;
@@ -58,58 +59,58 @@ struct rga_ctx {
 	u32 vflip;
 	u32 rotate;
 	u32 fill_color;
-};
+पूर्ण;
 
-struct rockchip_rga {
-	struct v4l2_device v4l2_dev;
-	struct v4l2_m2m_dev *m2m_dev;
-	struct video_device *vfd;
+काष्ठा rockchip_rga अणु
+	काष्ठा v4l2_device v4l2_dev;
+	काष्ठा v4l2_m2m_dev *m2m_dev;
+	काष्ठा video_device *vfd;
 
-	struct device *dev;
-	struct regmap *grf;
-	void __iomem *regs;
-	struct clk *sclk;
-	struct clk *aclk;
-	struct clk *hclk;
-	struct rockchip_rga_version version;
+	काष्ठा device *dev;
+	काष्ठा regmap *grf;
+	व्योम __iomem *regs;
+	काष्ठा clk *sclk;
+	काष्ठा clk *aclk;
+	काष्ठा clk *hclk;
+	काष्ठा rockchip_rga_version version;
 
 	/* vfd lock */
-	struct mutex mutex;
+	काष्ठा mutex mutex;
 	/* ctrl parm lock */
 	spinlock_t ctrl_lock;
 
-	struct rga_ctx *curr;
+	काष्ठा rga_ctx *curr;
 	dma_addr_t cmdbuf_phy;
-	void *cmdbuf_virt;
-	unsigned int *src_mmu_pages;
-	unsigned int *dst_mmu_pages;
-};
+	व्योम *cmdbuf_virt;
+	अचिन्हित पूर्णांक *src_mmu_pages;
+	अचिन्हित पूर्णांक *dst_mmu_pages;
+पूर्ण;
 
-struct rga_frame *rga_get_frame(struct rga_ctx *ctx, enum v4l2_buf_type type);
+काष्ठा rga_frame *rga_get_frame(काष्ठा rga_ctx *ctx, क्रमागत v4l2_buf_type type);
 
 /* RGA Buffers Manage */
-extern const struct vb2_ops rga_qops;
-void rga_buf_map(struct vb2_buffer *vb);
+बाह्य स्थिर काष्ठा vb2_ops rga_qops;
+व्योम rga_buf_map(काष्ठा vb2_buffer *vb);
 
 /* RGA Hardware */
-static inline void rga_write(struct rockchip_rga *rga, u32 reg, u32 value)
-{
-	writel(value, rga->regs + reg);
-};
+अटल अंतरभूत व्योम rga_ग_लिखो(काष्ठा rockchip_rga *rga, u32 reg, u32 value)
+अणु
+	ग_लिखोl(value, rga->regs + reg);
+पूर्ण;
 
-static inline u32 rga_read(struct rockchip_rga *rga, u32 reg)
-{
-	return readl(rga->regs + reg);
-};
+अटल अंतरभूत u32 rga_पढ़ो(काष्ठा rockchip_rga *rga, u32 reg)
+अणु
+	वापस पढ़ोl(rga->regs + reg);
+पूर्ण;
 
-static inline void rga_mod(struct rockchip_rga *rga, u32 reg, u32 val, u32 mask)
-{
-	u32 temp = rga_read(rga, reg) & ~(mask);
+अटल अंतरभूत व्योम rga_mod(काष्ठा rockchip_rga *rga, u32 reg, u32 val, u32 mask)
+अणु
+	u32 temp = rga_पढ़ो(rga, reg) & ~(mask);
 
 	temp |= val & mask;
-	rga_write(rga, reg, temp);
-};
+	rga_ग_लिखो(rga, reg, temp);
+पूर्ण;
 
-void rga_hw_start(struct rockchip_rga *rga);
+व्योम rga_hw_start(काष्ठा rockchip_rga *rga);
 
-#endif
+#पूर्ण_अगर

@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * max77686.h - Driver for the Maxim 77686/802
+ * max77686.h - Driver क्रम the Maxim 77686/802
  *
  *  Copyright (C) 2012 Samsung Electrnoics
  *  Chiwoong Byun <woong.byun@samsung.com>
@@ -12,13 +13,13 @@
  * this mfd driver.
  */
 
-#ifndef __LINUX_MFD_MAX77686_H
-#define __LINUX_MFD_MAX77686_H
+#अगर_अघोषित __LINUX_MFD_MAX77686_H
+#घोषणा __LINUX_MFD_MAX77686_H
 
-#include <linux/regulator/consumer.h>
+#समावेश <linux/regulator/consumer.h>
 
 /* MAX77686 regulator IDs */
-enum max77686_regulators {
+क्रमागत max77686_regulators अणु
 	MAX77686_LDO1 = 0,
 	MAX77686_LDO2,
 	MAX77686_LDO3,
@@ -56,10 +57,10 @@ enum max77686_regulators {
 	MAX77686_BUCK9,
 
 	MAX77686_REG_MAX,
-};
+पूर्ण;
 
 /* MAX77802 regulator IDs */
-enum max77802_regulators {
+क्रमागत max77802_regulators अणु
 	MAX77802_BUCK1 = 0,
 	MAX77802_BUCK2,
 	MAX77802_BUCK3,
@@ -104,12 +105,12 @@ enum max77802_regulators {
 	MAX77802_LDO35,
 
 	MAX77802_REG_MAX,
-};
+पूर्ण;
 
-enum max77686_opmode {
+क्रमागत max77686_opmode अणु
 	MAX77686_OPMODE_NORMAL,
 	MAX77686_OPMODE_LP,
 	MAX77686_OPMODE_STANDBY,
-};
+पूर्ण;
 
-#endif /* __LINUX_MFD_MAX77686_H */
+#पूर्ण_अगर /* __LINUX_MFD_MAX77686_H */

@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- *  linux/drivers/video/fbcmap.c -- Colormap handling for frame buffer devices
+ *  linux/drivers/video/fbcmap.c -- Colormap handling क्रम frame buffer devices
  *
  *	Created 15 Jun 1997 by Geert Uytterhoeven
  *
@@ -7,232 +8,232 @@
  *	- Brad Douglas <brad@neruo.com>
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of this archive for
+ *  License.  See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  */
 
-#include <linux/string.h>
-#include <linux/module.h>
-#include <linux/fb.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/module.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
 
-static u16 red2[] __read_mostly = {
+अटल u16 red2[] __पढ़ो_mostly = अणु
     0x0000, 0xaaaa
-};
-static u16 green2[] __read_mostly = {
+पूर्ण;
+अटल u16 green2[] __पढ़ो_mostly = अणु
     0x0000, 0xaaaa
-};
-static u16 blue2[] __read_mostly = {
+पूर्ण;
+अटल u16 blue2[] __पढ़ो_mostly = अणु
     0x0000, 0xaaaa
-};
+पूर्ण;
 
-static u16 red4[] __read_mostly = {
+अटल u16 red4[] __पढ़ो_mostly = अणु
     0x0000, 0xaaaa, 0x5555, 0xffff
-};
-static u16 green4[] __read_mostly = {
+पूर्ण;
+अटल u16 green4[] __पढ़ो_mostly = अणु
     0x0000, 0xaaaa, 0x5555, 0xffff
-};
-static u16 blue4[] __read_mostly = {
+पूर्ण;
+अटल u16 blue4[] __पढ़ो_mostly = अणु
     0x0000, 0xaaaa, 0x5555, 0xffff
-};
+पूर्ण;
 
-static u16 red8[] __read_mostly = {
+अटल u16 red8[] __पढ़ो_mostly = अणु
     0x0000, 0x0000, 0x0000, 0x0000, 0xaaaa, 0xaaaa, 0xaaaa, 0xaaaa
-};
-static u16 green8[] __read_mostly = {
+पूर्ण;
+अटल u16 green8[] __पढ़ो_mostly = अणु
     0x0000, 0x0000, 0xaaaa, 0xaaaa, 0x0000, 0x0000, 0x5555, 0xaaaa
-};
-static u16 blue8[] __read_mostly = {
+पूर्ण;
+अटल u16 blue8[] __पढ़ो_mostly = अणु
     0x0000, 0xaaaa, 0x0000, 0xaaaa, 0x0000, 0xaaaa, 0x0000, 0xaaaa
-};
+पूर्ण;
 
-static u16 red16[] __read_mostly = {
+अटल u16 red16[] __पढ़ो_mostly = अणु
     0x0000, 0x0000, 0x0000, 0x0000, 0xaaaa, 0xaaaa, 0xaaaa, 0xaaaa,
     0x5555, 0x5555, 0x5555, 0x5555, 0xffff, 0xffff, 0xffff, 0xffff
-};
-static u16 green16[] __read_mostly = {
+पूर्ण;
+अटल u16 green16[] __पढ़ो_mostly = अणु
     0x0000, 0x0000, 0xaaaa, 0xaaaa, 0x0000, 0x0000, 0x5555, 0xaaaa,
     0x5555, 0x5555, 0xffff, 0xffff, 0x5555, 0x5555, 0xffff, 0xffff
-};
-static u16 blue16[] __read_mostly = {
+पूर्ण;
+अटल u16 blue16[] __पढ़ो_mostly = अणु
     0x0000, 0xaaaa, 0x0000, 0xaaaa, 0x0000, 0xaaaa, 0x0000, 0xaaaa,
     0x5555, 0xffff, 0x5555, 0xffff, 0x5555, 0xffff, 0x5555, 0xffff
-};
+पूर्ण;
 
-static const struct fb_cmap default_2_colors = {
+अटल स्थिर काष्ठा fb_cmap शेष_2_colors = अणु
     .len=2, .red=red2, .green=green2, .blue=blue2
-};
-static const struct fb_cmap default_8_colors = {
+पूर्ण;
+अटल स्थिर काष्ठा fb_cmap शेष_8_colors = अणु
     .len=8, .red=red8, .green=green8, .blue=blue8
-};
-static const struct fb_cmap default_4_colors = {
+पूर्ण;
+अटल स्थिर काष्ठा fb_cmap शेष_4_colors = अणु
     .len=4, .red=red4, .green=green4, .blue=blue4
-};
-static const struct fb_cmap default_16_colors = {
+पूर्ण;
+अटल स्थिर काष्ठा fb_cmap शेष_16_colors = अणु
     .len=16, .red=red16, .green=green16, .blue=blue16
-};
+पूर्ण;
 
 
 
 /**
  *	fb_alloc_cmap_gfp - allocate a colormap
- *	@cmap: frame buffer colormap structure
+ *	@cmap: frame buffer colormap काष्ठाure
  *	@len: length of @cmap
- *	@transp: boolean, 1 if there is transparency, 0 otherwise
- *	@flags: flags for kmalloc memory allocation
+ *	@transp: boolean, 1 अगर there is transparency, 0 otherwise
+ *	@flags: flags क्रम kदो_स्मृति memory allocation
  *
- *	Allocates memory for a colormap @cmap.  @len is the
+ *	Allocates memory क्रम a colormap @cmap.  @len is the
  *	number of entries in the palette.
  *
- *	Returns negative errno on error, or zero on success.
+ *	Returns negative त्रुटि_सं on error, or zero on success.
  *
  */
 
-int fb_alloc_cmap_gfp(struct fb_cmap *cmap, int len, int transp, gfp_t flags)
-{
-	int size = len * sizeof(u16);
-	int ret = -ENOMEM;
+पूर्णांक fb_alloc_cmap_gfp(काष्ठा fb_cmap *cmap, पूर्णांक len, पूर्णांक transp, gfp_t flags)
+अणु
+	पूर्णांक size = len * माप(u16);
+	पूर्णांक ret = -ENOMEM;
 
 	flags |= __GFP_NOWARN;
 
-	if (cmap->len != len) {
+	अगर (cmap->len != len) अणु
 		fb_dealloc_cmap(cmap);
-		if (!len)
-			return 0;
+		अगर (!len)
+			वापस 0;
 
 		cmap->red = kzalloc(size, flags);
-		if (!cmap->red)
-			goto fail;
+		अगर (!cmap->red)
+			जाओ fail;
 		cmap->green = kzalloc(size, flags);
-		if (!cmap->green)
-			goto fail;
+		अगर (!cmap->green)
+			जाओ fail;
 		cmap->blue = kzalloc(size, flags);
-		if (!cmap->blue)
-			goto fail;
-		if (transp) {
+		अगर (!cmap->blue)
+			जाओ fail;
+		अगर (transp) अणु
 			cmap->transp = kzalloc(size, flags);
-			if (!cmap->transp)
-				goto fail;
-		} else {
-			cmap->transp = NULL;
-		}
-	}
+			अगर (!cmap->transp)
+				जाओ fail;
+		पूर्ण अन्यथा अणु
+			cmap->transp = शून्य;
+		पूर्ण
+	पूर्ण
 	cmap->start = 0;
 	cmap->len = len;
-	ret = fb_copy_cmap(fb_default_cmap(len), cmap);
-	if (ret)
-		goto fail;
-	return 0;
+	ret = fb_copy_cmap(fb_शेष_cmap(len), cmap);
+	अगर (ret)
+		जाओ fail;
+	वापस 0;
 
 fail:
 	fb_dealloc_cmap(cmap);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int fb_alloc_cmap(struct fb_cmap *cmap, int len, int transp)
-{
-	return fb_alloc_cmap_gfp(cmap, len, transp, GFP_ATOMIC);
-}
+पूर्णांक fb_alloc_cmap(काष्ठा fb_cmap *cmap, पूर्णांक len, पूर्णांक transp)
+अणु
+	वापस fb_alloc_cmap_gfp(cmap, len, transp, GFP_ATOMIC);
+पूर्ण
 
 /**
  *      fb_dealloc_cmap - deallocate a colormap
- *      @cmap: frame buffer colormap structure
+ *      @cmap: frame buffer colormap काष्ठाure
  *
  *      Deallocates a colormap that was previously allocated with
  *      fb_alloc_cmap().
  *
  */
 
-void fb_dealloc_cmap(struct fb_cmap *cmap)
-{
-	kfree(cmap->red);
-	kfree(cmap->green);
-	kfree(cmap->blue);
-	kfree(cmap->transp);
+व्योम fb_dealloc_cmap(काष्ठा fb_cmap *cmap)
+अणु
+	kमुक्त(cmap->red);
+	kमुक्त(cmap->green);
+	kमुक्त(cmap->blue);
+	kमुक्त(cmap->transp);
 
-	cmap->red = cmap->green = cmap->blue = cmap->transp = NULL;
+	cmap->red = cmap->green = cmap->blue = cmap->transp = शून्य;
 	cmap->len = 0;
-}
+पूर्ण
 
 /**
  *	fb_copy_cmap - copy a colormap
- *	@from: frame buffer colormap structure
- *	@to: frame buffer colormap structure
+ *	@from: frame buffer colormap काष्ठाure
+ *	@to: frame buffer colormap काष्ठाure
  *
  *	Copy contents of colormap from @from to @to.
  */
 
-int fb_copy_cmap(const struct fb_cmap *from, struct fb_cmap *to)
-{
-	unsigned int tooff = 0, fromoff = 0;
-	size_t size;
+पूर्णांक fb_copy_cmap(स्थिर काष्ठा fb_cmap *from, काष्ठा fb_cmap *to)
+अणु
+	अचिन्हित पूर्णांक tooff = 0, fromoff = 0;
+	माप_प्रकार size;
 
-	if (to->start > from->start)
+	अगर (to->start > from->start)
 		fromoff = to->start - from->start;
-	else
+	अन्यथा
 		tooff = from->start - to->start;
-	if (fromoff >= from->len || tooff >= to->len)
-		return -EINVAL;
+	अगर (fromoff >= from->len || tooff >= to->len)
+		वापस -EINVAL;
 
-	size = min_t(size_t, to->len - tooff, from->len - fromoff);
-	if (size == 0)
-		return -EINVAL;
-	size *= sizeof(u16);
+	size = min_t(माप_प्रकार, to->len - tooff, from->len - fromoff);
+	अगर (size == 0)
+		वापस -EINVAL;
+	size *= माप(u16);
 
-	memcpy(to->red+tooff, from->red+fromoff, size);
-	memcpy(to->green+tooff, from->green+fromoff, size);
-	memcpy(to->blue+tooff, from->blue+fromoff, size);
-	if (from->transp && to->transp)
-		memcpy(to->transp+tooff, from->transp+fromoff, size);
-	return 0;
-}
+	स_नकल(to->red+tooff, from->red+fromoff, size);
+	स_नकल(to->green+tooff, from->green+fromoff, size);
+	स_नकल(to->blue+tooff, from->blue+fromoff, size);
+	अगर (from->transp && to->transp)
+		स_नकल(to->transp+tooff, from->transp+fromoff, size);
+	वापस 0;
+पूर्ण
 
-int fb_cmap_to_user(const struct fb_cmap *from, struct fb_cmap_user *to)
-{
-	unsigned int tooff = 0, fromoff = 0;
-	size_t size;
+पूर्णांक fb_cmap_to_user(स्थिर काष्ठा fb_cmap *from, काष्ठा fb_cmap_user *to)
+अणु
+	अचिन्हित पूर्णांक tooff = 0, fromoff = 0;
+	माप_प्रकार size;
 
-	if (to->start > from->start)
+	अगर (to->start > from->start)
 		fromoff = to->start - from->start;
-	else
+	अन्यथा
 		tooff = from->start - to->start;
-	if (fromoff >= from->len || tooff >= to->len)
-		return -EINVAL;
+	अगर (fromoff >= from->len || tooff >= to->len)
+		वापस -EINVAL;
 
-	size = min_t(size_t, to->len - tooff, from->len - fromoff);
-	if (size == 0)
-		return -EINVAL;
-	size *= sizeof(u16);
+	size = min_t(माप_प्रकार, to->len - tooff, from->len - fromoff);
+	अगर (size == 0)
+		वापस -EINVAL;
+	size *= माप(u16);
 
-	if (copy_to_user(to->red+tooff, from->red+fromoff, size))
-		return -EFAULT;
-	if (copy_to_user(to->green+tooff, from->green+fromoff, size))
-		return -EFAULT;
-	if (copy_to_user(to->blue+tooff, from->blue+fromoff, size))
-		return -EFAULT;
-	if (from->transp && to->transp)
-		if (copy_to_user(to->transp+tooff, from->transp+fromoff, size))
-			return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(to->red+tooff, from->red+fromoff, size))
+		वापस -EFAULT;
+	अगर (copy_to_user(to->green+tooff, from->green+fromoff, size))
+		वापस -EFAULT;
+	अगर (copy_to_user(to->blue+tooff, from->blue+fromoff, size))
+		वापस -EFAULT;
+	अगर (from->transp && to->transp)
+		अगर (copy_to_user(to->transp+tooff, from->transp+fromoff, size))
+			वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 /**
  *	fb_set_cmap - set the colormap
- *	@cmap: frame buffer colormap structure
- *	@info: frame buffer info structure
+ *	@cmap: frame buffer colormap काष्ठाure
+ *	@info: frame buffer info काष्ठाure
  *
- *	Sets the colormap @cmap for a screen of device @info.
+ *	Sets the colormap @cmap क्रम a screen of device @info.
  *
- *	Returns negative errno on error, or zero on success.
+ *	Returns negative त्रुटि_सं on error, or zero on success.
  *
  */
 
-int fb_set_cmap(struct fb_cmap *cmap, struct fb_info *info)
-{
-	int i, start, rc = 0;
+पूर्णांक fb_set_cmap(काष्ठा fb_cmap *cmap, काष्ठा fb_info *info)
+अणु
+	पूर्णांक i, start, rc = 0;
 	u16 *red, *green, *blue, *transp;
-	u_int hred, hgreen, hblue, htransp = 0xffff;
+	u_पूर्णांक hred, hgreen, hblue, htransp = 0xffff;
 
 	red = cmap->red;
 	green = cmap->green;
@@ -240,123 +241,123 @@ int fb_set_cmap(struct fb_cmap *cmap, struct fb_info *info)
 	transp = cmap->transp;
 	start = cmap->start;
 
-	if (start < 0 || (!info->fbops->fb_setcolreg &&
+	अगर (start < 0 || (!info->fbops->fb_setcolreg &&
 			  !info->fbops->fb_setcmap))
-		return -EINVAL;
-	if (info->fbops->fb_setcmap) {
+		वापस -EINVAL;
+	अगर (info->fbops->fb_setcmap) अणु
 		rc = info->fbops->fb_setcmap(cmap, info);
-	} else {
-		for (i = 0; i < cmap->len; i++) {
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < cmap->len; i++) अणु
 			hred = *red++;
 			hgreen = *green++;
 			hblue = *blue++;
-			if (transp)
+			अगर (transp)
 				htransp = *transp++;
-			if (info->fbops->fb_setcolreg(start++,
+			अगर (info->fbops->fb_setcolreg(start++,
 						      hred, hgreen, hblue,
 						      htransp, info))
-				break;
-		}
-	}
-	if (rc == 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (rc == 0)
 		fb_copy_cmap(cmap, &info->cmap);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int fb_set_user_cmap(struct fb_cmap_user *cmap, struct fb_info *info)
-{
-	int rc, size = cmap->len * sizeof(u16);
-	struct fb_cmap umap;
+पूर्णांक fb_set_user_cmap(काष्ठा fb_cmap_user *cmap, काष्ठा fb_info *info)
+अणु
+	पूर्णांक rc, size = cmap->len * माप(u16);
+	काष्ठा fb_cmap umap;
 
-	if (size < 0 || size < cmap->len)
-		return -E2BIG;
+	अगर (size < 0 || size < cmap->len)
+		वापस -E2BIG;
 
-	memset(&umap, 0, sizeof(struct fb_cmap));
-	rc = fb_alloc_cmap_gfp(&umap, cmap->len, cmap->transp != NULL,
+	स_रखो(&umap, 0, माप(काष्ठा fb_cmap));
+	rc = fb_alloc_cmap_gfp(&umap, cmap->len, cmap->transp != शून्य,
 				GFP_KERNEL);
-	if (rc)
-		return rc;
-	if (copy_from_user(umap.red, cmap->red, size) ||
+	अगर (rc)
+		वापस rc;
+	अगर (copy_from_user(umap.red, cmap->red, size) ||
 	    copy_from_user(umap.green, cmap->green, size) ||
 	    copy_from_user(umap.blue, cmap->blue, size) ||
-	    (cmap->transp && copy_from_user(umap.transp, cmap->transp, size))) {
+	    (cmap->transp && copy_from_user(umap.transp, cmap->transp, size))) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	umap.start = cmap->start;
 	lock_fb_info(info);
 	rc = fb_set_cmap(&umap, info);
 	unlock_fb_info(info);
 out:
 	fb_dealloc_cmap(&umap);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- *	fb_default_cmap - get default colormap
- *	@len: size of palette for a depth
+ *	fb_शेष_cmap - get शेष colormap
+ *	@len: size of palette क्रम a depth
  *
- *	Gets the default colormap for a specific screen depth.  @len
- *	is the size of the palette for a particular screen depth.
+ *	Gets the शेष colormap क्रम a specअगरic screen depth.  @len
+ *	is the size of the palette क्रम a particular screen depth.
  *
- *	Returns pointer to a frame buffer colormap structure.
+ *	Returns poपूर्णांकer to a frame buffer colormap काष्ठाure.
  *
  */
 
-const struct fb_cmap *fb_default_cmap(int len)
-{
-    if (len <= 2)
-	return &default_2_colors;
-    if (len <= 4)
-	return &default_4_colors;
-    if (len <= 8)
-	return &default_8_colors;
-    return &default_16_colors;
-}
+स्थिर काष्ठा fb_cmap *fb_शेष_cmap(पूर्णांक len)
+अणु
+    अगर (len <= 2)
+	वापस &शेष_2_colors;
+    अगर (len <= 4)
+	वापस &शेष_4_colors;
+    अगर (len <= 8)
+	वापस &शेष_8_colors;
+    वापस &शेष_16_colors;
+पूर्ण
 
 
 /**
- *	fb_invert_cmaps - invert all defaults colormaps
+ *	fb_invert_cmaps - invert all शेषs colormaps
  *
- *	Invert all default colormaps.
+ *	Invert all शेष colormaps.
  *
  */
 
-void fb_invert_cmaps(void)
-{
-    u_int i;
+व्योम fb_invert_cmaps(व्योम)
+अणु
+    u_पूर्णांक i;
 
-    for (i = 0; i < ARRAY_SIZE(red2); i++) {
+    क्रम (i = 0; i < ARRAY_SIZE(red2); i++) अणु
 	red2[i] = ~red2[i];
 	green2[i] = ~green2[i];
 	blue2[i] = ~blue2[i];
-    }
-    for (i = 0; i < ARRAY_SIZE(red4); i++) {
+    पूर्ण
+    क्रम (i = 0; i < ARRAY_SIZE(red4); i++) अणु
 	red4[i] = ~red4[i];
 	green4[i] = ~green4[i];
 	blue4[i] = ~blue4[i];
-    }
-    for (i = 0; i < ARRAY_SIZE(red8); i++) {
+    पूर्ण
+    क्रम (i = 0; i < ARRAY_SIZE(red8); i++) अणु
 	red8[i] = ~red8[i];
 	green8[i] = ~green8[i];
 	blue8[i] = ~blue8[i];
-    }
-    for (i = 0; i < ARRAY_SIZE(red16); i++) {
+    पूर्ण
+    क्रम (i = 0; i < ARRAY_SIZE(red16); i++) अणु
 	red16[i] = ~red16[i];
 	green16[i] = ~green16[i];
 	blue16[i] = ~blue16[i];
-    }
-}
+    पूर्ण
+पूर्ण
 
 
     /*
-     *  Visible symbols for modules
+     *  Visible symbols क्रम modules
      */
 
 EXPORT_SYMBOL(fb_alloc_cmap);
 EXPORT_SYMBOL(fb_dealloc_cmap);
 EXPORT_SYMBOL(fb_copy_cmap);
 EXPORT_SYMBOL(fb_set_cmap);
-EXPORT_SYMBOL(fb_default_cmap);
+EXPORT_SYMBOL(fb_शेष_cmap);
 EXPORT_SYMBOL(fb_invert_cmaps);

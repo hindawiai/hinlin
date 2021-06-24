@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#ifndef _QED_L2_H
-#define _QED_L2_H
-#include <linux/types.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/qed/qed_eth_if.h>
-#include "qed.h"
-#include "qed_hw.h"
-#include "qed_sp.h"
-struct qed_rss_params {
+#अगर_अघोषित _QED_L2_H
+#घोषणा _QED_L2_H
+#समावेश <linux/types.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/qed/qed_eth_अगर.h>
+#समावेश "qed.h"
+#समावेश "qed_hw.h"
+#समावेश "qed_sp.h"
+काष्ठा qed_rss_params अणु
 	u8 update_rss_config;
 	u8 rss_enable;
 	u8 rss_eng_id;
@@ -25,11 +26,11 @@ struct qed_rss_params {
 	u8 rss_table_size_log;
 
 	/* Indirection table consist of rx queue handles */
-	void *rss_ind_table[QED_RSS_IND_TABLE_SIZE];
+	व्योम *rss_ind_table[QED_RSS_IND_TABLE_SIZE];
 	u32 rss_key[QED_RSS_KEY_SIZE];
-};
+पूर्ण;
 
-struct qed_sge_tpa_params {
+काष्ठा qed_sge_tpa_params अणु
 	u8 max_buffers_per_cqe;
 
 	u8 update_tpa_en_flg;
@@ -44,19 +45,19 @@ struct qed_sge_tpa_params {
 	u8 tpa_gro_consistent_flg;
 	u8 tpa_max_aggs_num;
 	u16 tpa_max_size;
-	u16 tpa_min_size_to_start;
-	u16 tpa_min_size_to_cont;
-};
+	u16 tpa_min_माप_प्रकारo_start;
+	u16 tpa_min_माप_प्रकारo_cont;
+पूर्ण;
 
-enum qed_filter_opcode {
+क्रमागत qed_filter_opcode अणु
 	QED_FILTER_ADD,
 	QED_FILTER_REMOVE,
 	QED_FILTER_MOVE,
 	QED_FILTER_REPLACE,	/* Delete all MACs and add new one instead */
 	QED_FILTER_FLUSH,	/* Removes all filters */
-};
+पूर्ण;
 
-enum qed_filter_ucast_type {
+क्रमागत qed_filter_ucast_type अणु
 	QED_FILTER_MAC,
 	QED_FILTER_VLAN,
 	QED_FILTER_MAC_VLAN,
@@ -66,71 +67,71 @@ enum qed_filter_ucast_type {
 	QED_FILTER_INNER_MAC_VNI_PAIR,
 	QED_FILTER_MAC_VNI_PAIR,
 	QED_FILTER_VNI,
-};
+पूर्ण;
 
-struct qed_filter_ucast {
-	enum qed_filter_opcode opcode;
-	enum qed_filter_ucast_type type;
+काष्ठा qed_filter_ucast अणु
+	क्रमागत qed_filter_opcode opcode;
+	क्रमागत qed_filter_ucast_type type;
 	u8 is_rx_filter;
 	u8 is_tx_filter;
 	u8 vport_to_add_to;
-	u8 vport_to_remove_from;
-	unsigned char mac[ETH_ALEN];
-	u8 assert_on_error;
+	u8 vport_to_हटाओ_from;
+	अचिन्हित अक्षर mac[ETH_ALEN];
+	u8 निश्चित_on_error;
 	u16 vlan;
 	u32 vni;
-};
+पूर्ण;
 
-struct qed_filter_mcast {
-	/* MOVE is not supported for multicast */
-	enum qed_filter_opcode opcode;
+काष्ठा qed_filter_mcast अणु
+	/* MOVE is not supported क्रम multicast */
+	क्रमागत qed_filter_opcode opcode;
 	u8 vport_to_add_to;
-	u8 vport_to_remove_from;
+	u8 vport_to_हटाओ_from;
 	u8 num_mc_addrs;
-#define QED_MAX_MC_ADDRS        64
-	unsigned char mac[QED_MAX_MC_ADDRS][ETH_ALEN];
-};
+#घोषणा QED_MAX_MC_ADDRS        64
+	अचिन्हित अक्षर mac[QED_MAX_MC_ADDRS][ETH_ALEN];
+पूर्ण;
 
 /**
- * @brief qed_eth_rx_queue_stop - This ramrod closes an Rx queue
+ * @brief qed_eth_rx_queue_stop - This ramrod बंदs an Rx queue
  *
  * @param p_hwfn
- * @param p_rxq			Handler of queue to close
+ * @param p_rxq			Handler of queue to बंद
  * @param eq_completion_only	If True completion will be on
- *				EQe, if False completion will be
- *				on EQe if p_hwfn opaque
- *				different from the RXQ opaque
+ *				EQe, अगर False completion will be
+ *				on EQe अगर p_hwfn opaque
+ *				dअगरferent from the RXQ opaque
  *				otherwise on CQe.
  * @param cqe_completion	If True completion will be
  *				receive on CQe.
- * @return int
+ * @वापस पूर्णांक
  */
-int
-qed_eth_rx_queue_stop(struct qed_hwfn *p_hwfn,
-		      void *p_rxq,
+पूर्णांक
+qed_eth_rx_queue_stop(काष्ठा qed_hwfn *p_hwfn,
+		      व्योम *p_rxq,
 		      bool eq_completion_only, bool cqe_completion);
 
 /**
- * @brief qed_eth_tx_queue_stop - closes a Tx queue
+ * @brief qed_eth_tx_queue_stop - बंदs a Tx queue
  *
  * @param p_hwfn
- * @param p_txq - handle to Tx queue needed to be closed
+ * @param p_txq - handle to Tx queue needed to be बंदd
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_eth_tx_queue_stop(struct qed_hwfn *p_hwfn, void *p_txq);
+पूर्णांक qed_eth_tx_queue_stop(काष्ठा qed_hwfn *p_hwfn, व्योम *p_txq);
 
-enum qed_tpa_mode {
+क्रमागत qed_tpa_mode अणु
 	QED_TPA_MODE_NONE,
 	QED_TPA_MODE_UNUSED,
 	QED_TPA_MODE_GRO,
 	QED_TPA_MODE_MAX
-};
+पूर्ण;
 
-struct qed_sp_vport_start_params {
-	enum qed_tpa_mode tpa_mode;
-	bool remove_inner_vlan;
-	bool tx_switching;
+काष्ठा qed_sp_vport_start_params अणु
+	क्रमागत qed_tpa_mode tpa_mode;
+	bool हटाओ_inner_vlan;
+	bool tx_चयनing;
 	bool handle_ptp_pkts;
 	bool only_untagged;
 	bool drop_ttl0;
@@ -141,35 +142,35 @@ struct qed_sp_vport_start_params {
 	u16 mtu;
 	bool check_mac;
 	bool check_ethtype;
-};
+पूर्ण;
 
-int qed_sp_eth_vport_start(struct qed_hwfn *p_hwfn,
-			   struct qed_sp_vport_start_params *p_params);
+पूर्णांक qed_sp_eth_vport_start(काष्ठा qed_hwfn *p_hwfn,
+			   काष्ठा qed_sp_vport_start_params *p_params);
 
 
-struct qed_filter_accept_flags {
+काष्ठा qed_filter_accept_flags अणु
 	u8	update_rx_mode_config;
 	u8	update_tx_mode_config;
 	u8	rx_accept_filter;
 	u8	tx_accept_filter;
-#define QED_ACCEPT_NONE         0x01
-#define QED_ACCEPT_UCAST_MATCHED        0x02
-#define QED_ACCEPT_UCAST_UNMATCHED      0x04
-#define QED_ACCEPT_MCAST_MATCHED        0x08
-#define QED_ACCEPT_MCAST_UNMATCHED      0x10
-#define QED_ACCEPT_BCAST                0x20
-#define QED_ACCEPT_ANY_VNI              0x40
-};
+#घोषणा QED_ACCEPT_NONE         0x01
+#घोषणा QED_ACCEPT_UCAST_MATCHED        0x02
+#घोषणा QED_ACCEPT_UCAST_UNMATCHED      0x04
+#घोषणा QED_ACCEPT_MCAST_MATCHED        0x08
+#घोषणा QED_ACCEPT_MCAST_UNMATCHED      0x10
+#घोषणा QED_ACCEPT_BCAST                0x20
+#घोषणा QED_ACCEPT_ANY_VNI              0x40
+पूर्ण;
 
-struct qed_arfs_config_params {
+काष्ठा qed_arfs_config_params अणु
 	bool tcp;
 	bool udp;
 	bool ipv4;
 	bool ipv6;
-	enum qed_filter_config_mode mode;
-};
+	क्रमागत qed_filter_config_mode mode;
+पूर्ण;
 
-struct qed_sp_vport_update_params {
+काष्ठा qed_sp_vport_update_params अणु
 	u16				opaque_fid;
 	u8				vport_id;
 	u8				update_vport_active_rx_flg;
@@ -179,55 +180,55 @@ struct qed_sp_vport_update_params {
 	u8				update_inner_vlan_removal_flg;
 	u8				inner_vlan_removal_flg;
 	u8				silent_vlan_removal_flg;
-	u8				update_default_vlan_enable_flg;
-	u8				default_vlan_enable_flg;
-	u8				update_default_vlan_flg;
-	u16				default_vlan;
-	u8				update_tx_switching_flg;
-	u8				tx_switching_flg;
+	u8				update_शेष_vlan_enable_flg;
+	u8				शेष_vlan_enable_flg;
+	u8				update_शेष_vlan_flg;
+	u16				शेष_vlan;
+	u8				update_tx_चयनing_flg;
+	u8				tx_चयनing_flg;
 	u8				update_approx_mcast_flg;
 	u8				update_anti_spoofing_en_flg;
 	u8				anti_spoofing_en;
 	u8				update_accept_any_vlan_flg;
 	u8				accept_any_vlan;
 	u32				bins[8];
-	struct qed_rss_params		*rss_params;
-	struct qed_filter_accept_flags	accept_flags;
-	struct qed_sge_tpa_params	*sge_tpa_params;
+	काष्ठा qed_rss_params		*rss_params;
+	काष्ठा qed_filter_accept_flags	accept_flags;
+	काष्ठा qed_sge_tpa_params	*sge_tpa_params;
 	u8				update_ctl_frame_check;
 	u8				mac_chk_en;
 	u8				ethtype_chk_en;
-};
+पूर्ण;
 
-int qed_sp_vport_update(struct qed_hwfn *p_hwfn,
-			struct qed_sp_vport_update_params *p_params,
-			enum spq_mode comp_mode,
-			struct qed_spq_comp_cb *p_comp_data);
+पूर्णांक qed_sp_vport_update(काष्ठा qed_hwfn *p_hwfn,
+			काष्ठा qed_sp_vport_update_params *p_params,
+			क्रमागत spq_mode comp_mode,
+			काष्ठा qed_spq_comp_cb *p_comp_data);
 
 /**
  * @brief qed_sp_vport_stop -
  *
- * This ramrod closes a VPort after all its RX and TX queues are terminated.
- * An Assert is generated if any queues are left open.
+ * This ramrod बंदs a VPort after all its RX and TX queues are terminated.
+ * An Assert is generated अगर any queues are left खोलो.
  *
  * @param p_hwfn
  * @param opaque_fid
  * @param vport_id VPort ID
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int qed_sp_vport_stop(struct qed_hwfn *p_hwfn, u16 opaque_fid, u8 vport_id);
+पूर्णांक qed_sp_vport_stop(काष्ठा qed_hwfn *p_hwfn, u16 opaque_fid, u8 vport_id);
 
-int qed_sp_eth_filter_ucast(struct qed_hwfn *p_hwfn,
+पूर्णांक qed_sp_eth_filter_ucast(काष्ठा qed_hwfn *p_hwfn,
 			    u16 opaque_fid,
-			    struct qed_filter_ucast *p_filter_cmd,
-			    enum spq_mode comp_mode,
-			    struct qed_spq_comp_cb *p_comp_data);
+			    काष्ठा qed_filter_ucast *p_filter_cmd,
+			    क्रमागत spq_mode comp_mode,
+			    काष्ठा qed_spq_comp_cb *p_comp_data);
 
 /**
  * @brief qed_sp_rx_eth_queues_update -
  *
- * This ramrod updates an RX queue. It is used for setting the active state
+ * This ramrod updates an RX queue. It is used क्रम setting the active state
  * of the queue and updating the TPA and SGE parameters.
  *
  * @note At the moment - only used by non-linux VFs.
@@ -235,26 +236,26 @@ int qed_sp_eth_filter_ucast(struct qed_hwfn *p_hwfn,
  * @param p_hwfn
  * @param pp_rxq_handlers	An array of queue handlers to be updated.
  * @param num_rxqs              number of queues to update.
- * @param complete_cqe_flg	Post completion to the CQE Ring if set
- * @param complete_event_flg	Post completion to the Event Ring if set
+ * @param complete_cqe_flg	Post completion to the CQE Ring अगर set
+ * @param complete_event_flg	Post completion to the Event Ring अगर set
  * @param comp_mode
  * @param p_comp_data
  *
- * @return int
+ * @वापस पूर्णांक
  */
 
-int
-qed_sp_eth_rx_queues_update(struct qed_hwfn *p_hwfn,
-			    void **pp_rxq_handlers,
+पूर्णांक
+qed_sp_eth_rx_queues_update(काष्ठा qed_hwfn *p_hwfn,
+			    व्योम **pp_rxq_handlers,
 			    u8 num_rxqs,
 			    u8 complete_cqe_flg,
 			    u8 complete_event_flg,
-			    enum spq_mode comp_mode,
-			    struct qed_spq_comp_cb *p_comp_data);
+			    क्रमागत spq_mode comp_mode,
+			    काष्ठा qed_spq_comp_cb *p_comp_data);
 
-void qed_get_vport_stats(struct qed_dev *cdev, struct qed_eth_stats *stats);
+व्योम qed_get_vport_stats(काष्ठा qed_dev *cdev, काष्ठा qed_eth_stats *stats);
 
-void qed_reset_vport_stats(struct qed_dev *cdev);
+व्योम qed_reset_vport_stats(काष्ठा qed_dev *cdev);
 
 /**
  * *@brief qed_arfs_mode_configure -
@@ -267,42 +268,42 @@ void qed_reset_vport_stats(struct qed_dev *cdev);
  **@param p_cfg_params - arfs mode configuration parameters.
  *
  */
-void qed_arfs_mode_configure(struct qed_hwfn *p_hwfn,
-			     struct qed_ptt *p_ptt,
-			     struct qed_arfs_config_params *p_cfg_params);
+व्योम qed_arfs_mode_configure(काष्ठा qed_hwfn *p_hwfn,
+			     काष्ठा qed_ptt *p_ptt,
+			     काष्ठा qed_arfs_config_params *p_cfg_params);
 
 /**
  * @brief - qed_configure_rfs_ntuple_filter
  *
- * This ramrod should be used to add or remove arfs hw filter
+ * This ramrod should be used to add or हटाओ arfs hw filter
  *
  * @params p_hwfn
- * @params p_cb - Used for QED_SPQ_MODE_CB,where client would initialize
- *		  it with cookie and callback function address, if not
- *		  using this mode then client must pass NULL.
+ * @params p_cb - Used क्रम QED_SPQ_MODE_CB,where client would initialize
+ *		  it with cookie and callback function address, अगर not
+ *		  using this mode then client must pass शून्य.
  * @params p_params
  */
-int
-qed_configure_rfs_ntuple_filter(struct qed_hwfn *p_hwfn,
-				struct qed_spq_comp_cb *p_cb,
-				struct qed_ntuple_filter_params *p_params);
+पूर्णांक
+qed_configure_rfs_ntuple_filter(काष्ठा qed_hwfn *p_hwfn,
+				काष्ठा qed_spq_comp_cb *p_cb,
+				काष्ठा qed_ntuple_filter_params *p_params);
 
-#define MAX_QUEUES_PER_QZONE    (sizeof(unsigned long) * 8)
-#define QED_QUEUE_CID_SELF	(0xff)
+#घोषणा MAX_QUEUES_PER_QZONE    (माप(अचिन्हित दीर्घ) * 8)
+#घोषणा QED_QUEUE_CID_SELF	(0xff)
 
 /* Almost identical to the qed_queue_start_common_params,
- * but here we maintain the SB index in IGU CAM.
+ * but here we मुख्यtain the SB index in IGU CAM.
  */
-struct qed_queue_cid_params {
+काष्ठा qed_queue_cid_params अणु
 	u8 vport_id;
 	u16 queue_id;
 	u8 stats_id;
-};
+पूर्ण;
 
-/* Additional parameters required for initialization of the queue_cid
- * and are relevant only for a PF initializing one for its VFs.
+/* Additional parameters required क्रम initialization of the queue_cid
+ * and are relevant only क्रम a PF initializing one क्रम its VFs.
  */
-struct qed_queue_cid_vf_params {
+काष्ठा qed_queue_cid_vf_params अणु
 	/* Should match the VF's relative index */
 	u8 vfid;
 
@@ -311,19 +312,19 @@ struct qed_queue_cid_vf_params {
 	 */
 	u8 vf_qid;
 
-	/* Indicates a VF is legacy, making it differ in several things:
-	 *  - Producers would be placed in a different place.
+	/* Indicates a VF is legacy, making it dअगरfer in several things:
+	 *  - Producers would be placed in a dअगरferent place.
 	 *  - Makes assumptions regarding the CIDs.
 	 */
 	u8 vf_legacy;
 
 	u8 qid_usage_idx;
-};
+पूर्ण;
 
-struct qed_queue_cid {
-	/* For stats-id, the `rel' is actually absolute as well */
-	struct qed_queue_cid_params rel;
-	struct qed_queue_cid_params abs;
+काष्ठा qed_queue_cid अणु
+	/* For stats-id, the `rel' is actually असलolute as well */
+	काष्ठा qed_queue_cid_params rel;
+	काष्ठा qed_queue_cid_params असल;
 
 	/* These have no 'relative' meaning */
 	u16 sb_igu_id;
@@ -334,7 +335,7 @@ struct qed_queue_cid {
 
 	bool b_is_rx;
 
-	/* VFs queues are mapped differently, so we need to know the
+	/* VFs queues are mapped dअगरferently, so we need to know the
 	 * relative queue associated with them [0-based].
 	 * Notice this is relevant on the *PF* queue-cid of its VF's queues,
 	 * and not on the VF itself.
@@ -342,39 +343,39 @@ struct qed_queue_cid {
 	u8 vfid;
 	u8 vf_qid;
 
-	/* We need an additional index to differentiate between queues opened
-	 * for same queue-zone, as VFs would have to communicate the info
-	 * to the PF [otherwise PF has no way to differentiate].
+	/* We need an additional index to dअगरferentiate between queues खोलोed
+	 * क्रम same queue-zone, as VFs would have to communicate the info
+	 * to the PF [otherwise PF has no way to dअगरferentiate].
 	 */
 	u8 qid_usage_idx;
 
 	u8 vf_legacy;
-#define QED_QCID_LEGACY_VF_RX_PROD	(BIT(0))
-#define QED_QCID_LEGACY_VF_CID		(BIT(1))
+#घोषणा QED_QCID_LEGACY_VF_RX_PROD	(BIT(0))
+#घोषणा QED_QCID_LEGACY_VF_CID		(BIT(1))
 
-	struct qed_hwfn *p_owner;
-};
+	काष्ठा qed_hwfn *p_owner;
+पूर्ण;
 
-int qed_l2_alloc(struct qed_hwfn *p_hwfn);
-void qed_l2_setup(struct qed_hwfn *p_hwfn);
-void qed_l2_free(struct qed_hwfn *p_hwfn);
+पूर्णांक qed_l2_alloc(काष्ठा qed_hwfn *p_hwfn);
+व्योम qed_l2_setup(काष्ठा qed_hwfn *p_hwfn);
+व्योम qed_l2_मुक्त(काष्ठा qed_hwfn *p_hwfn);
 
-void qed_eth_queue_cid_release(struct qed_hwfn *p_hwfn,
-			       struct qed_queue_cid *p_cid);
+व्योम qed_eth_queue_cid_release(काष्ठा qed_hwfn *p_hwfn,
+			       काष्ठा qed_queue_cid *p_cid);
 
-struct qed_queue_cid *
-qed_eth_queue_to_cid(struct qed_hwfn *p_hwfn,
+काष्ठा qed_queue_cid *
+qed_eth_queue_to_cid(काष्ठा qed_hwfn *p_hwfn,
 		     u16 opaque_fid,
-		     struct qed_queue_start_common_params *p_params,
+		     काष्ठा qed_queue_start_common_params *p_params,
 		     bool b_is_rx,
-		     struct qed_queue_cid_vf_params *p_vf_params);
+		     काष्ठा qed_queue_cid_vf_params *p_vf_params);
 
-int
-qed_sp_eth_vport_start(struct qed_hwfn *p_hwfn,
-		       struct qed_sp_vport_start_params *p_params);
+पूर्णांक
+qed_sp_eth_vport_start(काष्ठा qed_hwfn *p_hwfn,
+		       काष्ठा qed_sp_vport_start_params *p_params);
 
 /**
- * @brief - Starts an Rx queue, when queue_cid is already prepared
+ * @brief - Starts an Rx queue, when queue_cid is alपढ़ोy prepared
  *
  * @param p_hwfn
  * @param p_cid
@@ -383,47 +384,47 @@ qed_sp_eth_vport_start(struct qed_hwfn *p_hwfn,
  * @param cqe_pbl_addr
  * @param cqe_pbl_size
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int
-qed_eth_rxq_start_ramrod(struct qed_hwfn *p_hwfn,
-			 struct qed_queue_cid *p_cid,
+पूर्णांक
+qed_eth_rxq_start_ramrod(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_queue_cid *p_cid,
 			 u16 bd_max_bytes,
 			 dma_addr_t bd_chain_phys_addr,
 			 dma_addr_t cqe_pbl_addr, u16 cqe_pbl_size);
 
 /**
- * @brief - Starts a Tx queue, where queue_cid is already prepared
+ * @brief - Starts a Tx queue, where queue_cid is alपढ़ोy prepared
  *
  * @param p_hwfn
  * @param p_cid
  * @param pbl_addr
  * @param pbl_size
- * @param p_pq_params - parameters for choosing the PQ for this Tx queue
+ * @param p_pq_params - parameters क्रम choosing the PQ क्रम this Tx queue
  *
- * @return int
+ * @वापस पूर्णांक
  */
-int
-qed_eth_txq_start_ramrod(struct qed_hwfn *p_hwfn,
-			 struct qed_queue_cid *p_cid,
+पूर्णांक
+qed_eth_txq_start_ramrod(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_queue_cid *p_cid,
 			 dma_addr_t pbl_addr, u16 pbl_size, u16 pq_id);
 
 u8 qed_mcast_bin_from_mac(u8 *mac);
 
-int qed_set_rxq_coalesce(struct qed_hwfn *p_hwfn,
-			 struct qed_ptt *p_ptt,
-			 u16 coalesce, struct qed_queue_cid *p_cid);
+पूर्णांक qed_set_rxq_coalesce(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_ptt *p_ptt,
+			 u16 coalesce, काष्ठा qed_queue_cid *p_cid);
 
-int qed_set_txq_coalesce(struct qed_hwfn *p_hwfn,
-			 struct qed_ptt *p_ptt,
-			 u16 coalesce, struct qed_queue_cid *p_cid);
+पूर्णांक qed_set_txq_coalesce(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_ptt *p_ptt,
+			 u16 coalesce, काष्ठा qed_queue_cid *p_cid);
 
-int qed_get_rxq_coalesce(struct qed_hwfn *p_hwfn,
-			 struct qed_ptt *p_ptt,
-			 struct qed_queue_cid *p_cid, u16 *p_hw_coal);
+पूर्णांक qed_get_rxq_coalesce(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_ptt *p_ptt,
+			 काष्ठा qed_queue_cid *p_cid, u16 *p_hw_coal);
 
-int qed_get_txq_coalesce(struct qed_hwfn *p_hwfn,
-			 struct qed_ptt *p_ptt,
-			 struct qed_queue_cid *p_cid, u16 *p_hw_coal);
+पूर्णांक qed_get_txq_coalesce(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_ptt *p_ptt,
+			 काष्ठा qed_queue_cid *p_cid, u16 *p_hw_coal);
 
-#endif
+#पूर्ण_अगर

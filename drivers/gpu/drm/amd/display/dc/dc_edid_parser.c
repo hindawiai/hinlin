@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2021 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,58 +24,58 @@
  *
  */
 
-#include "dce/dce_dmcu.h"
-#include "dc_edid_parser.h"
+#समावेश "dce/dce_dmcu.h"
+#समावेश "dc_edid_parser.h"
 
-bool dc_edid_parser_send_cea(struct dc *dc,
-		int offset,
-		int total_length,
-		uint8_t *data,
-		int length)
-{
-	struct dmcu *dmcu = dc->res_pool->dmcu;
+bool dc_edid_parser_send_cea(काष्ठा dc *dc,
+		पूर्णांक offset,
+		पूर्णांक total_length,
+		uपूर्णांक8_t *data,
+		पूर्णांक length)
+अणु
+	काष्ठा dmcu *dmcu = dc->res_pool->dmcu;
 
-	if (dmcu &&
+	अगर (dmcu &&
 	    dmcu->funcs->is_dmcu_initialized(dmcu) &&
-	    dmcu->funcs->send_edid_cea) {
-		return dmcu->funcs->send_edid_cea(dmcu,
+	    dmcu->funcs->send_edid_cea) अणु
+		वापस dmcu->funcs->send_edid_cea(dmcu,
 				offset,
 				total_length,
 				data,
 				length);
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool dc_edid_parser_recv_cea_ack(struct dc *dc, int *offset)
-{
-	struct dmcu *dmcu = dc->res_pool->dmcu;
+bool dc_edid_parser_recv_cea_ack(काष्ठा dc *dc, पूर्णांक *offset)
+अणु
+	काष्ठा dmcu *dmcu = dc->res_pool->dmcu;
 
-	if (dmcu &&
+	अगर (dmcu &&
 	    dmcu->funcs->is_dmcu_initialized(dmcu) &&
-	    dmcu->funcs->recv_edid_cea_ack) {
-		return dmcu->funcs->recv_edid_cea_ack(dmcu, offset);
-	}
+	    dmcu->funcs->recv_edid_cea_ack) अणु
+		वापस dmcu->funcs->recv_edid_cea_ack(dmcu, offset);
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool dc_edid_parser_recv_amd_vsdb(struct dc *dc,
-		int *version,
-		int *min_frame_rate,
-		int *max_frame_rate)
-{
-	struct dmcu *dmcu = dc->res_pool->dmcu;
+bool dc_edid_parser_recv_amd_vsdb(काष्ठा dc *dc,
+		पूर्णांक *version,
+		पूर्णांक *min_frame_rate,
+		पूर्णांक *max_frame_rate)
+अणु
+	काष्ठा dmcu *dmcu = dc->res_pool->dmcu;
 
-	if (dmcu &&
+	अगर (dmcu &&
 	    dmcu->funcs->is_dmcu_initialized(dmcu) &&
-	    dmcu->funcs->recv_amd_vsdb) {
-		return dmcu->funcs->recv_amd_vsdb(dmcu,
+	    dmcu->funcs->recv_amd_vsdb) अणु
+		वापस dmcu->funcs->recv_amd_vsdb(dmcu,
 				version,
 				min_frame_rate,
 				max_frame_rate);
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण

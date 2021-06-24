@@ -1,38 +1,39 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef _I915_GLOBALS_H_
-#define _I915_GLOBALS_H_
+#अगर_अघोषित _I915_GLOBALS_H_
+#घोषणा _I915_GLOBALS_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-typedef void (*i915_global_func_t)(void);
+प्रकार व्योम (*i915_global_func_t)(व्योम);
 
-struct i915_global {
-	struct list_head link;
+काष्ठा i915_global अणु
+	काष्ठा list_head link;
 
 	i915_global_func_t shrink;
-	i915_global_func_t exit;
-};
+	i915_global_func_t निकास;
+पूर्ण;
 
-void i915_global_register(struct i915_global *global);
+व्योम i915_global_रेजिस्टर(काष्ठा i915_global *global);
 
-int i915_globals_init(void);
-void i915_globals_park(void);
-void i915_globals_unpark(void);
-void i915_globals_exit(void);
+पूर्णांक i915_globals_init(व्योम);
+व्योम i915_globals_park(व्योम);
+व्योम i915_globals_unpark(व्योम);
+व्योम i915_globals_निकास(व्योम);
 
-/* constructors */
-int i915_global_active_init(void);
-int i915_global_buddy_init(void);
-int i915_global_context_init(void);
-int i915_global_gem_context_init(void);
-int i915_global_objects_init(void);
-int i915_global_request_init(void);
-int i915_global_scheduler_init(void);
-int i915_global_vma_init(void);
+/* स्थिरructors */
+पूर्णांक i915_global_active_init(व्योम);
+पूर्णांक i915_global_buddy_init(व्योम);
+पूर्णांक i915_global_context_init(व्योम);
+पूर्णांक i915_global_gem_context_init(व्योम);
+पूर्णांक i915_global_objects_init(व्योम);
+पूर्णांक i915_global_request_init(व्योम);
+पूर्णांक i915_global_scheduler_init(व्योम);
+पूर्णांक i915_global_vma_init(व्योम);
 
-#endif /* _I915_GLOBALS_H_ */
+#पूर्ण_अगर /* _I915_GLOBALS_H_ */

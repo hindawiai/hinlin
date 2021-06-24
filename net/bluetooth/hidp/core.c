@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
-   HIDP implementation for Linux Bluetooth stack (BlueZ).
-   Copyright (C) 2003-2004 Marcel Holtmann <marcel@holtmann.org>
+   HIDP implementation क्रम Linux Bluetooth stack (BlueZ).
+   Copyright (C) 2003-2004 Marcel Holपंचांगann <marcel@holपंचांगann.org>
    Copyright (C) 2013 David Herrmann <dh.herrmann@gmail.com>
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -11,7 +12,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -21,25 +22,25 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-#include <linux/kref.h>
-#include <linux/module.h>
-#include <linux/file.h>
-#include <linux/kthread.h>
-#include <linux/hidraw.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/module.h>
+#समावेश <linux/file.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/hidraw.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
-#include <net/bluetooth/l2cap.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/l2cap.h>
 
-#include "hidp.h"
+#समावेश "hidp.h"
 
-#define VERSION "1.2"
+#घोषणा VERSION "1.2"
 
-static DECLARE_RWSEM(hidp_session_sem);
-static DECLARE_WAIT_QUEUE_HEAD(hidp_session_wq);
-static LIST_HEAD(hidp_session_list);
+अटल DECLARE_RWSEM(hidp_session_sem);
+अटल DECLARE_WAIT_QUEUE_HEAD(hidp_session_wq);
+अटल LIST_HEAD(hidp_session_list);
 
-static unsigned char hidp_keycode[256] = {
+अटल अचिन्हित अक्षर hidp_keycode[256] = अणु
 	  0,   0,   0,   0,  30,  48,  46,  32,  18,  33,  34,  35,  23,  36,
 	 37,  38,  50,  49,  24,  25,  16,  19,  31,  20,  22,  47,  17,  45,
 	 21,  44,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  28,   1,
@@ -58,104 +59,104 @@ static unsigned char hidp_keycode[256] = {
 	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
 	 29,  42,  56, 125,  97,  54, 100, 126, 164, 166, 165, 163, 161, 115,
 	114, 113, 150, 158, 159, 128, 136, 177, 178, 176, 142, 152, 173, 140
-};
+पूर्ण;
 
-static unsigned char hidp_mkeyspat[] = { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 };
+अटल अचिन्हित अक्षर hidp_mkeyspat[] = अणु 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 पूर्ण;
 
-static int hidp_session_probe(struct l2cap_conn *conn,
-			      struct l2cap_user *user);
-static void hidp_session_remove(struct l2cap_conn *conn,
-				struct l2cap_user *user);
-static int hidp_session_thread(void *arg);
-static void hidp_session_terminate(struct hidp_session *s);
+अटल पूर्णांक hidp_session_probe(काष्ठा l2cap_conn *conn,
+			      काष्ठा l2cap_user *user);
+अटल व्योम hidp_session_हटाओ(काष्ठा l2cap_conn *conn,
+				काष्ठा l2cap_user *user);
+अटल पूर्णांक hidp_session_thपढ़ो(व्योम *arg);
+अटल व्योम hidp_session_terminate(काष्ठा hidp_session *s);
 
-static void hidp_copy_session(struct hidp_session *session, struct hidp_conninfo *ci)
-{
+अटल व्योम hidp_copy_session(काष्ठा hidp_session *session, काष्ठा hidp_conninfo *ci)
+अणु
 	u32 valid_flags = 0;
-	memset(ci, 0, sizeof(*ci));
+	स_रखो(ci, 0, माप(*ci));
 	bacpy(&ci->bdaddr, &session->bdaddr);
 
 	ci->flags = session->flags & valid_flags;
 	ci->state = BT_CONNECTED;
 
-	if (session->input) {
-		ci->vendor  = session->input->id.vendor;
+	अगर (session->input) अणु
+		ci->venकरोr  = session->input->id.venकरोr;
 		ci->product = session->input->id.product;
 		ci->version = session->input->id.version;
-		if (session->input->name)
+		अगर (session->input->name)
 			strlcpy(ci->name, session->input->name, 128);
-		else
+		अन्यथा
 			strlcpy(ci->name, "HID Boot Device", 128);
-	} else if (session->hid) {
-		ci->vendor  = session->hid->vendor;
+	पूर्ण अन्यथा अगर (session->hid) अणु
+		ci->venकरोr  = session->hid->venकरोr;
 		ci->product = session->hid->product;
 		ci->version = session->hid->version;
 		strlcpy(ci->name, session->hid->name, 128);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* assemble skb, queue message on @transmit and wake up the session thread */
-static int hidp_send_message(struct hidp_session *session, struct socket *sock,
-			     struct sk_buff_head *transmit, unsigned char hdr,
-			     const unsigned char *data, int size)
-{
-	struct sk_buff *skb;
-	struct sock *sk = sock->sk;
-	int ret;
+/* assemble skb, queue message on @transmit and wake up the session thपढ़ो */
+अटल पूर्णांक hidp_send_message(काष्ठा hidp_session *session, काष्ठा socket *sock,
+			     काष्ठा sk_buff_head *transmit, अचिन्हित अक्षर hdr,
+			     स्थिर अचिन्हित अक्षर *data, पूर्णांक size)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक ret;
 
 	BT_DBG("session %p data %p size %d", session, data, size);
 
-	if (atomic_read(&session->terminate))
-		return -EIO;
+	अगर (atomic_पढ़ो(&session->terminate))
+		वापस -EIO;
 
 	skb = alloc_skb(size + 1, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		BT_ERR("Can't allocate memory for new frame");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	skb_put_u8(skb, hdr);
-	if (data && size > 0) {
+	अगर (data && size > 0) अणु
 		skb_put_data(skb, data, size);
 		ret = size;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = 0;
-	}
+	पूर्ण
 
 	skb_queue_tail(transmit, skb);
-	wake_up_interruptible(sk_sleep(sk));
+	wake_up_पूर्णांकerruptible(sk_sleep(sk));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hidp_send_ctrl_message(struct hidp_session *session,
-				  unsigned char hdr, const unsigned char *data,
-				  int size)
-{
-	return hidp_send_message(session, session->ctrl_sock,
+अटल पूर्णांक hidp_send_ctrl_message(काष्ठा hidp_session *session,
+				  अचिन्हित अक्षर hdr, स्थिर अचिन्हित अक्षर *data,
+				  पूर्णांक size)
+अणु
+	वापस hidp_send_message(session, session->ctrl_sock,
 				 &session->ctrl_transmit, hdr, data, size);
-}
+पूर्ण
 
-static int hidp_send_intr_message(struct hidp_session *session,
-				  unsigned char hdr, const unsigned char *data,
-				  int size)
-{
-	return hidp_send_message(session, session->intr_sock,
-				 &session->intr_transmit, hdr, data, size);
-}
+अटल पूर्णांक hidp_send_पूर्णांकr_message(काष्ठा hidp_session *session,
+				  अचिन्हित अक्षर hdr, स्थिर अचिन्हित अक्षर *data,
+				  पूर्णांक size)
+अणु
+	वापस hidp_send_message(session, session->पूर्णांकr_sock,
+				 &session->पूर्णांकr_transmit, hdr, data, size);
+पूर्ण
 
-static int hidp_input_event(struct input_dev *dev, unsigned int type,
-			    unsigned int code, int value)
-{
-	struct hidp_session *session = input_get_drvdata(dev);
-	unsigned char newleds;
-	unsigned char hdr, data[2];
+अटल पूर्णांक hidp_input_event(काष्ठा input_dev *dev, अचिन्हित पूर्णांक type,
+			    अचिन्हित पूर्णांक code, पूर्णांक value)
+अणु
+	काष्ठा hidp_session *session = input_get_drvdata(dev);
+	अचिन्हित अक्षर newleds;
+	अचिन्हित अक्षर hdr, data[2];
 
 	BT_DBG("session %p type %d code %d value %d",
 	       session, type, code, value);
 
-	if (type != EV_LED)
-		return -1;
+	अगर (type != EV_LED)
+		वापस -1;
 
 	newleds = (!!test_bit(LED_KANA,    dev->led) << 3) |
 		  (!!test_bit(LED_COMPOSE, dev->led) << 3) |
@@ -163,8 +164,8 @@ static int hidp_input_event(struct input_dev *dev, unsigned int type,
 		  (!!test_bit(LED_CAPSL,   dev->led) << 1) |
 		  (!!test_bit(LED_NUML,    dev->led) << 0);
 
-	if (session->leds == newleds)
-		return 0;
+	अगर (session->leds == newleds)
+		वापस 0;
 
 	session->leds = newleds;
 
@@ -172,47 +173,47 @@ static int hidp_input_event(struct input_dev *dev, unsigned int type,
 	data[0] = 0x01;
 	data[1] = newleds;
 
-	return hidp_send_intr_message(session, hdr, data, 2);
-}
+	वापस hidp_send_पूर्णांकr_message(session, hdr, data, 2);
+पूर्ण
 
-static void hidp_input_report(struct hidp_session *session, struct sk_buff *skb)
-{
-	struct input_dev *dev = session->input;
-	unsigned char *keys = session->keys;
-	unsigned char *udata = skb->data + 1;
-	signed char *sdata = skb->data + 1;
-	int i, size = skb->len - 1;
+अटल व्योम hidp_input_report(काष्ठा hidp_session *session, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा input_dev *dev = session->input;
+	अचिन्हित अक्षर *keys = session->keys;
+	अचिन्हित अक्षर *udata = skb->data + 1;
+	चिन्हित अक्षर *sdata = skb->data + 1;
+	पूर्णांक i, size = skb->len - 1;
 
-	switch (skb->data[0]) {
-	case 0x01:	/* Keyboard report */
-		for (i = 0; i < 8; i++)
+	चयन (skb->data[0]) अणु
+	हाल 0x01:	/* Keyboard report */
+		क्रम (i = 0; i < 8; i++)
 			input_report_key(dev, hidp_keycode[i + 224], (udata[0] >> i) & 1);
 
 		/* If all the key codes have been set to 0x01, it means
-		 * too many keys were pressed at the same time. */
-		if (!memcmp(udata + 2, hidp_mkeyspat, 6))
-			break;
+		 * too many keys were pressed at the same समय. */
+		अगर (!स_भेद(udata + 2, hidp_mkeyspat, 6))
+			अवरोध;
 
-		for (i = 2; i < 8; i++) {
-			if (keys[i] > 3 && memscan(udata + 2, keys[i], 6) == udata + 8) {
-				if (hidp_keycode[keys[i]])
+		क्रम (i = 2; i < 8; i++) अणु
+			अगर (keys[i] > 3 && memscan(udata + 2, keys[i], 6) == udata + 8) अणु
+				अगर (hidp_keycode[keys[i]])
 					input_report_key(dev, hidp_keycode[keys[i]], 0);
-				else
+				अन्यथा
 					BT_ERR("Unknown key (scancode %#x) released.", keys[i]);
-			}
+			पूर्ण
 
-			if (udata[i] > 3 && memscan(keys + 2, udata[i], 6) == keys + 8) {
-				if (hidp_keycode[udata[i]])
+			अगर (udata[i] > 3 && memscan(keys + 2, udata[i], 6) == keys + 8) अणु
+				अगर (hidp_keycode[udata[i]])
 					input_report_key(dev, hidp_keycode[udata[i]], 1);
-				else
+				अन्यथा
 					BT_ERR("Unknown key (scancode %#x) pressed.", udata[i]);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		memcpy(keys, udata, 8);
-		break;
+		स_नकल(keys, udata, 8);
+		अवरोध;
 
-	case 0x02:	/* Mouse report */
+	हाल 0x02:	/* Mouse report */
 		input_report_key(dev, BTN_LEFT,   sdata[0] & 0x01);
 		input_report_key(dev, BTN_RIGHT,  sdata[0] & 0x02);
 		input_report_key(dev, BTN_MIDDLE, sdata[0] & 0x04);
@@ -222,336 +223,336 @@ static void hidp_input_report(struct hidp_session *session, struct sk_buff *skb)
 		input_report_rel(dev, REL_X, sdata[1]);
 		input_report_rel(dev, REL_Y, sdata[2]);
 
-		if (size > 3)
+		अगर (size > 3)
 			input_report_rel(dev, REL_WHEEL, sdata[3]);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	input_sync(dev);
-}
+पूर्ण
 
-static int hidp_get_raw_report(struct hid_device *hid,
-		unsigned char report_number,
-		unsigned char *data, size_t count,
-		unsigned char report_type)
-{
-	struct hidp_session *session = hid->driver_data;
-	struct sk_buff *skb;
-	size_t len;
-	int numbered_reports = hid->report_enum[report_type].numbered;
-	int ret;
+अटल पूर्णांक hidp_get_raw_report(काष्ठा hid_device *hid,
+		अचिन्हित अक्षर report_number,
+		अचिन्हित अक्षर *data, माप_प्रकार count,
+		अचिन्हित अक्षर report_type)
+अणु
+	काष्ठा hidp_session *session = hid->driver_data;
+	काष्ठा sk_buff *skb;
+	माप_प्रकार len;
+	पूर्णांक numbered_reports = hid->report_क्रमागत[report_type].numbered;
+	पूर्णांक ret;
 
-	if (atomic_read(&session->terminate))
-		return -EIO;
+	अगर (atomic_पढ़ो(&session->terminate))
+		वापस -EIO;
 
-	switch (report_type) {
-	case HID_FEATURE_REPORT:
+	चयन (report_type) अणु
+	हाल HID_FEATURE_REPORT:
 		report_type = HIDP_TRANS_GET_REPORT | HIDP_DATA_RTYPE_FEATURE;
-		break;
-	case HID_INPUT_REPORT:
+		अवरोध;
+	हाल HID_INPUT_REPORT:
 		report_type = HIDP_TRANS_GET_REPORT | HIDP_DATA_RTYPE_INPUT;
-		break;
-	case HID_OUTPUT_REPORT:
+		अवरोध;
+	हाल HID_OUTPUT_REPORT:
 		report_type = HIDP_TRANS_GET_REPORT | HIDP_DATA_RTYPE_OUPUT;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (mutex_lock_interruptible(&session->report_mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&session->report_mutex))
+		वापस -ERESTARTSYS;
 
-	/* Set up our wait, and send the report request to the device. */
-	session->waiting_report_type = report_type & HIDP_DATA_RTYPE_MASK;
-	session->waiting_report_number = numbered_reports ? report_number : -1;
+	/* Set up our रुको, and send the report request to the device. */
+	session->रुकोing_report_type = report_type & HIDP_DATA_RTYPE_MASK;
+	session->रुकोing_report_number = numbered_reports ? report_number : -1;
 	set_bit(HIDP_WAITING_FOR_RETURN, &session->flags);
 	data[0] = report_number;
 	ret = hidp_send_ctrl_message(session, report_type, data, 1);
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
-	/* Wait for the return of the report. The returned report
-	   gets put in session->report_return.  */
-	while (test_bit(HIDP_WAITING_FOR_RETURN, &session->flags) &&
-	       !atomic_read(&session->terminate)) {
-		int res;
+	/* Wait क्रम the वापस of the report. The वापसed report
+	   माला_लो put in session->report_वापस.  */
+	जबतक (test_bit(HIDP_WAITING_FOR_RETURN, &session->flags) &&
+	       !atomic_पढ़ो(&session->terminate)) अणु
+		पूर्णांक res;
 
-		res = wait_event_interruptible_timeout(session->report_queue,
+		res = रुको_event_पूर्णांकerruptible_समयout(session->report_queue,
 			!test_bit(HIDP_WAITING_FOR_RETURN, &session->flags)
-				|| atomic_read(&session->terminate),
+				|| atomic_पढ़ो(&session->terminate),
 			5*HZ);
-		if (res == 0) {
-			/* timeout */
+		अगर (res == 0) अणु
+			/* समयout */
 			ret = -EIO;
-			goto err;
-		}
-		if (res < 0) {
-			/* signal */
+			जाओ err;
+		पूर्ण
+		अगर (res < 0) अणु
+			/* संकेत */
 			ret = -ERESTARTSYS;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	skb = session->report_return;
-	if (skb) {
+	skb = session->report_वापस;
+	अगर (skb) अणु
 		len = skb->len < count ? skb->len : count;
-		memcpy(data, skb->data, len);
+		स_नकल(data, skb->data, len);
 
-		kfree_skb(skb);
-		session->report_return = NULL;
-	} else {
-		/* Device returned a HANDSHAKE, indicating  protocol error. */
+		kमुक्त_skb(skb);
+		session->report_वापस = शून्य;
+	पूर्ण अन्यथा अणु
+		/* Device वापसed a HANDSHAKE, indicating  protocol error. */
 		len = -EIO;
-	}
+	पूर्ण
 
 	clear_bit(HIDP_WAITING_FOR_RETURN, &session->flags);
 	mutex_unlock(&session->report_mutex);
 
-	return len;
+	वापस len;
 
 err:
 	clear_bit(HIDP_WAITING_FOR_RETURN, &session->flags);
 	mutex_unlock(&session->report_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hidp_set_raw_report(struct hid_device *hid, unsigned char reportnum,
-			       unsigned char *data, size_t count,
-			       unsigned char report_type)
-{
-	struct hidp_session *session = hid->driver_data;
-	int ret;
+अटल पूर्णांक hidp_set_raw_report(काष्ठा hid_device *hid, अचिन्हित अक्षर reportnum,
+			       अचिन्हित अक्षर *data, माप_प्रकार count,
+			       अचिन्हित अक्षर report_type)
+अणु
+	काष्ठा hidp_session *session = hid->driver_data;
+	पूर्णांक ret;
 
-	switch (report_type) {
-	case HID_FEATURE_REPORT:
+	चयन (report_type) अणु
+	हाल HID_FEATURE_REPORT:
 		report_type = HIDP_TRANS_SET_REPORT | HIDP_DATA_RTYPE_FEATURE;
-		break;
-	case HID_INPUT_REPORT:
+		अवरोध;
+	हाल HID_INPUT_REPORT:
 		report_type = HIDP_TRANS_SET_REPORT | HIDP_DATA_RTYPE_INPUT;
-		break;
-	case HID_OUTPUT_REPORT:
+		अवरोध;
+	हाल HID_OUTPUT_REPORT:
 		report_type = HIDP_TRANS_SET_REPORT | HIDP_DATA_RTYPE_OUPUT;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (mutex_lock_interruptible(&session->report_mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&session->report_mutex))
+		वापस -ERESTARTSYS;
 
-	/* Set up our wait, and send the report request to the device. */
+	/* Set up our रुको, and send the report request to the device. */
 	data[0] = reportnum;
 	set_bit(HIDP_WAITING_FOR_SEND_ACK, &session->flags);
 	ret = hidp_send_ctrl_message(session, report_type, data, count);
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
-	/* Wait for the ACK from the device. */
-	while (test_bit(HIDP_WAITING_FOR_SEND_ACK, &session->flags) &&
-	       !atomic_read(&session->terminate)) {
-		int res;
+	/* Wait क्रम the ACK from the device. */
+	जबतक (test_bit(HIDP_WAITING_FOR_SEND_ACK, &session->flags) &&
+	       !atomic_पढ़ो(&session->terminate)) अणु
+		पूर्णांक res;
 
-		res = wait_event_interruptible_timeout(session->report_queue,
+		res = रुको_event_पूर्णांकerruptible_समयout(session->report_queue,
 			!test_bit(HIDP_WAITING_FOR_SEND_ACK, &session->flags)
-				|| atomic_read(&session->terminate),
+				|| atomic_पढ़ो(&session->terminate),
 			10*HZ);
-		if (res == 0) {
-			/* timeout */
+		अगर (res == 0) अणु
+			/* समयout */
 			ret = -EIO;
-			goto err;
-		}
-		if (res < 0) {
-			/* signal */
+			जाओ err;
+		पूर्ण
+		अगर (res < 0) अणु
+			/* संकेत */
 			ret = -ERESTARTSYS;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	if (!session->output_report_success) {
+	अगर (!session->output_report_success) अणु
 		ret = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = count;
 
 err:
 	clear_bit(HIDP_WAITING_FOR_SEND_ACK, &session->flags);
 	mutex_unlock(&session->report_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hidp_output_report(struct hid_device *hid, __u8 *data, size_t count)
-{
-	struct hidp_session *session = hid->driver_data;
+अटल पूर्णांक hidp_output_report(काष्ठा hid_device *hid, __u8 *data, माप_प्रकार count)
+अणु
+	काष्ठा hidp_session *session = hid->driver_data;
 
-	return hidp_send_intr_message(session,
+	वापस hidp_send_पूर्णांकr_message(session,
 				      HIDP_TRANS_DATA | HIDP_DATA_RTYPE_OUPUT,
 				      data, count);
-}
+पूर्ण
 
-static int hidp_raw_request(struct hid_device *hid, unsigned char reportnum,
-			    __u8 *buf, size_t len, unsigned char rtype,
-			    int reqtype)
-{
-	switch (reqtype) {
-	case HID_REQ_GET_REPORT:
-		return hidp_get_raw_report(hid, reportnum, buf, len, rtype);
-	case HID_REQ_SET_REPORT:
-		return hidp_set_raw_report(hid, reportnum, buf, len, rtype);
-	default:
-		return -EIO;
-	}
-}
+अटल पूर्णांक hidp_raw_request(काष्ठा hid_device *hid, अचिन्हित अक्षर reportnum,
+			    __u8 *buf, माप_प्रकार len, अचिन्हित अक्षर rtype,
+			    पूर्णांक reqtype)
+अणु
+	चयन (reqtype) अणु
+	हाल HID_REQ_GET_REPORT:
+		वापस hidp_get_raw_report(hid, reportnum, buf, len, rtype);
+	हाल HID_REQ_SET_REPORT:
+		वापस hidp_set_raw_report(hid, reportnum, buf, len, rtype);
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
-static void hidp_idle_timeout(struct timer_list *t)
-{
-	struct hidp_session *session = from_timer(session, t, timer);
+अटल व्योम hidp_idle_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा hidp_session *session = from_समयr(session, t, समयr);
 
-	/* The HIDP user-space API only contains calls to add and remove
-	 * devices. There is no way to forward events of any kind. Therefore,
-	 * we have to forcefully disconnect a device on idle-timeouts. This is
-	 * unfortunate and weird API design, but it is spec-compliant and
-	 * required for backwards-compatibility. Hence, on idle-timeout, we
-	 * signal driver-detach events, so poll() will be woken up with an
+	/* The HIDP user-space API only contains calls to add and हटाओ
+	 * devices. There is no way to क्रमward events of any kind. Thereक्रमe,
+	 * we have to क्रमcefully disconnect a device on idle-समयouts. This is
+	 * unक्रमtunate and weird API design, but it is spec-compliant and
+	 * required क्रम backwards-compatibility. Hence, on idle-समयout, we
+	 * संकेत driver-detach events, so poll() will be woken up with an
 	 * error-condition on both sockets.
 	 */
 
-	session->intr_sock->sk->sk_err = EUNATCH;
+	session->पूर्णांकr_sock->sk->sk_err = EUNATCH;
 	session->ctrl_sock->sk->sk_err = EUNATCH;
-	wake_up_interruptible(sk_sleep(session->intr_sock->sk));
-	wake_up_interruptible(sk_sleep(session->ctrl_sock->sk));
+	wake_up_पूर्णांकerruptible(sk_sleep(session->पूर्णांकr_sock->sk));
+	wake_up_पूर्णांकerruptible(sk_sleep(session->ctrl_sock->sk));
 
 	hidp_session_terminate(session);
-}
+पूर्ण
 
-static void hidp_set_timer(struct hidp_session *session)
-{
-	if (session->idle_to > 0)
-		mod_timer(&session->timer, jiffies + HZ * session->idle_to);
-}
+अटल व्योम hidp_set_समयr(काष्ठा hidp_session *session)
+अणु
+	अगर (session->idle_to > 0)
+		mod_समयr(&session->समयr, jअगरfies + HZ * session->idle_to);
+पूर्ण
 
-static void hidp_del_timer(struct hidp_session *session)
-{
-	if (session->idle_to > 0)
-		del_timer(&session->timer);
-}
+अटल व्योम hidp_del_समयr(काष्ठा hidp_session *session)
+अणु
+	अगर (session->idle_to > 0)
+		del_समयr(&session->समयr);
+पूर्ण
 
-static void hidp_process_report(struct hidp_session *session, int type,
-				const u8 *data, unsigned int len, int intr)
-{
-	if (len > HID_MAX_BUFFER_SIZE)
+अटल व्योम hidp_process_report(काष्ठा hidp_session *session, पूर्णांक type,
+				स्थिर u8 *data, अचिन्हित पूर्णांक len, पूर्णांक पूर्णांकr)
+अणु
+	अगर (len > HID_MAX_BUFFER_SIZE)
 		len = HID_MAX_BUFFER_SIZE;
 
-	memcpy(session->input_buf, data, len);
-	hid_input_report(session->hid, type, session->input_buf, len, intr);
-}
+	स_नकल(session->input_buf, data, len);
+	hid_input_report(session->hid, type, session->input_buf, len, पूर्णांकr);
+पूर्ण
 
-static void hidp_process_handshake(struct hidp_session *session,
-					unsigned char param)
-{
+अटल व्योम hidp_process_handshake(काष्ठा hidp_session *session,
+					अचिन्हित अक्षर param)
+अणु
 	BT_DBG("session %p param 0x%02x", session, param);
-	session->output_report_success = 0; /* default condition */
+	session->output_report_success = 0; /* शेष condition */
 
-	switch (param) {
-	case HIDP_HSHK_SUCCESSFUL:
-		/* FIXME: Call into SET_ GET_ handlers here */
+	चयन (param) अणु
+	हाल HIDP_HSHK_SUCCESSFUL:
+		/* FIXME: Call पूर्णांकo SET_ GET_ handlers here */
 		session->output_report_success = 1;
-		break;
+		अवरोध;
 
-	case HIDP_HSHK_NOT_READY:
-	case HIDP_HSHK_ERR_INVALID_REPORT_ID:
-	case HIDP_HSHK_ERR_UNSUPPORTED_REQUEST:
-	case HIDP_HSHK_ERR_INVALID_PARAMETER:
-		if (test_and_clear_bit(HIDP_WAITING_FOR_RETURN, &session->flags))
-			wake_up_interruptible(&session->report_queue);
+	हाल HIDP_HSHK_NOT_READY:
+	हाल HIDP_HSHK_ERR_INVALID_REPORT_ID:
+	हाल HIDP_HSHK_ERR_UNSUPPORTED_REQUEST:
+	हाल HIDP_HSHK_ERR_INVALID_PARAMETER:
+		अगर (test_and_clear_bit(HIDP_WAITING_FOR_RETURN, &session->flags))
+			wake_up_पूर्णांकerruptible(&session->report_queue);
 
-		/* FIXME: Call into SET_ GET_ handlers here */
-		break;
+		/* FIXME: Call पूर्णांकo SET_ GET_ handlers here */
+		अवरोध;
 
-	case HIDP_HSHK_ERR_UNKNOWN:
-		break;
+	हाल HIDP_HSHK_ERR_UNKNOWN:
+		अवरोध;
 
-	case HIDP_HSHK_ERR_FATAL:
+	हाल HIDP_HSHK_ERR_FATAL:
 		/* Device requests a reboot, as this is the only way this error
 		 * can be recovered. */
 		hidp_send_ctrl_message(session,
-			HIDP_TRANS_HID_CONTROL | HIDP_CTRL_SOFT_RESET, NULL, 0);
-		break;
+			HIDP_TRANS_HID_CONTROL | HIDP_CTRL_SOFT_RESET, शून्य, 0);
+		अवरोध;
 
-	default:
+	शेष:
 		hidp_send_ctrl_message(session,
-			HIDP_TRANS_HANDSHAKE | HIDP_HSHK_ERR_INVALID_PARAMETER, NULL, 0);
-		break;
-	}
+			HIDP_TRANS_HANDSHAKE | HIDP_HSHK_ERR_INVALID_PARAMETER, शून्य, 0);
+		अवरोध;
+	पूर्ण
 
-	/* Wake up the waiting thread. */
-	if (test_and_clear_bit(HIDP_WAITING_FOR_SEND_ACK, &session->flags))
-		wake_up_interruptible(&session->report_queue);
-}
+	/* Wake up the रुकोing thपढ़ो. */
+	अगर (test_and_clear_bit(HIDP_WAITING_FOR_SEND_ACK, &session->flags))
+		wake_up_पूर्णांकerruptible(&session->report_queue);
+पूर्ण
 
-static void hidp_process_hid_control(struct hidp_session *session,
-					unsigned char param)
-{
+अटल व्योम hidp_process_hid_control(काष्ठा hidp_session *session,
+					अचिन्हित अक्षर param)
+अणु
 	BT_DBG("session %p param 0x%02x", session, param);
 
-	if (param == HIDP_CTRL_VIRTUAL_CABLE_UNPLUG) {
+	अगर (param == HIDP_CTRL_VIRTUAL_CABLE_UNPLUG) अणु
 		/* Flush the transmit queues */
 		skb_queue_purge(&session->ctrl_transmit);
-		skb_queue_purge(&session->intr_transmit);
+		skb_queue_purge(&session->पूर्णांकr_transmit);
 
 		hidp_session_terminate(session);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Returns true if the passed-in skb should be freed by the caller. */
-static int hidp_process_data(struct hidp_session *session, struct sk_buff *skb,
-				unsigned char param)
-{
-	int done_with_skb = 1;
+/* Returns true अगर the passed-in skb should be मुक्तd by the caller. */
+अटल पूर्णांक hidp_process_data(काष्ठा hidp_session *session, काष्ठा sk_buff *skb,
+				अचिन्हित अक्षर param)
+अणु
+	पूर्णांक करोne_with_skb = 1;
 	BT_DBG("session %p skb %p len %d param 0x%02x", session, skb, skb->len, param);
 
-	switch (param) {
-	case HIDP_DATA_RTYPE_INPUT:
-		hidp_set_timer(session);
+	चयन (param) अणु
+	हाल HIDP_DATA_RTYPE_INPUT:
+		hidp_set_समयr(session);
 
-		if (session->input)
+		अगर (session->input)
 			hidp_input_report(session, skb);
 
-		if (session->hid)
+		अगर (session->hid)
 			hidp_process_report(session, HID_INPUT_REPORT,
 					    skb->data, skb->len, 0);
-		break;
+		अवरोध;
 
-	case HIDP_DATA_RTYPE_OTHER:
-	case HIDP_DATA_RTYPE_OUPUT:
-	case HIDP_DATA_RTYPE_FEATURE:
-		break;
+	हाल HIDP_DATA_RTYPE_OTHER:
+	हाल HIDP_DATA_RTYPE_OUPUT:
+	हाल HIDP_DATA_RTYPE_FEATURE:
+		अवरोध;
 
-	default:
+	शेष:
 		hidp_send_ctrl_message(session,
-			HIDP_TRANS_HANDSHAKE | HIDP_HSHK_ERR_INVALID_PARAMETER, NULL, 0);
-	}
+			HIDP_TRANS_HANDSHAKE | HIDP_HSHK_ERR_INVALID_PARAMETER, शून्य, 0);
+	पूर्ण
 
-	if (test_bit(HIDP_WAITING_FOR_RETURN, &session->flags) &&
-				param == session->waiting_report_type) {
-		if (session->waiting_report_number < 0 ||
-		    session->waiting_report_number == skb->data[0]) {
-			/* hidp_get_raw_report() is waiting on this report. */
-			session->report_return = skb;
-			done_with_skb = 0;
+	अगर (test_bit(HIDP_WAITING_FOR_RETURN, &session->flags) &&
+				param == session->रुकोing_report_type) अणु
+		अगर (session->रुकोing_report_number < 0 ||
+		    session->रुकोing_report_number == skb->data[0]) अणु
+			/* hidp_get_raw_report() is रुकोing on this report. */
+			session->report_वापस = skb;
+			करोne_with_skb = 0;
 			clear_bit(HIDP_WAITING_FOR_RETURN, &session->flags);
-			wake_up_interruptible(&session->report_queue);
-		}
-	}
+			wake_up_पूर्णांकerruptible(&session->report_queue);
+		पूर्ण
+	पूर्ण
 
-	return done_with_skb;
-}
+	वापस करोne_with_skb;
+पूर्ण
 
-static void hidp_recv_ctrl_frame(struct hidp_session *session,
-					struct sk_buff *skb)
-{
-	unsigned char hdr, type, param;
-	int free_skb = 1;
+अटल व्योम hidp_recv_ctrl_frame(काष्ठा hidp_session *session,
+					काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित अक्षर hdr, type, param;
+	पूर्णांक मुक्त_skb = 1;
 
 	BT_DBG("session %p skb %p len %d", session, skb, skb->len);
 
@@ -561,107 +562,107 @@ static void hidp_recv_ctrl_frame(struct hidp_session *session,
 	type = hdr & HIDP_HEADER_TRANS_MASK;
 	param = hdr & HIDP_HEADER_PARAM_MASK;
 
-	switch (type) {
-	case HIDP_TRANS_HANDSHAKE:
+	चयन (type) अणु
+	हाल HIDP_TRANS_HANDSHAKE:
 		hidp_process_handshake(session, param);
-		break;
+		अवरोध;
 
-	case HIDP_TRANS_HID_CONTROL:
+	हाल HIDP_TRANS_HID_CONTROL:
 		hidp_process_hid_control(session, param);
-		break;
+		अवरोध;
 
-	case HIDP_TRANS_DATA:
-		free_skb = hidp_process_data(session, skb, param);
-		break;
+	हाल HIDP_TRANS_DATA:
+		मुक्त_skb = hidp_process_data(session, skb, param);
+		अवरोध;
 
-	default:
+	शेष:
 		hidp_send_ctrl_message(session,
-			HIDP_TRANS_HANDSHAKE | HIDP_HSHK_ERR_UNSUPPORTED_REQUEST, NULL, 0);
-		break;
-	}
+			HIDP_TRANS_HANDSHAKE | HIDP_HSHK_ERR_UNSUPPORTED_REQUEST, शून्य, 0);
+		अवरोध;
+	पूर्ण
 
-	if (free_skb)
-		kfree_skb(skb);
-}
+	अगर (मुक्त_skb)
+		kमुक्त_skb(skb);
+पूर्ण
 
-static void hidp_recv_intr_frame(struct hidp_session *session,
-				struct sk_buff *skb)
-{
-	unsigned char hdr;
+अटल व्योम hidp_recv_पूर्णांकr_frame(काष्ठा hidp_session *session,
+				काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित अक्षर hdr;
 
 	BT_DBG("session %p skb %p len %d", session, skb, skb->len);
 
 	hdr = skb->data[0];
 	skb_pull(skb, 1);
 
-	if (hdr == (HIDP_TRANS_DATA | HIDP_DATA_RTYPE_INPUT)) {
-		hidp_set_timer(session);
+	अगर (hdr == (HIDP_TRANS_DATA | HIDP_DATA_RTYPE_INPUT)) अणु
+		hidp_set_समयr(session);
 
-		if (session->input)
+		अगर (session->input)
 			hidp_input_report(session, skb);
 
-		if (session->hid) {
+		अगर (session->hid) अणु
 			hidp_process_report(session, HID_INPUT_REPORT,
 					    skb->data, skb->len, 1);
 			BT_DBG("report len %d", skb->len);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		BT_DBG("Unsupported protocol header 0x%02x", hdr);
-	}
+	पूर्ण
 
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-static int hidp_send_frame(struct socket *sock, unsigned char *data, int len)
-{
-	struct kvec iv = { data, len };
-	struct msghdr msg;
+अटल पूर्णांक hidp_send_frame(काष्ठा socket *sock, अचिन्हित अक्षर *data, पूर्णांक len)
+अणु
+	काष्ठा kvec iv = अणु data, len पूर्ण;
+	काष्ठा msghdr msg;
 
 	BT_DBG("sock %p data %p len %d", sock, data, len);
 
-	if (!len)
-		return 0;
+	अगर (!len)
+		वापस 0;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 
-	return kernel_sendmsg(sock, &msg, &iv, 1, len);
-}
+	वापस kernel_sendmsg(sock, &msg, &iv, 1, len);
+पूर्ण
 
 /* dequeue message from @transmit and send via @sock */
-static void hidp_process_transmit(struct hidp_session *session,
-				  struct sk_buff_head *transmit,
-				  struct socket *sock)
-{
-	struct sk_buff *skb;
-	int ret;
+अटल व्योम hidp_process_transmit(काष्ठा hidp_session *session,
+				  काष्ठा sk_buff_head *transmit,
+				  काष्ठा socket *sock)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक ret;
 
 	BT_DBG("session %p", session);
 
-	while ((skb = skb_dequeue(transmit))) {
+	जबतक ((skb = skb_dequeue(transmit))) अणु
 		ret = hidp_send_frame(sock, skb->data, skb->len);
-		if (ret == -EAGAIN) {
+		अगर (ret == -EAGAIN) अणु
 			skb_queue_head(transmit, skb);
-			break;
-		} else if (ret < 0) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (ret < 0) अणु
 			hidp_session_terminate(session);
-			kfree_skb(skb);
-			break;
-		}
+			kमुक्त_skb(skb);
+			अवरोध;
+		पूर्ण
 
-		hidp_set_timer(session);
-		kfree_skb(skb);
-	}
-}
+		hidp_set_समयr(session);
+		kमुक्त_skb(skb);
+	पूर्ण
+पूर्ण
 
-static int hidp_setup_input(struct hidp_session *session,
-				const struct hidp_connadd_req *req)
-{
-	struct input_dev *input;
-	int i;
+अटल पूर्णांक hidp_setup_input(काष्ठा hidp_session *session,
+				स्थिर काष्ठा hidp_connadd_req *req)
+अणु
+	काष्ठा input_dev *input;
+	पूर्णांक i;
 
 	input = input_allocate_device();
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	session->input = input;
 
@@ -670,11 +671,11 @@ static int hidp_setup_input(struct hidp_session *session,
 	input->name = "Bluetooth HID Boot Protocol Device";
 
 	input->id.bustype = BUS_BLUETOOTH;
-	input->id.vendor  = req->vendor;
+	input->id.venकरोr  = req->venकरोr;
 	input->id.product = req->product;
 	input->id.version = req->version;
 
-	if (req->subclass & 0x40) {
+	अगर (req->subclass & 0x40) अणु
 		set_bit(EV_KEY, input->evbit);
 		set_bit(EV_LED, input->evbit);
 		set_bit(EV_REP, input->evbit);
@@ -685,12 +686,12 @@ static int hidp_setup_input(struct hidp_session *session,
 		set_bit(LED_COMPOSE, input->ledbit);
 		set_bit(LED_KANA,    input->ledbit);
 
-		for (i = 0; i < sizeof(hidp_keycode); i++)
+		क्रम (i = 0; i < माप(hidp_keycode); i++)
 			set_bit(hidp_keycode[i], input->keybit);
 		clear_bit(0, input->keybit);
-	}
+	पूर्ण
 
-	if (req->subclass & 0x80) {
+	अगर (req->subclass & 0x80) अणु
 		input->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REL);
 		input->keybit[BIT_WORD(BTN_MOUSE)] = BIT_MASK(BTN_LEFT) |
 			BIT_MASK(BTN_RIGHT) | BIT_MASK(BTN_MIDDLE);
@@ -698,687 +699,687 @@ static int hidp_setup_input(struct hidp_session *session,
 		input->keybit[BIT_WORD(BTN_MOUSE)] |= BIT_MASK(BTN_SIDE) |
 			BIT_MASK(BTN_EXTRA);
 		input->relbit[0] |= BIT_MASK(REL_WHEEL);
-	}
+	पूर्ण
 
 	input->dev.parent = &session->conn->hcon->dev;
 
 	input->event = hidp_input_event;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hidp_open(struct hid_device *hid)
-{
-	return 0;
-}
+अटल पूर्णांक hidp_खोलो(काष्ठा hid_device *hid)
+अणु
+	वापस 0;
+पूर्ण
 
-static void hidp_close(struct hid_device *hid)
-{
-}
+अटल व्योम hidp_बंद(काष्ठा hid_device *hid)
+अणु
+पूर्ण
 
-static int hidp_parse(struct hid_device *hid)
-{
-	struct hidp_session *session = hid->driver_data;
+अटल पूर्णांक hidp_parse(काष्ठा hid_device *hid)
+अणु
+	काष्ठा hidp_session *session = hid->driver_data;
 
-	return hid_parse_report(session->hid, session->rd_data,
+	वापस hid_parse_report(session->hid, session->rd_data,
 			session->rd_size);
-}
+पूर्ण
 
-static int hidp_start(struct hid_device *hid)
-{
-	return 0;
-}
+अटल पूर्णांक hidp_start(काष्ठा hid_device *hid)
+अणु
+	वापस 0;
+पूर्ण
 
-static void hidp_stop(struct hid_device *hid)
-{
-	struct hidp_session *session = hid->driver_data;
+अटल व्योम hidp_stop(काष्ठा hid_device *hid)
+अणु
+	काष्ठा hidp_session *session = hid->driver_data;
 
 	skb_queue_purge(&session->ctrl_transmit);
-	skb_queue_purge(&session->intr_transmit);
+	skb_queue_purge(&session->पूर्णांकr_transmit);
 
 	hid->claimed = 0;
-}
+पूर्ण
 
-struct hid_ll_driver hidp_hid_driver = {
+काष्ठा hid_ll_driver hidp_hid_driver = अणु
 	.parse = hidp_parse,
 	.start = hidp_start,
 	.stop = hidp_stop,
-	.open  = hidp_open,
-	.close = hidp_close,
+	.खोलो  = hidp_खोलो,
+	.बंद = hidp_बंद,
 	.raw_request = hidp_raw_request,
 	.output_report = hidp_output_report,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(hidp_hid_driver);
 
-/* This function sets up the hid device. It does not add it
-   to the HID system. That is done in hidp_add_connection(). */
-static int hidp_setup_hid(struct hidp_session *session,
-				const struct hidp_connadd_req *req)
-{
-	struct hid_device *hid;
-	int err;
+/* This function sets up the hid device. It करोes not add it
+   to the HID प्रणाली. That is करोne in hidp_add_connection(). */
+अटल पूर्णांक hidp_setup_hid(काष्ठा hidp_session *session,
+				स्थिर काष्ठा hidp_connadd_req *req)
+अणु
+	काष्ठा hid_device *hid;
+	पूर्णांक err;
 
 	session->rd_data = memdup_user(req->rd_data, req->rd_size);
-	if (IS_ERR(session->rd_data))
-		return PTR_ERR(session->rd_data);
+	अगर (IS_ERR(session->rd_data))
+		वापस PTR_ERR(session->rd_data);
 
 	session->rd_size = req->rd_size;
 
 	hid = hid_allocate_device();
-	if (IS_ERR(hid)) {
+	अगर (IS_ERR(hid)) अणु
 		err = PTR_ERR(hid);
-		goto fault;
-	}
+		जाओ fault;
+	पूर्ण
 
 	session->hid = hid;
 
 	hid->driver_data = session;
 
 	hid->bus     = BUS_BLUETOOTH;
-	hid->vendor  = req->vendor;
+	hid->venकरोr  = req->venकरोr;
 	hid->product = req->product;
 	hid->version = req->version;
 	hid->country = req->country;
 
-	strscpy(hid->name, req->name, sizeof(hid->name));
+	strscpy(hid->name, req->name, माप(hid->name));
 
-	snprintf(hid->phys, sizeof(hid->phys), "%pMR",
+	snम_लिखो(hid->phys, माप(hid->phys), "%pMR",
 		 &l2cap_pi(session->ctrl_sock->sk)->chan->src);
 
 	/* NOTE: Some device modules depend on the dst address being stored in
-	 * uniq. Please be aware of this before making changes to this behavior.
+	 * uniq. Please be aware of this beक्रमe making changes to this behavior.
 	 */
-	snprintf(hid->uniq, sizeof(hid->uniq), "%pMR",
+	snम_लिखो(hid->uniq, माप(hid->uniq), "%pMR",
 		 &l2cap_pi(session->ctrl_sock->sk)->chan->dst);
 
 	hid->dev.parent = &session->conn->hcon->dev;
 	hid->ll_driver = &hidp_hid_driver;
 
-	/* True if device is blacklisted in drivers/hid/hid-quirks.c */
-	if (hid_ignore(hid)) {
+	/* True अगर device is blacklisted in drivers/hid/hid-quirks.c */
+	अगर (hid_ignore(hid)) अणु
 		hid_destroy_device(session->hid);
-		session->hid = NULL;
-		return -ENODEV;
-	}
+		session->hid = शून्य;
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fault:
-	kfree(session->rd_data);
-	session->rd_data = NULL;
+	kमुक्त(session->rd_data);
+	session->rd_data = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* initialize session devices */
-static int hidp_session_dev_init(struct hidp_session *session,
-				 const struct hidp_connadd_req *req)
-{
-	int ret;
+अटल पूर्णांक hidp_session_dev_init(काष्ठा hidp_session *session,
+				 स्थिर काष्ठा hidp_connadd_req *req)
+अणु
+	पूर्णांक ret;
 
-	if (req->rd_size > 0) {
+	अगर (req->rd_size > 0) अणु
 		ret = hidp_setup_hid(session, req);
-		if (ret && ret != -ENODEV)
-			return ret;
-	}
+		अगर (ret && ret != -ENODEV)
+			वापस ret;
+	पूर्ण
 
-	if (!session->hid) {
+	अगर (!session->hid) अणु
 		ret = hidp_setup_input(session, req);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* destroy session devices */
-static void hidp_session_dev_destroy(struct hidp_session *session)
-{
-	if (session->hid)
+अटल व्योम hidp_session_dev_destroy(काष्ठा hidp_session *session)
+अणु
+	अगर (session->hid)
 		put_device(&session->hid->dev);
-	else if (session->input)
+	अन्यथा अगर (session->input)
 		input_put_device(session->input);
 
-	kfree(session->rd_data);
-	session->rd_data = NULL;
-}
+	kमुक्त(session->rd_data);
+	session->rd_data = शून्य;
+पूर्ण
 
-/* add HID/input devices to their underlying bus systems */
-static int hidp_session_dev_add(struct hidp_session *session)
-{
-	int ret;
+/* add HID/input devices to their underlying bus प्रणालीs */
+अटल पूर्णांक hidp_session_dev_add(काष्ठा hidp_session *session)
+अणु
+	पूर्णांक ret;
 
-	/* Both HID and input systems drop a ref-count when unregistering the
-	 * device but they don't take a ref-count when registering them. Work
+	/* Both HID and input प्रणालीs drop a ref-count when unरेजिस्टरing the
+	 * device but they करोn't take a ref-count when रेजिस्टरing them. Work
 	 * around this by explicitly taking a refcount during registration
-	 * which is dropped automatically by unregistering the devices. */
+	 * which is dropped स्वतःmatically by unरेजिस्टरing the devices. */
 
-	if (session->hid) {
+	अगर (session->hid) अणु
 		ret = hid_add_device(session->hid);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		get_device(&session->hid->dev);
-	} else if (session->input) {
-		ret = input_register_device(session->input);
-		if (ret)
-			return ret;
+	पूर्ण अन्यथा अगर (session->input) अणु
+		ret = input_रेजिस्टर_device(session->input);
+		अगर (ret)
+			वापस ret;
 		input_get_device(session->input);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* remove HID/input devices from their bus systems */
-static void hidp_session_dev_del(struct hidp_session *session)
-{
-	if (session->hid)
+/* हटाओ HID/input devices from their bus प्रणालीs */
+अटल व्योम hidp_session_dev_del(काष्ठा hidp_session *session)
+अणु
+	अगर (session->hid)
 		hid_destroy_device(session->hid);
-	else if (session->input)
-		input_unregister_device(session->input);
-}
+	अन्यथा अगर (session->input)
+		input_unरेजिस्टर_device(session->input);
+पूर्ण
 
 /*
  * Asynchronous device registration
- * HID device drivers might want to perform I/O during initialization to
- * detect device types. Therefore, call device registration in a separate
- * worker so the HIDP thread can schedule I/O operations.
- * Note that this must be called after the worker thread was initialized
+ * HID device drivers might want to perक्रमm I/O during initialization to
+ * detect device types. Thereक्रमe, call device registration in a separate
+ * worker so the HIDP thपढ़ो can schedule I/O operations.
+ * Note that this must be called after the worker thपढ़ो was initialized
  * successfully. This will then add the devices and increase session state
- * on success, otherwise it will terminate the session thread.
+ * on success, otherwise it will terminate the session thपढ़ो.
  */
-static void hidp_session_dev_work(struct work_struct *work)
-{
-	struct hidp_session *session = container_of(work,
-						    struct hidp_session,
+अटल व्योम hidp_session_dev_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hidp_session *session = container_of(work,
+						    काष्ठा hidp_session,
 						    dev_init);
-	int ret;
+	पूर्णांक ret;
 
 	ret = hidp_session_dev_add(session);
-	if (!ret)
+	अगर (!ret)
 		atomic_inc(&session->state);
-	else
+	अन्यथा
 		hidp_session_terminate(session);
-}
+पूर्ण
 
 /*
  * Create new session object
- * Allocate session object, initialize static fields, copy input data into the
+ * Allocate session object, initialize अटल fields, copy input data पूर्णांकo the
  * object and take a reference to all sub-objects.
- * This returns 0 on success and puts a pointer to the new session object in
- * \out. Otherwise, an error code is returned.
+ * This वापसs 0 on success and माला_दो a poपूर्णांकer to the new session object in
+ * \out. Otherwise, an error code is वापसed.
  * The new session object has an initial ref-count of 1.
  */
-static int hidp_session_new(struct hidp_session **out, const bdaddr_t *bdaddr,
-			    struct socket *ctrl_sock,
-			    struct socket *intr_sock,
-			    const struct hidp_connadd_req *req,
-			    struct l2cap_conn *conn)
-{
-	struct hidp_session *session;
-	int ret;
-	struct bt_sock *ctrl, *intr;
+अटल पूर्णांक hidp_session_new(काष्ठा hidp_session **out, स्थिर bdaddr_t *bdaddr,
+			    काष्ठा socket *ctrl_sock,
+			    काष्ठा socket *पूर्णांकr_sock,
+			    स्थिर काष्ठा hidp_connadd_req *req,
+			    काष्ठा l2cap_conn *conn)
+अणु
+	काष्ठा hidp_session *session;
+	पूर्णांक ret;
+	काष्ठा bt_sock *ctrl, *पूर्णांकr;
 
 	ctrl = bt_sk(ctrl_sock->sk);
-	intr = bt_sk(intr_sock->sk);
+	पूर्णांकr = bt_sk(पूर्णांकr_sock->sk);
 
-	session = kzalloc(sizeof(*session), GFP_KERNEL);
-	if (!session)
-		return -ENOMEM;
+	session = kzalloc(माप(*session), GFP_KERNEL);
+	अगर (!session)
+		वापस -ENOMEM;
 
-	/* object and runtime management */
+	/* object and runसमय management */
 	kref_init(&session->ref);
 	atomic_set(&session->state, HIDP_SESSION_IDLING);
-	init_waitqueue_head(&session->state_queue);
+	init_रुकोqueue_head(&session->state_queue);
 	session->flags = req->flags & BIT(HIDP_BLUETOOTH_VENDOR_ID);
 
 	/* connection management */
 	bacpy(&session->bdaddr, bdaddr);
 	session->conn = l2cap_conn_get(conn);
 	session->user.probe = hidp_session_probe;
-	session->user.remove = hidp_session_remove;
+	session->user.हटाओ = hidp_session_हटाओ;
 	INIT_LIST_HEAD(&session->user.list);
 	session->ctrl_sock = ctrl_sock;
-	session->intr_sock = intr_sock;
+	session->पूर्णांकr_sock = पूर्णांकr_sock;
 	skb_queue_head_init(&session->ctrl_transmit);
-	skb_queue_head_init(&session->intr_transmit);
-	session->ctrl_mtu = min_t(uint, l2cap_pi(ctrl)->chan->omtu,
+	skb_queue_head_init(&session->पूर्णांकr_transmit);
+	session->ctrl_mtu = min_t(uपूर्णांक, l2cap_pi(ctrl)->chan->omtu,
 					l2cap_pi(ctrl)->chan->imtu);
-	session->intr_mtu = min_t(uint, l2cap_pi(intr)->chan->omtu,
-					l2cap_pi(intr)->chan->imtu);
+	session->पूर्णांकr_mtu = min_t(uपूर्णांक, l2cap_pi(पूर्णांकr)->chan->omtu,
+					l2cap_pi(पूर्णांकr)->chan->imtu);
 	session->idle_to = req->idle_to;
 
 	/* device management */
 	INIT_WORK(&session->dev_init, hidp_session_dev_work);
-	timer_setup(&session->timer, hidp_idle_timeout, 0);
+	समयr_setup(&session->समयr, hidp_idle_समयout, 0);
 
 	/* session data */
 	mutex_init(&session->report_mutex);
-	init_waitqueue_head(&session->report_queue);
+	init_रुकोqueue_head(&session->report_queue);
 
 	ret = hidp_session_dev_init(session, req);
-	if (ret)
-		goto err_free;
+	अगर (ret)
+		जाओ err_मुक्त;
 
-	get_file(session->intr_sock->file);
+	get_file(session->पूर्णांकr_sock->file);
 	get_file(session->ctrl_sock->file);
 	*out = session;
-	return 0;
+	वापस 0;
 
-err_free:
+err_मुक्त:
 	l2cap_conn_put(session->conn);
-	kfree(session);
-	return ret;
-}
+	kमुक्त(session);
+	वापस ret;
+पूर्ण
 
 /* increase ref-count of the given session by one */
-static void hidp_session_get(struct hidp_session *session)
-{
+अटल व्योम hidp_session_get(काष्ठा hidp_session *session)
+अणु
 	kref_get(&session->ref);
-}
+पूर्ण
 
 /* release callback */
-static void session_free(struct kref *ref)
-{
-	struct hidp_session *session = container_of(ref, struct hidp_session,
+अटल व्योम session_मुक्त(काष्ठा kref *ref)
+अणु
+	काष्ठा hidp_session *session = container_of(ref, काष्ठा hidp_session,
 						    ref);
 
 	hidp_session_dev_destroy(session);
 	skb_queue_purge(&session->ctrl_transmit);
-	skb_queue_purge(&session->intr_transmit);
-	fput(session->intr_sock->file);
+	skb_queue_purge(&session->पूर्णांकr_transmit);
+	fput(session->पूर्णांकr_sock->file);
 	fput(session->ctrl_sock->file);
 	l2cap_conn_put(session->conn);
-	kfree(session);
-}
+	kमुक्त(session);
+पूर्ण
 
 /* decrease ref-count of the given session by one */
-static void hidp_session_put(struct hidp_session *session)
-{
-	kref_put(&session->ref, session_free);
-}
+अटल व्योम hidp_session_put(काष्ठा hidp_session *session)
+अणु
+	kref_put(&session->ref, session_मुक्त);
+पूर्ण
 
 /*
- * Search the list of active sessions for a session with target address
- * \bdaddr. You must hold at least a read-lock on \hidp_session_sem. As long as
- * you do not release this lock, the session objects cannot vanish and you can
+ * Search the list of active sessions क्रम a session with target address
+ * \मdaddr. You must hold at least a पढ़ो-lock on \hidp_session_sem. As दीर्घ as
+ * you करो not release this lock, the session objects cannot vanish and you can
  * safely take a reference to the session yourself.
  */
-static struct hidp_session *__hidp_session_find(const bdaddr_t *bdaddr)
-{
-	struct hidp_session *session;
+अटल काष्ठा hidp_session *__hidp_session_find(स्थिर bdaddr_t *bdaddr)
+अणु
+	काष्ठा hidp_session *session;
 
-	list_for_each_entry(session, &hidp_session_list, list) {
-		if (!bacmp(bdaddr, &session->bdaddr))
-			return session;
-	}
+	list_क्रम_each_entry(session, &hidp_session_list, list) अणु
+		अगर (!bacmp(bdaddr, &session->bdaddr))
+			वापस session;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Same as __hidp_session_find() but no locks must be held. This also takes a
- * reference of the returned session (if non-NULL) so you must drop this
- * reference if you no longer use the object.
+ * reference of the वापसed session (अगर non-शून्य) so you must drop this
+ * reference अगर you no दीर्घer use the object.
  */
-static struct hidp_session *hidp_session_find(const bdaddr_t *bdaddr)
-{
-	struct hidp_session *session;
+अटल काष्ठा hidp_session *hidp_session_find(स्थिर bdaddr_t *bdaddr)
+अणु
+	काष्ठा hidp_session *session;
 
-	down_read(&hidp_session_sem);
+	करोwn_पढ़ो(&hidp_session_sem);
 
 	session = __hidp_session_find(bdaddr);
-	if (session)
+	अगर (session)
 		hidp_session_get(session);
 
-	up_read(&hidp_session_sem);
+	up_पढ़ो(&hidp_session_sem);
 
-	return session;
-}
+	वापस session;
+पूर्ण
 
 /*
  * Start session synchronously
- * This starts a session thread and waits until initialization
- * is done or returns an error if it couldn't be started.
- * If this returns 0 the session thread is up and running. You must call
- * hipd_session_stop_sync() before deleting any runtime resources.
+ * This starts a session thपढ़ो and रुकोs until initialization
+ * is करोne or वापसs an error अगर it couldn't be started.
+ * If this वापसs 0 the session thपढ़ो is up and running. You must call
+ * hipd_session_stop_sync() beक्रमe deleting any runसमय resources.
  */
-static int hidp_session_start_sync(struct hidp_session *session)
-{
-	unsigned int vendor, product;
+अटल पूर्णांक hidp_session_start_sync(काष्ठा hidp_session *session)
+अणु
+	अचिन्हित पूर्णांक venकरोr, product;
 
-	if (session->hid) {
-		vendor  = session->hid->vendor;
+	अगर (session->hid) अणु
+		venकरोr  = session->hid->venकरोr;
 		product = session->hid->product;
-	} else if (session->input) {
-		vendor  = session->input->id.vendor;
+	पूर्ण अन्यथा अगर (session->input) अणु
+		venकरोr  = session->input->id.venकरोr;
 		product = session->input->id.product;
-	} else {
-		vendor = 0x0000;
+	पूर्ण अन्यथा अणु
+		venकरोr = 0x0000;
 		product = 0x0000;
-	}
+	पूर्ण
 
-	session->task = kthread_run(hidp_session_thread, session,
-				    "khidpd_%04x%04x", vendor, product);
-	if (IS_ERR(session->task))
-		return PTR_ERR(session->task);
+	session->task = kthपढ़ो_run(hidp_session_thपढ़ो, session,
+				    "khidpd_%04x%04x", venकरोr, product);
+	अगर (IS_ERR(session->task))
+		वापस PTR_ERR(session->task);
 
-	while (atomic_read(&session->state) <= HIDP_SESSION_IDLING)
-		wait_event(session->state_queue,
-			   atomic_read(&session->state) > HIDP_SESSION_IDLING);
+	जबतक (atomic_पढ़ो(&session->state) <= HIDP_SESSION_IDLING)
+		रुको_event(session->state_queue,
+			   atomic_पढ़ो(&session->state) > HIDP_SESSION_IDLING);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Terminate session thread
- * Wake up session thread and notify it to stop. This is asynchronous and
- * returns immediately. Call this whenever a runtime error occurs and you want
+ * Terminate session thपढ़ो
+ * Wake up session thपढ़ो and notअगरy it to stop. This is asynchronous and
+ * वापसs immediately. Call this whenever a runसमय error occurs and you want
  * the session to stop.
- * Note: wake_up_interruptible() performs any necessary memory-barriers for us.
+ * Note: wake_up_पूर्णांकerruptible() perक्रमms any necessary memory-barriers क्रम us.
  */
-static void hidp_session_terminate(struct hidp_session *session)
-{
+अटल व्योम hidp_session_terminate(काष्ठा hidp_session *session)
+अणु
 	atomic_inc(&session->terminate);
 	/*
-	 * See the comment preceding the call to wait_woken()
+	 * See the comment preceding the call to रुको_woken()
 	 * in hidp_session_run().
 	 */
-	wake_up_interruptible(&hidp_session_wq);
-}
+	wake_up_पूर्णांकerruptible(&hidp_session_wq);
+पूर्ण
 
 /*
  * Probe HIDP session
  * This is called from the l2cap_conn core when our l2cap_user object is bound
  * to the hci-connection. We get the session via the \user object and can now
- * start the session thread, link it into the global session list and
+ * start the session thपढ़ो, link it पूर्णांकo the global session list and
  * schedule HID/input device registration.
  * The global session-list owns its own reference to the session object so you
- * can drop your own reference after registering the l2cap_user object.
+ * can drop your own reference after रेजिस्टरing the l2cap_user object.
  */
-static int hidp_session_probe(struct l2cap_conn *conn,
-			      struct l2cap_user *user)
-{
-	struct hidp_session *session = container_of(user,
-						    struct hidp_session,
+अटल पूर्णांक hidp_session_probe(काष्ठा l2cap_conn *conn,
+			      काष्ठा l2cap_user *user)
+अणु
+	काष्ठा hidp_session *session = container_of(user,
+						    काष्ठा hidp_session,
 						    user);
-	struct hidp_session *s;
-	int ret;
+	काष्ठा hidp_session *s;
+	पूर्णांक ret;
 
-	down_write(&hidp_session_sem);
+	करोwn_ग_लिखो(&hidp_session_sem);
 
-	/* check that no other session for this device exists */
+	/* check that no other session क्रम this device exists */
 	s = __hidp_session_find(&session->bdaddr);
-	if (s) {
+	अगर (s) अणु
 		ret = -EEXIST;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (session->input) {
+	अगर (session->input) अणु
 		ret = hidp_session_dev_add(session);
-		if (ret)
-			goto out_unlock;
-	}
+		अगर (ret)
+			जाओ out_unlock;
+	पूर्ण
 
 	ret = hidp_session_start_sync(session);
-	if (ret)
-		goto out_del;
+	अगर (ret)
+		जाओ out_del;
 
 	/* HID device registration is async to allow I/O during probe */
-	if (session->input)
+	अगर (session->input)
 		atomic_inc(&session->state);
-	else
+	अन्यथा
 		schedule_work(&session->dev_init);
 
 	hidp_session_get(session);
 	list_add(&session->list, &hidp_session_list);
 	ret = 0;
-	goto out_unlock;
+	जाओ out_unlock;
 
 out_del:
-	if (session->input)
+	अगर (session->input)
 		hidp_session_dev_del(session);
 out_unlock:
-	up_write(&hidp_session_sem);
-	return ret;
-}
+	up_ग_लिखो(&hidp_session_sem);
+	वापस ret;
+पूर्ण
 
 /*
  * Remove HIDP session
- * Called from the l2cap_conn core when either we explicitly unregistered
- * the l2cap_user object or if the underlying connection is shut down.
- * We signal the hidp-session thread to shut down, unregister the HID/input
+ * Called from the l2cap_conn core when either we explicitly unरेजिस्टरed
+ * the l2cap_user object or अगर the underlying connection is shut करोwn.
+ * We संकेत the hidp-session thपढ़ो to shut करोwn, unरेजिस्टर the HID/input
  * devices and unlink the session from the global list.
  * This drops the reference to the session that is owned by the global
  * session-list.
- * Note: We _must_ not synchronosly wait for the session-thread to shut down.
- * This is, because the session-thread might be waiting for an HCI lock that is
- * held while we are called. Therefore, we only unregister the devices and
- * notify the session-thread to terminate. The thread itself owns a reference
- * to the session object so it can safely shut down.
+ * Note: We _must_ not synchronosly रुको क्रम the session-thपढ़ो to shut करोwn.
+ * This is, because the session-thपढ़ो might be रुकोing क्रम an HCI lock that is
+ * held जबतक we are called. Thereक्रमe, we only unरेजिस्टर the devices and
+ * notअगरy the session-thपढ़ो to terminate. The thपढ़ो itself owns a reference
+ * to the session object so it can safely shut करोwn.
  */
-static void hidp_session_remove(struct l2cap_conn *conn,
-				struct l2cap_user *user)
-{
-	struct hidp_session *session = container_of(user,
-						    struct hidp_session,
+अटल व्योम hidp_session_हटाओ(काष्ठा l2cap_conn *conn,
+				काष्ठा l2cap_user *user)
+अणु
+	काष्ठा hidp_session *session = container_of(user,
+						    काष्ठा hidp_session,
 						    user);
 
-	down_write(&hidp_session_sem);
+	करोwn_ग_लिखो(&hidp_session_sem);
 
 	hidp_session_terminate(session);
 
 	cancel_work_sync(&session->dev_init);
-	if (session->input ||
-	    atomic_read(&session->state) > HIDP_SESSION_PREPARING)
+	अगर (session->input ||
+	    atomic_पढ़ो(&session->state) > HIDP_SESSION_PREPARING)
 		hidp_session_dev_del(session);
 
 	list_del(&session->list);
 
-	up_write(&hidp_session_sem);
+	up_ग_लिखो(&hidp_session_sem);
 
 	hidp_session_put(session);
-}
+पूर्ण
 
 /*
  * Session Worker
- * This performs the actual main-loop of the HIDP worker. We first check
+ * This perक्रमms the actual मुख्य-loop of the HIDP worker. We first check
  * whether the underlying connection is still alive, then parse all pending
  * messages and finally send all outstanding messages.
  */
-static void hidp_session_run(struct hidp_session *session)
-{
-	struct sock *ctrl_sk = session->ctrl_sock->sk;
-	struct sock *intr_sk = session->intr_sock->sk;
-	struct sk_buff *skb;
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+अटल व्योम hidp_session_run(काष्ठा hidp_session *session)
+अणु
+	काष्ठा sock *ctrl_sk = session->ctrl_sock->sk;
+	काष्ठा sock *पूर्णांकr_sk = session->पूर्णांकr_sock->sk;
+	काष्ठा sk_buff *skb;
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
 
-	add_wait_queue(&hidp_session_wq, &wait);
-	for (;;) {
+	add_रुको_queue(&hidp_session_wq, &रुको);
+	क्रम (;;) अणु
 		/*
-		 * This thread can be woken up two ways:
+		 * This thपढ़ो can be woken up two ways:
 		 *  - You call hidp_session_terminate() which sets the
-		 *    session->terminate flag and wakes this thread up.
-		 *  - Via modifying the socket state of ctrl/intr_sock. This
-		 *    thread is woken up by ->sk_state_changed().
+		 *    session->terminate flag and wakes this thपढ़ो up.
+		 *  - Via modअगरying the socket state of ctrl/पूर्णांकr_sock. This
+		 *    thपढ़ो is woken up by ->sk_state_changed().
 		 */
 
-		if (atomic_read(&session->terminate))
-			break;
+		अगर (atomic_पढ़ो(&session->terminate))
+			अवरोध;
 
-		if (ctrl_sk->sk_state != BT_CONNECTED ||
-		    intr_sk->sk_state != BT_CONNECTED)
-			break;
+		अगर (ctrl_sk->sk_state != BT_CONNECTED ||
+		    पूर्णांकr_sk->sk_state != BT_CONNECTED)
+			अवरोध;
 
-		/* parse incoming intr-skbs */
-		while ((skb = skb_dequeue(&intr_sk->sk_receive_queue))) {
+		/* parse incoming पूर्णांकr-skbs */
+		जबतक ((skb = skb_dequeue(&पूर्णांकr_sk->sk_receive_queue))) अणु
 			skb_orphan(skb);
-			if (!skb_linearize(skb))
-				hidp_recv_intr_frame(session, skb);
-			else
-				kfree_skb(skb);
-		}
+			अगर (!skb_linearize(skb))
+				hidp_recv_पूर्णांकr_frame(session, skb);
+			अन्यथा
+				kमुक्त_skb(skb);
+		पूर्ण
 
-		/* send pending intr-skbs */
-		hidp_process_transmit(session, &session->intr_transmit,
-				      session->intr_sock);
+		/* send pending पूर्णांकr-skbs */
+		hidp_process_transmit(session, &session->पूर्णांकr_transmit,
+				      session->पूर्णांकr_sock);
 
 		/* parse incoming ctrl-skbs */
-		while ((skb = skb_dequeue(&ctrl_sk->sk_receive_queue))) {
+		जबतक ((skb = skb_dequeue(&ctrl_sk->sk_receive_queue))) अणु
 			skb_orphan(skb);
-			if (!skb_linearize(skb))
+			अगर (!skb_linearize(skb))
 				hidp_recv_ctrl_frame(session, skb);
-			else
-				kfree_skb(skb);
-		}
+			अन्यथा
+				kमुक्त_skb(skb);
+		पूर्ण
 
 		/* send pending ctrl-skbs */
 		hidp_process_transmit(session, &session->ctrl_transmit,
 				      session->ctrl_sock);
 
 		/*
-		 * wait_woken() performs the necessary memory barriers
-		 * for us; see the header comment for this primitive.
+		 * रुको_woken() perक्रमms the necessary memory barriers
+		 * क्रम us; see the header comment क्रम this primitive.
 		 */
-		wait_woken(&wait, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
-	}
-	remove_wait_queue(&hidp_session_wq, &wait);
+		रुको_woken(&रुको, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
+	पूर्ण
+	हटाओ_रुको_queue(&hidp_session_wq, &रुको);
 
 	atomic_inc(&session->terminate);
-}
+पूर्ण
 
-static int hidp_session_wake_function(wait_queue_entry_t *wait,
-				      unsigned int mode,
-				      int sync, void *key)
-{
-	wake_up_interruptible(&hidp_session_wq);
-	return false;
-}
+अटल पूर्णांक hidp_session_wake_function(रुको_queue_entry_t *रुको,
+				      अचिन्हित पूर्णांक mode,
+				      पूर्णांक sync, व्योम *key)
+अणु
+	wake_up_पूर्णांकerruptible(&hidp_session_wq);
+	वापस false;
+पूर्ण
 
 /*
- * HIDP session thread
- * This thread runs the I/O for a single HIDP session. Startup is synchronous
- * which allows us to take references to ourself here instead of doing that in
+ * HIDP session thपढ़ो
+ * This thपढ़ो runs the I/O क्रम a single HIDP session. Startup is synchronous
+ * which allows us to take references to ourself here instead of करोing that in
  * the caller.
- * When we are ready to run we notify the caller and call hidp_session_run().
+ * When we are पढ़ोy to run we notअगरy the caller and call hidp_session_run().
  */
-static int hidp_session_thread(void *arg)
-{
-	struct hidp_session *session = arg;
-	DEFINE_WAIT_FUNC(ctrl_wait, hidp_session_wake_function);
-	DEFINE_WAIT_FUNC(intr_wait, hidp_session_wake_function);
+अटल पूर्णांक hidp_session_thपढ़ो(व्योम *arg)
+अणु
+	काष्ठा hidp_session *session = arg;
+	DEFINE_WAIT_FUNC(ctrl_रुको, hidp_session_wake_function);
+	DEFINE_WAIT_FUNC(पूर्णांकr_रुको, hidp_session_wake_function);
 
 	BT_DBG("session %p", session);
 
-	/* initialize runtime environment */
+	/* initialize runसमय environment */
 	hidp_session_get(session);
 	__module_get(THIS_MODULE);
 	set_user_nice(current, -15);
-	hidp_set_timer(session);
+	hidp_set_समयr(session);
 
-	add_wait_queue(sk_sleep(session->ctrl_sock->sk), &ctrl_wait);
-	add_wait_queue(sk_sleep(session->intr_sock->sk), &intr_wait);
+	add_रुको_queue(sk_sleep(session->ctrl_sock->sk), &ctrl_रुको);
+	add_रुको_queue(sk_sleep(session->पूर्णांकr_sock->sk), &पूर्णांकr_रुको);
 	/* This memory barrier is paired with wq_has_sleeper(). See
-	 * sock_poll_wait() for more information why this is needed. */
-	smp_mb__before_atomic();
+	 * sock_poll_रुको() क्रम more inक्रमmation why this is needed. */
+	smp_mb__beक्रमe_atomic();
 
-	/* notify synchronous startup that we're ready */
+	/* notअगरy synchronous startup that we're पढ़ोy */
 	atomic_inc(&session->state);
 	wake_up(&session->state_queue);
 
 	/* run session */
 	hidp_session_run(session);
 
-	/* cleanup runtime environment */
-	remove_wait_queue(sk_sleep(session->intr_sock->sk), &intr_wait);
-	remove_wait_queue(sk_sleep(session->ctrl_sock->sk), &ctrl_wait);
-	wake_up_interruptible(&session->report_queue);
-	hidp_del_timer(session);
+	/* cleanup runसमय environment */
+	हटाओ_रुको_queue(sk_sleep(session->पूर्णांकr_sock->sk), &पूर्णांकr_रुको);
+	हटाओ_रुको_queue(sk_sleep(session->ctrl_sock->sk), &ctrl_रुको);
+	wake_up_पूर्णांकerruptible(&session->report_queue);
+	hidp_del_समयr(session);
 
 	/*
-	 * If we stopped ourself due to any internal signal, we should try to
-	 * unregister our own session here to avoid having it linger until the
+	 * If we stopped ourself due to any पूर्णांकernal संकेत, we should try to
+	 * unरेजिस्टर our own session here to aव्योम having it linger until the
 	 * parent l2cap_conn dies or user-space cleans it up.
-	 * This does not deadlock as we don't do any synchronous shutdown.
-	 * Instead, this call has the same semantics as if user-space tried to
+	 * This करोes not deadlock as we करोn't करो any synchronous shutकरोwn.
+	 * Instead, this call has the same semantics as अगर user-space tried to
 	 * delete the session.
 	 */
-	l2cap_unregister_user(session->conn, &session->user);
+	l2cap_unरेजिस्टर_user(session->conn, &session->user);
 	hidp_session_put(session);
 
-	module_put_and_exit(0);
-	return 0;
-}
+	module_put_and_निकास(0);
+	वापस 0;
+पूर्ण
 
-static int hidp_verify_sockets(struct socket *ctrl_sock,
-			       struct socket *intr_sock)
-{
-	struct l2cap_chan *ctrl_chan, *intr_chan;
-	struct bt_sock *ctrl, *intr;
-	struct hidp_session *session;
+अटल पूर्णांक hidp_verअगरy_sockets(काष्ठा socket *ctrl_sock,
+			       काष्ठा socket *पूर्णांकr_sock)
+अणु
+	काष्ठा l2cap_chan *ctrl_chan, *पूर्णांकr_chan;
+	काष्ठा bt_sock *ctrl, *पूर्णांकr;
+	काष्ठा hidp_session *session;
 
-	if (!l2cap_is_socket(ctrl_sock) || !l2cap_is_socket(intr_sock))
-		return -EINVAL;
+	अगर (!l2cap_is_socket(ctrl_sock) || !l2cap_is_socket(पूर्णांकr_sock))
+		वापस -EINVAL;
 
 	ctrl_chan = l2cap_pi(ctrl_sock->sk)->chan;
-	intr_chan = l2cap_pi(intr_sock->sk)->chan;
+	पूर्णांकr_chan = l2cap_pi(पूर्णांकr_sock->sk)->chan;
 
-	if (bacmp(&ctrl_chan->src, &intr_chan->src) ||
-	    bacmp(&ctrl_chan->dst, &intr_chan->dst))
-		return -ENOTUNIQ;
+	अगर (bacmp(&ctrl_chan->src, &पूर्णांकr_chan->src) ||
+	    bacmp(&ctrl_chan->dst, &पूर्णांकr_chan->dst))
+		वापस -ENOTUNIQ;
 
 	ctrl = bt_sk(ctrl_sock->sk);
-	intr = bt_sk(intr_sock->sk);
+	पूर्णांकr = bt_sk(पूर्णांकr_sock->sk);
 
-	if (ctrl->sk.sk_state != BT_CONNECTED ||
-	    intr->sk.sk_state != BT_CONNECTED)
-		return -EBADFD;
+	अगर (ctrl->sk.sk_state != BT_CONNECTED ||
+	    पूर्णांकr->sk.sk_state != BT_CONNECTED)
+		वापस -EBADFD;
 
 	/* early session check, we check again during session registration */
 	session = hidp_session_find(&ctrl_chan->dst);
-	if (session) {
+	अगर (session) अणु
 		hidp_session_put(session);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hidp_connection_add(const struct hidp_connadd_req *req,
-			struct socket *ctrl_sock,
-			struct socket *intr_sock)
-{
+पूर्णांक hidp_connection_add(स्थिर काष्ठा hidp_connadd_req *req,
+			काष्ठा socket *ctrl_sock,
+			काष्ठा socket *पूर्णांकr_sock)
+अणु
 	u32 valid_flags = BIT(HIDP_VIRTUAL_CABLE_UNPLUG) |
 			  BIT(HIDP_BOOT_PROTOCOL_MODE);
-	struct hidp_session *session;
-	struct l2cap_conn *conn;
-	struct l2cap_chan *chan;
-	int ret;
+	काष्ठा hidp_session *session;
+	काष्ठा l2cap_conn *conn;
+	काष्ठा l2cap_chan *chan;
+	पूर्णांक ret;
 
-	ret = hidp_verify_sockets(ctrl_sock, intr_sock);
-	if (ret)
-		return ret;
+	ret = hidp_verअगरy_sockets(ctrl_sock, पूर्णांकr_sock);
+	अगर (ret)
+		वापस ret;
 
-	if (req->flags & ~valid_flags)
-		return -EINVAL;
+	अगर (req->flags & ~valid_flags)
+		वापस -EINVAL;
 
 	chan = l2cap_pi(ctrl_sock->sk)->chan;
-	conn = NULL;
+	conn = शून्य;
 	l2cap_chan_lock(chan);
-	if (chan->conn)
+	अगर (chan->conn)
 		conn = l2cap_conn_get(chan->conn);
 	l2cap_chan_unlock(chan);
 
-	if (!conn)
-		return -EBADFD;
+	अगर (!conn)
+		वापस -EBADFD;
 
 	ret = hidp_session_new(&session, &chan->dst, ctrl_sock,
-			       intr_sock, req, conn);
-	if (ret)
-		goto out_conn;
+			       पूर्णांकr_sock, req, conn);
+	अगर (ret)
+		जाओ out_conn;
 
-	ret = l2cap_register_user(conn, &session->user);
-	if (ret)
-		goto out_session;
+	ret = l2cap_रेजिस्टर_user(conn, &session->user);
+	अगर (ret)
+		जाओ out_session;
 
 	ret = 0;
 
@@ -1386,91 +1387,91 @@ out_session:
 	hidp_session_put(session);
 out_conn:
 	l2cap_conn_put(conn);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int hidp_connection_del(struct hidp_conndel_req *req)
-{
+पूर्णांक hidp_connection_del(काष्ठा hidp_conndel_req *req)
+अणु
 	u32 valid_flags = BIT(HIDP_VIRTUAL_CABLE_UNPLUG);
-	struct hidp_session *session;
+	काष्ठा hidp_session *session;
 
-	if (req->flags & ~valid_flags)
-		return -EINVAL;
+	अगर (req->flags & ~valid_flags)
+		वापस -EINVAL;
 
 	session = hidp_session_find(&req->bdaddr);
-	if (!session)
-		return -ENOENT;
+	अगर (!session)
+		वापस -ENOENT;
 
-	if (req->flags & BIT(HIDP_VIRTUAL_CABLE_UNPLUG))
+	अगर (req->flags & BIT(HIDP_VIRTUAL_CABLE_UNPLUG))
 		hidp_send_ctrl_message(session,
 				       HIDP_TRANS_HID_CONTROL |
 				         HIDP_CTRL_VIRTUAL_CABLE_UNPLUG,
-				       NULL, 0);
-	else
-		l2cap_unregister_user(session->conn, &session->user);
+				       शून्य, 0);
+	अन्यथा
+		l2cap_unरेजिस्टर_user(session->conn, &session->user);
 
 	hidp_session_put(session);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hidp_get_connlist(struct hidp_connlist_req *req)
-{
-	struct hidp_session *session;
-	int err = 0, n = 0;
+पूर्णांक hidp_get_connlist(काष्ठा hidp_connlist_req *req)
+अणु
+	काष्ठा hidp_session *session;
+	पूर्णांक err = 0, n = 0;
 
 	BT_DBG("");
 
-	down_read(&hidp_session_sem);
+	करोwn_पढ़ो(&hidp_session_sem);
 
-	list_for_each_entry(session, &hidp_session_list, list) {
-		struct hidp_conninfo ci;
+	list_क्रम_each_entry(session, &hidp_session_list, list) अणु
+		काष्ठा hidp_conninfo ci;
 
 		hidp_copy_session(session, &ci);
 
-		if (copy_to_user(req->ci, &ci, sizeof(ci))) {
+		अगर (copy_to_user(req->ci, &ci, माप(ci))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (++n >= req->cnum)
-			break;
+		अगर (++n >= req->cnum)
+			अवरोध;
 
 		req->ci++;
-	}
+	पूर्ण
 	req->cnum = n;
 
-	up_read(&hidp_session_sem);
-	return err;
-}
+	up_पढ़ो(&hidp_session_sem);
+	वापस err;
+पूर्ण
 
-int hidp_get_conninfo(struct hidp_conninfo *ci)
-{
-	struct hidp_session *session;
+पूर्णांक hidp_get_conninfo(काष्ठा hidp_conninfo *ci)
+अणु
+	काष्ठा hidp_session *session;
 
 	session = hidp_session_find(&ci->bdaddr);
-	if (session) {
+	अगर (session) अणु
 		hidp_copy_session(session, ci);
 		hidp_session_put(session);
-	}
+	पूर्ण
 
-	return session ? 0 : -ENOENT;
-}
+	वापस session ? 0 : -ENOENT;
+पूर्ण
 
-static int __init hidp_init(void)
-{
+अटल पूर्णांक __init hidp_init(व्योम)
+अणु
 	BT_INFO("HIDP (Human Interface Emulation) ver %s", VERSION);
 
-	return hidp_init_sockets();
-}
+	वापस hidp_init_sockets();
+पूर्ण
 
-static void __exit hidp_exit(void)
-{
+अटल व्योम __निकास hidp_निकास(व्योम)
+अणु
 	hidp_cleanup_sockets();
-}
+पूर्ण
 
 module_init(hidp_init);
-module_exit(hidp_exit);
+module_निकास(hidp_निकास);
 
 MODULE_AUTHOR("Marcel Holtmann <marcel@holtmann.org>");
 MODULE_AUTHOR("David Herrmann <dh.herrmann@gmail.com>");

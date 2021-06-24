@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XFS_CKSUM_H
-#define _XFS_CKSUM_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XFS_CKSUM_H
+#घोषणा _XFS_CKSUM_H 1
 
-#define XFS_CRC_SEED	(~(uint32_t)0)
+#घोषणा XFS_CRC_SEED	(~(uपूर्णांक32_t)0)
 
 /*
- * Calculate the intermediate checksum for a buffer that has the CRC field
+ * Calculate the पूर्णांकermediate checksum क्रम a buffer that has the CRC field
  * inside it.  The offset of the 32bit crc fields is passed as the
- * cksum_offset parameter. We do not modify the buffer during verification,
+ * cksum_offset parameter. We करो not modअगरy the buffer during verअगरication,
  * hence we have to split the CRC calculation across the cksum_offset.
  */
-static inline uint32_t
-xfs_start_cksum_safe(char *buffer, size_t length, unsigned long cksum_offset)
-{
-	uint32_t zero = 0;
-	uint32_t crc;
+अटल अंतरभूत uपूर्णांक32_t
+xfs_start_cksum_safe(अक्षर *buffer, माप_प्रकार length, अचिन्हित दीर्घ cksum_offset)
+अणु
+	uपूर्णांक32_t zero = 0;
+	uपूर्णांक32_t crc;
 
 	/* Calculate CRC up to the checksum. */
 	crc = crc32c(XFS_CRC_SEED, buffer, cksum_offset);
 
 	/* Skip checksum field */
-	crc = crc32c(crc, &zero, sizeof(__u32));
+	crc = crc32c(crc, &zero, माप(__u32));
 
 	/* Calculate the rest of the CRC. */
-	return crc32c(crc, &buffer[cksum_offset + sizeof(__be32)],
-		      length - (cksum_offset + sizeof(__be32)));
-}
+	वापस crc32c(crc, &buffer[cksum_offset + माप(__be32)],
+		      length - (cksum_offset + माप(__be32)));
+पूर्ण
 
 /*
- * Fast CRC method where the buffer is modified. Callers must have exclusive
- * access to the buffer while the calculation takes place.
+ * Fast CRC method where the buffer is modअगरied. Callers must have exclusive
+ * access to the buffer जबतक the calculation takes place.
  */
-static inline uint32_t
-xfs_start_cksum_update(char *buffer, size_t length, unsigned long cksum_offset)
-{
+अटल अंतरभूत uपूर्णांक32_t
+xfs_start_cksum_update(अक्षर *buffer, माप_प्रकार length, अचिन्हित दीर्घ cksum_offset)
+अणु
 	/* zero the CRC field */
 	*(__le32 *)(buffer + cksum_offset) = 0;
 
-	/* single pass CRC calculation for the entire buffer */
-	return crc32c(XFS_CRC_SEED, buffer, length);
-}
+	/* single pass CRC calculation क्रम the entire buffer */
+	वापस crc32c(XFS_CRC_SEED, buffer, length);
+पूर्ण
 
 /*
- * Convert the intermediate checksum to the final ondisk format.
+ * Convert the पूर्णांकermediate checksum to the final ondisk क्रमmat.
  *
- * The CRC32c calculation uses LE format even on BE machines, but returns the
- * result in host endian format. Hence we need to byte swap it back to LE format
+ * The CRC32c calculation uses LE क्रमmat even on BE machines, but वापसs the
+ * result in host endian क्रमmat. Hence we need to byte swap it back to LE क्रमmat
  * so that it is consistent on disk.
  */
-static inline __le32
-xfs_end_cksum(uint32_t crc)
-{
-	return ~cpu_to_le32(crc);
-}
+अटल अंतरभूत __le32
+xfs_end_cksum(uपूर्णांक32_t crc)
+अणु
+	वापस ~cpu_to_le32(crc);
+पूर्ण
 
 /*
- * Helper to generate the checksum for a buffer.
+ * Helper to generate the checksum क्रम a buffer.
  *
- * This modifies the buffer temporarily - callers must have exclusive
- * access to the buffer while the calculation takes place.
+ * This modअगरies the buffer temporarily - callers must have exclusive
+ * access to the buffer जबतक the calculation takes place.
  */
-static inline void
-xfs_update_cksum(char *buffer, size_t length, unsigned long cksum_offset)
-{
-	uint32_t crc = xfs_start_cksum_update(buffer, length, cksum_offset);
+अटल अंतरभूत व्योम
+xfs_update_cksum(अक्षर *buffer, माप_प्रकार length, अचिन्हित दीर्घ cksum_offset)
+अणु
+	uपूर्णांक32_t crc = xfs_start_cksum_update(buffer, length, cksum_offset);
 
 	*(__le32 *)(buffer + cksum_offset) = xfs_end_cksum(crc);
-}
+पूर्ण
 
 /*
- * Helper to verify the checksum for a buffer.
+ * Helper to verअगरy the checksum क्रम a buffer.
  */
-static inline int
-xfs_verify_cksum(char *buffer, size_t length, unsigned long cksum_offset)
-{
-	uint32_t crc = xfs_start_cksum_safe(buffer, length, cksum_offset);
+अटल अंतरभूत पूर्णांक
+xfs_verअगरy_cksum(अक्षर *buffer, माप_प्रकार length, अचिन्हित दीर्घ cksum_offset)
+अणु
+	uपूर्णांक32_t crc = xfs_start_cksum_safe(buffer, length, cksum_offset);
 
-	return *(__le32 *)(buffer + cksum_offset) == xfs_end_cksum(crc);
-}
+	वापस *(__le32 *)(buffer + cksum_offset) == xfs_end_cksum(crc);
+पूर्ण
 
-#endif /* _XFS_CKSUM_H */
+#पूर्ण_अगर /* _XFS_CKSUM_H */

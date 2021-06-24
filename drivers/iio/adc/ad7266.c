@@ -1,189 +1,190 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AD7266/65 SPI ADC driver
  *
  * Copyright 2012 Analog Devices Inc.
  */
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/spi/spi.h>
-#include <linux/regulator/consumer.h>
-#include <linux/err.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
 
-#include <linux/interrupt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
 
-#include <linux/platform_data/ad7266.h>
+#समावेश <linux/platक्रमm_data/ad7266.h>
 
-struct ad7266_state {
-	struct spi_device	*spi;
-	struct regulator	*reg;
-	unsigned long		vref_mv;
+काष्ठा ad7266_state अणु
+	काष्ठा spi_device	*spi;
+	काष्ठा regulator	*reg;
+	अचिन्हित दीर्घ		vref_mv;
 
-	struct spi_transfer	single_xfer[3];
-	struct spi_message	single_msg;
+	काष्ठा spi_transfer	single_xfer[3];
+	काष्ठा spi_message	single_msg;
 
-	enum ad7266_range	range;
-	enum ad7266_mode	mode;
+	क्रमागत ad7266_range	range;
+	क्रमागत ad7266_mode	mode;
 	bool			fixed_addr;
-	struct gpio_desc	*gpios[3];
+	काष्ठा gpio_desc	*gpios[3];
 
 	/*
-	 * DMA (thus cache coherency maintenance) requires the
+	 * DMA (thus cache coherency मुख्यtenance) requires the
 	 * transfer buffers to live in their own cache lines.
 	 * The buffer needs to be large enough to hold two samples (4 bytes) and
-	 * the naturally aligned timestamp (8 bytes).
+	 * the naturally aligned बारtamp (8 bytes).
 	 */
-	struct {
+	काष्ठा अणु
 		__be16 sample[2];
-		s64 timestamp;
-	} data ____cacheline_aligned;
-};
+		s64 बारtamp;
+	पूर्ण data ____cacheline_aligned;
+पूर्ण;
 
-static int ad7266_wakeup(struct ad7266_state *st)
-{
-	/* Any read with >= 2 bytes will wake the device */
-	return spi_read(st->spi, &st->data.sample[0], 2);
-}
+अटल पूर्णांक ad7266_wakeup(काष्ठा ad7266_state *st)
+अणु
+	/* Any पढ़ो with >= 2 bytes will wake the device */
+	वापस spi_पढ़ो(st->spi, &st->data.sample[0], 2);
+पूर्ण
 
-static int ad7266_powerdown(struct ad7266_state *st)
-{
-	/* Any read with < 2 bytes will powerdown the device */
-	return spi_read(st->spi, &st->data.sample[0], 1);
-}
+अटल पूर्णांक ad7266_घातerकरोwn(काष्ठा ad7266_state *st)
+अणु
+	/* Any पढ़ो with < 2 bytes will घातerकरोwn the device */
+	वापस spi_पढ़ो(st->spi, &st->data.sample[0], 1);
+पूर्ण
 
-static int ad7266_preenable(struct iio_dev *indio_dev)
-{
-	struct ad7266_state *st = iio_priv(indio_dev);
-	return ad7266_wakeup(st);
-}
+अटल पूर्णांक ad7266_preenable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ad7266_state *st = iio_priv(indio_dev);
+	वापस ad7266_wakeup(st);
+पूर्ण
 
-static int ad7266_postdisable(struct iio_dev *indio_dev)
-{
-	struct ad7266_state *st = iio_priv(indio_dev);
-	return ad7266_powerdown(st);
-}
+अटल पूर्णांक ad7266_postdisable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ad7266_state *st = iio_priv(indio_dev);
+	वापस ad7266_घातerकरोwn(st);
+पूर्ण
 
-static const struct iio_buffer_setup_ops iio_triggered_buffer_setup_ops = {
+अटल स्थिर काष्ठा iio_buffer_setup_ops iio_triggered_buffer_setup_ops = अणु
 	.preenable = &ad7266_preenable,
 	.postdisable = &ad7266_postdisable,
-};
+पूर्ण;
 
-static irqreturn_t ad7266_trigger_handler(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct ad7266_state *st = iio_priv(indio_dev);
-	int ret;
+अटल irqवापस_t ad7266_trigger_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा ad7266_state *st = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	ret = spi_read(st->spi, st->data.sample, 4);
-	if (ret == 0) {
-		iio_push_to_buffers_with_timestamp(indio_dev, &st->data,
-			    pf->timestamp);
-	}
+	ret = spi_पढ़ो(st->spi, st->data.sample, 4);
+	अगर (ret == 0) अणु
+		iio_push_to_buffers_with_बारtamp(indio_dev, &st->data,
+			    pf->बारtamp);
+	पूर्ण
 
-	iio_trigger_notify_done(indio_dev->trig);
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void ad7266_select_input(struct ad7266_state *st, unsigned int nr)
-{
-	unsigned int i;
+अटल व्योम ad7266_select_input(काष्ठा ad7266_state *st, अचिन्हित पूर्णांक nr)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (st->fixed_addr)
-		return;
+	अगर (st->fixed_addr)
+		वापस;
 
-	switch (st->mode) {
-	case AD7266_MODE_SINGLE_ENDED:
+	चयन (st->mode) अणु
+	हाल AD7266_MODE_SINGLE_ENDED:
 		nr >>= 1;
-		break;
-	case AD7266_MODE_PSEUDO_DIFF:
+		अवरोध;
+	हाल AD7266_MODE_PSEUDO_DIFF:
 		nr |= 1;
-		break;
-	case AD7266_MODE_DIFF:
+		अवरोध;
+	हाल AD7266_MODE_DIFF:
 		nr &= ~1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	for (i = 0; i < 3; ++i)
+	क्रम (i = 0; i < 3; ++i)
 		gpiod_set_value(st->gpios[i], (bool)(nr & BIT(i)));
-}
+पूर्ण
 
-static int ad7266_update_scan_mode(struct iio_dev *indio_dev,
-	const unsigned long *scan_mask)
-{
-	struct ad7266_state *st = iio_priv(indio_dev);
-	unsigned int nr = find_first_bit(scan_mask, indio_dev->masklength);
+अटल पूर्णांक ad7266_update_scan_mode(काष्ठा iio_dev *indio_dev,
+	स्थिर अचिन्हित दीर्घ *scan_mask)
+अणु
+	काष्ठा ad7266_state *st = iio_priv(indio_dev);
+	अचिन्हित पूर्णांक nr = find_first_bit(scan_mask, indio_dev->masklength);
 
 	ad7266_select_input(st, nr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad7266_read_single(struct ad7266_state *st, int *val,
-	unsigned int address)
-{
-	int ret;
+अटल पूर्णांक ad7266_पढ़ो_single(काष्ठा ad7266_state *st, पूर्णांक *val,
+	अचिन्हित पूर्णांक address)
+अणु
+	पूर्णांक ret;
 
 	ad7266_select_input(st, address);
 
 	ret = spi_sync(st->spi, &st->single_msg);
 	*val = be16_to_cpu(st->data.sample[address % 2]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ad7266_read_raw(struct iio_dev *indio_dev,
-	struct iio_chan_spec const *chan, int *val, int *val2, long m)
-{
-	struct ad7266_state *st = iio_priv(indio_dev);
-	unsigned long scale_mv;
-	int ret;
+अटल पूर्णांक ad7266_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+	काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val, पूर्णांक *val2, दीर्घ m)
+अणु
+	काष्ठा ad7266_state *st = iio_priv(indio_dev);
+	अचिन्हित दीर्घ scale_mv;
+	पूर्णांक ret;
 
-	switch (m) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (m) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		ret = iio_device_claim_direct_mode(indio_dev);
-		if (ret)
-			return ret;
-		ret = ad7266_read_single(st, val, chan->address);
+		अगर (ret)
+			वापस ret;
+		ret = ad7266_पढ़ो_single(st, val, chan->address);
 		iio_device_release_direct_mode(indio_dev);
 
 		*val = (*val >> 2) & 0xfff;
-		if (chan->scan_type.sign == 's')
+		अगर (chan->scan_type.sign == 's')
 			*val = sign_extend32(*val, 11);
 
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
 		scale_mv = st->vref_mv;
-		if (st->mode == AD7266_MODE_DIFF)
+		अगर (st->mode == AD7266_MODE_DIFF)
 			scale_mv *= 2;
-		if (st->range == AD7266_RANGE_2VREF)
+		अगर (st->range == AD7266_RANGE_2VREF)
 			scale_mv *= 2;
 
 		*val = scale_mv;
 		*val2 = chan->scan_type.realbits;
-		return IIO_VAL_FRACTIONAL_LOG2;
-	case IIO_CHAN_INFO_OFFSET:
-		if (st->range == AD7266_RANGE_2VREF &&
+		वापस IIO_VAL_FRACTIONAL_LOG2;
+	हाल IIO_CHAN_INFO_OFFSET:
+		अगर (st->range == AD7266_RANGE_2VREF &&
 			st->mode != AD7266_MODE_DIFF)
 			*val = 2048;
-		else
+		अन्यथा
 			*val = 0;
-		return IIO_VAL_INT;
-	}
-	return -EINVAL;
-}
+		वापस IIO_VAL_INT;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-#define AD7266_CHAN(_chan, _sign) {			\
+#घोषणा AD7266_CHAN(_chan, _sign) अणु			\
 	.type = IIO_VOLTAGE,				\
 	.indexed = 1,					\
 	.channel = (_chan),				\
@@ -192,17 +193,17 @@ static int ad7266_read_raw(struct iio_dev *indio_dev,
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) \
 		| BIT(IIO_CHAN_INFO_OFFSET),			\
 	.scan_index = (_chan),				\
-	.scan_type = {					\
+	.scan_type = अणु					\
 		.sign = (_sign),			\
 		.realbits = 12,				\
 		.storagebits = 16,			\
-		.shift = 2,				\
+		.shअगरt = 2,				\
 		.endianness = IIO_BE,			\
-	},						\
-}
+	पूर्ण,						\
+पूर्ण
 
-#define AD7266_DECLARE_SINGLE_ENDED_CHANNELS(_name, _sign) \
-const struct iio_chan_spec ad7266_channels_##_name[] = { \
+#घोषणा AD7266_DECLARE_SINGLE_ENDED_CHANNELS(_name, _sign) \
+स्थिर काष्ठा iio_chan_spec ad7266_channels_##_name[] = अणु \
 	AD7266_CHAN(0, (_sign)), \
 	AD7266_CHAN(1, (_sign)), \
 	AD7266_CHAN(2, (_sign)), \
@@ -216,21 +217,21 @@ const struct iio_chan_spec ad7266_channels_##_name[] = { \
 	AD7266_CHAN(10, (_sign)), \
 	AD7266_CHAN(11, (_sign)), \
 	IIO_CHAN_SOFT_TIMESTAMP(13), \
-}
+पूर्ण
 
-#define AD7266_DECLARE_SINGLE_ENDED_CHANNELS_FIXED(_name, _sign) \
-const struct iio_chan_spec ad7266_channels_##_name##_fixed[] = { \
+#घोषणा AD7266_DECLARE_SINGLE_ENDED_CHANNELS_FIXED(_name, _sign) \
+स्थिर काष्ठा iio_chan_spec ad7266_channels_##_name##_fixed[] = अणु \
 	AD7266_CHAN(0, (_sign)), \
 	AD7266_CHAN(1, (_sign)), \
 	IIO_CHAN_SOFT_TIMESTAMP(2), \
-}
+पूर्ण
 
-static AD7266_DECLARE_SINGLE_ENDED_CHANNELS(u, 'u');
-static AD7266_DECLARE_SINGLE_ENDED_CHANNELS(s, 's');
-static AD7266_DECLARE_SINGLE_ENDED_CHANNELS_FIXED(u, 'u');
-static AD7266_DECLARE_SINGLE_ENDED_CHANNELS_FIXED(s, 's');
+अटल AD7266_DECLARE_SINGLE_ENDED_CHANNELS(u, 'u');
+अटल AD7266_DECLARE_SINGLE_ENDED_CHANNELS(s, 's');
+अटल AD7266_DECLARE_SINGLE_ENDED_CHANNELS_FIXED(u, 'u');
+अटल AD7266_DECLARE_SINGLE_ENDED_CHANNELS_FIXED(s, 's');
 
-#define AD7266_CHAN_DIFF(_chan, _sign) {			\
+#घोषणा AD7266_CHAN_DIFF(_chan, _sign) अणु			\
 	.type = IIO_VOLTAGE,				\
 	.indexed = 1,					\
 	.channel = (_chan) * 2,				\
@@ -240,18 +241,18 @@ static AD7266_DECLARE_SINGLE_ENDED_CHANNELS_FIXED(s, 's');
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE)	\
 		| BIT(IIO_CHAN_INFO_OFFSET),			\
 	.scan_index = (_chan),				\
-	.scan_type = {					\
+	.scan_type = अणु					\
 		.sign = _sign,			\
 		.realbits = 12,				\
 		.storagebits = 16,			\
-		.shift = 2,				\
+		.shअगरt = 2,				\
 		.endianness = IIO_BE,			\
-	},						\
-	.differential = 1,				\
-}
+	पूर्ण,						\
+	.dअगरferential = 1,				\
+पूर्ण
 
-#define AD7266_DECLARE_DIFF_CHANNELS(_name, _sign) \
-const struct iio_chan_spec ad7266_channels_diff_##_name[] = { \
+#घोषणा AD7266_DECLARE_DIFF_CHANNELS(_name, _sign) \
+स्थिर काष्ठा iio_chan_spec ad7266_channels_dअगरf_##_name[] = अणु \
 	AD7266_CHAN_DIFF(0, (_sign)), \
 	AD7266_CHAN_DIFF(1, (_sign)), \
 	AD7266_CHAN_DIFF(2, (_sign)), \
@@ -259,27 +260,27 @@ const struct iio_chan_spec ad7266_channels_diff_##_name[] = { \
 	AD7266_CHAN_DIFF(4, (_sign)), \
 	AD7266_CHAN_DIFF(5, (_sign)), \
 	IIO_CHAN_SOFT_TIMESTAMP(6), \
-}
+पूर्ण
 
-static AD7266_DECLARE_DIFF_CHANNELS(s, 's');
-static AD7266_DECLARE_DIFF_CHANNELS(u, 'u');
+अटल AD7266_DECLARE_DIFF_CHANNELS(s, 's');
+अटल AD7266_DECLARE_DIFF_CHANNELS(u, 'u');
 
-#define AD7266_DECLARE_DIFF_CHANNELS_FIXED(_name, _sign) \
-const struct iio_chan_spec ad7266_channels_diff_fixed_##_name[] = { \
+#घोषणा AD7266_DECLARE_DIFF_CHANNELS_FIXED(_name, _sign) \
+स्थिर काष्ठा iio_chan_spec ad7266_channels_dअगरf_fixed_##_name[] = अणु \
 	AD7266_CHAN_DIFF(0, (_sign)), \
 	AD7266_CHAN_DIFF(1, (_sign)), \
 	IIO_CHAN_SOFT_TIMESTAMP(2), \
-}
+पूर्ण
 
-static AD7266_DECLARE_DIFF_CHANNELS_FIXED(s, 's');
-static AD7266_DECLARE_DIFF_CHANNELS_FIXED(u, 'u');
+अटल AD7266_DECLARE_DIFF_CHANNELS_FIXED(s, 's');
+अटल AD7266_DECLARE_DIFF_CHANNELS_FIXED(u, 'u');
 
-static const struct iio_info ad7266_info = {
-	.read_raw = &ad7266_read_raw,
+अटल स्थिर काष्ठा iio_info ad7266_info = अणु
+	.पढ़ो_raw = &ad7266_पढ़ो_raw,
 	.update_scan_mode = &ad7266_update_scan_mode,
-};
+पूर्ण;
 
-static const unsigned long ad7266_available_scan_masks[] = {
+अटल स्थिर अचिन्हित दीर्घ ad7266_available_scan_masks[] = अणु
 	0x003,
 	0x00c,
 	0x030,
@@ -287,156 +288,156 @@ static const unsigned long ad7266_available_scan_masks[] = {
 	0x300,
 	0xc00,
 	0x000,
-};
+पूर्ण;
 
-static const unsigned long ad7266_available_scan_masks_diff[] = {
+अटल स्थिर अचिन्हित दीर्घ ad7266_available_scan_masks_dअगरf[] = अणु
 	0x003,
 	0x00c,
 	0x030,
 	0x000,
-};
+पूर्ण;
 
-static const unsigned long ad7266_available_scan_masks_fixed[] = {
+अटल स्थिर अचिन्हित दीर्घ ad7266_available_scan_masks_fixed[] = अणु
 	0x003,
 	0x000,
-};
+पूर्ण;
 
-struct ad7266_chan_info {
-	const struct iio_chan_spec *channels;
-	unsigned int num_channels;
-	const unsigned long *scan_masks;
-};
+काष्ठा ad7266_chan_info अणु
+	स्थिर काष्ठा iio_chan_spec *channels;
+	अचिन्हित पूर्णांक num_channels;
+	स्थिर अचिन्हित दीर्घ *scan_masks;
+पूर्ण;
 
-#define AD7266_CHAN_INFO_INDEX(_differential, _signed, _fixed) \
-	(((_differential) << 2) | ((_signed) << 1) | ((_fixed) << 0))
+#घोषणा AD7266_CHAN_INFO_INDEX(_dअगरferential, _चिन्हित, _fixed) \
+	(((_dअगरferential) << 2) | ((_चिन्हित) << 1) | ((_fixed) << 0))
 
-static const struct ad7266_chan_info ad7266_chan_infos[] = {
-	[AD7266_CHAN_INFO_INDEX(0, 0, 0)] = {
+अटल स्थिर काष्ठा ad7266_chan_info ad7266_chan_infos[] = अणु
+	[AD7266_CHAN_INFO_INDEX(0, 0, 0)] = अणु
 		.channels = ad7266_channels_u,
 		.num_channels = ARRAY_SIZE(ad7266_channels_u),
 		.scan_masks = ad7266_available_scan_masks,
-	},
-	[AD7266_CHAN_INFO_INDEX(0, 0, 1)] = {
+	पूर्ण,
+	[AD7266_CHAN_INFO_INDEX(0, 0, 1)] = अणु
 		.channels = ad7266_channels_u_fixed,
 		.num_channels = ARRAY_SIZE(ad7266_channels_u_fixed),
 		.scan_masks = ad7266_available_scan_masks_fixed,
-	},
-	[AD7266_CHAN_INFO_INDEX(0, 1, 0)] = {
+	पूर्ण,
+	[AD7266_CHAN_INFO_INDEX(0, 1, 0)] = अणु
 		.channels = ad7266_channels_s,
 		.num_channels = ARRAY_SIZE(ad7266_channels_s),
 		.scan_masks = ad7266_available_scan_masks,
-	},
-	[AD7266_CHAN_INFO_INDEX(0, 1, 1)] = {
+	पूर्ण,
+	[AD7266_CHAN_INFO_INDEX(0, 1, 1)] = अणु
 		.channels = ad7266_channels_s_fixed,
 		.num_channels = ARRAY_SIZE(ad7266_channels_s_fixed),
 		.scan_masks = ad7266_available_scan_masks_fixed,
-	},
-	[AD7266_CHAN_INFO_INDEX(1, 0, 0)] = {
-		.channels = ad7266_channels_diff_u,
-		.num_channels = ARRAY_SIZE(ad7266_channels_diff_u),
-		.scan_masks = ad7266_available_scan_masks_diff,
-	},
-	[AD7266_CHAN_INFO_INDEX(1, 0, 1)] = {
-		.channels = ad7266_channels_diff_fixed_u,
-		.num_channels = ARRAY_SIZE(ad7266_channels_diff_fixed_u),
+	पूर्ण,
+	[AD7266_CHAN_INFO_INDEX(1, 0, 0)] = अणु
+		.channels = ad7266_channels_dअगरf_u,
+		.num_channels = ARRAY_SIZE(ad7266_channels_dअगरf_u),
+		.scan_masks = ad7266_available_scan_masks_dअगरf,
+	पूर्ण,
+	[AD7266_CHAN_INFO_INDEX(1, 0, 1)] = अणु
+		.channels = ad7266_channels_dअगरf_fixed_u,
+		.num_channels = ARRAY_SIZE(ad7266_channels_dअगरf_fixed_u),
 		.scan_masks = ad7266_available_scan_masks_fixed,
-	},
-	[AD7266_CHAN_INFO_INDEX(1, 1, 0)] = {
-		.channels = ad7266_channels_diff_s,
-		.num_channels = ARRAY_SIZE(ad7266_channels_diff_s),
-		.scan_masks = ad7266_available_scan_masks_diff,
-	},
-	[AD7266_CHAN_INFO_INDEX(1, 1, 1)] = {
-		.channels = ad7266_channels_diff_fixed_s,
-		.num_channels = ARRAY_SIZE(ad7266_channels_diff_fixed_s),
+	पूर्ण,
+	[AD7266_CHAN_INFO_INDEX(1, 1, 0)] = अणु
+		.channels = ad7266_channels_dअगरf_s,
+		.num_channels = ARRAY_SIZE(ad7266_channels_dअगरf_s),
+		.scan_masks = ad7266_available_scan_masks_dअगरf,
+	पूर्ण,
+	[AD7266_CHAN_INFO_INDEX(1, 1, 1)] = अणु
+		.channels = ad7266_channels_dअगरf_fixed_s,
+		.num_channels = ARRAY_SIZE(ad7266_channels_dअगरf_fixed_s),
 		.scan_masks = ad7266_available_scan_masks_fixed,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void ad7266_init_channels(struct iio_dev *indio_dev)
-{
-	struct ad7266_state *st = iio_priv(indio_dev);
-	bool is_differential, is_signed;
-	const struct ad7266_chan_info *chan_info;
-	int i;
+अटल व्योम ad7266_init_channels(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ad7266_state *st = iio_priv(indio_dev);
+	bool is_dअगरferential, is_चिन्हित;
+	स्थिर काष्ठा ad7266_chan_info *chan_info;
+	पूर्णांक i;
 
-	is_differential = st->mode != AD7266_MODE_SINGLE_ENDED;
-	is_signed = (st->range == AD7266_RANGE_2VREF) |
+	is_dअगरferential = st->mode != AD7266_MODE_SINGLE_ENDED;
+	is_चिन्हित = (st->range == AD7266_RANGE_2VREF) |
 		    (st->mode == AD7266_MODE_DIFF);
 
-	i = AD7266_CHAN_INFO_INDEX(is_differential, is_signed, st->fixed_addr);
+	i = AD7266_CHAN_INFO_INDEX(is_dअगरferential, is_चिन्हित, st->fixed_addr);
 	chan_info = &ad7266_chan_infos[i];
 
 	indio_dev->channels = chan_info->channels;
 	indio_dev->num_channels = chan_info->num_channels;
 	indio_dev->available_scan_masks = chan_info->scan_masks;
 	indio_dev->masklength = chan_info->num_channels - 1;
-}
+पूर्ण
 
-static const char * const ad7266_gpio_labels[] = {
+अटल स्थिर अक्षर * स्थिर ad7266_gpio_labels[] = अणु
 	"ad0", "ad1", "ad2",
-};
+पूर्ण;
 
-static int ad7266_probe(struct spi_device *spi)
-{
-	struct ad7266_platform_data *pdata = spi->dev.platform_data;
-	struct iio_dev *indio_dev;
-	struct ad7266_state *st;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक ad7266_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा ad7266_platक्रमm_data *pdata = spi->dev.platक्रमm_data;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा ad7266_state *st;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*st));
-	if (indio_dev == NULL)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*st));
+	अगर (indio_dev == शून्य)
+		वापस -ENOMEM;
 
 	st = iio_priv(indio_dev);
 
 	st->reg = devm_regulator_get_optional(&spi->dev, "vref");
-	if (!IS_ERR(st->reg)) {
+	अगर (!IS_ERR(st->reg)) अणु
 		ret = regulator_enable(st->reg);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = regulator_get_voltage(st->reg);
-		if (ret < 0)
-			goto error_disable_reg;
+		अगर (ret < 0)
+			जाओ error_disable_reg;
 
 		st->vref_mv = ret / 1000;
-	} else {
-		/* Any other error indicates that the regulator does exist */
-		if (PTR_ERR(st->reg) != -ENODEV)
-			return PTR_ERR(st->reg);
-		/* Use internal reference */
+	पूर्ण अन्यथा अणु
+		/* Any other error indicates that the regulator करोes exist */
+		अगर (PTR_ERR(st->reg) != -ENODEV)
+			वापस PTR_ERR(st->reg);
+		/* Use पूर्णांकernal reference */
 		st->vref_mv = 2500;
-	}
+	पूर्ण
 
-	if (pdata) {
+	अगर (pdata) अणु
 		st->fixed_addr = pdata->fixed_addr;
 		st->mode = pdata->mode;
 		st->range = pdata->range;
 
-		if (!st->fixed_addr) {
-			for (i = 0; i < ARRAY_SIZE(st->gpios); ++i) {
+		अगर (!st->fixed_addr) अणु
+			क्रम (i = 0; i < ARRAY_SIZE(st->gpios); ++i) अणु
 				st->gpios[i] = devm_gpiod_get(&spi->dev,
 						      ad7266_gpio_labels[i],
 						      GPIOD_OUT_LOW);
-				if (IS_ERR(st->gpios[i])) {
+				अगर (IS_ERR(st->gpios[i])) अणु
 					ret = PTR_ERR(st->gpios[i]);
-					goto error_disable_reg;
-				}
-			}
-		}
-	} else {
+					जाओ error_disable_reg;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		st->fixed_addr = true;
 		st->range = AD7266_RANGE_VREF;
 		st->mode = AD7266_MODE_DIFF;
-	}
+	पूर्ण
 
 	spi_set_drvdata(spi, indio_dev);
 	st->spi = spi;
 
 	indio_dev->name = spi_get_device_id(spi)->name;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->info = &ad7266_info;
 
 	ad7266_init_channels(indio_dev);
@@ -449,7 +450,7 @@ static int ad7266_probe(struct spi_device *spi)
 	st->single_xfer[1].rx_buf = st->data.sample;
 	st->single_xfer[1].len = 4;
 	st->single_xfer[1].cs_change = 1;
-	/* powerdown */
+	/* घातerकरोwn */
 	st->single_xfer[2].tx_buf = &st->data.sample[0];
 	st->single_xfer[2].len = 1;
 
@@ -458,54 +459,54 @@ static int ad7266_probe(struct spi_device *spi)
 	spi_message_add_tail(&st->single_xfer[1], &st->single_msg);
 	spi_message_add_tail(&st->single_xfer[2], &st->single_msg);
 
-	ret = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_time,
+	ret = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_समय,
 		&ad7266_trigger_handler, &iio_triggered_buffer_setup_ops);
-	if (ret)
-		goto error_disable_reg;
+	अगर (ret)
+		जाओ error_disable_reg;
 
-	ret = iio_device_register(indio_dev);
-	if (ret)
-		goto error_buffer_cleanup;
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret)
+		जाओ error_buffer_cleanup;
 
-	return 0;
+	वापस 0;
 
 error_buffer_cleanup:
 	iio_triggered_buffer_cleanup(indio_dev);
 error_disable_reg:
-	if (!IS_ERR(st->reg))
+	अगर (!IS_ERR(st->reg))
 		regulator_disable(st->reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ad7266_remove(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev = spi_get_drvdata(spi);
-	struct ad7266_state *st = iio_priv(indio_dev);
+अटल पूर्णांक ad7266_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
+	काष्ठा ad7266_state *st = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
-	if (!IS_ERR(st->reg))
+	अगर (!IS_ERR(st->reg))
 		regulator_disable(st->reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id ad7266_id[] = {
-	{"ad7265", 0},
-	{"ad7266", 0},
-	{ }
-};
+अटल स्थिर काष्ठा spi_device_id ad7266_id[] = अणु
+	अणु"ad7265", 0पूर्ण,
+	अणु"ad7266", 0पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, ad7266_id);
 
-static struct spi_driver ad7266_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ad7266_driver = अणु
+	.driver = अणु
 		.name	= "ad7266",
-	},
+	पूर्ण,
 	.probe		= ad7266_probe,
-	.remove		= ad7266_remove,
+	.हटाओ		= ad7266_हटाओ,
 	.id_table	= ad7266_id,
-};
+पूर्ण;
 module_spi_driver(ad7266_driver);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");

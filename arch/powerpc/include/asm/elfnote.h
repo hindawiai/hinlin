@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * PowerPC ELF notes.
  *
  * Copyright 2019, IBM Corporation
  */
 
-#ifndef __ASM_POWERPC_ELFNOTE_H__
-#define __ASM_POWERPC_ELFNOTE_H__
+#अगर_अघोषित __ASM_POWERPC_ELFNOTE_H__
+#घोषणा __ASM_POWERPC_ELFNOTE_H__
 
 /*
  * These note types should live in a SHT_NOTE segment and have
@@ -14,11 +15,11 @@
  */
 
 /*
- * The capabilities supported/required by this kernel (bitmap).
+ * The capabilities supported/required by this kernel (biपंचांगap).
  *
- * This type uses a bitmap as "desc" field. Each bit is described
- * in arch/powerpc/kernel/note.S
+ * This type uses a biपंचांगap as "desc" field. Each bit is described
+ * in arch/घातerpc/kernel/note.S
  */
-#define PPC_ELFNOTE_CAPABILITIES 1
+#घोषणा PPC_ELFNOTE_CAPABILITIES 1
 
-#endif /* __ASM_POWERPC_ELFNOTE_H__ */
+#पूर्ण_अगर /* __ASM_POWERPC_ELFNOTE_H__ */

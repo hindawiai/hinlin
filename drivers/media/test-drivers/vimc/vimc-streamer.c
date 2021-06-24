@@ -1,238 +1,239 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * vimc-streamer.c Virtual Media Controller Driver
  *
- * Copyright (C) 2018 Lucas A. M. Magalhães <lucmaga@gmail.com>
+ * Copyright (C) 2018 Lucas A. M. Magalhथःes <lucmaga@gmail.com>
  *
  */
 
-#include <linux/init.h>
-#include <linux/freezer.h>
-#include <linux/kthread.h>
+#समावेश <linux/init.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include "vimc-streamer.h"
+#समावेश "vimc-streamer.h"
 
 /**
  * vimc_get_source_entity - get the entity connected with the first sink pad
  *
  * @ent:	reference media_entity
  *
- * Helper function that returns the media entity containing the source pad
+ * Helper function that वापसs the media entity containing the source pad
  * linked with the first sink pad from the given media entity pad list.
  *
- * Return: The source pad or NULL, if it wasn't found.
+ * Return: The source pad or शून्य, अगर it wasn't found.
  */
-static struct media_entity *vimc_get_source_entity(struct media_entity *ent)
-{
-	struct media_pad *pad;
-	int i;
+अटल काष्ठा media_entity *vimc_get_source_entity(काष्ठा media_entity *ent)
+अणु
+	काष्ठा media_pad *pad;
+	पूर्णांक i;
 
-	for (i = 0; i < ent->num_pads; i++) {
-		if (ent->pads[i].flags & MEDIA_PAD_FL_SOURCE)
-			continue;
+	क्रम (i = 0; i < ent->num_pads; i++) अणु
+		अगर (ent->pads[i].flags & MEDIA_PAD_FL_SOURCE)
+			जारी;
 		pad = media_entity_remote_pad(&ent->pads[i]);
-		return pad ? pad->entity : NULL;
-	}
-	return NULL;
-}
+		वापस pad ? pad->entity : शून्य;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  * vimc_streamer_pipeline_terminate - Disable stream in all ved in stream
  *
- * @stream: the pointer to the stream structure with the pipeline to be
+ * @stream: the poपूर्णांकer to the stream काष्ठाure with the pipeline to be
  *	    disabled.
  *
  * Calls s_stream to disable the stream in each entity of the pipeline
  *
  */
-static void vimc_streamer_pipeline_terminate(struct vimc_stream *stream)
-{
-	struct vimc_ent_device *ved;
-	struct v4l2_subdev *sd;
+अटल व्योम vimc_streamer_pipeline_terminate(काष्ठा vimc_stream *stream)
+अणु
+	काष्ठा vimc_ent_device *ved;
+	काष्ठा v4l2_subdev *sd;
 
-	while (stream->pipe_size) {
+	जबतक (stream->pipe_size) अणु
 		stream->pipe_size--;
 		ved = stream->ved_pipeline[stream->pipe_size];
-		stream->ved_pipeline[stream->pipe_size] = NULL;
+		stream->ved_pipeline[stream->pipe_size] = शून्य;
 
-		if (!is_media_entity_v4l2_subdev(ved->ent))
-			continue;
+		अगर (!is_media_entity_v4l2_subdev(ved->ent))
+			जारी;
 
 		sd = media_entity_to_v4l2_subdev(ved->ent);
 		v4l2_subdev_call(sd, video, s_stream, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * vimc_streamer_pipeline_init - Initializes the stream structure
+ * vimc_streamer_pipeline_init - Initializes the stream काष्ठाure
  *
- * @stream: the pointer to the stream structure to be initialized
- * @ved:    the pointer to the vimc entity initializing the stream
+ * @stream: the poपूर्णांकer to the stream काष्ठाure to be initialized
+ * @ved:    the poपूर्णांकer to the vimc entity initializing the stream
  *
- * Initializes the stream structure. Walks through the entity graph to
- * construct the pipeline used later on the streamer thread.
+ * Initializes the stream काष्ठाure. Walks through the entity graph to
+ * स्थिरruct the pipeline used later on the streamer thपढ़ो.
  * Calls vimc_streamer_s_stream() to enable stream in all entities of
  * the pipeline.
  *
- * Return: 0 if success, error code otherwise.
+ * Return: 0 अगर success, error code otherwise.
  */
-static int vimc_streamer_pipeline_init(struct vimc_stream *stream,
-				       struct vimc_ent_device *ved)
-{
-	struct media_entity *entity;
-	struct video_device *vdev;
-	struct v4l2_subdev *sd;
-	int ret = 0;
+अटल पूर्णांक vimc_streamer_pipeline_init(काष्ठा vimc_stream *stream,
+				       काष्ठा vimc_ent_device *ved)
+अणु
+	काष्ठा media_entity *entity;
+	काष्ठा video_device *vdev;
+	काष्ठा v4l2_subdev *sd;
+	पूर्णांक ret = 0;
 
 	stream->pipe_size = 0;
-	while (stream->pipe_size < VIMC_STREAMER_PIPELINE_MAX_SIZE) {
-		if (!ved) {
+	जबतक (stream->pipe_size < VIMC_STREAMER_PIPELINE_MAX_SIZE) अणु
+		अगर (!ved) अणु
 			vimc_streamer_pipeline_terminate(stream);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		stream->ved_pipeline[stream->pipe_size++] = ved;
 
-		if (is_media_entity_v4l2_subdev(ved->ent)) {
+		अगर (is_media_entity_v4l2_subdev(ved->ent)) अणु
 			sd = media_entity_to_v4l2_subdev(ved->ent);
 			ret = v4l2_subdev_call(sd, video, s_stream, 1);
-			if (ret && ret != -ENOIOCTLCMD) {
+			अगर (ret && ret != -ENOIOCTLCMD) अणु
 				dev_err(ved->dev, "subdev_call error %s\n",
 					ved->ent->name);
 				vimc_streamer_pipeline_terminate(stream);
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
 		entity = vimc_get_source_entity(ved->ent);
-		/* Check if the end of the pipeline was reached */
-		if (!entity) {
+		/* Check अगर the end of the pipeline was reached */
+		अगर (!entity) अणु
 			/* the first entity of the pipe should be source only */
-			if (!vimc_is_source(ved->ent)) {
+			अगर (!vimc_is_source(ved->ent)) अणु
 				dev_err(ved->dev,
 					"first entity in the pipe '%s' is not a source\n",
 					ved->ent->name);
 				vimc_streamer_pipeline_terminate(stream);
-				return -EPIPE;
-			}
-			return 0;
-		}
+				वापस -EPIPE;
+			पूर्ण
+			वापस 0;
+		पूर्ण
 
 		/* Get the next device in the pipeline */
-		if (is_media_entity_v4l2_subdev(entity)) {
+		अगर (is_media_entity_v4l2_subdev(entity)) अणु
 			sd = media_entity_to_v4l2_subdev(entity);
 			ved = v4l2_get_subdevdata(sd);
-		} else {
+		पूर्ण अन्यथा अणु
 			vdev = container_of(entity,
-					    struct video_device,
+					    काष्ठा video_device,
 					    entity);
 			ved = video_get_drvdata(vdev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	vimc_streamer_pipeline_terminate(stream);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
- * vimc_streamer_thread - Process frames through the pipeline
+ * vimc_streamer_thपढ़ो - Process frames through the pipeline
  *
- * @data:	vimc_stream struct of the current stream
+ * @data:	vimc_stream काष्ठा of the current stream
  *
- * From the source to the sink, gets a frame from each subdevice and send to
+ * From the source to the sink, माला_लो a frame from each subdevice and send to
  * the next one of the pipeline at a fixed framerate.
  *
  * Return:
- * Always zero (created as ``int`` instead of ``void`` to comply with
- * kthread API).
+ * Always zero (created as ``पूर्णांक`` instead of ``व्योम`` to comply with
+ * kthपढ़ो API).
  */
-static int vimc_streamer_thread(void *data)
-{
-	struct vimc_stream *stream = data;
-	u8 *frame = NULL;
-	int i;
+अटल पूर्णांक vimc_streamer_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा vimc_stream *stream = data;
+	u8 *frame = शून्य;
+	पूर्णांक i;
 
-	set_freezable();
+	set_मुक्तzable();
 
-	for (;;) {
-		try_to_freeze();
-		if (kthread_should_stop())
-			break;
+	क्रम (;;) अणु
+		try_to_मुक्तze();
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
 
-		for (i = stream->pipe_size - 1; i >= 0; i--) {
+		क्रम (i = stream->pipe_size - 1; i >= 0; i--) अणु
 			frame = stream->ved_pipeline[i]->process_frame(
 					stream->ved_pipeline[i], frame);
-			if (!frame || IS_ERR(frame))
-				break;
-		}
-		//wait for 60hz
+			अगर (!frame || IS_ERR(frame))
+				अवरोध;
+		पूर्ण
+		//रुको क्रम 60hz
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		schedule_timeout(HZ / 60);
-	}
+		schedule_समयout(HZ / 60);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vimc_streamer_s_stream - Start/stop the streaming on the media pipeline
  *
- * @stream:	the pointer to the stream structure of the current stream
- * @ved:	pointer to the vimc entity of the entity of the stream
- * @enable:	flag to determine if stream should start/stop
+ * @stream:	the poपूर्णांकer to the stream काष्ठाure of the current stream
+ * @ved:	poपूर्णांकer to the vimc entity of the entity of the stream
+ * @enable:	flag to determine अगर stream should start/stop
  *
- * When starting, check if there is no ``stream->kthread`` allocated. This
- * should indicate that a stream is already running. Then, it initializes the
- * pipeline, creates and runs a kthread to consume buffers through the pipeline.
- * When stopping, analogously check if there is a stream running, stop the
- * thread and terminates the pipeline.
+ * When starting, check अगर there is no ``stream->kthपढ़ो`` allocated. This
+ * should indicate that a stream is alपढ़ोy running. Then, it initializes the
+ * pipeline, creates and runs a kthपढ़ो to consume buffers through the pipeline.
+ * When stopping, analogously check अगर there is a stream running, stop the
+ * thपढ़ो and terminates the pipeline.
  *
- * Return: 0 if success, error code otherwise.
+ * Return: 0 अगर success, error code otherwise.
  */
-int vimc_streamer_s_stream(struct vimc_stream *stream,
-			   struct vimc_ent_device *ved,
-			   int enable)
-{
-	int ret;
+पूर्णांक vimc_streamer_s_stream(काष्ठा vimc_stream *stream,
+			   काष्ठा vimc_ent_device *ved,
+			   पूर्णांक enable)
+अणु
+	पूर्णांक ret;
 
-	if (!stream || !ved)
-		return -EINVAL;
+	अगर (!stream || !ved)
+		वापस -EINVAL;
 
-	if (enable) {
-		if (stream->kthread)
-			return 0;
+	अगर (enable) अणु
+		अगर (stream->kthपढ़ो)
+			वापस 0;
 
 		ret = vimc_streamer_pipeline_init(stream, ved);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		stream->kthread = kthread_run(vimc_streamer_thread, stream,
+		stream->kthपढ़ो = kthपढ़ो_run(vimc_streamer_thपढ़ो, stream,
 					      "vimc-streamer thread");
 
-		if (IS_ERR(stream->kthread)) {
-			ret = PTR_ERR(stream->kthread);
+		अगर (IS_ERR(stream->kthपढ़ो)) अणु
+			ret = PTR_ERR(stream->kthपढ़ो);
 			dev_err(ved->dev, "kthread_run failed with %d\n", ret);
 			vimc_streamer_pipeline_terminate(stream);
-			stream->kthread = NULL;
-			return ret;
-		}
+			stream->kthपढ़ो = शून्य;
+			वापस ret;
+		पूर्ण
 
-	} else {
-		if (!stream->kthread)
-			return 0;
+	पूर्ण अन्यथा अणु
+		अगर (!stream->kthपढ़ो)
+			वापस 0;
 
-		ret = kthread_stop(stream->kthread);
+		ret = kthपढ़ो_stop(stream->kthपढ़ो);
 		/*
-		 * kthread_stop returns -EINTR in cases when streamon was
-		 * immediately followed by streamoff, and the thread didn't had
+		 * kthपढ़ो_stop वापसs -EINTR in हालs when streamon was
+		 * immediately followed by streamoff, and the thपढ़ो didn't had
 		 * a chance to run. Ignore errors to stop the stream in the
 		 * pipeline.
 		 */
-		if (ret)
+		अगर (ret)
 			dev_dbg(ved->dev, "kthread_stop returned '%d'\n", ret);
 
-		stream->kthread = NULL;
+		stream->kthपढ़ो = शून्य;
 
 		vimc_streamer_pipeline_terminate(stream);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_BUG_H
-#define __ASM_CSKY_BUG_H
+#अगर_अघोषित __ASM_CSKY_BUG_H
+#घोषणा __ASM_CSKY_BUG_H
 
-#include <linux/compiler.h>
-#include <linux/const.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/स्थिर.h>
+#समावेश <linux/types.h>
 
-#define BUG()				\
-do {					\
-	asm volatile ("bkpt\n");	\
+#घोषणा BUG()				\
+करो अणु					\
+	यंत्र अस्थिर ("bkpt\n");	\
 	unreachable();			\
-} while (0)
+पूर्ण जबतक (0)
 
-#define HAVE_ARCH_BUG
+#घोषणा HAVE_ARCH_BUG
 
-#include <asm-generic/bug.h>
+#समावेश <यंत्र-generic/bug.h>
 
-struct pt_regs;
+काष्ठा pt_regs;
 
-void die(struct pt_regs *regs, const char *str);
-void do_trap(struct pt_regs *regs, int signo, int code, unsigned long addr);
+व्योम die(काष्ठा pt_regs *regs, स्थिर अक्षर *str);
+व्योम करो_trap(काष्ठा pt_regs *regs, पूर्णांक signo, पूर्णांक code, अचिन्हित दीर्घ addr);
 
-void show_regs(struct pt_regs *regs);
-void show_code(struct pt_regs *regs);
+व्योम show_regs(काष्ठा pt_regs *regs);
+व्योम show_code(काष्ठा pt_regs *regs);
 
-#endif /* __ASM_CSKY_BUG_H */
+#पूर्ण_अगर /* __ASM_CSKY_BUG_H */

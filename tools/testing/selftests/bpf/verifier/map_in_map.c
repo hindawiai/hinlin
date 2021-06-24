@@ -1,6 +1,7 @@
-{
+<शैली गुरु>
+अणु
 	"map in map access",
-	.insns = {
+	.insns = अणु
 	BPF_ST_MEM(0, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -14,13 +15,13 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_in_map = { 3 },
+	पूर्ण,
+	.fixup_map_in_map = अणु 3 पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"invalid inner map pointer",
-	.insns = {
+	.insns = अणु
 	BPF_ST_MEM(0, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -35,14 +36,14 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_in_map = { 3 },
+	पूर्ण,
+	.fixup_map_in_map = अणु 3 पूर्ण,
 	.errstr = "R1 pointer arithmetic on map_ptr prohibited",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"forgot null checking on the inner map pointer",
-	.insns = {
+	.insns = अणु
 	BPF_ST_MEM(0, BPF_REG_10, -4, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -4),
@@ -55,8 +56,8 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_in_map = { 3 },
+	पूर्ण,
+	.fixup_map_in_map = अणु 3 पूर्ण,
 	.errstr = "R1 type=map_value_or_null expected=map_ptr",
 	.result = REJECT,
-},
+पूर्ण,

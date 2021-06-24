@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * TUSB6010 USB 2.0 OTG Dual Role controller OMAP DMA interface
+ * TUSB6010 USB 2.0 OTG Dual Role controller OMAP DMA पूर्णांकerface
  *
  * Copyright (C) 2006 Nokia Corporation
  * Tony Lindgren <tony@atomide.com>
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/usb.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/dmaengine.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/usb.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/dmaengine.h>
 
-#include "musb_core.h"
-#include "tusb6010.h"
+#समावेश "musb_core.h"
+#समावेश "tusb6010.h"
 
-#define to_chdat(c)		((struct tusb_omap_dma_ch *)(c)->private_data)
+#घोषणा to_chdat(c)		((काष्ठा tusb_omap_dma_ch *)(c)->निजी_data)
 
-#define MAX_DMAREQ		5	/* REVISIT: Really 6, but req5 not OK */
+#घोषणा MAX_DMAREQ		5	/* REVISIT: Really 6, but req5 not OK */
 
-struct tusb_dma_data {
+काष्ठा tusb_dma_data अणु
 	s8			dmareq;
-	struct dma_chan		*chan;
-};
+	काष्ठा dma_chan		*chan;
+पूर्ण;
 
-struct tusb_omap_dma_ch {
-	struct musb		*musb;
-	void __iomem		*tbase;
-	unsigned long		phys_offset;
-	int			epnum;
+काष्ठा tusb_omap_dma_ch अणु
+	काष्ठा musb		*musb;
+	व्योम __iomem		*tbase;
+	अचिन्हित दीर्घ		phys_offset;
+	पूर्णांक			epnum;
 	u8			tx;
-	struct musb_hw_ep	*hw_ep;
+	काष्ठा musb_hw_ep	*hw_ep;
 
-	struct tusb_dma_data	*dma_data;
+	काष्ठा tusb_dma_data	*dma_data;
 
-	struct tusb_omap_dma	*tusb_dma;
+	काष्ठा tusb_omap_dma	*tusb_dma;
 
 	dma_addr_t		dma_addr;
 
@@ -45,210 +46,210 @@ struct tusb_omap_dma_ch {
 	u16			transfer_packet_sz;
 	u32			transfer_len;
 	u32			completed_len;
-};
+पूर्ण;
 
-struct tusb_omap_dma {
-	struct dma_controller		controller;
-	void __iomem			*tbase;
+काष्ठा tusb_omap_dma अणु
+	काष्ठा dma_controller		controller;
+	व्योम __iomem			*tbase;
 
-	struct tusb_dma_data		dma_pool[MAX_DMAREQ];
-	unsigned			multichannel:1;
-};
+	काष्ठा tusb_dma_data		dma_pool[MAX_DMAREQ];
+	अचिन्हित			multichannel:1;
+पूर्ण;
 
 /*
- * Allocate dmareq0 to the current channel unless it's already taken
+ * Allocate dmareq0 to the current channel unless it's alपढ़ोy taken
  */
-static inline int tusb_omap_use_shared_dmareq(struct tusb_omap_dma_ch *chdat)
-{
-	u32		reg = musb_readl(chdat->tbase, TUSB_DMA_EP_MAP);
+अटल अंतरभूत पूर्णांक tusb_omap_use_shared_dmareq(काष्ठा tusb_omap_dma_ch *chdat)
+अणु
+	u32		reg = musb_पढ़ोl(chdat->tbase, TUSB_DMA_EP_MAP);
 
-	if (reg != 0) {
+	अगर (reg != 0) अणु
 		dev_dbg(chdat->musb->controller, "ep%i dmareq0 is busy for ep%i\n",
 			chdat->epnum, reg & 0xf);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (chdat->tx)
+	अगर (chdat->tx)
 		reg = (1 << 4) | chdat->epnum;
-	else
+	अन्यथा
 		reg = chdat->epnum;
 
-	musb_writel(chdat->tbase, TUSB_DMA_EP_MAP, reg);
+	musb_ग_लिखोl(chdat->tbase, TUSB_DMA_EP_MAP, reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void tusb_omap_free_shared_dmareq(struct tusb_omap_dma_ch *chdat)
-{
-	u32		reg = musb_readl(chdat->tbase, TUSB_DMA_EP_MAP);
+अटल अंतरभूत व्योम tusb_omap_मुक्त_shared_dmareq(काष्ठा tusb_omap_dma_ch *chdat)
+अणु
+	u32		reg = musb_पढ़ोl(chdat->tbase, TUSB_DMA_EP_MAP);
 
-	if ((reg & 0xf) != chdat->epnum) {
-		printk(KERN_ERR "ep%i trying to release dmareq0 for ep%i\n",
+	अगर ((reg & 0xf) != chdat->epnum) अणु
+		prपूर्णांकk(KERN_ERR "ep%i trying to release dmareq0 for ep%i\n",
 			chdat->epnum, reg & 0xf);
-		return;
-	}
-	musb_writel(chdat->tbase, TUSB_DMA_EP_MAP, 0);
-}
+		वापस;
+	पूर्ण
+	musb_ग_लिखोl(chdat->tbase, TUSB_DMA_EP_MAP, 0);
+पूर्ण
 
 /*
  * See also musb_dma_completion in plat_uds.c and musb_g_[tx|rx]() in
  * musb_gadget.c.
  */
-static void tusb_omap_dma_cb(void *data)
-{
-	struct dma_channel	*channel = (struct dma_channel *)data;
-	struct tusb_omap_dma_ch	*chdat = to_chdat(channel);
-	struct tusb_omap_dma	*tusb_dma = chdat->tusb_dma;
-	struct musb		*musb = chdat->musb;
-	struct device		*dev = musb->controller;
-	struct musb_hw_ep	*hw_ep = chdat->hw_ep;
-	void __iomem		*ep_conf = hw_ep->conf;
-	void __iomem		*mbase = musb->mregs;
-	unsigned long		remaining, flags, pio;
+अटल व्योम tusb_omap_dma_cb(व्योम *data)
+अणु
+	काष्ठा dma_channel	*channel = (काष्ठा dma_channel *)data;
+	काष्ठा tusb_omap_dma_ch	*chdat = to_chdat(channel);
+	काष्ठा tusb_omap_dma	*tusb_dma = chdat->tusb_dma;
+	काष्ठा musb		*musb = chdat->musb;
+	काष्ठा device		*dev = musb->controller;
+	काष्ठा musb_hw_ep	*hw_ep = chdat->hw_ep;
+	व्योम __iomem		*ep_conf = hw_ep->conf;
+	व्योम __iomem		*mbase = musb->mregs;
+	अचिन्हित दीर्घ		reमुख्यing, flags, pio;
 
 	spin_lock_irqsave(&musb->lock, flags);
 
 	dev_dbg(musb->controller, "ep%i %s dma callback\n",
 		chdat->epnum, chdat->tx ? "tx" : "rx");
 
-	if (chdat->tx)
-		remaining = musb_readl(ep_conf, TUSB_EP_TX_OFFSET);
-	else
-		remaining = musb_readl(ep_conf, TUSB_EP_RX_OFFSET);
+	अगर (chdat->tx)
+		reमुख्यing = musb_पढ़ोl(ep_conf, TUSB_EP_TX_OFFSET);
+	अन्यथा
+		reमुख्यing = musb_पढ़ोl(ep_conf, TUSB_EP_RX_OFFSET);
 
-	remaining = TUSB_EP_CONFIG_XFR_SIZE(remaining);
+	reमुख्यing = TUSB_EP_CONFIG_XFR_SIZE(reमुख्यing);
 
 	/* HW issue #10: XFR_SIZE may get corrupt on DMA (both async & sync) */
-	if (unlikely(remaining > chdat->transfer_len)) {
+	अगर (unlikely(reमुख्यing > chdat->transfer_len)) अणु
 		dev_dbg(musb->controller, "Corrupt %s XFR_SIZE: 0x%08lx\n",
-			chdat->tx ? "tx" : "rx", remaining);
-		remaining = 0;
-	}
+			chdat->tx ? "tx" : "rx", reमुख्यing);
+		reमुख्यing = 0;
+	पूर्ण
 
-	channel->actual_len = chdat->transfer_len - remaining;
+	channel->actual_len = chdat->transfer_len - reमुख्यing;
 	pio = chdat->len - channel->actual_len;
 
-	dev_dbg(musb->controller, "DMA remaining %lu/%u\n", remaining, chdat->transfer_len);
+	dev_dbg(musb->controller, "DMA remaining %lu/%u\n", reमुख्यing, chdat->transfer_len);
 
-	/* Transfer remaining 1 - 31 bytes */
-	if (pio > 0 && pio < 32) {
+	/* Transfer reमुख्यing 1 - 31 bytes */
+	अगर (pio > 0 && pio < 32) अणु
 		u8	*buf;
 
 		dev_dbg(musb->controller, "Using PIO for remaining %lu bytes\n", pio);
 		buf = phys_to_virt((u32)chdat->dma_addr) + chdat->transfer_len;
-		if (chdat->tx) {
+		अगर (chdat->tx) अणु
 			dma_unmap_single(dev, chdat->dma_addr,
 						chdat->transfer_len,
 						DMA_TO_DEVICE);
-			musb_write_fifo(hw_ep, pio, buf);
-		} else {
+			musb_ग_लिखो_fअगरo(hw_ep, pio, buf);
+		पूर्ण अन्यथा अणु
 			dma_unmap_single(dev, chdat->dma_addr,
 						chdat->transfer_len,
 						DMA_FROM_DEVICE);
-			musb_read_fifo(hw_ep, pio, buf);
-		}
+			musb_पढ़ो_fअगरo(hw_ep, pio, buf);
+		पूर्ण
 		channel->actual_len += pio;
-	}
+	पूर्ण
 
-	if (!tusb_dma->multichannel)
-		tusb_omap_free_shared_dmareq(chdat);
+	अगर (!tusb_dma->multichannel)
+		tusb_omap_मुक्त_shared_dmareq(chdat);
 
 	channel->status = MUSB_DMA_STATUS_FREE;
 
 	musb_dma_completion(musb, chdat->epnum, chdat->tx);
 
-	/* We must terminate short tx transfers manually by setting TXPKTRDY.
+	/* We must terminate लघु tx transfers manually by setting TXPKTRDY.
 	 * REVISIT: This same problem may occur with other MUSB dma as well.
 	 * Easy to test with g_ether by pinging the MUSB board with ping -s54.
 	 */
-	if ((chdat->transfer_len < chdat->packet_sz)
-			|| (chdat->transfer_len % chdat->packet_sz != 0)) {
+	अगर ((chdat->transfer_len < chdat->packet_sz)
+			|| (chdat->transfer_len % chdat->packet_sz != 0)) अणु
 		u16	csr;
 
-		if (chdat->tx) {
+		अगर (chdat->tx) अणु
 			dev_dbg(musb->controller, "terminating short tx packet\n");
 			musb_ep_select(mbase, chdat->epnum);
-			csr = musb_readw(hw_ep->regs, MUSB_TXCSR);
+			csr = musb_पढ़ोw(hw_ep->regs, MUSB_TXCSR);
 			csr |= MUSB_TXCSR_MODE | MUSB_TXCSR_TXPKTRDY
 				| MUSB_TXCSR_P_WZC_BITS;
-			musb_writew(hw_ep->regs, MUSB_TXCSR, csr);
-		}
-	}
+			musb_ग_लिखोw(hw_ep->regs, MUSB_TXCSR, csr);
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&musb->lock, flags);
-}
+पूर्ण
 
-static int tusb_omap_dma_program(struct dma_channel *channel, u16 packet_sz,
+अटल पूर्णांक tusb_omap_dma_program(काष्ठा dma_channel *channel, u16 packet_sz,
 				u8 rndis_mode, dma_addr_t dma_addr, u32 len)
-{
-	struct tusb_omap_dma_ch		*chdat = to_chdat(channel);
-	struct tusb_omap_dma		*tusb_dma = chdat->tusb_dma;
-	struct musb			*musb = chdat->musb;
-	struct device			*dev = musb->controller;
-	struct musb_hw_ep		*hw_ep = chdat->hw_ep;
-	void __iomem			*mbase = musb->mregs;
-	void __iomem			*ep_conf = hw_ep->conf;
-	dma_addr_t			fifo_addr = hw_ep->fifo_sync;
-	u32				dma_remaining;
+अणु
+	काष्ठा tusb_omap_dma_ch		*chdat = to_chdat(channel);
+	काष्ठा tusb_omap_dma		*tusb_dma = chdat->tusb_dma;
+	काष्ठा musb			*musb = chdat->musb;
+	काष्ठा device			*dev = musb->controller;
+	काष्ठा musb_hw_ep		*hw_ep = chdat->hw_ep;
+	व्योम __iomem			*mbase = musb->mregs;
+	व्योम __iomem			*ep_conf = hw_ep->conf;
+	dma_addr_t			fअगरo_addr = hw_ep->fअगरo_sync;
+	u32				dma_reमुख्यing;
 	u16				csr;
 	u32				psize;
-	struct tusb_dma_data		*dma_data;
-	struct dma_async_tx_descriptor	*dma_desc;
-	struct dma_slave_config		dma_cfg;
-	enum dma_transfer_direction	dma_dir;
-	u32				port_window;
-	int				ret;
+	काष्ठा tusb_dma_data		*dma_data;
+	काष्ठा dma_async_tx_descriptor	*dma_desc;
+	काष्ठा dma_slave_config		dma_cfg;
+	क्रमागत dma_transfer_direction	dma_dir;
+	u32				port_winकरोw;
+	पूर्णांक				ret;
 
-	if (unlikely(dma_addr & 0x1) || (len < 32) || (len > packet_sz))
-		return false;
+	अगर (unlikely(dma_addr & 0x1) || (len < 32) || (len > packet_sz))
+		वापस false;
 
 	/*
 	 * HW issue #10: Async dma will eventually corrupt the XFR_SIZE
-	 * register which will cause missed DMA interrupt. We could try to
-	 * use a timer for the callback, but it is unsafe as the XFR_SIZE
-	 * register is corrupt, and we won't know if the DMA worked.
+	 * रेजिस्टर which will cause missed DMA पूर्णांकerrupt. We could try to
+	 * use a समयr क्रम the callback, but it is unsafe as the XFR_SIZE
+	 * रेजिस्टर is corrupt, and we won't know अगर the DMA worked.
 	 */
-	if (dma_addr & 0x2)
-		return false;
+	अगर (dma_addr & 0x2)
+		वापस false;
 
 	/*
 	 * Because of HW issue #10, it seems like mixing sync DMA and async
-	 * PIO access can confuse the DMA. Make sure XFR_SIZE is reset before
-	 * using the channel for DMA.
+	 * PIO access can confuse the DMA. Make sure XFR_SIZE is reset beक्रमe
+	 * using the channel क्रम DMA.
 	 */
-	if (chdat->tx)
-		dma_remaining = musb_readl(ep_conf, TUSB_EP_TX_OFFSET);
-	else
-		dma_remaining = musb_readl(ep_conf, TUSB_EP_RX_OFFSET);
+	अगर (chdat->tx)
+		dma_reमुख्यing = musb_पढ़ोl(ep_conf, TUSB_EP_TX_OFFSET);
+	अन्यथा
+		dma_reमुख्यing = musb_पढ़ोl(ep_conf, TUSB_EP_RX_OFFSET);
 
-	dma_remaining = TUSB_EP_CONFIG_XFR_SIZE(dma_remaining);
-	if (dma_remaining) {
+	dma_reमुख्यing = TUSB_EP_CONFIG_XFR_SIZE(dma_reमुख्यing);
+	अगर (dma_reमुख्यing) अणु
 		dev_dbg(musb->controller, "Busy %s dma, not using: %08x\n",
-			chdat->tx ? "tx" : "rx", dma_remaining);
-		return false;
-	}
+			chdat->tx ? "tx" : "rx", dma_reमुख्यing);
+		वापस false;
+	पूर्ण
 
 	chdat->transfer_len = len & ~0x1f;
 
-	if (len < packet_sz)
+	अगर (len < packet_sz)
 		chdat->transfer_packet_sz = chdat->transfer_len;
-	else
+	अन्यथा
 		chdat->transfer_packet_sz = packet_sz;
 
 	dma_data = chdat->dma_data;
-	if (!tusb_dma->multichannel) {
-		if (tusb_omap_use_shared_dmareq(chdat) != 0) {
+	अगर (!tusb_dma->multichannel) अणु
+		अगर (tusb_omap_use_shared_dmareq(chdat) != 0) अणु
 			dev_dbg(musb->controller, "could not get dma for ep%i\n", chdat->epnum);
-			return false;
-		}
-		if (dma_data->dmareq < 0) {
+			वापस false;
+		पूर्ण
+		अगर (dma_data->dmareq < 0) अणु
 			/* REVISIT: This should get blocked earlier, happens
 			 * with MSC ErrorRecoveryTest
 			 */
 			WARN_ON(1);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
 	chdat->packet_sz = packet_sz;
 	chdat->len = len;
@@ -257,56 +258,56 @@ static int tusb_omap_dma_program(struct dma_channel *channel, u16 packet_sz,
 	channel->status = MUSB_DMA_STATUS_BUSY;
 
 	/* Since we're recycling dma areas, we need to clean or invalidate */
-	if (chdat->tx) {
+	अगर (chdat->tx) अणु
 		dma_dir = DMA_MEM_TO_DEV;
 		dma_map_single(dev, phys_to_virt(dma_addr), len,
 				DMA_TO_DEVICE);
-	} else {
+	पूर्ण अन्यथा अणु
 		dma_dir = DMA_DEV_TO_MEM;
 		dma_map_single(dev, phys_to_virt(dma_addr), len,
 				DMA_FROM_DEVICE);
-	}
+	पूर्ण
 
-	memset(&dma_cfg, 0, sizeof(dma_cfg));
+	स_रखो(&dma_cfg, 0, माप(dma_cfg));
 
-	/* Use 16-bit transfer if dma_addr is not 32-bit aligned */
-	if ((dma_addr & 0x3) == 0) {
+	/* Use 16-bit transfer अगर dma_addr is not 32-bit aligned */
+	अगर ((dma_addr & 0x3) == 0) अणु
 		dma_cfg.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 		dma_cfg.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-		port_window = 8;
-	} else {
+		port_winकरोw = 8;
+	पूर्ण अन्यथा अणु
 		dma_cfg.src_addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 		dma_cfg.dst_addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
-		port_window = 16;
+		port_winकरोw = 16;
 
-		fifo_addr = hw_ep->fifo_async;
-	}
+		fअगरo_addr = hw_ep->fअगरo_async;
+	पूर्ण
 
 	dev_dbg(musb->controller,
 		"ep%i %s dma: %pad len: %u(%u) packet_sz: %i(%i)\n",
 		chdat->epnum, chdat->tx ? "tx" : "rx", &dma_addr,
 		chdat->transfer_len, len, chdat->transfer_packet_sz, packet_sz);
 
-	dma_cfg.src_addr = fifo_addr;
-	dma_cfg.dst_addr = fifo_addr;
-	dma_cfg.src_port_window_size = port_window;
-	dma_cfg.src_maxburst = port_window;
-	dma_cfg.dst_port_window_size = port_window;
-	dma_cfg.dst_maxburst = port_window;
+	dma_cfg.src_addr = fअगरo_addr;
+	dma_cfg.dst_addr = fअगरo_addr;
+	dma_cfg.src_port_winकरोw_size = port_winकरोw;
+	dma_cfg.src_maxburst = port_winकरोw;
+	dma_cfg.dst_port_winकरोw_size = port_winकरोw;
+	dma_cfg.dst_maxburst = port_winकरोw;
 
 	ret = dmaengine_slave_config(dma_data->chan, &dma_cfg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(musb->controller, "DMA slave config failed: %d\n", ret);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	dma_desc = dmaengine_prep_slave_single(dma_data->chan, dma_addr,
 					chdat->transfer_len, dma_dir,
 					DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!dma_desc) {
+	अगर (!dma_desc) अणु
 		dev_err(musb->controller, "DMA prep_slave_single failed\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	dma_desc->callback = tusb_omap_dma_cb;
 	dma_desc->callback_param = channel;
@@ -317,140 +318,140 @@ static int tusb_omap_dma_program(struct dma_channel *channel, u16 packet_sz,
 		chdat->epnum, chdat->tx ? "tx" : "rx",
 		dma_cfg.src_addr_width * 8,
 		((dma_addr & 0x3) == 0) ? "sync" : "async",
-		(dma_dir == DMA_MEM_TO_DEV) ? &dma_addr : &fifo_addr,
-		(dma_dir == DMA_MEM_TO_DEV) ? &fifo_addr : &dma_addr);
+		(dma_dir == DMA_MEM_TO_DEV) ? &dma_addr : &fअगरo_addr,
+		(dma_dir == DMA_MEM_TO_DEV) ? &fअगरo_addr : &dma_addr);
 
 	/*
-	 * Prepare MUSB for DMA transfer
+	 * Prepare MUSB क्रम DMA transfer
 	 */
 	musb_ep_select(mbase, chdat->epnum);
-	if (chdat->tx) {
-		csr = musb_readw(hw_ep->regs, MUSB_TXCSR);
+	अगर (chdat->tx) अणु
+		csr = musb_पढ़ोw(hw_ep->regs, MUSB_TXCSR);
 		csr |= (MUSB_TXCSR_AUTOSET | MUSB_TXCSR_DMAENAB
 			| MUSB_TXCSR_DMAMODE | MUSB_TXCSR_MODE);
 		csr &= ~MUSB_TXCSR_P_UNDERRUN;
-		musb_writew(hw_ep->regs, MUSB_TXCSR, csr);
-	} else {
-		csr = musb_readw(hw_ep->regs, MUSB_RXCSR);
+		musb_ग_लिखोw(hw_ep->regs, MUSB_TXCSR, csr);
+	पूर्ण अन्यथा अणु
+		csr = musb_पढ़ोw(hw_ep->regs, MUSB_RXCSR);
 		csr |= MUSB_RXCSR_DMAENAB;
 		csr &= ~(MUSB_RXCSR_AUTOCLEAR | MUSB_RXCSR_DMAMODE);
-		musb_writew(hw_ep->regs, MUSB_RXCSR,
+		musb_ग_लिखोw(hw_ep->regs, MUSB_RXCSR,
 			csr | MUSB_RXCSR_P_WZC_BITS);
-	}
+	पूर्ण
 
 	/* Start DMA transfer */
 	dma_async_issue_pending(dma_data->chan);
 
-	if (chdat->tx) {
-		/* Send transfer_packet_sz packets at a time */
-		psize = musb_readl(ep_conf, TUSB_EP_MAX_PACKET_SIZE_OFFSET);
+	अगर (chdat->tx) अणु
+		/* Send transfer_packet_sz packets at a समय */
+		psize = musb_पढ़ोl(ep_conf, TUSB_EP_MAX_PACKET_SIZE_OFFSET);
 		psize &= ~0x7ff;
 		psize |= chdat->transfer_packet_sz;
-		musb_writel(ep_conf, TUSB_EP_MAX_PACKET_SIZE_OFFSET, psize);
+		musb_ग_लिखोl(ep_conf, TUSB_EP_MAX_PACKET_SIZE_OFFSET, psize);
 
-		musb_writel(ep_conf, TUSB_EP_TX_OFFSET,
+		musb_ग_लिखोl(ep_conf, TUSB_EP_TX_OFFSET,
 			TUSB_EP_CONFIG_XFR_SIZE(chdat->transfer_len));
-	} else {
-		/* Receive transfer_packet_sz packets at a time */
-		psize = musb_readl(ep_conf, TUSB_EP_MAX_PACKET_SIZE_OFFSET);
+	पूर्ण अन्यथा अणु
+		/* Receive transfer_packet_sz packets at a समय */
+		psize = musb_पढ़ोl(ep_conf, TUSB_EP_MAX_PACKET_SIZE_OFFSET);
 		psize &= ~(0x7ff << 16);
 		psize |= (chdat->transfer_packet_sz << 16);
-		musb_writel(ep_conf, TUSB_EP_MAX_PACKET_SIZE_OFFSET, psize);
+		musb_ग_लिखोl(ep_conf, TUSB_EP_MAX_PACKET_SIZE_OFFSET, psize);
 
-		musb_writel(ep_conf, TUSB_EP_RX_OFFSET,
+		musb_ग_लिखोl(ep_conf, TUSB_EP_RX_OFFSET,
 			TUSB_EP_CONFIG_XFR_SIZE(chdat->transfer_len));
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int tusb_omap_dma_abort(struct dma_channel *channel)
-{
-	struct tusb_omap_dma_ch	*chdat = to_chdat(channel);
+अटल पूर्णांक tusb_omap_dma_पात(काष्ठा dma_channel *channel)
+अणु
+	काष्ठा tusb_omap_dma_ch	*chdat = to_chdat(channel);
 
-	if (chdat->dma_data)
+	अगर (chdat->dma_data)
 		dmaengine_terminate_all(chdat->dma_data->chan);
 
 	channel->status = MUSB_DMA_STATUS_FREE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int tusb_omap_dma_allocate_dmareq(struct tusb_omap_dma_ch *chdat)
-{
-	u32		reg = musb_readl(chdat->tbase, TUSB_DMA_EP_MAP);
-	int		i, dmareq_nr = -1;
+अटल अंतरभूत पूर्णांक tusb_omap_dma_allocate_dmareq(काष्ठा tusb_omap_dma_ch *chdat)
+अणु
+	u32		reg = musb_पढ़ोl(chdat->tbase, TUSB_DMA_EP_MAP);
+	पूर्णांक		i, dmareq_nr = -1;
 
-	for (i = 0; i < MAX_DMAREQ; i++) {
-		int cur = (reg & (0xf << (i * 5))) >> (i * 5);
-		if (cur == 0) {
+	क्रम (i = 0; i < MAX_DMAREQ; i++) अणु
+		पूर्णांक cur = (reg & (0xf << (i * 5))) >> (i * 5);
+		अगर (cur == 0) अणु
 			dmareq_nr = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (dmareq_nr == -1)
-		return -EAGAIN;
+	अगर (dmareq_nr == -1)
+		वापस -EAGAIN;
 
 	reg |= (chdat->epnum << (dmareq_nr * 5));
-	if (chdat->tx)
+	अगर (chdat->tx)
 		reg |= ((1 << 4) << (dmareq_nr * 5));
-	musb_writel(chdat->tbase, TUSB_DMA_EP_MAP, reg);
+	musb_ग_लिखोl(chdat->tbase, TUSB_DMA_EP_MAP, reg);
 
 	chdat->dma_data = &chdat->tusb_dma->dma_pool[dmareq_nr];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void tusb_omap_dma_free_dmareq(struct tusb_omap_dma_ch *chdat)
-{
+अटल अंतरभूत व्योम tusb_omap_dma_मुक्त_dmareq(काष्ठा tusb_omap_dma_ch *chdat)
+अणु
 	u32 reg;
 
-	if (!chdat || !chdat->dma_data || chdat->dma_data->dmareq < 0)
-		return;
+	अगर (!chdat || !chdat->dma_data || chdat->dma_data->dmareq < 0)
+		वापस;
 
-	reg = musb_readl(chdat->tbase, TUSB_DMA_EP_MAP);
+	reg = musb_पढ़ोl(chdat->tbase, TUSB_DMA_EP_MAP);
 	reg &= ~(0x1f << (chdat->dma_data->dmareq * 5));
-	musb_writel(chdat->tbase, TUSB_DMA_EP_MAP, reg);
+	musb_ग_लिखोl(chdat->tbase, TUSB_DMA_EP_MAP, reg);
 
-	chdat->dma_data = NULL;
-}
+	chdat->dma_data = शून्य;
+पूर्ण
 
-static struct dma_channel *dma_channel_pool[MAX_DMAREQ];
+अटल काष्ठा dma_channel *dma_channel_pool[MAX_DMAREQ];
 
-static struct dma_channel *
-tusb_omap_dma_allocate(struct dma_controller *c,
-		struct musb_hw_ep *hw_ep,
+अटल काष्ठा dma_channel *
+tusb_omap_dma_allocate(काष्ठा dma_controller *c,
+		काष्ठा musb_hw_ep *hw_ep,
 		u8 tx)
-{
-	int ret, i;
-	struct tusb_omap_dma	*tusb_dma;
-	struct musb		*musb;
-	struct dma_channel	*channel = NULL;
-	struct tusb_omap_dma_ch	*chdat = NULL;
-	struct tusb_dma_data	*dma_data = NULL;
+अणु
+	पूर्णांक ret, i;
+	काष्ठा tusb_omap_dma	*tusb_dma;
+	काष्ठा musb		*musb;
+	काष्ठा dma_channel	*channel = शून्य;
+	काष्ठा tusb_omap_dma_ch	*chdat = शून्य;
+	काष्ठा tusb_dma_data	*dma_data = शून्य;
 
-	tusb_dma = container_of(c, struct tusb_omap_dma, controller);
+	tusb_dma = container_of(c, काष्ठा tusb_omap_dma, controller);
 	musb = tusb_dma->controller.musb;
 
-	/* REVISIT: Why does dmareq5 not work? */
-	if (hw_ep->epnum == 0) {
+	/* REVISIT: Why करोes dmareq5 not work? */
+	अगर (hw_ep->epnum == 0) अणु
 		dev_dbg(musb->controller, "Not allowing DMA for ep0 %s\n", tx ? "tx" : "rx");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	for (i = 0; i < MAX_DMAREQ; i++) {
-		struct dma_channel *ch = dma_channel_pool[i];
-		if (ch->status == MUSB_DMA_STATUS_UNKNOWN) {
+	क्रम (i = 0; i < MAX_DMAREQ; i++) अणु
+		काष्ठा dma_channel *ch = dma_channel_pool[i];
+		अगर (ch->status == MUSB_DMA_STATUS_UNKNOWN) अणु
 			ch->status = MUSB_DMA_STATUS_FREE;
 			channel = ch;
-			chdat = ch->private_data;
-			break;
-		}
-	}
+			chdat = ch->निजी_data;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!channel)
-		return NULL;
+	अगर (!channel)
+		वापस शून्य;
 
 	chdat->musb = tusb_dma->controller.musb;
 	chdat->tbase = tusb_dma->tbase;
@@ -458,24 +459,24 @@ tusb_omap_dma_allocate(struct dma_controller *c,
 	chdat->epnum = hw_ep->epnum;
 	chdat->completed_len = 0;
 	chdat->tusb_dma = tusb_dma;
-	if (tx)
+	अगर (tx)
 		chdat->tx = 1;
-	else
+	अन्यथा
 		chdat->tx = 0;
 
 	channel->max_len = 0x7fffffff;
 	channel->desired_mode = 0;
 	channel->actual_len = 0;
 
-	if (!chdat->dma_data) {
-		if (tusb_dma->multichannel) {
+	अगर (!chdat->dma_data) अणु
+		अगर (tusb_dma->multichannel) अणु
 			ret = tusb_omap_dma_allocate_dmareq(chdat);
-			if (ret != 0)
-				goto free_dmareq;
-		} else {
+			अगर (ret != 0)
+				जाओ मुक्त_dmareq;
+		पूर्ण अन्यथा अणु
 			chdat->dma_data = &tusb_dma->dma_pool[0];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dma_data = chdat->dma_data;
 
@@ -485,120 +486,120 @@ tusb_omap_dma_allocate(struct dma_controller *c,
 		tusb_dma->multichannel ? "shared" : "dedicated",
 		dma_data->dmareq);
 
-	return channel;
+	वापस channel;
 
-free_dmareq:
-	tusb_omap_dma_free_dmareq(chdat);
+मुक्त_dmareq:
+	tusb_omap_dma_मुक्त_dmareq(chdat);
 
 	dev_dbg(musb->controller, "ep%i: Could not get a DMA channel\n", chdat->epnum);
 	channel->status = MUSB_DMA_STATUS_UNKNOWN;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void tusb_omap_dma_release(struct dma_channel *channel)
-{
-	struct tusb_omap_dma_ch	*chdat = to_chdat(channel);
-	struct musb		*musb = chdat->musb;
+अटल व्योम tusb_omap_dma_release(काष्ठा dma_channel *channel)
+अणु
+	काष्ठा tusb_omap_dma_ch	*chdat = to_chdat(channel);
+	काष्ठा musb		*musb = chdat->musb;
 
 	dev_dbg(musb->controller, "Release for ep%i\n", chdat->epnum);
 
 	channel->status = MUSB_DMA_STATUS_UNKNOWN;
 
 	dmaengine_terminate_sync(chdat->dma_data->chan);
-	tusb_omap_dma_free_dmareq(chdat);
+	tusb_omap_dma_मुक्त_dmareq(chdat);
 
-	channel = NULL;
-}
+	channel = शून्य;
+पूर्ण
 
-void tusb_dma_controller_destroy(struct dma_controller *c)
-{
-	struct tusb_omap_dma	*tusb_dma;
-	int			i;
+व्योम tusb_dma_controller_destroy(काष्ठा dma_controller *c)
+अणु
+	काष्ठा tusb_omap_dma	*tusb_dma;
+	पूर्णांक			i;
 
-	tusb_dma = container_of(c, struct tusb_omap_dma, controller);
-	for (i = 0; i < MAX_DMAREQ; i++) {
-		struct dma_channel *ch = dma_channel_pool[i];
-		if (ch) {
-			kfree(ch->private_data);
-			kfree(ch);
-		}
+	tusb_dma = container_of(c, काष्ठा tusb_omap_dma, controller);
+	क्रम (i = 0; i < MAX_DMAREQ; i++) अणु
+		काष्ठा dma_channel *ch = dma_channel_pool[i];
+		अगर (ch) अणु
+			kमुक्त(ch->निजी_data);
+			kमुक्त(ch);
+		पूर्ण
 
 		/* Free up the DMA channels */
-		if (tusb_dma && tusb_dma->dma_pool[i].chan)
+		अगर (tusb_dma && tusb_dma->dma_pool[i].chan)
 			dma_release_channel(tusb_dma->dma_pool[i].chan);
-	}
+	पूर्ण
 
-	kfree(tusb_dma);
-}
+	kमुक्त(tusb_dma);
+पूर्ण
 EXPORT_SYMBOL_GPL(tusb_dma_controller_destroy);
 
-static int tusb_omap_allocate_dma_pool(struct tusb_omap_dma *tusb_dma)
-{
-	struct musb *musb = tusb_dma->controller.musb;
-	int i;
-	int ret = 0;
+अटल पूर्णांक tusb_omap_allocate_dma_pool(काष्ठा tusb_omap_dma *tusb_dma)
+अणु
+	काष्ठा musb *musb = tusb_dma->controller.musb;
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	for (i = 0; i < MAX_DMAREQ; i++) {
-		struct tusb_dma_data *dma_data = &tusb_dma->dma_pool[i];
+	क्रम (i = 0; i < MAX_DMAREQ; i++) अणु
+		काष्ठा tusb_dma_data *dma_data = &tusb_dma->dma_pool[i];
 
 		/*
 		 * Request DMA channels:
-		 * - one channel in case of non multichannel mode
+		 * - one channel in हाल of non multichannel mode
 		 * - MAX_DMAREQ number of channels in multichannel mode
 		 */
-		if (i == 0 || tusb_dma->multichannel) {
-			char ch_name[8];
+		अगर (i == 0 || tusb_dma->multichannel) अणु
+			अक्षर ch_name[8];
 
-			sprintf(ch_name, "dmareq%d", i);
+			प्र_लिखो(ch_name, "dmareq%d", i);
 			dma_data->chan = dma_request_chan(musb->controller,
 							  ch_name);
-			if (IS_ERR(dma_data->chan)) {
+			अगर (IS_ERR(dma_data->chan)) अणु
 				dev_err(musb->controller,
 					"Failed to request %s\n", ch_name);
 				ret = PTR_ERR(dma_data->chan);
-				goto dma_error;
-			}
+				जाओ dma_error;
+			पूर्ण
 
 			dma_data->dmareq = i;
-		} else {
+		पूर्ण अन्यथा अणु
 			dma_data->dmareq = -1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 dma_error:
-	for (; i >= 0; i--) {
-		struct tusb_dma_data *dma_data = &tusb_dma->dma_pool[i];
+	क्रम (; i >= 0; i--) अणु
+		काष्ठा tusb_dma_data *dma_data = &tusb_dma->dma_pool[i];
 
-		if (dma_data->dmareq >= 0)
+		अगर (dma_data->dmareq >= 0)
 			dma_release_channel(dma_data->chan);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct dma_controller *
-tusb_dma_controller_create(struct musb *musb, void __iomem *base)
-{
-	void __iomem		*tbase = musb->ctrl_base;
-	struct tusb_omap_dma	*tusb_dma;
-	int			i;
+काष्ठा dma_controller *
+tusb_dma_controller_create(काष्ठा musb *musb, व्योम __iomem *base)
+अणु
+	व्योम __iomem		*tbase = musb->ctrl_base;
+	काष्ठा tusb_omap_dma	*tusb_dma;
+	पूर्णांक			i;
 
 	/* REVISIT: Get dmareq lines used from board-*.c */
 
-	musb_writel(musb->ctrl_base, TUSB_DMA_INT_MASK, 0x7fffffff);
-	musb_writel(musb->ctrl_base, TUSB_DMA_EP_MAP, 0);
+	musb_ग_लिखोl(musb->ctrl_base, TUSB_DMA_INT_MASK, 0x7fffffff);
+	musb_ग_लिखोl(musb->ctrl_base, TUSB_DMA_EP_MAP, 0);
 
-	musb_writel(tbase, TUSB_DMA_REQ_CONF,
+	musb_ग_लिखोl(tbase, TUSB_DMA_REQ_CONF,
 		TUSB_DMA_REQ_CONF_BURST_SIZE(2)
 		| TUSB_DMA_REQ_CONF_DMA_REQ_EN(0x3f)
 		| TUSB_DMA_REQ_CONF_DMA_REQ_ASSER(2));
 
-	tusb_dma = kzalloc(sizeof(struct tusb_omap_dma), GFP_KERNEL);
-	if (!tusb_dma)
-		goto out;
+	tusb_dma = kzalloc(माप(काष्ठा tusb_omap_dma), GFP_KERNEL);
+	अगर (!tusb_dma)
+		जाओ out;
 
 	tusb_dma->controller.musb = musb;
 	tusb_dma->tbase = musb->ctrl_base;
@@ -606,37 +607,37 @@ tusb_dma_controller_create(struct musb *musb, void __iomem *base)
 	tusb_dma->controller.channel_alloc = tusb_omap_dma_allocate;
 	tusb_dma->controller.channel_release = tusb_omap_dma_release;
 	tusb_dma->controller.channel_program = tusb_omap_dma_program;
-	tusb_dma->controller.channel_abort = tusb_omap_dma_abort;
+	tusb_dma->controller.channel_पात = tusb_omap_dma_पात;
 
-	if (musb->tusb_revision >= TUSB_REV_30)
+	अगर (musb->tusb_revision >= TUSB_REV_30)
 		tusb_dma->multichannel = 1;
 
-	for (i = 0; i < MAX_DMAREQ; i++) {
-		struct dma_channel	*ch;
-		struct tusb_omap_dma_ch	*chdat;
+	क्रम (i = 0; i < MAX_DMAREQ; i++) अणु
+		काष्ठा dma_channel	*ch;
+		काष्ठा tusb_omap_dma_ch	*chdat;
 
-		ch = kzalloc(sizeof(struct dma_channel), GFP_KERNEL);
-		if (!ch)
-			goto cleanup;
+		ch = kzalloc(माप(काष्ठा dma_channel), GFP_KERNEL);
+		अगर (!ch)
+			जाओ cleanup;
 
 		dma_channel_pool[i] = ch;
 
-		chdat = kzalloc(sizeof(struct tusb_omap_dma_ch), GFP_KERNEL);
-		if (!chdat)
-			goto cleanup;
+		chdat = kzalloc(माप(काष्ठा tusb_omap_dma_ch), GFP_KERNEL);
+		अगर (!chdat)
+			जाओ cleanup;
 
 		ch->status = MUSB_DMA_STATUS_UNKNOWN;
-		ch->private_data = chdat;
-	}
+		ch->निजी_data = chdat;
+	पूर्ण
 
-	if (tusb_omap_allocate_dma_pool(tusb_dma))
-		goto cleanup;
+	अगर (tusb_omap_allocate_dma_pool(tusb_dma))
+		जाओ cleanup;
 
-	return &tusb_dma->controller;
+	वापस &tusb_dma->controller;
 
 cleanup:
 	musb_dma_controller_destroy(&tusb_dma->controller);
 out:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(tusb_dma_controller_create);

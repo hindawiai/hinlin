@@ -1,66 +1,67 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright(c) 2007 - 2009 Intel Corporation. All rights reserved.
  */
-#ifndef DCA_H
-#define DCA_H
+#अगर_अघोषित DCA_H
+#घोषणा DCA_H
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
 /* DCA Provider API */
 
-/* DCA Notifier Interface */
-void dca_register_notify(struct notifier_block *nb);
-void dca_unregister_notify(struct notifier_block *nb);
+/* DCA Notअगरier Interface */
+व्योम dca_रेजिस्टर_notअगरy(काष्ठा notअगरier_block *nb);
+व्योम dca_unरेजिस्टर_notअगरy(काष्ठा notअगरier_block *nb);
 
-#define DCA_PROVIDER_ADD     0x0001
-#define DCA_PROVIDER_REMOVE  0x0002
+#घोषणा DCA_PROVIDER_ADD     0x0001
+#घोषणा DCA_PROVIDER_REMOVE  0x0002
 
-struct dca_provider {
-	struct list_head	node;
-	const struct dca_ops	*ops;
-	struct device 		*cd;
-	int			 id;
-};
+काष्ठा dca_provider अणु
+	काष्ठा list_head	node;
+	स्थिर काष्ठा dca_ops	*ops;
+	काष्ठा device 		*cd;
+	पूर्णांक			 id;
+पूर्ण;
 
-struct dca_domain {
-	struct list_head	node;
-	struct list_head	dca_providers;
-	struct pci_bus		*pci_rc;
-};
+काष्ठा dca_करोमुख्य अणु
+	काष्ठा list_head	node;
+	काष्ठा list_head	dca_providers;
+	काष्ठा pci_bus		*pci_rc;
+पूर्ण;
 
-struct dca_ops {
-	int	(*add_requester)    (struct dca_provider *, struct device *);
-	int	(*remove_requester) (struct dca_provider *, struct device *);
-	u8	(*get_tag)	    (struct dca_provider *, struct device *,
-				     int cpu);
-	int	(*dev_managed)      (struct dca_provider *, struct device *);
-};
+काष्ठा dca_ops अणु
+	पूर्णांक	(*add_requester)    (काष्ठा dca_provider *, काष्ठा device *);
+	पूर्णांक	(*हटाओ_requester) (काष्ठा dca_provider *, काष्ठा device *);
+	u8	(*get_tag)	    (काष्ठा dca_provider *, काष्ठा device *,
+				     पूर्णांक cpu);
+	पूर्णांक	(*dev_managed)      (काष्ठा dca_provider *, काष्ठा device *);
+पूर्ण;
 
-struct dca_provider *alloc_dca_provider(const struct dca_ops *ops,
-					int priv_size);
-void free_dca_provider(struct dca_provider *dca);
-int register_dca_provider(struct dca_provider *dca, struct device *dev);
-void unregister_dca_provider(struct dca_provider *dca, struct device *dev);
+काष्ठा dca_provider *alloc_dca_provider(स्थिर काष्ठा dca_ops *ops,
+					पूर्णांक priv_size);
+व्योम मुक्त_dca_provider(काष्ठा dca_provider *dca);
+पूर्णांक रेजिस्टर_dca_provider(काष्ठा dca_provider *dca, काष्ठा device *dev);
+व्योम unरेजिस्टर_dca_provider(काष्ठा dca_provider *dca, काष्ठा device *dev);
 
-static inline void *dca_priv(struct dca_provider *dca)
-{
-	return (void *)dca + sizeof(struct dca_provider);
-}
+अटल अंतरभूत व्योम *dca_priv(काष्ठा dca_provider *dca)
+अणु
+	वापस (व्योम *)dca + माप(काष्ठा dca_provider);
+पूर्ण
 
 /* Requester API */
-#define DCA_GET_TAG_TWO_ARGS
-int dca_add_requester(struct device *dev);
-int dca_remove_requester(struct device *dev);
-u8 dca_get_tag(int cpu);
-u8 dca3_get_tag(struct device *dev, int cpu);
+#घोषणा DCA_GET_TAG_TWO_ARGS
+पूर्णांक dca_add_requester(काष्ठा device *dev);
+पूर्णांक dca_हटाओ_requester(काष्ठा device *dev);
+u8 dca_get_tag(पूर्णांक cpu);
+u8 dca3_get_tag(काष्ठा device *dev, पूर्णांक cpu);
 
-/* internal stuff */
-int __init dca_sysfs_init(void);
-void __exit dca_sysfs_exit(void);
-int dca_sysfs_add_provider(struct dca_provider *dca, struct device *dev);
-void dca_sysfs_remove_provider(struct dca_provider *dca);
-int dca_sysfs_add_req(struct dca_provider *dca, struct device *dev, int slot);
-void dca_sysfs_remove_req(struct dca_provider *dca, int slot);
+/* पूर्णांकernal stuff */
+पूर्णांक __init dca_sysfs_init(व्योम);
+व्योम __निकास dca_sysfs_निकास(व्योम);
+पूर्णांक dca_sysfs_add_provider(काष्ठा dca_provider *dca, काष्ठा device *dev);
+व्योम dca_sysfs_हटाओ_provider(काष्ठा dca_provider *dca);
+पूर्णांक dca_sysfs_add_req(काष्ठा dca_provider *dca, काष्ठा device *dev, पूर्णांक slot);
+व्योम dca_sysfs_हटाओ_req(काष्ठा dca_provider *dca, पूर्णांक slot);
 
-#endif /* DCA_H */
+#पूर्ण_अगर /* DCA_H */

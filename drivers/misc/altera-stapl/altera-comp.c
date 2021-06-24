@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * altera-comp.c
  *
@@ -9,120 +10,120 @@
  * Copyright (C) 2010 Igor M. Liplianin <liplianin@netup.ru>
  */
 
-#include <linux/kernel.h>
-#include "altera-exprt.h"
+#समावेश <linux/kernel.h>
+#समावेश "altera-exprt.h"
 
-#define	SHORT_BITS		16
-#define	CHAR_BITS		8
-#define	DATA_BLOB_LENGTH	3
-#define	MATCH_DATA_LENGTH	8192
-#define ALTERA_REQUEST_SIZE	1024
-#define ALTERA_BUFFER_SIZE	(MATCH_DATA_LENGTH + ALTERA_REQUEST_SIZE)
+#घोषणा	SHORT_BITS		16
+#घोषणा	अक्षर_बिटS		8
+#घोषणा	DATA_BLOB_LENGTH	3
+#घोषणा	MATCH_DATA_LENGTH	8192
+#घोषणा ALTERA_REQUEST_SIZE	1024
+#घोषणा ALTERA_BUFFER_SIZE	(MATCH_DATA_LENGTH + ALTERA_REQUEST_SIZE)
 
-static u32 altera_bits_req(u32 n)
-{
+अटल u32 altera_bits_req(u32 n)
+अणु
 	u32 result = SHORT_BITS;
 
-	if (n == 0)
+	अगर (n == 0)
 		result = 1;
-	else {
-		/* Look for the highest non-zero bit position */
-		while ((n & (1 << (SHORT_BITS - 1))) == 0) {
+	अन्यथा अणु
+		/* Look क्रम the highest non-zero bit position */
+		जबतक ((n & (1 << (SHORT_BITS - 1))) == 0) अणु
 			n <<= 1;
 			--result;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static u32 altera_read_packed(u8 *buffer, u32 bits, u32 *bits_avail,
+अटल u32 altera_पढ़ो_packed(u8 *buffer, u32 bits, u32 *bits_avail,
 							u32 *in_index)
-{
+अणु
 	u32 result = 0;
-	u32 shift = 0;
+	u32 shअगरt = 0;
 	u32 databyte = 0;
 
-	while (bits > 0) {
+	जबतक (bits > 0) अणु
 		databyte = buffer[*in_index];
-		result |= (((databyte >> (CHAR_BITS - *bits_avail))
-			& (0xff >> (CHAR_BITS - *bits_avail))) << shift);
+		result |= (((databyte >> (अक्षर_बिटS - *bits_avail))
+			& (0xff >> (अक्षर_बिटS - *bits_avail))) << shअगरt);
 
-		if (bits <= *bits_avail) {
-			result &= (0xffff >> (SHORT_BITS - (bits + shift)));
+		अगर (bits <= *bits_avail) अणु
+			result &= (0xffff >> (SHORT_BITS - (bits + shअगरt)));
 			*bits_avail -= bits;
 			bits = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			++(*in_index);
-			shift += *bits_avail;
+			shअगरt += *bits_avail;
 			bits -= *bits_avail;
-			*bits_avail = CHAR_BITS;
-		}
-	}
+			*bits_avail = अक्षर_बिटS;
+		पूर्ण
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 u32 altera_shrink(u8 *in, u32 in_length, u8 *out, u32 out_length, s32 version)
-{
+अणु
 	u32 i, j, data_length = 0L;
 	u32 offset, length;
 	u32 match_data_length = MATCH_DATA_LENGTH;
-	u32 bits_avail = CHAR_BITS;
+	u32 bits_avail = अक्षर_बिटS;
 	u32 in_index = 0L;
 
-	if (version > 0)
+	अगर (version > 0)
 		--match_data_length;
 
-	for (i = 0; i < out_length; ++i)
+	क्रम (i = 0; i < out_length; ++i)
 		out[i] = 0;
 
 	/* Read number of bytes in data. */
-	for (i = 0; i < sizeof(in_length); ++i) {
+	क्रम (i = 0; i < माप(in_length); ++i) अणु
 		data_length = data_length | (
-			altera_read_packed(in,
-					CHAR_BITS,
+			altera_पढ़ो_packed(in,
+					अक्षर_बिटS,
 					&bits_avail,
-					&in_index) << (i * CHAR_BITS));
-	}
+					&in_index) << (i * अक्षर_बिटS));
+	पूर्ण
 
-	if (data_length > out_length) {
+	अगर (data_length > out_length) अणु
 		data_length = 0L;
-		return data_length;
-	}
+		वापस data_length;
+	पूर्ण
 
 	i = 0;
-	while (i < data_length) {
+	जबतक (i < data_length) अणु
 		/* A 0 bit indicates literal data. */
-		if (altera_read_packed(in, 1, &bits_avail,
-						&in_index) == 0) {
-			for (j = 0; j < DATA_BLOB_LENGTH; ++j) {
-				if (i < data_length) {
-					out[i] = (u8)altera_read_packed(in,
-							CHAR_BITS,
+		अगर (altera_पढ़ो_packed(in, 1, &bits_avail,
+						&in_index) == 0) अणु
+			क्रम (j = 0; j < DATA_BLOB_LENGTH; ++j) अणु
+				अगर (i < data_length) अणु
+					out[i] = (u8)altera_पढ़ो_packed(in,
+							अक्षर_बिटS,
 							&bits_avail,
 							&in_index);
 					i++;
-				}
-			}
-		} else {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* A 1 bit indicates offset/length to follow. */
-			offset = altera_read_packed(in, altera_bits_req((s16)
+			offset = altera_पढ़ो_packed(in, altera_bits_req((s16)
 					(i > match_data_length ?
 						match_data_length : i)),
 					&bits_avail,
 					&in_index);
-			length = altera_read_packed(in, CHAR_BITS,
+			length = altera_पढ़ो_packed(in, अक्षर_बिटS,
 					&bits_avail,
 					&in_index);
-			for (j = 0; j < length; ++j) {
-				if (i < data_length) {
+			क्रम (j = 0; j < length; ++j) अणु
+				अगर (i < data_length) अणु
 					out[i] = out[i - offset];
 					i++;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return data_length;
-}
+	वापस data_length;
+पूर्ण

@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef SQUASHFS_FS_SB
-#define SQUASHFS_FS_SB
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित SQUASHFS_FS_SB
+#घोषणा SQUASHFS_FS_SB
 /*
  * Squashfs
  *
@@ -10,60 +11,60 @@
  * squashfs_fs_sb.h
  */
 
-#include "squashfs_fs.h"
+#समावेश "squashfs_fs.h"
 
-struct squashfs_cache {
-	char			*name;
-	int			entries;
-	int			curr_blk;
-	int			next_blk;
-	int			num_waiters;
-	int			unused;
-	int			block_size;
-	int			pages;
+काष्ठा squashfs_cache अणु
+	अक्षर			*name;
+	पूर्णांक			entries;
+	पूर्णांक			curr_blk;
+	पूर्णांक			next_blk;
+	पूर्णांक			num_रुकोers;
+	पूर्णांक			unused;
+	पूर्णांक			block_size;
+	पूर्णांक			pages;
 	spinlock_t		lock;
-	wait_queue_head_t	wait_queue;
-	struct squashfs_cache_entry *entry;
-};
+	रुको_queue_head_t	रुको_queue;
+	काष्ठा squashfs_cache_entry *entry;
+पूर्ण;
 
-struct squashfs_cache_entry {
+काष्ठा squashfs_cache_entry अणु
 	u64			block;
-	int			length;
-	int			refcount;
+	पूर्णांक			length;
+	पूर्णांक			refcount;
 	u64			next_index;
-	int			pending;
-	int			error;
-	int			num_waiters;
-	wait_queue_head_t	wait_queue;
-	struct squashfs_cache	*cache;
-	void			**data;
-	struct squashfs_page_actor	*actor;
-};
+	पूर्णांक			pending;
+	पूर्णांक			error;
+	पूर्णांक			num_रुकोers;
+	रुको_queue_head_t	रुको_queue;
+	काष्ठा squashfs_cache	*cache;
+	व्योम			**data;
+	काष्ठा squashfs_page_actor	*actor;
+पूर्ण;
 
-struct squashfs_sb_info {
-	const struct squashfs_decompressor	*decompressor;
-	int					devblksize;
-	int					devblksize_log2;
-	struct squashfs_cache			*block_cache;
-	struct squashfs_cache			*fragment_cache;
-	struct squashfs_cache			*read_page;
-	int					next_meta_index;
+काष्ठा squashfs_sb_info अणु
+	स्थिर काष्ठा squashfs_decompressor	*decompressor;
+	पूर्णांक					devblksize;
+	पूर्णांक					devblksize_log2;
+	काष्ठा squashfs_cache			*block_cache;
+	काष्ठा squashfs_cache			*fragment_cache;
+	काष्ठा squashfs_cache			*पढ़ो_page;
+	पूर्णांक					next_meta_index;
 	__le64					*id_table;
 	__le64					*fragment_index;
 	__le64					*xattr_id_table;
-	struct mutex				meta_index_mutex;
-	struct meta_index			*meta_index;
-	struct squashfs_stream			*stream;
+	काष्ठा mutex				meta_index_mutex;
+	काष्ठा meta_index			*meta_index;
+	काष्ठा squashfs_stream			*stream;
 	__le64					*inode_lookup_table;
 	u64					inode_table;
 	u64					directory_table;
 	u64					xattr_table;
-	unsigned int				block_size;
-	unsigned short				block_log;
-	long long				bytes_used;
-	unsigned int				inodes;
-	unsigned int				fragments;
-	int					xattr_ids;
-	unsigned int				ids;
-};
-#endif
+	अचिन्हित पूर्णांक				block_size;
+	अचिन्हित लघु				block_log;
+	दीर्घ दीर्घ				bytes_used;
+	अचिन्हित पूर्णांक				inodes;
+	अचिन्हित पूर्णांक				fragments;
+	पूर्णांक					xattr_ids;
+	अचिन्हित पूर्णांक				ids;
+पूर्ण;
+#पूर्ण_अगर

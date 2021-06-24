@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Landlock LSM - Credential hooks
  *
- * Copyright © 2019-2020 Mickaël Salaün <mic@digikod.net>
- * Copyright © 2019-2020 ANSSI
+ * Copyright तऊ 2019-2020 Mickaथ+l Salaथञn <mic@digikod.net>
+ * Copyright तऊ 2019-2020 ANSSI
  */
 
-#ifndef _SECURITY_LANDLOCK_CRED_H
-#define _SECURITY_LANDLOCK_CRED_H
+#अगर_अघोषित _SECURITY_LANDLOCK_CRED_H
+#घोषणा _SECURITY_LANDLOCK_CRED_H
 
-#include <linux/cred.h>
-#include <linux/init.h>
-#include <linux/rcupdate.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/init.h>
+#समावेश <linux/rcupdate.h>
 
-#include "ruleset.h"
-#include "setup.h"
+#समावेश "ruleset.h"
+#समावेश "setup.h"
 
-struct landlock_cred_security {
-	struct landlock_ruleset *domain;
-};
+काष्ठा landlock_cred_security अणु
+	काष्ठा landlock_ruleset *करोमुख्य;
+पूर्ण;
 
-static inline struct landlock_cred_security *landlock_cred(
-		const struct cred *cred)
-{
-	return cred->security + landlock_blob_sizes.lbs_cred;
-}
+अटल अंतरभूत काष्ठा landlock_cred_security *landlock_cred(
+		स्थिर काष्ठा cred *cred)
+अणु
+	वापस cred->security + landlock_blob_sizes.lbs_cred;
+पूर्ण
 
-static inline const struct landlock_ruleset *landlock_get_current_domain(void)
-{
-	return landlock_cred(current_cred())->domain;
-}
+अटल अंतरभूत स्थिर काष्ठा landlock_ruleset *landlock_get_current_करोमुख्य(व्योम)
+अणु
+	वापस landlock_cred(current_cred())->करोमुख्य;
+पूर्ण
 
 /*
- * The call needs to come from an RCU read-side critical section.
+ * The call needs to come from an RCU पढ़ो-side critical section.
  */
-static inline const struct landlock_ruleset *landlock_get_task_domain(
-		const struct task_struct *const task)
-{
-	return landlock_cred(__task_cred(task))->domain;
-}
+अटल अंतरभूत स्थिर काष्ठा landlock_ruleset *landlock_get_task_करोमुख्य(
+		स्थिर काष्ठा task_काष्ठा *स्थिर task)
+अणु
+	वापस landlock_cred(__task_cred(task))->करोमुख्य;
+पूर्ण
 
-static inline bool landlocked(const struct task_struct *const task)
-{
-	bool has_dom;
+अटल अंतरभूत bool landlocked(स्थिर काष्ठा task_काष्ठा *स्थिर task)
+अणु
+	bool has_करोm;
 
-	if (task == current)
-		return !!landlock_get_current_domain();
+	अगर (task == current)
+		वापस !!landlock_get_current_करोमुख्य();
 
-	rcu_read_lock();
-	has_dom = !!landlock_get_task_domain(task);
-	rcu_read_unlock();
-	return has_dom;
-}
+	rcu_पढ़ो_lock();
+	has_करोm = !!landlock_get_task_करोमुख्य(task);
+	rcu_पढ़ो_unlock();
+	वापस has_करोm;
+पूर्ण
 
-__init void landlock_add_cred_hooks(void);
+__init व्योम landlock_add_cred_hooks(व्योम);
 
-#endif /* _SECURITY_LANDLOCK_CRED_H */
+#पूर्ण_अगर /* _SECURITY_LANDLOCK_CRED_H */

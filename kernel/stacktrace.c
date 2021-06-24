@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * kernel/stacktrace.c
  *
@@ -6,370 +7,370 @@
  *
  *  Copyright (C) 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
-#include <linux/sched/task_stack.h>
-#include <linux/sched/debug.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/kallsyms.h>
-#include <linux/stacktrace.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/stacktrace.h>
 
 /**
- * stack_trace_print - Print the entries in the stack trace
- * @entries:	Pointer to storage array
+ * stack_trace_prपूर्णांक - Prपूर्णांक the entries in the stack trace
+ * @entries:	Poपूर्णांकer to storage array
  * @nr_entries:	Number of entries in the storage array
- * @spaces:	Number of leading spaces to print
+ * @spaces:	Number of leading spaces to prपूर्णांक
  */
-void stack_trace_print(const unsigned long *entries, unsigned int nr_entries,
-		       int spaces)
-{
-	unsigned int i;
+व्योम stack_trace_prपूर्णांक(स्थिर अचिन्हित दीर्घ *entries, अचिन्हित पूर्णांक nr_entries,
+		       पूर्णांक spaces)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (WARN_ON(!entries))
-		return;
+	अगर (WARN_ON(!entries))
+		वापस;
 
-	for (i = 0; i < nr_entries; i++)
-		printk("%*c%pS\n", 1 + spaces, ' ', (void *)entries[i]);
-}
-EXPORT_SYMBOL_GPL(stack_trace_print);
+	क्रम (i = 0; i < nr_entries; i++)
+		prपूर्णांकk("%*c%pS\n", 1 + spaces, ' ', (व्योम *)entries[i]);
+पूर्ण
+EXPORT_SYMBOL_GPL(stack_trace_prपूर्णांक);
 
 /**
- * stack_trace_snprint - Print the entries in the stack trace into a buffer
- * @buf:	Pointer to the print buffer
- * @size:	Size of the print buffer
- * @entries:	Pointer to storage array
+ * stack_trace_snprपूर्णांक - Prपूर्णांक the entries in the stack trace पूर्णांकo a buffer
+ * @buf:	Poपूर्णांकer to the prपूर्णांक buffer
+ * @size:	Size of the prपूर्णांक buffer
+ * @entries:	Poपूर्णांकer to storage array
  * @nr_entries:	Number of entries in the storage array
- * @spaces:	Number of leading spaces to print
+ * @spaces:	Number of leading spaces to prपूर्णांक
  *
- * Return: Number of bytes printed.
+ * Return: Number of bytes prपूर्णांकed.
  */
-int stack_trace_snprint(char *buf, size_t size, const unsigned long *entries,
-			unsigned int nr_entries, int spaces)
-{
-	unsigned int generated, i, total = 0;
+पूर्णांक stack_trace_snprपूर्णांक(अक्षर *buf, माप_प्रकार size, स्थिर अचिन्हित दीर्घ *entries,
+			अचिन्हित पूर्णांक nr_entries, पूर्णांक spaces)
+अणु
+	अचिन्हित पूर्णांक generated, i, total = 0;
 
-	if (WARN_ON(!entries))
-		return 0;
+	अगर (WARN_ON(!entries))
+		वापस 0;
 
-	for (i = 0; i < nr_entries && size; i++) {
-		generated = snprintf(buf, size, "%*c%pS\n", 1 + spaces, ' ',
-				     (void *)entries[i]);
+	क्रम (i = 0; i < nr_entries && size; i++) अणु
+		generated = snम_लिखो(buf, size, "%*c%pS\n", 1 + spaces, ' ',
+				     (व्योम *)entries[i]);
 
 		total += generated;
-		if (generated >= size) {
+		अगर (generated >= size) अणु
 			buf += size;
 			size = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			buf += generated;
 			size -= generated;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return total;
-}
-EXPORT_SYMBOL_GPL(stack_trace_snprint);
+	वापस total;
+पूर्ण
+EXPORT_SYMBOL_GPL(stack_trace_snprपूर्णांक);
 
-#ifdef CONFIG_ARCH_STACKWALK
+#अगर_घोषित CONFIG_ARCH_STACKWALK
 
-struct stacktrace_cookie {
-	unsigned long	*store;
-	unsigned int	size;
-	unsigned int	skip;
-	unsigned int	len;
-};
+काष्ठा stacktrace_cookie अणु
+	अचिन्हित दीर्घ	*store;
+	अचिन्हित पूर्णांक	size;
+	अचिन्हित पूर्णांक	skip;
+	अचिन्हित पूर्णांक	len;
+पूर्ण;
 
-static bool stack_trace_consume_entry(void *cookie, unsigned long addr)
-{
-	struct stacktrace_cookie *c = cookie;
+अटल bool stack_trace_consume_entry(व्योम *cookie, अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा stacktrace_cookie *c = cookie;
 
-	if (c->len >= c->size)
-		return false;
+	अगर (c->len >= c->size)
+		वापस false;
 
-	if (c->skip > 0) {
+	अगर (c->skip > 0) अणु
 		c->skip--;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 	c->store[c->len++] = addr;
-	return c->len < c->size;
-}
+	वापस c->len < c->size;
+पूर्ण
 
-static bool stack_trace_consume_entry_nosched(void *cookie, unsigned long addr)
-{
-	if (in_sched_functions(addr))
-		return true;
-	return stack_trace_consume_entry(cookie, addr);
-}
+अटल bool stack_trace_consume_entry_nosched(व्योम *cookie, अचिन्हित दीर्घ addr)
+अणु
+	अगर (in_sched_functions(addr))
+		वापस true;
+	वापस stack_trace_consume_entry(cookie, addr);
+पूर्ण
 
 /**
- * stack_trace_save - Save a stack trace into a storage array
- * @store:	Pointer to storage array
+ * stack_trace_save - Save a stack trace पूर्णांकo a storage array
+ * @store:	Poपूर्णांकer to storage array
  * @size:	Size of the storage array
  * @skipnr:	Number of entries to skip at the start of the stack trace
  *
  * Return: Number of trace entries stored.
  */
-unsigned int stack_trace_save(unsigned long *store, unsigned int size,
-			      unsigned int skipnr)
-{
+अचिन्हित पूर्णांक stack_trace_save(अचिन्हित दीर्घ *store, अचिन्हित पूर्णांक size,
+			      अचिन्हित पूर्णांक skipnr)
+अणु
 	stack_trace_consume_fn consume_entry = stack_trace_consume_entry;
-	struct stacktrace_cookie c = {
+	काष्ठा stacktrace_cookie c = अणु
 		.store	= store,
 		.size	= size,
 		.skip	= skipnr + 1,
-	};
+	पूर्ण;
 
-	arch_stack_walk(consume_entry, &c, current, NULL);
-	return c.len;
-}
+	arch_stack_walk(consume_entry, &c, current, शून्य);
+	वापस c.len;
+पूर्ण
 EXPORT_SYMBOL_GPL(stack_trace_save);
 
 /**
- * stack_trace_save_tsk - Save a task stack trace into a storage array
+ * stack_trace_save_tsk - Save a task stack trace पूर्णांकo a storage array
  * @task:	The task to examine
- * @store:	Pointer to storage array
+ * @store:	Poपूर्णांकer to storage array
  * @size:	Size of the storage array
  * @skipnr:	Number of entries to skip at the start of the stack trace
  *
  * Return: Number of trace entries stored.
  */
-unsigned int stack_trace_save_tsk(struct task_struct *tsk, unsigned long *store,
-				  unsigned int size, unsigned int skipnr)
-{
+अचिन्हित पूर्णांक stack_trace_save_tsk(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ *store,
+				  अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक skipnr)
+अणु
 	stack_trace_consume_fn consume_entry = stack_trace_consume_entry_nosched;
-	struct stacktrace_cookie c = {
+	काष्ठा stacktrace_cookie c = अणु
 		.store	= store,
 		.size	= size,
-		/* skip this function if they are tracing us */
+		/* skip this function अगर they are tracing us */
 		.skip	= skipnr + (current == tsk),
-	};
+	पूर्ण;
 
-	if (!try_get_task_stack(tsk))
-		return 0;
+	अगर (!try_get_task_stack(tsk))
+		वापस 0;
 
-	arch_stack_walk(consume_entry, &c, tsk, NULL);
+	arch_stack_walk(consume_entry, &c, tsk, शून्य);
 	put_task_stack(tsk);
-	return c.len;
-}
+	वापस c.len;
+पूर्ण
 
 /**
- * stack_trace_save_regs - Save a stack trace based on pt_regs into a storage array
- * @regs:	Pointer to pt_regs to examine
- * @store:	Pointer to storage array
+ * stack_trace_save_regs - Save a stack trace based on pt_regs पूर्णांकo a storage array
+ * @regs:	Poपूर्णांकer to pt_regs to examine
+ * @store:	Poपूर्णांकer to storage array
  * @size:	Size of the storage array
  * @skipnr:	Number of entries to skip at the start of the stack trace
  *
  * Return: Number of trace entries stored.
  */
-unsigned int stack_trace_save_regs(struct pt_regs *regs, unsigned long *store,
-				   unsigned int size, unsigned int skipnr)
-{
+अचिन्हित पूर्णांक stack_trace_save_regs(काष्ठा pt_regs *regs, अचिन्हित दीर्घ *store,
+				   अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक skipnr)
+अणु
 	stack_trace_consume_fn consume_entry = stack_trace_consume_entry;
-	struct stacktrace_cookie c = {
+	काष्ठा stacktrace_cookie c = अणु
 		.store	= store,
 		.size	= size,
 		.skip	= skipnr,
-	};
+	पूर्ण;
 
 	arch_stack_walk(consume_entry, &c, current, regs);
-	return c.len;
-}
+	वापस c.len;
+पूर्ण
 
-#ifdef CONFIG_HAVE_RELIABLE_STACKTRACE
+#अगर_घोषित CONFIG_HAVE_RELIABLE_STACKTRACE
 /**
- * stack_trace_save_tsk_reliable - Save task stack with verification
- * @tsk:	Pointer to the task to examine
- * @store:	Pointer to storage array
+ * stack_trace_save_tsk_reliable - Save task stack with verअगरication
+ * @tsk:	Poपूर्णांकer to the task to examine
+ * @store:	Poपूर्णांकer to storage array
  * @size:	Size of the storage array
  *
- * Return:	An error if it detects any unreliable features of the
+ * Return:	An error अगर it detects any unreliable features of the
  *		stack. Otherwise it guarantees that the stack trace is
- *		reliable and returns the number of entries stored.
+ *		reliable and वापसs the number of entries stored.
  *
  * If the task is not 'current', the caller *must* ensure the task is inactive.
  */
-int stack_trace_save_tsk_reliable(struct task_struct *tsk, unsigned long *store,
-				  unsigned int size)
-{
+पूर्णांक stack_trace_save_tsk_reliable(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ *store,
+				  अचिन्हित पूर्णांक size)
+अणु
 	stack_trace_consume_fn consume_entry = stack_trace_consume_entry;
-	struct stacktrace_cookie c = {
+	काष्ठा stacktrace_cookie c = अणु
 		.store	= store,
 		.size	= size,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
 	/*
-	 * If the task doesn't have a stack (e.g., a zombie), the stack is
+	 * If the task करोesn't have a stack (e.g., a zombie), the stack is
 	 * "reliably" empty.
 	 */
-	if (!try_get_task_stack(tsk))
-		return 0;
+	अगर (!try_get_task_stack(tsk))
+		वापस 0;
 
 	ret = arch_stack_walk_reliable(consume_entry, &c, tsk);
 	put_task_stack(tsk);
-	return ret ? ret : c.len;
-}
-#endif
+	वापस ret ? ret : c.len;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_USER_STACKTRACE_SUPPORT
+#अगर_घोषित CONFIG_USER_STACKTRACE_SUPPORT
 /**
- * stack_trace_save_user - Save a user space stack trace into a storage array
- * @store:	Pointer to storage array
+ * stack_trace_save_user - Save a user space stack trace पूर्णांकo a storage array
+ * @store:	Poपूर्णांकer to storage array
  * @size:	Size of the storage array
  *
  * Return: Number of trace entries stored.
  */
-unsigned int stack_trace_save_user(unsigned long *store, unsigned int size)
-{
+अचिन्हित पूर्णांक stack_trace_save_user(अचिन्हित दीर्घ *store, अचिन्हित पूर्णांक size)
+अणु
 	stack_trace_consume_fn consume_entry = stack_trace_consume_entry;
-	struct stacktrace_cookie c = {
+	काष्ठा stacktrace_cookie c = अणु
 		.store	= store,
 		.size	= size,
-	};
+	पूर्ण;
 	mm_segment_t fs;
 
-	/* Trace user stack if not a kernel thread */
-	if (current->flags & PF_KTHREAD)
-		return 0;
+	/* Trace user stack अगर not a kernel thपढ़ो */
+	अगर (current->flags & PF_KTHREAD)
+		वापस 0;
 
-	fs = force_uaccess_begin();
+	fs = क्रमce_uaccess_begin();
 	arch_stack_walk_user(consume_entry, &c, task_pt_regs(current));
-	force_uaccess_end(fs);
+	क्रमce_uaccess_end(fs);
 
-	return c.len;
-}
-#endif
+	वापस c.len;
+पूर्ण
+#पूर्ण_अगर
 
-#else /* CONFIG_ARCH_STACKWALK */
+#अन्यथा /* CONFIG_ARCH_STACKWALK */
 
 /*
- * Architectures that do not implement save_stack_trace_*()
+ * Architectures that करो not implement save_stack_trace_*()
  * get these weak aliases and once-per-bootup warnings
- * (whenever this facility is utilized - for example by procfs):
+ * (whenever this facility is utilized - क्रम example by procfs):
  */
-__weak void
-save_stack_trace_tsk(struct task_struct *tsk, struct stack_trace *trace)
-{
+__weak व्योम
+save_stack_trace_tsk(काष्ठा task_काष्ठा *tsk, काष्ठा stack_trace *trace)
+अणु
 	WARN_ONCE(1, KERN_INFO "save_stack_trace_tsk() not implemented yet.\n");
-}
+पूर्ण
 
-__weak void
-save_stack_trace_regs(struct pt_regs *regs, struct stack_trace *trace)
-{
+__weak व्योम
+save_stack_trace_regs(काष्ठा pt_regs *regs, काष्ठा stack_trace *trace)
+अणु
 	WARN_ONCE(1, KERN_INFO "save_stack_trace_regs() not implemented yet.\n");
-}
+पूर्ण
 
 /**
- * stack_trace_save - Save a stack trace into a storage array
- * @store:	Pointer to storage array
+ * stack_trace_save - Save a stack trace पूर्णांकo a storage array
+ * @store:	Poपूर्णांकer to storage array
  * @size:	Size of the storage array
  * @skipnr:	Number of entries to skip at the start of the stack trace
  *
  * Return: Number of trace entries stored
  */
-unsigned int stack_trace_save(unsigned long *store, unsigned int size,
-			      unsigned int skipnr)
-{
-	struct stack_trace trace = {
+अचिन्हित पूर्णांक stack_trace_save(अचिन्हित दीर्घ *store, अचिन्हित पूर्णांक size,
+			      अचिन्हित पूर्णांक skipnr)
+अणु
+	काष्ठा stack_trace trace = अणु
 		.entries	= store,
 		.max_entries	= size,
 		.skip		= skipnr + 1,
-	};
+	पूर्ण;
 
 	save_stack_trace(&trace);
-	return trace.nr_entries;
-}
+	वापस trace.nr_entries;
+पूर्ण
 EXPORT_SYMBOL_GPL(stack_trace_save);
 
 /**
- * stack_trace_save_tsk - Save a task stack trace into a storage array
+ * stack_trace_save_tsk - Save a task stack trace पूर्णांकo a storage array
  * @task:	The task to examine
- * @store:	Pointer to storage array
+ * @store:	Poपूर्णांकer to storage array
  * @size:	Size of the storage array
  * @skipnr:	Number of entries to skip at the start of the stack trace
  *
  * Return: Number of trace entries stored
  */
-unsigned int stack_trace_save_tsk(struct task_struct *task,
-				  unsigned long *store, unsigned int size,
-				  unsigned int skipnr)
-{
-	struct stack_trace trace = {
+अचिन्हित पूर्णांक stack_trace_save_tsk(काष्ठा task_काष्ठा *task,
+				  अचिन्हित दीर्घ *store, अचिन्हित पूर्णांक size,
+				  अचिन्हित पूर्णांक skipnr)
+अणु
+	काष्ठा stack_trace trace = अणु
 		.entries	= store,
 		.max_entries	= size,
-		/* skip this function if they are tracing us */
+		/* skip this function अगर they are tracing us */
 		.skip	= skipnr + (current == task),
-	};
+	पूर्ण;
 
 	save_stack_trace_tsk(task, &trace);
-	return trace.nr_entries;
-}
+	वापस trace.nr_entries;
+पूर्ण
 
 /**
- * stack_trace_save_regs - Save a stack trace based on pt_regs into a storage array
- * @regs:	Pointer to pt_regs to examine
- * @store:	Pointer to storage array
+ * stack_trace_save_regs - Save a stack trace based on pt_regs पूर्णांकo a storage array
+ * @regs:	Poपूर्णांकer to pt_regs to examine
+ * @store:	Poपूर्णांकer to storage array
  * @size:	Size of the storage array
  * @skipnr:	Number of entries to skip at the start of the stack trace
  *
  * Return: Number of trace entries stored
  */
-unsigned int stack_trace_save_regs(struct pt_regs *regs, unsigned long *store,
-				   unsigned int size, unsigned int skipnr)
-{
-	struct stack_trace trace = {
+अचिन्हित पूर्णांक stack_trace_save_regs(काष्ठा pt_regs *regs, अचिन्हित दीर्घ *store,
+				   अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक skipnr)
+अणु
+	काष्ठा stack_trace trace = अणु
 		.entries	= store,
 		.max_entries	= size,
 		.skip		= skipnr,
-	};
+	पूर्ण;
 
 	save_stack_trace_regs(regs, &trace);
-	return trace.nr_entries;
-}
+	वापस trace.nr_entries;
+पूर्ण
 
-#ifdef CONFIG_HAVE_RELIABLE_STACKTRACE
+#अगर_घोषित CONFIG_HAVE_RELIABLE_STACKTRACE
 /**
- * stack_trace_save_tsk_reliable - Save task stack with verification
- * @tsk:	Pointer to the task to examine
- * @store:	Pointer to storage array
+ * stack_trace_save_tsk_reliable - Save task stack with verअगरication
+ * @tsk:	Poपूर्णांकer to the task to examine
+ * @store:	Poपूर्णांकer to storage array
  * @size:	Size of the storage array
  *
- * Return:	An error if it detects any unreliable features of the
+ * Return:	An error अगर it detects any unreliable features of the
  *		stack. Otherwise it guarantees that the stack trace is
- *		reliable and returns the number of entries stored.
+ *		reliable and वापसs the number of entries stored.
  *
  * If the task is not 'current', the caller *must* ensure the task is inactive.
  */
-int stack_trace_save_tsk_reliable(struct task_struct *tsk, unsigned long *store,
-				  unsigned int size)
-{
-	struct stack_trace trace = {
+पूर्णांक stack_trace_save_tsk_reliable(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ *store,
+				  अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा stack_trace trace = अणु
 		.entries	= store,
 		.max_entries	= size,
-	};
-	int ret = save_stack_trace_tsk_reliable(tsk, &trace);
+	पूर्ण;
+	पूर्णांक ret = save_stack_trace_tsk_reliable(tsk, &trace);
 
-	return ret ? ret : trace.nr_entries;
-}
-#endif
+	वापस ret ? ret : trace.nr_entries;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_USER_STACKTRACE_SUPPORT
+#अगर_घोषित CONFIG_USER_STACKTRACE_SUPPORT
 /**
- * stack_trace_save_user - Save a user space stack trace into a storage array
- * @store:	Pointer to storage array
+ * stack_trace_save_user - Save a user space stack trace पूर्णांकo a storage array
+ * @store:	Poपूर्णांकer to storage array
  * @size:	Size of the storage array
  *
  * Return: Number of trace entries stored
  */
-unsigned int stack_trace_save_user(unsigned long *store, unsigned int size)
-{
-	struct stack_trace trace = {
+अचिन्हित पूर्णांक stack_trace_save_user(अचिन्हित दीर्घ *store, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा stack_trace trace = अणु
 		.entries	= store,
 		.max_entries	= size,
-	};
+	पूर्ण;
 
 	save_stack_trace_user(&trace);
-	return trace.nr_entries;
-}
-#endif /* CONFIG_USER_STACKTRACE_SUPPORT */
+	वापस trace.nr_entries;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_USER_STACKTRACE_SUPPORT */
 
-#endif /* !CONFIG_ARCH_STACKWALK */
+#पूर्ण_अगर /* !CONFIG_ARCH_STACKWALK */

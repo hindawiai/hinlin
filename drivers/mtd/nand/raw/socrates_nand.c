@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Copyright © 2008 Ilya Yanok, Emcraft Systems
+ *  Copyright तऊ 2008 Ilya Yanok, Emcraft Systems
  */
 
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/partitions.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/io.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/पन.स>
 
-#define FPGA_NAND_CMD_MASK		(0x7 << 28)
-#define FPGA_NAND_CMD_COMMAND		(0x0 << 28)
-#define FPGA_NAND_CMD_ADDR		(0x1 << 28)
-#define FPGA_NAND_CMD_READ		(0x2 << 28)
-#define FPGA_NAND_CMD_WRITE		(0x3 << 28)
-#define FPGA_NAND_BUSY			(0x1 << 15)
-#define FPGA_NAND_ENABLE		(0x1 << 31)
-#define FPGA_NAND_DATA_SHIFT		16
+#घोषणा FPGA_न_अंकD_CMD_MASK		(0x7 << 28)
+#घोषणा FPGA_न_अंकD_CMD_COMMAND		(0x0 << 28)
+#घोषणा FPGA_न_अंकD_CMD_ADDR		(0x1 << 28)
+#घोषणा FPGA_न_अंकD_CMD_READ		(0x2 << 28)
+#घोषणा FPGA_न_अंकD_CMD_WRITE		(0x3 << 28)
+#घोषणा FPGA_न_अंकD_BUSY			(0x1 << 15)
+#घोषणा FPGA_न_अंकD_ENABLE		(0x1 << 31)
+#घोषणा FPGA_न_अंकD_DATA_SHIFT		16
 
-struct socrates_nand_host {
-	struct nand_controller	controller;
-	struct nand_chip	nand_chip;
-	void __iomem		*io_base;
-	struct device		*dev;
-};
+काष्ठा socrates_nand_host अणु
+	काष्ठा nand_controller	controller;
+	काष्ठा nand_chip	nand_chip;
+	व्योम __iomem		*io_base;
+	काष्ठा device		*dev;
+पूर्ण;
 
 /**
- * socrates_nand_write_buf -  write buffer to chip
- * @this:	NAND chip object
+ * socrates_nand_ग_लिखो_buf -  ग_लिखो buffer to chip
+ * @this:	न_अंकD chip object
  * @buf:	data buffer
- * @len:	number of bytes to write
+ * @len:	number of bytes to ग_लिखो
  */
-static void socrates_nand_write_buf(struct nand_chip *this, const uint8_t *buf,
-				    int len)
-{
-	int i;
-	struct socrates_nand_host *host = nand_get_controller_data(this);
+अटल व्योम socrates_nand_ग_लिखो_buf(काष्ठा nand_chip *this, स्थिर uपूर्णांक8_t *buf,
+				    पूर्णांक len)
+अणु
+	पूर्णांक i;
+	काष्ठा socrates_nand_host *host = nand_get_controller_data(this);
 
-	for (i = 0; i < len; i++) {
-		out_be32(host->io_base, FPGA_NAND_ENABLE |
-				FPGA_NAND_CMD_WRITE |
-				(buf[i] << FPGA_NAND_DATA_SHIFT));
-	}
-}
+	क्रम (i = 0; i < len; i++) अणु
+		out_be32(host->io_base, FPGA_न_अंकD_ENABLE |
+				FPGA_न_अंकD_CMD_WRITE |
+				(buf[i] << FPGA_न_अंकD_DATA_SHIFT));
+	पूर्ण
+पूर्ण
 
 /**
- * socrates_nand_read_buf -  read chip data into buffer
- * @this:	NAND chip object
+ * socrates_nand_पढ़ो_buf -  पढ़ो chip data पूर्णांकo buffer
+ * @this:	न_अंकD chip object
  * @buf:	buffer to store date
- * @len:	number of bytes to read
+ * @len:	number of bytes to पढ़ो
  */
-static void socrates_nand_read_buf(struct nand_chip *this, uint8_t *buf,
-				   int len)
-{
-	int i;
-	struct socrates_nand_host *host = nand_get_controller_data(this);
-	uint32_t val;
+अटल व्योम socrates_nand_पढ़ो_buf(काष्ठा nand_chip *this, uपूर्णांक8_t *buf,
+				   पूर्णांक len)
+अणु
+	पूर्णांक i;
+	काष्ठा socrates_nand_host *host = nand_get_controller_data(this);
+	uपूर्णांक32_t val;
 
-	val = FPGA_NAND_ENABLE | FPGA_NAND_CMD_READ;
+	val = FPGA_न_अंकD_ENABLE | FPGA_न_अंकD_CMD_READ;
 
 	out_be32(host->io_base, val);
-	for (i = 0; i < len; i++) {
+	क्रम (i = 0; i < len; i++) अणु
 		buf[i] = (in_be32(host->io_base) >>
-				FPGA_NAND_DATA_SHIFT) & 0xff;
-	}
-}
+				FPGA_न_अंकD_DATA_SHIFT) & 0xff;
+	पूर्ण
+पूर्ण
 
 /**
- * socrates_nand_read_byte -  read one byte from the chip
- * @mtd:	MTD device structure
+ * socrates_nand_पढ़ो_byte -  पढ़ो one byte from the chip
+ * @mtd:	MTD device काष्ठाure
  */
-static uint8_t socrates_nand_read_byte(struct nand_chip *this)
-{
-	uint8_t byte;
-	socrates_nand_read_buf(this, &byte, sizeof(byte));
-	return byte;
-}
+अटल uपूर्णांक8_t socrates_nand_पढ़ो_byte(काष्ठा nand_chip *this)
+अणु
+	uपूर्णांक8_t byte;
+	socrates_nand_पढ़ो_buf(this, &byte, माप(byte));
+	वापस byte;
+पूर्ण
 
 /*
- * Hardware specific access to control-lines
+ * Hardware specअगरic access to control-lines
  */
-static void socrates_nand_cmd_ctrl(struct nand_chip *nand_chip, int cmd,
-				   unsigned int ctrl)
-{
-	struct socrates_nand_host *host = nand_get_controller_data(nand_chip);
-	uint32_t val;
+अटल व्योम socrates_nand_cmd_ctrl(काष्ठा nand_chip *nand_chip, पूर्णांक cmd,
+				   अचिन्हित पूर्णांक ctrl)
+अणु
+	काष्ठा socrates_nand_host *host = nand_get_controller_data(nand_chip);
+	uपूर्णांक32_t val;
 
-	if (cmd == NAND_CMD_NONE)
-		return;
+	अगर (cmd == न_अंकD_CMD_NONE)
+		वापस;
 
-	if (ctrl & NAND_CLE)
-		val = FPGA_NAND_CMD_COMMAND;
-	else
-		val = FPGA_NAND_CMD_ADDR;
+	अगर (ctrl & न_अंकD_CLE)
+		val = FPGA_न_अंकD_CMD_COMMAND;
+	अन्यथा
+		val = FPGA_न_अंकD_CMD_ADDR;
 
-	if (ctrl & NAND_NCE)
-		val |= FPGA_NAND_ENABLE;
+	अगर (ctrl & न_अंकD_NCE)
+		val |= FPGA_न_अंकD_ENABLE;
 
-	val |= (cmd & 0xff) << FPGA_NAND_DATA_SHIFT;
+	val |= (cmd & 0xff) << FPGA_न_अंकD_DATA_SHIFT;
 
 	out_be32(host->io_base, val);
-}
+पूर्ण
 
 /*
  * Read the Device Ready pin.
  */
-static int socrates_nand_device_ready(struct nand_chip *nand_chip)
-{
-	struct socrates_nand_host *host = nand_get_controller_data(nand_chip);
+अटल पूर्णांक socrates_nand_device_पढ़ोy(काष्ठा nand_chip *nand_chip)
+अणु
+	काष्ठा socrates_nand_host *host = nand_get_controller_data(nand_chip);
 
-	if (in_be32(host->io_base) & FPGA_NAND_BUSY)
-		return 0; /* busy */
-	return 1;
-}
+	अगर (in_be32(host->io_base) & FPGA_न_अंकD_BUSY)
+		वापस 0; /* busy */
+	वापस 1;
+पूर्ण
 
-static int socrates_attach_chip(struct nand_chip *chip)
-{
-	chip->ecc.engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
+अटल पूर्णांक socrates_attach_chip(काष्ठा nand_chip *chip)
+अणु
+	chip->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
 
-	if (chip->ecc.algo == NAND_ECC_ALGO_UNKNOWN)
-		chip->ecc.algo = NAND_ECC_ALGO_HAMMING;
+	अगर (chip->ecc.algo == न_अंकD_ECC_ALGO_UNKNOWN)
+		chip->ecc.algo = न_अंकD_ECC_ALGO_HAMMING;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nand_controller_ops socrates_ops = {
+अटल स्थिर काष्ठा nand_controller_ops socrates_ops = अणु
 	.attach_chip = socrates_attach_chip,
-};
+पूर्ण;
 
 /*
- * Probe for the NAND device.
+ * Probe क्रम the न_अंकD device.
  */
-static int socrates_nand_probe(struct platform_device *ofdev)
-{
-	struct socrates_nand_host *host;
-	struct mtd_info *mtd;
-	struct nand_chip *nand_chip;
-	int res;
+अटल पूर्णांक socrates_nand_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा socrates_nand_host *host;
+	काष्ठा mtd_info *mtd;
+	काष्ठा nand_chip *nand_chip;
+	पूर्णांक res;
 
-	/* Allocate memory for the device structure (and zero it) */
-	host = devm_kzalloc(&ofdev->dev, sizeof(*host), GFP_KERNEL);
-	if (!host)
-		return -ENOMEM;
+	/* Allocate memory क्रम the device काष्ठाure (and zero it) */
+	host = devm_kzalloc(&ofdev->dev, माप(*host), GFP_KERNEL);
+	अगर (!host)
+		वापस -ENOMEM;
 
 	host->io_base = of_iomap(ofdev->dev.of_node, 0);
-	if (host->io_base == NULL) {
+	अगर (host->io_base == शून्य) अणु
 		dev_err(&ofdev->dev, "ioremap failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	nand_chip = &host->nand_chip;
 	mtd = nand_to_mtd(nand_chip);
@@ -160,76 +161,76 @@ static int socrates_nand_probe(struct platform_device *ofdev)
 	host->controller.ops = &socrates_ops;
 	nand_chip->controller = &host->controller;
 
-	/* link the private data structures */
+	/* link the निजी data काष्ठाures */
 	nand_set_controller_data(nand_chip, host);
 	nand_set_flash_node(nand_chip, ofdev->dev.of_node);
 	mtd->name = "socrates_nand";
 	mtd->dev.parent = &ofdev->dev;
 
 	nand_chip->legacy.cmd_ctrl = socrates_nand_cmd_ctrl;
-	nand_chip->legacy.read_byte = socrates_nand_read_byte;
-	nand_chip->legacy.write_buf = socrates_nand_write_buf;
-	nand_chip->legacy.read_buf = socrates_nand_read_buf;
-	nand_chip->legacy.dev_ready = socrates_nand_device_ready;
+	nand_chip->legacy.पढ़ो_byte = socrates_nand_पढ़ो_byte;
+	nand_chip->legacy.ग_लिखो_buf = socrates_nand_ग_लिखो_buf;
+	nand_chip->legacy.पढ़ो_buf = socrates_nand_पढ़ो_buf;
+	nand_chip->legacy.dev_पढ़ोy = socrates_nand_device_पढ़ोy;
 
 	/* TODO: I have no idea what real delay is. */
-	nand_chip->legacy.chip_delay = 20;	/* 20us command delay time */
+	nand_chip->legacy.chip_delay = 20;	/* 20us command delay समय */
 
 	dev_set_drvdata(&ofdev->dev, host);
 
 	res = nand_scan(nand_chip, 1);
-	if (res)
-		goto out;
+	अगर (res)
+		जाओ out;
 
-	res = mtd_device_register(mtd, NULL, 0);
-	if (!res)
-		return res;
+	res = mtd_device_रेजिस्टर(mtd, शून्य, 0);
+	अगर (!res)
+		वापस res;
 
 	nand_cleanup(nand_chip);
 
 out:
 	iounmap(host->io_base);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
- * Remove a NAND device.
+ * Remove a न_अंकD device.
  */
-static int socrates_nand_remove(struct platform_device *ofdev)
-{
-	struct socrates_nand_host *host = dev_get_drvdata(&ofdev->dev);
-	struct nand_chip *chip = &host->nand_chip;
-	int ret;
+अटल पूर्णांक socrates_nand_हटाओ(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा socrates_nand_host *host = dev_get_drvdata(&ofdev->dev);
+	काष्ठा nand_chip *chip = &host->nand_chip;
+	पूर्णांक ret;
 
-	ret = mtd_device_unregister(nand_to_mtd(chip));
+	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
 	WARN_ON(ret);
 	nand_cleanup(chip);
 
 	iounmap(host->io_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id socrates_nand_match[] =
-{
-	{
+अटल स्थिर काष्ठा of_device_id socrates_nand_match[] =
+अणु
+	अणु
 		.compatible   = "abb,socrates-nand",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, socrates_nand_match);
 
-static struct platform_driver socrates_nand_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver socrates_nand_driver = अणु
+	.driver = अणु
 		.name = "socrates_nand",
 		.of_match_table = socrates_nand_match,
-	},
+	पूर्ण,
 	.probe		= socrates_nand_probe,
-	.remove		= socrates_nand_remove,
-};
+	.हटाओ		= socrates_nand_हटाओ,
+पूर्ण;
 
-module_platform_driver(socrates_nand_driver);
+module_platक्रमm_driver(socrates_nand_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Ilya Yanok");

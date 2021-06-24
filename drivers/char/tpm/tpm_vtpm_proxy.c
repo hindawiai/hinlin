@@ -1,254 +1,255 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2015, 2016 IBM Corporation
  * Copyright (C) 2016 Intel Corporation
  *
  * Author: Stefan Berger <stefanb@us.ibm.com>
  *
- * Maintained by: <tpmdd-devel@lists.sourceforge.net>
+ * Maपूर्णांकained by: <tpmdd-devel@lists.sourceक्रमge.net>
  *
- * Device driver for vTPM (vTPM proxy driver)
+ * Device driver क्रम vTPM (vTPM proxy driver)
  */
 
-#include <linux/types.h>
-#include <linux/spinlock.h>
-#include <linux/uaccess.h>
-#include <linux/wait.h>
-#include <linux/miscdevice.h>
-#include <linux/vtpm_proxy.h>
-#include <linux/file.h>
-#include <linux/anon_inodes.h>
-#include <linux/poll.h>
-#include <linux/compat.h>
+#समावेश <linux/types.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/vtpm_proxy.h>
+#समावेश <linux/file.h>
+#समावेश <linux/anon_inodes.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/compat.h>
 
-#include "tpm.h"
+#समावेश "tpm.h"
 
-#define VTPM_PROXY_REQ_COMPLETE_FLAG  BIT(0)
+#घोषणा VTPM_PROXY_REQ_COMPLETE_FLAG  BIT(0)
 
-struct proxy_dev {
-	struct tpm_chip *chip;
+काष्ठा proxy_dev अणु
+	काष्ठा tpm_chip *chip;
 
-	u32 flags;                   /* public API flags */
+	u32 flags;                   /* खुला API flags */
 
-	wait_queue_head_t wq;
+	रुको_queue_head_t wq;
 
-	struct mutex buf_lock;       /* protect buffer and flags */
+	काष्ठा mutex buf_lock;       /* protect buffer and flags */
 
-	long state;                  /* internal state */
-#define STATE_OPENED_FLAG        BIT(0)
-#define STATE_WAIT_RESPONSE_FLAG BIT(1)  /* waiting for emulator response */
-#define STATE_REGISTERED_FLAG	 BIT(2)
-#define STATE_DRIVER_COMMAND     BIT(3)  /* sending a driver specific command */
+	दीर्घ state;                  /* पूर्णांकernal state */
+#घोषणा STATE_OPENED_FLAG        BIT(0)
+#घोषणा STATE_WAIT_RESPONSE_FLAG BIT(1)  /* रुकोing क्रम emulator response */
+#घोषणा STATE_REGISTERED_FLAG	 BIT(2)
+#घोषणा STATE_DRIVER_COMMAND     BIT(3)  /* sending a driver specअगरic command */
 
-	size_t req_len;              /* length of queued TPM request */
-	size_t resp_len;             /* length of queued TPM response */
-	u8 buffer[TPM_BUFSIZE];      /* request/response buffer */
+	माप_प्रकार req_len;              /* length of queued TPM request */
+	माप_प्रकार resp_len;             /* length of queued TPM response */
+	u8 buffer[TPM_बफ_मानE];      /* request/response buffer */
 
-	struct work_struct work;     /* task that retrieves TPM timeouts */
-};
+	काष्ठा work_काष्ठा work;     /* task that retrieves TPM समयouts */
+पूर्ण;
 
 /* all supported flags */
-#define VTPM_PROXY_FLAGS_ALL  (VTPM_PROXY_FLAG_TPM2)
+#घोषणा VTPM_PROXY_FLAGS_ALL  (VTPM_PROXY_FLAG_TPM2)
 
-static struct workqueue_struct *workqueue;
+अटल काष्ठा workqueue_काष्ठा *workqueue;
 
-static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev);
+अटल व्योम vtpm_proxy_delete_device(काष्ठा proxy_dev *proxy_dev);
 
 /*
  * Functions related to 'server side'
  */
 
 /**
- * vtpm_proxy_fops_read - Read TPM commands on 'server side'
+ * vtpm_proxy_fops_पढ़ो - Read TPM commands on 'server side'
  *
- * @filp: file pointer
- * @buf: read buffer
- * @count: number of bytes to read
+ * @filp: file poपूर्णांकer
+ * @buf: पढ़ो buffer
+ * @count: number of bytes to पढ़ो
  * @off: offset
  *
  * Return:
- *	Number of bytes read or negative error code
+ *	Number of bytes पढ़ो or negative error code
  */
-static ssize_t vtpm_proxy_fops_read(struct file *filp, char __user *buf,
-				    size_t count, loff_t *off)
-{
-	struct proxy_dev *proxy_dev = filp->private_data;
-	size_t len;
-	int sig, rc;
+अटल sमाप_प्रकार vtpm_proxy_fops_पढ़ो(काष्ठा file *filp, अक्षर __user *buf,
+				    माप_प्रकार count, loff_t *off)
+अणु
+	काष्ठा proxy_dev *proxy_dev = filp->निजी_data;
+	माप_प्रकार len;
+	पूर्णांक sig, rc;
 
-	sig = wait_event_interruptible(proxy_dev->wq,
+	sig = रुको_event_पूर्णांकerruptible(proxy_dev->wq,
 		proxy_dev->req_len != 0 ||
 		!(proxy_dev->state & STATE_OPENED_FLAG));
-	if (sig)
-		return -EINTR;
+	अगर (sig)
+		वापस -EINTR;
 
 	mutex_lock(&proxy_dev->buf_lock);
 
-	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+	अगर (!(proxy_dev->state & STATE_OPENED_FLAG)) अणु
 		mutex_unlock(&proxy_dev->buf_lock);
-		return -EPIPE;
-	}
+		वापस -EPIPE;
+	पूर्ण
 
 	len = proxy_dev->req_len;
 
-	if (count < len) {
+	अगर (count < len) अणु
 		mutex_unlock(&proxy_dev->buf_lock);
 		pr_debug("Invalid size in recv: count=%zd, req_len=%zd\n",
 			 count, len);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	rc = copy_to_user(buf, proxy_dev->buffer, len);
-	memset(proxy_dev->buffer, 0, len);
+	स_रखो(proxy_dev->buffer, 0, len);
 	proxy_dev->req_len = 0;
 
-	if (!rc)
+	अगर (!rc)
 		proxy_dev->state |= STATE_WAIT_RESPONSE_FLAG;
 
 	mutex_unlock(&proxy_dev->buf_lock);
 
-	if (rc)
-		return -EFAULT;
+	अगर (rc)
+		वापस -EFAULT;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /**
- * vtpm_proxy_fops_write - Write TPM responses on 'server side'
+ * vtpm_proxy_fops_ग_लिखो - Write TPM responses on 'server side'
  *
- * @filp: file pointer
- * @buf: write buffer
- * @count: number of bytes to write
+ * @filp: file poपूर्णांकer
+ * @buf: ग_लिखो buffer
+ * @count: number of bytes to ग_लिखो
  * @off: offset
  *
  * Return:
- *	Number of bytes read or negative error value
+ *	Number of bytes पढ़ो or negative error value
  */
-static ssize_t vtpm_proxy_fops_write(struct file *filp, const char __user *buf,
-				     size_t count, loff_t *off)
-{
-	struct proxy_dev *proxy_dev = filp->private_data;
+अटल sमाप_प्रकार vtpm_proxy_fops_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf,
+				     माप_प्रकार count, loff_t *off)
+अणु
+	काष्ठा proxy_dev *proxy_dev = filp->निजी_data;
 
 	mutex_lock(&proxy_dev->buf_lock);
 
-	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+	अगर (!(proxy_dev->state & STATE_OPENED_FLAG)) अणु
 		mutex_unlock(&proxy_dev->buf_lock);
-		return -EPIPE;
-	}
+		वापस -EPIPE;
+	पूर्ण
 
-	if (count > sizeof(proxy_dev->buffer) ||
-	    !(proxy_dev->state & STATE_WAIT_RESPONSE_FLAG)) {
+	अगर (count > माप(proxy_dev->buffer) ||
+	    !(proxy_dev->state & STATE_WAIT_RESPONSE_FLAG)) अणु
 		mutex_unlock(&proxy_dev->buf_lock);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	proxy_dev->state &= ~STATE_WAIT_RESPONSE_FLAG;
 
 	proxy_dev->req_len = 0;
 
-	if (copy_from_user(proxy_dev->buffer, buf, count)) {
+	अगर (copy_from_user(proxy_dev->buffer, buf, count)) अणु
 		mutex_unlock(&proxy_dev->buf_lock);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	proxy_dev->resp_len = count;
 
 	mutex_unlock(&proxy_dev->buf_lock);
 
-	wake_up_interruptible(&proxy_dev->wq);
+	wake_up_पूर्णांकerruptible(&proxy_dev->wq);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
  * vtpm_proxy_fops_poll - Poll status on 'server side'
  *
- * @filp: file pointer
- * @wait: poll table
+ * @filp: file poपूर्णांकer
+ * @रुको: poll table
  *
  * Return: Poll flags
  */
-static __poll_t vtpm_proxy_fops_poll(struct file *filp, poll_table *wait)
-{
-	struct proxy_dev *proxy_dev = filp->private_data;
+अटल __poll_t vtpm_proxy_fops_poll(काष्ठा file *filp, poll_table *रुको)
+अणु
+	काष्ठा proxy_dev *proxy_dev = filp->निजी_data;
 	__poll_t ret;
 
-	poll_wait(filp, &proxy_dev->wq, wait);
+	poll_रुको(filp, &proxy_dev->wq, रुको);
 
 	ret = EPOLLOUT;
 
 	mutex_lock(&proxy_dev->buf_lock);
 
-	if (proxy_dev->req_len)
+	अगर (proxy_dev->req_len)
 		ret |= EPOLLIN | EPOLLRDNORM;
 
-	if (!(proxy_dev->state & STATE_OPENED_FLAG))
+	अगर (!(proxy_dev->state & STATE_OPENED_FLAG))
 		ret |= EPOLLHUP;
 
 	mutex_unlock(&proxy_dev->buf_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * vtpm_proxy_fops_open - Open vTPM device on 'server side'
+ * vtpm_proxy_fops_खोलो - Open vTPM device on 'server side'
  *
- * @filp: file pointer
+ * @filp: file poपूर्णांकer
  *
  * Called when setting up the anonymous file descriptor
  */
-static void vtpm_proxy_fops_open(struct file *filp)
-{
-	struct proxy_dev *proxy_dev = filp->private_data;
+अटल व्योम vtpm_proxy_fops_खोलो(काष्ठा file *filp)
+अणु
+	काष्ठा proxy_dev *proxy_dev = filp->निजी_data;
 
 	proxy_dev->state |= STATE_OPENED_FLAG;
-}
+पूर्ण
 
 /**
- * vtpm_proxy_fops_undo_open - counter-part to vtpm_fops_open
- *       Call to undo vtpm_proxy_fops_open
+ * vtpm_proxy_fops_unकरो_खोलो - counter-part to vtpm_fops_खोलो
+ *       Call to unकरो vtpm_proxy_fops_खोलो
  *
  *@proxy_dev: tpm proxy device
  */
-static void vtpm_proxy_fops_undo_open(struct proxy_dev *proxy_dev)
-{
+अटल व्योम vtpm_proxy_fops_unकरो_खोलो(काष्ठा proxy_dev *proxy_dev)
+अणु
 	mutex_lock(&proxy_dev->buf_lock);
 
 	proxy_dev->state &= ~STATE_OPENED_FLAG;
 
 	mutex_unlock(&proxy_dev->buf_lock);
 
-	/* no more TPM responses -- wake up anyone waiting for them */
-	wake_up_interruptible(&proxy_dev->wq);
-}
+	/* no more TPM responses -- wake up anyone रुकोing क्रम them */
+	wake_up_पूर्णांकerruptible(&proxy_dev->wq);
+पूर्ण
 
 /*
  * vtpm_proxy_fops_release - Close 'server side'
  *
  * @inode: inode
- * @filp: file pointer
+ * @filp: file poपूर्णांकer
  * Return:
- *      Always returns 0.
+ *      Always वापसs 0.
  */
-static int vtpm_proxy_fops_release(struct inode *inode, struct file *filp)
-{
-	struct proxy_dev *proxy_dev = filp->private_data;
+अटल पूर्णांक vtpm_proxy_fops_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा proxy_dev *proxy_dev = filp->निजी_data;
 
-	filp->private_data = NULL;
+	filp->निजी_data = शून्य;
 
 	vtpm_proxy_delete_device(proxy_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations vtpm_proxy_fops = {
+अटल स्थिर काष्ठा file_operations vtpm_proxy_fops = अणु
 	.owner = THIS_MODULE,
 	.llseek = no_llseek,
-	.read = vtpm_proxy_fops_read,
-	.write = vtpm_proxy_fops_write,
+	.पढ़ो = vtpm_proxy_fops_पढ़ो,
+	.ग_लिखो = vtpm_proxy_fops_ग_लिखो,
 	.poll = vtpm_proxy_fops_poll,
 	.release = vtpm_proxy_fops_release,
-};
+पूर्ण;
 
 /*
  * Functions invoked by the core TPM driver to send TPM commands to
@@ -256,131 +257,131 @@ static const struct file_operations vtpm_proxy_fops = {
  */
 
 /*
- * Called when core TPM driver reads TPM responses from 'server side'
+ * Called when core TPM driver पढ़ोs TPM responses from 'server side'
  *
  * @chip: tpm chip to use
  * @buf: receive buffer
- * @count: bytes to read
+ * @count: bytes to पढ़ो
  * Return:
- *      Number of TPM response bytes read, negative error value otherwise
+ *      Number of TPM response bytes पढ़ो, negative error value otherwise
  */
-static int vtpm_proxy_tpm_op_recv(struct tpm_chip *chip, u8 *buf, size_t count)
-{
-	struct proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
-	size_t len;
+अटल पूर्णांक vtpm_proxy_tpm_op_recv(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार count)
+अणु
+	काष्ठा proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
+	माप_प्रकार len;
 
 	/* process gone ? */
 	mutex_lock(&proxy_dev->buf_lock);
 
-	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+	अगर (!(proxy_dev->state & STATE_OPENED_FLAG)) अणु
 		mutex_unlock(&proxy_dev->buf_lock);
-		return -EPIPE;
-	}
+		वापस -EPIPE;
+	पूर्ण
 
 	len = proxy_dev->resp_len;
-	if (count < len) {
+	अगर (count < len) अणु
 		dev_err(&chip->dev,
 			"Invalid size in recv: count=%zd, resp_len=%zd\n",
 			count, len);
 		len = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memcpy(buf, proxy_dev->buffer, len);
+	स_नकल(buf, proxy_dev->buffer, len);
 	proxy_dev->resp_len = 0;
 
 out:
 	mutex_unlock(&proxy_dev->buf_lock);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int vtpm_proxy_is_driver_command(struct tpm_chip *chip,
-					u8 *buf, size_t count)
-{
-	struct tpm_header *hdr = (struct tpm_header *)buf;
+अटल पूर्णांक vtpm_proxy_is_driver_command(काष्ठा tpm_chip *chip,
+					u8 *buf, माप_प्रकार count)
+अणु
+	काष्ठा tpm_header *hdr = (काष्ठा tpm_header *)buf;
 
-	if (count < sizeof(struct tpm_header))
-		return 0;
+	अगर (count < माप(काष्ठा tpm_header))
+		वापस 0;
 
-	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
-		switch (be32_to_cpu(hdr->ordinal)) {
-		case TPM2_CC_SET_LOCALITY:
-			return 1;
-		}
-	} else {
-		switch (be32_to_cpu(hdr->ordinal)) {
-		case TPM_ORD_SET_LOCALITY:
-			return 1;
-		}
-	}
-	return 0;
-}
+	अगर (chip->flags & TPM_CHIP_FLAG_TPM2) अणु
+		चयन (be32_to_cpu(hdr->ordinal)) अणु
+		हाल TPM2_CC_SET_LOCALITY:
+			वापस 1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (be32_to_cpu(hdr->ordinal)) अणु
+		हाल TPM_ORD_SET_LOCALITY:
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Called when core TPM driver forwards TPM requests to 'server side'.
+ * Called when core TPM driver क्रमwards TPM requests to 'server side'.
  *
  * @chip: tpm chip to use
  * @buf: send buffer
  * @count: bytes to send
  *
  * Return:
- *      0 in case of success, negative error value otherwise.
+ *      0 in हाल of success, negative error value otherwise.
  */
-static int vtpm_proxy_tpm_op_send(struct tpm_chip *chip, u8 *buf, size_t count)
-{
-	struct proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
+अटल पूर्णांक vtpm_proxy_tpm_op_send(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार count)
+अणु
+	काष्ठा proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
 
-	if (count > sizeof(proxy_dev->buffer)) {
+	अगर (count > माप(proxy_dev->buffer)) अणु
 		dev_err(&chip->dev,
 			"Invalid size in send: count=%zd, buffer size=%zd\n",
-			count, sizeof(proxy_dev->buffer));
-		return -EIO;
-	}
+			count, माप(proxy_dev->buffer));
+		वापस -EIO;
+	पूर्ण
 
-	if (!(proxy_dev->state & STATE_DRIVER_COMMAND) &&
+	अगर (!(proxy_dev->state & STATE_DRIVER_COMMAND) &&
 	    vtpm_proxy_is_driver_command(chip, buf, count))
-		return -EFAULT;
+		वापस -EFAULT;
 
 	mutex_lock(&proxy_dev->buf_lock);
 
-	if (!(proxy_dev->state & STATE_OPENED_FLAG)) {
+	अगर (!(proxy_dev->state & STATE_OPENED_FLAG)) अणु
 		mutex_unlock(&proxy_dev->buf_lock);
-		return -EPIPE;
-	}
+		वापस -EPIPE;
+	पूर्ण
 
 	proxy_dev->resp_len = 0;
 
 	proxy_dev->req_len = count;
-	memcpy(proxy_dev->buffer, buf, count);
+	स_नकल(proxy_dev->buffer, buf, count);
 
 	proxy_dev->state &= ~STATE_WAIT_RESPONSE_FLAG;
 
 	mutex_unlock(&proxy_dev->buf_lock);
 
-	wake_up_interruptible(&proxy_dev->wq);
+	wake_up_पूर्णांकerruptible(&proxy_dev->wq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vtpm_proxy_tpm_op_cancel(struct tpm_chip *chip)
-{
+अटल व्योम vtpm_proxy_tpm_op_cancel(काष्ठा tpm_chip *chip)
+अणु
 	/* not supported */
-}
+पूर्ण
 
-static u8 vtpm_proxy_tpm_op_status(struct tpm_chip *chip)
-{
-	struct proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
+अटल u8 vtpm_proxy_tpm_op_status(काष्ठा tpm_chip *chip)
+अणु
+	काष्ठा proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
 
-	if (proxy_dev->resp_len)
-		return VTPM_PROXY_REQ_COMPLETE_FLAG;
+	अगर (proxy_dev->resp_len)
+		वापस VTPM_PROXY_REQ_COMPLETE_FLAG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool vtpm_proxy_tpm_req_canceled(struct tpm_chip  *chip, u8 status)
-{
-	struct proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
+अटल bool vtpm_proxy_tpm_req_canceled(काष्ठा tpm_chip  *chip, u8 status)
+अणु
+	काष्ठा proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
 	bool ret;
 
 	mutex_lock(&proxy_dev->buf_lock);
@@ -389,24 +390,24 @@ static bool vtpm_proxy_tpm_req_canceled(struct tpm_chip  *chip, u8 status)
 
 	mutex_unlock(&proxy_dev->buf_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vtpm_proxy_request_locality(struct tpm_chip *chip, int locality)
-{
-	struct tpm_buf buf;
-	int rc;
-	const struct tpm_header *header;
-	struct proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
+अटल पूर्णांक vtpm_proxy_request_locality(काष्ठा tpm_chip *chip, पूर्णांक locality)
+अणु
+	काष्ठा tpm_buf buf;
+	पूर्णांक rc;
+	स्थिर काष्ठा tpm_header *header;
+	काष्ठा proxy_dev *proxy_dev = dev_get_drvdata(&chip->dev);
 
-	if (chip->flags & TPM_CHIP_FLAG_TPM2)
+	अगर (chip->flags & TPM_CHIP_FLAG_TPM2)
 		rc = tpm_buf_init(&buf, TPM2_ST_SESSIONS,
 				  TPM2_CC_SET_LOCALITY);
-	else
+	अन्यथा
 		rc = tpm_buf_init(&buf, TPM_TAG_RQU_COMMAND,
 				  TPM_ORD_SET_LOCALITY);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	tpm_buf_append_u8(&buf, locality);
 
 	proxy_dev->state |= STATE_DRIVER_COMMAND;
@@ -415,23 +416,23 @@ static int vtpm_proxy_request_locality(struct tpm_chip *chip, int locality)
 
 	proxy_dev->state &= ~STATE_DRIVER_COMMAND;
 
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		locality = rc;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	header = (const struct tpm_header *)buf.data;
-	rc = be32_to_cpu(header->return_code);
-	if (rc)
+	header = (स्थिर काष्ठा tpm_header *)buf.data;
+	rc = be32_to_cpu(header->वापस_code);
+	अगर (rc)
 		locality = -1;
 
 out:
 	tpm_buf_destroy(&buf);
 
-	return locality;
-}
+	वापस locality;
+पूर्ण
 
-static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
+अटल स्थिर काष्ठा tpm_class_ops vtpm_proxy_tpm_ops = अणु
 	.flags = TPM_OPS_AUTO_STARTUP,
 	.recv = vtpm_proxy_tpm_op_recv,
 	.send = vtpm_proxy_tpm_op_send,
@@ -441,130 +442,130 @@ static const struct tpm_class_ops vtpm_proxy_tpm_ops = {
 	.req_complete_val = VTPM_PROXY_REQ_COMPLETE_FLAG,
 	.req_canceled = vtpm_proxy_tpm_req_canceled,
 	.request_locality = vtpm_proxy_request_locality,
-};
+पूर्ण;
 
 /*
  * Code related to the startup of the TPM 2 and startup of TPM 1.2 +
- * retrieval of timeouts and durations.
+ * retrieval of समयouts and durations.
  */
 
-static void vtpm_proxy_work(struct work_struct *work)
-{
-	struct proxy_dev *proxy_dev = container_of(work, struct proxy_dev,
+अटल व्योम vtpm_proxy_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा proxy_dev *proxy_dev = container_of(work, काष्ठा proxy_dev,
 						   work);
-	int rc;
+	पूर्णांक rc;
 
-	rc = tpm_chip_register(proxy_dev->chip);
-	if (rc)
-		vtpm_proxy_fops_undo_open(proxy_dev);
-	else
+	rc = tpm_chip_रेजिस्टर(proxy_dev->chip);
+	अगर (rc)
+		vtpm_proxy_fops_unकरो_खोलो(proxy_dev);
+	अन्यथा
 		proxy_dev->state |= STATE_REGISTERED_FLAG;
-}
+पूर्ण
 
 /*
  * vtpm_proxy_work_stop: make sure the work has finished
  *
- * This function is useful when user space closed the fd
- * while the driver still determines timeouts.
+ * This function is useful when user space बंदd the fd
+ * जबतक the driver still determines समयouts.
  */
-static void vtpm_proxy_work_stop(struct proxy_dev *proxy_dev)
-{
-	vtpm_proxy_fops_undo_open(proxy_dev);
+अटल व्योम vtpm_proxy_work_stop(काष्ठा proxy_dev *proxy_dev)
+अणु
+	vtpm_proxy_fops_unकरो_खोलो(proxy_dev);
 	flush_work(&proxy_dev->work);
-}
+पूर्ण
 
 /*
- * vtpm_proxy_work_start: Schedule the work for TPM 1.2 & 2 initialization
+ * vtpm_proxy_work_start: Schedule the work क्रम TPM 1.2 & 2 initialization
  */
-static inline void vtpm_proxy_work_start(struct proxy_dev *proxy_dev)
-{
+अटल अंतरभूत व्योम vtpm_proxy_work_start(काष्ठा proxy_dev *proxy_dev)
+अणु
 	queue_work(workqueue, &proxy_dev->work);
-}
+पूर्ण
 
 /*
  * Code related to creation and deletion of device pairs
  */
-static struct proxy_dev *vtpm_proxy_create_proxy_dev(void)
-{
-	struct proxy_dev *proxy_dev;
-	struct tpm_chip *chip;
-	int err;
+अटल काष्ठा proxy_dev *vtpm_proxy_create_proxy_dev(व्योम)
+अणु
+	काष्ठा proxy_dev *proxy_dev;
+	काष्ठा tpm_chip *chip;
+	पूर्णांक err;
 
-	proxy_dev = kzalloc(sizeof(*proxy_dev), GFP_KERNEL);
-	if (proxy_dev == NULL)
-		return ERR_PTR(-ENOMEM);
+	proxy_dev = kzalloc(माप(*proxy_dev), GFP_KERNEL);
+	अगर (proxy_dev == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
-	init_waitqueue_head(&proxy_dev->wq);
+	init_रुकोqueue_head(&proxy_dev->wq);
 	mutex_init(&proxy_dev->buf_lock);
 	INIT_WORK(&proxy_dev->work, vtpm_proxy_work);
 
-	chip = tpm_chip_alloc(NULL, &vtpm_proxy_tpm_ops);
-	if (IS_ERR(chip)) {
+	chip = tpm_chip_alloc(शून्य, &vtpm_proxy_tpm_ops);
+	अगर (IS_ERR(chip)) अणु
 		err = PTR_ERR(chip);
-		goto err_proxy_dev_free;
-	}
+		जाओ err_proxy_dev_मुक्त;
+	पूर्ण
 	dev_set_drvdata(&chip->dev, proxy_dev);
 
 	proxy_dev->chip = chip;
 
-	return proxy_dev;
+	वापस proxy_dev;
 
-err_proxy_dev_free:
-	kfree(proxy_dev);
+err_proxy_dev_मुक्त:
+	kमुक्त(proxy_dev);
 
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
 /*
- * Undo what has been done in vtpm_create_proxy_dev
+ * Unकरो what has been करोne in vtpm_create_proxy_dev
  */
-static inline void vtpm_proxy_delete_proxy_dev(struct proxy_dev *proxy_dev)
-{
-	put_device(&proxy_dev->chip->dev); /* frees chip */
-	kfree(proxy_dev);
-}
+अटल अंतरभूत व्योम vtpm_proxy_delete_proxy_dev(काष्ठा proxy_dev *proxy_dev)
+अणु
+	put_device(&proxy_dev->chip->dev); /* मुक्तs chip */
+	kमुक्त(proxy_dev);
+पूर्ण
 
 /*
  * Create a /dev/tpm%d and 'server side' file descriptor pair
  *
  * Return:
- *      Returns file pointer on success, an error value otherwise
+ *      Returns file poपूर्णांकer on success, an error value otherwise
  */
-static struct file *vtpm_proxy_create_device(
-				 struct vtpm_proxy_new_dev *vtpm_new_dev)
-{
-	struct proxy_dev *proxy_dev;
-	int rc, fd;
-	struct file *file;
+अटल काष्ठा file *vtpm_proxy_create_device(
+				 काष्ठा vtpm_proxy_new_dev *vtpm_new_dev)
+अणु
+	काष्ठा proxy_dev *proxy_dev;
+	पूर्णांक rc, fd;
+	काष्ठा file *file;
 
-	if (vtpm_new_dev->flags & ~VTPM_PROXY_FLAGS_ALL)
-		return ERR_PTR(-EOPNOTSUPP);
+	अगर (vtpm_new_dev->flags & ~VTPM_PROXY_FLAGS_ALL)
+		वापस ERR_PTR(-EOPNOTSUPP);
 
 	proxy_dev = vtpm_proxy_create_proxy_dev();
-	if (IS_ERR(proxy_dev))
-		return ERR_CAST(proxy_dev);
+	अगर (IS_ERR(proxy_dev))
+		वापस ERR_CAST(proxy_dev);
 
 	proxy_dev->flags = vtpm_new_dev->flags;
 
-	/* setup an anonymous file for the server-side */
+	/* setup an anonymous file क्रम the server-side */
 	fd = get_unused_fd_flags(O_RDWR);
-	if (fd < 0) {
+	अगर (fd < 0) अणु
 		rc = fd;
-		goto err_delete_proxy_dev;
-	}
+		जाओ err_delete_proxy_dev;
+	पूर्ण
 
 	file = anon_inode_getfile("[vtpms]", &vtpm_proxy_fops, proxy_dev,
 				  O_RDWR);
-	if (IS_ERR(file)) {
+	अगर (IS_ERR(file)) अणु
 		rc = PTR_ERR(file);
-		goto err_put_unused_fd;
-	}
+		जाओ err_put_unused_fd;
+	पूर्ण
 
 	/* from now on we can unwind with put_unused_fd() + fput() */
-	/* simulate an open() on the server side */
-	vtpm_proxy_fops_open(file);
+	/* simulate an खोलो() on the server side */
+	vtpm_proxy_fops_खोलो(file);
 
-	if (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
+	अगर (proxy_dev->flags & VTPM_PROXY_FLAG_TPM2)
 		proxy_dev->chip->flags |= TPM_CHIP_FLAG_TPM2;
 
 	vtpm_proxy_work_start(proxy_dev);
@@ -574,7 +575,7 @@ static struct file *vtpm_proxy_create_device(
 	vtpm_new_dev->minor = MINOR(proxy_dev->chip->dev.devt);
 	vtpm_new_dev->tpm_num = proxy_dev->chip->dev_num;
 
-	return file;
+	वापस file;
 
 err_put_unused_fd:
 	put_unused_fd(fd);
@@ -582,76 +583,76 @@ err_put_unused_fd:
 err_delete_proxy_dev:
 	vtpm_proxy_delete_proxy_dev(proxy_dev);
 
-	return ERR_PTR(rc);
-}
+	वापस ERR_PTR(rc);
+पूर्ण
 
 /*
  * Counter part to vtpm_create_device.
  */
-static void vtpm_proxy_delete_device(struct proxy_dev *proxy_dev)
-{
+अटल व्योम vtpm_proxy_delete_device(काष्ठा proxy_dev *proxy_dev)
+अणु
 	vtpm_proxy_work_stop(proxy_dev);
 
 	/*
 	 * A client may hold the 'ops' lock, so let it know that the server
-	 * side shuts down before we try to grab the 'ops' lock when
-	 * unregistering the chip.
+	 * side shuts करोwn beक्रमe we try to grab the 'ops' lock when
+	 * unरेजिस्टरing the chip.
 	 */
-	vtpm_proxy_fops_undo_open(proxy_dev);
+	vtpm_proxy_fops_unकरो_खोलो(proxy_dev);
 
-	if (proxy_dev->state & STATE_REGISTERED_FLAG)
-		tpm_chip_unregister(proxy_dev->chip);
+	अगर (proxy_dev->state & STATE_REGISTERED_FLAG)
+		tpm_chip_unरेजिस्टर(proxy_dev->chip);
 
 	vtpm_proxy_delete_proxy_dev(proxy_dev);
-}
+पूर्ण
 
 /*
  * Code related to the control device /dev/vtpmx
  */
 
 /**
- * vtpmx_ioc_new_dev - handler for the %VTPM_PROXY_IOC_NEW_DEV ioctl
+ * vtpmx_ioc_new_dev - handler क्रम the %VTPM_PROXY_IOC_NEW_DEV ioctl
  * @file:	/dev/vtpmx
  * @ioctl:	the ioctl number
- * @arg:	pointer to the struct vtpmx_proxy_new_dev
+ * @arg:	poपूर्णांकer to the काष्ठा vtpmx_proxy_new_dev
  *
  * Creates an anonymous file that is used by the process acting as a TPM to
  * communicate with the client processes. The function will also add a new TPM
  * device through which data is proxied to this TPM acting process. The caller
  * will be provided with a file descriptor to communicate with the clients and
- * major and minor numbers for the TPM device.
+ * major and minor numbers क्रम the TPM device.
  */
-static long vtpmx_ioc_new_dev(struct file *file, unsigned int ioctl,
-			      unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	struct vtpm_proxy_new_dev __user *vtpm_new_dev_p;
-	struct vtpm_proxy_new_dev vtpm_new_dev;
-	struct file *vtpm_file;
+अटल दीर्घ vtpmx_ioc_new_dev(काष्ठा file *file, अचिन्हित पूर्णांक ioctl,
+			      अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	काष्ठा vtpm_proxy_new_dev __user *vtpm_new_dev_p;
+	काष्ठा vtpm_proxy_new_dev vtpm_new_dev;
+	काष्ठा file *vtpm_file;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
 	vtpm_new_dev_p = argp;
 
-	if (copy_from_user(&vtpm_new_dev, vtpm_new_dev_p,
-			   sizeof(vtpm_new_dev)))
-		return -EFAULT;
+	अगर (copy_from_user(&vtpm_new_dev, vtpm_new_dev_p,
+			   माप(vtpm_new_dev)))
+		वापस -EFAULT;
 
 	vtpm_file = vtpm_proxy_create_device(&vtpm_new_dev);
-	if (IS_ERR(vtpm_file))
-		return PTR_ERR(vtpm_file);
+	अगर (IS_ERR(vtpm_file))
+		वापस PTR_ERR(vtpm_file);
 
-	if (copy_to_user(vtpm_new_dev_p, &vtpm_new_dev,
-			 sizeof(vtpm_new_dev))) {
+	अगर (copy_to_user(vtpm_new_dev_p, &vtpm_new_dev,
+			 माप(vtpm_new_dev))) अणु
 		put_unused_fd(vtpm_new_dev.fd);
 		fput(vtpm_file);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	fd_install(vtpm_new_dev.fd, vtpm_file);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * vtpmx_fops_ioctl: ioctl on /dev/vtpmx
@@ -659,73 +660,73 @@ static long vtpmx_ioc_new_dev(struct file *file, unsigned int ioctl,
  * Return:
  *      Returns 0 on success, a negative error code otherwise.
  */
-static long vtpmx_fops_ioctl(struct file *f, unsigned int ioctl,
-			     unsigned long arg)
-{
-	switch (ioctl) {
-	case VTPM_PROXY_IOC_NEW_DEV:
-		return vtpmx_ioc_new_dev(f, ioctl, arg);
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
+अटल दीर्घ vtpmx_fops_ioctl(काष्ठा file *f, अचिन्हित पूर्णांक ioctl,
+			     अचिन्हित दीर्घ arg)
+अणु
+	चयन (ioctl) अणु
+	हाल VTPM_PROXY_IOC_NEW_DEV:
+		वापस vtpmx_ioc_new_dev(f, ioctl, arg);
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
-static const struct file_operations vtpmx_fops = {
+अटल स्थिर काष्ठा file_operations vtpmx_fops = अणु
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = vtpmx_fops_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-static struct miscdevice vtpmx_miscdev = {
+अटल काष्ठा miscdevice vtpmx_miscdev = अणु
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "vtpmx",
 	.fops = &vtpmx_fops,
-};
+पूर्ण;
 
-static int vtpmx_init(void)
-{
-	return misc_register(&vtpmx_miscdev);
-}
+अटल पूर्णांक vtpmx_init(व्योम)
+अणु
+	वापस misc_रेजिस्टर(&vtpmx_miscdev);
+पूर्ण
 
-static void vtpmx_cleanup(void)
-{
-	misc_deregister(&vtpmx_miscdev);
-}
+अटल व्योम vtpmx_cleanup(व्योम)
+अणु
+	misc_deरेजिस्टर(&vtpmx_miscdev);
+पूर्ण
 
-static int __init vtpm_module_init(void)
-{
-	int rc;
+अटल पूर्णांक __init vtpm_module_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	rc = vtpmx_init();
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("couldn't create vtpmx device\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	workqueue = create_workqueue("tpm-vtpm");
-	if (!workqueue) {
+	अगर (!workqueue) अणु
 		pr_err("couldn't create workqueue\n");
 		rc = -ENOMEM;
-		goto err_vtpmx_cleanup;
-	}
+		जाओ err_vtpmx_cleanup;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_vtpmx_cleanup:
 	vtpmx_cleanup();
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit vtpm_module_exit(void)
-{
+अटल व्योम __निकास vtpm_module_निकास(व्योम)
+अणु
 	destroy_workqueue(workqueue);
 	vtpmx_cleanup();
-}
+पूर्ण
 
 module_init(vtpm_module_init);
-module_exit(vtpm_module_exit);
+module_निकास(vtpm_module_निकास);
 
 MODULE_AUTHOR("Stefan Berger (stefanb@us.ibm.com)");
 MODULE_DESCRIPTION("vTPM Driver");

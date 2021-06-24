@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2006 - 2007 Ivo van Doorn
  * Copyright (C) 2007 Dmitry Torokhov
  * Copyright 2009 Johannes Berg <johannes@sipsolutions.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/workqueue.h>
-#include <linux/capability.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/rfkill.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
-#include <linux/device.h>
-#include <linux/miscdevice.h>
-#include <linux/wait.h>
-#include <linux/poll.h>
-#include <linux/fs.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/rfसमाप्त.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/device.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
 
-#include "rfkill.h"
+#समावेश "rfkill.h"
 
-#define POLL_INTERVAL		(5 * HZ)
+#घोषणा POLL_INTERVAL		(5 * HZ)
 
-#define RFKILL_BLOCK_HW		BIT(0)
-#define RFKILL_BLOCK_SW		BIT(1)
-#define RFKILL_BLOCK_SW_PREV	BIT(2)
-#define RFKILL_BLOCK_ANY	(RFKILL_BLOCK_HW |\
+#घोषणा RFKILL_BLOCK_HW		BIT(0)
+#घोषणा RFKILL_BLOCK_SW		BIT(1)
+#घोषणा RFKILL_BLOCK_SW_PREV	BIT(2)
+#घोषणा RFKILL_BLOCK_ANY	(RFKILL_BLOCK_HW |\
 				 RFKILL_BLOCK_SW |\
 				 RFKILL_BLOCK_SW_PREV)
-#define RFKILL_BLOCK_SW_SETCALL	BIT(31)
+#घोषणा RFKILL_BLOCK_SW_SETCALL	BIT(31)
 
-struct rfkill {
+काष्ठा rfसमाप्त अणु
 	spinlock_t		lock;
 
-	enum rfkill_type	type;
+	क्रमागत rfसमाप्त_type	type;
 
-	unsigned long		state;
-	unsigned long		hard_block_reasons;
+	अचिन्हित दीर्घ		state;
+	अचिन्हित दीर्घ		hard_block_reasons;
 
 	u32			idx;
 
-	bool			registered;
+	bool			रेजिस्टरed;
 	bool			persistent;
-	bool			polling_paused;
+	bool			polling_छोड़ोd;
 	bool			suspended;
 
-	const struct rfkill_ops	*ops;
-	void			*data;
+	स्थिर काष्ठा rfसमाप्त_ops	*ops;
+	व्योम			*data;
 
-#ifdef CONFIG_RFKILL_LEDS
-	struct led_trigger	led_trigger;
-	const char		*ledtrigname;
-#endif
+#अगर_घोषित CONFIG_RFKILL_LEDS
+	काष्ठा led_trigger	led_trigger;
+	स्थिर अक्षर		*ledtrigname;
+#पूर्ण_अगर
 
-	struct device		dev;
-	struct list_head	node;
+	काष्ठा device		dev;
+	काष्ठा list_head	node;
 
-	struct delayed_work	poll_work;
-	struct work_struct	uevent_work;
-	struct work_struct	sync_work;
-	char			name[];
-};
-#define to_rfkill(d)	container_of(d, struct rfkill, dev)
+	काष्ठा delayed_work	poll_work;
+	काष्ठा work_काष्ठा	uevent_work;
+	काष्ठा work_काष्ठा	sync_work;
+	अक्षर			name[];
+पूर्ण;
+#घोषणा to_rfसमाप्त(d)	container_of(d, काष्ठा rfसमाप्त, dev)
 
-struct rfkill_int_event {
-	struct list_head	list;
-	struct rfkill_event_ext	ev;
-};
+काष्ठा rfसमाप्त_पूर्णांक_event अणु
+	काष्ठा list_head	list;
+	काष्ठा rfसमाप्त_event_ext	ev;
+पूर्ण;
 
-struct rfkill_data {
-	struct list_head	list;
-	struct list_head	events;
-	struct mutex		mtx;
-	wait_queue_head_t	read_wait;
+काष्ठा rfसमाप्त_data अणु
+	काष्ठा list_head	list;
+	काष्ठा list_head	events;
+	काष्ठा mutex		mtx;
+	रुको_queue_head_t	पढ़ो_रुको;
 	bool			input_handler;
-};
+पूर्ण;
 
 
 MODULE_AUTHOR("Ivo van Doorn <IvDoorn@gmail.com>");
@@ -89,570 +90,570 @@ MODULE_LICENSE("GPL");
 
 /*
  * The locking here should be made much smarter, we currently have
- * a bit of a stupid situation because drivers might want to register
- * the rfkill struct under their own lock, and take this lock during
- * rfkill method calls -- which will cause an AB-BA deadlock situation.
+ * a bit of a stupid situation because drivers might want to रेजिस्टर
+ * the rfसमाप्त काष्ठा under their own lock, and take this lock during
+ * rfसमाप्त method calls -- which will cause an AB-BA deadlock situation.
  *
- * To fix that, we need to rework this code here to be mostly lock-free
- * and only use the mutex for list manipulations, not to protect the
- * various other global variables. Then we can avoid holding the mutex
+ * To fix that, we need to rework this code here to be mostly lock-मुक्त
+ * and only use the mutex क्रम list manipulations, not to protect the
+ * various other global variables. Then we can aव्योम holding the mutex
  * around driver operations, and all is happy.
  */
-static LIST_HEAD(rfkill_list);	/* list of registered rf switches */
-static DEFINE_MUTEX(rfkill_global_mutex);
-static LIST_HEAD(rfkill_fds);	/* list of open fds of /dev/rfkill */
+अटल LIST_HEAD(rfसमाप्त_list);	/* list of रेजिस्टरed rf चयनes */
+अटल DEFINE_MUTEX(rfसमाप्त_global_mutex);
+अटल LIST_HEAD(rfसमाप्त_fds);	/* list of खोलो fds of /dev/rfसमाप्त */
 
-static unsigned int rfkill_default_state = 1;
-module_param_named(default_state, rfkill_default_state, uint, 0444);
-MODULE_PARM_DESC(default_state,
+अटल अचिन्हित पूर्णांक rfसमाप्त_शेष_state = 1;
+module_param_named(शेष_state, rfसमाप्त_शेष_state, uपूर्णांक, 0444);
+MODULE_PARM_DESC(शेष_state,
 		 "Default initial state for all radio types, 0 = radio off");
 
-static struct {
+अटल काष्ठा अणु
 	bool cur, sav;
-} rfkill_global_states[NUM_RFKILL_TYPES];
+पूर्ण rfसमाप्त_global_states[NUM_RFKILL_TYPES];
 
-static bool rfkill_epo_lock_active;
+अटल bool rfसमाप्त_epo_lock_active;
 
 
-#ifdef CONFIG_RFKILL_LEDS
-static void rfkill_led_trigger_event(struct rfkill *rfkill)
-{
-	struct led_trigger *trigger;
+#अगर_घोषित CONFIG_RFKILL_LEDS
+अटल व्योम rfसमाप्त_led_trigger_event(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	काष्ठा led_trigger *trigger;
 
-	if (!rfkill->registered)
-		return;
+	अगर (!rfसमाप्त->रेजिस्टरed)
+		वापस;
 
-	trigger = &rfkill->led_trigger;
+	trigger = &rfसमाप्त->led_trigger;
 
-	if (rfkill->state & RFKILL_BLOCK_ANY)
+	अगर (rfसमाप्त->state & RFKILL_BLOCK_ANY)
 		led_trigger_event(trigger, LED_OFF);
-	else
+	अन्यथा
 		led_trigger_event(trigger, LED_FULL);
-}
+पूर्ण
 
-static int rfkill_led_trigger_activate(struct led_classdev *led)
-{
-	struct rfkill *rfkill;
+अटल पूर्णांक rfसमाप्त_led_trigger_activate(काष्ठा led_classdev *led)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त;
 
-	rfkill = container_of(led->trigger, struct rfkill, led_trigger);
+	rfसमाप्त = container_of(led->trigger, काष्ठा rfसमाप्त, led_trigger);
 
-	rfkill_led_trigger_event(rfkill);
+	rfसमाप्त_led_trigger_event(rfसमाप्त);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const char *rfkill_get_led_trigger_name(struct rfkill *rfkill)
-{
-	return rfkill->led_trigger.name;
-}
-EXPORT_SYMBOL(rfkill_get_led_trigger_name);
+स्थिर अक्षर *rfसमाप्त_get_led_trigger_name(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	वापस rfसमाप्त->led_trigger.name;
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_get_led_trigger_name);
 
-void rfkill_set_led_trigger_name(struct rfkill *rfkill, const char *name)
-{
-	BUG_ON(!rfkill);
+व्योम rfसमाप्त_set_led_trigger_name(काष्ठा rfसमाप्त *rfसमाप्त, स्थिर अक्षर *name)
+अणु
+	BUG_ON(!rfसमाप्त);
 
-	rfkill->ledtrigname = name;
-}
-EXPORT_SYMBOL(rfkill_set_led_trigger_name);
+	rfसमाप्त->ledtrigname = name;
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_set_led_trigger_name);
 
-static int rfkill_led_trigger_register(struct rfkill *rfkill)
-{
-	rfkill->led_trigger.name = rfkill->ledtrigname
-					? : dev_name(&rfkill->dev);
-	rfkill->led_trigger.activate = rfkill_led_trigger_activate;
-	return led_trigger_register(&rfkill->led_trigger);
-}
+अटल पूर्णांक rfसमाप्त_led_trigger_रेजिस्टर(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	rfसमाप्त->led_trigger.name = rfसमाप्त->ledtrigname
+					? : dev_name(&rfसमाप्त->dev);
+	rfसमाप्त->led_trigger.activate = rfसमाप्त_led_trigger_activate;
+	वापस led_trigger_रेजिस्टर(&rfसमाप्त->led_trigger);
+पूर्ण
 
-static void rfkill_led_trigger_unregister(struct rfkill *rfkill)
-{
-	led_trigger_unregister(&rfkill->led_trigger);
-}
+अटल व्योम rfसमाप्त_led_trigger_unरेजिस्टर(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	led_trigger_unरेजिस्टर(&rfसमाप्त->led_trigger);
+पूर्ण
 
-static struct led_trigger rfkill_any_led_trigger;
-static struct led_trigger rfkill_none_led_trigger;
-static struct work_struct rfkill_global_led_trigger_work;
+अटल काष्ठा led_trigger rfसमाप्त_any_led_trigger;
+अटल काष्ठा led_trigger rfसमाप्त_none_led_trigger;
+अटल काष्ठा work_काष्ठा rfसमाप्त_global_led_trigger_work;
 
-static void rfkill_global_led_trigger_worker(struct work_struct *work)
-{
-	enum led_brightness brightness = LED_OFF;
-	struct rfkill *rfkill;
+अटल व्योम rfसमाप्त_global_led_trigger_worker(काष्ठा work_काष्ठा *work)
+अणु
+	क्रमागत led_brightness brightness = LED_OFF;
+	काष्ठा rfसमाप्त *rfसमाप्त;
 
-	mutex_lock(&rfkill_global_mutex);
-	list_for_each_entry(rfkill, &rfkill_list, node) {
-		if (!(rfkill->state & RFKILL_BLOCK_ANY)) {
+	mutex_lock(&rfसमाप्त_global_mutex);
+	list_क्रम_each_entry(rfसमाप्त, &rfसमाप्त_list, node) अणु
+		अगर (!(rfसमाप्त->state & RFKILL_BLOCK_ANY)) अणु
 			brightness = LED_FULL;
-			break;
-		}
-	}
-	mutex_unlock(&rfkill_global_mutex);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	mutex_unlock(&rfसमाप्त_global_mutex);
 
-	led_trigger_event(&rfkill_any_led_trigger, brightness);
-	led_trigger_event(&rfkill_none_led_trigger,
+	led_trigger_event(&rfसमाप्त_any_led_trigger, brightness);
+	led_trigger_event(&rfसमाप्त_none_led_trigger,
 			  brightness == LED_OFF ? LED_FULL : LED_OFF);
-}
+पूर्ण
 
-static void rfkill_global_led_trigger_event(void)
-{
-	schedule_work(&rfkill_global_led_trigger_work);
-}
+अटल व्योम rfसमाप्त_global_led_trigger_event(व्योम)
+अणु
+	schedule_work(&rfसमाप्त_global_led_trigger_work);
+पूर्ण
 
-static int rfkill_global_led_trigger_register(void)
-{
-	int ret;
+अटल पूर्णांक rfसमाप्त_global_led_trigger_रेजिस्टर(व्योम)
+अणु
+	पूर्णांक ret;
 
-	INIT_WORK(&rfkill_global_led_trigger_work,
-			rfkill_global_led_trigger_worker);
+	INIT_WORK(&rfसमाप्त_global_led_trigger_work,
+			rfसमाप्त_global_led_trigger_worker);
 
-	rfkill_any_led_trigger.name = "rfkill-any";
-	ret = led_trigger_register(&rfkill_any_led_trigger);
-	if (ret)
-		return ret;
+	rfसमाप्त_any_led_trigger.name = "rfkill-any";
+	ret = led_trigger_रेजिस्टर(&rfसमाप्त_any_led_trigger);
+	अगर (ret)
+		वापस ret;
 
-	rfkill_none_led_trigger.name = "rfkill-none";
-	ret = led_trigger_register(&rfkill_none_led_trigger);
-	if (ret)
-		led_trigger_unregister(&rfkill_any_led_trigger);
-	else
-		/* Delay activation until all global triggers are registered */
-		rfkill_global_led_trigger_event();
+	rfसमाप्त_none_led_trigger.name = "rfkill-none";
+	ret = led_trigger_रेजिस्टर(&rfसमाप्त_none_led_trigger);
+	अगर (ret)
+		led_trigger_unरेजिस्टर(&rfसमाप्त_any_led_trigger);
+	अन्यथा
+		/* Delay activation until all global triggers are रेजिस्टरed */
+		rfसमाप्त_global_led_trigger_event();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void rfkill_global_led_trigger_unregister(void)
-{
-	led_trigger_unregister(&rfkill_none_led_trigger);
-	led_trigger_unregister(&rfkill_any_led_trigger);
-	cancel_work_sync(&rfkill_global_led_trigger_work);
-}
-#else
-static void rfkill_led_trigger_event(struct rfkill *rfkill)
-{
-}
+अटल व्योम rfसमाप्त_global_led_trigger_unरेजिस्टर(व्योम)
+अणु
+	led_trigger_unरेजिस्टर(&rfसमाप्त_none_led_trigger);
+	led_trigger_unरेजिस्टर(&rfसमाप्त_any_led_trigger);
+	cancel_work_sync(&rfसमाप्त_global_led_trigger_work);
+पूर्ण
+#अन्यथा
+अटल व्योम rfसमाप्त_led_trigger_event(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+पूर्ण
 
-static inline int rfkill_led_trigger_register(struct rfkill *rfkill)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक rfसमाप्त_led_trigger_रेजिस्टर(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void rfkill_led_trigger_unregister(struct rfkill *rfkill)
-{
-}
+अटल अंतरभूत व्योम rfसमाप्त_led_trigger_unरेजिस्टर(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+पूर्ण
 
-static void rfkill_global_led_trigger_event(void)
-{
-}
+अटल व्योम rfसमाप्त_global_led_trigger_event(व्योम)
+अणु
+पूर्ण
 
-static int rfkill_global_led_trigger_register(void)
-{
-	return 0;
-}
+अटल पूर्णांक rfसमाप्त_global_led_trigger_रेजिस्टर(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void rfkill_global_led_trigger_unregister(void)
-{
-}
-#endif /* CONFIG_RFKILL_LEDS */
+अटल व्योम rfसमाप्त_global_led_trigger_unरेजिस्टर(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_RFKILL_LEDS */
 
-static void rfkill_fill_event(struct rfkill_event_ext *ev,
-			      struct rfkill *rfkill,
-			      enum rfkill_operation op)
-{
-	unsigned long flags;
+अटल व्योम rfसमाप्त_fill_event(काष्ठा rfसमाप्त_event_ext *ev,
+			      काष्ठा rfसमाप्त *rfसमाप्त,
+			      क्रमागत rfसमाप्त_operation op)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	ev->idx = rfkill->idx;
-	ev->type = rfkill->type;
+	ev->idx = rfसमाप्त->idx;
+	ev->type = rfसमाप्त->type;
 	ev->op = op;
 
-	spin_lock_irqsave(&rfkill->lock, flags);
-	ev->hard = !!(rfkill->state & RFKILL_BLOCK_HW);
-	ev->soft = !!(rfkill->state & (RFKILL_BLOCK_SW |
+	spin_lock_irqsave(&rfसमाप्त->lock, flags);
+	ev->hard = !!(rfसमाप्त->state & RFKILL_BLOCK_HW);
+	ev->soft = !!(rfसमाप्त->state & (RFKILL_BLOCK_SW |
 					RFKILL_BLOCK_SW_PREV));
-	ev->hard_block_reasons = rfkill->hard_block_reasons;
-	spin_unlock_irqrestore(&rfkill->lock, flags);
-}
+	ev->hard_block_reasons = rfसमाप्त->hard_block_reasons;
+	spin_unlock_irqrestore(&rfसमाप्त->lock, flags);
+पूर्ण
 
-static void rfkill_send_events(struct rfkill *rfkill, enum rfkill_operation op)
-{
-	struct rfkill_data *data;
-	struct rfkill_int_event *ev;
+अटल व्योम rfसमाप्त_send_events(काष्ठा rfसमाप्त *rfसमाप्त, क्रमागत rfसमाप्त_operation op)
+अणु
+	काष्ठा rfसमाप्त_data *data;
+	काष्ठा rfसमाप्त_पूर्णांक_event *ev;
 
-	list_for_each_entry(data, &rfkill_fds, list) {
-		ev = kzalloc(sizeof(*ev), GFP_KERNEL);
-		if (!ev)
-			continue;
-		rfkill_fill_event(&ev->ev, rfkill, op);
+	list_क्रम_each_entry(data, &rfसमाप्त_fds, list) अणु
+		ev = kzalloc(माप(*ev), GFP_KERNEL);
+		अगर (!ev)
+			जारी;
+		rfसमाप्त_fill_event(&ev->ev, rfसमाप्त, op);
 		mutex_lock(&data->mtx);
 		list_add_tail(&ev->list, &data->events);
 		mutex_unlock(&data->mtx);
-		wake_up_interruptible(&data->read_wait);
-	}
-}
+		wake_up_पूर्णांकerruptible(&data->पढ़ो_रुको);
+	पूर्ण
+पूर्ण
 
-static void rfkill_event(struct rfkill *rfkill)
-{
-	if (!rfkill->registered)
-		return;
+अटल व्योम rfसमाप्त_event(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	अगर (!rfसमाप्त->रेजिस्टरed)
+		वापस;
 
-	kobject_uevent(&rfkill->dev.kobj, KOBJ_CHANGE);
+	kobject_uevent(&rfसमाप्त->dev.kobj, KOBJ_CHANGE);
 
-	/* also send event to /dev/rfkill */
-	rfkill_send_events(rfkill, RFKILL_OP_CHANGE);
-}
+	/* also send event to /dev/rfसमाप्त */
+	rfसमाप्त_send_events(rfसमाप्त, RFKILL_OP_CHANGE);
+पूर्ण
 
 /**
- * rfkill_set_block - wrapper for set_block method
+ * rfसमाप्त_set_block - wrapper क्रम set_block method
  *
- * @rfkill: the rfkill struct to use
+ * @rfसमाप्त: the rfसमाप्त काष्ठा to use
  * @blocked: the new software state
  *
- * Calls the set_block method (when applicable) and handles notifications
+ * Calls the set_block method (when applicable) and handles notअगरications
  * etc. as well.
  */
-static void rfkill_set_block(struct rfkill *rfkill, bool blocked)
-{
-	unsigned long flags;
+अटल व्योम rfसमाप्त_set_block(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool prev, curr;
-	int err;
+	पूर्णांक err;
 
-	if (unlikely(rfkill->dev.power.power_state.event & PM_EVENT_SLEEP))
-		return;
+	अगर (unlikely(rfसमाप्त->dev.घातer.घातer_state.event & PM_EVENT_SLEEP))
+		वापस;
 
 	/*
-	 * Some platforms (...!) generate input events which affect the
-	 * _hard_ kill state -- whenever something tries to change the
+	 * Some platक्रमms (...!) generate input events which affect the
+	 * _hard_ समाप्त state -- whenever something tries to change the
 	 * current software state query the hardware state too.
 	 */
-	if (rfkill->ops->query)
-		rfkill->ops->query(rfkill, rfkill->data);
+	अगर (rfसमाप्त->ops->query)
+		rfसमाप्त->ops->query(rfसमाप्त, rfसमाप्त->data);
 
-	spin_lock_irqsave(&rfkill->lock, flags);
-	prev = rfkill->state & RFKILL_BLOCK_SW;
+	spin_lock_irqsave(&rfसमाप्त->lock, flags);
+	prev = rfसमाप्त->state & RFKILL_BLOCK_SW;
 
-	if (prev)
-		rfkill->state |= RFKILL_BLOCK_SW_PREV;
-	else
-		rfkill->state &= ~RFKILL_BLOCK_SW_PREV;
+	अगर (prev)
+		rfसमाप्त->state |= RFKILL_BLOCK_SW_PREV;
+	अन्यथा
+		rfसमाप्त->state &= ~RFKILL_BLOCK_SW_PREV;
 
-	if (blocked)
-		rfkill->state |= RFKILL_BLOCK_SW;
-	else
-		rfkill->state &= ~RFKILL_BLOCK_SW;
+	अगर (blocked)
+		rfसमाप्त->state |= RFKILL_BLOCK_SW;
+	अन्यथा
+		rfसमाप्त->state &= ~RFKILL_BLOCK_SW;
 
-	rfkill->state |= RFKILL_BLOCK_SW_SETCALL;
-	spin_unlock_irqrestore(&rfkill->lock, flags);
+	rfसमाप्त->state |= RFKILL_BLOCK_SW_SETCALL;
+	spin_unlock_irqrestore(&rfसमाप्त->lock, flags);
 
-	err = rfkill->ops->set_block(rfkill->data, blocked);
+	err = rfसमाप्त->ops->set_block(rfसमाप्त->data, blocked);
 
-	spin_lock_irqsave(&rfkill->lock, flags);
-	if (err) {
+	spin_lock_irqsave(&rfसमाप्त->lock, flags);
+	अगर (err) अणु
 		/*
-		 * Failed -- reset status to _PREV, which may be different
+		 * Failed -- reset status to _PREV, which may be dअगरferent
 		 * from what we have set _PREV to earlier in this function
-		 * if rfkill_set_sw_state was invoked.
+		 * अगर rfसमाप्त_set_sw_state was invoked.
 		 */
-		if (rfkill->state & RFKILL_BLOCK_SW_PREV)
-			rfkill->state |= RFKILL_BLOCK_SW;
-		else
-			rfkill->state &= ~RFKILL_BLOCK_SW;
-	}
-	rfkill->state &= ~RFKILL_BLOCK_SW_SETCALL;
-	rfkill->state &= ~RFKILL_BLOCK_SW_PREV;
-	curr = rfkill->state & RFKILL_BLOCK_SW;
-	spin_unlock_irqrestore(&rfkill->lock, flags);
+		अगर (rfसमाप्त->state & RFKILL_BLOCK_SW_PREV)
+			rfसमाप्त->state |= RFKILL_BLOCK_SW;
+		अन्यथा
+			rfसमाप्त->state &= ~RFKILL_BLOCK_SW;
+	पूर्ण
+	rfसमाप्त->state &= ~RFKILL_BLOCK_SW_SETCALL;
+	rfसमाप्त->state &= ~RFKILL_BLOCK_SW_PREV;
+	curr = rfसमाप्त->state & RFKILL_BLOCK_SW;
+	spin_unlock_irqrestore(&rfसमाप्त->lock, flags);
 
-	rfkill_led_trigger_event(rfkill);
-	rfkill_global_led_trigger_event();
+	rfसमाप्त_led_trigger_event(rfसमाप्त);
+	rfसमाप्त_global_led_trigger_event();
 
-	if (prev != curr)
-		rfkill_event(rfkill);
-}
+	अगर (prev != curr)
+		rfसमाप्त_event(rfसमाप्त);
+पूर्ण
 
-static void rfkill_update_global_state(enum rfkill_type type, bool blocked)
-{
-	int i;
+अटल व्योम rfसमाप्त_update_global_state(क्रमागत rfसमाप्त_type type, bool blocked)
+अणु
+	पूर्णांक i;
 
-	if (type != RFKILL_TYPE_ALL) {
-		rfkill_global_states[type].cur = blocked;
-		return;
-	}
+	अगर (type != RFKILL_TYPE_ALL) अणु
+		rfसमाप्त_global_states[type].cur = blocked;
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < NUM_RFKILL_TYPES; i++)
-		rfkill_global_states[i].cur = blocked;
-}
+	क्रम (i = 0; i < NUM_RFKILL_TYPES; i++)
+		rfसमाप्त_global_states[i].cur = blocked;
+पूर्ण
 
-#ifdef CONFIG_RFKILL_INPUT
-static atomic_t rfkill_input_disabled = ATOMIC_INIT(0);
+#अगर_घोषित CONFIG_RFKILL_INPUT
+अटल atomic_t rfसमाप्त_input_disabled = ATOMIC_INIT(0);
 
 /**
- * __rfkill_switch_all - Toggle state of all switches of given type
- * @type: type of interfaces to be affected
+ * __rfसमाप्त_चयन_all - Toggle state of all चयनes of given type
+ * @type: type of पूर्णांकerfaces to be affected
  * @blocked: the new state
  *
- * This function sets the state of all switches of given type,
- * unless a specific switch is suspended.
+ * This function sets the state of all चयनes of given type,
+ * unless a specअगरic चयन is suspended.
  *
- * Caller must have acquired rfkill_global_mutex.
+ * Caller must have acquired rfसमाप्त_global_mutex.
  */
-static void __rfkill_switch_all(const enum rfkill_type type, bool blocked)
-{
-	struct rfkill *rfkill;
+अटल व्योम __rfसमाप्त_चयन_all(स्थिर क्रमागत rfसमाप्त_type type, bool blocked)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त;
 
-	rfkill_update_global_state(type, blocked);
-	list_for_each_entry(rfkill, &rfkill_list, node) {
-		if (rfkill->type != type && type != RFKILL_TYPE_ALL)
-			continue;
+	rfसमाप्त_update_global_state(type, blocked);
+	list_क्रम_each_entry(rfसमाप्त, &rfसमाप्त_list, node) अणु
+		अगर (rfसमाप्त->type != type && type != RFKILL_TYPE_ALL)
+			जारी;
 
-		rfkill_set_block(rfkill, blocked);
-	}
-}
+		rfसमाप्त_set_block(rfसमाप्त, blocked);
+	पूर्ण
+पूर्ण
 
 /**
- * rfkill_switch_all - Toggle state of all switches of given type
- * @type: type of interfaces to be affected
+ * rfसमाप्त_चयन_all - Toggle state of all चयनes of given type
+ * @type: type of पूर्णांकerfaces to be affected
  * @blocked: the new state
  *
- * Acquires rfkill_global_mutex and calls __rfkill_switch_all(@type, @state).
- * Please refer to __rfkill_switch_all() for details.
+ * Acquires rfसमाप्त_global_mutex and calls __rfसमाप्त_चयन_all(@type, @state).
+ * Please refer to __rfसमाप्त_चयन_all() क्रम details.
  *
- * Does nothing if the EPO lock is active.
+ * Does nothing अगर the EPO lock is active.
  */
-void rfkill_switch_all(enum rfkill_type type, bool blocked)
-{
-	if (atomic_read(&rfkill_input_disabled))
-		return;
+व्योम rfसमाप्त_चयन_all(क्रमागत rfसमाप्त_type type, bool blocked)
+अणु
+	अगर (atomic_पढ़ो(&rfसमाप्त_input_disabled))
+		वापस;
 
-	mutex_lock(&rfkill_global_mutex);
+	mutex_lock(&rfसमाप्त_global_mutex);
 
-	if (!rfkill_epo_lock_active)
-		__rfkill_switch_all(type, blocked);
+	अगर (!rfसमाप्त_epo_lock_active)
+		__rfसमाप्त_चयन_all(type, blocked);
 
-	mutex_unlock(&rfkill_global_mutex);
-}
+	mutex_unlock(&rfसमाप्त_global_mutex);
+पूर्ण
 
 /**
- * rfkill_epo - emergency power off all transmitters
+ * rfसमाप्त_epo - emergency घातer off all transmitters
  *
- * This kicks all non-suspended rfkill devices to RFKILL_STATE_SOFT_BLOCKED,
- * ignoring everything in its path but rfkill_global_mutex and rfkill->mutex.
+ * This kicks all non-suspended rfसमाप्त devices to RFKILL_STATE_SOFT_BLOCKED,
+ * ignoring everything in its path but rfसमाप्त_global_mutex and rfसमाप्त->mutex.
  *
- * The global state before the EPO is saved and can be restored later
- * using rfkill_restore_states().
+ * The global state beक्रमe the EPO is saved and can be restored later
+ * using rfसमाप्त_restore_states().
  */
-void rfkill_epo(void)
-{
-	struct rfkill *rfkill;
-	int i;
+व्योम rfसमाप्त_epo(व्योम)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त;
+	पूर्णांक i;
 
-	if (atomic_read(&rfkill_input_disabled))
-		return;
+	अगर (atomic_पढ़ो(&rfसमाप्त_input_disabled))
+		वापस;
 
-	mutex_lock(&rfkill_global_mutex);
+	mutex_lock(&rfसमाप्त_global_mutex);
 
-	rfkill_epo_lock_active = true;
-	list_for_each_entry(rfkill, &rfkill_list, node)
-		rfkill_set_block(rfkill, true);
+	rfसमाप्त_epo_lock_active = true;
+	list_क्रम_each_entry(rfसमाप्त, &rfसमाप्त_list, node)
+		rfसमाप्त_set_block(rfसमाप्त, true);
 
-	for (i = 0; i < NUM_RFKILL_TYPES; i++) {
-		rfkill_global_states[i].sav = rfkill_global_states[i].cur;
-		rfkill_global_states[i].cur = true;
-	}
+	क्रम (i = 0; i < NUM_RFKILL_TYPES; i++) अणु
+		rfसमाप्त_global_states[i].sav = rfसमाप्त_global_states[i].cur;
+		rfसमाप्त_global_states[i].cur = true;
+	पूर्ण
 
-	mutex_unlock(&rfkill_global_mutex);
-}
+	mutex_unlock(&rfसमाप्त_global_mutex);
+पूर्ण
 
 /**
- * rfkill_restore_states - restore global states
+ * rfसमाप्त_restore_states - restore global states
  *
- * Restore (and sync switches to) the global state from the
- * states in rfkill_default_states.  This can undo the effects of
- * a call to rfkill_epo().
+ * Restore (and sync चयनes to) the global state from the
+ * states in rfसमाप्त_शेष_states.  This can unकरो the effects of
+ * a call to rfसमाप्त_epo().
  */
-void rfkill_restore_states(void)
-{
-	int i;
+व्योम rfसमाप्त_restore_states(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (atomic_read(&rfkill_input_disabled))
-		return;
+	अगर (atomic_पढ़ो(&rfसमाप्त_input_disabled))
+		वापस;
 
-	mutex_lock(&rfkill_global_mutex);
+	mutex_lock(&rfसमाप्त_global_mutex);
 
-	rfkill_epo_lock_active = false;
-	for (i = 0; i < NUM_RFKILL_TYPES; i++)
-		__rfkill_switch_all(i, rfkill_global_states[i].sav);
-	mutex_unlock(&rfkill_global_mutex);
-}
+	rfसमाप्त_epo_lock_active = false;
+	क्रम (i = 0; i < NUM_RFKILL_TYPES; i++)
+		__rfसमाप्त_चयन_all(i, rfसमाप्त_global_states[i].sav);
+	mutex_unlock(&rfसमाप्त_global_mutex);
+पूर्ण
 
 /**
- * rfkill_remove_epo_lock - unlock state changes
+ * rfसमाप्त_हटाओ_epo_lock - unlock state changes
  *
- * Used by rfkill-input manually unlock state changes, when
- * the EPO switch is deactivated.
+ * Used by rfसमाप्त-input manually unlock state changes, when
+ * the EPO चयन is deactivated.
  */
-void rfkill_remove_epo_lock(void)
-{
-	if (atomic_read(&rfkill_input_disabled))
-		return;
+व्योम rfसमाप्त_हटाओ_epo_lock(व्योम)
+अणु
+	अगर (atomic_पढ़ो(&rfसमाप्त_input_disabled))
+		वापस;
 
-	mutex_lock(&rfkill_global_mutex);
-	rfkill_epo_lock_active = false;
-	mutex_unlock(&rfkill_global_mutex);
-}
+	mutex_lock(&rfसमाप्त_global_mutex);
+	rfसमाप्त_epo_lock_active = false;
+	mutex_unlock(&rfसमाप्त_global_mutex);
+पूर्ण
 
 /**
- * rfkill_is_epo_lock_active - returns true EPO is active
+ * rfसमाप्त_is_epo_lock_active - वापसs true EPO is active
  *
- * Returns 0 (false) if there is NOT an active EPO condition,
- * and 1 (true) if there is an active EPO condition, which
+ * Returns 0 (false) अगर there is NOT an active EPO condition,
+ * and 1 (true) अगर there is an active EPO condition, which
  * locks all radios in one of the BLOCKED states.
  *
  * Can be called in atomic context.
  */
-bool rfkill_is_epo_lock_active(void)
-{
-	return rfkill_epo_lock_active;
-}
+bool rfसमाप्त_is_epo_lock_active(व्योम)
+अणु
+	वापस rfसमाप्त_epo_lock_active;
+पूर्ण
 
 /**
- * rfkill_get_global_sw_state - returns global state for a type
+ * rfसमाप्त_get_global_sw_state - वापसs global state क्रम a type
  * @type: the type to get the global state of
  *
- * Returns the current global state for a given wireless
+ * Returns the current global state क्रम a given wireless
  * device type.
  */
-bool rfkill_get_global_sw_state(const enum rfkill_type type)
-{
-	return rfkill_global_states[type].cur;
-}
-#endif
+bool rfसमाप्त_get_global_sw_state(स्थिर क्रमागत rfसमाप्त_type type)
+अणु
+	वापस rfसमाप्त_global_states[type].cur;
+पूर्ण
+#पूर्ण_अगर
 
-bool rfkill_set_hw_state_reason(struct rfkill *rfkill,
-				bool blocked, unsigned long reason)
-{
-	unsigned long flags;
+bool rfसमाप्त_set_hw_state_reason(काष्ठा rfसमाप्त *rfसमाप्त,
+				bool blocked, अचिन्हित दीर्घ reason)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool ret, prev;
 
-	BUG_ON(!rfkill);
+	BUG_ON(!rfसमाप्त);
 
-	if (WARN(reason &
+	अगर (WARN(reason &
 	    ~(RFKILL_HARD_BLOCK_SIGNAL | RFKILL_HARD_BLOCK_NOT_OWNER),
 	    "hw_state reason not supported: 0x%lx", reason))
-		return blocked;
+		वापस blocked;
 
-	spin_lock_irqsave(&rfkill->lock, flags);
-	prev = !!(rfkill->hard_block_reasons & reason);
-	if (blocked) {
-		rfkill->state |= RFKILL_BLOCK_HW;
-		rfkill->hard_block_reasons |= reason;
-	} else {
-		rfkill->hard_block_reasons &= ~reason;
-		if (!rfkill->hard_block_reasons)
-			rfkill->state &= ~RFKILL_BLOCK_HW;
-	}
-	ret = !!(rfkill->state & RFKILL_BLOCK_ANY);
-	spin_unlock_irqrestore(&rfkill->lock, flags);
+	spin_lock_irqsave(&rfसमाप्त->lock, flags);
+	prev = !!(rfसमाप्त->hard_block_reasons & reason);
+	अगर (blocked) अणु
+		rfसमाप्त->state |= RFKILL_BLOCK_HW;
+		rfसमाप्त->hard_block_reasons |= reason;
+	पूर्ण अन्यथा अणु
+		rfसमाप्त->hard_block_reasons &= ~reason;
+		अगर (!rfसमाप्त->hard_block_reasons)
+			rfसमाप्त->state &= ~RFKILL_BLOCK_HW;
+	पूर्ण
+	ret = !!(rfसमाप्त->state & RFKILL_BLOCK_ANY);
+	spin_unlock_irqrestore(&rfसमाप्त->lock, flags);
 
-	rfkill_led_trigger_event(rfkill);
-	rfkill_global_led_trigger_event();
+	rfसमाप्त_led_trigger_event(rfसमाप्त);
+	rfसमाप्त_global_led_trigger_event();
 
-	if (rfkill->registered && prev != blocked)
-		schedule_work(&rfkill->uevent_work);
+	अगर (rfसमाप्त->रेजिस्टरed && prev != blocked)
+		schedule_work(&rfसमाप्त->uevent_work);
 
-	return ret;
-}
-EXPORT_SYMBOL(rfkill_set_hw_state_reason);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_set_hw_state_reason);
 
-static void __rfkill_set_sw_state(struct rfkill *rfkill, bool blocked)
-{
+अटल व्योम __rfसमाप्त_set_sw_state(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked)
+अणु
 	u32 bit = RFKILL_BLOCK_SW;
 
-	/* if in a ops->set_block right now, use other bit */
-	if (rfkill->state & RFKILL_BLOCK_SW_SETCALL)
+	/* अगर in a ops->set_block right now, use other bit */
+	अगर (rfसमाप्त->state & RFKILL_BLOCK_SW_SETCALL)
 		bit = RFKILL_BLOCK_SW_PREV;
 
-	if (blocked)
-		rfkill->state |= bit;
-	else
-		rfkill->state &= ~bit;
-}
+	अगर (blocked)
+		rfसमाप्त->state |= bit;
+	अन्यथा
+		rfसमाप्त->state &= ~bit;
+पूर्ण
 
-bool rfkill_set_sw_state(struct rfkill *rfkill, bool blocked)
-{
-	unsigned long flags;
+bool rfसमाप्त_set_sw_state(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool prev, hwblock;
 
-	BUG_ON(!rfkill);
+	BUG_ON(!rfसमाप्त);
 
-	spin_lock_irqsave(&rfkill->lock, flags);
-	prev = !!(rfkill->state & RFKILL_BLOCK_SW);
-	__rfkill_set_sw_state(rfkill, blocked);
-	hwblock = !!(rfkill->state & RFKILL_BLOCK_HW);
+	spin_lock_irqsave(&rfसमाप्त->lock, flags);
+	prev = !!(rfसमाप्त->state & RFKILL_BLOCK_SW);
+	__rfसमाप्त_set_sw_state(rfसमाप्त, blocked);
+	hwblock = !!(rfसमाप्त->state & RFKILL_BLOCK_HW);
 	blocked = blocked || hwblock;
-	spin_unlock_irqrestore(&rfkill->lock, flags);
+	spin_unlock_irqrestore(&rfसमाप्त->lock, flags);
 
-	if (!rfkill->registered)
-		return blocked;
+	अगर (!rfसमाप्त->रेजिस्टरed)
+		वापस blocked;
 
-	if (prev != blocked && !hwblock)
-		schedule_work(&rfkill->uevent_work);
+	अगर (prev != blocked && !hwblock)
+		schedule_work(&rfसमाप्त->uevent_work);
 
-	rfkill_led_trigger_event(rfkill);
-	rfkill_global_led_trigger_event();
+	rfसमाप्त_led_trigger_event(rfसमाप्त);
+	rfसमाप्त_global_led_trigger_event();
 
-	return blocked;
-}
-EXPORT_SYMBOL(rfkill_set_sw_state);
+	वापस blocked;
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_set_sw_state);
 
-void rfkill_init_sw_state(struct rfkill *rfkill, bool blocked)
-{
-	unsigned long flags;
+व्योम rfसमाप्त_init_sw_state(काष्ठा rfसमाप्त *rfसमाप्त, bool blocked)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	BUG_ON(!rfkill);
-	BUG_ON(rfkill->registered);
+	BUG_ON(!rfसमाप्त);
+	BUG_ON(rfसमाप्त->रेजिस्टरed);
 
-	spin_lock_irqsave(&rfkill->lock, flags);
-	__rfkill_set_sw_state(rfkill, blocked);
-	rfkill->persistent = true;
-	spin_unlock_irqrestore(&rfkill->lock, flags);
-}
-EXPORT_SYMBOL(rfkill_init_sw_state);
+	spin_lock_irqsave(&rfसमाप्त->lock, flags);
+	__rfसमाप्त_set_sw_state(rfसमाप्त, blocked);
+	rfसमाप्त->persistent = true;
+	spin_unlock_irqrestore(&rfसमाप्त->lock, flags);
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_init_sw_state);
 
-void rfkill_set_states(struct rfkill *rfkill, bool sw, bool hw)
-{
-	unsigned long flags;
+व्योम rfसमाप्त_set_states(काष्ठा rfसमाप्त *rfसमाप्त, bool sw, bool hw)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool swprev, hwprev;
 
-	BUG_ON(!rfkill);
+	BUG_ON(!rfसमाप्त);
 
-	spin_lock_irqsave(&rfkill->lock, flags);
+	spin_lock_irqsave(&rfसमाप्त->lock, flags);
 
 	/*
-	 * No need to care about prev/setblock ... this is for uevent only
-	 * and that will get triggered by rfkill_set_block anyway.
+	 * No need to care about prev/setblock ... this is क्रम uevent only
+	 * and that will get triggered by rfसमाप्त_set_block anyway.
 	 */
-	swprev = !!(rfkill->state & RFKILL_BLOCK_SW);
-	hwprev = !!(rfkill->state & RFKILL_BLOCK_HW);
-	__rfkill_set_sw_state(rfkill, sw);
-	if (hw)
-		rfkill->state |= RFKILL_BLOCK_HW;
-	else
-		rfkill->state &= ~RFKILL_BLOCK_HW;
+	swprev = !!(rfसमाप्त->state & RFKILL_BLOCK_SW);
+	hwprev = !!(rfसमाप्त->state & RFKILL_BLOCK_HW);
+	__rfसमाप्त_set_sw_state(rfसमाप्त, sw);
+	अगर (hw)
+		rfसमाप्त->state |= RFKILL_BLOCK_HW;
+	अन्यथा
+		rfसमाप्त->state &= ~RFKILL_BLOCK_HW;
 
-	spin_unlock_irqrestore(&rfkill->lock, flags);
+	spin_unlock_irqrestore(&rfसमाप्त->lock, flags);
 
-	if (!rfkill->registered) {
-		rfkill->persistent = true;
-	} else {
-		if (swprev != sw || hwprev != hw)
-			schedule_work(&rfkill->uevent_work);
+	अगर (!rfसमाप्त->रेजिस्टरed) अणु
+		rfसमाप्त->persistent = true;
+	पूर्ण अन्यथा अणु
+		अगर (swprev != sw || hwprev != hw)
+			schedule_work(&rfसमाप्त->uevent_work);
 
-		rfkill_led_trigger_event(rfkill);
-		rfkill_global_led_trigger_event();
-	}
-}
-EXPORT_SYMBOL(rfkill_set_states);
+		rfसमाप्त_led_trigger_event(rfसमाप्त);
+		rfसमाप्त_global_led_trigger_event();
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_set_states);
 
-static const char * const rfkill_types[] = {
-	NULL, /* RFKILL_TYPE_ALL */
+अटल स्थिर अक्षर * स्थिर rfसमाप्त_types[] = अणु
+	शून्य, /* RFKILL_TYPE_ALL */
 	"wlan",
 	"bluetooth",
 	"ultrawideband",
@@ -661,157 +662,157 @@ static const char * const rfkill_types[] = {
 	"gps",
 	"fm",
 	"nfc",
-};
+पूर्ण;
 
-enum rfkill_type rfkill_find_type(const char *name)
-{
-	int i;
+क्रमागत rfसमाप्त_type rfसमाप्त_find_type(स्थिर अक्षर *name)
+अणु
+	पूर्णांक i;
 
-	BUILD_BUG_ON(ARRAY_SIZE(rfkill_types) != NUM_RFKILL_TYPES);
+	BUILD_BUG_ON(ARRAY_SIZE(rfसमाप्त_types) != NUM_RFKILL_TYPES);
 
-	if (!name)
-		return RFKILL_TYPE_ALL;
+	अगर (!name)
+		वापस RFKILL_TYPE_ALL;
 
-	for (i = 1; i < NUM_RFKILL_TYPES; i++)
-		if (!strcmp(name, rfkill_types[i]))
-			return i;
-	return RFKILL_TYPE_ALL;
-}
-EXPORT_SYMBOL(rfkill_find_type);
+	क्रम (i = 1; i < NUM_RFKILL_TYPES; i++)
+		अगर (!म_भेद(name, rfसमाप्त_types[i]))
+			वापस i;
+	वापस RFKILL_TYPE_ALL;
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_find_type);
 
-static ssize_t name_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 
-	return sprintf(buf, "%s\n", rfkill->name);
-}
-static DEVICE_ATTR_RO(name);
+	वापस प्र_लिखो(buf, "%s\n", rfसमाप्त->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t type_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+अटल sमाप_प्रकार type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 
-	return sprintf(buf, "%s\n", rfkill_types[rfkill->type]);
-}
-static DEVICE_ATTR_RO(type);
+	वापस प्र_लिखो(buf, "%s\n", rfसमाप्त_types[rfसमाप्त->type]);
+पूर्ण
+अटल DEVICE_ATTR_RO(type);
 
-static ssize_t index_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+अटल sमाप_प्रकार index_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 
-	return sprintf(buf, "%d\n", rfkill->idx);
-}
-static DEVICE_ATTR_RO(index);
+	वापस प्र_लिखो(buf, "%d\n", rfसमाप्त->idx);
+पूर्ण
+अटल DEVICE_ATTR_RO(index);
 
-static ssize_t persistent_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+अटल sमाप_प्रकार persistent_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 
-	return sprintf(buf, "%d\n", rfkill->persistent);
-}
-static DEVICE_ATTR_RO(persistent);
+	वापस प्र_लिखो(buf, "%d\n", rfसमाप्त->persistent);
+पूर्ण
+अटल DEVICE_ATTR_RO(persistent);
 
-static ssize_t hard_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+अटल sमाप_प्रकार hard_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 
-	return sprintf(buf, "%d\n", (rfkill->state & RFKILL_BLOCK_HW) ? 1 : 0 );
-}
-static DEVICE_ATTR_RO(hard);
+	वापस प्र_लिखो(buf, "%d\n", (rfसमाप्त->state & RFKILL_BLOCK_HW) ? 1 : 0 );
+पूर्ण
+अटल DEVICE_ATTR_RO(hard);
 
-static ssize_t soft_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+अटल sमाप_प्रकार soft_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 
-	return sprintf(buf, "%d\n", (rfkill->state & RFKILL_BLOCK_SW) ? 1 : 0 );
-}
+	वापस प्र_लिखो(buf, "%d\n", (rfसमाप्त->state & RFKILL_BLOCK_SW) ? 1 : 0 );
+पूर्ण
 
-static ssize_t soft_store(struct device *dev, struct device_attribute *attr,
-			  const char *buf, size_t count)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
-	unsigned long state;
-	int err;
+अटल sमाप_प्रकार soft_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
+	अचिन्हित दीर्घ state;
+	पूर्णांक err;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	err = kstrtoul(buf, 0, &state);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 0, &state);
+	अगर (err)
+		वापस err;
 
-	if (state > 1 )
-		return -EINVAL;
+	अगर (state > 1 )
+		वापस -EINVAL;
 
-	mutex_lock(&rfkill_global_mutex);
-	rfkill_set_block(rfkill, state);
-	mutex_unlock(&rfkill_global_mutex);
+	mutex_lock(&rfसमाप्त_global_mutex);
+	rfसमाप्त_set_block(rfसमाप्त, state);
+	mutex_unlock(&rfसमाप्त_global_mutex);
 
-	return count;
-}
-static DEVICE_ATTR_RW(soft);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(soft);
 
-static ssize_t hard_block_reasons_show(struct device *dev,
-				       struct device_attribute *attr,
-				       char *buf)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+अटल sमाप_प्रकार hard_block_reasons_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       अक्षर *buf)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 
-	return sprintf(buf, "0x%lx\n", rfkill->hard_block_reasons);
-}
-static DEVICE_ATTR_RO(hard_block_reasons);
+	वापस प्र_लिखो(buf, "0x%lx\n", rfसमाप्त->hard_block_reasons);
+पूर्ण
+अटल DEVICE_ATTR_RO(hard_block_reasons);
 
-static u8 user_state_from_blocked(unsigned long state)
-{
-	if (state & RFKILL_BLOCK_HW)
-		return RFKILL_USER_STATE_HARD_BLOCKED;
-	if (state & RFKILL_BLOCK_SW)
-		return RFKILL_USER_STATE_SOFT_BLOCKED;
+अटल u8 user_state_from_blocked(अचिन्हित दीर्घ state)
+अणु
+	अगर (state & RFKILL_BLOCK_HW)
+		वापस RFKILL_USER_STATE_HARD_BLOCKED;
+	अगर (state & RFKILL_BLOCK_SW)
+		वापस RFKILL_USER_STATE_SOFT_BLOCKED;
 
-	return RFKILL_USER_STATE_UNBLOCKED;
-}
+	वापस RFKILL_USER_STATE_UNBLOCKED;
+पूर्ण
 
-static ssize_t state_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+अटल sमाप_प्रकार state_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 
-	return sprintf(buf, "%d\n", user_state_from_blocked(rfkill->state));
-}
+	वापस प्र_लिखो(buf, "%d\n", user_state_from_blocked(rfसमाप्त->state));
+पूर्ण
 
-static ssize_t state_store(struct device *dev, struct device_attribute *attr,
-			   const char *buf, size_t count)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
-	unsigned long state;
-	int err;
+अटल sमाप_प्रकार state_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
+	अचिन्हित दीर्घ state;
+	पूर्णांक err;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	err = kstrtoul(buf, 0, &state);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 0, &state);
+	अगर (err)
+		वापस err;
 
-	if (state != RFKILL_USER_STATE_SOFT_BLOCKED &&
+	अगर (state != RFKILL_USER_STATE_SOFT_BLOCKED &&
 	    state != RFKILL_USER_STATE_UNBLOCKED)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	mutex_lock(&rfkill_global_mutex);
-	rfkill_set_block(rfkill, state == RFKILL_USER_STATE_SOFT_BLOCKED);
-	mutex_unlock(&rfkill_global_mutex);
+	mutex_lock(&rfसमाप्त_global_mutex);
+	rfसमाप्त_set_block(rfसमाप्त, state == RFKILL_USER_STATE_SOFT_BLOCKED);
+	mutex_unlock(&rfसमाप्त_global_mutex);
 
-	return count;
-}
-static DEVICE_ATTR_RW(state);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(state);
 
-static struct attribute *rfkill_dev_attrs[] = {
+अटल काष्ठा attribute *rfसमाप्त_dev_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_type.attr,
 	&dev_attr_index.attr,
@@ -820,593 +821,593 @@ static struct attribute *rfkill_dev_attrs[] = {
 	&dev_attr_soft.attr,
 	&dev_attr_hard.attr,
 	&dev_attr_hard_block_reasons.attr,
-	NULL,
-};
-ATTRIBUTE_GROUPS(rfkill_dev);
+	शून्य,
+पूर्ण;
+ATTRIBUTE_GROUPS(rfसमाप्त_dev);
 
-static void rfkill_release(struct device *dev)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+अटल व्योम rfसमाप्त_release(काष्ठा device *dev)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 
-	kfree(rfkill);
-}
+	kमुक्त(rfसमाप्त);
+पूर्ण
 
-static int rfkill_dev_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
-	unsigned long flags;
-	unsigned long reasons;
+अटल पूर्णांक rfसमाप्त_dev_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ reasons;
 	u32 state;
-	int error;
+	पूर्णांक error;
 
-	error = add_uevent_var(env, "RFKILL_NAME=%s", rfkill->name);
-	if (error)
-		return error;
+	error = add_uevent_var(env, "RFKILL_NAME=%s", rfसमाप्त->name);
+	अगर (error)
+		वापस error;
 	error = add_uevent_var(env, "RFKILL_TYPE=%s",
-			       rfkill_types[rfkill->type]);
-	if (error)
-		return error;
-	spin_lock_irqsave(&rfkill->lock, flags);
-	state = rfkill->state;
-	reasons = rfkill->hard_block_reasons;
-	spin_unlock_irqrestore(&rfkill->lock, flags);
+			       rfसमाप्त_types[rfसमाप्त->type]);
+	अगर (error)
+		वापस error;
+	spin_lock_irqsave(&rfसमाप्त->lock, flags);
+	state = rfसमाप्त->state;
+	reasons = rfसमाप्त->hard_block_reasons;
+	spin_unlock_irqrestore(&rfसमाप्त->lock, flags);
 	error = add_uevent_var(env, "RFKILL_STATE=%d",
 			       user_state_from_blocked(state));
-	if (error)
-		return error;
-	return add_uevent_var(env, "RFKILL_HW_BLOCK_REASON=0x%lx", reasons);
-}
+	अगर (error)
+		वापस error;
+	वापस add_uevent_var(env, "RFKILL_HW_BLOCK_REASON=0x%lx", reasons);
+पूर्ण
 
-void rfkill_pause_polling(struct rfkill *rfkill)
-{
-	BUG_ON(!rfkill);
+व्योम rfसमाप्त_छोड़ो_polling(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	BUG_ON(!rfसमाप्त);
 
-	if (!rfkill->ops->poll)
-		return;
+	अगर (!rfसमाप्त->ops->poll)
+		वापस;
 
-	rfkill->polling_paused = true;
-	cancel_delayed_work_sync(&rfkill->poll_work);
-}
-EXPORT_SYMBOL(rfkill_pause_polling);
+	rfसमाप्त->polling_छोड़ोd = true;
+	cancel_delayed_work_sync(&rfसमाप्त->poll_work);
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_छोड़ो_polling);
 
-void rfkill_resume_polling(struct rfkill *rfkill)
-{
-	BUG_ON(!rfkill);
+व्योम rfसमाप्त_resume_polling(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	BUG_ON(!rfसमाप्त);
 
-	if (!rfkill->ops->poll)
-		return;
+	अगर (!rfसमाप्त->ops->poll)
+		वापस;
 
-	rfkill->polling_paused = false;
+	rfसमाप्त->polling_छोड़ोd = false;
 
-	if (rfkill->suspended)
-		return;
+	अगर (rfसमाप्त->suspended)
+		वापस;
 
-	queue_delayed_work(system_power_efficient_wq,
-			   &rfkill->poll_work, 0);
-}
-EXPORT_SYMBOL(rfkill_resume_polling);
+	queue_delayed_work(प्रणाली_घातer_efficient_wq,
+			   &rfसमाप्त->poll_work, 0);
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_resume_polling);
 
-#ifdef CONFIG_PM_SLEEP
-static int rfkill_suspend(struct device *dev)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक rfसमाप्त_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 
-	rfkill->suspended = true;
-	cancel_delayed_work_sync(&rfkill->poll_work);
+	rfसमाप्त->suspended = true;
+	cancel_delayed_work_sync(&rfसमाप्त->poll_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rfkill_resume(struct device *dev)
-{
-	struct rfkill *rfkill = to_rfkill(dev);
+अटल पूर्णांक rfसमाप्त_resume(काष्ठा device *dev)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त = to_rfसमाप्त(dev);
 	bool cur;
 
-	rfkill->suspended = false;
+	rfसमाप्त->suspended = false;
 
-	if (!rfkill->registered)
-		return 0;
+	अगर (!rfसमाप्त->रेजिस्टरed)
+		वापस 0;
 
-	if (!rfkill->persistent) {
-		cur = !!(rfkill->state & RFKILL_BLOCK_SW);
-		rfkill_set_block(rfkill, cur);
-	}
+	अगर (!rfसमाप्त->persistent) अणु
+		cur = !!(rfसमाप्त->state & RFKILL_BLOCK_SW);
+		rfसमाप्त_set_block(rfसमाप्त, cur);
+	पूर्ण
 
-	if (rfkill->ops->poll && !rfkill->polling_paused)
-		queue_delayed_work(system_power_efficient_wq,
-				   &rfkill->poll_work, 0);
+	अगर (rfसमाप्त->ops->poll && !rfसमाप्त->polling_छोड़ोd)
+		queue_delayed_work(प्रणाली_घातer_efficient_wq,
+				   &rfसमाप्त->poll_work, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(rfkill_pm_ops, rfkill_suspend, rfkill_resume);
-#define RFKILL_PM_OPS (&rfkill_pm_ops)
-#else
-#define RFKILL_PM_OPS NULL
-#endif
+अटल SIMPLE_DEV_PM_OPS(rfसमाप्त_pm_ops, rfसमाप्त_suspend, rfसमाप्त_resume);
+#घोषणा RFKILL_PM_OPS (&rfसमाप्त_pm_ops)
+#अन्यथा
+#घोषणा RFKILL_PM_OPS शून्य
+#पूर्ण_अगर
 
-static struct class rfkill_class = {
+अटल काष्ठा class rfसमाप्त_class = अणु
 	.name		= "rfkill",
-	.dev_release	= rfkill_release,
-	.dev_groups	= rfkill_dev_groups,
-	.dev_uevent	= rfkill_dev_uevent,
+	.dev_release	= rfसमाप्त_release,
+	.dev_groups	= rfसमाप्त_dev_groups,
+	.dev_uevent	= rfसमाप्त_dev_uevent,
 	.pm		= RFKILL_PM_OPS,
-};
+पूर्ण;
 
-bool rfkill_blocked(struct rfkill *rfkill)
-{
-	unsigned long flags;
+bool rfसमाप्त_blocked(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 state;
 
-	spin_lock_irqsave(&rfkill->lock, flags);
-	state = rfkill->state;
-	spin_unlock_irqrestore(&rfkill->lock, flags);
+	spin_lock_irqsave(&rfसमाप्त->lock, flags);
+	state = rfसमाप्त->state;
+	spin_unlock_irqrestore(&rfसमाप्त->lock, flags);
 
-	return !!(state & RFKILL_BLOCK_ANY);
-}
-EXPORT_SYMBOL(rfkill_blocked);
+	वापस !!(state & RFKILL_BLOCK_ANY);
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_blocked);
 
 
-struct rfkill * __must_check rfkill_alloc(const char *name,
-					  struct device *parent,
-					  const enum rfkill_type type,
-					  const struct rfkill_ops *ops,
-					  void *ops_data)
-{
-	struct rfkill *rfkill;
-	struct device *dev;
+काष्ठा rfसमाप्त * __must_check rfसमाप्त_alloc(स्थिर अक्षर *name,
+					  काष्ठा device *parent,
+					  स्थिर क्रमागत rfसमाप्त_type type,
+					  स्थिर काष्ठा rfसमाप्त_ops *ops,
+					  व्योम *ops_data)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त;
+	काष्ठा device *dev;
 
-	if (WARN_ON(!ops))
-		return NULL;
+	अगर (WARN_ON(!ops))
+		वापस शून्य;
 
-	if (WARN_ON(!ops->set_block))
-		return NULL;
+	अगर (WARN_ON(!ops->set_block))
+		वापस शून्य;
 
-	if (WARN_ON(!name))
-		return NULL;
+	अगर (WARN_ON(!name))
+		वापस शून्य;
 
-	if (WARN_ON(type == RFKILL_TYPE_ALL || type >= NUM_RFKILL_TYPES))
-		return NULL;
+	अगर (WARN_ON(type == RFKILL_TYPE_ALL || type >= NUM_RFKILL_TYPES))
+		वापस शून्य;
 
-	rfkill = kzalloc(sizeof(*rfkill) + strlen(name) + 1, GFP_KERNEL);
-	if (!rfkill)
-		return NULL;
+	rfसमाप्त = kzalloc(माप(*rfसमाप्त) + म_माप(name) + 1, GFP_KERNEL);
+	अगर (!rfसमाप्त)
+		वापस शून्य;
 
-	spin_lock_init(&rfkill->lock);
-	INIT_LIST_HEAD(&rfkill->node);
-	rfkill->type = type;
-	strcpy(rfkill->name, name);
-	rfkill->ops = ops;
-	rfkill->data = ops_data;
+	spin_lock_init(&rfसमाप्त->lock);
+	INIT_LIST_HEAD(&rfसमाप्त->node);
+	rfसमाप्त->type = type;
+	म_नकल(rfसमाप्त->name, name);
+	rfसमाप्त->ops = ops;
+	rfसमाप्त->data = ops_data;
 
-	dev = &rfkill->dev;
-	dev->class = &rfkill_class;
+	dev = &rfसमाप्त->dev;
+	dev->class = &rfसमाप्त_class;
 	dev->parent = parent;
 	device_initialize(dev);
 
-	return rfkill;
-}
-EXPORT_SYMBOL(rfkill_alloc);
+	वापस rfसमाप्त;
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_alloc);
 
-static void rfkill_poll(struct work_struct *work)
-{
-	struct rfkill *rfkill;
+अटल व्योम rfसमाप्त_poll(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त;
 
-	rfkill = container_of(work, struct rfkill, poll_work.work);
+	rfसमाप्त = container_of(work, काष्ठा rfसमाप्त, poll_work.work);
 
 	/*
 	 * Poll hardware state -- driver will use one of the
-	 * rfkill_set{,_hw,_sw}_state functions and use its
-	 * return value to update the current status.
+	 * rfसमाप्त_setअणु,_hw,_swपूर्ण_state functions and use its
+	 * वापस value to update the current status.
 	 */
-	rfkill->ops->poll(rfkill, rfkill->data);
+	rfसमाप्त->ops->poll(rfसमाप्त, rfसमाप्त->data);
 
-	queue_delayed_work(system_power_efficient_wq,
-		&rfkill->poll_work,
-		round_jiffies_relative(POLL_INTERVAL));
-}
+	queue_delayed_work(प्रणाली_घातer_efficient_wq,
+		&rfसमाप्त->poll_work,
+		round_jअगरfies_relative(POLL_INTERVAL));
+पूर्ण
 
-static void rfkill_uevent_work(struct work_struct *work)
-{
-	struct rfkill *rfkill;
+अटल व्योम rfसमाप्त_uevent_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त;
 
-	rfkill = container_of(work, struct rfkill, uevent_work);
+	rfसमाप्त = container_of(work, काष्ठा rfसमाप्त, uevent_work);
 
-	mutex_lock(&rfkill_global_mutex);
-	rfkill_event(rfkill);
-	mutex_unlock(&rfkill_global_mutex);
-}
+	mutex_lock(&rfसमाप्त_global_mutex);
+	rfसमाप्त_event(rfसमाप्त);
+	mutex_unlock(&rfसमाप्त_global_mutex);
+पूर्ण
 
-static void rfkill_sync_work(struct work_struct *work)
-{
-	struct rfkill *rfkill;
+अटल व्योम rfसमाप्त_sync_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त;
 	bool cur;
 
-	rfkill = container_of(work, struct rfkill, sync_work);
+	rfसमाप्त = container_of(work, काष्ठा rfसमाप्त, sync_work);
 
-	mutex_lock(&rfkill_global_mutex);
-	cur = rfkill_global_states[rfkill->type].cur;
-	rfkill_set_block(rfkill, cur);
-	mutex_unlock(&rfkill_global_mutex);
-}
+	mutex_lock(&rfसमाप्त_global_mutex);
+	cur = rfसमाप्त_global_states[rfसमाप्त->type].cur;
+	rfसमाप्त_set_block(rfसमाप्त, cur);
+	mutex_unlock(&rfसमाप्त_global_mutex);
+पूर्ण
 
-int __must_check rfkill_register(struct rfkill *rfkill)
-{
-	static unsigned long rfkill_no;
-	struct device *dev;
-	int error;
+पूर्णांक __must_check rfसमाप्त_रेजिस्टर(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	अटल अचिन्हित दीर्घ rfसमाप्त_no;
+	काष्ठा device *dev;
+	पूर्णांक error;
 
-	if (!rfkill)
-		return -EINVAL;
+	अगर (!rfसमाप्त)
+		वापस -EINVAL;
 
-	dev = &rfkill->dev;
+	dev = &rfसमाप्त->dev;
 
-	mutex_lock(&rfkill_global_mutex);
+	mutex_lock(&rfसमाप्त_global_mutex);
 
-	if (rfkill->registered) {
+	अगर (rfसमाप्त->रेजिस्टरed) अणु
 		error = -EALREADY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	rfkill->idx = rfkill_no;
-	dev_set_name(dev, "rfkill%lu", rfkill_no);
-	rfkill_no++;
+	rfसमाप्त->idx = rfसमाप्त_no;
+	dev_set_name(dev, "rfkill%lu", rfसमाप्त_no);
+	rfसमाप्त_no++;
 
-	list_add_tail(&rfkill->node, &rfkill_list);
+	list_add_tail(&rfसमाप्त->node, &rfसमाप्त_list);
 
 	error = device_add(dev);
-	if (error)
-		goto remove;
+	अगर (error)
+		जाओ हटाओ;
 
-	error = rfkill_led_trigger_register(rfkill);
-	if (error)
-		goto devdel;
+	error = rfसमाप्त_led_trigger_रेजिस्टर(rfसमाप्त);
+	अगर (error)
+		जाओ devdel;
 
-	rfkill->registered = true;
+	rfसमाप्त->रेजिस्टरed = true;
 
-	INIT_DELAYED_WORK(&rfkill->poll_work, rfkill_poll);
-	INIT_WORK(&rfkill->uevent_work, rfkill_uevent_work);
-	INIT_WORK(&rfkill->sync_work, rfkill_sync_work);
+	INIT_DELAYED_WORK(&rfसमाप्त->poll_work, rfसमाप्त_poll);
+	INIT_WORK(&rfसमाप्त->uevent_work, rfसमाप्त_uevent_work);
+	INIT_WORK(&rfसमाप्त->sync_work, rfसमाप्त_sync_work);
 
-	if (rfkill->ops->poll)
-		queue_delayed_work(system_power_efficient_wq,
-			&rfkill->poll_work,
-			round_jiffies_relative(POLL_INTERVAL));
+	अगर (rfसमाप्त->ops->poll)
+		queue_delayed_work(प्रणाली_घातer_efficient_wq,
+			&rfसमाप्त->poll_work,
+			round_jअगरfies_relative(POLL_INTERVAL));
 
-	if (!rfkill->persistent || rfkill_epo_lock_active) {
-		schedule_work(&rfkill->sync_work);
-	} else {
-#ifdef CONFIG_RFKILL_INPUT
-		bool soft_blocked = !!(rfkill->state & RFKILL_BLOCK_SW);
+	अगर (!rfसमाप्त->persistent || rfसमाप्त_epo_lock_active) अणु
+		schedule_work(&rfसमाप्त->sync_work);
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_RFKILL_INPUT
+		bool soft_blocked = !!(rfसमाप्त->state & RFKILL_BLOCK_SW);
 
-		if (!atomic_read(&rfkill_input_disabled))
-			__rfkill_switch_all(rfkill->type, soft_blocked);
-#endif
-	}
+		अगर (!atomic_पढ़ो(&rfसमाप्त_input_disabled))
+			__rfसमाप्त_चयन_all(rfसमाप्त->type, soft_blocked);
+#पूर्ण_अगर
+	पूर्ण
 
-	rfkill_global_led_trigger_event();
-	rfkill_send_events(rfkill, RFKILL_OP_ADD);
+	rfसमाप्त_global_led_trigger_event();
+	rfसमाप्त_send_events(rfसमाप्त, RFKILL_OP_ADD);
 
-	mutex_unlock(&rfkill_global_mutex);
-	return 0;
+	mutex_unlock(&rfसमाप्त_global_mutex);
+	वापस 0;
 
  devdel:
-	device_del(&rfkill->dev);
- remove:
-	list_del_init(&rfkill->node);
+	device_del(&rfसमाप्त->dev);
+ हटाओ:
+	list_del_init(&rfसमाप्त->node);
  unlock:
-	mutex_unlock(&rfkill_global_mutex);
-	return error;
-}
-EXPORT_SYMBOL(rfkill_register);
+	mutex_unlock(&rfसमाप्त_global_mutex);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_रेजिस्टर);
 
-void rfkill_unregister(struct rfkill *rfkill)
-{
-	BUG_ON(!rfkill);
+व्योम rfसमाप्त_unरेजिस्टर(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	BUG_ON(!rfसमाप्त);
 
-	if (rfkill->ops->poll)
-		cancel_delayed_work_sync(&rfkill->poll_work);
+	अगर (rfसमाप्त->ops->poll)
+		cancel_delayed_work_sync(&rfसमाप्त->poll_work);
 
-	cancel_work_sync(&rfkill->uevent_work);
-	cancel_work_sync(&rfkill->sync_work);
+	cancel_work_sync(&rfसमाप्त->uevent_work);
+	cancel_work_sync(&rfसमाप्त->sync_work);
 
-	rfkill->registered = false;
+	rfसमाप्त->रेजिस्टरed = false;
 
-	device_del(&rfkill->dev);
+	device_del(&rfसमाप्त->dev);
 
-	mutex_lock(&rfkill_global_mutex);
-	rfkill_send_events(rfkill, RFKILL_OP_DEL);
-	list_del_init(&rfkill->node);
-	rfkill_global_led_trigger_event();
-	mutex_unlock(&rfkill_global_mutex);
+	mutex_lock(&rfसमाप्त_global_mutex);
+	rfसमाप्त_send_events(rfसमाप्त, RFKILL_OP_DEL);
+	list_del_init(&rfसमाप्त->node);
+	rfसमाप्त_global_led_trigger_event();
+	mutex_unlock(&rfसमाप्त_global_mutex);
 
-	rfkill_led_trigger_unregister(rfkill);
-}
-EXPORT_SYMBOL(rfkill_unregister);
+	rfसमाप्त_led_trigger_unरेजिस्टर(rfसमाप्त);
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_unरेजिस्टर);
 
-void rfkill_destroy(struct rfkill *rfkill)
-{
-	if (rfkill)
-		put_device(&rfkill->dev);
-}
-EXPORT_SYMBOL(rfkill_destroy);
+व्योम rfसमाप्त_destroy(काष्ठा rfसमाप्त *rfसमाप्त)
+अणु
+	अगर (rfसमाप्त)
+		put_device(&rfसमाप्त->dev);
+पूर्ण
+EXPORT_SYMBOL(rfसमाप्त_destroy);
 
-static int rfkill_fop_open(struct inode *inode, struct file *file)
-{
-	struct rfkill_data *data;
-	struct rfkill *rfkill;
-	struct rfkill_int_event *ev, *tmp;
+अटल पूर्णांक rfसमाप्त_fop_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा rfसमाप्त_data *data;
+	काष्ठा rfसमाप्त *rfसमाप्त;
+	काष्ठा rfसमाप्त_पूर्णांक_event *ev, *पंचांगp;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&data->events);
 	mutex_init(&data->mtx);
-	init_waitqueue_head(&data->read_wait);
+	init_रुकोqueue_head(&data->पढ़ो_रुको);
 
-	mutex_lock(&rfkill_global_mutex);
+	mutex_lock(&rfसमाप्त_global_mutex);
 	mutex_lock(&data->mtx);
 	/*
-	 * start getting events from elsewhere but hold mtx to get
+	 * start getting events from अन्यथाwhere but hold mtx to get
 	 * startup events added first
 	 */
 
-	list_for_each_entry(rfkill, &rfkill_list, node) {
-		ev = kzalloc(sizeof(*ev), GFP_KERNEL);
-		if (!ev)
-			goto free;
-		rfkill_fill_event(&ev->ev, rfkill, RFKILL_OP_ADD);
+	list_क्रम_each_entry(rfसमाप्त, &rfसमाप्त_list, node) अणु
+		ev = kzalloc(माप(*ev), GFP_KERNEL);
+		अगर (!ev)
+			जाओ मुक्त;
+		rfसमाप्त_fill_event(&ev->ev, rfसमाप्त, RFKILL_OP_ADD);
 		list_add_tail(&ev->list, &data->events);
-	}
-	list_add(&data->list, &rfkill_fds);
+	पूर्ण
+	list_add(&data->list, &rfसमाप्त_fds);
 	mutex_unlock(&data->mtx);
-	mutex_unlock(&rfkill_global_mutex);
+	mutex_unlock(&rfसमाप्त_global_mutex);
 
-	file->private_data = data;
+	file->निजी_data = data;
 
-	return stream_open(inode, file);
+	वापस stream_खोलो(inode, file);
 
- free:
+ मुक्त:
 	mutex_unlock(&data->mtx);
-	mutex_unlock(&rfkill_global_mutex);
+	mutex_unlock(&rfसमाप्त_global_mutex);
 	mutex_destroy(&data->mtx);
-	list_for_each_entry_safe(ev, tmp, &data->events, list)
-		kfree(ev);
-	kfree(data);
-	return -ENOMEM;
-}
+	list_क्रम_each_entry_safe(ev, पंचांगp, &data->events, list)
+		kमुक्त(ev);
+	kमुक्त(data);
+	वापस -ENOMEM;
+पूर्ण
 
-static __poll_t rfkill_fop_poll(struct file *file, poll_table *wait)
-{
-	struct rfkill_data *data = file->private_data;
+अटल __poll_t rfसमाप्त_fop_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा rfसमाप्त_data *data = file->निजी_data;
 	__poll_t res = EPOLLOUT | EPOLLWRNORM;
 
-	poll_wait(file, &data->read_wait, wait);
+	poll_रुको(file, &data->पढ़ो_रुको, रुको);
 
 	mutex_lock(&data->mtx);
-	if (!list_empty(&data->events))
+	अगर (!list_empty(&data->events))
 		res = EPOLLIN | EPOLLRDNORM;
 	mutex_unlock(&data->mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static ssize_t rfkill_fop_read(struct file *file, char __user *buf,
-			       size_t count, loff_t *pos)
-{
-	struct rfkill_data *data = file->private_data;
-	struct rfkill_int_event *ev;
-	unsigned long sz;
-	int ret;
+अटल sमाप_प्रकार rfसमाप्त_fop_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			       माप_प्रकार count, loff_t *pos)
+अणु
+	काष्ठा rfसमाप्त_data *data = file->निजी_data;
+	काष्ठा rfसमाप्त_पूर्णांक_event *ev;
+	अचिन्हित दीर्घ sz;
+	पूर्णांक ret;
 
 	mutex_lock(&data->mtx);
 
-	while (list_empty(&data->events)) {
-		if (file->f_flags & O_NONBLOCK) {
+	जबतक (list_empty(&data->events)) अणु
+		अगर (file->f_flags & O_NONBLOCK) अणु
 			ret = -EAGAIN;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		mutex_unlock(&data->mtx);
-		/* since we re-check and it just compares pointers,
+		/* since we re-check and it just compares poपूर्णांकers,
 		 * using !list_empty() without locking isn't a problem
 		 */
-		ret = wait_event_interruptible(data->read_wait,
+		ret = रुको_event_पूर्णांकerruptible(data->पढ़ो_रुको,
 					       !list_empty(&data->events));
 		mutex_lock(&data->mtx);
 
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	ev = list_first_entry(&data->events, struct rfkill_int_event,
+	ev = list_first_entry(&data->events, काष्ठा rfसमाप्त_पूर्णांक_event,
 				list);
 
-	sz = min_t(unsigned long, sizeof(ev->ev), count);
+	sz = min_t(अचिन्हित दीर्घ, माप(ev->ev), count);
 	ret = sz;
-	if (copy_to_user(buf, &ev->ev, sz))
+	अगर (copy_to_user(buf, &ev->ev, sz))
 		ret = -EFAULT;
 
 	list_del(&ev->list);
-	kfree(ev);
+	kमुक्त(ev);
  out:
 	mutex_unlock(&data->mtx);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t rfkill_fop_write(struct file *file, const char __user *buf,
-				size_t count, loff_t *pos)
-{
-	struct rfkill *rfkill;
-	struct rfkill_event_ext ev;
-	int ret;
+अटल sमाप_प्रकार rfसमाप्त_fop_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				माप_प्रकार count, loff_t *pos)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त;
+	काष्ठा rfसमाप्त_event_ext ev;
+	पूर्णांक ret;
 
-	/* we don't need the 'hard' variable but accept it */
-	if (count < RFKILL_EVENT_SIZE_V1 - 1)
-		return -EINVAL;
+	/* we करोn't need the 'hard' variable but accept it */
+	अगर (count < RFKILL_EVENT_SIZE_V1 - 1)
+		वापस -EINVAL;
 
 	/*
-	 * Copy as much data as we can accept into our 'ev' buffer,
+	 * Copy as much data as we can accept पूर्णांकo our 'ev' buffer,
 	 * but tell userspace how much we've copied so it can determine
-	 * our API version even in a write() call, if it cares.
+	 * our API version even in a ग_लिखो() call, अगर it cares.
 	 */
-	count = min(count, sizeof(ev));
-	if (copy_from_user(&ev, buf, count))
-		return -EFAULT;
+	count = min(count, माप(ev));
+	अगर (copy_from_user(&ev, buf, count))
+		वापस -EFAULT;
 
-	if (ev.type >= NUM_RFKILL_TYPES)
-		return -EINVAL;
+	अगर (ev.type >= NUM_RFKILL_TYPES)
+		वापस -EINVAL;
 
-	mutex_lock(&rfkill_global_mutex);
+	mutex_lock(&rfसमाप्त_global_mutex);
 
-	switch (ev.op) {
-	case RFKILL_OP_CHANGE_ALL:
-		rfkill_update_global_state(ev.type, ev.soft);
-		list_for_each_entry(rfkill, &rfkill_list, node)
-			if (rfkill->type == ev.type ||
+	चयन (ev.op) अणु
+	हाल RFKILL_OP_CHANGE_ALL:
+		rfसमाप्त_update_global_state(ev.type, ev.soft);
+		list_क्रम_each_entry(rfसमाप्त, &rfसमाप्त_list, node)
+			अगर (rfसमाप्त->type == ev.type ||
 			    ev.type == RFKILL_TYPE_ALL)
-				rfkill_set_block(rfkill, ev.soft);
+				rfसमाप्त_set_block(rfसमाप्त, ev.soft);
 		ret = 0;
-		break;
-	case RFKILL_OP_CHANGE:
-		list_for_each_entry(rfkill, &rfkill_list, node)
-			if (rfkill->idx == ev.idx &&
-			    (rfkill->type == ev.type ||
+		अवरोध;
+	हाल RFKILL_OP_CHANGE:
+		list_क्रम_each_entry(rfसमाप्त, &rfसमाप्त_list, node)
+			अगर (rfसमाप्त->idx == ev.idx &&
+			    (rfसमाप्त->type == ev.type ||
 			     ev.type == RFKILL_TYPE_ALL))
-				rfkill_set_block(rfkill, ev.soft);
+				rfसमाप्त_set_block(rfसमाप्त, ev.soft);
 		ret = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	mutex_unlock(&rfkill_global_mutex);
+	mutex_unlock(&rfसमाप्त_global_mutex);
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static int rfkill_fop_release(struct inode *inode, struct file *file)
-{
-	struct rfkill_data *data = file->private_data;
-	struct rfkill_int_event *ev, *tmp;
+अटल पूर्णांक rfसमाप्त_fop_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा rfसमाप्त_data *data = file->निजी_data;
+	काष्ठा rfसमाप्त_पूर्णांक_event *ev, *पंचांगp;
 
-	mutex_lock(&rfkill_global_mutex);
+	mutex_lock(&rfसमाप्त_global_mutex);
 	list_del(&data->list);
-	mutex_unlock(&rfkill_global_mutex);
+	mutex_unlock(&rfसमाप्त_global_mutex);
 
 	mutex_destroy(&data->mtx);
-	list_for_each_entry_safe(ev, tmp, &data->events, list)
-		kfree(ev);
+	list_क्रम_each_entry_safe(ev, पंचांगp, &data->events, list)
+		kमुक्त(ev);
 
-#ifdef CONFIG_RFKILL_INPUT
-	if (data->input_handler)
-		if (atomic_dec_return(&rfkill_input_disabled) == 0)
-			printk(KERN_DEBUG "rfkill: input handler enabled\n");
-#endif
+#अगर_घोषित CONFIG_RFKILL_INPUT
+	अगर (data->input_handler)
+		अगर (atomic_dec_वापस(&rfसमाप्त_input_disabled) == 0)
+			prपूर्णांकk(KERN_DEBUG "rfkill: input handler enabled\n");
+#पूर्ण_अगर
 
-	kfree(data);
+	kमुक्त(data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_RFKILL_INPUT
-static long rfkill_fop_ioctl(struct file *file, unsigned int cmd,
-			     unsigned long arg)
-{
-	struct rfkill_data *data = file->private_data;
+#अगर_घोषित CONFIG_RFKILL_INPUT
+अटल दीर्घ rfसमाप्त_fop_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			     अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा rfसमाप्त_data *data = file->निजी_data;
 
-	if (_IOC_TYPE(cmd) != RFKILL_IOC_MAGIC)
-		return -ENOSYS;
+	अगर (_IOC_TYPE(cmd) != RFKILL_IOC_MAGIC)
+		वापस -ENOSYS;
 
-	if (_IOC_NR(cmd) != RFKILL_IOC_NOINPUT)
-		return -ENOSYS;
+	अगर (_IOC_NR(cmd) != RFKILL_IOC_NOINPUT)
+		वापस -ENOSYS;
 
 	mutex_lock(&data->mtx);
 
-	if (!data->input_handler) {
-		if (atomic_inc_return(&rfkill_input_disabled) == 1)
-			printk(KERN_DEBUG "rfkill: input handler disabled\n");
+	अगर (!data->input_handler) अणु
+		अगर (atomic_inc_वापस(&rfसमाप्त_input_disabled) == 1)
+			prपूर्णांकk(KERN_DEBUG "rfkill: input handler disabled\n");
 		data->input_handler = true;
-	}
+	पूर्ण
 
 	mutex_unlock(&data->mtx);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct file_operations rfkill_fops = {
+अटल स्थिर काष्ठा file_operations rfसमाप्त_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= rfkill_fop_open,
-	.read		= rfkill_fop_read,
-	.write		= rfkill_fop_write,
-	.poll		= rfkill_fop_poll,
-	.release	= rfkill_fop_release,
-#ifdef CONFIG_RFKILL_INPUT
-	.unlocked_ioctl	= rfkill_fop_ioctl,
+	.खोलो		= rfसमाप्त_fop_खोलो,
+	.पढ़ो		= rfसमाप्त_fop_पढ़ो,
+	.ग_लिखो		= rfसमाप्त_fop_ग_लिखो,
+	.poll		= rfसमाप्त_fop_poll,
+	.release	= rfसमाप्त_fop_release,
+#अगर_घोषित CONFIG_RFKILL_INPUT
+	.unlocked_ioctl	= rfसमाप्त_fop_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-#endif
+#पूर्ण_अगर
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-#define RFKILL_NAME "rfkill"
+#घोषणा RFKILL_NAME "rfkill"
 
-static struct miscdevice rfkill_miscdev = {
-	.fops	= &rfkill_fops,
+अटल काष्ठा miscdevice rfसमाप्त_miscdev = अणु
+	.fops	= &rfसमाप्त_fops,
 	.name	= RFKILL_NAME,
 	.minor	= RFKILL_MINOR,
-};
+पूर्ण;
 
-static int __init rfkill_init(void)
-{
-	int error;
+अटल पूर्णांक __init rfसमाप्त_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	rfkill_update_global_state(RFKILL_TYPE_ALL, !rfkill_default_state);
+	rfसमाप्त_update_global_state(RFKILL_TYPE_ALL, !rfसमाप्त_शेष_state);
 
-	error = class_register(&rfkill_class);
-	if (error)
-		goto error_class;
+	error = class_रेजिस्टर(&rfसमाप्त_class);
+	अगर (error)
+		जाओ error_class;
 
-	error = misc_register(&rfkill_miscdev);
-	if (error)
-		goto error_misc;
+	error = misc_रेजिस्टर(&rfसमाप्त_miscdev);
+	अगर (error)
+		जाओ error_misc;
 
-	error = rfkill_global_led_trigger_register();
-	if (error)
-		goto error_led_trigger;
+	error = rfसमाप्त_global_led_trigger_रेजिस्टर();
+	अगर (error)
+		जाओ error_led_trigger;
 
-#ifdef CONFIG_RFKILL_INPUT
-	error = rfkill_handler_init();
-	if (error)
-		goto error_input;
-#endif
+#अगर_घोषित CONFIG_RFKILL_INPUT
+	error = rfसमाप्त_handler_init();
+	अगर (error)
+		जाओ error_input;
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
-#ifdef CONFIG_RFKILL_INPUT
+#अगर_घोषित CONFIG_RFKILL_INPUT
 error_input:
-	rfkill_global_led_trigger_unregister();
-#endif
+	rfसमाप्त_global_led_trigger_unरेजिस्टर();
+#पूर्ण_अगर
 error_led_trigger:
-	misc_deregister(&rfkill_miscdev);
+	misc_deरेजिस्टर(&rfसमाप्त_miscdev);
 error_misc:
-	class_unregister(&rfkill_class);
+	class_unरेजिस्टर(&rfसमाप्त_class);
 error_class:
-	return error;
-}
-subsys_initcall(rfkill_init);
+	वापस error;
+पूर्ण
+subsys_initcall(rfसमाप्त_init);
 
-static void __exit rfkill_exit(void)
-{
-#ifdef CONFIG_RFKILL_INPUT
-	rfkill_handler_exit();
-#endif
-	rfkill_global_led_trigger_unregister();
-	misc_deregister(&rfkill_miscdev);
-	class_unregister(&rfkill_class);
-}
-module_exit(rfkill_exit);
+अटल व्योम __निकास rfसमाप्त_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_RFKILL_INPUT
+	rfसमाप्त_handler_निकास();
+#पूर्ण_अगर
+	rfसमाप्त_global_led_trigger_unरेजिस्टर();
+	misc_deरेजिस्टर(&rfसमाप्त_miscdev);
+	class_unरेजिस्टर(&rfसमाप्त_class);
+पूर्ण
+module_निकास(rfसमाप्त_निकास);
 
 MODULE_ALIAS_MISCDEV(RFKILL_MINOR);
 MODULE_ALIAS("devname:" RFKILL_NAME);

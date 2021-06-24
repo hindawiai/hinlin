@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
-#include <test_progs.h>
-#include <sys/syscall.h>
-#include "linked_funcs.skel.h"
+#समावेश <test_progs.h>
+#समावेश <sys/syscall.h>
+#समावेश "linked_funcs.skel.h"
 
-void test_linked_funcs(void)
-{
-	int err;
-	struct linked_funcs *skel;
+व्योम test_linked_funcs(व्योम)
+अणु
+	पूर्णांक err;
+	काष्ठा linked_funcs *skel;
 
-	skel = linked_funcs__open();
-	if (!ASSERT_OK_PTR(skel, "skel_open"))
-		return;
+	skel = linked_funcs__खोलो();
+	अगर (!ASSERT_OK_PTR(skel, "skel_open"))
+		वापस;
 
 	skel->rodata->my_tid = syscall(SYS_gettid);
 	skel->bss->syscall_id = SYS_getpgid;
 
 	err = linked_funcs__load(skel);
-	if (!ASSERT_OK(err, "skel_load"))
-		goto cleanup;
+	अगर (!ASSERT_OK(err, "skel_load"))
+		जाओ cleanup;
 
 	err = linked_funcs__attach(skel);
-	if (!ASSERT_OK(err, "skel_attach"))
-		goto cleanup;
+	अगर (!ASSERT_OK(err, "skel_attach"))
+		जाओ cleanup;
 
 	/* trigger */
 	syscall(SYS_getpgid);
@@ -39,4 +40,4 @@ void test_linked_funcs(void)
 
 cleanup:
 	linked_funcs__destroy(skel);
-}
+पूर्ण

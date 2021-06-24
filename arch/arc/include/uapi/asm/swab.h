@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
@@ -10,44 +11,44 @@
  *  -Support single cycle endian-swap insn in ARC700 4.10
  *
  * vineetg: June 2009
- *  -Better htonl implementation (5 instead of 9 ALU instructions)
+ *  -Better htonl implementation (5 instead of 9 ALU inकाष्ठाions)
  *  -Hardware assisted single cycle bswap (Use Case of ARC custom instrn)
  */
 
-#ifndef __ASM_ARC_SWAB_H
-#define __ASM_ARC_SWAB_H
+#अगर_अघोषित __ASM_ARC_SWAB_H
+#घोषणा __ASM_ARC_SWAB_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* Native single cycle endian swap insn */
-#ifdef CONFIG_ARC_HAS_SWAPE
+#अगर_घोषित CONFIG_ARC_HAS_SWAPE
 
-#define __arch_swab32(x)		\
-({					\
-	unsigned int tmp = x;		\
-	__asm__(			\
+#घोषणा __arch_swab32(x)		\
+(अणु					\
+	अचिन्हित पूर्णांक पंचांगp = x;		\
+	__यंत्र__(			\
 	"	swape	%0, %1	\n"	\
-	: "=r" (tmp)			\
-	: "r" (tmp));			\
-	tmp;				\
-})
+	: "=r" (पंचांगp)			\
+	: "r" (पंचांगp));			\
+	पंचांगp;				\
+पूर्ण)
 
-#else
+#अन्यथा
 
-/* Several ways of Endian-Swap Emulation for ARC
+/* Several ways of Endian-Swap Emulation क्रम ARC
  * 0: kernel generic
  * 1: ARC optimised "C"
- * 2: ARC Custom instruction
+ * 2: ARC Custom inकाष्ठाion
  */
-#define ARC_BSWAP_TYPE	1
+#घोषणा ARC_BSWAP_TYPE	1
 
-#if (ARC_BSWAP_TYPE == 1)		/******* Software only ********/
+#अगर (ARC_BSWAP_TYPE == 1)		/******* Software only ********/
 
-/* The kernel default implementation of htonl is
- *		return  x<<24 | x>>24 |
+/* The kernel शेष implementation of htonl is
+ *		वापस  x<<24 | x>>24 |
  *		 (x & (__u32)0x0000ff00UL)<<8 | (x & (__u32)0x00ff0000UL)>>8;
  *
- * This generates 9 instructions on ARC (excluding the ld/st)
+ * This generates 9 inकाष्ठाions on ARC (excluding the ld/st)
  *
  * 8051fd8c:	ld     r3,[r7,20]	; Mem op : Get the value to be swapped
  * 8051fd98:	asl    r5,r3,24		; get  3rd Byte
@@ -63,37 +64,37 @@
  *
  * Joern suggested a better "C" algorithm which is great since
  * (1) It is portable to any architecure
- * (2) At the same time it takes advantage of ARC ISA (rotate intrns)
+ * (2) At the same समय it takes advantage of ARC ISA (rotate पूर्णांकrns)
  */
 
-#define __arch_swab32(x)					\
-({	unsigned long __in = (x), __tmp;			\
-	__tmp = __in << 8 | __in >> 24; /* ror tmp,in,24 */	\
+#घोषणा __arch_swab32(x)					\
+(अणु	अचिन्हित दीर्घ __in = (x), __पंचांगp;			\
+	__पंचांगp = __in << 8 | __in >> 24; /* ror पंचांगp,in,24 */	\
 	__in = __in << 24 | __in >> 8; /* ror in,in,8 */	\
-	__tmp ^= __in;						\
-	__tmp &= 0xff00ff;					\
-	__tmp ^ __in;						\
-})
+	__पंचांगp ^= __in;						\
+	__पंचांगp &= 0xff00ff;					\
+	__पंचांगp ^ __in;						\
+पूर्ण)
 
-#elif (ARC_BSWAP_TYPE == 2)	/* Custom single cycle bswap instruction */
+#या_अगर (ARC_BSWAP_TYPE == 2)	/* Custom single cycle bswap inकाष्ठाion */
 
-#define __arch_swab32(x)						\
-({									\
-	unsigned int tmp = x;						\
-	__asm__(							\
+#घोषणा __arch_swab32(x)						\
+(अणु									\
+	अचिन्हित पूर्णांक पंचांगp = x;						\
+	__यंत्र__(							\
 	"	.extInstruction	bswap, 7, 0x00, SUFFIX_NONE, SYNTAX_2OP	\n"\
 	"	bswap  %0, %1						\n"\
-	: "=r" (tmp)							\
-	: "r" (tmp));							\
-	tmp;								\
-})
+	: "=r" (पंचांगp)							\
+	: "r" (पंचांगp));							\
+	पंचांगp;								\
+पूर्ण)
 
-#endif /* ARC_BSWAP_TYPE=zzz */
+#पूर्ण_अगर /* ARC_BSWAP_TYPE=zzz */
 
-#endif /* CONFIG_ARC_HAS_SWAPE */
+#पूर्ण_अगर /* CONFIG_ARC_HAS_SWAPE */
 
-#if !defined(__STRICT_ANSI__) || defined(__KERNEL__)
-#define __SWAB_64_THRU_32__
-#endif
+#अगर !defined(__STRICT_ANSI__) || defined(__KERNEL__)
+#घोषणा __SWAB_64_THRU_32__
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

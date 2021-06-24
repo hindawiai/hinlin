@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2011 Red Hat, Inc.  All Rights Reserved.
  */
 
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_error.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_error.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
 
 /*
  * XFS logging functions
  */
-static void
-__xfs_printk(
-	const char		*level,
-	const struct xfs_mount	*mp,
-	struct va_format	*vaf)
-{
-	if (mp && mp->m_super) {
-		printk("%sXFS (%s): %pV\n", level, mp->m_super->s_id, vaf);
-		return;
-	}
-	printk("%sXFS: %pV\n", level, vaf);
-}
+अटल व्योम
+__xfs_prपूर्णांकk(
+	स्थिर अक्षर		*level,
+	स्थिर काष्ठा xfs_mount	*mp,
+	काष्ठा va_क्रमmat	*vaf)
+अणु
+	अगर (mp && mp->m_super) अणु
+		prपूर्णांकk("%sXFS (%s): %pV\n", level, mp->m_super->s_id, vaf);
+		वापस;
+	पूर्ण
+	prपूर्णांकk("%sXFS: %pV\n", level, vaf);
+पूर्ण
 
-#define define_xfs_printk_level(func, kern_level)		\
-void func(const struct xfs_mount *mp, const char *fmt, ...)	\
-{								\
-	struct va_format	vaf;				\
-	va_list			args;				\
-	int			level;				\
+#घोषणा define_xfs_prपूर्णांकk_level(func, kern_level)		\
+व्योम func(स्थिर काष्ठा xfs_mount *mp, स्थिर अक्षर *fmt, ...)	\
+अणु								\
+	काष्ठा va_क्रमmat	vaf;				\
+	बहु_सूची			args;				\
+	पूर्णांक			level;				\
 								\
-	va_start(args, fmt);					\
+	बहु_शुरू(args, fmt);					\
 								\
 	vaf.fmt = fmt;						\
 	vaf.va = &args;						\
 								\
-	__xfs_printk(kern_level, mp, &vaf);			\
-	va_end(args);						\
+	__xfs_prपूर्णांकk(kern_level, mp, &vaf);			\
+	बहु_पूर्ण(args);						\
 								\
-	if (!kstrtoint(kern_level, 0, &level) &&		\
+	अगर (!kstrtoपूर्णांक(kern_level, 0, &level) &&		\
 	    level <= LOGLEVEL_ERR &&				\
 	    xfs_error_level >= XFS_ERRLEVEL_HIGH)		\
 		xfs_stack_trace();				\
-}								\
+पूर्ण								\
 
-define_xfs_printk_level(xfs_emerg, KERN_EMERG);
-define_xfs_printk_level(xfs_alert, KERN_ALERT);
-define_xfs_printk_level(xfs_crit, KERN_CRIT);
-define_xfs_printk_level(xfs_err, KERN_ERR);
-define_xfs_printk_level(xfs_warn, KERN_WARNING);
-define_xfs_printk_level(xfs_notice, KERN_NOTICE);
-define_xfs_printk_level(xfs_info, KERN_INFO);
-#ifdef DEBUG
-define_xfs_printk_level(xfs_debug, KERN_DEBUG);
-#endif
+define_xfs_prपूर्णांकk_level(xfs_emerg, KERN_EMERG);
+define_xfs_prपूर्णांकk_level(xfs_alert, KERN_ALERT);
+define_xfs_prपूर्णांकk_level(xfs_crit, KERN_CRIT);
+define_xfs_prपूर्णांकk_level(xfs_err, KERN_ERR);
+define_xfs_prपूर्णांकk_level(xfs_warn, KERN_WARNING);
+define_xfs_prपूर्णांकk_level(xfs_notice, KERN_NOTICE);
+define_xfs_prपूर्णांकk_level(xfs_info, KERN_INFO);
+#अगर_घोषित DEBUG
+define_xfs_prपूर्णांकk_level(xfs_debug, KERN_DEBUG);
+#पूर्ण_अगर
 
-void
+व्योम
 xfs_alert_tag(
-	const struct xfs_mount	*mp,
-	int			panic_tag,
-	const char		*fmt, ...)
-{
-	struct va_format	vaf;
-	va_list			args;
-	int			do_panic = 0;
+	स्थिर काष्ठा xfs_mount	*mp,
+	पूर्णांक			panic_tag,
+	स्थिर अक्षर		*fmt, ...)
+अणु
+	काष्ठा va_क्रमmat	vaf;
+	बहु_सूची			args;
+	पूर्णांक			करो_panic = 0;
 
-	if (xfs_panic_mask && (xfs_panic_mask & panic_tag)) {
+	अगर (xfs_panic_mask && (xfs_panic_mask & panic_tag)) अणु
 		xfs_alert(mp, "Transforming an alert into a BUG.");
-		do_panic = 1;
-	}
+		करो_panic = 1;
+	पूर्ण
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	__xfs_printk(KERN_ALERT, mp, &vaf);
-	va_end(args);
+	__xfs_prपूर्णांकk(KERN_ALERT, mp, &vaf);
+	बहु_पूर्ण(args);
 
-	BUG_ON(do_panic);
-}
+	BUG_ON(करो_panic);
+पूर्ण
 
-void
+व्योम
 asswarn(
-	struct xfs_mount	*mp,
-	char			*expr,
-	char			*file,
-	int			line)
-{
+	काष्ठा xfs_mount	*mp,
+	अक्षर			*expr,
+	अक्षर			*file,
+	पूर्णांक			line)
+अणु
 	xfs_warn(mp, "Assertion failed: %s, file: %s, line: %d",
 		expr, file, line);
 	WARN_ON(1);
-}
+पूर्ण
 
-void
+व्योम
 assfail(
-	struct xfs_mount	*mp,
-	char			*expr,
-	char			*file,
-	int			line)
-{
+	काष्ठा xfs_mount	*mp,
+	अक्षर			*expr,
+	अक्षर			*file,
+	पूर्णांक			line)
+अणु
 	xfs_emerg(mp, "Assertion failed: %s, file: %s, line: %d",
 		expr, file, line);
-	if (xfs_globals.bug_on_assert)
+	अगर (xfs_globals.bug_on_निश्चित)
 		BUG();
-	else
+	अन्यथा
 		WARN_ON(1);
-}
+पूर्ण
 
-void
-xfs_hex_dump(const void *p, int length)
-{
-	print_hex_dump(KERN_ALERT, "", DUMP_PREFIX_OFFSET, 16, 1, p, length, 1);
-}
+व्योम
+xfs_hex_dump(स्थिर व्योम *p, पूर्णांक length)
+अणु
+	prपूर्णांक_hex_dump(KERN_ALERT, "", DUMP_PREFIX_OFFSET, 16, 1, p, length, 1);
+पूर्ण
 
-void
+व्योम
 xfs_buf_alert_ratelimited(
-	struct xfs_buf		*bp,
-	const char		*rlmsg,
-	const char		*fmt,
+	काष्ठा xfs_buf		*bp,
+	स्थिर अक्षर		*rlmsg,
+	स्थिर अक्षर		*fmt,
 	...)
-{
-	struct xfs_mount	*mp = bp->b_mount;
-	struct va_format	vaf;
-	va_list			args;
+अणु
+	काष्ठा xfs_mount	*mp = bp->b_mount;
+	काष्ठा va_क्रमmat	vaf;
+	बहु_सूची			args;
 
-	/* use the more aggressive per-target rate limit for buffers */
-	if (!___ratelimit(&bp->b_target->bt_ioerror_rl, rlmsg))
-		return;
+	/* use the more aggressive per-target rate limit क्रम buffers */
+	अगर (!___ratelimit(&bp->b_target->bt_ioerror_rl, rlmsg))
+		वापस;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
-	__xfs_printk(KERN_ALERT, mp, &vaf);
-	va_end(args);
-}
+	__xfs_prपूर्णांकk(KERN_ALERT, mp, &vaf);
+	बहु_पूर्ण(args);
+पूर्ण

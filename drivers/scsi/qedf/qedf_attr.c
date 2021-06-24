@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  QLogic FCoE Offload Driver
  *  Copyright (c) 2016-2018 Cavium Inc.
  */
-#include "qedf.h"
+#समावेश "qedf.h"
 
-inline bool qedf_is_vport(struct qedf_ctx *qedf)
-{
-	return qedf->lport->vport != NULL;
-}
+अंतरभूत bool qedf_is_vport(काष्ठा qedf_ctx *qedf)
+अणु
+	वापस qedf->lport->vport != शून्य;
+पूर्ण
 
-/* Get base qedf for physical port from vport */
-static struct qedf_ctx *qedf_get_base_qedf(struct qedf_ctx *qedf)
-{
-	struct fc_lport *lport;
-	struct fc_lport *base_lport;
+/* Get base qedf क्रम physical port from vport */
+अटल काष्ठा qedf_ctx *qedf_get_base_qedf(काष्ठा qedf_ctx *qedf)
+अणु
+	काष्ठा fc_lport *lport;
+	काष्ठा fc_lport *base_lport;
 
-	if (!(qedf_is_vport(qedf)))
-		return NULL;
+	अगर (!(qedf_is_vport(qedf)))
+		वापस शून्य;
 
 	lport = qedf->lport;
 	base_lport = shost_priv(vport_to_shost(lport->vport));
-	return lport_priv(base_lport);
-}
+	वापस lport_priv(base_lport);
+पूर्ण
 
-static ssize_t
-qedf_fcoe_mac_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct fc_lport *lport = shost_priv(class_to_shost(dev));
+अटल sमाप_प्रकार
+qedf_fcoe_mac_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा fc_lport *lport = shost_priv(class_to_shost(dev));
 	u32 port_id;
 	u8 lport_src_id[3];
 	u8 fcoe_mac[6];
@@ -39,52 +40,52 @@ qedf_fcoe_mac_show(struct device *dev,
 	lport_src_id[0] = (port_id & 0x00FF0000) >> 16;
 	fc_fcoe_set_mac(fcoe_mac, lport_src_id);
 
-	return scnprintf(buf, PAGE_SIZE, "%pM\n", fcoe_mac);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%pM\n", fcoe_mac);
+पूर्ण
 
-static ssize_t
-qedf_fka_period_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct fc_lport *lport = shost_priv(class_to_shost(dev));
-	struct qedf_ctx *qedf = lport_priv(lport);
-	int fka_period = -1;
+अटल sमाप_प्रकार
+qedf_fka_period_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा fc_lport *lport = shost_priv(class_to_shost(dev));
+	काष्ठा qedf_ctx *qedf = lport_priv(lport);
+	पूर्णांक fka_period = -1;
 
-	if (qedf_is_vport(qedf))
+	अगर (qedf_is_vport(qedf))
 		qedf = qedf_get_base_qedf(qedf);
 
-	if (qedf->ctlr.sel_fcf)
+	अगर (qedf->ctlr.sel_fcf)
 		fka_period = qedf->ctlr.sel_fcf->fka_period;
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", fka_period);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", fka_period);
+पूर्ण
 
-static DEVICE_ATTR(fcoe_mac, S_IRUGO, qedf_fcoe_mac_show, NULL);
-static DEVICE_ATTR(fka_period, S_IRUGO, qedf_fka_period_show, NULL);
+अटल DEVICE_ATTR(fcoe_mac, S_IRUGO, qedf_fcoe_mac_show, शून्य);
+अटल DEVICE_ATTR(fka_period, S_IRUGO, qedf_fka_period_show, शून्य);
 
-struct device_attribute *qedf_host_attrs[] = {
+काष्ठा device_attribute *qedf_host_attrs[] = अणु
 	&dev_attr_fcoe_mac,
 	&dev_attr_fka_period,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-extern const struct qed_fcoe_ops *qed_ops;
+बाह्य स्थिर काष्ठा qed_fcoe_ops *qed_ops;
 
-void qedf_capture_grc_dump(struct qedf_ctx *qedf)
-{
-	struct qedf_ctx *base_qedf;
+व्योम qedf_capture_grc_dump(काष्ठा qedf_ctx *qedf)
+अणु
+	काष्ठा qedf_ctx *base_qedf;
 
 	/* Make sure we use the base qedf to take the GRC dump */
-	if (qedf_is_vport(qedf))
+	अगर (qedf_is_vport(qedf))
 		base_qedf = qedf_get_base_qedf(qedf);
-	else
+	अन्यथा
 		base_qedf = qedf;
 
-	if (test_bit(QEDF_GRCDUMP_CAPTURE, &base_qedf->flags)) {
+	अगर (test_bit(QEDF_GRCDUMP_CAPTURE, &base_qedf->flags)) अणु
 		QEDF_INFO(&(base_qedf->dbg_ctx), QEDF_LOG_INFO,
 		    "GRC Dump already captured.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 
 	qedf_get_grc_dump(base_qedf->cdev, qed_ops->common,
@@ -92,90 +93,90 @@ void qedf_capture_grc_dump(struct qedf_ctx *qedf)
 	QEDF_ERR(&(base_qedf->dbg_ctx), "GRC Dump captured.\n");
 	set_bit(QEDF_GRCDUMP_CAPTURE, &base_qedf->flags);
 	qedf_uevent_emit(base_qedf->lport->host, QEDF_UEVENT_CODE_GRCDUMP,
-	    NULL);
-}
+	    शून्य);
+पूर्ण
 
-static ssize_t
-qedf_sysfs_read_grcdump(struct file *filep, struct kobject *kobj,
-			struct bin_attribute *ba, char *buf, loff_t off,
-			size_t count)
-{
-	ssize_t ret = 0;
-	struct fc_lport *lport = shost_priv(dev_to_shost(container_of(kobj,
-							struct device, kobj)));
-	struct qedf_ctx *qedf = lport_priv(lport);
+अटल sमाप_प्रकार
+qedf_sysfs_पढ़ो_grcdump(काष्ठा file *filep, काष्ठा kobject *kobj,
+			काष्ठा bin_attribute *ba, अक्षर *buf, loff_t off,
+			माप_प्रकार count)
+अणु
+	sमाप_प्रकार ret = 0;
+	काष्ठा fc_lport *lport = shost_priv(dev_to_shost(container_of(kobj,
+							काष्ठा device, kobj)));
+	काष्ठा qedf_ctx *qedf = lport_priv(lport);
 
-	if (test_bit(QEDF_GRCDUMP_CAPTURE, &qedf->flags)) {
-		ret = memory_read_from_buffer(buf, count, &off,
+	अगर (test_bit(QEDF_GRCDUMP_CAPTURE, &qedf->flags)) अणु
+		ret = memory_पढ़ो_from_buffer(buf, count, &off,
 		    qedf->grcdump, qedf->grcdump_size);
-	} else {
+	पूर्ण अन्यथा अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "GRC Dump not captured!\n");
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-qedf_sysfs_write_grcdump(struct file *filep, struct kobject *kobj,
-			struct bin_attribute *ba, char *buf, loff_t off,
-			size_t count)
-{
-	struct fc_lport *lport = NULL;
-	struct qedf_ctx *qedf = NULL;
-	long reading;
-	int ret = 0;
-	char msg[40];
+अटल sमाप_प्रकार
+qedf_sysfs_ग_लिखो_grcdump(काष्ठा file *filep, काष्ठा kobject *kobj,
+			काष्ठा bin_attribute *ba, अक्षर *buf, loff_t off,
+			माप_प्रकार count)
+अणु
+	काष्ठा fc_lport *lport = शून्य;
+	काष्ठा qedf_ctx *qedf = शून्य;
+	दीर्घ पढ़ोing;
+	पूर्णांक ret = 0;
+	अक्षर msg[40];
 
-	if (off != 0)
-		return ret;
+	अगर (off != 0)
+		वापस ret;
 
 
 	lport = shost_priv(dev_to_shost(container_of(kobj,
-	    struct device, kobj)));
+	    काष्ठा device, kobj)));
 	qedf = lport_priv(lport);
 
 	buf[1] = 0;
-	ret = kstrtol(buf, 10, &reading);
-	if (ret) {
+	ret = kम_से_दीर्घ(buf, 10, &पढ़ोing);
+	अगर (ret) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Invalid input, err(%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	memset(msg, 0, sizeof(msg));
-	switch (reading) {
-	case 0:
-		memset(qedf->grcdump, 0, qedf->grcdump_size);
+	स_रखो(msg, 0, माप(msg));
+	चयन (पढ़ोing) अणु
+	हाल 0:
+		स_रखो(qedf->grcdump, 0, qedf->grcdump_size);
 		clear_bit(QEDF_GRCDUMP_CAPTURE, &qedf->flags);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		qedf_capture_grc_dump(qedf);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct bin_attribute sysfs_grcdump_attr = {
-	.attr = {
+अटल काष्ठा bin_attribute sysfs_grcdump_attr = अणु
+	.attr = अणु
 		.name = "grcdump",
 		.mode = S_IRUSR | S_IWUSR,
-	},
+	पूर्ण,
 	.size = 0,
-	.read = qedf_sysfs_read_grcdump,
-	.write = qedf_sysfs_write_grcdump,
-};
+	.पढ़ो = qedf_sysfs_पढ़ो_grcdump,
+	.ग_लिखो = qedf_sysfs_ग_लिखो_grcdump,
+पूर्ण;
 
-static struct sysfs_bin_attrs bin_file_entries[] = {
-	{"grcdump", &sysfs_grcdump_attr},
-	{NULL},
-};
+अटल काष्ठा sysfs_bin_attrs bin_file_entries[] = अणु
+	अणु"grcdump", &sysfs_grcdump_attrपूर्ण,
+	अणुशून्यपूर्ण,
+पूर्ण;
 
-void qedf_create_sysfs_ctx_attr(struct qedf_ctx *qedf)
-{
+व्योम qedf_create_sysfs_ctx_attr(काष्ठा qedf_ctx *qedf)
+अणु
 	qedf_create_sysfs_attr(qedf->lport->host, bin_file_entries);
-}
+पूर्ण
 
-void qedf_remove_sysfs_ctx_attr(struct qedf_ctx *qedf)
-{
-	qedf_remove_sysfs_attr(qedf->lport->host, bin_file_entries);
-}
+व्योम qedf_हटाओ_sysfs_ctx_attr(काष्ठा qedf_ctx *qedf)
+अणु
+	qedf_हटाओ_sysfs_attr(qedf->lport->host, bin_file_entries);
+पूर्ण

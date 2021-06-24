@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
-#include <stdio.h>
-#include <string.h>
-#include "builtin.h"
-#include "perf.h"
-#include "debug.h"
-#include <subcmd/parse-options.h>
-#include "data-convert.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश "builtin.h"
+#समावेश "perf.h"
+#समावेश "debug.h"
+#समावेश <subcmd/parse-options.h>
+#समावेश "data-convert.h"
 
-typedef int (*data_cmd_fn_t)(int argc, const char **argv);
+प्रकार पूर्णांक (*data_cmd_fn_t)(पूर्णांक argc, स्थिर अक्षर **argv);
 
-struct data_cmd {
-	const char	*name;
-	const char	*summary;
+काष्ठा data_cmd अणु
+	स्थिर अक्षर	*name;
+	स्थिर अक्षर	*summary;
 	data_cmd_fn_t	fn;
-};
+पूर्ण;
 
-static struct data_cmd data_cmds[];
+अटल काष्ठा data_cmd data_cmds[];
 
-#define for_each_cmd(cmd) \
-	for (cmd = data_cmds; cmd && cmd->name; cmd++)
+#घोषणा क्रम_each_cmd(cmd) \
+	क्रम (cmd = data_cmds; cmd && cmd->name; cmd++)
 
-static const struct option data_options[] = {
+अटल स्थिर काष्ठा option data_options[] = अणु
 	OPT_END()
-};
+पूर्ण;
 
-static const char * const data_subcommands[] = { "convert", NULL };
+अटल स्थिर अक्षर * स्थिर data_subcommands[] = अणु "convert", शून्य पूर्ण;
 
-static const char *data_usage[] = {
+अटल स्थिर अक्षर *data_usage[] = अणु
 	"perf data [<common options>] <command> [<options>]",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static void print_usage(void)
-{
-	struct data_cmd *cmd;
+अटल व्योम prपूर्णांक_usage(व्योम)
+अणु
+	काष्ठा data_cmd *cmd;
 
-	printf("Usage:\n");
-	printf("\t%s\n\n", data_usage[0]);
-	printf("\tAvailable commands:\n");
+	म_लिखो("Usage:\n");
+	म_लिखो("\t%s\n\n", data_usage[0]);
+	म_लिखो("\tAvailable commands:\n");
 
-	for_each_cmd(cmd) {
-		printf("\t %s\t- %s\n", cmd->name, cmd->summary);
-	}
+	क्रम_each_cmd(cmd) अणु
+		म_लिखो("\t %s\t- %s\n", cmd->name, cmd->summary);
+	पूर्ण
 
-	printf("\n");
-}
+	म_लिखो("\n");
+पूर्ण
 
-static const char * const data_convert_usage[] = {
+अटल स्थिर अक्षर * स्थिर data_convert_usage[] = अणु
 	"perf data convert [<options>]",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static int cmd_data_convert(int argc, const char **argv)
-{
-	const char *to_json = NULL;
-	const char *to_ctf = NULL;
-	struct perf_data_convert_opts opts = {
-		.force = false,
+अटल पूर्णांक cmd_data_convert(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	स्थिर अक्षर *to_json = शून्य;
+	स्थिर अक्षर *to_ctf = शून्य;
+	काष्ठा perf_data_convert_opts opts = अणु
+		.क्रमce = false,
 		.all = false,
-	};
-	const struct option options[] = {
+	पूर्ण;
+	स्थिर काष्ठा option options[] = अणु
 		OPT_INCR('v', "verbose", &verbose, "be more verbose"),
 		OPT_STRING('i', "input", &input_name, "file", "input file name"),
-		OPT_STRING(0, "to-json", &to_json, NULL, "Convert to JSON format"),
-#ifdef HAVE_LIBBABELTRACE_SUPPORT
-		OPT_STRING(0, "to-ctf", &to_ctf, NULL, "Convert to CTF format"),
+		OPT_STRING(0, "to-json", &to_json, शून्य, "Convert to JSON format"),
+#अगर_घोषित HAVE_LIBBABELTRACE_SUPPORT
+		OPT_STRING(0, "to-ctf", &to_ctf, शून्य, "Convert to CTF format"),
 		OPT_BOOLEAN(0, "tod", &opts.tod, "Convert time to wall clock time"),
-#endif
-		OPT_BOOLEAN('f', "force", &opts.force, "don't complain, do it"),
+#पूर्ण_अगर
+		OPT_BOOLEAN('f', "force", &opts.force, "don't complain, करो it"),
 		OPT_BOOLEAN(0, "all", &opts.all, "Convert all events"),
 		OPT_END()
-	};
+	पूर्ण;
 
 	argc = parse_options(argc, argv, options,
 			     data_convert_usage, 0);
-	if (argc) {
+	अगर (argc) अणु
 		usage_with_options(data_convert_usage, options);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (to_json && to_ctf) {
+	अगर (to_json && to_ctf) अणु
 		pr_err("You cannot specify both --to-ctf and --to-json.\n");
-		return -1;
-	}
-	if (!to_json && !to_ctf) {
+		वापस -1;
+	पूर्ण
+	अगर (!to_json && !to_ctf) अणु
 		pr_err("You must specify one of --to-ctf or --to-json.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (to_json)
-		return bt_convert__perf2json(input_name, to_json, &opts);
+	अगर (to_json)
+		वापस bt_convert__perf2json(input_name, to_json, &opts);
 
-	if (to_ctf) {
-#ifdef HAVE_LIBBABELTRACE_SUPPORT
-		return bt_convert__perf2ctf(input_name, to_ctf, &opts);
-#else
+	अगर (to_ctf) अणु
+#अगर_घोषित HAVE_LIBBABELTRACE_SUPPORT
+		वापस bt_convert__perf2ctf(input_name, to_ctf, &opts);
+#अन्यथा
 		pr_err("The libbabeltrace support is not compiled in. perf should be "
 		       "compiled with environment variables LIBBABELTRACE=1 and "
 		       "LIBBABELTRACE_DIR=/path/to/libbabeltrace/\n");
-		return -1;
-#endif
-	}
+		वापस -1;
+#पूर्ण_अगर
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct data_cmd data_cmds[] = {
-	{ "convert", "converts data file between formats", cmd_data_convert },
-	{ .name = NULL, },
-};
+अटल काष्ठा data_cmd data_cmds[] = अणु
+	अणु "convert", "converts data file between formats", cmd_data_convert पूर्ण,
+	अणु .name = शून्य, पूर्ण,
+पूर्ण;
 
-int cmd_data(int argc, const char **argv)
-{
-	struct data_cmd *cmd;
-	const char *cmdstr;
+पूर्णांक cmd_data(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा data_cmd *cmd;
+	स्थिर अक्षर *cmdstr;
 
-	/* No command specified. */
-	if (argc < 2)
-		goto usage;
+	/* No command specअगरied. */
+	अगर (argc < 2)
+		जाओ usage;
 
 	argc = parse_options_subcommand(argc, argv, data_options, data_subcommands, data_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
-	if (argc < 1)
-		goto usage;
+	अगर (argc < 1)
+		जाओ usage;
 
 	cmdstr = argv[0];
 
-	for_each_cmd(cmd) {
-		if (strcmp(cmd->name, cmdstr))
-			continue;
+	क्रम_each_cmd(cmd) अणु
+		अगर (म_भेद(cmd->name, cmdstr))
+			जारी;
 
-		return cmd->fn(argc, argv);
-	}
+		वापस cmd->fn(argc, argv);
+	पूर्ण
 
 	pr_err("Unknown command: %s\n", cmdstr);
 usage:
-	print_usage();
-	return -1;
-}
+	prपूर्णांक_usage();
+	वापस -1;
+पूर्ण

@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_TOP_PRIV_H__
-#define __NVKM_TOP_PRIV_H__
-#define nvkm_top(p) container_of((p), struct nvkm_top, subdev)
-#include <subdev/top.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_TOP_PRIV_H__
+#घोषणा __NVKM_TOP_PRIV_H__
+#घोषणा nvkm_top(p) container_of((p), काष्ठा nvkm_top, subdev)
+#समावेश <subdev/top.h>
 
-struct nvkm_top_func {
-	int (*oneinit)(struct nvkm_top *);
-};
+काष्ठा nvkm_top_func अणु
+	पूर्णांक (*oneinit)(काष्ठा nvkm_top *);
+पूर्ण;
 
-int nvkm_top_new_(const struct nvkm_top_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
-		  struct nvkm_top **);
+पूर्णांक nvkm_top_new_(स्थिर काष्ठा nvkm_top_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
+		  काष्ठा nvkm_top **);
 
-struct nvkm_top_device *nvkm_top_device_new(struct nvkm_top *);
-#endif
+काष्ठा nvkm_top_device *nvkm_top_device_new(काष्ठा nvkm_top *);
+#पूर्ण_अगर

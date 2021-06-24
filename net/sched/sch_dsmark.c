@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* net/sched/sch_dsmark.c - Differentiated Services field marker */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* net/sched/sch_dsmark.c - Dअगरferentiated Services field marker */
 
 /* Written 1998-2000 by Werner Almesberger, EPFL ICA */
 
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <linux/bitops.h>
-#include <net/pkt_sched.h>
-#include <net/pkt_cls.h>
-#include <net/dsfield.h>
-#include <net/inet_ecn.h>
-#include <asm/byteorder.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/bitops.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <net/dsfield.h>
+#समावेश <net/inet_ecn.h>
+#समावेश <यंत्र/byteorder.h>
 
 /*
  * classid	class		marking
@@ -35,267 +36,267 @@
  */
 
 
-#define NO_DEFAULT_INDEX	(1 << 16)
+#घोषणा NO_DEFAULT_INDEX	(1 << 16)
 
-struct mask_value {
+काष्ठा mask_value अणु
 	u8			mask;
 	u8			value;
-};
+पूर्ण;
 
-struct dsmark_qdisc_data {
-	struct Qdisc		*q;
-	struct tcf_proto __rcu	*filter_list;
-	struct tcf_block	*block;
-	struct mask_value	*mv;
+काष्ठा dsmark_qdisc_data अणु
+	काष्ठा Qdisc		*q;
+	काष्ठा tcf_proto __rcu	*filter_list;
+	काष्ठा tcf_block	*block;
+	काष्ठा mask_value	*mv;
 	u16			indices;
 	u8			set_tc_index;
-	u32			default_index;	/* index range is 0...0xffff */
-#define DSMARK_EMBEDDED_SZ	16
-	struct mask_value	embedded[DSMARK_EMBEDDED_SZ];
-};
+	u32			शेष_index;	/* index range is 0...0xffff */
+#घोषणा DSMARK_EMBEDDED_SZ	16
+	काष्ठा mask_value	embedded[DSMARK_EMBEDDED_SZ];
+पूर्ण;
 
-static inline int dsmark_valid_index(struct dsmark_qdisc_data *p, u16 index)
-{
-	return index <= p->indices && index > 0;
-}
+अटल अंतरभूत पूर्णांक dsmark_valid_index(काष्ठा dsmark_qdisc_data *p, u16 index)
+अणु
+	वापस index <= p->indices && index > 0;
+पूर्ण
 
 /* ------------------------- Class/flow operations ------------------------- */
 
-static int dsmark_graft(struct Qdisc *sch, unsigned long arg,
-			struct Qdisc *new, struct Qdisc **old,
-			struct netlink_ext_ack *extack)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
+अटल पूर्णांक dsmark_graft(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
+			काष्ठा Qdisc *new, काष्ठा Qdisc **old,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
 
 	pr_debug("%s(sch %p,[qdisc %p],new %p,old %p)\n",
 		 __func__, sch, p, new, old);
 
-	if (new == NULL) {
-		new = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
-					sch->handle, NULL);
-		if (new == NULL)
+	अगर (new == शून्य) अणु
+		new = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
+					sch->handle, शून्य);
+		अगर (new == शून्य)
 			new = &noop_qdisc;
-	}
+	पूर्ण
 
 	*old = qdisc_replace(sch, new, &p->q);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct Qdisc *dsmark_leaf(struct Qdisc *sch, unsigned long arg)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
-	return p->q;
-}
+अटल काष्ठा Qdisc *dsmark_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
+	वापस p->q;
+पूर्ण
 
-static unsigned long dsmark_find(struct Qdisc *sch, u32 classid)
-{
-	return TC_H_MIN(classid) + 1;
-}
+अटल अचिन्हित दीर्घ dsmark_find(काष्ठा Qdisc *sch, u32 classid)
+अणु
+	वापस TC_H_MIN(classid) + 1;
+पूर्ण
 
-static unsigned long dsmark_bind_filter(struct Qdisc *sch,
-					unsigned long parent, u32 classid)
-{
+अटल अचिन्हित दीर्घ dsmark_bind_filter(काष्ठा Qdisc *sch,
+					अचिन्हित दीर्घ parent, u32 classid)
+अणु
 	pr_debug("%s(sch %p,[qdisc %p],classid %x)\n",
 		 __func__, sch, qdisc_priv(sch), classid);
 
-	return dsmark_find(sch, classid);
-}
+	वापस dsmark_find(sch, classid);
+पूर्ण
 
-static void dsmark_unbind_filter(struct Qdisc *sch, unsigned long cl)
-{
-}
+अटल व्योम dsmark_unbind_filter(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl)
+अणु
+पूर्ण
 
-static const struct nla_policy dsmark_policy[TCA_DSMARK_MAX + 1] = {
-	[TCA_DSMARK_INDICES]		= { .type = NLA_U16 },
-	[TCA_DSMARK_DEFAULT_INDEX]	= { .type = NLA_U16 },
-	[TCA_DSMARK_SET_TC_INDEX]	= { .type = NLA_FLAG },
-	[TCA_DSMARK_MASK]		= { .type = NLA_U8 },
-	[TCA_DSMARK_VALUE]		= { .type = NLA_U8 },
-};
+अटल स्थिर काष्ठा nla_policy dsmark_policy[TCA_DSMARK_MAX + 1] = अणु
+	[TCA_DSMARK_INDICES]		= अणु .type = NLA_U16 पूर्ण,
+	[TCA_DSMARK_DEFAULT_INDEX]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_DSMARK_SET_TC_INDEX]	= अणु .type = NLA_FLAG पूर्ण,
+	[TCA_DSMARK_MASK]		= अणु .type = NLA_U8 पूर्ण,
+	[TCA_DSMARK_VALUE]		= अणु .type = NLA_U8 पूर्ण,
+पूर्ण;
 
-static int dsmark_change(struct Qdisc *sch, u32 classid, u32 parent,
-			 struct nlattr **tca, unsigned long *arg,
-			 struct netlink_ext_ack *extack)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
-	struct nlattr *opt = tca[TCA_OPTIONS];
-	struct nlattr *tb[TCA_DSMARK_MAX + 1];
-	int err = -EINVAL;
+अटल पूर्णांक dsmark_change(काष्ठा Qdisc *sch, u32 classid, u32 parent,
+			 काष्ठा nlattr **tca, अचिन्हित दीर्घ *arg,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
+	काष्ठा nlattr *opt = tca[TCA_OPTIONS];
+	काष्ठा nlattr *tb[TCA_DSMARK_MAX + 1];
+	पूर्णांक err = -EINVAL;
 
 	pr_debug("%s(sch %p,[qdisc %p],classid %x,parent %x), arg 0x%lx\n",
 		 __func__, sch, p, classid, parent, *arg);
 
-	if (!dsmark_valid_index(p, *arg)) {
+	अगर (!dsmark_valid_index(p, *arg)) अणु
 		err = -ENOENT;
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	if (!opt)
-		goto errout;
+	अगर (!opt)
+		जाओ errout;
 
 	err = nla_parse_nested_deprecated(tb, TCA_DSMARK_MAX, opt,
-					  dsmark_policy, NULL);
-	if (err < 0)
-		goto errout;
+					  dsmark_policy, शून्य);
+	अगर (err < 0)
+		जाओ errout;
 
-	if (tb[TCA_DSMARK_VALUE])
+	अगर (tb[TCA_DSMARK_VALUE])
 		p->mv[*arg - 1].value = nla_get_u8(tb[TCA_DSMARK_VALUE]);
 
-	if (tb[TCA_DSMARK_MASK])
+	अगर (tb[TCA_DSMARK_MASK])
 		p->mv[*arg - 1].mask = nla_get_u8(tb[TCA_DSMARK_MASK]);
 
 	err = 0;
 
 errout:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dsmark_delete(struct Qdisc *sch, unsigned long arg,
-			 struct netlink_ext_ack *extack)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
+अटल पूर्णांक dsmark_delete(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
 
-	if (!dsmark_valid_index(p, arg))
-		return -EINVAL;
+	अगर (!dsmark_valid_index(p, arg))
+		वापस -EINVAL;
 
 	p->mv[arg - 1].mask = 0xff;
 	p->mv[arg - 1].value = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsmark_walk(struct Qdisc *sch, struct qdisc_walker *walker)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
-	int i;
+अटल व्योम dsmark_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *walker)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
+	पूर्णांक i;
 
 	pr_debug("%s(sch %p,[qdisc %p],walker %p)\n",
 		 __func__, sch, p, walker);
 
-	if (walker->stop)
-		return;
+	अगर (walker->stop)
+		वापस;
 
-	for (i = 0; i < p->indices; i++) {
-		if (p->mv[i].mask == 0xff && !p->mv[i].value)
-			goto ignore;
-		if (walker->count >= walker->skip) {
-			if (walker->fn(sch, i + 1, walker) < 0) {
+	क्रम (i = 0; i < p->indices; i++) अणु
+		अगर (p->mv[i].mask == 0xff && !p->mv[i].value)
+			जाओ ignore;
+		अगर (walker->count >= walker->skip) अणु
+			अगर (walker->fn(sch, i + 1, walker) < 0) अणु
 				walker->stop = 1;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 ignore:
 		walker->count++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct tcf_block *dsmark_tcf_block(struct Qdisc *sch, unsigned long cl,
-					  struct netlink_ext_ack *extack)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
+अटल काष्ठा tcf_block *dsmark_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
+					  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
 
-	return p->block;
-}
+	वापस p->block;
+पूर्ण
 
 /* --------------------------- Qdisc operations ---------------------------- */
 
-static int dsmark_enqueue(struct sk_buff *skb, struct Qdisc *sch,
-			  struct sk_buff **to_free)
-{
-	unsigned int len = qdisc_pkt_len(skb);
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
-	int err;
+अटल पूर्णांक dsmark_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+			  काष्ठा sk_buff **to_मुक्त)
+अणु
+	अचिन्हित पूर्णांक len = qdisc_pkt_len(skb);
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
+	पूर्णांक err;
 
 	pr_debug("%s(skb %p,sch %p,[qdisc %p])\n", __func__, skb, sch, p);
 
-	if (p->set_tc_index) {
-		int wlen = skb_network_offset(skb);
+	अगर (p->set_tc_index) अणु
+		पूर्णांक wlen = skb_network_offset(skb);
 
-		switch (skb_protocol(skb, true)) {
-		case htons(ETH_P_IP):
-			wlen += sizeof(struct iphdr);
-			if (!pskb_may_pull(skb, wlen) ||
+		चयन (skb_protocol(skb, true)) अणु
+		हाल htons(ETH_P_IP):
+			wlen += माप(काष्ठा iphdr);
+			अगर (!pskb_may_pull(skb, wlen) ||
 			    skb_try_make_writable(skb, wlen))
-				goto drop;
+				जाओ drop;
 
 			skb->tc_index = ipv4_get_dsfield(ip_hdr(skb))
 				& ~INET_ECN_MASK;
-			break;
+			अवरोध;
 
-		case htons(ETH_P_IPV6):
-			wlen += sizeof(struct ipv6hdr);
-			if (!pskb_may_pull(skb, wlen) ||
+		हाल htons(ETH_P_IPV6):
+			wlen += माप(काष्ठा ipv6hdr);
+			अगर (!pskb_may_pull(skb, wlen) ||
 			    skb_try_make_writable(skb, wlen))
-				goto drop;
+				जाओ drop;
 
 			skb->tc_index = ipv6_get_dsfield(ipv6_hdr(skb))
 				& ~INET_ECN_MASK;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			skb->tc_index = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (TC_H_MAJ(skb->priority) == sch->handle)
+	अगर (TC_H_MAJ(skb->priority) == sch->handle)
 		skb->tc_index = TC_H_MIN(skb->priority);
-	else {
-		struct tcf_result res;
-		struct tcf_proto *fl = rcu_dereference_bh(p->filter_list);
-		int result = tcf_classify(skb, fl, &res, false);
+	अन्यथा अणु
+		काष्ठा tcf_result res;
+		काष्ठा tcf_proto *fl = rcu_dereference_bh(p->filter_list);
+		पूर्णांक result = tcf_classअगरy(skb, fl, &res, false);
 
 		pr_debug("result %d class 0x%04x\n", result, res.classid);
 
-		switch (result) {
-#ifdef CONFIG_NET_CLS_ACT
-		case TC_ACT_QUEUED:
-		case TC_ACT_STOLEN:
-		case TC_ACT_TRAP:
-			__qdisc_drop(skb, to_free);
-			return NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
+		चयन (result) अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+		हाल TC_ACT_QUEUED:
+		हाल TC_ACT_STOLEN:
+		हाल TC_ACT_TRAP:
+			__qdisc_drop(skb, to_मुक्त);
+			वापस NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
 
-		case TC_ACT_SHOT:
-			goto drop;
-#endif
-		case TC_ACT_OK:
+		हाल TC_ACT_SHOT:
+			जाओ drop;
+#पूर्ण_अगर
+		हाल TC_ACT_OK:
 			skb->tc_index = TC_H_MIN(res.classid);
-			break;
+			अवरोध;
 
-		default:
-			if (p->default_index != NO_DEFAULT_INDEX)
-				skb->tc_index = p->default_index;
-			break;
-		}
-	}
+		शेष:
+			अगर (p->शेष_index != NO_DEFAULT_INDEX)
+				skb->tc_index = p->शेष_index;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	err = qdisc_enqueue(skb, p->q, to_free);
-	if (err != NET_XMIT_SUCCESS) {
-		if (net_xmit_drop_count(err))
+	err = qdisc_enqueue(skb, p->q, to_मुक्त);
+	अगर (err != NET_XMIT_SUCCESS) अणु
+		अगर (net_xmit_drop_count(err))
 			qdisc_qstats_drop(sch);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	sch->qstats.backlog += len;
 	sch->q.qlen++;
 
-	return NET_XMIT_SUCCESS;
+	वापस NET_XMIT_SUCCESS;
 
 drop:
-	qdisc_drop(skb, sch, to_free);
-	return NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
-}
+	qdisc_drop(skb, sch, to_मुक्त);
+	वापस NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
+पूर्ण
 
-static struct sk_buff *dsmark_dequeue(struct Qdisc *sch)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *dsmark_dequeue(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
+	काष्ठा sk_buff *skb;
 	u32 index;
 
 	pr_debug("%s(sch %p,[qdisc %p])\n", __func__, sch, p);
 
 	skb = qdisc_dequeue_peeked(p->q);
-	if (skb == NULL)
-		return NULL;
+	अगर (skb == शून्य)
+		वापस शून्य;
 
 	qdisc_bstats_update(sch, skb);
 	qdisc_qstats_backlog_dec(sch, skb);
@@ -304,182 +305,182 @@ static struct sk_buff *dsmark_dequeue(struct Qdisc *sch)
 	index = skb->tc_index & (p->indices - 1);
 	pr_debug("index %d->%d\n", skb->tc_index, index);
 
-	switch (skb_protocol(skb, true)) {
-	case htons(ETH_P_IP):
+	चयन (skb_protocol(skb, true)) अणु
+	हाल htons(ETH_P_IP):
 		ipv4_change_dsfield(ip_hdr(skb), p->mv[index].mask,
 				    p->mv[index].value);
-			break;
-	case htons(ETH_P_IPV6):
+			अवरोध;
+	हाल htons(ETH_P_IPV6):
 		ipv6_change_dsfield(ipv6_hdr(skb), p->mv[index].mask,
 				    p->mv[index].value);
-			break;
-	default:
+			अवरोध;
+	शेष:
 		/*
-		 * Only complain if a change was actually attempted.
+		 * Only complain अगर a change was actually attempted.
 		 * This way, we can send non-IP traffic through dsmark
-		 * and don't need yet another qdisc as a bypass.
+		 * and करोn't need yet another qdisc as a bypass.
 		 */
-		if (p->mv[index].mask != 0xff || p->mv[index].value)
+		अगर (p->mv[index].mask != 0xff || p->mv[index].value)
 			pr_warn("%s: unsupported protocol %d\n",
 				__func__, ntohs(skb_protocol(skb, true)));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *dsmark_peek(struct Qdisc *sch)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
+अटल काष्ठा sk_buff *dsmark_peek(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
 
 	pr_debug("%s(sch %p,[qdisc %p])\n", __func__, sch, p);
 
-	return p->q->ops->peek(p->q);
-}
+	वापस p->q->ops->peek(p->q);
+पूर्ण
 
-static int dsmark_init(struct Qdisc *sch, struct nlattr *opt,
-		       struct netlink_ext_ack *extack)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
-	struct nlattr *tb[TCA_DSMARK_MAX + 1];
-	int err = -EINVAL;
-	u32 default_index = NO_DEFAULT_INDEX;
+अटल पूर्णांक dsmark_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
+	काष्ठा nlattr *tb[TCA_DSMARK_MAX + 1];
+	पूर्णांक err = -EINVAL;
+	u32 शेष_index = NO_DEFAULT_INDEX;
 	u16 indices;
-	int i;
+	पूर्णांक i;
 
 	pr_debug("%s(sch %p,[qdisc %p],opt %p)\n", __func__, sch, p, opt);
 
-	if (!opt)
-		goto errout;
+	अगर (!opt)
+		जाओ errout;
 
 	err = tcf_block_get(&p->block, &p->filter_list, sch, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = nla_parse_nested_deprecated(tb, TCA_DSMARK_MAX, opt,
-					  dsmark_policy, NULL);
-	if (err < 0)
-		goto errout;
+					  dsmark_policy, शून्य);
+	अगर (err < 0)
+		जाओ errout;
 
 	err = -EINVAL;
-	if (!tb[TCA_DSMARK_INDICES])
-		goto errout;
+	अगर (!tb[TCA_DSMARK_INDICES])
+		जाओ errout;
 	indices = nla_get_u16(tb[TCA_DSMARK_INDICES]);
 
-	if (hweight32(indices) != 1)
-		goto errout;
+	अगर (hweight32(indices) != 1)
+		जाओ errout;
 
-	if (tb[TCA_DSMARK_DEFAULT_INDEX])
-		default_index = nla_get_u16(tb[TCA_DSMARK_DEFAULT_INDEX]);
+	अगर (tb[TCA_DSMARK_DEFAULT_INDEX])
+		शेष_index = nla_get_u16(tb[TCA_DSMARK_DEFAULT_INDEX]);
 
-	if (indices <= DSMARK_EMBEDDED_SZ)
+	अगर (indices <= DSMARK_EMBEDDED_SZ)
 		p->mv = p->embedded;
-	else
-		p->mv = kmalloc_array(indices, sizeof(*p->mv), GFP_KERNEL);
-	if (!p->mv) {
+	अन्यथा
+		p->mv = kदो_स्मृति_array(indices, माप(*p->mv), GFP_KERNEL);
+	अगर (!p->mv) अणु
 		err = -ENOMEM;
-		goto errout;
-	}
-	for (i = 0; i < indices; i++) {
+		जाओ errout;
+	पूर्ण
+	क्रम (i = 0; i < indices; i++) अणु
 		p->mv[i].mask = 0xff;
 		p->mv[i].value = 0;
-	}
+	पूर्ण
 	p->indices = indices;
-	p->default_index = default_index;
+	p->शेष_index = शेष_index;
 	p->set_tc_index = nla_get_flag(tb[TCA_DSMARK_SET_TC_INDEX]);
 
-	p->q = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops, sch->handle,
-				 NULL);
-	if (p->q == NULL)
+	p->q = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops, sch->handle,
+				 शून्य);
+	अगर (p->q == शून्य)
 		p->q = &noop_qdisc;
-	else
+	अन्यथा
 		qdisc_hash_add(p->q, true);
 
 	pr_debug("%s: qdisc %p\n", __func__, p->q);
 
 	err = 0;
 errout:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void dsmark_reset(struct Qdisc *sch)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
+अटल व्योम dsmark_reset(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
 
 	pr_debug("%s(sch %p,[qdisc %p])\n", __func__, sch, p);
-	if (p->q)
+	अगर (p->q)
 		qdisc_reset(p->q);
 	sch->qstats.backlog = 0;
 	sch->q.qlen = 0;
-}
+पूर्ण
 
-static void dsmark_destroy(struct Qdisc *sch)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
+अटल व्योम dsmark_destroy(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
 
 	pr_debug("%s(sch %p,[qdisc %p])\n", __func__, sch, p);
 
 	tcf_block_put(p->block);
 	qdisc_put(p->q);
-	if (p->mv != p->embedded)
-		kfree(p->mv);
-}
+	अगर (p->mv != p->embedded)
+		kमुक्त(p->mv);
+पूर्ण
 
-static int dsmark_dump_class(struct Qdisc *sch, unsigned long cl,
-			     struct sk_buff *skb, struct tcmsg *tcm)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
-	struct nlattr *opts = NULL;
+अटल पूर्णांक dsmark_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
+			     काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
+	काष्ठा nlattr *opts = शून्य;
 
 	pr_debug("%s(sch %p,[qdisc %p],class %ld\n", __func__, sch, p, cl);
 
-	if (!dsmark_valid_index(p, cl))
-		return -EINVAL;
+	अगर (!dsmark_valid_index(p, cl))
+		वापस -EINVAL;
 
 	tcm->tcm_handle = TC_H_MAKE(TC_H_MAJ(sch->handle), cl - 1);
 	tcm->tcm_info = p->q->handle;
 
 	opts = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (opts == NULL)
-		goto nla_put_failure;
-	if (nla_put_u8(skb, TCA_DSMARK_MASK, p->mv[cl - 1].mask) ||
+	अगर (opts == शून्य)
+		जाओ nla_put_failure;
+	अगर (nla_put_u8(skb, TCA_DSMARK_MASK, p->mv[cl - 1].mask) ||
 	    nla_put_u8(skb, TCA_DSMARK_VALUE, p->mv[cl - 1].value))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	return nla_nest_end(skb, opts);
+	वापस nla_nest_end(skb, opts);
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int dsmark_dump(struct Qdisc *sch, struct sk_buff *skb)
-{
-	struct dsmark_qdisc_data *p = qdisc_priv(sch);
-	struct nlattr *opts = NULL;
+अटल पूर्णांक dsmark_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dsmark_qdisc_data *p = qdisc_priv(sch);
+	काष्ठा nlattr *opts = शून्य;
 
 	opts = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (opts == NULL)
-		goto nla_put_failure;
-	if (nla_put_u16(skb, TCA_DSMARK_INDICES, p->indices))
-		goto nla_put_failure;
+	अगर (opts == शून्य)
+		जाओ nla_put_failure;
+	अगर (nla_put_u16(skb, TCA_DSMARK_INDICES, p->indices))
+		जाओ nla_put_failure;
 
-	if (p->default_index != NO_DEFAULT_INDEX &&
-	    nla_put_u16(skb, TCA_DSMARK_DEFAULT_INDEX, p->default_index))
-		goto nla_put_failure;
+	अगर (p->शेष_index != NO_DEFAULT_INDEX &&
+	    nla_put_u16(skb, TCA_DSMARK_DEFAULT_INDEX, p->शेष_index))
+		जाओ nla_put_failure;
 
-	if (p->set_tc_index &&
+	अगर (p->set_tc_index &&
 	    nla_put_flag(skb, TCA_DSMARK_SET_TC_INDEX))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	return nla_nest_end(skb, opts);
+	वापस nla_nest_end(skb, opts);
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static const struct Qdisc_class_ops dsmark_class_ops = {
+अटल स्थिर काष्ठा Qdisc_class_ops dsmark_class_ops = अणु
 	.graft		=	dsmark_graft,
 	.leaf		=	dsmark_leaf,
 	.find		=	dsmark_find,
@@ -490,35 +491,35 @@ static const struct Qdisc_class_ops dsmark_class_ops = {
 	.bind_tcf	=	dsmark_bind_filter,
 	.unbind_tcf	=	dsmark_unbind_filter,
 	.dump		=	dsmark_dump_class,
-};
+पूर्ण;
 
-static struct Qdisc_ops dsmark_qdisc_ops __read_mostly = {
-	.next		=	NULL,
+अटल काष्ठा Qdisc_ops dsmark_qdisc_ops __पढ़ो_mostly = अणु
+	.next		=	शून्य,
 	.cl_ops		=	&dsmark_class_ops,
 	.id		=	"dsmark",
-	.priv_size	=	sizeof(struct dsmark_qdisc_data),
+	.priv_size	=	माप(काष्ठा dsmark_qdisc_data),
 	.enqueue	=	dsmark_enqueue,
 	.dequeue	=	dsmark_dequeue,
 	.peek		=	dsmark_peek,
 	.init		=	dsmark_init,
 	.reset		=	dsmark_reset,
 	.destroy	=	dsmark_destroy,
-	.change		=	NULL,
+	.change		=	शून्य,
 	.dump		=	dsmark_dump,
 	.owner		=	THIS_MODULE,
-};
+पूर्ण;
 
-static int __init dsmark_module_init(void)
-{
-	return register_qdisc(&dsmark_qdisc_ops);
-}
+अटल पूर्णांक __init dsmark_module_init(व्योम)
+अणु
+	वापस रेजिस्टर_qdisc(&dsmark_qdisc_ops);
+पूर्ण
 
-static void __exit dsmark_module_exit(void)
-{
-	unregister_qdisc(&dsmark_qdisc_ops);
-}
+अटल व्योम __निकास dsmark_module_निकास(व्योम)
+अणु
+	unरेजिस्टर_qdisc(&dsmark_qdisc_ops);
+पूर्ण
 
 module_init(dsmark_module_init)
-module_exit(dsmark_module_exit)
+module_निकास(dsmark_module_निकास)
 
 MODULE_LICENSE("GPL");

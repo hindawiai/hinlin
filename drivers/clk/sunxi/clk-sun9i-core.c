@@ -1,282 +1,283 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2014 Chen-Yu Tsai
  *
  * Chen-Yu Tsai <wens@csie.org>
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/log2.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/log2.h>
 
-#include "clk-factors.h"
+#समावेश "clk-factors.h"
 
 
 /*
- * sun9i_a80_get_pll4_factors() - calculates n, p, m factors for PLL4
+ * sun9i_a80_get_pll4_factors() - calculates n, p, m factors क्रम PLL4
  * PLL4 rate is calculated as follows
  * rate = (parent_rate * n >> p) / (m + 1);
  * parent_rate is always 24MHz
  *
- * p and m are named div1 and div2 in Allwinner's SDK
+ * p and m are named भाग1 and भाग2 in Allwinner's SDK
  */
 
-static void sun9i_a80_get_pll4_factors(struct factors_request *req)
-{
-	int n;
-	int m = 1;
-	int p = 1;
+अटल व्योम sun9i_a80_get_pll4_factors(काष्ठा factors_request *req)
+अणु
+	पूर्णांक n;
+	पूर्णांक m = 1;
+	पूर्णांक p = 1;
 
 	/* Normalize value to a 6 MHz multiple (24 MHz / 4) */
 	n = DIV_ROUND_UP(req->rate, 6000000);
 
-	/* If n is too large switch to steps of 12 MHz */
-	if (n > 255) {
+	/* If n is too large चयन to steps of 12 MHz */
+	अगर (n > 255) अणु
 		m = 0;
 		n = (n + 1) / 2;
-	}
+	पूर्ण
 
-	/* If n is still too large switch to steps of 24 MHz */
-	if (n > 255) {
+	/* If n is still too large चयन to steps of 24 MHz */
+	अगर (n > 255) अणु
 		p = 0;
 		n = (n + 1) / 2;
-	}
+	पूर्ण
 
 	/* n must be between 12 and 255 */
-	if (n > 255)
+	अगर (n > 255)
 		n = 255;
-	else if (n < 12)
+	अन्यथा अगर (n < 12)
 		n = 12;
 
 	req->rate = ((24000000 * n) >> p) / (m + 1);
 	req->n = n;
 	req->m = m;
 	req->p = p;
-}
+पूर्ण
 
-static const struct clk_factors_config sun9i_a80_pll4_config = {
-	.mshift = 18,
+अटल स्थिर काष्ठा clk_factors_config sun9i_a80_pll4_config = अणु
+	.mshअगरt = 18,
 	.mwidth = 1,
-	.nshift = 8,
+	.nshअगरt = 8,
 	.nwidth = 8,
-	.pshift = 16,
+	.pshअगरt = 16,
 	.pwidth = 1,
-};
+पूर्ण;
 
-static const struct factors_data sun9i_a80_pll4_data __initconst = {
+अटल स्थिर काष्ठा factors_data sun9i_a80_pll4_data __initस्थिर = अणु
 	.enable = 31,
 	.table = &sun9i_a80_pll4_config,
 	.getter = sun9i_a80_get_pll4_factors,
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(sun9i_a80_pll4_lock);
+अटल DEFINE_SPINLOCK(sun9i_a80_pll4_lock);
 
-static void __init sun9i_a80_pll4_setup(struct device_node *node)
-{
-	void __iomem *reg;
+अटल व्योम __init sun9i_a80_pll4_setup(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *reg;
 
 	reg = of_io_request_and_map(node, 0, of_node_full_name(node));
-	if (IS_ERR(reg)) {
+	अगर (IS_ERR(reg)) अणु
 		pr_err("Could not get registers for a80-pll4-clk: %pOFn\n",
 		       node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	sunxi_factors_register(node, &sun9i_a80_pll4_data,
+	sunxi_factors_रेजिस्टर(node, &sun9i_a80_pll4_data,
 			       &sun9i_a80_pll4_lock, reg);
-}
+पूर्ण
 CLK_OF_DECLARE(sun9i_a80_pll4, "allwinner,sun9i-a80-pll4-clk", sun9i_a80_pll4_setup);
 
 
 /*
- * sun9i_a80_get_gt_factors() - calculates m factor for GT
+ * sun9i_a80_get_gt_factors() - calculates m factor क्रम GT
  * GT rate is calculated as follows
  * rate = parent_rate / (m + 1);
  */
 
-static void sun9i_a80_get_gt_factors(struct factors_request *req)
-{
-	u32 div;
+अटल व्योम sun9i_a80_get_gt_factors(काष्ठा factors_request *req)
+अणु
+	u32 भाग;
 
-	if (req->parent_rate < req->rate)
+	अगर (req->parent_rate < req->rate)
 		req->rate = req->parent_rate;
 
-	div = DIV_ROUND_UP(req->parent_rate, req->rate);
+	भाग = DIV_ROUND_UP(req->parent_rate, req->rate);
 
-	/* maximum divider is 4 */
-	if (div > 4)
-		div = 4;
+	/* maximum भागider is 4 */
+	अगर (भाग > 4)
+		भाग = 4;
 
-	req->rate = req->parent_rate / div;
-	req->m = div;
-}
+	req->rate = req->parent_rate / भाग;
+	req->m = भाग;
+पूर्ण
 
-static const struct clk_factors_config sun9i_a80_gt_config = {
-	.mshift = 0,
+अटल स्थिर काष्ठा clk_factors_config sun9i_a80_gt_config = अणु
+	.mshअगरt = 0,
 	.mwidth = 2,
-};
+पूर्ण;
 
-static const struct factors_data sun9i_a80_gt_data __initconst = {
+अटल स्थिर काष्ठा factors_data sun9i_a80_gt_data __initस्थिर = अणु
 	.mux = 24,
 	.muxmask = BIT(1) | BIT(0),
 	.table = &sun9i_a80_gt_config,
 	.getter = sun9i_a80_get_gt_factors,
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(sun9i_a80_gt_lock);
+अटल DEFINE_SPINLOCK(sun9i_a80_gt_lock);
 
-static void __init sun9i_a80_gt_setup(struct device_node *node)
-{
-	void __iomem *reg;
+अटल व्योम __init sun9i_a80_gt_setup(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *reg;
 
 	reg = of_io_request_and_map(node, 0, of_node_full_name(node));
-	if (IS_ERR(reg)) {
+	अगर (IS_ERR(reg)) अणु
 		pr_err("Could not get registers for a80-gt-clk: %pOFn\n",
 		       node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* The GT bus clock needs to be always enabled */
-	sunxi_factors_register_critical(node, &sun9i_a80_gt_data,
+	/* The GT bus घड़ी needs to be always enabled */
+	sunxi_factors_रेजिस्टर_critical(node, &sun9i_a80_gt_data,
 					&sun9i_a80_gt_lock, reg);
-}
+पूर्ण
 CLK_OF_DECLARE(sun9i_a80_gt, "allwinner,sun9i-a80-gt-clk", sun9i_a80_gt_setup);
 
 
 /*
- * sun9i_a80_get_ahb_factors() - calculates p factor for AHB0/1/2
+ * sun9i_a80_get_ahb_factors() - calculates p factor क्रम AHB0/1/2
  * AHB rate is calculated as follows
  * rate = parent_rate >> p;
  */
 
-static void sun9i_a80_get_ahb_factors(struct factors_request *req)
-{
+अटल व्योम sun9i_a80_get_ahb_factors(काष्ठा factors_request *req)
+अणु
 	u32 _p;
 
-	if (req->parent_rate < req->rate)
+	अगर (req->parent_rate < req->rate)
 		req->rate = req->parent_rate;
 
 	_p = order_base_2(DIV_ROUND_UP(req->parent_rate, req->rate));
 
 	/* maximum p is 3 */
-	if (_p > 3)
+	अगर (_p > 3)
 		_p = 3;
 
 	req->rate = req->parent_rate >> _p;
 	req->p = _p;
-}
+पूर्ण
 
-static const struct clk_factors_config sun9i_a80_ahb_config = {
-	.pshift = 0,
+अटल स्थिर काष्ठा clk_factors_config sun9i_a80_ahb_config = अणु
+	.pshअगरt = 0,
 	.pwidth = 2,
-};
+पूर्ण;
 
-static const struct factors_data sun9i_a80_ahb_data __initconst = {
+अटल स्थिर काष्ठा factors_data sun9i_a80_ahb_data __initस्थिर = अणु
 	.mux = 24,
 	.muxmask = BIT(1) | BIT(0),
 	.table = &sun9i_a80_ahb_config,
 	.getter = sun9i_a80_get_ahb_factors,
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(sun9i_a80_ahb_lock);
+अटल DEFINE_SPINLOCK(sun9i_a80_ahb_lock);
 
-static void __init sun9i_a80_ahb_setup(struct device_node *node)
-{
-	void __iomem *reg;
+अटल व्योम __init sun9i_a80_ahb_setup(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *reg;
 
 	reg = of_io_request_and_map(node, 0, of_node_full_name(node));
-	if (IS_ERR(reg)) {
+	अगर (IS_ERR(reg)) अणु
 		pr_err("Could not get registers for a80-ahb-clk: %pOFn\n",
 		       node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	sunxi_factors_register(node, &sun9i_a80_ahb_data,
+	sunxi_factors_रेजिस्टर(node, &sun9i_a80_ahb_data,
 			       &sun9i_a80_ahb_lock, reg);
-}
+पूर्ण
 CLK_OF_DECLARE(sun9i_a80_ahb, "allwinner,sun9i-a80-ahb-clk", sun9i_a80_ahb_setup);
 
 
-static const struct factors_data sun9i_a80_apb0_data __initconst = {
+अटल स्थिर काष्ठा factors_data sun9i_a80_apb0_data __initस्थिर = अणु
 	.mux = 24,
 	.muxmask = BIT(0),
 	.table = &sun9i_a80_ahb_config,
 	.getter = sun9i_a80_get_ahb_factors,
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(sun9i_a80_apb0_lock);
+अटल DEFINE_SPINLOCK(sun9i_a80_apb0_lock);
 
-static void __init sun9i_a80_apb0_setup(struct device_node *node)
-{
-	void __iomem *reg;
+अटल व्योम __init sun9i_a80_apb0_setup(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *reg;
 
 	reg = of_io_request_and_map(node, 0, of_node_full_name(node));
-	if (IS_ERR(reg)) {
+	अगर (IS_ERR(reg)) अणु
 		pr_err("Could not get registers for a80-apb0-clk: %pOFn\n",
 		       node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	sunxi_factors_register(node, &sun9i_a80_apb0_data,
+	sunxi_factors_रेजिस्टर(node, &sun9i_a80_apb0_data,
 			       &sun9i_a80_apb0_lock, reg);
-}
+पूर्ण
 CLK_OF_DECLARE(sun9i_a80_apb0, "allwinner,sun9i-a80-apb0-clk", sun9i_a80_apb0_setup);
 
 
 /*
- * sun9i_a80_get_apb1_factors() - calculates m, p factors for APB1
+ * sun9i_a80_get_apb1_factors() - calculates m, p factors क्रम APB1
  * APB1 rate is calculated as follows
  * rate = (parent_rate >> p) / (m + 1);
  */
 
-static void sun9i_a80_get_apb1_factors(struct factors_request *req)
-{
-	u32 div;
+अटल व्योम sun9i_a80_get_apb1_factors(काष्ठा factors_request *req)
+अणु
+	u32 भाग;
 
-	if (req->parent_rate < req->rate)
+	अगर (req->parent_rate < req->rate)
 		req->rate = req->parent_rate;
 
-	div = DIV_ROUND_UP(req->parent_rate, req->rate);
+	भाग = DIV_ROUND_UP(req->parent_rate, req->rate);
 
-	/* Highest possible divider is 256 (p = 3, m = 31) */
-	if (div > 256)
-		div = 256;
+	/* Highest possible भागider is 256 (p = 3, m = 31) */
+	अगर (भाग > 256)
+		भाग = 256;
 
-	req->p = order_base_2(div);
+	req->p = order_base_2(भाग);
 	req->m = (req->parent_rate >> req->p) - 1;
 	req->rate = (req->parent_rate >> req->p) / (req->m + 1);
-}
+पूर्ण
 
-static const struct clk_factors_config sun9i_a80_apb1_config = {
-	.mshift = 0,
+अटल स्थिर काष्ठा clk_factors_config sun9i_a80_apb1_config = अणु
+	.mshअगरt = 0,
 	.mwidth = 5,
-	.pshift = 16,
+	.pshअगरt = 16,
 	.pwidth = 2,
-};
+पूर्ण;
 
-static const struct factors_data sun9i_a80_apb1_data __initconst = {
+अटल स्थिर काष्ठा factors_data sun9i_a80_apb1_data __initस्थिर = अणु
 	.mux = 24,
 	.muxmask = BIT(0),
 	.table = &sun9i_a80_apb1_config,
 	.getter = sun9i_a80_get_apb1_factors,
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(sun9i_a80_apb1_lock);
+अटल DEFINE_SPINLOCK(sun9i_a80_apb1_lock);
 
-static void __init sun9i_a80_apb1_setup(struct device_node *node)
-{
-	void __iomem *reg;
+अटल व्योम __init sun9i_a80_apb1_setup(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *reg;
 
 	reg = of_io_request_and_map(node, 0, of_node_full_name(node));
-	if (IS_ERR(reg)) {
+	अगर (IS_ERR(reg)) अणु
 		pr_err("Could not get registers for a80-apb1-clk: %pOFn\n",
 		       node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	sunxi_factors_register(node, &sun9i_a80_apb1_data,
+	sunxi_factors_रेजिस्टर(node, &sun9i_a80_apb1_data,
 			       &sun9i_a80_apb1_lock, reg);
-}
+पूर्ण
 CLK_OF_DECLARE(sun9i_a80_apb1, "allwinner,sun9i-a80-apb1-clk", sun9i_a80_apb1_setup);

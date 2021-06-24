@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,1567 +25,1567 @@
  *          Alex Deucher
  */
 
-#include <drm/drm_edid.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_dp_helper.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/amdgpu_drm.h>
-#include "amdgpu.h"
-#include "atom.h"
-#include "atombios_encoders.h"
-#include "atombios_dp.h"
-#include "amdgpu_connectors.h"
-#include "amdgpu_i2c.h"
-#include "amdgpu_display.h"
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_dp_helper.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/amdgpu_drm.h>
+#समावेश "amdgpu.h"
+#समावेश "atom.h"
+#समावेश "atombios_encoders.h"
+#समावेश "atombios_dp.h"
+#समावेश "amdgpu_connectors.h"
+#समावेश "amdgpu_i2c.h"
+#समावेश "amdgpu_display.h"
 
-#include <linux/pm_runtime.h>
+#समावेश <linux/pm_runसमय.स>
 
-void amdgpu_connector_hotplug(struct drm_connector *connector)
-{
-	struct drm_device *dev = connector->dev;
-	struct amdgpu_device *adev = drm_to_adev(dev);
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+व्योम amdgpu_connector_hotplug(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
 
-	/* bail if the connector does not have hpd pin, e.g.,
+	/* bail अगर the connector करोes not have hpd pin, e.g.,
 	 * VGA, TV, etc.
 	 */
-	if (amdgpu_connector->hpd.hpd == AMDGPU_HPD_NONE)
-		return;
+	अगर (amdgpu_connector->hpd.hpd == AMDGPU_HPD_NONE)
+		वापस;
 
 	amdgpu_display_hpd_set_polarity(adev, amdgpu_connector->hpd.hpd);
 
-	/* if the connector is already off, don't turn it back on */
-	if (connector->dpms != DRM_MODE_DPMS_ON)
-		return;
+	/* अगर the connector is alपढ़ोy off, करोn't turn it back on */
+	अगर (connector->dpms != DRM_MODE_DPMS_ON)
+		वापस;
 
 	/* just deal with DP (not eDP) here. */
-	if (connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort) {
-		struct amdgpu_connector_atom_dig *dig_connector =
+	अगर (connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort) अणु
+		काष्ठा amdgpu_connector_atom_dig *dig_connector =
 			amdgpu_connector->con_priv;
 
-		/* if existing sink type was not DP no need to retrain */
-		if (dig_connector->dp_sink_type != CONNECTOR_OBJECT_ID_DISPLAYPORT)
-			return;
+		/* अगर existing sink type was not DP no need to retrain */
+		अगर (dig_connector->dp_sink_type != CONNECTOR_OBJECT_ID_DISPLAYPORT)
+			वापस;
 
 		/* first get sink type as it may be reset after (un)plug */
 		dig_connector->dp_sink_type = amdgpu_atombios_dp_get_sinktype(amdgpu_connector);
-		/* don't do anything if sink is not display port, i.e.,
+		/* करोn't करो anything अगर sink is not display port, i.e.,
 		 * passive dp->(dvi|hdmi) adaptor
 		 */
-		if (dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT &&
+		अगर (dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT &&
 		    amdgpu_display_hpd_sense(adev, amdgpu_connector->hpd.hpd) &&
-		    amdgpu_atombios_dp_needs_link_train(amdgpu_connector)) {
-			/* Don't start link training before we have the DPCD */
-			if (amdgpu_atombios_dp_get_dpcd(amdgpu_connector))
-				return;
+		    amdgpu_atombios_dp_needs_link_train(amdgpu_connector)) अणु
+			/* Don't start link training beक्रमe we have the DPCD */
+			अगर (amdgpu_atombios_dp_get_dpcd(amdgpu_connector))
+				वापस;
 
 			/* Turn the connector off and back on immediately, which
 			 * will trigger link training
 			 */
 			drm_helper_connector_dpms(connector, DRM_MODE_DPMS_OFF);
 			drm_helper_connector_dpms(connector, DRM_MODE_DPMS_ON);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void amdgpu_connector_property_change_mode(struct drm_encoder *encoder)
-{
-	struct drm_crtc *crtc = encoder->crtc;
+अटल व्योम amdgpu_connector_property_change_mode(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा drm_crtc *crtc = encoder->crtc;
 
-	if (crtc && crtc->enabled) {
+	अगर (crtc && crtc->enabled) अणु
 		drm_crtc_helper_set_mode(crtc, &crtc->mode,
 					 crtc->x, crtc->y, crtc->primary->fb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int amdgpu_connector_get_monitor_bpc(struct drm_connector *connector)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	struct amdgpu_connector_atom_dig *dig_connector;
-	int bpc = 8;
-	unsigned mode_clock, max_tmds_clock;
+पूर्णांक amdgpu_connector_get_monitor_bpc(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	काष्ठा amdgpu_connector_atom_dig *dig_connector;
+	पूर्णांक bpc = 8;
+	अचिन्हित mode_घड़ी, max_पंचांगds_घड़ी;
 
-	switch (connector->connector_type) {
-	case DRM_MODE_CONNECTOR_DVII:
-	case DRM_MODE_CONNECTOR_HDMIB:
-		if (amdgpu_connector->use_digital) {
-			if (drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) {
-				if (connector->display_info.bpc)
+	चयन (connector->connector_type) अणु
+	हाल DRM_MODE_CONNECTOR_DVII:
+	हाल DRM_MODE_CONNECTOR_HDMIB:
+		अगर (amdgpu_connector->use_digital) अणु
+			अगर (drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) अणु
+				अगर (connector->display_info.bpc)
 					bpc = connector->display_info.bpc;
-			}
-		}
-		break;
-	case DRM_MODE_CONNECTOR_DVID:
-	case DRM_MODE_CONNECTOR_HDMIA:
-		if (drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) {
-			if (connector->display_info.bpc)
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल DRM_MODE_CONNECTOR_DVID:
+	हाल DRM_MODE_CONNECTOR_HDMIA:
+		अगर (drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) अणु
+			अगर (connector->display_info.bpc)
 				bpc = connector->display_info.bpc;
-		}
-		break;
-	case DRM_MODE_CONNECTOR_DisplayPort:
+		पूर्ण
+		अवरोध;
+	हाल DRM_MODE_CONNECTOR_DisplayPort:
 		dig_connector = amdgpu_connector->con_priv;
-		if ((dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) ||
+		अगर ((dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) ||
 		    (dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_eDP) ||
-		    drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) {
-			if (connector->display_info.bpc)
+		    drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) अणु
+			अगर (connector->display_info.bpc)
 				bpc = connector->display_info.bpc;
-		}
-		break;
-	case DRM_MODE_CONNECTOR_eDP:
-	case DRM_MODE_CONNECTOR_LVDS:
-		if (connector->display_info.bpc)
+		पूर्ण
+		अवरोध;
+	हाल DRM_MODE_CONNECTOR_eDP:
+	हाल DRM_MODE_CONNECTOR_LVDS:
+		अगर (connector->display_info.bpc)
 			bpc = connector->display_info.bpc;
-		else {
-			const struct drm_connector_helper_funcs *connector_funcs =
-				connector->helper_private;
-			struct drm_encoder *encoder = connector_funcs->best_encoder(connector);
-			struct amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
-			struct amdgpu_encoder_atom_dig *dig = amdgpu_encoder->enc_priv;
+		अन्यथा अणु
+			स्थिर काष्ठा drm_connector_helper_funcs *connector_funcs =
+				connector->helper_निजी;
+			काष्ठा drm_encoder *encoder = connector_funcs->best_encoder(connector);
+			काष्ठा amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
+			काष्ठा amdgpu_encoder_atom_dig *dig = amdgpu_encoder->enc_priv;
 
-			if (dig->lcd_misc & ATOM_PANEL_MISC_V13_6BIT_PER_COLOR)
+			अगर (dig->lcd_misc & ATOM_PANEL_MISC_V13_6BIT_PER_COLOR)
 				bpc = 6;
-			else if (dig->lcd_misc & ATOM_PANEL_MISC_V13_8BIT_PER_COLOR)
+			अन्यथा अगर (dig->lcd_misc & ATOM_PANEL_MISC_V13_8BIT_PER_COLOR)
 				bpc = 8;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) {
+	अगर (drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) अणु
 		/*
 		 * Pre DCE-8 hw can't handle > 12 bpc, and more than 12 bpc doesn't make
-		 * much sense without support for > 12 bpc framebuffers. RGB 4:4:4 at
+		 * much sense without support क्रम > 12 bpc framebuffers. RGB 4:4:4 at
 		 * 12 bpc is always supported on hdmi deep color sinks, as this is
 		 * required by the HDMI-1.3 spec. Clamp to a safe 12 bpc maximum.
 		 */
-		if (bpc > 12) {
+		अगर (bpc > 12) अणु
 			DRM_DEBUG("%s: HDMI deep color %d bpc unsupported. Using 12 bpc.\n",
 				  connector->name, bpc);
 			bpc = 12;
-		}
+		पूर्ण
 
-		/* Any defined maximum tmds clock limit we must not exceed? */
-		if (connector->display_info.max_tmds_clock > 0) {
-			/* mode_clock is clock in kHz for mode to be modeset on this connector */
-			mode_clock = amdgpu_connector->pixelclock_for_modeset;
+		/* Any defined maximum पंचांगds घड़ी limit we must not exceed? */
+		अगर (connector->display_info.max_पंचांगds_घड़ी > 0) अणु
+			/* mode_घड़ी is घड़ी in kHz क्रम mode to be modeset on this connector */
+			mode_घड़ी = amdgpu_connector->pixelघड़ी_क्रम_modeset;
 
-			/* Maximum allowable input clock in kHz */
-			max_tmds_clock = connector->display_info.max_tmds_clock;
+			/* Maximum allowable input घड़ी in kHz */
+			max_पंचांगds_घड़ी = connector->display_info.max_पंचांगds_घड़ी;
 
 			DRM_DEBUG("%s: hdmi mode dotclock %d kHz, max tmds input clock %d kHz.\n",
-				  connector->name, mode_clock, max_tmds_clock);
+				  connector->name, mode_घड़ी, max_पंचांगds_घड़ी);
 
-			/* Check if bpc is within clock limit. Try to degrade gracefully otherwise */
-			if ((bpc == 12) && (mode_clock * 3/2 > max_tmds_clock)) {
-				if ((connector->display_info.edid_hdmi_dc_modes & DRM_EDID_HDMI_DC_30) &&
-				    (mode_clock * 5/4 <= max_tmds_clock))
+			/* Check अगर bpc is within घड़ी limit. Try to degrade gracefully otherwise */
+			अगर ((bpc == 12) && (mode_घड़ी * 3/2 > max_पंचांगds_घड़ी)) अणु
+				अगर ((connector->display_info.edid_hdmi_dc_modes & DRM_EDID_HDMI_DC_30) &&
+				    (mode_घड़ी * 5/4 <= max_पंचांगds_घड़ी))
 					bpc = 10;
-				else
+				अन्यथा
 					bpc = 8;
 
 				DRM_DEBUG("%s: HDMI deep color 12 bpc exceeds max tmds clock. Using %d bpc.\n",
 					  connector->name, bpc);
-			}
+			पूर्ण
 
-			if ((bpc == 10) && (mode_clock * 5/4 > max_tmds_clock)) {
+			अगर ((bpc == 10) && (mode_घड़ी * 5/4 > max_पंचांगds_घड़ी)) अणु
 				bpc = 8;
 				DRM_DEBUG("%s: HDMI deep color 10 bpc exceeds max tmds clock. Using %d bpc.\n",
 					  connector->name, bpc);
-			}
-		} else if (bpc > 8) {
-			/* max_tmds_clock missing, but hdmi spec mandates it for deep color. */
+			पूर्ण
+		पूर्ण अन्यथा अगर (bpc > 8) अणु
+			/* max_पंचांगds_घड़ी missing, but hdmi spec mandates it क्रम deep color. */
 			DRM_DEBUG("%s: Required max tmds clock for HDMI deep color missing. Using 8 bpc.\n",
 				  connector->name);
 			bpc = 8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if ((amdgpu_deep_color == 0) && (bpc > 8)) {
+	अगर ((amdgpu_deep_color == 0) && (bpc > 8)) अणु
 		DRM_DEBUG("%s: Deep color disabled. Set amdgpu module param deep_color=1 to enable.\n",
 			  connector->name);
 		bpc = 8;
-	}
+	पूर्ण
 
 	DRM_DEBUG("%s: Display bpc=%d, returned bpc=%d\n",
 		  connector->name, connector->display_info.bpc, bpc);
 
-	return bpc;
-}
+	वापस bpc;
+पूर्ण
 
-static void
-amdgpu_connector_update_scratch_regs(struct drm_connector *connector,
-				      enum drm_connector_status status)
-{
-	struct drm_encoder *best_encoder;
-	struct drm_encoder *encoder;
-	const struct drm_connector_helper_funcs *connector_funcs = connector->helper_private;
+अटल व्योम
+amdgpu_connector_update_scratch_regs(काष्ठा drm_connector *connector,
+				      क्रमागत drm_connector_status status)
+अणु
+	काष्ठा drm_encoder *best_encoder;
+	काष्ठा drm_encoder *encoder;
+	स्थिर काष्ठा drm_connector_helper_funcs *connector_funcs = connector->helper_निजी;
 	bool connected;
 
 	best_encoder = connector_funcs->best_encoder(connector);
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
-		if ((encoder == best_encoder) && (status == connector_status_connected))
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
+		अगर ((encoder == best_encoder) && (status == connector_status_connected))
 			connected = true;
-		else
+		अन्यथा
 			connected = false;
 
 		amdgpu_atombios_encoder_set_bios_scratch_regs(connector, encoder, connected);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct drm_encoder *
-amdgpu_connector_find_encoder(struct drm_connector *connector,
-			       int encoder_type)
-{
-	struct drm_encoder *encoder;
+अटल काष्ठा drm_encoder *
+amdgpu_connector_find_encoder(काष्ठा drm_connector *connector,
+			       पूर्णांक encoder_type)
+अणु
+	काष्ठा drm_encoder *encoder;
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
-		if (encoder->encoder_type == encoder_type)
-			return encoder;
-	}
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
+		अगर (encoder->encoder_type == encoder_type)
+			वापस encoder;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct edid *amdgpu_connector_edid(struct drm_connector *connector)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	struct drm_property_blob *edid_blob = connector->edid_blob_ptr;
+काष्ठा edid *amdgpu_connector_edid(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	काष्ठा drm_property_blob *edid_blob = connector->edid_blob_ptr;
 
-	if (amdgpu_connector->edid) {
-		return amdgpu_connector->edid;
-	} else if (edid_blob) {
-		struct edid *edid = kmemdup(edid_blob->data, edid_blob->length, GFP_KERNEL);
-		if (edid)
+	अगर (amdgpu_connector->edid) अणु
+		वापस amdgpu_connector->edid;
+	पूर्ण अन्यथा अगर (edid_blob) अणु
+		काष्ठा edid *edid = kmemdup(edid_blob->data, edid_blob->length, GFP_KERNEL);
+		अगर (edid)
 			amdgpu_connector->edid = edid;
-	}
-	return amdgpu_connector->edid;
-}
+	पूर्ण
+	वापस amdgpu_connector->edid;
+पूर्ण
 
-static struct edid *
-amdgpu_connector_get_hardcoded_edid(struct amdgpu_device *adev)
-{
-	struct edid *edid;
+अटल काष्ठा edid *
+amdgpu_connector_get_hardcoded_edid(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा edid *edid;
 
-	if (adev->mode_info.bios_hardcoded_edid) {
-		edid = kmalloc(adev->mode_info.bios_hardcoded_edid_size, GFP_KERNEL);
-		if (edid) {
-			memcpy((unsigned char *)edid,
-			       (unsigned char *)adev->mode_info.bios_hardcoded_edid,
+	अगर (adev->mode_info.bios_hardcoded_edid) अणु
+		edid = kदो_स्मृति(adev->mode_info.bios_hardcoded_edid_size, GFP_KERNEL);
+		अगर (edid) अणु
+			स_नकल((अचिन्हित अक्षर *)edid,
+			       (अचिन्हित अक्षर *)adev->mode_info.bios_hardcoded_edid,
 			       adev->mode_info.bios_hardcoded_edid_size);
-			return edid;
-		}
-	}
-	return NULL;
-}
+			वापस edid;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void amdgpu_connector_get_edid(struct drm_connector *connector)
-{
-	struct drm_device *dev = connector->dev;
-	struct amdgpu_device *adev = drm_to_adev(dev);
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+अटल व्योम amdgpu_connector_get_edid(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
 
-	if (amdgpu_connector->edid)
-		return;
+	अगर (amdgpu_connector->edid)
+		वापस;
 
 	/* on hw with routers, select right port */
-	if (amdgpu_connector->router.ddc_valid)
+	अगर (amdgpu_connector->router.ddc_valid)
 		amdgpu_i2c_router_select_ddc_port(amdgpu_connector);
 
-	if ((amdgpu_connector_encoder_get_dp_bridge_encoder_id(connector) !=
+	अगर ((amdgpu_connector_encoder_get_dp_bridge_encoder_id(connector) !=
 	     ENCODER_OBJECT_ID_NONE) &&
-	    amdgpu_connector->ddc_bus->has_aux) {
+	    amdgpu_connector->ddc_bus->has_aux) अणु
 		amdgpu_connector->edid = drm_get_edid(connector,
 						      &amdgpu_connector->ddc_bus->aux.ddc);
-	} else if ((connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort) ||
-		   (connector->connector_type == DRM_MODE_CONNECTOR_eDP)) {
-		struct amdgpu_connector_atom_dig *dig = amdgpu_connector->con_priv;
+	पूर्ण अन्यथा अगर ((connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort) ||
+		   (connector->connector_type == DRM_MODE_CONNECTOR_eDP)) अणु
+		काष्ठा amdgpu_connector_atom_dig *dig = amdgpu_connector->con_priv;
 
-		if ((dig->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT ||
+		अगर ((dig->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT ||
 		     dig->dp_sink_type == CONNECTOR_OBJECT_ID_eDP) &&
 		    amdgpu_connector->ddc_bus->has_aux)
 			amdgpu_connector->edid = drm_get_edid(connector,
 							      &amdgpu_connector->ddc_bus->aux.ddc);
-		else if (amdgpu_connector->ddc_bus)
+		अन्यथा अगर (amdgpu_connector->ddc_bus)
 			amdgpu_connector->edid = drm_get_edid(connector,
 							      &amdgpu_connector->ddc_bus->adapter);
-	} else if (amdgpu_connector->ddc_bus) {
+	पूर्ण अन्यथा अगर (amdgpu_connector->ddc_bus) अणु
 		amdgpu_connector->edid = drm_get_edid(connector,
 						      &amdgpu_connector->ddc_bus->adapter);
-	}
+	पूर्ण
 
-	if (!amdgpu_connector->edid) {
-		/* some laptops provide a hardcoded edid in rom for LCDs */
-		if (((connector->connector_type == DRM_MODE_CONNECTOR_LVDS) ||
+	अगर (!amdgpu_connector->edid) अणु
+		/* some laptops provide a hardcoded edid in rom क्रम LCDs */
+		अगर (((connector->connector_type == DRM_MODE_CONNECTOR_LVDS) ||
 		     (connector->connector_type == DRM_MODE_CONNECTOR_eDP)))
 			amdgpu_connector->edid = amdgpu_connector_get_hardcoded_edid(adev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void amdgpu_connector_free_edid(struct drm_connector *connector)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+अटल व्योम amdgpu_connector_मुक्त_edid(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
 
-	kfree(amdgpu_connector->edid);
-	amdgpu_connector->edid = NULL;
-}
+	kमुक्त(amdgpu_connector->edid);
+	amdgpu_connector->edid = शून्य;
+पूर्ण
 
-static int amdgpu_connector_ddc_get_modes(struct drm_connector *connector)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	int ret;
+अटल पूर्णांक amdgpu_connector_ddc_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	पूर्णांक ret;
 
-	if (amdgpu_connector->edid) {
+	अगर (amdgpu_connector->edid) अणु
 		drm_connector_update_edid_property(connector, amdgpu_connector->edid);
 		ret = drm_add_edid_modes(connector, amdgpu_connector->edid);
-		return ret;
-	}
-	drm_connector_update_edid_property(connector, NULL);
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	drm_connector_update_edid_property(connector, शून्य);
+	वापस 0;
+पूर्ण
 
-static struct drm_encoder *
-amdgpu_connector_best_single_encoder(struct drm_connector *connector)
-{
-	struct drm_encoder *encoder;
+अटल काष्ठा drm_encoder *
+amdgpu_connector_best_single_encoder(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder;
 
 	/* pick the first one */
-	drm_connector_for_each_possible_encoder(connector, encoder)
-		return encoder;
+	drm_connector_क्रम_each_possible_encoder(connector, encoder)
+		वापस encoder;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void amdgpu_get_native_mode(struct drm_connector *connector)
-{
-	struct drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
-	struct amdgpu_encoder *amdgpu_encoder;
+अटल व्योम amdgpu_get_native_mode(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
+	काष्ठा amdgpu_encoder *amdgpu_encoder;
 
-	if (encoder == NULL)
-		return;
+	अगर (encoder == शून्य)
+		वापस;
 
 	amdgpu_encoder = to_amdgpu_encoder(encoder);
 
-	if (!list_empty(&connector->probed_modes)) {
-		struct drm_display_mode *preferred_mode =
+	अगर (!list_empty(&connector->probed_modes)) अणु
+		काष्ठा drm_display_mode *preferred_mode =
 			list_first_entry(&connector->probed_modes,
-					 struct drm_display_mode, head);
+					 काष्ठा drm_display_mode, head);
 
 		amdgpu_encoder->native_mode = *preferred_mode;
-	} else {
-		amdgpu_encoder->native_mode.clock = 0;
-	}
-}
+	पूर्ण अन्यथा अणु
+		amdgpu_encoder->native_mode.घड़ी = 0;
+	पूर्ण
+पूर्ण
 
-static struct drm_display_mode *
-amdgpu_connector_lcd_native_mode(struct drm_encoder *encoder)
-{
-	struct drm_device *dev = encoder->dev;
-	struct amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
-	struct drm_display_mode *mode = NULL;
-	struct drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
+अटल काष्ठा drm_display_mode *
+amdgpu_connector_lcd_native_mode(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
+	काष्ठा drm_display_mode *mode = शून्य;
+	काष्ठा drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
 
-	if (native_mode->hdisplay != 0 &&
+	अगर (native_mode->hdisplay != 0 &&
 	    native_mode->vdisplay != 0 &&
-	    native_mode->clock != 0) {
+	    native_mode->घड़ी != 0) अणु
 		mode = drm_mode_duplicate(dev, native_mode);
 		mode->type = DRM_MODE_TYPE_PREFERRED | DRM_MODE_TYPE_DRIVER;
 		drm_mode_set_name(mode);
 
 		DRM_DEBUG_KMS("Adding native panel mode %s\n", mode->name);
-	} else if (native_mode->hdisplay != 0 &&
-		   native_mode->vdisplay != 0) {
+	पूर्ण अन्यथा अगर (native_mode->hdisplay != 0 &&
+		   native_mode->vdisplay != 0) अणु
 		/* mac laptops without an edid */
 		/* Note that this is not necessarily the exact panel mode,
-		 * but an approximation based on the cvt formula.  For these
-		 * systems we should ideally read the mode info out of the
-		 * registers or add a mode table, but this works and is much
+		 * but an approximation based on the cvt क्रमmula.  For these
+		 * प्रणालीs we should ideally पढ़ो the mode info out of the
+		 * रेजिस्टरs or add a mode table, but this works and is much
 		 * simpler.
 		 */
 		mode = drm_cvt_mode(dev, native_mode->hdisplay, native_mode->vdisplay, 60, true, false, false);
 		mode->type = DRM_MODE_TYPE_PREFERRED | DRM_MODE_TYPE_DRIVER;
 		DRM_DEBUG_KMS("Adding cvt approximation of native panel mode %s\n", mode->name);
-	}
-	return mode;
-}
+	पूर्ण
+	वापस mode;
+पूर्ण
 
-static void amdgpu_connector_add_common_modes(struct drm_encoder *encoder,
-					       struct drm_connector *connector)
-{
-	struct drm_device *dev = encoder->dev;
-	struct amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
-	struct drm_display_mode *mode = NULL;
-	struct drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
-	int i;
-	static const struct mode_size {
-		int w;
-		int h;
-	} common_modes[17] = {
-		{ 640,  480},
-		{ 720,  480},
-		{ 800,  600},
-		{ 848,  480},
-		{1024,  768},
-		{1152,  768},
-		{1280,  720},
-		{1280,  800},
-		{1280,  854},
-		{1280,  960},
-		{1280, 1024},
-		{1440,  900},
-		{1400, 1050},
-		{1680, 1050},
-		{1600, 1200},
-		{1920, 1080},
-		{1920, 1200}
-	};
+अटल व्योम amdgpu_connector_add_common_modes(काष्ठा drm_encoder *encoder,
+					       काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
+	काष्ठा drm_display_mode *mode = शून्य;
+	काष्ठा drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
+	पूर्णांक i;
+	अटल स्थिर काष्ठा mode_size अणु
+		पूर्णांक w;
+		पूर्णांक h;
+	पूर्ण common_modes[17] = अणु
+		अणु 640,  480पूर्ण,
+		अणु 720,  480पूर्ण,
+		अणु 800,  600पूर्ण,
+		अणु 848,  480पूर्ण,
+		अणु1024,  768पूर्ण,
+		अणु1152,  768पूर्ण,
+		अणु1280,  720पूर्ण,
+		अणु1280,  800पूर्ण,
+		अणु1280,  854पूर्ण,
+		अणु1280,  960पूर्ण,
+		अणु1280, 1024पूर्ण,
+		अणु1440,  900पूर्ण,
+		अणु1400, 1050पूर्ण,
+		अणु1680, 1050पूर्ण,
+		अणु1600, 1200पूर्ण,
+		अणु1920, 1080पूर्ण,
+		अणु1920, 1200पूर्ण
+	पूर्ण;
 
-	for (i = 0; i < 17; i++) {
-		if (amdgpu_encoder->devices & (ATOM_DEVICE_TV_SUPPORT)) {
-			if (common_modes[i].w > 1024 ||
+	क्रम (i = 0; i < 17; i++) अणु
+		अगर (amdgpu_encoder->devices & (ATOM_DEVICE_TV_SUPPORT)) अणु
+			अगर (common_modes[i].w > 1024 ||
 			    common_modes[i].h > 768)
-				continue;
-		}
-		if (amdgpu_encoder->devices & (ATOM_DEVICE_LCD_SUPPORT)) {
-			if (common_modes[i].w > native_mode->hdisplay ||
+				जारी;
+		पूर्ण
+		अगर (amdgpu_encoder->devices & (ATOM_DEVICE_LCD_SUPPORT)) अणु
+			अगर (common_modes[i].w > native_mode->hdisplay ||
 			    common_modes[i].h > native_mode->vdisplay ||
 			    (common_modes[i].w == native_mode->hdisplay &&
 			     common_modes[i].h == native_mode->vdisplay))
-				continue;
-		}
-		if (common_modes[i].w < 320 || common_modes[i].h < 200)
-			continue;
+				जारी;
+		पूर्ण
+		अगर (common_modes[i].w < 320 || common_modes[i].h < 200)
+			जारी;
 
 		mode = drm_cvt_mode(dev, common_modes[i].w, common_modes[i].h, 60, false, false, false);
 		drm_mode_probed_add(connector, mode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int amdgpu_connector_set_property(struct drm_connector *connector,
-					  struct drm_property *property,
-					  uint64_t val)
-{
-	struct drm_device *dev = connector->dev;
-	struct amdgpu_device *adev = drm_to_adev(dev);
-	struct drm_encoder *encoder;
-	struct amdgpu_encoder *amdgpu_encoder;
+अटल पूर्णांक amdgpu_connector_set_property(काष्ठा drm_connector *connector,
+					  काष्ठा drm_property *property,
+					  uपूर्णांक64_t val)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
+	काष्ठा drm_encoder *encoder;
+	काष्ठा amdgpu_encoder *amdgpu_encoder;
 
-	if (property == adev->mode_info.coherent_mode_property) {
-		struct amdgpu_encoder_atom_dig *dig;
+	अगर (property == adev->mode_info.coherent_mode_property) अणु
+		काष्ठा amdgpu_encoder_atom_dig *dig;
 		bool new_coherent_mode;
 
 		/* need to find digital encoder on connector */
 		encoder = amdgpu_connector_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		amdgpu_encoder = to_amdgpu_encoder(encoder);
 
-		if (!amdgpu_encoder->enc_priv)
-			return 0;
+		अगर (!amdgpu_encoder->enc_priv)
+			वापस 0;
 
 		dig = amdgpu_encoder->enc_priv;
 		new_coherent_mode = val ? true : false;
-		if (dig->coherent_mode != new_coherent_mode) {
+		अगर (dig->coherent_mode != new_coherent_mode) अणु
 			dig->coherent_mode = new_coherent_mode;
 			amdgpu_connector_property_change_mode(&amdgpu_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == adev->mode_info.audio_property) {
-		struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	अगर (property == adev->mode_info.audio_property) अणु
+		काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
 		/* need to find digital encoder on connector */
 		encoder = amdgpu_connector_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		amdgpu_encoder = to_amdgpu_encoder(encoder);
 
-		if (amdgpu_connector->audio != val) {
+		अगर (amdgpu_connector->audio != val) अणु
 			amdgpu_connector->audio = val;
 			amdgpu_connector_property_change_mode(&amdgpu_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == adev->mode_info.dither_property) {
-		struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	अगर (property == adev->mode_info.dither_property) अणु
+		काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
 		/* need to find digital encoder on connector */
 		encoder = amdgpu_connector_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		amdgpu_encoder = to_amdgpu_encoder(encoder);
 
-		if (amdgpu_connector->dither != val) {
+		अगर (amdgpu_connector->dither != val) अणु
 			amdgpu_connector->dither = val;
 			amdgpu_connector_property_change_mode(&amdgpu_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == adev->mode_info.underscan_property) {
+	अगर (property == adev->mode_info.underscan_property) अणु
 		/* need to find digital encoder on connector */
 		encoder = amdgpu_connector_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		amdgpu_encoder = to_amdgpu_encoder(encoder);
 
-		if (amdgpu_encoder->underscan_type != val) {
+		अगर (amdgpu_encoder->underscan_type != val) अणु
 			amdgpu_encoder->underscan_type = val;
 			amdgpu_connector_property_change_mode(&amdgpu_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == adev->mode_info.underscan_hborder_property) {
+	अगर (property == adev->mode_info.underscan_hborder_property) अणु
 		/* need to find digital encoder on connector */
 		encoder = amdgpu_connector_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		amdgpu_encoder = to_amdgpu_encoder(encoder);
 
-		if (amdgpu_encoder->underscan_hborder != val) {
+		अगर (amdgpu_encoder->underscan_hborder != val) अणु
 			amdgpu_encoder->underscan_hborder = val;
 			amdgpu_connector_property_change_mode(&amdgpu_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == adev->mode_info.underscan_vborder_property) {
+	अगर (property == adev->mode_info.underscan_vborder_property) अणु
 		/* need to find digital encoder on connector */
 		encoder = amdgpu_connector_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		amdgpu_encoder = to_amdgpu_encoder(encoder);
 
-		if (amdgpu_encoder->underscan_vborder != val) {
+		अगर (amdgpu_encoder->underscan_vborder != val) अणु
 			amdgpu_encoder->underscan_vborder = val;
 			amdgpu_connector_property_change_mode(&amdgpu_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == adev->mode_info.load_detect_property) {
-		struct amdgpu_connector *amdgpu_connector =
+	अगर (property == adev->mode_info.load_detect_property) अणु
+		काष्ठा amdgpu_connector *amdgpu_connector =
 			to_amdgpu_connector(connector);
 
-		if (val == 0)
+		अगर (val == 0)
 			amdgpu_connector->dac_load_detect = false;
-		else
+		अन्यथा
 			amdgpu_connector->dac_load_detect = true;
-	}
+	पूर्ण
 
-	if (property == dev->mode_config.scaling_mode_property) {
-		enum amdgpu_rmx_type rmx_type;
+	अगर (property == dev->mode_config.scaling_mode_property) अणु
+		क्रमागत amdgpu_rmx_type rmx_type;
 
-		if (connector->encoder) {
+		अगर (connector->encoder) अणु
 			amdgpu_encoder = to_amdgpu_encoder(connector->encoder);
-		} else {
-			const struct drm_connector_helper_funcs *connector_funcs = connector->helper_private;
+		पूर्ण अन्यथा अणु
+			स्थिर काष्ठा drm_connector_helper_funcs *connector_funcs = connector->helper_निजी;
 			amdgpu_encoder = to_amdgpu_encoder(connector_funcs->best_encoder(connector));
-		}
+		पूर्ण
 
-		switch (val) {
-		default:
-		case DRM_MODE_SCALE_NONE: rmx_type = RMX_OFF; break;
-		case DRM_MODE_SCALE_CENTER: rmx_type = RMX_CENTER; break;
-		case DRM_MODE_SCALE_ASPECT: rmx_type = RMX_ASPECT; break;
-		case DRM_MODE_SCALE_FULLSCREEN: rmx_type = RMX_FULL; break;
-		}
-		if (amdgpu_encoder->rmx_type == rmx_type)
-			return 0;
+		चयन (val) अणु
+		शेष:
+		हाल DRM_MODE_SCALE_NONE: rmx_type = RMX_OFF; अवरोध;
+		हाल DRM_MODE_SCALE_CENTER: rmx_type = RMX_CENTER; अवरोध;
+		हाल DRM_MODE_SCALE_ASPECT: rmx_type = RMX_ASPECT; अवरोध;
+		हाल DRM_MODE_SCALE_FULLSCREEN: rmx_type = RMX_FULL; अवरोध;
+		पूर्ण
+		अगर (amdgpu_encoder->rmx_type == rmx_type)
+			वापस 0;
 
-		if ((rmx_type != DRM_MODE_SCALE_NONE) &&
-		    (amdgpu_encoder->native_mode.clock == 0))
-			return 0;
+		अगर ((rmx_type != DRM_MODE_SCALE_NONE) &&
+		    (amdgpu_encoder->native_mode.घड़ी == 0))
+			वापस 0;
 
 		amdgpu_encoder->rmx_type = rmx_type;
 
 		amdgpu_connector_property_change_mode(&amdgpu_encoder->base);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-amdgpu_connector_fixup_lcd_native_mode(struct drm_encoder *encoder,
-					struct drm_connector *connector)
-{
-	struct amdgpu_encoder *amdgpu_encoder =	to_amdgpu_encoder(encoder);
-	struct drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
-	struct drm_display_mode *t, *mode;
+अटल व्योम
+amdgpu_connector_fixup_lcd_native_mode(काष्ठा drm_encoder *encoder,
+					काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_encoder *amdgpu_encoder =	to_amdgpu_encoder(encoder);
+	काष्ठा drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
+	काष्ठा drm_display_mode *t, *mode;
 
-	/* If the EDID preferred mode doesn't match the native mode, use it */
-	list_for_each_entry_safe(mode, t, &connector->probed_modes, head) {
-		if (mode->type & DRM_MODE_TYPE_PREFERRED) {
-			if (mode->hdisplay != native_mode->hdisplay ||
+	/* If the EDID preferred mode करोesn't match the native mode, use it */
+	list_क्रम_each_entry_safe(mode, t, &connector->probed_modes, head) अणु
+		अगर (mode->type & DRM_MODE_TYPE_PREFERRED) अणु
+			अगर (mode->hdisplay != native_mode->hdisplay ||
 			    mode->vdisplay != native_mode->vdisplay)
-				memcpy(native_mode, mode, sizeof(*mode));
-		}
-	}
+				स_नकल(native_mode, mode, माप(*mode));
+		पूर्ण
+	पूर्ण
 
-	/* Try to get native mode details from EDID if necessary */
-	if (!native_mode->clock) {
-		list_for_each_entry_safe(mode, t, &connector->probed_modes, head) {
-			if (mode->hdisplay == native_mode->hdisplay &&
-			    mode->vdisplay == native_mode->vdisplay) {
+	/* Try to get native mode details from EDID अगर necessary */
+	अगर (!native_mode->घड़ी) अणु
+		list_क्रम_each_entry_safe(mode, t, &connector->probed_modes, head) अणु
+			अगर (mode->hdisplay == native_mode->hdisplay &&
+			    mode->vdisplay == native_mode->vdisplay) अणु
 				*native_mode = *mode;
 				drm_mode_set_crtcinfo(native_mode, CRTC_INTERLACE_HALVE_V);
 				DRM_DEBUG_KMS("Determined LVDS native mode details from EDID\n");
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!native_mode->clock) {
+	अगर (!native_mode->घड़ी) अणु
 		DRM_DEBUG_KMS("No LVDS native mode details, disabling RMX\n");
 		amdgpu_encoder->rmx_type = RMX_OFF;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int amdgpu_connector_lvds_get_modes(struct drm_connector *connector)
-{
-	struct drm_encoder *encoder;
-	int ret = 0;
-	struct drm_display_mode *mode;
+अटल पूर्णांक amdgpu_connector_lvds_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder;
+	पूर्णांक ret = 0;
+	काष्ठा drm_display_mode *mode;
 
 	amdgpu_connector_get_edid(connector);
 	ret = amdgpu_connector_ddc_get_modes(connector);
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		encoder = amdgpu_connector_best_single_encoder(connector);
-		if (encoder) {
+		अगर (encoder) अणु
 			amdgpu_connector_fixup_lcd_native_mode(encoder, connector);
 			/* add scaled modes */
 			amdgpu_connector_add_common_modes(encoder, connector);
-		}
-		return ret;
-	}
+		पूर्ण
+		वापस ret;
+	पूर्ण
 
 	encoder = amdgpu_connector_best_single_encoder(connector);
-	if (!encoder)
-		return 0;
+	अगर (!encoder)
+		वापस 0;
 
 	/* we have no EDID modes */
 	mode = amdgpu_connector_lcd_native_mode(encoder);
-	if (mode) {
+	अगर (mode) अणु
 		ret = 1;
 		drm_mode_probed_add(connector, mode);
-		/* add the width/height from vbios tables if available */
+		/* add the width/height from vbios tables अगर available */
 		connector->display_info.width_mm = mode->width_mm;
 		connector->display_info.height_mm = mode->height_mm;
 		/* add scaled modes */
 		amdgpu_connector_add_common_modes(encoder, connector);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum drm_mode_status amdgpu_connector_lvds_mode_valid(struct drm_connector *connector,
-					     struct drm_display_mode *mode)
-{
-	struct drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
+अटल क्रमागत drm_mode_status amdgpu_connector_lvds_mode_valid(काष्ठा drm_connector *connector,
+					     काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
 
-	if ((mode->hdisplay < 320) || (mode->vdisplay < 240))
-		return MODE_PANEL;
+	अगर ((mode->hdisplay < 320) || (mode->vdisplay < 240))
+		वापस MODE_PANEL;
 
-	if (encoder) {
-		struct amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
-		struct drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
+	अगर (encoder) अणु
+		काष्ठा amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
+		काष्ठा drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
 
-		/* AVIVO hardware supports downscaling modes larger than the panel
+		/* AVIVO hardware supports करोwnscaling modes larger than the panel
 		 * to the panel size, but I'm not sure this is desirable.
 		 */
-		if ((mode->hdisplay > native_mode->hdisplay) ||
+		अगर ((mode->hdisplay > native_mode->hdisplay) ||
 		    (mode->vdisplay > native_mode->vdisplay))
-			return MODE_PANEL;
+			वापस MODE_PANEL;
 
-		/* if scaling is disabled, block non-native modes */
-		if (amdgpu_encoder->rmx_type == RMX_OFF) {
-			if ((mode->hdisplay != native_mode->hdisplay) ||
+		/* अगर scaling is disabled, block non-native modes */
+		अगर (amdgpu_encoder->rmx_type == RMX_OFF) अणु
+			अगर ((mode->hdisplay != native_mode->hdisplay) ||
 			    (mode->vdisplay != native_mode->vdisplay))
-				return MODE_PANEL;
-		}
-	}
+				वापस MODE_PANEL;
+		पूर्ण
+	पूर्ण
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static enum drm_connector_status
-amdgpu_connector_lvds_detect(struct drm_connector *connector, bool force)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	struct drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
-	enum drm_connector_status ret = connector_status_disconnected;
-	int r;
+अटल क्रमागत drm_connector_status
+amdgpu_connector_lvds_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	काष्ठा drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
+	क्रमागत drm_connector_status ret = connector_status_disconnected;
+	पूर्णांक r;
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		r = pm_runtime_get_sync(connector->dev->dev);
-		if (r < 0) {
-			pm_runtime_put_autosuspend(connector->dev->dev);
-			return connector_status_disconnected;
-		}
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		r = pm_runसमय_get_sync(connector->dev->dev);
+		अगर (r < 0) अणु
+			pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+			वापस connector_status_disconnected;
+		पूर्ण
+	पूर्ण
 
-	if (encoder) {
-		struct amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
-		struct drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
+	अगर (encoder) अणु
+		काष्ठा amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
+		काष्ठा drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
 
-		/* check if panel is valid */
-		if (native_mode->hdisplay >= 320 && native_mode->vdisplay >= 240)
+		/* check अगर panel is valid */
+		अगर (native_mode->hdisplay >= 320 && native_mode->vdisplay >= 240)
 			ret = connector_status_connected;
 
-	}
+	पूर्ण
 
-	/* check for edid as well */
+	/* check क्रम edid as well */
 	amdgpu_connector_get_edid(connector);
-	if (amdgpu_connector->edid)
+	अगर (amdgpu_connector->edid)
 		ret = connector_status_connected;
 	/* check acpi lid status ??? */
 
 	amdgpu_connector_update_scratch_regs(connector, ret);
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		pm_runtime_mark_last_busy(connector->dev->dev);
-		pm_runtime_put_autosuspend(connector->dev->dev);
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		pm_runसमय_mark_last_busy(connector->dev->dev);
+		pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void amdgpu_connector_unregister(struct drm_connector *connector)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+अटल व्योम amdgpu_connector_unरेजिस्टर(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
 
-	if (amdgpu_connector->ddc_bus && amdgpu_connector->ddc_bus->has_aux) {
-		drm_dp_aux_unregister(&amdgpu_connector->ddc_bus->aux);
+	अगर (amdgpu_connector->ddc_bus && amdgpu_connector->ddc_bus->has_aux) अणु
+		drm_dp_aux_unरेजिस्टर(&amdgpu_connector->ddc_bus->aux);
 		amdgpu_connector->ddc_bus->has_aux = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void amdgpu_connector_destroy(struct drm_connector *connector)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+अटल व्योम amdgpu_connector_destroy(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
 
-	amdgpu_connector_free_edid(connector);
-	kfree(amdgpu_connector->con_priv);
-	drm_connector_unregister(connector);
+	amdgpu_connector_मुक्त_edid(connector);
+	kमुक्त(amdgpu_connector->con_priv);
+	drm_connector_unरेजिस्टर(connector);
 	drm_connector_cleanup(connector);
-	kfree(connector);
-}
+	kमुक्त(connector);
+पूर्ण
 
-static int amdgpu_connector_set_lcd_property(struct drm_connector *connector,
-					      struct drm_property *property,
-					      uint64_t value)
-{
-	struct drm_device *dev = connector->dev;
-	struct amdgpu_encoder *amdgpu_encoder;
-	enum amdgpu_rmx_type rmx_type;
+अटल पूर्णांक amdgpu_connector_set_lcd_property(काष्ठा drm_connector *connector,
+					      काष्ठा drm_property *property,
+					      uपूर्णांक64_t value)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा amdgpu_encoder *amdgpu_encoder;
+	क्रमागत amdgpu_rmx_type rmx_type;
 
 	DRM_DEBUG_KMS("\n");
-	if (property != dev->mode_config.scaling_mode_property)
-		return 0;
+	अगर (property != dev->mode_config.scaling_mode_property)
+		वापस 0;
 
-	if (connector->encoder)
+	अगर (connector->encoder)
 		amdgpu_encoder = to_amdgpu_encoder(connector->encoder);
-	else {
-		const struct drm_connector_helper_funcs *connector_funcs = connector->helper_private;
+	अन्यथा अणु
+		स्थिर काष्ठा drm_connector_helper_funcs *connector_funcs = connector->helper_निजी;
 		amdgpu_encoder = to_amdgpu_encoder(connector_funcs->best_encoder(connector));
-	}
+	पूर्ण
 
-	switch (value) {
-	case DRM_MODE_SCALE_NONE: rmx_type = RMX_OFF; break;
-	case DRM_MODE_SCALE_CENTER: rmx_type = RMX_CENTER; break;
-	case DRM_MODE_SCALE_ASPECT: rmx_type = RMX_ASPECT; break;
-	default:
-	case DRM_MODE_SCALE_FULLSCREEN: rmx_type = RMX_FULL; break;
-	}
-	if (amdgpu_encoder->rmx_type == rmx_type)
-		return 0;
+	चयन (value) अणु
+	हाल DRM_MODE_SCALE_NONE: rmx_type = RMX_OFF; अवरोध;
+	हाल DRM_MODE_SCALE_CENTER: rmx_type = RMX_CENTER; अवरोध;
+	हाल DRM_MODE_SCALE_ASPECT: rmx_type = RMX_ASPECT; अवरोध;
+	शेष:
+	हाल DRM_MODE_SCALE_FULLSCREEN: rmx_type = RMX_FULL; अवरोध;
+	पूर्ण
+	अगर (amdgpu_encoder->rmx_type == rmx_type)
+		वापस 0;
 
 	amdgpu_encoder->rmx_type = rmx_type;
 
 	amdgpu_connector_property_change_mode(&amdgpu_encoder->base);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct drm_connector_helper_funcs amdgpu_connector_lvds_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs amdgpu_connector_lvds_helper_funcs = अणु
 	.get_modes = amdgpu_connector_lvds_get_modes,
 	.mode_valid = amdgpu_connector_lvds_mode_valid,
 	.best_encoder = amdgpu_connector_best_single_encoder,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs amdgpu_connector_lvds_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs amdgpu_connector_lvds_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = amdgpu_connector_lvds_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
-	.early_unregister = amdgpu_connector_unregister,
+	.early_unरेजिस्टर = amdgpu_connector_unरेजिस्टर,
 	.destroy = amdgpu_connector_destroy,
 	.set_property = amdgpu_connector_set_lcd_property,
-};
+पूर्ण;
 
-static int amdgpu_connector_vga_get_modes(struct drm_connector *connector)
-{
-	int ret;
+अटल पूर्णांक amdgpu_connector_vga_get_modes(काष्ठा drm_connector *connector)
+अणु
+	पूर्णांक ret;
 
 	amdgpu_connector_get_edid(connector);
 	ret = amdgpu_connector_ddc_get_modes(connector);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum drm_mode_status amdgpu_connector_vga_mode_valid(struct drm_connector *connector,
-					    struct drm_display_mode *mode)
-{
-	struct drm_device *dev = connector->dev;
-	struct amdgpu_device *adev = drm_to_adev(dev);
+अटल क्रमागत drm_mode_status amdgpu_connector_vga_mode_valid(काष्ठा drm_connector *connector,
+					    काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
 
 	/* XXX check mode bandwidth */
 
-	if ((mode->clock / 10) > adev->clock.max_pixel_clock)
-		return MODE_CLOCK_HIGH;
+	अगर ((mode->घड़ी / 10) > adev->घड़ी.max_pixel_घड़ी)
+		वापस MODE_CLOCK_HIGH;
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static enum drm_connector_status
-amdgpu_connector_vga_detect(struct drm_connector *connector, bool force)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	struct drm_encoder *encoder;
-	const struct drm_encoder_helper_funcs *encoder_funcs;
+अटल क्रमागत drm_connector_status
+amdgpu_connector_vga_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	काष्ठा drm_encoder *encoder;
+	स्थिर काष्ठा drm_encoder_helper_funcs *encoder_funcs;
 	bool dret = false;
-	enum drm_connector_status ret = connector_status_disconnected;
-	int r;
+	क्रमागत drm_connector_status ret = connector_status_disconnected;
+	पूर्णांक r;
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		r = pm_runtime_get_sync(connector->dev->dev);
-		if (r < 0) {
-			pm_runtime_put_autosuspend(connector->dev->dev);
-			return connector_status_disconnected;
-		}
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		r = pm_runसमय_get_sync(connector->dev->dev);
+		अगर (r < 0) अणु
+			pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+			वापस connector_status_disconnected;
+		पूर्ण
+	पूर्ण
 
 	encoder = amdgpu_connector_best_single_encoder(connector);
-	if (!encoder)
+	अगर (!encoder)
 		ret = connector_status_disconnected;
 
-	if (amdgpu_connector->ddc_bus)
+	अगर (amdgpu_connector->ddc_bus)
 		dret = amdgpu_display_ddc_probe(amdgpu_connector, false);
-	if (dret) {
+	अगर (dret) अणु
 		amdgpu_connector->detected_by_load = false;
-		amdgpu_connector_free_edid(connector);
+		amdgpu_connector_मुक्त_edid(connector);
 		amdgpu_connector_get_edid(connector);
 
-		if (!amdgpu_connector->edid) {
+		अगर (!amdgpu_connector->edid) अणु
 			DRM_ERROR("%s: probed a monitor but no|invalid EDID\n",
 					connector->name);
 			ret = connector_status_connected;
-		} else {
+		पूर्ण अन्यथा अणु
 			amdgpu_connector->use_digital =
 				!!(amdgpu_connector->edid->input & DRM_EDID_INPUT_DIGITAL);
 
 			/* some oems have boards with separate digital and analog connectors
 			 * with a shared ddc line (often vga + hdmi)
 			 */
-			if (amdgpu_connector->use_digital && amdgpu_connector->shared_ddc) {
-				amdgpu_connector_free_edid(connector);
+			अगर (amdgpu_connector->use_digital && amdgpu_connector->shared_ddc) अणु
+				amdgpu_connector_मुक्त_edid(connector);
 				ret = connector_status_disconnected;
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = connector_status_connected;
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 
-		/* if we aren't forcing don't do destructive polling */
-		if (!force) {
-			/* only return the previous status if we last
+		/* अगर we aren't forcing don't करो deकाष्ठाive polling */
+		अगर (!क्रमce) अणु
+			/* only वापस the previous status अगर we last
 			 * detected a monitor via load.
 			 */
-			if (amdgpu_connector->detected_by_load)
+			अगर (amdgpu_connector->detected_by_load)
 				ret = connector->status;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (amdgpu_connector->dac_load_detect && encoder) {
-			encoder_funcs = encoder->helper_private;
+		अगर (amdgpu_connector->dac_load_detect && encoder) अणु
+			encoder_funcs = encoder->helper_निजी;
 			ret = encoder_funcs->detect(encoder, connector);
-			if (ret != connector_status_disconnected)
+			अगर (ret != connector_status_disconnected)
 				amdgpu_connector->detected_by_load = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	amdgpu_connector_update_scratch_regs(connector, ret);
 
 out:
-	if (!drm_kms_helper_is_poll_worker()) {
-		pm_runtime_mark_last_busy(connector->dev->dev);
-		pm_runtime_put_autosuspend(connector->dev->dev);
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		pm_runसमय_mark_last_busy(connector->dev->dev);
+		pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct drm_connector_helper_funcs amdgpu_connector_vga_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs amdgpu_connector_vga_helper_funcs = अणु
 	.get_modes = amdgpu_connector_vga_get_modes,
 	.mode_valid = amdgpu_connector_vga_mode_valid,
 	.best_encoder = amdgpu_connector_best_single_encoder,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs amdgpu_connector_vga_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs amdgpu_connector_vga_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = amdgpu_connector_vga_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
-	.early_unregister = amdgpu_connector_unregister,
+	.early_unरेजिस्टर = amdgpu_connector_unरेजिस्टर,
 	.destroy = amdgpu_connector_destroy,
 	.set_property = amdgpu_connector_set_property,
-};
+पूर्ण;
 
-static bool
-amdgpu_connector_check_hpd_status_unchanged(struct drm_connector *connector)
-{
-	struct drm_device *dev = connector->dev;
-	struct amdgpu_device *adev = drm_to_adev(dev);
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	enum drm_connector_status status;
+अटल bool
+amdgpu_connector_check_hpd_status_unchanged(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	क्रमागत drm_connector_status status;
 
-	if (amdgpu_connector->hpd.hpd != AMDGPU_HPD_NONE) {
-		if (amdgpu_display_hpd_sense(adev, amdgpu_connector->hpd.hpd))
+	अगर (amdgpu_connector->hpd.hpd != AMDGPU_HPD_NONE) अणु
+		अगर (amdgpu_display_hpd_sense(adev, amdgpu_connector->hpd.hpd))
 			status = connector_status_connected;
-		else
+		अन्यथा
 			status = connector_status_disconnected;
-		if (connector->status == status)
-			return true;
-	}
+		अगर (connector->status == status)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * DVI is complicated
- * Do a DDC probe, if DDC probe passes, get the full EDID so
- * we can do analog/digital monitor detection at this point.
+ * Do a DDC probe, अगर DDC probe passes, get the full EDID so
+ * we can करो analog/digital monitor detection at this poपूर्णांक.
  * If the monitor is an analog monitor or we got no DDC,
- * we need to find the DAC encoder object for this connector.
- * If we got no DDC, we do load detection on the DAC encoder object.
+ * we need to find the DAC encoder object क्रम this connector.
+ * If we got no DDC, we करो load detection on the DAC encoder object.
  * If we got analog DDC or load detection passes on the DAC encoder
- * we have to check if this analog encoder is shared with anyone else (TV)
- * if its shared we have to set the other connector to disconnected.
+ * we have to check अगर this analog encoder is shared with anyone अन्यथा (TV)
+ * अगर its shared we have to set the other connector to disconnected.
  */
-static enum drm_connector_status
-amdgpu_connector_dvi_detect(struct drm_connector *connector, bool force)
-{
-	struct drm_device *dev = connector->dev;
-	struct amdgpu_device *adev = drm_to_adev(dev);
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	const struct drm_encoder_helper_funcs *encoder_funcs;
-	int r;
-	enum drm_connector_status ret = connector_status_disconnected;
+अटल क्रमागत drm_connector_status
+amdgpu_connector_dvi_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	स्थिर काष्ठा drm_encoder_helper_funcs *encoder_funcs;
+	पूर्णांक r;
+	क्रमागत drm_connector_status ret = connector_status_disconnected;
 	bool dret = false, broken_edid = false;
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		r = pm_runtime_get_sync(connector->dev->dev);
-		if (r < 0) {
-			pm_runtime_put_autosuspend(connector->dev->dev);
-			return connector_status_disconnected;
-		}
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		r = pm_runसमय_get_sync(connector->dev->dev);
+		अगर (r < 0) अणु
+			pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+			वापस connector_status_disconnected;
+		पूर्ण
+	पूर्ण
 
-	if (!force && amdgpu_connector_check_hpd_status_unchanged(connector)) {
+	अगर (!क्रमce && amdgpu_connector_check_hpd_status_unchanged(connector)) अणु
 		ret = connector->status;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (amdgpu_connector->ddc_bus)
+	अगर (amdgpu_connector->ddc_bus)
 		dret = amdgpu_display_ddc_probe(amdgpu_connector, false);
-	if (dret) {
+	अगर (dret) अणु
 		amdgpu_connector->detected_by_load = false;
-		amdgpu_connector_free_edid(connector);
+		amdgpu_connector_मुक्त_edid(connector);
 		amdgpu_connector_get_edid(connector);
 
-		if (!amdgpu_connector->edid) {
+		अगर (!amdgpu_connector->edid) अणु
 			DRM_ERROR("%s: probed a monitor but no|invalid EDID\n",
 					connector->name);
 			ret = connector_status_connected;
 			broken_edid = true; /* defer use_digital to later */
-		} else {
+		पूर्ण अन्यथा अणु
 			amdgpu_connector->use_digital =
 				!!(amdgpu_connector->edid->input & DRM_EDID_INPUT_DIGITAL);
 
 			/* some oems have boards with separate digital and analog connectors
 			 * with a shared ddc line (often vga + hdmi)
 			 */
-			if ((!amdgpu_connector->use_digital) && amdgpu_connector->shared_ddc) {
-				amdgpu_connector_free_edid(connector);
+			अगर ((!amdgpu_connector->use_digital) && amdgpu_connector->shared_ddc) अणु
+				amdgpu_connector_मुक्त_edid(connector);
 				ret = connector_status_disconnected;
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = connector_status_connected;
-			}
+			पूर्ण
 
-			/* This gets complicated.  We have boards with VGA + HDMI with a
+			/* This माला_लो complicated.  We have boards with VGA + HDMI with a
 			 * shared DDC line and we have boards with DVI-D + HDMI with a shared
 			 * DDC line.  The latter is more complex because with DVI<->HDMI adapters
-			 * you don't really know what's connected to which port as both are digital.
+			 * you करोn't really know what's connected to which port as both are digital.
 			 */
-			if (amdgpu_connector->shared_ddc && (ret == connector_status_connected)) {
-				struct drm_connector *list_connector;
-				struct drm_connector_list_iter iter;
-				struct amdgpu_connector *list_amdgpu_connector;
+			अगर (amdgpu_connector->shared_ddc && (ret == connector_status_connected)) अणु
+				काष्ठा drm_connector *list_connector;
+				काष्ठा drm_connector_list_iter iter;
+				काष्ठा amdgpu_connector *list_amdgpu_connector;
 
 				drm_connector_list_iter_begin(dev, &iter);
-				drm_for_each_connector_iter(list_connector,
-							    &iter) {
-					if (connector == list_connector)
-						continue;
+				drm_क्रम_each_connector_iter(list_connector,
+							    &iter) अणु
+					अगर (connector == list_connector)
+						जारी;
 					list_amdgpu_connector = to_amdgpu_connector(list_connector);
-					if (list_amdgpu_connector->shared_ddc &&
+					अगर (list_amdgpu_connector->shared_ddc &&
 					    (list_amdgpu_connector->ddc_bus->rec.i2c_id ==
-					     amdgpu_connector->ddc_bus->rec.i2c_id)) {
-						/* cases where both connectors are digital */
-						if (list_connector->connector_type != DRM_MODE_CONNECTOR_VGA) {
-							/* hpd is our only option in this case */
-							if (!amdgpu_display_hpd_sense(adev, amdgpu_connector->hpd.hpd)) {
-								amdgpu_connector_free_edid(connector);
+					     amdgpu_connector->ddc_bus->rec.i2c_id)) अणु
+						/* हालs where both connectors are digital */
+						अगर (list_connector->connector_type != DRM_MODE_CONNECTOR_VGA) अणु
+							/* hpd is our only option in this हाल */
+							अगर (!amdgpu_display_hpd_sense(adev, amdgpu_connector->hpd.hpd)) अणु
+								amdgpu_connector_मुक्त_edid(connector);
 								ret = connector_status_disconnected;
-							}
-						}
-					}
-				}
+							पूर्ण
+						पूर्ण
+					पूर्ण
+				पूर्ण
 				drm_connector_list_iter_end(&iter);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if ((ret == connector_status_connected) && (amdgpu_connector->use_digital == true))
-		goto out;
+	अगर ((ret == connector_status_connected) && (amdgpu_connector->use_digital == true))
+		जाओ out;
 
 	/* DVI-D and HDMI-A are digital only */
-	if ((connector->connector_type == DRM_MODE_CONNECTOR_DVID) ||
+	अगर ((connector->connector_type == DRM_MODE_CONNECTOR_DVID) ||
 	    (connector->connector_type == DRM_MODE_CONNECTOR_HDMIA))
-		goto out;
+		जाओ out;
 
-	/* if we aren't forcing don't do destructive polling */
-	if (!force) {
-		/* only return the previous status if we last
+	/* अगर we aren't forcing don't करो deकाष्ठाive polling */
+	अगर (!क्रमce) अणु
+		/* only वापस the previous status अगर we last
 		 * detected a monitor via load.
 		 */
-		if (amdgpu_connector->detected_by_load)
+		अगर (amdgpu_connector->detected_by_load)
 			ret = connector->status;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* find analog encoder */
-	if (amdgpu_connector->dac_load_detect) {
-		struct drm_encoder *encoder;
+	अगर (amdgpu_connector->dac_load_detect) अणु
+		काष्ठा drm_encoder *encoder;
 
-		drm_connector_for_each_possible_encoder(connector, encoder) {
-			if (encoder->encoder_type != DRM_MODE_ENCODER_DAC &&
+		drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
+			अगर (encoder->encoder_type != DRM_MODE_ENCODER_DAC &&
 			    encoder->encoder_type != DRM_MODE_ENCODER_TVDAC)
-				continue;
+				जारी;
 
-			encoder_funcs = encoder->helper_private;
-			if (encoder_funcs->detect) {
-				if (!broken_edid) {
-					if (ret != connector_status_connected) {
+			encoder_funcs = encoder->helper_निजी;
+			अगर (encoder_funcs->detect) अणु
+				अगर (!broken_edid) अणु
+					अगर (ret != connector_status_connected) अणु
 						/* deal with analog monitors without DDC */
 						ret = encoder_funcs->detect(encoder, connector);
-						if (ret == connector_status_connected) {
+						अगर (ret == connector_status_connected) अणु
 							amdgpu_connector->use_digital = false;
-						}
-						if (ret != connector_status_disconnected)
+						पूर्ण
+						अगर (ret != connector_status_disconnected)
 							amdgpu_connector->detected_by_load = true;
-					}
-				} else {
-					enum drm_connector_status lret;
+					पूर्ण
+				पूर्ण अन्यथा अणु
+					क्रमागत drm_connector_status lret;
 					/* assume digital unless load detected otherwise */
 					amdgpu_connector->use_digital = true;
 					lret = encoder_funcs->detect(encoder, connector);
 					DRM_DEBUG_KMS("load_detect %x returned: %x\n",encoder->encoder_type,lret);
-					if (lret == connector_status_connected)
+					अगर (lret == connector_status_connected)
 						amdgpu_connector->use_digital = false;
-				}
-				break;
-			}
-		}
-	}
+				पूर्ण
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out:
-	/* updated in get modes as well since we need to know if it's analog or digital */
+	/* updated in get modes as well since we need to know अगर it's analog or digital */
 	amdgpu_connector_update_scratch_regs(connector, ret);
 
-exit:
-	if (!drm_kms_helper_is_poll_worker()) {
-		pm_runtime_mark_last_busy(connector->dev->dev);
-		pm_runtime_put_autosuspend(connector->dev->dev);
-	}
+निकास:
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		pm_runसमय_mark_last_busy(connector->dev->dev);
+		pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* okay need to be smart in here about which encoder to pick */
-static struct drm_encoder *
-amdgpu_connector_dvi_encoder(struct drm_connector *connector)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	struct drm_encoder *encoder;
+अटल काष्ठा drm_encoder *
+amdgpu_connector_dvi_encoder(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	काष्ठा drm_encoder *encoder;
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
-		if (amdgpu_connector->use_digital == true) {
-			if (encoder->encoder_type == DRM_MODE_ENCODER_TMDS)
-				return encoder;
-		} else {
-			if (encoder->encoder_type == DRM_MODE_ENCODER_DAC ||
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
+		अगर (amdgpu_connector->use_digital == true) अणु
+			अगर (encoder->encoder_type == DRM_MODE_ENCODER_TMDS)
+				वापस encoder;
+		पूर्ण अन्यथा अणु
+			अगर (encoder->encoder_type == DRM_MODE_ENCODER_DAC ||
 			    encoder->encoder_type == DRM_MODE_ENCODER_TVDAC)
-				return encoder;
-		}
-	}
+				वापस encoder;
+		पूर्ण
+	पूर्ण
 
-	/* see if we have a default encoder  TODO */
+	/* see अगर we have a शेष encoder  TODO */
 
 	/* then check use digitial */
 	/* pick the first one */
-	drm_connector_for_each_possible_encoder(connector, encoder)
-		return encoder;
+	drm_connector_क्रम_each_possible_encoder(connector, encoder)
+		वापस encoder;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void amdgpu_connector_dvi_force(struct drm_connector *connector)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	if (connector->force == DRM_FORCE_ON)
+अटल व्योम amdgpu_connector_dvi_क्रमce(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	अगर (connector->क्रमce == DRM_FORCE_ON)
 		amdgpu_connector->use_digital = false;
-	if (connector->force == DRM_FORCE_ON_DIGITAL)
+	अगर (connector->क्रमce == DRM_FORCE_ON_DIGITAL)
 		amdgpu_connector->use_digital = true;
-}
+पूर्ण
 
-static enum drm_mode_status amdgpu_connector_dvi_mode_valid(struct drm_connector *connector,
-					    struct drm_display_mode *mode)
-{
-	struct drm_device *dev = connector->dev;
-	struct amdgpu_device *adev = drm_to_adev(dev);
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+अटल क्रमागत drm_mode_status amdgpu_connector_dvi_mode_valid(काष्ठा drm_connector *connector,
+					    काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
 
 	/* XXX check mode bandwidth */
 
-	if (amdgpu_connector->use_digital && (mode->clock > 165000)) {
-		if ((amdgpu_connector->connector_object_id == CONNECTOR_OBJECT_ID_DUAL_LINK_DVI_I) ||
+	अगर (amdgpu_connector->use_digital && (mode->घड़ी > 165000)) अणु
+		अगर ((amdgpu_connector->connector_object_id == CONNECTOR_OBJECT_ID_DUAL_LINK_DVI_I) ||
 		    (amdgpu_connector->connector_object_id == CONNECTOR_OBJECT_ID_DUAL_LINK_DVI_D) ||
-		    (amdgpu_connector->connector_object_id == CONNECTOR_OBJECT_ID_HDMI_TYPE_B)) {
-			return MODE_OK;
-		} else if (drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) {
-			/* HDMI 1.3+ supports max clock of 340 Mhz */
-			if (mode->clock > 340000)
-				return MODE_CLOCK_HIGH;
-			else
-				return MODE_OK;
-		} else {
-			return MODE_CLOCK_HIGH;
-		}
-	}
+		    (amdgpu_connector->connector_object_id == CONNECTOR_OBJECT_ID_HDMI_TYPE_B)) अणु
+			वापस MODE_OK;
+		पूर्ण अन्यथा अगर (drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) अणु
+			/* HDMI 1.3+ supports max घड़ी of 340 Mhz */
+			अगर (mode->घड़ी > 340000)
+				वापस MODE_CLOCK_HIGH;
+			अन्यथा
+				वापस MODE_OK;
+		पूर्ण अन्यथा अणु
+			वापस MODE_CLOCK_HIGH;
+		पूर्ण
+	पूर्ण
 
-	/* check against the max pixel clock */
-	if ((mode->clock / 10) > adev->clock.max_pixel_clock)
-		return MODE_CLOCK_HIGH;
+	/* check against the max pixel घड़ी */
+	अगर ((mode->घड़ी / 10) > adev->घड़ी.max_pixel_घड़ी)
+		वापस MODE_CLOCK_HIGH;
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static const struct drm_connector_helper_funcs amdgpu_connector_dvi_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs amdgpu_connector_dvi_helper_funcs = अणु
 	.get_modes = amdgpu_connector_vga_get_modes,
 	.mode_valid = amdgpu_connector_dvi_mode_valid,
 	.best_encoder = amdgpu_connector_dvi_encoder,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs amdgpu_connector_dvi_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs amdgpu_connector_dvi_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = amdgpu_connector_dvi_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.set_property = amdgpu_connector_set_property,
-	.early_unregister = amdgpu_connector_unregister,
+	.early_unरेजिस्टर = amdgpu_connector_unरेजिस्टर,
 	.destroy = amdgpu_connector_destroy,
-	.force = amdgpu_connector_dvi_force,
-};
+	.क्रमce = amdgpu_connector_dvi_क्रमce,
+पूर्ण;
 
-static int amdgpu_connector_dp_get_modes(struct drm_connector *connector)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	struct amdgpu_connector_atom_dig *amdgpu_dig_connector = amdgpu_connector->con_priv;
-	struct drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
-	int ret;
+अटल पूर्णांक amdgpu_connector_dp_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	काष्ठा amdgpu_connector_atom_dig *amdgpu_dig_connector = amdgpu_connector->con_priv;
+	काष्ठा drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
+	पूर्णांक ret;
 
-	if ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
-	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) {
-		struct drm_display_mode *mode;
+	अगर ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
+	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) अणु
+		काष्ठा drm_display_mode *mode;
 
-		if (connector->connector_type == DRM_MODE_CONNECTOR_eDP) {
-			if (!amdgpu_dig_connector->edp_on)
-				amdgpu_atombios_encoder_set_edp_panel_power(connector,
+		अगर (connector->connector_type == DRM_MODE_CONNECTOR_eDP) अणु
+			अगर (!amdgpu_dig_connector->edp_on)
+				amdgpu_atombios_encoder_set_edp_panel_घातer(connector,
 								     ATOM_TRANSMITTER_ACTION_POWER_ON);
 			amdgpu_connector_get_edid(connector);
 			ret = amdgpu_connector_ddc_get_modes(connector);
-			if (!amdgpu_dig_connector->edp_on)
-				amdgpu_atombios_encoder_set_edp_panel_power(connector,
+			अगर (!amdgpu_dig_connector->edp_on)
+				amdgpu_atombios_encoder_set_edp_panel_घातer(connector,
 								     ATOM_TRANSMITTER_ACTION_POWER_OFF);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* need to setup ddc on the bridge */
-			if (amdgpu_connector_encoder_get_dp_bridge_encoder_id(connector) !=
-			    ENCODER_OBJECT_ID_NONE) {
-				if (encoder)
+			अगर (amdgpu_connector_encoder_get_dp_bridge_encoder_id(connector) !=
+			    ENCODER_OBJECT_ID_NONE) अणु
+				अगर (encoder)
 					amdgpu_atombios_encoder_setup_ext_encoder_ddc(encoder);
-			}
+			पूर्ण
 			amdgpu_connector_get_edid(connector);
 			ret = amdgpu_connector_ddc_get_modes(connector);
-		}
+		पूर्ण
 
-		if (ret > 0) {
-			if (encoder) {
+		अगर (ret > 0) अणु
+			अगर (encoder) अणु
 				amdgpu_connector_fixup_lcd_native_mode(encoder, connector);
 				/* add scaled modes */
 				amdgpu_connector_add_common_modes(encoder, connector);
-			}
-			return ret;
-		}
+			पूर्ण
+			वापस ret;
+		पूर्ण
 
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		/* we have no EDID modes */
 		mode = amdgpu_connector_lcd_native_mode(encoder);
-		if (mode) {
+		अगर (mode) अणु
 			ret = 1;
 			drm_mode_probed_add(connector, mode);
-			/* add the width/height from vbios tables if available */
+			/* add the width/height from vbios tables अगर available */
 			connector->display_info.width_mm = mode->width_mm;
 			connector->display_info.height_mm = mode->height_mm;
 			/* add scaled modes */
 			amdgpu_connector_add_common_modes(encoder, connector);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* need to setup ddc on the bridge */
-		if (amdgpu_connector_encoder_get_dp_bridge_encoder_id(connector) !=
-			ENCODER_OBJECT_ID_NONE) {
-			if (encoder)
+		अगर (amdgpu_connector_encoder_get_dp_bridge_encoder_id(connector) !=
+			ENCODER_OBJECT_ID_NONE) अणु
+			अगर (encoder)
 				amdgpu_atombios_encoder_setup_ext_encoder_ddc(encoder);
-		}
+		पूर्ण
 		amdgpu_connector_get_edid(connector);
 		ret = amdgpu_connector_ddc_get_modes(connector);
 
 		amdgpu_get_native_mode(connector);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-u16 amdgpu_connector_encoder_get_dp_bridge_encoder_id(struct drm_connector *connector)
-{
-	struct drm_encoder *encoder;
-	struct amdgpu_encoder *amdgpu_encoder;
+u16 amdgpu_connector_encoder_get_dp_bridge_encoder_id(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder;
+	काष्ठा amdgpu_encoder *amdgpu_encoder;
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
 		amdgpu_encoder = to_amdgpu_encoder(encoder);
 
-		switch (amdgpu_encoder->encoder_id) {
-		case ENCODER_OBJECT_ID_TRAVIS:
-		case ENCODER_OBJECT_ID_NUTMEG:
-			return amdgpu_encoder->encoder_id;
-		default:
-			break;
-		}
-	}
+		चयन (amdgpu_encoder->encoder_id) अणु
+		हाल ENCODER_OBJECT_ID_TRAVIS:
+		हाल ENCODER_OBJECT_ID_NUTMEG:
+			वापस amdgpu_encoder->encoder_id;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ENCODER_OBJECT_ID_NONE;
-}
+	वापस ENCODER_OBJECT_ID_NONE;
+पूर्ण
 
-static bool amdgpu_connector_encoder_is_hbr2(struct drm_connector *connector)
-{
-	struct drm_encoder *encoder;
-	struct amdgpu_encoder *amdgpu_encoder;
+अटल bool amdgpu_connector_encoder_is_hbr2(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder;
+	काष्ठा amdgpu_encoder *amdgpu_encoder;
 	bool found = false;
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
 		amdgpu_encoder = to_amdgpu_encoder(encoder);
-		if (amdgpu_encoder->caps & ATOM_ENCODER_CAP_RECORD_HBR2)
+		अगर (amdgpu_encoder->caps & ATOM_ENCODER_CAP_RECORD_HBR2)
 			found = true;
-	}
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-bool amdgpu_connector_is_dp12_capable(struct drm_connector *connector)
-{
-	struct drm_device *dev = connector->dev;
-	struct amdgpu_device *adev = drm_to_adev(dev);
+bool amdgpu_connector_is_dp12_capable(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
 
-	if ((adev->clock.default_dispclk >= 53900) &&
-	    amdgpu_connector_encoder_is_hbr2(connector)) {
-		return true;
-	}
+	अगर ((adev->घड़ी.शेष_dispclk >= 53900) &&
+	    amdgpu_connector_encoder_is_hbr2(connector)) अणु
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static enum drm_connector_status
-amdgpu_connector_dp_detect(struct drm_connector *connector, bool force)
-{
-	struct drm_device *dev = connector->dev;
-	struct amdgpu_device *adev = drm_to_adev(dev);
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	enum drm_connector_status ret = connector_status_disconnected;
-	struct amdgpu_connector_atom_dig *amdgpu_dig_connector = amdgpu_connector->con_priv;
-	struct drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
-	int r;
+अटल क्रमागत drm_connector_status
+amdgpu_connector_dp_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	क्रमागत drm_connector_status ret = connector_status_disconnected;
+	काष्ठा amdgpu_connector_atom_dig *amdgpu_dig_connector = amdgpu_connector->con_priv;
+	काष्ठा drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
+	पूर्णांक r;
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		r = pm_runtime_get_sync(connector->dev->dev);
-		if (r < 0) {
-			pm_runtime_put_autosuspend(connector->dev->dev);
-			return connector_status_disconnected;
-		}
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		r = pm_runसमय_get_sync(connector->dev->dev);
+		अगर (r < 0) अणु
+			pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+			वापस connector_status_disconnected;
+		पूर्ण
+	पूर्ण
 
-	if (!force && amdgpu_connector_check_hpd_status_unchanged(connector)) {
+	अगर (!क्रमce && amdgpu_connector_check_hpd_status_unchanged(connector)) अणु
 		ret = connector->status;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	amdgpu_connector_free_edid(connector);
+	amdgpu_connector_मुक्त_edid(connector);
 
-	if ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
-	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) {
-		if (encoder) {
-			struct amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
-			struct drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
+	अगर ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
+	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) अणु
+		अगर (encoder) अणु
+			काष्ठा amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
+			काष्ठा drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
 
-			/* check if panel is valid */
-			if (native_mode->hdisplay >= 320 && native_mode->vdisplay >= 240)
+			/* check अगर panel is valid */
+			अगर (native_mode->hdisplay >= 320 && native_mode->vdisplay >= 240)
 				ret = connector_status_connected;
-		}
+		पूर्ण
 		/* eDP is always DP */
 		amdgpu_dig_connector->dp_sink_type = CONNECTOR_OBJECT_ID_DISPLAYPORT;
-		if (!amdgpu_dig_connector->edp_on)
-			amdgpu_atombios_encoder_set_edp_panel_power(connector,
+		अगर (!amdgpu_dig_connector->edp_on)
+			amdgpu_atombios_encoder_set_edp_panel_घातer(connector,
 							     ATOM_TRANSMITTER_ACTION_POWER_ON);
-		if (!amdgpu_atombios_dp_get_dpcd(amdgpu_connector))
+		अगर (!amdgpu_atombios_dp_get_dpcd(amdgpu_connector))
 			ret = connector_status_connected;
-		if (!amdgpu_dig_connector->edp_on)
-			amdgpu_atombios_encoder_set_edp_panel_power(connector,
+		अगर (!amdgpu_dig_connector->edp_on)
+			amdgpu_atombios_encoder_set_edp_panel_घातer(connector,
 							     ATOM_TRANSMITTER_ACTION_POWER_OFF);
-	} else if (amdgpu_connector_encoder_get_dp_bridge_encoder_id(connector) !=
-		   ENCODER_OBJECT_ID_NONE) {
+	पूर्ण अन्यथा अगर (amdgpu_connector_encoder_get_dp_bridge_encoder_id(connector) !=
+		   ENCODER_OBJECT_ID_NONE) अणु
 		/* DP bridges are always DP */
 		amdgpu_dig_connector->dp_sink_type = CONNECTOR_OBJECT_ID_DISPLAYPORT;
 		/* get the DPCD from the bridge */
 		amdgpu_atombios_dp_get_dpcd(amdgpu_connector);
 
-		if (encoder) {
+		अगर (encoder) अणु
 			/* setup ddc on the bridge */
 			amdgpu_atombios_encoder_setup_ext_encoder_ddc(encoder);
 			/* bridge chips are always aux */
 			/* try DDC */
-			if (amdgpu_display_ddc_probe(amdgpu_connector, true))
+			अगर (amdgpu_display_ddc_probe(amdgpu_connector, true))
 				ret = connector_status_connected;
-			else if (amdgpu_connector->dac_load_detect) { /* try load detection */
-				const struct drm_encoder_helper_funcs *encoder_funcs = encoder->helper_private;
+			अन्यथा अगर (amdgpu_connector->dac_load_detect) अणु /* try load detection */
+				स्थिर काष्ठा drm_encoder_helper_funcs *encoder_funcs = encoder->helper_निजी;
 				ret = encoder_funcs->detect(encoder, connector);
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		amdgpu_dig_connector->dp_sink_type =
 			amdgpu_atombios_dp_get_sinktype(amdgpu_connector);
-		if (amdgpu_display_hpd_sense(adev, amdgpu_connector->hpd.hpd)) {
+		अगर (amdgpu_display_hpd_sense(adev, amdgpu_connector->hpd.hpd)) अणु
 			ret = connector_status_connected;
-			if (amdgpu_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT)
+			अगर (amdgpu_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT)
 				amdgpu_atombios_dp_get_dpcd(amdgpu_connector);
-		} else {
-			if (amdgpu_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) {
-				if (!amdgpu_atombios_dp_get_dpcd(amdgpu_connector))
+		पूर्ण अन्यथा अणु
+			अगर (amdgpu_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) अणु
+				अगर (!amdgpu_atombios_dp_get_dpcd(amdgpu_connector))
 					ret = connector_status_connected;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* try non-aux ddc (DP to DVI/HDMI/etc. adapter) */
-				if (amdgpu_display_ddc_probe(amdgpu_connector,
+				अगर (amdgpu_display_ddc_probe(amdgpu_connector,
 							     false))
 					ret = connector_status_connected;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	amdgpu_connector_update_scratch_regs(connector, ret);
 out:
-	if (!drm_kms_helper_is_poll_worker()) {
-		pm_runtime_mark_last_busy(connector->dev->dev);
-		pm_runtime_put_autosuspend(connector->dev->dev);
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		pm_runसमय_mark_last_busy(connector->dev->dev);
+		pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+	पूर्ण
 
-	if (connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort ||
+	अगर (connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort ||
 	    connector->connector_type == DRM_MODE_CONNECTOR_eDP)
 		drm_dp_set_subconnector_property(&amdgpu_connector->base,
 						 ret,
 						 amdgpu_dig_connector->dpcd,
-						 amdgpu_dig_connector->downstream_ports);
-	return ret;
-}
+						 amdgpu_dig_connector->करोwnstream_ports);
+	वापस ret;
+पूर्ण
 
-static enum drm_mode_status amdgpu_connector_dp_mode_valid(struct drm_connector *connector,
-					   struct drm_display_mode *mode)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	struct amdgpu_connector_atom_dig *amdgpu_dig_connector = amdgpu_connector->con_priv;
+अटल क्रमागत drm_mode_status amdgpu_connector_dp_mode_valid(काष्ठा drm_connector *connector,
+					   काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	काष्ठा amdgpu_connector_atom_dig *amdgpu_dig_connector = amdgpu_connector->con_priv;
 
 	/* XXX check mode bandwidth */
 
-	if ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
-	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) {
-		struct drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
+	अगर ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
+	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) अणु
+		काष्ठा drm_encoder *encoder = amdgpu_connector_best_single_encoder(connector);
 
-		if ((mode->hdisplay < 320) || (mode->vdisplay < 240))
-			return MODE_PANEL;
+		अगर ((mode->hdisplay < 320) || (mode->vdisplay < 240))
+			वापस MODE_PANEL;
 
-		if (encoder) {
-			struct amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
-			struct drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
+		अगर (encoder) अणु
+			काष्ठा amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
+			काष्ठा drm_display_mode *native_mode = &amdgpu_encoder->native_mode;
 
-			/* AVIVO hardware supports downscaling modes larger than the panel
+			/* AVIVO hardware supports करोwnscaling modes larger than the panel
 			 * to the panel size, but I'm not sure this is desirable.
 			 */
-			if ((mode->hdisplay > native_mode->hdisplay) ||
+			अगर ((mode->hdisplay > native_mode->hdisplay) ||
 			    (mode->vdisplay > native_mode->vdisplay))
-				return MODE_PANEL;
+				वापस MODE_PANEL;
 
-			/* if scaling is disabled, block non-native modes */
-			if (amdgpu_encoder->rmx_type == RMX_OFF) {
-				if ((mode->hdisplay != native_mode->hdisplay) ||
+			/* अगर scaling is disabled, block non-native modes */
+			अगर (amdgpu_encoder->rmx_type == RMX_OFF) अणु
+				अगर ((mode->hdisplay != native_mode->hdisplay) ||
 				    (mode->vdisplay != native_mode->vdisplay))
-					return MODE_PANEL;
-			}
-		}
-		return MODE_OK;
-	} else {
-		if ((amdgpu_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) ||
-		    (amdgpu_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_eDP)) {
-			return amdgpu_atombios_dp_mode_valid_helper(connector, mode);
-		} else {
-			if (drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) {
-				/* HDMI 1.3+ supports max clock of 340 Mhz */
-				if (mode->clock > 340000)
-					return MODE_CLOCK_HIGH;
-			} else {
-				if (mode->clock > 165000)
-					return MODE_CLOCK_HIGH;
-			}
-		}
-	}
+					वापस MODE_PANEL;
+			पूर्ण
+		पूर्ण
+		वापस MODE_OK;
+	पूर्ण अन्यथा अणु
+		अगर ((amdgpu_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) ||
+		    (amdgpu_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_eDP)) अणु
+			वापस amdgpu_atombios_dp_mode_valid_helper(connector, mode);
+		पूर्ण अन्यथा अणु
+			अगर (drm_detect_hdmi_monitor(amdgpu_connector_edid(connector))) अणु
+				/* HDMI 1.3+ supports max घड़ी of 340 Mhz */
+				अगर (mode->घड़ी > 340000)
+					वापस MODE_CLOCK_HIGH;
+			पूर्ण अन्यथा अणु
+				अगर (mode->घड़ी > 165000)
+					वापस MODE_CLOCK_HIGH;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static int
-amdgpu_connector_late_register(struct drm_connector *connector)
-{
-	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
-	int r = 0;
+अटल पूर्णांक
+amdgpu_connector_late_रेजिस्टर(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+	पूर्णांक r = 0;
 
-	if (amdgpu_connector->ddc_bus->has_aux) {
+	अगर (amdgpu_connector->ddc_bus->has_aux) अणु
 		amdgpu_connector->ddc_bus->aux.dev = amdgpu_connector->base.kdev;
-		r = drm_dp_aux_register(&amdgpu_connector->ddc_bus->aux);
-	}
+		r = drm_dp_aux_रेजिस्टर(&amdgpu_connector->ddc_bus->aux);
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static const struct drm_connector_helper_funcs amdgpu_connector_dp_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs amdgpu_connector_dp_helper_funcs = अणु
 	.get_modes = amdgpu_connector_dp_get_modes,
 	.mode_valid = amdgpu_connector_dp_mode_valid,
 	.best_encoder = amdgpu_connector_dvi_encoder,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs amdgpu_connector_dp_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs amdgpu_connector_dp_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = amdgpu_connector_dp_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.set_property = amdgpu_connector_set_property,
-	.early_unregister = amdgpu_connector_unregister,
+	.early_unरेजिस्टर = amdgpu_connector_unरेजिस्टर,
 	.destroy = amdgpu_connector_destroy,
-	.force = amdgpu_connector_dvi_force,
-	.late_register = amdgpu_connector_late_register,
-};
+	.क्रमce = amdgpu_connector_dvi_क्रमce,
+	.late_रेजिस्टर = amdgpu_connector_late_रेजिस्टर,
+पूर्ण;
 
-static const struct drm_connector_funcs amdgpu_connector_edp_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs amdgpu_connector_edp_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = amdgpu_connector_dp_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.set_property = amdgpu_connector_set_lcd_property,
-	.early_unregister = amdgpu_connector_unregister,
+	.early_unरेजिस्टर = amdgpu_connector_unरेजिस्टर,
 	.destroy = amdgpu_connector_destroy,
-	.force = amdgpu_connector_dvi_force,
-	.late_register = amdgpu_connector_late_register,
-};
+	.क्रमce = amdgpu_connector_dvi_क्रमce,
+	.late_रेजिस्टर = amdgpu_connector_late_रेजिस्टर,
+पूर्ण;
 
-void
-amdgpu_connector_add(struct amdgpu_device *adev,
-		      uint32_t connector_id,
-		      uint32_t supported_device,
-		      int connector_type,
-		      struct amdgpu_i2c_bus_rec *i2c_bus,
-		      uint16_t connector_object_id,
-		      struct amdgpu_hpd *hpd,
-		      struct amdgpu_router *router)
-{
-	struct drm_device *dev = adev_to_drm(adev);
-	struct drm_connector *connector;
-	struct drm_connector_list_iter iter;
-	struct amdgpu_connector *amdgpu_connector;
-	struct amdgpu_connector_atom_dig *amdgpu_dig_connector;
-	struct drm_encoder *encoder;
-	struct amdgpu_encoder *amdgpu_encoder;
-	struct i2c_adapter *ddc = NULL;
-	uint32_t subpixel_order = SubPixelNone;
+व्योम
+amdgpu_connector_add(काष्ठा amdgpu_device *adev,
+		      uपूर्णांक32_t connector_id,
+		      uपूर्णांक32_t supported_device,
+		      पूर्णांक connector_type,
+		      काष्ठा amdgpu_i2c_bus_rec *i2c_bus,
+		      uपूर्णांक16_t connector_object_id,
+		      काष्ठा amdgpu_hpd *hpd,
+		      काष्ठा amdgpu_router *router)
+अणु
+	काष्ठा drm_device *dev = adev_to_drm(adev);
+	काष्ठा drm_connector *connector;
+	काष्ठा drm_connector_list_iter iter;
+	काष्ठा amdgpu_connector *amdgpu_connector;
+	काष्ठा amdgpu_connector_atom_dig *amdgpu_dig_connector;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा amdgpu_encoder *amdgpu_encoder;
+	काष्ठा i2c_adapter *ddc = शून्य;
+	uपूर्णांक32_t subpixel_order = SubPixelNone;
 	bool shared_ddc = false;
 	bool is_dp_bridge = false;
 	bool has_aux = false;
 
-	if (connector_type == DRM_MODE_CONNECTOR_Unknown)
-		return;
+	अगर (connector_type == DRM_MODE_CONNECTOR_Unknown)
+		वापस;
 
-	/* see if we already added it */
+	/* see अगर we alपढ़ोy added it */
 	drm_connector_list_iter_begin(dev, &iter);
-	drm_for_each_connector_iter(connector, &iter) {
+	drm_क्रम_each_connector_iter(connector, &iter) अणु
 		amdgpu_connector = to_amdgpu_connector(connector);
-		if (amdgpu_connector->connector_id == connector_id) {
+		अगर (amdgpu_connector->connector_id == connector_id) अणु
 			amdgpu_connector->devices |= supported_device;
 			drm_connector_list_iter_end(&iter);
-			return;
-		}
-		if (amdgpu_connector->ddc_bus && i2c_bus->valid) {
-			if (amdgpu_connector->ddc_bus->rec.i2c_id == i2c_bus->i2c_id) {
+			वापस;
+		पूर्ण
+		अगर (amdgpu_connector->ddc_bus && i2c_bus->valid) अणु
+			अगर (amdgpu_connector->ddc_bus->rec.i2c_id == i2c_bus->i2c_id) अणु
 				amdgpu_connector->shared_ddc = true;
 				shared_ddc = true;
-			}
-			if (amdgpu_connector->router_bus && router->ddc_valid &&
-			    (amdgpu_connector->router.router_id == router->router_id)) {
+			पूर्ण
+			अगर (amdgpu_connector->router_bus && router->ddc_valid &&
+			    (amdgpu_connector->router.router_id == router->router_id)) अणु
 				amdgpu_connector->shared_ddc = false;
 				shared_ddc = false;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	drm_connector_list_iter_end(&iter);
 
-	/* check if it's a dp bridge */
-	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
+	/* check अगर it's a dp bridge */
+	list_क्रम_each_entry(encoder, &dev->mode_config.encoder_list, head) अणु
 		amdgpu_encoder = to_amdgpu_encoder(encoder);
-		if (amdgpu_encoder->devices & supported_device) {
-			switch (amdgpu_encoder->encoder_id) {
-			case ENCODER_OBJECT_ID_TRAVIS:
-			case ENCODER_OBJECT_ID_NUTMEG:
+		अगर (amdgpu_encoder->devices & supported_device) अणु
+			चयन (amdgpu_encoder->encoder_id) अणु
+			हाल ENCODER_OBJECT_ID_TRAVIS:
+			हाल ENCODER_OBJECT_ID_NUTMEG:
 				is_dp_bridge = true;
-				break;
-			default:
-				break;
-			}
-		}
-	}
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	amdgpu_connector = kzalloc(sizeof(struct amdgpu_connector), GFP_KERNEL);
-	if (!amdgpu_connector)
-		return;
+	amdgpu_connector = kzalloc(माप(काष्ठा amdgpu_connector), GFP_KERNEL);
+	अगर (!amdgpu_connector)
+		वापस;
 
 	connector = &amdgpu_connector->base;
 
@@ -1595,38 +1596,38 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 	amdgpu_connector->hpd = *hpd;
 
 	amdgpu_connector->router = *router;
-	if (router->ddc_valid || router->cd_valid) {
+	अगर (router->ddc_valid || router->cd_valid) अणु
 		amdgpu_connector->router_bus = amdgpu_i2c_lookup(adev, &router->i2c_info);
-		if (!amdgpu_connector->router_bus)
+		अगर (!amdgpu_connector->router_bus)
 			DRM_ERROR("Failed to assign router i2c bus! Check dmesg for i2c errors.\n");
-	}
+	पूर्ण
 
-	if (is_dp_bridge) {
-		amdgpu_dig_connector = kzalloc(sizeof(struct amdgpu_connector_atom_dig), GFP_KERNEL);
-		if (!amdgpu_dig_connector)
-			goto failed;
+	अगर (is_dp_bridge) अणु
+		amdgpu_dig_connector = kzalloc(माप(काष्ठा amdgpu_connector_atom_dig), GFP_KERNEL);
+		अगर (!amdgpu_dig_connector)
+			जाओ failed;
 		amdgpu_connector->con_priv = amdgpu_dig_connector;
-		if (i2c_bus->valid) {
+		अगर (i2c_bus->valid) अणु
 			amdgpu_connector->ddc_bus = amdgpu_i2c_lookup(adev, i2c_bus);
-			if (amdgpu_connector->ddc_bus) {
+			अगर (amdgpu_connector->ddc_bus) अणु
 				has_aux = true;
 				ddc = &amdgpu_connector->ddc_bus->adapter;
-			} else {
+			पूर्ण अन्यथा अणु
 				DRM_ERROR("DP: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-			}
-		}
-		switch (connector_type) {
-		case DRM_MODE_CONNECTOR_VGA:
-		case DRM_MODE_CONNECTOR_DVIA:
-		default:
+			पूर्ण
+		पूर्ण
+		चयन (connector_type) अणु
+		हाल DRM_MODE_CONNECTOR_VGA:
+		हाल DRM_MODE_CONNECTOR_DVIA:
+		शेष:
 			drm_connector_init_with_ddc(dev, &amdgpu_connector->base,
 						    &amdgpu_connector_dp_funcs,
 						    connector_type,
 						    ddc);
 			drm_connector_helper_add(&amdgpu_connector->base,
 						 &amdgpu_connector_dp_helper_funcs);
-			connector->interlace_allowed = true;
-			connector->doublescan_allowed = true;
+			connector->पूर्णांकerlace_allowed = true;
+			connector->द्विगुनscan_allowed = true;
 			amdgpu_connector->dac_load_detect = true;
 			drm_object_attach_property(&amdgpu_connector->base.base,
 						      adev->mode_info.load_detect_property,
@@ -1634,12 +1635,12 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 			drm_object_attach_property(&amdgpu_connector->base.base,
 						   dev->mode_config.scaling_mode_property,
 						   DRM_MODE_SCALE_NONE);
-			break;
-		case DRM_MODE_CONNECTOR_DVII:
-		case DRM_MODE_CONNECTOR_DVID:
-		case DRM_MODE_CONNECTOR_HDMIA:
-		case DRM_MODE_CONNECTOR_HDMIB:
-		case DRM_MODE_CONNECTOR_DisplayPort:
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_DVII:
+		हाल DRM_MODE_CONNECTOR_DVID:
+		हाल DRM_MODE_CONNECTOR_HDMIA:
+		हाल DRM_MODE_CONNECTOR_HDMIB:
+		हाल DRM_MODE_CONNECTOR_DisplayPort:
 			drm_connector_init_with_ddc(dev, &amdgpu_connector->base,
 						    &amdgpu_connector_dp_funcs,
 						    connector_type,
@@ -1664,26 +1665,26 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 						   adev->mode_info.dither_property,
 						   AMDGPU_FMT_DITHER_DISABLE);
 
-			if (amdgpu_audio != 0)
+			अगर (amdgpu_audio != 0)
 				drm_object_attach_property(&amdgpu_connector->base.base,
 							   adev->mode_info.audio_property,
 							   AMDGPU_AUDIO_AUTO);
 
 			subpixel_order = SubPixelHorizontalRGB;
-			connector->interlace_allowed = true;
-			if (connector_type == DRM_MODE_CONNECTOR_HDMIB)
-				connector->doublescan_allowed = true;
-			else
-				connector->doublescan_allowed = false;
-			if (connector_type == DRM_MODE_CONNECTOR_DVII) {
+			connector->पूर्णांकerlace_allowed = true;
+			अगर (connector_type == DRM_MODE_CONNECTOR_HDMIB)
+				connector->द्विगुनscan_allowed = true;
+			अन्यथा
+				connector->द्विगुनscan_allowed = false;
+			अगर (connector_type == DRM_MODE_CONNECTOR_DVII) अणु
 				amdgpu_connector->dac_load_detect = true;
 				drm_object_attach_property(&amdgpu_connector->base.base,
 							      adev->mode_info.load_detect_property,
 							      1);
-			}
-			break;
-		case DRM_MODE_CONNECTOR_LVDS:
-		case DRM_MODE_CONNECTOR_eDP:
+			पूर्ण
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_LVDS:
+		हाल DRM_MODE_CONNECTOR_eDP:
 			drm_connector_init_with_ddc(dev, &amdgpu_connector->base,
 						    &amdgpu_connector_edp_funcs,
 						    connector_type,
@@ -1694,20 +1695,20 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 						      dev->mode_config.scaling_mode_property,
 						      DRM_MODE_SCALE_FULLSCREEN);
 			subpixel_order = SubPixelHorizontalRGB;
-			connector->interlace_allowed = false;
-			connector->doublescan_allowed = false;
-			break;
-		}
-	} else {
-		switch (connector_type) {
-		case DRM_MODE_CONNECTOR_VGA:
-			if (i2c_bus->valid) {
+			connector->पूर्णांकerlace_allowed = false;
+			connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (connector_type) अणु
+		हाल DRM_MODE_CONNECTOR_VGA:
+			अगर (i2c_bus->valid) अणु
 				amdgpu_connector->ddc_bus = amdgpu_i2c_lookup(adev, i2c_bus);
-				if (!amdgpu_connector->ddc_bus)
+				अगर (!amdgpu_connector->ddc_bus)
 					DRM_ERROR("VGA: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				else
+				अन्यथा
 					ddc = &amdgpu_connector->ddc_bus->adapter;
-			}
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &amdgpu_connector->base,
 						    &amdgpu_connector_vga_funcs,
 						    connector_type,
@@ -1722,17 +1723,17 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 						   DRM_MODE_SCALE_NONE);
 			/* no HPD on analog connectors */
 			amdgpu_connector->hpd.hpd = AMDGPU_HPD_NONE;
-			connector->interlace_allowed = true;
-			connector->doublescan_allowed = true;
-			break;
-		case DRM_MODE_CONNECTOR_DVIA:
-			if (i2c_bus->valid) {
+			connector->पूर्णांकerlace_allowed = true;
+			connector->द्विगुनscan_allowed = true;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_DVIA:
+			अगर (i2c_bus->valid) अणु
 				amdgpu_connector->ddc_bus = amdgpu_i2c_lookup(adev, i2c_bus);
-				if (!amdgpu_connector->ddc_bus)
+				अगर (!amdgpu_connector->ddc_bus)
 					DRM_ERROR("DVIA: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				else
+				अन्यथा
 					ddc = &amdgpu_connector->ddc_bus->adapter;
-			}
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &amdgpu_connector->base,
 						    &amdgpu_connector_vga_funcs,
 						    connector_type,
@@ -1747,22 +1748,22 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 						   DRM_MODE_SCALE_NONE);
 			/* no HPD on analog connectors */
 			amdgpu_connector->hpd.hpd = AMDGPU_HPD_NONE;
-			connector->interlace_allowed = true;
-			connector->doublescan_allowed = true;
-			break;
-		case DRM_MODE_CONNECTOR_DVII:
-		case DRM_MODE_CONNECTOR_DVID:
-			amdgpu_dig_connector = kzalloc(sizeof(struct amdgpu_connector_atom_dig), GFP_KERNEL);
-			if (!amdgpu_dig_connector)
-				goto failed;
+			connector->पूर्णांकerlace_allowed = true;
+			connector->द्विगुनscan_allowed = true;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_DVII:
+		हाल DRM_MODE_CONNECTOR_DVID:
+			amdgpu_dig_connector = kzalloc(माप(काष्ठा amdgpu_connector_atom_dig), GFP_KERNEL);
+			अगर (!amdgpu_dig_connector)
+				जाओ failed;
 			amdgpu_connector->con_priv = amdgpu_dig_connector;
-			if (i2c_bus->valid) {
+			अगर (i2c_bus->valid) अणु
 				amdgpu_connector->ddc_bus = amdgpu_i2c_lookup(adev, i2c_bus);
-				if (!amdgpu_connector->ddc_bus)
+				अगर (!amdgpu_connector->ddc_bus)
 					DRM_ERROR("DVI: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				else
+				अन्यथा
 					ddc = &amdgpu_connector->ddc_bus->adapter;
-			}
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &amdgpu_connector->base,
 						    &amdgpu_connector_dvi_funcs,
 						    connector_type,
@@ -1785,39 +1786,39 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 						   dev->mode_config.scaling_mode_property,
 						   DRM_MODE_SCALE_NONE);
 
-			if (amdgpu_audio != 0) {
+			अगर (amdgpu_audio != 0) अणु
 				drm_object_attach_property(&amdgpu_connector->base.base,
 							   adev->mode_info.audio_property,
 							   AMDGPU_AUDIO_AUTO);
-			}
+			पूर्ण
 			drm_object_attach_property(&amdgpu_connector->base.base,
 						   adev->mode_info.dither_property,
 						   AMDGPU_FMT_DITHER_DISABLE);
-			if (connector_type == DRM_MODE_CONNECTOR_DVII) {
+			अगर (connector_type == DRM_MODE_CONNECTOR_DVII) अणु
 				amdgpu_connector->dac_load_detect = true;
 				drm_object_attach_property(&amdgpu_connector->base.base,
 							   adev->mode_info.load_detect_property,
 							   1);
-			}
-			connector->interlace_allowed = true;
-			if (connector_type == DRM_MODE_CONNECTOR_DVII)
-				connector->doublescan_allowed = true;
-			else
-				connector->doublescan_allowed = false;
-			break;
-		case DRM_MODE_CONNECTOR_HDMIA:
-		case DRM_MODE_CONNECTOR_HDMIB:
-			amdgpu_dig_connector = kzalloc(sizeof(struct amdgpu_connector_atom_dig), GFP_KERNEL);
-			if (!amdgpu_dig_connector)
-				goto failed;
+			पूर्ण
+			connector->पूर्णांकerlace_allowed = true;
+			अगर (connector_type == DRM_MODE_CONNECTOR_DVII)
+				connector->द्विगुनscan_allowed = true;
+			अन्यथा
+				connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_HDMIA:
+		हाल DRM_MODE_CONNECTOR_HDMIB:
+			amdgpu_dig_connector = kzalloc(माप(काष्ठा amdgpu_connector_atom_dig), GFP_KERNEL);
+			अगर (!amdgpu_dig_connector)
+				जाओ failed;
 			amdgpu_connector->con_priv = amdgpu_dig_connector;
-			if (i2c_bus->valid) {
+			अगर (i2c_bus->valid) अणु
 				amdgpu_connector->ddc_bus = amdgpu_i2c_lookup(adev, i2c_bus);
-				if (!amdgpu_connector->ddc_bus)
+				अगर (!amdgpu_connector->ddc_bus)
 					DRM_ERROR("HDMI: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				else
+				अन्यथा
 					ddc = &amdgpu_connector->ddc_bus->adapter;
-			}
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &amdgpu_connector->base,
 						    &amdgpu_connector_dvi_funcs,
 						    connector_type,
@@ -1838,35 +1839,35 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 			drm_object_attach_property(&amdgpu_connector->base.base,
 						   dev->mode_config.scaling_mode_property,
 						   DRM_MODE_SCALE_NONE);
-			if (amdgpu_audio != 0) {
+			अगर (amdgpu_audio != 0) अणु
 				drm_object_attach_property(&amdgpu_connector->base.base,
 							   adev->mode_info.audio_property,
 							   AMDGPU_AUDIO_AUTO);
-			}
+			पूर्ण
 			drm_object_attach_property(&amdgpu_connector->base.base,
 						   adev->mode_info.dither_property,
 						   AMDGPU_FMT_DITHER_DISABLE);
 			subpixel_order = SubPixelHorizontalRGB;
-			connector->interlace_allowed = true;
-			if (connector_type == DRM_MODE_CONNECTOR_HDMIB)
-				connector->doublescan_allowed = true;
-			else
-				connector->doublescan_allowed = false;
-			break;
-		case DRM_MODE_CONNECTOR_DisplayPort:
-			amdgpu_dig_connector = kzalloc(sizeof(struct amdgpu_connector_atom_dig), GFP_KERNEL);
-			if (!amdgpu_dig_connector)
-				goto failed;
+			connector->पूर्णांकerlace_allowed = true;
+			अगर (connector_type == DRM_MODE_CONNECTOR_HDMIB)
+				connector->द्विगुनscan_allowed = true;
+			अन्यथा
+				connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_DisplayPort:
+			amdgpu_dig_connector = kzalloc(माप(काष्ठा amdgpu_connector_atom_dig), GFP_KERNEL);
+			अगर (!amdgpu_dig_connector)
+				जाओ failed;
 			amdgpu_connector->con_priv = amdgpu_dig_connector;
-			if (i2c_bus->valid) {
+			अगर (i2c_bus->valid) अणु
 				amdgpu_connector->ddc_bus = amdgpu_i2c_lookup(adev, i2c_bus);
-				if (amdgpu_connector->ddc_bus) {
+				अगर (amdgpu_connector->ddc_bus) अणु
 					has_aux = true;
 					ddc = &amdgpu_connector->ddc_bus->adapter;
-				} else {
+				पूर्ण अन्यथा अणु
 					DRM_ERROR("DP: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				}
-			}
+				पूर्ण
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &amdgpu_connector->base,
 						    &amdgpu_connector_dp_funcs,
 						    connector_type,
@@ -1888,32 +1889,32 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 			drm_object_attach_property(&amdgpu_connector->base.base,
 						   dev->mode_config.scaling_mode_property,
 						   DRM_MODE_SCALE_NONE);
-			if (amdgpu_audio != 0) {
+			अगर (amdgpu_audio != 0) अणु
 				drm_object_attach_property(&amdgpu_connector->base.base,
 							   adev->mode_info.audio_property,
 							   AMDGPU_AUDIO_AUTO);
-			}
+			पूर्ण
 			drm_object_attach_property(&amdgpu_connector->base.base,
 						   adev->mode_info.dither_property,
 						   AMDGPU_FMT_DITHER_DISABLE);
-			connector->interlace_allowed = true;
+			connector->पूर्णांकerlace_allowed = true;
 			/* in theory with a DP to VGA converter... */
-			connector->doublescan_allowed = false;
-			break;
-		case DRM_MODE_CONNECTOR_eDP:
-			amdgpu_dig_connector = kzalloc(sizeof(struct amdgpu_connector_atom_dig), GFP_KERNEL);
-			if (!amdgpu_dig_connector)
-				goto failed;
+			connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_eDP:
+			amdgpu_dig_connector = kzalloc(माप(काष्ठा amdgpu_connector_atom_dig), GFP_KERNEL);
+			अगर (!amdgpu_dig_connector)
+				जाओ failed;
 			amdgpu_connector->con_priv = amdgpu_dig_connector;
-			if (i2c_bus->valid) {
+			अगर (i2c_bus->valid) अणु
 				amdgpu_connector->ddc_bus = amdgpu_i2c_lookup(adev, i2c_bus);
-				if (amdgpu_connector->ddc_bus) {
+				अगर (amdgpu_connector->ddc_bus) अणु
 					has_aux = true;
 					ddc = &amdgpu_connector->ddc_bus->adapter;
-				} else {
+				पूर्ण अन्यथा अणु
 					DRM_ERROR("DP: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				}
-			}
+				पूर्ण
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &amdgpu_connector->base,
 						    &amdgpu_connector_edp_funcs,
 						    connector_type,
@@ -1923,21 +1924,21 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 						      dev->mode_config.scaling_mode_property,
 						      DRM_MODE_SCALE_FULLSCREEN);
 			subpixel_order = SubPixelHorizontalRGB;
-			connector->interlace_allowed = false;
-			connector->doublescan_allowed = false;
-			break;
-		case DRM_MODE_CONNECTOR_LVDS:
-			amdgpu_dig_connector = kzalloc(sizeof(struct amdgpu_connector_atom_dig), GFP_KERNEL);
-			if (!amdgpu_dig_connector)
-				goto failed;
+			connector->पूर्णांकerlace_allowed = false;
+			connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_LVDS:
+			amdgpu_dig_connector = kzalloc(माप(काष्ठा amdgpu_connector_atom_dig), GFP_KERNEL);
+			अगर (!amdgpu_dig_connector)
+				जाओ failed;
 			amdgpu_connector->con_priv = amdgpu_dig_connector;
-			if (i2c_bus->valid) {
+			अगर (i2c_bus->valid) अणु
 				amdgpu_connector->ddc_bus = amdgpu_i2c_lookup(adev, i2c_bus);
-				if (!amdgpu_connector->ddc_bus)
+				अगर (!amdgpu_connector->ddc_bus)
 					DRM_ERROR("LVDS: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				else
+				अन्यथा
 					ddc = &amdgpu_connector->ddc_bus->adapter;
-			}
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &amdgpu_connector->base,
 						    &amdgpu_connector_lvds_funcs,
 						    connector_type,
@@ -1947,33 +1948,33 @@ amdgpu_connector_add(struct amdgpu_device *adev,
 						      dev->mode_config.scaling_mode_property,
 						      DRM_MODE_SCALE_FULLSCREEN);
 			subpixel_order = SubPixelHorizontalRGB;
-			connector->interlace_allowed = false;
-			connector->doublescan_allowed = false;
-			break;
-		}
-	}
+			connector->पूर्णांकerlace_allowed = false;
+			connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (amdgpu_connector->hpd.hpd == AMDGPU_HPD_NONE) {
-		if (i2c_bus->valid) {
+	अगर (amdgpu_connector->hpd.hpd == AMDGPU_HPD_NONE) अणु
+		अगर (i2c_bus->valid) अणु
 			connector->polled = DRM_CONNECTOR_POLL_CONNECT |
 			                    DRM_CONNECTOR_POLL_DISCONNECT;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		connector->polled = DRM_CONNECTOR_POLL_HPD;
 
 	connector->display_info.subpixel_order = subpixel_order;
 
-	if (has_aux)
+	अगर (has_aux)
 		amdgpu_atombios_dp_aux_init(amdgpu_connector);
 
-	if (connector_type == DRM_MODE_CONNECTOR_DisplayPort ||
-	    connector_type == DRM_MODE_CONNECTOR_eDP) {
+	अगर (connector_type == DRM_MODE_CONNECTOR_DisplayPort ||
+	    connector_type == DRM_MODE_CONNECTOR_eDP) अणु
 		drm_connector_attach_dp_subconnector_property(&amdgpu_connector->base);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
 failed:
 	drm_connector_cleanup(connector);
-	kfree(connector);
-}
+	kमुक्त(connector);
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
  * Author:Mark Yao <mark.yao@rock-chips.com>
@@ -6,149 +7,149 @@
  * based on exynos_drm_drv.c
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/dma-iommu.h>
-#include <linux/pm_runtime.h>
-#include <linux/module.h>
-#include <linux/of_graph.h>
-#include <linux/of_platform.h>
-#include <linux/component.h>
-#include <linux/console.h>
-#include <linux/iommu.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dma-iommu.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/component.h>
+#समावेश <linux/console.h>
+#समावेश <linux/iommu.h>
 
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_of.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "rockchip_drm_drv.h"
-#include "rockchip_drm_fb.h"
-#include "rockchip_drm_fbdev.h"
-#include "rockchip_drm_gem.h"
+#समावेश "rockchip_drm_drv.h"
+#समावेश "rockchip_drm_fb.h"
+#समावेश "rockchip_drm_fbdev.h"
+#समावेश "rockchip_drm_gem.h"
 
-#define DRIVER_NAME	"rockchip"
-#define DRIVER_DESC	"RockChip Soc DRM"
-#define DRIVER_DATE	"20140818"
-#define DRIVER_MAJOR	1
-#define DRIVER_MINOR	0
+#घोषणा DRIVER_NAME	"rockchip"
+#घोषणा DRIVER_DESC	"RockChip Soc DRM"
+#घोषणा DRIVER_DATE	"20140818"
+#घोषणा DRIVER_MAJOR	1
+#घोषणा DRIVER_MINOR	0
 
-static bool is_support_iommu = true;
-static const struct drm_driver rockchip_drm_driver;
+अटल bool is_support_iommu = true;
+अटल स्थिर काष्ठा drm_driver rockchip_drm_driver;
 
 /*
  * Attach a (component) device to the shared drm dma mapping from master drm
  * device.  This is used by the VOPs to map GEM buffers to a common DMA
  * mapping.
  */
-int rockchip_drm_dma_attach_device(struct drm_device *drm_dev,
-				   struct device *dev)
-{
-	struct rockchip_drm_private *private = drm_dev->dev_private;
-	int ret;
+पूर्णांक rockchip_drm_dma_attach_device(काष्ठा drm_device *drm_dev,
+				   काष्ठा device *dev)
+अणु
+	काष्ठा rockchip_drm_निजी *निजी = drm_dev->dev_निजी;
+	पूर्णांक ret;
 
-	if (!is_support_iommu)
-		return 0;
+	अगर (!is_support_iommu)
+		वापस 0;
 
-	ret = iommu_attach_device(private->domain, dev);
-	if (ret) {
+	ret = iommu_attach_device(निजी->करोमुख्य, dev);
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev, "Failed to attach iommu device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rockchip_drm_dma_detach_device(struct drm_device *drm_dev,
-				    struct device *dev)
-{
-	struct rockchip_drm_private *private = drm_dev->dev_private;
-	struct iommu_domain *domain = private->domain;
+व्योम rockchip_drm_dma_detach_device(काष्ठा drm_device *drm_dev,
+				    काष्ठा device *dev)
+अणु
+	काष्ठा rockchip_drm_निजी *निजी = drm_dev->dev_निजी;
+	काष्ठा iommu_करोमुख्य *करोमुख्य = निजी->करोमुख्य;
 
-	if (!is_support_iommu)
-		return;
+	अगर (!is_support_iommu)
+		वापस;
 
-	iommu_detach_device(domain, dev);
-}
+	iommu_detach_device(करोमुख्य, dev);
+पूर्ण
 
-static int rockchip_drm_init_iommu(struct drm_device *drm_dev)
-{
-	struct rockchip_drm_private *private = drm_dev->dev_private;
-	struct iommu_domain_geometry *geometry;
+अटल पूर्णांक rockchip_drm_init_iommu(काष्ठा drm_device *drm_dev)
+अणु
+	काष्ठा rockchip_drm_निजी *निजी = drm_dev->dev_निजी;
+	काष्ठा iommu_करोमुख्य_geometry *geometry;
 	u64 start, end;
 
-	if (!is_support_iommu)
-		return 0;
+	अगर (!is_support_iommu)
+		वापस 0;
 
-	private->domain = iommu_domain_alloc(&platform_bus_type);
-	if (!private->domain)
-		return -ENOMEM;
+	निजी->करोमुख्य = iommu_करोमुख्य_alloc(&platक्रमm_bus_type);
+	अगर (!निजी->करोमुख्य)
+		वापस -ENOMEM;
 
-	geometry = &private->domain->geometry;
+	geometry = &निजी->करोमुख्य->geometry;
 	start = geometry->aperture_start;
 	end = geometry->aperture_end;
 
 	DRM_DEBUG("IOMMU context initialized (aperture: %#llx-%#llx)\n",
 		  start, end);
-	drm_mm_init(&private->mm, start, end - start + 1);
-	mutex_init(&private->mm_lock);
+	drm_mm_init(&निजी->mm, start, end - start + 1);
+	mutex_init(&निजी->mm_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rockchip_iommu_cleanup(struct drm_device *drm_dev)
-{
-	struct rockchip_drm_private *private = drm_dev->dev_private;
+अटल व्योम rockchip_iommu_cleanup(काष्ठा drm_device *drm_dev)
+अणु
+	काष्ठा rockchip_drm_निजी *निजी = drm_dev->dev_निजी;
 
-	if (!is_support_iommu)
-		return;
+	अगर (!is_support_iommu)
+		वापस;
 
-	drm_mm_takedown(&private->mm);
-	iommu_domain_free(private->domain);
-}
+	drm_mm_takeकरोwn(&निजी->mm);
+	iommu_करोमुख्य_मुक्त(निजी->करोमुख्य);
+पूर्ण
 
-static int rockchip_drm_bind(struct device *dev)
-{
-	struct drm_device *drm_dev;
-	struct rockchip_drm_private *private;
-	int ret;
+अटल पूर्णांक rockchip_drm_bind(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm_dev;
+	काष्ठा rockchip_drm_निजी *निजी;
+	पूर्णांक ret;
 
 	drm_dev = drm_dev_alloc(&rockchip_drm_driver, dev);
-	if (IS_ERR(drm_dev))
-		return PTR_ERR(drm_dev);
+	अगर (IS_ERR(drm_dev))
+		वापस PTR_ERR(drm_dev);
 
 	dev_set_drvdata(dev, drm_dev);
 
-	private = devm_kzalloc(drm_dev->dev, sizeof(*private), GFP_KERNEL);
-	if (!private) {
+	निजी = devm_kzalloc(drm_dev->dev, माप(*निजी), GFP_KERNEL);
+	अगर (!निजी) अणु
 		ret = -ENOMEM;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	drm_dev->dev_private = private;
+	drm_dev->dev_निजी = निजी;
 
-	INIT_LIST_HEAD(&private->psr_list);
-	mutex_init(&private->psr_list_lock);
+	INIT_LIST_HEAD(&निजी->psr_list);
+	mutex_init(&निजी->psr_list_lock);
 
 	ret = rockchip_drm_init_iommu(drm_dev);
-	if (ret)
-		goto err_free;
+	अगर (ret)
+		जाओ err_मुक्त;
 
 	ret = drmm_mode_config_init(drm_dev);
-	if (ret)
-		goto err_iommu_cleanup;
+	अगर (ret)
+		जाओ err_iommu_cleanup;
 
 	rockchip_drm_mode_config_init(drm_dev);
 
 	/* Try to bind all sub drivers. */
 	ret = component_bind_all(dev, drm_dev);
-	if (ret)
-		goto err_iommu_cleanup;
+	अगर (ret)
+		जाओ err_iommu_cleanup;
 
 	ret = drm_vblank_init(drm_dev, drm_dev->mode_config.num_crtc);
-	if (ret)
-		goto err_unbind_all;
+	अगर (ret)
+		जाओ err_unbind_all;
 
 	drm_mode_config_reset(drm_dev);
 
@@ -159,17 +160,17 @@ static int rockchip_drm_bind(struct device *dev)
 	drm_dev->irq_enabled = true;
 
 	ret = rockchip_drm_fbdev_init(drm_dev);
-	if (ret)
-		goto err_unbind_all;
+	अगर (ret)
+		जाओ err_unbind_all;
 
-	/* init kms poll for handling hpd */
+	/* init kms poll क्रम handling hpd */
 	drm_kms_helper_poll_init(drm_dev);
 
-	ret = drm_dev_register(drm_dev, 0);
-	if (ret)
-		goto err_kms_helper_poll_fini;
+	ret = drm_dev_रेजिस्टर(drm_dev, 0);
+	अगर (ret)
+		जाओ err_kms_helper_poll_fini;
 
-	return 0;
+	वापस 0;
 err_kms_helper_poll_fini:
 	drm_kms_helper_poll_fini(drm_dev);
 	rockchip_drm_fbdev_fini(drm_dev);
@@ -177,41 +178,41 @@ err_unbind_all:
 	component_unbind_all(dev, drm_dev);
 err_iommu_cleanup:
 	rockchip_iommu_cleanup(drm_dev);
-err_free:
+err_मुक्त:
 	drm_dev_put(drm_dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void rockchip_drm_unbind(struct device *dev)
-{
-	struct drm_device *drm_dev = dev_get_drvdata(dev);
+अटल व्योम rockchip_drm_unbind(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm_dev = dev_get_drvdata(dev);
 
-	drm_dev_unregister(drm_dev);
+	drm_dev_unरेजिस्टर(drm_dev);
 
 	rockchip_drm_fbdev_fini(drm_dev);
 	drm_kms_helper_poll_fini(drm_dev);
 
-	drm_atomic_helper_shutdown(drm_dev);
+	drm_atomic_helper_shutकरोwn(drm_dev);
 	component_unbind_all(dev, drm_dev);
 	rockchip_iommu_cleanup(drm_dev);
 
 	drm_dev_put(drm_dev);
-}
+पूर्ण
 
-static const struct file_operations rockchip_drm_driver_fops = {
+अटल स्थिर काष्ठा file_operations rockchip_drm_driver_fops = अणु
 	.owner = THIS_MODULE,
-	.open = drm_open,
+	.खोलो = drm_खोलो,
 	.mmap = rockchip_gem_mmap,
 	.poll = drm_poll,
-	.read = drm_read,
+	.पढ़ो = drm_पढ़ो,
 	.unlocked_ioctl = drm_ioctl,
 	.compat_ioctl = drm_compat_ioctl,
 	.release = drm_release,
-};
+पूर्ण;
 
-static const struct drm_driver rockchip_drm_driver = {
+अटल स्थिर काष्ठा drm_driver rockchip_drm_driver = अणु
 	.driver_features	= DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
-	.lastclose		= drm_fb_helper_lastclose,
+	.lastबंद		= drm_fb_helper_lastबंद,
 	.dumb_create		= rockchip_gem_dumb_create,
 	.prime_handle_to_fd	= drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle	= drm_gem_prime_fd_to_handle,
@@ -223,249 +224,249 @@ static const struct drm_driver rockchip_drm_driver = {
 	.date	= DRIVER_DATE,
 	.major	= DRIVER_MAJOR,
 	.minor	= DRIVER_MINOR,
-};
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
-static int rockchip_drm_sys_suspend(struct device *dev)
-{
-	struct drm_device *drm = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक rockchip_drm_sys_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(dev);
 
-	return drm_mode_config_helper_suspend(drm);
-}
+	वापस drm_mode_config_helper_suspend(drm);
+पूर्ण
 
-static int rockchip_drm_sys_resume(struct device *dev)
-{
-	struct drm_device *drm = dev_get_drvdata(dev);
+अटल पूर्णांक rockchip_drm_sys_resume(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(dev);
 
-	return drm_mode_config_helper_resume(drm);
-}
-#endif
+	वापस drm_mode_config_helper_resume(drm);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops rockchip_drm_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops rockchip_drm_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(rockchip_drm_sys_suspend,
 				rockchip_drm_sys_resume)
-};
+पूर्ण;
 
-#define MAX_ROCKCHIP_SUB_DRIVERS 16
-static struct platform_driver *rockchip_sub_drivers[MAX_ROCKCHIP_SUB_DRIVERS];
-static int num_rockchip_sub_drivers;
+#घोषणा MAX_ROCKCHIP_SUB_DRIVERS 16
+अटल काष्ठा platक्रमm_driver *rockchip_sub_drivers[MAX_ROCKCHIP_SUB_DRIVERS];
+अटल पूर्णांक num_rockchip_sub_drivers;
 
 /*
- * Check if a vop endpoint is leading to a rockchip subdriver or bridge.
+ * Check अगर a vop endpoपूर्णांक is leading to a rockchip subdriver or bridge.
  * Should be called from the component bind stage of the drivers
  * to ensure that all subdrivers are probed.
  *
- * @ep: endpoint of a rockchip vop
+ * @ep: endpoपूर्णांक of a rockchip vop
  *
- * returns true if subdriver, false if external bridge and -ENODEV
- * if remote port does not contain a device.
+ * वापसs true अगर subdriver, false अगर बाह्यal bridge and -ENODEV
+ * अगर remote port करोes not contain a device.
  */
-int rockchip_drm_endpoint_is_subdriver(struct device_node *ep)
-{
-	struct device_node *node = of_graph_get_remote_port_parent(ep);
-	struct platform_device *pdev;
-	struct device_driver *drv;
-	int i;
+पूर्णांक rockchip_drm_endpoपूर्णांक_is_subdriver(काष्ठा device_node *ep)
+अणु
+	काष्ठा device_node *node = of_graph_get_remote_port_parent(ep);
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा device_driver *drv;
+	पूर्णांक i;
 
-	if (!node)
-		return -ENODEV;
+	अगर (!node)
+		वापस -ENODEV;
 
-	/* status disabled will prevent creation of platform-devices */
+	/* status disabled will prevent creation of platक्रमm-devices */
 	pdev = of_find_device_by_node(node);
 	of_node_put(node);
-	if (!pdev)
-		return -ENODEV;
+	अगर (!pdev)
+		वापस -ENODEV;
 
 	/*
-	 * All rockchip subdrivers have probed at this point, so
-	 * any device not having a driver now is an external bridge.
+	 * All rockchip subdrivers have probed at this poपूर्णांक, so
+	 * any device not having a driver now is an बाह्यal bridge.
 	 */
 	drv = pdev->dev.driver;
-	if (!drv) {
-		platform_device_put(pdev);
-		return false;
-	}
+	अगर (!drv) अणु
+		platक्रमm_device_put(pdev);
+		वापस false;
+	पूर्ण
 
-	for (i = 0; i < num_rockchip_sub_drivers; i++) {
-		if (rockchip_sub_drivers[i] == to_platform_driver(drv)) {
-			platform_device_put(pdev);
-			return true;
-		}
-	}
+	क्रम (i = 0; i < num_rockchip_sub_drivers; i++) अणु
+		अगर (rockchip_sub_drivers[i] == to_platक्रमm_driver(drv)) अणु
+			platक्रमm_device_put(pdev);
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	platform_device_put(pdev);
-	return false;
-}
+	platक्रमm_device_put(pdev);
+	वापस false;
+पूर्ण
 
-static int compare_dev(struct device *dev, void *data)
-{
-	return dev == (struct device *)data;
-}
+अटल पूर्णांक compare_dev(काष्ठा device *dev, व्योम *data)
+अणु
+	वापस dev == (काष्ठा device *)data;
+पूर्ण
 
-static void rockchip_drm_match_remove(struct device *dev)
-{
-	struct device_link *link;
+अटल व्योम rockchip_drm_match_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा device_link *link;
 
-	list_for_each_entry(link, &dev->links.consumers, s_node)
+	list_क्रम_each_entry(link, &dev->links.consumers, s_node)
 		device_link_del(link);
-}
+पूर्ण
 
-static struct component_match *rockchip_drm_match_add(struct device *dev)
-{
-	struct component_match *match = NULL;
-	int i;
+अटल काष्ठा component_match *rockchip_drm_match_add(काष्ठा device *dev)
+अणु
+	काष्ठा component_match *match = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; i < num_rockchip_sub_drivers; i++) {
-		struct platform_driver *drv = rockchip_sub_drivers[i];
-		struct device *p = NULL, *d;
+	क्रम (i = 0; i < num_rockchip_sub_drivers; i++) अणु
+		काष्ठा platक्रमm_driver *drv = rockchip_sub_drivers[i];
+		काष्ठा device *p = शून्य, *d;
 
-		do {
-			d = platform_find_device_by_driver(p, &drv->driver);
+		करो अणु
+			d = platक्रमm_find_device_by_driver(p, &drv->driver);
 			put_device(p);
 			p = d;
 
-			if (!d)
-				break;
+			अगर (!d)
+				अवरोध;
 
 			device_link_add(dev, d, DL_FLAG_STATELESS);
 			component_match_add(dev, &match, compare_dev, d);
-		} while (true);
-	}
+		पूर्ण जबतक (true);
+	पूर्ण
 
-	if (IS_ERR(match))
-		rockchip_drm_match_remove(dev);
+	अगर (IS_ERR(match))
+		rockchip_drm_match_हटाओ(dev);
 
-	return match ?: ERR_PTR(-ENODEV);
-}
+	वापस match ?: ERR_PTR(-ENODEV);
+पूर्ण
 
-static const struct component_master_ops rockchip_drm_ops = {
+अटल स्थिर काष्ठा component_master_ops rockchip_drm_ops = अणु
 	.bind = rockchip_drm_bind,
 	.unbind = rockchip_drm_unbind,
-};
+पूर्ण;
 
-static int rockchip_drm_platform_of_probe(struct device *dev)
-{
-	struct device_node *np = dev->of_node;
-	struct device_node *port;
+अटल पूर्णांक rockchip_drm_platक्रमm_of_probe(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा device_node *port;
 	bool found = false;
-	int i;
+	पूर्णांक i;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
-	for (i = 0;; i++) {
-		struct device_node *iommu;
+	क्रम (i = 0;; i++) अणु
+		काष्ठा device_node *iommu;
 
 		port = of_parse_phandle(np, "ports", i);
-		if (!port)
-			break;
+		अगर (!port)
+			अवरोध;
 
-		if (!of_device_is_available(port->parent)) {
+		अगर (!of_device_is_available(port->parent)) अणु
 			of_node_put(port);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		iommu = of_parse_phandle(port->parent, "iommus", 0);
-		if (!iommu || !of_device_is_available(iommu->parent)) {
+		अगर (!iommu || !of_device_is_available(iommu->parent)) अणु
 			DRM_DEV_DEBUG(dev,
 				      "no iommu attached for %pOF, using non-iommu buffers\n",
 				      port->parent);
 			/*
-			 * if there is a crtc not support iommu, force set all
+			 * अगर there is a crtc not support iommu, क्रमce set all
 			 * crtc use non-iommu buffer.
 			 */
 			is_support_iommu = false;
-		}
+		पूर्ण
 
 		found = true;
 
 		of_node_put(iommu);
 		of_node_put(port);
-	}
+	पूर्ण
 
-	if (i == 0) {
+	अगर (i == 0) अणु
 		DRM_DEV_ERROR(dev, "missing 'ports' property\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!found) {
+	अगर (!found) अणु
 		DRM_DEV_ERROR(dev,
 			      "No available vop found for display-subsystem.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_drm_platform_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct component_match *match = NULL;
-	int ret;
+अटल पूर्णांक rockchip_drm_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा component_match *match = शून्य;
+	पूर्णांक ret;
 
-	ret = rockchip_drm_platform_of_probe(dev);
-	if (ret)
-		return ret;
+	ret = rockchip_drm_platक्रमm_of_probe(dev);
+	अगर (ret)
+		वापस ret;
 
 	match = rockchip_drm_match_add(dev);
-	if (IS_ERR(match))
-		return PTR_ERR(match);
+	अगर (IS_ERR(match))
+		वापस PTR_ERR(match);
 
 	ret = component_master_add_with_match(dev, &rockchip_drm_ops, match);
-	if (ret < 0) {
-		rockchip_drm_match_remove(dev);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		rockchip_drm_match_हटाओ(dev);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_drm_platform_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक rockchip_drm_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_master_del(&pdev->dev, &rockchip_drm_ops);
 
-	rockchip_drm_match_remove(&pdev->dev);
+	rockchip_drm_match_हटाओ(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rockchip_drm_platform_shutdown(struct platform_device *pdev)
-{
-	struct drm_device *drm = platform_get_drvdata(pdev);
+अटल व्योम rockchip_drm_platक्रमm_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा drm_device *drm = platक्रमm_get_drvdata(pdev);
 
-	if (drm)
-		drm_atomic_helper_shutdown(drm);
-}
+	अगर (drm)
+		drm_atomic_helper_shutकरोwn(drm);
+पूर्ण
 
-static const struct of_device_id rockchip_drm_dt_ids[] = {
-	{ .compatible = "rockchip,display-subsystem", },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id rockchip_drm_dt_ids[] = अणु
+	अणु .compatible = "rockchip,display-subsystem", पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rockchip_drm_dt_ids);
 
-static struct platform_driver rockchip_drm_platform_driver = {
-	.probe = rockchip_drm_platform_probe,
-	.remove = rockchip_drm_platform_remove,
-	.shutdown = rockchip_drm_platform_shutdown,
-	.driver = {
+अटल काष्ठा platक्रमm_driver rockchip_drm_platक्रमm_driver = अणु
+	.probe = rockchip_drm_platक्रमm_probe,
+	.हटाओ = rockchip_drm_platक्रमm_हटाओ,
+	.shutकरोwn = rockchip_drm_platक्रमm_shutकरोwn,
+	.driver = अणु
 		.name = "rockchip-drm",
 		.of_match_table = rockchip_drm_dt_ids,
 		.pm = &rockchip_drm_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#define ADD_ROCKCHIP_SUB_DRIVER(drv, cond) { \
-	if (IS_ENABLED(cond) && \
+#घोषणा ADD_ROCKCHIP_SUB_DRIVER(drv, cond) अणु \
+	अगर (IS_ENABLED(cond) && \
 	    !WARN_ON(num_rockchip_sub_drivers >= MAX_ROCKCHIP_SUB_DRIVERS)) \
 		rockchip_sub_drivers[num_rockchip_sub_drivers++] = &drv; \
-}
+पूर्ण
 
-static int __init rockchip_drm_init(void)
-{
-	int ret;
+अटल पूर्णांक __init rockchip_drm_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	num_rockchip_sub_drivers = 0;
-	ADD_ROCKCHIP_SUB_DRIVER(vop_platform_driver, CONFIG_DRM_ROCKCHIP);
+	ADD_ROCKCHIP_SUB_DRIVER(vop_platक्रमm_driver, CONFIG_DRM_ROCKCHIP);
 	ADD_ROCKCHIP_SUB_DRIVER(rockchip_lvds_driver,
 				CONFIG_ROCKCHIP_LVDS);
 	ADD_ROCKCHIP_SUB_DRIVER(rockchip_dp_driver,
@@ -479,33 +480,33 @@ static int __init rockchip_drm_init(void)
 	ADD_ROCKCHIP_SUB_DRIVER(rk3066_hdmi_driver,
 				CONFIG_ROCKCHIP_RK3066_HDMI);
 
-	ret = platform_register_drivers(rockchip_sub_drivers,
+	ret = platक्रमm_रेजिस्टर_drivers(rockchip_sub_drivers,
 					num_rockchip_sub_drivers);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&rockchip_drm_platform_driver);
-	if (ret)
-		goto err_unreg_drivers;
+	ret = platक्रमm_driver_रेजिस्टर(&rockchip_drm_platक्रमm_driver);
+	अगर (ret)
+		जाओ err_unreg_drivers;
 
-	return 0;
+	वापस 0;
 
 err_unreg_drivers:
-	platform_unregister_drivers(rockchip_sub_drivers,
+	platक्रमm_unरेजिस्टर_drivers(rockchip_sub_drivers,
 				    num_rockchip_sub_drivers);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit rockchip_drm_fini(void)
-{
-	platform_driver_unregister(&rockchip_drm_platform_driver);
+अटल व्योम __निकास rockchip_drm_fini(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&rockchip_drm_platक्रमm_driver);
 
-	platform_unregister_drivers(rockchip_sub_drivers,
+	platक्रमm_unरेजिस्टर_drivers(rockchip_sub_drivers,
 				    num_rockchip_sub_drivers);
-}
+पूर्ण
 
 module_init(rockchip_drm_init);
-module_exit(rockchip_drm_fini);
+module_निकास(rockchip_drm_fini);
 
 MODULE_AUTHOR("Mark Yao <mark.yao@rock-chips.com>");
 MODULE_DESCRIPTION("ROCKCHIP DRM Driver");

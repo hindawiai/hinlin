@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2013 Intel Corporation. All rights reserved.
  *
- * HCI based Driver for Inside Secure microread NFC Chip
+ * HCI based Driver क्रम Inside Secure microपढ़ो NFC Chip
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/nfc.h>
-#include <net/nfc/hci.h>
-#include <net/nfc/llc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/nfc.h>
+#समावेश <net/nfc/hci.h>
+#समावेश <net/nfc/llc.h>
 
-#include "../mei_phy.h"
-#include "microread.h"
+#समावेश "../mei_phy.h"
+#समावेश "microread.h"
 
-#define MICROREAD_DRIVER_NAME "microread"
+#घोषणा MICROREAD_DRIVER_NAME "microread"
 
-static int microread_mei_probe(struct mei_cl_device *cldev,
-			       const struct mei_cl_device_id *id)
-{
-	struct nfc_mei_phy *phy;
-	int r;
+अटल पूर्णांक microपढ़ो_mei_probe(काष्ठा mei_cl_device *cldev,
+			       स्थिर काष्ठा mei_cl_device_id *id)
+अणु
+	काष्ठा nfc_mei_phy *phy;
+	पूर्णांक r;
 
 	pr_info("Probing NFC microread\n");
 
 	phy = nfc_mei_phy_alloc(cldev);
-	if (!phy) {
+	अगर (!phy) अणु
 		pr_err("Cannot allocate memory for microread mei phy.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	r = microread_probe(phy, &mei_phy_ops, LLC_NOP_NAME,
+	r = microपढ़ो_probe(phy, &mei_phy_ops, LLC_NOP_NAME,
 			    MEI_NFC_HEADER_SIZE, 0, MEI_NFC_MAX_HCI_PAYLOAD,
 			    &phy->hdev);
-	if (r < 0) {
-		nfc_mei_phy_free(phy);
+	अगर (r < 0) अणु
+		nfc_mei_phy_मुक्त(phy);
 
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void microread_mei_remove(struct mei_cl_device *cldev)
-{
-	struct nfc_mei_phy *phy = mei_cldev_get_drvdata(cldev);
+अटल व्योम microपढ़ो_mei_हटाओ(काष्ठा mei_cl_device *cldev)
+अणु
+	काष्ठा nfc_mei_phy *phy = mei_cldev_get_drvdata(cldev);
 
-	microread_remove(phy->hdev);
+	microपढ़ो_हटाओ(phy->hdev);
 
-	nfc_mei_phy_free(phy);
-}
+	nfc_mei_phy_मुक्त(phy);
+पूर्ण
 
-static struct mei_cl_device_id microread_mei_tbl[] = {
-	{ MICROREAD_DRIVER_NAME, MEI_NFC_UUID, MEI_CL_VERSION_ANY},
+अटल काष्ठा mei_cl_device_id microपढ़ो_mei_tbl[] = अणु
+	अणु MICROREAD_DRIVER_NAME, MEI_NFC_UUID, MEI_CL_VERSION_ANYपूर्ण,
 
 	/* required last entry */
-	{ }
-};
-MODULE_DEVICE_TABLE(mei, microread_mei_tbl);
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(mei, microपढ़ो_mei_tbl);
 
-static struct mei_cl_driver microread_driver = {
-	.id_table = microread_mei_tbl,
+अटल काष्ठा mei_cl_driver microपढ़ो_driver = अणु
+	.id_table = microपढ़ो_mei_tbl,
 	.name = MICROREAD_DRIVER_NAME,
 
-	.probe = microread_mei_probe,
-	.remove = microread_mei_remove,
-};
+	.probe = microपढ़ो_mei_probe,
+	.हटाओ = microपढ़ो_mei_हटाओ,
+पूर्ण;
 
-module_mei_cl_driver(microread_driver);
+module_mei_cl_driver(microपढ़ो_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION(DRIVER_DESC);

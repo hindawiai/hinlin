@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*******************************************************************************
   STMMAC Common Header File
 
@@ -8,318 +9,318 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#अगर_अघोषित __COMMON_H__
+#घोषणा __COMMON_H__
 
-#include <linux/etherdevice.h>
-#include <linux/netdevice.h>
-#include <linux/stmmac.h>
-#include <linux/phy.h>
-#include <linux/pcs/pcs-xpcs.h>
-#include <linux/module.h>
-#if IS_ENABLED(CONFIG_VLAN_8021Q)
-#define STMMAC_VLAN_TAG_USED
-#include <linux/if_vlan.h>
-#endif
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/sपंचांगmac.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/pcs/pcs-xpcs.h>
+#समावेश <linux/module.h>
+#अगर IS_ENABLED(CONFIG_VLAN_8021Q)
+#घोषणा STMMAC_VLAN_TAG_USED
+#समावेश <linux/अगर_vlan.h>
+#पूर्ण_अगर
 
-#include "descs.h"
-#include "hwif.h"
-#include "mmc.h"
+#समावेश "descs.h"
+#समावेश "hwif.h"
+#समावेश "mmc.h"
 
 /* Synopsys Core versions */
-#define	DWMAC_CORE_3_40		0x34
-#define	DWMAC_CORE_3_50		0x35
-#define	DWMAC_CORE_4_00		0x40
-#define DWMAC_CORE_4_10		0x41
-#define DWMAC_CORE_5_00		0x50
-#define DWMAC_CORE_5_10		0x51
-#define DWMAC_CORE_5_20		0x52
-#define DWXGMAC_CORE_2_10	0x21
-#define DWXLGMAC_CORE_2_00	0x20
+#घोषणा	DWMAC_CORE_3_40		0x34
+#घोषणा	DWMAC_CORE_3_50		0x35
+#घोषणा	DWMAC_CORE_4_00		0x40
+#घोषणा DWMAC_CORE_4_10		0x41
+#घोषणा DWMAC_CORE_5_00		0x50
+#घोषणा DWMAC_CORE_5_10		0x51
+#घोषणा DWMAC_CORE_5_20		0x52
+#घोषणा DWXGMAC_CORE_2_10	0x21
+#घोषणा DWXLGMAC_CORE_2_00	0x20
 
 /* Device ID */
-#define DWXGMAC_ID		0x76
-#define DWXLGMAC_ID		0x27
+#घोषणा DWXGMAC_ID		0x76
+#घोषणा DWXLGMAC_ID		0x27
 
-#define STMMAC_CHAN0	0	/* Always supported and default for all chips */
+#घोषणा STMMAC_CHAN0	0	/* Always supported and शेष क्रम all chips */
 
-/* TX and RX Descriptor Length, these need to be power of two.
- * TX descriptor length less than 64 may cause transmit queue timed out error.
+/* TX and RX Descriptor Length, these need to be घातer of two.
+ * TX descriptor length less than 64 may cause transmit queue समयd out error.
  * RX descriptor length less than 64 may cause inconsistent Rx chain error.
  */
-#define DMA_MIN_TX_SIZE		64
-#define DMA_MAX_TX_SIZE		1024
-#define DMA_DEFAULT_TX_SIZE	512
-#define DMA_MIN_RX_SIZE		64
-#define DMA_MAX_RX_SIZE		1024
-#define DMA_DEFAULT_RX_SIZE	512
-#define STMMAC_GET_ENTRY(x, size)	((x + 1) & (size - 1))
+#घोषणा DMA_MIN_TX_SIZE		64
+#घोषणा DMA_MAX_TX_SIZE		1024
+#घोषणा DMA_DEFAULT_TX_SIZE	512
+#घोषणा DMA_MIN_RX_SIZE		64
+#घोषणा DMA_MAX_RX_SIZE		1024
+#घोषणा DMA_DEFAULT_RX_SIZE	512
+#घोषणा STMMAC_GET_ENTRY(x, size)	((x + 1) & (size - 1))
 
-#undef FRAME_FILTER_DEBUG
-/* #define FRAME_FILTER_DEBUG */
+#अघोषित FRAME_FILTER_DEBUG
+/* #घोषणा FRAME_FILTER_DEBUG */
 
-/* Extra statistic and debug information exposed by ethtool */
-struct stmmac_extra_stats {
+/* Extra statistic and debug inक्रमmation exposed by ethtool */
+काष्ठा sपंचांगmac_extra_stats अणु
 	/* Transmit errors */
-	unsigned long tx_underflow ____cacheline_aligned;
-	unsigned long tx_carrier;
-	unsigned long tx_losscarrier;
-	unsigned long vlan_tag;
-	unsigned long tx_deferred;
-	unsigned long tx_vlan;
-	unsigned long tx_jabber;
-	unsigned long tx_frame_flushed;
-	unsigned long tx_payload_error;
-	unsigned long tx_ip_header_error;
+	अचिन्हित दीर्घ tx_underflow ____cacheline_aligned;
+	अचिन्हित दीर्घ tx_carrier;
+	अचिन्हित दीर्घ tx_losscarrier;
+	अचिन्हित दीर्घ vlan_tag;
+	अचिन्हित दीर्घ tx_deferred;
+	अचिन्हित दीर्घ tx_vlan;
+	अचिन्हित दीर्घ tx_jabber;
+	अचिन्हित दीर्घ tx_frame_flushed;
+	अचिन्हित दीर्घ tx_payload_error;
+	अचिन्हित दीर्घ tx_ip_header_error;
 	/* Receive errors */
-	unsigned long rx_desc;
-	unsigned long sa_filter_fail;
-	unsigned long overflow_error;
-	unsigned long ipc_csum_error;
-	unsigned long rx_collision;
-	unsigned long rx_crc_errors;
-	unsigned long dribbling_bit;
-	unsigned long rx_length;
-	unsigned long rx_mii;
-	unsigned long rx_multicast;
-	unsigned long rx_gmac_overflow;
-	unsigned long rx_watchdog;
-	unsigned long da_rx_filter_fail;
-	unsigned long sa_rx_filter_fail;
-	unsigned long rx_missed_cntr;
-	unsigned long rx_overflow_cntr;
-	unsigned long rx_vlan;
-	unsigned long rx_split_hdr_pkt_n;
+	अचिन्हित दीर्घ rx_desc;
+	अचिन्हित दीर्घ sa_filter_fail;
+	अचिन्हित दीर्घ overflow_error;
+	अचिन्हित दीर्घ ipc_csum_error;
+	अचिन्हित दीर्घ rx_collision;
+	अचिन्हित दीर्घ rx_crc_errors;
+	अचिन्हित दीर्घ dribbling_bit;
+	अचिन्हित दीर्घ rx_length;
+	अचिन्हित दीर्घ rx_mii;
+	अचिन्हित दीर्घ rx_multicast;
+	अचिन्हित दीर्घ rx_gmac_overflow;
+	अचिन्हित दीर्घ rx_watchकरोg;
+	अचिन्हित दीर्घ da_rx_filter_fail;
+	अचिन्हित दीर्घ sa_rx_filter_fail;
+	अचिन्हित दीर्घ rx_missed_cntr;
+	अचिन्हित दीर्घ rx_overflow_cntr;
+	अचिन्हित दीर्घ rx_vlan;
+	अचिन्हित दीर्घ rx_split_hdr_pkt_n;
 	/* Tx/Rx IRQ error info */
-	unsigned long tx_undeflow_irq;
-	unsigned long tx_process_stopped_irq;
-	unsigned long tx_jabber_irq;
-	unsigned long rx_overflow_irq;
-	unsigned long rx_buf_unav_irq;
-	unsigned long rx_process_stopped_irq;
-	unsigned long rx_watchdog_irq;
-	unsigned long tx_early_irq;
-	unsigned long fatal_bus_error_irq;
+	अचिन्हित दीर्घ tx_undeflow_irq;
+	अचिन्हित दीर्घ tx_process_stopped_irq;
+	अचिन्हित दीर्घ tx_jabber_irq;
+	अचिन्हित दीर्घ rx_overflow_irq;
+	अचिन्हित दीर्घ rx_buf_unav_irq;
+	अचिन्हित दीर्घ rx_process_stopped_irq;
+	अचिन्हित दीर्घ rx_watchकरोg_irq;
+	अचिन्हित दीर्घ tx_early_irq;
+	अचिन्हित दीर्घ fatal_bus_error_irq;
 	/* Tx/Rx IRQ Events */
-	unsigned long rx_early_irq;
-	unsigned long threshold;
-	unsigned long tx_pkt_n;
-	unsigned long rx_pkt_n;
-	unsigned long normal_irq_n;
-	unsigned long rx_normal_irq_n;
-	unsigned long napi_poll;
-	unsigned long tx_normal_irq_n;
-	unsigned long tx_clean;
-	unsigned long tx_set_ic_bit;
-	unsigned long irq_receive_pmt_irq_n;
+	अचिन्हित दीर्घ rx_early_irq;
+	अचिन्हित दीर्घ threshold;
+	अचिन्हित दीर्घ tx_pkt_n;
+	अचिन्हित दीर्घ rx_pkt_n;
+	अचिन्हित दीर्घ normal_irq_n;
+	अचिन्हित दीर्घ rx_normal_irq_n;
+	अचिन्हित दीर्घ napi_poll;
+	अचिन्हित दीर्घ tx_normal_irq_n;
+	अचिन्हित दीर्घ tx_clean;
+	अचिन्हित दीर्घ tx_set_ic_bit;
+	अचिन्हित दीर्घ irq_receive_pmt_irq_n;
 	/* MMC info */
-	unsigned long mmc_tx_irq_n;
-	unsigned long mmc_rx_irq_n;
-	unsigned long mmc_rx_csum_offload_irq_n;
+	अचिन्हित दीर्घ mmc_tx_irq_n;
+	अचिन्हित दीर्घ mmc_rx_irq_n;
+	अचिन्हित दीर्घ mmc_rx_csum_offload_irq_n;
 	/* EEE */
-	unsigned long irq_tx_path_in_lpi_mode_n;
-	unsigned long irq_tx_path_exit_lpi_mode_n;
-	unsigned long irq_rx_path_in_lpi_mode_n;
-	unsigned long irq_rx_path_exit_lpi_mode_n;
-	unsigned long phy_eee_wakeup_error_n;
+	अचिन्हित दीर्घ irq_tx_path_in_lpi_mode_n;
+	अचिन्हित दीर्घ irq_tx_path_निकास_lpi_mode_n;
+	अचिन्हित दीर्घ irq_rx_path_in_lpi_mode_n;
+	अचिन्हित दीर्घ irq_rx_path_निकास_lpi_mode_n;
+	अचिन्हित दीर्घ phy_eee_wakeup_error_n;
 	/* Extended RDES status */
-	unsigned long ip_hdr_err;
-	unsigned long ip_payload_err;
-	unsigned long ip_csum_bypassed;
-	unsigned long ipv4_pkt_rcvd;
-	unsigned long ipv6_pkt_rcvd;
-	unsigned long no_ptp_rx_msg_type_ext;
-	unsigned long ptp_rx_msg_type_sync;
-	unsigned long ptp_rx_msg_type_follow_up;
-	unsigned long ptp_rx_msg_type_delay_req;
-	unsigned long ptp_rx_msg_type_delay_resp;
-	unsigned long ptp_rx_msg_type_pdelay_req;
-	unsigned long ptp_rx_msg_type_pdelay_resp;
-	unsigned long ptp_rx_msg_type_pdelay_follow_up;
-	unsigned long ptp_rx_msg_type_announce;
-	unsigned long ptp_rx_msg_type_management;
-	unsigned long ptp_rx_msg_pkt_reserved_type;
-	unsigned long ptp_frame_type;
-	unsigned long ptp_ver;
-	unsigned long timestamp_dropped;
-	unsigned long av_pkt_rcvd;
-	unsigned long av_tagged_pkt_rcvd;
-	unsigned long vlan_tag_priority_val;
-	unsigned long l3_filter_match;
-	unsigned long l4_filter_match;
-	unsigned long l3_l4_filter_no_match;
+	अचिन्हित दीर्घ ip_hdr_err;
+	अचिन्हित दीर्घ ip_payload_err;
+	अचिन्हित दीर्घ ip_csum_bypassed;
+	अचिन्हित दीर्घ ipv4_pkt_rcvd;
+	अचिन्हित दीर्घ ipv6_pkt_rcvd;
+	अचिन्हित दीर्घ no_ptp_rx_msg_type_ext;
+	अचिन्हित दीर्घ ptp_rx_msg_type_sync;
+	अचिन्हित दीर्घ ptp_rx_msg_type_follow_up;
+	अचिन्हित दीर्घ ptp_rx_msg_type_delay_req;
+	अचिन्हित दीर्घ ptp_rx_msg_type_delay_resp;
+	अचिन्हित दीर्घ ptp_rx_msg_type_pdelay_req;
+	अचिन्हित दीर्घ ptp_rx_msg_type_pdelay_resp;
+	अचिन्हित दीर्घ ptp_rx_msg_type_pdelay_follow_up;
+	अचिन्हित दीर्घ ptp_rx_msg_type_announce;
+	अचिन्हित दीर्घ ptp_rx_msg_type_management;
+	अचिन्हित दीर्घ ptp_rx_msg_pkt_reserved_type;
+	अचिन्हित दीर्घ ptp_frame_type;
+	अचिन्हित दीर्घ ptp_ver;
+	अचिन्हित दीर्घ बारtamp_dropped;
+	अचिन्हित दीर्घ av_pkt_rcvd;
+	अचिन्हित दीर्घ av_tagged_pkt_rcvd;
+	अचिन्हित दीर्घ vlan_tag_priority_val;
+	अचिन्हित दीर्घ l3_filter_match;
+	अचिन्हित दीर्घ l4_filter_match;
+	अचिन्हित दीर्घ l3_l4_filter_no_match;
 	/* PCS */
-	unsigned long irq_pcs_ane_n;
-	unsigned long irq_pcs_link_n;
-	unsigned long irq_rgmii_n;
-	unsigned long pcs_link;
-	unsigned long pcs_duplex;
-	unsigned long pcs_speed;
-	/* debug register */
-	unsigned long mtl_tx_status_fifo_full;
-	unsigned long mtl_tx_fifo_not_empty;
-	unsigned long mmtl_fifo_ctrl;
-	unsigned long mtl_tx_fifo_read_ctrl_write;
-	unsigned long mtl_tx_fifo_read_ctrl_wait;
-	unsigned long mtl_tx_fifo_read_ctrl_read;
-	unsigned long mtl_tx_fifo_read_ctrl_idle;
-	unsigned long mac_tx_in_pause;
-	unsigned long mac_tx_frame_ctrl_xfer;
-	unsigned long mac_tx_frame_ctrl_idle;
-	unsigned long mac_tx_frame_ctrl_wait;
-	unsigned long mac_tx_frame_ctrl_pause;
-	unsigned long mac_gmii_tx_proto_engine;
-	unsigned long mtl_rx_fifo_fill_level_full;
-	unsigned long mtl_rx_fifo_fill_above_thresh;
-	unsigned long mtl_rx_fifo_fill_below_thresh;
-	unsigned long mtl_rx_fifo_fill_level_empty;
-	unsigned long mtl_rx_fifo_read_ctrl_flush;
-	unsigned long mtl_rx_fifo_read_ctrl_read_data;
-	unsigned long mtl_rx_fifo_read_ctrl_status;
-	unsigned long mtl_rx_fifo_read_ctrl_idle;
-	unsigned long mtl_rx_fifo_ctrl_active;
-	unsigned long mac_rx_frame_ctrl_fifo;
-	unsigned long mac_gmii_rx_proto_engine;
+	अचिन्हित दीर्घ irq_pcs_ane_n;
+	अचिन्हित दीर्घ irq_pcs_link_n;
+	अचिन्हित दीर्घ irq_rgmii_n;
+	अचिन्हित दीर्घ pcs_link;
+	अचिन्हित दीर्घ pcs_duplex;
+	अचिन्हित दीर्घ pcs_speed;
+	/* debug रेजिस्टर */
+	अचिन्हित दीर्घ mtl_tx_status_fअगरo_full;
+	अचिन्हित दीर्घ mtl_tx_fअगरo_not_empty;
+	अचिन्हित दीर्घ mmtl_fअगरo_ctrl;
+	अचिन्हित दीर्घ mtl_tx_fअगरo_पढ़ो_ctrl_ग_लिखो;
+	अचिन्हित दीर्घ mtl_tx_fअगरo_पढ़ो_ctrl_रुको;
+	अचिन्हित दीर्घ mtl_tx_fअगरo_पढ़ो_ctrl_पढ़ो;
+	अचिन्हित दीर्घ mtl_tx_fअगरo_पढ़ो_ctrl_idle;
+	अचिन्हित दीर्घ mac_tx_in_छोड़ो;
+	अचिन्हित दीर्घ mac_tx_frame_ctrl_xfer;
+	अचिन्हित दीर्घ mac_tx_frame_ctrl_idle;
+	अचिन्हित दीर्घ mac_tx_frame_ctrl_रुको;
+	अचिन्हित दीर्घ mac_tx_frame_ctrl_छोड़ो;
+	अचिन्हित दीर्घ mac_gmii_tx_proto_engine;
+	अचिन्हित दीर्घ mtl_rx_fअगरo_fill_level_full;
+	अचिन्हित दीर्घ mtl_rx_fअगरo_fill_above_thresh;
+	अचिन्हित दीर्घ mtl_rx_fअगरo_fill_below_thresh;
+	अचिन्हित दीर्घ mtl_rx_fअगरo_fill_level_empty;
+	अचिन्हित दीर्घ mtl_rx_fअगरo_पढ़ो_ctrl_flush;
+	अचिन्हित दीर्घ mtl_rx_fअगरo_पढ़ो_ctrl_पढ़ो_data;
+	अचिन्हित दीर्घ mtl_rx_fअगरo_पढ़ो_ctrl_status;
+	अचिन्हित दीर्घ mtl_rx_fअगरo_पढ़ो_ctrl_idle;
+	अचिन्हित दीर्घ mtl_rx_fअगरo_ctrl_active;
+	अचिन्हित दीर्घ mac_rx_frame_ctrl_fअगरo;
+	अचिन्हित दीर्घ mac_gmii_rx_proto_engine;
 	/* TSO */
-	unsigned long tx_tso_frames;
-	unsigned long tx_tso_nfrags;
+	अचिन्हित दीर्घ tx_tso_frames;
+	अचिन्हित दीर्घ tx_tso_nfrags;
 	/* EST */
-	unsigned long mtl_est_cgce;
-	unsigned long mtl_est_hlbs;
-	unsigned long mtl_est_hlbf;
-	unsigned long mtl_est_btre;
-	unsigned long mtl_est_btrlm;
-};
+	अचिन्हित दीर्घ mtl_est_cgce;
+	अचिन्हित दीर्घ mtl_est_hlbs;
+	अचिन्हित दीर्घ mtl_est_hlbf;
+	अचिन्हित दीर्घ mtl_est_btre;
+	अचिन्हित दीर्घ mtl_est_btrlm;
+पूर्ण;
 
 /* Safety Feature statistics exposed by ethtool */
-struct stmmac_safety_stats {
-	unsigned long mac_errors[32];
-	unsigned long mtl_errors[32];
-	unsigned long dma_errors[32];
-};
+काष्ठा sपंचांगmac_safety_stats अणु
+	अचिन्हित दीर्घ mac_errors[32];
+	अचिन्हित दीर्घ mtl_errors[32];
+	अचिन्हित दीर्घ dma_errors[32];
+पूर्ण;
 
 /* Number of fields in Safety Stats */
-#define STMMAC_SAFETY_FEAT_SIZE	\
-	(sizeof(struct stmmac_safety_stats) / sizeof(unsigned long))
+#घोषणा STMMAC_SAFETY_FEAT_SIZE	\
+	(माप(काष्ठा sपंचांगmac_safety_stats) / माप(अचिन्हित दीर्घ))
 
 /* CSR Frequency Access Defines*/
-#define CSR_F_35M	35000000
-#define CSR_F_60M	60000000
-#define CSR_F_100M	100000000
-#define CSR_F_150M	150000000
-#define CSR_F_250M	250000000
-#define CSR_F_300M	300000000
+#घोषणा CSR_F_35M	35000000
+#घोषणा CSR_F_60M	60000000
+#घोषणा CSR_F_100M	100000000
+#घोषणा CSR_F_150M	150000000
+#घोषणा CSR_F_250M	250000000
+#घोषणा CSR_F_300M	300000000
 
-#define	MAC_CSR_H_FRQ_MASK	0x20
+#घोषणा	MAC_CSR_H_FRQ_MASK	0x20
 
-#define HASH_TABLE_SIZE 64
-#define PAUSE_TIME 0xffff
+#घोषणा HASH_TABLE_SIZE 64
+#घोषणा PAUSE_TIME 0xffff
 
 /* Flow Control defines */
-#define FLOW_OFF	0
-#define FLOW_RX		1
-#define FLOW_TX		2
-#define FLOW_AUTO	(FLOW_TX | FLOW_RX)
+#घोषणा FLOW_OFF	0
+#घोषणा FLOW_RX		1
+#घोषणा FLOW_TX		2
+#घोषणा FLOW_AUTO	(FLOW_TX | FLOW_RX)
 
 /* PCS defines */
-#define STMMAC_PCS_RGMII	(1 << 0)
-#define STMMAC_PCS_SGMII	(1 << 1)
-#define STMMAC_PCS_TBI		(1 << 2)
-#define STMMAC_PCS_RTBI		(1 << 3)
+#घोषणा STMMAC_PCS_RGMII	(1 << 0)
+#घोषणा STMMAC_PCS_SGMII	(1 << 1)
+#घोषणा STMMAC_PCS_TBI		(1 << 2)
+#घोषणा STMMAC_PCS_RTBI		(1 << 3)
 
-#define SF_DMA_MODE 1		/* DMA STORE-AND-FORWARD Operation Mode */
+#घोषणा SF_DMA_MODE 1		/* DMA STORE-AND-FORWARD Operation Mode */
 
-/* DAM HW feature register fields */
-#define DMA_HW_FEAT_MIISEL	0x00000001	/* 10/100 Mbps Support */
-#define DMA_HW_FEAT_GMIISEL	0x00000002	/* 1000 Mbps Support */
-#define DMA_HW_FEAT_HDSEL	0x00000004	/* Half-Duplex Support */
-#define DMA_HW_FEAT_EXTHASHEN	0x00000008	/* Expanded DA Hash Filter */
-#define DMA_HW_FEAT_HASHSEL	0x00000010	/* HASH Filter */
-#define DMA_HW_FEAT_ADDMAC	0x00000020	/* Multiple MAC Addr Reg */
-#define DMA_HW_FEAT_PCSSEL	0x00000040	/* PCS registers */
-#define DMA_HW_FEAT_L3L4FLTREN	0x00000080	/* Layer 3 & Layer 4 Feature */
-#define DMA_HW_FEAT_SMASEL	0x00000100	/* SMA(MDIO) Interface */
-#define DMA_HW_FEAT_RWKSEL	0x00000200	/* PMT Remote Wakeup */
-#define DMA_HW_FEAT_MGKSEL	0x00000400	/* PMT Magic Packet */
-#define DMA_HW_FEAT_MMCSEL	0x00000800	/* RMON Module */
-#define DMA_HW_FEAT_TSVER1SEL	0x00001000	/* Only IEEE 1588-2002 */
-#define DMA_HW_FEAT_TSVER2SEL	0x00002000	/* IEEE 1588-2008 PTPv2 */
-#define DMA_HW_FEAT_EEESEL	0x00004000	/* Energy Efficient Ethernet */
-#define DMA_HW_FEAT_AVSEL	0x00008000	/* AV Feature */
-#define DMA_HW_FEAT_TXCOESEL	0x00010000	/* Checksum Offload in Tx */
-#define DMA_HW_FEAT_RXTYP1COE	0x00020000	/* IP COE (Type 1) in Rx */
-#define DMA_HW_FEAT_RXTYP2COE	0x00040000	/* IP COE (Type 2) in Rx */
-#define DMA_HW_FEAT_RXFIFOSIZE	0x00080000	/* Rx FIFO > 2048 Bytes */
-#define DMA_HW_FEAT_RXCHCNT	0x00300000	/* No. additional Rx Channels */
-#define DMA_HW_FEAT_TXCHCNT	0x00c00000	/* No. additional Tx Channels */
-#define DMA_HW_FEAT_ENHDESSEL	0x01000000	/* Alternate Descriptor */
+/* DAM HW feature रेजिस्टर fields */
+#घोषणा DMA_HW_FEAT_MIISEL	0x00000001	/* 10/100 Mbps Support */
+#घोषणा DMA_HW_FEAT_GMIISEL	0x00000002	/* 1000 Mbps Support */
+#घोषणा DMA_HW_FEAT_HDSEL	0x00000004	/* Half-Duplex Support */
+#घोषणा DMA_HW_FEAT_EXTHASHEN	0x00000008	/* Expanded DA Hash Filter */
+#घोषणा DMA_HW_FEAT_HASHSEL	0x00000010	/* HASH Filter */
+#घोषणा DMA_HW_FEAT_ADDMAC	0x00000020	/* Multiple MAC Addr Reg */
+#घोषणा DMA_HW_FEAT_PCSSEL	0x00000040	/* PCS रेजिस्टरs */
+#घोषणा DMA_HW_FEAT_L3L4FLTREN	0x00000080	/* Layer 3 & Layer 4 Feature */
+#घोषणा DMA_HW_FEAT_SMASEL	0x00000100	/* SMA(MDIO) Interface */
+#घोषणा DMA_HW_FEAT_RWKSEL	0x00000200	/* PMT Remote Wakeup */
+#घोषणा DMA_HW_FEAT_MGKSEL	0x00000400	/* PMT Magic Packet */
+#घोषणा DMA_HW_FEAT_MMCSEL	0x00000800	/* RMON Module */
+#घोषणा DMA_HW_FEAT_TSVER1SEL	0x00001000	/* Only IEEE 1588-2002 */
+#घोषणा DMA_HW_FEAT_TSVER2SEL	0x00002000	/* IEEE 1588-2008 PTPv2 */
+#घोषणा DMA_HW_FEAT_EEESEL	0x00004000	/* Energy Efficient Ethernet */
+#घोषणा DMA_HW_FEAT_AVSEL	0x00008000	/* AV Feature */
+#घोषणा DMA_HW_FEAT_TXCOESEL	0x00010000	/* Checksum Offload in Tx */
+#घोषणा DMA_HW_FEAT_RXTYP1COE	0x00020000	/* IP COE (Type 1) in Rx */
+#घोषणा DMA_HW_FEAT_RXTYP2COE	0x00040000	/* IP COE (Type 2) in Rx */
+#घोषणा DMA_HW_FEAT_RXFIFOSIZE	0x00080000	/* Rx FIFO > 2048 Bytes */
+#घोषणा DMA_HW_FEAT_RXCHCNT	0x00300000	/* No. additional Rx Channels */
+#घोषणा DMA_HW_FEAT_TXCHCNT	0x00c00000	/* No. additional Tx Channels */
+#घोषणा DMA_HW_FEAT_ENHDESSEL	0x01000000	/* Alternate Descriptor */
 /* Timestamping with Internal System Time */
-#define DMA_HW_FEAT_INTTSEN	0x02000000
-#define DMA_HW_FEAT_FLEXIPPSEN	0x04000000	/* Flexible PPS Output */
-#define DMA_HW_FEAT_SAVLANINS	0x08000000	/* Source Addr or VLAN */
-#define DMA_HW_FEAT_ACTPHYIF	0x70000000	/* Active/selected PHY iface */
-#define DEFAULT_DMA_PBL		8
+#घोषणा DMA_HW_FEAT_INTTSEN	0x02000000
+#घोषणा DMA_HW_FEAT_FLEXIPPSEN	0x04000000	/* Flexible PPS Output */
+#घोषणा DMA_HW_FEAT_SAVLANINS	0x08000000	/* Source Addr or VLAN */
+#घोषणा DMA_HW_FEAT_ACTPHYIF	0x70000000	/* Active/selected PHY अगरace */
+#घोषणा DEFAULT_DMA_PBL		8
 
 /* MSI defines */
-#define STMMAC_MSI_VEC_MAX	32
+#घोषणा STMMAC_MSI_VEC_MAX	32
 
 /* PCS status and mask defines */
-#define	PCS_ANE_IRQ		BIT(2)	/* PCS Auto-Negotiation */
-#define	PCS_LINK_IRQ		BIT(1)	/* PCS Link */
-#define	PCS_RGSMIIIS_IRQ	BIT(0)	/* RGMII or SMII Interrupt */
+#घोषणा	PCS_ANE_IRQ		BIT(2)	/* PCS Auto-Negotiation */
+#घोषणा	PCS_LINK_IRQ		BIT(1)	/* PCS Link */
+#घोषणा	PCS_RGSMIIIS_IRQ	BIT(0)	/* RGMII or SMII Interrupt */
 
-/* Max/Min RI Watchdog Timer count value */
-#define MAX_DMA_RIWT		0xff
-#define MIN_DMA_RIWT		0x10
-#define DEF_DMA_RIWT		0xa0
+/* Max/Min RI Watchकरोg Timer count value */
+#घोषणा MAX_DMA_RIWT		0xff
+#घोषणा MIN_DMA_RIWT		0x10
+#घोषणा DEF_DMA_RIWT		0xa0
 /* Tx coalesce parameters */
-#define STMMAC_COAL_TX_TIMER	1000
-#define STMMAC_MAX_COAL_TX_TICK	100000
-#define STMMAC_TX_MAX_FRAMES	256
-#define STMMAC_TX_FRAMES	25
-#define STMMAC_RX_FRAMES	0
+#घोषणा STMMAC_COAL_TX_TIMER	1000
+#घोषणा STMMAC_MAX_COAL_TX_TICK	100000
+#घोषणा STMMAC_TX_MAX_FRAMES	256
+#घोषणा STMMAC_TX_FRAMES	25
+#घोषणा STMMAC_RX_FRAMES	0
 
 /* Packets types */
-enum packets_types {
+क्रमागत packets_types अणु
 	PACKET_AVCPQ = 0x1, /* AV Untagged Control packets */
 	PACKET_PTPQ = 0x2, /* PTP Packets */
 	PACKET_DCBCPQ = 0x3, /* DCB Control Packets */
 	PACKET_UPQ = 0x4, /* Untagged Packets */
 	PACKET_MCBCQ = 0x5, /* Multicast & Broadcast Packets */
-};
+पूर्ण;
 
 /* Rx IPC status */
-enum rx_frame_status {
+क्रमागत rx_frame_status अणु
 	good_frame = 0x0,
 	discard_frame = 0x1,
 	csum_none = 0x2,
 	llc_snap = 0x4,
 	dma_own = 0x8,
 	rx_not_ls = 0x10,
-};
+पूर्ण;
 
 /* Tx status */
-enum tx_frame_status {
-	tx_done = 0x0,
+क्रमागत tx_frame_status अणु
+	tx_करोne = 0x0,
 	tx_not_ls = 0x1,
 	tx_err = 0x2,
 	tx_dma_own = 0x4,
-};
+पूर्ण;
 
-enum dma_irq_status {
+क्रमागत dma_irq_status अणु
 	tx_hard_error = 0x1,
 	tx_hard_error_bump_tc = 0x2,
 	handle_rx = 0x4,
 	handle_tx = 0x8,
-};
+पूर्ण;
 
-enum dma_irq_dir {
-	DMA_DIR_RX = 0x1,
-	DMA_DIR_TX = 0x2,
-	DMA_DIR_RXTX = 0x3,
-};
+क्रमागत dma_irq_dir अणु
+	DMA_सूची_RX = 0x1,
+	DMA_सूची_TX = 0x2,
+	DMA_सूची_RXTX = 0x3,
+पूर्ण;
 
-enum request_irq_err {
+क्रमागत request_irq_err अणु
 	REQ_IRQ_ERR_ALL,
 	REQ_IRQ_ERR_TX,
 	REQ_IRQ_ERR_RX,
@@ -329,227 +330,227 @@ enum request_irq_err {
 	REQ_IRQ_ERR_WOL,
 	REQ_IRQ_ERR_MAC,
 	REQ_IRQ_ERR_NO,
-};
+पूर्ण;
 
 /* EEE and LPI defines */
-#define	CORE_IRQ_TX_PATH_IN_LPI_MODE	(1 << 0)
-#define	CORE_IRQ_TX_PATH_EXIT_LPI_MODE	(1 << 1)
-#define	CORE_IRQ_RX_PATH_IN_LPI_MODE	(1 << 2)
-#define	CORE_IRQ_RX_PATH_EXIT_LPI_MODE	(1 << 3)
+#घोषणा	CORE_IRQ_TX_PATH_IN_LPI_MODE	(1 << 0)
+#घोषणा	CORE_IRQ_TX_PATH_EXIT_LPI_MODE	(1 << 1)
+#घोषणा	CORE_IRQ_RX_PATH_IN_LPI_MODE	(1 << 2)
+#घोषणा	CORE_IRQ_RX_PATH_EXIT_LPI_MODE	(1 << 3)
 
 /* FPE defines */
-#define FPE_EVENT_UNKNOWN		0
-#define FPE_EVENT_TRSP			BIT(0)
-#define FPE_EVENT_TVER			BIT(1)
-#define FPE_EVENT_RRSP			BIT(2)
-#define FPE_EVENT_RVER			BIT(3)
+#घोषणा FPE_EVENT_UNKNOWN		0
+#घोषणा FPE_EVENT_TRSP			BIT(0)
+#घोषणा FPE_EVENT_TVER			BIT(1)
+#घोषणा FPE_EVENT_RRSP			BIT(2)
+#घोषणा FPE_EVENT_RVER			BIT(3)
 
-#define CORE_IRQ_MTL_RX_OVERFLOW	BIT(8)
+#घोषणा CORE_IRQ_MTL_RX_OVERFLOW	BIT(8)
 
 /* Physical Coding Sublayer */
-struct rgmii_adv {
-	unsigned int pause;
-	unsigned int duplex;
-	unsigned int lp_pause;
-	unsigned int lp_duplex;
-};
+काष्ठा rgmii_adv अणु
+	अचिन्हित पूर्णांक छोड़ो;
+	अचिन्हित पूर्णांक duplex;
+	अचिन्हित पूर्णांक lp_छोड़ो;
+	अचिन्हित पूर्णांक lp_duplex;
+पूर्ण;
 
-#define STMMAC_PCS_PAUSE	1
-#define STMMAC_PCS_ASYM_PAUSE	2
+#घोषणा STMMAC_PCS_PAUSE	1
+#घोषणा STMMAC_PCS_ASYM_PAUSE	2
 
 /* DMA HW capabilities */
-struct dma_features {
-	unsigned int mbps_10_100;
-	unsigned int mbps_1000;
-	unsigned int half_duplex;
-	unsigned int hash_filter;
-	unsigned int multi_addr;
-	unsigned int pcs;
-	unsigned int sma_mdio;
-	unsigned int pmt_remote_wake_up;
-	unsigned int pmt_magic_frame;
-	unsigned int rmon;
+काष्ठा dma_features अणु
+	अचिन्हित पूर्णांक mbps_10_100;
+	अचिन्हित पूर्णांक mbps_1000;
+	अचिन्हित पूर्णांक half_duplex;
+	अचिन्हित पूर्णांक hash_filter;
+	अचिन्हित पूर्णांक multi_addr;
+	अचिन्हित पूर्णांक pcs;
+	अचिन्हित पूर्णांक sma_mdio;
+	अचिन्हित पूर्णांक pmt_remote_wake_up;
+	अचिन्हित पूर्णांक pmt_magic_frame;
+	अचिन्हित पूर्णांक rmon;
 	/* IEEE 1588-2002 */
-	unsigned int time_stamp;
+	अचिन्हित पूर्णांक समय_stamp;
 	/* IEEE 1588-2008 */
-	unsigned int atime_stamp;
+	अचिन्हित पूर्णांक aसमय_stamp;
 	/* 802.3az - Energy-Efficient Ethernet (EEE) */
-	unsigned int eee;
-	unsigned int av;
-	unsigned int hash_tb_sz;
-	unsigned int tsoen;
+	अचिन्हित पूर्णांक eee;
+	अचिन्हित पूर्णांक av;
+	अचिन्हित पूर्णांक hash_tb_sz;
+	अचिन्हित पूर्णांक tsoen;
 	/* TX and RX csum */
-	unsigned int tx_coe;
-	unsigned int rx_coe;
-	unsigned int rx_coe_type1;
-	unsigned int rx_coe_type2;
-	unsigned int rxfifo_over_2048;
+	अचिन्हित पूर्णांक tx_coe;
+	अचिन्हित पूर्णांक rx_coe;
+	अचिन्हित पूर्णांक rx_coe_type1;
+	अचिन्हित पूर्णांक rx_coe_type2;
+	अचिन्हित पूर्णांक rxfअगरo_over_2048;
 	/* TX and RX number of channels */
-	unsigned int number_rx_channel;
-	unsigned int number_tx_channel;
+	अचिन्हित पूर्णांक number_rx_channel;
+	अचिन्हित पूर्णांक number_tx_channel;
 	/* TX and RX number of queues */
-	unsigned int number_rx_queues;
-	unsigned int number_tx_queues;
+	अचिन्हित पूर्णांक number_rx_queues;
+	अचिन्हित पूर्णांक number_tx_queues;
 	/* PPS output */
-	unsigned int pps_out_num;
+	अचिन्हित पूर्णांक pps_out_num;
 	/* Alternate (enhanced) DESC mode */
-	unsigned int enh_desc;
+	अचिन्हित पूर्णांक enh_desc;
 	/* TX and RX FIFO sizes */
-	unsigned int tx_fifo_size;
-	unsigned int rx_fifo_size;
+	अचिन्हित पूर्णांक tx_fअगरo_size;
+	अचिन्हित पूर्णांक rx_fअगरo_size;
 	/* Automotive Safety Package */
-	unsigned int asp;
+	अचिन्हित पूर्णांक asp;
 	/* RX Parser */
-	unsigned int frpsel;
-	unsigned int frpbs;
-	unsigned int frpes;
-	unsigned int addr64;
-	unsigned int rssen;
-	unsigned int vlhash;
-	unsigned int sphen;
-	unsigned int vlins;
-	unsigned int dvlan;
-	unsigned int l3l4fnum;
-	unsigned int arpoffsel;
+	अचिन्हित पूर्णांक frpsel;
+	अचिन्हित पूर्णांक frpbs;
+	अचिन्हित पूर्णांक frpes;
+	अचिन्हित पूर्णांक addr64;
+	अचिन्हित पूर्णांक rssen;
+	अचिन्हित पूर्णांक vlhash;
+	अचिन्हित पूर्णांक sphen;
+	अचिन्हित पूर्णांक vlins;
+	अचिन्हित पूर्णांक dvlan;
+	अचिन्हित पूर्णांक l3l4fnum;
+	अचिन्हित पूर्णांक arpoffsel;
 	/* TSN Features */
-	unsigned int estwid;
-	unsigned int estdep;
-	unsigned int estsel;
-	unsigned int fpesel;
-	unsigned int tbssel;
-	/* Numbers of Auxiliary Snapshot Inputs */
-	unsigned int aux_snapshot_n;
-};
+	अचिन्हित पूर्णांक estwid;
+	अचिन्हित पूर्णांक estdep;
+	अचिन्हित पूर्णांक estsel;
+	अचिन्हित पूर्णांक fpesel;
+	अचिन्हित पूर्णांक tbssel;
+	/* Numbers of Auxiliary Snapshot Inमाला_दो */
+	अचिन्हित पूर्णांक aux_snapshot_n;
+पूर्ण;
 
 /* RX Buffer size must be multiple of 4/8/16 bytes */
-#define BUF_SIZE_16KiB 16368
-#define BUF_SIZE_8KiB 8188
-#define BUF_SIZE_4KiB 4096
-#define BUF_SIZE_2KiB 2048
+#घोषणा BUF_SIZE_16KiB 16368
+#घोषणा BUF_SIZE_8KiB 8188
+#घोषणा BUF_SIZE_4KiB 4096
+#घोषणा BUF_SIZE_2KiB 2048
 
 /* Power Down and WOL */
-#define PMT_NOT_SUPPORTED 0
-#define PMT_SUPPORTED 1
+#घोषणा PMT_NOT_SUPPORTED 0
+#घोषणा PMT_SUPPORTED 1
 
 /* Common MAC defines */
-#define MAC_CTRL_REG		0x00000000	/* MAC Control */
-#define MAC_ENABLE_TX		0x00000008	/* Transmitter Enable */
-#define MAC_ENABLE_RX		0x00000004	/* Receiver Enable */
+#घोषणा MAC_CTRL_REG		0x00000000	/* MAC Control */
+#घोषणा MAC_ENABLE_TX		0x00000008	/* Transmitter Enable */
+#घोषणा MAC_ENABLE_RX		0x00000004	/* Receiver Enable */
 
-/* Default LPI timers */
-#define STMMAC_DEFAULT_LIT_LS	0x3E8
-#define STMMAC_DEFAULT_TWT_LS	0x1E
-#define STMMAC_ET_MAX		0xFFFFF
+/* Default LPI समयrs */
+#घोषणा STMMAC_DEFAULT_LIT_LS	0x3E8
+#घोषणा STMMAC_DEFAULT_TWT_LS	0x1E
+#घोषणा STMMAC_ET_MAX		0xFFFFF
 
-#define STMMAC_CHAIN_MODE	0x1
-#define STMMAC_RING_MODE	0x2
+#घोषणा STMMAC_CHAIN_MODE	0x1
+#घोषणा STMMAC_RING_MODE	0x2
 
-#define JUMBO_LEN		9000
+#घोषणा JUMBO_LEN		9000
 
 /* Receive Side Scaling */
-#define STMMAC_RSS_HASH_KEY_SIZE	40
-#define STMMAC_RSS_MAX_TABLE_SIZE	256
+#घोषणा STMMAC_RSS_HASH_KEY_SIZE	40
+#घोषणा STMMAC_RSS_MAX_TABLE_SIZE	256
 
 /* VLAN */
-#define STMMAC_VLAN_NONE	0x0
-#define STMMAC_VLAN_REMOVE	0x1
-#define STMMAC_VLAN_INSERT	0x2
-#define STMMAC_VLAN_REPLACE	0x3
+#घोषणा STMMAC_VLAN_NONE	0x0
+#घोषणा STMMAC_VLAN_REMOVE	0x1
+#घोषणा STMMAC_VLAN_INSERT	0x2
+#घोषणा STMMAC_VLAN_REPLACE	0x3
 
-extern const struct stmmac_desc_ops enh_desc_ops;
-extern const struct stmmac_desc_ops ndesc_ops;
+बाह्य स्थिर काष्ठा sपंचांगmac_desc_ops enh_desc_ops;
+बाह्य स्थिर काष्ठा sपंचांगmac_desc_ops ndesc_ops;
 
-struct mac_device_info;
+काष्ठा mac_device_info;
 
-extern const struct stmmac_hwtimestamp stmmac_ptp;
-extern const struct stmmac_mode_ops dwmac4_ring_mode_ops;
+बाह्य स्थिर काष्ठा sपंचांगmac_hwबारtamp sपंचांगmac_ptp;
+बाह्य स्थिर काष्ठा sपंचांगmac_mode_ops dwmac4_ring_mode_ops;
 
-struct mac_link {
+काष्ठा mac_link अणु
 	u32 speed_mask;
 	u32 speed10;
 	u32 speed100;
 	u32 speed1000;
 	u32 speed2500;
 	u32 duplex;
-	struct {
+	काष्ठा अणु
 		u32 speed2500;
 		u32 speed5000;
 		u32 speed10000;
-	} xgmii;
-	struct {
+	पूर्ण xgmii;
+	काष्ठा अणु
 		u32 speed25000;
 		u32 speed40000;
 		u32 speed50000;
 		u32 speed100000;
-	} xlgmii;
-};
+	पूर्ण xlgmii;
+पूर्ण;
 
-struct mii_regs {
-	unsigned int addr;	/* MII Address */
-	unsigned int data;	/* MII Data */
-	unsigned int addr_shift;	/* MII address shift */
-	unsigned int reg_shift;		/* MII reg shift */
-	unsigned int addr_mask;		/* MII address mask */
-	unsigned int reg_mask;		/* MII reg mask */
-	unsigned int clk_csr_shift;
-	unsigned int clk_csr_mask;
-};
+काष्ठा mii_regs अणु
+	अचिन्हित पूर्णांक addr;	/* MII Address */
+	अचिन्हित पूर्णांक data;	/* MII Data */
+	अचिन्हित पूर्णांक addr_shअगरt;	/* MII address shअगरt */
+	अचिन्हित पूर्णांक reg_shअगरt;		/* MII reg shअगरt */
+	अचिन्हित पूर्णांक addr_mask;		/* MII address mask */
+	अचिन्हित पूर्णांक reg_mask;		/* MII reg mask */
+	अचिन्हित पूर्णांक clk_csr_shअगरt;
+	अचिन्हित पूर्णांक clk_csr_mask;
+पूर्ण;
 
-struct mac_device_info {
-	const struct stmmac_ops *mac;
-	const struct stmmac_desc_ops *desc;
-	const struct stmmac_dma_ops *dma;
-	const struct stmmac_mode_ops *mode;
-	const struct stmmac_hwtimestamp *ptp;
-	const struct stmmac_tc_ops *tc;
-	const struct stmmac_mmc_ops *mmc;
-	const struct mdio_xpcs_ops *xpcs;
-	struct mdio_xpcs_args xpcs_args;
-	struct mii_regs mii;	/* MII register Addresses */
-	struct mac_link link;
-	void __iomem *pcsr;     /* vpointer to device CSRs */
-	unsigned int multicast_filter_bins;
-	unsigned int unicast_filter_entries;
-	unsigned int mcast_bits_log2;
-	unsigned int rx_csum;
-	unsigned int pcs;
-	unsigned int pmt;
-	unsigned int ps;
-	unsigned int xlgmac;
-	unsigned int num_vlan;
+काष्ठा mac_device_info अणु
+	स्थिर काष्ठा sपंचांगmac_ops *mac;
+	स्थिर काष्ठा sपंचांगmac_desc_ops *desc;
+	स्थिर काष्ठा sपंचांगmac_dma_ops *dma;
+	स्थिर काष्ठा sपंचांगmac_mode_ops *mode;
+	स्थिर काष्ठा sपंचांगmac_hwबारtamp *ptp;
+	स्थिर काष्ठा sपंचांगmac_tc_ops *tc;
+	स्थिर काष्ठा sपंचांगmac_mmc_ops *mmc;
+	स्थिर काष्ठा mdio_xpcs_ops *xpcs;
+	काष्ठा mdio_xpcs_args xpcs_args;
+	काष्ठा mii_regs mii;	/* MII रेजिस्टर Addresses */
+	काष्ठा mac_link link;
+	व्योम __iomem *pcsr;     /* vpoपूर्णांकer to device CSRs */
+	अचिन्हित पूर्णांक multicast_filter_bins;
+	अचिन्हित पूर्णांक unicast_filter_entries;
+	अचिन्हित पूर्णांक mcast_bits_log2;
+	अचिन्हित पूर्णांक rx_csum;
+	अचिन्हित पूर्णांक pcs;
+	अचिन्हित पूर्णांक pmt;
+	अचिन्हित पूर्णांक ps;
+	अचिन्हित पूर्णांक xlgmac;
+	अचिन्हित पूर्णांक num_vlan;
 	u32 vlan_filter[32];
-	unsigned int promisc;
+	अचिन्हित पूर्णांक promisc;
 	bool vlan_fail_q_en;
 	u8 vlan_fail_q;
-};
+पूर्ण;
 
-struct stmmac_rx_routing {
+काष्ठा sपंचांगmac_rx_routing अणु
 	u32 reg_mask;
-	u32 reg_shift;
-};
+	u32 reg_shअगरt;
+पूर्ण;
 
-int dwmac100_setup(struct stmmac_priv *priv);
-int dwmac1000_setup(struct stmmac_priv *priv);
-int dwmac4_setup(struct stmmac_priv *priv);
-int dwxgmac2_setup(struct stmmac_priv *priv);
-int dwxlgmac2_setup(struct stmmac_priv *priv);
+पूर्णांक dwmac100_setup(काष्ठा sपंचांगmac_priv *priv);
+पूर्णांक dwmac1000_setup(काष्ठा sपंचांगmac_priv *priv);
+पूर्णांक dwmac4_setup(काष्ठा sपंचांगmac_priv *priv);
+पूर्णांक dwxgmac2_setup(काष्ठा sपंचांगmac_priv *priv);
+पूर्णांक dwxlgmac2_setup(काष्ठा sपंचांगmac_priv *priv);
 
-void stmmac_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
-			 unsigned int high, unsigned int low);
-void stmmac_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
-			 unsigned int high, unsigned int low);
-void stmmac_set_mac(void __iomem *ioaddr, bool enable);
+व्योम sपंचांगmac_set_mac_addr(व्योम __iomem *ioaddr, u8 addr[6],
+			 अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low);
+व्योम sपंचांगmac_get_mac_addr(व्योम __iomem *ioaddr, अचिन्हित अक्षर *addr,
+			 अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low);
+व्योम sपंचांगmac_set_mac(व्योम __iomem *ioaddr, bool enable);
 
-void stmmac_dwmac4_set_mac_addr(void __iomem *ioaddr, u8 addr[6],
-				unsigned int high, unsigned int low);
-void stmmac_dwmac4_get_mac_addr(void __iomem *ioaddr, unsigned char *addr,
-				unsigned int high, unsigned int low);
-void stmmac_dwmac4_set_mac(void __iomem *ioaddr, bool enable);
+व्योम sपंचांगmac_dwmac4_set_mac_addr(व्योम __iomem *ioaddr, u8 addr[6],
+				अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low);
+व्योम sपंचांगmac_dwmac4_get_mac_addr(व्योम __iomem *ioaddr, अचिन्हित अक्षर *addr,
+				अचिन्हित पूर्णांक high, अचिन्हित पूर्णांक low);
+व्योम sपंचांगmac_dwmac4_set_mac(व्योम __iomem *ioaddr, bool enable);
 
-void dwmac_dma_flush_tx_fifo(void __iomem *ioaddr);
+व्योम dwmac_dma_flush_tx_fअगरo(व्योम __iomem *ioaddr);
 
-extern const struct stmmac_mode_ops ring_mode_ops;
-extern const struct stmmac_mode_ops chain_mode_ops;
-extern const struct stmmac_desc_ops dwmac4_desc_ops;
+बाह्य स्थिर काष्ठा sपंचांगmac_mode_ops ring_mode_ops;
+बाह्य स्थिर काष्ठा sपंचांगmac_mode_ops chain_mode_ops;
+बाह्य स्थिर काष्ठा sपंचांगmac_desc_ops dwmac4_desc_ops;
 
-#endif /* __COMMON_H__ */
+#पूर्ण_अगर /* __COMMON_H__ */

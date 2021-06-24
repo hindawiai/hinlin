@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * xt_LED.c - netfilter target to make LEDs blink upon packet matches
  *
- * Copyright (C) 2008 Adam Nielsen <a.nielsen@shikadi.net>
+ * Copyright (C) 2008 Adam Niअन्यथाn <a.niअन्यथाn@shikadi.net>
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/netfilter/x_tables.h>
-#include <linux/slab.h>
-#include <linux/leds.h>
-#include <linux/mutex.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/mutex.h>
 
-#include <linux/netfilter/xt_LED.h>
+#समावेश <linux/netfilter/xt_LED.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Adam Nielsen <a.nielsen@shikadi.net>");
@@ -20,183 +21,183 @@ MODULE_DESCRIPTION("Xtables: trigger LED devices on packet match");
 MODULE_ALIAS("ipt_LED");
 MODULE_ALIAS("ip6t_LED");
 
-static LIST_HEAD(xt_led_triggers);
-static DEFINE_MUTEX(xt_led_mutex);
+अटल LIST_HEAD(xt_led_triggers);
+अटल DEFINE_MUTEX(xt_led_mutex);
 
 /*
- * This is declared in here (the kernel module) only, to avoid having these
- * dependencies in userspace code.  This is what xt_led_info.internal_data
- * points to.
+ * This is declared in here (the kernel module) only, to aव्योम having these
+ * dependencies in userspace code.  This is what xt_led_info.पूर्णांकernal_data
+ * poपूर्णांकs to.
  */
-struct xt_led_info_internal {
-	struct list_head list;
-	int refcnt;
-	char *trigger_id;
-	struct led_trigger netfilter_led_trigger;
-	struct timer_list timer;
-};
+काष्ठा xt_led_info_पूर्णांकernal अणु
+	काष्ठा list_head list;
+	पूर्णांक refcnt;
+	अक्षर *trigger_id;
+	काष्ठा led_trigger netfilter_led_trigger;
+	काष्ठा समयr_list समयr;
+पूर्ण;
 
-#define XT_LED_BLINK_DELAY 50 /* ms */
+#घोषणा XT_LED_BLINK_DELAY 50 /* ms */
 
-static unsigned int
-led_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct xt_led_info *ledinfo = par->targinfo;
-	struct xt_led_info_internal *ledinternal = ledinfo->internal_data;
-	unsigned long led_delay = XT_LED_BLINK_DELAY;
+अटल अचिन्हित पूर्णांक
+led_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_led_info *ledinfo = par->targinfo;
+	काष्ठा xt_led_info_पूर्णांकernal *ledपूर्णांकernal = ledinfo->पूर्णांकernal_data;
+	अचिन्हित दीर्घ led_delay = XT_LED_BLINK_DELAY;
 
 	/*
-	 * If "always blink" is enabled, and there's still some time until the
-	 * LED will switch off, briefly switch it off now.
+	 * If "always blink" is enabled, and there's still some समय until the
+	 * LED will चयन off, briefly चयन it off now.
 	 */
-	if ((ledinfo->delay > 0) && ledinfo->always_blink &&
-	    timer_pending(&ledinternal->timer))
-		led_trigger_blink_oneshot(&ledinternal->netfilter_led_trigger,
+	अगर ((ledinfo->delay > 0) && ledinfo->always_blink &&
+	    समयr_pending(&ledपूर्णांकernal->समयr))
+		led_trigger_blink_oneshot(&ledपूर्णांकernal->netfilter_led_trigger,
 					  &led_delay, &led_delay, 1);
-	else
-		led_trigger_event(&ledinternal->netfilter_led_trigger, LED_FULL);
+	अन्यथा
+		led_trigger_event(&ledपूर्णांकernal->netfilter_led_trigger, LED_FULL);
 
-	/* If there's a positive delay, start/update the timer */
-	if (ledinfo->delay > 0) {
-		mod_timer(&ledinternal->timer,
-			  jiffies + msecs_to_jiffies(ledinfo->delay));
+	/* If there's a positive delay, start/update the समयr */
+	अगर (ledinfo->delay > 0) अणु
+		mod_समयr(&ledपूर्णांकernal->समयr,
+			  jअगरfies + msecs_to_jअगरfies(ledinfo->delay));
 
-	/* Otherwise if there was no delay given, blink as fast as possible */
-	} else if (ledinfo->delay == 0) {
-		led_trigger_event(&ledinternal->netfilter_led_trigger, LED_OFF);
-	}
+	/* Otherwise अगर there was no delay given, blink as fast as possible */
+	पूर्ण अन्यथा अगर (ledinfo->delay == 0) अणु
+		led_trigger_event(&ledपूर्णांकernal->netfilter_led_trigger, LED_OFF);
+	पूर्ण
 
-	/* else the delay is negative, which means switch on and stay on */
+	/* अन्यथा the delay is negative, which means चयन on and stay on */
 
-	return XT_CONTINUE;
-}
+	वापस XT_CONTINUE;
+पूर्ण
 
-static void led_timeout_callback(struct timer_list *t)
-{
-	struct xt_led_info_internal *ledinternal = from_timer(ledinternal, t,
-							      timer);
+अटल व्योम led_समयout_callback(काष्ठा समयr_list *t)
+अणु
+	काष्ठा xt_led_info_पूर्णांकernal *ledपूर्णांकernal = from_समयr(ledपूर्णांकernal, t,
+							      समयr);
 
-	led_trigger_event(&ledinternal->netfilter_led_trigger, LED_OFF);
-}
+	led_trigger_event(&ledपूर्णांकernal->netfilter_led_trigger, LED_OFF);
+पूर्ण
 
-static struct xt_led_info_internal *led_trigger_lookup(const char *name)
-{
-	struct xt_led_info_internal *ledinternal;
+अटल काष्ठा xt_led_info_पूर्णांकernal *led_trigger_lookup(स्थिर अक्षर *name)
+अणु
+	काष्ठा xt_led_info_पूर्णांकernal *ledपूर्णांकernal;
 
-	list_for_each_entry(ledinternal, &xt_led_triggers, list) {
-		if (!strcmp(name, ledinternal->netfilter_led_trigger.name)) {
-			return ledinternal;
-		}
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(ledपूर्णांकernal, &xt_led_triggers, list) अणु
+		अगर (!म_भेद(name, ledपूर्णांकernal->netfilter_led_trigger.name)) अणु
+			वापस ledपूर्णांकernal;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int led_tg_check(const struct xt_tgchk_param *par)
-{
-	struct xt_led_info *ledinfo = par->targinfo;
-	struct xt_led_info_internal *ledinternal;
-	int err;
+अटल पूर्णांक led_tg_check(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	काष्ठा xt_led_info *ledinfo = par->targinfo;
+	काष्ठा xt_led_info_पूर्णांकernal *ledपूर्णांकernal;
+	पूर्णांक err;
 
-	if (ledinfo->id[0] == '\0')
-		return -EINVAL;
+	अगर (ledinfo->id[0] == '\0')
+		वापस -EINVAL;
 
 	mutex_lock(&xt_led_mutex);
 
-	ledinternal = led_trigger_lookup(ledinfo->id);
-	if (ledinternal) {
-		ledinternal->refcnt++;
-		goto out;
-	}
+	ledपूर्णांकernal = led_trigger_lookup(ledinfo->id);
+	अगर (ledपूर्णांकernal) अणु
+		ledपूर्णांकernal->refcnt++;
+		जाओ out;
+	पूर्ण
 
 	err = -ENOMEM;
-	ledinternal = kzalloc(sizeof(struct xt_led_info_internal), GFP_KERNEL);
-	if (!ledinternal)
-		goto exit_mutex_only;
+	ledपूर्णांकernal = kzalloc(माप(काष्ठा xt_led_info_पूर्णांकernal), GFP_KERNEL);
+	अगर (!ledपूर्णांकernal)
+		जाओ निकास_mutex_only;
 
-	ledinternal->trigger_id = kstrdup(ledinfo->id, GFP_KERNEL);
-	if (!ledinternal->trigger_id)
-		goto exit_internal_alloc;
+	ledपूर्णांकernal->trigger_id = kstrdup(ledinfo->id, GFP_KERNEL);
+	अगर (!ledपूर्णांकernal->trigger_id)
+		जाओ निकास_पूर्णांकernal_alloc;
 
-	ledinternal->refcnt = 1;
-	ledinternal->netfilter_led_trigger.name = ledinternal->trigger_id;
+	ledपूर्णांकernal->refcnt = 1;
+	ledपूर्णांकernal->netfilter_led_trigger.name = ledपूर्णांकernal->trigger_id;
 
-	err = led_trigger_register(&ledinternal->netfilter_led_trigger);
-	if (err) {
+	err = led_trigger_रेजिस्टर(&ledपूर्णांकernal->netfilter_led_trigger);
+	अगर (err) अणु
 		pr_info_ratelimited("Trigger name is already in use.\n");
-		goto exit_alloc;
-	}
+		जाओ निकास_alloc;
+	पूर्ण
 
-	/* Since the letinternal timer can be shared between multiple targets,
-	 * always set it up, even if the current target does not need it
+	/* Since the letपूर्णांकernal समयr can be shared between multiple tarमाला_लो,
+	 * always set it up, even अगर the current target करोes not need it
 	 */
-	timer_setup(&ledinternal->timer, led_timeout_callback, 0);
+	समयr_setup(&ledपूर्णांकernal->समयr, led_समयout_callback, 0);
 
-	list_add_tail(&ledinternal->list, &xt_led_triggers);
+	list_add_tail(&ledपूर्णांकernal->list, &xt_led_triggers);
 
 out:
 	mutex_unlock(&xt_led_mutex);
 
-	ledinfo->internal_data = ledinternal;
+	ledinfo->पूर्णांकernal_data = ledपूर्णांकernal;
 
-	return 0;
+	वापस 0;
 
-exit_alloc:
-	kfree(ledinternal->trigger_id);
+निकास_alloc:
+	kमुक्त(ledपूर्णांकernal->trigger_id);
 
-exit_internal_alloc:
-	kfree(ledinternal);
+निकास_पूर्णांकernal_alloc:
+	kमुक्त(ledपूर्णांकernal);
 
-exit_mutex_only:
+निकास_mutex_only:
 	mutex_unlock(&xt_led_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void led_tg_destroy(const struct xt_tgdtor_param *par)
-{
-	const struct xt_led_info *ledinfo = par->targinfo;
-	struct xt_led_info_internal *ledinternal = ledinfo->internal_data;
+अटल व्योम led_tg_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
+अणु
+	स्थिर काष्ठा xt_led_info *ledinfo = par->targinfo;
+	काष्ठा xt_led_info_पूर्णांकernal *ledपूर्णांकernal = ledinfo->पूर्णांकernal_data;
 
 	mutex_lock(&xt_led_mutex);
 
-	if (--ledinternal->refcnt) {
+	अगर (--ledपूर्णांकernal->refcnt) अणु
 		mutex_unlock(&xt_led_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	list_del(&ledinternal->list);
+	list_del(&ledपूर्णांकernal->list);
 
-	del_timer_sync(&ledinternal->timer);
+	del_समयr_sync(&ledपूर्णांकernal->समयr);
 
-	led_trigger_unregister(&ledinternal->netfilter_led_trigger);
+	led_trigger_unरेजिस्टर(&ledपूर्णांकernal->netfilter_led_trigger);
 
 	mutex_unlock(&xt_led_mutex);
 
-	kfree(ledinternal->trigger_id);
-	kfree(ledinternal);
-}
+	kमुक्त(ledपूर्णांकernal->trigger_id);
+	kमुक्त(ledपूर्णांकernal);
+पूर्ण
 
-static struct xt_target led_tg_reg __read_mostly = {
+अटल काष्ठा xt_target led_tg_reg __पढ़ो_mostly = अणु
 	.name		= "LED",
 	.revision	= 0,
 	.family		= NFPROTO_UNSPEC,
 	.target		= led_tg,
-	.targetsize	= sizeof(struct xt_led_info),
-	.usersize	= offsetof(struct xt_led_info, internal_data),
+	.tarमाला_लोize	= माप(काष्ठा xt_led_info),
+	.usersize	= दुरत्व(काष्ठा xt_led_info, पूर्णांकernal_data),
 	.checkentry	= led_tg_check,
 	.destroy	= led_tg_destroy,
 	.me		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init led_tg_init(void)
-{
-	return xt_register_target(&led_tg_reg);
-}
+अटल पूर्णांक __init led_tg_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_target(&led_tg_reg);
+पूर्ण
 
-static void __exit led_tg_exit(void)
-{
-	xt_unregister_target(&led_tg_reg);
-}
+अटल व्योम __निकास led_tg_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_target(&led_tg_reg);
+पूर्ण
 
 module_init(led_tg_init);
-module_exit(led_tg_exit);
+module_निकास(led_tg_निकास);

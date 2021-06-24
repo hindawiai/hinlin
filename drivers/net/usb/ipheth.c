@@ -1,34 +1,35 @@
+<शैली गुरु>
 /*
  * ipheth.c - Apple iPhone USB Ethernet driver
  *
  * Copyright (c) 2009 Diego Giagio <diego@giagio.com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. Neither the name of GIAGIO.COM nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *    may be used to enकरोrse or promote products derived from this software
+ *    without specअगरic prior written permission.
  *
  * Alternatively, provided that this notice is retained in full, this
  * software may be distributed under the terms of the GNU General
- * Public License ("GPL") version 2, in which case the provisions of the
+ * Public License ("GPL") version 2, in which हाल the provisions of the
  * GPL apply INSTEAD OF those given above.
  *
- * The provided data structures and external interfaces from this code
+ * The provided data काष्ठाures and बाह्यal पूर्णांकerfaces from this code
  * are not restricted to be used by modules with a GPL compatible license.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -43,164 +44,164 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/usb.h>
-#include <linux/workqueue.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/workqueue.h>
 
-#define USB_VENDOR_APPLE        0x05ac
+#घोषणा USB_VENDOR_APPLE        0x05ac
 
-#define IPHETH_USBINTF_CLASS    255
-#define IPHETH_USBINTF_SUBCLASS 253
-#define IPHETH_USBINTF_PROTO    1
+#घोषणा IPHETH_USBINTF_CLASS    255
+#घोषणा IPHETH_USBINTF_SUBCLASS 253
+#घोषणा IPHETH_USBINTF_PROTO    1
 
-#define IPHETH_BUF_SIZE         1514
-#define IPHETH_IP_ALIGN		2	/* padding at front of URB */
-#define IPHETH_TX_TIMEOUT       (5 * HZ)
+#घोषणा IPHETH_BUF_SIZE         1514
+#घोषणा IPHETH_IP_ALIGN		2	/* padding at front of URB */
+#घोषणा IPHETH_TX_TIMEOUT       (5 * HZ)
 
-#define IPHETH_INTFNUM          2
-#define IPHETH_ALT_INTFNUM      1
+#घोषणा IPHETH_INTFNUM          2
+#घोषणा IPHETH_ALT_INTFNUM      1
 
-#define IPHETH_CTRL_ENDP        0x00
-#define IPHETH_CTRL_BUF_SIZE    0x40
-#define IPHETH_CTRL_TIMEOUT     (5 * HZ)
+#घोषणा IPHETH_CTRL_ENDP        0x00
+#घोषणा IPHETH_CTRL_BUF_SIZE    0x40
+#घोषणा IPHETH_CTRL_TIMEOUT     (5 * HZ)
 
-#define IPHETH_CMD_GET_MACADDR   0x00
-#define IPHETH_CMD_CARRIER_CHECK 0x45
+#घोषणा IPHETH_CMD_GET_MACADDR   0x00
+#घोषणा IPHETH_CMD_CARRIER_CHECK 0x45
 
-#define IPHETH_CARRIER_CHECK_TIMEOUT round_jiffies_relative(1 * HZ)
-#define IPHETH_CARRIER_ON       0x04
+#घोषणा IPHETH_CARRIER_CHECK_TIMEOUT round_jअगरfies_relative(1 * HZ)
+#घोषणा IPHETH_CARRIER_ON       0x04
 
-static const struct usb_device_id ipheth_table[] = {
-	{ USB_VENDOR_AND_INTERFACE_INFO(USB_VENDOR_APPLE, IPHETH_USBINTF_CLASS,
+अटल स्थिर काष्ठा usb_device_id ipheth_table[] = अणु
+	अणु USB_VENDOR_AND_INTERFACE_INFO(USB_VENDOR_APPLE, IPHETH_USBINTF_CLASS,
 					IPHETH_USBINTF_SUBCLASS,
-					IPHETH_USBINTF_PROTO) },
-	{ }
-};
+					IPHETH_USBINTF_PROTO) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, ipheth_table);
 
-struct ipheth_device {
-	struct usb_device *udev;
-	struct usb_interface *intf;
-	struct net_device *net;
-	struct urb *tx_urb;
-	struct urb *rx_urb;
-	unsigned char *tx_buf;
-	unsigned char *rx_buf;
-	unsigned char *ctrl_buf;
+काष्ठा ipheth_device अणु
+	काष्ठा usb_device *udev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	काष्ठा net_device *net;
+	काष्ठा urb *tx_urb;
+	काष्ठा urb *rx_urb;
+	अचिन्हित अक्षर *tx_buf;
+	अचिन्हित अक्षर *rx_buf;
+	अचिन्हित अक्षर *ctrl_buf;
 	u8 bulk_in;
 	u8 bulk_out;
-	struct delayed_work carrier_work;
+	काष्ठा delayed_work carrier_work;
 	bool confirmed_pairing;
-};
+पूर्ण;
 
-static int ipheth_rx_submit(struct ipheth_device *dev, gfp_t mem_flags);
+अटल पूर्णांक ipheth_rx_submit(काष्ठा ipheth_device *dev, gfp_t mem_flags);
 
-static int ipheth_alloc_urbs(struct ipheth_device *iphone)
-{
-	struct urb *tx_urb = NULL;
-	struct urb *rx_urb = NULL;
-	u8 *tx_buf = NULL;
-	u8 *rx_buf = NULL;
+अटल पूर्णांक ipheth_alloc_urbs(काष्ठा ipheth_device *iphone)
+अणु
+	काष्ठा urb *tx_urb = शून्य;
+	काष्ठा urb *rx_urb = शून्य;
+	u8 *tx_buf = शून्य;
+	u8 *rx_buf = शून्य;
 
 	tx_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (tx_urb == NULL)
-		goto error_nomem;
+	अगर (tx_urb == शून्य)
+		जाओ error_nomem;
 
 	rx_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (rx_urb == NULL)
-		goto free_tx_urb;
+	अगर (rx_urb == शून्य)
+		जाओ मुक्त_tx_urb;
 
 	tx_buf = usb_alloc_coherent(iphone->udev, IPHETH_BUF_SIZE,
 				    GFP_KERNEL, &tx_urb->transfer_dma);
-	if (tx_buf == NULL)
-		goto free_rx_urb;
+	अगर (tx_buf == शून्य)
+		जाओ मुक्त_rx_urb;
 
 	rx_buf = usb_alloc_coherent(iphone->udev, IPHETH_BUF_SIZE,
 				    GFP_KERNEL, &rx_urb->transfer_dma);
-	if (rx_buf == NULL)
-		goto free_tx_buf;
+	अगर (rx_buf == शून्य)
+		जाओ मुक्त_tx_buf;
 
 
 	iphone->tx_urb = tx_urb;
 	iphone->rx_urb = rx_urb;
 	iphone->tx_buf = tx_buf;
 	iphone->rx_buf = rx_buf;
-	return 0;
+	वापस 0;
 
-free_tx_buf:
-	usb_free_coherent(iphone->udev, IPHETH_BUF_SIZE, tx_buf,
+मुक्त_tx_buf:
+	usb_मुक्त_coherent(iphone->udev, IPHETH_BUF_SIZE, tx_buf,
 			  tx_urb->transfer_dma);
-free_rx_urb:
-	usb_free_urb(rx_urb);
-free_tx_urb:
-	usb_free_urb(tx_urb);
+मुक्त_rx_urb:
+	usb_मुक्त_urb(rx_urb);
+मुक्त_tx_urb:
+	usb_मुक्त_urb(tx_urb);
 error_nomem:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void ipheth_free_urbs(struct ipheth_device *iphone)
-{
-	usb_free_coherent(iphone->udev, IPHETH_BUF_SIZE, iphone->rx_buf,
+अटल व्योम ipheth_मुक्त_urbs(काष्ठा ipheth_device *iphone)
+अणु
+	usb_मुक्त_coherent(iphone->udev, IPHETH_BUF_SIZE, iphone->rx_buf,
 			  iphone->rx_urb->transfer_dma);
-	usb_free_coherent(iphone->udev, IPHETH_BUF_SIZE, iphone->tx_buf,
+	usb_मुक्त_coherent(iphone->udev, IPHETH_BUF_SIZE, iphone->tx_buf,
 			  iphone->tx_urb->transfer_dma);
-	usb_free_urb(iphone->rx_urb);
-	usb_free_urb(iphone->tx_urb);
-}
+	usb_मुक्त_urb(iphone->rx_urb);
+	usb_मुक्त_urb(iphone->tx_urb);
+पूर्ण
 
-static void ipheth_kill_urbs(struct ipheth_device *dev)
-{
-	usb_kill_urb(dev->tx_urb);
-	usb_kill_urb(dev->rx_urb);
-}
+अटल व्योम ipheth_समाप्त_urbs(काष्ठा ipheth_device *dev)
+अणु
+	usb_समाप्त_urb(dev->tx_urb);
+	usb_समाप्त_urb(dev->rx_urb);
+पूर्ण
 
-static void ipheth_rcvbulk_callback(struct urb *urb)
-{
-	struct ipheth_device *dev;
-	struct sk_buff *skb;
-	int status;
-	char *buf;
-	int len;
+अटल व्योम ipheth_rcvbulk_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा ipheth_device *dev;
+	काष्ठा sk_buff *skb;
+	पूर्णांक status;
+	अक्षर *buf;
+	पूर्णांक len;
 
 	dev = urb->context;
-	if (dev == NULL)
-		return;
+	अगर (dev == शून्य)
+		वापस;
 
 	status = urb->status;
-	switch (status) {
-	case -ENOENT:
-	case -ECONNRESET:
-	case -ESHUTDOWN:
-	case -EPROTO:
-		return;
-	case 0:
-		break;
-	default:
-		dev_err(&dev->intf->dev, "%s: urb status: %d\n",
+	चयन (status) अणु
+	हाल -ENOENT:
+	हाल -ECONNRESET:
+	हाल -ESHUTDOWN:
+	हाल -EPROTO:
+		वापस;
+	हाल 0:
+		अवरोध;
+	शेष:
+		dev_err(&dev->पूर्णांकf->dev, "%s: urb status: %d\n",
 			__func__, status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (urb->actual_length <= IPHETH_IP_ALIGN) {
+	अगर (urb->actual_length <= IPHETH_IP_ALIGN) अणु
 		dev->net->stats.rx_length_errors++;
-		return;
-	}
+		वापस;
+	पूर्ण
 	len = urb->actual_length - IPHETH_IP_ALIGN;
 	buf = urb->transfer_buffer + IPHETH_IP_ALIGN;
 
 	skb = dev_alloc_skb(len);
-	if (!skb) {
-		dev_err(&dev->intf->dev, "%s: dev_alloc_skb: -ENOMEM\n",
+	अगर (!skb) अणु
+		dev_err(&dev->पूर्णांकf->dev, "%s: dev_alloc_skb: -ENOMEM\n",
 			__func__);
 		dev->net->stats.rx_dropped++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	skb_put_data(skb, buf, len);
 	skb->dev = dev->net;
@@ -209,40 +210,40 @@ static void ipheth_rcvbulk_callback(struct urb *urb)
 	dev->net->stats.rx_packets++;
 	dev->net->stats.rx_bytes += len;
 	dev->confirmed_pairing = true;
-	netif_rx(skb);
+	netअगर_rx(skb);
 	ipheth_rx_submit(dev, GFP_ATOMIC);
-}
+पूर्ण
 
-static void ipheth_sndbulk_callback(struct urb *urb)
-{
-	struct ipheth_device *dev;
-	int status = urb->status;
+अटल व्योम ipheth_sndbulk_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा ipheth_device *dev;
+	पूर्णांक status = urb->status;
 
 	dev = urb->context;
-	if (dev == NULL)
-		return;
+	अगर (dev == शून्य)
+		वापस;
 
-	if (status != 0 &&
+	अगर (status != 0 &&
 	    status != -ENOENT &&
 	    status != -ECONNRESET &&
 	    status != -ESHUTDOWN)
-		dev_err(&dev->intf->dev, "%s: urb status: %d\n",
+		dev_err(&dev->पूर्णांकf->dev, "%s: urb status: %d\n",
 		__func__, status);
 
-	if (status == 0)
-		netif_wake_queue(dev->net);
-	else
+	अगर (status == 0)
+		netअगर_wake_queue(dev->net);
+	अन्यथा
 		// on URB error, trigger immediate poll
 		schedule_delayed_work(&dev->carrier_work, 0);
-}
+पूर्ण
 
-static int ipheth_carrier_set(struct ipheth_device *dev)
-{
-	struct usb_device *udev;
-	int retval;
+अटल पूर्णांक ipheth_carrier_set(काष्ठा ipheth_device *dev)
+अणु
+	काष्ठा usb_device *udev;
+	पूर्णांक retval;
 
-	if (!dev->confirmed_pairing)
-		return 0;
+	अगर (!dev->confirmed_pairing)
+		वापस 0;
 
 	udev = dev->udev;
 	retval = usb_control_msg(udev,
@@ -253,37 +254,37 @@ static int ipheth_carrier_set(struct ipheth_device *dev)
 			0x02, /* index */
 			dev->ctrl_buf, IPHETH_CTRL_BUF_SIZE,
 			IPHETH_CTRL_TIMEOUT);
-	if (retval < 0) {
-		dev_err(&dev->intf->dev, "%s: usb_control_msg: %d\n",
+	अगर (retval < 0) अणु
+		dev_err(&dev->पूर्णांकf->dev, "%s: usb_control_msg: %d\n",
 			__func__, retval);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	if (dev->ctrl_buf[0] == IPHETH_CARRIER_ON) {
-		netif_carrier_on(dev->net);
-		if (dev->tx_urb->status != -EINPROGRESS)
-			netif_wake_queue(dev->net);
-	} else {
-		netif_carrier_off(dev->net);
-		netif_stop_queue(dev->net);
-	}
-	return 0;
-}
+	अगर (dev->ctrl_buf[0] == IPHETH_CARRIER_ON) अणु
+		netअगर_carrier_on(dev->net);
+		अगर (dev->tx_urb->status != -EINPROGRESS)
+			netअगर_wake_queue(dev->net);
+	पूर्ण अन्यथा अणु
+		netअगर_carrier_off(dev->net);
+		netअगर_stop_queue(dev->net);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void ipheth_carrier_check_work(struct work_struct *work)
-{
-	struct ipheth_device *dev = container_of(work, struct ipheth_device,
+अटल व्योम ipheth_carrier_check_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ipheth_device *dev = container_of(work, काष्ठा ipheth_device,
 						 carrier_work.work);
 
 	ipheth_carrier_set(dev);
 	schedule_delayed_work(&dev->carrier_work, IPHETH_CARRIER_CHECK_TIMEOUT);
-}
+पूर्ण
 
-static int ipheth_get_macaddr(struct ipheth_device *dev)
-{
-	struct usb_device *udev = dev->udev;
-	struct net_device *net = dev->net;
-	int retval;
+अटल पूर्णांक ipheth_get_macaddr(काष्ठा ipheth_device *dev)
+अणु
+	काष्ठा usb_device *udev = dev->udev;
+	काष्ठा net_device *net = dev->net;
+	पूर्णांक retval;
 
 	retval = usb_control_msg(udev,
 				 usb_rcvctrlpipe(udev, IPHETH_CTRL_ENDP),
@@ -294,26 +295,26 @@ static int ipheth_get_macaddr(struct ipheth_device *dev)
 				 dev->ctrl_buf,
 				 IPHETH_CTRL_BUF_SIZE,
 				 IPHETH_CTRL_TIMEOUT);
-	if (retval < 0) {
-		dev_err(&dev->intf->dev, "%s: usb_control_msg: %d\n",
+	अगर (retval < 0) अणु
+		dev_err(&dev->पूर्णांकf->dev, "%s: usb_control_msg: %d\n",
 			__func__, retval);
-	} else if (retval < ETH_ALEN) {
-		dev_err(&dev->intf->dev,
+	पूर्ण अन्यथा अगर (retval < ETH_ALEN) अणु
+		dev_err(&dev->पूर्णांकf->dev,
 			"%s: usb_control_msg: short packet: %d bytes\n",
 			__func__, retval);
 		retval = -EINVAL;
-	} else {
-		memcpy(net->dev_addr, dev->ctrl_buf, ETH_ALEN);
+	पूर्ण अन्यथा अणु
+		स_नकल(net->dev_addr, dev->ctrl_buf, ETH_ALEN);
 		retval = 0;
-	}
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int ipheth_rx_submit(struct ipheth_device *dev, gfp_t mem_flags)
-{
-	struct usb_device *udev = dev->udev;
-	int retval;
+अटल पूर्णांक ipheth_rx_submit(काष्ठा ipheth_device *dev, gfp_t mem_flags)
+अणु
+	काष्ठा usb_device *udev = dev->udev;
+	पूर्णांक retval;
 
 	usb_fill_bulk_urb(dev->rx_urb, udev,
 			  usb_rcvbulkpipe(udev, dev->bulk_in),
@@ -323,58 +324,58 @@ static int ipheth_rx_submit(struct ipheth_device *dev, gfp_t mem_flags)
 	dev->rx_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
 	retval = usb_submit_urb(dev->rx_urb, mem_flags);
-	if (retval)
-		dev_err(&dev->intf->dev, "%s: usb_submit_urb: %d\n",
+	अगर (retval)
+		dev_err(&dev->पूर्णांकf->dev, "%s: usb_submit_urb: %d\n",
 			__func__, retval);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int ipheth_open(struct net_device *net)
-{
-	struct ipheth_device *dev = netdev_priv(net);
-	struct usb_device *udev = dev->udev;
-	int retval = 0;
+अटल पूर्णांक ipheth_खोलो(काष्ठा net_device *net)
+अणु
+	काष्ठा ipheth_device *dev = netdev_priv(net);
+	काष्ठा usb_device *udev = dev->udev;
+	पूर्णांक retval = 0;
 
-	usb_set_interface(udev, IPHETH_INTFNUM, IPHETH_ALT_INTFNUM);
+	usb_set_पूर्णांकerface(udev, IPHETH_INTFNUM, IPHETH_ALT_INTFNUM);
 
 	retval = ipheth_carrier_set(dev);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	retval = ipheth_rx_submit(dev, GFP_KERNEL);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	schedule_delayed_work(&dev->carrier_work, IPHETH_CARRIER_CHECK_TIMEOUT);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int ipheth_close(struct net_device *net)
-{
-	struct ipheth_device *dev = netdev_priv(net);
+अटल पूर्णांक ipheth_बंद(काष्ठा net_device *net)
+अणु
+	काष्ठा ipheth_device *dev = netdev_priv(net);
 
 	cancel_delayed_work_sync(&dev->carrier_work);
-	netif_stop_queue(net);
-	return 0;
-}
+	netअगर_stop_queue(net);
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t ipheth_tx(struct sk_buff *skb, struct net_device *net)
-{
-	struct ipheth_device *dev = netdev_priv(net);
-	struct usb_device *udev = dev->udev;
-	int retval;
+अटल netdev_tx_t ipheth_tx(काष्ठा sk_buff *skb, काष्ठा net_device *net)
+अणु
+	काष्ठा ipheth_device *dev = netdev_priv(net);
+	काष्ठा usb_device *udev = dev->udev;
+	पूर्णांक retval;
 
 	/* Paranoid */
-	if (skb->len > IPHETH_BUF_SIZE) {
+	अगर (skb->len > IPHETH_BUF_SIZE) अणु
 		WARN(1, "%s: skb too large: %d bytes\n", __func__, skb->len);
 		dev->net->stats.tx_dropped++;
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	}
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	memcpy(dev->tx_buf, skb->data, skb->len);
-	if (skb->len < IPHETH_BUF_SIZE)
-		memset(dev->tx_buf + skb->len, 0, IPHETH_BUF_SIZE - skb->len);
+	स_नकल(dev->tx_buf, skb->data, skb->len);
+	अगर (skb->len < IPHETH_BUF_SIZE)
+		स_रखो(dev->tx_buf + skb->len, 0, IPHETH_BUF_SIZE - skb->len);
 
 	usb_fill_bulk_urb(dev->tx_urb, udev,
 			  usb_sndbulkpipe(udev, dev->bulk_out),
@@ -383,163 +384,163 @@ static netdev_tx_t ipheth_tx(struct sk_buff *skb, struct net_device *net)
 			  dev);
 	dev->tx_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	netif_stop_queue(net);
+	netअगर_stop_queue(net);
 	retval = usb_submit_urb(dev->tx_urb, GFP_ATOMIC);
-	if (retval) {
-		dev_err(&dev->intf->dev, "%s: usb_submit_urb: %d\n",
+	अगर (retval) अणु
+		dev_err(&dev->पूर्णांकf->dev, "%s: usb_submit_urb: %d\n",
 			__func__, retval);
 		dev->net->stats.tx_errors++;
-		dev_kfree_skb_any(skb);
-		netif_wake_queue(net);
-	} else {
+		dev_kमुक्त_skb_any(skb);
+		netअगर_wake_queue(net);
+	पूर्ण अन्यथा अणु
 		dev->net->stats.tx_packets++;
 		dev->net->stats.tx_bytes += skb->len;
 		dev_consume_skb_any(skb);
-	}
+	पूर्ण
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void ipheth_tx_timeout(struct net_device *net, unsigned int txqueue)
-{
-	struct ipheth_device *dev = netdev_priv(net);
+अटल व्योम ipheth_tx_समयout(काष्ठा net_device *net, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा ipheth_device *dev = netdev_priv(net);
 
-	dev_err(&dev->intf->dev, "%s: TX timeout\n", __func__);
+	dev_err(&dev->पूर्णांकf->dev, "%s: TX timeout\n", __func__);
 	dev->net->stats.tx_errors++;
 	usb_unlink_urb(dev->tx_urb);
-}
+पूर्ण
 
-static u32 ipheth_ethtool_op_get_link(struct net_device *net)
-{
-	struct ipheth_device *dev = netdev_priv(net);
-	return netif_carrier_ok(dev->net);
-}
+अटल u32 ipheth_ethtool_op_get_link(काष्ठा net_device *net)
+अणु
+	काष्ठा ipheth_device *dev = netdev_priv(net);
+	वापस netअगर_carrier_ok(dev->net);
+पूर्ण
 
-static const struct ethtool_ops ops = {
+अटल स्थिर काष्ठा ethtool_ops ops = अणु
 	.get_link = ipheth_ethtool_op_get_link
-};
+पूर्ण;
 
-static const struct net_device_ops ipheth_netdev_ops = {
-	.ndo_open = ipheth_open,
-	.ndo_stop = ipheth_close,
-	.ndo_start_xmit = ipheth_tx,
-	.ndo_tx_timeout = ipheth_tx_timeout,
-};
+अटल स्थिर काष्ठा net_device_ops ipheth_netdev_ops = अणु
+	.nकरो_खोलो = ipheth_खोलो,
+	.nकरो_stop = ipheth_बंद,
+	.nकरो_start_xmit = ipheth_tx,
+	.nकरो_tx_समयout = ipheth_tx_समयout,
+पूर्ण;
 
-static int ipheth_probe(struct usb_interface *intf,
-			const struct usb_device_id *id)
-{
-	struct usb_device *udev = interface_to_usbdev(intf);
-	struct usb_host_interface *hintf;
-	struct usb_endpoint_descriptor *endp;
-	struct ipheth_device *dev;
-	struct net_device *netdev;
-	int i;
-	int retval;
+अटल पूर्णांक ipheth_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा usb_host_पूर्णांकerface *hपूर्णांकf;
+	काष्ठा usb_endpoपूर्णांक_descriptor *endp;
+	काष्ठा ipheth_device *dev;
+	काष्ठा net_device *netdev;
+	पूर्णांक i;
+	पूर्णांक retval;
 
-	netdev = alloc_etherdev(sizeof(struct ipheth_device));
-	if (!netdev)
-		return -ENOMEM;
+	netdev = alloc_etherdev(माप(काष्ठा ipheth_device));
+	अगर (!netdev)
+		वापस -ENOMEM;
 
 	netdev->netdev_ops = &ipheth_netdev_ops;
-	netdev->watchdog_timeo = IPHETH_TX_TIMEOUT;
-	strcpy(netdev->name, "eth%d");
+	netdev->watchकरोg_समयo = IPHETH_TX_TIMEOUT;
+	म_नकल(netdev->name, "eth%d");
 
 	dev = netdev_priv(netdev);
 	dev->udev = udev;
 	dev->net = netdev;
-	dev->intf = intf;
+	dev->पूर्णांकf = पूर्णांकf;
 	dev->confirmed_pairing = false;
-	/* Set up endpoints */
-	hintf = usb_altnum_to_altsetting(intf, IPHETH_ALT_INTFNUM);
-	if (hintf == NULL) {
+	/* Set up endpoपूर्णांकs */
+	hपूर्णांकf = usb_altnum_to_altsetting(पूर्णांकf, IPHETH_ALT_INTFNUM);
+	अगर (hपूर्णांकf == शून्य) अणु
 		retval = -ENODEV;
-		dev_err(&intf->dev, "Unable to find alternate settings interface\n");
-		goto err_endpoints;
-	}
+		dev_err(&पूर्णांकf->dev, "Unable to find alternate settings interface\n");
+		जाओ err_endpoपूर्णांकs;
+	पूर्ण
 
-	for (i = 0; i < hintf->desc.bNumEndpoints; i++) {
-		endp = &hintf->endpoint[i].desc;
-		if (usb_endpoint_is_bulk_in(endp))
-			dev->bulk_in = endp->bEndpointAddress;
-		else if (usb_endpoint_is_bulk_out(endp))
-			dev->bulk_out = endp->bEndpointAddress;
-	}
-	if (!(dev->bulk_in && dev->bulk_out)) {
+	क्रम (i = 0; i < hपूर्णांकf->desc.bNumEndpoपूर्णांकs; i++) अणु
+		endp = &hपूर्णांकf->endpoपूर्णांक[i].desc;
+		अगर (usb_endpoपूर्णांक_is_bulk_in(endp))
+			dev->bulk_in = endp->bEndpoपूर्णांकAddress;
+		अन्यथा अगर (usb_endpoपूर्णांक_is_bulk_out(endp))
+			dev->bulk_out = endp->bEndpoपूर्णांकAddress;
+	पूर्ण
+	अगर (!(dev->bulk_in && dev->bulk_out)) अणु
 		retval = -ENODEV;
-		dev_err(&intf->dev, "Unable to find endpoints\n");
-		goto err_endpoints;
-	}
+		dev_err(&पूर्णांकf->dev, "Unable to find endpoints\n");
+		जाओ err_endpoपूर्णांकs;
+	पूर्ण
 
-	dev->ctrl_buf = kmalloc(IPHETH_CTRL_BUF_SIZE, GFP_KERNEL);
-	if (dev->ctrl_buf == NULL) {
+	dev->ctrl_buf = kदो_स्मृति(IPHETH_CTRL_BUF_SIZE, GFP_KERNEL);
+	अगर (dev->ctrl_buf == शून्य) अणु
 		retval = -ENOMEM;
-		goto err_alloc_ctrl_buf;
-	}
+		जाओ err_alloc_ctrl_buf;
+	पूर्ण
 
 	retval = ipheth_get_macaddr(dev);
-	if (retval)
-		goto err_get_macaddr;
+	अगर (retval)
+		जाओ err_get_macaddr;
 
 	INIT_DELAYED_WORK(&dev->carrier_work, ipheth_carrier_check_work);
 
 	retval = ipheth_alloc_urbs(dev);
-	if (retval) {
-		dev_err(&intf->dev, "error allocating urbs: %d\n", retval);
-		goto err_alloc_urbs;
-	}
+	अगर (retval) अणु
+		dev_err(&पूर्णांकf->dev, "error allocating urbs: %d\n", retval);
+		जाओ err_alloc_urbs;
+	पूर्ण
 
-	usb_set_intfdata(intf, dev);
+	usb_set_पूर्णांकfdata(पूर्णांकf, dev);
 
-	SET_NETDEV_DEV(netdev, &intf->dev);
+	SET_NETDEV_DEV(netdev, &पूर्णांकf->dev);
 	netdev->ethtool_ops = &ops;
 
-	retval = register_netdev(netdev);
-	if (retval) {
-		dev_err(&intf->dev, "error registering netdev: %d\n", retval);
+	retval = रेजिस्टर_netdev(netdev);
+	अगर (retval) अणु
+		dev_err(&पूर्णांकf->dev, "error registering netdev: %d\n", retval);
 		retval = -EIO;
-		goto err_register_netdev;
-	}
-	// carrier down and transmit queues stopped until packet from device
-	netif_carrier_off(netdev);
-	netif_tx_stop_all_queues(netdev);
-	dev_info(&intf->dev, "Apple iPhone USB Ethernet device attached\n");
-	return 0;
+		जाओ err_रेजिस्टर_netdev;
+	पूर्ण
+	// carrier करोwn and transmit queues stopped until packet from device
+	netअगर_carrier_off(netdev);
+	netअगर_tx_stop_all_queues(netdev);
+	dev_info(&पूर्णांकf->dev, "Apple iPhone USB Ethernet device attached\n");
+	वापस 0;
 
-err_register_netdev:
-	ipheth_free_urbs(dev);
+err_रेजिस्टर_netdev:
+	ipheth_मुक्त_urbs(dev);
 err_alloc_urbs:
 err_get_macaddr:
 err_alloc_ctrl_buf:
-	kfree(dev->ctrl_buf);
-err_endpoints:
-	free_netdev(netdev);
-	return retval;
-}
+	kमुक्त(dev->ctrl_buf);
+err_endpoपूर्णांकs:
+	मुक्त_netdev(netdev);
+	वापस retval;
+पूर्ण
 
-static void ipheth_disconnect(struct usb_interface *intf)
-{
-	struct ipheth_device *dev;
+अटल व्योम ipheth_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा ipheth_device *dev;
 
-	dev = usb_get_intfdata(intf);
-	if (dev != NULL) {
-		unregister_netdev(dev->net);
-		ipheth_kill_urbs(dev);
-		ipheth_free_urbs(dev);
-		kfree(dev->ctrl_buf);
-		free_netdev(dev->net);
-	}
-	usb_set_intfdata(intf, NULL);
-	dev_info(&intf->dev, "Apple iPhone USB Ethernet now disconnected\n");
-}
+	dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+	अगर (dev != शून्य) अणु
+		unरेजिस्टर_netdev(dev->net);
+		ipheth_समाप्त_urbs(dev);
+		ipheth_मुक्त_urbs(dev);
+		kमुक्त(dev->ctrl_buf);
+		मुक्त_netdev(dev->net);
+	पूर्ण
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	dev_info(&पूर्णांकf->dev, "Apple iPhone USB Ethernet now disconnected\n");
+पूर्ण
 
-static struct usb_driver ipheth_driver = {
+अटल काष्ठा usb_driver ipheth_driver = अणु
 	.name =		"ipheth",
 	.probe =	ipheth_probe,
 	.disconnect =	ipheth_disconnect,
 	.id_table =	ipheth_table,
 	.disable_hub_initiated_lpm = 1,
-};
+पूर्ण;
 
 module_usb_driver(ipheth_driver);
 

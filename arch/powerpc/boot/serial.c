@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Generic serial console support
  *
@@ -11,145 +12,145 @@
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
-#include <stdarg.h>
-#include <stddef.h>
-#include "types.h"
-#include "string.h"
-#include "stdio.h"
-#include "io.h"
-#include "ops.h"
+#समावेश <मानकतर्क.स>
+#समावेश <मानकघोष.स>
+#समावेश "types.h"
+#समावेश "string.h"
+#समावेश "stdio.h"
+#समावेश "io.h"
+#समावेश "ops.h"
 
-static int serial_open(void)
-{
-	struct serial_console_data *scdp = console_ops.data;
-	return scdp->open();
-}
+अटल पूर्णांक serial_खोलो(व्योम)
+अणु
+	काष्ठा serial_console_data *scdp = console_ops.data;
+	वापस scdp->खोलो();
+पूर्ण
 
-static void serial_write(const char *buf, int len)
-{
-	struct serial_console_data *scdp = console_ops.data;
+अटल व्योम serial_ग_लिखो(स्थिर अक्षर *buf, पूर्णांक len)
+अणु
+	काष्ठा serial_console_data *scdp = console_ops.data;
 
-	while (*buf != '\0')
-		scdp->putc(*buf++);
-}
+	जबतक (*buf != '\0')
+		scdp->अ_दो(*buf++);
+पूर्ण
 
-static void serial_edit_cmdline(char *buf, int len, unsigned int timeout)
-{
-	int timer = 0, count;
-	char ch, *cp;
-	struct serial_console_data *scdp = console_ops.data;
+अटल व्योम serial_edit_cmdline(अक्षर *buf, पूर्णांक len, अचिन्हित पूर्णांक समयout)
+अणु
+	पूर्णांक समयr = 0, count;
+	अक्षर ch, *cp;
+	काष्ठा serial_console_data *scdp = console_ops.data;
 
 	cp = buf;
-	count = strlen(buf);
+	count = म_माप(buf);
 	cp = &buf[count];
 	count++;
 
-	do {
-		if (scdp->tstc()) {
-			while (((ch = scdp->getc()) != '\n') && (ch != '\r')) {
-				/* Test for backspace/delete */
-				if ((ch == '\b') || (ch == '\177')) {
-					if (cp != buf) {
+	करो अणु
+		अगर (scdp->tstc()) अणु
+			जबतक (((ch = scdp->अ_लो()) != '\n') && (ch != '\r')) अणु
+				/* Test क्रम backspace/delete */
+				अगर ((ch == '\b') || (ch == '\177')) अणु
+					अगर (cp != buf) अणु
 						cp--;
 						count--;
-						printf("\b \b");
-					}
-				/* Test for ^x/^u (and wipe the line) */
-				} else if ((ch == '\030') || (ch == '\025')) {
-					while (cp != buf) {
+						म_लिखो("\b \b");
+					पूर्ण
+				/* Test क्रम ^x/^u (and wipe the line) */
+				पूर्ण अन्यथा अगर ((ch == '\030') || (ch == '\025')) अणु
+					जबतक (cp != buf) अणु
 						cp--;
 						count--;
-						printf("\b \b");
-					}
-				} else if (count < len) {
+						म_लिखो("\b \b");
+					पूर्ण
+				पूर्ण अन्यथा अगर (count < len) अणु
 						*cp++ = ch;
 						count++;
-						scdp->putc(ch);
-				}
-			}
-			break;  /* Exit 'timer' loop */
-		}
+						scdp->अ_दो(ch);
+				पूर्ण
+			पूर्ण
+			अवरोध;  /* Exit 'timer' loop */
+		पूर्ण
 		udelay(1000);  /* 1 msec */
-	} while (timer++ < timeout);
+	पूर्ण जबतक (समयr++ < समयout);
 	*cp = 0;
-}
+पूर्ण
 
-static void serial_close(void)
-{
-	struct serial_console_data *scdp = console_ops.data;
+अटल व्योम serial_बंद(व्योम)
+अणु
+	काष्ठा serial_console_data *scdp = console_ops.data;
 
-	if (scdp->close)
-		scdp->close();
-}
+	अगर (scdp->बंद)
+		scdp->बंद();
+पूर्ण
 
-static void *serial_get_stdout_devp(void)
-{
-	void *devp;
-	char devtype[MAX_PROP_LEN];
-	char path[MAX_PATH_LEN];
+अटल व्योम *serial_get_मानक_निकास_devp(व्योम)
+अणु
+	व्योम *devp;
+	अक्षर devtype[MAX_PROP_LEN];
+	अक्षर path[MAX_PATH_LEN];
 
 	devp = finddevice("/chosen");
-	if (devp == NULL)
-		goto err_out;
+	अगर (devp == शून्य)
+		जाओ err_out;
 
-	if (getprop(devp, "linux,stdout-path", path, MAX_PATH_LEN) > 0 ||
-		getprop(devp, "stdout-path", path, MAX_PATH_LEN) > 0) {
+	अगर (getprop(devp, "linux,stdout-path", path, MAX_PATH_LEN) > 0 ||
+		getprop(devp, "stdout-path", path, MAX_PATH_LEN) > 0) अणु
 		devp = finddevice(path);
-		if (devp == NULL)
-			goto err_out;
+		अगर (devp == शून्य)
+			जाओ err_out;
 
-		if ((getprop(devp, "device_type", devtype, sizeof(devtype)) > 0)
-				&& !strcmp(devtype, "serial"))
-			return devp;
-	}
+		अगर ((getprop(devp, "device_type", devtype, माप(devtype)) > 0)
+				&& !म_भेद(devtype, "serial"))
+			वापस devp;
+	पूर्ण
 err_out:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct serial_console_data serial_cd;
+अटल काष्ठा serial_console_data serial_cd;
 
 /* Node's "compatible" property determines which serial driver to use */
-int serial_console_init(void)
-{
-	void *devp;
-	int rc = -1;
+पूर्णांक serial_console_init(व्योम)
+अणु
+	व्योम *devp;
+	पूर्णांक rc = -1;
 
-	devp = serial_get_stdout_devp();
-	if (devp == NULL)
-		goto err_out;
+	devp = serial_get_मानक_निकास_devp();
+	अगर (devp == शून्य)
+		जाओ err_out;
 
-	if (dt_is_compatible(devp, "ns16550") ||
+	अगर (dt_is_compatible(devp, "ns16550") ||
 	    dt_is_compatible(devp, "pnpPNP,501"))
 		rc = ns16550_console_init(devp, &serial_cd);
-#ifdef CONFIG_CPM
-	else if (dt_is_compatible(devp, "fsl,cpm1-scc-uart") ||
+#अगर_घोषित CONFIG_CPM
+	अन्यथा अगर (dt_is_compatible(devp, "fsl,cpm1-scc-uart") ||
 	         dt_is_compatible(devp, "fsl,cpm1-smc-uart") ||
 	         dt_is_compatible(devp, "fsl,cpm2-scc-uart") ||
 	         dt_is_compatible(devp, "fsl,cpm2-smc-uart"))
 		rc = cpm_console_init(devp, &serial_cd);
-#endif
-#ifdef CONFIG_PPC_MPC52xx
-	else if (dt_is_compatible(devp, "fsl,mpc5200-psc-uart"))
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PPC_MPC52xx
+	अन्यथा अगर (dt_is_compatible(devp, "fsl,mpc5200-psc-uart"))
 		rc = mpc5200_psc_console_init(devp, &serial_cd);
-#endif
-#ifdef CONFIG_PPC64_BOOT_WRAPPER
-	else if (dt_is_compatible(devp, "ibm,opal-console-raw"))
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PPC64_BOOT_WRAPPER
+	अन्यथा अगर (dt_is_compatible(devp, "ibm,opal-console-raw"))
 		rc = opal_console_init(devp, &serial_cd);
-#endif
+#पूर्ण_अगर
 
 	/* Add other serial console driver calls here */
 
-	if (!rc) {
-		console_ops.open = serial_open;
-		console_ops.write = serial_write;
-		console_ops.close = serial_close;
+	अगर (!rc) अणु
+		console_ops.खोलो = serial_खोलो;
+		console_ops.ग_लिखो = serial_ग_लिखो;
+		console_ops.बंद = serial_बंद;
 		console_ops.data = &serial_cd;
 
-		if (serial_cd.getc)
+		अगर (serial_cd.अ_लो)
 			console_ops.edit_cmdline = serial_edit_cmdline;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 err_out:
-	return -1;
-}
+	वापस -1;
+पूर्ण

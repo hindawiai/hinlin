@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * mt8192-afe-common.h  --  Mediatek 8192 audio driver definitions
  *
@@ -6,17 +7,17 @@
  * Author: Shane Chien <shane.chien@mediatek.com>
  */
 
-#ifndef _MT_8192_AFE_COMMON_H_
-#define _MT_8192_AFE_COMMON_H_
+#अगर_अघोषित _MT_8192_AFE_COMMON_H_
+#घोषणा _MT_8192_AFE_COMMON_H_
 
-#include <linux/list.h>
-#include <linux/regmap.h>
-#include <sound/soc.h>
+#समावेश <linux/list.h>
+#समावेश <linux/regmap.h>
+#समावेश <sound/soc.h>
 
-#include "../common/mtk-base-afe.h"
-#include "mt8192-reg.h"
+#समावेश "../common/mtk-base-afe.h"
+#समावेश "mt8192-reg.h"
 
-enum {
+क्रमागत अणु
 	MT8192_MEMIF_DL1,
 	MT8192_MEMIF_DL12,
 	MT8192_MEMIF_DL2,
@@ -63,9 +64,9 @@ enum {
 	MT8192_DAI_PCM_2,
 	MT8192_DAI_TDM,
 	MT8192_DAI_NUM,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MT8192_IRQ_0,
 	MT8192_IRQ_1,
 	MT8192_IRQ_2,
@@ -93,24 +94,24 @@ enum {
 	MT8192_IRQ_24,
 	MT8192_IRQ_25,
 	MT8192_IRQ_26,
-	MT8192_IRQ_31,	/* used only for TDM */
+	MT8192_IRQ_31,	/* used only क्रम TDM */
 	MT8192_IRQ_NUM,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MTKAIF_PROTOCOL_1 = 0,
 	MTKAIF_PROTOCOL_2,
 	MTKAIF_PROTOCOL_2_CLK_P2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MTK_AFE_ADDA_DL_GAIN_MUTE = 0,
 	MTK_AFE_ADDA_DL_GAIN_NORMAL = 0xf74f,
 	/* SA suggest apply -0.3db to audio/speech path */
-};
+पूर्ण;
 
 /* MCLK */
-enum {
+क्रमागत अणु
 	MT8192_I2S0_MCK = 0,
 	MT8192_I2S1_MCK,
 	MT8192_I2S2_MCK,
@@ -123,48 +124,48 @@ enum {
 	MT8192_I2S8_MCK,
 	MT8192_I2S9_MCK,
 	MT8192_MCK_NUM,
-};
+पूर्ण;
 
-struct clk;
+काष्ठा clk;
 
-struct mt8192_afe_private {
-	struct clk **clk;
-	struct regmap *topckgen;
-	struct regmap *apmixedsys;
-	struct regmap *infracfg;
-	int stf_positive_gain_db;
-	int pm_runtime_bypass_reg_ctl;
+काष्ठा mt8192_afe_निजी अणु
+	काष्ठा clk **clk;
+	काष्ठा regmap *topckgen;
+	काष्ठा regmap *apmixedsys;
+	काष्ठा regmap *infracfg;
+	पूर्णांक stf_positive_gain_db;
+	पूर्णांक pm_runसमय_bypass_reg_ctl;
 
 	/* dai */
 	bool dai_on[MT8192_DAI_NUM];
-	void *dai_priv[MT8192_DAI_NUM];
+	व्योम *dai_priv[MT8192_DAI_NUM];
 
 	/* adda */
-	int mtkaif_protocol;
-	int mtkaif_chosen_phase[4];
-	int mtkaif_phase_cycle[4];
-	int mtkaif_calibration_num_phase;
-	int mtkaif_dmic;
-	int mtkaif_dmic_ch34;
-	int mtkaif_adda6_only;
+	पूर्णांक mtkaअगर_protocol;
+	पूर्णांक mtkaअगर_chosen_phase[4];
+	पूर्णांक mtkaअगर_phase_cycle[4];
+	पूर्णांक mtkaअगर_calibration_num_phase;
+	पूर्णांक mtkaअगर_dmic;
+	पूर्णांक mtkaअगर_dmic_ch34;
+	पूर्णांक mtkaअगर_adda6_only;
 
 	/* mck */
-	int mck_rate[MT8192_MCK_NUM];
-};
+	पूर्णांक mck_rate[MT8192_MCK_NUM];
+पूर्ण;
 
-int mt8192_dai_adda_register(struct mtk_base_afe *afe);
-int mt8192_dai_i2s_register(struct mtk_base_afe *afe);
-int mt8192_dai_hw_gain_register(struct mtk_base_afe *afe);
-int mt8192_dai_src_register(struct mtk_base_afe *afe);
-int mt8192_dai_pcm_register(struct mtk_base_afe *afe);
-int mt8192_dai_tdm_register(struct mtk_base_afe *afe);
+पूर्णांक mt8192_dai_adda_रेजिस्टर(काष्ठा mtk_base_afe *afe);
+पूर्णांक mt8192_dai_i2s_रेजिस्टर(काष्ठा mtk_base_afe *afe);
+पूर्णांक mt8192_dai_hw_gain_रेजिस्टर(काष्ठा mtk_base_afe *afe);
+पूर्णांक mt8192_dai_src_रेजिस्टर(काष्ठा mtk_base_afe *afe);
+पूर्णांक mt8192_dai_pcm_रेजिस्टर(काष्ठा mtk_base_afe *afe);
+पूर्णांक mt8192_dai_tdm_रेजिस्टर(काष्ठा mtk_base_afe *afe);
 
-unsigned int mt8192_general_rate_transform(struct device *dev,
-					   unsigned int rate);
-unsigned int mt8192_rate_transform(struct device *dev,
-				   unsigned int rate, int aud_blk);
+अचिन्हित पूर्णांक mt8192_general_rate_transक्रमm(काष्ठा device *dev,
+					   अचिन्हित पूर्णांक rate);
+अचिन्हित पूर्णांक mt8192_rate_transक्रमm(काष्ठा device *dev,
+				   अचिन्हित पूर्णांक rate, पूर्णांक aud_blk);
 
-int mt8192_dai_set_priv(struct mtk_base_afe *afe, int id,
-			int priv_size, const void *priv_data);
+पूर्णांक mt8192_dai_set_priv(काष्ठा mtk_base_afe *afe, पूर्णांक id,
+			पूर्णांक priv_size, स्थिर व्योम *priv_data);
 
-#endif
+#पूर्ण_अगर

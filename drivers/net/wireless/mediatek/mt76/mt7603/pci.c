@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
-#include "mt7603.h"
+#समावेश "mt7603.h"
 
-static const struct pci_device_id mt76pci_device_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7603) },
-	{ },
-};
+अटल स्थिर काष्ठा pci_device_id mt76pci_device_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7603) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int
-mt76pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	struct mt7603_dev *dev;
-	struct mt76_dev *mdev;
-	int ret;
+अटल पूर्णांक
+mt76pci_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा mt7603_dev *dev;
+	काष्ठा mt76_dev *mdev;
+	पूर्णांक ret;
 
 	ret = pcim_enable_device(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = pcim_iomap_regions(pdev, BIT(0), pci_name(pdev));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pci_set_master(pdev);
 
 	ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	mdev = mt76_alloc_device(&pdev->dev, sizeof(*dev), &mt7603_ops,
+	mdev = mt76_alloc_device(&pdev->dev, माप(*dev), &mt7603_ops,
 				 &mt7603_drv_ops);
-	if (!mdev)
-		return -ENOMEM;
+	अगर (!mdev)
+		वापस -ENOMEM;
 
-	dev = container_of(mdev, struct mt7603_dev, mt76);
+	dev = container_of(mdev, काष्ठा mt7603_dev, mt76);
 	mt76_mmio_init(mdev, pcim_iomap_table(pdev)[0]);
 
 	mdev->rev = (mt76_rr(dev, MT_HW_CHIPID) << 16) |
@@ -48,36 +49,36 @@ mt76pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	ret = devm_request_irq(mdev->dev, pdev->irq, mt7603_irq_handler,
 			       IRQF_SHARED, KBUILD_MODNAME, dev);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	ret = mt7603_register_device(dev);
-	if (ret)
-		goto error;
+	ret = mt7603_रेजिस्टर_device(dev);
+	अगर (ret)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 error:
-	mt76_free_device(&dev->mt76);
+	mt76_मुक्त_device(&dev->mt76);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-mt76pci_remove(struct pci_dev *pdev)
-{
-	struct mt76_dev *mdev = pci_get_drvdata(pdev);
-	struct mt7603_dev *dev = container_of(mdev, struct mt7603_dev, mt76);
+अटल व्योम
+mt76pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा mt76_dev *mdev = pci_get_drvdata(pdev);
+	काष्ठा mt7603_dev *dev = container_of(mdev, काष्ठा mt7603_dev, mt76);
 
-	mt7603_unregister_device(dev);
-}
+	mt7603_unरेजिस्टर_device(dev);
+पूर्ण
 
 MODULE_DEVICE_TABLE(pci, mt76pci_device_table);
 MODULE_FIRMWARE(MT7603_FIRMWARE_E1);
 MODULE_FIRMWARE(MT7603_FIRMWARE_E2);
 
-struct pci_driver mt7603_pci_driver = {
+काष्ठा pci_driver mt7603_pci_driver = अणु
 	.name		= KBUILD_MODNAME,
 	.id_table	= mt76pci_device_table,
 	.probe		= mt76pci_probe,
-	.remove		= mt76pci_remove,
-};
+	.हटाओ		= mt76pci_हटाओ,
+पूर्ण;

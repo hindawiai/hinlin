@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause) */
 /*
- * Simple streaming JSON writer
+ * Simple streaming JSON ग_लिखोr
  *
  * This takes care of the annoying bits of JSON syntax like the commas
  * after elements
@@ -8,66 +9,66 @@
  * Authors:	Stephen Hemminger <stephen@networkplumber.org>
  */
 
-#ifndef _JSON_WRITER_H_
-#define _JSON_WRITER_H_
+#अगर_अघोषित _JSON_WRITER_H_
+#घोषणा _JSON_WRITER_H_
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdarg.h>
-#include <linux/compiler.h>
+#समावेश <stdbool.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकतर्क.स>
+#समावेश <linux/compiler.h>
 
-/* Opaque class structure */
-typedef struct json_writer json_writer_t;
+/* Opaque class काष्ठाure */
+प्रकार काष्ठा json_ग_लिखोr json_ग_लिखोr_t;
 
 /* Create a new JSON stream */
-json_writer_t *jsonw_new(FILE *f);
+json_ग_लिखोr_t *jsonw_new(खाता *f);
 /* End output to JSON stream */
-void jsonw_destroy(json_writer_t **self_p);
+व्योम jsonw_destroy(json_ग_लिखोr_t **self_p);
 
 /* Cause output to have pretty whitespace */
-void jsonw_pretty(json_writer_t *self, bool on);
+व्योम jsonw_pretty(json_ग_लिखोr_t *self, bool on);
 
 /* Reset separator to create new JSON */
-void jsonw_reset(json_writer_t *self);
+व्योम jsonw_reset(json_ग_लिखोr_t *self);
 
 /* Add property name */
-void jsonw_name(json_writer_t *self, const char *name);
+व्योम jsonw_name(json_ग_लिखोr_t *self, स्थिर अक्षर *name);
 
 /* Add value  */
-void __printf(2, 0) jsonw_vprintf_enquote(json_writer_t *self, const char *fmt,
-					  va_list ap);
-void __printf(2, 3) jsonw_printf(json_writer_t *self, const char *fmt, ...);
-void jsonw_string(json_writer_t *self, const char *value);
-void jsonw_bool(json_writer_t *self, bool value);
-void jsonw_float(json_writer_t *self, double number);
-void jsonw_float_fmt(json_writer_t *self, const char *fmt, double num);
-void jsonw_uint(json_writer_t *self, uint64_t number);
-void jsonw_hu(json_writer_t *self, unsigned short number);
-void jsonw_int(json_writer_t *self, int64_t number);
-void jsonw_null(json_writer_t *self);
-void jsonw_lluint(json_writer_t *self, unsigned long long int num);
+व्योम __म_लिखो(2, 0) jsonw_भ_लिखो_enquote(json_ग_लिखोr_t *self, स्थिर अक्षर *fmt,
+					  बहु_सूची ap);
+व्योम __म_लिखो(2, 3) jsonw_म_लिखो(json_ग_लिखोr_t *self, स्थिर अक्षर *fmt, ...);
+व्योम jsonw_string(json_ग_लिखोr_t *self, स्थिर अक्षर *value);
+व्योम jsonw_bool(json_ग_लिखोr_t *self, bool value);
+व्योम jsonw_भग्न(json_ग_लिखोr_t *self, द्विगुन number);
+व्योम jsonw_भग्न_fmt(json_ग_लिखोr_t *self, स्थिर अक्षर *fmt, द्विगुन num);
+व्योम jsonw_uपूर्णांक(json_ग_लिखोr_t *self, uपूर्णांक64_t number);
+व्योम jsonw_hu(json_ग_लिखोr_t *self, अचिन्हित लघु number);
+व्योम jsonw_पूर्णांक(json_ग_लिखोr_t *self, पूर्णांक64_t number);
+व्योम jsonw_null(json_ग_लिखोr_t *self);
+व्योम jsonw_lluपूर्णांक(json_ग_लिखोr_t *self, अचिन्हित दीर्घ दीर्घ पूर्णांक num);
 
 /* Useful Combinations of name and value */
-void jsonw_string_field(json_writer_t *self, const char *prop, const char *val);
-void jsonw_bool_field(json_writer_t *self, const char *prop, bool value);
-void jsonw_float_field(json_writer_t *self, const char *prop, double num);
-void jsonw_uint_field(json_writer_t *self, const char *prop, uint64_t num);
-void jsonw_hu_field(json_writer_t *self, const char *prop, unsigned short num);
-void jsonw_int_field(json_writer_t *self, const char *prop, int64_t num);
-void jsonw_null_field(json_writer_t *self, const char *prop);
-void jsonw_lluint_field(json_writer_t *self, const char *prop,
-			unsigned long long int num);
-void jsonw_float_field_fmt(json_writer_t *self, const char *prop,
-			   const char *fmt, double val);
+व्योम jsonw_string_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, स्थिर अक्षर *val);
+व्योम jsonw_bool_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, bool value);
+व्योम jsonw_भग्न_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, द्विगुन num);
+व्योम jsonw_uपूर्णांक_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, uपूर्णांक64_t num);
+व्योम jsonw_hu_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, अचिन्हित लघु num);
+व्योम jsonw_पूर्णांक_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, पूर्णांक64_t num);
+व्योम jsonw_null_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop);
+व्योम jsonw_lluपूर्णांक_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop,
+			अचिन्हित दीर्घ दीर्घ पूर्णांक num);
+व्योम jsonw_भग्न_field_fmt(json_ग_लिखोr_t *self, स्थिर अक्षर *prop,
+			   स्थिर अक्षर *fmt, द्विगुन val);
 
 /* Collections */
-void jsonw_start_object(json_writer_t *self);
-void jsonw_end_object(json_writer_t *self);
+व्योम jsonw_start_object(json_ग_लिखोr_t *self);
+व्योम jsonw_end_object(json_ग_लिखोr_t *self);
 
-void jsonw_start_array(json_writer_t *self);
-void jsonw_end_array(json_writer_t *self);
+व्योम jsonw_start_array(json_ग_लिखोr_t *self);
+व्योम jsonw_end_array(json_ग_लिखोr_t *self);
 
-/* Override default exception handling */
-typedef void (jsonw_err_handler_fn)(const char *);
+/* Override शेष exception handling */
+प्रकार व्योम (jsonw_err_handler_fn)(स्थिर अक्षर *);
 
-#endif /* _JSON_WRITER_H_ */
+#पूर्ण_अगर /* _JSON_WRITER_H_ */

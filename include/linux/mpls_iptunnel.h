@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_MPLS_IPTUNNEL_H
-#define _LINUX_MPLS_IPTUNNEL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_MPLS_IPTUNNEL_H
+#घोषणा _LINUX_MPLS_IPTUNNEL_H
 
-#include <uapi/linux/mpls_iptunnel.h>
+#समावेश <uapi/linux/mpls_iptunnel.h>
 
-#endif  /* _LINUX_MPLS_IPTUNNEL_H */
+#पूर्ण_अगर  /* _LINUX_MPLS_IPTUNNEL_H */

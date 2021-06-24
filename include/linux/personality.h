@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_PERSONALITY_H
-#define _LINUX_PERSONALITY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_PERSONALITY_H
+#घोषणा _LINUX_PERSONALITY_H
 
-#include <uapi/linux/personality.h>
+#समावेश <uapi/linux/personality.h>
 
 /*
  * Return the base personality without flags.
  */
-#define personality(pers)	(pers & PER_MASK)
+#घोषणा personality(pers)	(pers & PER_MASK)
 
 /*
  * Change personality of the currently running process.
  */
-#define set_personality(pers)	(current->personality = (pers))
+#घोषणा set_personality(pers)	(current->personality = (pers))
 
-#endif /* _LINUX_PERSONALITY_H */
+#पूर्ण_अगर /* _LINUX_PERSONALITY_H */

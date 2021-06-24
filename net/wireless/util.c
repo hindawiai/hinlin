@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Wireless utility functions
  *
@@ -7,484 +8,484 @@
  * Copyright 2017	Intel Deutschland GmbH
  * Copyright (C) 2018-2020 Intel Corporation
  */
-#include <linux/export.h>
-#include <linux/bitops.h>
-#include <linux/etherdevice.h>
-#include <linux/slab.h>
-#include <linux/ieee80211.h>
-#include <net/cfg80211.h>
-#include <net/ip.h>
-#include <net/dsfield.h>
-#include <linux/if_vlan.h>
-#include <linux/mpls.h>
-#include <linux/gcd.h>
-#include <linux/bitfield.h>
-#include <linux/nospec.h>
-#include "core.h"
-#include "rdev-ops.h"
+#समावेश <linux/export.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ieee80211.h>
+#समावेश <net/cfg80211.h>
+#समावेश <net/ip.h>
+#समावेश <net/dsfield.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/mpls.h>
+#समावेश <linux/gcd.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/nospec.h>
+#समावेश "core.h"
+#समावेश "rdev-ops.h"
 
 
-const struct ieee80211_rate *
-ieee80211_get_response_rate(struct ieee80211_supported_band *sband,
-			    u32 basic_rates, int bitrate)
-{
-	struct ieee80211_rate *result = &sband->bitrates[0];
-	int i;
+स्थिर काष्ठा ieee80211_rate *
+ieee80211_get_response_rate(काष्ठा ieee80211_supported_band *sband,
+			    u32 basic_rates, पूर्णांक bitrate)
+अणु
+	काष्ठा ieee80211_rate *result = &sband->bitrates[0];
+	पूर्णांक i;
 
-	for (i = 0; i < sband->n_bitrates; i++) {
-		if (!(basic_rates & BIT(i)))
-			continue;
-		if (sband->bitrates[i].bitrate > bitrate)
-			continue;
+	क्रम (i = 0; i < sband->n_bitrates; i++) अणु
+		अगर (!(basic_rates & BIT(i)))
+			जारी;
+		अगर (sband->bitrates[i].bitrate > bitrate)
+			जारी;
 		result = &sband->bitrates[i];
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_response_rate);
 
-u32 ieee80211_mandatory_rates(struct ieee80211_supported_band *sband,
-			      enum nl80211_bss_scan_width scan_width)
-{
-	struct ieee80211_rate *bitrates;
+u32 ieee80211_mandatory_rates(काष्ठा ieee80211_supported_band *sband,
+			      क्रमागत nl80211_bss_scan_width scan_width)
+अणु
+	काष्ठा ieee80211_rate *bitrates;
 	u32 mandatory_rates = 0;
-	enum ieee80211_rate_flags mandatory_flag;
-	int i;
+	क्रमागत ieee80211_rate_flags mandatory_flag;
+	पूर्णांक i;
 
-	if (WARN_ON(!sband))
-		return 1;
+	अगर (WARN_ON(!sband))
+		वापस 1;
 
-	if (sband->band == NL80211_BAND_2GHZ) {
-		if (scan_width == NL80211_BSS_CHAN_WIDTH_5 ||
+	अगर (sband->band == NL80211_BAND_2GHZ) अणु
+		अगर (scan_width == NL80211_BSS_CHAN_WIDTH_5 ||
 		    scan_width == NL80211_BSS_CHAN_WIDTH_10)
 			mandatory_flag = IEEE80211_RATE_MANDATORY_G;
-		else
+		अन्यथा
 			mandatory_flag = IEEE80211_RATE_MANDATORY_B;
-	} else {
+	पूर्ण अन्यथा अणु
 		mandatory_flag = IEEE80211_RATE_MANDATORY_A;
-	}
+	पूर्ण
 
 	bitrates = sband->bitrates;
-	for (i = 0; i < sband->n_bitrates; i++)
-		if (bitrates[i].flags & mandatory_flag)
+	क्रम (i = 0; i < sband->n_bitrates; i++)
+		अगर (bitrates[i].flags & mandatory_flag)
 			mandatory_rates |= BIT(i);
-	return mandatory_rates;
-}
+	वापस mandatory_rates;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_mandatory_rates);
 
-u32 ieee80211_channel_to_freq_khz(int chan, enum nl80211_band band)
-{
+u32 ieee80211_channel_to_freq_khz(पूर्णांक chan, क्रमागत nl80211_band band)
+अणु
 	/* see 802.11 17.3.8.3.2 and Annex J
 	 * there are overlapping channel numbers in 5GHz and 2GHz bands */
-	if (chan <= 0)
-		return 0; /* not supported */
-	switch (band) {
-	case NL80211_BAND_2GHZ:
-		if (chan == 14)
-			return MHZ_TO_KHZ(2484);
-		else if (chan < 14)
-			return MHZ_TO_KHZ(2407 + chan * 5);
-		break;
-	case NL80211_BAND_5GHZ:
-		if (chan >= 182 && chan <= 196)
-			return MHZ_TO_KHZ(4000 + chan * 5);
-		else
-			return MHZ_TO_KHZ(5000 + chan * 5);
-		break;
-	case NL80211_BAND_6GHZ:
+	अगर (chan <= 0)
+		वापस 0; /* not supported */
+	चयन (band) अणु
+	हाल NL80211_BAND_2GHZ:
+		अगर (chan == 14)
+			वापस MHZ_TO_KHZ(2484);
+		अन्यथा अगर (chan < 14)
+			वापस MHZ_TO_KHZ(2407 + chan * 5);
+		अवरोध;
+	हाल NL80211_BAND_5GHZ:
+		अगर (chan >= 182 && chan <= 196)
+			वापस MHZ_TO_KHZ(4000 + chan * 5);
+		अन्यथा
+			वापस MHZ_TO_KHZ(5000 + chan * 5);
+		अवरोध;
+	हाल NL80211_BAND_6GHZ:
 		/* see 802.11ax D6.1 27.3.23.2 */
-		if (chan == 2)
-			return MHZ_TO_KHZ(5935);
-		if (chan <= 233)
-			return MHZ_TO_KHZ(5950 + chan * 5);
-		break;
-	case NL80211_BAND_60GHZ:
-		if (chan < 7)
-			return MHZ_TO_KHZ(56160 + chan * 2160);
-		break;
-	case NL80211_BAND_S1GHZ:
-		return 902000 + chan * 500;
-	default:
+		अगर (chan == 2)
+			वापस MHZ_TO_KHZ(5935);
+		अगर (chan <= 233)
+			वापस MHZ_TO_KHZ(5950 + chan * 5);
+		अवरोध;
+	हाल NL80211_BAND_60GHZ:
+		अगर (chan < 7)
+			वापस MHZ_TO_KHZ(56160 + chan * 2160);
+		अवरोध;
+	हाल NL80211_BAND_S1GHZ:
+		वापस 902000 + chan * 500;
+	शेष:
 		;
-	}
-	return 0; /* not supported */
-}
+	पूर्ण
+	वापस 0; /* not supported */
+पूर्ण
 EXPORT_SYMBOL(ieee80211_channel_to_freq_khz);
 
-enum nl80211_chan_width
-ieee80211_s1g_channel_width(const struct ieee80211_channel *chan)
-{
-	if (WARN_ON(!chan || chan->band != NL80211_BAND_S1GHZ))
-		return NL80211_CHAN_WIDTH_20_NOHT;
+क्रमागत nl80211_chan_width
+ieee80211_s1g_channel_width(स्थिर काष्ठा ieee80211_channel *chan)
+अणु
+	अगर (WARN_ON(!chan || chan->band != NL80211_BAND_S1GHZ))
+		वापस NL80211_CHAN_WIDTH_20_NOHT;
 
 	/*S1G defines a single allowed channel width per channel.
 	 * Extract that width here.
 	 */
-	if (chan->flags & IEEE80211_CHAN_1MHZ)
-		return NL80211_CHAN_WIDTH_1;
-	else if (chan->flags & IEEE80211_CHAN_2MHZ)
-		return NL80211_CHAN_WIDTH_2;
-	else if (chan->flags & IEEE80211_CHAN_4MHZ)
-		return NL80211_CHAN_WIDTH_4;
-	else if (chan->flags & IEEE80211_CHAN_8MHZ)
-		return NL80211_CHAN_WIDTH_8;
-	else if (chan->flags & IEEE80211_CHAN_16MHZ)
-		return NL80211_CHAN_WIDTH_16;
+	अगर (chan->flags & IEEE80211_CHAN_1MHZ)
+		वापस NL80211_CHAN_WIDTH_1;
+	अन्यथा अगर (chan->flags & IEEE80211_CHAN_2MHZ)
+		वापस NL80211_CHAN_WIDTH_2;
+	अन्यथा अगर (chan->flags & IEEE80211_CHAN_4MHZ)
+		वापस NL80211_CHAN_WIDTH_4;
+	अन्यथा अगर (chan->flags & IEEE80211_CHAN_8MHZ)
+		वापस NL80211_CHAN_WIDTH_8;
+	अन्यथा अगर (chan->flags & IEEE80211_CHAN_16MHZ)
+		वापस NL80211_CHAN_WIDTH_16;
 
 	pr_err("unknown channel width for channel at %dKHz?\n",
 	       ieee80211_channel_to_khz(chan));
 
-	return NL80211_CHAN_WIDTH_1;
-}
+	वापस NL80211_CHAN_WIDTH_1;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_s1g_channel_width);
 
-int ieee80211_freq_khz_to_channel(u32 freq)
-{
-	/* TODO: just handle MHz for now */
+पूर्णांक ieee80211_freq_khz_to_channel(u32 freq)
+अणु
+	/* TODO: just handle MHz क्रम now */
 	freq = KHZ_TO_MHZ(freq);
 
 	/* see 802.11 17.3.8.3.2 and Annex J */
-	if (freq == 2484)
-		return 14;
-	else if (freq < 2484)
-		return (freq - 2407) / 5;
-	else if (freq >= 4910 && freq <= 4980)
-		return (freq - 4000) / 5;
-	else if (freq < 5925)
-		return (freq - 5000) / 5;
-	else if (freq == 5935)
-		return 2;
-	else if (freq <= 45000) /* DMG band lower limit */
+	अगर (freq == 2484)
+		वापस 14;
+	अन्यथा अगर (freq < 2484)
+		वापस (freq - 2407) / 5;
+	अन्यथा अगर (freq >= 4910 && freq <= 4980)
+		वापस (freq - 4000) / 5;
+	अन्यथा अगर (freq < 5925)
+		वापस (freq - 5000) / 5;
+	अन्यथा अगर (freq == 5935)
+		वापस 2;
+	अन्यथा अगर (freq <= 45000) /* DMG band lower limit */
 		/* see 802.11ax D6.1 27.3.22.2 */
-		return (freq - 5950) / 5;
-	else if (freq >= 58320 && freq <= 70200)
-		return (freq - 56160) / 2160;
-	else
-		return 0;
-}
+		वापस (freq - 5950) / 5;
+	अन्यथा अगर (freq >= 58320 && freq <= 70200)
+		वापस (freq - 56160) / 2160;
+	अन्यथा
+		वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_freq_khz_to_channel);
 
-struct ieee80211_channel *ieee80211_get_channel_khz(struct wiphy *wiphy,
+काष्ठा ieee80211_channel *ieee80211_get_channel_khz(काष्ठा wiphy *wiphy,
 						    u32 freq)
-{
-	enum nl80211_band band;
-	struct ieee80211_supported_band *sband;
-	int i;
+अणु
+	क्रमागत nl80211_band band;
+	काष्ठा ieee80211_supported_band *sband;
+	पूर्णांक i;
 
-	for (band = 0; band < NUM_NL80211_BANDS; band++) {
+	क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
 		sband = wiphy->bands[band];
 
-		if (!sband)
-			continue;
+		अगर (!sband)
+			जारी;
 
-		for (i = 0; i < sband->n_channels; i++) {
-			struct ieee80211_channel *chan = &sband->channels[i];
+		क्रम (i = 0; i < sband->n_channels; i++) अणु
+			काष्ठा ieee80211_channel *chan = &sband->channels[i];
 
-			if (ieee80211_channel_to_khz(chan) == freq)
-				return chan;
-		}
-	}
+			अगर (ieee80211_channel_to_khz(chan) == freq)
+				वापस chan;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_channel_khz);
 
-static void set_mandatory_flags_band(struct ieee80211_supported_band *sband)
-{
-	int i, want;
+अटल व्योम set_mandatory_flags_band(काष्ठा ieee80211_supported_band *sband)
+अणु
+	पूर्णांक i, want;
 
-	switch (sband->band) {
-	case NL80211_BAND_5GHZ:
-	case NL80211_BAND_6GHZ:
+	चयन (sband->band) अणु
+	हाल NL80211_BAND_5GHZ:
+	हाल NL80211_BAND_6GHZ:
 		want = 3;
-		for (i = 0; i < sband->n_bitrates; i++) {
-			if (sband->bitrates[i].bitrate == 60 ||
+		क्रम (i = 0; i < sband->n_bitrates; i++) अणु
+			अगर (sband->bitrates[i].bitrate == 60 ||
 			    sband->bitrates[i].bitrate == 120 ||
-			    sband->bitrates[i].bitrate == 240) {
+			    sband->bitrates[i].bitrate == 240) अणु
 				sband->bitrates[i].flags |=
 					IEEE80211_RATE_MANDATORY_A;
 				want--;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		WARN_ON(want);
-		break;
-	case NL80211_BAND_2GHZ:
+		अवरोध;
+	हाल NL80211_BAND_2GHZ:
 		want = 7;
-		for (i = 0; i < sband->n_bitrates; i++) {
-			switch (sband->bitrates[i].bitrate) {
-			case 10:
-			case 20:
-			case 55:
-			case 110:
+		क्रम (i = 0; i < sband->n_bitrates; i++) अणु
+			चयन (sband->bitrates[i].bitrate) अणु
+			हाल 10:
+			हाल 20:
+			हाल 55:
+			हाल 110:
 				sband->bitrates[i].flags |=
 					IEEE80211_RATE_MANDATORY_B |
 					IEEE80211_RATE_MANDATORY_G;
 				want--;
-				break;
-			case 60:
-			case 120:
-			case 240:
+				अवरोध;
+			हाल 60:
+			हाल 120:
+			हाल 240:
 				sband->bitrates[i].flags |=
 					IEEE80211_RATE_MANDATORY_G;
 				want--;
 				fallthrough;
-			default:
+			शेष:
 				sband->bitrates[i].flags |=
 					IEEE80211_RATE_ERP_G;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		WARN_ON(want != 0 && want != 3);
-		break;
-	case NL80211_BAND_60GHZ:
-		/* check for mandatory HT MCS 1..4 */
+		अवरोध;
+	हाल NL80211_BAND_60GHZ:
+		/* check क्रम mandatory HT MCS 1..4 */
 		WARN_ON(!sband->ht_cap.ht_supported);
 		WARN_ON((sband->ht_cap.mcs.rx_mask[0] & 0x1e) != 0x1e);
-		break;
-	case NL80211_BAND_S1GHZ:
+		अवरोध;
+	हाल NL80211_BAND_S1GHZ:
 		/* Figure 9-589bd: 3 means unsupported, so != 3 means at least
 		 * mandatory is ok.
 		 */
 		WARN_ON((sband->s1g_cap.nss_mcs[0] & 0x3) == 0x3);
-		break;
-	case NUM_NL80211_BANDS:
-	default:
+		अवरोध;
+	हाल NUM_NL80211_BANDS:
+	शेष:
 		WARN_ON(1);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void ieee80211_set_bitrate_flags(struct wiphy *wiphy)
-{
-	enum nl80211_band band;
+व्योम ieee80211_set_bitrate_flags(काष्ठा wiphy *wiphy)
+अणु
+	क्रमागत nl80211_band band;
 
-	for (band = 0; band < NUM_NL80211_BANDS; band++)
-		if (wiphy->bands[band])
+	क्रम (band = 0; band < NUM_NL80211_BANDS; band++)
+		अगर (wiphy->bands[band])
 			set_mandatory_flags_band(wiphy->bands[band]);
-}
+पूर्ण
 
-bool cfg80211_supported_cipher_suite(struct wiphy *wiphy, u32 cipher)
-{
-	int i;
-	for (i = 0; i < wiphy->n_cipher_suites; i++)
-		if (cipher == wiphy->cipher_suites[i])
-			return true;
-	return false;
-}
+bool cfg80211_supported_cipher_suite(काष्ठा wiphy *wiphy, u32 cipher)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < wiphy->n_cipher_suites; i++)
+		अगर (cipher == wiphy->cipher_suites[i])
+			वापस true;
+	वापस false;
+पूर्ण
 
-static bool
-cfg80211_igtk_cipher_supported(struct cfg80211_registered_device *rdev)
-{
-	struct wiphy *wiphy = &rdev->wiphy;
-	int i;
+अटल bool
+cfg80211_igtk_cipher_supported(काष्ठा cfg80211_रेजिस्टरed_device *rdev)
+अणु
+	काष्ठा wiphy *wiphy = &rdev->wiphy;
+	पूर्णांक i;
 
-	for (i = 0; i < wiphy->n_cipher_suites; i++) {
-		switch (wiphy->cipher_suites[i]) {
-		case WLAN_CIPHER_SUITE_AES_CMAC:
-		case WLAN_CIPHER_SUITE_BIP_CMAC_256:
-		case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-		case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-			return true;
-		}
-	}
+	क्रम (i = 0; i < wiphy->n_cipher_suites; i++) अणु
+		चयन (wiphy->cipher_suites[i]) अणु
+		हाल WLAN_CIPHER_SUITE_AES_CMAC:
+		हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
+		हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+		हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool cfg80211_valid_key_idx(struct cfg80211_registered_device *rdev,
-			    int key_idx, bool pairwise)
-{
-	int max_key_idx;
+bool cfg80211_valid_key_idx(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
+			    पूर्णांक key_idx, bool pairwise)
+अणु
+	पूर्णांक max_key_idx;
 
-	if (pairwise)
+	अगर (pairwise)
 		max_key_idx = 3;
-	else if (wiphy_ext_feature_isset(&rdev->wiphy,
+	अन्यथा अगर (wiphy_ext_feature_isset(&rdev->wiphy,
 					 NL80211_EXT_FEATURE_BEACON_PROTECTION) ||
 		 wiphy_ext_feature_isset(&rdev->wiphy,
 					 NL80211_EXT_FEATURE_BEACON_PROTECTION_CLIENT))
 		max_key_idx = 7;
-	else if (cfg80211_igtk_cipher_supported(rdev))
+	अन्यथा अगर (cfg80211_igtk_cipher_supported(rdev))
 		max_key_idx = 5;
-	else
+	अन्यथा
 		max_key_idx = 3;
 
-	if (key_idx < 0 || key_idx > max_key_idx)
-		return false;
+	अगर (key_idx < 0 || key_idx > max_key_idx)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int cfg80211_validate_key_settings(struct cfg80211_registered_device *rdev,
-				   struct key_params *params, int key_idx,
-				   bool pairwise, const u8 *mac_addr)
-{
-	if (!cfg80211_valid_key_idx(rdev, key_idx, pairwise))
-		return -EINVAL;
+पूर्णांक cfg80211_validate_key_settings(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
+				   काष्ठा key_params *params, पूर्णांक key_idx,
+				   bool pairwise, स्थिर u8 *mac_addr)
+अणु
+	अगर (!cfg80211_valid_key_idx(rdev, key_idx, pairwise))
+		वापस -EINVAL;
 
-	if (!pairwise && mac_addr && !(rdev->wiphy.flags & WIPHY_FLAG_IBSS_RSN))
-		return -EINVAL;
+	अगर (!pairwise && mac_addr && !(rdev->wiphy.flags & WIPHY_FLAG_IBSS_RSN))
+		वापस -EINVAL;
 
-	if (pairwise && !mac_addr)
-		return -EINVAL;
+	अगर (pairwise && !mac_addr)
+		वापस -EINVAL;
 
-	switch (params->cipher) {
-	case WLAN_CIPHER_SUITE_TKIP:
+	चयन (params->cipher) अणु
+	हाल WLAN_CIPHER_SUITE_TKIP:
 		/* Extended Key ID can only be used with CCMP/GCMP ciphers */
-		if ((pairwise && key_idx) ||
+		अगर ((pairwise && key_idx) ||
 		    params->mode != NL80211_KEY_RX_TX)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_CCMP_256:
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP:
+	हाल WLAN_CIPHER_SUITE_CCMP_256:
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
 		/* IEEE802.11-2016 allows only 0 and - when supporting
-		 * Extended Key ID - 1 as index for pairwise keys.
-		 * @NL80211_KEY_NO_TX is only allowed for pairwise keys when
+		 * Extended Key ID - 1 as index क्रम pairwise keys.
+		 * @NL80211_KEY_NO_TX is only allowed क्रम pairwise keys when
 		 * the driver supports Extended Key ID.
 		 * @NL80211_KEY_SET_TX can't be set when installing and
 		 * validating a key.
 		 */
-		if ((params->mode == NL80211_KEY_NO_TX && !pairwise) ||
+		अगर ((params->mode == NL80211_KEY_NO_TX && !pairwise) ||
 		    params->mode == NL80211_KEY_SET_TX)
-			return -EINVAL;
-		if (wiphy_ext_feature_isset(&rdev->wiphy,
-					    NL80211_EXT_FEATURE_EXT_KEY_ID)) {
-			if (pairwise && (key_idx < 0 || key_idx > 1))
-				return -EINVAL;
-		} else if (pairwise && key_idx) {
-			return -EINVAL;
-		}
-		break;
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
+			वापस -EINVAL;
+		अगर (wiphy_ext_feature_isset(&rdev->wiphy,
+					    NL80211_EXT_FEATURE_EXT_KEY_ID)) अणु
+			अगर (pairwise && (key_idx < 0 || key_idx > 1))
+				वापस -EINVAL;
+		पूर्ण अन्यथा अगर (pairwise && key_idx) अणु
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+	हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
 		/* Disallow BIP (group-only) cipher as pairwise cipher */
-		if (pairwise)
-			return -EINVAL;
-		if (key_idx < 4)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_WEP40:
-	case WLAN_CIPHER_SUITE_WEP104:
-		if (key_idx > 3)
-			return -EINVAL;
-		break;
-	default:
-		break;
-	}
+		अगर (pairwise)
+			वापस -EINVAL;
+		अगर (key_idx < 4)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_WEP40:
+	हाल WLAN_CIPHER_SUITE_WEP104:
+		अगर (key_idx > 3)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	switch (params->cipher) {
-	case WLAN_CIPHER_SUITE_WEP40:
-		if (params->key_len != WLAN_KEY_LEN_WEP40)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_TKIP:
-		if (params->key_len != WLAN_KEY_LEN_TKIP)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_CCMP:
-		if (params->key_len != WLAN_KEY_LEN_CCMP)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_CCMP_256:
-		if (params->key_len != WLAN_KEY_LEN_CCMP_256)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_GCMP:
-		if (params->key_len != WLAN_KEY_LEN_GCMP)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_GCMP_256:
-		if (params->key_len != WLAN_KEY_LEN_GCMP_256)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_WEP104:
-		if (params->key_len != WLAN_KEY_LEN_WEP104)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-		if (params->key_len != WLAN_KEY_LEN_AES_CMAC)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
-		if (params->key_len != WLAN_KEY_LEN_BIP_CMAC_256)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-		if (params->key_len != WLAN_KEY_LEN_BIP_GMAC_128)
-			return -EINVAL;
-		break;
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-		if (params->key_len != WLAN_KEY_LEN_BIP_GMAC_256)
-			return -EINVAL;
-		break;
-	default:
+	चयन (params->cipher) अणु
+	हाल WLAN_CIPHER_SUITE_WEP40:
+		अगर (params->key_len != WLAN_KEY_LEN_WEP40)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_TKIP:
+		अगर (params->key_len != WLAN_KEY_LEN_TKIP)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP:
+		अगर (params->key_len != WLAN_KEY_LEN_CCMP)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP_256:
+		अगर (params->key_len != WLAN_KEY_LEN_CCMP_256)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_GCMP:
+		अगर (params->key_len != WLAN_KEY_LEN_GCMP)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
+		अगर (params->key_len != WLAN_KEY_LEN_GCMP_256)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_WEP104:
+		अगर (params->key_len != WLAN_KEY_LEN_WEP104)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+		अगर (params->key_len != WLAN_KEY_LEN_AES_CMAC)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
+		अगर (params->key_len != WLAN_KEY_LEN_BIP_CMAC_256)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+		अगर (params->key_len != WLAN_KEY_LEN_BIP_GMAC_128)
+			वापस -EINVAL;
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
+		अगर (params->key_len != WLAN_KEY_LEN_BIP_GMAC_256)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
 		/*
-		 * We don't know anything about this algorithm,
+		 * We करोn't know anything about this algorithm,
 		 * allow using it -- but the driver must check
 		 * all parameters! We still check below whether
 		 * or not the driver supports this algorithm,
 		 * of course.
 		 */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (params->seq) {
-		switch (params->cipher) {
-		case WLAN_CIPHER_SUITE_WEP40:
-		case WLAN_CIPHER_SUITE_WEP104:
-			/* These ciphers do not use key sequence */
-			return -EINVAL;
-		case WLAN_CIPHER_SUITE_TKIP:
-		case WLAN_CIPHER_SUITE_CCMP:
-		case WLAN_CIPHER_SUITE_CCMP_256:
-		case WLAN_CIPHER_SUITE_GCMP:
-		case WLAN_CIPHER_SUITE_GCMP_256:
-		case WLAN_CIPHER_SUITE_AES_CMAC:
-		case WLAN_CIPHER_SUITE_BIP_CMAC_256:
-		case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-		case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-			if (params->seq_len != 6)
-				return -EINVAL;
-			break;
-		}
-	}
+	अगर (params->seq) अणु
+		चयन (params->cipher) अणु
+		हाल WLAN_CIPHER_SUITE_WEP40:
+		हाल WLAN_CIPHER_SUITE_WEP104:
+			/* These ciphers करो not use key sequence */
+			वापस -EINVAL;
+		हाल WLAN_CIPHER_SUITE_TKIP:
+		हाल WLAN_CIPHER_SUITE_CCMP:
+		हाल WLAN_CIPHER_SUITE_CCMP_256:
+		हाल WLAN_CIPHER_SUITE_GCMP:
+		हाल WLAN_CIPHER_SUITE_GCMP_256:
+		हाल WLAN_CIPHER_SUITE_AES_CMAC:
+		हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
+		हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+		हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
+			अगर (params->seq_len != 6)
+				वापस -EINVAL;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!cfg80211_supported_cipher_suite(&rdev->wiphy, params->cipher))
-		return -EINVAL;
+	अगर (!cfg80211_supported_cipher_suite(&rdev->wiphy, params->cipher))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned int __attribute_const__ ieee80211_hdrlen(__le16 fc)
-{
-	unsigned int hdrlen = 24;
+अचिन्हित पूर्णांक __attribute_स्थिर__ ieee80211_hdrlen(__le16 fc)
+अणु
+	अचिन्हित पूर्णांक hdrlen = 24;
 
-	if (ieee80211_is_ext(fc)) {
+	अगर (ieee80211_is_ext(fc)) अणु
 		hdrlen = 4;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ieee80211_is_data(fc)) {
-		if (ieee80211_has_a4(fc))
+	अगर (ieee80211_is_data(fc)) अणु
+		अगर (ieee80211_has_a4(fc))
 			hdrlen = 30;
-		if (ieee80211_is_data_qos(fc)) {
+		अगर (ieee80211_is_data_qos(fc)) अणु
 			hdrlen += IEEE80211_QOS_CTL_LEN;
-			if (ieee80211_has_order(fc))
+			अगर (ieee80211_has_order(fc))
 				hdrlen += IEEE80211_HT_CTL_LEN;
-		}
-		goto out;
-	}
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
-	if (ieee80211_is_mgmt(fc)) {
-		if (ieee80211_has_order(fc))
+	अगर (ieee80211_is_mgmt(fc)) अणु
+		अगर (ieee80211_has_order(fc))
 			hdrlen += IEEE80211_HT_CTL_LEN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ieee80211_is_ctl(fc)) {
+	अगर (ieee80211_is_ctl(fc)) अणु
 		/*
 		 * ACK and CTS are 10 bytes, all others 16. To see how
 		 * to get this condition consider
@@ -494,73 +495,73 @@ unsigned int __attribute_const__ ieee80211_hdrlen(__le16 fc)
 		 *   bits that matter:         ^^^      (0x00E0)
 		 *   value of those: 0b0000000011000000 (0x00C0)
 		 */
-		if ((fc & cpu_to_le16(0x00E0)) == cpu_to_le16(0x00C0))
+		अगर ((fc & cpu_to_le16(0x00E0)) == cpu_to_le16(0x00C0))
 			hdrlen = 10;
-		else
+		अन्यथा
 			hdrlen = 16;
-	}
+	पूर्ण
 out:
-	return hdrlen;
-}
+	वापस hdrlen;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_hdrlen);
 
-unsigned int ieee80211_get_hdrlen_from_skb(const struct sk_buff *skb)
-{
-	const struct ieee80211_hdr *hdr =
-			(const struct ieee80211_hdr *)skb->data;
-	unsigned int hdrlen;
+अचिन्हित पूर्णांक ieee80211_get_hdrlen_from_skb(स्थिर काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा ieee80211_hdr *hdr =
+			(स्थिर काष्ठा ieee80211_hdr *)skb->data;
+	अचिन्हित पूर्णांक hdrlen;
 
-	if (unlikely(skb->len < 10))
-		return 0;
+	अगर (unlikely(skb->len < 10))
+		वापस 0;
 	hdrlen = ieee80211_hdrlen(hdr->frame_control);
-	if (unlikely(hdrlen > skb->len))
-		return 0;
-	return hdrlen;
-}
+	अगर (unlikely(hdrlen > skb->len))
+		वापस 0;
+	वापस hdrlen;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_hdrlen_from_skb);
 
-static unsigned int __ieee80211_get_mesh_hdrlen(u8 flags)
-{
-	int ae = flags & MESH_FLAGS_AE;
+अटल अचिन्हित पूर्णांक __ieee80211_get_mesh_hdrlen(u8 flags)
+अणु
+	पूर्णांक ae = flags & MESH_FLAGS_AE;
 	/* 802.11-2012, 8.2.4.7.3 */
-	switch (ae) {
-	default:
-	case 0:
-		return 6;
-	case MESH_FLAGS_AE_A4:
-		return 12;
-	case MESH_FLAGS_AE_A5_A6:
-		return 18;
-	}
-}
+	चयन (ae) अणु
+	शेष:
+	हाल 0:
+		वापस 6;
+	हाल MESH_FLAGS_AE_A4:
+		वापस 12;
+	हाल MESH_FLAGS_AE_A5_A6:
+		वापस 18;
+	पूर्ण
+पूर्ण
 
-unsigned int ieee80211_get_mesh_hdrlen(struct ieee80211s_hdr *meshhdr)
-{
-	return __ieee80211_get_mesh_hdrlen(meshhdr->flags);
-}
+अचिन्हित पूर्णांक ieee80211_get_mesh_hdrlen(काष्ठा ieee80211s_hdr *meshhdr)
+अणु
+	वापस __ieee80211_get_mesh_hdrlen(meshhdr->flags);
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_mesh_hdrlen);
 
-int ieee80211_data_to_8023_exthdr(struct sk_buff *skb, struct ethhdr *ehdr,
-				  const u8 *addr, enum nl80211_iftype iftype,
+पूर्णांक ieee80211_data_to_8023_exthdr(काष्ठा sk_buff *skb, काष्ठा ethhdr *ehdr,
+				  स्थिर u8 *addr, क्रमागत nl80211_अगरtype अगरtype,
 				  u8 data_offset, bool is_amsdu)
-{
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
-	struct {
+अणु
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *) skb->data;
+	काष्ठा अणु
 		u8 hdr[ETH_ALEN] __aligned(2);
 		__be16 proto;
-	} payload;
-	struct ethhdr tmp;
+	पूर्ण payload;
+	काष्ठा ethhdr पंचांगp;
 	u16 hdrlen;
 	u8 mesh_flags = 0;
 
-	if (unlikely(!ieee80211_is_data_present(hdr->frame_control)))
-		return -1;
+	अगर (unlikely(!ieee80211_is_data_present(hdr->frame_control)))
+		वापस -1;
 
 	hdrlen = ieee80211_hdrlen(hdr->frame_control) + data_offset;
-	if (skb->len < hdrlen + 8)
-		return -1;
+	अगर (skb->len < hdrlen + 8)
+		वापस -1;
 
-	/* convert IEEE 802.11 header + possible LLC headers into Ethernet
+	/* convert IEEE 802.11 header + possible LLC headers पूर्णांकo Ethernet
 	 * header
 	 * IEEE 802.11 address fields:
 	 * ToDS FromDS Addr1 Addr2 Addr3 Addr4
@@ -569,121 +570,121 @@ int ieee80211_data_to_8023_exthdr(struct sk_buff *skb, struct ethhdr *ehdr,
 	 *   1     0   BSSID SA    DA    n/a
 	 *   1     1   RA    TA    DA    SA
 	 */
-	memcpy(tmp.h_dest, ieee80211_get_DA(hdr), ETH_ALEN);
-	memcpy(tmp.h_source, ieee80211_get_SA(hdr), ETH_ALEN);
+	स_नकल(पंचांगp.h_dest, ieee80211_get_DA(hdr), ETH_ALEN);
+	स_नकल(पंचांगp.h_source, ieee80211_get_SA(hdr), ETH_ALEN);
 
-	if (iftype == NL80211_IFTYPE_MESH_POINT)
+	अगर (अगरtype == NL80211_IFTYPE_MESH_POINT)
 		skb_copy_bits(skb, hdrlen, &mesh_flags, 1);
 
 	mesh_flags &= MESH_FLAGS_AE;
 
-	switch (hdr->frame_control &
-		cpu_to_le16(IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS)) {
-	case cpu_to_le16(IEEE80211_FCTL_TODS):
-		if (unlikely(iftype != NL80211_IFTYPE_AP &&
-			     iftype != NL80211_IFTYPE_AP_VLAN &&
-			     iftype != NL80211_IFTYPE_P2P_GO))
-			return -1;
-		break;
-	case cpu_to_le16(IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS):
-		if (unlikely(iftype != NL80211_IFTYPE_MESH_POINT &&
-			     iftype != NL80211_IFTYPE_AP_VLAN &&
-			     iftype != NL80211_IFTYPE_STATION))
-			return -1;
-		if (iftype == NL80211_IFTYPE_MESH_POINT) {
-			if (mesh_flags == MESH_FLAGS_AE_A4)
-				return -1;
-			if (mesh_flags == MESH_FLAGS_AE_A5_A6) {
+	चयन (hdr->frame_control &
+		cpu_to_le16(IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS)) अणु
+	हाल cpu_to_le16(IEEE80211_FCTL_TODS):
+		अगर (unlikely(अगरtype != NL80211_IFTYPE_AP &&
+			     अगरtype != NL80211_IFTYPE_AP_VLAN &&
+			     अगरtype != NL80211_IFTYPE_P2P_GO))
+			वापस -1;
+		अवरोध;
+	हाल cpu_to_le16(IEEE80211_FCTL_TODS | IEEE80211_FCTL_FROMDS):
+		अगर (unlikely(अगरtype != NL80211_IFTYPE_MESH_POINT &&
+			     अगरtype != NL80211_IFTYPE_AP_VLAN &&
+			     अगरtype != NL80211_IFTYPE_STATION))
+			वापस -1;
+		अगर (अगरtype == NL80211_IFTYPE_MESH_POINT) अणु
+			अगर (mesh_flags == MESH_FLAGS_AE_A4)
+				वापस -1;
+			अगर (mesh_flags == MESH_FLAGS_AE_A5_A6) अणु
 				skb_copy_bits(skb, hdrlen +
-					offsetof(struct ieee80211s_hdr, eaddr1),
-					tmp.h_dest, 2 * ETH_ALEN);
-			}
+					दुरत्व(काष्ठा ieee80211s_hdr, eaddr1),
+					पंचांगp.h_dest, 2 * ETH_ALEN);
+			पूर्ण
 			hdrlen += __ieee80211_get_mesh_hdrlen(mesh_flags);
-		}
-		break;
-	case cpu_to_le16(IEEE80211_FCTL_FROMDS):
-		if ((iftype != NL80211_IFTYPE_STATION &&
-		     iftype != NL80211_IFTYPE_P2P_CLIENT &&
-		     iftype != NL80211_IFTYPE_MESH_POINT) ||
-		    (is_multicast_ether_addr(tmp.h_dest) &&
-		     ether_addr_equal(tmp.h_source, addr)))
-			return -1;
-		if (iftype == NL80211_IFTYPE_MESH_POINT) {
-			if (mesh_flags == MESH_FLAGS_AE_A5_A6)
-				return -1;
-			if (mesh_flags == MESH_FLAGS_AE_A4)
+		पूर्ण
+		अवरोध;
+	हाल cpu_to_le16(IEEE80211_FCTL_FROMDS):
+		अगर ((अगरtype != NL80211_IFTYPE_STATION &&
+		     अगरtype != NL80211_IFTYPE_P2P_CLIENT &&
+		     अगरtype != NL80211_IFTYPE_MESH_POINT) ||
+		    (is_multicast_ether_addr(पंचांगp.h_dest) &&
+		     ether_addr_equal(पंचांगp.h_source, addr)))
+			वापस -1;
+		अगर (अगरtype == NL80211_IFTYPE_MESH_POINT) अणु
+			अगर (mesh_flags == MESH_FLAGS_AE_A5_A6)
+				वापस -1;
+			अगर (mesh_flags == MESH_FLAGS_AE_A4)
 				skb_copy_bits(skb, hdrlen +
-					offsetof(struct ieee80211s_hdr, eaddr1),
-					tmp.h_source, ETH_ALEN);
+					दुरत्व(काष्ठा ieee80211s_hdr, eaddr1),
+					पंचांगp.h_source, ETH_ALEN);
 			hdrlen += __ieee80211_get_mesh_hdrlen(mesh_flags);
-		}
-		break;
-	case cpu_to_le16(0):
-		if (iftype != NL80211_IFTYPE_ADHOC &&
-		    iftype != NL80211_IFTYPE_STATION &&
-		    iftype != NL80211_IFTYPE_OCB)
-				return -1;
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	हाल cpu_to_le16(0):
+		अगर (अगरtype != NL80211_IFTYPE_ADHOC &&
+		    अगरtype != NL80211_IFTYPE_STATION &&
+		    अगरtype != NL80211_IFTYPE_OCB)
+				वापस -1;
+		अवरोध;
+	पूर्ण
 
-	skb_copy_bits(skb, hdrlen, &payload, sizeof(payload));
-	tmp.h_proto = payload.proto;
+	skb_copy_bits(skb, hdrlen, &payload, माप(payload));
+	पंचांगp.h_proto = payload.proto;
 
-	if (likely((!is_amsdu && ether_addr_equal(payload.hdr, rfc1042_header) &&
-		    tmp.h_proto != htons(ETH_P_AARP) &&
-		    tmp.h_proto != htons(ETH_P_IPX)) ||
+	अगर (likely((!is_amsdu && ether_addr_equal(payload.hdr, rfc1042_header) &&
+		    पंचांगp.h_proto != htons(ETH_P_AARP) &&
+		    पंचांगp.h_proto != htons(ETH_P_IPX)) ||
 		   ether_addr_equal(payload.hdr, bridge_tunnel_header)))
-		/* remove RFC1042 or Bridge-Tunnel encapsulation and
+		/* हटाओ RFC1042 or Bridge-Tunnel encapsulation and
 		 * replace EtherType */
 		hdrlen += ETH_ALEN + 2;
-	else
-		tmp.h_proto = htons(skb->len - hdrlen);
+	अन्यथा
+		पंचांगp.h_proto = htons(skb->len - hdrlen);
 
 	pskb_pull(skb, hdrlen);
 
-	if (!ehdr)
-		ehdr = skb_push(skb, sizeof(struct ethhdr));
-	memcpy(ehdr, &tmp, sizeof(tmp));
+	अगर (!ehdr)
+		ehdr = skb_push(skb, माप(काष्ठा ethhdr));
+	स_नकल(ehdr, &पंचांगp, माप(पंचांगp));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_data_to_8023_exthdr);
 
-static void
-__frame_add_frag(struct sk_buff *skb, struct page *page,
-		 void *ptr, int len, int size)
-{
-	struct skb_shared_info *sh = skb_shinfo(skb);
-	int page_offset;
+अटल व्योम
+__frame_add_frag(काष्ठा sk_buff *skb, काष्ठा page *page,
+		 व्योम *ptr, पूर्णांक len, पूर्णांक size)
+अणु
+	काष्ठा skb_shared_info *sh = skb_shinfo(skb);
+	पूर्णांक page_offset;
 
 	get_page(page);
 	page_offset = ptr - page_address(page);
 	skb_add_rx_frag(skb, sh->nr_frags, page, page_offset, len, size);
-}
+पूर्ण
 
-static void
-__ieee80211_amsdu_copy_frag(struct sk_buff *skb, struct sk_buff *frame,
-			    int offset, int len)
-{
-	struct skb_shared_info *sh = skb_shinfo(skb);
-	const skb_frag_t *frag = &sh->frags[0];
-	struct page *frag_page;
-	void *frag_ptr;
-	int frag_len, frag_size;
-	int head_size = skb->len - skb->data_len;
-	int cur_len;
+अटल व्योम
+__ieee80211_amsdu_copy_frag(काष्ठा sk_buff *skb, काष्ठा sk_buff *frame,
+			    पूर्णांक offset, पूर्णांक len)
+अणु
+	काष्ठा skb_shared_info *sh = skb_shinfo(skb);
+	स्थिर skb_frag_t *frag = &sh->frags[0];
+	काष्ठा page *frag_page;
+	व्योम *frag_ptr;
+	पूर्णांक frag_len, frag_size;
+	पूर्णांक head_size = skb->len - skb->data_len;
+	पूर्णांक cur_len;
 
 	frag_page = virt_to_head_page(skb->head);
 	frag_ptr = skb->data;
 	frag_size = head_size;
 
-	while (offset >= frag_size) {
+	जबतक (offset >= frag_size) अणु
 		offset -= frag_size;
 		frag_page = skb_frag_page(frag);
 		frag_ptr = skb_frag_address(frag);
 		frag_size = skb_frag_size(frag);
 		frag++;
-	}
+	पूर्ण
 
 	frag_ptr += offset;
 	frag_len = frag_size - offset;
@@ -693,112 +694,112 @@ __ieee80211_amsdu_copy_frag(struct sk_buff *skb, struct sk_buff *frame,
 	__frame_add_frag(frame, frag_page, frag_ptr, cur_len, frag_size);
 	len -= cur_len;
 
-	while (len > 0) {
+	जबतक (len > 0) अणु
 		frag_len = skb_frag_size(frag);
 		cur_len = min(len, frag_len);
 		__frame_add_frag(frame, skb_frag_page(frag),
 				 skb_frag_address(frag), cur_len, frag_len);
 		len -= cur_len;
 		frag++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct sk_buff *
-__ieee80211_amsdu_copy(struct sk_buff *skb, unsigned int hlen,
-		       int offset, int len, bool reuse_frag)
-{
-	struct sk_buff *frame;
-	int cur_len = len;
+अटल काष्ठा sk_buff *
+__ieee80211_amsdu_copy(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक hlen,
+		       पूर्णांक offset, पूर्णांक len, bool reuse_frag)
+अणु
+	काष्ठा sk_buff *frame;
+	पूर्णांक cur_len = len;
 
-	if (skb->len - offset < len)
-		return NULL;
+	अगर (skb->len - offset < len)
+		वापस शून्य;
 
 	/*
-	 * When reusing framents, copy some data to the head to simplify
+	 * When reusing framents, copy some data to the head to simplअगरy
 	 * ethernet header handling and speed up protocol header processing
 	 * in the stack later.
 	 */
-	if (reuse_frag)
-		cur_len = min_t(int, len, 32);
+	अगर (reuse_frag)
+		cur_len = min_t(पूर्णांक, len, 32);
 
 	/*
-	 * Allocate and reserve two bytes more for payload
-	 * alignment since sizeof(struct ethhdr) is 14.
+	 * Allocate and reserve two bytes more क्रम payload
+	 * alignment since माप(काष्ठा ethhdr) is 14.
 	 */
-	frame = dev_alloc_skb(hlen + sizeof(struct ethhdr) + 2 + cur_len);
-	if (!frame)
-		return NULL;
+	frame = dev_alloc_skb(hlen + माप(काष्ठा ethhdr) + 2 + cur_len);
+	अगर (!frame)
+		वापस शून्य;
 
-	skb_reserve(frame, hlen + sizeof(struct ethhdr) + 2);
+	skb_reserve(frame, hlen + माप(काष्ठा ethhdr) + 2);
 	skb_copy_bits(skb, offset, skb_put(frame, cur_len), cur_len);
 
 	len -= cur_len;
-	if (!len)
-		return frame;
+	अगर (!len)
+		वापस frame;
 
 	offset += cur_len;
 	__ieee80211_amsdu_copy_frag(skb, frame, offset, len);
 
-	return frame;
-}
+	वापस frame;
+पूर्ण
 
-void ieee80211_amsdu_to_8023s(struct sk_buff *skb, struct sk_buff_head *list,
-			      const u8 *addr, enum nl80211_iftype iftype,
-			      const unsigned int extra_headroom,
-			      const u8 *check_da, const u8 *check_sa)
-{
-	unsigned int hlen = ALIGN(extra_headroom, 4);
-	struct sk_buff *frame = NULL;
+व्योम ieee80211_amsdu_to_8023s(काष्ठा sk_buff *skb, काष्ठा sk_buff_head *list,
+			      स्थिर u8 *addr, क्रमागत nl80211_अगरtype अगरtype,
+			      स्थिर अचिन्हित पूर्णांक extra_headroom,
+			      स्थिर u8 *check_da, स्थिर u8 *check_sa)
+अणु
+	अचिन्हित पूर्णांक hlen = ALIGN(extra_headroom, 4);
+	काष्ठा sk_buff *frame = शून्य;
 	u16 ethertype;
 	u8 *payload;
-	int offset = 0, remaining;
-	struct ethhdr eth;
+	पूर्णांक offset = 0, reमुख्यing;
+	काष्ठा ethhdr eth;
 	bool reuse_frag = skb->head_frag && !skb_has_frag_list(skb);
 	bool reuse_skb = false;
 	bool last = false;
 
-	while (!last) {
-		unsigned int subframe_len;
-		int len;
+	जबतक (!last) अणु
+		अचिन्हित पूर्णांक subframe_len;
+		पूर्णांक len;
 		u8 padding;
 
-		skb_copy_bits(skb, offset, &eth, sizeof(eth));
+		skb_copy_bits(skb, offset, &eth, माप(eth));
 		len = ntohs(eth.h_proto);
-		subframe_len = sizeof(struct ethhdr) + len;
+		subframe_len = माप(काष्ठा ethhdr) + len;
 		padding = (4 - subframe_len) & 0x3;
 
 		/* the last MSDU has no padding */
-		remaining = skb->len - offset;
-		if (subframe_len > remaining)
-			goto purge;
+		reमुख्यing = skb->len - offset;
+		अगर (subframe_len > reमुख्यing)
+			जाओ purge;
 		/* mitigate A-MSDU aggregation injection attacks */
-		if (ether_addr_equal(eth.h_dest, rfc1042_header))
-			goto purge;
+		अगर (ether_addr_equal(eth.h_dest, rfc1042_header))
+			जाओ purge;
 
-		offset += sizeof(struct ethhdr);
-		last = remaining <= subframe_len + padding;
+		offset += माप(काष्ठा ethhdr);
+		last = reमुख्यing <= subframe_len + padding;
 
 		/* FIXME: should we really accept multicast DA? */
-		if ((check_da && !is_multicast_ether_addr(eth.h_dest) &&
+		अगर ((check_da && !is_multicast_ether_addr(eth.h_dest) &&
 		     !ether_addr_equal(check_da, eth.h_dest)) ||
-		    (check_sa && !ether_addr_equal(check_sa, eth.h_source))) {
+		    (check_sa && !ether_addr_equal(check_sa, eth.h_source))) अणु
 			offset += len + padding;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* reuse skb for the last subframe */
-		if (!skb_is_nonlinear(skb) && !reuse_frag && last) {
+		/* reuse skb क्रम the last subframe */
+		अगर (!skb_is_nonlinear(skb) && !reuse_frag && last) अणु
 			skb_pull(skb, offset);
 			frame = skb;
 			reuse_skb = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			frame = __ieee80211_amsdu_copy(skb, hlen, offset, len,
 						       reuse_frag);
-			if (!frame)
-				goto purge;
+			अगर (!frame)
+				जाओ purge;
 
 			offset += len + padding;
-		}
+		पूर्ण
 
 		skb_reset_network_header(frame);
 		frame->dev = skb->dev;
@@ -806,350 +807,350 @@ void ieee80211_amsdu_to_8023s(struct sk_buff *skb, struct sk_buff_head *list,
 
 		payload = frame->data;
 		ethertype = (payload[6] << 8) | payload[7];
-		if (likely((ether_addr_equal(payload, rfc1042_header) &&
+		अगर (likely((ether_addr_equal(payload, rfc1042_header) &&
 			    ethertype != ETH_P_AARP && ethertype != ETH_P_IPX) ||
-			   ether_addr_equal(payload, bridge_tunnel_header))) {
+			   ether_addr_equal(payload, bridge_tunnel_header))) अणु
 			eth.h_proto = htons(ethertype);
 			skb_pull(frame, ETH_ALEN + 2);
-		}
+		पूर्ण
 
-		memcpy(skb_push(frame, sizeof(eth)), &eth, sizeof(eth));
+		स_नकल(skb_push(frame, माप(eth)), &eth, माप(eth));
 		__skb_queue_tail(list, frame);
-	}
+	पूर्ण
 
-	if (!reuse_skb)
-		dev_kfree_skb(skb);
+	अगर (!reuse_skb)
+		dev_kमुक्त_skb(skb);
 
-	return;
+	वापस;
 
  purge:
 	__skb_queue_purge(list);
-	dev_kfree_skb(skb);
-}
+	dev_kमुक्त_skb(skb);
+पूर्ण
 EXPORT_SYMBOL(ieee80211_amsdu_to_8023s);
 
 /* Given a data frame determine the 802.1p/1d tag to use. */
-unsigned int cfg80211_classify8021d(struct sk_buff *skb,
-				    struct cfg80211_qos_map *qos_map)
-{
-	unsigned int dscp;
-	unsigned char vlan_priority;
-	unsigned int ret;
+अचिन्हित पूर्णांक cfg80211_classअगरy8021d(काष्ठा sk_buff *skb,
+				    काष्ठा cfg80211_qos_map *qos_map)
+अणु
+	अचिन्हित पूर्णांक dscp;
+	अचिन्हित अक्षर vlan_priority;
+	अचिन्हित पूर्णांक ret;
 
 	/* skb->priority values from 256->263 are magic values to
-	 * directly indicate a specific 802.1d priority.  This is used
+	 * directly indicate a specअगरic 802.1d priority.  This is used
 	 * to allow 802.1d priority to be passed directly in from VLAN
 	 * tags, etc.
 	 */
-	if (skb->priority >= 256 && skb->priority <= 263) {
+	अगर (skb->priority >= 256 && skb->priority <= 263) अणु
 		ret = skb->priority - 256;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (skb_vlan_tag_present(skb)) {
+	अगर (skb_vlan_tag_present(skb)) अणु
 		vlan_priority = (skb_vlan_tag_get(skb) & VLAN_PRIO_MASK)
 			>> VLAN_PRIO_SHIFT;
-		if (vlan_priority > 0) {
+		अगर (vlan_priority > 0) अणु
 			ret = vlan_priority;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	switch (skb->protocol) {
-	case htons(ETH_P_IP):
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IP):
 		dscp = ipv4_get_dsfield(ip_hdr(skb)) & 0xfc;
-		break;
-	case htons(ETH_P_IPV6):
+		अवरोध;
+	हाल htons(ETH_P_IPV6):
 		dscp = ipv6_get_dsfield(ipv6_hdr(skb)) & 0xfc;
-		break;
-	case htons(ETH_P_MPLS_UC):
-	case htons(ETH_P_MPLS_MC): {
-		struct mpls_label mpls_tmp, *mpls;
+		अवरोध;
+	हाल htons(ETH_P_MPLS_UC):
+	हाल htons(ETH_P_MPLS_MC): अणु
+		काष्ठा mpls_label mpls_पंचांगp, *mpls;
 
-		mpls = skb_header_pointer(skb, sizeof(struct ethhdr),
-					  sizeof(*mpls), &mpls_tmp);
-		if (!mpls)
-			return 0;
+		mpls = skb_header_poपूर्णांकer(skb, माप(काष्ठा ethhdr),
+					  माप(*mpls), &mpls_पंचांगp);
+		अगर (!mpls)
+			वापस 0;
 
 		ret = (ntohl(mpls->entry) & MPLS_LS_TC_MASK)
 			>> MPLS_LS_TC_SHIFT;
-		goto out;
-	}
-	case htons(ETH_P_80221):
+		जाओ out;
+	पूर्ण
+	हाल htons(ETH_P_80221):
 		/* 802.21 is always network control traffic */
-		return 7;
-	default:
-		return 0;
-	}
+		वापस 7;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	if (qos_map) {
-		unsigned int i, tmp_dscp = dscp >> 2;
+	अगर (qos_map) अणु
+		अचिन्हित पूर्णांक i, पंचांगp_dscp = dscp >> 2;
 
-		for (i = 0; i < qos_map->num_des; i++) {
-			if (tmp_dscp == qos_map->dscp_exception[i].dscp) {
+		क्रम (i = 0; i < qos_map->num_des; i++) अणु
+			अगर (पंचांगp_dscp == qos_map->dscp_exception[i].dscp) अणु
 				ret = qos_map->dscp_exception[i].up;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		for (i = 0; i < 8; i++) {
-			if (tmp_dscp >= qos_map->up[i].low &&
-			    tmp_dscp <= qos_map->up[i].high) {
+		क्रम (i = 0; i < 8; i++) अणु
+			अगर (पंचांगp_dscp >= qos_map->up[i].low &&
+			    पंचांगp_dscp <= qos_map->up[i].high) अणु
 				ret = i;
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	ret = dscp >> 5;
 out:
-	return array_index_nospec(ret, IEEE80211_NUM_TIDS);
-}
-EXPORT_SYMBOL(cfg80211_classify8021d);
+	वापस array_index_nospec(ret, IEEE80211_NUM_TIDS);
+पूर्ण
+EXPORT_SYMBOL(cfg80211_classअगरy8021d);
 
-const struct element *ieee80211_bss_get_elem(struct cfg80211_bss *bss, u8 id)
-{
-	const struct cfg80211_bss_ies *ies;
+स्थिर काष्ठा element *ieee80211_bss_get_elem(काष्ठा cfg80211_bss *bss, u8 id)
+अणु
+	स्थिर काष्ठा cfg80211_bss_ies *ies;
 
 	ies = rcu_dereference(bss->ies);
-	if (!ies)
-		return NULL;
+	अगर (!ies)
+		वापस शून्य;
 
-	return cfg80211_find_elem(id, ies->data, ies->len);
-}
+	वापस cfg80211_find_elem(id, ies->data, ies->len);
+पूर्ण
 EXPORT_SYMBOL(ieee80211_bss_get_elem);
 
-void cfg80211_upload_connect_keys(struct wireless_dev *wdev)
-{
-	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wdev->wiphy);
-	struct net_device *dev = wdev->netdev;
-	int i;
+व्योम cfg80211_upload_connect_keys(काष्ठा wireless_dev *wdev)
+अणु
+	काष्ठा cfg80211_रेजिस्टरed_device *rdev = wiphy_to_rdev(wdev->wiphy);
+	काष्ठा net_device *dev = wdev->netdev;
+	पूर्णांक i;
 
-	if (!wdev->connect_keys)
-		return;
+	अगर (!wdev->connect_keys)
+		वापस;
 
-	for (i = 0; i < CFG80211_MAX_WEP_KEYS; i++) {
-		if (!wdev->connect_keys->params[i].cipher)
-			continue;
-		if (rdev_add_key(rdev, dev, i, false, NULL,
-				 &wdev->connect_keys->params[i])) {
+	क्रम (i = 0; i < CFG80211_MAX_WEP_KEYS; i++) अणु
+		अगर (!wdev->connect_keys->params[i].cipher)
+			जारी;
+		अगर (rdev_add_key(rdev, dev, i, false, शून्य,
+				 &wdev->connect_keys->params[i])) अणु
 			netdev_err(dev, "failed to set key %d\n", i);
-			continue;
-		}
-		if (wdev->connect_keys->def == i &&
-		    rdev_set_default_key(rdev, dev, i, true, true)) {
+			जारी;
+		पूर्ण
+		अगर (wdev->connect_keys->def == i &&
+		    rdev_set_शेष_key(rdev, dev, i, true, true)) अणु
 			netdev_err(dev, "failed to set defkey %d\n", i);
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 
-	kfree_sensitive(wdev->connect_keys);
-	wdev->connect_keys = NULL;
-}
+	kमुक्त_sensitive(wdev->connect_keys);
+	wdev->connect_keys = शून्य;
+पूर्ण
 
-void cfg80211_process_wdev_events(struct wireless_dev *wdev)
-{
-	struct cfg80211_event *ev;
-	unsigned long flags;
+व्योम cfg80211_process_wdev_events(काष्ठा wireless_dev *wdev)
+अणु
+	काष्ठा cfg80211_event *ev;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&wdev->event_lock, flags);
-	while (!list_empty(&wdev->event_list)) {
+	जबतक (!list_empty(&wdev->event_list)) अणु
 		ev = list_first_entry(&wdev->event_list,
-				      struct cfg80211_event, list);
+				      काष्ठा cfg80211_event, list);
 		list_del(&ev->list);
 		spin_unlock_irqrestore(&wdev->event_lock, flags);
 
 		wdev_lock(wdev);
-		switch (ev->type) {
-		case EVENT_CONNECT_RESULT:
+		चयन (ev->type) अणु
+		हाल EVENT_CONNECT_RESULT:
 			__cfg80211_connect_result(
 				wdev->netdev,
 				&ev->cr,
 				ev->cr.status == WLAN_STATUS_SUCCESS);
-			break;
-		case EVENT_ROAMED:
+			अवरोध;
+		हाल EVENT_ROAMED:
 			__cfg80211_roamed(wdev, &ev->rm);
-			break;
-		case EVENT_DISCONNECTED:
+			अवरोध;
+		हाल EVENT_DISCONNECTED:
 			__cfg80211_disconnected(wdev->netdev,
 						ev->dc.ie, ev->dc.ie_len,
 						ev->dc.reason,
 						!ev->dc.locally_generated);
-			break;
-		case EVENT_IBSS_JOINED:
+			अवरोध;
+		हाल EVENT_IBSS_JOINED:
 			__cfg80211_ibss_joined(wdev->netdev, ev->ij.bssid,
 					       ev->ij.channel);
-			break;
-		case EVENT_STOPPED:
+			अवरोध;
+		हाल EVENT_STOPPED:
 			__cfg80211_leave(wiphy_to_rdev(wdev->wiphy), wdev);
-			break;
-		case EVENT_PORT_AUTHORIZED:
+			अवरोध;
+		हाल EVENT_PORT_AUTHORIZED:
 			__cfg80211_port_authorized(wdev, ev->pa.bssid);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		wdev_unlock(wdev);
 
-		kfree(ev);
+		kमुक्त(ev);
 
 		spin_lock_irqsave(&wdev->event_lock, flags);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&wdev->event_lock, flags);
-}
+पूर्ण
 
-void cfg80211_process_rdev_events(struct cfg80211_registered_device *rdev)
-{
-	struct wireless_dev *wdev;
+व्योम cfg80211_process_rdev_events(काष्ठा cfg80211_रेजिस्टरed_device *rdev)
+अणु
+	काष्ठा wireless_dev *wdev;
 
-	lockdep_assert_held(&rdev->wiphy.mtx);
+	lockdep_निश्चित_held(&rdev->wiphy.mtx);
 
-	list_for_each_entry(wdev, &rdev->wiphy.wdev_list, list)
+	list_क्रम_each_entry(wdev, &rdev->wiphy.wdev_list, list)
 		cfg80211_process_wdev_events(wdev);
-}
+पूर्ण
 
-int cfg80211_change_iface(struct cfg80211_registered_device *rdev,
-			  struct net_device *dev, enum nl80211_iftype ntype,
-			  struct vif_params *params)
-{
-	int err;
-	enum nl80211_iftype otype = dev->ieee80211_ptr->iftype;
+पूर्णांक cfg80211_change_अगरace(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
+			  काष्ठा net_device *dev, क्रमागत nl80211_अगरtype ntype,
+			  काष्ठा vअगर_params *params)
+अणु
+	पूर्णांक err;
+	क्रमागत nl80211_अगरtype otype = dev->ieee80211_ptr->अगरtype;
 
-	lockdep_assert_held(&rdev->wiphy.mtx);
+	lockdep_निश्चित_held(&rdev->wiphy.mtx);
 
-	/* don't support changing VLANs, you just re-create them */
-	if (otype == NL80211_IFTYPE_AP_VLAN)
-		return -EOPNOTSUPP;
+	/* करोn't support changing VLANs, you just re-create them */
+	अगर (otype == NL80211_IFTYPE_AP_VLAN)
+		वापस -EOPNOTSUPP;
 
-	/* cannot change into P2P device or NAN */
-	if (ntype == NL80211_IFTYPE_P2P_DEVICE ||
-	    ntype == NL80211_IFTYPE_NAN)
-		return -EOPNOTSUPP;
+	/* cannot change पूर्णांकo P2P device or न_अंक */
+	अगर (ntype == NL80211_IFTYPE_P2P_DEVICE ||
+	    ntype == NL80211_IFTYPE_न_अंक)
+		वापस -EOPNOTSUPP;
 
-	if (!rdev->ops->change_virtual_intf ||
-	    !(rdev->wiphy.interface_modes & (1 << ntype)))
-		return -EOPNOTSUPP;
+	अगर (!rdev->ops->change_भव_पूर्णांकf ||
+	    !(rdev->wiphy.पूर्णांकerface_modes & (1 << ntype)))
+		वापस -EOPNOTSUPP;
 
-	/* if it's part of a bridge, reject changing type to station/ibss */
-	if (netif_is_bridge_port(dev) &&
+	/* अगर it's part of a bridge, reject changing type to station/ibss */
+	अगर (netअगर_is_bridge_port(dev) &&
 	    (ntype == NL80211_IFTYPE_ADHOC ||
 	     ntype == NL80211_IFTYPE_STATION ||
 	     ntype == NL80211_IFTYPE_P2P_CLIENT))
-		return -EBUSY;
+		वापस -EBUSY;
 
-	if (ntype != otype) {
+	अगर (ntype != otype) अणु
 		dev->ieee80211_ptr->use_4addr = false;
 		dev->ieee80211_ptr->mesh_id_up_len = 0;
 		wdev_lock(dev->ieee80211_ptr);
-		rdev_set_qos_map(rdev, dev, NULL);
+		rdev_set_qos_map(rdev, dev, शून्य);
 		wdev_unlock(dev->ieee80211_ptr);
 
-		switch (otype) {
-		case NL80211_IFTYPE_AP:
+		चयन (otype) अणु
+		हाल NL80211_IFTYPE_AP:
 			cfg80211_stop_ap(rdev, dev, true);
-			break;
-		case NL80211_IFTYPE_ADHOC:
+			अवरोध;
+		हाल NL80211_IFTYPE_ADHOC:
 			cfg80211_leave_ibss(rdev, dev, false);
-			break;
-		case NL80211_IFTYPE_STATION:
-		case NL80211_IFTYPE_P2P_CLIENT:
+			अवरोध;
+		हाल NL80211_IFTYPE_STATION:
+		हाल NL80211_IFTYPE_P2P_CLIENT:
 			wdev_lock(dev->ieee80211_ptr);
 			cfg80211_disconnect(rdev, dev,
 					    WLAN_REASON_DEAUTH_LEAVING, true);
 			wdev_unlock(dev->ieee80211_ptr);
-			break;
-		case NL80211_IFTYPE_MESH_POINT:
+			अवरोध;
+		हाल NL80211_IFTYPE_MESH_POINT:
 			/* mesh should be handled? */
-			break;
-		case NL80211_IFTYPE_OCB:
+			अवरोध;
+		हाल NL80211_IFTYPE_OCB:
 			cfg80211_leave_ocb(rdev, dev);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		cfg80211_process_rdev_events(rdev);
 		cfg80211_mlme_purge_registrations(dev->ieee80211_ptr);
-	}
+	पूर्ण
 
-	err = rdev_change_virtual_intf(rdev, dev, ntype, params);
+	err = rdev_change_भव_पूर्णांकf(rdev, dev, ntype, params);
 
-	WARN_ON(!err && dev->ieee80211_ptr->iftype != ntype);
+	WARN_ON(!err && dev->ieee80211_ptr->अगरtype != ntype);
 
-	if (!err && params && params->use_4addr != -1)
+	अगर (!err && params && params->use_4addr != -1)
 		dev->ieee80211_ptr->use_4addr = params->use_4addr;
 
-	if (!err) {
+	अगर (!err) अणु
 		dev->priv_flags &= ~IFF_DONT_BRIDGE;
-		switch (ntype) {
-		case NL80211_IFTYPE_STATION:
-			if (dev->ieee80211_ptr->use_4addr)
-				break;
+		चयन (ntype) अणु
+		हाल NL80211_IFTYPE_STATION:
+			अगर (dev->ieee80211_ptr->use_4addr)
+				अवरोध;
 			fallthrough;
-		case NL80211_IFTYPE_OCB:
-		case NL80211_IFTYPE_P2P_CLIENT:
-		case NL80211_IFTYPE_ADHOC:
+		हाल NL80211_IFTYPE_OCB:
+		हाल NL80211_IFTYPE_P2P_CLIENT:
+		हाल NL80211_IFTYPE_ADHOC:
 			dev->priv_flags |= IFF_DONT_BRIDGE;
-			break;
-		case NL80211_IFTYPE_P2P_GO:
-		case NL80211_IFTYPE_AP:
-		case NL80211_IFTYPE_AP_VLAN:
-		case NL80211_IFTYPE_MESH_POINT:
+			अवरोध;
+		हाल NL80211_IFTYPE_P2P_GO:
+		हाल NL80211_IFTYPE_AP:
+		हाल NL80211_IFTYPE_AP_VLAN:
+		हाल NL80211_IFTYPE_MESH_POINT:
 			/* bridging OK */
-			break;
-		case NL80211_IFTYPE_MONITOR:
+			अवरोध;
+		हाल NL80211_IFTYPE_MONITOR:
 			/* monitor can't bridge anyway */
-			break;
-		case NL80211_IFTYPE_UNSPECIFIED:
-		case NUM_NL80211_IFTYPES:
+			अवरोध;
+		हाल NL80211_IFTYPE_UNSPECIFIED:
+		हाल NUM_NL80211_IFTYPES:
 			/* not happening */
-			break;
-		case NL80211_IFTYPE_P2P_DEVICE:
-		case NL80211_IFTYPE_WDS:
-		case NL80211_IFTYPE_NAN:
+			अवरोध;
+		हाल NL80211_IFTYPE_P2P_DEVICE:
+		हाल NL80211_IFTYPE_WDS:
+		हाल NL80211_IFTYPE_न_अंक:
 			WARN_ON(1);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!err && ntype != otype && netif_running(dev)) {
-		cfg80211_update_iface_num(rdev, ntype, 1);
-		cfg80211_update_iface_num(rdev, otype, -1);
-	}
+	अगर (!err && ntype != otype && netअगर_running(dev)) अणु
+		cfg80211_update_अगरace_num(rdev, ntype, 1);
+		cfg80211_update_अगरace_num(rdev, otype, -1);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u32 cfg80211_calculate_bitrate_ht(struct rate_info *rate)
-{
-	int modulation, streams, bitrate;
+अटल u32 cfg80211_calculate_bitrate_ht(काष्ठा rate_info *rate)
+अणु
+	पूर्णांक modulation, streams, bitrate;
 
-	/* the formula below does only work for MCS values smaller than 32 */
-	if (WARN_ON_ONCE(rate->mcs >= 32))
-		return 0;
+	/* the क्रमmula below करोes only work क्रम MCS values smaller than 32 */
+	अगर (WARN_ON_ONCE(rate->mcs >= 32))
+		वापस 0;
 
 	modulation = rate->mcs & 7;
 	streams = (rate->mcs >> 3) + 1;
 
 	bitrate = (rate->bw == RATE_INFO_BW_40) ? 13500000 : 6500000;
 
-	if (modulation < 4)
+	अगर (modulation < 4)
 		bitrate *= (modulation + 1);
-	else if (modulation == 4)
+	अन्यथा अगर (modulation == 4)
 		bitrate *= (modulation + 2);
-	else
+	अन्यथा
 		bitrate *= (modulation + 3);
 
 	bitrate *= streams;
 
-	if (rate->flags & RATE_INFO_FLAGS_SHORT_GI)
+	अगर (rate->flags & RATE_INFO_FLAGS_SHORT_GI)
 		bitrate = (bitrate / 9) * 10;
 
-	/* do NOT round down here */
-	return (bitrate + 50000) / 100000;
-}
+	/* करो NOT round करोwn here */
+	वापस (bitrate + 50000) / 100000;
+पूर्ण
 
-static u32 cfg80211_calculate_bitrate_dmg(struct rate_info *rate)
-{
-	static const u32 __mcs2bitrate[] = {
+अटल u32 cfg80211_calculate_bitrate_dmg(काष्ठा rate_info *rate)
+अणु
+	अटल स्थिर u32 __mcs2bitrate[] = अणु
 		/* control PHY */
 		[0] =   275,
 		/* SC PHY */
@@ -1186,17 +1187,17 @@ static u32 cfg80211_calculate_bitrate_dmg(struct rate_info *rate)
 		[29] = 16680,
 		[30] = 22240,
 		[31] = 25030,
-	};
+	पूर्ण;
 
-	if (WARN_ON_ONCE(rate->mcs >= ARRAY_SIZE(__mcs2bitrate)))
-		return 0;
+	अगर (WARN_ON_ONCE(rate->mcs >= ARRAY_SIZE(__mcs2bitrate)))
+		वापस 0;
 
-	return __mcs2bitrate[rate->mcs];
-}
+	वापस __mcs2bitrate[rate->mcs];
+पूर्ण
 
-static u32 cfg80211_calculate_bitrate_extended_sc_dmg(struct rate_info *rate)
-{
-	static const u32 __mcs2bitrate[] = {
+अटल u32 cfg80211_calculate_bitrate_extended_sc_dmg(काष्ठा rate_info *rate)
+अणु
+	अटल स्थिर u32 __mcs2bitrate[] = अणु
 		[6 - 6] = 26950, /* MCS 9.1 : 2695.0 mbps */
 		[7 - 6] = 50050, /* MCS 12.1 */
 		[8 - 6] = 53900,
@@ -1204,18 +1205,18 @@ static u32 cfg80211_calculate_bitrate_extended_sc_dmg(struct rate_info *rate)
 		[10 - 6] = 63900,
 		[11 - 6] = 75075,
 		[12 - 6] = 80850,
-	};
+	पूर्ण;
 
-	/* Extended SC MCS not defined for base MCS below 6 or above 12 */
-	if (WARN_ON_ONCE(rate->mcs < 6 || rate->mcs > 12))
-		return 0;
+	/* Extended SC MCS not defined क्रम base MCS below 6 or above 12 */
+	अगर (WARN_ON_ONCE(rate->mcs < 6 || rate->mcs > 12))
+		वापस 0;
 
-	return __mcs2bitrate[rate->mcs - 6];
-}
+	वापस __mcs2bitrate[rate->mcs - 6];
+पूर्ण
 
-static u32 cfg80211_calculate_bitrate_edmg(struct rate_info *rate)
-{
-	static const u32 __mcs2bitrate[] = {
+अटल u32 cfg80211_calculate_bitrate_edmg(काष्ठा rate_info *rate)
+अणु
+	अटल स्थिर u32 __mcs2bitrate[] = अणु
 		/* control PHY */
 		[0] =   275,
 		/* SC PHY */
@@ -1239,18 +1240,18 @@ static u32 cfg80211_calculate_bitrate_edmg(struct rate_info *rate)
 		[18] = 69300,
 		[19] = 75075,
 		[20] = 80850,
-	};
+	पूर्ण;
 
-	if (WARN_ON_ONCE(rate->mcs >= ARRAY_SIZE(__mcs2bitrate)))
-		return 0;
+	अगर (WARN_ON_ONCE(rate->mcs >= ARRAY_SIZE(__mcs2bitrate)))
+		वापस 0;
 
-	return __mcs2bitrate[rate->mcs] * rate->n_bonded_ch;
-}
+	वापस __mcs2bitrate[rate->mcs] * rate->n_bonded_ch;
+पूर्ण
 
-static u32 cfg80211_calculate_bitrate_vht(struct rate_info *rate)
-{
-	static const u32 base[4][12] = {
-		{   6500000,
+अटल u32 cfg80211_calculate_bitrate_vht(काष्ठा rate_info *rate)
+अणु
+	अटल स्थिर u32 base[4][12] = अणु
+		अणु   6500000,
 		   13000000,
 		   19500000,
 		   26000000,
@@ -1263,8 +1264,8 @@ static u32 cfg80211_calculate_bitrate_vht(struct rate_info *rate)
 		   86700000,
 		   97500000,
 		  108300000,
-		},
-		{  13500000,
+		पूर्ण,
+		अणु  13500000,
 		   27000000,
 		   40500000,
 		   54000000,
@@ -1276,8 +1277,8 @@ static u32 cfg80211_calculate_bitrate_vht(struct rate_info *rate)
 		  180000000,
 		  202500000,
 		  225000000,
-		},
-		{  29300000,
+		पूर्ण,
+		अणु  29300000,
 		   58500000,
 		   87800000,
 		  117000000,
@@ -1289,8 +1290,8 @@ static u32 cfg80211_calculate_bitrate_vht(struct rate_info *rate)
 		  390000000,
 		  438800000,
 		  487500000,
-		},
-		{  58500000,
+		पूर्ण,
+		अणु  58500000,
 		  117000000,
 		  175500000,
 		  234000000,
@@ -1302,50 +1303,50 @@ static u32 cfg80211_calculate_bitrate_vht(struct rate_info *rate)
 		  780000000,
 		  877500000,
 		  975000000,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 	u32 bitrate;
-	int idx;
+	पूर्णांक idx;
 
-	if (rate->mcs > 11)
-		goto warn;
+	अगर (rate->mcs > 11)
+		जाओ warn;
 
-	switch (rate->bw) {
-	case RATE_INFO_BW_160:
+	चयन (rate->bw) अणु
+	हाल RATE_INFO_BW_160:
 		idx = 3;
-		break;
-	case RATE_INFO_BW_80:
+		अवरोध;
+	हाल RATE_INFO_BW_80:
 		idx = 2;
-		break;
-	case RATE_INFO_BW_40:
+		अवरोध;
+	हाल RATE_INFO_BW_40:
 		idx = 1;
-		break;
-	case RATE_INFO_BW_5:
-	case RATE_INFO_BW_10:
-	default:
-		goto warn;
-	case RATE_INFO_BW_20:
+		अवरोध;
+	हाल RATE_INFO_BW_5:
+	हाल RATE_INFO_BW_10:
+	शेष:
+		जाओ warn;
+	हाल RATE_INFO_BW_20:
 		idx = 0;
-	}
+	पूर्ण
 
 	bitrate = base[idx][rate->mcs];
 	bitrate *= rate->nss;
 
-	if (rate->flags & RATE_INFO_FLAGS_SHORT_GI)
+	अगर (rate->flags & RATE_INFO_FLAGS_SHORT_GI)
 		bitrate = (bitrate / 9) * 10;
 
-	/* do NOT round down here */
-	return (bitrate + 50000) / 100000;
+	/* करो NOT round करोwn here */
+	वापस (bitrate + 50000) / 100000;
  warn:
 	WARN_ONCE(1, "invalid rate bw=%d, mcs=%d, nss=%d\n",
 		  rate->bw, rate->mcs, rate->nss);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 cfg80211_calculate_bitrate_he(struct rate_info *rate)
-{
-#define SCALE 6144
-	u32 mcs_divisors[14] = {
+अटल u32 cfg80211_calculate_bitrate_he(काष्ठा rate_info *rate)
+अणु
+#घोषणा SCALE 6144
+	u32 mcs_भागisors[14] = अणु
 		102399, /* 16.666666... */
 		 51201, /*  8.333333... */
 		 34134, /*  5.555555... */
@@ -1360,650 +1361,650 @@ static u32 cfg80211_calculate_bitrate_he(struct rate_info *rate)
 		  6144, /*  1.000000... */
 		  5690, /*  0.926106... */
 		  5120, /*  0.833333... */
-	};
-	u32 rates_160M[3] = { 960777777, 907400000, 816666666 };
-	u32 rates_969[3] =  { 480388888, 453700000, 408333333 };
-	u32 rates_484[3] =  { 229411111, 216666666, 195000000 };
-	u32 rates_242[3] =  { 114711111, 108333333,  97500000 };
-	u32 rates_106[3] =  {  40000000,  37777777,  34000000 };
-	u32 rates_52[3]  =  {  18820000,  17777777,  16000000 };
-	u32 rates_26[3]  =  {   9411111,   8888888,   8000000 };
-	u64 tmp;
+	पूर्ण;
+	u32 rates_160M[3] = अणु 960777777, 907400000, 816666666 पूर्ण;
+	u32 rates_969[3] =  अणु 480388888, 453700000, 408333333 पूर्ण;
+	u32 rates_484[3] =  अणु 229411111, 216666666, 195000000 पूर्ण;
+	u32 rates_242[3] =  अणु 114711111, 108333333,  97500000 पूर्ण;
+	u32 rates_106[3] =  अणु  40000000,  37777777,  34000000 पूर्ण;
+	u32 rates_52[3]  =  अणु  18820000,  17777777,  16000000 पूर्ण;
+	u32 rates_26[3]  =  अणु   9411111,   8888888,   8000000 पूर्ण;
+	u64 पंचांगp;
 	u32 result;
 
-	if (WARN_ON_ONCE(rate->mcs > 13))
-		return 0;
+	अगर (WARN_ON_ONCE(rate->mcs > 13))
+		वापस 0;
 
-	if (WARN_ON_ONCE(rate->he_gi > NL80211_RATE_INFO_HE_GI_3_2))
-		return 0;
-	if (WARN_ON_ONCE(rate->he_ru_alloc >
+	अगर (WARN_ON_ONCE(rate->he_gi > NL80211_RATE_INFO_HE_GI_3_2))
+		वापस 0;
+	अगर (WARN_ON_ONCE(rate->he_ru_alloc >
 			 NL80211_RATE_INFO_HE_RU_ALLOC_2x996))
-		return 0;
-	if (WARN_ON_ONCE(rate->nss < 1 || rate->nss > 8))
-		return 0;
+		वापस 0;
+	अगर (WARN_ON_ONCE(rate->nss < 1 || rate->nss > 8))
+		वापस 0;
 
-	if (rate->bw == RATE_INFO_BW_160)
+	अगर (rate->bw == RATE_INFO_BW_160)
 		result = rates_160M[rate->he_gi];
-	else if (rate->bw == RATE_INFO_BW_80 ||
+	अन्यथा अगर (rate->bw == RATE_INFO_BW_80 ||
 		 (rate->bw == RATE_INFO_BW_HE_RU &&
 		  rate->he_ru_alloc == NL80211_RATE_INFO_HE_RU_ALLOC_996))
 		result = rates_969[rate->he_gi];
-	else if (rate->bw == RATE_INFO_BW_40 ||
+	अन्यथा अगर (rate->bw == RATE_INFO_BW_40 ||
 		 (rate->bw == RATE_INFO_BW_HE_RU &&
 		  rate->he_ru_alloc == NL80211_RATE_INFO_HE_RU_ALLOC_484))
 		result = rates_484[rate->he_gi];
-	else if (rate->bw == RATE_INFO_BW_20 ||
+	अन्यथा अगर (rate->bw == RATE_INFO_BW_20 ||
 		 (rate->bw == RATE_INFO_BW_HE_RU &&
 		  rate->he_ru_alloc == NL80211_RATE_INFO_HE_RU_ALLOC_242))
 		result = rates_242[rate->he_gi];
-	else if (rate->bw == RATE_INFO_BW_HE_RU &&
+	अन्यथा अगर (rate->bw == RATE_INFO_BW_HE_RU &&
 		 rate->he_ru_alloc == NL80211_RATE_INFO_HE_RU_ALLOC_106)
 		result = rates_106[rate->he_gi];
-	else if (rate->bw == RATE_INFO_BW_HE_RU &&
+	अन्यथा अगर (rate->bw == RATE_INFO_BW_HE_RU &&
 		 rate->he_ru_alloc == NL80211_RATE_INFO_HE_RU_ALLOC_52)
 		result = rates_52[rate->he_gi];
-	else if (rate->bw == RATE_INFO_BW_HE_RU &&
+	अन्यथा अगर (rate->bw == RATE_INFO_BW_HE_RU &&
 		 rate->he_ru_alloc == NL80211_RATE_INFO_HE_RU_ALLOC_26)
 		result = rates_26[rate->he_gi];
-	else {
+	अन्यथा अणु
 		WARN(1, "invalid HE MCS: bw:%d, ru:%d\n",
 		     rate->bw, rate->he_ru_alloc);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* now scale to the appropriate MCS */
-	tmp = result;
-	tmp *= SCALE;
-	do_div(tmp, mcs_divisors[rate->mcs]);
-	result = tmp;
+	पंचांगp = result;
+	पंचांगp *= SCALE;
+	करो_भाग(पंचांगp, mcs_भागisors[rate->mcs]);
+	result = पंचांगp;
 
-	/* and take NSS, DCM into account */
+	/* and take NSS, DCM पूर्णांकo account */
 	result = (result * rate->nss) / 8;
-	if (rate->he_dcm)
+	अगर (rate->he_dcm)
 		result /= 2;
 
-	return result / 10000;
-}
+	वापस result / 10000;
+पूर्ण
 
-u32 cfg80211_calculate_bitrate(struct rate_info *rate)
-{
-	if (rate->flags & RATE_INFO_FLAGS_MCS)
-		return cfg80211_calculate_bitrate_ht(rate);
-	if (rate->flags & RATE_INFO_FLAGS_DMG)
-		return cfg80211_calculate_bitrate_dmg(rate);
-	if (rate->flags & RATE_INFO_FLAGS_EXTENDED_SC_DMG)
-		return cfg80211_calculate_bitrate_extended_sc_dmg(rate);
-	if (rate->flags & RATE_INFO_FLAGS_EDMG)
-		return cfg80211_calculate_bitrate_edmg(rate);
-	if (rate->flags & RATE_INFO_FLAGS_VHT_MCS)
-		return cfg80211_calculate_bitrate_vht(rate);
-	if (rate->flags & RATE_INFO_FLAGS_HE_MCS)
-		return cfg80211_calculate_bitrate_he(rate);
+u32 cfg80211_calculate_bitrate(काष्ठा rate_info *rate)
+अणु
+	अगर (rate->flags & RATE_INFO_FLAGS_MCS)
+		वापस cfg80211_calculate_bitrate_ht(rate);
+	अगर (rate->flags & RATE_INFO_FLAGS_DMG)
+		वापस cfg80211_calculate_bitrate_dmg(rate);
+	अगर (rate->flags & RATE_INFO_FLAGS_EXTENDED_SC_DMG)
+		वापस cfg80211_calculate_bitrate_extended_sc_dmg(rate);
+	अगर (rate->flags & RATE_INFO_FLAGS_EDMG)
+		वापस cfg80211_calculate_bitrate_edmg(rate);
+	अगर (rate->flags & RATE_INFO_FLAGS_VHT_MCS)
+		वापस cfg80211_calculate_bitrate_vht(rate);
+	अगर (rate->flags & RATE_INFO_FLAGS_HE_MCS)
+		वापस cfg80211_calculate_bitrate_he(rate);
 
-	return rate->legacy;
-}
+	वापस rate->legacy;
+पूर्ण
 EXPORT_SYMBOL(cfg80211_calculate_bitrate);
 
-int cfg80211_get_p2p_attr(const u8 *ies, unsigned int len,
-			  enum ieee80211_p2p_attr_id attr,
-			  u8 *buf, unsigned int bufsize)
-{
+पूर्णांक cfg80211_get_p2p_attr(स्थिर u8 *ies, अचिन्हित पूर्णांक len,
+			  क्रमागत ieee80211_p2p_attr_id attr,
+			  u8 *buf, अचिन्हित पूर्णांक bufsize)
+अणु
 	u8 *out = buf;
-	u16 attr_remaining = 0;
+	u16 attr_reमुख्यing = 0;
 	bool desired_attr = false;
 	u16 desired_len = 0;
 
-	while (len > 0) {
-		unsigned int iedatalen;
-		unsigned int copy;
-		const u8 *iedata;
+	जबतक (len > 0) अणु
+		अचिन्हित पूर्णांक iedatalen;
+		अचिन्हित पूर्णांक copy;
+		स्थिर u8 *iedata;
 
-		if (len < 2)
-			return -EILSEQ;
+		अगर (len < 2)
+			वापस -EILSEQ;
 		iedatalen = ies[1];
-		if (iedatalen + 2 > len)
-			return -EILSEQ;
+		अगर (iedatalen + 2 > len)
+			वापस -EILSEQ;
 
-		if (ies[0] != WLAN_EID_VENDOR_SPECIFIC)
-			goto cont;
+		अगर (ies[0] != WLAN_EID_VENDOR_SPECIFIC)
+			जाओ cont;
 
-		if (iedatalen < 4)
-			goto cont;
+		अगर (iedatalen < 4)
+			जाओ cont;
 
 		iedata = ies + 2;
 
 		/* check WFA OUI, P2P subtype */
-		if (iedata[0] != 0x50 || iedata[1] != 0x6f ||
+		अगर (iedata[0] != 0x50 || iedata[1] != 0x6f ||
 		    iedata[2] != 0x9a || iedata[3] != 0x09)
-			goto cont;
+			जाओ cont;
 
 		iedatalen -= 4;
 		iedata += 4;
 
-		/* check attribute continuation into this IE */
-		copy = min_t(unsigned int, attr_remaining, iedatalen);
-		if (copy && desired_attr) {
+		/* check attribute continuation पूर्णांकo this IE */
+		copy = min_t(अचिन्हित पूर्णांक, attr_reमुख्यing, iedatalen);
+		अगर (copy && desired_attr) अणु
 			desired_len += copy;
-			if (out) {
-				memcpy(out, iedata, min(bufsize, copy));
+			अगर (out) अणु
+				स_नकल(out, iedata, min(bufsize, copy));
 				out += min(bufsize, copy);
 				bufsize -= min(bufsize, copy);
-			}
+			पूर्ण
 
 
-			if (copy == attr_remaining)
-				return desired_len;
-		}
+			अगर (copy == attr_reमुख्यing)
+				वापस desired_len;
+		पूर्ण
 
-		attr_remaining -= copy;
-		if (attr_remaining)
-			goto cont;
+		attr_reमुख्यing -= copy;
+		अगर (attr_reमुख्यing)
+			जाओ cont;
 
 		iedatalen -= copy;
 		iedata += copy;
 
-		while (iedatalen > 0) {
+		जबतक (iedatalen > 0) अणु
 			u16 attr_len;
 
 			/* P2P attribute ID & size must fit */
-			if (iedatalen < 3)
-				return -EILSEQ;
+			अगर (iedatalen < 3)
+				वापस -EILSEQ;
 			desired_attr = iedata[0] == attr;
 			attr_len = get_unaligned_le16(iedata + 1);
 			iedatalen -= 3;
 			iedata += 3;
 
-			copy = min_t(unsigned int, attr_len, iedatalen);
+			copy = min_t(अचिन्हित पूर्णांक, attr_len, iedatalen);
 
-			if (desired_attr) {
+			अगर (desired_attr) अणु
 				desired_len += copy;
-				if (out) {
-					memcpy(out, iedata, min(bufsize, copy));
+				अगर (out) अणु
+					स_नकल(out, iedata, min(bufsize, copy));
 					out += min(bufsize, copy);
 					bufsize -= min(bufsize, copy);
-				}
+				पूर्ण
 
-				if (copy == attr_len)
-					return desired_len;
-			}
+				अगर (copy == attr_len)
+					वापस desired_len;
+			पूर्ण
 
 			iedata += copy;
 			iedatalen -= copy;
-			attr_remaining = attr_len - copy;
-		}
+			attr_reमुख्यing = attr_len - copy;
+		पूर्ण
 
  cont:
 		len -= ies[1] + 2;
 		ies += ies[1] + 2;
-	}
+	पूर्ण
 
-	if (attr_remaining && desired_attr)
-		return -EILSEQ;
+	अगर (attr_reमुख्यing && desired_attr)
+		वापस -EILSEQ;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 EXPORT_SYMBOL(cfg80211_get_p2p_attr);
 
-static bool ieee80211_id_in_list(const u8 *ids, int n_ids, u8 id, bool id_ext)
-{
-	int i;
+अटल bool ieee80211_id_in_list(स्थिर u8 *ids, पूर्णांक n_ids, u8 id, bool id_ext)
+अणु
+	पूर्णांक i;
 
 	/* Make sure array values are legal */
-	if (WARN_ON(ids[n_ids - 1] == WLAN_EID_EXTENSION))
-		return false;
+	अगर (WARN_ON(ids[n_ids - 1] == WLAN_EID_EXTENSION))
+		वापस false;
 
 	i = 0;
-	while (i < n_ids) {
-		if (ids[i] == WLAN_EID_EXTENSION) {
-			if (id_ext && (ids[i + 1] == id))
-				return true;
+	जबतक (i < n_ids) अणु
+		अगर (ids[i] == WLAN_EID_EXTENSION) अणु
+			अगर (id_ext && (ids[i + 1] == id))
+				वापस true;
 
 			i += 2;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (ids[i] == id && !id_ext)
-			return true;
+		अगर (ids[i] == id && !id_ext)
+			वापस true;
 
 		i++;
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static size_t skip_ie(const u8 *ies, size_t ielen, size_t pos)
-{
-	/* we assume a validly formed IEs buffer */
+अटल माप_प्रकार skip_ie(स्थिर u8 *ies, माप_प्रकार ielen, माप_प्रकार pos)
+अणु
+	/* we assume a validly क्रमmed IEs buffer */
 	u8 len = ies[pos + 1];
 
 	pos += 2 + len;
 
-	/* the IE itself must have 255 bytes for fragments to follow */
-	if (len < 255)
-		return pos;
+	/* the IE itself must have 255 bytes क्रम fragments to follow */
+	अगर (len < 255)
+		वापस pos;
 
-	while (pos < ielen && ies[pos] == WLAN_EID_FRAGMENT) {
+	जबतक (pos < ielen && ies[pos] == WLAN_EID_FRAGMENT) अणु
 		len = ies[pos + 1];
 		pos += 2 + len;
-	}
+	पूर्ण
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-size_t ieee80211_ie_split_ric(const u8 *ies, size_t ielen,
-			      const u8 *ids, int n_ids,
-			      const u8 *after_ric, int n_after_ric,
-			      size_t offset)
-{
-	size_t pos = offset;
+माप_प्रकार ieee80211_ie_split_ric(स्थिर u8 *ies, माप_प्रकार ielen,
+			      स्थिर u8 *ids, पूर्णांक n_ids,
+			      स्थिर u8 *after_ric, पूर्णांक n_after_ric,
+			      माप_प्रकार offset)
+अणु
+	माप_प्रकार pos = offset;
 
-	while (pos < ielen) {
+	जबतक (pos < ielen) अणु
 		u8 ext = 0;
 
-		if (ies[pos] == WLAN_EID_EXTENSION)
+		अगर (ies[pos] == WLAN_EID_EXTENSION)
 			ext = 2;
-		if ((pos + ext) >= ielen)
-			break;
+		अगर ((pos + ext) >= ielen)
+			अवरोध;
 
-		if (!ieee80211_id_in_list(ids, n_ids, ies[pos + ext],
+		अगर (!ieee80211_id_in_list(ids, n_ids, ies[pos + ext],
 					  ies[pos] == WLAN_EID_EXTENSION))
-			break;
+			अवरोध;
 
-		if (ies[pos] == WLAN_EID_RIC_DATA && n_after_ric) {
+		अगर (ies[pos] == WLAN_EID_RIC_DATA && n_after_ric) अणु
 			pos = skip_ie(ies, ielen, pos);
 
-			while (pos < ielen) {
-				if (ies[pos] == WLAN_EID_EXTENSION)
+			जबतक (pos < ielen) अणु
+				अगर (ies[pos] == WLAN_EID_EXTENSION)
 					ext = 2;
-				else
+				अन्यथा
 					ext = 0;
 
-				if ((pos + ext) >= ielen)
-					break;
+				अगर ((pos + ext) >= ielen)
+					अवरोध;
 
-				if (!ieee80211_id_in_list(after_ric,
+				अगर (!ieee80211_id_in_list(after_ric,
 							  n_after_ric,
 							  ies[pos + ext],
 							  ext == 2))
 					pos = skip_ie(ies, ielen, pos);
-				else
-					break;
-			}
-		} else {
+				अन्यथा
+					अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			pos = skip_ie(ies, ielen, pos);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_ie_split_ric);
 
 bool ieee80211_operating_class_to_band(u8 operating_class,
-				       enum nl80211_band *band)
-{
-	switch (operating_class) {
-	case 112:
-	case 115 ... 127:
-	case 128 ... 130:
+				       क्रमागत nl80211_band *band)
+अणु
+	चयन (operating_class) अणु
+	हाल 112:
+	हाल 115 ... 127:
+	हाल 128 ... 130:
 		*band = NL80211_BAND_5GHZ;
-		return true;
-	case 131 ... 135:
+		वापस true;
+	हाल 131 ... 135:
 		*band = NL80211_BAND_6GHZ;
-		return true;
-	case 81:
-	case 82:
-	case 83:
-	case 84:
+		वापस true;
+	हाल 81:
+	हाल 82:
+	हाल 83:
+	हाल 84:
 		*band = NL80211_BAND_2GHZ;
-		return true;
-	case 180:
+		वापस true;
+	हाल 180:
 		*band = NL80211_BAND_60GHZ;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_operating_class_to_band);
 
-bool ieee80211_chandef_to_operating_class(struct cfg80211_chan_def *chandef,
+bool ieee80211_chandef_to_operating_class(काष्ठा cfg80211_chan_def *chandef,
 					  u8 *op_class)
-{
+अणु
 	u8 vht_opclass;
 	u32 freq = chandef->center_freq1;
 
-	if (freq >= 2412 && freq <= 2472) {
-		if (chandef->width > NL80211_CHAN_WIDTH_40)
-			return false;
+	अगर (freq >= 2412 && freq <= 2472) अणु
+		अगर (chandef->width > NL80211_CHAN_WIDTH_40)
+			वापस false;
 
 		/* 2.407 GHz, channels 1..13 */
-		if (chandef->width == NL80211_CHAN_WIDTH_40) {
-			if (freq > chandef->chan->center_freq)
+		अगर (chandef->width == NL80211_CHAN_WIDTH_40) अणु
+			अगर (freq > chandef->chan->center_freq)
 				*op_class = 83; /* HT40+ */
-			else
+			अन्यथा
 				*op_class = 84; /* HT40- */
-		} else {
+		पूर्ण अन्यथा अणु
 			*op_class = 81;
-		}
+		पूर्ण
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (freq == 2484) {
-		/* channel 14 is only for IEEE 802.11b */
-		if (chandef->width != NL80211_CHAN_WIDTH_20_NOHT)
-			return false;
+	अगर (freq == 2484) अणु
+		/* channel 14 is only क्रम IEEE 802.11b */
+		अगर (chandef->width != NL80211_CHAN_WIDTH_20_NOHT)
+			वापस false;
 
 		*op_class = 82; /* channel 14 */
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	switch (chandef->width) {
-	case NL80211_CHAN_WIDTH_80:
+	चयन (chandef->width) अणु
+	हाल NL80211_CHAN_WIDTH_80:
 		vht_opclass = 128;
-		break;
-	case NL80211_CHAN_WIDTH_160:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_160:
 		vht_opclass = 129;
-		break;
-	case NL80211_CHAN_WIDTH_80P80:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_80P80:
 		vht_opclass = 130;
-		break;
-	case NL80211_CHAN_WIDTH_10:
-	case NL80211_CHAN_WIDTH_5:
-		return false; /* unsupported for now */
-	default:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_10:
+	हाल NL80211_CHAN_WIDTH_5:
+		वापस false; /* unsupported क्रम now */
+	शेष:
 		vht_opclass = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* 5 GHz, channels 36..48 */
-	if (freq >= 5180 && freq <= 5240) {
-		if (vht_opclass) {
+	अगर (freq >= 5180 && freq <= 5240) अणु
+		अगर (vht_opclass) अणु
 			*op_class = vht_opclass;
-		} else if (chandef->width == NL80211_CHAN_WIDTH_40) {
-			if (freq > chandef->chan->center_freq)
+		पूर्ण अन्यथा अगर (chandef->width == NL80211_CHAN_WIDTH_40) अणु
+			अगर (freq > chandef->chan->center_freq)
 				*op_class = 116;
-			else
+			अन्यथा
 				*op_class = 117;
-		} else {
+		पूर्ण अन्यथा अणु
 			*op_class = 115;
-		}
+		पूर्ण
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/* 5 GHz, channels 52..64 */
-	if (freq >= 5260 && freq <= 5320) {
-		if (vht_opclass) {
+	अगर (freq >= 5260 && freq <= 5320) अणु
+		अगर (vht_opclass) अणु
 			*op_class = vht_opclass;
-		} else if (chandef->width == NL80211_CHAN_WIDTH_40) {
-			if (freq > chandef->chan->center_freq)
+		पूर्ण अन्यथा अगर (chandef->width == NL80211_CHAN_WIDTH_40) अणु
+			अगर (freq > chandef->chan->center_freq)
 				*op_class = 119;
-			else
+			अन्यथा
 				*op_class = 120;
-		} else {
+		पूर्ण अन्यथा अणु
 			*op_class = 118;
-		}
+		पूर्ण
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/* 5 GHz, channels 100..144 */
-	if (freq >= 5500 && freq <= 5720) {
-		if (vht_opclass) {
+	अगर (freq >= 5500 && freq <= 5720) अणु
+		अगर (vht_opclass) अणु
 			*op_class = vht_opclass;
-		} else if (chandef->width == NL80211_CHAN_WIDTH_40) {
-			if (freq > chandef->chan->center_freq)
+		पूर्ण अन्यथा अगर (chandef->width == NL80211_CHAN_WIDTH_40) अणु
+			अगर (freq > chandef->chan->center_freq)
 				*op_class = 122;
-			else
+			अन्यथा
 				*op_class = 123;
-		} else {
+		पूर्ण अन्यथा अणु
 			*op_class = 121;
-		}
+		पूर्ण
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/* 5 GHz, channels 149..169 */
-	if (freq >= 5745 && freq <= 5845) {
-		if (vht_opclass) {
+	अगर (freq >= 5745 && freq <= 5845) अणु
+		अगर (vht_opclass) अणु
 			*op_class = vht_opclass;
-		} else if (chandef->width == NL80211_CHAN_WIDTH_40) {
-			if (freq > chandef->chan->center_freq)
+		पूर्ण अन्यथा अगर (chandef->width == NL80211_CHAN_WIDTH_40) अणु
+			अगर (freq > chandef->chan->center_freq)
 				*op_class = 126;
-			else
+			अन्यथा
 				*op_class = 127;
-		} else if (freq <= 5805) {
+		पूर्ण अन्यथा अगर (freq <= 5805) अणु
 			*op_class = 124;
-		} else {
+		पूर्ण अन्यथा अणु
 			*op_class = 125;
-		}
+		पूर्ण
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/* 56.16 GHz, channel 1..4 */
-	if (freq >= 56160 + 2160 * 1 && freq <= 56160 + 2160 * 6) {
-		if (chandef->width >= NL80211_CHAN_WIDTH_40)
-			return false;
+	अगर (freq >= 56160 + 2160 * 1 && freq <= 56160 + 2160 * 6) अणु
+		अगर (chandef->width >= NL80211_CHAN_WIDTH_40)
+			वापस false;
 
 		*op_class = 180;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/* not supported yet */
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_chandef_to_operating_class);
 
-static void cfg80211_calculate_bi_data(struct wiphy *wiphy, u32 new_beacon_int,
-				       u32 *beacon_int_gcd,
-				       bool *beacon_int_different)
-{
-	struct wireless_dev *wdev;
+अटल व्योम cfg80211_calculate_bi_data(काष्ठा wiphy *wiphy, u32 new_beacon_पूर्णांक,
+				       u32 *beacon_पूर्णांक_gcd,
+				       bool *beacon_पूर्णांक_dअगरferent)
+अणु
+	काष्ठा wireless_dev *wdev;
 
-	*beacon_int_gcd = 0;
-	*beacon_int_different = false;
+	*beacon_पूर्णांक_gcd = 0;
+	*beacon_पूर्णांक_dअगरferent = false;
 
-	list_for_each_entry(wdev, &wiphy->wdev_list, list) {
-		if (!wdev->beacon_interval)
-			continue;
+	list_क्रम_each_entry(wdev, &wiphy->wdev_list, list) अणु
+		अगर (!wdev->beacon_पूर्णांकerval)
+			जारी;
 
-		if (!*beacon_int_gcd) {
-			*beacon_int_gcd = wdev->beacon_interval;
-			continue;
-		}
+		अगर (!*beacon_पूर्णांक_gcd) अणु
+			*beacon_पूर्णांक_gcd = wdev->beacon_पूर्णांकerval;
+			जारी;
+		पूर्ण
 
-		if (wdev->beacon_interval == *beacon_int_gcd)
-			continue;
+		अगर (wdev->beacon_पूर्णांकerval == *beacon_पूर्णांक_gcd)
+			जारी;
 
-		*beacon_int_different = true;
-		*beacon_int_gcd = gcd(*beacon_int_gcd, wdev->beacon_interval);
-	}
+		*beacon_पूर्णांक_dअगरferent = true;
+		*beacon_पूर्णांक_gcd = gcd(*beacon_पूर्णांक_gcd, wdev->beacon_पूर्णांकerval);
+	पूर्ण
 
-	if (new_beacon_int && *beacon_int_gcd != new_beacon_int) {
-		if (*beacon_int_gcd)
-			*beacon_int_different = true;
-		*beacon_int_gcd = gcd(*beacon_int_gcd, new_beacon_int);
-	}
-}
+	अगर (new_beacon_पूर्णांक && *beacon_पूर्णांक_gcd != new_beacon_पूर्णांक) अणु
+		अगर (*beacon_पूर्णांक_gcd)
+			*beacon_पूर्णांक_dअगरferent = true;
+		*beacon_पूर्णांक_gcd = gcd(*beacon_पूर्णांक_gcd, new_beacon_पूर्णांक);
+	पूर्ण
+पूर्ण
 
-int cfg80211_validate_beacon_int(struct cfg80211_registered_device *rdev,
-				 enum nl80211_iftype iftype, u32 beacon_int)
-{
+पूर्णांक cfg80211_validate_beacon_पूर्णांक(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
+				 क्रमागत nl80211_अगरtype अगरtype, u32 beacon_पूर्णांक)
+अणु
 	/*
-	 * This is just a basic pre-condition check; if interface combinations
-	 * are possible the driver must already be checking those with a call
-	 * to cfg80211_check_combinations(), in which case we'll validate more
+	 * This is just a basic pre-condition check; अगर पूर्णांकerface combinations
+	 * are possible the driver must alपढ़ोy be checking those with a call
+	 * to cfg80211_check_combinations(), in which हाल we'll validate more
 	 * through the cfg80211_calculate_bi_data() call and code in
 	 * cfg80211_iter_combinations().
 	 */
 
-	if (beacon_int < 10 || beacon_int > 10000)
-		return -EINVAL;
+	अगर (beacon_पूर्णांक < 10 || beacon_पूर्णांक > 10000)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cfg80211_iter_combinations(struct wiphy *wiphy,
-			       struct iface_combination_params *params,
-			       void (*iter)(const struct ieee80211_iface_combination *c,
-					    void *data),
-			       void *data)
-{
-	const struct ieee80211_regdomain *regdom;
-	enum nl80211_dfs_regions region = 0;
-	int i, j, iftype;
-	int num_interfaces = 0;
-	u32 used_iftypes = 0;
-	u32 beacon_int_gcd;
-	bool beacon_int_different;
+पूर्णांक cfg80211_iter_combinations(काष्ठा wiphy *wiphy,
+			       काष्ठा अगरace_combination_params *params,
+			       व्योम (*iter)(स्थिर काष्ठा ieee80211_अगरace_combination *c,
+					    व्योम *data),
+			       व्योम *data)
+अणु
+	स्थिर काष्ठा ieee80211_regकरोमुख्य *regकरोm;
+	क्रमागत nl80211_dfs_regions region = 0;
+	पूर्णांक i, j, अगरtype;
+	पूर्णांक num_पूर्णांकerfaces = 0;
+	u32 used_अगरtypes = 0;
+	u32 beacon_पूर्णांक_gcd;
+	bool beacon_पूर्णांक_dअगरferent;
 
 	/*
 	 * This is a bit strange, since the iteration used to rely only on
 	 * the data given by the driver, but here it now relies on context,
-	 * in form of the currently operating interfaces.
-	 * This is OK for all current users, and saves us from having to
-	 * push the GCD calculations into all the drivers.
+	 * in क्रमm of the currently operating पूर्णांकerfaces.
+	 * This is OK क्रम all current users, and saves us from having to
+	 * push the GCD calculations पूर्णांकo all the drivers.
 	 * In the future, this should probably rely more on data that's in
-	 * cfg80211 already - the only thing not would appear to be any new
-	 * interfaces (while being brought up) and channel/radar data.
+	 * cfg80211 alपढ़ोy - the only thing not would appear to be any new
+	 * पूर्णांकerfaces (जबतक being brought up) and channel/radar data.
 	 */
-	cfg80211_calculate_bi_data(wiphy, params->new_beacon_int,
-				   &beacon_int_gcd, &beacon_int_different);
+	cfg80211_calculate_bi_data(wiphy, params->new_beacon_पूर्णांक,
+				   &beacon_पूर्णांक_gcd, &beacon_पूर्णांक_dअगरferent);
 
-	if (params->radar_detect) {
-		rcu_read_lock();
-		regdom = rcu_dereference(cfg80211_regdomain);
-		if (regdom)
-			region = regdom->dfs_region;
-		rcu_read_unlock();
-	}
+	अगर (params->radar_detect) अणु
+		rcu_पढ़ो_lock();
+		regकरोm = rcu_dereference(cfg80211_regकरोमुख्य);
+		अगर (regकरोm)
+			region = regकरोm->dfs_region;
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	for (iftype = 0; iftype < NUM_NL80211_IFTYPES; iftype++) {
-		num_interfaces += params->iftype_num[iftype];
-		if (params->iftype_num[iftype] > 0 &&
-		    !cfg80211_iftype_allowed(wiphy, iftype, 0, 1))
-			used_iftypes |= BIT(iftype);
-	}
+	क्रम (अगरtype = 0; अगरtype < NUM_NL80211_IFTYPES; अगरtype++) अणु
+		num_पूर्णांकerfaces += params->अगरtype_num[अगरtype];
+		अगर (params->अगरtype_num[अगरtype] > 0 &&
+		    !cfg80211_अगरtype_allowed(wiphy, अगरtype, 0, 1))
+			used_अगरtypes |= BIT(अगरtype);
+	पूर्ण
 
-	for (i = 0; i < wiphy->n_iface_combinations; i++) {
-		const struct ieee80211_iface_combination *c;
-		struct ieee80211_iface_limit *limits;
-		u32 all_iftypes = 0;
+	क्रम (i = 0; i < wiphy->n_अगरace_combinations; i++) अणु
+		स्थिर काष्ठा ieee80211_अगरace_combination *c;
+		काष्ठा ieee80211_अगरace_limit *limits;
+		u32 all_अगरtypes = 0;
 
-		c = &wiphy->iface_combinations[i];
+		c = &wiphy->अगरace_combinations[i];
 
-		if (num_interfaces > c->max_interfaces)
-			continue;
-		if (params->num_different_channels > c->num_different_channels)
-			continue;
+		अगर (num_पूर्णांकerfaces > c->max_पूर्णांकerfaces)
+			जारी;
+		अगर (params->num_dअगरferent_channels > c->num_dअगरferent_channels)
+			जारी;
 
-		limits = kmemdup(c->limits, sizeof(limits[0]) * c->n_limits,
+		limits = kmemdup(c->limits, माप(limits[0]) * c->n_limits,
 				 GFP_KERNEL);
-		if (!limits)
-			return -ENOMEM;
+		अगर (!limits)
+			वापस -ENOMEM;
 
-		for (iftype = 0; iftype < NUM_NL80211_IFTYPES; iftype++) {
-			if (cfg80211_iftype_allowed(wiphy, iftype, 0, 1))
-				continue;
-			for (j = 0; j < c->n_limits; j++) {
-				all_iftypes |= limits[j].types;
-				if (!(limits[j].types & BIT(iftype)))
-					continue;
-				if (limits[j].max < params->iftype_num[iftype])
-					goto cont;
-				limits[j].max -= params->iftype_num[iftype];
-			}
-		}
+		क्रम (अगरtype = 0; अगरtype < NUM_NL80211_IFTYPES; अगरtype++) अणु
+			अगर (cfg80211_अगरtype_allowed(wiphy, अगरtype, 0, 1))
+				जारी;
+			क्रम (j = 0; j < c->n_limits; j++) अणु
+				all_अगरtypes |= limits[j].types;
+				अगर (!(limits[j].types & BIT(अगरtype)))
+					जारी;
+				अगर (limits[j].max < params->अगरtype_num[अगरtype])
+					जाओ cont;
+				limits[j].max -= params->अगरtype_num[अगरtype];
+			पूर्ण
+		पूर्ण
 
-		if (params->radar_detect !=
+		अगर (params->radar_detect !=
 			(c->radar_detect_widths & params->radar_detect))
-			goto cont;
+			जाओ cont;
 
-		if (params->radar_detect && c->radar_detect_regions &&
+		अगर (params->radar_detect && c->radar_detect_regions &&
 		    !(c->radar_detect_regions & BIT(region)))
-			goto cont;
+			जाओ cont;
 
-		/* Finally check that all iftypes that we're currently
+		/* Finally check that all अगरtypes that we're currently
 		 * using are actually part of this combination. If they
 		 * aren't then we can't use this combination and have
-		 * to continue to the next.
+		 * to जारी to the next.
 		 */
-		if ((all_iftypes & used_iftypes) != used_iftypes)
-			goto cont;
+		अगर ((all_अगरtypes & used_अगरtypes) != used_अगरtypes)
+			जाओ cont;
 
-		if (beacon_int_gcd) {
-			if (c->beacon_int_min_gcd &&
-			    beacon_int_gcd < c->beacon_int_min_gcd)
-				goto cont;
-			if (!c->beacon_int_min_gcd && beacon_int_different)
-				goto cont;
-		}
+		अगर (beacon_पूर्णांक_gcd) अणु
+			अगर (c->beacon_पूर्णांक_min_gcd &&
+			    beacon_पूर्णांक_gcd < c->beacon_पूर्णांक_min_gcd)
+				जाओ cont;
+			अगर (!c->beacon_पूर्णांक_min_gcd && beacon_पूर्णांक_dअगरferent)
+				जाओ cont;
+		पूर्ण
 
-		/* This combination covered all interface types and
+		/* This combination covered all पूर्णांकerface types and
 		 * supported the requested numbers, so we're good.
 		 */
 
 		(*iter)(c, data);
  cont:
-		kfree(limits);
-	}
+		kमुक्त(limits);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cfg80211_iter_combinations);
 
-static void
-cfg80211_iter_sum_ifcombs(const struct ieee80211_iface_combination *c,
-			  void *data)
-{
-	int *num = data;
+अटल व्योम
+cfg80211_iter_sum_अगरcombs(स्थिर काष्ठा ieee80211_अगरace_combination *c,
+			  व्योम *data)
+अणु
+	पूर्णांक *num = data;
 	(*num)++;
-}
+पूर्ण
 
-int cfg80211_check_combinations(struct wiphy *wiphy,
-				struct iface_combination_params *params)
-{
-	int err, num = 0;
+पूर्णांक cfg80211_check_combinations(काष्ठा wiphy *wiphy,
+				काष्ठा अगरace_combination_params *params)
+अणु
+	पूर्णांक err, num = 0;
 
 	err = cfg80211_iter_combinations(wiphy, params,
-					 cfg80211_iter_sum_ifcombs, &num);
-	if (err)
-		return err;
-	if (num == 0)
-		return -EBUSY;
+					 cfg80211_iter_sum_अगरcombs, &num);
+	अगर (err)
+		वापस err;
+	अगर (num == 0)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cfg80211_check_combinations);
 
-int ieee80211_get_ratemask(struct ieee80211_supported_band *sband,
-			   const u8 *rates, unsigned int n_rates,
+पूर्णांक ieee80211_get_ratemask(काष्ठा ieee80211_supported_band *sband,
+			   स्थिर u8 *rates, अचिन्हित पूर्णांक n_rates,
 			   u32 *mask)
-{
-	int i, j;
+अणु
+	पूर्णांक i, j;
 
-	if (!sband)
-		return -EINVAL;
+	अगर (!sband)
+		वापस -EINVAL;
 
-	if (n_rates == 0 || n_rates > NL80211_MAX_SUPP_RATES)
-		return -EINVAL;
+	अगर (n_rates == 0 || n_rates > NL80211_MAX_SUPP_RATES)
+		वापस -EINVAL;
 
 	*mask = 0;
 
-	for (i = 0; i < n_rates; i++) {
-		int rate = (rates[i] & 0x7f) * 5;
+	क्रम (i = 0; i < n_rates; i++) अणु
+		पूर्णांक rate = (rates[i] & 0x7f) * 5;
 		bool found = false;
 
-		for (j = 0; j < sband->n_bitrates; j++) {
-			if (sband->bitrates[j].bitrate == rate) {
+		क्रम (j = 0; j < sband->n_bitrates; j++) अणु
+			अगर (sband->bitrates[j].bitrate == rate) अणु
 				found = true;
 				*mask |= BIT(j);
-				break;
-			}
-		}
-		if (!found)
-			return -EINVAL;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (!found)
+			वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * mask must have at least one bit set here since we
@@ -2011,104 +2012,104 @@ int ieee80211_get_ratemask(struct ieee80211_supported_band *sband,
 	 * entries in the array that didn't exist
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned int ieee80211_get_num_supported_channels(struct wiphy *wiphy)
-{
-	enum nl80211_band band;
-	unsigned int n_channels = 0;
+अचिन्हित पूर्णांक ieee80211_get_num_supported_channels(काष्ठा wiphy *wiphy)
+अणु
+	क्रमागत nl80211_band band;
+	अचिन्हित पूर्णांक n_channels = 0;
 
-	for (band = 0; band < NUM_NL80211_BANDS; band++)
-		if (wiphy->bands[band])
+	क्रम (band = 0; band < NUM_NL80211_BANDS; band++)
+		अगर (wiphy->bands[band])
 			n_channels += wiphy->bands[band]->n_channels;
 
-	return n_channels;
-}
+	वापस n_channels;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_num_supported_channels);
 
-int cfg80211_get_station(struct net_device *dev, const u8 *mac_addr,
-			 struct station_info *sinfo)
-{
-	struct cfg80211_registered_device *rdev;
-	struct wireless_dev *wdev;
+पूर्णांक cfg80211_get_station(काष्ठा net_device *dev, स्थिर u8 *mac_addr,
+			 काष्ठा station_info *sinfo)
+अणु
+	काष्ठा cfg80211_रेजिस्टरed_device *rdev;
+	काष्ठा wireless_dev *wdev;
 
 	wdev = dev->ieee80211_ptr;
-	if (!wdev)
-		return -EOPNOTSUPP;
+	अगर (!wdev)
+		वापस -EOPNOTSUPP;
 
 	rdev = wiphy_to_rdev(wdev->wiphy);
-	if (!rdev->ops->get_station)
-		return -EOPNOTSUPP;
+	अगर (!rdev->ops->get_station)
+		वापस -EOPNOTSUPP;
 
-	memset(sinfo, 0, sizeof(*sinfo));
+	स_रखो(sinfo, 0, माप(*sinfo));
 
-	return rdev_get_station(rdev, dev, mac_addr, sinfo);
-}
+	वापस rdev_get_station(rdev, dev, mac_addr, sinfo);
+पूर्ण
 EXPORT_SYMBOL(cfg80211_get_station);
 
-void cfg80211_free_nan_func(struct cfg80211_nan_func *f)
-{
-	int i;
+व्योम cfg80211_मुक्त_nan_func(काष्ठा cfg80211_nan_func *f)
+अणु
+	पूर्णांक i;
 
-	if (!f)
-		return;
+	अगर (!f)
+		वापस;
 
-	kfree(f->serv_spec_info);
-	kfree(f->srf_bf);
-	kfree(f->srf_macs);
-	for (i = 0; i < f->num_rx_filters; i++)
-		kfree(f->rx_filters[i].filter);
+	kमुक्त(f->serv_spec_info);
+	kमुक्त(f->srf_bf);
+	kमुक्त(f->srf_macs);
+	क्रम (i = 0; i < f->num_rx_filters; i++)
+		kमुक्त(f->rx_filters[i].filter);
 
-	for (i = 0; i < f->num_tx_filters; i++)
-		kfree(f->tx_filters[i].filter);
+	क्रम (i = 0; i < f->num_tx_filters; i++)
+		kमुक्त(f->tx_filters[i].filter);
 
-	kfree(f->rx_filters);
-	kfree(f->tx_filters);
-	kfree(f);
-}
-EXPORT_SYMBOL(cfg80211_free_nan_func);
+	kमुक्त(f->rx_filters);
+	kमुक्त(f->tx_filters);
+	kमुक्त(f);
+पूर्ण
+EXPORT_SYMBOL(cfg80211_मुक्त_nan_func);
 
-bool cfg80211_does_bw_fit_range(const struct ieee80211_freq_range *freq_range,
+bool cfg80211_करोes_bw_fit_range(स्थिर काष्ठा ieee80211_freq_range *freq_range,
 				u32 center_freq_khz, u32 bw_khz)
-{
+अणु
 	u32 start_freq_khz, end_freq_khz;
 
 	start_freq_khz = center_freq_khz - (bw_khz / 2);
 	end_freq_khz = center_freq_khz + (bw_khz / 2);
 
-	if (start_freq_khz >= freq_range->start_freq_khz &&
+	अगर (start_freq_khz >= freq_range->start_freq_khz &&
 	    end_freq_khz <= freq_range->end_freq_khz)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int cfg80211_sinfo_alloc_tid_stats(struct station_info *sinfo, gfp_t gfp)
-{
-	sinfo->pertid = kcalloc(IEEE80211_NUM_TIDS + 1,
-				sizeof(*(sinfo->pertid)),
+पूर्णांक cfg80211_sinfo_alloc_tid_stats(काष्ठा station_info *sinfo, gfp_t gfp)
+अणु
+	sinfo->pertid = kसुस्मृति(IEEE80211_NUM_TIDS + 1,
+				माप(*(sinfo->pertid)),
 				gfp);
-	if (!sinfo->pertid)
-		return -ENOMEM;
+	अगर (!sinfo->pertid)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cfg80211_sinfo_alloc_tid_stats);
 
-/* See IEEE 802.1H for LLC/SNAP encapsulation/decapsulation */
-/* Ethernet-II snap header (RFC1042 for most EtherTypes) */
-const unsigned char rfc1042_header[] __aligned(2) =
-	{ 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00 };
+/* See IEEE 802.1H क्रम LLC/SNAP encapsulation/decapsulation */
+/* Ethernet-II snap header (RFC1042 क्रम most EtherTypes) */
+स्थिर अचिन्हित अक्षर rfc1042_header[] __aligned(2) =
+	अणु 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00 पूर्ण;
 EXPORT_SYMBOL(rfc1042_header);
 
-/* Bridge-Tunnel header (for EtherTypes ETH_P_AARP and ETH_P_IPX) */
-const unsigned char bridge_tunnel_header[] __aligned(2) =
-	{ 0xaa, 0xaa, 0x03, 0x00, 0x00, 0xf8 };
+/* Bridge-Tunnel header (क्रम EtherTypes ETH_P_AARP and ETH_P_IPX) */
+स्थिर अचिन्हित अक्षर bridge_tunnel_header[] __aligned(2) =
+	अणु 0xaa, 0xaa, 0x03, 0x00, 0x00, 0xf8 पूर्ण;
 EXPORT_SYMBOL(bridge_tunnel_header);
 
 /* Layer 2 Update frame (802.2 Type 1 LLC XID Update response) */
-struct iapp_layer2_update {
+काष्ठा iapp_layer2_update अणु
 	u8 da[ETH_ALEN];	/* broadcast */
 	u8 sa[ETH_ALEN];	/* STA addr */
 	__be16 len;		/* 6 */
@@ -2116,168 +2117,168 @@ struct iapp_layer2_update {
 	u8 ssap;		/* 0 */
 	u8 control;
 	u8 xid_info[3];
-} __packed;
+पूर्ण __packed;
 
-void cfg80211_send_layer2_update(struct net_device *dev, const u8 *addr)
-{
-	struct iapp_layer2_update *msg;
-	struct sk_buff *skb;
+व्योम cfg80211_send_layer2_update(काष्ठा net_device *dev, स्थिर u8 *addr)
+अणु
+	काष्ठा iapp_layer2_update *msg;
+	काष्ठा sk_buff *skb;
 
-	/* Send Level 2 Update Frame to update forwarding tables in layer 2
+	/* Send Level 2 Update Frame to update क्रमwarding tables in layer 2
 	 * bridge devices */
 
-	skb = dev_alloc_skb(sizeof(*msg));
-	if (!skb)
-		return;
-	msg = skb_put(skb, sizeof(*msg));
+	skb = dev_alloc_skb(माप(*msg));
+	अगर (!skb)
+		वापस;
+	msg = skb_put(skb, माप(*msg));
 
-	/* 802.2 Type 1 Logical Link Control (LLC) Exchange Identifier (XID)
+	/* 802.2 Type 1 Logical Link Control (LLC) Exchange Identअगरier (XID)
 	 * Update response frame; IEEE Std 802.2-1998, 5.4.1.2.1 */
 
 	eth_broadcast_addr(msg->da);
 	ether_addr_copy(msg->sa, addr);
 	msg->len = htons(6);
 	msg->dsap = 0;
-	msg->ssap = 0x01;	/* NULL LSAP, CR Bit: Response */
+	msg->ssap = 0x01;	/* शून्य LSAP, CR Bit: Response */
 	msg->control = 0xaf;	/* XID response lsb.1111F101.
 				 * F=0 (no poll command; unsolicited frame) */
-	msg->xid_info[0] = 0x81;	/* XID format identifier */
+	msg->xid_info[0] = 0x81;	/* XID क्रमmat identअगरier */
 	msg->xid_info[1] = 1;	/* LLC types/classes: Type 1 LLC */
-	msg->xid_info[2] = 0;	/* XID sender's receive window size (RW) */
+	msg->xid_info[2] = 0;	/* XID sender's receive winकरोw size (RW) */
 
 	skb->dev = dev;
 	skb->protocol = eth_type_trans(skb, dev);
-	memset(skb->cb, 0, sizeof(skb->cb));
-	netif_rx_ni(skb);
-}
+	स_रखो(skb->cb, 0, माप(skb->cb));
+	netअगर_rx_ni(skb);
+पूर्ण
 EXPORT_SYMBOL(cfg80211_send_layer2_update);
 
-int ieee80211_get_vht_max_nss(struct ieee80211_vht_cap *cap,
-			      enum ieee80211_vht_chanwidth bw,
-			      int mcs, bool ext_nss_bw_capable,
-			      unsigned int max_vht_nss)
-{
+पूर्णांक ieee80211_get_vht_max_nss(काष्ठा ieee80211_vht_cap *cap,
+			      क्रमागत ieee80211_vht_chanwidth bw,
+			      पूर्णांक mcs, bool ext_nss_bw_capable,
+			      अचिन्हित पूर्णांक max_vht_nss)
+अणु
 	u16 map = le16_to_cpu(cap->supp_mcs.rx_mcs_map);
-	int ext_nss_bw;
-	int supp_width;
-	int i, mcs_encoding;
+	पूर्णांक ext_nss_bw;
+	पूर्णांक supp_width;
+	पूर्णांक i, mcs_encoding;
 
-	if (map == 0xffff)
-		return 0;
+	अगर (map == 0xffff)
+		वापस 0;
 
-	if (WARN_ON(mcs > 9 || max_vht_nss > 8))
-		return 0;
-	if (mcs <= 7)
+	अगर (WARN_ON(mcs > 9 || max_vht_nss > 8))
+		वापस 0;
+	अगर (mcs <= 7)
 		mcs_encoding = 0;
-	else if (mcs == 8)
+	अन्यथा अगर (mcs == 8)
 		mcs_encoding = 1;
-	else
+	अन्यथा
 		mcs_encoding = 2;
 
-	if (!max_vht_nss) {
-		/* find max_vht_nss for the given MCS */
-		for (i = 7; i >= 0; i--) {
-			int supp = (map >> (2 * i)) & 3;
+	अगर (!max_vht_nss) अणु
+		/* find max_vht_nss क्रम the given MCS */
+		क्रम (i = 7; i >= 0; i--) अणु
+			पूर्णांक supp = (map >> (2 * i)) & 3;
 
-			if (supp == 3)
-				continue;
+			अगर (supp == 3)
+				जारी;
 
-			if (supp >= mcs_encoding) {
+			अगर (supp >= mcs_encoding) अणु
 				max_vht_nss = i + 1;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!(cap->supp_mcs.tx_mcs_map &
+	अगर (!(cap->supp_mcs.tx_mcs_map &
 			cpu_to_le16(IEEE80211_VHT_EXT_NSS_BW_CAPABLE)))
-		return max_vht_nss;
+		वापस max_vht_nss;
 
 	ext_nss_bw = le32_get_bits(cap->vht_cap_info,
 				   IEEE80211_VHT_CAP_EXT_NSS_BW_MASK);
 	supp_width = le32_get_bits(cap->vht_cap_info,
 				   IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_MASK);
 
-	/* if not capable, treat ext_nss_bw as 0 */
-	if (!ext_nss_bw_capable)
+	/* अगर not capable, treat ext_nss_bw as 0 */
+	अगर (!ext_nss_bw_capable)
 		ext_nss_bw = 0;
 
 	/* This is invalid */
-	if (supp_width == 3)
-		return 0;
+	अगर (supp_width == 3)
+		वापस 0;
 
 	/* This is an invalid combination so pretend nothing is supported */
-	if (supp_width == 2 && (ext_nss_bw == 1 || ext_nss_bw == 2))
-		return 0;
+	अगर (supp_width == 2 && (ext_nss_bw == 1 || ext_nss_bw == 2))
+		वापस 0;
 
 	/*
-	 * Cover all the special cases according to IEEE 802.11-2016
-	 * Table 9-250. All other cases are either factor of 1 or not
+	 * Cover all the special हालs according to IEEE 802.11-2016
+	 * Table 9-250. All other हालs are either factor of 1 or not
 	 * valid/supported.
 	 */
-	switch (bw) {
-	case IEEE80211_VHT_CHANWIDTH_USE_HT:
-	case IEEE80211_VHT_CHANWIDTH_80MHZ:
-		if ((supp_width == 1 || supp_width == 2) &&
+	चयन (bw) अणु
+	हाल IEEE80211_VHT_CHANWIDTH_USE_HT:
+	हाल IEEE80211_VHT_CHANWIDTH_80MHZ:
+		अगर ((supp_width == 1 || supp_width == 2) &&
 		    ext_nss_bw == 3)
-			return 2 * max_vht_nss;
-		break;
-	case IEEE80211_VHT_CHANWIDTH_160MHZ:
-		if (supp_width == 0 &&
+			वापस 2 * max_vht_nss;
+		अवरोध;
+	हाल IEEE80211_VHT_CHANWIDTH_160MHZ:
+		अगर (supp_width == 0 &&
 		    (ext_nss_bw == 1 || ext_nss_bw == 2))
-			return max_vht_nss / 2;
-		if (supp_width == 0 &&
+			वापस max_vht_nss / 2;
+		अगर (supp_width == 0 &&
 		    ext_nss_bw == 3)
-			return (3 * max_vht_nss) / 4;
-		if (supp_width == 1 &&
+			वापस (3 * max_vht_nss) / 4;
+		अगर (supp_width == 1 &&
 		    ext_nss_bw == 3)
-			return 2 * max_vht_nss;
-		break;
-	case IEEE80211_VHT_CHANWIDTH_80P80MHZ:
-		if (supp_width == 0 && ext_nss_bw == 1)
-			return 0; /* not possible */
-		if (supp_width == 0 &&
+			वापस 2 * max_vht_nss;
+		अवरोध;
+	हाल IEEE80211_VHT_CHANWIDTH_80P80MHZ:
+		अगर (supp_width == 0 && ext_nss_bw == 1)
+			वापस 0; /* not possible */
+		अगर (supp_width == 0 &&
 		    ext_nss_bw == 2)
-			return max_vht_nss / 2;
-		if (supp_width == 0 &&
+			वापस max_vht_nss / 2;
+		अगर (supp_width == 0 &&
 		    ext_nss_bw == 3)
-			return (3 * max_vht_nss) / 4;
-		if (supp_width == 1 &&
+			वापस (3 * max_vht_nss) / 4;
+		अगर (supp_width == 1 &&
 		    ext_nss_bw == 0)
-			return 0; /* not possible */
-		if (supp_width == 1 &&
+			वापस 0; /* not possible */
+		अगर (supp_width == 1 &&
 		    ext_nss_bw == 1)
-			return max_vht_nss / 2;
-		if (supp_width == 1 &&
+			वापस max_vht_nss / 2;
+		अगर (supp_width == 1 &&
 		    ext_nss_bw == 2)
-			return (3 * max_vht_nss) / 4;
-		break;
-	}
+			वापस (3 * max_vht_nss) / 4;
+		अवरोध;
+	पूर्ण
 
 	/* not covered or invalid combination received */
-	return max_vht_nss;
-}
+	वापस max_vht_nss;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_vht_max_nss);
 
-bool cfg80211_iftype_allowed(struct wiphy *wiphy, enum nl80211_iftype iftype,
-			     bool is_4addr, u8 check_swif)
+bool cfg80211_अगरtype_allowed(काष्ठा wiphy *wiphy, क्रमागत nl80211_अगरtype अगरtype,
+			     bool is_4addr, u8 check_swअगर)
 
-{
-	bool is_vlan = iftype == NL80211_IFTYPE_AP_VLAN;
+अणु
+	bool is_vlan = अगरtype == NL80211_IFTYPE_AP_VLAN;
 
-	switch (check_swif) {
-	case 0:
-		if (is_vlan && is_4addr)
-			return wiphy->flags & WIPHY_FLAG_4ADDR_AP;
-		return wiphy->interface_modes & BIT(iftype);
-	case 1:
-		if (!(wiphy->software_iftypes & BIT(iftype)) && is_vlan)
-			return wiphy->flags & WIPHY_FLAG_4ADDR_AP;
-		return wiphy->software_iftypes & BIT(iftype);
-	default:
-		break;
-	}
+	चयन (check_swअगर) अणु
+	हाल 0:
+		अगर (is_vlan && is_4addr)
+			वापस wiphy->flags & WIPHY_FLAG_4ADDR_AP;
+		वापस wiphy->पूर्णांकerface_modes & BIT(अगरtype);
+	हाल 1:
+		अगर (!(wiphy->software_अगरtypes & BIT(अगरtype)) && is_vlan)
+			वापस wiphy->flags & WIPHY_FLAG_4ADDR_AP;
+		वापस wiphy->software_अगरtypes & BIT(अगरtype);
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
-EXPORT_SYMBOL(cfg80211_iftype_allowed);
+	वापस false;
+पूर्ण
+EXPORT_SYMBOL(cfg80211_अगरtype_allowed);

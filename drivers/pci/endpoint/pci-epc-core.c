@@ -1,164 +1,165 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCI Endpoint *Controller* (EPC) library
+ * PCI Endpoपूर्णांक *Controller* (EPC) library
  *
  * Copyright (C) 2017 Texas Instruments
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
 
-#include <linux/pci-epc.h>
-#include <linux/pci-epf.h>
-#include <linux/pci-ep-cfs.h>
+#समावेश <linux/pci-epc.h>
+#समावेश <linux/pci-epf.h>
+#समावेश <linux/pci-ep-cfs.h>
 
-static struct class *pci_epc_class;
+अटल काष्ठा class *pci_epc_class;
 
-static void devm_pci_epc_release(struct device *dev, void *res)
-{
-	struct pci_epc *epc = *(struct pci_epc **)res;
+अटल व्योम devm_pci_epc_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा pci_epc *epc = *(काष्ठा pci_epc **)res;
 
 	pci_epc_destroy(epc);
-}
+पूर्ण
 
-static int devm_pci_epc_match(struct device *dev, void *res, void *match_data)
-{
-	struct pci_epc **epc = res;
+अटल पूर्णांक devm_pci_epc_match(काष्ठा device *dev, व्योम *res, व्योम *match_data)
+अणु
+	काष्ठा pci_epc **epc = res;
 
-	return *epc == match_data;
-}
+	वापस *epc == match_data;
+पूर्ण
 
 /**
- * pci_epc_put() - release the PCI endpoint controller
- * @epc: epc returned by pci_epc_get()
+ * pci_epc_put() - release the PCI endpoपूर्णांक controller
+ * @epc: epc वापसed by pci_epc_get()
  *
  * release the refcount the caller obtained by invoking pci_epc_get()
  */
-void pci_epc_put(struct pci_epc *epc)
-{
-	if (!epc || IS_ERR(epc))
-		return;
+व्योम pci_epc_put(काष्ठा pci_epc *epc)
+अणु
+	अगर (!epc || IS_ERR(epc))
+		वापस;
 
 	module_put(epc->ops->owner);
 	put_device(&epc->dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_put);
 
 /**
- * pci_epc_get() - get the PCI endpoint controller
- * @epc_name: device name of the endpoint controller
+ * pci_epc_get() - get the PCI endpoपूर्णांक controller
+ * @epc_name: device name of the endpoपूर्णांक controller
  *
- * Invoke to get struct pci_epc * corresponding to the device name of the
- * endpoint controller
+ * Invoke to get काष्ठा pci_epc * corresponding to the device name of the
+ * endpoपूर्णांक controller
  */
-struct pci_epc *pci_epc_get(const char *epc_name)
-{
-	int ret = -EINVAL;
-	struct pci_epc *epc;
-	struct device *dev;
-	struct class_dev_iter iter;
+काष्ठा pci_epc *pci_epc_get(स्थिर अक्षर *epc_name)
+अणु
+	पूर्णांक ret = -EINVAL;
+	काष्ठा pci_epc *epc;
+	काष्ठा device *dev;
+	काष्ठा class_dev_iter iter;
 
-	class_dev_iter_init(&iter, pci_epc_class, NULL, NULL);
-	while ((dev = class_dev_iter_next(&iter))) {
-		if (strcmp(epc_name, dev_name(dev)))
-			continue;
+	class_dev_iter_init(&iter, pci_epc_class, शून्य, शून्य);
+	जबतक ((dev = class_dev_iter_next(&iter))) अणु
+		अगर (म_भेद(epc_name, dev_name(dev)))
+			जारी;
 
 		epc = to_pci_epc(dev);
-		if (!try_module_get(epc->ops->owner)) {
+		अगर (!try_module_get(epc->ops->owner)) अणु
 			ret = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		class_dev_iter_exit(&iter);
+		class_dev_iter_निकास(&iter);
 		get_device(&epc->dev);
-		return epc;
-	}
+		वापस epc;
+	पूर्ण
 
 err:
-	class_dev_iter_exit(&iter);
-	return ERR_PTR(ret);
-}
+	class_dev_iter_निकास(&iter);
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_get);
 
 /**
- * pci_epc_get_first_free_bar() - helper to get first unreserved BAR
- * @epc_features: pci_epc_features structure that holds the reserved bar bitmap
+ * pci_epc_get_first_मुक्त_bar() - helper to get first unreserved BAR
+ * @epc_features: pci_epc_features काष्ठाure that holds the reserved bar biपंचांगap
  *
- * Invoke to get the first unreserved BAR that can be used by the endpoint
- * function. For any incorrect value in reserved_bar return '0'.
+ * Invoke to get the first unreserved BAR that can be used by the endpoपूर्णांक
+ * function. For any incorrect value in reserved_bar वापस '0'.
  */
-enum pci_barno
-pci_epc_get_first_free_bar(const struct pci_epc_features *epc_features)
-{
-	return pci_epc_get_next_free_bar(epc_features, BAR_0);
-}
-EXPORT_SYMBOL_GPL(pci_epc_get_first_free_bar);
+क्रमागत pci_barno
+pci_epc_get_first_मुक्त_bar(स्थिर काष्ठा pci_epc_features *epc_features)
+अणु
+	वापस pci_epc_get_next_मुक्त_bar(epc_features, BAR_0);
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_epc_get_first_मुक्त_bar);
 
 /**
- * pci_epc_get_next_free_bar() - helper to get unreserved BAR starting from @bar
- * @epc_features: pci_epc_features structure that holds the reserved bar bitmap
+ * pci_epc_get_next_मुक्त_bar() - helper to get unreserved BAR starting from @bar
+ * @epc_features: pci_epc_features काष्ठाure that holds the reserved bar biपंचांगap
  * @bar: the starting BAR number from where unreserved BAR should be searched
  *
  * Invoke to get the next unreserved BAR starting from @bar that can be used
- * for endpoint function. For any incorrect value in reserved_bar return '0'.
+ * क्रम endpoपूर्णांक function. For any incorrect value in reserved_bar वापस '0'.
  */
-enum pci_barno pci_epc_get_next_free_bar(const struct pci_epc_features
-					 *epc_features, enum pci_barno bar)
-{
-	unsigned long free_bar;
+क्रमागत pci_barno pci_epc_get_next_मुक्त_bar(स्थिर काष्ठा pci_epc_features
+					 *epc_features, क्रमागत pci_barno bar)
+अणु
+	अचिन्हित दीर्घ मुक्त_bar;
 
-	if (!epc_features)
-		return BAR_0;
+	अगर (!epc_features)
+		वापस BAR_0;
 
 	/* If 'bar - 1' is a 64-bit BAR, move to the next BAR */
-	if ((epc_features->bar_fixed_64bit << 1) & 1 << bar)
+	अगर ((epc_features->bar_fixed_64bit << 1) & 1 << bar)
 		bar++;
 
-	/* Find if the reserved BAR is also a 64-bit BAR */
-	free_bar = epc_features->reserved_bar & epc_features->bar_fixed_64bit;
+	/* Find अगर the reserved BAR is also a 64-bit BAR */
+	मुक्त_bar = epc_features->reserved_bar & epc_features->bar_fixed_64bit;
 
-	/* Set the adjacent bit if the reserved BAR is also a 64-bit BAR */
-	free_bar <<= 1;
-	free_bar |= epc_features->reserved_bar;
+	/* Set the adjacent bit अगर the reserved BAR is also a 64-bit BAR */
+	मुक्त_bar <<= 1;
+	मुक्त_bar |= epc_features->reserved_bar;
 
-	free_bar = find_next_zero_bit(&free_bar, 6, bar);
-	if (free_bar > 5)
-		return NO_BAR;
+	मुक्त_bar = find_next_zero_bit(&मुक्त_bar, 6, bar);
+	अगर (मुक्त_bar > 5)
+		वापस NO_BAR;
 
-	return free_bar;
-}
-EXPORT_SYMBOL_GPL(pci_epc_get_next_free_bar);
+	वापस मुक्त_bar;
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_epc_get_next_मुक्त_bar);
 
 /**
  * pci_epc_get_features() - get the features supported by EPC
- * @epc: the features supported by *this* EPC device will be returned
- * @func_no: the features supported by the EPC device specific to the
- *	     endpoint function with func_no will be returned
+ * @epc: the features supported by *this* EPC device will be वापसed
+ * @func_no: the features supported by the EPC device specअगरic to the
+ *	     endpoपूर्णांक function with func_no will be वापसed
  *
  * Invoke to get the features provided by the EPC which may be
- * specific to an endpoint function. Returns pci_epc_features on success
- * and NULL for any failures.
+ * specअगरic to an endpoपूर्णांक function. Returns pci_epc_features on success
+ * and शून्य क्रम any failures.
  */
-const struct pci_epc_features *pci_epc_get_features(struct pci_epc *epc,
+स्थिर काष्ठा pci_epc_features *pci_epc_get_features(काष्ठा pci_epc *epc,
 						    u8 func_no)
-{
-	const struct pci_epc_features *epc_features;
+अणु
+	स्थिर काष्ठा pci_epc_features *epc_features;
 
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions)
-		return NULL;
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions)
+		वापस शून्य;
 
-	if (!epc->ops->get_features)
-		return NULL;
+	अगर (!epc->ops->get_features)
+		वापस शून्य;
 
 	mutex_lock(&epc->lock);
 	epc_features = epc->ops->get_features(epc, func_no);
 	mutex_unlock(&epc->lock);
 
-	return epc_features;
-}
+	वापस epc_features;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_get_features);
 
 /**
@@ -167,15 +168,15 @@ EXPORT_SYMBOL_GPL(pci_epc_get_features);
  *
  * Invoke to stop the PCI link
  */
-void pci_epc_stop(struct pci_epc *epc)
-{
-	if (IS_ERR(epc) || !epc->ops->stop)
-		return;
+व्योम pci_epc_stop(काष्ठा pci_epc *epc)
+अणु
+	अगर (IS_ERR(epc) || !epc->ops->stop)
+		वापस;
 
 	mutex_lock(&epc->lock);
 	epc->ops->stop(epc);
 	mutex_unlock(&epc->lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_stop);
 
 /**
@@ -184,479 +185,479 @@ EXPORT_SYMBOL_GPL(pci_epc_stop);
  *
  * Invoke to start the PCI link
  */
-int pci_epc_start(struct pci_epc *epc)
-{
-	int ret;
+पूर्णांक pci_epc_start(काष्ठा pci_epc *epc)
+अणु
+	पूर्णांक ret;
 
-	if (IS_ERR(epc))
-		return -EINVAL;
+	अगर (IS_ERR(epc))
+		वापस -EINVAL;
 
-	if (!epc->ops->start)
-		return 0;
+	अगर (!epc->ops->start)
+		वापस 0;
 
 	mutex_lock(&epc->lock);
 	ret = epc->ops->start(epc);
 	mutex_unlock(&epc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_start);
 
 /**
- * pci_epc_raise_irq() - interrupt the host system
- * @epc: the EPC device which has to interrupt the host
- * @func_no: the endpoint function number in the EPC device
- * @type: specify the type of interrupt; legacy, MSI or MSI-X
- * @interrupt_num: the MSI or MSI-X interrupt number
+ * pci_epc_उठाओ_irq() - पूर्णांकerrupt the host प्रणाली
+ * @epc: the EPC device which has to पूर्णांकerrupt the host
+ * @func_no: the endpoपूर्णांक function number in the EPC device
+ * @type: specअगरy the type of पूर्णांकerrupt; legacy, MSI or MSI-X
+ * @पूर्णांकerrupt_num: the MSI or MSI-X पूर्णांकerrupt number
  *
- * Invoke to raise an legacy, MSI or MSI-X interrupt
+ * Invoke to उठाओ an legacy, MSI or MSI-X पूर्णांकerrupt
  */
-int pci_epc_raise_irq(struct pci_epc *epc, u8 func_no,
-		      enum pci_epc_irq_type type, u16 interrupt_num)
-{
-	int ret;
+पूर्णांक pci_epc_उठाओ_irq(काष्ठा pci_epc *epc, u8 func_no,
+		      क्रमागत pci_epc_irq_type type, u16 पूर्णांकerrupt_num)
+अणु
+	पूर्णांक ret;
 
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions)
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions)
+		वापस -EINVAL;
 
-	if (!epc->ops->raise_irq)
-		return 0;
+	अगर (!epc->ops->उठाओ_irq)
+		वापस 0;
 
 	mutex_lock(&epc->lock);
-	ret = epc->ops->raise_irq(epc, func_no, type, interrupt_num);
+	ret = epc->ops->उठाओ_irq(epc, func_no, type, पूर्णांकerrupt_num);
 	mutex_unlock(&epc->lock);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(pci_epc_raise_irq);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_epc_उठाओ_irq);
 
 /**
- * pci_epc_map_msi_irq() - Map physical address to MSI address and return
+ * pci_epc_map_msi_irq() - Map physical address to MSI address and वापस
  *                         MSI data
  * @epc: the EPC device which has the MSI capability
- * @func_no: the physical endpoint function number in the EPC device
+ * @func_no: the physical endpoपूर्णांक function number in the EPC device
  * @phys_addr: the physical address of the outbound region
- * @interrupt_num: the MSI interrupt number
- * @entry_size: Size of Outbound address region for each interrupt
- * @msi_data: the data that should be written in order to raise MSI interrupt
- *            with interrupt number as 'interrupt num'
+ * @पूर्णांकerrupt_num: the MSI पूर्णांकerrupt number
+ * @entry_size: Size of Outbound address region क्रम each पूर्णांकerrupt
+ * @msi_data: the data that should be written in order to उठाओ MSI पूर्णांकerrupt
+ *            with पूर्णांकerrupt number as 'interrupt num'
  * @msi_addr_offset: Offset of MSI address from the aligned outbound address
  *                   to which the MSI address is mapped
  *
- * Invoke to map physical address to MSI address and return MSI data. The
+ * Invoke to map physical address to MSI address and वापस MSI data. The
  * physical address should be an address in the outbound region. This is
- * required to implement doorbell functionality of NTB wherein EPC on either
- * side of the interface (primary and secondary) can directly write to the
- * physical address (in outbound region) of the other interface to ring
- * doorbell.
+ * required to implement करोorbell functionality of NTB wherein EPC on either
+ * side of the पूर्णांकerface (primary and secondary) can directly ग_लिखो to the
+ * physical address (in outbound region) of the other पूर्णांकerface to ring
+ * करोorbell.
  */
-int pci_epc_map_msi_irq(struct pci_epc *epc, u8 func_no, phys_addr_t phys_addr,
-			u8 interrupt_num, u32 entry_size, u32 *msi_data,
+पूर्णांक pci_epc_map_msi_irq(काष्ठा pci_epc *epc, u8 func_no, phys_addr_t phys_addr,
+			u8 पूर्णांकerrupt_num, u32 entry_size, u32 *msi_data,
 			u32 *msi_addr_offset)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	if (IS_ERR_OR_NULL(epc))
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(epc))
+		वापस -EINVAL;
 
-	if (!epc->ops->map_msi_irq)
-		return -EINVAL;
+	अगर (!epc->ops->map_msi_irq)
+		वापस -EINVAL;
 
 	mutex_lock(&epc->lock);
-	ret = epc->ops->map_msi_irq(epc, func_no, phys_addr, interrupt_num,
+	ret = epc->ops->map_msi_irq(epc, func_no, phys_addr, पूर्णांकerrupt_num,
 				    entry_size, msi_data, msi_addr_offset);
 	mutex_unlock(&epc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_map_msi_irq);
 
 /**
- * pci_epc_get_msi() - get the number of MSI interrupt numbers allocated
- * @epc: the EPC device to which MSI interrupts was requested
- * @func_no: the endpoint function number in the EPC device
+ * pci_epc_get_msi() - get the number of MSI पूर्णांकerrupt numbers allocated
+ * @epc: the EPC device to which MSI पूर्णांकerrupts was requested
+ * @func_no: the endpoपूर्णांक function number in the EPC device
  *
- * Invoke to get the number of MSI interrupts allocated by the RC
+ * Invoke to get the number of MSI पूर्णांकerrupts allocated by the RC
  */
-int pci_epc_get_msi(struct pci_epc *epc, u8 func_no)
-{
-	int interrupt;
+पूर्णांक pci_epc_get_msi(काष्ठा pci_epc *epc, u8 func_no)
+अणु
+	पूर्णांक पूर्णांकerrupt;
 
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions)
-		return 0;
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions)
+		वापस 0;
 
-	if (!epc->ops->get_msi)
-		return 0;
+	अगर (!epc->ops->get_msi)
+		वापस 0;
 
 	mutex_lock(&epc->lock);
-	interrupt = epc->ops->get_msi(epc, func_no);
+	पूर्णांकerrupt = epc->ops->get_msi(epc, func_no);
 	mutex_unlock(&epc->lock);
 
-	if (interrupt < 0)
-		return 0;
+	अगर (पूर्णांकerrupt < 0)
+		वापस 0;
 
-	interrupt = 1 << interrupt;
+	पूर्णांकerrupt = 1 << पूर्णांकerrupt;
 
-	return interrupt;
-}
+	वापस पूर्णांकerrupt;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_get_msi);
 
 /**
- * pci_epc_set_msi() - set the number of MSI interrupt numbers required
+ * pci_epc_set_msi() - set the number of MSI पूर्णांकerrupt numbers required
  * @epc: the EPC device on which MSI has to be configured
- * @func_no: the endpoint function number in the EPC device
- * @interrupts: number of MSI interrupts required by the EPF
+ * @func_no: the endpoपूर्णांक function number in the EPC device
+ * @पूर्णांकerrupts: number of MSI पूर्णांकerrupts required by the EPF
  *
- * Invoke to set the required number of MSI interrupts.
+ * Invoke to set the required number of MSI पूर्णांकerrupts.
  */
-int pci_epc_set_msi(struct pci_epc *epc, u8 func_no, u8 interrupts)
-{
-	int ret;
-	u8 encode_int;
+पूर्णांक pci_epc_set_msi(काष्ठा pci_epc *epc, u8 func_no, u8 पूर्णांकerrupts)
+अणु
+	पूर्णांक ret;
+	u8 encode_पूर्णांक;
 
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions ||
-	    interrupts > 32)
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions ||
+	    पूर्णांकerrupts > 32)
+		वापस -EINVAL;
 
-	if (!epc->ops->set_msi)
-		return 0;
+	अगर (!epc->ops->set_msi)
+		वापस 0;
 
-	encode_int = order_base_2(interrupts);
+	encode_पूर्णांक = order_base_2(पूर्णांकerrupts);
 
 	mutex_lock(&epc->lock);
-	ret = epc->ops->set_msi(epc, func_no, encode_int);
+	ret = epc->ops->set_msi(epc, func_no, encode_पूर्णांक);
 	mutex_unlock(&epc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_set_msi);
 
 /**
- * pci_epc_get_msix() - get the number of MSI-X interrupt numbers allocated
- * @epc: the EPC device to which MSI-X interrupts was requested
- * @func_no: the endpoint function number in the EPC device
+ * pci_epc_get_msix() - get the number of MSI-X पूर्णांकerrupt numbers allocated
+ * @epc: the EPC device to which MSI-X पूर्णांकerrupts was requested
+ * @func_no: the endpoपूर्णांक function number in the EPC device
  *
- * Invoke to get the number of MSI-X interrupts allocated by the RC
+ * Invoke to get the number of MSI-X पूर्णांकerrupts allocated by the RC
  */
-int pci_epc_get_msix(struct pci_epc *epc, u8 func_no)
-{
-	int interrupt;
+पूर्णांक pci_epc_get_msix(काष्ठा pci_epc *epc, u8 func_no)
+अणु
+	पूर्णांक पूर्णांकerrupt;
 
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions)
-		return 0;
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions)
+		वापस 0;
 
-	if (!epc->ops->get_msix)
-		return 0;
+	अगर (!epc->ops->get_msix)
+		वापस 0;
 
 	mutex_lock(&epc->lock);
-	interrupt = epc->ops->get_msix(epc, func_no);
+	पूर्णांकerrupt = epc->ops->get_msix(epc, func_no);
 	mutex_unlock(&epc->lock);
 
-	if (interrupt < 0)
-		return 0;
+	अगर (पूर्णांकerrupt < 0)
+		वापस 0;
 
-	return interrupt + 1;
-}
+	वापस पूर्णांकerrupt + 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_get_msix);
 
 /**
- * pci_epc_set_msix() - set the number of MSI-X interrupt numbers required
+ * pci_epc_set_msix() - set the number of MSI-X पूर्णांकerrupt numbers required
  * @epc: the EPC device on which MSI-X has to be configured
- * @func_no: the endpoint function number in the EPC device
- * @interrupts: number of MSI-X interrupts required by the EPF
+ * @func_no: the endpoपूर्णांक function number in the EPC device
+ * @पूर्णांकerrupts: number of MSI-X पूर्णांकerrupts required by the EPF
  * @bir: BAR where the MSI-X table resides
- * @offset: Offset pointing to the start of MSI-X table
+ * @offset: Offset poपूर्णांकing to the start of MSI-X table
  *
- * Invoke to set the required number of MSI-X interrupts.
+ * Invoke to set the required number of MSI-X पूर्णांकerrupts.
  */
-int pci_epc_set_msix(struct pci_epc *epc, u8 func_no, u16 interrupts,
-		     enum pci_barno bir, u32 offset)
-{
-	int ret;
+पूर्णांक pci_epc_set_msix(काष्ठा pci_epc *epc, u8 func_no, u16 पूर्णांकerrupts,
+		     क्रमागत pci_barno bir, u32 offset)
+अणु
+	पूर्णांक ret;
 
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions ||
-	    interrupts < 1 || interrupts > 2048)
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions ||
+	    पूर्णांकerrupts < 1 || पूर्णांकerrupts > 2048)
+		वापस -EINVAL;
 
-	if (!epc->ops->set_msix)
-		return 0;
+	अगर (!epc->ops->set_msix)
+		वापस 0;
 
 	mutex_lock(&epc->lock);
-	ret = epc->ops->set_msix(epc, func_no, interrupts - 1, bir, offset);
+	ret = epc->ops->set_msix(epc, func_no, पूर्णांकerrupts - 1, bir, offset);
 	mutex_unlock(&epc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_set_msix);
 
 /**
  * pci_epc_unmap_addr() - unmap CPU address from PCI address
  * @epc: the EPC device on which address is allocated
- * @func_no: the endpoint function number in the EPC device
- * @phys_addr: physical address of the local system
+ * @func_no: the endpoपूर्णांक function number in the EPC device
+ * @phys_addr: physical address of the local प्रणाली
  *
  * Invoke to unmap the CPU address from PCI address.
  */
-void pci_epc_unmap_addr(struct pci_epc *epc, u8 func_no,
+व्योम pci_epc_unmap_addr(काष्ठा pci_epc *epc, u8 func_no,
 			phys_addr_t phys_addr)
-{
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions)
-		return;
+अणु
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions)
+		वापस;
 
-	if (!epc->ops->unmap_addr)
-		return;
+	अगर (!epc->ops->unmap_addr)
+		वापस;
 
 	mutex_lock(&epc->lock);
 	epc->ops->unmap_addr(epc, func_no, phys_addr);
 	mutex_unlock(&epc->lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_unmap_addr);
 
 /**
  * pci_epc_map_addr() - map CPU address to PCI address
  * @epc: the EPC device on which address is allocated
- * @func_no: the endpoint function number in the EPC device
- * @phys_addr: physical address of the local system
+ * @func_no: the endpoपूर्णांक function number in the EPC device
+ * @phys_addr: physical address of the local प्रणाली
  * @pci_addr: PCI address to which the physical address should be mapped
  * @size: the size of the allocation
  *
  * Invoke to map CPU address with PCI address.
  */
-int pci_epc_map_addr(struct pci_epc *epc, u8 func_no,
-		     phys_addr_t phys_addr, u64 pci_addr, size_t size)
-{
-	int ret;
+पूर्णांक pci_epc_map_addr(काष्ठा pci_epc *epc, u8 func_no,
+		     phys_addr_t phys_addr, u64 pci_addr, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
 
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions)
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions)
+		वापस -EINVAL;
 
-	if (!epc->ops->map_addr)
-		return 0;
+	अगर (!epc->ops->map_addr)
+		वापस 0;
 
 	mutex_lock(&epc->lock);
 	ret = epc->ops->map_addr(epc, func_no, phys_addr, pci_addr, size);
 	mutex_unlock(&epc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_map_addr);
 
 /**
  * pci_epc_clear_bar() - reset the BAR
- * @epc: the EPC device for which the BAR has to be cleared
- * @func_no: the endpoint function number in the EPC device
- * @epf_bar: the struct epf_bar that contains the BAR information
+ * @epc: the EPC device क्रम which the BAR has to be cleared
+ * @func_no: the endpoपूर्णांक function number in the EPC device
+ * @epf_bar: the काष्ठा epf_bar that contains the BAR inक्रमmation
  *
- * Invoke to reset the BAR of the endpoint device.
+ * Invoke to reset the BAR of the endpoपूर्णांक device.
  */
-void pci_epc_clear_bar(struct pci_epc *epc, u8 func_no,
-		       struct pci_epf_bar *epf_bar)
-{
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions ||
+व्योम pci_epc_clear_bar(काष्ठा pci_epc *epc, u8 func_no,
+		       काष्ठा pci_epf_bar *epf_bar)
+अणु
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions ||
 	    (epf_bar->barno == BAR_5 &&
 	     epf_bar->flags & PCI_BASE_ADDRESS_MEM_TYPE_64))
-		return;
+		वापस;
 
-	if (!epc->ops->clear_bar)
-		return;
+	अगर (!epc->ops->clear_bar)
+		वापस;
 
 	mutex_lock(&epc->lock);
 	epc->ops->clear_bar(epc, func_no, epf_bar);
 	mutex_unlock(&epc->lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_clear_bar);
 
 /**
- * pci_epc_set_bar() - configure BAR in order for host to assign PCI addr space
+ * pci_epc_set_bar() - configure BAR in order क्रम host to assign PCI addr space
  * @epc: the EPC device on which BAR has to be configured
- * @func_no: the endpoint function number in the EPC device
- * @epf_bar: the struct epf_bar that contains the BAR information
+ * @func_no: the endpoपूर्णांक function number in the EPC device
+ * @epf_bar: the काष्ठा epf_bar that contains the BAR inक्रमmation
  *
- * Invoke to configure the BAR of the endpoint device.
+ * Invoke to configure the BAR of the endpoपूर्णांक device.
  */
-int pci_epc_set_bar(struct pci_epc *epc, u8 func_no,
-		    struct pci_epf_bar *epf_bar)
-{
-	int ret;
-	int flags = epf_bar->flags;
+पूर्णांक pci_epc_set_bar(काष्ठा pci_epc *epc, u8 func_no,
+		    काष्ठा pci_epf_bar *epf_bar)
+अणु
+	पूर्णांक ret;
+	पूर्णांक flags = epf_bar->flags;
 
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions ||
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions ||
 	    (epf_bar->barno == BAR_5 &&
 	     flags & PCI_BASE_ADDRESS_MEM_TYPE_64) ||
 	    (flags & PCI_BASE_ADDRESS_SPACE_IO &&
 	     flags & PCI_BASE_ADDRESS_IO_MASK) ||
 	    (upper_32_bits(epf_bar->size) &&
 	     !(flags & PCI_BASE_ADDRESS_MEM_TYPE_64)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!epc->ops->set_bar)
-		return 0;
+	अगर (!epc->ops->set_bar)
+		वापस 0;
 
 	mutex_lock(&epc->lock);
 	ret = epc->ops->set_bar(epc, func_no, epf_bar);
 	mutex_unlock(&epc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_set_bar);
 
 /**
- * pci_epc_write_header() - write standard configuration header
+ * pci_epc_ग_लिखो_header() - ग_लिखो standard configuration header
  * @epc: the EPC device to which the configuration header should be written
- * @func_no: the endpoint function number in the EPC device
+ * @func_no: the endpoपूर्णांक function number in the EPC device
  * @header: standard configuration header fields
  *
- * Invoke to write the configuration header to the endpoint controller. Every
- * endpoint controller will have a dedicated location to which the standard
- * configuration header would be written. The callback function should write
+ * Invoke to ग_लिखो the configuration header to the endpoपूर्णांक controller. Every
+ * endpoपूर्णांक controller will have a dedicated location to which the standard
+ * configuration header would be written. The callback function should ग_लिखो
  * the header fields to this dedicated location.
  */
-int pci_epc_write_header(struct pci_epc *epc, u8 func_no,
-			 struct pci_epf_header *header)
-{
-	int ret;
+पूर्णांक pci_epc_ग_लिखो_header(काष्ठा pci_epc *epc, u8 func_no,
+			 काष्ठा pci_epf_header *header)
+अणु
+	पूर्णांक ret;
 
-	if (IS_ERR_OR_NULL(epc) || func_no >= epc->max_functions)
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(epc) || func_no >= epc->max_functions)
+		वापस -EINVAL;
 
-	if (!epc->ops->write_header)
-		return 0;
+	अगर (!epc->ops->ग_लिखो_header)
+		वापस 0;
 
 	mutex_lock(&epc->lock);
-	ret = epc->ops->write_header(epc, func_no, header);
+	ret = epc->ops->ग_लिखो_header(epc, func_no, header);
 	mutex_unlock(&epc->lock);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(pci_epc_write_header);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_epc_ग_लिखो_header);
 
 /**
- * pci_epc_add_epf() - bind PCI endpoint function to an endpoint controller
- * @epc: the EPC device to which the endpoint function should be added
- * @epf: the endpoint function to be added
- * @type: Identifies if the EPC is connected to the primary or secondary
- *        interface of EPF
+ * pci_epc_add_epf() - bind PCI endpoपूर्णांक function to an endpoपूर्णांक controller
+ * @epc: the EPC device to which the endpoपूर्णांक function should be added
+ * @epf: the endpoपूर्णांक function to be added
+ * @type: Identअगरies अगर the EPC is connected to the primary or secondary
+ *        पूर्णांकerface of EPF
  *
- * A PCI endpoint device can have one or more functions. In the case of PCIe,
- * the specification allows up to 8 PCIe endpoint functions. Invoke
- * pci_epc_add_epf() to add a PCI endpoint function to an endpoint controller.
+ * A PCI endpoपूर्णांक device can have one or more functions. In the हाल of PCIe,
+ * the specअगरication allows up to 8 PCIe endpoपूर्णांक functions. Invoke
+ * pci_epc_add_epf() to add a PCI endpoपूर्णांक function to an endpoपूर्णांक controller.
  */
-int pci_epc_add_epf(struct pci_epc *epc, struct pci_epf *epf,
-		    enum pci_epc_interface_type type)
-{
-	struct list_head *list;
+पूर्णांक pci_epc_add_epf(काष्ठा pci_epc *epc, काष्ठा pci_epf *epf,
+		    क्रमागत pci_epc_पूर्णांकerface_type type)
+अणु
+	काष्ठा list_head *list;
 	u32 func_no;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (IS_ERR_OR_NULL(epc))
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(epc))
+		वापस -EINVAL;
 
-	if (type == PRIMARY_INTERFACE && epf->epc)
-		return -EBUSY;
+	अगर (type == PRIMARY_INTERFACE && epf->epc)
+		वापस -EBUSY;
 
-	if (type == SECONDARY_INTERFACE && epf->sec_epc)
-		return -EBUSY;
+	अगर (type == SECONDARY_INTERFACE && epf->sec_epc)
+		वापस -EBUSY;
 
 	mutex_lock(&epc->lock);
 	func_no = find_first_zero_bit(&epc->function_num_map,
 				      BITS_PER_LONG);
-	if (func_no >= BITS_PER_LONG) {
+	अगर (func_no >= BITS_PER_LONG) अणु
 		ret = -EINVAL;
-		goto ret;
-	}
+		जाओ ret;
+	पूर्ण
 
-	if (func_no > epc->max_functions - 1) {
+	अगर (func_no > epc->max_functions - 1) अणु
 		dev_err(&epc->dev, "Exceeding max supported Function Number\n");
 		ret = -EINVAL;
-		goto ret;
-	}
+		जाओ ret;
+	पूर्ण
 
 	set_bit(func_no, &epc->function_num_map);
-	if (type == PRIMARY_INTERFACE) {
+	अगर (type == PRIMARY_INTERFACE) अणु
 		epf->func_no = func_no;
 		epf->epc = epc;
 		list = &epf->list;
-	} else {
+	पूर्ण अन्यथा अणु
 		epf->sec_epc_func_no = func_no;
 		epf->sec_epc = epc;
 		list = &epf->sec_epc_list;
-	}
+	पूर्ण
 
 	list_add_tail(list, &epc->pci_epf);
 ret:
 	mutex_unlock(&epc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_add_epf);
 
 /**
- * pci_epc_remove_epf() - remove PCI endpoint function from endpoint controller
- * @epc: the EPC device from which the endpoint function should be removed
- * @epf: the endpoint function to be removed
- * @type: identifies if the EPC is connected to the primary or secondary
- *        interface of EPF
+ * pci_epc_हटाओ_epf() - हटाओ PCI endpoपूर्णांक function from endpoपूर्णांक controller
+ * @epc: the EPC device from which the endpoपूर्णांक function should be हटाओd
+ * @epf: the endpoपूर्णांक function to be हटाओd
+ * @type: identअगरies अगर the EPC is connected to the primary or secondary
+ *        पूर्णांकerface of EPF
  *
- * Invoke to remove PCI endpoint function from the endpoint controller.
+ * Invoke to हटाओ PCI endpoपूर्णांक function from the endpoपूर्णांक controller.
  */
-void pci_epc_remove_epf(struct pci_epc *epc, struct pci_epf *epf,
-			enum pci_epc_interface_type type)
-{
-	struct list_head *list;
+व्योम pci_epc_हटाओ_epf(काष्ठा pci_epc *epc, काष्ठा pci_epf *epf,
+			क्रमागत pci_epc_पूर्णांकerface_type type)
+अणु
+	काष्ठा list_head *list;
 	u32 func_no = 0;
 
-	if (!epc || IS_ERR(epc) || !epf)
-		return;
+	अगर (!epc || IS_ERR(epc) || !epf)
+		वापस;
 
-	if (type == PRIMARY_INTERFACE) {
+	अगर (type == PRIMARY_INTERFACE) अणु
 		func_no = epf->func_no;
 		list = &epf->list;
-	} else {
+	पूर्ण अन्यथा अणु
 		func_no = epf->sec_epc_func_no;
 		list = &epf->sec_epc_list;
-	}
+	पूर्ण
 
 	mutex_lock(&epc->lock);
 	clear_bit(func_no, &epc->function_num_map);
 	list_del(list);
-	epf->epc = NULL;
+	epf->epc = शून्य;
 	mutex_unlock(&epc->lock);
-}
-EXPORT_SYMBOL_GPL(pci_epc_remove_epf);
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_epc_हटाओ_epf);
 
 /**
- * pci_epc_linkup() - Notify the EPF device that EPC device has established a
+ * pci_epc_linkup() - Notअगरy the EPF device that EPC device has established a
  *		      connection with the Root Complex.
  * @epc: the EPC device which has established link with the host
  *
- * Invoke to Notify the EPF device that the EPC device has established a
+ * Invoke to Notअगरy the EPF device that the EPC device has established a
  * connection with the Root Complex.
  */
-void pci_epc_linkup(struct pci_epc *epc)
-{
-	if (!epc || IS_ERR(epc))
-		return;
+व्योम pci_epc_linkup(काष्ठा pci_epc *epc)
+अणु
+	अगर (!epc || IS_ERR(epc))
+		वापस;
 
-	atomic_notifier_call_chain(&epc->notifier, LINK_UP, NULL);
-}
+	atomic_notअगरier_call_chain(&epc->notअगरier, LINK_UP, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_linkup);
 
 /**
- * pci_epc_init_notify() - Notify the EPF device that EPC device's core
+ * pci_epc_init_notअगरy() - Notअगरy the EPF device that EPC device's core
  *			   initialization is completed.
  * @epc: the EPC device whose core initialization is completeds
  *
- * Invoke to Notify the EPF device that the EPC device's initialization
+ * Invoke to Notअगरy the EPF device that the EPC device's initialization
  * is completed.
  */
-void pci_epc_init_notify(struct pci_epc *epc)
-{
-	if (!epc || IS_ERR(epc))
-		return;
+व्योम pci_epc_init_notअगरy(काष्ठा pci_epc *epc)
+अणु
+	अगर (!epc || IS_ERR(epc))
+		वापस;
 
-	atomic_notifier_call_chain(&epc->notifier, CORE_INIT, NULL);
-}
-EXPORT_SYMBOL_GPL(pci_epc_init_notify);
+	atomic_notअगरier_call_chain(&epc->notअगरier, CORE_INIT, शून्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_epc_init_notअगरy);
 
 /**
  * pci_epc_destroy() - destroy the EPC device
@@ -664,12 +665,12 @@ EXPORT_SYMBOL_GPL(pci_epc_init_notify);
  *
  * Invoke to destroy the PCI EPC device
  */
-void pci_epc_destroy(struct pci_epc *epc)
-{
-	pci_ep_cfs_remove_epc_group(epc->group);
-	device_unregister(&epc->dev);
-	kfree(epc);
-}
+व्योम pci_epc_destroy(काष्ठा pci_epc *epc)
+अणु
+	pci_ep_cfs_हटाओ_epc_group(epc->group);
+	device_unरेजिस्टर(&epc->dev);
+	kमुक्त(epc);
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_destroy);
 
 /**
@@ -680,45 +681,45 @@ EXPORT_SYMBOL_GPL(pci_epc_destroy);
  * Invoke to destroy the devres associated with this
  * pci_epc and destroy the EPC device.
  */
-void devm_pci_epc_destroy(struct device *dev, struct pci_epc *epc)
-{
-	int r;
+व्योम devm_pci_epc_destroy(काष्ठा device *dev, काष्ठा pci_epc *epc)
+अणु
+	पूर्णांक r;
 
 	r = devres_destroy(dev, devm_pci_epc_release, devm_pci_epc_match,
 			   epc);
 	dev_WARN_ONCE(dev, r, "couldn't find PCI EPC resource\n");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_pci_epc_destroy);
 
 /**
- * __pci_epc_create() - create a new endpoint controller (EPC) device
+ * __pci_epc_create() - create a new endpoपूर्णांक controller (EPC) device
  * @dev: device that is creating the new EPC
- * @ops: function pointers for performing EPC operations
+ * @ops: function poपूर्णांकers क्रम perक्रमming EPC operations
  * @owner: the owner of the module that creates the EPC device
  *
  * Invoke to create a new EPC device and add it to pci_epc class.
  */
-struct pci_epc *
-__pci_epc_create(struct device *dev, const struct pci_epc_ops *ops,
-		 struct module *owner)
-{
-	int ret;
-	struct pci_epc *epc;
+काष्ठा pci_epc *
+__pci_epc_create(काष्ठा device *dev, स्थिर काष्ठा pci_epc_ops *ops,
+		 काष्ठा module *owner)
+अणु
+	पूर्णांक ret;
+	काष्ठा pci_epc *epc;
 
-	if (WARN_ON(!dev)) {
+	अगर (WARN_ON(!dev)) अणु
 		ret = -EINVAL;
-		goto err_ret;
-	}
+		जाओ err_ret;
+	पूर्ण
 
-	epc = kzalloc(sizeof(*epc), GFP_KERNEL);
-	if (!epc) {
+	epc = kzalloc(माप(*epc), GFP_KERNEL);
+	अगर (!epc) अणु
 		ret = -ENOMEM;
-		goto err_ret;
-	}
+		जाओ err_ret;
+	पूर्ण
 
 	mutex_init(&epc->lock);
 	INIT_LIST_HEAD(&epc->pci_epf);
-	ATOMIC_INIT_NOTIFIER_HEAD(&epc->notifier);
+	ATOMIC_INIT_NOTIFIER_HEAD(&epc->notअगरier);
 
 	device_initialize(&epc->dev);
 	epc->dev.class = pci_epc_class;
@@ -726,77 +727,77 @@ __pci_epc_create(struct device *dev, const struct pci_epc_ops *ops,
 	epc->ops = ops;
 
 	ret = dev_set_name(&epc->dev, "%s", dev_name(dev));
-	if (ret)
-		goto put_dev;
+	अगर (ret)
+		जाओ put_dev;
 
 	ret = device_add(&epc->dev);
-	if (ret)
-		goto put_dev;
+	अगर (ret)
+		जाओ put_dev;
 
 	epc->group = pci_ep_cfs_add_epc_group(dev_name(dev));
 
-	return epc;
+	वापस epc;
 
 put_dev:
 	put_device(&epc->dev);
-	kfree(epc);
+	kमुक्त(epc);
 
 err_ret:
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(__pci_epc_create);
 
 /**
- * __devm_pci_epc_create() - create a new endpoint controller (EPC) device
+ * __devm_pci_epc_create() - create a new endpoपूर्णांक controller (EPC) device
  * @dev: device that is creating the new EPC
- * @ops: function pointers for performing EPC operations
+ * @ops: function poपूर्णांकers क्रम perक्रमming EPC operations
  * @owner: the owner of the module that creates the EPC device
  *
  * Invoke to create a new EPC device and add it to pci_epc class.
  * While at that, it also associates the device with the pci_epc using devres.
  * On driver detach, release function is invoked on the devres data,
- * then, devres data is freed.
+ * then, devres data is मुक्तd.
  */
-struct pci_epc *
-__devm_pci_epc_create(struct device *dev, const struct pci_epc_ops *ops,
-		      struct module *owner)
-{
-	struct pci_epc **ptr, *epc;
+काष्ठा pci_epc *
+__devm_pci_epc_create(काष्ठा device *dev, स्थिर काष्ठा pci_epc_ops *ops,
+		      काष्ठा module *owner)
+अणु
+	काष्ठा pci_epc **ptr, *epc;
 
-	ptr = devres_alloc(devm_pci_epc_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_pci_epc_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
 	epc = __pci_epc_create(dev, ops, owner);
-	if (!IS_ERR(epc)) {
+	अगर (!IS_ERR(epc)) अणु
 		*ptr = epc;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return epc;
-}
+	वापस epc;
+पूर्ण
 EXPORT_SYMBOL_GPL(__devm_pci_epc_create);
 
-static int __init pci_epc_init(void)
-{
+अटल पूर्णांक __init pci_epc_init(व्योम)
+अणु
 	pci_epc_class = class_create(THIS_MODULE, "pci_epc");
-	if (IS_ERR(pci_epc_class)) {
+	अगर (IS_ERR(pci_epc_class)) अणु
 		pr_err("failed to create pci epc class --> %ld\n",
 		       PTR_ERR(pci_epc_class));
-		return PTR_ERR(pci_epc_class);
-	}
+		वापस PTR_ERR(pci_epc_class);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 module_init(pci_epc_init);
 
-static void __exit pci_epc_exit(void)
-{
+अटल व्योम __निकास pci_epc_निकास(व्योम)
+अणु
 	class_destroy(pci_epc_class);
-}
-module_exit(pci_epc_exit);
+पूर्ण
+module_निकास(pci_epc_निकास);
 
 MODULE_DESCRIPTION("PCI EPC Library");
 MODULE_AUTHOR("Kishon Vijay Abraham I <kishon@ti.com>");

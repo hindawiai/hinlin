@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2010, Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2009, Wind River Systems Inc
  *   Implemented by fredrik.markstrom@gmail.com and ivarholmqvist@gmail.com
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/extable.h>
-#include <linux/uaccess.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/uaccess.h>
 
-int fixup_exception(struct pt_regs *regs)
-{
-	const struct exception_table_entry *fixup;
+पूर्णांक fixup_exception(काष्ठा pt_regs *regs)
+अणु
+	स्थिर काष्ठा exception_table_entry *fixup;
 
 	fixup = search_exception_tables(regs->ea);
-	if (fixup) {
+	अगर (fixup) अणु
 		regs->ea = fixup->fixup;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

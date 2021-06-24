@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Windfarm PowerMac thermal control. SMU based sensors
  *
@@ -6,472 +7,472 @@
  *                    <benh@kernel.crashing.org>
  */
 
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/wait.h>
-#include <linux/completion.h>
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <asm/io.h>
-#include <asm/sections.h>
-#include <asm/smu.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/completion.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/smu.h>
 
-#include "windfarm.h"
+#समावेश "windfarm.h"
 
-#define VERSION "0.2"
+#घोषणा VERSION "0.2"
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#ifdef DEBUG
-#define DBG(args...)	printk(args)
-#else
-#define DBG(args...)	do { } while(0)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा DBG(args...)	prपूर्णांकk(args)
+#अन्यथा
+#घोषणा DBG(args...)	करो अणु पूर्ण जबतक(0)
+#पूर्ण_अगर
 
 /*
- * Various SMU "partitions" calibration objects for which we
- * keep pointers here for use by bits & pieces of the driver
+ * Various SMU "partitions" calibration objects क्रम which we
+ * keep poपूर्णांकers here क्रम use by bits & pieces of the driver
  */
-static struct smu_sdbp_cpuvcp *cpuvcp;
-static int  cpuvcp_version;
-static struct smu_sdbp_cpudiode *cpudiode;
-static struct smu_sdbp_slotspow *slotspow;
-static u8 *debugswitches;
+अटल काष्ठा smu_sdbp_cpuvcp *cpuvcp;
+अटल पूर्णांक  cpuvcp_version;
+अटल काष्ठा smu_sdbp_cpudiode *cpudiode;
+अटल काष्ठा smu_sdbp_slotsघात *slotsघात;
+अटल u8 *debugचयनes;
 
 /*
  * SMU basic sensors objects
  */
 
-static LIST_HEAD(smu_ads);
+अटल LIST_HEAD(smu_ads);
 
-struct smu_ad_sensor {
-	struct list_head	link;
+काष्ठा smu_ad_sensor अणु
+	काष्ठा list_head	link;
 	u32			reg;		/* index in SMU */
-	struct wf_sensor	sens;
-};
-#define to_smu_ads(c) container_of(c, struct smu_ad_sensor, sens)
+	काष्ठा wf_sensor	sens;
+पूर्ण;
+#घोषणा to_smu_ads(c) container_of(c, काष्ठा smu_ad_sensor, sens)
 
-static void smu_ads_release(struct wf_sensor *sr)
-{
-	struct smu_ad_sensor *ads = to_smu_ads(sr);
+अटल व्योम smu_ads_release(काष्ठा wf_sensor *sr)
+अणु
+	काष्ठा smu_ad_sensor *ads = to_smu_ads(sr);
 
-	kfree(ads);
-}
+	kमुक्त(ads);
+पूर्ण
 
-static int smu_read_adc(u8 id, s32 *value)
-{
-	struct smu_simple_cmd	cmd;
+अटल पूर्णांक smu_पढ़ो_adc(u8 id, s32 *value)
+अणु
+	काष्ठा smu_simple_cmd	cmd;
 	DECLARE_COMPLETION_ONSTACK(comp);
-	int rc;
+	पूर्णांक rc;
 
 	rc = smu_queue_simple(&cmd, SMU_CMD_READ_ADC, 1,
-			      smu_done_complete, &comp, id);
-	if (rc)
-		return rc;
-	wait_for_completion(&comp);
-	if (cmd.cmd.status != 0)
-		return cmd.cmd.status;
-	if (cmd.cmd.reply_len != 2) {
-		printk(KERN_ERR "winfarm: read ADC 0x%x returned %d bytes !\n",
+			      smu_करोne_complete, &comp, id);
+	अगर (rc)
+		वापस rc;
+	रुको_क्रम_completion(&comp);
+	अगर (cmd.cmd.status != 0)
+		वापस cmd.cmd.status;
+	अगर (cmd.cmd.reply_len != 2) अणु
+		prपूर्णांकk(KERN_ERR "winfarm: read ADC 0x%x returned %d bytes !\n",
 		       id, cmd.cmd.reply_len);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	*value = *((u16 *)cmd.buffer);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_cputemp_get(struct wf_sensor *sr, s32 *value)
-{
-	struct smu_ad_sensor *ads = to_smu_ads(sr);
-	int rc;
+अटल पूर्णांक smu_cputemp_get(काष्ठा wf_sensor *sr, s32 *value)
+अणु
+	काष्ठा smu_ad_sensor *ads = to_smu_ads(sr);
+	पूर्णांक rc;
 	s32 val;
 	s64 scaled;
 
-	rc = smu_read_adc(ads->reg, &val);
-	if (rc) {
-		printk(KERN_ERR "windfarm: read CPU temp failed, err %d\n",
+	rc = smu_पढ़ो_adc(ads->reg, &val);
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR "windfarm: read CPU temp failed, err %d\n",
 		       rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Ok, we have to scale & adjust, taking units into account */
+	/* Ok, we have to scale & adjust, taking units पूर्णांकo account */
 	scaled = (s64)(((u64)val) * (u64)cpudiode->m_value);
 	scaled >>= 3;
 	scaled += ((s64)cpudiode->b_value) << 9;
 	*value = (s32)(scaled << 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_cpuamp_get(struct wf_sensor *sr, s32 *value)
-{
-	struct smu_ad_sensor *ads = to_smu_ads(sr);
+अटल पूर्णांक smu_cpuamp_get(काष्ठा wf_sensor *sr, s32 *value)
+अणु
+	काष्ठा smu_ad_sensor *ads = to_smu_ads(sr);
 	s32 val, scaled;
-	int rc;
+	पूर्णांक rc;
 
-	rc = smu_read_adc(ads->reg, &val);
-	if (rc) {
-		printk(KERN_ERR "windfarm: read CPU current failed, err %d\n",
+	rc = smu_पढ़ो_adc(ads->reg, &val);
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR "windfarm: read CPU current failed, err %d\n",
 		       rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Ok, we have to scale & adjust, taking units into account */
+	/* Ok, we have to scale & adjust, taking units पूर्णांकo account */
 	scaled = (s32)(val * (u32)cpuvcp->curr_scale);
 	scaled += (s32)cpuvcp->curr_offset;
 	*value = scaled << 4;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_cpuvolt_get(struct wf_sensor *sr, s32 *value)
-{
-	struct smu_ad_sensor *ads = to_smu_ads(sr);
+अटल पूर्णांक smu_cpuvolt_get(काष्ठा wf_sensor *sr, s32 *value)
+अणु
+	काष्ठा smu_ad_sensor *ads = to_smu_ads(sr);
 	s32 val, scaled;
-	int rc;
+	पूर्णांक rc;
 
-	rc = smu_read_adc(ads->reg, &val);
-	if (rc) {
-		printk(KERN_ERR "windfarm: read CPU voltage failed, err %d\n",
+	rc = smu_पढ़ो_adc(ads->reg, &val);
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR "windfarm: read CPU voltage failed, err %d\n",
 		       rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Ok, we have to scale & adjust, taking units into account */
+	/* Ok, we have to scale & adjust, taking units पूर्णांकo account */
 	scaled = (s32)(val * (u32)cpuvcp->volt_scale);
 	scaled += (s32)cpuvcp->volt_offset;
 	*value = scaled << 4;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_slotspow_get(struct wf_sensor *sr, s32 *value)
-{
-	struct smu_ad_sensor *ads = to_smu_ads(sr);
+अटल पूर्णांक smu_slotsघात_get(काष्ठा wf_sensor *sr, s32 *value)
+अणु
+	काष्ठा smu_ad_sensor *ads = to_smu_ads(sr);
 	s32 val, scaled;
-	int rc;
+	पूर्णांक rc;
 
-	rc = smu_read_adc(ads->reg, &val);
-	if (rc) {
-		printk(KERN_ERR "windfarm: read slots power failed, err %d\n",
+	rc = smu_पढ़ो_adc(ads->reg, &val);
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR "windfarm: read slots power failed, err %d\n",
 		       rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Ok, we have to scale & adjust, taking units into account */
-	scaled = (s32)(val * (u32)slotspow->pow_scale);
-	scaled += (s32)slotspow->pow_offset;
+	/* Ok, we have to scale & adjust, taking units पूर्णांकo account */
+	scaled = (s32)(val * (u32)slotsघात->घात_scale);
+	scaled += (s32)slotsघात->घात_offset;
 	*value = scaled << 4;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct wf_sensor_ops smu_cputemp_ops = {
+अटल स्थिर काष्ठा wf_sensor_ops smu_cputemp_ops = अणु
 	.get_value	= smu_cputemp_get,
 	.release	= smu_ads_release,
 	.owner		= THIS_MODULE,
-};
-static const struct wf_sensor_ops smu_cpuamp_ops = {
+पूर्ण;
+अटल स्थिर काष्ठा wf_sensor_ops smu_cpuamp_ops = अणु
 	.get_value	= smu_cpuamp_get,
 	.release	= smu_ads_release,
 	.owner		= THIS_MODULE,
-};
-static const struct wf_sensor_ops smu_cpuvolt_ops = {
+पूर्ण;
+अटल स्थिर काष्ठा wf_sensor_ops smu_cpuvolt_ops = अणु
 	.get_value	= smu_cpuvolt_get,
 	.release	= smu_ads_release,
 	.owner		= THIS_MODULE,
-};
-static const struct wf_sensor_ops smu_slotspow_ops = {
-	.get_value	= smu_slotspow_get,
+पूर्ण;
+अटल स्थिर काष्ठा wf_sensor_ops smu_slotsघात_ops = अणु
+	.get_value	= smu_slotsघात_get,
 	.release	= smu_ads_release,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
 
-static struct smu_ad_sensor *smu_ads_create(struct device_node *node)
-{
-	struct smu_ad_sensor *ads;
-	const char *l;
-	const u32 *v;
+अटल काष्ठा smu_ad_sensor *smu_ads_create(काष्ठा device_node *node)
+अणु
+	काष्ठा smu_ad_sensor *ads;
+	स्थिर अक्षर *l;
+	स्थिर u32 *v;
 
-	ads = kmalloc(sizeof(struct smu_ad_sensor), GFP_KERNEL);
-	if (ads == NULL)
-		return NULL;
-	l = of_get_property(node, "location", NULL);
-	if (l == NULL)
-		goto fail;
+	ads = kदो_स्मृति(माप(काष्ठा smu_ad_sensor), GFP_KERNEL);
+	अगर (ads == शून्य)
+		वापस शून्य;
+	l = of_get_property(node, "location", शून्य);
+	अगर (l == शून्य)
+		जाओ fail;
 
 	/* We currently pick the sensors based on the OF name and location
-	 * properties, while Darwin uses the sensor-id's.
-	 * The problem with the IDs is that they are model specific while it
-	 * looks like apple has been doing a reasonably good job at keeping
+	 * properties, जबतक Darwin uses the sensor-id's.
+	 * The problem with the IDs is that they are model specअगरic जबतक it
+	 * looks like apple has been करोing a reasonably good job at keeping
 	 * the names and locations consistents so I'll stick with the names
-	 * and locations for now.
+	 * and locations क्रम now.
 	 */
-	if (of_node_is_type(node, "temp-sensor") &&
-	    !strcmp(l, "CPU T-Diode")) {
+	अगर (of_node_is_type(node, "temp-sensor") &&
+	    !म_भेद(l, "CPU T-Diode")) अणु
 		ads->sens.ops = &smu_cputemp_ops;
 		ads->sens.name = "cpu-temp";
-		if (cpudiode == NULL) {
+		अगर (cpudiode == शून्य) अणु
 			DBG("wf: cpudiode partition (%02x) not found\n",
 			    SMU_SDB_CPUDIODE_ID);
-			goto fail;
-		}
-	} else if (of_node_is_type(node, "current-sensor") &&
-		   !strcmp(l, "CPU Current")) {
+			जाओ fail;
+		पूर्ण
+	पूर्ण अन्यथा अगर (of_node_is_type(node, "current-sensor") &&
+		   !म_भेद(l, "CPU Current")) अणु
 		ads->sens.ops = &smu_cpuamp_ops;
 		ads->sens.name = "cpu-current";
-		if (cpuvcp == NULL) {
+		अगर (cpuvcp == शून्य) अणु
 			DBG("wf: cpuvcp partition (%02x) not found\n",
 			    SMU_SDB_CPUVCP_ID);
-			goto fail;
-		}
-	} else if (of_node_is_type(node, "voltage-sensor") &&
-		   !strcmp(l, "CPU Voltage")) {
+			जाओ fail;
+		पूर्ण
+	पूर्ण अन्यथा अगर (of_node_is_type(node, "voltage-sensor") &&
+		   !म_भेद(l, "CPU Voltage")) अणु
 		ads->sens.ops = &smu_cpuvolt_ops;
 		ads->sens.name = "cpu-voltage";
-		if (cpuvcp == NULL) {
+		अगर (cpuvcp == शून्य) अणु
 			DBG("wf: cpuvcp partition (%02x) not found\n",
 			    SMU_SDB_CPUVCP_ID);
-			goto fail;
-		}
-	} else if (of_node_is_type(node, "power-sensor") &&
-		   !strcmp(l, "Slots Power")) {
-		ads->sens.ops = &smu_slotspow_ops;
+			जाओ fail;
+		पूर्ण
+	पूर्ण अन्यथा अगर (of_node_is_type(node, "power-sensor") &&
+		   !म_भेद(l, "Slots Power")) अणु
+		ads->sens.ops = &smu_slotsघात_ops;
 		ads->sens.name = "slots-power";
-		if (slotspow == NULL) {
+		अगर (slotsघात == शून्य) अणु
 			DBG("wf: slotspow partition (%02x) not found\n",
 			    SMU_SDB_SLOTSPOW_ID);
-			goto fail;
-		}
-	} else
-		goto fail;
+			जाओ fail;
+		पूर्ण
+	पूर्ण अन्यथा
+		जाओ fail;
 
-	v = of_get_property(node, "reg", NULL);
-	if (v == NULL)
-		goto fail;
+	v = of_get_property(node, "reg", शून्य);
+	अगर (v == शून्य)
+		जाओ fail;
 	ads->reg = *v;
 
-	if (wf_register_sensor(&ads->sens))
-		goto fail;
-	return ads;
+	अगर (wf_रेजिस्टर_sensor(&ads->sens))
+		जाओ fail;
+	वापस ads;
  fail:
-	kfree(ads);
-	return NULL;
-}
+	kमुक्त(ads);
+	वापस शून्य;
+पूर्ण
 
 /*
  * SMU Power combo sensor object
  */
 
-struct smu_cpu_power_sensor {
-	struct list_head	link;
-	struct wf_sensor	*volts;
-	struct wf_sensor	*amps;
-	int			fake_volts : 1;
-	int			quadratic : 1;
-	struct wf_sensor	sens;
-};
-#define to_smu_cpu_power(c) container_of(c, struct smu_cpu_power_sensor, sens)
+काष्ठा smu_cpu_घातer_sensor अणु
+	काष्ठा list_head	link;
+	काष्ठा wf_sensor	*volts;
+	काष्ठा wf_sensor	*amps;
+	पूर्णांक			fake_volts : 1;
+	पूर्णांक			quadratic : 1;
+	काष्ठा wf_sensor	sens;
+पूर्ण;
+#घोषणा to_smu_cpu_घातer(c) container_of(c, काष्ठा smu_cpu_घातer_sensor, sens)
 
-static struct smu_cpu_power_sensor *smu_cpu_power;
+अटल काष्ठा smu_cpu_घातer_sensor *smu_cpu_घातer;
 
-static void smu_cpu_power_release(struct wf_sensor *sr)
-{
-	struct smu_cpu_power_sensor *pow = to_smu_cpu_power(sr);
+अटल व्योम smu_cpu_घातer_release(काष्ठा wf_sensor *sr)
+अणु
+	काष्ठा smu_cpu_घातer_sensor *घात = to_smu_cpu_घातer(sr);
 
-	if (pow->volts)
-		wf_put_sensor(pow->volts);
-	if (pow->amps)
-		wf_put_sensor(pow->amps);
-	kfree(pow);
-}
+	अगर (घात->volts)
+		wf_put_sensor(घात->volts);
+	अगर (घात->amps)
+		wf_put_sensor(घात->amps);
+	kमुक्त(घात);
+पूर्ण
 
-static int smu_cpu_power_get(struct wf_sensor *sr, s32 *value)
-{
-	struct smu_cpu_power_sensor *pow = to_smu_cpu_power(sr);
-	s32 volts, amps, power;
-	u64 tmps, tmpa, tmpb;
-	int rc;
+अटल पूर्णांक smu_cpu_घातer_get(काष्ठा wf_sensor *sr, s32 *value)
+अणु
+	काष्ठा smu_cpu_घातer_sensor *घात = to_smu_cpu_घातer(sr);
+	s32 volts, amps, घातer;
+	u64 पंचांगps, पंचांगpa, पंचांगpb;
+	पूर्णांक rc;
 
-	rc = pow->amps->ops->get_value(pow->amps, &amps);
-	if (rc)
-		return rc;
+	rc = घात->amps->ops->get_value(घात->amps, &amps);
+	अगर (rc)
+		वापस rc;
 
-	if (pow->fake_volts) {
+	अगर (घात->fake_volts) अणु
 		*value = amps * 12 - 0x30000;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	rc = pow->volts->ops->get_value(pow->volts, &volts);
-	if (rc)
-		return rc;
+	rc = घात->volts->ops->get_value(घात->volts, &volts);
+	अगर (rc)
+		वापस rc;
 
-	power = (s32)((((u64)volts) * ((u64)amps)) >> 16);
-	if (!pow->quadratic) {
-		*value = power;
-		return 0;
-	}
-	tmps = (((u64)power) * ((u64)power)) >> 16;
-	tmpa = ((u64)cpuvcp->power_quads[0]) * tmps;
-	tmpb = ((u64)cpuvcp->power_quads[1]) * ((u64)power);
-	*value = (tmpa >> 28) + (tmpb >> 28) + (cpuvcp->power_quads[2] >> 12);
+	घातer = (s32)((((u64)volts) * ((u64)amps)) >> 16);
+	अगर (!घात->quadratic) अणु
+		*value = घातer;
+		वापस 0;
+	पूर्ण
+	पंचांगps = (((u64)घातer) * ((u64)घातer)) >> 16;
+	पंचांगpa = ((u64)cpuvcp->घातer_quads[0]) * पंचांगps;
+	पंचांगpb = ((u64)cpuvcp->घातer_quads[1]) * ((u64)घातer);
+	*value = (पंचांगpa >> 28) + (पंचांगpb >> 28) + (cpuvcp->घातer_quads[2] >> 12);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct wf_sensor_ops smu_cpu_power_ops = {
-	.get_value	= smu_cpu_power_get,
-	.release	= smu_cpu_power_release,
+अटल स्थिर काष्ठा wf_sensor_ops smu_cpu_घातer_ops = अणु
+	.get_value	= smu_cpu_घातer_get,
+	.release	= smu_cpu_घातer_release,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
 
-static struct smu_cpu_power_sensor *
-smu_cpu_power_create(struct wf_sensor *volts, struct wf_sensor *amps)
-{
-	struct smu_cpu_power_sensor *pow;
+अटल काष्ठा smu_cpu_घातer_sensor *
+smu_cpu_घातer_create(काष्ठा wf_sensor *volts, काष्ठा wf_sensor *amps)
+अणु
+	काष्ठा smu_cpu_घातer_sensor *घात;
 
-	pow = kmalloc(sizeof(struct smu_cpu_power_sensor), GFP_KERNEL);
-	if (pow == NULL)
-		return NULL;
-	pow->sens.ops = &smu_cpu_power_ops;
-	pow->sens.name = "cpu-power";
+	घात = kदो_स्मृति(माप(काष्ठा smu_cpu_घातer_sensor), GFP_KERNEL);
+	अगर (घात == शून्य)
+		वापस शून्य;
+	घात->sens.ops = &smu_cpu_घातer_ops;
+	घात->sens.name = "cpu-power";
 
 	wf_get_sensor(volts);
-	pow->volts = volts;
+	घात->volts = volts;
 	wf_get_sensor(amps);
-	pow->amps = amps;
+	घात->amps = amps;
 
 	/* Some early machines need a faked voltage */
-	if (debugswitches && ((*debugswitches) & 0x80)) {
-		printk(KERN_INFO "windfarm: CPU Power sensor using faked"
+	अगर (debugचयनes && ((*debugचयनes) & 0x80)) अणु
+		prपूर्णांकk(KERN_INFO "windfarm: CPU Power sensor using faked"
 		       " voltage !\n");
-		pow->fake_volts = 1;
-	} else
-		pow->fake_volts = 0;
+		घात->fake_volts = 1;
+	पूर्ण अन्यथा
+		घात->fake_volts = 0;
 
-	/* Try to use quadratic transforms on PowerMac8,1 and 9,1 for now,
+	/* Try to use quadratic transक्रमms on PowerMac8,1 and 9,1 क्रम now,
 	 * I yet have to figure out what's up with 8,2 and will have to
-	 * adjust for later, unless we can 100% trust the SDB partition...
+	 * adjust क्रम later, unless we can 100% trust the SDB partition...
 	 */
-	if ((of_machine_is_compatible("PowerMac8,1") ||
+	अगर ((of_machine_is_compatible("PowerMac8,1") ||
 	     of_machine_is_compatible("PowerMac8,2") ||
 	     of_machine_is_compatible("PowerMac9,1")) &&
-	    cpuvcp_version >= 2) {
-		pow->quadratic = 1;
+	    cpuvcp_version >= 2) अणु
+		घात->quadratic = 1;
 		DBG("windfarm: CPU Power using quadratic transform\n");
-	} else
-		pow->quadratic = 0;
+	पूर्ण अन्यथा
+		घात->quadratic = 0;
 
-	if (wf_register_sensor(&pow->sens))
-		goto fail;
-	return pow;
+	अगर (wf_रेजिस्टर_sensor(&घात->sens))
+		जाओ fail;
+	वापस घात;
  fail:
-	kfree(pow);
-	return NULL;
-}
+	kमुक्त(घात);
+	वापस शून्य;
+पूर्ण
 
-static void smu_fetch_param_partitions(void)
-{
-	const struct smu_sdbp_header *hdr;
+अटल व्योम smu_fetch_param_partitions(व्योम)
+अणु
+	स्थिर काष्ठा smu_sdbp_header *hdr;
 
-	/* Get CPU voltage/current/power calibration data */
-	hdr = smu_get_sdb_partition(SMU_SDB_CPUVCP_ID, NULL);
-	if (hdr != NULL) {
-		cpuvcp = (struct smu_sdbp_cpuvcp *)&hdr[1];
+	/* Get CPU voltage/current/घातer calibration data */
+	hdr = smu_get_sdb_partition(SMU_SDB_CPUVCP_ID, शून्य);
+	अगर (hdr != शून्य) अणु
+		cpuvcp = (काष्ठा smu_sdbp_cpuvcp *)&hdr[1];
 		/* Keep version around */
 		cpuvcp_version = hdr->version;
-	}
+	पूर्ण
 
 	/* Get CPU diode calibration data */
-	hdr = smu_get_sdb_partition(SMU_SDB_CPUDIODE_ID, NULL);
-	if (hdr != NULL)
-		cpudiode = (struct smu_sdbp_cpudiode *)&hdr[1];
+	hdr = smu_get_sdb_partition(SMU_SDB_CPUDIODE_ID, शून्य);
+	अगर (hdr != शून्य)
+		cpudiode = (काष्ठा smu_sdbp_cpudiode *)&hdr[1];
 
-	/* Get slots power calibration data if any */
-	hdr = smu_get_sdb_partition(SMU_SDB_SLOTSPOW_ID, NULL);
-	if (hdr != NULL)
-		slotspow = (struct smu_sdbp_slotspow *)&hdr[1];
+	/* Get slots घातer calibration data अगर any */
+	hdr = smu_get_sdb_partition(SMU_SDB_SLOTSPOW_ID, शून्य);
+	अगर (hdr != शून्य)
+		slotsघात = (काष्ठा smu_sdbp_slotsघात *)&hdr[1];
 
-	/* Get debug switches if any */
-	hdr = smu_get_sdb_partition(SMU_SDB_DEBUG_SWITCHES_ID, NULL);
-	if (hdr != NULL)
-		debugswitches = (u8 *)&hdr[1];
-}
+	/* Get debug चयनes अगर any */
+	hdr = smu_get_sdb_partition(SMU_SDB_DEBUG_SWITCHES_ID, शून्य);
+	अगर (hdr != शून्य)
+		debugचयनes = (u8 *)&hdr[1];
+पूर्ण
 
-static int __init smu_sensors_init(void)
-{
-	struct device_node *smu, *sensors, *s;
-	struct smu_ad_sensor *volt_sensor = NULL, *curr_sensor = NULL;
+अटल पूर्णांक __init smu_sensors_init(व्योम)
+अणु
+	काष्ठा device_node *smu, *sensors, *s;
+	काष्ठा smu_ad_sensor *volt_sensor = शून्य, *curr_sensor = शून्य;
 
-	if (!smu_present())
-		return -ENODEV;
+	अगर (!smu_present())
+		वापस -ENODEV;
 
 	/* Get parameters partitions */
 	smu_fetch_param_partitions();
 
-	smu = of_find_node_by_type(NULL, "smu");
-	if (smu == NULL)
-		return -ENODEV;
+	smu = of_find_node_by_type(शून्य, "smu");
+	अगर (smu == शून्य)
+		वापस -ENODEV;
 
-	/* Look for sensors subdir */
-	for_each_child_of_node(smu, sensors)
-		if (of_node_name_eq(sensors, "sensors"))
-			break;
+	/* Look क्रम sensors subdir */
+	क्रम_each_child_of_node(smu, sensors)
+		अगर (of_node_name_eq(sensors, "sensors"))
+			अवरोध;
 
 	of_node_put(smu);
 
 	/* Create basic sensors */
-	for (s = NULL;
-	     sensors && (s = of_get_next_child(sensors, s)) != NULL;) {
-		struct smu_ad_sensor *ads;
+	क्रम (s = शून्य;
+	     sensors && (s = of_get_next_child(sensors, s)) != शून्य;) अणु
+		काष्ठा smu_ad_sensor *ads;
 
 		ads = smu_ads_create(s);
-		if (ads == NULL)
-			continue;
+		अगर (ads == शून्य)
+			जारी;
 		list_add(&ads->link, &smu_ads);
 		/* keep track of cpu voltage & current */
-		if (!strcmp(ads->sens.name, "cpu-voltage"))
+		अगर (!म_भेद(ads->sens.name, "cpu-voltage"))
 			volt_sensor = ads;
-		else if (!strcmp(ads->sens.name, "cpu-current"))
+		अन्यथा अगर (!म_भेद(ads->sens.name, "cpu-current"))
 			curr_sensor = ads;
-	}
+	पूर्ण
 
 	of_node_put(sensors);
 
-	/* Create CPU power sensor if possible */
-	if (volt_sensor && curr_sensor)
-		smu_cpu_power = smu_cpu_power_create(&volt_sensor->sens,
+	/* Create CPU घातer sensor अगर possible */
+	अगर (volt_sensor && curr_sensor)
+		smu_cpu_घातer = smu_cpu_घातer_create(&volt_sensor->sens,
 						     &curr_sensor->sens);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit smu_sensors_exit(void)
-{
-	struct smu_ad_sensor *ads;
+अटल व्योम __निकास smu_sensors_निकास(व्योम)
+अणु
+	काष्ठा smu_ad_sensor *ads;
 
-	/* dispose of power sensor */
-	if (smu_cpu_power)
-		wf_unregister_sensor(&smu_cpu_power->sens);
+	/* dispose of घातer sensor */
+	अगर (smu_cpu_घातer)
+		wf_unरेजिस्टर_sensor(&smu_cpu_घातer->sens);
 
 	/* dispose of basic sensors */
-	while (!list_empty(&smu_ads)) {
-		ads = list_entry(smu_ads.next, struct smu_ad_sensor, link);
+	जबतक (!list_empty(&smu_ads)) अणु
+		ads = list_entry(smu_ads.next, काष्ठा smu_ad_sensor, link);
 		list_del(&ads->link);
-		wf_unregister_sensor(&ads->sens);
-	}
-}
+		wf_unरेजिस्टर_sensor(&ads->sens);
+	पूर्ण
+पूर्ण
 
 
 module_init(smu_sensors_init);
-module_exit(smu_sensors_exit);
+module_निकास(smu_sensors_निकास);
 
 MODULE_AUTHOR("Benjamin Herrenschmidt <benh@kernel.crashing.org>");
 MODULE_DESCRIPTION("SMU sensor objects for PowerMacs thermal control");

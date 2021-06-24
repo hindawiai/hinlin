@@ -1,338 +1,339 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // ALSA SoC IMX MQS driver
 //
 // Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
 // Copyright 2019 NXP
 
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/mfd/syscon.h>
-#include <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
-#include <linux/pm_runtime.h>
-#include <linux/of.h>
-#include <linux/pm.h>
-#include <linux/slab.h>
-#include <sound/soc.h>
-#include <sound/pcm.h>
-#include <sound/initval.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/of.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/initval.h>
 
-#define REG_MQS_CTRL		0x00
+#घोषणा REG_MQS_CTRL		0x00
 
-#define MQS_EN_MASK			(0x1 << 28)
-#define MQS_EN_SHIFT			(28)
-#define MQS_SW_RST_MASK			(0x1 << 24)
-#define MQS_SW_RST_SHIFT		(24)
-#define MQS_OVERSAMPLE_MASK		(0x1 << 20)
-#define MQS_OVERSAMPLE_SHIFT		(20)
-#define MQS_CLK_DIV_MASK		(0xFF << 0)
-#define MQS_CLK_DIV_SHIFT		(0)
+#घोषणा MQS_EN_MASK			(0x1 << 28)
+#घोषणा MQS_EN_SHIFT			(28)
+#घोषणा MQS_SW_RST_MASK			(0x1 << 24)
+#घोषणा MQS_SW_RST_SHIFT		(24)
+#घोषणा MQS_OVERSAMPLE_MASK		(0x1 << 20)
+#घोषणा MQS_OVERSAMPLE_SHIFT		(20)
+#घोषणा MQS_CLK_DIV_MASK		(0xFF << 0)
+#घोषणा MQS_CLK_DIV_SHIFT		(0)
 
-/* codec private data */
-struct fsl_mqs {
-	struct regmap *regmap;
-	struct clk *mclk;
-	struct clk *ipg;
+/* codec निजी data */
+काष्ठा fsl_mqs अणु
+	काष्ठा regmap *regmap;
+	काष्ठा clk *mclk;
+	काष्ठा clk *ipg;
 
-	unsigned int reg_iomuxc_gpr2;
-	unsigned int reg_mqs_ctrl;
+	अचिन्हित पूर्णांक reg_iomuxc_gpr2;
+	अचिन्हित पूर्णांक reg_mqs_ctrl;
 	bool use_gpr;
-};
+पूर्ण;
 
-#define FSL_MQS_RATES	(SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000)
-#define FSL_MQS_FORMATS	SNDRV_PCM_FMTBIT_S16_LE
+#घोषणा FSL_MQS_RATES	(SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000)
+#घोषणा FSL_MQS_FORMATS	SNDRV_PCM_FMTBIT_S16_LE
 
-static int fsl_mqs_hw_params(struct snd_pcm_substream *substream,
-			     struct snd_pcm_hw_params *params,
-			     struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct fsl_mqs *mqs_priv = snd_soc_component_get_drvdata(component);
-	unsigned long mclk_rate;
-	int div, res;
-	int lrclk;
+अटल पूर्णांक fsl_mqs_hw_params(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_pcm_hw_params *params,
+			     काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा fsl_mqs *mqs_priv = snd_soc_component_get_drvdata(component);
+	अचिन्हित दीर्घ mclk_rate;
+	पूर्णांक भाग, res;
+	पूर्णांक lrclk;
 
 	mclk_rate = clk_get_rate(mqs_priv->mclk);
 	lrclk = params_rate(params);
 
 	/*
-	 * mclk_rate / (oversample(32,64) * FS * 2 * divider ) = repeat_rate;
-	 * if repeat_rate is 8, mqs can achieve better quality.
+	 * mclk_rate / (oversample(32,64) * FS * 2 * भागider ) = repeat_rate;
+	 * अगर repeat_rate is 8, mqs can achieve better quality.
 	 * oversample rate is fix to 32 currently.
 	 */
-	div = mclk_rate / (32 * lrclk * 2 * 8);
+	भाग = mclk_rate / (32 * lrclk * 2 * 8);
 	res = mclk_rate % (32 * lrclk * 2 * 8);
 
-	if (res == 0 && div > 0 && div <= 256) {
-		if (mqs_priv->use_gpr) {
+	अगर (res == 0 && भाग > 0 && भाग <= 256) अणु
+		अगर (mqs_priv->use_gpr) अणु
 			regmap_update_bits(mqs_priv->regmap, IOMUXC_GPR2,
 					   IMX6SX_GPR2_MQS_CLK_DIV_MASK,
-					   (div - 1) << IMX6SX_GPR2_MQS_CLK_DIV_SHIFT);
+					   (भाग - 1) << IMX6SX_GPR2_MQS_CLK_DIV_SHIFT);
 			regmap_update_bits(mqs_priv->regmap, IOMUXC_GPR2,
 					   IMX6SX_GPR2_MQS_OVERSAMPLE_MASK, 0);
-		} else {
+		पूर्ण अन्यथा अणु
 			regmap_update_bits(mqs_priv->regmap, REG_MQS_CTRL,
 					   MQS_CLK_DIV_MASK,
-					   (div - 1) << MQS_CLK_DIV_SHIFT);
+					   (भाग - 1) << MQS_CLK_DIV_SHIFT);
 			regmap_update_bits(mqs_priv->regmap, REG_MQS_CTRL,
 					   MQS_OVERSAMPLE_MASK, 0);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(component->dev, "can't get proper divider\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsl_mqs_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
+अटल पूर्णांक fsl_mqs_set_dai_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
 	/* Only LEFT_J & SLAVE mode is supported. */
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_LEFT_J:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_LEFT_J:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsl_mqs_startup(struct snd_pcm_substream *substream,
-			   struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct fsl_mqs *mqs_priv = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक fsl_mqs_startup(काष्ठा snd_pcm_substream *substream,
+			   काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा fsl_mqs *mqs_priv = snd_soc_component_get_drvdata(component);
 
-	if (mqs_priv->use_gpr)
+	अगर (mqs_priv->use_gpr)
 		regmap_update_bits(mqs_priv->regmap, IOMUXC_GPR2,
 				   IMX6SX_GPR2_MQS_EN_MASK,
 				   1 << IMX6SX_GPR2_MQS_EN_SHIFT);
-	else
+	अन्यथा
 		regmap_update_bits(mqs_priv->regmap, REG_MQS_CTRL,
 				   MQS_EN_MASK,
 				   1 << MQS_EN_SHIFT);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fsl_mqs_shutdown(struct snd_pcm_substream *substream,
-			     struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct fsl_mqs *mqs_priv = snd_soc_component_get_drvdata(component);
+अटल व्योम fsl_mqs_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा fsl_mqs *mqs_priv = snd_soc_component_get_drvdata(component);
 
-	if (mqs_priv->use_gpr)
+	अगर (mqs_priv->use_gpr)
 		regmap_update_bits(mqs_priv->regmap, IOMUXC_GPR2,
 				   IMX6SX_GPR2_MQS_EN_MASK, 0);
-	else
+	अन्यथा
 		regmap_update_bits(mqs_priv->regmap, REG_MQS_CTRL,
 				   MQS_EN_MASK, 0);
-}
+पूर्ण
 
-static const struct snd_soc_component_driver soc_codec_fsl_mqs = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_codec_fsl_mqs = अणु
 	.idle_bias_on = 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static const struct snd_soc_dai_ops fsl_mqs_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops fsl_mqs_dai_ops = अणु
 	.startup = fsl_mqs_startup,
-	.shutdown = fsl_mqs_shutdown,
+	.shutकरोwn = fsl_mqs_shutकरोwn,
 	.hw_params = fsl_mqs_hw_params,
 	.set_fmt = fsl_mqs_set_dai_fmt,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver fsl_mqs_dai = {
+अटल काष्ठा snd_soc_dai_driver fsl_mqs_dai = अणु
 	.name		= "fsl-mqs-dai",
-	.playback	= {
+	.playback	= अणु
 		.stream_name	= "Playback",
 		.channels_min	= 2,
 		.channels_max	= 2,
 		.rates		= FSL_MQS_RATES,
-		.formats	= FSL_MQS_FORMATS,
-	},
+		.क्रमmats	= FSL_MQS_FORMATS,
+	पूर्ण,
 	.ops = &fsl_mqs_dai_ops,
-};
+पूर्ण;
 
-static const struct regmap_config fsl_mqs_regmap_config = {
+अटल स्थिर काष्ठा regmap_config fsl_mqs_regmap_config = अणु
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_register = REG_MQS_CTRL,
+	.max_रेजिस्टर = REG_MQS_CTRL,
 	.cache_type = REGCACHE_NONE,
-};
+पूर्ण;
 
-static int fsl_mqs_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct device_node *gpr_np = NULL;
-	struct fsl_mqs *mqs_priv;
-	void __iomem *regs;
-	int ret;
+अटल पूर्णांक fsl_mqs_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा device_node *gpr_np = शून्य;
+	काष्ठा fsl_mqs *mqs_priv;
+	व्योम __iomem *regs;
+	पूर्णांक ret;
 
-	mqs_priv = devm_kzalloc(&pdev->dev, sizeof(*mqs_priv), GFP_KERNEL);
-	if (!mqs_priv)
-		return -ENOMEM;
+	mqs_priv = devm_kzalloc(&pdev->dev, माप(*mqs_priv), GFP_KERNEL);
+	अगर (!mqs_priv)
+		वापस -ENOMEM;
 
-	/* On i.MX6sx the MQS control register is in GPR domain
-	 * But in i.MX8QM/i.MX8QXP the control register is moved
-	 * to its own domain.
+	/* On i.MX6sx the MQS control रेजिस्टर is in GPR करोमुख्य
+	 * But in i.MX8QM/i.MX8QXP the control रेजिस्टर is moved
+	 * to its own करोमुख्य.
 	 */
-	if (of_device_is_compatible(np, "fsl,imx8qm-mqs"))
+	अगर (of_device_is_compatible(np, "fsl,imx8qm-mqs"))
 		mqs_priv->use_gpr = false;
-	else
+	अन्यथा
 		mqs_priv->use_gpr = true;
 
-	if (mqs_priv->use_gpr) {
+	अगर (mqs_priv->use_gpr) अणु
 		gpr_np = of_parse_phandle(np, "gpr", 0);
-		if (!gpr_np) {
+		अगर (!gpr_np) अणु
 			dev_err(&pdev->dev, "failed to get gpr node by phandle\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		mqs_priv->regmap = syscon_node_to_regmap(gpr_np);
-		if (IS_ERR(mqs_priv->regmap)) {
+		अगर (IS_ERR(mqs_priv->regmap)) अणु
 			dev_err(&pdev->dev, "failed to get gpr regmap\n");
 			ret = PTR_ERR(mqs_priv->regmap);
-			goto err_free_gpr_np;
-		}
-	} else {
-		regs = devm_platform_ioremap_resource(pdev, 0);
-		if (IS_ERR(regs))
-			return PTR_ERR(regs);
+			जाओ err_मुक्त_gpr_np;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+		अगर (IS_ERR(regs))
+			वापस PTR_ERR(regs);
 
 		mqs_priv->regmap = devm_regmap_init_mmio_clk(&pdev->dev,
 							     "core",
 							     regs,
 							     &fsl_mqs_regmap_config);
-		if (IS_ERR(mqs_priv->regmap)) {
+		अगर (IS_ERR(mqs_priv->regmap)) अणु
 			dev_err(&pdev->dev, "failed to init regmap: %ld\n",
 				PTR_ERR(mqs_priv->regmap));
-			return PTR_ERR(mqs_priv->regmap);
-		}
+			वापस PTR_ERR(mqs_priv->regmap);
+		पूर्ण
 
 		mqs_priv->ipg = devm_clk_get(&pdev->dev, "core");
-		if (IS_ERR(mqs_priv->ipg)) {
+		अगर (IS_ERR(mqs_priv->ipg)) अणु
 			dev_err(&pdev->dev, "failed to get the clock: %ld\n",
 				PTR_ERR(mqs_priv->ipg));
-			return PTR_ERR(mqs_priv->ipg);
-		}
-	}
+			वापस PTR_ERR(mqs_priv->ipg);
+		पूर्ण
+	पूर्ण
 
 	mqs_priv->mclk = devm_clk_get(&pdev->dev, "mclk");
-	if (IS_ERR(mqs_priv->mclk)) {
+	अगर (IS_ERR(mqs_priv->mclk)) अणु
 		dev_err(&pdev->dev, "failed to get the clock: %ld\n",
 			PTR_ERR(mqs_priv->mclk));
 		ret = PTR_ERR(mqs_priv->mclk);
-		goto err_free_gpr_np;
-	}
+		जाओ err_मुक्त_gpr_np;
+	पूर्ण
 
 	dev_set_drvdata(&pdev->dev, mqs_priv);
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	ret = devm_snd_soc_register_component(&pdev->dev, &soc_codec_fsl_mqs,
+	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev, &soc_codec_fsl_mqs,
 			&fsl_mqs_dai, 1);
-	if (ret)
-		goto err_free_gpr_np;
-	return 0;
+	अगर (ret)
+		जाओ err_मुक्त_gpr_np;
+	वापस 0;
 
-err_free_gpr_np:
+err_मुक्त_gpr_np:
 	of_node_put(gpr_np);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fsl_mqs_remove(struct platform_device *pdev)
-{
-	pm_runtime_disable(&pdev->dev);
-	return 0;
-}
+अटल पूर्णांक fsl_mqs_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_disable(&pdev->dev);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int fsl_mqs_runtime_resume(struct device *dev)
-{
-	struct fsl_mqs *mqs_priv = dev_get_drvdata(dev);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक fsl_mqs_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा fsl_mqs *mqs_priv = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(mqs_priv->ipg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable ipg clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(mqs_priv->mclk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable mclk clock\n");
 		clk_disable_unprepare(mqs_priv->ipg);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (mqs_priv->use_gpr)
-		regmap_write(mqs_priv->regmap, IOMUXC_GPR2,
+	अगर (mqs_priv->use_gpr)
+		regmap_ग_लिखो(mqs_priv->regmap, IOMUXC_GPR2,
 			     mqs_priv->reg_iomuxc_gpr2);
-	else
-		regmap_write(mqs_priv->regmap, REG_MQS_CTRL,
+	अन्यथा
+		regmap_ग_लिखो(mqs_priv->regmap, REG_MQS_CTRL,
 			     mqs_priv->reg_mqs_ctrl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsl_mqs_runtime_suspend(struct device *dev)
-{
-	struct fsl_mqs *mqs_priv = dev_get_drvdata(dev);
+अटल पूर्णांक fsl_mqs_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा fsl_mqs *mqs_priv = dev_get_drvdata(dev);
 
-	if (mqs_priv->use_gpr)
-		regmap_read(mqs_priv->regmap, IOMUXC_GPR2,
+	अगर (mqs_priv->use_gpr)
+		regmap_पढ़ो(mqs_priv->regmap, IOMUXC_GPR2,
 			    &mqs_priv->reg_iomuxc_gpr2);
-	else
-		regmap_read(mqs_priv->regmap, REG_MQS_CTRL,
+	अन्यथा
+		regmap_पढ़ो(mqs_priv->regmap, REG_MQS_CTRL,
 			    &mqs_priv->reg_mqs_ctrl);
 
 	clk_disable_unprepare(mqs_priv->mclk);
 	clk_disable_unprepare(mqs_priv->ipg);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops fsl_mqs_pm_ops = {
-	SET_RUNTIME_PM_OPS(fsl_mqs_runtime_suspend,
-			   fsl_mqs_runtime_resume,
-			   NULL)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops fsl_mqs_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(fsl_mqs_runसमय_suspend,
+			   fsl_mqs_runसमय_resume,
+			   शून्य)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+पूर्ण;
 
-static const struct of_device_id fsl_mqs_dt_ids[] = {
-	{ .compatible = "fsl,imx8qm-mqs", },
-	{ .compatible = "fsl,imx6sx-mqs", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id fsl_mqs_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx8qm-mqs", पूर्ण,
+	अणु .compatible = "fsl,imx6sx-mqs", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, fsl_mqs_dt_ids);
 
-static struct platform_driver fsl_mqs_driver = {
+अटल काष्ठा platक्रमm_driver fsl_mqs_driver = अणु
 	.probe		= fsl_mqs_probe,
-	.remove		= fsl_mqs_remove,
-	.driver		= {
+	.हटाओ		= fsl_mqs_हटाओ,
+	.driver		= अणु
 		.name	= "fsl-mqs",
 		.of_match_table = fsl_mqs_dt_ids,
 		.pm = &fsl_mqs_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(fsl_mqs_driver);
+module_platक्रमm_driver(fsl_mqs_driver);
 
 MODULE_AUTHOR("Shengjiu Wang <Shengjiu.Wang@nxp.com>");
 MODULE_DESCRIPTION("MQS codec driver");

@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Core, IRQ and I2C device driver for DA9061 and DA9062 PMICs
+ * Core, IRQ and I2C device driver क्रम DA9061 and DA9062 PMICs
  * Copyright (C) 2015-2017  Dialog Semiconductor
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/regmap.h>
-#include <linux/irq.h>
-#include <linux/mfd/core.h>
-#include <linux/i2c.h>
-#include <linux/mfd/da9062/core.h>
-#include <linux/mfd/da9062/registers.h>
-#include <linux/regulator/of_regulator.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mfd/da9062/core.h>
+#समावेश <linux/mfd/da9062/रेजिस्टरs.h>
+#समावेश <linux/regulator/of_regulator.h>
 
-#define	DA9062_REG_EVENT_A_OFFSET	0
-#define	DA9062_REG_EVENT_B_OFFSET	1
-#define	DA9062_REG_EVENT_C_OFFSET	2
+#घोषणा	DA9062_REG_EVENT_A_OFFSET	0
+#घोषणा	DA9062_REG_EVENT_B_OFFSET	1
+#घोषणा	DA9062_REG_EVENT_C_OFFSET	2
 
-#define	DA9062_IRQ_LOW	0
-#define	DA9062_IRQ_HIGH	1
+#घोषणा	DA9062_IRQ_LOW	0
+#घोषणा	DA9062_IRQ_HIGH	1
 
-static struct regmap_irq da9061_irqs[] = {
+अटल काष्ठा regmap_irq da9061_irqs[] = अणु
 	/* EVENT A */
-	[DA9061_IRQ_ONKEY] = {
+	[DA9061_IRQ_ONKEY] = अणु
 		.reg_offset = DA9062_REG_EVENT_A_OFFSET,
 		.mask = DA9062AA_M_NONKEY_MASK,
-	},
-	[DA9061_IRQ_WDG_WARN] = {
+	पूर्ण,
+	[DA9061_IRQ_WDG_WARN] = अणु
 		.reg_offset = DA9062_REG_EVENT_A_OFFSET,
 		.mask = DA9062AA_M_WDG_WARN_MASK,
-	},
-	[DA9061_IRQ_SEQ_RDY] = {
+	पूर्ण,
+	[DA9061_IRQ_SEQ_RDY] = अणु
 		.reg_offset = DA9062_REG_EVENT_A_OFFSET,
 		.mask = DA9062AA_M_SEQ_RDY_MASK,
-	},
+	पूर्ण,
 	/* EVENT B */
-	[DA9061_IRQ_TEMP] = {
+	[DA9061_IRQ_TEMP] = अणु
 		.reg_offset = DA9062_REG_EVENT_B_OFFSET,
 		.mask = DA9062AA_M_TEMP_MASK,
-	},
-	[DA9061_IRQ_LDO_LIM] = {
+	पूर्ण,
+	[DA9061_IRQ_LDO_LIM] = अणु
 		.reg_offset = DA9062_REG_EVENT_B_OFFSET,
 		.mask = DA9062AA_M_LDO_LIM_MASK,
-	},
-	[DA9061_IRQ_DVC_RDY] = {
+	पूर्ण,
+	[DA9061_IRQ_DVC_RDY] = अणु
 		.reg_offset = DA9062_REG_EVENT_B_OFFSET,
 		.mask = DA9062AA_M_DVC_RDY_MASK,
-	},
-	[DA9061_IRQ_VDD_WARN] = {
+	पूर्ण,
+	[DA9061_IRQ_VDD_WARN] = अणु
 		.reg_offset = DA9062_REG_EVENT_B_OFFSET,
 		.mask = DA9062AA_M_VDD_WARN_MASK,
-	},
+	पूर्ण,
 	/* EVENT C */
-	[DA9061_IRQ_GPI0] = {
+	[DA9061_IRQ_GPI0] = अणु
 		.reg_offset = DA9062_REG_EVENT_C_OFFSET,
 		.mask = DA9062AA_M_GPI0_MASK,
-	},
-	[DA9061_IRQ_GPI1] = {
+	पूर्ण,
+	[DA9061_IRQ_GPI1] = अणु
 		.reg_offset = DA9062_REG_EVENT_C_OFFSET,
 		.mask = DA9062AA_M_GPI1_MASK,
-	},
-	[DA9061_IRQ_GPI2] = {
+	पूर्ण,
+	[DA9061_IRQ_GPI2] = अणु
 		.reg_offset = DA9062_REG_EVENT_C_OFFSET,
 		.mask = DA9062AA_M_GPI2_MASK,
-	},
-	[DA9061_IRQ_GPI3] = {
+	पूर्ण,
+	[DA9061_IRQ_GPI3] = अणु
 		.reg_offset = DA9062_REG_EVENT_C_OFFSET,
 		.mask = DA9062AA_M_GPI3_MASK,
-	},
-	[DA9061_IRQ_GPI4] = {
+	पूर्ण,
+	[DA9061_IRQ_GPI4] = अणु
 		.reg_offset = DA9062_REG_EVENT_C_OFFSET,
 		.mask = DA9062AA_M_GPI4_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct regmap_irq_chip da9061_irq_chip = {
+अटल काष्ठा regmap_irq_chip da9061_irq_chip = अणु
 	.name = "da9061-irq",
 	.irqs = da9061_irqs,
 	.num_irqs = DA9061_NUM_IRQ,
@@ -86,71 +87,71 @@ static struct regmap_irq_chip da9061_irq_chip = {
 	.status_base = DA9062AA_EVENT_A,
 	.mask_base = DA9062AA_IRQ_MASK_A,
 	.ack_base = DA9062AA_EVENT_A,
-};
+पूर्ण;
 
-static struct regmap_irq da9062_irqs[] = {
+अटल काष्ठा regmap_irq da9062_irqs[] = अणु
 	/* EVENT A */
-	[DA9062_IRQ_ONKEY] = {
+	[DA9062_IRQ_ONKEY] = अणु
 		.reg_offset = DA9062_REG_EVENT_A_OFFSET,
 		.mask = DA9062AA_M_NONKEY_MASK,
-	},
-	[DA9062_IRQ_ALARM] = {
+	पूर्ण,
+	[DA9062_IRQ_ALARM] = अणु
 		.reg_offset = DA9062_REG_EVENT_A_OFFSET,
 		.mask = DA9062AA_M_ALARM_MASK,
-	},
-	[DA9062_IRQ_TICK] = {
+	पूर्ण,
+	[DA9062_IRQ_TICK] = अणु
 		.reg_offset = DA9062_REG_EVENT_A_OFFSET,
 		.mask = DA9062AA_M_TICK_MASK,
-	},
-	[DA9062_IRQ_WDG_WARN] = {
+	पूर्ण,
+	[DA9062_IRQ_WDG_WARN] = अणु
 		.reg_offset = DA9062_REG_EVENT_A_OFFSET,
 		.mask = DA9062AA_M_WDG_WARN_MASK,
-	},
-	[DA9062_IRQ_SEQ_RDY] = {
+	पूर्ण,
+	[DA9062_IRQ_SEQ_RDY] = अणु
 		.reg_offset = DA9062_REG_EVENT_A_OFFSET,
 		.mask = DA9062AA_M_SEQ_RDY_MASK,
-	},
+	पूर्ण,
 	/* EVENT B */
-	[DA9062_IRQ_TEMP] = {
+	[DA9062_IRQ_TEMP] = अणु
 		.reg_offset = DA9062_REG_EVENT_B_OFFSET,
 		.mask = DA9062AA_M_TEMP_MASK,
-	},
-	[DA9062_IRQ_LDO_LIM] = {
+	पूर्ण,
+	[DA9062_IRQ_LDO_LIM] = अणु
 		.reg_offset = DA9062_REG_EVENT_B_OFFSET,
 		.mask = DA9062AA_M_LDO_LIM_MASK,
-	},
-	[DA9062_IRQ_DVC_RDY] = {
+	पूर्ण,
+	[DA9062_IRQ_DVC_RDY] = अणु
 		.reg_offset = DA9062_REG_EVENT_B_OFFSET,
 		.mask = DA9062AA_M_DVC_RDY_MASK,
-	},
-	[DA9062_IRQ_VDD_WARN] = {
+	पूर्ण,
+	[DA9062_IRQ_VDD_WARN] = अणु
 		.reg_offset = DA9062_REG_EVENT_B_OFFSET,
 		.mask = DA9062AA_M_VDD_WARN_MASK,
-	},
+	पूर्ण,
 	/* EVENT C */
-	[DA9062_IRQ_GPI0] = {
+	[DA9062_IRQ_GPI0] = अणु
 		.reg_offset = DA9062_REG_EVENT_C_OFFSET,
 		.mask = DA9062AA_M_GPI0_MASK,
-	},
-	[DA9062_IRQ_GPI1] = {
+	पूर्ण,
+	[DA9062_IRQ_GPI1] = अणु
 		.reg_offset = DA9062_REG_EVENT_C_OFFSET,
 		.mask = DA9062AA_M_GPI1_MASK,
-	},
-	[DA9062_IRQ_GPI2] = {
+	पूर्ण,
+	[DA9062_IRQ_GPI2] = अणु
 		.reg_offset = DA9062_REG_EVENT_C_OFFSET,
 		.mask = DA9062AA_M_GPI2_MASK,
-	},
-	[DA9062_IRQ_GPI3] = {
+	पूर्ण,
+	[DA9062_IRQ_GPI3] = अणु
 		.reg_offset = DA9062_REG_EVENT_C_OFFSET,
 		.mask = DA9062AA_M_GPI3_MASK,
-	},
-	[DA9062_IRQ_GPI4] = {
+	पूर्ण,
+	[DA9062_IRQ_GPI4] = अणु
 		.reg_offset = DA9062_REG_EVENT_C_OFFSET,
 		.mask = DA9062AA_M_GPI4_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct regmap_irq_chip da9062_irq_chip = {
+अटल काष्ठा regmap_irq_chip da9062_irq_chip = अणु
 	.name = "da9062-irq",
 	.irqs = da9062_irqs,
 	.num_irqs = DA9062_NUM_IRQ,
@@ -158,204 +159,204 @@ static struct regmap_irq_chip da9062_irq_chip = {
 	.status_base = DA9062AA_EVENT_A,
 	.mask_base = DA9062AA_IRQ_MASK_A,
 	.ack_base = DA9062AA_EVENT_A,
-};
+पूर्ण;
 
-static const struct resource da9061_core_resources[] = {
+अटल स्थिर काष्ठा resource da9061_core_resources[] = अणु
 	DEFINE_RES_IRQ_NAMED(DA9061_IRQ_VDD_WARN, "VDD_WARN"),
-};
+पूर्ण;
 
-static const struct resource da9061_regulators_resources[] = {
+अटल स्थिर काष्ठा resource da9061_regulators_resources[] = अणु
 	DEFINE_RES_IRQ_NAMED(DA9061_IRQ_LDO_LIM, "LDO_LIM"),
-};
+पूर्ण;
 
-static const struct resource da9061_thermal_resources[] = {
+अटल स्थिर काष्ठा resource da9061_thermal_resources[] = अणु
 	DEFINE_RES_IRQ_NAMED(DA9061_IRQ_TEMP, "THERMAL"),
-};
+पूर्ण;
 
-static const struct resource da9061_wdt_resources[] = {
+अटल स्थिर काष्ठा resource da9061_wdt_resources[] = अणु
 	DEFINE_RES_IRQ_NAMED(DA9061_IRQ_WDG_WARN, "WD_WARN"),
-};
+पूर्ण;
 
-static const struct resource da9061_onkey_resources[] = {
+अटल स्थिर काष्ठा resource da9061_onkey_resources[] = अणु
 	DEFINE_RES_IRQ_NAMED(DA9061_IRQ_ONKEY, "ONKEY"),
-};
+पूर्ण;
 
-static const struct mfd_cell da9061_devs[] = {
-	{
+अटल स्थिर काष्ठा mfd_cell da9061_devs[] = अणु
+	अणु
 		.name		= "da9061-core",
 		.num_resources	= ARRAY_SIZE(da9061_core_resources),
 		.resources	= da9061_core_resources,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "da9062-regulators",
 		.num_resources	= ARRAY_SIZE(da9061_regulators_resources),
 		.resources	= da9061_regulators_resources,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "da9061-watchdog",
 		.num_resources	= ARRAY_SIZE(da9061_wdt_resources),
 		.resources	= da9061_wdt_resources,
 		.of_compatible  = "dlg,da9061-watchdog",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "da9061-thermal",
 		.num_resources	= ARRAY_SIZE(da9061_thermal_resources),
 		.resources	= da9061_thermal_resources,
 		.of_compatible  = "dlg,da9061-thermal",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "da9061-onkey",
 		.num_resources	= ARRAY_SIZE(da9061_onkey_resources),
 		.resources	= da9061_onkey_resources,
 		.of_compatible = "dlg,da9061-onkey",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct resource da9062_core_resources[] = {
+अटल स्थिर काष्ठा resource da9062_core_resources[] = अणु
 	DEFINE_RES_NAMED(DA9062_IRQ_VDD_WARN, 1, "VDD_WARN", IORESOURCE_IRQ),
-};
+पूर्ण;
 
-static const struct resource da9062_regulators_resources[] = {
+अटल स्थिर काष्ठा resource da9062_regulators_resources[] = अणु
 	DEFINE_RES_NAMED(DA9062_IRQ_LDO_LIM, 1, "LDO_LIM", IORESOURCE_IRQ),
-};
+पूर्ण;
 
-static const struct resource da9062_thermal_resources[] = {
+अटल स्थिर काष्ठा resource da9062_thermal_resources[] = अणु
 	DEFINE_RES_NAMED(DA9062_IRQ_TEMP, 1, "THERMAL", IORESOURCE_IRQ),
-};
+पूर्ण;
 
-static const struct resource da9062_wdt_resources[] = {
+अटल स्थिर काष्ठा resource da9062_wdt_resources[] = अणु
 	DEFINE_RES_NAMED(DA9062_IRQ_WDG_WARN, 1, "WD_WARN", IORESOURCE_IRQ),
-};
+पूर्ण;
 
-static const struct resource da9062_rtc_resources[] = {
+अटल स्थिर काष्ठा resource da9062_rtc_resources[] = अणु
 	DEFINE_RES_NAMED(DA9062_IRQ_ALARM, 1, "ALARM", IORESOURCE_IRQ),
 	DEFINE_RES_NAMED(DA9062_IRQ_TICK, 1, "TICK", IORESOURCE_IRQ),
-};
+पूर्ण;
 
-static const struct resource da9062_onkey_resources[] = {
+अटल स्थिर काष्ठा resource da9062_onkey_resources[] = अणु
 	DEFINE_RES_NAMED(DA9062_IRQ_ONKEY, 1, "ONKEY", IORESOURCE_IRQ),
-};
+पूर्ण;
 
-static const struct resource da9062_gpio_resources[] = {
+अटल स्थिर काष्ठा resource da9062_gpio_resources[] = अणु
 	DEFINE_RES_NAMED(DA9062_IRQ_GPI0, 1, "GPI0", IORESOURCE_IRQ),
 	DEFINE_RES_NAMED(DA9062_IRQ_GPI1, 1, "GPI1", IORESOURCE_IRQ),
 	DEFINE_RES_NAMED(DA9062_IRQ_GPI2, 1, "GPI2", IORESOURCE_IRQ),
 	DEFINE_RES_NAMED(DA9062_IRQ_GPI3, 1, "GPI3", IORESOURCE_IRQ),
 	DEFINE_RES_NAMED(DA9062_IRQ_GPI4, 1, "GPI4", IORESOURCE_IRQ),
-};
+पूर्ण;
 
-static const struct mfd_cell da9062_devs[] = {
-	{
+अटल स्थिर काष्ठा mfd_cell da9062_devs[] = अणु
+	अणु
 		.name		= "da9062-core",
 		.num_resources	= ARRAY_SIZE(da9062_core_resources),
 		.resources	= da9062_core_resources,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "da9062-regulators",
 		.num_resources	= ARRAY_SIZE(da9062_regulators_resources),
 		.resources	= da9062_regulators_resources,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "da9062-watchdog",
 		.num_resources	= ARRAY_SIZE(da9062_wdt_resources),
 		.resources	= da9062_wdt_resources,
 		.of_compatible  = "dlg,da9062-watchdog",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "da9062-thermal",
 		.num_resources	= ARRAY_SIZE(da9062_thermal_resources),
 		.resources	= da9062_thermal_resources,
 		.of_compatible  = "dlg,da9062-thermal",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "da9062-rtc",
 		.num_resources	= ARRAY_SIZE(da9062_rtc_resources),
 		.resources	= da9062_rtc_resources,
 		.of_compatible  = "dlg,da9062-rtc",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "da9062-onkey",
 		.num_resources	= ARRAY_SIZE(da9062_onkey_resources),
 		.resources	= da9062_onkey_resources,
 		.of_compatible	= "dlg,da9062-onkey",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "da9062-gpio",
 		.num_resources	= ARRAY_SIZE(da9062_gpio_resources),
 		.resources	= da9062_gpio_resources,
 		.of_compatible	= "dlg,da9062-gpio",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int da9062_clear_fault_log(struct da9062 *chip)
-{
-	int ret;
-	int fault_log;
+अटल पूर्णांक da9062_clear_fault_log(काष्ठा da9062 *chip)
+अणु
+	पूर्णांक ret;
+	पूर्णांक fault_log;
 
-	ret = regmap_read(chip->regmap, DA9062AA_FAULT_LOG, &fault_log);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(chip->regmap, DA9062AA_FAULT_LOG, &fault_log);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (fault_log) {
-		if (fault_log & DA9062AA_TWD_ERROR_MASK)
+	अगर (fault_log) अणु
+		अगर (fault_log & DA9062AA_TWD_ERROR_MASK)
 			dev_dbg(chip->dev, "Fault log entry detected: TWD_ERROR\n");
-		if (fault_log & DA9062AA_POR_MASK)
+		अगर (fault_log & DA9062AA_POR_MASK)
 			dev_dbg(chip->dev, "Fault log entry detected: POR\n");
-		if (fault_log & DA9062AA_VDD_FAULT_MASK)
+		अगर (fault_log & DA9062AA_VDD_FAULT_MASK)
 			dev_dbg(chip->dev, "Fault log entry detected: VDD_FAULT\n");
-		if (fault_log & DA9062AA_VDD_START_MASK)
+		अगर (fault_log & DA9062AA_VDD_START_MASK)
 			dev_dbg(chip->dev, "Fault log entry detected: VDD_START\n");
-		if (fault_log & DA9062AA_TEMP_CRIT_MASK)
+		अगर (fault_log & DA9062AA_TEMP_CRIT_MASK)
 			dev_dbg(chip->dev, "Fault log entry detected: TEMP_CRIT\n");
-		if (fault_log & DA9062AA_KEY_RESET_MASK)
+		अगर (fault_log & DA9062AA_KEY_RESET_MASK)
 			dev_dbg(chip->dev, "Fault log entry detected: KEY_RESET\n");
-		if (fault_log & DA9062AA_NSHUTDOWN_MASK)
+		अगर (fault_log & DA9062AA_NSHUTDOWN_MASK)
 			dev_dbg(chip->dev, "Fault log entry detected: NSHUTDOWN\n");
-		if (fault_log & DA9062AA_WAIT_SHUT_MASK)
+		अगर (fault_log & DA9062AA_WAIT_SHUT_MASK)
 			dev_dbg(chip->dev, "Fault log entry detected: WAIT_SHUT\n");
 
-		ret = regmap_write(chip->regmap, DA9062AA_FAULT_LOG,
+		ret = regmap_ग_लिखो(chip->regmap, DA9062AA_FAULT_LOG,
 				   fault_log);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9062_get_device_type(struct da9062 *chip)
-{
-	int device_id, variant_id, variant_mrc, variant_vrc;
-	char *type;
-	int ret;
+अटल पूर्णांक da9062_get_device_type(काष्ठा da9062 *chip)
+अणु
+	पूर्णांक device_id, variant_id, variant_mrc, variant_vrc;
+	अक्षर *type;
+	पूर्णांक ret;
 
-	ret = regmap_read(chip->regmap, DA9062AA_DEVICE_ID, &device_id);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(chip->regmap, DA9062AA_DEVICE_ID, &device_id);
+	अगर (ret < 0) अणु
 		dev_err(chip->dev, "Cannot read chip ID.\n");
-		return -EIO;
-	}
-	if (device_id != DA9062_PMIC_DEVICE_ID) {
+		वापस -EIO;
+	पूर्ण
+	अगर (device_id != DA9062_PMIC_DEVICE_ID) अणु
 		dev_err(chip->dev, "Invalid device ID: 0x%02x\n", device_id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = regmap_read(chip->regmap, DA9062AA_VARIANT_ID, &variant_id);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(chip->regmap, DA9062AA_VARIANT_ID, &variant_id);
+	अगर (ret < 0) अणु
 		dev_err(chip->dev, "Cannot read chip variant id.\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	variant_vrc = (variant_id & DA9062AA_VRC_MASK) >> DA9062AA_VRC_SHIFT;
 
-	switch (variant_vrc) {
-	case DA9062_PMIC_VARIANT_VRC_DA9061:
+	चयन (variant_vrc) अणु
+	हाल DA9062_PMIC_VARIANT_VRC_DA9061:
 		type = "DA9061";
-		break;
-	case DA9062_PMIC_VARIANT_VRC_DA9062:
+		अवरोध;
+	हाल DA9062_PMIC_VARIANT_VRC_DA9062:
 		type = "DA9062";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		type = "Unknown";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dev_info(chip->dev,
 		 "Device detected (device-ID: 0x%02X, var-ID: 0x%02X, %s)\n",
@@ -363,43 +364,43 @@ static int da9062_get_device_type(struct da9062 *chip)
 
 	variant_mrc = (variant_id & DA9062AA_MRC_MASK) >> DA9062AA_MRC_SHIFT;
 
-	if (variant_mrc < DA9062_PMIC_VARIANT_MRC_AA) {
+	अगर (variant_mrc < DA9062_PMIC_VARIANT_MRC_AA) अणु
 		dev_err(chip->dev,
 			"Cannot support variant MRC: 0x%02X\n", variant_mrc);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 da9062_configure_irq_type(struct da9062 *chip, int irq, u32 *trigger)
-{
+अटल u32 da9062_configure_irq_type(काष्ठा da9062 *chip, पूर्णांक irq, u32 *trigger)
+अणु
 	u32 irq_type = 0;
-	struct irq_data *irq_data = irq_get_irq_data(irq);
+	काष्ठा irq_data *irq_data = irq_get_irq_data(irq);
 
-	if (!irq_data) {
+	अगर (!irq_data) अणु
 		dev_err(chip->dev, "Invalid IRQ: %d\n", irq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	*trigger = irqd_get_trigger_type(irq_data);
 
-	switch (*trigger) {
-	case IRQ_TYPE_LEVEL_HIGH:
+	चयन (*trigger) अणु
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		irq_type = DA9062_IRQ_HIGH;
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		irq_type = DA9062_IRQ_LOW;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_warn(chip->dev, "Unsupported IRQ type: %d\n", *trigger);
-		return -EINVAL;
-	}
-	return regmap_update_bits(chip->regmap, DA9062AA_CONFIG_A,
+		वापस -EINVAL;
+	पूर्ण
+	वापस regmap_update_bits(chip->regmap, DA9062AA_CONFIG_A,
 			DA9062AA_IRQ_TYPE_MASK,
 			irq_type << DA9062AA_IRQ_TYPE_SHIFT);
-}
+पूर्ण
 
-static const struct regmap_range da9061_aa_readable_ranges[] = {
+अटल स्थिर काष्ठा regmap_range da9061_aa_पढ़ोable_ranges[] = अणु
 	regmap_reg_range(DA9062AA_PAGE_CON, DA9062AA_STATUS_B),
 	regmap_reg_range(DA9062AA_STATUS_D, DA9062AA_EVENT_C),
 	regmap_reg_range(DA9062AA_IRQ_MASK_A, DA9062AA_IRQ_MASK_C),
@@ -427,9 +428,9 @@ static const struct regmap_range da9061_aa_readable_ranges[] = {
 	regmap_reg_range(DA9062AA_CONFIG_M, DA9062AA_CONFIG_M),
 	regmap_reg_range(DA9062AA_GP_ID_0, DA9062AA_GP_ID_19),
 	regmap_reg_range(DA9062AA_DEVICE_ID, DA9062AA_CONFIG_ID),
-};
+पूर्ण;
 
-static const struct regmap_range da9061_aa_writeable_ranges[] = {
+अटल स्थिर काष्ठा regmap_range da9061_aa_ग_लिखोable_ranges[] = अणु
 	regmap_reg_range(DA9062AA_PAGE_CON, DA9062AA_PAGE_CON),
 	regmap_reg_range(DA9062AA_FAULT_LOG, DA9062AA_EVENT_C),
 	regmap_reg_range(DA9062AA_IRQ_MASK_A, DA9062AA_IRQ_MASK_C),
@@ -453,9 +454,9 @@ static const struct regmap_range da9061_aa_writeable_ranges[] = {
 	regmap_reg_range(DA9062AA_VBUCK3_B, DA9062AA_VBUCK3_B),
 	regmap_reg_range(DA9062AA_VLDO1_B, DA9062AA_VLDO4_B),
 	regmap_reg_range(DA9062AA_GP_ID_0, DA9062AA_GP_ID_19),
-};
+पूर्ण;
 
-static const struct regmap_range da9061_aa_volatile_ranges[] = {
+अटल स्थिर काष्ठा regmap_range da9061_aa_अस्थिर_ranges[] = अणु
 	regmap_reg_range(DA9062AA_PAGE_CON, DA9062AA_STATUS_B),
 	regmap_reg_range(DA9062AA_STATUS_D, DA9062AA_EVENT_C),
 	regmap_reg_range(DA9062AA_CONTROL_A, DA9062AA_CONTROL_B),
@@ -465,48 +466,48 @@ static const struct regmap_range da9061_aa_volatile_ranges[] = {
 	regmap_reg_range(DA9062AA_LDO1_CONT, DA9062AA_LDO4_CONT),
 	regmap_reg_range(DA9062AA_DVC_1, DA9062AA_DVC_1),
 	regmap_reg_range(DA9062AA_SEQ, DA9062AA_SEQ),
-};
+पूर्ण;
 
-static const struct regmap_access_table da9061_aa_readable_table = {
-	.yes_ranges = da9061_aa_readable_ranges,
-	.n_yes_ranges = ARRAY_SIZE(da9061_aa_readable_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table da9061_aa_पढ़ोable_table = अणु
+	.yes_ranges = da9061_aa_पढ़ोable_ranges,
+	.n_yes_ranges = ARRAY_SIZE(da9061_aa_पढ़ोable_ranges),
+पूर्ण;
 
-static const struct regmap_access_table da9061_aa_writeable_table = {
-	.yes_ranges = da9061_aa_writeable_ranges,
-	.n_yes_ranges = ARRAY_SIZE(da9061_aa_writeable_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table da9061_aa_ग_लिखोable_table = अणु
+	.yes_ranges = da9061_aa_ग_लिखोable_ranges,
+	.n_yes_ranges = ARRAY_SIZE(da9061_aa_ग_लिखोable_ranges),
+पूर्ण;
 
-static const struct regmap_access_table da9061_aa_volatile_table = {
-	.yes_ranges = da9061_aa_volatile_ranges,
-	.n_yes_ranges = ARRAY_SIZE(da9061_aa_volatile_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table da9061_aa_अस्थिर_table = अणु
+	.yes_ranges = da9061_aa_अस्थिर_ranges,
+	.n_yes_ranges = ARRAY_SIZE(da9061_aa_अस्थिर_ranges),
+पूर्ण;
 
-static const struct regmap_range_cfg da9061_range_cfg[] = {
-	{
+अटल स्थिर काष्ठा regmap_range_cfg da9061_range_cfg[] = अणु
+	अणु
 		.range_min = DA9062AA_PAGE_CON,
 		.range_max = DA9062AA_CONFIG_ID,
 		.selector_reg = DA9062AA_PAGE_CON,
 		.selector_mask = 1 << DA9062_I2C_PAGE_SEL_SHIFT,
-		.selector_shift = DA9062_I2C_PAGE_SEL_SHIFT,
-		.window_start = 0,
-		.window_len = 256,
-	}
-};
+		.selector_shअगरt = DA9062_I2C_PAGE_SEL_SHIFT,
+		.winकरोw_start = 0,
+		.winकरोw_len = 256,
+	पूर्ण
+पूर्ण;
 
-static struct regmap_config da9061_regmap_config = {
+अटल काष्ठा regmap_config da9061_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 	.ranges = da9061_range_cfg,
 	.num_ranges = ARRAY_SIZE(da9061_range_cfg),
-	.max_register = DA9062AA_CONFIG_ID,
+	.max_रेजिस्टर = DA9062AA_CONFIG_ID,
 	.cache_type = REGCACHE_RBTREE,
-	.rd_table = &da9061_aa_readable_table,
-	.wr_table = &da9061_aa_writeable_table,
-	.volatile_table = &da9061_aa_volatile_table,
-};
+	.rd_table = &da9061_aa_पढ़ोable_table,
+	.wr_table = &da9061_aa_ग_लिखोable_table,
+	.अस्थिर_table = &da9061_aa_अस्थिर_table,
+पूर्ण;
 
-static const struct regmap_range da9062_aa_readable_ranges[] = {
+अटल स्थिर काष्ठा regmap_range da9062_aa_पढ़ोable_ranges[] = अणु
 	regmap_reg_range(DA9062AA_PAGE_CON, DA9062AA_STATUS_B),
 	regmap_reg_range(DA9062AA_STATUS_D, DA9062AA_EVENT_C),
 	regmap_reg_range(DA9062AA_IRQ_MASK_A, DA9062AA_IRQ_MASK_C),
@@ -532,9 +533,9 @@ static const struct regmap_range da9062_aa_readable_ranges[] = {
 	regmap_reg_range(DA9062AA_CONFIG_M, DA9062AA_CONFIG_M),
 	regmap_reg_range(DA9062AA_TRIM_CLDR, DA9062AA_GP_ID_19),
 	regmap_reg_range(DA9062AA_DEVICE_ID, DA9062AA_CONFIG_ID),
-};
+पूर्ण;
 
-static const struct regmap_range da9062_aa_writeable_ranges[] = {
+अटल स्थिर काष्ठा regmap_range da9062_aa_ग_लिखोable_ranges[] = अणु
 	regmap_reg_range(DA9062AA_PAGE_CON, DA9062AA_PAGE_CON),
 	regmap_reg_range(DA9062AA_FAULT_LOG, DA9062AA_EVENT_C),
 	regmap_reg_range(DA9062AA_IRQ_MASK_A, DA9062AA_IRQ_MASK_C),
@@ -556,9 +557,9 @@ static const struct regmap_range da9062_aa_writeable_ranges[] = {
 	regmap_reg_range(DA9062AA_VLDO1_B, DA9062AA_VLDO4_B),
 	regmap_reg_range(DA9062AA_BBAT_CONT, DA9062AA_BBAT_CONT),
 	regmap_reg_range(DA9062AA_GP_ID_0, DA9062AA_GP_ID_19),
-};
+पूर्ण;
 
-static const struct regmap_range da9062_aa_volatile_ranges[] = {
+अटल स्थिर काष्ठा regmap_range da9062_aa_अस्थिर_ranges[] = अणु
 	regmap_reg_range(DA9062AA_PAGE_CON, DA9062AA_STATUS_B),
 	regmap_reg_range(DA9062AA_STATUS_D, DA9062AA_EVENT_C),
 	regmap_reg_range(DA9062AA_CONTROL_A, DA9062AA_CONTROL_B),
@@ -570,178 +571,178 @@ static const struct regmap_range da9062_aa_volatile_ranges[] = {
 	regmap_reg_range(DA9062AA_COUNT_S, DA9062AA_SECOND_D),
 	regmap_reg_range(DA9062AA_SEQ, DA9062AA_SEQ),
 	regmap_reg_range(DA9062AA_EN_32K, DA9062AA_EN_32K),
-};
+पूर्ण;
 
-static const struct regmap_access_table da9062_aa_readable_table = {
-	.yes_ranges = da9062_aa_readable_ranges,
-	.n_yes_ranges = ARRAY_SIZE(da9062_aa_readable_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table da9062_aa_पढ़ोable_table = अणु
+	.yes_ranges = da9062_aa_पढ़ोable_ranges,
+	.n_yes_ranges = ARRAY_SIZE(da9062_aa_पढ़ोable_ranges),
+पूर्ण;
 
-static const struct regmap_access_table da9062_aa_writeable_table = {
-	.yes_ranges = da9062_aa_writeable_ranges,
-	.n_yes_ranges = ARRAY_SIZE(da9062_aa_writeable_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table da9062_aa_ग_लिखोable_table = अणु
+	.yes_ranges = da9062_aa_ग_लिखोable_ranges,
+	.n_yes_ranges = ARRAY_SIZE(da9062_aa_ग_लिखोable_ranges),
+पूर्ण;
 
-static const struct regmap_access_table da9062_aa_volatile_table = {
-	.yes_ranges = da9062_aa_volatile_ranges,
-	.n_yes_ranges = ARRAY_SIZE(da9062_aa_volatile_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table da9062_aa_अस्थिर_table = अणु
+	.yes_ranges = da9062_aa_अस्थिर_ranges,
+	.n_yes_ranges = ARRAY_SIZE(da9062_aa_अस्थिर_ranges),
+पूर्ण;
 
-static const struct regmap_range_cfg da9062_range_cfg[] = {
-	{
+अटल स्थिर काष्ठा regmap_range_cfg da9062_range_cfg[] = अणु
+	अणु
 		.range_min = DA9062AA_PAGE_CON,
 		.range_max = DA9062AA_CONFIG_ID,
 		.selector_reg = DA9062AA_PAGE_CON,
 		.selector_mask = 1 << DA9062_I2C_PAGE_SEL_SHIFT,
-		.selector_shift = DA9062_I2C_PAGE_SEL_SHIFT,
-		.window_start = 0,
-		.window_len = 256,
-	}
-};
+		.selector_shअगरt = DA9062_I2C_PAGE_SEL_SHIFT,
+		.winकरोw_start = 0,
+		.winकरोw_len = 256,
+	पूर्ण
+पूर्ण;
 
-static struct regmap_config da9062_regmap_config = {
+अटल काष्ठा regmap_config da9062_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 	.ranges = da9062_range_cfg,
 	.num_ranges = ARRAY_SIZE(da9062_range_cfg),
-	.max_register = DA9062AA_CONFIG_ID,
+	.max_रेजिस्टर = DA9062AA_CONFIG_ID,
 	.cache_type = REGCACHE_RBTREE,
-	.rd_table = &da9062_aa_readable_table,
-	.wr_table = &da9062_aa_writeable_table,
-	.volatile_table = &da9062_aa_volatile_table,
-};
+	.rd_table = &da9062_aa_पढ़ोable_table,
+	.wr_table = &da9062_aa_ग_लिखोable_table,
+	.अस्थिर_table = &da9062_aa_अस्थिर_table,
+पूर्ण;
 
-static const struct of_device_id da9062_dt_ids[] = {
-	{ .compatible = "dlg,da9061", .data = (void *)COMPAT_TYPE_DA9061, },
-	{ .compatible = "dlg,da9062", .data = (void *)COMPAT_TYPE_DA9062, },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id da9062_dt_ids[] = अणु
+	अणु .compatible = "dlg,da9061", .data = (व्योम *)COMPAT_TYPE_DA9061, पूर्ण,
+	अणु .compatible = "dlg,da9062", .data = (व्योम *)COMPAT_TYPE_DA9062, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, da9062_dt_ids);
 
-static int da9062_i2c_probe(struct i2c_client *i2c,
-	const struct i2c_device_id *id)
-{
-	struct da9062 *chip;
-	const struct of_device_id *match;
-	unsigned int irq_base;
-	const struct mfd_cell *cell;
-	const struct regmap_irq_chip *irq_chip;
-	const struct regmap_config *config;
-	int cell_num;
+अटल पूर्णांक da9062_i2c_probe(काष्ठा i2c_client *i2c,
+	स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा da9062 *chip;
+	स्थिर काष्ठा of_device_id *match;
+	अचिन्हित पूर्णांक irq_base;
+	स्थिर काष्ठा mfd_cell *cell;
+	स्थिर काष्ठा regmap_irq_chip *irq_chip;
+	स्थिर काष्ठा regmap_config *config;
+	पूर्णांक cell_num;
 	u32 trigger_type = 0;
-	int ret;
+	पूर्णांक ret;
 
-	chip = devm_kzalloc(&i2c->dev, sizeof(*chip), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(&i2c->dev, माप(*chip), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
-	if (i2c->dev.of_node) {
+	अगर (i2c->dev.of_node) अणु
 		match = of_match_node(da9062_dt_ids, i2c->dev.of_node);
-		if (!match)
-			return -EINVAL;
+		अगर (!match)
+			वापस -EINVAL;
 
-		chip->chip_type = (uintptr_t)match->data;
-	} else {
+		chip->chip_type = (uपूर्णांकptr_t)match->data;
+	पूर्ण अन्यथा अणु
 		chip->chip_type = id->driver_data;
-	}
+	पूर्ण
 
 	i2c_set_clientdata(i2c, chip);
 	chip->dev = &i2c->dev;
 
-	if (!i2c->irq) {
+	अगर (!i2c->irq) अणु
 		dev_err(chip->dev, "No IRQ configured\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (chip->chip_type) {
-	case COMPAT_TYPE_DA9061:
+	चयन (chip->chip_type) अणु
+	हाल COMPAT_TYPE_DA9061:
 		cell = da9061_devs;
 		cell_num = ARRAY_SIZE(da9061_devs);
 		irq_chip = &da9061_irq_chip;
 		config = &da9061_regmap_config;
-		break;
-	case COMPAT_TYPE_DA9062:
+		अवरोध;
+	हाल COMPAT_TYPE_DA9062:
 		cell = da9062_devs;
 		cell_num = ARRAY_SIZE(da9062_devs);
 		irq_chip = &da9062_irq_chip;
 		config = &da9062_regmap_config;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(chip->dev, "Unrecognised chip type\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	chip->regmap = devm_regmap_init_i2c(i2c, config);
-	if (IS_ERR(chip->regmap)) {
+	अगर (IS_ERR(chip->regmap)) अणु
 		ret = PTR_ERR(chip->regmap);
 		dev_err(chip->dev, "Failed to allocate register map: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = da9062_clear_fault_log(chip);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_warn(chip->dev, "Cannot clear fault log\n");
 
 	ret = da9062_get_device_type(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = da9062_configure_irq_type(chip, i2c->irq, &trigger_type);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(chip->dev, "Failed to configure IRQ type\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regmap_add_irq_chip(chip->regmap, i2c->irq,
 			trigger_type | IRQF_SHARED | IRQF_ONESHOT,
 			-1, irq_chip, &chip->regmap_irq);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(chip->dev, "Failed to request IRQ %d: %d\n",
 			i2c->irq, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	irq_base = regmap_irq_chip_get_base(chip->regmap_irq);
 
 	ret = mfd_add_devices(chip->dev, PLATFORM_DEVID_NONE, cell,
-			      cell_num, NULL, irq_base,
-			      NULL);
-	if (ret) {
+			      cell_num, शून्य, irq_base,
+			      शून्य);
+	अगर (ret) अणु
 		dev_err(chip->dev, "Cannot register child devices\n");
 		regmap_del_irq_chip(i2c->irq, chip->regmap_irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9062_i2c_remove(struct i2c_client *i2c)
-{
-	struct da9062 *chip = i2c_get_clientdata(i2c);
+अटल पूर्णांक da9062_i2c_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	काष्ठा da9062 *chip = i2c_get_clientdata(i2c);
 
-	mfd_remove_devices(chip->dev);
+	mfd_हटाओ_devices(chip->dev);
 	regmap_del_irq_chip(i2c->irq, chip->regmap_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id da9062_i2c_id[] = {
-	{ "da9061", COMPAT_TYPE_DA9061 },
-	{ "da9062", COMPAT_TYPE_DA9062 },
-	{ },
-};
+अटल स्थिर काष्ठा i2c_device_id da9062_i2c_id[] = अणु
+	अणु "da9061", COMPAT_TYPE_DA9061 पूर्ण,
+	अणु "da9062", COMPAT_TYPE_DA9062 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, da9062_i2c_id);
 
-static struct i2c_driver da9062_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver da9062_i2c_driver = अणु
+	.driver = अणु
 		.name = "da9062",
 		.of_match_table = da9062_dt_ids,
-	},
+	पूर्ण,
 	.probe    = da9062_i2c_probe,
-	.remove   = da9062_i2c_remove,
+	.हटाओ   = da9062_i2c_हटाओ,
 	.id_table = da9062_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(da9062_i2c_driver);
 

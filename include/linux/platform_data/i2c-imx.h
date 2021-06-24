@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * i2c.h - i.MX I2C driver header file
  *
  * Copyright (c) 2008, Darius Augulis <augulis.darius@gmail.com>
  */
 
-#ifndef __ASM_ARCH_I2C_H_
-#define __ASM_ARCH_I2C_H_
+#अगर_अघोषित __ASM_ARCH_I2C_H_
+#घोषणा __ASM_ARCH_I2C_H_
 
 /**
- * struct imxi2c_platform_data - structure of platform data for MXC I2C driver
+ * काष्ठा imxi2c_platक्रमm_data - काष्ठाure of platक्रमm data क्रम MXC I2C driver
  * @bitrate:	Bus speed measured in Hz
  *
  **/
-struct imxi2c_platform_data {
+काष्ठा imxi2c_platक्रमm_data अणु
 	u32 bitrate;
-};
+पूर्ण;
 
-#endif /* __ASM_ARCH_I2C_H_ */
+#पूर्ण_अगर /* __ASM_ARCH_I2C_H_ */

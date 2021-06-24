@@ -1,155 +1,156 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /**
  * Copyright (C) 2016 Linaro Ltd
  */
-#include <linux/module.h>
-#include <linux/ulpi/driver.h>
-#include <linux/ulpi/regs.h>
-#include <linux/phy/phy.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/pinctrl/pinctrl-state.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ulpi/driver.h>
+#समावेश <linux/ulpi/regs.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/pinctrl/pinctrl-state.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
 
-#define ULPI_HSIC_CFG		0x30
-#define ULPI_HSIC_IO_CAL	0x33
+#घोषणा ULPI_HSIC_CFG		0x30
+#घोषणा ULPI_HSIC_IO_CAL	0x33
 
-struct qcom_usb_hsic_phy {
-	struct ulpi *ulpi;
-	struct phy *phy;
-	struct pinctrl *pctl;
-	struct clk *phy_clk;
-	struct clk *cal_clk;
-	struct clk *cal_sleep_clk;
-};
+काष्ठा qcom_usb_hsic_phy अणु
+	काष्ठा ulpi *ulpi;
+	काष्ठा phy *phy;
+	काष्ठा pinctrl *pctl;
+	काष्ठा clk *phy_clk;
+	काष्ठा clk *cal_clk;
+	काष्ठा clk *cal_sleep_clk;
+पूर्ण;
 
-static int qcom_usb_hsic_phy_power_on(struct phy *phy)
-{
-	struct qcom_usb_hsic_phy *uphy = phy_get_drvdata(phy);
-	struct ulpi *ulpi = uphy->ulpi;
-	struct pinctrl_state *pins_default;
-	int ret;
+अटल पूर्णांक qcom_usb_hsic_phy_घातer_on(काष्ठा phy *phy)
+अणु
+	काष्ठा qcom_usb_hsic_phy *uphy = phy_get_drvdata(phy);
+	काष्ठा ulpi *ulpi = uphy->ulpi;
+	काष्ठा pinctrl_state *pins_शेष;
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(uphy->phy_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(uphy->cal_clk);
-	if (ret)
-		goto err_cal;
+	अगर (ret)
+		जाओ err_cal;
 
 	ret = clk_prepare_enable(uphy->cal_sleep_clk);
-	if (ret)
-		goto err_sleep;
+	अगर (ret)
+		जाओ err_sleep;
 
-	/* Set periodic calibration interval to ~2.048sec in HSIC_IO_CAL_REG */
-	ret = ulpi_write(ulpi, ULPI_HSIC_IO_CAL, 0xff);
-	if (ret)
-		goto err_ulpi;
+	/* Set periodic calibration पूर्णांकerval to ~2.048sec in HSIC_IO_CAL_REG */
+	ret = ulpi_ग_लिखो(ulpi, ULPI_HSIC_IO_CAL, 0xff);
+	अगर (ret)
+		जाओ err_ulpi;
 
-	/* Enable periodic IO calibration in HSIC_CFG register */
-	ret = ulpi_write(ulpi, ULPI_HSIC_CFG, 0xa8);
-	if (ret)
-		goto err_ulpi;
+	/* Enable periodic IO calibration in HSIC_CFG रेजिस्टर */
+	ret = ulpi_ग_लिखो(ulpi, ULPI_HSIC_CFG, 0xa8);
+	अगर (ret)
+		जाओ err_ulpi;
 
-	/* Configure pins for HSIC functionality */
-	pins_default = pinctrl_lookup_state(uphy->pctl, PINCTRL_STATE_DEFAULT);
-	if (IS_ERR(pins_default))
-		return PTR_ERR(pins_default);
+	/* Configure pins क्रम HSIC functionality */
+	pins_शेष = pinctrl_lookup_state(uphy->pctl, PINCTRL_STATE_DEFAULT);
+	अगर (IS_ERR(pins_शेष))
+		वापस PTR_ERR(pins_शेष);
 
-	ret = pinctrl_select_state(uphy->pctl, pins_default);
-	if (ret)
-		goto err_ulpi;
+	ret = pinctrl_select_state(uphy->pctl, pins_शेष);
+	अगर (ret)
+		जाओ err_ulpi;
 
-	 /* Enable HSIC mode in HSIC_CFG register */
-	ret = ulpi_write(ulpi, ULPI_SET(ULPI_HSIC_CFG), 0x01);
-	if (ret)
-		goto err_ulpi;
+	 /* Enable HSIC mode in HSIC_CFG रेजिस्टर */
+	ret = ulpi_ग_लिखो(ulpi, ULPI_SET(ULPI_HSIC_CFG), 0x01);
+	अगर (ret)
+		जाओ err_ulpi;
 
-	/* Disable auto-resume */
-	ret = ulpi_write(ulpi, ULPI_CLR(ULPI_IFC_CTRL),
+	/* Disable स्वतः-resume */
+	ret = ulpi_ग_लिखो(ulpi, ULPI_CLR(ULPI_IFC_CTRL),
 			 ULPI_IFC_CTRL_AUTORESUME);
-	if (ret)
-		goto err_ulpi;
+	अगर (ret)
+		जाओ err_ulpi;
 
-	return ret;
+	वापस ret;
 err_ulpi:
 	clk_disable_unprepare(uphy->cal_sleep_clk);
 err_sleep:
 	clk_disable_unprepare(uphy->cal_clk);
 err_cal:
 	clk_disable_unprepare(uphy->phy_clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qcom_usb_hsic_phy_power_off(struct phy *phy)
-{
-	struct qcom_usb_hsic_phy *uphy = phy_get_drvdata(phy);
+अटल पूर्णांक qcom_usb_hsic_phy_घातer_off(काष्ठा phy *phy)
+अणु
+	काष्ठा qcom_usb_hsic_phy *uphy = phy_get_drvdata(phy);
 
 	clk_disable_unprepare(uphy->cal_sleep_clk);
 	clk_disable_unprepare(uphy->cal_clk);
 	clk_disable_unprepare(uphy->phy_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct phy_ops qcom_usb_hsic_phy_ops = {
-	.power_on = qcom_usb_hsic_phy_power_on,
-	.power_off = qcom_usb_hsic_phy_power_off,
+अटल स्थिर काष्ठा phy_ops qcom_usb_hsic_phy_ops = अणु
+	.घातer_on = qcom_usb_hsic_phy_घातer_on,
+	.घातer_off = qcom_usb_hsic_phy_घातer_off,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int qcom_usb_hsic_phy_probe(struct ulpi *ulpi)
-{
-	struct qcom_usb_hsic_phy *uphy;
-	struct phy_provider *p;
-	struct clk *clk;
+अटल पूर्णांक qcom_usb_hsic_phy_probe(काष्ठा ulpi *ulpi)
+अणु
+	काष्ठा qcom_usb_hsic_phy *uphy;
+	काष्ठा phy_provider *p;
+	काष्ठा clk *clk;
 
-	uphy = devm_kzalloc(&ulpi->dev, sizeof(*uphy), GFP_KERNEL);
-	if (!uphy)
-		return -ENOMEM;
+	uphy = devm_kzalloc(&ulpi->dev, माप(*uphy), GFP_KERNEL);
+	अगर (!uphy)
+		वापस -ENOMEM;
 	ulpi_set_drvdata(ulpi, uphy);
 
 	uphy->ulpi = ulpi;
 	uphy->pctl = devm_pinctrl_get(&ulpi->dev);
-	if (IS_ERR(uphy->pctl))
-		return PTR_ERR(uphy->pctl);
+	अगर (IS_ERR(uphy->pctl))
+		वापस PTR_ERR(uphy->pctl);
 
 	uphy->phy_clk = clk = devm_clk_get(&ulpi->dev, "phy");
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
 	uphy->cal_clk = clk = devm_clk_get(&ulpi->dev, "cal");
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
 	uphy->cal_sleep_clk = clk = devm_clk_get(&ulpi->dev, "cal_sleep");
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
 	uphy->phy = devm_phy_create(&ulpi->dev, ulpi->dev.of_node,
 				    &qcom_usb_hsic_phy_ops);
-	if (IS_ERR(uphy->phy))
-		return PTR_ERR(uphy->phy);
+	अगर (IS_ERR(uphy->phy))
+		वापस PTR_ERR(uphy->phy);
 	phy_set_drvdata(uphy->phy, uphy);
 
-	p = devm_of_phy_provider_register(&ulpi->dev, of_phy_simple_xlate);
-	return PTR_ERR_OR_ZERO(p);
-}
+	p = devm_of_phy_provider_रेजिस्टर(&ulpi->dev, of_phy_simple_xlate);
+	वापस PTR_ERR_OR_ZERO(p);
+पूर्ण
 
-static const struct of_device_id qcom_usb_hsic_phy_match[] = {
-	{ .compatible = "qcom,usb-hsic-phy", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id qcom_usb_hsic_phy_match[] = अणु
+	अणु .compatible = "qcom,usb-hsic-phy", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qcom_usb_hsic_phy_match);
 
-static struct ulpi_driver qcom_usb_hsic_phy_driver = {
+अटल काष्ठा ulpi_driver qcom_usb_hsic_phy_driver = अणु
 	.probe = qcom_usb_hsic_phy_probe,
-	.driver = {
+	.driver = अणु
 		.name = "qcom_usb_hsic_phy",
 		.of_match_table = qcom_usb_hsic_phy_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_ulpi_driver(qcom_usb_hsic_phy_driver);
 
 MODULE_DESCRIPTION("Qualcomm USB HSIC phy");

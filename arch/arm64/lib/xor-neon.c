@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * arch/arm64/lib/xor-neon.c
  *
  * Authors: Jackie Liu <liuyun01@kylinos.cn>
- * Copyright (C) 2018,Tianjin KYLIN Information Technology Co., Ltd.
+ * Copyright (C) 2018,Tianjin KYLIN Inक्रमmation Technology Co., Ltd.
  */
 
-#include <linux/raid/xor.h>
-#include <linux/module.h>
-#include <asm/neon-intrinsics.h>
+#समावेश <linux/raid/xor.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/neon-पूर्णांकrinsics.h>
 
-void xor_arm64_neon_2(unsigned long bytes, unsigned long *p1,
-	unsigned long *p2)
-{
-	uint64_t *dp1 = (uint64_t *)p1;
-	uint64_t *dp2 = (uint64_t *)p2;
+व्योम xor_arm64_neon_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1,
+	अचिन्हित दीर्घ *p2)
+अणु
+	uपूर्णांक64_t *dp1 = (uपूर्णांक64_t *)p1;
+	uपूर्णांक64_t *dp2 = (uपूर्णांक64_t *)p2;
 
-	register uint64x2_t v0, v1, v2, v3;
-	long lines = bytes / (sizeof(uint64x2_t) * 4);
+	रेजिस्टर uपूर्णांक64x2_t v0, v1, v2, v3;
+	दीर्घ lines = bytes / (माप(uपूर्णांक64x2_t) * 4);
 
-	do {
+	करो अणु
 		/* p1 ^= p2 */
 		v0 = veorq_u64(vld1q_u64(dp1 +  0), vld1q_u64(dp2 +  0));
 		v1 = veorq_u64(vld1q_u64(dp1 +  2), vld1q_u64(dp2 +  2));
@@ -34,20 +35,20 @@ void xor_arm64_neon_2(unsigned long bytes, unsigned long *p1,
 
 		dp1 += 8;
 		dp2 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-void xor_arm64_neon_3(unsigned long bytes, unsigned long *p1,
-	unsigned long *p2, unsigned long *p3)
-{
-	uint64_t *dp1 = (uint64_t *)p1;
-	uint64_t *dp2 = (uint64_t *)p2;
-	uint64_t *dp3 = (uint64_t *)p3;
+व्योम xor_arm64_neon_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1,
+	अचिन्हित दीर्घ *p2, अचिन्हित दीर्घ *p3)
+अणु
+	uपूर्णांक64_t *dp1 = (uपूर्णांक64_t *)p1;
+	uपूर्णांक64_t *dp2 = (uपूर्णांक64_t *)p2;
+	uपूर्णांक64_t *dp3 = (uपूर्णांक64_t *)p3;
 
-	register uint64x2_t v0, v1, v2, v3;
-	long lines = bytes / (sizeof(uint64x2_t) * 4);
+	रेजिस्टर uपूर्णांक64x2_t v0, v1, v2, v3;
+	दीर्घ lines = bytes / (माप(uपूर्णांक64x2_t) * 4);
 
-	do {
+	करो अणु
 		/* p1 ^= p2 */
 		v0 = veorq_u64(vld1q_u64(dp1 +  0), vld1q_u64(dp2 +  0));
 		v1 = veorq_u64(vld1q_u64(dp1 +  2), vld1q_u64(dp2 +  2));
@@ -69,21 +70,21 @@ void xor_arm64_neon_3(unsigned long bytes, unsigned long *p1,
 		dp1 += 8;
 		dp2 += 8;
 		dp3 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-void xor_arm64_neon_4(unsigned long bytes, unsigned long *p1,
-	unsigned long *p2, unsigned long *p3, unsigned long *p4)
-{
-	uint64_t *dp1 = (uint64_t *)p1;
-	uint64_t *dp2 = (uint64_t *)p2;
-	uint64_t *dp3 = (uint64_t *)p3;
-	uint64_t *dp4 = (uint64_t *)p4;
+व्योम xor_arm64_neon_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1,
+	अचिन्हित दीर्घ *p2, अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	uपूर्णांक64_t *dp1 = (uपूर्णांक64_t *)p1;
+	uपूर्णांक64_t *dp2 = (uपूर्णांक64_t *)p2;
+	uपूर्णांक64_t *dp3 = (uपूर्णांक64_t *)p3;
+	uपूर्णांक64_t *dp4 = (uपूर्णांक64_t *)p4;
 
-	register uint64x2_t v0, v1, v2, v3;
-	long lines = bytes / (sizeof(uint64x2_t) * 4);
+	रेजिस्टर uपूर्णांक64x2_t v0, v1, v2, v3;
+	दीर्घ lines = bytes / (माप(uपूर्णांक64x2_t) * 4);
 
-	do {
+	करो अणु
 		/* p1 ^= p2 */
 		v0 = veorq_u64(vld1q_u64(dp1 +  0), vld1q_u64(dp2 +  0));
 		v1 = veorq_u64(vld1q_u64(dp1 +  2), vld1q_u64(dp2 +  2));
@@ -112,23 +113,23 @@ void xor_arm64_neon_4(unsigned long bytes, unsigned long *p1,
 		dp2 += 8;
 		dp3 += 8;
 		dp4 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-void xor_arm64_neon_5(unsigned long bytes, unsigned long *p1,
-	unsigned long *p2, unsigned long *p3,
-	unsigned long *p4, unsigned long *p5)
-{
-	uint64_t *dp1 = (uint64_t *)p1;
-	uint64_t *dp2 = (uint64_t *)p2;
-	uint64_t *dp3 = (uint64_t *)p3;
-	uint64_t *dp4 = (uint64_t *)p4;
-	uint64_t *dp5 = (uint64_t *)p5;
+व्योम xor_arm64_neon_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1,
+	अचिन्हित दीर्घ *p2, अचिन्हित दीर्घ *p3,
+	अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
+	uपूर्णांक64_t *dp1 = (uपूर्णांक64_t *)p1;
+	uपूर्णांक64_t *dp2 = (uपूर्णांक64_t *)p2;
+	uपूर्णांक64_t *dp3 = (uपूर्णांक64_t *)p3;
+	uपूर्णांक64_t *dp4 = (uपूर्णांक64_t *)p4;
+	uपूर्णांक64_t *dp5 = (uपूर्णांक64_t *)p5;
 
-	register uint64x2_t v0, v1, v2, v3;
-	long lines = bytes / (sizeof(uint64x2_t) * 4);
+	रेजिस्टर uपूर्णांक64x2_t v0, v1, v2, v3;
+	दीर्घ lines = bytes / (माप(uपूर्णांक64x2_t) * 4);
 
-	do {
+	करो अणु
 		/* p1 ^= p2 */
 		v0 = veorq_u64(vld1q_u64(dp1 +  0), vld1q_u64(dp2 +  0));
 		v1 = veorq_u64(vld1q_u64(dp1 +  2), vld1q_u64(dp2 +  2));
@@ -164,16 +165,16 @@ void xor_arm64_neon_5(unsigned long bytes, unsigned long *p1,
 		dp3 += 8;
 		dp4 += 8;
 		dp5 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-struct xor_block_template const xor_block_inner_neon = {
+काष्ठा xor_block_ढाँचा स्थिर xor_block_inner_neon = अणु
 	.name	= "__inner_neon__",
-	.do_2	= xor_arm64_neon_2,
-	.do_3	= xor_arm64_neon_3,
-	.do_4	= xor_arm64_neon_4,
-	.do_5	= xor_arm64_neon_5,
-};
+	.करो_2	= xor_arm64_neon_2,
+	.करो_3	= xor_arm64_neon_3,
+	.करो_4	= xor_arm64_neon_4,
+	.करो_5	= xor_arm64_neon_5,
+पूर्ण;
 EXPORT_SYMBOL(xor_block_inner_neon);
 
 MODULE_AUTHOR("Jackie Liu <liuyun01@kylinos.cn>");

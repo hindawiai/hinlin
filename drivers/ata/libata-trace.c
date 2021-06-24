@@ -1,210 +1,211 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * libata-trace.c - trace functions for libata
+ * libata-trace.c - trace functions क्रम libata
  *
  * Copyright 2015 Hannes Reinecke
  * Copyright 2015 SUSE Linux GmbH
  */
 
-#include <linux/kernel.h>
-#include <linux/trace_seq.h>
-#include <trace/events/libata.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/trace_seq.h>
+#समावेश <trace/events/libata.h>
 
-const char *
-libata_trace_parse_status(struct trace_seq *p, unsigned char status)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
+स्थिर अक्षर *
+libata_trace_parse_status(काष्ठा trace_seq *p, अचिन्हित अक्षर status)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
 
-	trace_seq_printf(p, "{ ");
-	if (status & ATA_BUSY)
-		trace_seq_printf(p, "BUSY ");
-	if (status & ATA_DRDY)
-		trace_seq_printf(p, "DRDY ");
-	if (status & ATA_DF)
-		trace_seq_printf(p, "DF ");
-	if (status & ATA_DSC)
-		trace_seq_printf(p, "DSC ");
-	if (status & ATA_DRQ)
-		trace_seq_printf(p, "DRQ ");
-	if (status & ATA_CORR)
-		trace_seq_printf(p, "CORR ");
-	if (status & ATA_SENSE)
-		trace_seq_printf(p, "SENSE ");
-	if (status & ATA_ERR)
-		trace_seq_printf(p, "ERR ");
-	trace_seq_putc(p, '}');
-	trace_seq_putc(p, 0);
+	trace_seq_म_लिखो(p, "{ ");
+	अगर (status & ATA_BUSY)
+		trace_seq_म_लिखो(p, "BUSY ");
+	अगर (status & ATA_DRDY)
+		trace_seq_म_लिखो(p, "DRDY ");
+	अगर (status & ATA_DF)
+		trace_seq_म_लिखो(p, "DF ");
+	अगर (status & ATA_DSC)
+		trace_seq_म_लिखो(p, "DSC ");
+	अगर (status & ATA_DRQ)
+		trace_seq_म_लिखो(p, "DRQ ");
+	अगर (status & ATA_CORR)
+		trace_seq_म_लिखो(p, "CORR ");
+	अगर (status & ATA_SENSE)
+		trace_seq_म_लिखो(p, "SENSE ");
+	अगर (status & ATA_ERR)
+		trace_seq_म_लिखो(p, "ERR ");
+	trace_seq_अ_दो(p, '}');
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const char *
-libata_trace_parse_eh_action(struct trace_seq *p, unsigned int eh_action)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
+स्थिर अक्षर *
+libata_trace_parse_eh_action(काष्ठा trace_seq *p, अचिन्हित पूर्णांक eh_action)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
 
-	trace_seq_printf(p, "%x", eh_action);
-	if (eh_action) {
-		trace_seq_printf(p, "{ ");
-		if (eh_action & ATA_EH_REVALIDATE)
-			trace_seq_printf(p, "REVALIDATE ");
-		if (eh_action & (ATA_EH_SOFTRESET | ATA_EH_HARDRESET))
-			trace_seq_printf(p, "RESET ");
-		else if (eh_action & ATA_EH_SOFTRESET)
-			trace_seq_printf(p, "SOFTRESET ");
-		else if (eh_action & ATA_EH_HARDRESET)
-			trace_seq_printf(p, "HARDRESET ");
-		if (eh_action & ATA_EH_ENABLE_LINK)
-			trace_seq_printf(p, "ENABLE_LINK ");
-		if (eh_action & ATA_EH_PARK)
-			trace_seq_printf(p, "PARK ");
-		trace_seq_putc(p, '}');
-	}
-	trace_seq_putc(p, 0);
+	trace_seq_म_लिखो(p, "%x", eh_action);
+	अगर (eh_action) अणु
+		trace_seq_म_लिखो(p, "{ ");
+		अगर (eh_action & ATA_EH_REVALIDATE)
+			trace_seq_म_लिखो(p, "REVALIDATE ");
+		अगर (eh_action & (ATA_EH_SOFTRESET | ATA_EH_HARDRESET))
+			trace_seq_म_लिखो(p, "RESET ");
+		अन्यथा अगर (eh_action & ATA_EH_SOFTRESET)
+			trace_seq_म_लिखो(p, "SOFTRESET ");
+		अन्यथा अगर (eh_action & ATA_EH_HARDRESET)
+			trace_seq_म_लिखो(p, "HARDRESET ");
+		अगर (eh_action & ATA_EH_ENABLE_LINK)
+			trace_seq_म_लिखो(p, "ENABLE_LINK ");
+		अगर (eh_action & ATA_EH_PARK)
+			trace_seq_म_लिखो(p, "PARK ");
+		trace_seq_अ_दो(p, '}');
+	पूर्ण
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const char *
-libata_trace_parse_eh_err_mask(struct trace_seq *p, unsigned int eh_err_mask)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
+स्थिर अक्षर *
+libata_trace_parse_eh_err_mask(काष्ठा trace_seq *p, अचिन्हित पूर्णांक eh_err_mask)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
 
-	trace_seq_printf(p, "%x", eh_err_mask);
-	if (eh_err_mask) {
-		trace_seq_printf(p, "{ ");
-		if (eh_err_mask & AC_ERR_DEV)
-			trace_seq_printf(p, "DEV ");
-		if (eh_err_mask & AC_ERR_HSM)
-			trace_seq_printf(p, "HSM ");
-		if (eh_err_mask & AC_ERR_TIMEOUT)
-			trace_seq_printf(p, "TIMEOUT ");
-		if (eh_err_mask & AC_ERR_MEDIA)
-			trace_seq_printf(p, "MEDIA ");
-		if (eh_err_mask & AC_ERR_ATA_BUS)
-			trace_seq_printf(p, "ATA_BUS ");
-		if (eh_err_mask & AC_ERR_HOST_BUS)
-			trace_seq_printf(p, "HOST_BUS ");
-		if (eh_err_mask & AC_ERR_SYSTEM)
-			trace_seq_printf(p, "SYSTEM ");
-		if (eh_err_mask & AC_ERR_INVALID)
-			trace_seq_printf(p, "INVALID ");
-		if (eh_err_mask & AC_ERR_OTHER)
-			trace_seq_printf(p, "OTHER ");
-		if (eh_err_mask & AC_ERR_NODEV_HINT)
-			trace_seq_printf(p, "NODEV_HINT ");
-		if (eh_err_mask & AC_ERR_NCQ)
-			trace_seq_printf(p, "NCQ ");
-		trace_seq_putc(p, '}');
-	}
-	trace_seq_putc(p, 0);
+	trace_seq_म_लिखो(p, "%x", eh_err_mask);
+	अगर (eh_err_mask) अणु
+		trace_seq_म_लिखो(p, "{ ");
+		अगर (eh_err_mask & AC_ERR_DEV)
+			trace_seq_म_लिखो(p, "DEV ");
+		अगर (eh_err_mask & AC_ERR_HSM)
+			trace_seq_म_लिखो(p, "HSM ");
+		अगर (eh_err_mask & AC_ERR_TIMEOUT)
+			trace_seq_म_लिखो(p, "TIMEOUT ");
+		अगर (eh_err_mask & AC_ERR_MEDIA)
+			trace_seq_म_लिखो(p, "MEDIA ");
+		अगर (eh_err_mask & AC_ERR_ATA_BUS)
+			trace_seq_म_लिखो(p, "ATA_BUS ");
+		अगर (eh_err_mask & AC_ERR_HOST_BUS)
+			trace_seq_म_लिखो(p, "HOST_BUS ");
+		अगर (eh_err_mask & AC_ERR_SYSTEM)
+			trace_seq_म_लिखो(p, "SYSTEM ");
+		अगर (eh_err_mask & AC_ERR_INVALID)
+			trace_seq_म_लिखो(p, "INVALID ");
+		अगर (eh_err_mask & AC_ERR_OTHER)
+			trace_seq_म_लिखो(p, "OTHER ");
+		अगर (eh_err_mask & AC_ERR_NODEV_HINT)
+			trace_seq_म_लिखो(p, "NODEV_HINT ");
+		अगर (eh_err_mask & AC_ERR_NCQ)
+			trace_seq_म_लिखो(p, "NCQ ");
+		trace_seq_अ_दो(p, '}');
+	पूर्ण
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const char *
-libata_trace_parse_qc_flags(struct trace_seq *p, unsigned int qc_flags)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
+स्थिर अक्षर *
+libata_trace_parse_qc_flags(काष्ठा trace_seq *p, अचिन्हित पूर्णांक qc_flags)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
 
-	trace_seq_printf(p, "%x", qc_flags);
-	if (qc_flags) {
-		trace_seq_printf(p, "{ ");
-		if (qc_flags & ATA_QCFLAG_ACTIVE)
-			trace_seq_printf(p, "ACTIVE ");
-		if (qc_flags & ATA_QCFLAG_DMAMAP)
-			trace_seq_printf(p, "DMAMAP ");
-		if (qc_flags & ATA_QCFLAG_IO)
-			trace_seq_printf(p, "IO ");
-		if (qc_flags & ATA_QCFLAG_RESULT_TF)
-			trace_seq_printf(p, "RESULT_TF ");
-		if (qc_flags & ATA_QCFLAG_CLEAR_EXCL)
-			trace_seq_printf(p, "CLEAR_EXCL ");
-		if (qc_flags & ATA_QCFLAG_QUIET)
-			trace_seq_printf(p, "QUIET ");
-		if (qc_flags & ATA_QCFLAG_RETRY)
-			trace_seq_printf(p, "RETRY ");
-		if (qc_flags & ATA_QCFLAG_FAILED)
-			trace_seq_printf(p, "FAILED ");
-		if (qc_flags & ATA_QCFLAG_SENSE_VALID)
-			trace_seq_printf(p, "SENSE_VALID ");
-		if (qc_flags & ATA_QCFLAG_EH_SCHEDULED)
-			trace_seq_printf(p, "EH_SCHEDULED ");
-		trace_seq_putc(p, '}');
-	}
-	trace_seq_putc(p, 0);
+	trace_seq_म_लिखो(p, "%x", qc_flags);
+	अगर (qc_flags) अणु
+		trace_seq_म_लिखो(p, "{ ");
+		अगर (qc_flags & ATA_QCFLAG_ACTIVE)
+			trace_seq_म_लिखो(p, "ACTIVE ");
+		अगर (qc_flags & ATA_QCFLAG_DMAMAP)
+			trace_seq_म_लिखो(p, "DMAMAP ");
+		अगर (qc_flags & ATA_QCFLAG_IO)
+			trace_seq_म_लिखो(p, "IO ");
+		अगर (qc_flags & ATA_QCFLAG_RESULT_TF)
+			trace_seq_म_लिखो(p, "RESULT_TF ");
+		अगर (qc_flags & ATA_QCFLAG_CLEAR_EXCL)
+			trace_seq_म_लिखो(p, "CLEAR_EXCL ");
+		अगर (qc_flags & ATA_QCFLAG_QUIET)
+			trace_seq_म_लिखो(p, "QUIET ");
+		अगर (qc_flags & ATA_QCFLAG_RETRY)
+			trace_seq_म_लिखो(p, "RETRY ");
+		अगर (qc_flags & ATA_QCFLAG_FAILED)
+			trace_seq_म_लिखो(p, "FAILED ");
+		अगर (qc_flags & ATA_QCFLAG_SENSE_VALID)
+			trace_seq_म_लिखो(p, "SENSE_VALID ");
+		अगर (qc_flags & ATA_QCFLAG_EH_SCHEDULED)
+			trace_seq_म_लिखो(p, "EH_SCHEDULED ");
+		trace_seq_अ_दो(p, '}');
+	पूर्ण
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const char *
-libata_trace_parse_subcmd(struct trace_seq *p, unsigned char cmd,
-			  unsigned char feature, unsigned char hob_nsect)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
+स्थिर अक्षर *
+libata_trace_parse_subcmd(काष्ठा trace_seq *p, अचिन्हित अक्षर cmd,
+			  अचिन्हित अक्षर feature, अचिन्हित अक्षर hob_nsect)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
 
-	switch (cmd) {
-	case ATA_CMD_FPDMA_RECV:
-		switch (hob_nsect & 0x5f) {
-		case ATA_SUBCMD_FPDMA_RECV_RD_LOG_DMA_EXT:
-			trace_seq_printf(p, " READ_LOG_DMA_EXT");
-			break;
-		case ATA_SUBCMD_FPDMA_RECV_ZAC_MGMT_IN:
-			trace_seq_printf(p, " ZAC_MGMT_IN");
-			break;
-		}
-		break;
-	case ATA_CMD_FPDMA_SEND:
-		switch (hob_nsect & 0x5f) {
-		case ATA_SUBCMD_FPDMA_SEND_WR_LOG_DMA_EXT:
-			trace_seq_printf(p, " WRITE_LOG_DMA_EXT");
-			break;
-		case ATA_SUBCMD_FPDMA_SEND_DSM:
-			trace_seq_printf(p, " DATASET_MANAGEMENT");
-			break;
-		}
-		break;
-	case ATA_CMD_NCQ_NON_DATA:
-		switch (feature) {
-		case ATA_SUBCMD_NCQ_NON_DATA_ABORT_QUEUE:
-			trace_seq_printf(p, " ABORT_QUEUE");
-			break;
-		case ATA_SUBCMD_NCQ_NON_DATA_SET_FEATURES:
-			trace_seq_printf(p, " SET_FEATURES");
-			break;
-		case ATA_SUBCMD_NCQ_NON_DATA_ZERO_EXT:
-			trace_seq_printf(p, " ZERO_EXT");
-			break;
-		case ATA_SUBCMD_NCQ_NON_DATA_ZAC_MGMT_OUT:
-			trace_seq_printf(p, " ZAC_MGMT_OUT");
-			break;
-		}
-		break;
-	case ATA_CMD_ZAC_MGMT_IN:
-		switch (feature) {
-		case ATA_SUBCMD_ZAC_MGMT_IN_REPORT_ZONES:
-			trace_seq_printf(p, " REPORT_ZONES");
-			break;
-		}
-		break;
-	case ATA_CMD_ZAC_MGMT_OUT:
-		switch (feature) {
-		case ATA_SUBCMD_ZAC_MGMT_OUT_CLOSE_ZONE:
-			trace_seq_printf(p, " CLOSE_ZONE");
-			break;
-		case ATA_SUBCMD_ZAC_MGMT_OUT_FINISH_ZONE:
-			trace_seq_printf(p, " FINISH_ZONE");
-			break;
-		case ATA_SUBCMD_ZAC_MGMT_OUT_OPEN_ZONE:
-			trace_seq_printf(p, " OPEN_ZONE");
-			break;
-		case ATA_SUBCMD_ZAC_MGMT_OUT_RESET_WRITE_POINTER:
-			trace_seq_printf(p, " RESET_WRITE_POINTER");
-			break;
-		}
-		break;
-	}
-	trace_seq_putc(p, 0);
+	चयन (cmd) अणु
+	हाल ATA_CMD_FPDMA_RECV:
+		चयन (hob_nsect & 0x5f) अणु
+		हाल ATA_SUBCMD_FPDMA_RECV_RD_LOG_DMA_EXT:
+			trace_seq_म_लिखो(p, " READ_LOG_DMA_EXT");
+			अवरोध;
+		हाल ATA_SUBCMD_FPDMA_RECV_ZAC_MGMT_IN:
+			trace_seq_म_लिखो(p, " ZAC_MGMT_IN");
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल ATA_CMD_FPDMA_SEND:
+		चयन (hob_nsect & 0x5f) अणु
+		हाल ATA_SUBCMD_FPDMA_SEND_WR_LOG_DMA_EXT:
+			trace_seq_म_लिखो(p, " WRITE_LOG_DMA_EXT");
+			अवरोध;
+		हाल ATA_SUBCMD_FPDMA_SEND_DSM:
+			trace_seq_म_लिखो(p, " DATASET_MANAGEMENT");
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल ATA_CMD_NCQ_NON_DATA:
+		चयन (feature) अणु
+		हाल ATA_SUBCMD_NCQ_NON_DATA_ABORT_QUEUE:
+			trace_seq_म_लिखो(p, " ABORT_QUEUE");
+			अवरोध;
+		हाल ATA_SUBCMD_NCQ_NON_DATA_SET_FEATURES:
+			trace_seq_म_लिखो(p, " SET_FEATURES");
+			अवरोध;
+		हाल ATA_SUBCMD_NCQ_NON_DATA_ZERO_EXT:
+			trace_seq_म_लिखो(p, " ZERO_EXT");
+			अवरोध;
+		हाल ATA_SUBCMD_NCQ_NON_DATA_ZAC_MGMT_OUT:
+			trace_seq_म_लिखो(p, " ZAC_MGMT_OUT");
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल ATA_CMD_ZAC_MGMT_IN:
+		चयन (feature) अणु
+		हाल ATA_SUBCMD_ZAC_MGMT_IN_REPORT_ZONES:
+			trace_seq_म_लिखो(p, " REPORT_ZONES");
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल ATA_CMD_ZAC_MGMT_OUT:
+		चयन (feature) अणु
+		हाल ATA_SUBCMD_ZAC_MGMT_OUT_CLOSE_ZONE:
+			trace_seq_म_लिखो(p, " CLOSE_ZONE");
+			अवरोध;
+		हाल ATA_SUBCMD_ZAC_MGMT_OUT_FINISH_ZONE:
+			trace_seq_म_लिखो(p, " FINISH_ZONE");
+			अवरोध;
+		हाल ATA_SUBCMD_ZAC_MGMT_OUT_OPEN_ZONE:
+			trace_seq_म_लिखो(p, " OPEN_ZONE");
+			अवरोध;
+		हाल ATA_SUBCMD_ZAC_MGMT_OUT_RESET_WRITE_POINTER:
+			trace_seq_म_लिखो(p, " RESET_WRITE_POINTER");
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,230 +1,231 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/suspend.h>
-#include <linux/suspend_ioctls.h>
-#include <linux/utsname.h>
-#include <linux/freezer.h>
-#include <linux/compiler.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/suspend.h>
+#समावेश <linux/suspend_ioctls.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/compiler.h>
 
-struct swsusp_info {
-	struct new_utsname	uts;
+काष्ठा swsusp_info अणु
+	काष्ठा new_utsname	uts;
 	u32			version_code;
-	unsigned long		num_physpages;
-	int			cpus;
-	unsigned long		image_pages;
-	unsigned long		pages;
-	unsigned long		size;
-} __aligned(PAGE_SIZE);
+	अचिन्हित दीर्घ		num_physpages;
+	पूर्णांक			cpus;
+	अचिन्हित दीर्घ		image_pages;
+	अचिन्हित दीर्घ		pages;
+	अचिन्हित दीर्घ		size;
+पूर्ण __aligned(PAGE_SIZE);
 
-#ifdef CONFIG_HIBERNATION
-/* kernel/power/snapshot.c */
-extern void __init hibernate_reserved_size_init(void);
-extern void __init hibernate_image_size_init(void);
+#अगर_घोषित CONFIG_HIBERNATION
+/* kernel/घातer/snapshot.c */
+बाह्य व्योम __init hibernate_reserved_size_init(व्योम);
+बाह्य व्योम __init hibernate_image_size_init(व्योम);
 
-#ifdef CONFIG_ARCH_HIBERNATION_HEADER
-/* Maximum size of architecture specific data in a hibernation header */
-#define MAX_ARCH_HEADER_SIZE	(sizeof(struct new_utsname) + 4)
+#अगर_घोषित CONFIG_ARCH_HIBERNATION_HEADER
+/* Maximum size of architecture specअगरic data in a hibernation header */
+#घोषणा MAX_ARCH_HEADER_SIZE	(माप(काष्ठा new_utsname) + 4)
 
-extern int arch_hibernation_header_save(void *addr, unsigned int max_size);
-extern int arch_hibernation_header_restore(void *addr);
+बाह्य पूर्णांक arch_hibernation_header_save(व्योम *addr, अचिन्हित पूर्णांक max_size);
+बाह्य पूर्णांक arch_hibernation_header_restore(व्योम *addr);
 
-static inline int init_header_complete(struct swsusp_info *info)
-{
-	return arch_hibernation_header_save(info, MAX_ARCH_HEADER_SIZE);
-}
+अटल अंतरभूत पूर्णांक init_header_complete(काष्ठा swsusp_info *info)
+अणु
+	वापस arch_hibernation_header_save(info, MAX_ARCH_HEADER_SIZE);
+पूर्ण
 
-static inline const char *check_image_kernel(struct swsusp_info *info)
-{
-	return arch_hibernation_header_restore(info) ?
-			"architecture specific data" : NULL;
-}
-#endif /* CONFIG_ARCH_HIBERNATION_HEADER */
+अटल अंतरभूत स्थिर अक्षर *check_image_kernel(काष्ठा swsusp_info *info)
+अणु
+	वापस arch_hibernation_header_restore(info) ?
+			"architecture specific data" : शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ARCH_HIBERNATION_HEADER */
 
-extern int hibernate_resume_nonboot_cpu_disable(void);
+बाह्य पूर्णांक hibernate_resume_nonboot_cpu_disable(व्योम);
 
 /*
- * Keep some memory free so that I/O operations can succeed without paging
+ * Keep some memory मुक्त so that I/O operations can succeed without paging
  * [Might this be more than 4 MB?]
  */
-#define PAGES_FOR_IO	((4096 * 1024) >> PAGE_SHIFT)
+#घोषणा PAGES_FOR_IO	((4096 * 1024) >> PAGE_SHIFT)
 
 /*
- * Keep 1 MB of memory free so that device drivers can allocate some pages in
- * their .suspend() routines without breaking the suspend to disk.
+ * Keep 1 MB of memory मुक्त so that device drivers can allocate some pages in
+ * their .suspend() routines without अवरोधing the suspend to disk.
  */
-#define SPARE_PAGES	((1024 * 1024) >> PAGE_SHIFT)
+#घोषणा SPARE_PAGES	((1024 * 1024) >> PAGE_SHIFT)
 
-asmlinkage int swsusp_save(void);
+यंत्रlinkage पूर्णांक swsusp_save(व्योम);
 
-/* kernel/power/hibernate.c */
-extern bool freezer_test_done;
+/* kernel/घातer/hibernate.c */
+बाह्य bool मुक्तzer_test_करोne;
 
-extern int hibernation_snapshot(int platform_mode);
-extern int hibernation_restore(int platform_mode);
-extern int hibernation_platform_enter(void);
+बाह्य पूर्णांक hibernation_snapshot(पूर्णांक platक्रमm_mode);
+बाह्य पूर्णांक hibernation_restore(पूर्णांक platक्रमm_mode);
+बाह्य पूर्णांक hibernation_platक्रमm_enter(व्योम);
 
-#ifdef CONFIG_STRICT_KERNEL_RWX
-/* kernel/power/snapshot.c */
-extern void enable_restore_image_protection(void);
-#else
-static inline void enable_restore_image_protection(void) {}
-#endif /* CONFIG_STRICT_KERNEL_RWX */
+#अगर_घोषित CONFIG_STRICT_KERNEL_RWX
+/* kernel/घातer/snapshot.c */
+बाह्य व्योम enable_restore_image_protection(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम enable_restore_image_protection(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_STRICT_KERNEL_RWX */
 
-#else /* !CONFIG_HIBERNATION */
+#अन्यथा /* !CONFIG_HIBERNATION */
 
-static inline void hibernate_reserved_size_init(void) {}
-static inline void hibernate_image_size_init(void) {}
-#endif /* !CONFIG_HIBERNATION */
+अटल अंतरभूत व्योम hibernate_reserved_size_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम hibernate_image_size_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* !CONFIG_HIBERNATION */
 
-#define power_attr(_name) \
-static struct kobj_attribute _name##_attr = {	\
-	.attr	= {				\
-		.name = __stringify(_name),	\
+#घोषणा घातer_attr(_name) \
+अटल काष्ठा kobj_attribute _name##_attr = अणु	\
+	.attr	= अणु				\
+		.name = __stringअगरy(_name),	\
 		.mode = 0644,			\
-	},					\
+	पूर्ण,					\
 	.show	= _name##_show,			\
 	.store	= _name##_store,		\
-}
+पूर्ण
 
-#define power_attr_ro(_name) \
-static struct kobj_attribute _name##_attr = {	\
-	.attr	= {				\
-		.name = __stringify(_name),	\
+#घोषणा घातer_attr_ro(_name) \
+अटल काष्ठा kobj_attribute _name##_attr = अणु	\
+	.attr	= अणु				\
+		.name = __stringअगरy(_name),	\
 		.mode = S_IRUGO,		\
-	},					\
+	पूर्ण,					\
 	.show	= _name##_show,			\
-}
+पूर्ण
 
-/* Preferred image size in bytes (default 500 MB) */
-extern unsigned long image_size;
-/* Size of memory reserved for drivers (default SPARE_PAGES x PAGE_SIZE) */
-extern unsigned long reserved_size;
-extern int in_suspend;
-extern dev_t swsusp_resume_device;
-extern sector_t swsusp_resume_block;
+/* Preferred image size in bytes (शेष 500 MB) */
+बाह्य अचिन्हित दीर्घ image_size;
+/* Size of memory reserved क्रम drivers (शेष SPARE_PAGES x PAGE_SIZE) */
+बाह्य अचिन्हित दीर्घ reserved_size;
+बाह्य पूर्णांक in_suspend;
+बाह्य dev_t swsusp_resume_device;
+बाह्य sector_t swsusp_resume_block;
 
-extern int create_basic_memory_bitmaps(void);
-extern void free_basic_memory_bitmaps(void);
-extern int hibernate_preallocate_memory(void);
+बाह्य पूर्णांक create_basic_memory_biपंचांगaps(व्योम);
+बाह्य व्योम मुक्त_basic_memory_biपंचांगaps(व्योम);
+बाह्य पूर्णांक hibernate_pपुनः_स्मृतिate_memory(व्योम);
 
-extern void clear_or_poison_free_pages(void);
+बाह्य व्योम clear_or_poison_मुक्त_pages(व्योम);
 
 /**
- *	Auxiliary structure used for reading the snapshot image data and
+ *	Auxiliary काष्ठाure used क्रम पढ़ोing the snapshot image data and
  *	metadata from and writing them to the list of page backup entries
- *	(PBEs) which is the main data structure of swsusp.
+ *	(PBEs) which is the मुख्य data काष्ठाure of swsusp.
  *
- *	Using struct snapshot_handle we can transfer the image, including its
+ *	Using काष्ठा snapshot_handle we can transfer the image, including its
  *	metadata, as a continuous sequence of bytes with the help of
- *	snapshot_read_next() and snapshot_write_next().
+ *	snapshot_पढ़ो_next() and snapshot_ग_लिखो_next().
  *
- *	The code that writes the image to a storage or transfers it to
- *	the user land is required to use snapshot_read_next() for this
- *	purpose and it should not make any assumptions regarding the internal
- *	structure of the image.  Similarly, the code that reads the image from
+ *	The code that ग_लिखोs the image to a storage or transfers it to
+ *	the user land is required to use snapshot_पढ़ो_next() क्रम this
+ *	purpose and it should not make any assumptions regarding the पूर्णांकernal
+ *	काष्ठाure of the image.  Similarly, the code that पढ़ोs the image from
  *	a storage or transfers it from the user land is required to use
- *	snapshot_write_next().
+ *	snapshot_ग_लिखो_next().
  *
- *	This may allow us to change the internal structure of the image
- *	in the future with considerably less effort.
+ *	This may allow us to change the पूर्णांकernal काष्ठाure of the image
+ *	in the future with considerably less efक्रमt.
  */
 
-struct snapshot_handle {
-	unsigned int	cur;	/* number of the block of PAGE_SIZE bytes the
+काष्ठा snapshot_handle अणु
+	अचिन्हित पूर्णांक	cur;	/* number of the block of PAGE_SIZE bytes the
 				 * next operation will refer to (ie. current)
 				 */
-	void		*buffer;	/* address of the block to read from
-					 * or write to
+	व्योम		*buffer;	/* address of the block to पढ़ो from
+					 * or ग_लिखो to
 					 */
-	int		sync_read;	/* Set to one to notify the caller of
-					 * snapshot_write_next() that it may
-					 * need to call wait_on_bio_chain()
+	पूर्णांक		sync_पढ़ो;	/* Set to one to notअगरy the caller of
+					 * snapshot_ग_लिखो_next() that it may
+					 * need to call रुको_on_bio_chain()
 					 */
-};
+पूर्ण;
 
-/* This macro returns the address from/to which the caller of
- * snapshot_read_next()/snapshot_write_next() is allowed to
- * read/write data after the function returns
+/* This macro वापसs the address from/to which the caller of
+ * snapshot_पढ़ो_next()/snapshot_ग_लिखो_next() is allowed to
+ * पढ़ो/ग_लिखो data after the function वापसs
  */
-#define data_of(handle)	((handle).buffer)
+#घोषणा data_of(handle)	((handle).buffer)
 
-extern unsigned int snapshot_additional_pages(struct zone *zone);
-extern unsigned long snapshot_get_image_size(void);
-extern int snapshot_read_next(struct snapshot_handle *handle);
-extern int snapshot_write_next(struct snapshot_handle *handle);
-extern void snapshot_write_finalize(struct snapshot_handle *handle);
-extern int snapshot_image_loaded(struct snapshot_handle *handle);
+बाह्य अचिन्हित पूर्णांक snapshot_additional_pages(काष्ठा zone *zone);
+बाह्य अचिन्हित दीर्घ snapshot_get_image_size(व्योम);
+बाह्य पूर्णांक snapshot_पढ़ो_next(काष्ठा snapshot_handle *handle);
+बाह्य पूर्णांक snapshot_ग_लिखो_next(काष्ठा snapshot_handle *handle);
+बाह्य व्योम snapshot_ग_लिखो_finalize(काष्ठा snapshot_handle *handle);
+बाह्य पूर्णांक snapshot_image_loaded(काष्ठा snapshot_handle *handle);
 
-extern bool hibernate_acquire(void);
-extern void hibernate_release(void);
+बाह्य bool hibernate_acquire(व्योम);
+बाह्य व्योम hibernate_release(व्योम);
 
-extern sector_t alloc_swapdev_block(int swap);
-extern void free_all_swap_pages(int swap);
-extern int swsusp_swap_in_use(void);
+बाह्य sector_t alloc_swapdev_block(पूर्णांक swap);
+बाह्य व्योम मुक्त_all_swap_pages(पूर्णांक swap);
+बाह्य पूर्णांक swsusp_swap_in_use(व्योम);
 
 /*
  * Flags that can be passed from the hibernatig hernel to the "boot" kernel in
  * the image header.
  */
-#define SF_PLATFORM_MODE	1
-#define SF_NOCOMPRESS_MODE	2
-#define SF_CRC32_MODE	        4
+#घोषणा SF_PLATFORM_MODE	1
+#घोषणा SF_NOCOMPRESS_MODE	2
+#घोषणा SF_CRC32_MODE	        4
 
-/* kernel/power/hibernate.c */
-extern int swsusp_check(void);
-extern void swsusp_free(void);
-extern int swsusp_read(unsigned int *flags_p);
-extern int swsusp_write(unsigned int flags);
-extern void swsusp_close(fmode_t);
-#ifdef CONFIG_SUSPEND
-extern int swsusp_unmark(void);
-#endif
+/* kernel/घातer/hibernate.c */
+बाह्य पूर्णांक swsusp_check(व्योम);
+बाह्य व्योम swsusp_मुक्त(व्योम);
+बाह्य पूर्णांक swsusp_पढ़ो(अचिन्हित पूर्णांक *flags_p);
+बाह्य पूर्णांक swsusp_ग_लिखो(अचिन्हित पूर्णांक flags);
+बाह्य व्योम swsusp_बंद(भ_शेषe_t);
+#अगर_घोषित CONFIG_SUSPEND
+बाह्य पूर्णांक swsusp_unmark(व्योम);
+#पूर्ण_अगर
 
-struct __kernel_old_timeval;
-/* kernel/power/swsusp.c */
-extern void swsusp_show_speed(ktime_t, ktime_t, unsigned int, char *);
+काष्ठा __kernel_old_समयval;
+/* kernel/घातer/swsusp.c */
+बाह्य व्योम swsusp_show_speed(kसमय_प्रकार, kसमय_प्रकार, अचिन्हित पूर्णांक, अक्षर *);
 
-#ifdef CONFIG_SUSPEND
-/* kernel/power/suspend.c */
-extern const char * const pm_labels[];
-extern const char *pm_states[];
-extern const char *mem_sleep_states[];
+#अगर_घोषित CONFIG_SUSPEND
+/* kernel/घातer/suspend.c */
+बाह्य स्थिर अक्षर * स्थिर pm_labels[];
+बाह्य स्थिर अक्षर *pm_states[];
+बाह्य स्थिर अक्षर *mem_sleep_states[];
 
-extern int suspend_devices_and_enter(suspend_state_t state);
-#else /* !CONFIG_SUSPEND */
-#define mem_sleep_current	PM_SUSPEND_ON
+बाह्य पूर्णांक suspend_devices_and_enter(suspend_state_t state);
+#अन्यथा /* !CONFIG_SUSPEND */
+#घोषणा mem_sleep_current	PM_SUSPEND_ON
 
-static inline int suspend_devices_and_enter(suspend_state_t state)
-{
-	return -ENOSYS;
-}
-#endif /* !CONFIG_SUSPEND */
+अटल अंतरभूत पूर्णांक suspend_devices_and_enter(suspend_state_t state)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_SUSPEND */
 
-#ifdef CONFIG_PM_TEST_SUSPEND
-/* kernel/power/suspend_test.c */
-extern void suspend_test_start(void);
-extern void suspend_test_finish(const char *label);
-#else /* !CONFIG_PM_TEST_SUSPEND */
-static inline void suspend_test_start(void) {}
-static inline void suspend_test_finish(const char *label) {}
-#endif /* !CONFIG_PM_TEST_SUSPEND */
+#अगर_घोषित CONFIG_PM_TEST_SUSPEND
+/* kernel/घातer/suspend_test.c */
+बाह्य व्योम suspend_test_start(व्योम);
+बाह्य व्योम suspend_test_finish(स्थिर अक्षर *label);
+#अन्यथा /* !CONFIG_PM_TEST_SUSPEND */
+अटल अंतरभूत व्योम suspend_test_start(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम suspend_test_finish(स्थिर अक्षर *label) अणुपूर्ण
+#पूर्ण_अगर /* !CONFIG_PM_TEST_SUSPEND */
 
-#ifdef CONFIG_PM_SLEEP
-/* kernel/power/main.c */
-extern int pm_notifier_call_chain_robust(unsigned long val_up, unsigned long val_down);
-extern int pm_notifier_call_chain(unsigned long val);
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP
+/* kernel/घातer/मुख्य.c */
+बाह्य पूर्णांक pm_notअगरier_call_chain_robust(अचिन्हित दीर्घ val_up, अचिन्हित दीर्घ val_करोwn);
+बाह्य पूर्णांक pm_notअगरier_call_chain(अचिन्हित दीर्घ val);
+#पूर्ण_अगर
 
-#ifdef CONFIG_HIGHMEM
-int restore_highmem(void);
-#else
-static inline unsigned int count_highmem_pages(void) { return 0; }
-static inline int restore_highmem(void) { return 0; }
-#endif
+#अगर_घोषित CONFIG_HIGHMEM
+पूर्णांक restore_highmem(व्योम);
+#अन्यथा
+अटल अंतरभूत अचिन्हित पूर्णांक count_highmem_pages(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक restore_highmem(व्योम) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
 /*
  * Suspend test levels
  */
-enum {
+क्रमागत अणु
 	/* keep first */
 	TEST_NONE,
 	TEST_CORE,
@@ -234,79 +235,79 @@ enum {
 	TEST_FREEZER,
 	/* keep last */
 	__TEST_AFTER_LAST
-};
+पूर्ण;
 
-#define TEST_FIRST	TEST_NONE
-#define TEST_MAX	(__TEST_AFTER_LAST - 1)
+#घोषणा TEST_FIRST	TEST_NONE
+#घोषणा TEST_MAX	(__TEST_AFTER_LAST - 1)
 
-#ifdef CONFIG_PM_SLEEP_DEBUG
-extern int pm_test_level;
-#else
-#define pm_test_level	(TEST_NONE)
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP_DEBUG
+बाह्य पूर्णांक pm_test_level;
+#अन्यथा
+#घोषणा pm_test_level	(TEST_NONE)
+#पूर्ण_अगर
 
-#ifdef CONFIG_SUSPEND_FREEZER
-static inline int suspend_freeze_processes(void)
-{
-	int error;
+#अगर_घोषित CONFIG_SUSPEND_FREEZER
+अटल अंतरभूत पूर्णांक suspend_मुक्तze_processes(व्योम)
+अणु
+	पूर्णांक error;
 
-	error = freeze_processes();
+	error = मुक्तze_processes();
 	/*
-	 * freeze_processes() automatically thaws every task if freezing
-	 * fails. So we need not do anything extra upon error.
+	 * मुक्तze_processes() स्वतःmatically thaws every task अगर मुक्तzing
+	 * fails. So we need not करो anything extra upon error.
 	 */
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = freeze_kernel_threads();
+	error = मुक्तze_kernel_thपढ़ोs();
 	/*
-	 * freeze_kernel_threads() thaws only kernel threads upon freezing
+	 * मुक्तze_kernel_thपढ़ोs() thaws only kernel thपढ़ोs upon मुक्तzing
 	 * failure. So we have to thaw the userspace tasks ourselves.
 	 */
-	if (error)
+	अगर (error)
 		thaw_processes();
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static inline void suspend_thaw_processes(void)
-{
+अटल अंतरभूत व्योम suspend_thaw_processes(व्योम)
+अणु
 	thaw_processes();
-}
-#else
-static inline int suspend_freeze_processes(void)
-{
-	return 0;
-}
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक suspend_मुक्तze_processes(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void suspend_thaw_processes(void)
-{
-}
-#endif
+अटल अंतरभूत व्योम suspend_thaw_processes(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_AUTOSLEEP
+#अगर_घोषित CONFIG_PM_AUTOSLEEP
 
-/* kernel/power/autosleep.c */
-extern int pm_autosleep_init(void);
-extern int pm_autosleep_lock(void);
-extern void pm_autosleep_unlock(void);
-extern suspend_state_t pm_autosleep_state(void);
-extern int pm_autosleep_set_state(suspend_state_t state);
+/* kernel/घातer/स्वतःsleep.c */
+बाह्य पूर्णांक pm_स्वतःsleep_init(व्योम);
+बाह्य पूर्णांक pm_स्वतःsleep_lock(व्योम);
+बाह्य व्योम pm_स्वतःsleep_unlock(व्योम);
+बाह्य suspend_state_t pm_स्वतःsleep_state(व्योम);
+बाह्य पूर्णांक pm_स्वतःsleep_set_state(suspend_state_t state);
 
-#else /* !CONFIG_PM_AUTOSLEEP */
+#अन्यथा /* !CONFIG_PM_AUTOSLEEP */
 
-static inline int pm_autosleep_init(void) { return 0; }
-static inline int pm_autosleep_lock(void) { return 0; }
-static inline void pm_autosleep_unlock(void) {}
-static inline suspend_state_t pm_autosleep_state(void) { return PM_SUSPEND_ON; }
+अटल अंतरभूत पूर्णांक pm_स्वतःsleep_init(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pm_स्वतःsleep_lock(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम pm_स्वतःsleep_unlock(व्योम) अणुपूर्ण
+अटल अंतरभूत suspend_state_t pm_स्वतःsleep_state(व्योम) अणु वापस PM_SUSPEND_ON; पूर्ण
 
-#endif /* !CONFIG_PM_AUTOSLEEP */
+#पूर्ण_अगर /* !CONFIG_PM_AUTOSLEEP */
 
-#ifdef CONFIG_PM_WAKELOCKS
+#अगर_घोषित CONFIG_PM_WAKELOCKS
 
-/* kernel/power/wakelock.c */
-extern ssize_t pm_show_wakelocks(char *buf, bool show_active);
-extern int pm_wake_lock(const char *buf);
-extern int pm_wake_unlock(const char *buf);
+/* kernel/घातer/wakelock.c */
+बाह्य sमाप_प्रकार pm_show_wakelocks(अक्षर *buf, bool show_active);
+बाह्य पूर्णांक pm_wake_lock(स्थिर अक्षर *buf);
+बाह्य पूर्णांक pm_wake_unlock(स्थिर अक्षर *buf);
 
-#endif /* !CONFIG_PM_WAKELOCKS */
+#पूर्ण_अगर /* !CONFIG_PM_WAKELOCKS */

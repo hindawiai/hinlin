@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Functions related to mapping data to requests
  */
-#include <linux/kernel.h>
-#include <linux/sched/task_stack.h>
-#include <linux/module.h>
-#include <linux/bio.h>
-#include <linux/blkdev.h>
-#include <linux/uio.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/module.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/uपन.स>
 
-#include "blk.h"
+#समावेश "blk.h"
 
-struct bio_map_data {
+काष्ठा bio_map_data अणु
 	bool is_our_pages : 1;
 	bool is_null_mapped : 1;
-	struct iov_iter iter;
-	struct iovec iov[];
-};
+	काष्ठा iov_iter iter;
+	काष्ठा iovec iov[];
+पूर्ण;
 
-static struct bio_map_data *bio_alloc_map_data(struct iov_iter *data,
+अटल काष्ठा bio_map_data *bio_alloc_map_data(काष्ठा iov_iter *data,
 					       gfp_t gfp_mask)
-{
-	struct bio_map_data *bmd;
+अणु
+	काष्ठा bio_map_data *bmd;
 
-	if (data->nr_segs > UIO_MAXIOV)
-		return NULL;
+	अगर (data->nr_segs > UIO_MAXIOV)
+		वापस शून्य;
 
-	bmd = kmalloc(struct_size(bmd, iov, data->nr_segs), gfp_mask);
-	if (!bmd)
-		return NULL;
-	memcpy(bmd->iov, data->iov, sizeof(struct iovec) * data->nr_segs);
+	bmd = kदो_स्मृति(काष्ठा_size(bmd, iov, data->nr_segs), gfp_mask);
+	अगर (!bmd)
+		वापस शून्य;
+	स_नकल(bmd->iov, data->iov, माप(काष्ठा iovec) * data->nr_segs);
 	bmd->iter = *data;
 	bmd->iter.iov = bmd->iov;
-	return bmd;
-}
+	वापस bmd;
+पूर्ण
 
 /**
  * bio_copy_from_iter - copy all pages from iov_iter to bio
- * @bio: The &struct bio which describes the I/O as destination
+ * @bio: The &काष्ठा bio which describes the I/O as destination
  * @iter: iov_iter as source
  *
  * Copy all pages from iov_iter to bio.
  * Returns 0 on success, or error on failure.
  */
-static int bio_copy_from_iter(struct bio *bio, struct iov_iter *iter)
-{
-	struct bio_vec *bvec;
-	struct bvec_iter_all iter_all;
+अटल पूर्णांक bio_copy_from_iter(काष्ठा bio *bio, काष्ठा iov_iter *iter)
+अणु
+	काष्ठा bio_vec *bvec;
+	काष्ठा bvec_iter_all iter_all;
 
-	bio_for_each_segment_all(bvec, bio, iter_all) {
-		ssize_t ret;
+	bio_क्रम_each_segment_all(bvec, bio, iter_all) अणु
+		sमाप_प्रकार ret;
 
 		ret = copy_page_from_iter(bvec->bv_page,
 					  bvec->bv_offset,
 					  bvec->bv_len,
 					  iter);
 
-		if (!iov_iter_count(iter))
-			break;
+		अगर (!iov_iter_count(iter))
+			अवरोध;
 
-		if (ret < bvec->bv_len)
-			return -EFAULT;
-	}
+		अगर (ret < bvec->bv_len)
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * bio_copy_to_iter - copy all pages from bio to iov_iter
- * @bio: The &struct bio which describes the I/O as source
+ * @bio: The &काष्ठा bio which describes the I/O as source
  * @iter: iov_iter as destination
  *
  * Copy all pages from bio to iov_iter.
  * Returns 0 on success, or error on failure.
  */
-static int bio_copy_to_iter(struct bio *bio, struct iov_iter iter)
-{
-	struct bio_vec *bvec;
-	struct bvec_iter_all iter_all;
+अटल पूर्णांक bio_copy_to_iter(काष्ठा bio *bio, काष्ठा iov_iter iter)
+अणु
+	काष्ठा bio_vec *bvec;
+	काष्ठा bvec_iter_all iter_all;
 
-	bio_for_each_segment_all(bvec, bio, iter_all) {
-		ssize_t ret;
+	bio_क्रम_each_segment_all(bvec, bio, iter_all) अणु
+		sमाप_प्रकार ret;
 
 		ret = copy_page_to_iter(bvec->bv_page,
 					bvec->bv_offset,
 					bvec->bv_len,
 					&iter);
 
-		if (!iov_iter_count(&iter))
-			break;
+		अगर (!iov_iter_count(&iter))
+			अवरोध;
 
-		if (ret < bvec->bv_len)
-			return -EFAULT;
-	}
+		अगर (ret < bvec->bv_len)
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	bio_uncopy_user	-	finish previously mapped bio
  *	@bio: bio being terminated
  *
- *	Free pages allocated from bio_copy_user_iov() and write back data
- *	to user space in case of a read.
+ *	Free pages allocated from bio_copy_user_iov() and ग_लिखो back data
+ *	to user space in हाल of a पढ़ो.
  */
-static int bio_uncopy_user(struct bio *bio)
-{
-	struct bio_map_data *bmd = bio->bi_private;
-	int ret = 0;
+अटल पूर्णांक bio_uncopy_user(काष्ठा bio *bio)
+अणु
+	काष्ठा bio_map_data *bmd = bio->bi_निजी;
+	पूर्णांक ret = 0;
 
-	if (!bmd->is_null_mapped) {
+	अगर (!bmd->is_null_mapped) अणु
 		/*
-		 * if we're in a workqueue, the request is orphaned, so
-		 * don't copy into a random user address space, just free
-		 * and return -EINTR so user space doesn't expect any data.
+		 * अगर we're in a workqueue, the request is orphaned, so
+		 * करोn't copy पूर्णांकo a अक्रमom user address space, just मुक्त
+		 * and वापस -EINTR so user space करोesn't expect any data.
 		 */
-		if (!current->mm)
+		अगर (!current->mm)
 			ret = -EINTR;
-		else if (bio_data_dir(bio) == READ)
+		अन्यथा अगर (bio_data_dir(bio) == READ)
 			ret = bio_copy_to_iter(bio, bmd->iter);
-		if (bmd->is_our_pages)
-			bio_free_pages(bio);
-	}
-	kfree(bmd);
-	return ret;
-}
+		अगर (bmd->is_our_pages)
+			bio_मुक्त_pages(bio);
+	पूर्ण
+	kमुक्त(bmd);
+	वापस ret;
+पूर्ण
 
-static int bio_copy_user_iov(struct request *rq, struct rq_map_data *map_data,
-		struct iov_iter *iter, gfp_t gfp_mask)
-{
-	struct bio_map_data *bmd;
-	struct page *page;
-	struct bio *bio;
-	int i = 0, ret;
-	int nr_pages;
-	unsigned int len = iter->count;
-	unsigned int offset = map_data ? offset_in_page(map_data->offset) : 0;
+अटल पूर्णांक bio_copy_user_iov(काष्ठा request *rq, काष्ठा rq_map_data *map_data,
+		काष्ठा iov_iter *iter, gfp_t gfp_mask)
+अणु
+	काष्ठा bio_map_data *bmd;
+	काष्ठा page *page;
+	काष्ठा bio *bio;
+	पूर्णांक i = 0, ret;
+	पूर्णांक nr_pages;
+	अचिन्हित पूर्णांक len = iter->count;
+	अचिन्हित पूर्णांक offset = map_data ? offset_in_page(map_data->offset) : 0;
 
 	bmd = bio_alloc_map_data(iter, gfp_mask);
-	if (!bmd)
-		return -ENOMEM;
+	अगर (!bmd)
+		वापस -ENOMEM;
 
 	/*
-	 * We need to do a deep copy of the iov_iter including the iovecs.
-	 * The caller provided iov might point to an on-stack or otherwise
-	 * shortlived one.
+	 * We need to करो a deep copy of the iov_iter including the iovecs.
+	 * The caller provided iov might poपूर्णांक to an on-stack or otherwise
+	 * लघुlived one.
 	 */
 	bmd->is_our_pages = !map_data;
 	bmd->is_null_mapped = (map_data && map_data->null_mapped);
@@ -152,429 +153,429 @@ static int bio_copy_user_iov(struct request *rq, struct rq_map_data *map_data,
 	nr_pages = bio_max_segs(DIV_ROUND_UP(offset + len, PAGE_SIZE));
 
 	ret = -ENOMEM;
-	bio = bio_kmalloc(gfp_mask, nr_pages);
-	if (!bio)
-		goto out_bmd;
+	bio = bio_kदो_स्मृति(gfp_mask, nr_pages);
+	अगर (!bio)
+		जाओ out_bmd;
 	bio->bi_opf |= req_op(rq);
 
-	if (map_data) {
+	अगर (map_data) अणु
 		nr_pages = 1 << map_data->page_order;
 		i = map_data->offset / PAGE_SIZE;
-	}
-	while (len) {
-		unsigned int bytes = PAGE_SIZE;
+	पूर्ण
+	जबतक (len) अणु
+		अचिन्हित पूर्णांक bytes = PAGE_SIZE;
 
 		bytes -= offset;
 
-		if (bytes > len)
+		अगर (bytes > len)
 			bytes = len;
 
-		if (map_data) {
-			if (i == map_data->nr_entries * nr_pages) {
+		अगर (map_data) अणु
+			अगर (i == map_data->nr_entries * nr_pages) अणु
 				ret = -ENOMEM;
-				goto cleanup;
-			}
+				जाओ cleanup;
+			पूर्ण
 
 			page = map_data->pages[i / nr_pages];
 			page += (i % nr_pages);
 
 			i++;
-		} else {
+		पूर्ण अन्यथा अणु
 			page = alloc_page(GFP_NOIO | gfp_mask);
-			if (!page) {
+			अगर (!page) अणु
 				ret = -ENOMEM;
-				goto cleanup;
-			}
-		}
+				जाओ cleanup;
+			पूर्ण
+		पूर्ण
 
-		if (bio_add_pc_page(rq->q, bio, page, bytes, offset) < bytes) {
-			if (!map_data)
-				__free_page(page);
-			break;
-		}
+		अगर (bio_add_pc_page(rq->q, bio, page, bytes, offset) < bytes) अणु
+			अगर (!map_data)
+				__मुक्त_page(page);
+			अवरोध;
+		पूर्ण
 
 		len -= bytes;
 		offset = 0;
-	}
+	पूर्ण
 
-	if (map_data)
+	अगर (map_data)
 		map_data->offset += bio->bi_iter.bi_size;
 
 	/*
 	 * success
 	 */
-	if ((iov_iter_rw(iter) == WRITE &&
+	अगर ((iov_iter_rw(iter) == WRITE &&
 	     (!map_data || !map_data->null_mapped)) ||
-	    (map_data && map_data->from_user)) {
+	    (map_data && map_data->from_user)) अणु
 		ret = bio_copy_from_iter(bio, iter);
-		if (ret)
-			goto cleanup;
-	} else {
-		if (bmd->is_our_pages)
+		अगर (ret)
+			जाओ cleanup;
+	पूर्ण अन्यथा अणु
+		अगर (bmd->is_our_pages)
 			zero_fill_bio(bio);
 		iov_iter_advance(iter, bio->bi_iter.bi_size);
-	}
+	पूर्ण
 
-	bio->bi_private = bmd;
+	bio->bi_निजी = bmd;
 
 	ret = blk_rq_append_bio(rq, bio);
-	if (ret)
-		goto cleanup;
-	return 0;
+	अगर (ret)
+		जाओ cleanup;
+	वापस 0;
 cleanup:
-	if (!map_data)
-		bio_free_pages(bio);
+	अगर (!map_data)
+		bio_मुक्त_pages(bio);
 	bio_put(bio);
 out_bmd:
-	kfree(bmd);
-	return ret;
-}
+	kमुक्त(bmd);
+	वापस ret;
+पूर्ण
 
-static int bio_map_user_iov(struct request *rq, struct iov_iter *iter,
+अटल पूर्णांक bio_map_user_iov(काष्ठा request *rq, काष्ठा iov_iter *iter,
 		gfp_t gfp_mask)
-{
-	unsigned int max_sectors = queue_max_hw_sectors(rq->q);
-	struct bio *bio;
-	int ret;
-	int j;
+अणु
+	अचिन्हित पूर्णांक max_sectors = queue_max_hw_sectors(rq->q);
+	काष्ठा bio *bio;
+	पूर्णांक ret;
+	पूर्णांक j;
 
-	if (!iov_iter_count(iter))
-		return -EINVAL;
+	अगर (!iov_iter_count(iter))
+		वापस -EINVAL;
 
-	bio = bio_kmalloc(gfp_mask, iov_iter_npages(iter, BIO_MAX_VECS));
-	if (!bio)
-		return -ENOMEM;
+	bio = bio_kदो_स्मृति(gfp_mask, iov_iter_npages(iter, BIO_MAX_VECS));
+	अगर (!bio)
+		वापस -ENOMEM;
 	bio->bi_opf |= req_op(rq);
 
-	while (iov_iter_count(iter)) {
-		struct page **pages;
-		ssize_t bytes;
-		size_t offs, added = 0;
-		int npages;
+	जबतक (iov_iter_count(iter)) अणु
+		काष्ठा page **pages;
+		sमाप_प्रकार bytes;
+		माप_प्रकार offs, added = 0;
+		पूर्णांक npages;
 
-		bytes = iov_iter_get_pages_alloc(iter, &pages, LONG_MAX, &offs);
-		if (unlikely(bytes <= 0)) {
+		bytes = iov_iter_get_pages_alloc(iter, &pages, दीर्घ_उच्च, &offs);
+		अगर (unlikely(bytes <= 0)) अणु
 			ret = bytes ? bytes : -EFAULT;
-			goto out_unmap;
-		}
+			जाओ out_unmap;
+		पूर्ण
 
 		npages = DIV_ROUND_UP(offs + bytes, PAGE_SIZE);
 
-		if (unlikely(offs & queue_dma_alignment(rq->q))) {
+		अगर (unlikely(offs & queue_dma_alignment(rq->q))) अणु
 			ret = -EINVAL;
 			j = 0;
-		} else {
-			for (j = 0; j < npages; j++) {
-				struct page *page = pages[j];
-				unsigned int n = PAGE_SIZE - offs;
+		पूर्ण अन्यथा अणु
+			क्रम (j = 0; j < npages; j++) अणु
+				काष्ठा page *page = pages[j];
+				अचिन्हित पूर्णांक n = PAGE_SIZE - offs;
 				bool same_page = false;
 
-				if (n > bytes)
+				अगर (n > bytes)
 					n = bytes;
 
-				if (!bio_add_hw_page(rq->q, bio, page, n, offs,
-						     max_sectors, &same_page)) {
-					if (same_page)
+				अगर (!bio_add_hw_page(rq->q, bio, page, n, offs,
+						     max_sectors, &same_page)) अणु
+					अगर (same_page)
 						put_page(page);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				added += n;
 				bytes -= n;
 				offs = 0;
-			}
+			पूर्ण
 			iov_iter_advance(iter, added);
-		}
+		पूर्ण
 		/*
-		 * release the pages we didn't map into the bio, if any
+		 * release the pages we didn't map पूर्णांकo the bio, अगर any
 		 */
-		while (j < npages)
+		जबतक (j < npages)
 			put_page(pages[j++]);
-		kvfree(pages);
-		/* couldn't stuff something into bio? */
-		if (bytes)
-			break;
-	}
+		kvमुक्त(pages);
+		/* couldn't stuff something पूर्णांकo bio? */
+		अगर (bytes)
+			अवरोध;
+	पूर्ण
 
 	ret = blk_rq_append_bio(rq, bio);
-	if (ret)
-		goto out_unmap;
-	return 0;
+	अगर (ret)
+		जाओ out_unmap;
+	वापस 0;
 
  out_unmap:
 	bio_release_pages(bio, false);
 	bio_put(bio);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void bio_invalidate_vmalloc_pages(struct bio *bio)
-{
-#ifdef ARCH_HAS_FLUSH_KERNEL_DCACHE_PAGE
-	if (bio->bi_private && !op_is_write(bio_op(bio))) {
-		unsigned long i, len = 0;
+अटल व्योम bio_invalidate_vदो_स्मृति_pages(काष्ठा bio *bio)
+अणु
+#अगर_घोषित ARCH_HAS_FLUSH_KERNEL_DCACHE_PAGE
+	अगर (bio->bi_निजी && !op_is_ग_लिखो(bio_op(bio))) अणु
+		अचिन्हित दीर्घ i, len = 0;
 
-		for (i = 0; i < bio->bi_vcnt; i++)
+		क्रम (i = 0; i < bio->bi_vcnt; i++)
 			len += bio->bi_io_vec[i].bv_len;
-		invalidate_kernel_vmap_range(bio->bi_private, len);
-	}
-#endif
-}
+		invalidate_kernel_vmap_range(bio->bi_निजी, len);
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static void bio_map_kern_endio(struct bio *bio)
-{
-	bio_invalidate_vmalloc_pages(bio);
+अटल व्योम bio_map_kern_endio(काष्ठा bio *bio)
+अणु
+	bio_invalidate_vदो_स्मृति_pages(bio);
 	bio_put(bio);
-}
+पूर्ण
 
 /**
- *	bio_map_kern	-	map kernel address into bio
- *	@q: the struct request_queue for the bio
- *	@data: pointer to buffer to map
+ *	bio_map_kern	-	map kernel address पूर्णांकo bio
+ *	@q: the काष्ठा request_queue क्रम the bio
+ *	@data: poपूर्णांकer to buffer to map
  *	@len: length in bytes
- *	@gfp_mask: allocation flags for bio allocation
+ *	@gfp_mask: allocation flags क्रम bio allocation
  *
- *	Map the kernel address into a bio suitable for io to a block
- *	device. Returns an error pointer in case of error.
+ *	Map the kernel address पूर्णांकo a bio suitable क्रम io to a block
+ *	device. Returns an error poपूर्णांकer in हाल of error.
  */
-static struct bio *bio_map_kern(struct request_queue *q, void *data,
-		unsigned int len, gfp_t gfp_mask)
-{
-	unsigned long kaddr = (unsigned long)data;
-	unsigned long end = (kaddr + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	unsigned long start = kaddr >> PAGE_SHIFT;
-	const int nr_pages = end - start;
-	bool is_vmalloc = is_vmalloc_addr(data);
-	struct page *page;
-	int offset, i;
-	struct bio *bio;
+अटल काष्ठा bio *bio_map_kern(काष्ठा request_queue *q, व्योम *data,
+		अचिन्हित पूर्णांक len, gfp_t gfp_mask)
+अणु
+	अचिन्हित दीर्घ kaddr = (अचिन्हित दीर्घ)data;
+	अचिन्हित दीर्घ end = (kaddr + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+	अचिन्हित दीर्घ start = kaddr >> PAGE_SHIFT;
+	स्थिर पूर्णांक nr_pages = end - start;
+	bool is_vदो_स्मृति = is_vदो_स्मृति_addr(data);
+	काष्ठा page *page;
+	पूर्णांक offset, i;
+	काष्ठा bio *bio;
 
-	bio = bio_kmalloc(gfp_mask, nr_pages);
-	if (!bio)
-		return ERR_PTR(-ENOMEM);
+	bio = bio_kदो_स्मृति(gfp_mask, nr_pages);
+	अगर (!bio)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (is_vmalloc) {
+	अगर (is_vदो_स्मृति) अणु
 		flush_kernel_vmap_range(data, len);
-		bio->bi_private = data;
-	}
+		bio->bi_निजी = data;
+	पूर्ण
 
 	offset = offset_in_page(kaddr);
-	for (i = 0; i < nr_pages; i++) {
-		unsigned int bytes = PAGE_SIZE - offset;
+	क्रम (i = 0; i < nr_pages; i++) अणु
+		अचिन्हित पूर्णांक bytes = PAGE_SIZE - offset;
 
-		if (len <= 0)
-			break;
+		अगर (len <= 0)
+			अवरोध;
 
-		if (bytes > len)
+		अगर (bytes > len)
 			bytes = len;
 
-		if (!is_vmalloc)
+		अगर (!is_vदो_स्मृति)
 			page = virt_to_page(data);
-		else
-			page = vmalloc_to_page(data);
-		if (bio_add_pc_page(q, bio, page, bytes,
-				    offset) < bytes) {
-			/* we don't support partial mappings */
+		अन्यथा
+			page = vदो_स्मृति_to_page(data);
+		अगर (bio_add_pc_page(q, bio, page, bytes,
+				    offset) < bytes) अणु
+			/* we करोn't support partial mappings */
 			bio_put(bio);
-			return ERR_PTR(-EINVAL);
-		}
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
 
 		data += bytes;
 		len -= bytes;
 		offset = 0;
-	}
+	पूर्ण
 
 	bio->bi_end_io = bio_map_kern_endio;
-	return bio;
-}
+	वापस bio;
+पूर्ण
 
-static void bio_copy_kern_endio(struct bio *bio)
-{
-	bio_free_pages(bio);
+अटल व्योम bio_copy_kern_endio(काष्ठा bio *bio)
+अणु
+	bio_मुक्त_pages(bio);
 	bio_put(bio);
-}
+पूर्ण
 
-static void bio_copy_kern_endio_read(struct bio *bio)
-{
-	char *p = bio->bi_private;
-	struct bio_vec *bvec;
-	struct bvec_iter_all iter_all;
+अटल व्योम bio_copy_kern_endio_पढ़ो(काष्ठा bio *bio)
+अणु
+	अक्षर *p = bio->bi_निजी;
+	काष्ठा bio_vec *bvec;
+	काष्ठा bvec_iter_all iter_all;
 
-	bio_for_each_segment_all(bvec, bio, iter_all) {
-		memcpy(p, page_address(bvec->bv_page), bvec->bv_len);
+	bio_क्रम_each_segment_all(bvec, bio, iter_all) अणु
+		स_नकल(p, page_address(bvec->bv_page), bvec->bv_len);
 		p += bvec->bv_len;
-	}
+	पूर्ण
 
 	bio_copy_kern_endio(bio);
-}
+पूर्ण
 
 /**
- *	bio_copy_kern	-	copy kernel address into bio
- *	@q: the struct request_queue for the bio
- *	@data: pointer to buffer to copy
+ *	bio_copy_kern	-	copy kernel address पूर्णांकo bio
+ *	@q: the काष्ठा request_queue क्रम the bio
+ *	@data: poपूर्णांकer to buffer to copy
  *	@len: length in bytes
- *	@gfp_mask: allocation flags for bio and page allocation
- *	@reading: data direction is READ
+ *	@gfp_mask: allocation flags क्रम bio and page allocation
+ *	@पढ़ोing: data direction is READ
  *
- *	copy the kernel address into a bio suitable for io to a block
- *	device. Returns an error pointer in case of error.
+ *	copy the kernel address पूर्णांकo a bio suitable क्रम io to a block
+ *	device. Returns an error poपूर्णांकer in हाल of error.
  */
-static struct bio *bio_copy_kern(struct request_queue *q, void *data,
-		unsigned int len, gfp_t gfp_mask, int reading)
-{
-	unsigned long kaddr = (unsigned long)data;
-	unsigned long end = (kaddr + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	unsigned long start = kaddr >> PAGE_SHIFT;
-	struct bio *bio;
-	void *p = data;
-	int nr_pages = 0;
+अटल काष्ठा bio *bio_copy_kern(काष्ठा request_queue *q, व्योम *data,
+		अचिन्हित पूर्णांक len, gfp_t gfp_mask, पूर्णांक पढ़ोing)
+अणु
+	अचिन्हित दीर्घ kaddr = (अचिन्हित दीर्घ)data;
+	अचिन्हित दीर्घ end = (kaddr + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+	अचिन्हित दीर्घ start = kaddr >> PAGE_SHIFT;
+	काष्ठा bio *bio;
+	व्योम *p = data;
+	पूर्णांक nr_pages = 0;
 
 	/*
-	 * Overflow, abort
+	 * Overflow, पात
 	 */
-	if (end < start)
-		return ERR_PTR(-EINVAL);
+	अगर (end < start)
+		वापस ERR_PTR(-EINVAL);
 
 	nr_pages = end - start;
-	bio = bio_kmalloc(gfp_mask, nr_pages);
-	if (!bio)
-		return ERR_PTR(-ENOMEM);
+	bio = bio_kदो_स्मृति(gfp_mask, nr_pages);
+	अगर (!bio)
+		वापस ERR_PTR(-ENOMEM);
 
-	while (len) {
-		struct page *page;
-		unsigned int bytes = PAGE_SIZE;
+	जबतक (len) अणु
+		काष्ठा page *page;
+		अचिन्हित पूर्णांक bytes = PAGE_SIZE;
 
-		if (bytes > len)
+		अगर (bytes > len)
 			bytes = len;
 
 		page = alloc_page(GFP_NOIO | gfp_mask);
-		if (!page)
-			goto cleanup;
+		अगर (!page)
+			जाओ cleanup;
 
-		if (!reading)
-			memcpy(page_address(page), p, bytes);
+		अगर (!पढ़ोing)
+			स_नकल(page_address(page), p, bytes);
 
-		if (bio_add_pc_page(q, bio, page, bytes, 0) < bytes)
-			break;
+		अगर (bio_add_pc_page(q, bio, page, bytes, 0) < bytes)
+			अवरोध;
 
 		len -= bytes;
 		p += bytes;
-	}
+	पूर्ण
 
-	if (reading) {
-		bio->bi_end_io = bio_copy_kern_endio_read;
-		bio->bi_private = data;
-	} else {
+	अगर (पढ़ोing) अणु
+		bio->bi_end_io = bio_copy_kern_endio_पढ़ो;
+		bio->bi_निजी = data;
+	पूर्ण अन्यथा अणु
 		bio->bi_end_io = bio_copy_kern_endio;
-	}
+	पूर्ण
 
-	return bio;
+	वापस bio;
 
 cleanup:
-	bio_free_pages(bio);
+	bio_मुक्त_pages(bio);
 	bio_put(bio);
-	return ERR_PTR(-ENOMEM);
-}
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
 /*
- * Append a bio to a passthrough request.  Only works if the bio can be merged
- * into the request based on the driver constraints.
+ * Append a bio to a passthrough request.  Only works अगर the bio can be merged
+ * पूर्णांकo the request based on the driver स्थिरraपूर्णांकs.
  */
-int blk_rq_append_bio(struct request *rq, struct bio *bio)
-{
-	struct bvec_iter iter;
-	struct bio_vec bv;
-	unsigned int nr_segs = 0;
+पूर्णांक blk_rq_append_bio(काष्ठा request *rq, काष्ठा bio *bio)
+अणु
+	काष्ठा bvec_iter iter;
+	काष्ठा bio_vec bv;
+	अचिन्हित पूर्णांक nr_segs = 0;
 
-	bio_for_each_bvec(bv, bio, iter)
+	bio_क्रम_each_bvec(bv, bio, iter)
 		nr_segs++;
 
-	if (!rq->bio) {
+	अगर (!rq->bio) अणु
 		blk_rq_bio_prep(rq, bio, nr_segs);
-	} else {
-		if (!ll_back_merge_fn(rq, bio, nr_segs))
-			return -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (!ll_back_merge_fn(rq, bio, nr_segs))
+			वापस -EINVAL;
 		rq->biotail->bi_next = bio;
 		rq->biotail = bio;
 		rq->__data_len += (bio)->bi_iter.bi_size;
-		bio_crypt_free_ctx(bio);
-	}
+		bio_crypt_मुक्त_ctx(bio);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(blk_rq_append_bio);
 
 /**
- * blk_rq_map_user_iov - map user data to a request, for passthrough requests
+ * blk_rq_map_user_iov - map user data to a request, क्रम passthrough requests
  * @q:		request queue where request should be inserted
  * @rq:		request to map data to
- * @map_data:   pointer to the rq_map_data holding pages (if necessary)
+ * @map_data:   poपूर्णांकer to the rq_map_data holding pages (अगर necessary)
  * @iter:	iovec iterator
  * @gfp_mask:	memory allocation flags
  *
  * Description:
- *    Data will be mapped directly for zero copy I/O, if possible. Otherwise
+ *    Data will be mapped directly क्रम zero copy I/O, अगर possible. Otherwise
  *    a kernel bounce buffer is used.
  *
- *    A matching blk_rq_unmap_user() must be issued at the end of I/O, while
+ *    A matching blk_rq_unmap_user() must be issued at the end of I/O, जबतक
  *    still in process context.
  */
-int blk_rq_map_user_iov(struct request_queue *q, struct request *rq,
-			struct rq_map_data *map_data,
-			const struct iov_iter *iter, gfp_t gfp_mask)
-{
+पूर्णांक blk_rq_map_user_iov(काष्ठा request_queue *q, काष्ठा request *rq,
+			काष्ठा rq_map_data *map_data,
+			स्थिर काष्ठा iov_iter *iter, gfp_t gfp_mask)
+अणु
 	bool copy = false;
-	unsigned long align = q->dma_pad_mask | queue_dma_alignment(q);
-	struct bio *bio = NULL;
-	struct iov_iter i;
-	int ret = -EINVAL;
+	अचिन्हित दीर्घ align = q->dma_pad_mask | queue_dma_alignment(q);
+	काष्ठा bio *bio = शून्य;
+	काष्ठा iov_iter i;
+	पूर्णांक ret = -EINVAL;
 
-	if (!iter_is_iovec(iter))
-		goto fail;
+	अगर (!iter_is_iovec(iter))
+		जाओ fail;
 
-	if (map_data)
+	अगर (map_data)
 		copy = true;
-	else if (blk_queue_may_bounce(q))
+	अन्यथा अगर (blk_queue_may_bounce(q))
 		copy = true;
-	else if (iov_iter_alignment(iter) & align)
+	अन्यथा अगर (iov_iter_alignment(iter) & align)
 		copy = true;
-	else if (queue_virt_boundary(q))
+	अन्यथा अगर (queue_virt_boundary(q))
 		copy = queue_virt_boundary(q) & iov_iter_gap_alignment(iter);
 
 	i = *iter;
-	do {
-		if (copy)
+	करो अणु
+		अगर (copy)
 			ret = bio_copy_user_iov(rq, map_data, &i, gfp_mask);
-		else
+		अन्यथा
 			ret = bio_map_user_iov(rq, &i, gfp_mask);
-		if (ret)
-			goto unmap_rq;
-		if (!bio)
+		अगर (ret)
+			जाओ unmap_rq;
+		अगर (!bio)
 			bio = rq->bio;
-	} while (iov_iter_count(&i));
+	पूर्ण जबतक (iov_iter_count(&i));
 
-	return 0;
+	वापस 0;
 
 unmap_rq:
 	blk_rq_unmap_user(bio);
 fail:
-	rq->bio = NULL;
-	return ret;
-}
+	rq->bio = शून्य;
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(blk_rq_map_user_iov);
 
-int blk_rq_map_user(struct request_queue *q, struct request *rq,
-		    struct rq_map_data *map_data, void __user *ubuf,
-		    unsigned long len, gfp_t gfp_mask)
-{
-	struct iovec iov;
-	struct iov_iter i;
-	int ret = import_single_range(rq_data_dir(rq), ubuf, len, &iov, &i);
+पूर्णांक blk_rq_map_user(काष्ठा request_queue *q, काष्ठा request *rq,
+		    काष्ठा rq_map_data *map_data, व्योम __user *ubuf,
+		    अचिन्हित दीर्घ len, gfp_t gfp_mask)
+अणु
+	काष्ठा iovec iov;
+	काष्ठा iov_iter i;
+	पूर्णांक ret = import_single_range(rq_data_dir(rq), ubuf, len, &iov, &i);
 
-	if (unlikely(ret < 0))
-		return ret;
+	अगर (unlikely(ret < 0))
+		वापस ret;
 
-	return blk_rq_map_user_iov(q, rq, map_data, &i, gfp_mask);
-}
+	वापस blk_rq_map_user_iov(q, rq, map_data, &i, gfp_mask);
+पूर्ण
 EXPORT_SYMBOL(blk_rq_map_user);
 
 /**
@@ -583,34 +584,34 @@ EXPORT_SYMBOL(blk_rq_map_user);
  *
  * Description:
  *    Unmap a rq previously mapped by blk_rq_map_user(). The caller must
- *    supply the original rq->bio from the blk_rq_map_user() return, since
+ *    supply the original rq->bio from the blk_rq_map_user() वापस, since
  *    the I/O completion may have changed rq->bio.
  */
-int blk_rq_unmap_user(struct bio *bio)
-{
-	struct bio *next_bio;
-	int ret = 0, ret2;
+पूर्णांक blk_rq_unmap_user(काष्ठा bio *bio)
+अणु
+	काष्ठा bio *next_bio;
+	पूर्णांक ret = 0, ret2;
 
-	while (bio) {
-		if (bio->bi_private) {
+	जबतक (bio) अणु
+		अगर (bio->bi_निजी) अणु
 			ret2 = bio_uncopy_user(bio);
-			if (ret2 && !ret)
+			अगर (ret2 && !ret)
 				ret = ret2;
-		} else {
+		पूर्ण अन्यथा अणु
 			bio_release_pages(bio, bio_data_dir(bio) == READ);
-		}
+		पूर्ण
 
 		next_bio = bio;
 		bio = bio->bi_next;
 		bio_put(next_bio);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(blk_rq_unmap_user);
 
 /**
- * blk_rq_map_kern - map kernel data to a request, for passthrough requests
+ * blk_rq_map_kern - map kernel data to a request, क्रम passthrough requests
  * @q:		request queue where request should be inserted
  * @rq:		request to fill
  * @kbuf:	the kernel buffer
@@ -618,38 +619,38 @@ EXPORT_SYMBOL(blk_rq_unmap_user);
  * @gfp_mask:	memory allocation flags
  *
  * Description:
- *    Data will be mapped directly if possible. Otherwise a bounce
- *    buffer is used. Can be called multiple times to append multiple
+ *    Data will be mapped directly अगर possible. Otherwise a bounce
+ *    buffer is used. Can be called multiple बार to append multiple
  *    buffers.
  */
-int blk_rq_map_kern(struct request_queue *q, struct request *rq, void *kbuf,
-		    unsigned int len, gfp_t gfp_mask)
-{
-	int reading = rq_data_dir(rq) == READ;
-	unsigned long addr = (unsigned long) kbuf;
-	struct bio *bio;
-	int ret;
+पूर्णांक blk_rq_map_kern(काष्ठा request_queue *q, काष्ठा request *rq, व्योम *kbuf,
+		    अचिन्हित पूर्णांक len, gfp_t gfp_mask)
+अणु
+	पूर्णांक पढ़ोing = rq_data_dir(rq) == READ;
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) kbuf;
+	काष्ठा bio *bio;
+	पूर्णांक ret;
 
-	if (len > (queue_max_hw_sectors(q) << 9))
-		return -EINVAL;
-	if (!len || !kbuf)
-		return -EINVAL;
+	अगर (len > (queue_max_hw_sectors(q) << 9))
+		वापस -EINVAL;
+	अगर (!len || !kbuf)
+		वापस -EINVAL;
 
-	if (!blk_rq_aligned(q, addr, len) || object_is_on_stack(kbuf) ||
+	अगर (!blk_rq_aligned(q, addr, len) || object_is_on_stack(kbuf) ||
 	    blk_queue_may_bounce(q))
-		bio = bio_copy_kern(q, kbuf, len, gfp_mask, reading);
-	else
+		bio = bio_copy_kern(q, kbuf, len, gfp_mask, पढ़ोing);
+	अन्यथा
 		bio = bio_map_kern(q, kbuf, len, gfp_mask);
 
-	if (IS_ERR(bio))
-		return PTR_ERR(bio);
+	अगर (IS_ERR(bio))
+		वापस PTR_ERR(bio);
 
 	bio->bi_opf &= ~REQ_OP_MASK;
 	bio->bi_opf |= req_op(rq);
 
 	ret = blk_rq_append_bio(rq, bio);
-	if (unlikely(ret))
+	अगर (unlikely(ret))
 		bio_put(bio);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(blk_rq_map_kern);

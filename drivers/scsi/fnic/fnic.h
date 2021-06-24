@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,368 +16,368 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _FNIC_H_
-#define _FNIC_H_
+#अगर_अघोषित _FNIC_H_
+#घोषणा _FNIC_H_
 
-#include <linux/interrupt.h>
-#include <linux/netdevice.h>
-#include <linux/workqueue.h>
-#include <linux/bitops.h>
-#include <scsi/libfc.h>
-#include <scsi/libfcoe.h>
-#include "fnic_io.h"
-#include "fnic_res.h"
-#include "fnic_trace.h"
-#include "fnic_stats.h"
-#include "vnic_dev.h"
-#include "vnic_wq.h"
-#include "vnic_rq.h"
-#include "vnic_cq.h"
-#include "vnic_wq_copy.h"
-#include "vnic_intr.h"
-#include "vnic_stats.h"
-#include "vnic_scsi.h"
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/bitops.h>
+#समावेश <scsi/libfc.h>
+#समावेश <scsi/libfcoe.h>
+#समावेश "fnic_io.h"
+#समावेश "fnic_res.h"
+#समावेश "fnic_trace.h"
+#समावेश "fnic_stats.h"
+#समावेश "vnic_dev.h"
+#समावेश "vnic_wq.h"
+#समावेश "vnic_rq.h"
+#समावेश "vnic_cq.h"
+#समावेश "vnic_wq_copy.h"
+#समावेश "vnic_intr.h"
+#समावेश "vnic_stats.h"
+#समावेश "vnic_scsi.h"
 
-#define DRV_NAME		"fnic"
-#define DRV_DESCRIPTION		"Cisco FCoE HBA Driver"
-#define DRV_VERSION		"1.6.0.53"
-#define PFX			DRV_NAME ": "
-#define DFX                     DRV_NAME "%d: "
+#घोषणा DRV_NAME		"fnic"
+#घोषणा DRV_DESCRIPTION		"Cisco FCoE HBA Driver"
+#घोषणा DRV_VERSION		"1.6.0.53"
+#घोषणा PFX			DRV_NAME ": "
+#घोषणा DFX                     DRV_NAME "%d: "
 
-#define DESC_CLEAN_LOW_WATERMARK 8
-#define FNIC_UCSM_DFLT_THROTTLE_CNT_BLD	16 /* UCSM default throttle count */
-#define FNIC_MIN_IO_REQ			256 /* Min IO throttle count */
-#define FNIC_MAX_IO_REQ		1024 /* scsi_cmnd tag map entries */
-#define FNIC_DFLT_IO_REQ        256 /* Default scsi_cmnd tag map entries */
-#define	FNIC_IO_LOCKS		64 /* IO locks: power of 2 */
-#define FNIC_DFLT_QUEUE_DEPTH	256
-#define	FNIC_STATS_RATE_LIMIT	4 /* limit rate at which stats are pulled up */
+#घोषणा DESC_CLEAN_LOW_WATERMARK 8
+#घोषणा FNIC_UCSM_DFLT_THROTTLE_CNT_BLD	16 /* UCSM शेष throttle count */
+#घोषणा FNIC_MIN_IO_REQ			256 /* Min IO throttle count */
+#घोषणा FNIC_MAX_IO_REQ		1024 /* scsi_cmnd tag map entries */
+#घोषणा FNIC_DFLT_IO_REQ        256 /* Default scsi_cmnd tag map entries */
+#घोषणा	FNIC_IO_LOCKS		64 /* IO locks: घातer of 2 */
+#घोषणा FNIC_DFLT_QUEUE_DEPTH	256
+#घोषणा	FNIC_STATS_RATE_LIMIT	4 /* limit rate at which stats are pulled up */
 
 /*
- * Tag bits used for special requests.
+ * Tag bits used क्रम special requests.
  */
-#define FNIC_TAG_ABORT		BIT(30)		/* tag bit indicating abort */
-#define FNIC_TAG_DEV_RST	BIT(29)		/* indicates device reset */
-#define FNIC_TAG_MASK		(BIT(24) - 1)	/* mask for lookup */
-#define FNIC_NO_TAG             -1
+#घोषणा FNIC_TAG_ABORT		BIT(30)		/* tag bit indicating पात */
+#घोषणा FNIC_TAG_DEV_RST	BIT(29)		/* indicates device reset */
+#घोषणा FNIC_TAG_MASK		(BIT(24) - 1)	/* mask क्रम lookup */
+#घोषणा FNIC_NO_TAG             -1
 
 /*
- * Command flags to identify the type of command and for other future
+ * Command flags to identअगरy the type of command and क्रम other future
  * use.
  */
-#define FNIC_NO_FLAGS                   0
-#define FNIC_IO_INITIALIZED             BIT(0)
-#define FNIC_IO_ISSUED                  BIT(1)
-#define FNIC_IO_DONE                    BIT(2)
-#define FNIC_IO_REQ_NULL                BIT(3)
-#define FNIC_IO_ABTS_PENDING            BIT(4)
-#define FNIC_IO_ABORTED                 BIT(5)
-#define FNIC_IO_ABTS_ISSUED             BIT(6)
-#define FNIC_IO_TERM_ISSUED             BIT(7)
-#define FNIC_IO_INTERNAL_TERM_ISSUED    BIT(8)
-#define FNIC_IO_ABT_TERM_DONE           BIT(9)
-#define FNIC_IO_ABT_TERM_REQ_NULL       BIT(10)
-#define FNIC_IO_ABT_TERM_TIMED_OUT      BIT(11)
-#define FNIC_DEVICE_RESET               BIT(12)  /* Device reset request */
-#define FNIC_DEV_RST_ISSUED             BIT(13)
-#define FNIC_DEV_RST_TIMED_OUT          BIT(14)
-#define FNIC_DEV_RST_ABTS_ISSUED        BIT(15)
-#define FNIC_DEV_RST_TERM_ISSUED        BIT(16)
-#define FNIC_DEV_RST_DONE               BIT(17)
-#define FNIC_DEV_RST_REQ_NULL           BIT(18)
-#define FNIC_DEV_RST_ABTS_DONE          BIT(19)
-#define FNIC_DEV_RST_TERM_DONE          BIT(20)
-#define FNIC_DEV_RST_ABTS_PENDING       BIT(21)
+#घोषणा FNIC_NO_FLAGS                   0
+#घोषणा FNIC_IO_INITIALIZED             BIT(0)
+#घोषणा FNIC_IO_ISSUED                  BIT(1)
+#घोषणा FNIC_IO_DONE                    BIT(2)
+#घोषणा FNIC_IO_REQ_शून्य                BIT(3)
+#घोषणा FNIC_IO_ABTS_PENDING            BIT(4)
+#घोषणा FNIC_IO_ABORTED                 BIT(5)
+#घोषणा FNIC_IO_ABTS_ISSUED             BIT(6)
+#घोषणा FNIC_IO_TERM_ISSUED             BIT(7)
+#घोषणा FNIC_IO_INTERNAL_TERM_ISSUED    BIT(8)
+#घोषणा FNIC_IO_ABT_TERM_DONE           BIT(9)
+#घोषणा FNIC_IO_ABT_TERM_REQ_शून्य       BIT(10)
+#घोषणा FNIC_IO_ABT_TERM_TIMED_OUT      BIT(11)
+#घोषणा FNIC_DEVICE_RESET               BIT(12)  /* Device reset request */
+#घोषणा FNIC_DEV_RST_ISSUED             BIT(13)
+#घोषणा FNIC_DEV_RST_TIMED_OUT          BIT(14)
+#घोषणा FNIC_DEV_RST_ABTS_ISSUED        BIT(15)
+#घोषणा FNIC_DEV_RST_TERM_ISSUED        BIT(16)
+#घोषणा FNIC_DEV_RST_DONE               BIT(17)
+#घोषणा FNIC_DEV_RST_REQ_शून्य           BIT(18)
+#घोषणा FNIC_DEV_RST_ABTS_DONE          BIT(19)
+#घोषणा FNIC_DEV_RST_TERM_DONE          BIT(20)
+#घोषणा FNIC_DEV_RST_ABTS_PENDING       BIT(21)
 
 /*
  * Usage of the scsi_cmnd scratchpad.
  * These fields are locked by the hashed io_req_lock.
  */
-#define CMD_SP(Cmnd)		((Cmnd)->SCp.ptr)
-#define CMD_STATE(Cmnd)		((Cmnd)->SCp.phase)
-#define CMD_ABTS_STATUS(Cmnd)	((Cmnd)->SCp.Message)
-#define CMD_LR_STATUS(Cmnd)	((Cmnd)->SCp.have_data_in)
-#define CMD_TAG(Cmnd)           ((Cmnd)->SCp.sent_command)
-#define CMD_FLAGS(Cmnd)         ((Cmnd)->SCp.Status)
+#घोषणा CMD_SP(Cmnd)		((Cmnd)->SCp.ptr)
+#घोषणा CMD_STATE(Cmnd)		((Cmnd)->SCp.phase)
+#घोषणा CMD_ABTS_STATUS(Cmnd)	((Cmnd)->SCp.Message)
+#घोषणा CMD_LR_STATUS(Cmnd)	((Cmnd)->SCp.have_data_in)
+#घोषणा CMD_TAG(Cmnd)           ((Cmnd)->SCp.sent_command)
+#घोषणा CMD_FLAGS(Cmnd)         ((Cmnd)->SCp.Status)
 
-#define FCPIO_INVALID_CODE 0x100 /* hdr_status value unused by firmware */
+#घोषणा FCPIO_INVALID_CODE 0x100 /* hdr_status value unused by firmware */
 
-#define FNIC_LUN_RESET_TIMEOUT	     10000	/* mSec */
-#define FNIC_HOST_RESET_TIMEOUT	     10000	/* mSec */
-#define FNIC_RMDEVICE_TIMEOUT        1000       /* mSec */
-#define FNIC_HOST_RESET_SETTLE_TIME  30         /* Sec */
-#define FNIC_ABT_TERM_DELAY_TIMEOUT  500        /* mSec */
+#घोषणा FNIC_LUN_RESET_TIMEOUT	     10000	/* mSec */
+#घोषणा FNIC_HOST_RESET_TIMEOUT	     10000	/* mSec */
+#घोषणा FNIC_RMDEVICE_TIMEOUT        1000       /* mSec */
+#घोषणा FNIC_HOST_RESET_SETTLE_TIME  30         /* Sec */
+#घोषणा FNIC_ABT_TERM_DELAY_TIMEOUT  500        /* mSec */
 
-#define FNIC_MAX_FCP_TARGET     256
+#घोषणा FNIC_MAX_FCP_TARGET     256
 
 /**
- * state_flags to identify host state along along with fnic's state
+ * state_flags to identअगरy host state aदीर्घ aदीर्घ with fnic's state
  **/
-#define __FNIC_FLAGS_FWRESET		BIT(0) /* fwreset in progress */
-#define __FNIC_FLAGS_BLOCK_IO		BIT(1) /* IOs are blocked */
+#घोषणा __FNIC_FLAGS_FWRESET		BIT(0) /* fwreset in progress */
+#घोषणा __FNIC_FLAGS_BLOCK_IO		BIT(1) /* IOs are blocked */
 
-#define FNIC_FLAGS_NONE			(0)
-#define FNIC_FLAGS_FWRESET		(__FNIC_FLAGS_FWRESET | \
+#घोषणा FNIC_FLAGS_NONE			(0)
+#घोषणा FNIC_FLAGS_FWRESET		(__FNIC_FLAGS_FWRESET | \
 					__FNIC_FLAGS_BLOCK_IO)
 
-#define FNIC_FLAGS_IO_BLOCKED		(__FNIC_FLAGS_BLOCK_IO)
+#घोषणा FNIC_FLAGS_IO_BLOCKED		(__FNIC_FLAGS_BLOCK_IO)
 
-#define fnic_set_state_flags(fnicp, st_flags)	\
+#घोषणा fnic_set_state_flags(fnicp, st_flags)	\
 	__fnic_set_state_flags(fnicp, st_flags, 0)
 
-#define fnic_clear_state_flags(fnicp, st_flags)  \
+#घोषणा fnic_clear_state_flags(fnicp, st_flags)  \
 	__fnic_set_state_flags(fnicp, st_flags, 1)
 
-extern unsigned int fnic_log_level;
-extern unsigned int io_completions;
+बाह्य अचिन्हित पूर्णांक fnic_log_level;
+बाह्य अचिन्हित पूर्णांक io_completions;
 
-#define FNIC_MAIN_LOGGING 0x01
-#define FNIC_FCS_LOGGING 0x02
-#define FNIC_SCSI_LOGGING 0x04
-#define FNIC_ISR_LOGGING 0x08
+#घोषणा FNIC_MAIN_LOGGING 0x01
+#घोषणा FNIC_FCS_LOGGING 0x02
+#घोषणा FNIC_SCSI_LOGGING 0x04
+#घोषणा FNIC_ISR_LOGGING 0x08
 
-#define FNIC_CHECK_LOGGING(LEVEL, CMD)				\
-do {								\
-	if (unlikely(fnic_log_level & LEVEL))			\
-		do {						\
+#घोषणा FNIC_CHECK_LOGGING(LEVEL, CMD)				\
+करो अणु								\
+	अगर (unlikely(fnic_log_level & LEVEL))			\
+		करो अणु						\
 			CMD;					\
-		} while (0);					\
-} while (0)
+		पूर्ण जबतक (0);					\
+पूर्ण जबतक (0)
 
-#define FNIC_MAIN_DBG(kern_level, host, fmt, args...)		\
+#घोषणा FNIC_MAIN_DBG(kern_level, host, fmt, args...)		\
 	FNIC_CHECK_LOGGING(FNIC_MAIN_LOGGING,			\
-			 shost_printk(kern_level, host, fmt, ##args);)
+			 shost_prपूर्णांकk(kern_level, host, fmt, ##args);)
 
-#define FNIC_FCS_DBG(kern_level, host, fmt, args...)		\
+#घोषणा FNIC_FCS_DBG(kern_level, host, fmt, args...)		\
 	FNIC_CHECK_LOGGING(FNIC_FCS_LOGGING,			\
-			 shost_printk(kern_level, host, fmt, ##args);)
+			 shost_prपूर्णांकk(kern_level, host, fmt, ##args);)
 
-#define FNIC_SCSI_DBG(kern_level, host, fmt, args...)		\
+#घोषणा FNIC_SCSI_DBG(kern_level, host, fmt, args...)		\
 	FNIC_CHECK_LOGGING(FNIC_SCSI_LOGGING,			\
-			 shost_printk(kern_level, host, fmt, ##args);)
+			 shost_prपूर्णांकk(kern_level, host, fmt, ##args);)
 
-#define FNIC_ISR_DBG(kern_level, host, fmt, args...)		\
+#घोषणा FNIC_ISR_DBG(kern_level, host, fmt, args...)		\
 	FNIC_CHECK_LOGGING(FNIC_ISR_LOGGING,			\
-			 shost_printk(kern_level, host, fmt, ##args);)
+			 shost_prपूर्णांकk(kern_level, host, fmt, ##args);)
 
-#define FNIC_MAIN_NOTE(kern_level, host, fmt, args...)          \
-	shost_printk(kern_level, host, fmt, ##args)
+#घोषणा FNIC_MAIN_NOTE(kern_level, host, fmt, args...)          \
+	shost_prपूर्णांकk(kern_level, host, fmt, ##args)
 
-extern const char *fnic_state_str[];
+बाह्य स्थिर अक्षर *fnic_state_str[];
 
-enum fnic_intx_intr_index {
+क्रमागत fnic_पूर्णांकx_पूर्णांकr_index अणु
 	FNIC_INTX_WQ_RQ_COPYWQ,
 	FNIC_INTX_ERR,
 	FNIC_INTX_NOTIFY,
 	FNIC_INTX_INTR_MAX,
-};
+पूर्ण;
 
-enum fnic_msix_intr_index {
+क्रमागत fnic_msix_पूर्णांकr_index अणु
 	FNIC_MSIX_RQ,
 	FNIC_MSIX_WQ,
 	FNIC_MSIX_WQ_COPY,
 	FNIC_MSIX_ERR_NOTIFY,
 	FNIC_MSIX_INTR_MAX,
-};
+पूर्ण;
 
-struct fnic_msix_entry {
-	int requested;
-	char devname[IFNAMSIZ + 11];
-	irqreturn_t (*isr)(int, void *);
-	void *devid;
-};
+काष्ठा fnic_msix_entry अणु
+	पूर्णांक requested;
+	अक्षर devname[IFNAMSIZ + 11];
+	irqवापस_t (*isr)(पूर्णांक, व्योम *);
+	व्योम *devid;
+पूर्ण;
 
-enum fnic_state {
+क्रमागत fnic_state अणु
 	FNIC_IN_FC_MODE = 0,
 	FNIC_IN_FC_TRANS_ETH_MODE,
 	FNIC_IN_ETH_MODE,
 	FNIC_IN_ETH_TRANS_FC_MODE,
-};
+पूर्ण;
 
-#define FNIC_WQ_COPY_MAX 1
-#define FNIC_WQ_MAX 1
-#define FNIC_RQ_MAX 1
-#define FNIC_CQ_MAX (FNIC_WQ_COPY_MAX + FNIC_WQ_MAX + FNIC_RQ_MAX)
-#define FNIC_DFLT_IO_COMPLETIONS 256
+#घोषणा FNIC_WQ_COPY_MAX 1
+#घोषणा FNIC_WQ_MAX 1
+#घोषणा FNIC_RQ_MAX 1
+#घोषणा FNIC_CQ_MAX (FNIC_WQ_COPY_MAX + FNIC_WQ_MAX + FNIC_RQ_MAX)
+#घोषणा FNIC_DFLT_IO_COMPLETIONS 256
 
-struct mempool;
+काष्ठा mempool;
 
-enum fnic_evt {
+क्रमागत fnic_evt अणु
 	FNIC_EVT_START_VLAN_DISC = 1,
 	FNIC_EVT_START_FCF_DISC = 2,
 	FNIC_EVT_MAX,
-};
+पूर्ण;
 
-struct fnic_event {
-	struct list_head list;
-	struct fnic *fnic;
-	enum fnic_evt event;
-};
+काष्ठा fnic_event अणु
+	काष्ठा list_head list;
+	काष्ठा fnic *fnic;
+	क्रमागत fnic_evt event;
+पूर्ण;
 
-/* Per-instance private data structure */
-struct fnic {
-	struct fc_lport *lport;
-	struct fcoe_ctlr ctlr;		/* FIP FCoE controller structure */
-	struct vnic_dev_bar bar0;
+/* Per-instance निजी data काष्ठाure */
+काष्ठा fnic अणु
+	काष्ठा fc_lport *lport;
+	काष्ठा fcoe_ctlr ctlr;		/* FIP FCoE controller काष्ठाure */
+	काष्ठा vnic_dev_bar bar0;
 
-	struct fnic_msix_entry msix[FNIC_MSIX_INTR_MAX];
+	काष्ठा fnic_msix_entry msix[FNIC_MSIX_INTR_MAX];
 
-	struct vnic_stats *stats;
-	unsigned long stats_time;	/* time of stats update */
-	unsigned long stats_reset_time; /* time of stats reset */
-	struct vnic_nic_cfg *nic_cfg;
-	char name[IFNAMSIZ];
-	struct timer_list notify_timer; /* used for MSI interrupts */
+	काष्ठा vnic_stats *stats;
+	अचिन्हित दीर्घ stats_समय;	/* समय of stats update */
+	अचिन्हित दीर्घ stats_reset_समय; /* समय of stats reset */
+	काष्ठा vnic_nic_cfg *nic_cfg;
+	अक्षर name[IFNAMSIZ];
+	काष्ठा समयr_list notअगरy_समयr; /* used क्रम MSI पूर्णांकerrupts */
 
-	unsigned int fnic_max_tag_id;
-	unsigned int err_intr_offset;
-	unsigned int link_intr_offset;
+	अचिन्हित पूर्णांक fnic_max_tag_id;
+	अचिन्हित पूर्णांक err_पूर्णांकr_offset;
+	अचिन्हित पूर्णांक link_पूर्णांकr_offset;
 
-	unsigned int wq_count;
-	unsigned int cq_count;
+	अचिन्हित पूर्णांक wq_count;
+	अचिन्हित पूर्णांक cq_count;
 
-	struct dentry *fnic_stats_debugfs_host;
-	struct dentry *fnic_stats_debugfs_file;
-	struct dentry *fnic_reset_debugfs_file;
-	unsigned int reset_stats;
+	काष्ठा dentry *fnic_stats_debugfs_host;
+	काष्ठा dentry *fnic_stats_debugfs_file;
+	काष्ठा dentry *fnic_reset_debugfs_file;
+	अचिन्हित पूर्णांक reset_stats;
 	atomic64_t io_cmpl_skip;
-	struct fnic_stats fnic_stats;
+	काष्ठा fnic_stats fnic_stats;
 
 	u32 vlan_hw_insert:1;	        /* let hw insert the tag */
-	u32 in_remove:1;                /* fnic device in removal */
+	u32 in_हटाओ:1;                /* fnic device in removal */
 	u32 stop_rx_link_events:1;      /* stop proc. rx frames, link events */
 	u32 link_events:1;              /* set when we get any link event*/
 
-	struct completion *remove_wait; /* device remove thread blocks */
+	काष्ठा completion *हटाओ_रुको; /* device हटाओ thपढ़ो blocks */
 
 	atomic_t in_flight;		/* io counter */
-	bool internal_reset_inprogress;
+	bool पूर्णांकernal_reset_inprogress;
 	u32 _reserved;			/* fill hole */
-	unsigned long state_flags;	/* protected by host lock */
-	enum fnic_state state;
+	अचिन्हित दीर्घ state_flags;	/* रक्षित by host lock */
+	क्रमागत fnic_state state;
 	spinlock_t fnic_lock;
 
 	u16 vlan_id;	                /* VLAN tag including priority */
 	u8 data_src_addr[ETH_ALEN];
-	u64 fcp_input_bytes;		/* internal statistic */
-	u64 fcp_output_bytes;		/* internal statistic */
-	u32 link_down_cnt;
-	int link_status;
+	u64 fcp_input_bytes;		/* पूर्णांकernal statistic */
+	u64 fcp_output_bytes;		/* पूर्णांकernal statistic */
+	u32 link_करोwn_cnt;
+	पूर्णांक link_status;
 
-	struct list_head list;
-	struct pci_dev *pdev;
-	struct vnic_fc_config config;
-	struct vnic_dev *vdev;
-	unsigned int raw_wq_count;
-	unsigned int wq_copy_count;
-	unsigned int rq_count;
-	int fw_ack_index[FNIC_WQ_COPY_MAX];
-	unsigned short fw_ack_recd[FNIC_WQ_COPY_MAX];
-	unsigned short wq_copy_desc_low[FNIC_WQ_COPY_MAX];
-	unsigned int intr_count;
+	काष्ठा list_head list;
+	काष्ठा pci_dev *pdev;
+	काष्ठा vnic_fc_config config;
+	काष्ठा vnic_dev *vdev;
+	अचिन्हित पूर्णांक raw_wq_count;
+	अचिन्हित पूर्णांक wq_copy_count;
+	अचिन्हित पूर्णांक rq_count;
+	पूर्णांक fw_ack_index[FNIC_WQ_COPY_MAX];
+	अचिन्हित लघु fw_ack_recd[FNIC_WQ_COPY_MAX];
+	अचिन्हित लघु wq_copy_desc_low[FNIC_WQ_COPY_MAX];
+	अचिन्हित पूर्णांक पूर्णांकr_count;
 	u32 __iomem *legacy_pba;
-	struct fnic_host_tag *tags;
+	काष्ठा fnic_host_tag *tags;
 	mempool_t *io_req_pool;
 	mempool_t *io_sgl_pool[FNIC_SGL_NUM_CACHES];
-	spinlock_t io_req_lock[FNIC_IO_LOCKS];	/* locks for scsi cmnds */
+	spinlock_t io_req_lock[FNIC_IO_LOCKS];	/* locks क्रम scsi cmnds */
 
-	struct work_struct link_work;
-	struct work_struct frame_work;
-	struct sk_buff_head frame_queue;
-	struct sk_buff_head tx_queue;
+	काष्ठा work_काष्ठा link_work;
+	काष्ठा work_काष्ठा frame_work;
+	काष्ठा sk_buff_head frame_queue;
+	काष्ठा sk_buff_head tx_queue;
 
 	/*** FIP related data members  -- start ***/
-	void (*set_vlan)(struct fnic *, u16 vlan);
-	struct work_struct      fip_frame_work;
-	struct sk_buff_head     fip_frame_queue;
-	struct timer_list       fip_timer;
-	struct list_head        vlans;
+	व्योम (*set_vlan)(काष्ठा fnic *, u16 vlan);
+	काष्ठा work_काष्ठा      fip_frame_work;
+	काष्ठा sk_buff_head     fip_frame_queue;
+	काष्ठा समयr_list       fip_समयr;
+	काष्ठा list_head        vlans;
 	spinlock_t              vlans_lock;
 
-	struct work_struct      event_work;
-	struct list_head        evlist;
+	काष्ठा work_काष्ठा      event_work;
+	काष्ठा list_head        evlist;
 	/*** FIP related data members  -- end ***/
 
 	/* copy work queue cache line section */
-	____cacheline_aligned struct vnic_wq_copy wq_copy[FNIC_WQ_COPY_MAX];
+	____cacheline_aligned काष्ठा vnic_wq_copy wq_copy[FNIC_WQ_COPY_MAX];
 	/* completion queue cache line section */
-	____cacheline_aligned struct vnic_cq cq[FNIC_CQ_MAX];
+	____cacheline_aligned काष्ठा vnic_cq cq[FNIC_CQ_MAX];
 
 	spinlock_t wq_copy_lock[FNIC_WQ_COPY_MAX];
 
 	/* work queue cache line section */
-	____cacheline_aligned struct vnic_wq wq[FNIC_WQ_MAX];
+	____cacheline_aligned काष्ठा vnic_wq wq[FNIC_WQ_MAX];
 	spinlock_t wq_lock[FNIC_WQ_MAX];
 
 	/* receive queue cache line section */
-	____cacheline_aligned struct vnic_rq rq[FNIC_RQ_MAX];
+	____cacheline_aligned काष्ठा vnic_rq rq[FNIC_RQ_MAX];
 
-	/* interrupt resource cache line section */
-	____cacheline_aligned struct vnic_intr intr[FNIC_MSIX_INTR_MAX];
-};
+	/* पूर्णांकerrupt resource cache line section */
+	____cacheline_aligned काष्ठा vnic_पूर्णांकr पूर्णांकr[FNIC_MSIX_INTR_MAX];
+पूर्ण;
 
-static inline struct fnic *fnic_from_ctlr(struct fcoe_ctlr *fip)
-{
-	return container_of(fip, struct fnic, ctlr);
-}
+अटल अंतरभूत काष्ठा fnic *fnic_from_ctlr(काष्ठा fcoe_ctlr *fip)
+अणु
+	वापस container_of(fip, काष्ठा fnic, ctlr);
+पूर्ण
 
-extern struct workqueue_struct *fnic_event_queue;
-extern struct workqueue_struct *fnic_fip_queue;
-extern struct device_attribute *fnic_attrs[];
+बाह्य काष्ठा workqueue_काष्ठा *fnic_event_queue;
+बाह्य काष्ठा workqueue_काष्ठा *fnic_fip_queue;
+बाह्य काष्ठा device_attribute *fnic_attrs[];
 
-void fnic_clear_intr_mode(struct fnic *fnic);
-int fnic_set_intr_mode(struct fnic *fnic);
-void fnic_free_intr(struct fnic *fnic);
-int fnic_request_intr(struct fnic *fnic);
+व्योम fnic_clear_पूर्णांकr_mode(काष्ठा fnic *fnic);
+पूर्णांक fnic_set_पूर्णांकr_mode(काष्ठा fnic *fnic);
+व्योम fnic_मुक्त_पूर्णांकr(काष्ठा fnic *fnic);
+पूर्णांक fnic_request_पूर्णांकr(काष्ठा fnic *fnic);
 
-int fnic_send(struct fc_lport *, struct fc_frame *);
-void fnic_free_wq_buf(struct vnic_wq *wq, struct vnic_wq_buf *buf);
-void fnic_handle_frame(struct work_struct *work);
-void fnic_handle_link(struct work_struct *work);
-void fnic_handle_event(struct work_struct *work);
-int fnic_rq_cmpl_handler(struct fnic *fnic, int);
-int fnic_alloc_rq_frame(struct vnic_rq *rq);
-void fnic_free_rq_buf(struct vnic_rq *rq, struct vnic_rq_buf *buf);
-void fnic_flush_tx(struct fnic *);
-void fnic_eth_send(struct fcoe_ctlr *, struct sk_buff *skb);
-void fnic_set_port_id(struct fc_lport *, u32, struct fc_frame *);
-void fnic_update_mac(struct fc_lport *, u8 *new);
-void fnic_update_mac_locked(struct fnic *, u8 *new);
+पूर्णांक fnic_send(काष्ठा fc_lport *, काष्ठा fc_frame *);
+व्योम fnic_मुक्त_wq_buf(काष्ठा vnic_wq *wq, काष्ठा vnic_wq_buf *buf);
+व्योम fnic_handle_frame(काष्ठा work_काष्ठा *work);
+व्योम fnic_handle_link(काष्ठा work_काष्ठा *work);
+व्योम fnic_handle_event(काष्ठा work_काष्ठा *work);
+पूर्णांक fnic_rq_cmpl_handler(काष्ठा fnic *fnic, पूर्णांक);
+पूर्णांक fnic_alloc_rq_frame(काष्ठा vnic_rq *rq);
+व्योम fnic_मुक्त_rq_buf(काष्ठा vnic_rq *rq, काष्ठा vnic_rq_buf *buf);
+व्योम fnic_flush_tx(काष्ठा fnic *);
+व्योम fnic_eth_send(काष्ठा fcoe_ctlr *, काष्ठा sk_buff *skb);
+व्योम fnic_set_port_id(काष्ठा fc_lport *, u32, काष्ठा fc_frame *);
+व्योम fnic_update_mac(काष्ठा fc_lport *, u8 *new);
+व्योम fnic_update_mac_locked(काष्ठा fnic *, u8 *new);
 
-int fnic_queuecommand(struct Scsi_Host *, struct scsi_cmnd *);
-int fnic_abort_cmd(struct scsi_cmnd *);
-int fnic_device_reset(struct scsi_cmnd *);
-int fnic_host_reset(struct scsi_cmnd *);
-int fnic_reset(struct Scsi_Host *);
-void fnic_scsi_cleanup(struct fc_lport *);
-void fnic_scsi_abort_io(struct fc_lport *);
-void fnic_empty_scsi_cleanup(struct fc_lport *);
-void fnic_exch_mgr_reset(struct fc_lport *, u32, u32);
-int fnic_wq_copy_cmpl_handler(struct fnic *fnic, int);
-int fnic_wq_cmpl_handler(struct fnic *fnic, int);
-int fnic_flogi_reg_handler(struct fnic *fnic, u32);
-void fnic_wq_copy_cleanup_handler(struct vnic_wq_copy *wq,
-				  struct fcpio_host_req *desc);
-int fnic_fw_reset_handler(struct fnic *fnic);
-void fnic_terminate_rport_io(struct fc_rport *);
-const char *fnic_state_to_str(unsigned int state);
+पूर्णांक fnic_queuecommand(काष्ठा Scsi_Host *, काष्ठा scsi_cmnd *);
+पूर्णांक fnic_पात_cmd(काष्ठा scsi_cmnd *);
+पूर्णांक fnic_device_reset(काष्ठा scsi_cmnd *);
+पूर्णांक fnic_host_reset(काष्ठा scsi_cmnd *);
+पूर्णांक fnic_reset(काष्ठा Scsi_Host *);
+व्योम fnic_scsi_cleanup(काष्ठा fc_lport *);
+व्योम fnic_scsi_पात_io(काष्ठा fc_lport *);
+व्योम fnic_empty_scsi_cleanup(काष्ठा fc_lport *);
+व्योम fnic_exch_mgr_reset(काष्ठा fc_lport *, u32, u32);
+पूर्णांक fnic_wq_copy_cmpl_handler(काष्ठा fnic *fnic, पूर्णांक);
+पूर्णांक fnic_wq_cmpl_handler(काष्ठा fnic *fnic, पूर्णांक);
+पूर्णांक fnic_flogi_reg_handler(काष्ठा fnic *fnic, u32);
+व्योम fnic_wq_copy_cleanup_handler(काष्ठा vnic_wq_copy *wq,
+				  काष्ठा fcpio_host_req *desc);
+पूर्णांक fnic_fw_reset_handler(काष्ठा fnic *fnic);
+व्योम fnic_terminate_rport_io(काष्ठा fc_rport *);
+स्थिर अक्षर *fnic_state_to_str(अचिन्हित पूर्णांक state);
 
-void fnic_log_q_error(struct fnic *fnic);
-void fnic_handle_link_event(struct fnic *fnic);
+व्योम fnic_log_q_error(काष्ठा fnic *fnic);
+व्योम fnic_handle_link_event(काष्ठा fnic *fnic);
 
-int fnic_is_abts_pending(struct fnic *, struct scsi_cmnd *);
+पूर्णांक fnic_is_abts_pending(काष्ठा fnic *, काष्ठा scsi_cmnd *);
 
-void fnic_handle_fip_frame(struct work_struct *work);
-void fnic_handle_fip_event(struct fnic *fnic);
-void fnic_fcoe_reset_vlans(struct fnic *fnic);
-void fnic_fcoe_evlist_free(struct fnic *fnic);
-extern void fnic_handle_fip_timer(struct fnic *fnic);
+व्योम fnic_handle_fip_frame(काष्ठा work_काष्ठा *work);
+व्योम fnic_handle_fip_event(काष्ठा fnic *fnic);
+व्योम fnic_fcoe_reset_vlans(काष्ठा fnic *fnic);
+व्योम fnic_fcoe_evlist_मुक्त(काष्ठा fnic *fnic);
+बाह्य व्योम fnic_handle_fip_समयr(काष्ठा fnic *fnic);
 
-static inline int
-fnic_chk_state_flags_locked(struct fnic *fnic, unsigned long st_flags)
-{
-	return ((fnic->state_flags & st_flags) == st_flags);
-}
-void __fnic_set_state_flags(struct fnic *, unsigned long, unsigned long);
-void fnic_dump_fchost_stats(struct Scsi_Host *, struct fc_host_statistics *);
-#endif /* _FNIC_H_ */
+अटल अंतरभूत पूर्णांक
+fnic_chk_state_flags_locked(काष्ठा fnic *fnic, अचिन्हित दीर्घ st_flags)
+अणु
+	वापस ((fnic->state_flags & st_flags) == st_flags);
+पूर्ण
+व्योम __fnic_set_state_flags(काष्ठा fnic *, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+व्योम fnic_dump_fchost_stats(काष्ठा Scsi_Host *, काष्ठा fc_host_statistics *);
+#पूर्ण_अगर /* _FNIC_H_ */

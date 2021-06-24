@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * SM2 asymmetric public-key algorithm
- * as specified by OSCCA GM/T 0003.1-2012 -- 0003.5-2012 SM2 and
- * described at https://tools.ietf.org/html/draft-shen-sm2-ecdsa-02
+ * SM2 asymmetric खुला-key algorithm
+ * as specअगरied by OSCCA GM/T 0003.1-2012 -- 0003.5-2012 SM2 and
+ * described at https://tools.ietf.org/hपंचांगl/draft-shen-sm2-ecdsa-02
  *
  * Copyright (c) 2020, Alibaba Group.
  * Authors: Tianjia Zhang <tianjia.zhang@linux.alibaba.com>
  */
 
-#include <linux/module.h>
-#include <linux/mpi.h>
-#include <crypto/internal/akcipher.h>
-#include <crypto/akcipher.h>
-#include <crypto/hash.h>
-#include <crypto/sm3_base.h>
-#include <crypto/rng.h>
-#include <crypto/sm2.h>
-#include "sm2signature.asn1.h"
+#समावेश <linux/module.h>
+#समावेश <linux/mpi.h>
+#समावेश <crypto/पूर्णांकernal/akcipher.h>
+#समावेश <crypto/akcipher.h>
+#समावेश <crypto/hash.h>
+#समावेश <crypto/sm3_base.h>
+#समावेश <crypto/rng.h>
+#समावेश <crypto/sm2.h>
+#समावेश "sm2signature.asn1.h"
 
-#define MPI_NBYTES(m)   ((mpi_get_nbits(m) + 7) / 8)
+#घोषणा MPI_NBYTES(m)   ((mpi_get_nbits(m) + 7) / 8)
 
-struct ecc_domain_parms {
-	const char *desc;           /* Description of the curve.  */
-	unsigned int nbits;         /* Number of bits.  */
-	unsigned int fips:1; /* True if this is a FIPS140-2 approved curve */
+काष्ठा ecc_करोमुख्य_parms अणु
+	स्थिर अक्षर *desc;           /* Description of the curve.  */
+	अचिन्हित पूर्णांक nbits;         /* Number of bits.  */
+	अचिन्हित पूर्णांक fips:1; /* True अगर this is a FIPS140-2 approved curve */
 
-	/* The model describing this curve.  This is mainly used to select
+	/* The model describing this curve.  This is मुख्यly used to select
 	 * the group equation.
 	 */
-	enum gcry_mpi_ec_models model;
+	क्रमागत gcry_mpi_ec_models model;
 
-	/* The actual ECC dialect used.  This is used for curve specific
+	/* The actual ECC dialect used.  This is used क्रम curve specअगरic
 	 * optimizations and to select encodings etc.
 	 */
-	enum ecc_dialects dialect;
+	क्रमागत ecc_dialects dialect;
 
-	const char *p;              /* The prime defining the field.  */
-	const char *a, *b;          /* The coefficients.  For Twisted Edwards
-				     * Curves b is used for d.  For Montgomery
+	स्थिर अक्षर *p;              /* The prime defining the field.  */
+	स्थिर अक्षर *a, *b;          /* The coefficients.  For Twisted Edwards
+				     * Curves b is used क्रम d.  For Montgomery
 				     * Curves (a,b) has ((A-2)/4,B^-1).
 				     */
-	const char *n;              /* The order of the base point.  */
-	const char *g_x, *g_y;      /* Base point.  */
-	unsigned int h;             /* Cofactor.  */
-};
+	स्थिर अक्षर *n;              /* The order of the base poपूर्णांक.  */
+	स्थिर अक्षर *g_x, *g_y;      /* Base poपूर्णांक.  */
+	अचिन्हित पूर्णांक h;             /* Cofactor.  */
+पूर्ण;
 
-static const struct ecc_domain_parms sm2_ecp = {
+अटल स्थिर काष्ठा ecc_करोमुख्य_parms sm2_ecp = अणु
 	.desc = "sm2p256v1",
 	.nbits = 256,
 	.fips = 0,
@@ -58,31 +59,31 @@ static const struct ecc_domain_parms sm2_ecp = {
 	.g_x = "0x32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7",
 	.g_y = "0xbc3736a2f4f6779c59bdcee36b692153d0a9877cc62a474002df32e52139f0a0",
 	.h = 1
-};
+पूर्ण;
 
-static int sm2_ec_ctx_init(struct mpi_ec_ctx *ec)
-{
-	const struct ecc_domain_parms *ecp = &sm2_ecp;
+अटल पूर्णांक sm2_ec_ctx_init(काष्ठा mpi_ec_ctx *ec)
+अणु
+	स्थिर काष्ठा ecc_करोमुख्य_parms *ecp = &sm2_ecp;
 	MPI p, a, b;
 	MPI x, y;
-	int rc = -EINVAL;
+	पूर्णांक rc = -EINVAL;
 
 	p = mpi_scanval(ecp->p);
 	a = mpi_scanval(ecp->a);
 	b = mpi_scanval(ecp->b);
-	if (!p || !a || !b)
-		goto free_p;
+	अगर (!p || !a || !b)
+		जाओ मुक्त_p;
 
 	x = mpi_scanval(ecp->g_x);
 	y = mpi_scanval(ecp->g_y);
-	if (!x || !y)
-		goto free;
+	अगर (!x || !y)
+		जाओ मुक्त;
 
 	rc = -ENOMEM;
 	/* mpi_ec_setup_elliptic_curve */
-	ec->G = mpi_point_new(0);
-	if (!ec->G)
-		goto free;
+	ec->G = mpi_poपूर्णांक_new(0);
+	अगर (!ec->G)
+		जाओ मुक्त;
 
 	mpi_set(ec->G->x, x);
 	mpi_set(ec->G->y, y);
@@ -90,10 +91,10 @@ static int sm2_ec_ctx_init(struct mpi_ec_ctx *ec)
 
 	rc = -EINVAL;
 	ec->n = mpi_scanval(ecp->n);
-	if (!ec->n) {
-		mpi_point_release(ec->G);
-		goto free;
-	}
+	अगर (!ec->n) अणु
+		mpi_poपूर्णांक_release(ec->G);
+		जाओ मुक्त;
+	पूर्ण
 
 	ec->h = ecp->h;
 	ec->name = ecp->desc;
@@ -101,58 +102,58 @@ static int sm2_ec_ctx_init(struct mpi_ec_ctx *ec)
 
 	rc = 0;
 
-free:
-	mpi_free(x);
-	mpi_free(y);
-free_p:
-	mpi_free(p);
-	mpi_free(a);
-	mpi_free(b);
+मुक्त:
+	mpi_मुक्त(x);
+	mpi_मुक्त(y);
+मुक्त_p:
+	mpi_मुक्त(p);
+	mpi_मुक्त(a);
+	mpi_मुक्त(b);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void sm2_ec_ctx_deinit(struct mpi_ec_ctx *ec)
-{
+अटल व्योम sm2_ec_ctx_deinit(काष्ठा mpi_ec_ctx *ec)
+अणु
 	mpi_ec_deinit(ec);
 
-	memset(ec, 0, sizeof(*ec));
-}
+	स_रखो(ec, 0, माप(*ec));
+पूर्ण
 
 /* RESULT must have been initialized and is set on success to the
- * point given by VALUE.
+ * poपूर्णांक given by VALUE.
  */
-static int sm2_ecc_os2ec(MPI_POINT result, MPI value)
-{
-	int rc;
-	size_t n;
-	unsigned char *buf;
+अटल पूर्णांक sm2_ecc_os2ec(MPI_POINT result, MPI value)
+अणु
+	पूर्णांक rc;
+	माप_प्रकार n;
+	अचिन्हित अक्षर *buf;
 	MPI x, y;
 
 	n = MPI_NBYTES(value);
-	buf = kmalloc(n, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(n, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	rc = mpi_print(GCRYMPI_FMT_USG, buf, n, &n, value);
-	if (rc)
-		goto err_freebuf;
+	rc = mpi_prपूर्णांक(GCRYMPI_FMT_USG, buf, n, &n, value);
+	अगर (rc)
+		जाओ err_मुक्तbuf;
 
 	rc = -EINVAL;
-	if (n < 1 || ((n - 1) % 2))
-		goto err_freebuf;
-	/* No support for point compression */
-	if (*buf != 0x4)
-		goto err_freebuf;
+	अगर (n < 1 || ((n - 1) % 2))
+		जाओ err_मुक्तbuf;
+	/* No support क्रम poपूर्णांक compression */
+	अगर (*buf != 0x4)
+		जाओ err_मुक्तbuf;
 
 	rc = -ENOMEM;
 	n = (n - 1) / 2;
-	x = mpi_read_raw_data(buf + 1, n);
-	if (!x)
-		goto err_freebuf;
-	y = mpi_read_raw_data(buf + 1 + n, n);
-	if (!y)
-		goto err_freex;
+	x = mpi_पढ़ो_raw_data(buf + 1, n);
+	अगर (!x)
+		जाओ err_मुक्तbuf;
+	y = mpi_पढ़ो_raw_data(buf + 1 + n, n);
+	अगर (!y)
+		जाओ err_मुक्तx;
 
 	mpi_normalize(x);
 	mpi_normalize(y);
@@ -162,108 +163,108 @@ static int sm2_ecc_os2ec(MPI_POINT result, MPI value)
 
 	rc = 0;
 
-	mpi_free(y);
-err_freex:
-	mpi_free(x);
-err_freebuf:
-	kfree(buf);
-	return rc;
-}
+	mpi_मुक्त(y);
+err_मुक्तx:
+	mpi_मुक्त(x);
+err_मुक्तbuf:
+	kमुक्त(buf);
+	वापस rc;
+पूर्ण
 
-struct sm2_signature_ctx {
+काष्ठा sm2_signature_ctx अणु
 	MPI sig_r;
 	MPI sig_s;
-};
+पूर्ण;
 
-int sm2_get_signature_r(void *context, size_t hdrlen, unsigned char tag,
-				const void *value, size_t vlen)
-{
-	struct sm2_signature_ctx *sig = context;
+पूर्णांक sm2_get_signature_r(व्योम *context, माप_प्रकार hdrlen, अचिन्हित अक्षर tag,
+				स्थिर व्योम *value, माप_प्रकार vlen)
+अणु
+	काष्ठा sm2_signature_ctx *sig = context;
 
-	if (!value || !vlen)
-		return -EINVAL;
+	अगर (!value || !vlen)
+		वापस -EINVAL;
 
-	sig->sig_r = mpi_read_raw_data(value, vlen);
-	if (!sig->sig_r)
-		return -ENOMEM;
+	sig->sig_r = mpi_पढ़ो_raw_data(value, vlen);
+	अगर (!sig->sig_r)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sm2_get_signature_s(void *context, size_t hdrlen, unsigned char tag,
-				const void *value, size_t vlen)
-{
-	struct sm2_signature_ctx *sig = context;
+पूर्णांक sm2_get_signature_s(व्योम *context, माप_प्रकार hdrlen, अचिन्हित अक्षर tag,
+				स्थिर व्योम *value, माप_प्रकार vlen)
+अणु
+	काष्ठा sm2_signature_ctx *sig = context;
 
-	if (!value || !vlen)
-		return -EINVAL;
+	अगर (!value || !vlen)
+		वापस -EINVAL;
 
-	sig->sig_s = mpi_read_raw_data(value, vlen);
-	if (!sig->sig_s)
-		return -ENOMEM;
+	sig->sig_s = mpi_पढ़ो_raw_data(value, vlen);
+	अगर (!sig->sig_s)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sm2_z_digest_update(struct shash_desc *desc,
-			MPI m, unsigned int pbytes)
-{
-	static const unsigned char zero[32];
-	unsigned char *in;
-	unsigned int inlen;
+अटल पूर्णांक sm2_z_digest_update(काष्ठा shash_desc *desc,
+			MPI m, अचिन्हित पूर्णांक pbytes)
+अणु
+	अटल स्थिर अचिन्हित अक्षर zero[32];
+	अचिन्हित अक्षर *in;
+	अचिन्हित पूर्णांक inlen;
 
-	in = mpi_get_buffer(m, &inlen, NULL);
-	if (!in)
-		return -EINVAL;
+	in = mpi_get_buffer(m, &inlen, शून्य);
+	अगर (!in)
+		वापस -EINVAL;
 
-	if (inlen < pbytes) {
+	अगर (inlen < pbytes) अणु
 		/* padding with zero */
 		crypto_sm3_update(desc, zero, pbytes - inlen);
 		crypto_sm3_update(desc, in, inlen);
-	} else if (inlen > pbytes) {
+	पूर्ण अन्यथा अगर (inlen > pbytes) अणु
 		/* skip the starting zero */
 		crypto_sm3_update(desc, in + inlen - pbytes, pbytes);
-	} else {
+	पूर्ण अन्यथा अणु
 		crypto_sm3_update(desc, in, inlen);
-	}
+	पूर्ण
 
-	kfree(in);
-	return 0;
-}
+	kमुक्त(in);
+	वापस 0;
+पूर्ण
 
-static int sm2_z_digest_update_point(struct shash_desc *desc,
-		MPI_POINT point, struct mpi_ec_ctx *ec, unsigned int pbytes)
-{
+अटल पूर्णांक sm2_z_digest_update_poपूर्णांक(काष्ठा shash_desc *desc,
+		MPI_POINT poपूर्णांक, काष्ठा mpi_ec_ctx *ec, अचिन्हित पूर्णांक pbytes)
+अणु
 	MPI x, y;
-	int ret = -EINVAL;
+	पूर्णांक ret = -EINVAL;
 
 	x = mpi_new(0);
 	y = mpi_new(0);
 
-	if (!mpi_ec_get_affine(x, y, point, ec) &&
+	अगर (!mpi_ec_get_affine(x, y, poपूर्णांक, ec) &&
 		!sm2_z_digest_update(desc, x, pbytes) &&
 		!sm2_z_digest_update(desc, y, pbytes))
 		ret = 0;
 
-	mpi_free(x);
-	mpi_free(y);
-	return ret;
-}
+	mpi_मुक्त(x);
+	mpi_मुक्त(y);
+	वापस ret;
+पूर्ण
 
-int sm2_compute_z_digest(struct crypto_akcipher *tfm,
-			const unsigned char *id, size_t id_len,
-			unsigned char dgst[SM3_DIGEST_SIZE])
-{
-	struct mpi_ec_ctx *ec = akcipher_tfm_ctx(tfm);
-	uint16_t bits_len;
-	unsigned char entl[2];
-	SHASH_DESC_ON_STACK(desc, NULL);
-	unsigned int pbytes;
+पूर्णांक sm2_compute_z_digest(काष्ठा crypto_akcipher *tfm,
+			स्थिर अचिन्हित अक्षर *id, माप_प्रकार id_len,
+			अचिन्हित अक्षर dgst[SM3_DIGEST_SIZE])
+अणु
+	काष्ठा mpi_ec_ctx *ec = akcipher_tfm_ctx(tfm);
+	uपूर्णांक16_t bits_len;
+	अचिन्हित अक्षर entl[2];
+	SHASH_DESC_ON_STACK(desc, शून्य);
+	अचिन्हित पूर्णांक pbytes;
 
-	if (id_len > (USHRT_MAX / 8) || !ec->Q)
-		return -EINVAL;
+	अगर (id_len > (अच_लघु_उच्च / 8) || !ec->Q)
+		वापस -EINVAL;
 
-	bits_len = (uint16_t)(id_len * 8);
+	bits_len = (uपूर्णांक16_t)(id_len * 8);
 	entl[0] = bits_len >> 8;
 	entl[1] = bits_len & 0xff;
 
@@ -274,189 +275,189 @@ int sm2_compute_z_digest(struct crypto_akcipher *tfm,
 	crypto_sm3_update(desc, entl, 2);
 	crypto_sm3_update(desc, id, id_len);
 
-	if (sm2_z_digest_update(desc, ec->a, pbytes) ||
+	अगर (sm2_z_digest_update(desc, ec->a, pbytes) ||
 		sm2_z_digest_update(desc, ec->b, pbytes) ||
-		sm2_z_digest_update_point(desc, ec->G, ec, pbytes) ||
-		sm2_z_digest_update_point(desc, ec->Q, ec, pbytes))
-		return -EINVAL;
+		sm2_z_digest_update_poपूर्णांक(desc, ec->G, ec, pbytes) ||
+		sm2_z_digest_update_poपूर्णांक(desc, ec->Q, ec, pbytes))
+		वापस -EINVAL;
 
 	crypto_sm3_final(desc, dgst);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(sm2_compute_z_digest);
 
-static int _sm2_verify(struct mpi_ec_ctx *ec, MPI hash, MPI sig_r, MPI sig_s)
-{
-	int rc = -EINVAL;
-	struct gcry_mpi_point sG, tP;
-	MPI t = NULL;
-	MPI x1 = NULL, y1 = NULL;
+अटल पूर्णांक _sm2_verअगरy(काष्ठा mpi_ec_ctx *ec, MPI hash, MPI sig_r, MPI sig_s)
+अणु
+	पूर्णांक rc = -EINVAL;
+	काष्ठा gcry_mpi_poपूर्णांक sG, tP;
+	MPI t = शून्य;
+	MPI x1 = शून्य, y1 = शून्य;
 
-	mpi_point_init(&sG);
-	mpi_point_init(&tP);
+	mpi_poपूर्णांक_init(&sG);
+	mpi_poपूर्णांक_init(&tP);
 	x1 = mpi_new(0);
 	y1 = mpi_new(0);
 	t = mpi_new(0);
 
 	/* r, s in [1, n-1] */
-	if (mpi_cmp_ui(sig_r, 1) < 0 || mpi_cmp(sig_r, ec->n) > 0 ||
-		mpi_cmp_ui(sig_s, 1) < 0 || mpi_cmp(sig_s, ec->n) > 0) {
-		goto leave;
-	}
+	अगर (mpi_cmp_ui(sig_r, 1) < 0 || mpi_cmp(sig_r, ec->n) > 0 ||
+		mpi_cmp_ui(sig_s, 1) < 0 || mpi_cmp(sig_s, ec->n) > 0) अणु
+		जाओ leave;
+	पूर्ण
 
 	/* t = (r + s) % n, t == 0 */
 	mpi_addm(t, sig_r, sig_s, ec->n);
-	if (mpi_cmp_ui(t, 0) == 0)
-		goto leave;
+	अगर (mpi_cmp_ui(t, 0) == 0)
+		जाओ leave;
 
 	/* sG + tP = (x1, y1) */
 	rc = -EBADMSG;
-	mpi_ec_mul_point(&sG, sig_s, ec->G, ec);
-	mpi_ec_mul_point(&tP, t, ec->Q, ec);
-	mpi_ec_add_points(&sG, &sG, &tP, ec);
-	if (mpi_ec_get_affine(x1, y1, &sG, ec))
-		goto leave;
+	mpi_ec_mul_poपूर्णांक(&sG, sig_s, ec->G, ec);
+	mpi_ec_mul_poपूर्णांक(&tP, t, ec->Q, ec);
+	mpi_ec_add_poपूर्णांकs(&sG, &sG, &tP, ec);
+	अगर (mpi_ec_get_affine(x1, y1, &sG, ec))
+		जाओ leave;
 
 	/* R = (e + x1) % n */
 	mpi_addm(t, hash, x1, ec->n);
 
 	/* check R == r */
 	rc = -EKEYREJECTED;
-	if (mpi_cmp(t, sig_r))
-		goto leave;
+	अगर (mpi_cmp(t, sig_r))
+		जाओ leave;
 
 	rc = 0;
 
 leave:
-	mpi_point_free_parts(&sG);
-	mpi_point_free_parts(&tP);
-	mpi_free(x1);
-	mpi_free(y1);
-	mpi_free(t);
+	mpi_poपूर्णांक_मुक्त_parts(&sG);
+	mpi_poपूर्णांक_मुक्त_parts(&tP);
+	mpi_मुक्त(x1);
+	mpi_मुक्त(y1);
+	mpi_मुक्त(t);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int sm2_verify(struct akcipher_request *req)
-{
-	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
-	struct mpi_ec_ctx *ec = akcipher_tfm_ctx(tfm);
-	unsigned char *buffer;
-	struct sm2_signature_ctx sig;
+अटल पूर्णांक sm2_verअगरy(काष्ठा akcipher_request *req)
+अणु
+	काष्ठा crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
+	काष्ठा mpi_ec_ctx *ec = akcipher_tfm_ctx(tfm);
+	अचिन्हित अक्षर *buffer;
+	काष्ठा sm2_signature_ctx sig;
 	MPI hash;
-	int ret;
+	पूर्णांक ret;
 
-	if (unlikely(!ec->Q))
-		return -EINVAL;
+	अगर (unlikely(!ec->Q))
+		वापस -EINVAL;
 
-	buffer = kmalloc(req->src_len + req->dst_len, GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+	buffer = kदो_स्मृति(req->src_len + req->dst_len, GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	sg_pcopy_to_buffer(req->src,
-		sg_nents_for_len(req->src, req->src_len + req->dst_len),
+		sg_nents_क्रम_len(req->src, req->src_len + req->dst_len),
 		buffer, req->src_len + req->dst_len, 0);
 
-	sig.sig_r = NULL;
-	sig.sig_s = NULL;
+	sig.sig_r = शून्य;
+	sig.sig_s = शून्य;
 	ret = asn1_ber_decoder(&sm2signature_decoder, &sig,
 				buffer, req->src_len);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
 	ret = -ENOMEM;
-	hash = mpi_read_raw_data(buffer + req->src_len, req->dst_len);
-	if (!hash)
-		goto error;
+	hash = mpi_पढ़ो_raw_data(buffer + req->src_len, req->dst_len);
+	अगर (!hash)
+		जाओ error;
 
-	ret = _sm2_verify(ec, hash, sig.sig_r, sig.sig_s);
+	ret = _sm2_verअगरy(ec, hash, sig.sig_r, sig.sig_s);
 
-	mpi_free(hash);
+	mpi_मुक्त(hash);
 error:
-	mpi_free(sig.sig_r);
-	mpi_free(sig.sig_s);
-	kfree(buffer);
-	return ret;
-}
+	mpi_मुक्त(sig.sig_r);
+	mpi_मुक्त(sig.sig_s);
+	kमुक्त(buffer);
+	वापस ret;
+पूर्ण
 
-static int sm2_set_pub_key(struct crypto_akcipher *tfm,
-			const void *key, unsigned int keylen)
-{
-	struct mpi_ec_ctx *ec = akcipher_tfm_ctx(tfm);
+अटल पूर्णांक sm2_set_pub_key(काष्ठा crypto_akcipher *tfm,
+			स्थिर व्योम *key, अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा mpi_ec_ctx *ec = akcipher_tfm_ctx(tfm);
 	MPI a;
-	int rc;
+	पूर्णांक rc;
 
-	ec->Q = mpi_point_new(0);
-	if (!ec->Q)
-		return -ENOMEM;
+	ec->Q = mpi_poपूर्णांक_new(0);
+	अगर (!ec->Q)
+		वापस -ENOMEM;
 
 	/* include the uncompressed flag '0x04' */
 	rc = -ENOMEM;
-	a = mpi_read_raw_data(key, keylen);
-	if (!a)
-		goto error;
+	a = mpi_पढ़ो_raw_data(key, keylen);
+	अगर (!a)
+		जाओ error;
 
 	mpi_normalize(a);
 	rc = sm2_ecc_os2ec(ec->Q, a);
-	mpi_free(a);
-	if (rc)
-		goto error;
+	mpi_मुक्त(a);
+	अगर (rc)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 
 error:
-	mpi_point_release(ec->Q);
-	ec->Q = NULL;
-	return rc;
-}
+	mpi_poपूर्णांक_release(ec->Q);
+	ec->Q = शून्य;
+	वापस rc;
+पूर्ण
 
-static unsigned int sm2_max_size(struct crypto_akcipher *tfm)
-{
+अटल अचिन्हित पूर्णांक sm2_max_size(काष्ठा crypto_akcipher *tfm)
+अणु
 	/* Unlimited max size */
-	return PAGE_SIZE;
-}
+	वापस PAGE_SIZE;
+पूर्ण
 
-static int sm2_init_tfm(struct crypto_akcipher *tfm)
-{
-	struct mpi_ec_ctx *ec = akcipher_tfm_ctx(tfm);
+अटल पूर्णांक sm2_init_tfm(काष्ठा crypto_akcipher *tfm)
+अणु
+	काष्ठा mpi_ec_ctx *ec = akcipher_tfm_ctx(tfm);
 
-	return sm2_ec_ctx_init(ec);
-}
+	वापस sm2_ec_ctx_init(ec);
+पूर्ण
 
-static void sm2_exit_tfm(struct crypto_akcipher *tfm)
-{
-	struct mpi_ec_ctx *ec = akcipher_tfm_ctx(tfm);
+अटल व्योम sm2_निकास_tfm(काष्ठा crypto_akcipher *tfm)
+अणु
+	काष्ठा mpi_ec_ctx *ec = akcipher_tfm_ctx(tfm);
 
 	sm2_ec_ctx_deinit(ec);
-}
+पूर्ण
 
-static struct akcipher_alg sm2 = {
-	.verify = sm2_verify,
+अटल काष्ठा akcipher_alg sm2 = अणु
+	.verअगरy = sm2_verअगरy,
 	.set_pub_key = sm2_set_pub_key,
 	.max_size = sm2_max_size,
 	.init = sm2_init_tfm,
-	.exit = sm2_exit_tfm,
-	.base = {
+	.निकास = sm2_निकास_tfm,
+	.base = अणु
 		.cra_name = "sm2",
 		.cra_driver_name = "sm2-generic",
 		.cra_priority = 100,
 		.cra_module = THIS_MODULE,
-		.cra_ctxsize = sizeof(struct mpi_ec_ctx),
-	},
-};
+		.cra_ctxsize = माप(काष्ठा mpi_ec_ctx),
+	पूर्ण,
+पूर्ण;
 
-static int sm2_init(void)
-{
-	return crypto_register_akcipher(&sm2);
-}
+अटल पूर्णांक sm2_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_akcipher(&sm2);
+पूर्ण
 
-static void sm2_exit(void)
-{
-	crypto_unregister_akcipher(&sm2);
-}
+अटल व्योम sm2_निकास(व्योम)
+अणु
+	crypto_unरेजिस्टर_akcipher(&sm2);
+पूर्ण
 
 subsys_initcall(sm2_init);
-module_exit(sm2_exit);
+module_निकास(sm2_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Tianjia Zhang <tianjia.zhang@linux.alibaba.com>");

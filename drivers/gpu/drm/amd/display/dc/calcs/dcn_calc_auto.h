@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,16 +24,16 @@
  *
  */
 
-#ifndef _DCN_CALC_AUTO_H_
-#define _DCN_CALC_AUTO_H_
+#अगर_अघोषित _DCN_CALC_AUTO_H_
+#घोषणा _DCN_CALC_AUTO_H_
 
-#include "dc.h"
-#include "dcn_calcs.h"
+#समावेश "dc.h"
+#समावेश "dcn_calcs.h"
 
-void scaler_settings_calculation(struct dcn_bw_internal_vars *v);
-void mode_support_and_system_configuration(struct dcn_bw_internal_vars *v);
-void display_pipe_configuration(struct dcn_bw_internal_vars *v);
-void dispclkdppclkdcfclk_deep_sleep_prefetch_parameters_watermarks_and_performance_calculation(
-		struct dcn_bw_internal_vars *v);
+व्योम scaler_settings_calculation(काष्ठा dcn_bw_पूर्णांकernal_vars *v);
+व्योम mode_support_and_प्रणाली_configuration(काष्ठा dcn_bw_पूर्णांकernal_vars *v);
+व्योम display_pipe_configuration(काष्ठा dcn_bw_पूर्णांकernal_vars *v);
+व्योम dispclkdppclkdcfclk_deep_sleep_prefetch_parameters_watermarks_and_perक्रमmance_calculation(
+		काष्ठा dcn_bw_पूर्णांकernal_vars *v);
 
-#endif /* _DCN_CALC_AUTO_H_ */
+#पूर्ण_अगर /* _DCN_CALC_AUTO_H_ */

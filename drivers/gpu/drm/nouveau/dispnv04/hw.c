@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Copyright 2006 Dave Airlie
  * Copyright 2007 Maarten Maathuis
  * Copyright 2007-2009 Stuart Bennett
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,321 +23,321 @@
  * SOFTWARE.
  */
 
-#include "nouveau_drv.h"
-#include "hw.h"
+#समावेश "nouveau_drv.h"
+#समावेश "hw.h"
 
-#include <subdev/bios/pll.h>
-#include <nvif/timer.h>
+#समावेश <subdev/bios/pll.h>
+#समावेश <nvअगर/समयr.h>
 
-#define CHIPSET_NFORCE 0x01a0
-#define CHIPSET_NFORCE2 0x01f0
+#घोषणा CHIPSET_NFORCE 0x01a0
+#घोषणा CHIPSET_NFORCE2 0x01f0
 
 /*
  * misc hw access wrappers/control functions
  */
 
-void
-NVWriteVgaSeq(struct drm_device *dev, int head, uint8_t index, uint8_t value)
-{
+व्योम
+NVWriteVgaSeq(काष्ठा drm_device *dev, पूर्णांक head, uपूर्णांक8_t index, uपूर्णांक8_t value)
+अणु
 	NVWritePRMVIO(dev, head, NV_PRMVIO_SRX, index);
 	NVWritePRMVIO(dev, head, NV_PRMVIO_SR, value);
-}
+पूर्ण
 
-uint8_t
-NVReadVgaSeq(struct drm_device *dev, int head, uint8_t index)
-{
+uपूर्णांक8_t
+NVReadVgaSeq(काष्ठा drm_device *dev, पूर्णांक head, uपूर्णांक8_t index)
+अणु
 	NVWritePRMVIO(dev, head, NV_PRMVIO_SRX, index);
-	return NVReadPRMVIO(dev, head, NV_PRMVIO_SR);
-}
+	वापस NVReadPRMVIO(dev, head, NV_PRMVIO_SR);
+पूर्ण
 
-void
-NVWriteVgaGr(struct drm_device *dev, int head, uint8_t index, uint8_t value)
-{
+व्योम
+NVWriteVgaGr(काष्ठा drm_device *dev, पूर्णांक head, uपूर्णांक8_t index, uपूर्णांक8_t value)
+अणु
 	NVWritePRMVIO(dev, head, NV_PRMVIO_GRX, index);
 	NVWritePRMVIO(dev, head, NV_PRMVIO_GX, value);
-}
+पूर्ण
 
-uint8_t
-NVReadVgaGr(struct drm_device *dev, int head, uint8_t index)
-{
+uपूर्णांक8_t
+NVReadVgaGr(काष्ठा drm_device *dev, पूर्णांक head, uपूर्णांक8_t index)
+अणु
 	NVWritePRMVIO(dev, head, NV_PRMVIO_GRX, index);
-	return NVReadPRMVIO(dev, head, NV_PRMVIO_GX);
-}
+	वापस NVReadPRMVIO(dev, head, NV_PRMVIO_GX);
+पूर्ण
 
 /* CR44 takes values 0 (head A), 3 (head B) and 4 (heads tied)
  * it affects only the 8 bit vga io regs, which we access using mmio at
- * 0xc{0,2}3c*, 0x60{1,3}3*, and 0x68{1,3}3d*
- * in general, the set value of cr44 does not matter: reg access works as
- * expected and values can be set for the appropriate head by using a 0x2000
+ * 0xcअणु0,2पूर्ण3c*, 0x60अणु1,3पूर्ण3*, and 0x68अणु1,3पूर्ण3d*
+ * in general, the set value of cr44 करोes not matter: reg access works as
+ * expected and values can be set क्रम the appropriate head by using a 0x2000
  * offset as required
  * however:
  * a) pre nv40, the head B range of PRMVIO regs at 0xc23c* was not exposed and
- *    cr44 must be set to 0 or 3 for accessing values on the correct head
+ *    cr44 must be set to 0 or 3 क्रम accessing values on the correct head
  *    through the common 0xc03c* addresses
  * b) in tied mode (4) head B is programmed to the values set on head A, and
  *    access using the head B addresses can have strange results, ergo we leave
- *    tied mode in init once we know to what cr44 should be restored on exit
+ *    tied mode in init once we know to what cr44 should be restored on निकास
  *
  * the owner parameter is slightly abused:
  * 0 and 1 are treated as head values and so the set value is (owner * 3)
  * other values are treated as literal values to set
  */
-void
-NVSetOwner(struct drm_device *dev, int owner)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
+व्योम
+NVSetOwner(काष्ठा drm_device *dev, पूर्णांक owner)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
 
-	if (owner == 1)
+	अगर (owner == 1)
 		owner *= 3;
 
-	if (drm->client.device.info.chipset == 0x11) {
-		/* This might seem stupid, but the blob does it and
-		 * omitting it often locks the system up.
+	अगर (drm->client.device.info.chipset == 0x11) अणु
+		/* This might seem stupid, but the blob करोes it and
+		 * omitting it often locks the प्रणाली up.
 		 */
 		NVReadVgaCrtc(dev, 0, NV_CIO_SR_LOCK_INDEX);
 		NVReadVgaCrtc(dev, 1, NV_CIO_SR_LOCK_INDEX);
-	}
+	पूर्ण
 
 	/* CR44 is always changed on CRTC0 */
 	NVWriteVgaCrtc(dev, 0, NV_CIO_CRE_44, owner);
 
-	if (drm->client.device.info.chipset == 0x11) {	/* set me harder */
+	अगर (drm->client.device.info.chipset == 0x11) अणु	/* set me harder */
 		NVWriteVgaCrtc(dev, 0, NV_CIO_CRE_2E, owner);
 		NVWriteVgaCrtc(dev, 0, NV_CIO_CRE_2E, owner);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-NVBlankScreen(struct drm_device *dev, int head, bool blank)
-{
-	unsigned char seq1;
+व्योम
+NVBlankScreen(काष्ठा drm_device *dev, पूर्णांक head, bool blank)
+अणु
+	अचिन्हित अक्षर seq1;
 
-	if (nv_two_heads(dev))
+	अगर (nv_two_heads(dev))
 		NVSetOwner(dev, head);
 
 	seq1 = NVReadVgaSeq(dev, head, NV_VIO_SR_CLOCK_INDEX);
 
 	NVVgaSeqReset(dev, head, true);
-	if (blank)
+	अगर (blank)
 		NVWriteVgaSeq(dev, head, NV_VIO_SR_CLOCK_INDEX, seq1 | 0x20);
-	else
+	अन्यथा
 		NVWriteVgaSeq(dev, head, NV_VIO_SR_CLOCK_INDEX, seq1 & ~0x20);
 	NVVgaSeqReset(dev, head, false);
-}
+पूर्ण
 
 /*
  * PLL getting
  */
 
-static void
-nouveau_hw_decode_pll(struct drm_device *dev, uint32_t reg1, uint32_t pll1,
-		      uint32_t pll2, struct nvkm_pll_vals *pllvals)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
+अटल व्योम
+nouveau_hw_decode_pll(काष्ठा drm_device *dev, uपूर्णांक32_t reg1, uपूर्णांक32_t pll1,
+		      uपूर्णांक32_t pll2, काष्ठा nvkm_pll_vals *pllvals)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
 
-	/* to force parsing as single stage (i.e. nv40 vplls) pass pll2 as 0 */
+	/* to क्रमce parsing as single stage (i.e. nv40 vplls) pass pll2 as 0 */
 
 	/* log2P is & 0x7 as never more than 7, and nv30/35 only uses 3 bits */
 	pllvals->log2P = (pll1 >> 16) & 0x7;
 	pllvals->N2 = pllvals->M2 = 1;
 
-	if (reg1 <= 0x405c) {
+	अगर (reg1 <= 0x405c) अणु
 		pllvals->NM1 = pll2 & 0xffff;
 		/* single stage NVPLL and VPLLs use 1 << 8, MPLL uses 1 << 12 */
-		if (!(pll1 & 0x1100))
+		अगर (!(pll1 & 0x1100))
 			pllvals->NM2 = pll2 >> 16;
-	} else {
+	पूर्ण अन्यथा अणु
 		pllvals->NM1 = pll1 & 0xffff;
-		if (nv_two_reg_pll(dev) && pll2 & NV31_RAMDAC_ENABLE_VCO2)
+		अगर (nv_two_reg_pll(dev) && pll2 & NV31_RAMDAC_ENABLE_VCO2)
 			pllvals->NM2 = pll2 & 0xffff;
-		else if (drm->client.device.info.chipset == 0x30 || drm->client.device.info.chipset == 0x35) {
+		अन्यथा अगर (drm->client.device.info.chipset == 0x30 || drm->client.device.info.chipset == 0x35) अणु
 			pllvals->M1 &= 0xf; /* only 4 bits */
-			if (pll1 & NV30_RAMDAC_ENABLE_VCO2) {
+			अगर (pll1 & NV30_RAMDAC_ENABLE_VCO2) अणु
 				pllvals->M2 = (pll1 >> 4) & 0x7;
 				pllvals->N2 = ((pll1 >> 21) & 0x18) |
 					      ((pll1 >> 19) & 0x7);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int
-nouveau_hw_get_pllvals(struct drm_device *dev, enum nvbios_pll_type plltype,
-		       struct nvkm_pll_vals *pllvals)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nvif_object *device = &drm->client.device.object;
-	struct nvkm_bios *bios = nvxx_bios(&drm->client.device);
-	uint32_t reg1, pll1, pll2 = 0;
-	struct nvbios_pll pll_lim;
-	int ret;
+पूर्णांक
+nouveau_hw_get_pllvals(काष्ठा drm_device *dev, क्रमागत nvbios_pll_type plltype,
+		       काष्ठा nvkm_pll_vals *pllvals)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nvअगर_object *device = &drm->client.device.object;
+	काष्ठा nvkm_bios *bios = nvxx_bios(&drm->client.device);
+	uपूर्णांक32_t reg1, pll1, pll2 = 0;
+	काष्ठा nvbios_pll pll_lim;
+	पूर्णांक ret;
 
 	ret = nvbios_pll_parse(bios, plltype, &pll_lim);
-	if (ret || !(reg1 = pll_lim.reg))
-		return -ENOENT;
+	अगर (ret || !(reg1 = pll_lim.reg))
+		वापस -ENOENT;
 
-	pll1 = nvif_rd32(device, reg1);
-	if (reg1 <= 0x405c)
-		pll2 = nvif_rd32(device, reg1 + 4);
-	else if (nv_two_reg_pll(dev)) {
-		uint32_t reg2 = reg1 + (reg1 == NV_RAMDAC_VPLL2 ? 0x5c : 0x70);
+	pll1 = nvअगर_rd32(device, reg1);
+	अगर (reg1 <= 0x405c)
+		pll2 = nvअगर_rd32(device, reg1 + 4);
+	अन्यथा अगर (nv_two_reg_pll(dev)) अणु
+		uपूर्णांक32_t reg2 = reg1 + (reg1 == NV_RAMDAC_VPLL2 ? 0x5c : 0x70);
 
-		pll2 = nvif_rd32(device, reg2);
-	}
+		pll2 = nvअगर_rd32(device, reg2);
+	पूर्ण
 
-	if (drm->client.device.info.family == NV_DEVICE_INFO_V0_CELSIUS && reg1 >= NV_PRAMDAC_VPLL_COEFF) {
-		uint32_t ramdac580 = NVReadRAMDAC(dev, 0, NV_PRAMDAC_580);
+	अगर (drm->client.device.info.family == NV_DEVICE_INFO_V0_CELSIUS && reg1 >= NV_PRAMDAC_VPLL_COEFF) अणु
+		uपूर्णांक32_t ramdac580 = NVReadRAMDAC(dev, 0, NV_PRAMDAC_580);
 
-		/* check whether vpll has been forced into single stage mode */
-		if (reg1 == NV_PRAMDAC_VPLL_COEFF) {
-			if (ramdac580 & NV_RAMDAC_580_VPLL1_ACTIVE)
+		/* check whether vpll has been क्रमced पूर्णांकo single stage mode */
+		अगर (reg1 == NV_PRAMDAC_VPLL_COEFF) अणु
+			अगर (ramdac580 & NV_RAMDAC_580_VPLL1_ACTIVE)
 				pll2 = 0;
-		} else
-			if (ramdac580 & NV_RAMDAC_580_VPLL2_ACTIVE)
+		पूर्ण अन्यथा
+			अगर (ramdac580 & NV_RAMDAC_580_VPLL2_ACTIVE)
 				pll2 = 0;
-	}
+	पूर्ण
 
 	nouveau_hw_decode_pll(dev, reg1, pll1, pll2, pllvals);
 	pllvals->refclk = pll_lim.refclk;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nouveau_hw_pllvals_to_clk(struct nvkm_pll_vals *pv)
-{
-	/* Avoid divide by zero if called at an inappropriate time */
-	if (!pv->M1 || !pv->M2)
-		return 0;
+पूर्णांक
+nouveau_hw_pllvals_to_clk(काष्ठा nvkm_pll_vals *pv)
+अणु
+	/* Aव्योम भागide by zero अगर called at an inappropriate समय */
+	अगर (!pv->M1 || !pv->M2)
+		वापस 0;
 
-	return pv->N1 * pv->N2 * pv->refclk / (pv->M1 * pv->M2) >> pv->log2P;
-}
+	वापस pv->N1 * pv->N2 * pv->refclk / (pv->M1 * pv->M2) >> pv->log2P;
+पूर्ण
 
-int
-nouveau_hw_get_clock(struct drm_device *dev, enum nvbios_pll_type plltype)
-{
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
-	struct nvkm_pll_vals pllvals;
-	int ret;
-	int domain;
+पूर्णांक
+nouveau_hw_get_घड़ी(काष्ठा drm_device *dev, क्रमागत nvbios_pll_type plltype)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+	काष्ठा nvkm_pll_vals pllvals;
+	पूर्णांक ret;
+	पूर्णांक करोमुख्य;
 
-	domain = pci_domain_nr(pdev->bus);
+	करोमुख्य = pci_करोमुख्य_nr(pdev->bus);
 
-	if (plltype == PLL_MEMORY &&
-	    (pdev->device & 0x0ff0) == CHIPSET_NFORCE) {
-		uint32_t mpllP;
-		pci_read_config_dword(pci_get_domain_bus_and_slot(domain, 0, 3),
+	अगर (plltype == PLL_MEMORY &&
+	    (pdev->device & 0x0ff0) == CHIPSET_NFORCE) अणु
+		uपूर्णांक32_t mpllP;
+		pci_पढ़ो_config_dword(pci_get_करोमुख्य_bus_and_slot(करोमुख्य, 0, 3),
 				      0x6c, &mpllP);
 		mpllP = (mpllP >> 8) & 0xf;
-		if (!mpllP)
+		अगर (!mpllP)
 			mpllP = 4;
 
-		return 400000 / mpllP;
-	} else
-	if (plltype == PLL_MEMORY &&
-	    (pdev->device & 0xff0) == CHIPSET_NFORCE2) {
-		uint32_t clock;
+		वापस 400000 / mpllP;
+	पूर्ण अन्यथा
+	अगर (plltype == PLL_MEMORY &&
+	    (pdev->device & 0xff0) == CHIPSET_NFORCE2) अणु
+		uपूर्णांक32_t घड़ी;
 
-		pci_read_config_dword(pci_get_domain_bus_and_slot(domain, 0, 5),
-				      0x4c, &clock);
-		return clock / 1000;
-	}
+		pci_पढ़ो_config_dword(pci_get_करोमुख्य_bus_and_slot(करोमुख्य, 0, 5),
+				      0x4c, &घड़ी);
+		वापस घड़ी / 1000;
+	पूर्ण
 
 	ret = nouveau_hw_get_pllvals(dev, plltype, &pllvals);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return nouveau_hw_pllvals_to_clk(&pllvals);
-}
+	वापस nouveau_hw_pllvals_to_clk(&pllvals);
+पूर्ण
 
-static void
-nouveau_hw_fix_bad_vpll(struct drm_device *dev, int head)
-{
-	/* the vpll on an unused head can come up with a random value, way
-	 * beyond the pll limits.  for some reason this causes the chip to
-	 * lock up when reading the dac palette regs, so set a valid pll here
+अटल व्योम
+nouveau_hw_fix_bad_vpll(काष्ठा drm_device *dev, पूर्णांक head)
+अणु
+	/* the vpll on an unused head can come up with a अक्रमom value, way
+	 * beyond the pll limits.  क्रम some reason this causes the chip to
+	 * lock up when पढ़ोing the dac palette regs, so set a valid pll here
 	 * when such a condition detected.  only seen on nv11 to date
 	 */
 
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nvif_device *device = &drm->client.device;
-	struct nvkm_clk *clk = nvxx_clk(device);
-	struct nvkm_bios *bios = nvxx_bios(device);
-	struct nvbios_pll pll_lim;
-	struct nvkm_pll_vals pv;
-	enum nvbios_pll_type pll = head ? PLL_VPLL1 : PLL_VPLL0;
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nvअगर_device *device = &drm->client.device;
+	काष्ठा nvkm_clk *clk = nvxx_clk(device);
+	काष्ठा nvkm_bios *bios = nvxx_bios(device);
+	काष्ठा nvbios_pll pll_lim;
+	काष्ठा nvkm_pll_vals pv;
+	क्रमागत nvbios_pll_type pll = head ? PLL_VPLL1 : PLL_VPLL0;
 
-	if (nvbios_pll_parse(bios, pll, &pll_lim))
-		return;
+	अगर (nvbios_pll_parse(bios, pll, &pll_lim))
+		वापस;
 	nouveau_hw_get_pllvals(dev, pll, &pv);
 
-	if (pv.M1 >= pll_lim.vco1.min_m && pv.M1 <= pll_lim.vco1.max_m &&
+	अगर (pv.M1 >= pll_lim.vco1.min_m && pv.M1 <= pll_lim.vco1.max_m &&
 	    pv.N1 >= pll_lim.vco1.min_n && pv.N1 <= pll_lim.vco1.max_n &&
 	    pv.log2P <= pll_lim.max_p)
-		return;
+		वापस;
 
 	NV_WARN(drm, "VPLL %d outwith limits, attempting to fix\n", head + 1);
 
-	/* set lowest clock within static limits */
+	/* set lowest घड़ी within अटल limits */
 	pv.M1 = pll_lim.vco1.max_m;
 	pv.N1 = pll_lim.vco1.min_n;
 	pv.log2P = pll_lim.max_p_usable;
 	clk->pll_prog(clk, pll_lim.reg, &pv);
-}
+पूर्ण
 
 /*
  * vga font save/restore
  */
 
-static void nouveau_vga_font_io(struct drm_device *dev,
-				void __iomem *iovram,
-				bool save, unsigned plane)
-{
-	unsigned i;
+अटल व्योम nouveau_vga_font_io(काष्ठा drm_device *dev,
+				व्योम __iomem *iovram,
+				bool save, अचिन्हित plane)
+अणु
+	अचिन्हित i;
 
 	NVWriteVgaSeq(dev, 0, NV_VIO_SR_PLANE_MASK_INDEX, 1 << plane);
 	NVWriteVgaGr(dev, 0, NV_VIO_GX_READ_MAP_INDEX, plane);
-	for (i = 0; i < 16384; i++) {
-		if (save) {
+	क्रम (i = 0; i < 16384; i++) अणु
+		अगर (save) अणु
 			nv04_display(dev)->saved_vga_font[plane][i] =
-					ioread32_native(iovram + i * 4);
-		} else {
-			iowrite32_native(nv04_display(dev)->saved_vga_font[plane][i],
+					ioपढ़ो32_native(iovram + i * 4);
+		पूर्ण अन्यथा अणु
+			ioग_लिखो32_native(nv04_display(dev)->saved_vga_font[plane][i],
 							iovram + i * 4);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void
-nouveau_hw_save_vga_fonts(struct drm_device *dev, bool save)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
-	uint8_t misc, gr4, gr5, gr6, seq2, seq4;
+व्योम
+nouveau_hw_save_vga_fonts(काष्ठा drm_device *dev, bool save)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+	uपूर्णांक8_t misc, gr4, gr5, gr6, seq2, seq4;
 	bool graphicsmode;
-	unsigned plane;
-	void __iomem *iovram;
+	अचिन्हित plane;
+	व्योम __iomem *iovram;
 
-	if (nv_two_heads(dev))
+	अगर (nv_two_heads(dev))
 		NVSetOwner(dev, 0);
 
 	NVSetEnablePalette(dev, 0, true);
 	graphicsmode = NVReadVgaAttr(dev, 0, NV_CIO_AR_MODE_INDEX) & 1;
 	NVSetEnablePalette(dev, 0, false);
 
-	if (graphicsmode) /* graphics mode => framebuffer => no need to save */
-		return;
+	अगर (graphicsmode) /* graphics mode => framebuffer => no need to save */
+		वापस;
 
 	NV_INFO(drm, "%sing VGA fonts\n", save ? "Sav" : "Restor");
 
 	/* map first 64KiB of VRAM, holds VGA fonts etc */
 	iovram = ioremap(pci_resource_start(pdev, 1), 65536);
-	if (!iovram) {
+	अगर (!iovram) अणु
 		NV_ERROR(drm, "Failed to map VRAM, "
 					"cannot save/restore VGA fonts.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (nv_two_heads(dev))
+	अगर (nv_two_heads(dev))
 		NVBlankScreen(dev, 1, true);
 	NVBlankScreen(dev, 0, true);
 
@@ -354,7 +355,7 @@ nouveau_hw_save_vga_fonts(struct drm_device *dev, bool save)
 	NVWriteVgaGr(dev, 0, NV_VIO_GX_MISC_INDEX, 0x5);
 
 	/* store font in planes 0..3 */
-	for (plane = 0; plane < 4; plane++)
+	क्रम (plane = 0; plane < 4; plane++)
 		nouveau_vga_font_io(dev, iovram, save, plane);
 
 	/* restore control regs */
@@ -365,54 +366,54 @@ nouveau_hw_save_vga_fonts(struct drm_device *dev, bool save)
 	NVWriteVgaSeq(dev, 0, NV_VIO_SR_PLANE_MASK_INDEX, seq2);
 	NVWriteVgaSeq(dev, 0, NV_VIO_SR_MEM_MODE_INDEX, seq4);
 
-	if (nv_two_heads(dev))
+	अगर (nv_two_heads(dev))
 		NVBlankScreen(dev, 1, false);
 	NVBlankScreen(dev, 0, false);
 
 	iounmap(iovram);
-}
+पूर्ण
 
 /*
  * mode state save/load
  */
 
-static void
-rd_cio_state(struct drm_device *dev, int head,
-	     struct nv04_crtc_reg *crtcstate, int index)
-{
+अटल व्योम
+rd_cio_state(काष्ठा drm_device *dev, पूर्णांक head,
+	     काष्ठा nv04_crtc_reg *crtcstate, पूर्णांक index)
+अणु
 	crtcstate->CRTC[index] = NVReadVgaCrtc(dev, head, index);
-}
+पूर्ण
 
-static void
-wr_cio_state(struct drm_device *dev, int head,
-	     struct nv04_crtc_reg *crtcstate, int index)
-{
+अटल व्योम
+wr_cio_state(काष्ठा drm_device *dev, पूर्णांक head,
+	     काष्ठा nv04_crtc_reg *crtcstate, पूर्णांक index)
+अणु
 	NVWriteVgaCrtc(dev, head, index, crtcstate->CRTC[index]);
-}
+पूर्ण
 
-static void
-nv_save_state_ramdac(struct drm_device *dev, int head,
-		     struct nv04_mode_state *state)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nv04_crtc_reg *regp = &state->crtc_reg[head];
-	int i;
+अटल व्योम
+nv_save_state_ramdac(काष्ठा drm_device *dev, पूर्णांक head,
+		     काष्ठा nv04_mode_state *state)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nv04_crtc_reg *regp = &state->crtc_reg[head];
+	पूर्णांक i;
 
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS)
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS)
 		regp->nv10_cursync = NVReadRAMDAC(dev, head, NV_RAMDAC_NV10_CURSYNC);
 
 	nouveau_hw_get_pllvals(dev, head ? PLL_VPLL1 : PLL_VPLL0, &regp->pllvals);
 	state->pllsel = NVReadRAMDAC(dev, 0, NV_PRAMDAC_PLL_COEFF_SELECT);
-	if (nv_two_heads(dev))
+	अगर (nv_two_heads(dev))
 		state->sel_clk = NVReadRAMDAC(dev, 0, NV_PRAMDAC_SEL_CLK);
-	if (drm->client.device.info.chipset == 0x11)
+	अगर (drm->client.device.info.chipset == 0x11)
 		regp->dither = NVReadRAMDAC(dev, head, NV_RAMDAC_DITHER_NV11);
 
 	regp->ramdac_gen_ctrl = NVReadRAMDAC(dev, head, NV_PRAMDAC_GENERAL_CONTROL);
 
-	if (nv_gf4_disp_arch(dev))
+	अगर (nv_gf4_disp_arch(dev))
 		regp->ramdac_630 = NVReadRAMDAC(dev, head, NV_PRAMDAC_630);
-	if (drm->client.device.info.chipset >= 0x30)
+	अगर (drm->client.device.info.chipset >= 0x30)
 		regp->ramdac_634 = NVReadRAMDAC(dev, head, NV_PRAMDAC_634);
 
 	regp->tv_setup = NVReadRAMDAC(dev, head, NV_PRAMDAC_TV_SETUP);
@@ -424,72 +425,72 @@ nv_save_state_ramdac(struct drm_device *dev, int head,
 	regp->tv_hsync_delay = NVReadRAMDAC(dev, head, NV_PRAMDAC_TV_HSYNC_DELAY);
 	regp->tv_hsync_delay2 = NVReadRAMDAC(dev, head, NV_PRAMDAC_TV_HSYNC_DELAY2);
 
-	for (i = 0; i < 7; i++) {
-		uint32_t ramdac_reg = NV_PRAMDAC_FP_VDISPLAY_END + (i * 4);
+	क्रम (i = 0; i < 7; i++) अणु
+		uपूर्णांक32_t ramdac_reg = NV_PRAMDAC_FP_VDISPLAY_END + (i * 4);
 		regp->fp_vert_regs[i] = NVReadRAMDAC(dev, head, ramdac_reg);
 		regp->fp_horiz_regs[i] = NVReadRAMDAC(dev, head, ramdac_reg + 0x20);
-	}
+	पूर्ण
 
-	if (nv_gf4_disp_arch(dev)) {
+	अगर (nv_gf4_disp_arch(dev)) अणु
 		regp->dither = NVReadRAMDAC(dev, head, NV_RAMDAC_FP_DITHER);
-		for (i = 0; i < 3; i++) {
+		क्रम (i = 0; i < 3; i++) अणु
 			regp->dither_regs[i] = NVReadRAMDAC(dev, head, NV_PRAMDAC_850 + i * 4);
 			regp->dither_regs[i + 3] = NVReadRAMDAC(dev, head, NV_PRAMDAC_85C + i * 4);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	regp->fp_control = NVReadRAMDAC(dev, head, NV_PRAMDAC_FP_TG_CONTROL);
 	regp->fp_debug_0 = NVReadRAMDAC(dev, head, NV_PRAMDAC_FP_DEBUG_0);
-	if (!nv_gf4_disp_arch(dev) && head == 0) {
-		/* early chips don't allow access to PRAMDAC_TMDS_* without
+	अगर (!nv_gf4_disp_arch(dev) && head == 0) अणु
+		/* early chips करोn't allow access to PRAMDAC_TMDS_* without
 		 * the head A FPCLK on (nv11 even locks up) */
 		NVWriteRAMDAC(dev, 0, NV_PRAMDAC_FP_DEBUG_0, regp->fp_debug_0 &
 			      ~NV_PRAMDAC_FP_DEBUG_0_PWRDOWN_FPCLK);
-	}
+	पूर्ण
 	regp->fp_debug_1 = NVReadRAMDAC(dev, head, NV_PRAMDAC_FP_DEBUG_1);
 	regp->fp_debug_2 = NVReadRAMDAC(dev, head, NV_PRAMDAC_FP_DEBUG_2);
 
 	regp->fp_margin_color = NVReadRAMDAC(dev, head, NV_PRAMDAC_FP_MARGIN_COLOR);
 
-	if (nv_gf4_disp_arch(dev))
+	अगर (nv_gf4_disp_arch(dev))
 		regp->ramdac_8c0 = NVReadRAMDAC(dev, head, NV_PRAMDAC_8C0);
 
-	if (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE) {
+	अगर (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE) अणु
 		regp->ramdac_a20 = NVReadRAMDAC(dev, head, NV_PRAMDAC_A20);
 		regp->ramdac_a24 = NVReadRAMDAC(dev, head, NV_PRAMDAC_A24);
 		regp->ramdac_a34 = NVReadRAMDAC(dev, head, NV_PRAMDAC_A34);
 
-		for (i = 0; i < 38; i++)
+		क्रम (i = 0; i < 38; i++)
 			regp->ctv_regs[i] = NVReadRAMDAC(dev, head,
 							 NV_PRAMDAC_CTV + 4*i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-nv_load_state_ramdac(struct drm_device *dev, int head,
-		     struct nv04_mode_state *state)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nvkm_clk *clk = nvxx_clk(&drm->client.device);
-	struct nv04_crtc_reg *regp = &state->crtc_reg[head];
-	uint32_t pllreg = head ? NV_RAMDAC_VPLL2 : NV_PRAMDAC_VPLL_COEFF;
-	int i;
+अटल व्योम
+nv_load_state_ramdac(काष्ठा drm_device *dev, पूर्णांक head,
+		     काष्ठा nv04_mode_state *state)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nvkm_clk *clk = nvxx_clk(&drm->client.device);
+	काष्ठा nv04_crtc_reg *regp = &state->crtc_reg[head];
+	uपूर्णांक32_t pllreg = head ? NV_RAMDAC_VPLL2 : NV_PRAMDAC_VPLL_COEFF;
+	पूर्णांक i;
 
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS)
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS)
 		NVWriteRAMDAC(dev, head, NV_RAMDAC_NV10_CURSYNC, regp->nv10_cursync);
 
 	clk->pll_prog(clk, pllreg, &regp->pllvals);
 	NVWriteRAMDAC(dev, 0, NV_PRAMDAC_PLL_COEFF_SELECT, state->pllsel);
-	if (nv_two_heads(dev))
+	अगर (nv_two_heads(dev))
 		NVWriteRAMDAC(dev, 0, NV_PRAMDAC_SEL_CLK, state->sel_clk);
-	if (drm->client.device.info.chipset == 0x11)
+	अगर (drm->client.device.info.chipset == 0x11)
 		NVWriteRAMDAC(dev, head, NV_RAMDAC_DITHER_NV11, regp->dither);
 
 	NVWriteRAMDAC(dev, head, NV_PRAMDAC_GENERAL_CONTROL, regp->ramdac_gen_ctrl);
 
-	if (nv_gf4_disp_arch(dev))
+	अगर (nv_gf4_disp_arch(dev))
 		NVWriteRAMDAC(dev, head, NV_PRAMDAC_630, regp->ramdac_630);
-	if (drm->client.device.info.chipset >= 0x30)
+	अगर (drm->client.device.info.chipset >= 0x30)
 		NVWriteRAMDAC(dev, head, NV_PRAMDAC_634, regp->ramdac_634);
 
 	NVWriteRAMDAC(dev, head, NV_PRAMDAC_TV_SETUP, regp->tv_setup);
@@ -501,20 +502,20 @@ nv_load_state_ramdac(struct drm_device *dev, int head,
 	NVWriteRAMDAC(dev, head, NV_PRAMDAC_TV_HSYNC_DELAY, regp->tv_hsync_delay);
 	NVWriteRAMDAC(dev, head, NV_PRAMDAC_TV_HSYNC_DELAY2, regp->tv_hsync_delay2);
 
-	for (i = 0; i < 7; i++) {
-		uint32_t ramdac_reg = NV_PRAMDAC_FP_VDISPLAY_END + (i * 4);
+	क्रम (i = 0; i < 7; i++) अणु
+		uपूर्णांक32_t ramdac_reg = NV_PRAMDAC_FP_VDISPLAY_END + (i * 4);
 
 		NVWriteRAMDAC(dev, head, ramdac_reg, regp->fp_vert_regs[i]);
 		NVWriteRAMDAC(dev, head, ramdac_reg + 0x20, regp->fp_horiz_regs[i]);
-	}
+	पूर्ण
 
-	if (nv_gf4_disp_arch(dev)) {
+	अगर (nv_gf4_disp_arch(dev)) अणु
 		NVWriteRAMDAC(dev, head, NV_RAMDAC_FP_DITHER, regp->dither);
-		for (i = 0; i < 3; i++) {
+		क्रम (i = 0; i < 3; i++) अणु
 			NVWriteRAMDAC(dev, head, NV_PRAMDAC_850 + i * 4, regp->dither_regs[i]);
 			NVWriteRAMDAC(dev, head, NV_PRAMDAC_85C + i * 4, regp->dither_regs[i + 3]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	NVWriteRAMDAC(dev, head, NV_PRAMDAC_FP_TG_CONTROL, regp->fp_control);
 	NVWriteRAMDAC(dev, head, NV_PRAMDAC_FP_DEBUG_0, regp->fp_debug_0);
@@ -523,77 +524,77 @@ nv_load_state_ramdac(struct drm_device *dev, int head,
 
 	NVWriteRAMDAC(dev, head, NV_PRAMDAC_FP_MARGIN_COLOR, regp->fp_margin_color);
 
-	if (nv_gf4_disp_arch(dev))
+	अगर (nv_gf4_disp_arch(dev))
 		NVWriteRAMDAC(dev, head, NV_PRAMDAC_8C0, regp->ramdac_8c0);
 
-	if (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE) {
+	अगर (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE) अणु
 		NVWriteRAMDAC(dev, head, NV_PRAMDAC_A20, regp->ramdac_a20);
 		NVWriteRAMDAC(dev, head, NV_PRAMDAC_A24, regp->ramdac_a24);
 		NVWriteRAMDAC(dev, head, NV_PRAMDAC_A34, regp->ramdac_a34);
 
-		for (i = 0; i < 38; i++)
+		क्रम (i = 0; i < 38; i++)
 			NVWriteRAMDAC(dev, head,
 				      NV_PRAMDAC_CTV + 4*i, regp->ctv_regs[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-nv_save_state_vga(struct drm_device *dev, int head,
-		  struct nv04_mode_state *state)
-{
-	struct nv04_crtc_reg *regp = &state->crtc_reg[head];
-	int i;
+अटल व्योम
+nv_save_state_vga(काष्ठा drm_device *dev, पूर्णांक head,
+		  काष्ठा nv04_mode_state *state)
+अणु
+	काष्ठा nv04_crtc_reg *regp = &state->crtc_reg[head];
+	पूर्णांक i;
 
 	regp->MiscOutReg = NVReadPRMVIO(dev, head, NV_PRMVIO_MISC__READ);
 
-	for (i = 0; i < 25; i++)
+	क्रम (i = 0; i < 25; i++)
 		rd_cio_state(dev, head, regp, i);
 
 	NVSetEnablePalette(dev, head, true);
-	for (i = 0; i < 21; i++)
+	क्रम (i = 0; i < 21; i++)
 		regp->Attribute[i] = NVReadVgaAttr(dev, head, i);
 	NVSetEnablePalette(dev, head, false);
 
-	for (i = 0; i < 9; i++)
+	क्रम (i = 0; i < 9; i++)
 		regp->Graphics[i] = NVReadVgaGr(dev, head, i);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		regp->Sequencer[i] = NVReadVgaSeq(dev, head, i);
-}
+पूर्ण
 
-static void
-nv_load_state_vga(struct drm_device *dev, int head,
-		  struct nv04_mode_state *state)
-{
-	struct nv04_crtc_reg *regp = &state->crtc_reg[head];
-	int i;
+अटल व्योम
+nv_load_state_vga(काष्ठा drm_device *dev, पूर्णांक head,
+		  काष्ठा nv04_mode_state *state)
+अणु
+	काष्ठा nv04_crtc_reg *regp = &state->crtc_reg[head];
+	पूर्णांक i;
 
 	NVWritePRMVIO(dev, head, NV_PRMVIO_MISC__WRITE, regp->MiscOutReg);
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		NVWriteVgaSeq(dev, head, i, regp->Sequencer[i]);
 
 	nv_lock_vga_crtc_base(dev, head, false);
-	for (i = 0; i < 25; i++)
+	क्रम (i = 0; i < 25; i++)
 		wr_cio_state(dev, head, regp, i);
 	nv_lock_vga_crtc_base(dev, head, true);
 
-	for (i = 0; i < 9; i++)
+	क्रम (i = 0; i < 9; i++)
 		NVWriteVgaGr(dev, head, i, regp->Graphics[i]);
 
 	NVSetEnablePalette(dev, head, true);
-	for (i = 0; i < 21; i++)
+	क्रम (i = 0; i < 21; i++)
 		NVWriteVgaAttr(dev, head, i, regp->Attribute[i]);
 	NVSetEnablePalette(dev, head, false);
-}
+पूर्ण
 
-static void
-nv_save_state_ext(struct drm_device *dev, int head,
-		  struct nv04_mode_state *state)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nv04_crtc_reg *regp = &state->crtc_reg[head];
-	int i;
+अटल व्योम
+nv_save_state_ext(काष्ठा drm_device *dev, पूर्णांक head,
+		  काष्ठा nv04_mode_state *state)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nv04_crtc_reg *regp = &state->crtc_reg[head];
+	पूर्णांक i;
 
 	rd_cio_state(dev, head, regp, NV_CIO_CRE_LCD__INDEX);
 	rd_cio_state(dev, head, regp, NV_CIO_CRE_RPC0_INDEX);
@@ -607,10 +608,10 @@ nv_save_state_ext(struct drm_device *dev, int head,
 	rd_cio_state(dev, head, regp, NV_CIO_CRE_FFLWM__INDEX);
 	rd_cio_state(dev, head, regp, NV_CIO_CRE_21);
 
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_KELVIN)
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_KELVIN)
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_47);
 
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_RANKINE)
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_RANKINE)
 		rd_cio_state(dev, head, regp, 0x9f);
 
 	rd_cio_state(dev, head, regp, NV_CIO_CRE_49);
@@ -619,94 +620,94 @@ nv_save_state_ext(struct drm_device *dev, int head,
 	rd_cio_state(dev, head, regp, NV_CIO_CRE_HCUR_ADDR2_INDEX);
 	rd_cio_state(dev, head, regp, NV_CIO_CRE_ILACE__INDEX);
 
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS) {
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS) अणु
 		regp->crtc_830 = NVReadCRTC(dev, head, NV_PCRTC_830);
 		regp->crtc_834 = NVReadCRTC(dev, head, NV_PCRTC_834);
 
-		if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_RANKINE)
+		अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_RANKINE)
 			regp->gpio_ext = NVReadCRTC(dev, head, NV_PCRTC_GPIO_EXT);
 
-		if (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE)
+		अगर (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE)
 			regp->crtc_850 = NVReadCRTC(dev, head, NV_PCRTC_850);
 
-		if (nv_two_heads(dev))
+		अगर (nv_two_heads(dev))
 			regp->crtc_eng_ctrl = NVReadCRTC(dev, head, NV_PCRTC_ENGINE_CTRL);
 		regp->cursor_cfg = NVReadCRTC(dev, head, NV_PCRTC_CURSOR_CONFIG);
-	}
+	पूर्ण
 
 	regp->crtc_cfg = NVReadCRTC(dev, head, NV_PCRTC_CONFIG);
 
 	rd_cio_state(dev, head, regp, NV_CIO_CRE_SCRATCH3__INDEX);
 	rd_cio_state(dev, head, regp, NV_CIO_CRE_SCRATCH4__INDEX);
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS) {
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS) अणु
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_EBR_INDEX);
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_CSB);
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_4B);
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_TVOUT_LATENCY);
-	}
-	/* NV11 and NV20 don't have this, they stop at 0x52. */
-	if (nv_gf4_disp_arch(dev)) {
+	पूर्ण
+	/* NV11 and NV20 करोn't have this, they stop at 0x52. */
+	अगर (nv_gf4_disp_arch(dev)) अणु
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_42);
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_53);
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_54);
 
-		for (i = 0; i < 0x10; i++)
+		क्रम (i = 0; i < 0x10; i++)
 			regp->CR58[i] = NVReadVgaCrtc5758(dev, head, i);
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_59);
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_5B);
 
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_85);
 		rd_cio_state(dev, head, regp, NV_CIO_CRE_86);
-	}
+	पूर्ण
 
 	regp->fb_start = NVReadCRTC(dev, head, NV_PCRTC_START);
-}
+पूर्ण
 
-static void
-nv_load_state_ext(struct drm_device *dev, int head,
-		  struct nv04_mode_state *state)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nvif_object *device = &drm->client.device.object;
-	struct nv04_crtc_reg *regp = &state->crtc_reg[head];
-	uint32_t reg900;
-	int i;
+अटल व्योम
+nv_load_state_ext(काष्ठा drm_device *dev, पूर्णांक head,
+		  काष्ठा nv04_mode_state *state)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nvअगर_object *device = &drm->client.device.object;
+	काष्ठा nv04_crtc_reg *regp = &state->crtc_reg[head];
+	uपूर्णांक32_t reg900;
+	पूर्णांक i;
 
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS) {
-		if (nv_two_heads(dev))
-			/* setting ENGINE_CTRL (EC) *must* come before
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS) अणु
+		अगर (nv_two_heads(dev))
+			/* setting ENGINE_CTRL (EC) *must* come beक्रमe
 			 * CIO_CRE_LCD, as writing CRE_LCD sets bits 16 & 17 in
 			 * EC that should not be overwritten by writing stale EC
 			 */
 			NVWriteCRTC(dev, head, NV_PCRTC_ENGINE_CTRL, regp->crtc_eng_ctrl);
 
-		nvif_wr32(device, NV_PVIDEO_STOP, 1);
-		nvif_wr32(device, NV_PVIDEO_INTR_EN, 0);
-		nvif_wr32(device, NV_PVIDEO_OFFSET_BUFF(0), 0);
-		nvif_wr32(device, NV_PVIDEO_OFFSET_BUFF(1), 0);
-		nvif_wr32(device, NV_PVIDEO_LIMIT(0), drm->client.device.info.ram_size - 1);
-		nvif_wr32(device, NV_PVIDEO_LIMIT(1), drm->client.device.info.ram_size - 1);
-		nvif_wr32(device, NV_PVIDEO_UVPLANE_LIMIT(0), drm->client.device.info.ram_size - 1);
-		nvif_wr32(device, NV_PVIDEO_UVPLANE_LIMIT(1), drm->client.device.info.ram_size - 1);
-		nvif_wr32(device, NV_PBUS_POWERCTRL_2, 0);
+		nvअगर_wr32(device, NV_PVIDEO_STOP, 1);
+		nvअगर_wr32(device, NV_PVIDEO_INTR_EN, 0);
+		nvअगर_wr32(device, NV_PVIDEO_OFFSET_BUFF(0), 0);
+		nvअगर_wr32(device, NV_PVIDEO_OFFSET_BUFF(1), 0);
+		nvअगर_wr32(device, NV_PVIDEO_LIMIT(0), drm->client.device.info.ram_size - 1);
+		nvअगर_wr32(device, NV_PVIDEO_LIMIT(1), drm->client.device.info.ram_size - 1);
+		nvअगर_wr32(device, NV_PVIDEO_UVPLANE_LIMIT(0), drm->client.device.info.ram_size - 1);
+		nvअगर_wr32(device, NV_PVIDEO_UVPLANE_LIMIT(1), drm->client.device.info.ram_size - 1);
+		nvअगर_wr32(device, NV_PBUS_POWERCTRL_2, 0);
 
 		NVWriteCRTC(dev, head, NV_PCRTC_CURSOR_CONFIG, regp->cursor_cfg);
 		NVWriteCRTC(dev, head, NV_PCRTC_830, regp->crtc_830);
 		NVWriteCRTC(dev, head, NV_PCRTC_834, regp->crtc_834);
 
-		if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_RANKINE)
+		अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_RANKINE)
 			NVWriteCRTC(dev, head, NV_PCRTC_GPIO_EXT, regp->gpio_ext);
 
-		if (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE) {
+		अगर (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE) अणु
 			NVWriteCRTC(dev, head, NV_PCRTC_850, regp->crtc_850);
 
 			reg900 = NVReadRAMDAC(dev, head, NV_PRAMDAC_900);
-			if (regp->crtc_cfg == NV10_PCRTC_CONFIG_START_ADDRESS_HSYNC)
+			अगर (regp->crtc_cfg == NV10_PCRTC_CONFIG_START_ADDRESS_HSYNC)
 				NVWriteRAMDAC(dev, head, NV_PRAMDAC_900, reg900 | 0x10000);
-			else
+			अन्यथा
 				NVWriteRAMDAC(dev, head, NV_PRAMDAC_900, reg900 & ~0x10000);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	NVWriteCRTC(dev, head, NV_PCRTC_CONFIG, regp->crtc_cfg);
 
@@ -720,118 +721,118 @@ nv_load_state_ext(struct drm_device *dev, int head,
 	wr_cio_state(dev, head, regp, NV_CIO_CRE_FF_INDEX);
 	wr_cio_state(dev, head, regp, NV_CIO_CRE_FFLWM__INDEX);
 
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_KELVIN)
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_KELVIN)
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_47);
 
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_RANKINE)
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_RANKINE)
 		wr_cio_state(dev, head, regp, 0x9f);
 
 	wr_cio_state(dev, head, regp, NV_CIO_CRE_49);
 	wr_cio_state(dev, head, regp, NV_CIO_CRE_HCUR_ADDR0_INDEX);
 	wr_cio_state(dev, head, regp, NV_CIO_CRE_HCUR_ADDR1_INDEX);
 	wr_cio_state(dev, head, regp, NV_CIO_CRE_HCUR_ADDR2_INDEX);
-	if (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE)
+	अगर (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE)
 		nv_fix_nv40_hw_cursor(dev, head);
 	wr_cio_state(dev, head, regp, NV_CIO_CRE_ILACE__INDEX);
 
 	wr_cio_state(dev, head, regp, NV_CIO_CRE_SCRATCH3__INDEX);
 	wr_cio_state(dev, head, regp, NV_CIO_CRE_SCRATCH4__INDEX);
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS) {
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS) अणु
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_EBR_INDEX);
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_CSB);
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_4B);
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_TVOUT_LATENCY);
-	}
+	पूर्ण
 	/* NV11 and NV20 stop at 0x52. */
-	if (nv_gf4_disp_arch(dev)) {
-		if (drm->client.device.info.family < NV_DEVICE_INFO_V0_KELVIN) {
-			/* Not waiting for vertical retrace before modifying
+	अगर (nv_gf4_disp_arch(dev)) अणु
+		अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_KELVIN) अणु
+			/* Not रुकोing क्रम vertical retrace beक्रमe modअगरying
 			   CRE_53/CRE_54 causes lockups. */
-			nvif_msec(&drm->client.device, 650,
-				if ( (nvif_rd32(device, NV_PRMCIO_INP0__COLOR) & 8))
-					break;
+			nvअगर_msec(&drm->client.device, 650,
+				अगर ( (nvअगर_rd32(device, NV_PRMCIO_INP0__COLOR) & 8))
+					अवरोध;
 			);
-			nvif_msec(&drm->client.device, 650,
-				if (!(nvif_rd32(device, NV_PRMCIO_INP0__COLOR) & 8))
-					break;
+			nvअगर_msec(&drm->client.device, 650,
+				अगर (!(nvअगर_rd32(device, NV_PRMCIO_INP0__COLOR) & 8))
+					अवरोध;
 			);
-		}
+		पूर्ण
 
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_42);
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_53);
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_54);
 
-		for (i = 0; i < 0x10; i++)
+		क्रम (i = 0; i < 0x10; i++)
 			NVWriteVgaCrtc5758(dev, head, i, regp->CR58[i]);
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_59);
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_5B);
 
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_85);
 		wr_cio_state(dev, head, regp, NV_CIO_CRE_86);
-	}
+	पूर्ण
 
 	NVWriteCRTC(dev, head, NV_PCRTC_START, regp->fb_start);
-}
+पूर्ण
 
-static void
-nv_save_state_palette(struct drm_device *dev, int head,
-		      struct nv04_mode_state *state)
-{
-	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
-	int head_offset = head * NV_PRMDIO_SIZE, i;
+अटल व्योम
+nv_save_state_palette(काष्ठा drm_device *dev, पूर्णांक head,
+		      काष्ठा nv04_mode_state *state)
+अणु
+	काष्ठा nvअगर_object *device = &nouveau_drm(dev)->client.device.object;
+	पूर्णांक head_offset = head * NV_PRMDIO_SIZE, i;
 
-	nvif_wr08(device, NV_PRMDIO_PIXEL_MASK + head_offset,
+	nvअगर_wr08(device, NV_PRMDIO_PIXEL_MASK + head_offset,
 				NV_PRMDIO_PIXEL_MASK_MASK);
-	nvif_wr08(device, NV_PRMDIO_READ_MODE_ADDRESS + head_offset, 0x0);
+	nvअगर_wr08(device, NV_PRMDIO_READ_MODE_ADDRESS + head_offset, 0x0);
 
-	for (i = 0; i < 768; i++) {
-		state->crtc_reg[head].DAC[i] = nvif_rd08(device,
+	क्रम (i = 0; i < 768; i++) अणु
+		state->crtc_reg[head].DAC[i] = nvअगर_rd08(device,
 				NV_PRMDIO_PALETTE_DATA + head_offset);
-	}
+	पूर्ण
 
 	NVSetEnablePalette(dev, head, false);
-}
+पूर्ण
 
-void
-nouveau_hw_load_state_palette(struct drm_device *dev, int head,
-			      struct nv04_mode_state *state)
-{
-	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
-	int head_offset = head * NV_PRMDIO_SIZE, i;
+व्योम
+nouveau_hw_load_state_palette(काष्ठा drm_device *dev, पूर्णांक head,
+			      काष्ठा nv04_mode_state *state)
+अणु
+	काष्ठा nvअगर_object *device = &nouveau_drm(dev)->client.device.object;
+	पूर्णांक head_offset = head * NV_PRMDIO_SIZE, i;
 
-	nvif_wr08(device, NV_PRMDIO_PIXEL_MASK + head_offset,
+	nvअगर_wr08(device, NV_PRMDIO_PIXEL_MASK + head_offset,
 				NV_PRMDIO_PIXEL_MASK_MASK);
-	nvif_wr08(device, NV_PRMDIO_WRITE_MODE_ADDRESS + head_offset, 0x0);
+	nvअगर_wr08(device, NV_PRMDIO_WRITE_MODE_ADDRESS + head_offset, 0x0);
 
-	for (i = 0; i < 768; i++) {
-		nvif_wr08(device, NV_PRMDIO_PALETTE_DATA + head_offset,
+	क्रम (i = 0; i < 768; i++) अणु
+		nvअगर_wr08(device, NV_PRMDIO_PALETTE_DATA + head_offset,
 				state->crtc_reg[head].DAC[i]);
-	}
+	पूर्ण
 
 	NVSetEnablePalette(dev, head, false);
-}
+पूर्ण
 
-void nouveau_hw_save_state(struct drm_device *dev, int head,
-			   struct nv04_mode_state *state)
-{
-	struct nouveau_drm *drm = nouveau_drm(dev);
+व्योम nouveau_hw_save_state(काष्ठा drm_device *dev, पूर्णांक head,
+			   काष्ठा nv04_mode_state *state)
+अणु
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
 
-	if (drm->client.device.info.chipset == 0x11)
+	अगर (drm->client.device.info.chipset == 0x11)
 		/* NB: no attempt is made to restore the bad pll later on */
 		nouveau_hw_fix_bad_vpll(dev, head);
 	nv_save_state_ramdac(dev, head, state);
 	nv_save_state_vga(dev, head, state);
 	nv_save_state_palette(dev, head, state);
 	nv_save_state_ext(dev, head, state);
-}
+पूर्ण
 
-void nouveau_hw_load_state(struct drm_device *dev, int head,
-			   struct nv04_mode_state *state)
-{
+व्योम nouveau_hw_load_state(काष्ठा drm_device *dev, पूर्णांक head,
+			   काष्ठा nv04_mode_state *state)
+अणु
 	NVVgaProtect(dev, head, true);
 	nv_load_state_ramdac(dev, head, state);
 	nv_load_state_ext(dev, head, state);
 	nouveau_hw_load_state_palette(dev, head, state);
 	nv_load_state_vga(dev, head, state);
 	NVVgaProtect(dev, head, false);
-}
+पूर्ण

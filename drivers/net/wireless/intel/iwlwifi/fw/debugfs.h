@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright (C) 2012-2014 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
-#include "runtime.h"
+#समावेश "runtime.h"
 
-#ifdef CONFIG_IWLWIFI_DEBUGFS
-void iwl_fwrt_dbgfs_register(struct iwl_fw_runtime *fwrt,
-			    struct dentry *dbgfs_dir);
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
+व्योम iwl_fwrt_dbgfs_रेजिस्टर(काष्ठा iwl_fw_runसमय *fwrt,
+			    काष्ठा dentry *dbgfs_dir);
 
-#else
-static inline void iwl_fwrt_dbgfs_register(struct iwl_fw_runtime *fwrt,
-					   struct dentry *dbgfs_dir) { }
+#अन्यथा
+अटल अंतरभूत व्योम iwl_fwrt_dbgfs_रेजिस्टर(काष्ठा iwl_fw_runसमय *fwrt,
+					   काष्ठा dentry *dbgfs_dir) अणु पूर्ण
 
-#endif /* CONFIG_IWLWIFI_DEBUGFS */
+#पूर्ण_अगर /* CONFIG_IWLWIFI_DEBUGFS */

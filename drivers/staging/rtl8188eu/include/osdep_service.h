@@ -1,81 +1,82 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __OSDEP_SERVICE_H_
-#define __OSDEP_SERVICE_H_
+#अगर_अघोषित __OSDEP_SERVICE_H_
+#घोषणा __OSDEP_SERVICE_H_
 
-#include <basic_types.h>
+#समावेश <basic_types.h>
 
-#define _FAIL		0
-#define _SUCCESS	1
-#define RTW_RX_HANDLED	2
+#घोषणा _FAIL		0
+#घोषणा _SUCCESS	1
+#घोषणा RTW_RX_HANDLED	2
 
-#include <linux/spinlock.h>
-#include <linux/compiler.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/kref.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/circ_buf.h>
-#include <linux/uaccess.h>
-#include <asm/byteorder.h>
-#include <linux/atomic.h>
-#include <linux/io.h>
-#include <linux/mutex.h>
-#include <linux/sem.h>
-#include <linux/sched/signal.h>
-#include <linux/etherdevice.h>
-#include <linux/wireless.h>
-#include <net/iw_handler.h>
-#include <linux/if_arp.h>
-#include <linux/rtnetlink.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>	/*  for struct tasklet_struct */
-#include <linux/ip.h>
-#include <linux/kthread.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sem.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/wireless.h>
+#समावेश <net/iw_handler.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>	/*  क्रम काष्ठा tasklet_काष्ठा */
+#समावेश <linux/ip.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include <linux/usb.h>
-#include <linux/usb/ch9.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/ch9.h>
 
-struct	__queue	{
-	struct	list_head	queue;
+काष्ठा	__queue	अणु
+	काष्ठा	list_head	queue;
 	spinlock_t lock;
-};
+पूर्ण;
 
-static inline struct list_head *get_list_head(struct __queue *queue)
-{
-	return &queue->queue;
-}
+अटल अंतरभूत काष्ठा list_head *get_list_head(काष्ठा __queue *queue)
+अणु
+	वापस &queue->queue;
+पूर्ण
 
-static inline int rtw_netif_queue_stopped(struct net_device *pnetdev)
-{
-	return  netif_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 0)) &&
-		netif_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 1)) &&
-		netif_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 2)) &&
-		netif_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 3));
-}
+अटल अंतरभूत पूर्णांक rtw_netअगर_queue_stopped(काष्ठा net_device *pnetdev)
+अणु
+	वापस  netअगर_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 0)) &&
+		netअगर_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 1)) &&
+		netअगर_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 2)) &&
+		netअगर_tx_queue_stopped(netdev_get_tx_queue(pnetdev, 3));
+पूर्ण
 
-u8 *_rtw_malloc(u32 sz);
-#define rtw_malloc(sz)			_rtw_malloc((sz))
+u8 *_rtw_दो_स्मृति(u32 sz);
+#घोषणा rtw_दो_स्मृति(sz)			_rtw_दो_स्मृति((sz))
 
-void _rtw_init_queue(struct __queue *pqueue);
+व्योम _rtw_init_queue(काष्ठा __queue *pqueue);
 
-#define FUNC_NDEV_FMT "%s(%s)"
-#define FUNC_NDEV_ARG(ndev) __func__, ndev->name
-#define FUNC_ADPT_FMT "%s(%s)"
-#define FUNC_ADPT_ARG(adapter) __func__, adapter->pnetdev->name
+#घोषणा FUNC_NDEV_FMT "%s(%s)"
+#घोषणा FUNC_NDEV_ARG(ndev) __func__, ndev->name
+#घोषणा FUNC_ADPT_FMT "%s(%s)"
+#घोषणा FUNC_ADPT_ARG(adapter) __func__, adapter->pnetdev->name
 
-/* Macros for handling unaligned memory accesses */
+/* Macros क्रम handling unaligned memory accesses */
 
-#define RTW_GET_BE24(a) ((((u32)(a)[0]) << 16) | (((u32)(a)[1]) << 8) | \
+#घोषणा RTW_GET_BE24(a) ((((u32)(a)[0]) << 16) | (((u32)(a)[1]) << 8) | \
 			 ((u32)(a)[2]))
 
-void rtw_buf_free(u8 **buf, u32 *buf_len);
-void rtw_buf_update(u8 **buf, u32 *buf_len, u8 *src, u32 src_len);
-#endif
+व्योम rtw_buf_मुक्त(u8 **buf, u32 *buf_len);
+व्योम rtw_buf_update(u8 **buf, u32 *buf_len, u8 *src, u32 src_len);
+#पूर्ण_अगर

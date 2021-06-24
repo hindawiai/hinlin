@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: dbutils - AML debugger utilities
  *
  ******************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acnamesp.h"
-#include "acdebug.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acnamesp.h"
+#समावेश "acdebug.h"
 
-#define _COMPONENT          ACPI_CA_DEBUGGER
+#घोषणा _COMPONENT          ACPI_CA_DEBUGGER
 ACPI_MODULE_NAME("dbutils")
 
 /* Local prototypes */
-#ifdef ACPI_OBSOLETE_FUNCTIONS
-acpi_status acpi_db_second_pass_parse(union acpi_parse_object *root);
+#अगर_घोषित ACPI_OBSOLETE_FUNCTIONS
+acpi_status acpi_db_second_pass_parse(जोड़ acpi_parse_object *root);
 
-void acpi_db_dump_buffer(u32 address);
-#endif
+व्योम acpi_db_dump_buffer(u32 address);
+#पूर्ण_अगर
 
 /*******************************************************************************
  *
@@ -27,34 +28,34 @@ void acpi_db_dump_buffer(u32 address);
  * PARAMETERS:  user_argument           - User command line
  *              arguments               - Array of commands to match against
  *
- * RETURN:      Index into command array or ACPI_TYPE_NOT_FOUND if not found
+ * RETURN:      Index पूर्णांकo command array or ACPI_TYPE_NOT_FOUND अगर not found
  *
- * DESCRIPTION: Search command array for a command match
+ * DESCRIPTION: Search command array क्रम a command match
  *
  ******************************************************************************/
 
 acpi_object_type
-acpi_db_match_argument(char *user_argument,
-		       struct acpi_db_argument_info *arguments)
-{
+acpi_db_match_argument(अक्षर *user_argument,
+		       काष्ठा acpi_db_argument_info *arguments)
+अणु
 	u32 i;
 
-	if (!user_argument || user_argument[0] == 0) {
-		return (ACPI_TYPE_NOT_FOUND);
-	}
+	अगर (!user_argument || user_argument[0] == 0) अणु
+		वापस (ACPI_TYPE_NOT_FOUND);
+	पूर्ण
 
-	for (i = 0; arguments[i].name; i++) {
-		if (strstr(ACPI_CAST_PTR(char, arguments[i].name),
-			   ACPI_CAST_PTR(char,
-					 user_argument)) == arguments[i].name) {
-			return (i);
-		}
-	}
+	क्रम (i = 0; arguments[i].name; i++) अणु
+		अगर (म_माला(ACPI_CAST_PTR(अक्षर, arguments[i].name),
+			   ACPI_CAST_PTR(अक्षर,
+					 user_argument)) == arguments[i].name) अणु
+			वापस (i);
+		पूर्ण
+	पूर्ण
 
 	/* Argument not recognized */
 
-	return (ACPI_TYPE_NOT_FOUND);
-}
+	वापस (ACPI_TYPE_NOT_FOUND);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -64,123 +65,123 @@ acpi_db_match_argument(char *user_argument,
  *
  * RETURN:      None
  *
- * DESCRIPTION: Set the current destination for debugger output. Also sets
+ * DESCRIPTION: Set the current destination क्रम debugger output. Also sets
  *              the debug output level accordingly.
  *
  ******************************************************************************/
 
-void acpi_db_set_output_destination(u32 output_flags)
-{
+व्योम acpi_db_set_output_destination(u32 output_flags)
+अणु
 
 	acpi_gbl_db_output_flags = (u8)output_flags;
 
-	if ((output_flags & ACPI_DB_REDIRECTABLE_OUTPUT) &&
-	    acpi_gbl_db_output_to_file) {
+	अगर ((output_flags & ACPI_DB_REसूचीECTABLE_OUTPUT) &&
+	    acpi_gbl_db_output_to_file) अणु
 		acpi_dbg_level = acpi_gbl_db_debug_level;
-	} else {
+	पूर्ण अन्यथा अणु
 		acpi_dbg_level = acpi_gbl_db_console_debug_level;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_db_dump_external_object
+ * FUNCTION:    acpi_db_dump_बाह्यal_object
  *
  * PARAMETERS:  obj_desc        - External ACPI object to dump
  *              level           - Nesting level.
  *
  * RETURN:      None
  *
- * DESCRIPTION: Dump the contents of an ACPI external object
+ * DESCRIPTION: Dump the contents of an ACPI बाह्यal object
  *
  ******************************************************************************/
 
-void acpi_db_dump_external_object(union acpi_object *obj_desc, u32 level)
-{
+व्योम acpi_db_dump_बाह्यal_object(जोड़ acpi_object *obj_desc, u32 level)
+अणु
 	u32 i;
 
-	if (!obj_desc) {
-		acpi_os_printf("[Null Object]\n");
-		return;
-	}
+	अगर (!obj_desc) अणु
+		acpi_os_म_लिखो("[Null Object]\n");
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < level; i++) {
-		acpi_os_printf(" ");
-	}
+	क्रम (i = 0; i < level; i++) अणु
+		acpi_os_म_लिखो(" ");
+	पूर्ण
 
-	switch (obj_desc->type) {
-	case ACPI_TYPE_ANY:
+	चयन (obj_desc->type) अणु
+	हाल ACPI_TYPE_ANY:
 
-		acpi_os_printf("[Null Object] (Type=0)\n");
-		break;
+		acpi_os_म_लिखो("[Null Object] (Type=0)\n");
+		अवरोध;
 
-	case ACPI_TYPE_INTEGER:
+	हाल ACPI_TYPE_INTEGER:
 
-		acpi_os_printf("[Integer] = %8.8X%8.8X\n",
-			       ACPI_FORMAT_UINT64(obj_desc->integer.value));
-		break;
+		acpi_os_म_लिखो("[Integer] = %8.8X%8.8X\n",
+			       ACPI_FORMAT_UINT64(obj_desc->पूर्णांकeger.value));
+		अवरोध;
 
-	case ACPI_TYPE_STRING:
+	हाल ACPI_TYPE_STRING:
 
-		acpi_os_printf("[String] Length %.2X = ",
+		acpi_os_म_लिखो("[String] Length %.2X = ",
 			       obj_desc->string.length);
-		acpi_ut_print_string(obj_desc->string.pointer, ACPI_UINT8_MAX);
-		acpi_os_printf("\n");
-		break;
+		acpi_ut_prपूर्णांक_string(obj_desc->string.poपूर्णांकer, ACPI_UINT8_MAX);
+		acpi_os_म_लिखो("\n");
+		अवरोध;
 
-	case ACPI_TYPE_BUFFER:
+	हाल ACPI_TYPE_BUFFER:
 
-		acpi_os_printf("[Buffer] Length %.2X = ",
+		acpi_os_म_लिखो("[Buffer] Length %.2X = ",
 			       obj_desc->buffer.length);
-		if (obj_desc->buffer.length) {
-			if (obj_desc->buffer.length > 16) {
-				acpi_os_printf("\n");
-			}
+		अगर (obj_desc->buffer.length) अणु
+			अगर (obj_desc->buffer.length > 16) अणु
+				acpi_os_म_लिखो("\n");
+			पूर्ण
 
 			acpi_ut_debug_dump_buffer(ACPI_CAST_PTR
 						  (u8,
-						   obj_desc->buffer.pointer),
+						   obj_desc->buffer.poपूर्णांकer),
 						  obj_desc->buffer.length,
 						  DB_BYTE_DISPLAY, _COMPONENT);
-		} else {
-			acpi_os_printf("\n");
-		}
-		break;
+		पूर्ण अन्यथा अणु
+			acpi_os_म_लिखो("\n");
+		पूर्ण
+		अवरोध;
 
-	case ACPI_TYPE_PACKAGE:
+	हाल ACPI_TYPE_PACKAGE:
 
-		acpi_os_printf("[Package] Contains %u Elements:\n",
+		acpi_os_म_लिखो("[Package] Contains %u Elements:\n",
 			       obj_desc->package.count);
 
-		for (i = 0; i < obj_desc->package.count; i++) {
-			acpi_db_dump_external_object(&obj_desc->package.
+		क्रम (i = 0; i < obj_desc->package.count; i++) अणु
+			acpi_db_dump_बाह्यal_object(&obj_desc->package.
 						     elements[i], level + 1);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case ACPI_TYPE_LOCAL_REFERENCE:
+	हाल ACPI_TYPE_LOCAL_REFERENCE:
 
-		acpi_os_printf("[Object Reference] = ");
-		acpi_db_display_internal_object(obj_desc->reference.handle,
-						NULL);
-		break;
+		acpi_os_म_लिखो("[Object Reference] = ");
+		acpi_db_display_पूर्णांकernal_object(obj_desc->reference.handle,
+						शून्य);
+		अवरोध;
 
-	case ACPI_TYPE_PROCESSOR:
+	हाल ACPI_TYPE_PROCESSOR:
 
-		acpi_os_printf("[Processor]\n");
-		break;
+		acpi_os_म_लिखो("[Processor]\n");
+		अवरोध;
 
-	case ACPI_TYPE_POWER:
+	हाल ACPI_TYPE_POWER:
 
-		acpi_os_printf("[Power Resource]\n");
-		break;
+		acpi_os_म_लिखो("[Power Resource]\n");
+		अवरोध;
 
-	default:
+	शेष:
 
-		acpi_os_printf("[Unknown Type] %X\n", obj_desc->type);
-		break;
-	}
-}
+		acpi_os_म_लिखो("[Unknown Type] %X\n", obj_desc->type);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
@@ -190,41 +191,41 @@ void acpi_db_dump_external_object(union acpi_object *obj_desc, u32 level)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Translate all forward slashes and dots to backslashes.
+ * DESCRIPTION: Translate all क्रमward slashes and करोts to backslashes.
  *
  ******************************************************************************/
 
-void acpi_db_prep_namestring(char *name)
-{
+व्योम acpi_db_prep_namestring(अक्षर *name)
+अणु
 
-	if (!name) {
-		return;
-	}
+	अगर (!name) अणु
+		वापस;
+	पूर्ण
 
 	acpi_ut_strupr(name);
 
-	/* Convert a leading forward slash to a backslash */
+	/* Convert a leading क्रमward slash to a backslash */
 
-	if (*name == '/') {
+	अगर (*name == '/') अणु
 		*name = '\\';
-	}
+	पूर्ण
 
 	/* Ignore a leading backslash, this is the root prefix */
 
-	if (ACPI_IS_ROOT_PREFIX(*name)) {
+	अगर (ACPI_IS_ROOT_PREFIX(*name)) अणु
 		name++;
-	}
+	पूर्ण
 
-	/* Convert all slash path separators to dots */
+	/* Convert all slash path separators to करोts */
 
-	while (*name) {
-		if ((*name == '/') || (*name == '\\')) {
+	जबतक (*name) अणु
+		अगर ((*name == '/') || (*name == '\\')) अणु
 			*name = '.';
-		}
+		पूर्ण
 
 		name++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
@@ -232,82 +233,82 @@ void acpi_db_prep_namestring(char *name)
  *
  * PARAMETERS:  name            - Name to lookup
  *
- * RETURN:      Pointer to a namespace node, null on failure
+ * RETURN:      Poपूर्णांकer to a namespace node, null on failure
  *
  * DESCRIPTION: Lookup a name in the ACPI namespace
  *
  * Note: Currently begins search from the root. Could be enhanced to use
- * the current prefix (scope) node as the search beginning point.
+ * the current prefix (scope) node as the search beginning poपूर्णांक.
  *
  ******************************************************************************/
 
-struct acpi_namespace_node *acpi_db_local_ns_lookup(char *name)
-{
-	char *internal_path;
+काष्ठा acpi_namespace_node *acpi_db_local_ns_lookup(अक्षर *name)
+अणु
+	अक्षर *पूर्णांकernal_path;
 	acpi_status status;
-	struct acpi_namespace_node *node = NULL;
+	काष्ठा acpi_namespace_node *node = शून्य;
 
 	acpi_db_prep_namestring(name);
 
-	/* Build an internal namestring */
+	/* Build an पूर्णांकernal namestring */
 
-	status = acpi_ns_internalize_name(name, &internal_path);
-	if (ACPI_FAILURE(status)) {
-		acpi_os_printf("Invalid namestring: %s\n", name);
-		return (NULL);
-	}
+	status = acpi_ns_पूर्णांकernalize_name(name, &पूर्णांकernal_path);
+	अगर (ACPI_FAILURE(status)) अणु
+		acpi_os_म_लिखो("Invalid namestring: %s\n", name);
+		वापस (शून्य);
+	पूर्ण
 
 	/*
 	 * Lookup the name.
-	 * (Uses root node as the search starting point)
+	 * (Uses root node as the search starting poपूर्णांक)
 	 */
-	status = acpi_ns_lookup(NULL, internal_path, ACPI_TYPE_ANY,
+	status = acpi_ns_lookup(शून्य, पूर्णांकernal_path, ACPI_TYPE_ANY,
 				ACPI_IMODE_EXECUTE,
 				ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE,
-				NULL, &node);
-	if (ACPI_FAILURE(status)) {
-		acpi_os_printf("Could not locate name: %s, %s\n",
-			       name, acpi_format_exception(status));
-	}
+				शून्य, &node);
+	अगर (ACPI_FAILURE(status)) अणु
+		acpi_os_म_लिखो("Could not locate name: %s, %s\n",
+			       name, acpi_क्रमmat_exception(status));
+	पूर्ण
 
-	ACPI_FREE(internal_path);
-	return (node);
-}
+	ACPI_FREE(पूर्णांकernal_path);
+	वापस (node);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_db_uint32_to_hex_string
+ * FUNCTION:    acpi_db_uपूर्णांक32_to_hex_string
  *
  * PARAMETERS:  value           - The value to be converted to string
- *              buffer          - Buffer for result (not less than 11 bytes)
+ *              buffer          - Buffer क्रम result (not less than 11 bytes)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Convert the unsigned 32-bit value to the hexadecimal image
+ * DESCRIPTION: Convert the अचिन्हित 32-bit value to the hexadecimal image
  *
  * NOTE: It is the caller's responsibility to ensure that the length of buffer
  *       is sufficient.
  *
  ******************************************************************************/
 
-void acpi_db_uint32_to_hex_string(u32 value, char *buffer)
-{
-	int i;
+व्योम acpi_db_uपूर्णांक32_to_hex_string(u32 value, अक्षर *buffer)
+अणु
+	पूर्णांक i;
 
-	if (value == 0) {
-		strcpy(buffer, "0");
-		return;
-	}
+	अगर (value == 0) अणु
+		म_नकल(buffer, "0");
+		वापस;
+	पूर्ण
 
 	buffer[8] = '\0';
 
-	for (i = 7; i >= 0; i--) {
+	क्रम (i = 7; i >= 0; i--) अणु
 		buffer[i] = acpi_gbl_upper_hex_digits[value & 0x0F];
 		value = value >> 4;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef ACPI_OBSOLETE_FUNCTIONS
+#अगर_घोषित ACPI_OBSOLETE_FUNCTIONS
 /*******************************************************************************
  *
  * FUNCTION:    acpi_db_second_pass_parse
@@ -316,36 +317,36 @@ void acpi_db_uint32_to_hex_string(u32 value, char *buffer)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Second pass parse of the ACPI tables. We need to wait until
+ * DESCRIPTION: Second pass parse of the ACPI tables. We need to रुको until
  *              second pass to parse the control methods
  *
  ******************************************************************************/
 
-acpi_status acpi_db_second_pass_parse(union acpi_parse_object *root)
-{
-	union acpi_parse_object *op = root;
-	union acpi_parse_object *method;
-	union acpi_parse_object *search_op;
-	union acpi_parse_object *start_op;
+acpi_status acpi_db_second_pass_parse(जोड़ acpi_parse_object *root)
+अणु
+	जोड़ acpi_parse_object *op = root;
+	जोड़ acpi_parse_object *method;
+	जोड़ acpi_parse_object *search_op;
+	जोड़ acpi_parse_object *start_op;
 	acpi_status status = AE_OK;
 	u32 base_aml_offset;
-	struct acpi_walk_state *walk_state;
+	काष्ठा acpi_walk_state *walk_state;
 
 	ACPI_FUNCTION_ENTRY();
 
-	acpi_os_printf("Pass two parse ....\n");
+	acpi_os_म_लिखो("Pass two parse ....\n");
 
-	while (op) {
-		if (op->common.aml_opcode == AML_METHOD_OP) {
+	जबतक (op) अणु
+		अगर (op->common.aml_opcode == AML_METHOD_OP) अणु
 			method = op;
 
-			/* Create a new walk state for the parse */
+			/* Create a new walk state क्रम the parse */
 
 			walk_state =
-			    acpi_ds_create_walk_state(0, NULL, NULL, NULL);
-			if (!walk_state) {
-				return (AE_NO_MEMORY);
-			}
+			    acpi_ds_create_walk_state(0, शून्य, शून्य, शून्य);
+			अगर (!walk_state) अणु
+				वापस (AE_NO_MEMORY);
+			पूर्ण
 
 			/* Init the Walk State */
 
@@ -361,7 +362,7 @@ acpi_status acpi_db_second_pass_parse(union acpi_parse_object *root)
 			    acpi_ds_load1_begin_op;
 			walk_state->ascending_callback = acpi_ds_load1_end_op;
 
-			/* Perform the AML parse */
+			/* Perक्रमm the AML parse */
 
 			status = acpi_ps_parse_aml(walk_state);
 
@@ -370,52 +371,52 @@ acpi_status acpi_db_second_pass_parse(union acpi_parse_object *root)
 			start_op = (method->common.value.arg)->common.next;
 			search_op = start_op;
 
-			while (search_op) {
+			जबतक (search_op) अणु
 				search_op->common.aml_offset += base_aml_offset;
 				search_op =
 				    acpi_ps_get_depth_next(start_op, search_op);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (op->common.aml_opcode == AML_REGION_OP) {
+		अगर (op->common.aml_opcode == AML_REGION_OP) अणु
 
-			/* TBD: [Investigate] this isn't quite the right thing to do! */
+			/* TBD: [Investigate] this isn't quite the right thing to करो! */
 			/*
 			 *
 			 * Method = (ACPI_DEFERRED_OP *) Op;
 			 * Status = acpi_ps_parse_aml (Op, Method->Body, Method->body_length);
 			 */
-		}
+		पूर्ण
 
-		if (ACPI_FAILURE(status)) {
-			break;
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			अवरोध;
+		पूर्ण
 
 		op = acpi_ps_get_depth_next(root, op);
-	}
+	पूर्ण
 
-	return (status);
-}
+	वापस (status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_db_dump_buffer
  *
- * PARAMETERS:  address             - Pointer to the buffer
+ * PARAMETERS:  address             - Poपूर्णांकer to the buffer
  *
  * RETURN:      None
  *
- * DESCRIPTION: Print a portion of a buffer
+ * DESCRIPTION: Prपूर्णांक a portion of a buffer
  *
  ******************************************************************************/
 
-void acpi_db_dump_buffer(u32 address)
-{
+व्योम acpi_db_dump_buffer(u32 address)
+अणु
 
-	acpi_os_printf("\nLocation %X:\n", address);
+	acpi_os_म_लिखो("\nLocation %X:\n", address);
 
 	acpi_dbg_level |= ACPI_LV_TABLES;
 	acpi_ut_debug_dump_buffer(ACPI_TO_POINTER(address), 64, DB_BYTE_DISPLAY,
 				  ACPI_UINT32_MAX);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

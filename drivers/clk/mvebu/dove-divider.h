@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef DOVE_DIVIDER_H
-#define DOVE_DIVIDER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित DOVE_DIVIDER_H
+#घोषणा DOVE_DIVIDER_H
 
-void __init dove_divider_clk_init(struct device_node *np);
+व्योम __init करोve_भागider_clk_init(काष्ठा device_node *np);
 
-#endif
+#पूर्ण_अगर

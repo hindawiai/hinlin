@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#ifndef __INTEL_DRAM_H__
-#define __INTEL_DRAM_H__
+#अगर_अघोषित __INTEL_DRAM_H__
+#घोषणा __INTEL_DRAM_H__
 
-struct drm_i915_private;
+काष्ठा drm_i915_निजी;
 
-void intel_dram_edram_detect(struct drm_i915_private *i915);
-void intel_dram_detect(struct drm_i915_private *i915);
+व्योम पूर्णांकel_dram_edram_detect(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_dram_detect(काष्ठा drm_i915_निजी *i915);
 
-#endif /* __INTEL_DRAM_H__ */
+#पूर्ण_अगर /* __INTEL_DRAM_H__ */

@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1996, 1997, 1999 by Ralf Baechle
  * Copyright (C) 1999 Silicon Graphics, Inc.
  */
-#ifndef _ASM_SIGCONTEXT_H
-#define _ASM_SIGCONTEXT_H
+#अगर_अघोषित _ASM_SIGCONTEXT_H
+#घोषणा _ASM_SIGCONTEXT_H
 
-#include <uapi/asm/sigcontext.h>
+#समावेश <uapi/यंत्र/sigcontext.h>
 
-#if _MIPS_SIM == _MIPS_SIM_ABI64 || _MIPS_SIM == _MIPS_SIM_NABI32
+#अगर _MIPS_SIM == _MIPS_SIM_ABI64 || _MIPS_SIM == _MIPS_SIM_NABI32
 
-struct sigcontext32 {
+काष्ठा sigcontext32 अणु
 	__u32		sc_regmask;	/* Unused */
 	__u32		sc_status;	/* Unused */
 	__u64		sc_pc;
@@ -32,6 +33,6 @@ struct sigcontext32 {
 	__u32		sc_lo2;
 	__u32		sc_hi3;
 	__u32		sc_lo3;
-};
-#endif /* _MIPS_SIM == _MIPS_SIM_ABI64 || _MIPS_SIM == _MIPS_SIM_NABI32 */
-#endif /* _ASM_SIGCONTEXT_H */
+पूर्ण;
+#पूर्ण_अगर /* _MIPS_SIM == _MIPS_SIM_ABI64 || _MIPS_SIM == _MIPS_SIM_NABI32 */
+#पूर्ण_अगर /* _ASM_SIGCONTEXT_H */

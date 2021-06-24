@@ -1,3345 +1,3346 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "builtin.h"
-#include "perf.h"
-#include "perf-sys.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "builtin.h"
+#समावेश "perf.h"
+#समावेश "perf-sys.h"
 
-#include "util/cpumap.h"
-#include "util/evlist.h"
-#include "util/evsel.h"
-#include "util/evsel_fprintf.h"
-#include "util/symbol.h"
-#include "util/thread.h"
-#include "util/header.h"
-#include "util/session.h"
-#include "util/tool.h"
-#include "util/cloexec.h"
-#include "util/thread_map.h"
-#include "util/color.h"
-#include "util/stat.h"
-#include "util/string2.h"
-#include "util/callchain.h"
-#include "util/time-utils.h"
+#समावेश "util/cpumap.h"
+#समावेश "util/evlist.h"
+#समावेश "util/evsel.h"
+#समावेश "util/evsel_fprintf.h"
+#समावेश "util/symbol.h"
+#समावेश "util/thread.h"
+#समावेश "util/header.h"
+#समावेश "util/session.h"
+#समावेश "util/tool.h"
+#समावेश "util/cloexec.h"
+#समावेश "util/thread_map.h"
+#समावेश "util/color.h"
+#समावेश "util/stat.h"
+#समावेश "util/string2.h"
+#समावेश "util/callchain.h"
+#समावेश "util/time-utils.h"
 
-#include <subcmd/pager.h>
-#include <subcmd/parse-options.h>
-#include "util/trace-event.h"
+#समावेश <subcmd/pager.h>
+#समावेश <subcmd/parse-options.h>
+#समावेश "util/trace-event.h"
 
-#include "util/debug.h"
-#include "util/event.h"
+#समावेश "util/debug.h"
+#समावेश "util/event.h"
 
-#include <linux/kernel.h>
-#include <linux/log2.h>
-#include <linux/zalloc.h>
-#include <sys/prctl.h>
-#include <sys/resource.h>
-#include <inttypes.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/zभाग.स>
+#समावेश <sys/prctl.h>
+#समावेश <sys/resource.h>
+#समावेश <पूर्णांकtypes.h>
 
-#include <errno.h>
-#include <semaphore.h>
-#include <pthread.h>
-#include <math.h>
-#include <api/fs/fs.h>
-#include <perf/cpumap.h>
-#include <linux/time64.h>
-#include <linux/err.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <semaphore.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <गणित.स>
+#समावेश <api/fs/fs.h>
+#समावेश <perf/cpumap.h>
+#समावेश <linux/समय64.h>
+#समावेश <linux/err.h>
 
-#include <linux/ctype.h>
+#समावेश <linux/प्रकार.स>
 
-#define PR_SET_NAME		15               /* Set process name */
-#define MAX_CPUS		4096
-#define COMM_LEN		20
-#define SYM_LEN			129
-#define MAX_PID			1024000
+#घोषणा PR_SET_NAME		15               /* Set process name */
+#घोषणा MAX_CPUS		4096
+#घोषणा COMM_LEN		20
+#घोषणा SYM_LEN			129
+#घोषणा MAX_PID			1024000
 
-static const char *cpu_list;
-static DECLARE_BITMAP(cpu_bitmap, MAX_NR_CPUS);
+अटल स्थिर अक्षर *cpu_list;
+अटल DECLARE_BITMAP(cpu_biपंचांगap, MAX_NR_CPUS);
 
-struct sched_atom;
+काष्ठा sched_atom;
 
-struct task_desc {
-	unsigned long		nr;
-	unsigned long		pid;
-	char			comm[COMM_LEN];
+काष्ठा task_desc अणु
+	अचिन्हित दीर्घ		nr;
+	अचिन्हित दीर्घ		pid;
+	अक्षर			comm[COMM_LEN];
 
-	unsigned long		nr_events;
-	unsigned long		curr_event;
-	struct sched_atom	**atoms;
+	अचिन्हित दीर्घ		nr_events;
+	अचिन्हित दीर्घ		curr_event;
+	काष्ठा sched_atom	**atoms;
 
-	pthread_t		thread;
+	pthपढ़ो_t		thपढ़ो;
 	sem_t			sleep_sem;
 
-	sem_t			ready_for_work;
-	sem_t			work_done_sem;
+	sem_t			पढ़ोy_क्रम_work;
+	sem_t			work_करोne_sem;
 
 	u64			cpu_usage;
-};
+पूर्ण;
 
-enum sched_event_type {
+क्रमागत sched_event_type अणु
 	SCHED_EVENT_RUN,
 	SCHED_EVENT_SLEEP,
 	SCHED_EVENT_WAKEUP,
 	SCHED_EVENT_MIGRATION,
-};
+पूर्ण;
 
-struct sched_atom {
-	enum sched_event_type	type;
-	int			specific_wait;
-	u64			timestamp;
+काष्ठा sched_atom अणु
+	क्रमागत sched_event_type	type;
+	पूर्णांक			specअगरic_रुको;
+	u64			बारtamp;
 	u64			duration;
-	unsigned long		nr;
-	sem_t			*wait_sem;
-	struct task_desc	*wakee;
-};
+	अचिन्हित दीर्घ		nr;
+	sem_t			*रुको_sem;
+	काष्ठा task_desc	*wakee;
+पूर्ण;
 
-#define TASK_STATE_TO_CHAR_STR "RSDTtZXxKWP"
+#घोषणा TASK_STATE_TO_CHAR_STR "RSDTtZXxKWP"
 
-/* task state bitmask, copied from include/linux/sched.h */
-#define TASK_RUNNING		0
-#define TASK_INTERRUPTIBLE	1
-#define TASK_UNINTERRUPTIBLE	2
-#define __TASK_STOPPED		4
-#define __TASK_TRACED		8
-/* in tsk->exit_state */
-#define EXIT_DEAD		16
-#define EXIT_ZOMBIE		32
-#define EXIT_TRACE		(EXIT_ZOMBIE | EXIT_DEAD)
+/* task state biपंचांगask, copied from include/linux/sched.h */
+#घोषणा TASK_RUNNING		0
+#घोषणा TASK_INTERRUPTIBLE	1
+#घोषणा TASK_UNINTERRUPTIBLE	2
+#घोषणा __TASK_STOPPED		4
+#घोषणा __TASK_TRACED		8
+/* in tsk->निकास_state */
+#घोषणा EXIT_DEAD		16
+#घोषणा EXIT_ZOMBIE		32
+#घोषणा EXIT_TRACE		(EXIT_ZOMBIE | EXIT_DEAD)
 /* in tsk->state again */
-#define TASK_DEAD		64
-#define TASK_WAKEKILL		128
-#define TASK_WAKING		256
-#define TASK_PARKED		512
+#घोषणा TASK_DEAD		64
+#घोषणा TASK_WAKEKILL		128
+#घोषणा TASK_WAKING		256
+#घोषणा TASK_PARKED		512
 
-enum thread_state {
+क्रमागत thपढ़ो_state अणु
 	THREAD_SLEEPING = 0,
 	THREAD_WAIT_CPU,
 	THREAD_SCHED_IN,
 	THREAD_IGNORE
-};
+पूर्ण;
 
-struct work_atom {
-	struct list_head	list;
-	enum thread_state	state;
-	u64			sched_out_time;
-	u64			wake_up_time;
-	u64			sched_in_time;
-	u64			runtime;
-};
+काष्ठा work_atom अणु
+	काष्ठा list_head	list;
+	क्रमागत thपढ़ो_state	state;
+	u64			sched_out_समय;
+	u64			wake_up_समय;
+	u64			sched_in_समय;
+	u64			runसमय;
+पूर्ण;
 
-struct work_atoms {
-	struct list_head	work_list;
-	struct thread		*thread;
-	struct rb_node		node;
+काष्ठा work_atoms अणु
+	काष्ठा list_head	work_list;
+	काष्ठा thपढ़ो		*thपढ़ो;
+	काष्ठा rb_node		node;
 	u64			max_lat;
 	u64			max_lat_start;
 	u64			max_lat_end;
 	u64			total_lat;
 	u64			nb_atoms;
-	u64			total_runtime;
-	int			num_merged;
-};
+	u64			total_runसमय;
+	पूर्णांक			num_merged;
+पूर्ण;
 
-typedef int (*sort_fn_t)(struct work_atoms *, struct work_atoms *);
+प्रकार पूर्णांक (*sort_fn_t)(काष्ठा work_atoms *, काष्ठा work_atoms *);
 
-struct perf_sched;
+काष्ठा perf_sched;
 
-struct trace_sched_handler {
-	int (*switch_event)(struct perf_sched *sched, struct evsel *evsel,
-			    struct perf_sample *sample, struct machine *machine);
+काष्ठा trace_sched_handler अणु
+	पूर्णांक (*चयन_event)(काष्ठा perf_sched *sched, काष्ठा evsel *evsel,
+			    काष्ठा perf_sample *sample, काष्ठा machine *machine);
 
-	int (*runtime_event)(struct perf_sched *sched, struct evsel *evsel,
-			     struct perf_sample *sample, struct machine *machine);
+	पूर्णांक (*runसमय_event)(काष्ठा perf_sched *sched, काष्ठा evsel *evsel,
+			     काष्ठा perf_sample *sample, काष्ठा machine *machine);
 
-	int (*wakeup_event)(struct perf_sched *sched, struct evsel *evsel,
-			    struct perf_sample *sample, struct machine *machine);
+	पूर्णांक (*wakeup_event)(काष्ठा perf_sched *sched, काष्ठा evsel *evsel,
+			    काष्ठा perf_sample *sample, काष्ठा machine *machine);
 
-	/* PERF_RECORD_FORK event, not sched_process_fork tracepoint */
-	int (*fork_event)(struct perf_sched *sched, union perf_event *event,
-			  struct machine *machine);
+	/* PERF_RECORD_FORK event, not sched_process_विभाजन tracepoपूर्णांक */
+	पूर्णांक (*विभाजन_event)(काष्ठा perf_sched *sched, जोड़ perf_event *event,
+			  काष्ठा machine *machine);
 
-	int (*migrate_task_event)(struct perf_sched *sched,
-				  struct evsel *evsel,
-				  struct perf_sample *sample,
-				  struct machine *machine);
-};
+	पूर्णांक (*migrate_task_event)(काष्ठा perf_sched *sched,
+				  काष्ठा evsel *evsel,
+				  काष्ठा perf_sample *sample,
+				  काष्ठा machine *machine);
+पूर्ण;
 
-#define COLOR_PIDS PERF_COLOR_BLUE
-#define COLOR_CPUS PERF_COLOR_BG_RED
+#घोषणा COLOR_PIDS PERF_COLOR_BLUE
+#घोषणा COLOR_CPUS PERF_COLOR_BG_RED
 
-struct perf_sched_map {
+काष्ठा perf_sched_map अणु
 	DECLARE_BITMAP(comp_cpus_mask, MAX_CPUS);
-	int			*comp_cpus;
+	पूर्णांक			*comp_cpus;
 	bool			 comp;
-	struct perf_thread_map *color_pids;
-	const char		*color_pids_str;
-	struct perf_cpu_map	*color_cpus;
-	const char		*color_cpus_str;
-	struct perf_cpu_map	*cpus;
-	const char		*cpus_str;
-};
+	काष्ठा perf_thपढ़ो_map *color_pids;
+	स्थिर अक्षर		*color_pids_str;
+	काष्ठा perf_cpu_map	*color_cpus;
+	स्थिर अक्षर		*color_cpus_str;
+	काष्ठा perf_cpu_map	*cpus;
+	स्थिर अक्षर		*cpus_str;
+पूर्ण;
 
-struct perf_sched {
-	struct perf_tool tool;
-	const char	 *sort_order;
-	unsigned long	 nr_tasks;
-	struct task_desc **pid_to_task;
-	struct task_desc **tasks;
-	const struct trace_sched_handler *tp_handler;
-	pthread_mutex_t	 start_work_mutex;
-	pthread_mutex_t	 work_done_wait_mutex;
-	int		 profile_cpu;
+काष्ठा perf_sched अणु
+	काष्ठा perf_tool tool;
+	स्थिर अक्षर	 *sort_order;
+	अचिन्हित दीर्घ	 nr_tasks;
+	काष्ठा task_desc **pid_to_task;
+	काष्ठा task_desc **tasks;
+	स्थिर काष्ठा trace_sched_handler *tp_handler;
+	pthपढ़ो_mutex_t	 start_work_mutex;
+	pthपढ़ो_mutex_t	 work_करोne_रुको_mutex;
+	पूर्णांक		 profile_cpu;
 /*
  * Track the current task - that way we can know whether there's any
- * weird events, such as a task being switched away that is not current.
+ * weird events, such as a task being चयनed away that is not current.
  */
-	int		 max_cpu;
+	पूर्णांक		 max_cpu;
 	u32		 curr_pid[MAX_CPUS];
-	struct thread	 *curr_thread[MAX_CPUS];
-	char		 next_shortname1;
-	char		 next_shortname2;
-	unsigned int	 replay_repeat;
-	unsigned long	 nr_run_events;
-	unsigned long	 nr_sleep_events;
-	unsigned long	 nr_wakeup_events;
-	unsigned long	 nr_sleep_corrections;
-	unsigned long	 nr_run_events_optimized;
-	unsigned long	 targetless_wakeups;
-	unsigned long	 multitarget_wakeups;
-	unsigned long	 nr_runs;
-	unsigned long	 nr_timestamps;
-	unsigned long	 nr_unordered_timestamps;
-	unsigned long	 nr_context_switch_bugs;
-	unsigned long	 nr_events;
-	unsigned long	 nr_lost_chunks;
-	unsigned long	 nr_lost_events;
+	काष्ठा thपढ़ो	 *curr_thपढ़ो[MAX_CPUS];
+	अक्षर		 next_लघुname1;
+	अक्षर		 next_लघुname2;
+	अचिन्हित पूर्णांक	 replay_repeat;
+	अचिन्हित दीर्घ	 nr_run_events;
+	अचिन्हित दीर्घ	 nr_sleep_events;
+	अचिन्हित दीर्घ	 nr_wakeup_events;
+	अचिन्हित दीर्घ	 nr_sleep_corrections;
+	अचिन्हित दीर्घ	 nr_run_events_optimized;
+	अचिन्हित दीर्घ	 targetless_wakeups;
+	अचिन्हित दीर्घ	 multitarget_wakeups;
+	अचिन्हित दीर्घ	 nr_runs;
+	अचिन्हित दीर्घ	 nr_बारtamps;
+	अचिन्हित दीर्घ	 nr_unordered_बारtamps;
+	अचिन्हित दीर्घ	 nr_context_चयन_bugs;
+	अचिन्हित दीर्घ	 nr_events;
+	अचिन्हित दीर्घ	 nr_lost_chunks;
+	अचिन्हित दीर्घ	 nr_lost_events;
 	u64		 run_measurement_overhead;
 	u64		 sleep_measurement_overhead;
-	u64		 start_time;
+	u64		 start_समय;
 	u64		 cpu_usage;
 	u64		 runavg_cpu_usage;
 	u64		 parent_cpu_usage;
 	u64		 runavg_parent_cpu_usage;
-	u64		 sum_runtime;
+	u64		 sum_runसमय;
 	u64		 sum_fluct;
 	u64		 run_avg;
-	u64		 all_runtime;
+	u64		 all_runसमय;
 	u64		 all_count;
-	u64		 cpu_last_switched[MAX_CPUS];
-	struct rb_root_cached atom_root, sorted_atom_root, merged_atom_root;
-	struct list_head sort_list, cmp_pid;
-	bool force;
+	u64		 cpu_last_चयनed[MAX_CPUS];
+	काष्ठा rb_root_cached atom_root, sorted_atom_root, merged_atom_root;
+	काष्ठा list_head sort_list, cmp_pid;
+	bool क्रमce;
 	bool skip_merge;
-	struct perf_sched_map map;
+	काष्ठा perf_sched_map map;
 
-	/* options for timehist command */
+	/* options क्रम समयhist command */
 	bool		summary;
 	bool		summary_only;
 	bool		idle_hist;
 	bool		show_callchain;
-	unsigned int	max_stack;
+	अचिन्हित पूर्णांक	max_stack;
 	bool		show_cpu_visual;
 	bool		show_wakeups;
 	bool		show_next;
 	bool		show_migrations;
 	bool		show_state;
 	u64		skipped_samples;
-	const char	*time_str;
-	struct perf_time_interval ptime;
-	struct perf_time_interval hist_time;
-};
+	स्थिर अक्षर	*समय_str;
+	काष्ठा perf_समय_पूर्णांकerval pसमय;
+	काष्ठा perf_समय_पूर्णांकerval hist_समय;
+पूर्ण;
 
-/* per thread run time data */
-struct thread_runtime {
-	u64 last_time;      /* time of previous sched in/out event */
-	u64 dt_run;         /* run time */
-	u64 dt_sleep;       /* time between CPU access by sleep (off cpu) */
-	u64 dt_iowait;      /* time between CPU access by iowait (off cpu) */
-	u64 dt_preempt;     /* time between CPU access by preempt (off cpu) */
-	u64 dt_delay;       /* time between wakeup and sched-in */
-	u64 ready_to_run;   /* time of wakeup */
+/* per thपढ़ो run समय data */
+काष्ठा thपढ़ो_runसमय अणु
+	u64 last_समय;      /* समय of previous sched in/out event */
+	u64 dt_run;         /* run समय */
+	u64 dt_sleep;       /* समय between CPU access by sleep (off cpu) */
+	u64 dt_ioरुको;      /* समय between CPU access by ioरुको (off cpu) */
+	u64 dt_preempt;     /* समय between CPU access by preempt (off cpu) */
+	u64 dt_delay;       /* समय between wakeup and sched-in */
+	u64 पढ़ोy_to_run;   /* समय of wakeup */
 
-	struct stats run_stats;
-	u64 total_run_time;
-	u64 total_sleep_time;
-	u64 total_iowait_time;
-	u64 total_preempt_time;
-	u64 total_delay_time;
+	काष्ठा stats run_stats;
+	u64 total_run_समय;
+	u64 total_sleep_समय;
+	u64 total_ioरुको_समय;
+	u64 total_preempt_समय;
+	u64 total_delay_समय;
 
-	int last_state;
+	पूर्णांक last_state;
 
-	char shortname[3];
+	अक्षर लघुname[3];
 	bool comm_changed;
 
 	u64 migrations;
-};
+पूर्ण;
 
-/* per event run time data */
-struct evsel_runtime {
-	u64 *last_time; /* time this event was last seen per cpu */
+/* per event run समय data */
+काष्ठा evsel_runसमय अणु
+	u64 *last_समय; /* समय this event was last seen per cpu */
 	u32 ncpu;       /* highest cpu slot allocated */
-};
+पूर्ण;
 
-/* per cpu idle time data */
-struct idle_thread_runtime {
-	struct thread_runtime	tr;
-	struct thread		*last_thread;
-	struct rb_root_cached	sorted_root;
-	struct callchain_root	callchain;
-	struct callchain_cursor	cursor;
-};
+/* per cpu idle समय data */
+काष्ठा idle_thपढ़ो_runसमय अणु
+	काष्ठा thपढ़ो_runसमय	tr;
+	काष्ठा thपढ़ो		*last_thपढ़ो;
+	काष्ठा rb_root_cached	sorted_root;
+	काष्ठा callchain_root	callchain;
+	काष्ठा callchain_cursor	cursor;
+पूर्ण;
 
-/* track idle times per cpu */
-static struct thread **idle_threads;
-static int idle_max_cpu;
-static char idle_comm[] = "<idle>";
+/* track idle बार per cpu */
+अटल काष्ठा thपढ़ो **idle_thपढ़ोs;
+अटल पूर्णांक idle_max_cpu;
+अटल अक्षर idle_comm[] = "<idle>";
 
-static u64 get_nsecs(void)
-{
-	struct timespec ts;
+अटल u64 get_nsecs(व्योम)
+अणु
+	काष्ठा बारpec ts;
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
+	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
 
-	return ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
-}
+	वापस ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
+पूर्ण
 
-static void burn_nsecs(struct perf_sched *sched, u64 nsecs)
-{
+अटल व्योम burn_nsecs(काष्ठा perf_sched *sched, u64 nsecs)
+अणु
 	u64 T0 = get_nsecs(), T1;
 
-	do {
+	करो अणु
 		T1 = get_nsecs();
-	} while (T1 + sched->run_measurement_overhead < T0 + nsecs);
-}
+	पूर्ण जबतक (T1 + sched->run_measurement_overhead < T0 + nsecs);
+पूर्ण
 
-static void sleep_nsecs(u64 nsecs)
-{
-	struct timespec ts;
+अटल व्योम sleep_nsecs(u64 nsecs)
+अणु
+	काष्ठा बारpec ts;
 
 	ts.tv_nsec = nsecs % 999999999;
 	ts.tv_sec = nsecs / 999999999;
 
-	nanosleep(&ts, NULL);
-}
+	nanosleep(&ts, शून्य);
+पूर्ण
 
-static void calibrate_run_measurement_overhead(struct perf_sched *sched)
-{
+अटल व्योम calibrate_run_measurement_overhead(काष्ठा perf_sched *sched)
+अणु
 	u64 T0, T1, delta, min_delta = NSEC_PER_SEC;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 		T0 = get_nsecs();
 		burn_nsecs(sched, 0);
 		T1 = get_nsecs();
 		delta = T1-T0;
 		min_delta = min(min_delta, delta);
-	}
+	पूर्ण
 	sched->run_measurement_overhead = min_delta;
 
-	printf("run measurement overhead: %" PRIu64 " nsecs\n", min_delta);
-}
+	म_लिखो("run measurement overhead: %" PRIu64 " nsecs\n", min_delta);
+पूर्ण
 
-static void calibrate_sleep_measurement_overhead(struct perf_sched *sched)
-{
+अटल व्योम calibrate_sleep_measurement_overhead(काष्ठा perf_sched *sched)
+अणु
 	u64 T0, T1, delta, min_delta = NSEC_PER_SEC;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 		T0 = get_nsecs();
 		sleep_nsecs(10000);
 		T1 = get_nsecs();
 		delta = T1-T0;
 		min_delta = min(min_delta, delta);
-	}
+	पूर्ण
 	min_delta -= 10000;
 	sched->sleep_measurement_overhead = min_delta;
 
-	printf("sleep measurement overhead: %" PRIu64 " nsecs\n", min_delta);
-}
+	म_लिखो("sleep measurement overhead: %" PRIu64 " nsecs\n", min_delta);
+पूर्ण
 
-static struct sched_atom *
-get_new_event(struct task_desc *task, u64 timestamp)
-{
-	struct sched_atom *event = zalloc(sizeof(*event));
-	unsigned long idx = task->nr_events;
-	size_t size;
+अटल काष्ठा sched_atom *
+get_new_event(काष्ठा task_desc *task, u64 बारtamp)
+अणु
+	काष्ठा sched_atom *event = zalloc(माप(*event));
+	अचिन्हित दीर्घ idx = task->nr_events;
+	माप_प्रकार size;
 
-	event->timestamp = timestamp;
+	event->बारtamp = बारtamp;
 	event->nr = idx;
 
 	task->nr_events++;
-	size = sizeof(struct sched_atom *) * task->nr_events;
-	task->atoms = realloc(task->atoms, size);
+	size = माप(काष्ठा sched_atom *) * task->nr_events;
+	task->atoms = पुनः_स्मृति(task->atoms, size);
 	BUG_ON(!task->atoms);
 
 	task->atoms[idx] = event;
 
-	return event;
-}
+	वापस event;
+पूर्ण
 
-static struct sched_atom *last_event(struct task_desc *task)
-{
-	if (!task->nr_events)
-		return NULL;
+अटल काष्ठा sched_atom *last_event(काष्ठा task_desc *task)
+अणु
+	अगर (!task->nr_events)
+		वापस शून्य;
 
-	return task->atoms[task->nr_events - 1];
-}
+	वापस task->atoms[task->nr_events - 1];
+पूर्ण
 
-static void add_sched_event_run(struct perf_sched *sched, struct task_desc *task,
-				u64 timestamp, u64 duration)
-{
-	struct sched_atom *event, *curr_event = last_event(task);
+अटल व्योम add_sched_event_run(काष्ठा perf_sched *sched, काष्ठा task_desc *task,
+				u64 बारtamp, u64 duration)
+अणु
+	काष्ठा sched_atom *event, *curr_event = last_event(task);
 
 	/*
 	 * optimize an existing RUN event by merging this one
 	 * to it:
 	 */
-	if (curr_event && curr_event->type == SCHED_EVENT_RUN) {
+	अगर (curr_event && curr_event->type == SCHED_EVENT_RUN) अणु
 		sched->nr_run_events_optimized++;
 		curr_event->duration += duration;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	event = get_new_event(task, timestamp);
+	event = get_new_event(task, बारtamp);
 
 	event->type = SCHED_EVENT_RUN;
 	event->duration = duration;
 
 	sched->nr_run_events++;
-}
+पूर्ण
 
-static void add_sched_event_wakeup(struct perf_sched *sched, struct task_desc *task,
-				   u64 timestamp, struct task_desc *wakee)
-{
-	struct sched_atom *event, *wakee_event;
+अटल व्योम add_sched_event_wakeup(काष्ठा perf_sched *sched, काष्ठा task_desc *task,
+				   u64 बारtamp, काष्ठा task_desc *wakee)
+अणु
+	काष्ठा sched_atom *event, *wakee_event;
 
-	event = get_new_event(task, timestamp);
+	event = get_new_event(task, बारtamp);
 	event->type = SCHED_EVENT_WAKEUP;
 	event->wakee = wakee;
 
 	wakee_event = last_event(wakee);
-	if (!wakee_event || wakee_event->type != SCHED_EVENT_SLEEP) {
+	अगर (!wakee_event || wakee_event->type != SCHED_EVENT_SLEEP) अणु
 		sched->targetless_wakeups++;
-		return;
-	}
-	if (wakee_event->wait_sem) {
+		वापस;
+	पूर्ण
+	अगर (wakee_event->रुको_sem) अणु
 		sched->multitarget_wakeups++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	wakee_event->wait_sem = zalloc(sizeof(*wakee_event->wait_sem));
-	sem_init(wakee_event->wait_sem, 0, 0);
-	wakee_event->specific_wait = 1;
-	event->wait_sem = wakee_event->wait_sem;
+	wakee_event->रुको_sem = zalloc(माप(*wakee_event->रुको_sem));
+	sem_init(wakee_event->रुको_sem, 0, 0);
+	wakee_event->specअगरic_रुको = 1;
+	event->रुको_sem = wakee_event->रुको_sem;
 
 	sched->nr_wakeup_events++;
-}
+पूर्ण
 
-static void add_sched_event_sleep(struct perf_sched *sched, struct task_desc *task,
-				  u64 timestamp, u64 task_state __maybe_unused)
-{
-	struct sched_atom *event = get_new_event(task, timestamp);
+अटल व्योम add_sched_event_sleep(काष्ठा perf_sched *sched, काष्ठा task_desc *task,
+				  u64 बारtamp, u64 task_state __maybe_unused)
+अणु
+	काष्ठा sched_atom *event = get_new_event(task, बारtamp);
 
 	event->type = SCHED_EVENT_SLEEP;
 
 	sched->nr_sleep_events++;
-}
+पूर्ण
 
-static struct task_desc *register_pid(struct perf_sched *sched,
-				      unsigned long pid, const char *comm)
-{
-	struct task_desc *task;
-	static int pid_max;
+अटल काष्ठा task_desc *रेजिस्टर_pid(काष्ठा perf_sched *sched,
+				      अचिन्हित दीर्घ pid, स्थिर अक्षर *comm)
+अणु
+	काष्ठा task_desc *task;
+	अटल पूर्णांक pid_max;
 
-	if (sched->pid_to_task == NULL) {
-		if (sysctl__read_int("kernel/pid_max", &pid_max) < 0)
+	अगर (sched->pid_to_task == शून्य) अणु
+		अगर (sysctl__पढ़ो_पूर्णांक("kernel/pid_max", &pid_max) < 0)
 			pid_max = MAX_PID;
-		BUG_ON((sched->pid_to_task = calloc(pid_max, sizeof(struct task_desc *))) == NULL);
-	}
-	if (pid >= (unsigned long)pid_max) {
-		BUG_ON((sched->pid_to_task = realloc(sched->pid_to_task, (pid + 1) *
-			sizeof(struct task_desc *))) == NULL);
-		while (pid >= (unsigned long)pid_max)
-			sched->pid_to_task[pid_max++] = NULL;
-	}
+		BUG_ON((sched->pid_to_task = सुस्मृति(pid_max, माप(काष्ठा task_desc *))) == शून्य);
+	पूर्ण
+	अगर (pid >= (अचिन्हित दीर्घ)pid_max) अणु
+		BUG_ON((sched->pid_to_task = पुनः_स्मृति(sched->pid_to_task, (pid + 1) *
+			माप(काष्ठा task_desc *))) == शून्य);
+		जबतक (pid >= (अचिन्हित दीर्घ)pid_max)
+			sched->pid_to_task[pid_max++] = शून्य;
+	पूर्ण
 
 	task = sched->pid_to_task[pid];
 
-	if (task)
-		return task;
+	अगर (task)
+		वापस task;
 
-	task = zalloc(sizeof(*task));
+	task = zalloc(माप(*task));
 	task->pid = pid;
 	task->nr = sched->nr_tasks;
-	strcpy(task->comm, comm);
+	म_नकल(task->comm, comm);
 	/*
-	 * every task starts in sleeping state - this gets ignored
-	 * if there's no wakeup pointing to this sleep state:
+	 * every task starts in sleeping state - this माला_लो ignored
+	 * अगर there's no wakeup poपूर्णांकing to this sleep state:
 	 */
 	add_sched_event_sleep(sched, task, 0, 0);
 
 	sched->pid_to_task[pid] = task;
 	sched->nr_tasks++;
-	sched->tasks = realloc(sched->tasks, sched->nr_tasks * sizeof(struct task_desc *));
+	sched->tasks = पुनः_स्मृति(sched->tasks, sched->nr_tasks * माप(काष्ठा task_desc *));
 	BUG_ON(!sched->tasks);
 	sched->tasks[task->nr] = task;
 
-	if (verbose > 0)
-		printf("registered task #%ld, PID %ld (%s)\n", sched->nr_tasks, pid, comm);
+	अगर (verbose > 0)
+		म_लिखो("registered task #%ld, PID %ld (%s)\n", sched->nr_tasks, pid, comm);
 
-	return task;
-}
+	वापस task;
+पूर्ण
 
 
-static void print_task_traces(struct perf_sched *sched)
-{
-	struct task_desc *task;
-	unsigned long i;
+अटल व्योम prपूर्णांक_task_traces(काष्ठा perf_sched *sched)
+अणु
+	काष्ठा task_desc *task;
+	अचिन्हित दीर्घ i;
 
-	for (i = 0; i < sched->nr_tasks; i++) {
+	क्रम (i = 0; i < sched->nr_tasks; i++) अणु
 		task = sched->tasks[i];
-		printf("task %6ld (%20s:%10ld), nr_events: %ld\n",
+		म_लिखो("task %6ld (%20s:%10ld), nr_events: %ld\n",
 			task->nr, task->comm, task->pid, task->nr_events);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void add_cross_task_wakeups(struct perf_sched *sched)
-{
-	struct task_desc *task1, *task2;
-	unsigned long i, j;
+अटल व्योम add_cross_task_wakeups(काष्ठा perf_sched *sched)
+अणु
+	काष्ठा task_desc *task1, *task2;
+	अचिन्हित दीर्घ i, j;
 
-	for (i = 0; i < sched->nr_tasks; i++) {
+	क्रम (i = 0; i < sched->nr_tasks; i++) अणु
 		task1 = sched->tasks[i];
 		j = i + 1;
-		if (j == sched->nr_tasks)
+		अगर (j == sched->nr_tasks)
 			j = 0;
 		task2 = sched->tasks[j];
 		add_sched_event_wakeup(sched, task1, 0, task2);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void perf_sched__process_event(struct perf_sched *sched,
-				      struct sched_atom *atom)
-{
-	int ret = 0;
+अटल व्योम perf_sched__process_event(काष्ठा perf_sched *sched,
+				      काष्ठा sched_atom *atom)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (atom->type) {
-		case SCHED_EVENT_RUN:
+	चयन (atom->type) अणु
+		हाल SCHED_EVENT_RUN:
 			burn_nsecs(sched, atom->duration);
-			break;
-		case SCHED_EVENT_SLEEP:
-			if (atom->wait_sem)
-				ret = sem_wait(atom->wait_sem);
+			अवरोध;
+		हाल SCHED_EVENT_SLEEP:
+			अगर (atom->रुको_sem)
+				ret = sem_रुको(atom->रुको_sem);
 			BUG_ON(ret);
-			break;
-		case SCHED_EVENT_WAKEUP:
-			if (atom->wait_sem)
-				ret = sem_post(atom->wait_sem);
+			अवरोध;
+		हाल SCHED_EVENT_WAKEUP:
+			अगर (atom->रुको_sem)
+				ret = sem_post(atom->रुको_sem);
 			BUG_ON(ret);
-			break;
-		case SCHED_EVENT_MIGRATION:
-			break;
-		default:
+			अवरोध;
+		हाल SCHED_EVENT_MIGRATION:
+			अवरोध;
+		शेष:
 			BUG_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u64 get_cpu_usage_nsec_parent(void)
-{
-	struct rusage ru;
+अटल u64 get_cpu_usage_nsec_parent(व्योम)
+अणु
+	काष्ठा rusage ru;
 	u64 sum;
-	int err;
+	पूर्णांक err;
 
 	err = getrusage(RUSAGE_SELF, &ru);
 	BUG_ON(err);
 
-	sum =  ru.ru_utime.tv_sec * NSEC_PER_SEC + ru.ru_utime.tv_usec * NSEC_PER_USEC;
-	sum += ru.ru_stime.tv_sec * NSEC_PER_SEC + ru.ru_stime.tv_usec * NSEC_PER_USEC;
+	sum =  ru.ru_uसमय.tv_sec * NSEC_PER_SEC + ru.ru_uसमय.tv_usec * NSEC_PER_USEC;
+	sum += ru.ru_sसमय.tv_sec * NSEC_PER_SEC + ru.ru_sसमय.tv_usec * NSEC_PER_USEC;
 
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
-static int self_open_counters(struct perf_sched *sched, unsigned long cur_task)
-{
-	struct perf_event_attr attr;
-	char sbuf[STRERR_BUFSIZE], info[STRERR_BUFSIZE];
-	int fd;
-	struct rlimit limit;
+अटल पूर्णांक self_खोलो_counters(काष्ठा perf_sched *sched, अचिन्हित दीर्घ cur_task)
+अणु
+	काष्ठा perf_event_attr attr;
+	अक्षर sbuf[STRERR_बफ_मानE], info[STRERR_बफ_मानE];
+	पूर्णांक fd;
+	काष्ठा rlimit limit;
 	bool need_privilege = false;
 
-	memset(&attr, 0, sizeof(attr));
+	स_रखो(&attr, 0, माप(attr));
 
 	attr.type = PERF_TYPE_SOFTWARE;
 	attr.config = PERF_COUNT_SW_TASK_CLOCK;
 
-force_again:
-	fd = sys_perf_event_open(&attr, 0, -1, -1,
-				 perf_event_open_cloexec_flag());
+क्रमce_again:
+	fd = sys_perf_event_खोलो(&attr, 0, -1, -1,
+				 perf_event_खोलो_cloexec_flag());
 
-	if (fd < 0) {
-		if (errno == EMFILE) {
-			if (sched->force) {
-				BUG_ON(getrlimit(RLIMIT_NOFILE, &limit) == -1);
+	अगर (fd < 0) अणु
+		अगर (त्रुटि_सं == EMखाता) अणु
+			अगर (sched->क्रमce) अणु
+				BUG_ON(getrlimit(RLIMIT_NOखाता, &limit) == -1);
 				limit.rlim_cur += sched->nr_tasks - cur_task;
-				if (limit.rlim_cur > limit.rlim_max) {
+				अगर (limit.rlim_cur > limit.rlim_max) अणु
 					limit.rlim_max = limit.rlim_cur;
 					need_privilege = true;
-				}
-				if (setrlimit(RLIMIT_NOFILE, &limit) == -1) {
-					if (need_privilege && errno == EPERM)
-						strcpy(info, "Need privilege\n");
-				} else
-					goto force_again;
-			} else
-				strcpy(info, "Have a try with -f option\n");
-		}
+				पूर्ण
+				अगर (setrlimit(RLIMIT_NOखाता, &limit) == -1) अणु
+					अगर (need_privilege && त्रुटि_सं == EPERM)
+						म_नकल(info, "Need privilege\n");
+				पूर्ण अन्यथा
+					जाओ क्रमce_again;
+			पूर्ण अन्यथा
+				म_नकल(info, "Have a try with -f option\n");
+		पूर्ण
 		pr_err("Error: sys_perf_event_open() syscall returned "
 		       "with %d (%s)\n%s", fd,
-		       str_error_r(errno, sbuf, sizeof(sbuf)), info);
-		exit(EXIT_FAILURE);
-	}
-	return fd;
-}
+		       str_error_r(त्रुटि_सं, sbuf, माप(sbuf)), info);
+		निकास(निकास_त्रुटि);
+	पूर्ण
+	वापस fd;
+पूर्ण
 
-static u64 get_cpu_usage_nsec_self(int fd)
-{
-	u64 runtime;
-	int ret;
+अटल u64 get_cpu_usage_nsec_self(पूर्णांक fd)
+अणु
+	u64 runसमय;
+	पूर्णांक ret;
 
-	ret = read(fd, &runtime, sizeof(runtime));
-	BUG_ON(ret != sizeof(runtime));
+	ret = पढ़ो(fd, &runसमय, माप(runसमय));
+	BUG_ON(ret != माप(runसमय));
 
-	return runtime;
-}
+	वापस runसमय;
+पूर्ण
 
-struct sched_thread_parms {
-	struct task_desc  *task;
-	struct perf_sched *sched;
-	int fd;
-};
+काष्ठा sched_thपढ़ो_parms अणु
+	काष्ठा task_desc  *task;
+	काष्ठा perf_sched *sched;
+	पूर्णांक fd;
+पूर्ण;
 
-static void *thread_func(void *ctx)
-{
-	struct sched_thread_parms *parms = ctx;
-	struct task_desc *this_task = parms->task;
-	struct perf_sched *sched = parms->sched;
+अटल व्योम *thपढ़ो_func(व्योम *ctx)
+अणु
+	काष्ठा sched_thपढ़ो_parms *parms = ctx;
+	काष्ठा task_desc *this_task = parms->task;
+	काष्ठा perf_sched *sched = parms->sched;
 	u64 cpu_usage_0, cpu_usage_1;
-	unsigned long i, ret;
-	char comm2[22];
-	int fd = parms->fd;
+	अचिन्हित दीर्घ i, ret;
+	अक्षर comm2[22];
+	पूर्णांक fd = parms->fd;
 
-	zfree(&parms);
+	zमुक्त(&parms);
 
-	sprintf(comm2, ":%s", this_task->comm);
+	प्र_लिखो(comm2, ":%s", this_task->comm);
 	prctl(PR_SET_NAME, comm2);
-	if (fd < 0)
-		return NULL;
+	अगर (fd < 0)
+		वापस शून्य;
 again:
-	ret = sem_post(&this_task->ready_for_work);
+	ret = sem_post(&this_task->पढ़ोy_क्रम_work);
 	BUG_ON(ret);
-	ret = pthread_mutex_lock(&sched->start_work_mutex);
+	ret = pthपढ़ो_mutex_lock(&sched->start_work_mutex);
 	BUG_ON(ret);
-	ret = pthread_mutex_unlock(&sched->start_work_mutex);
+	ret = pthपढ़ो_mutex_unlock(&sched->start_work_mutex);
 	BUG_ON(ret);
 
 	cpu_usage_0 = get_cpu_usage_nsec_self(fd);
 
-	for (i = 0; i < this_task->nr_events; i++) {
+	क्रम (i = 0; i < this_task->nr_events; i++) अणु
 		this_task->curr_event = i;
 		perf_sched__process_event(sched, this_task->atoms[i]);
-	}
+	पूर्ण
 
 	cpu_usage_1 = get_cpu_usage_nsec_self(fd);
 	this_task->cpu_usage = cpu_usage_1 - cpu_usage_0;
-	ret = sem_post(&this_task->work_done_sem);
+	ret = sem_post(&this_task->work_करोne_sem);
 	BUG_ON(ret);
 
-	ret = pthread_mutex_lock(&sched->work_done_wait_mutex);
+	ret = pthपढ़ो_mutex_lock(&sched->work_करोne_रुको_mutex);
 	BUG_ON(ret);
-	ret = pthread_mutex_unlock(&sched->work_done_wait_mutex);
+	ret = pthपढ़ो_mutex_unlock(&sched->work_करोne_रुको_mutex);
 	BUG_ON(ret);
 
-	goto again;
-}
+	जाओ again;
+पूर्ण
 
-static void create_tasks(struct perf_sched *sched)
-{
-	struct task_desc *task;
-	pthread_attr_t attr;
-	unsigned long i;
-	int err;
+अटल व्योम create_tasks(काष्ठा perf_sched *sched)
+अणु
+	काष्ठा task_desc *task;
+	pthपढ़ो_attr_t attr;
+	अचिन्हित दीर्घ i;
+	पूर्णांक err;
 
-	err = pthread_attr_init(&attr);
+	err = pthपढ़ो_attr_init(&attr);
 	BUG_ON(err);
-	err = pthread_attr_setstacksize(&attr,
-			(size_t) max(16 * 1024, PTHREAD_STACK_MIN));
+	err = pthपढ़ो_attr_setstacksize(&attr,
+			(माप_प्रकार) max(16 * 1024, PTHREAD_STACK_MIN));
 	BUG_ON(err);
-	err = pthread_mutex_lock(&sched->start_work_mutex);
+	err = pthपढ़ो_mutex_lock(&sched->start_work_mutex);
 	BUG_ON(err);
-	err = pthread_mutex_lock(&sched->work_done_wait_mutex);
+	err = pthपढ़ो_mutex_lock(&sched->work_करोne_रुको_mutex);
 	BUG_ON(err);
-	for (i = 0; i < sched->nr_tasks; i++) {
-		struct sched_thread_parms *parms = malloc(sizeof(*parms));
-		BUG_ON(parms == NULL);
+	क्रम (i = 0; i < sched->nr_tasks; i++) अणु
+		काष्ठा sched_thपढ़ो_parms *parms = दो_स्मृति(माप(*parms));
+		BUG_ON(parms == शून्य);
 		parms->task = task = sched->tasks[i];
 		parms->sched = sched;
-		parms->fd = self_open_counters(sched, i);
+		parms->fd = self_खोलो_counters(sched, i);
 		sem_init(&task->sleep_sem, 0, 0);
-		sem_init(&task->ready_for_work, 0, 0);
-		sem_init(&task->work_done_sem, 0, 0);
+		sem_init(&task->पढ़ोy_क्रम_work, 0, 0);
+		sem_init(&task->work_करोne_sem, 0, 0);
 		task->curr_event = 0;
-		err = pthread_create(&task->thread, &attr, thread_func, parms);
+		err = pthपढ़ो_create(&task->thपढ़ो, &attr, thपढ़ो_func, parms);
 		BUG_ON(err);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void wait_for_tasks(struct perf_sched *sched)
-{
+अटल व्योम रुको_क्रम_tasks(काष्ठा perf_sched *sched)
+अणु
 	u64 cpu_usage_0, cpu_usage_1;
-	struct task_desc *task;
-	unsigned long i, ret;
+	काष्ठा task_desc *task;
+	अचिन्हित दीर्घ i, ret;
 
-	sched->start_time = get_nsecs();
+	sched->start_समय = get_nsecs();
 	sched->cpu_usage = 0;
-	pthread_mutex_unlock(&sched->work_done_wait_mutex);
+	pthपढ़ो_mutex_unlock(&sched->work_करोne_रुको_mutex);
 
-	for (i = 0; i < sched->nr_tasks; i++) {
+	क्रम (i = 0; i < sched->nr_tasks; i++) अणु
 		task = sched->tasks[i];
-		ret = sem_wait(&task->ready_for_work);
+		ret = sem_रुको(&task->पढ़ोy_क्रम_work);
 		BUG_ON(ret);
-		sem_init(&task->ready_for_work, 0, 0);
-	}
-	ret = pthread_mutex_lock(&sched->work_done_wait_mutex);
+		sem_init(&task->पढ़ोy_क्रम_work, 0, 0);
+	पूर्ण
+	ret = pthपढ़ो_mutex_lock(&sched->work_करोne_रुको_mutex);
 	BUG_ON(ret);
 
 	cpu_usage_0 = get_cpu_usage_nsec_parent();
 
-	pthread_mutex_unlock(&sched->start_work_mutex);
+	pthपढ़ो_mutex_unlock(&sched->start_work_mutex);
 
-	for (i = 0; i < sched->nr_tasks; i++) {
+	क्रम (i = 0; i < sched->nr_tasks; i++) अणु
 		task = sched->tasks[i];
-		ret = sem_wait(&task->work_done_sem);
+		ret = sem_रुको(&task->work_करोne_sem);
 		BUG_ON(ret);
-		sem_init(&task->work_done_sem, 0, 0);
+		sem_init(&task->work_करोne_sem, 0, 0);
 		sched->cpu_usage += task->cpu_usage;
 		task->cpu_usage = 0;
-	}
+	पूर्ण
 
 	cpu_usage_1 = get_cpu_usage_nsec_parent();
-	if (!sched->runavg_cpu_usage)
+	अगर (!sched->runavg_cpu_usage)
 		sched->runavg_cpu_usage = sched->cpu_usage;
 	sched->runavg_cpu_usage = (sched->runavg_cpu_usage * (sched->replay_repeat - 1) + sched->cpu_usage) / sched->replay_repeat;
 
 	sched->parent_cpu_usage = cpu_usage_1 - cpu_usage_0;
-	if (!sched->runavg_parent_cpu_usage)
+	अगर (!sched->runavg_parent_cpu_usage)
 		sched->runavg_parent_cpu_usage = sched->parent_cpu_usage;
 	sched->runavg_parent_cpu_usage = (sched->runavg_parent_cpu_usage * (sched->replay_repeat - 1) +
 					 sched->parent_cpu_usage)/sched->replay_repeat;
 
-	ret = pthread_mutex_lock(&sched->start_work_mutex);
+	ret = pthपढ़ो_mutex_lock(&sched->start_work_mutex);
 	BUG_ON(ret);
 
-	for (i = 0; i < sched->nr_tasks; i++) {
+	क्रम (i = 0; i < sched->nr_tasks; i++) अणु
 		task = sched->tasks[i];
 		sem_init(&task->sleep_sem, 0, 0);
 		task->curr_event = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void run_one_test(struct perf_sched *sched)
-{
+अटल व्योम run_one_test(काष्ठा perf_sched *sched)
+अणु
 	u64 T0, T1, delta, avg_delta, fluct;
 
 	T0 = get_nsecs();
-	wait_for_tasks(sched);
+	रुको_क्रम_tasks(sched);
 	T1 = get_nsecs();
 
 	delta = T1 - T0;
-	sched->sum_runtime += delta;
+	sched->sum_runसमय += delta;
 	sched->nr_runs++;
 
-	avg_delta = sched->sum_runtime / sched->nr_runs;
-	if (delta < avg_delta)
+	avg_delta = sched->sum_runसमय / sched->nr_runs;
+	अगर (delta < avg_delta)
 		fluct = avg_delta - delta;
-	else
+	अन्यथा
 		fluct = delta - avg_delta;
 	sched->sum_fluct += fluct;
-	if (!sched->run_avg)
+	अगर (!sched->run_avg)
 		sched->run_avg = delta;
 	sched->run_avg = (sched->run_avg * (sched->replay_repeat - 1) + delta) / sched->replay_repeat;
 
-	printf("#%-3ld: %0.3f, ", sched->nr_runs, (double)delta / NSEC_PER_MSEC);
+	म_लिखो("#%-3ld: %0.3f, ", sched->nr_runs, (द्विगुन)delta / NSEC_PER_MSEC);
 
-	printf("ravg: %0.2f, ", (double)sched->run_avg / NSEC_PER_MSEC);
+	म_लिखो("ravg: %0.2f, ", (द्विगुन)sched->run_avg / NSEC_PER_MSEC);
 
-	printf("cpu: %0.2f / %0.2f",
-		(double)sched->cpu_usage / NSEC_PER_MSEC, (double)sched->runavg_cpu_usage / NSEC_PER_MSEC);
+	म_लिखो("cpu: %0.2f / %0.2f",
+		(द्विगुन)sched->cpu_usage / NSEC_PER_MSEC, (द्विगुन)sched->runavg_cpu_usage / NSEC_PER_MSEC);
 
-#if 0
+#अगर 0
 	/*
-	 * rusage statistics done by the parent, these are less
-	 * accurate than the sched->sum_exec_runtime based statistics:
+	 * rusage statistics करोne by the parent, these are less
+	 * accurate than the sched->sum_exec_runसमय based statistics:
 	 */
-	printf(" [%0.2f / %0.2f]",
-		(double)sched->parent_cpu_usage / NSEC_PER_MSEC,
-		(double)sched->runavg_parent_cpu_usage / NSEC_PER_MSEC);
-#endif
+	म_लिखो(" [%0.2f / %0.2f]",
+		(द्विगुन)sched->parent_cpu_usage / NSEC_PER_MSEC,
+		(द्विगुन)sched->runavg_parent_cpu_usage / NSEC_PER_MSEC);
+#पूर्ण_अगर
 
-	printf("\n");
+	म_लिखो("\n");
 
-	if (sched->nr_sleep_corrections)
-		printf(" (%ld sleep corrections)\n", sched->nr_sleep_corrections);
+	अगर (sched->nr_sleep_corrections)
+		म_लिखो(" (%ld sleep corrections)\n", sched->nr_sleep_corrections);
 	sched->nr_sleep_corrections = 0;
-}
+पूर्ण
 
-static void test_calibrations(struct perf_sched *sched)
-{
+अटल व्योम test_calibrations(काष्ठा perf_sched *sched)
+अणु
 	u64 T0, T1;
 
 	T0 = get_nsecs();
 	burn_nsecs(sched, NSEC_PER_MSEC);
 	T1 = get_nsecs();
 
-	printf("the run test took %" PRIu64 " nsecs\n", T1 - T0);
+	म_लिखो("the run test took %" PRIu64 " nsecs\n", T1 - T0);
 
 	T0 = get_nsecs();
 	sleep_nsecs(NSEC_PER_MSEC);
 	T1 = get_nsecs();
 
-	printf("the sleep test took %" PRIu64 " nsecs\n", T1 - T0);
-}
+	म_लिखो("the sleep test took %" PRIu64 " nsecs\n", T1 - T0);
+पूर्ण
 
-static int
-replay_wakeup_event(struct perf_sched *sched,
-		    struct evsel *evsel, struct perf_sample *sample,
-		    struct machine *machine __maybe_unused)
-{
-	const char *comm = evsel__strval(evsel, sample, "comm");
-	const u32 pid	 = evsel__intval(evsel, sample, "pid");
-	struct task_desc *waker, *wakee;
+अटल पूर्णांक
+replay_wakeup_event(काष्ठा perf_sched *sched,
+		    काष्ठा evsel *evsel, काष्ठा perf_sample *sample,
+		    काष्ठा machine *machine __maybe_unused)
+अणु
+	स्थिर अक्षर *comm = evsel__strval(evsel, sample, "comm");
+	स्थिर u32 pid	 = evsel__पूर्णांकval(evsel, sample, "pid");
+	काष्ठा task_desc *waker, *wakee;
 
-	if (verbose > 0) {
-		printf("sched_wakeup event %p\n", evsel);
+	अगर (verbose > 0) अणु
+		म_लिखो("sched_wakeup event %p\n", evsel);
 
-		printf(" ... pid %d woke up %s/%d\n", sample->tid, comm, pid);
-	}
+		म_लिखो(" ... pid %d woke up %s/%d\n", sample->tid, comm, pid);
+	पूर्ण
 
-	waker = register_pid(sched, sample->tid, "<unknown>");
-	wakee = register_pid(sched, pid, comm);
+	waker = रेजिस्टर_pid(sched, sample->tid, "<unknown>");
+	wakee = रेजिस्टर_pid(sched, pid, comm);
 
-	add_sched_event_wakeup(sched, waker, sample->time, wakee);
-	return 0;
-}
+	add_sched_event_wakeup(sched, waker, sample->समय, wakee);
+	वापस 0;
+पूर्ण
 
-static int replay_switch_event(struct perf_sched *sched,
-			       struct evsel *evsel,
-			       struct perf_sample *sample,
-			       struct machine *machine __maybe_unused)
-{
-	const char *prev_comm  = evsel__strval(evsel, sample, "prev_comm"),
+अटल पूर्णांक replay_चयन_event(काष्ठा perf_sched *sched,
+			       काष्ठा evsel *evsel,
+			       काष्ठा perf_sample *sample,
+			       काष्ठा machine *machine __maybe_unused)
+अणु
+	स्थिर अक्षर *prev_comm  = evsel__strval(evsel, sample, "prev_comm"),
 		   *next_comm  = evsel__strval(evsel, sample, "next_comm");
-	const u32 prev_pid = evsel__intval(evsel, sample, "prev_pid"),
-		  next_pid = evsel__intval(evsel, sample, "next_pid");
-	const u64 prev_state = evsel__intval(evsel, sample, "prev_state");
-	struct task_desc *prev, __maybe_unused *next;
-	u64 timestamp0, timestamp = sample->time;
-	int cpu = sample->cpu;
+	स्थिर u32 prev_pid = evsel__पूर्णांकval(evsel, sample, "prev_pid"),
+		  next_pid = evsel__पूर्णांकval(evsel, sample, "next_pid");
+	स्थिर u64 prev_state = evsel__पूर्णांकval(evsel, sample, "prev_state");
+	काष्ठा task_desc *prev, __maybe_unused *next;
+	u64 बारtamp0, बारtamp = sample->समय;
+	पूर्णांक cpu = sample->cpu;
 	s64 delta;
 
-	if (verbose > 0)
-		printf("sched_switch event %p\n", evsel);
+	अगर (verbose > 0)
+		म_लिखो("sched_switch event %p\n", evsel);
 
-	if (cpu >= MAX_CPUS || cpu < 0)
-		return 0;
+	अगर (cpu >= MAX_CPUS || cpu < 0)
+		वापस 0;
 
-	timestamp0 = sched->cpu_last_switched[cpu];
-	if (timestamp0)
-		delta = timestamp - timestamp0;
-	else
+	बारtamp0 = sched->cpu_last_चयनed[cpu];
+	अगर (बारtamp0)
+		delta = बारtamp - बारtamp0;
+	अन्यथा
 		delta = 0;
 
-	if (delta < 0) {
+	अगर (delta < 0) अणु
 		pr_err("hm, delta: %" PRIu64 " < 0 ?\n", delta);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	pr_debug(" ... switch from %s/%d to %s/%d [ran %" PRIu64 " nsecs]\n",
 		 prev_comm, prev_pid, next_comm, next_pid, delta);
 
-	prev = register_pid(sched, prev_pid, prev_comm);
-	next = register_pid(sched, next_pid, next_comm);
+	prev = रेजिस्टर_pid(sched, prev_pid, prev_comm);
+	next = रेजिस्टर_pid(sched, next_pid, next_comm);
 
-	sched->cpu_last_switched[cpu] = timestamp;
+	sched->cpu_last_चयनed[cpu] = बारtamp;
 
-	add_sched_event_run(sched, prev, timestamp, delta);
-	add_sched_event_sleep(sched, prev, timestamp, prev_state);
+	add_sched_event_run(sched, prev, बारtamp, delta);
+	add_sched_event_sleep(sched, prev, बारtamp, prev_state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int replay_fork_event(struct perf_sched *sched,
-			     union perf_event *event,
-			     struct machine *machine)
-{
-	struct thread *child, *parent;
+अटल पूर्णांक replay_विभाजन_event(काष्ठा perf_sched *sched,
+			     जोड़ perf_event *event,
+			     काष्ठा machine *machine)
+अणु
+	काष्ठा thपढ़ो *child, *parent;
 
-	child = machine__findnew_thread(machine, event->fork.pid,
-					event->fork.tid);
-	parent = machine__findnew_thread(machine, event->fork.ppid,
-					 event->fork.ptid);
+	child = machine__findnew_thपढ़ो(machine, event->विभाजन.pid,
+					event->विभाजन.tid);
+	parent = machine__findnew_thपढ़ो(machine, event->विभाजन.ppid,
+					 event->विभाजन.ptid);
 
-	if (child == NULL || parent == NULL) {
+	अगर (child == शून्य || parent == शून्य) अणु
 		pr_debug("thread does not exist on fork event: child %p, parent %p\n",
 				 child, parent);
-		goto out_put;
-	}
+		जाओ out_put;
+	पूर्ण
 
-	if (verbose > 0) {
-		printf("fork event\n");
-		printf("... parent: %s/%d\n", thread__comm_str(parent), parent->tid);
-		printf("...  child: %s/%d\n", thread__comm_str(child), child->tid);
-	}
+	अगर (verbose > 0) अणु
+		म_लिखो("fork event\n");
+		म_लिखो("... parent: %s/%d\n", thपढ़ो__comm_str(parent), parent->tid);
+		म_लिखो("...  child: %s/%d\n", thपढ़ो__comm_str(child), child->tid);
+	पूर्ण
 
-	register_pid(sched, parent->tid, thread__comm_str(parent));
-	register_pid(sched, child->tid, thread__comm_str(child));
+	रेजिस्टर_pid(sched, parent->tid, thपढ़ो__comm_str(parent));
+	रेजिस्टर_pid(sched, child->tid, thपढ़ो__comm_str(child));
 out_put:
-	thread__put(child);
-	thread__put(parent);
-	return 0;
-}
+	thपढ़ो__put(child);
+	thपढ़ो__put(parent);
+	वापस 0;
+पूर्ण
 
-struct sort_dimension {
-	const char		*name;
+काष्ठा sort_dimension अणु
+	स्थिर अक्षर		*name;
 	sort_fn_t		cmp;
-	struct list_head	list;
-};
+	काष्ठा list_head	list;
+पूर्ण;
 
 /*
- * handle runtime stats saved per thread
+ * handle runसमय stats saved per thपढ़ो
  */
-static struct thread_runtime *thread__init_runtime(struct thread *thread)
-{
-	struct thread_runtime *r;
+अटल काष्ठा thपढ़ो_runसमय *thपढ़ो__init_runसमय(काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा thपढ़ो_runसमय *r;
 
-	r = zalloc(sizeof(struct thread_runtime));
-	if (!r)
-		return NULL;
+	r = zalloc(माप(काष्ठा thपढ़ो_runसमय));
+	अगर (!r)
+		वापस शून्य;
 
 	init_stats(&r->run_stats);
-	thread__set_priv(thread, r);
+	thपढ़ो__set_priv(thपढ़ो, r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static struct thread_runtime *thread__get_runtime(struct thread *thread)
-{
-	struct thread_runtime *tr;
+अटल काष्ठा thपढ़ो_runसमय *thपढ़ो__get_runसमय(काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा thपढ़ो_runसमय *tr;
 
-	tr = thread__priv(thread);
-	if (tr == NULL) {
-		tr = thread__init_runtime(thread);
-		if (tr == NULL)
+	tr = thपढ़ो__priv(thपढ़ो);
+	अगर (tr == शून्य) अणु
+		tr = thपढ़ो__init_runसमय(thपढ़ो);
+		अगर (tr == शून्य)
 			pr_debug("Failed to malloc memory for runtime data.\n");
-	}
+	पूर्ण
 
-	return tr;
-}
+	वापस tr;
+पूर्ण
 
-static int
-thread_lat_cmp(struct list_head *list, struct work_atoms *l, struct work_atoms *r)
-{
-	struct sort_dimension *sort;
-	int ret = 0;
+अटल पूर्णांक
+thपढ़ो_lat_cmp(काष्ठा list_head *list, काष्ठा work_atoms *l, काष्ठा work_atoms *r)
+अणु
+	काष्ठा sort_dimension *sort;
+	पूर्णांक ret = 0;
 
 	BUG_ON(list_empty(list));
 
-	list_for_each_entry(sort, list, list) {
+	list_क्रम_each_entry(sort, list, list) अणु
 		ret = sort->cmp(l, r);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct work_atoms *
-thread_atoms_search(struct rb_root_cached *root, struct thread *thread,
-			 struct list_head *sort_list)
-{
-	struct rb_node *node = root->rb_root.rb_node;
-	struct work_atoms key = { .thread = thread };
+अटल काष्ठा work_atoms *
+thपढ़ो_atoms_search(काष्ठा rb_root_cached *root, काष्ठा thपढ़ो *thपढ़ो,
+			 काष्ठा list_head *sort_list)
+अणु
+	काष्ठा rb_node *node = root->rb_root.rb_node;
+	काष्ठा work_atoms key = अणु .thपढ़ो = thपढ़ो पूर्ण;
 
-	while (node) {
-		struct work_atoms *atoms;
-		int cmp;
+	जबतक (node) अणु
+		काष्ठा work_atoms *atoms;
+		पूर्णांक cmp;
 
-		atoms = container_of(node, struct work_atoms, node);
+		atoms = container_of(node, काष्ठा work_atoms, node);
 
-		cmp = thread_lat_cmp(sort_list, &key, atoms);
-		if (cmp > 0)
+		cmp = thपढ़ो_lat_cmp(sort_list, &key, atoms);
+		अगर (cmp > 0)
 			node = node->rb_left;
-		else if (cmp < 0)
+		अन्यथा अगर (cmp < 0)
 			node = node->rb_right;
-		else {
-			BUG_ON(thread != atoms->thread);
-			return atoms;
-		}
-	}
-	return NULL;
-}
+		अन्यथा अणु
+			BUG_ON(thपढ़ो != atoms->thपढ़ो);
+			वापस atoms;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void
-__thread_latency_insert(struct rb_root_cached *root, struct work_atoms *data,
-			 struct list_head *sort_list)
-{
-	struct rb_node **new = &(root->rb_root.rb_node), *parent = NULL;
-	bool leftmost = true;
+अटल व्योम
+__thपढ़ो_latency_insert(काष्ठा rb_root_cached *root, काष्ठा work_atoms *data,
+			 काष्ठा list_head *sort_list)
+अणु
+	काष्ठा rb_node **new = &(root->rb_root.rb_node), *parent = शून्य;
+	bool lefपंचांगost = true;
 
-	while (*new) {
-		struct work_atoms *this;
-		int cmp;
+	जबतक (*new) अणु
+		काष्ठा work_atoms *this;
+		पूर्णांक cmp;
 
-		this = container_of(*new, struct work_atoms, node);
+		this = container_of(*new, काष्ठा work_atoms, node);
 		parent = *new;
 
-		cmp = thread_lat_cmp(sort_list, data, this);
+		cmp = thपढ़ो_lat_cmp(sort_list, data, this);
 
-		if (cmp > 0)
+		अगर (cmp > 0)
 			new = &((*new)->rb_left);
-		else {
+		अन्यथा अणु
 			new = &((*new)->rb_right);
-			leftmost = false;
-		}
-	}
+			lefपंचांगost = false;
+		पूर्ण
+	पूर्ण
 
 	rb_link_node(&data->node, parent, new);
-	rb_insert_color_cached(&data->node, root, leftmost);
-}
+	rb_insert_color_cached(&data->node, root, lefपंचांगost);
+पूर्ण
 
-static int thread_atoms_insert(struct perf_sched *sched, struct thread *thread)
-{
-	struct work_atoms *atoms = zalloc(sizeof(*atoms));
-	if (!atoms) {
+अटल पूर्णांक thपढ़ो_atoms_insert(काष्ठा perf_sched *sched, काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा work_atoms *atoms = zalloc(माप(*atoms));
+	अगर (!atoms) अणु
 		pr_err("No memory at %s\n", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	atoms->thread = thread__get(thread);
+	atoms->thपढ़ो = thपढ़ो__get(thपढ़ो);
 	INIT_LIST_HEAD(&atoms->work_list);
-	__thread_latency_insert(&sched->atom_root, atoms, &sched->cmp_pid);
-	return 0;
-}
+	__thपढ़ो_latency_insert(&sched->atom_root, atoms, &sched->cmp_pid);
+	वापस 0;
+पूर्ण
 
-static char sched_out_state(u64 prev_state)
-{
-	const char *str = TASK_STATE_TO_CHAR_STR;
+अटल अक्षर sched_out_state(u64 prev_state)
+अणु
+	स्थिर अक्षर *str = TASK_STATE_TO_CHAR_STR;
 
-	return str[prev_state];
-}
+	वापस str[prev_state];
+पूर्ण
 
-static int
-add_sched_out_event(struct work_atoms *atoms,
-		    char run_state,
-		    u64 timestamp)
-{
-	struct work_atom *atom = zalloc(sizeof(*atom));
-	if (!atom) {
+अटल पूर्णांक
+add_sched_out_event(काष्ठा work_atoms *atoms,
+		    अक्षर run_state,
+		    u64 बारtamp)
+अणु
+	काष्ठा work_atom *atom = zalloc(माप(*atom));
+	अगर (!atom) अणु
 		pr_err("Non memory at %s", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	atom->sched_out_time = timestamp;
+	atom->sched_out_समय = बारtamp;
 
-	if (run_state == 'R') {
+	अगर (run_state == 'R') अणु
 		atom->state = THREAD_WAIT_CPU;
-		atom->wake_up_time = atom->sched_out_time;
-	}
+		atom->wake_up_समय = atom->sched_out_समय;
+	पूर्ण
 
 	list_add_tail(&atom->list, &atoms->work_list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-add_runtime_event(struct work_atoms *atoms, u64 delta,
-		  u64 timestamp __maybe_unused)
-{
-	struct work_atom *atom;
+अटल व्योम
+add_runसमय_event(काष्ठा work_atoms *atoms, u64 delta,
+		  u64 बारtamp __maybe_unused)
+अणु
+	काष्ठा work_atom *atom;
 
 	BUG_ON(list_empty(&atoms->work_list));
 
-	atom = list_entry(atoms->work_list.prev, struct work_atom, list);
+	atom = list_entry(atoms->work_list.prev, काष्ठा work_atom, list);
 
-	atom->runtime += delta;
-	atoms->total_runtime += delta;
-}
+	atom->runसमय += delta;
+	atoms->total_runसमय += delta;
+पूर्ण
 
-static void
-add_sched_in_event(struct work_atoms *atoms, u64 timestamp)
-{
-	struct work_atom *atom;
+अटल व्योम
+add_sched_in_event(काष्ठा work_atoms *atoms, u64 बारtamp)
+अणु
+	काष्ठा work_atom *atom;
 	u64 delta;
 
-	if (list_empty(&atoms->work_list))
-		return;
+	अगर (list_empty(&atoms->work_list))
+		वापस;
 
-	atom = list_entry(atoms->work_list.prev, struct work_atom, list);
+	atom = list_entry(atoms->work_list.prev, काष्ठा work_atom, list);
 
-	if (atom->state != THREAD_WAIT_CPU)
-		return;
+	अगर (atom->state != THREAD_WAIT_CPU)
+		वापस;
 
-	if (timestamp < atom->wake_up_time) {
+	अगर (बारtamp < atom->wake_up_समय) अणु
 		atom->state = THREAD_IGNORE;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	atom->state = THREAD_SCHED_IN;
-	atom->sched_in_time = timestamp;
+	atom->sched_in_समय = बारtamp;
 
-	delta = atom->sched_in_time - atom->wake_up_time;
+	delta = atom->sched_in_समय - atom->wake_up_समय;
 	atoms->total_lat += delta;
-	if (delta > atoms->max_lat) {
+	अगर (delta > atoms->max_lat) अणु
 		atoms->max_lat = delta;
-		atoms->max_lat_start = atom->wake_up_time;
-		atoms->max_lat_end = timestamp;
-	}
+		atoms->max_lat_start = atom->wake_up_समय;
+		atoms->max_lat_end = बारtamp;
+	पूर्ण
 	atoms->nb_atoms++;
-}
+पूर्ण
 
-static int latency_switch_event(struct perf_sched *sched,
-				struct evsel *evsel,
-				struct perf_sample *sample,
-				struct machine *machine)
-{
-	const u32 prev_pid = evsel__intval(evsel, sample, "prev_pid"),
-		  next_pid = evsel__intval(evsel, sample, "next_pid");
-	const u64 prev_state = evsel__intval(evsel, sample, "prev_state");
-	struct work_atoms *out_events, *in_events;
-	struct thread *sched_out, *sched_in;
-	u64 timestamp0, timestamp = sample->time;
-	int cpu = sample->cpu, err = -1;
+अटल पूर्णांक latency_चयन_event(काष्ठा perf_sched *sched,
+				काष्ठा evsel *evsel,
+				काष्ठा perf_sample *sample,
+				काष्ठा machine *machine)
+अणु
+	स्थिर u32 prev_pid = evsel__पूर्णांकval(evsel, sample, "prev_pid"),
+		  next_pid = evsel__पूर्णांकval(evsel, sample, "next_pid");
+	स्थिर u64 prev_state = evsel__पूर्णांकval(evsel, sample, "prev_state");
+	काष्ठा work_atoms *out_events, *in_events;
+	काष्ठा thपढ़ो *sched_out, *sched_in;
+	u64 बारtamp0, बारtamp = sample->समय;
+	पूर्णांक cpu = sample->cpu, err = -1;
 	s64 delta;
 
 	BUG_ON(cpu >= MAX_CPUS || cpu < 0);
 
-	timestamp0 = sched->cpu_last_switched[cpu];
-	sched->cpu_last_switched[cpu] = timestamp;
-	if (timestamp0)
-		delta = timestamp - timestamp0;
-	else
+	बारtamp0 = sched->cpu_last_चयनed[cpu];
+	sched->cpu_last_चयनed[cpu] = बारtamp;
+	अगर (बारtamp0)
+		delta = बारtamp - बारtamp0;
+	अन्यथा
 		delta = 0;
 
-	if (delta < 0) {
+	अगर (delta < 0) अणु
 		pr_err("hm, delta: %" PRIu64 " < 0 ?\n", delta);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	sched_out = machine__findnew_thread(machine, -1, prev_pid);
-	sched_in = machine__findnew_thread(machine, -1, next_pid);
-	if (sched_out == NULL || sched_in == NULL)
-		goto out_put;
+	sched_out = machine__findnew_thपढ़ो(machine, -1, prev_pid);
+	sched_in = machine__findnew_thपढ़ो(machine, -1, next_pid);
+	अगर (sched_out == शून्य || sched_in == शून्य)
+		जाओ out_put;
 
-	out_events = thread_atoms_search(&sched->atom_root, sched_out, &sched->cmp_pid);
-	if (!out_events) {
-		if (thread_atoms_insert(sched, sched_out))
-			goto out_put;
-		out_events = thread_atoms_search(&sched->atom_root, sched_out, &sched->cmp_pid);
-		if (!out_events) {
+	out_events = thपढ़ो_atoms_search(&sched->atom_root, sched_out, &sched->cmp_pid);
+	अगर (!out_events) अणु
+		अगर (thपढ़ो_atoms_insert(sched, sched_out))
+			जाओ out_put;
+		out_events = thपढ़ो_atoms_search(&sched->atom_root, sched_out, &sched->cmp_pid);
+		अगर (!out_events) अणु
 			pr_err("out-event: Internal tree error");
-			goto out_put;
-		}
-	}
-	if (add_sched_out_event(out_events, sched_out_state(prev_state), timestamp))
-		return -1;
+			जाओ out_put;
+		पूर्ण
+	पूर्ण
+	अगर (add_sched_out_event(out_events, sched_out_state(prev_state), बारtamp))
+		वापस -1;
 
-	in_events = thread_atoms_search(&sched->atom_root, sched_in, &sched->cmp_pid);
-	if (!in_events) {
-		if (thread_atoms_insert(sched, sched_in))
-			goto out_put;
-		in_events = thread_atoms_search(&sched->atom_root, sched_in, &sched->cmp_pid);
-		if (!in_events) {
+	in_events = thपढ़ो_atoms_search(&sched->atom_root, sched_in, &sched->cmp_pid);
+	अगर (!in_events) अणु
+		अगर (thपढ़ो_atoms_insert(sched, sched_in))
+			जाओ out_put;
+		in_events = thपढ़ो_atoms_search(&sched->atom_root, sched_in, &sched->cmp_pid);
+		अगर (!in_events) अणु
 			pr_err("in-event: Internal tree error");
-			goto out_put;
-		}
+			जाओ out_put;
+		पूर्ण
 		/*
 		 * Take came in we have not heard about yet,
 		 * add in an initial atom in runnable state:
 		 */
-		if (add_sched_out_event(in_events, 'R', timestamp))
-			goto out_put;
-	}
-	add_sched_in_event(in_events, timestamp);
+		अगर (add_sched_out_event(in_events, 'R', बारtamp))
+			जाओ out_put;
+	पूर्ण
+	add_sched_in_event(in_events, बारtamp);
 	err = 0;
 out_put:
-	thread__put(sched_out);
-	thread__put(sched_in);
-	return err;
-}
+	thपढ़ो__put(sched_out);
+	thपढ़ो__put(sched_in);
+	वापस err;
+पूर्ण
 
-static int latency_runtime_event(struct perf_sched *sched,
-				 struct evsel *evsel,
-				 struct perf_sample *sample,
-				 struct machine *machine)
-{
-	const u32 pid	   = evsel__intval(evsel, sample, "pid");
-	const u64 runtime  = evsel__intval(evsel, sample, "runtime");
-	struct thread *thread = machine__findnew_thread(machine, -1, pid);
-	struct work_atoms *atoms = thread_atoms_search(&sched->atom_root, thread, &sched->cmp_pid);
-	u64 timestamp = sample->time;
-	int cpu = sample->cpu, err = -1;
+अटल पूर्णांक latency_runसमय_event(काष्ठा perf_sched *sched,
+				 काष्ठा evsel *evsel,
+				 काष्ठा perf_sample *sample,
+				 काष्ठा machine *machine)
+अणु
+	स्थिर u32 pid	   = evsel__पूर्णांकval(evsel, sample, "pid");
+	स्थिर u64 runसमय  = evsel__पूर्णांकval(evsel, sample, "runtime");
+	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(machine, -1, pid);
+	काष्ठा work_atoms *atoms = thपढ़ो_atoms_search(&sched->atom_root, thपढ़ो, &sched->cmp_pid);
+	u64 बारtamp = sample->समय;
+	पूर्णांक cpu = sample->cpu, err = -1;
 
-	if (thread == NULL)
-		return -1;
+	अगर (thपढ़ो == शून्य)
+		वापस -1;
 
 	BUG_ON(cpu >= MAX_CPUS || cpu < 0);
-	if (!atoms) {
-		if (thread_atoms_insert(sched, thread))
-			goto out_put;
-		atoms = thread_atoms_search(&sched->atom_root, thread, &sched->cmp_pid);
-		if (!atoms) {
+	अगर (!atoms) अणु
+		अगर (thपढ़ो_atoms_insert(sched, thपढ़ो))
+			जाओ out_put;
+		atoms = thपढ़ो_atoms_search(&sched->atom_root, thपढ़ो, &sched->cmp_pid);
+		अगर (!atoms) अणु
 			pr_err("in-event: Internal tree error");
-			goto out_put;
-		}
-		if (add_sched_out_event(atoms, 'R', timestamp))
-			goto out_put;
-	}
+			जाओ out_put;
+		पूर्ण
+		अगर (add_sched_out_event(atoms, 'R', बारtamp))
+			जाओ out_put;
+	पूर्ण
 
-	add_runtime_event(atoms, runtime, timestamp);
+	add_runसमय_event(atoms, runसमय, बारtamp);
 	err = 0;
 out_put:
-	thread__put(thread);
-	return err;
-}
+	thपढ़ो__put(thपढ़ो);
+	वापस err;
+पूर्ण
 
-static int latency_wakeup_event(struct perf_sched *sched,
-				struct evsel *evsel,
-				struct perf_sample *sample,
-				struct machine *machine)
-{
-	const u32 pid	  = evsel__intval(evsel, sample, "pid");
-	struct work_atoms *atoms;
-	struct work_atom *atom;
-	struct thread *wakee;
-	u64 timestamp = sample->time;
-	int err = -1;
+अटल पूर्णांक latency_wakeup_event(काष्ठा perf_sched *sched,
+				काष्ठा evsel *evsel,
+				काष्ठा perf_sample *sample,
+				काष्ठा machine *machine)
+अणु
+	स्थिर u32 pid	  = evsel__पूर्णांकval(evsel, sample, "pid");
+	काष्ठा work_atoms *atoms;
+	काष्ठा work_atom *atom;
+	काष्ठा thपढ़ो *wakee;
+	u64 बारtamp = sample->समय;
+	पूर्णांक err = -1;
 
-	wakee = machine__findnew_thread(machine, -1, pid);
-	if (wakee == NULL)
-		return -1;
-	atoms = thread_atoms_search(&sched->atom_root, wakee, &sched->cmp_pid);
-	if (!atoms) {
-		if (thread_atoms_insert(sched, wakee))
-			goto out_put;
-		atoms = thread_atoms_search(&sched->atom_root, wakee, &sched->cmp_pid);
-		if (!atoms) {
+	wakee = machine__findnew_thपढ़ो(machine, -1, pid);
+	अगर (wakee == शून्य)
+		वापस -1;
+	atoms = thपढ़ो_atoms_search(&sched->atom_root, wakee, &sched->cmp_pid);
+	अगर (!atoms) अणु
+		अगर (thपढ़ो_atoms_insert(sched, wakee))
+			जाओ out_put;
+		atoms = thपढ़ो_atoms_search(&sched->atom_root, wakee, &sched->cmp_pid);
+		अगर (!atoms) अणु
 			pr_err("wakeup-event: Internal tree error");
-			goto out_put;
-		}
-		if (add_sched_out_event(atoms, 'S', timestamp))
-			goto out_put;
-	}
+			जाओ out_put;
+		पूर्ण
+		अगर (add_sched_out_event(atoms, 'S', बारtamp))
+			जाओ out_put;
+	पूर्ण
 
 	BUG_ON(list_empty(&atoms->work_list));
 
-	atom = list_entry(atoms->work_list.prev, struct work_atom, list);
+	atom = list_entry(atoms->work_list.prev, काष्ठा work_atom, list);
 
 	/*
-	 * As we do not guarantee the wakeup event happens when
+	 * As we करो not guarantee the wakeup event happens when
 	 * task is out of run queue, also may happen when task is
 	 * on run queue and wakeup only change ->state to TASK_RUNNING,
-	 * then we should not set the ->wake_up_time when wake up a
+	 * then we should not set the ->wake_up_समय when wake up a
 	 * task which is on run queue.
 	 *
-	 * You WILL be missing events if you've recorded only
-	 * one CPU, or are only looking at only one, so don't
-	 * skip in this case.
+	 * You WILL be missing events अगर you've recorded only
+	 * one CPU, or are only looking at only one, so करोn't
+	 * skip in this हाल.
 	 */
-	if (sched->profile_cpu == -1 && atom->state != THREAD_SLEEPING)
-		goto out_ok;
+	अगर (sched->profile_cpu == -1 && atom->state != THREAD_SLEEPING)
+		जाओ out_ok;
 
-	sched->nr_timestamps++;
-	if (atom->sched_out_time > timestamp) {
-		sched->nr_unordered_timestamps++;
-		goto out_ok;
-	}
+	sched->nr_बारtamps++;
+	अगर (atom->sched_out_समय > बारtamp) अणु
+		sched->nr_unordered_बारtamps++;
+		जाओ out_ok;
+	पूर्ण
 
 	atom->state = THREAD_WAIT_CPU;
-	atom->wake_up_time = timestamp;
+	atom->wake_up_समय = बारtamp;
 out_ok:
 	err = 0;
 out_put:
-	thread__put(wakee);
-	return err;
-}
+	thपढ़ो__put(wakee);
+	वापस err;
+पूर्ण
 
-static int latency_migrate_task_event(struct perf_sched *sched,
-				      struct evsel *evsel,
-				      struct perf_sample *sample,
-				      struct machine *machine)
-{
-	const u32 pid = evsel__intval(evsel, sample, "pid");
-	u64 timestamp = sample->time;
-	struct work_atoms *atoms;
-	struct work_atom *atom;
-	struct thread *migrant;
-	int err = -1;
+अटल पूर्णांक latency_migrate_task_event(काष्ठा perf_sched *sched,
+				      काष्ठा evsel *evsel,
+				      काष्ठा perf_sample *sample,
+				      काष्ठा machine *machine)
+अणु
+	स्थिर u32 pid = evsel__पूर्णांकval(evsel, sample, "pid");
+	u64 बारtamp = sample->समय;
+	काष्ठा work_atoms *atoms;
+	काष्ठा work_atom *atom;
+	काष्ठा thपढ़ो *migrant;
+	पूर्णांक err = -1;
 
 	/*
 	 * Only need to worry about migration when profiling one CPU.
 	 */
-	if (sched->profile_cpu == -1)
-		return 0;
+	अगर (sched->profile_cpu == -1)
+		वापस 0;
 
-	migrant = machine__findnew_thread(machine, -1, pid);
-	if (migrant == NULL)
-		return -1;
-	atoms = thread_atoms_search(&sched->atom_root, migrant, &sched->cmp_pid);
-	if (!atoms) {
-		if (thread_atoms_insert(sched, migrant))
-			goto out_put;
-		register_pid(sched, migrant->tid, thread__comm_str(migrant));
-		atoms = thread_atoms_search(&sched->atom_root, migrant, &sched->cmp_pid);
-		if (!atoms) {
+	migrant = machine__findnew_thपढ़ो(machine, -1, pid);
+	अगर (migrant == शून्य)
+		वापस -1;
+	atoms = thपढ़ो_atoms_search(&sched->atom_root, migrant, &sched->cmp_pid);
+	अगर (!atoms) अणु
+		अगर (thपढ़ो_atoms_insert(sched, migrant))
+			जाओ out_put;
+		रेजिस्टर_pid(sched, migrant->tid, thपढ़ो__comm_str(migrant));
+		atoms = thपढ़ो_atoms_search(&sched->atom_root, migrant, &sched->cmp_pid);
+		अगर (!atoms) अणु
 			pr_err("migration-event: Internal tree error");
-			goto out_put;
-		}
-		if (add_sched_out_event(atoms, 'R', timestamp))
-			goto out_put;
-	}
+			जाओ out_put;
+		पूर्ण
+		अगर (add_sched_out_event(atoms, 'R', बारtamp))
+			जाओ out_put;
+	पूर्ण
 
 	BUG_ON(list_empty(&atoms->work_list));
 
-	atom = list_entry(atoms->work_list.prev, struct work_atom, list);
-	atom->sched_in_time = atom->sched_out_time = atom->wake_up_time = timestamp;
+	atom = list_entry(atoms->work_list.prev, काष्ठा work_atom, list);
+	atom->sched_in_समय = atom->sched_out_समय = atom->wake_up_समय = बारtamp;
 
-	sched->nr_timestamps++;
+	sched->nr_बारtamps++;
 
-	if (atom->sched_out_time > timestamp)
-		sched->nr_unordered_timestamps++;
+	अगर (atom->sched_out_समय > बारtamp)
+		sched->nr_unordered_बारtamps++;
 	err = 0;
 out_put:
-	thread__put(migrant);
-	return err;
-}
+	thपढ़ो__put(migrant);
+	वापस err;
+पूर्ण
 
-static void output_lat_thread(struct perf_sched *sched, struct work_atoms *work_list)
-{
-	int i;
-	int ret;
+अटल व्योम output_lat_thपढ़ो(काष्ठा perf_sched *sched, काष्ठा work_atoms *work_list)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
 	u64 avg;
-	char max_lat_start[32], max_lat_end[32];
+	अक्षर max_lat_start[32], max_lat_end[32];
 
-	if (!work_list->nb_atoms)
-		return;
+	अगर (!work_list->nb_atoms)
+		वापस;
 	/*
-	 * Ignore idle threads:
+	 * Ignore idle thपढ़ोs:
 	 */
-	if (!strcmp(thread__comm_str(work_list->thread), "swapper"))
-		return;
+	अगर (!म_भेद(thपढ़ो__comm_str(work_list->thपढ़ो), "swapper"))
+		वापस;
 
-	sched->all_runtime += work_list->total_runtime;
+	sched->all_runसमय += work_list->total_runसमय;
 	sched->all_count   += work_list->nb_atoms;
 
-	if (work_list->num_merged > 1)
-		ret = printf("  %s:(%d) ", thread__comm_str(work_list->thread), work_list->num_merged);
-	else
-		ret = printf("  %s:%d ", thread__comm_str(work_list->thread), work_list->thread->tid);
+	अगर (work_list->num_merged > 1)
+		ret = म_लिखो("  %s:(%d) ", thपढ़ो__comm_str(work_list->thपढ़ो), work_list->num_merged);
+	अन्यथा
+		ret = म_लिखो("  %s:%d ", thपढ़ो__comm_str(work_list->thपढ़ो), work_list->thपढ़ो->tid);
 
-	for (i = 0; i < 24 - ret; i++)
-		printf(" ");
+	क्रम (i = 0; i < 24 - ret; i++)
+		म_लिखो(" ");
 
 	avg = work_list->total_lat / work_list->nb_atoms;
-	timestamp__scnprintf_usec(work_list->max_lat_start, max_lat_start, sizeof(max_lat_start));
-	timestamp__scnprintf_usec(work_list->max_lat_end, max_lat_end, sizeof(max_lat_end));
+	बारtamp__scnम_लिखो_usec(work_list->max_lat_start, max_lat_start, माप(max_lat_start));
+	बारtamp__scnम_लिखो_usec(work_list->max_lat_end, max_lat_end, माप(max_lat_end));
 
-	printf("|%11.3f ms |%9" PRIu64 " | avg:%8.3f ms | max:%8.3f ms | max start: %12s s | max end: %12s s\n",
-	      (double)work_list->total_runtime / NSEC_PER_MSEC,
-		 work_list->nb_atoms, (double)avg / NSEC_PER_MSEC,
-		 (double)work_list->max_lat / NSEC_PER_MSEC,
+	म_लिखो("|%11.3f ms |%9" PRIu64 " | avg:%8.3f ms | max:%8.3f ms | max start: %12s s | max end: %12s s\n",
+	      (द्विगुन)work_list->total_runसमय / NSEC_PER_MSEC,
+		 work_list->nb_atoms, (द्विगुन)avg / NSEC_PER_MSEC,
+		 (द्विगुन)work_list->max_lat / NSEC_PER_MSEC,
 		 max_lat_start, max_lat_end);
-}
+पूर्ण
 
-static int pid_cmp(struct work_atoms *l, struct work_atoms *r)
-{
-	if (l->thread == r->thread)
-		return 0;
-	if (l->thread->tid < r->thread->tid)
-		return -1;
-	if (l->thread->tid > r->thread->tid)
-		return 1;
-	return (int)(l->thread - r->thread);
-}
+अटल पूर्णांक pid_cmp(काष्ठा work_atoms *l, काष्ठा work_atoms *r)
+अणु
+	अगर (l->thपढ़ो == r->thपढ़ो)
+		वापस 0;
+	अगर (l->thपढ़ो->tid < r->thपढ़ो->tid)
+		वापस -1;
+	अगर (l->thपढ़ो->tid > r->thपढ़ो->tid)
+		वापस 1;
+	वापस (पूर्णांक)(l->thपढ़ो - r->thपढ़ो);
+पूर्ण
 
-static int avg_cmp(struct work_atoms *l, struct work_atoms *r)
-{
+अटल पूर्णांक avg_cmp(काष्ठा work_atoms *l, काष्ठा work_atoms *r)
+अणु
 	u64 avgl, avgr;
 
-	if (!l->nb_atoms)
-		return -1;
+	अगर (!l->nb_atoms)
+		वापस -1;
 
-	if (!r->nb_atoms)
-		return 1;
+	अगर (!r->nb_atoms)
+		वापस 1;
 
 	avgl = l->total_lat / l->nb_atoms;
 	avgr = r->total_lat / r->nb_atoms;
 
-	if (avgl < avgr)
-		return -1;
-	if (avgl > avgr)
-		return 1;
+	अगर (avgl < avgr)
+		वापस -1;
+	अगर (avgl > avgr)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max_cmp(struct work_atoms *l, struct work_atoms *r)
-{
-	if (l->max_lat < r->max_lat)
-		return -1;
-	if (l->max_lat > r->max_lat)
-		return 1;
+अटल पूर्णांक max_cmp(काष्ठा work_atoms *l, काष्ठा work_atoms *r)
+अणु
+	अगर (l->max_lat < r->max_lat)
+		वापस -1;
+	अगर (l->max_lat > r->max_lat)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int switch_cmp(struct work_atoms *l, struct work_atoms *r)
-{
-	if (l->nb_atoms < r->nb_atoms)
-		return -1;
-	if (l->nb_atoms > r->nb_atoms)
-		return 1;
+अटल पूर्णांक चयन_cmp(काष्ठा work_atoms *l, काष्ठा work_atoms *r)
+अणु
+	अगर (l->nb_atoms < r->nb_atoms)
+		वापस -1;
+	अगर (l->nb_atoms > r->nb_atoms)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int runtime_cmp(struct work_atoms *l, struct work_atoms *r)
-{
-	if (l->total_runtime < r->total_runtime)
-		return -1;
-	if (l->total_runtime > r->total_runtime)
-		return 1;
+अटल पूर्णांक runसमय_cmp(काष्ठा work_atoms *l, काष्ठा work_atoms *r)
+अणु
+	अगर (l->total_runसमय < r->total_runसमय)
+		वापस -1;
+	अगर (l->total_runसमय > r->total_runसमय)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sort_dimension__add(const char *tok, struct list_head *list)
-{
-	size_t i;
-	static struct sort_dimension avg_sort_dimension = {
+अटल पूर्णांक sort_dimension__add(स्थिर अक्षर *tok, काष्ठा list_head *list)
+अणु
+	माप_प्रकार i;
+	अटल काष्ठा sort_dimension avg_sort_dimension = अणु
 		.name = "avg",
 		.cmp  = avg_cmp,
-	};
-	static struct sort_dimension max_sort_dimension = {
+	पूर्ण;
+	अटल काष्ठा sort_dimension max_sort_dimension = अणु
 		.name = "max",
 		.cmp  = max_cmp,
-	};
-	static struct sort_dimension pid_sort_dimension = {
+	पूर्ण;
+	अटल काष्ठा sort_dimension pid_sort_dimension = अणु
 		.name = "pid",
 		.cmp  = pid_cmp,
-	};
-	static struct sort_dimension runtime_sort_dimension = {
+	पूर्ण;
+	अटल काष्ठा sort_dimension runसमय_sort_dimension = अणु
 		.name = "runtime",
-		.cmp  = runtime_cmp,
-	};
-	static struct sort_dimension switch_sort_dimension = {
+		.cmp  = runसमय_cmp,
+	पूर्ण;
+	अटल काष्ठा sort_dimension चयन_sort_dimension = अणु
 		.name = "switch",
-		.cmp  = switch_cmp,
-	};
-	struct sort_dimension *available_sorts[] = {
+		.cmp  = चयन_cmp,
+	पूर्ण;
+	काष्ठा sort_dimension *available_sorts[] = अणु
 		&pid_sort_dimension,
 		&avg_sort_dimension,
 		&max_sort_dimension,
-		&switch_sort_dimension,
-		&runtime_sort_dimension,
-	};
+		&चयन_sort_dimension,
+		&runसमय_sort_dimension,
+	पूर्ण;
 
-	for (i = 0; i < ARRAY_SIZE(available_sorts); i++) {
-		if (!strcmp(available_sorts[i]->name, tok)) {
+	क्रम (i = 0; i < ARRAY_SIZE(available_sorts); i++) अणु
+		अगर (!म_भेद(available_sorts[i]->name, tok)) अणु
 			list_add_tail(&available_sorts[i]->list, list);
 
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void perf_sched__sort_lat(struct perf_sched *sched)
-{
-	struct rb_node *node;
-	struct rb_root_cached *root = &sched->atom_root;
+अटल व्योम perf_sched__sort_lat(काष्ठा perf_sched *sched)
+अणु
+	काष्ठा rb_node *node;
+	काष्ठा rb_root_cached *root = &sched->atom_root;
 again:
-	for (;;) {
-		struct work_atoms *data;
+	क्रम (;;) अणु
+		काष्ठा work_atoms *data;
 		node = rb_first_cached(root);
-		if (!node)
-			break;
+		अगर (!node)
+			अवरोध;
 
 		rb_erase_cached(node, root);
-		data = rb_entry(node, struct work_atoms, node);
-		__thread_latency_insert(&sched->sorted_atom_root, data, &sched->sort_list);
-	}
-	if (root == &sched->atom_root) {
+		data = rb_entry(node, काष्ठा work_atoms, node);
+		__thपढ़ो_latency_insert(&sched->sorted_atom_root, data, &sched->sort_list);
+	पूर्ण
+	अगर (root == &sched->atom_root) अणु
 		root = &sched->merged_atom_root;
-		goto again;
-	}
-}
+		जाओ again;
+	पूर्ण
+पूर्ण
 
-static int process_sched_wakeup_event(struct perf_tool *tool,
-				      struct evsel *evsel,
-				      struct perf_sample *sample,
-				      struct machine *machine)
-{
-	struct perf_sched *sched = container_of(tool, struct perf_sched, tool);
+अटल पूर्णांक process_sched_wakeup_event(काष्ठा perf_tool *tool,
+				      काष्ठा evsel *evsel,
+				      काष्ठा perf_sample *sample,
+				      काष्ठा machine *machine)
+अणु
+	काष्ठा perf_sched *sched = container_of(tool, काष्ठा perf_sched, tool);
 
-	if (sched->tp_handler->wakeup_event)
-		return sched->tp_handler->wakeup_event(sched, evsel, sample, machine);
+	अगर (sched->tp_handler->wakeup_event)
+		वापस sched->tp_handler->wakeup_event(sched, evsel, sample, machine);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-union map_priv {
-	void	*ptr;
+जोड़ map_priv अणु
+	व्योम	*ptr;
 	bool	 color;
-};
+पूर्ण;
 
-static bool thread__has_color(struct thread *thread)
-{
-	union map_priv priv = {
-		.ptr = thread__priv(thread),
-	};
+अटल bool thपढ़ो__has_color(काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	जोड़ map_priv priv = अणु
+		.ptr = thपढ़ो__priv(thपढ़ो),
+	पूर्ण;
 
-	return priv.color;
-}
+	वापस priv.color;
+पूर्ण
 
-static struct thread*
-map__findnew_thread(struct perf_sched *sched, struct machine *machine, pid_t pid, pid_t tid)
-{
-	struct thread *thread = machine__findnew_thread(machine, pid, tid);
-	union map_priv priv = {
+अटल काष्ठा thपढ़ो*
+map__findnew_thपढ़ो(काष्ठा perf_sched *sched, काष्ठा machine *machine, pid_t pid, pid_t tid)
+अणु
+	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(machine, pid, tid);
+	जोड़ map_priv priv = अणु
 		.color = false,
-	};
+	पूर्ण;
 
-	if (!sched->map.color_pids || !thread || thread__priv(thread))
-		return thread;
+	अगर (!sched->map.color_pids || !thपढ़ो || thपढ़ो__priv(thपढ़ो))
+		वापस thपढ़ो;
 
-	if (thread_map__has(sched->map.color_pids, tid))
+	अगर (thपढ़ो_map__has(sched->map.color_pids, tid))
 		priv.color = true;
 
-	thread__set_priv(thread, priv.ptr);
-	return thread;
-}
+	thपढ़ो__set_priv(thपढ़ो, priv.ptr);
+	वापस thपढ़ो;
+पूर्ण
 
-static int map_switch_event(struct perf_sched *sched, struct evsel *evsel,
-			    struct perf_sample *sample, struct machine *machine)
-{
-	const u32 next_pid = evsel__intval(evsel, sample, "next_pid");
-	struct thread *sched_in;
-	struct thread_runtime *tr;
-	int new_shortname;
-	u64 timestamp0, timestamp = sample->time;
+अटल पूर्णांक map_चयन_event(काष्ठा perf_sched *sched, काष्ठा evsel *evsel,
+			    काष्ठा perf_sample *sample, काष्ठा machine *machine)
+अणु
+	स्थिर u32 next_pid = evsel__पूर्णांकval(evsel, sample, "next_pid");
+	काष्ठा thपढ़ो *sched_in;
+	काष्ठा thपढ़ो_runसमय *tr;
+	पूर्णांक new_लघुname;
+	u64 बारtamp0, बारtamp = sample->समय;
 	s64 delta;
-	int i, this_cpu = sample->cpu;
-	int cpus_nr;
+	पूर्णांक i, this_cpu = sample->cpu;
+	पूर्णांक cpus_nr;
 	bool new_cpu = false;
-	const char *color = PERF_COLOR_NORMAL;
-	char stimestamp[32];
+	स्थिर अक्षर *color = PERF_COLOR_NORMAL;
+	अक्षर sबारtamp[32];
 
 	BUG_ON(this_cpu >= MAX_CPUS || this_cpu < 0);
 
-	if (this_cpu > sched->max_cpu)
+	अगर (this_cpu > sched->max_cpu)
 		sched->max_cpu = this_cpu;
 
-	if (sched->map.comp) {
-		cpus_nr = bitmap_weight(sched->map.comp_cpus_mask, MAX_CPUS);
-		if (!test_and_set_bit(this_cpu, sched->map.comp_cpus_mask)) {
+	अगर (sched->map.comp) अणु
+		cpus_nr = biपंचांगap_weight(sched->map.comp_cpus_mask, MAX_CPUS);
+		अगर (!test_and_set_bit(this_cpu, sched->map.comp_cpus_mask)) अणु
 			sched->map.comp_cpus[cpus_nr++] = this_cpu;
 			new_cpu = true;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		cpus_nr = sched->max_cpu;
 
-	timestamp0 = sched->cpu_last_switched[this_cpu];
-	sched->cpu_last_switched[this_cpu] = timestamp;
-	if (timestamp0)
-		delta = timestamp - timestamp0;
-	else
+	बारtamp0 = sched->cpu_last_चयनed[this_cpu];
+	sched->cpu_last_चयनed[this_cpu] = बारtamp;
+	अगर (बारtamp0)
+		delta = बारtamp - बारtamp0;
+	अन्यथा
 		delta = 0;
 
-	if (delta < 0) {
+	अगर (delta < 0) अणु
 		pr_err("hm, delta: %" PRIu64 " < 0 ?\n", delta);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	sched_in = map__findnew_thread(sched, machine, -1, next_pid);
-	if (sched_in == NULL)
-		return -1;
+	sched_in = map__findnew_thपढ़ो(sched, machine, -1, next_pid);
+	अगर (sched_in == शून्य)
+		वापस -1;
 
-	tr = thread__get_runtime(sched_in);
-	if (tr == NULL) {
-		thread__put(sched_in);
-		return -1;
-	}
+	tr = thपढ़ो__get_runसमय(sched_in);
+	अगर (tr == शून्य) अणु
+		thपढ़ो__put(sched_in);
+		वापस -1;
+	पूर्ण
 
-	sched->curr_thread[this_cpu] = thread__get(sched_in);
+	sched->curr_thपढ़ो[this_cpu] = thपढ़ो__get(sched_in);
 
-	printf("  ");
+	म_लिखो("  ");
 
-	new_shortname = 0;
-	if (!tr->shortname[0]) {
-		if (!strcmp(thread__comm_str(sched_in), "swapper")) {
+	new_लघुname = 0;
+	अगर (!tr->लघुname[0]) अणु
+		अगर (!म_भेद(thपढ़ो__comm_str(sched_in), "swapper")) अणु
 			/*
-			 * Don't allocate a letter-number for swapper:0
-			 * as a shortname. Instead, we use '.' for it.
+			 * Don't allocate a letter-number क्रम swapper:0
+			 * as a लघुname. Instead, we use '.' क्रम it.
 			 */
-			tr->shortname[0] = '.';
-			tr->shortname[1] = ' ';
-		} else {
-			tr->shortname[0] = sched->next_shortname1;
-			tr->shortname[1] = sched->next_shortname2;
+			tr->लघुname[0] = '.';
+			tr->लघुname[1] = ' ';
+		पूर्ण अन्यथा अणु
+			tr->लघुname[0] = sched->next_लघुname1;
+			tr->लघुname[1] = sched->next_लघुname2;
 
-			if (sched->next_shortname1 < 'Z') {
-				sched->next_shortname1++;
-			} else {
-				sched->next_shortname1 = 'A';
-				if (sched->next_shortname2 < '9')
-					sched->next_shortname2++;
-				else
-					sched->next_shortname2 = '0';
-			}
-		}
-		new_shortname = 1;
-	}
+			अगर (sched->next_लघुname1 < 'Z') अणु
+				sched->next_लघुname1++;
+			पूर्ण अन्यथा अणु
+				sched->next_लघुname1 = 'A';
+				अगर (sched->next_लघुname2 < '9')
+					sched->next_लघुname2++;
+				अन्यथा
+					sched->next_लघुname2 = '0';
+			पूर्ण
+		पूर्ण
+		new_लघुname = 1;
+	पूर्ण
 
-	for (i = 0; i < cpus_nr; i++) {
-		int cpu = sched->map.comp ? sched->map.comp_cpus[i] : i;
-		struct thread *curr_thread = sched->curr_thread[cpu];
-		struct thread_runtime *curr_tr;
-		const char *pid_color = color;
-		const char *cpu_color = color;
+	क्रम (i = 0; i < cpus_nr; i++) अणु
+		पूर्णांक cpu = sched->map.comp ? sched->map.comp_cpus[i] : i;
+		काष्ठा thपढ़ो *curr_thपढ़ो = sched->curr_thपढ़ो[cpu];
+		काष्ठा thपढ़ो_runसमय *curr_tr;
+		स्थिर अक्षर *pid_color = color;
+		स्थिर अक्षर *cpu_color = color;
 
-		if (curr_thread && thread__has_color(curr_thread))
+		अगर (curr_thपढ़ो && thपढ़ो__has_color(curr_thपढ़ो))
 			pid_color = COLOR_PIDS;
 
-		if (sched->map.cpus && !cpu_map__has(sched->map.cpus, cpu))
-			continue;
+		अगर (sched->map.cpus && !cpu_map__has(sched->map.cpus, cpu))
+			जारी;
 
-		if (sched->map.color_cpus && cpu_map__has(sched->map.color_cpus, cpu))
+		अगर (sched->map.color_cpus && cpu_map__has(sched->map.color_cpus, cpu))
 			cpu_color = COLOR_CPUS;
 
-		if (cpu != this_cpu)
-			color_fprintf(stdout, color, " ");
-		else
-			color_fprintf(stdout, cpu_color, "*");
+		अगर (cpu != this_cpu)
+			color_ख_लिखो(मानक_निकास, color, " ");
+		अन्यथा
+			color_ख_लिखो(मानक_निकास, cpu_color, "*");
 
-		if (sched->curr_thread[cpu]) {
-			curr_tr = thread__get_runtime(sched->curr_thread[cpu]);
-			if (curr_tr == NULL) {
-				thread__put(sched_in);
-				return -1;
-			}
-			color_fprintf(stdout, pid_color, "%2s ", curr_tr->shortname);
-		} else
-			color_fprintf(stdout, color, "   ");
-	}
+		अगर (sched->curr_thपढ़ो[cpu]) अणु
+			curr_tr = thपढ़ो__get_runसमय(sched->curr_thपढ़ो[cpu]);
+			अगर (curr_tr == शून्य) अणु
+				thपढ़ो__put(sched_in);
+				वापस -1;
+			पूर्ण
+			color_ख_लिखो(मानक_निकास, pid_color, "%2s ", curr_tr->लघुname);
+		पूर्ण अन्यथा
+			color_ख_लिखो(मानक_निकास, color, "   ");
+	पूर्ण
 
-	if (sched->map.cpus && !cpu_map__has(sched->map.cpus, this_cpu))
-		goto out;
+	अगर (sched->map.cpus && !cpu_map__has(sched->map.cpus, this_cpu))
+		जाओ out;
 
-	timestamp__scnprintf_usec(timestamp, stimestamp, sizeof(stimestamp));
-	color_fprintf(stdout, color, "  %12s secs ", stimestamp);
-	if (new_shortname || tr->comm_changed || (verbose > 0 && sched_in->tid)) {
-		const char *pid_color = color;
+	बारtamp__scnम_लिखो_usec(बारtamp, sबारtamp, माप(sबारtamp));
+	color_ख_लिखो(मानक_निकास, color, "  %12s secs ", sबारtamp);
+	अगर (new_लघुname || tr->comm_changed || (verbose > 0 && sched_in->tid)) अणु
+		स्थिर अक्षर *pid_color = color;
 
-		if (thread__has_color(sched_in))
+		अगर (thपढ़ो__has_color(sched_in))
 			pid_color = COLOR_PIDS;
 
-		color_fprintf(stdout, pid_color, "%s => %s:%d",
-		       tr->shortname, thread__comm_str(sched_in), sched_in->tid);
+		color_ख_लिखो(मानक_निकास, pid_color, "%s => %s:%d",
+		       tr->लघुname, thपढ़ो__comm_str(sched_in), sched_in->tid);
 		tr->comm_changed = false;
-	}
+	पूर्ण
 
-	if (sched->map.comp && new_cpu)
-		color_fprintf(stdout, color, " (CPU %d)", this_cpu);
+	अगर (sched->map.comp && new_cpu)
+		color_ख_लिखो(मानक_निकास, color, " (CPU %d)", this_cpu);
 
 out:
-	color_fprintf(stdout, color, "\n");
+	color_ख_लिखो(मानक_निकास, color, "\n");
 
-	thread__put(sched_in);
+	thपढ़ो__put(sched_in);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_sched_switch_event(struct perf_tool *tool,
-				      struct evsel *evsel,
-				      struct perf_sample *sample,
-				      struct machine *machine)
-{
-	struct perf_sched *sched = container_of(tool, struct perf_sched, tool);
-	int this_cpu = sample->cpu, err = 0;
-	u32 prev_pid = evsel__intval(evsel, sample, "prev_pid"),
-	    next_pid = evsel__intval(evsel, sample, "next_pid");
+अटल पूर्णांक process_sched_चयन_event(काष्ठा perf_tool *tool,
+				      काष्ठा evsel *evsel,
+				      काष्ठा perf_sample *sample,
+				      काष्ठा machine *machine)
+अणु
+	काष्ठा perf_sched *sched = container_of(tool, काष्ठा perf_sched, tool);
+	पूर्णांक this_cpu = sample->cpu, err = 0;
+	u32 prev_pid = evsel__पूर्णांकval(evsel, sample, "prev_pid"),
+	    next_pid = evsel__पूर्णांकval(evsel, sample, "next_pid");
 
-	if (sched->curr_pid[this_cpu] != (u32)-1) {
+	अगर (sched->curr_pid[this_cpu] != (u32)-1) अणु
 		/*
-		 * Are we trying to switch away a PID that is
+		 * Are we trying to चयन away a PID that is
 		 * not current?
 		 */
-		if (sched->curr_pid[this_cpu] != prev_pid)
-			sched->nr_context_switch_bugs++;
-	}
+		अगर (sched->curr_pid[this_cpu] != prev_pid)
+			sched->nr_context_चयन_bugs++;
+	पूर्ण
 
-	if (sched->tp_handler->switch_event)
-		err = sched->tp_handler->switch_event(sched, evsel, sample, machine);
+	अगर (sched->tp_handler->चयन_event)
+		err = sched->tp_handler->चयन_event(sched, evsel, sample, machine);
 
 	sched->curr_pid[this_cpu] = next_pid;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int process_sched_runtime_event(struct perf_tool *tool,
-				       struct evsel *evsel,
-				       struct perf_sample *sample,
-				       struct machine *machine)
-{
-	struct perf_sched *sched = container_of(tool, struct perf_sched, tool);
+अटल पूर्णांक process_sched_runसमय_event(काष्ठा perf_tool *tool,
+				       काष्ठा evsel *evsel,
+				       काष्ठा perf_sample *sample,
+				       काष्ठा machine *machine)
+अणु
+	काष्ठा perf_sched *sched = container_of(tool, काष्ठा perf_sched, tool);
 
-	if (sched->tp_handler->runtime_event)
-		return sched->tp_handler->runtime_event(sched, evsel, sample, machine);
+	अगर (sched->tp_handler->runसमय_event)
+		वापस sched->tp_handler->runसमय_event(sched, evsel, sample, machine);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_sched__process_fork_event(struct perf_tool *tool,
-					  union perf_event *event,
-					  struct perf_sample *sample,
-					  struct machine *machine)
-{
-	struct perf_sched *sched = container_of(tool, struct perf_sched, tool);
+अटल पूर्णांक perf_sched__process_विभाजन_event(काष्ठा perf_tool *tool,
+					  जोड़ perf_event *event,
+					  काष्ठा perf_sample *sample,
+					  काष्ठा machine *machine)
+अणु
+	काष्ठा perf_sched *sched = container_of(tool, काष्ठा perf_sched, tool);
 
-	/* run the fork event through the perf machinery */
-	perf_event__process_fork(tool, event, sample, machine);
+	/* run the विभाजन event through the perf machinery */
+	perf_event__process_विभाजन(tool, event, sample, machine);
 
-	/* and then run additional processing needed for this command */
-	if (sched->tp_handler->fork_event)
-		return sched->tp_handler->fork_event(sched, event, machine);
+	/* and then run additional processing needed क्रम this command */
+	अगर (sched->tp_handler->विभाजन_event)
+		वापस sched->tp_handler->विभाजन_event(sched, event, machine);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_sched_migrate_task_event(struct perf_tool *tool,
-					    struct evsel *evsel,
-					    struct perf_sample *sample,
-					    struct machine *machine)
-{
-	struct perf_sched *sched = container_of(tool, struct perf_sched, tool);
+अटल पूर्णांक process_sched_migrate_task_event(काष्ठा perf_tool *tool,
+					    काष्ठा evsel *evsel,
+					    काष्ठा perf_sample *sample,
+					    काष्ठा machine *machine)
+अणु
+	काष्ठा perf_sched *sched = container_of(tool, काष्ठा perf_sched, tool);
 
-	if (sched->tp_handler->migrate_task_event)
-		return sched->tp_handler->migrate_task_event(sched, evsel, sample, machine);
+	अगर (sched->tp_handler->migrate_task_event)
+		वापस sched->tp_handler->migrate_task_event(sched, evsel, sample, machine);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-typedef int (*tracepoint_handler)(struct perf_tool *tool,
-				  struct evsel *evsel,
-				  struct perf_sample *sample,
-				  struct machine *machine);
+प्रकार पूर्णांक (*tracepoपूर्णांक_handler)(काष्ठा perf_tool *tool,
+				  काष्ठा evsel *evsel,
+				  काष्ठा perf_sample *sample,
+				  काष्ठा machine *machine);
 
-static int perf_sched__process_tracepoint_sample(struct perf_tool *tool __maybe_unused,
-						 union perf_event *event __maybe_unused,
-						 struct perf_sample *sample,
-						 struct evsel *evsel,
-						 struct machine *machine)
-{
-	int err = 0;
+अटल पूर्णांक perf_sched__process_tracepoपूर्णांक_sample(काष्ठा perf_tool *tool __maybe_unused,
+						 जोड़ perf_event *event __maybe_unused,
+						 काष्ठा perf_sample *sample,
+						 काष्ठा evsel *evsel,
+						 काष्ठा machine *machine)
+अणु
+	पूर्णांक err = 0;
 
-	if (evsel->handler != NULL) {
-		tracepoint_handler f = evsel->handler;
+	अगर (evsel->handler != शून्य) अणु
+		tracepoपूर्णांक_handler f = evsel->handler;
 		err = f(tool, evsel, sample, machine);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int perf_sched__process_comm(struct perf_tool *tool __maybe_unused,
-				    union perf_event *event,
-				    struct perf_sample *sample,
-				    struct machine *machine)
-{
-	struct thread *thread;
-	struct thread_runtime *tr;
-	int err;
+अटल पूर्णांक perf_sched__process_comm(काष्ठा perf_tool *tool __maybe_unused,
+				    जोड़ perf_event *event,
+				    काष्ठा perf_sample *sample,
+				    काष्ठा machine *machine)
+अणु
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा thपढ़ो_runसमय *tr;
+	पूर्णांक err;
 
 	err = perf_event__process_comm(tool, event, sample, machine);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	thread = machine__find_thread(machine, sample->pid, sample->tid);
-	if (!thread) {
+	thपढ़ो = machine__find_thपढ़ो(machine, sample->pid, sample->tid);
+	अगर (!thपढ़ो) अणु
 		pr_err("Internal error: can't find thread\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	tr = thread__get_runtime(thread);
-	if (tr == NULL) {
-		thread__put(thread);
-		return -1;
-	}
+	tr = thपढ़ो__get_runसमय(thपढ़ो);
+	अगर (tr == शून्य) अणु
+		thपढ़ो__put(thपढ़ो);
+		वापस -1;
+	पूर्ण
 
 	tr->comm_changed = true;
-	thread__put(thread);
+	thपढ़ो__put(thपढ़ो);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_sched__read_events(struct perf_sched *sched)
-{
-	const struct evsel_str_handler handlers[] = {
-		{ "sched:sched_switch",	      process_sched_switch_event, },
-		{ "sched:sched_stat_runtime", process_sched_runtime_event, },
-		{ "sched:sched_wakeup",	      process_sched_wakeup_event, },
-		{ "sched:sched_wakeup_new",   process_sched_wakeup_event, },
-		{ "sched:sched_migrate_task", process_sched_migrate_task_event, },
-	};
-	struct perf_session *session;
-	struct perf_data data = {
+अटल पूर्णांक perf_sched__पढ़ो_events(काष्ठा perf_sched *sched)
+अणु
+	स्थिर काष्ठा evsel_str_handler handlers[] = अणु
+		अणु "sched:sched_switch",	      process_sched_चयन_event, पूर्ण,
+		अणु "sched:sched_stat_runtime", process_sched_runसमय_event, पूर्ण,
+		अणु "sched:sched_wakeup",	      process_sched_wakeup_event, पूर्ण,
+		अणु "sched:sched_wakeup_new",   process_sched_wakeup_event, पूर्ण,
+		अणु "sched:sched_migrate_task", process_sched_migrate_task_event, पूर्ण,
+	पूर्ण;
+	काष्ठा perf_session *session;
+	काष्ठा perf_data data = अणु
 		.path  = input_name,
 		.mode  = PERF_DATA_MODE_READ,
-		.force = sched->force,
-	};
-	int rc = -1;
+		.क्रमce = sched->क्रमce,
+	पूर्ण;
+	पूर्णांक rc = -1;
 
 	session = perf_session__new(&data, false, &sched->tool);
-	if (IS_ERR(session)) {
+	अगर (IS_ERR(session)) अणु
 		pr_debug("Error creating perf session");
-		return PTR_ERR(session);
-	}
+		वापस PTR_ERR(session);
+	पूर्ण
 
 	symbol__init(&session->header.env);
 
-	if (perf_session__set_tracepoints_handlers(session, handlers))
-		goto out_delete;
+	अगर (perf_session__set_tracepoपूर्णांकs_handlers(session, handlers))
+		जाओ out_delete;
 
-	if (perf_session__has_traces(session, "record -R")) {
-		int err = perf_session__process_events(session);
-		if (err) {
+	अगर (perf_session__has_traces(session, "record -R")) अणु
+		पूर्णांक err = perf_session__process_events(session);
+		अगर (err) अणु
 			pr_err("Failed to process events, error %d", err);
-			goto out_delete;
-		}
+			जाओ out_delete;
+		पूर्ण
 
 		sched->nr_events      = session->evlist->stats.nr_events[0];
 		sched->nr_lost_events = session->evlist->stats.total_lost;
 		sched->nr_lost_chunks = session->evlist->stats.nr_events[PERF_RECORD_LOST];
-	}
+	पूर्ण
 
 	rc = 0;
 out_delete:
 	perf_session__delete(session);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * scheduling times are printed as msec.usec
+ * scheduling बार are prपूर्णांकed as msec.usec
  */
-static inline void print_sched_time(unsigned long long nsecs, int width)
-{
-	unsigned long msecs;
-	unsigned long usecs;
+अटल अंतरभूत व्योम prपूर्णांक_sched_समय(अचिन्हित दीर्घ दीर्घ nsecs, पूर्णांक width)
+अणु
+	अचिन्हित दीर्घ msecs;
+	अचिन्हित दीर्घ usecs;
 
 	msecs  = nsecs / NSEC_PER_MSEC;
 	nsecs -= msecs * NSEC_PER_MSEC;
 	usecs  = nsecs / NSEC_PER_USEC;
-	printf("%*lu.%03lu ", width, msecs, usecs);
-}
+	म_लिखो("%*lu.%03lu ", width, msecs, usecs);
+पूर्ण
 
 /*
- * returns runtime data for event, allocating memory for it the
- * first time it is used.
+ * वापसs runसमय data क्रम event, allocating memory क्रम it the
+ * first समय it is used.
  */
-static struct evsel_runtime *evsel__get_runtime(struct evsel *evsel)
-{
-	struct evsel_runtime *r = evsel->priv;
+अटल काष्ठा evsel_runसमय *evsel__get_runसमय(काष्ठा evsel *evsel)
+अणु
+	काष्ठा evsel_runसमय *r = evsel->priv;
 
-	if (r == NULL) {
-		r = zalloc(sizeof(struct evsel_runtime));
+	अगर (r == शून्य) अणु
+		r = zalloc(माप(काष्ठा evsel_runसमय));
 		evsel->priv = r;
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * save last time event was seen per cpu
+ * save last समय event was seen per cpu
  */
-static void evsel__save_time(struct evsel *evsel, u64 timestamp, u32 cpu)
-{
-	struct evsel_runtime *r = evsel__get_runtime(evsel);
+अटल व्योम evsel__save_समय(काष्ठा evsel *evsel, u64 बारtamp, u32 cpu)
+अणु
+	काष्ठा evsel_runसमय *r = evsel__get_runसमय(evsel);
 
-	if (r == NULL)
-		return;
+	अगर (r == शून्य)
+		वापस;
 
-	if ((cpu >= r->ncpu) || (r->last_time == NULL)) {
-		int i, n = __roundup_pow_of_two(cpu+1);
-		void *p = r->last_time;
+	अगर ((cpu >= r->ncpu) || (r->last_समय == शून्य)) अणु
+		पूर्णांक i, n = __roundup_घात_of_two(cpu+1);
+		व्योम *p = r->last_समय;
 
-		p = realloc(r->last_time, n * sizeof(u64));
-		if (!p)
-			return;
+		p = पुनः_स्मृति(r->last_समय, n * माप(u64));
+		अगर (!p)
+			वापस;
 
-		r->last_time = p;
-		for (i = r->ncpu; i < n; ++i)
-			r->last_time[i] = (u64) 0;
+		r->last_समय = p;
+		क्रम (i = r->ncpu; i < n; ++i)
+			r->last_समय[i] = (u64) 0;
 
 		r->ncpu = n;
-	}
+	पूर्ण
 
-	r->last_time[cpu] = timestamp;
-}
+	r->last_समय[cpu] = बारtamp;
+पूर्ण
 
-/* returns last time this event was seen on the given cpu */
-static u64 evsel__get_time(struct evsel *evsel, u32 cpu)
-{
-	struct evsel_runtime *r = evsel__get_runtime(evsel);
+/* वापसs last समय this event was seen on the given cpu */
+अटल u64 evsel__get_समय(काष्ठा evsel *evsel, u32 cpu)
+अणु
+	काष्ठा evsel_runसमय *r = evsel__get_runसमय(evsel);
 
-	if ((r == NULL) || (r->last_time == NULL) || (cpu >= r->ncpu))
-		return 0;
+	अगर ((r == शून्य) || (r->last_समय == शून्य) || (cpu >= r->ncpu))
+		वापस 0;
 
-	return r->last_time[cpu];
-}
+	वापस r->last_समय[cpu];
+पूर्ण
 
-static int comm_width = 30;
+अटल पूर्णांक comm_width = 30;
 
-static char *timehist_get_commstr(struct thread *thread)
-{
-	static char str[32];
-	const char *comm = thread__comm_str(thread);
-	pid_t tid = thread->tid;
-	pid_t pid = thread->pid_;
-	int n;
+अटल अक्षर *समयhist_get_commstr(काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	अटल अक्षर str[32];
+	स्थिर अक्षर *comm = thपढ़ो__comm_str(thपढ़ो);
+	pid_t tid = thपढ़ो->tid;
+	pid_t pid = thपढ़ो->pid_;
+	पूर्णांक n;
 
-	if (pid == 0)
-		n = scnprintf(str, sizeof(str), "%s", comm);
+	अगर (pid == 0)
+		n = scnम_लिखो(str, माप(str), "%s", comm);
 
-	else if (tid != pid)
-		n = scnprintf(str, sizeof(str), "%s[%d/%d]", comm, tid, pid);
+	अन्यथा अगर (tid != pid)
+		n = scnम_लिखो(str, माप(str), "%s[%d/%d]", comm, tid, pid);
 
-	else
-		n = scnprintf(str, sizeof(str), "%s[%d]", comm, tid);
+	अन्यथा
+		n = scnम_लिखो(str, माप(str), "%s[%d]", comm, tid);
 
-	if (n > comm_width)
+	अगर (n > comm_width)
 		comm_width = n;
 
-	return str;
-}
+	वापस str;
+पूर्ण
 
-static void timehist_header(struct perf_sched *sched)
-{
+अटल व्योम समयhist_header(काष्ठा perf_sched *sched)
+अणु
 	u32 ncpus = sched->max_cpu + 1;
 	u32 i, j;
 
-	printf("%15s %6s ", "time", "cpu");
+	म_लिखो("%15s %6s ", "time", "cpu");
 
-	if (sched->show_cpu_visual) {
-		printf(" ");
-		for (i = 0, j = 0; i < ncpus; ++i) {
-			printf("%x", j++);
-			if (j > 15)
+	अगर (sched->show_cpu_visual) अणु
+		म_लिखो(" ");
+		क्रम (i = 0, j = 0; i < ncpus; ++i) अणु
+			म_लिखो("%x", j++);
+			अगर (j > 15)
 				j = 0;
-		}
-		printf(" ");
-	}
+		पूर्ण
+		म_लिखो(" ");
+	पूर्ण
 
-	printf(" %-*s  %9s  %9s  %9s", comm_width,
+	म_लिखो(" %-*s  %9s  %9s  %9s", comm_width,
 		"task name", "wait time", "sch delay", "run time");
 
-	if (sched->show_state)
-		printf("  %s", "state");
+	अगर (sched->show_state)
+		म_लिखो("  %s", "state");
 
-	printf("\n");
+	म_लिखो("\n");
 
 	/*
 	 * units row
 	 */
-	printf("%15s %-6s ", "", "");
+	म_लिखो("%15s %-6s ", "", "");
 
-	if (sched->show_cpu_visual)
-		printf(" %*s ", ncpus, "");
+	अगर (sched->show_cpu_visual)
+		म_लिखो(" %*s ", ncpus, "");
 
-	printf(" %-*s  %9s  %9s  %9s", comm_width,
+	म_लिखो(" %-*s  %9s  %9s  %9s", comm_width,
 	       "[tid/pid]", "(msec)", "(msec)", "(msec)");
 
-	if (sched->show_state)
-		printf("  %5s", "");
+	अगर (sched->show_state)
+		म_लिखो("  %5s", "");
 
-	printf("\n");
+	म_लिखो("\n");
 
 	/*
 	 * separator
 	 */
-	printf("%.15s %.6s ", graph_dotted_line, graph_dotted_line);
+	म_लिखो("%.15s %.6s ", graph_करोtted_line, graph_करोtted_line);
 
-	if (sched->show_cpu_visual)
-		printf(" %.*s ", ncpus, graph_dotted_line);
+	अगर (sched->show_cpu_visual)
+		म_लिखो(" %.*s ", ncpus, graph_करोtted_line);
 
-	printf(" %.*s  %.9s  %.9s  %.9s", comm_width,
-		graph_dotted_line, graph_dotted_line, graph_dotted_line,
-		graph_dotted_line);
+	म_लिखो(" %.*s  %.9s  %.9s  %.9s", comm_width,
+		graph_करोtted_line, graph_करोtted_line, graph_करोtted_line,
+		graph_करोtted_line);
 
-	if (sched->show_state)
-		printf("  %.5s", graph_dotted_line);
+	अगर (sched->show_state)
+		म_लिखो("  %.5s", graph_करोtted_line);
 
-	printf("\n");
-}
+	म_लिखो("\n");
+पूर्ण
 
-static char task_state_char(struct thread *thread, int state)
-{
-	static const char state_to_char[] = TASK_STATE_TO_CHAR_STR;
-	unsigned bit = state ? ffs(state) : 0;
+अटल अक्षर task_state_अक्षर(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक state)
+अणु
+	अटल स्थिर अक्षर state_to_अक्षर[] = TASK_STATE_TO_CHAR_STR;
+	अचिन्हित bit = state ? ffs(state) : 0;
 
-	/* 'I' for idle */
-	if (thread->tid == 0)
-		return 'I';
+	/* 'I' क्रम idle */
+	अगर (thपढ़ो->tid == 0)
+		वापस 'I';
 
-	return bit < sizeof(state_to_char) - 1 ? state_to_char[bit] : '?';
-}
+	वापस bit < माप(state_to_अक्षर) - 1 ? state_to_अक्षर[bit] : '?';
+पूर्ण
 
-static void timehist_print_sample(struct perf_sched *sched,
-				  struct evsel *evsel,
-				  struct perf_sample *sample,
-				  struct addr_location *al,
-				  struct thread *thread,
-				  u64 t, int state)
-{
-	struct thread_runtime *tr = thread__priv(thread);
-	const char *next_comm = evsel__strval(evsel, sample, "next_comm");
-	const u32 next_pid = evsel__intval(evsel, sample, "next_pid");
+अटल व्योम समयhist_prपूर्णांक_sample(काष्ठा perf_sched *sched,
+				  काष्ठा evsel *evsel,
+				  काष्ठा perf_sample *sample,
+				  काष्ठा addr_location *al,
+				  काष्ठा thपढ़ो *thपढ़ो,
+				  u64 t, पूर्णांक state)
+अणु
+	काष्ठा thपढ़ो_runसमय *tr = thपढ़ो__priv(thपढ़ो);
+	स्थिर अक्षर *next_comm = evsel__strval(evsel, sample, "next_comm");
+	स्थिर u32 next_pid = evsel__पूर्णांकval(evsel, sample, "next_pid");
 	u32 max_cpus = sched->max_cpu + 1;
-	char tstr[64];
-	char nstr[30];
-	u64 wait_time;
+	अक्षर tstr[64];
+	अक्षर nstr[30];
+	u64 रुको_समय;
 
-	if (cpu_list && !test_bit(sample->cpu, cpu_bitmap))
-		return;
+	अगर (cpu_list && !test_bit(sample->cpu, cpu_biपंचांगap))
+		वापस;
 
-	timestamp__scnprintf_usec(t, tstr, sizeof(tstr));
-	printf("%15s [%04d] ", tstr, sample->cpu);
+	बारtamp__scnम_लिखो_usec(t, tstr, माप(tstr));
+	म_लिखो("%15s [%04d] ", tstr, sample->cpu);
 
-	if (sched->show_cpu_visual) {
+	अगर (sched->show_cpu_visual) अणु
 		u32 i;
-		char c;
+		अक्षर c;
 
-		printf(" ");
-		for (i = 0; i < max_cpus; ++i) {
-			/* flag idle times with 'i'; others are sched events */
-			if (i == sample->cpu)
-				c = (thread->tid == 0) ? 'i' : 's';
-			else
+		म_लिखो(" ");
+		क्रम (i = 0; i < max_cpus; ++i) अणु
+			/* flag idle बार with 'i'; others are sched events */
+			अगर (i == sample->cpu)
+				c = (thपढ़ो->tid == 0) ? 'i' : 's';
+			अन्यथा
 				c = ' ';
-			printf("%c", c);
-		}
-		printf(" ");
-	}
+			म_लिखो("%c", c);
+		पूर्ण
+		म_लिखो(" ");
+	पूर्ण
 
-	printf(" %-*s ", comm_width, timehist_get_commstr(thread));
+	म_लिखो(" %-*s ", comm_width, समयhist_get_commstr(thपढ़ो));
 
-	wait_time = tr->dt_sleep + tr->dt_iowait + tr->dt_preempt;
-	print_sched_time(wait_time, 6);
+	रुको_समय = tr->dt_sleep + tr->dt_ioरुको + tr->dt_preempt;
+	prपूर्णांक_sched_समय(रुको_समय, 6);
 
-	print_sched_time(tr->dt_delay, 6);
-	print_sched_time(tr->dt_run, 6);
+	prपूर्णांक_sched_समय(tr->dt_delay, 6);
+	prपूर्णांक_sched_समय(tr->dt_run, 6);
 
-	if (sched->show_state)
-		printf(" %5c ", task_state_char(thread, state));
+	अगर (sched->show_state)
+		म_लिखो(" %5c ", task_state_अक्षर(thपढ़ो, state));
 
-	if (sched->show_next) {
-		snprintf(nstr, sizeof(nstr), "next: %s[%d]", next_comm, next_pid);
-		printf(" %-*s", comm_width, nstr);
-	}
+	अगर (sched->show_next) अणु
+		snम_लिखो(nstr, माप(nstr), "next: %s[%d]", next_comm, next_pid);
+		म_लिखो(" %-*s", comm_width, nstr);
+	पूर्ण
 
-	if (sched->show_wakeups && !sched->show_next)
-		printf("  %-*s", comm_width, "");
+	अगर (sched->show_wakeups && !sched->show_next)
+		म_लिखो("  %-*s", comm_width, "");
 
-	if (thread->tid == 0)
-		goto out;
+	अगर (thपढ़ो->tid == 0)
+		जाओ out;
 
-	if (sched->show_callchain)
-		printf("  ");
+	अगर (sched->show_callchain)
+		म_लिखो("  ");
 
-	sample__fprintf_sym(sample, al, 0,
+	sample__ख_लिखो_sym(sample, al, 0,
 			    EVSEL__PRINT_SYM | EVSEL__PRINT_ONELINE |
 			    EVSEL__PRINT_CALLCHAIN_ARROW |
 			    EVSEL__PRINT_SKIP_IGNORED,
-			    &callchain_cursor, symbol_conf.bt_stop_list,  stdout);
+			    &callchain_cursor, symbol_conf.bt_stop_list,  मानक_निकास);
 
 out:
-	printf("\n");
-}
+	म_लिखो("\n");
+पूर्ण
 
 /*
- * Explanation of delta-time stats:
+ * Explanation of delta-समय stats:
  *
- *            t = time of current schedule out event
- *        tprev = time of previous sched out event
- *                also time of schedule-in event for current task
- *    last_time = time of last sched change event for current task
- *                (i.e, time process was last scheduled out)
- * ready_to_run = time of wakeup for current task
+ *            t = समय of current schedule out event
+ *        tprev = समय of previous sched out event
+ *                also समय of schedule-in event क्रम current task
+ *    last_समय = समय of last sched change event क्रम current task
+ *                (i.e, समय process was last scheduled out)
+ * पढ़ोy_to_run = समय of wakeup क्रम current task
  *
  * -----|------------|------------|------------|------
- *    last         ready        tprev          t
- *    time         to run
+ *    last         पढ़ोy        tprev          t
+ *    समय         to run
  *
- *      |-------- dt_wait --------|
+ *      |-------- dt_रुको --------|
  *                   |- dt_delay -|-- dt_run --|
  *
- *   dt_run = run time of current task
- *  dt_wait = time between last schedule out event for task and tprev
- *            represents time spent off the cpu
- * dt_delay = time between wakeup and schedule-in of task
+ *   dt_run = run समय of current task
+ *  dt_रुको = समय between last schedule out event क्रम task and tprev
+ *            represents समय spent off the cpu
+ * dt_delay = समय between wakeup and schedule-in of task
  */
 
-static void timehist_update_runtime_stats(struct thread_runtime *r,
+अटल व्योम समयhist_update_runसमय_stats(काष्ठा thपढ़ो_runसमय *r,
 					 u64 t, u64 tprev)
-{
+अणु
 	r->dt_delay   = 0;
 	r->dt_sleep   = 0;
-	r->dt_iowait  = 0;
+	r->dt_ioरुको  = 0;
 	r->dt_preempt = 0;
 	r->dt_run     = 0;
 
-	if (tprev) {
+	अगर (tprev) अणु
 		r->dt_run = t - tprev;
-		if (r->ready_to_run) {
-			if (r->ready_to_run > tprev)
+		अगर (r->पढ़ोy_to_run) अणु
+			अगर (r->पढ़ोy_to_run > tprev)
 				pr_debug("time travel: wakeup time for task > previous sched_switch event\n");
-			else
-				r->dt_delay = tprev - r->ready_to_run;
-		}
+			अन्यथा
+				r->dt_delay = tprev - r->पढ़ोy_to_run;
+		पूर्ण
 
-		if (r->last_time > tprev)
+		अगर (r->last_समय > tprev)
 			pr_debug("time travel: last sched out time for task > previous sched_switch event\n");
-		else if (r->last_time) {
-			u64 dt_wait = tprev - r->last_time;
+		अन्यथा अगर (r->last_समय) अणु
+			u64 dt_रुको = tprev - r->last_समय;
 
-			if (r->last_state == TASK_RUNNING)
-				r->dt_preempt = dt_wait;
-			else if (r->last_state == TASK_UNINTERRUPTIBLE)
-				r->dt_iowait = dt_wait;
-			else
-				r->dt_sleep = dt_wait;
-		}
-	}
+			अगर (r->last_state == TASK_RUNNING)
+				r->dt_preempt = dt_रुको;
+			अन्यथा अगर (r->last_state == TASK_UNINTERRUPTIBLE)
+				r->dt_ioरुको = dt_रुको;
+			अन्यथा
+				r->dt_sleep = dt_रुको;
+		पूर्ण
+	पूर्ण
 
 	update_stats(&r->run_stats, r->dt_run);
 
-	r->total_run_time     += r->dt_run;
-	r->total_delay_time   += r->dt_delay;
-	r->total_sleep_time   += r->dt_sleep;
-	r->total_iowait_time  += r->dt_iowait;
-	r->total_preempt_time += r->dt_preempt;
-}
+	r->total_run_समय     += r->dt_run;
+	r->total_delay_समय   += r->dt_delay;
+	r->total_sleep_समय   += r->dt_sleep;
+	r->total_ioरुको_समय  += r->dt_ioरुको;
+	r->total_preempt_समय += r->dt_preempt;
+पूर्ण
 
-static bool is_idle_sample(struct perf_sample *sample,
-			   struct evsel *evsel)
-{
+अटल bool is_idle_sample(काष्ठा perf_sample *sample,
+			   काष्ठा evsel *evsel)
+अणु
 	/* pid 0 == swapper == idle task */
-	if (strcmp(evsel__name(evsel), "sched:sched_switch") == 0)
-		return evsel__intval(evsel, sample, "prev_pid") == 0;
+	अगर (म_भेद(evsel__name(evsel), "sched:sched_switch") == 0)
+		वापस evsel__पूर्णांकval(evsel, sample, "prev_pid") == 0;
 
-	return sample->pid == 0;
-}
+	वापस sample->pid == 0;
+पूर्ण
 
-static void save_task_callchain(struct perf_sched *sched,
-				struct perf_sample *sample,
-				struct evsel *evsel,
-				struct machine *machine)
-{
-	struct callchain_cursor *cursor = &callchain_cursor;
-	struct thread *thread;
+अटल व्योम save_task_callchain(काष्ठा perf_sched *sched,
+				काष्ठा perf_sample *sample,
+				काष्ठा evsel *evsel,
+				काष्ठा machine *machine)
+अणु
+	काष्ठा callchain_cursor *cursor = &callchain_cursor;
+	काष्ठा thपढ़ो *thपढ़ो;
 
-	/* want main thread for process - has maps */
-	thread = machine__findnew_thread(machine, sample->pid, sample->pid);
-	if (thread == NULL) {
+	/* want मुख्य thपढ़ो क्रम process - has maps */
+	thपढ़ो = machine__findnew_thपढ़ो(machine, sample->pid, sample->pid);
+	अगर (thपढ़ो == शून्य) अणु
 		pr_debug("Failed to get thread for pid %d.\n", sample->pid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sched->show_callchain || sample->callchain == NULL)
-		return;
+	अगर (!sched->show_callchain || sample->callchain == शून्य)
+		वापस;
 
-	if (thread__resolve_callchain(thread, cursor, evsel, sample,
-				      NULL, NULL, sched->max_stack + 2) != 0) {
-		if (verbose > 0)
+	अगर (thपढ़ो__resolve_callchain(thपढ़ो, cursor, evsel, sample,
+				      शून्य, शून्य, sched->max_stack + 2) != 0) अणु
+		अगर (verbose > 0)
 			pr_err("Failed to resolve callchain. Skipping\n");
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	callchain_cursor_commit(cursor);
 
-	while (true) {
-		struct callchain_cursor_node *node;
-		struct symbol *sym;
+	जबतक (true) अणु
+		काष्ठा callchain_cursor_node *node;
+		काष्ठा symbol *sym;
 
 		node = callchain_cursor_current(cursor);
-		if (node == NULL)
-			break;
+		अगर (node == शून्य)
+			अवरोध;
 
 		sym = node->ms.sym;
-		if (sym) {
-			if (!strcmp(sym->name, "schedule") ||
-			    !strcmp(sym->name, "__schedule") ||
-			    !strcmp(sym->name, "preempt_schedule"))
+		अगर (sym) अणु
+			अगर (!म_भेद(sym->name, "schedule") ||
+			    !म_भेद(sym->name, "__schedule") ||
+			    !म_भेद(sym->name, "preempt_schedule"))
 				sym->ignore = 1;
-		}
+		पूर्ण
 
 		callchain_cursor_advance(cursor);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int init_idle_thread(struct thread *thread)
-{
-	struct idle_thread_runtime *itr;
+अटल पूर्णांक init_idle_thपढ़ो(काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा idle_thपढ़ो_runसमय *itr;
 
-	thread__set_comm(thread, idle_comm, 0);
+	thपढ़ो__set_comm(thपढ़ो, idle_comm, 0);
 
-	itr = zalloc(sizeof(*itr));
-	if (itr == NULL)
-		return -ENOMEM;
+	itr = zalloc(माप(*itr));
+	अगर (itr == शून्य)
+		वापस -ENOMEM;
 
 	init_stats(&itr->tr.run_stats);
 	callchain_init(&itr->callchain);
 	callchain_cursor_reset(&itr->cursor);
-	thread__set_priv(thread, itr);
+	thपढ़ो__set_priv(thपढ़ो, itr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Track idle stats per cpu by maintaining a local thread
- * struct for the idle task on each cpu.
+ * Track idle stats per cpu by मुख्यtaining a local thपढ़ो
+ * काष्ठा क्रम the idle task on each cpu.
  */
-static int init_idle_threads(int ncpu)
-{
-	int i, ret;
+अटल पूर्णांक init_idle_thपढ़ोs(पूर्णांक ncpu)
+अणु
+	पूर्णांक i, ret;
 
-	idle_threads = zalloc(ncpu * sizeof(struct thread *));
-	if (!idle_threads)
-		return -ENOMEM;
+	idle_thपढ़ोs = zalloc(ncpu * माप(काष्ठा thपढ़ो *));
+	अगर (!idle_thपढ़ोs)
+		वापस -ENOMEM;
 
 	idle_max_cpu = ncpu;
 
-	/* allocate the actual thread struct if needed */
-	for (i = 0; i < ncpu; ++i) {
-		idle_threads[i] = thread__new(0, 0);
-		if (idle_threads[i] == NULL)
-			return -ENOMEM;
+	/* allocate the actual thपढ़ो काष्ठा अगर needed */
+	क्रम (i = 0; i < ncpu; ++i) अणु
+		idle_thपढ़ोs[i] = thपढ़ो__new(0, 0);
+		अगर (idle_thपढ़ोs[i] == शून्य)
+			वापस -ENOMEM;
 
-		ret = init_idle_thread(idle_threads[i]);
-		if (ret < 0)
-			return ret;
-	}
+		ret = init_idle_thपढ़ो(idle_thपढ़ोs[i]);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_idle_threads(void)
-{
-	int i;
+अटल व्योम मुक्त_idle_thपढ़ोs(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (idle_threads == NULL)
-		return;
+	अगर (idle_thपढ़ोs == शून्य)
+		वापस;
 
-	for (i = 0; i < idle_max_cpu; ++i) {
-		if ((idle_threads[i]))
-			thread__delete(idle_threads[i]);
-	}
+	क्रम (i = 0; i < idle_max_cpu; ++i) अणु
+		अगर ((idle_thपढ़ोs[i]))
+			thपढ़ो__delete(idle_thपढ़ोs[i]);
+	पूर्ण
 
-	free(idle_threads);
-}
+	मुक्त(idle_thपढ़ोs);
+पूर्ण
 
-static struct thread *get_idle_thread(int cpu)
-{
+अटल काष्ठा thपढ़ो *get_idle_thपढ़ो(पूर्णांक cpu)
+अणु
 	/*
-	 * expand/allocate array of pointers to local thread
-	 * structs if needed
+	 * expand/allocate array of poपूर्णांकers to local thपढ़ो
+	 * काष्ठाs अगर needed
 	 */
-	if ((cpu >= idle_max_cpu) || (idle_threads == NULL)) {
-		int i, j = __roundup_pow_of_two(cpu+1);
-		void *p;
+	अगर ((cpu >= idle_max_cpu) || (idle_thपढ़ोs == शून्य)) अणु
+		पूर्णांक i, j = __roundup_घात_of_two(cpu+1);
+		व्योम *p;
 
-		p = realloc(idle_threads, j * sizeof(struct thread *));
-		if (!p)
-			return NULL;
+		p = पुनः_स्मृति(idle_thपढ़ोs, j * माप(काष्ठा thपढ़ो *));
+		अगर (!p)
+			वापस शून्य;
 
-		idle_threads = (struct thread **) p;
-		for (i = idle_max_cpu; i < j; ++i)
-			idle_threads[i] = NULL;
+		idle_thपढ़ोs = (काष्ठा thपढ़ो **) p;
+		क्रम (i = idle_max_cpu; i < j; ++i)
+			idle_thपढ़ोs[i] = शून्य;
 
 		idle_max_cpu = j;
-	}
+	पूर्ण
 
-	/* allocate a new thread struct if needed */
-	if (idle_threads[cpu] == NULL) {
-		idle_threads[cpu] = thread__new(0, 0);
+	/* allocate a new thपढ़ो काष्ठा अगर needed */
+	अगर (idle_thपढ़ोs[cpu] == शून्य) अणु
+		idle_thपढ़ोs[cpu] = thपढ़ो__new(0, 0);
 
-		if (idle_threads[cpu]) {
-			if (init_idle_thread(idle_threads[cpu]) < 0)
-				return NULL;
-		}
-	}
+		अगर (idle_thपढ़ोs[cpu]) अणु
+			अगर (init_idle_thपढ़ो(idle_thपढ़ोs[cpu]) < 0)
+				वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return idle_threads[cpu];
-}
+	वापस idle_thपढ़ोs[cpu];
+पूर्ण
 
-static void save_idle_callchain(struct perf_sched *sched,
-				struct idle_thread_runtime *itr,
-				struct perf_sample *sample)
-{
-	if (!sched->show_callchain || sample->callchain == NULL)
-		return;
+अटल व्योम save_idle_callchain(काष्ठा perf_sched *sched,
+				काष्ठा idle_thपढ़ो_runसमय *itr,
+				काष्ठा perf_sample *sample)
+अणु
+	अगर (!sched->show_callchain || sample->callchain == शून्य)
+		वापस;
 
 	callchain_cursor__copy(&itr->cursor, &callchain_cursor);
-}
+पूर्ण
 
-static struct thread *timehist_get_thread(struct perf_sched *sched,
-					  struct perf_sample *sample,
-					  struct machine *machine,
-					  struct evsel *evsel)
-{
-	struct thread *thread;
+अटल काष्ठा thपढ़ो *समयhist_get_thपढ़ो(काष्ठा perf_sched *sched,
+					  काष्ठा perf_sample *sample,
+					  काष्ठा machine *machine,
+					  काष्ठा evsel *evsel)
+अणु
+	काष्ठा thपढ़ो *thपढ़ो;
 
-	if (is_idle_sample(sample, evsel)) {
-		thread = get_idle_thread(sample->cpu);
-		if (thread == NULL)
+	अगर (is_idle_sample(sample, evsel)) अणु
+		thपढ़ो = get_idle_thपढ़ो(sample->cpu);
+		अगर (thपढ़ो == शून्य)
 			pr_err("Failed to get idle thread for cpu %d.\n", sample->cpu);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* there were samples with tid 0 but non-zero pid */
-		thread = machine__findnew_thread(machine, sample->pid,
+		thपढ़ो = machine__findnew_thपढ़ो(machine, sample->pid,
 						 sample->tid ?: sample->pid);
-		if (thread == NULL) {
+		अगर (thपढ़ो == शून्य) अणु
 			pr_debug("Failed to get thread for tid %d. skipping sample.\n",
 				 sample->tid);
-		}
+		पूर्ण
 
 		save_task_callchain(sched, sample, evsel, machine);
-		if (sched->idle_hist) {
-			struct thread *idle;
-			struct idle_thread_runtime *itr;
+		अगर (sched->idle_hist) अणु
+			काष्ठा thपढ़ो *idle;
+			काष्ठा idle_thपढ़ो_runसमय *itr;
 
-			idle = get_idle_thread(sample->cpu);
-			if (idle == NULL) {
+			idle = get_idle_thपढ़ो(sample->cpu);
+			अगर (idle == शून्य) अणु
 				pr_err("Failed to get idle thread for cpu %d.\n", sample->cpu);
-				return NULL;
-			}
+				वापस शून्य;
+			पूर्ण
 
-			itr = thread__priv(idle);
-			if (itr == NULL)
-				return NULL;
+			itr = thपढ़ो__priv(idle);
+			अगर (itr == शून्य)
+				वापस शून्य;
 
-			itr->last_thread = thread;
+			itr->last_thपढ़ो = thपढ़ो;
 
 			/* copy task callchain when entering to idle */
-			if (evsel__intval(evsel, sample, "next_pid") == 0)
+			अगर (evsel__पूर्णांकval(evsel, sample, "next_pid") == 0)
 				save_idle_callchain(sched, itr, sample);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return thread;
-}
+	वापस thपढ़ो;
+पूर्ण
 
-static bool timehist_skip_sample(struct perf_sched *sched,
-				 struct thread *thread,
-				 struct evsel *evsel,
-				 struct perf_sample *sample)
-{
+अटल bool समयhist_skip_sample(काष्ठा perf_sched *sched,
+				 काष्ठा thपढ़ो *thपढ़ो,
+				 काष्ठा evsel *evsel,
+				 काष्ठा perf_sample *sample)
+अणु
 	bool rc = false;
 
-	if (thread__is_filtered(thread)) {
+	अगर (thपढ़ो__is_filtered(thपढ़ो)) अणु
 		rc = true;
 		sched->skipped_samples++;
-	}
+	पूर्ण
 
-	if (sched->idle_hist) {
-		if (strcmp(evsel__name(evsel), "sched:sched_switch"))
+	अगर (sched->idle_hist) अणु
+		अगर (म_भेद(evsel__name(evsel), "sched:sched_switch"))
 			rc = true;
-		else if (evsel__intval(evsel, sample, "prev_pid") != 0 &&
-			 evsel__intval(evsel, sample, "next_pid") != 0)
+		अन्यथा अगर (evsel__पूर्णांकval(evsel, sample, "prev_pid") != 0 &&
+			 evsel__पूर्णांकval(evsel, sample, "next_pid") != 0)
 			rc = true;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void timehist_print_wakeup_event(struct perf_sched *sched,
-					struct evsel *evsel,
-					struct perf_sample *sample,
-					struct machine *machine,
-					struct thread *awakened)
-{
-	struct thread *thread;
-	char tstr[64];
+अटल व्योम समयhist_prपूर्णांक_wakeup_event(काष्ठा perf_sched *sched,
+					काष्ठा evsel *evsel,
+					काष्ठा perf_sample *sample,
+					काष्ठा machine *machine,
+					काष्ठा thपढ़ो *awakened)
+अणु
+	काष्ठा thपढ़ो *thपढ़ो;
+	अक्षर tstr[64];
 
-	thread = machine__findnew_thread(machine, sample->pid, sample->tid);
-	if (thread == NULL)
-		return;
+	thपढ़ो = machine__findnew_thपढ़ो(machine, sample->pid, sample->tid);
+	अगर (thपढ़ो == शून्य)
+		वापस;
 
 	/* show wakeup unless both awakee and awaker are filtered */
-	if (timehist_skip_sample(sched, thread, evsel, sample) &&
-	    timehist_skip_sample(sched, awakened, evsel, sample)) {
-		return;
-	}
+	अगर (समयhist_skip_sample(sched, thपढ़ो, evsel, sample) &&
+	    समयhist_skip_sample(sched, awakened, evsel, sample)) अणु
+		वापस;
+	पूर्ण
 
-	timestamp__scnprintf_usec(sample->time, tstr, sizeof(tstr));
-	printf("%15s [%04d] ", tstr, sample->cpu);
-	if (sched->show_cpu_visual)
-		printf(" %*s ", sched->max_cpu + 1, "");
+	बारtamp__scnम_लिखो_usec(sample->समय, tstr, माप(tstr));
+	म_लिखो("%15s [%04d] ", tstr, sample->cpu);
+	अगर (sched->show_cpu_visual)
+		म_लिखो(" %*s ", sched->max_cpu + 1, "");
 
-	printf(" %-*s ", comm_width, timehist_get_commstr(thread));
+	म_लिखो(" %-*s ", comm_width, समयhist_get_commstr(thपढ़ो));
 
 	/* dt spacer */
-	printf("  %9s  %9s  %9s ", "", "", "");
+	म_लिखो("  %9s  %9s  %9s ", "", "", "");
 
-	printf("awakened: %s", timehist_get_commstr(awakened));
+	म_लिखो("awakened: %s", समयhist_get_commstr(awakened));
 
-	printf("\n");
-}
+	म_लिखो("\n");
+पूर्ण
 
-static int timehist_sched_wakeup_ignore(struct perf_tool *tool __maybe_unused,
-					union perf_event *event __maybe_unused,
-					struct evsel *evsel __maybe_unused,
-					struct perf_sample *sample __maybe_unused,
-					struct machine *machine __maybe_unused)
-{
-	return 0;
-}
+अटल पूर्णांक समयhist_sched_wakeup_ignore(काष्ठा perf_tool *tool __maybe_unused,
+					जोड़ perf_event *event __maybe_unused,
+					काष्ठा evsel *evsel __maybe_unused,
+					काष्ठा perf_sample *sample __maybe_unused,
+					काष्ठा machine *machine __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static int timehist_sched_wakeup_event(struct perf_tool *tool,
-				       union perf_event *event __maybe_unused,
-				       struct evsel *evsel,
-				       struct perf_sample *sample,
-				       struct machine *machine)
-{
-	struct perf_sched *sched = container_of(tool, struct perf_sched, tool);
-	struct thread *thread;
-	struct thread_runtime *tr = NULL;
+अटल पूर्णांक समयhist_sched_wakeup_event(काष्ठा perf_tool *tool,
+				       जोड़ perf_event *event __maybe_unused,
+				       काष्ठा evsel *evsel,
+				       काष्ठा perf_sample *sample,
+				       काष्ठा machine *machine)
+अणु
+	काष्ठा perf_sched *sched = container_of(tool, काष्ठा perf_sched, tool);
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा thपढ़ो_runसमय *tr = शून्य;
 	/* want pid of awakened task not pid in sample */
-	const u32 pid = evsel__intval(evsel, sample, "pid");
+	स्थिर u32 pid = evsel__पूर्णांकval(evsel, sample, "pid");
 
-	thread = machine__findnew_thread(machine, 0, pid);
-	if (thread == NULL)
-		return -1;
+	thपढ़ो = machine__findnew_thपढ़ो(machine, 0, pid);
+	अगर (thपढ़ो == शून्य)
+		वापस -1;
 
-	tr = thread__get_runtime(thread);
-	if (tr == NULL)
-		return -1;
+	tr = thपढ़ो__get_runसमय(thपढ़ो);
+	अगर (tr == शून्य)
+		वापस -1;
 
-	if (tr->ready_to_run == 0)
-		tr->ready_to_run = sample->time;
+	अगर (tr->पढ़ोy_to_run == 0)
+		tr->पढ़ोy_to_run = sample->समय;
 
-	/* show wakeups if requested */
-	if (sched->show_wakeups &&
-	    !perf_time__skip_sample(&sched->ptime, sample->time))
-		timehist_print_wakeup_event(sched, evsel, sample, machine, thread);
+	/* show wakeups अगर requested */
+	अगर (sched->show_wakeups &&
+	    !perf_समय__skip_sample(&sched->pसमय, sample->समय))
+		समयhist_prपूर्णांक_wakeup_event(sched, evsel, sample, machine, thपढ़ो);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void timehist_print_migration_event(struct perf_sched *sched,
-					struct evsel *evsel,
-					struct perf_sample *sample,
-					struct machine *machine,
-					struct thread *migrated)
-{
-	struct thread *thread;
-	char tstr[64];
+अटल व्योम समयhist_prपूर्णांक_migration_event(काष्ठा perf_sched *sched,
+					काष्ठा evsel *evsel,
+					काष्ठा perf_sample *sample,
+					काष्ठा machine *machine,
+					काष्ठा thपढ़ो *migrated)
+अणु
+	काष्ठा thपढ़ो *thपढ़ो;
+	अक्षर tstr[64];
 	u32 max_cpus = sched->max_cpu + 1;
 	u32 ocpu, dcpu;
 
-	if (sched->summary_only)
-		return;
+	अगर (sched->summary_only)
+		वापस;
 
 	max_cpus = sched->max_cpu + 1;
-	ocpu = evsel__intval(evsel, sample, "orig_cpu");
-	dcpu = evsel__intval(evsel, sample, "dest_cpu");
+	ocpu = evsel__पूर्णांकval(evsel, sample, "orig_cpu");
+	dcpu = evsel__पूर्णांकval(evsel, sample, "dest_cpu");
 
-	thread = machine__findnew_thread(machine, sample->pid, sample->tid);
-	if (thread == NULL)
-		return;
+	thपढ़ो = machine__findnew_thपढ़ो(machine, sample->pid, sample->tid);
+	अगर (thपढ़ो == शून्य)
+		वापस;
 
-	if (timehist_skip_sample(sched, thread, evsel, sample) &&
-	    timehist_skip_sample(sched, migrated, evsel, sample)) {
-		return;
-	}
+	अगर (समयhist_skip_sample(sched, thपढ़ो, evsel, sample) &&
+	    समयhist_skip_sample(sched, migrated, evsel, sample)) अणु
+		वापस;
+	पूर्ण
 
-	timestamp__scnprintf_usec(sample->time, tstr, sizeof(tstr));
-	printf("%15s [%04d] ", tstr, sample->cpu);
+	बारtamp__scnम_लिखो_usec(sample->समय, tstr, माप(tstr));
+	म_लिखो("%15s [%04d] ", tstr, sample->cpu);
 
-	if (sched->show_cpu_visual) {
+	अगर (sched->show_cpu_visual) अणु
 		u32 i;
-		char c;
+		अक्षर c;
 
-		printf("  ");
-		for (i = 0; i < max_cpus; ++i) {
+		म_लिखो("  ");
+		क्रम (i = 0; i < max_cpus; ++i) अणु
 			c = (i == sample->cpu) ? 'm' : ' ';
-			printf("%c", c);
-		}
-		printf("  ");
-	}
+			म_लिखो("%c", c);
+		पूर्ण
+		म_लिखो("  ");
+	पूर्ण
 
-	printf(" %-*s ", comm_width, timehist_get_commstr(thread));
+	म_लिखो(" %-*s ", comm_width, समयhist_get_commstr(thपढ़ो));
 
 	/* dt spacer */
-	printf("  %9s  %9s  %9s ", "", "", "");
+	म_लिखो("  %9s  %9s  %9s ", "", "", "");
 
-	printf("migrated: %s", timehist_get_commstr(migrated));
-	printf(" cpu %d => %d", ocpu, dcpu);
+	म_लिखो("migrated: %s", समयhist_get_commstr(migrated));
+	म_लिखो(" cpu %d => %d", ocpu, dcpu);
 
-	printf("\n");
-}
+	म_लिखो("\n");
+पूर्ण
 
-static int timehist_migrate_task_event(struct perf_tool *tool,
-				       union perf_event *event __maybe_unused,
-				       struct evsel *evsel,
-				       struct perf_sample *sample,
-				       struct machine *machine)
-{
-	struct perf_sched *sched = container_of(tool, struct perf_sched, tool);
-	struct thread *thread;
-	struct thread_runtime *tr = NULL;
+अटल पूर्णांक समयhist_migrate_task_event(काष्ठा perf_tool *tool,
+				       जोड़ perf_event *event __maybe_unused,
+				       काष्ठा evsel *evsel,
+				       काष्ठा perf_sample *sample,
+				       काष्ठा machine *machine)
+अणु
+	काष्ठा perf_sched *sched = container_of(tool, काष्ठा perf_sched, tool);
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा thपढ़ो_runसमय *tr = शून्य;
 	/* want pid of migrated task not pid in sample */
-	const u32 pid = evsel__intval(evsel, sample, "pid");
+	स्थिर u32 pid = evsel__पूर्णांकval(evsel, sample, "pid");
 
-	thread = machine__findnew_thread(machine, 0, pid);
-	if (thread == NULL)
-		return -1;
+	thपढ़ो = machine__findnew_thपढ़ो(machine, 0, pid);
+	अगर (thपढ़ो == शून्य)
+		वापस -1;
 
-	tr = thread__get_runtime(thread);
-	if (tr == NULL)
-		return -1;
+	tr = thपढ़ो__get_runसमय(thपढ़ो);
+	अगर (tr == शून्य)
+		वापस -1;
 
 	tr->migrations++;
 
-	/* show migrations if requested */
-	timehist_print_migration_event(sched, evsel, sample, machine, thread);
+	/* show migrations अगर requested */
+	समयhist_prपूर्णांक_migration_event(sched, evsel, sample, machine, thपढ़ो);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int timehist_sched_change_event(struct perf_tool *tool,
-				       union perf_event *event,
-				       struct evsel *evsel,
-				       struct perf_sample *sample,
-				       struct machine *machine)
-{
-	struct perf_sched *sched = container_of(tool, struct perf_sched, tool);
-	struct perf_time_interval *ptime = &sched->ptime;
-	struct addr_location al;
-	struct thread *thread;
-	struct thread_runtime *tr = NULL;
-	u64 tprev, t = sample->time;
-	int rc = 0;
-	int state = evsel__intval(evsel, sample, "prev_state");
+अटल पूर्णांक समयhist_sched_change_event(काष्ठा perf_tool *tool,
+				       जोड़ perf_event *event,
+				       काष्ठा evsel *evsel,
+				       काष्ठा perf_sample *sample,
+				       काष्ठा machine *machine)
+अणु
+	काष्ठा perf_sched *sched = container_of(tool, काष्ठा perf_sched, tool);
+	काष्ठा perf_समय_पूर्णांकerval *pसमय = &sched->pसमय;
+	काष्ठा addr_location al;
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा thपढ़ो_runसमय *tr = शून्य;
+	u64 tprev, t = sample->समय;
+	पूर्णांक rc = 0;
+	पूर्णांक state = evsel__पूर्णांकval(evsel, sample, "prev_state");
 
-	if (machine__resolve(machine, &al, sample) < 0) {
+	अगर (machine__resolve(machine, &al, sample) < 0) अणु
 		pr_err("problem processing %d event. skipping it\n",
 		       event->header.type);
 		rc = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	thread = timehist_get_thread(sched, sample, machine, evsel);
-	if (thread == NULL) {
+	thपढ़ो = समयhist_get_thपढ़ो(sched, sample, machine, evsel);
+	अगर (thपढ़ो == शून्य) अणु
 		rc = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (timehist_skip_sample(sched, thread, evsel, sample))
-		goto out;
+	अगर (समयhist_skip_sample(sched, thपढ़ो, evsel, sample))
+		जाओ out;
 
-	tr = thread__get_runtime(thread);
-	if (tr == NULL) {
+	tr = thपढ़ो__get_runसमय(thपढ़ो);
+	अगर (tr == शून्य) अणु
 		rc = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	tprev = evsel__get_time(evsel, sample->cpu);
+	tprev = evsel__get_समय(evsel, sample->cpu);
 
 	/*
-	 * If start time given:
-	 * - sample time is under window user cares about - skip sample
-	 * - tprev is under window user cares about  - reset to start of window
+	 * If start समय given:
+	 * - sample समय is under winकरोw user cares about - skip sample
+	 * - tprev is under winकरोw user cares about  - reset to start of winकरोw
 	 */
-	if (ptime->start && ptime->start > t)
-		goto out;
+	अगर (pसमय->start && pसमय->start > t)
+		जाओ out;
 
-	if (tprev && ptime->start > tprev)
-		tprev = ptime->start;
+	अगर (tprev && pसमय->start > tprev)
+		tprev = pसमय->start;
 
 	/*
-	 * If end time given:
-	 * - previous sched event is out of window - we are done
-	 * - sample time is beyond window user cares about - reset it
-	 *   to close out stats for time window interest
+	 * If end समय given:
+	 * - previous sched event is out of winकरोw - we are करोne
+	 * - sample समय is beyond winकरोw user cares about - reset it
+	 *   to बंद out stats क्रम समय winकरोw पूर्णांकerest
 	 */
-	if (ptime->end) {
-		if (tprev > ptime->end)
-			goto out;
+	अगर (pसमय->end) अणु
+		अगर (tprev > pसमय->end)
+			जाओ out;
 
-		if (t > ptime->end)
-			t = ptime->end;
-	}
+		अगर (t > pसमय->end)
+			t = pसमय->end;
+	पूर्ण
 
-	if (!sched->idle_hist || thread->tid == 0) {
-		if (!cpu_list || test_bit(sample->cpu, cpu_bitmap))
-			timehist_update_runtime_stats(tr, t, tprev);
+	अगर (!sched->idle_hist || thपढ़ो->tid == 0) अणु
+		अगर (!cpu_list || test_bit(sample->cpu, cpu_biपंचांगap))
+			समयhist_update_runसमय_stats(tr, t, tprev);
 
-		if (sched->idle_hist) {
-			struct idle_thread_runtime *itr = (void *)tr;
-			struct thread_runtime *last_tr;
+		अगर (sched->idle_hist) अणु
+			काष्ठा idle_thपढ़ो_runसमय *itr = (व्योम *)tr;
+			काष्ठा thपढ़ो_runसमय *last_tr;
 
-			BUG_ON(thread->tid != 0);
+			BUG_ON(thपढ़ो->tid != 0);
 
-			if (itr->last_thread == NULL)
-				goto out;
+			अगर (itr->last_thपढ़ो == शून्य)
+				जाओ out;
 
-			/* add current idle time as last thread's runtime */
-			last_tr = thread__get_runtime(itr->last_thread);
-			if (last_tr == NULL)
-				goto out;
+			/* add current idle समय as last thपढ़ो's runसमय */
+			last_tr = thपढ़ो__get_runसमय(itr->last_thपढ़ो);
+			अगर (last_tr == शून्य)
+				जाओ out;
 
-			timehist_update_runtime_stats(last_tr, t, tprev);
+			समयhist_update_runसमय_stats(last_tr, t, tprev);
 			/*
-			 * remove delta time of last thread as it's not updated
+			 * हटाओ delta समय of last thपढ़ो as it's not updated
 			 * and otherwise it will show an invalid value next
-			 * time.  we only care total run time and run stat.
+			 * समय.  we only care total run समय and run stat.
 			 */
 			last_tr->dt_run = 0;
 			last_tr->dt_delay = 0;
 			last_tr->dt_sleep = 0;
-			last_tr->dt_iowait = 0;
+			last_tr->dt_ioरुको = 0;
 			last_tr->dt_preempt = 0;
 
-			if (itr->cursor.nr)
+			अगर (itr->cursor.nr)
 				callchain_append(&itr->callchain, &itr->cursor, t - tprev);
 
-			itr->last_thread = NULL;
-		}
-	}
+			itr->last_thपढ़ो = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (!sched->summary_only)
-		timehist_print_sample(sched, evsel, sample, &al, thread, t, state);
+	अगर (!sched->summary_only)
+		समयhist_prपूर्णांक_sample(sched, evsel, sample, &al, thपढ़ो, t, state);
 
 out:
-	if (sched->hist_time.start == 0 && t >= ptime->start)
-		sched->hist_time.start = t;
-	if (ptime->end == 0 || t <= ptime->end)
-		sched->hist_time.end = t;
+	अगर (sched->hist_समय.start == 0 && t >= pसमय->start)
+		sched->hist_समय.start = t;
+	अगर (pसमय->end == 0 || t <= pसमय->end)
+		sched->hist_समय.end = t;
 
-	if (tr) {
-		/* time of this sched_switch event becomes last time task seen */
-		tr->last_time = sample->time;
+	अगर (tr) अणु
+		/* समय of this sched_चयन event becomes last समय task seen */
+		tr->last_समय = sample->समय;
 
-		/* last state is used to determine where to account wait time */
+		/* last state is used to determine where to account रुको समय */
 		tr->last_state = state;
 
-		/* sched out event for task so reset ready to run time */
-		tr->ready_to_run = 0;
-	}
+		/* sched out event क्रम task so reset पढ़ोy to run समय */
+		tr->पढ़ोy_to_run = 0;
+	पूर्ण
 
-	evsel__save_time(evsel, sample->time, sample->cpu);
+	evsel__save_समय(evsel, sample->समय, sample->cpu);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int timehist_sched_switch_event(struct perf_tool *tool,
-			     union perf_event *event,
-			     struct evsel *evsel,
-			     struct perf_sample *sample,
-			     struct machine *machine __maybe_unused)
-{
-	return timehist_sched_change_event(tool, event, evsel, sample, machine);
-}
+अटल पूर्णांक समयhist_sched_चयन_event(काष्ठा perf_tool *tool,
+			     जोड़ perf_event *event,
+			     काष्ठा evsel *evsel,
+			     काष्ठा perf_sample *sample,
+			     काष्ठा machine *machine __maybe_unused)
+अणु
+	वापस समयhist_sched_change_event(tool, event, evsel, sample, machine);
+पूर्ण
 
-static int process_lost(struct perf_tool *tool __maybe_unused,
-			union perf_event *event,
-			struct perf_sample *sample,
-			struct machine *machine __maybe_unused)
-{
-	char tstr[64];
+अटल पूर्णांक process_lost(काष्ठा perf_tool *tool __maybe_unused,
+			जोड़ perf_event *event,
+			काष्ठा perf_sample *sample,
+			काष्ठा machine *machine __maybe_unused)
+अणु
+	अक्षर tstr[64];
 
-	timestamp__scnprintf_usec(sample->time, tstr, sizeof(tstr));
-	printf("%15s ", tstr);
-	printf("lost %" PRI_lu64 " events on cpu %d\n", event->lost.lost, sample->cpu);
+	बारtamp__scnम_लिखो_usec(sample->समय, tstr, माप(tstr));
+	म_लिखो("%15s ", tstr);
+	म_लिखो("lost %" PRI_lu64 " events on cpu %d\n", event->lost.lost, sample->cpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void print_thread_runtime(struct thread *t,
-				 struct thread_runtime *r)
-{
-	double mean = avg_stats(&r->run_stats);
-	float stddev;
+अटल व्योम prपूर्णांक_thपढ़ो_runसमय(काष्ठा thपढ़ो *t,
+				 काष्ठा thपढ़ो_runसमय *r)
+अणु
+	द्विगुन mean = avg_stats(&r->run_stats);
+	भग्न stddev;
 
-	printf("%*s   %5d  %9" PRIu64 " ",
-	       comm_width, timehist_get_commstr(t), t->ppid,
+	म_लिखो("%*s   %5d  %9" PRIu64 " ",
+	       comm_width, समयhist_get_commstr(t), t->ppid,
 	       (u64) r->run_stats.n);
 
-	print_sched_time(r->total_run_time, 8);
+	prपूर्णांक_sched_समय(r->total_run_समय, 8);
 	stddev = rel_stddev_stats(stddev_stats(&r->run_stats), mean);
-	print_sched_time(r->run_stats.min, 6);
-	printf(" ");
-	print_sched_time((u64) mean, 6);
-	printf(" ");
-	print_sched_time(r->run_stats.max, 6);
-	printf("  ");
-	printf("%5.2f", stddev);
-	printf("   %5" PRIu64, r->migrations);
-	printf("\n");
-}
+	prपूर्णांक_sched_समय(r->run_stats.min, 6);
+	म_लिखो(" ");
+	prपूर्णांक_sched_समय((u64) mean, 6);
+	म_लिखो(" ");
+	prपूर्णांक_sched_समय(r->run_stats.max, 6);
+	म_लिखो("  ");
+	म_लिखो("%5.2f", stddev);
+	म_लिखो("   %5" PRIu64, r->migrations);
+	म_लिखो("\n");
+पूर्ण
 
-static void print_thread_waittime(struct thread *t,
-				  struct thread_runtime *r)
-{
-	printf("%*s   %5d  %9" PRIu64 " ",
-	       comm_width, timehist_get_commstr(t), t->ppid,
+अटल व्योम prपूर्णांक_thपढ़ो_रुकोसमय(काष्ठा thपढ़ो *t,
+				  काष्ठा thपढ़ो_runसमय *r)
+अणु
+	म_लिखो("%*s   %5d  %9" PRIu64 " ",
+	       comm_width, समयhist_get_commstr(t), t->ppid,
 	       (u64) r->run_stats.n);
 
-	print_sched_time(r->total_run_time, 8);
-	print_sched_time(r->total_sleep_time, 6);
-	printf(" ");
-	print_sched_time(r->total_iowait_time, 6);
-	printf(" ");
-	print_sched_time(r->total_preempt_time, 6);
-	printf(" ");
-	print_sched_time(r->total_delay_time, 6);
-	printf("\n");
-}
+	prपूर्णांक_sched_समय(r->total_run_समय, 8);
+	prपूर्णांक_sched_समय(r->total_sleep_समय, 6);
+	म_लिखो(" ");
+	prपूर्णांक_sched_समय(r->total_ioरुको_समय, 6);
+	म_लिखो(" ");
+	prपूर्णांक_sched_समय(r->total_preempt_समय, 6);
+	म_लिखो(" ");
+	prपूर्णांक_sched_समय(r->total_delay_समय, 6);
+	म_लिखो("\n");
+पूर्ण
 
-struct total_run_stats {
-	struct perf_sched *sched;
+काष्ठा total_run_stats अणु
+	काष्ठा perf_sched *sched;
 	u64  sched_count;
 	u64  task_count;
-	u64  total_run_time;
-};
+	u64  total_run_समय;
+पूर्ण;
 
-static int __show_thread_runtime(struct thread *t, void *priv)
-{
-	struct total_run_stats *stats = priv;
-	struct thread_runtime *r;
+अटल पूर्णांक __show_thपढ़ो_runसमय(काष्ठा thपढ़ो *t, व्योम *priv)
+अणु
+	काष्ठा total_run_stats *stats = priv;
+	काष्ठा thपढ़ो_runसमय *r;
 
-	if (thread__is_filtered(t))
-		return 0;
+	अगर (thपढ़ो__is_filtered(t))
+		वापस 0;
 
-	r = thread__priv(t);
-	if (r && r->run_stats.n) {
+	r = thपढ़ो__priv(t);
+	अगर (r && r->run_stats.n) अणु
 		stats->task_count++;
 		stats->sched_count += r->run_stats.n;
-		stats->total_run_time += r->total_run_time;
+		stats->total_run_समय += r->total_run_समय;
 
-		if (stats->sched->show_state)
-			print_thread_waittime(t, r);
-		else
-			print_thread_runtime(t, r);
-	}
+		अगर (stats->sched->show_state)
+			prपूर्णांक_thपढ़ो_रुकोसमय(t, r);
+		अन्यथा
+			prपूर्णांक_thपढ़ो_runसमय(t, r);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int show_thread_runtime(struct thread *t, void *priv)
-{
-	if (t->dead)
-		return 0;
+अटल पूर्णांक show_thपढ़ो_runसमय(काष्ठा thपढ़ो *t, व्योम *priv)
+अणु
+	अगर (t->dead)
+		वापस 0;
 
-	return __show_thread_runtime(t, priv);
-}
+	वापस __show_thपढ़ो_runसमय(t, priv);
+पूर्ण
 
-static int show_deadthread_runtime(struct thread *t, void *priv)
-{
-	if (!t->dead)
-		return 0;
+अटल पूर्णांक show_deadthपढ़ो_runसमय(काष्ठा thपढ़ो *t, व्योम *priv)
+अणु
+	अगर (!t->dead)
+		वापस 0;
 
-	return __show_thread_runtime(t, priv);
-}
+	वापस __show_thपढ़ो_runसमय(t, priv);
+पूर्ण
 
-static size_t callchain__fprintf_folded(FILE *fp, struct callchain_node *node)
-{
-	const char *sep = " <- ";
-	struct callchain_list *chain;
-	size_t ret = 0;
-	char bf[1024];
+अटल माप_प्रकार callchain__ख_लिखो_folded(खाता *fp, काष्ठा callchain_node *node)
+अणु
+	स्थिर अक्षर *sep = " <- ";
+	काष्ठा callchain_list *chain;
+	माप_प्रकार ret = 0;
+	अक्षर bf[1024];
 	bool first;
 
-	if (node == NULL)
-		return 0;
+	अगर (node == शून्य)
+		वापस 0;
 
-	ret = callchain__fprintf_folded(fp, node->parent);
+	ret = callchain__ख_लिखो_folded(fp, node->parent);
 	first = (ret == 0);
 
-	list_for_each_entry(chain, &node->val, list) {
-		if (chain->ip >= PERF_CONTEXT_MAX)
-			continue;
-		if (chain->ms.sym && chain->ms.sym->ignore)
-			continue;
-		ret += fprintf(fp, "%s%s", first ? "" : sep,
-			       callchain_list__sym_name(chain, bf, sizeof(bf),
+	list_क्रम_each_entry(chain, &node->val, list) अणु
+		अगर (chain->ip >= PERF_CONTEXT_MAX)
+			जारी;
+		अगर (chain->ms.sym && chain->ms.sym->ignore)
+			जारी;
+		ret += ख_लिखो(fp, "%s%s", first ? "" : sep,
+			       callchain_list__sym_name(chain, bf, माप(bf),
 							false));
 		first = false;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static size_t timehist_print_idlehist_callchain(struct rb_root_cached *root)
-{
-	size_t ret = 0;
-	FILE *fp = stdout;
-	struct callchain_node *chain;
-	struct rb_node *rb_node = rb_first_cached(root);
+अटल माप_प्रकार समयhist_prपूर्णांक_idlehist_callchain(काष्ठा rb_root_cached *root)
+अणु
+	माप_प्रकार ret = 0;
+	खाता *fp = मानक_निकास;
+	काष्ठा callchain_node *chain;
+	काष्ठा rb_node *rb_node = rb_first_cached(root);
 
-	printf("  %16s  %8s  %s\n", "Idle time (msec)", "Count", "Callchains");
-	printf("  %.16s  %.8s  %.50s\n", graph_dotted_line, graph_dotted_line,
-	       graph_dotted_line);
+	म_लिखो("  %16s  %8s  %s\n", "Idle time (msec)", "Count", "Callchains");
+	म_लिखो("  %.16s  %.8s  %.50s\n", graph_करोtted_line, graph_करोtted_line,
+	       graph_करोtted_line);
 
-	while (rb_node) {
-		chain = rb_entry(rb_node, struct callchain_node, rb_node);
+	जबतक (rb_node) अणु
+		chain = rb_entry(rb_node, काष्ठा callchain_node, rb_node);
 		rb_node = rb_next(rb_node);
 
-		ret += fprintf(fp, "  ");
-		print_sched_time(chain->hit, 12);
-		ret += 16;  /* print_sched_time returns 2nd arg + 4 */
-		ret += fprintf(fp, " %8d  ", chain->count);
-		ret += callchain__fprintf_folded(fp, chain);
-		ret += fprintf(fp, "\n");
-	}
+		ret += ख_लिखो(fp, "  ");
+		prपूर्णांक_sched_समय(chain->hit, 12);
+		ret += 16;  /* prपूर्णांक_sched_समय वापसs 2nd arg + 4 */
+		ret += ख_लिखो(fp, " %8d  ", chain->count);
+		ret += callchain__ख_लिखो_folded(fp, chain);
+		ret += ख_लिखो(fp, "\n");
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void timehist_print_summary(struct perf_sched *sched,
-				   struct perf_session *session)
-{
-	struct machine *m = &session->machines.host;
-	struct total_run_stats totals;
+अटल व्योम समयhist_prपूर्णांक_summary(काष्ठा perf_sched *sched,
+				   काष्ठा perf_session *session)
+अणु
+	काष्ठा machine *m = &session->machines.host;
+	काष्ठा total_run_stats totals;
 	u64 task_count;
-	struct thread *t;
-	struct thread_runtime *r;
-	int i;
-	u64 hist_time = sched->hist_time.end - sched->hist_time.start;
+	काष्ठा thपढ़ो *t;
+	काष्ठा thपढ़ो_runसमय *r;
+	पूर्णांक i;
+	u64 hist_समय = sched->hist_समय.end - sched->hist_समय.start;
 
-	memset(&totals, 0, sizeof(totals));
+	स_रखो(&totals, 0, माप(totals));
 	totals.sched = sched;
 
-	if (sched->idle_hist) {
-		printf("\nIdle-time summary\n");
-		printf("%*s  parent  sched-out  ", comm_width, "comm");
-		printf("  idle-time   min-idle    avg-idle    max-idle  stddev  migrations\n");
-	} else if (sched->show_state) {
-		printf("\nWait-time summary\n");
-		printf("%*s  parent   sched-in  ", comm_width, "comm");
-		printf("   run-time      sleep      iowait     preempt       delay\n");
-	} else {
-		printf("\nRuntime summary\n");
-		printf("%*s  parent   sched-in  ", comm_width, "comm");
-		printf("   run-time    min-run     avg-run     max-run  stddev  migrations\n");
-	}
-	printf("%*s            (count)  ", comm_width, "");
-	printf("     (msec)     (msec)      (msec)      (msec)       %s\n",
+	अगर (sched->idle_hist) अणु
+		म_लिखो("\nIdle-time summary\n");
+		म_लिखो("%*s  parent  sched-out  ", comm_width, "comm");
+		म_लिखो("  idle-time   min-idle    avg-idle    max-idle  stddev  migrations\n");
+	पूर्ण अन्यथा अगर (sched->show_state) अणु
+		म_लिखो("\nWait-time summary\n");
+		म_लिखो("%*s  parent   sched-in  ", comm_width, "comm");
+		म_लिखो("   run-time      sleep      iowait     preempt       delay\n");
+	पूर्ण अन्यथा अणु
+		म_लिखो("\nRuntime summary\n");
+		म_लिखो("%*s  parent   sched-in  ", comm_width, "comm");
+		म_लिखो("   run-time    min-run     avg-run     max-run  stddev  migrations\n");
+	पूर्ण
+	म_लिखो("%*s            (count)  ", comm_width, "");
+	म_लिखो("     (msec)     (msec)      (msec)      (msec)       %s\n",
 	       sched->show_state ? "(msec)" : "%");
-	printf("%.117s\n", graph_dotted_line);
+	म_लिखो("%.117s\n", graph_करोtted_line);
 
-	machine__for_each_thread(m, show_thread_runtime, &totals);
+	machine__क्रम_each_thपढ़ो(m, show_thपढ़ो_runसमय, &totals);
 	task_count = totals.task_count;
-	if (!task_count)
-		printf("<no still running tasks>\n");
+	अगर (!task_count)
+		म_लिखो("<no still running tasks>\n");
 
-	printf("\nTerminated tasks:\n");
-	machine__for_each_thread(m, show_deadthread_runtime, &totals);
-	if (task_count == totals.task_count)
-		printf("<no terminated tasks>\n");
+	म_लिखो("\nTerminated tasks:\n");
+	machine__क्रम_each_thपढ़ो(m, show_deadthपढ़ो_runसमय, &totals);
+	अगर (task_count == totals.task_count)
+		म_लिखो("<no terminated tasks>\n");
 
 	/* CPU idle stats not tracked when samples were skipped */
-	if (sched->skipped_samples && !sched->idle_hist)
-		return;
+	अगर (sched->skipped_samples && !sched->idle_hist)
+		वापस;
 
-	printf("\nIdle stats:\n");
-	for (i = 0; i < idle_max_cpu; ++i) {
-		if (cpu_list && !test_bit(i, cpu_bitmap))
-			continue;
+	म_लिखो("\nIdle stats:\n");
+	क्रम (i = 0; i < idle_max_cpu; ++i) अणु
+		अगर (cpu_list && !test_bit(i, cpu_biपंचांगap))
+			जारी;
 
-		t = idle_threads[i];
-		if (!t)
-			continue;
+		t = idle_thपढ़ोs[i];
+		अगर (!t)
+			जारी;
 
-		r = thread__priv(t);
-		if (r && r->run_stats.n) {
+		r = thपढ़ो__priv(t);
+		अगर (r && r->run_stats.n) अणु
 			totals.sched_count += r->run_stats.n;
-			printf("    CPU %2d idle for ", i);
-			print_sched_time(r->total_run_time, 6);
-			printf(" msec  (%6.2f%%)\n", 100.0 * r->total_run_time / hist_time);
-		} else
-			printf("    CPU %2d idle entire time window\n", i);
-	}
+			म_लिखो("    CPU %2d idle for ", i);
+			prपूर्णांक_sched_समय(r->total_run_समय, 6);
+			म_लिखो(" msec  (%6.2f%%)\n", 100.0 * r->total_run_समय / hist_समय);
+		पूर्ण अन्यथा
+			म_लिखो("    CPU %2d idle entire time window\n", i);
+	पूर्ण
 
-	if (sched->idle_hist && sched->show_callchain) {
+	अगर (sched->idle_hist && sched->show_callchain) अणु
 		callchain_param.mode  = CHAIN_FOLDED;
 		callchain_param.value = CCVAL_PERIOD;
 
-		callchain_register_param(&callchain_param);
+		callchain_रेजिस्टर_param(&callchain_param);
 
-		printf("\nIdle stats by callchain:\n");
-		for (i = 0; i < idle_max_cpu; ++i) {
-			struct idle_thread_runtime *itr;
+		म_लिखो("\nIdle stats by callchain:\n");
+		क्रम (i = 0; i < idle_max_cpu; ++i) अणु
+			काष्ठा idle_thपढ़ो_runसमय *itr;
 
-			t = idle_threads[i];
-			if (!t)
-				continue;
+			t = idle_thपढ़ोs[i];
+			अगर (!t)
+				जारी;
 
-			itr = thread__priv(t);
-			if (itr == NULL)
-				continue;
+			itr = thपढ़ो__priv(t);
+			अगर (itr == शून्य)
+				जारी;
 
 			callchain_param.sort(&itr->sorted_root.rb_root, &itr->callchain,
 					     0, &callchain_param);
 
-			printf("  CPU %2d:", i);
-			print_sched_time(itr->tr.total_run_time, 6);
-			printf(" msec\n");
-			timehist_print_idlehist_callchain(&itr->sorted_root);
-			printf("\n");
-		}
-	}
+			म_लिखो("  CPU %2d:", i);
+			prपूर्णांक_sched_समय(itr->tr.total_run_समय, 6);
+			म_लिखो(" msec\n");
+			समयhist_prपूर्णांक_idlehist_callchain(&itr->sorted_root);
+			म_लिखो("\n");
+		पूर्ण
+	पूर्ण
 
-	printf("\n"
+	म_लिखो("\n"
 	       "    Total number of unique tasks: %" PRIu64 "\n"
 	       "Total number of context switches: %" PRIu64 "\n",
 	       totals.task_count, totals.sched_count);
 
-	printf("           Total run time (msec): ");
-	print_sched_time(totals.total_run_time, 2);
-	printf("\n");
+	म_लिखो("           Total run time (msec): ");
+	prपूर्णांक_sched_समय(totals.total_run_समय, 2);
+	म_लिखो("\n");
 
-	printf("    Total scheduling time (msec): ");
-	print_sched_time(hist_time, 2);
-	printf(" (x %d)\n", sched->max_cpu);
-}
+	म_लिखो("    Total scheduling time (msec): ");
+	prपूर्णांक_sched_समय(hist_समय, 2);
+	म_लिखो(" (x %d)\n", sched->max_cpu);
+पूर्ण
 
-typedef int (*sched_handler)(struct perf_tool *tool,
-			  union perf_event *event,
-			  struct evsel *evsel,
-			  struct perf_sample *sample,
-			  struct machine *machine);
+प्रकार पूर्णांक (*sched_handler)(काष्ठा perf_tool *tool,
+			  जोड़ perf_event *event,
+			  काष्ठा evsel *evsel,
+			  काष्ठा perf_sample *sample,
+			  काष्ठा machine *machine);
 
-static int perf_timehist__process_sample(struct perf_tool *tool,
-					 union perf_event *event,
-					 struct perf_sample *sample,
-					 struct evsel *evsel,
-					 struct machine *machine)
-{
-	struct perf_sched *sched = container_of(tool, struct perf_sched, tool);
-	int err = 0;
-	int this_cpu = sample->cpu;
+अटल पूर्णांक perf_समयhist__process_sample(काष्ठा perf_tool *tool,
+					 जोड़ perf_event *event,
+					 काष्ठा perf_sample *sample,
+					 काष्ठा evsel *evsel,
+					 काष्ठा machine *machine)
+अणु
+	काष्ठा perf_sched *sched = container_of(tool, काष्ठा perf_sched, tool);
+	पूर्णांक err = 0;
+	पूर्णांक this_cpu = sample->cpu;
 
-	if (this_cpu > sched->max_cpu)
+	अगर (this_cpu > sched->max_cpu)
 		sched->max_cpu = this_cpu;
 
-	if (evsel->handler != NULL) {
+	अगर (evsel->handler != शून्य) अणु
 		sched_handler f = evsel->handler;
 
 		err = f(tool, event, evsel, sample, machine);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int timehist_check_attr(struct perf_sched *sched,
-			       struct evlist *evlist)
-{
-	struct evsel *evsel;
-	struct evsel_runtime *er;
+अटल पूर्णांक समयhist_check_attr(काष्ठा perf_sched *sched,
+			       काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
+	काष्ठा evsel_runसमय *er;
 
-	list_for_each_entry(evsel, &evlist->core.entries, core.node) {
-		er = evsel__get_runtime(evsel);
-		if (er == NULL) {
+	list_क्रम_each_entry(evsel, &evlist->core.entries, core.node) अणु
+		er = evsel__get_runसमय(evsel);
+		अगर (er == शून्य) अणु
 			pr_err("Failed to allocate memory for evsel runtime data\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		if (sched->show_callchain && !evsel__has_callchain(evsel)) {
+		अगर (sched->show_callchain && !evsel__has_callchain(evsel)) अणु
 			pr_info("Samples do not have callchains.\n");
 			sched->show_callchain = 0;
 			symbol_conf.use_callchain = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_sched__timehist(struct perf_sched *sched)
-{
-	struct evsel_str_handler handlers[] = {
-		{ "sched:sched_switch",       timehist_sched_switch_event, },
-		{ "sched:sched_wakeup",	      timehist_sched_wakeup_event, },
-		{ "sched:sched_waking",       timehist_sched_wakeup_event, },
-		{ "sched:sched_wakeup_new",   timehist_sched_wakeup_event, },
-	};
-	const struct evsel_str_handler migrate_handlers[] = {
-		{ "sched:sched_migrate_task", timehist_migrate_task_event, },
-	};
-	struct perf_data data = {
+अटल पूर्णांक perf_sched__समयhist(काष्ठा perf_sched *sched)
+अणु
+	काष्ठा evsel_str_handler handlers[] = अणु
+		अणु "sched:sched_switch",       समयhist_sched_चयन_event, पूर्ण,
+		अणु "sched:sched_wakeup",	      समयhist_sched_wakeup_event, पूर्ण,
+		अणु "sched:sched_waking",       समयhist_sched_wakeup_event, पूर्ण,
+		अणु "sched:sched_wakeup_new",   समयhist_sched_wakeup_event, पूर्ण,
+	पूर्ण;
+	स्थिर काष्ठा evsel_str_handler migrate_handlers[] = अणु
+		अणु "sched:sched_migrate_task", समयhist_migrate_task_event, पूर्ण,
+	पूर्ण;
+	काष्ठा perf_data data = अणु
 		.path  = input_name,
 		.mode  = PERF_DATA_MODE_READ,
-		.force = sched->force,
-	};
+		.क्रमce = sched->क्रमce,
+	पूर्ण;
 
-	struct perf_session *session;
-	struct evlist *evlist;
-	int err = -1;
+	काष्ठा perf_session *session;
+	काष्ठा evlist *evlist;
+	पूर्णांक err = -1;
 
 	/*
-	 * event handlers for timehist option
+	 * event handlers क्रम समयhist option
 	 */
-	sched->tool.sample	 = perf_timehist__process_sample;
+	sched->tool.sample	 = perf_समयhist__process_sample;
 	sched->tool.mmap	 = perf_event__process_mmap;
 	sched->tool.comm	 = perf_event__process_comm;
-	sched->tool.exit	 = perf_event__process_exit;
-	sched->tool.fork	 = perf_event__process_fork;
+	sched->tool.निकास	 = perf_event__process_निकास;
+	sched->tool.विभाजन	 = perf_event__process_विभाजन;
 	sched->tool.lost	 = process_lost;
 	sched->tool.attr	 = perf_event__process_attr;
 	sched->tool.tracing_data = perf_event__process_tracing_data;
 	sched->tool.build_id	 = perf_event__process_build_id;
 
 	sched->tool.ordered_events = true;
-	sched->tool.ordering_requires_timestamps = true;
+	sched->tool.ordering_requires_बारtamps = true;
 
 	symbol_conf.use_callchain = sched->show_callchain;
 
 	session = perf_session__new(&data, false, &sched->tool);
-	if (IS_ERR(session))
-		return PTR_ERR(session);
+	अगर (IS_ERR(session))
+		वापस PTR_ERR(session);
 
-	if (cpu_list) {
-		err = perf_session__cpu_bitmap(session, cpu_list, cpu_bitmap);
-		if (err < 0)
-			goto out;
-	}
+	अगर (cpu_list) अणु
+		err = perf_session__cpu_biपंचांगap(session, cpu_list, cpu_biपंचांगap);
+		अगर (err < 0)
+			जाओ out;
+	पूर्ण
 
 	evlist = session->evlist;
 
 	symbol__init(&session->header.env);
 
-	if (perf_time__parse_str(&sched->ptime, sched->time_str) != 0) {
+	अगर (perf_समय__parse_str(&sched->pसमय, sched->समय_str) != 0) अणु
 		pr_err("Invalid time string\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (timehist_check_attr(sched, evlist) != 0)
-		goto out;
+	अगर (समयhist_check_attr(sched, evlist) != 0)
+		जाओ out;
 
 	setup_pager();
 
-	/* prefer sched_waking if it is captured */
-	if (evlist__find_tracepoint_by_name(session->evlist, "sched:sched_waking"))
-		handlers[1].handler = timehist_sched_wakeup_ignore;
+	/* prefer sched_waking अगर it is captured */
+	अगर (evlist__find_tracepoपूर्णांक_by_name(session->evlist, "sched:sched_waking"))
+		handlers[1].handler = समयhist_sched_wakeup_ignore;
 
 	/* setup per-evsel handlers */
-	if (perf_session__set_tracepoints_handlers(session, handlers))
-		goto out;
+	अगर (perf_session__set_tracepoपूर्णांकs_handlers(session, handlers))
+		जाओ out;
 
-	/* sched_switch event at a minimum needs to exist */
-	if (!evlist__find_tracepoint_by_name(session->evlist, "sched:sched_switch")) {
+	/* sched_चयन event at a minimum needs to exist */
+	अगर (!evlist__find_tracepoपूर्णांक_by_name(session->evlist, "sched:sched_switch")) अणु
 		pr_err("No sched_switch events found. Have you run 'perf sched record'?\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (sched->show_migrations &&
-	    perf_session__set_tracepoints_handlers(session, migrate_handlers))
-		goto out;
+	अगर (sched->show_migrations &&
+	    perf_session__set_tracepoपूर्णांकs_handlers(session, migrate_handlers))
+		जाओ out;
 
-	/* pre-allocate struct for per-CPU idle stats */
+	/* pre-allocate काष्ठा क्रम per-CPU idle stats */
 	sched->max_cpu = session->header.env.nr_cpus_online;
-	if (sched->max_cpu == 0)
+	अगर (sched->max_cpu == 0)
 		sched->max_cpu = 4;
-	if (init_idle_threads(sched->max_cpu))
-		goto out;
+	अगर (init_idle_thपढ़ोs(sched->max_cpu))
+		जाओ out;
 
-	/* summary_only implies summary option, but don't overwrite summary if set */
-	if (sched->summary_only)
+	/* summary_only implies summary option, but करोn't overग_लिखो summary अगर set */
+	अगर (sched->summary_only)
 		sched->summary = sched->summary_only;
 
-	if (!sched->summary_only)
-		timehist_header(sched);
+	अगर (!sched->summary_only)
+		समयhist_header(sched);
 
 	err = perf_session__process_events(session);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed to process events, error %d", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	sched->nr_events      = evlist->stats.nr_events[0];
 	sched->nr_lost_events = evlist->stats.total_lost;
 	sched->nr_lost_chunks = evlist->stats.nr_events[PERF_RECORD_LOST];
 
-	if (sched->summary)
-		timehist_print_summary(sched, session);
+	अगर (sched->summary)
+		समयhist_prपूर्णांक_summary(sched, session);
 
 out:
-	free_idle_threads();
+	मुक्त_idle_thपढ़ोs();
 	perf_session__delete(session);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static void print_bad_events(struct perf_sched *sched)
-{
-	if (sched->nr_unordered_timestamps && sched->nr_timestamps) {
-		printf("  INFO: %.3f%% unordered timestamps (%ld out of %ld)\n",
-			(double)sched->nr_unordered_timestamps/(double)sched->nr_timestamps*100.0,
-			sched->nr_unordered_timestamps, sched->nr_timestamps);
-	}
-	if (sched->nr_lost_events && sched->nr_events) {
-		printf("  INFO: %.3f%% lost events (%ld out of %ld, in %ld chunks)\n",
-			(double)sched->nr_lost_events/(double)sched->nr_events * 100.0,
+अटल व्योम prपूर्णांक_bad_events(काष्ठा perf_sched *sched)
+अणु
+	अगर (sched->nr_unordered_बारtamps && sched->nr_बारtamps) अणु
+		म_लिखो("  INFO: %.3f%% unordered timestamps (%ld out of %ld)\n",
+			(द्विगुन)sched->nr_unordered_बारtamps/(द्विगुन)sched->nr_बारtamps*100.0,
+			sched->nr_unordered_बारtamps, sched->nr_बारtamps);
+	पूर्ण
+	अगर (sched->nr_lost_events && sched->nr_events) अणु
+		म_लिखो("  INFO: %.3f%% lost events (%ld out of %ld, in %ld chunks)\n",
+			(द्विगुन)sched->nr_lost_events/(द्विगुन)sched->nr_events * 100.0,
 			sched->nr_lost_events, sched->nr_events, sched->nr_lost_chunks);
-	}
-	if (sched->nr_context_switch_bugs && sched->nr_timestamps) {
-		printf("  INFO: %.3f%% context switch bugs (%ld out of %ld)",
-			(double)sched->nr_context_switch_bugs/(double)sched->nr_timestamps*100.0,
-			sched->nr_context_switch_bugs, sched->nr_timestamps);
-		if (sched->nr_lost_events)
-			printf(" (due to lost events?)");
-		printf("\n");
-	}
-}
+	पूर्ण
+	अगर (sched->nr_context_चयन_bugs && sched->nr_बारtamps) अणु
+		म_लिखो("  INFO: %.3f%% context switch bugs (%ld out of %ld)",
+			(द्विगुन)sched->nr_context_चयन_bugs/(द्विगुन)sched->nr_बारtamps*100.0,
+			sched->nr_context_चयन_bugs, sched->nr_बारtamps);
+		अगर (sched->nr_lost_events)
+			म_लिखो(" (due to lost events?)");
+		म_लिखो("\n");
+	पूर्ण
+पूर्ण
 
-static void __merge_work_atoms(struct rb_root_cached *root, struct work_atoms *data)
-{
-	struct rb_node **new = &(root->rb_root.rb_node), *parent = NULL;
-	struct work_atoms *this;
-	const char *comm = thread__comm_str(data->thread), *this_comm;
-	bool leftmost = true;
+अटल व्योम __merge_work_atoms(काष्ठा rb_root_cached *root, काष्ठा work_atoms *data)
+अणु
+	काष्ठा rb_node **new = &(root->rb_root.rb_node), *parent = शून्य;
+	काष्ठा work_atoms *this;
+	स्थिर अक्षर *comm = thपढ़ो__comm_str(data->thपढ़ो), *this_comm;
+	bool lefपंचांगost = true;
 
-	while (*new) {
-		int cmp;
+	जबतक (*new) अणु
+		पूर्णांक cmp;
 
-		this = container_of(*new, struct work_atoms, node);
+		this = container_of(*new, काष्ठा work_atoms, node);
 		parent = *new;
 
-		this_comm = thread__comm_str(this->thread);
-		cmp = strcmp(comm, this_comm);
-		if (cmp > 0) {
+		this_comm = thपढ़ो__comm_str(this->thपढ़ो);
+		cmp = म_भेद(comm, this_comm);
+		अगर (cmp > 0) अणु
 			new = &((*new)->rb_left);
-		} else if (cmp < 0) {
+		पूर्ण अन्यथा अगर (cmp < 0) अणु
 			new = &((*new)->rb_right);
-			leftmost = false;
-		} else {
+			lefपंचांगost = false;
+		पूर्ण अन्यथा अणु
 			this->num_merged++;
-			this->total_runtime += data->total_runtime;
+			this->total_runसमय += data->total_runसमय;
 			this->nb_atoms += data->nb_atoms;
 			this->total_lat += data->total_lat;
 			list_splice(&data->work_list, &this->work_list);
-			if (this->max_lat < data->max_lat) {
+			अगर (this->max_lat < data->max_lat) अणु
 				this->max_lat = data->max_lat;
 				this->max_lat_start = data->max_lat_start;
 				this->max_lat_end = data->max_lat_end;
-			}
-			zfree(&data);
-			return;
-		}
-	}
+			पूर्ण
+			zमुक्त(&data);
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	data->num_merged++;
 	rb_link_node(&data->node, parent, new);
-	rb_insert_color_cached(&data->node, root, leftmost);
-}
+	rb_insert_color_cached(&data->node, root, lefपंचांगost);
+पूर्ण
 
-static void perf_sched__merge_lat(struct perf_sched *sched)
-{
-	struct work_atoms *data;
-	struct rb_node *node;
+अटल व्योम perf_sched__merge_lat(काष्ठा perf_sched *sched)
+अणु
+	काष्ठा work_atoms *data;
+	काष्ठा rb_node *node;
 
-	if (sched->skip_merge)
-		return;
+	अगर (sched->skip_merge)
+		वापस;
 
-	while ((node = rb_first_cached(&sched->atom_root))) {
+	जबतक ((node = rb_first_cached(&sched->atom_root))) अणु
 		rb_erase_cached(node, &sched->atom_root);
-		data = rb_entry(node, struct work_atoms, node);
+		data = rb_entry(node, काष्ठा work_atoms, node);
 		__merge_work_atoms(&sched->merged_atom_root, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int perf_sched__lat(struct perf_sched *sched)
-{
-	struct rb_node *next;
+अटल पूर्णांक perf_sched__lat(काष्ठा perf_sched *sched)
+अणु
+	काष्ठा rb_node *next;
 
 	setup_pager();
 
-	if (perf_sched__read_events(sched))
-		return -1;
+	अगर (perf_sched__पढ़ो_events(sched))
+		वापस -1;
 
 	perf_sched__merge_lat(sched);
 	perf_sched__sort_lat(sched);
 
-	printf("\n -------------------------------------------------------------------------------------------------------------------------------------------\n");
-	printf("  Task                  |   Runtime ms  | Switches | Avg delay ms    | Max delay ms    | Max delay start           | Max delay end          |\n");
-	printf(" -------------------------------------------------------------------------------------------------------------------------------------------\n");
+	म_लिखो("\n -------------------------------------------------------------------------------------------------------------------------------------------\n");
+	म_लिखो("  Task                  |   Runtime ms  | Switches | Avg delay ms    | Max delay ms    | Max delay start           | Max delay end          |\n");
+	म_लिखो(" -------------------------------------------------------------------------------------------------------------------------------------------\n");
 
 	next = rb_first_cached(&sched->sorted_atom_root);
 
-	while (next) {
-		struct work_atoms *work_list;
+	जबतक (next) अणु
+		काष्ठा work_atoms *work_list;
 
-		work_list = rb_entry(next, struct work_atoms, node);
-		output_lat_thread(sched, work_list);
+		work_list = rb_entry(next, काष्ठा work_atoms, node);
+		output_lat_thपढ़ो(sched, work_list);
 		next = rb_next(next);
-		thread__zput(work_list->thread);
-	}
+		thपढ़ो__zput(work_list->thपढ़ो);
+	पूर्ण
 
-	printf(" -----------------------------------------------------------------------------------------------------------------\n");
-	printf("  TOTAL:                |%11.3f ms |%9" PRIu64 " |\n",
-		(double)sched->all_runtime / NSEC_PER_MSEC, sched->all_count);
+	म_लिखो(" -----------------------------------------------------------------------------------------------------------------\n");
+	म_लिखो("  TOTAL:                |%11.3f ms |%9" PRIu64 " |\n",
+		(द्विगुन)sched->all_runसमय / NSEC_PER_MSEC, sched->all_count);
 
-	printf(" ---------------------------------------------------\n");
+	म_लिखो(" ---------------------------------------------------\n");
 
-	print_bad_events(sched);
-	printf("\n");
+	prपूर्णांक_bad_events(sched);
+	म_लिखो("\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int setup_map_cpus(struct perf_sched *sched)
-{
-	struct perf_cpu_map *map;
+अटल पूर्णांक setup_map_cpus(काष्ठा perf_sched *sched)
+अणु
+	काष्ठा perf_cpu_map *map;
 
 	sched->max_cpu  = sysconf(_SC_NPROCESSORS_CONF);
 
-	if (sched->map.comp) {
-		sched->map.comp_cpus = zalloc(sched->max_cpu * sizeof(int));
-		if (!sched->map.comp_cpus)
-			return -1;
-	}
+	अगर (sched->map.comp) अणु
+		sched->map.comp_cpus = zalloc(sched->max_cpu * माप(पूर्णांक));
+		अगर (!sched->map.comp_cpus)
+			वापस -1;
+	पूर्ण
 
-	if (!sched->map.cpus_str)
-		return 0;
+	अगर (!sched->map.cpus_str)
+		वापस 0;
 
 	map = perf_cpu_map__new(sched->map.cpus_str);
-	if (!map) {
+	अगर (!map) अणु
 		pr_err("failed to get cpus map from %s\n", sched->map.cpus_str);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	sched->map.cpus = map;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int setup_color_pids(struct perf_sched *sched)
-{
-	struct perf_thread_map *map;
+अटल पूर्णांक setup_color_pids(काष्ठा perf_sched *sched)
+अणु
+	काष्ठा perf_thपढ़ो_map *map;
 
-	if (!sched->map.color_pids_str)
-		return 0;
+	अगर (!sched->map.color_pids_str)
+		वापस 0;
 
-	map = thread_map__new_by_tid_str(sched->map.color_pids_str);
-	if (!map) {
+	map = thपढ़ो_map__new_by_tid_str(sched->map.color_pids_str);
+	अगर (!map) अणु
 		pr_err("failed to get thread map from %s\n", sched->map.color_pids_str);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	sched->map.color_pids = map;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int setup_color_cpus(struct perf_sched *sched)
-{
-	struct perf_cpu_map *map;
+अटल पूर्णांक setup_color_cpus(काष्ठा perf_sched *sched)
+अणु
+	काष्ठा perf_cpu_map *map;
 
-	if (!sched->map.color_cpus_str)
-		return 0;
+	अगर (!sched->map.color_cpus_str)
+		वापस 0;
 
 	map = perf_cpu_map__new(sched->map.color_cpus_str);
-	if (!map) {
+	अगर (!map) अणु
 		pr_err("failed to get thread map from %s\n", sched->map.color_cpus_str);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	sched->map.color_cpus = map;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_sched__map(struct perf_sched *sched)
-{
-	if (setup_map_cpus(sched))
-		return -1;
+अटल पूर्णांक perf_sched__map(काष्ठा perf_sched *sched)
+अणु
+	अगर (setup_map_cpus(sched))
+		वापस -1;
 
-	if (setup_color_pids(sched))
-		return -1;
+	अगर (setup_color_pids(sched))
+		वापस -1;
 
-	if (setup_color_cpus(sched))
-		return -1;
+	अगर (setup_color_cpus(sched))
+		वापस -1;
 
 	setup_pager();
-	if (perf_sched__read_events(sched))
-		return -1;
-	print_bad_events(sched);
-	return 0;
-}
+	अगर (perf_sched__पढ़ो_events(sched))
+		वापस -1;
+	prपूर्णांक_bad_events(sched);
+	वापस 0;
+पूर्ण
 
-static int perf_sched__replay(struct perf_sched *sched)
-{
-	unsigned long i;
+अटल पूर्णांक perf_sched__replay(काष्ठा perf_sched *sched)
+अणु
+	अचिन्हित दीर्घ i;
 
 	calibrate_run_measurement_overhead(sched);
 	calibrate_sleep_measurement_overhead(sched);
 
 	test_calibrations(sched);
 
-	if (perf_sched__read_events(sched))
-		return -1;
+	अगर (perf_sched__पढ़ो_events(sched))
+		वापस -1;
 
-	printf("nr_run_events:        %ld\n", sched->nr_run_events);
-	printf("nr_sleep_events:      %ld\n", sched->nr_sleep_events);
-	printf("nr_wakeup_events:     %ld\n", sched->nr_wakeup_events);
+	म_लिखो("nr_run_events:        %ld\n", sched->nr_run_events);
+	म_लिखो("nr_sleep_events:      %ld\n", sched->nr_sleep_events);
+	म_लिखो("nr_wakeup_events:     %ld\n", sched->nr_wakeup_events);
 
-	if (sched->targetless_wakeups)
-		printf("target-less wakeups:  %ld\n", sched->targetless_wakeups);
-	if (sched->multitarget_wakeups)
-		printf("multi-target wakeups: %ld\n", sched->multitarget_wakeups);
-	if (sched->nr_run_events_optimized)
-		printf("run atoms optimized: %ld\n",
+	अगर (sched->targetless_wakeups)
+		म_लिखो("target-less wakeups:  %ld\n", sched->targetless_wakeups);
+	अगर (sched->multitarget_wakeups)
+		म_लिखो("multi-target wakeups: %ld\n", sched->multitarget_wakeups);
+	अगर (sched->nr_run_events_optimized)
+		म_लिखो("run atoms optimized: %ld\n",
 			sched->nr_run_events_optimized);
 
-	print_task_traces(sched);
+	prपूर्णांक_task_traces(sched);
 	add_cross_task_wakeups(sched);
 
 	create_tasks(sched);
-	printf("------------------------------------------------------------\n");
-	for (i = 0; i < sched->replay_repeat; i++)
+	म_लिखो("------------------------------------------------------------\n");
+	क्रम (i = 0; i < sched->replay_repeat; i++)
 		run_one_test(sched);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void setup_sorting(struct perf_sched *sched, const struct option *options,
-			  const char * const usage_msg[])
-{
-	char *tmp, *tok, *str = strdup(sched->sort_order);
+अटल व्योम setup_sorting(काष्ठा perf_sched *sched, स्थिर काष्ठा option *options,
+			  स्थिर अक्षर * स्थिर usage_msg[])
+अणु
+	अक्षर *पंचांगp, *tok, *str = strdup(sched->sort_order);
 
-	for (tok = strtok_r(str, ", ", &tmp);
-			tok; tok = strtok_r(NULL, ", ", &tmp)) {
-		if (sort_dimension__add(tok, &sched->sort_list) < 0) {
+	क्रम (tok = म_मोहर_r(str, ", ", &पंचांगp);
+			tok; tok = म_मोहर_r(शून्य, ", ", &पंचांगp)) अणु
+		अगर (sort_dimension__add(tok, &sched->sort_list) < 0) अणु
 			usage_with_options_msg(usage_msg, options,
 					"Unknown --sort key: `%s'", tok);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	free(str);
+	मुक्त(str);
 
 	sort_dimension__add("pid", &sched->cmp_pid);
-}
+पूर्ण
 
-static int __cmd_record(int argc, const char **argv)
-{
-	unsigned int rec_argc, i, j;
-	const char **rec_argv;
-	const char * const record_args[] = {
+अटल पूर्णांक __cmd_record(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अचिन्हित पूर्णांक rec_argc, i, j;
+	स्थिर अक्षर **rec_argv;
+	स्थिर अक्षर * स्थिर record_args[] = अणु
 		"record",
 		"-a",
 		"-R",
@@ -3353,73 +3354,73 @@ static int __cmd_record(int argc, const char **argv)
 		"-e", "sched:sched_process_fork",
 		"-e", "sched:sched_wakeup_new",
 		"-e", "sched:sched_migrate_task",
-	};
-	struct tep_event *waking_event;
+	पूर्ण;
+	काष्ठा tep_event *waking_event;
 
 	/*
-	 * +2 for either "-e", "sched:sched_wakeup" or
+	 * +2 क्रम either "-e", "sched:sched_wakeup" or
 	 * "-e", "sched:sched_waking"
 	 */
 	rec_argc = ARRAY_SIZE(record_args) + 2 + argc - 1;
-	rec_argv = calloc(rec_argc + 1, sizeof(char *));
+	rec_argv = सुस्मृति(rec_argc + 1, माप(अक्षर *));
 
-	if (rec_argv == NULL)
-		return -ENOMEM;
+	अगर (rec_argv == शून्य)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ARRAY_SIZE(record_args); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(record_args); i++)
 		rec_argv[i] = strdup(record_args[i]);
 
 	rec_argv[i++] = "-e";
-	waking_event = trace_event__tp_format("sched", "sched_waking");
-	if (!IS_ERR(waking_event))
+	waking_event = trace_event__tp_क्रमmat("sched", "sched_waking");
+	अगर (!IS_ERR(waking_event))
 		rec_argv[i++] = strdup("sched:sched_waking");
-	else
+	अन्यथा
 		rec_argv[i++] = strdup("sched:sched_wakeup");
 
-	for (j = 1; j < (unsigned int)argc; j++, i++)
+	क्रम (j = 1; j < (अचिन्हित पूर्णांक)argc; j++, i++)
 		rec_argv[i] = argv[j];
 
 	BUG_ON(i != rec_argc);
 
-	return cmd_record(i, rec_argv);
-}
+	वापस cmd_record(i, rec_argv);
+पूर्ण
 
-int cmd_sched(int argc, const char **argv)
-{
-	static const char default_sort_order[] = "avg, max, switch, runtime";
-	struct perf_sched sched = {
-		.tool = {
-			.sample		 = perf_sched__process_tracepoint_sample,
+पूर्णांक cmd_sched(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अटल स्थिर अक्षर शेष_sort_order[] = "avg, max, switch, runtime";
+	काष्ठा perf_sched sched = अणु
+		.tool = अणु
+			.sample		 = perf_sched__process_tracepoपूर्णांक_sample,
 			.comm		 = perf_sched__process_comm,
 			.namespaces	 = perf_event__process_namespaces,
 			.lost		 = perf_event__process_lost,
-			.fork		 = perf_sched__process_fork_event,
+			.विभाजन		 = perf_sched__process_विभाजन_event,
 			.ordered_events = true,
-		},
+		पूर्ण,
 		.cmp_pid	      = LIST_HEAD_INIT(sched.cmp_pid),
 		.sort_list	      = LIST_HEAD_INIT(sched.sort_list),
 		.start_work_mutex     = PTHREAD_MUTEX_INITIALIZER,
-		.work_done_wait_mutex = PTHREAD_MUTEX_INITIALIZER,
-		.sort_order	      = default_sort_order,
+		.work_करोne_रुको_mutex = PTHREAD_MUTEX_INITIALIZER,
+		.sort_order	      = शेष_sort_order,
 		.replay_repeat	      = 10,
 		.profile_cpu	      = -1,
-		.next_shortname1      = 'A',
-		.next_shortname2      = '0',
+		.next_लघुname1      = 'A',
+		.next_लघुname2      = '0',
 		.skip_merge           = 0,
 		.show_callchain	      = 1,
 		.max_stack            = 5,
-	};
-	const struct option sched_options[] = {
+	पूर्ण;
+	स्थिर काष्ठा option sched_options[] = अणु
 	OPT_STRING('i', "input", &input_name, "file",
 		    "input file name"),
 	OPT_INCR('v', "verbose", &verbose,
 		    "be more verbose (show symbol address, etc)"),
 	OPT_BOOLEAN('D', "dump-raw-trace", &dump_trace,
 		    "dump raw trace in ASCII"),
-	OPT_BOOLEAN('f', "force", &sched.force, "don't complain, do it"),
+	OPT_BOOLEAN('f', "force", &sched.force, "don't complain, करो it"),
 	OPT_END()
-	};
-	const struct option latency_options[] = {
+	पूर्ण;
+	स्थिर काष्ठा option latency_options[] = अणु
 	OPT_STRING('s', "sort", &sched.sort_order, "key[,key2...]",
 		   "sort by key(s): runtime, switch, avg, max"),
 	OPT_INTEGER('C', "CPU", &sched.profile_cpu,
@@ -3427,13 +3428,13 @@ int cmd_sched(int argc, const char **argv)
 	OPT_BOOLEAN('p', "pids", &sched.skip_merge,
 		    "latency stats per pid instead of per comm"),
 	OPT_PARENT(sched_options)
-	};
-	const struct option replay_options[] = {
+	पूर्ण;
+	स्थिर काष्ठा option replay_options[] = अणु
 	OPT_UINTEGER('r', "repeat", &sched.replay_repeat,
 		     "repeat the workload replay N times (-1: infinite)"),
 	OPT_PARENT(sched_options)
-	};
-	const struct option map_options[] = {
+	पूर्ण;
+	स्थिर काष्ठा option map_options[] = अणु
 	OPT_BOOLEAN(0, "compact", &sched.map.comp,
 		    "map output in compact mode"),
 	OPT_STRING(0, "color-pids", &sched.map.color_pids_str, "pids",
@@ -3443,8 +3444,8 @@ int cmd_sched(int argc, const char **argv)
 	OPT_STRING(0, "cpus", &sched.map.cpus_str, "cpus",
                     "display given CPUs in map"),
 	OPT_PARENT(sched_options)
-	};
-	const struct option timehist_options[] = {
+	पूर्ण;
+	स्थिर काष्ठा option समयhist_options[] = अणु
 	OPT_STRING('k', "vmlinux", &symbol_conf.vmlinux_name,
 		   "file", "vmlinux pathname"),
 	OPT_STRING(0, "kallsyms", &symbol_conf.kallsyms_name,
@@ -3464,7 +3465,7 @@ int cmd_sched(int argc, const char **argv)
 	OPT_BOOLEAN('M', "migrations", &sched.show_migrations, "Show migration events"),
 	OPT_BOOLEAN('V', "cpu-visual", &sched.show_cpu_visual, "Add CPU visual"),
 	OPT_BOOLEAN('I', "idle-hist", &sched.idle_hist, "Show idle events only"),
-	OPT_STRING(0, "time", &sched.time_str, "str",
+	OPT_STRING(0, "time", &sched.समय_str, "str",
 		   "Time span for analysis (start,stop)"),
 	OPT_BOOLEAN(0, "state", &sched.show_state, "Show task state when sched-out"),
 	OPT_STRING('p', "pid", &symbol_conf.pid_list_str, "pid[,pid...]",
@@ -3473,111 +3474,111 @@ int cmd_sched(int argc, const char **argv)
 		   "analyze events only for given thread id(s)"),
 	OPT_STRING('C', "cpu", &cpu_list, "cpu", "list of cpus to profile"),
 	OPT_PARENT(sched_options)
-	};
+	पूर्ण;
 
-	const char * const latency_usage[] = {
+	स्थिर अक्षर * स्थिर latency_usage[] = अणु
 		"perf sched latency [<options>]",
-		NULL
-	};
-	const char * const replay_usage[] = {
+		शून्य
+	पूर्ण;
+	स्थिर अक्षर * स्थिर replay_usage[] = अणु
 		"perf sched replay [<options>]",
-		NULL
-	};
-	const char * const map_usage[] = {
+		शून्य
+	पूर्ण;
+	स्थिर अक्षर * स्थिर map_usage[] = अणु
 		"perf sched map [<options>]",
-		NULL
-	};
-	const char * const timehist_usage[] = {
+		शून्य
+	पूर्ण;
+	स्थिर अक्षर * स्थिर समयhist_usage[] = अणु
 		"perf sched timehist [<options>]",
-		NULL
-	};
-	const char *const sched_subcommands[] = { "record", "latency", "map",
+		शून्य
+	पूर्ण;
+	स्थिर अक्षर *स्थिर sched_subcommands[] = अणु "record", "latency", "map",
 						  "replay", "script",
-						  "timehist", NULL };
-	const char *sched_usage[] = {
-		NULL,
-		NULL
-	};
-	struct trace_sched_handler lat_ops  = {
+						  "timehist", शून्य पूर्ण;
+	स्थिर अक्षर *sched_usage[] = अणु
+		शून्य,
+		शून्य
+	पूर्ण;
+	काष्ठा trace_sched_handler lat_ops  = अणु
 		.wakeup_event	    = latency_wakeup_event,
-		.switch_event	    = latency_switch_event,
-		.runtime_event	    = latency_runtime_event,
+		.चयन_event	    = latency_चयन_event,
+		.runसमय_event	    = latency_runसमय_event,
 		.migrate_task_event = latency_migrate_task_event,
-	};
-	struct trace_sched_handler map_ops  = {
-		.switch_event	    = map_switch_event,
-	};
-	struct trace_sched_handler replay_ops  = {
+	पूर्ण;
+	काष्ठा trace_sched_handler map_ops  = अणु
+		.चयन_event	    = map_चयन_event,
+	पूर्ण;
+	काष्ठा trace_sched_handler replay_ops  = अणु
 		.wakeup_event	    = replay_wakeup_event,
-		.switch_event	    = replay_switch_event,
-		.fork_event	    = replay_fork_event,
-	};
-	unsigned int i;
+		.चयन_event	    = replay_चयन_event,
+		.विभाजन_event	    = replay_विभाजन_event,
+	पूर्ण;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(sched.curr_pid); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(sched.curr_pid); i++)
 		sched.curr_pid[i] = -1;
 
 	argc = parse_options_subcommand(argc, argv, sched_options, sched_subcommands,
 					sched_usage, PARSE_OPT_STOP_AT_NON_OPTION);
-	if (!argc)
+	अगर (!argc)
 		usage_with_options(sched_usage, sched_options);
 
 	/*
-	 * Aliased to 'perf script' for now:
+	 * Aliased to 'perf script' क्रम now:
 	 */
-	if (!strcmp(argv[0], "script"))
-		return cmd_script(argc, argv);
+	अगर (!म_भेद(argv[0], "script"))
+		वापस cmd_script(argc, argv);
 
-	if (!strncmp(argv[0], "rec", 3)) {
-		return __cmd_record(argc, argv);
-	} else if (!strncmp(argv[0], "lat", 3)) {
+	अगर (!म_भेदन(argv[0], "rec", 3)) अणु
+		वापस __cmd_record(argc, argv);
+	पूर्ण अन्यथा अगर (!म_भेदन(argv[0], "lat", 3)) अणु
 		sched.tp_handler = &lat_ops;
-		if (argc > 1) {
+		अगर (argc > 1) अणु
 			argc = parse_options(argc, argv, latency_options, latency_usage, 0);
-			if (argc)
+			अगर (argc)
 				usage_with_options(latency_usage, latency_options);
-		}
+		पूर्ण
 		setup_sorting(&sched, latency_options, latency_usage);
-		return perf_sched__lat(&sched);
-	} else if (!strcmp(argv[0], "map")) {
-		if (argc) {
+		वापस perf_sched__lat(&sched);
+	पूर्ण अन्यथा अगर (!म_भेद(argv[0], "map")) अणु
+		अगर (argc) अणु
 			argc = parse_options(argc, argv, map_options, map_usage, 0);
-			if (argc)
+			अगर (argc)
 				usage_with_options(map_usage, map_options);
-		}
+		पूर्ण
 		sched.tp_handler = &map_ops;
 		setup_sorting(&sched, latency_options, latency_usage);
-		return perf_sched__map(&sched);
-	} else if (!strncmp(argv[0], "rep", 3)) {
+		वापस perf_sched__map(&sched);
+	पूर्ण अन्यथा अगर (!म_भेदन(argv[0], "rep", 3)) अणु
 		sched.tp_handler = &replay_ops;
-		if (argc) {
+		अगर (argc) अणु
 			argc = parse_options(argc, argv, replay_options, replay_usage, 0);
-			if (argc)
+			अगर (argc)
 				usage_with_options(replay_usage, replay_options);
-		}
-		return perf_sched__replay(&sched);
-	} else if (!strcmp(argv[0], "timehist")) {
-		if (argc) {
-			argc = parse_options(argc, argv, timehist_options,
-					     timehist_usage, 0);
-			if (argc)
-				usage_with_options(timehist_usage, timehist_options);
-		}
-		if ((sched.show_wakeups || sched.show_next) &&
-		    sched.summary_only) {
+		पूर्ण
+		वापस perf_sched__replay(&sched);
+	पूर्ण अन्यथा अगर (!म_भेद(argv[0], "timehist")) अणु
+		अगर (argc) अणु
+			argc = parse_options(argc, argv, समयhist_options,
+					     समयhist_usage, 0);
+			अगर (argc)
+				usage_with_options(समयhist_usage, समयhist_options);
+		पूर्ण
+		अगर ((sched.show_wakeups || sched.show_next) &&
+		    sched.summary_only) अणु
 			pr_err(" Error: -s and -[n|w] are mutually exclusive.\n");
-			parse_options_usage(timehist_usage, timehist_options, "s", true);
-			if (sched.show_wakeups)
-				parse_options_usage(NULL, timehist_options, "w", true);
-			if (sched.show_next)
-				parse_options_usage(NULL, timehist_options, "n", true);
-			return -EINVAL;
-		}
+			parse_options_usage(समयhist_usage, समयhist_options, "s", true);
+			अगर (sched.show_wakeups)
+				parse_options_usage(शून्य, समयhist_options, "w", true);
+			अगर (sched.show_next)
+				parse_options_usage(शून्य, समयhist_options, "n", true);
+			वापस -EINVAL;
+		पूर्ण
 
-		return perf_sched__timehist(&sched);
-	} else {
+		वापस perf_sched__समयhist(&sched);
+	पूर्ण अन्यथा अणु
 		usage_with_options(sched_usage, sched_options);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,414 +1,415 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  button.c - ACPI Button Driver
  *
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
  */
 
-#define pr_fmt(fmt) "ACPI: button: " fmt
+#घोषणा pr_fmt(fmt) "ACPI: button: " fmt
 
-#include <linux/compiler.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/input.h>
-#include <linux/slab.h>
-#include <linux/acpi.h>
-#include <linux/dmi.h>
-#include <acpi/button.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/input.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/dmi.h>
+#समावेश <acpi/button.h>
 
-#define ACPI_BUTTON_CLASS		"button"
-#define ACPI_BUTTON_FILE_STATE		"state"
-#define ACPI_BUTTON_TYPE_UNKNOWN	0x00
-#define ACPI_BUTTON_NOTIFY_STATUS	0x80
+#घोषणा ACPI_BUTTON_CLASS		"button"
+#घोषणा ACPI_BUTTON_खाता_STATE		"state"
+#घोषणा ACPI_BUTTON_TYPE_UNKNOWN	0x00
+#घोषणा ACPI_BUTTON_NOTIFY_STATUS	0x80
 
-#define ACPI_BUTTON_SUBCLASS_POWER	"power"
-#define ACPI_BUTTON_DEVICE_NAME_POWER	"Power Button"
-#define ACPI_BUTTON_TYPE_POWER		0x01
+#घोषणा ACPI_BUTTON_SUBCLASS_POWER	"power"
+#घोषणा ACPI_BUTTON_DEVICE_NAME_POWER	"Power Button"
+#घोषणा ACPI_BUTTON_TYPE_POWER		0x01
 
-#define ACPI_BUTTON_SUBCLASS_SLEEP	"sleep"
-#define ACPI_BUTTON_DEVICE_NAME_SLEEP	"Sleep Button"
-#define ACPI_BUTTON_TYPE_SLEEP		0x03
+#घोषणा ACPI_BUTTON_SUBCLASS_SLEEP	"sleep"
+#घोषणा ACPI_BUTTON_DEVICE_NAME_SLEEP	"Sleep Button"
+#घोषणा ACPI_BUTTON_TYPE_SLEEP		0x03
 
-#define ACPI_BUTTON_SUBCLASS_LID	"lid"
-#define ACPI_BUTTON_DEVICE_NAME_LID	"Lid Switch"
-#define ACPI_BUTTON_TYPE_LID		0x05
+#घोषणा ACPI_BUTTON_SUBCLASS_LID	"lid"
+#घोषणा ACPI_BUTTON_DEVICE_NAME_LID	"Lid Switch"
+#घोषणा ACPI_BUTTON_TYPE_LID		0x05
 
-enum {
+क्रमागत अणु
 	ACPI_BUTTON_LID_INIT_IGNORE,
 	ACPI_BUTTON_LID_INIT_OPEN,
 	ACPI_BUTTON_LID_INIT_METHOD,
 	ACPI_BUTTON_LID_INIT_DISABLED,
-};
+पूर्ण;
 
-static const char * const lid_init_state_str[] = {
+अटल स्थिर अक्षर * स्थिर lid_init_state_str[] = अणु
 	[ACPI_BUTTON_LID_INIT_IGNORE]		= "ignore",
 	[ACPI_BUTTON_LID_INIT_OPEN]		= "open",
 	[ACPI_BUTTON_LID_INIT_METHOD]		= "method",
 	[ACPI_BUTTON_LID_INIT_DISABLED]		= "disabled",
-};
+पूर्ण;
 
 MODULE_AUTHOR("Paul Diefenbaugh");
 MODULE_DESCRIPTION("ACPI Button Driver");
 MODULE_LICENSE("GPL");
 
-static const struct acpi_device_id button_device_ids[] = {
-	{ACPI_BUTTON_HID_LID,    0},
-	{ACPI_BUTTON_HID_SLEEP,  0},
-	{ACPI_BUTTON_HID_SLEEPF, 0},
-	{ACPI_BUTTON_HID_POWER,  0},
-	{ACPI_BUTTON_HID_POWERF, 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id button_device_ids[] = अणु
+	अणुACPI_BUTTON_HID_LID,    0पूर्ण,
+	अणुACPI_BUTTON_HID_SLEEP,  0पूर्ण,
+	अणुACPI_BUTTON_HID_SLEEPF, 0पूर्ण,
+	अणुACPI_BUTTON_HID_POWER,  0पूर्ण,
+	अणुACPI_BUTTON_HID_POWERF, 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, button_device_ids);
 
-/* Please keep this list sorted alphabetically by vendor and model */
-static const struct dmi_system_id dmi_lid_quirks[] = {
-	{
-		/* GP-electronic T701, _LID method points to a floating GPIO */
-		.matches = {
+/* Please keep this list sorted alphabetically by venकरोr and model */
+अटल स्थिर काष्ठा dmi_प्रणाली_id dmi_lid_quirks[] = अणु
+	अणु
+		/* GP-electronic T701, _LID method poपूर्णांकs to a भग्नing GPIO */
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Insyde"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "T701"),
 			DMI_MATCH(DMI_BIOS_VERSION, "BYT70A.YNCHENG.WIN.007"),
-		},
-		.driver_data = (void *)(long)ACPI_BUTTON_LID_INIT_DISABLED,
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)(दीर्घ)ACPI_BUTTON_LID_INIT_DISABLED,
+	पूर्ण,
+	अणु
 		/*
-		 * Medion Akoya E2215T, notification of the LID device only
-		 * happens on close, not on open and _LID always returns closed.
+		 * Medion Akoya E2215T, notअगरication of the LID device only
+		 * happens on बंद, not on खोलो and _LID always वापसs बंदd.
 		 */
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "MEDION"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "E2215T"),
-		},
-		.driver_data = (void *)(long)ACPI_BUTTON_LID_INIT_OPEN,
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)(दीर्घ)ACPI_BUTTON_LID_INIT_OPEN,
+	पूर्ण,
+	अणु
 		/*
-		 * Medion Akoya E2228T, notification of the LID device only
-		 * happens on close, not on open and _LID always returns closed.
+		 * Medion Akoya E2228T, notअगरication of the LID device only
+		 * happens on बंद, not on खोलो and _LID always वापसs बंदd.
 		 */
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "MEDION"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "E2228T"),
-		},
-		.driver_data = (void *)(long)ACPI_BUTTON_LID_INIT_OPEN,
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)(दीर्घ)ACPI_BUTTON_LID_INIT_OPEN,
+	पूर्ण,
+	अणु
 		/*
-		 * Razer Blade Stealth 13 late 2019, notification of the LID device
-		 * only happens on close, not on open and _LID always returns closed.
+		 * Razer Blade Stealth 13 late 2019, notअगरication of the LID device
+		 * only happens on बंद, not on खोलो and _LID always वापसs बंदd.
 		 */
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Razer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Razer Blade Stealth 13 Late 2019"),
-		},
-		.driver_data = (void *)(long)ACPI_BUTTON_LID_INIT_OPEN,
-	},
-	{}
-};
+		पूर्ण,
+		.driver_data = (व्योम *)(दीर्घ)ACPI_BUTTON_LID_INIT_OPEN,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int acpi_button_add(struct acpi_device *device);
-static int acpi_button_remove(struct acpi_device *device);
-static void acpi_button_notify(struct acpi_device *device, u32 event);
+अटल पूर्णांक acpi_button_add(काष्ठा acpi_device *device);
+अटल पूर्णांक acpi_button_हटाओ(काष्ठा acpi_device *device);
+अटल व्योम acpi_button_notअगरy(काष्ठा acpi_device *device, u32 event);
 
-#ifdef CONFIG_PM_SLEEP
-static int acpi_button_suspend(struct device *dev);
-static int acpi_button_resume(struct device *dev);
-#else
-#define acpi_button_suspend NULL
-#define acpi_button_resume NULL
-#endif
-static SIMPLE_DEV_PM_OPS(acpi_button_pm, acpi_button_suspend, acpi_button_resume);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक acpi_button_suspend(काष्ठा device *dev);
+अटल पूर्णांक acpi_button_resume(काष्ठा device *dev);
+#अन्यथा
+#घोषणा acpi_button_suspend शून्य
+#घोषणा acpi_button_resume शून्य
+#पूर्ण_अगर
+अटल SIMPLE_DEV_PM_OPS(acpi_button_pm, acpi_button_suspend, acpi_button_resume);
 
-static struct acpi_driver acpi_button_driver = {
+अटल काष्ठा acpi_driver acpi_button_driver = अणु
 	.name = "button",
 	.class = ACPI_BUTTON_CLASS,
 	.ids = button_device_ids,
-	.ops = {
+	.ops = अणु
 		.add = acpi_button_add,
-		.remove = acpi_button_remove,
-		.notify = acpi_button_notify,
-	},
+		.हटाओ = acpi_button_हटाओ,
+		.notअगरy = acpi_button_notअगरy,
+	पूर्ण,
 	.drv.pm = &acpi_button_pm,
-};
+पूर्ण;
 
-struct acpi_button {
-	unsigned int type;
-	struct input_dev *input;
-	char phys[32];			/* for input device */
-	unsigned long pushed;
-	int last_state;
-	ktime_t last_time;
+काष्ठा acpi_button अणु
+	अचिन्हित पूर्णांक type;
+	काष्ठा input_dev *input;
+	अक्षर phys[32];			/* क्रम input device */
+	अचिन्हित दीर्घ pushed;
+	पूर्णांक last_state;
+	kसमय_प्रकार last_समय;
 	bool suspended;
 	bool lid_state_initialized;
-};
+पूर्ण;
 
-static struct acpi_device *lid_device;
-static long lid_init_state = -1;
+अटल काष्ठा acpi_device *lid_device;
+अटल दीर्घ lid_init_state = -1;
 
-static unsigned long lid_report_interval __read_mostly = 500;
-module_param(lid_report_interval, ulong, 0644);
-MODULE_PARM_DESC(lid_report_interval, "Interval (ms) between lid key events");
+अटल अचिन्हित दीर्घ lid_report_पूर्णांकerval __पढ़ो_mostly = 500;
+module_param(lid_report_पूर्णांकerval, uदीर्घ, 0644);
+MODULE_PARM_DESC(lid_report_पूर्णांकerval, "Interval (ms) between lid key events");
 
 /* FS Interface (/proc) */
-static struct proc_dir_entry *acpi_button_dir;
-static struct proc_dir_entry *acpi_lid_dir;
+अटल काष्ठा proc_dir_entry *acpi_button_dir;
+अटल काष्ठा proc_dir_entry *acpi_lid_dir;
 
-static int acpi_lid_evaluate_state(struct acpi_device *device)
-{
-	unsigned long long lid_state;
+अटल पूर्णांक acpi_lid_evaluate_state(काष्ठा acpi_device *device)
+अणु
+	अचिन्हित दीर्घ दीर्घ lid_state;
 	acpi_status status;
 
-	status = acpi_evaluate_integer(device->handle, "_LID", NULL, &lid_state);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	status = acpi_evaluate_पूर्णांकeger(device->handle, "_LID", शून्य, &lid_state);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	return lid_state ? 1 : 0;
-}
+	वापस lid_state ? 1 : 0;
+पूर्ण
 
-static int acpi_lid_notify_state(struct acpi_device *device, int state)
-{
-	struct acpi_button *button = acpi_driver_data(device);
-	ktime_t next_report;
-	bool do_update;
+अटल पूर्णांक acpi_lid_notअगरy_state(काष्ठा acpi_device *device, पूर्णांक state)
+अणु
+	काष्ठा acpi_button *button = acpi_driver_data(device);
+	kसमय_प्रकार next_report;
+	bool करो_update;
 
 	/*
-	 * In lid_init_state=ignore mode, if user opens/closes lid
+	 * In lid_init_state=ignore mode, अगर user खोलोs/बंदs lid
 	 * frequently with "open" missing, and "last_time" is also updated
 	 * frequently, "close" cannot be delivered to the userspace.
-	 * So "last_time" is only updated after a timeout or an actual
-	 * switch.
+	 * So "last_time" is only updated after a समयout or an actual
+	 * चयन.
 	 */
-	if (lid_init_state != ACPI_BUTTON_LID_INIT_IGNORE ||
+	अगर (lid_init_state != ACPI_BUTTON_LID_INIT_IGNORE ||
 	    button->last_state != !!state)
-		do_update = true;
-	else
-		do_update = false;
+		करो_update = true;
+	अन्यथा
+		करो_update = false;
 
-	next_report = ktime_add(button->last_time,
-				ms_to_ktime(lid_report_interval));
-	if (button->last_state == !!state &&
-	    ktime_after(ktime_get(), next_report)) {
+	next_report = kसमय_add(button->last_समय,
+				ms_to_kसमय(lid_report_पूर्णांकerval));
+	अगर (button->last_state == !!state &&
+	    kसमय_after(kसमय_get(), next_report)) अणु
 		/* Complain the buggy firmware */
 		pr_warn_once("The lid device is not compliant to SW_LID.\n");
 
 		/*
-		 * Send the unreliable complement switch event:
+		 * Send the unreliable complement चयन event:
 		 *
-		 * On most platforms, the lid device is reliable. However
+		 * On most platक्रमms, the lid device is reliable. However
 		 * there are exceptions:
-		 * 1. Platforms returning initial lid state as "close" by
-		 *    default after booting/resuming:
+		 * 1. Platक्रमms वापसing initial lid state as "close" by
+		 *    शेष after booting/resuming:
 		 *     https://bugzilla.kernel.org/show_bug.cgi?id=89211
 		 *     https://bugzilla.kernel.org/show_bug.cgi?id=106151
-		 * 2. Platforms never reporting "open" events:
+		 * 2. Platक्रमms never reporting "open" events:
 		 *     https://bugzilla.kernel.org/show_bug.cgi?id=106941
-		 * On these buggy platforms, the usage model of the ACPI
+		 * On these buggy platक्रमms, the usage model of the ACPI
 		 * lid device actually is:
-		 * 1. The initial returning value of _LID may not be
+		 * 1. The initial वापसing value of _LID may not be
 		 *    reliable.
-		 * 2. The open event may not be reliable.
-		 * 3. The close event is reliable.
+		 * 2. The खोलो event may not be reliable.
+		 * 3. The बंद event is reliable.
 		 *
-		 * But SW_LID is typed as input switch event, the input
-		 * layer checks if the event is redundant. Hence if the
-		 * state is not switched, the userspace cannot see this
-		 * platform triggered reliable event. By inserting a
-		 * complement switch event, it then is guaranteed that the
-		 * platform triggered reliable one can always be seen by
+		 * But SW_LID is typed as input चयन event, the input
+		 * layer checks अगर the event is redundant. Hence अगर the
+		 * state is not चयनed, the userspace cannot see this
+		 * platक्रमm triggered reliable event. By inserting a
+		 * complement चयन event, it then is guaranteed that the
+		 * platक्रमm triggered reliable one can always be seen by
 		 * the userspace.
 		 */
-		if (lid_init_state == ACPI_BUTTON_LID_INIT_IGNORE) {
-			do_update = true;
+		अगर (lid_init_state == ACPI_BUTTON_LID_INIT_IGNORE) अणु
+			करो_update = true;
 			/*
-			 * Do generate complement switch event for "close"
+			 * Do generate complement चयन event क्रम "close"
 			 * as "close" is reliable and wrong "open" won't
 			 * trigger unexpected behaviors.
-			 * Do not generate complement switch event for
+			 * Do not generate complement चयन event क्रम
 			 * "open" as "open" is not reliable and wrong
 			 * "close" will trigger unexpected behaviors.
 			 */
-			if (!state) {
-				input_report_switch(button->input,
+			अगर (!state) अणु
+				input_report_चयन(button->input,
 						    SW_LID, state);
 				input_sync(button->input);
-			}
-		}
-	}
-	/* Send the platform triggered reliable event */
-	if (do_update) {
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	/* Send the platक्रमm triggered reliable event */
+	अगर (करो_update) अणु
 		acpi_handle_debug(device->handle, "ACPI LID %s\n",
 				  state ? "open" : "closed");
-		input_report_switch(button->input, SW_LID, !state);
+		input_report_चयन(button->input, SW_LID, !state);
 		input_sync(button->input);
 		button->last_state = !!state;
-		button->last_time = ktime_get();
-	}
+		button->last_समय = kसमय_get();
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused acpi_button_state_seq_show(struct seq_file *seq,
-						     void *offset)
-{
-	struct acpi_device *device = seq->private;
-	int state;
+अटल पूर्णांक __maybe_unused acpi_button_state_seq_show(काष्ठा seq_file *seq,
+						     व्योम *offset)
+अणु
+	काष्ठा acpi_device *device = seq->निजी;
+	पूर्णांक state;
 
 	state = acpi_lid_evaluate_state(device);
-	seq_printf(seq, "state:      %s\n",
+	seq_म_लिखो(seq, "state:      %s\n",
 		   state < 0 ? "unsupported" : (state ? "open" : "closed"));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_button_add_fs(struct acpi_device *device)
-{
-	struct acpi_button *button = acpi_driver_data(device);
-	struct proc_dir_entry *entry = NULL;
-	int ret = 0;
+अटल पूर्णांक acpi_button_add_fs(काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_button *button = acpi_driver_data(device);
+	काष्ठा proc_dir_entry *entry = शून्य;
+	पूर्णांक ret = 0;
 
-	/* procfs I/F for ACPI lid device only */
-	if (button->type != ACPI_BUTTON_TYPE_LID)
-		return 0;
+	/* procfs I/F क्रम ACPI lid device only */
+	अगर (button->type != ACPI_BUTTON_TYPE_LID)
+		वापस 0;
 
-	if (acpi_button_dir || acpi_lid_dir) {
+	अगर (acpi_button_dir || acpi_lid_dir) अणु
 		pr_info("More than one Lid device found!\n");
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
 	/* create /proc/acpi/button */
-	acpi_button_dir = proc_mkdir(ACPI_BUTTON_CLASS, acpi_root_dir);
-	if (!acpi_button_dir)
-		return -ENODEV;
+	acpi_button_dir = proc_सूची_गढ़ो(ACPI_BUTTON_CLASS, acpi_root_dir);
+	अगर (!acpi_button_dir)
+		वापस -ENODEV;
 
 	/* create /proc/acpi/button/lid */
-	acpi_lid_dir = proc_mkdir(ACPI_BUTTON_SUBCLASS_LID, acpi_button_dir);
-	if (!acpi_lid_dir) {
+	acpi_lid_dir = proc_सूची_गढ़ो(ACPI_BUTTON_SUBCLASS_LID, acpi_button_dir);
+	अगर (!acpi_lid_dir) अणु
 		ret = -ENODEV;
-		goto remove_button_dir;
-	}
+		जाओ हटाओ_button_dir;
+	पूर्ण
 
 	/* create /proc/acpi/button/lid/LID/ */
-	acpi_device_dir(device) = proc_mkdir(acpi_device_bid(device), acpi_lid_dir);
-	if (!acpi_device_dir(device)) {
+	acpi_device_dir(device) = proc_सूची_गढ़ो(acpi_device_bid(device), acpi_lid_dir);
+	अगर (!acpi_device_dir(device)) अणु
 		ret = -ENODEV;
-		goto remove_lid_dir;
-	}
+		जाओ हटाओ_lid_dir;
+	पूर्ण
 
 	/* create /proc/acpi/button/lid/LID/state */
-	entry = proc_create_single_data(ACPI_BUTTON_FILE_STATE, S_IRUGO,
+	entry = proc_create_single_data(ACPI_BUTTON_खाता_STATE, S_IRUGO,
 			acpi_device_dir(device), acpi_button_state_seq_show,
 			device);
-	if (!entry) {
+	अगर (!entry) अणु
 		ret = -ENODEV;
-		goto remove_dev_dir;
-	}
+		जाओ हटाओ_dev_dir;
+	पूर्ण
 
-done:
-	return ret;
+करोne:
+	वापस ret;
 
-remove_dev_dir:
-	remove_proc_entry(acpi_device_bid(device),
+हटाओ_dev_dir:
+	हटाओ_proc_entry(acpi_device_bid(device),
 			  acpi_lid_dir);
-	acpi_device_dir(device) = NULL;
-remove_lid_dir:
-	remove_proc_entry(ACPI_BUTTON_SUBCLASS_LID, acpi_button_dir);
-	acpi_lid_dir = NULL;
-remove_button_dir:
-	remove_proc_entry(ACPI_BUTTON_CLASS, acpi_root_dir);
-	acpi_button_dir = NULL;
-	goto done;
-}
+	acpi_device_dir(device) = शून्य;
+हटाओ_lid_dir:
+	हटाओ_proc_entry(ACPI_BUTTON_SUBCLASS_LID, acpi_button_dir);
+	acpi_lid_dir = शून्य;
+हटाओ_button_dir:
+	हटाओ_proc_entry(ACPI_BUTTON_CLASS, acpi_root_dir);
+	acpi_button_dir = शून्य;
+	जाओ करोne;
+पूर्ण
 
-static int acpi_button_remove_fs(struct acpi_device *device)
-{
-	struct acpi_button *button = acpi_driver_data(device);
+अटल पूर्णांक acpi_button_हटाओ_fs(काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_button *button = acpi_driver_data(device);
 
-	if (button->type != ACPI_BUTTON_TYPE_LID)
-		return 0;
+	अगर (button->type != ACPI_BUTTON_TYPE_LID)
+		वापस 0;
 
-	remove_proc_entry(ACPI_BUTTON_FILE_STATE,
+	हटाओ_proc_entry(ACPI_BUTTON_खाता_STATE,
 			  acpi_device_dir(device));
-	remove_proc_entry(acpi_device_bid(device),
+	हटाओ_proc_entry(acpi_device_bid(device),
 			  acpi_lid_dir);
-	acpi_device_dir(device) = NULL;
-	remove_proc_entry(ACPI_BUTTON_SUBCLASS_LID, acpi_button_dir);
-	acpi_lid_dir = NULL;
-	remove_proc_entry(ACPI_BUTTON_CLASS, acpi_root_dir);
-	acpi_button_dir = NULL;
+	acpi_device_dir(device) = शून्य;
+	हटाओ_proc_entry(ACPI_BUTTON_SUBCLASS_LID, acpi_button_dir);
+	acpi_lid_dir = शून्य;
+	हटाओ_proc_entry(ACPI_BUTTON_CLASS, acpi_root_dir);
+	acpi_button_dir = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Driver Interface */
-int acpi_lid_open(void)
-{
-	if (!lid_device)
-		return -ENODEV;
+पूर्णांक acpi_lid_खोलो(व्योम)
+अणु
+	अगर (!lid_device)
+		वापस -ENODEV;
 
-	return acpi_lid_evaluate_state(lid_device);
-}
-EXPORT_SYMBOL(acpi_lid_open);
+	वापस acpi_lid_evaluate_state(lid_device);
+पूर्ण
+EXPORT_SYMBOL(acpi_lid_खोलो);
 
-static int acpi_lid_update_state(struct acpi_device *device,
-				 bool signal_wakeup)
-{
-	int state;
+अटल पूर्णांक acpi_lid_update_state(काष्ठा acpi_device *device,
+				 bool संकेत_wakeup)
+अणु
+	पूर्णांक state;
 
 	state = acpi_lid_evaluate_state(device);
-	if (state < 0)
-		return state;
+	अगर (state < 0)
+		वापस state;
 
-	if (state && signal_wakeup)
+	अगर (state && संकेत_wakeup)
 		acpi_pm_wakeup_event(&device->dev);
 
-	return acpi_lid_notify_state(device, state);
-}
+	वापस acpi_lid_notअगरy_state(device, state);
+पूर्ण
 
-static void acpi_lid_initialize_state(struct acpi_device *device)
-{
-	struct acpi_button *button = acpi_driver_data(device);
+अटल व्योम acpi_lid_initialize_state(काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_button *button = acpi_driver_data(device);
 
-	switch (lid_init_state) {
-	case ACPI_BUTTON_LID_INIT_OPEN:
-		(void)acpi_lid_notify_state(device, 1);
-		break;
-	case ACPI_BUTTON_LID_INIT_METHOD:
-		(void)acpi_lid_update_state(device, false);
-		break;
-	case ACPI_BUTTON_LID_INIT_IGNORE:
-	default:
-		break;
-	}
+	चयन (lid_init_state) अणु
+	हाल ACPI_BUTTON_LID_INIT_OPEN:
+		(व्योम)acpi_lid_notअगरy_state(device, 1);
+		अवरोध;
+	हाल ACPI_BUTTON_LID_INIT_METHOD:
+		(व्योम)acpi_lid_update_state(device, false);
+		अवरोध;
+	हाल ACPI_BUTTON_LID_INIT_IGNORE:
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	button->lid_state_initialized = true;
-}
+पूर्ण
 
-static void acpi_button_notify(struct acpi_device *device, u32 event)
-{
-	struct acpi_button *button = acpi_driver_data(device);
-	struct input_dev *input;
+अटल व्योम acpi_button_notअगरy(काष्ठा acpi_device *device, u32 event)
+अणु
+	काष्ठा acpi_button *button = acpi_driver_data(device);
+	काष्ठा input_dev *input;
 
-	switch (event) {
-	case ACPI_FIXED_HARDWARE_EVENT:
+	चयन (event) अणु
+	हाल ACPI_FIXED_HARDWARE_EVENT:
 		event = ACPI_BUTTON_NOTIFY_STATUS;
 		fallthrough;
-	case ACPI_BUTTON_NOTIFY_STATUS:
+	हाल ACPI_BUTTON_NOTIFY_STATUS:
 		input = button->input;
-		if (button->type == ACPI_BUTTON_TYPE_LID) {
-			if (button->lid_state_initialized)
+		अगर (button->type == ACPI_BUTTON_TYPE_LID) अणु
+			अगर (button->lid_state_initialized)
 				acpi_lid_update_state(device, true);
-		} else {
-			int keycode;
+		पूर्ण अन्यथा अणु
+			पूर्णांक keycode;
 
 			acpi_pm_wakeup_event(&device->dev);
-			if (button->suspended)
-				break;
+			अगर (button->suspended)
+				अवरोध;
 
 			keycode = test_bit(KEY_SLEEP, input->keybit) ?
 						KEY_SLEEP : KEY_POWER;
@@ -421,108 +422,108 @@ static void acpi_button_notify(struct acpi_device *device, u32 event)
 					device->pnp.device_class,
 					dev_name(&device->dev),
 					event, ++button->pushed);
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		acpi_handle_debug(device->handle, "Unsupported event [0x%x]\n",
 				  event);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int acpi_button_suspend(struct device *dev)
-{
-	struct acpi_device *device = to_acpi_device(dev);
-	struct acpi_button *button = acpi_driver_data(device);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक acpi_button_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा acpi_device *device = to_acpi_device(dev);
+	काष्ठा acpi_button *button = acpi_driver_data(device);
 
 	button->suspended = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_button_resume(struct device *dev)
-{
-	struct acpi_device *device = to_acpi_device(dev);
-	struct acpi_button *button = acpi_driver_data(device);
+अटल पूर्णांक acpi_button_resume(काष्ठा device *dev)
+अणु
+	काष्ठा acpi_device *device = to_acpi_device(dev);
+	काष्ठा acpi_button *button = acpi_driver_data(device);
 
 	button->suspended = false;
-	if (button->type == ACPI_BUTTON_TYPE_LID) {
+	अगर (button->type == ACPI_BUTTON_TYPE_LID) अणु
 		button->last_state = !!acpi_lid_evaluate_state(device);
-		button->last_time = ktime_get();
+		button->last_समय = kसमय_get();
 		acpi_lid_initialize_state(device);
-	}
-	return 0;
-}
-#endif
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int acpi_lid_input_open(struct input_dev *input)
-{
-	struct acpi_device *device = input_get_drvdata(input);
-	struct acpi_button *button = acpi_driver_data(device);
+अटल पूर्णांक acpi_lid_input_खोलो(काष्ठा input_dev *input)
+अणु
+	काष्ठा acpi_device *device = input_get_drvdata(input);
+	काष्ठा acpi_button *button = acpi_driver_data(device);
 
 	button->last_state = !!acpi_lid_evaluate_state(device);
-	button->last_time = ktime_get();
+	button->last_समय = kसमय_get();
 	acpi_lid_initialize_state(device);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_button_add(struct acpi_device *device)
-{
-	struct acpi_button *button;
-	struct input_dev *input;
-	const char *hid = acpi_device_hid(device);
-	char *name, *class;
-	int error;
+अटल पूर्णांक acpi_button_add(काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_button *button;
+	काष्ठा input_dev *input;
+	स्थिर अक्षर *hid = acpi_device_hid(device);
+	अक्षर *name, *class;
+	पूर्णांक error;
 
-	if (!strcmp(hid, ACPI_BUTTON_HID_LID) &&
+	अगर (!म_भेद(hid, ACPI_BUTTON_HID_LID) &&
 	     lid_init_state == ACPI_BUTTON_LID_INIT_DISABLED)
-		return -ENODEV;
+		वापस -ENODEV;
 
-	button = kzalloc(sizeof(struct acpi_button), GFP_KERNEL);
-	if (!button)
-		return -ENOMEM;
+	button = kzalloc(माप(काष्ठा acpi_button), GFP_KERNEL);
+	अगर (!button)
+		वापस -ENOMEM;
 
 	device->driver_data = button;
 
 	button->input = input = input_allocate_device();
-	if (!input) {
+	अगर (!input) अणु
 		error = -ENOMEM;
-		goto err_free_button;
-	}
+		जाओ err_मुक्त_button;
+	पूर्ण
 
 	name = acpi_device_name(device);
 	class = acpi_device_class(device);
 
-	if (!strcmp(hid, ACPI_BUTTON_HID_POWER) ||
-	    !strcmp(hid, ACPI_BUTTON_HID_POWERF)) {
+	अगर (!म_भेद(hid, ACPI_BUTTON_HID_POWER) ||
+	    !म_भेद(hid, ACPI_BUTTON_HID_POWERF)) अणु
 		button->type = ACPI_BUTTON_TYPE_POWER;
-		strcpy(name, ACPI_BUTTON_DEVICE_NAME_POWER);
-		sprintf(class, "%s/%s",
+		म_नकल(name, ACPI_BUTTON_DEVICE_NAME_POWER);
+		प्र_लिखो(class, "%s/%s",
 			ACPI_BUTTON_CLASS, ACPI_BUTTON_SUBCLASS_POWER);
-	} else if (!strcmp(hid, ACPI_BUTTON_HID_SLEEP) ||
-		   !strcmp(hid, ACPI_BUTTON_HID_SLEEPF)) {
+	पूर्ण अन्यथा अगर (!म_भेद(hid, ACPI_BUTTON_HID_SLEEP) ||
+		   !म_भेद(hid, ACPI_BUTTON_HID_SLEEPF)) अणु
 		button->type = ACPI_BUTTON_TYPE_SLEEP;
-		strcpy(name, ACPI_BUTTON_DEVICE_NAME_SLEEP);
-		sprintf(class, "%s/%s",
+		म_नकल(name, ACPI_BUTTON_DEVICE_NAME_SLEEP);
+		प्र_लिखो(class, "%s/%s",
 			ACPI_BUTTON_CLASS, ACPI_BUTTON_SUBCLASS_SLEEP);
-	} else if (!strcmp(hid, ACPI_BUTTON_HID_LID)) {
+	पूर्ण अन्यथा अगर (!म_भेद(hid, ACPI_BUTTON_HID_LID)) अणु
 		button->type = ACPI_BUTTON_TYPE_LID;
-		strcpy(name, ACPI_BUTTON_DEVICE_NAME_LID);
-		sprintf(class, "%s/%s",
+		म_नकल(name, ACPI_BUTTON_DEVICE_NAME_LID);
+		प्र_लिखो(class, "%s/%s",
 			ACPI_BUTTON_CLASS, ACPI_BUTTON_SUBCLASS_LID);
-		input->open = acpi_lid_input_open;
-	} else {
+		input->खोलो = acpi_lid_input_खोलो;
+	पूर्ण अन्यथा अणु
 		pr_info("Unsupported hid [%s]\n", hid);
 		error = -ENODEV;
-		goto err_free_input;
-	}
+		जाओ err_मुक्त_input;
+	पूर्ण
 
 	error = acpi_button_add_fs(device);
-	if (error)
-		goto err_free_input;
+	अगर (error)
+		जाओ err_मुक्त_input;
 
-	snprintf(button->phys, sizeof(button->phys), "%s/button/input0", hid);
+	snम_लिखो(button->phys, माप(button->phys), "%s/button/input0", hid);
 
 	input->name = name;
 	input->phys = button->phys;
@@ -530,119 +531,119 @@ static int acpi_button_add(struct acpi_device *device)
 	input->id.product = button->type;
 	input->dev.parent = &device->dev;
 
-	switch (button->type) {
-	case ACPI_BUTTON_TYPE_POWER:
+	चयन (button->type) अणु
+	हाल ACPI_BUTTON_TYPE_POWER:
 		input_set_capability(input, EV_KEY, KEY_POWER);
-		break;
+		अवरोध;
 
-	case ACPI_BUTTON_TYPE_SLEEP:
+	हाल ACPI_BUTTON_TYPE_SLEEP:
 		input_set_capability(input, EV_KEY, KEY_SLEEP);
-		break;
+		अवरोध;
 
-	case ACPI_BUTTON_TYPE_LID:
+	हाल ACPI_BUTTON_TYPE_LID:
 		input_set_capability(input, EV_SW, SW_LID);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	input_set_drvdata(input, device);
-	error = input_register_device(input);
-	if (error)
-		goto err_remove_fs;
-	if (button->type == ACPI_BUTTON_TYPE_LID) {
+	error = input_रेजिस्टर_device(input);
+	अगर (error)
+		जाओ err_हटाओ_fs;
+	अगर (button->type == ACPI_BUTTON_TYPE_LID) अणु
 		/*
-		 * This assumes there's only one lid device, or if there are
+		 * This assumes there's only one lid device, or अगर there are
 		 * more we only care about the last one...
 		 */
 		lid_device = device;
-	}
+	पूर्ण
 
 	device_init_wakeup(&device->dev, true);
 	pr_info("%s [%s]\n", name, acpi_device_bid(device));
-	return 0;
+	वापस 0;
 
- err_remove_fs:
-	acpi_button_remove_fs(device);
- err_free_input:
-	input_free_device(input);
- err_free_button:
-	kfree(button);
-	return error;
-}
+ err_हटाओ_fs:
+	acpi_button_हटाओ_fs(device);
+ err_मुक्त_input:
+	input_मुक्त_device(input);
+ err_मुक्त_button:
+	kमुक्त(button);
+	वापस error;
+पूर्ण
 
-static int acpi_button_remove(struct acpi_device *device)
-{
-	struct acpi_button *button = acpi_driver_data(device);
+अटल पूर्णांक acpi_button_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_button *button = acpi_driver_data(device);
 
-	acpi_button_remove_fs(device);
-	input_unregister_device(button->input);
-	kfree(button);
-	return 0;
-}
+	acpi_button_हटाओ_fs(device);
+	input_unरेजिस्टर_device(button->input);
+	kमुक्त(button);
+	वापस 0;
+पूर्ण
 
-static int param_set_lid_init_state(const char *val,
-				    const struct kernel_param *kp)
-{
-	int i;
+अटल पूर्णांक param_set_lid_init_state(स्थिर अक्षर *val,
+				    स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक i;
 
 	i = sysfs_match_string(lid_init_state_str, val);
-	if (i < 0)
-		return i;
+	अगर (i < 0)
+		वापस i;
 
 	lid_init_state = i;
 	pr_info("Initial lid state set to '%s'\n", lid_init_state_str[i]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int param_get_lid_init_state(char *buf, const struct kernel_param *kp)
-{
-	int i, c = 0;
+अटल पूर्णांक param_get_lid_init_state(अक्षर *buf, स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक i, c = 0;
 
-	for (i = 0; i < ARRAY_SIZE(lid_init_state_str); i++)
-		if (i == lid_init_state)
-			c += sprintf(buf + c, "[%s] ", lid_init_state_str[i]);
-		else
-			c += sprintf(buf + c, "%s ", lid_init_state_str[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(lid_init_state_str); i++)
+		अगर (i == lid_init_state)
+			c += प्र_लिखो(buf + c, "[%s] ", lid_init_state_str[i]);
+		अन्यथा
+			c += प्र_लिखो(buf + c, "%s ", lid_init_state_str[i]);
 
 	buf[c - 1] = '\n'; /* Replace the final space with a newline */
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
 module_param_call(lid_init_state,
 		  param_set_lid_init_state, param_get_lid_init_state,
-		  NULL, 0644);
+		  शून्य, 0644);
 MODULE_PARM_DESC(lid_init_state, "Behavior for reporting LID initial state");
 
-static int acpi_button_register_driver(struct acpi_driver *driver)
-{
-	const struct dmi_system_id *dmi_id;
+अटल पूर्णांक acpi_button_रेजिस्टर_driver(काष्ठा acpi_driver *driver)
+अणु
+	स्थिर काष्ठा dmi_प्रणाली_id *dmi_id;
 
-	if (lid_init_state == -1) {
+	अगर (lid_init_state == -1) अणु
 		dmi_id = dmi_first_match(dmi_lid_quirks);
-		if (dmi_id)
-			lid_init_state = (long)dmi_id->driver_data;
-		else
+		अगर (dmi_id)
+			lid_init_state = (दीर्घ)dmi_id->driver_data;
+		अन्यथा
 			lid_init_state = ACPI_BUTTON_LID_INIT_METHOD;
-	}
+	पूर्ण
 
 	/*
-	 * Modules such as nouveau.ko and i915.ko have a link time dependency
-	 * on acpi_lid_open(), and would therefore not be loadable on ACPI
-	 * capable kernels booted in non-ACPI mode if the return value of
-	 * acpi_bus_register_driver() is returned from here with ACPI disabled
+	 * Modules such as nouveau.ko and i915.ko have a link समय dependency
+	 * on acpi_lid_खोलो(), and would thereक्रमe not be loadable on ACPI
+	 * capable kernels booted in non-ACPI mode अगर the वापस value of
+	 * acpi_bus_रेजिस्टर_driver() is वापसed from here with ACPI disabled
 	 * when this driver is built as a module.
 	 */
-	if (acpi_disabled)
-		return 0;
+	अगर (acpi_disabled)
+		वापस 0;
 
-	return acpi_bus_register_driver(driver);
-}
+	वापस acpi_bus_रेजिस्टर_driver(driver);
+पूर्ण
 
-static void acpi_button_unregister_driver(struct acpi_driver *driver)
-{
-	if (!acpi_disabled)
-		acpi_bus_unregister_driver(driver);
-}
+अटल व्योम acpi_button_unरेजिस्टर_driver(काष्ठा acpi_driver *driver)
+अणु
+	अगर (!acpi_disabled)
+		acpi_bus_unरेजिस्टर_driver(driver);
+पूर्ण
 
-module_driver(acpi_button_driver, acpi_button_register_driver,
-	       acpi_button_unregister_driver);
+module_driver(acpi_button_driver, acpi_button_रेजिस्टर_driver,
+	       acpi_button_unरेजिस्टर_driver);

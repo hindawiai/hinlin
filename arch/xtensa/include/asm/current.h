@@ -1,38 +1,39 @@
+<शैली गुरु>
 /*
- * include/asm-xtensa/current.h
+ * include/यंत्र-xtensa/current.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#ifndef _XTENSA_CURRENT_H
-#define _XTENSA_CURRENT_H
+#अगर_अघोषित _XTENSA_CURRENT_H
+#घोषणा _XTENSA_CURRENT_H
 
-#include <asm/thread_info.h>
+#समावेश <यंत्र/thपढ़ो_info.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/thread_info.h>
+#समावेश <linux/thपढ़ो_info.h>
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-static inline struct task_struct *get_current(void)
-{
-	return current_thread_info()->task;
-}
+अटल अंतरभूत काष्ठा task_काष्ठा *get_current(व्योम)
+अणु
+	वापस current_thपढ़ो_info()->task;
+पूर्ण
 
-#define current get_current()
+#घोषणा current get_current()
 
-#else
+#अन्यथा
 
-#define GET_CURRENT(reg,sp)		\
+#घोषणा GET_CURRENT(reg,sp)		\
 	GET_THREAD_INFO(reg,sp);	\
 	l32i reg, reg, TI_TASK		\
 
-#endif
+#पूर्ण_अगर
 
 
-#endif /* XTENSA_CURRENT_H */
+#पूर्ण_अगर /* XTENSA_CURRENT_H */

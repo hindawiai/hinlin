@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#ifndef __INTEL_ENGINE_STATS_H__
-#define __INTEL_ENGINE_STATS_H__
+#अगर_अघोषित __INTEL_ENGINE_STATS_H__
+#घोषणा __INTEL_ENGINE_STATS_H__
 
-#include <linux/atomic.h>
-#include <linux/ktime.h>
-#include <linux/seqlock.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/seqlock.h>
 
-#include "i915_gem.h" /* GEM_BUG_ON */
-#include "intel_engine.h"
+#समावेश "i915_gem.h" /* GEM_BUG_ON */
+#समावेश "intel_engine.h"
 
-static inline void intel_engine_context_in(struct intel_engine_cs *engine)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम पूर्णांकel_engine_context_in(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (engine->stats.active) {
+	अगर (engine->stats.active) अणु
 		engine->stats.active++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* The writer is serialised; but the pmu reader may be from hardirq */
+	/* The ग_लिखोr is serialised; but the pmu पढ़ोer may be from hardirq */
 	local_irq_save(flags);
-	write_seqcount_begin(&engine->stats.lock);
+	ग_लिखो_seqcount_begin(&engine->stats.lock);
 
-	engine->stats.start = ktime_get();
+	engine->stats.start = kसमय_get();
 	engine->stats.active++;
 
-	write_seqcount_end(&engine->stats.lock);
+	ग_लिखो_seqcount_end(&engine->stats.lock);
 	local_irq_restore(flags);
 
 	GEM_BUG_ON(!engine->stats.active);
-}
+पूर्ण
 
-static inline void intel_engine_context_out(struct intel_engine_cs *engine)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम पूर्णांकel_engine_context_out(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	GEM_BUG_ON(!engine->stats.active);
-	if (engine->stats.active > 1) {
+	अगर (engine->stats.active > 1) अणु
 		engine->stats.active--;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	local_irq_save(flags);
-	write_seqcount_begin(&engine->stats.lock);
+	ग_लिखो_seqcount_begin(&engine->stats.lock);
 
 	engine->stats.active--;
 	engine->stats.total =
-		ktime_add(engine->stats.total,
-			  ktime_sub(ktime_get(), engine->stats.start));
+		kसमय_add(engine->stats.total,
+			  kसमय_sub(kसमय_get(), engine->stats.start));
 
-	write_seqcount_end(&engine->stats.lock);
+	ग_लिखो_seqcount_end(&engine->stats.lock);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-#endif /* __INTEL_ENGINE_STATS_H__ */
+#पूर्ण_अगर /* __INTEL_ENGINE_STATS_H__ */

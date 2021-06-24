@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Functions corresponding to SET password methods under BIOS attributes interface GUID
+ * Functions corresponding to SET password methods under BIOS attributes पूर्णांकerface GUID
  *
  *  Copyright (c) 2020 Dell Inc.
  */
 
-#include <linux/wmi.h>
-#include "dell-wmi-sysman.h"
+#समावेश <linux/wmi.h>
+#समावेश "dell-wmi-sysman.h"
 
-static int call_password_interface(struct wmi_device *wdev, char *in_args, size_t size)
-{
-	struct acpi_buffer output = {ACPI_ALLOCATE_BUFFER, NULL};
-	struct acpi_buffer input;
-	union acpi_object *obj;
+अटल पूर्णांक call_password_पूर्णांकerface(काष्ठा wmi_device *wdev, अक्षर *in_args, माप_प्रकार size)
+अणु
+	काष्ठा acpi_buffer output = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
+	काष्ठा acpi_buffer input;
+	जोड़ acpi_object *obj;
 	acpi_status status;
-	int ret = -EIO;
+	पूर्णांक ret = -EIO;
 
 	input.length =  (acpi_size) size;
-	input.pointer = in_args;
+	input.poपूर्णांकer = in_args;
 	status = wmidev_evaluate_method(wdev, 0, 1, &input, &output);
-	if (ACPI_FAILURE(status))
-		return -EIO;
-	obj = (union acpi_object *)output.pointer;
-	if (obj->type == ACPI_TYPE_INTEGER)
-		ret = obj->integer.value;
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
+	obj = (जोड़ acpi_object *)output.poपूर्णांकer;
+	अगर (obj->type == ACPI_TYPE_INTEGER)
+		ret = obj->पूर्णांकeger.value;
 
-	kfree(output.pointer);
+	kमुक्त(output.poपूर्णांकer);
 	/* let userland know it may need to check is_password_set again */
 	kobject_uevent(&wmi_priv.class_dev->kobj, KOBJ_CHANGE);
-	return map_wmi_error(ret);
-}
+	वापस map_wmi_error(ret);
+पूर्ण
 
 /**
- * set_new_password() - Sets a system admin password
+ * set_new_password() - Sets a प्रणाली admin password
  * @password_type: The type of password to set
  * @new: The new password
  *
- * Sets the password using plaintext interface
+ * Sets the password using plaपूर्णांकext पूर्णांकerface
  */
-int set_new_password(const char *password_type, const char *new)
-{
-	size_t password_type_size, current_password_size, new_size;
-	size_t security_area_size, buffer_size;
-	char *buffer = NULL, *start;
-	char *current_password;
-	int ret;
+पूर्णांक set_new_password(स्थिर अक्षर *password_type, स्थिर अक्षर *new)
+अणु
+	माप_प्रकार password_type_size, current_password_size, new_size;
+	माप_प्रकार security_area_size, buffer_size;
+	अक्षर *buffer = शून्य, *start;
+	अक्षर *current_password;
+	पूर्णांक ret;
 
 	mutex_lock(&wmi_priv.mutex);
-	if (!wmi_priv.password_attr_wdev) {
+	अगर (!wmi_priv.password_attr_wdev) अणु
 		ret = -ENODEV;
-		goto out;
-	}
-	if (strcmp(password_type, "Admin") == 0) {
+		जाओ out;
+	पूर्ण
+	अगर (म_भेद(password_type, "Admin") == 0) अणु
 		current_password = wmi_priv.current_admin_password;
-	} else if (strcmp(password_type, "System") == 0) {
-		current_password = wmi_priv.current_system_password;
-	} else {
+	पूर्ण अन्यथा अगर (म_भेद(password_type, "System") == 0) अणु
+		current_password = wmi_priv.current_प्रणाली_password;
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
 		dev_err(&wmi_priv.password_attr_wdev->dev, "unknown password type %s\n",
 			password_type);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* build/calculate buffer */
 	security_area_size = calculate_security_buffer(wmi_priv.current_admin_password);
@@ -69,10 +70,10 @@ int set_new_password(const char *password_type, const char *new)
 	new_size = calculate_string_buffer(new);
 	buffer_size = security_area_size + password_type_size + current_password_size + new_size;
 	buffer = kzalloc(buffer_size, GFP_KERNEL);
-	if (!buffer) {
+	अगर (!buffer) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* build security area */
 	populate_security_buffer(buffer, wmi_priv.current_admin_password);
@@ -80,73 +81,73 @@ int set_new_password(const char *password_type, const char *new)
 	/* build variables to set */
 	start = buffer + security_area_size;
 	ret = populate_string_buffer(start, password_type_size, password_type);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	start += ret;
 	ret = populate_string_buffer(start, current_password_size, current_password);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	start += ret;
 	ret = populate_string_buffer(start, new_size, new);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	print_hex_dump_bytes("set new password data: ", DUMP_PREFIX_NONE, buffer, buffer_size);
-	ret = call_password_interface(wmi_priv.password_attr_wdev, buffer, buffer_size);
+	prपूर्णांक_hex_dump_bytes("set new password data: ", DUMP_PREFIX_NONE, buffer, buffer_size);
+	ret = call_password_पूर्णांकerface(wmi_priv.password_attr_wdev, buffer, buffer_size);
 	/* clear current_password here and use user input from wmi_priv.current_password */
-	if (!ret)
-		memset(current_password, 0, MAX_BUFF);
+	अगर (!ret)
+		स_रखो(current_password, 0, MAX_BUFF);
 	/* explain to user the detailed failure reason */
-	else if (ret == -EOPNOTSUPP)
+	अन्यथा अगर (ret == -EOPNOTSUPP)
 		dev_err(&wmi_priv.password_attr_wdev->dev, "admin password must be configured\n");
-	else if (ret == -EACCES)
+	अन्यथा अगर (ret == -EACCES)
 		dev_err(&wmi_priv.password_attr_wdev->dev, "invalid password\n");
 
 out:
-	kfree(buffer);
+	kमुक्त(buffer);
 	mutex_unlock(&wmi_priv.mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bios_attr_pass_interface_probe(struct wmi_device *wdev, const void *context)
-{
+अटल पूर्णांक bios_attr_pass_पूर्णांकerface_probe(काष्ठा wmi_device *wdev, स्थिर व्योम *context)
+अणु
 	mutex_lock(&wmi_priv.mutex);
 	wmi_priv.password_attr_wdev = wdev;
 	mutex_unlock(&wmi_priv.mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bios_attr_pass_interface_remove(struct wmi_device *wdev)
-{
+अटल व्योम bios_attr_pass_पूर्णांकerface_हटाओ(काष्ठा wmi_device *wdev)
+अणु
 	mutex_lock(&wmi_priv.mutex);
-	wmi_priv.password_attr_wdev = NULL;
+	wmi_priv.password_attr_wdev = शून्य;
 	mutex_unlock(&wmi_priv.mutex);
-}
+पूर्ण
 
-static const struct wmi_device_id bios_attr_pass_interface_id_table[] = {
-	{ .guid_string = DELL_WMI_BIOS_PASSWORD_INTERFACE_GUID },
-	{ },
-};
-static struct wmi_driver bios_attr_pass_interface_driver = {
-	.driver = {
+अटल स्थिर काष्ठा wmi_device_id bios_attr_pass_पूर्णांकerface_id_table[] = अणु
+	अणु .guid_string = DELL_WMI_BIOS_PASSWORD_INTERFACE_GUID पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+अटल काष्ठा wmi_driver bios_attr_pass_पूर्णांकerface_driver = अणु
+	.driver = अणु
 		.name = DRIVER_NAME"-password"
-	},
-	.probe = bios_attr_pass_interface_probe,
-	.remove = bios_attr_pass_interface_remove,
-	.id_table = bios_attr_pass_interface_id_table,
-};
+	पूर्ण,
+	.probe = bios_attr_pass_पूर्णांकerface_probe,
+	.हटाओ = bios_attr_pass_पूर्णांकerface_हटाओ,
+	.id_table = bios_attr_pass_पूर्णांकerface_id_table,
+पूर्ण;
 
-int init_bios_attr_pass_interface(void)
-{
-	return wmi_driver_register(&bios_attr_pass_interface_driver);
-}
+पूर्णांक init_bios_attr_pass_पूर्णांकerface(व्योम)
+अणु
+	वापस wmi_driver_रेजिस्टर(&bios_attr_pass_पूर्णांकerface_driver);
+पूर्ण
 
-void exit_bios_attr_pass_interface(void)
-{
-	wmi_driver_unregister(&bios_attr_pass_interface_driver);
-}
+व्योम निकास_bios_attr_pass_पूर्णांकerface(व्योम)
+अणु
+	wmi_driver_unरेजिस्टर(&bios_attr_pass_पूर्णांकerface_driver);
+पूर्ण
 
-MODULE_DEVICE_TABLE(wmi, bios_attr_pass_interface_id_table);
+MODULE_DEVICE_TABLE(wmi, bios_attr_pass_पूर्णांकerface_id_table);

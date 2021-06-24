@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,55 +22,55 @@
  *
  * Authors: Ben Skeggs
  */
-#include <subdev/bios.h>
-#include <subdev/bios/dcb.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/dcb.h>
 
 u16
-dcb_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
-{
-	struct nvkm_subdev *subdev = &bios->subdev;
-	struct nvkm_device *device = subdev->device;
+dcb_table(काष्ठा nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
+अणु
+	काष्ठा nvkm_subdev *subdev = &bios->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u16 dcb = 0x0000;
 
-	if (device->card_type > NV_04)
+	अगर (device->card_type > NV_04)
 		dcb = nvbios_rd16(bios, 0x36);
-	if (!dcb) {
+	अगर (!dcb) अणु
 		nvkm_warn(subdev, "DCB table not found\n");
-		return dcb;
-	}
+		वापस dcb;
+	पूर्ण
 
 	*ver = nvbios_rd08(bios, dcb);
 
-	if (*ver >= 0x42) {
+	अगर (*ver >= 0x42) अणु
 		nvkm_warn(subdev, "DCB version 0x%02x unknown\n", *ver);
-		return 0x0000;
-	} else
-	if (*ver >= 0x30) {
-		if (nvbios_rd32(bios, dcb + 6) == 0x4edcbdcb) {
+		वापस 0x0000;
+	पूर्ण अन्यथा
+	अगर (*ver >= 0x30) अणु
+		अगर (nvbios_rd32(bios, dcb + 6) == 0x4edcbdcb) अणु
 			*hdr = nvbios_rd08(bios, dcb + 1);
 			*cnt = nvbios_rd08(bios, dcb + 2);
 			*len = nvbios_rd08(bios, dcb + 3);
-			return dcb;
-		}
-	} else
-	if (*ver >= 0x20) {
-		if (nvbios_rd32(bios, dcb + 4) == 0x4edcbdcb) {
+			वापस dcb;
+		पूर्ण
+	पूर्ण अन्यथा
+	अगर (*ver >= 0x20) अणु
+		अगर (nvbios_rd32(bios, dcb + 4) == 0x4edcbdcb) अणु
 			u16 i2c = nvbios_rd16(bios, dcb + 2);
 			*hdr = 8;
 			*cnt = (i2c - dcb) / 8;
 			*len = 8;
-			return dcb;
-		}
-	} else
-	if (*ver >= 0x15) {
-		if (!nvbios_memcmp(bios, dcb - 7, "DEV_REC", 7)) {
+			वापस dcb;
+		पूर्ण
+	पूर्ण अन्यथा
+	अगर (*ver >= 0x15) अणु
+		अगर (!nvbios_स_भेद(bios, dcb - 7, "DEV_REC", 7)) अणु
 			u16 i2c = nvbios_rd16(bios, dcb + 2);
 			*hdr = 4;
 			*cnt = (i2c - dcb) / 10;
 			*len = 10;
-			return dcb;
-		}
-	} else {
+			वापस dcb;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * v1.4 (some NV15/16, NV11+) seems the same as v1.5, but
 		 * always has the same single (crt) entry, even when tv-out
@@ -77,54 +78,54 @@ dcb_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
 		 * be used.
 		 *
 		 * v1.2 tables (some NV6/10, and NV15+) normally have the
-		 * same 5 entries, which are not specific to the card and so
+		 * same 5 entries, which are not specअगरic to the card and so
 		 * no use.
 		 *
-		 * v1.2 does have an I2C table that read_dcb_i2c_table can
+		 * v1.2 करोes have an I2C table that पढ़ो_dcb_i2c_table can
 		 * handle, but cards exist (nv11 in #14821) with a bad i2c
-		 * table pointer, so use the indices parsed in
-		 * parse_bmp_structure.
+		 * table poपूर्णांकer, so use the indices parsed in
+		 * parse_bmp_काष्ठाure.
 		 *
 		 * v1.1 (NV5+, maybe some NV4) is entirely unhelpful
 		 */
 		nvkm_debug(subdev, "DCB contains no useful data\n");
-		return 0x0000;
-	}
+		वापस 0x0000;
+	पूर्ण
 
 	nvkm_warn(subdev, "DCB header validation failed\n");
-	return 0x0000;
-}
+	वापस 0x0000;
+पूर्ण
 
 u16
-dcb_outp(struct nvkm_bios *bios, u8 idx, u8 *ver, u8 *len)
-{
+dcb_outp(काष्ठा nvkm_bios *bios, u8 idx, u8 *ver, u8 *len)
+अणु
 	u8  hdr, cnt;
 	u16 dcb = dcb_table(bios, ver, &hdr, &cnt, len);
-	if (dcb && idx < cnt)
-		return dcb + hdr + (idx * *len);
-	return 0x0000;
-}
+	अगर (dcb && idx < cnt)
+		वापस dcb + hdr + (idx * *len);
+	वापस 0x0000;
+पूर्ण
 
-static inline u16
-dcb_outp_hasht(struct dcb_output *outp)
-{
-	return (outp->extdev << 8) | (outp->location << 4) | outp->type;
-}
+अटल अंतरभूत u16
+dcb_outp_hasht(काष्ठा dcb_output *outp)
+अणु
+	वापस (outp->extdev << 8) | (outp->location << 4) | outp->type;
+पूर्ण
 
-static inline u16
-dcb_outp_hashm(struct dcb_output *outp)
-{
-	return (outp->heads << 8) | (outp->link << 6) | outp->or;
-}
+अटल अंतरभूत u16
+dcb_outp_hashm(काष्ठा dcb_output *outp)
+अणु
+	वापस (outp->heads << 8) | (outp->link << 6) | outp->or;
+पूर्ण
 
 u16
-dcb_outp_parse(struct nvkm_bios *bios, u8 idx, u8 *ver, u8 *len,
-	       struct dcb_output *outp)
-{
+dcb_outp_parse(काष्ठा nvkm_bios *bios, u8 idx, u8 *ver, u8 *len,
+	       काष्ठा dcb_output *outp)
+अणु
 	u16 dcb = dcb_outp(bios, idx, ver, len);
-	memset(outp, 0x00, sizeof(*outp));
-	if (dcb) {
-		if (*ver >= 0x20) {
+	स_रखो(outp, 0x00, माप(*outp));
+	अगर (dcb) अणु
+		अगर (*ver >= 0x20) अणु
 			u32 conn = nvbios_rd32(bios, dcb + 0x00);
 			outp->or        = (conn & 0x0f000000) >> 24;
 			outp->location  = (conn & 0x00300000) >> 20;
@@ -134,102 +135,102 @@ dcb_outp_parse(struct nvkm_bios *bios, u8 idx, u8 *ver, u8 *len,
 			outp->i2c_index = (conn & 0x000000f0) >> 4;
 			outp->type      = (conn & 0x0000000f);
 			outp->link      = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			dcb = 0x0000;
-		}
+		पूर्ण
 
-		if (*ver >= 0x40) {
+		अगर (*ver >= 0x40) अणु
 			u32 conf = nvbios_rd32(bios, dcb + 0x04);
-			switch (outp->type) {
-			case DCB_OUTPUT_DP:
-				switch (conf & 0x00e00000) {
-				case 0x00000000: /* 1.62 */
+			चयन (outp->type) अणु
+			हाल DCB_OUTPUT_DP:
+				चयन (conf & 0x00e00000) अणु
+				हाल 0x00000000: /* 1.62 */
 					outp->dpconf.link_bw = 0x06;
-					break;
-				case 0x00200000: /* 2.7 */
+					अवरोध;
+				हाल 0x00200000: /* 2.7 */
 					outp->dpconf.link_bw = 0x0a;
-					break;
-				case 0x00400000: /* 5.4 */
+					अवरोध;
+				हाल 0x00400000: /* 5.4 */
 					outp->dpconf.link_bw = 0x14;
-					break;
-				case 0x00600000: /* 8.1 */
-				default:
+					अवरोध;
+				हाल 0x00600000: /* 8.1 */
+				शेष:
 					outp->dpconf.link_bw = 0x1e;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
-				switch ((conf & 0x0f000000) >> 24) {
-				case 0xf:
-				case 0x4:
+				चयन ((conf & 0x0f000000) >> 24) अणु
+				हाल 0xf:
+				हाल 0x4:
 					outp->dpconf.link_nr = 4;
-					break;
-				case 0x3:
-				case 0x2:
+					अवरोध;
+				हाल 0x3:
+				हाल 0x2:
 					outp->dpconf.link_nr = 2;
-					break;
-				case 0x1:
-				default:
+					अवरोध;
+				हाल 0x1:
+				शेष:
 					outp->dpconf.link_nr = 1;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				fallthrough;
 
-			case DCB_OUTPUT_TMDS:
-			case DCB_OUTPUT_LVDS:
+			हाल DCB_OUTPUT_TMDS:
+			हाल DCB_OUTPUT_LVDS:
 				outp->link = (conf & 0x00000030) >> 4;
 				outp->sorconf.link = outp->link; /*XXX*/
 				outp->extdev = 0x00;
-				if (outp->location != 0)
+				अगर (outp->location != 0)
 					outp->extdev = (conf & 0x0000ff00) >> 8;
-				break;
-			default:
-				break;
-			}
-		}
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		outp->hasht = dcb_outp_hasht(outp);
 		outp->hashm = dcb_outp_hashm(outp);
-	}
-	return dcb;
-}
+	पूर्ण
+	वापस dcb;
+पूर्ण
 
 u16
-dcb_outp_match(struct nvkm_bios *bios, u16 type, u16 mask,
-	       u8 *ver, u8 *len, struct dcb_output *outp)
-{
+dcb_outp_match(काष्ठा nvkm_bios *bios, u16 type, u16 mask,
+	       u8 *ver, u8 *len, काष्ठा dcb_output *outp)
+अणु
 	u16 dcb, idx = 0;
-	while ((dcb = dcb_outp_parse(bios, idx++, ver, len, outp))) {
-		if ((dcb_outp_hasht(outp) & 0x00ff) == (type & 0x00ff)) {
-			if ((dcb_outp_hashm(outp) & mask) == mask)
-				break;
-		}
-	}
-	return dcb;
-}
+	जबतक ((dcb = dcb_outp_parse(bios, idx++, ver, len, outp))) अणु
+		अगर ((dcb_outp_hasht(outp) & 0x00ff) == (type & 0x00ff)) अणु
+			अगर ((dcb_outp_hashm(outp) & mask) == mask)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस dcb;
+पूर्ण
 
-int
-dcb_outp_foreach(struct nvkm_bios *bios, void *data,
-		 int (*exec)(struct nvkm_bios *, void *, int, u16))
-{
-	int ret, idx = -1;
+पूर्णांक
+dcb_outp_क्रमeach(काष्ठा nvkm_bios *bios, व्योम *data,
+		 पूर्णांक (*exec)(काष्ठा nvkm_bios *, व्योम *, पूर्णांक, u16))
+अणु
+	पूर्णांक ret, idx = -1;
 	u8  ver, len;
 	u16 outp;
 
-	while ((outp = dcb_outp(bios, ++idx, &ver, &len))) {
-		if (nvbios_rd32(bios, outp) == 0x00000000)
-			break; /* seen on an NV11 with DCB v1.5 */
-		if (nvbios_rd32(bios, outp) == 0xffffffff)
-			break; /* seen on an NV17 with DCB v2.0 */
+	जबतक ((outp = dcb_outp(bios, ++idx, &ver, &len))) अणु
+		अगर (nvbios_rd32(bios, outp) == 0x00000000)
+			अवरोध; /* seen on an NV11 with DCB v1.5 */
+		अगर (nvbios_rd32(bios, outp) == 0xffffffff)
+			अवरोध; /* seen on an NV17 with DCB v2.0 */
 
-		if (nvbios_rd08(bios, outp) == DCB_OUTPUT_UNUSED)
-			continue;
-		if (nvbios_rd08(bios, outp) == DCB_OUTPUT_EOL)
-			break;
+		अगर (nvbios_rd08(bios, outp) == DCB_OUTPUT_UNUSED)
+			जारी;
+		अगर (nvbios_rd08(bios, outp) == DCB_OUTPUT_EOL)
+			अवरोध;
 
 		ret = exec(bios, data, idx, outp);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

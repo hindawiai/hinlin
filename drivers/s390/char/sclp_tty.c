@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *    SCLP line mode terminal driver.
  *
@@ -8,536 +9,536 @@
  *		 Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#include <linux/kmod.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/tty_flip.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/gfp.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/uaccess.h>
 
-#include "ctrlchar.h"
-#include "sclp.h"
-#include "sclp_rw.h"
-#include "sclp_tty.h"
+#समावेश "ctrlchar.h"
+#समावेश "sclp.h"
+#समावेश "sclp_rw.h"
+#समावेश "sclp_tty.h"
 
 /*
- * size of a buffer that collects single characters coming in
- * via sclp_tty_put_char()
+ * size of a buffer that collects single अक्षरacters coming in
+ * via sclp_tty_put_अक्षर()
  */
-#define SCLP_TTY_BUF_SIZE 512
+#घोषणा SCLP_TTY_BUF_SIZE 512
 
 /*
  * There is exactly one SCLP terminal, so we can keep things simple
- * and allocate all variables statically.
+ * and allocate all variables अटलally.
  */
 
 /* Lock to guard over changes to global variables. */
-static DEFINE_SPINLOCK(sclp_tty_lock);
-/* List of free pages that can be used for console output buffering. */
-static LIST_HEAD(sclp_tty_pages);
-/* List of full struct sclp_buffer structures ready for output. */
-static LIST_HEAD(sclp_tty_outqueue);
+अटल DEFINE_SPINLOCK(sclp_tty_lock);
+/* List of मुक्त pages that can be used क्रम console output buffering. */
+अटल LIST_HEAD(sclp_tty_pages);
+/* List of full काष्ठा sclp_buffer काष्ठाures पढ़ोy क्रम output. */
+अटल LIST_HEAD(sclp_tty_outqueue);
 /* Counter how many buffers are emitted. */
-static int sclp_tty_buffer_count;
-/* Pointer to current console buffer. */
-static struct sclp_buffer *sclp_ttybuf;
-/* Timer for delayed output of console messages. */
-static struct timer_list sclp_tty_timer;
+अटल पूर्णांक sclp_tty_buffer_count;
+/* Poपूर्णांकer to current console buffer. */
+अटल काष्ठा sclp_buffer *sclp_ttybuf;
+/* Timer क्रम delayed output of console messages. */
+अटल काष्ठा समयr_list sclp_tty_समयr;
 
-static struct tty_port sclp_port;
-static unsigned char sclp_tty_chars[SCLP_TTY_BUF_SIZE];
-static unsigned short int sclp_tty_chars_count;
+अटल काष्ठा tty_port sclp_port;
+अटल अचिन्हित अक्षर sclp_tty_अक्षरs[SCLP_TTY_BUF_SIZE];
+अटल अचिन्हित लघु पूर्णांक sclp_tty_अक्षरs_count;
 
-struct tty_driver *sclp_tty_driver;
+काष्ठा tty_driver *sclp_tty_driver;
 
-static int sclp_tty_tolower;
+अटल पूर्णांक sclp_tty_छोटे;
 
-#define SCLP_TTY_COLUMNS 320
-#define SPACES_PER_TAB 8
-#define CASE_DELIMITER 0x6c /* to separate upper and lower case (% in EBCDIC) */
+#घोषणा SCLP_TTY_COLUMNS 320
+#घोषणा SPACES_PER_TAB 8
+#घोषणा CASE_DELIMITER 0x6c /* to separate upper and lower हाल (% in EBCDIC) */
 
-/* This routine is called whenever we try to open a SCLP terminal. */
-static int
-sclp_tty_open(struct tty_struct *tty, struct file *filp)
-{
+/* This routine is called whenever we try to खोलो a SCLP terminal. */
+अटल पूर्णांक
+sclp_tty_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
+अणु
 	tty_port_tty_set(&sclp_port, tty);
-	tty->driver_data = NULL;
-	return 0;
-}
+	tty->driver_data = शून्य;
+	वापस 0;
+पूर्ण
 
-/* This routine is called when the SCLP terminal is closed. */
-static void
-sclp_tty_close(struct tty_struct *tty, struct file *filp)
-{
-	if (tty->count > 1)
-		return;
-	tty_port_tty_set(&sclp_port, NULL);
-}
+/* This routine is called when the SCLP terminal is बंदd. */
+अटल व्योम
+sclp_tty_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
+अणु
+	अगर (tty->count > 1)
+		वापस;
+	tty_port_tty_set(&sclp_port, शून्य);
+पूर्ण
 
 /*
- * This routine returns the numbers of characters the tty driver
- * will accept for queuing to be written.  This number is subject
- * to change as output buffers get emptied, or if the output flow
+ * This routine वापसs the numbers of अक्षरacters the tty driver
+ * will accept क्रम queuing to be written.  This number is subject
+ * to change as output buffers get emptied, or अगर the output flow
  * control is acted. This is not an exact number because not every
- * character needs the same space in the sccb. The worst case is
+ * अक्षरacter needs the same space in the sccb. The worst हाल is
  * a string of newlines. Every newline creates a new message which
  * needs 82 bytes.
  */
-static int
-sclp_tty_write_room (struct tty_struct *tty)
-{
-	unsigned long flags;
-	struct list_head *l;
-	int count;
+अटल पूर्णांक
+sclp_tty_ग_लिखो_room (काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head *l;
+	पूर्णांक count;
 
 	spin_lock_irqsave(&sclp_tty_lock, flags);
 	count = 0;
-	if (sclp_ttybuf != NULL)
-		count = sclp_buffer_space(sclp_ttybuf) / sizeof(struct msg_buf);
-	list_for_each(l, &sclp_tty_pages)
+	अगर (sclp_ttybuf != शून्य)
+		count = sclp_buffer_space(sclp_ttybuf) / माप(काष्ठा msg_buf);
+	list_क्रम_each(l, &sclp_tty_pages)
 		count += NR_EMPTY_MSG_PER_SCCB;
 	spin_unlock_irqrestore(&sclp_tty_lock, flags);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void
-sclp_ttybuf_callback(struct sclp_buffer *buffer, int rc)
-{
-	unsigned long flags;
-	void *page;
+अटल व्योम
+sclp_ttybuf_callback(काष्ठा sclp_buffer *buffer, पूर्णांक rc)
+अणु
+	अचिन्हित दीर्घ flags;
+	व्योम *page;
 
-	do {
+	करो अणु
 		page = sclp_unmake_buffer(buffer);
 		spin_lock_irqsave(&sclp_tty_lock, flags);
 		/* Remove buffer from outqueue */
 		list_del(&buffer->list);
 		sclp_tty_buffer_count--;
-		list_add_tail((struct list_head *) page, &sclp_tty_pages);
-		/* Check if there is a pending buffer on the out queue. */
-		buffer = NULL;
-		if (!list_empty(&sclp_tty_outqueue))
+		list_add_tail((काष्ठा list_head *) page, &sclp_tty_pages);
+		/* Check अगर there is a pending buffer on the out queue. */
+		buffer = शून्य;
+		अगर (!list_empty(&sclp_tty_outqueue))
 			buffer = list_entry(sclp_tty_outqueue.next,
-					    struct sclp_buffer, list);
+					    काष्ठा sclp_buffer, list);
 		spin_unlock_irqrestore(&sclp_tty_lock, flags);
-	} while (buffer && sclp_emit_buffer(buffer, sclp_ttybuf_callback));
+	पूर्ण जबतक (buffer && sclp_emit_buffer(buffer, sclp_ttybuf_callback));
 
 	tty_port_tty_wakeup(&sclp_port);
-}
+पूर्ण
 
-static inline void
-__sclp_ttybuf_emit(struct sclp_buffer *buffer)
-{
-	unsigned long flags;
-	int count;
-	int rc;
+अटल अंतरभूत व्योम
+__sclp_ttybuf_emit(काष्ठा sclp_buffer *buffer)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count;
+	पूर्णांक rc;
 
 	spin_lock_irqsave(&sclp_tty_lock, flags);
 	list_add_tail(&buffer->list, &sclp_tty_outqueue);
 	count = sclp_tty_buffer_count++;
 	spin_unlock_irqrestore(&sclp_tty_lock, flags);
-	if (count)
-		return;
+	अगर (count)
+		वापस;
 	rc = sclp_emit_buffer(buffer, sclp_ttybuf_callback);
-	if (rc)
+	अगर (rc)
 		sclp_ttybuf_callback(buffer, rc);
-}
+पूर्ण
 
 /*
- * When this routine is called from the timer then we flush the
- * temporary write buffer.
+ * When this routine is called from the समयr then we flush the
+ * temporary ग_लिखो buffer.
  */
-static void
-sclp_tty_timeout(struct timer_list *unused)
-{
-	unsigned long flags;
-	struct sclp_buffer *buf;
+अटल व्योम
+sclp_tty_समयout(काष्ठा समयr_list *unused)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा sclp_buffer *buf;
 
 	spin_lock_irqsave(&sclp_tty_lock, flags);
 	buf = sclp_ttybuf;
-	sclp_ttybuf = NULL;
+	sclp_ttybuf = शून्य;
 	spin_unlock_irqrestore(&sclp_tty_lock, flags);
 
-	if (buf != NULL) {
+	अगर (buf != शून्य) अणु
 		__sclp_ttybuf_emit(buf);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Write a string to the sclp tty.
  */
-static int sclp_tty_write_string(const unsigned char *str, int count, int may_fail)
-{
-	unsigned long flags;
-	void *page;
-	int written;
-	int overall_written;
-	struct sclp_buffer *buf;
+अटल पूर्णांक sclp_tty_ग_लिखो_string(स्थिर अचिन्हित अक्षर *str, पूर्णांक count, पूर्णांक may_fail)
+अणु
+	अचिन्हित दीर्घ flags;
+	व्योम *page;
+	पूर्णांक written;
+	पूर्णांक overall_written;
+	काष्ठा sclp_buffer *buf;
 
-	if (count <= 0)
-		return 0;
+	अगर (count <= 0)
+		वापस 0;
 	overall_written = 0;
 	spin_lock_irqsave(&sclp_tty_lock, flags);
-	do {
-		/* Create a sclp output buffer if none exists yet */
-		if (sclp_ttybuf == NULL) {
-			while (list_empty(&sclp_tty_pages)) {
+	करो अणु
+		/* Create a sclp output buffer अगर none exists yet */
+		अगर (sclp_ttybuf == शून्य) अणु
+			जबतक (list_empty(&sclp_tty_pages)) अणु
 				spin_unlock_irqrestore(&sclp_tty_lock, flags);
-				if (may_fail)
-					goto out;
-				else
-					sclp_sync_wait();
+				अगर (may_fail)
+					जाओ out;
+				अन्यथा
+					sclp_sync_रुको();
 				spin_lock_irqsave(&sclp_tty_lock, flags);
-			}
+			पूर्ण
 			page = sclp_tty_pages.next;
-			list_del((struct list_head *) page);
+			list_del((काष्ठा list_head *) page);
 			sclp_ttybuf = sclp_make_buffer(page, SCLP_TTY_COLUMNS,
 						       SPACES_PER_TAB);
-		}
-		/* try to write the string to the current output buffer */
-		written = sclp_write(sclp_ttybuf, str, count);
+		पूर्ण
+		/* try to ग_लिखो the string to the current output buffer */
+		written = sclp_ग_लिखो(sclp_ttybuf, str, count);
 		overall_written += written;
-		if (written == count)
-			break;
+		अगर (written == count)
+			अवरोध;
 		/*
-		 * Not all characters could be written to the current
+		 * Not all अक्षरacters could be written to the current
 		 * output buffer. Emit the buffer, create a new buffer
 		 * and then output the rest of the string.
 		 */
 		buf = sclp_ttybuf;
-		sclp_ttybuf = NULL;
+		sclp_ttybuf = शून्य;
 		spin_unlock_irqrestore(&sclp_tty_lock, flags);
 		__sclp_ttybuf_emit(buf);
 		spin_lock_irqsave(&sclp_tty_lock, flags);
 		str += written;
 		count -= written;
-	} while (count > 0);
-	/* Setup timer to output current console buffer after 1/10 second */
-	if (sclp_ttybuf && sclp_chars_in_buffer(sclp_ttybuf) &&
-	    !timer_pending(&sclp_tty_timer)) {
-		mod_timer(&sclp_tty_timer, jiffies + HZ / 10);
-	}
+	पूर्ण जबतक (count > 0);
+	/* Setup समयr to output current console buffer after 1/10 second */
+	अगर (sclp_ttybuf && sclp_अक्षरs_in_buffer(sclp_ttybuf) &&
+	    !समयr_pending(&sclp_tty_समयr)) अणु
+		mod_समयr(&sclp_tty_समयr, jअगरfies + HZ / 10);
+	पूर्ण
 	spin_unlock_irqrestore(&sclp_tty_lock, flags);
 out:
-	return overall_written;
-}
+	वापस overall_written;
+पूर्ण
 
 /*
- * This routine is called by the kernel to write a series of characters to the
- * tty device. The characters may come from user space or kernel space. This
- * routine will return the number of characters actually accepted for writing.
+ * This routine is called by the kernel to ग_लिखो a series of अक्षरacters to the
+ * tty device. The अक्षरacters may come from user space or kernel space. This
+ * routine will वापस the number of अक्षरacters actually accepted क्रम writing.
  */
-static int
-sclp_tty_write(struct tty_struct *tty, const unsigned char *buf, int count)
-{
-	if (sclp_tty_chars_count > 0) {
-		sclp_tty_write_string(sclp_tty_chars, sclp_tty_chars_count, 0);
-		sclp_tty_chars_count = 0;
-	}
-	return sclp_tty_write_string(buf, count, 1);
-}
+अटल पूर्णांक
+sclp_tty_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	अगर (sclp_tty_अक्षरs_count > 0) अणु
+		sclp_tty_ग_लिखो_string(sclp_tty_अक्षरs, sclp_tty_अक्षरs_count, 0);
+		sclp_tty_अक्षरs_count = 0;
+	पूर्ण
+	वापस sclp_tty_ग_लिखो_string(buf, count, 1);
+पूर्ण
 
 /*
- * This routine is called by the kernel to write a single character to the tty
- * device. If the kernel uses this routine, it must call the flush_chars()
- * routine (if defined) when it is done stuffing characters into the driver.
+ * This routine is called by the kernel to ग_लिखो a single अक्षरacter to the tty
+ * device. If the kernel uses this routine, it must call the flush_अक्षरs()
+ * routine (अगर defined) when it is करोne stuffing अक्षरacters पूर्णांकo the driver.
  *
- * Characters provided to sclp_tty_put_char() are buffered by the SCLP driver.
- * If the given character is a '\n' the contents of the SCLP write buffer
- * - including previous characters from sclp_tty_put_char() and strings from
- * sclp_write() without final '\n' - will be written.
+ * Characters provided to sclp_tty_put_अक्षर() are buffered by the SCLP driver.
+ * If the given अक्षरacter is a '\n' the contents of the SCLP ग_लिखो buffer
+ * - including previous अक्षरacters from sclp_tty_put_अक्षर() and strings from
+ * sclp_ग_लिखो() without final '\n' - will be written.
  */
-static int
-sclp_tty_put_char(struct tty_struct *tty, unsigned char ch)
-{
-	sclp_tty_chars[sclp_tty_chars_count++] = ch;
-	if (ch == '\n' || sclp_tty_chars_count >= SCLP_TTY_BUF_SIZE) {
-		sclp_tty_write_string(sclp_tty_chars, sclp_tty_chars_count, 0);
-		sclp_tty_chars_count = 0;
-	}
-	return 1;
-}
+अटल पूर्णांक
+sclp_tty_put_अक्षर(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर ch)
+अणु
+	sclp_tty_अक्षरs[sclp_tty_अक्षरs_count++] = ch;
+	अगर (ch == '\n' || sclp_tty_अक्षरs_count >= SCLP_TTY_BUF_SIZE) अणु
+		sclp_tty_ग_लिखो_string(sclp_tty_अक्षरs, sclp_tty_अक्षरs_count, 0);
+		sclp_tty_अक्षरs_count = 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /*
  * This routine is called by the kernel after it has written a series of
- * characters to the tty device using put_char().
+ * अक्षरacters to the tty device using put_अक्षर().
  */
-static void
-sclp_tty_flush_chars(struct tty_struct *tty)
-{
-	if (sclp_tty_chars_count > 0) {
-		sclp_tty_write_string(sclp_tty_chars, sclp_tty_chars_count, 0);
-		sclp_tty_chars_count = 0;
-	}
-}
+अटल व्योम
+sclp_tty_flush_अक्षरs(काष्ठा tty_काष्ठा *tty)
+अणु
+	अगर (sclp_tty_अक्षरs_count > 0) अणु
+		sclp_tty_ग_लिखो_string(sclp_tty_अक्षरs, sclp_tty_अक्षरs_count, 0);
+		sclp_tty_अक्षरs_count = 0;
+	पूर्ण
+पूर्ण
 
 /*
- * This routine returns the number of characters in the write buffer of the
- * SCLP driver. The provided number includes all characters that are stored
- * in the SCCB (will be written next time the SCLP is not busy) as well as
- * characters in the write buffer (will not be written as long as there is a
+ * This routine वापसs the number of अक्षरacters in the ग_लिखो buffer of the
+ * SCLP driver. The provided number includes all अक्षरacters that are stored
+ * in the SCCB (will be written next समय the SCLP is not busy) as well as
+ * अक्षरacters in the ग_लिखो buffer (will not be written as दीर्घ as there is a
  * final line feed missing).
  */
-static int
-sclp_tty_chars_in_buffer(struct tty_struct *tty)
-{
-	unsigned long flags;
-	struct list_head *l;
-	struct sclp_buffer *t;
-	int count;
+अटल पूर्णांक
+sclp_tty_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head *l;
+	काष्ठा sclp_buffer *t;
+	पूर्णांक count;
 
 	spin_lock_irqsave(&sclp_tty_lock, flags);
 	count = 0;
-	if (sclp_ttybuf != NULL)
-		count = sclp_chars_in_buffer(sclp_ttybuf);
-	list_for_each(l, &sclp_tty_outqueue) {
-		t = list_entry(l, struct sclp_buffer, list);
-		count += sclp_chars_in_buffer(t);
-	}
+	अगर (sclp_ttybuf != शून्य)
+		count = sclp_अक्षरs_in_buffer(sclp_ttybuf);
+	list_क्रम_each(l, &sclp_tty_outqueue) अणु
+		t = list_entry(l, काष्ठा sclp_buffer, list);
+		count += sclp_अक्षरs_in_buffer(t);
+	पूर्ण
 	spin_unlock_irqrestore(&sclp_tty_lock, flags);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * removes all content from buffers of low level driver
+ * हटाओs all content from buffers of low level driver
  */
-static void
-sclp_tty_flush_buffer(struct tty_struct *tty)
-{
-	if (sclp_tty_chars_count > 0) {
-		sclp_tty_write_string(sclp_tty_chars, sclp_tty_chars_count, 0);
-		sclp_tty_chars_count = 0;
-	}
-}
+अटल व्योम
+sclp_tty_flush_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
+	अगर (sclp_tty_अक्षरs_count > 0) अणु
+		sclp_tty_ग_लिखो_string(sclp_tty_अक्षरs, sclp_tty_अक्षरs_count, 0);
+		sclp_tty_अक्षरs_count = 0;
+	पूर्ण
+पूर्ण
 
 /*
  * push input to tty
  */
-static void
-sclp_tty_input(unsigned char* buf, unsigned int count)
-{
-	struct tty_struct *tty = tty_port_tty_get(&sclp_port);
-	unsigned int cchar;
+अटल व्योम
+sclp_tty_input(अचिन्हित अक्षर* buf, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&sclp_port);
+	अचिन्हित पूर्णांक cअक्षर;
 
 	/*
-	 * If this tty driver is currently closed
+	 * If this tty driver is currently बंदd
 	 * then throw the received input away.
 	 */
-	if (tty == NULL)
-		return;
-	cchar = ctrlchar_handle(buf, count, tty);
-	switch (cchar & CTRLCHAR_MASK) {
-	case CTRLCHAR_SYSRQ:
-		break;
-	case CTRLCHAR_CTRL:
-		tty_insert_flip_char(&sclp_port, cchar, TTY_NORMAL);
+	अगर (tty == शून्य)
+		वापस;
+	cअक्षर = ctrlअक्षर_handle(buf, count, tty);
+	चयन (cअक्षर & CTRLCHAR_MASK) अणु
+	हाल CTRLCHAR_SYSRQ:
+		अवरोध;
+	हाल CTRLCHAR_CTRL:
+		tty_insert_flip_अक्षर(&sclp_port, cअक्षर, TTY_NORMAL);
 		tty_flip_buffer_push(&sclp_port);
-		break;
-	case CTRLCHAR_NONE:
+		अवरोध;
+	हाल CTRLCHAR_NONE:
 		/* send (normal) input to line discipline */
-		if (count < 2 ||
-		    (strncmp((const char *) buf + count - 2, "^n", 2) &&
-		     strncmp((const char *) buf + count - 2, "\252n", 2))) {
-			/* add the auto \n */
+		अगर (count < 2 ||
+		    (म_भेदन((स्थिर अक्षर *) buf + count - 2, "^n", 2) &&
+		     म_भेदन((स्थिर अक्षर *) buf + count - 2, "\252n", 2))) अणु
+			/* add the स्वतः \न */
 			tty_insert_flip_string(&sclp_port, buf, count);
-			tty_insert_flip_char(&sclp_port, '\n', TTY_NORMAL);
-		} else
+			tty_insert_flip_अक्षर(&sclp_port, '\n', TTY_NORMAL);
+		पूर्ण अन्यथा
 			tty_insert_flip_string(&sclp_port, buf, count - 2);
 		tty_flip_buffer_push(&sclp_port);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	tty_kref_put(tty);
-}
+पूर्ण
 
 /*
- * get a EBCDIC string in upper/lower case,
- * find out characters in lower/upper case separated by a special character,
- * modifiy original string,
- * returns length of resulting string
+ * get a EBCDIC string in upper/lower हाल,
+ * find out अक्षरacters in lower/upper हाल separated by a special अक्षरacter,
+ * modअगरiy original string,
+ * वापसs length of resulting string
  */
-static int sclp_switch_cases(unsigned char *buf, int count)
-{
-	unsigned char *ip, *op;
-	int toggle;
+अटल पूर्णांक sclp_चयन_हालs(अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	अचिन्हित अक्षर *ip, *op;
+	पूर्णांक toggle;
 
-	/* initially changing case is off */
+	/* initially changing हाल is off */
 	toggle = 0;
 	ip = op = buf;
-	while (count-- > 0) {
-		/* compare with special character */
-		if (*ip == CASE_DELIMITER) {
-			/* followed by another special character? */
-			if (count && ip[1] == CASE_DELIMITER) {
+	जबतक (count-- > 0) अणु
+		/* compare with special अक्षरacter */
+		अगर (*ip == CASE_DELIMITER) अणु
+			/* followed by another special अक्षरacter? */
+			अगर (count && ip[1] == CASE_DELIMITER) अणु
 				/*
 				 * ... then put a single copy of the special
-				 * character to the output string
+				 * अक्षरacter to the output string
 				 */
 				*op++ = *ip++;
 				count--;
-			} else
+			पूर्ण अन्यथा
 				/*
-				 * ... special character follower by a normal
-				 * character toggles the case change behaviour
+				 * ... special अक्षरacter follower by a normal
+				 * अक्षरacter toggles the हाल change behaviour
 				 */
 				toggle = ~toggle;
-			/* skip special character */
+			/* skip special अक्षरacter */
 			ip++;
-		} else
-			/* not the special character */
-			if (toggle)
-				/* but case switching is on */
-				if (sclp_tty_tolower)
-					/* switch to uppercase */
-					*op++ = _ebc_toupper[(int) *ip++];
-				else
-					/* switch to lowercase */
-					*op++ = _ebc_tolower[(int) *ip++];
-			else
-				/* no case switching, copy the character */
+		पूर्ण अन्यथा
+			/* not the special अक्षरacter */
+			अगर (toggle)
+				/* but हाल चयनing is on */
+				अगर (sclp_tty_छोटे)
+					/* चयन to upperहाल */
+					*op++ = _ebc_बड़े[(पूर्णांक) *ip++];
+				अन्यथा
+					/* चयन to lowerहाल */
+					*op++ = _ebc_छोटे[(पूर्णांक) *ip++];
+			अन्यथा
+				/* no हाल चयनing, copy the अक्षरacter */
 				*op++ = *ip++;
-	}
-	/* return length of reformatted string. */
-	return op - buf;
-}
+	पूर्ण
+	/* वापस length of reक्रमmatted string. */
+	वापस op - buf;
+पूर्ण
 
-static void sclp_get_input(struct gds_subvector *sv)
-{
-	unsigned char *str;
-	int count;
+अटल व्योम sclp_get_input(काष्ठा gds_subvector *sv)
+अणु
+	अचिन्हित अक्षर *str;
+	पूर्णांक count;
 
-	str = (unsigned char *) (sv + 1);
-	count = sv->length - sizeof(*sv);
-	if (sclp_tty_tolower)
+	str = (अचिन्हित अक्षर *) (sv + 1);
+	count = sv->length - माप(*sv);
+	अगर (sclp_tty_छोटे)
 		EBC_TOLOWER(str, count);
-	count = sclp_switch_cases(str, count);
-	/* convert EBCDIC to ASCII (modify original input in SCCB) */
+	count = sclp_चयन_हालs(str, count);
+	/* convert EBCDIC to ASCII (modअगरy original input in SCCB) */
 	sclp_ebcasc_str(str, count);
 
 	/* transfer input to high level driver */
 	sclp_tty_input(str, count);
-}
+पूर्ण
 
-static inline void sclp_eval_selfdeftextmsg(struct gds_subvector *sv)
-{
-	void *end;
+अटल अंतरभूत व्योम sclp_eval_selfdeftexपंचांगsg(काष्ठा gds_subvector *sv)
+अणु
+	व्योम *end;
 
-	end = (void *) sv + sv->length;
-	for (sv = sv + 1; (void *) sv < end; sv = (void *) sv + sv->length)
-		if (sv->key == 0x30)
+	end = (व्योम *) sv + sv->length;
+	क्रम (sv = sv + 1; (व्योम *) sv < end; sv = (व्योम *) sv + sv->length)
+		अगर (sv->key == 0x30)
 			sclp_get_input(sv);
-}
+पूर्ण
 
-static inline void sclp_eval_textcmd(struct gds_vector *v)
-{
-	struct gds_subvector *sv;
-	void *end;
+अटल अंतरभूत व्योम sclp_eval_textcmd(काष्ठा gds_vector *v)
+अणु
+	काष्ठा gds_subvector *sv;
+	व्योम *end;
 
-	end = (void *) v + v->length;
-	for (sv = (struct gds_subvector *) (v + 1);
-	     (void *) sv < end; sv = (void *) sv + sv->length)
-		if (sv->key == GDS_KEY_SELFDEFTEXTMSG)
-			sclp_eval_selfdeftextmsg(sv);
+	end = (व्योम *) v + v->length;
+	क्रम (sv = (काष्ठा gds_subvector *) (v + 1);
+	     (व्योम *) sv < end; sv = (व्योम *) sv + sv->length)
+		अगर (sv->key == GDS_KEY_SELFDEFTEXTMSG)
+			sclp_eval_selfdeftexपंचांगsg(sv);
 
-}
+पूर्ण
 
-static inline void sclp_eval_cpmsu(struct gds_vector *v)
-{
-	void *end;
+अटल अंतरभूत व्योम sclp_eval_cpmsu(काष्ठा gds_vector *v)
+अणु
+	व्योम *end;
 
-	end = (void *) v + v->length;
-	for (v = v + 1; (void *) v < end; v = (void *) v + v->length)
-		if (v->gds_id == GDS_ID_TEXTCMD)
+	end = (व्योम *) v + v->length;
+	क्रम (v = v + 1; (व्योम *) v < end; v = (व्योम *) v + v->length)
+		अगर (v->gds_id == GDS_ID_TEXTCMD)
 			sclp_eval_textcmd(v);
-}
+पूर्ण
 
 
-static inline void sclp_eval_mdsmu(struct gds_vector *v)
-{
-	v = sclp_find_gds_vector(v + 1, (void *) v + v->length, GDS_ID_CPMSU);
-	if (v)
+अटल अंतरभूत व्योम sclp_eval_mdsmu(काष्ठा gds_vector *v)
+अणु
+	v = sclp_find_gds_vector(v + 1, (व्योम *) v + v->length, GDS_ID_CPMSU);
+	अगर (v)
 		sclp_eval_cpmsu(v);
-}
+पूर्ण
 
-static void sclp_tty_receiver(struct evbuf_header *evbuf)
-{
-	struct gds_vector *v;
+अटल व्योम sclp_tty_receiver(काष्ठा evbuf_header *evbuf)
+अणु
+	काष्ठा gds_vector *v;
 
-	v = sclp_find_gds_vector(evbuf + 1, (void *) evbuf + evbuf->length,
+	v = sclp_find_gds_vector(evbuf + 1, (व्योम *) evbuf + evbuf->length,
 				 GDS_ID_MDSMU);
-	if (v)
+	अगर (v)
 		sclp_eval_mdsmu(v);
-}
+पूर्ण
 
-static void
-sclp_tty_state_change(struct sclp_register *reg)
-{
-}
+अटल व्योम
+sclp_tty_state_change(काष्ठा sclp_रेजिस्टर *reg)
+अणु
+पूर्ण
 
-static struct sclp_register sclp_input_event =
-{
+अटल काष्ठा sclp_रेजिस्टर sclp_input_event =
+अणु
 	.receive_mask = EVTYP_OPCMD_MASK | EVTYP_PMSGCMD_MASK,
 	.state_change_fn = sclp_tty_state_change,
 	.receiver_fn = sclp_tty_receiver
-};
+पूर्ण;
 
-static const struct tty_operations sclp_ops = {
-	.open = sclp_tty_open,
-	.close = sclp_tty_close,
-	.write = sclp_tty_write,
-	.put_char = sclp_tty_put_char,
-	.flush_chars = sclp_tty_flush_chars,
-	.write_room = sclp_tty_write_room,
-	.chars_in_buffer = sclp_tty_chars_in_buffer,
+अटल स्थिर काष्ठा tty_operations sclp_ops = अणु
+	.खोलो = sclp_tty_खोलो,
+	.बंद = sclp_tty_बंद,
+	.ग_लिखो = sclp_tty_ग_लिखो,
+	.put_अक्षर = sclp_tty_put_अक्षर,
+	.flush_अक्षरs = sclp_tty_flush_अक्षरs,
+	.ग_लिखो_room = sclp_tty_ग_लिखो_room,
+	.अक्षरs_in_buffer = sclp_tty_अक्षरs_in_buffer,
 	.flush_buffer = sclp_tty_flush_buffer,
-};
+पूर्ण;
 
-static int __init
-sclp_tty_init(void)
-{
-	struct tty_driver *driver;
-	void *page;
-	int i;
-	int rc;
+अटल पूर्णांक __init
+sclp_tty_init(व्योम)
+अणु
+	काष्ठा tty_driver *driver;
+	व्योम *page;
+	पूर्णांक i;
+	पूर्णांक rc;
 
 	/* z/VM multiplexes the line mode output on the 32xx screen */
-	if (MACHINE_IS_VM && !CONSOLE_IS_SCLP)
-		return 0;
-	if (!sclp.has_linemode)
-		return 0;
+	अगर (MACHINE_IS_VM && !CONSOLE_IS_SCLP)
+		वापस 0;
+	अगर (!sclp.has_linemode)
+		वापस 0;
 	driver = alloc_tty_driver(1);
-	if (!driver)
-		return -ENOMEM;
+	अगर (!driver)
+		वापस -ENOMEM;
 
 	rc = sclp_rw_init();
-	if (rc) {
+	अगर (rc) अणु
 		put_tty_driver(driver);
-		return rc;
-	}
-	/* Allocate pages for output buffering */
-	for (i = 0; i < MAX_KMEM_PAGES; i++) {
-		page = (void *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
-		if (page == NULL) {
+		वापस rc;
+	पूर्ण
+	/* Allocate pages क्रम output buffering */
+	क्रम (i = 0; i < MAX_KMEM_PAGES; i++) अणु
+		page = (व्योम *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+		अगर (page == शून्य) अणु
 			put_tty_driver(driver);
-			return -ENOMEM;
-		}
-		list_add_tail((struct list_head *) page, &sclp_tty_pages);
-	}
-	timer_setup(&sclp_tty_timer, sclp_tty_timeout, 0);
-	sclp_ttybuf = NULL;
+			वापस -ENOMEM;
+		पूर्ण
+		list_add_tail((काष्ठा list_head *) page, &sclp_tty_pages);
+	पूर्ण
+	समयr_setup(&sclp_tty_समयr, sclp_tty_समयout, 0);
+	sclp_ttybuf = शून्य;
 	sclp_tty_buffer_count = 0;
-	if (MACHINE_IS_VM) {
-		/* case input lines to lowercase */
-		sclp_tty_tolower = 1;
-	}
-	sclp_tty_chars_count = 0;
+	अगर (MACHINE_IS_VM) अणु
+		/* हाल input lines to lowerहाल */
+		sclp_tty_छोटे = 1;
+	पूर्ण
+	sclp_tty_अक्षरs_count = 0;
 
-	rc = sclp_register(&sclp_input_event);
-	if (rc) {
+	rc = sclp_रेजिस्टर(&sclp_input_event);
+	अगर (rc) अणु
 		put_tty_driver(driver);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	tty_port_init(&sclp_port);
 
@@ -548,19 +549,19 @@ sclp_tty_init(void)
 	driver->type = TTY_DRIVER_TYPE_SYSTEM;
 	driver->subtype = SYSTEM_TYPE_TTY;
 	driver->init_termios = tty_std_termios;
-	driver->init_termios.c_iflag = IGNBRK | IGNPAR;
+	driver->init_termios.c_अगरlag = IGNBRK | IGNPAR;
 	driver->init_termios.c_oflag = ONLCR;
 	driver->init_termios.c_lflag = ISIG | ECHO;
 	driver->flags = TTY_DRIVER_REAL_RAW;
 	tty_set_operations(driver, &sclp_ops);
 	tty_port_link_device(&sclp_port, driver, 0);
-	rc = tty_register_driver(driver);
-	if (rc) {
+	rc = tty_रेजिस्टर_driver(driver);
+	अगर (rc) अणु
 		put_tty_driver(driver);
 		tty_port_destroy(&sclp_port);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	sclp_tty_driver = driver;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(sclp_tty_init);

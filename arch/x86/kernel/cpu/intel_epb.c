@@ -1,216 +1,217 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Intel Performance and Energy Bias Hint support.
+ * Intel Perक्रमmance and Energy Bias Hपूर्णांक support.
  *
  * Copyright (C) 2019 Intel Corporation
  *
  * Author:
- *	Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+ *	Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
  */
 
-#include <linux/cpuhotplug.h>
-#include <linux/cpu.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/syscore_ops.h>
-#include <linux/pm.h>
+#समावेश <linux/cpuhotplug.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/pm.h>
 
-#include <asm/cpufeature.h>
-#include <asm/msr.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/msr.h>
 
 /**
  * DOC: overview
  *
- * The Performance and Energy Bias Hint (EPB) allows software to specify its
- * preference with respect to the power-performance tradeoffs present in the
+ * The Perक्रमmance and Energy Bias Hपूर्णांक (EPB) allows software to specअगरy its
+ * preference with respect to the घातer-perक्रमmance tradeoffs present in the
  * processor.  Generally, the EPB is expected to be set by user space (directly
  * via sysfs or with the help of the x86_energy_perf_policy tool), but there are
- * two reasons for the kernel to update it.
+ * two reasons क्रम the kernel to update it.
  *
- * First, there are systems where the platform firmware resets the EPB during
- * system-wide transitions from sleep states back into the working state
+ * First, there are प्रणालीs where the platक्रमm firmware resets the EPB during
+ * प्रणाली-wide transitions from sleep states back पूर्णांकo the working state
  * effectively causing the previous EPB updates by user space to be lost.
- * Thus the kernel needs to save the current EPB values for all CPUs during
- * system-wide transitions to sleep states and restore them on the way back to
- * the working state.  That can be achieved by saving EPB for secondary CPUs
- * when they are taken offline during transitions into system sleep states and
- * for the boot CPU in a syscore suspend operation, so that it can be restored
- * for the boot CPU in a syscore resume operation and for the other CPUs when
- * they are brought back online.  However, CPUs that are already offline when
- * a system-wide PM transition is started are not taken offline again, but their
- * EPB values may still be reset by the platform firmware during the transition,
+ * Thus the kernel needs to save the current EPB values क्रम all CPUs during
+ * प्रणाली-wide transitions to sleep states and restore them on the way back to
+ * the working state.  That can be achieved by saving EPB क्रम secondary CPUs
+ * when they are taken offline during transitions पूर्णांकo प्रणाली sleep states and
+ * क्रम the boot CPU in a syscore suspend operation, so that it can be restored
+ * क्रम the boot CPU in a syscore resume operation and क्रम the other CPUs when
+ * they are brought back online.  However, CPUs that are alपढ़ोy offline when
+ * a प्रणाली-wide PM transition is started are not taken offline again, but their
+ * EPB values may still be reset by the platक्रमm firmware during the transition,
  * so in fact it is necessary to save the EPB of any CPU taken offline and to
- * restore it when the given CPU goes back online at all times.
+ * restore it when the given CPU goes back online at all बार.
  *
- * Second, on many systems the initial EPB value coming from the platform
+ * Second, on many प्रणालीs the initial EPB value coming from the platक्रमm
  * firmware is 0 ('performance') and at least on some of them that is because
- * the platform firmware does not initialize EPB at all with the assumption that
- * the OS will do that anyway.  That sometimes is problematic, as it may cause
- * the system battery to drain too fast, for example, so it is better to adjust
- * it on CPU bring-up and if the initial EPB value for a given CPU is 0, the
+ * the platक्रमm firmware करोes not initialize EPB at all with the assumption that
+ * the OS will करो that anyway.  That someबार is problematic, as it may cause
+ * the प्रणाली battery to drain too fast, क्रम example, so it is better to adjust
+ * it on CPU bring-up and अगर the initial EPB value क्रम a given CPU is 0, the
  * kernel changes it to 6 ('normal').
  */
 
-static DEFINE_PER_CPU(u8, saved_epb);
+अटल DEFINE_PER_CPU(u8, saved_epb);
 
-#define EPB_MASK	0x0fULL
-#define EPB_SAVED	0x10ULL
-#define MAX_EPB		EPB_MASK
+#घोषणा EPB_MASK	0x0fULL
+#घोषणा EPB_SAVED	0x10ULL
+#घोषणा MAX_EPB		EPB_MASK
 
-static int intel_epb_save(void)
-{
+अटल पूर्णांक पूर्णांकel_epb_save(व्योम)
+अणु
 	u64 epb;
 
 	rdmsrl(MSR_IA32_ENERGY_PERF_BIAS, epb);
 	/*
-	 * Ensure that saved_epb will always be nonzero after this write even if
-	 * the EPB value read from the MSR is 0.
+	 * Ensure that saved_epb will always be nonzero after this ग_लिखो even अगर
+	 * the EPB value पढ़ो from the MSR is 0.
 	 */
-	this_cpu_write(saved_epb, (epb & EPB_MASK) | EPB_SAVED);
+	this_cpu_ग_लिखो(saved_epb, (epb & EPB_MASK) | EPB_SAVED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void intel_epb_restore(void)
-{
-	u64 val = this_cpu_read(saved_epb);
+अटल व्योम पूर्णांकel_epb_restore(व्योम)
+अणु
+	u64 val = this_cpu_पढ़ो(saved_epb);
 	u64 epb;
 
 	rdmsrl(MSR_IA32_ENERGY_PERF_BIAS, epb);
-	if (val) {
+	अगर (val) अणु
 		val &= EPB_MASK;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Because intel_epb_save() has not run for the current CPU yet,
-		 * it is going online for the first time, so if its EPB value is
-		 * 0 ('performance') at this point, assume that it has not been
-		 * initialized by the platform firmware and set it to 6
+		 * Because पूर्णांकel_epb_save() has not run क्रम the current CPU yet,
+		 * it is going online क्रम the first समय, so अगर its EPB value is
+		 * 0 ('performance') at this poपूर्णांक, assume that it has not been
+		 * initialized by the platक्रमm firmware and set it to 6
 		 * ('normal').
 		 */
 		val = epb & EPB_MASK;
-		if (val == ENERGY_PERF_BIAS_PERFORMANCE) {
+		अगर (val == ENERGY_PERF_BIAS_PERFORMANCE) अणु
 			val = ENERGY_PERF_BIAS_NORMAL;
 			pr_warn_once("ENERGY_PERF_BIAS: Set to 'normal', was 'performance'\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 	wrmsrl(MSR_IA32_ENERGY_PERF_BIAS, (epb & ~EPB_MASK) | val);
-}
+पूर्ण
 
-static struct syscore_ops intel_epb_syscore_ops = {
-	.suspend = intel_epb_save,
-	.resume = intel_epb_restore,
-};
+अटल काष्ठा syscore_ops पूर्णांकel_epb_syscore_ops = अणु
+	.suspend = पूर्णांकel_epb_save,
+	.resume = पूर्णांकel_epb_restore,
+पूर्ण;
 
-static const char * const energy_perf_strings[] = {
+अटल स्थिर अक्षर * स्थिर energy_perf_strings[] = अणु
 	"performance",
 	"balance-performance",
 	"normal",
 	"balance-power",
 	"power"
-};
-static const u8 energ_perf_values[] = {
+पूर्ण;
+अटल स्थिर u8 energ_perf_values[] = अणु
 	ENERGY_PERF_BIAS_PERFORMANCE,
 	ENERGY_PERF_BIAS_BALANCE_PERFORMANCE,
 	ENERGY_PERF_BIAS_NORMAL,
 	ENERGY_PERF_BIAS_BALANCE_POWERSAVE,
 	ENERGY_PERF_BIAS_POWERSAVE
-};
+पूर्ण;
 
-static ssize_t energy_perf_bias_show(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	unsigned int cpu = dev->id;
+अटल sमाप_प्रकार energy_perf_bias_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	अचिन्हित पूर्णांक cpu = dev->id;
 	u64 epb;
-	int ret;
+	पूर्णांक ret;
 
 	ret = rdmsrl_on_cpu(cpu, MSR_IA32_ENERGY_PERF_BIAS, &epb);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return sprintf(buf, "%llu\n", epb);
-}
+	वापस प्र_लिखो(buf, "%llu\n", epb);
+पूर्ण
 
-static ssize_t energy_perf_bias_store(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf, size_t count)
-{
-	unsigned int cpu = dev->id;
+अटल sमाप_प्रकार energy_perf_bias_store(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक cpu = dev->id;
 	u64 epb, val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = __sysfs_match_string(energy_perf_strings,
 				   ARRAY_SIZE(energy_perf_strings), buf);
-	if (ret >= 0)
+	अगर (ret >= 0)
 		val = energ_perf_values[ret];
-	else if (kstrtou64(buf, 0, &val) || val > MAX_EPB)
-		return -EINVAL;
+	अन्यथा अगर (kstrtou64(buf, 0, &val) || val > MAX_EPB)
+		वापस -EINVAL;
 
 	ret = rdmsrl_on_cpu(cpu, MSR_IA32_ENERGY_PERF_BIAS, &epb);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = wrmsrl_on_cpu(cpu, MSR_IA32_ENERGY_PERF_BIAS,
 			    (epb & ~EPB_MASK) | val);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(energy_perf_bias);
+अटल DEVICE_ATTR_RW(energy_perf_bias);
 
-static struct attribute *intel_epb_attrs[] = {
+अटल काष्ठा attribute *पूर्णांकel_epb_attrs[] = अणु
 	&dev_attr_energy_perf_bias.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group intel_epb_attr_group = {
-	.name = power_group_name,
-	.attrs =  intel_epb_attrs
-};
+अटल स्थिर काष्ठा attribute_group पूर्णांकel_epb_attr_group = अणु
+	.name = घातer_group_name,
+	.attrs =  पूर्णांकel_epb_attrs
+पूर्ण;
 
-static int intel_epb_online(unsigned int cpu)
-{
-	struct device *cpu_dev = get_cpu_device(cpu);
+अटल पूर्णांक पूर्णांकel_epb_online(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा device *cpu_dev = get_cpu_device(cpu);
 
-	intel_epb_restore();
-	if (!cpuhp_tasks_frozen)
-		sysfs_merge_group(&cpu_dev->kobj, &intel_epb_attr_group);
+	पूर्णांकel_epb_restore();
+	अगर (!cpuhp_tasks_frozen)
+		sysfs_merge_group(&cpu_dev->kobj, &पूर्णांकel_epb_attr_group);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_epb_offline(unsigned int cpu)
-{
-	struct device *cpu_dev = get_cpu_device(cpu);
+अटल पूर्णांक पूर्णांकel_epb_offline(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा device *cpu_dev = get_cpu_device(cpu);
 
-	if (!cpuhp_tasks_frozen)
-		sysfs_unmerge_group(&cpu_dev->kobj, &intel_epb_attr_group);
+	अगर (!cpuhp_tasks_frozen)
+		sysfs_unmerge_group(&cpu_dev->kobj, &पूर्णांकel_epb_attr_group);
 
-	intel_epb_save();
-	return 0;
-}
+	पूर्णांकel_epb_save();
+	वापस 0;
+पूर्ण
 
-static __init int intel_epb_init(void)
-{
-	int ret;
+अटल __init पूर्णांक पूर्णांकel_epb_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!boot_cpu_has(X86_FEATURE_EPB))
-		return -ENODEV;
+	अगर (!boot_cpu_has(X86_FEATURE_EPB))
+		वापस -ENODEV;
 
 	ret = cpuhp_setup_state(CPUHP_AP_X86_INTEL_EPB_ONLINE,
-				"x86/intel/epb:online", intel_epb_online,
-				intel_epb_offline);
-	if (ret < 0)
-		goto err_out_online;
+				"x86/intel/epb:online", पूर्णांकel_epb_online,
+				पूर्णांकel_epb_offline);
+	अगर (ret < 0)
+		जाओ err_out_online;
 
-	register_syscore_ops(&intel_epb_syscore_ops);
-	return 0;
+	रेजिस्टर_syscore_ops(&पूर्णांकel_epb_syscore_ops);
+	वापस 0;
 
 err_out_online:
-	cpuhp_remove_state(CPUHP_AP_X86_INTEL_EPB_ONLINE);
-	return ret;
-}
-subsys_initcall(intel_epb_init);
+	cpuhp_हटाओ_state(CPUHP_AP_X86_INTEL_EPB_ONLINE);
+	वापस ret;
+पूर्ण
+subsys_initcall(पूर्णांकel_epb_init);

@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/bitops.h>
-#include <linux/export.h>
-#include <linux/regmap.h>
-#include <linux/reset-controller.h>
-#include <linux/delay.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/export.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset-controller.h>
+#समावेश <linux/delay.h>
 
-#include "reset.h"
+#समावेश "reset.h"
 
-static int qcom_reset(struct reset_controller_dev *rcdev, unsigned long id)
-{
-	rcdev->ops->assert(rcdev, id);
+अटल पूर्णांक qcom_reset(काष्ठा reset_controller_dev *rcdev, अचिन्हित दीर्घ id)
+अणु
+	rcdev->ops->निश्चित(rcdev, id);
 	udelay(1);
-	rcdev->ops->deassert(rcdev, id);
-	return 0;
-}
+	rcdev->ops->deनिश्चित(rcdev, id);
+	वापस 0;
+पूर्ण
 
-static int
-qcom_reset_assert(struct reset_controller_dev *rcdev, unsigned long id)
-{
-	struct qcom_reset_controller *rst;
-	const struct qcom_reset_map *map;
+अटल पूर्णांक
+qcom_reset_निश्चित(काष्ठा reset_controller_dev *rcdev, अचिन्हित दीर्घ id)
+अणु
+	काष्ठा qcom_reset_controller *rst;
+	स्थिर काष्ठा qcom_reset_map *map;
 	u32 mask;
 
 	rst = to_qcom_reset_controller(rcdev);
 	map = &rst->reset_map[id];
 	mask = BIT(map->bit);
 
-	return regmap_update_bits(rst->regmap, map->reg, mask, mask);
-}
+	वापस regmap_update_bits(rst->regmap, map->reg, mask, mask);
+पूर्ण
 
-static int
-qcom_reset_deassert(struct reset_controller_dev *rcdev, unsigned long id)
-{
-	struct qcom_reset_controller *rst;
-	const struct qcom_reset_map *map;
+अटल पूर्णांक
+qcom_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev, अचिन्हित दीर्घ id)
+अणु
+	काष्ठा qcom_reset_controller *rst;
+	स्थिर काष्ठा qcom_reset_map *map;
 	u32 mask;
 
 	rst = to_qcom_reset_controller(rcdev);
 	map = &rst->reset_map[id];
 	mask = BIT(map->bit);
 
-	return regmap_update_bits(rst->regmap, map->reg, mask, 0);
-}
+	वापस regmap_update_bits(rst->regmap, map->reg, mask, 0);
+पूर्ण
 
-const struct reset_control_ops qcom_reset_ops = {
+स्थिर काष्ठा reset_control_ops qcom_reset_ops = अणु
 	.reset = qcom_reset,
-	.assert = qcom_reset_assert,
-	.deassert = qcom_reset_deassert,
-};
+	.निश्चित = qcom_reset_निश्चित,
+	.deनिश्चित = qcom_reset_deनिश्चित,
+पूर्ण;
 EXPORT_SYMBOL_GPL(qcom_reset_ops);

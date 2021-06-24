@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for Atmel Pulse Width Modulation Controller
+ * Driver क्रम Aपंचांगel Pulse Width Modulation Controller
  *
- * Copyright (C) 2013 Atmel Corporation
- *		 Bo Shen <voice.shen@atmel.com>
+ * Copyright (C) 2013 Aपंचांगel Corporation
+ *		 Bo Shen <voice.shen@aपंचांगel.com>
  *
- * Links to reference manuals for the supported PWM chips can be found in
+ * Links to reference manuals क्रम the supported PWM chips can be found in
  * Documentation/arm/microchip.rst.
  *
  * Limitations:
@@ -13,469 +14,469 @@
  * - Hardware has to be stopped in general to update settings.
  *
  * Software bugs/possible improvements:
- * - When atmel_pwm_apply() is called with state->enabled=false a change in
+ * - When aपंचांगel_pwm_apply() is called with state->enabled=false a change in
  *   state->polarity isn't honored.
- * - Instead of sleeping to wait for a completed period, the interrupt
+ * - Instead of sleeping to रुको क्रम a completed period, the पूर्णांकerrupt
  *   functionality could be used.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pwm.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/slab.h>
 
-/* The following is global registers for PWM controller */
-#define PWM_ENA			0x04
-#define PWM_DIS			0x08
-#define PWM_SR			0x0C
-#define PWM_ISR			0x1C
+/* The following is global रेजिस्टरs क्रम PWM controller */
+#घोषणा PWM_ENA			0x04
+#घोषणा PWM_DIS			0x08
+#घोषणा PWM_SR			0x0C
+#घोषणा PWM_ISR			0x1C
 /* Bit field in SR */
-#define PWM_SR_ALL_CH_ON	0x0F
+#घोषणा PWM_SR_ALL_CH_ON	0x0F
 
-/* The following register is PWM channel related registers */
-#define PWM_CH_REG_OFFSET	0x200
-#define PWM_CH_REG_SIZE		0x20
+/* The following रेजिस्टर is PWM channel related रेजिस्टरs */
+#घोषणा PWM_CH_REG_OFFSET	0x200
+#घोषणा PWM_CH_REG_SIZE		0x20
 
-#define PWM_CMR			0x0
+#घोषणा PWM_CMR			0x0
 /* Bit field in CMR */
-#define PWM_CMR_CPOL		(1 << 9)
-#define PWM_CMR_UPD_CDTY	(1 << 10)
-#define PWM_CMR_CPRE_MSK	0xF
+#घोषणा PWM_CMR_CPOL		(1 << 9)
+#घोषणा PWM_CMR_UPD_CDTY	(1 << 10)
+#घोषणा PWM_CMR_CPRE_MSK	0xF
 
-/* The following registers for PWM v1 */
-#define PWMV1_CDTY		0x04
-#define PWMV1_CPRD		0x08
-#define PWMV1_CUPD		0x10
+/* The following रेजिस्टरs क्रम PWM v1 */
+#घोषणा PWMV1_CDTY		0x04
+#घोषणा PWMV1_CPRD		0x08
+#घोषणा PWMV1_CUPD		0x10
 
-/* The following registers for PWM v2 */
-#define PWMV2_CDTY		0x04
-#define PWMV2_CDTYUPD		0x08
-#define PWMV2_CPRD		0x0C
-#define PWMV2_CPRDUPD		0x10
+/* The following रेजिस्टरs क्रम PWM v2 */
+#घोषणा PWMV2_CDTY		0x04
+#घोषणा PWMV2_CDTYUPD		0x08
+#घोषणा PWMV2_CPRD		0x0C
+#घोषणा PWMV2_CPRDUPD		0x10
 
-#define PWM_MAX_PRES		10
+#घोषणा PWM_MAX_PRES		10
 
-struct atmel_pwm_registers {
+काष्ठा aपंचांगel_pwm_रेजिस्टरs अणु
 	u8 period;
 	u8 period_upd;
 	u8 duty;
 	u8 duty_upd;
-};
+पूर्ण;
 
-struct atmel_pwm_config {
+काष्ठा aपंचांगel_pwm_config अणु
 	u32 period_bits;
-};
+पूर्ण;
 
-struct atmel_pwm_data {
-	struct atmel_pwm_registers regs;
-	struct atmel_pwm_config cfg;
-};
+काष्ठा aपंचांगel_pwm_data अणु
+	काष्ठा aपंचांगel_pwm_रेजिस्टरs regs;
+	काष्ठा aपंचांगel_pwm_config cfg;
+पूर्ण;
 
-struct atmel_pwm_chip {
-	struct pwm_chip chip;
-	struct clk *clk;
-	void __iomem *base;
-	const struct atmel_pwm_data *data;
+काष्ठा aपंचांगel_pwm_chip अणु
+	काष्ठा pwm_chip chip;
+	काष्ठा clk *clk;
+	व्योम __iomem *base;
+	स्थिर काष्ठा aपंचांगel_pwm_data *data;
 
-	unsigned int updated_pwms;
-	/* ISR is cleared when read, ensure only one thread does that */
-	struct mutex isr_lock;
-};
+	अचिन्हित पूर्णांक updated_pwms;
+	/* ISR is cleared when पढ़ो, ensure only one thपढ़ो करोes that */
+	काष्ठा mutex isr_lock;
+पूर्ण;
 
-static inline struct atmel_pwm_chip *to_atmel_pwm_chip(struct pwm_chip *chip)
-{
-	return container_of(chip, struct atmel_pwm_chip, chip);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_pwm_chip *to_aपंचांगel_pwm_chip(काष्ठा pwm_chip *chip)
+अणु
+	वापस container_of(chip, काष्ठा aपंचांगel_pwm_chip, chip);
+पूर्ण
 
-static inline u32 atmel_pwm_readl(struct atmel_pwm_chip *chip,
-				  unsigned long offset)
-{
-	return readl_relaxed(chip->base + offset);
-}
+अटल अंतरभूत u32 aपंचांगel_pwm_पढ़ोl(काष्ठा aपंचांगel_pwm_chip *chip,
+				  अचिन्हित दीर्घ offset)
+अणु
+	वापस पढ़ोl_relaxed(chip->base + offset);
+पूर्ण
 
-static inline void atmel_pwm_writel(struct atmel_pwm_chip *chip,
-				    unsigned long offset, unsigned long val)
-{
-	writel_relaxed(val, chip->base + offset);
-}
+अटल अंतरभूत व्योम aपंचांगel_pwm_ग_लिखोl(काष्ठा aपंचांगel_pwm_chip *chip,
+				    अचिन्हित दीर्घ offset, अचिन्हित दीर्घ val)
+अणु
+	ग_लिखोl_relaxed(val, chip->base + offset);
+पूर्ण
 
-static inline u32 atmel_pwm_ch_readl(struct atmel_pwm_chip *chip,
-				     unsigned int ch, unsigned long offset)
-{
-	unsigned long base = PWM_CH_REG_OFFSET + ch * PWM_CH_REG_SIZE;
+अटल अंतरभूत u32 aपंचांगel_pwm_ch_पढ़ोl(काष्ठा aपंचांगel_pwm_chip *chip,
+				     अचिन्हित पूर्णांक ch, अचिन्हित दीर्घ offset)
+अणु
+	अचिन्हित दीर्घ base = PWM_CH_REG_OFFSET + ch * PWM_CH_REG_SIZE;
 
-	return atmel_pwm_readl(chip, base + offset);
-}
+	वापस aपंचांगel_pwm_पढ़ोl(chip, base + offset);
+पूर्ण
 
-static inline void atmel_pwm_ch_writel(struct atmel_pwm_chip *chip,
-				       unsigned int ch, unsigned long offset,
-				       unsigned long val)
-{
-	unsigned long base = PWM_CH_REG_OFFSET + ch * PWM_CH_REG_SIZE;
+अटल अंतरभूत व्योम aपंचांगel_pwm_ch_ग_लिखोl(काष्ठा aपंचांगel_pwm_chip *chip,
+				       अचिन्हित पूर्णांक ch, अचिन्हित दीर्घ offset,
+				       अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ base = PWM_CH_REG_OFFSET + ch * PWM_CH_REG_SIZE;
 
-	atmel_pwm_writel(chip, base + offset, val);
-}
+	aपंचांगel_pwm_ग_लिखोl(chip, base + offset, val);
+पूर्ण
 
-static int atmel_pwm_calculate_cprd_and_pres(struct pwm_chip *chip,
-					     unsigned long clkrate,
-					     const struct pwm_state *state,
-					     unsigned long *cprd, u32 *pres)
-{
-	struct atmel_pwm_chip *atmel_pwm = to_atmel_pwm_chip(chip);
-	unsigned long long cycles = state->period;
-	int shift;
+अटल पूर्णांक aपंचांगel_pwm_calculate_cprd_and_pres(काष्ठा pwm_chip *chip,
+					     अचिन्हित दीर्घ clkrate,
+					     स्थिर काष्ठा pwm_state *state,
+					     अचिन्हित दीर्घ *cprd, u32 *pres)
+अणु
+	काष्ठा aपंचांगel_pwm_chip *aपंचांगel_pwm = to_aपंचांगel_pwm_chip(chip);
+	अचिन्हित दीर्घ दीर्घ cycles = state->period;
+	पूर्णांक shअगरt;
 
 	/* Calculate the period cycles and prescale value */
 	cycles *= clkrate;
-	do_div(cycles, NSEC_PER_SEC);
+	करो_भाग(cycles, NSEC_PER_SEC);
 
 	/*
-	 * The register for the period length is cfg.period_bits bits wide.
-	 * So for each bit the number of clock cycles is wider divide the input
-	 * clock frequency by two using pres and shift cprd accordingly.
+	 * The रेजिस्टर क्रम the period length is cfg.period_bits bits wide.
+	 * So क्रम each bit the number of घड़ी cycles is wider भागide the input
+	 * घड़ी frequency by two using pres and shअगरt cprd accordingly.
 	 */
-	shift = fls(cycles) - atmel_pwm->data->cfg.period_bits;
+	shअगरt = fls(cycles) - aपंचांगel_pwm->data->cfg.period_bits;
 
-	if (shift > PWM_MAX_PRES) {
+	अगर (shअगरt > PWM_MAX_PRES) अणु
 		dev_err(chip->dev, "pres exceeds the maximum value\n");
-		return -EINVAL;
-	} else if (shift > 0) {
-		*pres = shift;
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (shअगरt > 0) अणु
+		*pres = shअगरt;
 		cycles >>= *pres;
-	} else {
+	पूर्ण अन्यथा अणु
 		*pres = 0;
-	}
+	पूर्ण
 
 	*cprd = cycles;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atmel_pwm_calculate_cdty(const struct pwm_state *state,
-				     unsigned long clkrate, unsigned long cprd,
-				     u32 pres, unsigned long *cdty)
-{
-	unsigned long long cycles = state->duty_cycle;
+अटल व्योम aपंचांगel_pwm_calculate_cdty(स्थिर काष्ठा pwm_state *state,
+				     अचिन्हित दीर्घ clkrate, अचिन्हित दीर्घ cprd,
+				     u32 pres, अचिन्हित दीर्घ *cdty)
+अणु
+	अचिन्हित दीर्घ दीर्घ cycles = state->duty_cycle;
 
 	cycles *= clkrate;
-	do_div(cycles, NSEC_PER_SEC);
+	करो_भाग(cycles, NSEC_PER_SEC);
 	cycles >>= pres;
 	*cdty = cprd - cycles;
-}
+पूर्ण
 
-static void atmel_pwm_update_cdty(struct pwm_chip *chip, struct pwm_device *pwm,
-				  unsigned long cdty)
-{
-	struct atmel_pwm_chip *atmel_pwm = to_atmel_pwm_chip(chip);
+अटल व्योम aपंचांगel_pwm_update_cdty(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+				  अचिन्हित दीर्घ cdty)
+अणु
+	काष्ठा aपंचांगel_pwm_chip *aपंचांगel_pwm = to_aपंचांगel_pwm_chip(chip);
 	u32 val;
 
-	if (atmel_pwm->data->regs.duty_upd ==
-	    atmel_pwm->data->regs.period_upd) {
-		val = atmel_pwm_ch_readl(atmel_pwm, pwm->hwpwm, PWM_CMR);
+	अगर (aपंचांगel_pwm->data->regs.duty_upd ==
+	    aपंचांगel_pwm->data->regs.period_upd) अणु
+		val = aपंचांगel_pwm_ch_पढ़ोl(aपंचांगel_pwm, pwm->hwpwm, PWM_CMR);
 		val &= ~PWM_CMR_UPD_CDTY;
-		atmel_pwm_ch_writel(atmel_pwm, pwm->hwpwm, PWM_CMR, val);
-	}
+		aपंचांगel_pwm_ch_ग_लिखोl(aपंचांगel_pwm, pwm->hwpwm, PWM_CMR, val);
+	पूर्ण
 
-	atmel_pwm_ch_writel(atmel_pwm, pwm->hwpwm,
-			    atmel_pwm->data->regs.duty_upd, cdty);
-}
+	aपंचांगel_pwm_ch_ग_लिखोl(aपंचांगel_pwm, pwm->hwpwm,
+			    aपंचांगel_pwm->data->regs.duty_upd, cdty);
+पूर्ण
 
-static void atmel_pwm_set_cprd_cdty(struct pwm_chip *chip,
-				    struct pwm_device *pwm,
-				    unsigned long cprd, unsigned long cdty)
-{
-	struct atmel_pwm_chip *atmel_pwm = to_atmel_pwm_chip(chip);
+अटल व्योम aपंचांगel_pwm_set_cprd_cdty(काष्ठा pwm_chip *chip,
+				    काष्ठा pwm_device *pwm,
+				    अचिन्हित दीर्घ cprd, अचिन्हित दीर्घ cdty)
+अणु
+	काष्ठा aपंचांगel_pwm_chip *aपंचांगel_pwm = to_aपंचांगel_pwm_chip(chip);
 
-	atmel_pwm_ch_writel(atmel_pwm, pwm->hwpwm,
-			    atmel_pwm->data->regs.duty, cdty);
-	atmel_pwm_ch_writel(atmel_pwm, pwm->hwpwm,
-			    atmel_pwm->data->regs.period, cprd);
-}
+	aपंचांगel_pwm_ch_ग_लिखोl(aपंचांगel_pwm, pwm->hwpwm,
+			    aपंचांगel_pwm->data->regs.duty, cdty);
+	aपंचांगel_pwm_ch_ग_लिखोl(aपंचांगel_pwm, pwm->hwpwm,
+			    aपंचांगel_pwm->data->regs.period, cprd);
+पूर्ण
 
-static void atmel_pwm_disable(struct pwm_chip *chip, struct pwm_device *pwm,
+अटल व्योम aपंचांगel_pwm_disable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
 			      bool disable_clk)
-{
-	struct atmel_pwm_chip *atmel_pwm = to_atmel_pwm_chip(chip);
-	unsigned long timeout = jiffies + 2 * HZ;
+अणु
+	काष्ठा aपंचांगel_pwm_chip *aपंचांगel_pwm = to_aपंचांगel_pwm_chip(chip);
+	अचिन्हित दीर्घ समयout = jअगरfies + 2 * HZ;
 
 	/*
-	 * Wait for at least a complete period to have passed before disabling a
+	 * Wait क्रम at least a complete period to have passed beक्रमe disabling a
 	 * channel to be sure that CDTY has been updated
 	 */
-	mutex_lock(&atmel_pwm->isr_lock);
-	atmel_pwm->updated_pwms |= atmel_pwm_readl(atmel_pwm, PWM_ISR);
+	mutex_lock(&aपंचांगel_pwm->isr_lock);
+	aपंचांगel_pwm->updated_pwms |= aपंचांगel_pwm_पढ़ोl(aपंचांगel_pwm, PWM_ISR);
 
-	while (!(atmel_pwm->updated_pwms & (1 << pwm->hwpwm)) &&
-	       time_before(jiffies, timeout)) {
+	जबतक (!(aपंचांगel_pwm->updated_pwms & (1 << pwm->hwpwm)) &&
+	       समय_beक्रमe(jअगरfies, समयout)) अणु
 		usleep_range(10, 100);
-		atmel_pwm->updated_pwms |= atmel_pwm_readl(atmel_pwm, PWM_ISR);
-	}
+		aपंचांगel_pwm->updated_pwms |= aपंचांगel_pwm_पढ़ोl(aपंचांगel_pwm, PWM_ISR);
+	पूर्ण
 
-	mutex_unlock(&atmel_pwm->isr_lock);
-	atmel_pwm_writel(atmel_pwm, PWM_DIS, 1 << pwm->hwpwm);
+	mutex_unlock(&aपंचांगel_pwm->isr_lock);
+	aपंचांगel_pwm_ग_लिखोl(aपंचांगel_pwm, PWM_DIS, 1 << pwm->hwpwm);
 
 	/*
-	 * Wait for the PWM channel disable operation to be effective before
-	 * stopping the clock.
+	 * Wait क्रम the PWM channel disable operation to be effective beक्रमe
+	 * stopping the घड़ी.
 	 */
-	timeout = jiffies + 2 * HZ;
+	समयout = jअगरfies + 2 * HZ;
 
-	while ((atmel_pwm_readl(atmel_pwm, PWM_SR) & (1 << pwm->hwpwm)) &&
-	       time_before(jiffies, timeout))
+	जबतक ((aपंचांगel_pwm_पढ़ोl(aपंचांगel_pwm, PWM_SR) & (1 << pwm->hwpwm)) &&
+	       समय_beक्रमe(jअगरfies, समयout))
 		usleep_range(10, 100);
 
-	if (disable_clk)
-		clk_disable(atmel_pwm->clk);
-}
+	अगर (disable_clk)
+		clk_disable(aपंचांगel_pwm->clk);
+पूर्ण
 
-static int atmel_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
-			   const struct pwm_state *state)
-{
-	struct atmel_pwm_chip *atmel_pwm = to_atmel_pwm_chip(chip);
-	struct pwm_state cstate;
-	unsigned long cprd, cdty;
+अटल पूर्णांक aपंचांगel_pwm_apply(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+			   स्थिर काष्ठा pwm_state *state)
+अणु
+	काष्ठा aपंचांगel_pwm_chip *aपंचांगel_pwm = to_aपंचांगel_pwm_chip(chip);
+	काष्ठा pwm_state cstate;
+	अचिन्हित दीर्घ cprd, cdty;
 	u32 pres, val;
-	int ret;
+	पूर्णांक ret;
 
 	pwm_get_state(pwm, &cstate);
 
-	if (state->enabled) {
-		unsigned long clkrate = clk_get_rate(atmel_pwm->clk);
+	अगर (state->enabled) अणु
+		अचिन्हित दीर्घ clkrate = clk_get_rate(aपंचांगel_pwm->clk);
 
-		if (cstate.enabled &&
+		अगर (cstate.enabled &&
 		    cstate.polarity == state->polarity &&
-		    cstate.period == state->period) {
-			u32 cmr = atmel_pwm_ch_readl(atmel_pwm, pwm->hwpwm, PWM_CMR);
+		    cstate.period == state->period) अणु
+			u32 cmr = aपंचांगel_pwm_ch_पढ़ोl(aपंचांगel_pwm, pwm->hwpwm, PWM_CMR);
 
-			cprd = atmel_pwm_ch_readl(atmel_pwm, pwm->hwpwm,
-						  atmel_pwm->data->regs.period);
+			cprd = aपंचांगel_pwm_ch_पढ़ोl(aपंचांगel_pwm, pwm->hwpwm,
+						  aपंचांगel_pwm->data->regs.period);
 			pres = cmr & PWM_CMR_CPRE_MSK;
 
-			atmel_pwm_calculate_cdty(state, clkrate, cprd, pres, &cdty);
-			atmel_pwm_update_cdty(chip, pwm, cdty);
-			return 0;
-		}
+			aपंचांगel_pwm_calculate_cdty(state, clkrate, cprd, pres, &cdty);
+			aपंचांगel_pwm_update_cdty(chip, pwm, cdty);
+			वापस 0;
+		पूर्ण
 
-		ret = atmel_pwm_calculate_cprd_and_pres(chip, clkrate, state, &cprd,
+		ret = aपंचांगel_pwm_calculate_cprd_and_pres(chip, clkrate, state, &cprd,
 							&pres);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(chip->dev,
 				"failed to calculate cprd and prescaler\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		atmel_pwm_calculate_cdty(state, clkrate, cprd, pres, &cdty);
+		aपंचांगel_pwm_calculate_cdty(state, clkrate, cprd, pres, &cdty);
 
-		if (cstate.enabled) {
-			atmel_pwm_disable(chip, pwm, false);
-		} else {
-			ret = clk_enable(atmel_pwm->clk);
-			if (ret) {
+		अगर (cstate.enabled) अणु
+			aपंचांगel_pwm_disable(chip, pwm, false);
+		पूर्ण अन्यथा अणु
+			ret = clk_enable(aपंचांगel_pwm->clk);
+			अगर (ret) अणु
 				dev_err(chip->dev, "failed to enable clock\n");
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
 		/* It is necessary to preserve CPOL, inside CMR */
-		val = atmel_pwm_ch_readl(atmel_pwm, pwm->hwpwm, PWM_CMR);
+		val = aपंचांगel_pwm_ch_पढ़ोl(aपंचांगel_pwm, pwm->hwpwm, PWM_CMR);
 		val = (val & ~PWM_CMR_CPRE_MSK) | (pres & PWM_CMR_CPRE_MSK);
-		if (state->polarity == PWM_POLARITY_NORMAL)
+		अगर (state->polarity == PWM_POLARITY_NORMAL)
 			val &= ~PWM_CMR_CPOL;
-		else
+		अन्यथा
 			val |= PWM_CMR_CPOL;
-		atmel_pwm_ch_writel(atmel_pwm, pwm->hwpwm, PWM_CMR, val);
-		atmel_pwm_set_cprd_cdty(chip, pwm, cprd, cdty);
-		mutex_lock(&atmel_pwm->isr_lock);
-		atmel_pwm->updated_pwms |= atmel_pwm_readl(atmel_pwm, PWM_ISR);
-		atmel_pwm->updated_pwms &= ~(1 << pwm->hwpwm);
-		mutex_unlock(&atmel_pwm->isr_lock);
-		atmel_pwm_writel(atmel_pwm, PWM_ENA, 1 << pwm->hwpwm);
-	} else if (cstate.enabled) {
-		atmel_pwm_disable(chip, pwm, true);
-	}
+		aपंचांगel_pwm_ch_ग_लिखोl(aपंचांगel_pwm, pwm->hwpwm, PWM_CMR, val);
+		aपंचांगel_pwm_set_cprd_cdty(chip, pwm, cprd, cdty);
+		mutex_lock(&aपंचांगel_pwm->isr_lock);
+		aपंचांगel_pwm->updated_pwms |= aपंचांगel_pwm_पढ़ोl(aपंचांगel_pwm, PWM_ISR);
+		aपंचांगel_pwm->updated_pwms &= ~(1 << pwm->hwpwm);
+		mutex_unlock(&aपंचांगel_pwm->isr_lock);
+		aपंचांगel_pwm_ग_लिखोl(aपंचांगel_pwm, PWM_ENA, 1 << pwm->hwpwm);
+	पूर्ण अन्यथा अगर (cstate.enabled) अणु
+		aपंचांगel_pwm_disable(chip, pwm, true);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atmel_pwm_get_state(struct pwm_chip *chip, struct pwm_device *pwm,
-				struct pwm_state *state)
-{
-	struct atmel_pwm_chip *atmel_pwm = to_atmel_pwm_chip(chip);
+अटल व्योम aपंचांगel_pwm_get_state(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+				काष्ठा pwm_state *state)
+अणु
+	काष्ठा aपंचांगel_pwm_chip *aपंचांगel_pwm = to_aपंचांगel_pwm_chip(chip);
 	u32 sr, cmr;
 
-	sr = atmel_pwm_readl(atmel_pwm, PWM_SR);
-	cmr = atmel_pwm_ch_readl(atmel_pwm, pwm->hwpwm, PWM_CMR);
+	sr = aपंचांगel_pwm_पढ़ोl(aपंचांगel_pwm, PWM_SR);
+	cmr = aपंचांगel_pwm_ch_पढ़ोl(aपंचांगel_pwm, pwm->hwpwm, PWM_CMR);
 
-	if (sr & (1 << pwm->hwpwm)) {
-		unsigned long rate = clk_get_rate(atmel_pwm->clk);
+	अगर (sr & (1 << pwm->hwpwm)) अणु
+		अचिन्हित दीर्घ rate = clk_get_rate(aपंचांगel_pwm->clk);
 		u32 cdty, cprd, pres;
-		u64 tmp;
+		u64 पंचांगp;
 
 		pres = cmr & PWM_CMR_CPRE_MSK;
 
-		cprd = atmel_pwm_ch_readl(atmel_pwm, pwm->hwpwm,
-					  atmel_pwm->data->regs.period);
-		tmp = (u64)cprd * NSEC_PER_SEC;
-		tmp <<= pres;
-		state->period = DIV64_U64_ROUND_UP(tmp, rate);
+		cprd = aपंचांगel_pwm_ch_पढ़ोl(aपंचांगel_pwm, pwm->hwpwm,
+					  aपंचांगel_pwm->data->regs.period);
+		पंचांगp = (u64)cprd * NSEC_PER_SEC;
+		पंचांगp <<= pres;
+		state->period = DIV64_U64_ROUND_UP(पंचांगp, rate);
 
-		cdty = atmel_pwm_ch_readl(atmel_pwm, pwm->hwpwm,
-					  atmel_pwm->data->regs.duty);
-		tmp = (u64)(cprd - cdty) * NSEC_PER_SEC;
-		tmp <<= pres;
-		state->duty_cycle = DIV64_U64_ROUND_UP(tmp, rate);
+		cdty = aपंचांगel_pwm_ch_पढ़ोl(aपंचांगel_pwm, pwm->hwpwm,
+					  aपंचांगel_pwm->data->regs.duty);
+		पंचांगp = (u64)(cprd - cdty) * NSEC_PER_SEC;
+		पंचांगp <<= pres;
+		state->duty_cycle = DIV64_U64_ROUND_UP(पंचांगp, rate);
 
 		state->enabled = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		state->enabled = false;
-	}
+	पूर्ण
 
-	if (cmr & PWM_CMR_CPOL)
+	अगर (cmr & PWM_CMR_CPOL)
 		state->polarity = PWM_POLARITY_INVERSED;
-	else
+	अन्यथा
 		state->polarity = PWM_POLARITY_NORMAL;
-}
+पूर्ण
 
-static const struct pwm_ops atmel_pwm_ops = {
-	.apply = atmel_pwm_apply,
-	.get_state = atmel_pwm_get_state,
+अटल स्थिर काष्ठा pwm_ops aपंचांगel_pwm_ops = अणु
+	.apply = aपंचांगel_pwm_apply,
+	.get_state = aपंचांगel_pwm_get_state,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct atmel_pwm_data atmel_sam9rl_pwm_data = {
-	.regs = {
+अटल स्थिर काष्ठा aपंचांगel_pwm_data aपंचांगel_sam9rl_pwm_data = अणु
+	.regs = अणु
 		.period		= PWMV1_CPRD,
 		.period_upd	= PWMV1_CUPD,
 		.duty		= PWMV1_CDTY,
 		.duty_upd	= PWMV1_CUPD,
-	},
-	.cfg = {
+	पूर्ण,
+	.cfg = अणु
 		/* 16 bits to keep period and duty. */
 		.period_bits	= 16,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct atmel_pwm_data atmel_sama5_pwm_data = {
-	.regs = {
+अटल स्थिर काष्ठा aपंचांगel_pwm_data aपंचांगel_sama5_pwm_data = अणु
+	.regs = अणु
 		.period		= PWMV2_CPRD,
 		.period_upd	= PWMV2_CPRDUPD,
 		.duty		= PWMV2_CDTY,
 		.duty_upd	= PWMV2_CDTYUPD,
-	},
-	.cfg = {
+	पूर्ण,
+	.cfg = अणु
 		/* 16 bits to keep period and duty. */
 		.period_bits	= 16,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct atmel_pwm_data mchp_sam9x60_pwm_data = {
-	.regs = {
+अटल स्थिर काष्ठा aपंचांगel_pwm_data mchp_sam9x60_pwm_data = अणु
+	.regs = अणु
 		.period		= PWMV1_CPRD,
 		.period_upd	= PWMV1_CUPD,
 		.duty		= PWMV1_CDTY,
 		.duty_upd	= PWMV1_CUPD,
-	},
-	.cfg = {
+	पूर्ण,
+	.cfg = अणु
 		/* 32 bits to keep period and duty. */
 		.period_bits	= 32,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct of_device_id atmel_pwm_dt_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id aपंचांगel_pwm_dt_ids[] = अणु
+	अणु
 		.compatible = "atmel,at91sam9rl-pwm",
-		.data = &atmel_sam9rl_pwm_data,
-	}, {
+		.data = &aपंचांगel_sam9rl_pwm_data,
+	पूर्ण, अणु
 		.compatible = "atmel,sama5d3-pwm",
-		.data = &atmel_sama5_pwm_data,
-	}, {
+		.data = &aपंचांगel_sama5_pwm_data,
+	पूर्ण, अणु
 		.compatible = "atmel,sama5d2-pwm",
-		.data = &atmel_sama5_pwm_data,
-	}, {
+		.data = &aपंचांगel_sama5_pwm_data,
+	पूर्ण, अणु
 		.compatible = "microchip,sam9x60-pwm",
 		.data = &mchp_sam9x60_pwm_data,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	},
-};
-MODULE_DEVICE_TABLE(of, atmel_pwm_dt_ids);
+	पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, aपंचांगel_pwm_dt_ids);
 
-static int atmel_pwm_probe(struct platform_device *pdev)
-{
-	struct atmel_pwm_chip *atmel_pwm;
-	int ret;
+अटल पूर्णांक aपंचांगel_pwm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aपंचांगel_pwm_chip *aपंचांगel_pwm;
+	पूर्णांक ret;
 
-	atmel_pwm = devm_kzalloc(&pdev->dev, sizeof(*atmel_pwm), GFP_KERNEL);
-	if (!atmel_pwm)
-		return -ENOMEM;
+	aपंचांगel_pwm = devm_kzalloc(&pdev->dev, माप(*aपंचांगel_pwm), GFP_KERNEL);
+	अगर (!aपंचांगel_pwm)
+		वापस -ENOMEM;
 
-	mutex_init(&atmel_pwm->isr_lock);
-	atmel_pwm->data = of_device_get_match_data(&pdev->dev);
-	atmel_pwm->updated_pwms = 0;
+	mutex_init(&aपंचांगel_pwm->isr_lock);
+	aपंचांगel_pwm->data = of_device_get_match_data(&pdev->dev);
+	aपंचांगel_pwm->updated_pwms = 0;
 
-	atmel_pwm->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(atmel_pwm->base))
-		return PTR_ERR(atmel_pwm->base);
+	aपंचांगel_pwm->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(aपंचांगel_pwm->base))
+		वापस PTR_ERR(aपंचांगel_pwm->base);
 
-	atmel_pwm->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(atmel_pwm->clk))
-		return PTR_ERR(atmel_pwm->clk);
+	aपंचांगel_pwm->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(aपंचांगel_pwm->clk))
+		वापस PTR_ERR(aपंचांगel_pwm->clk);
 
-	ret = clk_prepare(atmel_pwm->clk);
-	if (ret) {
+	ret = clk_prepare(aपंचांगel_pwm->clk);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to prepare PWM clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	atmel_pwm->chip.dev = &pdev->dev;
-	atmel_pwm->chip.ops = &atmel_pwm_ops;
-	atmel_pwm->chip.of_xlate = of_pwm_xlate_with_flags;
-	atmel_pwm->chip.of_pwm_n_cells = 3;
-	atmel_pwm->chip.npwm = 4;
+	aपंचांगel_pwm->chip.dev = &pdev->dev;
+	aपंचांगel_pwm->chip.ops = &aपंचांगel_pwm_ops;
+	aपंचांगel_pwm->chip.of_xlate = of_pwm_xlate_with_flags;
+	aपंचांगel_pwm->chip.of_pwm_n_cells = 3;
+	aपंचांगel_pwm->chip.npwm = 4;
 
-	ret = pwmchip_add(&atmel_pwm->chip);
-	if (ret < 0) {
+	ret = pwmchip_add(&aपंचांगel_pwm->chip);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to add PWM chip %d\n", ret);
-		goto unprepare_clk;
-	}
+		जाओ unprepare_clk;
+	पूर्ण
 
-	platform_set_drvdata(pdev, atmel_pwm);
+	platक्रमm_set_drvdata(pdev, aपंचांगel_pwm);
 
-	return ret;
+	वापस ret;
 
 unprepare_clk:
-	clk_unprepare(atmel_pwm->clk);
-	return ret;
-}
+	clk_unprepare(aपंचांगel_pwm->clk);
+	वापस ret;
+पूर्ण
 
-static int atmel_pwm_remove(struct platform_device *pdev)
-{
-	struct atmel_pwm_chip *atmel_pwm = platform_get_drvdata(pdev);
+अटल पूर्णांक aपंचांगel_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aपंचांगel_pwm_chip *aपंचांगel_pwm = platक्रमm_get_drvdata(pdev);
 
-	pwmchip_remove(&atmel_pwm->chip);
+	pwmchip_हटाओ(&aपंचांगel_pwm->chip);
 
-	clk_unprepare(atmel_pwm->clk);
-	mutex_destroy(&atmel_pwm->isr_lock);
+	clk_unprepare(aपंचांगel_pwm->clk);
+	mutex_destroy(&aपंचांगel_pwm->isr_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver atmel_pwm_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver aपंचांगel_pwm_driver = अणु
+	.driver = अणु
 		.name = "atmel-pwm",
-		.of_match_table = of_match_ptr(atmel_pwm_dt_ids),
-	},
-	.probe = atmel_pwm_probe,
-	.remove = atmel_pwm_remove,
-};
-module_platform_driver(atmel_pwm_driver);
+		.of_match_table = of_match_ptr(aपंचांगel_pwm_dt_ids),
+	पूर्ण,
+	.probe = aपंचांगel_pwm_probe,
+	.हटाओ = aपंचांगel_pwm_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(aपंचांगel_pwm_driver);
 
 MODULE_ALIAS("platform:atmel-pwm");
 MODULE_AUTHOR("Bo Shen <voice.shen@atmel.com>");

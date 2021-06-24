@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <babeltrace/ctf-writer/writer.h>
-#include <babeltrace/ctf-ir/stream-class.h>
+#समावेश <babeltrace/ctf-ग_लिखोr/ग_लिखोr.h>
+#समावेश <babeltrace/ctf-ir/stream-class.h>
 
-int main(void)
-{
-	bt_ctf_stream_class_get_packet_context_type((void *) 0);
-	return 0;
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	bt_ctf_stream_class_get_packet_context_type((व्योम *) 0);
+	वापस 0;
+पूर्ण

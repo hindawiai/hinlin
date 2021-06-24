@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * ADT7316 digital temperature sensor driver supporting ADT7316/7/8 ADT7516/7/9
  *
  * Copyright 2010 Analog Devices Inc.
  */
 
-#ifndef _ADT7316_H_
-#define _ADT7316_H_
+#अगर_अघोषित _ADT7316_H_
+#घोषणा _ADT7316_H_
 
-#include <linux/types.h>
-#include <linux/pm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pm.h>
 
-#define ADT7316_REG_MAX_ADDR		0x3F
+#घोषणा ADT7316_REG_MAX_ADDR		0x3F
 
-struct adt7316_bus {
-	void *client;
-	int irq;
-	int (*read)(void *client, u8 reg, u8 *data);
-	int (*write)(void *client, u8 reg, u8 val);
-	int (*multi_read)(void *client, u8 first_reg, u8 count, u8 *data);
-	int (*multi_write)(void *client, u8 first_reg, u8 count, u8 *data);
-};
+काष्ठा adt7316_bus अणु
+	व्योम *client;
+	पूर्णांक irq;
+	पूर्णांक (*पढ़ो)(व्योम *client, u8 reg, u8 *data);
+	पूर्णांक (*ग_लिखो)(व्योम *client, u8 reg, u8 val);
+	पूर्णांक (*multi_पढ़ो)(व्योम *client, u8 first_reg, u8 count, u8 *data);
+	पूर्णांक (*multi_ग_लिखो)(व्योम *client, u8 first_reg, u8 count, u8 *data);
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
-extern const struct dev_pm_ops adt7316_pm_ops;
-#define ADT7316_PM_OPS (&adt7316_pm_ops)
-#else
-#define ADT7316_PM_OPS NULL
-#endif
-int adt7316_probe(struct device *dev, struct adt7316_bus *bus,
-		  const char *name);
+#अगर_घोषित CONFIG_PM_SLEEP
+बाह्य स्थिर काष्ठा dev_pm_ops adt7316_pm_ops;
+#घोषणा ADT7316_PM_OPS (&adt7316_pm_ops)
+#अन्यथा
+#घोषणा ADT7316_PM_OPS शून्य
+#पूर्ण_अगर
+पूर्णांक adt7316_probe(काष्ठा device *dev, काष्ठा adt7316_bus *bus,
+		  स्थिर अक्षर *name);
 
-#endif
+#पूर्ण_अगर

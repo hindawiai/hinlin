@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Early serial console for 8250/16550 devices
+ * Early serial console क्रम 8250/16550 devices
  *
  * (c) Copyright 2004 Hewlett-Packard Development Company, L.P.
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  *
  * Based on the 8250.c serial driver, Copyright (C) 2001 Russell King,
- * and on early_printk.c by Andi Kleen.
+ * and on early_prपूर्णांकk.c by Andi Kleen.
  *
- * This is for use before the serial driver has initialized, in
- * particular, before the UARTs have been discovered and named.
- * Instead of specifying the console device as, e.g., "ttyS0",
+ * This is क्रम use beक्रमe the serial driver has initialized, in
+ * particular, beक्रमe the UARTs have been discovered and named.
+ * Instead of specअगरying the console device as, e.g., "ttyS0",
  * we locate the device directly by its MMIO or I/O port address.
  *
- * The user can specify the device directly, e.g.,
+ * The user can specअगरy the device directly, e.g.,
  *	earlycon=uart8250,io,0x3f8,9600n8
  *	earlycon=uart8250,mmio,0xff5e0000,115200n8
  *	earlycon=uart8250,mmio32,0xff5e0000,115200n8
@@ -23,157 +24,157 @@
  *	console=uart8250,mmio32,0xff5e0000,115200n8
  */
 
-#include <linux/tty.h>
-#include <linux/init.h>
-#include <linux/console.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/serial_reg.h>
-#include <linux/serial.h>
-#include <linux/serial_8250.h>
-#include <asm/io.h>
-#include <asm/serial.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/init.h>
+#समावेश <linux/console.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_8250.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/serial.h>
 
-static unsigned int serial8250_early_in(struct uart_port *port, int offset)
-{
-	int reg_offset = offset;
-	offset <<= port->regshift;
+अटल अचिन्हित पूर्णांक serial8250_early_in(काष्ठा uart_port *port, पूर्णांक offset)
+अणु
+	पूर्णांक reg_offset = offset;
+	offset <<= port->regshअगरt;
 
-	switch (port->iotype) {
-	case UPIO_MEM:
-		return readb(port->membase + offset);
-	case UPIO_MEM16:
-		return readw(port->membase + offset);
-	case UPIO_MEM32:
-		return readl(port->membase + offset);
-	case UPIO_MEM32BE:
-		return ioread32be(port->membase + offset);
-	case UPIO_PORT:
-		return inb(port->iobase + offset);
-	case UPIO_AU:
-		return port->serial_in(port, reg_offset);
-	default:
-		return 0;
-	}
-}
+	चयन (port->iotype) अणु
+	हाल UPIO_MEM:
+		वापस पढ़ोb(port->membase + offset);
+	हाल UPIO_MEM16:
+		वापस पढ़ोw(port->membase + offset);
+	हाल UPIO_MEM32:
+		वापस पढ़ोl(port->membase + offset);
+	हाल UPIO_MEM32BE:
+		वापस ioपढ़ो32be(port->membase + offset);
+	हाल UPIO_PORT:
+		वापस inb(port->iobase + offset);
+	हाल UPIO_AU:
+		वापस port->serial_in(port, reg_offset);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void serial8250_early_out(struct uart_port *port, int offset, int value)
-{
-	int reg_offset = offset;
-	offset <<= port->regshift;
+अटल व्योम serial8250_early_out(काष्ठा uart_port *port, पूर्णांक offset, पूर्णांक value)
+अणु
+	पूर्णांक reg_offset = offset;
+	offset <<= port->regshअगरt;
 
-	switch (port->iotype) {
-	case UPIO_MEM:
-		writeb(value, port->membase + offset);
-		break;
-	case UPIO_MEM16:
-		writew(value, port->membase + offset);
-		break;
-	case UPIO_MEM32:
-		writel(value, port->membase + offset);
-		break;
-	case UPIO_MEM32BE:
-		iowrite32be(value, port->membase + offset);
-		break;
-	case UPIO_PORT:
+	चयन (port->iotype) अणु
+	हाल UPIO_MEM:
+		ग_लिखोb(value, port->membase + offset);
+		अवरोध;
+	हाल UPIO_MEM16:
+		ग_लिखोw(value, port->membase + offset);
+		अवरोध;
+	हाल UPIO_MEM32:
+		ग_लिखोl(value, port->membase + offset);
+		अवरोध;
+	हाल UPIO_MEM32BE:
+		ioग_लिखो32be(value, port->membase + offset);
+		अवरोध;
+	हाल UPIO_PORT:
 		outb(value, port->iobase + offset);
-		break;
-	case UPIO_AU:
+		अवरोध;
+	हाल UPIO_AU:
 		port->serial_out(port, reg_offset, value);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#define BOTH_EMPTY (UART_LSR_TEMT | UART_LSR_THRE)
+#घोषणा BOTH_EMPTY (UART_LSR_TEMT | UART_LSR_THRE)
 
-static void serial_putc(struct uart_port *port, int c)
-{
-	unsigned int status;
+अटल व्योम serial_अ_दो(काष्ठा uart_port *port, पूर्णांक c)
+अणु
+	अचिन्हित पूर्णांक status;
 
 	serial8250_early_out(port, UART_TX, c);
 
-	for (;;) {
+	क्रम (;;) अणु
 		status = serial8250_early_in(port, UART_LSR);
-		if ((status & BOTH_EMPTY) == BOTH_EMPTY)
-			break;
+		अगर ((status & BOTH_EMPTY) == BOTH_EMPTY)
+			अवरोध;
 		cpu_relax();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void early_serial8250_write(struct console *console,
-					const char *s, unsigned int count)
-{
-	struct earlycon_device *device = console->data;
-	struct uart_port *port = &device->port;
+अटल व्योम early_serial8250_ग_लिखो(काष्ठा console *console,
+					स्थिर अक्षर *s, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा earlycon_device *device = console->data;
+	काष्ठा uart_port *port = &device->port;
 
-	uart_console_write(port, s, count, serial_putc);
-}
+	uart_console_ग_लिखो(port, s, count, serial_अ_दो);
+पूर्ण
 
-#ifdef CONFIG_CONSOLE_POLL
-static int early_serial8250_read(struct console *console,
-				 char *s, unsigned int count)
-{
-	struct earlycon_device *device = console->data;
-	struct uart_port *port = &device->port;
-	unsigned int status;
-	int num_read = 0;
+#अगर_घोषित CONFIG_CONSOLE_POLL
+अटल पूर्णांक early_serial8250_पढ़ो(काष्ठा console *console,
+				 अक्षर *s, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा earlycon_device *device = console->data;
+	काष्ठा uart_port *port = &device->port;
+	अचिन्हित पूर्णांक status;
+	पूर्णांक num_पढ़ो = 0;
 
-	while (num_read < count) {
+	जबतक (num_पढ़ो < count) अणु
 		status = serial8250_early_in(port, UART_LSR);
-		if (!(status & UART_LSR_DR))
-			break;
-		s[num_read++] = serial8250_early_in(port, UART_RX);
-	}
+		अगर (!(status & UART_LSR_DR))
+			अवरोध;
+		s[num_पढ़ो++] = serial8250_early_in(port, UART_RX);
+	पूर्ण
 
-	return num_read;
-}
-#else
-#define early_serial8250_read NULL
-#endif
+	वापस num_पढ़ो;
+पूर्ण
+#अन्यथा
+#घोषणा early_serial8250_पढ़ो शून्य
+#पूर्ण_अगर
 
-static void __init init_port(struct earlycon_device *device)
-{
-	struct uart_port *port = &device->port;
-	unsigned int divisor;
-	unsigned char c;
-	unsigned int ier;
+अटल व्योम __init init_port(काष्ठा earlycon_device *device)
+अणु
+	काष्ठा uart_port *port = &device->port;
+	अचिन्हित पूर्णांक भागisor;
+	अचिन्हित अक्षर c;
+	अचिन्हित पूर्णांक ier;
 
 	serial8250_early_out(port, UART_LCR, 0x3);	/* 8n1 */
 	ier = serial8250_early_in(port, UART_IER);
-	serial8250_early_out(port, UART_IER, ier & UART_IER_UUE); /* no interrupt */
-	serial8250_early_out(port, UART_FCR, 0);	/* no fifo */
+	serial8250_early_out(port, UART_IER, ier & UART_IER_UUE); /* no पूर्णांकerrupt */
+	serial8250_early_out(port, UART_FCR, 0);	/* no fअगरo */
 	serial8250_early_out(port, UART_MCR, 0x3);	/* DTR + RTS */
 
-	if (port->uartclk) {
-		divisor = DIV_ROUND_CLOSEST(port->uartclk, 16 * device->baud);
+	अगर (port->uartclk) अणु
+		भागisor = DIV_ROUND_CLOSEST(port->uartclk, 16 * device->baud);
 		c = serial8250_early_in(port, UART_LCR);
 		serial8250_early_out(port, UART_LCR, c | UART_LCR_DLAB);
-		serial8250_early_out(port, UART_DLL, divisor & 0xff);
-		serial8250_early_out(port, UART_DLM, (divisor >> 8) & 0xff);
+		serial8250_early_out(port, UART_DLL, भागisor & 0xff);
+		serial8250_early_out(port, UART_DLM, (भागisor >> 8) & 0xff);
 		serial8250_early_out(port, UART_LCR, c & ~UART_LCR_DLAB);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int __init early_serial8250_setup(struct earlycon_device *device,
-					 const char *options)
-{
-	if (!(device->port.membase || device->port.iobase))
-		return -ENODEV;
+पूर्णांक __init early_serial8250_setup(काष्ठा earlycon_device *device,
+					 स्थिर अक्षर *options)
+अणु
+	अगर (!(device->port.membase || device->port.iobase))
+		वापस -ENODEV;
 
-	if (!device->baud) {
-		struct uart_port *port = &device->port;
-		unsigned int ier;
+	अगर (!device->baud) अणु
+		काष्ठा uart_port *port = &device->port;
+		अचिन्हित पूर्णांक ier;
 
-		/* assume the device was initialized, only mask interrupts */
+		/* assume the device was initialized, only mask पूर्णांकerrupts */
 		ier = serial8250_early_in(port, UART_IER);
 		serial8250_early_out(port, UART_IER, ier & UART_IER_UUE);
-	} else
+	पूर्ण अन्यथा
 		init_port(device);
 
-	device->con->write = early_serial8250_write;
-	device->con->read = early_serial8250_read;
-	return 0;
-}
+	device->con->ग_लिखो = early_serial8250_ग_लिखो;
+	device->con->पढ़ो = early_serial8250_पढ़ो;
+	वापस 0;
+पूर्ण
 EARLYCON_DECLARE(uart8250, early_serial8250_setup);
 EARLYCON_DECLARE(uart, early_serial8250_setup);
 OF_EARLYCON_DECLARE(ns16550, "ns16550", early_serial8250_setup);
@@ -181,37 +182,37 @@ OF_EARLYCON_DECLARE(ns16550a, "ns16550a", early_serial8250_setup);
 OF_EARLYCON_DECLARE(uart, "nvidia,tegra20-uart", early_serial8250_setup);
 OF_EARLYCON_DECLARE(uart, "snps,dw-apb-uart", early_serial8250_setup);
 
-#ifdef CONFIG_SERIAL_8250_OMAP
+#अगर_घोषित CONFIG_SERIAL_8250_OMAP
 
-static int __init early_omap8250_setup(struct earlycon_device *device,
-				       const char *options)
-{
-	struct uart_port *port = &device->port;
+अटल पूर्णांक __init early_omap8250_setup(काष्ठा earlycon_device *device,
+				       स्थिर अक्षर *options)
+अणु
+	काष्ठा uart_port *port = &device->port;
 
-	if (!(device->port.membase || device->port.iobase))
-		return -ENODEV;
+	अगर (!(device->port.membase || device->port.iobase))
+		वापस -ENODEV;
 
-	port->regshift = 2;
-	device->con->write = early_serial8250_write;
-	return 0;
-}
+	port->regshअगरt = 2;
+	device->con->ग_लिखो = early_serial8250_ग_लिखो;
+	वापस 0;
+पूर्ण
 
 OF_EARLYCON_DECLARE(omap8250, "ti,omap2-uart", early_omap8250_setup);
 OF_EARLYCON_DECLARE(omap8250, "ti,omap3-uart", early_omap8250_setup);
 OF_EARLYCON_DECLARE(omap8250, "ti,omap4-uart", early_omap8250_setup);
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_SERIAL_8250_RT288X
+#अगर_घोषित CONFIG_SERIAL_8250_RT288X
 
-static int __init early_au_setup(struct earlycon_device *dev, const char *opt)
-{
+अटल पूर्णांक __init early_au_setup(काष्ठा earlycon_device *dev, स्थिर अक्षर *opt)
+अणु
 	dev->port.serial_in = au_serial_in;
 	dev->port.serial_out = au_serial_out;
 	dev->port.iotype = UPIO_AU;
-	dev->con->write = early_serial8250_write;
-	return 0;
-}
+	dev->con->ग_लिखो = early_serial8250_ग_लिखो;
+	वापस 0;
+पूर्ण
 OF_EARLYCON_DECLARE(palmchip, "ralink,rt2880-uart", early_au_setup);
 
-#endif
+#पूर्ण_अगर

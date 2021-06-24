@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
 
-#ifndef __QCOM_CLK_REGMAP_MUX_H__
-#define __QCOM_CLK_REGMAP_MUX_H__
+#अगर_अघोषित __QCOM_CLK_REGMAP_MUX_H__
+#घोषणा __QCOM_CLK_REGMAP_MUX_H__
 
-#include <linux/clk-provider.h>
-#include "clk-regmap.h"
-#include "common.h"
+#समावेश <linux/clk-provider.h>
+#समावेश "clk-regmap.h"
+#समावेश "common.h"
 
-struct clk_regmap_mux {
+काष्ठा clk_regmap_mux अणु
 	u32			reg;
-	u32			shift;
+	u32			shअगरt;
 	u32			width;
-	const struct parent_map	*parent_map;
-	struct clk_regmap	clkr;
-};
+	स्थिर काष्ठा parent_map	*parent_map;
+	काष्ठा clk_regmap	clkr;
+पूर्ण;
 
-extern const struct clk_ops clk_regmap_mux_closest_ops;
+बाह्य स्थिर काष्ठा clk_ops clk_regmap_mux_बंदst_ops;
 
-#endif
+#पूर्ण_अगर

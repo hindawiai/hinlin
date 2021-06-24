@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  KVM guest address space mapping code
  *
  *    Copyright IBM Corp. 2007, 2020
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
- *		 David Hildenbrand <david@redhat.com>
+ *		 David Hildenbअक्रम <david@redhat.com>
  *		 Janosch Frank <frankja@linux.vnet.ibm.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/pagewalk.h>
-#include <linux/swap.h>
-#include <linux/smp.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/swapops.h>
-#include <linux/ksm.h>
-#include <linux/mman.h>
-#include <linux/pgtable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pagewalk.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/swapops.h>
+#समावेश <linux/ksm.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/pgalloc.h>
-#include <asm/gmap.h>
-#include <asm/tlb.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/gmap.h>
+#समावेश <यंत्र/tlb.h>
 
-#define GMAP_SHADOW_FAKE_TABLE 1ULL
+#घोषणा GMAP_SHADOW_FAKE_TABLE 1ULL
 
 /**
  * gmap_alloc - allocate and initialize a guest address space
- * @mm: pointer to the parent mm_struct
+ * @mm: poपूर्णांकer to the parent mm_काष्ठा
  * @limit: maximum address of the gmap address space
  *
- * Returns a guest address space structure.
+ * Returns a guest address space काष्ठाure.
  */
-static struct gmap *gmap_alloc(unsigned long limit)
-{
-	struct gmap *gmap;
-	struct page *page;
-	unsigned long *table;
-	unsigned long etype, atype;
+अटल काष्ठा gmap *gmap_alloc(अचिन्हित दीर्घ limit)
+अणु
+	काष्ठा gmap *gmap;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ *table;
+	अचिन्हित दीर्घ etype, atype;
 
-	if (limit < _REGION3_SIZE) {
+	अगर (limit < _REGION3_SIZE) अणु
 		limit = _REGION3_SIZE - 1;
 		atype = _ASCE_TYPE_SEGMENT;
 		etype = _SEGMENT_ENTRY_EMPTY;
-	} else if (limit < _REGION2_SIZE) {
+	पूर्ण अन्यथा अगर (limit < _REGION2_SIZE) अणु
 		limit = _REGION2_SIZE - 1;
 		atype = _ASCE_TYPE_REGION3;
 		etype = _REGION3_ENTRY_EMPTY;
-	} else if (limit < _REGION1_SIZE) {
+	पूर्ण अन्यथा अगर (limit < _REGION1_SIZE) अणु
 		limit = _REGION1_SIZE - 1;
 		atype = _ASCE_TYPE_REGION2;
 		etype = _REGION2_ENTRY_EMPTY;
-	} else {
+	पूर्ण अन्यथा अणु
 		limit = -1UL;
 		atype = _ASCE_TYPE_REGION1;
 		etype = _REGION1_ENTRY_EMPTY;
-	}
-	gmap = kzalloc(sizeof(struct gmap), GFP_KERNEL_ACCOUNT);
-	if (!gmap)
-		goto out;
+	पूर्ण
+	gmap = kzalloc(माप(काष्ठा gmap), GFP_KERNEL_ACCOUNT);
+	अगर (!gmap)
+		जाओ out;
 	INIT_LIST_HEAD(&gmap->crst_list);
 	INIT_LIST_HEAD(&gmap->children);
 	INIT_LIST_HEAD(&gmap->pt_list);
@@ -66,516 +67,516 @@ static struct gmap *gmap_alloc(unsigned long limit)
 	INIT_RADIX_TREE(&gmap->host_to_guest, GFP_ATOMIC | __GFP_ACCOUNT);
 	INIT_RADIX_TREE(&gmap->host_to_rmap, GFP_ATOMIC | __GFP_ACCOUNT);
 	spin_lock_init(&gmap->guest_table_lock);
-	spin_lock_init(&gmap->shadow_lock);
+	spin_lock_init(&gmap->shaकरोw_lock);
 	refcount_set(&gmap->ref_count, 1);
 	page = alloc_pages(GFP_KERNEL_ACCOUNT, CRST_ALLOC_ORDER);
-	if (!page)
-		goto out_free;
+	अगर (!page)
+		जाओ out_मुक्त;
 	page->index = 0;
 	list_add(&page->lru, &gmap->crst_list);
-	table = (unsigned long *) page_to_phys(page);
+	table = (अचिन्हित दीर्घ *) page_to_phys(page);
 	crst_table_init(table, etype);
 	gmap->table = table;
 	gmap->asce = atype | _ASCE_TABLE_LENGTH |
 		_ASCE_USER_BITS | __pa(table);
 	gmap->asce_end = limit;
-	return gmap;
+	वापस gmap;
 
-out_free:
-	kfree(gmap);
+out_मुक्त:
+	kमुक्त(gmap);
 out:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * gmap_create - create a guest address space
- * @mm: pointer to the parent mm_struct
+ * @mm: poपूर्णांकer to the parent mm_काष्ठा
  * @limit: maximum size of the gmap address space
  *
- * Returns a guest address space structure.
+ * Returns a guest address space काष्ठाure.
  */
-struct gmap *gmap_create(struct mm_struct *mm, unsigned long limit)
-{
-	struct gmap *gmap;
-	unsigned long gmap_asce;
+काष्ठा gmap *gmap_create(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ limit)
+अणु
+	काष्ठा gmap *gmap;
+	अचिन्हित दीर्घ gmap_asce;
 
 	gmap = gmap_alloc(limit);
-	if (!gmap)
-		return NULL;
+	अगर (!gmap)
+		वापस शून्य;
 	gmap->mm = mm;
 	spin_lock(&mm->context.lock);
 	list_add_rcu(&gmap->list, &mm->context.gmap_list);
-	if (list_is_singular(&mm->context.gmap_list))
+	अगर (list_is_singular(&mm->context.gmap_list))
 		gmap_asce = gmap->asce;
-	else
+	अन्यथा
 		gmap_asce = -1UL;
 	WRITE_ONCE(mm->context.gmap_asce, gmap_asce);
 	spin_unlock(&mm->context.lock);
-	return gmap;
-}
+	वापस gmap;
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_create);
 
-static void gmap_flush_tlb(struct gmap *gmap)
-{
-	if (MACHINE_HAS_IDTE)
+अटल व्योम gmap_flush_tlb(काष्ठा gmap *gmap)
+अणु
+	अगर (MACHINE_HAS_IDTE)
 		__tlb_flush_idte(gmap->asce);
-	else
+	अन्यथा
 		__tlb_flush_global();
-}
+पूर्ण
 
-static void gmap_radix_tree_free(struct radix_tree_root *root)
-{
-	struct radix_tree_iter iter;
-	unsigned long indices[16];
-	unsigned long index;
-	void __rcu **slot;
-	int i, nr;
+अटल व्योम gmap_radix_tree_मुक्त(काष्ठा radix_tree_root *root)
+अणु
+	काष्ठा radix_tree_iter iter;
+	अचिन्हित दीर्घ indices[16];
+	अचिन्हित दीर्घ index;
+	व्योम __rcu **slot;
+	पूर्णांक i, nr;
 
-	/* A radix tree is freed by deleting all of its entries */
+	/* A radix tree is मुक्तd by deleting all of its entries */
 	index = 0;
-	do {
+	करो अणु
 		nr = 0;
-		radix_tree_for_each_slot(slot, root, &iter, index) {
+		radix_tree_क्रम_each_slot(slot, root, &iter, index) अणु
 			indices[nr] = iter.index;
-			if (++nr == 16)
-				break;
-		}
-		for (i = 0; i < nr; i++) {
+			अगर (++nr == 16)
+				अवरोध;
+		पूर्ण
+		क्रम (i = 0; i < nr; i++) अणु
 			index = indices[i];
 			radix_tree_delete(root, index);
-		}
-	} while (nr > 0);
-}
+		पूर्ण
+	पूर्ण जबतक (nr > 0);
+पूर्ण
 
-static void gmap_rmap_radix_tree_free(struct radix_tree_root *root)
-{
-	struct gmap_rmap *rmap, *rnext, *head;
-	struct radix_tree_iter iter;
-	unsigned long indices[16];
-	unsigned long index;
-	void __rcu **slot;
-	int i, nr;
+अटल व्योम gmap_rmap_radix_tree_मुक्त(काष्ठा radix_tree_root *root)
+अणु
+	काष्ठा gmap_rmap *rmap, *rnext, *head;
+	काष्ठा radix_tree_iter iter;
+	अचिन्हित दीर्घ indices[16];
+	अचिन्हित दीर्घ index;
+	व्योम __rcu **slot;
+	पूर्णांक i, nr;
 
-	/* A radix tree is freed by deleting all of its entries */
+	/* A radix tree is मुक्तd by deleting all of its entries */
 	index = 0;
-	do {
+	करो अणु
 		nr = 0;
-		radix_tree_for_each_slot(slot, root, &iter, index) {
+		radix_tree_क्रम_each_slot(slot, root, &iter, index) अणु
 			indices[nr] = iter.index;
-			if (++nr == 16)
-				break;
-		}
-		for (i = 0; i < nr; i++) {
+			अगर (++nr == 16)
+				अवरोध;
+		पूर्ण
+		क्रम (i = 0; i < nr; i++) अणु
 			index = indices[i];
 			head = radix_tree_delete(root, index);
-			gmap_for_each_rmap_safe(rmap, rnext, head)
-				kfree(rmap);
-		}
-	} while (nr > 0);
-}
+			gmap_क्रम_each_rmap_safe(rmap, rnext, head)
+				kमुक्त(rmap);
+		पूर्ण
+	पूर्ण जबतक (nr > 0);
+पूर्ण
 
 /**
- * gmap_free - free a guest address space
- * @gmap: pointer to the guest address space structure
+ * gmap_मुक्त - मुक्त a guest address space
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
  *
  * No locks required. There are no references to this gmap anymore.
  */
-static void gmap_free(struct gmap *gmap)
-{
-	struct page *page, *next;
+अटल व्योम gmap_मुक्त(काष्ठा gmap *gmap)
+अणु
+	काष्ठा page *page, *next;
 
-	/* Flush tlb of all gmaps (if not already done for shadows) */
-	if (!(gmap_is_shadow(gmap) && gmap->removed))
+	/* Flush tlb of all gmaps (अगर not alपढ़ोy करोne क्रम shaकरोws) */
+	अगर (!(gmap_is_shaकरोw(gmap) && gmap->हटाओd))
 		gmap_flush_tlb(gmap);
 	/* Free all segment & region tables. */
-	list_for_each_entry_safe(page, next, &gmap->crst_list, lru)
-		__free_pages(page, CRST_ALLOC_ORDER);
-	gmap_radix_tree_free(&gmap->guest_to_host);
-	gmap_radix_tree_free(&gmap->host_to_guest);
+	list_क्रम_each_entry_safe(page, next, &gmap->crst_list, lru)
+		__मुक्त_pages(page, CRST_ALLOC_ORDER);
+	gmap_radix_tree_मुक्त(&gmap->guest_to_host);
+	gmap_radix_tree_मुक्त(&gmap->host_to_guest);
 
-	/* Free additional data for a shadow gmap */
-	if (gmap_is_shadow(gmap)) {
+	/* Free additional data क्रम a shaकरोw gmap */
+	अगर (gmap_is_shaकरोw(gmap)) अणु
 		/* Free all page tables. */
-		list_for_each_entry_safe(page, next, &gmap->pt_list, lru)
-			page_table_free_pgste(page);
-		gmap_rmap_radix_tree_free(&gmap->host_to_rmap);
+		list_क्रम_each_entry_safe(page, next, &gmap->pt_list, lru)
+			page_table_मुक्त_pgste(page);
+		gmap_rmap_radix_tree_मुक्त(&gmap->host_to_rmap);
 		/* Release reference to the parent */
 		gmap_put(gmap->parent);
-	}
+	पूर्ण
 
-	kfree(gmap);
-}
+	kमुक्त(gmap);
+पूर्ण
 
 /**
- * gmap_get - increase reference counter for guest address space
- * @gmap: pointer to the guest address space structure
+ * gmap_get - increase reference counter क्रम guest address space
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
  *
- * Returns the gmap pointer
+ * Returns the gmap poपूर्णांकer
  */
-struct gmap *gmap_get(struct gmap *gmap)
-{
+काष्ठा gmap *gmap_get(काष्ठा gmap *gmap)
+अणु
 	refcount_inc(&gmap->ref_count);
-	return gmap;
-}
+	वापस gmap;
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_get);
 
 /**
- * gmap_put - decrease reference counter for guest address space
- * @gmap: pointer to the guest address space structure
+ * gmap_put - decrease reference counter क्रम guest address space
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
  *
- * If the reference counter reaches zero the guest address space is freed.
+ * If the reference counter reaches zero the guest address space is मुक्तd.
  */
-void gmap_put(struct gmap *gmap)
-{
-	if (refcount_dec_and_test(&gmap->ref_count))
-		gmap_free(gmap);
-}
+व्योम gmap_put(काष्ठा gmap *gmap)
+अणु
+	अगर (refcount_dec_and_test(&gmap->ref_count))
+		gmap_मुक्त(gmap);
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_put);
 
 /**
- * gmap_remove - remove a guest address space but do not free it yet
- * @gmap: pointer to the guest address space structure
+ * gmap_हटाओ - हटाओ a guest address space but करो not मुक्त it yet
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
  */
-void gmap_remove(struct gmap *gmap)
-{
-	struct gmap *sg, *next;
-	unsigned long gmap_asce;
+व्योम gmap_हटाओ(काष्ठा gmap *gmap)
+अणु
+	काष्ठा gmap *sg, *next;
+	अचिन्हित दीर्घ gmap_asce;
 
-	/* Remove all shadow gmaps linked to this gmap */
-	if (!list_empty(&gmap->children)) {
-		spin_lock(&gmap->shadow_lock);
-		list_for_each_entry_safe(sg, next, &gmap->children, list) {
+	/* Remove all shaकरोw gmaps linked to this gmap */
+	अगर (!list_empty(&gmap->children)) अणु
+		spin_lock(&gmap->shaकरोw_lock);
+		list_क्रम_each_entry_safe(sg, next, &gmap->children, list) अणु
 			list_del(&sg->list);
 			gmap_put(sg);
-		}
-		spin_unlock(&gmap->shadow_lock);
-	}
+		पूर्ण
+		spin_unlock(&gmap->shaकरोw_lock);
+	पूर्ण
 	/* Remove gmap from the pre-mm list */
 	spin_lock(&gmap->mm->context.lock);
 	list_del_rcu(&gmap->list);
-	if (list_empty(&gmap->mm->context.gmap_list))
+	अगर (list_empty(&gmap->mm->context.gmap_list))
 		gmap_asce = 0;
-	else if (list_is_singular(&gmap->mm->context.gmap_list))
+	अन्यथा अगर (list_is_singular(&gmap->mm->context.gmap_list))
 		gmap_asce = list_first_entry(&gmap->mm->context.gmap_list,
-					     struct gmap, list)->asce;
-	else
+					     काष्ठा gmap, list)->asce;
+	अन्यथा
 		gmap_asce = -1UL;
 	WRITE_ONCE(gmap->mm->context.gmap_asce, gmap_asce);
 	spin_unlock(&gmap->mm->context.lock);
 	synchronize_rcu();
 	/* Put reference */
 	gmap_put(gmap);
-}
-EXPORT_SYMBOL_GPL(gmap_remove);
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_हटाओ);
 
 /**
- * gmap_enable - switch primary space to the guest address space
- * @gmap: pointer to the guest address space structure
+ * gmap_enable - चयन primary space to the guest address space
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
  */
-void gmap_enable(struct gmap *gmap)
-{
-	S390_lowcore.gmap = (unsigned long) gmap;
-}
+व्योम gmap_enable(काष्ठा gmap *gmap)
+अणु
+	S390_lowcore.gmap = (अचिन्हित दीर्घ) gmap;
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_enable);
 
 /**
- * gmap_disable - switch back to the standard primary address space
- * @gmap: pointer to the guest address space structure
+ * gmap_disable - चयन back to the standard primary address space
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
  */
-void gmap_disable(struct gmap *gmap)
-{
+व्योम gmap_disable(काष्ठा gmap *gmap)
+अणु
 	S390_lowcore.gmap = 0UL;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_disable);
 
 /**
- * gmap_get_enabled - get a pointer to the currently enabled gmap
+ * gmap_get_enabled - get a poपूर्णांकer to the currently enabled gmap
  *
- * Returns a pointer to the currently enabled gmap. 0 if none is enabled.
+ * Returns a poपूर्णांकer to the currently enabled gmap. 0 अगर none is enabled.
  */
-struct gmap *gmap_get_enabled(void)
-{
-	return (struct gmap *) S390_lowcore.gmap;
-}
+काष्ठा gmap *gmap_get_enabled(व्योम)
+अणु
+	वापस (काष्ठा gmap *) S390_lowcore.gmap;
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_get_enabled);
 
 /*
  * gmap_alloc_table is assumed to be called with mmap_lock held
  */
-static int gmap_alloc_table(struct gmap *gmap, unsigned long *table,
-			    unsigned long init, unsigned long gaddr)
-{
-	struct page *page;
-	unsigned long *new;
+अटल पूर्णांक gmap_alloc_table(काष्ठा gmap *gmap, अचिन्हित दीर्घ *table,
+			    अचिन्हित दीर्घ init, अचिन्हित दीर्घ gaddr)
+अणु
+	काष्ठा page *page;
+	अचिन्हित दीर्घ *new;
 
-	/* since we dont free the gmap table until gmap_free we can unlock */
+	/* since we करोnt मुक्त the gmap table until gmap_मुक्त we can unlock */
 	page = alloc_pages(GFP_KERNEL_ACCOUNT, CRST_ALLOC_ORDER);
-	if (!page)
-		return -ENOMEM;
-	new = (unsigned long *) page_to_phys(page);
+	अगर (!page)
+		वापस -ENOMEM;
+	new = (अचिन्हित दीर्घ *) page_to_phys(page);
 	crst_table_init(new, init);
 	spin_lock(&gmap->guest_table_lock);
-	if (*table & _REGION_ENTRY_INVALID) {
+	अगर (*table & _REGION_ENTRY_INVALID) अणु
 		list_add(&page->lru, &gmap->crst_list);
-		*table = (unsigned long) new | _REGION_ENTRY_LENGTH |
+		*table = (अचिन्हित दीर्घ) new | _REGION_ENTRY_LENGTH |
 			(*table & _REGION_ENTRY_TYPE_MASK);
 		page->index = gaddr;
-		page = NULL;
-	}
+		page = शून्य;
+	पूर्ण
 	spin_unlock(&gmap->guest_table_lock);
-	if (page)
-		__free_pages(page, CRST_ALLOC_ORDER);
-	return 0;
-}
+	अगर (page)
+		__मुक्त_pages(page, CRST_ALLOC_ORDER);
+	वापस 0;
+पूर्ण
 
 /**
- * __gmap_segment_gaddr - find virtual address from segment pointer
- * @entry: pointer to a segment table entry in the guest address space
+ * __gmap_segment_gaddr - find भव address from segment poपूर्णांकer
+ * @entry: poपूर्णांकer to a segment table entry in the guest address space
  *
- * Returns the virtual address in the guest address space for the segment
+ * Returns the भव address in the guest address space क्रम the segment
  */
-static unsigned long __gmap_segment_gaddr(unsigned long *entry)
-{
-	struct page *page;
-	unsigned long offset, mask;
+अटल अचिन्हित दीर्घ __gmap_segment_gaddr(अचिन्हित दीर्घ *entry)
+अणु
+	काष्ठा page *page;
+	अचिन्हित दीर्घ offset, mask;
 
-	offset = (unsigned long) entry / sizeof(unsigned long);
+	offset = (अचिन्हित दीर्घ) entry / माप(अचिन्हित दीर्घ);
 	offset = (offset & (PTRS_PER_PMD - 1)) * PMD_SIZE;
-	mask = ~(PTRS_PER_PMD * sizeof(pmd_t) - 1);
-	page = virt_to_page((void *)((unsigned long) entry & mask));
-	return page->index + offset;
-}
+	mask = ~(PTRS_PER_PMD * माप(pmd_t) - 1);
+	page = virt_to_page((व्योम *)((अचिन्हित दीर्घ) entry & mask));
+	वापस page->index + offset;
+पूर्ण
 
 /**
  * __gmap_unlink_by_vmaddr - unlink a single segment via a host address
- * @gmap: pointer to the guest address space structure
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
  * @vmaddr: address in the host process address space
  *
- * Returns 1 if a TLB flush is required
+ * Returns 1 अगर a TLB flush is required
  */
-static int __gmap_unlink_by_vmaddr(struct gmap *gmap, unsigned long vmaddr)
-{
-	unsigned long *entry;
-	int flush = 0;
+अटल पूर्णांक __gmap_unlink_by_vmaddr(काष्ठा gmap *gmap, अचिन्हित दीर्घ vmaddr)
+अणु
+	अचिन्हित दीर्घ *entry;
+	पूर्णांक flush = 0;
 
-	BUG_ON(gmap_is_shadow(gmap));
+	BUG_ON(gmap_is_shaकरोw(gmap));
 	spin_lock(&gmap->guest_table_lock);
 	entry = radix_tree_delete(&gmap->host_to_guest, vmaddr >> PMD_SHIFT);
-	if (entry) {
+	अगर (entry) अणु
 		flush = (*entry != _SEGMENT_ENTRY_EMPTY);
 		*entry = _SEGMENT_ENTRY_EMPTY;
-	}
+	पूर्ण
 	spin_unlock(&gmap->guest_table_lock);
-	return flush;
-}
+	वापस flush;
+पूर्ण
 
 /**
  * __gmap_unmap_by_gaddr - unmap a single segment via a guest address
- * @gmap: pointer to the guest address space structure
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
  * @gaddr: address in the guest address space
  *
- * Returns 1 if a TLB flush is required
+ * Returns 1 अगर a TLB flush is required
  */
-static int __gmap_unmap_by_gaddr(struct gmap *gmap, unsigned long gaddr)
-{
-	unsigned long vmaddr;
+अटल पूर्णांक __gmap_unmap_by_gaddr(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr)
+अणु
+	अचिन्हित दीर्घ vmaddr;
 
-	vmaddr = (unsigned long) radix_tree_delete(&gmap->guest_to_host,
+	vmaddr = (अचिन्हित दीर्घ) radix_tree_delete(&gmap->guest_to_host,
 						   gaddr >> PMD_SHIFT);
-	return vmaddr ? __gmap_unlink_by_vmaddr(gmap, vmaddr) : 0;
-}
+	वापस vmaddr ? __gmap_unlink_by_vmaddr(gmap, vmaddr) : 0;
+पूर्ण
 
 /**
  * gmap_unmap_segment - unmap segment from the guest address space
- * @gmap: pointer to the guest address space structure
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
  * @to: address in the guest address space
  * @len: length of the memory area to unmap
  *
- * Returns 0 if the unmap succeeded, -EINVAL if not.
+ * Returns 0 अगर the unmap succeeded, -EINVAL अगर not.
  */
-int gmap_unmap_segment(struct gmap *gmap, unsigned long to, unsigned long len)
-{
-	unsigned long off;
-	int flush;
+पूर्णांक gmap_unmap_segment(काष्ठा gmap *gmap, अचिन्हित दीर्घ to, अचिन्हित दीर्घ len)
+अणु
+	अचिन्हित दीर्घ off;
+	पूर्णांक flush;
 
-	BUG_ON(gmap_is_shadow(gmap));
-	if ((to | len) & (PMD_SIZE - 1))
-		return -EINVAL;
-	if (len == 0 || to + len < to)
-		return -EINVAL;
+	BUG_ON(gmap_is_shaकरोw(gmap));
+	अगर ((to | len) & (PMD_SIZE - 1))
+		वापस -EINVAL;
+	अगर (len == 0 || to + len < to)
+		वापस -EINVAL;
 
 	flush = 0;
-	mmap_write_lock(gmap->mm);
-	for (off = 0; off < len; off += PMD_SIZE)
+	mmap_ग_लिखो_lock(gmap->mm);
+	क्रम (off = 0; off < len; off += PMD_SIZE)
 		flush |= __gmap_unmap_by_gaddr(gmap, to + off);
-	mmap_write_unlock(gmap->mm);
-	if (flush)
+	mmap_ग_लिखो_unlock(gmap->mm);
+	अगर (flush)
 		gmap_flush_tlb(gmap);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_unmap_segment);
 
 /**
  * gmap_map_segment - map a segment to the guest address space
- * @gmap: pointer to the guest address space structure
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
  * @from: source address in the parent address space
  * @to: target address in the guest address space
  * @len: length of the memory area to map
  *
- * Returns 0 if the mmap succeeded, -EINVAL or -ENOMEM if not.
+ * Returns 0 अगर the mmap succeeded, -EINVAL or -ENOMEM अगर not.
  */
-int gmap_map_segment(struct gmap *gmap, unsigned long from,
-		     unsigned long to, unsigned long len)
-{
-	unsigned long off;
-	int flush;
+पूर्णांक gmap_map_segment(काष्ठा gmap *gmap, अचिन्हित दीर्घ from,
+		     अचिन्हित दीर्घ to, अचिन्हित दीर्घ len)
+अणु
+	अचिन्हित दीर्घ off;
+	पूर्णांक flush;
 
-	BUG_ON(gmap_is_shadow(gmap));
-	if ((from | to | len) & (PMD_SIZE - 1))
-		return -EINVAL;
-	if (len == 0 || from + len < from || to + len < to ||
+	BUG_ON(gmap_is_shaकरोw(gmap));
+	अगर ((from | to | len) & (PMD_SIZE - 1))
+		वापस -EINVAL;
+	अगर (len == 0 || from + len < from || to + len < to ||
 	    from + len - 1 > TASK_SIZE_MAX || to + len - 1 > gmap->asce_end)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	flush = 0;
-	mmap_write_lock(gmap->mm);
-	for (off = 0; off < len; off += PMD_SIZE) {
+	mmap_ग_लिखो_lock(gmap->mm);
+	क्रम (off = 0; off < len; off += PMD_SIZE) अणु
 		/* Remove old translation */
 		flush |= __gmap_unmap_by_gaddr(gmap, to + off);
 		/* Store new translation */
-		if (radix_tree_insert(&gmap->guest_to_host,
+		अगर (radix_tree_insert(&gmap->guest_to_host,
 				      (to + off) >> PMD_SHIFT,
-				      (void *) from + off))
-			break;
-	}
-	mmap_write_unlock(gmap->mm);
-	if (flush)
+				      (व्योम *) from + off))
+			अवरोध;
+	पूर्ण
+	mmap_ग_लिखो_unlock(gmap->mm);
+	अगर (flush)
 		gmap_flush_tlb(gmap);
-	if (off >= len)
-		return 0;
+	अगर (off >= len)
+		वापस 0;
 	gmap_unmap_segment(gmap, to, len);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_map_segment);
 
 /**
  * __gmap_translate - translate a guest address to a user space address
- * @gmap: pointer to guest mapping meta data structure
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
  * @gaddr: guest address
  *
  * Returns user space address which corresponds to the guest address or
- * -EFAULT if no such mapping exists.
- * This function does not establish potentially missing page table entries.
- * The mmap_lock of the mm that belongs to the address space must be held
- * when this function gets called.
+ * -EFAULT अगर no such mapping exists.
+ * This function करोes not establish potentially missing page table entries.
+ * The mmap_lock of the mm that beदीर्घs to the address space must be held
+ * when this function माला_लो called.
  *
- * Note: Can also be called for shadow gmaps.
+ * Note: Can also be called क्रम shaकरोw gmaps.
  */
-unsigned long __gmap_translate(struct gmap *gmap, unsigned long gaddr)
-{
-	unsigned long vmaddr;
+अचिन्हित दीर्घ __gmap_translate(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr)
+अणु
+	अचिन्हित दीर्घ vmaddr;
 
-	vmaddr = (unsigned long)
+	vmaddr = (अचिन्हित दीर्घ)
 		radix_tree_lookup(&gmap->guest_to_host, gaddr >> PMD_SHIFT);
-	/* Note: guest_to_host is empty for a shadow gmap */
-	return vmaddr ? (vmaddr | (gaddr & ~PMD_MASK)) : -EFAULT;
-}
+	/* Note: guest_to_host is empty क्रम a shaकरोw gmap */
+	वापस vmaddr ? (vmaddr | (gaddr & ~PMD_MASK)) : -EFAULT;
+पूर्ण
 EXPORT_SYMBOL_GPL(__gmap_translate);
 
 /**
  * gmap_translate - translate a guest address to a user space address
- * @gmap: pointer to guest mapping meta data structure
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
  * @gaddr: guest address
  *
  * Returns user space address which corresponds to the guest address or
- * -EFAULT if no such mapping exists.
- * This function does not establish potentially missing page table entries.
+ * -EFAULT अगर no such mapping exists.
+ * This function करोes not establish potentially missing page table entries.
  */
-unsigned long gmap_translate(struct gmap *gmap, unsigned long gaddr)
-{
-	unsigned long rc;
+अचिन्हित दीर्घ gmap_translate(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr)
+अणु
+	अचिन्हित दीर्घ rc;
 
-	mmap_read_lock(gmap->mm);
+	mmap_पढ़ो_lock(gmap->mm);
 	rc = __gmap_translate(gmap, gaddr);
-	mmap_read_unlock(gmap->mm);
-	return rc;
-}
+	mmap_पढ़ो_unlock(gmap->mm);
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_translate);
 
 /**
- * gmap_unlink - disconnect a page table from the gmap shadow tables
- * @gmap: pointer to guest mapping meta data structure
- * @table: pointer to the host page table
+ * gmap_unlink - disconnect a page table from the gmap shaकरोw tables
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
+ * @table: poपूर्णांकer to the host page table
  * @vmaddr: vm address associated with the host page table
  */
-void gmap_unlink(struct mm_struct *mm, unsigned long *table,
-		 unsigned long vmaddr)
-{
-	struct gmap *gmap;
-	int flush;
+व्योम gmap_unlink(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ *table,
+		 अचिन्हित दीर्घ vmaddr)
+अणु
+	काष्ठा gmap *gmap;
+	पूर्णांक flush;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(gmap, &mm->context.gmap_list, list) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(gmap, &mm->context.gmap_list, list) अणु
 		flush = __gmap_unlink_by_vmaddr(gmap, vmaddr);
-		if (flush)
+		अगर (flush)
 			gmap_flush_tlb(gmap);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void gmap_pmdp_xchg(struct gmap *gmap, pmd_t *old, pmd_t new,
-			   unsigned long gaddr);
+अटल व्योम gmap_pmdp_xchg(काष्ठा gmap *gmap, pmd_t *old, pmd_t new,
+			   अचिन्हित दीर्घ gaddr);
 
 /**
- * gmap_link - set up shadow page tables to connect a host to a guest address
- * @gmap: pointer to guest mapping meta data structure
+ * gmap_link - set up shaकरोw page tables to connect a host to a guest address
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
  * @gaddr: guest address
  * @vmaddr: vm address
  *
- * Returns 0 on success, -ENOMEM for out of memory conditions, and -EFAULT
- * if the vm address is already mapped to a different guest segment.
- * The mmap_lock of the mm that belongs to the address space must be held
- * when this function gets called.
+ * Returns 0 on success, -ENOMEM क्रम out of memory conditions, and -EFAULT
+ * अगर the vm address is alपढ़ोy mapped to a dअगरferent guest segment.
+ * The mmap_lock of the mm that beदीर्घs to the address space must be held
+ * when this function माला_लो called.
  */
-int __gmap_link(struct gmap *gmap, unsigned long gaddr, unsigned long vmaddr)
-{
-	struct mm_struct *mm;
-	unsigned long *table;
+पूर्णांक __gmap_link(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr, अचिन्हित दीर्घ vmaddr)
+अणु
+	काष्ठा mm_काष्ठा *mm;
+	अचिन्हित दीर्घ *table;
 	spinlock_t *ptl;
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	u64 unprot;
-	int rc;
+	पूर्णांक rc;
 
-	BUG_ON(gmap_is_shadow(gmap));
+	BUG_ON(gmap_is_shaकरोw(gmap));
 	/* Create higher level tables in the gmap page table */
 	table = gmap->table;
-	if ((gmap->asce & _ASCE_TYPE_MASK) >= _ASCE_TYPE_REGION1) {
+	अगर ((gmap->asce & _ASCE_TYPE_MASK) >= _ASCE_TYPE_REGION1) अणु
 		table += (gaddr & _REGION1_INDEX) >> _REGION1_SHIFT;
-		if ((*table & _REGION_ENTRY_INVALID) &&
+		अगर ((*table & _REGION_ENTRY_INVALID) &&
 		    gmap_alloc_table(gmap, table, _REGION2_ENTRY_EMPTY,
 				     gaddr & _REGION1_MASK))
-			return -ENOMEM;
-		table = (unsigned long *)(*table & _REGION_ENTRY_ORIGIN);
-	}
-	if ((gmap->asce & _ASCE_TYPE_MASK) >= _ASCE_TYPE_REGION2) {
+			वापस -ENOMEM;
+		table = (अचिन्हित दीर्घ *)(*table & _REGION_ENTRY_ORIGIN);
+	पूर्ण
+	अगर ((gmap->asce & _ASCE_TYPE_MASK) >= _ASCE_TYPE_REGION2) अणु
 		table += (gaddr & _REGION2_INDEX) >> _REGION2_SHIFT;
-		if ((*table & _REGION_ENTRY_INVALID) &&
+		अगर ((*table & _REGION_ENTRY_INVALID) &&
 		    gmap_alloc_table(gmap, table, _REGION3_ENTRY_EMPTY,
 				     gaddr & _REGION2_MASK))
-			return -ENOMEM;
-		table = (unsigned long *)(*table & _REGION_ENTRY_ORIGIN);
-	}
-	if ((gmap->asce & _ASCE_TYPE_MASK) >= _ASCE_TYPE_REGION3) {
+			वापस -ENOMEM;
+		table = (अचिन्हित दीर्घ *)(*table & _REGION_ENTRY_ORIGIN);
+	पूर्ण
+	अगर ((gmap->asce & _ASCE_TYPE_MASK) >= _ASCE_TYPE_REGION3) अणु
 		table += (gaddr & _REGION3_INDEX) >> _REGION3_SHIFT;
-		if ((*table & _REGION_ENTRY_INVALID) &&
+		अगर ((*table & _REGION_ENTRY_INVALID) &&
 		    gmap_alloc_table(gmap, table, _SEGMENT_ENTRY_EMPTY,
 				     gaddr & _REGION3_MASK))
-			return -ENOMEM;
-		table = (unsigned long *)(*table & _REGION_ENTRY_ORIGIN);
-	}
+			वापस -ENOMEM;
+		table = (अचिन्हित दीर्घ *)(*table & _REGION_ENTRY_ORIGIN);
+	पूर्ण
 	table += (gaddr & _SEGMENT_INDEX) >> _SEGMENT_SHIFT;
 	/* Walk the parent mm page table */
 	mm = gmap->mm;
@@ -586,2123 +587,2123 @@ int __gmap_link(struct gmap *gmap, unsigned long gaddr, unsigned long vmaddr)
 	pud = pud_offset(p4d, vmaddr);
 	VM_BUG_ON(pud_none(*pud));
 	/* large puds cannot yet be handled */
-	if (pud_large(*pud))
-		return -EFAULT;
+	अगर (pud_large(*pud))
+		वापस -EFAULT;
 	pmd = pmd_offset(pud, vmaddr);
 	VM_BUG_ON(pmd_none(*pmd));
 	/* Are we allowed to use huge pages? */
-	if (pmd_large(*pmd) && !gmap->mm->context.allow_gmap_hpage_1m)
-		return -EFAULT;
+	अगर (pmd_large(*pmd) && !gmap->mm->context.allow_gmap_hpage_1m)
+		वापस -EFAULT;
 	/* Link gmap segment table entry location to page table. */
 	rc = radix_tree_preload(GFP_KERNEL_ACCOUNT);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	ptl = pmd_lock(mm, pmd);
 	spin_lock(&gmap->guest_table_lock);
-	if (*table == _SEGMENT_ENTRY_EMPTY) {
+	अगर (*table == _SEGMENT_ENTRY_EMPTY) अणु
 		rc = radix_tree_insert(&gmap->host_to_guest,
 				       vmaddr >> PMD_SHIFT, table);
-		if (!rc) {
-			if (pmd_large(*pmd)) {
+		अगर (!rc) अणु
+			अगर (pmd_large(*pmd)) अणु
 				*table = (pmd_val(*pmd) &
 					  _SEGMENT_ENTRY_HARDWARE_BITS_LARGE)
 					| _SEGMENT_ENTRY_GMAP_UC;
-			} else
+			पूर्ण अन्यथा
 				*table = pmd_val(*pmd) &
 					_SEGMENT_ENTRY_HARDWARE_BITS;
-		}
-	} else if (*table & _SEGMENT_ENTRY_PROTECT &&
-		   !(pmd_val(*pmd) & _SEGMENT_ENTRY_PROTECT)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (*table & _SEGMENT_ENTRY_PROTECT &&
+		   !(pmd_val(*pmd) & _SEGMENT_ENTRY_PROTECT)) अणु
 		unprot = (u64)*table;
 		unprot &= ~_SEGMENT_ENTRY_PROTECT;
 		unprot |= _SEGMENT_ENTRY_GMAP_UC;
 		gmap_pmdp_xchg(gmap, (pmd_t *)table, __pmd(unprot), gaddr);
-	}
+	पूर्ण
 	spin_unlock(&gmap->guest_table_lock);
 	spin_unlock(ptl);
 	radix_tree_preload_end();
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * gmap_fault - resolve a fault on a guest address
- * @gmap: pointer to guest mapping meta data structure
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
  * @gaddr: guest address
- * @fault_flags: flags to pass down to handle_mm_fault()
+ * @fault_flags: flags to pass करोwn to handle_mm_fault()
  *
- * Returns 0 on success, -ENOMEM for out of memory conditions, and -EFAULT
- * if the vm address is already mapped to a different guest segment.
+ * Returns 0 on success, -ENOMEM क्रम out of memory conditions, and -EFAULT
+ * अगर the vm address is alपढ़ोy mapped to a dअगरferent guest segment.
  */
-int gmap_fault(struct gmap *gmap, unsigned long gaddr,
-	       unsigned int fault_flags)
-{
-	unsigned long vmaddr;
-	int rc;
+पूर्णांक gmap_fault(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr,
+	       अचिन्हित पूर्णांक fault_flags)
+अणु
+	अचिन्हित दीर्घ vmaddr;
+	पूर्णांक rc;
 	bool unlocked;
 
-	mmap_read_lock(gmap->mm);
+	mmap_पढ़ो_lock(gmap->mm);
 
 retry:
 	unlocked = false;
 	vmaddr = __gmap_translate(gmap, gaddr);
-	if (IS_ERR_VALUE(vmaddr)) {
+	अगर (IS_ERR_VALUE(vmaddr)) अणु
 		rc = vmaddr;
-		goto out_up;
-	}
-	if (fixup_user_fault(gmap->mm, vmaddr, fault_flags,
-			     &unlocked)) {
+		जाओ out_up;
+	पूर्ण
+	अगर (fixup_user_fault(gmap->mm, vmaddr, fault_flags,
+			     &unlocked)) अणु
 		rc = -EFAULT;
-		goto out_up;
-	}
+		जाओ out_up;
+	पूर्ण
 	/*
-	 * In the case that fixup_user_fault unlocked the mmap_lock during
-	 * faultin redo __gmap_translate to not race with a map/unmap_segment.
+	 * In the हाल that fixup_user_fault unlocked the mmap_lock during
+	 * faultin reकरो __gmap_translate to not race with a map/unmap_segment.
 	 */
-	if (unlocked)
-		goto retry;
+	अगर (unlocked)
+		जाओ retry;
 
 	rc = __gmap_link(gmap, gaddr, vmaddr);
 out_up:
-	mmap_read_unlock(gmap->mm);
-	return rc;
-}
+	mmap_पढ़ो_unlock(gmap->mm);
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_fault);
 
 /*
  * this function is assumed to be called with mmap_lock held
  */
-void __gmap_zap(struct gmap *gmap, unsigned long gaddr)
-{
-	unsigned long vmaddr;
+व्योम __gmap_zap(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr)
+अणु
+	अचिन्हित दीर्घ vmaddr;
 	spinlock_t *ptl;
 	pte_t *ptep;
 
-	/* Find the vm address for the guest address */
-	vmaddr = (unsigned long) radix_tree_lookup(&gmap->guest_to_host,
+	/* Find the vm address क्रम the guest address */
+	vmaddr = (अचिन्हित दीर्घ) radix_tree_lookup(&gmap->guest_to_host,
 						   gaddr >> PMD_SHIFT);
-	if (vmaddr) {
+	अगर (vmaddr) अणु
 		vmaddr |= gaddr & ~PMD_MASK;
-		/* Get pointer to the page table entry */
+		/* Get poपूर्णांकer to the page table entry */
 		ptep = get_locked_pte(gmap->mm, vmaddr, &ptl);
-		if (likely(ptep))
+		अगर (likely(ptep))
 			ptep_zap_unused(gmap->mm, vmaddr, ptep, 0);
 		pte_unmap_unlock(ptep, ptl);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(__gmap_zap);
 
-void gmap_discard(struct gmap *gmap, unsigned long from, unsigned long to)
-{
-	unsigned long gaddr, vmaddr, size;
-	struct vm_area_struct *vma;
+व्योम gmap_discard(काष्ठा gmap *gmap, अचिन्हित दीर्घ from, अचिन्हित दीर्घ to)
+अणु
+	अचिन्हित दीर्घ gaddr, vmaddr, size;
+	काष्ठा vm_area_काष्ठा *vma;
 
-	mmap_read_lock(gmap->mm);
-	for (gaddr = from; gaddr < to;
-	     gaddr = (gaddr + PMD_SIZE) & PMD_MASK) {
-		/* Find the vm address for the guest address */
-		vmaddr = (unsigned long)
+	mmap_पढ़ो_lock(gmap->mm);
+	क्रम (gaddr = from; gaddr < to;
+	     gaddr = (gaddr + PMD_SIZE) & PMD_MASK) अणु
+		/* Find the vm address क्रम the guest address */
+		vmaddr = (अचिन्हित दीर्घ)
 			radix_tree_lookup(&gmap->guest_to_host,
 					  gaddr >> PMD_SHIFT);
-		if (!vmaddr)
-			continue;
+		अगर (!vmaddr)
+			जारी;
 		vmaddr |= gaddr & ~PMD_MASK;
 		/* Find vma in the parent mm */
 		vma = find_vma(gmap->mm, vmaddr);
-		if (!vma)
-			continue;
+		अगर (!vma)
+			जारी;
 		/*
-		 * We do not discard pages that are backed by
-		 * hugetlbfs, so we don't have to refault them.
+		 * We करो not discard pages that are backed by
+		 * hugetlbfs, so we करोn't have to refault them.
 		 */
-		if (is_vm_hugetlb_page(vma))
-			continue;
+		अगर (is_vm_hugetlb_page(vma))
+			जारी;
 		size = min(to - gaddr, PMD_SIZE - (gaddr & ~PMD_MASK));
 		zap_page_range(vma, vmaddr, size);
-	}
-	mmap_read_unlock(gmap->mm);
-}
+	पूर्ण
+	mmap_पढ़ो_unlock(gmap->mm);
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_discard);
 
-static LIST_HEAD(gmap_notifier_list);
-static DEFINE_SPINLOCK(gmap_notifier_lock);
+अटल LIST_HEAD(gmap_notअगरier_list);
+अटल DEFINE_SPINLOCK(gmap_notअगरier_lock);
 
 /**
- * gmap_register_pte_notifier - register a pte invalidation callback
- * @nb: pointer to the gmap notifier block
+ * gmap_रेजिस्टर_pte_notअगरier - रेजिस्टर a pte invalidation callback
+ * @nb: poपूर्णांकer to the gmap notअगरier block
  */
-void gmap_register_pte_notifier(struct gmap_notifier *nb)
-{
-	spin_lock(&gmap_notifier_lock);
-	list_add_rcu(&nb->list, &gmap_notifier_list);
-	spin_unlock(&gmap_notifier_lock);
-}
-EXPORT_SYMBOL_GPL(gmap_register_pte_notifier);
+व्योम gmap_रेजिस्टर_pte_notअगरier(काष्ठा gmap_notअगरier *nb)
+अणु
+	spin_lock(&gmap_notअगरier_lock);
+	list_add_rcu(&nb->list, &gmap_notअगरier_list);
+	spin_unlock(&gmap_notअगरier_lock);
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_रेजिस्टर_pte_notअगरier);
 
 /**
- * gmap_unregister_pte_notifier - remove a pte invalidation callback
- * @nb: pointer to the gmap notifier block
+ * gmap_unरेजिस्टर_pte_notअगरier - हटाओ a pte invalidation callback
+ * @nb: poपूर्णांकer to the gmap notअगरier block
  */
-void gmap_unregister_pte_notifier(struct gmap_notifier *nb)
-{
-	spin_lock(&gmap_notifier_lock);
+व्योम gmap_unरेजिस्टर_pte_notअगरier(काष्ठा gmap_notअगरier *nb)
+अणु
+	spin_lock(&gmap_notअगरier_lock);
 	list_del_rcu(&nb->list);
-	spin_unlock(&gmap_notifier_lock);
+	spin_unlock(&gmap_notअगरier_lock);
 	synchronize_rcu();
-}
-EXPORT_SYMBOL_GPL(gmap_unregister_pte_notifier);
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_unरेजिस्टर_pte_notअगरier);
 
 /**
- * gmap_call_notifier - call all registered invalidation callbacks
- * @gmap: pointer to guest mapping meta data structure
- * @start: start virtual address in the guest address space
- * @end: end virtual address in the guest address space
+ * gmap_call_notअगरier - call all रेजिस्टरed invalidation callbacks
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
+ * @start: start भव address in the guest address space
+ * @end: end भव address in the guest address space
  */
-static void gmap_call_notifier(struct gmap *gmap, unsigned long start,
-			       unsigned long end)
-{
-	struct gmap_notifier *nb;
+अटल व्योम gmap_call_notअगरier(काष्ठा gmap *gmap, अचिन्हित दीर्घ start,
+			       अचिन्हित दीर्घ end)
+अणु
+	काष्ठा gmap_notअगरier *nb;
 
-	list_for_each_entry(nb, &gmap_notifier_list, list)
-		nb->notifier_call(gmap, start, end);
-}
+	list_क्रम_each_entry(nb, &gmap_notअगरier_list, list)
+		nb->notअगरier_call(gmap, start, end);
+पूर्ण
 
 /**
  * gmap_table_walk - walk the gmap page tables
- * @gmap: pointer to guest mapping meta data structure
- * @gaddr: virtual address in the guest address space
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
+ * @gaddr: भव address in the guest address space
  * @level: page table level to stop at
  *
- * Returns a table entry pointer for the given guest address and @level
- * @level=0 : returns a pointer to a page table table entry (or NULL)
- * @level=1 : returns a pointer to a segment table entry (or NULL)
- * @level=2 : returns a pointer to a region-3 table entry (or NULL)
- * @level=3 : returns a pointer to a region-2 table entry (or NULL)
- * @level=4 : returns a pointer to a region-1 table entry (or NULL)
+ * Returns a table entry poपूर्णांकer क्रम the given guest address and @level
+ * @level=0 : वापसs a poपूर्णांकer to a page table table entry (or शून्य)
+ * @level=1 : वापसs a poपूर्णांकer to a segment table entry (or शून्य)
+ * @level=2 : वापसs a poपूर्णांकer to a region-3 table entry (or शून्य)
+ * @level=3 : वापसs a poपूर्णांकer to a region-2 table entry (or शून्य)
+ * @level=4 : वापसs a poपूर्णांकer to a region-1 table entry (or शून्य)
  *
- * Returns NULL if the gmap page tables could not be walked to the
+ * Returns शून्य अगर the gmap page tables could not be walked to the
  * requested level.
  *
- * Note: Can also be called for shadow gmaps.
+ * Note: Can also be called क्रम shaकरोw gmaps.
  */
-static inline unsigned long *gmap_table_walk(struct gmap *gmap,
-					     unsigned long gaddr, int level)
-{
-	const int asce_type = gmap->asce & _ASCE_TYPE_MASK;
-	unsigned long *table = gmap->table;
+अटल अंतरभूत अचिन्हित दीर्घ *gmap_table_walk(काष्ठा gmap *gmap,
+					     अचिन्हित दीर्घ gaddr, पूर्णांक level)
+अणु
+	स्थिर पूर्णांक asce_type = gmap->asce & _ASCE_TYPE_MASK;
+	अचिन्हित दीर्घ *table = gmap->table;
 
-	if (gmap_is_shadow(gmap) && gmap->removed)
-		return NULL;
+	अगर (gmap_is_shaकरोw(gmap) && gmap->हटाओd)
+		वापस शून्य;
 
-	if (WARN_ON_ONCE(level > (asce_type >> 2) + 1))
-		return NULL;
+	अगर (WARN_ON_ONCE(level > (asce_type >> 2) + 1))
+		वापस शून्य;
 
-	if (asce_type != _ASCE_TYPE_REGION1 &&
+	अगर (asce_type != _ASCE_TYPE_REGION1 &&
 	    gaddr & (-1UL << (31 + (asce_type >> 2) * 11)))
-		return NULL;
+		वापस शून्य;
 
-	switch (asce_type) {
-	case _ASCE_TYPE_REGION1:
+	चयन (asce_type) अणु
+	हाल _ASCE_TYPE_REGION1:
 		table += (gaddr & _REGION1_INDEX) >> _REGION1_SHIFT;
-		if (level == 4)
-			break;
-		if (*table & _REGION_ENTRY_INVALID)
-			return NULL;
-		table = (unsigned long *)(*table & _REGION_ENTRY_ORIGIN);
+		अगर (level == 4)
+			अवरोध;
+		अगर (*table & _REGION_ENTRY_INVALID)
+			वापस शून्य;
+		table = (अचिन्हित दीर्घ *)(*table & _REGION_ENTRY_ORIGIN);
 		fallthrough;
-	case _ASCE_TYPE_REGION2:
+	हाल _ASCE_TYPE_REGION2:
 		table += (gaddr & _REGION2_INDEX) >> _REGION2_SHIFT;
-		if (level == 3)
-			break;
-		if (*table & _REGION_ENTRY_INVALID)
-			return NULL;
-		table = (unsigned long *)(*table & _REGION_ENTRY_ORIGIN);
+		अगर (level == 3)
+			अवरोध;
+		अगर (*table & _REGION_ENTRY_INVALID)
+			वापस शून्य;
+		table = (अचिन्हित दीर्घ *)(*table & _REGION_ENTRY_ORIGIN);
 		fallthrough;
-	case _ASCE_TYPE_REGION3:
+	हाल _ASCE_TYPE_REGION3:
 		table += (gaddr & _REGION3_INDEX) >> _REGION3_SHIFT;
-		if (level == 2)
-			break;
-		if (*table & _REGION_ENTRY_INVALID)
-			return NULL;
-		table = (unsigned long *)(*table & _REGION_ENTRY_ORIGIN);
+		अगर (level == 2)
+			अवरोध;
+		अगर (*table & _REGION_ENTRY_INVALID)
+			वापस शून्य;
+		table = (अचिन्हित दीर्घ *)(*table & _REGION_ENTRY_ORIGIN);
 		fallthrough;
-	case _ASCE_TYPE_SEGMENT:
+	हाल _ASCE_TYPE_SEGMENT:
 		table += (gaddr & _SEGMENT_INDEX) >> _SEGMENT_SHIFT;
-		if (level == 1)
-			break;
-		if (*table & _REGION_ENTRY_INVALID)
-			return NULL;
-		table = (unsigned long *)(*table & _SEGMENT_ENTRY_ORIGIN);
+		अगर (level == 1)
+			अवरोध;
+		अगर (*table & _REGION_ENTRY_INVALID)
+			वापस शून्य;
+		table = (अचिन्हित दीर्घ *)(*table & _SEGMENT_ENTRY_ORIGIN);
 		table += (gaddr & _PAGE_INDEX) >> _PAGE_SHIFT;
-	}
-	return table;
-}
+	पूर्ण
+	वापस table;
+पूर्ण
 
 /**
  * gmap_pte_op_walk - walk the gmap page table, get the page table lock
- *		      and return the pte pointer
- * @gmap: pointer to guest mapping meta data structure
- * @gaddr: virtual address in the guest address space
- * @ptl: pointer to the spinlock pointer
+ *		      and वापस the pte poपूर्णांकer
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
+ * @gaddr: भव address in the guest address space
+ * @ptl: poपूर्णांकer to the spinlock poपूर्णांकer
  *
- * Returns a pointer to the locked pte for a guest address, or NULL
+ * Returns a poपूर्णांकer to the locked pte क्रम a guest address, or शून्य
  */
-static pte_t *gmap_pte_op_walk(struct gmap *gmap, unsigned long gaddr,
+अटल pte_t *gmap_pte_op_walk(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr,
 			       spinlock_t **ptl)
-{
-	unsigned long *table;
+अणु
+	अचिन्हित दीर्घ *table;
 
-	BUG_ON(gmap_is_shadow(gmap));
-	/* Walk the gmap page table, lock and get pte pointer */
-	table = gmap_table_walk(gmap, gaddr, 1); /* get segment pointer */
-	if (!table || *table & _SEGMENT_ENTRY_INVALID)
-		return NULL;
-	return pte_alloc_map_lock(gmap->mm, (pmd_t *) table, gaddr, ptl);
-}
+	BUG_ON(gmap_is_shaकरोw(gmap));
+	/* Walk the gmap page table, lock and get pte poपूर्णांकer */
+	table = gmap_table_walk(gmap, gaddr, 1); /* get segment poपूर्णांकer */
+	अगर (!table || *table & _SEGMENT_ENTRY_INVALID)
+		वापस शून्य;
+	वापस pte_alloc_map_lock(gmap->mm, (pmd_t *) table, gaddr, ptl);
+पूर्ण
 
 /**
- * gmap_pte_op_fixup - force a page in and connect the gmap page table
- * @gmap: pointer to guest mapping meta data structure
- * @gaddr: virtual address in the guest address space
+ * gmap_pte_op_fixup - क्रमce a page in and connect the gmap page table
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
+ * @gaddr: भव address in the guest address space
  * @vmaddr: address in the host process address space
  * @prot: indicates access rights: PROT_NONE, PROT_READ or PROT_WRITE
  *
- * Returns 0 if the caller can retry __gmap_translate (might fail again),
- * -ENOMEM if out of memory and -EFAULT if anything goes wrong while fixing
+ * Returns 0 अगर the caller can retry __gmap_translate (might fail again),
+ * -ENOMEM अगर out of memory and -EFAULT अगर anything goes wrong जबतक fixing
  * up or connecting the gmap page table.
  */
-static int gmap_pte_op_fixup(struct gmap *gmap, unsigned long gaddr,
-			     unsigned long vmaddr, int prot)
-{
-	struct mm_struct *mm = gmap->mm;
-	unsigned int fault_flags;
+अटल पूर्णांक gmap_pte_op_fixup(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr,
+			     अचिन्हित दीर्घ vmaddr, पूर्णांक prot)
+अणु
+	काष्ठा mm_काष्ठा *mm = gmap->mm;
+	अचिन्हित पूर्णांक fault_flags;
 	bool unlocked = false;
 
-	BUG_ON(gmap_is_shadow(gmap));
+	BUG_ON(gmap_is_shaकरोw(gmap));
 	fault_flags = (prot == PROT_WRITE) ? FAULT_FLAG_WRITE : 0;
-	if (fixup_user_fault(mm, vmaddr, fault_flags, &unlocked))
-		return -EFAULT;
-	if (unlocked)
+	अगर (fixup_user_fault(mm, vmaddr, fault_flags, &unlocked))
+		वापस -EFAULT;
+	अगर (unlocked)
 		/* lost mmap_lock, caller has to retry __gmap_translate */
-		return 0;
+		वापस 0;
 	/* Connect the page tables */
-	return __gmap_link(gmap, gaddr, vmaddr);
-}
+	वापस __gmap_link(gmap, gaddr, vmaddr);
+पूर्ण
 
 /**
  * gmap_pte_op_end - release the page table lock
- * @ptl: pointer to the spinlock pointer
+ * @ptl: poपूर्णांकer to the spinlock poपूर्णांकer
  */
-static void gmap_pte_op_end(spinlock_t *ptl)
-{
-	if (ptl)
+अटल व्योम gmap_pte_op_end(spinlock_t *ptl)
+अणु
+	अगर (ptl)
 		spin_unlock(ptl);
-}
+पूर्ण
 
 /**
  * gmap_pmd_op_walk - walk the gmap tables, get the guest table lock
- *		      and return the pmd pointer
- * @gmap: pointer to guest mapping meta data structure
- * @gaddr: virtual address in the guest address space
+ *		      and वापस the pmd poपूर्णांकer
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
+ * @gaddr: भव address in the guest address space
  *
- * Returns a pointer to the pmd for a guest address, or NULL
+ * Returns a poपूर्णांकer to the pmd क्रम a guest address, or शून्य
  */
-static inline pmd_t *gmap_pmd_op_walk(struct gmap *gmap, unsigned long gaddr)
-{
+अटल अंतरभूत pmd_t *gmap_pmd_op_walk(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr)
+अणु
 	pmd_t *pmdp;
 
-	BUG_ON(gmap_is_shadow(gmap));
+	BUG_ON(gmap_is_shaकरोw(gmap));
 	pmdp = (pmd_t *) gmap_table_walk(gmap, gaddr, 1);
-	if (!pmdp)
-		return NULL;
+	अगर (!pmdp)
+		वापस शून्य;
 
 	/* without huge pages, there is no need to take the table lock */
-	if (!gmap->mm->context.allow_gmap_hpage_1m)
-		return pmd_none(*pmdp) ? NULL : pmdp;
+	अगर (!gmap->mm->context.allow_gmap_hpage_1m)
+		वापस pmd_none(*pmdp) ? शून्य : pmdp;
 
 	spin_lock(&gmap->guest_table_lock);
-	if (pmd_none(*pmdp)) {
+	अगर (pmd_none(*pmdp)) अणु
 		spin_unlock(&gmap->guest_table_lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* 4k page table entries are locked via the pte (pte_alloc_map_lock). */
-	if (!pmd_large(*pmdp))
+	अगर (!pmd_large(*pmdp))
 		spin_unlock(&gmap->guest_table_lock);
-	return pmdp;
-}
+	वापस pmdp;
+पूर्ण
 
 /**
- * gmap_pmd_op_end - release the guest_table_lock if needed
- * @gmap: pointer to the guest mapping meta data structure
- * @pmdp: pointer to the pmd
+ * gmap_pmd_op_end - release the guest_table_lock अगर needed
+ * @gmap: poपूर्णांकer to the guest mapping meta data काष्ठाure
+ * @pmdp: poपूर्णांकer to the pmd
  */
-static inline void gmap_pmd_op_end(struct gmap *gmap, pmd_t *pmdp)
-{
-	if (pmd_large(*pmdp))
+अटल अंतरभूत व्योम gmap_pmd_op_end(काष्ठा gmap *gmap, pmd_t *pmdp)
+अणु
+	अगर (pmd_large(*pmdp))
 		spin_unlock(&gmap->guest_table_lock);
-}
+पूर्ण
 
 /*
- * gmap_protect_pmd - remove access rights to memory and set pmd notification bits
- * @pmdp: pointer to the pmd to be protected
+ * gmap_protect_pmd - हटाओ access rights to memory and set pmd notअगरication bits
+ * @pmdp: poपूर्णांकer to the pmd to be रक्षित
  * @prot: indicates access rights: PROT_NONE, PROT_READ or PROT_WRITE
- * @bits: notification bits to set
+ * @bits: notअगरication bits to set
  *
  * Returns:
- * 0 if successfully protected
- * -EAGAIN if a fixup is needed
- * -EINVAL if unsupported notifier bits have been specified
+ * 0 अगर successfully रक्षित
+ * -EAGAIN अगर a fixup is needed
+ * -EINVAL अगर unsupported notअगरier bits have been specअगरied
  *
- * Expected to be called with sg->mm->mmap_lock in read and
+ * Expected to be called with sg->mm->mmap_lock in पढ़ो and
  * guest_table_lock held.
  */
-static int gmap_protect_pmd(struct gmap *gmap, unsigned long gaddr,
-			    pmd_t *pmdp, int prot, unsigned long bits)
-{
-	int pmd_i = pmd_val(*pmdp) & _SEGMENT_ENTRY_INVALID;
-	int pmd_p = pmd_val(*pmdp) & _SEGMENT_ENTRY_PROTECT;
+अटल पूर्णांक gmap_protect_pmd(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr,
+			    pmd_t *pmdp, पूर्णांक prot, अचिन्हित दीर्घ bits)
+अणु
+	पूर्णांक pmd_i = pmd_val(*pmdp) & _SEGMENT_ENTRY_INVALID;
+	पूर्णांक pmd_p = pmd_val(*pmdp) & _SEGMENT_ENTRY_PROTECT;
 	pmd_t new = *pmdp;
 
 	/* Fixup needed */
-	if ((pmd_i && (prot != PROT_NONE)) || (pmd_p && (prot == PROT_WRITE)))
-		return -EAGAIN;
+	अगर ((pmd_i && (prot != PROT_NONE)) || (pmd_p && (prot == PROT_WRITE)))
+		वापस -EAGAIN;
 
-	if (prot == PROT_NONE && !pmd_i) {
+	अगर (prot == PROT_NONE && !pmd_i) अणु
 		pmd_val(new) |= _SEGMENT_ENTRY_INVALID;
 		gmap_pmdp_xchg(gmap, pmdp, new, gaddr);
-	}
+	पूर्ण
 
-	if (prot == PROT_READ && !pmd_p) {
+	अगर (prot == PROT_READ && !pmd_p) अणु
 		pmd_val(new) &= ~_SEGMENT_ENTRY_INVALID;
 		pmd_val(new) |= _SEGMENT_ENTRY_PROTECT;
 		gmap_pmdp_xchg(gmap, pmdp, new, gaddr);
-	}
+	पूर्ण
 
-	if (bits & GMAP_NOTIFY_MPROT)
+	अगर (bits & GMAP_NOTIFY_MPROT)
 		pmd_val(*pmdp) |= _SEGMENT_ENTRY_GMAP_IN;
 
-	/* Shadow GMAP protection needs split PMDs */
-	if (bits & GMAP_NOTIFY_SHADOW)
-		return -EINVAL;
+	/* Shaकरोw GMAP protection needs split PMDs */
+	अगर (bits & GMAP_NOTIFY_SHADOW)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * gmap_protect_pte - remove access rights to memory and set pgste bits
- * @gmap: pointer to guest mapping meta data structure
- * @gaddr: virtual address in the guest address space
- * @pmdp: pointer to the pmd associated with the pte
+ * gmap_protect_pte - हटाओ access rights to memory and set pgste bits
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
+ * @gaddr: भव address in the guest address space
+ * @pmdp: poपूर्णांकer to the pmd associated with the pte
  * @prot: indicates access rights: PROT_NONE, PROT_READ or PROT_WRITE
- * @bits: notification bits to set
+ * @bits: notअगरication bits to set
  *
- * Returns 0 if successfully protected, -ENOMEM if out of memory and
- * -EAGAIN if a fixup is needed.
+ * Returns 0 अगर successfully रक्षित, -ENOMEM अगर out of memory and
+ * -EAGAIN अगर a fixup is needed.
  *
- * Expected to be called with sg->mm->mmap_lock in read
+ * Expected to be called with sg->mm->mmap_lock in पढ़ो
  */
-static int gmap_protect_pte(struct gmap *gmap, unsigned long gaddr,
-			    pmd_t *pmdp, int prot, unsigned long bits)
-{
-	int rc;
+अटल पूर्णांक gmap_protect_pte(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr,
+			    pmd_t *pmdp, पूर्णांक prot, अचिन्हित दीर्घ bits)
+अणु
+	पूर्णांक rc;
 	pte_t *ptep;
-	spinlock_t *ptl = NULL;
-	unsigned long pbits = 0;
+	spinlock_t *ptl = शून्य;
+	अचिन्हित दीर्घ pbits = 0;
 
-	if (pmd_val(*pmdp) & _SEGMENT_ENTRY_INVALID)
-		return -EAGAIN;
+	अगर (pmd_val(*pmdp) & _SEGMENT_ENTRY_INVALID)
+		वापस -EAGAIN;
 
 	ptep = pte_alloc_map_lock(gmap->mm, pmdp, gaddr, &ptl);
-	if (!ptep)
-		return -ENOMEM;
+	अगर (!ptep)
+		वापस -ENOMEM;
 
 	pbits |= (bits & GMAP_NOTIFY_MPROT) ? PGSTE_IN_BIT : 0;
 	pbits |= (bits & GMAP_NOTIFY_SHADOW) ? PGSTE_VSIE_BIT : 0;
 	/* Protect and unlock. */
-	rc = ptep_force_prot(gmap->mm, gaddr, ptep, prot, pbits);
+	rc = ptep_क्रमce_prot(gmap->mm, gaddr, ptep, prot, pbits);
 	gmap_pte_op_end(ptl);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * gmap_protect_range - remove access rights to memory and set pgste bits
- * @gmap: pointer to guest mapping meta data structure
- * @gaddr: virtual address in the guest address space
+ * gmap_protect_range - हटाओ access rights to memory and set pgste bits
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
+ * @gaddr: भव address in the guest address space
  * @len: size of area
  * @prot: indicates access rights: PROT_NONE, PROT_READ or PROT_WRITE
- * @bits: pgste notification bits to set
+ * @bits: pgste notअगरication bits to set
  *
- * Returns 0 if successfully protected, -ENOMEM if out of memory and
- * -EFAULT if gaddr is invalid (or mapping for shadows is missing).
+ * Returns 0 अगर successfully रक्षित, -ENOMEM अगर out of memory and
+ * -EFAULT अगर gaddr is invalid (or mapping क्रम shaकरोws is missing).
  *
- * Called with sg->mm->mmap_lock in read.
+ * Called with sg->mm->mmap_lock in पढ़ो.
  */
-static int gmap_protect_range(struct gmap *gmap, unsigned long gaddr,
-			      unsigned long len, int prot, unsigned long bits)
-{
-	unsigned long vmaddr, dist;
+अटल पूर्णांक gmap_protect_range(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr,
+			      अचिन्हित दीर्घ len, पूर्णांक prot, अचिन्हित दीर्घ bits)
+अणु
+	अचिन्हित दीर्घ vmaddr, dist;
 	pmd_t *pmdp;
-	int rc;
+	पूर्णांक rc;
 
-	BUG_ON(gmap_is_shadow(gmap));
-	while (len) {
+	BUG_ON(gmap_is_shaकरोw(gmap));
+	जबतक (len) अणु
 		rc = -EAGAIN;
 		pmdp = gmap_pmd_op_walk(gmap, gaddr);
-		if (pmdp) {
-			if (!pmd_large(*pmdp)) {
+		अगर (pmdp) अणु
+			अगर (!pmd_large(*pmdp)) अणु
 				rc = gmap_protect_pte(gmap, gaddr, pmdp, prot,
 						      bits);
-				if (!rc) {
+				अगर (!rc) अणु
 					len -= PAGE_SIZE;
 					gaddr += PAGE_SIZE;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				rc = gmap_protect_pmd(gmap, gaddr, pmdp, prot,
 						      bits);
-				if (!rc) {
+				अगर (!rc) अणु
 					dist = HPAGE_SIZE - (gaddr & ~HPAGE_MASK);
 					len = len < dist ? 0 : len - dist;
 					gaddr = (gaddr & HPAGE_MASK) + HPAGE_SIZE;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			gmap_pmd_op_end(gmap, pmdp);
-		}
-		if (rc) {
-			if (rc == -EINVAL)
-				return rc;
+		पूर्ण
+		अगर (rc) अणु
+			अगर (rc == -EINVAL)
+				वापस rc;
 
 			/* -EAGAIN, fixup of userspace mm and gmap */
 			vmaddr = __gmap_translate(gmap, gaddr);
-			if (IS_ERR_VALUE(vmaddr))
-				return vmaddr;
+			अगर (IS_ERR_VALUE(vmaddr))
+				वापस vmaddr;
 			rc = gmap_pte_op_fixup(gmap, gaddr, vmaddr, prot);
-			if (rc)
-				return rc;
-		}
-	}
-	return 0;
-}
+			अगर (rc)
+				वापस rc;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * gmap_mprotect_notify - change access rights for a range of ptes and
- *                        call the notifier if any pte changes again
- * @gmap: pointer to guest mapping meta data structure
- * @gaddr: virtual address in the guest address space
+ * gmap_mprotect_notअगरy - change access rights क्रम a range of ptes and
+ *                        call the notअगरier अगर any pte changes again
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
+ * @gaddr: भव address in the guest address space
  * @len: size of area
  * @prot: indicates access rights: PROT_NONE, PROT_READ or PROT_WRITE
  *
- * Returns 0 if for each page in the given range a gmap mapping exists,
- * the new access rights could be set and the notifier could be armed.
- * If the gmap mapping is missing for one or more pages -EFAULT is
- * returned. If no memory could be allocated -ENOMEM is returned.
+ * Returns 0 अगर क्रम each page in the given range a gmap mapping exists,
+ * the new access rights could be set and the notअगरier could be armed.
+ * If the gmap mapping is missing क्रम one or more pages -EFAULT is
+ * वापसed. If no memory could be allocated -ENOMEM is वापसed.
  * This function establishes missing page table entries.
  */
-int gmap_mprotect_notify(struct gmap *gmap, unsigned long gaddr,
-			 unsigned long len, int prot)
-{
-	int rc;
+पूर्णांक gmap_mprotect_notअगरy(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr,
+			 अचिन्हित दीर्घ len, पूर्णांक prot)
+अणु
+	पूर्णांक rc;
 
-	if ((gaddr & ~PAGE_MASK) || (len & ~PAGE_MASK) || gmap_is_shadow(gmap))
-		return -EINVAL;
-	if (!MACHINE_HAS_ESOP && prot == PROT_READ)
-		return -EINVAL;
-	mmap_read_lock(gmap->mm);
+	अगर ((gaddr & ~PAGE_MASK) || (len & ~PAGE_MASK) || gmap_is_shaकरोw(gmap))
+		वापस -EINVAL;
+	अगर (!MACHINE_HAS_ESOP && prot == PROT_READ)
+		वापस -EINVAL;
+	mmap_पढ़ो_lock(gmap->mm);
 	rc = gmap_protect_range(gmap, gaddr, len, prot, GMAP_NOTIFY_MPROT);
-	mmap_read_unlock(gmap->mm);
-	return rc;
-}
-EXPORT_SYMBOL_GPL(gmap_mprotect_notify);
+	mmap_पढ़ो_unlock(gmap->mm);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_mprotect_notअगरy);
 
 /**
- * gmap_read_table - get an unsigned long value from a guest page table using
- *                   absolute addressing, without marking the page referenced.
- * @gmap: pointer to guest mapping meta data structure
- * @gaddr: virtual address in the guest address space
- * @val: pointer to the unsigned long value to return
+ * gmap_पढ़ो_table - get an अचिन्हित दीर्घ value from a guest page table using
+ *                   असलolute addressing, without marking the page referenced.
+ * @gmap: poपूर्णांकer to guest mapping meta data काष्ठाure
+ * @gaddr: भव address in the guest address space
+ * @val: poपूर्णांकer to the अचिन्हित दीर्घ value to वापस
  *
- * Returns 0 if the value was read, -ENOMEM if out of memory and -EFAULT
- * if reading using the virtual address failed. -EINVAL if called on a gmap
- * shadow.
+ * Returns 0 अगर the value was पढ़ो, -ENOMEM अगर out of memory and -EFAULT
+ * अगर पढ़ोing using the भव address failed. -EINVAL अगर called on a gmap
+ * shaकरोw.
  *
- * Called with gmap->mm->mmap_lock in read.
+ * Called with gmap->mm->mmap_lock in पढ़ो.
  */
-int gmap_read_table(struct gmap *gmap, unsigned long gaddr, unsigned long *val)
-{
-	unsigned long address, vmaddr;
+पूर्णांक gmap_पढ़ो_table(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr, अचिन्हित दीर्घ *val)
+अणु
+	अचिन्हित दीर्घ address, vmaddr;
 	spinlock_t *ptl;
 	pte_t *ptep, pte;
-	int rc;
+	पूर्णांक rc;
 
-	if (gmap_is_shadow(gmap))
-		return -EINVAL;
+	अगर (gmap_is_shaकरोw(gmap))
+		वापस -EINVAL;
 
-	while (1) {
+	जबतक (1) अणु
 		rc = -EAGAIN;
 		ptep = gmap_pte_op_walk(gmap, gaddr, &ptl);
-		if (ptep) {
+		अगर (ptep) अणु
 			pte = *ptep;
-			if (pte_present(pte) && (pte_val(pte) & _PAGE_READ)) {
+			अगर (pte_present(pte) && (pte_val(pte) & _PAGE_READ)) अणु
 				address = pte_val(pte) & PAGE_MASK;
 				address += gaddr & ~PAGE_MASK;
-				*val = *(unsigned long *) address;
+				*val = *(अचिन्हित दीर्घ *) address;
 				pte_val(*ptep) |= _PAGE_YOUNG;
 				/* Do *NOT* clear the _PAGE_INVALID bit! */
 				rc = 0;
-			}
+			पूर्ण
 			gmap_pte_op_end(ptl);
-		}
-		if (!rc)
-			break;
+		पूर्ण
+		अगर (!rc)
+			अवरोध;
 		vmaddr = __gmap_translate(gmap, gaddr);
-		if (IS_ERR_VALUE(vmaddr)) {
+		अगर (IS_ERR_VALUE(vmaddr)) अणु
 			rc = vmaddr;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		rc = gmap_pte_op_fixup(gmap, gaddr, vmaddr, PROT_READ);
-		if (rc)
-			break;
-	}
-	return rc;
-}
-EXPORT_SYMBOL_GPL(gmap_read_table);
+		अगर (rc)
+			अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_पढ़ो_table);
 
 /**
  * gmap_insert_rmap - add a rmap to the host_to_rmap radix tree
- * @sg: pointer to the shadow guest address space structure
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
  * @vmaddr: vm address associated with the rmap
- * @rmap: pointer to the rmap structure
+ * @rmap: poपूर्णांकer to the rmap काष्ठाure
  *
  * Called with the sg->guest_table_lock
  */
-static inline void gmap_insert_rmap(struct gmap *sg, unsigned long vmaddr,
-				    struct gmap_rmap *rmap)
-{
-	void __rcu **slot;
+अटल अंतरभूत व्योम gmap_insert_rmap(काष्ठा gmap *sg, अचिन्हित दीर्घ vmaddr,
+				    काष्ठा gmap_rmap *rmap)
+अणु
+	व्योम __rcu **slot;
 
-	BUG_ON(!gmap_is_shadow(sg));
+	BUG_ON(!gmap_is_shaकरोw(sg));
 	slot = radix_tree_lookup_slot(&sg->host_to_rmap, vmaddr >> PAGE_SHIFT);
-	if (slot) {
-		rmap->next = radix_tree_deref_slot_protected(slot,
+	अगर (slot) अणु
+		rmap->next = radix_tree_deref_slot_रक्षित(slot,
 							&sg->guest_table_lock);
 		radix_tree_replace_slot(&sg->host_to_rmap, slot, rmap);
-	} else {
-		rmap->next = NULL;
+	पूर्ण अन्यथा अणु
+		rmap->next = शून्य;
 		radix_tree_insert(&sg->host_to_rmap, vmaddr >> PAGE_SHIFT,
 				  rmap);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * gmap_protect_rmap - restrict access rights to memory (RO) and create an rmap
- * @sg: pointer to the shadow guest address space structure
- * @raddr: rmap address in the shadow gmap
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: rmap address in the shaकरोw gmap
  * @paddr: address in the parent guest address space
  * @len: length of the memory area to protect
  *
- * Returns 0 if successfully protected and the rmap was created, -ENOMEM
- * if out of memory and -EFAULT if paddr is invalid.
+ * Returns 0 अगर successfully रक्षित and the rmap was created, -ENOMEM
+ * अगर out of memory and -EFAULT अगर paddr is invalid.
  */
-static int gmap_protect_rmap(struct gmap *sg, unsigned long raddr,
-			     unsigned long paddr, unsigned long len)
-{
-	struct gmap *parent;
-	struct gmap_rmap *rmap;
-	unsigned long vmaddr;
+अटल पूर्णांक gmap_protect_rmap(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr,
+			     अचिन्हित दीर्घ paddr, अचिन्हित दीर्घ len)
+अणु
+	काष्ठा gmap *parent;
+	काष्ठा gmap_rmap *rmap;
+	अचिन्हित दीर्घ vmaddr;
 	spinlock_t *ptl;
 	pte_t *ptep;
-	int rc;
+	पूर्णांक rc;
 
-	BUG_ON(!gmap_is_shadow(sg));
+	BUG_ON(!gmap_is_shaकरोw(sg));
 	parent = sg->parent;
-	while (len) {
+	जबतक (len) अणु
 		vmaddr = __gmap_translate(parent, paddr);
-		if (IS_ERR_VALUE(vmaddr))
-			return vmaddr;
-		rmap = kzalloc(sizeof(*rmap), GFP_KERNEL_ACCOUNT);
-		if (!rmap)
-			return -ENOMEM;
+		अगर (IS_ERR_VALUE(vmaddr))
+			वापस vmaddr;
+		rmap = kzalloc(माप(*rmap), GFP_KERNEL_ACCOUNT);
+		अगर (!rmap)
+			वापस -ENOMEM;
 		rmap->raddr = raddr;
 		rc = radix_tree_preload(GFP_KERNEL_ACCOUNT);
-		if (rc) {
-			kfree(rmap);
-			return rc;
-		}
+		अगर (rc) अणु
+			kमुक्त(rmap);
+			वापस rc;
+		पूर्ण
 		rc = -EAGAIN;
 		ptep = gmap_pte_op_walk(parent, paddr, &ptl);
-		if (ptep) {
+		अगर (ptep) अणु
 			spin_lock(&sg->guest_table_lock);
-			rc = ptep_force_prot(parent->mm, paddr, ptep, PROT_READ,
+			rc = ptep_क्रमce_prot(parent->mm, paddr, ptep, PROT_READ,
 					     PGSTE_VSIE_BIT);
-			if (!rc)
+			अगर (!rc)
 				gmap_insert_rmap(sg, vmaddr, rmap);
 			spin_unlock(&sg->guest_table_lock);
 			gmap_pte_op_end(ptl);
-		}
+		पूर्ण
 		radix_tree_preload_end();
-		if (rc) {
-			kfree(rmap);
+		अगर (rc) अणु
+			kमुक्त(rmap);
 			rc = gmap_pte_op_fixup(parent, paddr, vmaddr, PROT_READ);
-			if (rc)
-				return rc;
-			continue;
-		}
+			अगर (rc)
+				वापस rc;
+			जारी;
+		पूर्ण
 		paddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define _SHADOW_RMAP_MASK	0x7
-#define _SHADOW_RMAP_REGION1	0x5
-#define _SHADOW_RMAP_REGION2	0x4
-#define _SHADOW_RMAP_REGION3	0x3
-#define _SHADOW_RMAP_SEGMENT	0x2
-#define _SHADOW_RMAP_PGTABLE	0x1
+#घोषणा _SHADOW_RMAP_MASK	0x7
+#घोषणा _SHADOW_RMAP_REGION1	0x5
+#घोषणा _SHADOW_RMAP_REGION2	0x4
+#घोषणा _SHADOW_RMAP_REGION3	0x3
+#घोषणा _SHADOW_RMAP_SEGMENT	0x2
+#घोषणा _SHADOW_RMAP_PGTABLE	0x1
 
 /**
  * gmap_idte_one - invalidate a single region or segment table entry
  * @asce: region or segment table *origin* + table-type bits
- * @vaddr: virtual address to identify the table entry to flush
+ * @vaddr: भव address to identअगरy the table entry to flush
  *
  * The invalid bit of a single region or segment table entry is set
  * and the associated TLB entries depending on the entry are flushed.
- * The table-type of the @asce identifies the portion of the @vaddr
+ * The table-type of the @asce identअगरies the portion of the @vaddr
  * that is used as the invalidation index.
  */
-static inline void gmap_idte_one(unsigned long asce, unsigned long vaddr)
-{
-	asm volatile(
+अटल अंतरभूत व्योम gmap_idte_one(अचिन्हित दीर्घ asce, अचिन्हित दीर्घ vaddr)
+अणु
+	यंत्र अस्थिर(
 		"	.insn	rrf,0xb98e0000,%0,%1,0,0"
 		: : "a" (asce), "a" (vaddr) : "cc", "memory");
-}
+पूर्ण
 
 /**
- * gmap_unshadow_page - remove a page from a shadow page table
- * @sg: pointer to the shadow guest address space structure
- * @raddr: rmap address in the shadow guest address space
+ * gmap_unshaकरोw_page - हटाओ a page from a shaकरोw page table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: rmap address in the shaकरोw guest address space
  *
  * Called with the sg->guest_table_lock
  */
-static void gmap_unshadow_page(struct gmap *sg, unsigned long raddr)
-{
-	unsigned long *table;
+अटल व्योम gmap_unshaकरोw_page(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr)
+अणु
+	अचिन्हित दीर्घ *table;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	table = gmap_table_walk(sg, raddr, 0); /* get page table pointer */
-	if (!table || *table & _PAGE_INVALID)
-		return;
-	gmap_call_notifier(sg, raddr, raddr + _PAGE_SIZE - 1);
-	ptep_unshadow_pte(sg->mm, raddr, (pte_t *) table);
-}
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	table = gmap_table_walk(sg, raddr, 0); /* get page table poपूर्णांकer */
+	अगर (!table || *table & _PAGE_INVALID)
+		वापस;
+	gmap_call_notअगरier(sg, raddr, raddr + _PAGE_SIZE - 1);
+	ptep_unshaकरोw_pte(sg->mm, raddr, (pte_t *) table);
+पूर्ण
 
 /**
- * __gmap_unshadow_pgt - remove all entries from a shadow page table
- * @sg: pointer to the shadow guest address space structure
- * @raddr: rmap address in the shadow guest address space
- * @pgt: pointer to the start of a shadow page table
+ * __gmap_unshaकरोw_pgt - हटाओ all entries from a shaकरोw page table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: rmap address in the shaकरोw guest address space
+ * @pgt: poपूर्णांकer to the start of a shaकरोw page table
  *
  * Called with the sg->guest_table_lock
  */
-static void __gmap_unshadow_pgt(struct gmap *sg, unsigned long raddr,
-				unsigned long *pgt)
-{
-	int i;
+अटल व्योम __gmap_unshaकरोw_pgt(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr,
+				अचिन्हित दीर्घ *pgt)
+अणु
+	पूर्णांक i;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	for (i = 0; i < _PAGE_ENTRIES; i++, raddr += _PAGE_SIZE)
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	क्रम (i = 0; i < _PAGE_ENTRIES; i++, raddr += _PAGE_SIZE)
 		pgt[i] = _PAGE_INVALID;
-}
+पूर्ण
 
 /**
- * gmap_unshadow_pgt - remove a shadow page table from a segment entry
- * @sg: pointer to the shadow guest address space structure
- * @raddr: address in the shadow guest address space
+ * gmap_unshaकरोw_pgt - हटाओ a shaकरोw page table from a segment entry
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: address in the shaकरोw guest address space
  *
  * Called with the sg->guest_table_lock
  */
-static void gmap_unshadow_pgt(struct gmap *sg, unsigned long raddr)
-{
-	unsigned long sto, *ste, *pgt;
-	struct page *page;
+अटल व्योम gmap_unshaकरोw_pgt(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr)
+अणु
+	अचिन्हित दीर्घ sto, *ste, *pgt;
+	काष्ठा page *page;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	ste = gmap_table_walk(sg, raddr, 1); /* get segment pointer */
-	if (!ste || !(*ste & _SEGMENT_ENTRY_ORIGIN))
-		return;
-	gmap_call_notifier(sg, raddr, raddr + _SEGMENT_SIZE - 1);
-	sto = (unsigned long) (ste - ((raddr & _SEGMENT_INDEX) >> _SEGMENT_SHIFT));
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	ste = gmap_table_walk(sg, raddr, 1); /* get segment poपूर्णांकer */
+	अगर (!ste || !(*ste & _SEGMENT_ENTRY_ORIGIN))
+		वापस;
+	gmap_call_notअगरier(sg, raddr, raddr + _SEGMENT_SIZE - 1);
+	sto = (अचिन्हित दीर्घ) (ste - ((raddr & _SEGMENT_INDEX) >> _SEGMENT_SHIFT));
 	gmap_idte_one(sto | _ASCE_TYPE_SEGMENT, raddr);
-	pgt = (unsigned long *)(*ste & _SEGMENT_ENTRY_ORIGIN);
+	pgt = (अचिन्हित दीर्घ *)(*ste & _SEGMENT_ENTRY_ORIGIN);
 	*ste = _SEGMENT_ENTRY_EMPTY;
-	__gmap_unshadow_pgt(sg, raddr, pgt);
+	__gmap_unshaकरोw_pgt(sg, raddr, pgt);
 	/* Free page table */
 	page = pfn_to_page(__pa(pgt) >> PAGE_SHIFT);
 	list_del(&page->lru);
-	page_table_free_pgste(page);
-}
+	page_table_मुक्त_pgste(page);
+पूर्ण
 
 /**
- * __gmap_unshadow_sgt - remove all entries from a shadow segment table
- * @sg: pointer to the shadow guest address space structure
- * @raddr: rmap address in the shadow guest address space
- * @sgt: pointer to the start of a shadow segment table
+ * __gmap_unshaकरोw_sgt - हटाओ all entries from a shaकरोw segment table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: rmap address in the shaकरोw guest address space
+ * @sgt: poपूर्णांकer to the start of a shaकरोw segment table
  *
  * Called with the sg->guest_table_lock
  */
-static void __gmap_unshadow_sgt(struct gmap *sg, unsigned long raddr,
-				unsigned long *sgt)
-{
-	unsigned long *pgt;
-	struct page *page;
-	int i;
+अटल व्योम __gmap_unshaकरोw_sgt(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr,
+				अचिन्हित दीर्घ *sgt)
+अणु
+	अचिन्हित दीर्घ *pgt;
+	काष्ठा page *page;
+	पूर्णांक i;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	for (i = 0; i < _CRST_ENTRIES; i++, raddr += _SEGMENT_SIZE) {
-		if (!(sgt[i] & _SEGMENT_ENTRY_ORIGIN))
-			continue;
-		pgt = (unsigned long *)(sgt[i] & _REGION_ENTRY_ORIGIN);
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	क्रम (i = 0; i < _CRST_ENTRIES; i++, raddr += _SEGMENT_SIZE) अणु
+		अगर (!(sgt[i] & _SEGMENT_ENTRY_ORIGIN))
+			जारी;
+		pgt = (अचिन्हित दीर्घ *)(sgt[i] & _REGION_ENTRY_ORIGIN);
 		sgt[i] = _SEGMENT_ENTRY_EMPTY;
-		__gmap_unshadow_pgt(sg, raddr, pgt);
+		__gmap_unshaकरोw_pgt(sg, raddr, pgt);
 		/* Free page table */
 		page = pfn_to_page(__pa(pgt) >> PAGE_SHIFT);
 		list_del(&page->lru);
-		page_table_free_pgste(page);
-	}
-}
+		page_table_मुक्त_pgste(page);
+	पूर्ण
+पूर्ण
 
 /**
- * gmap_unshadow_sgt - remove a shadow segment table from a region-3 entry
- * @sg: pointer to the shadow guest address space structure
- * @raddr: rmap address in the shadow guest address space
+ * gmap_unshaकरोw_sgt - हटाओ a shaकरोw segment table from a region-3 entry
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: rmap address in the shaकरोw guest address space
  *
- * Called with the shadow->guest_table_lock
+ * Called with the shaकरोw->guest_table_lock
  */
-static void gmap_unshadow_sgt(struct gmap *sg, unsigned long raddr)
-{
-	unsigned long r3o, *r3e, *sgt;
-	struct page *page;
+अटल व्योम gmap_unshaकरोw_sgt(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr)
+अणु
+	अचिन्हित दीर्घ r3o, *r3e, *sgt;
+	काष्ठा page *page;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	r3e = gmap_table_walk(sg, raddr, 2); /* get region-3 pointer */
-	if (!r3e || !(*r3e & _REGION_ENTRY_ORIGIN))
-		return;
-	gmap_call_notifier(sg, raddr, raddr + _REGION3_SIZE - 1);
-	r3o = (unsigned long) (r3e - ((raddr & _REGION3_INDEX) >> _REGION3_SHIFT));
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	r3e = gmap_table_walk(sg, raddr, 2); /* get region-3 poपूर्णांकer */
+	अगर (!r3e || !(*r3e & _REGION_ENTRY_ORIGIN))
+		वापस;
+	gmap_call_notअगरier(sg, raddr, raddr + _REGION3_SIZE - 1);
+	r3o = (अचिन्हित दीर्घ) (r3e - ((raddr & _REGION3_INDEX) >> _REGION3_SHIFT));
 	gmap_idte_one(r3o | _ASCE_TYPE_REGION3, raddr);
-	sgt = (unsigned long *)(*r3e & _REGION_ENTRY_ORIGIN);
+	sgt = (अचिन्हित दीर्घ *)(*r3e & _REGION_ENTRY_ORIGIN);
 	*r3e = _REGION3_ENTRY_EMPTY;
-	__gmap_unshadow_sgt(sg, raddr, sgt);
+	__gmap_unshaकरोw_sgt(sg, raddr, sgt);
 	/* Free segment table */
 	page = pfn_to_page(__pa(sgt) >> PAGE_SHIFT);
 	list_del(&page->lru);
-	__free_pages(page, CRST_ALLOC_ORDER);
-}
+	__मुक्त_pages(page, CRST_ALLOC_ORDER);
+पूर्ण
 
 /**
- * __gmap_unshadow_r3t - remove all entries from a shadow region-3 table
- * @sg: pointer to the shadow guest address space structure
- * @raddr: address in the shadow guest address space
- * @r3t: pointer to the start of a shadow region-3 table
+ * __gmap_unshaकरोw_r3t - हटाओ all entries from a shaकरोw region-3 table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: address in the shaकरोw guest address space
+ * @r3t: poपूर्णांकer to the start of a shaकरोw region-3 table
  *
  * Called with the sg->guest_table_lock
  */
-static void __gmap_unshadow_r3t(struct gmap *sg, unsigned long raddr,
-				unsigned long *r3t)
-{
-	unsigned long *sgt;
-	struct page *page;
-	int i;
+अटल व्योम __gmap_unshaकरोw_r3t(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr,
+				अचिन्हित दीर्घ *r3t)
+अणु
+	अचिन्हित दीर्घ *sgt;
+	काष्ठा page *page;
+	पूर्णांक i;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	for (i = 0; i < _CRST_ENTRIES; i++, raddr += _REGION3_SIZE) {
-		if (!(r3t[i] & _REGION_ENTRY_ORIGIN))
-			continue;
-		sgt = (unsigned long *)(r3t[i] & _REGION_ENTRY_ORIGIN);
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	क्रम (i = 0; i < _CRST_ENTRIES; i++, raddr += _REGION3_SIZE) अणु
+		अगर (!(r3t[i] & _REGION_ENTRY_ORIGIN))
+			जारी;
+		sgt = (अचिन्हित दीर्घ *)(r3t[i] & _REGION_ENTRY_ORIGIN);
 		r3t[i] = _REGION3_ENTRY_EMPTY;
-		__gmap_unshadow_sgt(sg, raddr, sgt);
+		__gmap_unshaकरोw_sgt(sg, raddr, sgt);
 		/* Free segment table */
 		page = pfn_to_page(__pa(sgt) >> PAGE_SHIFT);
 		list_del(&page->lru);
-		__free_pages(page, CRST_ALLOC_ORDER);
-	}
-}
+		__मुक्त_pages(page, CRST_ALLOC_ORDER);
+	पूर्ण
+पूर्ण
 
 /**
- * gmap_unshadow_r3t - remove a shadow region-3 table from a region-2 entry
- * @sg: pointer to the shadow guest address space structure
- * @raddr: rmap address in the shadow guest address space
+ * gmap_unshaकरोw_r3t - हटाओ a shaकरोw region-3 table from a region-2 entry
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: rmap address in the shaकरोw guest address space
  *
  * Called with the sg->guest_table_lock
  */
-static void gmap_unshadow_r3t(struct gmap *sg, unsigned long raddr)
-{
-	unsigned long r2o, *r2e, *r3t;
-	struct page *page;
+अटल व्योम gmap_unshaकरोw_r3t(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr)
+अणु
+	अचिन्हित दीर्घ r2o, *r2e, *r3t;
+	काष्ठा page *page;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	r2e = gmap_table_walk(sg, raddr, 3); /* get region-2 pointer */
-	if (!r2e || !(*r2e & _REGION_ENTRY_ORIGIN))
-		return;
-	gmap_call_notifier(sg, raddr, raddr + _REGION2_SIZE - 1);
-	r2o = (unsigned long) (r2e - ((raddr & _REGION2_INDEX) >> _REGION2_SHIFT));
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	r2e = gmap_table_walk(sg, raddr, 3); /* get region-2 poपूर्णांकer */
+	अगर (!r2e || !(*r2e & _REGION_ENTRY_ORIGIN))
+		वापस;
+	gmap_call_notअगरier(sg, raddr, raddr + _REGION2_SIZE - 1);
+	r2o = (अचिन्हित दीर्घ) (r2e - ((raddr & _REGION2_INDEX) >> _REGION2_SHIFT));
 	gmap_idte_one(r2o | _ASCE_TYPE_REGION2, raddr);
-	r3t = (unsigned long *)(*r2e & _REGION_ENTRY_ORIGIN);
+	r3t = (अचिन्हित दीर्घ *)(*r2e & _REGION_ENTRY_ORIGIN);
 	*r2e = _REGION2_ENTRY_EMPTY;
-	__gmap_unshadow_r3t(sg, raddr, r3t);
+	__gmap_unshaकरोw_r3t(sg, raddr, r3t);
 	/* Free region 3 table */
 	page = pfn_to_page(__pa(r3t) >> PAGE_SHIFT);
 	list_del(&page->lru);
-	__free_pages(page, CRST_ALLOC_ORDER);
-}
+	__मुक्त_pages(page, CRST_ALLOC_ORDER);
+पूर्ण
 
 /**
- * __gmap_unshadow_r2t - remove all entries from a shadow region-2 table
- * @sg: pointer to the shadow guest address space structure
- * @raddr: rmap address in the shadow guest address space
- * @r2t: pointer to the start of a shadow region-2 table
+ * __gmap_unshaकरोw_r2t - हटाओ all entries from a shaकरोw region-2 table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: rmap address in the shaकरोw guest address space
+ * @r2t: poपूर्णांकer to the start of a shaकरोw region-2 table
  *
  * Called with the sg->guest_table_lock
  */
-static void __gmap_unshadow_r2t(struct gmap *sg, unsigned long raddr,
-				unsigned long *r2t)
-{
-	unsigned long *r3t;
-	struct page *page;
-	int i;
+अटल व्योम __gmap_unshaकरोw_r2t(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr,
+				अचिन्हित दीर्घ *r2t)
+अणु
+	अचिन्हित दीर्घ *r3t;
+	काष्ठा page *page;
+	पूर्णांक i;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	for (i = 0; i < _CRST_ENTRIES; i++, raddr += _REGION2_SIZE) {
-		if (!(r2t[i] & _REGION_ENTRY_ORIGIN))
-			continue;
-		r3t = (unsigned long *)(r2t[i] & _REGION_ENTRY_ORIGIN);
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	क्रम (i = 0; i < _CRST_ENTRIES; i++, raddr += _REGION2_SIZE) अणु
+		अगर (!(r2t[i] & _REGION_ENTRY_ORIGIN))
+			जारी;
+		r3t = (अचिन्हित दीर्घ *)(r2t[i] & _REGION_ENTRY_ORIGIN);
 		r2t[i] = _REGION2_ENTRY_EMPTY;
-		__gmap_unshadow_r3t(sg, raddr, r3t);
+		__gmap_unshaकरोw_r3t(sg, raddr, r3t);
 		/* Free region 3 table */
 		page = pfn_to_page(__pa(r3t) >> PAGE_SHIFT);
 		list_del(&page->lru);
-		__free_pages(page, CRST_ALLOC_ORDER);
-	}
-}
+		__मुक्त_pages(page, CRST_ALLOC_ORDER);
+	पूर्ण
+पूर्ण
 
 /**
- * gmap_unshadow_r2t - remove a shadow region-2 table from a region-1 entry
- * @sg: pointer to the shadow guest address space structure
- * @raddr: rmap address in the shadow guest address space
+ * gmap_unshaकरोw_r2t - हटाओ a shaकरोw region-2 table from a region-1 entry
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: rmap address in the shaकरोw guest address space
  *
  * Called with the sg->guest_table_lock
  */
-static void gmap_unshadow_r2t(struct gmap *sg, unsigned long raddr)
-{
-	unsigned long r1o, *r1e, *r2t;
-	struct page *page;
+अटल व्योम gmap_unshaकरोw_r2t(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr)
+अणु
+	अचिन्हित दीर्घ r1o, *r1e, *r2t;
+	काष्ठा page *page;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	r1e = gmap_table_walk(sg, raddr, 4); /* get region-1 pointer */
-	if (!r1e || !(*r1e & _REGION_ENTRY_ORIGIN))
-		return;
-	gmap_call_notifier(sg, raddr, raddr + _REGION1_SIZE - 1);
-	r1o = (unsigned long) (r1e - ((raddr & _REGION1_INDEX) >> _REGION1_SHIFT));
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	r1e = gmap_table_walk(sg, raddr, 4); /* get region-1 poपूर्णांकer */
+	अगर (!r1e || !(*r1e & _REGION_ENTRY_ORIGIN))
+		वापस;
+	gmap_call_notअगरier(sg, raddr, raddr + _REGION1_SIZE - 1);
+	r1o = (अचिन्हित दीर्घ) (r1e - ((raddr & _REGION1_INDEX) >> _REGION1_SHIFT));
 	gmap_idte_one(r1o | _ASCE_TYPE_REGION1, raddr);
-	r2t = (unsigned long *)(*r1e & _REGION_ENTRY_ORIGIN);
+	r2t = (अचिन्हित दीर्घ *)(*r1e & _REGION_ENTRY_ORIGIN);
 	*r1e = _REGION1_ENTRY_EMPTY;
-	__gmap_unshadow_r2t(sg, raddr, r2t);
+	__gmap_unshaकरोw_r2t(sg, raddr, r2t);
 	/* Free region 2 table */
 	page = pfn_to_page(__pa(r2t) >> PAGE_SHIFT);
 	list_del(&page->lru);
-	__free_pages(page, CRST_ALLOC_ORDER);
-}
+	__मुक्त_pages(page, CRST_ALLOC_ORDER);
+पूर्ण
 
 /**
- * __gmap_unshadow_r1t - remove all entries from a shadow region-1 table
- * @sg: pointer to the shadow guest address space structure
- * @raddr: rmap address in the shadow guest address space
- * @r1t: pointer to the start of a shadow region-1 table
+ * __gmap_unshaकरोw_r1t - हटाओ all entries from a shaकरोw region-1 table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @raddr: rmap address in the shaकरोw guest address space
+ * @r1t: poपूर्णांकer to the start of a shaकरोw region-1 table
  *
- * Called with the shadow->guest_table_lock
+ * Called with the shaकरोw->guest_table_lock
  */
-static void __gmap_unshadow_r1t(struct gmap *sg, unsigned long raddr,
-				unsigned long *r1t)
-{
-	unsigned long asce, *r2t;
-	struct page *page;
-	int i;
+अटल व्योम __gmap_unshaकरोw_r1t(काष्ठा gmap *sg, अचिन्हित दीर्घ raddr,
+				अचिन्हित दीर्घ *r1t)
+अणु
+	अचिन्हित दीर्घ asce, *r2t;
+	काष्ठा page *page;
+	पूर्णांक i;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	asce = (unsigned long) r1t | _ASCE_TYPE_REGION1;
-	for (i = 0; i < _CRST_ENTRIES; i++, raddr += _REGION1_SIZE) {
-		if (!(r1t[i] & _REGION_ENTRY_ORIGIN))
-			continue;
-		r2t = (unsigned long *)(r1t[i] & _REGION_ENTRY_ORIGIN);
-		__gmap_unshadow_r2t(sg, raddr, r2t);
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	asce = (अचिन्हित दीर्घ) r1t | _ASCE_TYPE_REGION1;
+	क्रम (i = 0; i < _CRST_ENTRIES; i++, raddr += _REGION1_SIZE) अणु
+		अगर (!(r1t[i] & _REGION_ENTRY_ORIGIN))
+			जारी;
+		r2t = (अचिन्हित दीर्घ *)(r1t[i] & _REGION_ENTRY_ORIGIN);
+		__gmap_unshaकरोw_r2t(sg, raddr, r2t);
 		/* Clear entry and flush translation r1t -> r2t */
 		gmap_idte_one(asce, raddr);
 		r1t[i] = _REGION1_ENTRY_EMPTY;
 		/* Free region 2 table */
 		page = pfn_to_page(__pa(r2t) >> PAGE_SHIFT);
 		list_del(&page->lru);
-		__free_pages(page, CRST_ALLOC_ORDER);
-	}
-}
+		__मुक्त_pages(page, CRST_ALLOC_ORDER);
+	पूर्ण
+पूर्ण
 
 /**
- * gmap_unshadow - remove a shadow page table completely
- * @sg: pointer to the shadow guest address space structure
+ * gmap_unshaकरोw - हटाओ a shaकरोw page table completely
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
  *
  * Called with sg->guest_table_lock
  */
-static void gmap_unshadow(struct gmap *sg)
-{
-	unsigned long *table;
+अटल व्योम gmap_unshaकरोw(काष्ठा gmap *sg)
+अणु
+	अचिन्हित दीर्घ *table;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	if (sg->removed)
-		return;
-	sg->removed = 1;
-	gmap_call_notifier(sg, 0, -1UL);
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	अगर (sg->हटाओd)
+		वापस;
+	sg->हटाओd = 1;
+	gmap_call_notअगरier(sg, 0, -1UL);
 	gmap_flush_tlb(sg);
-	table = (unsigned long *)(sg->asce & _ASCE_ORIGIN);
-	switch (sg->asce & _ASCE_TYPE_MASK) {
-	case _ASCE_TYPE_REGION1:
-		__gmap_unshadow_r1t(sg, 0, table);
-		break;
-	case _ASCE_TYPE_REGION2:
-		__gmap_unshadow_r2t(sg, 0, table);
-		break;
-	case _ASCE_TYPE_REGION3:
-		__gmap_unshadow_r3t(sg, 0, table);
-		break;
-	case _ASCE_TYPE_SEGMENT:
-		__gmap_unshadow_sgt(sg, 0, table);
-		break;
-	}
-}
+	table = (अचिन्हित दीर्घ *)(sg->asce & _ASCE_ORIGIN);
+	चयन (sg->asce & _ASCE_TYPE_MASK) अणु
+	हाल _ASCE_TYPE_REGION1:
+		__gmap_unshaकरोw_r1t(sg, 0, table);
+		अवरोध;
+	हाल _ASCE_TYPE_REGION2:
+		__gmap_unshaकरोw_r2t(sg, 0, table);
+		अवरोध;
+	हाल _ASCE_TYPE_REGION3:
+		__gmap_unshaकरोw_r3t(sg, 0, table);
+		अवरोध;
+	हाल _ASCE_TYPE_SEGMENT:
+		__gmap_unshaकरोw_sgt(sg, 0, table);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * gmap_find_shadow - find a specific asce in the list of shadow tables
- * @parent: pointer to the parent gmap
- * @asce: ASCE for which the shadow table is created
- * @edat_level: edat level to be used for the shadow translation
+ * gmap_find_shaकरोw - find a specअगरic asce in the list of shaकरोw tables
+ * @parent: poपूर्णांकer to the parent gmap
+ * @asce: ASCE क्रम which the shaकरोw table is created
+ * @edat_level: edat level to be used क्रम the shaकरोw translation
  *
- * Returns the pointer to a gmap if a shadow table with the given asce is
- * already available, ERR_PTR(-EAGAIN) if another one is just being created,
- * otherwise NULL
+ * Returns the poपूर्णांकer to a gmap अगर a shaकरोw table with the given asce is
+ * alपढ़ोy available, ERR_PTR(-EAGAIN) अगर another one is just being created,
+ * otherwise शून्य
  */
-static struct gmap *gmap_find_shadow(struct gmap *parent, unsigned long asce,
-				     int edat_level)
-{
-	struct gmap *sg;
+अटल काष्ठा gmap *gmap_find_shaकरोw(काष्ठा gmap *parent, अचिन्हित दीर्घ asce,
+				     पूर्णांक edat_level)
+अणु
+	काष्ठा gmap *sg;
 
-	list_for_each_entry(sg, &parent->children, list) {
-		if (sg->orig_asce != asce || sg->edat_level != edat_level ||
-		    sg->removed)
-			continue;
-		if (!sg->initialized)
-			return ERR_PTR(-EAGAIN);
+	list_क्रम_each_entry(sg, &parent->children, list) अणु
+		अगर (sg->orig_asce != asce || sg->edat_level != edat_level ||
+		    sg->हटाओd)
+			जारी;
+		अगर (!sg->initialized)
+			वापस ERR_PTR(-EAGAIN);
 		refcount_inc(&sg->ref_count);
-		return sg;
-	}
-	return NULL;
-}
+		वापस sg;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * gmap_shadow_valid - check if a shadow guest address space matches the
+ * gmap_shaकरोw_valid - check अगर a shaकरोw guest address space matches the
  *                     given properties and is still valid
- * @sg: pointer to the shadow guest address space structure
- * @asce: ASCE for which the shadow table is requested
- * @edat_level: edat level to be used for the shadow translation
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @asce: ASCE क्रम which the shaकरोw table is requested
+ * @edat_level: edat level to be used क्रम the shaकरोw translation
  *
- * Returns 1 if the gmap shadow is still valid and matches the given
- * properties, the caller can continue using it. Returns 0 otherwise, the
- * caller has to request a new shadow gmap in this case.
+ * Returns 1 अगर the gmap shaकरोw is still valid and matches the given
+ * properties, the caller can जारी using it. Returns 0 otherwise, the
+ * caller has to request a new shaकरोw gmap in this हाल.
  *
  */
-int gmap_shadow_valid(struct gmap *sg, unsigned long asce, int edat_level)
-{
-	if (sg->removed)
-		return 0;
-	return sg->orig_asce == asce && sg->edat_level == edat_level;
-}
-EXPORT_SYMBOL_GPL(gmap_shadow_valid);
+पूर्णांक gmap_shaकरोw_valid(काष्ठा gmap *sg, अचिन्हित दीर्घ asce, पूर्णांक edat_level)
+अणु
+	अगर (sg->हटाओd)
+		वापस 0;
+	वापस sg->orig_asce == asce && sg->edat_level == edat_level;
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_shaकरोw_valid);
 
 /**
- * gmap_shadow - create/find a shadow guest address space
- * @parent: pointer to the parent gmap
- * @asce: ASCE for which the shadow table is created
- * @edat_level: edat level to be used for the shadow translation
+ * gmap_shaकरोw - create/find a shaकरोw guest address space
+ * @parent: poपूर्णांकer to the parent gmap
+ * @asce: ASCE क्रम which the shaकरोw table is created
+ * @edat_level: edat level to be used क्रम the shaकरोw translation
  *
  * The pages of the top level page table referred by the asce parameter
- * will be set to read-only and marked in the PGSTEs of the kvm process.
- * The shadow table will be removed automatically on any change to the
- * PTE mapping for the source table.
+ * will be set to पढ़ो-only and marked in the PGSTEs of the kvm process.
+ * The shaकरोw table will be हटाओd स्वतःmatically on any change to the
+ * PTE mapping क्रम the source table.
  *
- * Returns a guest address space structure, ERR_PTR(-ENOMEM) if out of memory,
- * ERR_PTR(-EAGAIN) if the caller has to retry and ERR_PTR(-EFAULT) if the
- * parent gmap table could not be protected.
+ * Returns a guest address space काष्ठाure, ERR_PTR(-ENOMEM) अगर out of memory,
+ * ERR_PTR(-EAGAIN) अगर the caller has to retry and ERR_PTR(-EFAULT) अगर the
+ * parent gmap table could not be रक्षित.
  */
-struct gmap *gmap_shadow(struct gmap *parent, unsigned long asce,
-			 int edat_level)
-{
-	struct gmap *sg, *new;
-	unsigned long limit;
-	int rc;
+काष्ठा gmap *gmap_shaकरोw(काष्ठा gmap *parent, अचिन्हित दीर्घ asce,
+			 पूर्णांक edat_level)
+अणु
+	काष्ठा gmap *sg, *new;
+	अचिन्हित दीर्घ limit;
+	पूर्णांक rc;
 
 	BUG_ON(parent->mm->context.allow_gmap_hpage_1m);
-	BUG_ON(gmap_is_shadow(parent));
-	spin_lock(&parent->shadow_lock);
-	sg = gmap_find_shadow(parent, asce, edat_level);
-	spin_unlock(&parent->shadow_lock);
-	if (sg)
-		return sg;
-	/* Create a new shadow gmap */
+	BUG_ON(gmap_is_shaकरोw(parent));
+	spin_lock(&parent->shaकरोw_lock);
+	sg = gmap_find_shaकरोw(parent, asce, edat_level);
+	spin_unlock(&parent->shaकरोw_lock);
+	अगर (sg)
+		वापस sg;
+	/* Create a new shaकरोw gmap */
 	limit = -1UL >> (33 - (((asce & _ASCE_TYPE_MASK) >> 2) * 11));
-	if (asce & _ASCE_REAL_SPACE)
+	अगर (asce & _ASCE_REAL_SPACE)
 		limit = -1UL;
 	new = gmap_alloc(limit);
-	if (!new)
-		return ERR_PTR(-ENOMEM);
+	अगर (!new)
+		वापस ERR_PTR(-ENOMEM);
 	new->mm = parent->mm;
 	new->parent = gmap_get(parent);
 	new->orig_asce = asce;
 	new->edat_level = edat_level;
 	new->initialized = false;
-	spin_lock(&parent->shadow_lock);
-	/* Recheck if another CPU created the same shadow */
-	sg = gmap_find_shadow(parent, asce, edat_level);
-	if (sg) {
-		spin_unlock(&parent->shadow_lock);
-		gmap_free(new);
-		return sg;
-	}
-	if (asce & _ASCE_REAL_SPACE) {
-		/* only allow one real-space gmap shadow */
-		list_for_each_entry(sg, &parent->children, list) {
-			if (sg->orig_asce & _ASCE_REAL_SPACE) {
+	spin_lock(&parent->shaकरोw_lock);
+	/* Recheck अगर another CPU created the same shaकरोw */
+	sg = gmap_find_shaकरोw(parent, asce, edat_level);
+	अगर (sg) अणु
+		spin_unlock(&parent->shaकरोw_lock);
+		gmap_मुक्त(new);
+		वापस sg;
+	पूर्ण
+	अगर (asce & _ASCE_REAL_SPACE) अणु
+		/* only allow one real-space gmap shaकरोw */
+		list_क्रम_each_entry(sg, &parent->children, list) अणु
+			अगर (sg->orig_asce & _ASCE_REAL_SPACE) अणु
 				spin_lock(&sg->guest_table_lock);
-				gmap_unshadow(sg);
+				gmap_unshaकरोw(sg);
 				spin_unlock(&sg->guest_table_lock);
 				list_del(&sg->list);
 				gmap_put(sg);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	refcount_set(&new->ref_count, 2);
 	list_add(&new->list, &parent->children);
-	if (asce & _ASCE_REAL_SPACE) {
-		/* nothing to protect, return right away */
+	अगर (asce & _ASCE_REAL_SPACE) अणु
+		/* nothing to protect, वापस right away */
 		new->initialized = true;
-		spin_unlock(&parent->shadow_lock);
-		return new;
-	}
-	spin_unlock(&parent->shadow_lock);
+		spin_unlock(&parent->shaकरोw_lock);
+		वापस new;
+	पूर्ण
+	spin_unlock(&parent->shaकरोw_lock);
 	/* protect after insertion, so it will get properly invalidated */
-	mmap_read_lock(parent->mm);
+	mmap_पढ़ो_lock(parent->mm);
 	rc = gmap_protect_range(parent, asce & _ASCE_ORIGIN,
 				((asce & _ASCE_TABLE_LENGTH) + 1) * PAGE_SIZE,
 				PROT_READ, GMAP_NOTIFY_SHADOW);
-	mmap_read_unlock(parent->mm);
-	spin_lock(&parent->shadow_lock);
+	mmap_पढ़ो_unlock(parent->mm);
+	spin_lock(&parent->shaकरोw_lock);
 	new->initialized = true;
-	if (rc) {
+	अगर (rc) अणु
 		list_del(&new->list);
-		gmap_free(new);
+		gmap_मुक्त(new);
 		new = ERR_PTR(rc);
-	}
-	spin_unlock(&parent->shadow_lock);
-	return new;
-}
-EXPORT_SYMBOL_GPL(gmap_shadow);
+	पूर्ण
+	spin_unlock(&parent->shaकरोw_lock);
+	वापस new;
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_shaकरोw);
 
 /**
- * gmap_shadow_r2t - create an empty shadow region 2 table
- * @sg: pointer to the shadow guest address space structure
- * @saddr: faulting address in the shadow gmap
- * @r2t: parent gmap address of the region 2 table to get shadowed
+ * gmap_shaकरोw_r2t - create an empty shaकरोw region 2 table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @saddr: faulting address in the shaकरोw gmap
+ * @r2t: parent gmap address of the region 2 table to get shaकरोwed
  * @fake: r2t references contiguous guest memory block, not a r2t
  *
- * The r2t parameter specifies the address of the source table. The
- * four pages of the source table are made read-only in the parent gmap
- * address space. A write to the source table area @r2t will automatically
- * remove the shadow r2 table and all of its decendents.
+ * The r2t parameter specअगरies the address of the source table. The
+ * four pages of the source table are made पढ़ो-only in the parent gmap
+ * address space. A ग_लिखो to the source table area @r2t will स्वतःmatically
+ * हटाओ the shaकरोw r2 table and all of its decendents.
  *
- * Returns 0 if successfully shadowed or already shadowed, -EAGAIN if the
- * shadow table structure is incomplete, -ENOMEM if out of memory and
- * -EFAULT if an address in the parent gmap could not be resolved.
+ * Returns 0 अगर successfully shaकरोwed or alपढ़ोy shaकरोwed, -EAGAIN अगर the
+ * shaकरोw table काष्ठाure is incomplete, -ENOMEM अगर out of memory and
+ * -EFAULT अगर an address in the parent gmap could not be resolved.
  *
- * Called with sg->mm->mmap_lock in read.
+ * Called with sg->mm->mmap_lock in पढ़ो.
  */
-int gmap_shadow_r2t(struct gmap *sg, unsigned long saddr, unsigned long r2t,
-		    int fake)
-{
-	unsigned long raddr, origin, offset, len;
-	unsigned long *s_r2t, *table;
-	struct page *page;
-	int rc;
+पूर्णांक gmap_shaकरोw_r2t(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr, अचिन्हित दीर्घ r2t,
+		    पूर्णांक fake)
+अणु
+	अचिन्हित दीर्घ raddr, origin, offset, len;
+	अचिन्हित दीर्घ *s_r2t, *table;
+	काष्ठा page *page;
+	पूर्णांक rc;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	/* Allocate a shadow region second table */
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	/* Allocate a shaकरोw region second table */
 	page = alloc_pages(GFP_KERNEL_ACCOUNT, CRST_ALLOC_ORDER);
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 	page->index = r2t & _REGION_ENTRY_ORIGIN;
-	if (fake)
+	अगर (fake)
 		page->index |= GMAP_SHADOW_FAKE_TABLE;
-	s_r2t = (unsigned long *) page_to_phys(page);
-	/* Install shadow region second table */
+	s_r2t = (अचिन्हित दीर्घ *) page_to_phys(page);
+	/* Install shaकरोw region second table */
 	spin_lock(&sg->guest_table_lock);
-	table = gmap_table_walk(sg, saddr, 4); /* get region-1 pointer */
-	if (!table) {
-		rc = -EAGAIN;		/* Race with unshadow */
-		goto out_free;
-	}
-	if (!(*table & _REGION_ENTRY_INVALID)) {
-		rc = 0;			/* Already established */
-		goto out_free;
-	} else if (*table & _REGION_ENTRY_ORIGIN) {
-		rc = -EAGAIN;		/* Race with shadow */
-		goto out_free;
-	}
+	table = gmap_table_walk(sg, saddr, 4); /* get region-1 poपूर्णांकer */
+	अगर (!table) अणु
+		rc = -EAGAIN;		/* Race with unshaकरोw */
+		जाओ out_मुक्त;
+	पूर्ण
+	अगर (!(*table & _REGION_ENTRY_INVALID)) अणु
+		rc = 0;			/* Alपढ़ोy established */
+		जाओ out_मुक्त;
+	पूर्ण अन्यथा अगर (*table & _REGION_ENTRY_ORIGIN) अणु
+		rc = -EAGAIN;		/* Race with shaकरोw */
+		जाओ out_मुक्त;
+	पूर्ण
 	crst_table_init(s_r2t, _REGION2_ENTRY_EMPTY);
-	/* mark as invalid as long as the parent table is not protected */
-	*table = (unsigned long) s_r2t | _REGION_ENTRY_LENGTH |
+	/* mark as invalid as दीर्घ as the parent table is not रक्षित */
+	*table = (अचिन्हित दीर्घ) s_r2t | _REGION_ENTRY_LENGTH |
 		 _REGION_ENTRY_TYPE_R1 | _REGION_ENTRY_INVALID;
-	if (sg->edat_level >= 1)
+	अगर (sg->edat_level >= 1)
 		*table |= (r2t & _REGION_ENTRY_PROTECT);
 	list_add(&page->lru, &sg->crst_list);
-	if (fake) {
-		/* nothing to protect for fake tables */
+	अगर (fake) अणु
+		/* nothing to protect क्रम fake tables */
 		*table &= ~_REGION_ENTRY_INVALID;
 		spin_unlock(&sg->guest_table_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock(&sg->guest_table_lock);
-	/* Make r2t read-only in parent gmap page table */
+	/* Make r2t पढ़ो-only in parent gmap page table */
 	raddr = (saddr & _REGION1_MASK) | _SHADOW_RMAP_REGION1;
 	origin = r2t & _REGION_ENTRY_ORIGIN;
 	offset = ((r2t & _REGION_ENTRY_OFFSET) >> 6) * PAGE_SIZE;
 	len = ((r2t & _REGION_ENTRY_LENGTH) + 1) * PAGE_SIZE - offset;
 	rc = gmap_protect_rmap(sg, raddr, origin + offset, len);
 	spin_lock(&sg->guest_table_lock);
-	if (!rc) {
+	अगर (!rc) अणु
 		table = gmap_table_walk(sg, saddr, 4);
-		if (!table || (*table & _REGION_ENTRY_ORIGIN) !=
-			      (unsigned long) s_r2t)
-			rc = -EAGAIN;		/* Race with unshadow */
-		else
+		अगर (!table || (*table & _REGION_ENTRY_ORIGIN) !=
+			      (अचिन्हित दीर्घ) s_r2t)
+			rc = -EAGAIN;		/* Race with unshaकरोw */
+		अन्यथा
 			*table &= ~_REGION_ENTRY_INVALID;
-	} else {
-		gmap_unshadow_r2t(sg, raddr);
-	}
+	पूर्ण अन्यथा अणु
+		gmap_unshaकरोw_r2t(sg, raddr);
+	पूर्ण
 	spin_unlock(&sg->guest_table_lock);
-	return rc;
-out_free:
+	वापस rc;
+out_मुक्त:
 	spin_unlock(&sg->guest_table_lock);
-	__free_pages(page, CRST_ALLOC_ORDER);
-	return rc;
-}
-EXPORT_SYMBOL_GPL(gmap_shadow_r2t);
+	__मुक्त_pages(page, CRST_ALLOC_ORDER);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_shaकरोw_r2t);
 
 /**
- * gmap_shadow_r3t - create a shadow region 3 table
- * @sg: pointer to the shadow guest address space structure
- * @saddr: faulting address in the shadow gmap
- * @r3t: parent gmap address of the region 3 table to get shadowed
+ * gmap_shaकरोw_r3t - create a shaकरोw region 3 table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @saddr: faulting address in the shaकरोw gmap
+ * @r3t: parent gmap address of the region 3 table to get shaकरोwed
  * @fake: r3t references contiguous guest memory block, not a r3t
  *
- * Returns 0 if successfully shadowed or already shadowed, -EAGAIN if the
- * shadow table structure is incomplete, -ENOMEM if out of memory and
- * -EFAULT if an address in the parent gmap could not be resolved.
+ * Returns 0 अगर successfully shaकरोwed or alपढ़ोy shaकरोwed, -EAGAIN अगर the
+ * shaकरोw table काष्ठाure is incomplete, -ENOMEM अगर out of memory and
+ * -EFAULT अगर an address in the parent gmap could not be resolved.
  *
- * Called with sg->mm->mmap_lock in read.
+ * Called with sg->mm->mmap_lock in पढ़ो.
  */
-int gmap_shadow_r3t(struct gmap *sg, unsigned long saddr, unsigned long r3t,
-		    int fake)
-{
-	unsigned long raddr, origin, offset, len;
-	unsigned long *s_r3t, *table;
-	struct page *page;
-	int rc;
+पूर्णांक gmap_shaकरोw_r3t(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr, अचिन्हित दीर्घ r3t,
+		    पूर्णांक fake)
+अणु
+	अचिन्हित दीर्घ raddr, origin, offset, len;
+	अचिन्हित दीर्घ *s_r3t, *table;
+	काष्ठा page *page;
+	पूर्णांक rc;
 
-	BUG_ON(!gmap_is_shadow(sg));
-	/* Allocate a shadow region second table */
+	BUG_ON(!gmap_is_shaकरोw(sg));
+	/* Allocate a shaकरोw region second table */
 	page = alloc_pages(GFP_KERNEL_ACCOUNT, CRST_ALLOC_ORDER);
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 	page->index = r3t & _REGION_ENTRY_ORIGIN;
-	if (fake)
+	अगर (fake)
 		page->index |= GMAP_SHADOW_FAKE_TABLE;
-	s_r3t = (unsigned long *) page_to_phys(page);
-	/* Install shadow region second table */
+	s_r3t = (अचिन्हित दीर्घ *) page_to_phys(page);
+	/* Install shaकरोw region second table */
 	spin_lock(&sg->guest_table_lock);
-	table = gmap_table_walk(sg, saddr, 3); /* get region-2 pointer */
-	if (!table) {
-		rc = -EAGAIN;		/* Race with unshadow */
-		goto out_free;
-	}
-	if (!(*table & _REGION_ENTRY_INVALID)) {
-		rc = 0;			/* Already established */
-		goto out_free;
-	} else if (*table & _REGION_ENTRY_ORIGIN) {
-		rc = -EAGAIN;		/* Race with shadow */
-		goto out_free;
-	}
+	table = gmap_table_walk(sg, saddr, 3); /* get region-2 poपूर्णांकer */
+	अगर (!table) अणु
+		rc = -EAGAIN;		/* Race with unshaकरोw */
+		जाओ out_मुक्त;
+	पूर्ण
+	अगर (!(*table & _REGION_ENTRY_INVALID)) अणु
+		rc = 0;			/* Alपढ़ोy established */
+		जाओ out_मुक्त;
+	पूर्ण अन्यथा अगर (*table & _REGION_ENTRY_ORIGIN) अणु
+		rc = -EAGAIN;		/* Race with shaकरोw */
+		जाओ out_मुक्त;
+	पूर्ण
 	crst_table_init(s_r3t, _REGION3_ENTRY_EMPTY);
-	/* mark as invalid as long as the parent table is not protected */
-	*table = (unsigned long) s_r3t | _REGION_ENTRY_LENGTH |
+	/* mark as invalid as दीर्घ as the parent table is not रक्षित */
+	*table = (अचिन्हित दीर्घ) s_r3t | _REGION_ENTRY_LENGTH |
 		 _REGION_ENTRY_TYPE_R2 | _REGION_ENTRY_INVALID;
-	if (sg->edat_level >= 1)
+	अगर (sg->edat_level >= 1)
 		*table |= (r3t & _REGION_ENTRY_PROTECT);
 	list_add(&page->lru, &sg->crst_list);
-	if (fake) {
-		/* nothing to protect for fake tables */
+	अगर (fake) अणु
+		/* nothing to protect क्रम fake tables */
 		*table &= ~_REGION_ENTRY_INVALID;
 		spin_unlock(&sg->guest_table_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock(&sg->guest_table_lock);
-	/* Make r3t read-only in parent gmap page table */
+	/* Make r3t पढ़ो-only in parent gmap page table */
 	raddr = (saddr & _REGION2_MASK) | _SHADOW_RMAP_REGION2;
 	origin = r3t & _REGION_ENTRY_ORIGIN;
 	offset = ((r3t & _REGION_ENTRY_OFFSET) >> 6) * PAGE_SIZE;
 	len = ((r3t & _REGION_ENTRY_LENGTH) + 1) * PAGE_SIZE - offset;
 	rc = gmap_protect_rmap(sg, raddr, origin + offset, len);
 	spin_lock(&sg->guest_table_lock);
-	if (!rc) {
+	अगर (!rc) अणु
 		table = gmap_table_walk(sg, saddr, 3);
-		if (!table || (*table & _REGION_ENTRY_ORIGIN) !=
-			      (unsigned long) s_r3t)
-			rc = -EAGAIN;		/* Race with unshadow */
-		else
+		अगर (!table || (*table & _REGION_ENTRY_ORIGIN) !=
+			      (अचिन्हित दीर्घ) s_r3t)
+			rc = -EAGAIN;		/* Race with unshaकरोw */
+		अन्यथा
 			*table &= ~_REGION_ENTRY_INVALID;
-	} else {
-		gmap_unshadow_r3t(sg, raddr);
-	}
+	पूर्ण अन्यथा अणु
+		gmap_unshaकरोw_r3t(sg, raddr);
+	पूर्ण
 	spin_unlock(&sg->guest_table_lock);
-	return rc;
-out_free:
+	वापस rc;
+out_मुक्त:
 	spin_unlock(&sg->guest_table_lock);
-	__free_pages(page, CRST_ALLOC_ORDER);
-	return rc;
-}
-EXPORT_SYMBOL_GPL(gmap_shadow_r3t);
+	__मुक्त_pages(page, CRST_ALLOC_ORDER);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_shaकरोw_r3t);
 
 /**
- * gmap_shadow_sgt - create a shadow segment table
- * @sg: pointer to the shadow guest address space structure
- * @saddr: faulting address in the shadow gmap
- * @sgt: parent gmap address of the segment table to get shadowed
+ * gmap_shaकरोw_sgt - create a shaकरोw segment table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @saddr: faulting address in the shaकरोw gmap
+ * @sgt: parent gmap address of the segment table to get shaकरोwed
  * @fake: sgt references contiguous guest memory block, not a sgt
  *
- * Returns: 0 if successfully shadowed or already shadowed, -EAGAIN if the
- * shadow table structure is incomplete, -ENOMEM if out of memory and
- * -EFAULT if an address in the parent gmap could not be resolved.
+ * Returns: 0 अगर successfully shaकरोwed or alपढ़ोy shaकरोwed, -EAGAIN अगर the
+ * shaकरोw table काष्ठाure is incomplete, -ENOMEM अगर out of memory and
+ * -EFAULT अगर an address in the parent gmap could not be resolved.
  *
- * Called with sg->mm->mmap_lock in read.
+ * Called with sg->mm->mmap_lock in पढ़ो.
  */
-int gmap_shadow_sgt(struct gmap *sg, unsigned long saddr, unsigned long sgt,
-		    int fake)
-{
-	unsigned long raddr, origin, offset, len;
-	unsigned long *s_sgt, *table;
-	struct page *page;
-	int rc;
+पूर्णांक gmap_shaकरोw_sgt(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr, अचिन्हित दीर्घ sgt,
+		    पूर्णांक fake)
+अणु
+	अचिन्हित दीर्घ raddr, origin, offset, len;
+	अचिन्हित दीर्घ *s_sgt, *table;
+	काष्ठा page *page;
+	पूर्णांक rc;
 
-	BUG_ON(!gmap_is_shadow(sg) || (sgt & _REGION3_ENTRY_LARGE));
-	/* Allocate a shadow segment table */
+	BUG_ON(!gmap_is_shaकरोw(sg) || (sgt & _REGION3_ENTRY_LARGE));
+	/* Allocate a shaकरोw segment table */
 	page = alloc_pages(GFP_KERNEL_ACCOUNT, CRST_ALLOC_ORDER);
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 	page->index = sgt & _REGION_ENTRY_ORIGIN;
-	if (fake)
+	अगर (fake)
 		page->index |= GMAP_SHADOW_FAKE_TABLE;
-	s_sgt = (unsigned long *) page_to_phys(page);
-	/* Install shadow region second table */
+	s_sgt = (अचिन्हित दीर्घ *) page_to_phys(page);
+	/* Install shaकरोw region second table */
 	spin_lock(&sg->guest_table_lock);
-	table = gmap_table_walk(sg, saddr, 2); /* get region-3 pointer */
-	if (!table) {
-		rc = -EAGAIN;		/* Race with unshadow */
-		goto out_free;
-	}
-	if (!(*table & _REGION_ENTRY_INVALID)) {
-		rc = 0;			/* Already established */
-		goto out_free;
-	} else if (*table & _REGION_ENTRY_ORIGIN) {
-		rc = -EAGAIN;		/* Race with shadow */
-		goto out_free;
-	}
+	table = gmap_table_walk(sg, saddr, 2); /* get region-3 poपूर्णांकer */
+	अगर (!table) अणु
+		rc = -EAGAIN;		/* Race with unshaकरोw */
+		जाओ out_मुक्त;
+	पूर्ण
+	अगर (!(*table & _REGION_ENTRY_INVALID)) अणु
+		rc = 0;			/* Alपढ़ोy established */
+		जाओ out_मुक्त;
+	पूर्ण अन्यथा अगर (*table & _REGION_ENTRY_ORIGIN) अणु
+		rc = -EAGAIN;		/* Race with shaकरोw */
+		जाओ out_मुक्त;
+	पूर्ण
 	crst_table_init(s_sgt, _SEGMENT_ENTRY_EMPTY);
-	/* mark as invalid as long as the parent table is not protected */
-	*table = (unsigned long) s_sgt | _REGION_ENTRY_LENGTH |
+	/* mark as invalid as दीर्घ as the parent table is not रक्षित */
+	*table = (अचिन्हित दीर्घ) s_sgt | _REGION_ENTRY_LENGTH |
 		 _REGION_ENTRY_TYPE_R3 | _REGION_ENTRY_INVALID;
-	if (sg->edat_level >= 1)
+	अगर (sg->edat_level >= 1)
 		*table |= sgt & _REGION_ENTRY_PROTECT;
 	list_add(&page->lru, &sg->crst_list);
-	if (fake) {
-		/* nothing to protect for fake tables */
+	अगर (fake) अणु
+		/* nothing to protect क्रम fake tables */
 		*table &= ~_REGION_ENTRY_INVALID;
 		spin_unlock(&sg->guest_table_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock(&sg->guest_table_lock);
-	/* Make sgt read-only in parent gmap page table */
+	/* Make sgt पढ़ो-only in parent gmap page table */
 	raddr = (saddr & _REGION3_MASK) | _SHADOW_RMAP_REGION3;
 	origin = sgt & _REGION_ENTRY_ORIGIN;
 	offset = ((sgt & _REGION_ENTRY_OFFSET) >> 6) * PAGE_SIZE;
 	len = ((sgt & _REGION_ENTRY_LENGTH) + 1) * PAGE_SIZE - offset;
 	rc = gmap_protect_rmap(sg, raddr, origin + offset, len);
 	spin_lock(&sg->guest_table_lock);
-	if (!rc) {
+	अगर (!rc) अणु
 		table = gmap_table_walk(sg, saddr, 2);
-		if (!table || (*table & _REGION_ENTRY_ORIGIN) !=
-			      (unsigned long) s_sgt)
-			rc = -EAGAIN;		/* Race with unshadow */
-		else
+		अगर (!table || (*table & _REGION_ENTRY_ORIGIN) !=
+			      (अचिन्हित दीर्घ) s_sgt)
+			rc = -EAGAIN;		/* Race with unshaकरोw */
+		अन्यथा
 			*table &= ~_REGION_ENTRY_INVALID;
-	} else {
-		gmap_unshadow_sgt(sg, raddr);
-	}
+	पूर्ण अन्यथा अणु
+		gmap_unshaकरोw_sgt(sg, raddr);
+	पूर्ण
 	spin_unlock(&sg->guest_table_lock);
-	return rc;
-out_free:
+	वापस rc;
+out_मुक्त:
 	spin_unlock(&sg->guest_table_lock);
-	__free_pages(page, CRST_ALLOC_ORDER);
-	return rc;
-}
-EXPORT_SYMBOL_GPL(gmap_shadow_sgt);
+	__मुक्त_pages(page, CRST_ALLOC_ORDER);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_shaकरोw_sgt);
 
 /**
- * gmap_shadow_lookup_pgtable - find a shadow page table
- * @sg: pointer to the shadow guest address space structure
- * @saddr: the address in the shadow aguest address space
- * @pgt: parent gmap address of the page table to get shadowed
- * @dat_protection: if the pgtable is marked as protected by dat
+ * gmap_shaकरोw_lookup_pgtable - find a shaकरोw page table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @saddr: the address in the shaकरोw aguest address space
+ * @pgt: parent gmap address of the page table to get shaकरोwed
+ * @dat_protection: अगर the pgtable is marked as रक्षित by dat
  * @fake: pgt references contiguous guest memory block, not a pgtable
  *
- * Returns 0 if the shadow page table was found and -EAGAIN if the page
+ * Returns 0 अगर the shaकरोw page table was found and -EAGAIN अगर the page
  * table was not found.
  *
- * Called with sg->mm->mmap_lock in read.
+ * Called with sg->mm->mmap_lock in पढ़ो.
  */
-int gmap_shadow_pgt_lookup(struct gmap *sg, unsigned long saddr,
-			   unsigned long *pgt, int *dat_protection,
-			   int *fake)
-{
-	unsigned long *table;
-	struct page *page;
-	int rc;
+पूर्णांक gmap_shaकरोw_pgt_lookup(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr,
+			   अचिन्हित दीर्घ *pgt, पूर्णांक *dat_protection,
+			   पूर्णांक *fake)
+अणु
+	अचिन्हित दीर्घ *table;
+	काष्ठा page *page;
+	पूर्णांक rc;
 
-	BUG_ON(!gmap_is_shadow(sg));
+	BUG_ON(!gmap_is_shaकरोw(sg));
 	spin_lock(&sg->guest_table_lock);
-	table = gmap_table_walk(sg, saddr, 1); /* get segment pointer */
-	if (table && !(*table & _SEGMENT_ENTRY_INVALID)) {
-		/* Shadow page tables are full pages (pte+pgste) */
+	table = gmap_table_walk(sg, saddr, 1); /* get segment poपूर्णांकer */
+	अगर (table && !(*table & _SEGMENT_ENTRY_INVALID)) अणु
+		/* Shaकरोw page tables are full pages (pte+pgste) */
 		page = pfn_to_page(*table >> PAGE_SHIFT);
 		*pgt = page->index & ~GMAP_SHADOW_FAKE_TABLE;
 		*dat_protection = !!(*table & _SEGMENT_ENTRY_PROTECT);
 		*fake = !!(page->index & GMAP_SHADOW_FAKE_TABLE);
 		rc = 0;
-	} else  {
+	पूर्ण अन्यथा  अणु
 		rc = -EAGAIN;
-	}
+	पूर्ण
 	spin_unlock(&sg->guest_table_lock);
-	return rc;
+	वापस rc;
 
-}
-EXPORT_SYMBOL_GPL(gmap_shadow_pgt_lookup);
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_shaकरोw_pgt_lookup);
 
 /**
- * gmap_shadow_pgt - instantiate a shadow page table
- * @sg: pointer to the shadow guest address space structure
- * @saddr: faulting address in the shadow gmap
- * @pgt: parent gmap address of the page table to get shadowed
+ * gmap_shaकरोw_pgt - instantiate a shaकरोw page table
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @saddr: faulting address in the shaकरोw gmap
+ * @pgt: parent gmap address of the page table to get shaकरोwed
  * @fake: pgt references contiguous guest memory block, not a pgtable
  *
- * Returns 0 if successfully shadowed or already shadowed, -EAGAIN if the
- * shadow table structure is incomplete, -ENOMEM if out of memory,
- * -EFAULT if an address in the parent gmap could not be resolved and
+ * Returns 0 अगर successfully shaकरोwed or alपढ़ोy shaकरोwed, -EAGAIN अगर the
+ * shaकरोw table काष्ठाure is incomplete, -ENOMEM अगर out of memory,
+ * -EFAULT अगर an address in the parent gmap could not be resolved and
  *
- * Called with gmap->mm->mmap_lock in read
+ * Called with gmap->mm->mmap_lock in पढ़ो
  */
-int gmap_shadow_pgt(struct gmap *sg, unsigned long saddr, unsigned long pgt,
-		    int fake)
-{
-	unsigned long raddr, origin;
-	unsigned long *s_pgt, *table;
-	struct page *page;
-	int rc;
+पूर्णांक gmap_shaकरोw_pgt(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr, अचिन्हित दीर्घ pgt,
+		    पूर्णांक fake)
+अणु
+	अचिन्हित दीर्घ raddr, origin;
+	अचिन्हित दीर्घ *s_pgt, *table;
+	काष्ठा page *page;
+	पूर्णांक rc;
 
-	BUG_ON(!gmap_is_shadow(sg) || (pgt & _SEGMENT_ENTRY_LARGE));
-	/* Allocate a shadow page table */
+	BUG_ON(!gmap_is_shaकरोw(sg) || (pgt & _SEGMENT_ENTRY_LARGE));
+	/* Allocate a shaकरोw page table */
 	page = page_table_alloc_pgste(sg->mm);
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 	page->index = pgt & _SEGMENT_ENTRY_ORIGIN;
-	if (fake)
+	अगर (fake)
 		page->index |= GMAP_SHADOW_FAKE_TABLE;
-	s_pgt = (unsigned long *) page_to_phys(page);
-	/* Install shadow page table */
+	s_pgt = (अचिन्हित दीर्घ *) page_to_phys(page);
+	/* Install shaकरोw page table */
 	spin_lock(&sg->guest_table_lock);
-	table = gmap_table_walk(sg, saddr, 1); /* get segment pointer */
-	if (!table) {
-		rc = -EAGAIN;		/* Race with unshadow */
-		goto out_free;
-	}
-	if (!(*table & _SEGMENT_ENTRY_INVALID)) {
-		rc = 0;			/* Already established */
-		goto out_free;
-	} else if (*table & _SEGMENT_ENTRY_ORIGIN) {
-		rc = -EAGAIN;		/* Race with shadow */
-		goto out_free;
-	}
-	/* mark as invalid as long as the parent table is not protected */
-	*table = (unsigned long) s_pgt | _SEGMENT_ENTRY |
+	table = gmap_table_walk(sg, saddr, 1); /* get segment poपूर्णांकer */
+	अगर (!table) अणु
+		rc = -EAGAIN;		/* Race with unshaकरोw */
+		जाओ out_मुक्त;
+	पूर्ण
+	अगर (!(*table & _SEGMENT_ENTRY_INVALID)) अणु
+		rc = 0;			/* Alपढ़ोy established */
+		जाओ out_मुक्त;
+	पूर्ण अन्यथा अगर (*table & _SEGMENT_ENTRY_ORIGIN) अणु
+		rc = -EAGAIN;		/* Race with shaकरोw */
+		जाओ out_मुक्त;
+	पूर्ण
+	/* mark as invalid as दीर्घ as the parent table is not रक्षित */
+	*table = (अचिन्हित दीर्घ) s_pgt | _SEGMENT_ENTRY |
 		 (pgt & _SEGMENT_ENTRY_PROTECT) | _SEGMENT_ENTRY_INVALID;
 	list_add(&page->lru, &sg->pt_list);
-	if (fake) {
-		/* nothing to protect for fake tables */
+	अगर (fake) अणु
+		/* nothing to protect क्रम fake tables */
 		*table &= ~_SEGMENT_ENTRY_INVALID;
 		spin_unlock(&sg->guest_table_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock(&sg->guest_table_lock);
-	/* Make pgt read-only in parent gmap page table (not the pgste) */
+	/* Make pgt पढ़ो-only in parent gmap page table (not the pgste) */
 	raddr = (saddr & _SEGMENT_MASK) | _SHADOW_RMAP_SEGMENT;
 	origin = pgt & _SEGMENT_ENTRY_ORIGIN & PAGE_MASK;
 	rc = gmap_protect_rmap(sg, raddr, origin, PAGE_SIZE);
 	spin_lock(&sg->guest_table_lock);
-	if (!rc) {
+	अगर (!rc) अणु
 		table = gmap_table_walk(sg, saddr, 1);
-		if (!table || (*table & _SEGMENT_ENTRY_ORIGIN) !=
-			      (unsigned long) s_pgt)
-			rc = -EAGAIN;		/* Race with unshadow */
-		else
+		अगर (!table || (*table & _SEGMENT_ENTRY_ORIGIN) !=
+			      (अचिन्हित दीर्घ) s_pgt)
+			rc = -EAGAIN;		/* Race with unshaकरोw */
+		अन्यथा
 			*table &= ~_SEGMENT_ENTRY_INVALID;
-	} else {
-		gmap_unshadow_pgt(sg, raddr);
-	}
+	पूर्ण अन्यथा अणु
+		gmap_unshaकरोw_pgt(sg, raddr);
+	पूर्ण
 	spin_unlock(&sg->guest_table_lock);
-	return rc;
-out_free:
+	वापस rc;
+out_मुक्त:
 	spin_unlock(&sg->guest_table_lock);
-	page_table_free_pgste(page);
-	return rc;
+	page_table_मुक्त_pgste(page);
+	वापस rc;
 
-}
-EXPORT_SYMBOL_GPL(gmap_shadow_pgt);
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_shaकरोw_pgt);
 
 /**
- * gmap_shadow_page - create a shadow page mapping
- * @sg: pointer to the shadow guest address space structure
- * @saddr: faulting address in the shadow gmap
- * @pte: pte in parent gmap address space to get shadowed
+ * gmap_shaकरोw_page - create a shaकरोw page mapping
+ * @sg: poपूर्णांकer to the shaकरोw guest address space काष्ठाure
+ * @saddr: faulting address in the shaकरोw gmap
+ * @pte: pte in parent gmap address space to get shaकरोwed
  *
- * Returns 0 if successfully shadowed or already shadowed, -EAGAIN if the
- * shadow table structure is incomplete, -ENOMEM if out of memory and
- * -EFAULT if an address in the parent gmap could not be resolved.
+ * Returns 0 अगर successfully shaकरोwed or alपढ़ोy shaकरोwed, -EAGAIN अगर the
+ * shaकरोw table काष्ठाure is incomplete, -ENOMEM अगर out of memory and
+ * -EFAULT अगर an address in the parent gmap could not be resolved.
  *
- * Called with sg->mm->mmap_lock in read.
+ * Called with sg->mm->mmap_lock in पढ़ो.
  */
-int gmap_shadow_page(struct gmap *sg, unsigned long saddr, pte_t pte)
-{
-	struct gmap *parent;
-	struct gmap_rmap *rmap;
-	unsigned long vmaddr, paddr;
+पूर्णांक gmap_shaकरोw_page(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr, pte_t pte)
+अणु
+	काष्ठा gmap *parent;
+	काष्ठा gmap_rmap *rmap;
+	अचिन्हित दीर्घ vmaddr, paddr;
 	spinlock_t *ptl;
 	pte_t *sptep, *tptep;
-	int prot;
-	int rc;
+	पूर्णांक prot;
+	पूर्णांक rc;
 
-	BUG_ON(!gmap_is_shadow(sg));
+	BUG_ON(!gmap_is_shaकरोw(sg));
 	parent = sg->parent;
 	prot = (pte_val(pte) & _PAGE_PROTECT) ? PROT_READ : PROT_WRITE;
 
-	rmap = kzalloc(sizeof(*rmap), GFP_KERNEL_ACCOUNT);
-	if (!rmap)
-		return -ENOMEM;
+	rmap = kzalloc(माप(*rmap), GFP_KERNEL_ACCOUNT);
+	अगर (!rmap)
+		वापस -ENOMEM;
 	rmap->raddr = (saddr & PAGE_MASK) | _SHADOW_RMAP_PGTABLE;
 
-	while (1) {
+	जबतक (1) अणु
 		paddr = pte_val(pte) & PAGE_MASK;
 		vmaddr = __gmap_translate(parent, paddr);
-		if (IS_ERR_VALUE(vmaddr)) {
+		अगर (IS_ERR_VALUE(vmaddr)) अणु
 			rc = vmaddr;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		rc = radix_tree_preload(GFP_KERNEL_ACCOUNT);
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 		rc = -EAGAIN;
 		sptep = gmap_pte_op_walk(parent, paddr, &ptl);
-		if (sptep) {
+		अगर (sptep) अणु
 			spin_lock(&sg->guest_table_lock);
-			/* Get page table pointer */
+			/* Get page table poपूर्णांकer */
 			tptep = (pte_t *) gmap_table_walk(sg, saddr, 0);
-			if (!tptep) {
+			अगर (!tptep) अणु
 				spin_unlock(&sg->guest_table_lock);
 				gmap_pte_op_end(ptl);
 				radix_tree_preload_end();
-				break;
-			}
-			rc = ptep_shadow_pte(sg->mm, saddr, sptep, tptep, pte);
-			if (rc > 0) {
+				अवरोध;
+			पूर्ण
+			rc = ptep_shaकरोw_pte(sg->mm, saddr, sptep, tptep, pte);
+			अगर (rc > 0) अणु
 				/* Success and a new mapping */
 				gmap_insert_rmap(sg, vmaddr, rmap);
-				rmap = NULL;
+				rmap = शून्य;
 				rc = 0;
-			}
+			पूर्ण
 			gmap_pte_op_end(ptl);
 			spin_unlock(&sg->guest_table_lock);
-		}
+		पूर्ण
 		radix_tree_preload_end();
-		if (!rc)
-			break;
+		अगर (!rc)
+			अवरोध;
 		rc = gmap_pte_op_fixup(parent, paddr, vmaddr, prot);
-		if (rc)
-			break;
-	}
-	kfree(rmap);
-	return rc;
-}
-EXPORT_SYMBOL_GPL(gmap_shadow_page);
+		अगर (rc)
+			अवरोध;
+	पूर्ण
+	kमुक्त(rmap);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(gmap_shaकरोw_page);
 
 /**
- * gmap_shadow_notify - handle notifications for shadow gmap
+ * gmap_shaकरोw_notअगरy - handle notअगरications क्रम shaकरोw gmap
  *
- * Called with sg->parent->shadow_lock.
+ * Called with sg->parent->shaकरोw_lock.
  */
-static void gmap_shadow_notify(struct gmap *sg, unsigned long vmaddr,
-			       unsigned long gaddr)
-{
-	struct gmap_rmap *rmap, *rnext, *head;
-	unsigned long start, end, bits, raddr;
+अटल व्योम gmap_shaकरोw_notअगरy(काष्ठा gmap *sg, अचिन्हित दीर्घ vmaddr,
+			       अचिन्हित दीर्घ gaddr)
+अणु
+	काष्ठा gmap_rmap *rmap, *rnext, *head;
+	अचिन्हित दीर्घ start, end, bits, raddr;
 
-	BUG_ON(!gmap_is_shadow(sg));
+	BUG_ON(!gmap_is_shaकरोw(sg));
 
 	spin_lock(&sg->guest_table_lock);
-	if (sg->removed) {
+	अगर (sg->हटाओd) अणु
 		spin_unlock(&sg->guest_table_lock);
-		return;
-	}
-	/* Check for top level table */
+		वापस;
+	पूर्ण
+	/* Check क्रम top level table */
 	start = sg->orig_asce & _ASCE_ORIGIN;
 	end = start + ((sg->orig_asce & _ASCE_TABLE_LENGTH) + 1) * PAGE_SIZE;
-	if (!(sg->orig_asce & _ASCE_REAL_SPACE) && gaddr >= start &&
-	    gaddr < end) {
-		/* The complete shadow table has to go */
-		gmap_unshadow(sg);
+	अगर (!(sg->orig_asce & _ASCE_REAL_SPACE) && gaddr >= start &&
+	    gaddr < end) अणु
+		/* The complete shaकरोw table has to go */
+		gmap_unshaकरोw(sg);
 		spin_unlock(&sg->guest_table_lock);
 		list_del(&sg->list);
 		gmap_put(sg);
-		return;
-	}
-	/* Remove the page table tree from on specific entry */
+		वापस;
+	पूर्ण
+	/* Remove the page table tree from on specअगरic entry */
 	head = radix_tree_delete(&sg->host_to_rmap, vmaddr >> PAGE_SHIFT);
-	gmap_for_each_rmap_safe(rmap, rnext, head) {
+	gmap_क्रम_each_rmap_safe(rmap, rnext, head) अणु
 		bits = rmap->raddr & _SHADOW_RMAP_MASK;
 		raddr = rmap->raddr ^ bits;
-		switch (bits) {
-		case _SHADOW_RMAP_REGION1:
-			gmap_unshadow_r2t(sg, raddr);
-			break;
-		case _SHADOW_RMAP_REGION2:
-			gmap_unshadow_r3t(sg, raddr);
-			break;
-		case _SHADOW_RMAP_REGION3:
-			gmap_unshadow_sgt(sg, raddr);
-			break;
-		case _SHADOW_RMAP_SEGMENT:
-			gmap_unshadow_pgt(sg, raddr);
-			break;
-		case _SHADOW_RMAP_PGTABLE:
-			gmap_unshadow_page(sg, raddr);
-			break;
-		}
-		kfree(rmap);
-	}
+		चयन (bits) अणु
+		हाल _SHADOW_RMAP_REGION1:
+			gmap_unshaकरोw_r2t(sg, raddr);
+			अवरोध;
+		हाल _SHADOW_RMAP_REGION2:
+			gmap_unshaकरोw_r3t(sg, raddr);
+			अवरोध;
+		हाल _SHADOW_RMAP_REGION3:
+			gmap_unshaकरोw_sgt(sg, raddr);
+			अवरोध;
+		हाल _SHADOW_RMAP_SEGMENT:
+			gmap_unshaकरोw_pgt(sg, raddr);
+			अवरोध;
+		हाल _SHADOW_RMAP_PGTABLE:
+			gmap_unshaकरोw_page(sg, raddr);
+			अवरोध;
+		पूर्ण
+		kमुक्त(rmap);
+	पूर्ण
 	spin_unlock(&sg->guest_table_lock);
-}
+पूर्ण
 
 /**
- * ptep_notify - call all invalidation callbacks for a specific pte.
- * @mm: pointer to the process mm_struct
- * @addr: virtual address in the process address space
- * @pte: pointer to the page table entry
- * @bits: bits from the pgste that caused the notify call
+ * ptep_notअगरy - call all invalidation callbacks क्रम a specअगरic pte.
+ * @mm: poपूर्णांकer to the process mm_काष्ठा
+ * @addr: भव address in the process address space
+ * @pte: poपूर्णांकer to the page table entry
+ * @bits: bits from the pgste that caused the notअगरy call
  *
  * This function is assumed to be called with the page table lock held
- * for the pte to notify.
+ * क्रम the pte to notअगरy.
  */
-void ptep_notify(struct mm_struct *mm, unsigned long vmaddr,
-		 pte_t *pte, unsigned long bits)
-{
-	unsigned long offset, gaddr = 0;
-	unsigned long *table;
-	struct gmap *gmap, *sg, *next;
+व्योम ptep_notअगरy(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vmaddr,
+		 pte_t *pte, अचिन्हित दीर्घ bits)
+अणु
+	अचिन्हित दीर्घ offset, gaddr = 0;
+	अचिन्हित दीर्घ *table;
+	काष्ठा gmap *gmap, *sg, *next;
 
-	offset = ((unsigned long) pte) & (255 * sizeof(pte_t));
-	offset = offset * (PAGE_SIZE / sizeof(pte_t));
-	rcu_read_lock();
-	list_for_each_entry_rcu(gmap, &mm->context.gmap_list, list) {
+	offset = ((अचिन्हित दीर्घ) pte) & (255 * माप(pte_t));
+	offset = offset * (PAGE_SIZE / माप(pte_t));
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(gmap, &mm->context.gmap_list, list) अणु
 		spin_lock(&gmap->guest_table_lock);
 		table = radix_tree_lookup(&gmap->host_to_guest,
 					  vmaddr >> PMD_SHIFT);
-		if (table)
+		अगर (table)
 			gaddr = __gmap_segment_gaddr(table) + offset;
 		spin_unlock(&gmap->guest_table_lock);
-		if (!table)
-			continue;
+		अगर (!table)
+			जारी;
 
-		if (!list_empty(&gmap->children) && (bits & PGSTE_VSIE_BIT)) {
-			spin_lock(&gmap->shadow_lock);
-			list_for_each_entry_safe(sg, next,
+		अगर (!list_empty(&gmap->children) && (bits & PGSTE_VSIE_BIT)) अणु
+			spin_lock(&gmap->shaकरोw_lock);
+			list_क्रम_each_entry_safe(sg, next,
 						 &gmap->children, list)
-				gmap_shadow_notify(sg, vmaddr, gaddr);
-			spin_unlock(&gmap->shadow_lock);
-		}
-		if (bits & PGSTE_IN_BIT)
-			gmap_call_notifier(gmap, gaddr, gaddr + PAGE_SIZE - 1);
-	}
-	rcu_read_unlock();
-}
-EXPORT_SYMBOL_GPL(ptep_notify);
+				gmap_shaकरोw_notअगरy(sg, vmaddr, gaddr);
+			spin_unlock(&gmap->shaकरोw_lock);
+		पूर्ण
+		अगर (bits & PGSTE_IN_BIT)
+			gmap_call_notअगरier(gmap, gaddr, gaddr + PAGE_SIZE - 1);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
+EXPORT_SYMBOL_GPL(ptep_notअगरy);
 
-static void pmdp_notify_gmap(struct gmap *gmap, pmd_t *pmdp,
-			     unsigned long gaddr)
-{
+अटल व्योम pmdp_notअगरy_gmap(काष्ठा gmap *gmap, pmd_t *pmdp,
+			     अचिन्हित दीर्घ gaddr)
+अणु
 	pmd_val(*pmdp) &= ~_SEGMENT_ENTRY_GMAP_IN;
-	gmap_call_notifier(gmap, gaddr, gaddr + HPAGE_SIZE - 1);
-}
+	gmap_call_notअगरier(gmap, gaddr, gaddr + HPAGE_SIZE - 1);
+पूर्ण
 
 /**
  * gmap_pmdp_xchg - exchange a gmap pmd with another
- * @gmap: pointer to the guest address space structure
- * @pmdp: pointer to the pmd entry
+ * @gmap: poपूर्णांकer to the guest address space काष्ठाure
+ * @pmdp: poपूर्णांकer to the pmd entry
  * @new: replacement entry
  * @gaddr: the affected guest address
  *
  * This function is assumed to be called with the guest_table_lock
  * held.
  */
-static void gmap_pmdp_xchg(struct gmap *gmap, pmd_t *pmdp, pmd_t new,
-			   unsigned long gaddr)
-{
+अटल व्योम gmap_pmdp_xchg(काष्ठा gmap *gmap, pmd_t *pmdp, pmd_t new,
+			   अचिन्हित दीर्घ gaddr)
+अणु
 	gaddr &= HPAGE_MASK;
-	pmdp_notify_gmap(gmap, pmdp, gaddr);
+	pmdp_notअगरy_gmap(gmap, pmdp, gaddr);
 	pmd_val(new) &= ~_SEGMENT_ENTRY_GMAP_IN;
-	if (MACHINE_HAS_TLB_GUEST)
+	अगर (MACHINE_HAS_TLB_GUEST)
 		__pmdp_idte(gaddr, (pmd_t *)pmdp, IDTE_GUEST_ASCE, gmap->asce,
 			    IDTE_GLOBAL);
-	else if (MACHINE_HAS_IDTE)
+	अन्यथा अगर (MACHINE_HAS_IDTE)
 		__pmdp_idte(gaddr, (pmd_t *)pmdp, 0, 0, IDTE_GLOBAL);
-	else
+	अन्यथा
 		__pmdp_csp(pmdp);
 	*pmdp = new;
-}
+पूर्ण
 
-static void gmap_pmdp_clear(struct mm_struct *mm, unsigned long vmaddr,
-			    int purge)
-{
+अटल व्योम gmap_pmdp_clear(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vmaddr,
+			    पूर्णांक purge)
+अणु
 	pmd_t *pmdp;
-	struct gmap *gmap;
-	unsigned long gaddr;
+	काष्ठा gmap *gmap;
+	अचिन्हित दीर्घ gaddr;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(gmap, &mm->context.gmap_list, list) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(gmap, &mm->context.gmap_list, list) अणु
 		spin_lock(&gmap->guest_table_lock);
 		pmdp = (pmd_t *)radix_tree_delete(&gmap->host_to_guest,
 						  vmaddr >> PMD_SHIFT);
-		if (pmdp) {
-			gaddr = __gmap_segment_gaddr((unsigned long *)pmdp);
-			pmdp_notify_gmap(gmap, pmdp, gaddr);
+		अगर (pmdp) अणु
+			gaddr = __gmap_segment_gaddr((अचिन्हित दीर्घ *)pmdp);
+			pmdp_notअगरy_gmap(gmap, pmdp, gaddr);
 			WARN_ON(pmd_val(*pmdp) & ~(_SEGMENT_ENTRY_HARDWARE_BITS_LARGE |
 						   _SEGMENT_ENTRY_GMAP_UC));
-			if (purge)
+			अगर (purge)
 				__pmdp_csp(pmdp);
 			pmd_val(*pmdp) = _SEGMENT_ENTRY_EMPTY;
-		}
+		पूर्ण
 		spin_unlock(&gmap->guest_table_lock);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
  * gmap_pmdp_invalidate - invalidate all affected guest pmd entries without
  *                        flushing
- * @mm: pointer to the process mm_struct
- * @vmaddr: virtual address in the process address space
+ * @mm: poपूर्णांकer to the process mm_काष्ठा
+ * @vmaddr: भव address in the process address space
  */
-void gmap_pmdp_invalidate(struct mm_struct *mm, unsigned long vmaddr)
-{
+व्योम gmap_pmdp_invalidate(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vmaddr)
+अणु
 	gmap_pmdp_clear(mm, vmaddr, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_pmdp_invalidate);
 
 /**
  * gmap_pmdp_csp - csp all affected guest pmd entries
- * @mm: pointer to the process mm_struct
- * @vmaddr: virtual address in the process address space
+ * @mm: poपूर्णांकer to the process mm_काष्ठा
+ * @vmaddr: भव address in the process address space
  */
-void gmap_pmdp_csp(struct mm_struct *mm, unsigned long vmaddr)
-{
+व्योम gmap_pmdp_csp(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vmaddr)
+अणु
 	gmap_pmdp_clear(mm, vmaddr, 1);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_pmdp_csp);
 
 /**
  * gmap_pmdp_idte_local - invalidate and clear a guest pmd entry
- * @mm: pointer to the process mm_struct
- * @vmaddr: virtual address in the process address space
+ * @mm: poपूर्णांकer to the process mm_काष्ठा
+ * @vmaddr: भव address in the process address space
  */
-void gmap_pmdp_idte_local(struct mm_struct *mm, unsigned long vmaddr)
-{
-	unsigned long *entry, gaddr;
-	struct gmap *gmap;
+व्योम gmap_pmdp_idte_local(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vmaddr)
+अणु
+	अचिन्हित दीर्घ *entry, gaddr;
+	काष्ठा gmap *gmap;
 	pmd_t *pmdp;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(gmap, &mm->context.gmap_list, list) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(gmap, &mm->context.gmap_list, list) अणु
 		spin_lock(&gmap->guest_table_lock);
 		entry = radix_tree_delete(&gmap->host_to_guest,
 					  vmaddr >> PMD_SHIFT);
-		if (entry) {
+		अगर (entry) अणु
 			pmdp = (pmd_t *)entry;
 			gaddr = __gmap_segment_gaddr(entry);
-			pmdp_notify_gmap(gmap, pmdp, gaddr);
+			pmdp_notअगरy_gmap(gmap, pmdp, gaddr);
 			WARN_ON(*entry & ~(_SEGMENT_ENTRY_HARDWARE_BITS_LARGE |
 					   _SEGMENT_ENTRY_GMAP_UC));
-			if (MACHINE_HAS_TLB_GUEST)
+			अगर (MACHINE_HAS_TLB_GUEST)
 				__pmdp_idte(gaddr, pmdp, IDTE_GUEST_ASCE,
 					    gmap->asce, IDTE_LOCAL);
-			else if (MACHINE_HAS_IDTE)
+			अन्यथा अगर (MACHINE_HAS_IDTE)
 				__pmdp_idte(gaddr, pmdp, 0, 0, IDTE_LOCAL);
 			*entry = _SEGMENT_ENTRY_EMPTY;
-		}
+		पूर्ण
 		spin_unlock(&gmap->guest_table_lock);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_pmdp_idte_local);
 
 /**
  * gmap_pmdp_idte_global - invalidate and clear a guest pmd entry
- * @mm: pointer to the process mm_struct
- * @vmaddr: virtual address in the process address space
+ * @mm: poपूर्णांकer to the process mm_काष्ठा
+ * @vmaddr: भव address in the process address space
  */
-void gmap_pmdp_idte_global(struct mm_struct *mm, unsigned long vmaddr)
-{
-	unsigned long *entry, gaddr;
-	struct gmap *gmap;
+व्योम gmap_pmdp_idte_global(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vmaddr)
+अणु
+	अचिन्हित दीर्घ *entry, gaddr;
+	काष्ठा gmap *gmap;
 	pmd_t *pmdp;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(gmap, &mm->context.gmap_list, list) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(gmap, &mm->context.gmap_list, list) अणु
 		spin_lock(&gmap->guest_table_lock);
 		entry = radix_tree_delete(&gmap->host_to_guest,
 					  vmaddr >> PMD_SHIFT);
-		if (entry) {
+		अगर (entry) अणु
 			pmdp = (pmd_t *)entry;
 			gaddr = __gmap_segment_gaddr(entry);
-			pmdp_notify_gmap(gmap, pmdp, gaddr);
+			pmdp_notअगरy_gmap(gmap, pmdp, gaddr);
 			WARN_ON(*entry & ~(_SEGMENT_ENTRY_HARDWARE_BITS_LARGE |
 					   _SEGMENT_ENTRY_GMAP_UC));
-			if (MACHINE_HAS_TLB_GUEST)
+			अगर (MACHINE_HAS_TLB_GUEST)
 				__pmdp_idte(gaddr, pmdp, IDTE_GUEST_ASCE,
 					    gmap->asce, IDTE_GLOBAL);
-			else if (MACHINE_HAS_IDTE)
+			अन्यथा अगर (MACHINE_HAS_IDTE)
 				__pmdp_idte(gaddr, pmdp, 0, 0, IDTE_GLOBAL);
-			else
+			अन्यथा
 				__pmdp_csp(pmdp);
 			*entry = _SEGMENT_ENTRY_EMPTY;
-		}
+		पूर्ण
 		spin_unlock(&gmap->guest_table_lock);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_pmdp_idte_global);
 
 /**
  * gmap_test_and_clear_dirty_pmd - test and reset segment dirty status
- * @gmap: pointer to guest address space
- * @pmdp: pointer to the pmd to be tested
- * @gaddr: virtual address in the guest address space
+ * @gmap: poपूर्णांकer to guest address space
+ * @pmdp: poपूर्णांकer to the pmd to be tested
+ * @gaddr: भव address in the guest address space
  *
  * This function is assumed to be called with the guest_table_lock
  * held.
  */
-static bool gmap_test_and_clear_dirty_pmd(struct gmap *gmap, pmd_t *pmdp,
-					  unsigned long gaddr)
-{
-	if (pmd_val(*pmdp) & _SEGMENT_ENTRY_INVALID)
-		return false;
+अटल bool gmap_test_and_clear_dirty_pmd(काष्ठा gmap *gmap, pmd_t *pmdp,
+					  अचिन्हित दीर्घ gaddr)
+अणु
+	अगर (pmd_val(*pmdp) & _SEGMENT_ENTRY_INVALID)
+		वापस false;
 
-	/* Already protected memory, which did not change is clean */
-	if (pmd_val(*pmdp) & _SEGMENT_ENTRY_PROTECT &&
+	/* Alपढ़ोy रक्षित memory, which did not change is clean */
+	अगर (pmd_val(*pmdp) & _SEGMENT_ENTRY_PROTECT &&
 	    !(pmd_val(*pmdp) & _SEGMENT_ENTRY_GMAP_UC))
-		return false;
+		वापस false;
 
 	/* Clear UC indication and reset protection */
 	pmd_val(*pmdp) &= ~_SEGMENT_ENTRY_GMAP_UC;
 	gmap_protect_pmd(gmap, gaddr, pmdp, PROT_READ, 0);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * gmap_sync_dirty_log_pmd - set bitmap based on dirty status of segment
- * @gmap: pointer to guest address space
- * @bitmap: dirty bitmap for this pmd
- * @gaddr: virtual address in the guest address space
- * @vmaddr: virtual address in the host address space
+ * gmap_sync_dirty_log_pmd - set biपंचांगap based on dirty status of segment
+ * @gmap: poपूर्णांकer to guest address space
+ * @biपंचांगap: dirty biपंचांगap क्रम this pmd
+ * @gaddr: भव address in the guest address space
+ * @vmaddr: भव address in the host address space
  *
  * This function is assumed to be called with the guest_table_lock
  * held.
  */
-void gmap_sync_dirty_log_pmd(struct gmap *gmap, unsigned long bitmap[4],
-			     unsigned long gaddr, unsigned long vmaddr)
-{
-	int i;
+व्योम gmap_sync_dirty_log_pmd(काष्ठा gmap *gmap, अचिन्हित दीर्घ biपंचांगap[4],
+			     अचिन्हित दीर्घ gaddr, अचिन्हित दीर्घ vmaddr)
+अणु
+	पूर्णांक i;
 	pmd_t *pmdp;
 	pte_t *ptep;
 	spinlock_t *ptl;
 
 	pmdp = gmap_pmd_op_walk(gmap, gaddr);
-	if (!pmdp)
-		return;
+	अगर (!pmdp)
+		वापस;
 
-	if (pmd_large(*pmdp)) {
-		if (gmap_test_and_clear_dirty_pmd(gmap, pmdp, gaddr))
-			bitmap_fill(bitmap, _PAGE_ENTRIES);
-	} else {
-		for (i = 0; i < _PAGE_ENTRIES; i++, vmaddr += PAGE_SIZE) {
+	अगर (pmd_large(*pmdp)) अणु
+		अगर (gmap_test_and_clear_dirty_pmd(gmap, pmdp, gaddr))
+			biपंचांगap_fill(biपंचांगap, _PAGE_ENTRIES);
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < _PAGE_ENTRIES; i++, vmaddr += PAGE_SIZE) अणु
 			ptep = pte_alloc_map_lock(gmap->mm, pmdp, vmaddr, &ptl);
-			if (!ptep)
-				continue;
-			if (ptep_test_and_clear_uc(gmap->mm, vmaddr, ptep))
-				set_bit(i, bitmap);
+			अगर (!ptep)
+				जारी;
+			अगर (ptep_test_and_clear_uc(gmap->mm, vmaddr, ptep))
+				set_bit(i, biपंचांगap);
 			spin_unlock(ptl);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	gmap_pmd_op_end(gmap, pmdp);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_sync_dirty_log_pmd);
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-static int thp_split_walk_pmd_entry(pmd_t *pmd, unsigned long addr,
-				    unsigned long end, struct mm_walk *walk)
-{
-	struct vm_area_struct *vma = walk->vma;
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+अटल पूर्णांक thp_split_walk_pmd_entry(pmd_t *pmd, अचिन्हित दीर्घ addr,
+				    अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 
 	split_huge_pmd(vma, pmd, addr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mm_walk_ops thp_split_walk_ops = {
+अटल स्थिर काष्ठा mm_walk_ops thp_split_walk_ops = अणु
 	.pmd_entry	= thp_split_walk_pmd_entry,
-};
+पूर्ण;
 
-static inline void thp_split_mm(struct mm_struct *mm)
-{
-	struct vm_area_struct *vma;
+अटल अंतरभूत व्योम thp_split_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
 
-	for (vma = mm->mmap; vma != NULL; vma = vma->vm_next) {
+	क्रम (vma = mm->mmap; vma != शून्य; vma = vma->vm_next) अणु
 		vma->vm_flags &= ~VM_HUGEPAGE;
 		vma->vm_flags |= VM_NOHUGEPAGE;
-		walk_page_vma(vma, &thp_split_walk_ops, NULL);
-	}
+		walk_page_vma(vma, &thp_split_walk_ops, शून्य);
+	पूर्ण
 	mm->def_flags |= VM_NOHUGEPAGE;
-}
-#else
-static inline void thp_split_mm(struct mm_struct *mm)
-{
-}
-#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम thp_split_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
 
 /*
- * Remove all empty zero pages from the mapping for lazy refaulting
- * - This must be called after mm->context.has_pgste is set, to avoid
+ * Remove all empty zero pages from the mapping क्रम lazy refaulting
+ * - This must be called after mm->context.has_pgste is set, to aव्योम
  *   future creation of zero pages
  * - This must be called after THP was enabled
  */
-static int __zap_zero_pages(pmd_t *pmd, unsigned long start,
-			   unsigned long end, struct mm_walk *walk)
-{
-	unsigned long addr;
+अटल पूर्णांक __zap_zero_pages(pmd_t *pmd, अचिन्हित दीर्घ start,
+			   अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
+अणु
+	अचिन्हित दीर्घ addr;
 
-	for (addr = start; addr != end; addr += PAGE_SIZE) {
+	क्रम (addr = start; addr != end; addr += PAGE_SIZE) अणु
 		pte_t *ptep;
 		spinlock_t *ptl;
 
 		ptep = pte_offset_map_lock(walk->mm, pmd, addr, &ptl);
-		if (is_zero_pfn(pte_pfn(*ptep)))
+		अगर (is_zero_pfn(pte_pfn(*ptep)))
 			ptep_xchg_direct(walk->mm, addr, ptep, __pte(_PAGE_INVALID));
 		pte_unmap_unlock(ptep, ptl);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct mm_walk_ops zap_zero_walk_ops = {
+अटल स्थिर काष्ठा mm_walk_ops zap_zero_walk_ops = अणु
 	.pmd_entry	= __zap_zero_pages,
-};
+पूर्ण;
 
 /*
- * switch on pgstes for its userspace process (for kvm)
+ * चयन on pgstes क्रम its userspace process (क्रम kvm)
  */
-int s390_enable_sie(void)
-{
-	struct mm_struct *mm = current->mm;
+पूर्णांक s390_enable_sie(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
 
-	/* Do we have pgstes? if yes, we are done */
-	if (mm_has_pgste(mm))
-		return 0;
-	/* Fail if the page tables are 2K */
-	if (!mm_alloc_pgste(mm))
-		return -EINVAL;
-	mmap_write_lock(mm);
+	/* Do we have pgstes? अगर yes, we are करोne */
+	अगर (mm_has_pgste(mm))
+		वापस 0;
+	/* Fail अगर the page tables are 2K */
+	अगर (!mm_alloc_pgste(mm))
+		वापस -EINVAL;
+	mmap_ग_लिखो_lock(mm);
 	mm->context.has_pgste = 1;
-	/* split thp mappings and disable thp for future mappings */
+	/* split thp mappings and disable thp क्रम future mappings */
 	thp_split_mm(mm);
-	walk_page_range(mm, 0, TASK_SIZE, &zap_zero_walk_ops, NULL);
-	mmap_write_unlock(mm);
-	return 0;
-}
+	walk_page_range(mm, 0, TASK_SIZE, &zap_zero_walk_ops, शून्य);
+	mmap_ग_लिखो_unlock(mm);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(s390_enable_sie);
 
-int gmap_mark_unmergeable(void)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
-	int ret;
+पूर्णांक gmap_mark_unmergeable(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक ret;
 
-	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
 		ret = ksm_madvise(vma, vma->vm_start, vma->vm_end,
 				  MADV_UNMERGEABLE, &vma->vm_flags);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 	mm->def_flags &= ~VM_MERGEABLE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(gmap_mark_unmergeable);
 
 /*
  * Enable storage key handling from now on and initialize the storage
- * keys with the default key.
+ * keys with the शेष key.
  */
-static int __s390_enable_skey_pte(pte_t *pte, unsigned long addr,
-				  unsigned long next, struct mm_walk *walk)
-{
+अटल पूर्णांक __s390_enable_skey_pte(pte_t *pte, अचिन्हित दीर्घ addr,
+				  अचिन्हित दीर्घ next, काष्ठा mm_walk *walk)
+अणु
 	/* Clear storage key */
 	ptep_zap_key(walk->mm, addr, pte);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __s390_enable_skey_hugetlb(pte_t *pte, unsigned long addr,
-				      unsigned long hmask, unsigned long next,
-				      struct mm_walk *walk)
-{
+अटल पूर्णांक __s390_enable_skey_hugetlb(pte_t *pte, अचिन्हित दीर्घ addr,
+				      अचिन्हित दीर्घ hmask, अचिन्हित दीर्घ next,
+				      काष्ठा mm_walk *walk)
+अणु
 	pmd_t *pmd = (pmd_t *)pte;
-	unsigned long start, end;
-	struct page *page = pmd_page(*pmd);
+	अचिन्हित दीर्घ start, end;
+	काष्ठा page *page = pmd_page(*pmd);
 
 	/*
-	 * The write check makes sure we do not set a key on shared
-	 * memory. This is needed as the walker does not differentiate
+	 * The ग_लिखो check makes sure we करो not set a key on shared
+	 * memory. This is needed as the walker करोes not dअगरferentiate
 	 * between actual guest memory and the process executable or
 	 * shared libraries.
 	 */
-	if (pmd_val(*pmd) & _SEGMENT_ENTRY_INVALID ||
+	अगर (pmd_val(*pmd) & _SEGMENT_ENTRY_INVALID ||
 	    !(pmd_val(*pmd) & _SEGMENT_ENTRY_WRITE))
-		return 0;
+		वापस 0;
 
 	start = pmd_val(*pmd) & HPAGE_MASK;
 	end = start + HPAGE_SIZE - 1;
 	__storage_key_init_range(start, end);
 	set_bit(PG_arch_1, &page->flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mm_walk_ops enable_skey_walk_ops = {
+अटल स्थिर काष्ठा mm_walk_ops enable_skey_walk_ops = अणु
 	.hugetlb_entry		= __s390_enable_skey_hugetlb,
 	.pte_entry		= __s390_enable_skey_pte,
-};
+पूर्ण;
 
-int s390_enable_skey(void)
-{
-	struct mm_struct *mm = current->mm;
-	int rc = 0;
+पूर्णांक s390_enable_skey(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	पूर्णांक rc = 0;
 
-	mmap_write_lock(mm);
-	if (mm_uses_skeys(mm))
-		goto out_up;
+	mmap_ग_लिखो_lock(mm);
+	अगर (mm_uses_skeys(mm))
+		जाओ out_up;
 
 	mm->context.uses_skeys = 1;
 	rc = gmap_mark_unmergeable();
-	if (rc) {
+	अगर (rc) अणु
 		mm->context.uses_skeys = 0;
-		goto out_up;
-	}
-	walk_page_range(mm, 0, TASK_SIZE, &enable_skey_walk_ops, NULL);
+		जाओ out_up;
+	पूर्ण
+	walk_page_range(mm, 0, TASK_SIZE, &enable_skey_walk_ops, शून्य);
 
 out_up:
-	mmap_write_unlock(mm);
-	return rc;
-}
+	mmap_ग_लिखो_unlock(mm);
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(s390_enable_skey);
 
 /*
  * Reset CMMA state, make all pages stable again.
  */
-static int __s390_reset_cmma(pte_t *pte, unsigned long addr,
-			     unsigned long next, struct mm_walk *walk)
-{
+अटल पूर्णांक __s390_reset_cmma(pte_t *pte, अचिन्हित दीर्घ addr,
+			     अचिन्हित दीर्घ next, काष्ठा mm_walk *walk)
+अणु
 	ptep_zap_unused(walk->mm, addr, pte, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mm_walk_ops reset_cmma_walk_ops = {
+अटल स्थिर काष्ठा mm_walk_ops reset_cmma_walk_ops = अणु
 	.pte_entry		= __s390_reset_cmma,
-};
+पूर्ण;
 
-void s390_reset_cmma(struct mm_struct *mm)
-{
-	mmap_write_lock(mm);
-	walk_page_range(mm, 0, TASK_SIZE, &reset_cmma_walk_ops, NULL);
-	mmap_write_unlock(mm);
-}
+व्योम s390_reset_cmma(काष्ठा mm_काष्ठा *mm)
+अणु
+	mmap_ग_लिखो_lock(mm);
+	walk_page_range(mm, 0, TASK_SIZE, &reset_cmma_walk_ops, शून्य);
+	mmap_ग_लिखो_unlock(mm);
+पूर्ण
 EXPORT_SYMBOL_GPL(s390_reset_cmma);
 
 /*
  * make inaccessible pages accessible again
  */
-static int __s390_reset_acc(pte_t *ptep, unsigned long addr,
-			    unsigned long next, struct mm_walk *walk)
-{
+अटल पूर्णांक __s390_reset_acc(pte_t *ptep, अचिन्हित दीर्घ addr,
+			    अचिन्हित दीर्घ next, काष्ठा mm_walk *walk)
+अणु
 	pte_t pte = READ_ONCE(*ptep);
 
-	if (pte_present(pte))
+	अगर (pte_present(pte))
 		WARN_ON_ONCE(uv_destroy_page(pte_val(pte) & PAGE_MASK));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mm_walk_ops reset_acc_walk_ops = {
+अटल स्थिर काष्ठा mm_walk_ops reset_acc_walk_ops = अणु
 	.pte_entry		= __s390_reset_acc,
-};
+पूर्ण;
 
-#include <linux/sched/mm.h>
-void s390_reset_acc(struct mm_struct *mm)
-{
-	if (!mm_is_protected(mm))
-		return;
+#समावेश <linux/sched/mm.h>
+व्योम s390_reset_acc(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (!mm_is_रक्षित(mm))
+		वापस;
 	/*
 	 * we might be called during
 	 * reset:                             we walk the pages and clear
-	 * close of all kvm file descriptors: we walk the pages and clear
-	 * exit of process on fd closure:     vma already gone, do nothing
+	 * बंद of all kvm file descriptors: we walk the pages and clear
+	 * निकास of process on fd closure:     vma alपढ़ोy gone, करो nothing
 	 */
-	if (!mmget_not_zero(mm))
-		return;
-	mmap_read_lock(mm);
-	walk_page_range(mm, 0, TASK_SIZE, &reset_acc_walk_ops, NULL);
-	mmap_read_unlock(mm);
+	अगर (!mmget_not_zero(mm))
+		वापस;
+	mmap_पढ़ो_lock(mm);
+	walk_page_range(mm, 0, TASK_SIZE, &reset_acc_walk_ops, शून्य);
+	mmap_पढ़ो_unlock(mm);
 	mmput(mm);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(s390_reset_acc);

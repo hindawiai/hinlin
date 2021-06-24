@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * NXP Wireless LAN device driver: 802.11h
  *
@@ -5,231 +6,231 @@
  *
  * This software file (the "File") is distributed by NXP
  * under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modify this File in
+ * (the "License").  You may use, redistribute and/or modअगरy this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available by writing to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
+ * 51 Franklin Street, Fअगरth Floor, Boston, MA 02110-1301 USA or on the
  * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
- * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  */
 
-#include "main.h"
-#include "fw.h"
+#समावेश "main.h"
+#समावेश "fw.h"
 
 
-void mwifiex_init_11h_params(struct mwifiex_private *priv)
-{
+व्योम mwअगरiex_init_11h_params(काष्ठा mwअगरiex_निजी *priv)
+अणु
 	priv->state_11h.is_11h_enabled = true;
 	priv->state_11h.is_11h_active = false;
-}
+पूर्ण
 
-inline int mwifiex_is_11h_active(struct mwifiex_private *priv)
-{
-	return priv->state_11h.is_11h_active;
-}
-/* This function appends 11h info to a buffer while joining an
- * infrastructure BSS
+अंतरभूत पूर्णांक mwअगरiex_is_11h_active(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	वापस priv->state_11h.is_11h_active;
+पूर्ण
+/* This function appends 11h info to a buffer जबतक joining an
+ * infraकाष्ठाure BSS
  */
-static void
-mwifiex_11h_process_infra_join(struct mwifiex_private *priv, u8 **buffer,
-			       struct mwifiex_bssdescriptor *bss_desc)
-{
-	struct mwifiex_ie_types_header *ie_header;
-	struct mwifiex_ie_types_pwr_capability *cap;
-	struct mwifiex_ie_types_local_pwr_constraint *constraint;
-	struct ieee80211_supported_band *sband;
+अटल व्योम
+mwअगरiex_11h_process_infra_join(काष्ठा mwअगरiex_निजी *priv, u8 **buffer,
+			       काष्ठा mwअगरiex_bssdescriptor *bss_desc)
+अणु
+	काष्ठा mwअगरiex_ie_types_header *ie_header;
+	काष्ठा mwअगरiex_ie_types_pwr_capability *cap;
+	काष्ठा mwअगरiex_ie_types_local_pwr_स्थिरraपूर्णांक *स्थिरraपूर्णांक;
+	काष्ठा ieee80211_supported_band *sband;
 	u8 radio_type;
-	int i;
+	पूर्णांक i;
 
-	if (!buffer || !(*buffer))
-		return;
+	अगर (!buffer || !(*buffer))
+		वापस;
 
-	radio_type = mwifiex_band_to_radio_type((u8) bss_desc->bss_band);
+	radio_type = mwअगरiex_band_to_radio_type((u8) bss_desc->bss_band);
 	sband = priv->wdev.wiphy->bands[radio_type];
 
-	cap = (struct mwifiex_ie_types_pwr_capability *)*buffer;
+	cap = (काष्ठा mwअगरiex_ie_types_pwr_capability *)*buffer;
 	cap->header.type = cpu_to_le16(WLAN_EID_PWR_CAPABILITY);
 	cap->header.len = cpu_to_le16(2);
 	cap->min_pwr = 0;
 	cap->max_pwr = 0;
-	*buffer += sizeof(*cap);
+	*buffer += माप(*cap);
 
-	constraint = (struct mwifiex_ie_types_local_pwr_constraint *)*buffer;
-	constraint->header.type = cpu_to_le16(WLAN_EID_PWR_CONSTRAINT);
-	constraint->header.len = cpu_to_le16(2);
-	constraint->chan = bss_desc->channel;
-	constraint->constraint = bss_desc->local_constraint;
-	*buffer += sizeof(*constraint);
+	स्थिरraपूर्णांक = (काष्ठा mwअगरiex_ie_types_local_pwr_स्थिरraपूर्णांक *)*buffer;
+	स्थिरraपूर्णांक->header.type = cpu_to_le16(WLAN_EID_PWR_CONSTRAINT);
+	स्थिरraपूर्णांक->header.len = cpu_to_le16(2);
+	स्थिरraपूर्णांक->chan = bss_desc->channel;
+	स्थिरraपूर्णांक->स्थिरraपूर्णांक = bss_desc->local_स्थिरraपूर्णांक;
+	*buffer += माप(*स्थिरraपूर्णांक);
 
-	ie_header = (struct mwifiex_ie_types_header *)*buffer;
+	ie_header = (काष्ठा mwअगरiex_ie_types_header *)*buffer;
 	ie_header->type = cpu_to_le16(TLV_TYPE_PASSTHROUGH);
 	ie_header->len  = cpu_to_le16(2 * sband->n_channels + 2);
-	*buffer += sizeof(*ie_header);
+	*buffer += माप(*ie_header);
 	*(*buffer)++ = WLAN_EID_SUPPORTED_CHANNELS;
 	*(*buffer)++ = 2 * sband->n_channels;
-	for (i = 0; i < sband->n_channels; i++) {
+	क्रम (i = 0; i < sband->n_channels; i++) अणु
 		*(*buffer)++ = ieee80211_frequency_to_channel(
 					sband->channels[i].center_freq);
 		*(*buffer)++ = 1; /* one channel in the subband */
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Enable or disable the 11h extensions in the firmware */
-int mwifiex_11h_activate(struct mwifiex_private *priv, bool flag)
-{
+पूर्णांक mwअगरiex_11h_activate(काष्ठा mwअगरiex_निजी *priv, bool flag)
+अणु
 	u32 enable = flag;
 
-	/* enable master mode radar detection on AP interface */
-	if ((GET_BSS_ROLE(priv) == MWIFIEX_BSS_ROLE_UAP) && enable)
+	/* enable master mode radar detection on AP पूर्णांकerface */
+	अगर ((GET_BSS_ROLE(priv) == MWIFIEX_BSS_ROLE_UAP) && enable)
 		enable |= MWIFIEX_MASTER_RADAR_DET_MASK;
 
-	return mwifiex_send_cmd(priv, HostCmd_CMD_802_11_SNMP_MIB,
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_SNMP_MIB,
 				HostCmd_ACT_GEN_SET, DOT11H_I, &enable, true);
-}
+पूर्ण
 
-/* This functions processes TLV buffer for a pending BSS Join command.
+/* This functions processes TLV buffer क्रम a pending BSS Join command.
  *
- * Activate 11h functionality in the firmware if the spectrum management
+ * Activate 11h functionality in the firmware अगर the spectrum management
  * capability bit is found in the network we are joining. Also, necessary
  * TLVs are set based on requested network's 11h capability.
  */
-void mwifiex_11h_process_join(struct mwifiex_private *priv, u8 **buffer,
-			      struct mwifiex_bssdescriptor *bss_desc)
-{
-	if (bss_desc->sensed_11h) {
+व्योम mwअगरiex_11h_process_join(काष्ठा mwअगरiex_निजी *priv, u8 **buffer,
+			      काष्ठा mwअगरiex_bssdescriptor *bss_desc)
+अणु
+	अगर (bss_desc->sensed_11h) अणु
 		/* Activate 11h functions in firmware, turns on capability
 		 * bit
 		 */
-		mwifiex_11h_activate(priv, true);
+		mwअगरiex_11h_activate(priv, true);
 		priv->state_11h.is_11h_active = true;
-		bss_desc->cap_info_bitmap |= WLAN_CAPABILITY_SPECTRUM_MGMT;
-		mwifiex_11h_process_infra_join(priv, buffer, bss_desc);
-	} else {
+		bss_desc->cap_info_biपंचांगap |= WLAN_CAPABILITY_SPECTRUM_MGMT;
+		mwअगरiex_11h_process_infra_join(priv, buffer, bss_desc);
+	पूर्ण अन्यथा अणु
 		/* Deactivate 11h functions in the firmware */
-		mwifiex_11h_activate(priv, false);
+		mwअगरiex_11h_activate(priv, false);
 		priv->state_11h.is_11h_active = false;
-		bss_desc->cap_info_bitmap &= ~WLAN_CAPABILITY_SPECTRUM_MGMT;
-	}
-}
+		bss_desc->cap_info_biपंचांगap &= ~WLAN_CAPABILITY_SPECTRUM_MGMT;
+	पूर्ण
+पूर्ण
 
 /* This is DFS CAC work queue function.
- * This delayed work emits CAC finished event for cfg80211 if
+ * This delayed work emits CAC finished event क्रम cfg80211 अगर
  * CAC was started earlier.
  */
-void mwifiex_dfs_cac_work_queue(struct work_struct *work)
-{
-	struct cfg80211_chan_def chandef;
-	struct delayed_work *delayed_work = to_delayed_work(work);
-	struct mwifiex_private *priv =
-			container_of(delayed_work, struct mwifiex_private,
+व्योम mwअगरiex_dfs_cac_work_queue(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cfg80211_chan_def chandef;
+	काष्ठा delayed_work *delayed_work = to_delayed_work(work);
+	काष्ठा mwअगरiex_निजी *priv =
+			container_of(delayed_work, काष्ठा mwअगरiex_निजी,
 				     dfs_cac_work);
 
 	chandef = priv->dfs_chandef;
-	if (priv->wdev.cac_started) {
-		mwifiex_dbg(priv->adapter, MSG,
+	अगर (priv->wdev.cac_started) अणु
+		mwअगरiex_dbg(priv->adapter, MSG,
 			    "CAC timer finished; No radar detected\n");
 		cfg80211_cac_event(priv->netdev, &chandef,
 				   NL80211_RADAR_CAC_FINISHED,
 				   GFP_KERNEL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* This function prepares channel report request command to FW for
+/* This function prepares channel report request command to FW क्रम
  * starting radar detection.
  */
-int mwifiex_cmd_issue_chan_report_request(struct mwifiex_private *priv,
-					  struct host_cmd_ds_command *cmd,
-					  void *data_buf)
-{
-	struct host_cmd_ds_chan_rpt_req *cr_req = &cmd->params.chan_rpt_req;
-	struct mwifiex_radar_params *radar_params = (void *)data_buf;
+पूर्णांक mwअगरiex_cmd_issue_chan_report_request(काष्ठा mwअगरiex_निजी *priv,
+					  काष्ठा host_cmd_ds_command *cmd,
+					  व्योम *data_buf)
+अणु
+	काष्ठा host_cmd_ds_chan_rpt_req *cr_req = &cmd->params.chan_rpt_req;
+	काष्ठा mwअगरiex_radar_params *radar_params = (व्योम *)data_buf;
 
 	cmd->command = cpu_to_le16(HostCmd_CMD_CHAN_REPORT_REQUEST);
 	cmd->size = cpu_to_le16(S_DS_GEN);
 	le16_unaligned_add_cpu(&cmd->size,
-			       sizeof(struct host_cmd_ds_chan_rpt_req));
+			       माप(काष्ठा host_cmd_ds_chan_rpt_req));
 
 	cr_req->chan_desc.start_freq = cpu_to_le16(MWIFIEX_A_BAND_START_FREQ);
 	cr_req->chan_desc.chan_num = radar_params->chandef->chan->hw_value;
 	cr_req->chan_desc.chan_width = radar_params->chandef->width;
-	cr_req->msec_dwell_time = cpu_to_le32(radar_params->cac_time_ms);
+	cr_req->msec_dwell_समय = cpu_to_le32(radar_params->cac_समय_ms);
 
-	if (radar_params->cac_time_ms)
-		mwifiex_dbg(priv->adapter, MSG,
+	अगर (radar_params->cac_समय_ms)
+		mwअगरiex_dbg(priv->adapter, MSG,
 			    "11h: issuing DFS Radar check for channel=%d\n",
 			    radar_params->chandef->chan->hw_value);
-	else
-		mwifiex_dbg(priv->adapter, MSG, "cancelling CAC\n");
+	अन्यथा
+		mwअगरiex_dbg(priv->adapter, MSG, "cancelling CAC\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mwifiex_stop_radar_detection(struct mwifiex_private *priv,
-				 struct cfg80211_chan_def *chandef)
-{
-	struct mwifiex_radar_params radar_params;
+पूर्णांक mwअगरiex_stop_radar_detection(काष्ठा mwअगरiex_निजी *priv,
+				 काष्ठा cfg80211_chan_def *chandef)
+अणु
+	काष्ठा mwअगरiex_radar_params radar_params;
 
-	memset(&radar_params, 0, sizeof(struct mwifiex_radar_params));
+	स_रखो(&radar_params, 0, माप(काष्ठा mwअगरiex_radar_params));
 	radar_params.chandef = chandef;
-	radar_params.cac_time_ms = 0;
+	radar_params.cac_समय_ms = 0;
 
-	return mwifiex_send_cmd(priv, HostCmd_CMD_CHAN_REPORT_REQUEST,
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_CHAN_REPORT_REQUEST,
 				HostCmd_ACT_GEN_SET, 0, &radar_params, true);
-}
+पूर्ण
 
-/* This function is to abort ongoing CAC upon stopping AP operations
+/* This function is to पात ongoing CAC upon stopping AP operations
  * or during unload.
  */
-void mwifiex_abort_cac(struct mwifiex_private *priv)
-{
-	if (priv->wdev.cac_started) {
-		if (mwifiex_stop_radar_detection(priv, &priv->dfs_chandef))
-			mwifiex_dbg(priv->adapter, ERROR,
+व्योम mwअगरiex_पात_cac(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	अगर (priv->wdev.cac_started) अणु
+		अगर (mwअगरiex_stop_radar_detection(priv, &priv->dfs_chandef))
+			mwअगरiex_dbg(priv->adapter, ERROR,
 				    "failed to stop CAC in FW\n");
-		mwifiex_dbg(priv->adapter, MSG,
+		mwअगरiex_dbg(priv->adapter, MSG,
 			    "Aborting delayed work for CAC.\n");
 		cancel_delayed_work_sync(&priv->dfs_cac_work);
 		cfg80211_cac_event(priv->netdev, &priv->dfs_chandef,
 				   NL80211_RADAR_CAC_ABORTED, GFP_KERNEL);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* This function handles channel report event from FW during CAC period.
  * If radar is detected during CAC, driver indicates the same to cfg80211
  * and also cancels ongoing delayed work.
  */
-int mwifiex_11h_handle_chanrpt_ready(struct mwifiex_private *priv,
-				     struct sk_buff *skb)
-{
-	struct host_cmd_ds_chan_rpt_event *rpt_event;
-	struct mwifiex_ie_types_chan_rpt_data *rpt;
+पूर्णांक mwअगरiex_11h_handle_chanrpt_पढ़ोy(काष्ठा mwअगरiex_निजी *priv,
+				     काष्ठा sk_buff *skb)
+अणु
+	काष्ठा host_cmd_ds_chan_rpt_event *rpt_event;
+	काष्ठा mwअगरiex_ie_types_chan_rpt_data *rpt;
 	u8 *evt_buf;
 	u16 event_len, tlv_len;
 
-	rpt_event = (void *)(skb->data + sizeof(u32));
-	event_len = skb->len - (sizeof(struct host_cmd_ds_chan_rpt_event)+
-				sizeof(u32));
+	rpt_event = (व्योम *)(skb->data + माप(u32));
+	event_len = skb->len - (माप(काष्ठा host_cmd_ds_chan_rpt_event)+
+				माप(u32));
 
-	if (le32_to_cpu(rpt_event->result) != HostCmd_RESULT_OK) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (le32_to_cpu(rpt_event->result) != HostCmd_RESULT_OK) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "Error in channel report event\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	evt_buf = (void *)&rpt_event->tlvbuf;
+	evt_buf = (व्योम *)&rpt_event->tlvbuf;
 
-	while (event_len >= sizeof(struct mwifiex_ie_types_header)) {
-		rpt = (void *)&rpt_event->tlvbuf;
+	जबतक (event_len >= माप(काष्ठा mwअगरiex_ie_types_header)) अणु
+		rpt = (व्योम *)&rpt_event->tlvbuf;
 		tlv_len = le16_to_cpu(rpt->header.len);
 
-		switch (le16_to_cpu(rpt->header.type)) {
-		case TLV_TYPE_CHANRPT_11H_BASIC:
-			if (rpt->map.radar) {
-				mwifiex_dbg(priv->adapter, MSG,
+		चयन (le16_to_cpu(rpt->header.type)) अणु
+		हाल TLV_TYPE_CHANRPT_11H_BASIC:
+			अगर (rpt->map.radar) अणु
+				mwअगरiex_dbg(priv->adapter, MSG,
 					    "RADAR Detected on channel %d!\n",
 					    priv->dfs_chandef.chan->hw_value);
 				cancel_delayed_work_sync(&priv->dfs_cac_work);
@@ -237,71 +238,71 @@ int mwifiex_11h_handle_chanrpt_ready(struct mwifiex_private *priv,
 						   &priv->dfs_chandef,
 						   NL80211_RADAR_DETECTED,
 						   GFP_KERNEL);
-			}
-			break;
-		default:
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		evt_buf += (tlv_len + sizeof(rpt->header));
-		event_len -= (tlv_len + sizeof(rpt->header));
-	}
+		evt_buf += (tlv_len + माप(rpt->header));
+		event_len -= (tlv_len + माप(rpt->header));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Handler for radar detected event from FW.*/
-int mwifiex_11h_handle_radar_detected(struct mwifiex_private *priv,
-				      struct sk_buff *skb)
-{
-	struct mwifiex_radar_det_event *rdr_event;
+/* Handler क्रम radar detected event from FW.*/
+पूर्णांक mwअगरiex_11h_handle_radar_detected(काष्ठा mwअगरiex_निजी *priv,
+				      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mwअगरiex_radar_det_event *rdr_event;
 
-	rdr_event = (void *)(skb->data + sizeof(u32));
+	rdr_event = (व्योम *)(skb->data + माप(u32));
 
-	mwifiex_dbg(priv->adapter, MSG,
+	mwअगरiex_dbg(priv->adapter, MSG,
 		    "radar detected; indicating kernel\n");
-	if (mwifiex_stop_radar_detection(priv, &priv->dfs_chandef))
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (mwअगरiex_stop_radar_detection(priv, &priv->dfs_chandef))
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "Failed to stop CAC in FW\n");
 	cfg80211_radar_event(priv->adapter->wiphy, &priv->dfs_chandef,
 			     GFP_KERNEL);
-	mwifiex_dbg(priv->adapter, MSG, "regdomain: %d\n",
-		    rdr_event->reg_domain);
-	mwifiex_dbg(priv->adapter, MSG, "radar detection type: %d\n",
+	mwअगरiex_dbg(priv->adapter, MSG, "regdomain: %d\n",
+		    rdr_event->reg_करोमुख्य);
+	mwअगरiex_dbg(priv->adapter, MSG, "radar detection type: %d\n",
 		    rdr_event->det_type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* This is work queue function for channel switch handling.
+/* This is work queue function क्रम channel चयन handling.
  * This function takes care of updating new channel definitin to
- * bss config structure, restart AP and indicate channel switch success
+ * bss config काष्ठाure, restart AP and indicate channel चयन success
  * to cfg80211.
  */
-void mwifiex_dfs_chan_sw_work_queue(struct work_struct *work)
-{
-	struct mwifiex_uap_bss_param *bss_cfg;
-	struct delayed_work *delayed_work = to_delayed_work(work);
-	struct mwifiex_private *priv =
-			container_of(delayed_work, struct mwifiex_private,
+व्योम mwअगरiex_dfs_chan_sw_work_queue(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mwअगरiex_uap_bss_param *bss_cfg;
+	काष्ठा delayed_work *delayed_work = to_delayed_work(work);
+	काष्ठा mwअगरiex_निजी *priv =
+			container_of(delayed_work, काष्ठा mwअगरiex_निजी,
 				     dfs_chan_sw_work);
 
 	bss_cfg = &priv->bss_cfg;
-	if (!bss_cfg->beacon_period) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (!bss_cfg->beacon_period) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "channel switch: AP already stopped\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mwifiex_uap_set_channel(priv, bss_cfg, priv->dfs_chandef);
+	mwअगरiex_uap_set_channel(priv, bss_cfg, priv->dfs_chandef);
 
-	if (mwifiex_config_start_uap(priv, bss_cfg)) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (mwअगरiex_config_start_uap(priv, bss_cfg)) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "Failed to start AP after channel switch\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mwifiex_dbg(priv->adapter, MSG,
+	mwअगरiex_dbg(priv->adapter, MSG,
 		    "indicating channel switch completion to kernel\n");
-	cfg80211_ch_switch_notify(priv->netdev, &priv->dfs_chandef);
-}
+	cfg80211_ch_चयन_notअगरy(priv->netdev, &priv->dfs_chandef);
+पूर्ण

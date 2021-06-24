@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_KCMP_H
-#define _UAPI_LINUX_KCMP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_KCMP_H
+#घोषणा _UAPI_LINUX_KCMP_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* Comparison type */
-enum kcmp_type {
-	KCMP_FILE,
+क्रमागत kcmp_type अणु
+	KCMP_खाता,
 	KCMP_VM,
-	KCMP_FILES,
+	KCMP_खाताS,
 	KCMP_FS,
 	KCMP_SIGHAND,
 	KCMP_IO,
@@ -16,13 +17,13 @@ enum kcmp_type {
 	KCMP_EPOLL_TFD,
 
 	KCMP_TYPES,
-};
+पूर्ण;
 
-/* Slot for KCMP_EPOLL_TFD */
-struct kcmp_epoll_slot {
+/* Slot क्रम KCMP_EPOLL_TFD */
+काष्ठा kcmp_epoll_slot अणु
 	__u32 efd;		/* epoll file descriptor */
 	__u32 tfd;		/* target file number */
 	__u32 toff;		/* target offset within same numbered sequence */
-};
+पूर्ण;
 
-#endif /* _UAPI_LINUX_KCMP_H */
+#पूर्ण_अगर /* _UAPI_LINUX_KCMP_H */

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * vivid-kthread-cap.h - video/vbi capture thread support functions.
+ * vivid-kthपढ़ो-cap.h - video/vbi capture thपढ़ो support functions.
  *
  */
 
-#ifndef _VIVID_KTHREAD_CAP_H_
-#define _VIVID_KTHREAD_CAP_H_
+#अगर_अघोषित _VIVID_KTHREAD_CAP_H_
+#घोषणा _VIVID_KTHREAD_CAP_H_
 
-int vivid_start_generating_touch_cap(struct vivid_dev *dev);
-void vivid_stop_generating_touch_cap(struct vivid_dev *dev);
+पूर्णांक vivid_start_generating_touch_cap(काष्ठा vivid_dev *dev);
+व्योम vivid_stop_generating_touch_cap(काष्ठा vivid_dev *dev);
 
-#endif
+#पूर्ण_अगर

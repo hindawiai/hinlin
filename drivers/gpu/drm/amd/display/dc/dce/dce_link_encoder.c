@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,86 +24,86 @@
  *
  */
 
-#include <linux/delay.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
 
-#include "reg_helper.h"
+#समावेश "reg_helper.h"
 
-#include "core_types.h"
-#include "link_encoder.h"
-#include "dce_link_encoder.h"
-#include "stream_encoder.h"
-#include "i2caux_interface.h"
-#include "dc_bios_types.h"
+#समावेश "core_types.h"
+#समावेश "link_encoder.h"
+#समावेश "dce_link_encoder.h"
+#समावेश "stream_encoder.h"
+#समावेश "i2caux_interface.h"
+#समावेश "dc_bios_types.h"
 
-#include "gpio_service_interface.h"
+#समावेश "gpio_service_interface.h"
 
-#include "dce/dce_11_0_d.h"
-#include "dce/dce_11_0_sh_mask.h"
-#include "dce/dce_11_0_enum.h"
+#समावेश "dce/dce_11_0_d.h"
+#समावेश "dce/dce_11_0_sh_mask.h"
+#समावेश "dce/dce_11_0_enum.h"
 
-#ifndef DMU_MEM_PWR_CNTL__DMCU_IRAM_MEM_PWR_STATE__SHIFT
-#define DMU_MEM_PWR_CNTL__DMCU_IRAM_MEM_PWR_STATE__SHIFT 0xa
-#endif
+#अगर_अघोषित DMU_MEM_PWR_CNTL__DMCU_IRAM_MEM_PWR_STATE__SHIFT
+#घोषणा DMU_MEM_PWR_CNTL__DMCU_IRAM_MEM_PWR_STATE__SHIFT 0xa
+#पूर्ण_अगर
 
-#ifndef DMU_MEM_PWR_CNTL__DMCU_IRAM_MEM_PWR_STATE_MASK
-#define DMU_MEM_PWR_CNTL__DMCU_IRAM_MEM_PWR_STATE_MASK 0x00000400L
-#endif
+#अगर_अघोषित DMU_MEM_PWR_CNTL__DMCU_IRAM_MEM_PWR_STATE_MASK
+#घोषणा DMU_MEM_PWR_CNTL__DMCU_IRAM_MEM_PWR_STATE_MASK 0x00000400L
+#पूर्ण_अगर
 
-#ifndef HPD0_DC_HPD_CONTROL__DC_HPD_EN_MASK
-#define HPD0_DC_HPD_CONTROL__DC_HPD_EN_MASK  0x10000000L
-#endif
+#अगर_अघोषित HPD0_DC_HPD_CONTROL__DC_HPD_EN_MASK
+#घोषणा HPD0_DC_HPD_CONTROL__DC_HPD_EN_MASK  0x10000000L
+#पूर्ण_अगर
 
-#ifndef HPD0_DC_HPD_CONTROL__DC_HPD_EN__SHIFT
-#define HPD0_DC_HPD_CONTROL__DC_HPD_EN__SHIFT  0x1c
-#endif
+#अगर_अघोषित HPD0_DC_HPD_CONTROL__DC_HPD_EN__SHIFT
+#घोषणा HPD0_DC_HPD_CONTROL__DC_HPD_EN__SHIFT  0x1c
+#पूर्ण_अगर
 
-#define CTX \
+#घोषणा CTX \
 	enc110->base.ctx
-#define DC_LOGGER \
+#घोषणा DC_LOGGER \
 	enc110->base.ctx->logger
 
-#define REG(reg)\
+#घोषणा REG(reg)\
 	(enc110->link_regs->reg)
 
-#define AUX_REG(reg)\
+#घोषणा AUX_REG(reg)\
 	(enc110->aux_regs->reg)
 
-#define HPD_REG(reg)\
+#घोषणा HPD_REG(reg)\
 	(enc110->hpd_regs->reg)
 
-#define DEFAULT_AUX_MAX_DATA_SIZE 16
-#define AUX_MAX_DEFER_WRITE_RETRY 20
+#घोषणा DEFAULT_AUX_MAX_DATA_SIZE 16
+#घोषणा AUX_MAX_DEFER_WRITE_RETRY 20
 /*
  * @brief
  * Trigger Source Select
- * ASIC-dependent, actual values for register programming
+ * ASIC-dependent, actual values क्रम रेजिस्टर programming
  */
-#define DCE110_DIG_FE_SOURCE_SELECT_INVALID 0x0
-#define DCE110_DIG_FE_SOURCE_SELECT_DIGA 0x1
-#define DCE110_DIG_FE_SOURCE_SELECT_DIGB 0x2
-#define DCE110_DIG_FE_SOURCE_SELECT_DIGC 0x4
-#define DCE110_DIG_FE_SOURCE_SELECT_DIGD 0x08
-#define DCE110_DIG_FE_SOURCE_SELECT_DIGE 0x10
-#define DCE110_DIG_FE_SOURCE_SELECT_DIGF 0x20
-#define DCE110_DIG_FE_SOURCE_SELECT_DIGG 0x40
+#घोषणा DCE110_DIG_FE_SOURCE_SELECT_INVALID 0x0
+#घोषणा DCE110_DIG_FE_SOURCE_SELECT_DIGA 0x1
+#घोषणा DCE110_DIG_FE_SOURCE_SELECT_DIGB 0x2
+#घोषणा DCE110_DIG_FE_SOURCE_SELECT_DIGC 0x4
+#घोषणा DCE110_DIG_FE_SOURCE_SELECT_DIGD 0x08
+#घोषणा DCE110_DIG_FE_SOURCE_SELECT_DIGE 0x10
+#घोषणा DCE110_DIG_FE_SOURCE_SELECT_DIGF 0x20
+#घोषणा DCE110_DIG_FE_SOURCE_SELECT_DIGG 0x40
 
-enum {
+क्रमागत अणु
 	DP_MST_UPDATE_MAX_RETRY = 50
-};
+पूर्ण;
 
-#define DIG_REG(reg)\
+#घोषणा DIG_REG(reg)\
 	(reg + enc110->offsets.dig)
 
-#define DP_REG(reg)\
+#घोषणा DP_REG(reg)\
 	(reg + enc110->offsets.dp)
 
-static const struct link_encoder_funcs dce110_lnk_enc_funcs = {
+अटल स्थिर काष्ठा link_encoder_funcs dce110_lnk_enc_funcs = अणु
 	.validate_output_with_stream =
 		dce110_link_encoder_validate_output_with_stream,
 	.hw_init = dce110_link_encoder_hw_init,
 	.setup = dce110_link_encoder_setup,
-	.enable_tmds_output = dce110_link_encoder_enable_tmds_output,
+	.enable_पंचांगds_output = dce110_link_encoder_enable_पंचांगds_output,
 	.enable_dp_output = dce110_link_encoder_enable_dp_output,
 	.enable_dp_mst_output = dce110_link_encoder_enable_dp_mst_output,
 	.enable_lvds_output = dce110_link_encoder_enable_lvds_output,
@@ -121,82 +122,82 @@ static const struct link_encoder_funcs dce110_lnk_enc_funcs = {
 	.destroy = dce110_link_encoder_destroy,
 	.get_max_link_cap = dce110_link_encoder_get_max_link_cap,
 	.get_dig_frontend = dce110_get_dig_frontend,
-};
+पूर्ण;
 
-static enum bp_result link_transmitter_control(
-	struct dce110_link_encoder *enc110,
-	struct bp_transmitter_control *cntl)
-{
-	enum bp_result result;
-	struct dc_bios *bp = enc110->base.ctx->dc_bios;
+अटल क्रमागत bp_result link_transmitter_control(
+	काष्ठा dce110_link_encoder *enc110,
+	काष्ठा bp_transmitter_control *cntl)
+अणु
+	क्रमागत bp_result result;
+	काष्ठा dc_bios *bp = enc110->base.ctx->dc_bios;
 
 	result = bp->funcs->transmitter_control(bp, cntl);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void enable_phy_bypass_mode(
-	struct dce110_link_encoder *enc110,
+अटल व्योम enable_phy_bypass_mode(
+	काष्ठा dce110_link_encoder *enc110,
 	bool enable)
-{
-	/* This register resides in DP back end block;
-	 * transmitter is used for the offset */
+अणु
+	/* This रेजिस्टर resides in DP back end block;
+	 * transmitter is used क्रम the offset */
 
 	REG_UPDATE(DP_DPHY_CNTL, DPHY_BYPASS, enable);
 
-}
+पूर्ण
 
-static void disable_prbs_symbols(
-	struct dce110_link_encoder *enc110,
+अटल व्योम disable_prbs_symbols(
+	काष्ठा dce110_link_encoder *enc110,
 	bool disable)
-{
-	/* This register resides in DP back end block;
-	 * transmitter is used for the offset */
+अणु
+	/* This रेजिस्टर resides in DP back end block;
+	 * transmitter is used क्रम the offset */
 
 	REG_UPDATE_4(DP_DPHY_CNTL,
 			DPHY_ATEST_SEL_LANE0, disable,
 			DPHY_ATEST_SEL_LANE1, disable,
 			DPHY_ATEST_SEL_LANE2, disable,
 			DPHY_ATEST_SEL_LANE3, disable);
-}
+पूर्ण
 
-static void disable_prbs_mode(
-	struct dce110_link_encoder *enc110)
-{
+अटल व्योम disable_prbs_mode(
+	काष्ठा dce110_link_encoder *enc110)
+अणु
 	REG_UPDATE(DP_DPHY_PRBS_CNTL, DPHY_PRBS_EN, 0);
-}
+पूर्ण
 
-static void program_pattern_symbols(
-	struct dce110_link_encoder *enc110,
-	uint16_t pattern_symbols[8])
-{
-	/* This register resides in DP back end block;
-	 * transmitter is used for the offset */
+अटल व्योम program_pattern_symbols(
+	काष्ठा dce110_link_encoder *enc110,
+	uपूर्णांक16_t pattern_symbols[8])
+अणु
+	/* This रेजिस्टर resides in DP back end block;
+	 * transmitter is used क्रम the offset */
 
 	REG_SET_3(DP_DPHY_SYM0, 0,
 			DPHY_SYM1, pattern_symbols[0],
 			DPHY_SYM2, pattern_symbols[1],
 			DPHY_SYM3, pattern_symbols[2]);
 
-	/* This register resides in DP back end block;
-	 * transmitter is used for the offset */
+	/* This रेजिस्टर resides in DP back end block;
+	 * transmitter is used क्रम the offset */
 
 	REG_SET_3(DP_DPHY_SYM1, 0,
 			DPHY_SYM4, pattern_symbols[3],
 			DPHY_SYM5, pattern_symbols[4],
 			DPHY_SYM6, pattern_symbols[5]);
 
-	/* This register resides in DP back end block;
-	 * transmitter is used for the offset */
+	/* This रेजिस्टर resides in DP back end block;
+	 * transmitter is used क्रम the offset */
 
 	REG_SET_2(DP_DPHY_SYM2, 0,
 			DPHY_SYM7, pattern_symbols[6],
 			DPHY_SYM8, pattern_symbols[7]);
-}
+पूर्ण
 
-static void set_dp_phy_pattern_d102(
-	struct dce110_link_encoder *enc110)
-{
+अटल व्योम set_dp_phy_pattern_d102(
+	काष्ठा dce110_link_encoder *enc110)
+अणु
 	/* Disable PHY Bypass mode to setup the test pattern */
 	enable_phy_bypass_mode(enc110, false);
 
@@ -211,74 +212,74 @@ static void set_dp_phy_pattern_d102(
 	disable_prbs_mode(enc110);
 
 	/* Program debug symbols to be output */
-	{
-		uint16_t pattern_symbols[8] = {
+	अणु
+		uपूर्णांक16_t pattern_symbols[8] = अणु
 			0x2AA, 0x2AA, 0x2AA, 0x2AA,
 			0x2AA, 0x2AA, 0x2AA, 0x2AA
-		};
+		पूर्ण;
 
 		program_pattern_symbols(enc110, pattern_symbols);
-	}
+	पूर्ण
 
 	/* Enable phy bypass mode to enable the test pattern */
 
 	enable_phy_bypass_mode(enc110, true);
-}
+पूर्ण
 
-static void set_link_training_complete(
-	struct dce110_link_encoder *enc110,
+अटल व्योम set_link_training_complete(
+	काष्ठा dce110_link_encoder *enc110,
 	bool complete)
-{
-	/* This register resides in DP back end block;
-	 * transmitter is used for the offset */
+अणु
+	/* This रेजिस्टर resides in DP back end block;
+	 * transmitter is used क्रम the offset */
 
 	REG_UPDATE(DP_LINK_CNTL, DP_LINK_TRAINING_COMPLETE, complete);
 
-}
+पूर्ण
 
-unsigned int dce110_get_dig_frontend(struct link_encoder *enc)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+अचिन्हित पूर्णांक dce110_get_dig_frontend(काष्ठा link_encoder *enc)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
 	u32 value;
-	enum engine_id result;
+	क्रमागत engine_id result;
 
 	REG_GET(DIG_BE_CNTL, DIG_FE_SOURCE_SELECT, &value);
 
-	switch (value) {
-	case DCE110_DIG_FE_SOURCE_SELECT_DIGA:
+	चयन (value) अणु
+	हाल DCE110_DIG_FE_SOURCE_SELECT_DIGA:
 		result = ENGINE_ID_DIGA;
-		break;
-	case DCE110_DIG_FE_SOURCE_SELECT_DIGB:
+		अवरोध;
+	हाल DCE110_DIG_FE_SOURCE_SELECT_DIGB:
 		result = ENGINE_ID_DIGB;
-		break;
-	case DCE110_DIG_FE_SOURCE_SELECT_DIGC:
+		अवरोध;
+	हाल DCE110_DIG_FE_SOURCE_SELECT_DIGC:
 		result = ENGINE_ID_DIGC;
-		break;
-	case DCE110_DIG_FE_SOURCE_SELECT_DIGD:
+		अवरोध;
+	हाल DCE110_DIG_FE_SOURCE_SELECT_DIGD:
 		result = ENGINE_ID_DIGD;
-		break;
-	case DCE110_DIG_FE_SOURCE_SELECT_DIGE:
+		अवरोध;
+	हाल DCE110_DIG_FE_SOURCE_SELECT_DIGE:
 		result = ENGINE_ID_DIGE;
-		break;
-	case DCE110_DIG_FE_SOURCE_SELECT_DIGF:
+		अवरोध;
+	हाल DCE110_DIG_FE_SOURCE_SELECT_DIGF:
 		result = ENGINE_ID_DIGF;
-		break;
-	case DCE110_DIG_FE_SOURCE_SELECT_DIGG:
+		अवरोध;
+	हाल DCE110_DIG_FE_SOURCE_SELECT_DIGG:
 		result = ENGINE_ID_DIGG;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		// invalid source select DIG
 		result = ENGINE_ID_UNKNOWN;
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-void dce110_link_encoder_set_dp_phy_pattern_training_pattern(
-	struct link_encoder *enc,
-	uint32_t index)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+व्योम dce110_link_encoder_set_dp_phy_pattern_training_pattern(
+	काष्ठा link_encoder *enc,
+	uपूर्णांक32_t index)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
 	/* Write Training Pattern */
 
 	REG_WRITE(DP_DPHY_TRAINING_PATTERN_SEL, index);
@@ -293,47 +294,47 @@ void dce110_link_encoder_set_dp_phy_pattern_training_pattern(
 
 	/* Disable PRBS mode */
 	disable_prbs_mode(enc110);
-}
+पूर्ण
 
-static void setup_panel_mode(
-	struct dce110_link_encoder *enc110,
-	enum dp_panel_mode panel_mode)
-{
-	uint32_t value;
-	struct dc_context *ctx = enc110->base.ctx;
+अटल व्योम setup_panel_mode(
+	काष्ठा dce110_link_encoder *enc110,
+	क्रमागत dp_panel_mode panel_mode)
+अणु
+	uपूर्णांक32_t value;
+	काष्ठा dc_context *ctx = enc110->base.ctx;
 
-	/* if psp set panel mode, dal should be program it */
-	if (ctx->dc->caps.psp_setup_panel_mode)
-		return;
+	/* अगर psp set panel mode, dal should be program it */
+	अगर (ctx->dc->caps.psp_setup_panel_mode)
+		वापस;
 
 	ASSERT(REG(DP_DPHY_INTERNAL_CTRL));
 	value = REG_READ(DP_DPHY_INTERNAL_CTRL);
 
-	switch (panel_mode) {
-	case DP_PANEL_MODE_EDP:
+	चयन (panel_mode) अणु
+	हाल DP_PANEL_MODE_EDP:
 		value = 0x1;
-		break;
-	case DP_PANEL_MODE_SPECIAL:
+		अवरोध;
+	हाल DP_PANEL_MODE_SPECIAL:
 		value = 0x11;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		value = 0x0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	REG_WRITE(DP_DPHY_INTERNAL_CTRL, value);
-}
+पूर्ण
 
-static void set_dp_phy_pattern_symbol_error(
-	struct dce110_link_encoder *enc110)
-{
+अटल व्योम set_dp_phy_pattern_symbol_error(
+	काष्ठा dce110_link_encoder *enc110)
+अणु
 	/* Disable PHY Bypass mode to setup the test pattern */
 	enable_phy_bypass_mode(enc110, false);
 
 	/* program correct panel mode*/
 	setup_panel_mode(enc110, DP_PANEL_MODE_DEFAULT);
 
-	/* A PRBS23 pattern is used for most DP electrical measurements. */
+	/* A PRBS23 pattern is used क्रम most DP electrical measurements. */
 
 	/* Enable PRBS symbols on the lanes */
 	disable_prbs_symbols(enc110, false);
@@ -345,15 +346,15 @@ static void set_dp_phy_pattern_symbol_error(
 
 	/* Enable phy bypass mode to enable the test pattern */
 	enable_phy_bypass_mode(enc110, true);
-}
+पूर्ण
 
-static void set_dp_phy_pattern_prbs7(
-	struct dce110_link_encoder *enc110)
-{
+अटल व्योम set_dp_phy_pattern_prbs7(
+	काष्ठा dce110_link_encoder *enc110)
+अणु
 	/* Disable PHY Bypass mode to setup the test pattern */
 	enable_phy_bypass_mode(enc110, false);
 
-	/* A PRBS7 pattern is used for most DP electrical measurements. */
+	/* A PRBS7 pattern is used क्रम most DP electrical measurements. */
 
 	/* Enable PRBS symbols on the lanes */
 	disable_prbs_symbols(enc110, false);
@@ -365,12 +366,12 @@ static void set_dp_phy_pattern_prbs7(
 
 	/* Enable phy bypass mode to enable the test pattern */
 	enable_phy_bypass_mode(enc110, true);
-}
+पूर्ण
 
-static void set_dp_phy_pattern_80bit_custom(
-	struct dce110_link_encoder *enc110,
-	const uint8_t *pattern)
-{
+अटल व्योम set_dp_phy_pattern_80bit_custom(
+	काष्ठा dce110_link_encoder *enc110,
+	स्थिर uपूर्णांक8_t *pattern)
+अणु
 	/* Disable PHY Bypass mode to setup the test pattern */
 	enable_phy_bypass_mode(enc110, false);
 
@@ -384,8 +385,8 @@ static void set_dp_phy_pattern_80bit_custom(
 	enable_phy_bypass_mode(enc110, true);
 
 	/* Program 80 bit custom pattern */
-	{
-		uint16_t pattern_symbols[8];
+	अणु
+		uपूर्णांक16_t pattern_symbols[8];
 
 		pattern_symbols[0] =
 			((pattern[1] & 0x03) << 8) | pattern[0];
@@ -405,22 +406,22 @@ static void set_dp_phy_pattern_80bit_custom(
 			(pattern[9] << 2) | ((pattern[8] >> 6) & 0x03);
 
 		program_pattern_symbols(enc110, pattern_symbols);
-	}
+	पूर्ण
 
 	/* Enable phy bypass mode to enable the test pattern */
 
 	enable_phy_bypass_mode(enc110, true);
-}
+पूर्ण
 
-static void set_dp_phy_pattern_hbr2_compliance_cp2520_2(
-	struct dce110_link_encoder *enc110,
-	unsigned int cp2520_pattern)
-{
+अटल व्योम set_dp_phy_pattern_hbr2_compliance_cp2520_2(
+	काष्ठा dce110_link_encoder *enc110,
+	अचिन्हित पूर्णांक cp2520_pattern)
+अणु
 
-	/* previously there is a register DP_HBR2_EYE_PATTERN
+	/* previously there is a रेजिस्टर DP_HBR2_EYE_PATTERN
 	 * that is enabled to get the pattern.
-	 * But it does not work with the latest spec change,
-	 * so we are programming the following registers manually.
+	 * But it करोes not work with the latest spec change,
+	 * so we are programming the following रेजिस्टरs manually.
 	 *
 	 * The following settings have been confirmed
 	 * by Nick Chorney and Sandra Liu */
@@ -447,10 +448,10 @@ static void set_dp_phy_pattern_hbr2_compliance_cp2520_2(
 	REG_UPDATE(DP_DPHY_SCRAM_CNTL, DPHY_SCRAMBLER_BS_COUNT, 0);
 
 	/* select cp2520 patterns */
-	if (REG(DP_DPHY_HBR2_PATTERN_CONTROL))
+	अगर (REG(DP_DPHY_HBR2_PATTERN_CONTROL))
 		REG_UPDATE(DP_DPHY_HBR2_PATTERN_CONTROL,
 				DP_DPHY_HBR2_PATTERN_CONTROL, cp2520_pattern);
-	else
+	अन्यथा
 		/* pre-DCE11 can only generate CP2520 pattern 2 */
 		ASSERT(cp2520_pattern == 2);
 
@@ -462,18 +463,18 @@ static void set_dp_phy_pattern_hbr2_compliance_cp2520_2(
 
 	/* Disable PHY Bypass mode to setup the test pattern */
 	enable_phy_bypass_mode(enc110, false);
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_set_dp_phy_pattern_hbr2_compliance_cp2520_2(
-	struct dce110_link_encoder *enc110,
-	unsigned int cp2520_pattern)
-{
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_set_dp_phy_pattern_hbr2_compliance_cp2520_2(
+	काष्ठा dce110_link_encoder *enc110,
+	अचिन्हित पूर्णांक cp2520_pattern)
+अणु
 
-	/* previously there is a register DP_HBR2_EYE_PATTERN
+	/* previously there is a रेजिस्टर DP_HBR2_EYE_PATTERN
 	 * that is enabled to get the pattern.
-	 * But it does not work with the latest spec change,
-	 * so we are programming the following registers manually.
+	 * But it करोes not work with the latest spec change,
+	 * so we are programming the following रेजिस्टरs manually.
 	 *
 	 * The following settings have been confirmed
 	 * by Nick Chorney and Sandra Liu */
@@ -496,13 +497,13 @@ static void dce60_set_dp_phy_pattern_hbr2_compliance_cp2520_2(
 			DP_VBID_DISABLE, 1,
 			DP_VID_ENHANCED_FRAME_MODE, 1);
 
-	/* DCE6 has no DP_DPHY_SCRAM_CNTL register, skip swap BS with SR */
+	/* DCE6 has no DP_DPHY_SCRAM_CNTL रेजिस्टर, skip swap BS with SR */
 
 	/* select cp2520 patterns */
-	if (REG(DP_DPHY_HBR2_PATTERN_CONTROL))
+	अगर (REG(DP_DPHY_HBR2_PATTERN_CONTROL))
 		REG_UPDATE(DP_DPHY_HBR2_PATTERN_CONTROL,
 				DP_DPHY_HBR2_PATTERN_CONTROL, cp2520_pattern);
-	else
+	अन्यथा
 		/* pre-DCE11 can only generate CP2520 pattern 2 */
 		ASSERT(cp2520_pattern == 2);
 
@@ -514,18 +515,18 @@ static void dce60_set_dp_phy_pattern_hbr2_compliance_cp2520_2(
 
 	/* Disable PHY Bypass mode to setup the test pattern */
 	enable_phy_bypass_mode(enc110, false);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void set_dp_phy_pattern_passthrough_mode(
-	struct dce110_link_encoder *enc110,
-	enum dp_panel_mode panel_mode)
-{
+अटल व्योम set_dp_phy_pattern_passthrough_mode(
+	काष्ठा dce110_link_encoder *enc110,
+	क्रमागत dp_panel_mode panel_mode)
+अणु
 	/* program correct panel mode */
 	setup_panel_mode(enc110, panel_mode);
 
 	/* restore LINK_FRAMING_CNTL and DPHY_SCRAMBLER_BS_COUNT
-	 * in case we were doing HBR2 compliance pattern before
+	 * in हाल we were करोing HBR2 compliance pattern beक्रमe
 	 */
 	REG_UPDATE_3(DP_LINK_FRAMING_CNTL,
 			DP_IDLE_BS_INTERVAL, 0x2000,
@@ -542,25 +543,25 @@ static void set_dp_phy_pattern_passthrough_mode(
 
 	/* Disable PRBS mode */
 	disable_prbs_mode(enc110);
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_set_dp_phy_pattern_passthrough_mode(
-	struct dce110_link_encoder *enc110,
-	enum dp_panel_mode panel_mode)
-{
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_set_dp_phy_pattern_passthrough_mode(
+	काष्ठा dce110_link_encoder *enc110,
+	क्रमागत dp_panel_mode panel_mode)
+अणु
 	/* program correct panel mode */
 	setup_panel_mode(enc110, panel_mode);
 
 	/* restore LINK_FRAMING_CNTL
-	 * in case we were doing HBR2 compliance pattern before
+	 * in हाल we were करोing HBR2 compliance pattern beक्रमe
 	 */
 	REG_UPDATE_3(DP_LINK_FRAMING_CNTL,
 			DP_IDLE_BS_INTERVAL, 0x2000,
 			DP_VBID_DISABLE, 0,
 			DP_VID_ENHANCED_FRAME_MODE, 1);
 
-	/* DCE6 has no DP_DPHY_SCRAM_CNTL register, skip DPHY_SCRAMBLER_BS_COUNT restore */
+	/* DCE6 has no DP_DPHY_SCRAM_CNTL रेजिस्टर, skip DPHY_SCRAMBLER_BS_COUNT restore */
 
 	/* set link training complete */
 	set_link_training_complete(enc110, true);
@@ -570,38 +571,38 @@ static void dce60_set_dp_phy_pattern_passthrough_mode(
 
 	/* Disable PRBS mode */
 	disable_prbs_mode(enc110);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-/* return value is bit-vector */
-static uint8_t get_frontend_source(
-	enum engine_id engine)
-{
-	switch (engine) {
-	case ENGINE_ID_DIGA:
-		return DCE110_DIG_FE_SOURCE_SELECT_DIGA;
-	case ENGINE_ID_DIGB:
-		return DCE110_DIG_FE_SOURCE_SELECT_DIGB;
-	case ENGINE_ID_DIGC:
-		return DCE110_DIG_FE_SOURCE_SELECT_DIGC;
-	case ENGINE_ID_DIGD:
-		return DCE110_DIG_FE_SOURCE_SELECT_DIGD;
-	case ENGINE_ID_DIGE:
-		return DCE110_DIG_FE_SOURCE_SELECT_DIGE;
-	case ENGINE_ID_DIGF:
-		return DCE110_DIG_FE_SOURCE_SELECT_DIGF;
-	case ENGINE_ID_DIGG:
-		return DCE110_DIG_FE_SOURCE_SELECT_DIGG;
-	default:
+/* वापस value is bit-vector */
+अटल uपूर्णांक8_t get_frontend_source(
+	क्रमागत engine_id engine)
+अणु
+	चयन (engine) अणु
+	हाल ENGINE_ID_DIGA:
+		वापस DCE110_DIG_FE_SOURCE_SELECT_DIGA;
+	हाल ENGINE_ID_DIGB:
+		वापस DCE110_DIG_FE_SOURCE_SELECT_DIGB;
+	हाल ENGINE_ID_DIGC:
+		वापस DCE110_DIG_FE_SOURCE_SELECT_DIGC;
+	हाल ENGINE_ID_DIGD:
+		वापस DCE110_DIG_FE_SOURCE_SELECT_DIGD;
+	हाल ENGINE_ID_DIGE:
+		वापस DCE110_DIG_FE_SOURCE_SELECT_DIGE;
+	हाल ENGINE_ID_DIGF:
+		वापस DCE110_DIG_FE_SOURCE_SELECT_DIGF;
+	हाल ENGINE_ID_DIGG:
+		वापस DCE110_DIG_FE_SOURCE_SELECT_DIGG;
+	शेष:
 		ASSERT_CRITICAL(false);
-		return DCE110_DIG_FE_SOURCE_SELECT_INVALID;
-	}
-}
+		वापस DCE110_DIG_FE_SOURCE_SELECT_INVALID;
+	पूर्ण
+पूर्ण
 
-static void configure_encoder(
-	struct dce110_link_encoder *enc110,
-	const struct dc_link_settings *link_settings)
-{
+अटल व्योम configure_encoder(
+	काष्ठा dce110_link_encoder *enc110,
+	स्थिर काष्ठा dc_link_settings *link_settings)
+अणु
 	/* set number of lanes */
 
 	REG_SET(DP_CONFIG, 0,
@@ -609,89 +610,89 @@ static void configure_encoder(
 
 	/* setup scrambler */
 	REG_UPDATE(DP_DPHY_SCRAM_CNTL, DPHY_SCRAMBLER_ADVANCE, 1);
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_configure_encoder(
-	struct dce110_link_encoder *enc110,
-	const struct dc_link_settings *link_settings)
-{
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_configure_encoder(
+	काष्ठा dce110_link_encoder *enc110,
+	स्थिर काष्ठा dc_link_settings *link_settings)
+अणु
 	/* set number of lanes */
 
 	REG_SET(DP_CONFIG, 0,
 			DP_UDI_LANES, link_settings->lane_count - LANE_COUNT_ONE);
 
-	/* DCE6 has no DP_DPHY_SCRAM_CNTL register, skip setup scrambler */
-}
-#endif
+	/* DCE6 has no DP_DPHY_SCRAM_CNTL रेजिस्टर, skip setup scrambler */
+पूर्ण
+#पूर्ण_अगर
 
-static void aux_initialize(
-	struct dce110_link_encoder *enc110)
-{
-	struct dc_context *ctx = enc110->base.ctx;
-	enum hpd_source_id hpd_source = enc110->base.hpd_source;
-	uint32_t addr = AUX_REG(AUX_CONTROL);
-	uint32_t value = dm_read_reg(ctx, addr);
+अटल व्योम aux_initialize(
+	काष्ठा dce110_link_encoder *enc110)
+अणु
+	काष्ठा dc_context *ctx = enc110->base.ctx;
+	क्रमागत hpd_source_id hpd_source = enc110->base.hpd_source;
+	uपूर्णांक32_t addr = AUX_REG(AUX_CONTROL);
+	uपूर्णांक32_t value = dm_पढ़ो_reg(ctx, addr);
 
 	set_reg_field_value(value, hpd_source, AUX_CONTROL, AUX_HPD_SEL);
 	set_reg_field_value(value, 0, AUX_CONTROL, AUX_LS_READ_EN);
-	dm_write_reg(ctx, addr, value);
+	dm_ग_लिखो_reg(ctx, addr, value);
 
 	addr = AUX_REG(AUX_DPHY_RX_CONTROL0);
-	value = dm_read_reg(ctx, addr);
+	value = dm_पढ़ो_reg(ctx, addr);
 
-	/* 1/4 window (the maximum allowed) */
+	/* 1/4 winकरोw (the maximum allowed) */
 	set_reg_field_value(value, 1,
 			AUX_DPHY_RX_CONTROL0, AUX_RX_RECEIVE_WINDOW);
-	dm_write_reg(ctx, addr, value);
+	dm_ग_लिखो_reg(ctx, addr, value);
 
-}
+पूर्ण
 
-void dce110_psr_program_dp_dphy_fast_training(struct link_encoder *enc,
-			bool exit_link_training_required)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+व्योम dce110_psr_program_dp_dphy_fast_training(काष्ठा link_encoder *enc,
+			bool निकास_link_training_required)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
 
-	if (exit_link_training_required)
+	अगर (निकास_link_training_required)
 		REG_UPDATE(DP_DPHY_FAST_TRAINING,
 				DPHY_RX_FAST_TRAINING_CAPABLE, 1);
-	else {
+	अन्यथा अणु
 		REG_UPDATE(DP_DPHY_FAST_TRAINING,
 				DPHY_RX_FAST_TRAINING_CAPABLE, 0);
-		/*In DCE 11, we are able to pre-program a Force SR register
+		/*In DCE 11, we are able to pre-program a Force SR रेजिस्टर
 		 * to be able to trigger SR symbol after 5 idle patterns
 		 * transmitted. Upon PSR Exit, DMCU can trigger
 		 * DPHY_LOAD_BS_COUNT_START = 1. Upon writing 1 to
-		 * DPHY_LOAD_BS_COUNT_START and the internal counter
+		 * DPHY_LOAD_BS_COUNT_START and the पूर्णांकernal counter
 		 * reaches DPHY_LOAD_BS_COUNT, the next BS symbol will be
 		 * replaced by SR symbol once.
 		 */
 
 		REG_UPDATE(DP_DPHY_BS_SR_SWAP_CNTL, DPHY_LOAD_BS_COUNT, 0x5);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void dce110_psr_program_secondary_packet(struct link_encoder *enc,
-			unsigned int sdp_transmit_line_num_deadline)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+व्योम dce110_psr_program_secondary_packet(काष्ठा link_encoder *enc,
+			अचिन्हित पूर्णांक sdp_transmit_line_num_deadline)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
 
 	REG_UPDATE_2(DP_SEC_CNTL1,
 		DP_SEC_GSP0_LINE_NUM, sdp_transmit_line_num_deadline,
 		DP_SEC_GSP0_PRIORITY, 1);
-}
+पूर्ण
 
-bool dce110_is_dig_enabled(struct link_encoder *enc)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	uint32_t value;
+bool dce110_is_dig_enabled(काष्ठा link_encoder *enc)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	uपूर्णांक32_t value;
 
 	REG_GET(DIG_BE_EN_CNTL, DIG_ENABLE, &value);
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static void link_encoder_disable(struct dce110_link_encoder *enc110)
-{
+अटल व्योम link_encoder_disable(काष्ठा dce110_link_encoder *enc110)
+अणु
 	/* reset training pattern */
 	REG_SET(DP_DPHY_TRAINING_PATTERN_SEL, 0,
 			DPHY_TRAINING_PATTERN_SEL, 0);
@@ -701,123 +702,123 @@ static void link_encoder_disable(struct dce110_link_encoder *enc110)
 
 	/* reset panel mode */
 	setup_panel_mode(enc110, DP_PANEL_MODE_DEFAULT);
-}
+पूर्ण
 
-static void hpd_initialize(
-	struct dce110_link_encoder *enc110)
-{
+अटल व्योम hpd_initialize(
+	काष्ठा dce110_link_encoder *enc110)
+अणु
 	/* Associate HPD with DIG_BE */
-	enum hpd_source_id hpd_source = enc110->base.hpd_source;
+	क्रमागत hpd_source_id hpd_source = enc110->base.hpd_source;
 
 	REG_UPDATE(DIG_BE_CNTL, DIG_HPD_SELECT, hpd_source);
-}
+पूर्ण
 
 bool dce110_link_encoder_validate_dvi_output(
-	const struct dce110_link_encoder *enc110,
-	enum signal_type connector_signal,
-	enum signal_type signal,
-	const struct dc_crtc_timing *crtc_timing)
-{
-	uint32_t max_pixel_clock = TMDS_MAX_PIXEL_CLOCK;
+	स्थिर काष्ठा dce110_link_encoder *enc110,
+	क्रमागत संकेत_type connector_संकेत,
+	क्रमागत संकेत_type संकेत,
+	स्थिर काष्ठा dc_crtc_timing *crtc_timing)
+अणु
+	uपूर्णांक32_t max_pixel_घड़ी = TMDS_MAX_PIXEL_CLOCK;
 
-	if (signal == SIGNAL_TYPE_DVI_DUAL_LINK)
-		max_pixel_clock *= 2;
+	अगर (संकेत == SIGNAL_TYPE_DVI_DUAL_LINK)
+		max_pixel_घड़ी *= 2;
 
-	/* This handles the case of HDMI downgrade to DVI we don't want to
-	 * we don't want to cap the pixel clock if the DDI is not DVI.
+	/* This handles the हाल of HDMI करोwngrade to DVI we करोn't want to
+	 * we करोn't want to cap the pixel घड़ी अगर the DDI is not DVI.
 	 */
-	if (connector_signal != SIGNAL_TYPE_DVI_DUAL_LINK &&
-			connector_signal != SIGNAL_TYPE_DVI_SINGLE_LINK)
-		max_pixel_clock = enc110->base.features.max_hdmi_pixel_clock;
+	अगर (connector_संकेत != SIGNAL_TYPE_DVI_DUAL_LINK &&
+			connector_संकेत != SIGNAL_TYPE_DVI_SINGLE_LINK)
+		max_pixel_घड़ी = enc110->base.features.max_hdmi_pixel_घड़ी;
 
 	/* DVI only support RGB pixel encoding */
-	if (crtc_timing->pixel_encoding != PIXEL_ENCODING_RGB)
-		return false;
+	अगर (crtc_timing->pixel_encoding != PIXEL_ENCODING_RGB)
+		वापस false;
 
 	/*connect DVI via adpater's HDMI connector*/
-	if ((connector_signal == SIGNAL_TYPE_DVI_SINGLE_LINK ||
-		connector_signal == SIGNAL_TYPE_HDMI_TYPE_A) &&
-		signal != SIGNAL_TYPE_HDMI_TYPE_A &&
+	अगर ((connector_संकेत == SIGNAL_TYPE_DVI_SINGLE_LINK ||
+		connector_संकेत == SIGNAL_TYPE_HDMI_TYPE_A) &&
+		संकेत != SIGNAL_TYPE_HDMI_TYPE_A &&
 		crtc_timing->pix_clk_100hz > (TMDS_MAX_PIXEL_CLOCK * 10))
-		return false;
-	if (crtc_timing->pix_clk_100hz < (TMDS_MIN_PIXEL_CLOCK * 10))
-		return false;
+		वापस false;
+	अगर (crtc_timing->pix_clk_100hz < (TMDS_MIN_PIXEL_CLOCK * 10))
+		वापस false;
 
-	if (crtc_timing->pix_clk_100hz > (max_pixel_clock * 10))
-		return false;
+	अगर (crtc_timing->pix_clk_100hz > (max_pixel_घड़ी * 10))
+		वापस false;
 
 	/* DVI supports 6/8bpp single-link and 10/16bpp dual-link */
-	switch (crtc_timing->display_color_depth) {
-	case COLOR_DEPTH_666:
-	case COLOR_DEPTH_888:
-	break;
-	case COLOR_DEPTH_101010:
-	case COLOR_DEPTH_161616:
-		if (signal != SIGNAL_TYPE_DVI_DUAL_LINK)
-			return false;
-	break;
-	default:
-		return false;
-	}
+	चयन (crtc_timing->display_color_depth) अणु
+	हाल COLOR_DEPTH_666:
+	हाल COLOR_DEPTH_888:
+	अवरोध;
+	हाल COLOR_DEPTH_101010:
+	हाल COLOR_DEPTH_161616:
+		अगर (संकेत != SIGNAL_TYPE_DVI_DUAL_LINK)
+			वापस false;
+	अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool dce110_link_encoder_validate_hdmi_output(
-	const struct dce110_link_encoder *enc110,
-	const struct dc_crtc_timing *crtc_timing,
-	int adjusted_pix_clk_khz)
-{
-	enum dc_color_depth max_deep_color =
+अटल bool dce110_link_encoder_validate_hdmi_output(
+	स्थिर काष्ठा dce110_link_encoder *enc110,
+	स्थिर काष्ठा dc_crtc_timing *crtc_timing,
+	पूर्णांक adjusted_pix_clk_khz)
+अणु
+	क्रमागत dc_color_depth max_deep_color =
 			enc110->base.features.max_hdmi_deep_color;
 
-	if (max_deep_color < crtc_timing->display_color_depth)
-		return false;
+	अगर (max_deep_color < crtc_timing->display_color_depth)
+		वापस false;
 
-	if (crtc_timing->display_color_depth < COLOR_DEPTH_888)
-		return false;
-	if (adjusted_pix_clk_khz < TMDS_MIN_PIXEL_CLOCK)
-		return false;
+	अगर (crtc_timing->display_color_depth < COLOR_DEPTH_888)
+		वापस false;
+	अगर (adjusted_pix_clk_khz < TMDS_MIN_PIXEL_CLOCK)
+		वापस false;
 
-	if ((adjusted_pix_clk_khz == 0) ||
-		(adjusted_pix_clk_khz > enc110->base.features.max_hdmi_pixel_clock))
-		return false;
+	अगर ((adjusted_pix_clk_khz == 0) ||
+		(adjusted_pix_clk_khz > enc110->base.features.max_hdmi_pixel_घड़ी))
+		वापस false;
 
-	/* DCE11 HW does not support 420 */
-	if (!enc110->base.features.hdmi_ycbcr420_supported &&
+	/* DCE11 HW करोes not support 420 */
+	अगर (!enc110->base.features.hdmi_ycbcr420_supported &&
 			crtc_timing->pixel_encoding == PIXEL_ENCODING_YCBCR420)
-		return false;
+		वापस false;
 
-	if (!enc110->base.features.flags.bits.HDMI_6GB_EN &&
+	अगर (!enc110->base.features.flags.bits.HDMI_6GB_EN &&
 		adjusted_pix_clk_khz >= 300000)
-		return false;
-	if (enc110->base.ctx->dc->debug.hdmi20_disable &&
+		वापस false;
+	अगर (enc110->base.ctx->dc->debug.hdmi20_disable &&
 		crtc_timing->pixel_encoding == PIXEL_ENCODING_YCBCR420)
-		return false;
-	return true;
-}
+		वापस false;
+	वापस true;
+पूर्ण
 
 bool dce110_link_encoder_validate_dp_output(
-	const struct dce110_link_encoder *enc110,
-	const struct dc_crtc_timing *crtc_timing)
-{
-	if (crtc_timing->pixel_encoding == PIXEL_ENCODING_YCBCR420)
-		return false;
+	स्थिर काष्ठा dce110_link_encoder *enc110,
+	स्थिर काष्ठा dc_crtc_timing *crtc_timing)
+अणु
+	अगर (crtc_timing->pixel_encoding == PIXEL_ENCODING_YCBCR420)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void dce110_link_encoder_construct(
-	struct dce110_link_encoder *enc110,
-	const struct encoder_init_data *init_data,
-	const struct encoder_feature_support *enc_features,
-	const struct dce110_link_enc_registers *link_regs,
-	const struct dce110_link_enc_aux_registers *aux_regs,
-	const struct dce110_link_enc_hpd_registers *hpd_regs)
-{
-	struct bp_encoder_cap_info bp_cap_info = {0};
-	const struct dc_vbios_funcs *bp_funcs = init_data->ctx->dc_bios->funcs;
-	enum bp_result result = BP_RESULT_OK;
+व्योम dce110_link_encoder_स्थिरruct(
+	काष्ठा dce110_link_encoder *enc110,
+	स्थिर काष्ठा encoder_init_data *init_data,
+	स्थिर काष्ठा encoder_feature_support *enc_features,
+	स्थिर काष्ठा dce110_link_enc_रेजिस्टरs *link_regs,
+	स्थिर काष्ठा dce110_link_enc_aux_रेजिस्टरs *aux_regs,
+	स्थिर काष्ठा dce110_link_enc_hpd_रेजिस्टरs *hpd_regs)
+अणु
+	काष्ठा bp_encoder_cap_info bp_cap_info = अणु0पूर्ण;
+	स्थिर काष्ठा dc_vbios_funcs *bp_funcs = init_data->ctx->dc_bios->funcs;
+	क्रमागत bp_result result = BP_RESULT_OK;
 
 	enc110->base.funcs = &dce110_lnk_enc_funcs;
 	enc110->base.ctx = init_data->ctx;
@@ -833,15 +834,15 @@ void dce110_link_encoder_construct(
 	enc110->base.transmitter = init_data->transmitter;
 
 	/* set the flag to indicate whether driver poll the I2C data pin
-	 * while doing the DP sink detect
+	 * जबतक करोing the DP sink detect
 	 */
 
-/*	if (dal_adapter_service_is_feature_supported(as,
+/*	अगर (dal_adapter_service_is_feature_supported(as,
 		FEATURE_DP_SINK_DETECT_POLL_DATA_PIN))
 		enc110->base.features.flags.bits.
 			DP_SINK_DETECT_POLL_DATA_PIN = true;*/
 
-	enc110->base.output_signals =
+	enc110->base.output_संकेतs =
 		SIGNAL_TYPE_DVI_SINGLE_LINK |
 		SIGNAL_TYPE_DVI_DUAL_LINK |
 		SIGNAL_TYPE_LVDS |
@@ -851,12 +852,12 @@ void dce110_link_encoder_construct(
 		SIGNAL_TYPE_HDMI_TYPE_A;
 
 	/* For DCE 8.0 and 8.1, by design, UNIPHY is hardwired to DIG_BE.
-	 * SW always assign DIG_FE 1:1 mapped to DIG_FE for non-MST UNIPHY.
+	 * SW always assign DIG_FE 1:1 mapped to DIG_FE क्रम non-MST UNIPHY.
 	 * SW assign DIG_FE to non-MST UNIPHY first and MST last. So prefer
 	 * DIG is per UNIPHY and used by SST DP, eDP, HDMI, DVI and LVDS.
 	 * Prefer DIG assignment is decided by board design.
 	 * For DCE 8.0, there are only max 6 UNIPHYs, we assume board design
-	 * and VBIOS will filter out 7 UNIPHY for DCE 8.0.
+	 * and VBIOS will filter out 7 UNIPHY क्रम DCE 8.0.
 	 * By this, adding DIGG should not hurt DCE 8.0.
 	 * This will let DCE 8.1 share DCE 8.0 as much as possible
 	 */
@@ -865,106 +866,106 @@ void dce110_link_encoder_construct(
 	enc110->aux_regs = aux_regs;
 	enc110->hpd_regs = hpd_regs;
 
-	switch (enc110->base.transmitter) {
-	case TRANSMITTER_UNIPHY_A:
+	चयन (enc110->base.transmitter) अणु
+	हाल TRANSMITTER_UNIPHY_A:
 		enc110->base.preferred_engine = ENGINE_ID_DIGA;
-	break;
-	case TRANSMITTER_UNIPHY_B:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_B:
 		enc110->base.preferred_engine = ENGINE_ID_DIGB;
-	break;
-	case TRANSMITTER_UNIPHY_C:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_C:
 		enc110->base.preferred_engine = ENGINE_ID_DIGC;
-	break;
-	case TRANSMITTER_UNIPHY_D:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_D:
 		enc110->base.preferred_engine = ENGINE_ID_DIGD;
-	break;
-	case TRANSMITTER_UNIPHY_E:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_E:
 		enc110->base.preferred_engine = ENGINE_ID_DIGE;
-	break;
-	case TRANSMITTER_UNIPHY_F:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_F:
 		enc110->base.preferred_engine = ENGINE_ID_DIGF;
-	break;
-	case TRANSMITTER_UNIPHY_G:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_G:
 		enc110->base.preferred_engine = ENGINE_ID_DIGG;
-	break;
-	default:
+	अवरोध;
+	शेष:
 		ASSERT_CRITICAL(false);
 		enc110->base.preferred_engine = ENGINE_ID_UNKNOWN;
-	}
+	पूर्ण
 
-	/* default to one to mirror Windows behavior */
+	/* शेष to one to mirror Winकरोws behavior */
 	enc110->base.features.flags.bits.HDMI_6GB_EN = 1;
 
 	result = bp_funcs->get_encoder_cap_info(enc110->base.ctx->dc_bios,
 						enc110->base.id, &bp_cap_info);
 
-	/* Override features with DCE-specific values */
-	if (BP_RESULT_OK == result) {
+	/* Override features with DCE-specअगरic values */
+	अगर (BP_RESULT_OK == result) अणु
 		enc110->base.features.flags.bits.IS_HBR2_CAPABLE =
 				bp_cap_info.DP_HBR2_EN;
 		enc110->base.features.flags.bits.IS_HBR3_CAPABLE =
 				bp_cap_info.DP_HBR3_EN;
 		enc110->base.features.flags.bits.HDMI_6GB_EN = bp_cap_info.HDMI_6GB_EN;
-	} else {
+	पूर्ण अन्यथा अणु
 		DC_LOG_WARNING("%s: Failed to get encoder_cap_info from VBIOS with error code %d!\n",
 				__func__,
 				result);
-	}
-	if (enc110->base.ctx->dc->debug.hdmi20_disable) {
+	पूर्ण
+	अगर (enc110->base.ctx->dc->debug.hdmi20_disable) अणु
 		enc110->base.features.flags.bits.HDMI_6GB_EN = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 bool dce110_link_encoder_validate_output_with_stream(
-	struct link_encoder *enc,
-	const struct dc_stream_state *stream)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा dc_stream_state *stream)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
 	bool is_valid;
 
-	switch (stream->signal) {
-	case SIGNAL_TYPE_DVI_SINGLE_LINK:
-	case SIGNAL_TYPE_DVI_DUAL_LINK:
+	चयन (stream->संकेत) अणु
+	हाल SIGNAL_TYPE_DVI_SINGLE_LINK:
+	हाल SIGNAL_TYPE_DVI_DUAL_LINK:
 		is_valid = dce110_link_encoder_validate_dvi_output(
 			enc110,
-			stream->link->connector_signal,
-			stream->signal,
+			stream->link->connector_संकेत,
+			stream->संकेत,
 			&stream->timing);
-	break;
-	case SIGNAL_TYPE_HDMI_TYPE_A:
+	अवरोध;
+	हाल SIGNAL_TYPE_HDMI_TYPE_A:
 		is_valid = dce110_link_encoder_validate_hdmi_output(
 				enc110,
 				&stream->timing,
 				stream->phy_pix_clk);
-	break;
-	case SIGNAL_TYPE_DISPLAY_PORT:
-	case SIGNAL_TYPE_DISPLAY_PORT_MST:
+	अवरोध;
+	हाल SIGNAL_TYPE_DISPLAY_PORT:
+	हाल SIGNAL_TYPE_DISPLAY_PORT_MST:
 		is_valid = dce110_link_encoder_validate_dp_output(
 					enc110, &stream->timing);
-	break;
-	case SIGNAL_TYPE_EDP:
-	case SIGNAL_TYPE_LVDS:
+	अवरोध;
+	हाल SIGNAL_TYPE_EDP:
+	हाल SIGNAL_TYPE_LVDS:
 		is_valid =
 			(stream->timing.
 				pixel_encoding == PIXEL_ENCODING_RGB) ? true : false;
-	break;
-	case SIGNAL_TYPE_VIRTUAL:
+	अवरोध;
+	हाल SIGNAL_TYPE_VIRTUAL:
 		is_valid = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		is_valid = false;
-	break;
-	}
+	अवरोध;
+	पूर्ण
 
-	return is_valid;
-}
+	वापस is_valid;
+पूर्ण
 
-void dce110_link_encoder_hw_init(
-	struct link_encoder *enc)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	struct bp_transmitter_control cntl = { 0 };
-	enum bp_result result;
+व्योम dce110_link_encoder_hw_init(
+	काष्ठा link_encoder *enc)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा bp_transmitter_control cntl = अणु 0 पूर्ण;
+	क्रमागत bp_result result;
 
 	cntl.action = TRANSMITTER_CONTROL_INIT;
 	cntl.engine_id = ENGINE_ID_UNKNOWN;
@@ -974,26 +975,26 @@ void dce110_link_encoder_hw_init(
 	cntl.coherent = false;
 	cntl.hpd_sel = enc110->base.hpd_source;
 
-	if (enc110->base.connector.id == CONNECTOR_ID_EDP)
-		cntl.signal = SIGNAL_TYPE_EDP;
+	अगर (enc110->base.connector.id == CONNECTOR_ID_EDP)
+		cntl.संकेत = SIGNAL_TYPE_EDP;
 
 	result = link_transmitter_control(enc110, &cntl);
 
-	if (result != BP_RESULT_OK) {
+	अगर (result != BP_RESULT_OK) अणु
 		DC_LOG_ERROR("%s: Failed to execute VBIOS command table!\n",
 			__func__);
 		BREAK_TO_DEBUGGER();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (enc110->base.connector.id == CONNECTOR_ID_LVDS) {
+	अगर (enc110->base.connector.id == CONNECTOR_ID_LVDS) अणु
 		cntl.action = TRANSMITTER_CONTROL_BACKLIGHT_BRIGHTNESS;
 
 		result = link_transmitter_control(enc110, &cntl);
 
 		ASSERT(result == BP_RESULT_OK);
 
-	}
+	पूर्ण
 	aux_initialize(enc110);
 
 	/* reinitialize HPD.
@@ -1002,134 +1003,134 @@ void dce110_link_encoder_hw_init(
 	 * as DIG_FE id even caller pass DIG_FE id.
 	 * So this routine must be called first. */
 	hpd_initialize(enc110);
-}
+पूर्ण
 
-void dce110_link_encoder_destroy(struct link_encoder **enc)
-{
-	kfree(TO_DCE110_LINK_ENC(*enc));
-	*enc = NULL;
-}
+व्योम dce110_link_encoder_destroy(काष्ठा link_encoder **enc)
+अणु
+	kमुक्त(TO_DCE110_LINK_ENC(*enc));
+	*enc = शून्य;
+पूर्ण
 
-void dce110_link_encoder_setup(
-	struct link_encoder *enc,
-	enum signal_type signal)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+व्योम dce110_link_encoder_setup(
+	काष्ठा link_encoder *enc,
+	क्रमागत संकेत_type संकेत)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
 
-	switch (signal) {
-	case SIGNAL_TYPE_EDP:
-	case SIGNAL_TYPE_DISPLAY_PORT:
+	चयन (संकेत) अणु
+	हाल SIGNAL_TYPE_EDP:
+	हाल SIGNAL_TYPE_DISPLAY_PORT:
 		/* DP SST */
 		REG_UPDATE(DIG_BE_CNTL, DIG_MODE, 0);
-		break;
-	case SIGNAL_TYPE_LVDS:
+		अवरोध;
+	हाल SIGNAL_TYPE_LVDS:
 		/* LVDS */
 		REG_UPDATE(DIG_BE_CNTL, DIG_MODE, 1);
-		break;
-	case SIGNAL_TYPE_DVI_SINGLE_LINK:
-	case SIGNAL_TYPE_DVI_DUAL_LINK:
+		अवरोध;
+	हाल SIGNAL_TYPE_DVI_SINGLE_LINK:
+	हाल SIGNAL_TYPE_DVI_DUAL_LINK:
 		/* TMDS-DVI */
 		REG_UPDATE(DIG_BE_CNTL, DIG_MODE, 2);
-		break;
-	case SIGNAL_TYPE_HDMI_TYPE_A:
+		अवरोध;
+	हाल SIGNAL_TYPE_HDMI_TYPE_A:
 		/* TMDS-HDMI */
 		REG_UPDATE(DIG_BE_CNTL, DIG_MODE, 3);
-		break;
-	case SIGNAL_TYPE_DISPLAY_PORT_MST:
+		अवरोध;
+	हाल SIGNAL_TYPE_DISPLAY_PORT_MST:
 		/* DP MST */
 		REG_UPDATE(DIG_BE_CNTL, DIG_MODE, 5);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ASSERT_CRITICAL(false);
 		/* invalid mode ! */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-}
+पूर्ण
 
-/* TODO: still need depth or just pass in adjusted pixel clock? */
-void dce110_link_encoder_enable_tmds_output(
-	struct link_encoder *enc,
-	enum clock_source_id clock_source,
-	enum dc_color_depth color_depth,
-	enum signal_type signal,
-	uint32_t pixel_clock)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	struct bp_transmitter_control cntl = { 0 };
-	enum bp_result result;
+/* TODO: still need depth or just pass in adjusted pixel घड़ी? */
+व्योम dce110_link_encoder_enable_पंचांगds_output(
+	काष्ठा link_encoder *enc,
+	क्रमागत घड़ी_source_id घड़ी_source,
+	क्रमागत dc_color_depth color_depth,
+	क्रमागत संकेत_type संकेत,
+	uपूर्णांक32_t pixel_घड़ी)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा bp_transmitter_control cntl = अणु 0 पूर्ण;
+	क्रमागत bp_result result;
 
 	/* Enable the PHY */
 	cntl.connector_obj_id = enc110->base.connector;
 	cntl.action = TRANSMITTER_CONTROL_ENABLE;
 	cntl.engine_id = enc->preferred_engine;
 	cntl.transmitter = enc110->base.transmitter;
-	cntl.pll_id = clock_source;
-	cntl.signal = signal;
-	if (cntl.signal == SIGNAL_TYPE_DVI_DUAL_LINK)
+	cntl.pll_id = घड़ी_source;
+	cntl.संकेत = संकेत;
+	अगर (cntl.संकेत == SIGNAL_TYPE_DVI_DUAL_LINK)
 		cntl.lanes_number = 8;
-	else
+	अन्यथा
 		cntl.lanes_number = 4;
 
 	cntl.hpd_sel = enc110->base.hpd_source;
 
-	cntl.pixel_clock = pixel_clock;
+	cntl.pixel_घड़ी = pixel_घड़ी;
 	cntl.color_depth = color_depth;
 
 	result = link_transmitter_control(enc110, &cntl);
 
-	if (result != BP_RESULT_OK) {
+	अगर (result != BP_RESULT_OK) अणु
 		DC_LOG_ERROR("%s: Failed to execute VBIOS command table!\n",
 			__func__);
 		BREAK_TO_DEBUGGER();
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* TODO: still need depth or just pass in adjusted pixel clock? */
-void dce110_link_encoder_enable_lvds_output(
-	struct link_encoder *enc,
-	enum clock_source_id clock_source,
-	uint32_t pixel_clock)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	struct bp_transmitter_control cntl = { 0 };
-	enum bp_result result;
+/* TODO: still need depth or just pass in adjusted pixel घड़ी? */
+व्योम dce110_link_encoder_enable_lvds_output(
+	काष्ठा link_encoder *enc,
+	क्रमागत घड़ी_source_id घड़ी_source,
+	uपूर्णांक32_t pixel_घड़ी)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा bp_transmitter_control cntl = अणु 0 पूर्ण;
+	क्रमागत bp_result result;
 
 	/* Enable the PHY */
 	cntl.connector_obj_id = enc110->base.connector;
 	cntl.action = TRANSMITTER_CONTROL_ENABLE;
 	cntl.engine_id = enc->preferred_engine;
 	cntl.transmitter = enc110->base.transmitter;
-	cntl.pll_id = clock_source;
-	cntl.signal = SIGNAL_TYPE_LVDS;
+	cntl.pll_id = घड़ी_source;
+	cntl.संकेत = SIGNAL_TYPE_LVDS;
 	cntl.lanes_number = 4;
 
 	cntl.hpd_sel = enc110->base.hpd_source;
 
-	cntl.pixel_clock = pixel_clock;
+	cntl.pixel_घड़ी = pixel_घड़ी;
 
 	result = link_transmitter_control(enc110, &cntl);
 
-	if (result != BP_RESULT_OK) {
+	अगर (result != BP_RESULT_OK) अणु
 		DC_LOG_ERROR("%s: Failed to execute VBIOS command table!\n",
 			__func__);
 		BREAK_TO_DEBUGGER();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* enables DP PHY output */
-void dce110_link_encoder_enable_dp_output(
-	struct link_encoder *enc,
-	const struct dc_link_settings *link_settings,
-	enum clock_source_id clock_source)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	struct bp_transmitter_control cntl = { 0 };
-	enum bp_result result;
+व्योम dce110_link_encoder_enable_dp_output(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा dc_link_settings *link_settings,
+	क्रमागत घड़ी_source_id घड़ी_source)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा bp_transmitter_control cntl = अणु 0 पूर्ण;
+	क्रमागत bp_result result;
 
 	/* Enable the PHY */
 
-	/* number_of_lanes is used for pixel clock adjust,
+	/* number_of_lanes is used क्रम pixel घड़ी adjust,
 	 * but it's not passed to asic_control.
 	 * We need to set number of lanes manually.
 	 */
@@ -1138,37 +1139,37 @@ void dce110_link_encoder_enable_dp_output(
 	cntl.action = TRANSMITTER_CONTROL_ENABLE;
 	cntl.engine_id = enc->preferred_engine;
 	cntl.transmitter = enc110->base.transmitter;
-	cntl.pll_id = clock_source;
-	cntl.signal = SIGNAL_TYPE_DISPLAY_PORT;
+	cntl.pll_id = घड़ी_source;
+	cntl.संकेत = SIGNAL_TYPE_DISPLAY_PORT;
 	cntl.lanes_number = link_settings->lane_count;
 	cntl.hpd_sel = enc110->base.hpd_source;
-	cntl.pixel_clock = link_settings->link_rate
+	cntl.pixel_घड़ी = link_settings->link_rate
 						* LINK_RATE_REF_FREQ_IN_KHZ;
-	/* TODO: check if undefined works */
+	/* TODO: check अगर undefined works */
 	cntl.color_depth = COLOR_DEPTH_UNDEFINED;
 
 	result = link_transmitter_control(enc110, &cntl);
 
-	if (result != BP_RESULT_OK) {
+	अगर (result != BP_RESULT_OK) अणु
 		DC_LOG_ERROR("%s: Failed to execute VBIOS command table!\n",
 			__func__);
 		BREAK_TO_DEBUGGER();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* enables DP PHY output in MST mode */
-void dce110_link_encoder_enable_dp_mst_output(
-	struct link_encoder *enc,
-	const struct dc_link_settings *link_settings,
-	enum clock_source_id clock_source)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	struct bp_transmitter_control cntl = { 0 };
-	enum bp_result result;
+व्योम dce110_link_encoder_enable_dp_mst_output(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा dc_link_settings *link_settings,
+	क्रमागत घड़ी_source_id घड़ी_source)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा bp_transmitter_control cntl = अणु 0 पूर्ण;
+	क्रमागत bp_result result;
 
 	/* Enable the PHY */
 
-	/* number_of_lanes is used for pixel clock adjust,
+	/* number_of_lanes is used क्रम pixel घड़ी adjust,
 	 * but it's not passed to asic_control.
 	 * We need to set number of lanes manually.
 	 */
@@ -1177,38 +1178,38 @@ void dce110_link_encoder_enable_dp_mst_output(
 	cntl.action = TRANSMITTER_CONTROL_ENABLE;
 	cntl.engine_id = ENGINE_ID_UNKNOWN;
 	cntl.transmitter = enc110->base.transmitter;
-	cntl.pll_id = clock_source;
-	cntl.signal = SIGNAL_TYPE_DISPLAY_PORT_MST;
+	cntl.pll_id = घड़ी_source;
+	cntl.संकेत = SIGNAL_TYPE_DISPLAY_PORT_MST;
 	cntl.lanes_number = link_settings->lane_count;
 	cntl.hpd_sel = enc110->base.hpd_source;
-	cntl.pixel_clock = link_settings->link_rate
+	cntl.pixel_घड़ी = link_settings->link_rate
 						* LINK_RATE_REF_FREQ_IN_KHZ;
-	/* TODO: check if undefined works */
+	/* TODO: check अगर undefined works */
 	cntl.color_depth = COLOR_DEPTH_UNDEFINED;
 
 	result = link_transmitter_control(enc110, &cntl);
 
-	if (result != BP_RESULT_OK) {
+	अगर (result != BP_RESULT_OK) अणु
 		DC_LOG_ERROR("%s: Failed to execute VBIOS command table!\n",
 			__func__);
 		BREAK_TO_DEBUGGER();
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
 /* enables DP PHY output */
-static void dce60_link_encoder_enable_dp_output(
-	struct link_encoder *enc,
-	const struct dc_link_settings *link_settings,
-	enum clock_source_id clock_source)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	struct bp_transmitter_control cntl = { 0 };
-	enum bp_result result;
+अटल व्योम dce60_link_encoder_enable_dp_output(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा dc_link_settings *link_settings,
+	क्रमागत घड़ी_source_id घड़ी_source)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा bp_transmitter_control cntl = अणु 0 पूर्ण;
+	क्रमागत bp_result result;
 
 	/* Enable the PHY */
 
-	/* number_of_lanes is used for pixel clock adjust,
+	/* number_of_lanes is used क्रम pixel घड़ी adjust,
 	 * but it's not passed to asic_control.
 	 * We need to set number of lanes manually.
 	 */
@@ -1217,37 +1218,37 @@ static void dce60_link_encoder_enable_dp_output(
 	cntl.action = TRANSMITTER_CONTROL_ENABLE;
 	cntl.engine_id = enc->preferred_engine;
 	cntl.transmitter = enc110->base.transmitter;
-	cntl.pll_id = clock_source;
-	cntl.signal = SIGNAL_TYPE_DISPLAY_PORT;
+	cntl.pll_id = घड़ी_source;
+	cntl.संकेत = SIGNAL_TYPE_DISPLAY_PORT;
 	cntl.lanes_number = link_settings->lane_count;
 	cntl.hpd_sel = enc110->base.hpd_source;
-	cntl.pixel_clock = link_settings->link_rate
+	cntl.pixel_घड़ी = link_settings->link_rate
 						* LINK_RATE_REF_FREQ_IN_KHZ;
-	/* TODO: check if undefined works */
+	/* TODO: check अगर undefined works */
 	cntl.color_depth = COLOR_DEPTH_UNDEFINED;
 
 	result = link_transmitter_control(enc110, &cntl);
 
-	if (result != BP_RESULT_OK) {
+	अगर (result != BP_RESULT_OK) अणु
 		DC_LOG_ERROR("%s: Failed to execute VBIOS command table!\n",
 			__func__);
 		BREAK_TO_DEBUGGER();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* enables DP PHY output in MST mode */
-static void dce60_link_encoder_enable_dp_mst_output(
-	struct link_encoder *enc,
-	const struct dc_link_settings *link_settings,
-	enum clock_source_id clock_source)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	struct bp_transmitter_control cntl = { 0 };
-	enum bp_result result;
+अटल व्योम dce60_link_encoder_enable_dp_mst_output(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा dc_link_settings *link_settings,
+	क्रमागत घड़ी_source_id घड़ी_source)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा bp_transmitter_control cntl = अणु 0 पूर्ण;
+	क्रमागत bp_result result;
 
 	/* Enable the PHY */
 
-	/* number_of_lanes is used for pixel clock adjust,
+	/* number_of_lanes is used क्रम pixel घड़ी adjust,
 	 * but it's not passed to asic_control.
 	 * We need to set number of lanes manually.
 	 */
@@ -1256,95 +1257,95 @@ static void dce60_link_encoder_enable_dp_mst_output(
 	cntl.action = TRANSMITTER_CONTROL_ENABLE;
 	cntl.engine_id = ENGINE_ID_UNKNOWN;
 	cntl.transmitter = enc110->base.transmitter;
-	cntl.pll_id = clock_source;
-	cntl.signal = SIGNAL_TYPE_DISPLAY_PORT_MST;
+	cntl.pll_id = घड़ी_source;
+	cntl.संकेत = SIGNAL_TYPE_DISPLAY_PORT_MST;
 	cntl.lanes_number = link_settings->lane_count;
 	cntl.hpd_sel = enc110->base.hpd_source;
-	cntl.pixel_clock = link_settings->link_rate
+	cntl.pixel_घड़ी = link_settings->link_rate
 						* LINK_RATE_REF_FREQ_IN_KHZ;
-	/* TODO: check if undefined works */
+	/* TODO: check अगर undefined works */
 	cntl.color_depth = COLOR_DEPTH_UNDEFINED;
 
 	result = link_transmitter_control(enc110, &cntl);
 
-	if (result != BP_RESULT_OK) {
+	अगर (result != BP_RESULT_OK) अणु
 		DC_LOG_ERROR("%s: Failed to execute VBIOS command table!\n",
 			__func__);
 		BREAK_TO_DEBUGGER();
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * @brief
  * Disable transmitter and its encoder
  */
-void dce110_link_encoder_disable_output(
-	struct link_encoder *enc,
-	enum signal_type signal)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	struct bp_transmitter_control cntl = { 0 };
-	enum bp_result result;
+व्योम dce110_link_encoder_disable_output(
+	काष्ठा link_encoder *enc,
+	क्रमागत संकेत_type संकेत)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा bp_transmitter_control cntl = अणु 0 पूर्ण;
+	क्रमागत bp_result result;
 
-	if (!dce110_is_dig_enabled(enc)) {
+	अगर (!dce110_is_dig_enabled(enc)) अणु
 		/* OF_SKIP_POWER_DOWN_INACTIVE_ENCODER */
-		return;
-	}
-	/* Power-down RX and disable GPU PHY should be paired.
-	 * Disabling PHY without powering down RX may cause
-	 * symbol lock loss, on which we will get DP Sink interrupt. */
+		वापस;
+	पूर्ण
+	/* Power-करोwn RX and disable GPU PHY should be paired.
+	 * Disabling PHY without घातering करोwn RX may cause
+	 * symbol lock loss, on which we will get DP Sink पूर्णांकerrupt. */
 
-	/* There is a case for the DP active dongles
-	 * where we want to disable the PHY but keep RX powered,
-	 * for those we need to ignore DP Sink interrupt
+	/* There is a हाल क्रम the DP active करोngles
+	 * where we want to disable the PHY but keep RX घातered,
+	 * क्रम those we need to ignore DP Sink पूर्णांकerrupt
 	 * by checking lane count that has been set
-	 * on the last do_enable_output(). */
+	 * on the last करो_enable_output(). */
 
 	/* disable transmitter */
 	cntl.action = TRANSMITTER_CONTROL_DISABLE;
 	cntl.transmitter = enc110->base.transmitter;
 	cntl.hpd_sel = enc110->base.hpd_source;
-	cntl.signal = signal;
+	cntl.संकेत = संकेत;
 	cntl.connector_obj_id = enc110->base.connector;
 
 	result = link_transmitter_control(enc110, &cntl);
 
-	if (result != BP_RESULT_OK) {
+	अगर (result != BP_RESULT_OK) अणु
 		DC_LOG_ERROR("%s: Failed to execute VBIOS command table!\n",
 			__func__);
 		BREAK_TO_DEBUGGER();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* disable encoder */
-	if (dc_is_dp_signal(signal))
+	अगर (dc_is_dp_संकेत(संकेत))
 		link_encoder_disable(enc110);
-}
+पूर्ण
 
-void dce110_link_encoder_dp_set_lane_settings(
-	struct link_encoder *enc,
-	const struct link_training_settings *link_settings)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	union dpcd_training_lane_set training_lane_set = { { 0 } };
-	int32_t lane = 0;
-	struct bp_transmitter_control cntl = { 0 };
+व्योम dce110_link_encoder_dp_set_lane_settings(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा link_training_settings *link_settings)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	जोड़ dpcd_training_lane_set training_lane_set = अणु अणु 0 पूर्ण पूर्ण;
+	पूर्णांक32_t lane = 0;
+	काष्ठा bp_transmitter_control cntl = अणु 0 पूर्ण;
 
-	if (!link_settings) {
+	अगर (!link_settings) अणु
 		BREAK_TO_DEBUGGER();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cntl.action = TRANSMITTER_CONTROL_SET_VOLTAGE_AND_PREEMPASIS;
 	cntl.transmitter = enc110->base.transmitter;
 	cntl.connector_obj_id = enc110->base.connector;
 	cntl.lanes_number = link_settings->link_settings.lane_count;
 	cntl.hpd_sel = enc110->base.hpd_source;
-	cntl.pixel_clock = link_settings->link_settings.link_rate *
+	cntl.pixel_घड़ी = link_settings->link_settings.link_rate *
 						LINK_RATE_REF_FREQ_IN_KHZ;
 
-	for (lane = 0; lane < link_settings->link_settings.lane_count; lane++) {
+	क्रम (lane = 0; lane < link_settings->link_settings.lane_count; lane++) अणु
 		/* translate lane settings */
 
 		training_lane_set.bits.VOLTAGE_SWING_SET =
@@ -1353,161 +1354,161 @@ void dce110_link_encoder_dp_set_lane_settings(
 			link_settings->lane_settings[lane].PRE_EMPHASIS;
 
 		/* post cursor 2 setting only applies to HBR2 link rate */
-		if (link_settings->link_settings.link_rate == LINK_RATE_HIGH2) {
+		अगर (link_settings->link_settings.link_rate == LINK_RATE_HIGH2) अणु
 			/* this is passed to VBIOS
 			 * to program post cursor 2 level */
 
 			training_lane_set.bits.POST_CURSOR2_SET =
 				link_settings->lane_settings[lane].POST_CURSOR2;
-		}
+		पूर्ण
 
 		cntl.lane_select = lane;
 		cntl.lane_settings = training_lane_set.raw;
 
 		/* call VBIOS table to set voltage swing and pre-emphasis */
 		link_transmitter_control(enc110, &cntl);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* set DP PHY test and training patterns */
-void dce110_link_encoder_dp_set_phy_pattern(
-	struct link_encoder *enc,
-	const struct encoder_set_dp_phy_pattern_param *param)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+व्योम dce110_link_encoder_dp_set_phy_pattern(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा encoder_set_dp_phy_pattern_param *param)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
 
-	switch (param->dp_phy_pattern) {
-	case DP_TEST_PATTERN_TRAINING_PATTERN1:
+	चयन (param->dp_phy_pattern) अणु
+	हाल DP_TEST_PATTERN_TRAINING_PATTERN1:
 		dce110_link_encoder_set_dp_phy_pattern_training_pattern(enc, 0);
-		break;
-	case DP_TEST_PATTERN_TRAINING_PATTERN2:
+		अवरोध;
+	हाल DP_TEST_PATTERN_TRAINING_PATTERN2:
 		dce110_link_encoder_set_dp_phy_pattern_training_pattern(enc, 1);
-		break;
-	case DP_TEST_PATTERN_TRAINING_PATTERN3:
+		अवरोध;
+	हाल DP_TEST_PATTERN_TRAINING_PATTERN3:
 		dce110_link_encoder_set_dp_phy_pattern_training_pattern(enc, 2);
-		break;
-	case DP_TEST_PATTERN_TRAINING_PATTERN4:
+		अवरोध;
+	हाल DP_TEST_PATTERN_TRAINING_PATTERN4:
 		dce110_link_encoder_set_dp_phy_pattern_training_pattern(enc, 3);
-		break;
-	case DP_TEST_PATTERN_D102:
+		अवरोध;
+	हाल DP_TEST_PATTERN_D102:
 		set_dp_phy_pattern_d102(enc110);
-		break;
-	case DP_TEST_PATTERN_SYMBOL_ERROR:
+		अवरोध;
+	हाल DP_TEST_PATTERN_SYMBOL_ERROR:
 		set_dp_phy_pattern_symbol_error(enc110);
-		break;
-	case DP_TEST_PATTERN_PRBS7:
+		अवरोध;
+	हाल DP_TEST_PATTERN_PRBS7:
 		set_dp_phy_pattern_prbs7(enc110);
-		break;
-	case DP_TEST_PATTERN_80BIT_CUSTOM:
+		अवरोध;
+	हाल DP_TEST_PATTERN_80BIT_CUSTOM:
 		set_dp_phy_pattern_80bit_custom(
 			enc110, param->custom_pattern);
-		break;
-	case DP_TEST_PATTERN_CP2520_1:
+		अवरोध;
+	हाल DP_TEST_PATTERN_CP2520_1:
 		set_dp_phy_pattern_hbr2_compliance_cp2520_2(enc110, 1);
-		break;
-	case DP_TEST_PATTERN_CP2520_2:
+		अवरोध;
+	हाल DP_TEST_PATTERN_CP2520_2:
 		set_dp_phy_pattern_hbr2_compliance_cp2520_2(enc110, 2);
-		break;
-	case DP_TEST_PATTERN_CP2520_3:
+		अवरोध;
+	हाल DP_TEST_PATTERN_CP2520_3:
 		set_dp_phy_pattern_hbr2_compliance_cp2520_2(enc110, 3);
-		break;
-	case DP_TEST_PATTERN_VIDEO_MODE: {
+		अवरोध;
+	हाल DP_TEST_PATTERN_VIDEO_MODE: अणु
 		set_dp_phy_pattern_passthrough_mode(
 			enc110, param->dp_panel_mode);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		/* invalid phy pattern */
 		ASSERT_CRITICAL(false);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
 /* set DP PHY test and training patterns */
-static void dce60_link_encoder_dp_set_phy_pattern(
-	struct link_encoder *enc,
-	const struct encoder_set_dp_phy_pattern_param *param)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+अटल व्योम dce60_link_encoder_dp_set_phy_pattern(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा encoder_set_dp_phy_pattern_param *param)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
 
-	switch (param->dp_phy_pattern) {
-	case DP_TEST_PATTERN_TRAINING_PATTERN1:
+	चयन (param->dp_phy_pattern) अणु
+	हाल DP_TEST_PATTERN_TRAINING_PATTERN1:
 		dce110_link_encoder_set_dp_phy_pattern_training_pattern(enc, 0);
-		break;
-	case DP_TEST_PATTERN_TRAINING_PATTERN2:
+		अवरोध;
+	हाल DP_TEST_PATTERN_TRAINING_PATTERN2:
 		dce110_link_encoder_set_dp_phy_pattern_training_pattern(enc, 1);
-		break;
-	case DP_TEST_PATTERN_TRAINING_PATTERN3:
+		अवरोध;
+	हाल DP_TEST_PATTERN_TRAINING_PATTERN3:
 		dce110_link_encoder_set_dp_phy_pattern_training_pattern(enc, 2);
-		break;
-	case DP_TEST_PATTERN_TRAINING_PATTERN4:
+		अवरोध;
+	हाल DP_TEST_PATTERN_TRAINING_PATTERN4:
 		dce110_link_encoder_set_dp_phy_pattern_training_pattern(enc, 3);
-		break;
-	case DP_TEST_PATTERN_D102:
+		अवरोध;
+	हाल DP_TEST_PATTERN_D102:
 		set_dp_phy_pattern_d102(enc110);
-		break;
-	case DP_TEST_PATTERN_SYMBOL_ERROR:
+		अवरोध;
+	हाल DP_TEST_PATTERN_SYMBOL_ERROR:
 		set_dp_phy_pattern_symbol_error(enc110);
-		break;
-	case DP_TEST_PATTERN_PRBS7:
+		अवरोध;
+	हाल DP_TEST_PATTERN_PRBS7:
 		set_dp_phy_pattern_prbs7(enc110);
-		break;
-	case DP_TEST_PATTERN_80BIT_CUSTOM:
+		अवरोध;
+	हाल DP_TEST_PATTERN_80BIT_CUSTOM:
 		set_dp_phy_pattern_80bit_custom(
 			enc110, param->custom_pattern);
-		break;
-	case DP_TEST_PATTERN_CP2520_1:
+		अवरोध;
+	हाल DP_TEST_PATTERN_CP2520_1:
 		dce60_set_dp_phy_pattern_hbr2_compliance_cp2520_2(enc110, 1);
-		break;
-	case DP_TEST_PATTERN_CP2520_2:
+		अवरोध;
+	हाल DP_TEST_PATTERN_CP2520_2:
 		dce60_set_dp_phy_pattern_hbr2_compliance_cp2520_2(enc110, 2);
-		break;
-	case DP_TEST_PATTERN_CP2520_3:
+		अवरोध;
+	हाल DP_TEST_PATTERN_CP2520_3:
 		dce60_set_dp_phy_pattern_hbr2_compliance_cp2520_2(enc110, 3);
-		break;
-	case DP_TEST_PATTERN_VIDEO_MODE: {
+		अवरोध;
+	हाल DP_TEST_PATTERN_VIDEO_MODE: अणु
 		dce60_set_dp_phy_pattern_passthrough_mode(
 			enc110, param->dp_panel_mode);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		/* invalid phy pattern */
 		ASSERT_CRITICAL(false);
-		break;
-	}
-}
-#endif
+		अवरोध;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static void fill_stream_allocation_row_info(
-	const struct link_mst_stream_allocation *stream_allocation,
-	uint32_t *src,
-	uint32_t *slots)
-{
-	const struct stream_encoder *stream_enc = stream_allocation->stream_enc;
+अटल व्योम fill_stream_allocation_row_info(
+	स्थिर काष्ठा link_mst_stream_allocation *stream_allocation,
+	uपूर्णांक32_t *src,
+	uपूर्णांक32_t *slots)
+अणु
+	स्थिर काष्ठा stream_encoder *stream_enc = stream_allocation->stream_enc;
 
-	if (stream_enc) {
+	अगर (stream_enc) अणु
 		*src = stream_enc->id;
 		*slots = stream_allocation->slot_count;
-	} else {
+	पूर्ण अन्यथा अणु
 		*src = 0;
 		*slots = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* programs DP MST VC payload allocation */
-void dce110_link_encoder_update_mst_stream_allocation_table(
-	struct link_encoder *enc,
-	const struct link_mst_stream_allocation_table *table)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	uint32_t value1 = 0;
-	uint32_t value2 = 0;
-	uint32_t slots = 0;
-	uint32_t src = 0;
-	uint32_t retries = 0;
+व्योम dce110_link_encoder_update_mst_stream_allocation_table(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा link_mst_stream_allocation_table *table)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	uपूर्णांक32_t value1 = 0;
+	uपूर्णांक32_t value2 = 0;
+	uपूर्णांक32_t slots = 0;
+	uपूर्णांक32_t src = 0;
+	uपूर्णांक32_t retries = 0;
 
 	/* For CZ, there are only 3 pipes. So Virtual channel is up 3.*/
 
@@ -1516,69 +1517,69 @@ void dce110_link_encoder_update_mst_stream_allocation_table(
 	 * Issue allocation change trigger
 	 * to commit payload on both tx and rx side */
 
-	/* we should clean-up table each time */
+	/* we should clean-up table each समय */
 
-	if (table->stream_count >= 1) {
+	अगर (table->stream_count >= 1) अणु
 		fill_stream_allocation_row_info(
 			&table->stream_allocations[0],
 			&src,
 			&slots);
-	} else {
+	पूर्ण अन्यथा अणु
 		src = 0;
 		slots = 0;
-	}
+	पूर्ण
 
 	REG_UPDATE_2(DP_MSE_SAT0,
 			DP_MSE_SAT_SRC0, src,
 			DP_MSE_SAT_SLOT_COUNT0, slots);
 
-	if (table->stream_count >= 2) {
+	अगर (table->stream_count >= 2) अणु
 		fill_stream_allocation_row_info(
 			&table->stream_allocations[1],
 			&src,
 			&slots);
-	} else {
+	पूर्ण अन्यथा अणु
 		src = 0;
 		slots = 0;
-	}
+	पूर्ण
 
 	REG_UPDATE_2(DP_MSE_SAT0,
 			DP_MSE_SAT_SRC1, src,
 			DP_MSE_SAT_SLOT_COUNT1, slots);
 
-	if (table->stream_count >= 3) {
+	अगर (table->stream_count >= 3) अणु
 		fill_stream_allocation_row_info(
 			&table->stream_allocations[2],
 			&src,
 			&slots);
-	} else {
+	पूर्ण अन्यथा अणु
 		src = 0;
 		slots = 0;
-	}
+	पूर्ण
 
 	REG_UPDATE_2(DP_MSE_SAT1,
 			DP_MSE_SAT_SRC2, src,
 			DP_MSE_SAT_SLOT_COUNT2, slots);
 
-	if (table->stream_count >= 4) {
+	अगर (table->stream_count >= 4) अणु
 		fill_stream_allocation_row_info(
 			&table->stream_allocations[3],
 			&src,
 			&slots);
-	} else {
+	पूर्ण अन्यथा अणु
 		src = 0;
 		slots = 0;
-	}
+	पूर्ण
 
 	REG_UPDATE_2(DP_MSE_SAT1,
 			DP_MSE_SAT_SRC3, src,
 			DP_MSE_SAT_SLOT_COUNT3, slots);
 
-	/* --- wait for transaction finish */
+	/* --- रुको क्रम transaction finish */
 
 	/* send allocation change trigger (ACT) ?
 	 * this step first sends the ACT,
-	 * then double buffers the SAT into the hardware
+	 * then द्विगुन buffers the SAT पूर्णांकo the hardware
 	 * making the new allocation active on the DP MST mode link */
 
 
@@ -1590,17 +1591,17 @@ void dce110_link_encoder_update_mst_stream_allocation_table(
 	REG_UPDATE(DP_MSE_SAT_UPDATE,
 			DP_MSE_SAT_UPDATE, 1);
 
-	/* wait for update to complete
+	/* रुको क्रम update to complete
 	 * (i.e. DP_MSE_SAT_UPDATE field is reset to 0)
-	 * then wait for the transmission
+	 * then रुको क्रम the transmission
 	 * of at least 16 MTP headers on immediate local link.
-	 * i.e. DP_MSE_16_MTP_KEEPOUT field (read only) is reset to 0
+	 * i.e. DP_MSE_16_MTP_KEEPOUT field (पढ़ो only) is reset to 0
 	 * a value of 1 indicates that DP MST mode
 	 * is in the 16 MTP keepout region after a VC has been added.
 	 * MST stream bandwidth (VC rate) can be configured
 	 * after this bit is cleared */
 
-	do {
+	करो अणु
 		udelay(10);
 
 		REG_READ(DP_MSE_SAT_UPDATE);
@@ -1611,82 +1612,82 @@ void dce110_link_encoder_update_mst_stream_allocation_table(
 		REG_GET(DP_MSE_SAT_UPDATE,
 				DP_MSE_16_MTP_KEEPOUT, &value2);
 
-		/* bit field DP_MSE_SAT_UPDATE is set to 1 already */
-		if (!value1 && !value2)
-			break;
+		/* bit field DP_MSE_SAT_UPDATE is set to 1 alपढ़ोy */
+		अगर (!value1 && !value2)
+			अवरोध;
 		++retries;
-	} while (retries < DP_MST_UPDATE_MAX_RETRY);
-}
+	पूर्ण जबतक (retries < DP_MST_UPDATE_MAX_RETRY);
+पूर्ण
 
-void dce110_link_encoder_connect_dig_be_to_fe(
-	struct link_encoder *enc,
-	enum engine_id engine,
+व्योम dce110_link_encoder_connect_dig_be_to_fe(
+	काष्ठा link_encoder *enc,
+	क्रमागत engine_id engine,
 	bool connect)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	uint32_t field;
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	uपूर्णांक32_t field;
 
-	if (engine != ENGINE_ID_UNKNOWN) {
+	अगर (engine != ENGINE_ID_UNKNOWN) अणु
 
 		REG_GET(DIG_BE_CNTL, DIG_FE_SOURCE_SELECT, &field);
 
-		if (connect)
+		अगर (connect)
 			field |= get_frontend_source(engine);
-		else
+		अन्यथा
 			field &= ~get_frontend_source(engine);
 
 		REG_UPDATE(DIG_BE_CNTL, DIG_FE_SOURCE_SELECT, field);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void dce110_link_encoder_enable_hpd(struct link_encoder *enc)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	struct dc_context *ctx = enc110->base.ctx;
-	uint32_t addr = HPD_REG(DC_HPD_CONTROL);
-	uint32_t hpd_enable = 0;
-	uint32_t value = dm_read_reg(ctx, addr);
+व्योम dce110_link_encoder_enable_hpd(काष्ठा link_encoder *enc)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा dc_context *ctx = enc110->base.ctx;
+	uपूर्णांक32_t addr = HPD_REG(DC_HPD_CONTROL);
+	uपूर्णांक32_t hpd_enable = 0;
+	uपूर्णांक32_t value = dm_पढ़ो_reg(ctx, addr);
 
 	get_reg_field_value(hpd_enable, DC_HPD_CONTROL, DC_HPD_EN);
 
-	if (hpd_enable == 0)
+	अगर (hpd_enable == 0)
 		set_reg_field_value(value, 1, DC_HPD_CONTROL, DC_HPD_EN);
-}
+पूर्ण
 
-void dce110_link_encoder_disable_hpd(struct link_encoder *enc)
-{
-	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	struct dc_context *ctx = enc110->base.ctx;
-	uint32_t addr = HPD_REG(DC_HPD_CONTROL);
-	uint32_t value = dm_read_reg(ctx, addr);
+व्योम dce110_link_encoder_disable_hpd(काष्ठा link_encoder *enc)
+अणु
+	काष्ठा dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
+	काष्ठा dc_context *ctx = enc110->base.ctx;
+	uपूर्णांक32_t addr = HPD_REG(DC_HPD_CONTROL);
+	uपूर्णांक32_t value = dm_पढ़ो_reg(ctx, addr);
 
 	set_reg_field_value(value, 0, DC_HPD_CONTROL, DC_HPD_EN);
-}
+पूर्ण
 
-void dce110_link_encoder_get_max_link_cap(struct link_encoder *enc,
-	struct dc_link_settings *link_settings)
-{
+व्योम dce110_link_encoder_get_max_link_cap(काष्ठा link_encoder *enc,
+	काष्ठा dc_link_settings *link_settings)
+अणु
 	/* Set Default link settings */
-	struct dc_link_settings max_link_cap = {LANE_COUNT_FOUR, LINK_RATE_HIGH,
-			LINK_SPREAD_05_DOWNSPREAD_30KHZ, false, 0};
+	काष्ठा dc_link_settings max_link_cap = अणुLANE_COUNT_FOUR, LINK_RATE_HIGH,
+			LINK_SPREAD_05_DOWNSPREAD_30KHZ, false, 0पूर्ण;
 
 	/* Higher link settings based on feature supported */
-	if (enc->features.flags.bits.IS_HBR2_CAPABLE)
+	अगर (enc->features.flags.bits.IS_HBR2_CAPABLE)
 		max_link_cap.link_rate = LINK_RATE_HIGH2;
 
-	if (enc->features.flags.bits.IS_HBR3_CAPABLE)
+	अगर (enc->features.flags.bits.IS_HBR3_CAPABLE)
 		max_link_cap.link_rate = LINK_RATE_HIGH3;
 
 	*link_settings = max_link_cap;
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static const struct link_encoder_funcs dce60_lnk_enc_funcs = {
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल स्थिर काष्ठा link_encoder_funcs dce60_lnk_enc_funcs = अणु
 	.validate_output_with_stream =
 		dce110_link_encoder_validate_output_with_stream,
 	.hw_init = dce110_link_encoder_hw_init,
 	.setup = dce110_link_encoder_setup,
-	.enable_tmds_output = dce110_link_encoder_enable_tmds_output,
+	.enable_पंचांगds_output = dce110_link_encoder_enable_पंचांगds_output,
 	.enable_dp_output = dce60_link_encoder_enable_dp_output,
 	.enable_dp_mst_output = dce60_link_encoder_enable_dp_mst_output,
 	.enable_lvds_output = dce110_link_encoder_enable_lvds_output,
@@ -1705,19 +1706,19 @@ static const struct link_encoder_funcs dce60_lnk_enc_funcs = {
 	.destroy = dce110_link_encoder_destroy,
 	.get_max_link_cap = dce110_link_encoder_get_max_link_cap,
 	.get_dig_frontend = dce110_get_dig_frontend
-};
+पूर्ण;
 
-void dce60_link_encoder_construct(
-	struct dce110_link_encoder *enc110,
-	const struct encoder_init_data *init_data,
-	const struct encoder_feature_support *enc_features,
-	const struct dce110_link_enc_registers *link_regs,
-	const struct dce110_link_enc_aux_registers *aux_regs,
-	const struct dce110_link_enc_hpd_registers *hpd_regs)
-{
-	struct bp_encoder_cap_info bp_cap_info = {0};
-	const struct dc_vbios_funcs *bp_funcs = init_data->ctx->dc_bios->funcs;
-	enum bp_result result = BP_RESULT_OK;
+व्योम dce60_link_encoder_स्थिरruct(
+	काष्ठा dce110_link_encoder *enc110,
+	स्थिर काष्ठा encoder_init_data *init_data,
+	स्थिर काष्ठा encoder_feature_support *enc_features,
+	स्थिर काष्ठा dce110_link_enc_रेजिस्टरs *link_regs,
+	स्थिर काष्ठा dce110_link_enc_aux_रेजिस्टरs *aux_regs,
+	स्थिर काष्ठा dce110_link_enc_hpd_रेजिस्टरs *hpd_regs)
+अणु
+	काष्ठा bp_encoder_cap_info bp_cap_info = अणु0पूर्ण;
+	स्थिर काष्ठा dc_vbios_funcs *bp_funcs = init_data->ctx->dc_bios->funcs;
+	क्रमागत bp_result result = BP_RESULT_OK;
 
 	enc110->base.funcs = &dce60_lnk_enc_funcs;
 	enc110->base.ctx = init_data->ctx;
@@ -1733,15 +1734,15 @@ void dce60_link_encoder_construct(
 	enc110->base.transmitter = init_data->transmitter;
 
 	/* set the flag to indicate whether driver poll the I2C data pin
-	 * while doing the DP sink detect
+	 * जबतक करोing the DP sink detect
 	 */
 
-/*	if (dal_adapter_service_is_feature_supported(as,
+/*	अगर (dal_adapter_service_is_feature_supported(as,
 		FEATURE_DP_SINK_DETECT_POLL_DATA_PIN))
 		enc110->base.features.flags.bits.
 			DP_SINK_DETECT_POLL_DATA_PIN = true;*/
 
-	enc110->base.output_signals =
+	enc110->base.output_संकेतs =
 		SIGNAL_TYPE_DVI_SINGLE_LINK |
 		SIGNAL_TYPE_DVI_DUAL_LINK |
 		SIGNAL_TYPE_LVDS |
@@ -1751,12 +1752,12 @@ void dce60_link_encoder_construct(
 		SIGNAL_TYPE_HDMI_TYPE_A;
 
 	/* For DCE 8.0 and 8.1, by design, UNIPHY is hardwired to DIG_BE.
-	 * SW always assign DIG_FE 1:1 mapped to DIG_FE for non-MST UNIPHY.
+	 * SW always assign DIG_FE 1:1 mapped to DIG_FE क्रम non-MST UNIPHY.
 	 * SW assign DIG_FE to non-MST UNIPHY first and MST last. So prefer
 	 * DIG is per UNIPHY and used by SST DP, eDP, HDMI, DVI and LVDS.
 	 * Prefer DIG assignment is decided by board design.
 	 * For DCE 8.0, there are only max 6 UNIPHYs, we assume board design
-	 * and VBIOS will filter out 7 UNIPHY for DCE 8.0.
+	 * and VBIOS will filter out 7 UNIPHY क्रम DCE 8.0.
 	 * By this, adding DIGG should not hurt DCE 8.0.
 	 * This will let DCE 8.1 share DCE 8.0 as much as possible
 	 */
@@ -1765,53 +1766,53 @@ void dce60_link_encoder_construct(
 	enc110->aux_regs = aux_regs;
 	enc110->hpd_regs = hpd_regs;
 
-	switch (enc110->base.transmitter) {
-	case TRANSMITTER_UNIPHY_A:
+	चयन (enc110->base.transmitter) अणु
+	हाल TRANSMITTER_UNIPHY_A:
 		enc110->base.preferred_engine = ENGINE_ID_DIGA;
-	break;
-	case TRANSMITTER_UNIPHY_B:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_B:
 		enc110->base.preferred_engine = ENGINE_ID_DIGB;
-	break;
-	case TRANSMITTER_UNIPHY_C:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_C:
 		enc110->base.preferred_engine = ENGINE_ID_DIGC;
-	break;
-	case TRANSMITTER_UNIPHY_D:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_D:
 		enc110->base.preferred_engine = ENGINE_ID_DIGD;
-	break;
-	case TRANSMITTER_UNIPHY_E:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_E:
 		enc110->base.preferred_engine = ENGINE_ID_DIGE;
-	break;
-	case TRANSMITTER_UNIPHY_F:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_F:
 		enc110->base.preferred_engine = ENGINE_ID_DIGF;
-	break;
-	case TRANSMITTER_UNIPHY_G:
+	अवरोध;
+	हाल TRANSMITTER_UNIPHY_G:
 		enc110->base.preferred_engine = ENGINE_ID_DIGG;
-	break;
-	default:
+	अवरोध;
+	शेष:
 		ASSERT_CRITICAL(false);
 		enc110->base.preferred_engine = ENGINE_ID_UNKNOWN;
-	}
+	पूर्ण
 
-	/* default to one to mirror Windows behavior */
+	/* शेष to one to mirror Winकरोws behavior */
 	enc110->base.features.flags.bits.HDMI_6GB_EN = 1;
 
 	result = bp_funcs->get_encoder_cap_info(enc110->base.ctx->dc_bios,
 						enc110->base.id, &bp_cap_info);
 
-	/* Override features with DCE-specific values */
-	if (BP_RESULT_OK == result) {
+	/* Override features with DCE-specअगरic values */
+	अगर (BP_RESULT_OK == result) अणु
 		enc110->base.features.flags.bits.IS_HBR2_CAPABLE =
 				bp_cap_info.DP_HBR2_EN;
 		enc110->base.features.flags.bits.IS_HBR3_CAPABLE =
 				bp_cap_info.DP_HBR3_EN;
 		enc110->base.features.flags.bits.HDMI_6GB_EN = bp_cap_info.HDMI_6GB_EN;
-	} else {
+	पूर्ण अन्यथा अणु
 		DC_LOG_WARNING("%s: Failed to get encoder_cap_info from VBIOS with error code %d!\n",
 				__func__,
 				result);
-	}
-	if (enc110->base.ctx->dc->debug.hdmi20_disable) {
+	पूर्ण
+	अगर (enc110->base.ctx->dc->debug.hdmi20_disable) अणु
 		enc110->base.features.flags.bits.HDMI_6GB_EN = 0;
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर

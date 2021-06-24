@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * FB driver for the UC1701 LCD Controller
+ * FB driver क्रम the UC1701 LCD Controller
  *
  * The display is monochrome and the video memory is RGB565.
  * Any pixel value except 0 turns the pixel on.
@@ -8,157 +9,157 @@
  * Copyright (C) 2014 Juergen Holzmann
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/gpio/consumer.h>
-#include <linux/spi/spi.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/delay.h>
 
-#include "fbtft.h"
+#समावेश "fbtft.h"
 
-#define DRVNAME	"fb_uc1701"
-#define WIDTH	  102
-#define HEIGHT	 64
-#define PAGES	  (HEIGHT / 8)
+#घोषणा DRVNAME	"fb_uc1701"
+#घोषणा WIDTH	  102
+#घोषणा HEIGHT	 64
+#घोषणा PAGES	  (HEIGHT / 8)
 
 /* 1: Display on/off */
-#define LCD_DISPLAY_ENABLE    0xAE
+#घोषणा LCD_DISPLAY_ENABLE    0xAE
 /* 2: display start line set */
-#define LCD_START_LINE	0x40
+#घोषणा LCD_START_LINE	0x40
 /* 3: Page address set (lower 4 bits select one of the pages) */
-#define LCD_PAGE_ADDRESS      0xB0
+#घोषणा LCD_PAGE_ADDRESS      0xB0
 /* 4: column address */
-#define LCD_COL_ADDRESS       0x10
+#घोषणा LCD_COL_ADDRESS       0x10
 /* 8: select orientation */
-#define LCD_BOTTOMVIEW	0xA0
+#घोषणा LCD_BOTTOMVIEW	0xA0
 /* 9: inverted display */
-#define LCD_DISPLAY_INVERT    0xA6
-/* 10: show memory content or switch all pixels on */
-#define LCD_ALL_PIXEL	 0xA4
+#घोषणा LCD_DISPLAY_INVERT    0xA6
+/* 10: show memory content or चयन all pixels on */
+#घोषणा LCD_ALL_PIXEL	 0xA4
 /* 11: lcd bias set */
-#define LCD_BIAS	      0xA2
+#घोषणा LCD_BIAS	      0xA2
 /* 14: Reset Controller */
-#define LCD_RESET_CMD	 0xE2
-/* 15: output mode select (turns display upside-down) */
-#define LCD_SCAN_DIR	  0xC0
-/* 16: power control set */
-#define LCD_POWER_CONTROL     0x28
+#घोषणा LCD_RESET_CMD	 0xE2
+/* 15: output mode select (turns display upside-करोwn) */
+#घोषणा LCD_SCAN_सूची	  0xC0
+/* 16: घातer control set */
+#घोषणा LCD_POWER_CONTROL     0x28
 /* 17: voltage regulator resistor ratio set */
-#define LCD_VOLTAGE	   0x20
+#घोषणा LCD_VOLTAGE	   0x20
 /* 18: Volume mode set */
-#define LCD_VOLUME_MODE       0x81
+#घोषणा LCD_VOLUME_MODE       0x81
 /* 22: NOP command */
-#define LCD_NO_OP	     0xE3
+#घोषणा LCD_NO_OP	     0xE3
 /* 25: advanced program control */
-#define LCD_ADV_PROG_CTRL     0xFA
+#घोषणा LCD_ADV_PROG_CTRL     0xFA
 /* 25: advanced program control2 */
-#define LCD_ADV_PROG_CTRL2    0x10
-#define LCD_TEMPCOMP_HIGH     0x80
-/* column offset for normal orientation */
-#define SHIFT_ADDR_NORMAL     0
-/* column offset for bottom view orientation */
-#define SHIFT_ADDR_TOPVIEW    30
+#घोषणा LCD_ADV_PROG_CTRL2    0x10
+#घोषणा LCD_TEMPCOMP_HIGH     0x80
+/* column offset क्रम normal orientation */
+#घोषणा SHIFT_ADDR_NORMAL     0
+/* column offset क्रम bottom view orientation */
+#घोषणा SHIFT_ADDR_TOPVIEW    30
 
-static int init_display(struct fbtft_par *par)
-{
+अटल पूर्णांक init_display(काष्ठा fbtft_par *par)
+अणु
 	par->fbtftops.reset(par);
 
 	/* softreset of LCD */
-	write_reg(par, LCD_RESET_CMD);
+	ग_लिखो_reg(par, LCD_RESET_CMD);
 	mdelay(10);
 
-	/* set startpoint */
-	write_reg(par, LCD_START_LINE);
+	/* set startpoपूर्णांक */
+	ग_लिखो_reg(par, LCD_START_LINE);
 
 	/* select orientation BOTTOMVIEW */
-	write_reg(par, LCD_BOTTOMVIEW | 1);
+	ग_लिखो_reg(par, LCD_BOTTOMVIEW | 1);
 
-	/* output mode select (turns display upside-down) */
-	write_reg(par, LCD_SCAN_DIR | 0x00);
+	/* output mode select (turns display upside-करोwn) */
+	ग_लिखो_reg(par, LCD_SCAN_सूची | 0x00);
 
 	/* Normal Pixel mode */
-	write_reg(par, LCD_ALL_PIXEL | 0);
+	ग_लिखो_reg(par, LCD_ALL_PIXEL | 0);
 
 	/* positive display */
-	write_reg(par, LCD_DISPLAY_INVERT | 0);
+	ग_लिखो_reg(par, LCD_DISPLAY_INVERT | 0);
 
 	/* bias 1/9 */
-	write_reg(par, LCD_BIAS | 0);
+	ग_लिखो_reg(par, LCD_BIAS | 0);
 
-	/* power control mode: all features on */
-	write_reg(par, LCD_POWER_CONTROL | 0x07);
+	/* घातer control mode: all features on */
+	ग_लिखो_reg(par, LCD_POWER_CONTROL | 0x07);
 
 	/* set voltage regulator R/R */
-	write_reg(par, LCD_VOLTAGE | 0x07);
+	ग_लिखो_reg(par, LCD_VOLTAGE | 0x07);
 
 	/* volume mode set */
-	write_reg(par, LCD_VOLUME_MODE);
-	write_reg(par, 0x09);
-	write_reg(par, LCD_NO_OP);
+	ग_लिखो_reg(par, LCD_VOLUME_MODE);
+	ग_लिखो_reg(par, 0x09);
+	ग_लिखो_reg(par, LCD_NO_OP);
 
 	/* advanced program control */
-	write_reg(par, LCD_ADV_PROG_CTRL);
-	write_reg(par, LCD_ADV_PROG_CTRL2 | LCD_TEMPCOMP_HIGH);
+	ग_लिखो_reg(par, LCD_ADV_PROG_CTRL);
+	ग_लिखो_reg(par, LCD_ADV_PROG_CTRL2 | LCD_TEMPCOMP_HIGH);
 
 	/* enable display */
-	write_reg(par, LCD_DISPLAY_ENABLE | 1);
+	ग_लिखो_reg(par, LCD_DISPLAY_ENABLE | 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
-{
-	/* goto address */
-	write_reg(par, LCD_PAGE_ADDRESS);
-	write_reg(par, 0x00);
-	write_reg(par, LCD_COL_ADDRESS);
-}
+अटल व्योम set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe, पूर्णांक ye)
+अणु
+	/* जाओ address */
+	ग_लिखो_reg(par, LCD_PAGE_ADDRESS);
+	ग_लिखो_reg(par, 0x00);
+	ग_लिखो_reg(par, LCD_COL_ADDRESS);
+पूर्ण
 
-static int write_vmem(struct fbtft_par *par, size_t offset, size_t len)
-{
+अटल पूर्णांक ग_लिखो_vmem(काष्ठा fbtft_par *par, माप_प्रकार offset, माप_प्रकार len)
+अणु
 	u16 *vmem16 = (u16 *)par->info->screen_buffer;
 	u8 *buf;
-	int x, y, i;
-	int ret = 0;
+	पूर्णांक x, y, i;
+	पूर्णांक ret = 0;
 
-	for (y = 0; y < PAGES; y++) {
+	क्रम (y = 0; y < PAGES; y++) अणु
 		buf = par->txbuf.buf;
-		for (x = 0; x < WIDTH; x++) {
+		क्रम (x = 0; x < WIDTH; x++) अणु
 			*buf = 0x00;
-			for (i = 0; i < 8; i++)
+			क्रम (i = 0; i < 8; i++)
 				*buf |= (vmem16[((y * 8 * WIDTH) +
 						 (i * WIDTH)) + x] ?
 					 1 : 0) << i;
 			buf++;
-		}
+		पूर्ण
 
-		write_reg(par, LCD_PAGE_ADDRESS | (u8)y);
-		write_reg(par, 0x00);
-		write_reg(par, LCD_COL_ADDRESS);
+		ग_लिखो_reg(par, LCD_PAGE_ADDRESS | (u8)y);
+		ग_लिखो_reg(par, 0x00);
+		ग_लिखो_reg(par, LCD_COL_ADDRESS);
 		gpiod_set_value(par->gpio.dc, 1);
-		ret = par->fbtftops.write(par, par->txbuf.buf, WIDTH);
+		ret = par->fbtftops.ग_लिखो(par, par->txbuf.buf, WIDTH);
 		gpiod_set_value(par->gpio.dc, 0);
-	}
+	पूर्ण
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(par->info->device, "write failed and returned: %d\n",
 			ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct fbtft_display display = {
+अटल काष्ठा fbtft_display display = अणु
 	.regwidth = 8,
 	.width = WIDTH,
 	.height = HEIGHT,
-	.fbtftops = {
+	.fbtftops = अणु
 		.init_display = init_display,
 		.set_addr_win = set_addr_win,
-		.write_vmem = write_vmem,
-	},
+		.ग_लिखो_vmem = ग_लिखो_vmem,
+	पूर्ण,
 	.backlight = 1,
-};
+पूर्ण;
 
 FBTFT_REGISTER_DRIVER(DRVNAME, "UltraChip,uc1701", &display);
 

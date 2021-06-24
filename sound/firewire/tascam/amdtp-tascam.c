@@ -1,261 +1,262 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * amdtp-tascam.c - a part of driver for TASCAM FireWire series
+ * amdtp-tascam.c - a part of driver क्रम TASCAM FireWire series
  *
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
-#include <sound/pcm.h>
-#include "tascam.h"
+#समावेश <sound/pcm.h>
+#समावेश "tascam.h"
 
-#define AMDTP_FMT_TSCM_TX	0x1e
-#define AMDTP_FMT_TSCM_RX	0x3e
+#घोषणा AMDTP_FMT_TSCM_TX	0x1e
+#घोषणा AMDTP_FMT_TSCM_RX	0x3e
 
-struct amdtp_tscm {
-	unsigned int pcm_channels;
-};
+काष्ठा amdtp_tscm अणु
+	अचिन्हित पूर्णांक pcm_channels;
+पूर्ण;
 
-int amdtp_tscm_set_parameters(struct amdtp_stream *s, unsigned int rate)
-{
-	struct amdtp_tscm *p = s->protocol;
-	unsigned int data_channels;
+पूर्णांक amdtp_tscm_set_parameters(काष्ठा amdtp_stream *s, अचिन्हित पूर्णांक rate)
+अणु
+	काष्ठा amdtp_tscm *p = s->protocol;
+	अचिन्हित पूर्णांक data_channels;
 
-	if (amdtp_stream_running(s))
-		return -EBUSY;
+	अगर (amdtp_stream_running(s))
+		वापस -EBUSY;
 
 	data_channels = p->pcm_channels;
 
 	/* Packets in in-stream have extra 2 data channels. */
-	if (s->direction == AMDTP_IN_STREAM)
+	अगर (s->direction == AMDTP_IN_STREAM)
 		data_channels += 2;
 
-	return amdtp_stream_set_parameters(s, rate, data_channels);
-}
+	वापस amdtp_stream_set_parameters(s, rate, data_channels);
+पूर्ण
 
-static void write_pcm_s32(struct amdtp_stream *s, struct snd_pcm_substream *pcm,
-			  __be32 *buffer, unsigned int frames,
-			  unsigned int pcm_frames)
-{
-	struct amdtp_tscm *p = s->protocol;
-	unsigned int channels = p->pcm_channels;
-	struct snd_pcm_runtime *runtime = pcm->runtime;
-	unsigned int pcm_buffer_pointer;
-	int remaining_frames;
-	const u32 *src;
-	int i, c;
+अटल व्योम ग_लिखो_pcm_s32(काष्ठा amdtp_stream *s, काष्ठा snd_pcm_substream *pcm,
+			  __be32 *buffer, अचिन्हित पूर्णांक frames,
+			  अचिन्हित पूर्णांक pcm_frames)
+अणु
+	काष्ठा amdtp_tscm *p = s->protocol;
+	अचिन्हित पूर्णांक channels = p->pcm_channels;
+	काष्ठा snd_pcm_runसमय *runसमय = pcm->runसमय;
+	अचिन्हित पूर्णांक pcm_buffer_poपूर्णांकer;
+	पूर्णांक reमुख्यing_frames;
+	स्थिर u32 *src;
+	पूर्णांक i, c;
 
-	pcm_buffer_pointer = s->pcm_buffer_pointer + pcm_frames;
-	pcm_buffer_pointer %= runtime->buffer_size;
+	pcm_buffer_poपूर्णांकer = s->pcm_buffer_poपूर्णांकer + pcm_frames;
+	pcm_buffer_poपूर्णांकer %= runसमय->buffer_size;
 
-	src = (void *)runtime->dma_area +
-				frames_to_bytes(runtime, pcm_buffer_pointer);
-	remaining_frames = runtime->buffer_size - pcm_buffer_pointer;
+	src = (व्योम *)runसमय->dma_area +
+				frames_to_bytes(runसमय, pcm_buffer_poपूर्णांकer);
+	reमुख्यing_frames = runसमय->buffer_size - pcm_buffer_poपूर्णांकer;
 
-	for (i = 0; i < frames; ++i) {
-		for (c = 0; c < channels; ++c) {
+	क्रम (i = 0; i < frames; ++i) अणु
+		क्रम (c = 0; c < channels; ++c) अणु
 			buffer[c] = cpu_to_be32(*src);
 			src++;
-		}
+		पूर्ण
 		buffer += s->data_block_quadlets;
-		if (--remaining_frames == 0)
-			src = (void *)runtime->dma_area;
-	}
-}
+		अगर (--reमुख्यing_frames == 0)
+			src = (व्योम *)runसमय->dma_area;
+	पूर्ण
+पूर्ण
 
-static void read_pcm_s32(struct amdtp_stream *s, struct snd_pcm_substream *pcm,
-			 __be32 *buffer, unsigned int frames,
-			 unsigned int pcm_frames)
-{
-	struct amdtp_tscm *p = s->protocol;
-	unsigned int channels = p->pcm_channels;
-	struct snd_pcm_runtime *runtime = pcm->runtime;
-	unsigned int pcm_buffer_pointer;
-	int remaining_frames;
+अटल व्योम पढ़ो_pcm_s32(काष्ठा amdtp_stream *s, काष्ठा snd_pcm_substream *pcm,
+			 __be32 *buffer, अचिन्हित पूर्णांक frames,
+			 अचिन्हित पूर्णांक pcm_frames)
+अणु
+	काष्ठा amdtp_tscm *p = s->protocol;
+	अचिन्हित पूर्णांक channels = p->pcm_channels;
+	काष्ठा snd_pcm_runसमय *runसमय = pcm->runसमय;
+	अचिन्हित पूर्णांक pcm_buffer_poपूर्णांकer;
+	पूर्णांक reमुख्यing_frames;
 	u32 *dst;
-	int i, c;
+	पूर्णांक i, c;
 
-	pcm_buffer_pointer = s->pcm_buffer_pointer + pcm_frames;
-	pcm_buffer_pointer %= runtime->buffer_size;
+	pcm_buffer_poपूर्णांकer = s->pcm_buffer_poपूर्णांकer + pcm_frames;
+	pcm_buffer_poपूर्णांकer %= runसमय->buffer_size;
 
-	dst  = (void *)runtime->dma_area +
-				frames_to_bytes(runtime, pcm_buffer_pointer);
-	remaining_frames = runtime->buffer_size - pcm_buffer_pointer;
+	dst  = (व्योम *)runसमय->dma_area +
+				frames_to_bytes(runसमय, pcm_buffer_poपूर्णांकer);
+	reमुख्यing_frames = runसमय->buffer_size - pcm_buffer_poपूर्णांकer;
 
-	/* The first data channel is for event counter. */
+	/* The first data channel is क्रम event counter. */
 	buffer += 1;
 
-	for (i = 0; i < frames; ++i) {
-		for (c = 0; c < channels; ++c) {
+	क्रम (i = 0; i < frames; ++i) अणु
+		क्रम (c = 0; c < channels; ++c) अणु
 			*dst = be32_to_cpu(buffer[c]);
 			dst++;
-		}
+		पूर्ण
 		buffer += s->data_block_quadlets;
-		if (--remaining_frames == 0)
-			dst = (void *)runtime->dma_area;
-	}
-}
+		अगर (--reमुख्यing_frames == 0)
+			dst = (व्योम *)runसमय->dma_area;
+	पूर्ण
+पूर्ण
 
-static void write_pcm_silence(struct amdtp_stream *s, __be32 *buffer,
-			      unsigned int data_blocks)
-{
-	struct amdtp_tscm *p = s->protocol;
-	unsigned int channels, i, c;
+अटल व्योम ग_लिखो_pcm_silence(काष्ठा amdtp_stream *s, __be32 *buffer,
+			      अचिन्हित पूर्णांक data_blocks)
+अणु
+	काष्ठा amdtp_tscm *p = s->protocol;
+	अचिन्हित पूर्णांक channels, i, c;
 
 	channels = p->pcm_channels;
 
-	for (i = 0; i < data_blocks; ++i) {
-		for (c = 0; c < channels; ++c)
+	क्रम (i = 0; i < data_blocks; ++i) अणु
+		क्रम (c = 0; c < channels; ++c)
 			buffer[c] = 0x00000000;
 		buffer += s->data_block_quadlets;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int amdtp_tscm_add_pcm_hw_constraints(struct amdtp_stream *s,
-				      struct snd_pcm_runtime *runtime)
-{
-	int err;
+पूर्णांक amdtp_tscm_add_pcm_hw_स्थिरraपूर्णांकs(काष्ठा amdtp_stream *s,
+				      काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	पूर्णांक err;
 
 	/*
 	 * Our implementation allows this protocol to deliver 24 bit sample in
 	 * 32bit data channel.
 	 */
-	err = snd_pcm_hw_constraint_msbits(runtime, 0, 32, 24);
-	if (err < 0)
-		return err;
+	err = snd_pcm_hw_स्थिरraपूर्णांक_msbits(runसमय, 0, 32, 24);
+	अगर (err < 0)
+		वापस err;
 
-	return amdtp_stream_add_pcm_hw_constraints(s, runtime);
-}
+	वापस amdtp_stream_add_pcm_hw_स्थिरraपूर्णांकs(s, runसमय);
+पूर्ण
 
-static void read_status_messages(struct amdtp_stream *s,
-				 __be32 *buffer, unsigned int data_blocks)
-{
-	struct snd_tscm *tscm = container_of(s, struct snd_tscm, tx_stream);
+अटल व्योम पढ़ो_status_messages(काष्ठा amdtp_stream *s,
+				 __be32 *buffer, अचिन्हित पूर्णांक data_blocks)
+अणु
+	काष्ठा snd_tscm *tscm = container_of(s, काष्ठा snd_tscm, tx_stream);
 	bool used = READ_ONCE(tscm->hwdep->used);
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < data_blocks; i++) {
-		unsigned int index;
-		__be32 before;
+	क्रम (i = 0; i < data_blocks; i++) अणु
+		अचिन्हित पूर्णांक index;
+		__be32 beक्रमe;
 		__be32 after;
 
 		index = be32_to_cpu(buffer[0]) % SNDRV_FIREWIRE_TASCAM_STATE_COUNT;
-		before = tscm->state[index];
+		beक्रमe = tscm->state[index];
 		after = buffer[s->data_block_quadlets - 1];
 
-		if (used && index > 4 && index < 16) {
+		अगर (used && index > 4 && index < 16) अणु
 			__be32 mask;
 
-			if (index == 5)
+			अगर (index == 5)
 				mask = cpu_to_be32(~0x0000ffff);
-			else if (index == 6)
+			अन्यथा अगर (index == 6)
 				mask = cpu_to_be32(~0x0000ffff);
-			else if (index == 8)
+			अन्यथा अगर (index == 8)
 				mask = cpu_to_be32(~0x000f0f00);
-			else
+			अन्यथा
 				mask = cpu_to_be32(~0x00000000);
 
-			if ((before ^ after) & mask) {
-				struct snd_firewire_tascam_change *entry =
+			अगर ((beक्रमe ^ after) & mask) अणु
+				काष्ठा snd_firewire_tascam_change *entry =
 						&tscm->queue[tscm->push_pos];
-				unsigned long flag;
+				अचिन्हित दीर्घ flag;
 
 				spin_lock_irqsave(&tscm->lock, flag);
 				entry->index = index;
-				entry->before = before;
+				entry->beक्रमe = beक्रमe;
 				entry->after = after;
-				if (++tscm->push_pos >= SND_TSCM_QUEUE_COUNT)
+				अगर (++tscm->push_pos >= SND_TSCM_QUEUE_COUNT)
 					tscm->push_pos = 0;
 				spin_unlock_irqrestore(&tscm->lock, flag);
 
-				wake_up(&tscm->hwdep_wait);
-			}
-		}
+				wake_up(&tscm->hwdep_रुको);
+			पूर्ण
+		पूर्ण
 
 		tscm->state[index] = after;
 		buffer += s->data_block_quadlets;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int process_ir_ctx_payloads(struct amdtp_stream *s,
-					    const struct pkt_desc *descs,
-					    unsigned int packets,
-					    struct snd_pcm_substream *pcm)
-{
-	unsigned int pcm_frames = 0;
-	int i;
+अटल अचिन्हित पूर्णांक process_ir_ctx_payloads(काष्ठा amdtp_stream *s,
+					    स्थिर काष्ठा pkt_desc *descs,
+					    अचिन्हित पूर्णांक packets,
+					    काष्ठा snd_pcm_substream *pcm)
+अणु
+	अचिन्हित पूर्णांक pcm_frames = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < packets; ++i) {
-		const struct pkt_desc *desc = descs + i;
+	क्रम (i = 0; i < packets; ++i) अणु
+		स्थिर काष्ठा pkt_desc *desc = descs + i;
 		__be32 *buf = desc->ctx_payload;
-		unsigned int data_blocks = desc->data_blocks;
+		अचिन्हित पूर्णांक data_blocks = desc->data_blocks;
 
-		if (pcm) {
-			read_pcm_s32(s, pcm, buf, data_blocks, pcm_frames);
+		अगर (pcm) अणु
+			पढ़ो_pcm_s32(s, pcm, buf, data_blocks, pcm_frames);
 			pcm_frames += data_blocks;
-		}
+		पूर्ण
 
-		read_status_messages(s, buf, data_blocks);
-	}
+		पढ़ो_status_messages(s, buf, data_blocks);
+	पूर्ण
 
-	return pcm_frames;
-}
+	वापस pcm_frames;
+पूर्ण
 
-static unsigned int process_it_ctx_payloads(struct amdtp_stream *s,
-					    const struct pkt_desc *descs,
-					    unsigned int packets,
-					    struct snd_pcm_substream *pcm)
-{
-	unsigned int pcm_frames = 0;
-	int i;
+अटल अचिन्हित पूर्णांक process_it_ctx_payloads(काष्ठा amdtp_stream *s,
+					    स्थिर काष्ठा pkt_desc *descs,
+					    अचिन्हित पूर्णांक packets,
+					    काष्ठा snd_pcm_substream *pcm)
+अणु
+	अचिन्हित पूर्णांक pcm_frames = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < packets; ++i) {
-		const struct pkt_desc *desc = descs + i;
+	क्रम (i = 0; i < packets; ++i) अणु
+		स्थिर काष्ठा pkt_desc *desc = descs + i;
 		__be32 *buf = desc->ctx_payload;
-		unsigned int data_blocks = desc->data_blocks;
+		अचिन्हित पूर्णांक data_blocks = desc->data_blocks;
 
-		if (pcm) {
-			write_pcm_s32(s, pcm, buf, data_blocks, pcm_frames);
+		अगर (pcm) अणु
+			ग_लिखो_pcm_s32(s, pcm, buf, data_blocks, pcm_frames);
 			pcm_frames += data_blocks;
-		} else {
-			write_pcm_silence(s, buf, data_blocks);
-		}
-	}
+		पूर्ण अन्यथा अणु
+			ग_लिखो_pcm_silence(s, buf, data_blocks);
+		पूर्ण
+	पूर्ण
 
-	return pcm_frames;
-}
+	वापस pcm_frames;
+पूर्ण
 
-int amdtp_tscm_init(struct amdtp_stream *s, struct fw_unit *unit,
-		    enum amdtp_stream_direction dir, unsigned int pcm_channels)
-{
+पूर्णांक amdtp_tscm_init(काष्ठा amdtp_stream *s, काष्ठा fw_unit *unit,
+		    क्रमागत amdtp_stream_direction dir, अचिन्हित पूर्णांक pcm_channels)
+अणु
 	amdtp_stream_process_ctx_payloads_t process_ctx_payloads;
-	struct amdtp_tscm *p;
-	unsigned int fmt;
-	int err;
+	काष्ठा amdtp_tscm *p;
+	अचिन्हित पूर्णांक fmt;
+	पूर्णांक err;
 
-	if (dir == AMDTP_IN_STREAM) {
+	अगर (dir == AMDTP_IN_STREAM) अणु
 		fmt = AMDTP_FMT_TSCM_TX;
 		process_ctx_payloads = process_ir_ctx_payloads;
-	} else {
+	पूर्ण अन्यथा अणु
 		fmt = AMDTP_FMT_TSCM_RX;
 		process_ctx_payloads = process_it_ctx_payloads;
-	}
+	पूर्ण
 
 	err = amdtp_stream_init(s, unit, dir,
 			CIP_NONBLOCKING | CIP_SKIP_DBC_ZERO_CHECK, fmt,
-			process_ctx_payloads, sizeof(struct amdtp_tscm));
-	if (err < 0)
-		return 0;
+			process_ctx_payloads, माप(काष्ठा amdtp_tscm));
+	अगर (err < 0)
+		वापस 0;
 
-	if (dir == AMDTP_OUT_STREAM) {
-		// Use fixed value for FDF field.
+	अगर (dir == AMDTP_OUT_STREAM) अणु
+		// Use fixed value क्रम FDF field.
 		s->ctx_data.rx.fdf = 0x00;
 		// Not used.
 		s->ctx_data.rx.syt_override = 0x0000;
-	}
+	पूर्ण
 
-	/* This protocol uses fixed number of data channels for PCM samples. */
+	/* This protocol uses fixed number of data channels क्रम PCM samples. */
 	p = s->protocol;
 	p->pcm_channels = pcm_channels;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

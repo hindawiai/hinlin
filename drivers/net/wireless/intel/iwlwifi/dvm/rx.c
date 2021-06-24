@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /******************************************************************************
  *
  * Copyright(c) 2003 - 2014 Intel Corporation. All rights reserved.
@@ -6,25 +7,25 @@
  * Copyright(c) 2018, 2020 Intel Corporation
  *
  * Portions of this file are derived from the ipw3945 project, as well
- * as portionhelp of the ieee80211 subsystem header files.
+ * as portionhelp of the ieee80211 subप्रणाली header files.
  *
- * Contact Information:
- *  Intel Linux Wireless <linuxwifi@intel.com>
+ * Contact Inक्रमmation:
+ *  Intel Linux Wireless <linuxwअगरi@पूर्णांकel.com>
  * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  *
  *****************************************************************************/
 
-#include <linux/etherdevice.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <net/mac80211.h>
-#include <asm/unaligned.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <net/mac80211.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "iwl-trans.h"
-#include "iwl-io.h"
-#include "dev.h"
-#include "calib.h"
-#include "agn.h"
+#समावेश "iwl-trans.h"
+#समावेश "iwl-io.h"
+#समावेश "dev.h"
+#समावेश "calib.h"
+#समावेश "agn.h"
 
 /******************************************************************************
  *
@@ -32,11 +33,11 @@
  *
  ******************************************************************************/
 
-static void iwlagn_rx_reply_error(struct iwl_priv *priv,
-				  struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_error_resp *err_resp = (void *)pkt->data;
+अटल व्योम iwlagn_rx_reply_error(काष्ठा iwl_priv *priv,
+				  काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_error_resp *err_resp = (व्योम *)pkt->data;
 
 	IWL_ERR(priv, "Error Reply type 0x%08X cmd REPLY_ERROR (0x%02X) "
 		"seq 0x%04X ser 0x%08X\n",
@@ -44,206 +45,206 @@ static void iwlagn_rx_reply_error(struct iwl_priv *priv,
 		err_resp->cmd_id,
 		le16_to_cpu(err_resp->bad_cmd_seq_num),
 		le32_to_cpu(err_resp->error_info));
-}
+पूर्ण
 
-static void iwlagn_rx_csa(struct iwl_priv *priv, struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_csa_notification *csa = (void *)pkt->data;
+अटल व्योम iwlagn_rx_csa(काष्ठा iwl_priv *priv, काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_csa_notअगरication *csa = (व्योम *)pkt->data;
 	/*
 	 * MULTI-FIXME
-	 * See iwlagn_mac_channel_switch.
+	 * See iwlagn_mac_channel_चयन.
 	 */
-	struct iwl_rxon_context *ctx = &priv->contexts[IWL_RXON_CTX_BSS];
-	struct iwl_rxon_cmd *rxon = (void *)&ctx->active;
+	काष्ठा iwl_rxon_context *ctx = &priv->contexts[IWL_RXON_CTX_BSS];
+	काष्ठा iwl_rxon_cmd *rxon = (व्योम *)&ctx->active;
 
-	if (!test_bit(STATUS_CHANNEL_SWITCH_PENDING, &priv->status))
-		return;
+	अगर (!test_bit(STATUS_CHANNEL_SWITCH_PENDING, &priv->status))
+		वापस;
 
-	if (!le32_to_cpu(csa->status) && csa->channel == priv->switch_channel) {
+	अगर (!le32_to_cpu(csa->status) && csa->channel == priv->चयन_channel) अणु
 		rxon->channel = csa->channel;
 		ctx->staging.channel = csa->channel;
 		IWL_DEBUG_11H(priv, "CSA notif: channel %d\n",
 			      le16_to_cpu(csa->channel));
-		iwl_chswitch_done(priv, true);
-	} else {
+		iwl_chचयन_करोne(priv, true);
+	पूर्ण अन्यथा अणु
 		IWL_ERR(priv, "CSA notif (fail) : channel %d\n",
 			le16_to_cpu(csa->channel));
-		iwl_chswitch_done(priv, false);
-	}
-}
+		iwl_chचयन_करोne(priv, false);
+	पूर्ण
+पूर्ण
 
 
-static void iwlagn_rx_spectrum_measure_notif(struct iwl_priv *priv,
-					     struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_spectrum_notification *report = (void *)pkt->data;
+अटल व्योम iwlagn_rx_spectrum_measure_notअगर(काष्ठा iwl_priv *priv,
+					     काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_spectrum_notअगरication *report = (व्योम *)pkt->data;
 
-	if (!report->state) {
+	अगर (!report->state) अणु
 		IWL_DEBUG_11H(priv,
 			"Spectrum Measure Notification: Start\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memcpy(&priv->measure_report, report, sizeof(*report));
+	स_नकल(&priv->measure_report, report, माप(*report));
 	priv->measurement_status |= MEASUREMENT_READY;
-}
+पूर्ण
 
-static void iwlagn_rx_pm_sleep_notif(struct iwl_priv *priv,
-				     struct iwl_rx_cmd_buffer *rxb)
-{
-#ifdef CONFIG_IWLWIFI_DEBUG
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_sleep_notification *sleep = (void *)pkt->data;
+अटल व्योम iwlagn_rx_pm_sleep_notअगर(काष्ठा iwl_priv *priv,
+				     काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+#अगर_घोषित CONFIG_IWLWIFI_DEBUG
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_sleep_notअगरication *sleep = (व्योम *)pkt->data;
 	IWL_DEBUG_RX(priv, "sleep mode: %d, src: %d\n",
 		     sleep->pm_sleep_mode, sleep->pm_wakeup_src);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void iwlagn_rx_pm_debug_statistics_notif(struct iwl_priv *priv,
-						struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
+अटल व्योम iwlagn_rx_pm_debug_statistics_notअगर(काष्ठा iwl_priv *priv,
+						काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
 	u32 __maybe_unused len = iwl_rx_packet_len(pkt);
 	IWL_DEBUG_RADIO(priv, "Dumping %d bytes of unhandled "
 			"notification for PM_DEBUG_STATISTIC_NOTIFIC:\n", len);
-	iwl_print_hex_dump(priv, IWL_DL_RADIO, pkt->data, len);
-}
+	iwl_prपूर्णांक_hex_dump(priv, IWL_DL_RADIO, pkt->data, len);
+पूर्ण
 
-static void iwlagn_rx_beacon_notif(struct iwl_priv *priv,
-				   struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwlagn_beacon_notif *beacon = (void *)pkt->data;
-#ifdef CONFIG_IWLWIFI_DEBUG
-	u16 status = le16_to_cpu(beacon->beacon_notify_hdr.status.status);
-	u8 rate = iwl_hw_get_rate(beacon->beacon_notify_hdr.rate_n_flags);
+अटल व्योम iwlagn_rx_beacon_notअगर(काष्ठा iwl_priv *priv,
+				   काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwlagn_beacon_notअगर *beacon = (व्योम *)pkt->data;
+#अगर_घोषित CONFIG_IWLWIFI_DEBUG
+	u16 status = le16_to_cpu(beacon->beacon_notअगरy_hdr.status.status);
+	u8 rate = iwl_hw_get_rate(beacon->beacon_notअगरy_hdr.rate_n_flags);
 
 	IWL_DEBUG_RX(priv, "beacon status %#x, retries:%d ibssmgr:%d "
 		"tsf:0x%.8x%.8x rate:%d\n",
 		status & TX_STATUS_MSK,
-		beacon->beacon_notify_hdr.failure_frame,
+		beacon->beacon_notअगरy_hdr.failure_frame,
 		le32_to_cpu(beacon->ibss_mgr_status),
 		le32_to_cpu(beacon->high_tsf),
 		le32_to_cpu(beacon->low_tsf), rate);
-#endif
+#पूर्ण_अगर
 
 	priv->ibss_manager = le32_to_cpu(beacon->ibss_mgr_status);
-}
+पूर्ण
 
 /*
- * iwl_good_plcp_health - checks for plcp error.
+ * iwl_good_plcp_health - checks क्रम plcp error.
  *
  * When the plcp error is exceeding the thresholds, reset the radio
  * to improve the throughput.
  */
-static bool iwlagn_good_plcp_health(struct iwl_priv *priv,
-				 struct statistics_rx_phy *cur_ofdm,
-				 struct statistics_rx_ht_phy *cur_ofdm_ht,
-				 unsigned int msecs)
-{
-	int delta;
-	int threshold = priv->plcp_delta_threshold;
+अटल bool iwlagn_good_plcp_health(काष्ठा iwl_priv *priv,
+				 काष्ठा statistics_rx_phy *cur_ofdm,
+				 काष्ठा statistics_rx_ht_phy *cur_ofdm_ht,
+				 अचिन्हित पूर्णांक msecs)
+अणु
+	पूर्णांक delta;
+	पूर्णांक threshold = priv->plcp_delta_threshold;
 
-	if (threshold == IWL_MAX_PLCP_ERR_THRESHOLD_DISABLE) {
+	अगर (threshold == IWL_MAX_PLCP_ERR_THRESHOLD_DISABLE) अणु
 		IWL_DEBUG_RADIO(priv, "plcp_err check disabled\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	delta = le32_to_cpu(cur_ofdm->plcp_err) -
 		le32_to_cpu(priv->statistics.rx_ofdm.plcp_err) +
 		le32_to_cpu(cur_ofdm_ht->plcp_err) -
 		le32_to_cpu(priv->statistics.rx_ofdm_ht.plcp_err);
 
-	/* Can be negative if firmware reset statistics */
-	if (delta <= 0)
-		return true;
+	/* Can be negative अगर firmware reset statistics */
+	अगर (delta <= 0)
+		वापस true;
 
-	if ((delta * 100 / msecs) > threshold) {
+	अगर ((delta * 100 / msecs) > threshold) अणु
 		IWL_DEBUG_RADIO(priv,
 				"plcp health threshold %u delta %d msecs %u\n",
 				threshold, delta, msecs);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int iwl_force_rf_reset(struct iwl_priv *priv, bool external)
-{
-	struct iwl_rf_reset *rf_reset;
+पूर्णांक iwl_क्रमce_rf_reset(काष्ठा iwl_priv *priv, bool बाह्यal)
+अणु
+	काष्ठा iwl_rf_reset *rf_reset;
 
-	if (test_bit(STATUS_EXIT_PENDING, &priv->status))
-		return -EAGAIN;
+	अगर (test_bit(STATUS_EXIT_PENDING, &priv->status))
+		वापस -EAGAIN;
 
-	if (!iwl_is_any_associated(priv)) {
+	अगर (!iwl_is_any_associated(priv)) अणु
 		IWL_DEBUG_SCAN(priv, "force reset rejected: not associated\n");
-		return -ENOLINK;
-	}
+		वापस -ENOLINK;
+	पूर्ण
 
 	rf_reset = &priv->rf_reset;
 	rf_reset->reset_request_count++;
-	if (!external && rf_reset->last_reset_jiffies &&
-	    time_after(rf_reset->last_reset_jiffies +
-		       IWL_DELAY_NEXT_FORCE_RF_RESET, jiffies)) {
+	अगर (!बाह्यal && rf_reset->last_reset_jअगरfies &&
+	    समय_after(rf_reset->last_reset_jअगरfies +
+		       IWL_DELAY_NEXT_FORCE_RF_RESET, jअगरfies)) अणु
 		IWL_DEBUG_INFO(priv, "RF reset rejected\n");
 		rf_reset->reset_reject_count++;
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 	rf_reset->reset_success_count++;
-	rf_reset->last_reset_jiffies = jiffies;
+	rf_reset->last_reset_jअगरfies = jअगरfies;
 
 	/*
-	 * There is no easy and better way to force reset the radio,
-	 * the only known method is switching channel which will force to
+	 * There is no easy and better way to क्रमce reset the radio,
+	 * the only known method is चयनing channel which will क्रमce to
 	 * reset and tune the radio.
-	 * Use internal short scan (single channel) operation to should
+	 * Use पूर्णांकernal लघु scan (single channel) operation to should
 	 * achieve this objective.
 	 * Driver should reset the radio when number of consecutive missed
 	 * beacon, or any other uCode error condition detected.
 	 */
 	IWL_DEBUG_INFO(priv, "perform radio reset.\n");
-	iwl_internal_short_hw_scan(priv);
-	return 0;
-}
+	iwl_पूर्णांकernal_लघु_hw_scan(priv);
+	वापस 0;
+पूर्ण
 
 
-static void iwlagn_recover_from_statistics(struct iwl_priv *priv,
-				struct statistics_rx_phy *cur_ofdm,
-				struct statistics_rx_ht_phy *cur_ofdm_ht,
-				struct statistics_tx *tx,
-				unsigned long stamp)
-{
-	unsigned int msecs;
+अटल व्योम iwlagn_recover_from_statistics(काष्ठा iwl_priv *priv,
+				काष्ठा statistics_rx_phy *cur_ofdm,
+				काष्ठा statistics_rx_ht_phy *cur_ofdm_ht,
+				काष्ठा statistics_tx *tx,
+				अचिन्हित दीर्घ stamp)
+अणु
+	अचिन्हित पूर्णांक msecs;
 
-	if (test_bit(STATUS_EXIT_PENDING, &priv->status))
-		return;
+	अगर (test_bit(STATUS_EXIT_PENDING, &priv->status))
+		वापस;
 
-	msecs = jiffies_to_msecs(stamp - priv->rx_statistics_jiffies);
+	msecs = jअगरfies_to_msecs(stamp - priv->rx_statistics_jअगरfies);
 
-	/* Only gather statistics and update time stamp when not associated */
-	if (!iwl_is_any_associated(priv))
-		return;
+	/* Only gather statistics and update समय stamp when not associated */
+	अगर (!iwl_is_any_associated(priv))
+		वापस;
 
-	/* Do not check/recover when do not have enough statistics data */
-	if (msecs < 99)
-		return;
+	/* Do not check/recover when करो not have enough statistics data */
+	अगर (msecs < 99)
+		वापस;
 
-	if (!iwlagn_good_plcp_health(priv, cur_ofdm, cur_ofdm_ht, msecs))
-		iwl_force_rf_reset(priv, false);
-}
+	अगर (!iwlagn_good_plcp_health(priv, cur_ofdm, cur_ofdm_ht, msecs))
+		iwl_क्रमce_rf_reset(priv, false);
+पूर्ण
 
 /* Calculate noise level, based on measurements during network silence just
- *   before arriving beacon.  This measurement can be done only if we know
- *   exactly when to expect beacons, therefore only when we're associated. */
-static void iwlagn_rx_calc_noise(struct iwl_priv *priv)
-{
-	struct statistics_rx_non_phy *rx_info;
-	int num_active_rx = 0;
-	int total_silence = 0;
-	int bcn_silence_a, bcn_silence_b, bcn_silence_c;
-	int last_rx_noise;
+ *   beक्रमe arriving beacon.  This measurement can be करोne only अगर we know
+ *   exactly when to expect beacons, thereक्रमe only when we're associated. */
+अटल व्योम iwlagn_rx_calc_noise(काष्ठा iwl_priv *priv)
+अणु
+	काष्ठा statistics_rx_non_phy *rx_info;
+	पूर्णांक num_active_rx = 0;
+	पूर्णांक total_silence = 0;
+	पूर्णांक bcn_silence_a, bcn_silence_b, bcn_silence_c;
+	पूर्णांक last_rx_noise;
 
 	rx_info = &priv->statistics.rx_non_phy;
 
@@ -254,71 +255,71 @@ static void iwlagn_rx_calc_noise(struct iwl_priv *priv)
 	bcn_silence_c =
 		le32_to_cpu(rx_info->beacon_silence_rssi_c) & IN_BAND_FILTER;
 
-	if (bcn_silence_a) {
+	अगर (bcn_silence_a) अणु
 		total_silence += bcn_silence_a;
 		num_active_rx++;
-	}
-	if (bcn_silence_b) {
+	पूर्ण
+	अगर (bcn_silence_b) अणु
 		total_silence += bcn_silence_b;
 		num_active_rx++;
-	}
-	if (bcn_silence_c) {
+	पूर्ण
+	अगर (bcn_silence_c) अणु
 		total_silence += bcn_silence_c;
 		num_active_rx++;
-	}
+	पूर्ण
 
 	/* Average among active antennas */
-	if (num_active_rx)
+	अगर (num_active_rx)
 		last_rx_noise = (total_silence / num_active_rx) - 107;
-	else
+	अन्यथा
 		last_rx_noise = IWL_NOISE_MEAS_NOT_AVAILABLE;
 
 	IWL_DEBUG_CALIB(priv, "inband silence a %u, b %u, c %u, dBm %d\n",
 			bcn_silence_a, bcn_silence_b, bcn_silence_c,
 			last_rx_noise);
-}
+पूर्ण
 
-#ifdef CONFIG_IWLWIFI_DEBUGFS
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
 /*
  *  based on the assumption of all statistics counter are in DWORD
- *  FIXME: This function is for debugging, do not deal with
- *  the case of counters roll-over.
+ *  FIXME: This function is क्रम debugging, करो not deal with
+ *  the हाल of counters roll-over.
  */
-static void accum_stats(__le32 *prev, __le32 *cur, __le32 *delta,
-			__le32 *max_delta, __le32 *accum, int size)
-{
-	int i;
+अटल व्योम accum_stats(__le32 *prev, __le32 *cur, __le32 *delta,
+			__le32 *max_delta, __le32 *accum, पूर्णांक size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0;
-	     i < size / sizeof(__le32);
-	     i++, prev++, cur++, delta++, max_delta++, accum++) {
-		if (le32_to_cpu(*cur) > le32_to_cpu(*prev)) {
+	क्रम (i = 0;
+	     i < size / माप(__le32);
+	     i++, prev++, cur++, delta++, max_delta++, accum++) अणु
+		अगर (le32_to_cpu(*cur) > le32_to_cpu(*prev)) अणु
 			*delta = cpu_to_le32(
 				le32_to_cpu(*cur) - le32_to_cpu(*prev));
 			le32_add_cpu(accum, le32_to_cpu(*delta));
-			if (le32_to_cpu(*delta) > le32_to_cpu(*max_delta))
+			अगर (le32_to_cpu(*delta) > le32_to_cpu(*max_delta))
 				*max_delta = *delta;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void
-iwlagn_accumulative_statistics(struct iwl_priv *priv,
-			    struct statistics_general_common *common,
-			    struct statistics_rx_non_phy *rx_non_phy,
-			    struct statistics_rx_phy *rx_ofdm,
-			    struct statistics_rx_ht_phy *rx_ofdm_ht,
-			    struct statistics_rx_phy *rx_cck,
-			    struct statistics_tx *tx,
-			    struct statistics_bt_activity *bt_activity)
-{
-#define ACCUM(_name)	\
+अटल व्योम
+iwlagn_accumulative_statistics(काष्ठा iwl_priv *priv,
+			    काष्ठा statistics_general_common *common,
+			    काष्ठा statistics_rx_non_phy *rx_non_phy,
+			    काष्ठा statistics_rx_phy *rx_ofdm,
+			    काष्ठा statistics_rx_ht_phy *rx_ofdm_ht,
+			    काष्ठा statistics_rx_phy *rx_cck,
+			    काष्ठा statistics_tx *tx,
+			    काष्ठा statistics_bt_activity *bt_activity)
+अणु
+#घोषणा ACCUM(_name)	\
 	accum_stats((__le32 *)&priv->statistics._name,		\
 		    (__le32 *)_name,				\
 		    (__le32 *)&priv->delta_stats._name,		\
 		    (__le32 *)&priv->max_delta_stats._name,	\
 		    (__le32 *)&priv->accum_stats._name,		\
-		    sizeof(*_name));
+		    माप(*_name));
 
 	ACCUM(common);
 	ACCUM(rx_non_phy);
@@ -326,49 +327,49 @@ iwlagn_accumulative_statistics(struct iwl_priv *priv,
 	ACCUM(rx_ofdm_ht);
 	ACCUM(rx_cck);
 	ACCUM(tx);
-	if (bt_activity)
+	अगर (bt_activity)
 		ACCUM(bt_activity);
-#undef ACCUM
-}
-#else
-static inline void
-iwlagn_accumulative_statistics(struct iwl_priv *priv,
-			    struct statistics_general_common *common,
-			    struct statistics_rx_non_phy *rx_non_phy,
-			    struct statistics_rx_phy *rx_ofdm,
-			    struct statistics_rx_ht_phy *rx_ofdm_ht,
-			    struct statistics_rx_phy *rx_cck,
-			    struct statistics_tx *tx,
-			    struct statistics_bt_activity *bt_activity)
-{
-}
-#endif
+#अघोषित ACCUM
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम
+iwlagn_accumulative_statistics(काष्ठा iwl_priv *priv,
+			    काष्ठा statistics_general_common *common,
+			    काष्ठा statistics_rx_non_phy *rx_non_phy,
+			    काष्ठा statistics_rx_phy *rx_ofdm,
+			    काष्ठा statistics_rx_ht_phy *rx_ofdm_ht,
+			    काष्ठा statistics_rx_phy *rx_cck,
+			    काष्ठा statistics_tx *tx,
+			    काष्ठा statistics_bt_activity *bt_activity)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static void iwlagn_rx_statistics(struct iwl_priv *priv,
-				 struct iwl_rx_cmd_buffer *rxb)
-{
-	unsigned long stamp = jiffies;
-	const int reg_recalib_period = 60;
-	int change;
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
+अटल व्योम iwlagn_rx_statistics(काष्ठा iwl_priv *priv,
+				 काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	अचिन्हित दीर्घ stamp = jअगरfies;
+	स्थिर पूर्णांक reg_recalib_period = 60;
+	पूर्णांक change;
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
 	u32 len = iwl_rx_packet_payload_len(pkt);
 	__le32 *flag;
-	struct statistics_general_common *common;
-	struct statistics_rx_non_phy *rx_non_phy;
-	struct statistics_rx_phy *rx_ofdm;
-	struct statistics_rx_ht_phy *rx_ofdm_ht;
-	struct statistics_rx_phy *rx_cck;
-	struct statistics_tx *tx;
-	struct statistics_bt_activity *bt_activity;
+	काष्ठा statistics_general_common *common;
+	काष्ठा statistics_rx_non_phy *rx_non_phy;
+	काष्ठा statistics_rx_phy *rx_ofdm;
+	काष्ठा statistics_rx_ht_phy *rx_ofdm_ht;
+	काष्ठा statistics_rx_phy *rx_cck;
+	काष्ठा statistics_tx *tx;
+	काष्ठा statistics_bt_activity *bt_activity;
 
 	IWL_DEBUG_RX(priv, "Statistics notification received (%d bytes).\n",
 		     len);
 
 	spin_lock(&priv->statistics.lock);
 
-	if (len == sizeof(struct iwl_bt_notif_statistics)) {
-		struct iwl_bt_notif_statistics *stats;
-		stats = (void *)&pkt->data;
+	अगर (len == माप(काष्ठा iwl_bt_notअगर_statistics)) अणु
+		काष्ठा iwl_bt_notअगर_statistics *stats;
+		stats = (व्योम *)&pkt->data;
 		flag = &stats->flag;
 		common = &stats->general.common;
 		rx_non_phy = &stats->rx.general.common;
@@ -378,15 +379,15 @@ static void iwlagn_rx_statistics(struct iwl_priv *priv,
 		tx = &stats->tx;
 		bt_activity = &stats->general.activity;
 
-#ifdef CONFIG_IWLWIFI_DEBUGFS
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
 		/* handle this exception directly */
-		priv->statistics.num_bt_kills = stats->rx.general.num_bt_kills;
-		le32_add_cpu(&priv->statistics.accum_num_bt_kills,
-			     le32_to_cpu(stats->rx.general.num_bt_kills));
-#endif
-	} else if (len == sizeof(struct iwl_notif_statistics)) {
-		struct iwl_notif_statistics *stats;
-		stats = (void *)&pkt->data;
+		priv->statistics.num_bt_समाप्तs = stats->rx.general.num_bt_समाप्तs;
+		le32_add_cpu(&priv->statistics.accum_num_bt_समाप्तs,
+			     le32_to_cpu(stats->rx.general.num_bt_समाप्तs));
+#पूर्ण_अगर
+	पूर्ण अन्यथा अगर (len == माप(काष्ठा iwl_notअगर_statistics)) अणु
+		काष्ठा iwl_notअगर_statistics *stats;
+		stats = (व्योम *)&pkt->data;
 		flag = &stats->flag;
 		common = &stats->general.common;
 		rx_non_phy = &stats->rx.general;
@@ -394,14 +395,14 @@ static void iwlagn_rx_statistics(struct iwl_priv *priv,
 		rx_ofdm_ht = &stats->rx.ofdm_ht;
 		rx_cck = &stats->rx.cck;
 		tx = &stats->tx;
-		bt_activity = NULL;
-	} else {
+		bt_activity = शून्य;
+	पूर्ण अन्यथा अणु
 		WARN_ONCE(1, "len %d doesn't match BT (%zu) or normal (%zu)\n",
-			  len, sizeof(struct iwl_bt_notif_statistics),
-			  sizeof(struct iwl_notif_statistics));
+			  len, माप(काष्ठा iwl_bt_notअगर_statistics),
+			  माप(काष्ठा iwl_notअगर_statistics));
 		spin_unlock(&priv->statistics.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	change = common->temperature != priv->statistics.common.temperature ||
 		 (*flag & STATISTICS_REPLY_FLG_HT40_MODE_MSK) !=
@@ -413,70 +414,70 @@ static void iwlagn_rx_statistics(struct iwl_priv *priv,
 	iwlagn_recover_from_statistics(priv, rx_ofdm, rx_ofdm_ht, tx, stamp);
 
 	priv->statistics.flag = *flag;
-	memcpy(&priv->statistics.common, common, sizeof(*common));
-	memcpy(&priv->statistics.rx_non_phy, rx_non_phy, sizeof(*rx_non_phy));
-	memcpy(&priv->statistics.rx_ofdm, rx_ofdm, sizeof(*rx_ofdm));
-	memcpy(&priv->statistics.rx_ofdm_ht, rx_ofdm_ht, sizeof(*rx_ofdm_ht));
-	memcpy(&priv->statistics.rx_cck, rx_cck, sizeof(*rx_cck));
-	memcpy(&priv->statistics.tx, tx, sizeof(*tx));
-#ifdef CONFIG_IWLWIFI_DEBUGFS
-	if (bt_activity)
-		memcpy(&priv->statistics.bt_activity, bt_activity,
-			sizeof(*bt_activity));
-#endif
+	स_नकल(&priv->statistics.common, common, माप(*common));
+	स_नकल(&priv->statistics.rx_non_phy, rx_non_phy, माप(*rx_non_phy));
+	स_नकल(&priv->statistics.rx_ofdm, rx_ofdm, माप(*rx_ofdm));
+	स_नकल(&priv->statistics.rx_ofdm_ht, rx_ofdm_ht, माप(*rx_ofdm_ht));
+	स_नकल(&priv->statistics.rx_cck, rx_cck, माप(*rx_cck));
+	स_नकल(&priv->statistics.tx, tx, माप(*tx));
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
+	अगर (bt_activity)
+		स_नकल(&priv->statistics.bt_activity, bt_activity,
+			माप(*bt_activity));
+#पूर्ण_अगर
 
-	priv->rx_statistics_jiffies = stamp;
+	priv->rx_statistics_jअगरfies = stamp;
 
 	set_bit(STATUS_STATISTICS, &priv->status);
 
-	/* Reschedule the statistics timer to occur in
+	/* Reschedule the statistics समयr to occur in
 	 * reg_recalib_period seconds to ensure we get a
-	 * thermal update even if the uCode doesn't give
+	 * thermal update even अगर the uCode करोesn't give
 	 * us one */
-	mod_timer(&priv->statistics_periodic, jiffies +
-		  msecs_to_jiffies(reg_recalib_period * 1000));
+	mod_समयr(&priv->statistics_periodic, jअगरfies +
+		  msecs_to_jअगरfies(reg_recalib_period * 1000));
 
-	if (unlikely(!test_bit(STATUS_SCANNING, &priv->status)) &&
-	    (pkt->hdr.cmd == STATISTICS_NOTIFICATION)) {
+	अगर (unlikely(!test_bit(STATUS_SCANNING, &priv->status)) &&
+	    (pkt->hdr.cmd == STATISTICS_NOTIFICATION)) अणु
 		iwlagn_rx_calc_noise(priv);
-		queue_work(priv->workqueue, &priv->run_time_calib_work);
-	}
-	if (priv->lib->temperature && change)
+		queue_work(priv->workqueue, &priv->run_समय_calib_work);
+	पूर्ण
+	अगर (priv->lib->temperature && change)
 		priv->lib->temperature(priv);
 
 	spin_unlock(&priv->statistics.lock);
-}
+पूर्ण
 
-static void iwlagn_rx_reply_statistics(struct iwl_priv *priv,
-				       struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_notif_statistics *stats = (void *)pkt->data;
+अटल व्योम iwlagn_rx_reply_statistics(काष्ठा iwl_priv *priv,
+				       काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_notअगर_statistics *stats = (व्योम *)pkt->data;
 
-	if (le32_to_cpu(stats->flag) & UCODE_STATISTICS_CLEAR_MSK) {
-#ifdef CONFIG_IWLWIFI_DEBUGFS
-		memset(&priv->accum_stats, 0,
-			sizeof(priv->accum_stats));
-		memset(&priv->delta_stats, 0,
-			sizeof(priv->delta_stats));
-		memset(&priv->max_delta_stats, 0,
-			sizeof(priv->max_delta_stats));
-#endif
+	अगर (le32_to_cpu(stats->flag) & UCODE_STATISTICS_CLEAR_MSK) अणु
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
+		स_रखो(&priv->accum_stats, 0,
+			माप(priv->accum_stats));
+		स_रखो(&priv->delta_stats, 0,
+			माप(priv->delta_stats));
+		स_रखो(&priv->max_delta_stats, 0,
+			माप(priv->max_delta_stats));
+#पूर्ण_अगर
 		IWL_DEBUG_RX(priv, "Statistics have been cleared\n");
-	}
+	पूर्ण
 
 	iwlagn_rx_statistics(priv, rxb);
-}
+पूर्ण
 
-/* Handle notification from uCode that card's power state is changing
+/* Handle notअगरication from uCode that card's घातer state is changing
  * due to software, hardware, or critical temperature RFKILL */
-static void iwlagn_rx_card_state_notif(struct iwl_priv *priv,
-				       struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_card_state_notif *card_state_notif = (void *)pkt->data;
-	u32 flags = le32_to_cpu(card_state_notif->flags);
-	unsigned long status = priv->status;
+अटल व्योम iwlagn_rx_card_state_notअगर(काष्ठा iwl_priv *priv,
+				       काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_card_state_notअगर *card_state_notअगर = (व्योम *)pkt->data;
+	u32 flags = le32_to_cpu(card_state_notअगर->flags);
+	अचिन्हित दीर्घ status = priv->status;
 
 	IWL_DEBUG_RF_KILL(priv, "Card state received: HW:%s SW:%s CT:%s\n",
 			  (flags & HW_CARD_DISABLED) ? "Kill" : "On",
@@ -484,203 +485,203 @@ static void iwlagn_rx_card_state_notif(struct iwl_priv *priv,
 			  (flags & CT_CARD_DISABLED) ?
 			  "Reached" : "Not reached");
 
-	if (flags & (SW_CARD_DISABLED | HW_CARD_DISABLED |
-		     CT_CARD_DISABLED)) {
+	अगर (flags & (SW_CARD_DISABLED | HW_CARD_DISABLED |
+		     CT_CARD_DISABLED)) अणु
 
-		iwl_write32(priv->trans, CSR_UCODE_DRV_GP1_SET,
+		iwl_ग_लिखो32(priv->trans, CSR_UCODE_DRV_GP1_SET,
 			    CSR_UCODE_DRV_GP1_BIT_CMD_BLOCKED);
 
-		iwl_write_direct32(priv->trans, HBUS_TARG_MBX_C,
+		iwl_ग_लिखो_direct32(priv->trans, HBUS_TARG_MBX_C,
 					HBUS_TARG_MBX_C_REG_BIT_CMD_BLOCKED);
 
-		if (!(flags & RXON_CARD_DISABLED)) {
-			iwl_write32(priv->trans, CSR_UCODE_DRV_GP1_CLR,
+		अगर (!(flags & RXON_CARD_DISABLED)) अणु
+			iwl_ग_लिखो32(priv->trans, CSR_UCODE_DRV_GP1_CLR,
 				    CSR_UCODE_DRV_GP1_BIT_CMD_BLOCKED);
-			iwl_write_direct32(priv->trans, HBUS_TARG_MBX_C,
+			iwl_ग_लिखो_direct32(priv->trans, HBUS_TARG_MBX_C,
 					HBUS_TARG_MBX_C_REG_BIT_CMD_BLOCKED);
-		}
-		if (flags & CT_CARD_DISABLED)
-			iwl_tt_enter_ct_kill(priv);
-	}
-	if (!(flags & CT_CARD_DISABLED))
-		iwl_tt_exit_ct_kill(priv);
+		पूर्ण
+		अगर (flags & CT_CARD_DISABLED)
+			iwl_tt_enter_ct_समाप्त(priv);
+	पूर्ण
+	अगर (!(flags & CT_CARD_DISABLED))
+		iwl_tt_निकास_ct_समाप्त(priv);
 
-	if (flags & HW_CARD_DISABLED)
+	अगर (flags & HW_CARD_DISABLED)
 		set_bit(STATUS_RF_KILL_HW, &priv->status);
-	else
+	अन्यथा
 		clear_bit(STATUS_RF_KILL_HW, &priv->status);
 
 
-	if (!(flags & RXON_CARD_DISABLED))
+	अगर (!(flags & RXON_CARD_DISABLED))
 		iwl_scan_cancel(priv);
 
-	if ((test_bit(STATUS_RF_KILL_HW, &status) !=
+	अगर ((test_bit(STATUS_RF_KILL_HW, &status) !=
 	     test_bit(STATUS_RF_KILL_HW, &priv->status)))
-		wiphy_rfkill_set_hw_state(priv->hw->wiphy,
+		wiphy_rfसमाप्त_set_hw_state(priv->hw->wiphy,
 			test_bit(STATUS_RF_KILL_HW, &priv->status));
-}
+पूर्ण
 
-static void iwlagn_rx_missed_beacon_notif(struct iwl_priv *priv,
-					  struct iwl_rx_cmd_buffer *rxb)
+अटल व्योम iwlagn_rx_missed_beacon_notअगर(काष्ठा iwl_priv *priv,
+					  काष्ठा iwl_rx_cmd_buffer *rxb)
 
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_missed_beacon_notif *missed_beacon = (void *)pkt->data;
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_missed_beacon_notअगर *missed_beacon = (व्योम *)pkt->data;
 
-	if (le32_to_cpu(missed_beacon->consecutive_missed_beacons) >
-	    priv->missed_beacon_threshold) {
+	अगर (le32_to_cpu(missed_beacon->consecutive_missed_beacons) >
+	    priv->missed_beacon_threshold) अणु
 		IWL_DEBUG_CALIB(priv,
 		    "missed bcn cnsq %d totl %d rcd %d expctd %d\n",
 		    le32_to_cpu(missed_beacon->consecutive_missed_beacons),
 		    le32_to_cpu(missed_beacon->total_missed_becons),
 		    le32_to_cpu(missed_beacon->num_recvd_beacons),
 		    le32_to_cpu(missed_beacon->num_expected_beacons));
-		if (!test_bit(STATUS_SCANNING, &priv->status))
+		अगर (!test_bit(STATUS_SCANNING, &priv->status))
 			iwl_init_sensitivity(priv);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Cache phy data (Rx signal strength, etc) for HT frame (REPLY_RX_PHY_CMD).
- * This will be used later in iwl_rx_reply_rx() for REPLY_RX_MPDU_CMD. */
-static void iwlagn_rx_reply_rx_phy(struct iwl_priv *priv,
-				   struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
+/* Cache phy data (Rx संकेत strength, etc) क्रम HT frame (REPLY_RX_PHY_CMD).
+ * This will be used later in iwl_rx_reply_rx() क्रम REPLY_RX_MPDU_CMD. */
+अटल व्योम iwlagn_rx_reply_rx_phy(काष्ठा iwl_priv *priv,
+				   काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
 
 	priv->last_phy_res_valid = true;
 	priv->ampdu_ref++;
-	memcpy(&priv->last_phy_res, pkt->data,
-	       sizeof(struct iwl_rx_phy_res));
-}
+	स_नकल(&priv->last_phy_res, pkt->data,
+	       माप(काष्ठा iwl_rx_phy_res));
+पूर्ण
 
 /*
- * returns non-zero if packet should be dropped
+ * वापसs non-zero अगर packet should be dropped
  */
-static int iwlagn_set_decrypted_flag(struct iwl_priv *priv,
-				  struct ieee80211_hdr *hdr,
+अटल पूर्णांक iwlagn_set_decrypted_flag(काष्ठा iwl_priv *priv,
+				  काष्ठा ieee80211_hdr *hdr,
 				  u32 decrypt_res,
-				  struct ieee80211_rx_status *stats)
-{
+				  काष्ठा ieee80211_rx_status *stats)
+अणु
 	u16 fc = le16_to_cpu(hdr->frame_control);
 
 	/*
 	 * All contexts have the same setting here due to it being
 	 * a module parameter, so OK to check any context.
 	 */
-	if (priv->contexts[IWL_RXON_CTX_BSS].active.filter_flags &
+	अगर (priv->contexts[IWL_RXON_CTX_BSS].active.filter_flags &
 						RXON_FILTER_DIS_DECRYPT_MSK)
-		return 0;
+		वापस 0;
 
-	if (!(fc & IEEE80211_FCTL_PROTECTED))
-		return 0;
+	अगर (!(fc & IEEE80211_FCTL_PROTECTED))
+		वापस 0;
 
 	IWL_DEBUG_RX(priv, "decrypt_res:0x%x\n", decrypt_res);
-	switch (decrypt_res & RX_RES_STATUS_SEC_TYPE_MSK) {
-	case RX_RES_STATUS_SEC_TYPE_TKIP:
+	चयन (decrypt_res & RX_RES_STATUS_SEC_TYPE_MSK) अणु
+	हाल RX_RES_STATUS_SEC_TYPE_TKIP:
 		/* The uCode has got a bad phase 1 Key, pushes the packet.
-		 * Decryption will be done in SW. */
-		if ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
+		 * Decryption will be करोne in SW. */
+		अगर ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
 		    RX_RES_STATUS_BAD_KEY_TTAK)
-			break;
+			अवरोध;
 		fallthrough;
-	case RX_RES_STATUS_SEC_TYPE_WEP:
-		if ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
-		    RX_RES_STATUS_BAD_ICV_MIC) {
+	हाल RX_RES_STATUS_SEC_TYPE_WEP:
+		अगर ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
+		    RX_RES_STATUS_BAD_ICV_MIC) अणु
 			/* bad ICV, the packet is destroyed since the
 			 * decryption is inplace, drop it */
 			IWL_DEBUG_RX(priv, "Packet destroyed\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		fallthrough;
-	case RX_RES_STATUS_SEC_TYPE_CCMP:
-		if ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
-		    RX_RES_STATUS_DECRYPT_OK) {
+	हाल RX_RES_STATUS_SEC_TYPE_CCMP:
+		अगर ((decrypt_res & RX_RES_STATUS_DECRYPT_TYPE_MSK) ==
+		    RX_RES_STATUS_DECRYPT_OK) अणु
 			IWL_DEBUG_RX(priv, "hw decrypt successfully!!!\n");
 			stats->flag |= RX_FLAG_DECRYPTED;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
-	return 0;
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void iwlagn_pass_packet_to_mac80211(struct iwl_priv *priv,
-					struct ieee80211_hdr *hdr,
+अटल व्योम iwlagn_pass_packet_to_mac80211(काष्ठा iwl_priv *priv,
+					काष्ठा ieee80211_hdr *hdr,
 					u16 len,
 					u32 ampdu_status,
-					struct iwl_rx_cmd_buffer *rxb,
-					struct ieee80211_rx_status *stats)
-{
-	struct sk_buff *skb;
+					काष्ठा iwl_rx_cmd_buffer *rxb,
+					काष्ठा ieee80211_rx_status *stats)
+अणु
+	काष्ठा sk_buff *skb;
 	__le16 fc = hdr->frame_control;
-	struct iwl_rxon_context *ctx;
-	unsigned int hdrlen, fraglen;
+	काष्ठा iwl_rxon_context *ctx;
+	अचिन्हित पूर्णांक hdrlen, fraglen;
 
-	/* We only process data packets if the interface is open */
-	if (unlikely(!priv->is_open)) {
+	/* We only process data packets अगर the पूर्णांकerface is खोलो */
+	अगर (unlikely(!priv->is_खोलो)) अणु
 		IWL_DEBUG_DROP_LIMIT(priv,
 		    "Dropping packet while interface is not open.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* In case of HW accelerated crypto and bad decryption, drop */
-	if (!iwlwifi_mod_params.swcrypto &&
+	/* In हाल of HW accelerated crypto and bad decryption, drop */
+	अगर (!iwlwअगरi_mod_params.swcrypto &&
 	    iwlagn_set_decrypted_flag(priv, hdr, ampdu_status, stats))
-		return;
+		वापस;
 
 	/* Dont use dev_alloc_skb(), we'll have enough headroom once
 	 * ieee80211_hdr pulled.
 	 */
 	skb = alloc_skb(128, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		IWL_ERR(priv, "alloc_skb failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* If frame is small enough to fit in skb->head, pull it completely.
 	 * If not, only pull ieee80211_hdr so that splice() or TCP coalesce
 	 * are more efficient.
 	 */
-	hdrlen = (len <= skb_tailroom(skb)) ? len : sizeof(*hdr);
+	hdrlen = (len <= skb_tailroom(skb)) ? len : माप(*hdr);
 
 	skb_put_data(skb, hdr, hdrlen);
 	fraglen = len - hdrlen;
 
-	if (fraglen) {
-		int offset = (void *)hdr + hdrlen -
+	अगर (fraglen) अणु
+		पूर्णांक offset = (व्योम *)hdr + hdrlen -
 			     rxb_addr(rxb) + rxb_offset(rxb);
 
 		skb_add_rx_frag(skb, 0, rxb_steal_page(rxb), offset,
 				fraglen, rxb->truesize);
-	}
+	पूर्ण
 
 	/*
 	* Wake any queues that were stopped due to a passive channel tx
-	* failure. This can happen because the regulatory enforcement in
-	* the device waits for a beacon before allowing transmission,
-	* sometimes even after already having transmitted frames for the
-	* association because the new RXON may reset the information.
+	* failure. This can happen because the regulatory enक्रमcement in
+	* the device रुकोs क्रम a beacon beक्रमe allowing transmission,
+	* someबार even after alपढ़ोy having transmitted frames क्रम the
+	* association because the new RXON may reset the inक्रमmation.
 	*/
-	if (unlikely(ieee80211_is_beacon(fc) && priv->passive_no_rx)) {
-		for_each_context(priv, ctx) {
-			if (!ether_addr_equal(hdr->addr3,
+	अगर (unlikely(ieee80211_is_beacon(fc) && priv->passive_no_rx)) अणु
+		क्रम_each_context(priv, ctx) अणु
+			अगर (!ether_addr_equal(hdr->addr3,
 					      ctx->active.bssid_addr))
-				continue;
-			iwlagn_lift_passive_no_rx(priv);
-		}
-	}
+				जारी;
+			iwlagn_lअगरt_passive_no_rx(priv);
+		पूर्ण
+	पूर्ण
 
-	memcpy(IEEE80211_SKB_RXCB(skb), stats, sizeof(*stats));
+	स_नकल(IEEE80211_SKB_RXCB(skb), stats, माप(*stats));
 
-	ieee80211_rx_napi(priv->hw, NULL, skb, priv->napi);
-}
+	ieee80211_rx_napi(priv->hw, शून्य, skb, priv->napi);
+पूर्ण
 
-static u32 iwlagn_translate_rx_status(struct iwl_priv *priv, u32 decrypt_in)
-{
+अटल u32 iwlagn_translate_rx_status(काष्ठा iwl_priv *priv, u32 decrypt_in)
+अणु
 	u32 decrypt_out = 0;
 
-	if ((decrypt_in & RX_RES_STATUS_STATION_FOUND) ==
+	अगर ((decrypt_in & RX_RES_STATUS_STATION_FOUND) ==
 					RX_RES_STATUS_STATION_FOUND)
 		decrypt_out |= (RX_RES_STATUS_STATION_FOUND |
 				RX_RES_STATUS_NO_STATION_INFO_MISMATCH);
@@ -688,62 +689,62 @@ static u32 iwlagn_translate_rx_status(struct iwl_priv *priv, u32 decrypt_in)
 	decrypt_out |= (decrypt_in & RX_RES_STATUS_SEC_TYPE_MSK);
 
 	/* packet was not encrypted */
-	if ((decrypt_in & RX_RES_STATUS_SEC_TYPE_MSK) ==
+	अगर ((decrypt_in & RX_RES_STATUS_SEC_TYPE_MSK) ==
 					RX_RES_STATUS_SEC_TYPE_NONE)
-		return decrypt_out;
+		वापस decrypt_out;
 
 	/* packet was encrypted with unknown alg */
-	if ((decrypt_in & RX_RES_STATUS_SEC_TYPE_MSK) ==
+	अगर ((decrypt_in & RX_RES_STATUS_SEC_TYPE_MSK) ==
 					RX_RES_STATUS_SEC_TYPE_ERR)
-		return decrypt_out;
+		वापस decrypt_out;
 
-	/* decryption was not done in HW */
-	if ((decrypt_in & RX_MPDU_RES_STATUS_DEC_DONE_MSK) !=
+	/* decryption was not करोne in HW */
+	अगर ((decrypt_in & RX_MPDU_RES_STATUS_DEC_DONE_MSK) !=
 					RX_MPDU_RES_STATUS_DEC_DONE_MSK)
-		return decrypt_out;
+		वापस decrypt_out;
 
-	switch (decrypt_in & RX_RES_STATUS_SEC_TYPE_MSK) {
+	चयन (decrypt_in & RX_RES_STATUS_SEC_TYPE_MSK) अणु
 
-	case RX_RES_STATUS_SEC_TYPE_CCMP:
+	हाल RX_RES_STATUS_SEC_TYPE_CCMP:
 		/* alg is CCM: check MIC only */
-		if (!(decrypt_in & RX_MPDU_RES_STATUS_MIC_OK))
+		अगर (!(decrypt_in & RX_MPDU_RES_STATUS_MIC_OK))
 			/* Bad MIC */
 			decrypt_out |= RX_RES_STATUS_BAD_ICV_MIC;
-		else
+		अन्यथा
 			decrypt_out |= RX_RES_STATUS_DECRYPT_OK;
 
-		break;
+		अवरोध;
 
-	case RX_RES_STATUS_SEC_TYPE_TKIP:
-		if (!(decrypt_in & RX_MPDU_RES_STATUS_TTAK_OK)) {
+	हाल RX_RES_STATUS_SEC_TYPE_TKIP:
+		अगर (!(decrypt_in & RX_MPDU_RES_STATUS_TTAK_OK)) अणु
 			/* Bad TTAK */
 			decrypt_out |= RX_RES_STATUS_BAD_KEY_TTAK;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default:
-		if (!(decrypt_in & RX_MPDU_RES_STATUS_ICV_OK))
+	शेष:
+		अगर (!(decrypt_in & RX_MPDU_RES_STATUS_ICV_OK))
 			decrypt_out |= RX_RES_STATUS_BAD_ICV_MIC;
-		else
+		अन्यथा
 			decrypt_out |= RX_RES_STATUS_DECRYPT_OK;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	IWL_DEBUG_RX(priv, "decrypt_in:0x%x  decrypt_out = 0x%x\n",
 					decrypt_in, decrypt_out);
 
-	return decrypt_out;
-}
+	वापस decrypt_out;
+पूर्ण
 
-/* Calc max signal level (dBm) among 3 possible receivers */
-static int iwlagn_calc_rssi(struct iwl_priv *priv,
-			     struct iwl_rx_phy_res *rx_resp)
-{
-	/* data from PHY/DSP regarding signal strength, etc.,
+/* Calc max संकेत level (dBm) among 3 possible receivers */
+अटल पूर्णांक iwlagn_calc_rssi(काष्ठा iwl_priv *priv,
+			     काष्ठा iwl_rx_phy_res *rx_resp)
+अणु
+	/* data from PHY/DSP regarding संकेत strength, etc.,
 	 *   contents are always there, not configurable by host
 	 */
-	struct iwlagn_non_cfg_phy *ncphy =
-		(struct iwlagn_non_cfg_phy *)rx_resp->non_cfg_phy_buf;
+	काष्ठा iwlagn_non_cfg_phy *ncphy =
+		(काष्ठा iwlagn_non_cfg_phy *)rx_resp->non_cfg_phy_buf;
 	u32 val, rssi_a, rssi_b, rssi_c, max_rssi;
 	u8 agc;
 
@@ -751,9 +752,9 @@ static int iwlagn_calc_rssi(struct iwl_priv *priv,
 	agc = (val & IWLAGN_OFDM_AGC_MSK) >> IWLAGN_OFDM_AGC_BIT_POS;
 
 	/* Find max rssi among 3 possible receivers.
-	 * These values are measured by the digital signal processor (DSP).
-	 * They should stay fairly constant even as the signal strength varies,
-	 *   if the radio's automatic gain control (AGC) is working right.
+	 * These values are measured by the digital संकेत processor (DSP).
+	 * They should stay fairly स्थिरant even as the संकेत strength varies,
+	 *   अगर the radio's स्वतःmatic gain control (AGC) is working right.
 	 * AGC value (see below) will provide the "interesting" info.
 	 */
 	val = le32_to_cpu(ncphy->non_cfg_phy[IWLAGN_RX_RES_RSSI_AB_IDX]);
@@ -771,67 +772,67 @@ static int iwlagn_calc_rssi(struct iwl_priv *priv,
 	IWL_DEBUG_STATS(priv, "Rssi In A %d B %d C %d Max %d AGC dB %d\n",
 		rssi_a, rssi_b, rssi_c, max_rssi, agc);
 
-	/* dBm = max_rssi dB - agc dB - constant.
-	 * Higher AGC (higher radio gain) means lower signal. */
-	return max_rssi - agc - IWLAGN_RSSI_OFFSET;
-}
+	/* dBm = max_rssi dB - agc dB - स्थिरant.
+	 * Higher AGC (higher radio gain) means lower संकेत. */
+	वापस max_rssi - agc - IWLAGN_RSSI_OFFSET;
+पूर्ण
 
-/* Called for REPLY_RX_MPDU_CMD */
-static void iwlagn_rx_reply_rx(struct iwl_priv *priv,
-			       struct iwl_rx_cmd_buffer *rxb)
-{
-	struct ieee80211_hdr *header;
-	struct ieee80211_rx_status rx_status = {};
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_rx_phy_res *phy_res;
+/* Called क्रम REPLY_RX_MPDU_CMD */
+अटल व्योम iwlagn_rx_reply_rx(काष्ठा iwl_priv *priv,
+			       काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा ieee80211_hdr *header;
+	काष्ठा ieee80211_rx_status rx_status = अणुपूर्ण;
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_rx_phy_res *phy_res;
 	__le32 rx_pkt_status;
-	struct iwl_rx_mpdu_res_start *amsdu;
+	काष्ठा iwl_rx_mpdu_res_start *amsdu;
 	u32 len, pkt_len = iwl_rx_packet_len(pkt);
 	u32 ampdu_status;
 	u32 rate_n_flags;
 
-	if (!priv->last_phy_res_valid) {
+	अगर (!priv->last_phy_res_valid) अणु
 		IWL_ERR(priv, "MPDU frame without cached PHY data\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (unlikely(pkt_len < sizeof(*amsdu))) {
+	अगर (unlikely(pkt_len < माप(*amsdu))) अणु
 		IWL_DEBUG_DROP(priv, "Bad REPLY_RX_MPDU_CMD size\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	phy_res = &priv->last_phy_res;
-	amsdu = (struct iwl_rx_mpdu_res_start *)pkt->data;
-	header = (struct ieee80211_hdr *)(pkt->data + sizeof(*amsdu));
+	amsdu = (काष्ठा iwl_rx_mpdu_res_start *)pkt->data;
+	header = (काष्ठा ieee80211_hdr *)(pkt->data + माप(*amsdu));
 	len = le16_to_cpu(amsdu->byte_count);
 
-	if (unlikely(len + sizeof(*amsdu) + sizeof(__le32) > pkt_len)) {
+	अगर (unlikely(len + माप(*amsdu) + माप(__le32) > pkt_len)) अणु
 		IWL_DEBUG_DROP(priv, "FW lied about packet len\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	rx_pkt_status = *(__le32 *)(pkt->data + sizeof(*amsdu) + len);
+	rx_pkt_status = *(__le32 *)(pkt->data + माप(*amsdu) + len);
 	ampdu_status = iwlagn_translate_rx_status(priv,
 						  le32_to_cpu(rx_pkt_status));
 
-	if ((unlikely(phy_res->cfg_phy_cnt > 20))) {
+	अगर ((unlikely(phy_res->cfg_phy_cnt > 20))) अणु
 		IWL_DEBUG_DROP(priv, "dsp size out of range [0,20]: %d\n",
 				phy_res->cfg_phy_cnt);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!(rx_pkt_status & RX_RES_STATUS_NO_CRC32_ERROR) ||
-	    !(rx_pkt_status & RX_RES_STATUS_NO_RXE_OVERFLOW)) {
+	अगर (!(rx_pkt_status & RX_RES_STATUS_NO_CRC32_ERROR) ||
+	    !(rx_pkt_status & RX_RES_STATUS_NO_RXE_OVERFLOW)) अणु
 		IWL_DEBUG_RX(priv, "Bad CRC or FIFO: 0x%08X.\n",
 				le32_to_cpu(rx_pkt_status));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* This will be used in several places later */
 	rate_n_flags = le32_to_cpu(phy_res->rate_n_flags);
 
-	/* rx_status carries information about the packet to mac80211 */
-	rx_status.mactime = le64_to_cpu(phy_res->timestamp);
+	/* rx_status carries inक्रमmation about the packet to mac80211 */
+	rx_status.maस_समय = le64_to_cpu(phy_res->बारtamp);
 	rx_status.band = (phy_res->phy_flags & RX_RES_PHY_FLAGS_BAND_24_MSK) ?
 				NL80211_BAND_2GHZ : NL80211_BAND_5GHZ;
 	rx_status.freq =
@@ -842,16 +843,16 @@ static void iwlagn_rx_reply_rx(struct iwl_priv *priv,
 	rx_status.flag = 0;
 
 	/* TSF isn't reliable. In order to allow smooth user experience,
-	 * this W/A doesn't propagate it to the mac80211 */
+	 * this W/A करोesn't propagate it to the mac80211 */
 	/*rx_status.flag |= RX_FLAG_MACTIME_START;*/
 
-	priv->ucode_beacon_time = le32_to_cpu(phy_res->beacon_time_stamp);
+	priv->ucode_beacon_समय = le32_to_cpu(phy_res->beacon_समय_stamp);
 
-	/* Find max signal strength (dBm) among 3 antenna/receiver chains */
-	rx_status.signal = iwlagn_calc_rssi(priv, phy_res);
+	/* Find max संकेत strength (dBm) among 3 antenna/receiver chains */
+	rx_status.संकेत = iwlagn_calc_rssi(priv, phy_res);
 
 	IWL_DEBUG_STATS_LIMIT(priv, "Rssi %d, TSF %llu\n",
-		rx_status.signal, (unsigned long long)rx_status.mactime);
+		rx_status.संकेत, (अचिन्हित दीर्घ दीर्घ)rx_status.maस_समय);
 
 	/*
 	 * "antenna number"
@@ -859,59 +860,59 @@ static void iwlagn_rx_reply_rx(struct iwl_priv *priv,
 	 * It seems that the antenna field in the phy flags value
 	 * is actually a bit field. This is undefined by radiotap,
 	 * it wants an actual antenna number but I always get "7"
-	 * for most legacy frames I receive indicating that the
+	 * क्रम most legacy frames I receive indicating that the
 	 * same frame was received on all three RX chains.
 	 *
-	 * I think this field should be removed in favor of a
+	 * I think this field should be हटाओd in favor of a
 	 * new 802.11n radiotap field "RX chains" that is defined
-	 * as a bitmask.
+	 * as a biपंचांगask.
 	 */
 	rx_status.antenna =
 		(le16_to_cpu(phy_res->phy_flags) & RX_RES_PHY_FLAGS_ANTENNA_MSK)
 		>> RX_RES_PHY_FLAGS_ANTENNA_POS;
 
-	/* set the preamble flag if appropriate */
-	if (phy_res->phy_flags & RX_RES_PHY_FLAGS_SHORT_PREAMBLE_MSK)
+	/* set the preamble flag अगर appropriate */
+	अगर (phy_res->phy_flags & RX_RES_PHY_FLAGS_SHORT_PREAMBLE_MSK)
 		rx_status.enc_flags |= RX_ENC_FLAG_SHORTPRE;
 
-	if (phy_res->phy_flags & RX_RES_PHY_FLAGS_AGG_MSK) {
+	अगर (phy_res->phy_flags & RX_RES_PHY_FLAGS_AGG_MSK) अणु
 		/*
-		 * We know which subframes of an A-MPDU belong
+		 * We know which subframes of an A-MPDU beदीर्घ
 		 * together since we get a single PHY response
-		 * from the firmware for all of them
+		 * from the firmware क्रम all of them
 		 */
 		rx_status.flag |= RX_FLAG_AMPDU_DETAILS;
 		rx_status.ampdu_reference = priv->ampdu_ref;
-	}
+	पूर्ण
 
 	/* Set up the HT phy flags */
-	if (rate_n_flags & RATE_MCS_HT_MSK)
+	अगर (rate_n_flags & RATE_MCS_HT_MSK)
 		rx_status.encoding = RX_ENC_HT;
-	if (rate_n_flags & RATE_MCS_HT40_MSK)
+	अगर (rate_n_flags & RATE_MCS_HT40_MSK)
 		rx_status.bw = RATE_INFO_BW_40;
-	else
+	अन्यथा
 		rx_status.bw = RATE_INFO_BW_20;
-	if (rate_n_flags & RATE_MCS_SGI_MSK)
+	अगर (rate_n_flags & RATE_MCS_SGI_MSK)
 		rx_status.enc_flags |= RX_ENC_FLAG_SHORT_GI;
-	if (rate_n_flags & RATE_MCS_GF_MSK)
+	अगर (rate_n_flags & RATE_MCS_GF_MSK)
 		rx_status.enc_flags |= RX_ENC_FLAG_HT_GF;
 
 	iwlagn_pass_packet_to_mac80211(priv, header, len, ampdu_status,
 				    rxb, &rx_status);
-}
+पूर्ण
 
-static void iwlagn_rx_noa_notification(struct iwl_priv *priv,
-				       struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_wipan_noa_data *new_data, *old_data;
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_wipan_noa_notification *noa_notif = (void *)pkt->data;
+अटल व्योम iwlagn_rx_noa_notअगरication(काष्ठा iwl_priv *priv,
+				       काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_wipan_noa_data *new_data, *old_data;
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_wipan_noa_notअगरication *noa_notअगर = (व्योम *)pkt->data;
 
 	/* no condition -- we're in softirq */
-	old_data = rcu_dereference_protected(priv->noa_data, true);
+	old_data = rcu_dereference_रक्षित(priv->noa_data, true);
 
-	if (noa_notif->noa_active) {
-		u32 len = le16_to_cpu(noa_notif->noa_attribute.length);
+	अगर (noa_notअगर->noa_active) अणु
+		u32 len = le16_to_cpu(noa_notअगर->noa_attribute.length);
 		u32 copylen = len;
 
 		/* EID, len, OUI, subtype */
@@ -920,8 +921,8 @@ static void iwlagn_rx_noa_notification(struct iwl_priv *priv,
 		len += 1 + 2;
 		copylen += 1 + 2;
 
-		new_data = kmalloc(sizeof(*new_data) + len, GFP_ATOMIC);
-		if (new_data) {
+		new_data = kदो_स्मृति(माप(*new_data) + len, GFP_ATOMIC);
+		अगर (new_data) अणु
 			new_data->length = len;
 			new_data->data[0] = WLAN_EID_VENDOR_SPECIFIC;
 			new_data->data[1] = len - 2; /* not counting EID, len */
@@ -929,55 +930,55 @@ static void iwlagn_rx_noa_notification(struct iwl_priv *priv,
 			new_data->data[3] = (WLAN_OUI_WFA >> 8) & 0xff;
 			new_data->data[4] = (WLAN_OUI_WFA >> 0) & 0xff;
 			new_data->data[5] = WLAN_OUI_TYPE_WFA_P2P;
-			memcpy(&new_data->data[6], &noa_notif->noa_attribute,
+			स_नकल(&new_data->data[6], &noa_notअगर->noa_attribute,
 			       copylen);
-		}
-	} else
-		new_data = NULL;
+		पूर्ण
+	पूर्ण अन्यथा
+		new_data = शून्य;
 
-	rcu_assign_pointer(priv->noa_data, new_data);
+	rcu_assign_poपूर्णांकer(priv->noa_data, new_data);
 
-	if (old_data)
-		kfree_rcu(old_data, rcu_head);
-}
+	अगर (old_data)
+		kमुक्त_rcu(old_data, rcu_head);
+पूर्ण
 
 /*
  * iwl_setup_rx_handlers - Initialize Rx handler callbacks
  *
- * Setup the RX handlers for each of the reply types sent from the uCode
+ * Setup the RX handlers क्रम each of the reply types sent from the uCode
  * to the host.
  */
-void iwl_setup_rx_handlers(struct iwl_priv *priv)
-{
-	void (**handlers)(struct iwl_priv *priv, struct iwl_rx_cmd_buffer *rxb);
+व्योम iwl_setup_rx_handlers(काष्ठा iwl_priv *priv)
+अणु
+	व्योम (**handlers)(काष्ठा iwl_priv *priv, काष्ठा iwl_rx_cmd_buffer *rxb);
 
 	handlers = priv->rx_handlers;
 
 	handlers[REPLY_ERROR]			= iwlagn_rx_reply_error;
 	handlers[CHANNEL_SWITCH_NOTIFICATION]	= iwlagn_rx_csa;
 	handlers[SPECTRUM_MEASURE_NOTIFICATION]	=
-		iwlagn_rx_spectrum_measure_notif;
-	handlers[PM_SLEEP_NOTIFICATION]		= iwlagn_rx_pm_sleep_notif;
+		iwlagn_rx_spectrum_measure_notअगर;
+	handlers[PM_SLEEP_NOTIFICATION]		= iwlagn_rx_pm_sleep_notअगर;
 	handlers[PM_DEBUG_STATISTIC_NOTIFIC]	=
-		iwlagn_rx_pm_debug_statistics_notif;
-	handlers[BEACON_NOTIFICATION]		= iwlagn_rx_beacon_notif;
+		iwlagn_rx_pm_debug_statistics_notअगर;
+	handlers[BEACON_NOTIFICATION]		= iwlagn_rx_beacon_notअगर;
 	handlers[REPLY_ADD_STA]			= iwl_add_sta_callback;
 
-	handlers[REPLY_WIPAN_NOA_NOTIFICATION]	= iwlagn_rx_noa_notification;
+	handlers[REPLY_WIPAN_NOA_NOTIFICATION]	= iwlagn_rx_noa_notअगरication;
 
 	/*
-	 * The same handler is used for both the REPLY to a discrete
-	 * statistics request from the host as well as for the periodic
-	 * statistics notifications (after received beacons) from the uCode.
+	 * The same handler is used क्रम both the REPLY to a discrete
+	 * statistics request from the host as well as क्रम the periodic
+	 * statistics notअगरications (after received beacons) from the uCode.
 	 */
 	handlers[REPLY_STATISTICS_CMD]		= iwlagn_rx_reply_statistics;
 	handlers[STATISTICS_NOTIFICATION]	= iwlagn_rx_statistics;
 
 	iwl_setup_rx_scan_handlers(priv);
 
-	handlers[CARD_STATE_NOTIFICATION]	= iwlagn_rx_card_state_notif;
+	handlers[CARD_STATE_NOTIFICATION]	= iwlagn_rx_card_state_notअगर;
 	handlers[MISSED_BEACONS_NOTIFICATION]	=
-		iwlagn_rx_missed_beacon_notif;
+		iwlagn_rx_missed_beacon_notअगर;
 
 	/* Rx handlers */
 	handlers[REPLY_RX_PHY_CMD]		= iwlagn_rx_reply_rx_phy;
@@ -989,39 +990,39 @@ void iwl_setup_rx_handlers(struct iwl_priv *priv)
 
 	priv->rx_handlers[REPLY_TX] = iwlagn_rx_reply_tx;
 
-	/* set up notification wait support */
-	iwl_notification_wait_init(&priv->notif_wait);
+	/* set up notअगरication रुको support */
+	iwl_notअगरication_रुको_init(&priv->notअगर_रुको);
 
 	/* Set up BT Rx handlers */
-	if (priv->lib->bt_params)
+	अगर (priv->lib->bt_params)
 		iwlagn_bt_rx_handler_setup(priv);
-}
+पूर्ण
 
-void iwl_rx_dispatch(struct iwl_op_mode *op_mode, struct napi_struct *napi,
-		     struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_priv *priv = IWL_OP_MODE_GET_DVM(op_mode);
+व्योम iwl_rx_dispatch(काष्ठा iwl_op_mode *op_mode, काष्ठा napi_काष्ठा *napi,
+		     काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_priv *priv = IWL_OP_MODE_GET_DVM(op_mode);
 
 	/*
-	 * Do the notification wait before RX handlers so
-	 * even if the RX handler consumes the RXB we have
-	 * access to it in the notification wait entry.
+	 * Do the notअगरication रुको beक्रमe RX handlers so
+	 * even अगर the RX handler consumes the RXB we have
+	 * access to it in the notअगरication रुको entry.
 	 */
-	iwl_notification_wait_notify(&priv->notif_wait, pkt);
+	iwl_notअगरication_रुको_notअगरy(&priv->notअगर_रुको, pkt);
 
-	/* Based on type of command response or notification,
+	/* Based on type of command response or notअगरication,
 	 *   handle those that need handling via function in
 	 *   rx_handlers table.  See iwl_setup_rx_handlers() */
-	if (priv->rx_handlers[pkt->hdr.cmd]) {
+	अगर (priv->rx_handlers[pkt->hdr.cmd]) अणु
 		priv->rx_handlers_stats[pkt->hdr.cmd]++;
 		priv->rx_handlers[pkt->hdr.cmd](priv, rxb);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* No handling needed */
 		IWL_DEBUG_RX(priv, "No handler needed for %s, 0x%02x\n",
 			     iwl_get_cmd_string(priv->trans,
 						iwl_cmd_id(pkt->hdr.cmd,
 							   0, 0)),
 			     pkt->hdr.cmd);
-	}
-}
+	पूर्ण
+पूर्ण

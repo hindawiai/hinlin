@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * JZ47xx SoCs TCU clocks driver
+ * JZ47xx SoCs TCU घड़ीs driver
  * Copyright (C) 2019 Paul Cercueil <paul@crapouillou.net>
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/clockchips.h>
-#include <linux/mfd/ingenic-tcu.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/syscore_ops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/mfd/ingenic-tcu.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/syscore_ops.h>
 
-#include <dt-bindings/clock/ingenic,tcu.h>
+#समावेश <dt-bindings/घड़ी/ingenic,tcu.h>
 
-/* 8 channels max + watchdog + OST */
-#define TCU_CLK_COUNT	10
+/* 8 channels max + watchकरोg + OST */
+#घोषणा TCU_CLK_COUNT	10
 
-#undef pr_fmt
-#define pr_fmt(fmt) "ingenic-tcu-clk: " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) "ingenic-tcu-clk: " fmt
 
-enum tcu_clk_parent {
+क्रमागत tcu_clk_parent अणु
 	TCU_PARENT_PCLK,
 	TCU_PARENT_RTC,
 	TCU_PARENT_EXT,
-};
+पूर्ण;
 
-struct ingenic_soc_info {
-	unsigned int num_channels;
+काष्ठा ingenic_soc_info अणु
+	अचिन्हित पूर्णांक num_channels;
 	bool has_ost;
 	bool has_tcu_clk;
-};
+पूर्ण;
 
-struct ingenic_tcu_clk_info {
-	struct clk_init_data init_data;
+काष्ठा ingenic_tcu_clk_info अणु
+	काष्ठा clk_init_data init_data;
 	u8 gate_bit;
 	u8 tcsr_reg;
-};
+पूर्ण;
 
-struct ingenic_tcu_clk {
-	struct clk_hw hw;
-	unsigned int idx;
-	struct ingenic_tcu *tcu;
-	const struct ingenic_tcu_clk_info *info;
-};
+काष्ठा ingenic_tcu_clk अणु
+	काष्ठा clk_hw hw;
+	अचिन्हित पूर्णांक idx;
+	काष्ठा ingenic_tcu *tcu;
+	स्थिर काष्ठा ingenic_tcu_clk_info *info;
+पूर्ण;
 
-struct ingenic_tcu {
-	const struct ingenic_soc_info *soc_info;
-	struct regmap *map;
-	struct clk *clk;
+काष्ठा ingenic_tcu अणु
+	स्थिर काष्ठा ingenic_soc_info *soc_info;
+	काष्ठा regmap *map;
+	काष्ठा clk *clk;
 
-	struct clk_hw_onecell_data *clocks;
-};
+	काष्ठा clk_hw_onecell_data *घड़ीs;
+पूर्ण;
 
-static struct ingenic_tcu *ingenic_tcu;
+अटल काष्ठा ingenic_tcu *ingenic_tcu;
 
-static inline struct ingenic_tcu_clk *to_tcu_clk(struct clk_hw *hw)
-{
-	return container_of(hw, struct ingenic_tcu_clk, hw);
-}
+अटल अंतरभूत काष्ठा ingenic_tcu_clk *to_tcu_clk(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा ingenic_tcu_clk, hw);
+पूर्ण
 
-static int ingenic_tcu_enable(struct clk_hw *hw)
-{
-	struct ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
-	const struct ingenic_tcu_clk_info *info = tcu_clk->info;
-	struct ingenic_tcu *tcu = tcu_clk->tcu;
+अटल पूर्णांक ingenic_tcu_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
+	स्थिर काष्ठा ingenic_tcu_clk_info *info = tcu_clk->info;
+	काष्ठा ingenic_tcu *tcu = tcu_clk->tcu;
 
-	regmap_write(tcu->map, TCU_REG_TSCR, BIT(info->gate_bit));
+	regmap_ग_लिखो(tcu->map, TCU_REG_TSCR, BIT(info->gate_bit));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ingenic_tcu_disable(struct clk_hw *hw)
-{
-	struct ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
-	const struct ingenic_tcu_clk_info *info = tcu_clk->info;
-	struct ingenic_tcu *tcu = tcu_clk->tcu;
+अटल व्योम ingenic_tcu_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
+	स्थिर काष्ठा ingenic_tcu_clk_info *info = tcu_clk->info;
+	काष्ठा ingenic_tcu *tcu = tcu_clk->tcu;
 
-	regmap_write(tcu->map, TCU_REG_TSSR, BIT(info->gate_bit));
-}
+	regmap_ग_लिखो(tcu->map, TCU_REG_TSSR, BIT(info->gate_bit));
+पूर्ण
 
-static int ingenic_tcu_is_enabled(struct clk_hw *hw)
-{
-	struct ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
-	const struct ingenic_tcu_clk_info *info = tcu_clk->info;
-	unsigned int value;
+अटल पूर्णांक ingenic_tcu_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
+	स्थिर काष्ठा ingenic_tcu_clk_info *info = tcu_clk->info;
+	अचिन्हित पूर्णांक value;
 
-	regmap_read(tcu_clk->tcu->map, TCU_REG_TSR, &value);
+	regmap_पढ़ो(tcu_clk->tcu->map, TCU_REG_TSR, &value);
 
-	return !(value & BIT(info->gate_bit));
-}
+	वापस !(value & BIT(info->gate_bit));
+पूर्ण
 
-static bool ingenic_tcu_enable_regs(struct clk_hw *hw)
-{
-	struct ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
-	const struct ingenic_tcu_clk_info *info = tcu_clk->info;
-	struct ingenic_tcu *tcu = tcu_clk->tcu;
+अटल bool ingenic_tcu_enable_regs(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
+	स्थिर काष्ठा ingenic_tcu_clk_info *info = tcu_clk->info;
+	काष्ठा ingenic_tcu *tcu = tcu_clk->tcu;
 	bool enabled = false;
 
 	/*
-	 * If the SoC has no global TCU clock, we must ungate the channel's
-	 * clock to be able to access its registers.
-	 * If we have a TCU clock, it will be enabled automatically as it has
+	 * If the SoC has no global TCU घड़ी, we must ungate the channel's
+	 * घड़ी to be able to access its रेजिस्टरs.
+	 * If we have a TCU घड़ी, it will be enabled स्वतःmatically as it has
 	 * been attached to the regmap.
 	 */
-	if (!tcu->clk) {
+	अगर (!tcu->clk) अणु
 		enabled = !!ingenic_tcu_is_enabled(hw);
-		regmap_write(tcu->map, TCU_REG_TSCR, BIT(info->gate_bit));
-	}
+		regmap_ग_लिखो(tcu->map, TCU_REG_TSCR, BIT(info->gate_bit));
+	पूर्ण
 
-	return enabled;
-}
+	वापस enabled;
+पूर्ण
 
-static void ingenic_tcu_disable_regs(struct clk_hw *hw)
-{
-	struct ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
-	const struct ingenic_tcu_clk_info *info = tcu_clk->info;
-	struct ingenic_tcu *tcu = tcu_clk->tcu;
+अटल व्योम ingenic_tcu_disable_regs(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
+	स्थिर काष्ठा ingenic_tcu_clk_info *info = tcu_clk->info;
+	काष्ठा ingenic_tcu *tcu = tcu_clk->tcu;
 
-	if (!tcu->clk)
-		regmap_write(tcu->map, TCU_REG_TSSR, BIT(info->gate_bit));
-}
+	अगर (!tcu->clk)
+		regmap_ग_लिखो(tcu->map, TCU_REG_TSSR, BIT(info->gate_bit));
+पूर्ण
 
-static u8 ingenic_tcu_get_parent(struct clk_hw *hw)
-{
-	struct ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
-	const struct ingenic_tcu_clk_info *info = tcu_clk->info;
-	unsigned int val = 0;
-	int ret;
+अटल u8 ingenic_tcu_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
+	स्थिर काष्ठा ingenic_tcu_clk_info *info = tcu_clk->info;
+	अचिन्हित पूर्णांक val = 0;
+	पूर्णांक ret;
 
-	ret = regmap_read(tcu_clk->tcu->map, info->tcsr_reg, &val);
+	ret = regmap_पढ़ो(tcu_clk->tcu->map, info->tcsr_reg, &val);
 	WARN_ONCE(ret < 0, "Unable to read TCSR %d", tcu_clk->idx);
 
-	return ffs(val & TCU_TCSR_PARENT_CLOCK_MASK) - 1;
-}
+	वापस ffs(val & TCU_TCSR_PARENT_CLOCK_MASK) - 1;
+पूर्ण
 
-static int ingenic_tcu_set_parent(struct clk_hw *hw, u8 idx)
-{
-	struct ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
-	const struct ingenic_tcu_clk_info *info = tcu_clk->info;
+अटल पूर्णांक ingenic_tcu_set_parent(काष्ठा clk_hw *hw, u8 idx)
+अणु
+	काष्ठा ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
+	स्थिर काष्ठा ingenic_tcu_clk_info *info = tcu_clk->info;
 	bool was_enabled;
-	int ret;
+	पूर्णांक ret;
 
 	was_enabled = ingenic_tcu_enable_regs(hw);
 
@@ -149,61 +150,61 @@ static int ingenic_tcu_set_parent(struct clk_hw *hw, u8 idx)
 				 TCU_TCSR_PARENT_CLOCK_MASK, BIT(idx));
 	WARN_ONCE(ret < 0, "Unable to update TCSR %d", tcu_clk->idx);
 
-	if (!was_enabled)
+	अगर (!was_enabled)
 		ingenic_tcu_disable_regs(hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long ingenic_tcu_recalc_rate(struct clk_hw *hw,
-		unsigned long parent_rate)
-{
-	struct ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
-	const struct ingenic_tcu_clk_info *info = tcu_clk->info;
-	unsigned int prescale;
-	int ret;
+अटल अचिन्हित दीर्घ ingenic_tcu_recalc_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
+	स्थिर काष्ठा ingenic_tcu_clk_info *info = tcu_clk->info;
+	अचिन्हित पूर्णांक prescale;
+	पूर्णांक ret;
 
-	ret = regmap_read(tcu_clk->tcu->map, info->tcsr_reg, &prescale);
+	ret = regmap_पढ़ो(tcu_clk->tcu->map, info->tcsr_reg, &prescale);
 	WARN_ONCE(ret < 0, "Unable to read TCSR %d", tcu_clk->idx);
 
 	prescale = (prescale & TCU_TCSR_PRESCALE_MASK) >> TCU_TCSR_PRESCALE_LSB;
 
-	return parent_rate >> (prescale * 2);
-}
+	वापस parent_rate >> (prescale * 2);
+पूर्ण
 
-static u8 ingenic_tcu_get_prescale(unsigned long rate, unsigned long req_rate)
-{
+अटल u8 ingenic_tcu_get_prescale(अचिन्हित दीर्घ rate, अचिन्हित दीर्घ req_rate)
+अणु
 	u8 prescale;
 
-	for (prescale = 0; prescale < 5; prescale++)
-		if ((rate >> (prescale * 2)) <= req_rate)
-			return prescale;
+	क्रम (prescale = 0; prescale < 5; prescale++)
+		अगर ((rate >> (prescale * 2)) <= req_rate)
+			वापस prescale;
 
-	return 5; /* /1024 divider */
-}
+	वापस 5; /* /1024 भागider */
+पूर्ण
 
-static long ingenic_tcu_round_rate(struct clk_hw *hw, unsigned long req_rate,
-		unsigned long *parent_rate)
-{
-	unsigned long rate = *parent_rate;
+अटल दीर्घ ingenic_tcu_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ req_rate,
+		अचिन्हित दीर्घ *parent_rate)
+अणु
+	अचिन्हित दीर्घ rate = *parent_rate;
 	u8 prescale;
 
-	if (req_rate > rate)
-		return rate;
+	अगर (req_rate > rate)
+		वापस rate;
 
 	prescale = ingenic_tcu_get_prescale(rate, req_rate);
 
-	return rate >> (prescale * 2);
-}
+	वापस rate >> (prescale * 2);
+पूर्ण
 
-static int ingenic_tcu_set_rate(struct clk_hw *hw, unsigned long req_rate,
-		unsigned long parent_rate)
-{
-	struct ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
-	const struct ingenic_tcu_clk_info *info = tcu_clk->info;
+अटल पूर्णांक ingenic_tcu_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ req_rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा ingenic_tcu_clk *tcu_clk = to_tcu_clk(hw);
+	स्थिर काष्ठा ingenic_tcu_clk_info *info = tcu_clk->info;
 	u8 prescale = ingenic_tcu_get_prescale(parent_rate, req_rate);
 	bool was_enabled;
-	int ret;
+	पूर्णांक ret;
 
 	was_enabled = ingenic_tcu_enable_regs(hw);
 
@@ -212,13 +213,13 @@ static int ingenic_tcu_set_rate(struct clk_hw *hw, unsigned long req_rate,
 				 prescale << TCU_TCSR_PRESCALE_LSB);
 	WARN_ONCE(ret < 0, "Unable to update TCSR %d", tcu_clk->idx);
 
-	if (!was_enabled)
+	अगर (!was_enabled)
 		ingenic_tcu_disable_regs(hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops ingenic_tcu_clk_ops = {
+अटल स्थिर काष्ठा clk_ops ingenic_tcu_clk_ops = अणु
 	.get_parent	= ingenic_tcu_get_parent,
 	.set_parent	= ingenic_tcu_set_parent,
 
@@ -229,27 +230,27 @@ static const struct clk_ops ingenic_tcu_clk_ops = {
 	.enable		= ingenic_tcu_enable,
 	.disable	= ingenic_tcu_disable,
 	.is_enabled	= ingenic_tcu_is_enabled,
-};
+पूर्ण;
 
-static const char * const ingenic_tcu_timer_parents[] = {
+अटल स्थिर अक्षर * स्थिर ingenic_tcu_समयr_parents[] = अणु
 	[TCU_PARENT_PCLK] = "pclk",
 	[TCU_PARENT_RTC]  = "rtc",
 	[TCU_PARENT_EXT]  = "ext",
-};
+पूर्ण;
 
-#define DEF_TIMER(_name, _gate_bit, _tcsr)				\
-	{								\
-		.init_data = {						\
+#घोषणा DEF_TIMER(_name, _gate_bit, _tcsr)				\
+	अणु								\
+		.init_data = अणु						\
 			.name = _name,					\
-			.parent_names = ingenic_tcu_timer_parents,	\
-			.num_parents = ARRAY_SIZE(ingenic_tcu_timer_parents),\
+			.parent_names = ingenic_tcu_समयr_parents,	\
+			.num_parents = ARRAY_SIZE(ingenic_tcu_समयr_parents),\
 			.ops = &ingenic_tcu_clk_ops,			\
 			.flags = CLK_SET_RATE_UNGATE,			\
-		},							\
+		पूर्ण,							\
 		.gate_bit = _gate_bit,					\
 		.tcsr_reg = _tcsr,					\
-	}
-static const struct ingenic_tcu_clk_info ingenic_tcu_clk_info[] = {
+	पूर्ण
+अटल स्थिर काष्ठा ingenic_tcu_clk_info ingenic_tcu_clk_info[] = अणु
 	[TCU_CLK_TIMER0] = DEF_TIMER("timer0", 0, TCU_REG_TCSRc(0)),
 	[TCU_CLK_TIMER1] = DEF_TIMER("timer1", 1, TCU_REG_TCSRc(1)),
 	[TCU_CLK_TIMER2] = DEF_TIMER("timer2", 2, TCU_REG_TCSRc(2)),
@@ -258,222 +259,222 @@ static const struct ingenic_tcu_clk_info ingenic_tcu_clk_info[] = {
 	[TCU_CLK_TIMER5] = DEF_TIMER("timer5", 5, TCU_REG_TCSRc(5)),
 	[TCU_CLK_TIMER6] = DEF_TIMER("timer6", 6, TCU_REG_TCSRc(6)),
 	[TCU_CLK_TIMER7] = DEF_TIMER("timer7", 7, TCU_REG_TCSRc(7)),
-};
+पूर्ण;
 
-static const struct ingenic_tcu_clk_info ingenic_tcu_watchdog_clk_info =
+अटल स्थिर काष्ठा ingenic_tcu_clk_info ingenic_tcu_watchकरोg_clk_info =
 					 DEF_TIMER("wdt", 16, TCU_REG_WDT_TCSR);
-static const struct ingenic_tcu_clk_info ingenic_tcu_ost_clk_info =
+अटल स्थिर काष्ठा ingenic_tcu_clk_info ingenic_tcu_ost_clk_info =
 					 DEF_TIMER("ost", 15, TCU_REG_OST_TCSR);
-#undef DEF_TIMER
+#अघोषित DEF_TIMER
 
-static int __init ingenic_tcu_register_clock(struct ingenic_tcu *tcu,
-			unsigned int idx, enum tcu_clk_parent parent,
-			const struct ingenic_tcu_clk_info *info,
-			struct clk_hw_onecell_data *clocks)
-{
-	struct ingenic_tcu_clk *tcu_clk;
-	int err;
+अटल पूर्णांक __init ingenic_tcu_रेजिस्टर_घड़ी(काष्ठा ingenic_tcu *tcu,
+			अचिन्हित पूर्णांक idx, क्रमागत tcu_clk_parent parent,
+			स्थिर काष्ठा ingenic_tcu_clk_info *info,
+			काष्ठा clk_hw_onecell_data *घड़ीs)
+अणु
+	काष्ठा ingenic_tcu_clk *tcu_clk;
+	पूर्णांक err;
 
-	tcu_clk = kzalloc(sizeof(*tcu_clk), GFP_KERNEL);
-	if (!tcu_clk)
-		return -ENOMEM;
+	tcu_clk = kzalloc(माप(*tcu_clk), GFP_KERNEL);
+	अगर (!tcu_clk)
+		वापस -ENOMEM;
 
 	tcu_clk->hw.init = &info->init_data;
 	tcu_clk->idx = idx;
 	tcu_clk->info = info;
 	tcu_clk->tcu = tcu;
 
-	/* Reset channel and clock divider, set default parent */
+	/* Reset channel and घड़ी भागider, set शेष parent */
 	ingenic_tcu_enable_regs(&tcu_clk->hw);
 	regmap_update_bits(tcu->map, info->tcsr_reg, 0xffff, BIT(parent));
 	ingenic_tcu_disable_regs(&tcu_clk->hw);
 
-	err = clk_hw_register(NULL, &tcu_clk->hw);
-	if (err) {
-		kfree(tcu_clk);
-		return err;
-	}
+	err = clk_hw_रेजिस्टर(शून्य, &tcu_clk->hw);
+	अगर (err) अणु
+		kमुक्त(tcu_clk);
+		वापस err;
+	पूर्ण
 
-	clocks->hws[idx] = &tcu_clk->hw;
+	घड़ीs->hws[idx] = &tcu_clk->hw;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ingenic_soc_info jz4740_soc_info = {
+अटल स्थिर काष्ठा ingenic_soc_info jz4740_soc_info = अणु
 	.num_channels = 8,
 	.has_ost = false,
 	.has_tcu_clk = true,
-};
+पूर्ण;
 
-static const struct ingenic_soc_info jz4725b_soc_info = {
+अटल स्थिर काष्ठा ingenic_soc_info jz4725b_soc_info = अणु
 	.num_channels = 6,
 	.has_ost = true,
 	.has_tcu_clk = true,
-};
+पूर्ण;
 
-static const struct ingenic_soc_info jz4770_soc_info = {
+अटल स्थिर काष्ठा ingenic_soc_info jz4770_soc_info = अणु
 	.num_channels = 8,
 	.has_ost = true,
 	.has_tcu_clk = false,
-};
+पूर्ण;
 
-static const struct ingenic_soc_info x1000_soc_info = {
+अटल स्थिर काष्ठा ingenic_soc_info x1000_soc_info = अणु
 	.num_channels = 8,
-	.has_ost = false, /* X1000 has OST, but it not belong TCU */
+	.has_ost = false, /* X1000 has OST, but it not beदीर्घ TCU */
 	.has_tcu_clk = false,
-};
+पूर्ण;
 
-static const struct of_device_id __maybe_unused ingenic_tcu_of_match[] __initconst = {
-	{ .compatible = "ingenic,jz4740-tcu", .data = &jz4740_soc_info, },
-	{ .compatible = "ingenic,jz4725b-tcu", .data = &jz4725b_soc_info, },
-	{ .compatible = "ingenic,jz4770-tcu", .data = &jz4770_soc_info, },
-	{ .compatible = "ingenic,x1000-tcu", .data = &x1000_soc_info, },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id __maybe_unused ingenic_tcu_of_match[] __initस्थिर = अणु
+	अणु .compatible = "ingenic,jz4740-tcu", .data = &jz4740_soc_info, पूर्ण,
+	अणु .compatible = "ingenic,jz4725b-tcu", .data = &jz4725b_soc_info, पूर्ण,
+	अणु .compatible = "ingenic,jz4770-tcu", .data = &jz4770_soc_info, पूर्ण,
+	अणु .compatible = "ingenic,x1000-tcu", .data = &x1000_soc_info, पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int __init ingenic_tcu_probe(struct device_node *np)
-{
-	const struct of_device_id *id = of_match_node(ingenic_tcu_of_match, np);
-	struct ingenic_tcu *tcu;
-	struct regmap *map;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक __init ingenic_tcu_probe(काष्ठा device_node *np)
+अणु
+	स्थिर काष्ठा of_device_id *id = of_match_node(ingenic_tcu_of_match, np);
+	काष्ठा ingenic_tcu *tcu;
+	काष्ठा regmap *map;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	map = device_node_to_regmap(np);
-	if (IS_ERR(map))
-		return PTR_ERR(map);
+	अगर (IS_ERR(map))
+		वापस PTR_ERR(map);
 
-	tcu = kzalloc(sizeof(*tcu), GFP_KERNEL);
-	if (!tcu)
-		return -ENOMEM;
+	tcu = kzalloc(माप(*tcu), GFP_KERNEL);
+	अगर (!tcu)
+		वापस -ENOMEM;
 
 	tcu->map = map;
 	tcu->soc_info = id->data;
 
-	if (tcu->soc_info->has_tcu_clk) {
+	अगर (tcu->soc_info->has_tcu_clk) अणु
 		tcu->clk = of_clk_get_by_name(np, "tcu");
-		if (IS_ERR(tcu->clk)) {
+		अगर (IS_ERR(tcu->clk)) अणु
 			ret = PTR_ERR(tcu->clk);
 			pr_crit("Cannot get TCU clock\n");
-			goto err_free_tcu;
-		}
+			जाओ err_मुक्त_tcu;
+		पूर्ण
 
 		ret = clk_prepare_enable(tcu->clk);
-		if (ret) {
+		अगर (ret) अणु
 			pr_crit("Unable to enable TCU clock\n");
-			goto err_put_clk;
-		}
-	}
+			जाओ err_put_clk;
+		पूर्ण
+	पूर्ण
 
-	tcu->clocks = kzalloc(struct_size(tcu->clocks, hws, TCU_CLK_COUNT),
+	tcu->घड़ीs = kzalloc(काष्ठा_size(tcu->घड़ीs, hws, TCU_CLK_COUNT),
 			      GFP_KERNEL);
-	if (!tcu->clocks) {
+	अगर (!tcu->घड़ीs) अणु
 		ret = -ENOMEM;
-		goto err_clk_disable;
-	}
+		जाओ err_clk_disable;
+	पूर्ण
 
-	tcu->clocks->num = TCU_CLK_COUNT;
+	tcu->घड़ीs->num = TCU_CLK_COUNT;
 
-	for (i = 0; i < tcu->soc_info->num_channels; i++) {
-		ret = ingenic_tcu_register_clock(tcu, i, TCU_PARENT_EXT,
+	क्रम (i = 0; i < tcu->soc_info->num_channels; i++) अणु
+		ret = ingenic_tcu_रेजिस्टर_घड़ी(tcu, i, TCU_PARENT_EXT,
 						 &ingenic_tcu_clk_info[i],
-						 tcu->clocks);
-		if (ret) {
+						 tcu->घड़ीs);
+		अगर (ret) अणु
 			pr_crit("cannot register clock %d\n", i);
-			goto err_unregister_timer_clocks;
-		}
-	}
+			जाओ err_unरेजिस्टर_समयr_घड़ीs;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * We set EXT as the default parent clock for all the TCU clocks
-	 * except for the watchdog one, where we set the RTC clock as the
-	 * parent. Since the EXT and PCLK are much faster than the RTC clock,
-	 * the watchdog would kick after a maximum time of 5s, and we might
-	 * want a slower kicking time.
+	 * We set EXT as the शेष parent घड़ी क्रम all the TCU घड़ीs
+	 * except क्रम the watchकरोg one, where we set the RTC घड़ी as the
+	 * parent. Since the EXT and PCLK are much faster than the RTC घड़ी,
+	 * the watchकरोg would kick after a maximum समय of 5s, and we might
+	 * want a slower kicking समय.
 	 */
-	ret = ingenic_tcu_register_clock(tcu, TCU_CLK_WDT, TCU_PARENT_RTC,
-					 &ingenic_tcu_watchdog_clk_info,
-					 tcu->clocks);
-	if (ret) {
+	ret = ingenic_tcu_रेजिस्टर_घड़ी(tcu, TCU_CLK_WDT, TCU_PARENT_RTC,
+					 &ingenic_tcu_watchकरोg_clk_info,
+					 tcu->घड़ीs);
+	अगर (ret) अणु
 		pr_crit("cannot register watchdog clock\n");
-		goto err_unregister_timer_clocks;
-	}
+		जाओ err_unरेजिस्टर_समयr_घड़ीs;
+	पूर्ण
 
-	if (tcu->soc_info->has_ost) {
-		ret = ingenic_tcu_register_clock(tcu, TCU_CLK_OST,
+	अगर (tcu->soc_info->has_ost) अणु
+		ret = ingenic_tcu_रेजिस्टर_घड़ी(tcu, TCU_CLK_OST,
 						 TCU_PARENT_EXT,
 						 &ingenic_tcu_ost_clk_info,
-						 tcu->clocks);
-		if (ret) {
+						 tcu->घड़ीs);
+		अगर (ret) अणु
 			pr_crit("cannot register ost clock\n");
-			goto err_unregister_watchdog_clock;
-		}
-	}
+			जाओ err_unरेजिस्टर_watchकरोg_घड़ी;
+		पूर्ण
+	पूर्ण
 
-	ret = of_clk_add_hw_provider(np, of_clk_hw_onecell_get, tcu->clocks);
-	if (ret) {
+	ret = of_clk_add_hw_provider(np, of_clk_hw_onecell_get, tcu->घड़ीs);
+	अगर (ret) अणु
 		pr_crit("cannot add OF clock provider\n");
-		goto err_unregister_ost_clock;
-	}
+		जाओ err_unरेजिस्टर_ost_घड़ी;
+	पूर्ण
 
 	ingenic_tcu = tcu;
 
-	return 0;
+	वापस 0;
 
-err_unregister_ost_clock:
-	if (tcu->soc_info->has_ost)
-		clk_hw_unregister(tcu->clocks->hws[i + 1]);
-err_unregister_watchdog_clock:
-	clk_hw_unregister(tcu->clocks->hws[i]);
-err_unregister_timer_clocks:
-	for (i = 0; i < tcu->clocks->num; i++)
-		if (tcu->clocks->hws[i])
-			clk_hw_unregister(tcu->clocks->hws[i]);
-	kfree(tcu->clocks);
+err_unरेजिस्टर_ost_घड़ी:
+	अगर (tcu->soc_info->has_ost)
+		clk_hw_unरेजिस्टर(tcu->घड़ीs->hws[i + 1]);
+err_unरेजिस्टर_watchकरोg_घड़ी:
+	clk_hw_unरेजिस्टर(tcu->घड़ीs->hws[i]);
+err_unरेजिस्टर_समयr_घड़ीs:
+	क्रम (i = 0; i < tcu->घड़ीs->num; i++)
+		अगर (tcu->घड़ीs->hws[i])
+			clk_hw_unरेजिस्टर(tcu->घड़ीs->hws[i]);
+	kमुक्त(tcu->घड़ीs);
 err_clk_disable:
-	if (tcu->soc_info->has_tcu_clk)
+	अगर (tcu->soc_info->has_tcu_clk)
 		clk_disable_unprepare(tcu->clk);
 err_put_clk:
-	if (tcu->soc_info->has_tcu_clk)
+	अगर (tcu->soc_info->has_tcu_clk)
 		clk_put(tcu->clk);
-err_free_tcu:
-	kfree(tcu);
-	return ret;
-}
+err_मुक्त_tcu:
+	kमुक्त(tcu);
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused tcu_pm_suspend(void)
-{
-	struct ingenic_tcu *tcu = ingenic_tcu;
+अटल पूर्णांक __maybe_unused tcu_pm_suspend(व्योम)
+अणु
+	काष्ठा ingenic_tcu *tcu = ingenic_tcu;
 
-	if (tcu->clk)
+	अगर (tcu->clk)
 		clk_disable(tcu->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __maybe_unused tcu_pm_resume(void)
-{
-	struct ingenic_tcu *tcu = ingenic_tcu;
+अटल व्योम __maybe_unused tcu_pm_resume(व्योम)
+अणु
+	काष्ठा ingenic_tcu *tcu = ingenic_tcu;
 
-	if (tcu->clk)
+	अगर (tcu->clk)
 		clk_enable(tcu->clk);
-}
+पूर्ण
 
-static struct syscore_ops __maybe_unused tcu_pm_ops = {
+अटल काष्ठा syscore_ops __maybe_unused tcu_pm_ops = अणु
 	.suspend = tcu_pm_suspend,
 	.resume = tcu_pm_resume,
-};
+पूर्ण;
 
-static void __init ingenic_tcu_init(struct device_node *np)
-{
-	int ret = ingenic_tcu_probe(np);
+अटल व्योम __init ingenic_tcu_init(काष्ठा device_node *np)
+अणु
+	पूर्णांक ret = ingenic_tcu_probe(np);
 
-	if (ret)
+	अगर (ret)
 		pr_crit("Failed to initialize TCU clocks: %d\n", ret);
 
-	if (IS_ENABLED(CONFIG_PM_SLEEP))
-		register_syscore_ops(&tcu_pm_ops);
-}
+	अगर (IS_ENABLED(CONFIG_PM_SLEEP))
+		रेजिस्टर_syscore_ops(&tcu_pm_ops);
+पूर्ण
 
 CLK_OF_DECLARE_DRIVER(jz4740_cgu, "ingenic,jz4740-tcu", ingenic_tcu_init);
 CLK_OF_DECLARE_DRIVER(jz4725b_cgu, "ingenic,jz4725b-tcu", ingenic_tcu_init);

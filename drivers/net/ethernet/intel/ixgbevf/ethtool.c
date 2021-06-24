@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
-/* ethtool support for ixgbevf */
+/* ethtool support क्रम ixgbevf */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <linux/ethtool.h>
-#include <linux/vmalloc.h>
-#include <linux/if_vlan.h>
-#include <linux/uaccess.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/uaccess.h>
 
-#include "ixgbevf.h"
+#समावेश "ixgbevf.h"
 
-#define IXGBE_ALL_RAR_ENTRIES 16
+#घोषणा IXGBE_ALL_RAR_ENTRIES 16
 
-enum {NETDEV_STATS, IXGBEVF_STATS};
+क्रमागत अणुNETDEV_STATS, IXGBEVF_STATSपूर्ण;
 
-struct ixgbe_stats {
-	char stat_string[ETH_GSTRING_LEN];
-	int type;
-	int sizeof_stat;
-	int stat_offset;
-};
+काष्ठा ixgbe_stats अणु
+	अक्षर stat_string[ETH_GSTRING_LEN];
+	पूर्णांक type;
+	पूर्णांक माप_stat;
+	पूर्णांक stat_offset;
+पूर्ण;
 
-#define IXGBEVF_STAT(_name, _stat) { \
+#घोषणा IXGBEVF_STAT(_name, _stat) अणु \
 	.stat_string = _name, \
 	.type = IXGBEVF_STATS, \
-	.sizeof_stat = sizeof_field(struct ixgbevf_adapter, _stat), \
-	.stat_offset = offsetof(struct ixgbevf_adapter, _stat) \
-}
+	.माप_stat = माप_field(काष्ठा ixgbevf_adapter, _stat), \
+	.stat_offset = दुरत्व(काष्ठा ixgbevf_adapter, _stat) \
+पूर्ण
 
-#define IXGBEVF_NETDEV_STAT(_net_stat) { \
+#घोषणा IXGBEVF_NETDEV_STAT(_net_stat) अणु \
 	.stat_string = #_net_stat, \
 	.type = NETDEV_STATS, \
-	.sizeof_stat = sizeof_field(struct net_device_stats, _net_stat), \
-	.stat_offset = offsetof(struct net_device_stats, _net_stat) \
-}
+	.माप_stat = माप_field(काष्ठा net_device_stats, _net_stat), \
+	.stat_offset = दुरत्व(काष्ठा net_device_stats, _net_stat) \
+पूर्ण
 
-static struct ixgbe_stats ixgbevf_gstrings_stats[] = {
+अटल काष्ठा ixgbe_stats ixgbevf_gstrings_stats[] = अणु
 	IXGBEVF_NETDEV_STAT(rx_packets),
 	IXGBEVF_NETDEV_STAT(tx_packets),
 	IXGBEVF_NETDEV_STAT(rx_bytes),
 	IXGBEVF_NETDEV_STAT(tx_bytes),
 	IXGBEVF_STAT("tx_busy", tx_busy),
 	IXGBEVF_STAT("tx_restart_queue", restart_queue),
-	IXGBEVF_STAT("tx_timeout_count", tx_timeout_count),
+	IXGBEVF_STAT("tx_timeout_count", tx_समयout_count),
 	IXGBEVF_NETDEV_STAT(multicast),
 	IXGBEVF_STAT("rx_csum_offload_errors", hw_csum_rx_error),
 	IXGBEVF_STAT("alloc_rx_page", alloc_rx_page),
@@ -57,100 +58,100 @@ static struct ixgbe_stats ixgbevf_gstrings_stats[] = {
 	IXGBEVF_STAT("alloc_rx_buff_failed", alloc_rx_buff_failed),
 	IXGBEVF_STAT("tx_ipsec", tx_ipsec),
 	IXGBEVF_STAT("rx_ipsec", rx_ipsec),
-};
+पूर्ण;
 
-#define IXGBEVF_QUEUE_STATS_LEN ( \
-	(((struct ixgbevf_adapter *)netdev_priv(netdev))->num_tx_queues + \
-	 ((struct ixgbevf_adapter *)netdev_priv(netdev))->num_xdp_queues + \
-	 ((struct ixgbevf_adapter *)netdev_priv(netdev))->num_rx_queues) * \
-	 (sizeof(struct ixgbevf_stats) / sizeof(u64)))
-#define IXGBEVF_GLOBAL_STATS_LEN ARRAY_SIZE(ixgbevf_gstrings_stats)
+#घोषणा IXGBEVF_QUEUE_STATS_LEN ( \
+	(((काष्ठा ixgbevf_adapter *)netdev_priv(netdev))->num_tx_queues + \
+	 ((काष्ठा ixgbevf_adapter *)netdev_priv(netdev))->num_xdp_queues + \
+	 ((काष्ठा ixgbevf_adapter *)netdev_priv(netdev))->num_rx_queues) * \
+	 (माप(काष्ठा ixgbevf_stats) / माप(u64)))
+#घोषणा IXGBEVF_GLOBAL_STATS_LEN ARRAY_SIZE(ixgbevf_gstrings_stats)
 
-#define IXGBEVF_STATS_LEN (IXGBEVF_GLOBAL_STATS_LEN + IXGBEVF_QUEUE_STATS_LEN)
-static const char ixgbe_gstrings_test[][ETH_GSTRING_LEN] = {
+#घोषणा IXGBEVF_STATS_LEN (IXGBEVF_GLOBAL_STATS_LEN + IXGBEVF_QUEUE_STATS_LEN)
+अटल स्थिर अक्षर ixgbe_gstrings_test[][ETH_GSTRING_LEN] = अणु
 	"Register test  (offline)",
 	"Link test   (on/offline)"
-};
+पूर्ण;
 
-#define IXGBEVF_TEST_LEN (sizeof(ixgbe_gstrings_test) / ETH_GSTRING_LEN)
+#घोषणा IXGBEVF_TEST_LEN (माप(ixgbe_gstrings_test) / ETH_GSTRING_LEN)
 
-static const char ixgbevf_priv_flags_strings[][ETH_GSTRING_LEN] = {
-#define IXGBEVF_PRIV_FLAGS_LEGACY_RX	BIT(0)
+अटल स्थिर अक्षर ixgbevf_priv_flags_strings[][ETH_GSTRING_LEN] = अणु
+#घोषणा IXGBEVF_PRIV_FLAGS_LEGACY_RX	BIT(0)
 	"legacy-rx",
-};
+पूर्ण;
 
-#define IXGBEVF_PRIV_FLAGS_STR_LEN ARRAY_SIZE(ixgbevf_priv_flags_strings)
+#घोषणा IXGBEVF_PRIV_FLAGS_STR_LEN ARRAY_SIZE(ixgbevf_priv_flags_strings)
 
-static int ixgbevf_get_link_ksettings(struct net_device *netdev,
-				      struct ethtool_link_ksettings *cmd)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक ixgbevf_get_link_ksettings(काष्ठा net_device *netdev,
+				      काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
 	ethtool_link_ksettings_zero_link_mode(cmd, supported);
 	ethtool_link_ksettings_add_link_mode(cmd, supported, 10000baseT_Full);
-	cmd->base.autoneg = AUTONEG_DISABLE;
+	cmd->base.स्वतःneg = AUTONEG_DISABLE;
 	cmd->base.port = -1;
 
-	if (adapter->link_up) {
+	अगर (adapter->link_up) अणु
 		__u32 speed = SPEED_10000;
 
-		switch (adapter->link_speed) {
-		case IXGBE_LINK_SPEED_10GB_FULL:
+		चयन (adapter->link_speed) अणु
+		हाल IXGBE_LINK_SPEED_10GB_FULL:
 			speed = SPEED_10000;
-			break;
-		case IXGBE_LINK_SPEED_1GB_FULL:
+			अवरोध;
+		हाल IXGBE_LINK_SPEED_1GB_FULL:
 			speed = SPEED_1000;
-			break;
-		case IXGBE_LINK_SPEED_100_FULL:
+			अवरोध;
+		हाल IXGBE_LINK_SPEED_100_FULL:
 			speed = SPEED_100;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		cmd->base.speed = speed;
 		cmd->base.duplex = DUPLEX_FULL;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd->base.speed = SPEED_UNKNOWN;
 		cmd->base.duplex = DUPLEX_UNKNOWN;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 ixgbevf_get_msglevel(struct net_device *netdev)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल u32 ixgbevf_get_msglevel(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
-	return adapter->msg_enable;
-}
+	वापस adapter->msg_enable;
+पूर्ण
 
-static void ixgbevf_set_msglevel(struct net_device *netdev, u32 data)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम ixgbevf_set_msglevel(काष्ठा net_device *netdev, u32 data)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
 	adapter->msg_enable = data;
-}
+पूर्ण
 
-#define IXGBE_GET_STAT(_A_, _R_) (_A_->stats._R_)
+#घोषणा IXGBE_GET_STAT(_A_, _R_) (_A_->stats._R_)
 
-static int ixgbevf_get_regs_len(struct net_device *netdev)
-{
-#define IXGBE_REGS_LEN 45
-	return IXGBE_REGS_LEN * sizeof(u32);
-}
+अटल पूर्णांक ixgbevf_get_regs_len(काष्ठा net_device *netdev)
+अणु
+#घोषणा IXGBE_REGS_LEN 45
+	वापस IXGBE_REGS_LEN * माप(u32);
+पूर्ण
 
-static void ixgbevf_get_regs(struct net_device *netdev,
-			     struct ethtool_regs *regs,
-			     void *p)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbevf_get_regs(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_regs *regs,
+			     व्योम *p)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 *regs_buff = p;
 	u32 regs_len = ixgbevf_get_regs_len(netdev);
 	u8 i;
 
-	memset(p, 0, regs_len);
+	स_रखो(p, 0, regs_len);
 
-	/* generate a number suitable for ethtool's register version */
+	/* generate a number suitable क्रम ethtool's रेजिस्टर version */
 	regs->version = (1u << 24) | (hw->revision_id << 16) | hw->device_id;
 
 	/* General Registers */
@@ -161,8 +162,8 @@ static void ixgbevf_get_regs(struct net_device *netdev,
 	regs_buff[4] = IXGBE_READ_REG(hw, IXGBE_VFFRTIMER);
 
 	/* Interrupt */
-	/* don't read EICR because it can clear interrupt causes, instead
-	 * read EICS which is a shadow but doesn't clear EICR
+	/* करोn't पढ़ो EICR because it can clear पूर्णांकerrupt causes, instead
+	 * पढ़ो EICS which is a shaकरोw but करोesn't clear EICR
 	 */
 	regs_buff[5] = IXGBE_READ_REG(hw, IXGBE_VTEICS);
 	regs_buff[6] = IXGBE_READ_REG(hw, IXGBE_VTEICS);
@@ -175,76 +176,76 @@ static void ixgbevf_get_regs(struct net_device *netdev,
 	regs_buff[13] = IXGBE_READ_REG(hw, IXGBE_VTIVAR_MISC);
 
 	/* Receive DMA */
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[14 + i] = IXGBE_READ_REG(hw, IXGBE_VFRDBAL(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[16 + i] = IXGBE_READ_REG(hw, IXGBE_VFRDBAH(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[18 + i] = IXGBE_READ_REG(hw, IXGBE_VFRDLEN(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[20 + i] = IXGBE_READ_REG(hw, IXGBE_VFRDH(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[22 + i] = IXGBE_READ_REG(hw, IXGBE_VFRDT(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[24 + i] = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[26 + i] = IXGBE_READ_REG(hw, IXGBE_VFSRRCTL(i));
 
 	/* Receive */
 	regs_buff[28] = IXGBE_READ_REG(hw, IXGBE_VFPSRTYPE);
 
 	/* Transmit */
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[29 + i] = IXGBE_READ_REG(hw, IXGBE_VFTDBAL(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[31 + i] = IXGBE_READ_REG(hw, IXGBE_VFTDBAH(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[33 + i] = IXGBE_READ_REG(hw, IXGBE_VFTDLEN(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[35 + i] = IXGBE_READ_REG(hw, IXGBE_VFTDH(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[37 + i] = IXGBE_READ_REG(hw, IXGBE_VFTDT(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[39 + i] = IXGBE_READ_REG(hw, IXGBE_VFTXDCTL(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[41 + i] = IXGBE_READ_REG(hw, IXGBE_VFTDWBAL(i));
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		regs_buff[43 + i] = IXGBE_READ_REG(hw, IXGBE_VFTDWBAH(i));
-}
+पूर्ण
 
-static void ixgbevf_get_drvinfo(struct net_device *netdev,
-				struct ethtool_drvinfo *drvinfo)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम ixgbevf_get_drvinfo(काष्ठा net_device *netdev,
+				काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
-	strlcpy(drvinfo->driver, ixgbevf_driver_name, sizeof(drvinfo->driver));
+	strlcpy(drvinfo->driver, ixgbevf_driver_name, माप(drvinfo->driver));
 	strlcpy(drvinfo->bus_info, pci_name(adapter->pdev),
-		sizeof(drvinfo->bus_info));
+		माप(drvinfo->bus_info));
 
 	drvinfo->n_priv_flags = IXGBEVF_PRIV_FLAGS_STR_LEN;
-}
+पूर्ण
 
-static void ixgbevf_get_ringparam(struct net_device *netdev,
-				  struct ethtool_ringparam *ring)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम ixgbevf_get_ringparam(काष्ठा net_device *netdev,
+				  काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
 	ring->rx_max_pending = IXGBEVF_MAX_RXD;
 	ring->tx_max_pending = IXGBEVF_MAX_TXD;
 	ring->rx_pending = adapter->rx_ring_count;
 	ring->tx_pending = adapter->tx_ring_count;
-}
+पूर्ण
 
-static int ixgbevf_set_ringparam(struct net_device *netdev,
-				 struct ethtool_ringparam *ring)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbevf_ring *tx_ring = NULL, *rx_ring = NULL;
+अटल पूर्णांक ixgbevf_set_ringparam(काष्ठा net_device *netdev,
+				 काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbevf_ring *tx_ring = शून्य, *rx_ring = शून्य;
 	u32 new_rx_count, new_tx_count;
-	int i, j, err = 0;
+	पूर्णांक i, j, err = 0;
 
-	if ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
-		return -EINVAL;
+	अगर ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
+		वापस -EINVAL;
 
 	new_tx_count = max_t(u32, ring->tx_pending, IXGBEVF_MIN_TXD);
 	new_tx_count = min_t(u32, new_tx_count, IXGBEVF_MAX_TXD);
@@ -254,718 +255,718 @@ static int ixgbevf_set_ringparam(struct net_device *netdev,
 	new_rx_count = min_t(u32, new_rx_count, IXGBEVF_MAX_RXD);
 	new_rx_count = ALIGN(new_rx_count, IXGBE_REQ_RX_DESCRIPTOR_MULTIPLE);
 
-	/* if nothing to do return success */
-	if ((new_tx_count == adapter->tx_ring_count) &&
+	/* अगर nothing to करो वापस success */
+	अगर ((new_tx_count == adapter->tx_ring_count) &&
 	    (new_rx_count == adapter->rx_ring_count))
-		return 0;
+		वापस 0;
 
-	while (test_and_set_bit(__IXGBEVF_RESETTING, &adapter->state))
+	जबतक (test_and_set_bit(__IXGBEVF_RESETTING, &adapter->state))
 		usleep_range(1000, 2000);
 
-	if (!netif_running(adapter->netdev)) {
-		for (i = 0; i < adapter->num_tx_queues; i++)
+	अगर (!netअगर_running(adapter->netdev)) अणु
+		क्रम (i = 0; i < adapter->num_tx_queues; i++)
 			adapter->tx_ring[i]->count = new_tx_count;
-		for (i = 0; i < adapter->num_xdp_queues; i++)
+		क्रम (i = 0; i < adapter->num_xdp_queues; i++)
 			adapter->xdp_ring[i]->count = new_tx_count;
-		for (i = 0; i < adapter->num_rx_queues; i++)
+		क्रम (i = 0; i < adapter->num_rx_queues; i++)
 			adapter->rx_ring[i]->count = new_rx_count;
 		adapter->tx_ring_count = new_tx_count;
 		adapter->xdp_ring_count = new_tx_count;
 		adapter->rx_ring_count = new_rx_count;
-		goto clear_reset;
-	}
+		जाओ clear_reset;
+	पूर्ण
 
-	if (new_tx_count != adapter->tx_ring_count) {
-		tx_ring = vmalloc(array_size(sizeof(*tx_ring),
+	अगर (new_tx_count != adapter->tx_ring_count) अणु
+		tx_ring = vदो_स्मृति(array_size(माप(*tx_ring),
 					     adapter->num_tx_queues +
 						adapter->num_xdp_queues));
-		if (!tx_ring) {
+		अगर (!tx_ring) अणु
 			err = -ENOMEM;
-			goto clear_reset;
-		}
+			जाओ clear_reset;
+		पूर्ण
 
-		for (i = 0; i < adapter->num_tx_queues; i++) {
+		क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
 			/* clone ring and setup updated count */
 			tx_ring[i] = *adapter->tx_ring[i];
 			tx_ring[i].count = new_tx_count;
 			err = ixgbevf_setup_tx_resources(&tx_ring[i]);
-			if (err) {
-				while (i) {
+			अगर (err) अणु
+				जबतक (i) अणु
 					i--;
-					ixgbevf_free_tx_resources(&tx_ring[i]);
-				}
+					ixgbevf_मुक्त_tx_resources(&tx_ring[i]);
+				पूर्ण
 
-				vfree(tx_ring);
-				tx_ring = NULL;
+				vमुक्त(tx_ring);
+				tx_ring = शून्य;
 
-				goto clear_reset;
-			}
-		}
+				जाओ clear_reset;
+			पूर्ण
+		पूर्ण
 
-		for (j = 0; j < adapter->num_xdp_queues; i++, j++) {
+		क्रम (j = 0; j < adapter->num_xdp_queues; i++, j++) अणु
 			/* clone ring and setup updated count */
 			tx_ring[i] = *adapter->xdp_ring[j];
 			tx_ring[i].count = new_tx_count;
 			err = ixgbevf_setup_tx_resources(&tx_ring[i]);
-			if (err) {
-				while (i) {
+			अगर (err) अणु
+				जबतक (i) अणु
 					i--;
-					ixgbevf_free_tx_resources(&tx_ring[i]);
-				}
+					ixgbevf_मुक्त_tx_resources(&tx_ring[i]);
+				पूर्ण
 
-				vfree(tx_ring);
-				tx_ring = NULL;
+				vमुक्त(tx_ring);
+				tx_ring = शून्य;
 
-				goto clear_reset;
-			}
-		}
-	}
+				जाओ clear_reset;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (new_rx_count != adapter->rx_ring_count) {
-		rx_ring = vmalloc(array_size(sizeof(*rx_ring),
+	अगर (new_rx_count != adapter->rx_ring_count) अणु
+		rx_ring = vदो_स्मृति(array_size(माप(*rx_ring),
 					     adapter->num_rx_queues));
-		if (!rx_ring) {
+		अगर (!rx_ring) अणु
 			err = -ENOMEM;
-			goto clear_reset;
-		}
+			जाओ clear_reset;
+		पूर्ण
 
-		for (i = 0; i < adapter->num_rx_queues; i++) {
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
 			/* clone ring and setup updated count */
 			rx_ring[i] = *adapter->rx_ring[i];
 
 			/* Clear copied XDP RX-queue info */
-			memset(&rx_ring[i].xdp_rxq, 0,
-			       sizeof(rx_ring[i].xdp_rxq));
+			स_रखो(&rx_ring[i].xdp_rxq, 0,
+			       माप(rx_ring[i].xdp_rxq));
 
 			rx_ring[i].count = new_rx_count;
 			err = ixgbevf_setup_rx_resources(adapter, &rx_ring[i]);
-			if (err) {
-				while (i) {
+			अगर (err) अणु
+				जबतक (i) अणु
 					i--;
-					ixgbevf_free_rx_resources(&rx_ring[i]);
-				}
+					ixgbevf_मुक्त_rx_resources(&rx_ring[i]);
+				पूर्ण
 
-				vfree(rx_ring);
-				rx_ring = NULL;
+				vमुक्त(rx_ring);
+				rx_ring = शून्य;
 
-				goto clear_reset;
-			}
-		}
-	}
+				जाओ clear_reset;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* bring interface down to prepare for update */
-	ixgbevf_down(adapter);
+	/* bring पूर्णांकerface करोwn to prepare क्रम update */
+	ixgbevf_करोwn(adapter);
 
 	/* Tx */
-	if (tx_ring) {
-		for (i = 0; i < adapter->num_tx_queues; i++) {
-			ixgbevf_free_tx_resources(adapter->tx_ring[i]);
+	अगर (tx_ring) अणु
+		क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+			ixgbevf_मुक्त_tx_resources(adapter->tx_ring[i]);
 			*adapter->tx_ring[i] = tx_ring[i];
-		}
+		पूर्ण
 		adapter->tx_ring_count = new_tx_count;
 
-		for (j = 0; j < adapter->num_xdp_queues; i++, j++) {
-			ixgbevf_free_tx_resources(adapter->xdp_ring[j]);
+		क्रम (j = 0; j < adapter->num_xdp_queues; i++, j++) अणु
+			ixgbevf_मुक्त_tx_resources(adapter->xdp_ring[j]);
 			*adapter->xdp_ring[j] = tx_ring[i];
-		}
+		पूर्ण
 		adapter->xdp_ring_count = new_tx_count;
 
-		vfree(tx_ring);
-		tx_ring = NULL;
-	}
+		vमुक्त(tx_ring);
+		tx_ring = शून्य;
+	पूर्ण
 
 	/* Rx */
-	if (rx_ring) {
-		for (i = 0; i < adapter->num_rx_queues; i++) {
-			ixgbevf_free_rx_resources(adapter->rx_ring[i]);
+	अगर (rx_ring) अणु
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+			ixgbevf_मुक्त_rx_resources(adapter->rx_ring[i]);
 			*adapter->rx_ring[i] = rx_ring[i];
-		}
+		पूर्ण
 		adapter->rx_ring_count = new_rx_count;
 
-		vfree(rx_ring);
-		rx_ring = NULL;
-	}
+		vमुक्त(rx_ring);
+		rx_ring = शून्य;
+	पूर्ण
 
-	/* restore interface using new values */
+	/* restore पूर्णांकerface using new values */
 	ixgbevf_up(adapter);
 
 clear_reset:
-	/* free Tx resources if Rx error is encountered */
-	if (tx_ring) {
-		for (i = 0;
+	/* मुक्त Tx resources अगर Rx error is encountered */
+	अगर (tx_ring) अणु
+		क्रम (i = 0;
 		     i < adapter->num_tx_queues + adapter->num_xdp_queues; i++)
-			ixgbevf_free_tx_resources(&tx_ring[i]);
-		vfree(tx_ring);
-	}
+			ixgbevf_मुक्त_tx_resources(&tx_ring[i]);
+		vमुक्त(tx_ring);
+	पूर्ण
 
 	clear_bit(__IXGBEVF_RESETTING, &adapter->state);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ixgbevf_get_sset_count(struct net_device *netdev, int stringset)
-{
-	switch (stringset) {
-	case ETH_SS_TEST:
-		return IXGBEVF_TEST_LEN;
-	case ETH_SS_STATS:
-		return IXGBEVF_STATS_LEN;
-	case ETH_SS_PRIV_FLAGS:
-		return IXGBEVF_PRIV_FLAGS_STR_LEN;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक ixgbevf_get_sset_count(काष्ठा net_device *netdev, पूर्णांक stringset)
+अणु
+	चयन (stringset) अणु
+	हाल ETH_SS_TEST:
+		वापस IXGBEVF_TEST_LEN;
+	हाल ETH_SS_STATS:
+		वापस IXGBEVF_STATS_LEN;
+	हाल ETH_SS_PRIV_FLAGS:
+		वापस IXGBEVF_PRIV_FLAGS_STR_LEN;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void ixgbevf_get_ethtool_stats(struct net_device *netdev,
-				      struct ethtool_stats *stats, u64 *data)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct rtnl_link_stats64 temp;
-	const struct rtnl_link_stats64 *net_stats;
-	unsigned int start;
-	struct ixgbevf_ring *ring;
-	int i, j;
-	char *p;
+अटल व्योम ixgbevf_get_ethtool_stats(काष्ठा net_device *netdev,
+				      काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा rtnl_link_stats64 temp;
+	स्थिर काष्ठा rtnl_link_stats64 *net_stats;
+	अचिन्हित पूर्णांक start;
+	काष्ठा ixgbevf_ring *ring;
+	पूर्णांक i, j;
+	अक्षर *p;
 
 	ixgbevf_update_stats(adapter);
 	net_stats = dev_get_stats(netdev, &temp);
-	for (i = 0; i < IXGBEVF_GLOBAL_STATS_LEN; i++) {
-		switch (ixgbevf_gstrings_stats[i].type) {
-		case NETDEV_STATS:
-			p = (char *)net_stats +
+	क्रम (i = 0; i < IXGBEVF_GLOBAL_STATS_LEN; i++) अणु
+		चयन (ixgbevf_gstrings_stats[i].type) अणु
+		हाल NETDEV_STATS:
+			p = (अक्षर *)net_stats +
 					ixgbevf_gstrings_stats[i].stat_offset;
-			break;
-		case IXGBEVF_STATS:
-			p = (char *)adapter +
+			अवरोध;
+		हाल IXGBEVF_STATS:
+			p = (अक्षर *)adapter +
 					ixgbevf_gstrings_stats[i].stat_offset;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			data[i] = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		data[i] = (ixgbevf_gstrings_stats[i].sizeof_stat ==
-			   sizeof(u64)) ? *(u64 *)p : *(u32 *)p;
-	}
+		data[i] = (ixgbevf_gstrings_stats[i].माप_stat ==
+			   माप(u64)) ? *(u64 *)p : *(u32 *)p;
+	पूर्ण
 
 	/* populate Tx queue data */
-	for (j = 0; j < adapter->num_tx_queues; j++) {
+	क्रम (j = 0; j < adapter->num_tx_queues; j++) अणु
 		ring = adapter->tx_ring[j];
-		if (!ring) {
+		अगर (!ring) अणु
 			data[i++] = 0;
 			data[i++] = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->syncp);
 			data[i]   = ring->stats.packets;
 			data[i + 1] = ring->stats.bytes;
-		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->syncp, start));
 		i += 2;
-	}
+	पूर्ण
 
 	/* populate XDP queue data */
-	for (j = 0; j < adapter->num_xdp_queues; j++) {
+	क्रम (j = 0; j < adapter->num_xdp_queues; j++) अणु
 		ring = adapter->xdp_ring[j];
-		if (!ring) {
+		अगर (!ring) अणु
 			data[i++] = 0;
 			data[i++] = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->syncp);
 			data[i] = ring->stats.packets;
 			data[i + 1] = ring->stats.bytes;
-		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->syncp, start));
 		i += 2;
-	}
+	पूर्ण
 
 	/* populate Rx queue data */
-	for (j = 0; j < adapter->num_rx_queues; j++) {
+	क्रम (j = 0; j < adapter->num_rx_queues; j++) अणु
 		ring = adapter->rx_ring[j];
-		if (!ring) {
+		अगर (!ring) अणु
 			data[i++] = 0;
 			data[i++] = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->syncp);
 			data[i]   = ring->stats.packets;
 			data[i + 1] = ring->stats.bytes;
-		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->syncp, start));
 		i += 2;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbevf_get_strings(struct net_device *netdev, u32 stringset,
+अटल व्योम ixgbevf_get_strings(काष्ठा net_device *netdev, u32 stringset,
 				u8 *data)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	char *p = (char *)data;
-	int i;
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	अक्षर *p = (अक्षर *)data;
+	पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_TEST:
-		memcpy(data, *ixgbe_gstrings_test,
+	चयन (stringset) अणु
+	हाल ETH_SS_TEST:
+		स_नकल(data, *ixgbe_gstrings_test,
 		       IXGBEVF_TEST_LEN * ETH_GSTRING_LEN);
-		break;
-	case ETH_SS_STATS:
-		for (i = 0; i < IXGBEVF_GLOBAL_STATS_LEN; i++) {
-			memcpy(p, ixgbevf_gstrings_stats[i].stat_string,
+		अवरोध;
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < IXGBEVF_GLOBAL_STATS_LEN; i++) अणु
+			स_नकल(p, ixgbevf_gstrings_stats[i].stat_string,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
+		पूर्ण
 
-		for (i = 0; i < adapter->num_tx_queues; i++) {
-			sprintf(p, "tx_queue_%u_packets", i);
+		क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+			प्र_लिखो(p, "tx_queue_%u_packets", i);
 			p += ETH_GSTRING_LEN;
-			sprintf(p, "tx_queue_%u_bytes", i);
+			प्र_लिखो(p, "tx_queue_%u_bytes", i);
 			p += ETH_GSTRING_LEN;
-		}
-		for (i = 0; i < adapter->num_xdp_queues; i++) {
-			sprintf(p, "xdp_queue_%u_packets", i);
+		पूर्ण
+		क्रम (i = 0; i < adapter->num_xdp_queues; i++) अणु
+			प्र_लिखो(p, "xdp_queue_%u_packets", i);
 			p += ETH_GSTRING_LEN;
-			sprintf(p, "xdp_queue_%u_bytes", i);
+			प्र_लिखो(p, "xdp_queue_%u_bytes", i);
 			p += ETH_GSTRING_LEN;
-		}
-		for (i = 0; i < adapter->num_rx_queues; i++) {
-			sprintf(p, "rx_queue_%u_packets", i);
+		पूर्ण
+		क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+			प्र_लिखो(p, "rx_queue_%u_packets", i);
 			p += ETH_GSTRING_LEN;
-			sprintf(p, "rx_queue_%u_bytes", i);
+			प्र_लिखो(p, "rx_queue_%u_bytes", i);
 			p += ETH_GSTRING_LEN;
-		}
-		break;
-	case ETH_SS_PRIV_FLAGS:
-		memcpy(data, ixgbevf_priv_flags_strings,
+		पूर्ण
+		अवरोध;
+	हाल ETH_SS_PRIV_FLAGS:
+		स_नकल(data, ixgbevf_priv_flags_strings,
 		       IXGBEVF_PRIV_FLAGS_STR_LEN * ETH_GSTRING_LEN);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int ixgbevf_link_test(struct ixgbevf_adapter *adapter, u64 *data)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल पूर्णांक ixgbevf_link_test(काष्ठा ixgbevf_adapter *adapter, u64 *data)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	bool link_up;
 	u32 link_speed = 0;
 	*data = 0;
 
 	hw->mac.ops.check_link(hw, &link_speed, &link_up, true);
-	if (!link_up)
+	अगर (!link_up)
 		*data = 1;
 
-	return *data;
-}
+	वापस *data;
+पूर्ण
 
-/* ethtool register test data */
-struct ixgbevf_reg_test {
+/* ethtool रेजिस्टर test data */
+काष्ठा ixgbevf_reg_test अणु
 	u16 reg;
 	u8  array_len;
 	u8  test_type;
 	u32 mask;
-	u32 write;
-};
+	u32 ग_लिखो;
+पूर्ण;
 
-/* In the hardware, registers are laid out either singly, in arrays
+/* In the hardware, रेजिस्टरs are laid out either singly, in arrays
  * spaced 0x40 bytes apart, or in contiguous tables.  We assume
- * most tests take place on arrays or single registers (handled
- * as a single-element array) and special-case the tables.
+ * most tests take place on arrays or single रेजिस्टरs (handled
+ * as a single-element array) and special-हाल the tables.
  * Table tests are always pattern tests.
  *
- * We also make provision for some required setup steps by specifying
- * registers to be written without any read-back testing.
+ * We also make provision क्रम some required setup steps by specअगरying
+ * रेजिस्टरs to be written without any पढ़ो-back testing.
  */
 
-#define PATTERN_TEST	1
-#define SET_READ_TEST	2
-#define WRITE_NO_TEST	3
-#define TABLE32_TEST	4
-#define TABLE64_TEST_LO	5
-#define TABLE64_TEST_HI	6
+#घोषणा PATTERN_TEST	1
+#घोषणा SET_READ_TEST	2
+#घोषणा WRITE_NO_TEST	3
+#घोषणा TABLE32_TEST	4
+#घोषणा TABLE64_TEST_LO	5
+#घोषणा TABLE64_TEST_HI	6
 
-/* default VF register test */
-static const struct ixgbevf_reg_test reg_test_vf[] = {
-	{ IXGBE_VFRDBAL(0), 2, PATTERN_TEST, 0xFFFFFF80, 0xFFFFFF80 },
-	{ IXGBE_VFRDBAH(0), 2, PATTERN_TEST, 0xFFFFFFFF, 0xFFFFFFFF },
-	{ IXGBE_VFRDLEN(0), 2, PATTERN_TEST, 0x000FFF80, 0x000FFFFF },
-	{ IXGBE_VFRXDCTL(0), 2, WRITE_NO_TEST, 0, IXGBE_RXDCTL_ENABLE },
-	{ IXGBE_VFRDT(0), 2, PATTERN_TEST, 0x0000FFFF, 0x0000FFFF },
-	{ IXGBE_VFRXDCTL(0), 2, WRITE_NO_TEST, 0, 0 },
-	{ IXGBE_VFTDBAL(0), 2, PATTERN_TEST, 0xFFFFFF80, 0xFFFFFFFF },
-	{ IXGBE_VFTDBAH(0), 2, PATTERN_TEST, 0xFFFFFFFF, 0xFFFFFFFF },
-	{ IXGBE_VFTDLEN(0), 2, PATTERN_TEST, 0x000FFF80, 0x000FFF80 },
-	{ .reg = 0 }
-};
+/* शेष VF रेजिस्टर test */
+अटल स्थिर काष्ठा ixgbevf_reg_test reg_test_vf[] = अणु
+	अणु IXGBE_VFRDBAL(0), 2, PATTERN_TEST, 0xFFFFFF80, 0xFFFFFF80 पूर्ण,
+	अणु IXGBE_VFRDBAH(0), 2, PATTERN_TEST, 0xFFFFFFFF, 0xFFFFFFFF पूर्ण,
+	अणु IXGBE_VFRDLEN(0), 2, PATTERN_TEST, 0x000FFF80, 0x000FFFFF पूर्ण,
+	अणु IXGBE_VFRXDCTL(0), 2, WRITE_NO_TEST, 0, IXGBE_RXDCTL_ENABLE पूर्ण,
+	अणु IXGBE_VFRDT(0), 2, PATTERN_TEST, 0x0000FFFF, 0x0000FFFF पूर्ण,
+	अणु IXGBE_VFRXDCTL(0), 2, WRITE_NO_TEST, 0, 0 पूर्ण,
+	अणु IXGBE_VFTDBAL(0), 2, PATTERN_TEST, 0xFFFFFF80, 0xFFFFFFFF पूर्ण,
+	अणु IXGBE_VFTDBAH(0), 2, PATTERN_TEST, 0xFFFFFFFF, 0xFFFFFFFF पूर्ण,
+	अणु IXGBE_VFTDLEN(0), 2, PATTERN_TEST, 0x000FFF80, 0x000FFF80 पूर्ण,
+	अणु .reg = 0 पूर्ण
+पूर्ण;
 
-static const u32 register_test_patterns[] = {
+अटल स्थिर u32 रेजिस्टर_test_patterns[] = अणु
 	0x5A5A5A5A, 0xA5A5A5A5, 0x00000000, 0xFFFFFFFF
-};
+पूर्ण;
 
-static bool reg_pattern_test(struct ixgbevf_adapter *adapter, u64 *data,
-			     int reg, u32 mask, u32 write)
-{
-	u32 pat, val, before;
+अटल bool reg_pattern_test(काष्ठा ixgbevf_adapter *adapter, u64 *data,
+			     पूर्णांक reg, u32 mask, u32 ग_लिखो)
+अणु
+	u32 pat, val, beक्रमe;
 
-	if (IXGBE_REMOVED(adapter->hw.hw_addr)) {
+	अगर (IXGBE_REMOVED(adapter->hw.hw_addr)) अणु
 		*data = 1;
-		return true;
-	}
-	for (pat = 0; pat < ARRAY_SIZE(register_test_patterns); pat++) {
-		before = ixgbevf_read_reg(&adapter->hw, reg);
-		ixgbe_write_reg(&adapter->hw, reg,
-				register_test_patterns[pat] & write);
-		val = ixgbevf_read_reg(&adapter->hw, reg);
-		if (val != (register_test_patterns[pat] & write & mask)) {
+		वापस true;
+	पूर्ण
+	क्रम (pat = 0; pat < ARRAY_SIZE(रेजिस्टर_test_patterns); pat++) अणु
+		beक्रमe = ixgbevf_पढ़ो_reg(&adapter->hw, reg);
+		ixgbe_ग_लिखो_reg(&adapter->hw, reg,
+				रेजिस्टर_test_patterns[pat] & ग_लिखो);
+		val = ixgbevf_पढ़ो_reg(&adapter->hw, reg);
+		अगर (val != (रेजिस्टर_test_patterns[pat] & ग_लिखो & mask)) अणु
 			hw_dbg(&adapter->hw,
 			       "pattern test reg %04X failed: got 0x%08X expected 0x%08X\n",
 			       reg, val,
-			       register_test_patterns[pat] & write & mask);
+			       रेजिस्टर_test_patterns[pat] & ग_लिखो & mask);
 			*data = reg;
-			ixgbe_write_reg(&adapter->hw, reg, before);
-			return true;
-		}
-		ixgbe_write_reg(&adapter->hw, reg, before);
-	}
-	return false;
-}
+			ixgbe_ग_लिखो_reg(&adapter->hw, reg, beक्रमe);
+			वापस true;
+		पूर्ण
+		ixgbe_ग_लिखो_reg(&adapter->hw, reg, beक्रमe);
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool reg_set_and_check(struct ixgbevf_adapter *adapter, u64 *data,
-			      int reg, u32 mask, u32 write)
-{
-	u32 val, before;
+अटल bool reg_set_and_check(काष्ठा ixgbevf_adapter *adapter, u64 *data,
+			      पूर्णांक reg, u32 mask, u32 ग_लिखो)
+अणु
+	u32 val, beक्रमe;
 
-	if (IXGBE_REMOVED(adapter->hw.hw_addr)) {
+	अगर (IXGBE_REMOVED(adapter->hw.hw_addr)) अणु
 		*data = 1;
-		return true;
-	}
-	before = ixgbevf_read_reg(&adapter->hw, reg);
-	ixgbe_write_reg(&adapter->hw, reg, write & mask);
-	val = ixgbevf_read_reg(&adapter->hw, reg);
-	if ((write & mask) != (val & mask)) {
+		वापस true;
+	पूर्ण
+	beक्रमe = ixgbevf_पढ़ो_reg(&adapter->hw, reg);
+	ixgbe_ग_लिखो_reg(&adapter->hw, reg, ग_लिखो & mask);
+	val = ixgbevf_पढ़ो_reg(&adapter->hw, reg);
+	अगर ((ग_लिखो & mask) != (val & mask)) अणु
 		pr_err("set/check reg %04X test failed: got 0x%08X expected 0x%08X\n",
-		       reg, (val & mask), write & mask);
+		       reg, (val & mask), ग_लिखो & mask);
 		*data = reg;
-		ixgbe_write_reg(&adapter->hw, reg, before);
-		return true;
-	}
-	ixgbe_write_reg(&adapter->hw, reg, before);
-	return false;
-}
+		ixgbe_ग_लिखो_reg(&adapter->hw, reg, beक्रमe);
+		वापस true;
+	पूर्ण
+	ixgbe_ग_लिखो_reg(&adapter->hw, reg, beक्रमe);
+	वापस false;
+पूर्ण
 
-static int ixgbevf_reg_test(struct ixgbevf_adapter *adapter, u64 *data)
-{
-	const struct ixgbevf_reg_test *test;
+अटल पूर्णांक ixgbevf_reg_test(काष्ठा ixgbevf_adapter *adapter, u64 *data)
+अणु
+	स्थिर काष्ठा ixgbevf_reg_test *test;
 	u32 i;
 
-	if (IXGBE_REMOVED(adapter->hw.hw_addr)) {
+	अगर (IXGBE_REMOVED(adapter->hw.hw_addr)) अणु
 		dev_err(&adapter->pdev->dev,
 			"Adapter removed - register test blocked\n");
 		*data = 1;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	test = reg_test_vf;
 
-	/* Perform the register test, looping through the test table
+	/* Perक्रमm the रेजिस्टर test, looping through the test table
 	 * until we either fail or reach the null entry.
 	 */
-	while (test->reg) {
-		for (i = 0; i < test->array_len; i++) {
+	जबतक (test->reg) अणु
+		क्रम (i = 0; i < test->array_len; i++) अणु
 			bool b = false;
 
-			switch (test->test_type) {
-			case PATTERN_TEST:
+			चयन (test->test_type) अणु
+			हाल PATTERN_TEST:
 				b = reg_pattern_test(adapter, data,
 						     test->reg + (i * 0x40),
 						     test->mask,
-						     test->write);
-				break;
-			case SET_READ_TEST:
+						     test->ग_लिखो);
+				अवरोध;
+			हाल SET_READ_TEST:
 				b = reg_set_and_check(adapter, data,
 						      test->reg + (i * 0x40),
 						      test->mask,
-						      test->write);
-				break;
-			case WRITE_NO_TEST:
-				ixgbe_write_reg(&adapter->hw,
+						      test->ग_लिखो);
+				अवरोध;
+			हाल WRITE_NO_TEST:
+				ixgbe_ग_लिखो_reg(&adapter->hw,
 						test->reg + (i * 0x40),
-						test->write);
-				break;
-			case TABLE32_TEST:
+						test->ग_लिखो);
+				अवरोध;
+			हाल TABLE32_TEST:
 				b = reg_pattern_test(adapter, data,
 						     test->reg + (i * 4),
 						     test->mask,
-						     test->write);
-				break;
-			case TABLE64_TEST_LO:
+						     test->ग_लिखो);
+				अवरोध;
+			हाल TABLE64_TEST_LO:
 				b = reg_pattern_test(adapter, data,
 						     test->reg + (i * 8),
 						     test->mask,
-						     test->write);
-				break;
-			case TABLE64_TEST_HI:
+						     test->ग_लिखो);
+				अवरोध;
+			हाल TABLE64_TEST_HI:
 				b = reg_pattern_test(adapter, data,
 						     test->reg + 4 + (i * 8),
 						     test->mask,
-						     test->write);
-				break;
-			}
-			if (b)
-				return 1;
-		}
+						     test->ग_लिखो);
+				अवरोध;
+			पूर्ण
+			अगर (b)
+				वापस 1;
+		पूर्ण
 		test++;
-	}
+	पूर्ण
 
 	*data = 0;
-	return *data;
-}
+	वापस *data;
+पूर्ण
 
-static void ixgbevf_diag_test(struct net_device *netdev,
-			      struct ethtool_test *eth_test, u64 *data)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	bool if_running = netif_running(netdev);
+अटल व्योम ixgbevf_diag_test(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_test *eth_test, u64 *data)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	bool अगर_running = netअगर_running(netdev);
 
-	if (IXGBE_REMOVED(adapter->hw.hw_addr)) {
+	अगर (IXGBE_REMOVED(adapter->hw.hw_addr)) अणु
 		dev_err(&adapter->pdev->dev,
 			"Adapter removed - test blocked\n");
 		data[0] = 1;
 		data[1] = 1;
 		eth_test->flags |= ETH_TEST_FL_FAILED;
-		return;
-	}
+		वापस;
+	पूर्ण
 	set_bit(__IXGBEVF_TESTING, &adapter->state);
-	if (eth_test->flags == ETH_TEST_FL_OFFLINE) {
+	अगर (eth_test->flags == ETH_TEST_FL_OFFLINE) अणु
 		/* Offline tests */
 
 		hw_dbg(&adapter->hw, "offline testing starting\n");
 
-		/* Link test performed before hardware reset so autoneg doesn't
-		 * interfere with test result
+		/* Link test perक्रमmed beक्रमe hardware reset so स्वतःneg करोesn't
+		 * पूर्णांकerfere with test result
 		 */
-		if (ixgbevf_link_test(adapter, &data[1]))
+		अगर (ixgbevf_link_test(adapter, &data[1]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
-		if (if_running)
+		अगर (अगर_running)
 			/* indicate we're in test mode */
-			ixgbevf_close(netdev);
-		else
+			ixgbevf_बंद(netdev);
+		अन्यथा
 			ixgbevf_reset(adapter);
 
 		hw_dbg(&adapter->hw, "register testing starting\n");
-		if (ixgbevf_reg_test(adapter, &data[0]))
+		अगर (ixgbevf_reg_test(adapter, &data[0]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
 		ixgbevf_reset(adapter);
 
 		clear_bit(__IXGBEVF_TESTING, &adapter->state);
-		if (if_running)
-			ixgbevf_open(netdev);
-	} else {
+		अगर (अगर_running)
+			ixgbevf_खोलो(netdev);
+	पूर्ण अन्यथा अणु
 		hw_dbg(&adapter->hw, "online testing starting\n");
 		/* Online tests */
-		if (ixgbevf_link_test(adapter, &data[1]))
+		अगर (ixgbevf_link_test(adapter, &data[1]))
 			eth_test->flags |= ETH_TEST_FL_FAILED;
 
-		/* Online tests aren't run; pass by default */
+		/* Online tests aren't run; pass by शेष */
 		data[0] = 0;
 
 		clear_bit(__IXGBEVF_TESTING, &adapter->state);
-	}
-	msleep_interruptible(4 * 1000);
-}
+	पूर्ण
+	msleep_पूर्णांकerruptible(4 * 1000);
+पूर्ण
 
-static int ixgbevf_nway_reset(struct net_device *netdev)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक ixgbevf_nway_reset(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
-	if (netif_running(netdev))
+	अगर (netअगर_running(netdev))
 		ixgbevf_reinit_locked(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbevf_get_coalesce(struct net_device *netdev,
-				struct ethtool_coalesce *ec)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक ixgbevf_get_coalesce(काष्ठा net_device *netdev,
+				काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
-	/* only valid if in constant ITR mode */
-	if (adapter->rx_itr_setting <= 1)
+	/* only valid अगर in स्थिरant ITR mode */
+	अगर (adapter->rx_itr_setting <= 1)
 		ec->rx_coalesce_usecs = adapter->rx_itr_setting;
-	else
+	अन्यथा
 		ec->rx_coalesce_usecs = adapter->rx_itr_setting >> 2;
 
-	/* if in mixed Tx/Rx queues per vector mode, report only Rx settings */
-	if (adapter->q_vector[0]->tx.count && adapter->q_vector[0]->rx.count)
-		return 0;
+	/* अगर in mixed Tx/Rx queues per vector mode, report only Rx settings */
+	अगर (adapter->q_vector[0]->tx.count && adapter->q_vector[0]->rx.count)
+		वापस 0;
 
-	/* only valid if in constant ITR mode */
-	if (adapter->tx_itr_setting <= 1)
+	/* only valid अगर in स्थिरant ITR mode */
+	अगर (adapter->tx_itr_setting <= 1)
 		ec->tx_coalesce_usecs = adapter->tx_itr_setting;
-	else
+	अन्यथा
 		ec->tx_coalesce_usecs = adapter->tx_itr_setting >> 2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbevf_set_coalesce(struct net_device *netdev,
-				struct ethtool_coalesce *ec)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbevf_q_vector *q_vector;
-	int num_vectors, i;
+अटल पूर्णांक ixgbevf_set_coalesce(काष्ठा net_device *netdev,
+				काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbevf_q_vector *q_vector;
+	पूर्णांक num_vectors, i;
 	u16 tx_itr_param, rx_itr_param;
 
-	/* don't accept Tx specific changes if we've got mixed RxTx vectors */
-	if (adapter->q_vector[0]->tx.count &&
+	/* करोn't accept Tx specific changes if we've got mixed RxTx vectors */
+	अगर (adapter->q_vector[0]->tx.count &&
 	    adapter->q_vector[0]->rx.count && ec->tx_coalesce_usecs)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if ((ec->rx_coalesce_usecs > (IXGBE_MAX_EITR >> 2)) ||
+	अगर ((ec->rx_coalesce_usecs > (IXGBE_MAX_EITR >> 2)) ||
 	    (ec->tx_coalesce_usecs > (IXGBE_MAX_EITR >> 2)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (ec->rx_coalesce_usecs > 1)
+	अगर (ec->rx_coalesce_usecs > 1)
 		adapter->rx_itr_setting = ec->rx_coalesce_usecs << 2;
-	else
+	अन्यथा
 		adapter->rx_itr_setting = ec->rx_coalesce_usecs;
 
-	if (adapter->rx_itr_setting == 1)
+	अगर (adapter->rx_itr_setting == 1)
 		rx_itr_param = IXGBE_20K_ITR;
-	else
+	अन्यथा
 		rx_itr_param = adapter->rx_itr_setting;
 
-	if (ec->tx_coalesce_usecs > 1)
+	अगर (ec->tx_coalesce_usecs > 1)
 		adapter->tx_itr_setting = ec->tx_coalesce_usecs << 2;
-	else
+	अन्यथा
 		adapter->tx_itr_setting = ec->tx_coalesce_usecs;
 
-	if (adapter->tx_itr_setting == 1)
+	अगर (adapter->tx_itr_setting == 1)
 		tx_itr_param = IXGBE_12K_ITR;
-	else
+	अन्यथा
 		tx_itr_param = adapter->tx_itr_setting;
 
 	num_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
 
-	for (i = 0; i < num_vectors; i++) {
+	क्रम (i = 0; i < num_vectors; i++) अणु
 		q_vector = adapter->q_vector[i];
-		if (q_vector->tx.count && !q_vector->rx.count)
+		अगर (q_vector->tx.count && !q_vector->rx.count)
 			/* Tx only */
 			q_vector->itr = tx_itr_param;
-		else
+		अन्यथा
 			/* Rx only or mixed */
 			q_vector->itr = rx_itr_param;
-		ixgbevf_write_eitr(q_vector);
-	}
+		ixgbevf_ग_लिखो_eitr(q_vector);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbevf_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *info,
+अटल पूर्णांक ixgbevf_get_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *info,
 			     u32 *rules __always_unused)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(dev);
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(dev);
 
-	switch (info->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (info->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		info->data = adapter->num_rx_queues;
-		return 0;
-	default:
+		वापस 0;
+	शेष:
 		hw_dbg(&adapter->hw, "Command parameters not supported\n");
-		return -EOPNOTSUPP;
-	}
-}
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static u32 ixgbevf_get_rxfh_indir_size(struct net_device *netdev)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल u32 ixgbevf_get_rxfh_indir_size(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
-	if (adapter->hw.mac.type >= ixgbe_mac_X550_vf)
-		return IXGBEVF_X550_VFRETA_SIZE;
+	अगर (adapter->hw.mac.type >= ixgbe_mac_X550_vf)
+		वापस IXGBEVF_X550_VFRETA_SIZE;
 
-	return IXGBEVF_82599_RETA_SIZE;
-}
+	वापस IXGBEVF_82599_RETA_SIZE;
+पूर्ण
 
-static u32 ixgbevf_get_rxfh_key_size(struct net_device *netdev)
-{
-	return IXGBEVF_RSS_HASH_KEY_SIZE;
-}
+अटल u32 ixgbevf_get_rxfh_key_size(काष्ठा net_device *netdev)
+अणु
+	वापस IXGBEVF_RSS_HASH_KEY_SIZE;
+पूर्ण
 
-static int ixgbevf_get_rxfh(struct net_device *netdev, u32 *indir, u8 *key,
+अटल पूर्णांक ixgbevf_get_rxfh(काष्ठा net_device *netdev, u32 *indir, u8 *key,
 			    u8 *hfunc)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	int err = 0;
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक err = 0;
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
 
-	if (adapter->hw.mac.type >= ixgbe_mac_X550_vf) {
-		if (key)
-			memcpy(key, adapter->rss_key,
+	अगर (adapter->hw.mac.type >= ixgbe_mac_X550_vf) अणु
+		अगर (key)
+			स_नकल(key, adapter->rss_key,
 			       ixgbevf_get_rxfh_key_size(netdev));
 
-		if (indir) {
-			int i;
+		अगर (indir) अणु
+			पूर्णांक i;
 
-			for (i = 0; i < IXGBEVF_X550_VFRETA_SIZE; i++)
+			क्रम (i = 0; i < IXGBEVF_X550_VFRETA_SIZE; i++)
 				indir[i] = adapter->rss_indir_tbl[i];
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* If neither indirection table nor hash key was requested
-		 *  - just return a success avoiding taking any locks.
+		 *  - just वापस a success aव्योमing taking any locks.
 		 */
-		if (!indir && !key)
-			return 0;
+		अगर (!indir && !key)
+			वापस 0;
 
 		spin_lock_bh(&adapter->mbx_lock);
-		if (indir)
+		अगर (indir)
 			err = ixgbevf_get_reta_locked(&adapter->hw, indir,
 						      adapter->num_rx_queues);
 
-		if (!err && key)
+		अगर (!err && key)
 			err = ixgbevf_get_rss_key_locked(&adapter->hw, key);
 
 		spin_unlock_bh(&adapter->mbx_lock);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u32 ixgbevf_get_priv_flags(struct net_device *netdev)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल u32 ixgbevf_get_priv_flags(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 	u32 priv_flags = 0;
 
-	if (adapter->flags & IXGBEVF_FLAGS_LEGACY_RX)
+	अगर (adapter->flags & IXGBEVF_FLAGS_LEGACY_RX)
 		priv_flags |= IXGBEVF_PRIV_FLAGS_LEGACY_RX;
 
-	return priv_flags;
-}
+	वापस priv_flags;
+पूर्ण
 
-static int ixgbevf_set_priv_flags(struct net_device *netdev, u32 priv_flags)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	unsigned int flags = adapter->flags;
+अटल पूर्णांक ixgbevf_set_priv_flags(काष्ठा net_device *netdev, u32 priv_flags)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	अचिन्हित पूर्णांक flags = adapter->flags;
 
 	flags &= ~IXGBEVF_FLAGS_LEGACY_RX;
-	if (priv_flags & IXGBEVF_PRIV_FLAGS_LEGACY_RX)
+	अगर (priv_flags & IXGBEVF_PRIV_FLAGS_LEGACY_RX)
 		flags |= IXGBEVF_FLAGS_LEGACY_RX;
 
-	if (flags != adapter->flags) {
+	अगर (flags != adapter->flags) अणु
 		adapter->flags = flags;
 
-		/* reset interface to repopulate queues */
-		if (netif_running(netdev))
+		/* reset पूर्णांकerface to repopulate queues */
+		अगर (netअगर_running(netdev))
 			ixgbevf_reinit_locked(adapter);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ethtool_ops ixgbevf_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops ixgbevf_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS,
 	.get_drvinfo		= ixgbevf_get_drvinfo,
 	.get_regs_len		= ixgbevf_get_regs_len,
@@ -989,9 +990,9 @@ static const struct ethtool_ops ixgbevf_ethtool_ops = {
 	.get_link_ksettings	= ixgbevf_get_link_ksettings,
 	.get_priv_flags		= ixgbevf_get_priv_flags,
 	.set_priv_flags		= ixgbevf_set_priv_flags,
-};
+पूर्ण;
 
-void ixgbevf_set_ethtool_ops(struct net_device *netdev)
-{
+व्योम ixgbevf_set_ethtool_ops(काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = &ixgbevf_ethtool_ops;
-}
+पूर्ण

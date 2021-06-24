@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/buffer_head.h>
-#include <linux/slab.h>
-#include "minix.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/slab.h>
+#समावेश "minix.h"
 
-enum {DEPTH = 3, DIRECT = 7};	/* Only double indirect */
+क्रमागत अणुDEPTH = 3, सूचीECT = 7पूर्ण;	/* Only द्विगुन indirect */
 
-typedef u16 block_t;	/* 16 bit, host order */
+प्रकार u16 block_t;	/* 16 bit, host order */
 
-static inline unsigned long block_to_cpu(block_t n)
-{
-	return n;
-}
+अटल अंतरभूत अचिन्हित दीर्घ block_to_cpu(block_t n)
+अणु
+	वापस n;
+पूर्ण
 
-static inline block_t cpu_to_block(unsigned long n)
-{
-	return n;
-}
+अटल अंतरभूत block_t cpu_to_block(अचिन्हित दीर्घ n)
+अणु
+	वापस n;
+पूर्ण
 
-static inline block_t *i_data(struct inode *inode)
-{
-	return (block_t *)minix_i(inode)->u.i1_data;
-}
+अटल अंतरभूत block_t *i_data(काष्ठा inode *inode)
+अणु
+	वापस (block_t *)minix_i(inode)->u.i1_data;
+पूर्ण
 
-static int block_to_path(struct inode * inode, long block, int offsets[DEPTH])
-{
-	int n = 0;
+अटल पूर्णांक block_to_path(काष्ठा inode * inode, दीर्घ block, पूर्णांक offsets[DEPTH])
+अणु
+	पूर्णांक n = 0;
 
-	if (block < 0) {
-		printk("MINIX-fs: block_to_path: block %ld < 0 on dev %pg\n",
+	अगर (block < 0) अणु
+		prपूर्णांकk("MINIX-fs: block_to_path: block %ld < 0 on dev %pg\n",
 			block, inode->i_sb->s_bdev);
-		return 0;
-	}
-	if ((u64)block * BLOCK_SIZE >= inode->i_sb->s_maxbytes)
-		return 0;
+		वापस 0;
+	पूर्ण
+	अगर ((u64)block * BLOCK_SIZE >= inode->i_sb->s_maxbytes)
+		वापस 0;
 
-	if (block < 7) {
+	अगर (block < 7) अणु
 		offsets[n++] = block;
-	} else if ((block -= 7) < 512) {
+	पूर्ण अन्यथा अगर ((block -= 7) < 512) अणु
 		offsets[n++] = 7;
 		offsets[n++] = block;
-	} else {
+	पूर्ण अन्यथा अणु
 		block -= 512;
 		offsets[n++] = 8;
 		offsets[n++] = block>>9;
 		offsets[n++] = block & 511;
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
-#include "itree_common.c"
+#समावेश "itree_common.c"
 
-int V1_minix_get_block(struct inode * inode, long block,
-			struct buffer_head *bh_result, int create)
-{
-	return get_block(inode, block, bh_result, create);
-}
+पूर्णांक V1_minix_get_block(काष्ठा inode * inode, दीर्घ block,
+			काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
+	वापस get_block(inode, block, bh_result, create);
+पूर्ण
 
-void V1_minix_truncate(struct inode * inode)
-{
+व्योम V1_minix_truncate(काष्ठा inode * inode)
+अणु
 	truncate(inode);
-}
+पूर्ण
 
-unsigned V1_minix_blocks(loff_t size, struct super_block *sb)
-{
-	return nblocks(size, sb);
-}
+अचिन्हित V1_minix_blocks(loff_t size, काष्ठा super_block *sb)
+अणु
+	वापस nblocks(size, sb);
+पूर्ण

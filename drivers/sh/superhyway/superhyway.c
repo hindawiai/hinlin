@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * drivers/sh/superhyway/superhyway.c
  *
@@ -6,233 +7,233 @@
  * Copyright (C) 2004, 2005  Paul Mundt <lethal@linux-sh.org>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/superhyway.h>
-#include <linux/string.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/superhyway.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
 
-static int superhyway_devices;
+अटल पूर्णांक superhyway_devices;
 
-static struct device superhyway_bus_device = {
+अटल काष्ठा device superhyway_bus_device = अणु
 	.init_name = "superhyway",
-};
+पूर्ण;
 
-static void superhyway_device_release(struct device *dev)
-{
-	struct superhyway_device *sdev = to_superhyway_device(dev);
+अटल व्योम superhyway_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा superhyway_device *sdev = to_superhyway_device(dev);
 
-	kfree(sdev->resource);
-	kfree(sdev);
-}
+	kमुक्त(sdev->resource);
+	kमुक्त(sdev);
+पूर्ण
 
 /**
  * superhyway_add_device - Add a SuperHyway module
  * @base: Physical address where module is mapped.
- * @sdev: SuperHyway device to add, or NULL to allocate a new one.
+ * @sdev: SuperHyway device to add, or शून्य to allocate a new one.
  * @bus: Bus where SuperHyway module resides.
  *
- * This is responsible for adding a new SuperHyway module. This sets up a new
- * struct superhyway_device for the module being added if @sdev == NULL.
+ * This is responsible क्रम adding a new SuperHyway module. This sets up a new
+ * काष्ठा superhyway_device क्रम the module being added अगर @sdev == शून्य.
  *
  * Devices are initially added in the order that they are scanned (from the
- * top-down of the memory map), and are assigned an ID based on the order that
+ * top-करोwn of the memory map), and are asचिन्हित an ID based on the order that
  * they are added. Any manual addition of a module will thus get the ID after
- * the devices already discovered regardless of where it resides in memory.
+ * the devices alपढ़ोy discovered regardless of where it resides in memory.
  *
- * Further work can and should be done in superhyway_scan_bus(), to be sure
- * that any new modules are properly discovered and subsequently registered.
+ * Further work can and should be करोne in superhyway_scan_bus(), to be sure
+ * that any new modules are properly discovered and subsequently रेजिस्टरed.
  */
-int superhyway_add_device(unsigned long base, struct superhyway_device *sdev,
-			  struct superhyway_bus *bus)
-{
-	struct superhyway_device *dev = sdev;
+पूर्णांक superhyway_add_device(अचिन्हित दीर्घ base, काष्ठा superhyway_device *sdev,
+			  काष्ठा superhyway_bus *bus)
+अणु
+	काष्ठा superhyway_device *dev = sdev;
 
-	if (!dev) {
-		dev = kzalloc(sizeof(struct superhyway_device), GFP_KERNEL);
-		if (!dev)
-			return -ENOMEM;
+	अगर (!dev) अणु
+		dev = kzalloc(माप(काष्ठा superhyway_device), GFP_KERNEL);
+		अगर (!dev)
+			वापस -ENOMEM;
 
-	}
+	पूर्ण
 
 	dev->bus = bus;
-	superhyway_read_vcr(dev, base, &dev->vcr);
+	superhyway_पढ़ो_vcr(dev, base, &dev->vcr);
 
-	if (!dev->resource) {
-		dev->resource = kzalloc(sizeof(struct resource), GFP_KERNEL);
-		if (!dev->resource) {
-			kfree(dev);
-			return -ENOMEM;
-		}
+	अगर (!dev->resource) अणु
+		dev->resource = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
+		अगर (!dev->resource) अणु
+			kमुक्त(dev);
+			वापस -ENOMEM;
+		पूर्ण
 
 		dev->resource->name	= dev->name;
 		dev->resource->start	= base;
 		dev->resource->end	= dev->resource->start + 0x01000000;
-	}
+	पूर्ण
 
 	dev->dev.parent		= &superhyway_bus_device;
 	dev->dev.bus		= &superhyway_bus_type;
 	dev->dev.release	= superhyway_device_release;
 	dev->id.id		= dev->vcr.mod_id;
 
-	sprintf(dev->name, "SuperHyway device %04x", dev->id.id);
+	प्र_लिखो(dev->name, "SuperHyway device %04x", dev->id.id);
 	dev_set_name(&dev->dev, "%02x", superhyway_devices);
 
 	superhyway_devices++;
 
-	return device_register(&dev->dev);
-}
+	वापस device_रेजिस्टर(&dev->dev);
+पूर्ण
 
-int superhyway_add_devices(struct superhyway_bus *bus,
-			   struct superhyway_device **devices,
-			   int nr_devices)
-{
-	int i, ret = 0;
+पूर्णांक superhyway_add_devices(काष्ठा superhyway_bus *bus,
+			   काष्ठा superhyway_device **devices,
+			   पूर्णांक nr_devices)
+अणु
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < nr_devices; i++) {
-		struct superhyway_device *dev = devices[i];
+	क्रम (i = 0; i < nr_devices; i++) अणु
+		काष्ठा superhyway_device *dev = devices[i];
 		ret |= superhyway_add_device(dev->resource[0].start, dev, bus);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init superhyway_init(void)
-{
-	struct superhyway_bus *bus;
-	int ret;
+अटल पूर्णांक __init superhyway_init(व्योम)
+अणु
+	काष्ठा superhyway_bus *bus;
+	पूर्णांक ret;
 
-	ret = device_register(&superhyway_bus_device);
-	if (unlikely(ret))
-		return ret;
+	ret = device_रेजिस्टर(&superhyway_bus_device);
+	अगर (unlikely(ret))
+		वापस ret;
 
-	for (bus = superhyway_channels; bus->ops; bus++)
+	क्रम (bus = superhyway_channels; bus->ops; bus++)
 		ret |= superhyway_scan_bus(bus);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 postcore_initcall(superhyway_init);
 
-static const struct superhyway_device_id *
-superhyway_match_id(const struct superhyway_device_id *ids,
-		    struct superhyway_device *dev)
-{
-	while (ids->id) {
-		if (ids->id == dev->id.id)
-			return ids;
+अटल स्थिर काष्ठा superhyway_device_id *
+superhyway_match_id(स्थिर काष्ठा superhyway_device_id *ids,
+		    काष्ठा superhyway_device *dev)
+अणु
+	जबतक (ids->id) अणु
+		अगर (ids->id == dev->id.id)
+			वापस ids;
 
 		ids++;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int superhyway_device_probe(struct device *dev)
-{
-	struct superhyway_device *shyway_dev = to_superhyway_device(dev);
-	struct superhyway_driver *shyway_drv = to_superhyway_driver(dev->driver);
+अटल पूर्णांक superhyway_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा superhyway_device *shyway_dev = to_superhyway_device(dev);
+	काष्ठा superhyway_driver *shyway_drv = to_superhyway_driver(dev->driver);
 
-	if (shyway_drv && shyway_drv->probe) {
-		const struct superhyway_device_id *id;
+	अगर (shyway_drv && shyway_drv->probe) अणु
+		स्थिर काष्ठा superhyway_device_id *id;
 
 		id = superhyway_match_id(shyway_drv->id_table, shyway_dev);
-		if (id)
-			return shyway_drv->probe(shyway_dev, id);
-	}
+		अगर (id)
+			वापस shyway_drv->probe(shyway_dev, id);
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int superhyway_device_remove(struct device *dev)
-{
-	struct superhyway_device *shyway_dev = to_superhyway_device(dev);
-	struct superhyway_driver *shyway_drv = to_superhyway_driver(dev->driver);
+अटल पूर्णांक superhyway_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा superhyway_device *shyway_dev = to_superhyway_device(dev);
+	काष्ठा superhyway_driver *shyway_drv = to_superhyway_driver(dev->driver);
 
-	if (shyway_drv && shyway_drv->remove) {
-		shyway_drv->remove(shyway_dev);
-		return 0;
-	}
+	अगर (shyway_drv && shyway_drv->हटाओ) अणु
+		shyway_drv->हटाओ(shyway_dev);
+		वापस 0;
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /**
- * superhyway_register_driver - Register a new SuperHyway driver
- * @drv: SuperHyway driver to register.
+ * superhyway_रेजिस्टर_driver - Register a new SuperHyway driver
+ * @drv: SuperHyway driver to रेजिस्टर.
  *
- * This registers the passed in @drv. Any devices matching the id table will
- * automatically be populated and handed off to the driver's specified probe
+ * This रेजिस्टरs the passed in @drv. Any devices matching the id table will
+ * स्वतःmatically be populated and handed off to the driver's specअगरied probe
  * routine.
  */
-int superhyway_register_driver(struct superhyway_driver *drv)
-{
+पूर्णांक superhyway_रेजिस्टर_driver(काष्ठा superhyway_driver *drv)
+अणु
 	drv->drv.name	= drv->name;
 	drv->drv.bus	= &superhyway_bus_type;
 
-	return driver_register(&drv->drv);
-}
+	वापस driver_रेजिस्टर(&drv->drv);
+पूर्ण
 
 /**
- * superhyway_unregister_driver - Unregister a SuperHyway driver
- * @drv: SuperHyway driver to unregister.
+ * superhyway_unरेजिस्टर_driver - Unरेजिस्टर a SuperHyway driver
+ * @drv: SuperHyway driver to unरेजिस्टर.
  *
- * This cleans up after superhyway_register_driver(), and should be invoked in
- * the exit path of any module drivers.
+ * This cleans up after superhyway_रेजिस्टर_driver(), and should be invoked in
+ * the निकास path of any module drivers.
  */
-void superhyway_unregister_driver(struct superhyway_driver *drv)
-{
-	driver_unregister(&drv->drv);
-}
+व्योम superhyway_unरेजिस्टर_driver(काष्ठा superhyway_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->drv);
+पूर्ण
 
-static int superhyway_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct superhyway_device *shyway_dev = to_superhyway_device(dev);
-	struct superhyway_driver *shyway_drv = to_superhyway_driver(drv);
-	const struct superhyway_device_id *ids = shyway_drv->id_table;
+अटल पूर्णांक superhyway_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा superhyway_device *shyway_dev = to_superhyway_device(dev);
+	काष्ठा superhyway_driver *shyway_drv = to_superhyway_driver(drv);
+	स्थिर काष्ठा superhyway_device_id *ids = shyway_drv->id_table;
 
-	if (!ids)
-		return -EINVAL;
-	if (superhyway_match_id(ids, shyway_dev))
-		return 1;
+	अगर (!ids)
+		वापस -EINVAL;
+	अगर (superhyway_match_id(ids, shyway_dev))
+		वापस 1;
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-struct bus_type superhyway_bus_type = {
+काष्ठा bus_type superhyway_bus_type = अणु
 	.name		= "superhyway",
 	.match		= superhyway_bus_match,
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 	.dev_groups	= superhyway_dev_groups,
-#endif
+#पूर्ण_अगर
 	.probe		= superhyway_device_probe,
-	.remove		= superhyway_device_remove,
-};
+	.हटाओ		= superhyway_device_हटाओ,
+पूर्ण;
 
-static int __init superhyway_bus_init(void)
-{
-	return bus_register(&superhyway_bus_type);
-}
+अटल पूर्णांक __init superhyway_bus_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&superhyway_bus_type);
+पूर्ण
 
-static void __exit superhyway_bus_exit(void)
-{
-	device_unregister(&superhyway_bus_device);
-	bus_unregister(&superhyway_bus_type);
-}
+अटल व्योम __निकास superhyway_bus_निकास(व्योम)
+अणु
+	device_unरेजिस्टर(&superhyway_bus_device);
+	bus_unरेजिस्टर(&superhyway_bus_type);
+पूर्ण
 
 core_initcall(superhyway_bus_init);
-module_exit(superhyway_bus_exit);
+module_निकास(superhyway_bus_निकास);
 
 EXPORT_SYMBOL(superhyway_bus_type);
 EXPORT_SYMBOL(superhyway_add_device);
 EXPORT_SYMBOL(superhyway_add_devices);
-EXPORT_SYMBOL(superhyway_register_driver);
-EXPORT_SYMBOL(superhyway_unregister_driver);
+EXPORT_SYMBOL(superhyway_रेजिस्टर_driver);
+EXPORT_SYMBOL(superhyway_unरेजिस्टर_driver);
 
 MODULE_LICENSE("GPL");

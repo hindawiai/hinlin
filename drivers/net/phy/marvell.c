@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * drivers/net/phy/marvell.c
  *
- * Driver for Marvell PHYs
+ * Driver क्रम Marvell PHYs
  *
  * Author: Andy Fleming
  *
@@ -10,646 +11,646 @@
  *
  * Copyright (c) 2013 Michael Stapelberg <michael@stapelberg.de>
  */
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <linux/errno.h>
-#include <linux/unistd.h>
-#include <linux/hwmon.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/spinlock.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/mii.h>
-#include <linux/ethtool.h>
-#include <linux/ethtool_netlink.h>
-#include <linux/phy.h>
-#include <linux/marvell_phy.h>
-#include <linux/bitfield.h>
-#include <linux/of.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/unistd.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/ethtool_netlink.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/marvell_phy.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/of.h>
 
-#include <linux/io.h>
-#include <asm/irq.h>
-#include <linux/uaccess.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/uaccess.h>
 
-#define MII_MARVELL_PHY_PAGE		22
-#define MII_MARVELL_COPPER_PAGE		0x00
-#define MII_MARVELL_FIBER_PAGE		0x01
-#define MII_MARVELL_MSCR_PAGE		0x02
-#define MII_MARVELL_LED_PAGE		0x03
-#define MII_MARVELL_VCT5_PAGE		0x05
-#define MII_MARVELL_MISC_TEST_PAGE	0x06
-#define MII_MARVELL_VCT7_PAGE		0x07
-#define MII_MARVELL_WOL_PAGE		0x11
+#घोषणा MII_MARVELL_PHY_PAGE		22
+#घोषणा MII_MARVELL_COPPER_PAGE		0x00
+#घोषणा MII_MARVELL_FIBER_PAGE		0x01
+#घोषणा MII_MARVELL_MSCR_PAGE		0x02
+#घोषणा MII_MARVELL_LED_PAGE		0x03
+#घोषणा MII_MARVELL_VCT5_PAGE		0x05
+#घोषणा MII_MARVELL_MISC_TEST_PAGE	0x06
+#घोषणा MII_MARVELL_VCT7_PAGE		0x07
+#घोषणा MII_MARVELL_WOL_PAGE		0x11
 
-#define MII_M1011_IEVENT		0x13
-#define MII_M1011_IEVENT_CLEAR		0x0000
+#घोषणा MII_M1011_IEVENT		0x13
+#घोषणा MII_M1011_IEVENT_CLEAR		0x0000
 
-#define MII_M1011_IMASK			0x12
-#define MII_M1011_IMASK_INIT		0x6400
-#define MII_M1011_IMASK_CLEAR		0x0000
+#घोषणा MII_M1011_IMASK			0x12
+#घोषणा MII_M1011_IMASK_INIT		0x6400
+#घोषणा MII_M1011_IMASK_CLEAR		0x0000
 
-#define MII_M1011_PHY_SCR			0x10
-#define MII_M1011_PHY_SCR_DOWNSHIFT_EN		BIT(11)
-#define MII_M1011_PHY_SCR_DOWNSHIFT_MASK	GENMASK(14, 12)
-#define MII_M1011_PHY_SCR_DOWNSHIFT_MAX		8
-#define MII_M1011_PHY_SCR_MDI			(0x0 << 5)
-#define MII_M1011_PHY_SCR_MDI_X			(0x1 << 5)
-#define MII_M1011_PHY_SCR_AUTO_CROSS		(0x3 << 5)
+#घोषणा MII_M1011_PHY_SCR			0x10
+#घोषणा MII_M1011_PHY_SCR_DOWNSHIFT_EN		BIT(11)
+#घोषणा MII_M1011_PHY_SCR_DOWNSHIFT_MASK	GENMASK(14, 12)
+#घोषणा MII_M1011_PHY_SCR_DOWNSHIFT_MAX		8
+#घोषणा MII_M1011_PHY_SCR_MDI			(0x0 << 5)
+#घोषणा MII_M1011_PHY_SCR_MDI_X			(0x1 << 5)
+#घोषणा MII_M1011_PHY_SCR_AUTO_CROSS		(0x3 << 5)
 
-#define MII_M1011_PHY_SSR			0x11
-#define MII_M1011_PHY_SSR_DOWNSHIFT		BIT(5)
+#घोषणा MII_M1011_PHY_SSR			0x11
+#घोषणा MII_M1011_PHY_SSR_DOWNSHIFT		BIT(5)
 
-#define MII_M1111_PHY_LED_CONTROL	0x18
-#define MII_M1111_PHY_LED_DIRECT	0x4100
-#define MII_M1111_PHY_LED_COMBINE	0x411c
-#define MII_M1111_PHY_EXT_CR		0x14
-#define MII_M1111_PHY_EXT_CR_DOWNSHIFT_MASK	GENMASK(11, 9)
-#define MII_M1111_PHY_EXT_CR_DOWNSHIFT_MAX	8
-#define MII_M1111_PHY_EXT_CR_DOWNSHIFT_EN	BIT(8)
-#define MII_M1111_RGMII_RX_DELAY	BIT(7)
-#define MII_M1111_RGMII_TX_DELAY	BIT(1)
-#define MII_M1111_PHY_EXT_SR		0x1b
+#घोषणा MII_M1111_PHY_LED_CONTROL	0x18
+#घोषणा MII_M1111_PHY_LED_सूचीECT	0x4100
+#घोषणा MII_M1111_PHY_LED_COMBINE	0x411c
+#घोषणा MII_M1111_PHY_EXT_CR		0x14
+#घोषणा MII_M1111_PHY_EXT_CR_DOWNSHIFT_MASK	GENMASK(11, 9)
+#घोषणा MII_M1111_PHY_EXT_CR_DOWNSHIFT_MAX	8
+#घोषणा MII_M1111_PHY_EXT_CR_DOWNSHIFT_EN	BIT(8)
+#घोषणा MII_M1111_RGMII_RX_DELAY	BIT(7)
+#घोषणा MII_M1111_RGMII_TX_DELAY	BIT(1)
+#घोषणा MII_M1111_PHY_EXT_SR		0x1b
 
-#define MII_M1111_HWCFG_MODE_MASK		0xf
-#define MII_M1111_HWCFG_MODE_FIBER_RGMII	0x3
-#define MII_M1111_HWCFG_MODE_SGMII_NO_CLK	0x4
-#define MII_M1111_HWCFG_MODE_RTBI		0x7
-#define MII_M1111_HWCFG_MODE_COPPER_1000X_AN	0x8
-#define MII_M1111_HWCFG_MODE_COPPER_RTBI	0x9
-#define MII_M1111_HWCFG_MODE_COPPER_RGMII	0xb
-#define MII_M1111_HWCFG_MODE_COPPER_1000X_NOAN	0xc
-#define MII_M1111_HWCFG_SERIAL_AN_BYPASS	BIT(12)
-#define MII_M1111_HWCFG_FIBER_COPPER_RES	BIT(13)
-#define MII_M1111_HWCFG_FIBER_COPPER_AUTO	BIT(15)
+#घोषणा MII_M1111_HWCFG_MODE_MASK		0xf
+#घोषणा MII_M1111_HWCFG_MODE_FIBER_RGMII	0x3
+#घोषणा MII_M1111_HWCFG_MODE_SGMII_NO_CLK	0x4
+#घोषणा MII_M1111_HWCFG_MODE_RTBI		0x7
+#घोषणा MII_M1111_HWCFG_MODE_COPPER_1000X_AN	0x8
+#घोषणा MII_M1111_HWCFG_MODE_COPPER_RTBI	0x9
+#घोषणा MII_M1111_HWCFG_MODE_COPPER_RGMII	0xb
+#घोषणा MII_M1111_HWCFG_MODE_COPPER_1000X_NOAN	0xc
+#घोषणा MII_M1111_HWCFG_SERIAL_AN_BYPASS	BIT(12)
+#घोषणा MII_M1111_HWCFG_FIBER_COPPER_RES	BIT(13)
+#घोषणा MII_M1111_HWCFG_FIBER_COPPER_AUTO	BIT(15)
 
-#define MII_88E1121_PHY_MSCR_REG	21
-#define MII_88E1121_PHY_MSCR_RX_DELAY	BIT(5)
-#define MII_88E1121_PHY_MSCR_TX_DELAY	BIT(4)
-#define MII_88E1121_PHY_MSCR_DELAY_MASK	(BIT(5) | BIT(4))
+#घोषणा MII_88E1121_PHY_MSCR_REG	21
+#घोषणा MII_88E1121_PHY_MSCR_RX_DELAY	BIT(5)
+#घोषणा MII_88E1121_PHY_MSCR_TX_DELAY	BIT(4)
+#घोषणा MII_88E1121_PHY_MSCR_DELAY_MASK	(BIT(5) | BIT(4))
 
-#define MII_88E1121_MISC_TEST				0x1a
-#define MII_88E1510_MISC_TEST_TEMP_THRESHOLD_MASK	0x1f00
-#define MII_88E1510_MISC_TEST_TEMP_THRESHOLD_SHIFT	8
-#define MII_88E1510_MISC_TEST_TEMP_IRQ_EN		BIT(7)
-#define MII_88E1510_MISC_TEST_TEMP_IRQ			BIT(6)
-#define MII_88E1121_MISC_TEST_TEMP_SENSOR_EN		BIT(5)
-#define MII_88E1121_MISC_TEST_TEMP_MASK			0x1f
+#घोषणा MII_88E1121_MISC_TEST				0x1a
+#घोषणा MII_88E1510_MISC_TEST_TEMP_THRESHOLD_MASK	0x1f00
+#घोषणा MII_88E1510_MISC_TEST_TEMP_THRESHOLD_SHIFT	8
+#घोषणा MII_88E1510_MISC_TEST_TEMP_IRQ_EN		BIT(7)
+#घोषणा MII_88E1510_MISC_TEST_TEMP_IRQ			BIT(6)
+#घोषणा MII_88E1121_MISC_TEST_TEMP_SENSOR_EN		BIT(5)
+#घोषणा MII_88E1121_MISC_TEST_TEMP_MASK			0x1f
 
-#define MII_88E1510_TEMP_SENSOR		0x1b
-#define MII_88E1510_TEMP_SENSOR_MASK	0xff
+#घोषणा MII_88E1510_TEMP_SENSOR		0x1b
+#घोषणा MII_88E1510_TEMP_SENSOR_MASK	0xff
 
-#define MII_88E1540_COPPER_CTRL3	0x1a
-#define MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_MASK	GENMASK(11, 10)
-#define MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_00MS	0
-#define MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_10MS	1
-#define MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_20MS	2
-#define MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_40MS	3
-#define MII_88E1540_COPPER_CTRL3_FAST_LINK_DOWN		BIT(9)
+#घोषणा MII_88E1540_COPPER_CTRL3	0x1a
+#घोषणा MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_MASK	GENMASK(11, 10)
+#घोषणा MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_00MS	0
+#घोषणा MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_10MS	1
+#घोषणा MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_20MS	2
+#घोषणा MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_40MS	3
+#घोषणा MII_88E1540_COPPER_CTRL3_FAST_LINK_DOWN		BIT(9)
 
-#define MII_88E6390_MISC_TEST		0x1b
-#define MII_88E6390_MISC_TEST_TEMP_SENSOR_ENABLE_SAMPLE_1S	(0x0 << 14)
-#define MII_88E6390_MISC_TEST_TEMP_SENSOR_ENABLE		(0x1 << 14)
-#define MII_88E6390_MISC_TEST_TEMP_SENSOR_ENABLE_ONESHOT	(0x2 << 14)
-#define MII_88E6390_MISC_TEST_TEMP_SENSOR_DISABLE		(0x3 << 14)
-#define MII_88E6390_MISC_TEST_TEMP_SENSOR_MASK			(0x3 << 14)
-#define MII_88E6393_MISC_TEST_SAMPLES_2048	(0x0 << 11)
-#define MII_88E6393_MISC_TEST_SAMPLES_4096	(0x1 << 11)
-#define MII_88E6393_MISC_TEST_SAMPLES_8192	(0x2 << 11)
-#define MII_88E6393_MISC_TEST_SAMPLES_16384	(0x3 << 11)
-#define MII_88E6393_MISC_TEST_SAMPLES_MASK	(0x3 << 11)
-#define MII_88E6393_MISC_TEST_RATE_2_3MS	(0x5 << 8)
-#define MII_88E6393_MISC_TEST_RATE_6_4MS	(0x6 << 8)
-#define MII_88E6393_MISC_TEST_RATE_11_9MS	(0x7 << 8)
-#define MII_88E6393_MISC_TEST_RATE_MASK		(0x7 << 8)
+#घोषणा MII_88E6390_MISC_TEST		0x1b
+#घोषणा MII_88E6390_MISC_TEST_TEMP_SENSOR_ENABLE_SAMPLE_1S	(0x0 << 14)
+#घोषणा MII_88E6390_MISC_TEST_TEMP_SENSOR_ENABLE		(0x1 << 14)
+#घोषणा MII_88E6390_MISC_TEST_TEMP_SENSOR_ENABLE_ONESHOT	(0x2 << 14)
+#घोषणा MII_88E6390_MISC_TEST_TEMP_SENSOR_DISABLE		(0x3 << 14)
+#घोषणा MII_88E6390_MISC_TEST_TEMP_SENSOR_MASK			(0x3 << 14)
+#घोषणा MII_88E6393_MISC_TEST_SAMPLES_2048	(0x0 << 11)
+#घोषणा MII_88E6393_MISC_TEST_SAMPLES_4096	(0x1 << 11)
+#घोषणा MII_88E6393_MISC_TEST_SAMPLES_8192	(0x2 << 11)
+#घोषणा MII_88E6393_MISC_TEST_SAMPLES_16384	(0x3 << 11)
+#घोषणा MII_88E6393_MISC_TEST_SAMPLES_MASK	(0x3 << 11)
+#घोषणा MII_88E6393_MISC_TEST_RATE_2_3MS	(0x5 << 8)
+#घोषणा MII_88E6393_MISC_TEST_RATE_6_4MS	(0x6 << 8)
+#घोषणा MII_88E6393_MISC_TEST_RATE_11_9MS	(0x7 << 8)
+#घोषणा MII_88E6393_MISC_TEST_RATE_MASK		(0x7 << 8)
 
-#define MII_88E6390_TEMP_SENSOR		0x1c
-#define MII_88E6393_TEMP_SENSOR_THRESHOLD_MASK	0xff00
-#define MII_88E6393_TEMP_SENSOR_THRESHOLD_SHIFT	8
-#define MII_88E6390_TEMP_SENSOR_MASK		0xff
-#define MII_88E6390_TEMP_SENSOR_SAMPLES		10
+#घोषणा MII_88E6390_TEMP_SENSOR		0x1c
+#घोषणा MII_88E6393_TEMP_SENSOR_THRESHOLD_MASK	0xff00
+#घोषणा MII_88E6393_TEMP_SENSOR_THRESHOLD_SHIFT	8
+#घोषणा MII_88E6390_TEMP_SENSOR_MASK		0xff
+#घोषणा MII_88E6390_TEMP_SENSOR_SAMPLES		10
 
-#define MII_88E1318S_PHY_MSCR1_REG	16
-#define MII_88E1318S_PHY_MSCR1_PAD_ODD	BIT(6)
+#घोषणा MII_88E1318S_PHY_MSCR1_REG	16
+#घोषणा MII_88E1318S_PHY_MSCR1_PAD_ODD	BIT(6)
 
-/* Copper Specific Interrupt Enable Register */
-#define MII_88E1318S_PHY_CSIER				0x12
+/* Copper Specअगरic Interrupt Enable Register */
+#घोषणा MII_88E1318S_PHY_CSIER				0x12
 /* WOL Event Interrupt Enable */
-#define MII_88E1318S_PHY_CSIER_WOL_EIE			BIT(7)
+#घोषणा MII_88E1318S_PHY_CSIER_WOL_EIE			BIT(7)
 
 /* LED Timer Control Register */
-#define MII_88E1318S_PHY_LED_TCR			0x12
-#define MII_88E1318S_PHY_LED_TCR_FORCE_INT		BIT(15)
-#define MII_88E1318S_PHY_LED_TCR_INTn_ENABLE		BIT(7)
-#define MII_88E1318S_PHY_LED_TCR_INT_ACTIVE_LOW		BIT(11)
+#घोषणा MII_88E1318S_PHY_LED_TCR			0x12
+#घोषणा MII_88E1318S_PHY_LED_TCR_FORCE_INT		BIT(15)
+#घोषणा MII_88E1318S_PHY_LED_TCR_INTn_ENABLE		BIT(7)
+#घोषणा MII_88E1318S_PHY_LED_TCR_INT_ACTIVE_LOW		BIT(11)
 
-/* Magic Packet MAC address registers */
-#define MII_88E1318S_PHY_MAGIC_PACKET_WORD2		0x17
-#define MII_88E1318S_PHY_MAGIC_PACKET_WORD1		0x18
-#define MII_88E1318S_PHY_MAGIC_PACKET_WORD0		0x19
+/* Magic Packet MAC address रेजिस्टरs */
+#घोषणा MII_88E1318S_PHY_MAGIC_PACKET_WORD2		0x17
+#घोषणा MII_88E1318S_PHY_MAGIC_PACKET_WORD1		0x18
+#घोषणा MII_88E1318S_PHY_MAGIC_PACKET_WORD0		0x19
 
-#define MII_88E1318S_PHY_WOL_CTRL				0x10
-#define MII_88E1318S_PHY_WOL_CTRL_CLEAR_WOL_STATUS		BIT(12)
-#define MII_88E1318S_PHY_WOL_CTRL_MAGIC_PACKET_MATCH_ENABLE	BIT(14)
+#घोषणा MII_88E1318S_PHY_WOL_CTRL				0x10
+#घोषणा MII_88E1318S_PHY_WOL_CTRL_CLEAR_WOL_STATUS		BIT(12)
+#घोषणा MII_88E1318S_PHY_WOL_CTRL_MAGIC_PACKET_MATCH_ENABLE	BIT(14)
 
-#define MII_PHY_LED_CTRL	        16
-#define MII_88E1121_PHY_LED_DEF		0x0030
-#define MII_88E1510_PHY_LED_DEF		0x1177
-#define MII_88E1510_PHY_LED0_LINK_LED1_ACTIVE	0x1040
+#घोषणा MII_PHY_LED_CTRL	        16
+#घोषणा MII_88E1121_PHY_LED_DEF		0x0030
+#घोषणा MII_88E1510_PHY_LED_DEF		0x1177
+#घोषणा MII_88E1510_PHY_LED0_LINK_LED1_ACTIVE	0x1040
 
-#define MII_M1011_PHY_STATUS		0x11
-#define MII_M1011_PHY_STATUS_1000	0x8000
-#define MII_M1011_PHY_STATUS_100	0x4000
-#define MII_M1011_PHY_STATUS_SPD_MASK	0xc000
-#define MII_M1011_PHY_STATUS_FULLDUPLEX	0x2000
-#define MII_M1011_PHY_STATUS_RESOLVED	0x0800
-#define MII_M1011_PHY_STATUS_LINK	0x0400
+#घोषणा MII_M1011_PHY_STATUS		0x11
+#घोषणा MII_M1011_PHY_STATUS_1000	0x8000
+#घोषणा MII_M1011_PHY_STATUS_100	0x4000
+#घोषणा MII_M1011_PHY_STATUS_SPD_MASK	0xc000
+#घोषणा MII_M1011_PHY_STATUS_FULLDUPLEX	0x2000
+#घोषणा MII_M1011_PHY_STATUS_RESOLVED	0x0800
+#घोषणा MII_M1011_PHY_STATUS_LINK	0x0400
 
-#define MII_88E3016_PHY_SPEC_CTRL	0x10
-#define MII_88E3016_DISABLE_SCRAMBLER	0x0200
-#define MII_88E3016_AUTO_MDIX_CROSSOVER	0x0030
+#घोषणा MII_88E3016_PHY_SPEC_CTRL	0x10
+#घोषणा MII_88E3016_DISABLE_SCRAMBLER	0x0200
+#घोषणा MII_88E3016_AUTO_MDIX_CROSSOVER	0x0030
 
-#define MII_88E1510_GEN_CTRL_REG_1		0x14
-#define MII_88E1510_GEN_CTRL_REG_1_MODE_MASK	0x7
-#define MII_88E1510_GEN_CTRL_REG_1_MODE_SGMII	0x1	/* SGMII to copper */
-#define MII_88E1510_GEN_CTRL_REG_1_RESET	0x8000	/* Soft reset */
+#घोषणा MII_88E1510_GEN_CTRL_REG_1		0x14
+#घोषणा MII_88E1510_GEN_CTRL_REG_1_MODE_MASK	0x7
+#घोषणा MII_88E1510_GEN_CTRL_REG_1_MODE_SGMII	0x1	/* SGMII to copper */
+#घोषणा MII_88E1510_GEN_CTRL_REG_1_RESET	0x8000	/* Soft reset */
 
-#define MII_VCT5_TX_RX_MDI0_COUPLING	0x10
-#define MII_VCT5_TX_RX_MDI1_COUPLING	0x11
-#define MII_VCT5_TX_RX_MDI2_COUPLING	0x12
-#define MII_VCT5_TX_RX_MDI3_COUPLING	0x13
-#define MII_VCT5_TX_RX_AMPLITUDE_MASK	0x7f00
-#define MII_VCT5_TX_RX_AMPLITUDE_SHIFT	8
-#define MII_VCT5_TX_RX_COUPLING_POSITIVE_REFLECTION	BIT(15)
+#घोषणा MII_VCT5_TX_RX_MDI0_COUPLING	0x10
+#घोषणा MII_VCT5_TX_RX_MDI1_COUPLING	0x11
+#घोषणा MII_VCT5_TX_RX_MDI2_COUPLING	0x12
+#घोषणा MII_VCT5_TX_RX_MDI3_COUPLING	0x13
+#घोषणा MII_VCT5_TX_RX_AMPLITUDE_MASK	0x7f00
+#घोषणा MII_VCT5_TX_RX_AMPLITUDE_SHIFT	8
+#घोषणा MII_VCT5_TX_RX_COUPLING_POSITIVE_REFLECTION	BIT(15)
 
-#define MII_VCT5_CTRL				0x17
-#define MII_VCT5_CTRL_ENABLE				BIT(15)
-#define MII_VCT5_CTRL_COMPLETE				BIT(14)
-#define MII_VCT5_CTRL_TX_SAME_CHANNEL			(0x0 << 11)
-#define MII_VCT5_CTRL_TX0_CHANNEL			(0x4 << 11)
-#define MII_VCT5_CTRL_TX1_CHANNEL			(0x5 << 11)
-#define MII_VCT5_CTRL_TX2_CHANNEL			(0x6 << 11)
-#define MII_VCT5_CTRL_TX3_CHANNEL			(0x7 << 11)
-#define MII_VCT5_CTRL_SAMPLES_2				(0x0 << 8)
-#define MII_VCT5_CTRL_SAMPLES_4				(0x1 << 8)
-#define MII_VCT5_CTRL_SAMPLES_8				(0x2 << 8)
-#define MII_VCT5_CTRL_SAMPLES_16			(0x3 << 8)
-#define MII_VCT5_CTRL_SAMPLES_32			(0x4 << 8)
-#define MII_VCT5_CTRL_SAMPLES_64			(0x5 << 8)
-#define MII_VCT5_CTRL_SAMPLES_128			(0x6 << 8)
-#define MII_VCT5_CTRL_SAMPLES_DEFAULT			(0x6 << 8)
-#define MII_VCT5_CTRL_SAMPLES_256			(0x7 << 8)
-#define MII_VCT5_CTRL_SAMPLES_SHIFT			8
-#define MII_VCT5_CTRL_MODE_MAXIMUM_PEEK			(0x0 << 6)
-#define MII_VCT5_CTRL_MODE_FIRST_LAST_PEEK		(0x1 << 6)
-#define MII_VCT5_CTRL_MODE_OFFSET			(0x2 << 6)
-#define MII_VCT5_CTRL_SAMPLE_POINT			(0x3 << 6)
-#define MII_VCT5_CTRL_PEEK_HYST_DEFAULT			3
+#घोषणा MII_VCT5_CTRL				0x17
+#घोषणा MII_VCT5_CTRL_ENABLE				BIT(15)
+#घोषणा MII_VCT5_CTRL_COMPLETE				BIT(14)
+#घोषणा MII_VCT5_CTRL_TX_SAME_CHANNEL			(0x0 << 11)
+#घोषणा MII_VCT5_CTRL_TX0_CHANNEL			(0x4 << 11)
+#घोषणा MII_VCT5_CTRL_TX1_CHANNEL			(0x5 << 11)
+#घोषणा MII_VCT5_CTRL_TX2_CHANNEL			(0x6 << 11)
+#घोषणा MII_VCT5_CTRL_TX3_CHANNEL			(0x7 << 11)
+#घोषणा MII_VCT5_CTRL_SAMPLES_2				(0x0 << 8)
+#घोषणा MII_VCT5_CTRL_SAMPLES_4				(0x1 << 8)
+#घोषणा MII_VCT5_CTRL_SAMPLES_8				(0x2 << 8)
+#घोषणा MII_VCT5_CTRL_SAMPLES_16			(0x3 << 8)
+#घोषणा MII_VCT5_CTRL_SAMPLES_32			(0x4 << 8)
+#घोषणा MII_VCT5_CTRL_SAMPLES_64			(0x5 << 8)
+#घोषणा MII_VCT5_CTRL_SAMPLES_128			(0x6 << 8)
+#घोषणा MII_VCT5_CTRL_SAMPLES_DEFAULT			(0x6 << 8)
+#घोषणा MII_VCT5_CTRL_SAMPLES_256			(0x7 << 8)
+#घोषणा MII_VCT5_CTRL_SAMPLES_SHIFT			8
+#घोषणा MII_VCT5_CTRL_MODE_MAXIMUM_PEEK			(0x0 << 6)
+#घोषणा MII_VCT5_CTRL_MODE_FIRST_LAST_PEEK		(0x1 << 6)
+#घोषणा MII_VCT5_CTRL_MODE_OFFSET			(0x2 << 6)
+#घोषणा MII_VCT5_CTRL_SAMPLE_POINT			(0x3 << 6)
+#घोषणा MII_VCT5_CTRL_PEEK_HYST_DEFAULT			3
 
-#define MII_VCT5_SAMPLE_POINT_DISTANCE		0x18
-#define MII_VCT5_SAMPLE_POINT_DISTANCE_MAX	511
-#define MII_VCT5_TX_PULSE_CTRL			0x1c
-#define MII_VCT5_TX_PULSE_CTRL_DONT_WAIT_LINK_DOWN	BIT(12)
-#define MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_128nS	(0x0 << 10)
-#define MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_96nS		(0x1 << 10)
-#define MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_64nS		(0x2 << 10)
-#define MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_32nS		(0x3 << 10)
-#define MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_SHIFT	10
-#define MII_VCT5_TX_PULSE_CTRL_PULSE_AMPLITUDE_1000mV	(0x0 << 8)
-#define MII_VCT5_TX_PULSE_CTRL_PULSE_AMPLITUDE_750mV	(0x1 << 8)
-#define MII_VCT5_TX_PULSE_CTRL_PULSE_AMPLITUDE_500mV	(0x2 << 8)
-#define MII_VCT5_TX_PULSE_CTRL_PULSE_AMPLITUDE_250mV	(0x3 << 8)
-#define MII_VCT5_TX_PULSE_CTRL_PULSE_AMPLITUDE_SHIFT	8
-#define MII_VCT5_TX_PULSE_CTRL_MAX_AMP			BIT(7)
-#define MII_VCT5_TX_PULSE_CTRL_GT_140m_46_86mV		(0x6 << 0)
+#घोषणा MII_VCT5_SAMPLE_POINT_DISTANCE		0x18
+#घोषणा MII_VCT5_SAMPLE_POINT_DISTANCE_MAX	511
+#घोषणा MII_VCT5_TX_PULSE_CTRL			0x1c
+#घोषणा MII_VCT5_TX_PULSE_CTRL_DONT_WAIT_LINK_DOWN	BIT(12)
+#घोषणा MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_128nS	(0x0 << 10)
+#घोषणा MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_96nS		(0x1 << 10)
+#घोषणा MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_64nS		(0x2 << 10)
+#घोषणा MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_32nS		(0x3 << 10)
+#घोषणा MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_SHIFT	10
+#घोषणा MII_VCT5_TX_PULSE_CTRL_PULSE_AMPLITUDE_1000mV	(0x0 << 8)
+#घोषणा MII_VCT5_TX_PULSE_CTRL_PULSE_AMPLITUDE_750mV	(0x1 << 8)
+#घोषणा MII_VCT5_TX_PULSE_CTRL_PULSE_AMPLITUDE_500mV	(0x2 << 8)
+#घोषणा MII_VCT5_TX_PULSE_CTRL_PULSE_AMPLITUDE_250mV	(0x3 << 8)
+#घोषणा MII_VCT5_TX_PULSE_CTRL_PULSE_AMPLITUDE_SHIFT	8
+#घोषणा MII_VCT5_TX_PULSE_CTRL_MAX_AMP			BIT(7)
+#घोषणा MII_VCT5_TX_PULSE_CTRL_GT_140m_46_86mV		(0x6 << 0)
 
-/* For TDR measurements less than 11 meters, a short pulse should be
+/* For TDR measurements less than 11 meters, a लघु pulse should be
  * used.
  */
-#define TDR_SHORT_CABLE_LENGTH	11
+#घोषणा TDR_SHORT_CABLE_LENGTH	11
 
-#define MII_VCT7_PAIR_0_DISTANCE	0x10
-#define MII_VCT7_PAIR_1_DISTANCE	0x11
-#define MII_VCT7_PAIR_2_DISTANCE	0x12
-#define MII_VCT7_PAIR_3_DISTANCE	0x13
+#घोषणा MII_VCT7_PAIR_0_DISTANCE	0x10
+#घोषणा MII_VCT7_PAIR_1_DISTANCE	0x11
+#घोषणा MII_VCT7_PAIR_2_DISTANCE	0x12
+#घोषणा MII_VCT7_PAIR_3_DISTANCE	0x13
 
-#define MII_VCT7_RESULTS	0x14
-#define MII_VCT7_RESULTS_PAIR3_MASK	0xf000
-#define MII_VCT7_RESULTS_PAIR2_MASK	0x0f00
-#define MII_VCT7_RESULTS_PAIR1_MASK	0x00f0
-#define MII_VCT7_RESULTS_PAIR0_MASK	0x000f
-#define MII_VCT7_RESULTS_PAIR3_SHIFT	12
-#define MII_VCT7_RESULTS_PAIR2_SHIFT	8
-#define MII_VCT7_RESULTS_PAIR1_SHIFT	4
-#define MII_VCT7_RESULTS_PAIR0_SHIFT	0
-#define MII_VCT7_RESULTS_INVALID	0
-#define MII_VCT7_RESULTS_OK		1
-#define MII_VCT7_RESULTS_OPEN		2
-#define MII_VCT7_RESULTS_SAME_SHORT	3
-#define MII_VCT7_RESULTS_CROSS_SHORT	4
-#define MII_VCT7_RESULTS_BUSY		9
+#घोषणा MII_VCT7_RESULTS	0x14
+#घोषणा MII_VCT7_RESULTS_PAIR3_MASK	0xf000
+#घोषणा MII_VCT7_RESULTS_PAIR2_MASK	0x0f00
+#घोषणा MII_VCT7_RESULTS_PAIR1_MASK	0x00f0
+#घोषणा MII_VCT7_RESULTS_PAIR0_MASK	0x000f
+#घोषणा MII_VCT7_RESULTS_PAIR3_SHIFT	12
+#घोषणा MII_VCT7_RESULTS_PAIR2_SHIFT	8
+#घोषणा MII_VCT7_RESULTS_PAIR1_SHIFT	4
+#घोषणा MII_VCT7_RESULTS_PAIR0_SHIFT	0
+#घोषणा MII_VCT7_RESULTS_INVALID	0
+#घोषणा MII_VCT7_RESULTS_OK		1
+#घोषणा MII_VCT7_RESULTS_OPEN		2
+#घोषणा MII_VCT7_RESULTS_SAME_SHORT	3
+#घोषणा MII_VCT7_RESULTS_CROSS_SHORT	4
+#घोषणा MII_VCT7_RESULTS_BUSY		9
 
-#define MII_VCT7_CTRL		0x15
-#define MII_VCT7_CTRL_RUN_NOW			BIT(15)
-#define MII_VCT7_CTRL_RUN_ANEG			BIT(14)
-#define MII_VCT7_CTRL_DISABLE_CROSS		BIT(13)
-#define MII_VCT7_CTRL_RUN_AFTER_BREAK_LINK	BIT(12)
-#define MII_VCT7_CTRL_IN_PROGRESS		BIT(11)
-#define MII_VCT7_CTRL_METERS			BIT(10)
-#define MII_VCT7_CTRL_CENTIMETERS		0
+#घोषणा MII_VCT7_CTRL		0x15
+#घोषणा MII_VCT7_CTRL_RUN_NOW			BIT(15)
+#घोषणा MII_VCT7_CTRL_RUN_ANEG			BIT(14)
+#घोषणा MII_VCT7_CTRL_DISABLE_CROSS		BIT(13)
+#घोषणा MII_VCT7_CTRL_RUN_AFTER_BREAK_LINK	BIT(12)
+#घोषणा MII_VCT7_CTRL_IN_PROGRESS		BIT(11)
+#घोषणा MII_VCT7_CTRL_METERS			BIT(10)
+#घोषणा MII_VCT7_CTRL_CENTIMETERS		0
 
-#define LPA_PAUSE_FIBER		0x180
-#define LPA_PAUSE_ASYM_FIBER	0x100
+#घोषणा LPA_PAUSE_FIBER		0x180
+#घोषणा LPA_PAUSE_ASYM_FIBER	0x100
 
-#define NB_FIBER_STATS	1
+#घोषणा NB_FIBER_STATS	1
 
 MODULE_DESCRIPTION("Marvell PHY driver");
 MODULE_AUTHOR("Andy Fleming");
 MODULE_LICENSE("GPL");
 
-struct marvell_hw_stat {
-	const char *string;
+काष्ठा marvell_hw_stat अणु
+	स्थिर अक्षर *string;
 	u8 page;
 	u8 reg;
 	u8 bits;
-};
+पूर्ण;
 
-static struct marvell_hw_stat marvell_hw_stats[] = {
-	{ "phy_receive_errors_copper", 0, 21, 16},
-	{ "phy_idle_errors", 0, 10, 8 },
-	{ "phy_receive_errors_fiber", 1, 21, 16},
-};
+अटल काष्ठा marvell_hw_stat marvell_hw_stats[] = अणु
+	अणु "phy_receive_errors_copper", 0, 21, 16पूर्ण,
+	अणु "phy_idle_errors", 0, 10, 8 पूर्ण,
+	अणु "phy_receive_errors_fiber", 1, 21, 16पूर्ण,
+पूर्ण;
 
-struct marvell_priv {
+काष्ठा marvell_priv अणु
 	u64 stats[ARRAY_SIZE(marvell_hw_stats)];
-	char *hwmon_name;
-	struct device *hwmon_dev;
+	अक्षर *hwmon_name;
+	काष्ठा device *hwmon_dev;
 	bool cable_test_tdr;
 	u32 first;
 	u32 last;
 	u32 step;
 	s8 pair;
-};
+पूर्ण;
 
-static int marvell_read_page(struct phy_device *phydev)
-{
-	return __phy_read(phydev, MII_MARVELL_PHY_PAGE);
-}
+अटल पूर्णांक marvell_पढ़ो_page(काष्ठा phy_device *phydev)
+अणु
+	वापस __phy_पढ़ो(phydev, MII_MARVELL_PHY_PAGE);
+पूर्ण
 
-static int marvell_write_page(struct phy_device *phydev, int page)
-{
-	return __phy_write(phydev, MII_MARVELL_PHY_PAGE, page);
-}
+अटल पूर्णांक marvell_ग_लिखो_page(काष्ठा phy_device *phydev, पूर्णांक page)
+अणु
+	वापस __phy_ग_लिखो(phydev, MII_MARVELL_PHY_PAGE, page);
+पूर्ण
 
-static int marvell_set_page(struct phy_device *phydev, int page)
-{
-	return phy_write(phydev, MII_MARVELL_PHY_PAGE, page);
-}
+अटल पूर्णांक marvell_set_page(काष्ठा phy_device *phydev, पूर्णांक page)
+अणु
+	वापस phy_ग_लिखो(phydev, MII_MARVELL_PHY_PAGE, page);
+पूर्ण
 
-static int marvell_ack_interrupt(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक marvell_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
-	/* Clear the interrupts by reading the reg */
-	err = phy_read(phydev, MII_M1011_IEVENT);
+	/* Clear the पूर्णांकerrupts by पढ़ोing the reg */
+	err = phy_पढ़ो(phydev, MII_M1011_IEVENT);
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int marvell_config_intr(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक marvell_config_पूर्णांकr(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
-	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
-		err = marvell_ack_interrupt(phydev);
-		if (err)
-			return err;
+	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
+		err = marvell_ack_पूर्णांकerrupt(phydev);
+		अगर (err)
+			वापस err;
 
-		err = phy_write(phydev, MII_M1011_IMASK,
+		err = phy_ग_लिखो(phydev, MII_M1011_IMASK,
 				MII_M1011_IMASK_INIT);
-	} else {
-		err = phy_write(phydev, MII_M1011_IMASK,
+	पूर्ण अन्यथा अणु
+		err = phy_ग_लिखो(phydev, MII_M1011_IMASK,
 				MII_M1011_IMASK_CLEAR);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		err = marvell_ack_interrupt(phydev);
-	}
+		err = marvell_ack_पूर्णांकerrupt(phydev);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static irqreturn_t marvell_handle_interrupt(struct phy_device *phydev)
-{
-	int irq_status;
+अटल irqवापस_t marvell_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक irq_status;
 
-	irq_status = phy_read(phydev, MII_M1011_IEVENT);
-	if (irq_status < 0) {
+	irq_status = phy_पढ़ो(phydev, MII_M1011_IEVENT);
+	अगर (irq_status < 0) अणु
 		phy_error(phydev);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (!(irq_status & MII_M1011_IMASK_INIT))
-		return IRQ_NONE;
+	अगर (!(irq_status & MII_M1011_IMASK_INIT))
+		वापस IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int marvell_set_polarity(struct phy_device *phydev, int polarity)
-{
-	int reg;
-	int err;
-	int val;
+अटल पूर्णांक marvell_set_polarity(काष्ठा phy_device *phydev, पूर्णांक polarity)
+अणु
+	पूर्णांक reg;
+	पूर्णांक err;
+	पूर्णांक val;
 
 	/* get the current settings */
-	reg = phy_read(phydev, MII_M1011_PHY_SCR);
-	if (reg < 0)
-		return reg;
+	reg = phy_पढ़ो(phydev, MII_M1011_PHY_SCR);
+	अगर (reg < 0)
+		वापस reg;
 
 	val = reg;
 	val &= ~MII_M1011_PHY_SCR_AUTO_CROSS;
-	switch (polarity) {
-	case ETH_TP_MDI:
+	चयन (polarity) अणु
+	हाल ETH_TP_MDI:
 		val |= MII_M1011_PHY_SCR_MDI;
-		break;
-	case ETH_TP_MDI_X:
+		अवरोध;
+	हाल ETH_TP_MDI_X:
 		val |= MII_M1011_PHY_SCR_MDI_X;
-		break;
-	case ETH_TP_MDI_AUTO:
-	case ETH_TP_MDI_INVALID:
-	default:
+		अवरोध;
+	हाल ETH_TP_MDI_AUTO:
+	हाल ETH_TP_MDI_INVALID:
+	शेष:
 		val |= MII_M1011_PHY_SCR_AUTO_CROSS;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (val != reg) {
-		/* Set the new polarity value in the register */
-		err = phy_write(phydev, MII_M1011_PHY_SCR, val);
-		if (err)
-			return err;
-	}
+	अगर (val != reg) अणु
+		/* Set the new polarity value in the रेजिस्टर */
+		err = phy_ग_लिखो(phydev, MII_M1011_PHY_SCR, val);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return val != reg;
-}
+	वापस val != reg;
+पूर्ण
 
-static int marvell_config_aneg(struct phy_device *phydev)
-{
-	int changed = 0;
-	int err;
+अटल पूर्णांक marvell_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक changed = 0;
+	पूर्णांक err;
 
 	err = marvell_set_polarity(phydev, phydev->mdix_ctrl);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	changed = err;
 
-	err = phy_write(phydev, MII_M1111_PHY_LED_CONTROL,
-			MII_M1111_PHY_LED_DIRECT);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, MII_M1111_PHY_LED_CONTROL,
+			MII_M1111_PHY_LED_सूचीECT);
+	अगर (err < 0)
+		वापस err;
 
 	err = genphy_config_aneg(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (phydev->autoneg != AUTONEG_ENABLE || changed) {
-		/* A write to speed/duplex bits (that is performed by
+	अगर (phydev->स्वतःneg != AUTONEG_ENABLE || changed) अणु
+		/* A ग_लिखो to speed/duplex bits (that is perक्रमmed by
 		 * genphy_config_aneg() call above) must be followed by
-		 * a software reset. Otherwise, the write has no effect.
+		 * a software reset. Otherwise, the ग_लिखो has no effect.
 		 */
 		err = genphy_soft_reset(phydev);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e1101_config_aneg(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1101_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	/* This Marvell PHY has an errata which requires
-	 * that certain registers get written in order
-	 * to restart autonegotiation
+	 * that certain रेजिस्टरs get written in order
+	 * to restart स्वतःnegotiation
 	 */
 	err = genphy_soft_reset(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = phy_write(phydev, 0x1d, 0x1f);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x1d, 0x1f);
+	अगर (err < 0)
+		वापस err;
 
-	err = phy_write(phydev, 0x1e, 0x200c);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x1e, 0x200c);
+	अगर (err < 0)
+		वापस err;
 
-	err = phy_write(phydev, 0x1d, 0x5);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x1d, 0x5);
+	अगर (err < 0)
+		वापस err;
 
-	err = phy_write(phydev, 0x1e, 0);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x1e, 0);
+	अगर (err < 0)
+		वापस err;
 
-	err = phy_write(phydev, 0x1e, 0x100);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x1e, 0x100);
+	अगर (err < 0)
+		वापस err;
 
-	return marvell_config_aneg(phydev);
-}
+	वापस marvell_config_aneg(phydev);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_OF_MDIO)
-/* Set and/or override some configuration registers based on the
- * marvell,reg-init property stored in the of_node for the phydev.
+#अगर IS_ENABLED(CONFIG_OF_MDIO)
+/* Set and/or override some configuration रेजिस्टरs based on the
+ * marvell,reg-init property stored in the of_node क्रम the phydev.
  *
  * marvell,reg-init = <reg-page reg mask value>,...;
  *
  * There may be one or more sets of <reg-page reg mask value>:
  *
- * reg-page: which register bank to use.
- * reg: the register.
- * mask: if non-zero, ANDed with existing register value.
+ * reg-page: which रेजिस्टर bank to use.
+ * reg: the रेजिस्टर.
+ * mask: अगर non-zero, ANDed with existing रेजिस्टर value.
  * value: ORed with the masked value and written to the regiser.
  *
  */
-static int marvell_of_reg_init(struct phy_device *phydev)
-{
-	const __be32 *paddr;
-	int len, i, saved_page, current_page, ret = 0;
+अटल पूर्णांक marvell_of_reg_init(काष्ठा phy_device *phydev)
+अणु
+	स्थिर __be32 *paddr;
+	पूर्णांक len, i, saved_page, current_page, ret = 0;
 
-	if (!phydev->mdio.dev.of_node)
-		return 0;
+	अगर (!phydev->mdio.dev.of_node)
+		वापस 0;
 
 	paddr = of_get_property(phydev->mdio.dev.of_node,
 				"marvell,reg-init", &len);
-	if (!paddr || len < (4 * sizeof(*paddr)))
-		return 0;
+	अगर (!paddr || len < (4 * माप(*paddr)))
+		वापस 0;
 
 	saved_page = phy_save_page(phydev);
-	if (saved_page < 0)
-		goto err;
+	अगर (saved_page < 0)
+		जाओ err;
 	current_page = saved_page;
 
-	len /= sizeof(*paddr);
-	for (i = 0; i < len - 3; i += 4) {
+	len /= माप(*paddr);
+	क्रम (i = 0; i < len - 3; i += 4) अणु
 		u16 page = be32_to_cpup(paddr + i);
 		u16 reg = be32_to_cpup(paddr + i + 1);
 		u16 mask = be32_to_cpup(paddr + i + 2);
 		u16 val_bits = be32_to_cpup(paddr + i + 3);
-		int val;
+		पूर्णांक val;
 
-		if (page != current_page) {
+		अगर (page != current_page) अणु
 			current_page = page;
-			ret = marvell_write_page(phydev, page);
-			if (ret < 0)
-				goto err;
-		}
+			ret = marvell_ग_लिखो_page(phydev, page);
+			अगर (ret < 0)
+				जाओ err;
+		पूर्ण
 
 		val = 0;
-		if (mask) {
-			val = __phy_read(phydev, reg);
-			if (val < 0) {
+		अगर (mask) अणु
+			val = __phy_पढ़ो(phydev, reg);
+			अगर (val < 0) अणु
 				ret = val;
-				goto err;
-			}
+				जाओ err;
+			पूर्ण
 			val &= mask;
-		}
+		पूर्ण
 		val |= val_bits;
 
-		ret = __phy_write(phydev, reg, val);
-		if (ret < 0)
-			goto err;
-	}
+		ret = __phy_ग_लिखो(phydev, reg, val);
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
 err:
-	return phy_restore_page(phydev, saved_page, ret);
-}
-#else
-static int marvell_of_reg_init(struct phy_device *phydev)
-{
-	return 0;
-}
-#endif /* CONFIG_OF_MDIO */
+	वापस phy_restore_page(phydev, saved_page, ret);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक marvell_of_reg_init(काष्ठा phy_device *phydev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF_MDIO */
 
-static int m88e1121_config_aneg_rgmii_delays(struct phy_device *phydev)
-{
-	int mscr;
+अटल पूर्णांक m88e1121_config_aneg_rgmii_delays(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक mscr;
 
-	if (phydev->interface == PHY_INTERFACE_MODE_RGMII_ID)
+	अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID)
 		mscr = MII_88E1121_PHY_MSCR_RX_DELAY |
 		       MII_88E1121_PHY_MSCR_TX_DELAY;
-	else if (phydev->interface == PHY_INTERFACE_MODE_RGMII_RXID)
+	अन्यथा अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_RXID)
 		mscr = MII_88E1121_PHY_MSCR_RX_DELAY;
-	else if (phydev->interface == PHY_INTERFACE_MODE_RGMII_TXID)
+	अन्यथा अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_TXID)
 		mscr = MII_88E1121_PHY_MSCR_TX_DELAY;
-	else
+	अन्यथा
 		mscr = 0;
 
-	return phy_modify_paged(phydev, MII_MARVELL_MSCR_PAGE,
+	वापस phy_modअगरy_paged(phydev, MII_MARVELL_MSCR_PAGE,
 				MII_88E1121_PHY_MSCR_REG,
 				MII_88E1121_PHY_MSCR_DELAY_MASK, mscr);
-}
+पूर्ण
 
-static int m88e1121_config_aneg(struct phy_device *phydev)
-{
-	int changed = 0;
-	int err = 0;
+अटल पूर्णांक m88e1121_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक changed = 0;
+	पूर्णांक err = 0;
 
-	if (phy_interface_is_rgmii(phydev)) {
+	अगर (phy_पूर्णांकerface_is_rgmii(phydev)) अणु
 		err = m88e1121_config_aneg_rgmii_delays(phydev);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	err = marvell_set_polarity(phydev, phydev->mdix_ctrl);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	changed = err;
 
 	err = genphy_config_aneg(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (phydev->autoneg != AUTONEG_ENABLE || changed) {
+	अगर (phydev->स्वतःneg != AUTONEG_ENABLE || changed) अणु
 		/* A software reset is used to ensure a "commit" of the
-		 * changes is done.
+		 * changes is करोne.
 		 */
 		err = genphy_soft_reset(phydev);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e1318_config_aneg(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1318_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
-	err = phy_modify_paged(phydev, MII_MARVELL_MSCR_PAGE,
+	err = phy_modअगरy_paged(phydev, MII_MARVELL_MSCR_PAGE,
 			       MII_88E1318S_PHY_MSCR1_REG,
 			       0, MII_88E1318S_PHY_MSCR1_PAD_ODD);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return m88e1121_config_aneg(phydev);
-}
+	वापस m88e1121_config_aneg(phydev);
+पूर्ण
 
 /**
  * linkmode_adv_to_fiber_adv_t
  * @advertise: the linkmode advertisement settings
  *
  * A small helper function that translates linkmode advertisement
- * settings to phy autonegotiation advertisements for the MII_ADV
- * register for fiber link.
+ * settings to phy स्वतःnegotiation advertisements क्रम the MII_ADV
+ * रेजिस्टर क्रम fiber link.
  */
-static inline u32 linkmode_adv_to_fiber_adv_t(unsigned long *advertise)
-{
+अटल अंतरभूत u32 linkmode_adv_to_fiber_adv_t(अचिन्हित दीर्घ *advertise)
+अणु
 	u32 result = 0;
 
-	if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Half_BIT, advertise))
+	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Half_BIT, advertise))
 		result |= ADVERTISE_1000XHALF;
-	if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT, advertise))
+	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT, advertise))
 		result |= ADVERTISE_1000XFULL;
 
-	if (linkmode_test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, advertise) &&
+	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, advertise) &&
 	    linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT, advertise))
 		result |= ADVERTISE_1000XPSE_ASYM;
-	else if (linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT, advertise))
+	अन्यथा अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT, advertise))
 		result |= ADVERTISE_1000XPAUSE;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * marvell_config_aneg_fiber - restart auto-negotiation or write BMCR
- * @phydev: target phy_device struct
+ * marvell_config_aneg_fiber - restart स्वतः-negotiation or ग_लिखो BMCR
+ * @phydev: target phy_device काष्ठा
  *
- * Description: If auto-negotiation is enabled, we configure the
- *   advertising, and then restart auto-negotiation.  If it is not
- *   enabled, then we write the BMCR. Adapted for fiber link in
+ * Description: If स्वतः-negotiation is enabled, we configure the
+ *   advertising, and then restart स्वतः-negotiation.  If it is not
+ *   enabled, then we ग_लिखो the BMCR. Adapted क्रम fiber link in
  *   some Marvell's devices.
  */
-static int marvell_config_aneg_fiber(struct phy_device *phydev)
-{
-	int changed = 0;
-	int err;
+अटल पूर्णांक marvell_config_aneg_fiber(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक changed = 0;
+	पूर्णांक err;
 	u16 adv;
 
-	if (phydev->autoneg != AUTONEG_ENABLE)
-		return genphy_setup_forced(phydev);
+	अगर (phydev->स्वतःneg != AUTONEG_ENABLE)
+		वापस genphy_setup_क्रमced(phydev);
 
 	/* Only allow advertising what this PHY supports */
 	linkmode_and(phydev->advertising, phydev->advertising,
@@ -658,926 +659,926 @@ static int marvell_config_aneg_fiber(struct phy_device *phydev)
 	adv = linkmode_adv_to_fiber_adv_t(phydev->advertising);
 
 	/* Setup fiber advertisement */
-	err = phy_modify_changed(phydev, MII_ADVERTISE,
+	err = phy_modअगरy_changed(phydev, MII_ADVERTISE,
 				 ADVERTISE_1000XHALF | ADVERTISE_1000XFULL |
 				 ADVERTISE_1000XPAUSE | ADVERTISE_1000XPSE_ASYM,
 				 adv);
-	if (err < 0)
-		return err;
-	if (err > 0)
+	अगर (err < 0)
+		वापस err;
+	अगर (err > 0)
 		changed = 1;
 
-	return genphy_check_and_restart_aneg(phydev, changed);
-}
+	वापस genphy_check_and_restart_aneg(phydev, changed);
+पूर्ण
 
-static int m88e1111_config_aneg(struct phy_device *phydev)
-{
-	int extsr = phy_read(phydev, MII_M1111_PHY_EXT_SR);
-	int err;
+अटल पूर्णांक m88e1111_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक extsr = phy_पढ़ो(phydev, MII_M1111_PHY_EXT_SR);
+	पूर्णांक err;
 
-	if (extsr < 0)
-		return extsr;
+	अगर (extsr < 0)
+		वापस extsr;
 
 	/* If not using SGMII or copper 1000BaseX modes, use normal process.
-	 * Steps below are only required for these modes.
+	 * Steps below are only required क्रम these modes.
 	 */
-	if (phydev->interface != PHY_INTERFACE_MODE_SGMII &&
+	अगर (phydev->पूर्णांकerface != PHY_INTERFACE_MODE_SGMII &&
 	    (extsr & MII_M1111_HWCFG_MODE_MASK) !=
 	    MII_M1111_HWCFG_MODE_COPPER_1000X_AN)
-		return marvell_config_aneg(phydev);
+		वापस marvell_config_aneg(phydev);
 
 	err = marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	/* Configure the copper link first */
 	err = marvell_config_aneg(phydev);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	/* Then the fiber link */
 	err = marvell_set_page(phydev, MII_MARVELL_FIBER_PAGE);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	if (phydev->interface == PHY_INTERFACE_MODE_SGMII)
-		/* Do not touch the fiber advertisement if we're in copper->sgmii mode.
-		 * Just ensure that SGMII-side autonegotiation is enabled.
-		 * If we switched from some other mode to SGMII it may not be.
+	अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_SGMII)
+		/* Do not touch the fiber advertisement अगर we're in copper->sgmii mode.
+		 * Just ensure that SGMII-side स्वतःnegotiation is enabled.
+		 * If we चयनed from some other mode to SGMII it may not be.
 		 */
 		err = genphy_check_and_restart_aneg(phydev, false);
-	else
+	अन्यथा
 		err = marvell_config_aneg_fiber(phydev);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	return marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
+	वापस marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
 
 error:
 	marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int m88e1510_config_aneg(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1510_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	err = marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	/* Configure the copper link first */
 	err = m88e1318_config_aneg(phydev);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	/* Do not touch the fiber page if we're in copper->sgmii mode */
-	if (phydev->interface == PHY_INTERFACE_MODE_SGMII)
-		return 0;
+	/* Do not touch the fiber page अगर we're in copper->sgmii mode */
+	अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_SGMII)
+		वापस 0;
 
 	/* Then the fiber link */
 	err = marvell_set_page(phydev, MII_MARVELL_FIBER_PAGE);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	err = marvell_config_aneg_fiber(phydev);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	return marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
+	वापस marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
 
 error:
 	marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void marvell_config_led(struct phy_device *phydev)
-{
+अटल व्योम marvell_config_led(काष्ठा phy_device *phydev)
+अणु
 	u16 def_config;
-	int err;
+	पूर्णांक err;
 
-	switch (MARVELL_PHY_FAMILY_ID(phydev->phy_id)) {
+	चयन (MARVELL_PHY_FAMILY_ID(phydev->phy_id)) अणु
 	/* Default PHY LED config: LED[0] .. Link, LED[1] .. Activity */
-	case MARVELL_PHY_FAMILY_ID(MARVELL_PHY_ID_88E1121R):
-	case MARVELL_PHY_FAMILY_ID(MARVELL_PHY_ID_88E1318S):
+	हाल MARVELL_PHY_FAMILY_ID(MARVELL_PHY_ID_88E1121R):
+	हाल MARVELL_PHY_FAMILY_ID(MARVELL_PHY_ID_88E1318S):
 		def_config = MII_88E1121_PHY_LED_DEF;
-		break;
+		अवरोध;
 	/* Default PHY LED config:
 	 * LED[0] .. 1000Mbps Link
 	 * LED[1] .. 100Mbps Link
 	 * LED[2] .. Blink, Activity
 	 */
-	case MARVELL_PHY_FAMILY_ID(MARVELL_PHY_ID_88E1510):
-		if (phydev->dev_flags & MARVELL_PHY_LED0_LINK_LED1_ACTIVE)
+	हाल MARVELL_PHY_FAMILY_ID(MARVELL_PHY_ID_88E1510):
+		अगर (phydev->dev_flags & MARVELL_PHY_LED0_LINK_LED1_ACTIVE)
 			def_config = MII_88E1510_PHY_LED0_LINK_LED1_ACTIVE;
-		else
+		अन्यथा
 			def_config = MII_88E1510_PHY_LED_DEF;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	err = phy_write_paged(phydev, MII_MARVELL_LED_PAGE, MII_PHY_LED_CTRL,
+	err = phy_ग_लिखो_paged(phydev, MII_MARVELL_LED_PAGE, MII_PHY_LED_CTRL,
 			      def_config);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Fail to config marvell phy LED.\n");
-}
+पूर्ण
 
-static int marvell_config_init(struct phy_device *phydev)
-{
-	/* Set default LED */
+अटल पूर्णांक marvell_config_init(काष्ठा phy_device *phydev)
+अणु
+	/* Set शेष LED */
 	marvell_config_led(phydev);
 
-	/* Set registers from marvell,reg-init DT property */
-	return marvell_of_reg_init(phydev);
-}
+	/* Set रेजिस्टरs from marvell,reg-init DT property */
+	वापस marvell_of_reg_init(phydev);
+पूर्ण
 
-static int m88e3016_config_init(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक m88e3016_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
 	/* Enable Scrambler and Auto-Crossover */
-	ret = phy_modify(phydev, MII_88E3016_PHY_SPEC_CTRL,
+	ret = phy_modअगरy(phydev, MII_88E3016_PHY_SPEC_CTRL,
 			 MII_88E3016_DISABLE_SCRAMBLER,
 			 MII_88E3016_AUTO_MDIX_CROSSOVER);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return marvell_config_init(phydev);
-}
+	वापस marvell_config_init(phydev);
+पूर्ण
 
-static int m88e1111_config_init_hwcfg_mode(struct phy_device *phydev,
+अटल पूर्णांक m88e1111_config_init_hwcfg_mode(काष्ठा phy_device *phydev,
 					   u16 mode,
-					   int fibre_copper_auto)
-{
-	if (fibre_copper_auto)
+					   पूर्णांक fibre_copper_स्वतः)
+अणु
+	अगर (fibre_copper_स्वतः)
 		mode |= MII_M1111_HWCFG_FIBER_COPPER_AUTO;
 
-	return phy_modify(phydev, MII_M1111_PHY_EXT_SR,
+	वापस phy_modअगरy(phydev, MII_M1111_PHY_EXT_SR,
 			  MII_M1111_HWCFG_MODE_MASK |
 			  MII_M1111_HWCFG_FIBER_COPPER_AUTO |
 			  MII_M1111_HWCFG_FIBER_COPPER_RES,
 			  mode);
-}
+पूर्ण
 
-static int m88e1111_config_init_rgmii_delays(struct phy_device *phydev)
-{
-	int delay;
+अटल पूर्णांक m88e1111_config_init_rgmii_delays(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक delay;
 
-	if (phydev->interface == PHY_INTERFACE_MODE_RGMII_ID) {
+	अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID) अणु
 		delay = MII_M1111_RGMII_RX_DELAY | MII_M1111_RGMII_TX_DELAY;
-	} else if (phydev->interface == PHY_INTERFACE_MODE_RGMII_RXID) {
+	पूर्ण अन्यथा अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_RXID) अणु
 		delay = MII_M1111_RGMII_RX_DELAY;
-	} else if (phydev->interface == PHY_INTERFACE_MODE_RGMII_TXID) {
+	पूर्ण अन्यथा अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_TXID) अणु
 		delay = MII_M1111_RGMII_TX_DELAY;
-	} else {
+	पूर्ण अन्यथा अणु
 		delay = 0;
-	}
+	पूर्ण
 
-	return phy_modify(phydev, MII_M1111_PHY_EXT_CR,
+	वापस phy_modअगरy(phydev, MII_M1111_PHY_EXT_CR,
 			  MII_M1111_RGMII_RX_DELAY | MII_M1111_RGMII_TX_DELAY,
 			  delay);
-}
+पूर्ण
 
-static int m88e1111_config_init_rgmii(struct phy_device *phydev)
-{
-	int temp;
-	int err;
+अटल पूर्णांक m88e1111_config_init_rgmii(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक temp;
+	पूर्णांक err;
 
 	err = m88e1111_config_init_rgmii_delays(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	temp = phy_read(phydev, MII_M1111_PHY_EXT_SR);
-	if (temp < 0)
-		return temp;
+	temp = phy_पढ़ो(phydev, MII_M1111_PHY_EXT_SR);
+	अगर (temp < 0)
+		वापस temp;
 
 	temp &= ~(MII_M1111_HWCFG_MODE_MASK);
 
-	if (temp & MII_M1111_HWCFG_FIBER_COPPER_RES)
+	अगर (temp & MII_M1111_HWCFG_FIBER_COPPER_RES)
 		temp |= MII_M1111_HWCFG_MODE_FIBER_RGMII;
-	else
+	अन्यथा
 		temp |= MII_M1111_HWCFG_MODE_COPPER_RGMII;
 
-	return phy_write(phydev, MII_M1111_PHY_EXT_SR, temp);
-}
+	वापस phy_ग_लिखो(phydev, MII_M1111_PHY_EXT_SR, temp);
+पूर्ण
 
-static int m88e1111_config_init_sgmii(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1111_config_init_sgmii(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	err = m88e1111_config_init_hwcfg_mode(
 		phydev,
 		MII_M1111_HWCFG_MODE_SGMII_NO_CLK,
 		MII_M1111_HWCFG_FIBER_COPPER_AUTO);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* make sure copper is selected */
-	return marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-}
+	वापस marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
+पूर्ण
 
-static int m88e1111_config_init_rtbi(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1111_config_init_rtbi(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	err = m88e1111_config_init_rgmii_delays(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = m88e1111_config_init_hwcfg_mode(
 		phydev,
 		MII_M1111_HWCFG_MODE_RTBI,
 		MII_M1111_HWCFG_FIBER_COPPER_AUTO);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* soft reset */
 	err = genphy_soft_reset(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return m88e1111_config_init_hwcfg_mode(
+	वापस m88e1111_config_init_hwcfg_mode(
 		phydev,
 		MII_M1111_HWCFG_MODE_RTBI,
 		MII_M1111_HWCFG_FIBER_COPPER_AUTO);
-}
+पूर्ण
 
-static int m88e1111_config_init_1000basex(struct phy_device *phydev)
-{
-	int extsr = phy_read(phydev, MII_M1111_PHY_EXT_SR);
-	int err, mode;
+अटल पूर्णांक m88e1111_config_init_1000basex(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक extsr = phy_पढ़ो(phydev, MII_M1111_PHY_EXT_SR);
+	पूर्णांक err, mode;
 
-	if (extsr < 0)
-		return extsr;
+	अगर (extsr < 0)
+		वापस extsr;
 
-	/* If using copper mode, ensure 1000BaseX auto-negotiation is enabled */
+	/* If using copper mode, ensure 1000BaseX स्वतः-negotiation is enabled */
 	mode = extsr & MII_M1111_HWCFG_MODE_MASK;
-	if (mode == MII_M1111_HWCFG_MODE_COPPER_1000X_NOAN) {
-		err = phy_modify(phydev, MII_M1111_PHY_EXT_SR,
+	अगर (mode == MII_M1111_HWCFG_MODE_COPPER_1000X_NOAN) अणु
+		err = phy_modअगरy(phydev, MII_M1111_PHY_EXT_SR,
 				 MII_M1111_HWCFG_MODE_MASK |
 				 MII_M1111_HWCFG_SERIAL_AN_BYPASS,
 				 MII_M1111_HWCFG_MODE_COPPER_1000X_AN |
 				 MII_M1111_HWCFG_SERIAL_AN_BYPASS);
-		if (err < 0)
-			return err;
-	}
-	return 0;
-}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int m88e1111_config_init(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1111_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
-	if (phy_interface_is_rgmii(phydev)) {
+	अगर (phy_पूर्णांकerface_is_rgmii(phydev)) अणु
 		err = m88e1111_config_init_rgmii(phydev);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (phydev->interface == PHY_INTERFACE_MODE_SGMII) {
+	अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_SGMII) अणु
 		err = m88e1111_config_init_sgmii(phydev);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (phydev->interface == PHY_INTERFACE_MODE_RTBI) {
+	अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RTBI) अणु
 		err = m88e1111_config_init_rtbi(phydev);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (phydev->interface == PHY_INTERFACE_MODE_1000BASEX) {
+	अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_1000BASEX) अणु
 		err = m88e1111_config_init_1000basex(phydev);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	err = marvell_of_reg_init(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return genphy_soft_reset(phydev);
-}
+	वापस genphy_soft_reset(phydev);
+पूर्ण
 
-static int m88e1111_get_downshift(struct phy_device *phydev, u8 *data)
-{
-	int val, cnt, enable;
+अटल पूर्णांक m88e1111_get_करोwnshअगरt(काष्ठा phy_device *phydev, u8 *data)
+अणु
+	पूर्णांक val, cnt, enable;
 
-	val = phy_read(phydev, MII_M1111_PHY_EXT_CR);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो(phydev, MII_M1111_PHY_EXT_CR);
+	अगर (val < 0)
+		वापस val;
 
 	enable = FIELD_GET(MII_M1111_PHY_EXT_CR_DOWNSHIFT_EN, val);
 	cnt = FIELD_GET(MII_M1111_PHY_EXT_CR_DOWNSHIFT_MASK, val) + 1;
 
 	*data = enable ? cnt : DOWNSHIFT_DEV_DISABLE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e1111_set_downshift(struct phy_device *phydev, u8 cnt)
-{
-	int val, err;
+अटल पूर्णांक m88e1111_set_करोwnshअगरt(काष्ठा phy_device *phydev, u8 cnt)
+अणु
+	पूर्णांक val, err;
 
-	if (cnt > MII_M1111_PHY_EXT_CR_DOWNSHIFT_MAX)
-		return -E2BIG;
+	अगर (cnt > MII_M1111_PHY_EXT_CR_DOWNSHIFT_MAX)
+		वापस -E2BIG;
 
-	if (!cnt) {
+	अगर (!cnt) अणु
 		err = phy_clear_bits(phydev, MII_M1111_PHY_EXT_CR,
 				     MII_M1111_PHY_EXT_CR_DOWNSHIFT_EN);
-	} else {
+	पूर्ण अन्यथा अणु
 		val = MII_M1111_PHY_EXT_CR_DOWNSHIFT_EN;
 		val |= FIELD_PREP(MII_M1111_PHY_EXT_CR_DOWNSHIFT_MASK, cnt - 1);
 
-		err = phy_modify(phydev, MII_M1111_PHY_EXT_CR,
+		err = phy_modअगरy(phydev, MII_M1111_PHY_EXT_CR,
 				 MII_M1111_PHY_EXT_CR_DOWNSHIFT_EN |
 				 MII_M1111_PHY_EXT_CR_DOWNSHIFT_MASK,
 				 val);
-	}
+	पूर्ण
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return genphy_soft_reset(phydev);
-}
+	वापस genphy_soft_reset(phydev);
+पूर्ण
 
-static int m88e1111_get_tunable(struct phy_device *phydev,
-				struct ethtool_tunable *tuna, void *data)
-{
-	switch (tuna->id) {
-	case ETHTOOL_PHY_DOWNSHIFT:
-		return m88e1111_get_downshift(phydev, data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक m88e1111_get_tunable(काष्ठा phy_device *phydev,
+				काष्ठा ethtool_tunable *tuna, व्योम *data)
+अणु
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_PHY_DOWNSHIFT:
+		वापस m88e1111_get_करोwnshअगरt(phydev, data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int m88e1111_set_tunable(struct phy_device *phydev,
-				struct ethtool_tunable *tuna, const void *data)
-{
-	switch (tuna->id) {
-	case ETHTOOL_PHY_DOWNSHIFT:
-		return m88e1111_set_downshift(phydev, *(const u8 *)data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक m88e1111_set_tunable(काष्ठा phy_device *phydev,
+				काष्ठा ethtool_tunable *tuna, स्थिर व्योम *data)
+अणु
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_PHY_DOWNSHIFT:
+		वापस m88e1111_set_करोwnshअगरt(phydev, *(स्थिर u8 *)data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int m88e1011_get_downshift(struct phy_device *phydev, u8 *data)
-{
-	int val, cnt, enable;
+अटल पूर्णांक m88e1011_get_करोwnshअगरt(काष्ठा phy_device *phydev, u8 *data)
+अणु
+	पूर्णांक val, cnt, enable;
 
-	val = phy_read(phydev, MII_M1011_PHY_SCR);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो(phydev, MII_M1011_PHY_SCR);
+	अगर (val < 0)
+		वापस val;
 
 	enable = FIELD_GET(MII_M1011_PHY_SCR_DOWNSHIFT_EN, val);
 	cnt = FIELD_GET(MII_M1011_PHY_SCR_DOWNSHIFT_MASK, val) + 1;
 
 	*data = enable ? cnt : DOWNSHIFT_DEV_DISABLE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e1011_set_downshift(struct phy_device *phydev, u8 cnt)
-{
-	int val, err;
+अटल पूर्णांक m88e1011_set_करोwnshअगरt(काष्ठा phy_device *phydev, u8 cnt)
+अणु
+	पूर्णांक val, err;
 
-	if (cnt > MII_M1011_PHY_SCR_DOWNSHIFT_MAX)
-		return -E2BIG;
+	अगर (cnt > MII_M1011_PHY_SCR_DOWNSHIFT_MAX)
+		वापस -E2BIG;
 
-	if (!cnt) {
+	अगर (!cnt) अणु
 		err = phy_clear_bits(phydev, MII_M1011_PHY_SCR,
 				     MII_M1011_PHY_SCR_DOWNSHIFT_EN);
-	} else {
+	पूर्ण अन्यथा अणु
 		val = MII_M1011_PHY_SCR_DOWNSHIFT_EN;
 		val |= FIELD_PREP(MII_M1011_PHY_SCR_DOWNSHIFT_MASK, cnt - 1);
 
-		err = phy_modify(phydev, MII_M1011_PHY_SCR,
+		err = phy_modअगरy(phydev, MII_M1011_PHY_SCR,
 				 MII_M1011_PHY_SCR_DOWNSHIFT_EN |
 				 MII_M1011_PHY_SCR_DOWNSHIFT_MASK,
 				 val);
-	}
+	पूर्ण
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return genphy_soft_reset(phydev);
-}
+	वापस genphy_soft_reset(phydev);
+पूर्ण
 
-static int m88e1011_get_tunable(struct phy_device *phydev,
-				struct ethtool_tunable *tuna, void *data)
-{
-	switch (tuna->id) {
-	case ETHTOOL_PHY_DOWNSHIFT:
-		return m88e1011_get_downshift(phydev, data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक m88e1011_get_tunable(काष्ठा phy_device *phydev,
+				काष्ठा ethtool_tunable *tuna, व्योम *data)
+अणु
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_PHY_DOWNSHIFT:
+		वापस m88e1011_get_करोwnshअगरt(phydev, data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int m88e1011_set_tunable(struct phy_device *phydev,
-				struct ethtool_tunable *tuna, const void *data)
-{
-	switch (tuna->id) {
-	case ETHTOOL_PHY_DOWNSHIFT:
-		return m88e1011_set_downshift(phydev, *(const u8 *)data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक m88e1011_set_tunable(काष्ठा phy_device *phydev,
+				काष्ठा ethtool_tunable *tuna, स्थिर व्योम *data)
+अणु
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_PHY_DOWNSHIFT:
+		वापस m88e1011_set_करोwnshअगरt(phydev, *(स्थिर u8 *)data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int m88e1112_config_init(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1112_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
-	err = m88e1011_set_downshift(phydev, 3);
-	if (err < 0)
-		return err;
+	err = m88e1011_set_करोwnshअगरt(phydev, 3);
+	अगर (err < 0)
+		वापस err;
 
-	return m88e1111_config_init(phydev);
-}
+	वापस m88e1111_config_init(phydev);
+पूर्ण
 
-static int m88e1111gbe_config_init(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1111gbe_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
-	err = m88e1111_set_downshift(phydev, 3);
-	if (err < 0)
-		return err;
+	err = m88e1111_set_करोwnshअगरt(phydev, 3);
+	अगर (err < 0)
+		वापस err;
 
-	return m88e1111_config_init(phydev);
-}
+	वापस m88e1111_config_init(phydev);
+पूर्ण
 
-static int marvell_1011gbe_config_init(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक marvell_1011gbe_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
-	err = m88e1011_set_downshift(phydev, 3);
-	if (err < 0)
-		return err;
+	err = m88e1011_set_करोwnshअगरt(phydev, 3);
+	अगर (err < 0)
+		वापस err;
 
-	return marvell_config_init(phydev);
-}
-static int m88e1116r_config_init(struct phy_device *phydev)
-{
-	int err;
+	वापस marvell_config_init(phydev);
+पूर्ण
+अटल पूर्णांक m88e1116r_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	err = genphy_soft_reset(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	msleep(500);
 
 	err = marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = marvell_set_polarity(phydev, phydev->mdix_ctrl);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = m88e1011_set_downshift(phydev, 8);
-	if (err < 0)
-		return err;
+	err = m88e1011_set_करोwnshअगरt(phydev, 8);
+	अगर (err < 0)
+		वापस err;
 
-	if (phy_interface_is_rgmii(phydev)) {
+	अगर (phy_पूर्णांकerface_is_rgmii(phydev)) अणु
 		err = m88e1121_config_aneg_rgmii_delays(phydev);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	err = genphy_soft_reset(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return marvell_config_init(phydev);
-}
+	वापस marvell_config_init(phydev);
+पूर्ण
 
-static int m88e1318_config_init(struct phy_device *phydev)
-{
-	if (phy_interrupt_is_valid(phydev)) {
-		int err = phy_modify_paged(
+अटल पूर्णांक m88e1318_config_init(काष्ठा phy_device *phydev)
+अणु
+	अगर (phy_पूर्णांकerrupt_is_valid(phydev)) अणु
+		पूर्णांक err = phy_modअगरy_paged(
 			phydev, MII_MARVELL_LED_PAGE,
 			MII_88E1318S_PHY_LED_TCR,
 			MII_88E1318S_PHY_LED_TCR_FORCE_INT,
 			MII_88E1318S_PHY_LED_TCR_INTn_ENABLE |
 			MII_88E1318S_PHY_LED_TCR_INT_ACTIVE_LOW);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	return marvell_config_init(phydev);
-}
+	वापस marvell_config_init(phydev);
+पूर्ण
 
-static int m88e1510_config_init(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1510_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	/* SGMII-to-Copper mode initialization */
-	if (phydev->interface == PHY_INTERFACE_MODE_SGMII) {
+	अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_SGMII) अणु
 		/* Select page 18 */
 		err = marvell_set_page(phydev, 18);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
-		/* In reg 20, write MODE[2:0] = 0x1 (SGMII to Copper) */
-		err = phy_modify(phydev, MII_88E1510_GEN_CTRL_REG_1,
+		/* In reg 20, ग_लिखो MODE[2:0] = 0x1 (SGMII to Copper) */
+		err = phy_modअगरy(phydev, MII_88E1510_GEN_CTRL_REG_1,
 				 MII_88E1510_GEN_CTRL_REG_1_MODE_MASK,
 				 MII_88E1510_GEN_CTRL_REG_1_MODE_SGMII);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		/* PHY reset is necessary after changing MODE[2:0] */
 		err = phy_set_bits(phydev, MII_88E1510_GEN_CTRL_REG_1,
 				   MII_88E1510_GEN_CTRL_REG_1_RESET);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		/* Reset page selection */
 		err = marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-		if (err < 0)
-			return err;
-	}
-	err = m88e1011_set_downshift(phydev, 3);
-	if (err < 0)
-		return err;
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	err = m88e1011_set_करोwnshअगरt(phydev, 3);
+	अगर (err < 0)
+		वापस err;
 
-	return m88e1318_config_init(phydev);
-}
+	वापस m88e1318_config_init(phydev);
+पूर्ण
 
-static int m88e1118_config_aneg(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1118_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	err = genphy_soft_reset(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = marvell_set_polarity(phydev, phydev->mdix_ctrl);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = genphy_config_aneg(phydev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e1118_config_init(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1118_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	/* Change address */
 	err = marvell_set_page(phydev, MII_MARVELL_MSCR_PAGE);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* Enable 1000 Mbit */
-	err = phy_write(phydev, 0x15, 0x1070);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x15, 0x1070);
+	अगर (err < 0)
+		वापस err;
 
 	/* Change address */
 	err = marvell_set_page(phydev, MII_MARVELL_LED_PAGE);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* Adjust LED Control */
-	if (phydev->dev_flags & MARVELL_PHY_M1118_DNS323_LEDS)
-		err = phy_write(phydev, 0x10, 0x1100);
-	else
-		err = phy_write(phydev, 0x10, 0x021e);
-	if (err < 0)
-		return err;
+	अगर (phydev->dev_flags & MARVELL_PHY_M1118_DNS323_LEDS)
+		err = phy_ग_लिखो(phydev, 0x10, 0x1100);
+	अन्यथा
+		err = phy_ग_लिखो(phydev, 0x10, 0x021e);
+	अगर (err < 0)
+		वापस err;
 
 	err = marvell_of_reg_init(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* Reset address */
 	err = marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return genphy_soft_reset(phydev);
-}
+	वापस genphy_soft_reset(phydev);
+पूर्ण
 
-static int m88e1149_config_init(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1149_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	/* Change address */
 	err = marvell_set_page(phydev, MII_MARVELL_MSCR_PAGE);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* Enable 1000 Mbit */
-	err = phy_write(phydev, 0x15, 0x1048);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x15, 0x1048);
+	अगर (err < 0)
+		वापस err;
 
 	err = marvell_of_reg_init(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* Reset address */
 	err = marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return genphy_soft_reset(phydev);
-}
+	वापस genphy_soft_reset(phydev);
+पूर्ण
 
-static int m88e1145_config_init_rgmii(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1145_config_init_rgmii(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	err = m88e1111_config_init_rgmii_delays(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (phydev->dev_flags & MARVELL_PHY_M1145_FLAGS_RESISTANCE) {
-		err = phy_write(phydev, 0x1d, 0x0012);
-		if (err < 0)
-			return err;
+	अगर (phydev->dev_flags & MARVELL_PHY_M1145_FLAGS_RESISTANCE) अणु
+		err = phy_ग_लिखो(phydev, 0x1d, 0x0012);
+		अगर (err < 0)
+			वापस err;
 
-		err = phy_modify(phydev, 0x1e, 0x0fc0,
+		err = phy_modअगरy(phydev, 0x1e, 0x0fc0,
 				 2 << 9 | /* 36 ohm */
 				 2 << 6); /* 39 ohm */
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
-		err = phy_write(phydev, 0x1d, 0x3);
-		if (err < 0)
-			return err;
+		err = phy_ग_लिखो(phydev, 0x1d, 0x3);
+		अगर (err < 0)
+			वापस err;
 
-		err = phy_write(phydev, 0x1e, 0x8000);
-	}
-	return err;
-}
+		err = phy_ग_लिखो(phydev, 0x1e, 0x8000);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int m88e1145_config_init_sgmii(struct phy_device *phydev)
-{
-	return m88e1111_config_init_hwcfg_mode(
+अटल पूर्णांक m88e1145_config_init_sgmii(काष्ठा phy_device *phydev)
+अणु
+	वापस m88e1111_config_init_hwcfg_mode(
 		phydev, MII_M1111_HWCFG_MODE_SGMII_NO_CLK,
 		MII_M1111_HWCFG_FIBER_COPPER_AUTO);
-}
+पूर्ण
 
-static int m88e1145_config_init(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e1145_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	/* Take care of errata E0 & E1 */
-	err = phy_write(phydev, 0x1d, 0x001b);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x1d, 0x001b);
+	अगर (err < 0)
+		वापस err;
 
-	err = phy_write(phydev, 0x1e, 0x418f);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x1e, 0x418f);
+	अगर (err < 0)
+		वापस err;
 
-	err = phy_write(phydev, 0x1d, 0x0016);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x1d, 0x0016);
+	अगर (err < 0)
+		वापस err;
 
-	err = phy_write(phydev, 0x1e, 0xa2da);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, 0x1e, 0xa2da);
+	अगर (err < 0)
+		वापस err;
 
-	if (phydev->interface == PHY_INTERFACE_MODE_RGMII_ID) {
+	अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID) अणु
 		err = m88e1145_config_init_rgmii(phydev);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (phydev->interface == PHY_INTERFACE_MODE_SGMII) {
+	अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_SGMII) अणु
 		err = m88e1145_config_init_sgmii(phydev);
-		if (err < 0)
-			return err;
-	}
-	err = m88e1111_set_downshift(phydev, 3);
-	if (err < 0)
-		return err;
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	err = m88e1111_set_करोwnshअगरt(phydev, 3);
+	अगर (err < 0)
+		वापस err;
 
 	err = marvell_of_reg_init(phydev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e1540_get_fld(struct phy_device *phydev, u8 *msecs)
-{
-	int val;
+अटल पूर्णांक m88e1540_get_fld(काष्ठा phy_device *phydev, u8 *msecs)
+अणु
+	पूर्णांक val;
 
-	val = phy_read(phydev, MII_88E1540_COPPER_CTRL3);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो(phydev, MII_88E1540_COPPER_CTRL3);
+	अगर (val < 0)
+		वापस val;
 
-	if (!(val & MII_88E1540_COPPER_CTRL3_FAST_LINK_DOWN)) {
+	अगर (!(val & MII_88E1540_COPPER_CTRL3_FAST_LINK_DOWN)) अणु
 		*msecs = ETHTOOL_PHY_FAST_LINK_DOWN_OFF;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	val = FIELD_GET(MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_MASK, val);
 
-	switch (val) {
-	case MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_00MS:
+	चयन (val) अणु
+	हाल MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_00MS:
 		*msecs = 0;
-		break;
-	case MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_10MS:
+		अवरोध;
+	हाल MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_10MS:
 		*msecs = 10;
-		break;
-	case MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_20MS:
+		अवरोध;
+	हाल MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_20MS:
 		*msecs = 20;
-		break;
-	case MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_40MS:
+		अवरोध;
+	हाल MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_40MS:
 		*msecs = 40;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e1540_set_fld(struct phy_device *phydev, const u8 *msecs)
-{
-	struct ethtool_eee eee;
-	int val, ret;
+अटल पूर्णांक m88e1540_set_fld(काष्ठा phy_device *phydev, स्थिर u8 *msecs)
+अणु
+	काष्ठा ethtool_eee eee;
+	पूर्णांक val, ret;
 
-	if (*msecs == ETHTOOL_PHY_FAST_LINK_DOWN_OFF)
-		return phy_clear_bits(phydev, MII_88E1540_COPPER_CTRL3,
+	अगर (*msecs == ETHTOOL_PHY_FAST_LINK_DOWN_OFF)
+		वापस phy_clear_bits(phydev, MII_88E1540_COPPER_CTRL3,
 				      MII_88E1540_COPPER_CTRL3_FAST_LINK_DOWN);
 
-	/* According to the Marvell data sheet EEE must be disabled for
+	/* According to the Marvell data sheet EEE must be disabled क्रम
 	 * Fast Link Down detection to work properly
 	 */
 	ret = phy_ethtool_get_eee(phydev, &eee);
-	if (!ret && eee.eee_enabled) {
+	अगर (!ret && eee.eee_enabled) अणु
 		phydev_warn(phydev, "Fast Link Down detection requires EEE to be disabled!\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (*msecs <= 5)
+	अगर (*msecs <= 5)
 		val = MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_00MS;
-	else if (*msecs <= 15)
+	अन्यथा अगर (*msecs <= 15)
 		val = MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_10MS;
-	else if (*msecs <= 30)
+	अन्यथा अगर (*msecs <= 30)
 		val = MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_20MS;
-	else
+	अन्यथा
 		val = MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_40MS;
 
 	val = FIELD_PREP(MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_MASK, val);
 
-	ret = phy_modify(phydev, MII_88E1540_COPPER_CTRL3,
+	ret = phy_modअगरy(phydev, MII_88E1540_COPPER_CTRL3,
 			 MII_88E1540_COPPER_CTRL3_LINK_DOWN_DELAY_MASK, val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return phy_set_bits(phydev, MII_88E1540_COPPER_CTRL3,
+	वापस phy_set_bits(phydev, MII_88E1540_COPPER_CTRL3,
 			    MII_88E1540_COPPER_CTRL3_FAST_LINK_DOWN);
-}
+पूर्ण
 
-static int m88e1540_get_tunable(struct phy_device *phydev,
-				struct ethtool_tunable *tuna, void *data)
-{
-	switch (tuna->id) {
-	case ETHTOOL_PHY_FAST_LINK_DOWN:
-		return m88e1540_get_fld(phydev, data);
-	case ETHTOOL_PHY_DOWNSHIFT:
-		return m88e1011_get_downshift(phydev, data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक m88e1540_get_tunable(काष्ठा phy_device *phydev,
+				काष्ठा ethtool_tunable *tuna, व्योम *data)
+अणु
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_PHY_FAST_LINK_DOWN:
+		वापस m88e1540_get_fld(phydev, data);
+	हाल ETHTOOL_PHY_DOWNSHIFT:
+		वापस m88e1011_get_करोwnshअगरt(phydev, data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int m88e1540_set_tunable(struct phy_device *phydev,
-				struct ethtool_tunable *tuna, const void *data)
-{
-	switch (tuna->id) {
-	case ETHTOOL_PHY_FAST_LINK_DOWN:
-		return m88e1540_set_fld(phydev, data);
-	case ETHTOOL_PHY_DOWNSHIFT:
-		return m88e1011_set_downshift(phydev, *(const u8 *)data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक m88e1540_set_tunable(काष्ठा phy_device *phydev,
+				काष्ठा ethtool_tunable *tuna, स्थिर व्योम *data)
+अणु
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_PHY_FAST_LINK_DOWN:
+		वापस m88e1540_set_fld(phydev, data);
+	हाल ETHTOOL_PHY_DOWNSHIFT:
+		वापस m88e1011_set_करोwnshअगरt(phydev, *(स्थिर u8 *)data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-/* The VOD can be out of specification on link up. Poke an
- * undocumented register, in an undocumented page, with a magic value
+/* The VOD can be out of specअगरication on link up. Poke an
+ * unकरोcumented रेजिस्टर, in an unकरोcumented page, with a magic value
  * to fix this.
  */
-static int m88e6390_errata(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e6390_errata(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
-	err = phy_write(phydev, MII_BMCR,
+	err = phy_ग_लिखो(phydev, MII_BMCR,
 			BMCR_ANENABLE | BMCR_SPEED1000 | BMCR_FULLDPLX);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	usleep_range(300, 400);
 
-	err = phy_write_paged(phydev, 0xf8, 0x08, 0x36);
-	if (err)
-		return err;
+	err = phy_ग_लिखो_paged(phydev, 0xf8, 0x08, 0x36);
+	अगर (err)
+		वापस err;
 
-	return genphy_soft_reset(phydev);
-}
+	वापस genphy_soft_reset(phydev);
+पूर्ण
 
-static int m88e6390_config_aneg(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e6390_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	err = m88e6390_errata(phydev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return m88e1510_config_aneg(phydev);
-}
+	वापस m88e1510_config_aneg(phydev);
+पूर्ण
 
 /**
  * fiber_lpa_mod_linkmode_lpa_t
  * @advertising: the linkmode advertisement settings
- * @lpa: value of the MII_LPA register for fiber link
+ * @lpa: value of the MII_LPA रेजिस्टर क्रम fiber link
  *
  * A small helper function that translates MII_LPA bits to linkmode LP
  * advertisement settings. Other bits in advertising are left
  * unchanged.
  */
-static void fiber_lpa_mod_linkmode_lpa_t(unsigned long *advertising, u32 lpa)
-{
+अटल व्योम fiber_lpa_mod_linkmode_lpa_t(अचिन्हित दीर्घ *advertising, u32 lpa)
+अणु
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_1000baseT_Half_BIT,
 			 advertising, lpa & LPA_1000XHALF);
 
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 			 advertising, lpa & LPA_1000XFULL);
-}
+पूर्ण
 
-static int marvell_read_status_page_an(struct phy_device *phydev,
-				       int fiber, int status)
-{
-	int lpa;
-	int err;
+अटल पूर्णांक marvell_पढ़ो_status_page_an(काष्ठा phy_device *phydev,
+				       पूर्णांक fiber, पूर्णांक status)
+अणु
+	पूर्णांक lpa;
+	पूर्णांक err;
 
-	if (!(status & MII_M1011_PHY_STATUS_RESOLVED)) {
+	अगर (!(status & MII_M1011_PHY_STATUS_RESOLVED)) अणु
 		phydev->link = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (status & MII_M1011_PHY_STATUS_FULLDUPLEX)
+	अगर (status & MII_M1011_PHY_STATUS_FULLDUPLEX)
 		phydev->duplex = DUPLEX_FULL;
-	else
+	अन्यथा
 		phydev->duplex = DUPLEX_HALF;
 
-	switch (status & MII_M1011_PHY_STATUS_SPD_MASK) {
-	case MII_M1011_PHY_STATUS_1000:
+	चयन (status & MII_M1011_PHY_STATUS_SPD_MASK) अणु
+	हाल MII_M1011_PHY_STATUS_1000:
 		phydev->speed = SPEED_1000;
-		break;
+		अवरोध;
 
-	case MII_M1011_PHY_STATUS_100:
+	हाल MII_M1011_PHY_STATUS_100:
 		phydev->speed = SPEED_100;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		phydev->speed = SPEED_10;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!fiber) {
-		err = genphy_read_lpa(phydev);
-		if (err < 0)
-			return err;
+	अगर (!fiber) अणु
+		err = genphy_पढ़ो_lpa(phydev);
+		अगर (err < 0)
+			वापस err;
 
-		phy_resolve_aneg_pause(phydev);
-	} else {
-		lpa = phy_read(phydev, MII_LPA);
-		if (lpa < 0)
-			return lpa;
+		phy_resolve_aneg_छोड़ो(phydev);
+	पूर्ण अन्यथा अणु
+		lpa = phy_पढ़ो(phydev, MII_LPA);
+		अगर (lpa < 0)
+			वापस lpa;
 
 		/* The fiber link is only 1000M capable */
 		fiber_lpa_mod_linkmode_lpa_t(phydev->lp_advertising, lpa);
 
-		if (phydev->duplex == DUPLEX_FULL) {
-			if (!(lpa & LPA_PAUSE_FIBER)) {
-				phydev->pause = 0;
-				phydev->asym_pause = 0;
-			} else if ((lpa & LPA_PAUSE_ASYM_FIBER)) {
-				phydev->pause = 1;
-				phydev->asym_pause = 1;
-			} else {
-				phydev->pause = 1;
-				phydev->asym_pause = 0;
-			}
-		}
-	}
+		अगर (phydev->duplex == DUPLEX_FULL) अणु
+			अगर (!(lpa & LPA_PAUSE_FIBER)) अणु
+				phydev->छोड़ो = 0;
+				phydev->asym_छोड़ो = 0;
+			पूर्ण अन्यथा अगर ((lpa & LPA_PAUSE_ASYM_FIBER)) अणु
+				phydev->छोड़ो = 1;
+				phydev->asym_छोड़ो = 1;
+			पूर्ण अन्यथा अणु
+				phydev->छोड़ो = 1;
+				phydev->asym_छोड़ो = 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* marvell_read_status_page
+/* marvell_पढ़ो_status_page
  *
  * Description:
  *   Check the link, then figure out the current state
@@ -1585,535 +1586,535 @@ static int marvell_read_status_page_an(struct phy_device *phydev,
  *   advertises.  Start by checking the gigabit possibilities,
  *   then move on to 10/100.
  */
-static int marvell_read_status_page(struct phy_device *phydev, int page)
-{
-	int status;
-	int fiber;
-	int err;
+अटल पूर्णांक marvell_पढ़ो_status_page(काष्ठा phy_device *phydev, पूर्णांक page)
+अणु
+	पूर्णांक status;
+	पूर्णांक fiber;
+	पूर्णांक err;
 
-	status = phy_read(phydev, MII_M1011_PHY_STATUS);
-	if (status < 0)
-		return status;
+	status = phy_पढ़ो(phydev, MII_M1011_PHY_STATUS);
+	अगर (status < 0)
+		वापस status;
 
-	/* Use the generic register for copper link status,
-	 * and the PHY status register for fiber link status.
+	/* Use the generic रेजिस्टर क्रम copper link status,
+	 * and the PHY status रेजिस्टर क्रम fiber link status.
 	 */
-	if (page == MII_MARVELL_FIBER_PAGE) {
+	अगर (page == MII_MARVELL_FIBER_PAGE) अणु
 		phydev->link = !!(status & MII_M1011_PHY_STATUS_LINK);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = genphy_update_link(phydev);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (page == MII_MARVELL_FIBER_PAGE)
+	अगर (page == MII_MARVELL_FIBER_PAGE)
 		fiber = 1;
-	else
+	अन्यथा
 		fiber = 0;
 
 	linkmode_zero(phydev->lp_advertising);
-	phydev->pause = 0;
-	phydev->asym_pause = 0;
+	phydev->छोड़ो = 0;
+	phydev->asym_छोड़ो = 0;
 	phydev->speed = SPEED_UNKNOWN;
 	phydev->duplex = DUPLEX_UNKNOWN;
 	phydev->port = fiber ? PORT_FIBRE : PORT_TP;
 
-	if (phydev->autoneg == AUTONEG_ENABLE)
-		err = marvell_read_status_page_an(phydev, fiber, status);
-	else
-		err = genphy_read_status_fixed(phydev);
+	अगर (phydev->स्वतःneg == AUTONEG_ENABLE)
+		err = marvell_पढ़ो_status_page_an(phydev, fiber, status);
+	अन्यथा
+		err = genphy_पढ़ो_status_fixed(phydev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* marvell_read_status
+/* marvell_पढ़ो_status
  *
  * Some Marvell's phys have two modes: fiber and copper.
  * Both need status checked.
  * Description:
  *   First, check the fiber link and status.
- *   If the fiber link is down, check the copper link and status which
- *   will be the default value if both link are down.
+ *   If the fiber link is करोwn, check the copper link and status which
+ *   will be the शेष value अगर both link are करोwn.
  */
-static int marvell_read_status(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक marvell_पढ़ो_status(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	/* Check the fiber mode first */
-	if (linkmode_test_bit(ETHTOOL_LINK_MODE_FIBRE_BIT,
+	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_FIBRE_BIT,
 			      phydev->supported) &&
-	    phydev->interface != PHY_INTERFACE_MODE_SGMII) {
+	    phydev->पूर्णांकerface != PHY_INTERFACE_MODE_SGMII) अणु
 		err = marvell_set_page(phydev, MII_MARVELL_FIBER_PAGE);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = marvell_read_status_page(phydev, MII_MARVELL_FIBER_PAGE);
-		if (err < 0)
-			goto error;
+		err = marvell_पढ़ो_status_page(phydev, MII_MARVELL_FIBER_PAGE);
+		अगर (err < 0)
+			जाओ error;
 
 		/* If the fiber link is up, it is the selected and
-		 * used link. In this case, we need to stay in the
-		 * fiber page. Please to be careful about that, avoid
+		 * used link. In this हाल, we need to stay in the
+		 * fiber page. Please to be careful about that, aव्योम
 		 * to restore Copper page in other functions which
-		 * could break the behaviour for some fiber phy like
+		 * could अवरोध the behaviour क्रम some fiber phy like
 		 * 88E1512.
 		 */
-		if (phydev->link)
-			return 0;
+		अगर (phydev->link)
+			वापस 0;
 
-		/* If fiber link is down, check and save copper mode state */
+		/* If fiber link is करोwn, check and save copper mode state */
 		err = marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-		if (err < 0)
-			goto error;
-	}
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
-	return marvell_read_status_page(phydev, MII_MARVELL_COPPER_PAGE);
+	वापस marvell_पढ़ो_status_page(phydev, MII_MARVELL_COPPER_PAGE);
 
 error:
 	marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* marvell_suspend
  *
  * Some Marvell's phys have two modes: fiber and copper.
  * Both need to be suspended
  */
-static int marvell_suspend(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक marvell_suspend(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	/* Suspend the fiber mode first */
-	if (!linkmode_test_bit(ETHTOOL_LINK_MODE_FIBRE_BIT,
-			       phydev->supported)) {
+	अगर (!linkmode_test_bit(ETHTOOL_LINK_MODE_FIBRE_BIT,
+			       phydev->supported)) अणु
 		err = marvell_set_page(phydev, MII_MARVELL_FIBER_PAGE);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
 		/* With the page set, use the generic suspend */
 		err = genphy_suspend(phydev);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
 		/* Then, the copper link */
 		err = marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-		if (err < 0)
-			goto error;
-	}
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
 	/* With the page set, use the generic suspend */
-	return genphy_suspend(phydev);
+	वापस genphy_suspend(phydev);
 
 error:
 	marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* marvell_resume
  *
  * Some Marvell's phys have two modes: fiber and copper.
  * Both need to be resumed
  */
-static int marvell_resume(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक marvell_resume(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	/* Resume the fiber mode first */
-	if (!linkmode_test_bit(ETHTOOL_LINK_MODE_FIBRE_BIT,
-			       phydev->supported)) {
+	अगर (!linkmode_test_bit(ETHTOOL_LINK_MODE_FIBRE_BIT,
+			       phydev->supported)) अणु
 		err = marvell_set_page(phydev, MII_MARVELL_FIBER_PAGE);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
 		/* With the page set, use the generic resume */
 		err = genphy_resume(phydev);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
 		/* Then, the copper link */
 		err = marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-		if (err < 0)
-			goto error;
-	}
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
 	/* With the page set, use the generic resume */
-	return genphy_resume(phydev);
+	वापस genphy_resume(phydev);
 
 error:
 	marvell_set_page(phydev, MII_MARVELL_COPPER_PAGE);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int marvell_aneg_done(struct phy_device *phydev)
-{
-	int retval = phy_read(phydev, MII_M1011_PHY_STATUS);
+अटल पूर्णांक marvell_aneg_करोne(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक retval = phy_पढ़ो(phydev, MII_M1011_PHY_STATUS);
 
-	return (retval < 0) ? retval : (retval & MII_M1011_PHY_STATUS_RESOLVED);
-}
+	वापस (retval < 0) ? retval : (retval & MII_M1011_PHY_STATUS_RESOLVED);
+पूर्ण
 
-static void m88e1318_get_wol(struct phy_device *phydev,
-			     struct ethtool_wolinfo *wol)
-{
-	int ret;
+अटल व्योम m88e1318_get_wol(काष्ठा phy_device *phydev,
+			     काष्ठा ethtool_wolinfo *wol)
+अणु
+	पूर्णांक ret;
 
 	wol->supported = WAKE_MAGIC;
 	wol->wolopts = 0;
 
-	ret = phy_read_paged(phydev, MII_MARVELL_WOL_PAGE,
+	ret = phy_पढ़ो_paged(phydev, MII_MARVELL_WOL_PAGE,
 			     MII_88E1318S_PHY_WOL_CTRL);
-	if (ret >= 0 && ret & MII_88E1318S_PHY_WOL_CTRL_MAGIC_PACKET_MATCH_ENABLE)
+	अगर (ret >= 0 && ret & MII_88E1318S_PHY_WOL_CTRL_MAGIC_PACKET_MATCH_ENABLE)
 		wol->wolopts |= WAKE_MAGIC;
-}
+पूर्ण
 
-static int m88e1318_set_wol(struct phy_device *phydev,
-			    struct ethtool_wolinfo *wol)
-{
-	int err = 0, oldpage;
+अटल पूर्णांक m88e1318_set_wol(काष्ठा phy_device *phydev,
+			    काष्ठा ethtool_wolinfo *wol)
+अणु
+	पूर्णांक err = 0, oldpage;
 
 	oldpage = phy_save_page(phydev);
-	if (oldpage < 0)
-		goto error;
+	अगर (oldpage < 0)
+		जाओ error;
 
-	if (wol->wolopts & WAKE_MAGIC) {
-		/* Explicitly switch to page 0x00, just to be sure */
-		err = marvell_write_page(phydev, MII_MARVELL_COPPER_PAGE);
-		if (err < 0)
-			goto error;
+	अगर (wol->wolopts & WAKE_MAGIC) अणु
+		/* Explicitly चयन to page 0x00, just to be sure */
+		err = marvell_ग_लिखो_page(phydev, MII_MARVELL_COPPER_PAGE);
+		अगर (err < 0)
+			जाओ error;
 
-		/* If WOL event happened once, the LED[2] interrupt pin
-		 * will not be cleared unless we reading the interrupt status
-		 * register. If interrupts are in use, the normal interrupt
+		/* If WOL event happened once, the LED[2] पूर्णांकerrupt pin
+		 * will not be cleared unless we पढ़ोing the पूर्णांकerrupt status
+		 * रेजिस्टर. If पूर्णांकerrupts are in use, the normal पूर्णांकerrupt
 		 * handling will clear the WOL event. Clear the WOL event
-		 * before enabling it if !phy_interrupt_is_valid()
+		 * beक्रमe enabling it अगर !phy_पूर्णांकerrupt_is_valid()
 		 */
-		if (!phy_interrupt_is_valid(phydev))
-			__phy_read(phydev, MII_M1011_IEVENT);
+		अगर (!phy_पूर्णांकerrupt_is_valid(phydev))
+			__phy_पढ़ो(phydev, MII_M1011_IEVENT);
 
-		/* Enable the WOL interrupt */
+		/* Enable the WOL पूर्णांकerrupt */
 		err = __phy_set_bits(phydev, MII_88E1318S_PHY_CSIER,
 				     MII_88E1318S_PHY_CSIER_WOL_EIE);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = marvell_write_page(phydev, MII_MARVELL_LED_PAGE);
-		if (err < 0)
-			goto error;
+		err = marvell_ग_लिखो_page(phydev, MII_MARVELL_LED_PAGE);
+		अगर (err < 0)
+			जाओ error;
 
-		/* Setup LED[2] as interrupt pin (active low) */
-		err = __phy_modify(phydev, MII_88E1318S_PHY_LED_TCR,
+		/* Setup LED[2] as पूर्णांकerrupt pin (active low) */
+		err = __phy_modअगरy(phydev, MII_88E1318S_PHY_LED_TCR,
 				   MII_88E1318S_PHY_LED_TCR_FORCE_INT,
 				   MII_88E1318S_PHY_LED_TCR_INTn_ENABLE |
 				   MII_88E1318S_PHY_LED_TCR_INT_ACTIVE_LOW);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = marvell_write_page(phydev, MII_MARVELL_WOL_PAGE);
-		if (err < 0)
-			goto error;
+		err = marvell_ग_लिखो_page(phydev, MII_MARVELL_WOL_PAGE);
+		अगर (err < 0)
+			जाओ error;
 
-		/* Store the device address for the magic packet */
-		err = __phy_write(phydev, MII_88E1318S_PHY_MAGIC_PACKET_WORD2,
+		/* Store the device address क्रम the magic packet */
+		err = __phy_ग_लिखो(phydev, MII_88E1318S_PHY_MAGIC_PACKET_WORD2,
 				((phydev->attached_dev->dev_addr[5] << 8) |
 				 phydev->attached_dev->dev_addr[4]));
-		if (err < 0)
-			goto error;
-		err = __phy_write(phydev, MII_88E1318S_PHY_MAGIC_PACKET_WORD1,
+		अगर (err < 0)
+			जाओ error;
+		err = __phy_ग_लिखो(phydev, MII_88E1318S_PHY_MAGIC_PACKET_WORD1,
 				((phydev->attached_dev->dev_addr[3] << 8) |
 				 phydev->attached_dev->dev_addr[2]));
-		if (err < 0)
-			goto error;
-		err = __phy_write(phydev, MII_88E1318S_PHY_MAGIC_PACKET_WORD0,
+		अगर (err < 0)
+			जाओ error;
+		err = __phy_ग_लिखो(phydev, MII_88E1318S_PHY_MAGIC_PACKET_WORD0,
 				((phydev->attached_dev->dev_addr[1] << 8) |
 				 phydev->attached_dev->dev_addr[0]));
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
 		/* Clear WOL status and enable magic packet matching */
 		err = __phy_set_bits(phydev, MII_88E1318S_PHY_WOL_CTRL,
 				     MII_88E1318S_PHY_WOL_CTRL_CLEAR_WOL_STATUS |
 				     MII_88E1318S_PHY_WOL_CTRL_MAGIC_PACKET_MATCH_ENABLE);
-		if (err < 0)
-			goto error;
-	} else {
-		err = marvell_write_page(phydev, MII_MARVELL_WOL_PAGE);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण अन्यथा अणु
+		err = marvell_ग_लिखो_page(phydev, MII_MARVELL_WOL_PAGE);
+		अगर (err < 0)
+			जाओ error;
 
 		/* Clear WOL status and disable magic packet matching */
-		err = __phy_modify(phydev, MII_88E1318S_PHY_WOL_CTRL,
+		err = __phy_modअगरy(phydev, MII_88E1318S_PHY_WOL_CTRL,
 				   MII_88E1318S_PHY_WOL_CTRL_MAGIC_PACKET_MATCH_ENABLE,
 				   MII_88E1318S_PHY_WOL_CTRL_CLEAR_WOL_STATUS);
-		if (err < 0)
-			goto error;
-	}
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
 error:
-	return phy_restore_page(phydev, oldpage, err);
-}
+	वापस phy_restore_page(phydev, oldpage, err);
+पूर्ण
 
-static int marvell_get_sset_count(struct phy_device *phydev)
-{
-	if (linkmode_test_bit(ETHTOOL_LINK_MODE_FIBRE_BIT,
+अटल पूर्णांक marvell_get_sset_count(काष्ठा phy_device *phydev)
+अणु
+	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_FIBRE_BIT,
 			      phydev->supported))
-		return ARRAY_SIZE(marvell_hw_stats);
-	else
-		return ARRAY_SIZE(marvell_hw_stats) - NB_FIBER_STATS;
-}
+		वापस ARRAY_SIZE(marvell_hw_stats);
+	अन्यथा
+		वापस ARRAY_SIZE(marvell_hw_stats) - NB_FIBER_STATS;
+पूर्ण
 
-static void marvell_get_strings(struct phy_device *phydev, u8 *data)
-{
-	int count = marvell_get_sset_count(phydev);
-	int i;
+अटल व्योम marvell_get_strings(काष्ठा phy_device *phydev, u8 *data)
+अणु
+	पूर्णांक count = marvell_get_sset_count(phydev);
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		strlcpy(data + i * ETH_GSTRING_LEN,
 			marvell_hw_stats[i].string, ETH_GSTRING_LEN);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u64 marvell_get_stat(struct phy_device *phydev, int i)
-{
-	struct marvell_hw_stat stat = marvell_hw_stats[i];
-	struct marvell_priv *priv = phydev->priv;
-	int val;
+अटल u64 marvell_get_stat(काष्ठा phy_device *phydev, पूर्णांक i)
+अणु
+	काष्ठा marvell_hw_stat stat = marvell_hw_stats[i];
+	काष्ठा marvell_priv *priv = phydev->priv;
+	पूर्णांक val;
 	u64 ret;
 
-	val = phy_read_paged(phydev, stat.page, stat.reg);
-	if (val < 0) {
+	val = phy_पढ़ो_paged(phydev, stat.page, stat.reg);
+	अगर (val < 0) अणु
 		ret = U64_MAX;
-	} else {
+	पूर्ण अन्यथा अणु
 		val = val & ((1 << stat.bits) - 1);
 		priv->stats[i] += val;
 		ret = priv->stats[i];
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void marvell_get_stats(struct phy_device *phydev,
-			      struct ethtool_stats *stats, u64 *data)
-{
-	int count = marvell_get_sset_count(phydev);
-	int i;
+अटल व्योम marvell_get_stats(काष्ठा phy_device *phydev,
+			      काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	पूर्णांक count = marvell_get_sset_count(phydev);
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++)
+	क्रम (i = 0; i < count; i++)
 		data[i] = marvell_get_stat(phydev, i);
-}
+पूर्ण
 
-static int marvell_vct5_wait_complete(struct phy_device *phydev)
-{
-	int i;
-	int val;
+अटल पूर्णांक marvell_vct5_रुको_complete(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक i;
+	पूर्णांक val;
 
-	for (i = 0; i < 32; i++) {
-		val = __phy_read(phydev, MII_VCT5_CTRL);
-		if (val < 0)
-			return val;
+	क्रम (i = 0; i < 32; i++) अणु
+		val = __phy_पढ़ो(phydev, MII_VCT5_CTRL);
+		अगर (val < 0)
+			वापस val;
 
-		if (val & MII_VCT5_CTRL_COMPLETE)
-			return 0;
-	}
+		अगर (val & MII_VCT5_CTRL_COMPLETE)
+			वापस 0;
+	पूर्ण
 
 	phydev_err(phydev, "Timeout while waiting for cable test to finish\n");
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int marvell_vct5_amplitude(struct phy_device *phydev, int pair)
-{
-	int amplitude;
-	int val;
-	int reg;
+अटल पूर्णांक marvell_vct5_amplitude(काष्ठा phy_device *phydev, पूर्णांक pair)
+अणु
+	पूर्णांक amplitude;
+	पूर्णांक val;
+	पूर्णांक reg;
 
 	reg = MII_VCT5_TX_RX_MDI0_COUPLING + pair;
-	val = __phy_read(phydev, reg);
+	val = __phy_पढ़ो(phydev, reg);
 
-	if (val < 0)
-		return 0;
+	अगर (val < 0)
+		वापस 0;
 
 	amplitude = (val & MII_VCT5_TX_RX_AMPLITUDE_MASK) >>
 		MII_VCT5_TX_RX_AMPLITUDE_SHIFT;
 
-	if (!(val & MII_VCT5_TX_RX_COUPLING_POSITIVE_REFLECTION))
+	अगर (!(val & MII_VCT5_TX_RX_COUPLING_POSITIVE_REFLECTION))
 		amplitude = -amplitude;
 
-	return 1000 * amplitude / 128;
-}
+	वापस 1000 * amplitude / 128;
+पूर्ण
 
-static u32 marvell_vct5_distance2cm(int distance)
-{
-	return distance * 805 / 10;
-}
+अटल u32 marvell_vct5_distance2cm(पूर्णांक distance)
+अणु
+	वापस distance * 805 / 10;
+पूर्ण
 
-static u32 marvell_vct5_cm2distance(int cm)
-{
-	return cm * 10 / 805;
-}
+अटल u32 marvell_vct5_cm2distance(पूर्णांक cm)
+अणु
+	वापस cm * 10 / 805;
+पूर्ण
 
-static int marvell_vct5_amplitude_distance(struct phy_device *phydev,
-					   int distance, int pair)
-{
+अटल पूर्णांक marvell_vct5_amplitude_distance(काष्ठा phy_device *phydev,
+					   पूर्णांक distance, पूर्णांक pair)
+अणु
 	u16 reg;
-	int err;
-	int mV;
-	int i;
+	पूर्णांक err;
+	पूर्णांक mV;
+	पूर्णांक i;
 
-	err = __phy_write(phydev, MII_VCT5_SAMPLE_POINT_DISTANCE,
+	err = __phy_ग_लिखो(phydev, MII_VCT5_SAMPLE_POINT_DISTANCE,
 			  distance);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	reg = MII_VCT5_CTRL_ENABLE |
 		MII_VCT5_CTRL_TX_SAME_CHANNEL |
 		MII_VCT5_CTRL_SAMPLES_DEFAULT |
 		MII_VCT5_CTRL_SAMPLE_POINT |
 		MII_VCT5_CTRL_PEEK_HYST_DEFAULT;
-	err = __phy_write(phydev, MII_VCT5_CTRL, reg);
-	if (err)
-		return err;
+	err = __phy_ग_लिखो(phydev, MII_VCT5_CTRL, reg);
+	अगर (err)
+		वापस err;
 
-	err = marvell_vct5_wait_complete(phydev);
-	if (err)
-		return err;
+	err = marvell_vct5_रुको_complete(phydev);
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < 4; i++) {
-		if (pair != PHY_PAIR_ALL && i != pair)
-			continue;
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (pair != PHY_PAIR_ALL && i != pair)
+			जारी;
 
 		mV = marvell_vct5_amplitude(phydev, i);
 		ethnl_cable_test_amplitude(phydev, i, mV);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int marvell_vct5_amplitude_graph(struct phy_device *phydev)
-{
-	struct marvell_priv *priv = phydev->priv;
-	int distance;
+अटल पूर्णांक marvell_vct5_amplitude_graph(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा marvell_priv *priv = phydev->priv;
+	पूर्णांक distance;
 	u16 width;
-	int page;
-	int err;
+	पूर्णांक page;
+	पूर्णांक err;
 	u16 reg;
 
-	if (priv->first <= TDR_SHORT_CABLE_LENGTH)
+	अगर (priv->first <= TDR_SHORT_CABLE_LENGTH)
 		width = MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_32nS;
-	else
+	अन्यथा
 		width = MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_128nS;
 
 	reg = MII_VCT5_TX_PULSE_CTRL_GT_140m_46_86mV |
 		MII_VCT5_TX_PULSE_CTRL_DONT_WAIT_LINK_DOWN |
 		MII_VCT5_TX_PULSE_CTRL_MAX_AMP | width;
 
-	err = phy_write_paged(phydev, MII_MARVELL_VCT5_PAGE,
+	err = phy_ग_लिखो_paged(phydev, MII_MARVELL_VCT5_PAGE,
 			      MII_VCT5_TX_PULSE_CTRL, reg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Reading the TDR data is very MDIO heavy. We need to optimize
-	 * access to keep the time to a minimum. So lock the bus once,
-	 * and don't release it until complete. We can then avoid having
-	 * to change the page for every access, greatly speeding things
+	 * access to keep the समय to a minimum. So lock the bus once,
+	 * and करोn't release it until complete. We can then aव्योम having
+	 * to change the page क्रम every access, greatly speeding things
 	 * up.
 	 */
 	page = phy_select_page(phydev, MII_MARVELL_VCT5_PAGE);
-	if (page < 0)
-		goto restore_page;
+	अगर (page < 0)
+		जाओ restore_page;
 
-	for (distance = priv->first;
+	क्रम (distance = priv->first;
 	     distance <= priv->last;
-	     distance += priv->step) {
+	     distance += priv->step) अणु
 		err = marvell_vct5_amplitude_distance(phydev, distance,
 						      priv->pair);
-		if (err)
-			goto restore_page;
+		अगर (err)
+			जाओ restore_page;
 
-		if (distance > TDR_SHORT_CABLE_LENGTH &&
-		    width == MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_32nS) {
+		अगर (distance > TDR_SHORT_CABLE_LENGTH &&
+		    width == MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_32nS) अणु
 			width = MII_VCT5_TX_PULSE_CTRL_PULSE_WIDTH_128nS;
 			reg = MII_VCT5_TX_PULSE_CTRL_GT_140m_46_86mV |
 				MII_VCT5_TX_PULSE_CTRL_DONT_WAIT_LINK_DOWN |
 				MII_VCT5_TX_PULSE_CTRL_MAX_AMP | width;
-			err = __phy_write(phydev, MII_VCT5_TX_PULSE_CTRL, reg);
-			if (err)
-				goto restore_page;
-		}
-	}
+			err = __phy_ग_लिखो(phydev, MII_VCT5_TX_PULSE_CTRL, reg);
+			अगर (err)
+				जाओ restore_page;
+		पूर्ण
+	पूर्ण
 
 restore_page:
-	return phy_restore_page(phydev, page, err);
-}
+	वापस phy_restore_page(phydev, page, err);
+पूर्ण
 
-static int marvell_cable_test_start_common(struct phy_device *phydev)
-{
-	int bmcr, bmsr, ret;
+अटल पूर्णांक marvell_cable_test_start_common(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक bmcr, bmsr, ret;
 
-	/* If auto-negotiation is enabled, but not complete, the cable
-	 * test never completes. So disable auto-neg.
+	/* If स्वतः-negotiation is enabled, but not complete, the cable
+	 * test never completes. So disable स्वतः-neg.
 	 */
-	bmcr = phy_read(phydev, MII_BMCR);
-	if (bmcr < 0)
-		return bmcr;
+	bmcr = phy_पढ़ो(phydev, MII_BMCR);
+	अगर (bmcr < 0)
+		वापस bmcr;
 
-	bmsr = phy_read(phydev, MII_BMSR);
+	bmsr = phy_पढ़ो(phydev, MII_BMSR);
 
-	if (bmsr < 0)
-		return bmsr;
+	अगर (bmsr < 0)
+		वापस bmsr;
 
-	if (bmcr & BMCR_ANENABLE) {
+	अगर (bmcr & BMCR_ANENABLE) अणु
 		ret =  phy_clear_bits(phydev, MII_BMCR, BMCR_ANENABLE);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		ret = genphy_soft_reset(phydev);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	/* If the link is up, allow it some time to go down */
-	if (bmsr & BMSR_LSTATUS)
+	/* If the link is up, allow it some समय to go करोwn */
+	अगर (bmsr & BMSR_LSTATUS)
 		msleep(1500);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int marvell_vct7_cable_test_start(struct phy_device *phydev)
-{
-	struct marvell_priv *priv = phydev->priv;
-	int ret;
+अटल पूर्णांक marvell_vct7_cable_test_start(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा marvell_priv *priv = phydev->priv;
+	पूर्णांक ret;
 
 	ret = marvell_cable_test_start_common(phydev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	priv->cable_test_tdr = false;
 
-	/* Reset the VCT5 API control to defaults, otherwise
-	 * VCT7 does not work correctly.
+	/* Reset the VCT5 API control to शेषs, otherwise
+	 * VCT7 करोes not work correctly.
 	 */
-	ret = phy_write_paged(phydev, MII_MARVELL_VCT5_PAGE,
+	ret = phy_ग_लिखो_paged(phydev, MII_MARVELL_VCT5_PAGE,
 			      MII_VCT5_CTRL,
 			      MII_VCT5_CTRL_TX_SAME_CHANNEL |
 			      MII_VCT5_CTRL_SAMPLES_DEFAULT |
 			      MII_VCT5_CTRL_MODE_MAXIMUM_PEEK |
 			      MII_VCT5_CTRL_PEEK_HYST_DEFAULT);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = phy_write_paged(phydev, MII_MARVELL_VCT5_PAGE,
+	ret = phy_ग_लिखो_paged(phydev, MII_MARVELL_VCT5_PAGE,
 			      MII_VCT5_SAMPLE_POINT_DISTANCE, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return phy_write_paged(phydev, MII_MARVELL_VCT7_PAGE,
+	वापस phy_ग_लिखो_paged(phydev, MII_MARVELL_VCT7_PAGE,
 			       MII_VCT7_CTRL,
 			       MII_VCT7_CTRL_RUN_NOW |
 			       MII_VCT7_CTRL_CENTIMETERS);
-}
+पूर्ण
 
-static int marvell_vct5_cable_test_tdr_start(struct phy_device *phydev,
-					     const struct phy_tdr_config *cfg)
-{
-	struct marvell_priv *priv = phydev->priv;
-	int ret;
+अटल पूर्णांक marvell_vct5_cable_test_tdr_start(काष्ठा phy_device *phydev,
+					     स्थिर काष्ठा phy_tdr_config *cfg)
+अणु
+	काष्ठा marvell_priv *priv = phydev->priv;
+	पूर्णांक ret;
 
 	priv->cable_test_tdr = true;
 	priv->first = marvell_vct5_cm2distance(cfg->first);
@@ -2121,95 +2122,95 @@ static int marvell_vct5_cable_test_tdr_start(struct phy_device *phydev,
 	priv->step = marvell_vct5_cm2distance(cfg->step);
 	priv->pair = cfg->pair;
 
-	if (priv->first > MII_VCT5_SAMPLE_POINT_DISTANCE_MAX)
-		return -EINVAL;
+	अगर (priv->first > MII_VCT5_SAMPLE_POINT_DISTANCE_MAX)
+		वापस -EINVAL;
 
-	if (priv->last > MII_VCT5_SAMPLE_POINT_DISTANCE_MAX)
-		return -EINVAL;
+	अगर (priv->last > MII_VCT5_SAMPLE_POINT_DISTANCE_MAX)
+		वापस -EINVAL;
 
 	/* Disable  VCT7 */
-	ret = phy_write_paged(phydev, MII_MARVELL_VCT7_PAGE,
+	ret = phy_ग_लिखो_paged(phydev, MII_MARVELL_VCT7_PAGE,
 			      MII_VCT7_CTRL, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = marvell_cable_test_start_common(phydev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ethnl_cable_test_pulse(phydev, 1000);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ethnl_cable_test_step(phydev,
+	वापस ethnl_cable_test_step(phydev,
 				     marvell_vct5_distance2cm(priv->first),
 				     marvell_vct5_distance2cm(priv->last),
 				     marvell_vct5_distance2cm(priv->step));
-}
+पूर्ण
 
-static int marvell_vct7_distance_to_length(int distance, bool meter)
-{
-	if (meter)
+अटल पूर्णांक marvell_vct7_distance_to_length(पूर्णांक distance, bool meter)
+अणु
+	अगर (meter)
 		distance *= 100;
 
-	return distance;
-}
+	वापस distance;
+पूर्ण
 
-static bool marvell_vct7_distance_valid(int result)
-{
-	switch (result) {
-	case MII_VCT7_RESULTS_OPEN:
-	case MII_VCT7_RESULTS_SAME_SHORT:
-	case MII_VCT7_RESULTS_CROSS_SHORT:
-		return true;
-	}
-	return false;
-}
+अटल bool marvell_vct7_distance_valid(पूर्णांक result)
+अणु
+	चयन (result) अणु
+	हाल MII_VCT7_RESULTS_OPEN:
+	हाल MII_VCT7_RESULTS_SAME_SHORT:
+	हाल MII_VCT7_RESULTS_CROSS_SHORT:
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static int marvell_vct7_report_length(struct phy_device *phydev,
-				      int pair, bool meter)
-{
-	int length;
-	int ret;
+अटल पूर्णांक marvell_vct7_report_length(काष्ठा phy_device *phydev,
+				      पूर्णांक pair, bool meter)
+अणु
+	पूर्णांक length;
+	पूर्णांक ret;
 
-	ret = phy_read_paged(phydev, MII_MARVELL_VCT7_PAGE,
+	ret = phy_पढ़ो_paged(phydev, MII_MARVELL_VCT7_PAGE,
 			     MII_VCT7_PAIR_0_DISTANCE + pair);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	length = marvell_vct7_distance_to_length(ret, meter);
 
 	ethnl_cable_test_fault_length(phydev, pair, length);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int marvell_vct7_cable_test_report_trans(int result)
-{
-	switch (result) {
-	case MII_VCT7_RESULTS_OK:
-		return ETHTOOL_A_CABLE_RESULT_CODE_OK;
-	case MII_VCT7_RESULTS_OPEN:
-		return ETHTOOL_A_CABLE_RESULT_CODE_OPEN;
-	case MII_VCT7_RESULTS_SAME_SHORT:
-		return ETHTOOL_A_CABLE_RESULT_CODE_SAME_SHORT;
-	case MII_VCT7_RESULTS_CROSS_SHORT:
-		return ETHTOOL_A_CABLE_RESULT_CODE_CROSS_SHORT;
-	default:
-		return ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC;
-	}
-}
+अटल पूर्णांक marvell_vct7_cable_test_report_trans(पूर्णांक result)
+अणु
+	चयन (result) अणु
+	हाल MII_VCT7_RESULTS_OK:
+		वापस ETHTOOL_A_CABLE_RESULT_CODE_OK;
+	हाल MII_VCT7_RESULTS_OPEN:
+		वापस ETHTOOL_A_CABLE_RESULT_CODE_OPEN;
+	हाल MII_VCT7_RESULTS_SAME_SHORT:
+		वापस ETHTOOL_A_CABLE_RESULT_CODE_SAME_SHORT;
+	हाल MII_VCT7_RESULTS_CROSS_SHORT:
+		वापस ETHTOOL_A_CABLE_RESULT_CODE_CROSS_SHORT;
+	शेष:
+		वापस ETHTOOL_A_CABLE_RESULT_CODE_UNSPEC;
+	पूर्ण
+पूर्ण
 
-static int marvell_vct7_cable_test_report(struct phy_device *phydev)
-{
-	int pair0, pair1, pair2, pair3;
+अटल पूर्णांक marvell_vct7_cable_test_report(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक pair0, pair1, pair2, pair3;
 	bool meter;
-	int ret;
+	पूर्णांक ret;
 
-	ret = phy_read_paged(phydev, MII_MARVELL_VCT7_PAGE,
+	ret = phy_पढ़ो_paged(phydev, MII_MARVELL_VCT7_PAGE,
 			     MII_VCT7_RESULTS);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	pair3 = (ret & MII_VCT7_RESULTS_PAIR3_MASK) >>
 		MII_VCT7_RESULTS_PAIR3_SHIFT;
@@ -2229,280 +2230,280 @@ static int marvell_vct7_cable_test_report(struct phy_device *phydev)
 	ethnl_cable_test_result(phydev, ETHTOOL_A_CABLE_PAIR_D,
 				marvell_vct7_cable_test_report_trans(pair3));
 
-	ret = phy_read_paged(phydev, MII_MARVELL_VCT7_PAGE, MII_VCT7_CTRL);
-	if (ret < 0)
-		return ret;
+	ret = phy_पढ़ो_paged(phydev, MII_MARVELL_VCT7_PAGE, MII_VCT7_CTRL);
+	अगर (ret < 0)
+		वापस ret;
 
 	meter = ret & MII_VCT7_CTRL_METERS;
 
-	if (marvell_vct7_distance_valid(pair0))
+	अगर (marvell_vct7_distance_valid(pair0))
 		marvell_vct7_report_length(phydev, 0, meter);
-	if (marvell_vct7_distance_valid(pair1))
+	अगर (marvell_vct7_distance_valid(pair1))
 		marvell_vct7_report_length(phydev, 1, meter);
-	if (marvell_vct7_distance_valid(pair2))
+	अगर (marvell_vct7_distance_valid(pair2))
 		marvell_vct7_report_length(phydev, 2, meter);
-	if (marvell_vct7_distance_valid(pair3))
+	अगर (marvell_vct7_distance_valid(pair3))
 		marvell_vct7_report_length(phydev, 3, meter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int marvell_vct7_cable_test_get_status(struct phy_device *phydev,
+अटल पूर्णांक marvell_vct7_cable_test_get_status(काष्ठा phy_device *phydev,
 					      bool *finished)
-{
-	struct marvell_priv *priv = phydev->priv;
-	int ret;
+अणु
+	काष्ठा marvell_priv *priv = phydev->priv;
+	पूर्णांक ret;
 
-	if (priv->cable_test_tdr) {
+	अगर (priv->cable_test_tdr) अणु
 		ret = marvell_vct5_amplitude_graph(phydev);
 		*finished = true;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	*finished = false;
 
-	ret = phy_read_paged(phydev, MII_MARVELL_VCT7_PAGE,
+	ret = phy_पढ़ो_paged(phydev, MII_MARVELL_VCT7_PAGE,
 			     MII_VCT7_CTRL);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!(ret & MII_VCT7_CTRL_IN_PROGRESS)) {
+	अगर (!(ret & MII_VCT7_CTRL_IN_PROGRESS)) अणु
 		*finished = true;
 
-		return marvell_vct7_cable_test_report(phydev);
-	}
+		वापस marvell_vct7_cable_test_report(phydev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HWMON
-struct marvell_hwmon_ops {
-	int (*config)(struct phy_device *phydev);
-	int (*get_temp)(struct phy_device *phydev, long *temp);
-	int (*get_temp_critical)(struct phy_device *phydev, long *temp);
-	int (*set_temp_critical)(struct phy_device *phydev, long temp);
-	int (*get_temp_alarm)(struct phy_device *phydev, long *alarm);
-};
+#अगर_घोषित CONFIG_HWMON
+काष्ठा marvell_hwmon_ops अणु
+	पूर्णांक (*config)(काष्ठा phy_device *phydev);
+	पूर्णांक (*get_temp)(काष्ठा phy_device *phydev, दीर्घ *temp);
+	पूर्णांक (*get_temp_critical)(काष्ठा phy_device *phydev, दीर्घ *temp);
+	पूर्णांक (*set_temp_critical)(काष्ठा phy_device *phydev, दीर्घ temp);
+	पूर्णांक (*get_temp_alarm)(काष्ठा phy_device *phydev, दीर्घ *alarm);
+पूर्ण;
 
-static const struct marvell_hwmon_ops *
-to_marvell_hwmon_ops(const struct phy_device *phydev)
-{
-	return phydev->drv->driver_data;
-}
+अटल स्थिर काष्ठा marvell_hwmon_ops *
+to_marvell_hwmon_ops(स्थिर काष्ठा phy_device *phydev)
+अणु
+	वापस phydev->drv->driver_data;
+पूर्ण
 
-static int m88e1121_get_temp(struct phy_device *phydev, long *temp)
-{
-	int oldpage;
-	int ret = 0;
-	int val;
+अटल पूर्णांक m88e1121_get_temp(काष्ठा phy_device *phydev, दीर्घ *temp)
+अणु
+	पूर्णांक oldpage;
+	पूर्णांक ret = 0;
+	पूर्णांक val;
 
 	*temp = 0;
 
 	oldpage = phy_select_page(phydev, MII_MARVELL_MISC_TEST_PAGE);
-	if (oldpage < 0)
-		goto error;
+	अगर (oldpage < 0)
+		जाओ error;
 
 	/* Enable temperature sensor */
-	ret = __phy_read(phydev, MII_88E1121_MISC_TEST);
-	if (ret < 0)
-		goto error;
+	ret = __phy_पढ़ो(phydev, MII_88E1121_MISC_TEST);
+	अगर (ret < 0)
+		जाओ error;
 
-	ret = __phy_write(phydev, MII_88E1121_MISC_TEST,
+	ret = __phy_ग_लिखो(phydev, MII_88E1121_MISC_TEST,
 			  ret | MII_88E1121_MISC_TEST_TEMP_SENSOR_EN);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
-	/* Wait for temperature to stabilize */
+	/* Wait क्रम temperature to stabilize */
 	usleep_range(10000, 12000);
 
-	val = __phy_read(phydev, MII_88E1121_MISC_TEST);
-	if (val < 0) {
+	val = __phy_पढ़ो(phydev, MII_88E1121_MISC_TEST);
+	अगर (val < 0) अणु
 		ret = val;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* Disable temperature sensor */
-	ret = __phy_write(phydev, MII_88E1121_MISC_TEST,
+	ret = __phy_ग_लिखो(phydev, MII_88E1121_MISC_TEST,
 			  ret & ~MII_88E1121_MISC_TEST_TEMP_SENSOR_EN);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
 	*temp = ((val & MII_88E1121_MISC_TEST_TEMP_MASK) - 5) * 5000;
 
 error:
-	return phy_restore_page(phydev, oldpage, ret);
-}
+	वापस phy_restore_page(phydev, oldpage, ret);
+पूर्ण
 
-static int m88e1510_get_temp(struct phy_device *phydev, long *temp)
-{
-	int ret;
+अटल पूर्णांक m88e1510_get_temp(काष्ठा phy_device *phydev, दीर्घ *temp)
+अणु
+	पूर्णांक ret;
 
 	*temp = 0;
 
-	ret = phy_read_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
+	ret = phy_पढ़ो_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
 			     MII_88E1510_TEMP_SENSOR);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	*temp = ((ret & MII_88E1510_TEMP_SENSOR_MASK) - 25) * 1000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e1510_get_temp_critical(struct phy_device *phydev, long *temp)
-{
-	int ret;
+अटल पूर्णांक m88e1510_get_temp_critical(काष्ठा phy_device *phydev, दीर्घ *temp)
+अणु
+	पूर्णांक ret;
 
 	*temp = 0;
 
-	ret = phy_read_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
+	ret = phy_पढ़ो_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
 			     MII_88E1121_MISC_TEST);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	*temp = (((ret & MII_88E1510_MISC_TEST_TEMP_THRESHOLD_MASK) >>
 		  MII_88E1510_MISC_TEST_TEMP_THRESHOLD_SHIFT) * 5) - 25;
 	/* convert to mC */
 	*temp *= 1000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e1510_set_temp_critical(struct phy_device *phydev, long temp)
-{
+अटल पूर्णांक m88e1510_set_temp_critical(काष्ठा phy_device *phydev, दीर्घ temp)
+अणु
 	temp = temp / 1000;
 	temp = clamp_val(DIV_ROUND_CLOSEST(temp, 5) + 5, 0, 0x1f);
 
-	return phy_modify_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
+	वापस phy_modअगरy_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
 				MII_88E1121_MISC_TEST,
 				MII_88E1510_MISC_TEST_TEMP_THRESHOLD_MASK,
 				temp << MII_88E1510_MISC_TEST_TEMP_THRESHOLD_SHIFT);
-}
+पूर्ण
 
-static int m88e1510_get_temp_alarm(struct phy_device *phydev, long *alarm)
-{
-	int ret;
+अटल पूर्णांक m88e1510_get_temp_alarm(काष्ठा phy_device *phydev, दीर्घ *alarm)
+अणु
+	पूर्णांक ret;
 
 	*alarm = false;
 
-	ret = phy_read_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
+	ret = phy_पढ़ो_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
 			     MII_88E1121_MISC_TEST);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	*alarm = !!(ret & MII_88E1510_MISC_TEST_TEMP_IRQ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e6390_get_temp(struct phy_device *phydev, long *temp)
-{
-	int sum = 0;
-	int oldpage;
-	int ret = 0;
-	int i;
+अटल पूर्णांक m88e6390_get_temp(काष्ठा phy_device *phydev, दीर्घ *temp)
+अणु
+	पूर्णांक sum = 0;
+	पूर्णांक oldpage;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
 	*temp = 0;
 
 	oldpage = phy_select_page(phydev, MII_MARVELL_MISC_TEST_PAGE);
-	if (oldpage < 0)
-		goto error;
+	अगर (oldpage < 0)
+		जाओ error;
 
 	/* Enable temperature sensor */
-	ret = __phy_read(phydev, MII_88E6390_MISC_TEST);
-	if (ret < 0)
-		goto error;
+	ret = __phy_पढ़ो(phydev, MII_88E6390_MISC_TEST);
+	अगर (ret < 0)
+		जाओ error;
 
 	ret &= ~MII_88E6390_MISC_TEST_TEMP_SENSOR_MASK;
 	ret |= MII_88E6390_MISC_TEST_TEMP_SENSOR_ENABLE_SAMPLE_1S;
 
-	ret = __phy_write(phydev, MII_88E6390_MISC_TEST, ret);
-	if (ret < 0)
-		goto error;
+	ret = __phy_ग_लिखो(phydev, MII_88E6390_MISC_TEST, ret);
+	अगर (ret < 0)
+		जाओ error;
 
-	/* Wait for temperature to stabilize */
+	/* Wait क्रम temperature to stabilize */
 	usleep_range(10000, 12000);
 
-	/* Reading the temperature sense has an errata. You need to read
-	 * a number of times and take an average.
+	/* Reading the temperature sense has an errata. You need to पढ़ो
+	 * a number of बार and take an average.
 	 */
-	for (i = 0; i < MII_88E6390_TEMP_SENSOR_SAMPLES; i++) {
-		ret = __phy_read(phydev, MII_88E6390_TEMP_SENSOR);
-		if (ret < 0)
-			goto error;
+	क्रम (i = 0; i < MII_88E6390_TEMP_SENSOR_SAMPLES; i++) अणु
+		ret = __phy_पढ़ो(phydev, MII_88E6390_TEMP_SENSOR);
+		अगर (ret < 0)
+			जाओ error;
 		sum += ret & MII_88E6390_TEMP_SENSOR_MASK;
-	}
+	पूर्ण
 
 	sum /= MII_88E6390_TEMP_SENSOR_SAMPLES;
 	*temp = (sum  - 75) * 1000;
 
 	/* Disable temperature sensor */
-	ret = __phy_read(phydev, MII_88E6390_MISC_TEST);
-	if (ret < 0)
-		goto error;
+	ret = __phy_पढ़ो(phydev, MII_88E6390_MISC_TEST);
+	अगर (ret < 0)
+		जाओ error;
 
 	ret = ret & ~MII_88E6390_MISC_TEST_TEMP_SENSOR_MASK;
 	ret |= MII_88E6390_MISC_TEST_TEMP_SENSOR_DISABLE;
 
-	ret = __phy_write(phydev, MII_88E6390_MISC_TEST, ret);
+	ret = __phy_ग_लिखो(phydev, MII_88E6390_MISC_TEST, ret);
 
 error:
 	phy_restore_page(phydev, oldpage, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int m88e6393_get_temp(struct phy_device *phydev, long *temp)
-{
-	int err;
+अटल पूर्णांक m88e6393_get_temp(काष्ठा phy_device *phydev, दीर्घ *temp)
+अणु
+	पूर्णांक err;
 
 	err = m88e1510_get_temp(phydev, temp);
 
-	/* 88E1510 measures T + 25, while the PHY on 88E6393X switch
+	/* 88E1510 measures T + 25, जबतक the PHY on 88E6393X चयन
 	 * T + 75, so we have to subtract another 50
 	 */
 	*temp -= 50000;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int m88e6393_get_temp_critical(struct phy_device *phydev, long *temp)
-{
-	int ret;
+अटल पूर्णांक m88e6393_get_temp_critical(काष्ठा phy_device *phydev, दीर्घ *temp)
+अणु
+	पूर्णांक ret;
 
 	*temp = 0;
 
-	ret = phy_read_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
+	ret = phy_पढ़ो_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
 			     MII_88E6390_TEMP_SENSOR);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	*temp = (((ret & MII_88E6393_TEMP_SENSOR_THRESHOLD_MASK) >>
 		  MII_88E6393_TEMP_SENSOR_THRESHOLD_SHIFT) - 75) * 1000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m88e6393_set_temp_critical(struct phy_device *phydev, long temp)
-{
+अटल पूर्णांक m88e6393_set_temp_critical(काष्ठा phy_device *phydev, दीर्घ temp)
+अणु
 	temp = (temp / 1000) + 75;
 
-	return phy_modify_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
+	वापस phy_modअगरy_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
 				MII_88E6390_TEMP_SENSOR,
 				MII_88E6393_TEMP_SENSOR_THRESHOLD_MASK,
 				temp << MII_88E6393_TEMP_SENSOR_THRESHOLD_SHIFT);
-}
+पूर्ण
 
-static int m88e6393_hwmon_config(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक m88e6393_hwmon_config(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	err = m88e6393_set_temp_critical(phydev, 100000);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return phy_modify_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
+	वापस phy_modअगरy_paged(phydev, MII_MARVELL_MISC_TEST_PAGE,
 				MII_88E6390_MISC_TEST,
 				MII_88E6390_MISC_TEST_TEMP_SENSOR_MASK |
 				MII_88E6393_MISC_TEST_SAMPLES_MASK |
@@ -2510,209 +2511,209 @@ static int m88e6393_hwmon_config(struct phy_device *phydev)
 				MII_88E6390_MISC_TEST_TEMP_SENSOR_ENABLE |
 				MII_88E6393_MISC_TEST_SAMPLES_2048 |
 				MII_88E6393_MISC_TEST_RATE_2_3MS);
-}
+पूर्ण
 
-static int marvell_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
-			      u32 attr, int channel, long *temp)
-{
-	struct phy_device *phydev = dev_get_drvdata(dev);
-	const struct marvell_hwmon_ops *ops = to_marvell_hwmon_ops(phydev);
-	int err = -EOPNOTSUPP;
+अटल पूर्णांक marvell_hwmon_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+			      u32 attr, पूर्णांक channel, दीर्घ *temp)
+अणु
+	काष्ठा phy_device *phydev = dev_get_drvdata(dev);
+	स्थिर काष्ठा marvell_hwmon_ops *ops = to_marvell_hwmon_ops(phydev);
+	पूर्णांक err = -EOPNOTSUPP;
 
-	switch (attr) {
-	case hwmon_temp_input:
-		if (ops->get_temp)
+	चयन (attr) अणु
+	हाल hwmon_temp_input:
+		अगर (ops->get_temp)
 			err = ops->get_temp(phydev, temp);
-		break;
-	case hwmon_temp_crit:
-		if (ops->get_temp_critical)
+		अवरोध;
+	हाल hwmon_temp_crit:
+		अगर (ops->get_temp_critical)
 			err = ops->get_temp_critical(phydev, temp);
-		break;
-	case hwmon_temp_max_alarm:
-		if (ops->get_temp_alarm)
+		अवरोध;
+	हाल hwmon_temp_max_alarm:
+		अगर (ops->get_temp_alarm)
 			err = ops->get_temp_alarm(phydev, temp);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int marvell_hwmon_write(struct device *dev, enum hwmon_sensor_types type,
-			       u32 attr, int channel, long temp)
-{
-	struct phy_device *phydev = dev_get_drvdata(dev);
-	const struct marvell_hwmon_ops *ops = to_marvell_hwmon_ops(phydev);
-	int err = -EOPNOTSUPP;
+अटल पूर्णांक marvell_hwmon_ग_लिखो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+			       u32 attr, पूर्णांक channel, दीर्घ temp)
+अणु
+	काष्ठा phy_device *phydev = dev_get_drvdata(dev);
+	स्थिर काष्ठा marvell_hwmon_ops *ops = to_marvell_hwmon_ops(phydev);
+	पूर्णांक err = -EOPNOTSUPP;
 
-	switch (attr) {
-	case hwmon_temp_crit:
-		if (ops->set_temp_critical)
+	चयन (attr) अणु
+	हाल hwmon_temp_crit:
+		अगर (ops->set_temp_critical)
 			err = ops->set_temp_critical(phydev, temp);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static umode_t marvell_hwmon_is_visible(const void *data,
-					enum hwmon_sensor_types type,
-					u32 attr, int channel)
-{
-	const struct phy_device *phydev = data;
-	const struct marvell_hwmon_ops *ops = to_marvell_hwmon_ops(phydev);
+अटल umode_t marvell_hwmon_is_visible(स्थिर व्योम *data,
+					क्रमागत hwmon_sensor_types type,
+					u32 attr, पूर्णांक channel)
+अणु
+	स्थिर काष्ठा phy_device *phydev = data;
+	स्थिर काष्ठा marvell_hwmon_ops *ops = to_marvell_hwmon_ops(phydev);
 
-	if (type != hwmon_temp)
-		return 0;
+	अगर (type != hwmon_temp)
+		वापस 0;
 
-	switch (attr) {
-	case hwmon_temp_input:
-		return ops->get_temp ? 0444 : 0;
-	case hwmon_temp_max_alarm:
-		return ops->get_temp_alarm ? 0444 : 0;
-	case hwmon_temp_crit:
-		return (ops->get_temp_critical ? 0444 : 0) |
+	चयन (attr) अणु
+	हाल hwmon_temp_input:
+		वापस ops->get_temp ? 0444 : 0;
+	हाल hwmon_temp_max_alarm:
+		वापस ops->get_temp_alarm ? 0444 : 0;
+	हाल hwmon_temp_crit:
+		वापस (ops->get_temp_critical ? 0444 : 0) |
 		       (ops->set_temp_critical ? 0200 : 0);
-	default:
-		return 0;
-	}
-}
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static u32 marvell_hwmon_chip_config[] = {
+अटल u32 marvell_hwmon_chip_config[] = अणु
 	HWMON_C_REGISTER_TZ,
 	0
-};
+पूर्ण;
 
-static const struct hwmon_channel_info marvell_hwmon_chip = {
+अटल स्थिर काष्ठा hwmon_channel_info marvell_hwmon_chip = अणु
 	.type = hwmon_chip,
 	.config = marvell_hwmon_chip_config,
-};
+पूर्ण;
 
 /* we can define HWMON_T_CRIT and HWMON_T_MAX_ALARM even though these are not
- * defined for all PHYs, because the hwmon code checks whether the attributes
+ * defined क्रम all PHYs, because the hwmon code checks whether the attributes
  * exists via the .is_visible method
  */
-static u32 marvell_hwmon_temp_config[] = {
+अटल u32 marvell_hwmon_temp_config[] = अणु
 	HWMON_T_INPUT | HWMON_T_CRIT | HWMON_T_MAX_ALARM,
 	0
-};
+पूर्ण;
 
-static const struct hwmon_channel_info marvell_hwmon_temp = {
+अटल स्थिर काष्ठा hwmon_channel_info marvell_hwmon_temp = अणु
 	.type = hwmon_temp,
 	.config = marvell_hwmon_temp_config,
-};
+पूर्ण;
 
-static const struct hwmon_channel_info *marvell_hwmon_info[] = {
+अटल स्थिर काष्ठा hwmon_channel_info *marvell_hwmon_info[] = अणु
 	&marvell_hwmon_chip,
 	&marvell_hwmon_temp,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct hwmon_ops marvell_hwmon_hwmon_ops = {
+अटल स्थिर काष्ठा hwmon_ops marvell_hwmon_hwmon_ops = अणु
 	.is_visible = marvell_hwmon_is_visible,
-	.read = marvell_hwmon_read,
-	.write = marvell_hwmon_write,
-};
+	.पढ़ो = marvell_hwmon_पढ़ो,
+	.ग_लिखो = marvell_hwmon_ग_लिखो,
+पूर्ण;
 
-static const struct hwmon_chip_info marvell_hwmon_chip_info = {
+अटल स्थिर काष्ठा hwmon_chip_info marvell_hwmon_chip_info = अणु
 	.ops = &marvell_hwmon_hwmon_ops,
 	.info = marvell_hwmon_info,
-};
+पूर्ण;
 
-static int marvell_hwmon_name(struct phy_device *phydev)
-{
-	struct marvell_priv *priv = phydev->priv;
-	struct device *dev = &phydev->mdio.dev;
-	const char *devname = dev_name(dev);
-	size_t len = strlen(devname);
-	int i, j;
+अटल पूर्णांक marvell_hwmon_name(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा marvell_priv *priv = phydev->priv;
+	काष्ठा device *dev = &phydev->mdio.dev;
+	स्थिर अक्षर *devname = dev_name(dev);
+	माप_प्रकार len = म_माप(devname);
+	पूर्णांक i, j;
 
 	priv->hwmon_name = devm_kzalloc(dev, len, GFP_KERNEL);
-	if (!priv->hwmon_name)
-		return -ENOMEM;
+	अगर (!priv->hwmon_name)
+		वापस -ENOMEM;
 
-	for (i = j = 0; i < len && devname[i]; i++) {
-		if (isalnum(devname[i]))
+	क्रम (i = j = 0; i < len && devname[i]; i++) अणु
+		अगर (है_अक्षर_अंक(devname[i]))
 			priv->hwmon_name[j++] = devname[i];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int marvell_hwmon_probe(struct phy_device *phydev)
-{
-	const struct marvell_hwmon_ops *ops = to_marvell_hwmon_ops(phydev);
-	struct marvell_priv *priv = phydev->priv;
-	struct device *dev = &phydev->mdio.dev;
-	int err;
+अटल पूर्णांक marvell_hwmon_probe(काष्ठा phy_device *phydev)
+अणु
+	स्थिर काष्ठा marvell_hwmon_ops *ops = to_marvell_hwmon_ops(phydev);
+	काष्ठा marvell_priv *priv = phydev->priv;
+	काष्ठा device *dev = &phydev->mdio.dev;
+	पूर्णांक err;
 
-	if (!ops)
-		return 0;
+	अगर (!ops)
+		वापस 0;
 
 	err = marvell_hwmon_name(phydev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	priv->hwmon_dev = devm_hwmon_device_register_with_info(
-		dev, priv->hwmon_name, phydev, &marvell_hwmon_chip_info, NULL);
-	if (IS_ERR(priv->hwmon_dev))
-		return PTR_ERR(priv->hwmon_dev);
+	priv->hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(
+		dev, priv->hwmon_name, phydev, &marvell_hwmon_chip_info, शून्य);
+	अगर (IS_ERR(priv->hwmon_dev))
+		वापस PTR_ERR(priv->hwmon_dev);
 
-	if (ops->config)
+	अगर (ops->config)
 		err = ops->config(phydev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct marvell_hwmon_ops m88e1121_hwmon_ops = {
+अटल स्थिर काष्ठा marvell_hwmon_ops m88e1121_hwmon_ops = अणु
 	.get_temp = m88e1121_get_temp,
-};
+पूर्ण;
 
-static const struct marvell_hwmon_ops m88e1510_hwmon_ops = {
+अटल स्थिर काष्ठा marvell_hwmon_ops m88e1510_hwmon_ops = अणु
 	.get_temp = m88e1510_get_temp,
 	.get_temp_critical = m88e1510_get_temp_critical,
 	.set_temp_critical = m88e1510_set_temp_critical,
 	.get_temp_alarm = m88e1510_get_temp_alarm,
-};
+पूर्ण;
 
-static const struct marvell_hwmon_ops m88e6390_hwmon_ops = {
+अटल स्थिर काष्ठा marvell_hwmon_ops m88e6390_hwmon_ops = अणु
 	.get_temp = m88e6390_get_temp,
-};
+पूर्ण;
 
-static const struct marvell_hwmon_ops m88e6393_hwmon_ops = {
+अटल स्थिर काष्ठा marvell_hwmon_ops m88e6393_hwmon_ops = अणु
 	.config = m88e6393_hwmon_config,
 	.get_temp = m88e6393_get_temp,
 	.get_temp_critical = m88e6393_get_temp_critical,
 	.set_temp_critical = m88e6393_set_temp_critical,
 	.get_temp_alarm = m88e1510_get_temp_alarm,
-};
+पूर्ण;
 
-#define DEF_MARVELL_HWMON_OPS(s) (&(s))
+#घोषणा DEF_MARVELL_HWMON_OPS(s) (&(s))
 
-#else
+#अन्यथा
 
-#define DEF_MARVELL_HWMON_OPS(s) NULL
+#घोषणा DEF_MARVELL_HWMON_OPS(s) शून्य
 
-static int marvell_hwmon_probe(struct phy_device *phydev)
-{
-	return 0;
-}
-#endif
+अटल पूर्णांक marvell_hwmon_probe(काष्ठा phy_device *phydev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int marvell_probe(struct phy_device *phydev)
-{
-	struct marvell_priv *priv;
+अटल पूर्णांक marvell_probe(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा marvell_priv *priv;
 
-	priv = devm_kzalloc(&phydev->mdio.dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&phydev->mdio.dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	phydev->priv = priv;
 
-	return marvell_hwmon_probe(phydev);
-}
+	वापस marvell_hwmon_probe(phydev);
+पूर्ण
 
-static struct phy_driver marvell_drivers[] = {
-	{
+अटल काष्ठा phy_driver marvell_drivers[] = अणु
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1101,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1101",
@@ -2720,17 +2721,17 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = marvell_config_init,
 		.config_aneg = m88e1101_config_aneg,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1112,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1112",
@@ -2738,19 +2739,19 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = m88e1112_config_init,
 		.config_aneg = marvell_config_aneg,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
 		.get_tunable = m88e1011_get_tunable,
 		.set_tunable = m88e1011_set_tunable,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1111,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1111",
@@ -2758,20 +2759,20 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = m88e1111gbe_config_init,
 		.config_aneg = m88e1111_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
 		.get_tunable = m88e1111_get_tunable,
 		.set_tunable = m88e1111_set_tunable,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1111_FINISAR,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1111 (Finisar)",
@@ -2779,20 +2780,20 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = m88e1111gbe_config_init,
 		.config_aneg = m88e1111_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
 		.get_tunable = m88e1111_get_tunable,
 		.set_tunable = m88e1111_set_tunable,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1118,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1118",
@@ -2800,17 +2801,17 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = m88e1118_config_init,
 		.config_aneg = m88e1118_config_aneg,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1121R,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1121R",
@@ -2819,20 +2820,20 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = marvell_1011gbe_config_init,
 		.config_aneg = m88e1121_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
 		.get_tunable = m88e1011_get_tunable,
 		.set_tunable = m88e1011_set_tunable,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1318S,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1318S",
@@ -2840,20 +2841,20 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = m88e1318_config_init,
 		.config_aneg = m88e1318_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.get_wol = m88e1318_get_wol,
 		.set_wol = m88e1318_set_wol,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1145,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1145",
@@ -2861,19 +2862,19 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = m88e1145_config_init,
 		.config_aneg = m88e1101_config_aneg,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
 		.get_tunable = m88e1111_get_tunable,
 		.set_tunable = m88e1111_set_tunable,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1149R,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1149R",
@@ -2881,17 +2882,17 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = m88e1149_config_init,
 		.config_aneg = m88e1118_config_aneg,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1240,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1240",
@@ -2899,38 +2900,38 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = m88e1112_config_init,
 		.config_aneg = marvell_config_aneg,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
 		.get_tunable = m88e1011_get_tunable,
 		.set_tunable = m88e1011_set_tunable,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1116R,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1116R",
 		/* PHY_GBIT_FEATURES */
 		.probe = marvell_probe,
 		.config_init = m88e1116r_config_init,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
 		.get_tunable = m88e1011_get_tunable,
 		.set_tunable = m88e1011_set_tunable,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1510,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1510",
@@ -2940,15 +2941,15 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = m88e1510_config_init,
 		.config_aneg = m88e1510_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.get_wol = m88e1318_get_wol,
 		.set_wol = m88e1318_set_wol,
 		.resume = marvell_resume,
 		.suspend = marvell_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
@@ -2958,8 +2959,8 @@ static struct phy_driver marvell_drivers[] = {
 		.cable_test_start = marvell_vct7_cable_test_start,
 		.cable_test_tdr_start = marvell_vct5_cable_test_tdr_start,
 		.cable_test_get_status = marvell_vct7_cable_test_get_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1540,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1540",
@@ -2969,13 +2970,13 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = marvell_1011gbe_config_init,
 		.config_aneg = m88e1510_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
@@ -2984,8 +2985,8 @@ static struct phy_driver marvell_drivers[] = {
 		.cable_test_start = marvell_vct7_cable_test_start,
 		.cable_test_tdr_start = marvell_vct5_cable_test_tdr_start,
 		.cable_test_get_status = marvell_vct7_cable_test_get_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1545,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1545",
@@ -2995,13 +2996,13 @@ static struct phy_driver marvell_drivers[] = {
 		.flags = PHY_POLL_CABLE_TEST,
 		.config_init = marvell_1011gbe_config_init,
 		.config_aneg = m88e1510_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
@@ -3010,27 +3011,27 @@ static struct phy_driver marvell_drivers[] = {
 		.cable_test_start = marvell_vct7_cable_test_start,
 		.cable_test_tdr_start = marvell_vct5_cable_test_tdr_start,
 		.cable_test_get_status = marvell_vct7_cable_test_get_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E3016,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E3016",
 		/* PHY_BASIC_FEATURES */
 		.probe = marvell_probe,
 		.config_init = m88e3016_config_init,
-		.aneg_done = marvell_aneg_done,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.aneg_करोne = marvell_aneg_करोne,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E6341_FAMILY,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E6341 Family",
@@ -3040,13 +3041,13 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = marvell_1011gbe_config_init,
 		.config_aneg = m88e6390_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
@@ -3055,8 +3056,8 @@ static struct phy_driver marvell_drivers[] = {
 		.cable_test_start = marvell_vct7_cable_test_start,
 		.cable_test_tdr_start = marvell_vct5_cable_test_tdr_start,
 		.cable_test_get_status = marvell_vct7_cable_test_get_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E6390_FAMILY,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E6390 Family",
@@ -3066,13 +3067,13 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = marvell_1011gbe_config_init,
 		.config_aneg = m88e6390_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
@@ -3081,8 +3082,8 @@ static struct phy_driver marvell_drivers[] = {
 		.cable_test_start = marvell_vct7_cable_test_start,
 		.cable_test_tdr_start = marvell_vct5_cable_test_tdr_start,
 		.cable_test_get_status = marvell_vct7_cable_test_get_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E6393_FAMILY,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E6393 Family",
@@ -3092,13 +3093,13 @@ static struct phy_driver marvell_drivers[] = {
 		.probe = marvell_probe,
 		.config_init = marvell_1011gbe_config_init,
 		.config_aneg = m88e1510_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
@@ -3107,8 +3108,8 @@ static struct phy_driver marvell_drivers[] = {
 		.cable_test_start = marvell_vct7_cable_test_start,
 		.cable_test_tdr_start = marvell_vct5_cable_test_tdr_start,
 		.cable_test_get_status = marvell_vct7_cable_test_get_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1340S,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1340S",
@@ -3117,20 +3118,20 @@ static struct phy_driver marvell_drivers[] = {
 		/* PHY_GBIT_FEATURES */
 		.config_init = marvell_1011gbe_config_init,
 		.config_aneg = m88e1510_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
 		.get_tunable = m88e1540_get_tunable,
 		.set_tunable = m88e1540_set_tunable,
-	},
-	{
+	पूर्ण,
+	अणु
 		.phy_id = MARVELL_PHY_ID_88E1548P,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
 		.name = "Marvell 88E1548P",
@@ -3139,45 +3140,45 @@ static struct phy_driver marvell_drivers[] = {
 		.features = PHY_GBIT_FIBRE_FEATURES,
 		.config_init = marvell_1011gbe_config_init,
 		.config_aneg = m88e1510_config_aneg,
-		.read_status = marvell_read_status,
-		.config_intr = marvell_config_intr,
-		.handle_interrupt = marvell_handle_interrupt,
+		.पढ़ो_status = marvell_पढ़ो_status,
+		.config_पूर्णांकr = marvell_config_पूर्णांकr,
+		.handle_पूर्णांकerrupt = marvell_handle_पूर्णांकerrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
-		.read_page = marvell_read_page,
-		.write_page = marvell_write_page,
+		.पढ़ो_page = marvell_पढ़ो_page,
+		.ग_लिखो_page = marvell_ग_लिखो_page,
 		.get_sset_count = marvell_get_sset_count,
 		.get_strings = marvell_get_strings,
 		.get_stats = marvell_get_stats,
 		.get_tunable = m88e1540_get_tunable,
 		.set_tunable = m88e1540_set_tunable,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_phy_driver(marvell_drivers);
 
-static struct mdio_device_id __maybe_unused marvell_tbl[] = {
-	{ MARVELL_PHY_ID_88E1101, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1112, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1111, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1111_FINISAR, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1118, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1121R, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1145, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1149R, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1240, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1318S, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1116R, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1510, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1540, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1545, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E3016, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E6341_FAMILY, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E6390_FAMILY, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E6393_FAMILY, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1340S, MARVELL_PHY_ID_MASK },
-	{ MARVELL_PHY_ID_88E1548P, MARVELL_PHY_ID_MASK },
-	{ }
-};
+अटल काष्ठा mdio_device_id __maybe_unused marvell_tbl[] = अणु
+	अणु MARVELL_PHY_ID_88E1101, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1112, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1111, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1111_FINISAR, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1118, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1121R, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1145, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1149R, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1240, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1318S, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1116R, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1510, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1540, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1545, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E3016, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E6341_FAMILY, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E6390_FAMILY, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E6393_FAMILY, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1340S, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु MARVELL_PHY_ID_88E1548P, MARVELL_PHY_ID_MASK पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(mdio, marvell_tbl);

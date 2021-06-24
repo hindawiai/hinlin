@@ -1,174 +1,175 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2012 John Crispin <john@phrozen.org>
  *  Copyright (C) 2012 Lantiq GmbH
  */
 
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/of_platform.h>
-#include <linux/of_irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_irq.h>
 
-#include <lantiq_soc.h>
-#include "../clk.h"
+#समावेश <lantiq_soc.h>
+#समावेश "../clk.h"
 
 /* the magic ID byte of the core */
-#define GPTU_MAGIC	0x59
-/* clock control register */
-#define GPTU_CLC	0x00
-/* id register */
-#define GPTU_ID		0x08
-/* interrupt node enable */
-#define GPTU_IRNEN	0xf4
-/* interrupt control register */
-#define GPTU_IRCR	0xf8
-/* interrupt capture register */
-#define GPTU_IRNCR	0xfc
-/* there are 3 identical blocks of 2 timers. calculate register offsets */
-#define GPTU_SHIFT(x)	(x % 2 ? 4 : 0)
-#define GPTU_BASE(x)	(((x >> 1) * 0x20) + 0x10)
-/* timer control register */
-#define GPTU_CON(x)	(GPTU_BASE(x) + GPTU_SHIFT(x) + 0x00)
-/* timer auto reload register */
-#define GPTU_RUN(x)	(GPTU_BASE(x) + GPTU_SHIFT(x) + 0x08)
-/* timer manual reload register */
-#define GPTU_RLD(x)	(GPTU_BASE(x) + GPTU_SHIFT(x) + 0x10)
-/* timer count register */
-#define GPTU_CNT(x)	(GPTU_BASE(x) + GPTU_SHIFT(x) + 0x18)
+#घोषणा GPTU_MAGIC	0x59
+/* घड़ी control रेजिस्टर */
+#घोषणा GPTU_CLC	0x00
+/* id रेजिस्टर */
+#घोषणा GPTU_ID		0x08
+/* पूर्णांकerrupt node enable */
+#घोषणा GPTU_IRNEN	0xf4
+/* पूर्णांकerrupt control रेजिस्टर */
+#घोषणा GPTU_IRCR	0xf8
+/* पूर्णांकerrupt capture रेजिस्टर */
+#घोषणा GPTU_IRNCR	0xfc
+/* there are 3 identical blocks of 2 समयrs. calculate रेजिस्टर offsets */
+#घोषणा GPTU_SHIFT(x)	(x % 2 ? 4 : 0)
+#घोषणा GPTU_BASE(x)	(((x >> 1) * 0x20) + 0x10)
+/* समयr control रेजिस्टर */
+#घोषणा GPTU_CON(x)	(GPTU_BASE(x) + GPTU_SHIFT(x) + 0x00)
+/* समयr स्वतः reload रेजिस्टर */
+#घोषणा GPTU_RUN(x)	(GPTU_BASE(x) + GPTU_SHIFT(x) + 0x08)
+/* समयr manual reload रेजिस्टर */
+#घोषणा GPTU_RLD(x)	(GPTU_BASE(x) + GPTU_SHIFT(x) + 0x10)
+/* समयr count रेजिस्टर */
+#घोषणा GPTU_CNT(x)	(GPTU_BASE(x) + GPTU_SHIFT(x) + 0x18)
 
 /* GPTU_CON(x) */
-#define CON_CNT		BIT(2)
-#define CON_EDGE_ANY	(BIT(7) | BIT(6))
-#define CON_SYNC	BIT(8)
-#define CON_CLK_INT	BIT(10)
+#घोषणा CON_CNT		BIT(2)
+#घोषणा CON_EDGE_ANY	(BIT(7) | BIT(6))
+#घोषणा CON_SYNC	BIT(8)
+#घोषणा CON_CLK_INT	BIT(10)
 
 /* GPTU_RUN(x) */
-#define RUN_SEN		BIT(0)
-#define RUN_RL		BIT(2)
+#घोषणा RUN_SEN		BIT(0)
+#घोषणा RUN_RL		BIT(2)
 
-/* set clock to runmode */
-#define CLC_RMC		BIT(8)
+/* set घड़ी to runmode */
+#घोषणा CLC_RMC		BIT(8)
 /* bring core out of suspend */
-#define CLC_SUSPEND	BIT(4)
+#घोषणा CLC_SUSPEND	BIT(4)
 /* the disable bit */
-#define CLC_DISABLE	BIT(0)
+#घोषणा CLC_DISABLE	BIT(0)
 
-#define gptu_w32(x, y)	ltq_w32((x), gptu_membase + (y))
-#define gptu_r32(x)	ltq_r32(gptu_membase + (x))
+#घोषणा gptu_w32(x, y)	ltq_w32((x), gptu_membase + (y))
+#घोषणा gptu_r32(x)	ltq_r32(gptu_membase + (x))
 
-enum gptu_timer {
+क्रमागत gptu_समयr अणु
 	TIMER1A = 0,
 	TIMER1B,
 	TIMER2A,
 	TIMER2B,
 	TIMER3A,
 	TIMER3B
-};
+पूर्ण;
 
-static void __iomem *gptu_membase;
-static struct resource irqres[6];
+अटल व्योम __iomem *gptu_membase;
+अटल काष्ठा resource irqres[6];
 
-static irqreturn_t timer_irq_handler(int irq, void *priv)
-{
-	int timer = irq - irqres[0].start;
-	gptu_w32(1 << timer, GPTU_IRNCR);
-	return IRQ_HANDLED;
-}
+अटल irqवापस_t समयr_irq_handler(पूर्णांक irq, व्योम *priv)
+अणु
+	पूर्णांक समयr = irq - irqres[0].start;
+	gptu_w32(1 << समयr, GPTU_IRNCR);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void gptu_hwinit(void)
-{
+अटल व्योम gptu_hwinit(व्योम)
+अणु
 	gptu_w32(0x00, GPTU_IRNEN);
 	gptu_w32(0xff, GPTU_IRNCR);
 	gptu_w32(CLC_RMC | CLC_SUSPEND, GPTU_CLC);
-}
+पूर्ण
 
-static void gptu_hwexit(void)
-{
+अटल व्योम gptu_hwनिकास(व्योम)
+अणु
 	gptu_w32(0x00, GPTU_IRNEN);
 	gptu_w32(0xff, GPTU_IRNCR);
 	gptu_w32(CLC_DISABLE, GPTU_CLC);
-}
+पूर्ण
 
-static int gptu_enable(struct clk *clk)
-{
-	int ret = request_irq(irqres[clk->bits].start, timer_irq_handler,
-		IRQF_TIMER, "gtpu", NULL);
-	if (ret) {
+अटल पूर्णांक gptu_enable(काष्ठा clk *clk)
+अणु
+	पूर्णांक ret = request_irq(irqres[clk->bits].start, समयr_irq_handler,
+		IRQF_TIMER, "gtpu", शून्य);
+	अगर (ret) अणु
 		pr_err("gptu: failed to request irq\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	gptu_w32(CON_CNT | CON_EDGE_ANY | CON_SYNC | CON_CLK_INT,
 		GPTU_CON(clk->bits));
 	gptu_w32(1, GPTU_RLD(clk->bits));
 	gptu_w32(gptu_r32(GPTU_IRNEN) | BIT(clk->bits), GPTU_IRNEN);
 	gptu_w32(RUN_SEN | RUN_RL, GPTU_RUN(clk->bits));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gptu_disable(struct clk *clk)
-{
+अटल व्योम gptu_disable(काष्ठा clk *clk)
+अणु
 	gptu_w32(0, GPTU_RUN(clk->bits));
 	gptu_w32(0, GPTU_CON(clk->bits));
 	gptu_w32(0, GPTU_RLD(clk->bits));
 	gptu_w32(gptu_r32(GPTU_IRNEN) & ~BIT(clk->bits), GPTU_IRNEN);
-	free_irq(irqres[clk->bits].start, NULL);
-}
+	मुक्त_irq(irqres[clk->bits].start, शून्य);
+पूर्ण
 
-static inline void clkdev_add_gptu(struct device *dev, const char *con,
-							unsigned int timer)
-{
-	struct clk *clk = kzalloc(sizeof(struct clk), GFP_KERNEL);
+अटल अंतरभूत व्योम clkdev_add_gptu(काष्ठा device *dev, स्थिर अक्षर *con,
+							अचिन्हित पूर्णांक समयr)
+अणु
+	काष्ठा clk *clk = kzalloc(माप(काष्ठा clk), GFP_KERNEL);
 
 	clk->cl.dev_id = dev_name(dev);
 	clk->cl.con_id = con;
 	clk->cl.clk = clk;
 	clk->enable = gptu_enable;
 	clk->disable = gptu_disable;
-	clk->bits = timer;
+	clk->bits = समयr;
 	clkdev_add(&clk->cl);
-}
+पूर्ण
 
-static int gptu_probe(struct platform_device *pdev)
-{
-	struct clk *clk;
-	struct resource *res;
+अटल पूर्णांक gptu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk *clk;
+	काष्ठा resource *res;
 
-	if (of_irq_to_resource_table(pdev->dev.of_node, irqres, 6) != 6) {
+	अगर (of_irq_to_resource_table(pdev->dev.of_node, irqres, 6) != 6) अणु
 		dev_err(&pdev->dev, "Failed to get IRQ list\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 
-	/* remap gptu register range */
+	/* remap gptu रेजिस्टर range */
 	gptu_membase = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(gptu_membase))
-		return PTR_ERR(gptu_membase);
+	अगर (IS_ERR(gptu_membase))
+		वापस PTR_ERR(gptu_membase);
 
-	/* enable our clock */
-	clk = clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
+	/* enable our घड़ी */
+	clk = clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(clk)) अणु
 		dev_err(&pdev->dev, "Failed to get clock\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 	clk_enable(clk);
 
-	/* power up the core */
+	/* घातer up the core */
 	gptu_hwinit();
 
-	/* the gptu has a ID register */
-	if (((gptu_r32(GPTU_ID) >> 8) & 0xff) != GPTU_MAGIC) {
+	/* the gptu has a ID रेजिस्टर */
+	अगर (((gptu_r32(GPTU_ID) >> 8) & 0xff) != GPTU_MAGIC) अणु
 		dev_err(&pdev->dev, "Failed to find magic\n");
-		gptu_hwexit();
+		gptu_hwनिकास();
 		clk_disable(clk);
 		clk_put(clk);
-		return -ENAVAIL;
-	}
+		वापस -ENAVAIL;
+	पूर्ण
 
-	/* register the clocks */
+	/* रेजिस्टर the घड़ीs */
 	clkdev_add_gptu(&pdev->dev, "timer1a", TIMER1A);
 	clkdev_add_gptu(&pdev->dev, "timer1b", TIMER1B);
 	clkdev_add_gptu(&pdev->dev, "timer2a", TIMER2A);
@@ -178,29 +179,29 @@ static int gptu_probe(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "gptu: 6 timers loaded\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id gptu_match[] = {
-	{ .compatible = "lantiq,gptu-xway" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id gptu_match[] = अणु
+	अणु .compatible = "lantiq,gptu-xway" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver dma_driver = {
+अटल काष्ठा platक्रमm_driver dma_driver = अणु
 	.probe = gptu_probe,
-	.driver = {
+	.driver = अणु
 		.name = "gptu-xway",
 		.of_match_table = gptu_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int __init gptu_init(void)
-{
-	int ret = platform_driver_register(&dma_driver);
+पूर्णांक __init gptu_init(व्योम)
+अणु
+	पूर्णांक ret = platक्रमm_driver_रेजिस्टर(&dma_driver);
 
-	if (ret)
+	अगर (ret)
 		pr_info("gptu: Error registering platform driver\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 arch_initcall(gptu_init);

@@ -1,80 +1,81 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * extent_map.h
  *
- * In-memory file extent mappings for OCFS2.
+ * In-memory file extent mappings क्रम OCFS2.
  *
  * Copyright (C) 2004 Oracle.  All rights reserved.
  */
 
-#ifndef _EXTENT_MAP_H
-#define _EXTENT_MAP_H
+#अगर_अघोषित _EXTENT_MAP_H
+#घोषणा _EXTENT_MAP_H
 
-struct ocfs2_extent_map_item {
-	unsigned int			ei_cpos;
-	unsigned int			ei_phys;
-	unsigned int			ei_clusters;
-	unsigned int			ei_flags;
+काष्ठा ocfs2_extent_map_item अणु
+	अचिन्हित पूर्णांक			ei_cpos;
+	अचिन्हित पूर्णांक			ei_phys;
+	अचिन्हित पूर्णांक			ei_clusters;
+	अचिन्हित पूर्णांक			ei_flags;
 
-	struct list_head		ei_list;
-};
+	काष्ठा list_head		ei_list;
+पूर्ण;
 
-#define OCFS2_MAX_EXTENT_MAP_ITEMS			3
-struct ocfs2_extent_map {
-	unsigned int			em_num_items;
-	struct list_head		em_list;
-};
+#घोषणा OCFS2_MAX_EXTENT_MAP_ITEMS			3
+काष्ठा ocfs2_extent_map अणु
+	अचिन्हित पूर्णांक			em_num_items;
+	काष्ठा list_head		em_list;
+पूर्ण;
 
-void ocfs2_extent_map_init(struct inode *inode);
-void ocfs2_extent_map_trunc(struct inode *inode, unsigned int cluster);
-void ocfs2_extent_map_insert_rec(struct inode *inode,
-				 struct ocfs2_extent_rec *rec);
+व्योम ocfs2_extent_map_init(काष्ठा inode *inode);
+व्योम ocfs2_extent_map_trunc(काष्ठा inode *inode, अचिन्हित पूर्णांक cluster);
+व्योम ocfs2_extent_map_insert_rec(काष्ठा inode *inode,
+				 काष्ठा ocfs2_extent_rec *rec);
 
-int ocfs2_get_clusters(struct inode *inode, u32 v_cluster, u32 *p_cluster,
-		       u32 *num_clusters, unsigned int *extent_flags);
-int ocfs2_extent_map_get_blocks(struct inode *inode, u64 v_blkno, u64 *p_blkno,
-				u64 *ret_count, unsigned int *extent_flags);
+पूर्णांक ocfs2_get_clusters(काष्ठा inode *inode, u32 v_cluster, u32 *p_cluster,
+		       u32 *num_clusters, अचिन्हित पूर्णांक *extent_flags);
+पूर्णांक ocfs2_extent_map_get_blocks(काष्ठा inode *inode, u64 v_blkno, u64 *p_blkno,
+				u64 *ret_count, अचिन्हित पूर्णांक *extent_flags);
 
-int ocfs2_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
+पूर्णांक ocfs2_fiemap(काष्ठा inode *inode, काष्ठा fiemap_extent_info *fieinfo,
 		 u64 map_start, u64 map_len);
 
-int ocfs2_overwrite_io(struct inode *inode, struct buffer_head *di_bh,
+पूर्णांक ocfs2_overग_लिखो_io(काष्ठा inode *inode, काष्ठा buffer_head *di_bh,
 		       u64 map_start, u64 map_len);
 
-int ocfs2_seek_data_hole_offset(struct file *file, loff_t *offset, int origin);
+पूर्णांक ocfs2_seek_data_hole_offset(काष्ठा file *file, loff_t *offset, पूर्णांक origin);
 
-int ocfs2_xattr_get_clusters(struct inode *inode, u32 v_cluster,
+पूर्णांक ocfs2_xattr_get_clusters(काष्ठा inode *inode, u32 v_cluster,
 			     u32 *p_cluster, u32 *num_clusters,
-			     struct ocfs2_extent_list *el,
-			     unsigned int *extent_flags);
+			     काष्ठा ocfs2_extent_list *el,
+			     अचिन्हित पूर्णांक *extent_flags);
 
-int ocfs2_read_virt_blocks(struct inode *inode, u64 v_block, int nr,
-			   struct buffer_head *bhs[], int flags,
-			   int (*validate)(struct super_block *sb,
-					   struct buffer_head *bh));
-int ocfs2_figure_hole_clusters(struct ocfs2_caching_info *ci,
-			       struct ocfs2_extent_list *el,
-			       struct buffer_head *eb_bh,
+पूर्णांक ocfs2_पढ़ो_virt_blocks(काष्ठा inode *inode, u64 v_block, पूर्णांक nr,
+			   काष्ठा buffer_head *bhs[], पूर्णांक flags,
+			   पूर्णांक (*validate)(काष्ठा super_block *sb,
+					   काष्ठा buffer_head *bh));
+पूर्णांक ocfs2_figure_hole_clusters(काष्ठा ocfs2_caching_info *ci,
+			       काष्ठा ocfs2_extent_list *el,
+			       काष्ठा buffer_head *eb_bh,
 			       u32 v_cluster,
 			       u32 *num_clusters);
-static inline int ocfs2_read_virt_block(struct inode *inode, u64 v_block,
-					struct buffer_head **bh,
-					int (*validate)(struct super_block *sb,
-							struct buffer_head *bh))
-{
-	int status = 0;
+अटल अंतरभूत पूर्णांक ocfs2_पढ़ो_virt_block(काष्ठा inode *inode, u64 v_block,
+					काष्ठा buffer_head **bh,
+					पूर्णांक (*validate)(काष्ठा super_block *sb,
+							काष्ठा buffer_head *bh))
+अणु
+	पूर्णांक status = 0;
 
-	if (bh == NULL) {
-		printk("ocfs2: bh == NULL\n");
+	अगर (bh == शून्य) अणु
+		prपूर्णांकk("ocfs2: bh == NULL\n");
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	status = ocfs2_read_virt_blocks(inode, v_block, 1, bh, 0, validate);
+	status = ocfs2_पढ़ो_virt_blocks(inode, v_block, 1, bh, 0, validate);
 
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 
-#endif  /* _EXTENT_MAP_H */
+#पूर्ण_अगर  /* _EXTENT_MAP_H */

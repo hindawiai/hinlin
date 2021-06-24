@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2006, 2007, 2008, 2009, 2010 QLogic Corporation.
  * All rights reserved.
@@ -6,20 +7,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,65 +33,65 @@
  * SOFTWARE.
  */
 
-#ifndef _QIB_COMMON_H
-#define _QIB_COMMON_H
+#अगर_अघोषित _QIB_COMMON_H
+#घोषणा _QIB_COMMON_H
 
 /*
- * This file contains defines, structures, etc. that are used
+ * This file contains defines, काष्ठाures, etc. that are used
  * to communicate between kernel and user code.
  */
 
-/* This is the IEEE-assigned OUI for QLogic Inc. QLogic_IB */
-#define QIB_SRC_OUI_1 0x00
-#define QIB_SRC_OUI_2 0x11
-#define QIB_SRC_OUI_3 0x75
+/* This is the IEEE-asचिन्हित OUI क्रम QLogic Inc. QLogic_IB */
+#घोषणा QIB_SRC_OUI_1 0x00
+#घोषणा QIB_SRC_OUI_2 0x11
+#घोषणा QIB_SRC_OUI_3 0x75
 
-/* version of protocol header (known to chip also). In the long run,
+/* version of protocol header (known to chip also). In the दीर्घ run,
  * we should be able to generate and accept a range of version numbers;
- * for now we only accept one, and it's compiled in.
+ * क्रम now we only accept one, and it's compiled in.
  */
-#define IPS_PROTO_VERSION 2
+#घोषणा IPS_PROTO_VERSION 2
 
 /*
- * These are compile time constants that you may want to enable or disable
- * if you are trying to debug problems with code or performance.
- * QIB_VERBOSE_TRACING define as 1 if you want additional tracing in
+ * These are compile समय स्थिरants that you may want to enable or disable
+ * अगर you are trying to debug problems with code or perक्रमmance.
+ * QIB_VERBOSE_TRACING define as 1 अगर you want additional tracing in
  * fastpath code
- * QIB_TRACE_REGWRITES define as 1 if you want register writes to be
+ * QIB_TRACE_REGWRITES define as 1 अगर you want रेजिस्टर ग_लिखोs to be
  * traced in fastpath code
- * _QIB_TRACING define as 0 if you want to remove all tracing in a
+ * _QIB_TRACING define as 0 अगर you want to हटाओ all tracing in a
  * compilation unit
  */
 
 /*
- * The value in the BTH QP field that QLogic_IB uses to differentiate
+ * The value in the BTH QP field that QLogic_IB uses to dअगरferentiate
  * an qlogic_ib protocol IB packet vs standard IB transport
- * This it needs to be even (0x656b78), because the LSB is sometimes
- * used for the MSB of context. The change may cause a problem
- * interoperating with older software.
+ * This it needs to be even (0x656b78), because the LSB is someबार
+ * used क्रम the MSB of context. The change may cause a problem
+ * पूर्णांकeroperating with older software.
  */
-#define QIB_KD_QP 0x656b78
+#घोषणा QIB_KD_QP 0x656b78
 
 /*
- * These are the status bits readable (in ascii form, 64bit value)
+ * These are the status bits पढ़ोable (in ascii क्रमm, 64bit value)
  * from the "status" sysfs file.  For binary compatibility, values
- * must remain as is; removed states can be reused for different
+ * must reमुख्य as is; हटाओd states can be reused क्रम dअगरferent
  * purposes.
  */
-#define QIB_STATUS_INITTED       0x1    /* basic initialization done */
+#घोषणा QIB_STATUS_INITTED       0x1    /* basic initialization करोne */
 /* Chip has been found and initted */
-#define QIB_STATUS_CHIP_PRESENT 0x20
-/* IB link is at ACTIVE, usable for data traffic */
-#define QIB_STATUS_IB_READY     0x40
+#घोषणा QIB_STATUS_CHIP_PRESENT 0x20
+/* IB link is at ACTIVE, usable क्रम data traffic */
+#घोषणा QIB_STATUS_IB_READY     0x40
 /* link is configured, LID, MTU, etc. have been set */
-#define QIB_STATUS_IB_CONF      0x80
+#घोषणा QIB_STATUS_IB_CONF      0x80
 /* A Fatal hardware error has occurred. */
-#define QIB_STATUS_HWERROR     0x200
+#घोषणा QIB_STATUS_HWERROR     0x200
 
 /*
- * The list of usermode accessible registers.  Also see Reg_* later in file.
+ * The list of usermode accessible रेजिस्टरs.  Also see Reg_* later in file.
  */
-enum qib_ureg {
+क्रमागत qib_ureg अणु
 	/* (RO)  DMA RcvHdr to be used next. */
 	ur_rcvhdrtail = 0,
 	/* (RW)  RcvHdr entry to be processed next by host. */
@@ -99,41 +100,41 @@ enum qib_ureg {
 	ur_rcvegrindextail = 2,
 	/* (RW)  Eager TID to be processed next */
 	ur_rcvegrindexhead = 3,
-	/* For internal use only; max register number. */
+	/* For पूर्णांकernal use only; max रेजिस्टर number. */
 	_QIB_UregMax
-};
+पूर्ण;
 
-/* bit values for spi_runtime_flags */
-#define QIB_RUNTIME_PCIE                0x0002
-#define QIB_RUNTIME_FORCE_WC_ORDER      0x0004
-#define QIB_RUNTIME_RCVHDR_COPY         0x0008
-#define QIB_RUNTIME_MASTER              0x0010
-#define QIB_RUNTIME_RCHK                0x0020
-#define QIB_RUNTIME_NODMA_RTAIL         0x0080
-#define QIB_RUNTIME_SPECIAL_TRIGGER     0x0100
-#define QIB_RUNTIME_SDMA                0x0200
-#define QIB_RUNTIME_FORCE_PIOAVAIL      0x0400
-#define QIB_RUNTIME_PIO_REGSWAPPED      0x0800
-#define QIB_RUNTIME_CTXT_MSB_IN_QP      0x1000
-#define QIB_RUNTIME_CTXT_REDIRECT       0x2000
-#define QIB_RUNTIME_HDRSUPP             0x4000
+/* bit values क्रम spi_runसमय_flags */
+#घोषणा QIB_RUNTIME_PCIE                0x0002
+#घोषणा QIB_RUNTIME_FORCE_WC_ORDER      0x0004
+#घोषणा QIB_RUNTIME_RCVHDR_COPY         0x0008
+#घोषणा QIB_RUNTIME_MASTER              0x0010
+#घोषणा QIB_RUNTIME_RCHK                0x0020
+#घोषणा QIB_RUNTIME_NODMA_RTAIL         0x0080
+#घोषणा QIB_RUNTIME_SPECIAL_TRIGGER     0x0100
+#घोषणा QIB_RUNTIME_SDMA                0x0200
+#घोषणा QIB_RUNTIME_FORCE_PIOAVAIL      0x0400
+#घोषणा QIB_RUNTIME_PIO_REGSWAPPED      0x0800
+#घोषणा QIB_RUNTIME_CTXT_MSB_IN_QP      0x1000
+#घोषणा QIB_RUNTIME_CTXT_REसूचीECT       0x2000
+#घोषणा QIB_RUNTIME_HDRSUPP             0x4000
 
 /*
- * This structure is returned by qib_userinit() immediately after
- * open to get implementation-specific info, and info specific to this
+ * This काष्ठाure is वापसed by qib_userinit() immediately after
+ * खोलो to get implementation-specअगरic info, and info specअगरic to this
  * instance.
  *
- * This struct must have explict pad fields where type sizes
- * may result in different alignments between 32 and 64 bit
+ * This काष्ठा must have explict pad fields where type sizes
+ * may result in dअगरferent alignments between 32 and 64 bit
  * programs, since the 64 bit * bit kernel requires the user code
  * to have matching offsets
  */
-struct qib_base_info {
-	/* version of hardware, for feature checking. */
+काष्ठा qib_base_info अणु
+	/* version of hardware, क्रम feature checking. */
 	__u32 spi_hw_version;
-	/* version of software, for feature checking. */
+	/* version of software, क्रम feature checking. */
 	__u32 spi_sw_version;
-	/* QLogic_IB context assigned, goes into sent packets */
+	/* QLogic_IB context asचिन्हित, goes पूर्णांकo sent packets */
 	__u16 spi_ctxt;
 	__u16 spi_subctxt;
 	/*
@@ -144,7 +145,7 @@ struct qib_base_info {
 	/*
 	 * Size of a PIO buffer.  Any given packet's total size must be less
 	 * than this (in words).  Included is the starting control word, so
-	 * if 513 is returned, then total pkt size is 512 words or less.
+	 * अगर 513 is वापसed, then total pkt size is 512 words or less.
 	 */
 	__u32 spi_piosize;
 	/* size of the TID cache in qlogic_ib, in entries */
@@ -159,8 +160,8 @@ struct qib_base_info {
 	 */
 	__u32 spi_rcvhdr_cnt;
 
-	/* per-chip and other runtime features bitmap (QIB_RUNTIME_*) */
-	__u32 spi_runtime_flags;
+	/* per-chip and other runसमय features biपंचांगap (QIB_RUNTIME_*) */
+	__u32 spi_runसमय_flags;
 
 	/* address where hardware receive header queue is mapped */
 	__u64 spi_rcvhdr_base;
@@ -174,27 +175,27 @@ struct qib_base_info {
 
 	/*
 	 * Size of each TID buffer in host memory, starting at
-	 * spi_rcv_egrbufs.  The buffers are virtually contiguous.
+	 * spi_rcv_egrbufs.  The buffers are भवly contiguous.
 	 */
 	__u32 spi_rcv_egrbufsize;
 	/*
-	 * The special QP (queue pair) value that identifies an qlogic_ib
+	 * The special QP (queue pair) value that identअगरies an qlogic_ib
 	 * protocol packet from standard IB packets.  More, probably much
 	 * more, to be added.
 	 */
 	__u32 spi_qpair;
 
 	/*
-	 * User register base for init code, not to be used directly by
-	 * protocol or applications.  Always points to chip registers,
-	 * for normal or shared context.
+	 * User रेजिस्टर base क्रम init code, not to be used directly by
+	 * protocol or applications.  Always poपूर्णांकs to chip रेजिस्टरs,
+	 * क्रम normal or shared context.
 	 */
 	__u64 spi_uregbase;
 	/*
 	 * Maximum buffer size in bytes that can be used in a single TID
 	 * entry (assuming the buffer is aligned to this boundary).  This is
 	 * the minimum of what the hardware and software support Guaranteed
-	 * to be a power of 2.
+	 * to be a घातer of 2.
 	 */
 	__u32 spi_tid_maxsize;
 	/*
@@ -204,31 +205,31 @@ struct qib_base_info {
 	__u32 spi_pioalign;
 	/*
 	 * The index of the first pio buffer available to this process;
-	 * needed to do lookup in spi_pioavailaddr; not added to
+	 * needed to करो lookup in spi_pioavailaddr; not added to
 	 * spi_piobufbase.
 	 */
 	__u32 spi_pioindex;
-	 /* number of buffers mapped for this process */
+	 /* number of buffers mapped क्रम this process */
 	__u32 spi_piocnt;
 
 	/*
-	 * Base address of writeonly pio buffers for this process.
+	 * Base address of ग_लिखोonly pio buffers क्रम this process.
 	 * Each buffer has spi_piosize words, and is aligned on spi_pioalign
 	 * boundaries.  spi_piocnt buffers are mapped from this address
 	 */
 	__u64 spi_piobufbase;
 
 	/*
-	 * Base address of readonly memory copy of the pioavail registers.
-	 * There are 2 bits for each buffer.
+	 * Base address of पढ़ोonly memory copy of the pioavail रेजिस्टरs.
+	 * There are 2 bits क्रम each buffer.
 	 */
 	__u64 spi_pioavailaddr;
 
 	/*
-	 * Address where driver updates a copy of the interface and driver
+	 * Address where driver updates a copy of the पूर्णांकerface and driver
 	 * status (QIB_STATUS_*) as a 64 bit value.  It's followed by a
-	 * link status qword (formerly combined with driver status), then a
-	 * string indicating hardware error, if there was one.
+	 * link status qword (क्रमmerly combined with driver status), then a
+	 * string indicating hardware error, अगर there was one.
 	 */
 	__u64 spi_status;
 
@@ -242,96 +243,96 @@ struct qib_base_info {
 	__u32 spi_rcv_egrchunksize;
 	/* total size of mmap to cover full rcvegrbuffers */
 	__u32 spi_rcv_egrbuftotlen;
-	__u32 spi_rhf_offset; /* dword offset in hdrqent for rcvhdr flags */
-	/* address of readonly memory copy of the rcvhdrq tail register. */
+	__u32 spi_rhf_offset; /* dword offset in hdrqent क्रम rcvhdr flags */
+	/* address of पढ़ोonly memory copy of the rcvhdrq tail रेजिस्टर. */
 	__u64 spi_rcvhdr_tailaddr;
 
 	/*
-	 * shared memory pages for subctxts if ctxt is shared; these cover
+	 * shared memory pages क्रम subctxts अगर ctxt is shared; these cover
 	 * all the processes in the group sharing a single context.
-	 * all have enough space for the num_subcontexts value on this job.
+	 * all have enough space क्रम the num_subcontexts value on this job.
 	 */
 	__u64 spi_subctxt_uregbase;
 	__u64 spi_subctxt_rcvegrbuf;
 	__u64 spi_subctxt_rcvhdr_base;
 
-	/* shared memory page for send buffer disarm status */
+	/* shared memory page क्रम send buffer disarm status */
 	__u64 spi_sendbuf_status;
-} __aligned(8);
+पूर्ण __aligned(8);
 
 /*
  * This version number is given to the driver by the user code during
  * initialization in the spu_userversion field of qib_user_info, so
- * the driver can check for compatibility with user code.
+ * the driver can check क्रम compatibility with user code.
  *
- * The major version changes when data structures
+ * The major version changes when data काष्ठाures
  * change in an incompatible way.  The driver must be the same or higher
- * for initialization to succeed.  In some cases, a higher version
- * driver will not interoperate with older software, and initialization
- * will return an error.
+ * क्रम initialization to succeed.  In some हालs, a higher version
+ * driver will not पूर्णांकeroperate with older software, and initialization
+ * will वापस an error.
  */
-#define QIB_USER_SWMAJOR 1
+#घोषणा QIB_USER_SWMAJOR 1
 
 /*
- * Minor version differences are always compatible
- * a within a major version, however if user software is larger
- * than driver software, some new features and/or structure fields
- * may not be implemented; the user code must deal with this if it
- * cares, or it must abort after initialization reports the difference.
+ * Minor version dअगरferences are always compatible
+ * a within a major version, however अगर user software is larger
+ * than driver software, some new features and/or काष्ठाure fields
+ * may not be implemented; the user code must deal with this अगर it
+ * cares, or it must पात after initialization reports the dअगरference.
  */
-#define QIB_USER_SWMINOR 13
+#घोषणा QIB_USER_SWMINOR 13
 
-#define QIB_USER_SWVERSION ((QIB_USER_SWMAJOR << 16) | QIB_USER_SWMINOR)
+#घोषणा QIB_USER_SWVERSION ((QIB_USER_SWMAJOR << 16) | QIB_USER_SWMINOR)
 
-#ifndef QIB_KERN_TYPE
-#define QIB_KERN_TYPE 0
-#endif
+#अगर_अघोषित QIB_KERN_TYPE
+#घोषणा QIB_KERN_TYPE 0
+#पूर्ण_अगर
 
 /*
  * Similarly, this is the kernel version going back to the user.  It's
- * slightly different, in that we want to tell if the driver was built as
- * part of a QLogic release, or from the driver from openfabrics.org,
- * kernel.org, or a standard distribution, for support reasons.
- * The high bit is 0 for non-QLogic and 1 for QLogic-built/supplied.
+ * slightly dअगरferent, in that we want to tell अगर the driver was built as
+ * part of a QLogic release, or from the driver from खोलोfabrics.org,
+ * kernel.org, or a standard distribution, क्रम support reasons.
+ * The high bit is 0 क्रम non-QLogic and 1 क्रम QLogic-built/supplied.
  *
- * It's returned by the driver to the user code during initialization in the
+ * It's वापसed by the driver to the user code during initialization in the
  * spi_sw_version field of qib_base_info, so the user code can in turn
- * check for compatibility with the kernel.
+ * check क्रम compatibility with the kernel.
 */
-#define QIB_KERN_SWVERSION ((QIB_KERN_TYPE << 31) | QIB_USER_SWVERSION)
+#घोषणा QIB_KERN_SWVERSION ((QIB_KERN_TYPE << 31) | QIB_USER_SWVERSION)
 
 /*
  * Define the driver version number.  This is something that refers only
- * to the driver itself, not the software interfaces it supports.
+ * to the driver itself, not the software पूर्णांकerfaces it supports.
  */
-#define QIB_DRIVER_VERSION_BASE "1.11"
+#घोषणा QIB_DRIVER_VERSION_BASE "1.11"
 
 /* create the final driver version string */
-#ifdef QIB_IDSTR
-#define QIB_DRIVER_VERSION QIB_DRIVER_VERSION_BASE " " QIB_IDSTR
-#else
-#define QIB_DRIVER_VERSION QIB_DRIVER_VERSION_BASE
-#endif
+#अगर_घोषित QIB_IDSTR
+#घोषणा QIB_DRIVER_VERSION QIB_DRIVER_VERSION_BASE " " QIB_IDSTR
+#अन्यथा
+#घोषणा QIB_DRIVER_VERSION QIB_DRIVER_VERSION_BASE
+#पूर्ण_अगर
 
 /*
- * If the unit is specified via open, HCA choice is fixed.  If port is
- * specified, it's also fixed.  Otherwise we try to spread contexts
- * across ports and HCAs, using different algorithims.  WITHIN is
- * the old default, prior to this mechanism.
+ * If the unit is specअगरied via खोलो, HCA choice is fixed.  If port is
+ * specअगरied, it's also fixed.  Otherwise we try to spपढ़ो contexts
+ * across ports and HCAs, using dअगरferent algorithims.  WITHIN is
+ * the old शेष, prior to this mechanism.
  */
-#define QIB_PORT_ALG_ACROSS 0 /* round robin contexts across HCAs, then
-			       * ports; this is the default */
-#define QIB_PORT_ALG_WITHIN 1 /* use all contexts on an HCA (round robin
+#घोषणा QIB_PORT_ALG_ACROSS 0 /* round robin contexts across HCAs, then
+			       * ports; this is the शेष */
+#घोषणा QIB_PORT_ALG_WITHIN 1 /* use all contexts on an HCA (round robin
 			       * active ports within), then next HCA */
-#define QIB_PORT_ALG_COUNT 2 /* number of algorithm choices */
+#घोषणा QIB_PORT_ALG_COUNT 2 /* number of algorithm choices */
 
 /*
- * This structure is passed to qib_userinit() to tell the driver where
+ * This काष्ठाure is passed to qib_userinit() to tell the driver where
  * user code buffers are, sizes, etc.   The offsets and sizes of the
- * fields must remain unchanged, for binary compatibility.  It can
- * be extended, if userversion is changed so user code can tell, if needed
+ * fields must reमुख्य unchanged, क्रम binary compatibility.  It can
+ * be extended, अगर userversion is changed so user code can tell, अगर needed
  */
-struct qib_user_info {
+काष्ठा qib_user_info अणु
 	/*
 	 * version of user software, to detect compatibility issues.
 	 * Should be set to QIB_USER_SWVERSION.
@@ -340,7 +341,7 @@ struct qib_user_info {
 
 	__u32 _spu_unused2;
 
-	/* size of struct base_info to write to */
+	/* size of काष्ठा base_info to ग_लिखो to */
 	__u32 spu_base_info_size;
 
 	__u32 spu_port_alg; /* which QIB_PORT_ALG_*; unused user minor < 11 */
@@ -349,105 +350,105 @@ struct qib_user_info {
 	 * If two or more processes wish to share a context, each process
 	 * must set the spu_subctxt_cnt and spu_subctxt_id to the same
 	 * values.  The only restriction on the spu_subctxt_id is that
-	 * it be unique for a given node.
+	 * it be unique क्रम a given node.
 	 */
 	__u16 spu_subctxt_cnt;
 	__u16 spu_subctxt_id;
 
-	__u32 spu_port; /* IB port requested by user if > 0 */
+	__u32 spu_port; /* IB port requested by user अगर > 0 */
 
 	/*
-	 * address of struct base_info to write to
+	 * address of काष्ठा base_info to ग_लिखो to
 	 */
 	__u64 spu_base_info;
 
-} __aligned(8);
+पूर्ण __aligned(8);
 
 /* User commands. */
 
-/* 16 available, was: old set up userspace (for old user code) */
-#define QIB_CMD_CTXT_INFO       17      /* find out what resources we got */
-#define QIB_CMD_RECV_CTRL       18      /* control receipt of packets */
-#define QIB_CMD_TID_UPDATE      19      /* update expected TID entries */
-#define QIB_CMD_TID_FREE        20      /* free expected TID entries */
-#define QIB_CMD_SET_PART_KEY    21      /* add partition key */
-/* 22 available, was: return info on slave processes (for old user code) */
-#define QIB_CMD_ASSIGN_CTXT     23      /* allocate HCA and ctxt */
-#define QIB_CMD_USER_INIT       24      /* set up userspace */
-#define QIB_CMD_UNUSED_1        25
-#define QIB_CMD_UNUSED_2        26
-#define QIB_CMD_PIOAVAILUPD     27      /* force an update of PIOAvail reg */
-#define QIB_CMD_POLL_TYPE       28      /* set the kind of polling we want */
-#define QIB_CMD_ARMLAUNCH_CTRL  29      /* armlaunch detection control */
+/* 16 available, was: old set up userspace (क्रम old user code) */
+#घोषणा QIB_CMD_CTXT_INFO       17      /* find out what resources we got */
+#घोषणा QIB_CMD_RECV_CTRL       18      /* control receipt of packets */
+#घोषणा QIB_CMD_TID_UPDATE      19      /* update expected TID entries */
+#घोषणा QIB_CMD_TID_FREE        20      /* मुक्त expected TID entries */
+#घोषणा QIB_CMD_SET_PART_KEY    21      /* add partition key */
+/* 22 available, was: वापस info on slave processes (क्रम old user code) */
+#घोषणा QIB_CMD_ASSIGN_CTXT     23      /* allocate HCA and ctxt */
+#घोषणा QIB_CMD_USER_INIT       24      /* set up userspace */
+#घोषणा QIB_CMD_UNUSED_1        25
+#घोषणा QIB_CMD_UNUSED_2        26
+#घोषणा QIB_CMD_PIOAVAILUPD     27      /* क्रमce an update of PIOAvail reg */
+#घोषणा QIB_CMD_POLL_TYPE       28      /* set the kind of polling we want */
+#घोषणा QIB_CMD_ARMLAUNCH_CTRL  29      /* armlaunch detection control */
 /* 30 is unused */
-#define QIB_CMD_SDMA_INFLIGHT   31      /* sdma inflight counter request */
-#define QIB_CMD_SDMA_COMPLETE   32      /* sdma completion counter request */
+#घोषणा QIB_CMD_SDMA_INFLIGHT   31      /* sdma inflight counter request */
+#घोषणा QIB_CMD_SDMA_COMPLETE   32      /* sdma completion counter request */
 /* 33 available, was a testing feature  */
-#define QIB_CMD_DISARM_BUFS     34      /* disarm send buffers w/ errors */
-#define QIB_CMD_ACK_EVENT       35      /* ack & clear bits */
-#define QIB_CMD_CPUS_LIST       36      /* list of cpus allocated, for pinned
+#घोषणा QIB_CMD_DISARM_BUFS     34      /* disarm send buffers w/ errors */
+#घोषणा QIB_CMD_ACK_EVENT       35      /* ack & clear bits */
+#घोषणा QIB_CMD_CPUS_LIST       36      /* list of cpus allocated, क्रम pinned
 					 * processes: qib_cpus_list */
 
 /*
- * QIB_CMD_ACK_EVENT obsoletes QIB_CMD_DISARM_BUFS, but we keep it for
+ * QIB_CMD_ACK_EVENT obsoletes QIB_CMD_DISARM_BUFS, but we keep it क्रम
  * compatibility with libraries from previous release.   The ACK_EVENT
- * will take appropriate driver action (if any, just DISARM for now),
+ * will take appropriate driver action (अगर any, just DISARM क्रम now),
  * then clear the bits passed in as part of the mask.  These bits are
  * in the first 64bit word at spi_sendbuf_status, and are passed to
- * the driver in the event_mask union as well.
+ * the driver in the event_mask जोड़ as well.
  */
-#define _QIB_EVENT_DISARM_BUFS_BIT	0
-#define _QIB_EVENT_LINKDOWN_BIT		1
-#define _QIB_EVENT_LID_CHANGE_BIT	2
-#define _QIB_EVENT_LMC_CHANGE_BIT	3
-#define _QIB_EVENT_SL2VL_CHANGE_BIT	4
-#define _QIB_MAX_EVENT_BIT _QIB_EVENT_SL2VL_CHANGE_BIT
+#घोषणा _QIB_EVENT_DISARM_BUFS_BIT	0
+#घोषणा _QIB_EVENT_LINKDOWN_BIT		1
+#घोषणा _QIB_EVENT_LID_CHANGE_BIT	2
+#घोषणा _QIB_EVENT_LMC_CHANGE_BIT	3
+#घोषणा _QIB_EVENT_SL2VL_CHANGE_BIT	4
+#घोषणा _QIB_MAX_EVENT_BIT _QIB_EVENT_SL2VL_CHANGE_BIT
 
-#define QIB_EVENT_DISARM_BUFS_BIT	(1UL << _QIB_EVENT_DISARM_BUFS_BIT)
-#define QIB_EVENT_LINKDOWN_BIT		(1UL << _QIB_EVENT_LINKDOWN_BIT)
-#define QIB_EVENT_LID_CHANGE_BIT	(1UL << _QIB_EVENT_LID_CHANGE_BIT)
-#define QIB_EVENT_LMC_CHANGE_BIT	(1UL << _QIB_EVENT_LMC_CHANGE_BIT)
-#define QIB_EVENT_SL2VL_CHANGE_BIT	(1UL << _QIB_EVENT_SL2VL_CHANGE_BIT)
+#घोषणा QIB_EVENT_DISARM_BUFS_BIT	(1UL << _QIB_EVENT_DISARM_BUFS_BIT)
+#घोषणा QIB_EVENT_LINKDOWN_BIT		(1UL << _QIB_EVENT_LINKDOWN_BIT)
+#घोषणा QIB_EVENT_LID_CHANGE_BIT	(1UL << _QIB_EVENT_LID_CHANGE_BIT)
+#घोषणा QIB_EVENT_LMC_CHANGE_BIT	(1UL << _QIB_EVENT_LMC_CHANGE_BIT)
+#घोषणा QIB_EVENT_SL2VL_CHANGE_BIT	(1UL << _QIB_EVENT_SL2VL_CHANGE_BIT)
 
 
 /*
  * Poll types
  */
-#define QIB_POLL_TYPE_ANYRCV     0x0
-#define QIB_POLL_TYPE_URGENT     0x1
+#घोषणा QIB_POLL_TYPE_ANYRCV     0x0
+#घोषणा QIB_POLL_TYPE_URGENT     0x1
 
-struct qib_ctxt_info {
+काष्ठा qib_ctxt_info अणु
 	__u16 num_active;       /* number of active units */
-	__u16 unit;             /* unit (chip) assigned to caller */
-	__u16 port;             /* IB port assigned to caller (1-based) */
-	__u16 ctxt;             /* ctxt on unit assigned to caller */
-	__u16 subctxt;          /* subctxt on unit assigned to caller */
+	__u16 unit;             /* unit (chip) asचिन्हित to caller */
+	__u16 port;             /* IB port asचिन्हित to caller (1-based) */
+	__u16 ctxt;             /* ctxt on unit asचिन्हित to caller */
+	__u16 subctxt;          /* subctxt on unit asचिन्हित to caller */
 	__u16 num_ctxts;        /* number of ctxts available on unit */
-	__u16 num_subctxts;     /* number of subctxts opened on ctxt */
-	__u16 rec_cpu;          /* cpu # for affinity (ffff if none) */
-};
+	__u16 num_subctxts;     /* number of subctxts खोलोed on ctxt */
+	__u16 rec_cpu;          /* cpu # क्रम affinity (ffff अगर none) */
+पूर्ण;
 
-struct qib_tid_info {
+काष्ठा qib_tid_info अणु
 	__u32 tidcnt;
-	/* make structure same size in 32 and 64 bit */
+	/* make काष्ठाure same size in 32 and 64 bit */
 	__u32 tid__unused;
-	/* virtual address of first page in transfer */
+	/* भव address of first page in transfer */
 	__u64 tidvaddr;
-	/* pointer (same size 32/64 bit) to __u16 tid array */
+	/* poपूर्णांकer (same size 32/64 bit) to __u16 tid array */
 	__u64 tidlist;
 
 	/*
-	 * pointer (same size 32/64 bit) to bitmap of TIDs used
-	 * for this call; checked for being large enough at open
+	 * poपूर्णांकer (same size 32/64 bit) to biपंचांगap of TIDs used
+	 * क्रम this call; checked क्रम being large enough at खोलो
 	 */
 	__u64 tidmap;
-};
+पूर्ण;
 
-struct qib_cmd {
+काष्ठा qib_cmd अणु
 	__u32 type;                     /* command type */
-	union {
-		struct qib_tid_info tid_info;
-		struct qib_user_info user_info;
+	जोड़ अणु
+		काष्ठा qib_tid_info tid_info;
+		काष्ठा qib_user_info user_info;
 
 		/*
 		 * address in userspace where we should put the sdma
@@ -459,8 +460,8 @@ struct qib_cmd {
 		 * completion counter
 		 */
 		__u64 sdma_complete;
-		/* address in userspace of struct qib_ctxt_info to
-		   write result to */
+		/* address in userspace of काष्ठा qib_ctxt_info to
+		   ग_लिखो result to */
 		__u64 ctxt_info;
 		/* enable/disable receipt of packets */
 		__u32 recv_ctrl;
@@ -468,102 +469,102 @@ struct qib_cmd {
 		__u32 armlaunch_ctrl;
 		/* partition key to set */
 		__u16 part_key;
-		/* user address of __u32 bitmask of active slaves */
+		/* user address of __u32 biपंचांगask of active slaves */
 		__u64 slave_mask_addr;
 		/* type of polling we want */
 		__u16 poll_type;
-		/* back pressure enable bit for one particular context */
+		/* back pressure enable bit क्रम one particular context */
 		__u8 ctxt_bp;
 		/* qib_user_event_ack(), IPATH_EVENT_* bits */
 		__u64 event_mask;
-	} cmd;
-};
+	पूर्ण cmd;
+पूर्ण;
 
-struct qib_iovec {
-	/* Pointer to data, but same size 32 and 64 bit */
+काष्ठा qib_iovec अणु
+	/* Poपूर्णांकer to data, but same size 32 and 64 bit */
 	__u64 iov_base;
 
 	/*
-	 * Length of data; don't need 64 bits, but want
-	 * qib_sendpkt to remain same size as before 32 bit changes, so...
+	 * Length of data; करोn't need 64 bits, but want
+	 * qib_sendpkt to reमुख्य same size as beक्रमe 32 bit changes, so...
 	 */
 	__u64 iov_len;
-};
+पूर्ण;
 
 /*
- * Describes a single packet for send.  Each packet can have one or more
+ * Describes a single packet क्रम send.  Each packet can have one or more
  * buffers, but the total length (exclusive of IB headers) must be less
- * than the MTU, and if using the PIO method, entire packet length,
+ * than the MTU, and अगर using the PIO method, entire packet length,
  * including IB headers, must be less than the qib_piosize value (words).
- * Use of this necessitates including sys/uio.h
+ * Use of this necessitates including sys/uपन.स
  */
-struct __qib_sendpkt {
-	__u32 sps_flags;        /* flags for packet (TBD) */
+काष्ठा __qib_sendpkt अणु
+	__u32 sps_flags;        /* flags क्रम packet (TBD) */
 	__u32 sps_cnt;          /* number of entries to use in sps_iov */
 	/* array of iov's describing packet. TEMPORARY */
-	struct qib_iovec sps_iov[4];
-};
+	काष्ठा qib_iovec sps_iov[4];
+पूर्ण;
 
 /*
  * Diagnostics can send a packet by "writing" the following
- * structs to the diag data special file.
+ * काष्ठाs to the diag data special file.
  * This allows a custom
- * pbc (+ static rate) qword, so that special modes and deliberate
+ * pbc (+ अटल rate) qword, so that special modes and deliberate
  * changes to CRCs can be used. The elements were also re-ordered
- * for better alignment and to avoid padding issues.
+ * क्रम better alignment and to aव्योम padding issues.
  */
-#define _DIAG_XPKT_VERS 3
-struct qib_diag_xpkt {
+#घोषणा _DIAG_XPKT_VERS 3
+काष्ठा qib_diag_xpkt अणु
 	__u16 version;
 	__u16 unit;
 	__u16 port;
 	__u16 len;
 	__u64 data;
 	__u64 pbc_wd;
-};
+पूर्ण;
 
 /*
- * Data layout in I2C flash (for GUID, etc.)
+ * Data layout in I2C flash (क्रम GUID, etc.)
  * All fields are little-endian binary unless otherwise stated
  */
-#define QIB_FLASH_VERSION 2
-struct qib_flash {
+#घोषणा QIB_FLASH_VERSION 2
+काष्ठा qib_flash अणु
 	/* flash layout version (QIB_FLASH_VERSION) */
-	__u8 if_fversion;
-	/* checksum protecting if_length bytes */
-	__u8 if_csum;
+	__u8 अगर_fversion;
+	/* checksum protecting अगर_length bytes */
+	__u8 अगर_csum;
 	/*
-	 * valid length (in use, protected by if_csum), including
-	 * if_fversion and if_csum themselves)
+	 * valid length (in use, रक्षित by अगर_csum), including
+	 * अगर_fversion and अगर_csum themselves)
 	 */
-	__u8 if_length;
+	__u8 अगर_length;
 	/* the GUID, in network order */
-	__u8 if_guid[8];
-	/* number of GUIDs to use, starting from if_guid */
-	__u8 if_numguid;
-	/* the (last 10 characters of) board serial number, in ASCII */
-	char if_serial[12];
+	__u8 अगर_guid[8];
+	/* number of GUIDs to use, starting from अगर_guid */
+	__u8 अगर_numguid;
+	/* the (last 10 अक्षरacters of) board serial number, in ASCII */
+	अक्षर अगर_serial[12];
 	/* board mfg date (YYYYMMDD ASCII) */
-	char if_mfgdate[8];
+	अक्षर अगर_mfgdate[8];
 	/* last board rework/test date (YYYYMMDD ASCII) */
-	char if_testdate[8];
+	अक्षर अगर_testdate[8];
 	/* logging of error counts, TBD */
-	__u8 if_errcntp[4];
-	/* powered on hours, updated at driver unload */
-	__u8 if_powerhour[2];
-	/* ASCII free-form comment field */
-	char if_comment[32];
-	/* Backwards compatible prefix for longer QLogic Serial Numbers */
-	char if_sprefix[4];
+	__u8 अगर_errcntp[4];
+	/* घातered on hours, updated at driver unload */
+	__u8 अगर_घातerhour[2];
+	/* ASCII मुक्त-क्रमm comment field */
+	अक्षर अगर_comment[32];
+	/* Backwards compatible prefix क्रम दीर्घer QLogic Serial Numbers */
+	अक्षर अगर_sprefix[4];
 	/* 82 bytes used, min flash size is 128 bytes */
-	__u8 if_future[46];
-};
+	__u8 अगर_future[46];
+पूर्ण;
 
 /*
  * These are the counters implemented in the chip, and are listed in order.
  * The InterCaps naming is taken straight from the chip spec.
  */
-struct qlogic_ib_counters {
+काष्ठा qlogic_ib_counters अणु
 	__u64 LBIntCnt;
 	__u64 LBFlowStallCnt;
 	__u64 TxSDmaDescCnt;    /* was Reserved1 */
@@ -621,87 +622,87 @@ struct qlogic_ib_counters {
 	__u64 LocalLinkIntegrityErrCnt;
 	__u64 RxVlErrCnt;
 	__u64 RxDlidFltrCnt;
-};
+पूर्ण;
 
 /*
- * The next set of defines are for packet headers, and chip register
+ * The next set of defines are क्रम packet headers, and chip रेजिस्टर
  * and memory bits that are visible to and/or used by user-mode software.
  */
 
 /* RcvHdrFlags bits */
-#define QLOGIC_IB_RHF_LENGTH_MASK 0x7FF
-#define QLOGIC_IB_RHF_LENGTH_SHIFT 0
-#define QLOGIC_IB_RHF_RCVTYPE_MASK 0x7
-#define QLOGIC_IB_RHF_RCVTYPE_SHIFT 11
-#define QLOGIC_IB_RHF_EGRINDEX_MASK 0xFFF
-#define QLOGIC_IB_RHF_EGRINDEX_SHIFT 16
-#define QLOGIC_IB_RHF_SEQ_MASK 0xF
-#define QLOGIC_IB_RHF_SEQ_SHIFT 0
-#define QLOGIC_IB_RHF_HDRQ_OFFSET_MASK 0x7FF
-#define QLOGIC_IB_RHF_HDRQ_OFFSET_SHIFT 4
-#define QLOGIC_IB_RHF_H_ICRCERR   0x80000000
-#define QLOGIC_IB_RHF_H_VCRCERR   0x40000000
-#define QLOGIC_IB_RHF_H_PARITYERR 0x20000000
-#define QLOGIC_IB_RHF_H_LENERR    0x10000000
-#define QLOGIC_IB_RHF_H_MTUERR    0x08000000
-#define QLOGIC_IB_RHF_H_IHDRERR   0x04000000
-#define QLOGIC_IB_RHF_H_TIDERR    0x02000000
-#define QLOGIC_IB_RHF_H_MKERR     0x01000000
-#define QLOGIC_IB_RHF_H_IBERR     0x00800000
-#define QLOGIC_IB_RHF_H_ERR_MASK  0xFF800000
-#define QLOGIC_IB_RHF_L_USE_EGR   0x80000000
-#define QLOGIC_IB_RHF_L_SWA       0x00008000
-#define QLOGIC_IB_RHF_L_SWB       0x00004000
+#घोषणा QLOGIC_IB_RHF_LENGTH_MASK 0x7FF
+#घोषणा QLOGIC_IB_RHF_LENGTH_SHIFT 0
+#घोषणा QLOGIC_IB_RHF_RCVTYPE_MASK 0x7
+#घोषणा QLOGIC_IB_RHF_RCVTYPE_SHIFT 11
+#घोषणा QLOGIC_IB_RHF_EGRINDEX_MASK 0xFFF
+#घोषणा QLOGIC_IB_RHF_EGRINDEX_SHIFT 16
+#घोषणा QLOGIC_IB_RHF_SEQ_MASK 0xF
+#घोषणा QLOGIC_IB_RHF_SEQ_SHIFT 0
+#घोषणा QLOGIC_IB_RHF_HDRQ_OFFSET_MASK 0x7FF
+#घोषणा QLOGIC_IB_RHF_HDRQ_OFFSET_SHIFT 4
+#घोषणा QLOGIC_IB_RHF_H_ICRCERR   0x80000000
+#घोषणा QLOGIC_IB_RHF_H_VCRCERR   0x40000000
+#घोषणा QLOGIC_IB_RHF_H_PARITYERR 0x20000000
+#घोषणा QLOGIC_IB_RHF_H_LENERR    0x10000000
+#घोषणा QLOGIC_IB_RHF_H_MTUERR    0x08000000
+#घोषणा QLOGIC_IB_RHF_H_IHDRERR   0x04000000
+#घोषणा QLOGIC_IB_RHF_H_TIDERR    0x02000000
+#घोषणा QLOGIC_IB_RHF_H_MKERR     0x01000000
+#घोषणा QLOGIC_IB_RHF_H_IBERR     0x00800000
+#घोषणा QLOGIC_IB_RHF_H_ERR_MASK  0xFF800000
+#घोषणा QLOGIC_IB_RHF_L_USE_EGR   0x80000000
+#घोषणा QLOGIC_IB_RHF_L_SWA       0x00008000
+#घोषणा QLOGIC_IB_RHF_L_SWB       0x00004000
 
 /* qlogic_ib header fields */
-#define QLOGIC_IB_I_VERS_MASK 0xF
-#define QLOGIC_IB_I_VERS_SHIFT 28
-#define QLOGIC_IB_I_CTXT_MASK 0xF
-#define QLOGIC_IB_I_CTXT_SHIFT 24
-#define QLOGIC_IB_I_TID_MASK 0x7FF
-#define QLOGIC_IB_I_TID_SHIFT 13
-#define QLOGIC_IB_I_OFFSET_MASK 0x1FFF
-#define QLOGIC_IB_I_OFFSET_SHIFT 0
+#घोषणा QLOGIC_IB_I_VERS_MASK 0xF
+#घोषणा QLOGIC_IB_I_VERS_SHIFT 28
+#घोषणा QLOGIC_IB_I_CTXT_MASK 0xF
+#घोषणा QLOGIC_IB_I_CTXT_SHIFT 24
+#घोषणा QLOGIC_IB_I_TID_MASK 0x7FF
+#घोषणा QLOGIC_IB_I_TID_SHIFT 13
+#घोषणा QLOGIC_IB_I_OFFSET_MASK 0x1FFF
+#घोषणा QLOGIC_IB_I_OFFSET_SHIFT 0
 
 /* K_PktFlags bits */
-#define QLOGIC_IB_KPF_INTR 0x1
-#define QLOGIC_IB_KPF_SUBCTXT_MASK 0x3
-#define QLOGIC_IB_KPF_SUBCTXT_SHIFT 1
+#घोषणा QLOGIC_IB_KPF_INTR 0x1
+#घोषणा QLOGIC_IB_KPF_SUBCTXT_MASK 0x3
+#घोषणा QLOGIC_IB_KPF_SUBCTXT_SHIFT 1
 
-#define QLOGIC_IB_MAX_SUBCTXT   4
+#घोषणा QLOGIC_IB_MAX_SUBCTXT   4
 
 /* SendPIO per-buffer control */
-#define QLOGIC_IB_SP_TEST    0x40
-#define QLOGIC_IB_SP_TESTEBP 0x20
-#define QLOGIC_IB_SP_TRIGGER_SHIFT  15
+#घोषणा QLOGIC_IB_SP_TEST    0x40
+#घोषणा QLOGIC_IB_SP_TESTEBP 0x20
+#घोषणा QLOGIC_IB_SP_TRIGGER_SHIFT  15
 
 /* SendPIOAvail bits */
-#define QLOGIC_IB_SENDPIOAVAIL_BUSY_SHIFT 1
-#define QLOGIC_IB_SENDPIOAVAIL_CHECK_SHIFT 0
+#घोषणा QLOGIC_IB_SENDPIOAVAIL_BUSY_SHIFT 1
+#घोषणा QLOGIC_IB_SENDPIOAVAIL_CHECK_SHIFT 0
 
-/* qlogic_ib header format */
-struct qib_header {
+/* qlogic_ib header क्रमmat */
+काष्ठा qib_header अणु
 	/*
 	 * Version - 4 bits, Context - 4 bits, TID - 10 bits and Offset -
-	 * 14 bits before ECO change ~28 Dec 03.  After that, Vers 4,
+	 * 14 bits beक्रमe ECO change ~28 Dec 03.  After that, Vers 4,
 	 * Context 4, TID 11, offset 13.
 	 */
 	__le32 ver_ctxt_tid_offset;
 	__le16 chksum;
 	__le16 pkt_flags;
-};
+पूर्ण;
 
 /*
- * qlogic_ib user message header format.
- * This structure contains the first 4 fields common to all protocols
+ * qlogic_ib user message header क्रमmat.
+ * This काष्ठाure contains the first 4 fields common to all protocols
  * that employ qlogic_ib.
  */
-struct qib_message_header {
+काष्ठा qib_message_header अणु
 	__be16 lrh[4];
 	__be32 bth[3];
-	/* fields below this point are in host byte order */
-	struct qib_header iph;
-	/* fields below are simplified, but should match PSM */
+	/* fields below this poपूर्णांक are in host byte order */
+	काष्ठा qib_header iph;
+	/* fields below are simplअगरied, but should match PSM */
 	/* some are accessed by driver when packet spliting is needed */
 	__u8 sub_opcode;
 	__u8 flags;
@@ -711,88 +712,88 @@ struct qib_message_header {
 	__u8 hdr_dlen;
 	__u16 mqhdr;
 	__u32 uwords[4];
-};
+पूर्ण;
 
-/* sequence number bits for message */
-union qib_seqnum {
-	struct {
+/* sequence number bits क्रम message */
+जोड़ qib_seqnum अणु
+	काष्ठा अणु
 		__u32 seq:11;
 		__u32 gen:8;
 		__u32 flow:5;
-	};
-	struct {
+	पूर्ण;
+	काष्ठा अणु
 		__u32 pkt:16;
 		__u32 msg:8;
-	};
+	पूर्ण;
 	__u32 val;
-};
+पूर्ण;
 
 /* qib receiving-dma tid-session-member */
-struct qib_tid_session_member {
+काष्ठा qib_tid_session_member अणु
 	__u16 tid;
 	__u16 offset;
 	__u16 length;
-};
+पूर्ण;
 
-/* IB - LRH header consts */
-#define QIB_LRH_GRH 0x0003      /* 1. word of IB LRH - next header: GRH */
-#define QIB_LRH_BTH 0x0002      /* 1. word of IB LRH - next header: BTH */
+/* IB - LRH header स्थिरs */
+#घोषणा QIB_LRH_GRH 0x0003      /* 1. word of IB LRH - next header: GRH */
+#घोषणा QIB_LRH_BTH 0x0002      /* 1. word of IB LRH - next header: BTH */
 
 /* misc. */
-#define SIZE_OF_CRC 1
+#घोषणा SIZE_OF_CRC 1
 
-#define QIB_DEFAULT_P_KEY 0xFFFF
-#define QIB_PSN_MASK 0xFFFFFF
-#define QIB_EAGER_TID_ID QLOGIC_IB_I_TID_MASK
-#define QIB_MULTICAST_QPN 0xFFFFFF
+#घोषणा QIB_DEFAULT_P_KEY 0xFFFF
+#घोषणा QIB_PSN_MASK 0xFFFFFF
+#घोषणा QIB_EAGER_TID_ID QLOGIC_IB_I_TID_MASK
+#घोषणा QIB_MULTICAST_QPN 0xFFFFFF
 
 /* Receive Header Queue: receive type (from qlogic_ib) */
-#define RCVHQ_RCV_TYPE_EXPECTED  0
-#define RCVHQ_RCV_TYPE_EAGER     1
-#define RCVHQ_RCV_TYPE_NON_KD    2
-#define RCVHQ_RCV_TYPE_ERROR     3
+#घोषणा RCVHQ_RCV_TYPE_EXPECTED  0
+#घोषणा RCVHQ_RCV_TYPE_EAGER     1
+#घोषणा RCVHQ_RCV_TYPE_NON_KD    2
+#घोषणा RCVHQ_RCV_TYPE_ERROR     3
 
-#define QIB_HEADER_QUEUE_WORDS 9
+#घोषणा QIB_HEADER_QUEUE_WORDS 9
 
-/* functions for extracting fields from rcvhdrq entries for the driver.
+/* functions क्रम extracting fields from rcvhdrq entries क्रम the driver.
  */
-static inline __u32 qib_hdrget_err_flags(const __le32 *rbuf)
-{
-	return __le32_to_cpu(rbuf[1]) & QLOGIC_IB_RHF_H_ERR_MASK;
-}
+अटल अंतरभूत __u32 qib_hdrget_err_flags(स्थिर __le32 *rbuf)
+अणु
+	वापस __le32_to_cpu(rbuf[1]) & QLOGIC_IB_RHF_H_ERR_MASK;
+पूर्ण
 
-static inline __u32 qib_hdrget_rcv_type(const __le32 *rbuf)
-{
-	return (__le32_to_cpu(rbuf[0]) >> QLOGIC_IB_RHF_RCVTYPE_SHIFT) &
+अटल अंतरभूत __u32 qib_hdrget_rcv_type(स्थिर __le32 *rbuf)
+अणु
+	वापस (__le32_to_cpu(rbuf[0]) >> QLOGIC_IB_RHF_RCVTYPE_SHIFT) &
 		QLOGIC_IB_RHF_RCVTYPE_MASK;
-}
+पूर्ण
 
-static inline __u32 qib_hdrget_length_in_bytes(const __le32 *rbuf)
-{
-	return ((__le32_to_cpu(rbuf[0]) >> QLOGIC_IB_RHF_LENGTH_SHIFT) &
+अटल अंतरभूत __u32 qib_hdrget_length_in_bytes(स्थिर __le32 *rbuf)
+अणु
+	वापस ((__le32_to_cpu(rbuf[0]) >> QLOGIC_IB_RHF_LENGTH_SHIFT) &
 		QLOGIC_IB_RHF_LENGTH_MASK) << 2;
-}
+पूर्ण
 
-static inline __u32 qib_hdrget_index(const __le32 *rbuf)
-{
-	return (__le32_to_cpu(rbuf[0]) >> QLOGIC_IB_RHF_EGRINDEX_SHIFT) &
+अटल अंतरभूत __u32 qib_hdrget_index(स्थिर __le32 *rbuf)
+अणु
+	वापस (__le32_to_cpu(rbuf[0]) >> QLOGIC_IB_RHF_EGRINDEX_SHIFT) &
 		QLOGIC_IB_RHF_EGRINDEX_MASK;
-}
+पूर्ण
 
-static inline __u32 qib_hdrget_seq(const __le32 *rbuf)
-{
-	return (__le32_to_cpu(rbuf[1]) >> QLOGIC_IB_RHF_SEQ_SHIFT) &
+अटल अंतरभूत __u32 qib_hdrget_seq(स्थिर __le32 *rbuf)
+अणु
+	वापस (__le32_to_cpu(rbuf[1]) >> QLOGIC_IB_RHF_SEQ_SHIFT) &
 		QLOGIC_IB_RHF_SEQ_MASK;
-}
+पूर्ण
 
-static inline __u32 qib_hdrget_offset(const __le32 *rbuf)
-{
-	return (__le32_to_cpu(rbuf[1]) >> QLOGIC_IB_RHF_HDRQ_OFFSET_SHIFT) &
+अटल अंतरभूत __u32 qib_hdrget_offset(स्थिर __le32 *rbuf)
+अणु
+	वापस (__le32_to_cpu(rbuf[1]) >> QLOGIC_IB_RHF_HDRQ_OFFSET_SHIFT) &
 		QLOGIC_IB_RHF_HDRQ_OFFSET_MASK;
-}
+पूर्ण
 
-static inline __u32 qib_hdrget_use_egr_buf(const __le32 *rbuf)
-{
-	return __le32_to_cpu(rbuf[0]) & QLOGIC_IB_RHF_L_USE_EGR;
-}
-#endif                          /* _QIB_COMMON_H */
+अटल अंतरभूत __u32 qib_hdrget_use_egr_buf(स्थिर __le32 *rbuf)
+अणु
+	वापस __le32_to_cpu(rbuf[0]) & QLOGIC_IB_RHF_L_USE_EGR;
+पूर्ण
+#पूर्ण_अगर                          /* _QIB_COMMON_H */

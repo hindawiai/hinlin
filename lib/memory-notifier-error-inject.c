@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/memory.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/memory.h>
 
-#include "notifier-error-inject.h"
+#समावेश "notifier-error-inject.h"
 
-static int priority;
-module_param(priority, int, 0);
+अटल पूर्णांक priority;
+module_param(priority, पूर्णांक, 0);
 MODULE_PARM_DESC(priority, "specify memory notifier priority");
 
-static struct notifier_err_inject memory_notifier_err_inject = {
-	.actions = {
-		{ NOTIFIER_ERR_INJECT_ACTION(MEM_GOING_ONLINE) },
-		{ NOTIFIER_ERR_INJECT_ACTION(MEM_GOING_OFFLINE) },
-		{}
-	}
-};
+अटल काष्ठा notअगरier_err_inject memory_notअगरier_err_inject = अणु
+	.actions = अणु
+		अणु NOTIFIER_ERR_INJECT_ACTION(MEM_GOING_ONLINE) पूर्ण,
+		अणु NOTIFIER_ERR_INJECT_ACTION(MEM_GOING_OFFLINE) पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-static struct dentry *dir;
+अटल काष्ठा dentry *dir;
 
-static int err_inject_init(void)
-{
-	int err;
+अटल पूर्णांक err_inject_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	dir = notifier_err_inject_init("memory", notifier_err_inject_dir,
-					&memory_notifier_err_inject, priority);
-	if (IS_ERR(dir))
-		return PTR_ERR(dir);
+	dir = notअगरier_err_inject_init("memory", notअगरier_err_inject_dir,
+					&memory_notअगरier_err_inject, priority);
+	अगर (IS_ERR(dir))
+		वापस PTR_ERR(dir);
 
-	err = register_memory_notifier(&memory_notifier_err_inject.nb);
-	if (err)
-		debugfs_remove_recursive(dir);
+	err = रेजिस्टर_memory_notअगरier(&memory_notअगरier_err_inject.nb);
+	अगर (err)
+		debugfs_हटाओ_recursive(dir);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void err_inject_exit(void)
-{
-	unregister_memory_notifier(&memory_notifier_err_inject.nb);
-	debugfs_remove_recursive(dir);
-}
+अटल व्योम err_inject_निकास(व्योम)
+अणु
+	unरेजिस्टर_memory_notअगरier(&memory_notअगरier_err_inject.nb);
+	debugfs_हटाओ_recursive(dir);
+पूर्ण
 
 module_init(err_inject_init);
-module_exit(err_inject_exit);
+module_निकास(err_inject_निकास);
 
 MODULE_DESCRIPTION("memory notifier error injection module");
 MODULE_LICENSE("GPL");

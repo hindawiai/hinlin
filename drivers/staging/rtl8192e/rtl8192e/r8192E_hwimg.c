@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Information: wlanfae <wlanfae@realtek.com>
+ * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
  */
-#include "r8192E_hwimg.h"
+#समावेश "r8192E_hwimg.h"
 
-u32 Rtl8192PciEPHY_REGArray[PHY_REGArrayLengthPciE] = {0x0,};
+u32 Rtl8192PciEPHY_REGArray[PHY_REGArrayLengthPciE] = अणु0x0,पूर्ण;
 
-u32 Rtl8192PciEPHY_REG_1T2RArray[PHY_REG_1T2RArrayLengthPciE] = {
+u32 Rtl8192PciEPHY_REG_1T2RArray[PHY_REG_1T2RArrayLengthPciE] = अणु
 	0x800, 0x00000000,
 	0x804, 0x00000001,
 	0x808, 0x0000fc00,
@@ -157,9 +158,9 @@ u32 Rtl8192PciEPHY_REG_1T2RArray[PHY_REG_1T2RArrayLengthPciE] = {
 	0xe14, 0x12121416,
 	0xe18, 0x161a1a1a,
 	0xe1c, 0x12121416,
-};
+पूर्ण;
 
-u32 Rtl8192PciERadioA_Array[RadioA_ArrayLengthPciE] = {
+u32 Rtl8192PciERadioA_Array[RadioA_ArrayLengthPciE] = अणु
 	0x019, 0x00000003,
 	0x000, 0x000000bf,
 	0x001, 0x00000ee0,
@@ -283,9 +284,9 @@ u32 Rtl8192PciERadioA_Array[RadioA_ArrayLengthPciE] = {
 	0x000, 0x00000cbf,
 	0x004, 0x00000975,
 	0x007, 0x00000700,
-};
+पूर्ण;
 
-u32 Rtl8192PciERadioB_Array[RadioB_ArrayLengthPciE] = {
+u32 Rtl8192PciERadioB_Array[RadioB_ArrayLengthPciE] = अणु
 	0x019, 0x00000003,
 	0x000, 0x000000bf,
 	0x001, 0x000006e0,
@@ -325,24 +326,24 @@ u32 Rtl8192PciERadioB_Array[RadioB_ArrayLengthPciE] = {
 	0x000, 0x00000cbf,
 	0x004, 0x00000975,
 	0x007, 0x00000700,
-};
+पूर्ण;
 
-u32 Rtl8192PciERadioC_Array[RadioC_ArrayLengthPciE] = {
-	0x0,  };
+u32 Rtl8192PciERadioC_Array[RadioC_ArrayLengthPciE] = अणु
+	0x0,  पूर्ण;
 
-u32 Rtl8192PciERadioD_Array[RadioD_ArrayLengthPciE] = {
-	0x0, };
+u32 Rtl8192PciERadioD_Array[RadioD_ArrayLengthPciE] = अणु
+	0x0, पूर्ण;
 
-u32 Rtl8192PciEMACPHY_Array[] = {
+u32 Rtl8192PciEMACPHY_Array[] = अणु
 	0x03c, 0xffff0000, 0x00000f0f,
 	0x340, 0xffffffff, 0x161a1a1a,
 	0x344, 0xffffffff, 0x12121416,
 	0x348, 0x0000ffff, 0x00001818,
 	0x12c, 0xffffffff, 0x04000802,
 	0x318, 0x00000fff, 0x00000100,
-};
+पूर्ण;
 
-u32 Rtl8192PciEMACPHY_Array_PG[] = {
+u32 Rtl8192PciEMACPHY_Array_PG[] = अणु
 	0x03c, 0xffff0000, 0x00000f0f,
 	0xe00, 0xffffffff, 0x06090909,
 	0xe04, 0xffffffff, 0x00030306,
@@ -353,9 +354,9 @@ u32 Rtl8192PciEMACPHY_Array_PG[] = {
 	0xe1c, 0xffffffff, 0x06070809,
 	0x12c, 0xffffffff, 0x04000802,
 	0x318, 0x00000fff, 0x00000800,
-};
+पूर्ण;
 
-u32 Rtl8192PciEAGCTAB_Array[AGCTAB_ArrayLengthPciE] = {
+u32 Rtl8192PciEAGCTAB_Array[AGCTAB_ArrayLengthPciE] = अणु
 	0xc78, 0x7d000001,
 	0xc78, 0x7d010001,
 	0xc78, 0x7d020001,
@@ -548,4 +549,4 @@ u32 Rtl8192PciEAGCTAB_Array[AGCTAB_ArrayLengthPciE] = {
 	0xc78, 0x683d001e,
 	0xc78, 0x693e001e,
 	0xc78, 0x6a3f001e,
-};
+पूर्ण;

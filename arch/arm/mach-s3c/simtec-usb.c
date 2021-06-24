@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright 2004-2005 Simtec Electronics
 //   Ben Dooks <ben@simtec.co.uk>
@@ -7,119 +8,119 @@
 //
 // Simtec BAST and Thorcom VR1000 USB port support functions
 
-#define DEBUG
+#घोषणा DEBUG
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/gpio.h>
-#include <linux/timer.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
 
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
-#include <asm/mach/irq.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/mach/irq.h>
 
-#include "gpio-samsung.h"
-#include <mach/irqs.h>
-#include <asm/irq.h>
+#समावेश "gpio-samsung.h"
+#समावेश <mach/irqs.h>
+#समावेश <यंत्र/irq.h>
 
-#include <linux/platform_data/usb-ohci-s3c2410.h>
-#include "devs.h"
+#समावेश <linux/platक्रमm_data/usb-ohci-s3c2410.h>
+#समावेश "devs.h"
 
-#include "bast.h"
-#include "simtec.h"
+#समावेश "bast.h"
+#समावेश "simtec.h"
 
-/* control power and monitor over-current events on various Simtec
- * designed boards.
+/* control घातer and monitor over-current events on various Simtec
+ * deचिन्हित boards.
 */
 
-static unsigned int power_state[2];
+अटल अचिन्हित पूर्णांक घातer_state[2];
 
-static void
-usb_simtec_powercontrol(int port, int to)
-{
+अटल व्योम
+usb_simtec_घातercontrol(पूर्णांक port, पूर्णांक to)
+अणु
 	pr_debug("usb_simtec_powercontrol(%d,%d)\n", port, to);
 
-	power_state[port] = to;
+	घातer_state[port] = to;
 
-	if (power_state[0] && power_state[1])
+	अगर (घातer_state[0] && घातer_state[1])
 		gpio_set_value(S3C2410_GPB(4), 0);
-	else
+	अन्यथा
 		gpio_set_value(S3C2410_GPB(4), 1);
-}
+पूर्ण
 
-static irqreturn_t
-usb_simtec_ocirq(int irq, void *pw)
-{
-	struct s3c2410_hcd_info *info = pw;
+अटल irqवापस_t
+usb_simtec_ocirq(पूर्णांक irq, व्योम *pw)
+अणु
+	काष्ठा s3c2410_hcd_info *info = pw;
 
-	if (gpio_get_value(S3C2410_GPG(10)) == 0) {
+	अगर (gpio_get_value(S3C2410_GPG(10)) == 0) अणु
 		pr_debug("usb_simtec: over-current irq (oc detected)\n");
 		s3c2410_usb_report_oc(info, 3);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_debug("usb_simtec: over-current irq (oc cleared)\n");
 		s3c2410_usb_report_oc(info, 0);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void usb_simtec_enableoc(struct s3c2410_hcd_info *info, int on)
-{
-	int ret;
+अटल व्योम usb_simtec_enableoc(काष्ठा s3c2410_hcd_info *info, पूर्णांक on)
+अणु
+	पूर्णांक ret;
 
-	if (on) {
+	अगर (on) अणु
 		ret = request_irq(BAST_IRQ_USBOC, usb_simtec_ocirq,
 				  IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 				  "USB Over-current", info);
-		if (ret != 0) {
-			printk(KERN_ERR "failed to request usb oc irq\n");
-		}
-	} else {
-		free_irq(BAST_IRQ_USBOC, info);
-	}
-}
+		अगर (ret != 0) अणु
+			prपूर्णांकk(KERN_ERR "failed to request usb oc irq\n");
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		मुक्त_irq(BAST_IRQ_USBOC, info);
+	पूर्ण
+पूर्ण
 
-static struct s3c2410_hcd_info usb_simtec_info __initdata = {
-	.port[0]	= {
+अटल काष्ठा s3c2410_hcd_info usb_simtec_info __initdata = अणु
+	.port[0]	= अणु
 		.flags	= S3C_HCDFLG_USED
-	},
-	.port[1]	= {
+	पूर्ण,
+	.port[1]	= अणु
 		.flags	= S3C_HCDFLG_USED
-	},
+	पूर्ण,
 
-	.power_control	= usb_simtec_powercontrol,
+	.घातer_control	= usb_simtec_घातercontrol,
 	.enable_oc	= usb_simtec_enableoc,
-};
+पूर्ण;
 
 
-int __init usb_simtec_init(void)
-{
-	int ret;
+पूर्णांक __init usb_simtec_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	printk("USB Power Control, Copyright 2004 Simtec Electronics\n");
+	prपूर्णांकk("USB Power Control, Copyright 2004 Simtec Electronics\n");
 
 	ret = gpio_request(S3C2410_GPB(4), "USB power control");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("%s: failed to get GPB4\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = gpio_request(S3C2410_GPG(10), "USB overcurrent");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("%s: failed to get GPG10\n", __func__);
-		gpio_free(S3C2410_GPB(4));
-		return ret;
-	}
+		gpio_मुक्त(S3C2410_GPB(4));
+		वापस ret;
+	पूर्ण
 
-	/* turn power on */
+	/* turn घातer on */
 	gpio_direction_output(S3C2410_GPB(4), 1);
 	gpio_direction_input(S3C2410_GPG(10));
 
 	s3c_ohci_set_platdata(&usb_simtec_info);
-	return 0;
-}
+	वापस 0;
+पूर्ण

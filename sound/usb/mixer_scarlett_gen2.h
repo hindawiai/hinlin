@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __USB_MIXER_SCARLETT_GEN2_H
-#define __USB_MIXER_SCARLETT_GEN2_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __USB_MIXER_SCARLETT_GEN2_H
+#घोषणा __USB_MIXER_SCARLETT_GEN2_H
 
-int snd_scarlett_gen2_init(struct usb_mixer_interface *mixer);
+पूर्णांक snd_scarlett_gen2_init(काष्ठा usb_mixer_पूर्णांकerface *mixer);
 
-#endif /* __USB_MIXER_SCARLETT_GEN2_H */
+#पूर्ण_अगर /* __USB_MIXER_SCARLETT_GEN2_H */

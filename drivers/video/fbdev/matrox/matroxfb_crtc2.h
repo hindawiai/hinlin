@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MATROXFB_CRTC2_H__
-#define __MATROXFB_CRTC2_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MATROXFB_CRTC2_H__
+#घोषणा __MATROXFB_CRTC2_H__
 
-#include <linux/ioctl.h>
-#include "matroxfb_base.h"
+#समावेश <linux/ioctl.h>
+#समावेश "matroxfb_base.h"
 
-struct matroxfb_dh_fb_info {
-	struct fb_info		fbcon;
-	int			fbcon_registered;
-	int                     initialized;
+काष्ठा matroxfb_dh_fb_info अणु
+	काष्ठा fb_info		fbcon;
+	पूर्णांक			fbcon_रेजिस्टरed;
+	पूर्णांक                     initialized;
 
-	struct matrox_fb_info*	primary_dev;
+	काष्ठा matrox_fb_info*	primary_dev;
 
-	struct {
-		unsigned long	base;	/* physical */
-		vaddr_t		vbase;	/* virtual */
-		unsigned int	len;
-		unsigned int	len_usable;
-		unsigned int	len_maximum;
-		unsigned int 	offbase;
-		unsigned int	borrowed;
-			      } video;
-	struct {
-		unsigned long	base;
+	काष्ठा अणु
+		अचिन्हित दीर्घ	base;	/* physical */
+		vaddr_t		vbase;	/* भव */
+		अचिन्हित पूर्णांक	len;
+		अचिन्हित पूर्णांक	len_usable;
+		अचिन्हित पूर्णांक	len_maximum;
+		अचिन्हित पूर्णांक 	offbase;
+		अचिन्हित पूर्णांक	borrowed;
+			      पूर्ण video;
+	काष्ठा अणु
+		अचिन्हित दीर्घ	base;
 		vaddr_t		vbase;
-		unsigned int	len;
-			      } mmio;
+		अचिन्हित पूर्णांक	len;
+			      पूर्ण mmio;
 
-	unsigned int		interlaced:1;
+	अचिन्हित पूर्णांक		पूर्णांकerlaced:1;
 
-	u_int32_t cmap[16];
-};
+	u_पूर्णांक32_t cmap[16];
+पूर्ण;
 
-#endif /* __MATROXFB_CRTC2_H__ */
+#पूर्ण_अगर /* __MATROXFB_CRTC2_H__ */

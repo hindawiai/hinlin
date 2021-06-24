@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * motu.c - a part of driver for MOTU FireWire series
+ * motu.c - a part of driver क्रम MOTU FireWire series
  *
  * Copyright (c) 2015-2017 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
-#include "motu.h"
+#समावेश "motu.h"
 
-#define OUI_MOTU	0x0001f2
+#घोषणा OUI_MOTU	0x0001f2
 
 MODULE_DESCRIPTION("MOTU FireWire driver");
 MODULE_AUTHOR("Takashi Sakamoto <o-takashi@sakamocchi.jp>");
 MODULE_LICENSE("GPL v2");
 
-const unsigned int snd_motu_clock_rates[SND_MOTU_CLOCK_RATE_COUNT] = {
+स्थिर अचिन्हित पूर्णांक snd_motu_घड़ी_rates[SND_MOTU_CLOCK_RATE_COUNT] = अणु
 	/* mode 0 */
 	[0] =  44100,
 	[1] =  48000,
@@ -23,167 +24,167 @@ const unsigned int snd_motu_clock_rates[SND_MOTU_CLOCK_RATE_COUNT] = {
 	/* mode 2 */
 	[4] = 176400,
 	[5] = 192000,
-};
+पूर्ण;
 
-static void name_card(struct snd_motu *motu)
-{
-	struct fw_device *fw_dev = fw_parent_device(motu->unit);
-	struct fw_csr_iterator it;
-	int key, val;
+अटल व्योम name_card(काष्ठा snd_motu *motu)
+अणु
+	काष्ठा fw_device *fw_dev = fw_parent_device(motu->unit);
+	काष्ठा fw_csr_iterator it;
+	पूर्णांक key, val;
 	u32 version = 0;
 
 	fw_csr_iterator_init(&it, motu->unit->directory);
-	while (fw_csr_iterator_next(&it, &key, &val)) {
-		switch (key) {
-		case CSR_MODEL:
+	जबतक (fw_csr_iterator_next(&it, &key, &val)) अणु
+		चयन (key) अणु
+		हाल CSR_MODEL:
 			version = val;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	strcpy(motu->card->driver, "FW-MOTU");
-	strcpy(motu->card->shortname, motu->spec->name);
-	strcpy(motu->card->mixername, motu->spec->name);
-	snprintf(motu->card->longname, sizeof(motu->card->longname),
+	म_नकल(motu->card->driver, "FW-MOTU");
+	म_नकल(motu->card->लघुname, motu->spec->name);
+	म_नकल(motu->card->mixername, motu->spec->name);
+	snम_लिखो(motu->card->दीर्घname, माप(motu->card->दीर्घname),
 		 "MOTU %s (version:%06x), GUID %08x%08x at %s, S%d",
 		 motu->spec->name, version,
 		 fw_dev->config_rom[3], fw_dev->config_rom[4],
 		 dev_name(&motu->unit->device), 100 << fw_dev->max_speed);
-}
+पूर्ण
 
-static void motu_card_free(struct snd_card *card)
-{
-	struct snd_motu *motu = card->private_data;
+अटल व्योम motu_card_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_motu *motu = card->निजी_data;
 
-	snd_motu_transaction_unregister(motu);
+	snd_motu_transaction_unरेजिस्टर(motu);
 	snd_motu_stream_destroy_duplex(motu);
-}
+पूर्ण
 
-static void do_registration(struct work_struct *work)
-{
-	struct snd_motu *motu = container_of(work, struct snd_motu, dwork.work);
-	int err;
+अटल व्योम करो_registration(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा snd_motu *motu = container_of(work, काष्ठा snd_motu, dwork.work);
+	पूर्णांक err;
 
-	if (motu->registered)
-		return;
+	अगर (motu->रेजिस्टरed)
+		वापस;
 
-	err = snd_card_new(&motu->unit->device, -1, NULL, THIS_MODULE, 0,
+	err = snd_card_new(&motu->unit->device, -1, शून्य, THIS_MODULE, 0,
 			   &motu->card);
-	if (err < 0)
-		return;
-	motu->card->private_free = motu_card_free;
-	motu->card->private_data = motu;
+	अगर (err < 0)
+		वापस;
+	motu->card->निजी_मुक्त = motu_card_मुक्त;
+	motu->card->निजी_data = motu;
 
 	name_card(motu);
 
-	err = snd_motu_transaction_register(motu);
-	if (err < 0)
-		goto error;
+	err = snd_motu_transaction_रेजिस्टर(motu);
+	अगर (err < 0)
+		जाओ error;
 
 	err = snd_motu_stream_init_duplex(motu);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	snd_motu_proc_init(motu);
 
 	err = snd_motu_create_pcm_devices(motu);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	if ((motu->spec->flags & SND_MOTU_SPEC_RX_MIDI_2ND_Q) ||
+	अगर ((motu->spec->flags & SND_MOTU_SPEC_RX_MIDI_2ND_Q) ||
 	    (motu->spec->flags & SND_MOTU_SPEC_RX_MIDI_3RD_Q) ||
 	    (motu->spec->flags & SND_MOTU_SPEC_TX_MIDI_2ND_Q) ||
-	    (motu->spec->flags & SND_MOTU_SPEC_TX_MIDI_3RD_Q)) {
+	    (motu->spec->flags & SND_MOTU_SPEC_TX_MIDI_3RD_Q)) अणु
 		err = snd_motu_create_midi_devices(motu);
-		if (err < 0)
-			goto error;
-	}
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
 	err = snd_motu_create_hwdep_device(motu);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	err = snd_card_register(motu->card);
-	if (err < 0)
-		goto error;
+	err = snd_card_रेजिस्टर(motu->card);
+	अगर (err < 0)
+		जाओ error;
 
-	motu->registered = true;
+	motu->रेजिस्टरed = true;
 
-	return;
+	वापस;
 error:
-	snd_card_free(motu->card);
+	snd_card_मुक्त(motu->card);
 	dev_info(&motu->unit->device,
 		 "Sound card registration failed: %d\n", err);
-}
+पूर्ण
 
-static int motu_probe(struct fw_unit *unit,
-		      const struct ieee1394_device_id *entry)
-{
-	struct snd_motu *motu;
+अटल पूर्णांक motu_probe(काष्ठा fw_unit *unit,
+		      स्थिर काष्ठा ieee1394_device_id *entry)
+अणु
+	काष्ठा snd_motu *motu;
 
 	/* Allocate this independently of sound card instance. */
-	motu = devm_kzalloc(&unit->device, sizeof(struct snd_motu), GFP_KERNEL);
-	if (!motu)
-		return -ENOMEM;
+	motu = devm_kzalloc(&unit->device, माप(काष्ठा snd_motu), GFP_KERNEL);
+	अगर (!motu)
+		वापस -ENOMEM;
 	motu->unit = fw_unit_get(unit);
 	dev_set_drvdata(&unit->device, motu);
 
-	motu->spec = (const struct snd_motu_spec *)entry->driver_data;
+	motu->spec = (स्थिर काष्ठा snd_motu_spec *)entry->driver_data;
 	mutex_init(&motu->mutex);
 	spin_lock_init(&motu->lock);
-	init_waitqueue_head(&motu->hwdep_wait);
+	init_रुकोqueue_head(&motu->hwdep_रुको);
 
-	/* Allocate and register this sound card later. */
-	INIT_DEFERRABLE_WORK(&motu->dwork, do_registration);
+	/* Allocate and रेजिस्टर this sound card later. */
+	INIT_DEFERRABLE_WORK(&motu->dwork, करो_registration);
 	snd_fw_schedule_registration(unit, &motu->dwork);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void motu_remove(struct fw_unit *unit)
-{
-	struct snd_motu *motu = dev_get_drvdata(&unit->device);
+अटल व्योम motu_हटाओ(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा snd_motu *motu = dev_get_drvdata(&unit->device);
 
 	/*
-	 * Confirm to stop the work for registration before the sound card is
+	 * Confirm to stop the work क्रम registration beक्रमe the sound card is
 	 * going to be released. The work is not scheduled again because bus
 	 * reset handler is not called anymore.
 	 */
 	cancel_delayed_work_sync(&motu->dwork);
 
-	if (motu->registered) {
-		// Block till all of ALSA character devices are released.
-		snd_card_free(motu->card);
-	}
+	अगर (motu->रेजिस्टरed) अणु
+		// Block till all of ALSA अक्षरacter devices are released.
+		snd_card_मुक्त(motu->card);
+	पूर्ण
 
 	mutex_destroy(&motu->mutex);
 	fw_unit_put(motu->unit);
-}
+पूर्ण
 
-static void motu_bus_update(struct fw_unit *unit)
-{
-	struct snd_motu *motu = dev_get_drvdata(&unit->device);
+अटल व्योम motu_bus_update(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा snd_motu *motu = dev_get_drvdata(&unit->device);
 
-	/* Postpone a workqueue for deferred registration. */
-	if (!motu->registered)
+	/* Postpone a workqueue क्रम deferred registration. */
+	अगर (!motu->रेजिस्टरed)
 		snd_fw_schedule_registration(unit, &motu->dwork);
 
-	/* The handler address register becomes initialized. */
-	snd_motu_transaction_reregister(motu);
-}
+	/* The handler address रेजिस्टर becomes initialized. */
+	snd_motu_transaction_reरेजिस्टर(motu);
+पूर्ण
 
-#define SND_MOTU_DEV_ENTRY(model, data)			\
-{							\
+#घोषणा SND_MOTU_DEV_ENTRY(model, data)			\
+अणु							\
 	.match_flags	= IEEE1394_MATCH_VENDOR_ID |	\
 			  IEEE1394_MATCH_SPECIFIER_ID |	\
 			  IEEE1394_MATCH_VERSION,	\
-	.vendor_id	= OUI_MOTU,			\
-	.specifier_id	= OUI_MOTU,			\
+	.venकरोr_id	= OUI_MOTU,			\
+	.specअगरier_id	= OUI_MOTU,			\
 	.version	= model,			\
-	.driver_data	= (kernel_ulong_t)data,		\
-}
+	.driver_data	= (kernel_uदीर्घ_t)data,		\
+पूर्ण
 
-static const struct ieee1394_device_id motu_id_table[] = {
+अटल स्थिर काष्ठा ieee1394_device_id motu_id_table[] = अणु
 	SND_MOTU_DEV_ENTRY(0x000003, &snd_motu_spec_828mk2),
 	SND_MOTU_DEV_ENTRY(0x000009, &snd_motu_spec_traveler),
 	SND_MOTU_DEV_ENTRY(0x00000d, &snd_motu_spec_ultralite),
@@ -193,31 +194,31 @@ static const struct ieee1394_device_id motu_id_table[] = {
 	SND_MOTU_DEV_ENTRY(0x000035, &snd_motu_spec_828mk3), // Hybrid.
 	SND_MOTU_DEV_ENTRY(0x000033, &snd_motu_spec_audio_express),
 	SND_MOTU_DEV_ENTRY(0x000045, &snd_motu_spec_4pre),
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(ieee1394, motu_id_table);
 
-static struct fw_driver motu_driver = {
-	.driver   = {
+अटल काष्ठा fw_driver motu_driver = अणु
+	.driver   = अणु
 		.owner	= THIS_MODULE,
 		.name	= KBUILD_MODNAME,
 		.bus	= &fw_bus_type,
-	},
+	पूर्ण,
 	.probe    = motu_probe,
 	.update   = motu_bus_update,
-	.remove   = motu_remove,
+	.हटाओ   = motu_हटाओ,
 	.id_table = motu_id_table,
-};
+पूर्ण;
 
-static int __init alsa_motu_init(void)
-{
-	return driver_register(&motu_driver.driver);
-}
+अटल पूर्णांक __init alsa_motu_init(व्योम)
+अणु
+	वापस driver_रेजिस्टर(&motu_driver.driver);
+पूर्ण
 
-static void __exit alsa_motu_exit(void)
-{
-	driver_unregister(&motu_driver.driver);
-}
+अटल व्योम __निकास alsa_motu_निकास(व्योम)
+अणु
+	driver_unरेजिस्टर(&motu_driver.driver);
+पूर्ण
 
 module_init(alsa_motu_init);
-module_exit(alsa_motu_exit);
+module_निकास(alsa_motu_निकास);

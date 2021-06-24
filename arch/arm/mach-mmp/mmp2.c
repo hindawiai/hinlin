@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-mmp/mmp2.c
  *
@@ -6,32 +7,32 @@
  *
  * Copyright (C) 2009 Marvell International Ltd.
  */
-#include <linux/clk/mmp.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/irqchip/mmp.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk/mmp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip/mmp.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/hardware/cache-tauros2.h>
+#समावेश <यंत्र/hardware/cache-tauros2.h>
 
-#include <asm/mach/time.h>
-#include "addr-map.h"
-#include "regs-apbc.h"
-#include <linux/soc/mmp/cputype.h>
-#include "irqs.h"
-#include "mfp.h"
-#include "devices.h"
-#include "mmp2.h"
-#include "pm-mmp2.h"
+#समावेश <यंत्र/mach/समय.स>
+#समावेश "addr-map.h"
+#समावेश "regs-apbc.h"
+#समावेश <linux/soc/mmp/cputype.h>
+#समावेश "irqs.h"
+#समावेश "mfp.h"
+#समावेश "devices.h"
+#समावेश "mmp2.h"
+#समावेश "pm-mmp2.h"
 
-#include "common.h"
+#समावेश "common.h"
 
-#define MFPR_VIRT_BASE	(APB_VIRT_BASE + 0x1e000)
+#घोषणा MFPR_VIRT_BASE	(APB_VIRT_BASE + 0x1e000)
 
-static struct mfp_addr_map mmp2_addr_map[] __initdata = {
+अटल काष्ठा mfp_addr_map mmp2_addr_map[] __initdata = अणु
 
 	MFP_ADDR_X(GPIO0, GPIO58, 0x54),
 	MFP_ADDR_X(GPIO59, GPIO73, 0x280),
@@ -78,61 +79,61 @@ static struct mfp_addr_map mmp2_addr_map[] __initdata = {
 	MFP_ADDR(CLK_REQ, 0x160),
 
 	MFP_ADDR_END,
-};
+पूर्ण;
 
-void mmp2_clear_pmic_int(void)
-{
-	void __iomem *mfpr_pmic;
-	unsigned long data;
+व्योम mmp2_clear_pmic_पूर्णांक(व्योम)
+अणु
+	व्योम __iomem *mfpr_pmic;
+	अचिन्हित दीर्घ data;
 
 	mfpr_pmic = APB_VIRT_BASE + 0x1e000 + 0x2c4;
-	data = __raw_readl(mfpr_pmic);
-	__raw_writel(data | (1 << 6), mfpr_pmic);
-	__raw_writel(data, mfpr_pmic);
-}
+	data = __raw_पढ़ोl(mfpr_pmic);
+	__raw_ग_लिखोl(data | (1 << 6), mfpr_pmic);
+	__raw_ग_लिखोl(data, mfpr_pmic);
+पूर्ण
 
-void __init mmp2_init_irq(void)
-{
+व्योम __init mmp2_init_irq(व्योम)
+अणु
 	mmp2_init_icu();
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	icu_irq_chip.irq_set_wake = mmp2_set_wake;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static int __init mmp2_init(void)
-{
-	if (cpu_is_mmp2()) {
-#ifdef CONFIG_CACHE_TAUROS2
+अटल पूर्णांक __init mmp2_init(व्योम)
+अणु
+	अगर (cpu_is_mmp2()) अणु
+#अगर_घोषित CONFIG_CACHE_TAUROS2
 		tauros2_init(0);
-#endif
+#पूर्ण_अगर
 		mfp_init_base(MFPR_VIRT_BASE);
 		mfp_init_addr(mmp2_addr_map);
 		mmp2_clk_init(APB_PHYS_BASE + 0x50000,
 			      AXI_PHYS_BASE + 0x82800,
 			      APB_PHYS_BASE + 0x15000);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 postcore_initcall(mmp2_init);
 
-#define APBC_TIMERS	APBC_REG(0x024)
+#घोषणा APBC_TIMERS	APBC_REG(0x024)
 
-void __init mmp2_timer_init(void)
-{
-	unsigned long clk_rst;
+व्योम __init mmp2_समयr_init(व्योम)
+अणु
+	अचिन्हित दीर्घ clk_rst;
 
-	__raw_writel(APBC_APBCLK | APBC_RST, APBC_TIMERS);
+	__raw_ग_लिखोl(APBC_APBCLK | APBC_RST, APBC_TIMERS);
 
 	/*
-	 * enable bus/functional clock, enable 6.5MHz (divider 4),
+	 * enable bus/functional घड़ी, enable 6.5MHz (भागider 4),
 	 * release reset
 	 */
 	clk_rst = APBC_APBCLK | APBC_FNCLK | APBC_FNCLKSEL(1);
-	__raw_writel(clk_rst, APBC_TIMERS);
+	__raw_ग_लिखोl(clk_rst, APBC_TIMERS);
 
-	mmp_timer_init(IRQ_MMP2_TIMER1, 6500000);
-}
+	mmp_समयr_init(IRQ_MMP2_TIMER1, 6500000);
+पूर्ण
 
 /* on-chip devices */
 MMP2_DEVICE(uart1, "pxa2xx-uart", 0, UART1, 0xd4030000, 0x30, 4, 5);
@@ -145,31 +146,31 @@ MMP2_DEVICE(twsi3, "pxa2xx-i2c", 2, TWSI3, 0xd4032000, 0x70);
 MMP2_DEVICE(twsi4, "pxa2xx-i2c", 3, TWSI4, 0xd4033000, 0x70);
 MMP2_DEVICE(twsi5, "pxa2xx-i2c", 4, TWSI5, 0xd4033800, 0x70);
 MMP2_DEVICE(twsi6, "pxa2xx-i2c", 5, TWSI6, 0xd4034000, 0x70);
-MMP2_DEVICE(nand, "pxa3xx-nand", -1, NAND, 0xd4283000, 0x100, 28, 29);
+MMP2_DEVICE(nand, "pxa3xx-nand", -1, न_अंकD, 0xd4283000, 0x100, 28, 29);
 MMP2_DEVICE(sdh0, "sdhci-pxav3", 0, MMC, 0xd4280000, 0x120);
 MMP2_DEVICE(sdh1, "sdhci-pxav3", 1, MMC2, 0xd4280800, 0x120);
 MMP2_DEVICE(sdh2, "sdhci-pxav3", 2, MMC3, 0xd4281000, 0x120);
 MMP2_DEVICE(sdh3, "sdhci-pxav3", 3, MMC4, 0xd4281800, 0x120);
 MMP2_DEVICE(asram, "asram", -1, NONE, 0xe0000000, 0x4000);
-/* 0xd1000000 ~ 0xd101ffff is reserved for secure processor */
+/* 0xd1000000 ~ 0xd101ffff is reserved क्रम secure processor */
 MMP2_DEVICE(isram, "isram", -1, NONE, 0xd1020000, 0x18000);
 
-struct resource mmp2_resource_gpio[] = {
-	{
+काष्ठा resource mmp2_resource_gpio[] = अणु
+	अणु
 		.start	= 0xd4019000,
 		.end	= 0xd4019fff,
 		.flags	= IORESOURCE_MEM,
-	}, {
+	पूर्ण, अणु
 		.start	= IRQ_MMP2_GPIO,
 		.end	= IRQ_MMP2_GPIO,
 		.name	= "gpio_mux",
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct platform_device mmp2_device_gpio = {
+काष्ठा platक्रमm_device mmp2_device_gpio = अणु
 	.name		= "mmp2-gpio",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(mmp2_resource_gpio),
 	.resource	= mmp2_resource_gpio,
-};
+पूर्ण;

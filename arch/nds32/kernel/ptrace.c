@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/ptrace.h>
-#include <linux/regset.h>
-#include <linux/tracehook.h>
-#include <linux/elf.h>
-#include <linux/sched/task_stack.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/regset.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/sched/task_stack.h>
 
-enum nds32_regset {
+क्रमागत nds32_regset अणु
 	REGSET_GPR,
-};
+पूर्ण;
 
-static int gpr_get(struct task_struct *target,
-		   const struct user_regset *regset,
-		   struct membuf to)
-{
-	return membuf_write(&to, &task_pt_regs(target)->user_regs,
-				sizeof(struct user_pt_regs));
-}
+अटल पूर्णांक gpr_get(काष्ठा task_काष्ठा *target,
+		   स्थिर काष्ठा user_regset *regset,
+		   काष्ठा membuf to)
+अणु
+	वापस membuf_ग_लिखो(&to, &task_pt_regs(target)->user_regs,
+				माप(काष्ठा user_pt_regs));
+पूर्ण
 
-static int gpr_set(struct task_struct *target, const struct user_regset *regset,
-		   unsigned int pos, unsigned int count,
-		   const void *kbuf, const void __user * ubuf)
-{
-	int err;
-	struct user_pt_regs newregs = task_pt_regs(target)->user_regs;
+अटल पूर्णांक gpr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		   स्थिर व्योम *kbuf, स्थिर व्योम __user * ubuf)
+अणु
+	पूर्णांक err;
+	काष्ठा user_pt_regs newregs = task_pt_regs(target)->user_regs;
 
 	err = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &newregs, 0, -1);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	task_pt_regs(target)->user_regs = newregs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct user_regset nds32_regsets[] = {
-	[REGSET_GPR] = {
+अटल स्थिर काष्ठा user_regset nds32_regsets[] = अणु
+	[REGSET_GPR] = अणु
 			.core_note_type = NT_PRSTATUS,
-			.n = sizeof(struct user_pt_regs) / sizeof(u32),
-			.size = sizeof(elf_greg_t),
-			.align = sizeof(elf_greg_t),
+			.n = माप(काष्ठा user_pt_regs) / माप(u32),
+			.size = माप(elf_greg_t),
+			.align = माप(elf_greg_t),
 			.regset_get = gpr_get,
-			.set = gpr_set}
-};
+			.set = gpr_setपूर्ण
+पूर्ण;
 
-static const struct user_regset_view nds32_user_view = {
+अटल स्थिर काष्ठा user_regset_view nds32_user_view = अणु
 	.name = "nds32",
 	.e_machine = EM_NDS32,
 	.regsets = nds32_regsets,
 	.n = ARRAY_SIZE(nds32_regsets)
-};
+पूर्ण;
 
-const struct user_regset_view *task_user_regset_view(struct task_struct *task)
-{
-	return &nds32_user_view;
-}
+स्थिर काष्ठा user_regset_view *task_user_regset_view(काष्ठा task_काष्ठा *task)
+अणु
+	वापस &nds32_user_view;
+पूर्ण
 
-void ptrace_disable(struct task_struct *child)
-{
+व्योम ptrace_disable(काष्ठा task_काष्ठा *child)
+अणु
 	user_disable_single_step(child);
-}
+पूर्ण
 
-/* do_ptrace()
+/* करो_ptrace()
  *
  * Provide ptrace defined service.
  */
-long arch_ptrace(struct task_struct *child, long request, unsigned long addr,
-		 unsigned long data)
-{
-	int ret = -EIO;
+दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request, अचिन्हित दीर्घ addr,
+		 अचिन्हित दीर्घ data)
+अणु
+	पूर्णांक ret = -EIO;
 
-	switch (request) {
-	default:
+	चयन (request) अणु
+	शेष:
 		ret = ptrace_request(child, request, addr, data);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void user_enable_single_step(struct task_struct *child)
-{
-	struct pt_regs *regs;
+व्योम user_enable_single_step(काष्ठा task_काष्ठा *child)
+अणु
+	काष्ठा pt_regs *regs;
 	regs = task_pt_regs(child);
 	regs->ipsw |= PSW_mskHSS;
-	set_tsk_thread_flag(child, TIF_SINGLESTEP);
-}
+	set_tsk_thपढ़ो_flag(child, TIF_SINGLESTEP);
+पूर्ण
 
-void user_disable_single_step(struct task_struct *child)
-{
-	struct pt_regs *regs;
+व्योम user_disable_single_step(काष्ठा task_काष्ठा *child)
+अणु
+	काष्ठा pt_regs *regs;
 	regs = task_pt_regs(child);
 	regs->ipsw &= ~PSW_mskHSS;
-	clear_tsk_thread_flag(child, TIF_SINGLESTEP);
-}
+	clear_tsk_thपढ़ो_flag(child, TIF_SINGLESTEP);
+पूर्ण
 
 /* sys_trace()
  *
  * syscall trace handler.
  */
 
-asmlinkage int syscall_trace_enter(struct pt_regs *regs)
-{
-	if (test_thread_flag(TIF_SYSCALL_TRACE)) {
-		if (tracehook_report_syscall_entry(regs))
-			forget_syscall(regs);
-	}
-	return regs->syscallno;
-}
+यंत्रlinkage पूर्णांक syscall_trace_enter(काष्ठा pt_regs *regs)
+अणु
+	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACE)) अणु
+		अगर (tracehook_report_syscall_entry(regs))
+			क्रमget_syscall(regs);
+	पूर्ण
+	वापस regs->syscallno;
+पूर्ण
 
-asmlinkage void syscall_trace_leave(struct pt_regs *regs)
-{
-	int step = test_thread_flag(TIF_SINGLESTEP);
-	if (step || test_thread_flag(TIF_SYSCALL_TRACE))
-		tracehook_report_syscall_exit(regs, step);
+यंत्रlinkage व्योम syscall_trace_leave(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक step = test_thपढ़ो_flag(TIF_SINGLESTEP);
+	अगर (step || test_thपढ़ो_flag(TIF_SYSCALL_TRACE))
+		tracehook_report_syscall_निकास(regs, step);
 
-}
+पूर्ण

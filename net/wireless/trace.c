@@ -1,7 +1,8 @@
-#include <linux/module.h>
+<शैली गुरु>
+#समावेश <linux/module.h>
 
-#ifndef __CHECKER__
-#define CREATE_TRACE_POINTS
-#include "trace.h"
+#अगर_अघोषित __CHECKER__
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace.h"
 
-#endif
+#पूर्ण_अगर

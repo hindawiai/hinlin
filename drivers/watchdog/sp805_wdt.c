@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
- * drivers/char/watchdog/sp805-wdt.c
+ * drivers/अक्षर/watchकरोg/sp805-wdt.c
  *
- * Watchdog driver for ARM SP805 watchdog module
+ * Watchकरोg driver क्रम ARM SP805 watchकरोg module
  *
  * Copyright (C) 2010 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -11,258 +12,258 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/acpi.h>
-#include <linux/device.h>
-#include <linux/resource.h>
-#include <linux/amba/bus.h>
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/math64.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/of.h>
-#include <linux/pm.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/watchdog.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/device.h>
+#समावेश <linux/resource.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/math64.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/watchकरोg.h>
 
-/* default timeout in seconds */
-#define DEFAULT_TIMEOUT		60
+/* शेष समयout in seconds */
+#घोषणा DEFAULT_TIMEOUT		60
 
-#define MODULE_NAME		"sp805-wdt"
+#घोषणा MODULE_NAME		"sp805-wdt"
 
-/* watchdog register offsets and masks */
-#define WDTLOAD			0x000
-	#define LOAD_MIN	0x00000001
-	#define LOAD_MAX	0xFFFFFFFF
-#define WDTVALUE		0x004
-#define WDTCONTROL		0x008
-	/* control register masks */
-	#define	INT_ENABLE	(1 << 0)
-	#define	RESET_ENABLE	(1 << 1)
-	#define	ENABLE_MASK	(INT_ENABLE | RESET_ENABLE)
-#define WDTINTCLR		0x00C
-#define WDTRIS			0x010
-#define WDTMIS			0x014
-	#define INT_MASK	(1 << 0)
-#define WDTLOCK			0xC00
-	#define	UNLOCK		0x1ACCE551
-	#define	LOCK		0x00000001
+/* watchकरोg रेजिस्टर offsets and masks */
+#घोषणा WDTLOAD			0x000
+	#घोषणा LOAD_MIN	0x00000001
+	#घोषणा LOAD_MAX	0xFFFFFFFF
+#घोषणा WDTVALUE		0x004
+#घोषणा WDTCONTROL		0x008
+	/* control रेजिस्टर masks */
+	#घोषणा	INT_ENABLE	(1 << 0)
+	#घोषणा	RESET_ENABLE	(1 << 1)
+	#घोषणा	ENABLE_MASK	(INT_ENABLE | RESET_ENABLE)
+#घोषणा WDTINTCLR		0x00C
+#घोषणा WDTRIS			0x010
+#घोषणा WDTMIS			0x014
+	#घोषणा INT_MASK	(1 << 0)
+#घोषणा WDTLOCK			0xC00
+	#घोषणा	UNLOCK		0x1ACCE551
+	#घोषणा	LOCK		0x00000001
 
 /**
- * struct sp805_wdt: sp805 wdt device structure
- * @wdd: instance of struct watchdog_device
- * @lock: spin lock protecting dev structure and io access
+ * काष्ठा sp805_wdt: sp805 wdt device काष्ठाure
+ * @wdd: instance of काष्ठा watchकरोg_device
+ * @lock: spin lock protecting dev काष्ठाure and io access
  * @base: base address of wdt
- * @clk: clock structure of wdt
- * @adev: amba device structure of wdt
+ * @clk: घड़ी काष्ठाure of wdt
+ * @adev: amba device काष्ठाure of wdt
  * @status: current status of wdt
- * @load_val: load value to be set for current timeout
+ * @load_val: load value to be set क्रम current समयout
  */
-struct sp805_wdt {
-	struct watchdog_device		wdd;
+काष्ठा sp805_wdt अणु
+	काष्ठा watchकरोg_device		wdd;
 	spinlock_t			lock;
-	void __iomem			*base;
-	struct clk			*clk;
+	व्योम __iomem			*base;
+	काष्ठा clk			*clk;
 	u64				rate;
-	struct amba_device		*adev;
-	unsigned int			load_val;
-};
+	काष्ठा amba_device		*adev;
+	अचिन्हित पूर्णांक			load_val;
+पूर्ण;
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Set to 1 to keep watchdog running after device release");
 
-/* returns true if wdt is running; otherwise returns false */
-static bool wdt_is_running(struct watchdog_device *wdd)
-{
-	struct sp805_wdt *wdt = watchdog_get_drvdata(wdd);
-	u32 wdtcontrol = readl_relaxed(wdt->base + WDTCONTROL);
+/* वापसs true अगर wdt is running; otherwise वापसs false */
+अटल bool wdt_is_running(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा sp805_wdt *wdt = watchकरोg_get_drvdata(wdd);
+	u32 wdtcontrol = पढ़ोl_relaxed(wdt->base + WDTCONTROL);
 
-	return (wdtcontrol & ENABLE_MASK) == ENABLE_MASK;
-}
+	वापस (wdtcontrol & ENABLE_MASK) == ENABLE_MASK;
+पूर्ण
 
-/* This routine finds load value that will reset system in required timout */
-static int wdt_setload(struct watchdog_device *wdd, unsigned int timeout)
-{
-	struct sp805_wdt *wdt = watchdog_get_drvdata(wdd);
+/* This routine finds load value that will reset प्रणाली in required timout */
+अटल पूर्णांक wdt_setload(काष्ठा watchकरोg_device *wdd, अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा sp805_wdt *wdt = watchकरोg_get_drvdata(wdd);
 	u64 load, rate;
 
 	rate = wdt->rate;
 
 	/*
 	 * sp805 runs counter with given value twice, after the end of first
-	 * counter it gives an interrupt and then starts counter again. If
-	 * interrupt already occurred then it resets the system. This is why
+	 * counter it gives an पूर्णांकerrupt and then starts counter again. If
+	 * पूर्णांकerrupt alपढ़ोy occurred then it resets the प्रणाली. This is why
 	 * load is half of what should be required.
 	 */
-	load = div_u64(rate, 2) * timeout - 1;
+	load = भाग_u64(rate, 2) * समयout - 1;
 
 	load = (load > LOAD_MAX) ? LOAD_MAX : load;
 	load = (load < LOAD_MIN) ? LOAD_MIN : load;
 
 	spin_lock(&wdt->lock);
 	wdt->load_val = load;
-	/* roundup timeout to closest positive integer value */
-	wdd->timeout = div_u64((load + 1) * 2 + (rate / 2), rate);
+	/* roundup समयout to बंदst positive पूर्णांकeger value */
+	wdd->समयout = भाग_u64((load + 1) * 2 + (rate / 2), rate);
 	spin_unlock(&wdt->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* returns number of seconds left for reset to occur */
-static unsigned int wdt_timeleft(struct watchdog_device *wdd)
-{
-	struct sp805_wdt *wdt = watchdog_get_drvdata(wdd);
+/* वापसs number of seconds left क्रम reset to occur */
+अटल अचिन्हित पूर्णांक wdt_समयleft(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा sp805_wdt *wdt = watchकरोg_get_drvdata(wdd);
 	u64 load;
 
 	spin_lock(&wdt->lock);
-	load = readl_relaxed(wdt->base + WDTVALUE);
+	load = पढ़ोl_relaxed(wdt->base + WDTVALUE);
 
-	/*If the interrupt is inactive then time left is WDTValue + WDTLoad. */
-	if (!(readl_relaxed(wdt->base + WDTRIS) & INT_MASK))
+	/*If the पूर्णांकerrupt is inactive then समय left is WDTValue + WDTLoad. */
+	अगर (!(पढ़ोl_relaxed(wdt->base + WDTRIS) & INT_MASK))
 		load += wdt->load_val + 1;
 	spin_unlock(&wdt->lock);
 
-	return div_u64(load, wdt->rate);
-}
+	वापस भाग_u64(load, wdt->rate);
+पूर्ण
 
-static int
-wdt_restart(struct watchdog_device *wdd, unsigned long mode, void *cmd)
-{
-	struct sp805_wdt *wdt = watchdog_get_drvdata(wdd);
+अटल पूर्णांक
+wdt_restart(काष्ठा watchकरोg_device *wdd, अचिन्हित दीर्घ mode, व्योम *cmd)
+अणु
+	काष्ठा sp805_wdt *wdt = watchकरोg_get_drvdata(wdd);
 
-	writel_relaxed(UNLOCK, wdt->base + WDTLOCK);
-	writel_relaxed(0, wdt->base + WDTCONTROL);
-	writel_relaxed(0, wdt->base + WDTLOAD);
-	writel_relaxed(INT_ENABLE | RESET_ENABLE, wdt->base + WDTCONTROL);
+	ग_लिखोl_relaxed(UNLOCK, wdt->base + WDTLOCK);
+	ग_लिखोl_relaxed(0, wdt->base + WDTCONTROL);
+	ग_लिखोl_relaxed(0, wdt->base + WDTLOAD);
+	ग_लिखोl_relaxed(INT_ENABLE | RESET_ENABLE, wdt->base + WDTCONTROL);
 
-	/* Flush posted writes. */
-	readl_relaxed(wdt->base + WDTLOCK);
+	/* Flush posted ग_लिखोs. */
+	पढ़ोl_relaxed(wdt->base + WDTLOCK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wdt_config(struct watchdog_device *wdd, bool ping)
-{
-	struct sp805_wdt *wdt = watchdog_get_drvdata(wdd);
-	int ret;
+अटल पूर्णांक wdt_config(काष्ठा watchकरोg_device *wdd, bool ping)
+अणु
+	काष्ठा sp805_wdt *wdt = watchकरोg_get_drvdata(wdd);
+	पूर्णांक ret;
 
-	if (!ping) {
+	अगर (!ping) अणु
 
 		ret = clk_prepare_enable(wdt->clk);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&wdt->adev->dev, "clock enable fail");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	spin_lock(&wdt->lock);
 
-	writel_relaxed(UNLOCK, wdt->base + WDTLOCK);
-	writel_relaxed(wdt->load_val, wdt->base + WDTLOAD);
-	writel_relaxed(INT_MASK, wdt->base + WDTINTCLR);
+	ग_लिखोl_relaxed(UNLOCK, wdt->base + WDTLOCK);
+	ग_लिखोl_relaxed(wdt->load_val, wdt->base + WDTLOAD);
+	ग_लिखोl_relaxed(INT_MASK, wdt->base + WDTINTCLR);
 
-	if (!ping)
-		writel_relaxed(INT_ENABLE | RESET_ENABLE, wdt->base +
+	अगर (!ping)
+		ग_लिखोl_relaxed(INT_ENABLE | RESET_ENABLE, wdt->base +
 				WDTCONTROL);
 
-	writel_relaxed(LOCK, wdt->base + WDTLOCK);
+	ग_लिखोl_relaxed(LOCK, wdt->base + WDTLOCK);
 
-	/* Flush posted writes. */
-	readl_relaxed(wdt->base + WDTLOCK);
+	/* Flush posted ग_लिखोs. */
+	पढ़ोl_relaxed(wdt->base + WDTLOCK);
 	spin_unlock(&wdt->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wdt_ping(struct watchdog_device *wdd)
-{
-	return wdt_config(wdd, true);
-}
+अटल पूर्णांक wdt_ping(काष्ठा watchकरोg_device *wdd)
+अणु
+	वापस wdt_config(wdd, true);
+पूर्ण
 
-/* enables watchdog timers reset */
-static int wdt_enable(struct watchdog_device *wdd)
-{
-	return wdt_config(wdd, false);
-}
+/* enables watchकरोg समयrs reset */
+अटल पूर्णांक wdt_enable(काष्ठा watchकरोg_device *wdd)
+अणु
+	वापस wdt_config(wdd, false);
+पूर्ण
 
-/* disables watchdog timers reset */
-static int wdt_disable(struct watchdog_device *wdd)
-{
-	struct sp805_wdt *wdt = watchdog_get_drvdata(wdd);
+/* disables watchकरोg समयrs reset */
+अटल पूर्णांक wdt_disable(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा sp805_wdt *wdt = watchकरोg_get_drvdata(wdd);
 
 	spin_lock(&wdt->lock);
 
-	writel_relaxed(UNLOCK, wdt->base + WDTLOCK);
-	writel_relaxed(0, wdt->base + WDTCONTROL);
-	writel_relaxed(LOCK, wdt->base + WDTLOCK);
+	ग_लिखोl_relaxed(UNLOCK, wdt->base + WDTLOCK);
+	ग_लिखोl_relaxed(0, wdt->base + WDTCONTROL);
+	ग_लिखोl_relaxed(LOCK, wdt->base + WDTLOCK);
 
-	/* Flush posted writes. */
-	readl_relaxed(wdt->base + WDTLOCK);
+	/* Flush posted ग_लिखोs. */
+	पढ़ोl_relaxed(wdt->base + WDTLOCK);
 	spin_unlock(&wdt->lock);
 
 	clk_disable_unprepare(wdt->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info wdt_info = अणु
 	.options = WDIOF_MAGICCLOSE | WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING,
 	.identity = MODULE_NAME,
-};
+पूर्ण;
 
-static const struct watchdog_ops wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops wdt_ops = अणु
 	.owner		= THIS_MODULE,
 	.start		= wdt_enable,
 	.stop		= wdt_disable,
 	.ping		= wdt_ping,
-	.set_timeout	= wdt_setload,
-	.get_timeleft	= wdt_timeleft,
+	.set_समयout	= wdt_setload,
+	.get_समयleft	= wdt_समयleft,
 	.restart	= wdt_restart,
-};
+पूर्ण;
 
-static int
-sp805_wdt_probe(struct amba_device *adev, const struct amba_id *id)
-{
-	struct sp805_wdt *wdt;
-	int ret = 0;
+अटल पूर्णांक
+sp805_wdt_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
+अणु
+	काष्ठा sp805_wdt *wdt;
+	पूर्णांक ret = 0;
 
-	wdt = devm_kzalloc(&adev->dev, sizeof(*wdt), GFP_KERNEL);
-	if (!wdt) {
+	wdt = devm_kzalloc(&adev->dev, माप(*wdt), GFP_KERNEL);
+	अगर (!wdt) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	wdt->base = devm_ioremap_resource(&adev->dev, &adev->res);
-	if (IS_ERR(wdt->base))
-		return PTR_ERR(wdt->base);
+	अगर (IS_ERR(wdt->base))
+		वापस PTR_ERR(wdt->base);
 
-	if (adev->dev.of_node) {
-		wdt->clk = devm_clk_get(&adev->dev, NULL);
-		if (IS_ERR(wdt->clk)) {
+	अगर (adev->dev.of_node) अणु
+		wdt->clk = devm_clk_get(&adev->dev, शून्य);
+		अगर (IS_ERR(wdt->clk)) अणु
 			dev_err(&adev->dev, "Clock not found\n");
-			return PTR_ERR(wdt->clk);
-		}
+			वापस PTR_ERR(wdt->clk);
+		पूर्ण
 		wdt->rate = clk_get_rate(wdt->clk);
-	} else if (has_acpi_companion(&adev->dev)) {
+	पूर्ण अन्यथा अगर (has_acpi_companion(&adev->dev)) अणु
 		/*
-		 * When Driver probe with ACPI device, clock devices
-		 * are not available, so watchdog rate get from
-		 * clock-frequency property given in _DSD object.
+		 * When Driver probe with ACPI device, घड़ी devices
+		 * are not available, so watchकरोg rate get from
+		 * घड़ी-frequency property given in _DSD object.
 		 */
-		device_property_read_u64(&adev->dev, "clock-frequency",
+		device_property_पढ़ो_u64(&adev->dev, "clock-frequency",
 					 &wdt->rate);
-		if (!wdt->rate) {
+		अगर (!wdt->rate) अणु
 			dev_err(&adev->dev, "no clock-frequency property\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
 	wdt->adev = adev;
 	wdt->wdd.info = &wdt_info;
@@ -270,91 +271,91 @@ sp805_wdt_probe(struct amba_device *adev, const struct amba_id *id)
 	wdt->wdd.parent = &adev->dev;
 
 	spin_lock_init(&wdt->lock);
-	watchdog_set_nowayout(&wdt->wdd, nowayout);
-	watchdog_set_drvdata(&wdt->wdd, wdt);
-	watchdog_set_restart_priority(&wdt->wdd, 128);
+	watchकरोg_set_nowayout(&wdt->wdd, nowayout);
+	watchकरोg_set_drvdata(&wdt->wdd, wdt);
+	watchकरोg_set_restart_priority(&wdt->wdd, 128);
 
 	/*
-	 * If 'timeout-sec' devicetree property is specified, use that.
+	 * If 'timeout-sec' devicetree property is specअगरied, use that.
 	 * Otherwise, use DEFAULT_TIMEOUT
 	 */
-	wdt->wdd.timeout = DEFAULT_TIMEOUT;
-	watchdog_init_timeout(&wdt->wdd, 0, &adev->dev);
-	wdt_setload(&wdt->wdd, wdt->wdd.timeout);
+	wdt->wdd.समयout = DEFAULT_TIMEOUT;
+	watchकरोg_init_समयout(&wdt->wdd, 0, &adev->dev);
+	wdt_setload(&wdt->wdd, wdt->wdd.समयout);
 
 	/*
-	 * If HW is already running, enable/reset the wdt and set the running
-	 * bit to tell the wdt subsystem
+	 * If HW is alपढ़ोy running, enable/reset the wdt and set the running
+	 * bit to tell the wdt subप्रणाली
 	 */
-	if (wdt_is_running(&wdt->wdd)) {
+	अगर (wdt_is_running(&wdt->wdd)) अणु
 		wdt_enable(&wdt->wdd);
 		set_bit(WDOG_HW_RUNNING, &wdt->wdd.status);
-	}
+	पूर्ण
 
-	watchdog_stop_on_reboot(&wdt->wdd);
-	ret = watchdog_register_device(&wdt->wdd);
-	if (ret)
-		goto err;
+	watchकरोg_stop_on_reboot(&wdt->wdd);
+	ret = watchकरोg_रेजिस्टर_device(&wdt->wdd);
+	अगर (ret)
+		जाओ err;
 	amba_set_drvdata(adev, wdt);
 
 	dev_info(&adev->dev, "registration successful\n");
-	return 0;
+	वापस 0;
 
 err:
 	dev_err(&adev->dev, "Probe Failed!!!\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sp805_wdt_remove(struct amba_device *adev)
-{
-	struct sp805_wdt *wdt = amba_get_drvdata(adev);
+अटल व्योम sp805_wdt_हटाओ(काष्ठा amba_device *adev)
+अणु
+	काष्ठा sp805_wdt *wdt = amba_get_drvdata(adev);
 
-	watchdog_unregister_device(&wdt->wdd);
-	watchdog_set_drvdata(&wdt->wdd, NULL);
-}
+	watchकरोg_unरेजिस्टर_device(&wdt->wdd);
+	watchकरोg_set_drvdata(&wdt->wdd, शून्य);
+पूर्ण
 
-static int __maybe_unused sp805_wdt_suspend(struct device *dev)
-{
-	struct sp805_wdt *wdt = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused sp805_wdt_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sp805_wdt *wdt = dev_get_drvdata(dev);
 
-	if (watchdog_active(&wdt->wdd))
-		return wdt_disable(&wdt->wdd);
+	अगर (watchकरोg_active(&wdt->wdd))
+		वापस wdt_disable(&wdt->wdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused sp805_wdt_resume(struct device *dev)
-{
-	struct sp805_wdt *wdt = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused sp805_wdt_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sp805_wdt *wdt = dev_get_drvdata(dev);
 
-	if (watchdog_active(&wdt->wdd))
-		return wdt_enable(&wdt->wdd);
+	अगर (watchकरोg_active(&wdt->wdd))
+		वापस wdt_enable(&wdt->wdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(sp805_wdt_dev_pm_ops, sp805_wdt_suspend,
+अटल SIMPLE_DEV_PM_OPS(sp805_wdt_dev_pm_ops, sp805_wdt_suspend,
 		sp805_wdt_resume);
 
-static const struct amba_id sp805_wdt_ids[] = {
-	{
+अटल स्थिर काष्ठा amba_id sp805_wdt_ids[] = अणु
+	अणु
 		.id	= 0x00141805,
 		.mask	= 0x00ffffff,
-	},
-	{ 0, 0 },
-};
+	पूर्ण,
+	अणु 0, 0 पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(amba, sp805_wdt_ids);
 
-static struct amba_driver sp805_wdt_driver = {
-	.drv = {
+अटल काष्ठा amba_driver sp805_wdt_driver = अणु
+	.drv = अणु
 		.name	= MODULE_NAME,
 		.pm	= &sp805_wdt_dev_pm_ops,
-	},
+	पूर्ण,
 	.id_table	= sp805_wdt_ids,
 	.probe		= sp805_wdt_probe,
-	.remove = sp805_wdt_remove,
-};
+	.हटाओ = sp805_wdt_हटाओ,
+पूर्ण;
 
 module_amba_driver(sp805_wdt_driver);
 

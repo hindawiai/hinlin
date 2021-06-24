@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#ifndef VMCI_DOORBELL_H
-#define VMCI_DOORBELL_H
+#अगर_अघोषित VMCI_DOORBELL_H
+#घोषणा VMCI_DOORBELL_H
 
-#include <linux/vmw_vmci_defs.h>
-#include <linux/types.h>
+#समावेश <linux/vmw_vmci_defs.h>
+#समावेश <linux/types.h>
 
-#include "vmci_driver.h"
+#समावेश "vmci_driver.h"
 
 /*
- * VMCINotifyResourceInfo: Used to create and destroy doorbells, and
- * generate a notification for a doorbell or queue pair.
+ * VMCINotअगरyResourceInfo: Used to create and destroy करोorbells, and
+ * generate a notअगरication क्रम a करोorbell or queue pair.
  */
-struct vmci_dbell_notify_resource_info {
-	struct vmci_handle handle;
+काष्ठा vmci_dbell_notअगरy_resource_info अणु
+	काष्ठा vmci_handle handle;
 	u16 resource;
 	u16 action;
 	s32 result;
-};
+पूर्ण;
 
 /*
- * Structure used for checkpointing the doorbell mappings. It is
- * written to the checkpoint as is, so changing this structure will
- * break checkpoint compatibility.
+ * Structure used क्रम checkpoपूर्णांकing the करोorbell mappings. It is
+ * written to the checkpoपूर्णांक as is, so changing this काष्ठाure will
+ * अवरोध checkpoपूर्णांक compatibility.
  */
-struct dbell_cpt_state {
-	struct vmci_handle handle;
-	u64 bitmap_idx;
-};
+काष्ठा dbell_cpt_state अणु
+	काष्ठा vmci_handle handle;
+	u64 biपंचांगap_idx;
+पूर्ण;
 
-int vmci_dbell_host_context_notify(u32 src_cid, struct vmci_handle handle);
-int vmci_dbell_get_priv_flags(struct vmci_handle handle, u32 *priv_flags);
+पूर्णांक vmci_dbell_host_context_notअगरy(u32 src_cid, काष्ठा vmci_handle handle);
+पूर्णांक vmci_dbell_get_priv_flags(काष्ठा vmci_handle handle, u32 *priv_flags);
 
-bool vmci_dbell_register_notification_bitmap(u64 bitmap_ppn);
-void vmci_dbell_scan_notification_entries(u8 *bitmap);
+bool vmci_dbell_रेजिस्टर_notअगरication_biपंचांगap(u64 biपंचांगap_ppn);
+व्योम vmci_dbell_scan_notअगरication_entries(u8 *biपंचांगap);
 
-#endif /* VMCI_DOORBELL_H */
+#पूर्ण_अगर /* VMCI_DOORBELL_H */

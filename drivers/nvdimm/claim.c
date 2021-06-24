@@ -1,338 +1,339 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
-#include <linux/device.h>
-#include <linux/sizes.h>
-#include <linux/badblocks.h>
-#include "nd-core.h"
-#include "pmem.h"
-#include "pfn.h"
-#include "btt.h"
-#include "nd.h"
+#समावेश <linux/device.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/badblocks.h>
+#समावेश "nd-core.h"
+#समावेश "pmem.h"
+#समावेश "pfn.h"
+#समावेश "btt.h"
+#समावेश "nd.h"
 
-void __nd_detach_ndns(struct device *dev, struct nd_namespace_common **_ndns)
-{
-	struct nd_namespace_common *ndns = *_ndns;
-	struct nvdimm_bus *nvdimm_bus;
+व्योम __nd_detach_ndns(काष्ठा device *dev, काष्ठा nd_namespace_common **_ndns)
+अणु
+	काष्ठा nd_namespace_common *ndns = *_ndns;
+	काष्ठा nvdimm_bus *nvdimm_bus;
 
-	if (!ndns)
-		return;
+	अगर (!ndns)
+		वापस;
 
 	nvdimm_bus = walk_to_nvdimm_bus(&ndns->dev);
-	lockdep_assert_held(&nvdimm_bus->reconfig_mutex);
+	lockdep_निश्चित_held(&nvdimm_bus->reconfig_mutex);
 	dev_WARN_ONCE(dev, ndns->claim != dev, "%s: invalid claim\n", __func__);
-	ndns->claim = NULL;
-	*_ndns = NULL;
+	ndns->claim = शून्य;
+	*_ndns = शून्य;
 	put_device(&ndns->dev);
-}
+पूर्ण
 
-void nd_detach_ndns(struct device *dev,
-		struct nd_namespace_common **_ndns)
-{
-	struct nd_namespace_common *ndns = *_ndns;
+व्योम nd_detach_ndns(काष्ठा device *dev,
+		काष्ठा nd_namespace_common **_ndns)
+अणु
+	काष्ठा nd_namespace_common *ndns = *_ndns;
 
-	if (!ndns)
-		return;
+	अगर (!ndns)
+		वापस;
 	get_device(&ndns->dev);
 	nvdimm_bus_lock(&ndns->dev);
 	__nd_detach_ndns(dev, _ndns);
 	nvdimm_bus_unlock(&ndns->dev);
 	put_device(&ndns->dev);
-}
+पूर्ण
 
-bool __nd_attach_ndns(struct device *dev, struct nd_namespace_common *attach,
-		struct nd_namespace_common **_ndns)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(&attach->dev);
+bool __nd_attach_ndns(काष्ठा device *dev, काष्ठा nd_namespace_common *attach,
+		काष्ठा nd_namespace_common **_ndns)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(&attach->dev);
 
-	if (attach->claim)
-		return false;
-	lockdep_assert_held(&nvdimm_bus->reconfig_mutex);
+	अगर (attach->claim)
+		वापस false;
+	lockdep_निश्चित_held(&nvdimm_bus->reconfig_mutex);
 	dev_WARN_ONCE(dev, *_ndns, "%s: invalid claim\n", __func__);
 	attach->claim = dev;
 	*_ndns = attach;
 	get_device(&attach->dev);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool nd_attach_ndns(struct device *dev, struct nd_namespace_common *attach,
-		struct nd_namespace_common **_ndns)
-{
+bool nd_attach_ndns(काष्ठा device *dev, काष्ठा nd_namespace_common *attach,
+		काष्ठा nd_namespace_common **_ndns)
+अणु
 	bool claimed;
 
 	nvdimm_bus_lock(&attach->dev);
 	claimed = __nd_attach_ndns(dev, attach, _ndns);
 	nvdimm_bus_unlock(&attach->dev);
-	return claimed;
-}
+	वापस claimed;
+पूर्ण
 
-static int namespace_match(struct device *dev, void *data)
-{
-	char *name = data;
+अटल पूर्णांक namespace_match(काष्ठा device *dev, व्योम *data)
+अणु
+	अक्षर *name = data;
 
-	return strcmp(name, dev_name(dev)) == 0;
-}
+	वापस म_भेद(name, dev_name(dev)) == 0;
+पूर्ण
 
-static bool is_idle(struct device *dev, struct nd_namespace_common *ndns)
-{
-	struct nd_region *nd_region = to_nd_region(dev->parent);
-	struct device *seed = NULL;
+अटल bool is_idle(काष्ठा device *dev, काष्ठा nd_namespace_common *ndns)
+अणु
+	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
+	काष्ठा device *seed = शून्य;
 
-	if (is_nd_btt(dev))
+	अगर (is_nd_btt(dev))
 		seed = nd_region->btt_seed;
-	else if (is_nd_pfn(dev))
+	अन्यथा अगर (is_nd_pfn(dev))
 		seed = nd_region->pfn_seed;
-	else if (is_nd_dax(dev))
+	अन्यथा अगर (is_nd_dax(dev))
 		seed = nd_region->dax_seed;
 
-	if (seed == dev || ndns || dev->driver)
-		return false;
-	return true;
-}
+	अगर (seed == dev || ndns || dev->driver)
+		वापस false;
+	वापस true;
+पूर्ण
 
-struct nd_pfn *to_nd_pfn_safe(struct device *dev)
-{
+काष्ठा nd_pfn *to_nd_pfn_safe(काष्ठा device *dev)
+अणु
 	/*
 	 * pfn device attributes are re-used by dax device instances, so we
 	 * need to be careful to correct device-to-nd_pfn conversion.
 	 */
-	if (is_nd_pfn(dev))
-		return to_nd_pfn(dev);
+	अगर (is_nd_pfn(dev))
+		वापस to_nd_pfn(dev);
 
-	if (is_nd_dax(dev)) {
-		struct nd_dax *nd_dax = to_nd_dax(dev);
+	अगर (is_nd_dax(dev)) अणु
+		काष्ठा nd_dax *nd_dax = to_nd_dax(dev);
 
-		return &nd_dax->nd_pfn;
-	}
+		वापस &nd_dax->nd_pfn;
+	पूर्ण
 
 	WARN_ON(1);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void nd_detach_and_reset(struct device *dev,
-		struct nd_namespace_common **_ndns)
-{
+अटल व्योम nd_detach_and_reset(काष्ठा device *dev,
+		काष्ठा nd_namespace_common **_ndns)
+अणु
 	/* detach the namespace and destroy / reset the device */
 	__nd_detach_ndns(dev, _ndns);
-	if (is_idle(dev, *_ndns)) {
-		nd_device_unregister(dev, ND_ASYNC);
-	} else if (is_nd_btt(dev)) {
-		struct nd_btt *nd_btt = to_nd_btt(dev);
+	अगर (is_idle(dev, *_ndns)) अणु
+		nd_device_unरेजिस्टर(dev, ND_ASYNC);
+	पूर्ण अन्यथा अगर (is_nd_btt(dev)) अणु
+		काष्ठा nd_btt *nd_btt = to_nd_btt(dev);
 
 		nd_btt->lbasize = 0;
-		kfree(nd_btt->uuid);
-		nd_btt->uuid = NULL;
-	} else if (is_nd_pfn(dev) || is_nd_dax(dev)) {
-		struct nd_pfn *nd_pfn = to_nd_pfn_safe(dev);
+		kमुक्त(nd_btt->uuid);
+		nd_btt->uuid = शून्य;
+	पूर्ण अन्यथा अगर (is_nd_pfn(dev) || is_nd_dax(dev)) अणु
+		काष्ठा nd_pfn *nd_pfn = to_nd_pfn_safe(dev);
 
-		kfree(nd_pfn->uuid);
-		nd_pfn->uuid = NULL;
+		kमुक्त(nd_pfn->uuid);
+		nd_pfn->uuid = शून्य;
 		nd_pfn->mode = PFN_MODE_NONE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-ssize_t nd_namespace_store(struct device *dev,
-		struct nd_namespace_common **_ndns, const char *buf,
-		size_t len)
-{
-	struct nd_namespace_common *ndns;
-	struct device *found;
-	char *name;
+sमाप_प्रकार nd_namespace_store(काष्ठा device *dev,
+		काष्ठा nd_namespace_common **_ndns, स्थिर अक्षर *buf,
+		माप_प्रकार len)
+अणु
+	काष्ठा nd_namespace_common *ndns;
+	काष्ठा device *found;
+	अक्षर *name;
 
-	if (dev->driver) {
+	अगर (dev->driver) अणु
 		dev_dbg(dev, "namespace already active\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	name = kstrndup(buf, len, GFP_KERNEL);
-	if (!name)
-		return -ENOMEM;
+	अगर (!name)
+		वापस -ENOMEM;
 	strim(name);
 
-	if (strncmp(name, "namespace", 9) == 0 || strcmp(name, "") == 0)
+	अगर (म_भेदन(name, "namespace", 9) == 0 || म_भेद(name, "") == 0)
 		/* pass */;
-	else {
+	अन्यथा अणु
 		len = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ndns = *_ndns;
-	if (strcmp(name, "") == 0) {
+	अगर (म_भेद(name, "") == 0) अणु
 		nd_detach_and_reset(dev, _ndns);
-		goto out;
-	} else if (ndns) {
+		जाओ out;
+	पूर्ण अन्यथा अगर (ndns) अणु
 		dev_dbg(dev, "namespace already set to: %s\n",
 				dev_name(&ndns->dev));
 		len = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	found = device_find_child(dev->parent, name, namespace_match);
-	if (!found) {
+	अगर (!found) अणु
 		dev_dbg(dev, "'%s' not found under %s\n", name,
 				dev_name(dev->parent));
 		len = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ndns = to_ndns(found);
 
-	switch (ndns->claim_class) {
-	case NVDIMM_CCLASS_NONE:
-		break;
-	case NVDIMM_CCLASS_BTT:
-	case NVDIMM_CCLASS_BTT2:
-		if (!is_nd_btt(dev)) {
+	चयन (ndns->claim_class) अणु
+	हाल NVDIMM_CCLASS_NONE:
+		अवरोध;
+	हाल NVDIMM_CCLASS_BTT:
+	हाल NVDIMM_CCLASS_BTT2:
+		अगर (!is_nd_btt(dev)) अणु
 			len = -EBUSY;
-			goto out_attach;
-		}
-		break;
-	case NVDIMM_CCLASS_PFN:
-		if (!is_nd_pfn(dev)) {
+			जाओ out_attach;
+		पूर्ण
+		अवरोध;
+	हाल NVDIMM_CCLASS_PFN:
+		अगर (!is_nd_pfn(dev)) अणु
 			len = -EBUSY;
-			goto out_attach;
-		}
-		break;
-	case NVDIMM_CCLASS_DAX:
-		if (!is_nd_dax(dev)) {
+			जाओ out_attach;
+		पूर्ण
+		अवरोध;
+	हाल NVDIMM_CCLASS_DAX:
+		अगर (!is_nd_dax(dev)) अणु
 			len = -EBUSY;
-			goto out_attach;
-		}
-		break;
-	default:
+			जाओ out_attach;
+		पूर्ण
+		अवरोध;
+	शेष:
 		len = -EBUSY;
-		goto out_attach;
-		break;
-	}
+		जाओ out_attach;
+		अवरोध;
+	पूर्ण
 
-	if (__nvdimm_namespace_capacity(ndns) < SZ_16M) {
+	अगर (__nvdimm_namespace_capacity(ndns) < SZ_16M) अणु
 		dev_dbg(dev, "%s too small to host\n", name);
 		len = -ENXIO;
-		goto out_attach;
-	}
+		जाओ out_attach;
+	पूर्ण
 
 	WARN_ON_ONCE(!is_nvdimm_bus_locked(dev));
-	if (!__nd_attach_ndns(dev, ndns, _ndns)) {
+	अगर (!__nd_attach_ndns(dev, ndns, _ndns)) अणु
 		dev_dbg(dev, "%s already claimed\n",
 				dev_name(&ndns->dev));
 		len = -EBUSY;
-	}
+	पूर्ण
 
  out_attach:
 	put_device(&ndns->dev); /* from device_find_child */
  out:
-	kfree(name);
-	return len;
-}
+	kमुक्त(name);
+	वापस len;
+पूर्ण
 
 /*
- * nd_sb_checksum: compute checksum for a generic info block
+ * nd_sb_checksum: compute checksum क्रम a generic info block
  *
  * Returns a fletcher64 checksum of everything in the given info block
  * except the last field (since that's where the checksum lives).
  */
-u64 nd_sb_checksum(struct nd_gen_sb *nd_gen_sb)
-{
+u64 nd_sb_checksum(काष्ठा nd_gen_sb *nd_gen_sb)
+अणु
 	u64 sum;
 	__le64 sum_save;
 
-	BUILD_BUG_ON(sizeof(struct btt_sb) != SZ_4K);
-	BUILD_BUG_ON(sizeof(struct nd_pfn_sb) != SZ_4K);
-	BUILD_BUG_ON(sizeof(struct nd_gen_sb) != SZ_4K);
+	BUILD_BUG_ON(माप(काष्ठा btt_sb) != SZ_4K);
+	BUILD_BUG_ON(माप(काष्ठा nd_pfn_sb) != SZ_4K);
+	BUILD_BUG_ON(माप(काष्ठा nd_gen_sb) != SZ_4K);
 
 	sum_save = nd_gen_sb->checksum;
 	nd_gen_sb->checksum = 0;
-	sum = nd_fletcher64(nd_gen_sb, sizeof(*nd_gen_sb), 1);
+	sum = nd_fletcher64(nd_gen_sb, माप(*nd_gen_sb), 1);
 	nd_gen_sb->checksum = sum_save;
-	return sum;
-}
+	वापस sum;
+पूर्ण
 EXPORT_SYMBOL(nd_sb_checksum);
 
-static int nsio_rw_bytes(struct nd_namespace_common *ndns,
-		resource_size_t offset, void *buf, size_t size, int rw,
-		unsigned long flags)
-{
-	struct nd_namespace_io *nsio = to_nd_namespace_io(&ndns->dev);
-	unsigned int sz_align = ALIGN(size + (offset & (512 - 1)), 512);
+अटल पूर्णांक nsio_rw_bytes(काष्ठा nd_namespace_common *ndns,
+		resource_माप_प्रकार offset, व्योम *buf, माप_प्रकार size, पूर्णांक rw,
+		अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा nd_namespace_io *nsio = to_nd_namespace_io(&ndns->dev);
+	अचिन्हित पूर्णांक sz_align = ALIGN(size + (offset & (512 - 1)), 512);
 	sector_t sector = offset >> 9;
-	int rc = 0, ret = 0;
+	पूर्णांक rc = 0, ret = 0;
 
-	if (unlikely(!size))
-		return 0;
+	अगर (unlikely(!size))
+		वापस 0;
 
-	if (unlikely(offset + size > nsio->size)) {
+	अगर (unlikely(offset + size > nsio->size)) अणु
 		dev_WARN_ONCE(&ndns->dev, 1, "request out of range\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (rw == READ) {
-		if (unlikely(is_bad_pmem(&nsio->bb, sector, sz_align)))
-			return -EIO;
-		if (copy_mc_to_kernel(buf, nsio->addr + offset, size) != 0)
-			return -EIO;
-		return 0;
-	}
+	अगर (rw == READ) अणु
+		अगर (unlikely(is_bad_pmem(&nsio->bb, sector, sz_align)))
+			वापस -EIO;
+		अगर (copy_mc_to_kernel(buf, nsio->addr + offset, size) != 0)
+			वापस -EIO;
+		वापस 0;
+	पूर्ण
 
-	if (unlikely(is_bad_pmem(&nsio->bb, sector, sz_align))) {
-		if (IS_ALIGNED(offset, 512) && IS_ALIGNED(size, 512)
-				&& !(flags & NVDIMM_IO_ATOMIC)) {
-			long cleared;
+	अगर (unlikely(is_bad_pmem(&nsio->bb, sector, sz_align))) अणु
+		अगर (IS_ALIGNED(offset, 512) && IS_ALIGNED(size, 512)
+				&& !(flags & NVDIMM_IO_ATOMIC)) अणु
+			दीर्घ cleared;
 
 			might_sleep();
 			cleared = nvdimm_clear_poison(&ndns->dev,
 					nsio->res.start + offset, size);
-			if (cleared < size)
+			अगर (cleared < size)
 				rc = -EIO;
-			if (cleared > 0 && cleared / 512) {
+			अगर (cleared > 0 && cleared / 512) अणु
 				cleared /= 512;
 				badblocks_clear(&nsio->bb, sector, cleared);
-			}
+			पूर्ण
 			arch_invalidate_pmem(nsio->addr + offset, size);
-		} else
+		पूर्ण अन्यथा
 			rc = -EIO;
-	}
+	पूर्ण
 
-	memcpy_flushcache(nsio->addr + offset, buf, size);
-	ret = nvdimm_flush(to_nd_region(ndns->dev.parent), NULL);
-	if (ret)
+	स_नकल_flushcache(nsio->addr + offset, buf, size);
+	ret = nvdimm_flush(to_nd_region(ndns->dev.parent), शून्य);
+	अगर (ret)
 		rc = ret;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int devm_nsio_enable(struct device *dev, struct nd_namespace_io *nsio,
-		resource_size_t size)
-{
-	struct nd_namespace_common *ndns = &nsio->common;
-	struct range range = {
+पूर्णांक devm_nsio_enable(काष्ठा device *dev, काष्ठा nd_namespace_io *nsio,
+		resource_माप_प्रकार size)
+अणु
+	काष्ठा nd_namespace_common *ndns = &nsio->common;
+	काष्ठा range range = अणु
 		.start = nsio->res.start,
 		.end = nsio->res.end,
-	};
+	पूर्ण;
 
 	nsio->size = size;
-	if (!devm_request_mem_region(dev, range.start, size,
-				dev_name(&ndns->dev))) {
+	अगर (!devm_request_mem_region(dev, range.start, size,
+				dev_name(&ndns->dev))) अणु
 		dev_warn(dev, "could not reserve region %pR\n", &nsio->res);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	ndns->rw_bytes = nsio_rw_bytes;
-	if (devm_init_badblocks(dev, &nsio->bb))
-		return -ENOMEM;
+	अगर (devm_init_badblocks(dev, &nsio->bb))
+		वापस -ENOMEM;
 	nvdimm_badblocks_populate(to_nd_region(ndns->dev.parent), &nsio->bb,
 			&range);
 
 	nsio->addr = devm_memremap(dev, range.start, size, ARCH_MEMREMAP_PMEM);
 
-	return PTR_ERR_OR_ZERO(nsio->addr);
-}
+	वापस PTR_ERR_OR_ZERO(nsio->addr);
+पूर्ण
 
-void devm_nsio_disable(struct device *dev, struct nd_namespace_io *nsio)
-{
-	struct resource *res = &nsio->res;
+व्योम devm_nsio_disable(काष्ठा device *dev, काष्ठा nd_namespace_io *nsio)
+अणु
+	काष्ठा resource *res = &nsio->res;
 
 	devm_memunmap(dev, nsio->addr);
-	devm_exit_badblocks(dev, &nsio->bb);
+	devm_निकास_badblocks(dev, &nsio->bb);
 	devm_release_mem_region(dev, res->start, nsio->size);
-}
+पूर्ण

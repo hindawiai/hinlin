@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *	linux/lib/crc-ccitt.c
  */
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/crc-ccitt.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/crc-ccitt.h>
 
 /*
  * This mysterious table is just the CRC of each possible byte. It can be
- * computed using the standard bit-at-a-time methods. The polynomial can
+ * computed using the standard bit-at-a-समय methods. The polynomial can
  * be seen in entry 128, 0x8408. This corresponds to x^0 + x^5 + x^12.
  * Add the implicit x^16, and you have the standard CRC-CCITT.
  */
-u16 const crc_ccitt_table[256] = {
+u16 स्थिर crc_ccitt_table[256] = अणु
 	0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
 	0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
 	0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
@@ -46,14 +47,14 @@ u16 const crc_ccitt_table[256] = {
 	0x6b46, 0x7acf, 0x4854, 0x59dd, 0x2d62, 0x3ceb, 0x0e70, 0x1ff9,
 	0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
 	0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
-};
+पूर्ण;
 EXPORT_SYMBOL(crc_ccitt_table);
 
 /*
  * Similar table to calculate CRC16 variant known as CRC-CCITT-FALSE
- * Reflected bits order, does not augment final value.
+ * Reflected bits order, करोes not augment final value.
  */
-u16 const crc_ccitt_false_table[256] = {
+u16 स्थिर crc_ccitt_false_table[256] = अणु
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
     0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
     0x1231, 0x0210, 0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6,
@@ -86,37 +87,37 @@ u16 const crc_ccitt_false_table[256] = {
     0x7C26, 0x6C07, 0x5C64, 0x4C45, 0x3CA2, 0x2C83, 0x1CE0, 0x0CC1,
     0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8,
     0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
-};
+पूर्ण;
 EXPORT_SYMBOL(crc_ccitt_false_table);
 
 /**
- *	crc_ccitt - recompute the CRC (CRC-CCITT variant) for the data
+ *	crc_ccitt - recompute the CRC (CRC-CCITT variant) क्रम the data
  *	buffer
  *	@crc: previous CRC value
- *	@buffer: data pointer
+ *	@buffer: data poपूर्णांकer
  *	@len: number of bytes in the buffer
  */
-u16 crc_ccitt(u16 crc, u8 const *buffer, size_t len)
-{
-	while (len--)
+u16 crc_ccitt(u16 crc, u8 स्थिर *buffer, माप_प्रकार len)
+अणु
+	जबतक (len--)
 		crc = crc_ccitt_byte(crc, *buffer++);
-	return crc;
-}
+	वापस crc;
+पूर्ण
 EXPORT_SYMBOL(crc_ccitt);
 
 /**
  *	crc_ccitt_false - recompute the CRC (CRC-CCITT-FALSE variant)
- *	for the data buffer
+ *	क्रम the data buffer
  *	@crc: previous CRC value
- *	@buffer: data pointer
+ *	@buffer: data poपूर्णांकer
  *	@len: number of bytes in the buffer
  */
-u16 crc_ccitt_false(u16 crc, u8 const *buffer, size_t len)
-{
-	while (len--)
+u16 crc_ccitt_false(u16 crc, u8 स्थिर *buffer, माप_प्रकार len)
+अणु
+	जबतक (len--)
 		crc = crc_ccitt_false_byte(crc, *buffer++);
-	return crc;
-}
+	वापस crc;
+पूर्ण
 EXPORT_SYMBOL(crc_ccitt_false);
 
 MODULE_DESCRIPTION("CRC-CCITT calculations");

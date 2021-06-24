@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson SA 2011
  *
  * Author: Mian Yousaf Kaukab <mian.yousaf.kaukab@stericsson.com>
  */
-#ifndef __ASM_ARCH_USB_H
-#define __ASM_ARCH_USB_H
+#अगर_अघोषित __ASM_ARCH_USB_H
+#घोषणा __ASM_ARCH_USB_H
 
-#include <linux/dmaengine.h>
+#समावेश <linux/dmaengine.h>
 
-#define UX500_MUSB_DMA_NUM_RX_TX_CHANNELS 8
+#घोषणा UX500_MUSB_DMA_NUM_RX_TX_CHANNELS 8
 
-struct ux500_musb_board_data {
-	void	**dma_rx_param_array;
-	void	**dma_tx_param_array;
-	bool (*dma_filter)(struct dma_chan *chan, void *filter_param);
-};
+काष्ठा ux500_musb_board_data अणु
+	व्योम	**dma_rx_param_array;
+	व्योम	**dma_tx_param_array;
+	bool (*dma_filter)(काष्ठा dma_chan *chan, व्योम *filter_param);
+पूर्ण;
 
-void ux500_add_usb(struct device *parent, resource_size_t base,
-		   int irq, int *dma_rx_cfg, int *dma_tx_cfg);
-#endif
+व्योम ux500_add_usb(काष्ठा device *parent, resource_माप_प्रकार base,
+		   पूर्णांक irq, पूर्णांक *dma_rx_cfg, पूर्णांक *dma_tx_cfg);
+#पूर्ण_अगर

@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/component.h>
-#include <linux/export.h>
-#include <linux/list.h>
-#include <linux/of_graph.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/component.h>
+#समावेश <linux/export.h>
+#समावेश <linux/list.h>
+#समावेश <linux/of_graph.h>
 
-#include <drm/drm_bridge.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_device.h>
-#include <drm/drm_encoder.h>
-#include <drm/drm_of.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_encoder.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_panel.h>
 
 /**
  * DOC: overview
@@ -18,325 +19,325 @@
  * properties.
  */
 
-static void drm_release_of(struct device *dev, void *data)
-{
+अटल व्योम drm_release_of(काष्ठा device *dev, व्योम *data)
+अणु
 	of_node_put(data);
-}
+पूर्ण
 
 /**
- * drm_of_crtc_port_mask - find the mask of a registered CRTC by port OF node
+ * drm_of_crtc_port_mask - find the mask of a रेजिस्टरed CRTC by port OF node
  * @dev: DRM device
  * @port: port OF node
  *
- * Given a port OF node, return the possible mask of the corresponding
- * CRTC within a device's list of CRTCs.  Returns zero if not found.
+ * Given a port OF node, वापस the possible mask of the corresponding
+ * CRTC within a device's list of CRTCs.  Returns zero अगर not found.
  */
-uint32_t drm_of_crtc_port_mask(struct drm_device *dev,
-			    struct device_node *port)
-{
-	unsigned int index = 0;
-	struct drm_crtc *tmp;
+uपूर्णांक32_t drm_of_crtc_port_mask(काष्ठा drm_device *dev,
+			    काष्ठा device_node *port)
+अणु
+	अचिन्हित पूर्णांक index = 0;
+	काष्ठा drm_crtc *पंचांगp;
 
-	drm_for_each_crtc(tmp, dev) {
-		if (tmp->port == port)
-			return 1 << index;
+	drm_क्रम_each_crtc(पंचांगp, dev) अणु
+		अगर (पंचांगp->port == port)
+			वापस 1 << index;
 
 		index++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_of_crtc_port_mask);
 
 /**
- * drm_of_find_possible_crtcs - find the possible CRTCs for an encoder port
+ * drm_of_find_possible_crtcs - find the possible CRTCs क्रम an encoder port
  * @dev: DRM device
- * @port: encoder port to scan for endpoints
+ * @port: encoder port to scan क्रम endpoपूर्णांकs
  *
- * Scan all endpoints attached to a port, locate their attached CRTCs,
+ * Scan all endpoपूर्णांकs attached to a port, locate their attached CRTCs,
  * and generate the DRM mask of CRTCs which may be attached to this
  * encoder.
  *
- * See Documentation/devicetree/bindings/graph.txt for the bindings.
+ * See Documentation/devicetree/bindings/graph.txt क्रम the bindings.
  */
-uint32_t drm_of_find_possible_crtcs(struct drm_device *dev,
-				    struct device_node *port)
-{
-	struct device_node *remote_port, *ep;
-	uint32_t possible_crtcs = 0;
+uपूर्णांक32_t drm_of_find_possible_crtcs(काष्ठा drm_device *dev,
+				    काष्ठा device_node *port)
+अणु
+	काष्ठा device_node *remote_port, *ep;
+	uपूर्णांक32_t possible_crtcs = 0;
 
-	for_each_endpoint_of_node(port, ep) {
+	क्रम_each_endpoपूर्णांक_of_node(port, ep) अणु
 		remote_port = of_graph_get_remote_port(ep);
-		if (!remote_port) {
+		अगर (!remote_port) अणु
 			of_node_put(ep);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		possible_crtcs |= drm_of_crtc_port_mask(dev, remote_port);
 
 		of_node_put(remote_port);
-	}
+	पूर्ण
 
-	return possible_crtcs;
-}
+	वापस possible_crtcs;
+पूर्ण
 EXPORT_SYMBOL(drm_of_find_possible_crtcs);
 
 /**
  * drm_of_component_match_add - Add a component helper OF node match rule
  * @master: master device
- * @matchptr: component match pointer
- * @compare: compare function used for matching component
+ * @matchptr: component match poपूर्णांकer
+ * @compare: compare function used क्रम matching component
  * @node: of_node
  */
-void drm_of_component_match_add(struct device *master,
-				struct component_match **matchptr,
-				int (*compare)(struct device *, void *),
-				struct device_node *node)
-{
+व्योम drm_of_component_match_add(काष्ठा device *master,
+				काष्ठा component_match **matchptr,
+				पूर्णांक (*compare)(काष्ठा device *, व्योम *),
+				काष्ठा device_node *node)
+अणु
 	of_node_get(node);
 	component_match_add_release(master, matchptr, drm_release_of,
 				    compare, node);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(drm_of_component_match_add);
 
 /**
- * drm_of_component_probe - Generic probe function for a component based master
+ * drm_of_component_probe - Generic probe function क्रम a component based master
  * @dev: master device containing the OF node
- * @compare_of: compare function used for matching components
+ * @compare_of: compare function used क्रम matching components
  * @m_ops: component master ops to be used
  *
- * Parse the platform device OF node and bind all the components associated
- * with the master. Interface ports are added before the encoders in order to
+ * Parse the platक्रमm device OF node and bind all the components associated
+ * with the master. Interface ports are added beक्रमe the encoders in order to
  * satisfy their .bind requirements
- * See Documentation/devicetree/bindings/graph.txt for the bindings.
+ * See Documentation/devicetree/bindings/graph.txt क्रम the bindings.
  *
- * Returns zero if successful, or one of the standard error codes if it fails.
+ * Returns zero अगर successful, or one of the standard error codes अगर it fails.
  */
-int drm_of_component_probe(struct device *dev,
-			   int (*compare_of)(struct device *, void *),
-			   const struct component_master_ops *m_ops)
-{
-	struct device_node *ep, *port, *remote;
-	struct component_match *match = NULL;
-	int i;
+पूर्णांक drm_of_component_probe(काष्ठा device *dev,
+			   पूर्णांक (*compare_of)(काष्ठा device *, व्योम *),
+			   स्थिर काष्ठा component_master_ops *m_ops)
+अणु
+	काष्ठा device_node *ep, *port, *remote;
+	काष्ठा component_match *match = शून्य;
+	पूर्णांक i;
 
-	if (!dev->of_node)
-		return -EINVAL;
+	अगर (!dev->of_node)
+		वापस -EINVAL;
 
 	/*
 	 * Bind the crtc's ports first, so that drm_of_find_possible_crtcs()
 	 * called from encoder's .bind callbacks works as expected
 	 */
-	for (i = 0; ; i++) {
+	क्रम (i = 0; ; i++) अणु
 		port = of_parse_phandle(dev->of_node, "ports", i);
-		if (!port)
-			break;
+		अगर (!port)
+			अवरोध;
 
-		if (of_device_is_available(port->parent))
+		अगर (of_device_is_available(port->parent))
 			drm_of_component_match_add(dev, &match, compare_of,
 						   port);
 
 		of_node_put(port);
-	}
+	पूर्ण
 
-	if (i == 0) {
+	अगर (i == 0) अणु
 		dev_err(dev, "missing 'ports' property\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!match) {
+	अगर (!match) अणु
 		dev_err(dev, "no available port\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
-	 * For bound crtcs, bind the encoders attached to their remote endpoint
+	 * For bound crtcs, bind the encoders attached to their remote endpoपूर्णांक
 	 */
-	for (i = 0; ; i++) {
+	क्रम (i = 0; ; i++) अणु
 		port = of_parse_phandle(dev->of_node, "ports", i);
-		if (!port)
-			break;
+		अगर (!port)
+			अवरोध;
 
-		if (!of_device_is_available(port->parent)) {
+		अगर (!of_device_is_available(port->parent)) अणु
 			of_node_put(port);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		for_each_child_of_node(port, ep) {
+		क्रम_each_child_of_node(port, ep) अणु
 			remote = of_graph_get_remote_port_parent(ep);
-			if (!remote || !of_device_is_available(remote)) {
+			अगर (!remote || !of_device_is_available(remote)) अणु
 				of_node_put(remote);
-				continue;
-			} else if (!of_device_is_available(remote->parent)) {
+				जारी;
+			पूर्ण अन्यथा अगर (!of_device_is_available(remote->parent)) अणु
 				dev_warn(dev, "parent device of %pOF is not available\n",
 					 remote);
 				of_node_put(remote);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			drm_of_component_match_add(dev, &match, compare_of,
 						   remote);
 			of_node_put(remote);
-		}
+		पूर्ण
 		of_node_put(port);
-	}
+	पूर्ण
 
-	return component_master_add_with_match(dev, m_ops, match);
-}
+	वापस component_master_add_with_match(dev, m_ops, match);
+पूर्ण
 EXPORT_SYMBOL(drm_of_component_probe);
 
 /*
- * drm_of_encoder_active_endpoint - return the active encoder endpoint
+ * drm_of_encoder_active_endpoपूर्णांक - वापस the active encoder endpoपूर्णांक
  * @node: device tree node containing encoder input ports
  * @encoder: drm_encoder
  *
  * Given an encoder device node and a drm_encoder with a connected crtc,
- * parse the encoder endpoint connecting to the crtc port.
+ * parse the encoder endpoपूर्णांक connecting to the crtc port.
  */
-int drm_of_encoder_active_endpoint(struct device_node *node,
-				   struct drm_encoder *encoder,
-				   struct of_endpoint *endpoint)
-{
-	struct device_node *ep;
-	struct drm_crtc *crtc = encoder->crtc;
-	struct device_node *port;
-	int ret;
+पूर्णांक drm_of_encoder_active_endpoपूर्णांक(काष्ठा device_node *node,
+				   काष्ठा drm_encoder *encoder,
+				   काष्ठा of_endpoपूर्णांक *endpoपूर्णांक)
+अणु
+	काष्ठा device_node *ep;
+	काष्ठा drm_crtc *crtc = encoder->crtc;
+	काष्ठा device_node *port;
+	पूर्णांक ret;
 
-	if (!node || !crtc)
-		return -EINVAL;
+	अगर (!node || !crtc)
+		वापस -EINVAL;
 
-	for_each_endpoint_of_node(node, ep) {
+	क्रम_each_endpoपूर्णांक_of_node(node, ep) अणु
 		port = of_graph_get_remote_port(ep);
 		of_node_put(port);
-		if (port == crtc->port) {
-			ret = of_graph_parse_endpoint(ep, endpoint);
+		अगर (port == crtc->port) अणु
+			ret = of_graph_parse_endpoपूर्णांक(ep, endpoपूर्णांक);
 			of_node_put(ep);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
-EXPORT_SYMBOL_GPL(drm_of_encoder_active_endpoint);
+	वापस -EINVAL;
+पूर्ण
+EXPORT_SYMBOL_GPL(drm_of_encoder_active_endpoपूर्णांक);
 
 /**
- * drm_of_find_panel_or_bridge - return connected panel or bridge device
+ * drm_of_find_panel_or_bridge - वापस connected panel or bridge device
  * @np: device tree node containing encoder output ports
  * @port: port in the device tree node
- * @endpoint: endpoint in the device tree node
- * @panel: pointer to hold returned drm_panel
- * @bridge: pointer to hold returned drm_bridge
+ * @endpoपूर्णांक: endpoपूर्णांक in the device tree node
+ * @panel: poपूर्णांकer to hold वापसed drm_panel
+ * @bridge: poपूर्णांकer to hold वापसed drm_bridge
  *
- * Given a DT node's port and endpoint number, find the connected node and
- * return either the associated struct drm_panel or drm_bridge device. Either
- * @panel or @bridge must not be NULL.
+ * Given a DT node's port and endpoपूर्णांक number, find the connected node and
+ * वापस either the associated काष्ठा drm_panel or drm_bridge device. Either
+ * @panel or @bridge must not be शून्य.
  *
- * Returns zero if successful, or one of the standard error codes if it fails.
+ * Returns zero अगर successful, or one of the standard error codes अगर it fails.
  */
-int drm_of_find_panel_or_bridge(const struct device_node *np,
-				int port, int endpoint,
-				struct drm_panel **panel,
-				struct drm_bridge **bridge)
-{
-	int ret = -EPROBE_DEFER;
-	struct device_node *remote;
+पूर्णांक drm_of_find_panel_or_bridge(स्थिर काष्ठा device_node *np,
+				पूर्णांक port, पूर्णांक endpoपूर्णांक,
+				काष्ठा drm_panel **panel,
+				काष्ठा drm_bridge **bridge)
+अणु
+	पूर्णांक ret = -EPROBE_DEFER;
+	काष्ठा device_node *remote;
 
-	if (!panel && !bridge)
-		return -EINVAL;
-	if (panel)
-		*panel = NULL;
+	अगर (!panel && !bridge)
+		वापस -EINVAL;
+	अगर (panel)
+		*panel = शून्य;
 
 	/*
-	 * of_graph_get_remote_node() produces a noisy error message if port
-	 * node isn't found and the absence of the port is a legit case here,
+	 * of_graph_get_remote_node() produces a noisy error message अगर port
+	 * node isn't found and the असलence of the port is a legit हाल here,
 	 * so at first we silently check whether graph presents in the
 	 * device-tree node.
 	 */
-	if (!of_graph_is_present(np))
-		return -ENODEV;
+	अगर (!of_graph_is_present(np))
+		वापस -ENODEV;
 
-	remote = of_graph_get_remote_node(np, port, endpoint);
-	if (!remote)
-		return -ENODEV;
+	remote = of_graph_get_remote_node(np, port, endpoपूर्णांक);
+	अगर (!remote)
+		वापस -ENODEV;
 
-	if (panel) {
+	अगर (panel) अणु
 		*panel = of_drm_find_panel(remote);
-		if (!IS_ERR(*panel))
+		अगर (!IS_ERR(*panel))
 			ret = 0;
-		else
-			*panel = NULL;
-	}
+		अन्यथा
+			*panel = शून्य;
+	पूर्ण
 
-	/* No panel found yet, check for a bridge next. */
-	if (bridge) {
-		if (ret) {
+	/* No panel found yet, check क्रम a bridge next. */
+	अगर (bridge) अणु
+		अगर (ret) अणु
 			*bridge = of_drm_find_bridge(remote);
-			if (*bridge)
+			अगर (*bridge)
 				ret = 0;
-		} else {
-			*bridge = NULL;
-		}
+		पूर्ण अन्यथा अणु
+			*bridge = शून्य;
+		पूर्ण
 
-	}
+	पूर्ण
 
 	of_node_put(remote);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(drm_of_find_panel_or_bridge);
 
-enum drm_of_lvds_pixels {
+क्रमागत drm_of_lvds_pixels अणु
 	DRM_OF_LVDS_EVEN = BIT(0),
 	DRM_OF_LVDS_ODD = BIT(1),
-};
+पूर्ण;
 
-static int drm_of_lvds_get_port_pixels_type(struct device_node *port_node)
-{
+अटल पूर्णांक drm_of_lvds_get_port_pixels_type(काष्ठा device_node *port_node)
+अणु
 	bool even_pixels =
-		of_property_read_bool(port_node, "dual-lvds-even-pixels");
+		of_property_पढ़ो_bool(port_node, "dual-lvds-even-pixels");
 	bool odd_pixels =
-		of_property_read_bool(port_node, "dual-lvds-odd-pixels");
+		of_property_पढ़ो_bool(port_node, "dual-lvds-odd-pixels");
 
-	return (even_pixels ? DRM_OF_LVDS_EVEN : 0) |
+	वापस (even_pixels ? DRM_OF_LVDS_EVEN : 0) |
 	       (odd_pixels ? DRM_OF_LVDS_ODD : 0);
-}
+पूर्ण
 
-static int drm_of_lvds_get_remote_pixels_type(
-			const struct device_node *port_node)
-{
-	struct device_node *endpoint = NULL;
-	int pixels_type = -EPIPE;
+अटल पूर्णांक drm_of_lvds_get_remote_pixels_type(
+			स्थिर काष्ठा device_node *port_node)
+अणु
+	काष्ठा device_node *endpoपूर्णांक = शून्य;
+	पूर्णांक pixels_type = -EPIPE;
 
-	for_each_child_of_node(port_node, endpoint) {
-		struct device_node *remote_port;
-		int current_pt;
+	क्रम_each_child_of_node(port_node, endpoपूर्णांक) अणु
+		काष्ठा device_node *remote_port;
+		पूर्णांक current_pt;
 
-		if (!of_node_name_eq(endpoint, "endpoint"))
-			continue;
+		अगर (!of_node_name_eq(endpoपूर्णांक, "endpoint"))
+			जारी;
 
-		remote_port = of_graph_get_remote_port(endpoint);
-		if (!remote_port) {
+		remote_port = of_graph_get_remote_port(endpoपूर्णांक);
+		अगर (!remote_port) अणु
 			of_node_put(remote_port);
-			return -EPIPE;
-		}
+			वापस -EPIPE;
+		पूर्ण
 
 		current_pt = drm_of_lvds_get_port_pixels_type(remote_port);
 		of_node_put(remote_port);
-		if (pixels_type < 0)
+		अगर (pixels_type < 0)
 			pixels_type = current_pt;
 
 		/*
-		 * Sanity check, ensure that all remote endpoints have the same
-		 * pixel type. We may lift this restriction later if we need to
-		 * support multiple sinks with different dual-link
-		 * configurations by passing the endpoints explicitly to
+		 * Sanity check, ensure that all remote endpoपूर्णांकs have the same
+		 * pixel type. We may lअगरt this restriction later अगर we need to
+		 * support multiple sinks with dअगरferent dual-link
+		 * configurations by passing the endpoपूर्णांकs explicitly to
 		 * drm_of_lvds_get_dual_link_pixel_order().
 		 */
-		if (!current_pt || pixels_type != current_pt)
-			return -EINVAL;
-	}
+		अगर (!current_pt || pixels_type != current_pt)
+			वापस -EINVAL;
+	पूर्ण
 
-	return pixels_type;
-}
+	वापस pixels_type;
+पूर्ण
 
 /**
  * drm_of_lvds_get_dual_link_pixel_order - Get LVDS dual-link pixel order
@@ -345,18 +346,18 @@ static int drm_of_lvds_get_remote_pixels_type(
  *
  * An LVDS dual-link connection is made of two links, with even pixels
  * transitting on one link, and odd pixels on the other link. This function
- * returns, for two ports of an LVDS dual-link source, which port shall transmit
+ * वापसs, क्रम two ports of an LVDS dual-link source, which port shall transmit
  * the even and odd pixels, based on the requirements of the connected sink.
  *
  * The pixel order is determined from the dual-lvds-even-pixels and
  * dual-lvds-odd-pixels properties in the sink's DT port nodes. If those
- * properties are not present, or if their usage is not valid, this function
- * returns -EINVAL.
+ * properties are not present, or अगर their usage is not valid, this function
+ * वापसs -EINVAL.
  *
- * If either port is not connected, this function returns -EPIPE.
+ * If either port is not connected, this function वापसs -EPIPE.
  *
- * @port1 and @port2 are typically DT sibling nodes, but may have different
- * parents when, for instance, two separate LVDS encoders carry the even and odd
+ * @port1 and @port2 are typically DT sibling nodes, but may have dअगरferent
+ * parents when, क्रम instance, two separate LVDS encoders carry the even and odd
  * pixels.
  *
  * Return:
@@ -368,32 +369,32 @@ static int drm_of_lvds_get_remote_pixels_type(
  *   the sink configuration is invalid
  * * -EPIPE - when @port1 or @port2 are not connected
  */
-int drm_of_lvds_get_dual_link_pixel_order(const struct device_node *port1,
-					  const struct device_node *port2)
-{
-	int remote_p1_pt, remote_p2_pt;
+पूर्णांक drm_of_lvds_get_dual_link_pixel_order(स्थिर काष्ठा device_node *port1,
+					  स्थिर काष्ठा device_node *port2)
+अणु
+	पूर्णांक remote_p1_pt, remote_p2_pt;
 
-	if (!port1 || !port2)
-		return -EINVAL;
+	अगर (!port1 || !port2)
+		वापस -EINVAL;
 
 	remote_p1_pt = drm_of_lvds_get_remote_pixels_type(port1);
-	if (remote_p1_pt < 0)
-		return remote_p1_pt;
+	अगर (remote_p1_pt < 0)
+		वापस remote_p1_pt;
 
 	remote_p2_pt = drm_of_lvds_get_remote_pixels_type(port2);
-	if (remote_p2_pt < 0)
-		return remote_p2_pt;
+	अगर (remote_p2_pt < 0)
+		वापस remote_p2_pt;
 
 	/*
 	 * A valid dual-lVDS bus is found when one remote port is marked with
 	 * "dual-lvds-even-pixels", and the other remote port is marked with
-	 * "dual-lvds-odd-pixels", bail out if the markers are not right.
+	 * "dual-lvds-odd-pixels", bail out अगर the markers are not right.
 	 */
-	if (remote_p1_pt + remote_p2_pt != DRM_OF_LVDS_EVEN + DRM_OF_LVDS_ODD)
-		return -EINVAL;
+	अगर (remote_p1_pt + remote_p2_pt != DRM_OF_LVDS_EVEN + DRM_OF_LVDS_ODD)
+		वापस -EINVAL;
 
-	return remote_p1_pt == DRM_OF_LVDS_EVEN ?
+	वापस remote_p1_pt == DRM_OF_LVDS_EVEN ?
 		DRM_LVDS_DUAL_LINK_EVEN_ODD_PIXELS :
 		DRM_LVDS_DUAL_LINK_ODD_EVEN_PIXELS;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(drm_of_lvds_get_dual_link_pixel_order);

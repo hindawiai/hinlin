@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Common file for modeset selftests.
+ * Common file क्रम modeset selftests.
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include "test-drm_modeset_common.h"
+#समावेश "test-drm_modeset_common.h"
 
-#define TESTS "drm_modeset_selftests.h"
-#include "drm_selftest.h"
+#घोषणा TESTS "drm_modeset_selftests.h"
+#समावेश "drm_selftest.h"
 
-#include "drm_selftest.c"
+#समावेश "drm_selftest.c"
 
-static int __init test_drm_modeset_init(void)
-{
-	int err;
+अटल पूर्णांक __init test_drm_modeset_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = run_selftests(selftests, ARRAY_SIZE(selftests), NULL);
+	err = run_selftests(selftests, ARRAY_SIZE(selftests), शून्य);
 
-	return err > 0 ? 0 : err;
-}
+	वापस err > 0 ? 0 : err;
+पूर्ण
 
-static void __exit test_drm_modeset_exit(void)
-{
-}
+अटल व्योम __निकास test_drm_modeset_निकास(व्योम)
+अणु
+पूर्ण
 
 module_init(test_drm_modeset_init);
-module_exit(test_drm_modeset_exit);
+module_निकास(test_drm_modeset_निकास);
 
 MODULE_AUTHOR("Intel Corporation");
 MODULE_LICENSE("GPL");

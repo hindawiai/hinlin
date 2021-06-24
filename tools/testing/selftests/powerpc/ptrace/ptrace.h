@@ -1,745 +1,746 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Ptrace interface test helper functions
+ * Ptrace पूर्णांकerface test helper functions
  *
  * Copyright (C) 2015 Anshuman Khandual, IBM Corporation.
  */
-#include <inttypes.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <malloc.h>
-#include <errno.h>
-#include <time.h>
-#include <sys/ptrace.h>
-#include <sys/ioctl.h>
-#include <sys/uio.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/signal.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/user.h>
-#include <linux/elf.h>
-#include <linux/types.h>
-#include <linux/auxvec.h>
-#include "reg.h"
-#include "utils.h"
+#समावेश <पूर्णांकtypes.h>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <दो_स्मृति.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <समय.स>
+#समावेश <sys/ptrace.h>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/uपन.स>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <sys/संकेत.स>
+#समावेश <sys/ipc.h>
+#समावेश <sys/shm.h>
+#समावेश <sys/user.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/types.h>
+#समावेश <linux/auxvec.h>
+#समावेश "reg.h"
+#समावेश "utils.h"
 
-#define TEST_PASS 0
-#define TEST_FAIL 1
+#घोषणा TEST_PASS 0
+#घोषणा TEST_FAIL 1
 
-struct fpr_regs {
-	unsigned long fpr[32];
-	unsigned long fpscr;
-};
+काष्ठा fpr_regs अणु
+	अचिन्हित दीर्घ fpr[32];
+	अचिन्हित दीर्घ fpscr;
+पूर्ण;
 
-struct tm_spr_regs {
-	unsigned long tm_tfhar;
-	unsigned long tm_texasr;
-	unsigned long tm_tfiar;
-};
+काष्ठा पंचांग_spr_regs अणु
+	अचिन्हित दीर्घ पंचांग_tfhar;
+	अचिन्हित दीर्घ पंचांग_texasr;
+	अचिन्हित दीर्घ पंचांग_tfiar;
+पूर्ण;
 
-#ifndef NT_PPC_TAR
-#define NT_PPC_TAR	0x103
-#define NT_PPC_PPR	0x104
-#define NT_PPC_DSCR	0x105
-#define NT_PPC_EBB	0x106
-#define NT_PPC_PMU	0x107
-#define NT_PPC_TM_CGPR	0x108
-#define NT_PPC_TM_CFPR	0x109
-#define NT_PPC_TM_CVMX	0x10a
-#define NT_PPC_TM_CVSX	0x10b
-#define NT_PPC_TM_SPR	0x10c
-#define NT_PPC_TM_CTAR	0x10d
-#define NT_PPC_TM_CPPR	0x10e
-#define NT_PPC_TM_CDSCR	0x10f
-#endif
+#अगर_अघोषित NT_PPC_TAR
+#घोषणा NT_PPC_TAR	0x103
+#घोषणा NT_PPC_PPR	0x104
+#घोषणा NT_PPC_DSCR	0x105
+#घोषणा NT_PPC_EBB	0x106
+#घोषणा NT_PPC_PMU	0x107
+#घोषणा NT_PPC_TM_CGPR	0x108
+#घोषणा NT_PPC_TM_CFPR	0x109
+#घोषणा NT_PPC_TM_CVMX	0x10a
+#घोषणा NT_PPC_TM_CVSX	0x10b
+#घोषणा NT_PPC_TM_SPR	0x10c
+#घोषणा NT_PPC_TM_CTAR	0x10d
+#घोषणा NT_PPC_TM_CPPR	0x10e
+#घोषणा NT_PPC_TM_CDSCR	0x10f
+#पूर्ण_अगर
 
 /* Basic ptrace operations */
-int start_trace(pid_t child)
-{
-	int ret;
+पूर्णांक start_trace(pid_t child)
+अणु
+	पूर्णांक ret;
 
-	ret = ptrace(PTRACE_ATTACH, child, NULL, NULL);
-	if (ret) {
-		perror("ptrace(PTRACE_ATTACH) failed");
-		return TEST_FAIL;
-	}
-	ret = waitpid(child, NULL, 0);
-	if (ret != child) {
-		perror("waitpid() failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	ret = ptrace(PTRACE_ATTACH, child, शून्य, शून्य);
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_ATTACH) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	ret = रुकोpid(child, शून्य, 0);
+	अगर (ret != child) अणु
+		लिखो_त्रुटि("waitpid() failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
-int stop_trace(pid_t child)
-{
-	int ret;
+पूर्णांक stop_trace(pid_t child)
+अणु
+	पूर्णांक ret;
 
-	ret = ptrace(PTRACE_DETACH, child, NULL, NULL);
-	if (ret) {
-		perror("ptrace(PTRACE_DETACH) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	ret = ptrace(PTRACE_DETACH, child, शून्य, शून्य);
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_DETACH) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
-int cont_trace(pid_t child)
-{
-	int ret;
+पूर्णांक cont_trace(pid_t child)
+अणु
+	पूर्णांक ret;
 
-	ret = ptrace(PTRACE_CONT, child, NULL, NULL);
-	if (ret) {
-		perror("ptrace(PTRACE_CONT) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	ret = ptrace(PTRACE_CONT, child, शून्य, शून्य);
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_CONT) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
-int ptrace_read_regs(pid_t child, unsigned long type, unsigned long regs[],
-		     int n)
-{
-	struct iovec iov;
-	long ret;
+पूर्णांक ptrace_पढ़ो_regs(pid_t child, अचिन्हित दीर्घ type, अचिन्हित दीर्घ regs[],
+		     पूर्णांक n)
+अणु
+	काष्ठा iovec iov;
+	दीर्घ ret;
 
 	FAIL_IF(start_trace(child));
 
 	iov.iov_base = regs;
-	iov.iov_len = n * sizeof(unsigned long);
+	iov.iov_len = n * माप(अचिन्हित दीर्घ);
 
 	ret = ptrace(PTRACE_GETREGSET, child, type, &iov);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	FAIL_IF(stop_trace(child));
 
-	return TEST_PASS;
-}
+	वापस TEST_PASS;
+पूर्ण
 
-long ptrace_write_regs(pid_t child, unsigned long type, unsigned long regs[],
-		       int n)
-{
-	struct iovec iov;
-	long ret;
+दीर्घ ptrace_ग_लिखो_regs(pid_t child, अचिन्हित दीर्घ type, अचिन्हित दीर्घ regs[],
+		       पूर्णांक n)
+अणु
+	काष्ठा iovec iov;
+	दीर्घ ret;
 
 	FAIL_IF(start_trace(child));
 
 	iov.iov_base = regs;
-	iov.iov_len = n * sizeof(unsigned long);
+	iov.iov_len = n * माप(अचिन्हित दीर्घ);
 
 	ret = ptrace(PTRACE_SETREGSET, child, type, &iov);
 
 	FAIL_IF(stop_trace(child));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* TAR, PPR, DSCR */
-int show_tar_registers(pid_t child, unsigned long *out)
-{
-	struct iovec iov;
-	unsigned long *reg;
-	int ret;
+पूर्णांक show_tar_रेजिस्टरs(pid_t child, अचिन्हित दीर्घ *out)
+अणु
+	काष्ठा iovec iov;
+	अचिन्हित दीर्घ *reg;
+	पूर्णांक ret;
 
-	reg = malloc(sizeof(unsigned long));
-	if (!reg) {
-		perror("malloc() failed");
-		return TEST_FAIL;
-	}
+	reg = दो_स्मृति(माप(अचिन्हित दीर्घ));
+	अगर (!reg) अणु
+		लिखो_त्रुटि("malloc() failed");
+		वापस TEST_FAIL;
+	पूर्ण
 	iov.iov_base = (u64 *) reg;
-	iov.iov_len = sizeof(unsigned long);
+	iov.iov_len = माप(अचिन्हित दीर्घ);
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TAR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		goto fail;
-	}
-	if (out)
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		जाओ fail;
+	पूर्ण
+	अगर (out)
 		out[0] = *reg;
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_PPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		goto fail;
-	}
-	if (out)
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		जाओ fail;
+	पूर्ण
+	अगर (out)
 		out[1] = *reg;
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_DSCR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		goto fail;
-	}
-	if (out)
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		जाओ fail;
+	पूर्ण
+	अगर (out)
 		out[2] = *reg;
 
-	free(reg);
-	return TEST_PASS;
+	मुक्त(reg);
+	वापस TEST_PASS;
 fail:
-	free(reg);
-	return TEST_FAIL;
-}
+	मुक्त(reg);
+	वापस TEST_FAIL;
+पूर्ण
 
-int write_tar_registers(pid_t child, unsigned long tar,
-		unsigned long ppr, unsigned long dscr)
-{
-	struct iovec iov;
-	unsigned long *reg;
-	int ret;
+पूर्णांक ग_लिखो_tar_रेजिस्टरs(pid_t child, अचिन्हित दीर्घ tar,
+		अचिन्हित दीर्घ ppr, अचिन्हित दीर्घ dscr)
+अणु
+	काष्ठा iovec iov;
+	अचिन्हित दीर्घ *reg;
+	पूर्णांक ret;
 
-	reg = malloc(sizeof(unsigned long));
-	if (!reg) {
-		perror("malloc() failed");
-		return TEST_FAIL;
-	}
+	reg = दो_स्मृति(माप(अचिन्हित दीर्घ));
+	अगर (!reg) अणु
+		लिखो_त्रुटि("malloc() failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
 	iov.iov_base = (u64 *) reg;
-	iov.iov_len = sizeof(unsigned long);
+	iov.iov_len = माप(अचिन्हित दीर्घ);
 
 	*reg = tar;
 	ret = ptrace(PTRACE_SETREGSET, child, NT_PPC_TAR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_SETREGSET) failed");
-		goto fail;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_SETREGSET) failed");
+		जाओ fail;
+	पूर्ण
 
 	*reg = ppr;
 	ret = ptrace(PTRACE_SETREGSET, child, NT_PPC_PPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_SETREGSET) failed");
-		goto fail;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_SETREGSET) failed");
+		जाओ fail;
+	पूर्ण
 
 	*reg = dscr;
 	ret = ptrace(PTRACE_SETREGSET, child, NT_PPC_DSCR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_SETREGSET) failed");
-		goto fail;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_SETREGSET) failed");
+		जाओ fail;
+	पूर्ण
 
-	free(reg);
-	return TEST_PASS;
+	मुक्त(reg);
+	वापस TEST_PASS;
 fail:
-	free(reg);
-	return TEST_FAIL;
-}
+	मुक्त(reg);
+	वापस TEST_FAIL;
+पूर्ण
 
-int show_tm_checkpointed_state(pid_t child, unsigned long *out)
-{
-	struct iovec iov;
-	unsigned long *reg;
-	int ret;
+पूर्णांक show_पंचांग_checkpoपूर्णांकed_state(pid_t child, अचिन्हित दीर्घ *out)
+अणु
+	काष्ठा iovec iov;
+	अचिन्हित दीर्घ *reg;
+	पूर्णांक ret;
 
-	reg = malloc(sizeof(unsigned long));
-	if (!reg) {
-		perror("malloc() failed");
-		return TEST_FAIL;
-	}
+	reg = दो_स्मृति(माप(अचिन्हित दीर्घ));
+	अगर (!reg) अणु
+		लिखो_त्रुटि("malloc() failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
 	iov.iov_base = (u64 *) reg;
-	iov.iov_len = sizeof(unsigned long);
+	iov.iov_len = माप(अचिन्हित दीर्घ);
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TM_CTAR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		goto fail;
-	}
-	if (out)
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		जाओ fail;
+	पूर्ण
+	अगर (out)
 		out[0] = *reg;
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TM_CPPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		goto fail;
-	}
-	if (out)
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		जाओ fail;
+	पूर्ण
+	अगर (out)
 		out[1] = *reg;
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TM_CDSCR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		goto fail;
-	}
-	if (out)
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		जाओ fail;
+	पूर्ण
+	अगर (out)
 		out[2] = *reg;
 
-	free(reg);
-	return TEST_PASS;
+	मुक्त(reg);
+	वापस TEST_PASS;
 
 fail:
-	free(reg);
-	return TEST_FAIL;
-}
+	मुक्त(reg);
+	वापस TEST_FAIL;
+पूर्ण
 
-int write_ckpt_tar_registers(pid_t child, unsigned long tar,
-		unsigned long ppr, unsigned long dscr)
-{
-	struct iovec iov;
-	unsigned long *reg;
-	int ret;
+पूर्णांक ग_लिखो_ckpt_tar_रेजिस्टरs(pid_t child, अचिन्हित दीर्घ tar,
+		अचिन्हित दीर्घ ppr, अचिन्हित दीर्घ dscr)
+अणु
+	काष्ठा iovec iov;
+	अचिन्हित दीर्घ *reg;
+	पूर्णांक ret;
 
-	reg = malloc(sizeof(unsigned long));
-	if (!reg) {
-		perror("malloc() failed");
-		return TEST_FAIL;
-	}
+	reg = दो_स्मृति(माप(अचिन्हित दीर्घ));
+	अगर (!reg) अणु
+		लिखो_त्रुटि("malloc() failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
 	iov.iov_base = (u64 *) reg;
-	iov.iov_len = sizeof(unsigned long);
+	iov.iov_len = माप(अचिन्हित दीर्घ);
 
 	*reg = tar;
 	ret = ptrace(PTRACE_SETREGSET, child, NT_PPC_TM_CTAR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		goto fail;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		जाओ fail;
+	पूर्ण
 
 	*reg = ppr;
 	ret = ptrace(PTRACE_SETREGSET, child, NT_PPC_TM_CPPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		goto fail;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		जाओ fail;
+	पूर्ण
 
 	*reg = dscr;
 	ret = ptrace(PTRACE_SETREGSET, child, NT_PPC_TM_CDSCR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		goto fail;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		जाओ fail;
+	पूर्ण
 
-	free(reg);
-	return TEST_PASS;
+	मुक्त(reg);
+	वापस TEST_PASS;
 fail:
-	free(reg);
-	return TEST_FAIL;
-}
+	मुक्त(reg);
+	वापस TEST_FAIL;
+पूर्ण
 
 /* FPR */
-int show_fpr(pid_t child, unsigned long *fpr)
-{
-	struct fpr_regs *regs;
-	int ret, i;
+पूर्णांक show_fpr(pid_t child, अचिन्हित दीर्घ *fpr)
+अणु
+	काष्ठा fpr_regs *regs;
+	पूर्णांक ret, i;
 
-	regs = (struct fpr_regs *) malloc(sizeof(struct fpr_regs));
-	ret = ptrace(PTRACE_GETFPREGS, child, NULL, regs);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
+	regs = (काष्ठा fpr_regs *) दो_स्मृति(माप(काष्ठा fpr_regs));
+	ret = ptrace(PTRACE_GETFPREGS, child, शून्य, regs);
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	if (fpr) {
-		for (i = 0; i < 32; i++)
+	अगर (fpr) अणु
+		क्रम (i = 0; i < 32; i++)
 			fpr[i] = regs->fpr[i];
-	}
-	return TEST_PASS;
-}
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
-int write_fpr(pid_t child, unsigned long val)
-{
-	struct fpr_regs *regs;
-	int ret, i;
+पूर्णांक ग_लिखो_fpr(pid_t child, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा fpr_regs *regs;
+	पूर्णांक ret, i;
 
-	regs = (struct fpr_regs *) malloc(sizeof(struct fpr_regs));
-	ret = ptrace(PTRACE_GETFPREGS, child, NULL, regs);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
+	regs = (काष्ठा fpr_regs *) दो_स्मृति(माप(काष्ठा fpr_regs));
+	ret = ptrace(PTRACE_GETFPREGS, child, शून्य, regs);
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	for (i = 0; i < 32; i++)
+	क्रम (i = 0; i < 32; i++)
 		regs->fpr[i] = val;
 
-	ret = ptrace(PTRACE_SETFPREGS, child, NULL, regs);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	ret = ptrace(PTRACE_SETFPREGS, child, शून्य, regs);
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
-int show_ckpt_fpr(pid_t child, unsigned long *fpr)
-{
-	struct fpr_regs *regs;
-	struct iovec iov;
-	int ret, i;
+पूर्णांक show_ckpt_fpr(pid_t child, अचिन्हित दीर्घ *fpr)
+अणु
+	काष्ठा fpr_regs *regs;
+	काष्ठा iovec iov;
+	पूर्णांक ret, i;
 
-	regs = (struct fpr_regs *) malloc(sizeof(struct fpr_regs));
+	regs = (काष्ठा fpr_regs *) दो_स्मृति(माप(काष्ठा fpr_regs));
 	iov.iov_base = regs;
-	iov.iov_len = sizeof(struct fpr_regs);
+	iov.iov_len = माप(काष्ठा fpr_regs);
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TM_CFPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	if (fpr) {
-		for (i = 0; i < 32; i++)
+	अगर (fpr) अणु
+		क्रम (i = 0; i < 32; i++)
 			fpr[i] = regs->fpr[i];
-	}
+	पूर्ण
 
-	return TEST_PASS;
-}
+	वापस TEST_PASS;
+पूर्ण
 
-int write_ckpt_fpr(pid_t child, unsigned long val)
-{
-	struct fpr_regs *regs;
-	struct iovec iov;
-	int ret, i;
+पूर्णांक ग_लिखो_ckpt_fpr(pid_t child, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा fpr_regs *regs;
+	काष्ठा iovec iov;
+	पूर्णांक ret, i;
 
-	regs = (struct fpr_regs *) malloc(sizeof(struct fpr_regs));
+	regs = (काष्ठा fpr_regs *) दो_स्मृति(माप(काष्ठा fpr_regs));
 	iov.iov_base = regs;
-	iov.iov_len = sizeof(struct fpr_regs);
+	iov.iov_len = माप(काष्ठा fpr_regs);
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TM_CFPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	for (i = 0; i < 32; i++)
+	क्रम (i = 0; i < 32; i++)
 		regs->fpr[i] = val;
 
 	ret = ptrace(PTRACE_SETREGSET, child, NT_PPC_TM_CFPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
 /* GPR */
-int show_gpr(pid_t child, unsigned long *gpr)
-{
-	struct pt_regs *regs;
-	int ret, i;
+पूर्णांक show_gpr(pid_t child, अचिन्हित दीर्घ *gpr)
+अणु
+	काष्ठा pt_regs *regs;
+	पूर्णांक ret, i;
 
-	regs = (struct pt_regs *) malloc(sizeof(struct pt_regs));
-	if (!regs) {
-		perror("malloc() failed");
-		return TEST_FAIL;
-	}
+	regs = (काष्ठा pt_regs *) दो_स्मृति(माप(काष्ठा pt_regs));
+	अगर (!regs) अणु
+		लिखो_त्रुटि("malloc() failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	ret = ptrace(PTRACE_GETREGS, child, NULL, regs);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
+	ret = ptrace(PTRACE_GETREGS, child, शून्य, regs);
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	if (gpr) {
-		for (i = 14; i < 32; i++)
+	अगर (gpr) अणु
+		क्रम (i = 14; i < 32; i++)
 			gpr[i-14] = regs->gpr[i];
-	}
+	पूर्ण
 
-	return TEST_PASS;
-}
+	वापस TEST_PASS;
+पूर्ण
 
-int write_gpr(pid_t child, unsigned long val)
-{
-	struct pt_regs *regs;
-	int i, ret;
+पूर्णांक ग_लिखो_gpr(pid_t child, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा pt_regs *regs;
+	पूर्णांक i, ret;
 
-	regs = (struct pt_regs *) malloc(sizeof(struct pt_regs));
-	if (!regs) {
-		perror("malloc() failed");
-		return TEST_FAIL;
-	}
+	regs = (काष्ठा pt_regs *) दो_स्मृति(माप(काष्ठा pt_regs));
+	अगर (!regs) अणु
+		लिखो_त्रुटि("malloc() failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	ret = ptrace(PTRACE_GETREGS, child, NULL, regs);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
+	ret = ptrace(PTRACE_GETREGS, child, शून्य, regs);
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	for (i = 14; i < 32; i++)
+	क्रम (i = 14; i < 32; i++)
 		regs->gpr[i] = val;
 
-	ret = ptrace(PTRACE_SETREGS, child, NULL, regs);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	ret = ptrace(PTRACE_SETREGS, child, शून्य, regs);
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
-int show_ckpt_gpr(pid_t child, unsigned long *gpr)
-{
-	struct pt_regs *regs;
-	struct iovec iov;
-	int ret, i;
+पूर्णांक show_ckpt_gpr(pid_t child, अचिन्हित दीर्घ *gpr)
+अणु
+	काष्ठा pt_regs *regs;
+	काष्ठा iovec iov;
+	पूर्णांक ret, i;
 
-	regs = (struct pt_regs *) malloc(sizeof(struct pt_regs));
-	if (!regs) {
-		perror("malloc() failed");
-		return TEST_FAIL;
-	}
+	regs = (काष्ठा pt_regs *) दो_स्मृति(माप(काष्ठा pt_regs));
+	अगर (!regs) अणु
+		लिखो_त्रुटि("malloc() failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
 	iov.iov_base = (u64 *) regs;
-	iov.iov_len = sizeof(struct pt_regs);
+	iov.iov_len = माप(काष्ठा pt_regs);
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TM_CGPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	if (gpr) {
-		for (i = 14; i < 32; i++)
+	अगर (gpr) अणु
+		क्रम (i = 14; i < 32; i++)
 			gpr[i-14] = regs->gpr[i];
-	}
+	पूर्ण
 
-	return TEST_PASS;
-}
+	वापस TEST_PASS;
+पूर्ण
 
-int write_ckpt_gpr(pid_t child, unsigned long val)
-{
-	struct pt_regs *regs;
-	struct iovec iov;
-	int ret, i;
+पूर्णांक ग_लिखो_ckpt_gpr(pid_t child, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा pt_regs *regs;
+	काष्ठा iovec iov;
+	पूर्णांक ret, i;
 
-	regs = (struct pt_regs *) malloc(sizeof(struct pt_regs));
-	if (!regs) {
-		perror("malloc() failed\n");
-		return TEST_FAIL;
-	}
+	regs = (काष्ठा pt_regs *) दो_स्मृति(माप(काष्ठा pt_regs));
+	अगर (!regs) अणु
+		लिखो_त्रुटि("malloc() failed\n");
+		वापस TEST_FAIL;
+	पूर्ण
 	iov.iov_base = (u64 *) regs;
-	iov.iov_len = sizeof(struct pt_regs);
+	iov.iov_len = माप(काष्ठा pt_regs);
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TM_CGPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	for (i = 14; i < 32; i++)
+	क्रम (i = 14; i < 32; i++)
 		regs->gpr[i] = val;
 
 	ret = ptrace(PTRACE_SETREGSET, child, NT_PPC_TM_CGPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
 /* VMX */
-int show_vmx(pid_t child, unsigned long vmx[][2])
-{
-	int ret;
+पूर्णांक show_vmx(pid_t child, अचिन्हित दीर्घ vmx[][2])
+अणु
+	पूर्णांक ret;
 
 	ret = ptrace(PTRACE_GETVRREGS, child, 0, vmx);
-	if (ret) {
-		perror("ptrace(PTRACE_GETVRREGS) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETVRREGS) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
-int show_vmx_ckpt(pid_t child, unsigned long vmx[][2])
-{
-	unsigned long regs[34][2];
-	struct iovec iov;
-	int ret;
+पूर्णांक show_vmx_ckpt(pid_t child, अचिन्हित दीर्घ vmx[][2])
+अणु
+	अचिन्हित दीर्घ regs[34][2];
+	काष्ठा iovec iov;
+	पूर्णांक ret;
 
 	iov.iov_base = (u64 *) regs;
-	iov.iov_len = sizeof(regs);
+	iov.iov_len = माप(regs);
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TM_CVMX, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET, NT_PPC_TM_CVMX) failed");
-		return TEST_FAIL;
-	}
-	memcpy(vmx, regs, sizeof(regs));
-	return TEST_PASS;
-}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET, NT_PPC_TM_CVMX) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	स_नकल(vmx, regs, माप(regs));
+	वापस TEST_PASS;
+पूर्ण
 
 
-int write_vmx(pid_t child, unsigned long vmx[][2])
-{
-	int ret;
+पूर्णांक ग_लिखो_vmx(pid_t child, अचिन्हित दीर्घ vmx[][2])
+अणु
+	पूर्णांक ret;
 
 	ret = ptrace(PTRACE_SETVRREGS, child, 0, vmx);
-	if (ret) {
-		perror("ptrace(PTRACE_SETVRREGS) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_SETVRREGS) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
-int write_vmx_ckpt(pid_t child, unsigned long vmx[][2])
-{
-	unsigned long regs[34][2];
-	struct iovec iov;
-	int ret;
+पूर्णांक ग_लिखो_vmx_ckpt(pid_t child, अचिन्हित दीर्घ vmx[][2])
+अणु
+	अचिन्हित दीर्घ regs[34][2];
+	काष्ठा iovec iov;
+	पूर्णांक ret;
 
-	memcpy(regs, vmx, sizeof(regs));
+	स_नकल(regs, vmx, माप(regs));
 	iov.iov_base = (u64 *) regs;
-	iov.iov_len = sizeof(regs);
+	iov.iov_len = माप(regs);
 	ret = ptrace(PTRACE_SETREGSET, child, NT_PPC_TM_CVMX, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_SETREGSET, NT_PPC_TM_CVMX) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_SETREGSET, NT_PPC_TM_CVMX) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
 /* VSX */
-int show_vsx(pid_t child, unsigned long *vsx)
-{
-	int ret;
+पूर्णांक show_vsx(pid_t child, अचिन्हित दीर्घ *vsx)
+अणु
+	पूर्णांक ret;
 
 	ret = ptrace(PTRACE_GETVSRREGS, child, 0, vsx);
-	if (ret) {
-		perror("ptrace(PTRACE_GETVSRREGS) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETVSRREGS) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
-int show_vsx_ckpt(pid_t child, unsigned long *vsx)
-{
-	unsigned long regs[32];
-	struct iovec iov;
-	int ret;
+पूर्णांक show_vsx_ckpt(pid_t child, अचिन्हित दीर्घ *vsx)
+अणु
+	अचिन्हित दीर्घ regs[32];
+	काष्ठा iovec iov;
+	पूर्णांक ret;
 
 	iov.iov_base = (u64 *) regs;
-	iov.iov_len = sizeof(regs);
+	iov.iov_len = माप(regs);
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TM_CVSX, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET, NT_PPC_TM_CVSX) failed");
-		return TEST_FAIL;
-	}
-	memcpy(vsx, regs, sizeof(regs));
-	return TEST_PASS;
-}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET, NT_PPC_TM_CVSX) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	स_नकल(vsx, regs, माप(regs));
+	वापस TEST_PASS;
+पूर्ण
 
-int write_vsx(pid_t child, unsigned long *vsx)
-{
-	int ret;
+पूर्णांक ग_लिखो_vsx(pid_t child, अचिन्हित दीर्घ *vsx)
+अणु
+	पूर्णांक ret;
 
 	ret = ptrace(PTRACE_SETVSRREGS, child, 0, vsx);
-	if (ret) {
-		perror("ptrace(PTRACE_SETVSRREGS) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_SETVSRREGS) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
-int write_vsx_ckpt(pid_t child, unsigned long *vsx)
-{
-	unsigned long regs[32];
-	struct iovec iov;
-	int ret;
+पूर्णांक ग_लिखो_vsx_ckpt(pid_t child, अचिन्हित दीर्घ *vsx)
+अणु
+	अचिन्हित दीर्घ regs[32];
+	काष्ठा iovec iov;
+	पूर्णांक ret;
 
-	memcpy(regs, vsx, sizeof(regs));
+	स_नकल(regs, vsx, माप(regs));
 	iov.iov_base = (u64 *) regs;
-	iov.iov_len = sizeof(regs);
+	iov.iov_len = माप(regs);
 	ret = ptrace(PTRACE_SETREGSET, child, NT_PPC_TM_CVSX, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_SETREGSET, NT_PPC_TM_CVSX) failed");
-		return TEST_FAIL;
-	}
-	return TEST_PASS;
-}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_SETREGSET, NT_PPC_TM_CVSX) failed");
+		वापस TEST_FAIL;
+	पूर्ण
+	वापस TEST_PASS;
+पूर्ण
 
 /* TM SPR */
-int show_tm_spr(pid_t child, struct tm_spr_regs *out)
-{
-	struct tm_spr_regs *regs;
-	struct iovec iov;
-	int ret;
+पूर्णांक show_पंचांग_spr(pid_t child, काष्ठा पंचांग_spr_regs *out)
+अणु
+	काष्ठा पंचांग_spr_regs *regs;
+	काष्ठा iovec iov;
+	पूर्णांक ret;
 
-	regs = (struct tm_spr_regs *) malloc(sizeof(struct tm_spr_regs));
-	if (!regs) {
-		perror("malloc() failed");
-		return TEST_FAIL;
-	}
+	regs = (काष्ठा पंचांग_spr_regs *) दो_स्मृति(माप(काष्ठा पंचांग_spr_regs));
+	अगर (!regs) अणु
+		लिखो_त्रुटि("malloc() failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
 	iov.iov_base = (u64 *) regs;
-	iov.iov_len = sizeof(struct tm_spr_regs);
+	iov.iov_len = माप(काष्ठा पंचांग_spr_regs);
 
 	ret = ptrace(PTRACE_GETREGSET, child, NT_PPC_TM_SPR, &iov);
-	if (ret) {
-		perror("ptrace(PTRACE_GETREGSET) failed");
-		return TEST_FAIL;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("ptrace(PTRACE_GETREGSET) failed");
+		वापस TEST_FAIL;
+	पूर्ण
 
-	if (out)
-		memcpy(out, regs, sizeof(struct tm_spr_regs));
+	अगर (out)
+		स_नकल(out, regs, माप(काष्ठा पंचांग_spr_regs));
 
-	return TEST_PASS;
-}
+	वापस TEST_PASS;
+पूर्ण
 
 
 
 /* Analyse TEXASR after TM failure */
-inline unsigned long get_tfiar(void)
-{
-	unsigned long ret;
+अंतरभूत अचिन्हित दीर्घ get_tfiar(व्योम)
+अणु
+	अचिन्हित दीर्घ ret;
 
-	asm volatile("mfspr %0,%1" : "=r" (ret) : "i" (SPRN_TFIAR));
-	return ret;
-}
+	यंत्र अस्थिर("mfspr %0,%1" : "=r" (ret) : "i" (SPRN_TFIAR));
+	वापस ret;
+पूर्ण
 
-void analyse_texasr(unsigned long texasr)
-{
-	printf("TEXASR: %16lx\t", texasr);
+व्योम analyse_texasr(अचिन्हित दीर्घ texasr)
+अणु
+	म_लिखो("TEXASR: %16lx\t", texasr);
 
-	if (texasr & TEXASR_FP)
-		printf("TEXASR_FP  ");
+	अगर (texasr & TEXASR_FP)
+		म_लिखो("TEXASR_FP  ");
 
-	if (texasr & TEXASR_DA)
-		printf("TEXASR_DA  ");
+	अगर (texasr & TEXASR_DA)
+		म_लिखो("TEXASR_DA  ");
 
-	if (texasr & TEXASR_NO)
-		printf("TEXASR_NO  ");
+	अगर (texasr & TEXASR_NO)
+		म_लिखो("TEXASR_NO  ");
 
-	if (texasr & TEXASR_FO)
-		printf("TEXASR_FO  ");
+	अगर (texasr & TEXASR_FO)
+		म_लिखो("TEXASR_FO  ");
 
-	if (texasr & TEXASR_SIC)
-		printf("TEXASR_SIC  ");
+	अगर (texasr & TEXASR_SIC)
+		म_लिखो("TEXASR_SIC  ");
 
-	if (texasr & TEXASR_NTC)
-		printf("TEXASR_NTC  ");
+	अगर (texasr & TEXASR_NTC)
+		म_लिखो("TEXASR_NTC  ");
 
-	if (texasr & TEXASR_TC)
-		printf("TEXASR_TC  ");
+	अगर (texasr & TEXASR_TC)
+		म_लिखो("TEXASR_TC  ");
 
-	if (texasr & TEXASR_TIC)
-		printf("TEXASR_TIC  ");
+	अगर (texasr & TEXASR_TIC)
+		म_लिखो("TEXASR_TIC  ");
 
-	if (texasr & TEXASR_IC)
-		printf("TEXASR_IC  ");
+	अगर (texasr & TEXASR_IC)
+		म_लिखो("TEXASR_IC  ");
 
-	if (texasr & TEXASR_IFC)
-		printf("TEXASR_IFC  ");
+	अगर (texasr & TEXASR_IFC)
+		म_लिखो("TEXASR_IFC  ");
 
-	if (texasr & TEXASR_ABT)
-		printf("TEXASR_ABT  ");
+	अगर (texasr & TEXASR_ABT)
+		म_लिखो("TEXASR_ABT  ");
 
-	if (texasr & TEXASR_SPD)
-		printf("TEXASR_SPD  ");
+	अगर (texasr & TEXASR_SPD)
+		म_लिखो("TEXASR_SPD  ");
 
-	if (texasr & TEXASR_HV)
-		printf("TEXASR_HV  ");
+	अगर (texasr & TEXASR_HV)
+		म_लिखो("TEXASR_HV  ");
 
-	if (texasr & TEXASR_PR)
-		printf("TEXASR_PR  ");
+	अगर (texasr & TEXASR_PR)
+		म_लिखो("TEXASR_PR  ");
 
-	if (texasr & TEXASR_FS)
-		printf("TEXASR_FS  ");
+	अगर (texasr & TEXASR_FS)
+		म_लिखो("TEXASR_FS  ");
 
-	if (texasr & TEXASR_TE)
-		printf("TEXASR_TE  ");
+	अगर (texasr & TEXASR_TE)
+		म_लिखो("TEXASR_TE  ");
 
-	if (texasr & TEXASR_ROT)
-		printf("TEXASR_ROT  ");
+	अगर (texasr & TEXASR_ROT)
+		म_लिखो("TEXASR_ROT  ");
 
-	printf("TFIAR :%lx\n", get_tfiar());
-}
+	म_लिखो("TFIAR :%lx\n", get_tfiar());
+पूर्ण
 
-void store_gpr(unsigned long *addr);
-void store_fpr(float *addr);
+व्योम store_gpr(अचिन्हित दीर्घ *addr);
+व्योम store_fpr(भग्न *addr);

@@ -1,120 +1,121 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2020 Cloudflare
 
-#include <errno.h>
-#include <stdbool.h>
-#include <linux/bpf.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <stdbool.h>
+#समावेश <linux/bpf.h>
 
-#include <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_helpers.h>
 
-struct {
-	__uint(type, BPF_MAP_TYPE_SOCKMAP);
-	__uint(max_entries, 2);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_SOCKMAP);
+	__uपूर्णांक(max_entries, 2);
 	__type(key, __u32);
 	__type(value, __u64);
-} sock_map SEC(".maps");
+पूर्ण sock_map SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_SOCKHASH);
-	__uint(max_entries, 2);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_SOCKHASH);
+	__uपूर्णांक(max_entries, 2);
 	__type(key, __u32);
 	__type(value, __u64);
-} sock_hash SEC(".maps");
+पूर्ण sock_hash SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__uint(max_entries, 2);
-	__type(key, int);
-	__type(value, unsigned int);
-} verdict_map SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__uपूर्णांक(max_entries, 2);
+	__type(key, पूर्णांक);
+	__type(value, अचिन्हित पूर्णांक);
+पूर्ण verdict_map SEC(".maps");
 
-static volatile bool test_sockmap; /* toggled by user-space */
-static volatile bool test_ingress; /* toggled by user-space */
+अटल अस्थिर bool test_sockmap; /* toggled by user-space */
+अटल अस्थिर bool test_ingress; /* toggled by user-space */
 
 SEC("sk_skb/stream_parser")
-int prog_stream_parser(struct __sk_buff *skb)
-{
-	return skb->len;
-}
+पूर्णांक prog_stream_parser(काष्ठा __sk_buff *skb)
+अणु
+	वापस skb->len;
+पूर्ण
 
 SEC("sk_skb/stream_verdict")
-int prog_stream_verdict(struct __sk_buff *skb)
-{
-	unsigned int *count;
+पूर्णांक prog_stream_verdict(काष्ठा __sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक *count;
 	__u32 zero = 0;
-	int verdict;
+	पूर्णांक verdict;
 
-	if (test_sockmap)
+	अगर (test_sockmap)
 		verdict = bpf_sk_redirect_map(skb, &sock_map, zero, 0);
-	else
+	अन्यथा
 		verdict = bpf_sk_redirect_hash(skb, &sock_hash, &zero, 0);
 
 	count = bpf_map_lookup_elem(&verdict_map, &verdict);
-	if (count)
+	अगर (count)
 		(*count)++;
 
-	return verdict;
-}
+	वापस verdict;
+पूर्ण
 
 SEC("sk_skb/skb_verdict")
-int prog_skb_verdict(struct __sk_buff *skb)
-{
-	unsigned int *count;
+पूर्णांक prog_skb_verdict(काष्ठा __sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक *count;
 	__u32 zero = 0;
-	int verdict;
+	पूर्णांक verdict;
 
-	if (test_sockmap)
+	अगर (test_sockmap)
 		verdict = bpf_sk_redirect_map(skb, &sock_map, zero,
 					      test_ingress ? BPF_F_INGRESS : 0);
-	else
+	अन्यथा
 		verdict = bpf_sk_redirect_hash(skb, &sock_hash, &zero,
 					       test_ingress ? BPF_F_INGRESS : 0);
 
 	count = bpf_map_lookup_elem(&verdict_map, &verdict);
-	if (count)
+	अगर (count)
 		(*count)++;
 
-	return verdict;
-}
+	वापस verdict;
+पूर्ण
 
 SEC("sk_msg")
-int prog_msg_verdict(struct sk_msg_md *msg)
-{
-	unsigned int *count;
+पूर्णांक prog_msg_verdict(काष्ठा sk_msg_md *msg)
+अणु
+	अचिन्हित पूर्णांक *count;
 	__u32 zero = 0;
-	int verdict;
+	पूर्णांक verdict;
 
-	if (test_sockmap)
+	अगर (test_sockmap)
 		verdict = bpf_msg_redirect_map(msg, &sock_map, zero, 0);
-	else
+	अन्यथा
 		verdict = bpf_msg_redirect_hash(msg, &sock_hash, &zero, 0);
 
 	count = bpf_map_lookup_elem(&verdict_map, &verdict);
-	if (count)
+	अगर (count)
 		(*count)++;
 
-	return verdict;
-}
+	वापस verdict;
+पूर्ण
 
 SEC("sk_reuseport")
-int prog_reuseport(struct sk_reuseport_md *reuse)
-{
-	unsigned int *count;
-	int err, verdict;
+पूर्णांक prog_reuseport(काष्ठा sk_reuseport_md *reuse)
+अणु
+	अचिन्हित पूर्णांक *count;
+	पूर्णांक err, verdict;
 	__u32 zero = 0;
 
-	if (test_sockmap)
+	अगर (test_sockmap)
 		err = bpf_sk_select_reuseport(reuse, &sock_map, &zero, 0);
-	else
+	अन्यथा
 		err = bpf_sk_select_reuseport(reuse, &sock_hash, &zero, 0);
 	verdict = err ? SK_DROP : SK_PASS;
 
 	count = bpf_map_lookup_elem(&verdict_map, &verdict);
-	if (count)
+	अगर (count)
 		(*count)++;
 
-	return verdict;
-}
+	वापस verdict;
+पूर्ण
 
-int _version SEC("version") = 1;
-char _license[] SEC("license") = "GPL";
+पूर्णांक _version SEC("version") = 1;
+अक्षर _license[] SEC("license") = "GPL";

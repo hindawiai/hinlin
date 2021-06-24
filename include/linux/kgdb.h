@@ -1,6 +1,7 @@
+<शैली गुरु>
 /*
  * This provides the callbacks and functions that KGDB needs to share between
- * the core, I/O and arch-specific portions.
+ * the core, I/O and arch-specअगरic portions.
  *
  * Author: Amit Kale <amitkale@linsyssoft.com> and
  *         Tom Rini <trini@kernel.crashing.org>
@@ -10,330 +11,330 @@
  * version 2. This program is licensed "as is" without any warranty of any
  * kind, whether express or implied.
  */
-#ifndef _KGDB_H_
-#define _KGDB_H_
+#अगर_अघोषित _KGDB_H_
+#घोषणा _KGDB_H_
 
-#include <linux/linkage.h>
-#include <linux/init.h>
-#include <linux/atomic.h>
-#include <linux/kprobes.h>
-#ifdef CONFIG_HAVE_ARCH_KGDB
-#include <asm/kgdb.h>
-#endif
+#समावेश <linux/linkage.h>
+#समावेश <linux/init.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/kprobes.h>
+#अगर_घोषित CONFIG_HAVE_ARCH_KGDB
+#समावेश <यंत्र/kgdb.h>
+#पूर्ण_अगर
 
-#ifdef CONFIG_KGDB
-struct pt_regs;
+#अगर_घोषित CONFIG_KGDB
+काष्ठा pt_regs;
 
 /**
- *	kgdb_skipexception - (optional) exit kgdb_handle_exception early
+ *	kgdb_skipexception - (optional) निकास kgdb_handle_exception early
  *	@exception: Exception vector number
- *	@regs: Current &struct pt_regs.
+ *	@regs: Current &काष्ठा pt_regs.
  *
- *	On some architectures it is required to skip a breakpoint
- *	exception when it occurs after a breakpoint has been removed.
- *	This can be implemented in the architecture specific portion of kgdb.
+ *	On some architectures it is required to skip a अवरोधpoपूर्णांक
+ *	exception when it occurs after a अवरोधpoपूर्णांक has been हटाओd.
+ *	This can be implemented in the architecture specअगरic portion of kgdb.
  */
-extern int kgdb_skipexception(int exception, struct pt_regs *regs);
+बाह्य पूर्णांक kgdb_skipexception(पूर्णांक exception, काष्ठा pt_regs *regs);
 
-struct tasklet_struct;
-struct task_struct;
-struct uart_port;
+काष्ठा tasklet_काष्ठा;
+काष्ठा task_काष्ठा;
+काष्ठा uart_port;
 
 /**
- *	kgdb_breakpoint - compiled in breakpoint
+ *	kgdb_अवरोधpoपूर्णांक - compiled in अवरोधpoपूर्णांक
  *
- *	This will be implemented as a static inline per architecture.  This
+ *	This will be implemented as a अटल अंतरभूत per architecture.  This
  *	function is called by the kgdb core to execute an architecture
- *	specific trap to cause kgdb to enter the exception processing.
+ *	specअगरic trap to cause kgdb to enter the exception processing.
  *
  */
-void kgdb_breakpoint(void);
+व्योम kgdb_अवरोधpoपूर्णांक(व्योम);
 
-extern int kgdb_connected;
-extern int kgdb_io_module_registered;
+बाह्य पूर्णांक kgdb_connected;
+बाह्य पूर्णांक kgdb_io_module_रेजिस्टरed;
 
-extern atomic_t			kgdb_setting_breakpoint;
-extern atomic_t			kgdb_cpu_doing_single_step;
+बाह्य atomic_t			kgdb_setting_अवरोधpoपूर्णांक;
+बाह्य atomic_t			kgdb_cpu_करोing_single_step;
 
-extern struct task_struct	*kgdb_usethread;
-extern struct task_struct	*kgdb_contthread;
+बाह्य काष्ठा task_काष्ठा	*kgdb_usethपढ़ो;
+बाह्य काष्ठा task_काष्ठा	*kgdb_contthपढ़ो;
 
-enum kgdb_bptype {
+क्रमागत kgdb_bptype अणु
 	BP_BREAKPOINT = 0,
 	BP_HARDWARE_BREAKPOINT,
 	BP_WRITE_WATCHPOINT,
 	BP_READ_WATCHPOINT,
 	BP_ACCESS_WATCHPOINT,
 	BP_POKE_BREAKPOINT,
-};
+पूर्ण;
 
-enum kgdb_bpstate {
+क्रमागत kgdb_bpstate अणु
 	BP_UNDEFINED = 0,
 	BP_REMOVED,
 	BP_SET,
 	BP_ACTIVE
-};
+पूर्ण;
 
-struct kgdb_bkpt {
-	unsigned long		bpt_addr;
-	unsigned char		saved_instr[BREAK_INSTR_SIZE];
-	enum kgdb_bptype	type;
-	enum kgdb_bpstate	state;
-};
+काष्ठा kgdb_bkpt अणु
+	अचिन्हित दीर्घ		bpt_addr;
+	अचिन्हित अक्षर		saved_instr[BREAK_INSTR_SIZE];
+	क्रमागत kgdb_bptype	type;
+	क्रमागत kgdb_bpstate	state;
+पूर्ण;
 
-struct dbg_reg_def_t {
-	char *name;
-	int size;
-	int offset;
-};
+काष्ठा dbg_reg_def_t अणु
+	अक्षर *name;
+	पूर्णांक size;
+	पूर्णांक offset;
+पूर्ण;
 
-#ifndef DBG_MAX_REG_NUM
-#define DBG_MAX_REG_NUM 0
-#else
-extern struct dbg_reg_def_t dbg_reg_def[];
-extern char *dbg_get_reg(int regno, void *mem, struct pt_regs *regs);
-extern int dbg_set_reg(int regno, void *mem, struct pt_regs *regs);
-#endif
-#ifndef KGDB_MAX_BREAKPOINTS
+#अगर_अघोषित DBG_MAX_REG_NUM
+#घोषणा DBG_MAX_REG_NUM 0
+#अन्यथा
+बाह्य काष्ठा dbg_reg_def_t dbg_reg_def[];
+बाह्य अक्षर *dbg_get_reg(पूर्णांक regno, व्योम *mem, काष्ठा pt_regs *regs);
+बाह्य पूर्णांक dbg_set_reg(पूर्णांक regno, व्योम *mem, काष्ठा pt_regs *regs);
+#पूर्ण_अगर
+#अगर_अघोषित KGDB_MAX_BREAKPOINTS
 # define KGDB_MAX_BREAKPOINTS	1000
-#endif
+#पूर्ण_अगर
 
-#define KGDB_HW_BREAKPOINT	1
+#घोषणा KGDB_HW_BREAKPOINT	1
 
 /*
  * Functions each KGDB-supporting architecture must provide:
  */
 
 /**
- *	kgdb_arch_init - Perform any architecture specific initalization.
+ *	kgdb_arch_init - Perक्रमm any architecture specअगरic initalization.
  *
  *	This function will handle the initalization of any architecture
- *	specific callbacks.
+ *	specअगरic callbacks.
  */
-extern int kgdb_arch_init(void);
+बाह्य पूर्णांक kgdb_arch_init(व्योम);
 
 /**
- *	kgdb_arch_exit - Perform any architecture specific uninitalization.
+ *	kgdb_arch_निकास - Perक्रमm any architecture specअगरic uninitalization.
  *
  *	This function will handle the uninitalization of any architecture
- *	specific callbacks, for dynamic registration and unregistration.
+ *	specअगरic callbacks, क्रम dynamic registration and unregistration.
  */
-extern void kgdb_arch_exit(void);
+बाह्य व्योम kgdb_arch_निकास(व्योम);
 
 /**
  *	pt_regs_to_gdb_regs - Convert ptrace regs to GDB regs
- *	@gdb_regs: A pointer to hold the registers in the order GDB wants.
- *	@regs: The &struct pt_regs of the current process.
+ *	@gdb_regs: A poपूर्णांकer to hold the रेजिस्टरs in the order GDB wants.
+ *	@regs: The &काष्ठा pt_regs of the current process.
  *
- *	Convert the pt_regs in @regs into the format for registers that
+ *	Convert the pt_regs in @regs पूर्णांकo the क्रमmat क्रम रेजिस्टरs that
  *	GDB expects, stored in @gdb_regs.
  */
-extern void pt_regs_to_gdb_regs(unsigned long *gdb_regs, struct pt_regs *regs);
+बाह्य व्योम pt_regs_to_gdb_regs(अचिन्हित दीर्घ *gdb_regs, काष्ठा pt_regs *regs);
 
 /**
- *	sleeping_thread_to_gdb_regs - Convert ptrace regs to GDB regs
- *	@gdb_regs: A pointer to hold the registers in the order GDB wants.
- *	@p: The &struct task_struct of the desired process.
+ *	sleeping_thपढ़ो_to_gdb_regs - Convert ptrace regs to GDB regs
+ *	@gdb_regs: A poपूर्णांकer to hold the रेजिस्टरs in the order GDB wants.
+ *	@p: The &काष्ठा task_काष्ठा of the desired process.
  *
- *	Convert the register values of the sleeping process in @p to
- *	the format that GDB expects.
- *	This function is called when kgdb does not have access to the
- *	&struct pt_regs and therefore it should fill the gdb registers
- *	@gdb_regs with what has	been saved in &struct thread_struct
- *	thread field during switch_to.
+ *	Convert the रेजिस्टर values of the sleeping process in @p to
+ *	the क्रमmat that GDB expects.
+ *	This function is called when kgdb करोes not have access to the
+ *	&काष्ठा pt_regs and thereक्रमe it should fill the gdb रेजिस्टरs
+ *	@gdb_regs with what has	been saved in &काष्ठा thपढ़ो_काष्ठा
+ *	thपढ़ो field during चयन_to.
  */
-extern void
-sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p);
+बाह्य व्योम
+sleeping_thपढ़ो_to_gdb_regs(अचिन्हित दीर्घ *gdb_regs, काष्ठा task_काष्ठा *p);
 
 /**
  *	gdb_regs_to_pt_regs - Convert GDB regs to ptrace regs.
- *	@gdb_regs: A pointer to hold the registers we've received from GDB.
- *	@regs: A pointer to a &struct pt_regs to hold these values in.
+ *	@gdb_regs: A poपूर्णांकer to hold the रेजिस्टरs we've received from GDB.
+ *	@regs: A poपूर्णांकer to a &काष्ठा pt_regs to hold these values in.
  *
- *	Convert the GDB regs in @gdb_regs into the pt_regs, and store them
+ *	Convert the GDB regs in @gdb_regs पूर्णांकo the pt_regs, and store them
  *	in @regs.
  */
-extern void gdb_regs_to_pt_regs(unsigned long *gdb_regs, struct pt_regs *regs);
+बाह्य व्योम gdb_regs_to_pt_regs(अचिन्हित दीर्घ *gdb_regs, काष्ठा pt_regs *regs);
 
 /**
- *	kgdb_arch_handle_exception - Handle architecture specific GDB packets.
+ *	kgdb_arch_handle_exception - Handle architecture specअगरic GDB packets.
  *	@vector: The error vector of the exception that happened.
- *	@signo: The signal number of the exception that happened.
+ *	@signo: The संकेत number of the exception that happened.
  *	@err_code: The error code of the exception that happened.
- *	@remcom_in_buffer: The buffer of the packet we have read.
- *	@remcom_out_buffer: The buffer of %BUFMAX bytes to write a packet into.
- *	@regs: The &struct pt_regs of the current process.
+ *	@remcom_in_buffer: The buffer of the packet we have पढ़ो.
+ *	@remcom_out_buffer: The buffer of %BUFMAX bytes to ग_लिखो a packet पूर्णांकo.
+ *	@regs: The &काष्ठा pt_regs of the current process.
  *
  *	This function MUST handle the 'c' and 's' command packets,
- *	as well packets to set / remove a hardware breakpoint, if used.
+ *	as well packets to set / हटाओ a hardware अवरोधpoपूर्णांक, अगर used.
  *	If there are additional packets which the hardware needs to handle,
- *	they are handled here.  The code should return -1 if it wants to
- *	process more packets, and a %0 or %1 if it wants to exit from the
+ *	they are handled here.  The code should वापस -1 अगर it wants to
+ *	process more packets, and a %0 or %1 अगर it wants to निकास from the
  *	kgdb callback.
  */
-extern int
-kgdb_arch_handle_exception(int vector, int signo, int err_code,
-			   char *remcom_in_buffer,
-			   char *remcom_out_buffer,
-			   struct pt_regs *regs);
+बाह्य पूर्णांक
+kgdb_arch_handle_exception(पूर्णांक vector, पूर्णांक signo, पूर्णांक err_code,
+			   अक्षर *remcom_in_buffer,
+			   अक्षर *remcom_out_buffer,
+			   काष्ठा pt_regs *regs);
 
 /**
- *	kgdb_arch_handle_qxfer_pkt - Handle architecture specific GDB XML
+ *	kgdb_arch_handle_qxfer_pkt - Handle architecture specअगरic GDB XML
  *				     packets.
- *	@remcom_in_buffer: The buffer of the packet we have read.
- *	@remcom_out_buffer: The buffer of %BUFMAX bytes to write a packet into.
+ *	@remcom_in_buffer: The buffer of the packet we have पढ़ो.
+ *	@remcom_out_buffer: The buffer of %BUFMAX bytes to ग_लिखो a packet पूर्णांकo.
  */
 
-extern void
-kgdb_arch_handle_qxfer_pkt(char *remcom_in_buffer,
-			   char *remcom_out_buffer);
+बाह्य व्योम
+kgdb_arch_handle_qxfer_pkt(अक्षर *remcom_in_buffer,
+			   अक्षर *remcom_out_buffer);
 
 /**
  *	kgdb_call_nmi_hook - Call kgdb_nmicallback() on the current CPU
  *	@ignored: This parameter is only here to match the prototype.
  *
- *	If you're using the default implementation of kgdb_roundup_cpus()
- *	this function will be called per CPU.  If you don't implement
- *	kgdb_call_nmi_hook() a default will be used.
+ *	If you're using the शेष implementation of kgdb_roundup_cpus()
+ *	this function will be called per CPU.  If you करोn't implement
+ *	kgdb_call_nmi_hook() a शेष will be used.
  */
 
-extern void kgdb_call_nmi_hook(void *ignored);
+बाह्य व्योम kgdb_call_nmi_hook(व्योम *ignored);
 
 /**
- *	kgdb_roundup_cpus - Get other CPUs into a holding pattern
+ *	kgdb_roundup_cpus - Get other CPUs पूर्णांकo a holding pattern
  *
- *	On SMP systems, we need to get the attention of the other CPUs
- *	and get them into a known state.  This should do what is needed
- *	to get the other CPUs to call kgdb_wait(). Note that on some arches,
- *	the NMI approach is not used for rounding up all the CPUs.  Normally
- *	those architectures can just not implement this and get the default.
+ *	On SMP प्रणालीs, we need to get the attention of the other CPUs
+ *	and get them पूर्णांकo a known state.  This should करो what is needed
+ *	to get the other CPUs to call kgdb_रुको(). Note that on some arches,
+ *	the NMI approach is not used क्रम rounding up all the CPUs.  Normally
+ *	those architectures can just not implement this and get the शेष.
  *
- *	On non-SMP systems, this is not called.
+ *	On non-SMP प्रणालीs, this is not called.
  */
-extern void kgdb_roundup_cpus(void);
+बाह्य व्योम kgdb_roundup_cpus(व्योम);
 
 /**
  *	kgdb_arch_set_pc - Generic call back to the program counter
- *	@regs: Current &struct pt_regs.
- *  @pc: The new value for the program counter
+ *	@regs: Current &काष्ठा pt_regs.
+ *  @pc: The new value क्रम the program counter
  *
  *	This function handles updating the program counter and requires an
- *	architecture specific implementation.
+ *	architecture specअगरic implementation.
  */
-extern void kgdb_arch_set_pc(struct pt_regs *regs, unsigned long pc);
+बाह्य व्योम kgdb_arch_set_pc(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc);
 
 
 /* Optional functions. */
-extern int kgdb_validate_break_address(unsigned long addr);
-extern int kgdb_arch_set_breakpoint(struct kgdb_bkpt *bpt);
-extern int kgdb_arch_remove_breakpoint(struct kgdb_bkpt *bpt);
+बाह्य पूर्णांक kgdb_validate_अवरोध_address(अचिन्हित दीर्घ addr);
+बाह्य पूर्णांक kgdb_arch_set_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt);
+बाह्य पूर्णांक kgdb_arch_हटाओ_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt);
 
 /**
- *	kgdb_arch_late - Perform any architecture specific initalization.
+ *	kgdb_arch_late - Perक्रमm any architecture specअगरic initalization.
  *
  *	This function will handle the late initalization of any
- *	architecture specific callbacks.  This is an optional function for
- *	handling things like late initialization of hw breakpoints.  The
- *	default implementation does nothing.
+ *	architecture specअगरic callbacks.  This is an optional function क्रम
+ *	handling things like late initialization of hw अवरोधpoपूर्णांकs.  The
+ *	शेष implementation करोes nothing.
  */
-extern void kgdb_arch_late(void);
+बाह्य व्योम kgdb_arch_late(व्योम);
 
 
 /**
- * struct kgdb_arch - Describe architecture specific values.
- * @gdb_bpt_instr: The instruction to trigger a breakpoint.
- * @flags: Flags for the breakpoint, currently just %KGDB_HW_BREAKPOINT.
- * @set_breakpoint: Allow an architecture to specify how to set a software
- * breakpoint.
- * @remove_breakpoint: Allow an architecture to specify how to remove a
- * software breakpoint.
- * @set_hw_breakpoint: Allow an architecture to specify how to set a hardware
- * breakpoint.
- * @remove_hw_breakpoint: Allow an architecture to specify how to remove a
- * hardware breakpoint.
- * @disable_hw_break: Allow an architecture to specify how to disable
- * hardware breakpoints for a single cpu.
- * @remove_all_hw_break: Allow an architecture to specify how to remove all
- * hardware breakpoints.
- * @correct_hw_break: Allow an architecture to specify how to correct the
- * hardware debug registers.
+ * काष्ठा kgdb_arch - Describe architecture specअगरic values.
+ * @gdb_bpt_instr: The inकाष्ठाion to trigger a अवरोधpoपूर्णांक.
+ * @flags: Flags क्रम the अवरोधpoपूर्णांक, currently just %KGDB_HW_BREAKPOINT.
+ * @set_अवरोधpoपूर्णांक: Allow an architecture to specअगरy how to set a software
+ * अवरोधpoपूर्णांक.
+ * @हटाओ_अवरोधpoपूर्णांक: Allow an architecture to specअगरy how to हटाओ a
+ * software अवरोधpoपूर्णांक.
+ * @set_hw_अवरोधpoपूर्णांक: Allow an architecture to specअगरy how to set a hardware
+ * अवरोधpoपूर्णांक.
+ * @हटाओ_hw_अवरोधpoपूर्णांक: Allow an architecture to specअगरy how to हटाओ a
+ * hardware अवरोधpoपूर्णांक.
+ * @disable_hw_अवरोध: Allow an architecture to specअगरy how to disable
+ * hardware अवरोधpoपूर्णांकs क्रम a single cpu.
+ * @हटाओ_all_hw_अवरोध: Allow an architecture to specअगरy how to हटाओ all
+ * hardware अवरोधpoपूर्णांकs.
+ * @correct_hw_अवरोध: Allow an architecture to specअगरy how to correct the
+ * hardware debug रेजिस्टरs.
  * @enable_nmi: Manage NMI-triggered entry to KGDB
  */
-struct kgdb_arch {
-	unsigned char		gdb_bpt_instr[BREAK_INSTR_SIZE];
-	unsigned long		flags;
+काष्ठा kgdb_arch अणु
+	अचिन्हित अक्षर		gdb_bpt_instr[BREAK_INSTR_SIZE];
+	अचिन्हित दीर्घ		flags;
 
-	int	(*set_breakpoint)(unsigned long, char *);
-	int	(*remove_breakpoint)(unsigned long, char *);
-	int	(*set_hw_breakpoint)(unsigned long, int, enum kgdb_bptype);
-	int	(*remove_hw_breakpoint)(unsigned long, int, enum kgdb_bptype);
-	void	(*disable_hw_break)(struct pt_regs *regs);
-	void	(*remove_all_hw_break)(void);
-	void	(*correct_hw_break)(void);
+	पूर्णांक	(*set_अवरोधpoपूर्णांक)(अचिन्हित दीर्घ, अक्षर *);
+	पूर्णांक	(*हटाओ_अवरोधpoपूर्णांक)(अचिन्हित दीर्घ, अक्षर *);
+	पूर्णांक	(*set_hw_अवरोधpoपूर्णांक)(अचिन्हित दीर्घ, पूर्णांक, क्रमागत kgdb_bptype);
+	पूर्णांक	(*हटाओ_hw_अवरोधpoपूर्णांक)(अचिन्हित दीर्घ, पूर्णांक, क्रमागत kgdb_bptype);
+	व्योम	(*disable_hw_अवरोध)(काष्ठा pt_regs *regs);
+	व्योम	(*हटाओ_all_hw_अवरोध)(व्योम);
+	व्योम	(*correct_hw_अवरोध)(व्योम);
 
-	void	(*enable_nmi)(bool on);
-};
+	व्योम	(*enable_nmi)(bool on);
+पूर्ण;
 
 /**
- * struct kgdb_io - Describe the interface for an I/O driver to talk with KGDB.
+ * काष्ठा kgdb_io - Describe the पूर्णांकerface क्रम an I/O driver to talk with KGDB.
  * @name: Name of the I/O driver.
- * @read_char: Pointer to a function that will return one char.
- * @write_char: Pointer to a function that will write one char.
- * @flush: Pointer to a function that will flush any pending writes.
- * @init: Pointer to a function that will initialize the device.
- * @deinit: Pointer to a function that will deinit the device. Implies that
+ * @पढ़ो_अक्षर: Poपूर्णांकer to a function that will वापस one अक्षर.
+ * @ग_लिखो_अक्षर: Poपूर्णांकer to a function that will ग_लिखो one अक्षर.
+ * @flush: Poपूर्णांकer to a function that will flush any pending ग_लिखोs.
+ * @init: Poपूर्णांकer to a function that will initialize the device.
+ * @deinit: Poपूर्णांकer to a function that will deinit the device. Implies that
  * this I/O driver is temporary and expects to be replaced. Called when
- * an I/O driver is replaced or explicitly unregistered.
- * @pre_exception: Pointer to a function that will do any prep work for
+ * an I/O driver is replaced or explicitly unरेजिस्टरed.
+ * @pre_exception: Poपूर्णांकer to a function that will करो any prep work क्रम
  * the I/O driver.
- * @post_exception: Pointer to a function that will do any cleanup work
- * for the I/O driver.
- * @cons: valid if the I/O device is a console; else NULL.
+ * @post_exception: Poपूर्णांकer to a function that will करो any cleanup work
+ * क्रम the I/O driver.
+ * @cons: valid अगर the I/O device is a console; अन्यथा शून्य.
  */
-struct kgdb_io {
-	const char		*name;
-	int			(*read_char) (void);
-	void			(*write_char) (u8);
-	void			(*flush) (void);
-	int			(*init) (void);
-	void			(*deinit) (void);
-	void			(*pre_exception) (void);
-	void			(*post_exception) (void);
-	struct console		*cons;
-};
+काष्ठा kgdb_io अणु
+	स्थिर अक्षर		*name;
+	पूर्णांक			(*पढ़ो_अक्षर) (व्योम);
+	व्योम			(*ग_लिखो_अक्षर) (u8);
+	व्योम			(*flush) (व्योम);
+	पूर्णांक			(*init) (व्योम);
+	व्योम			(*deinit) (व्योम);
+	व्योम			(*pre_exception) (व्योम);
+	व्योम			(*post_exception) (व्योम);
+	काष्ठा console		*cons;
+पूर्ण;
 
-extern const struct kgdb_arch		arch_kgdb_ops;
+बाह्य स्थिर काष्ठा kgdb_arch		arch_kgdb_ops;
 
-extern unsigned long kgdb_arch_pc(int exception, struct pt_regs *regs);
+बाह्य अचिन्हित दीर्घ kgdb_arch_pc(पूर्णांक exception, काष्ठा pt_regs *regs);
 
-#ifdef CONFIG_SERIAL_KGDB_NMI
-extern int kgdb_register_nmi_console(void);
-extern int kgdb_unregister_nmi_console(void);
-extern bool kgdb_nmi_poll_knock(void);
-#else
-static inline int kgdb_register_nmi_console(void) { return 0; }
-static inline int kgdb_unregister_nmi_console(void) { return 0; }
-static inline bool kgdb_nmi_poll_knock(void) { return true; }
-#endif
+#अगर_घोषित CONFIG_SERIAL_KGDB_NMI
+बाह्य पूर्णांक kgdb_रेजिस्टर_nmi_console(व्योम);
+बाह्य पूर्णांक kgdb_unरेजिस्टर_nmi_console(व्योम);
+बाह्य bool kgdb_nmi_poll_knock(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक kgdb_रेजिस्टर_nmi_console(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक kgdb_unरेजिस्टर_nmi_console(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत bool kgdb_nmi_poll_knock(व्योम) अणु वापस true; पूर्ण
+#पूर्ण_अगर
 
-extern int kgdb_register_io_module(struct kgdb_io *local_kgdb_io_ops);
-extern void kgdb_unregister_io_module(struct kgdb_io *local_kgdb_io_ops);
-extern struct kgdb_io *dbg_io_ops;
+बाह्य पूर्णांक kgdb_रेजिस्टर_io_module(काष्ठा kgdb_io *local_kgdb_io_ops);
+बाह्य व्योम kgdb_unरेजिस्टर_io_module(काष्ठा kgdb_io *local_kgdb_io_ops);
+बाह्य काष्ठा kgdb_io *dbg_io_ops;
 
-extern int kgdb_hex2long(char **ptr, unsigned long *long_val);
-extern char *kgdb_mem2hex(char *mem, char *buf, int count);
-extern int kgdb_hex2mem(char *buf, char *mem, int count);
+बाह्य पूर्णांक kgdb_hex2दीर्घ(अक्षर **ptr, अचिन्हित दीर्घ *दीर्घ_val);
+बाह्य अक्षर *kgdb_mem2hex(अक्षर *mem, अक्षर *buf, पूर्णांक count);
+बाह्य पूर्णांक kgdb_hex2mem(अक्षर *buf, अक्षर *mem, पूर्णांक count);
 
-extern int kgdb_isremovedbreak(unsigned long addr);
-extern int kgdb_has_hit_break(unsigned long addr);
+बाह्य पूर्णांक kgdb_isहटाओdअवरोध(अचिन्हित दीर्घ addr);
+बाह्य पूर्णांक kgdb_has_hit_अवरोध(अचिन्हित दीर्घ addr);
 
-extern int
-kgdb_handle_exception(int ex_vector, int signo, int err_code,
-		      struct pt_regs *regs);
-extern int kgdb_nmicallback(int cpu, void *regs);
-extern int kgdb_nmicallin(int cpu, int trapnr, void *regs, int err_code,
+बाह्य पूर्णांक
+kgdb_handle_exception(पूर्णांक ex_vector, पूर्णांक signo, पूर्णांक err_code,
+		      काष्ठा pt_regs *regs);
+बाह्य पूर्णांक kgdb_nmicallback(पूर्णांक cpu, व्योम *regs);
+बाह्य पूर्णांक kgdb_nmicallin(पूर्णांक cpu, पूर्णांक trapnr, व्योम *regs, पूर्णांक err_code,
 			  atomic_t *snd_rdy);
-extern void gdbstub_exit(int status);
+बाह्य व्योम gdbstub_निकास(पूर्णांक status);
 
 /*
  * kgdb and kprobes both use the same (kprobe) blocklist (which makes sense
@@ -341,29 +342,29 @@ extern void gdbstub_exit(int status);
  * architectures one cannot be used to debug the other)
  *
  * However on architectures where kprobes is not (yet) implemented we permit
- * breakpoints everywhere rather than blocking everything by default.
+ * अवरोधpoपूर्णांकs everywhere rather than blocking everything by शेष.
  */
-static inline bool kgdb_within_blocklist(unsigned long addr)
-{
-#ifdef CONFIG_KGDB_HONOUR_BLOCKLIST
-	return within_kprobe_blacklist(addr);
-#else
-	return false;
-#endif
-}
+अटल अंतरभूत bool kgdb_within_blocklist(अचिन्हित दीर्घ addr)
+अणु
+#अगर_घोषित CONFIG_KGDB_HONOUR_BLOCKLIST
+	वापस within_kprobe_blacklist(addr);
+#अन्यथा
+	वापस false;
+#पूर्ण_अगर
+पूर्ण
 
-extern int			kgdb_single_step;
-extern atomic_t			kgdb_active;
-#define in_dbg_master() \
-	(irqs_disabled() && (smp_processor_id() == atomic_read(&kgdb_active)))
-extern bool dbg_is_early;
-extern void __init dbg_late_init(void);
-extern void kgdb_panic(const char *msg);
-extern void kgdb_free_init_mem(void);
-#else /* ! CONFIG_KGDB */
-#define in_dbg_master() (0)
-#define dbg_late_init()
-static inline void kgdb_panic(const char *msg) {}
-static inline void kgdb_free_init_mem(void) { }
-#endif /* ! CONFIG_KGDB */
-#endif /* _KGDB_H_ */
+बाह्य पूर्णांक			kgdb_single_step;
+बाह्य atomic_t			kgdb_active;
+#घोषणा in_dbg_master() \
+	(irqs_disabled() && (smp_processor_id() == atomic_पढ़ो(&kgdb_active)))
+बाह्य bool dbg_is_early;
+बाह्य व्योम __init dbg_late_init(व्योम);
+बाह्य व्योम kgdb_panic(स्थिर अक्षर *msg);
+बाह्य व्योम kgdb_मुक्त_init_mem(व्योम);
+#अन्यथा /* ! CONFIG_KGDB */
+#घोषणा in_dbg_master() (0)
+#घोषणा dbg_late_init()
+अटल अंतरभूत व्योम kgdb_panic(स्थिर अक्षर *msg) अणुपूर्ण
+अटल अंतरभूत व्योम kgdb_मुक्त_init_mem(व्योम) अणु पूर्ण
+#पूर्ण_अगर /* ! CONFIG_KGDB */
+#पूर्ण_अगर /* _KGDB_H_ */

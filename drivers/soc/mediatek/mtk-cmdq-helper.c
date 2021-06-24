@@ -1,219 +1,220 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2018 MediaTek Inc.
 
-#include <linux/completion.h>
-#include <linux/errno.h>
-#include <linux/dma-mapping.h>
-#include <linux/module.h>
-#include <linux/mailbox_controller.h>
-#include <linux/soc/mediatek/mtk-cmdq.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mailbox_controller.h>
+#समावेश <linux/soc/mediatek/mtk-cmdq.h>
 
-#define CMDQ_WRITE_ENABLE_MASK	BIT(0)
-#define CMDQ_POLL_ENABLE_MASK	BIT(0)
-#define CMDQ_EOC_IRQ_EN		BIT(0)
-#define CMDQ_REG_TYPE		1
-#define CMDQ_JUMP_RELATIVE	1
+#घोषणा CMDQ_WRITE_ENABLE_MASK	BIT(0)
+#घोषणा CMDQ_POLL_ENABLE_MASK	BIT(0)
+#घोषणा CMDQ_EOC_IRQ_EN		BIT(0)
+#घोषणा CMDQ_REG_TYPE		1
+#घोषणा CMDQ_JUMP_RELATIVE	1
 
-struct cmdq_instruction {
-	union {
+काष्ठा cmdq_inकाष्ठाion अणु
+	जोड़ अणु
 		u32 value;
 		u32 mask;
-		struct {
+		काष्ठा अणु
 			u16 arg_c;
 			u16 src_reg;
-		};
-	};
-	union {
+		पूर्ण;
+	पूर्ण;
+	जोड़ अणु
 		u16 offset;
 		u16 event;
 		u16 reg_dst;
-	};
-	union {
+	पूर्ण;
+	जोड़ अणु
 		u8 subsys;
-		struct {
+		काष्ठा अणु
 			u8 sop:5;
 			u8 arg_c_t:1;
 			u8 src_t:1;
 			u8 dst_t:1;
-		};
-	};
+		पूर्ण;
+	पूर्ण;
 	u8 op;
-};
+पूर्ण;
 
-int cmdq_dev_get_client_reg(struct device *dev,
-			    struct cmdq_client_reg *client_reg, int idx)
-{
-	struct of_phandle_args spec;
-	int err;
+पूर्णांक cmdq_dev_get_client_reg(काष्ठा device *dev,
+			    काष्ठा cmdq_client_reg *client_reg, पूर्णांक idx)
+अणु
+	काष्ठा of_phandle_args spec;
+	पूर्णांक err;
 
-	if (!client_reg)
-		return -ENOENT;
+	अगर (!client_reg)
+		वापस -ENOENT;
 
 	err = of_parse_phandle_with_fixed_args(dev->of_node,
 					       "mediatek,gce-client-reg",
 					       3, idx, &spec);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev,
 			"error %d can't parse gce-client-reg property (%d)",
 			err, idx);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	client_reg->subsys = (u8)spec.args[0];
 	client_reg->offset = (u16)spec.args[1];
 	client_reg->size = (u16)spec.args[2];
 	of_node_put(spec.np);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cmdq_dev_get_client_reg);
 
-struct cmdq_client *cmdq_mbox_create(struct device *dev, int index)
-{
-	struct cmdq_client *client;
+काष्ठा cmdq_client *cmdq_mbox_create(काष्ठा device *dev, पूर्णांक index)
+अणु
+	काष्ठा cmdq_client *client;
 
-	client = kzalloc(sizeof(*client), GFP_KERNEL);
-	if (!client)
-		return (struct cmdq_client *)-ENOMEM;
+	client = kzalloc(माप(*client), GFP_KERNEL);
+	अगर (!client)
+		वापस (काष्ठा cmdq_client *)-ENOMEM;
 
 	client->client.dev = dev;
 	client->client.tx_block = false;
-	client->client.knows_txdone = true;
+	client->client.knows_txकरोne = true;
 	client->chan = mbox_request_channel(&client->client, index);
 
-	if (IS_ERR(client->chan)) {
-		long err;
+	अगर (IS_ERR(client->chan)) अणु
+		दीर्घ err;
 
 		dev_err(dev, "failed to request channel\n");
 		err = PTR_ERR(client->chan);
-		kfree(client);
+		kमुक्त(client);
 
-		return ERR_PTR(err);
-	}
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return client;
-}
+	वापस client;
+पूर्ण
 EXPORT_SYMBOL(cmdq_mbox_create);
 
-void cmdq_mbox_destroy(struct cmdq_client *client)
-{
-	mbox_free_channel(client->chan);
-	kfree(client);
-}
+व्योम cmdq_mbox_destroy(काष्ठा cmdq_client *client)
+अणु
+	mbox_मुक्त_channel(client->chan);
+	kमुक्त(client);
+पूर्ण
 EXPORT_SYMBOL(cmdq_mbox_destroy);
 
-struct cmdq_pkt *cmdq_pkt_create(struct cmdq_client *client, size_t size)
-{
-	struct cmdq_pkt *pkt;
-	struct device *dev;
+काष्ठा cmdq_pkt *cmdq_pkt_create(काष्ठा cmdq_client *client, माप_प्रकार size)
+अणु
+	काष्ठा cmdq_pkt *pkt;
+	काष्ठा device *dev;
 	dma_addr_t dma_addr;
 
-	pkt = kzalloc(sizeof(*pkt), GFP_KERNEL);
-	if (!pkt)
-		return ERR_PTR(-ENOMEM);
+	pkt = kzalloc(माप(*pkt), GFP_KERNEL);
+	अगर (!pkt)
+		वापस ERR_PTR(-ENOMEM);
 	pkt->va_base = kzalloc(size, GFP_KERNEL);
-	if (!pkt->va_base) {
-		kfree(pkt);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!pkt->va_base) अणु
+		kमुक्त(pkt);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	pkt->buf_size = size;
-	pkt->cl = (void *)client;
+	pkt->cl = (व्योम *)client;
 
 	dev = client->chan->mbox->dev;
 	dma_addr = dma_map_single(dev, pkt->va_base, pkt->buf_size,
 				  DMA_TO_DEVICE);
-	if (dma_mapping_error(dev, dma_addr)) {
+	अगर (dma_mapping_error(dev, dma_addr)) अणु
 		dev_err(dev, "dma map failed, size=%u\n", (u32)(u64)size);
-		kfree(pkt->va_base);
-		kfree(pkt);
-		return ERR_PTR(-ENOMEM);
-	}
+		kमुक्त(pkt->va_base);
+		kमुक्त(pkt);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	pkt->pa_base = dma_addr;
 
-	return pkt;
-}
+	वापस pkt;
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_create);
 
-void cmdq_pkt_destroy(struct cmdq_pkt *pkt)
-{
-	struct cmdq_client *client = (struct cmdq_client *)pkt->cl;
+व्योम cmdq_pkt_destroy(काष्ठा cmdq_pkt *pkt)
+अणु
+	काष्ठा cmdq_client *client = (काष्ठा cmdq_client *)pkt->cl;
 
 	dma_unmap_single(client->chan->mbox->dev, pkt->pa_base, pkt->buf_size,
 			 DMA_TO_DEVICE);
-	kfree(pkt->va_base);
-	kfree(pkt);
-}
+	kमुक्त(pkt->va_base);
+	kमुक्त(pkt);
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_destroy);
 
-static int cmdq_pkt_append_command(struct cmdq_pkt *pkt,
-				   struct cmdq_instruction inst)
-{
-	struct cmdq_instruction *cmd_ptr;
+अटल पूर्णांक cmdq_pkt_append_command(काष्ठा cmdq_pkt *pkt,
+				   काष्ठा cmdq_inकाष्ठाion inst)
+अणु
+	काष्ठा cmdq_inकाष्ठाion *cmd_ptr;
 
-	if (unlikely(pkt->cmd_buf_size + CMDQ_INST_SIZE > pkt->buf_size)) {
+	अगर (unlikely(pkt->cmd_buf_size + CMDQ_INST_SIZE > pkt->buf_size)) अणु
 		/*
-		 * In the case of allocated buffer size (pkt->buf_size) is used
+		 * In the हाल of allocated buffer size (pkt->buf_size) is used
 		 * up, the real required size (pkt->cmdq_buf_size) is still
 		 * increased, so that the user knows how much memory should be
 		 * ultimately allocated after appending all commands and
-		 * flushing the command packet. Therefor, the user can call
+		 * flushing the command packet. Thereक्रम, the user can call
 		 * cmdq_pkt_create() again with the real required buffer size.
 		 */
 		pkt->cmd_buf_size += CMDQ_INST_SIZE;
 		WARN_ONCE(1, "%s: buffer size %u is too small !\n",
 			__func__, (u32)pkt->buf_size);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	cmd_ptr = pkt->va_base + pkt->cmd_buf_size;
 	*cmd_ptr = inst;
 	pkt->cmd_buf_size += CMDQ_INST_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cmdq_pkt_write(struct cmdq_pkt *pkt, u8 subsys, u16 offset, u32 value)
-{
-	struct cmdq_instruction inst;
+पूर्णांक cmdq_pkt_ग_लिखो(काष्ठा cmdq_pkt *pkt, u8 subsys, u16 offset, u32 value)
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst;
 
 	inst.op = CMDQ_CODE_WRITE;
 	inst.value = value;
 	inst.offset = offset;
 	inst.subsys = subsys;
 
-	return cmdq_pkt_append_command(pkt, inst);
-}
-EXPORT_SYMBOL(cmdq_pkt_write);
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
+EXPORT_SYMBOL(cmdq_pkt_ग_लिखो);
 
-int cmdq_pkt_write_mask(struct cmdq_pkt *pkt, u8 subsys,
+पूर्णांक cmdq_pkt_ग_लिखो_mask(काष्ठा cmdq_pkt *pkt, u8 subsys,
 			u16 offset, u32 value, u32 mask)
-{
-	struct cmdq_instruction inst = { {0} };
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणु अणु0पूर्ण पूर्ण;
 	u16 offset_mask = offset;
-	int err;
+	पूर्णांक err;
 
-	if (mask != 0xffffffff) {
+	अगर (mask != 0xffffffff) अणु
 		inst.op = CMDQ_CODE_MASK;
 		inst.mask = ~mask;
 		err = cmdq_pkt_append_command(pkt, inst);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		offset_mask |= CMDQ_WRITE_ENABLE_MASK;
-	}
-	err = cmdq_pkt_write(pkt, subsys, offset_mask, value);
+	पूर्ण
+	err = cmdq_pkt_ग_लिखो(pkt, subsys, offset_mask, value);
 
-	return err;
-}
-EXPORT_SYMBOL(cmdq_pkt_write_mask);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(cmdq_pkt_ग_लिखो_mask);
 
-int cmdq_pkt_read_s(struct cmdq_pkt *pkt, u16 high_addr_reg_idx, u16 addr_low,
+पूर्णांक cmdq_pkt_पढ़ो_s(काष्ठा cmdq_pkt *pkt, u16 high_addr_reg_idx, u16 addr_low,
 		    u16 reg_idx)
-{
-	struct cmdq_instruction inst = {};
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणुपूर्ण;
 
 	inst.op = CMDQ_CODE_READ_S;
 	inst.dst_t = CMDQ_REG_TYPE;
@@ -221,14 +222,14 @@ int cmdq_pkt_read_s(struct cmdq_pkt *pkt, u16 high_addr_reg_idx, u16 addr_low,
 	inst.reg_dst = reg_idx;
 	inst.src_reg = addr_low;
 
-	return cmdq_pkt_append_command(pkt, inst);
-}
-EXPORT_SYMBOL(cmdq_pkt_read_s);
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
+EXPORT_SYMBOL(cmdq_pkt_पढ़ो_s);
 
-int cmdq_pkt_write_s(struct cmdq_pkt *pkt, u16 high_addr_reg_idx,
+पूर्णांक cmdq_pkt_ग_लिखो_s(काष्ठा cmdq_pkt *pkt, u16 high_addr_reg_idx,
 		     u16 addr_low, u16 src_reg_idx)
-{
-	struct cmdq_instruction inst = {};
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणुपूर्ण;
 
 	inst.op = CMDQ_CODE_WRITE_S;
 	inst.src_t = CMDQ_REG_TYPE;
@@ -236,21 +237,21 @@ int cmdq_pkt_write_s(struct cmdq_pkt *pkt, u16 high_addr_reg_idx,
 	inst.offset = addr_low;
 	inst.src_reg = src_reg_idx;
 
-	return cmdq_pkt_append_command(pkt, inst);
-}
-EXPORT_SYMBOL(cmdq_pkt_write_s);
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
+EXPORT_SYMBOL(cmdq_pkt_ग_लिखो_s);
 
-int cmdq_pkt_write_s_mask(struct cmdq_pkt *pkt, u16 high_addr_reg_idx,
+पूर्णांक cmdq_pkt_ग_लिखो_s_mask(काष्ठा cmdq_pkt *pkt, u16 high_addr_reg_idx,
 			  u16 addr_low, u16 src_reg_idx, u32 mask)
-{
-	struct cmdq_instruction inst = {};
-	int err;
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणुपूर्ण;
+	पूर्णांक err;
 
 	inst.op = CMDQ_CODE_MASK;
 	inst.mask = ~mask;
 	err = cmdq_pkt_append_command(pkt, inst);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	inst.mask = 0;
 	inst.op = CMDQ_CODE_WRITE_S_MASK;
@@ -259,96 +260,96 @@ int cmdq_pkt_write_s_mask(struct cmdq_pkt *pkt, u16 high_addr_reg_idx,
 	inst.offset = addr_low;
 	inst.src_reg = src_reg_idx;
 
-	return cmdq_pkt_append_command(pkt, inst);
-}
-EXPORT_SYMBOL(cmdq_pkt_write_s_mask);
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
+EXPORT_SYMBOL(cmdq_pkt_ग_लिखो_s_mask);
 
-int cmdq_pkt_write_s_value(struct cmdq_pkt *pkt, u8 high_addr_reg_idx,
+पूर्णांक cmdq_pkt_ग_लिखो_s_value(काष्ठा cmdq_pkt *pkt, u8 high_addr_reg_idx,
 			   u16 addr_low, u32 value)
-{
-	struct cmdq_instruction inst = {};
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणुपूर्ण;
 
 	inst.op = CMDQ_CODE_WRITE_S;
 	inst.sop = high_addr_reg_idx;
 	inst.offset = addr_low;
 	inst.value = value;
 
-	return cmdq_pkt_append_command(pkt, inst);
-}
-EXPORT_SYMBOL(cmdq_pkt_write_s_value);
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
+EXPORT_SYMBOL(cmdq_pkt_ग_लिखो_s_value);
 
-int cmdq_pkt_write_s_mask_value(struct cmdq_pkt *pkt, u8 high_addr_reg_idx,
+पूर्णांक cmdq_pkt_ग_लिखो_s_mask_value(काष्ठा cmdq_pkt *pkt, u8 high_addr_reg_idx,
 				u16 addr_low, u32 value, u32 mask)
-{
-	struct cmdq_instruction inst = {};
-	int err;
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणुपूर्ण;
+	पूर्णांक err;
 
 	inst.op = CMDQ_CODE_MASK;
 	inst.mask = ~mask;
 	err = cmdq_pkt_append_command(pkt, inst);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	inst.op = CMDQ_CODE_WRITE_S_MASK;
 	inst.sop = high_addr_reg_idx;
 	inst.offset = addr_low;
 	inst.value = value;
 
-	return cmdq_pkt_append_command(pkt, inst);
-}
-EXPORT_SYMBOL(cmdq_pkt_write_s_mask_value);
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
+EXPORT_SYMBOL(cmdq_pkt_ग_लिखो_s_mask_value);
 
-int cmdq_pkt_wfe(struct cmdq_pkt *pkt, u16 event, bool clear)
-{
-	struct cmdq_instruction inst = { {0} };
+पूर्णांक cmdq_pkt_wfe(काष्ठा cmdq_pkt *pkt, u16 event, bool clear)
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणु अणु0पूर्ण पूर्ण;
 	u32 clear_option = clear ? CMDQ_WFE_UPDATE : 0;
 
-	if (event >= CMDQ_MAX_EVENT)
-		return -EINVAL;
+	अगर (event >= CMDQ_MAX_EVENT)
+		वापस -EINVAL;
 
 	inst.op = CMDQ_CODE_WFE;
 	inst.value = CMDQ_WFE_OPTION | clear_option;
 	inst.event = event;
 
-	return cmdq_pkt_append_command(pkt, inst);
-}
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_wfe);
 
-int cmdq_pkt_clear_event(struct cmdq_pkt *pkt, u16 event)
-{
-	struct cmdq_instruction inst = { {0} };
+पूर्णांक cmdq_pkt_clear_event(काष्ठा cmdq_pkt *pkt, u16 event)
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणु अणु0पूर्ण पूर्ण;
 
-	if (event >= CMDQ_MAX_EVENT)
-		return -EINVAL;
+	अगर (event >= CMDQ_MAX_EVENT)
+		वापस -EINVAL;
 
 	inst.op = CMDQ_CODE_WFE;
 	inst.value = CMDQ_WFE_UPDATE;
 	inst.event = event;
 
-	return cmdq_pkt_append_command(pkt, inst);
-}
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_clear_event);
 
-int cmdq_pkt_set_event(struct cmdq_pkt *pkt, u16 event)
-{
-	struct cmdq_instruction inst = {};
+पूर्णांक cmdq_pkt_set_event(काष्ठा cmdq_pkt *pkt, u16 event)
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणुपूर्ण;
 
-	if (event >= CMDQ_MAX_EVENT)
-		return -EINVAL;
+	अगर (event >= CMDQ_MAX_EVENT)
+		वापस -EINVAL;
 
 	inst.op = CMDQ_CODE_WFE;
 	inst.value = CMDQ_WFE_UPDATE | CMDQ_WFE_UPDATE_VALUE;
 	inst.event = event;
 
-	return cmdq_pkt_append_command(pkt, inst);
-}
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_set_event);
 
-int cmdq_pkt_poll(struct cmdq_pkt *pkt, u8 subsys,
+पूर्णांक cmdq_pkt_poll(काष्ठा cmdq_pkt *pkt, u8 subsys,
 		  u16 offset, u32 value)
-{
-	struct cmdq_instruction inst = { {0} };
-	int err;
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणु अणु0पूर्ण पूर्ण;
+	पूर्णांक err;
 
 	inst.op = CMDQ_CODE_POLL;
 	inst.value = value;
@@ -356,111 +357,111 @@ int cmdq_pkt_poll(struct cmdq_pkt *pkt, u8 subsys,
 	inst.subsys = subsys;
 	err = cmdq_pkt_append_command(pkt, inst);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_poll);
 
-int cmdq_pkt_poll_mask(struct cmdq_pkt *pkt, u8 subsys,
+पूर्णांक cmdq_pkt_poll_mask(काष्ठा cmdq_pkt *pkt, u8 subsys,
 		       u16 offset, u32 value, u32 mask)
-{
-	struct cmdq_instruction inst = { {0} };
-	int err;
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणु अणु0पूर्ण पूर्ण;
+	पूर्णांक err;
 
 	inst.op = CMDQ_CODE_MASK;
 	inst.mask = ~mask;
 	err = cmdq_pkt_append_command(pkt, inst);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	offset = offset | CMDQ_POLL_ENABLE_MASK;
 	err = cmdq_pkt_poll(pkt, subsys, offset, value);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_poll_mask);
 
-int cmdq_pkt_assign(struct cmdq_pkt *pkt, u16 reg_idx, u32 value)
-{
-	struct cmdq_instruction inst = {};
+पूर्णांक cmdq_pkt_assign(काष्ठा cmdq_pkt *pkt, u16 reg_idx, u32 value)
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणुपूर्ण;
 
 	inst.op = CMDQ_CODE_LOGIC;
 	inst.dst_t = CMDQ_REG_TYPE;
 	inst.reg_dst = reg_idx;
 	inst.value = value;
-	return cmdq_pkt_append_command(pkt, inst);
-}
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_assign);
 
-int cmdq_pkt_jump(struct cmdq_pkt *pkt, dma_addr_t addr)
-{
-	struct cmdq_instruction inst = {};
+पूर्णांक cmdq_pkt_jump(काष्ठा cmdq_pkt *pkt, dma_addr_t addr)
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणुपूर्ण;
 
 	inst.op = CMDQ_CODE_JUMP;
 	inst.offset = CMDQ_JUMP_RELATIVE;
 	inst.value = addr >>
-		cmdq_get_shift_pa(((struct cmdq_client *)pkt->cl)->chan);
-	return cmdq_pkt_append_command(pkt, inst);
-}
+		cmdq_get_shअगरt_pa(((काष्ठा cmdq_client *)pkt->cl)->chan);
+	वापस cmdq_pkt_append_command(pkt, inst);
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_jump);
 
-int cmdq_pkt_finalize(struct cmdq_pkt *pkt)
-{
-	struct cmdq_instruction inst = { {0} };
-	int err;
+पूर्णांक cmdq_pkt_finalize(काष्ठा cmdq_pkt *pkt)
+अणु
+	काष्ठा cmdq_inकाष्ठाion inst = अणु अणु0पूर्ण पूर्ण;
+	पूर्णांक err;
 
-	/* insert EOC and generate IRQ for each command iteration */
+	/* insert EOC and generate IRQ क्रम each command iteration */
 	inst.op = CMDQ_CODE_EOC;
 	inst.value = CMDQ_EOC_IRQ_EN;
 	err = cmdq_pkt_append_command(pkt, inst);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* JUMP to end */
 	inst.op = CMDQ_CODE_JUMP;
 	inst.value = CMDQ_JUMP_PASS >>
-		cmdq_get_shift_pa(((struct cmdq_client *)pkt->cl)->chan);
+		cmdq_get_shअगरt_pa(((काष्ठा cmdq_client *)pkt->cl)->chan);
 	err = cmdq_pkt_append_command(pkt, inst);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_finalize);
 
-static void cmdq_pkt_flush_async_cb(struct cmdq_cb_data data)
-{
-	struct cmdq_pkt *pkt = (struct cmdq_pkt *)data.data;
-	struct cmdq_task_cb *cb = &pkt->cb;
-	struct cmdq_client *client = (struct cmdq_client *)pkt->cl;
+अटल व्योम cmdq_pkt_flush_async_cb(काष्ठा cmdq_cb_data data)
+अणु
+	काष्ठा cmdq_pkt *pkt = (काष्ठा cmdq_pkt *)data.data;
+	काष्ठा cmdq_task_cb *cb = &pkt->cb;
+	काष्ठा cmdq_client *client = (काष्ठा cmdq_client *)pkt->cl;
 
-	dma_sync_single_for_cpu(client->chan->mbox->dev, pkt->pa_base,
+	dma_sync_single_क्रम_cpu(client->chan->mbox->dev, pkt->pa_base,
 				pkt->cmd_buf_size, DMA_TO_DEVICE);
-	if (cb->cb) {
+	अगर (cb->cb) अणु
 		data.data = cb->data;
 		cb->cb(data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int cmdq_pkt_flush_async(struct cmdq_pkt *pkt, cmdq_async_flush_cb cb,
-			 void *data)
-{
-	int err;
-	struct cmdq_client *client = (struct cmdq_client *)pkt->cl;
+पूर्णांक cmdq_pkt_flush_async(काष्ठा cmdq_pkt *pkt, cmdq_async_flush_cb cb,
+			 व्योम *data)
+अणु
+	पूर्णांक err;
+	काष्ठा cmdq_client *client = (काष्ठा cmdq_client *)pkt->cl;
 
 	pkt->cb.cb = cb;
 	pkt->cb.data = data;
 	pkt->async_cb.cb = cmdq_pkt_flush_async_cb;
 	pkt->async_cb.data = pkt;
 
-	dma_sync_single_for_device(client->chan->mbox->dev, pkt->pa_base,
+	dma_sync_single_क्रम_device(client->chan->mbox->dev, pkt->pa_base,
 				   pkt->cmd_buf_size, DMA_TO_DEVICE);
 
 	err = mbox_send_message(client->chan, pkt);
-	if (err < 0)
-		return err;
-	/* We can send next packet immediately, so just call txdone. */
-	mbox_client_txdone(client->chan, 0);
+	अगर (err < 0)
+		वापस err;
+	/* We can send next packet immediately, so just call txकरोne. */
+	mbox_client_txकरोne(client->chan, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cmdq_pkt_flush_async);
 
 MODULE_LICENSE("GPL v2");

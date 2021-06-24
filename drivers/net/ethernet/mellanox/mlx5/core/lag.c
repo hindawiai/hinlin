@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,119 +31,119 @@
  * SOFTWARE.
  */
 
-#include <linux/netdevice.h>
-#include <linux/mlx5/driver.h>
-#include <linux/mlx5/vport.h>
-#include "mlx5_core.h"
-#include "eswitch.h"
-#include "lag.h"
-#include "lag_mp.h"
+#समावेश <linux/netdevice.h>
+#समावेश <linux/mlx5/driver.h>
+#समावेश <linux/mlx5/vport.h>
+#समावेश "mlx5_core.h"
+#समावेश "eswitch.h"
+#समावेश "lag.h"
+#समावेश "lag_mp.h"
 
-/* General purpose, use for short periods of time.
+/* General purpose, use क्रम लघु periods of समय.
  * Beware of lock dependencies (preferably, no locks should be acquired
  * under it).
  */
-static DEFINE_SPINLOCK(lag_lock);
+अटल DEFINE_SPINLOCK(lag_lock);
 
-static int mlx5_cmd_create_lag(struct mlx5_core_dev *dev, u8 remap_port1,
+अटल पूर्णांक mlx5_cmd_create_lag(काष्ठा mlx5_core_dev *dev, u8 remap_port1,
 			       u8 remap_port2)
-{
-	u32 in[MLX5_ST_SZ_DW(create_lag_in)] = {};
-	void *lag_ctx = MLX5_ADDR_OF(create_lag_in, in, ctx);
+अणु
+	u32 in[MLX5_ST_SZ_DW(create_lag_in)] = अणुपूर्ण;
+	व्योम *lag_ctx = MLX5_ADDR_OF(create_lag_in, in, ctx);
 
 	MLX5_SET(create_lag_in, in, opcode, MLX5_CMD_OP_CREATE_LAG);
 
 	MLX5_SET(lagc, lag_ctx, tx_remap_affinity_1, remap_port1);
 	MLX5_SET(lagc, lag_ctx, tx_remap_affinity_2, remap_port2);
 
-	return mlx5_cmd_exec_in(dev, create_lag, in);
-}
+	वापस mlx5_cmd_exec_in(dev, create_lag, in);
+पूर्ण
 
-static int mlx5_cmd_modify_lag(struct mlx5_core_dev *dev, u8 remap_port1,
+अटल पूर्णांक mlx5_cmd_modअगरy_lag(काष्ठा mlx5_core_dev *dev, u8 remap_port1,
 			       u8 remap_port2)
-{
-	u32 in[MLX5_ST_SZ_DW(modify_lag_in)] = {};
-	void *lag_ctx = MLX5_ADDR_OF(modify_lag_in, in, ctx);
+अणु
+	u32 in[MLX5_ST_SZ_DW(modअगरy_lag_in)] = अणुपूर्ण;
+	व्योम *lag_ctx = MLX5_ADDR_OF(modअगरy_lag_in, in, ctx);
 
-	MLX5_SET(modify_lag_in, in, opcode, MLX5_CMD_OP_MODIFY_LAG);
-	MLX5_SET(modify_lag_in, in, field_select, 0x1);
+	MLX5_SET(modअगरy_lag_in, in, opcode, MLX5_CMD_OP_MODIFY_LAG);
+	MLX5_SET(modअगरy_lag_in, in, field_select, 0x1);
 
 	MLX5_SET(lagc, lag_ctx, tx_remap_affinity_1, remap_port1);
 	MLX5_SET(lagc, lag_ctx, tx_remap_affinity_2, remap_port2);
 
-	return mlx5_cmd_exec_in(dev, modify_lag, in);
-}
+	वापस mlx5_cmd_exec_in(dev, modअगरy_lag, in);
+पूर्ण
 
-int mlx5_cmd_create_vport_lag(struct mlx5_core_dev *dev)
-{
-	u32 in[MLX5_ST_SZ_DW(create_vport_lag_in)] = {};
+पूर्णांक mlx5_cmd_create_vport_lag(काष्ठा mlx5_core_dev *dev)
+अणु
+	u32 in[MLX5_ST_SZ_DW(create_vport_lag_in)] = अणुपूर्ण;
 
 	MLX5_SET(create_vport_lag_in, in, opcode, MLX5_CMD_OP_CREATE_VPORT_LAG);
 
-	return mlx5_cmd_exec_in(dev, create_vport_lag, in);
-}
+	वापस mlx5_cmd_exec_in(dev, create_vport_lag, in);
+पूर्ण
 EXPORT_SYMBOL(mlx5_cmd_create_vport_lag);
 
-int mlx5_cmd_destroy_vport_lag(struct mlx5_core_dev *dev)
-{
-	u32 in[MLX5_ST_SZ_DW(destroy_vport_lag_in)] = {};
+पूर्णांक mlx5_cmd_destroy_vport_lag(काष्ठा mlx5_core_dev *dev)
+अणु
+	u32 in[MLX5_ST_SZ_DW(destroy_vport_lag_in)] = अणुपूर्ण;
 
 	MLX5_SET(destroy_vport_lag_in, in, opcode, MLX5_CMD_OP_DESTROY_VPORT_LAG);
 
-	return mlx5_cmd_exec_in(dev, destroy_vport_lag, in);
-}
+	वापस mlx5_cmd_exec_in(dev, destroy_vport_lag, in);
+पूर्ण
 EXPORT_SYMBOL(mlx5_cmd_destroy_vport_lag);
 
-int mlx5_lag_dev_get_netdev_idx(struct mlx5_lag *ldev,
-				struct net_device *ndev)
-{
-	int i;
+पूर्णांक mlx5_lag_dev_get_netdev_idx(काष्ठा mlx5_lag *ldev,
+				काष्ठा net_device *ndev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MLX5_MAX_PORTS; i++)
-		if (ldev->pf[i].netdev == ndev)
-			return i;
+	क्रम (i = 0; i < MLX5_MAX_PORTS; i++)
+		अगर (ldev->pf[i].netdev == ndev)
+			वापस i;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static bool __mlx5_lag_is_roce(struct mlx5_lag *ldev)
-{
-	return !!(ldev->flags & MLX5_LAG_FLAG_ROCE);
-}
+अटल bool __mlx5_lag_is_roce(काष्ठा mlx5_lag *ldev)
+अणु
+	वापस !!(ldev->flags & MLX5_LAG_FLAG_ROCE);
+पूर्ण
 
-static bool __mlx5_lag_is_sriov(struct mlx5_lag *ldev)
-{
-	return !!(ldev->flags & MLX5_LAG_FLAG_SRIOV);
-}
+अटल bool __mlx5_lag_is_sriov(काष्ठा mlx5_lag *ldev)
+अणु
+	वापस !!(ldev->flags & MLX5_LAG_FLAG_SRIOV);
+पूर्ण
 
-static void mlx5_infer_tx_affinity_mapping(struct lag_tracker *tracker,
+अटल व्योम mlx5_infer_tx_affinity_mapping(काष्ठा lag_tracker *tracker,
 					   u8 *port1, u8 *port2)
-{
+अणु
 	*port1 = 1;
 	*port2 = 2;
-	if (!tracker->netdev_state[MLX5_LAG_P1].tx_enabled ||
-	    !tracker->netdev_state[MLX5_LAG_P1].link_up) {
+	अगर (!tracker->netdev_state[MLX5_LAG_P1].tx_enabled ||
+	    !tracker->netdev_state[MLX5_LAG_P1].link_up) अणु
 		*port1 = 2;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!tracker->netdev_state[MLX5_LAG_P2].tx_enabled ||
+	अगर (!tracker->netdev_state[MLX5_LAG_P2].tx_enabled ||
 	    !tracker->netdev_state[MLX5_LAG_P2].link_up)
 		*port2 = 1;
-}
+पूर्ण
 
-void mlx5_modify_lag(struct mlx5_lag *ldev,
-		     struct lag_tracker *tracker)
-{
-	struct mlx5_core_dev *dev0 = ldev->pf[MLX5_LAG_P1].dev;
+व्योम mlx5_modअगरy_lag(काष्ठा mlx5_lag *ldev,
+		     काष्ठा lag_tracker *tracker)
+अणु
+	काष्ठा mlx5_core_dev *dev0 = ldev->pf[MLX5_LAG_P1].dev;
 	u8 v2p_port1, v2p_port2;
-	int err;
+	पूर्णांक err;
 
 	mlx5_infer_tx_affinity_mapping(tracker, &v2p_port1,
 				       &v2p_port2);
 
-	if (v2p_port1 != ldev->v2p_map[MLX5_LAG_P1] ||
-	    v2p_port2 != ldev->v2p_map[MLX5_LAG_P2]) {
+	अगर (v2p_port1 != ldev->v2p_map[MLX5_LAG_P1] ||
+	    v2p_port2 != ldev->v2p_map[MLX5_LAG_P2]) अणु
 		ldev->v2p_map[MLX5_LAG_P1] = v2p_port1;
 		ldev->v2p_map[MLX5_LAG_P2] = v2p_port2;
 
@@ -150,19 +151,19 @@ void mlx5_modify_lag(struct mlx5_lag *ldev,
 			       ldev->v2p_map[MLX5_LAG_P1],
 			       ldev->v2p_map[MLX5_LAG_P2]);
 
-		err = mlx5_cmd_modify_lag(dev0, v2p_port1, v2p_port2);
-		if (err)
+		err = mlx5_cmd_modअगरy_lag(dev0, v2p_port1, v2p_port2);
+		अगर (err)
 			mlx5_core_err(dev0,
 				      "Failed to modify LAG (%d)\n",
 				      err);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int mlx5_create_lag(struct mlx5_lag *ldev,
-			   struct lag_tracker *tracker)
-{
-	struct mlx5_core_dev *dev0 = ldev->pf[MLX5_LAG_P1].dev;
-	int err;
+अटल पूर्णांक mlx5_create_lag(काष्ठा mlx5_lag *ldev,
+			   काष्ठा lag_tracker *tracker)
+अणु
+	काष्ठा mlx5_core_dev *dev0 = ldev->pf[MLX5_LAG_P1].dev;
+	पूर्णांक err;
 
 	mlx5_infer_tx_affinity_mapping(tracker, &ldev->v2p_map[MLX5_LAG_P1],
 				       &ldev->v2p_map[MLX5_LAG_P2]);
@@ -172,358 +173,358 @@ static int mlx5_create_lag(struct mlx5_lag *ldev,
 
 	err = mlx5_cmd_create_lag(dev0, ldev->v2p_map[MLX5_LAG_P1],
 				  ldev->v2p_map[MLX5_LAG_P2]);
-	if (err)
+	अगर (err)
 		mlx5_core_err(dev0,
 			      "Failed to create LAG (%d)\n",
 			      err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mlx5_activate_lag(struct mlx5_lag *ldev,
-		      struct lag_tracker *tracker,
+पूर्णांक mlx5_activate_lag(काष्ठा mlx5_lag *ldev,
+		      काष्ठा lag_tracker *tracker,
 		      u8 flags)
-{
+अणु
 	bool roce_lag = !!(flags & MLX5_LAG_FLAG_ROCE);
-	struct mlx5_core_dev *dev0 = ldev->pf[MLX5_LAG_P1].dev;
-	int err;
+	काष्ठा mlx5_core_dev *dev0 = ldev->pf[MLX5_LAG_P1].dev;
+	पूर्णांक err;
 
 	err = mlx5_create_lag(ldev, tracker);
-	if (err) {
-		if (roce_lag) {
+	अगर (err) अणु
+		अगर (roce_lag) अणु
 			mlx5_core_err(dev0,
 				      "Failed to activate RoCE LAG\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			mlx5_core_err(dev0,
 				      "Failed to activate VF LAG\n"
 				      "Make sure all VFs are unbound prior to VF LAG activation or deactivation\n");
-		}
-		return err;
-	}
+		पूर्ण
+		वापस err;
+	पूर्ण
 
 	ldev->flags |= flags;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5_deactivate_lag(struct mlx5_lag *ldev)
-{
-	struct mlx5_core_dev *dev0 = ldev->pf[MLX5_LAG_P1].dev;
-	u32 in[MLX5_ST_SZ_DW(destroy_lag_in)] = {};
+अटल पूर्णांक mlx5_deactivate_lag(काष्ठा mlx5_lag *ldev)
+अणु
+	काष्ठा mlx5_core_dev *dev0 = ldev->pf[MLX5_LAG_P1].dev;
+	u32 in[MLX5_ST_SZ_DW(destroy_lag_in)] = अणुपूर्ण;
 	bool roce_lag = __mlx5_lag_is_roce(ldev);
-	int err;
+	पूर्णांक err;
 
 	ldev->flags &= ~MLX5_LAG_MODE_FLAGS;
 
 	MLX5_SET(destroy_lag_in, in, opcode, MLX5_CMD_OP_DESTROY_LAG);
 	err = mlx5_cmd_exec_in(dev0, destroy_lag, in);
-	if (err) {
-		if (roce_lag) {
+	अगर (err) अणु
+		अगर (roce_lag) अणु
 			mlx5_core_err(dev0,
 				      "Failed to deactivate RoCE LAG; driver restart required\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			mlx5_core_err(dev0,
 				      "Failed to deactivate VF LAG; driver restart required\n"
 				      "Make sure all VFs are unbound prior to VF LAG activation or deactivation\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool mlx5_lag_check_prereq(struct mlx5_lag *ldev)
-{
-	if (!ldev->pf[MLX5_LAG_P1].dev || !ldev->pf[MLX5_LAG_P2].dev)
-		return false;
+अटल bool mlx5_lag_check_prereq(काष्ठा mlx5_lag *ldev)
+अणु
+	अगर (!ldev->pf[MLX5_LAG_P1].dev || !ldev->pf[MLX5_LAG_P2].dev)
+		वापस false;
 
-#ifdef CONFIG_MLX5_ESWITCH
-	return mlx5_esw_lag_prereq(ldev->pf[MLX5_LAG_P1].dev,
+#अगर_घोषित CONFIG_MLX5_ESWITCH
+	वापस mlx5_esw_lag_prereq(ldev->pf[MLX5_LAG_P1].dev,
 				   ldev->pf[MLX5_LAG_P2].dev);
-#else
-	return (!mlx5_sriov_is_enabled(ldev->pf[MLX5_LAG_P1].dev) &&
+#अन्यथा
+	वापस (!mlx5_sriov_is_enabled(ldev->pf[MLX5_LAG_P1].dev) &&
 		!mlx5_sriov_is_enabled(ldev->pf[MLX5_LAG_P2].dev));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void mlx5_lag_add_devices(struct mlx5_lag *ldev)
-{
-	int i;
+अटल व्योम mlx5_lag_add_devices(काष्ठा mlx5_lag *ldev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MLX5_MAX_PORTS; i++) {
-		if (!ldev->pf[i].dev)
-			continue;
+	क्रम (i = 0; i < MLX5_MAX_PORTS; i++) अणु
+		अगर (!ldev->pf[i].dev)
+			जारी;
 
 		ldev->pf[i].dev->priv.flags &= ~MLX5_PRIV_FLAGS_DISABLE_IB_ADEV;
 		mlx5_rescan_drivers_locked(ldev->pf[i].dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mlx5_lag_remove_devices(struct mlx5_lag *ldev)
-{
-	int i;
+अटल व्योम mlx5_lag_हटाओ_devices(काष्ठा mlx5_lag *ldev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MLX5_MAX_PORTS; i++) {
-		if (!ldev->pf[i].dev)
-			continue;
+	क्रम (i = 0; i < MLX5_MAX_PORTS; i++) अणु
+		अगर (!ldev->pf[i].dev)
+			जारी;
 
 		ldev->pf[i].dev->priv.flags |= MLX5_PRIV_FLAGS_DISABLE_IB_ADEV;
 		mlx5_rescan_drivers_locked(ldev->pf[i].dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mlx5_do_bond(struct mlx5_lag *ldev)
-{
-	struct mlx5_core_dev *dev0 = ldev->pf[MLX5_LAG_P1].dev;
-	struct mlx5_core_dev *dev1 = ldev->pf[MLX5_LAG_P2].dev;
-	struct lag_tracker tracker;
-	bool do_bond, roce_lag;
-	int err;
+अटल व्योम mlx5_करो_bond(काष्ठा mlx5_lag *ldev)
+अणु
+	काष्ठा mlx5_core_dev *dev0 = ldev->pf[MLX5_LAG_P1].dev;
+	काष्ठा mlx5_core_dev *dev1 = ldev->pf[MLX5_LAG_P2].dev;
+	काष्ठा lag_tracker tracker;
+	bool करो_bond, roce_lag;
+	पूर्णांक err;
 
-	if (!mlx5_lag_is_ready(ldev))
-		return;
+	अगर (!mlx5_lag_is_पढ़ोy(ldev))
+		वापस;
 
 	spin_lock(&lag_lock);
 	tracker = ldev->tracker;
 	spin_unlock(&lag_lock);
 
-	do_bond = tracker.is_bonded && mlx5_lag_check_prereq(ldev);
+	करो_bond = tracker.is_bonded && mlx5_lag_check_prereq(ldev);
 
-	if (do_bond && !__mlx5_lag_is_active(ldev)) {
+	अगर (करो_bond && !__mlx5_lag_is_active(ldev)) अणु
 		roce_lag = !mlx5_sriov_is_enabled(dev0) &&
 			   !mlx5_sriov_is_enabled(dev1);
 
-#ifdef CONFIG_MLX5_ESWITCH
-		roce_lag &= dev0->priv.eswitch->mode == MLX5_ESWITCH_NONE &&
-			    dev1->priv.eswitch->mode == MLX5_ESWITCH_NONE;
-#endif
+#अगर_घोषित CONFIG_MLX5_ESWITCH
+		roce_lag &= dev0->priv.eचयन->mode == MLX5_ESWITCH_NONE &&
+			    dev1->priv.eचयन->mode == MLX5_ESWITCH_NONE;
+#पूर्ण_अगर
 
-		if (roce_lag)
-			mlx5_lag_remove_devices(ldev);
+		अगर (roce_lag)
+			mlx5_lag_हटाओ_devices(ldev);
 
 		err = mlx5_activate_lag(ldev, &tracker,
 					roce_lag ? MLX5_LAG_FLAG_ROCE :
 					MLX5_LAG_FLAG_SRIOV);
-		if (err) {
-			if (roce_lag)
+		अगर (err) अणु
+			अगर (roce_lag)
 				mlx5_lag_add_devices(ldev);
 
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (roce_lag) {
+		अगर (roce_lag) अणु
 			dev0->priv.flags &= ~MLX5_PRIV_FLAGS_DISABLE_IB_ADEV;
 			mlx5_rescan_drivers_locked(dev0);
 			mlx5_nic_vport_enable_roce(dev1);
-		}
-	} else if (do_bond && __mlx5_lag_is_active(ldev)) {
-		mlx5_modify_lag(ldev, &tracker);
-	} else if (!do_bond && __mlx5_lag_is_active(ldev)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (करो_bond && __mlx5_lag_is_active(ldev)) अणु
+		mlx5_modअगरy_lag(ldev, &tracker);
+	पूर्ण अन्यथा अगर (!करो_bond && __mlx5_lag_is_active(ldev)) अणु
 		roce_lag = __mlx5_lag_is_roce(ldev);
 
-		if (roce_lag) {
+		अगर (roce_lag) अणु
 			dev0->priv.flags |= MLX5_PRIV_FLAGS_DISABLE_IB_ADEV;
 			mlx5_rescan_drivers_locked(dev0);
 			mlx5_nic_vport_disable_roce(dev1);
-		}
+		पूर्ण
 
 		err = mlx5_deactivate_lag(ldev);
-		if (err)
-			return;
+		अगर (err)
+			वापस;
 
-		if (roce_lag)
+		अगर (roce_lag)
 			mlx5_lag_add_devices(ldev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mlx5_queue_bond_work(struct mlx5_lag *ldev, unsigned long delay)
-{
+अटल व्योम mlx5_queue_bond_work(काष्ठा mlx5_lag *ldev, अचिन्हित दीर्घ delay)
+अणु
 	queue_delayed_work(ldev->wq, &ldev->bond_work, delay);
-}
+पूर्ण
 
-static void mlx5_do_bond_work(struct work_struct *work)
-{
-	struct delayed_work *delayed_work = to_delayed_work(work);
-	struct mlx5_lag *ldev = container_of(delayed_work, struct mlx5_lag,
+अटल व्योम mlx5_करो_bond_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा delayed_work *delayed_work = to_delayed_work(work);
+	काष्ठा mlx5_lag *ldev = container_of(delayed_work, काष्ठा mlx5_lag,
 					     bond_work);
-	int status;
+	पूर्णांक status;
 
 	status = mlx5_dev_list_trylock();
-	if (!status) {
+	अगर (!status) अणु
 		/* 1 sec delay. */
 		mlx5_queue_bond_work(ldev, HZ);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mlx5_do_bond(ldev);
+	mlx5_करो_bond(ldev);
 	mlx5_dev_list_unlock();
-}
+पूर्ण
 
-static int mlx5_handle_changeupper_event(struct mlx5_lag *ldev,
-					 struct lag_tracker *tracker,
-					 struct net_device *ndev,
-					 struct netdev_notifier_changeupper_info *info)
-{
-	struct net_device *upper = info->upper_dev, *ndev_tmp;
-	struct netdev_lag_upper_info *lag_upper_info = NULL;
+अटल पूर्णांक mlx5_handle_changeupper_event(काष्ठा mlx5_lag *ldev,
+					 काष्ठा lag_tracker *tracker,
+					 काष्ठा net_device *ndev,
+					 काष्ठा netdev_notअगरier_changeupper_info *info)
+अणु
+	काष्ठा net_device *upper = info->upper_dev, *ndev_पंचांगp;
+	काष्ठा netdev_lag_upper_info *lag_upper_info = शून्य;
 	bool is_bonded, is_in_lag, mode_supported;
-	int bond_status = 0;
-	int num_slaves = 0;
-	int idx;
+	पूर्णांक bond_status = 0;
+	पूर्णांक num_slaves = 0;
+	पूर्णांक idx;
 
-	if (!netif_is_lag_master(upper))
-		return 0;
+	अगर (!netअगर_is_lag_master(upper))
+		वापस 0;
 
-	if (info->linking)
+	अगर (info->linking)
 		lag_upper_info = info->upper_info;
 
-	/* The event may still be of interest if the slave does not belong to
+	/* The event may still be of पूर्णांकerest अगर the slave करोes not beदीर्घ to
 	 * us, but is enslaved to a master which has one or more of our netdevs
-	 * as slaves (e.g., if a new slave is added to a master that bonds two
+	 * as slaves (e.g., अगर a new slave is added to a master that bonds two
 	 * of our netdevs, we should unbond).
 	 */
-	rcu_read_lock();
-	for_each_netdev_in_bond_rcu(upper, ndev_tmp) {
-		idx = mlx5_lag_dev_get_netdev_idx(ldev, ndev_tmp);
-		if (idx >= 0)
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_in_bond_rcu(upper, ndev_पंचांगp) अणु
+		idx = mlx5_lag_dev_get_netdev_idx(ldev, ndev_पंचांगp);
+		अगर (idx >= 0)
 			bond_status |= (1 << idx);
 
 		num_slaves++;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	/* None of this lagdev's netdevs are slaves of this master. */
-	if (!(bond_status & 0x3))
-		return 0;
+	अगर (!(bond_status & 0x3))
+		वापस 0;
 
-	if (lag_upper_info)
+	अगर (lag_upper_info)
 		tracker->tx_type = lag_upper_info->tx_type;
 
 	/* Determine bonding status:
-	 * A device is considered bonded if both its physical ports are slaves
+	 * A device is considered bonded अगर both its physical ports are slaves
 	 * of the same lag master, and only them.
 	 */
 	is_in_lag = num_slaves == MLX5_MAX_PORTS && bond_status == 0x3;
 
-	if (!mlx5_lag_is_ready(ldev) && is_in_lag) {
+	अगर (!mlx5_lag_is_पढ़ोy(ldev) && is_in_lag) अणु
 		NL_SET_ERR_MSG_MOD(info->info.extack,
 				   "Can't activate LAG offload, PF is configured with more than 64 VFs");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Lag mode must be activebackup or hash. */
 	mode_supported = tracker->tx_type == NETDEV_LAG_TX_TYPE_ACTIVEBACKUP ||
 			 tracker->tx_type == NETDEV_LAG_TX_TYPE_HASH;
 
-	if (is_in_lag && !mode_supported)
+	अगर (is_in_lag && !mode_supported)
 		NL_SET_ERR_MSG_MOD(info->info.extack,
 				   "Can't activate LAG offload, TX type isn't supported");
 
 	is_bonded = is_in_lag && mode_supported;
-	if (tracker->is_bonded != is_bonded) {
+	अगर (tracker->is_bonded != is_bonded) अणु
 		tracker->is_bonded = is_bonded;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx5_handle_changelowerstate_event(struct mlx5_lag *ldev,
-					      struct lag_tracker *tracker,
-					      struct net_device *ndev,
-					      struct netdev_notifier_changelowerstate_info *info)
-{
-	struct netdev_lag_lower_state_info *lag_lower_info;
-	int idx;
+अटल पूर्णांक mlx5_handle_changelowerstate_event(काष्ठा mlx5_lag *ldev,
+					      काष्ठा lag_tracker *tracker,
+					      काष्ठा net_device *ndev,
+					      काष्ठा netdev_notअगरier_changelowerstate_info *info)
+अणु
+	काष्ठा netdev_lag_lower_state_info *lag_lower_info;
+	पूर्णांक idx;
 
-	if (!netif_is_lag_port(ndev))
-		return 0;
+	अगर (!netअगर_is_lag_port(ndev))
+		वापस 0;
 
 	idx = mlx5_lag_dev_get_netdev_idx(ldev, ndev);
-	if (idx < 0)
-		return 0;
+	अगर (idx < 0)
+		वापस 0;
 
-	/* This information is used to determine virtual to physical
+	/* This inक्रमmation is used to determine भव to physical
 	 * port mapping.
 	 */
 	lag_lower_info = info->lower_state_info;
-	if (!lag_lower_info)
-		return 0;
+	अगर (!lag_lower_info)
+		वापस 0;
 
 	tracker->netdev_state[idx] = *lag_lower_info;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int mlx5_lag_netdev_event(struct notifier_block *this,
-				 unsigned long event, void *ptr)
-{
-	struct net_device *ndev = netdev_notifier_info_to_dev(ptr);
-	struct lag_tracker tracker;
-	struct mlx5_lag *ldev;
-	int changed = 0;
+अटल पूर्णांक mlx5_lag_netdev_event(काष्ठा notअगरier_block *this,
+				 अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *ndev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा lag_tracker tracker;
+	काष्ठा mlx5_lag *ldev;
+	पूर्णांक changed = 0;
 
-	if ((event != NETDEV_CHANGEUPPER) && (event != NETDEV_CHANGELOWERSTATE))
-		return NOTIFY_DONE;
+	अगर ((event != NETDEV_CHANGEUPPER) && (event != NETDEV_CHANGELOWERSTATE))
+		वापस NOTIFY_DONE;
 
-	ldev    = container_of(this, struct mlx5_lag, nb);
+	ldev    = container_of(this, काष्ठा mlx5_lag, nb);
 
-	if (!mlx5_lag_is_ready(ldev) && event == NETDEV_CHANGELOWERSTATE)
-		return NOTIFY_DONE;
+	अगर (!mlx5_lag_is_पढ़ोy(ldev) && event == NETDEV_CHANGELOWERSTATE)
+		वापस NOTIFY_DONE;
 
 	tracker = ldev->tracker;
 
-	switch (event) {
-	case NETDEV_CHANGEUPPER:
+	चयन (event) अणु
+	हाल NETDEV_CHANGEUPPER:
 		changed = mlx5_handle_changeupper_event(ldev, &tracker, ndev,
 							ptr);
-		break;
-	case NETDEV_CHANGELOWERSTATE:
+		अवरोध;
+	हाल NETDEV_CHANGELOWERSTATE:
 		changed = mlx5_handle_changelowerstate_event(ldev, &tracker,
 							     ndev, ptr);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_lock(&lag_lock);
 	ldev->tracker = tracker;
 	spin_unlock(&lag_lock);
 
-	if (changed)
+	अगर (changed)
 		mlx5_queue_bond_work(ldev, 0);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct mlx5_lag *mlx5_lag_dev_alloc(void)
-{
-	struct mlx5_lag *ldev;
+अटल काष्ठा mlx5_lag *mlx5_lag_dev_alloc(व्योम)
+अणु
+	काष्ठा mlx5_lag *ldev;
 
-	ldev = kzalloc(sizeof(*ldev), GFP_KERNEL);
-	if (!ldev)
-		return NULL;
+	ldev = kzalloc(माप(*ldev), GFP_KERNEL);
+	अगर (!ldev)
+		वापस शून्य;
 
-	ldev->wq = create_singlethread_workqueue("mlx5_lag");
-	if (!ldev->wq) {
-		kfree(ldev);
-		return NULL;
-	}
+	ldev->wq = create_singlethपढ़ो_workqueue("mlx5_lag");
+	अगर (!ldev->wq) अणु
+		kमुक्त(ldev);
+		वापस शून्य;
+	पूर्ण
 
-	INIT_DELAYED_WORK(&ldev->bond_work, mlx5_do_bond_work);
+	INIT_DELAYED_WORK(&ldev->bond_work, mlx5_करो_bond_work);
 
-	return ldev;
-}
+	वापस ldev;
+पूर्ण
 
-static void mlx5_lag_dev_free(struct mlx5_lag *ldev)
-{
+अटल व्योम mlx5_lag_dev_मुक्त(काष्ठा mlx5_lag *ldev)
+अणु
 	destroy_workqueue(ldev->wq);
-	kfree(ldev);
-}
+	kमुक्त(ldev);
+पूर्ण
 
-static int mlx5_lag_dev_add_pf(struct mlx5_lag *ldev,
-			       struct mlx5_core_dev *dev,
-			       struct net_device *netdev)
-{
-	unsigned int fn = PCI_FUNC(dev->pdev->devfn);
+अटल पूर्णांक mlx5_lag_dev_add_pf(काष्ठा mlx5_lag *ldev,
+			       काष्ठा mlx5_core_dev *dev,
+			       काष्ठा net_device *netdev)
+अणु
+	अचिन्हित पूर्णांक fn = PCI_FUNC(dev->pdev->devfn);
 
-	if (fn >= MLX5_MAX_PORTS)
-		return -EPERM;
+	अगर (fn >= MLX5_MAX_PORTS)
+		वापस -EPERM;
 
 	spin_lock(&lag_lock);
 	ldev->pf[fn].dev    = dev;
@@ -535,111 +536,111 @@ static int mlx5_lag_dev_add_pf(struct mlx5_lag *ldev,
 
 	spin_unlock(&lag_lock);
 
-	return fn;
-}
+	वापस fn;
+पूर्ण
 
-static void mlx5_lag_dev_remove_pf(struct mlx5_lag *ldev,
-				   struct mlx5_core_dev *dev)
-{
-	int i;
+अटल व्योम mlx5_lag_dev_हटाओ_pf(काष्ठा mlx5_lag *ldev,
+				   काष्ठा mlx5_core_dev *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MLX5_MAX_PORTS; i++)
-		if (ldev->pf[i].dev == dev)
-			break;
+	क्रम (i = 0; i < MLX5_MAX_PORTS; i++)
+		अगर (ldev->pf[i].dev == dev)
+			अवरोध;
 
-	if (i == MLX5_MAX_PORTS)
-		return;
+	अगर (i == MLX5_MAX_PORTS)
+		वापस;
 
 	spin_lock(&lag_lock);
-	memset(&ldev->pf[i], 0, sizeof(*ldev->pf));
+	स_रखो(&ldev->pf[i], 0, माप(*ldev->pf));
 
-	dev->priv.lag = NULL;
+	dev->priv.lag = शून्य;
 	spin_unlock(&lag_lock);
-}
+पूर्ण
 
-/* Must be called with intf_mutex held */
-void mlx5_lag_add(struct mlx5_core_dev *dev, struct net_device *netdev)
-{
-	struct mlx5_lag *ldev = NULL;
-	struct mlx5_core_dev *tmp_dev;
-	int i, err;
+/* Must be called with पूर्णांकf_mutex held */
+व्योम mlx5_lag_add(काष्ठा mlx5_core_dev *dev, काष्ठा net_device *netdev)
+अणु
+	काष्ठा mlx5_lag *ldev = शून्य;
+	काष्ठा mlx5_core_dev *पंचांगp_dev;
+	पूर्णांक i, err;
 
-	if (!MLX5_CAP_GEN(dev, vport_group_manager) ||
+	अगर (!MLX5_CAP_GEN(dev, vport_group_manager) ||
 	    !MLX5_CAP_GEN(dev, lag_master) ||
 	    MLX5_CAP_GEN(dev, num_lag_ports) != MLX5_MAX_PORTS)
-		return;
+		वापस;
 
-	tmp_dev = mlx5_get_next_phys_dev(dev);
-	if (tmp_dev)
-		ldev = tmp_dev->priv.lag;
+	पंचांगp_dev = mlx5_get_next_phys_dev(dev);
+	अगर (पंचांगp_dev)
+		ldev = पंचांगp_dev->priv.lag;
 
-	if (!ldev) {
+	अगर (!ldev) अणु
 		ldev = mlx5_lag_dev_alloc();
-		if (!ldev) {
+		अगर (!ldev) अणु
 			mlx5_core_err(dev, "Failed to alloc lag dev\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (mlx5_lag_dev_add_pf(ldev, dev, netdev) < 0)
-		return;
+	अगर (mlx5_lag_dev_add_pf(ldev, dev, netdev) < 0)
+		वापस;
 
-	for (i = 0; i < MLX5_MAX_PORTS; i++)
-		if (!ldev->pf[i].dev)
-			break;
+	क्रम (i = 0; i < MLX5_MAX_PORTS; i++)
+		अगर (!ldev->pf[i].dev)
+			अवरोध;
 
-	if (i >= MLX5_MAX_PORTS)
+	अगर (i >= MLX5_MAX_PORTS)
 		ldev->flags |= MLX5_LAG_FLAG_READY;
 
-	if (!ldev->nb.notifier_call) {
-		ldev->nb.notifier_call = mlx5_lag_netdev_event;
-		if (register_netdevice_notifier_net(&init_net, &ldev->nb)) {
-			ldev->nb.notifier_call = NULL;
+	अगर (!ldev->nb.notअगरier_call) अणु
+		ldev->nb.notअगरier_call = mlx5_lag_netdev_event;
+		अगर (रेजिस्टर_netdevice_notअगरier_net(&init_net, &ldev->nb)) अणु
+			ldev->nb.notअगरier_call = शून्य;
 			mlx5_core_err(dev, "Failed to register LAG netdev notifier\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	err = mlx5_lag_mp_init(ldev);
-	if (err)
+	अगर (err)
 		mlx5_core_err(dev, "Failed to init multipath lag err=%d\n",
 			      err);
-}
+पूर्ण
 
-/* Must be called with intf_mutex held */
-void mlx5_lag_remove(struct mlx5_core_dev *dev)
-{
-	struct mlx5_lag *ldev;
-	int i;
+/* Must be called with पूर्णांकf_mutex held */
+व्योम mlx5_lag_हटाओ(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_lag *ldev;
+	पूर्णांक i;
 
 	ldev = mlx5_lag_dev_get(dev);
-	if (!ldev)
-		return;
+	अगर (!ldev)
+		वापस;
 
-	if (__mlx5_lag_is_active(ldev))
+	अगर (__mlx5_lag_is_active(ldev))
 		mlx5_deactivate_lag(ldev);
 
-	mlx5_lag_dev_remove_pf(ldev, dev);
+	mlx5_lag_dev_हटाओ_pf(ldev, dev);
 
 	ldev->flags &= ~MLX5_LAG_FLAG_READY;
 
-	for (i = 0; i < MLX5_MAX_PORTS; i++)
-		if (ldev->pf[i].dev)
-			break;
+	क्रम (i = 0; i < MLX5_MAX_PORTS; i++)
+		अगर (ldev->pf[i].dev)
+			अवरोध;
 
-	if (i == MLX5_MAX_PORTS) {
-		if (ldev->nb.notifier_call) {
-			unregister_netdevice_notifier_net(&init_net, &ldev->nb);
-			ldev->nb.notifier_call = NULL;
-		}
+	अगर (i == MLX5_MAX_PORTS) अणु
+		अगर (ldev->nb.notअगरier_call) अणु
+			unरेजिस्टर_netdevice_notअगरier_net(&init_net, &ldev->nb);
+			ldev->nb.notअगरier_call = शून्य;
+		पूर्ण
 		mlx5_lag_mp_cleanup(ldev);
 		cancel_delayed_work_sync(&ldev->bond_work);
-		mlx5_lag_dev_free(ldev);
-	}
-}
+		mlx5_lag_dev_मुक्त(ldev);
+	पूर्ण
+पूर्ण
 
-bool mlx5_lag_is_roce(struct mlx5_core_dev *dev)
-{
-	struct mlx5_lag *ldev;
+bool mlx5_lag_is_roce(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_lag *ldev;
 	bool res;
 
 	spin_lock(&lag_lock);
@@ -647,13 +648,13 @@ bool mlx5_lag_is_roce(struct mlx5_core_dev *dev)
 	res  = ldev && __mlx5_lag_is_roce(ldev);
 	spin_unlock(&lag_lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(mlx5_lag_is_roce);
 
-bool mlx5_lag_is_active(struct mlx5_core_dev *dev)
-{
-	struct mlx5_lag *ldev;
+bool mlx5_lag_is_active(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_lag *ldev;
 	bool res;
 
 	spin_lock(&lag_lock);
@@ -661,13 +662,13 @@ bool mlx5_lag_is_active(struct mlx5_core_dev *dev)
 	res  = ldev && __mlx5_lag_is_active(ldev);
 	spin_unlock(&lag_lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(mlx5_lag_is_active);
 
-bool mlx5_lag_is_sriov(struct mlx5_core_dev *dev)
-{
-	struct mlx5_lag *ldev;
+bool mlx5_lag_is_sriov(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_lag *ldev;
 	bool res;
 
 	spin_lock(&lag_lock);
@@ -675,123 +676,123 @@ bool mlx5_lag_is_sriov(struct mlx5_core_dev *dev)
 	res  = ldev && __mlx5_lag_is_sriov(ldev);
 	spin_unlock(&lag_lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(mlx5_lag_is_sriov);
 
-void mlx5_lag_update(struct mlx5_core_dev *dev)
-{
-	struct mlx5_lag *ldev;
+व्योम mlx5_lag_update(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_lag *ldev;
 
 	mlx5_dev_list_lock();
 	ldev = mlx5_lag_dev_get(dev);
-	if (!ldev)
-		goto unlock;
+	अगर (!ldev)
+		जाओ unlock;
 
-	mlx5_do_bond(ldev);
+	mlx5_करो_bond(ldev);
 
 unlock:
 	mlx5_dev_list_unlock();
-}
+पूर्ण
 
-struct net_device *mlx5_lag_get_roce_netdev(struct mlx5_core_dev *dev)
-{
-	struct net_device *ndev = NULL;
-	struct mlx5_lag *ldev;
+काष्ठा net_device *mlx5_lag_get_roce_netdev(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा net_device *ndev = शून्य;
+	काष्ठा mlx5_lag *ldev;
 
 	spin_lock(&lag_lock);
 	ldev = mlx5_lag_dev_get(dev);
 
-	if (!(ldev && __mlx5_lag_is_roce(ldev)))
-		goto unlock;
+	अगर (!(ldev && __mlx5_lag_is_roce(ldev)))
+		जाओ unlock;
 
-	if (ldev->tracker.tx_type == NETDEV_LAG_TX_TYPE_ACTIVEBACKUP) {
+	अगर (ldev->tracker.tx_type == NETDEV_LAG_TX_TYPE_ACTIVEBACKUP) अणु
 		ndev = ldev->tracker.netdev_state[MLX5_LAG_P1].tx_enabled ?
 		       ldev->pf[MLX5_LAG_P1].netdev :
 		       ldev->pf[MLX5_LAG_P2].netdev;
-	} else {
+	पूर्ण अन्यथा अणु
 		ndev = ldev->pf[MLX5_LAG_P1].netdev;
-	}
-	if (ndev)
+	पूर्ण
+	अगर (ndev)
 		dev_hold(ndev);
 
 unlock:
 	spin_unlock(&lag_lock);
 
-	return ndev;
-}
+	वापस ndev;
+पूर्ण
 EXPORT_SYMBOL(mlx5_lag_get_roce_netdev);
 
-u8 mlx5_lag_get_slave_port(struct mlx5_core_dev *dev,
-			   struct net_device *slave)
-{
-	struct mlx5_lag *ldev;
+u8 mlx5_lag_get_slave_port(काष्ठा mlx5_core_dev *dev,
+			   काष्ठा net_device *slave)
+अणु
+	काष्ठा mlx5_lag *ldev;
 	u8 port = 0;
 
 	spin_lock(&lag_lock);
 	ldev = mlx5_lag_dev_get(dev);
-	if (!(ldev && __mlx5_lag_is_roce(ldev)))
-		goto unlock;
+	अगर (!(ldev && __mlx5_lag_is_roce(ldev)))
+		जाओ unlock;
 
-	if (ldev->pf[MLX5_LAG_P1].netdev == slave)
+	अगर (ldev->pf[MLX5_LAG_P1].netdev == slave)
 		port = MLX5_LAG_P1;
-	else
+	अन्यथा
 		port = MLX5_LAG_P2;
 
 	port = ldev->v2p_map[port];
 
 unlock:
 	spin_unlock(&lag_lock);
-	return port;
-}
+	वापस port;
+पूर्ण
 EXPORT_SYMBOL(mlx5_lag_get_slave_port);
 
-int mlx5_lag_query_cong_counters(struct mlx5_core_dev *dev,
+पूर्णांक mlx5_lag_query_cong_counters(काष्ठा mlx5_core_dev *dev,
 				 u64 *values,
-				 int num_counters,
-				 size_t *offsets)
-{
-	int outlen = MLX5_ST_SZ_BYTES(query_cong_statistics_out);
-	struct mlx5_core_dev *mdev[MLX5_MAX_PORTS];
-	struct mlx5_lag *ldev;
-	int num_ports;
-	int ret, i, j;
-	void *out;
+				 पूर्णांक num_counters,
+				 माप_प्रकार *offsets)
+अणु
+	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_cong_statistics_out);
+	काष्ठा mlx5_core_dev *mdev[MLX5_MAX_PORTS];
+	काष्ठा mlx5_lag *ldev;
+	पूर्णांक num_ports;
+	पूर्णांक ret, i, j;
+	व्योम *out;
 
 	out = kvzalloc(outlen, GFP_KERNEL);
-	if (!out)
-		return -ENOMEM;
+	अगर (!out)
+		वापस -ENOMEM;
 
-	memset(values, 0, sizeof(*values) * num_counters);
+	स_रखो(values, 0, माप(*values) * num_counters);
 
 	spin_lock(&lag_lock);
 	ldev = mlx5_lag_dev_get(dev);
-	if (ldev && __mlx5_lag_is_active(ldev)) {
+	अगर (ldev && __mlx5_lag_is_active(ldev)) अणु
 		num_ports = MLX5_MAX_PORTS;
 		mdev[MLX5_LAG_P1] = ldev->pf[MLX5_LAG_P1].dev;
 		mdev[MLX5_LAG_P2] = ldev->pf[MLX5_LAG_P2].dev;
-	} else {
+	पूर्ण अन्यथा अणु
 		num_ports = 1;
 		mdev[MLX5_LAG_P1] = dev;
-	}
+	पूर्ण
 	spin_unlock(&lag_lock);
 
-	for (i = 0; i < num_ports; ++i) {
-		u32 in[MLX5_ST_SZ_DW(query_cong_statistics_in)] = {};
+	क्रम (i = 0; i < num_ports; ++i) अणु
+		u32 in[MLX5_ST_SZ_DW(query_cong_statistics_in)] = अणुपूर्ण;
 
 		MLX5_SET(query_cong_statistics_in, in, opcode,
 			 MLX5_CMD_OP_QUERY_CONG_STATISTICS);
 		ret = mlx5_cmd_exec_inout(mdev[i], query_cong_statistics, in,
 					  out);
-		if (ret)
-			goto free;
+		अगर (ret)
+			जाओ मुक्त;
 
-		for (j = 0; j < num_counters; ++j)
+		क्रम (j = 0; j < num_counters; ++j)
 			values[j] += be64_to_cpup((__be64 *)(out + offsets[j]));
-	}
+	पूर्ण
 
-free:
-	kvfree(out);
-	return ret;
-}
+मुक्त:
+	kvमुक्त(out);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(mlx5_lag_query_cong_counters);

@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * dsp_hwec.c:
- * builtin mISDN dsp pipeline element for enabling the hw echocanceller
+ * builtin mISDN dsp pipeline element क्रम enabling the hw echocanceller
  *
  * Copyright (C) 2007, Nadi Sarrar
  *
  * Nadi Sarrar <nadi@beronet.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/mISDNdsp.h>
-#include <linux/mISDNif.h>
-#include "core.h"
-#include "dsp.h"
-#include "dsp_hwec.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mISDNdsp.h>
+#समावेश <linux/mISDNअगर.h>
+#समावेश "core.h"
+#समावेश "dsp.h"
+#समावेश "dsp_hwec.h"
 
-static struct mISDN_dsp_element_arg args[] = {
-	{ "deftaps", "128", "Set the number of taps of cancellation." },
-};
+अटल काष्ठा mISDN_dsp_element_arg args[] = अणु
+	अणु "deftaps", "128", "Set the number of taps of cancellation." पूर्ण,
+पूर्ण;
 
-static struct mISDN_dsp_element dsp_hwec_p = {
+अटल काष्ठा mISDN_dsp_element dsp_hwec_p = अणु
 	.name = "hwec",
-	.new = NULL,
-	.free = NULL,
-	.process_tx = NULL,
-	.process_rx = NULL,
+	.new = शून्य,
+	.मुक्त = शून्य,
+	.process_tx = शून्य,
+	.process_rx = शून्य,
 	.num_args = ARRAY_SIZE(args),
 	.args = args,
-};
-struct mISDN_dsp_element *dsp_hwec = &dsp_hwec_p;
+पूर्ण;
+काष्ठा mISDN_dsp_element *dsp_hwec = &dsp_hwec_p;
 
-void dsp_hwec_enable(struct dsp *dsp, const char *arg)
-{
-	int deftaps = 128,
+व्योम dsp_hwec_enable(काष्ठा dsp *dsp, स्थिर अक्षर *arg)
+अणु
+	पूर्णांक deftaps = 128,
 		len;
-	struct mISDN_ctrl_req	cq;
+	काष्ठा mISDN_ctrl_req	cq;
 
-	if (!dsp) {
-		printk(KERN_ERR "%s: failed to enable hwec: dsp is NULL\n",
+	अगर (!dsp) अणु
+		prपूर्णांकk(KERN_ERR "%s: failed to enable hwec: dsp is NULL\n",
 		       __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!arg)
-		goto _do;
+	अगर (!arg)
+		जाओ _करो;
 
-	len = strlen(arg);
-	if (!len)
-		goto _do;
+	len = म_माप(arg);
+	अगर (!len)
+		जाओ _करो;
 
-	{
-		char *dup, *tok, *name, *val;
-		int tmp;
+	अणु
+		अक्षर *dup, *tok, *name, *val;
+		पूर्णांक पंचांगp;
 
 		dup = kstrdup(arg, GFP_ATOMIC);
-		if (!dup)
-			return;
+		अगर (!dup)
+			वापस;
 
-		while ((tok = strsep(&dup, ","))) {
-			if (!strlen(tok))
-				continue;
+		जबतक ((tok = strsep(&dup, ","))) अणु
+			अगर (!म_माप(tok))
+				जारी;
 			name = strsep(&tok, "=");
 			val = tok;
 
-			if (!val)
-				continue;
+			अगर (!val)
+				जारी;
 
-			if (!strcmp(name, "deftaps")) {
-				if (sscanf(val, "%d", &tmp) == 1)
-					deftaps = tmp;
-			}
-		}
+			अगर (!म_भेद(name, "deftaps")) अणु
+				अगर (माला_पूछो(val, "%d", &पंचांगp) == 1)
+					deftaps = पंचांगp;
+			पूर्ण
+		पूर्ण
 
-		kfree(dup);
-	}
+		kमुक्त(dup);
+	पूर्ण
 
-_do:
-	printk(KERN_DEBUG "%s: enabling hwec with deftaps=%d\n",
+_करो:
+	prपूर्णांकk(KERN_DEBUG "%s: enabling hwec with deftaps=%d\n",
 	       __func__, deftaps);
-	memset(&cq, 0, sizeof(cq));
+	स_रखो(&cq, 0, माप(cq));
 	cq.op = MISDN_CTRL_HFC_ECHOCAN_ON;
 	cq.p1 = deftaps;
-	if (!dsp->ch.peer->ctrl(&dsp->ch, CONTROL_CHANNEL, &cq)) {
-		printk(KERN_DEBUG "%s: CONTROL_CHANNEL failed\n",
+	अगर (!dsp->ch.peer->ctrl(&dsp->ch, CONTROL_CHANNEL, &cq)) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: CONTROL_CHANNEL failed\n",
 		       __func__);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-void dsp_hwec_disable(struct dsp *dsp)
-{
-	struct mISDN_ctrl_req	cq;
+व्योम dsp_hwec_disable(काष्ठा dsp *dsp)
+अणु
+	काष्ठा mISDN_ctrl_req	cq;
 
-	if (!dsp) {
-		printk(KERN_ERR "%s: failed to disable hwec: dsp is NULL\n",
+	अगर (!dsp) अणु
+		prपूर्णांकk(KERN_ERR "%s: failed to disable hwec: dsp is NULL\n",
 		       __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	printk(KERN_DEBUG "%s: disabling hwec\n", __func__);
-	memset(&cq, 0, sizeof(cq));
+	prपूर्णांकk(KERN_DEBUG "%s: disabling hwec\n", __func__);
+	स_रखो(&cq, 0, माप(cq));
 	cq.op = MISDN_CTRL_HFC_ECHOCAN_OFF;
-	if (!dsp->ch.peer->ctrl(&dsp->ch, CONTROL_CHANNEL, &cq)) {
-		printk(KERN_DEBUG "%s: CONTROL_CHANNEL failed\n",
+	अगर (!dsp->ch.peer->ctrl(&dsp->ch, CONTROL_CHANNEL, &cq)) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: CONTROL_CHANNEL failed\n",
 		       __func__);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-int dsp_hwec_init(void)
-{
-	mISDN_dsp_element_register(dsp_hwec);
+पूर्णांक dsp_hwec_init(व्योम)
+अणु
+	mISDN_dsp_element_रेजिस्टर(dsp_hwec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dsp_hwec_exit(void)
-{
-	mISDN_dsp_element_unregister(dsp_hwec);
-}
+व्योम dsp_hwec_निकास(व्योम)
+अणु
+	mISDN_dsp_element_unरेजिस्टर(dsp_hwec);
+पूर्ण

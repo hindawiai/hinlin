@@ -1,213 +1,214 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/virtio.h>
-#include <linux/spinlock.h>
-#include <linux/virtio_config.h>
-#include <linux/module.h>
-#include <linux/idr.h>
-#include <uapi/linux/virtio_ids.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/virtपन.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/virtio_config.h>
+#समावेश <linux/module.h>
+#समावेश <linux/idr.h>
+#समावेश <uapi/linux/virtio_ids.h>
 
-/* Unique numbering for virtio devices. */
-static DEFINE_IDA(virtio_index_ida);
+/* Unique numbering क्रम virtio devices. */
+अटल DEFINE_IDA(virtio_index_ida);
 
-static ssize_t device_show(struct device *_d,
-			   struct device_attribute *attr, char *buf)
-{
-	struct virtio_device *dev = dev_to_virtio(_d);
-	return sprintf(buf, "0x%04x\n", dev->id.device);
-}
-static DEVICE_ATTR_RO(device);
+अटल sमाप_प्रकार device_show(काष्ठा device *_d,
+			   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा virtio_device *dev = dev_to_virtio(_d);
+	वापस प्र_लिखो(buf, "0x%04x\n", dev->id.device);
+पूर्ण
+अटल DEVICE_ATTR_RO(device);
 
-static ssize_t vendor_show(struct device *_d,
-			   struct device_attribute *attr, char *buf)
-{
-	struct virtio_device *dev = dev_to_virtio(_d);
-	return sprintf(buf, "0x%04x\n", dev->id.vendor);
-}
-static DEVICE_ATTR_RO(vendor);
+अटल sमाप_प्रकार venकरोr_show(काष्ठा device *_d,
+			   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा virtio_device *dev = dev_to_virtio(_d);
+	वापस प्र_लिखो(buf, "0x%04x\n", dev->id.venकरोr);
+पूर्ण
+अटल DEVICE_ATTR_RO(venकरोr);
 
-static ssize_t status_show(struct device *_d,
-			   struct device_attribute *attr, char *buf)
-{
-	struct virtio_device *dev = dev_to_virtio(_d);
-	return sprintf(buf, "0x%08x\n", dev->config->get_status(dev));
-}
-static DEVICE_ATTR_RO(status);
+अटल sमाप_प्रकार status_show(काष्ठा device *_d,
+			   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा virtio_device *dev = dev_to_virtio(_d);
+	वापस प्र_लिखो(buf, "0x%08x\n", dev->config->get_status(dev));
+पूर्ण
+अटल DEVICE_ATTR_RO(status);
 
-static ssize_t modalias_show(struct device *_d,
-			     struct device_attribute *attr, char *buf)
-{
-	struct virtio_device *dev = dev_to_virtio(_d);
-	return sprintf(buf, "virtio:d%08Xv%08X\n",
-		       dev->id.device, dev->id.vendor);
-}
-static DEVICE_ATTR_RO(modalias);
+अटल sमाप_प्रकार modalias_show(काष्ठा device *_d,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा virtio_device *dev = dev_to_virtio(_d);
+	वापस प्र_लिखो(buf, "virtio:d%08Xv%08X\n",
+		       dev->id.device, dev->id.venकरोr);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static ssize_t features_show(struct device *_d,
-			     struct device_attribute *attr, char *buf)
-{
-	struct virtio_device *dev = dev_to_virtio(_d);
-	unsigned int i;
-	ssize_t len = 0;
+अटल sमाप_प्रकार features_show(काष्ठा device *_d,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा virtio_device *dev = dev_to_virtio(_d);
+	अचिन्हित पूर्णांक i;
+	sमाप_प्रकार len = 0;
 
 	/* We actually represent this as a bitstring, as it could be
 	 * arbitrary length in future. */
-	for (i = 0; i < sizeof(dev->features)*8; i++)
-		len += sprintf(buf+len, "%c",
+	क्रम (i = 0; i < माप(dev->features)*8; i++)
+		len += प्र_लिखो(buf+len, "%c",
 			       __virtio_test_bit(dev, i) ? '1' : '0');
-	len += sprintf(buf+len, "\n");
-	return len;
-}
-static DEVICE_ATTR_RO(features);
+	len += प्र_लिखो(buf+len, "\n");
+	वापस len;
+पूर्ण
+अटल DEVICE_ATTR_RO(features);
 
-static struct attribute *virtio_dev_attrs[] = {
+अटल काष्ठा attribute *virtio_dev_attrs[] = अणु
 	&dev_attr_device.attr,
-	&dev_attr_vendor.attr,
+	&dev_attr_venकरोr.attr,
 	&dev_attr_status.attr,
 	&dev_attr_modalias.attr,
 	&dev_attr_features.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(virtio_dev);
 
-static inline int virtio_id_match(const struct virtio_device *dev,
-				  const struct virtio_device_id *id)
-{
-	if (id->device != dev->id.device && id->device != VIRTIO_DEV_ANY_ID)
-		return 0;
+अटल अंतरभूत पूर्णांक virtio_id_match(स्थिर काष्ठा virtio_device *dev,
+				  स्थिर काष्ठा virtio_device_id *id)
+अणु
+	अगर (id->device != dev->id.device && id->device != VIRTIO_DEV_ANY_ID)
+		वापस 0;
 
-	return id->vendor == VIRTIO_DEV_ANY_ID || id->vendor == dev->id.vendor;
-}
+	वापस id->venकरोr == VIRTIO_DEV_ANY_ID || id->venकरोr == dev->id.venकरोr;
+पूर्ण
 
 /* This looks through all the IDs a driver claims to support.  If any of them
- * match, we return 1 and the kernel will call virtio_dev_probe(). */
-static int virtio_dev_match(struct device *_dv, struct device_driver *_dr)
-{
-	unsigned int i;
-	struct virtio_device *dev = dev_to_virtio(_dv);
-	const struct virtio_device_id *ids;
+ * match, we वापस 1 and the kernel will call virtio_dev_probe(). */
+अटल पूर्णांक virtio_dev_match(काष्ठा device *_dv, काष्ठा device_driver *_dr)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा virtio_device *dev = dev_to_virtio(_dv);
+	स्थिर काष्ठा virtio_device_id *ids;
 
 	ids = drv_to_virtio(_dr)->id_table;
-	for (i = 0; ids[i].device; i++)
-		if (virtio_id_match(dev, &ids[i]))
-			return 1;
-	return 0;
-}
+	क्रम (i = 0; ids[i].device; i++)
+		अगर (virtio_id_match(dev, &ids[i]))
+			वापस 1;
+	वापस 0;
+पूर्ण
 
-static int virtio_uevent(struct device *_dv, struct kobj_uevent_env *env)
-{
-	struct virtio_device *dev = dev_to_virtio(_dv);
+अटल पूर्णांक virtio_uevent(काष्ठा device *_dv, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा virtio_device *dev = dev_to_virtio(_dv);
 
-	return add_uevent_var(env, "MODALIAS=virtio:d%08Xv%08X",
-			      dev->id.device, dev->id.vendor);
-}
+	वापस add_uevent_var(env, "MODALIAS=virtio:d%08Xv%08X",
+			      dev->id.device, dev->id.venकरोr);
+पूर्ण
 
-void virtio_check_driver_offered_feature(const struct virtio_device *vdev,
-					 unsigned int fbit)
-{
-	unsigned int i;
-	struct virtio_driver *drv = drv_to_virtio(vdev->dev.driver);
+व्योम virtio_check_driver_offered_feature(स्थिर काष्ठा virtio_device *vdev,
+					 अचिन्हित पूर्णांक fbit)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा virtio_driver *drv = drv_to_virtio(vdev->dev.driver);
 
-	for (i = 0; i < drv->feature_table_size; i++)
-		if (drv->feature_table[i] == fbit)
-			return;
+	क्रम (i = 0; i < drv->feature_table_size; i++)
+		अगर (drv->feature_table[i] == fbit)
+			वापस;
 
-	if (drv->feature_table_legacy) {
-		for (i = 0; i < drv->feature_table_size_legacy; i++)
-			if (drv->feature_table_legacy[i] == fbit)
-				return;
-	}
+	अगर (drv->feature_table_legacy) अणु
+		क्रम (i = 0; i < drv->feature_table_size_legacy; i++)
+			अगर (drv->feature_table_legacy[i] == fbit)
+				वापस;
+	पूर्ण
 
 	BUG();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(virtio_check_driver_offered_feature);
 
-static void __virtio_config_changed(struct virtio_device *dev)
-{
-	struct virtio_driver *drv = drv_to_virtio(dev->dev.driver);
+अटल व्योम __virtio_config_changed(काष्ठा virtio_device *dev)
+अणु
+	काष्ठा virtio_driver *drv = drv_to_virtio(dev->dev.driver);
 
-	if (!dev->config_enabled)
+	अगर (!dev->config_enabled)
 		dev->config_change_pending = true;
-	else if (drv && drv->config_changed)
+	अन्यथा अगर (drv && drv->config_changed)
 		drv->config_changed(dev);
-}
+पूर्ण
 
-void virtio_config_changed(struct virtio_device *dev)
-{
-	unsigned long flags;
+व्योम virtio_config_changed(काष्ठा virtio_device *dev)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->config_lock, flags);
 	__virtio_config_changed(dev);
 	spin_unlock_irqrestore(&dev->config_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(virtio_config_changed);
 
-static void virtio_config_disable(struct virtio_device *dev)
-{
+अटल व्योम virtio_config_disable(काष्ठा virtio_device *dev)
+अणु
 	spin_lock_irq(&dev->config_lock);
 	dev->config_enabled = false;
 	spin_unlock_irq(&dev->config_lock);
-}
+पूर्ण
 
-static void virtio_config_enable(struct virtio_device *dev)
-{
+अटल व्योम virtio_config_enable(काष्ठा virtio_device *dev)
+अणु
 	spin_lock_irq(&dev->config_lock);
 	dev->config_enabled = true;
-	if (dev->config_change_pending)
+	अगर (dev->config_change_pending)
 		__virtio_config_changed(dev);
 	dev->config_change_pending = false;
 	spin_unlock_irq(&dev->config_lock);
-}
+पूर्ण
 
-void virtio_add_status(struct virtio_device *dev, unsigned int status)
-{
+व्योम virtio_add_status(काष्ठा virtio_device *dev, अचिन्हित पूर्णांक status)
+अणु
 	might_sleep();
 	dev->config->set_status(dev, dev->config->get_status(dev) | status);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(virtio_add_status);
 
-int virtio_finalize_features(struct virtio_device *dev)
-{
-	int ret = dev->config->finalize_features(dev);
-	unsigned status;
+पूर्णांक virtio_finalize_features(काष्ठा virtio_device *dev)
+अणु
+	पूर्णांक ret = dev->config->finalize_features(dev);
+	अचिन्हित status;
 
 	might_sleep();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = arch_has_restricted_virtio_memory_access();
-	if (ret) {
-		if (!virtio_has_feature(dev, VIRTIO_F_VERSION_1)) {
+	अगर (ret) अणु
+		अगर (!virtio_has_feature(dev, VIRTIO_F_VERSION_1)) अणु
 			dev_warn(&dev->dev,
 				 "device must provide VIRTIO_F_VERSION_1\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		if (!virtio_has_feature(dev, VIRTIO_F_ACCESS_PLATFORM)) {
+		अगर (!virtio_has_feature(dev, VIRTIO_F_ACCESS_PLATFORM)) अणु
 			dev_warn(&dev->dev,
 				 "device must provide VIRTIO_F_ACCESS_PLATFORM\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	if (!virtio_has_feature(dev, VIRTIO_F_VERSION_1))
-		return 0;
+	अगर (!virtio_has_feature(dev, VIRTIO_F_VERSION_1))
+		वापस 0;
 
 	virtio_add_status(dev, VIRTIO_CONFIG_S_FEATURES_OK);
 	status = dev->config->get_status(dev);
-	if (!(status & VIRTIO_CONFIG_S_FEATURES_OK)) {
+	अगर (!(status & VIRTIO_CONFIG_S_FEATURES_OK)) अणु
 		dev_err(&dev->dev, "virtio: device refuses features: %x\n",
 			status);
-		return -ENODEV;
-	}
-	return 0;
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(virtio_finalize_features);
 
-static int virtio_dev_probe(struct device *_d)
-{
-	int err, i;
-	struct virtio_device *dev = dev_to_virtio(_d);
-	struct virtio_driver *drv = drv_to_virtio(dev->dev.driver);
+अटल पूर्णांक virtio_dev_probe(काष्ठा device *_d)
+अणु
+	पूर्णांक err, i;
+	काष्ठा virtio_device *dev = dev_to_virtio(_d);
+	काष्ठा virtio_driver *drv = drv_to_virtio(dev->dev.driver);
 	u64 device_features;
 	u64 driver_features;
 	u64 driver_features_legacy;
@@ -220,125 +221,125 @@ static int virtio_dev_probe(struct device *_d)
 
 	/* Figure out what features the driver supports. */
 	driver_features = 0;
-	for (i = 0; i < drv->feature_table_size; i++) {
-		unsigned int f = drv->feature_table[i];
+	क्रम (i = 0; i < drv->feature_table_size; i++) अणु
+		अचिन्हित पूर्णांक f = drv->feature_table[i];
 		BUG_ON(f >= 64);
 		driver_features |= (1ULL << f);
-	}
+	पूर्ण
 
-	/* Some drivers have a separate feature table for virtio v1.0 */
-	if (drv->feature_table_legacy) {
+	/* Some drivers have a separate feature table क्रम virtio v1.0 */
+	अगर (drv->feature_table_legacy) अणु
 		driver_features_legacy = 0;
-		for (i = 0; i < drv->feature_table_size_legacy; i++) {
-			unsigned int f = drv->feature_table_legacy[i];
+		क्रम (i = 0; i < drv->feature_table_size_legacy; i++) अणु
+			अचिन्हित पूर्णांक f = drv->feature_table_legacy[i];
 			BUG_ON(f >= 64);
 			driver_features_legacy |= (1ULL << f);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		driver_features_legacy = driver_features;
-	}
+	पूर्ण
 
-	if (device_features & (1ULL << VIRTIO_F_VERSION_1))
+	अगर (device_features & (1ULL << VIRTIO_F_VERSION_1))
 		dev->features = driver_features & device_features;
-	else
+	अन्यथा
 		dev->features = driver_features_legacy & device_features;
 
 	/* Transport features always preserved to pass to finalize_features. */
-	for (i = VIRTIO_TRANSPORT_F_START; i < VIRTIO_TRANSPORT_F_END; i++)
-		if (device_features & (1ULL << i))
+	क्रम (i = VIRTIO_TRANSPORT_F_START; i < VIRTIO_TRANSPORT_F_END; i++)
+		अगर (device_features & (1ULL << i))
 			__virtio_set_bit(dev, i);
 
-	if (drv->validate) {
+	अगर (drv->validate) अणु
 		err = drv->validate(dev);
-		if (err)
-			goto err;
-	}
+		अगर (err)
+			जाओ err;
+	पूर्ण
 
 	err = virtio_finalize_features(dev);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
 	err = drv->probe(dev);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
-	/* If probe didn't do it, mark device DRIVER_OK ourselves. */
-	if (!(dev->config->get_status(dev) & VIRTIO_CONFIG_S_DRIVER_OK))
-		virtio_device_ready(dev);
+	/* If probe didn't करो it, mark device DRIVER_OK ourselves. */
+	अगर (!(dev->config->get_status(dev) & VIRTIO_CONFIG_S_DRIVER_OK))
+		virtio_device_पढ़ोy(dev);
 
-	if (drv->scan)
+	अगर (drv->scan)
 		drv->scan(dev);
 
 	virtio_config_enable(dev);
 
-	return 0;
+	वापस 0;
 err:
 	virtio_add_status(dev, VIRTIO_CONFIG_S_FAILED);
-	return err;
+	वापस err;
 
-}
+पूर्ण
 
-static int virtio_dev_remove(struct device *_d)
-{
-	struct virtio_device *dev = dev_to_virtio(_d);
-	struct virtio_driver *drv = drv_to_virtio(dev->dev.driver);
+अटल पूर्णांक virtio_dev_हटाओ(काष्ठा device *_d)
+अणु
+	काष्ठा virtio_device *dev = dev_to_virtio(_d);
+	काष्ठा virtio_driver *drv = drv_to_virtio(dev->dev.driver);
 
 	virtio_config_disable(dev);
 
-	drv->remove(dev);
+	drv->हटाओ(dev);
 
 	/* Driver should have reset device. */
 	WARN_ON_ONCE(dev->config->get_status(dev));
 
 	/* Acknowledge the device's existence again. */
 	virtio_add_status(dev, VIRTIO_CONFIG_S_ACKNOWLEDGE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct bus_type virtio_bus = {
+अटल काष्ठा bus_type virtio_bus = अणु
 	.name  = "virtio",
 	.match = virtio_dev_match,
 	.dev_groups = virtio_dev_groups,
 	.uevent = virtio_uevent,
 	.probe = virtio_dev_probe,
-	.remove = virtio_dev_remove,
-};
+	.हटाओ = virtio_dev_हटाओ,
+पूर्ण;
 
-int register_virtio_driver(struct virtio_driver *driver)
-{
+पूर्णांक रेजिस्टर_virtio_driver(काष्ठा virtio_driver *driver)
+अणु
 	/* Catch this early. */
 	BUG_ON(driver->feature_table_size && !driver->feature_table);
 	driver->driver.bus = &virtio_bus;
-	return driver_register(&driver->driver);
-}
-EXPORT_SYMBOL_GPL(register_virtio_driver);
+	वापस driver_रेजिस्टर(&driver->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_virtio_driver);
 
-void unregister_virtio_driver(struct virtio_driver *driver)
-{
-	driver_unregister(&driver->driver);
-}
-EXPORT_SYMBOL_GPL(unregister_virtio_driver);
+व्योम unरेजिस्टर_virtio_driver(काष्ठा virtio_driver *driver)
+अणु
+	driver_unरेजिस्टर(&driver->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_virtio_driver);
 
 /**
- * register_virtio_device - register virtio device
- * @dev        : virtio device to be registered
+ * रेजिस्टर_virtio_device - रेजिस्टर virtio device
+ * @dev        : virtio device to be रेजिस्टरed
  *
- * On error, the caller must call put_device on &@dev->dev (and not kfree),
+ * On error, the caller must call put_device on &@dev->dev (and not kमुक्त),
  * as another code path may have obtained a reference to @dev.
  *
  * Returns: 0 on suceess, -error on failure
  */
-int register_virtio_device(struct virtio_device *dev)
-{
-	int err;
+पूर्णांक रेजिस्टर_virtio_device(काष्ठा virtio_device *dev)
+अणु
+	पूर्णांक err;
 
 	dev->dev.bus = &virtio_bus;
 	device_initialize(&dev->dev);
 
 	/* Assign a unique device index and hence name. */
 	err = ida_simple_get(&virtio_index_ida, 0, 0, GFP_KERNEL);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
 	dev->index = err;
 	dev_set_name(&dev->dev, "virtio%u", dev->index);
@@ -347,7 +348,7 @@ int register_virtio_device(struct virtio_device *dev)
 	dev->config_enabled = false;
 	dev->config_change_pending = false;
 
-	/* We always start by resetting the device, in case a previous
+	/* We always start by resetting the device, in हाल a previous
 	 * driver messed it up.  This also tests that code path a little. */
 	dev->config->reset(dev);
 
@@ -357,110 +358,110 @@ int register_virtio_device(struct virtio_device *dev)
 	INIT_LIST_HEAD(&dev->vqs);
 
 	/*
-	 * device_add() causes the bus infrastructure to look for a matching
+	 * device_add() causes the bus infraकाष्ठाure to look क्रम a matching
 	 * driver.
 	 */
 	err = device_add(&dev->dev);
-	if (err)
-		ida_simple_remove(&virtio_index_ida, dev->index);
+	अगर (err)
+		ida_simple_हटाओ(&virtio_index_ida, dev->index);
 out:
-	if (err)
+	अगर (err)
 		virtio_add_status(dev, VIRTIO_CONFIG_S_FAILED);
-	return err;
-}
-EXPORT_SYMBOL_GPL(register_virtio_device);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_virtio_device);
 
-bool is_virtio_device(struct device *dev)
-{
-	return dev->bus == &virtio_bus;
-}
+bool is_virtio_device(काष्ठा device *dev)
+अणु
+	वापस dev->bus == &virtio_bus;
+पूर्ण
 EXPORT_SYMBOL_GPL(is_virtio_device);
 
-void unregister_virtio_device(struct virtio_device *dev)
-{
-	int index = dev->index; /* save for after device release */
+व्योम unरेजिस्टर_virtio_device(काष्ठा virtio_device *dev)
+अणु
+	पूर्णांक index = dev->index; /* save क्रम after device release */
 
-	device_unregister(&dev->dev);
-	ida_simple_remove(&virtio_index_ida, index);
-}
-EXPORT_SYMBOL_GPL(unregister_virtio_device);
+	device_unरेजिस्टर(&dev->dev);
+	ida_simple_हटाओ(&virtio_index_ida, index);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_virtio_device);
 
-#ifdef CONFIG_PM_SLEEP
-int virtio_device_freeze(struct virtio_device *dev)
-{
-	struct virtio_driver *drv = drv_to_virtio(dev->dev.driver);
+#अगर_घोषित CONFIG_PM_SLEEP
+पूर्णांक virtio_device_मुक्तze(काष्ठा virtio_device *dev)
+अणु
+	काष्ठा virtio_driver *drv = drv_to_virtio(dev->dev.driver);
 
 	virtio_config_disable(dev);
 
 	dev->failed = dev->config->get_status(dev) & VIRTIO_CONFIG_S_FAILED;
 
-	if (drv && drv->freeze)
-		return drv->freeze(dev);
+	अगर (drv && drv->मुक्तze)
+		वापस drv->मुक्तze(dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(virtio_device_freeze);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(virtio_device_मुक्तze);
 
-int virtio_device_restore(struct virtio_device *dev)
-{
-	struct virtio_driver *drv = drv_to_virtio(dev->dev.driver);
-	int ret;
+पूर्णांक virtio_device_restore(काष्ठा virtio_device *dev)
+अणु
+	काष्ठा virtio_driver *drv = drv_to_virtio(dev->dev.driver);
+	पूर्णांक ret;
 
-	/* We always start by resetting the device, in case a previous
+	/* We always start by resetting the device, in हाल a previous
 	 * driver messed it up. */
 	dev->config->reset(dev);
 
 	/* Acknowledge that we've seen the device. */
 	virtio_add_status(dev, VIRTIO_CONFIG_S_ACKNOWLEDGE);
 
-	/* Maybe driver failed before freeze.
-	 * Restore the failed status, for debugging. */
-	if (dev->failed)
+	/* Maybe driver failed beक्रमe मुक्तze.
+	 * Restore the failed status, क्रम debugging. */
+	अगर (dev->failed)
 		virtio_add_status(dev, VIRTIO_CONFIG_S_FAILED);
 
-	if (!drv)
-		return 0;
+	अगर (!drv)
+		वापस 0;
 
 	/* We have a driver! */
 	virtio_add_status(dev, VIRTIO_CONFIG_S_DRIVER);
 
 	ret = virtio_finalize_features(dev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	if (drv->restore) {
+	अगर (drv->restore) अणु
 		ret = drv->restore(dev);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
 	/* Finally, tell the device we're all set */
 	virtio_add_status(dev, VIRTIO_CONFIG_S_DRIVER_OK);
 
 	virtio_config_enable(dev);
 
-	return 0;
+	वापस 0;
 
 err:
 	virtio_add_status(dev, VIRTIO_CONFIG_S_FAILED);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(virtio_device_restore);
-#endif
+#पूर्ण_अगर
 
-static int virtio_init(void)
-{
-	if (bus_register(&virtio_bus) != 0)
+अटल पूर्णांक virtio_init(व्योम)
+अणु
+	अगर (bus_रेजिस्टर(&virtio_bus) != 0)
 		panic("virtio bus registration failed");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit virtio_exit(void)
-{
-	bus_unregister(&virtio_bus);
+अटल व्योम __निकास virtio_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&virtio_bus);
 	ida_destroy(&virtio_index_ida);
-}
+पूर्ण
 core_initcall(virtio_init);
-module_exit(virtio_exit);
+module_निकास(virtio_निकास);
 
 MODULE_LICENSE("GPL");

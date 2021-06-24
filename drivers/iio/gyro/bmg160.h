@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BMG160_H_
-#define BMG160_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BMG160_H_
+#घोषणा BMG160_H_
 
-extern const struct dev_pm_ops bmg160_pm_ops;
+बाह्य स्थिर काष्ठा dev_pm_ops bmg160_pm_ops;
 
-int bmg160_core_probe(struct device *dev, struct regmap *regmap, int irq,
-		      const char *name);
-void bmg160_core_remove(struct device *dev);
+पूर्णांक bmg160_core_probe(काष्ठा device *dev, काष्ठा regmap *regmap, पूर्णांक irq,
+		      स्थिर अक्षर *name);
+व्योम bmg160_core_हटाओ(काष्ठा device *dev);
 
-#endif  /* BMG160_H_ */
+#पूर्ण_अगर  /* BMG160_H_ */

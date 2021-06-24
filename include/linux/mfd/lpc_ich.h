@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  linux/drivers/mfd/lpc_ich.h
  *
  *  Copyright (c) 2012 Extreme Engineering Solution, Inc.
  *  Author: Aaron Sierra <asierra@xes-inc.com>
  */
-#ifndef LPC_ICH_H
-#define LPC_ICH_H
+#अगर_अघोषित LPC_ICH_H
+#घोषणा LPC_ICH_H
 
-#include <linux/platform_data/x86/intel-spi.h>
+#समावेश <linux/platक्रमm_data/x86/पूर्णांकel-spi.h>
 
 /* GPIO resources */
-#define ICH_RES_GPIO	0
-#define ICH_RES_GPE0	1
+#घोषणा ICH_RES_GPIO	0
+#घोषणा ICH_RES_GPE0	1
 
 /* GPIO compatibility */
-enum {
+क्रमागत अणु
 	ICH_I3100_GPIO,
 	ICH_V5_GPIO,
 	ICH_V6_GPIO,
@@ -24,14 +25,14 @@ enum {
 	ICH_V10CORP_GPIO,
 	ICH_V10CONS_GPIO,
 	AVOTON_GPIO,
-};
+पूर्ण;
 
-struct lpc_ich_info {
-	char name[32];
-	unsigned int iTCO_version;
-	unsigned int gpio_version;
-	enum intel_spi_type spi_type;
+काष्ठा lpc_ich_info अणु
+	अक्षर name[32];
+	अचिन्हित पूर्णांक iTCO_version;
+	अचिन्हित पूर्णांक gpio_version;
+	क्रमागत पूर्णांकel_spi_type spi_type;
 	u8 use_gpio;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * tegra_pcm.c - Tegra PCM driver
  *
@@ -15,16 +16,16 @@
  * Iliyan Malchev <malchev@google.com>
  */
 
-#include <linux/module.h>
-#include <linux/dma-mapping.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/dmaengine_pcm.h>
-#include "tegra_pcm.h"
+#समावेश <linux/module.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/dmaengine_pcm.h>
+#समावेश "tegra_pcm.h"
 
-static const struct snd_pcm_hardware tegra_pcm_hardware = {
+अटल स्थिर काष्ठा snd_pcm_hardware tegra_pcm_hardware = अणु
 	.info			= SNDRV_PCM_INFO_MMAP |
 				  SNDRV_PCM_INFO_MMAP_VALID |
 				  SNDRV_PCM_INFO_INTERLEAVED,
@@ -33,268 +34,268 @@ static const struct snd_pcm_hardware tegra_pcm_hardware = {
 	.periods_min		= 2,
 	.periods_max		= 8,
 	.buffer_bytes_max	= PAGE_SIZE * 8,
-	.fifo_size		= 4,
-};
+	.fअगरo_size		= 4,
+पूर्ण;
 
-static const struct snd_dmaengine_pcm_config tegra_dmaengine_pcm_config = {
+अटल स्थिर काष्ठा snd_dmaengine_pcm_config tegra_dmaengine_pcm_config = अणु
 	.pcm_hardware = &tegra_pcm_hardware,
 	.prepare_slave_config = snd_dmaengine_pcm_prepare_slave_config,
-	.prealloc_buffer_size = PAGE_SIZE * 8,
-};
+	.pपुनः_स्मृति_buffer_size = PAGE_SIZE * 8,
+पूर्ण;
 
-int tegra_pcm_platform_register(struct device *dev)
-{
-	return snd_dmaengine_pcm_register(dev, &tegra_dmaengine_pcm_config, 0);
-}
-EXPORT_SYMBOL_GPL(tegra_pcm_platform_register);
+पूर्णांक tegra_pcm_platक्रमm_रेजिस्टर(काष्ठा device *dev)
+अणु
+	वापस snd_dmaengine_pcm_रेजिस्टर(dev, &tegra_dmaengine_pcm_config, 0);
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_pcm_platक्रमm_रेजिस्टर);
 
-int tegra_pcm_platform_register_with_chan_names(struct device *dev,
-				struct snd_dmaengine_pcm_config *config,
-				char *txdmachan, char *rxdmachan)
-{
+पूर्णांक tegra_pcm_platक्रमm_रेजिस्टर_with_chan_names(काष्ठा device *dev,
+				काष्ठा snd_dmaengine_pcm_config *config,
+				अक्षर *txdmachan, अक्षर *rxdmachan)
+अणु
 	*config = tegra_dmaengine_pcm_config;
 	config->dma_dev = dev->parent;
 	config->chan_names[0] = txdmachan;
 	config->chan_names[1] = rxdmachan;
 
-	return snd_dmaengine_pcm_register(dev, config, 0);
-}
-EXPORT_SYMBOL_GPL(tegra_pcm_platform_register_with_chan_names);
+	वापस snd_dmaengine_pcm_रेजिस्टर(dev, config, 0);
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_pcm_platक्रमm_रेजिस्टर_with_chan_names);
 
-void tegra_pcm_platform_unregister(struct device *dev)
-{
-	return snd_dmaengine_pcm_unregister(dev);
-}
-EXPORT_SYMBOL_GPL(tegra_pcm_platform_unregister);
+व्योम tegra_pcm_platक्रमm_unरेजिस्टर(काष्ठा device *dev)
+अणु
+	वापस snd_dmaengine_pcm_unरेजिस्टर(dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_pcm_platक्रमm_unरेजिस्टर);
 
-int tegra_pcm_open(struct snd_soc_component *component,
-		   struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_dmaengine_dai_dma_data *dmap;
-	struct dma_chan *chan;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	int ret;
+पूर्णांक tegra_pcm_खोलो(काष्ठा snd_soc_component *component,
+		   काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
+	काष्ठा snd_dmaengine_dai_dma_data *dmap;
+	काष्ठा dma_chan *chan;
+	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	पूर्णांक ret;
 
-	if (rtd->dai_link->no_pcm)
-		return 0;
+	अगर (rtd->dai_link->no_pcm)
+		वापस 0;
 
 	dmap = snd_soc_dai_get_dma_data(cpu_dai, substream);
 
 	/* Set HW params now that initialization is complete */
-	snd_soc_set_runtime_hwparams(substream, &tegra_pcm_hardware);
+	snd_soc_set_runसमय_hwparams(substream, &tegra_pcm_hardware);
 
 	/* Ensure period size is multiple of 8 */
-	ret = snd_pcm_hw_constraint_step(substream->runtime, 0,
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_step(substream->runसमय, 0,
 					 SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 0x8);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(rtd->dev, "failed to set constraint %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	chan = dma_request_slave_channel(cpu_dai->dev, dmap->chan_name);
-	if (!chan) {
+	अगर (!chan) अणु
 		dev_err(cpu_dai->dev,
 			"dmaengine request slave channel failed! (%s)\n",
 			dmap->chan_name);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = snd_dmaengine_pcm_open(substream, chan);
-	if (ret) {
+	ret = snd_dmaengine_pcm_खोलो(substream, chan);
+	अगर (ret) अणु
 		dev_err(rtd->dev,
 			"dmaengine pcm open failed with err %d (%s)\n", ret,
 			dmap->chan_name);
 
 		dma_release_channel(chan);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra_pcm_open);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_pcm_खोलो);
 
-int tegra_pcm_close(struct snd_soc_component *component,
-		    struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+पूर्णांक tegra_pcm_बंद(काष्ठा snd_soc_component *component,
+		    काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
 
-	if (rtd->dai_link->no_pcm)
-		return 0;
+	अगर (rtd->dai_link->no_pcm)
+		वापस 0;
 
-	snd_dmaengine_pcm_close_release_chan(substream);
+	snd_dmaengine_pcm_बंद_release_chan(substream);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra_pcm_close);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_pcm_बंद);
 
-int tegra_pcm_hw_params(struct snd_soc_component *component,
-			struct snd_pcm_substream *substream,
-			struct snd_pcm_hw_params *params)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_dmaengine_dai_dma_data *dmap;
-	struct dma_slave_config slave_config;
-	struct dma_chan *chan;
-	int ret;
+पूर्णांक tegra_pcm_hw_params(काष्ठा snd_soc_component *component,
+			काष्ठा snd_pcm_substream *substream,
+			काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
+	काष्ठा snd_dmaengine_dai_dma_data *dmap;
+	काष्ठा dma_slave_config slave_config;
+	काष्ठा dma_chan *chan;
+	पूर्णांक ret;
 
-	if (rtd->dai_link->no_pcm)
-		return 0;
+	अगर (rtd->dai_link->no_pcm)
+		वापस 0;
 
 	dmap = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0), substream);
-	if (!dmap)
-		return 0;
+	अगर (!dmap)
+		वापस 0;
 
 	chan = snd_dmaengine_pcm_get_chan(substream);
 
 	ret = snd_hwparams_to_dma_slave_config(substream, params,
 					       &slave_config);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(rtd->dev, "hw params config failed with err %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 		slave_config.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 		slave_config.dst_addr = dmap->addr;
 		slave_config.dst_maxburst = 8;
-	} else {
+	पूर्ण अन्यथा अणु
 		slave_config.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 		slave_config.src_addr = dmap->addr;
 		slave_config.src_maxburst = 8;
-	}
+	पूर्ण
 
 	ret = dmaengine_slave_config(chan, &slave_config);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(rtd->dev, "dma slave config failed with err %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
+	snd_pcm_set_runसमय_buffer(substream, &substream->dma_buffer);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra_pcm_hw_params);
 
-int tegra_pcm_hw_free(struct snd_soc_component *component,
-		      struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+पूर्णांक tegra_pcm_hw_मुक्त(काष्ठा snd_soc_component *component,
+		      काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
 
-	if (rtd->dai_link->no_pcm)
-		return 0;
+	अगर (rtd->dai_link->no_pcm)
+		वापस 0;
 
-	snd_pcm_set_runtime_buffer(substream, NULL);
+	snd_pcm_set_runसमय_buffer(substream, शून्य);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra_pcm_hw_free);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_pcm_hw_मुक्त);
 
-int tegra_pcm_mmap(struct snd_soc_component *component,
-		   struct snd_pcm_substream *substream,
-		   struct vm_area_struct *vma)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_pcm_runtime *runtime = substream->runtime;
+पूर्णांक tegra_pcm_mmap(काष्ठा snd_soc_component *component,
+		   काष्ठा snd_pcm_substream *substream,
+		   काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
-	if (rtd->dai_link->no_pcm)
-		return 0;
+	अगर (rtd->dai_link->no_pcm)
+		वापस 0;
 
-	return dma_mmap_wc(substream->pcm->card->dev, vma, runtime->dma_area,
-			   runtime->dma_addr, runtime->dma_bytes);
-}
+	वापस dma_mmap_wc(substream->pcm->card->dev, vma, runसमय->dma_area,
+			   runसमय->dma_addr, runसमय->dma_bytes);
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra_pcm_mmap);
 
-snd_pcm_uframes_t tegra_pcm_pointer(struct snd_soc_component *component,
-				    struct snd_pcm_substream *substream)
-{
-	return snd_dmaengine_pcm_pointer(substream);
-}
-EXPORT_SYMBOL_GPL(tegra_pcm_pointer);
+snd_pcm_uframes_t tegra_pcm_poपूर्णांकer(काष्ठा snd_soc_component *component,
+				    काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_dmaengine_pcm_poपूर्णांकer(substream);
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_pcm_poपूर्णांकer);
 
-static int tegra_pcm_preallocate_dma_buffer(struct snd_pcm *pcm, int stream,
-					    size_t size)
-{
-	struct snd_pcm_substream *substream = pcm->streams[stream].substream;
-	struct snd_dma_buffer *buf = &substream->dma_buffer;
+अटल पूर्णांक tegra_pcm_pपुनः_स्मृतिate_dma_buffer(काष्ठा snd_pcm *pcm, पूर्णांक stream,
+					    माप_प्रकार size)
+अणु
+	काष्ठा snd_pcm_substream *substream = pcm->streams[stream].substream;
+	काष्ठा snd_dma_buffer *buf = &substream->dma_buffer;
 
 	buf->area = dma_alloc_wc(pcm->card->dev, size, &buf->addr, GFP_KERNEL);
-	if (!buf->area)
-		return -ENOMEM;
+	अगर (!buf->area)
+		वापस -ENOMEM;
 
-	buf->private_data = NULL;
+	buf->निजी_data = शून्य;
 	buf->dev.type = SNDRV_DMA_TYPE_DEV;
 	buf->dev.dev = pcm->card->dev;
 	buf->bytes = size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tegra_pcm_deallocate_dma_buffer(struct snd_pcm *pcm, int stream)
-{
-	struct snd_pcm_substream *substream;
-	struct snd_dma_buffer *buf;
+अटल व्योम tegra_pcm_deallocate_dma_buffer(काष्ठा snd_pcm *pcm, पूर्णांक stream)
+अणु
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_dma_buffer *buf;
 
 	substream = pcm->streams[stream].substream;
-	if (!substream)
-		return;
+	अगर (!substream)
+		वापस;
 
 	buf = &substream->dma_buffer;
-	if (!buf->area)
-		return;
+	अगर (!buf->area)
+		वापस;
 
-	dma_free_wc(pcm->card->dev, buf->bytes, buf->area, buf->addr);
-	buf->area = NULL;
-}
+	dma_मुक्त_wc(pcm->card->dev, buf->bytes, buf->area, buf->addr);
+	buf->area = शून्य;
+पूर्ण
 
-static int tegra_pcm_dma_allocate(struct snd_soc_pcm_runtime *rtd,
-				  size_t size)
-{
-	struct snd_card *card = rtd->card->snd_card;
-	struct snd_pcm *pcm = rtd->pcm;
-	int ret;
+अटल पूर्णांक tegra_pcm_dma_allocate(काष्ठा snd_soc_pcm_runसमय *rtd,
+				  माप_प्रकार size)
+अणु
+	काष्ठा snd_card *card = rtd->card->snd_card;
+	काष्ठा snd_pcm *pcm = rtd->pcm;
+	पूर्णांक ret;
 
 	ret = dma_set_mask_and_coherent(card->dev, DMA_BIT_MASK(32));
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) {
-		ret = tegra_pcm_preallocate_dma_buffer(pcm,
+	अगर (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) अणु
+		ret = tegra_pcm_pपुनः_स्मृतिate_dma_buffer(pcm,
 			SNDRV_PCM_STREAM_PLAYBACK, size);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	if (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) {
-		ret = tegra_pcm_preallocate_dma_buffer(pcm,
+	अगर (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) अणु
+		ret = tegra_pcm_pपुनः_स्मृतिate_dma_buffer(pcm,
 			SNDRV_PCM_STREAM_CAPTURE, size);
-		if (ret)
-			goto err_free_play;
-	}
+		अगर (ret)
+			जाओ err_मुक्त_play;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_play:
+err_मुक्त_play:
 	tegra_pcm_deallocate_dma_buffer(pcm, SNDRV_PCM_STREAM_PLAYBACK);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tegra_pcm_construct(struct snd_soc_component *component,
-			struct snd_soc_pcm_runtime *rtd)
-{
-	return tegra_pcm_dma_allocate(rtd, tegra_pcm_hardware.buffer_bytes_max);
-}
-EXPORT_SYMBOL_GPL(tegra_pcm_construct);
+पूर्णांक tegra_pcm_स्थिरruct(काष्ठा snd_soc_component *component,
+			काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	वापस tegra_pcm_dma_allocate(rtd, tegra_pcm_hardware.buffer_bytes_max);
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_pcm_स्थिरruct);
 
-void tegra_pcm_destruct(struct snd_soc_component *component,
-			struct snd_pcm *pcm)
-{
+व्योम tegra_pcm_deकाष्ठा(काष्ठा snd_soc_component *component,
+			काष्ठा snd_pcm *pcm)
+अणु
 	tegra_pcm_deallocate_dma_buffer(pcm, SNDRV_PCM_STREAM_CAPTURE);
 	tegra_pcm_deallocate_dma_buffer(pcm, SNDRV_PCM_STREAM_PLAYBACK);
-}
-EXPORT_SYMBOL_GPL(tegra_pcm_destruct);
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_pcm_deकाष्ठा);
 
 MODULE_AUTHOR("Stephen Warren <swarren@nvidia.com>");
 MODULE_DESCRIPTION("Tegra PCM ASoC driver");

@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2015 MediaTek Inc.
  */
 
-#ifndef MTK_DRM_CRTC_H
-#define MTK_DRM_CRTC_H
+#अगर_अघोषित MTK_DRM_CRTC_H
+#घोषणा MTK_DRM_CRTC_H
 
-#include <drm/drm_crtc.h>
-#include "mtk_drm_ddp_comp.h"
-#include "mtk_drm_plane.h"
+#समावेश <drm/drm_crtc.h>
+#समावेश "mtk_drm_ddp_comp.h"
+#समावेश "mtk_drm_plane.h"
 
-#define MTK_LUT_SIZE	512
-#define MTK_MAX_BPC	10
-#define MTK_MIN_BPC	3
+#घोषणा MTK_LUT_SIZE	512
+#घोषणा MTK_MAX_BPC	10
+#घोषणा MTK_MIN_BPC	3
 
-void mtk_drm_crtc_commit(struct drm_crtc *crtc);
-int mtk_drm_crtc_create(struct drm_device *drm_dev,
-			const enum mtk_ddp_comp_id *path,
-			unsigned int path_len);
-int mtk_drm_crtc_plane_check(struct drm_crtc *crtc, struct drm_plane *plane,
-			     struct mtk_plane_state *state);
-void mtk_drm_crtc_async_update(struct drm_crtc *crtc, struct drm_plane *plane,
-			       struct drm_atomic_state *plane_state);
+व्योम mtk_drm_crtc_commit(काष्ठा drm_crtc *crtc);
+पूर्णांक mtk_drm_crtc_create(काष्ठा drm_device *drm_dev,
+			स्थिर क्रमागत mtk_ddp_comp_id *path,
+			अचिन्हित पूर्णांक path_len);
+पूर्णांक mtk_drm_crtc_plane_check(काष्ठा drm_crtc *crtc, काष्ठा drm_plane *plane,
+			     काष्ठा mtk_plane_state *state);
+व्योम mtk_drm_crtc_async_update(काष्ठा drm_crtc *crtc, काष्ठा drm_plane *plane,
+			       काष्ठा drm_atomic_state *plane_state);
 
-#endif /* MTK_DRM_CRTC_H */
+#पूर्ण_अगर /* MTK_DRM_CRTC_H */

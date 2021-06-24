@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * PPC4xx Prototypes and definitions
  *
  * Copyright 2008 DENX Software Engineering, Stefan Roese <sr@denx.de>
  */
 
-#ifndef __ASM_POWERPC_PPC4xx_H__
-#define __ASM_POWERPC_PPC4xx_H__
+#अगर_अघोषित __ASM_POWERPC_PPC4xx_H__
+#घोषणा __ASM_POWERPC_PPC4xx_H__
 
-extern void __noreturn ppc4xx_reset_system(char *cmd);
+बाह्य व्योम __noवापस ppc4xx_reset_प्रणाली(अक्षर *cmd);
 
-#endif /* __ASM_POWERPC_PPC4xx_H__ */
+#पूर्ण_अगर /* __ASM_POWERPC_PPC4xx_H__ */

@@ -1,147 +1,148 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_SWIOTLB_H
-#define __LINUX_SWIOTLB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_SWIOTLB_H
+#घोषणा __LINUX_SWIOTLB_H
 
-#include <linux/dma-direction.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/limits.h>
-#include <linux/spinlock.h>
+#समावेश <linux/dma-direction.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/spinlock.h>
 
-struct device;
-struct page;
-struct scatterlist;
+काष्ठा device;
+काष्ठा page;
+काष्ठा scatterlist;
 
-enum swiotlb_force {
+क्रमागत swiotlb_क्रमce अणु
 	SWIOTLB_NORMAL,		/* Default - depending on HW DMA mask etc. */
-	SWIOTLB_FORCE,		/* swiotlb=force */
-	SWIOTLB_NO_FORCE,	/* swiotlb=noforce */
-};
+	SWIOTLB_FORCE,		/* swiotlb=क्रमce */
+	SWIOTLB_NO_FORCE,	/* swiotlb=noक्रमce */
+पूर्ण;
 
 /*
- * Maximum allowable number of contiguous slabs to map,
- * must be a power of 2.  What is the appropriate value ?
- * The complexity of {map,unmap}_single is linearly dependent on this value.
+ * Maximum allowable number of contiguous sद_असल to map,
+ * must be a घातer of 2.  What is the appropriate value ?
+ * The complनिकासy of अणुmap,unmapपूर्ण_single is linearly dependent on this value.
  */
-#define IO_TLB_SEGSIZE	128
+#घोषणा IO_TLB_SEGSIZE	128
 
 /*
- * log of the size of each IO TLB slab.  The number of slabs is command line
+ * log of the size of each IO TLB slab.  The number of sद_असल is command line
  * controllable.
  */
-#define IO_TLB_SHIFT 11
-#define IO_TLB_SIZE (1 << IO_TLB_SHIFT)
+#घोषणा IO_TLB_SHIFT 11
+#घोषणा IO_TLB_SIZE (1 << IO_TLB_SHIFT)
 
-/* default to 64MB */
-#define IO_TLB_DEFAULT_SIZE (64UL<<20)
+/* शेष to 64MB */
+#घोषणा IO_TLB_DEFAULT_SIZE (64UL<<20)
 
-extern void swiotlb_init(int verbose);
-int swiotlb_init_with_tbl(char *tlb, unsigned long nslabs, int verbose);
-unsigned long swiotlb_size_or_default(void);
-extern int swiotlb_late_init_with_tbl(char *tlb, unsigned long nslabs);
-extern int swiotlb_late_init_with_default_size(size_t default_size);
-extern void __init swiotlb_update_mem_attributes(void);
+बाह्य व्योम swiotlb_init(पूर्णांक verbose);
+पूर्णांक swiotlb_init_with_tbl(अक्षर *tlb, अचिन्हित दीर्घ nsद_असल, पूर्णांक verbose);
+अचिन्हित दीर्घ swiotlb_size_or_शेष(व्योम);
+बाह्य पूर्णांक swiotlb_late_init_with_tbl(अक्षर *tlb, अचिन्हित दीर्घ nsद_असल);
+बाह्य पूर्णांक swiotlb_late_init_with_शेष_size(माप_प्रकार शेष_size);
+बाह्य व्योम __init swiotlb_update_mem_attributes(व्योम);
 
-phys_addr_t swiotlb_tbl_map_single(struct device *hwdev, phys_addr_t phys,
-		size_t mapping_size, size_t alloc_size,
-		enum dma_data_direction dir, unsigned long attrs);
+phys_addr_t swiotlb_tbl_map_single(काष्ठा device *hwdev, phys_addr_t phys,
+		माप_प्रकार mapping_size, माप_प्रकार alloc_size,
+		क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs);
 
-extern void swiotlb_tbl_unmap_single(struct device *hwdev,
+बाह्य व्योम swiotlb_tbl_unmap_single(काष्ठा device *hwdev,
 				     phys_addr_t tlb_addr,
-				     size_t mapping_size,
-				     enum dma_data_direction dir,
-				     unsigned long attrs);
+				     माप_प्रकार mapping_size,
+				     क्रमागत dma_data_direction dir,
+				     अचिन्हित दीर्घ attrs);
 
-void swiotlb_sync_single_for_device(struct device *dev, phys_addr_t tlb_addr,
-		size_t size, enum dma_data_direction dir);
-void swiotlb_sync_single_for_cpu(struct device *dev, phys_addr_t tlb_addr,
-		size_t size, enum dma_data_direction dir);
-dma_addr_t swiotlb_map(struct device *dev, phys_addr_t phys,
-		size_t size, enum dma_data_direction dir, unsigned long attrs);
+व्योम swiotlb_sync_single_क्रम_device(काष्ठा device *dev, phys_addr_t tlb_addr,
+		माप_प्रकार size, क्रमागत dma_data_direction dir);
+व्योम swiotlb_sync_single_क्रम_cpu(काष्ठा device *dev, phys_addr_t tlb_addr,
+		माप_प्रकार size, क्रमागत dma_data_direction dir);
+dma_addr_t swiotlb_map(काष्ठा device *dev, phys_addr_t phys,
+		माप_प्रकार size, क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs);
 
-#ifdef CONFIG_SWIOTLB
-extern enum swiotlb_force swiotlb_force;
+#अगर_घोषित CONFIG_SWIOTLB
+बाह्य क्रमागत swiotlb_क्रमce swiotlb_क्रमce;
 
 /**
- * struct io_tlb_mem - IO TLB Memory Pool Descriptor
+ * काष्ठा io_tlb_mem - IO TLB Memory Pool Descriptor
  *
- * @start:	The start address of the swiotlb memory pool. Used to do a quick
- *		range check to see if the memory was in fact allocated by this
+ * @start:	The start address of the swiotlb memory pool. Used to करो a quick
+ *		range check to see अगर the memory was in fact allocated by this
  *		API.
- * @end:	The end address of the swiotlb memory pool. Used to do a quick
- *		range check to see if the memory was in fact allocated by this
+ * @end:	The end address of the swiotlb memory pool. Used to करो a quick
+ *		range check to see अगर the memory was in fact allocated by this
  *		API.
- * @nslabs:	The number of IO TLB blocks (in groups of 64) between @start and
+ * @nsद_असल:	The number of IO TLB blocks (in groups of 64) between @start and
  *		@end. This is command line adjustable via setup_io_tlb_npages.
  * @used:	The number of used IO TLB block.
- * @list:	The free list describing the number of free entries available
+ * @list:	The मुक्त list describing the number of मुक्त entries available
  *		from each index.
  * @index:	The index to start searching in the next round.
  * @orig_addr:	The original address corresponding to a mapped entry.
  * @alloc_size:	Size of the allocated buffer.
- * @lock:	The lock to protect the above data structures in the map and
+ * @lock:	The lock to protect the above data काष्ठाures in the map and
  *		unmap calls.
  * @debugfs:	The dentry to debugfs.
- * @late_alloc:	%true if allocated using the page allocator
+ * @late_alloc:	%true अगर allocated using the page allocator
  */
-struct io_tlb_mem {
+काष्ठा io_tlb_mem अणु
 	phys_addr_t start;
 	phys_addr_t end;
-	unsigned long nslabs;
-	unsigned long used;
-	unsigned int index;
+	अचिन्हित दीर्घ nsद_असल;
+	अचिन्हित दीर्घ used;
+	अचिन्हित पूर्णांक index;
 	spinlock_t lock;
-	struct dentry *debugfs;
+	काष्ठा dentry *debugfs;
 	bool late_alloc;
-	struct io_tlb_slot {
+	काष्ठा io_tlb_slot अणु
 		phys_addr_t orig_addr;
-		size_t alloc_size;
-		unsigned int list;
-	} slots[];
-};
-extern struct io_tlb_mem *io_tlb_default_mem;
+		माप_प्रकार alloc_size;
+		अचिन्हित पूर्णांक list;
+	पूर्ण slots[];
+पूर्ण;
+बाह्य काष्ठा io_tlb_mem *io_tlb_शेष_mem;
 
-static inline bool is_swiotlb_buffer(phys_addr_t paddr)
-{
-	struct io_tlb_mem *mem = io_tlb_default_mem;
+अटल अंतरभूत bool is_swiotlb_buffer(phys_addr_t paddr)
+अणु
+	काष्ठा io_tlb_mem *mem = io_tlb_शेष_mem;
 
-	return mem && paddr >= mem->start && paddr < mem->end;
-}
+	वापस mem && paddr >= mem->start && paddr < mem->end;
+पूर्ण
 
-void __init swiotlb_exit(void);
-unsigned int swiotlb_max_segment(void);
-size_t swiotlb_max_mapping_size(struct device *dev);
-bool is_swiotlb_active(void);
-void __init swiotlb_adjust_size(unsigned long size);
-#else
-#define swiotlb_force SWIOTLB_NO_FORCE
-static inline bool is_swiotlb_buffer(phys_addr_t paddr)
-{
-	return false;
-}
-static inline void swiotlb_exit(void)
-{
-}
-static inline unsigned int swiotlb_max_segment(void)
-{
-	return 0;
-}
-static inline size_t swiotlb_max_mapping_size(struct device *dev)
-{
-	return SIZE_MAX;
-}
+व्योम __init swiotlb_निकास(व्योम);
+अचिन्हित पूर्णांक swiotlb_max_segment(व्योम);
+माप_प्रकार swiotlb_max_mapping_size(काष्ठा device *dev);
+bool is_swiotlb_active(व्योम);
+व्योम __init swiotlb_adjust_size(अचिन्हित दीर्घ size);
+#अन्यथा
+#घोषणा swiotlb_क्रमce SWIOTLB_NO_FORCE
+अटल अंतरभूत bool is_swiotlb_buffer(phys_addr_t paddr)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत व्योम swiotlb_निकास(व्योम)
+अणु
+पूर्ण
+अटल अंतरभूत अचिन्हित पूर्णांक swiotlb_max_segment(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत माप_प्रकार swiotlb_max_mapping_size(काष्ठा device *dev)
+अणु
+	वापस SIZE_MAX;
+पूर्ण
 
-static inline bool is_swiotlb_active(void)
-{
-	return false;
-}
+अटल अंतरभूत bool is_swiotlb_active(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void swiotlb_adjust_size(unsigned long size)
-{
-}
-#endif /* CONFIG_SWIOTLB */
+अटल अंतरभूत व्योम swiotlb_adjust_size(अचिन्हित दीर्घ size)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SWIOTLB */
 
-extern void swiotlb_print_info(void);
-extern void swiotlb_set_max_segment(unsigned int);
+बाह्य व्योम swiotlb_prपूर्णांक_info(व्योम);
+बाह्य व्योम swiotlb_set_max_segment(अचिन्हित पूर्णांक);
 
-#endif /* __LINUX_SWIOTLB_H */
+#पूर्ण_अगर /* __LINUX_SWIOTLB_H */

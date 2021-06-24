@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __ASM_SH_SIGCONTEXT_H
-#define __ASM_SH_SIGCONTEXT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __ASM_SH_SIGCONTEXT_H
+#घोषणा __ASM_SH_SIGCONTEXT_H
 
-struct sigcontext {
-	unsigned long	oldmask;
+काष्ठा sigcontext अणु
+	अचिन्हित दीर्घ	oldmask;
 
-	/* CPU registers */
-	unsigned long sc_regs[16];
-	unsigned long sc_pc;
-	unsigned long sc_pr;
-	unsigned long sc_sr;
-	unsigned long sc_gbr;
-	unsigned long sc_mach;
-	unsigned long sc_macl;
+	/* CPU रेजिस्टरs */
+	अचिन्हित दीर्घ sc_regs[16];
+	अचिन्हित दीर्घ sc_pc;
+	अचिन्हित दीर्घ sc_pr;
+	अचिन्हित दीर्घ sc_sr;
+	अचिन्हित दीर्घ sc_gbr;
+	अचिन्हित दीर्घ sc_mach;
+	अचिन्हित दीर्घ sc_macl;
 
-	/* FPU registers */
-	unsigned long sc_fpregs[16];
-	unsigned long sc_xfpregs[16];
-	unsigned int sc_fpscr;
-	unsigned int sc_fpul;
-	unsigned int sc_ownedfp;
-};
+	/* FPU रेजिस्टरs */
+	अचिन्हित दीर्घ sc_fpregs[16];
+	अचिन्हित दीर्घ sc_xfpregs[16];
+	अचिन्हित पूर्णांक sc_fpscr;
+	अचिन्हित पूर्णांक sc_fpul;
+	अचिन्हित पूर्णांक sc_ownedfp;
+पूर्ण;
 
-#endif /* __ASM_SH_SIGCONTEXT_H */
+#पूर्ण_अगर /* __ASM_SH_SIGCONTEXT_H */

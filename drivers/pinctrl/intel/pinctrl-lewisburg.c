@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Lewisburg pinctrl/GPIO driver
  *
  * Copyright (C) 2017, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define LBG_PAD_OWN	0x020
-#define LBG_PADCFGLOCK	0x060
-#define LBG_HOSTSW_OWN	0x080
-#define LBG_GPI_IS	0x100
-#define LBG_GPI_IE	0x110
+#घोषणा LBG_PAD_OWN	0x020
+#घोषणा LBG_PADCFGLOCK	0x060
+#घोषणा LBG_HOSTSW_OWN	0x080
+#घोषणा LBG_GPI_IS	0x100
+#घोषणा LBG_GPI_IE	0x110
 
-#define LBG_COMMUNITY(b, s, e)				\
-	{						\
+#घोषणा LBG_COMMUNITY(b, s, e)				\
+	अणु						\
 		.barno = (b),				\
-		.padown_offset = LBG_PAD_OWN,		\
+		.paकरोwn_offset = LBG_PAD_OWN,		\
 		.padcfglock_offset = LBG_PADCFGLOCK,	\
 		.hostown_offset = LBG_HOSTSW_OWN,	\
 		.is_offset = LBG_GPI_IS,		\
@@ -31,10 +32,10 @@
 		.gpp_size = 24,				\
 		.pin_base = (s),			\
 		.npins = ((e) - (s) + 1),		\
-	}
+	पूर्ण
 
 /* Lewisburg */
-static const struct pinctrl_pin_desc lbg_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc lbg_pins[] = अणु
 	/* GPP_A */
 	PINCTRL_PIN(0, "RCINB"),
 	PINCTRL_PIN(1, "LAD_0"),
@@ -294,41 +295,41 @@ static const struct pinctrl_pin_desc lbg_pins[] = {
 	PINCTRL_PIN(244, "VISA2CH1_D6"),
 	PINCTRL_PIN(245, "VISA2CH1_D7"),
 	PINCTRL_PIN(246, "VISA2CH1_CLK"),
-};
+पूर्ण;
 
-static const struct intel_community lbg_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community lbg_communities[] = अणु
 	LBG_COMMUNITY(0, 0, 71),
 	LBG_COMMUNITY(1, 72, 132),
 	LBG_COMMUNITY(3, 133, 143),
 	LBG_COMMUNITY(4, 144, 178),
 	LBG_COMMUNITY(5, 179, 246),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data lbg_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data lbg_soc_data = अणु
 	.pins = lbg_pins,
 	.npins = ARRAY_SIZE(lbg_pins),
 	.communities = lbg_communities,
 	.ncommunities = ARRAY_SIZE(lbg_communities),
-};
+पूर्ण;
 
-static INTEL_PINCTRL_PM_OPS(lbg_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(lbg_pinctrl_pm_ops);
 
-static const struct acpi_device_id lbg_pinctrl_acpi_match[] = {
-	{ "INT3536", (kernel_ulong_t)&lbg_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id lbg_pinctrl_acpi_match[] = अणु
+	अणु "INT3536", (kernel_uदीर्घ_t)&lbg_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, lbg_pinctrl_acpi_match);
 
-static struct platform_driver lbg_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_hid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver lbg_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_hid,
+	.driver = अणु
 		.name = "lewisburg-pinctrl",
 		.acpi_match_table = lbg_pinctrl_acpi_match,
 		.pm = &lbg_pinctrl_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(lbg_pinctrl_driver);
+module_platक्रमm_driver(lbg_pinctrl_driver);
 
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Lewisburg pinctrl/GPIO driver");

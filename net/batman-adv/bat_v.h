@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
- * Marek Lindner, Linus Lüssing
+ * Marek Lindner, Linus Lथञssing
  */
 
-#ifndef _NET_BATMAN_ADV_BAT_V_H_
-#define _NET_BATMAN_ADV_BAT_V_H_
+#अगर_अघोषित _NET_BATMAN_ADV_BAT_V_H_
+#घोषणा _NET_BATMAN_ADV_BAT_V_H_
 
-#include "main.h"
+#समावेश "main.h"
 
-#ifdef CONFIG_BATMAN_ADV_BATMAN_V
+#अगर_घोषित CONFIG_BATMAN_ADV_BATMAN_V
 
-int batadv_v_init(void);
-void batadv_v_hardif_init(struct batadv_hard_iface *hardif);
-int batadv_v_mesh_init(struct batadv_priv *bat_priv);
-void batadv_v_mesh_free(struct batadv_priv *bat_priv);
+पूर्णांक batadv_v_init(व्योम);
+व्योम batadv_v_hardअगर_init(काष्ठा batadv_hard_अगरace *hardअगर);
+पूर्णांक batadv_v_mesh_init(काष्ठा batadv_priv *bat_priv);
+व्योम batadv_v_mesh_मुक्त(काष्ठा batadv_priv *bat_priv);
 
-#else
+#अन्यथा
 
-static inline int batadv_v_init(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक batadv_v_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void batadv_v_hardif_init(struct batadv_hard_iface *hardif)
-{
-}
+अटल अंतरभूत व्योम batadv_v_hardअगर_init(काष्ठा batadv_hard_अगरace *hardअगर)
+अणु
+पूर्ण
 
-static inline int batadv_v_mesh_init(struct batadv_priv *bat_priv)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक batadv_v_mesh_init(काष्ठा batadv_priv *bat_priv)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void batadv_v_mesh_free(struct batadv_priv *bat_priv)
-{
-}
+अटल अंतरभूत व्योम batadv_v_mesh_मुक्त(काष्ठा batadv_priv *bat_priv)
+अणु
+पूर्ण
 
-#endif /* CONFIG_BATMAN_ADV_BATMAN_V */
+#पूर्ण_अगर /* CONFIG_BATMAN_ADV_BATMAN_V */
 
-#endif /* _NET_BATMAN_ADV_BAT_V_H_ */
+#पूर्ण_अगर /* _NET_BATMAN_ADV_BAT_V_H_ */

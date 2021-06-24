@@ -1,90 +1,91 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/of_reserved_mem.h>
+#समावेश <linux/of_reserved_स्मृति.स>
 
-#include "tegra210-emc.h"
+#समावेश "tegra210-emc.h"
 
-#define TEGRA_EMC_MAX_FREQS		16
+#घोषणा TEGRA_EMC_MAX_FREQS		16
 
-static int tegra210_emc_table_device_init(struct reserved_mem *rmem,
-					  struct device *dev)
-{
-	struct tegra210_emc *emc = dev_get_drvdata(dev);
-	struct tegra210_emc_timing *timings;
-	unsigned int i, count = 0;
+अटल पूर्णांक tegra210_emc_table_device_init(काष्ठा reserved_mem *rmem,
+					  काष्ठा device *dev)
+अणु
+	काष्ठा tegra210_emc *emc = dev_get_drvdata(dev);
+	काष्ठा tegra210_emc_timing *timings;
+	अचिन्हित पूर्णांक i, count = 0;
 
 	timings = memremap(rmem->base, rmem->size, MEMREMAP_WB);
-	if (!timings) {
+	अगर (!timings) अणु
 		dev_err(dev, "failed to map EMC table\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	count = 0;
 
-	for (i = 0; i < TEGRA_EMC_MAX_FREQS; i++) {
-		if (timings[i].revision == 0)
-			break;
+	क्रम (i = 0; i < TEGRA_EMC_MAX_FREQS; i++) अणु
+		अगर (timings[i].revision == 0)
+			अवरोध;
 
 		count++;
-	}
+	पूर्ण
 
 	/* only the nominal and derated tables are expected */
-	if (emc->derated) {
+	अगर (emc->derated) अणु
 		dev_warn(dev, "excess EMC table '%s'\n", rmem->name);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (emc->nominal) {
-		if (count != emc->num_timings) {
+	अगर (emc->nominal) अणु
+		अगर (count != emc->num_timings) अणु
 			dev_warn(dev, "%u derated vs. %u nominal entries\n",
 				 count, emc->num_timings);
 			memunmap(timings);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		emc->derated = timings;
-	} else {
+	पूर्ण अन्यथा अणु
 		emc->num_timings = count;
 		emc->nominal = timings;
-	}
+	पूर्ण
 
 out:
 	/* keep track of which table this is */
 	rmem->priv = timings;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tegra210_emc_table_device_release(struct reserved_mem *rmem,
-					      struct device *dev)
-{
-	struct tegra210_emc_timing *timings = rmem->priv;
-	struct tegra210_emc *emc = dev_get_drvdata(dev);
+अटल व्योम tegra210_emc_table_device_release(काष्ठा reserved_mem *rmem,
+					      काष्ठा device *dev)
+अणु
+	काष्ठा tegra210_emc_timing *timings = rmem->priv;
+	काष्ठा tegra210_emc *emc = dev_get_drvdata(dev);
 
-	if ((emc->nominal && timings != emc->nominal) &&
+	अगर ((emc->nominal && timings != emc->nominal) &&
 	    (emc->derated && timings != emc->derated))
 		dev_warn(dev, "trying to release unassigned EMC table '%s'\n",
 			 rmem->name);
 
 	memunmap(timings);
-}
+पूर्ण
 
-static const struct reserved_mem_ops tegra210_emc_table_ops = {
+अटल स्थिर काष्ठा reserved_mem_ops tegra210_emc_table_ops = अणु
 	.device_init = tegra210_emc_table_device_init,
 	.device_release = tegra210_emc_table_device_release,
-};
+पूर्ण;
 
-static int tegra210_emc_table_init(struct reserved_mem *rmem)
-{
+अटल पूर्णांक tegra210_emc_table_init(काष्ठा reserved_mem *rmem)
+अणु
 	pr_debug("Tegra210 EMC table at %pa, size %lu bytes\n", &rmem->base,
-		 (unsigned long)rmem->size);
+		 (अचिन्हित दीर्घ)rmem->size);
 
 	rmem->ops = &tegra210_emc_table_ops;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 RESERVEDMEM_OF_DECLARE(tegra210_emc_table, "nvidia,tegra210-emc-table",
 		       tegra210_emc_table_init);

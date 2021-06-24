@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	linux/arch/ia64/kernel/irq.c
  *
  *	Copyright (C) 1992, 1998 Linus Torvalds, Ingo Molnar
  *
  * This file contains the code used by various IRQ handling routines:
- * asking for different IRQs should be done through these routines
- * instead of just grabbing them. Thus setups with different IRQ numbers
+ * asking क्रम dअगरferent IRQs should be करोne through these routines
+ * instead of just grabbing them. Thus setups with dअगरferent IRQ numbers
  * shouldn't result in any weird surprises, and installing new handlers
  * should be easier.
  *
- * Copyright (C) Ashok Raj<ashok.raj@intel.com>, Intel Corporation 2004
+ * Copyright (C) Ashok Raj<ashok.raj@पूर्णांकel.com>, Intel Corporation 2004
  *
- * 4/14/2004: Added code to handle cpu migration and do safe irq
- *			migration without losing interrupts for iosapic
+ * 4/14/2004: Added code to handle cpu migration and करो safe irq
+ *			migration without losing पूर्णांकerrupts क्रम iosapic
  *			architecture.
  */
 
-#include <asm/delay.h>
-#include <linux/uaccess.h>
-#include <linux/module.h>
-#include <linux/seq_file.h>
-#include <linux/interrupt.h>
-#include <linux/kernel_stat.h>
+#समावेश <यंत्र/delay.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel_स्थिति.स>
 
-#include <asm/mca.h>
-#include <asm/xtp.h>
+#समावेश <यंत्र/mca.h>
+#समावेश <यंत्र/xtp.h>
 
 /*
  * 'what should we do if we get a hw irq event on an illegal vector'.
  * each architecture has to answer this themselves.
  */
-void ack_bad_irq(unsigned int irq)
-{
-	printk(KERN_ERR "Unexpected irq vector 0x%x on CPU %u!\n", irq, smp_processor_id());
-}
+व्योम ack_bad_irq(अचिन्हित पूर्णांक irq)
+अणु
+	prपूर्णांकk(KERN_ERR "Unexpected irq vector 0x%x on CPU %u!\n", irq, smp_processor_id());
+पूर्ण
 
 /*
  * Interrupt statistics:
@@ -43,65 +44,65 @@ void ack_bad_irq(unsigned int irq)
 atomic_t irq_err_count;
 
 /*
- * /proc/interrupts printing:
+ * /proc/पूर्णांकerrupts prपूर्णांकing:
  */
-int arch_show_interrupts(struct seq_file *p, int prec)
-{
-	seq_printf(p, "ERR: %10u\n", atomic_read(&irq_err_count));
-	return 0;
-}
+पूर्णांक arch_show_पूर्णांकerrupts(काष्ठा seq_file *p, पूर्णांक prec)
+अणु
+	seq_म_लिखो(p, "ERR: %10u\n", atomic_पढ़ो(&irq_err_count));
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SMP
-static char irq_redir [NR_IRQS]; // = { [0 ... NR_IRQS-1] = 1 };
+#अगर_घोषित CONFIG_SMP
+अटल अक्षर irq_redir [NR_IRQS]; // = अणु [0 ... NR_IRQS-1] = 1 पूर्ण;
 
-void set_irq_affinity_info (unsigned int irq, int hwid, int redir)
-{
-	if (irq < NR_IRQS) {
+व्योम set_irq_affinity_info (अचिन्हित पूर्णांक irq, पूर्णांक hwid, पूर्णांक redir)
+अणु
+	अगर (irq < NR_IRQS) अणु
 		cpumask_copy(irq_get_affinity_mask(irq),
 			     cpumask_of(cpu_logical_id(hwid)));
-		irq_redir[irq] = (char) (redir & 0xff);
-	}
-}
-#endif /* CONFIG_SMP */
+		irq_redir[irq] = (अक्षर) (redir & 0xff);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-int __init arch_early_irq_init(void)
-{
+पूर्णांक __init arch_early_irq_init(व्योम)
+अणु
 	ia64_mca_irq_init();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-unsigned int vectors_in_migration[NR_IRQS];
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अचिन्हित पूर्णांक vectors_in_migration[NR_IRQS];
 
 /*
- * Since cpu_online_mask is already updated, we just need to check for
+ * Since cpu_online_mask is alपढ़ोy updated, we just need to check क्रम
  * affinity that has zeros
  */
-static void migrate_irqs(void)
-{
-	int 		irq, new_cpu;
+अटल व्योम migrate_irqs(व्योम)
+अणु
+	पूर्णांक 		irq, new_cpu;
 
-	for (irq=0; irq < NR_IRQS; irq++) {
-		struct irq_desc *desc = irq_to_desc(irq);
-		struct irq_data *data = irq_desc_get_irq_data(desc);
-		struct irq_chip *chip = irq_data_get_irq_chip(data);
+	क्रम (irq=0; irq < NR_IRQS; irq++) अणु
+		काष्ठा irq_desc *desc = irq_to_desc(irq);
+		काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
+		काष्ठा irq_chip *chip = irq_data_get_irq_chip(data);
 
-		if (irqd_irq_disabled(data))
-			continue;
+		अगर (irqd_irq_disabled(data))
+			जारी;
 
 		/*
-		 * No handling for now.
+		 * No handling क्रम now.
 		 * TBD: Implement a disable function so we can now
-		 * tell CPU not to respond to these local intr sources.
+		 * tell CPU not to respond to these local पूर्णांकr sources.
 		 * such as ITV,CPEI,MCA etc.
 		 */
-		if (irqd_is_per_cpu(data))
-			continue;
+		अगर (irqd_is_per_cpu(data))
+			जारी;
 
-		if (cpumask_any_and(irq_data_get_affinity_mask(data),
-				    cpu_online_mask) >= nr_cpu_ids) {
+		अगर (cpumask_any_and(irq_data_get_affinity_mask(data),
+				    cpu_online_mask) >= nr_cpu_ids) अणु
 			/*
-			 * Save it for phase 2 processing
+			 * Save it क्रम phase 2 processing
 			 */
 			vectors_in_migration[irq] = irq;
 
@@ -110,72 +111,72 @@ static void migrate_irqs(void)
 			/*
 			 * Al three are essential, currently WARN_ON.. maybe panic?
 			 */
-			if (chip && chip->irq_disable &&
-				chip->irq_enable && chip->irq_set_affinity) {
+			अगर (chip && chip->irq_disable &&
+				chip->irq_enable && chip->irq_set_affinity) अणु
 				chip->irq_disable(data);
 				chip->irq_set_affinity(data,
 						       cpumask_of(new_cpu), false);
 				chip->irq_enable(data);
-			} else {
+			पूर्ण अन्यथा अणु
 				WARN_ON((!chip || !chip->irq_disable ||
 					 !chip->irq_enable ||
 					 !chip->irq_set_affinity));
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void fixup_irqs(void)
-{
-	unsigned int irq;
-	extern void ia64_process_pending_intr(void);
-	extern volatile int time_keeper_id;
+व्योम fixup_irqs(व्योम)
+अणु
+	अचिन्हित पूर्णांक irq;
+	बाह्य व्योम ia64_process_pending_पूर्णांकr(व्योम);
+	बाह्य अस्थिर पूर्णांक समय_keeper_id;
 
-	/* Mask ITV to disable timer */
+	/* Mask ITV to disable समयr */
 	ia64_set_itv(1 << 16);
 
 	/*
-	 * Find a new timesync master
+	 * Find a new बारync master
 	 */
-	if (smp_processor_id() == time_keeper_id) {
-		time_keeper_id = cpumask_first(cpu_online_mask);
-		printk ("CPU %d is now promoted to time-keeper master\n", time_keeper_id);
-	}
+	अगर (smp_processor_id() == समय_keeper_id) अणु
+		समय_keeper_id = cpumask_first(cpu_online_mask);
+		prपूर्णांकk ("CPU %d is now promoted to time-keeper master\n", समय_keeper_id);
+	पूर्ण
 
 	/*
 	 * Phase 1: Locate IRQs bound to this cpu and
-	 * relocate them for cpu removal.
+	 * relocate them क्रम cpu removal.
 	 */
 	migrate_irqs();
 
 	/*
-	 * Phase 2: Perform interrupt processing for all entries reported in
+	 * Phase 2: Perक्रमm पूर्णांकerrupt processing क्रम all entries reported in
 	 * local APIC.
 	 */
-	ia64_process_pending_intr();
+	ia64_process_pending_पूर्णांकr();
 
 	/*
-	 * Phase 3: Now handle any interrupts not captured in local APIC.
-	 * This is to account for cases that device interrupted during the time the
+	 * Phase 3: Now handle any पूर्णांकerrupts not captured in local APIC.
+	 * This is to account क्रम हालs that device पूर्णांकerrupted during the समय the
 	 * rte was being disabled and re-programmed.
 	 */
-	for (irq=0; irq < NR_IRQS; irq++) {
-		if (vectors_in_migration[irq]) {
-			struct pt_regs *old_regs = set_irq_regs(NULL);
+	क्रम (irq=0; irq < NR_IRQS; irq++) अणु
+		अगर (vectors_in_migration[irq]) अणु
+			काष्ठा pt_regs *old_regs = set_irq_regs(शून्य);
 
 			vectors_in_migration[irq]=0;
 			generic_handle_irq(irq);
 			set_irq_regs(old_regs);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Now let processor die. We do irq disable and max_xtp() to
-	 * ensure there is no more interrupts routed to this processor.
-	 * But the local timer interrupt can have 1 pending which we
-	 * take care in timer_interrupt().
+	 * Now let processor die. We करो irq disable and max_xtp() to
+	 * ensure there is no more पूर्णांकerrupts routed to this processor.
+	 * But the local समयr पूर्णांकerrupt can have 1 pending which we
+	 * take care in समयr_पूर्णांकerrupt().
 	 */
 	max_xtp();
 	local_irq_disable();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

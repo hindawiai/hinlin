@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Comedi driver for NI 670x devices
+ * Comedi driver क्रम NI 670x devices
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1997-2001 David A. Schleef <ds@schleef.org>
@@ -21,62 +22,62 @@
  *   322110b.pdf	PCI/PXI-6703/6704 User Manual
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
 
-#include "../comedi_pci.h"
+#समावेश "../comedi_pci.h"
 
-#define AO_VALUE_OFFSET			0x00
-#define	AO_CHAN_OFFSET			0x0c
-#define	AO_STATUS_OFFSET		0x10
-#define AO_CONTROL_OFFSET		0x10
-#define	DIO_PORT0_DIR_OFFSET	0x20
-#define	DIO_PORT0_DATA_OFFSET	0x24
-#define	DIO_PORT1_DIR_OFFSET	0x28
-#define	DIO_PORT1_DATA_OFFSET	0x2c
-#define	MISC_STATUS_OFFSET		0x14
-#define	MISC_CONTROL_OFFSET		0x14
+#घोषणा AO_VALUE_OFFSET			0x00
+#घोषणा	AO_CHAN_OFFSET			0x0c
+#घोषणा	AO_STATUS_OFFSET		0x10
+#घोषणा AO_CONTROL_OFFSET		0x10
+#घोषणा	DIO_PORT0_सूची_OFFSET	0x20
+#घोषणा	DIO_PORT0_DATA_OFFSET	0x24
+#घोषणा	DIO_PORT1_सूची_OFFSET	0x28
+#घोषणा	DIO_PORT1_DATA_OFFSET	0x2c
+#घोषणा	MISC_STATUS_OFFSET		0x14
+#घोषणा	MISC_CONTROL_OFFSET		0x14
 
-enum ni_670x_boardid {
+क्रमागत ni_670x_boardid अणु
 	BOARD_PCI6703,
 	BOARD_PXI6704,
 	BOARD_PCI6704,
-};
+पूर्ण;
 
-struct ni_670x_board {
-	const char *name;
-	unsigned short ao_chans;
-};
+काष्ठा ni_670x_board अणु
+	स्थिर अक्षर *name;
+	अचिन्हित लघु ao_chans;
+पूर्ण;
 
-static const struct ni_670x_board ni_670x_boards[] = {
-	[BOARD_PCI6703] = {
+अटल स्थिर काष्ठा ni_670x_board ni_670x_boards[] = अणु
+	[BOARD_PCI6703] = अणु
 		.name		= "PCI-6703",
 		.ao_chans	= 16,
-	},
-	[BOARD_PXI6704] = {
+	पूर्ण,
+	[BOARD_PXI6704] = अणु
 		.name		= "PXI-6704",
 		.ao_chans	= 32,
-	},
-	[BOARD_PCI6704] = {
+	पूर्ण,
+	[BOARD_PCI6704] = अणु
 		.name		= "PCI-6704",
 		.ao_chans	= 32,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct ni_670x_private {
-	int boardtype;
-	int dio;
-};
+काष्ठा ni_670x_निजी अणु
+	पूर्णांक boardtype;
+	पूर्णांक dio;
+पूर्ण;
 
-static int ni_670x_ao_insn_write(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn,
-				 unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int val = s->readback[chan];
-	int i;
+अटल पूर्णांक ni_670x_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn,
+				 अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक val = s->पढ़ोback[chan];
+	पूर्णांक i;
 
 	/*
 	 * Channel number mapping:
@@ -88,107 +89,107 @@ static int ni_670x_ao_insn_write(struct comedi_device *dev,
 	 * ...              | ...
 	 * vch(15) : 30     | ich(31) : 31
 	 */
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		val = data[i];
-		/* First write in channel register which channel to use */
-		writel(((chan & 15) << 1) | ((chan & 16) >> 4),
+		/* First ग_लिखो in channel रेजिस्टर which channel to use */
+		ग_लिखोl(((chan & 15) << 1) | ((chan & 16) >> 4),
 		       dev->mmio + AO_CHAN_OFFSET);
-		/* write channel value */
-		writel(val, dev->mmio + AO_VALUE_OFFSET);
-	}
-	s->readback[chan] = val;
+		/* ग_लिखो channel value */
+		ग_लिखोl(val, dev->mmio + AO_VALUE_OFFSET);
+	पूर्ण
+	s->पढ़ोback[chan] = val;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int ni_670x_dio_insn_bits(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn,
-				 unsigned int *data)
-{
-	if (comedi_dio_update_state(s, data))
-		writel(s->state, dev->mmio + DIO_PORT0_DATA_OFFSET);
+अटल पूर्णांक ni_670x_dio_insn_bits(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn,
+				 अचिन्हित पूर्णांक *data)
+अणु
+	अगर (comedi_dio_update_state(s, data))
+		ग_लिखोl(s->state, dev->mmio + DIO_PORT0_DATA_OFFSET);
 
-	data[1] = readl(dev->mmio + DIO_PORT0_DATA_OFFSET);
+	data[1] = पढ़ोl(dev->mmio + DIO_PORT0_DATA_OFFSET);
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int ni_670x_dio_insn_config(struct comedi_device *dev,
-				   struct comedi_subdevice *s,
-				   struct comedi_insn *insn,
-				   unsigned int *data)
-{
-	int ret;
+अटल पूर्णांक ni_670x_dio_insn_config(काष्ठा comedi_device *dev,
+				   काष्ठा comedi_subdevice *s,
+				   काष्ठा comedi_insn *insn,
+				   अचिन्हित पूर्णांक *data)
+अणु
+	पूर्णांक ret;
 
 	ret = comedi_dio_insn_config(dev, s, insn, data, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	writel(s->io_bits, dev->mmio + DIO_PORT0_DIR_OFFSET);
+	ग_लिखोl(s->io_bits, dev->mmio + DIO_PORT0_सूची_OFFSET);
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-/* ripped from mite.h and mite_setup2() to avoid mite dependency */
-#define MITE_IODWBSR	0xc0	 /* IO Device Window Base Size Register */
-#define WENAB		BIT(7) /* window enable */
+/* ripped from mite.h and mite_setup2() to aव्योम mite dependency */
+#घोषणा MITE_IODWBSR	0xc0	 /* IO Device Winकरोw Base Size Register */
+#घोषणा WENAB		BIT(7) /* winकरोw enable */
 
-static int ni_670x_mite_init(struct pci_dev *pcidev)
-{
-	void __iomem *mite_base;
-	u32 main_phys_addr;
+अटल पूर्णांक ni_670x_mite_init(काष्ठा pci_dev *pcidev)
+अणु
+	व्योम __iomem *mite_base;
+	u32 मुख्य_phys_addr;
 
-	/* ioremap the MITE registers (BAR 0) temporarily */
+	/* ioremap the MITE रेजिस्टरs (BAR 0) temporarily */
 	mite_base = pci_ioremap_bar(pcidev, 0);
-	if (!mite_base)
-		return -ENOMEM;
+	अगर (!mite_base)
+		वापस -ENOMEM;
 
-	/* set data window to main registers (BAR 1) */
-	main_phys_addr = pci_resource_start(pcidev, 1);
-	writel(main_phys_addr | WENAB, mite_base + MITE_IODWBSR);
+	/* set data winकरोw to मुख्य रेजिस्टरs (BAR 1) */
+	मुख्य_phys_addr = pci_resource_start(pcidev, 1);
+	ग_लिखोl(मुख्य_phys_addr | WENAB, mite_base + MITE_IODWBSR);
 
-	/* finished with MITE registers */
+	/* finished with MITE रेजिस्टरs */
 	iounmap(mite_base);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ni_670x_auto_attach(struct comedi_device *dev,
-			       unsigned long context)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	const struct ni_670x_board *board = NULL;
-	struct ni_670x_private *devpriv;
-	struct comedi_subdevice *s;
-	int ret;
-	int i;
+अटल पूर्णांक ni_670x_स्वतः_attach(काष्ठा comedi_device *dev,
+			       अचिन्हित दीर्घ context)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	स्थिर काष्ठा ni_670x_board *board = शून्य;
+	काष्ठा ni_670x_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (context < ARRAY_SIZE(ni_670x_boards))
+	अगर (context < ARRAY_SIZE(ni_670x_boards))
 		board = &ni_670x_boards[context];
-	if (!board)
-		return -ENODEV;
+	अगर (!board)
+		वापस -ENODEV;
 	dev->board_ptr = board;
 	dev->board_name = board->name;
 
 	ret = comedi_pci_enable(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	ret = ni_670x_mite_init(pcidev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dev->mmio = pci_ioremap_bar(pcidev, 1);
-	if (!dev->mmio)
-		return -ENOMEM;
+	अगर (!dev->mmio)
+		वापस -ENOMEM;
 
 	ret = comedi_alloc_subdevices(dev, 2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	s = &dev->subdevices[0];
 	/* analog output subdevice */
@@ -196,27 +197,27 @@ static int ni_670x_auto_attach(struct comedi_device *dev,
 	s->subdev_flags = SDF_WRITABLE;
 	s->n_chan = board->ao_chans;
 	s->maxdata = 0xffff;
-	if (s->n_chan == 32) {
-		const struct comedi_lrange **range_table_list;
+	अगर (s->n_chan == 32) अणु
+		स्थिर काष्ठा comedi_lrange **range_table_list;
 
-		range_table_list = kmalloc_array(32,
-						 sizeof(struct comedi_lrange *),
+		range_table_list = kदो_स्मृति_array(32,
+						 माप(काष्ठा comedi_lrange *),
 						 GFP_KERNEL);
-		if (!range_table_list)
-			return -ENOMEM;
+		अगर (!range_table_list)
+			वापस -ENOMEM;
 		s->range_table_list = range_table_list;
-		for (i = 0; i < 16; i++) {
+		क्रम (i = 0; i < 16; i++) अणु
 			range_table_list[i] = &range_bipolar10;
 			range_table_list[16 + i] = &range_0_20mA;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		s->range_table = &range_bipolar10;
-	}
-	s->insn_write = ni_670x_ao_insn_write;
+	पूर्ण
+	s->insn_ग_लिखो = ni_670x_ao_insn_ग_लिखो;
 
-	ret = comedi_alloc_subdev_readback(s);
-	if (ret)
-		return ret;
+	ret = comedi_alloc_subdev_पढ़ोback(s);
+	अगर (ret)
+		वापस ret;
 
 	s = &dev->subdevices[1];
 	/* digital i/o subdevice */
@@ -228,53 +229,53 @@ static int ni_670x_auto_attach(struct comedi_device *dev,
 	s->insn_bits = ni_670x_dio_insn_bits;
 	s->insn_config = ni_670x_dio_insn_config;
 
-	/* Config of misc registers */
-	writel(0x10, dev->mmio + MISC_CONTROL_OFFSET);
-	/* Config of ao registers */
-	writel(0x00, dev->mmio + AO_CONTROL_OFFSET);
+	/* Config of misc रेजिस्टरs */
+	ग_लिखोl(0x10, dev->mmio + MISC_CONTROL_OFFSET);
+	/* Config of ao रेजिस्टरs */
+	ग_लिखोl(0x00, dev->mmio + AO_CONTROL_OFFSET);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ni_670x_detach(struct comedi_device *dev)
-{
-	struct comedi_subdevice *s;
+अटल व्योम ni_670x_detach(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा comedi_subdevice *s;
 
 	comedi_pci_detach(dev);
-	if (dev->n_subdevices) {
+	अगर (dev->n_subdevices) अणु
 		s = &dev->subdevices[0];
-		if (s)
-			kfree(s->range_table_list);
-	}
-}
+		अगर (s)
+			kमुक्त(s->range_table_list);
+	पूर्ण
+पूर्ण
 
-static struct comedi_driver ni_670x_driver = {
+अटल काष्ठा comedi_driver ni_670x_driver = अणु
 	.driver_name	= "ni_670x",
 	.module		= THIS_MODULE,
-	.auto_attach	= ni_670x_auto_attach,
+	.स्वतः_attach	= ni_670x_स्वतः_attach,
 	.detach		= ni_670x_detach,
-};
+पूर्ण;
 
-static int ni_670x_pci_probe(struct pci_dev *dev,
-			     const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &ni_670x_driver, id->driver_data);
-}
+अटल पूर्णांक ni_670x_pci_probe(काष्ठा pci_dev *dev,
+			     स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &ni_670x_driver, id->driver_data);
+पूर्ण
 
-static const struct pci_device_id ni_670x_pci_table[] = {
-	{ PCI_VDEVICE(NI, 0x1290), BOARD_PCI6704 },
-	{ PCI_VDEVICE(NI, 0x1920), BOARD_PXI6704 },
-	{ PCI_VDEVICE(NI, 0x2c90), BOARD_PCI6703 },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id ni_670x_pci_table[] = अणु
+	अणु PCI_VDEVICE(NI, 0x1290), BOARD_PCI6704 पूर्ण,
+	अणु PCI_VDEVICE(NI, 0x1920), BOARD_PXI6704 पूर्ण,
+	अणु PCI_VDEVICE(NI, 0x2c90), BOARD_PCI6703 पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, ni_670x_pci_table);
 
-static struct pci_driver ni_670x_pci_driver = {
+अटल काष्ठा pci_driver ni_670x_pci_driver = अणु
 	.name		= "ni_670x",
 	.id_table	= ni_670x_pci_table,
 	.probe		= ni_670x_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(ni_670x_driver, ni_670x_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Mediated device Core Driver
  *
@@ -7,152 +8,152 @@
  *             Kirti Wankhede <kwankhede@nvidia.com>
  */
 
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/uuid.h>
-#include <linux/sysfs.h>
-#include <linux/mdev.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uuid.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/mdev.h>
 
-#include "mdev_private.h"
+#समावेश "mdev_private.h"
 
-#define DRIVER_VERSION		"0.1"
-#define DRIVER_AUTHOR		"NVIDIA Corporation"
-#define DRIVER_DESC		"Mediated device Core Driver"
+#घोषणा DRIVER_VERSION		"0.1"
+#घोषणा DRIVER_AUTHOR		"NVIDIA Corporation"
+#घोषणा DRIVER_DESC		"Mediated device Core Driver"
 
-static LIST_HEAD(parent_list);
-static DEFINE_MUTEX(parent_list_lock);
-static struct class_compat *mdev_bus_compat_class;
+अटल LIST_HEAD(parent_list);
+अटल DEFINE_MUTEX(parent_list_lock);
+अटल काष्ठा class_compat *mdev_bus_compat_class;
 
-static LIST_HEAD(mdev_list);
-static DEFINE_MUTEX(mdev_list_lock);
+अटल LIST_HEAD(mdev_list);
+अटल DEFINE_MUTEX(mdev_list_lock);
 
-struct device *mdev_parent_dev(struct mdev_device *mdev)
-{
-	return mdev->type->parent->dev;
-}
+काष्ठा device *mdev_parent_dev(काष्ठा mdev_device *mdev)
+अणु
+	वापस mdev->type->parent->dev;
+पूर्ण
 EXPORT_SYMBOL(mdev_parent_dev);
 
 /*
  * Return the index in supported_type_groups that this mdev_device was created
  * from.
  */
-unsigned int mdev_get_type_group_id(struct mdev_device *mdev)
-{
-	return mdev->type->type_group_id;
-}
+अचिन्हित पूर्णांक mdev_get_type_group_id(काष्ठा mdev_device *mdev)
+अणु
+	वापस mdev->type->type_group_id;
+पूर्ण
 EXPORT_SYMBOL(mdev_get_type_group_id);
 
 /*
- * Used in mdev_type_attribute sysfs functions to return the index in the
+ * Used in mdev_type_attribute sysfs functions to वापस the index in the
  * supported_type_groups that the sysfs is called from.
  */
-unsigned int mtype_get_type_group_id(struct mdev_type *mtype)
-{
-	return mtype->type_group_id;
-}
+अचिन्हित पूर्णांक mtype_get_type_group_id(काष्ठा mdev_type *mtype)
+अणु
+	वापस mtype->type_group_id;
+पूर्ण
 EXPORT_SYMBOL(mtype_get_type_group_id);
 
 /*
- * Used in mdev_type_attribute sysfs functions to return the parent struct
+ * Used in mdev_type_attribute sysfs functions to वापस the parent काष्ठा
  * device
  */
-struct device *mtype_get_parent_dev(struct mdev_type *mtype)
-{
-	return mtype->parent->dev;
-}
+काष्ठा device *mtype_get_parent_dev(काष्ठा mdev_type *mtype)
+अणु
+	वापस mtype->parent->dev;
+पूर्ण
 EXPORT_SYMBOL(mtype_get_parent_dev);
 
 /* Should be called holding parent_list_lock */
-static struct mdev_parent *__find_parent_device(struct device *dev)
-{
-	struct mdev_parent *parent;
+अटल काष्ठा mdev_parent *__find_parent_device(काष्ठा device *dev)
+अणु
+	काष्ठा mdev_parent *parent;
 
-	list_for_each_entry(parent, &parent_list, next) {
-		if (parent->dev == dev)
-			return parent;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(parent, &parent_list, next) अणु
+		अगर (parent->dev == dev)
+			वापस parent;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void mdev_release_parent(struct kref *kref)
-{
-	struct mdev_parent *parent = container_of(kref, struct mdev_parent,
+व्योम mdev_release_parent(काष्ठा kref *kref)
+अणु
+	काष्ठा mdev_parent *parent = container_of(kref, काष्ठा mdev_parent,
 						  ref);
-	struct device *dev = parent->dev;
+	काष्ठा device *dev = parent->dev;
 
-	kfree(parent);
+	kमुक्त(parent);
 	put_device(dev);
-}
+पूर्ण
 
-/* Caller must hold parent unreg_sem read or write lock */
-static void mdev_device_remove_common(struct mdev_device *mdev)
-{
-	struct mdev_parent *parent = mdev->type->parent;
-	int ret;
+/* Caller must hold parent unreg_sem पढ़ो or ग_लिखो lock */
+अटल व्योम mdev_device_हटाओ_common(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा mdev_parent *parent = mdev->type->parent;
+	पूर्णांक ret;
 
-	mdev_remove_sysfs_files(mdev);
+	mdev_हटाओ_sysfs_files(mdev);
 	device_del(&mdev->dev);
-	lockdep_assert_held(&parent->unreg_sem);
-	ret = parent->ops->remove(mdev);
-	if (ret)
+	lockdep_निश्चित_held(&parent->unreg_sem);
+	ret = parent->ops->हटाओ(mdev);
+	अगर (ret)
 		dev_err(&mdev->dev, "Remove failed: err=%d\n", ret);
 
 	/* Balances with device_initialize() */
 	put_device(&mdev->dev);
-}
+पूर्ण
 
-static int mdev_device_remove_cb(struct device *dev, void *data)
-{
-	struct mdev_device *mdev = mdev_from_dev(dev);
+अटल पूर्णांक mdev_device_हटाओ_cb(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा mdev_device *mdev = mdev_from_dev(dev);
 
-	if (mdev)
-		mdev_device_remove_common(mdev);
-	return 0;
-}
+	अगर (mdev)
+		mdev_device_हटाओ_common(mdev);
+	वापस 0;
+पूर्ण
 
 /*
- * mdev_register_device : Register a device
- * @dev: device structure representing parent device.
- * @ops: Parent device operation structure to be registered.
+ * mdev_रेजिस्टर_device : Register a device
+ * @dev: device काष्ठाure representing parent device.
+ * @ops: Parent device operation काष्ठाure to be रेजिस्टरed.
  *
- * Add device to list of registered parent devices.
+ * Add device to list of रेजिस्टरed parent devices.
  * Returns a negative value on error, otherwise 0.
  */
-int mdev_register_device(struct device *dev, const struct mdev_parent_ops *ops)
-{
-	int ret;
-	struct mdev_parent *parent;
-	char *env_string = "MDEV_STATE=registered";
-	char *envp[] = { env_string, NULL };
+पूर्णांक mdev_रेजिस्टर_device(काष्ठा device *dev, स्थिर काष्ठा mdev_parent_ops *ops)
+अणु
+	पूर्णांक ret;
+	काष्ठा mdev_parent *parent;
+	अक्षर *env_string = "MDEV_STATE=registered";
+	अक्षर *envp[] = अणु env_string, शून्य पूर्ण;
 
-	/* check for mandatory ops */
-	if (!ops || !ops->create || !ops->remove || !ops->supported_type_groups)
-		return -EINVAL;
+	/* check क्रम mandatory ops */
+	अगर (!ops || !ops->create || !ops->हटाओ || !ops->supported_type_groups)
+		वापस -EINVAL;
 
 	dev = get_device(dev);
-	if (!dev)
-		return -EINVAL;
+	अगर (!dev)
+		वापस -EINVAL;
 
-	/* Not mandatory, but its absence could be a problem */
-	if (!ops->request)
+	/* Not mandatory, but its असलence could be a problem */
+	अगर (!ops->request)
 		dev_info(dev, "Driver cannot be asked to release device\n");
 
 	mutex_lock(&parent_list_lock);
 
-	/* Check for duplicate */
+	/* Check क्रम duplicate */
 	parent = __find_parent_device(dev);
-	if (parent) {
-		parent = NULL;
+	अगर (parent) अणु
+		parent = शून्य;
 		ret = -EEXIST;
-		goto add_dev_err;
-	}
+		जाओ add_dev_err;
+	पूर्ण
 
-	parent = kzalloc(sizeof(*parent), GFP_KERNEL);
-	if (!parent) {
+	parent = kzalloc(माप(*parent), GFP_KERNEL);
+	अगर (!parent) अणु
 		ret = -ENOMEM;
-		goto add_dev_err;
-	}
+		जाओ add_dev_err;
+	पूर्ण
 
 	kref_init(&parent->ref);
 	init_rwsem(&parent->unreg_sem);
@@ -160,20 +161,20 @@ int mdev_register_device(struct device *dev, const struct mdev_parent_ops *ops)
 	parent->dev = dev;
 	parent->ops = ops;
 
-	if (!mdev_bus_compat_class) {
-		mdev_bus_compat_class = class_compat_register("mdev_bus");
-		if (!mdev_bus_compat_class) {
+	अगर (!mdev_bus_compat_class) अणु
+		mdev_bus_compat_class = class_compat_रेजिस्टर("mdev_bus");
+		अगर (!mdev_bus_compat_class) अणु
 			ret = -ENOMEM;
-			goto add_dev_err;
-		}
-	}
+			जाओ add_dev_err;
+		पूर्ण
+	पूर्ण
 
 	ret = parent_create_sysfs_files(parent);
-	if (ret)
-		goto add_dev_err;
+	अगर (ret)
+		जाओ add_dev_err;
 
-	ret = class_compat_create_link(mdev_bus_compat_class, dev, NULL);
-	if (ret)
+	ret = class_compat_create_link(mdev_bus_compat_class, dev, शून्य);
+	अगर (ret)
 		dev_warn(dev, "Failed to create compatibility class link\n");
 
 	list_add(&parent->next, &parent_list);
@@ -182,63 +183,63 @@ int mdev_register_device(struct device *dev, const struct mdev_parent_ops *ops)
 	dev_info(dev, "MDEV: Registered\n");
 	kobject_uevent_env(&dev->kobj, KOBJ_CHANGE, envp);
 
-	return 0;
+	वापस 0;
 
 add_dev_err:
 	mutex_unlock(&parent_list_lock);
-	if (parent)
+	अगर (parent)
 		mdev_put_parent(parent);
-	else
+	अन्यथा
 		put_device(dev);
-	return ret;
-}
-EXPORT_SYMBOL(mdev_register_device);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(mdev_रेजिस्टर_device);
 
 /*
- * mdev_unregister_device : Unregister a parent device
- * @dev: device structure representing parent device.
+ * mdev_unरेजिस्टर_device : Unरेजिस्टर a parent device
+ * @dev: device काष्ठाure representing parent device.
  *
- * Remove device from list of registered parent devices. Give a chance to free
- * existing mediated devices for given device.
+ * Remove device from list of रेजिस्टरed parent devices. Give a chance to मुक्त
+ * existing mediated devices क्रम given device.
  */
 
-void mdev_unregister_device(struct device *dev)
-{
-	struct mdev_parent *parent;
-	char *env_string = "MDEV_STATE=unregistered";
-	char *envp[] = { env_string, NULL };
+व्योम mdev_unरेजिस्टर_device(काष्ठा device *dev)
+अणु
+	काष्ठा mdev_parent *parent;
+	अक्षर *env_string = "MDEV_STATE=unregistered";
+	अक्षर *envp[] = अणु env_string, शून्य पूर्ण;
 
 	mutex_lock(&parent_list_lock);
 	parent = __find_parent_device(dev);
 
-	if (!parent) {
+	अगर (!parent) अणु
 		mutex_unlock(&parent_list_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	dev_info(dev, "MDEV: Unregistering\n");
 
 	list_del(&parent->next);
 	mutex_unlock(&parent_list_lock);
 
-	down_write(&parent->unreg_sem);
+	करोwn_ग_लिखो(&parent->unreg_sem);
 
-	class_compat_remove_link(mdev_bus_compat_class, dev, NULL);
+	class_compat_हटाओ_link(mdev_bus_compat_class, dev, शून्य);
 
-	device_for_each_child(dev, NULL, mdev_device_remove_cb);
+	device_क्रम_each_child(dev, शून्य, mdev_device_हटाओ_cb);
 
-	parent_remove_sysfs_files(parent);
-	up_write(&parent->unreg_sem);
+	parent_हटाओ_sysfs_files(parent);
+	up_ग_लिखो(&parent->unreg_sem);
 
 	mdev_put_parent(parent);
 
-	/* We still have the caller's reference to use for the uevent */
+	/* We still have the caller's reference to use क्रम the uevent */
 	kobject_uevent_env(&dev->kobj, KOBJ_CHANGE, envp);
-}
-EXPORT_SYMBOL(mdev_unregister_device);
+पूर्ण
+EXPORT_SYMBOL(mdev_unरेजिस्टर_device);
 
-static void mdev_device_release(struct device *dev)
-{
-	struct mdev_device *mdev = to_mdev_device(dev);
+अटल व्योम mdev_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा mdev_device *mdev = to_mdev_device(dev);
 
 	/* Pairs with the get in mdev_device_create() */
 	kobject_put(&mdev->type->kobj);
@@ -248,30 +249,30 @@ static void mdev_device_release(struct device *dev)
 	mutex_unlock(&mdev_list_lock);
 
 	dev_dbg(&mdev->dev, "MDEV: destroying\n");
-	kfree(mdev);
-}
+	kमुक्त(mdev);
+पूर्ण
 
-int mdev_device_create(struct mdev_type *type, const guid_t *uuid)
-{
-	int ret;
-	struct mdev_device *mdev, *tmp;
-	struct mdev_parent *parent = type->parent;
+पूर्णांक mdev_device_create(काष्ठा mdev_type *type, स्थिर guid_t *uuid)
+अणु
+	पूर्णांक ret;
+	काष्ठा mdev_device *mdev, *पंचांगp;
+	काष्ठा mdev_parent *parent = type->parent;
 
 	mutex_lock(&mdev_list_lock);
 
-	/* Check for duplicate */
-	list_for_each_entry(tmp, &mdev_list, next) {
-		if (guid_equal(&tmp->uuid, uuid)) {
+	/* Check क्रम duplicate */
+	list_क्रम_each_entry(पंचांगp, &mdev_list, next) अणु
+		अगर (guid_equal(&पंचांगp->uuid, uuid)) अणु
 			mutex_unlock(&mdev_list_lock);
-			return -EEXIST;
-		}
-	}
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
 
-	mdev = kzalloc(sizeof(*mdev), GFP_KERNEL);
-	if (!mdev) {
+	mdev = kzalloc(माप(*mdev), GFP_KERNEL);
+	अगर (!mdev) अणु
 		mutex_unlock(&mdev_list_lock);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	device_initialize(&mdev->dev);
 	mdev->dev.parent  = parent->dev;
@@ -287,92 +288,92 @@ int mdev_device_create(struct mdev_type *type, const guid_t *uuid)
 	mutex_unlock(&mdev_list_lock);
 
 	ret = dev_set_name(&mdev->dev, "%pUl", uuid);
-	if (ret)
-		goto out_put_device;
+	अगर (ret)
+		जाओ out_put_device;
 
-	/* Check if parent unregistration has started */
-	if (!down_read_trylock(&parent->unreg_sem)) {
+	/* Check अगर parent unregistration has started */
+	अगर (!करोwn_पढ़ो_trylock(&parent->unreg_sem)) अणु
 		ret = -ENODEV;
-		goto out_put_device;
-	}
+		जाओ out_put_device;
+	पूर्ण
 
 	ret = parent->ops->create(mdev);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
 	ret = device_add(&mdev->dev);
-	if (ret)
-		goto out_remove;
+	अगर (ret)
+		जाओ out_हटाओ;
 
 	ret = mdev_create_sysfs_files(mdev);
-	if (ret)
-		goto out_del;
+	अगर (ret)
+		जाओ out_del;
 
 	mdev->active = true;
 	dev_dbg(&mdev->dev, "MDEV: created\n");
-	up_read(&parent->unreg_sem);
+	up_पढ़ो(&parent->unreg_sem);
 
-	return 0;
+	वापस 0;
 
 out_del:
 	device_del(&mdev->dev);
-out_remove:
-	parent->ops->remove(mdev);
+out_हटाओ:
+	parent->ops->हटाओ(mdev);
 out_unlock:
-	up_read(&parent->unreg_sem);
+	up_पढ़ो(&parent->unreg_sem);
 out_put_device:
 	put_device(&mdev->dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int mdev_device_remove(struct mdev_device *mdev)
-{
-	struct mdev_device *tmp;
-	struct mdev_parent *parent = mdev->type->parent;
+पूर्णांक mdev_device_हटाओ(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा mdev_device *पंचांगp;
+	काष्ठा mdev_parent *parent = mdev->type->parent;
 
 	mutex_lock(&mdev_list_lock);
-	list_for_each_entry(tmp, &mdev_list, next) {
-		if (tmp == mdev)
-			break;
-	}
+	list_क्रम_each_entry(पंचांगp, &mdev_list, next) अणु
+		अगर (पंचांगp == mdev)
+			अवरोध;
+	पूर्ण
 
-	if (tmp != mdev) {
+	अगर (पंचांगp != mdev) अणु
 		mutex_unlock(&mdev_list_lock);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!mdev->active) {
+	अगर (!mdev->active) अणु
 		mutex_unlock(&mdev_list_lock);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	mdev->active = false;
 	mutex_unlock(&mdev_list_lock);
 
-	/* Check if parent unregistration has started */
-	if (!down_read_trylock(&parent->unreg_sem))
-		return -ENODEV;
+	/* Check अगर parent unregistration has started */
+	अगर (!करोwn_पढ़ो_trylock(&parent->unreg_sem))
+		वापस -ENODEV;
 
-	mdev_device_remove_common(mdev);
-	up_read(&parent->unreg_sem);
-	return 0;
-}
+	mdev_device_हटाओ_common(mdev);
+	up_पढ़ो(&parent->unreg_sem);
+	वापस 0;
+पूर्ण
 
-static int __init mdev_init(void)
-{
-	return mdev_bus_register();
-}
+अटल पूर्णांक __init mdev_init(व्योम)
+अणु
+	वापस mdev_bus_रेजिस्टर();
+पूर्ण
 
-static void __exit mdev_exit(void)
-{
-	if (mdev_bus_compat_class)
-		class_compat_unregister(mdev_bus_compat_class);
+अटल व्योम __निकास mdev_निकास(व्योम)
+अणु
+	अगर (mdev_bus_compat_class)
+		class_compat_unरेजिस्टर(mdev_bus_compat_class);
 
-	mdev_bus_unregister();
-}
+	mdev_bus_unरेजिस्टर();
+पूर्ण
 
 module_init(mdev_init)
-module_exit(mdev_exit)
+module_निकास(mdev_निकास)
 
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE("GPL v2");

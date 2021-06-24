@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * AMD 10Gb Ethernet driver
  *
@@ -8,7 +9,7 @@
  *
  * Copyright (c) 2014-2016 Advanced Micro Devices, Inc.
  *
- * This file is free software; you may copy, redistribute and/or modify
+ * This file is मुक्त software; you may copy, redistribute and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or (at
  * your option) any later version.
@@ -16,27 +17,27 @@
  * This file is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * aदीर्घ with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
- *     The Synopsys DWC ETHER XGMAC Software Driver and documentation
+ *     The Synopsys DWC ETHER XGMAC Software Driver and करोcumentation
  *     (hereinafter "Software") is an unsupported proprietary work of Synopsys,
  *     Inc. unless otherwise expressly agreed to in writing between Synopsys
  *     and you.
  *
  *     The Software IS NOT an item of Licensed Software or Licensed Product
- *     under any End User Software License Agreement or Agreement for Licensed
+ *     under any End User Software License Agreement or Agreement क्रम Licensed
  *     Product with Synopsys or any supplement thereto.  Permission is hereby
- *     granted, free of charge, to any person obtaining a copy of this software
+ *     granted, मुक्त of अक्षरge, to any person obtaining a copy of this software
  *     annotated with this license and the Software, to deal in the Software
  *     without restriction, including without limitation the rights to use,
- *     copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ *     copy, modअगरy, merge, publish, distribute, sublicense, and/or sell copies
  *     of the Software, and to permit persons to whom the Software is furnished
- *     to do so, subject to the following conditions:
+ *     to करो so, subject to the following conditions:
  *
  *     The above copyright notice and this permission notice shall be included
  *     in all copies or substantial portions of the Software.
@@ -45,7 +46,7 @@
  *     BASIS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
  *     PARTICULAR PURPOSE ARE HEREBY DISCLAIMED. IN NO EVENT SHALL SYNOPSYS
- *     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *     BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *     CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *     SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  *     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -54,27 +55,27 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * License 2: Modified BSD
+ * License 2: Modअगरied BSD
  *
  * Copyright (c) 2014-2016 Advanced Micro Devices, Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
+ *     * Redistributions in binary क्रमm must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
+ *       करोcumentation and/or other materials provided with the distribution.
  *     * Neither the name of Advanced Micro Devices, Inc. nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this software without specific prior written permission.
+ *       names of its contributors may be used to enकरोrse or promote products
+ *       derived from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -83,20 +84,20 @@
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
- *     The Synopsys DWC ETHER XGMAC Software Driver and documentation
+ *     The Synopsys DWC ETHER XGMAC Software Driver and करोcumentation
  *     (hereinafter "Software") is an unsupported proprietary work of Synopsys,
  *     Inc. unless otherwise expressly agreed to in writing between Synopsys
  *     and you.
  *
  *     The Software IS NOT an item of Licensed Software or Licensed Product
- *     under any End User Software License Agreement or Agreement for Licensed
+ *     under any End User Software License Agreement or Agreement क्रम Licensed
  *     Product with Synopsys or any supplement thereto.  Permission is hereby
- *     granted, free of charge, to any person obtaining a copy of this software
+ *     granted, मुक्त of अक्षरge, to any person obtaining a copy of this software
  *     annotated with this license and the Software, to deal in the Software
  *     without restriction, including without limitation the rights to use,
- *     copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ *     copy, modअगरy, merge, publish, distribute, sublicense, and/or sell copies
  *     of the Software, and to permit persons to whom the Software is furnished
- *     to do so, subject to the following conditions:
+ *     to करो so, subject to the following conditions:
  *
  *     The above copyright notice and this permission notice shall be included
  *     in all copies or substantial portions of the Software.
@@ -105,7 +106,7 @@
  *     BASIS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
  *     PARTICULAR PURPOSE ARE HEREBY DISCLAIMED. IN NO EVENT SHALL SYNOPSYS
- *     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *     BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *     CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *     SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  *     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -114,30 +115,30 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/spinlock.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/io.h>
-#include <linux/notifier.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/notअगरier.h>
 
-#include "xgbe.h"
-#include "xgbe-common.h"
+#समावेश "xgbe.h"
+#समावेश "xgbe-common.h"
 
 MODULE_AUTHOR("Tom Lendacky <thomas.lendacky@amd.com>");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION(XGBE_DRV_DESC);
 
-static int debug = -1;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug = -1;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, " Network interface message level setting");
 
-static const u32 default_msg_level = (NETIF_MSG_LINK | NETIF_MSG_IFDOWN |
+अटल स्थिर u32 शेष_msg_level = (NETIF_MSG_LINK | NETIF_MSG_IFDOWN |
 				      NETIF_MSG_IFUP);
 
-static void xgbe_default_config(struct xgbe_prv_data *pdata)
-{
+अटल व्योम xgbe_शेष_config(काष्ठा xgbe_prv_data *pdata)
+अणु
 	DBGPR("-->xgbe_default_config\n");
 
 	pdata->blen = DMA_SBMR_BLEN_64;
@@ -150,36 +151,36 @@ static void xgbe_default_config(struct xgbe_prv_data *pdata)
 	pdata->tx_osp_mode = DMA_OSP_ENABLE;
 	pdata->rx_sf_mode = MTL_RSF_DISABLE;
 	pdata->rx_threshold = MTL_RX_THRESHOLD_64;
-	pdata->pause_autoneg = 1;
-	pdata->tx_pause = 1;
-	pdata->rx_pause = 1;
+	pdata->छोड़ो_स्वतःneg = 1;
+	pdata->tx_छोड़ो = 1;
+	pdata->rx_छोड़ो = 1;
 	pdata->phy_speed = SPEED_UNKNOWN;
-	pdata->power_down = 0;
+	pdata->घातer_करोwn = 0;
 
 	DBGPR("<--xgbe_default_config\n");
-}
+पूर्ण
 
-static void xgbe_init_all_fptrs(struct xgbe_prv_data *pdata)
-{
-	xgbe_init_function_ptrs_dev(&pdata->hw_if);
-	xgbe_init_function_ptrs_phy(&pdata->phy_if);
-	xgbe_init_function_ptrs_i2c(&pdata->i2c_if);
-	xgbe_init_function_ptrs_desc(&pdata->desc_if);
+अटल व्योम xgbe_init_all_fptrs(काष्ठा xgbe_prv_data *pdata)
+अणु
+	xgbe_init_function_ptrs_dev(&pdata->hw_अगर);
+	xgbe_init_function_ptrs_phy(&pdata->phy_अगर);
+	xgbe_init_function_ptrs_i2c(&pdata->i2c_अगर);
+	xgbe_init_function_ptrs_desc(&pdata->desc_अगर);
 
-	pdata->vdata->init_function_ptrs_phy_impl(&pdata->phy_if);
-}
+	pdata->vdata->init_function_ptrs_phy_impl(&pdata->phy_अगर);
+पूर्ण
 
-struct xgbe_prv_data *xgbe_alloc_pdata(struct device *dev)
-{
-	struct xgbe_prv_data *pdata;
-	struct net_device *netdev;
+काष्ठा xgbe_prv_data *xgbe_alloc_pdata(काष्ठा device *dev)
+अणु
+	काष्ठा xgbe_prv_data *pdata;
+	काष्ठा net_device *netdev;
 
-	netdev = alloc_etherdev_mq(sizeof(struct xgbe_prv_data),
+	netdev = alloc_etherdev_mq(माप(काष्ठा xgbe_prv_data),
 				   XGBE_MAX_DMA_CHANNELS);
-	if (!netdev) {
+	अगर (!netdev) अणु
 		dev_err(dev, "alloc_etherdev_mq failed\n");
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	SET_NETDEV_DEV(netdev, dev);
 	pdata = netdev_priv(netdev);
 	pdata->netdev = netdev;
@@ -193,136 +194,136 @@ struct xgbe_prv_data *xgbe_alloc_pdata(struct device *dev)
 	init_completion(&pdata->i2c_complete);
 	init_completion(&pdata->mdio_complete);
 
-	pdata->msg_enable = netif_msg_init(debug, default_msg_level);
+	pdata->msg_enable = netअगर_msg_init(debug, शेष_msg_level);
 
 	set_bit(XGBE_DOWN, &pdata->dev_state);
 	set_bit(XGBE_STOPPED, &pdata->dev_state);
 
-	return pdata;
-}
+	वापस pdata;
+पूर्ण
 
-void xgbe_free_pdata(struct xgbe_prv_data *pdata)
-{
-	struct net_device *netdev = pdata->netdev;
+व्योम xgbe_मुक्त_pdata(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा net_device *netdev = pdata->netdev;
 
-	free_netdev(netdev);
-}
+	मुक्त_netdev(netdev);
+पूर्ण
 
-void xgbe_set_counts(struct xgbe_prv_data *pdata)
-{
-	/* Set all the function pointers */
+व्योम xgbe_set_counts(काष्ठा xgbe_prv_data *pdata)
+अणु
+	/* Set all the function poपूर्णांकers */
 	xgbe_init_all_fptrs(pdata);
 
 	/* Populate the hardware features */
 	xgbe_get_all_hw_features(pdata);
 
-	/* Set default max values if not provided */
-	if (!pdata->tx_max_channel_count)
+	/* Set शेष max values अगर not provided */
+	अगर (!pdata->tx_max_channel_count)
 		pdata->tx_max_channel_count = pdata->hw_feat.tx_ch_cnt;
-	if (!pdata->rx_max_channel_count)
+	अगर (!pdata->rx_max_channel_count)
 		pdata->rx_max_channel_count = pdata->hw_feat.rx_ch_cnt;
 
-	if (!pdata->tx_max_q_count)
+	अगर (!pdata->tx_max_q_count)
 		pdata->tx_max_q_count = pdata->hw_feat.tx_q_cnt;
-	if (!pdata->rx_max_q_count)
+	अगर (!pdata->rx_max_q_count)
 		pdata->rx_max_q_count = pdata->hw_feat.rx_q_cnt;
 
 	/* Calculate the number of Tx and Rx rings to be created
 	 *  -Tx (DMA) Channels map 1-to-1 to Tx Queues so set
 	 *   the number of Tx queues to the number of Tx channels
 	 *   enabled
-	 *  -Rx (DMA) Channels do not map 1-to-1 so use the actual
+	 *  -Rx (DMA) Channels करो not map 1-to-1 so use the actual
 	 *   number of Rx queues or maximum allowed
 	 */
-	pdata->tx_ring_count = min_t(unsigned int, num_online_cpus(),
+	pdata->tx_ring_count = min_t(अचिन्हित पूर्णांक, num_online_cpus(),
 				     pdata->hw_feat.tx_ch_cnt);
-	pdata->tx_ring_count = min_t(unsigned int, pdata->tx_ring_count,
+	pdata->tx_ring_count = min_t(अचिन्हित पूर्णांक, pdata->tx_ring_count,
 				     pdata->tx_max_channel_count);
-	pdata->tx_ring_count = min_t(unsigned int, pdata->tx_ring_count,
+	pdata->tx_ring_count = min_t(अचिन्हित पूर्णांक, pdata->tx_ring_count,
 				     pdata->tx_max_q_count);
 
 	pdata->tx_q_count = pdata->tx_ring_count;
 
-	pdata->rx_ring_count = min_t(unsigned int, num_online_cpus(),
+	pdata->rx_ring_count = min_t(अचिन्हित पूर्णांक, num_online_cpus(),
 				     pdata->hw_feat.rx_ch_cnt);
-	pdata->rx_ring_count = min_t(unsigned int, pdata->rx_ring_count,
+	pdata->rx_ring_count = min_t(अचिन्हित पूर्णांक, pdata->rx_ring_count,
 				     pdata->rx_max_channel_count);
 
-	pdata->rx_q_count = min_t(unsigned int, pdata->hw_feat.rx_q_cnt,
+	pdata->rx_q_count = min_t(अचिन्हित पूर्णांक, pdata->hw_feat.rx_q_cnt,
 				  pdata->rx_max_q_count);
 
-	if (netif_msg_probe(pdata)) {
+	अगर (netअगर_msg_probe(pdata)) अणु
 		dev_dbg(pdata->dev, "TX/RX DMA channel count = %u/%u\n",
 			pdata->tx_ring_count, pdata->rx_ring_count);
 		dev_dbg(pdata->dev, "TX/RX hardware queue count = %u/%u\n",
 			pdata->tx_q_count, pdata->rx_q_count);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int xgbe_config_netdev(struct xgbe_prv_data *pdata)
-{
-	struct net_device *netdev = pdata->netdev;
-	struct device *dev = pdata->dev;
-	int ret;
+पूर्णांक xgbe_config_netdev(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा net_device *netdev = pdata->netdev;
+	काष्ठा device *dev = pdata->dev;
+	पूर्णांक ret;
 
 	netdev->irq = pdata->dev_irq;
-	netdev->base_addr = (unsigned long)pdata->xgmac_regs;
-	memcpy(netdev->dev_addr, pdata->mac_addr, netdev->addr_len);
+	netdev->base_addr = (अचिन्हित दीर्घ)pdata->xgmac_regs;
+	स_नकल(netdev->dev_addr, pdata->mac_addr, netdev->addr_len);
 
-	/* Initialize ECC timestamps */
-	pdata->tx_sec_period = jiffies;
-	pdata->tx_ded_period = jiffies;
-	pdata->rx_sec_period = jiffies;
-	pdata->rx_ded_period = jiffies;
-	pdata->desc_sec_period = jiffies;
-	pdata->desc_ded_period = jiffies;
+	/* Initialize ECC बारtamps */
+	pdata->tx_sec_period = jअगरfies;
+	pdata->tx_ded_period = jअगरfies;
+	pdata->rx_sec_period = jअगरfies;
+	pdata->rx_ded_period = jअगरfies;
+	pdata->desc_sec_period = jअगरfies;
+	pdata->desc_ded_period = jअगरfies;
 
 	/* Issue software reset to device */
-	ret = pdata->hw_if.exit(pdata);
-	if (ret) {
+	ret = pdata->hw_अगर.निकास(pdata);
+	अगर (ret) अणु
 		dev_err(dev, "software reset failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Set default configuration data */
-	xgbe_default_config(pdata);
+	/* Set शेष configuration data */
+	xgbe_शेष_config(pdata);
 
 	/* Set the DMA mask */
 	ret = dma_set_mask_and_coherent(dev,
 					DMA_BIT_MASK(pdata->hw_feat.dma_width));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "dma_set_mask_and_coherent failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Set default max values if not provided */
-	if (!pdata->tx_max_fifo_size)
-		pdata->tx_max_fifo_size = pdata->hw_feat.tx_fifo_size;
-	if (!pdata->rx_max_fifo_size)
-		pdata->rx_max_fifo_size = pdata->hw_feat.rx_fifo_size;
+	/* Set शेष max values अगर not provided */
+	अगर (!pdata->tx_max_fअगरo_size)
+		pdata->tx_max_fअगरo_size = pdata->hw_feat.tx_fअगरo_size;
+	अगर (!pdata->rx_max_fअगरo_size)
+		pdata->rx_max_fअगरo_size = pdata->hw_feat.rx_fअगरo_size;
 
-	/* Set and validate the number of descriptors for a ring */
+	/* Set and validate the number of descriptors क्रम a ring */
 	BUILD_BUG_ON_NOT_POWER_OF_2(XGBE_TX_DESC_CNT);
 	pdata->tx_desc_count = XGBE_TX_DESC_CNT;
 
 	BUILD_BUG_ON_NOT_POWER_OF_2(XGBE_RX_DESC_CNT);
 	pdata->rx_desc_count = XGBE_RX_DESC_CNT;
 
-	/* Adjust the number of queues based on interrupts assigned */
-	if (pdata->channel_irq_count) {
-		pdata->tx_ring_count = min_t(unsigned int, pdata->tx_ring_count,
+	/* Adjust the number of queues based on पूर्णांकerrupts asचिन्हित */
+	अगर (pdata->channel_irq_count) अणु
+		pdata->tx_ring_count = min_t(अचिन्हित पूर्णांक, pdata->tx_ring_count,
 					     pdata->channel_irq_count);
-		pdata->rx_ring_count = min_t(unsigned int, pdata->rx_ring_count,
+		pdata->rx_ring_count = min_t(अचिन्हित पूर्णांक, pdata->rx_ring_count,
 					     pdata->channel_irq_count);
 
-		if (netif_msg_probe(pdata))
+		अगर (netअगर_msg_probe(pdata))
 			dev_dbg(pdata->dev,
 				"adjusted TX/RX DMA channel count = %u/%u\n",
 				pdata->tx_ring_count, pdata->rx_ring_count);
-	}
+	पूर्ण
 
 	/* Initialize RSS hash key */
-	netdev_rss_key_fill(pdata->rss_key, sizeof(pdata->rss_key));
+	netdev_rss_key_fill(pdata->rss_key, माप(pdata->rss_key));
 
 	XGMAC_SET_BITS(pdata->rss_options, MAC_RSSCR, IP2TE, 1);
 	XGMAC_SET_BITS(pdata->rss_options, MAC_RSSCR, TCP4TE, 1);
@@ -330,16 +331,16 @@ int xgbe_config_netdev(struct xgbe_prv_data *pdata)
 
 	/* Call MDIO/PHY initialization routine */
 	pdata->debugfs_an_cdr_workaround = pdata->vdata->an_cdr_workaround;
-	ret = pdata->phy_if.phy_init(pdata);
-	if (ret)
-		return ret;
+	ret = pdata->phy_अगर.phy_init(pdata);
+	अगर (ret)
+		वापस ret;
 
 	/* Set device operations */
 	netdev->netdev_ops = xgbe_get_netdev_ops();
 	netdev->ethtool_ops = xgbe_get_ethtool_ops();
-#ifdef CONFIG_AMD_XGBE_DCB
+#अगर_घोषित CONFIG_AMD_XGBE_DCB
 	netdev->dcbnl_ops = xgbe_get_dcbnl_ops();
-#endif
+#पूर्ण_अगर
 
 	/* Set device features */
 	netdev->hw_features = NETIF_F_SG |
@@ -353,10 +354,10 @@ int xgbe_config_netdev(struct xgbe_prv_data *pdata)
 			      NETIF_F_HW_VLAN_CTAG_TX |
 			      NETIF_F_HW_VLAN_CTAG_FILTER;
 
-	if (pdata->hw_feat.rss)
+	अगर (pdata->hw_feat.rss)
 		netdev->hw_features |= NETIF_F_RXHASH;
 
-	if (pdata->hw_feat.vxn) {
+	अगर (pdata->hw_feat.vxn) अणु
 		netdev->hw_enc_features = NETIF_F_SG |
 					  NETIF_F_IP_CSUM |
 					  NETIF_F_IPV6_CSUM |
@@ -371,7 +372,7 @@ int xgbe_config_netdev(struct xgbe_prv_data *pdata)
 				       NETIF_F_GSO_UDP_TUNNEL_CSUM;
 
 		netdev->udp_tunnel_nic_info = xgbe_get_udp_tunnel_info();
-	}
+	पूर्ण
 
 	netdev->vlan_features |= NETIF_F_SG |
 				 NETIF_F_IP_CSUM |
@@ -386,105 +387,105 @@ int xgbe_config_netdev(struct xgbe_prv_data *pdata)
 	netdev->min_mtu = 0;
 	netdev->max_mtu = XGMAC_JUMBO_PACKET_MTU;
 
-	/* Use default watchdog timeout */
-	netdev->watchdog_timeo = 0;
+	/* Use शेष watchकरोg समयout */
+	netdev->watchकरोg_समयo = 0;
 
 	xgbe_init_rx_coalesce(pdata);
 	xgbe_init_tx_coalesce(pdata);
 
-	netif_carrier_off(netdev);
-	ret = register_netdev(netdev);
-	if (ret) {
+	netअगर_carrier_off(netdev);
+	ret = रेजिस्टर_netdev(netdev);
+	अगर (ret) अणु
 		dev_err(dev, "net device registration failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (IS_REACHABLE(CONFIG_PTP_1588_CLOCK))
-		xgbe_ptp_register(pdata);
+	अगर (IS_REACHABLE(CONFIG_PTP_1588_CLOCK))
+		xgbe_ptp_रेजिस्टर(pdata);
 
 	xgbe_debugfs_init(pdata);
 
-	netif_dbg(pdata, drv, pdata->netdev, "%u Tx software queues\n",
+	netअगर_dbg(pdata, drv, pdata->netdev, "%u Tx software queues\n",
 		  pdata->tx_ring_count);
-	netif_dbg(pdata, drv, pdata->netdev, "%u Rx software queues\n",
+	netअगर_dbg(pdata, drv, pdata->netdev, "%u Rx software queues\n",
 		  pdata->rx_ring_count);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void xgbe_deconfig_netdev(struct xgbe_prv_data *pdata)
-{
-	struct net_device *netdev = pdata->netdev;
+व्योम xgbe_deconfig_netdev(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा net_device *netdev = pdata->netdev;
 
-	xgbe_debugfs_exit(pdata);
+	xgbe_debugfs_निकास(pdata);
 
-	if (IS_REACHABLE(CONFIG_PTP_1588_CLOCK))
-		xgbe_ptp_unregister(pdata);
+	अगर (IS_REACHABLE(CONFIG_PTP_1588_CLOCK))
+		xgbe_ptp_unरेजिस्टर(pdata);
 
-	unregister_netdev(netdev);
+	unरेजिस्टर_netdev(netdev);
 
-	pdata->phy_if.phy_exit(pdata);
-}
+	pdata->phy_अगर.phy_निकास(pdata);
+पूर्ण
 
-static int xgbe_netdev_event(struct notifier_block *nb, unsigned long event,
-			     void *data)
-{
-	struct net_device *netdev = netdev_notifier_info_to_dev(data);
-	struct xgbe_prv_data *pdata = netdev_priv(netdev);
+अटल पूर्णांक xgbe_netdev_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
+			     व्योम *data)
+अणु
+	काष्ठा net_device *netdev = netdev_notअगरier_info_to_dev(data);
+	काष्ठा xgbe_prv_data *pdata = netdev_priv(netdev);
 
-	if (netdev->netdev_ops != xgbe_get_netdev_ops())
-		goto out;
+	अगर (netdev->netdev_ops != xgbe_get_netdev_ops())
+		जाओ out;
 
-	switch (event) {
-	case NETDEV_CHANGENAME:
-		xgbe_debugfs_rename(pdata);
-		break;
+	चयन (event) अणु
+	हाल NETDEV_CHANGENAME:
+		xgbe_debugfs_नाम(pdata);
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 out:
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block xgbe_netdev_notifier = {
-	.notifier_call = xgbe_netdev_event,
-};
+अटल काष्ठा notअगरier_block xgbe_netdev_notअगरier = अणु
+	.notअगरier_call = xgbe_netdev_event,
+पूर्ण;
 
-static int __init xgbe_mod_init(void)
-{
-	int ret;
+अटल पूर्णांक __init xgbe_mod_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_netdevice_notifier(&xgbe_netdev_notifier);
-	if (ret)
-		return ret;
+	ret = रेजिस्टर_netdevice_notअगरier(&xgbe_netdev_notअगरier);
+	अगर (ret)
+		वापस ret;
 
-	ret = xgbe_platform_init();
-	if (ret)
-		goto err_platform_init;
+	ret = xgbe_platक्रमm_init();
+	अगर (ret)
+		जाओ err_platक्रमm_init;
 
 	ret = xgbe_pci_init();
-	if (ret)
-		goto err_pci_init;
+	अगर (ret)
+		जाओ err_pci_init;
 
-	return 0;
+	वापस 0;
 
 err_pci_init:
-	xgbe_platform_exit();
-err_platform_init:
-	unregister_netdevice_notifier(&xgbe_netdev_notifier);
-	return ret;
-}
+	xgbe_platक्रमm_निकास();
+err_platक्रमm_init:
+	unरेजिस्टर_netdevice_notअगरier(&xgbe_netdev_notअगरier);
+	वापस ret;
+पूर्ण
 
-static void __exit xgbe_mod_exit(void)
-{
-	xgbe_pci_exit();
+अटल व्योम __निकास xgbe_mod_निकास(व्योम)
+अणु
+	xgbe_pci_निकास();
 
-	xgbe_platform_exit();
+	xgbe_platक्रमm_निकास();
 
-	unregister_netdevice_notifier(&xgbe_netdev_notifier);
-}
+	unरेजिस्टर_netdevice_notअगरier(&xgbe_netdev_notअगरier);
+पूर्ण
 
 module_init(xgbe_mod_init);
-module_exit(xgbe_mod_exit);
+module_निकास(xgbe_mod_निकास);

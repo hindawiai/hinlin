@@ -1,123 +1,124 @@
-// SPDX-License-Identifier: LGPL-2.1
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
 /*
  * Copyright (C) 2009, 2010 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
 
-#ifndef _PARSE_EVENTS_INT_H
-#define _PARSE_EVENTS_INT_H
+#अगर_अघोषित _PARSE_EVENTS_INT_H
+#घोषणा _PARSE_EVENTS_INT_H
 
-struct tep_cmdline;
-struct cmdline_list;
-struct func_map;
-struct func_list;
-struct event_handler;
-struct func_resolver;
-struct tep_plugins_dir;
+काष्ठा tep_cmdline;
+काष्ठा cmdline_list;
+काष्ठा func_map;
+काष्ठा func_list;
+काष्ठा event_handler;
+काष्ठा func_resolver;
+काष्ठा tep_plugins_dir;
 
-#define __hidden __attribute__((visibility ("hidden")))
+#घोषणा __hidden __attribute__((visibility ("hidden")))
 
-struct tep_handle {
-	int ref_count;
+काष्ठा tep_handle अणु
+	पूर्णांक ref_count;
 
-	int header_page_ts_offset;
-	int header_page_ts_size;
-	int header_page_size_offset;
-	int header_page_size_size;
-	int header_page_data_offset;
-	int header_page_data_size;
-	int header_page_overwrite;
+	पूर्णांक header_page_ts_offset;
+	पूर्णांक header_page_ts_size;
+	पूर्णांक header_page_size_offset;
+	पूर्णांक header_page_size_size;
+	पूर्णांक header_page_data_offset;
+	पूर्णांक header_page_data_size;
+	पूर्णांक header_page_overग_लिखो;
 
-	enum tep_endian file_bigendian;
-	enum tep_endian host_bigendian;
+	क्रमागत tep_endian file_bigendian;
+	क्रमागत tep_endian host_bigendian;
 
-	int old_format;
+	पूर्णांक old_क्रमmat;
 
-	int cpus;
-	int long_size;
-	int page_size;
+	पूर्णांक cpus;
+	पूर्णांक दीर्घ_size;
+	पूर्णांक page_size;
 
-	struct tep_cmdline *cmdlines;
-	struct cmdline_list *cmdlist;
-	int cmdline_count;
+	काष्ठा tep_cmdline *cmdlines;
+	काष्ठा cmdline_list *cmdlist;
+	पूर्णांक cmdline_count;
 
-	struct func_map *func_map;
-	struct func_resolver *func_resolver;
-	struct func_list *funclist;
-	unsigned int func_count;
+	काष्ठा func_map *func_map;
+	काष्ठा func_resolver *func_resolver;
+	काष्ठा func_list *funclist;
+	अचिन्हित पूर्णांक func_count;
 
-	struct printk_map *printk_map;
-	struct printk_list *printklist;
-	unsigned int printk_count;
+	काष्ठा prपूर्णांकk_map *prपूर्णांकk_map;
+	काष्ठा prपूर्णांकk_list *prपूर्णांकklist;
+	अचिन्हित पूर्णांक prपूर्णांकk_count;
 
-	struct tep_event **events;
-	int nr_events;
-	struct tep_event **sort_events;
-	enum tep_event_sort_type last_type;
+	काष्ठा tep_event **events;
+	पूर्णांक nr_events;
+	काष्ठा tep_event **sort_events;
+	क्रमागत tep_event_sort_type last_type;
 
-	int type_offset;
-	int type_size;
+	पूर्णांक type_offset;
+	पूर्णांक type_size;
 
-	int pid_offset;
-	int pid_size;
+	पूर्णांक pid_offset;
+	पूर्णांक pid_size;
 
-	int pc_offset;
-	int pc_size;
+	पूर्णांक pc_offset;
+	पूर्णांक pc_size;
 
-	int flags_offset;
-	int flags_size;
+	पूर्णांक flags_offset;
+	पूर्णांक flags_size;
 
-	int ld_offset;
-	int ld_size;
+	पूर्णांक ld_offset;
+	पूर्णांक ld_size;
 
-	int test_filters;
+	पूर्णांक test_filters;
 
-	int flags;
+	पूर्णांक flags;
 
-	struct tep_format_field *bprint_ip_field;
-	struct tep_format_field *bprint_fmt_field;
-	struct tep_format_field *bprint_buf_field;
+	काष्ठा tep_क्रमmat_field *bprपूर्णांक_ip_field;
+	काष्ठा tep_क्रमmat_field *bprपूर्णांक_fmt_field;
+	काष्ठा tep_क्रमmat_field *bprपूर्णांक_buf_field;
 
-	struct event_handler *handlers;
-	struct tep_function_handler *func_handlers;
+	काष्ठा event_handler *handlers;
+	काष्ठा tep_function_handler *func_handlers;
 
 	/* cache */
-	struct tep_event *last_event;
+	काष्ठा tep_event *last_event;
 
-	struct tep_plugins_dir *plugins_dir;
-};
+	काष्ठा tep_plugins_dir *plugins_dir;
+पूर्ण;
 
-enum tep_print_parse_type {
+क्रमागत tep_prपूर्णांक_parse_type अणु
 	PRINT_FMT_STRING,
 	PRINT_FMT_ARG_DIGIT,
 	PRINT_FMT_ARG_POINTER,
 	PRINT_FMT_ARG_STRING,
-};
+पूर्ण;
 
-struct tep_print_parse {
-	struct tep_print_parse	*next;
+काष्ठा tep_prपूर्णांक_parse अणु
+	काष्ठा tep_prपूर्णांक_parse	*next;
 
-	char				*format;
-	int				ls;
-	enum tep_print_parse_type	type;
-	struct tep_print_arg		*arg;
-	struct tep_print_arg		*len_as_arg;
-};
+	अक्षर				*क्रमmat;
+	पूर्णांक				ls;
+	क्रमागत tep_prपूर्णांक_parse_type	type;
+	काष्ठा tep_prपूर्णांक_arg		*arg;
+	काष्ठा tep_prपूर्णांक_arg		*len_as_arg;
+पूर्ण;
 
-void free_tep_event(struct tep_event *event);
-void free_tep_format_field(struct tep_format_field *field);
-void free_tep_plugin_paths(struct tep_handle *tep);
+व्योम मुक्त_tep_event(काष्ठा tep_event *event);
+व्योम मुक्त_tep_क्रमmat_field(काष्ठा tep_क्रमmat_field *field);
+व्योम मुक्त_tep_plugin_paths(काष्ठा tep_handle *tep);
 
-unsigned short data2host2(struct tep_handle *tep, unsigned short data);
-unsigned int data2host4(struct tep_handle *tep, unsigned int data);
-unsigned long long data2host8(struct tep_handle *tep, unsigned long long data);
+अचिन्हित लघु data2host2(काष्ठा tep_handle *tep, अचिन्हित लघु data);
+अचिन्हित पूर्णांक data2host4(काष्ठा tep_handle *tep, अचिन्हित पूर्णांक data);
+अचिन्हित दीर्घ दीर्घ data2host8(काष्ठा tep_handle *tep, अचिन्हित दीर्घ दीर्घ data);
 
-/* access to the internal parser */
-int peek_char(void);
-void init_input_buf(const char *buf, unsigned long long size);
-unsigned long long get_input_buf_ptr(void);
-const char *get_input_buf(void);
-enum tep_event_type read_token(char **tok);
-void free_token(char *tok);
+/* access to the पूर्णांकernal parser */
+पूर्णांक peek_अक्षर(व्योम);
+व्योम init_input_buf(स्थिर अक्षर *buf, अचिन्हित दीर्घ दीर्घ size);
+अचिन्हित दीर्घ दीर्घ get_input_buf_ptr(व्योम);
+स्थिर अक्षर *get_input_buf(व्योम);
+क्रमागत tep_event_type पढ़ो_token(अक्षर **tok);
+व्योम मुक्त_token(अक्षर *tok);
 
-#endif /* _PARSE_EVENTS_INT_H */
+#पूर्ण_अगर /* _PARSE_EVENTS_INT_H */

@@ -1,303 +1,304 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012-2013, Analog Devices Inc.
  * Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#include <linux/clk.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/dmaengine_pcm.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/dmaengine_pcm.h>
 
-#define AXI_I2S_REG_RESET	0x00
-#define AXI_I2S_REG_CTRL	0x04
-#define AXI_I2S_REG_CLK_CTRL	0x08
-#define AXI_I2S_REG_STATUS	0x10
+#घोषणा AXI_I2S_REG_RESET	0x00
+#घोषणा AXI_I2S_REG_CTRL	0x04
+#घोषणा AXI_I2S_REG_CLK_CTRL	0x08
+#घोषणा AXI_I2S_REG_STATUS	0x10
 
-#define AXI_I2S_REG_RX_FIFO	0x28
-#define AXI_I2S_REG_TX_FIFO	0x2C
+#घोषणा AXI_I2S_REG_RX_FIFO	0x28
+#घोषणा AXI_I2S_REG_TX_FIFO	0x2C
 
-#define AXI_I2S_RESET_GLOBAL	BIT(0)
-#define AXI_I2S_RESET_TX_FIFO	BIT(1)
-#define AXI_I2S_RESET_RX_FIFO	BIT(2)
+#घोषणा AXI_I2S_RESET_GLOBAL	BIT(0)
+#घोषणा AXI_I2S_RESET_TX_FIFO	BIT(1)
+#घोषणा AXI_I2S_RESET_RX_FIFO	BIT(2)
 
-#define AXI_I2S_CTRL_TX_EN	BIT(0)
-#define AXI_I2S_CTRL_RX_EN	BIT(1)
+#घोषणा AXI_I2S_CTRL_TX_EN	BIT(0)
+#घोषणा AXI_I2S_CTRL_RX_EN	BIT(1)
 
-/* The frame size is configurable, but for now we always set it 64 bit */
-#define AXI_I2S_BITS_PER_FRAME 64
+/* The frame size is configurable, but क्रम now we always set it 64 bit */
+#घोषणा AXI_I2S_BITS_PER_FRAME 64
 
-struct axi_i2s {
-	struct regmap *regmap;
-	struct clk *clk;
-	struct clk *clk_ref;
+काष्ठा axi_i2s अणु
+	काष्ठा regmap *regmap;
+	काष्ठा clk *clk;
+	काष्ठा clk *clk_ref;
 
 	bool   has_capture;
 	bool   has_playback;
 
-	struct snd_soc_dai_driver dai_driver;
+	काष्ठा snd_soc_dai_driver dai_driver;
 
-	struct snd_dmaengine_dai_dma_data capture_dma_data;
-	struct snd_dmaengine_dai_dma_data playback_dma_data;
+	काष्ठा snd_dmaengine_dai_dma_data capture_dma_data;
+	काष्ठा snd_dmaengine_dai_dma_data playback_dma_data;
 
-	struct snd_ratnum ratnum;
-	struct snd_pcm_hw_constraint_ratnums rate_constraints;
-};
+	काष्ठा snd_ratnum ratnum;
+	काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_ratnums rate_स्थिरraपूर्णांकs;
+पूर्ण;
 
-static int axi_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
-	struct snd_soc_dai *dai)
-{
-	struct axi_i2s *i2s = snd_soc_dai_get_drvdata(dai);
-	unsigned int mask, val;
+अटल पूर्णांक axi_i2s_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+	काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा axi_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+	अचिन्हित पूर्णांक mask, val;
 
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 		mask = AXI_I2S_CTRL_RX_EN;
-	else
+	अन्यथा
 		mask = AXI_I2S_CTRL_TX_EN;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		val = mask;
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		val = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(i2s->regmap, AXI_I2S_REG_CTRL, mask, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axi_i2s_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
-{
-	struct axi_i2s *i2s = snd_soc_dai_get_drvdata(dai);
-	unsigned int bclk_div, word_size;
-	unsigned int bclk_rate;
+अटल पूर्णांक axi_i2s_hw_params(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_pcm_hw_params *params, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा axi_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+	अचिन्हित पूर्णांक bclk_भाग, word_size;
+	अचिन्हित पूर्णांक bclk_rate;
 
 	bclk_rate = params_rate(params) * AXI_I2S_BITS_PER_FRAME;
 
 	word_size = AXI_I2S_BITS_PER_FRAME / 2 - 1;
-	bclk_div = DIV_ROUND_UP(clk_get_rate(i2s->clk_ref), bclk_rate) / 2 - 1;
+	bclk_भाग = DIV_ROUND_UP(clk_get_rate(i2s->clk_ref), bclk_rate) / 2 - 1;
 
-	regmap_write(i2s->regmap, AXI_I2S_REG_CLK_CTRL, (word_size << 16) |
-		bclk_div);
+	regmap_ग_लिखो(i2s->regmap, AXI_I2S_REG_CLK_CTRL, (word_size << 16) |
+		bclk_भाग);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axi_i2s_startup(struct snd_pcm_substream *substream,
-	struct snd_soc_dai *dai)
-{
-	struct axi_i2s *i2s = snd_soc_dai_get_drvdata(dai);
-	uint32_t mask;
-	int ret;
+अटल पूर्णांक axi_i2s_startup(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा axi_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+	uपूर्णांक32_t mask;
+	पूर्णांक ret;
 
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 		mask = AXI_I2S_RESET_RX_FIFO;
-	else
+	अन्यथा
 		mask = AXI_I2S_RESET_TX_FIFO;
 
-	regmap_write(i2s->regmap, AXI_I2S_REG_RESET, mask);
+	regmap_ग_लिखो(i2s->regmap, AXI_I2S_REG_RESET, mask);
 
-	ret = snd_pcm_hw_constraint_ratnums(substream->runtime, 0,
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_ratnums(substream->runसमय, 0,
 			   SNDRV_PCM_HW_PARAM_RATE,
-			   &i2s->rate_constraints);
-	if (ret)
-		return ret;
+			   &i2s->rate_स्थिरraपूर्णांकs);
+	अगर (ret)
+		वापस ret;
 
-	return clk_prepare_enable(i2s->clk_ref);
-}
+	वापस clk_prepare_enable(i2s->clk_ref);
+पूर्ण
 
-static void axi_i2s_shutdown(struct snd_pcm_substream *substream,
-	struct snd_soc_dai *dai)
-{
-	struct axi_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+अटल व्योम axi_i2s_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा axi_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 
 	clk_disable_unprepare(i2s->clk_ref);
-}
+पूर्ण
 
-static int axi_i2s_dai_probe(struct snd_soc_dai *dai)
-{
-	struct axi_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक axi_i2s_dai_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा axi_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 
 	snd_soc_dai_init_dma_data(
 		dai,
-		i2s->has_playback ? &i2s->playback_dma_data : NULL,
-		i2s->has_capture  ? &i2s->capture_dma_data  : NULL);
+		i2s->has_playback ? &i2s->playback_dma_data : शून्य,
+		i2s->has_capture  ? &i2s->capture_dma_data  : शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops axi_i2s_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops axi_i2s_dai_ops = अणु
 	.startup = axi_i2s_startup,
-	.shutdown = axi_i2s_shutdown,
+	.shutकरोwn = axi_i2s_shutकरोwn,
 	.trigger = axi_i2s_trigger,
 	.hw_params = axi_i2s_hw_params,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver axi_i2s_dai = {
+अटल काष्ठा snd_soc_dai_driver axi_i2s_dai = अणु
 	.probe = axi_i2s_dai_probe,
 	.ops = &axi_i2s_dai_ops,
 	.symmetric_rate = 1,
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver axi_i2s_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver axi_i2s_component = अणु
 	.name = "axi-i2s",
-};
+पूर्ण;
 
-static const struct regmap_config axi_i2s_regmap_config = {
+अटल स्थिर काष्ठा regmap_config axi_i2s_regmap_config = अणु
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_register = AXI_I2S_REG_STATUS,
-};
+	.max_रेजिस्टर = AXI_I2S_REG_STATUS,
+पूर्ण;
 
-static void axi_i2s_parse_of(struct axi_i2s *i2s, const struct device_node *np)
-{
-	struct property *dma_names;
-	const char *dma_name;
+अटल व्योम axi_i2s_parse_of(काष्ठा axi_i2s *i2s, स्थिर काष्ठा device_node *np)
+अणु
+	काष्ठा property *dma_names;
+	स्थिर अक्षर *dma_name;
 
-	of_property_for_each_string(np, "dma-names", dma_names, dma_name) {
-		if (strcmp(dma_name, "rx") == 0)
+	of_property_क्रम_each_string(np, "dma-names", dma_names, dma_name) अणु
+		अगर (म_भेद(dma_name, "rx") == 0)
 			i2s->has_capture = true;
-		if (strcmp(dma_name, "tx") == 0)
+		अगर (म_भेद(dma_name, "tx") == 0)
 			i2s->has_playback = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int axi_i2s_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	struct axi_i2s *i2s;
-	void __iomem *base;
-	int ret;
+अटल पूर्णांक axi_i2s_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा axi_i2s *i2s;
+	व्योम __iomem *base;
+	पूर्णांक ret;
 
-	i2s = devm_kzalloc(&pdev->dev, sizeof(*i2s), GFP_KERNEL);
-	if (!i2s)
-		return -ENOMEM;
+	i2s = devm_kzalloc(&pdev->dev, माप(*i2s), GFP_KERNEL);
+	अगर (!i2s)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, i2s);
+	platक्रमm_set_drvdata(pdev, i2s);
 
 	axi_i2s_parse_of(i2s, pdev->dev.of_node);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	i2s->regmap = devm_regmap_init_mmio(&pdev->dev, base,
 		&axi_i2s_regmap_config);
-	if (IS_ERR(i2s->regmap))
-		return PTR_ERR(i2s->regmap);
+	अगर (IS_ERR(i2s->regmap))
+		वापस PTR_ERR(i2s->regmap);
 
 	i2s->clk = devm_clk_get(&pdev->dev, "axi");
-	if (IS_ERR(i2s->clk))
-		return PTR_ERR(i2s->clk);
+	अगर (IS_ERR(i2s->clk))
+		वापस PTR_ERR(i2s->clk);
 
 	i2s->clk_ref = devm_clk_get(&pdev->dev, "ref");
-	if (IS_ERR(i2s->clk_ref))
-		return PTR_ERR(i2s->clk_ref);
+	अगर (IS_ERR(i2s->clk_ref))
+		वापस PTR_ERR(i2s->clk_ref);
 
 	ret = clk_prepare_enable(i2s->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (i2s->has_playback) {
+	अगर (i2s->has_playback) अणु
 		axi_i2s_dai.playback.channels_min = 2;
 		axi_i2s_dai.playback.channels_max = 2;
 		axi_i2s_dai.playback.rates = SNDRV_PCM_RATE_KNOT;
-		axi_i2s_dai.playback.formats =
+		axi_i2s_dai.playback.क्रमmats =
 			SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_U32_LE;
 
 		i2s->playback_dma_data.addr = res->start + AXI_I2S_REG_TX_FIFO;
 		i2s->playback_dma_data.addr_width = 4;
 		i2s->playback_dma_data.maxburst = 1;
-	}
+	पूर्ण
 
-	if (i2s->has_capture) {
+	अगर (i2s->has_capture) अणु
 		axi_i2s_dai.capture.channels_min = 2;
 		axi_i2s_dai.capture.channels_max = 2;
 		axi_i2s_dai.capture.rates = SNDRV_PCM_RATE_KNOT;
-		axi_i2s_dai.capture.formats =
+		axi_i2s_dai.capture.क्रमmats =
 			SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_U32_LE;
 
 		i2s->capture_dma_data.addr = res->start + AXI_I2S_REG_RX_FIFO;
 		i2s->capture_dma_data.addr_width = 4;
 		i2s->capture_dma_data.maxburst = 1;
-	}
+	पूर्ण
 
 	i2s->ratnum.num = clk_get_rate(i2s->clk_ref) / 2 / AXI_I2S_BITS_PER_FRAME;
 	i2s->ratnum.den_step = 1;
 	i2s->ratnum.den_min = 1;
 	i2s->ratnum.den_max = 64;
 
-	i2s->rate_constraints.rats = &i2s->ratnum;
-	i2s->rate_constraints.nrats = 1;
+	i2s->rate_स्थिरraपूर्णांकs.rats = &i2s->ratnum;
+	i2s->rate_स्थिरraपूर्णांकs.nrats = 1;
 
-	regmap_write(i2s->regmap, AXI_I2S_REG_RESET, AXI_I2S_RESET_GLOBAL);
+	regmap_ग_लिखो(i2s->regmap, AXI_I2S_REG_RESET, AXI_I2S_RESET_GLOBAL);
 
-	ret = devm_snd_soc_register_component(&pdev->dev, &axi_i2s_component,
+	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev, &axi_i2s_component,
 					 &axi_i2s_dai, 1);
-	if (ret)
-		goto err_clk_disable;
+	अगर (ret)
+		जाओ err_clk_disable;
 
-	ret = devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
-	if (ret)
-		goto err_clk_disable;
+	ret = devm_snd_dmaengine_pcm_रेजिस्टर(&pdev->dev, शून्य, 0);
+	अगर (ret)
+		जाओ err_clk_disable;
 
 	dev_info(&pdev->dev, "probed, capture %s, playback %s\n",
 		 i2s->has_capture ? "enabled" : "disabled",
 		 i2s->has_playback ? "enabled" : "disabled");
 
-	return 0;
+	वापस 0;
 
 err_clk_disable:
 	clk_disable_unprepare(i2s->clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int axi_i2s_dev_remove(struct platform_device *pdev)
-{
-	struct axi_i2s *i2s = platform_get_drvdata(pdev);
+अटल पूर्णांक axi_i2s_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा axi_i2s *i2s = platक्रमm_get_drvdata(pdev);
 
 	clk_disable_unprepare(i2s->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id axi_i2s_of_match[] = {
-	{ .compatible = "adi,axi-i2s-1.00.a", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id axi_i2s_of_match[] = अणु
+	अणु .compatible = "adi,axi-i2s-1.00.a", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, axi_i2s_of_match);
 
-static struct platform_driver axi_i2s_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver axi_i2s_driver = अणु
+	.driver = अणु
 		.name = "axi-i2s",
 		.of_match_table = axi_i2s_of_match,
-	},
+	पूर्ण,
 	.probe = axi_i2s_probe,
-	.remove = axi_i2s_dev_remove,
-};
-module_platform_driver(axi_i2s_driver);
+	.हटाओ = axi_i2s_dev_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(axi_i2s_driver);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");
 MODULE_DESCRIPTION("AXI I2S driver");

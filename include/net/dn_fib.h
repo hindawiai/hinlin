@@ -1,167 +1,168 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NET_DN_FIB_H
-#define _NET_DN_FIB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NET_DN_FIB_H
+#घोषणा _NET_DN_FIB_H
 
-#include <linux/netlink.h>
-#include <linux/refcount.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/refcount.h>
 
-extern const struct nla_policy rtm_dn_policy[];
+बाह्य स्थिर काष्ठा nla_policy rपंचांग_dn_policy[];
 
-struct dn_fib_res {
-	struct fib_rule *r;
-	struct dn_fib_info *fi;
-	unsigned char prefixlen;
-	unsigned char nh_sel;
-	unsigned char type;
-	unsigned char scope;
-};
+काष्ठा dn_fib_res अणु
+	काष्ठा fib_rule *r;
+	काष्ठा dn_fib_info *fi;
+	अचिन्हित अक्षर prefixlen;
+	अचिन्हित अक्षर nh_sel;
+	अचिन्हित अक्षर type;
+	अचिन्हित अक्षर scope;
+पूर्ण;
 
-struct dn_fib_nh {
-	struct net_device	*nh_dev;
-	unsigned int		nh_flags;
-	unsigned char		nh_scope;
-	int			nh_weight;
-	int			nh_power;
-	int			nh_oif;
+काष्ठा dn_fib_nh अणु
+	काष्ठा net_device	*nh_dev;
+	अचिन्हित पूर्णांक		nh_flags;
+	अचिन्हित अक्षर		nh_scope;
+	पूर्णांक			nh_weight;
+	पूर्णांक			nh_घातer;
+	पूर्णांक			nh_oअगर;
 	__le16			nh_gw;
-};
+पूर्ण;
 
-struct dn_fib_info {
-	struct dn_fib_info	*fib_next;
-	struct dn_fib_info	*fib_prev;
-	int 			fib_treeref;
+काष्ठा dn_fib_info अणु
+	काष्ठा dn_fib_info	*fib_next;
+	काष्ठा dn_fib_info	*fib_prev;
+	पूर्णांक 			fib_treeref;
 	refcount_t		fib_clntref;
-	int			fib_dead;
-	unsigned int		fib_flags;
-	int			fib_protocol;
+	पूर्णांक			fib_dead;
+	अचिन्हित पूर्णांक		fib_flags;
+	पूर्णांक			fib_protocol;
 	__le16			fib_prefsrc;
 	__u32			fib_priority;
 	__u32			fib_metrics[RTAX_MAX];
-	int			fib_nhs;
-	int			fib_power;
-	struct dn_fib_nh	fib_nh[0];
-#define dn_fib_dev		fib_nh[0].nh_dev
-};
+	पूर्णांक			fib_nhs;
+	पूर्णांक			fib_घातer;
+	काष्ठा dn_fib_nh	fib_nh[0];
+#घोषणा dn_fib_dev		fib_nh[0].nh_dev
+पूर्ण;
 
 
-#define DN_FIB_RES_RESET(res)	((res).nh_sel = 0)
-#define DN_FIB_RES_NH(res)	((res).fi->fib_nh[(res).nh_sel])
+#घोषणा DN_FIB_RES_RESET(res)	((res).nh_sel = 0)
+#घोषणा DN_FIB_RES_NH(res)	((res).fi->fib_nh[(res).nh_sel])
 
-#define DN_FIB_RES_PREFSRC(res)	((res).fi->fib_prefsrc ? : __dn_fib_res_prefsrc(&res))
-#define DN_FIB_RES_GW(res)	(DN_FIB_RES_NH(res).nh_gw)
-#define DN_FIB_RES_DEV(res)	(DN_FIB_RES_NH(res).nh_dev)
-#define DN_FIB_RES_OIF(res)	(DN_FIB_RES_NH(res).nh_oif)
+#घोषणा DN_FIB_RES_PREFSRC(res)	((res).fi->fib_prefsrc ? : __dn_fib_res_prefsrc(&res))
+#घोषणा DN_FIB_RES_GW(res)	(DN_FIB_RES_NH(res).nh_gw)
+#घोषणा DN_FIB_RES_DEV(res)	(DN_FIB_RES_NH(res).nh_dev)
+#घोषणा DN_FIB_RES_OIF(res)	(DN_FIB_RES_NH(res).nh_oअगर)
 
-typedef struct {
+प्रकार काष्ठा अणु
 	__le16	datum;
-} dn_fib_key_t;
+पूर्ण dn_fib_key_t;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	__le16	datum;
-} dn_fib_hash_t;
+पूर्ण dn_fib_hash_t;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	__u16	datum;
-} dn_fib_idx_t;
+पूर्ण dn_fib_idx_t;
 
-struct dn_fib_node {
-	struct dn_fib_node *fn_next;
-	struct dn_fib_info *fn_info;
-#define DN_FIB_INFO(f) ((f)->fn_info)
+काष्ठा dn_fib_node अणु
+	काष्ठा dn_fib_node *fn_next;
+	काष्ठा dn_fib_info *fn_info;
+#घोषणा DN_FIB_INFO(f) ((f)->fn_info)
 	dn_fib_key_t	fn_key;
 	u8		fn_type;
 	u8		fn_scope;
 	u8		fn_state;
-};
+पूर्ण;
 
 
-struct dn_fib_table {
-	struct hlist_node hlist;
+काष्ठा dn_fib_table अणु
+	काष्ठा hlist_node hlist;
 	u32 n;
 
-	int (*insert)(struct dn_fib_table *t, struct rtmsg *r, 
-			struct nlattr *attrs[], struct nlmsghdr *n,
-			struct netlink_skb_parms *req);
-	int (*delete)(struct dn_fib_table *t, struct rtmsg *r,
-			struct nlattr *attrs[], struct nlmsghdr *n,
-			struct netlink_skb_parms *req);
-	int (*lookup)(struct dn_fib_table *t, const struct flowidn *fld,
-			struct dn_fib_res *res);
-	int (*flush)(struct dn_fib_table *t);
-	int (*dump)(struct dn_fib_table *t, struct sk_buff *skb, struct netlink_callback *cb);
+	पूर्णांक (*insert)(काष्ठा dn_fib_table *t, काष्ठा rपंचांगsg *r, 
+			काष्ठा nlattr *attrs[], काष्ठा nlmsghdr *n,
+			काष्ठा netlink_skb_parms *req);
+	पूर्णांक (*delete)(काष्ठा dn_fib_table *t, काष्ठा rपंचांगsg *r,
+			काष्ठा nlattr *attrs[], काष्ठा nlmsghdr *n,
+			काष्ठा netlink_skb_parms *req);
+	पूर्णांक (*lookup)(काष्ठा dn_fib_table *t, स्थिर काष्ठा flowidn *fld,
+			काष्ठा dn_fib_res *res);
+	पूर्णांक (*flush)(काष्ठा dn_fib_table *t);
+	पूर्णांक (*dump)(काष्ठा dn_fib_table *t, काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
 
-	unsigned char data[];
-};
+	अचिन्हित अक्षर data[];
+पूर्ण;
 
-#ifdef CONFIG_DECNET_ROUTER
+#अगर_घोषित CONFIG_DECNET_ROUTER
 /*
  * dn_fib.c
  */
-void dn_fib_init(void);
-void dn_fib_cleanup(void);
+व्योम dn_fib_init(व्योम);
+व्योम dn_fib_cleanup(व्योम);
 
-int dn_fib_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
-struct dn_fib_info *dn_fib_create_info(const struct rtmsg *r,
-				       struct nlattr *attrs[],
-				       const struct nlmsghdr *nlh, int *errp);
-int dn_fib_semantic_match(int type, struct dn_fib_info *fi,
-			  const struct flowidn *fld, struct dn_fib_res *res);
-void dn_fib_release_info(struct dn_fib_info *fi);
-void dn_fib_flush(void);
-void dn_fib_select_multipath(const struct flowidn *fld, struct dn_fib_res *res);
+पूर्णांक dn_fib_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+काष्ठा dn_fib_info *dn_fib_create_info(स्थिर काष्ठा rपंचांगsg *r,
+				       काष्ठा nlattr *attrs[],
+				       स्थिर काष्ठा nlmsghdr *nlh, पूर्णांक *errp);
+पूर्णांक dn_fib_semantic_match(पूर्णांक type, काष्ठा dn_fib_info *fi,
+			  स्थिर काष्ठा flowidn *fld, काष्ठा dn_fib_res *res);
+व्योम dn_fib_release_info(काष्ठा dn_fib_info *fi);
+व्योम dn_fib_flush(व्योम);
+व्योम dn_fib_select_multipath(स्थिर काष्ठा flowidn *fld, काष्ठा dn_fib_res *res);
 
 /*
  * dn_tables.c
  */
-struct dn_fib_table *dn_fib_get_table(u32 n, int creat);
-struct dn_fib_table *dn_fib_empty_table(void);
-void dn_fib_table_init(void);
-void dn_fib_table_cleanup(void);
+काष्ठा dn_fib_table *dn_fib_get_table(u32 n, पूर्णांक creat);
+काष्ठा dn_fib_table *dn_fib_empty_table(व्योम);
+व्योम dn_fib_table_init(व्योम);
+व्योम dn_fib_table_cleanup(व्योम);
 
 /*
  * dn_rules.c
  */
-void dn_fib_rules_init(void);
-void dn_fib_rules_cleanup(void);
-unsigned int dnet_addr_type(__le16 addr);
-int dn_fib_lookup(struct flowidn *fld, struct dn_fib_res *res);
+व्योम dn_fib_rules_init(व्योम);
+व्योम dn_fib_rules_cleanup(व्योम);
+अचिन्हित पूर्णांक dnet_addr_type(__le16 addr);
+पूर्णांक dn_fib_lookup(काष्ठा flowidn *fld, काष्ठा dn_fib_res *res);
 
-int dn_fib_dump(struct sk_buff *skb, struct netlink_callback *cb);
+पूर्णांक dn_fib_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
 
-void dn_fib_free_info(struct dn_fib_info *fi);
+व्योम dn_fib_मुक्त_info(काष्ठा dn_fib_info *fi);
 
-static inline void dn_fib_info_put(struct dn_fib_info *fi)
-{
-	if (refcount_dec_and_test(&fi->fib_clntref))
-		dn_fib_free_info(fi);
-}
+अटल अंतरभूत व्योम dn_fib_info_put(काष्ठा dn_fib_info *fi)
+अणु
+	अगर (refcount_dec_and_test(&fi->fib_clntref))
+		dn_fib_मुक्त_info(fi);
+पूर्ण
 
-static inline void dn_fib_res_put(struct dn_fib_res *res)
-{
-	if (res->fi)
+अटल अंतरभूत व्योम dn_fib_res_put(काष्ठा dn_fib_res *res)
+अणु
+	अगर (res->fi)
 		dn_fib_info_put(res->fi);
-	if (res->r)
+	अगर (res->r)
 		fib_rule_put(res->r);
-}
+पूर्ण
 
-#else /* Endnode */
+#अन्यथा /* Endnode */
 
-#define dn_fib_init()  do { } while(0)
-#define dn_fib_cleanup() do { } while(0)
+#घोषणा dn_fib_init()  करो अणु पूर्ण जबतक(0)
+#घोषणा dn_fib_cleanup() करो अणु पूर्ण जबतक(0)
 
-#define dn_fib_lookup(fl, res) (-ESRCH)
-#define dn_fib_info_put(fi) do { } while(0)
-#define dn_fib_select_multipath(fl, res) do { } while(0)
-#define dn_fib_rules_policy(saddr,res,flags) (0)
-#define dn_fib_res_put(res) do { } while(0)
+#घोषणा dn_fib_lookup(fl, res) (-ESRCH)
+#घोषणा dn_fib_info_put(fi) करो अणु पूर्ण जबतक(0)
+#घोषणा dn_fib_select_multipath(fl, res) करो अणु पूर्ण जबतक(0)
+#घोषणा dn_fib_rules_policy(saddr,res,flags) (0)
+#घोषणा dn_fib_res_put(res) करो अणु पूर्ण जबतक(0)
 
-#endif /* CONFIG_DECNET_ROUTER */
+#पूर्ण_अगर /* CONFIG_DECNET_ROUTER */
 
-static inline __le16 dnet_make_mask(int n)
-{
-	if (n)
-		return cpu_to_le16(~((1 << (16 - n)) - 1));
-	return cpu_to_le16(0);
-}
+अटल अंतरभूत __le16 dnet_make_mask(पूर्णांक n)
+अणु
+	अगर (n)
+		वापस cpu_to_le16(~((1 << (16 - n)) - 1));
+	वापस cpu_to_le16(0);
+पूर्ण
 
-#endif /* _NET_DN_FIB_H */
+#पूर्ण_अगर /* _NET_DN_FIB_H */

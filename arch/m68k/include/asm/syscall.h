@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_M68K_SYSCALL_H
-#define _ASM_M68K_SYSCALL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_M68K_SYSCALL_H
+#घोषणा _ASM_M68K_SYSCALL_H
 
-#include <uapi/linux/audit.h>
+#समावेश <uapi/linux/audit.h>
 
-static inline int syscall_get_arch(struct task_struct *task)
-{
-	return AUDIT_ARCH_M68K;
-}
+अटल अंतरभूत पूर्णांक syscall_get_arch(काष्ठा task_काष्ठा *task)
+अणु
+	वापस AUDIT_ARCH_M68K;
+पूर्ण
 
-#endif	/* _ASM_M68K_SYSCALL_H */
+#पूर्ण_अगर	/* _ASM_M68K_SYSCALL_H */

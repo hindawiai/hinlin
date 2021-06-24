@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_STACK_POINTER_H
-#define __ASM_STACK_POINTER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_STACK_POINTER_H
+#घोषणा __ASM_STACK_POINTER_H
 
 /*
- * how to get the current stack pointer from C
+ * how to get the current stack poपूर्णांकer from C
  */
-register unsigned long current_stack_pointer asm ("sp");
+रेजिस्टर अचिन्हित दीर्घ current_stack_poपूर्णांकer यंत्र ("sp");
 
-#endif /* __ASM_STACK_POINTER_H */
+#पूर्ण_अगर /* __ASM_STACK_POINTER_H */

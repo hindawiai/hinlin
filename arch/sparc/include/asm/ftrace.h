@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_SPARC64_FTRACE
-#define _ASM_SPARC64_FTRACE
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_SPARC64_FTRACE
+#घोषणा _ASM_SPARC64_FTRACE
 
-#ifdef CONFIG_MCOUNT
-#define MCOUNT_ADDR		((unsigned long)(_mcount))
-#define MCOUNT_INSN_SIZE	4 /* sizeof mcount call */
+#अगर_घोषित CONFIG_MCOUNT
+#घोषणा MCOUNT_ADDR		((अचिन्हित दीर्घ)(_mcount))
+#घोषणा MCOUNT_INSN_SIZE	4 /* माप mcount call */
 
-#ifndef __ASSEMBLY__
-void _mcount(void);
-#endif
+#अगर_अघोषित __ASSEMBLY__
+व्योम _mcount(व्योम);
+#पूर्ण_अगर
 
-#endif /* CONFIG_MCOUNT */
+#पूर्ण_अगर /* CONFIG_MCOUNT */
 
-#if defined(CONFIG_SPARC64) && !defined(CC_USE_FENTRY)
-#define HAVE_FUNCTION_GRAPH_FP_TEST
-#endif
+#अगर defined(CONFIG_SPARC64) && !defined(CC_USE_FENTRY)
+#घोषणा HAVE_FUNCTION_GRAPH_FP_TEST
+#पूर्ण_अगर
 
-#ifdef CONFIG_DYNAMIC_FTRACE
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
 /* relocation of mcount call site is the same as the address */
-static inline unsigned long ftrace_call_adjust(unsigned long addr)
-{
-	return addr;
-}
+अटल अंतरभूत अचिन्हित दीर्घ ftrace_call_adjust(अचिन्हित दीर्घ addr)
+अणु
+	वापस addr;
+पूर्ण
 
-struct dyn_arch_ftrace {
-};
-#endif /*  CONFIG_DYNAMIC_FTRACE */
+काष्ठा dyn_arch_ftrace अणु
+पूर्ण;
+#पूर्ण_अगर /*  CONFIG_DYNAMIC_FTRACE */
 
-unsigned long prepare_ftrace_return(unsigned long parent,
-				    unsigned long self_addr,
-				    unsigned long frame_pointer);
+अचिन्हित दीर्घ prepare_ftrace_वापस(अचिन्हित दीर्घ parent,
+				    अचिन्हित दीर्घ self_addr,
+				    अचिन्हित दीर्घ frame_poपूर्णांकer);
 
-#endif /* _ASM_SPARC64_FTRACE */
+#पूर्ण_अगर /* _ASM_SPARC64_FTRACE */

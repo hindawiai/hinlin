@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Memory barrier definitions.  This is based on information published
+ * Memory barrier definitions.  This is based on inक्रमmation published
  * in the Processor Abstraction Layer and the System Abstraction Layer
  * manual.
  *
  * Copyright (C) 1998-2003 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
- * Copyright (C) 1999 Asit Mallick <asit.k.mallick@intel.com>
- * Copyright (C) 1999 Don Dugger <don.dugger@intel.com>
+ * Copyright (C) 1999 Asit Mallick <asit.k.mallick@पूर्णांकel.com>
+ * Copyright (C) 1999 Don Dugger <करोn.dugger@पूर्णांकel.com>
  */
-#ifndef _ASM_IA64_BARRIER_H
-#define _ASM_IA64_BARRIER_H
+#अगर_अघोषित _ASM_IA64_BARRIER_H
+#घोषणा _ASM_IA64_BARRIER_H
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
 /*
- * Macros to force memory ordering.  In these descriptions, "previous"
+ * Macros to क्रमce memory ordering.  In these descriptions, "previous"
  * and "subsequent" refer to program order; "visible" means that all
  * architecturally visible effects of a memory access have occurred
- * (at a minimum, this means the memory has been read or written).
+ * (at a minimum, this means the memory has been पढ़ो or written).
  *
  *   wmb():	Guarantees that all preceding stores to memory-
- *		like regions are visible before any subsequent
+ *		like regions are visible beक्रमe any subsequent
  *		stores and that all following stores will be
  *		visible only after all previous stores.
- *   rmb():	Like wmb(), but for reads.
+ *   rmb():	Like wmb(), but क्रम पढ़ोs.
  *   mb():	wmb()/rmb() combo, i.e., all previous memory
- *		accesses are visible before all subsequent
+ *		accesses are visible beक्रमe all subsequent
  *		accesses and vice versa.  This is also known as
  *		a "fence."
  *
  * Note: "mb()" and its variants cannot be used as a fence to order
- * accesses to memory mapped I/O registers.  For that, mf.a needs to
- * be used.  However, we don't want to always use mf.a because (a)
- * it's (presumably) much slower than mf and (b) mf.a is supported for
+ * accesses to memory mapped I/O रेजिस्टरs.  For that, mf.a needs to
+ * be used.  However, we करोn't want to always use mf.a because (a)
+ * it's (presumably) much slower than mf and (b) mf.a is supported क्रम
  * sequential memory pages only.
  */
-#define mb()		ia64_mf()
-#define rmb()		mb()
-#define wmb()		mb()
+#घोषणा mb()		ia64_mf()
+#घोषणा rmb()		mb()
+#घोषणा wmb()		mb()
 
-#define dma_rmb()	mb()
-#define dma_wmb()	mb()
+#घोषणा dma_rmb()	mb()
+#घोषणा dma_wmb()	mb()
 
 # define __smp_mb()	mb()
 
-#define __smp_mb__before_atomic()	barrier()
-#define __smp_mb__after_atomic()	barrier()
+#घोषणा __smp_mb__beक्रमe_atomic()	barrier()
+#घोषणा __smp_mb__after_atomic()	barrier()
 
 /*
- * IA64 GCC turns volatile stores into st.rel and volatile loads into ld.acq no
- * need for asm trickery!
+ * IA64 GCC turns अस्थिर stores पूर्णांकo st.rel and अस्थिर loads पूर्णांकo ld.acq no
+ * need क्रम यंत्र trickery!
  */
 
-#define __smp_store_release(p, v)						\
-do {									\
-	compiletime_assert_atomic_type(*p);				\
+#घोषणा __smp_store_release(p, v)						\
+करो अणु									\
+	compileसमय_निश्चित_atomic_type(*p);				\
 	barrier();							\
 	WRITE_ONCE(*p, v);						\
-} while (0)
+पूर्ण जबतक (0)
 
-#define __smp_load_acquire(p)						\
-({									\
+#घोषणा __smp_load_acquire(p)						\
+(अणु									\
 	typeof(*p) ___p1 = READ_ONCE(*p);				\
-	compiletime_assert_atomic_type(*p);				\
+	compileसमय_निश्चित_atomic_type(*p);				\
 	barrier();							\
 	___p1;								\
-})
+पूर्ण)
 
 /*
  * The group barrier in front of the rsm & ssm are necessary to ensure
- * that none of the previous instructions in the same group are
+ * that none of the previous inकाष्ठाions in the same group are
  * affected by the rsm/ssm.
  */
 
-#include <asm-generic/barrier.h>
+#समावेश <यंत्र-generic/barrier.h>
 
-#endif /* _ASM_IA64_BARRIER_H */
+#पूर्ण_अगर /* _ASM_IA64_BARRIER_H */

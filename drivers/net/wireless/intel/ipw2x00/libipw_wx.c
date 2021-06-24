@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /******************************************************************************
 
   Copyright(c) 2004-2005 Intel Corporation. All rights reserved.
@@ -10,85 +11,85 @@
   Copyright (c) 2002-2003, Jouni Malinen <j@w1.fi>
 
 
-  Contact Information:
-  Intel Linux Wireless <ilw@linux.intel.com>
+  Contact Inक्रमmation:
+  Intel Linux Wireless <ilw@linux.पूर्णांकel.com>
   Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
 
 ******************************************************************************/
 
-#include <linux/hardirq.h>
-#include <linux/kmod.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/jiffies.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/jअगरfies.h>
 
-#include <net/lib80211.h>
-#include <linux/wireless.h>
+#समावेश <net/lib80211.h>
+#समावेश <linux/wireless.h>
 
-#include "libipw.h"
+#समावेश "libipw.h"
 
-static const char *libipw_modes[] = {
+अटल स्थिर अक्षर *libipw_modes[] = अणु
 	"?", "a", "b", "ab", "g", "ag", "bg", "abg"
-};
+पूर्ण;
 
-static inline unsigned int elapsed_jiffies_msecs(unsigned long start)
-{
-	unsigned long end = jiffies;
+अटल अंतरभूत अचिन्हित पूर्णांक elapsed_jअगरfies_msecs(अचिन्हित दीर्घ start)
+अणु
+	अचिन्हित दीर्घ end = jअगरfies;
 
-	if (end >= start)
-		return jiffies_to_msecs(end - start);
+	अगर (end >= start)
+		वापस jअगरfies_to_msecs(end - start);
 
-	return jiffies_to_msecs(end + (MAX_JIFFY_OFFSET - start) + 1);
-}
+	वापस jअगरfies_to_msecs(end + (MAX_JIFFY_OFFSET - start) + 1);
+पूर्ण
 
-#define MAX_CUSTOM_LEN 64
-static char *libipw_translate_scan(struct libipw_device *ieee,
-				      char *start, char *stop,
-				      struct libipw_network *network,
-				      struct iw_request_info *info)
-{
-	char custom[MAX_CUSTOM_LEN];
-	char *p;
-	struct iw_event iwe;
-	int i, j;
-	char *current_val;	/* For rates */
+#घोषणा MAX_CUSTOM_LEN 64
+अटल अक्षर *libipw_translate_scan(काष्ठा libipw_device *ieee,
+				      अक्षर *start, अक्षर *stop,
+				      काष्ठा libipw_network *network,
+				      काष्ठा iw_request_info *info)
+अणु
+	अक्षर custom[MAX_CUSTOM_LEN];
+	अक्षर *p;
+	काष्ठा iw_event iwe;
+	पूर्णांक i, j;
+	अक्षर *current_val;	/* For rates */
 	u8 rate;
 
 	/* First entry *MUST* be the AP MAC address */
 	iwe.cmd = SIOCGIWAP;
 	iwe.u.ap_addr.sa_family = ARPHRD_ETHER;
-	memcpy(iwe.u.ap_addr.sa_data, network->bssid, ETH_ALEN);
+	स_नकल(iwe.u.ap_addr.sa_data, network->bssid, ETH_ALEN);
 	start = iwe_stream_add_event(info, start, stop, &iwe, IW_EV_ADDR_LEN);
 
-	/* Remaining entries will be displayed in the order we provide them */
+	/* Reमुख्यing entries will be displayed in the order we provide them */
 
 	/* Add the ESSID */
 	iwe.cmd = SIOCGIWESSID;
 	iwe.u.data.flags = 1;
 	iwe.u.data.length = min(network->ssid_len, (u8) 32);
-	start = iwe_stream_add_point(info, start, stop,
+	start = iwe_stream_add_poपूर्णांक(info, start, stop,
 				     &iwe, network->ssid);
 
 	/* Add the protocol name */
 	iwe.cmd = SIOCGIWNAME;
-	snprintf(iwe.u.name, IFNAMSIZ, "IEEE 802.11%s",
+	snम_लिखो(iwe.u.name, IFNAMSIZ, "IEEE 802.11%s",
 		 libipw_modes[network->mode]);
 	start = iwe_stream_add_event(info, start, stop, &iwe, IW_EV_CHAR_LEN);
 
 	/* Add mode */
 	iwe.cmd = SIOCGIWMODE;
-	if (network->capability & (WLAN_CAPABILITY_ESS | WLAN_CAPABILITY_IBSS)) {
-		if (network->capability & WLAN_CAPABILITY_ESS)
+	अगर (network->capability & (WLAN_CAPABILITY_ESS | WLAN_CAPABILITY_IBSS)) अणु
+		अगर (network->capability & WLAN_CAPABILITY_ESS)
 			iwe.u.mode = IW_MODE_MASTER;
-		else
+		अन्यथा
 			iwe.u.mode = IW_MODE_ADHOC;
 
 		start = iwe_stream_add_event(info, start, stop,
 					     &iwe, IW_EV_UINT_LEN);
-	}
+	पूर्ण
 
 	/* Add channel and frequency */
-	/* Note : userspace automatically computes channel using iwrange */
+	/* Note : userspace स्वतःmatically computes channel using iwrange */
 	iwe.cmd = SIOCGIWFREQ;
 	iwe.u.freq.m = libipw_channel_to_freq(ieee, network->channel);
 	iwe.u.freq.e = 6;
@@ -97,12 +98,12 @@ static char *libipw_translate_scan(struct libipw_device *ieee,
 
 	/* Add encryption capability */
 	iwe.cmd = SIOCGIWENCODE;
-	if (network->capability & WLAN_CAPABILITY_PRIVACY)
+	अगर (network->capability & WLAN_CAPABILITY_PRIVACY)
 		iwe.u.data.flags = IW_ENCODE_ENABLED | IW_ENCODE_NOKEY;
-	else
+	अन्यथा
 		iwe.u.data.flags = IW_ENCODE_DISABLED;
 	iwe.u.data.length = 0;
-	start = iwe_stream_add_point(info, start, stop,
+	start = iwe_stream_add_poपूर्णांक(info, start, stop,
 				     &iwe, network->ssid);
 
 	/* Add basic and extended rates */
@@ -113,29 +114,29 @@ static char *libipw_translate_scan(struct libipw_device *ieee,
 	/* Those two flags are ignored... */
 	iwe.u.bitrate.fixed = iwe.u.bitrate.disabled = 0;
 
-	for (i = 0, j = 0; i < network->rates_len;) {
-		if (j < network->rates_ex_len &&
+	क्रम (i = 0, j = 0; i < network->rates_len;) अणु
+		अगर (j < network->rates_ex_len &&
 		    ((network->rates_ex[j] & 0x7F) <
 		     (network->rates[i] & 0x7F)))
 			rate = network->rates_ex[j++] & 0x7F;
-		else
+		अन्यथा
 			rate = network->rates[i++] & 0x7F;
 		/* Bit rate given in 500 kb/s units (+ 0x80) */
 		iwe.u.bitrate.value = ((rate & 0x7f) * 500000);
 		/* Add new value to event */
 		current_val = iwe_stream_add_value(info, start, current_val,
 						   stop, &iwe, IW_EV_PARAM_LEN);
-	}
-	for (; j < network->rates_ex_len; j++) {
+	पूर्ण
+	क्रम (; j < network->rates_ex_len; j++) अणु
 		rate = network->rates_ex[j] & 0x7F;
 		/* Bit rate given in 500 kb/s units (+ 0x80) */
 		iwe.u.bitrate.value = ((rate & 0x7f) * 500000);
 		/* Add new value to event */
 		current_val = iwe_stream_add_value(info, start, current_val,
 						   stop, &iwe, IW_EV_PARAM_LEN);
-	}
-	/* Check if we added any rate */
-	if ((current_val - start) > iwe_stream_lcp_len(info))
+	पूर्ण
+	/* Check अगर we added any rate */
+	अगर ((current_val - start) > iwe_stream_lcp_len(info))
 		start = current_val;
 
 	/* Add quality statistics */
@@ -143,14 +144,14 @@ static char *libipw_translate_scan(struct libipw_device *ieee,
 	iwe.u.qual.updated = IW_QUAL_QUAL_UPDATED | IW_QUAL_LEVEL_UPDATED |
 	    IW_QUAL_NOISE_UPDATED;
 
-	if (!(network->stats.mask & LIBIPW_STATMASK_RSSI)) {
+	अगर (!(network->stats.mask & LIBIPW_STATMASK_RSSI)) अणु
 		iwe.u.qual.updated |= IW_QUAL_QUAL_INVALID |
 		    IW_QUAL_LEVEL_INVALID;
 		iwe.u.qual.qual = 0;
-	} else {
-		if (ieee->perfect_rssi == ieee->worst_rssi)
+	पूर्ण अन्यथा अणु
+		अगर (ieee->perfect_rssi == ieee->worst_rssi)
 			iwe.u.qual.qual = 100;
-		else
+		अन्यथा
 			iwe.u.qual.qual =
 			    (100 *
 			     (ieee->perfect_rssi - ieee->worst_rssi) *
@@ -162,25 +163,25 @@ static char *libipw_translate_scan(struct libipw_device *ieee,
 			    ((ieee->perfect_rssi -
 			      ieee->worst_rssi) * (ieee->perfect_rssi -
 						   ieee->worst_rssi));
-		if (iwe.u.qual.qual > 100)
+		अगर (iwe.u.qual.qual > 100)
 			iwe.u.qual.qual = 100;
-		else if (iwe.u.qual.qual < 1)
+		अन्यथा अगर (iwe.u.qual.qual < 1)
 			iwe.u.qual.qual = 0;
-	}
+	पूर्ण
 
-	if (!(network->stats.mask & LIBIPW_STATMASK_NOISE)) {
+	अगर (!(network->stats.mask & LIBIPW_STATMASK_NOISE)) अणु
 		iwe.u.qual.updated |= IW_QUAL_NOISE_INVALID;
 		iwe.u.qual.noise = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		iwe.u.qual.noise = network->stats.noise;
-	}
+	पूर्ण
 
-	if (!(network->stats.mask & LIBIPW_STATMASK_SIGNAL)) {
+	अगर (!(network->stats.mask & LIBIPW_STATMASK_SIGNAL)) अणु
 		iwe.u.qual.updated |= IW_QUAL_LEVEL_INVALID;
 		iwe.u.qual.level = 0;
-	} else {
-		iwe.u.qual.level = network->stats.signal;
-	}
+	पूर्ण अन्यथा अणु
+		iwe.u.qual.level = network->stats.संकेत;
+	पूर्ण
 
 	start = iwe_stream_add_event(info, start, stop, &iwe, IW_EV_QUAL_LEN);
 
@@ -188,100 +189,100 @@ static char *libipw_translate_scan(struct libipw_device *ieee,
 	p = custom;
 
 	iwe.u.data.length = p - custom;
-	if (iwe.u.data.length)
-		start = iwe_stream_add_point(info, start, stop, &iwe, custom);
+	अगर (iwe.u.data.length)
+		start = iwe_stream_add_poपूर्णांक(info, start, stop, &iwe, custom);
 
-	memset(&iwe, 0, sizeof(iwe));
-	if (network->wpa_ie_len) {
-		char buf[MAX_WPA_IE_LEN];
-		memcpy(buf, network->wpa_ie, network->wpa_ie_len);
+	स_रखो(&iwe, 0, माप(iwe));
+	अगर (network->wpa_ie_len) अणु
+		अक्षर buf[MAX_WPA_IE_LEN];
+		स_नकल(buf, network->wpa_ie, network->wpa_ie_len);
 		iwe.cmd = IWEVGENIE;
 		iwe.u.data.length = network->wpa_ie_len;
-		start = iwe_stream_add_point(info, start, stop, &iwe, buf);
-	}
+		start = iwe_stream_add_poपूर्णांक(info, start, stop, &iwe, buf);
+	पूर्ण
 
-	memset(&iwe, 0, sizeof(iwe));
-	if (network->rsn_ie_len) {
-		char buf[MAX_WPA_IE_LEN];
-		memcpy(buf, network->rsn_ie, network->rsn_ie_len);
+	स_रखो(&iwe, 0, माप(iwe));
+	अगर (network->rsn_ie_len) अणु
+		अक्षर buf[MAX_WPA_IE_LEN];
+		स_नकल(buf, network->rsn_ie, network->rsn_ie_len);
 		iwe.cmd = IWEVGENIE;
 		iwe.u.data.length = network->rsn_ie_len;
-		start = iwe_stream_add_point(info, start, stop, &iwe, buf);
-	}
+		start = iwe_stream_add_poपूर्णांक(info, start, stop, &iwe, buf);
+	पूर्ण
 
 	/* Add EXTRA: Age to display seconds since last beacon/probe response
-	 * for given network. */
+	 * क्रम given network. */
 	iwe.cmd = IWEVCUSTOM;
 	p = custom;
-	p += scnprintf(p, MAX_CUSTOM_LEN - (p - custom),
+	p += scnम_लिखो(p, MAX_CUSTOM_LEN - (p - custom),
 		      " Last beacon: %ums ago",
-		      elapsed_jiffies_msecs(network->last_scanned));
+		      elapsed_jअगरfies_msecs(network->last_scanned));
 	iwe.u.data.length = p - custom;
-	if (iwe.u.data.length)
-		start = iwe_stream_add_point(info, start, stop, &iwe, custom);
+	अगर (iwe.u.data.length)
+		start = iwe_stream_add_poपूर्णांक(info, start, stop, &iwe, custom);
 
-	/* Add spectrum management information */
+	/* Add spectrum management inक्रमmation */
 	iwe.cmd = -1;
 	p = custom;
-	p += scnprintf(p, MAX_CUSTOM_LEN - (p - custom), " Channel flags: ");
+	p += scnम_लिखो(p, MAX_CUSTOM_LEN - (p - custom), " Channel flags: ");
 
-	if (libipw_get_channel_flags(ieee, network->channel) &
-	    LIBIPW_CH_INVALID) {
+	अगर (libipw_get_channel_flags(ieee, network->channel) &
+	    LIBIPW_CH_INVALID) अणु
 		iwe.cmd = IWEVCUSTOM;
-		p += scnprintf(p, MAX_CUSTOM_LEN - (p - custom), "INVALID ");
-	}
+		p += scnम_लिखो(p, MAX_CUSTOM_LEN - (p - custom), "INVALID ");
+	पूर्ण
 
-	if (libipw_get_channel_flags(ieee, network->channel) &
-	    LIBIPW_CH_RADAR_DETECT) {
+	अगर (libipw_get_channel_flags(ieee, network->channel) &
+	    LIBIPW_CH_RADAR_DETECT) अणु
 		iwe.cmd = IWEVCUSTOM;
-		p += scnprintf(p, MAX_CUSTOM_LEN - (p - custom), "DFS ");
-	}
+		p += scnम_लिखो(p, MAX_CUSTOM_LEN - (p - custom), "DFS ");
+	पूर्ण
 
-	if (iwe.cmd == IWEVCUSTOM) {
+	अगर (iwe.cmd == IWEVCUSTOM) अणु
 		iwe.u.data.length = p - custom;
-		start = iwe_stream_add_point(info, start, stop, &iwe, custom);
-	}
+		start = iwe_stream_add_poपूर्णांक(info, start, stop, &iwe, custom);
+	पूर्ण
 
-	return start;
-}
+	वापस start;
+पूर्ण
 
-#define SCAN_ITEM_SIZE 128
+#घोषणा SCAN_ITEM_SIZE 128
 
-int libipw_wx_get_scan(struct libipw_device *ieee,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra)
-{
-	struct libipw_network *network;
-	unsigned long flags;
-	int err = 0;
+पूर्णांक libipw_wx_get_scan(काष्ठा libipw_device *ieee,
+			  काष्ठा iw_request_info *info,
+			  जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा libipw_network *network;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
 
-	char *ev = extra;
-	char *stop = ev + wrqu->data.length;
-	int i = 0;
+	अक्षर *ev = extra;
+	अक्षर *stop = ev + wrqu->data.length;
+	पूर्णांक i = 0;
 
 	LIBIPW_DEBUG_WX("Getting scan\n");
 
 	spin_lock_irqsave(&ieee->lock, flags);
 
-	list_for_each_entry(network, &ieee->network_list, list) {
+	list_क्रम_each_entry(network, &ieee->network_list, list) अणु
 		i++;
-		if (stop - ev < SCAN_ITEM_SIZE) {
+		अगर (stop - ev < SCAN_ITEM_SIZE) अणु
 			err = -E2BIG;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (ieee->scan_age == 0 ||
-		    time_after(network->last_scanned + ieee->scan_age, jiffies))
+		अगर (ieee->scan_age == 0 ||
+		    समय_after(network->last_scanned + ieee->scan_age, jअगरfies))
 			ev = libipw_translate_scan(ieee, ev, stop, network,
 						      info);
-		else {
+		अन्यथा अणु
 			LIBIPW_DEBUG_SCAN("Not showing network '%*pE (%pM)' due to age (%ums).\n",
 					  network->ssid_len, network->ssid,
 					  network->bssid,
-					  elapsed_jiffies_msecs(
+					  elapsed_jअगरfies_msecs(
 					               network->last_scanned));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&ieee->lock, flags);
 
@@ -290,161 +291,161 @@ int libipw_wx_get_scan(struct libipw_device *ieee,
 
 	LIBIPW_DEBUG_WX("exit: %d networks returned.\n", i);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int libipw_wx_set_encode(struct libipw_device *ieee,
-			    struct iw_request_info *info,
-			    union iwreq_data *wrqu, char *keybuf)
-{
-	struct iw_point *erq = &(wrqu->encoding);
-	struct net_device *dev = ieee->dev;
-	struct libipw_security sec = {
+पूर्णांक libipw_wx_set_encode(काष्ठा libipw_device *ieee,
+			    काष्ठा iw_request_info *info,
+			    जोड़ iwreq_data *wrqu, अक्षर *keybuf)
+अणु
+	काष्ठा iw_poपूर्णांक *erq = &(wrqu->encoding);
+	काष्ठा net_device *dev = ieee->dev;
+	काष्ठा libipw_security sec = अणु
 		.flags = 0
-	};
-	int i, key, key_provided, len;
-	struct lib80211_crypt_data **crypt;
-	int host_crypto = ieee->host_encrypt || ieee->host_decrypt;
+	पूर्ण;
+	पूर्णांक i, key, key_provided, len;
+	काष्ठा lib80211_crypt_data **crypt;
+	पूर्णांक host_crypto = ieee->host_encrypt || ieee->host_decrypt;
 
 	LIBIPW_DEBUG_WX("SET_ENCODE\n");
 
 	key = erq->flags & IW_ENCODE_INDEX;
-	if (key) {
-		if (key > WEP_KEYS)
-			return -EINVAL;
+	अगर (key) अणु
+		अगर (key > WEP_KEYS)
+			वापस -EINVAL;
 		key--;
 		key_provided = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		key_provided = 0;
 		key = ieee->crypt_info.tx_keyidx;
-	}
+	पूर्ण
 
 	LIBIPW_DEBUG_WX("Key: %d [%s]\n", key, key_provided ?
 			   "provided" : "default");
 
 	crypt = &ieee->crypt_info.crypt[key];
 
-	if (erq->flags & IW_ENCODE_DISABLED) {
-		if (key_provided && *crypt) {
+	अगर (erq->flags & IW_ENCODE_DISABLED) अणु
+		अगर (key_provided && *crypt) अणु
 			LIBIPW_DEBUG_WX("Disabling encryption on key %d.\n",
 					   key);
 			lib80211_crypt_delayed_deinit(&ieee->crypt_info, crypt);
-		} else
+		पूर्ण अन्यथा
 			LIBIPW_DEBUG_WX("Disabling encryption.\n");
 
-		/* Check all the keys to see if any are still configured,
-		 * and if no key index was provided, de-init them all */
-		for (i = 0; i < WEP_KEYS; i++) {
-			if (ieee->crypt_info.crypt[i] != NULL) {
-				if (key_provided)
-					break;
+		/* Check all the keys to see अगर any are still configured,
+		 * and अगर no key index was provided, de-init them all */
+		क्रम (i = 0; i < WEP_KEYS; i++) अणु
+			अगर (ieee->crypt_info.crypt[i] != शून्य) अणु
+				अगर (key_provided)
+					अवरोध;
 				lib80211_crypt_delayed_deinit(&ieee->crypt_info,
 							       &ieee->crypt_info.crypt[i]);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (i == WEP_KEYS) {
+		अगर (i == WEP_KEYS) अणु
 			sec.enabled = 0;
 			sec.encrypt = 0;
 			sec.level = SEC_LEVEL_0;
 			sec.flags |= SEC_ENABLED | SEC_LEVEL | SEC_ENCRYPT;
-		}
+		पूर्ण
 
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	sec.enabled = 1;
 	sec.encrypt = 1;
 	sec.flags |= SEC_ENABLED | SEC_ENCRYPT;
 
-	if (*crypt != NULL && (*crypt)->ops != NULL &&
-	    strcmp((*crypt)->ops->name, "WEP") != 0) {
+	अगर (*crypt != शून्य && (*crypt)->ops != शून्य &&
+	    म_भेद((*crypt)->ops->name, "WEP") != 0) अणु
 		/* changing to use WEP; deinit previously used algorithm
 		 * on this key */
 		lib80211_crypt_delayed_deinit(&ieee->crypt_info, crypt);
-	}
+	पूर्ण
 
-	if (*crypt == NULL && host_crypto) {
-		struct lib80211_crypt_data *new_crypt;
+	अगर (*crypt == शून्य && host_crypto) अणु
+		काष्ठा lib80211_crypt_data *new_crypt;
 
-		/* take WEP into use */
-		new_crypt = kzalloc(sizeof(struct lib80211_crypt_data),
+		/* take WEP पूर्णांकo use */
+		new_crypt = kzalloc(माप(काष्ठा lib80211_crypt_data),
 				    GFP_KERNEL);
-		if (new_crypt == NULL)
-			return -ENOMEM;
+		अगर (new_crypt == शून्य)
+			वापस -ENOMEM;
 		new_crypt->ops = lib80211_get_crypto_ops("WEP");
-		if (!new_crypt->ops) {
+		अगर (!new_crypt->ops) अणु
 			request_module("lib80211_crypt_wep");
 			new_crypt->ops = lib80211_get_crypto_ops("WEP");
-		}
+		पूर्ण
 
-		if (new_crypt->ops && try_module_get(new_crypt->ops->owner))
+		अगर (new_crypt->ops && try_module_get(new_crypt->ops->owner))
 			new_crypt->priv = new_crypt->ops->init(key);
 
-		if (!new_crypt->ops || !new_crypt->priv) {
-			kfree(new_crypt);
-			new_crypt = NULL;
+		अगर (!new_crypt->ops || !new_crypt->priv) अणु
+			kमुक्त(new_crypt);
+			new_crypt = शून्य;
 
-			printk(KERN_WARNING "%s: could not initialize WEP: "
+			prपूर्णांकk(KERN_WARNING "%s: could not initialize WEP: "
 			       "load module lib80211_crypt_wep\n", dev->name);
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 		*crypt = new_crypt;
-	}
+	पूर्ण
 
 	/* If a new key was provided, set it up */
-	if (erq->length > 0) {
+	अगर (erq->length > 0) अणु
 		len = erq->length <= 5 ? 5 : 13;
-		memcpy(sec.keys[key], keybuf, erq->length);
-		if (len > erq->length)
-			memset(sec.keys[key] + erq->length, 0,
+		स_नकल(sec.keys[key], keybuf, erq->length);
+		अगर (len > erq->length)
+			स_रखो(sec.keys[key] + erq->length, 0,
 			       len - erq->length);
 		LIBIPW_DEBUG_WX("Setting key %d to '%*pE' (%d:%d bytes)\n",
 				   key, len, sec.keys[key],
 				   erq->length, len);
 		sec.key_sizes[key] = len;
-		if (*crypt)
-			(*crypt)->ops->set_key(sec.keys[key], len, NULL,
+		अगर (*crypt)
+			(*crypt)->ops->set_key(sec.keys[key], len, शून्य,
 					       (*crypt)->priv);
 		sec.flags |= (1 << key);
-		/* This ensures a key will be activated if no key is
+		/* This ensures a key will be activated अगर no key is
 		 * explicitly set */
-		if (key == sec.active_key)
+		अगर (key == sec.active_key)
 			sec.flags |= SEC_ACTIVE_KEY;
 
-	} else {
-		if (host_crypto) {
+	पूर्ण अन्यथा अणु
+		अगर (host_crypto) अणु
 			len = (*crypt)->ops->get_key(sec.keys[key], WEP_KEY_LEN,
-						     NULL, (*crypt)->priv);
-			if (len == 0) {
-				/* Set a default key of all 0 */
+						     शून्य, (*crypt)->priv);
+			अगर (len == 0) अणु
+				/* Set a शेष key of all 0 */
 				LIBIPW_DEBUG_WX("Setting key %d to all "
 						   "zero.\n", key);
-				memset(sec.keys[key], 0, 13);
-				(*crypt)->ops->set_key(sec.keys[key], 13, NULL,
+				स_रखो(sec.keys[key], 0, 13);
+				(*crypt)->ops->set_key(sec.keys[key], 13, शून्य,
 						       (*crypt)->priv);
 				sec.key_sizes[key] = 13;
 				sec.flags |= (1 << key);
-			}
-		}
-		/* No key data - just set the default TX key index */
-		if (key_provided) {
+			पूर्ण
+		पूर्ण
+		/* No key data - just set the शेष TX key index */
+		अगर (key_provided) अणु
 			LIBIPW_DEBUG_WX("Setting key %d to default Tx "
 					   "key.\n", key);
 			ieee->crypt_info.tx_keyidx = key;
 			sec.active_key = key;
 			sec.flags |= SEC_ACTIVE_KEY;
-		}
-	}
-	if (erq->flags & (IW_ENCODE_OPEN | IW_ENCODE_RESTRICTED)) {
-		ieee->open_wep = !(erq->flags & IW_ENCODE_RESTRICTED);
-		sec.auth_mode = ieee->open_wep ? WLAN_AUTH_OPEN :
+		पूर्ण
+	पूर्ण
+	अगर (erq->flags & (IW_ENCODE_OPEN | IW_ENCODE_RESTRICTED)) अणु
+		ieee->खोलो_wep = !(erq->flags & IW_ENCODE_RESTRICTED);
+		sec.auth_mode = ieee->खोलो_wep ? WLAN_AUTH_OPEN :
 		    WLAN_AUTH_SHARED_KEY;
 		sec.flags |= SEC_AUTH_MODE;
 		LIBIPW_DEBUG_WX("Auth: %s\n",
 				   sec.auth_mode == WLAN_AUTH_OPEN ?
 				   "OPEN" : "SHARED KEY");
-	}
+	पूर्ण
 
 	/* For now we just support WEP, so only set that security level...
 	 * TODO: When WPA is added this is one place that needs to change */
@@ -452,271 +453,271 @@ int libipw_wx_set_encode(struct libipw_device *ieee,
 	sec.level = SEC_LEVEL_1;	/* 40 and 104 bit WEP */
 	sec.encode_alg[key] = SEC_ALG_WEP;
 
-      done:
-	if (ieee->set_security)
+      करोne:
+	अगर (ieee->set_security)
 		ieee->set_security(dev, &sec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int libipw_wx_get_encode(struct libipw_device *ieee,
-			    struct iw_request_info *info,
-			    union iwreq_data *wrqu, char *keybuf)
-{
-	struct iw_point *erq = &(wrqu->encoding);
-	int len, key;
-	struct libipw_security *sec = &ieee->sec;
+पूर्णांक libipw_wx_get_encode(काष्ठा libipw_device *ieee,
+			    काष्ठा iw_request_info *info,
+			    जोड़ iwreq_data *wrqu, अक्षर *keybuf)
+अणु
+	काष्ठा iw_poपूर्णांक *erq = &(wrqu->encoding);
+	पूर्णांक len, key;
+	काष्ठा libipw_security *sec = &ieee->sec;
 
 	LIBIPW_DEBUG_WX("GET_ENCODE\n");
 
 	key = erq->flags & IW_ENCODE_INDEX;
-	if (key) {
-		if (key > WEP_KEYS)
-			return -EINVAL;
+	अगर (key) अणु
+		अगर (key > WEP_KEYS)
+			वापस -EINVAL;
 		key--;
-	} else
+	पूर्ण अन्यथा
 		key = ieee->crypt_info.tx_keyidx;
 
 	erq->flags = key + 1;
 
-	if (!sec->enabled) {
+	अगर (!sec->enabled) अणु
 		erq->length = 0;
 		erq->flags |= IW_ENCODE_DISABLED;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	len = sec->key_sizes[key];
-	memcpy(keybuf, sec->keys[key], len);
+	स_नकल(keybuf, sec->keys[key], len);
 
 	erq->length = len;
 	erq->flags |= IW_ENCODE_ENABLED;
 
-	if (ieee->open_wep)
+	अगर (ieee->खोलो_wep)
 		erq->flags |= IW_ENCODE_OPEN;
-	else
+	अन्यथा
 		erq->flags |= IW_ENCODE_RESTRICTED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int libipw_wx_set_encodeext(struct libipw_device *ieee,
-			       struct iw_request_info *info,
-			       union iwreq_data *wrqu, char *extra)
-{
-	struct net_device *dev = ieee->dev;
-	struct iw_point *encoding = &wrqu->encoding;
-	struct iw_encode_ext *ext = (struct iw_encode_ext *)extra;
-	int i, idx, ret = 0;
-	int group_key = 0;
-	const char *alg, *module;
-	struct lib80211_crypto_ops *ops;
-	struct lib80211_crypt_data **crypt;
+पूर्णांक libipw_wx_set_encodeext(काष्ठा libipw_device *ieee,
+			       काष्ठा iw_request_info *info,
+			       जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा net_device *dev = ieee->dev;
+	काष्ठा iw_poपूर्णांक *encoding = &wrqu->encoding;
+	काष्ठा iw_encode_ext *ext = (काष्ठा iw_encode_ext *)extra;
+	पूर्णांक i, idx, ret = 0;
+	पूर्णांक group_key = 0;
+	स्थिर अक्षर *alg, *module;
+	काष्ठा lib80211_crypto_ops *ops;
+	काष्ठा lib80211_crypt_data **crypt;
 
-	struct libipw_security sec = {
+	काष्ठा libipw_security sec = अणु
 		.flags = 0,
-	};
+	पूर्ण;
 
 	idx = encoding->flags & IW_ENCODE_INDEX;
-	if (idx) {
-		if (idx < 1 || idx > WEP_KEYS)
-			return -EINVAL;
+	अगर (idx) अणु
+		अगर (idx < 1 || idx > WEP_KEYS)
+			वापस -EINVAL;
 		idx--;
-	} else
+	पूर्ण अन्यथा
 		idx = ieee->crypt_info.tx_keyidx;
 
-	if (ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY) {
+	अगर (ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY) अणु
 		crypt = &ieee->crypt_info.crypt[idx];
 		group_key = 1;
-	} else {
-		/* some Cisco APs use idx>0 for unicast in dynamic WEP */
-		if (idx != 0 && ext->alg != IW_ENCODE_ALG_WEP)
-			return -EINVAL;
-		if (ieee->iw_mode == IW_MODE_INFRA)
+	पूर्ण अन्यथा अणु
+		/* some Cisco APs use idx>0 क्रम unicast in dynamic WEP */
+		अगर (idx != 0 && ext->alg != IW_ENCODE_ALG_WEP)
+			वापस -EINVAL;
+		अगर (ieee->iw_mode == IW_MODE_INFRA)
 			crypt = &ieee->crypt_info.crypt[idx];
-		else
-			return -EINVAL;
-	}
+		अन्यथा
+			वापस -EINVAL;
+	पूर्ण
 
 	sec.flags |= SEC_ENABLED | SEC_ENCRYPT;
-	if ((encoding->flags & IW_ENCODE_DISABLED) ||
-	    ext->alg == IW_ENCODE_ALG_NONE) {
-		if (*crypt)
+	अगर ((encoding->flags & IW_ENCODE_DISABLED) ||
+	    ext->alg == IW_ENCODE_ALG_NONE) अणु
+		अगर (*crypt)
 			lib80211_crypt_delayed_deinit(&ieee->crypt_info, crypt);
 
-		for (i = 0; i < WEP_KEYS; i++)
-			if (ieee->crypt_info.crypt[i] != NULL)
-				break;
+		क्रम (i = 0; i < WEP_KEYS; i++)
+			अगर (ieee->crypt_info.crypt[i] != शून्य)
+				अवरोध;
 
-		if (i == WEP_KEYS) {
+		अगर (i == WEP_KEYS) अणु
 			sec.enabled = 0;
 			sec.encrypt = 0;
 			sec.level = SEC_LEVEL_0;
 			sec.flags |= SEC_LEVEL;
-		}
-		goto done;
-	}
+		पूर्ण
+		जाओ करोne;
+	पूर्ण
 
 	sec.enabled = 1;
 	sec.encrypt = 1;
 
-	if (group_key ? !ieee->host_mc_decrypt :
+	अगर (group_key ? !ieee->host_mc_decrypt :
 	    !(ieee->host_encrypt || ieee->host_decrypt ||
 	      ieee->host_encrypt_msdu))
-		goto skip_host_crypt;
+		जाओ skip_host_crypt;
 
-	switch (ext->alg) {
-	case IW_ENCODE_ALG_WEP:
+	चयन (ext->alg) अणु
+	हाल IW_ENCODE_ALG_WEP:
 		alg = "WEP";
 		module = "lib80211_crypt_wep";
-		break;
-	case IW_ENCODE_ALG_TKIP:
+		अवरोध;
+	हाल IW_ENCODE_ALG_TKIP:
 		alg = "TKIP";
 		module = "lib80211_crypt_tkip";
-		break;
-	case IW_ENCODE_ALG_CCMP:
+		अवरोध;
+	हाल IW_ENCODE_ALG_CCMP:
 		alg = "CCMP";
 		module = "lib80211_crypt_ccmp";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		LIBIPW_DEBUG_WX("%s: unknown crypto alg %d\n",
 				   dev->name, ext->alg);
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	ops = lib80211_get_crypto_ops(alg);
-	if (ops == NULL) {
+	अगर (ops == शून्य) अणु
 		request_module(module);
 		ops = lib80211_get_crypto_ops(alg);
-	}
-	if (ops == NULL) {
+	पूर्ण
+	अगर (ops == शून्य) अणु
 		LIBIPW_DEBUG_WX("%s: unknown crypto alg %d\n",
 				   dev->name, ext->alg);
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (*crypt == NULL || (*crypt)->ops != ops) {
-		struct lib80211_crypt_data *new_crypt;
+	अगर (*crypt == शून्य || (*crypt)->ops != ops) अणु
+		काष्ठा lib80211_crypt_data *new_crypt;
 
 		lib80211_crypt_delayed_deinit(&ieee->crypt_info, crypt);
 
-		new_crypt = kzalloc(sizeof(*new_crypt), GFP_KERNEL);
-		if (new_crypt == NULL) {
+		new_crypt = kzalloc(माप(*new_crypt), GFP_KERNEL);
+		अगर (new_crypt == शून्य) अणु
 			ret = -ENOMEM;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		new_crypt->ops = ops;
-		if (new_crypt->ops && try_module_get(new_crypt->ops->owner))
+		अगर (new_crypt->ops && try_module_get(new_crypt->ops->owner))
 			new_crypt->priv = new_crypt->ops->init(idx);
-		if (new_crypt->priv == NULL) {
-			kfree(new_crypt);
+		अगर (new_crypt->priv == शून्य) अणु
+			kमुक्त(new_crypt);
 			ret = -EINVAL;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		*crypt = new_crypt;
-	}
+	पूर्ण
 
-	if (ext->key_len > 0 && (*crypt)->ops->set_key &&
+	अगर (ext->key_len > 0 && (*crypt)->ops->set_key &&
 	    (*crypt)->ops->set_key(ext->key, ext->key_len, ext->rx_seq,
-				   (*crypt)->priv) < 0) {
+				   (*crypt)->priv) < 0) अणु
 		LIBIPW_DEBUG_WX("%s: key setting failed\n", dev->name);
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
       skip_host_crypt:
-	if (ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY) {
+	अगर (ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY) अणु
 		ieee->crypt_info.tx_keyidx = idx;
 		sec.active_key = idx;
 		sec.flags |= SEC_ACTIVE_KEY;
-	}
+	पूर्ण
 
-	if (ext->alg != IW_ENCODE_ALG_NONE) {
-		int key_len = clamp_val(ext->key_len, 0, SCM_KEY_LEN);
+	अगर (ext->alg != IW_ENCODE_ALG_NONE) अणु
+		पूर्णांक key_len = clamp_val(ext->key_len, 0, SCM_KEY_LEN);
 
-		memcpy(sec.keys[idx], ext->key, key_len);
+		स_नकल(sec.keys[idx], ext->key, key_len);
 		sec.key_sizes[idx] = key_len;
 		sec.flags |= (1 << idx);
-		if (ext->alg == IW_ENCODE_ALG_WEP) {
+		अगर (ext->alg == IW_ENCODE_ALG_WEP) अणु
 			sec.encode_alg[idx] = SEC_ALG_WEP;
 			sec.flags |= SEC_LEVEL;
 			sec.level = SEC_LEVEL_1;
-		} else if (ext->alg == IW_ENCODE_ALG_TKIP) {
+		पूर्ण अन्यथा अगर (ext->alg == IW_ENCODE_ALG_TKIP) अणु
 			sec.encode_alg[idx] = SEC_ALG_TKIP;
 			sec.flags |= SEC_LEVEL;
 			sec.level = SEC_LEVEL_2;
-		} else if (ext->alg == IW_ENCODE_ALG_CCMP) {
+		पूर्ण अन्यथा अगर (ext->alg == IW_ENCODE_ALG_CCMP) अणु
 			sec.encode_alg[idx] = SEC_ALG_CCMP;
 			sec.flags |= SEC_LEVEL;
 			sec.level = SEC_LEVEL_3;
-		}
-		/* Don't set sec level for group keys. */
-		if (group_key)
+		पूर्ण
+		/* Don't set sec level क्रम group keys. */
+		अगर (group_key)
 			sec.flags &= ~SEC_LEVEL;
-	}
-      done:
-	if (ieee->set_security)
+	पूर्ण
+      करोne:
+	अगर (ieee->set_security)
 		ieee->set_security(dev, &sec);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int libipw_wx_get_encodeext(struct libipw_device *ieee,
-			       struct iw_request_info *info,
-			       union iwreq_data *wrqu, char *extra)
-{
-	struct iw_point *encoding = &wrqu->encoding;
-	struct iw_encode_ext *ext = (struct iw_encode_ext *)extra;
-	struct libipw_security *sec = &ieee->sec;
-	int idx, max_key_len;
+पूर्णांक libipw_wx_get_encodeext(काष्ठा libipw_device *ieee,
+			       काष्ठा iw_request_info *info,
+			       जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	काष्ठा iw_poपूर्णांक *encoding = &wrqu->encoding;
+	काष्ठा iw_encode_ext *ext = (काष्ठा iw_encode_ext *)extra;
+	काष्ठा libipw_security *sec = &ieee->sec;
+	पूर्णांक idx, max_key_len;
 
-	max_key_len = encoding->length - sizeof(*ext);
-	if (max_key_len < 0)
-		return -EINVAL;
+	max_key_len = encoding->length - माप(*ext);
+	अगर (max_key_len < 0)
+		वापस -EINVAL;
 
 	idx = encoding->flags & IW_ENCODE_INDEX;
-	if (idx) {
-		if (idx < 1 || idx > WEP_KEYS)
-			return -EINVAL;
+	अगर (idx) अणु
+		अगर (idx < 1 || idx > WEP_KEYS)
+			वापस -EINVAL;
 		idx--;
-	} else
+	पूर्ण अन्यथा
 		idx = ieee->crypt_info.tx_keyidx;
 
-	if (!(ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY) &&
+	अगर (!(ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY) &&
 	    ext->alg != IW_ENCODE_ALG_WEP)
-		if (idx != 0 || ieee->iw_mode != IW_MODE_INFRA)
-			return -EINVAL;
+		अगर (idx != 0 || ieee->iw_mode != IW_MODE_INFRA)
+			वापस -EINVAL;
 
 	encoding->flags = idx + 1;
-	memset(ext, 0, sizeof(*ext));
+	स_रखो(ext, 0, माप(*ext));
 
-	if (!sec->enabled) {
+	अगर (!sec->enabled) अणु
 		ext->alg = IW_ENCODE_ALG_NONE;
 		ext->key_len = 0;
 		encoding->flags |= IW_ENCODE_DISABLED;
-	} else {
-		if (sec->encode_alg[idx] == SEC_ALG_WEP)
+	पूर्ण अन्यथा अणु
+		अगर (sec->encode_alg[idx] == SEC_ALG_WEP)
 			ext->alg = IW_ENCODE_ALG_WEP;
-		else if (sec->encode_alg[idx] == SEC_ALG_TKIP)
+		अन्यथा अगर (sec->encode_alg[idx] == SEC_ALG_TKIP)
 			ext->alg = IW_ENCODE_ALG_TKIP;
-		else if (sec->encode_alg[idx] == SEC_ALG_CCMP)
+		अन्यथा अगर (sec->encode_alg[idx] == SEC_ALG_CCMP)
 			ext->alg = IW_ENCODE_ALG_CCMP;
-		else
-			return -EINVAL;
+		अन्यथा
+			वापस -EINVAL;
 
 		ext->key_len = sec->key_sizes[idx];
-		memcpy(ext->key, sec->keys[idx], ext->key_len);
+		स_नकल(ext->key, sec->keys[idx], ext->key_len);
 		encoding->flags |= IW_ENCODE_ENABLED;
-		if (ext->key_len &&
+		अगर (ext->key_len &&
 		    (ext->alg == IW_ENCODE_ALG_TKIP ||
 		     ext->alg == IW_ENCODE_ALG_CCMP))
 			ext->ext_flags |= IW_ENCODE_EXT_TX_SEQ_VALID;
 
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(libipw_wx_set_encodeext);
 EXPORT_SYMBOL(libipw_wx_get_encodeext);

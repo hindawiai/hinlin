@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * This driver supports the analog controls for the internal codec
+ * This driver supports the analog controls क्रम the पूर्णांकernal codec
  * found in Allwinner's A64 SoC.
  *
  * Copyright (C) 2016 Chen-Yu Tsai <wens@csie.org>
@@ -11,116 +12,116 @@
  *
  */
 
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#include <sound/soc.h>
-#include <sound/soc-dapm.h>
-#include <sound/tlv.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dapm.h>
+#समावेश <sound/tlv.h>
 
-#include "sun8i-adda-pr-regmap.h"
+#समावेश "sun8i-adda-pr-regmap.h"
 
-/* Codec analog control register offsets and bit fields */
-#define SUN50I_ADDA_HP_CTRL		0x00
-#define SUN50I_ADDA_HP_CTRL_PA_CLK_GATE		7
-#define SUN50I_ADDA_HP_CTRL_HPPA_EN		6
-#define SUN50I_ADDA_HP_CTRL_HPVOL		0
+/* Codec analog control रेजिस्टर offsets and bit fields */
+#घोषणा SUN50I_ADDA_HP_CTRL		0x00
+#घोषणा SUN50I_ADDA_HP_CTRL_PA_CLK_GATE		7
+#घोषणा SUN50I_ADDA_HP_CTRL_HPPA_EN		6
+#घोषणा SUN50I_ADDA_HP_CTRL_HPVOL		0
 
-#define SUN50I_ADDA_OL_MIX_CTRL		0x01
-#define SUN50I_ADDA_OL_MIX_CTRL_MIC1		6
-#define SUN50I_ADDA_OL_MIX_CTRL_MIC2		5
-#define SUN50I_ADDA_OL_MIX_CTRL_PHONE		4
-#define SUN50I_ADDA_OL_MIX_CTRL_PHONEN		3
-#define SUN50I_ADDA_OL_MIX_CTRL_LINEINL		2
-#define SUN50I_ADDA_OL_MIX_CTRL_DACL		1
-#define SUN50I_ADDA_OL_MIX_CTRL_DACR		0
+#घोषणा SUN50I_ADDA_OL_MIX_CTRL		0x01
+#घोषणा SUN50I_ADDA_OL_MIX_CTRL_MIC1		6
+#घोषणा SUN50I_ADDA_OL_MIX_CTRL_MIC2		5
+#घोषणा SUN50I_ADDA_OL_MIX_CTRL_PHONE		4
+#घोषणा SUN50I_ADDA_OL_MIX_CTRL_PHONEN		3
+#घोषणा SUN50I_ADDA_OL_MIX_CTRL_LINEINL		2
+#घोषणा SUN50I_ADDA_OL_MIX_CTRL_DACL		1
+#घोषणा SUN50I_ADDA_OL_MIX_CTRL_DACR		0
 
-#define SUN50I_ADDA_OR_MIX_CTRL		0x02
-#define SUN50I_ADDA_OR_MIX_CTRL_MIC1		6
-#define SUN50I_ADDA_OR_MIX_CTRL_MIC2		5
-#define SUN50I_ADDA_OR_MIX_CTRL_PHONE		4
-#define SUN50I_ADDA_OR_MIX_CTRL_PHONEP		3
-#define SUN50I_ADDA_OR_MIX_CTRL_LINEINR		2
-#define SUN50I_ADDA_OR_MIX_CTRL_DACR		1
-#define SUN50I_ADDA_OR_MIX_CTRL_DACL		0
+#घोषणा SUN50I_ADDA_OR_MIX_CTRL		0x02
+#घोषणा SUN50I_ADDA_OR_MIX_CTRL_MIC1		6
+#घोषणा SUN50I_ADDA_OR_MIX_CTRL_MIC2		5
+#घोषणा SUN50I_ADDA_OR_MIX_CTRL_PHONE		4
+#घोषणा SUN50I_ADDA_OR_MIX_CTRL_PHONEP		3
+#घोषणा SUN50I_ADDA_OR_MIX_CTRL_LINEINR		2
+#घोषणा SUN50I_ADDA_OR_MIX_CTRL_DACR		1
+#घोषणा SUN50I_ADDA_OR_MIX_CTRL_DACL		0
 
-#define SUN50I_ADDA_EARPIECE_CTRL0	0x03
-#define SUN50I_ADDA_EARPIECE_CTRL0_EAR_RAMP_TIME	4
-#define SUN50I_ADDA_EARPIECE_CTRL0_ESPSR		0
+#घोषणा SUN50I_ADDA_EARPIECE_CTRL0	0x03
+#घोषणा SUN50I_ADDA_EARPIECE_CTRL0_EAR_RAMP_TIME	4
+#घोषणा SUN50I_ADDA_EARPIECE_CTRL0_ESPSR		0
 
-#define SUN50I_ADDA_EARPIECE_CTRL1	0x04
-#define SUN50I_ADDA_EARPIECE_CTRL1_ESPPA_EN	7
-#define SUN50I_ADDA_EARPIECE_CTRL1_ESPPA_MUTE	6
-#define SUN50I_ADDA_EARPIECE_CTRL1_ESP_VOL	0
+#घोषणा SUN50I_ADDA_EARPIECE_CTRL1	0x04
+#घोषणा SUN50I_ADDA_EARPIECE_CTRL1_ESPPA_EN	7
+#घोषणा SUN50I_ADDA_EARPIECE_CTRL1_ESPPA_MUTE	6
+#घोषणा SUN50I_ADDA_EARPIECE_CTRL1_ESP_VOL	0
 
-#define SUN50I_ADDA_LINEOUT_CTRL0	0x05
-#define SUN50I_ADDA_LINEOUT_CTRL0_LEN		7
-#define SUN50I_ADDA_LINEOUT_CTRL0_REN		6
-#define SUN50I_ADDA_LINEOUT_CTRL0_LSRC_SEL	5
-#define SUN50I_ADDA_LINEOUT_CTRL0_RSRC_SEL	4
+#घोषणा SUN50I_ADDA_LINEOUT_CTRL0	0x05
+#घोषणा SUN50I_ADDA_LINEOUT_CTRL0_LEN		7
+#घोषणा SUN50I_ADDA_LINEOUT_CTRL0_REN		6
+#घोषणा SUN50I_ADDA_LINEOUT_CTRL0_LSRC_SEL	5
+#घोषणा SUN50I_ADDA_LINEOUT_CTRL0_RSRC_SEL	4
 
-#define SUN50I_ADDA_LINEOUT_CTRL1	0x06
-#define SUN50I_ADDA_LINEOUT_CTRL1_VOL		0
+#घोषणा SUN50I_ADDA_LINEOUT_CTRL1	0x06
+#घोषणा SUN50I_ADDA_LINEOUT_CTRL1_VOL		0
 
-#define SUN50I_ADDA_MIC1_CTRL		0x07
-#define SUN50I_ADDA_MIC1_CTRL_MIC1G		4
-#define SUN50I_ADDA_MIC1_CTRL_MIC1AMPEN		3
-#define SUN50I_ADDA_MIC1_CTRL_MIC1BOOST		0
+#घोषणा SUN50I_ADDA_MIC1_CTRL		0x07
+#घोषणा SUN50I_ADDA_MIC1_CTRL_MIC1G		4
+#घोषणा SUN50I_ADDA_MIC1_CTRL_MIC1AMPEN		3
+#घोषणा SUN50I_ADDA_MIC1_CTRL_MIC1BOOST		0
 
-#define SUN50I_ADDA_MIC2_CTRL		0x08
-#define SUN50I_ADDA_MIC2_CTRL_MIC2G		4
-#define SUN50I_ADDA_MIC2_CTRL_MIC2AMPEN		3
-#define SUN50I_ADDA_MIC2_CTRL_MIC2BOOST		0
+#घोषणा SUN50I_ADDA_MIC2_CTRL		0x08
+#घोषणा SUN50I_ADDA_MIC2_CTRL_MIC2G		4
+#घोषणा SUN50I_ADDA_MIC2_CTRL_MIC2AMPEN		3
+#घोषणा SUN50I_ADDA_MIC2_CTRL_MIC2BOOST		0
 
-#define SUN50I_ADDA_LINEIN_CTRL		0x09
-#define SUN50I_ADDA_LINEIN_CTRL_LINEING		0
+#घोषणा SUN50I_ADDA_LINEIN_CTRL		0x09
+#घोषणा SUN50I_ADDA_LINEIN_CTRL_LINEING		0
 
-#define SUN50I_ADDA_MIX_DAC_CTRL	0x0a
-#define SUN50I_ADDA_MIX_DAC_CTRL_DACAREN	7
-#define SUN50I_ADDA_MIX_DAC_CTRL_DACALEN	6
-#define SUN50I_ADDA_MIX_DAC_CTRL_RMIXEN		5
-#define SUN50I_ADDA_MIX_DAC_CTRL_LMIXEN		4
-#define SUN50I_ADDA_MIX_DAC_CTRL_RHPPAMUTE	3
-#define SUN50I_ADDA_MIX_DAC_CTRL_LHPPAMUTE	2
-#define SUN50I_ADDA_MIX_DAC_CTRL_RHPIS		1
-#define SUN50I_ADDA_MIX_DAC_CTRL_LHPIS		0
+#घोषणा SUN50I_ADDA_MIX_DAC_CTRL	0x0a
+#घोषणा SUN50I_ADDA_MIX_DAC_CTRL_DACAREN	7
+#घोषणा SUN50I_ADDA_MIX_DAC_CTRL_DACALEN	6
+#घोषणा SUN50I_ADDA_MIX_DAC_CTRL_RMIXEN		5
+#घोषणा SUN50I_ADDA_MIX_DAC_CTRL_LMIXEN		4
+#घोषणा SUN50I_ADDA_MIX_DAC_CTRL_RHPPAMUTE	3
+#घोषणा SUN50I_ADDA_MIX_DAC_CTRL_LHPPAMUTE	2
+#घोषणा SUN50I_ADDA_MIX_DAC_CTRL_RHPIS		1
+#घोषणा SUN50I_ADDA_MIX_DAC_CTRL_LHPIS		0
 
-#define SUN50I_ADDA_L_ADCMIX_SRC	0x0b
-#define SUN50I_ADDA_L_ADCMIX_SRC_MIC1		6
-#define SUN50I_ADDA_L_ADCMIX_SRC_MIC2		5
-#define SUN50I_ADDA_L_ADCMIX_SRC_PHONE		4
-#define SUN50I_ADDA_L_ADCMIX_SRC_PHONEN		3
-#define SUN50I_ADDA_L_ADCMIX_SRC_LINEINL	2
-#define SUN50I_ADDA_L_ADCMIX_SRC_OMIXRL		1
-#define SUN50I_ADDA_L_ADCMIX_SRC_OMIXRR		0
+#घोषणा SUN50I_ADDA_L_ADCMIX_SRC	0x0b
+#घोषणा SUN50I_ADDA_L_ADCMIX_SRC_MIC1		6
+#घोषणा SUN50I_ADDA_L_ADCMIX_SRC_MIC2		5
+#घोषणा SUN50I_ADDA_L_ADCMIX_SRC_PHONE		4
+#घोषणा SUN50I_ADDA_L_ADCMIX_SRC_PHONEN		3
+#घोषणा SUN50I_ADDA_L_ADCMIX_SRC_LINEINL	2
+#घोषणा SUN50I_ADDA_L_ADCMIX_SRC_OMIXRL		1
+#घोषणा SUN50I_ADDA_L_ADCMIX_SRC_OMIXRR		0
 
-#define SUN50I_ADDA_R_ADCMIX_SRC	0x0c
-#define SUN50I_ADDA_R_ADCMIX_SRC_MIC1		6
-#define SUN50I_ADDA_R_ADCMIX_SRC_MIC2		5
-#define SUN50I_ADDA_R_ADCMIX_SRC_PHONE		4
-#define SUN50I_ADDA_R_ADCMIX_SRC_PHONEP		3
-#define SUN50I_ADDA_R_ADCMIX_SRC_LINEINR	2
-#define SUN50I_ADDA_R_ADCMIX_SRC_OMIXR		1
-#define SUN50I_ADDA_R_ADCMIX_SRC_OMIXL		0
+#घोषणा SUN50I_ADDA_R_ADCMIX_SRC	0x0c
+#घोषणा SUN50I_ADDA_R_ADCMIX_SRC_MIC1		6
+#घोषणा SUN50I_ADDA_R_ADCMIX_SRC_MIC2		5
+#घोषणा SUN50I_ADDA_R_ADCMIX_SRC_PHONE		4
+#घोषणा SUN50I_ADDA_R_ADCMIX_SRC_PHONEP		3
+#घोषणा SUN50I_ADDA_R_ADCMIX_SRC_LINEINR	2
+#घोषणा SUN50I_ADDA_R_ADCMIX_SRC_OMIXR		1
+#घोषणा SUN50I_ADDA_R_ADCMIX_SRC_OMIXL		0
 
-#define SUN50I_ADDA_ADC_CTRL		0x0d
-#define SUN50I_ADDA_ADC_CTRL_ADCREN		7
-#define SUN50I_ADDA_ADC_CTRL_ADCLEN		6
-#define SUN50I_ADDA_ADC_CTRL_ADCG		0
+#घोषणा SUN50I_ADDA_ADC_CTRL		0x0d
+#घोषणा SUN50I_ADDA_ADC_CTRL_ADCREN		7
+#घोषणा SUN50I_ADDA_ADC_CTRL_ADCLEN		6
+#घोषणा SUN50I_ADDA_ADC_CTRL_ADCG		0
 
-#define SUN50I_ADDA_HS_MBIAS_CTRL	0x0e
-#define SUN50I_ADDA_HS_MBIAS_CTRL_MMICBIASEN	7
+#घोषणा SUN50I_ADDA_HS_MBIAS_CTRL	0x0e
+#घोषणा SUN50I_ADDA_HS_MBIAS_CTRL_MMICBIASEN	7
 
-#define SUN50I_ADDA_JACK_MIC_CTRL	0x1d
-#define SUN50I_ADDA_JACK_MIC_CTRL_HMICBIASEN	5
+#घोषणा SUN50I_ADDA_JACK_MIC_CTRL	0x1d
+#घोषणा SUN50I_ADDA_JACK_MIC_CTRL_HMICBIASEN	5
 
 /* mixer controls */
-static const struct snd_kcontrol_new sun50i_a64_codec_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun50i_a64_codec_mixer_controls[] = अणु
 	SOC_DAPM_DOUBLE_R("Mic1 Playback Switch",
 			  SUN50I_ADDA_OL_MIX_CTRL,
 			  SUN50I_ADDA_OR_MIX_CTRL,
@@ -141,10 +142,10 @@ static const struct snd_kcontrol_new sun50i_a64_codec_mixer_controls[] = {
 			  SUN50I_ADDA_OL_MIX_CTRL,
 			  SUN50I_ADDA_OR_MIX_CTRL,
 			  SUN50I_ADDA_OL_MIX_CTRL_DACR, 1, 0),
-};
+पूर्ण;
 
 /* ADC mixer controls */
-static const struct snd_kcontrol_new sun50i_codec_adc_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun50i_codec_adc_mixer_controls[] = अणु
 	SOC_DAPM_DOUBLE_R("Mic1 Capture Switch",
 			  SUN50I_ADDA_L_ADCMIX_SRC,
 			  SUN50I_ADDA_R_ADCMIX_SRC,
@@ -165,29 +166,29 @@ static const struct snd_kcontrol_new sun50i_codec_adc_mixer_controls[] = {
 			  SUN50I_ADDA_L_ADCMIX_SRC,
 			  SUN50I_ADDA_R_ADCMIX_SRC,
 			  SUN50I_ADDA_L_ADCMIX_SRC_OMIXRR, 1, 0),
-};
+पूर्ण;
 
-static const DECLARE_TLV_DB_SCALE(sun50i_codec_out_mixer_pregain_scale,
+अटल स्थिर DECLARE_TLV_DB_SCALE(sun50i_codec_out_mixer_pregain_scale,
 				  -450, 150, 0);
-static const DECLARE_TLV_DB_RANGE(sun50i_codec_mic_gain_scale,
+अटल स्थिर DECLARE_TLV_DB_RANGE(sun50i_codec_mic_gain_scale,
 	0, 0, TLV_DB_SCALE_ITEM(0, 0, 0),
 	1, 7, TLV_DB_SCALE_ITEM(2400, 300, 0),
 );
 
-static const DECLARE_TLV_DB_SCALE(sun50i_codec_hp_vol_scale, -6300, 100, 1);
+अटल स्थिर DECLARE_TLV_DB_SCALE(sun50i_codec_hp_vol_scale, -6300, 100, 1);
 
-static const DECLARE_TLV_DB_RANGE(sun50i_codec_lineout_vol_scale,
+अटल स्थिर DECLARE_TLV_DB_RANGE(sun50i_codec_lineout_vol_scale,
 	0, 1, TLV_DB_SCALE_ITEM(TLV_DB_GAIN_MUTE, 0, 1),
 	2, 31, TLV_DB_SCALE_ITEM(-4350, 150, 0),
 );
 
-static const DECLARE_TLV_DB_RANGE(sun50i_codec_earpiece_vol_scale,
+अटल स्थिर DECLARE_TLV_DB_RANGE(sun50i_codec_earpiece_vol_scale,
 	0, 1, TLV_DB_SCALE_ITEM(TLV_DB_GAIN_MUTE, 0, 1),
 	2, 31, TLV_DB_SCALE_ITEM(-4350, 150, 0),
 );
 
 /* volume / mute controls */
-static const struct snd_kcontrol_new sun50i_a64_codec_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun50i_a64_codec_controls[] = अणु
 	SOC_SINGLE_TLV("Headphone Playback Volume",
 		       SUN50I_ADDA_HP_CTRL,
 		       SUN50I_ADDA_HP_CTRL_HPVOL, 0x3f, 0,
@@ -232,85 +233,85 @@ static const struct snd_kcontrol_new sun50i_a64_codec_controls[] = {
 		       SUN50I_ADDA_EARPIECE_CTRL1,
 		       SUN50I_ADDA_EARPIECE_CTRL1_ESP_VOL, 0x1f, 0,
 		       sun50i_codec_earpiece_vol_scale),
-};
+पूर्ण;
 
-static const char * const sun50i_codec_hp_src_enum_text[] = {
+अटल स्थिर अक्षर * स्थिर sun50i_codec_hp_src_क्रमागत_text[] = अणु
 	"DAC", "Mixer",
-};
+पूर्ण;
 
-static SOC_ENUM_DOUBLE_DECL(sun50i_codec_hp_src_enum,
+अटल SOC_ENUM_DOUBLE_DECL(sun50i_codec_hp_src_क्रमागत,
 			    SUN50I_ADDA_MIX_DAC_CTRL,
 			    SUN50I_ADDA_MIX_DAC_CTRL_LHPIS,
 			    SUN50I_ADDA_MIX_DAC_CTRL_RHPIS,
-			    sun50i_codec_hp_src_enum_text);
+			    sun50i_codec_hp_src_क्रमागत_text);
 
-static const struct snd_kcontrol_new sun50i_codec_hp_src[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun50i_codec_hp_src[] = अणु
 	SOC_DAPM_ENUM("Headphone Source Playback Route",
-		      sun50i_codec_hp_src_enum),
-};
+		      sun50i_codec_hp_src_क्रमागत),
+पूर्ण;
 
-static const struct snd_kcontrol_new sun50i_codec_hp_switch =
+अटल स्थिर काष्ठा snd_kcontrol_new sun50i_codec_hp_चयन =
 	SOC_DAPM_DOUBLE("Headphone Playback Switch",
 			SUN50I_ADDA_MIX_DAC_CTRL,
 			SUN50I_ADDA_MIX_DAC_CTRL_LHPPAMUTE,
 			SUN50I_ADDA_MIX_DAC_CTRL_RHPPAMUTE, 1, 0);
 
-static const char * const sun50i_codec_lineout_src_enum_text[] = {
+अटल स्थिर अक्षर * स्थिर sun50i_codec_lineout_src_क्रमागत_text[] = अणु
 	"Stereo", "Mono Differential",
-};
+पूर्ण;
 
-static SOC_ENUM_DOUBLE_DECL(sun50i_codec_lineout_src_enum,
+अटल SOC_ENUM_DOUBLE_DECL(sun50i_codec_lineout_src_क्रमागत,
 			    SUN50I_ADDA_LINEOUT_CTRL0,
 			    SUN50I_ADDA_LINEOUT_CTRL0_LSRC_SEL,
 			    SUN50I_ADDA_LINEOUT_CTRL0_RSRC_SEL,
-			    sun50i_codec_lineout_src_enum_text);
+			    sun50i_codec_lineout_src_क्रमागत_text);
 
-static const struct snd_kcontrol_new sun50i_codec_lineout_src[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun50i_codec_lineout_src[] = अणु
 	SOC_DAPM_ENUM("Line Out Source Playback Route",
-		      sun50i_codec_lineout_src_enum),
-};
+		      sun50i_codec_lineout_src_क्रमागत),
+पूर्ण;
 
-static const struct snd_kcontrol_new sun50i_codec_lineout_switch =
+अटल स्थिर काष्ठा snd_kcontrol_new sun50i_codec_lineout_चयन =
 	SOC_DAPM_DOUBLE("Line Out Playback Switch",
 			SUN50I_ADDA_LINEOUT_CTRL0,
 			SUN50I_ADDA_LINEOUT_CTRL0_LEN,
 			SUN50I_ADDA_LINEOUT_CTRL0_REN, 1, 0);
 
-static const char * const sun50i_codec_earpiece_src_enum_text[] = {
+अटल स्थिर अक्षर * स्थिर sun50i_codec_earpiece_src_क्रमागत_text[] = अणु
 	"DACR", "DACL", "Right Mixer", "Left Mixer",
-};
+पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(sun50i_codec_earpiece_src_enum,
+अटल SOC_ENUM_SINGLE_DECL(sun50i_codec_earpiece_src_क्रमागत,
 			    SUN50I_ADDA_EARPIECE_CTRL0,
 			    SUN50I_ADDA_EARPIECE_CTRL0_ESPSR,
-			    sun50i_codec_earpiece_src_enum_text);
+			    sun50i_codec_earpiece_src_क्रमागत_text);
 
-static const struct snd_kcontrol_new sun50i_codec_earpiece_src[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun50i_codec_earpiece_src[] = अणु
 	SOC_DAPM_ENUM("Earpiece Source Playback Route",
-		      sun50i_codec_earpiece_src_enum),
-};
+		      sun50i_codec_earpiece_src_क्रमागत),
+पूर्ण;
 
-static const struct snd_kcontrol_new sun50i_codec_earpiece_switch[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun50i_codec_earpiece_चयन[] = अणु
 	SOC_DAPM_SINGLE("Earpiece Playback Switch",
 			SUN50I_ADDA_EARPIECE_CTRL1,
 			SUN50I_ADDA_EARPIECE_CTRL1_ESPPA_MUTE, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget sun50i_a64_codec_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget sun50i_a64_codec_widमाला_लो[] = अणु
 	/* DAC */
-	SND_SOC_DAPM_DAC("Left DAC", NULL, SUN50I_ADDA_MIX_DAC_CTRL,
+	SND_SOC_DAPM_DAC("Left DAC", शून्य, SUN50I_ADDA_MIX_DAC_CTRL,
 			 SUN50I_ADDA_MIX_DAC_CTRL_DACALEN, 0),
-	SND_SOC_DAPM_DAC("Right DAC", NULL, SUN50I_ADDA_MIX_DAC_CTRL,
+	SND_SOC_DAPM_DAC("Right DAC", शून्य, SUN50I_ADDA_MIX_DAC_CTRL,
 			 SUN50I_ADDA_MIX_DAC_CTRL_DACAREN, 0),
 	/* ADC */
-	SND_SOC_DAPM_ADC("Left ADC", NULL, SUN50I_ADDA_ADC_CTRL,
+	SND_SOC_DAPM_ADC("Left ADC", शून्य, SUN50I_ADDA_ADC_CTRL,
 			 SUN50I_ADDA_ADC_CTRL_ADCLEN, 0),
-	SND_SOC_DAPM_ADC("Right ADC", NULL, SUN50I_ADDA_ADC_CTRL,
+	SND_SOC_DAPM_ADC("Right ADC", शून्य, SUN50I_ADDA_ADC_CTRL,
 			 SUN50I_ADDA_ADC_CTRL_ADCREN, 0),
 	/*
-	 * Due to this component and the codec belonging to separate DAPM
-	 * contexts, we need to manually link the above widgets to their
-	 * stream widgets at the card level.
+	 * Due to this component and the codec beदीर्घing to separate DAPM
+	 * contexts, we need to manually link the above widमाला_लो to their
+	 * stream widमाला_लो at the card level.
 	 */
 
 	SND_SOC_DAPM_REGULATOR_SUPPLY("cpvdd", 0, 0),
@@ -319,15 +320,15 @@ static const struct snd_soc_dapm_widget sun50i_a64_codec_widgets[] = {
 	SND_SOC_DAPM_MUX("Right Headphone Source",
 			 SND_SOC_NOPM, 0, 0, sun50i_codec_hp_src),
 	SND_SOC_DAPM_SWITCH("Left Headphone Switch",
-			    SND_SOC_NOPM, 0, 0, &sun50i_codec_hp_switch),
+			    SND_SOC_NOPM, 0, 0, &sun50i_codec_hp_चयन),
 	SND_SOC_DAPM_SWITCH("Right Headphone Switch",
-			    SND_SOC_NOPM, 0, 0, &sun50i_codec_hp_switch),
+			    SND_SOC_NOPM, 0, 0, &sun50i_codec_hp_चयन),
 	SND_SOC_DAPM_OUT_DRV("Left Headphone Amp",
-			     SND_SOC_NOPM, 0, 0, NULL, 0),
+			     SND_SOC_NOPM, 0, 0, शून्य, 0),
 	SND_SOC_DAPM_OUT_DRV("Right Headphone Amp",
-			     SND_SOC_NOPM, 0, 0, NULL, 0),
+			     SND_SOC_NOPM, 0, 0, शून्य, 0),
 	SND_SOC_DAPM_SUPPLY("Headphone Amp", SUN50I_ADDA_HP_CTRL,
-			     SUN50I_ADDA_HP_CTRL_HPPA_EN, 0, NULL, 0),
+			     SUN50I_ADDA_HP_CTRL_HPPA_EN, 0, शून्य, 0),
 	SND_SOC_DAPM_OUTPUT("HP"),
 
 	SND_SOC_DAPM_MUX("Left Line Out Source",
@@ -335,31 +336,31 @@ static const struct snd_soc_dapm_widget sun50i_a64_codec_widgets[] = {
 	SND_SOC_DAPM_MUX("Right Line Out Source",
 			 SND_SOC_NOPM, 0, 0, sun50i_codec_lineout_src),
 	SND_SOC_DAPM_SWITCH("Left Line Out Switch",
-			    SND_SOC_NOPM, 0, 0, &sun50i_codec_lineout_switch),
+			    SND_SOC_NOPM, 0, 0, &sun50i_codec_lineout_चयन),
 	SND_SOC_DAPM_SWITCH("Right Line Out Switch",
-			    SND_SOC_NOPM, 0, 0, &sun50i_codec_lineout_switch),
+			    SND_SOC_NOPM, 0, 0, &sun50i_codec_lineout_चयन),
 	SND_SOC_DAPM_OUTPUT("LINEOUT"),
 
 	SND_SOC_DAPM_MUX("Earpiece Source Playback Route",
 			 SND_SOC_NOPM, 0, 0, sun50i_codec_earpiece_src),
 	SOC_MIXER_NAMED_CTL_ARRAY("Earpiece Switch",
 				  SND_SOC_NOPM, 0, 0,
-				  sun50i_codec_earpiece_switch),
+				  sun50i_codec_earpiece_चयन),
 	SND_SOC_DAPM_OUT_DRV("Earpiece Amp", SUN50I_ADDA_EARPIECE_CTRL1,
-			     SUN50I_ADDA_EARPIECE_CTRL1_ESPPA_EN, 0, NULL, 0),
+			     SUN50I_ADDA_EARPIECE_CTRL1_ESPPA_EN, 0, शून्य, 0),
 	SND_SOC_DAPM_OUTPUT("EARPIECE"),
 
-	/* Microphone inputs */
+	/* Microphone inमाला_दो */
 	SND_SOC_DAPM_INPUT("MIC1"),
 
 	/* Microphone Bias */
 	SND_SOC_DAPM_SUPPLY("MBIAS", SUN50I_ADDA_HS_MBIAS_CTRL,
 			    SUN50I_ADDA_HS_MBIAS_CTRL_MMICBIASEN,
-			    0, NULL, 0),
+			    0, शून्य, 0),
 
 	/* Mic input path */
 	SND_SOC_DAPM_PGA("Mic1 Amplifier", SUN50I_ADDA_MIC1_CTRL,
-			 SUN50I_ADDA_MIC1_CTRL_MIC1AMPEN, 0, NULL, 0),
+			 SUN50I_ADDA_MIC1_CTRL_MIC1AMPEN, 0, शून्य, 0),
 
 	/* Microphone input */
 	SND_SOC_DAPM_INPUT("MIC2"),
@@ -367,11 +368,11 @@ static const struct snd_soc_dapm_widget sun50i_a64_codec_widgets[] = {
 	/* Microphone Bias */
 	SND_SOC_DAPM_SUPPLY("HBIAS", SUN50I_ADDA_JACK_MIC_CTRL,
 			    SUN50I_ADDA_JACK_MIC_CTRL_HMICBIASEN,
-			    0, NULL, 0),
+			    0, शून्य, 0),
 
 	/* Mic input path */
 	SND_SOC_DAPM_PGA("Mic2 Amplifier", SUN50I_ADDA_MIC2_CTRL,
-			 SUN50I_ADDA_MIC2_CTRL_MIC2AMPEN, 0, NULL, 0),
+			 SUN50I_ADDA_MIC2_CTRL_MIC2AMPEN, 0, शून्य, 0),
 
 	/* Line input */
 	SND_SOC_DAPM_INPUT("LINEIN"),
@@ -391,148 +392,148 @@ static const struct snd_soc_dapm_widget sun50i_a64_codec_widgets[] = {
 	SND_SOC_DAPM_MIXER("Right ADC Mixer", SND_SOC_NOPM, 0, 0,
 			   sun50i_codec_adc_mixer_controls,
 			   ARRAY_SIZE(sun50i_codec_adc_mixer_controls)),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route sun50i_a64_codec_routes[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route sun50i_a64_codec_routes[] = अणु
 	/* Left Mixer Routes */
-	{ "Left Mixer", "Mic1 Playback Switch", "Mic1 Amplifier" },
-	{ "Left Mixer", "Mic2 Playback Switch", "Mic2 Amplifier" },
-	{ "Left Mixer", "Line In Playback Switch", "LINEIN" },
-	{ "Left Mixer", "DAC Playback Switch", "Left DAC" },
-	{ "Left Mixer", "DAC Reversed Playback Switch", "Right DAC" },
+	अणु "Left Mixer", "Mic1 Playback Switch", "Mic1 Amplifier" पूर्ण,
+	अणु "Left Mixer", "Mic2 Playback Switch", "Mic2 Amplifier" पूर्ण,
+	अणु "Left Mixer", "Line In Playback Switch", "LINEIN" पूर्ण,
+	अणु "Left Mixer", "DAC Playback Switch", "Left DAC" पूर्ण,
+	अणु "Left Mixer", "DAC Reversed Playback Switch", "Right DAC" पूर्ण,
 
 	/* Right Mixer Routes */
-	{ "Right Mixer", "Mic1 Playback Switch", "Mic1 Amplifier" },
-	{ "Right Mixer", "Mic2 Playback Switch", "Mic2 Amplifier" },
-	{ "Right Mixer", "Line In Playback Switch", "LINEIN" },
-	{ "Right Mixer", "DAC Playback Switch", "Right DAC" },
-	{ "Right Mixer", "DAC Reversed Playback Switch", "Left DAC" },
+	अणु "Right Mixer", "Mic1 Playback Switch", "Mic1 Amplifier" पूर्ण,
+	अणु "Right Mixer", "Mic2 Playback Switch", "Mic2 Amplifier" पूर्ण,
+	अणु "Right Mixer", "Line In Playback Switch", "LINEIN" पूर्ण,
+	अणु "Right Mixer", "DAC Playback Switch", "Right DAC" पूर्ण,
+	अणु "Right Mixer", "DAC Reversed Playback Switch", "Left DAC" पूर्ण,
 
 	/* Left ADC Mixer Routes */
-	{ "Left ADC Mixer", "Mic1 Capture Switch", "Mic1 Amplifier" },
-	{ "Left ADC Mixer", "Mic2 Capture Switch", "Mic2 Amplifier" },
-	{ "Left ADC Mixer", "Line In Capture Switch", "LINEIN" },
-	{ "Left ADC Mixer", "Mixer Capture Switch", "Left Mixer" },
-	{ "Left ADC Mixer", "Mixer Reversed Capture Switch", "Right Mixer" },
+	अणु "Left ADC Mixer", "Mic1 Capture Switch", "Mic1 Amplifier" पूर्ण,
+	अणु "Left ADC Mixer", "Mic2 Capture Switch", "Mic2 Amplifier" पूर्ण,
+	अणु "Left ADC Mixer", "Line In Capture Switch", "LINEIN" पूर्ण,
+	अणु "Left ADC Mixer", "Mixer Capture Switch", "Left Mixer" पूर्ण,
+	अणु "Left ADC Mixer", "Mixer Reversed Capture Switch", "Right Mixer" पूर्ण,
 
 	/* Right ADC Mixer Routes */
-	{ "Right ADC Mixer", "Mic1 Capture Switch", "Mic1 Amplifier" },
-	{ "Right ADC Mixer", "Mic2 Capture Switch", "Mic2 Amplifier" },
-	{ "Right ADC Mixer", "Line In Capture Switch", "LINEIN" },
-	{ "Right ADC Mixer", "Mixer Capture Switch", "Right Mixer" },
-	{ "Right ADC Mixer", "Mixer Reversed Capture Switch", "Left Mixer" },
+	अणु "Right ADC Mixer", "Mic1 Capture Switch", "Mic1 Amplifier" पूर्ण,
+	अणु "Right ADC Mixer", "Mic2 Capture Switch", "Mic2 Amplifier" पूर्ण,
+	अणु "Right ADC Mixer", "Line In Capture Switch", "LINEIN" पूर्ण,
+	अणु "Right ADC Mixer", "Mixer Capture Switch", "Right Mixer" पूर्ण,
+	अणु "Right ADC Mixer", "Mixer Reversed Capture Switch", "Left Mixer" पूर्ण,
 
 	/* ADC Routes */
-	{ "Left ADC", NULL, "Left ADC Mixer" },
-	{ "Right ADC", NULL, "Right ADC Mixer" },
+	अणु "Left ADC", शून्य, "Left ADC Mixer" पूर्ण,
+	अणु "Right ADC", शून्य, "Right ADC Mixer" पूर्ण,
 
 	/* Headphone Routes */
-	{ "Left Headphone Source", "DAC", "Left DAC" },
-	{ "Left Headphone Source", "Mixer", "Left Mixer" },
-	{ "Left Headphone Switch", "Headphone Playback Switch", "Left Headphone Source" },
-	{ "Left Headphone Amp", NULL, "Left Headphone Switch" },
-	{ "Left Headphone Amp", NULL, "Headphone Amp" },
-	{ "HP", NULL, "Left Headphone Amp" },
+	अणु "Left Headphone Source", "DAC", "Left DAC" पूर्ण,
+	अणु "Left Headphone Source", "Mixer", "Left Mixer" पूर्ण,
+	अणु "Left Headphone Switch", "Headphone Playback Switch", "Left Headphone Source" पूर्ण,
+	अणु "Left Headphone Amp", शून्य, "Left Headphone Switch" पूर्ण,
+	अणु "Left Headphone Amp", शून्य, "Headphone Amp" पूर्ण,
+	अणु "HP", शून्य, "Left Headphone Amp" पूर्ण,
 
-	{ "Right Headphone Source", "DAC", "Right DAC" },
-	{ "Right Headphone Source", "Mixer", "Right Mixer" },
-	{ "Right Headphone Switch", "Headphone Playback Switch", "Right Headphone Source" },
-	{ "Right Headphone Amp", NULL, "Right Headphone Switch" },
-	{ "Right Headphone Amp", NULL, "Headphone Amp" },
-	{ "HP", NULL, "Right Headphone Amp" },
+	अणु "Right Headphone Source", "DAC", "Right DAC" पूर्ण,
+	अणु "Right Headphone Source", "Mixer", "Right Mixer" पूर्ण,
+	अणु "Right Headphone Switch", "Headphone Playback Switch", "Right Headphone Source" पूर्ण,
+	अणु "Right Headphone Amp", शून्य, "Right Headphone Switch" पूर्ण,
+	अणु "Right Headphone Amp", शून्य, "Headphone Amp" पूर्ण,
+	अणु "HP", शून्य, "Right Headphone Amp" पूर्ण,
 
-	{ "Headphone Amp", NULL, "cpvdd" },
-
-	/* Microphone Routes */
-	{ "Mic1 Amplifier", NULL, "MIC1"},
+	अणु "Headphone Amp", शून्य, "cpvdd" पूर्ण,
 
 	/* Microphone Routes */
-	{ "Mic2 Amplifier", NULL, "MIC2"},
+	अणु "Mic1 Amplifier", शून्य, "MIC1"पूर्ण,
+
+	/* Microphone Routes */
+	अणु "Mic2 Amplifier", शून्य, "MIC2"पूर्ण,
 
 	/* Line-out Routes */
-	{ "Left Line Out Source", "Stereo", "Left Mixer" },
-	{ "Left Line Out Source", "Mono Differential", "Left Mixer" },
-	{ "Left Line Out Source", "Mono Differential", "Right Mixer" },
-	{ "Left Line Out Switch", "Line Out Playback Switch", "Left Line Out Source" },
-	{ "LINEOUT", NULL, "Left Line Out Switch" },
+	अणु "Left Line Out Source", "Stereo", "Left Mixer" पूर्ण,
+	अणु "Left Line Out Source", "Mono Differential", "Left Mixer" पूर्ण,
+	अणु "Left Line Out Source", "Mono Differential", "Right Mixer" पूर्ण,
+	अणु "Left Line Out Switch", "Line Out Playback Switch", "Left Line Out Source" पूर्ण,
+	अणु "LINEOUT", शून्य, "Left Line Out Switch" पूर्ण,
 
-	{ "Right Line Out Switch", "Line Out Playback Switch", "Right Mixer" },
-	{ "Right Line Out Source", "Stereo", "Right Line Out Switch" },
-	{ "Right Line Out Source", "Mono Differential", "Left Line Out Switch" },
-	{ "LINEOUT", NULL, "Right Line Out Source" },
+	अणु "Right Line Out Switch", "Line Out Playback Switch", "Right Mixer" पूर्ण,
+	अणु "Right Line Out Source", "Stereo", "Right Line Out Switch" पूर्ण,
+	अणु "Right Line Out Source", "Mono Differential", "Left Line Out Switch" पूर्ण,
+	अणु "LINEOUT", शून्य, "Right Line Out Source" पूर्ण,
 
 	/* Earpiece Routes */
-	{ "Earpiece Source Playback Route", "DACL", "Left DAC" },
-	{ "Earpiece Source Playback Route", "DACR", "Right DAC" },
-	{ "Earpiece Source Playback Route", "Left Mixer", "Left Mixer" },
-	{ "Earpiece Source Playback Route", "Right Mixer", "Right Mixer" },
-	{ "Earpiece Switch", "Earpiece Playback Switch", "Earpiece Source Playback Route" },
-	{ "Earpiece Amp", NULL, "Earpiece Switch" },
-	{ "EARPIECE", NULL, "Earpiece Amp" },
-};
+	अणु "Earpiece Source Playback Route", "DACL", "Left DAC" पूर्ण,
+	अणु "Earpiece Source Playback Route", "DACR", "Right DAC" पूर्ण,
+	अणु "Earpiece Source Playback Route", "Left Mixer", "Left Mixer" पूर्ण,
+	अणु "Earpiece Source Playback Route", "Right Mixer", "Right Mixer" पूर्ण,
+	अणु "Earpiece Switch", "Earpiece Playback Switch", "Earpiece Source Playback Route" पूर्ण,
+	अणु "Earpiece Amp", शून्य, "Earpiece Switch" पूर्ण,
+	अणु "EARPIECE", शून्य, "Earpiece Amp" पूर्ण,
+पूर्ण;
 
-static int sun50i_a64_codec_suspend(struct snd_soc_component *component)
-{
-	return regmap_update_bits(component->regmap, SUN50I_ADDA_HP_CTRL,
+अटल पूर्णांक sun50i_a64_codec_suspend(काष्ठा snd_soc_component *component)
+अणु
+	वापस regmap_update_bits(component->regmap, SUN50I_ADDA_HP_CTRL,
 				  BIT(SUN50I_ADDA_HP_CTRL_PA_CLK_GATE),
 				  BIT(SUN50I_ADDA_HP_CTRL_PA_CLK_GATE));
-}
+पूर्ण
 
-static int sun50i_a64_codec_resume(struct snd_soc_component *component)
-{
-	return regmap_update_bits(component->regmap, SUN50I_ADDA_HP_CTRL,
+अटल पूर्णांक sun50i_a64_codec_resume(काष्ठा snd_soc_component *component)
+अणु
+	वापस regmap_update_bits(component->regmap, SUN50I_ADDA_HP_CTRL,
 				  BIT(SUN50I_ADDA_HP_CTRL_PA_CLK_GATE), 0);
-}
+पूर्ण
 
-static const struct snd_soc_component_driver sun50i_codec_analog_cmpnt_drv = {
+अटल स्थिर काष्ठा snd_soc_component_driver sun50i_codec_analog_cmpnt_drv = अणु
 	.controls		= sun50i_a64_codec_controls,
 	.num_controls		= ARRAY_SIZE(sun50i_a64_codec_controls),
-	.dapm_widgets		= sun50i_a64_codec_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(sun50i_a64_codec_widgets),
+	.dapm_widमाला_लो		= sun50i_a64_codec_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(sun50i_a64_codec_widमाला_लो),
 	.dapm_routes		= sun50i_a64_codec_routes,
 	.num_dapm_routes	= ARRAY_SIZE(sun50i_a64_codec_routes),
 	.suspend		= sun50i_a64_codec_suspend,
 	.resume			= sun50i_a64_codec_resume,
-};
+पूर्ण;
 
-static const struct of_device_id sun50i_codec_analog_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sun50i_codec_analog_of_match[] = अणु
+	अणु
 		.compatible = "allwinner,sun50i-a64-codec-analog",
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sun50i_codec_analog_of_match);
 
-static int sun50i_codec_analog_probe(struct platform_device *pdev)
-{
-	struct regmap *regmap;
-	void __iomem *base;
+अटल पूर्णांक sun50i_codec_analog_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा regmap *regmap;
+	व्योम __iomem *base;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base)) {
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base)) अणु
 		dev_err(&pdev->dev, "Failed to map the registers\n");
-		return PTR_ERR(base);
-	}
+		वापस PTR_ERR(base);
+	पूर्ण
 
 	regmap = sun8i_adda_pr_regmap_init(&pdev->dev, base);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&pdev->dev, "Failed to create regmap\n");
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return devm_snd_soc_register_component(&pdev->dev,
+	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
 					       &sun50i_codec_analog_cmpnt_drv,
-					       NULL, 0);
-}
+					       शून्य, 0);
+पूर्ण
 
-static struct platform_driver sun50i_codec_analog_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sun50i_codec_analog_driver = अणु
+	.driver = अणु
 		.name = "sun50i-codec-analog",
 		.of_match_table = sun50i_codec_analog_of_match,
-	},
+	पूर्ण,
 	.probe = sun50i_codec_analog_probe,
-};
-module_platform_driver(sun50i_codec_analog_driver);
+पूर्ण;
+module_platक्रमm_driver(sun50i_codec_analog_driver);
 
 MODULE_DESCRIPTION("Allwinner internal codec analog controls driver for A64");
 MODULE_AUTHOR("Vasily Khoruzhick <anarsoul@gmail.com>");

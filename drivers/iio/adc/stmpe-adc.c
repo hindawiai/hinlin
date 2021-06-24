@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  STMicroelectronics STMPE811 IIO ADC Driver
  *
@@ -7,61 +8,61 @@
  *  Copyright (C) 2013-2018 Toradex AG <stefan.agner@toradex.com>
  */
 
-#include <linux/completion.h>
-#include <linux/err.h>
-#include <linux/iio/iio.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/mfd/stmpe.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/device.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/err.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/sपंचांगpe.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/device.h>
 
-#define STMPE_REG_INT_STA		0x0B
-#define STMPE_REG_ADC_INT_EN		0x0E
-#define STMPE_REG_ADC_INT_STA		0x0F
+#घोषणा STMPE_REG_INT_STA		0x0B
+#घोषणा STMPE_REG_ADC_INT_EN		0x0E
+#घोषणा STMPE_REG_ADC_INT_STA		0x0F
 
-#define STMPE_REG_ADC_CTRL1		0x20
-#define STMPE_REG_ADC_CTRL2		0x21
-#define STMPE_REG_ADC_CAPT		0x22
-#define STMPE_REG_ADC_DATA_CH(channel)	(0x30 + 2 * (channel))
+#घोषणा STMPE_REG_ADC_CTRL1		0x20
+#घोषणा STMPE_REG_ADC_CTRL2		0x21
+#घोषणा STMPE_REG_ADC_CAPT		0x22
+#घोषणा STMPE_REG_ADC_DATA_CH(channel)	(0x30 + 2 * (channel))
 
-#define STMPE_REG_TEMP_CTRL		0x60
-#define STMPE_TEMP_CTRL_ENABLE		BIT(0)
-#define STMPE_TEMP_CTRL_ACQ		BIT(1)
-#define STMPE_TEMP_CTRL_THRES_EN	BIT(3)
-#define STMPE_START_ONE_TEMP_CONV	(STMPE_TEMP_CTRL_ENABLE | \
+#घोषणा STMPE_REG_TEMP_CTRL		0x60
+#घोषणा STMPE_TEMP_CTRL_ENABLE		BIT(0)
+#घोषणा STMPE_TEMP_CTRL_ACQ		BIT(1)
+#घोषणा STMPE_TEMP_CTRL_THRES_EN	BIT(3)
+#घोषणा STMPE_START_ONE_TEMP_CONV	(STMPE_TEMP_CTRL_ENABLE | \
 					STMPE_TEMP_CTRL_ACQ | \
 					STMPE_TEMP_CTRL_THRES_EN)
-#define STMPE_REG_TEMP_DATA		0x61
-#define STMPE_REG_TEMP_TH		0x63
-#define STMPE_ADC_LAST_NR		7
-#define STMPE_TEMP_CHANNEL		(STMPE_ADC_LAST_NR + 1)
+#घोषणा STMPE_REG_TEMP_DATA		0x61
+#घोषणा STMPE_REG_TEMP_TH		0x63
+#घोषणा STMPE_ADC_LAST_NR		7
+#घोषणा STMPE_TEMP_CHANNEL		(STMPE_ADC_LAST_NR + 1)
 
-#define STMPE_ADC_CH(channel)		((1 << (channel)) & 0xff)
+#घोषणा STMPE_ADC_CH(channel)		((1 << (channel)) & 0xff)
 
-#define STMPE_ADC_TIMEOUT		msecs_to_jiffies(1000)
+#घोषणा STMPE_ADC_TIMEOUT		msecs_to_jअगरfies(1000)
 
-struct stmpe_adc {
-	struct stmpe *stmpe;
-	struct clk *clk;
-	struct device *dev;
-	struct mutex lock;
+काष्ठा sपंचांगpe_adc अणु
+	काष्ठा sपंचांगpe *sपंचांगpe;
+	काष्ठा clk *clk;
+	काष्ठा device *dev;
+	काष्ठा mutex lock;
 
-	/* We are allocating plus one for the temperature channel */
-	struct iio_chan_spec stmpe_adc_iio_channels[STMPE_ADC_LAST_NR + 2];
+	/* We are allocating plus one क्रम the temperature channel */
+	काष्ठा iio_chan_spec sपंचांगpe_adc_iio_channels[STMPE_ADC_LAST_NR + 2];
 
-	struct completion completion;
+	काष्ठा completion completion;
 
 	u8 channel;
 	u32 value;
-};
+पूर्ण;
 
-static int stmpe_read_voltage(struct stmpe_adc *info,
-		struct iio_chan_spec const *chan, int *val)
-{
-	long ret;
+अटल पूर्णांक sपंचांगpe_पढ़ो_voltage(काष्ठा sपंचांगpe_adc *info,
+		काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val)
+अणु
+	दीर्घ ret;
 
 	mutex_lock(&info->lock);
 
@@ -69,34 +70,34 @@ static int stmpe_read_voltage(struct stmpe_adc *info,
 
 	info->channel = (u8)chan->channel;
 
-	if (info->channel > STMPE_ADC_LAST_NR) {
+	अगर (info->channel > STMPE_ADC_LAST_NR) अणु
 		mutex_unlock(&info->lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	stmpe_reg_write(info->stmpe, STMPE_REG_ADC_CAPT,
+	sपंचांगpe_reg_ग_लिखो(info->sपंचांगpe, STMPE_REG_ADC_CAPT,
 			STMPE_ADC_CH(info->channel));
 
-	ret = wait_for_completion_timeout(&info->completion, STMPE_ADC_TIMEOUT);
+	ret = रुको_क्रम_completion_समयout(&info->completion, STMPE_ADC_TIMEOUT);
 
-	if (ret <= 0) {
-		stmpe_reg_write(info->stmpe, STMPE_REG_ADC_INT_STA,
+	अगर (ret <= 0) अणु
+		sपंचांगpe_reg_ग_लिखो(info->sपंचांगpe, STMPE_REG_ADC_INT_STA,
 				STMPE_ADC_CH(info->channel));
 		mutex_unlock(&info->lock);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	*val = info->value;
 
 	mutex_unlock(&info->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmpe_read_temp(struct stmpe_adc *info,
-		struct iio_chan_spec const *chan, int *val)
-{
-	long ret;
+अटल पूर्णांक sपंचांगpe_पढ़ो_temp(काष्ठा sपंचांगpe_adc *info,
+		काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val)
+अणु
+	दीर्घ ret;
 
 	mutex_lock(&info->lock);
 
@@ -104,260 +105,260 @@ static int stmpe_read_temp(struct stmpe_adc *info,
 
 	info->channel = (u8)chan->channel;
 
-	if (info->channel != STMPE_TEMP_CHANNEL) {
+	अगर (info->channel != STMPE_TEMP_CHANNEL) अणु
 		mutex_unlock(&info->lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	stmpe_reg_write(info->stmpe, STMPE_REG_TEMP_CTRL,
+	sपंचांगpe_reg_ग_लिखो(info->sपंचांगpe, STMPE_REG_TEMP_CTRL,
 			STMPE_START_ONE_TEMP_CONV);
 
-	ret = wait_for_completion_timeout(&info->completion, STMPE_ADC_TIMEOUT);
+	ret = रुको_क्रम_completion_समयout(&info->completion, STMPE_ADC_TIMEOUT);
 
-	if (ret <= 0) {
+	अगर (ret <= 0) अणु
 		mutex_unlock(&info->lock);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	/*
-	 * absolute temp = +V3.3 * value /7.51 [K]
-	 * scale to [milli °C]
+	 * असलolute temp = +V3.3 * value /7.51 [K]
+	 * scale to [milli तओC]
 	 */
 	*val = ((449960l * info->value) / 1024l) - 273150;
 
 	mutex_unlock(&info->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmpe_read_raw(struct iio_dev *indio_dev,
-			  struct iio_chan_spec const *chan,
-			  int *val,
-			  int *val2,
-			  long mask)
-{
-	struct stmpe_adc *info = iio_priv(indio_dev);
-	long ret;
+अटल पूर्णांक sपंचांगpe_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			  काष्ठा iio_chan_spec स्थिर *chan,
+			  पूर्णांक *val,
+			  पूर्णांक *val2,
+			  दीर्घ mask)
+अणु
+	काष्ठा sपंचांगpe_adc *info = iio_priv(indio_dev);
+	दीर्घ ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-	case IIO_CHAN_INFO_PROCESSED:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+	हाल IIO_CHAN_INFO_PROCESSED:
 
-		switch (chan->type) {
-		case IIO_VOLTAGE:
-			ret = stmpe_read_voltage(info, chan, val);
-			break;
+		चयन (chan->type) अणु
+		हाल IIO_VOLTAGE:
+			ret = sपंचांगpe_पढ़ो_voltage(info, chan, val);
+			अवरोध;
 
-		case IIO_TEMP:
-			ret = stmpe_read_temp(info, chan, val);
-			break;
-		default:
-			return -EINVAL;
-		}
+		हाल IIO_TEMP:
+			ret = sपंचांगpe_पढ़ो_temp(info, chan, val);
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 
-	case IIO_CHAN_INFO_SCALE:
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = 3300;
-		*val2 = info->stmpe->mod_12b ? 12 : 10;
-		return IIO_VAL_FRACTIONAL_LOG2;
+		*val2 = info->sपंचांगpe->mod_12b ? 12 : 10;
+		वापस IIO_VAL_FRACTIONAL_LOG2;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static irqreturn_t stmpe_adc_isr(int irq, void *dev_id)
-{
-	struct stmpe_adc *info = (struct stmpe_adc *)dev_id;
+अटल irqवापस_t sपंचांगpe_adc_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sपंचांगpe_adc *info = (काष्ठा sपंचांगpe_adc *)dev_id;
 	__be16 data;
 
-	if (info->channel <= STMPE_ADC_LAST_NR) {
-		int int_sta;
+	अगर (info->channel <= STMPE_ADC_LAST_NR) अणु
+		पूर्णांक पूर्णांक_sta;
 
-		int_sta = stmpe_reg_read(info->stmpe, STMPE_REG_ADC_INT_STA);
+		पूर्णांक_sta = sपंचांगpe_reg_पढ़ो(info->sपंचांगpe, STMPE_REG_ADC_INT_STA);
 
-		/* Is the interrupt relevant */
-		if (!(int_sta & STMPE_ADC_CH(info->channel)))
-			return IRQ_NONE;
+		/* Is the पूर्णांकerrupt relevant */
+		अगर (!(पूर्णांक_sta & STMPE_ADC_CH(info->channel)))
+			वापस IRQ_NONE;
 
 		/* Read value */
-		stmpe_block_read(info->stmpe,
+		sपंचांगpe_block_पढ़ो(info->sपंचांगpe,
 			STMPE_REG_ADC_DATA_CH(info->channel), 2, (u8 *) &data);
 
-		stmpe_reg_write(info->stmpe, STMPE_REG_ADC_INT_STA, int_sta);
-	} else if (info->channel == STMPE_TEMP_CHANNEL) {
+		sपंचांगpe_reg_ग_लिखो(info->sपंचांगpe, STMPE_REG_ADC_INT_STA, पूर्णांक_sta);
+	पूर्ण अन्यथा अगर (info->channel == STMPE_TEMP_CHANNEL) अणु
 		/* Read value */
-		stmpe_block_read(info->stmpe, STMPE_REG_TEMP_DATA, 2,
+		sपंचांगpe_block_पढ़ो(info->sपंचांगpe, STMPE_REG_TEMP_DATA, 2,
 				(u8 *) &data);
-	} else {
-		return IRQ_NONE;
-	}
+	पूर्ण अन्यथा अणु
+		वापस IRQ_NONE;
+	पूर्ण
 
 	info->value = (u32) be16_to_cpu(data);
 	complete(&info->completion);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct iio_info stmpe_adc_iio_info = {
-	.read_raw = &stmpe_read_raw,
-};
+अटल स्थिर काष्ठा iio_info sपंचांगpe_adc_iio_info = अणु
+	.पढ़ो_raw = &sपंचांगpe_पढ़ो_raw,
+पूर्ण;
 
-static void stmpe_adc_voltage_chan(struct iio_chan_spec *ics, int chan)
-{
+अटल व्योम sपंचांगpe_adc_voltage_chan(काष्ठा iio_chan_spec *ics, पूर्णांक chan)
+अणु
 	ics->type = IIO_VOLTAGE;
 	ics->info_mask_separate = BIT(IIO_CHAN_INFO_RAW);
 	ics->info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE);
 	ics->indexed = 1;
 	ics->channel = chan;
-}
+पूर्ण
 
-static void stmpe_adc_temp_chan(struct iio_chan_spec *ics, int chan)
-{
+अटल व्योम sपंचांगpe_adc_temp_chan(काष्ठा iio_chan_spec *ics, पूर्णांक chan)
+अणु
 	ics->type = IIO_TEMP;
 	ics->info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED);
 	ics->indexed = 1;
 	ics->channel = chan;
-}
+पूर्ण
 
-static int stmpe_adc_init_hw(struct stmpe_adc *adc)
-{
-	int ret;
-	struct stmpe *stmpe = adc->stmpe;
+अटल पूर्णांक sपंचांगpe_adc_init_hw(काष्ठा sपंचांगpe_adc *adc)
+अणु
+	पूर्णांक ret;
+	काष्ठा sपंचांगpe *sपंचांगpe = adc->sपंचांगpe;
 
-	ret = stmpe_enable(stmpe, STMPE_BLOCK_ADC);
-	if (ret) {
-		dev_err(stmpe->dev, "Could not enable clock for ADC\n");
-		return ret;
-	}
+	ret = sपंचांगpe_enable(sपंचांगpe, STMPE_BLOCK_ADC);
+	अगर (ret) अणु
+		dev_err(sपंचांगpe->dev, "Could not enable clock for ADC\n");
+		वापस ret;
+	पूर्ण
 
-	ret = stmpe811_adc_common_init(stmpe);
-	if (ret) {
-		stmpe_disable(stmpe, STMPE_BLOCK_ADC);
-		return ret;
-	}
+	ret = sपंचांगpe811_adc_common_init(sपंचांगpe);
+	अगर (ret) अणु
+		sपंचांगpe_disable(sपंचांगpe, STMPE_BLOCK_ADC);
+		वापस ret;
+	पूर्ण
 
-	/* use temp irq for each conversion completion */
-	stmpe_reg_write(stmpe, STMPE_REG_TEMP_TH, 0);
-	stmpe_reg_write(stmpe, STMPE_REG_TEMP_TH + 1, 0);
+	/* use temp irq क्रम each conversion completion */
+	sपंचांगpe_reg_ग_लिखो(sपंचांगpe, STMPE_REG_TEMP_TH, 0);
+	sपंचांगpe_reg_ग_लिखो(sपंचांगpe, STMPE_REG_TEMP_TH + 1, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmpe_adc_probe(struct platform_device *pdev)
-{
-	struct iio_dev *indio_dev;
-	struct stmpe_adc *info;
-	struct device_node *np;
+अटल पूर्णांक sपंचांगpe_adc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा sपंचांगpe_adc *info;
+	काष्ठा device_node *np;
 	u32 norequest_mask = 0;
-	int irq_temp, irq_adc;
-	int num_chan = 0;
-	int i = 0;
-	int ret;
+	पूर्णांक irq_temp, irq_adc;
+	पूर्णांक num_chan = 0;
+	पूर्णांक i = 0;
+	पूर्णांक ret;
 
-	irq_adc = platform_get_irq_byname(pdev, "STMPE_ADC");
-	if (irq_adc < 0)
-		return irq_adc;
+	irq_adc = platक्रमm_get_irq_byname(pdev, "STMPE_ADC");
+	अगर (irq_adc < 0)
+		वापस irq_adc;
 
-	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(struct stmpe_adc));
-	if (!indio_dev) {
+	indio_dev = devm_iio_device_alloc(&pdev->dev, माप(काष्ठा sपंचांगpe_adc));
+	अगर (!indio_dev) अणु
 		dev_err(&pdev->dev, "failed allocating iio device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	info = iio_priv(indio_dev);
 	mutex_init(&info->lock);
 
 	init_completion(&info->completion);
-	ret = devm_request_threaded_irq(&pdev->dev, irq_adc, NULL,
-					stmpe_adc_isr, IRQF_ONESHOT,
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq_adc, शून्य,
+					sपंचांगpe_adc_isr, IRQF_ONESHOT,
 					"stmpe-adc", info);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed requesting irq, irq = %d\n",
 				irq_adc);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	irq_temp = platform_get_irq_byname(pdev, "STMPE_TEMP_SENS");
-	if (irq_temp >= 0) {
-		ret = devm_request_threaded_irq(&pdev->dev, irq_temp, NULL,
-						stmpe_adc_isr, IRQF_ONESHOT,
+	irq_temp = platक्रमm_get_irq_byname(pdev, "STMPE_TEMP_SENS");
+	अगर (irq_temp >= 0) अणु
+		ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq_temp, शून्य,
+						sपंचांगpe_adc_isr, IRQF_ONESHOT,
 						"stmpe-adc", info);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_warn(&pdev->dev, "failed requesting irq for"
 				 " temp sensor, irq = %d\n", irq_temp);
-	}
+	पूर्ण
 
-	platform_set_drvdata(pdev, indio_dev);
+	platक्रमm_set_drvdata(pdev, indio_dev);
 
 	indio_dev->name		= dev_name(&pdev->dev);
-	indio_dev->info		= &stmpe_adc_iio_info;
-	indio_dev->modes	= INDIO_DIRECT_MODE;
+	indio_dev->info		= &sपंचांगpe_adc_iio_info;
+	indio_dev->modes	= INDIO_सूचीECT_MODE;
 
-	info->stmpe = dev_get_drvdata(pdev->dev.parent);
+	info->sपंचांगpe = dev_get_drvdata(pdev->dev.parent);
 
 	np = pdev->dev.of_node;
 
-	if (!np)
+	अगर (!np)
 		dev_err(&pdev->dev, "no device tree node found\n");
 
-	of_property_read_u32(np, "st,norequest-mask", &norequest_mask);
+	of_property_पढ़ो_u32(np, "st,norequest-mask", &norequest_mask);
 
-	for_each_clear_bit(i, (unsigned long *) &norequest_mask,
-			   (STMPE_ADC_LAST_NR + 1)) {
-		stmpe_adc_voltage_chan(&info->stmpe_adc_iio_channels[num_chan], i);
+	क्रम_each_clear_bit(i, (अचिन्हित दीर्घ *) &norequest_mask,
+			   (STMPE_ADC_LAST_NR + 1)) अणु
+		sपंचांगpe_adc_voltage_chan(&info->sपंचांगpe_adc_iio_channels[num_chan], i);
 		num_chan++;
-	}
-	stmpe_adc_temp_chan(&info->stmpe_adc_iio_channels[num_chan], i);
+	पूर्ण
+	sपंचांगpe_adc_temp_chan(&info->sपंचांगpe_adc_iio_channels[num_chan], i);
 	num_chan++;
-	indio_dev->channels = info->stmpe_adc_iio_channels;
+	indio_dev->channels = info->sपंचांगpe_adc_iio_channels;
 	indio_dev->num_channels = num_chan;
 
-	ret = stmpe_adc_init_hw(info);
-	if (ret)
-		return ret;
+	ret = sपंचांगpe_adc_init_hw(info);
+	अगर (ret)
+		वापस ret;
 
-	stmpe_reg_write(info->stmpe, STMPE_REG_ADC_INT_EN,
+	sपंचांगpe_reg_ग_लिखो(info->sपंचांगpe, STMPE_REG_ADC_INT_EN,
 			~(norequest_mask & 0xFF));
 
-	stmpe_reg_write(info->stmpe, STMPE_REG_ADC_INT_STA,
+	sपंचांगpe_reg_ग_लिखो(info->sपंचांगpe, STMPE_REG_ADC_INT_STA,
 			~(norequest_mask & 0xFF));
 
-	return devm_iio_device_register(&pdev->dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(&pdev->dev, indio_dev);
+पूर्ण
 
-static int __maybe_unused stmpe_adc_resume(struct device *dev)
-{
-	struct iio_dev *indio_dev = dev_get_drvdata(dev);
-	struct stmpe_adc *info = iio_priv(indio_dev);
+अटल पूर्णांक __maybe_unused sपंचांगpe_adc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_get_drvdata(dev);
+	काष्ठा sपंचांगpe_adc *info = iio_priv(indio_dev);
 
-	stmpe_adc_init_hw(info);
+	sपंचांगpe_adc_init_hw(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(stmpe_adc_pm_ops, NULL, stmpe_adc_resume);
+अटल SIMPLE_DEV_PM_OPS(sपंचांगpe_adc_pm_ops, शून्य, sपंचांगpe_adc_resume);
 
-static struct platform_driver stmpe_adc_driver = {
-	.probe		= stmpe_adc_probe,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver sपंचांगpe_adc_driver = अणु
+	.probe		= sपंचांगpe_adc_probe,
+	.driver		= अणु
 		.name	= "stmpe-adc",
-		.pm	= &stmpe_adc_pm_ops,
-	},
-};
-module_platform_driver(stmpe_adc_driver);
+		.pm	= &sपंचांगpe_adc_pm_ops,
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(sपंचांगpe_adc_driver);
 
-static const struct of_device_id stmpe_adc_ids[] = {
-	{ .compatible = "st,stmpe-adc", },
-	{ },
-};
-MODULE_DEVICE_TABLE(of, stmpe_adc_ids);
+अटल स्थिर काष्ठा of_device_id sपंचांगpe_adc_ids[] = अणु
+	अणु .compatible = "st,stmpe-adc", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, sपंचांगpe_adc_ids);
 
 MODULE_AUTHOR("Stefan Agner <stefan.agner@toradex.com>");
 MODULE_DESCRIPTION("STMPEXXX ADC driver");

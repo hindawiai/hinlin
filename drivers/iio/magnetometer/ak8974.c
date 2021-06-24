@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for the Asahi Kasei EMD Corporation AK8974
+ * Driver क्रम the Asahi Kasei EMD Corporation AK8974
  * and Aichi Steel AMI305 magnetometer chips.
  * Based on a patch from Samu Onkalo and the AK8975 IIO driver.
  *
@@ -11,543 +12,543 @@
  * Author: Samu Onkalo <samu.p.onkalo@nokia.com>
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/kernel.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h> /* For irq_get_irq_data() */
-#include <linux/completion.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
-#include <linux/delay.h>
-#include <linux/bitops.h>
-#include <linux/random.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h> /* For irq_get_irq_data() */
+#समावेश <linux/completion.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
 
 /*
- * 16-bit registers are little-endian. LSB is at the address defined below
+ * 16-bit रेजिस्टरs are little-endian. LSB is at the address defined below
  * and MSB is at the next higher address.
  */
 
-/* These registers are common for AK8974 and AMI30x */
-#define AK8974_SELFTEST		0x0C
-#define AK8974_SELFTEST_IDLE	0x55
-#define AK8974_SELFTEST_OK	0xAA
+/* These रेजिस्टरs are common क्रम AK8974 and AMI30x */
+#घोषणा AK8974_SELFTEST		0x0C
+#घोषणा AK8974_SELFTEST_IDLE	0x55
+#घोषणा AK8974_SELFTEST_OK	0xAA
 
-#define AK8974_INFO		0x0D
+#घोषणा AK8974_INFO		0x0D
 
-#define AK8974_WHOAMI		0x0F
-#define AK8974_WHOAMI_VALUE_AMI306 0x46
-#define AK8974_WHOAMI_VALUE_AMI305 0x47
-#define AK8974_WHOAMI_VALUE_AK8974 0x48
-#define AK8974_WHOAMI_VALUE_HSCDTD008A 0x49
+#घोषणा AK8974_WHOAMI		0x0F
+#घोषणा AK8974_WHOAMI_VALUE_AMI306 0x46
+#घोषणा AK8974_WHOAMI_VALUE_AMI305 0x47
+#घोषणा AK8974_WHOAMI_VALUE_AK8974 0x48
+#घोषणा AK8974_WHOAMI_VALUE_HSCDTD008A 0x49
 
-#define AK8974_DATA_X		0x10
-#define AK8974_DATA_Y		0x12
-#define AK8974_DATA_Z		0x14
-#define AK8974_INT_SRC		0x16
-#define AK8974_STATUS		0x18
-#define AK8974_INT_CLEAR	0x1A
-#define AK8974_CTRL1		0x1B
-#define AK8974_CTRL2		0x1C
-#define AK8974_CTRL3		0x1D
-#define AK8974_INT_CTRL		0x1E
-#define AK8974_INT_THRES	0x26  /* Absolute any axis value threshold */
-#define AK8974_PRESET		0x30
+#घोषणा AK8974_DATA_X		0x10
+#घोषणा AK8974_DATA_Y		0x12
+#घोषणा AK8974_DATA_Z		0x14
+#घोषणा AK8974_INT_SRC		0x16
+#घोषणा AK8974_STATUS		0x18
+#घोषणा AK8974_INT_CLEAR	0x1A
+#घोषणा AK8974_CTRL1		0x1B
+#घोषणा AK8974_CTRL2		0x1C
+#घोषणा AK8974_CTRL3		0x1D
+#घोषणा AK8974_INT_CTRL		0x1E
+#घोषणा AK8974_INT_THRES	0x26  /* Absolute any axis value threshold */
+#घोषणा AK8974_PRESET		0x30
 
-/* AK8974-specific offsets */
-#define AK8974_OFFSET_X		0x20
-#define AK8974_OFFSET_Y		0x22
-#define AK8974_OFFSET_Z		0x24
-/* AMI305-specific offsets */
-#define AMI305_OFFSET_X		0x6C
-#define AMI305_OFFSET_Y		0x72
-#define AMI305_OFFSET_Z		0x78
+/* AK8974-specअगरic offsets */
+#घोषणा AK8974_OFFSET_X		0x20
+#घोषणा AK8974_OFFSET_Y		0x22
+#घोषणा AK8974_OFFSET_Z		0x24
+/* AMI305-specअगरic offsets */
+#घोषणा AMI305_OFFSET_X		0x6C
+#घोषणा AMI305_OFFSET_Y		0x72
+#घोषणा AMI305_OFFSET_Z		0x78
 
-/* Different temperature registers */
-#define AK8974_TEMP		0x31
-#define AMI305_TEMP		0x60
+/* Dअगरferent temperature रेजिस्टरs */
+#घोषणा AK8974_TEMP		0x31
+#घोषणा AMI305_TEMP		0x60
 
-/* AMI306-specific control register */
-#define AMI306_CTRL4		0x5C
+/* AMI306-specअगरic control रेजिस्टर */
+#घोषणा AMI306_CTRL4		0x5C
 
 /* AMI306 factory calibration data */
 
 /* fine axis sensitivity */
-#define AMI306_FINEOUTPUT_X	0x90
-#define AMI306_FINEOUTPUT_Y	0x92
-#define AMI306_FINEOUTPUT_Z	0x94
+#घोषणा AMI306_FINEOUTPUT_X	0x90
+#घोषणा AMI306_FINEOUTPUT_Y	0x92
+#घोषणा AMI306_FINEOUTPUT_Z	0x94
 
 /* axis sensitivity */
-#define AMI306_SENS_X		0x96
-#define AMI306_SENS_Y		0x98
-#define AMI306_SENS_Z		0x9A
+#घोषणा AMI306_SENS_X		0x96
+#घोषणा AMI306_SENS_Y		0x98
+#घोषणा AMI306_SENS_Z		0x9A
 
-/* axis cross-interference */
-#define AMI306_GAIN_PARA_XZ	0x9C
-#define AMI306_GAIN_PARA_XY	0x9D
-#define AMI306_GAIN_PARA_YZ	0x9E
-#define AMI306_GAIN_PARA_YX	0x9F
-#define AMI306_GAIN_PARA_ZY	0xA0
-#define AMI306_GAIN_PARA_ZX	0xA1
+/* axis cross-पूर्णांकerference */
+#घोषणा AMI306_GAIN_PARA_XZ	0x9C
+#घोषणा AMI306_GAIN_PARA_XY	0x9D
+#घोषणा AMI306_GAIN_PARA_YZ	0x9E
+#घोषणा AMI306_GAIN_PARA_YX	0x9F
+#घोषणा AMI306_GAIN_PARA_ZY	0xA0
+#घोषणा AMI306_GAIN_PARA_ZX	0xA1
 
 /* offset at ZERO magnetic field */
-#define AMI306_OFFZERO_X	0xF8
-#define AMI306_OFFZERO_Y	0xFA
-#define AMI306_OFFZERO_Z	0xFC
+#घोषणा AMI306_OFFZERO_X	0xF8
+#घोषणा AMI306_OFFZERO_Y	0xFA
+#घोषणा AMI306_OFFZERO_Z	0xFC
 
 
-#define AK8974_INT_X_HIGH	BIT(7) /* Axis over +threshold  */
-#define AK8974_INT_Y_HIGH	BIT(6)
-#define AK8974_INT_Z_HIGH	BIT(5)
-#define AK8974_INT_X_LOW	BIT(4) /* Axis below -threshold	*/
-#define AK8974_INT_Y_LOW	BIT(3)
-#define AK8974_INT_Z_LOW	BIT(2)
-#define AK8974_INT_RANGE	BIT(1) /* Range overflow (any axis) */
+#घोषणा AK8974_INT_X_HIGH	BIT(7) /* Axis over +threshold  */
+#घोषणा AK8974_INT_Y_HIGH	BIT(6)
+#घोषणा AK8974_INT_Z_HIGH	BIT(5)
+#घोषणा AK8974_INT_X_LOW	BIT(4) /* Axis below -threshold	*/
+#घोषणा AK8974_INT_Y_LOW	BIT(3)
+#घोषणा AK8974_INT_Z_LOW	BIT(2)
+#घोषणा AK8974_INT_RANGE	BIT(1) /* Range overflow (any axis) */
 
-#define AK8974_STATUS_DRDY	BIT(6) /* Data ready */
-#define AK8974_STATUS_OVERRUN	BIT(5) /* Data overrun */
-#define AK8974_STATUS_INT	BIT(4) /* Interrupt occurred */
+#घोषणा AK8974_STATUS_DRDY	BIT(6) /* Data पढ़ोy */
+#घोषणा AK8974_STATUS_OVERRUN	BIT(5) /* Data overrun */
+#घोषणा AK8974_STATUS_INT	BIT(4) /* Interrupt occurred */
 
-#define AK8974_CTRL1_POWER	BIT(7) /* 0 = standby; 1 = active */
-#define AK8974_CTRL1_RATE	BIT(4) /* 0 = 10 Hz; 1 = 20 Hz	 */
-#define AK8974_CTRL1_FORCE_EN	BIT(1) /* 0 = normal; 1 = force	 */
-#define AK8974_CTRL1_MODE2	BIT(0) /* 0 */
+#घोषणा AK8974_CTRL1_POWER	BIT(7) /* 0 = standby; 1 = active */
+#घोषणा AK8974_CTRL1_RATE	BIT(4) /* 0 = 10 Hz; 1 = 20 Hz	 */
+#घोषणा AK8974_CTRL1_FORCE_EN	BIT(1) /* 0 = normal; 1 = क्रमce	 */
+#घोषणा AK8974_CTRL1_MODE2	BIT(0) /* 0 */
 
-#define AK8974_CTRL2_INT_EN	BIT(4)  /* 1 = enable interrupts	      */
-#define AK8974_CTRL2_DRDY_EN	BIT(3)  /* 1 = enable data ready signal */
-#define AK8974_CTRL2_DRDY_POL	BIT(2)  /* 1 = data ready active high   */
-#define AK8974_CTRL2_RESDEF	(AK8974_CTRL2_DRDY_POL)
+#घोषणा AK8974_CTRL2_INT_EN	BIT(4)  /* 1 = enable पूर्णांकerrupts	      */
+#घोषणा AK8974_CTRL2_DRDY_EN	BIT(3)  /* 1 = enable data पढ़ोy संकेत */
+#घोषणा AK8974_CTRL2_DRDY_POL	BIT(2)  /* 1 = data पढ़ोy active high   */
+#घोषणा AK8974_CTRL2_RESDEF	(AK8974_CTRL2_DRDY_POL)
 
-#define AK8974_CTRL3_RESET	BIT(7) /* Software reset		  */
-#define AK8974_CTRL3_FORCE	BIT(6) /* Start forced measurement */
-#define AK8974_CTRL3_SELFTEST	BIT(4) /* Set selftest register	  */
-#define AK8974_CTRL3_RESDEF	0x00
+#घोषणा AK8974_CTRL3_RESET	BIT(7) /* Software reset		  */
+#घोषणा AK8974_CTRL3_FORCE	BIT(6) /* Start क्रमced measurement */
+#घोषणा AK8974_CTRL3_SELFTEST	BIT(4) /* Set selftest रेजिस्टर	  */
+#घोषणा AK8974_CTRL3_RESDEF	0x00
 
-#define AK8974_INT_CTRL_XEN	BIT(7) /* Enable interrupt for this axis */
-#define AK8974_INT_CTRL_YEN	BIT(6)
-#define AK8974_INT_CTRL_ZEN	BIT(5)
-#define AK8974_INT_CTRL_XYZEN	(BIT(7)|BIT(6)|BIT(5))
-#define AK8974_INT_CTRL_POL	BIT(3) /* 0 = active low; 1 = active high */
-#define AK8974_INT_CTRL_PULSE	BIT(1) /* 0 = latched; 1 = pulse (50 usec) */
-#define AK8974_INT_CTRL_RESDEF	(AK8974_INT_CTRL_XYZEN | AK8974_INT_CTRL_POL)
+#घोषणा AK8974_INT_CTRL_XEN	BIT(7) /* Enable पूर्णांकerrupt क्रम this axis */
+#घोषणा AK8974_INT_CTRL_YEN	BIT(6)
+#घोषणा AK8974_INT_CTRL_ZEN	BIT(5)
+#घोषणा AK8974_INT_CTRL_XYZEN	(BIT(7)|BIT(6)|BIT(5))
+#घोषणा AK8974_INT_CTRL_POL	BIT(3) /* 0 = active low; 1 = active high */
+#घोषणा AK8974_INT_CTRL_PULSE	BIT(1) /* 0 = latched; 1 = pulse (50 usec) */
+#घोषणा AK8974_INT_CTRL_RESDEF	(AK8974_INT_CTRL_XYZEN | AK8974_INT_CTRL_POL)
 
-/* HSCDTD008A-specific control register */
-#define HSCDTD008A_CTRL4	0x1E
-#define HSCDTD008A_CTRL4_MMD	BIT(7)	/* must be set to 1 */
-#define HSCDTD008A_CTRL4_RANGE	BIT(4)	/* 0 = 14-bit output; 1 = 15-bit output */
-#define HSCDTD008A_CTRL4_RESDEF	(HSCDTD008A_CTRL4_MMD | HSCDTD008A_CTRL4_RANGE)
+/* HSCDTD008A-specअगरic control रेजिस्टर */
+#घोषणा HSCDTD008A_CTRL4	0x1E
+#घोषणा HSCDTD008A_CTRL4_MMD	BIT(7)	/* must be set to 1 */
+#घोषणा HSCDTD008A_CTRL4_RANGE	BIT(4)	/* 0 = 14-bit output; 1 = 15-bit output */
+#घोषणा HSCDTD008A_CTRL4_RESDEF	(HSCDTD008A_CTRL4_MMD | HSCDTD008A_CTRL4_RANGE)
 
-/* The AMI305 has elaborate FW version and serial number registers */
-#define AMI305_VER		0xE8
-#define AMI305_SN		0xEA
+/* The AMI305 has elaborate FW version and serial number रेजिस्टरs */
+#घोषणा AMI305_VER		0xE8
+#घोषणा AMI305_SN		0xEA
 
-#define AK8974_MAX_RANGE	2048
+#घोषणा AK8974_MAX_RANGE	2048
 
-#define AK8974_POWERON_DELAY	50
-#define AK8974_ACTIVATE_DELAY	1
-#define AK8974_SELFTEST_DELAY	1
+#घोषणा AK8974_POWERON_DELAY	50
+#घोषणा AK8974_ACTIVATE_DELAY	1
+#घोषणा AK8974_SELFTEST_DELAY	1
 /*
- * Set the autosuspend to two orders of magnitude larger than the poweron
- * delay to make sane reasonable power tradeoff savings (5 seconds in
- * this case).
+ * Set the स्वतःsuspend to two orders of magnitude larger than the घातeron
+ * delay to make sane reasonable घातer tradeoff savings (5 seconds in
+ * this हाल).
  */
-#define AK8974_AUTOSUSPEND_DELAY 5000
+#घोषणा AK8974_AUTOSUSPEND_DELAY 5000
 
-#define AK8974_MEASTIME		3
+#घोषणा AK8974_MEASTIME		3
 
-#define AK8974_PWR_ON		1
-#define AK8974_PWR_OFF		0
+#घोषणा AK8974_PWR_ON		1
+#घोषणा AK8974_PWR_OFF		0
 
 /**
- * struct ak8974 - state container for the AK8974 driver
+ * काष्ठा ak8974 - state container क्रम the AK8974 driver
  * @i2c: parent I2C client
  * @orientation: mounting matrix, flipped axis etc
- * @map: regmap to access the AK8974 registers over I2C
- * @regs: the avdd and dvdd power regulators
+ * @map: regmap to access the AK8974 रेजिस्टरs over I2C
+ * @regs: the avdd and dvdd घातer regulators
  * @name: the name of the part
- * @variant: the whoami ID value (for selecting code paths)
- * @lock: locks the magnetometer for exclusive use during a measurement
+ * @variant: the whoami ID value (क्रम selecting code paths)
+ * @lock: locks the magnetometer क्रम exclusive use during a measurement
  * @drdy_irq: uses the DRDY IRQ line
- * @drdy_complete: completion for DRDY
+ * @drdy_complete: completion क्रम DRDY
  * @drdy_active_low: the DRDY IRQ is active low
- * @scan: timestamps
+ * @scan: बारtamps
  */
-struct ak8974 {
-	struct i2c_client *i2c;
-	struct iio_mount_matrix orientation;
-	struct regmap *map;
-	struct regulator_bulk_data regs[2];
-	const char *name;
+काष्ठा ak8974 अणु
+	काष्ठा i2c_client *i2c;
+	काष्ठा iio_mount_matrix orientation;
+	काष्ठा regmap *map;
+	काष्ठा regulator_bulk_data regs[2];
+	स्थिर अक्षर *name;
 	u8 variant;
-	struct mutex lock;
+	काष्ठा mutex lock;
 	bool drdy_irq;
-	struct completion drdy_complete;
+	काष्ठा completion drdy_complete;
 	bool drdy_active_low;
-	/* Ensure timestamp is naturally aligned */
-	struct {
+	/* Ensure बारtamp is naturally aligned */
+	काष्ठा अणु
 		__le16 channels[3];
 		s64 ts __aligned(8);
-	} scan;
-};
+	पूर्ण scan;
+पूर्ण;
 
-static const char ak8974_reg_avdd[] = "avdd";
-static const char ak8974_reg_dvdd[] = "dvdd";
+अटल स्थिर अक्षर ak8974_reg_avdd[] = "avdd";
+अटल स्थिर अक्षर ak8974_reg_dvdd[] = "dvdd";
 
-static int ak8974_get_u16_val(struct ak8974 *ak8974, u8 reg, u16 *val)
-{
-	int ret;
+अटल पूर्णांक ak8974_get_u16_val(काष्ठा ak8974 *ak8974, u8 reg, u16 *val)
+अणु
+	पूर्णांक ret;
 	__le16 bulk;
 
-	ret = regmap_bulk_read(ak8974->map, reg, &bulk, 2);
-	if (ret)
-		return ret;
+	ret = regmap_bulk_पढ़ो(ak8974->map, reg, &bulk, 2);
+	अगर (ret)
+		वापस ret;
 	*val = le16_to_cpu(bulk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak8974_set_u16_val(struct ak8974 *ak8974, u8 reg, u16 val)
-{
+अटल पूर्णांक ak8974_set_u16_val(काष्ठा ak8974 *ak8974, u8 reg, u16 val)
+अणु
 	__le16 bulk = cpu_to_le16(val);
 
-	return regmap_bulk_write(ak8974->map, reg, &bulk, 2);
-}
+	वापस regmap_bulk_ग_लिखो(ak8974->map, reg, &bulk, 2);
+पूर्ण
 
-static int ak8974_set_power(struct ak8974 *ak8974, bool mode)
-{
-	int ret;
+अटल पूर्णांक ak8974_set_घातer(काष्ठा ak8974 *ak8974, bool mode)
+अणु
+	पूर्णांक ret;
 	u8 val;
 
 	val = mode ? AK8974_CTRL1_POWER : 0;
 	val |= AK8974_CTRL1_FORCE_EN;
-	ret = regmap_write(ak8974->map, AK8974_CTRL1, val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_ग_लिखो(ak8974->map, AK8974_CTRL1, val);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (mode)
+	अगर (mode)
 		msleep(AK8974_ACTIVATE_DELAY);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak8974_reset(struct ak8974 *ak8974)
-{
-	int ret;
+अटल पूर्णांक ak8974_reset(काष्ठा ak8974 *ak8974)
+अणु
+	पूर्णांक ret;
 
-	/* Power on to get register access. Sets CTRL1 reg to reset state */
-	ret = ak8974_set_power(ak8974, AK8974_PWR_ON);
-	if (ret)
-		return ret;
-	ret = regmap_write(ak8974->map, AK8974_CTRL2, AK8974_CTRL2_RESDEF);
-	if (ret)
-		return ret;
-	ret = regmap_write(ak8974->map, AK8974_CTRL3, AK8974_CTRL3_RESDEF);
-	if (ret)
-		return ret;
-	if (ak8974->variant != AK8974_WHOAMI_VALUE_HSCDTD008A) {
-		ret = regmap_write(ak8974->map, AK8974_INT_CTRL,
+	/* Power on to get रेजिस्टर access. Sets CTRL1 reg to reset state */
+	ret = ak8974_set_घातer(ak8974, AK8974_PWR_ON);
+	अगर (ret)
+		वापस ret;
+	ret = regmap_ग_लिखो(ak8974->map, AK8974_CTRL2, AK8974_CTRL2_RESDEF);
+	अगर (ret)
+		वापस ret;
+	ret = regmap_ग_लिखो(ak8974->map, AK8974_CTRL3, AK8974_CTRL3_RESDEF);
+	अगर (ret)
+		वापस ret;
+	अगर (ak8974->variant != AK8974_WHOAMI_VALUE_HSCDTD008A) अणु
+		ret = regmap_ग_लिखो(ak8974->map, AK8974_INT_CTRL,
 				   AK8974_INT_CTRL_RESDEF);
-		if (ret)
-			return ret;
-	} else {
-		ret = regmap_write(ak8974->map, HSCDTD008A_CTRL4,
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		ret = regmap_ग_लिखो(ak8974->map, HSCDTD008A_CTRL4,
 				   HSCDTD008A_CTRL4_RESDEF);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* After reset, power off is default state */
-	return ak8974_set_power(ak8974, AK8974_PWR_OFF);
-}
+	/* After reset, घातer off is शेष state */
+	वापस ak8974_set_घातer(ak8974, AK8974_PWR_OFF);
+पूर्ण
 
-static int ak8974_configure(struct ak8974 *ak8974)
-{
-	int ret;
+अटल पूर्णांक ak8974_configure(काष्ठा ak8974 *ak8974)
+अणु
+	पूर्णांक ret;
 
-	ret = regmap_write(ak8974->map, AK8974_CTRL2, AK8974_CTRL2_DRDY_EN |
+	ret = regmap_ग_लिखो(ak8974->map, AK8974_CTRL2, AK8974_CTRL2_DRDY_EN |
 			   AK8974_CTRL2_INT_EN);
-	if (ret)
-		return ret;
-	ret = regmap_write(ak8974->map, AK8974_CTRL3, 0);
-	if (ret)
-		return ret;
-	if (ak8974->variant == AK8974_WHOAMI_VALUE_AMI306) {
+	अगर (ret)
+		वापस ret;
+	ret = regmap_ग_लिखो(ak8974->map, AK8974_CTRL3, 0);
+	अगर (ret)
+		वापस ret;
+	अगर (ak8974->variant == AK8974_WHOAMI_VALUE_AMI306) अणु
 		/* magic from datasheet: set high-speed measurement mode */
 		ret = ak8974_set_u16_val(ak8974, AMI306_CTRL4, 0xA07E);
-		if (ret)
-			return ret;
-	}
-	if (ak8974->variant == AK8974_WHOAMI_VALUE_HSCDTD008A)
-		return 0;
-	ret = regmap_write(ak8974->map, AK8974_INT_CTRL, AK8974_INT_CTRL_POL);
-	if (ret)
-		return ret;
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	अगर (ak8974->variant == AK8974_WHOAMI_VALUE_HSCDTD008A)
+		वापस 0;
+	ret = regmap_ग_लिखो(ak8974->map, AK8974_INT_CTRL, AK8974_INT_CTRL_POL);
+	अगर (ret)
+		वापस ret;
 
-	return regmap_write(ak8974->map, AK8974_PRESET, 0);
-}
+	वापस regmap_ग_लिखो(ak8974->map, AK8974_PRESET, 0);
+पूर्ण
 
-static int ak8974_trigmeas(struct ak8974 *ak8974)
-{
-	unsigned int clear;
+अटल पूर्णांक ak8974_trigmeas(काष्ठा ak8974 *ak8974)
+अणु
+	अचिन्हित पूर्णांक clear;
 	u8 mask;
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
 	/* Clear any previous measurement overflow status */
-	ret = regmap_read(ak8974->map, AK8974_INT_CLEAR, &clear);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(ak8974->map, AK8974_INT_CLEAR, &clear);
+	अगर (ret)
+		वापस ret;
 
 	/* If we have a DRDY IRQ line, use it */
-	if (ak8974->drdy_irq) {
+	अगर (ak8974->drdy_irq) अणु
 		mask = AK8974_CTRL2_INT_EN |
 			AK8974_CTRL2_DRDY_EN |
 			AK8974_CTRL2_DRDY_POL;
 		val = AK8974_CTRL2_DRDY_EN;
 
-		if (!ak8974->drdy_active_low)
+		अगर (!ak8974->drdy_active_low)
 			val |= AK8974_CTRL2_DRDY_POL;
 
 		init_completion(&ak8974->drdy_complete);
 		ret = regmap_update_bits(ak8974->map, AK8974_CTRL2,
 					 mask, val);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* Force a measurement */
-	return regmap_update_bits(ak8974->map,
+	वापस regmap_update_bits(ak8974->map,
 				  AK8974_CTRL3,
 				  AK8974_CTRL3_FORCE,
 				  AK8974_CTRL3_FORCE);
-}
+पूर्ण
 
-static int ak8974_await_drdy(struct ak8974 *ak8974)
-{
-	int timeout = 2;
-	unsigned int val;
-	int ret;
+अटल पूर्णांक ak8974_aरुको_drdy(काष्ठा ak8974 *ak8974)
+अणु
+	पूर्णांक समयout = 2;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	if (ak8974->drdy_irq) {
-		ret = wait_for_completion_timeout(&ak8974->drdy_complete,
-					1 + msecs_to_jiffies(1000));
-		if (!ret) {
+	अगर (ak8974->drdy_irq) अणु
+		ret = रुको_क्रम_completion_समयout(&ak8974->drdy_complete,
+					1 + msecs_to_jअगरfies(1000));
+		अगर (!ret) अणु
 			dev_err(&ak8974->i2c->dev,
 				"timeout waiting for DRDY IRQ\n");
-			return -ETIMEDOUT;
-		}
-		return 0;
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	/* Default delay-based poll loop */
-	do {
+	करो अणु
 		msleep(AK8974_MEASTIME);
-		ret = regmap_read(ak8974->map, AK8974_STATUS, &val);
-		if (ret < 0)
-			return ret;
-		if (val & AK8974_STATUS_DRDY)
-			return 0;
-	} while (--timeout);
+		ret = regmap_पढ़ो(ak8974->map, AK8974_STATUS, &val);
+		अगर (ret < 0)
+			वापस ret;
+		अगर (val & AK8974_STATUS_DRDY)
+			वापस 0;
+	पूर्ण जबतक (--समयout);
 
 	dev_err(&ak8974->i2c->dev, "timeout waiting for DRDY\n");
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int ak8974_getresult(struct ak8974 *ak8974, __le16 *result)
-{
-	unsigned int src;
-	int ret;
+अटल पूर्णांक ak8974_getresult(काष्ठा ak8974 *ak8974, __le16 *result)
+अणु
+	अचिन्हित पूर्णांक src;
+	पूर्णांक ret;
 
-	ret = ak8974_await_drdy(ak8974);
-	if (ret)
-		return ret;
-	ret = regmap_read(ak8974->map, AK8974_INT_SRC, &src);
-	if (ret < 0)
-		return ret;
+	ret = ak8974_aरुको_drdy(ak8974);
+	अगर (ret)
+		वापस ret;
+	ret = regmap_पढ़ो(ak8974->map, AK8974_INT_SRC, &src);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Out of range overflow! Strong magnet close? */
-	if (src & AK8974_INT_RANGE) {
+	/* Out of range overflow! Strong magnet बंद? */
+	अगर (src & AK8974_INT_RANGE) अणु
 		dev_err(&ak8974->i2c->dev,
 			"range overflow in sensor\n");
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
-	ret = regmap_bulk_read(ak8974->map, AK8974_DATA_X, result, 6);
-	if (ret)
-		return ret;
+	ret = regmap_bulk_पढ़ो(ak8974->map, AK8974_DATA_X, result, 6);
+	अगर (ret)
+		वापस ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t ak8974_drdy_irq(int irq, void *d)
-{
-	struct ak8974 *ak8974 = d;
+अटल irqवापस_t ak8974_drdy_irq(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा ak8974 *ak8974 = d;
 
-	if (!ak8974->drdy_irq)
-		return IRQ_NONE;
+	अगर (!ak8974->drdy_irq)
+		वापस IRQ_NONE;
 
-	/* TODO: timestamp here to get good measurement stamps */
-	return IRQ_WAKE_THREAD;
-}
+	/* TODO: बारtamp here to get good measurement stamps */
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static irqreturn_t ak8974_drdy_irq_thread(int irq, void *d)
-{
-	struct ak8974 *ak8974 = d;
-	unsigned int val;
-	int ret;
+अटल irqवापस_t ak8974_drdy_irq_thपढ़ो(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा ak8974 *ak8974 = d;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	/* Check if this was a DRDY from us */
-	ret = regmap_read(ak8974->map, AK8974_STATUS, &val);
-	if (ret < 0) {
+	/* Check अगर this was a DRDY from us */
+	ret = regmap_पढ़ो(ak8974->map, AK8974_STATUS, &val);
+	अगर (ret < 0) अणु
 		dev_err(&ak8974->i2c->dev, "error reading DRDY status\n");
-		return IRQ_HANDLED;
-	}
-	if (val & AK8974_STATUS_DRDY) {
+		वापस IRQ_HANDLED;
+	पूर्ण
+	अगर (val & AK8974_STATUS_DRDY) अणु
 		/* Yes this was our IRQ */
 		complete(&ak8974->drdy_complete);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	/* We may be on a shared IRQ, let the next client check */
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static int ak8974_selftest(struct ak8974 *ak8974)
-{
-	struct device *dev = &ak8974->i2c->dev;
-	unsigned int val;
-	int ret;
+अटल पूर्णांक ak8974_selftest(काष्ठा ak8974 *ak8974)
+अणु
+	काष्ठा device *dev = &ak8974->i2c->dev;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(ak8974->map, AK8974_SELFTEST, &val);
-	if (ret)
-		return ret;
-	if (val != AK8974_SELFTEST_IDLE) {
+	ret = regmap_पढ़ो(ak8974->map, AK8974_SELFTEST, &val);
+	अगर (ret)
+		वापस ret;
+	अगर (val != AK8974_SELFTEST_IDLE) अणु
 		dev_err(dev, "selftest not idle before test\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* Trigger self-test */
 	ret = regmap_update_bits(ak8974->map,
 			AK8974_CTRL3,
 			AK8974_CTRL3_SELFTEST,
 			AK8974_CTRL3_SELFTEST);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "could not write CTRL3\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	msleep(AK8974_SELFTEST_DELAY);
 
-	ret = regmap_read(ak8974->map, AK8974_SELFTEST, &val);
-	if (ret)
-		return ret;
-	if (val != AK8974_SELFTEST_OK) {
+	ret = regmap_पढ़ो(ak8974->map, AK8974_SELFTEST, &val);
+	अगर (ret)
+		वापस ret;
+	अगर (val != AK8974_SELFTEST_OK) अणु
 		dev_err(dev, "selftest result NOT OK (%02x)\n", val);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	ret = regmap_read(ak8974->map, AK8974_SELFTEST, &val);
-	if (ret)
-		return ret;
-	if (val != AK8974_SELFTEST_IDLE) {
+	ret = regmap_पढ़ो(ak8974->map, AK8974_SELFTEST, &val);
+	अगर (ret)
+		वापस ret;
+	अगर (val != AK8974_SELFTEST_IDLE) अणु
 		dev_err(dev, "selftest not idle after test (%02x)\n", val);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	dev_dbg(dev, "passed self-test\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ak8974_read_calib_data(struct ak8974 *ak8974, unsigned int reg,
-				   __le16 *tab, size_t tab_size)
-{
-	int ret = regmap_bulk_read(ak8974->map, reg, tab, tab_size);
-	if (ret) {
-		memset(tab, 0xFF, tab_size);
+अटल व्योम ak8974_पढ़ो_calib_data(काष्ठा ak8974 *ak8974, अचिन्हित पूर्णांक reg,
+				   __le16 *tab, माप_प्रकार tab_size)
+अणु
+	पूर्णांक ret = regmap_bulk_पढ़ो(ak8974->map, reg, tab, tab_size);
+	अगर (ret) अणु
+		स_रखो(tab, 0xFF, tab_size);
 		dev_warn(&ak8974->i2c->dev,
 			 "can't read calibration data (regs %u..%zu): %d\n",
 			 reg, reg + tab_size - 1, ret);
-	} else {
-		add_device_randomness(tab, tab_size);
-	}
-}
+	पूर्ण अन्यथा अणु
+		add_device_अक्रमomness(tab, tab_size);
+	पूर्ण
+पूर्ण
 
-static int ak8974_detect(struct ak8974 *ak8974)
-{
-	unsigned int whoami;
-	const char *name;
-	int ret;
-	unsigned int fw;
+अटल पूर्णांक ak8974_detect(काष्ठा ak8974 *ak8974)
+अणु
+	अचिन्हित पूर्णांक whoami;
+	स्थिर अक्षर *name;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक fw;
 	u16 sn;
 
-	ret = regmap_read(ak8974->map, AK8974_WHOAMI, &whoami);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(ak8974->map, AK8974_WHOAMI, &whoami);
+	अगर (ret)
+		वापस ret;
 
 	name = "ami305";
 
-	switch (whoami) {
-	case AK8974_WHOAMI_VALUE_AMI306:
+	चयन (whoami) अणु
+	हाल AK8974_WHOAMI_VALUE_AMI306:
 		name = "ami306";
 		fallthrough;
-	case AK8974_WHOAMI_VALUE_AMI305:
-		ret = regmap_read(ak8974->map, AMI305_VER, &fw);
-		if (ret)
-			return ret;
+	हाल AK8974_WHOAMI_VALUE_AMI305:
+		ret = regmap_पढ़ो(ak8974->map, AMI305_VER, &fw);
+		अगर (ret)
+			वापस ret;
 		fw &= 0x7f; /* only bits 0 thru 6 valid */
 		ret = ak8974_get_u16_val(ak8974, AMI305_SN, &sn);
-		if (ret)
-			return ret;
-		add_device_randomness(&sn, sizeof(sn));
+		अगर (ret)
+			वापस ret;
+		add_device_अक्रमomness(&sn, माप(sn));
 		dev_info(&ak8974->i2c->dev,
 			 "detected %s, FW ver %02x, S/N: %04x\n",
 			 name, fw, sn);
-		break;
-	case AK8974_WHOAMI_VALUE_AK8974:
+		अवरोध;
+	हाल AK8974_WHOAMI_VALUE_AK8974:
 		name = "ak8974";
 		dev_info(&ak8974->i2c->dev, "detected AK8974\n");
-		break;
-	case AK8974_WHOAMI_VALUE_HSCDTD008A:
+		अवरोध;
+	हाल AK8974_WHOAMI_VALUE_HSCDTD008A:
 		name = "hscdtd008a";
 		dev_info(&ak8974->i2c->dev, "detected hscdtd008a\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&ak8974->i2c->dev, "unsupported device (%02x) ",
 			whoami);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ak8974->name = name;
 	ak8974->variant = whoami;
 
-	if (whoami == AK8974_WHOAMI_VALUE_AMI306) {
+	अगर (whoami == AK8974_WHOAMI_VALUE_AMI306) अणु
 		__le16 fab_data1[9], fab_data2[3];
-		int i;
+		पूर्णांक i;
 
-		ak8974_read_calib_data(ak8974, AMI306_FINEOUTPUT_X,
-				       fab_data1, sizeof(fab_data1));
-		ak8974_read_calib_data(ak8974, AMI306_OFFZERO_X,
-				       fab_data2, sizeof(fab_data2));
+		ak8974_पढ़ो_calib_data(ak8974, AMI306_FINEOUTPUT_X,
+				       fab_data1, माप(fab_data1));
+		ak8974_पढ़ो_calib_data(ak8974, AMI306_OFFZERO_X,
+				       fab_data2, माप(fab_data2));
 
-		for (i = 0; i < 3; ++i) {
-			static const char axis[3] = "XYZ";
-			static const char pgaxis[6] = "ZYZXYX";
-			unsigned offz = le16_to_cpu(fab_data2[i]) & 0x7F;
-			unsigned fine = le16_to_cpu(fab_data1[i]);
-			unsigned sens = le16_to_cpu(fab_data1[i + 3]);
-			unsigned pgain1 = le16_to_cpu(fab_data1[i + 6]);
-			unsigned pgain2 = pgain1 >> 8;
+		क्रम (i = 0; i < 3; ++i) अणु
+			अटल स्थिर अक्षर axis[3] = "XYZ";
+			अटल स्थिर अक्षर pgaxis[6] = "ZYZXYX";
+			अचिन्हित offz = le16_to_cpu(fab_data2[i]) & 0x7F;
+			अचिन्हित fine = le16_to_cpu(fab_data1[i]);
+			अचिन्हित sens = le16_to_cpu(fab_data1[i + 3]);
+			अचिन्हित pgain1 = le16_to_cpu(fab_data1[i + 6]);
+			अचिन्हित pgain2 = pgain1 >> 8;
 
 			pgain1 &= 0xFF;
 
@@ -555,71 +556,71 @@ static int ak8974_detect(struct ak8974 *ak8974)
 				 "factory calibration for axis %c: offz=%u sens=%u fine=%u pga%c=%u pga%c=%u\n",
 				 axis[i], offz, sens, fine, pgaxis[i * 2],
 				 pgain1, pgaxis[i * 2 + 1], pgain2);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak8974_measure_channel(struct ak8974 *ak8974, unsigned long address,
-				  int *val)
-{
+अटल पूर्णांक ak8974_measure_channel(काष्ठा ak8974 *ak8974, अचिन्हित दीर्घ address,
+				  पूर्णांक *val)
+अणु
 	__le16 hw_values[3];
-	int ret;
+	पूर्णांक ret;
 
-	pm_runtime_get_sync(&ak8974->i2c->dev);
+	pm_runसमय_get_sync(&ak8974->i2c->dev);
 	mutex_lock(&ak8974->lock);
 
 	/*
-	 * We read all axes and discard all but one, for optimized
-	 * reading, use the triggered buffer.
+	 * We पढ़ो all axes and discard all but one, क्रम optimized
+	 * पढ़ोing, use the triggered buffer.
 	 */
 	ret = ak8974_trigmeas(ak8974);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 	ret = ak8974_getresult(ak8974, hw_values);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 	/*
 	 * This explicit cast to (s16) is necessary as the measurement
-	 * is done in 2's complement with positive and negative values.
-	 * The follwing assignment to *val will then convert the signed
-	 * s16 value to a signed int value.
+	 * is करोne in 2's complement with positive and negative values.
+	 * The follwing assignment to *val will then convert the चिन्हित
+	 * s16 value to a चिन्हित पूर्णांक value.
 	 */
 	*val = (s16)le16_to_cpu(hw_values[address]);
 out_unlock:
 	mutex_unlock(&ak8974->lock);
-	pm_runtime_mark_last_busy(&ak8974->i2c->dev);
-	pm_runtime_put_autosuspend(&ak8974->i2c->dev);
+	pm_runसमय_mark_last_busy(&ak8974->i2c->dev);
+	pm_runसमय_put_स्वतःsuspend(&ak8974->i2c->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ak8974_read_raw(struct iio_dev *indio_dev,
-			   struct iio_chan_spec const *chan,
-			   int *val, int *val2,
-			   long mask)
-{
-	struct ak8974 *ak8974 = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक ak8974_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			   काष्ठा iio_chan_spec स्थिर *chan,
+			   पूर्णांक *val, पूर्णांक *val2,
+			   दीर्घ mask)
+अणु
+	काष्ठा ak8974 *ak8974 = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		if (chan->address > 2) {
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		अगर (chan->address > 2) अणु
 			dev_err(&ak8974->i2c->dev, "faulty channel address\n");
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		ret = ak8974_measure_channel(ak8974, chan->address, val);
-		if (ret)
-			return ret;
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
-		switch (ak8974->variant) {
-		case AK8974_WHOAMI_VALUE_AMI306:
-		case AK8974_WHOAMI_VALUE_AMI305:
+		अगर (ret)
+			वापस ret;
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (ak8974->variant) अणु
+		हाल AK8974_WHOAMI_VALUE_AMI306:
+		हाल AK8974_WHOAMI_VALUE_AMI305:
 			/*
-			 * The datasheet for AMI305 and AMI306, page 6
-			 * specifies the range of the sensor to be
+			 * The datasheet क्रम AMI305 and AMI306, page 6
+			 * specअगरies the range of the sensor to be
 			 * +/- 12 Gauss.
 			 */
 			*val = 12;
@@ -629,10 +630,10 @@ static int ak8974_read_raw(struct iio_dev *indio_dev,
 			 * [ 0xf800 .. 0x07ff ]
 			 */
 			*val2 = 11;
-			return IIO_VAL_FRACTIONAL_LOG2;
-		case AK8974_WHOAMI_VALUE_HSCDTD008A:
+			वापस IIO_VAL_FRACTIONAL_LOG2;
+		हाल AK8974_WHOAMI_VALUE_HSCDTD008A:
 			/*
-			 * The datasheet for HSCDTF008A, page 3 specifies the
+			 * The datasheet क्रम HSCDTF008A, page 3 specअगरies the
 			 * range of the sensor as +/- 2.4 mT per axis, which
 			 * corresponds to +/- 2400 uT = +/- 24 Gauss.
 			 */
@@ -643,200 +644,200 @@ static int ak8974_read_raw(struct iio_dev *indio_dev,
 			 * [ 0xc000 .. 0x3fff ]
 			 */
 			*val2 = 14;
-			return IIO_VAL_FRACTIONAL_LOG2;
-		default:
+			वापस IIO_VAL_FRACTIONAL_LOG2;
+		शेष:
 			/* GUESSING +/- 12 Gauss */
 			*val = 12;
 			/* GUESSING 12 bits ADC +/- 2^11 */
 			*val2 = 11;
-			return IIO_VAL_FRACTIONAL_LOG2;
-		}
-		break;
-	default:
+			वापस IIO_VAL_FRACTIONAL_LOG2;
+		पूर्ण
+		अवरोध;
+	शेष:
 		/* Unknown request */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void ak8974_fill_buffer(struct iio_dev *indio_dev)
-{
-	struct ak8974 *ak8974 = iio_priv(indio_dev);
-	int ret;
+अटल व्योम ak8974_fill_buffer(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ak8974 *ak8974 = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	pm_runtime_get_sync(&ak8974->i2c->dev);
+	pm_runसमय_get_sync(&ak8974->i2c->dev);
 	mutex_lock(&ak8974->lock);
 
 	ret = ak8974_trigmeas(ak8974);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&ak8974->i2c->dev, "error triggering measure\n");
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	ret = ak8974_getresult(ak8974, ak8974->scan.channels);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&ak8974->i2c->dev, "error getting measures\n");
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	iio_push_to_buffers_with_timestamp(indio_dev, &ak8974->scan,
-					   iio_get_time_ns(indio_dev));
+	iio_push_to_buffers_with_बारtamp(indio_dev, &ak8974->scan,
+					   iio_get_समय_ns(indio_dev));
 
  out_unlock:
 	mutex_unlock(&ak8974->lock);
-	pm_runtime_mark_last_busy(&ak8974->i2c->dev);
-	pm_runtime_put_autosuspend(&ak8974->i2c->dev);
-}
+	pm_runसमय_mark_last_busy(&ak8974->i2c->dev);
+	pm_runसमय_put_स्वतःsuspend(&ak8974->i2c->dev);
+पूर्ण
 
-static irqreturn_t ak8974_handle_trigger(int irq, void *p)
-{
-	const struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
+अटल irqवापस_t ak8974_handle_trigger(पूर्णांक irq, व्योम *p)
+अणु
+	स्थिर काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
 
 	ak8974_fill_buffer(indio_dev);
-	iio_trigger_notify_done(indio_dev->trig);
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct iio_mount_matrix *
-ak8974_get_mount_matrix(const struct iio_dev *indio_dev,
-			const struct iio_chan_spec *chan)
-{
-	struct ak8974 *ak8974 = iio_priv(indio_dev);
+अटल स्थिर काष्ठा iio_mount_matrix *
+ak8974_get_mount_matrix(स्थिर काष्ठा iio_dev *indio_dev,
+			स्थिर काष्ठा iio_chan_spec *chan)
+अणु
+	काष्ठा ak8974 *ak8974 = iio_priv(indio_dev);
 
-	return &ak8974->orientation;
-}
+	वापस &ak8974->orientation;
+पूर्ण
 
-static const struct iio_chan_spec_ext_info ak8974_ext_info[] = {
-	IIO_MOUNT_MATRIX(IIO_SHARED_BY_DIR, ak8974_get_mount_matrix),
-	{ },
-};
+अटल स्थिर काष्ठा iio_chan_spec_ext_info ak8974_ext_info[] = अणु
+	IIO_MOUNT_MATRIX(IIO_SHARED_BY_सूची, ak8974_get_mount_matrix),
+	अणु पूर्ण,
+पूर्ण;
 
-#define AK8974_AXIS_CHANNEL(axis, index, bits)				\
-	{								\
+#घोषणा AK8974_AXIS_CHANNEL(axis, index, bits)				\
+	अणु								\
 		.type = IIO_MAGN,					\
-		.modified = 1,						\
+		.modअगरied = 1,						\
 		.channel2 = IIO_MOD_##axis,				\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |		\
 			BIT(IIO_CHAN_INFO_SCALE),			\
 		.ext_info = ak8974_ext_info,				\
 		.address = index,					\
 		.scan_index = index,					\
-		.scan_type = {						\
+		.scan_type = अणु						\
 			.sign = 's',					\
 			.realbits = bits,				\
 			.storagebits = 16,				\
 			.endianness = IIO_LE				\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
 /*
- * We have no datasheet for the AK8974 but we guess that its
+ * We have no datasheet क्रम the AK8974 but we guess that its
  * ADC is 12 bits. The AMI305 and AMI306 certainly has 12bit
  * ADC.
  */
-static const struct iio_chan_spec ak8974_12_bits_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec ak8974_12_bits_channels[] = अणु
 	AK8974_AXIS_CHANNEL(X, 0, 12),
 	AK8974_AXIS_CHANNEL(Y, 1, 12),
 	AK8974_AXIS_CHANNEL(Z, 2, 12),
 	IIO_CHAN_SOFT_TIMESTAMP(3),
-};
+पूर्ण;
 
 /*
  * The HSCDTD008A has 15 bits resolution the way we set it up
  * in CTRL4.
  */
-static const struct iio_chan_spec ak8974_15_bits_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec ak8974_15_bits_channels[] = अणु
 	AK8974_AXIS_CHANNEL(X, 0, 15),
 	AK8974_AXIS_CHANNEL(Y, 1, 15),
 	AK8974_AXIS_CHANNEL(Z, 2, 15),
 	IIO_CHAN_SOFT_TIMESTAMP(3),
-};
+पूर्ण;
 
-static const unsigned long ak8974_scan_masks[] = { 0x7, 0 };
+अटल स्थिर अचिन्हित दीर्घ ak8974_scan_masks[] = अणु 0x7, 0 पूर्ण;
 
-static const struct iio_info ak8974_info = {
-	.read_raw = &ak8974_read_raw,
-};
+अटल स्थिर काष्ठा iio_info ak8974_info = अणु
+	.पढ़ो_raw = &ak8974_पढ़ो_raw,
+पूर्ण;
 
-static bool ak8974_writeable_reg(struct device *dev, unsigned int reg)
-{
-	struct i2c_client *i2c = to_i2c_client(dev);
-	struct iio_dev *indio_dev = i2c_get_clientdata(i2c);
-	struct ak8974 *ak8974 = iio_priv(indio_dev);
+अटल bool ak8974_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा i2c_client *i2c = to_i2c_client(dev);
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(i2c);
+	काष्ठा ak8974 *ak8974 = iio_priv(indio_dev);
 
-	switch (reg) {
-	case AK8974_CTRL1:
-	case AK8974_CTRL2:
-	case AK8974_CTRL3:
-	case AK8974_INT_CTRL:
-	case AK8974_INT_THRES:
-	case AK8974_INT_THRES + 1:
-		return true;
-	case AK8974_PRESET:
-	case AK8974_PRESET + 1:
-		return ak8974->variant != AK8974_WHOAMI_VALUE_HSCDTD008A;
-	case AK8974_OFFSET_X:
-	case AK8974_OFFSET_X + 1:
-	case AK8974_OFFSET_Y:
-	case AK8974_OFFSET_Y + 1:
-	case AK8974_OFFSET_Z:
-	case AK8974_OFFSET_Z + 1:
-		return ak8974->variant == AK8974_WHOAMI_VALUE_AK8974 ||
+	चयन (reg) अणु
+	हाल AK8974_CTRL1:
+	हाल AK8974_CTRL2:
+	हाल AK8974_CTRL3:
+	हाल AK8974_INT_CTRL:
+	हाल AK8974_INT_THRES:
+	हाल AK8974_INT_THRES + 1:
+		वापस true;
+	हाल AK8974_PRESET:
+	हाल AK8974_PRESET + 1:
+		वापस ak8974->variant != AK8974_WHOAMI_VALUE_HSCDTD008A;
+	हाल AK8974_OFFSET_X:
+	हाल AK8974_OFFSET_X + 1:
+	हाल AK8974_OFFSET_Y:
+	हाल AK8974_OFFSET_Y + 1:
+	हाल AK8974_OFFSET_Z:
+	हाल AK8974_OFFSET_Z + 1:
+		वापस ak8974->variant == AK8974_WHOAMI_VALUE_AK8974 ||
 		       ak8974->variant == AK8974_WHOAMI_VALUE_HSCDTD008A;
-	case AMI305_OFFSET_X:
-	case AMI305_OFFSET_X + 1:
-	case AMI305_OFFSET_Y:
-	case AMI305_OFFSET_Y + 1:
-	case AMI305_OFFSET_Z:
-	case AMI305_OFFSET_Z + 1:
-		return ak8974->variant == AK8974_WHOAMI_VALUE_AMI305 ||
+	हाल AMI305_OFFSET_X:
+	हाल AMI305_OFFSET_X + 1:
+	हाल AMI305_OFFSET_Y:
+	हाल AMI305_OFFSET_Y + 1:
+	हाल AMI305_OFFSET_Z:
+	हाल AMI305_OFFSET_Z + 1:
+		वापस ak8974->variant == AK8974_WHOAMI_VALUE_AMI305 ||
 		       ak8974->variant == AK8974_WHOAMI_VALUE_AMI306;
-	case AMI306_CTRL4:
-	case AMI306_CTRL4 + 1:
-		return ak8974->variant == AK8974_WHOAMI_VALUE_AMI306;
-	default:
-		return false;
-	}
-}
+	हाल AMI306_CTRL4:
+	हाल AMI306_CTRL4 + 1:
+		वापस ak8974->variant == AK8974_WHOAMI_VALUE_AMI306;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool ak8974_precious_reg(struct device *dev, unsigned int reg)
-{
-	return reg == AK8974_INT_CLEAR;
-}
+अटल bool ak8974_precious_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस reg == AK8974_INT_CLEAR;
+पूर्ण
 
-static const struct regmap_config ak8974_regmap_config = {
+अटल स्थिर काष्ठा regmap_config ak8974_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = 0xff,
-	.writeable_reg = ak8974_writeable_reg,
+	.max_रेजिस्टर = 0xff,
+	.ग_लिखोable_reg = ak8974_ग_लिखोable_reg,
 	.precious_reg = ak8974_precious_reg,
-};
+पूर्ण;
 
-static int ak8974_probe(struct i2c_client *i2c,
-			const struct i2c_device_id *id)
-{
-	struct iio_dev *indio_dev;
-	struct ak8974 *ak8974;
-	unsigned long irq_trig;
-	int irq = i2c->irq;
-	int ret;
+अटल पूर्णांक ak8974_probe(काष्ठा i2c_client *i2c,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा ak8974 *ak8974;
+	अचिन्हित दीर्घ irq_trig;
+	पूर्णांक irq = i2c->irq;
+	पूर्णांक ret;
 
 	/* Register with IIO */
-	indio_dev = devm_iio_device_alloc(&i2c->dev, sizeof(*ak8974));
-	if (indio_dev == NULL)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&i2c->dev, माप(*ak8974));
+	अगर (indio_dev == शून्य)
+		वापस -ENOMEM;
 
 	ak8974 = iio_priv(indio_dev);
 	i2c_set_clientdata(i2c, indio_dev);
 	ak8974->i2c = i2c;
 	mutex_init(&ak8974->lock);
 
-	ret = iio_read_mount_matrix(&i2c->dev, "mount-matrix",
+	ret = iio_पढ़ो_mount_matrix(&i2c->dev, "mount-matrix",
 				    &ak8974->orientation);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ak8974->regs[0].supply = ak8974_reg_avdd;
 	ak8974->regs[1].supply = ak8974_reg_dvdd;
@@ -844,220 +845,220 @@ static int ak8974_probe(struct i2c_client *i2c,
 	ret = devm_regulator_bulk_get(&i2c->dev,
 				      ARRAY_SIZE(ak8974->regs),
 				      ak8974->regs);
-	if (ret < 0)
-		return dev_err_probe(&i2c->dev, ret, "cannot get regulators\n");
+	अगर (ret < 0)
+		वापस dev_err_probe(&i2c->dev, ret, "cannot get regulators\n");
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(ak8974->regs), ak8974->regs);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&i2c->dev, "cannot enable regulators\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Take runtime PM online */
-	pm_runtime_get_noresume(&i2c->dev);
-	pm_runtime_set_active(&i2c->dev);
-	pm_runtime_enable(&i2c->dev);
+	/* Take runसमय PM online */
+	pm_runसमय_get_noresume(&i2c->dev);
+	pm_runसमय_set_active(&i2c->dev);
+	pm_runसमय_enable(&i2c->dev);
 
 	ak8974->map = devm_regmap_init_i2c(i2c, &ak8974_regmap_config);
-	if (IS_ERR(ak8974->map)) {
+	अगर (IS_ERR(ak8974->map)) अणु
 		dev_err(&i2c->dev, "failed to allocate register map\n");
-		pm_runtime_put_noidle(&i2c->dev);
-		pm_runtime_disable(&i2c->dev);
-		return PTR_ERR(ak8974->map);
-	}
+		pm_runसमय_put_noidle(&i2c->dev);
+		pm_runसमय_disable(&i2c->dev);
+		वापस PTR_ERR(ak8974->map);
+	पूर्ण
 
-	ret = ak8974_set_power(ak8974, AK8974_PWR_ON);
-	if (ret) {
+	ret = ak8974_set_घातer(ak8974, AK8974_PWR_ON);
+	अगर (ret) अणु
 		dev_err(&i2c->dev, "could not power on\n");
-		goto disable_pm;
-	}
+		जाओ disable_pm;
+	पूर्ण
 
 	ret = ak8974_detect(ak8974);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&i2c->dev, "neither AK8974 nor AMI30x found\n");
-		goto disable_pm;
-	}
+		जाओ disable_pm;
+	पूर्ण
 
 	ret = ak8974_selftest(ak8974);
-	if (ret)
+	अगर (ret)
 		dev_err(&i2c->dev, "selftest failed (continuing anyway)\n");
 
 	ret = ak8974_reset(ak8974);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&i2c->dev, "AK8974 reset failed\n");
-		goto disable_pm;
-	}
+		जाओ disable_pm;
+	पूर्ण
 
-	switch (ak8974->variant) {
-	case AK8974_WHOAMI_VALUE_AMI306:
-	case AK8974_WHOAMI_VALUE_AMI305:
+	चयन (ak8974->variant) अणु
+	हाल AK8974_WHOAMI_VALUE_AMI306:
+	हाल AK8974_WHOAMI_VALUE_AMI305:
 		indio_dev->channels = ak8974_12_bits_channels;
 		indio_dev->num_channels = ARRAY_SIZE(ak8974_12_bits_channels);
-		break;
-	case AK8974_WHOAMI_VALUE_HSCDTD008A:
+		अवरोध;
+	हाल AK8974_WHOAMI_VALUE_HSCDTD008A:
 		indio_dev->channels = ak8974_15_bits_channels;
 		indio_dev->num_channels = ARRAY_SIZE(ak8974_15_bits_channels);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		indio_dev->channels = ak8974_12_bits_channels;
 		indio_dev->num_channels = ARRAY_SIZE(ak8974_12_bits_channels);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	indio_dev->info = &ak8974_info;
 	indio_dev->available_scan_masks = ak8974_scan_masks;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->name = ak8974->name;
 
-	ret = iio_triggered_buffer_setup(indio_dev, NULL,
+	ret = iio_triggered_buffer_setup(indio_dev, शून्य,
 					 ak8974_handle_trigger,
-					 NULL);
-	if (ret) {
+					 शून्य);
+	अगर (ret) अणु
 		dev_err(&i2c->dev, "triggered buffer setup failed\n");
-		goto disable_pm;
-	}
+		जाओ disable_pm;
+	पूर्ण
 
 	/* If we have a valid DRDY IRQ, make use of it */
-	if (irq > 0) {
+	अगर (irq > 0) अणु
 		irq_trig = irqd_get_trigger_type(irq_get_irq_data(irq));
-		if (irq_trig == IRQF_TRIGGER_RISING) {
+		अगर (irq_trig == IRQF_TRIGGER_RISING) अणु
 			dev_info(&i2c->dev, "enable rising edge DRDY IRQ\n");
-		} else if (irq_trig == IRQF_TRIGGER_FALLING) {
+		पूर्ण अन्यथा अगर (irq_trig == IRQF_TRIGGER_FALLING) अणु
 			ak8974->drdy_active_low = true;
 			dev_info(&i2c->dev, "enable falling edge DRDY IRQ\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			irq_trig = IRQF_TRIGGER_RISING;
-		}
+		पूर्ण
 		irq_trig |= IRQF_ONESHOT;
 		irq_trig |= IRQF_SHARED;
 
-		ret = devm_request_threaded_irq(&i2c->dev,
+		ret = devm_request_thपढ़ोed_irq(&i2c->dev,
 						irq,
 						ak8974_drdy_irq,
-						ak8974_drdy_irq_thread,
+						ak8974_drdy_irq_thपढ़ो,
 						irq_trig,
 						ak8974->name,
 						ak8974);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&i2c->dev, "unable to request DRDY IRQ "
 				"- proceeding without IRQ\n");
-			goto no_irq;
-		}
+			जाओ no_irq;
+		पूर्ण
 		ak8974->drdy_irq = true;
-	}
+	पूर्ण
 
 no_irq:
-	ret = iio_device_register(indio_dev);
-	if (ret) {
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret) अणु
 		dev_err(&i2c->dev, "device register failed\n");
-		goto cleanup_buffer;
-	}
+		जाओ cleanup_buffer;
+	पूर्ण
 
-	pm_runtime_set_autosuspend_delay(&i2c->dev,
+	pm_runसमय_set_स्वतःsuspend_delay(&i2c->dev,
 					 AK8974_AUTOSUSPEND_DELAY);
-	pm_runtime_use_autosuspend(&i2c->dev);
-	pm_runtime_put(&i2c->dev);
+	pm_runसमय_use_स्वतःsuspend(&i2c->dev);
+	pm_runसमय_put(&i2c->dev);
 
-	return 0;
+	वापस 0;
 
 cleanup_buffer:
 	iio_triggered_buffer_cleanup(indio_dev);
 disable_pm:
-	pm_runtime_put_noidle(&i2c->dev);
-	pm_runtime_disable(&i2c->dev);
-	ak8974_set_power(ak8974, AK8974_PWR_OFF);
+	pm_runसमय_put_noidle(&i2c->dev);
+	pm_runसमय_disable(&i2c->dev);
+	ak8974_set_घातer(ak8974, AK8974_PWR_OFF);
 	regulator_bulk_disable(ARRAY_SIZE(ak8974->regs), ak8974->regs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ak8974_remove(struct i2c_client *i2c)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(i2c);
-	struct ak8974 *ak8974 = iio_priv(indio_dev);
+अटल पूर्णांक ak8974_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(i2c);
+	काष्ठा ak8974 *ak8974 = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
-	pm_runtime_get_sync(&i2c->dev);
-	pm_runtime_put_noidle(&i2c->dev);
-	pm_runtime_disable(&i2c->dev);
-	ak8974_set_power(ak8974, AK8974_PWR_OFF);
+	pm_runसमय_get_sync(&i2c->dev);
+	pm_runसमय_put_noidle(&i2c->dev);
+	pm_runसमय_disable(&i2c->dev);
+	ak8974_set_घातer(ak8974, AK8974_PWR_OFF);
 	regulator_bulk_disable(ARRAY_SIZE(ak8974->regs), ak8974->regs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ak8974_runtime_suspend(struct device *dev)
-{
-	struct ak8974 *ak8974 =
+अटल पूर्णांक __maybe_unused ak8974_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा ak8974 *ak8974 =
 		iio_priv(i2c_get_clientdata(to_i2c_client(dev)));
 
-	ak8974_set_power(ak8974, AK8974_PWR_OFF);
+	ak8974_set_घातer(ak8974, AK8974_PWR_OFF);
 	regulator_bulk_disable(ARRAY_SIZE(ak8974->regs), ak8974->regs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ak8974_runtime_resume(struct device *dev)
-{
-	struct ak8974 *ak8974 =
+अटल पूर्णांक __maybe_unused ak8974_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ak8974 *ak8974 =
 		iio_priv(i2c_get_clientdata(to_i2c_client(dev)));
-	int ret;
+	पूर्णांक ret;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(ak8974->regs), ak8974->regs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	msleep(AK8974_POWERON_DELAY);
-	ret = ak8974_set_power(ak8974, AK8974_PWR_ON);
-	if (ret)
-		goto out_regulator_disable;
+	ret = ak8974_set_घातer(ak8974, AK8974_PWR_ON);
+	अगर (ret)
+		जाओ out_regulator_disable;
 
 	ret = ak8974_configure(ak8974);
-	if (ret)
-		goto out_disable_power;
+	अगर (ret)
+		जाओ out_disable_घातer;
 
-	return 0;
+	वापस 0;
 
-out_disable_power:
-	ak8974_set_power(ak8974, AK8974_PWR_OFF);
+out_disable_घातer:
+	ak8974_set_घातer(ak8974, AK8974_PWR_OFF);
 out_regulator_disable:
 	regulator_bulk_disable(ARRAY_SIZE(ak8974->regs), ak8974->regs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dev_pm_ops ak8974_dev_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-	SET_RUNTIME_PM_OPS(ak8974_runtime_suspend,
-			   ak8974_runtime_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops ak8974_dev_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+	SET_RUNTIME_PM_OPS(ak8974_runसमय_suspend,
+			   ak8974_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct i2c_device_id ak8974_id[] = {
-	{"ami305", 0 },
-	{"ami306", 0 },
-	{"ak8974", 0 },
-	{"hscdtd008a", 0 },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id ak8974_id[] = अणु
+	अणु"ami305", 0 पूर्ण,
+	अणु"ami306", 0 पूर्ण,
+	अणु"ak8974", 0 पूर्ण,
+	अणु"hscdtd008a", 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ak8974_id);
 
-static const struct of_device_id ak8974_of_match[] = {
-	{ .compatible = "asahi-kasei,ak8974", },
-	{ .compatible = "alps,hscdtd008a", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id ak8974_of_match[] = अणु
+	अणु .compatible = "asahi-kasei,ak8974", पूर्ण,
+	अणु .compatible = "alps,hscdtd008a", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ak8974_of_match);
 
-static struct i2c_driver ak8974_driver = {
-	.driver	 = {
+अटल काष्ठा i2c_driver ak8974_driver = अणु
+	.driver	 = अणु
 		.name	= "ak8974",
 		.pm = &ak8974_dev_pm_ops,
 		.of_match_table = ak8974_of_match,
-	},
+	पूर्ण,
 	.probe	  = ak8974_probe,
-	.remove	  = ak8974_remove,
+	.हटाओ	  = ak8974_हटाओ,
 	.id_table = ak8974_id,
-};
+पूर्ण;
 module_i2c_driver(ak8974_driver);
 
 MODULE_DESCRIPTION("AK8974 and AMI30x 3-axis magnetometer driver");

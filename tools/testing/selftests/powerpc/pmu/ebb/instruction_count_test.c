@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <sys/prctl.h>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
+#समावेश <sys/prctl.h>
 
-#include "ebb.h"
+#समावेश "ebb.h"
 
 
 /*
- * Run a calibrated instruction loop and count instructions executed using
+ * Run a calibrated inकाष्ठाion loop and count inकाष्ठाions executed using
  * EBBs. Make sure the counts look right.
  */
 
-extern void thirty_two_instruction_loop(uint64_t loops);
+बाह्य व्योम thirty_two_inकाष्ठाion_loop(uपूर्णांक64_t loops);
 
-static bool counters_frozen = true;
+अटल bool counters_frozen = true;
 
-static int do_count_loop(struct event *event, uint64_t instructions,
-			 uint64_t overhead, bool report)
-{
-	int64_t difference, expected;
-	double percentage;
+अटल पूर्णांक करो_count_loop(काष्ठा event *event, uपूर्णांक64_t inकाष्ठाions,
+			 uपूर्णांक64_t overhead, bool report)
+अणु
+	पूर्णांक64_t dअगरference, expected;
+	द्विगुन percentage;
 
 	clear_ebb_stats();
 
@@ -34,7 +35,7 @@ static int do_count_loop(struct event *event, uint64_t instructions,
 	mb();
 	mtspr(SPRN_MMCR0, mfspr(SPRN_MMCR0) & ~MMCR0_FC);
 
-	thirty_two_instruction_loop(instructions >> 5);
+	thirty_two_inकाष्ठाion_loop(inकाष्ठाions >> 5);
 
 	counters_frozen = true;
 	mb();
@@ -43,73 +44,73 @@ static int do_count_loop(struct event *event, uint64_t instructions,
 	count_pmc(4, sample_period);
 
 	event->result.value = ebb_state.stats.pmc_count[4-1];
-	expected = instructions + overhead;
-	difference = event->result.value - expected;
-	percentage = (double)difference / event->result.value * 100;
+	expected = inकाष्ठाions + overhead;
+	dअगरference = event->result.value - expected;
+	percentage = (द्विगुन)dअगरference / event->result.value * 100;
 
-	if (report) {
-		printf("Looped for %lu instructions, overhead %lu\n", instructions, overhead);
-		printf("Expected %lu\n", expected);
-		printf("Actual   %llu\n", event->result.value);
-		printf("Delta    %ld, %f%%\n", difference, percentage);
-		printf("Took %d EBBs\n", ebb_state.stats.ebb_count);
-	}
+	अगर (report) अणु
+		म_लिखो("Looped for %lu instructions, overhead %lu\n", inकाष्ठाions, overhead);
+		म_लिखो("Expected %lu\n", expected);
+		म_लिखो("Actual   %llu\n", event->result.value);
+		म_लिखो("Delta    %ld, %f%%\n", dअगरference, percentage);
+		म_लिखो("Took %d EBBs\n", ebb_state.stats.ebb_count);
+	पूर्ण
 
-	if (difference < 0)
-		difference = -difference;
+	अगर (dअगरference < 0)
+		dअगरference = -dअगरference;
 
-	/* Tolerate a difference of up to 0.0001 % */
-	difference *= 10000 * 100;
-	if (difference / event->result.value)
-		return -1;
+	/* Tolerate a dअगरference of up to 0.0001 % */
+	dअगरference *= 10000 * 100;
+	अगर (dअगरference / event->result.value)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Count how many instructions it takes to do a null loop */
-static uint64_t determine_overhead(struct event *event)
-{
-	uint64_t current, overhead;
-	int i;
+/* Count how many inकाष्ठाions it takes to करो a null loop */
+अटल uपूर्णांक64_t determine_overhead(काष्ठा event *event)
+अणु
+	uपूर्णांक64_t current, overhead;
+	पूर्णांक i;
 
-	do_count_loop(event, 0, 0, false);
+	करो_count_loop(event, 0, 0, false);
 	overhead = event->result.value;
 
-	for (i = 0; i < 100; i++) {
-		do_count_loop(event, 0, 0, false);
+	क्रम (i = 0; i < 100; i++) अणु
+		करो_count_loop(event, 0, 0, false);
 		current = event->result.value;
-		if (current < overhead) {
-			printf("Replacing overhead %lu with %lu\n", overhead, current);
+		अगर (current < overhead) अणु
+			म_लिखो("Replacing overhead %lu with %lu\n", overhead, current);
 			overhead = current;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return overhead;
-}
+	वापस overhead;
+पूर्ण
 
-static void pmc4_ebb_callee(void)
-{
-	uint64_t val;
+अटल व्योम pmc4_ebb_callee(व्योम)
+अणु
+	uपूर्णांक64_t val;
 
 	val = mfspr(SPRN_BESCR);
-	if (!(val & BESCR_PMEO)) {
+	अगर (!(val & BESCR_PMEO)) अणु
 		ebb_state.stats.spurious++;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ebb_state.stats.ebb_count++;
 	count_pmc(4, sample_period);
 out:
-	if (counters_frozen)
+	अगर (counters_frozen)
 		reset_ebb_with_clear_mask(MMCR0_PMAO);
-	else
+	अन्यथा
 		reset_ebb();
-}
+पूर्ण
 
-int instruction_count(void)
-{
-	struct event event;
-	uint64_t overhead;
+पूर्णांक inकाष्ठाion_count(व्योम)
+अणु
+	काष्ठा event event;
+	uपूर्णांक64_t overhead;
 
 	SKIP_IF(!ebb_is_supported());
 
@@ -119,7 +120,7 @@ int instruction_count(void)
 	event.attr.exclude_hv = 1;
 	event.attr.exclude_idle = 1;
 
-	FAIL_IF(event_open(&event));
+	FAIL_IF(event_खोलो(&event));
 	FAIL_IF(ebb_event_enable(&event));
 
 	sample_period = COUNTER_OVERFLOW;
@@ -129,39 +130,39 @@ int instruction_count(void)
 	ebb_global_enable();
 
 	overhead = determine_overhead(&event);
-	printf("Overhead of null loop: %lu instructions\n", overhead);
+	म_लिखो("Overhead of null loop: %lu instructions\n", overhead);
 
-	/* Run for 1M instructions */
-	FAIL_IF(do_count_loop(&event, 0x100000, overhead, true));
+	/* Run क्रम 1M inकाष्ठाions */
+	FAIL_IF(करो_count_loop(&event, 0x100000, overhead, true));
 
-	/* Run for 10M instructions */
-	FAIL_IF(do_count_loop(&event, 0xa00000, overhead, true));
+	/* Run क्रम 10M inकाष्ठाions */
+	FAIL_IF(करो_count_loop(&event, 0xa00000, overhead, true));
 
-	/* Run for 100M instructions */
-	FAIL_IF(do_count_loop(&event, 0x6400000, overhead, true));
+	/* Run क्रम 100M inकाष्ठाions */
+	FAIL_IF(करो_count_loop(&event, 0x6400000, overhead, true));
 
-	/* Run for 1G instructions */
-	FAIL_IF(do_count_loop(&event, 0x40000000, overhead, true));
+	/* Run क्रम 1G inकाष्ठाions */
+	FAIL_IF(करो_count_loop(&event, 0x40000000, overhead, true));
 
-	/* Run for 16G instructions */
-	FAIL_IF(do_count_loop(&event, 0x400000000, overhead, true));
+	/* Run क्रम 16G inकाष्ठाions */
+	FAIL_IF(करो_count_loop(&event, 0x400000000, overhead, true));
 
-	/* Run for 64G instructions */
-	FAIL_IF(do_count_loop(&event, 0x1000000000, overhead, true));
+	/* Run क्रम 64G inकाष्ठाions */
+	FAIL_IF(करो_count_loop(&event, 0x1000000000, overhead, true));
 
-	/* Run for 128G instructions */
-	FAIL_IF(do_count_loop(&event, 0x2000000000, overhead, true));
+	/* Run क्रम 128G inकाष्ठाions */
+	FAIL_IF(करो_count_loop(&event, 0x2000000000, overhead, true));
 
 	ebb_global_disable();
-	event_close(&event);
+	event_बंद(&event);
 
-	printf("Finished OK\n");
+	म_लिखो("Finished OK\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	test_harness_set_timeout(300);
-	return test_harness(instruction_count, "instruction_count");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	test_harness_set_समयout(300);
+	वापस test_harness(inकाष्ठाion_count, "instruction_count");
+पूर्ण

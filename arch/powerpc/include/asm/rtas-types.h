@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_POWERPC_RTAS_TYPES_H
-#define _ASM_POWERPC_RTAS_TYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_POWERPC_RTAS_TYPES_H
+#घोषणा _ASM_POWERPC_RTAS_TYPES_H
 
-#include <linux/spinlock_types.h>
+#समावेश <linux/spinlock_types.h>
 
-typedef __be32 rtas_arg_t;
+प्रकार __be32 rtas_arg_t;
 
-struct rtas_args {
+काष्ठा rtas_args अणु
 	__be32 token;
 	__be32 nargs;
 	__be32 nret;
 	rtas_arg_t args[16];
-	rtas_arg_t *rets;     /* Pointer to return values in args[]. */
-};
+	rtas_arg_t *rets;     /* Poपूर्णांकer to वापस values in args[]. */
+पूर्ण;
 
-struct rtas_t {
-	unsigned long entry;		/* physical address pointer */
-	unsigned long base;		/* physical address pointer */
-	unsigned long size;
+काष्ठा rtas_t अणु
+	अचिन्हित दीर्घ entry;		/* physical address poपूर्णांकer */
+	अचिन्हित दीर्घ base;		/* physical address poपूर्णांकer */
+	अचिन्हित दीर्घ size;
 	arch_spinlock_t lock;
-	struct rtas_args args;
-	struct device_node *dev;	/* virtual address pointer */
-};
+	काष्ठा rtas_args args;
+	काष्ठा device_node *dev;	/* भव address poपूर्णांकer */
+पूर्ण;
 
-struct rtas_error_log {
+काष्ठा rtas_error_log अणु
 	/* Byte 0 */
 	u8		byte0;			/* Architectural version */
 
@@ -44,14 +45,14 @@ struct rtas_error_log {
 	 */
 	u8		byte3;			/* General event or error*/
 	__be32		extended_log_length;	/* length in bytes */
-	unsigned char	buffer[1];		/* Start of extended log */
+	अचिन्हित अक्षर	buffer[1];		/* Start of extended log */
 						/* Variable length.      */
-};
+पूर्ण;
 
 /* RTAS general extended event log, Version 6. The extended log starts
- * from "buffer" field of struct rtas_error_log defined above.
+ * from "buffer" field of काष्ठा rtas_error_log defined above.
  */
-struct rtas_ext_event_log_v6 {
+काष्ठा rtas_ext_event_log_v6 अणु
 	/* Byte 0 */
 	u8 byte0;
 	/* XXXXXXXX
@@ -60,7 +61,7 @@ struct rtas_ext_event_log_v6 {
 	 *   X		1: Recoverable (correctable or successfully retried)
 	 *    X		1: Bypassed unrecoverable error (degraded operation)
 	 *     X	1: Predictive error
-	 *      X	1: "New" log (always 1 for data returned from RTAS)
+	 *      X	1: "New" log (always 1 क्रम data वापसed from RTAS)
 	 *       X	1: Big Endian
 	 *        X	1: Reserved
 	 */
@@ -71,9 +72,9 @@ struct rtas_ext_event_log_v6 {
 	/* Byte 2 */
 	u8 byte2;
 	/* XXXXXXXX
-	 * X		1: Set to 1 (indicating log is in PowerPC format)
+	 * X		1: Set to 1 (indicating log is in PowerPC क्रमmat)
 	 *  XXX		3: Reserved
-	 *     XXXX	4: Log format used for bytes 12-2047
+	 *     XXXX	4: Log क्रमmat used क्रम bytes 12-2047
 	 */
 
 	/* Byte 3 */
@@ -82,35 +83,35 @@ struct rtas_ext_event_log_v6 {
 	u8 reserved[8];			/* reserved */
 	/* Byte 12-15 */
 	__be32  company_id;		/* Company ID of the company	*/
-					/* that defines the format for	*/
-					/* the vendor specific log type	*/
+					/* that defines the क्रमmat क्रम	*/
+					/* the venकरोr specअगरic log type	*/
 	/* Byte 16-end of log */
-	u8 vendor_log[1];		/* Start of vendor specific log	*/
+	u8 venकरोr_log[1];		/* Start of venकरोr specअगरic log	*/
 					/* Variable length.		*/
-};
+पूर्ण;
 
-/* Vendor specific Platform Event Log Format, Version 6, section header */
-struct pseries_errorlog {
+/* Venकरोr specअगरic Platक्रमm Event Log Format, Version 6, section header */
+काष्ठा pseries_errorlog अणु
 	__be16 id;			/* 0x00 2-byte ASCII section ID	*/
 	__be16 length;			/* 0x02 Section length in bytes	*/
 	u8 version;			/* 0x04 Section version		*/
 	u8 subtype;			/* 0x05 Section subtype		*/
 	__be16 creator_component;	/* 0x06 Creator component ID	*/
 	u8 data[];			/* 0x08 Start of section data	*/
-};
+पूर्ण;
 
 /* RTAS pseries hotplug errorlog section */
-struct pseries_hp_errorlog {
+काष्ठा pseries_hp_errorlog अणु
 	u8	resource;
 	u8	action;
 	u8	id_type;
 	u8	reserved;
-	union {
+	जोड़ अणु
 		__be32	drc_index;
 		__be32	drc_count;
-		struct { __be32 count, index; } ic;
-		char	drc_name[1];
-	} _drc_u;
-};
+		काष्ठा अणु __be32 count, index; पूर्ण ic;
+		अक्षर	drc_name[1];
+	पूर्ण _drc_u;
+पूर्ण;
 
-#endif /* _ASM_POWERPC_RTAS_TYPES_H */
+#पूर्ण_अगर /* _ASM_POWERPC_RTAS_TYPES_H */

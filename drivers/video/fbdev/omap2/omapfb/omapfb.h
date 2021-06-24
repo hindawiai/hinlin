@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * linux/drivers/video/omap2/omapfb.h
  *
@@ -9,188 +10,188 @@
  * by Imre Deak.
  */
 
-#ifndef __DRIVERS_VIDEO_OMAP2_OMAPFB_H__
-#define __DRIVERS_VIDEO_OMAP2_OMAPFB_H__
+#अगर_अघोषित __DRIVERS_VIDEO_OMAP2_OMAPFB_H__
+#घोषणा __DRIVERS_VIDEO_OMAP2_OMAPFB_H__
 
-#ifdef CONFIG_FB_OMAP2_DEBUG_SUPPORT
-#define DEBUG
-#endif
+#अगर_घोषित CONFIG_FB_OMAP2_DEBUG_SUPPORT
+#घोषणा DEBUG
+#पूर्ण_अगर
 
-#include <linux/rwsem.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/dma-mapping.h>
 
-#include <video/omapfb_dss.h>
+#समावेश <video/omapfb_dss.h>
 
-#ifdef DEBUG
-extern bool omapfb_debug;
-#define DBG(format, ...) \
-	do { \
-		if (omapfb_debug) \
-			printk(KERN_DEBUG "OMAPFB: " format, ## __VA_ARGS__); \
-	} while (0)
-#else
-#define DBG(format, ...) no_printk(format, ## __VA_ARGS__)
-#endif
+#अगर_घोषित DEBUG
+बाह्य bool omapfb_debug;
+#घोषणा DBG(क्रमmat, ...) \
+	करो अणु \
+		अगर (omapfb_debug) \
+			prपूर्णांकk(KERN_DEBUG "OMAPFB: " क्रमmat, ## __VA_ARGS__); \
+	पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा DBG(क्रमmat, ...) no_prपूर्णांकk(क्रमmat, ## __VA_ARGS__)
+#पूर्ण_अगर
 
-#define FB2OFB(fb_info) ((struct omapfb_info *)(fb_info->par))
+#घोषणा FB2OFB(fb_info) ((काष्ठा omapfb_info *)(fb_info->par))
 
 /* max number of overlays to which a framebuffer data can be direct */
-#define OMAPFB_MAX_OVL_PER_FB 3
+#घोषणा OMAPFB_MAX_OVL_PER_FB 3
 
-struct omapfb2_mem_region {
-	int             id;
-	unsigned long	attrs;
-	void		*token;
+काष्ठा omapfb2_mem_region अणु
+	पूर्णांक             id;
+	अचिन्हित दीर्घ	attrs;
+	व्योम		*token;
 	dma_addr_t	dma_handle;
 	u32		paddr;
-	void __iomem	*vaddr;
-	struct vrfb	vrfb;
-	unsigned long	size;
+	व्योम __iomem	*vaddr;
+	काष्ठा vrfb	vrfb;
+	अचिन्हित दीर्घ	size;
 	u8		type;		/* OMAPFB_PLANE_MEM_* */
 	bool		alloc;		/* allocated by the driver */
 	bool		map;		/* kernel mapped by the driver */
 	atomic_t	map_count;
-	struct rw_semaphore lock;
+	काष्ठा rw_semaphore lock;
 	atomic_t	lock_count;
-};
+पूर्ण;
 
 /* appended to fb_info */
-struct omapfb_info {
-	int id;
-	struct omapfb2_mem_region *region;
-	int num_overlays;
-	struct omap_overlay *overlays[OMAPFB_MAX_OVL_PER_FB];
-	struct omapfb2_device *fbdev;
-	enum omap_dss_rotation_type rotation_type;
+काष्ठा omapfb_info अणु
+	पूर्णांक id;
+	काष्ठा omapfb2_mem_region *region;
+	पूर्णांक num_overlays;
+	काष्ठा omap_overlay *overlays[OMAPFB_MAX_OVL_PER_FB];
+	काष्ठा omapfb2_device *fbdev;
+	क्रमागत omap_dss_rotation_type rotation_type;
 	u8 rotation[OMAPFB_MAX_OVL_PER_FB];
 	bool mirror;
-};
+पूर्ण;
 
-struct omapfb_display_data {
-	struct omapfb2_device *fbdev;
-	struct omap_dss_device *dssdev;
+काष्ठा omapfb_display_data अणु
+	काष्ठा omapfb2_device *fbdev;
+	काष्ठा omap_dss_device *dssdev;
 	u8 bpp_override;
-	enum omapfb_update_mode update_mode;
-	bool auto_update_work_enabled;
-	struct delayed_work auto_update_work;
-};
+	क्रमागत omapfb_update_mode update_mode;
+	bool स्वतः_update_work_enabled;
+	काष्ठा delayed_work स्वतः_update_work;
+पूर्ण;
 
-struct omapfb2_device {
-	struct device *dev;
-	struct mutex  mtx;
+काष्ठा omapfb2_device अणु
+	काष्ठा device *dev;
+	काष्ठा mutex  mtx;
 
-	u32 pseudo_palette[17];
+	u32 pseuकरो_palette[17];
 
-	int state;
+	पूर्णांक state;
 
-	unsigned num_fbs;
-	struct fb_info *fbs[10];
-	struct omapfb2_mem_region regions[10];
+	अचिन्हित num_fbs;
+	काष्ठा fb_info *fbs[10];
+	काष्ठा omapfb2_mem_region regions[10];
 
-	unsigned num_displays;
-	struct omapfb_display_data displays[10];
-	unsigned num_overlays;
-	struct omap_overlay *overlays[10];
-	unsigned num_managers;
-	struct omap_overlay_manager *managers[10];
+	अचिन्हित num_displays;
+	काष्ठा omapfb_display_data displays[10];
+	अचिन्हित num_overlays;
+	काष्ठा omap_overlay *overlays[10];
+	अचिन्हित num_managers;
+	काष्ठा omap_overlay_manager *managers[10];
 
-	struct workqueue_struct *auto_update_wq;
-};
+	काष्ठा workqueue_काष्ठा *स्वतः_update_wq;
+पूर्ण;
 
-struct omapfb_colormode {
-	enum omap_color_mode dssmode;
+काष्ठा omapfb_colormode अणु
+	क्रमागत omap_color_mode dssmode;
 	u32 bits_per_pixel;
 	u32 nonstd;
-	struct fb_bitfield red;
-	struct fb_bitfield green;
-	struct fb_bitfield blue;
-	struct fb_bitfield transp;
-};
+	काष्ठा fb_bitfield red;
+	काष्ठा fb_bitfield green;
+	काष्ठा fb_bitfield blue;
+	काष्ठा fb_bitfield transp;
+पूर्ण;
 
-void set_fb_fix(struct fb_info *fbi);
-int check_fb_var(struct fb_info *fbi, struct fb_var_screeninfo *var);
-int omapfb_realloc_fbmem(struct fb_info *fbi, unsigned long size, int type);
-int omapfb_apply_changes(struct fb_info *fbi, int init);
+व्योम set_fb_fix(काष्ठा fb_info *fbi);
+पूर्णांक check_fb_var(काष्ठा fb_info *fbi, काष्ठा fb_var_screeninfo *var);
+पूर्णांक omapfb_पुनः_स्मृति_fbmem(काष्ठा fb_info *fbi, अचिन्हित दीर्घ size, पूर्णांक type);
+पूर्णांक omapfb_apply_changes(काष्ठा fb_info *fbi, पूर्णांक init);
 
-int omapfb_create_sysfs(struct omapfb2_device *fbdev);
-void omapfb_remove_sysfs(struct omapfb2_device *fbdev);
+पूर्णांक omapfb_create_sysfs(काष्ठा omapfb2_device *fbdev);
+व्योम omapfb_हटाओ_sysfs(काष्ठा omapfb2_device *fbdev);
 
-int omapfb_ioctl(struct fb_info *fbi, unsigned int cmd, unsigned long arg);
+पूर्णांक omapfb_ioctl(काष्ठा fb_info *fbi, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
 
-int dss_mode_to_fb_mode(enum omap_color_mode dssmode,
-			struct fb_var_screeninfo *var);
+पूर्णांक dss_mode_to_fb_mode(क्रमागत omap_color_mode dssmode,
+			काष्ठा fb_var_screeninfo *var);
 
-int omapfb_setup_overlay(struct fb_info *fbi, struct omap_overlay *ovl,
+पूर्णांक omapfb_setup_overlay(काष्ठा fb_info *fbi, काष्ठा omap_overlay *ovl,
 		u16 posx, u16 posy, u16 outw, u16 outh);
 
-void omapfb_start_auto_update(struct omapfb2_device *fbdev,
-		struct omap_dss_device *display);
-void omapfb_stop_auto_update(struct omapfb2_device *fbdev,
-		struct omap_dss_device *display);
-int omapfb_get_update_mode(struct fb_info *fbi, enum omapfb_update_mode *mode);
-int omapfb_set_update_mode(struct fb_info *fbi, enum omapfb_update_mode mode);
+व्योम omapfb_start_स्वतः_update(काष्ठा omapfb2_device *fbdev,
+		काष्ठा omap_dss_device *display);
+व्योम omapfb_stop_स्वतः_update(काष्ठा omapfb2_device *fbdev,
+		काष्ठा omap_dss_device *display);
+पूर्णांक omapfb_get_update_mode(काष्ठा fb_info *fbi, क्रमागत omapfb_update_mode *mode);
+पूर्णांक omapfb_set_update_mode(काष्ठा fb_info *fbi, क्रमागत omapfb_update_mode mode);
 
-/* find the display connected to this fb, if any */
-static inline struct omap_dss_device *fb2display(struct fb_info *fbi)
-{
-	struct omapfb_info *ofbi = FB2OFB(fbi);
-	struct omap_overlay *ovl;
+/* find the display connected to this fb, अगर any */
+अटल अंतरभूत काष्ठा omap_dss_device *fb2display(काष्ठा fb_info *fbi)
+अणु
+	काष्ठा omapfb_info *ofbi = FB2OFB(fbi);
+	काष्ठा omap_overlay *ovl;
 
-	/* XXX: returns the display connected to first attached overlay */
+	/* XXX: वापसs the display connected to first attached overlay */
 
-	if (ofbi->num_overlays == 0)
-		return NULL;
+	अगर (ofbi->num_overlays == 0)
+		वापस शून्य;
 
 	ovl = ofbi->overlays[0];
 
-	return ovl->get_device(ovl);
-}
+	वापस ovl->get_device(ovl);
+पूर्ण
 
-static inline struct omapfb_display_data *get_display_data(
-		struct omapfb2_device *fbdev, struct omap_dss_device *dssdev)
-{
-	int i;
+अटल अंतरभूत काष्ठा omapfb_display_data *get_display_data(
+		काष्ठा omapfb2_device *fbdev, काष्ठा omap_dss_device *dssdev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < fbdev->num_displays; ++i)
-		if (fbdev->displays[i].dssdev == dssdev)
-			return &fbdev->displays[i];
+	क्रम (i = 0; i < fbdev->num_displays; ++i)
+		अगर (fbdev->displays[i].dssdev == dssdev)
+			वापस &fbdev->displays[i];
 
 	/* This should never happen */
 	BUG();
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline void omapfb_lock(struct omapfb2_device *fbdev)
-{
+अटल अंतरभूत व्योम omapfb_lock(काष्ठा omapfb2_device *fbdev)
+अणु
 	mutex_lock(&fbdev->mtx);
-}
+पूर्ण
 
-static inline void omapfb_unlock(struct omapfb2_device *fbdev)
-{
+अटल अंतरभूत व्योम omapfb_unlock(काष्ठा omapfb2_device *fbdev)
+अणु
 	mutex_unlock(&fbdev->mtx);
-}
+पूर्ण
 
-static inline int omapfb_overlay_enable(struct omap_overlay *ovl,
-		int enable)
-{
-	if (enable)
-		return ovl->enable(ovl);
-	else
-		return ovl->disable(ovl);
-}
+अटल अंतरभूत पूर्णांक omapfb_overlay_enable(काष्ठा omap_overlay *ovl,
+		पूर्णांक enable)
+अणु
+	अगर (enable)
+		वापस ovl->enable(ovl);
+	अन्यथा
+		वापस ovl->disable(ovl);
+पूर्ण
 
-static inline struct omapfb2_mem_region *
-omapfb_get_mem_region(struct omapfb2_mem_region *rg)
-{
-	down_read_nested(&rg->lock, rg->id);
+अटल अंतरभूत काष्ठा omapfb2_mem_region *
+omapfb_get_mem_region(काष्ठा omapfb2_mem_region *rg)
+अणु
+	करोwn_पढ़ो_nested(&rg->lock, rg->id);
 	atomic_inc(&rg->lock_count);
-	return rg;
-}
+	वापस rg;
+पूर्ण
 
-static inline void omapfb_put_mem_region(struct omapfb2_mem_region *rg)
-{
+अटल अंतरभूत व्योम omapfb_put_mem_region(काष्ठा omapfb2_mem_region *rg)
+अणु
 	atomic_dec(&rg->lock_count);
-	up_read(&rg->lock);
-}
+	up_पढ़ो(&rg->lock);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

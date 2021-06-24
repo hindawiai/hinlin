@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/lib/zlib_inflate/inflate_syms.c
  *
- * Exported symbols for the inflate functionality.
+ * Exported symbols क्रम the inflate functionality.
  *
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
 
-#include <linux/zlib.h>
+#समावेश <linux/zlib.h>
 
 EXPORT_SYMBOL(zlib_inflate_workspacesize);
 EXPORT_SYMBOL(zlib_inflate);

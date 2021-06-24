@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * nct7904.c - driver for Nuvoton NCT7904D.
+ * nct7904.c - driver क्रम Nuvoton NCT7904D.
  *
  * Copyright (c) 2015 Kontron
  * Author: Vadim V. Vlasov <vvlasov@dev.rtsoft.ru>
@@ -17,119 +18,119 @@
  * nct7904d     20    12    4     5      8    0xc5
  */
 
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/i2c.h>
-#include <linux/mutex.h>
-#include <linux/hwmon.h>
-#include <linux/watchdog.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/watchकरोg.h>
 
-#define VENDOR_ID_REG		0x7A	/* Any bank */
-#define NUVOTON_ID		0x50
-#define CHIP_ID_REG		0x7B	/* Any bank */
-#define NCT7904_ID		0xC5
-#define DEVICE_ID_REG		0x7C	/* Any bank */
+#घोषणा VENDOR_ID_REG		0x7A	/* Any bank */
+#घोषणा NUVOTON_ID		0x50
+#घोषणा CHIP_ID_REG		0x7B	/* Any bank */
+#घोषणा NCT7904_ID		0xC5
+#घोषणा DEVICE_ID_REG		0x7C	/* Any bank */
 
-#define BANK_SEL_REG		0xFF
-#define BANK_0			0x00
-#define BANK_1			0x01
-#define BANK_2			0x02
-#define BANK_3			0x03
-#define BANK_4			0x04
-#define BANK_MAX		0x04
+#घोषणा BANK_SEL_REG		0xFF
+#घोषणा BANK_0			0x00
+#घोषणा BANK_1			0x01
+#घोषणा BANK_2			0x02
+#घोषणा BANK_3			0x03
+#घोषणा BANK_4			0x04
+#घोषणा BANK_MAX		0x04
 
-#define FANIN_MAX		12	/* Counted from 1 */
-#define VSEN_MAX		21	/* VSEN1..14, 3VDD, VBAT, V3VSB,
+#घोषणा FANIN_MAX		12	/* Counted from 1 */
+#घोषणा VSEN_MAX		21	/* VSEN1..14, 3VDD, VBAT, V3VSB,
 					   LTD (not a voltage), VSEN17..19 */
-#define FANCTL_MAX		4	/* Counted from 1 */
-#define TCPU_MAX		8	/* Counted from 1 */
-#define TEMP_MAX		4	/* Counted from 1 */
-#define SMI_STS_MAX		10	/* Counted from 1 */
+#घोषणा FANCTL_MAX		4	/* Counted from 1 */
+#घोषणा TCPU_MAX		8	/* Counted from 1 */
+#घोषणा TEMP_MAX		4	/* Counted from 1 */
+#घोषणा SMI_STS_MAX		10	/* Counted from 1 */
 
-#define VT_ADC_CTRL0_REG	0x20	/* Bank 0 */
-#define VT_ADC_CTRL1_REG	0x21	/* Bank 0 */
-#define VT_ADC_CTRL2_REG	0x22	/* Bank 0 */
-#define FANIN_CTRL0_REG		0x24
-#define FANIN_CTRL1_REG		0x25
-#define DTS_T_CTRL0_REG		0x26
-#define DTS_T_CTRL1_REG		0x27
-#define VT_ADC_MD_REG		0x2E
+#घोषणा VT_ADC_CTRL0_REG	0x20	/* Bank 0 */
+#घोषणा VT_ADC_CTRL1_REG	0x21	/* Bank 0 */
+#घोषणा VT_ADC_CTRL2_REG	0x22	/* Bank 0 */
+#घोषणा FANIN_CTRL0_REG		0x24
+#घोषणा FANIN_CTRL1_REG		0x25
+#घोषणा DTS_T_CTRL0_REG		0x26
+#घोषणा DTS_T_CTRL1_REG		0x27
+#घोषणा VT_ADC_MD_REG		0x2E
 
-#define VSEN1_HV_LL_REG		0x02	/* Bank 1; 2 regs (HV/LV) per sensor */
-#define VSEN1_LV_LL_REG		0x03	/* Bank 1; 2 regs (HV/LV) per sensor */
-#define VSEN1_HV_HL_REG		0x00	/* Bank 1; 2 regs (HV/LV) per sensor */
-#define VSEN1_LV_HL_REG		0x01	/* Bank 1; 2 regs (HV/LV) per sensor */
-#define SMI_STS1_REG		0xC1	/* Bank 0; SMI Status Register */
-#define SMI_STS3_REG		0xC3	/* Bank 0; SMI Status Register */
-#define SMI_STS5_REG		0xC5	/* Bank 0; SMI Status Register */
-#define SMI_STS7_REG		0xC7	/* Bank 0; SMI Status Register */
-#define SMI_STS8_REG		0xC8	/* Bank 0; SMI Status Register */
+#घोषणा VSEN1_HV_LL_REG		0x02	/* Bank 1; 2 regs (HV/LV) per sensor */
+#घोषणा VSEN1_LV_LL_REG		0x03	/* Bank 1; 2 regs (HV/LV) per sensor */
+#घोषणा VSEN1_HV_HL_REG		0x00	/* Bank 1; 2 regs (HV/LV) per sensor */
+#घोषणा VSEN1_LV_HL_REG		0x01	/* Bank 1; 2 regs (HV/LV) per sensor */
+#घोषणा SMI_STS1_REG		0xC1	/* Bank 0; SMI Status Register */
+#घोषणा SMI_STS3_REG		0xC3	/* Bank 0; SMI Status Register */
+#घोषणा SMI_STS5_REG		0xC5	/* Bank 0; SMI Status Register */
+#घोषणा SMI_STS7_REG		0xC7	/* Bank 0; SMI Status Register */
+#घोषणा SMI_STS8_REG		0xC8	/* Bank 0; SMI Status Register */
 
-#define VSEN1_HV_REG		0x40	/* Bank 0; 2 regs (HV/LV) per sensor */
-#define TEMP_CH1_HV_REG		0x42	/* Bank 0; same as VSEN2_HV */
-#define LTD_HV_REG		0x62	/* Bank 0; 2 regs in VSEN range */
-#define LTD_HV_HL_REG		0x44	/* Bank 1; 1 reg for LTD */
-#define LTD_LV_HL_REG		0x45	/* Bank 1; 1 reg for LTD */
-#define LTD_HV_LL_REG		0x46	/* Bank 1; 1 reg for LTD */
-#define LTD_LV_LL_REG		0x47	/* Bank 1; 1 reg for LTD */
-#define TEMP_CH1_CH_REG		0x05	/* Bank 1; 1 reg for LTD */
-#define TEMP_CH1_W_REG		0x06	/* Bank 1; 1 reg for LTD */
-#define TEMP_CH1_WH_REG		0x07	/* Bank 1; 1 reg for LTD */
-#define TEMP_CH1_C_REG		0x04	/* Bank 1; 1 reg per sensor */
-#define DTS_T_CPU1_C_REG	0x90	/* Bank 1; 1 reg per sensor */
-#define DTS_T_CPU1_CH_REG	0x91	/* Bank 1; 1 reg per sensor */
-#define DTS_T_CPU1_W_REG	0x92	/* Bank 1; 1 reg per sensor */
-#define DTS_T_CPU1_WH_REG	0x93	/* Bank 1; 1 reg per sensor */
-#define FANIN1_HV_REG		0x80	/* Bank 0; 2 regs (HV/LV) per sensor */
-#define FANIN1_HV_HL_REG	0x60	/* Bank 1; 2 regs (HV/LV) per sensor */
-#define FANIN1_LV_HL_REG	0x61	/* Bank 1; 2 regs (HV/LV) per sensor */
-#define T_CPU1_HV_REG		0xA0	/* Bank 0; 2 regs (HV/LV) per sensor */
+#घोषणा VSEN1_HV_REG		0x40	/* Bank 0; 2 regs (HV/LV) per sensor */
+#घोषणा TEMP_CH1_HV_REG		0x42	/* Bank 0; same as VSEN2_HV */
+#घोषणा LTD_HV_REG		0x62	/* Bank 0; 2 regs in VSEN range */
+#घोषणा LTD_HV_HL_REG		0x44	/* Bank 1; 1 reg क्रम LTD */
+#घोषणा LTD_LV_HL_REG		0x45	/* Bank 1; 1 reg क्रम LTD */
+#घोषणा LTD_HV_LL_REG		0x46	/* Bank 1; 1 reg क्रम LTD */
+#घोषणा LTD_LV_LL_REG		0x47	/* Bank 1; 1 reg क्रम LTD */
+#घोषणा TEMP_CH1_CH_REG		0x05	/* Bank 1; 1 reg क्रम LTD */
+#घोषणा TEMP_CH1_W_REG		0x06	/* Bank 1; 1 reg क्रम LTD */
+#घोषणा TEMP_CH1_WH_REG		0x07	/* Bank 1; 1 reg क्रम LTD */
+#घोषणा TEMP_CH1_C_REG		0x04	/* Bank 1; 1 reg per sensor */
+#घोषणा DTS_T_CPU1_C_REG	0x90	/* Bank 1; 1 reg per sensor */
+#घोषणा DTS_T_CPU1_CH_REG	0x91	/* Bank 1; 1 reg per sensor */
+#घोषणा DTS_T_CPU1_W_REG	0x92	/* Bank 1; 1 reg per sensor */
+#घोषणा DTS_T_CPU1_WH_REG	0x93	/* Bank 1; 1 reg per sensor */
+#घोषणा FANIN1_HV_REG		0x80	/* Bank 0; 2 regs (HV/LV) per sensor */
+#घोषणा FANIN1_HV_HL_REG	0x60	/* Bank 1; 2 regs (HV/LV) per sensor */
+#घोषणा FANIN1_LV_HL_REG	0x61	/* Bank 1; 2 regs (HV/LV) per sensor */
+#घोषणा T_CPU1_HV_REG		0xA0	/* Bank 0; 2 regs (HV/LV) per sensor */
 
-#define PRTS_REG		0x03	/* Bank 2 */
-#define PFE_REG			0x00	/* Bank 2; PECI Function Enable */
-#define TSI_CTRL_REG		0x50	/* Bank 2; TSI Control Register */
-#define FANCTL1_FMR_REG		0x00	/* Bank 3; 1 reg per channel */
-#define FANCTL1_OUT_REG		0x10	/* Bank 3; 1 reg per channel */
+#घोषणा PRTS_REG		0x03	/* Bank 2 */
+#घोषणा PFE_REG			0x00	/* Bank 2; PECI Function Enable */
+#घोषणा TSI_CTRL_REG		0x50	/* Bank 2; TSI Control Register */
+#घोषणा FANCTL1_FMR_REG		0x00	/* Bank 3; 1 reg per channel */
+#घोषणा FANCTL1_OUT_REG		0x10	/* Bank 3; 1 reg per channel */
 
-#define WDT_LOCK_REG		0xE0	/* W/O Lock Watchdog Register */
-#define WDT_EN_REG		0xE1	/* R/O Watchdog Enable Register */
-#define WDT_STS_REG		0xE2	/* R/O Watchdog Status Register */
-#define WDT_TIMER_REG		0xE3	/* R/W Watchdog Timer Register */
-#define WDT_SOFT_EN		0x55	/* Enable soft watchdog timer */
-#define WDT_SOFT_DIS		0xAA	/* Disable soft watchdog timer */
+#घोषणा WDT_LOCK_REG		0xE0	/* W/O Lock Watchकरोg Register */
+#घोषणा WDT_EN_REG		0xE1	/* R/O Watchकरोg Enable Register */
+#घोषणा WDT_STS_REG		0xE2	/* R/O Watchकरोg Status Register */
+#घोषणा WDT_TIMER_REG		0xE3	/* R/W Watchकरोg Timer Register */
+#घोषणा WDT_SOFT_EN		0x55	/* Enable soft watchकरोg समयr */
+#घोषणा WDT_SOFT_DIS		0xAA	/* Disable soft watchकरोg समयr */
 
-#define VOLT_MONITOR_MODE	0x0
-#define THERMAL_DIODE_MODE	0x1
-#define THERMISTOR_MODE		0x3
+#घोषणा VOLT_MONITOR_MODE	0x0
+#घोषणा THERMAL_DIODE_MODE	0x1
+#घोषणा THERMISTOR_MODE		0x3
 
-#define ENABLE_TSI	BIT(1)
+#घोषणा ENABLE_TSI	BIT(1)
 
-#define WATCHDOG_TIMEOUT	1	/* 1 minute default timeout */
+#घोषणा WATCHDOG_TIMEOUT	1	/* 1 minute शेष समयout */
 
-/*The timeout range is 1-255 minutes*/
-#define MIN_TIMEOUT		(1 * 60)
-#define MAX_TIMEOUT		(255 * 60)
+/*The समयout range is 1-255 minutes*/
+#घोषणा MIN_TIMEOUT		(1 * 60)
+#घोषणा MAX_TIMEOUT		(255 * 60)
 
-static int timeout;
-module_param(timeout, int, 0);
-MODULE_PARM_DESC(timeout, "Watchdog timeout in minutes. 1 <= timeout <= 255, default="
+अटल पूर्णांक समयout;
+module_param(समयout, पूर्णांक, 0);
+MODULE_PARM_DESC(समयout, "Watchdog timeout in minutes. 1 <= timeout <= 255, default="
 			__MODULE_STRING(WATCHDOG_TIMEOUT) ".");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 			__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static const unsigned short normal_i2c[] = {
+अटल स्थिर अचिन्हित लघु normal_i2c[] = अणु
 	0x2d, 0x2e, I2C_CLIENT_END
-};
+पूर्ण;
 
-struct nct7904_data {
-	struct i2c_client *client;
-	struct watchdog_device wdt;
-	struct mutex bank_lock;
-	int bank_sel;
+काष्ठा nct7904_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा watchकरोg_device wdt;
+	काष्ठा mutex bank_lock;
+	पूर्णांक bank_sel;
 	u32 fanin_mask;
 	u32 vsen_mask;
 	u32 tcpu_mask;
@@ -139,671 +140,671 @@ struct nct7904_data {
 	u8 temp_mode; /* 0: TR mode, 1: TD mode */
 	u8 fan_alarm[2];
 	u8 vsen_alarm[3];
-};
+पूर्ण;
 
 /* Access functions */
-static int nct7904_bank_lock(struct nct7904_data *data, unsigned int bank)
-{
-	int ret;
+अटल पूर्णांक nct7904_bank_lock(काष्ठा nct7904_data *data, अचिन्हित पूर्णांक bank)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&data->bank_lock);
-	if (data->bank_sel == bank)
-		return 0;
-	ret = i2c_smbus_write_byte_data(data->client, BANK_SEL_REG, bank);
-	if (ret == 0)
+	अगर (data->bank_sel == bank)
+		वापस 0;
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, BANK_SEL_REG, bank);
+	अगर (ret == 0)
 		data->bank_sel = bank;
-	else
+	अन्यथा
 		data->bank_sel = -1;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void nct7904_bank_release(struct nct7904_data *data)
-{
+अटल अंतरभूत व्योम nct7904_bank_release(काष्ठा nct7904_data *data)
+अणु
 	mutex_unlock(&data->bank_lock);
-}
+पूर्ण
 
-/* Read 1-byte register. Returns unsigned reg or -ERRNO on error. */
-static int nct7904_read_reg(struct nct7904_data *data,
-			    unsigned int bank, unsigned int reg)
-{
-	struct i2c_client *client = data->client;
-	int ret;
+/* Read 1-byte रेजिस्टर. Returns अचिन्हित reg or -ERRNO on error. */
+अटल पूर्णांक nct7904_पढ़ो_reg(काष्ठा nct7904_data *data,
+			    अचिन्हित पूर्णांक bank, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक ret;
 
 	ret = nct7904_bank_lock(data, bank);
-	if (ret == 0)
-		ret = i2c_smbus_read_byte_data(client, reg);
+	अगर (ret == 0)
+		ret = i2c_smbus_पढ़ो_byte_data(client, reg);
 
 	nct7904_bank_release(data);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Read 2-byte register. Returns register in big-endian format or
+ * Read 2-byte रेजिस्टर. Returns रेजिस्टर in big-endian क्रमmat or
  * -ERRNO on error.
  */
-static int nct7904_read_reg16(struct nct7904_data *data,
-			      unsigned int bank, unsigned int reg)
-{
-	struct i2c_client *client = data->client;
-	int ret, hi;
+अटल पूर्णांक nct7904_पढ़ो_reg16(काष्ठा nct7904_data *data,
+			      अचिन्हित पूर्णांक bank, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक ret, hi;
 
 	ret = nct7904_bank_lock(data, bank);
-	if (ret == 0) {
-		ret = i2c_smbus_read_byte_data(client, reg);
-		if (ret >= 0) {
+	अगर (ret == 0) अणु
+		ret = i2c_smbus_पढ़ो_byte_data(client, reg);
+		अगर (ret >= 0) अणु
 			hi = ret;
-			ret = i2c_smbus_read_byte_data(client, reg + 1);
-			if (ret >= 0)
+			ret = i2c_smbus_पढ़ो_byte_data(client, reg + 1);
+			अगर (ret >= 0)
 				ret |= hi << 8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	nct7904_bank_release(data);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Write 1-byte register. Returns 0 or -ERRNO on error. */
-static int nct7904_write_reg(struct nct7904_data *data,
-			     unsigned int bank, unsigned int reg, u8 val)
-{
-	struct i2c_client *client = data->client;
-	int ret;
+/* Write 1-byte रेजिस्टर. Returns 0 or -ERRNO on error. */
+अटल पूर्णांक nct7904_ग_लिखो_reg(काष्ठा nct7904_data *data,
+			     अचिन्हित पूर्णांक bank, अचिन्हित पूर्णांक reg, u8 val)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक ret;
 
 	ret = nct7904_bank_lock(data, bank);
-	if (ret == 0)
-		ret = i2c_smbus_write_byte_data(client, reg, val);
+	अगर (ret == 0)
+		ret = i2c_smbus_ग_लिखो_byte_data(client, reg, val);
 
 	nct7904_bank_release(data);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nct7904_read_fan(struct device *dev, u32 attr, int channel,
-			    long *val)
-{
-	struct nct7904_data *data = dev_get_drvdata(dev);
-	unsigned int cnt, rpm;
-	int ret;
+अटल पूर्णांक nct7904_पढ़ो_fan(काष्ठा device *dev, u32 attr, पूर्णांक channel,
+			    दीर्घ *val)
+अणु
+	काष्ठा nct7904_data *data = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक cnt, rpm;
+	पूर्णांक ret;
 
-	switch (attr) {
-	case hwmon_fan_input:
-		ret = nct7904_read_reg16(data, BANK_0,
+	चयन (attr) अणु
+	हाल hwmon_fan_input:
+		ret = nct7904_पढ़ो_reg16(data, BANK_0,
 					 FANIN1_HV_REG + channel * 2);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		cnt = ((ret & 0xff00) >> 3) | (ret & 0x1f);
-		if (cnt == 0 || cnt == 0x1fff)
+		अगर (cnt == 0 || cnt == 0x1fff)
 			rpm = 0;
-		else
+		अन्यथा
 			rpm = 1350000 / cnt;
 		*val = rpm;
-		return 0;
-	case hwmon_fan_min:
-		ret = nct7904_read_reg16(data, BANK_1,
+		वापस 0;
+	हाल hwmon_fan_min:
+		ret = nct7904_पढ़ो_reg16(data, BANK_1,
 					 FANIN1_HV_HL_REG + channel * 2);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		cnt = ((ret & 0xff00) >> 3) | (ret & 0x1f);
-		if (cnt == 0 || cnt == 0x1fff)
+		अगर (cnt == 0 || cnt == 0x1fff)
 			rpm = 0;
-		else
+		अन्यथा
 			rpm = 1350000 / cnt;
 		*val = rpm;
-		return 0;
-	case hwmon_fan_alarm:
-		ret = nct7904_read_reg(data, BANK_0,
+		वापस 0;
+	हाल hwmon_fan_alarm:
+		ret = nct7904_पढ़ो_reg(data, BANK_0,
 				       SMI_STS5_REG + (channel >> 3));
-		if (ret < 0)
-			return ret;
-		if (!data->fan_alarm[channel >> 3])
+		अगर (ret < 0)
+			वापस ret;
+		अगर (!data->fan_alarm[channel >> 3])
 			data->fan_alarm[channel >> 3] = ret & 0xff;
-		else
+		अन्यथा
 			/* If there is new alarm showing up */
 			data->fan_alarm[channel >> 3] |= (ret & 0xff);
 		*val = (data->fan_alarm[channel >> 3] >> (channel & 0x07)) & 1;
-		/* Needs to clean the alarm if alarm existing */
-		if (*val)
+		/* Needs to clean the alarm अगर alarm existing */
+		अगर (*val)
 			data->fan_alarm[channel >> 3] ^= 1 << (channel & 0x07);
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static umode_t nct7904_fan_is_visible(const void *_data, u32 attr, int channel)
-{
-	const struct nct7904_data *data = _data;
+अटल umode_t nct7904_fan_is_visible(स्थिर व्योम *_data, u32 attr, पूर्णांक channel)
+अणु
+	स्थिर काष्ठा nct7904_data *data = _data;
 
-	switch (attr) {
-	case hwmon_fan_input:
-	case hwmon_fan_alarm:
-		if (data->fanin_mask & (1 << channel))
-			return 0444;
-		break;
-	case hwmon_fan_min:
-		if (data->fanin_mask & (1 << channel))
-			return 0644;
-		break;
-	default:
-		break;
-	}
+	चयन (attr) अणु
+	हाल hwmon_fan_input:
+	हाल hwmon_fan_alarm:
+		अगर (data->fanin_mask & (1 << channel))
+			वापस 0444;
+		अवरोध;
+	हाल hwmon_fan_min:
+		अगर (data->fanin_mask & (1 << channel))
+			वापस 0644;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 nct7904_chan_to_index[] = {
+अटल u8 nct7904_chan_to_index[] = अणु
 	0,	/* Not used */
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 	18, 19, 20, 16
-};
+पूर्ण;
 
-static int nct7904_read_in(struct device *dev, u32 attr, int channel,
-			   long *val)
-{
-	struct nct7904_data *data = dev_get_drvdata(dev);
-	int ret, volt, index;
+अटल पूर्णांक nct7904_पढ़ो_in(काष्ठा device *dev, u32 attr, पूर्णांक channel,
+			   दीर्घ *val)
+अणु
+	काष्ठा nct7904_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret, volt, index;
 
 	index = nct7904_chan_to_index[channel];
 
-	switch (attr) {
-	case hwmon_in_input:
-		ret = nct7904_read_reg16(data, BANK_0,
+	चयन (attr) अणु
+	हाल hwmon_in_input:
+		ret = nct7904_पढ़ो_reg16(data, BANK_0,
 					 VSEN1_HV_REG + index * 2);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		volt = ((ret & 0xff00) >> 5) | (ret & 0x7);
-		if (index < 14)
+		अगर (index < 14)
 			volt *= 2; /* 0.002V scale */
-		else
+		अन्यथा
 			volt *= 6; /* 0.006V scale */
 		*val = volt;
-		return 0;
-	case hwmon_in_min:
-		ret = nct7904_read_reg16(data, BANK_1,
+		वापस 0;
+	हाल hwmon_in_min:
+		ret = nct7904_पढ़ो_reg16(data, BANK_1,
 					 VSEN1_HV_LL_REG + index * 4);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		volt = ((ret & 0xff00) >> 5) | (ret & 0x7);
-		if (index < 14)
+		अगर (index < 14)
 			volt *= 2; /* 0.002V scale */
-		else
+		अन्यथा
 			volt *= 6; /* 0.006V scale */
 		*val = volt;
-		return 0;
-	case hwmon_in_max:
-		ret = nct7904_read_reg16(data, BANK_1,
+		वापस 0;
+	हाल hwmon_in_max:
+		ret = nct7904_पढ़ो_reg16(data, BANK_1,
 					 VSEN1_HV_HL_REG + index * 4);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		volt = ((ret & 0xff00) >> 5) | (ret & 0x7);
-		if (index < 14)
+		अगर (index < 14)
 			volt *= 2; /* 0.002V scale */
-		else
+		अन्यथा
 			volt *= 6; /* 0.006V scale */
 		*val = volt;
-		return 0;
-	case hwmon_in_alarm:
-		ret = nct7904_read_reg(data, BANK_0,
+		वापस 0;
+	हाल hwmon_in_alarm:
+		ret = nct7904_पढ़ो_reg(data, BANK_0,
 				       SMI_STS1_REG + (index >> 3));
-		if (ret < 0)
-			return ret;
-		if (!data->vsen_alarm[index >> 3])
+		अगर (ret < 0)
+			वापस ret;
+		अगर (!data->vsen_alarm[index >> 3])
 			data->vsen_alarm[index >> 3] = ret & 0xff;
-		else
+		अन्यथा
 			/* If there is new alarm showing up */
 			data->vsen_alarm[index >> 3] |= (ret & 0xff);
 		*val = (data->vsen_alarm[index >> 3] >> (index & 0x07)) & 1;
-		/* Needs to clean the alarm if alarm existing */
-		if (*val)
+		/* Needs to clean the alarm अगर alarm existing */
+		अगर (*val)
 			data->vsen_alarm[index >> 3] ^= 1 << (index & 0x07);
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static umode_t nct7904_in_is_visible(const void *_data, u32 attr, int channel)
-{
-	const struct nct7904_data *data = _data;
-	int index = nct7904_chan_to_index[channel];
+अटल umode_t nct7904_in_is_visible(स्थिर व्योम *_data, u32 attr, पूर्णांक channel)
+अणु
+	स्थिर काष्ठा nct7904_data *data = _data;
+	पूर्णांक index = nct7904_chan_to_index[channel];
 
-	switch (attr) {
-	case hwmon_in_input:
-	case hwmon_in_alarm:
-		if (channel > 0 && (data->vsen_mask & BIT(index)))
-			return 0444;
-		break;
-	case hwmon_in_min:
-	case hwmon_in_max:
-		if (channel > 0 && (data->vsen_mask & BIT(index)))
-			return 0644;
-		break;
-	default:
-		break;
-	}
+	चयन (attr) अणु
+	हाल hwmon_in_input:
+	हाल hwmon_in_alarm:
+		अगर (channel > 0 && (data->vsen_mask & BIT(index)))
+			वापस 0444;
+		अवरोध;
+	हाल hwmon_in_min:
+	हाल hwmon_in_max:
+		अगर (channel > 0 && (data->vsen_mask & BIT(index)))
+			वापस 0644;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nct7904_read_temp(struct device *dev, u32 attr, int channel,
-			     long *val)
-{
-	struct nct7904_data *data = dev_get_drvdata(dev);
-	int ret, temp;
-	unsigned int reg1, reg2, reg3;
+अटल पूर्णांक nct7904_पढ़ो_temp(काष्ठा device *dev, u32 attr, पूर्णांक channel,
+			     दीर्घ *val)
+अणु
+	काष्ठा nct7904_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret, temp;
+	अचिन्हित पूर्णांक reg1, reg2, reg3;
 	s8 temps;
 
-	switch (attr) {
-	case hwmon_temp_input:
-		if (channel == 4)
-			ret = nct7904_read_reg16(data, BANK_0, LTD_HV_REG);
-		else if (channel < 5)
-			ret = nct7904_read_reg16(data, BANK_0,
+	चयन (attr) अणु
+	हाल hwmon_temp_input:
+		अगर (channel == 4)
+			ret = nct7904_पढ़ो_reg16(data, BANK_0, LTD_HV_REG);
+		अन्यथा अगर (channel < 5)
+			ret = nct7904_पढ़ो_reg16(data, BANK_0,
 						 TEMP_CH1_HV_REG + channel * 4);
-		else
-			ret = nct7904_read_reg16(data, BANK_0,
+		अन्यथा
+			ret = nct7904_पढ़ो_reg16(data, BANK_0,
 						 T_CPU1_HV_REG + (channel - 5)
 						 * 2);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		temp = ((ret & 0xff00) >> 5) | (ret & 0x7);
 		*val = sign_extend32(temp, 10) * 125;
-		return 0;
-	case hwmon_temp_alarm:
-		if (channel == 4) {
-			ret = nct7904_read_reg(data, BANK_0,
+		वापस 0;
+	हाल hwmon_temp_alarm:
+		अगर (channel == 4) अणु
+			ret = nct7904_पढ़ो_reg(data, BANK_0,
 					       SMI_STS3_REG);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 			*val = (ret >> 1) & 1;
-		} else if (channel < 4) {
-			ret = nct7904_read_reg(data, BANK_0,
+		पूर्ण अन्यथा अगर (channel < 4) अणु
+			ret = nct7904_पढ़ो_reg(data, BANK_0,
 					       SMI_STS1_REG);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 			*val = (ret >> (((channel * 2) + 1) & 0x07)) & 1;
-		} else {
-			if ((channel - 5) < 4) {
-				ret = nct7904_read_reg(data, BANK_0,
+		पूर्ण अन्यथा अणु
+			अगर ((channel - 5) < 4) अणु
+				ret = nct7904_पढ़ो_reg(data, BANK_0,
 						       SMI_STS7_REG +
 						       ((channel - 5) >> 3));
-				if (ret < 0)
-					return ret;
+				अगर (ret < 0)
+					वापस ret;
 				*val = (ret >> ((channel - 5) & 0x07)) & 1;
-			} else {
-				ret = nct7904_read_reg(data, BANK_0,
+			पूर्ण अन्यथा अणु
+				ret = nct7904_पढ़ो_reg(data, BANK_0,
 						       SMI_STS8_REG +
 						       ((channel - 5) >> 3));
-				if (ret < 0)
-					return ret;
+				अगर (ret < 0)
+					वापस ret;
 				*val = (ret >> (((channel - 5) & 0x07) - 4))
 							& 1;
-			}
-		}
-		return 0;
-	case hwmon_temp_type:
-		if (channel < 5) {
-			if ((data->tcpu_mask >> channel) & 0x01) {
-				if ((data->temp_mode >> channel) & 0x01)
+			पूर्ण
+		पूर्ण
+		वापस 0;
+	हाल hwmon_temp_type:
+		अगर (channel < 5) अणु
+			अगर ((data->tcpu_mask >> channel) & 0x01) अणु
+				अगर ((data->temp_mode >> channel) & 0x01)
 					*val = 3; /* TD */
-				else
+				अन्यथा
 					*val = 4; /* TR */
-			} else {
+			पूर्ण अन्यथा अणु
 				*val = 0;
-			}
-		} else {
-			if ((data->has_dts >> (channel - 5)) & 0x01) {
-				if (data->enable_dts & ENABLE_TSI)
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर ((data->has_dts >> (channel - 5)) & 0x01) अणु
+				अगर (data->enable_dts & ENABLE_TSI)
 					*val = 5; /* TSI */
-				else
+				अन्यथा
 					*val = 6; /* PECI */
-			} else {
+			पूर्ण अन्यथा अणु
 				*val = 0;
-			}
-		}
-		return 0;
-	case hwmon_temp_max:
+			पूर्ण
+		पूर्ण
+		वापस 0;
+	हाल hwmon_temp_max:
 		reg1 = LTD_HV_LL_REG;
 		reg2 = TEMP_CH1_W_REG;
 		reg3 = DTS_T_CPU1_W_REG;
-		break;
-	case hwmon_temp_max_hyst:
+		अवरोध;
+	हाल hwmon_temp_max_hyst:
 		reg1 = LTD_LV_LL_REG;
 		reg2 = TEMP_CH1_WH_REG;
 		reg3 = DTS_T_CPU1_WH_REG;
-		break;
-	case hwmon_temp_crit:
+		अवरोध;
+	हाल hwmon_temp_crit:
 		reg1 = LTD_HV_HL_REG;
 		reg2 = TEMP_CH1_C_REG;
 		reg3 = DTS_T_CPU1_C_REG;
-		break;
-	case hwmon_temp_crit_hyst:
+		अवरोध;
+	हाल hwmon_temp_crit_hyst:
 		reg1 = LTD_LV_HL_REG;
 		reg2 = TEMP_CH1_CH_REG;
 		reg3 = DTS_T_CPU1_CH_REG;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (channel == 4)
-		ret = nct7904_read_reg(data, BANK_1, reg1);
-	else if (channel < 5)
-		ret = nct7904_read_reg(data, BANK_1,
+	अगर (channel == 4)
+		ret = nct7904_पढ़ो_reg(data, BANK_1, reg1);
+	अन्यथा अगर (channel < 5)
+		ret = nct7904_पढ़ो_reg(data, BANK_1,
 				       reg2 + channel * 8);
-	else
-		ret = nct7904_read_reg(data, BANK_1,
+	अन्यथा
+		ret = nct7904_पढ़ो_reg(data, BANK_1,
 				       reg3 + (channel - 5) * 4);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	temps = ret;
 	*val = temps * 1000;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static umode_t nct7904_temp_is_visible(const void *_data, u32 attr, int channel)
-{
-	const struct nct7904_data *data = _data;
+अटल umode_t nct7904_temp_is_visible(स्थिर व्योम *_data, u32 attr, पूर्णांक channel)
+अणु
+	स्थिर काष्ठा nct7904_data *data = _data;
 
-	switch (attr) {
-	case hwmon_temp_input:
-	case hwmon_temp_alarm:
-	case hwmon_temp_type:
-		if (channel < 5) {
-			if (data->tcpu_mask & BIT(channel))
-				return 0444;
-		} else {
-			if (data->has_dts & BIT(channel - 5))
-				return 0444;
-		}
-		break;
-	case hwmon_temp_max:
-	case hwmon_temp_max_hyst:
-	case hwmon_temp_crit:
-	case hwmon_temp_crit_hyst:
-		if (channel < 5) {
-			if (data->tcpu_mask & BIT(channel))
-				return 0644;
-		} else {
-			if (data->has_dts & BIT(channel - 5))
-				return 0644;
-		}
-		break;
-	default:
-		break;
-	}
+	चयन (attr) अणु
+	हाल hwmon_temp_input:
+	हाल hwmon_temp_alarm:
+	हाल hwmon_temp_type:
+		अगर (channel < 5) अणु
+			अगर (data->tcpu_mask & BIT(channel))
+				वापस 0444;
+		पूर्ण अन्यथा अणु
+			अगर (data->has_dts & BIT(channel - 5))
+				वापस 0444;
+		पूर्ण
+		अवरोध;
+	हाल hwmon_temp_max:
+	हाल hwmon_temp_max_hyst:
+	हाल hwmon_temp_crit:
+	हाल hwmon_temp_crit_hyst:
+		अगर (channel < 5) अणु
+			अगर (data->tcpu_mask & BIT(channel))
+				वापस 0644;
+		पूर्ण अन्यथा अणु
+			अगर (data->has_dts & BIT(channel - 5))
+				वापस 0644;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nct7904_read_pwm(struct device *dev, u32 attr, int channel,
-			    long *val)
-{
-	struct nct7904_data *data = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक nct7904_पढ़ो_pwm(काष्ठा device *dev, u32 attr, पूर्णांक channel,
+			    दीर्घ *val)
+अणु
+	काष्ठा nct7904_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	switch (attr) {
-	case hwmon_pwm_input:
-		ret = nct7904_read_reg(data, BANK_3, FANCTL1_OUT_REG + channel);
-		if (ret < 0)
-			return ret;
+	चयन (attr) अणु
+	हाल hwmon_pwm_input:
+		ret = nct7904_पढ़ो_reg(data, BANK_3, FANCTL1_OUT_REG + channel);
+		अगर (ret < 0)
+			वापस ret;
 		*val = ret;
-		return 0;
-	case hwmon_pwm_enable:
-		ret = nct7904_read_reg(data, BANK_3, FANCTL1_FMR_REG + channel);
-		if (ret < 0)
-			return ret;
+		वापस 0;
+	हाल hwmon_pwm_enable:
+		ret = nct7904_पढ़ो_reg(data, BANK_3, FANCTL1_FMR_REG + channel);
+		अगर (ret < 0)
+			वापस ret;
 
 		*val = ret ? 2 : 1;
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int nct7904_write_temp(struct device *dev, u32 attr, int channel,
-			      long val)
-{
-	struct nct7904_data *data = dev_get_drvdata(dev);
-	int ret;
-	unsigned int reg1, reg2, reg3;
+अटल पूर्णांक nct7904_ग_लिखो_temp(काष्ठा device *dev, u32 attr, पूर्णांक channel,
+			      दीर्घ val)
+अणु
+	काष्ठा nct7904_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक reg1, reg2, reg3;
 
 	val = clamp_val(val / 1000, -128, 127);
 
-	switch (attr) {
-	case hwmon_temp_max:
+	चयन (attr) अणु
+	हाल hwmon_temp_max:
 		reg1 = LTD_HV_LL_REG;
 		reg2 = TEMP_CH1_W_REG;
 		reg3 = DTS_T_CPU1_W_REG;
-		break;
-	case hwmon_temp_max_hyst:
+		अवरोध;
+	हाल hwmon_temp_max_hyst:
 		reg1 = LTD_LV_LL_REG;
 		reg2 = TEMP_CH1_WH_REG;
 		reg3 = DTS_T_CPU1_WH_REG;
-		break;
-	case hwmon_temp_crit:
+		अवरोध;
+	हाल hwmon_temp_crit:
 		reg1 = LTD_HV_HL_REG;
 		reg2 = TEMP_CH1_C_REG;
 		reg3 = DTS_T_CPU1_C_REG;
-		break;
-	case hwmon_temp_crit_hyst:
+		अवरोध;
+	हाल hwmon_temp_crit_hyst:
 		reg1 = LTD_LV_HL_REG;
 		reg2 = TEMP_CH1_CH_REG;
 		reg3 = DTS_T_CPU1_CH_REG;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
-	if (channel == 4)
-		ret = nct7904_write_reg(data, BANK_1, reg1, val);
-	else if (channel < 5)
-		ret = nct7904_write_reg(data, BANK_1,
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	अगर (channel == 4)
+		ret = nct7904_ग_लिखो_reg(data, BANK_1, reg1, val);
+	अन्यथा अगर (channel < 5)
+		ret = nct7904_ग_लिखो_reg(data, BANK_1,
 					reg2 + channel * 8, val);
-	else
-		ret = nct7904_write_reg(data, BANK_1,
+	अन्यथा
+		ret = nct7904_ग_लिखो_reg(data, BANK_1,
 					reg3 + (channel - 5) * 4, val);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nct7904_write_fan(struct device *dev, u32 attr, int channel,
-			     long val)
-{
-	struct nct7904_data *data = dev_get_drvdata(dev);
-	int ret;
-	u8 tmp;
+अटल पूर्णांक nct7904_ग_लिखो_fan(काष्ठा device *dev, u32 attr, पूर्णांक channel,
+			     दीर्घ val)
+अणु
+	काष्ठा nct7904_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret;
+	u8 पंचांगp;
 
-	switch (attr) {
-	case hwmon_fan_min:
-		if (val <= 0)
-			return -EINVAL;
+	चयन (attr) अणु
+	हाल hwmon_fan_min:
+		अगर (val <= 0)
+			वापस -EINVAL;
 
 		val = clamp_val(DIV_ROUND_CLOSEST(1350000, val), 1, 0x1fff);
-		tmp = (val >> 5) & 0xff;
-		ret = nct7904_write_reg(data, BANK_1,
-					FANIN1_HV_HL_REG + channel * 2, tmp);
-		if (ret < 0)
-			return ret;
-		tmp = val & 0x1f;
-		ret = nct7904_write_reg(data, BANK_1,
-					FANIN1_LV_HL_REG + channel * 2, tmp);
-		return ret;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		पंचांगp = (val >> 5) & 0xff;
+		ret = nct7904_ग_लिखो_reg(data, BANK_1,
+					FANIN1_HV_HL_REG + channel * 2, पंचांगp);
+		अगर (ret < 0)
+			वापस ret;
+		पंचांगp = val & 0x1f;
+		ret = nct7904_ग_लिखो_reg(data, BANK_1,
+					FANIN1_LV_HL_REG + channel * 2, पंचांगp);
+		वापस ret;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int nct7904_write_in(struct device *dev, u32 attr, int channel,
-			    long val)
-{
-	struct nct7904_data *data = dev_get_drvdata(dev);
-	int ret, index, tmp;
+अटल पूर्णांक nct7904_ग_लिखो_in(काष्ठा device *dev, u32 attr, पूर्णांक channel,
+			    दीर्घ val)
+अणु
+	काष्ठा nct7904_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret, index, पंचांगp;
 
 	index = nct7904_chan_to_index[channel];
 
-	if (index < 14)
+	अगर (index < 14)
 		val = val / 2; /* 0.002V scale */
-	else
+	अन्यथा
 		val = val / 6; /* 0.006V scale */
 
 	val = clamp_val(val, 0, 0x7ff);
 
-	switch (attr) {
-	case hwmon_in_min:
-		tmp = nct7904_read_reg(data, BANK_1,
+	चयन (attr) अणु
+	हाल hwmon_in_min:
+		पंचांगp = nct7904_पढ़ो_reg(data, BANK_1,
 				       VSEN1_LV_LL_REG + index * 4);
-		if (tmp < 0)
-			return tmp;
-		tmp &= ~0x7;
-		tmp |= val & 0x7;
-		ret = nct7904_write_reg(data, BANK_1,
-					VSEN1_LV_LL_REG + index * 4, tmp);
-		if (ret < 0)
-			return ret;
-		tmp = nct7904_read_reg(data, BANK_1,
+		अगर (पंचांगp < 0)
+			वापस पंचांगp;
+		पंचांगp &= ~0x7;
+		पंचांगp |= val & 0x7;
+		ret = nct7904_ग_लिखो_reg(data, BANK_1,
+					VSEN1_LV_LL_REG + index * 4, पंचांगp);
+		अगर (ret < 0)
+			वापस ret;
+		पंचांगp = nct7904_पढ़ो_reg(data, BANK_1,
 				       VSEN1_HV_LL_REG + index * 4);
-		if (tmp < 0)
-			return tmp;
-		tmp = (val >> 3) & 0xff;
-		ret = nct7904_write_reg(data, BANK_1,
-					VSEN1_HV_LL_REG + index * 4, tmp);
-		return ret;
-	case hwmon_in_max:
-		tmp = nct7904_read_reg(data, BANK_1,
+		अगर (पंचांगp < 0)
+			वापस पंचांगp;
+		पंचांगp = (val >> 3) & 0xff;
+		ret = nct7904_ग_लिखो_reg(data, BANK_1,
+					VSEN1_HV_LL_REG + index * 4, पंचांगp);
+		वापस ret;
+	हाल hwmon_in_max:
+		पंचांगp = nct7904_पढ़ो_reg(data, BANK_1,
 				       VSEN1_LV_HL_REG + index * 4);
-		if (tmp < 0)
-			return tmp;
-		tmp &= ~0x7;
-		tmp |= val & 0x7;
-		ret = nct7904_write_reg(data, BANK_1,
-					VSEN1_LV_HL_REG + index * 4, tmp);
-		if (ret < 0)
-			return ret;
-		tmp = nct7904_read_reg(data, BANK_1,
+		अगर (पंचांगp < 0)
+			वापस पंचांगp;
+		पंचांगp &= ~0x7;
+		पंचांगp |= val & 0x7;
+		ret = nct7904_ग_लिखो_reg(data, BANK_1,
+					VSEN1_LV_HL_REG + index * 4, पंचांगp);
+		अगर (ret < 0)
+			वापस ret;
+		पंचांगp = nct7904_पढ़ो_reg(data, BANK_1,
 				       VSEN1_HV_HL_REG + index * 4);
-		if (tmp < 0)
-			return tmp;
-		tmp = (val >> 3) & 0xff;
-		ret = nct7904_write_reg(data, BANK_1,
-					VSEN1_HV_HL_REG + index * 4, tmp);
-		return ret;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		अगर (पंचांगp < 0)
+			वापस पंचांगp;
+		पंचांगp = (val >> 3) & 0xff;
+		ret = nct7904_ग_लिखो_reg(data, BANK_1,
+					VSEN1_HV_HL_REG + index * 4, पंचांगp);
+		वापस ret;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int nct7904_write_pwm(struct device *dev, u32 attr, int channel,
-			     long val)
-{
-	struct nct7904_data *data = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक nct7904_ग_लिखो_pwm(काष्ठा device *dev, u32 attr, पूर्णांक channel,
+			     दीर्घ val)
+अणु
+	काष्ठा nct7904_data *data = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	switch (attr) {
-	case hwmon_pwm_input:
-		if (val < 0 || val > 255)
-			return -EINVAL;
-		ret = nct7904_write_reg(data, BANK_3, FANCTL1_OUT_REG + channel,
+	चयन (attr) अणु
+	हाल hwmon_pwm_input:
+		अगर (val < 0 || val > 255)
+			वापस -EINVAL;
+		ret = nct7904_ग_लिखो_reg(data, BANK_3, FANCTL1_OUT_REG + channel,
 					val);
-		return ret;
-	case hwmon_pwm_enable:
-		if (val < 1 || val > 2 ||
+		वापस ret;
+	हाल hwmon_pwm_enable:
+		अगर (val < 1 || val > 2 ||
 		    (val == 2 && !data->fan_mode[channel]))
-			return -EINVAL;
-		ret = nct7904_write_reg(data, BANK_3, FANCTL1_FMR_REG + channel,
+			वापस -EINVAL;
+		ret = nct7904_ग_लिखो_reg(data, BANK_3, FANCTL1_FMR_REG + channel,
 					val == 2 ? data->fan_mode[channel] : 0);
-		return ret;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस ret;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static umode_t nct7904_pwm_is_visible(const void *_data, u32 attr, int channel)
-{
-	switch (attr) {
-	case hwmon_pwm_input:
-	case hwmon_pwm_enable:
-		return 0644;
-	default:
-		return 0;
-	}
-}
+अटल umode_t nct7904_pwm_is_visible(स्थिर व्योम *_data, u32 attr, पूर्णांक channel)
+अणु
+	चयन (attr) अणु
+	हाल hwmon_pwm_input:
+	हाल hwmon_pwm_enable:
+		वापस 0644;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int nct7904_read(struct device *dev, enum hwmon_sensor_types type,
-			u32 attr, int channel, long *val)
-{
-	switch (type) {
-	case hwmon_in:
-		return nct7904_read_in(dev, attr, channel, val);
-	case hwmon_fan:
-		return nct7904_read_fan(dev, attr, channel, val);
-	case hwmon_pwm:
-		return nct7904_read_pwm(dev, attr, channel, val);
-	case hwmon_temp:
-		return nct7904_read_temp(dev, attr, channel, val);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक nct7904_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+			u32 attr, पूर्णांक channel, दीर्घ *val)
+अणु
+	चयन (type) अणु
+	हाल hwmon_in:
+		वापस nct7904_पढ़ो_in(dev, attr, channel, val);
+	हाल hwmon_fan:
+		वापस nct7904_पढ़ो_fan(dev, attr, channel, val);
+	हाल hwmon_pwm:
+		वापस nct7904_पढ़ो_pwm(dev, attr, channel, val);
+	हाल hwmon_temp:
+		वापस nct7904_पढ़ो_temp(dev, attr, channel, val);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int nct7904_write(struct device *dev, enum hwmon_sensor_types type,
-			 u32 attr, int channel, long val)
-{
-	switch (type) {
-	case hwmon_in:
-		return nct7904_write_in(dev, attr, channel, val);
-	case hwmon_fan:
-		return nct7904_write_fan(dev, attr, channel, val);
-	case hwmon_pwm:
-		return nct7904_write_pwm(dev, attr, channel, val);
-	case hwmon_temp:
-		return nct7904_write_temp(dev, attr, channel, val);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक nct7904_ग_लिखो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+			 u32 attr, पूर्णांक channel, दीर्घ val)
+अणु
+	चयन (type) अणु
+	हाल hwmon_in:
+		वापस nct7904_ग_लिखो_in(dev, attr, channel, val);
+	हाल hwmon_fan:
+		वापस nct7904_ग_लिखो_fan(dev, attr, channel, val);
+	हाल hwmon_pwm:
+		वापस nct7904_ग_लिखो_pwm(dev, attr, channel, val);
+	हाल hwmon_temp:
+		वापस nct7904_ग_लिखो_temp(dev, attr, channel, val);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static umode_t nct7904_is_visible(const void *data,
-				  enum hwmon_sensor_types type,
-				  u32 attr, int channel)
-{
-	switch (type) {
-	case hwmon_in:
-		return nct7904_in_is_visible(data, attr, channel);
-	case hwmon_fan:
-		return nct7904_fan_is_visible(data, attr, channel);
-	case hwmon_pwm:
-		return nct7904_pwm_is_visible(data, attr, channel);
-	case hwmon_temp:
-		return nct7904_temp_is_visible(data, attr, channel);
-	default:
-		return 0;
-	}
-}
+अटल umode_t nct7904_is_visible(स्थिर व्योम *data,
+				  क्रमागत hwmon_sensor_types type,
+				  u32 attr, पूर्णांक channel)
+अणु
+	चयन (type) अणु
+	हाल hwmon_in:
+		वापस nct7904_in_is_visible(data, attr, channel);
+	हाल hwmon_fan:
+		वापस nct7904_fan_is_visible(data, attr, channel);
+	हाल hwmon_pwm:
+		वापस nct7904_pwm_is_visible(data, attr, channel);
+	हाल hwmon_temp:
+		वापस nct7904_temp_is_visible(data, attr, channel);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-/* Return 0 if detection is successful, -ENODEV otherwise */
-static int nct7904_detect(struct i2c_client *client,
-			  struct i2c_board_info *info)
-{
-	struct i2c_adapter *adapter = client->adapter;
+/* Return 0 अगर detection is successful, -ENODEV otherwise */
+अटल पूर्णांक nct7904_detect(काष्ठा i2c_client *client,
+			  काष्ठा i2c_board_info *info)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
 
-	if (!i2c_check_functionality(adapter,
+	अगर (!i2c_check_functionality(adapter,
 				     I2C_FUNC_SMBUS_READ_BYTE |
 				     I2C_FUNC_SMBUS_WRITE_BYTE_DATA))
-		return -ENODEV;
+		वापस -ENODEV;
 
 	/* Determine the chip type. */
-	if (i2c_smbus_read_byte_data(client, VENDOR_ID_REG) != NUVOTON_ID ||
-	    i2c_smbus_read_byte_data(client, CHIP_ID_REG) != NCT7904_ID ||
-	    (i2c_smbus_read_byte_data(client, DEVICE_ID_REG) & 0xf0) != 0x50 ||
-	    (i2c_smbus_read_byte_data(client, BANK_SEL_REG) & 0xf8) != 0x00)
-		return -ENODEV;
+	अगर (i2c_smbus_पढ़ो_byte_data(client, VENDOR_ID_REG) != NUVOTON_ID ||
+	    i2c_smbus_पढ़ो_byte_data(client, CHIP_ID_REG) != NCT7904_ID ||
+	    (i2c_smbus_पढ़ो_byte_data(client, DEVICE_ID_REG) & 0xf0) != 0x50 ||
+	    (i2c_smbus_पढ़ो_byte_data(client, BANK_SEL_REG) & 0xf8) != 0x00)
+		वापस -ENODEV;
 
 	strlcpy(info->type, "nct7904", I2C_NAME_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hwmon_channel_info *nct7904_info[] = {
+अटल स्थिर काष्ठा hwmon_channel_info *nct7904_info[] = अणु
 	HWMON_CHANNEL_INFO(in,
 			   /* dummy, skipped in is_visible */
 			   HWMON_I_INPUT | HWMON_I_MIN | HWMON_I_MAX |
@@ -906,121 +907,121 @@ static const struct hwmon_channel_info *nct7904_info[] = {
 			   HWMON_T_INPUT | HWMON_T_ALARM | HWMON_T_MAX |
 			   HWMON_T_MAX_HYST | HWMON_T_TYPE | HWMON_T_CRIT |
 			   HWMON_T_CRIT_HYST),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct hwmon_ops nct7904_hwmon_ops = {
+अटल स्थिर काष्ठा hwmon_ops nct7904_hwmon_ops = अणु
 	.is_visible = nct7904_is_visible,
-	.read = nct7904_read,
-	.write = nct7904_write,
-};
+	.पढ़ो = nct7904_पढ़ो,
+	.ग_लिखो = nct7904_ग_लिखो,
+पूर्ण;
 
-static const struct hwmon_chip_info nct7904_chip_info = {
+अटल स्थिर काष्ठा hwmon_chip_info nct7904_chip_info = अणु
 	.ops = &nct7904_hwmon_ops,
 	.info = nct7904_info,
-};
+पूर्ण;
 
 /*
- * Watchdog Function
+ * Watchकरोg Function
  */
-static int nct7904_wdt_start(struct watchdog_device *wdt)
-{
-	struct nct7904_data *data = watchdog_get_drvdata(wdt);
+अटल पूर्णांक nct7904_wdt_start(काष्ठा watchकरोg_device *wdt)
+अणु
+	काष्ठा nct7904_data *data = watchकरोg_get_drvdata(wdt);
 
-	/* Enable soft watchdog timer */
-	return nct7904_write_reg(data, BANK_0, WDT_LOCK_REG, WDT_SOFT_EN);
-}
+	/* Enable soft watchकरोg समयr */
+	वापस nct7904_ग_लिखो_reg(data, BANK_0, WDT_LOCK_REG, WDT_SOFT_EN);
+पूर्ण
 
-static int nct7904_wdt_stop(struct watchdog_device *wdt)
-{
-	struct nct7904_data *data = watchdog_get_drvdata(wdt);
+अटल पूर्णांक nct7904_wdt_stop(काष्ठा watchकरोg_device *wdt)
+अणु
+	काष्ठा nct7904_data *data = watchकरोg_get_drvdata(wdt);
 
-	return nct7904_write_reg(data, BANK_0, WDT_LOCK_REG, WDT_SOFT_DIS);
-}
+	वापस nct7904_ग_लिखो_reg(data, BANK_0, WDT_LOCK_REG, WDT_SOFT_DIS);
+पूर्ण
 
-static int nct7904_wdt_set_timeout(struct watchdog_device *wdt,
-				   unsigned int timeout)
-{
-	struct nct7904_data *data = watchdog_get_drvdata(wdt);
+अटल पूर्णांक nct7904_wdt_set_समयout(काष्ठा watchकरोg_device *wdt,
+				   अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा nct7904_data *data = watchकरोg_get_drvdata(wdt);
 	/*
-	 * The NCT7904 is very special in watchdog function.
-	 * Its minimum unit is minutes. And wdt->timeout needs
-	 * to match the actual timeout selected. So, this needs
-	 * to be: wdt->timeout = timeout / 60 * 60.
-	 * For example, if the user configures a timeout of
-	 * 119 seconds, the actual timeout will be 60 seconds.
-	 * So, wdt->timeout must then be set to 60 seconds.
+	 * The NCT7904 is very special in watchकरोg function.
+	 * Its minimum unit is minutes. And wdt->समयout needs
+	 * to match the actual समयout selected. So, this needs
+	 * to be: wdt->समयout = समयout / 60 * 60.
+	 * For example, अगर the user configures a समयout of
+	 * 119 seconds, the actual समयout will be 60 seconds.
+	 * So, wdt->समयout must then be set to 60 seconds.
 	 */
-	wdt->timeout = timeout / 60 * 60;
+	wdt->समयout = समयout / 60 * 60;
 
-	return nct7904_write_reg(data, BANK_0, WDT_TIMER_REG,
-				 wdt->timeout / 60);
-}
+	वापस nct7904_ग_लिखो_reg(data, BANK_0, WDT_TIMER_REG,
+				 wdt->समयout / 60);
+पूर्ण
 
-static int nct7904_wdt_ping(struct watchdog_device *wdt)
-{
+अटल पूर्णांक nct7904_wdt_ping(काष्ठा watchकरोg_device *wdt)
+अणु
 	/*
 	 * Note:
-	 * NCT7904 does not support refreshing WDT_TIMER_REG register when
-	 * the watchdog is active. Please disable watchdog before feeding
-	 * the watchdog and enable it again.
+	 * NCT7904 करोes not support refreshing WDT_TIMER_REG रेजिस्टर when
+	 * the watchकरोg is active. Please disable watchकरोg beक्रमe feeding
+	 * the watchकरोg and enable it again.
 	 */
-	struct nct7904_data *data = watchdog_get_drvdata(wdt);
-	int ret;
+	काष्ठा nct7904_data *data = watchकरोg_get_drvdata(wdt);
+	पूर्णांक ret;
 
-	/* Disable soft watchdog timer */
-	ret = nct7904_write_reg(data, BANK_0, WDT_LOCK_REG, WDT_SOFT_DIS);
-	if (ret < 0)
-		return ret;
+	/* Disable soft watchकरोg समयr */
+	ret = nct7904_ग_लिखो_reg(data, BANK_0, WDT_LOCK_REG, WDT_SOFT_DIS);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* feed watchdog */
-	ret = nct7904_write_reg(data, BANK_0, WDT_TIMER_REG, wdt->timeout / 60);
-	if (ret < 0)
-		return ret;
+	/* feed watchकरोg */
+	ret = nct7904_ग_लिखो_reg(data, BANK_0, WDT_TIMER_REG, wdt->समयout / 60);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Enable soft watchdog timer */
-	return nct7904_write_reg(data, BANK_0, WDT_LOCK_REG, WDT_SOFT_EN);
-}
+	/* Enable soft watchकरोg समयr */
+	वापस nct7904_ग_लिखो_reg(data, BANK_0, WDT_LOCK_REG, WDT_SOFT_EN);
+पूर्ण
 
-static unsigned int nct7904_wdt_get_timeleft(struct watchdog_device *wdt)
-{
-	struct nct7904_data *data = watchdog_get_drvdata(wdt);
-	int ret;
+अटल अचिन्हित पूर्णांक nct7904_wdt_get_समयleft(काष्ठा watchकरोg_device *wdt)
+अणु
+	काष्ठा nct7904_data *data = watchकरोg_get_drvdata(wdt);
+	पूर्णांक ret;
 
-	ret = nct7904_read_reg(data, BANK_0, WDT_TIMER_REG);
-	if (ret < 0)
-		return 0;
+	ret = nct7904_पढ़ो_reg(data, BANK_0, WDT_TIMER_REG);
+	अगर (ret < 0)
+		वापस 0;
 
-	return ret * 60;
-}
+	वापस ret * 60;
+पूर्ण
 
-static const struct watchdog_info nct7904_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info nct7904_wdt_info = अणु
 	.options	= WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING |
 				WDIOF_MAGICCLOSE,
 	.identity	= "nct7904 watchdog",
-};
+पूर्ण;
 
-static const struct watchdog_ops nct7904_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops nct7904_wdt_ops = अणु
 	.owner		= THIS_MODULE,
 	.start		= nct7904_wdt_start,
 	.stop		= nct7904_wdt_stop,
 	.ping		= nct7904_wdt_ping,
-	.set_timeout	= nct7904_wdt_set_timeout,
-	.get_timeleft	= nct7904_wdt_get_timeleft,
-};
+	.set_समयout	= nct7904_wdt_set_समयout,
+	.get_समयleft	= nct7904_wdt_get_समयleft,
+पूर्ण;
 
-static int nct7904_probe(struct i2c_client *client)
-{
-	struct nct7904_data *data;
-	struct device *hwmon_dev;
-	struct device *dev = &client->dev;
-	int ret, i;
+अटल पूर्णांक nct7904_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा nct7904_data *data;
+	काष्ठा device *hwmon_dev;
+	काष्ठा device *dev = &client->dev;
+	पूर्णांक ret, i;
 	u32 mask;
 	u8 val, bit;
 
-	data = devm_kzalloc(dev, sizeof(struct nct7904_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(काष्ठा nct7904_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->client = client;
 	mutex_init(&data->bank_lock);
@@ -1028,154 +1029,154 @@ static int nct7904_probe(struct i2c_client *client)
 
 	/* Setup sensor groups. */
 	/* FANIN attributes */
-	ret = nct7904_read_reg16(data, BANK_0, FANIN_CTRL0_REG);
-	if (ret < 0)
-		return ret;
+	ret = nct7904_पढ़ो_reg16(data, BANK_0, FANIN_CTRL0_REG);
+	अगर (ret < 0)
+		वापस ret;
 	data->fanin_mask = (ret >> 8) | ((ret & 0xff) << 8);
 
 	/*
 	 * VSEN attributes
 	 *
-	 * Note: voltage sensors overlap with external temperature
-	 * sensors. So, if we ever decide to support the latter
+	 * Note: voltage sensors overlap with बाह्यal temperature
+	 * sensors. So, अगर we ever decide to support the latter
 	 * we will have to adjust 'vsen_mask' accordingly.
 	 */
 	mask = 0;
-	ret = nct7904_read_reg16(data, BANK_0, VT_ADC_CTRL0_REG);
-	if (ret >= 0)
+	ret = nct7904_पढ़ो_reg16(data, BANK_0, VT_ADC_CTRL0_REG);
+	अगर (ret >= 0)
 		mask = (ret >> 8) | ((ret & 0xff) << 8);
-	ret = nct7904_read_reg(data, BANK_0, VT_ADC_CTRL2_REG);
-	if (ret >= 0)
+	ret = nct7904_पढ़ो_reg(data, BANK_0, VT_ADC_CTRL2_REG);
+	अगर (ret >= 0)
 		mask |= (ret << 16);
 	data->vsen_mask = mask;
 
 	/* CPU_TEMP attributes */
-	ret = nct7904_read_reg(data, BANK_0, VT_ADC_CTRL0_REG);
-	if (ret < 0)
-		return ret;
+	ret = nct7904_पढ़ो_reg(data, BANK_0, VT_ADC_CTRL0_REG);
+	अगर (ret < 0)
+		वापस ret;
 
-	if ((ret & 0x6) == 0x6)
+	अगर ((ret & 0x6) == 0x6)
 		data->tcpu_mask |= 1; /* TR1 */
-	if ((ret & 0x18) == 0x18)
+	अगर ((ret & 0x18) == 0x18)
 		data->tcpu_mask |= 2; /* TR2 */
-	if ((ret & 0x20) == 0x20)
+	अगर ((ret & 0x20) == 0x20)
 		data->tcpu_mask |= 4; /* TR3 */
-	if ((ret & 0x80) == 0x80)
+	अगर ((ret & 0x80) == 0x80)
 		data->tcpu_mask |= 8; /* TR4 */
 
 	/* LTD */
-	ret = nct7904_read_reg(data, BANK_0, VT_ADC_CTRL2_REG);
-	if (ret < 0)
-		return ret;
-	if ((ret & 0x02) == 0x02)
+	ret = nct7904_पढ़ो_reg(data, BANK_0, VT_ADC_CTRL2_REG);
+	अगर (ret < 0)
+		वापस ret;
+	अगर ((ret & 0x02) == 0x02)
 		data->tcpu_mask |= 0x10;
 
-	/* Multi-Function detecting for Volt and TR/TD */
-	ret = nct7904_read_reg(data, BANK_0, VT_ADC_MD_REG);
-	if (ret < 0)
-		return ret;
+	/* Multi-Function detecting क्रम Volt and TR/TD */
+	ret = nct7904_पढ़ो_reg(data, BANK_0, VT_ADC_MD_REG);
+	अगर (ret < 0)
+		वापस ret;
 
 	data->temp_mode = 0;
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		val = (ret >> (i * 2)) & 0x03;
 		bit = (1 << i);
-		if (val == VOLT_MONITOR_MODE) {
+		अगर (val == VOLT_MONITOR_MODE) अणु
 			data->tcpu_mask &= ~bit;
-		} else if (val == THERMAL_DIODE_MODE && i < 2) {
+		पूर्ण अन्यथा अगर (val == THERMAL_DIODE_MODE && i < 2) अणु
 			data->temp_mode |= bit;
 			data->vsen_mask &= ~(0x06 << (i * 2));
-		} else if (val == THERMISTOR_MODE) {
+		पूर्ण अन्यथा अगर (val == THERMISTOR_MODE) अणु
 			data->vsen_mask &= ~(0x02 << (i * 2));
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Reserved */
 			data->tcpu_mask &= ~bit;
 			data->vsen_mask &= ~(0x06 << (i * 2));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* PECI */
-	ret = nct7904_read_reg(data, BANK_2, PFE_REG);
-	if (ret < 0)
-		return ret;
-	if (ret & 0x80) {
+	ret = nct7904_पढ़ो_reg(data, BANK_2, PFE_REG);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret & 0x80) अणु
 		data->enable_dts = 1; /* Enable DTS & PECI */
-	} else {
-		ret = nct7904_read_reg(data, BANK_2, TSI_CTRL_REG);
-		if (ret < 0)
-			return ret;
-		if (ret & 0x80)
+	पूर्ण अन्यथा अणु
+		ret = nct7904_पढ़ो_reg(data, BANK_2, TSI_CTRL_REG);
+		अगर (ret < 0)
+			वापस ret;
+		अगर (ret & 0x80)
 			data->enable_dts = 0x3; /* Enable DTS & TSI */
-	}
+	पूर्ण
 
 	/* Check DTS enable status */
-	if (data->enable_dts) {
-		ret = nct7904_read_reg(data, BANK_0, DTS_T_CTRL0_REG);
-		if (ret < 0)
-			return ret;
+	अगर (data->enable_dts) अणु
+		ret = nct7904_पढ़ो_reg(data, BANK_0, DTS_T_CTRL0_REG);
+		अगर (ret < 0)
+			वापस ret;
 		data->has_dts = ret & 0xF;
-		if (data->enable_dts & ENABLE_TSI) {
-			ret = nct7904_read_reg(data, BANK_0, DTS_T_CTRL1_REG);
-			if (ret < 0)
-				return ret;
+		अगर (data->enable_dts & ENABLE_TSI) अणु
+			ret = nct7904_पढ़ो_reg(data, BANK_0, DTS_T_CTRL1_REG);
+			अगर (ret < 0)
+				वापस ret;
 			data->has_dts |= (ret & 0xF) << 4;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < FANCTL_MAX; i++) {
-		ret = nct7904_read_reg(data, BANK_3, FANCTL1_FMR_REG + i);
-		if (ret < 0)
-			return ret;
+	क्रम (i = 0; i < FANCTL_MAX; i++) अणु
+		ret = nct7904_पढ़ो_reg(data, BANK_3, FANCTL1_FMR_REG + i);
+		अगर (ret < 0)
+			वापस ret;
 		data->fan_mode[i] = ret;
-	}
+	पूर्ण
 
-	/* Read all of SMI status register to clear alarms */
-	for (i = 0; i < SMI_STS_MAX; i++) {
-		ret = nct7904_read_reg(data, BANK_0, SMI_STS1_REG + i);
-		if (ret < 0)
-			return ret;
-	}
+	/* Read all of SMI status रेजिस्टर to clear alarms */
+	क्रम (i = 0; i < SMI_STS_MAX; i++) अणु
+		ret = nct7904_पढ़ो_reg(data, BANK_0, SMI_STS1_REG + i);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	hwmon_dev =
-		devm_hwmon_device_register_with_info(dev, client->name, data,
-						     &nct7904_chip_info, NULL);
+		devm_hwmon_device_रेजिस्टर_with_info(dev, client->name, data,
+						     &nct7904_chip_info, शून्य);
 	ret = PTR_ERR_OR_ZERO(hwmon_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Watchdog initialization */
+	/* Watchकरोg initialization */
 	data->wdt.ops = &nct7904_wdt_ops;
 	data->wdt.info = &nct7904_wdt_info;
 
-	data->wdt.timeout = WATCHDOG_TIMEOUT * 60; /* Set default timeout */
-	data->wdt.min_timeout = MIN_TIMEOUT;
-	data->wdt.max_timeout = MAX_TIMEOUT;
+	data->wdt.समयout = WATCHDOG_TIMEOUT * 60; /* Set शेष समयout */
+	data->wdt.min_समयout = MIN_TIMEOUT;
+	data->wdt.max_समयout = MAX_TIMEOUT;
 	data->wdt.parent = &client->dev;
 
-	watchdog_init_timeout(&data->wdt, timeout * 60, &client->dev);
-	watchdog_set_nowayout(&data->wdt, nowayout);
-	watchdog_set_drvdata(&data->wdt, data);
+	watchकरोg_init_समयout(&data->wdt, समयout * 60, &client->dev);
+	watchकरोg_set_nowayout(&data->wdt, nowayout);
+	watchकरोg_set_drvdata(&data->wdt, data);
 
-	watchdog_stop_on_unregister(&data->wdt);
+	watchकरोg_stop_on_unरेजिस्टर(&data->wdt);
 
-	return devm_watchdog_register_device(dev, &data->wdt);
-}
+	वापस devm_watchकरोg_रेजिस्टर_device(dev, &data->wdt);
+पूर्ण
 
-static const struct i2c_device_id nct7904_id[] = {
-	{"nct7904", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id nct7904_id[] = अणु
+	अणु"nct7904", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, nct7904_id);
 
-static struct i2c_driver nct7904_driver = {
+अटल काष्ठा i2c_driver nct7904_driver = अणु
 	.class = I2C_CLASS_HWMON,
-	.driver = {
+	.driver = अणु
 		.name = "nct7904",
-	},
+	पूर्ण,
 	.probe_new = nct7904_probe,
 	.id_table = nct7904_id,
 	.detect = nct7904_detect,
 	.address_list = normal_i2c,
-};
+पूर्ण;
 
 module_i2c_driver(nct7904_driver);
 

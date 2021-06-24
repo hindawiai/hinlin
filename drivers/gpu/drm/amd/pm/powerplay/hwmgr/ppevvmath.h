@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,81 +21,81 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include <asm/div64.h>
+#समावेश <यंत्र/भाग64.h>
 
-#define SHIFT_AMOUNT 16 /* We multiply all original integers with 2^SHIFT_AMOUNT to get the fInt representation */
+#घोषणा SHIFT_AMOUNT 16 /* We multiply all original पूर्णांकegers with 2^SHIFT_AMOUNT to get the fInt representation */
 
-#define PRECISION 5 /* Change this value to change the number of decimal places in the final output - 5 is a good default */
+#घोषणा PRECISION 5 /* Change this value to change the number of decimal places in the final output - 5 is a good शेष */
 
-#define SHIFTED_2 (2 << SHIFT_AMOUNT)
-#define MAX (1 << (SHIFT_AMOUNT - 1)) - 1 /* 32767 - Might change in the future */
+#घोषणा SHIFTED_2 (2 << SHIFT_AMOUNT)
+#घोषणा MAX (1 << (SHIFT_AMOUNT - 1)) - 1 /* 32767 - Might change in the future */
 
 /* -------------------------------------------------------------------------------
  * NEW TYPE - fINT
  * -------------------------------------------------------------------------------
- * A variable of type fInt can be accessed in 3 ways using the dot (.) operator
+ * A variable of type fInt can be accessed in 3 ways using the करोt (.) चालक
  * fInt A;
- * A.full => The full number as it is. Generally not easy to read
- * A.partial.real => Only the integer portion
+ * A.full => The full number as it is. Generally not easy to पढ़ो
+ * A.partial.real => Only the पूर्णांकeger portion
  * A.partial.decimal => Only the fractional portion
  */
-typedef union _fInt {
-    int full;
-    struct _partial {
-        unsigned int decimal: SHIFT_AMOUNT; /*Needs to always be unsigned*/
-        int real: 32 - SHIFT_AMOUNT;
-    } partial;
-} fInt;
+प्रकार जोड़ _fInt अणु
+    पूर्णांक full;
+    काष्ठा _partial अणु
+        अचिन्हित पूर्णांक decimal: SHIFT_AMOUNT; /*Needs to always be अचिन्हित*/
+        पूर्णांक real: 32 - SHIFT_AMOUNT;
+    पूर्ण partial;
+पूर्ण fInt;
 
 /* -------------------------------------------------------------------------------
  * Function Declarations
  *  -------------------------------------------------------------------------------
  */
-static fInt ConvertToFraction(int);                       /* Use this to convert an INT to a FINT */
-static fInt Convert_ULONG_ToFraction(uint32_t);           /* Use this to convert an uint32_t to a FINT */
-static fInt GetScaledFraction(int, int);                  /* Use this to convert an INT to a FINT after scaling it by a factor */
-static int ConvertBackToInteger(fInt);                    /* Convert a FINT back to an INT that is scaled by 1000 (i.e. last 3 digits are the decimal digits) */
+अटल fInt ConvertToFraction(पूर्णांक);                       /* Use this to convert an INT to a FINT */
+अटल fInt Convert_ULONG_ToFraction(uपूर्णांक32_t);           /* Use this to convert an uपूर्णांक32_t to a FINT */
+अटल fInt GetScaledFraction(पूर्णांक, पूर्णांक);                  /* Use this to convert an INT to a FINT after scaling it by a factor */
+अटल पूर्णांक ConvertBackToInteger(fInt);                    /* Convert a FINT back to an INT that is scaled by 1000 (i.e. last 3 digits are the decimal digits) */
 
-static fInt fNegate(fInt);                                /* Returns -1 * input fInt value */
-static fInt fAdd (fInt, fInt);                            /* Returns the sum of two fInt numbers */
-static fInt fSubtract (fInt A, fInt B);                   /* Returns A-B - Sometimes easier than Adding negative numbers */
-static fInt fMultiply (fInt, fInt);                       /* Returns the product of two fInt numbers */
-static fInt fDivide (fInt A, fInt B);                     /* Returns A/B */
-static fInt fGetSquare(fInt);                             /* Returns the square of a fInt number */
-static fInt fSqrt(fInt);                                  /* Returns the Square Root of a fInt number */
+अटल fInt fNegate(fInt);                                /* Returns -1 * input fInt value */
+अटल fInt fAdd (fInt, fInt);                            /* Returns the sum of two fInt numbers */
+अटल fInt fSubtract (fInt A, fInt B);                   /* Returns A-B - Someबार easier than Adding negative numbers */
+अटल fInt fMultiply (fInt, fInt);                       /* Returns the product of two fInt numbers */
+अटल fInt fDivide (fInt A, fInt B);                     /* Returns A/B */
+अटल fInt fGetSquare(fInt);                             /* Returns the square of a fInt number */
+अटल fInt fSqrt(fInt);                                  /* Returns the Square Root of a fInt number */
 
-static int uAbs(int);                                     /* Returns the Absolute value of the Int */
-static int uPow(int base, int exponent);                  /* Returns base^exponent an INT */
+अटल पूर्णांक uAbs(पूर्णांक);                                     /* Returns the Absolute value of the Int */
+अटल पूर्णांक uPow(पूर्णांक base, पूर्णांक exponent);                  /* Returns base^exponent an INT */
 
-static void SolveQuadracticEqn(fInt, fInt, fInt, fInt[]); /* Returns the 2 roots via the array */
-static bool Equal(fInt, fInt);                            /* Returns true if two fInts are equal to each other */
-static bool GreaterThan(fInt A, fInt B);                  /* Returns true if A > B */
+अटल व्योम SolveQuadracticEqn(fInt, fInt, fInt, fInt[]); /* Returns the 2 roots via the array */
+अटल bool Equal(fInt, fInt);                            /* Returns true अगर two fInts are equal to each other */
+अटल bool GreaterThan(fInt A, fInt B);                  /* Returns true अगर A > B */
 
-static fInt fExponential(fInt exponent);                  /* Can be used to calculate e^exponent */
-static fInt fNaturalLog(fInt value);                      /* Can be used to calculate ln(value) */
+अटल fInt fExponential(fInt exponent);                  /* Can be used to calculate e^exponent */
+अटल fInt fNaturalLog(fInt value);                      /* Can be used to calculate ln(value) */
 
 /* Fuse decoding functions
  * -------------------------------------------------------------------------------------
  */
-static fInt fDecodeLinearFuse(uint32_t fuse_value, fInt f_min, fInt f_range, uint32_t bitlength);
-static fInt fDecodeLogisticFuse(uint32_t fuse_value, fInt f_average, fInt f_range, uint32_t bitlength);
-static fInt fDecodeLeakageID (uint32_t leakageID_fuse, fInt ln_max_div_min, fInt f_min, uint32_t bitlength);
+अटल fInt fDecodeLinearFuse(uपूर्णांक32_t fuse_value, fInt f_min, fInt f_range, uपूर्णांक32_t bitlength);
+अटल fInt fDecodeLogisticFuse(uपूर्णांक32_t fuse_value, fInt f_average, fInt f_range, uपूर्णांक32_t bitlength);
+अटल fInt fDecodeLeakageID (uपूर्णांक32_t leakageID_fuse, fInt ln_max_भाग_min, fInt f_min, uपूर्णांक32_t bitlength);
 
-/* Internal Support Functions - Use these ONLY for testing or adding to internal functions
+/* Internal Support Functions - Use these ONLY क्रम testing or adding to पूर्णांकernal functions
  * -------------------------------------------------------------------------------------
- * Some of the following functions take two INTs as their input - This is unsafe for a variety of reasons.
+ * Some of the following functions take two INTs as their input - This is unsafe क्रम a variety of reasons.
  */
-static fInt Divide (int, int);                            /* Divide two INTs and return result as FINT */
-static fInt fNegate(fInt);
+अटल fInt Divide (पूर्णांक, पूर्णांक);                            /* Divide two INTs and वापस result as FINT */
+अटल fInt fNegate(fInt);
 
-static int uGetScaledDecimal (fInt);                      /* Internal function */
-static int GetReal (fInt A);                              /* Internal function */
+अटल पूर्णांक uGetScaledDecimal (fInt);                      /* Internal function */
+अटल पूर्णांक GetReal (fInt A);                              /* Internal function */
 
 /* -------------------------------------------------------------------------------------
  * TROUBLESHOOTING INFORMATION
  * -------------------------------------------------------------------------------------
- * 1) ConvertToFraction - InputOutOfRangeException: Only accepts numbers smaller than MAX (default: 32767)
- * 2) fAdd - OutputOutOfRangeException: Output bigger than MAX (default: 32767)
+ * 1) ConvertToFraction - InputOutOfRangeException: Only accepts numbers smaller than MAX (शेष: 32767)
+ * 2) fAdd - OutputOutOfRangeException: Output bigger than MAX (शेष: 32767)
  * 3) fMultiply - OutputOutOfRangeException:
  * 4) fGetSquare - OutputOutOfRangeException:
  * 5) fDivide - DivideByZeroException
@@ -105,9 +106,9 @@ static int GetReal (fInt A);                              /* Internal function *
  * START OF CODE
  * -------------------------------------------------------------------------------------
  */
-static fInt fExponential(fInt exponent)        /*Can be used to calculate e^exponent*/
-{
-	uint32_t i;
+अटल fInt fExponential(fInt exponent)        /*Can be used to calculate e^exponent*/
+अणु
+	uपूर्णांक32_t i;
 	bool bNegated = false;
 
 	fInt fPositiveOne = ConvertToFraction(1);
@@ -117,60 +118,60 @@ static fInt fExponential(fInt exponent)        /*Can be used to calculate e^expo
 	fInt solution = fPositiveOne; /*Starting off with baseline of 1 */
 	fInt error_term;
 
-	static const uint32_t k_array[11] = {55452, 27726, 13863, 6931, 4055, 2231, 1178, 606, 308, 155, 78};
-	static const uint32_t expk_array[11] = {2560000, 160000, 40000, 20000, 15000, 12500, 11250, 10625, 10313, 10156, 10078};
+	अटल स्थिर uपूर्णांक32_t k_array[11] = अणु55452, 27726, 13863, 6931, 4055, 2231, 1178, 606, 308, 155, 78पूर्ण;
+	अटल स्थिर uपूर्णांक32_t expk_array[11] = अणु2560000, 160000, 40000, 20000, 15000, 12500, 11250, 10625, 10313, 10156, 10078पूर्ण;
 
-	if (GreaterThan(fZERO, exponent)) {
+	अगर (GreaterThan(fZERO, exponent)) अणु
 		exponent = fNegate(exponent);
 		bNegated = true;
-	}
+	पूर्ण
 
-	while (GreaterThan(exponent, lower_bound)) {
-		for (i = 0; i < 11; i++) {
-			if (GreaterThan(exponent, GetScaledFraction(k_array[i], 10000))) {
+	जबतक (GreaterThan(exponent, lower_bound)) अणु
+		क्रम (i = 0; i < 11; i++) अणु
+			अगर (GreaterThan(exponent, GetScaledFraction(k_array[i], 10000))) अणु
 				exponent = fSubtract(exponent, GetScaledFraction(k_array[i], 10000));
 				solution = fMultiply(solution, GetScaledFraction(expk_array[i], 10000));
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	error_term = fAdd(fPositiveOne, exponent);
 
 	solution = fMultiply(solution, error_term);
 
-	if (bNegated)
+	अगर (bNegated)
 		solution = fDivide(fPositiveOne, solution);
 
-	return solution;
-}
+	वापस solution;
+पूर्ण
 
-static fInt fNaturalLog(fInt value)
-{
-	uint32_t i;
+अटल fInt fNaturalLog(fInt value)
+अणु
+	uपूर्णांक32_t i;
 	fInt upper_bound = Divide(8, 1000);
 	fInt fNegativeOne = ConvertToFraction(-1);
 	fInt solution = ConvertToFraction(0); /*Starting off with baseline of 0 */
 	fInt error_term;
 
-	static const uint32_t k_array[10] = {160000, 40000, 20000, 15000, 12500, 11250, 10625, 10313, 10156, 10078};
-	static const uint32_t logk_array[10] = {27726, 13863, 6931, 4055, 2231, 1178, 606, 308, 155, 78};
+	अटल स्थिर uपूर्णांक32_t k_array[10] = अणु160000, 40000, 20000, 15000, 12500, 11250, 10625, 10313, 10156, 10078पूर्ण;
+	अटल स्थिर uपूर्णांक32_t logk_array[10] = अणु27726, 13863, 6931, 4055, 2231, 1178, 606, 308, 155, 78पूर्ण;
 
-	while (GreaterThan(fAdd(value, fNegativeOne), upper_bound)) {
-		for (i = 0; i < 10; i++) {
-			if (GreaterThan(value, GetScaledFraction(k_array[i], 10000))) {
+	जबतक (GreaterThan(fAdd(value, fNegativeOne), upper_bound)) अणु
+		क्रम (i = 0; i < 10; i++) अणु
+			अगर (GreaterThan(value, GetScaledFraction(k_array[i], 10000))) अणु
 				value = fDivide(value, GetScaledFraction(k_array[i], 10000));
 				solution = fAdd(solution, GetScaledFraction(logk_array[i], 10000));
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	error_term = fAdd(fNegativeOne, value);
 
-	return (fAdd(solution, error_term));
-}
+	वापस (fAdd(solution, error_term));
+पूर्ण
 
-static fInt fDecodeLinearFuse(uint32_t fuse_value, fInt f_min, fInt f_range, uint32_t bitlength)
-{
+अटल fInt fDecodeLinearFuse(uपूर्णांक32_t fuse_value, fInt f_min, fInt f_range, uपूर्णांक32_t bitlength)
+अणु
 	fInt f_fuse_value = Convert_ULONG_ToFraction(fuse_value);
 	fInt f_bit_max_value = Convert_ULONG_ToFraction((uPow(2, bitlength)) - 1);
 
@@ -180,12 +181,12 @@ static fInt fDecodeLinearFuse(uint32_t fuse_value, fInt f_min, fInt f_range, uin
 	f_decoded_value = fMultiply(f_decoded_value, f_range);
 	f_decoded_value = fAdd(f_decoded_value, f_min);
 
-	return f_decoded_value;
-}
+	वापस f_decoded_value;
+पूर्ण
 
 
-static fInt fDecodeLogisticFuse(uint32_t fuse_value, fInt f_average, fInt f_range, uint32_t bitlength)
-{
+अटल fInt fDecodeLogisticFuse(uपूर्णांक32_t fuse_value, fInt f_average, fInt f_range, uपूर्णांक32_t bitlength)
+अणु
 	fInt f_fuse_value = Convert_ULONG_ToFraction(fuse_value);
 	fInt f_bit_max_value = Convert_ULONG_ToFraction((uPow(2, bitlength)) - 1);
 
@@ -199,183 +200,183 @@ static fInt fDecodeLogisticFuse(uint32_t fuse_value, fInt f_average, fInt f_rang
 	f_decoded_value = fMultiply(f_decoded_value, fDivide(f_range, f_CONSTANT_NEG13));
 	f_decoded_value = fAdd(f_decoded_value, f_average);
 
-	return f_decoded_value;
-}
+	वापस f_decoded_value;
+पूर्ण
 
-static fInt fDecodeLeakageID (uint32_t leakageID_fuse, fInt ln_max_div_min, fInt f_min, uint32_t bitlength)
-{
+अटल fInt fDecodeLeakageID (uपूर्णांक32_t leakageID_fuse, fInt ln_max_भाग_min, fInt f_min, uपूर्णांक32_t bitlength)
+अणु
 	fInt fLeakage;
 	fInt f_bit_max_value = Convert_ULONG_ToFraction((uPow(2, bitlength)) - 1);
 
-	fLeakage = fMultiply(ln_max_div_min, Convert_ULONG_ToFraction(leakageID_fuse));
+	fLeakage = fMultiply(ln_max_भाग_min, Convert_ULONG_ToFraction(leakageID_fuse));
 	fLeakage = fDivide(fLeakage, f_bit_max_value);
 	fLeakage = fExponential(fLeakage);
 	fLeakage = fMultiply(fLeakage, f_min);
 
-	return fLeakage;
-}
+	वापस fLeakage;
+पूर्ण
 
-static fInt ConvertToFraction(int X) /*Add all range checking here. Is it possible to make fInt a private declaration? */
-{
+अटल fInt ConvertToFraction(पूर्णांक X) /*Add all range checking here. Is it possible to make fInt a निजी declaration? */
+अणु
 	fInt temp;
 
-	if (X <= MAX)
+	अगर (X <= MAX)
 		temp.full = (X << SHIFT_AMOUNT);
-	else
+	अन्यथा
 		temp.full = 0;
 
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
-static fInt fNegate(fInt X)
-{
+अटल fInt fNegate(fInt X)
+अणु
 	fInt CONSTANT_NEGONE = ConvertToFraction(-1);
-	return (fMultiply(X, CONSTANT_NEGONE));
-}
+	वापस (fMultiply(X, CONSTANT_NEGONE));
+पूर्ण
 
-static fInt Convert_ULONG_ToFraction(uint32_t X)
-{
+अटल fInt Convert_ULONG_ToFraction(uपूर्णांक32_t X)
+अणु
 	fInt temp;
 
-	if (X <= MAX)
+	अगर (X <= MAX)
 		temp.full = (X << SHIFT_AMOUNT);
-	else
+	अन्यथा
 		temp.full = 0;
 
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
-static fInt GetScaledFraction(int X, int factor)
-{
-	int times_shifted, factor_shifted;
+अटल fInt GetScaledFraction(पूर्णांक X, पूर्णांक factor)
+अणु
+	पूर्णांक बार_shअगरted, factor_shअगरted;
 	bool bNEGATED;
 	fInt fValue;
 
-	times_shifted = 0;
-	factor_shifted = 0;
+	बार_shअगरted = 0;
+	factor_shअगरted = 0;
 	bNEGATED = false;
 
-	if (X < 0) {
+	अगर (X < 0) अणु
 		X = -1*X;
 		bNEGATED = true;
-	}
+	पूर्ण
 
-	if (factor < 0) {
+	अगर (factor < 0) अणु
 		factor = -1*factor;
-		bNEGATED = !bNEGATED; /*If bNEGATED = true due to X < 0, this will cover the case of negative cancelling negative */
-	}
+		bNEGATED = !bNEGATED; /*If bNEGATED = true due to X < 0, this will cover the हाल of negative cancelling negative */
+	पूर्ण
 
-	if ((X > MAX) || factor > MAX) {
-		if ((X/factor) <= MAX) {
-			while (X > MAX) {
+	अगर ((X > MAX) || factor > MAX) अणु
+		अगर ((X/factor) <= MAX) अणु
+			जबतक (X > MAX) अणु
 				X = X >> 1;
-				times_shifted++;
-			}
+				बार_shअगरted++;
+			पूर्ण
 
-			while (factor > MAX) {
+			जबतक (factor > MAX) अणु
 				factor = factor >> 1;
-				factor_shifted++;
-			}
-		} else {
+				factor_shअगरted++;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			fValue.full = 0;
-			return fValue;
-		}
-	}
+			वापस fValue;
+		पूर्ण
+	पूर्ण
 
-	if (factor == 1)
-		return ConvertToFraction(X);
+	अगर (factor == 1)
+		वापस ConvertToFraction(X);
 
 	fValue = fDivide(ConvertToFraction(X * uPow(-1, bNEGATED)), ConvertToFraction(factor));
 
-	fValue.full = fValue.full << times_shifted;
-	fValue.full = fValue.full >> factor_shifted;
+	fValue.full = fValue.full << बार_shअगरted;
+	fValue.full = fValue.full >> factor_shअगरted;
 
-	return fValue;
-}
+	वापस fValue;
+पूर्ण
 
 /* Addition using two fInts */
-static fInt fAdd (fInt X, fInt Y)
-{
+अटल fInt fAdd (fInt X, fInt Y)
+अणु
 	fInt Sum;
 
 	Sum.full = X.full + Y.full;
 
-	return Sum;
-}
+	वापस Sum;
+पूर्ण
 
 /* Addition using two fInts */
-static fInt fSubtract (fInt X, fInt Y)
-{
-	fInt Difference;
+अटल fInt fSubtract (fInt X, fInt Y)
+अणु
+	fInt Dअगरference;
 
-	Difference.full = X.full - Y.full;
+	Dअगरference.full = X.full - Y.full;
 
-	return Difference;
-}
+	वापस Dअगरference;
+पूर्ण
 
-static bool Equal(fInt A, fInt B)
-{
-	if (A.full == B.full)
-		return true;
-	else
-		return false;
-}
+अटल bool Equal(fInt A, fInt B)
+अणु
+	अगर (A.full == B.full)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static bool GreaterThan(fInt A, fInt B)
-{
-	if (A.full > B.full)
-		return true;
-	else
-		return false;
-}
+अटल bool GreaterThan(fInt A, fInt B)
+अणु
+	अगर (A.full > B.full)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static fInt fMultiply (fInt X, fInt Y) /* Uses 64-bit integers (int64_t) */
-{
+अटल fInt fMultiply (fInt X, fInt Y) /* Uses 64-bit पूर्णांकegers (पूर्णांक64_t) */
+अणु
 	fInt Product;
-	int64_t tempProduct;
+	पूर्णांक64_t tempProduct;
 
-	/*The following is for a very specific common case: Non-zero number with ONLY fractional portion*/
+	/*The following is क्रम a very specअगरic common हाल: Non-zero number with ONLY fractional portion*/
 	/* TEMPORARILY DISABLED - CAN BE USED TO IMPROVE PRECISION
 	bool X_LessThanOne, Y_LessThanOne;
 
 	X_LessThanOne = (X.partial.real == 0 && X.partial.decimal != 0 && X.full >= 0);
 	Y_LessThanOne = (Y.partial.real == 0 && Y.partial.decimal != 0 && Y.full >= 0);
 
-	if (X_LessThanOne && Y_LessThanOne) {
+	अगर (X_LessThanOne && Y_LessThanOne) अणु
 		Product.full = X.full * Y.full;
-		return Product
-	}*/
+		वापस Product
+	पूर्ण*/
 
-	tempProduct = ((int64_t)X.full) * ((int64_t)Y.full); /*Q(16,16)*Q(16,16) = Q(32, 32) - Might become a negative number! */
+	tempProduct = ((पूर्णांक64_t)X.full) * ((पूर्णांक64_t)Y.full); /*Q(16,16)*Q(16,16) = Q(32, 32) - Might become a negative number! */
 	tempProduct = tempProduct >> 16; /*Remove lagging 16 bits - Will lose some precision from decimal; */
-	Product.full = (int)tempProduct; /*The int64_t will lose the leading 16 bits that were part of the integer portion */
+	Product.full = (पूर्णांक)tempProduct; /*The पूर्णांक64_t will lose the leading 16 bits that were part of the पूर्णांकeger portion */
 
-	return Product;
-}
+	वापस Product;
+पूर्ण
 
-static fInt fDivide (fInt X, fInt Y)
-{
+अटल fInt fDivide (fInt X, fInt Y)
+अणु
 	fInt fZERO, fQuotient;
-	int64_t longlongX, longlongY;
+	पूर्णांक64_t दीर्घदीर्घX, दीर्घदीर्घY;
 
 	fZERO = ConvertToFraction(0);
 
-	if (Equal(Y, fZERO))
-		return fZERO;
+	अगर (Equal(Y, fZERO))
+		वापस fZERO;
 
-	longlongX = (int64_t)X.full;
-	longlongY = (int64_t)Y.full;
+	दीर्घदीर्घX = (पूर्णांक64_t)X.full;
+	दीर्घदीर्घY = (पूर्णांक64_t)Y.full;
 
-	longlongX = longlongX << 16; /*Q(16,16) -> Q(32,32) */
+	दीर्घदीर्घX = दीर्घदीर्घX << 16; /*Q(16,16) -> Q(32,32) */
 
-	div64_s64(longlongX, longlongY); /*Q(32,32) divided by Q(16,16) = Q(16,16) Back to original format */
+	भाग64_s64(दीर्घदीर्घX, दीर्घदीर्घY); /*Q(32,32) भागided by Q(16,16) = Q(16,16) Back to original क्रमmat */
 
-	fQuotient.full = (int)longlongX;
-	return fQuotient;
-}
+	fQuotient.full = (पूर्णांक)दीर्घदीर्घX;
+	वापस fQuotient;
+पूर्ण
 
-static int ConvertBackToInteger (fInt A) /*THIS is the function that will be used to check with the Golden settings table*/
-{
+अटल पूर्णांक ConvertBackToInteger (fInt A) /*THIS is the function that will be used to check with the Golden settings table*/
+अणु
 	fInt fullNumber, scaledDecimal, scaledReal;
 
 	scaledReal.full = GetReal(A) * uPow(10, PRECISION-1); /* DOUBLE CHECK THISSSS!!! */
@@ -384,74 +385,74 @@ static int ConvertBackToInteger (fInt A) /*THIS is the function that will be use
 
 	fullNumber = fAdd(scaledDecimal,scaledReal);
 
-	return fullNumber.full;
-}
+	वापस fullNumber.full;
+पूर्ण
 
-static fInt fGetSquare(fInt A)
-{
-	return fMultiply(A,A);
-}
+अटल fInt fGetSquare(fInt A)
+अणु
+	वापस fMultiply(A,A);
+पूर्ण
 
 /* x_new = x_old - (x_old^2 - C) / (2 * x_old) */
-static fInt fSqrt(fInt num)
-{
-	fInt F_divide_Fprime, Fprime;
+अटल fInt fSqrt(fInt num)
+अणु
+	fInt F_भागide_Fprime, Fprime;
 	fInt test;
-	fInt twoShifted;
-	int seed, counter, error;
+	fInt twoShअगरted;
+	पूर्णांक seed, counter, error;
 	fInt x_new, x_old, C, y;
 
 	fInt fZERO = ConvertToFraction(0);
 
 	/* (0 > num) is the same as (num < 0), i.e., num is negative */
 
-	if (GreaterThan(fZERO, num) || Equal(fZERO, num))
-		return fZERO;
+	अगर (GreaterThan(fZERO, num) || Equal(fZERO, num))
+		वापस fZERO;
 
 	C = num;
 
-	if (num.partial.real > 3000)
+	अगर (num.partial.real > 3000)
 		seed = 60;
-	else if (num.partial.real > 1000)
+	अन्यथा अगर (num.partial.real > 1000)
 		seed = 30;
-	else if (num.partial.real > 100)
+	अन्यथा अगर (num.partial.real > 100)
 		seed = 10;
-	else
+	अन्यथा
 		seed = 2;
 
 	counter = 0;
 
-	if (Equal(num, fZERO)) /*Square Root of Zero is zero */
-		return fZERO;
+	अगर (Equal(num, fZERO)) /*Square Root of Zero is zero */
+		वापस fZERO;
 
-	twoShifted = ConvertToFraction(2);
+	twoShअगरted = ConvertToFraction(2);
 	x_new = ConvertToFraction(seed);
 
-	do {
+	करो अणु
 		counter++;
 
 		x_old.full = x_new.full;
 
-		test = fGetSquare(x_old); /*1.75*1.75 is reverting back to 1 when shifted down */
+		test = fGetSquare(x_old); /*1.75*1.75 is reverting back to 1 when shअगरted करोwn */
 		y = fSubtract(test, C); /*y = f(x) = x^2 - C; */
 
-		Fprime = fMultiply(twoShifted, x_old);
-		F_divide_Fprime = fDivide(y, Fprime);
+		Fprime = fMultiply(twoShअगरted, x_old);
+		F_भागide_Fprime = fDivide(y, Fprime);
 
-		x_new = fSubtract(x_old, F_divide_Fprime);
+		x_new = fSubtract(x_old, F_भागide_Fprime);
 
 		error = ConvertBackToInteger(x_new) - ConvertBackToInteger(x_old);
 
-		if (counter > 20) /*20 is already way too many iterations. If we dont have an answer by then, we never will*/
-			return x_new;
+		अगर (counter > 20) /*20 is alपढ़ोy way too many iterations. If we करोnt have an answer by then, we never will*/
+			वापस x_new;
 
-	} while (uAbs(error) > 0);
+	पूर्ण जबतक (uAbs(error) > 0);
 
-	return (x_new);
-}
+	वापस (x_new);
+पूर्ण
 
-static void SolveQuadracticEqn(fInt A, fInt B, fInt C, fInt Roots[])
-{
+अटल व्योम SolveQuadracticEqn(fInt A, fInt B, fInt C, fInt Roots[])
+अणु
 	fInt *pRoots = &Roots[0];
 	fInt temp, root_first, root_second;
 	fInt f_CONSTANT10, f_CONSTANT100;
@@ -459,11 +460,11 @@ static void SolveQuadracticEqn(fInt A, fInt B, fInt C, fInt Roots[])
 	f_CONSTANT100 = ConvertToFraction(100);
 	f_CONSTANT10 = ConvertToFraction(10);
 
-	while(GreaterThan(A, f_CONSTANT100) || GreaterThan(B, f_CONSTANT100) || GreaterThan(C, f_CONSTANT100)) {
+	जबतक(GreaterThan(A, f_CONSTANT100) || GreaterThan(B, f_CONSTANT100) || GreaterThan(C, f_CONSTANT100)) अणु
 		A = fDivide(A, f_CONSTANT10);
 		B = fDivide(B, f_CONSTANT10);
 		C = fDivide(C, f_CONSTANT10);
-	}
+	पूर्ण
 
 	temp = fMultiply(ConvertToFraction(4), A); /* root = 4*A */
 	temp = fMultiply(temp, C); /* root = 4*A*C */
@@ -481,7 +482,7 @@ static void SolveQuadracticEqn(fInt A, fInt B, fInt C, fInt Roots[])
 
 	*(pRoots + 0) = root_first;
 	*(pRoots + 1) = root_second;
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * SUPPORT FUNCTIONS
@@ -489,13 +490,13 @@ static void SolveQuadracticEqn(fInt A, fInt B, fInt C, fInt Roots[])
  */
 
 /* Conversion Functions */
-static int GetReal (fInt A)
-{
-	return (A.full >> SHIFT_AMOUNT);
-}
+अटल पूर्णांक GetReal (fInt A)
+अणु
+	वापस (A.full >> SHIFT_AMOUNT);
+पूर्ण
 
-static fInt Divide (int X, int Y)
-{
+अटल fInt Divide (पूर्णांक X, पूर्णांक Y)
+अणु
 	fInt A, B, Quotient;
 
 	A.full = X << SHIFT_AMOUNT;
@@ -503,53 +504,53 @@ static fInt Divide (int X, int Y)
 
 	Quotient = fDivide(A, B);
 
-	return Quotient;
-}
+	वापस Quotient;
+पूर्ण
 
-static int uGetScaledDecimal (fInt A) /*Converts the fractional portion to whole integers - Costly function */
-{
-	int dec[PRECISION];
-	int i, scaledDecimal = 0, tmp = A.partial.decimal;
+अटल पूर्णांक uGetScaledDecimal (fInt A) /*Converts the fractional portion to whole पूर्णांकegers - Costly function */
+अणु
+	पूर्णांक dec[PRECISION];
+	पूर्णांक i, scaledDecimal = 0, पंचांगp = A.partial.decimal;
 
-	for (i = 0; i < PRECISION; i++) {
-		dec[i] = tmp / (1 << SHIFT_AMOUNT);
-		tmp = tmp - ((1 << SHIFT_AMOUNT)*dec[i]);
-		tmp *= 10;
+	क्रम (i = 0; i < PRECISION; i++) अणु
+		dec[i] = पंचांगp / (1 << SHIFT_AMOUNT);
+		पंचांगp = पंचांगp - ((1 << SHIFT_AMOUNT)*dec[i]);
+		पंचांगp *= 10;
 		scaledDecimal = scaledDecimal + dec[i]*uPow(10, PRECISION - 1 -i);
-	}
+	पूर्ण
 
-	return scaledDecimal;
-}
+	वापस scaledDecimal;
+पूर्ण
 
-static int uPow(int base, int power)
-{
-	if (power == 0)
-		return 1;
-	else
-		return (base)*uPow(base, power - 1);
-}
+अटल पूर्णांक uPow(पूर्णांक base, पूर्णांक घातer)
+अणु
+	अगर (घातer == 0)
+		वापस 1;
+	अन्यथा
+		वापस (base)*uPow(base, घातer - 1);
+पूर्ण
 
-static int uAbs(int X)
-{
-	if (X < 0)
-		return (X * -1);
-	else
-		return X;
-}
+अटल पूर्णांक uAbs(पूर्णांक X)
+अणु
+	अगर (X < 0)
+		वापस (X * -1);
+	अन्यथा
+		वापस X;
+पूर्ण
 
-static fInt fRoundUpByStepSize(fInt A, fInt fStepSize, bool error_term)
-{
+अटल fInt fRoundUpByStepSize(fInt A, fInt fStepSize, bool error_term)
+अणु
 	fInt solution;
 
 	solution = fDivide(A, fStepSize);
 	solution.partial.decimal = 0; /*All fractional digits changes to 0 */
 
-	if (error_term)
+	अगर (error_term)
 		solution.partial.real += 1; /*Error term of 1 added */
 
 	solution = fMultiply(solution, fStepSize);
 	solution = fAdd(solution, fStepSize);
 
-	return solution;
-}
+	वापस solution;
+पूर्ण
 

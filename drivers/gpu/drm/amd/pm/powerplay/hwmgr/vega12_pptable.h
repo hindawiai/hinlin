@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,32 +21,32 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef _VEGA12_PPTABLE_H_
-#define _VEGA12_PPTABLE_H_
+#अगर_अघोषित _VEGA12_PPTABLE_H_
+#घोषणा _VEGA12_PPTABLE_H_
 
-#pragma pack(push, 1)
+#आशय pack(push, 1)
 
-#define ATOM_VEGA12_PP_THERMALCONTROLLER_NONE           0
-#define ATOM_VEGA12_PP_THERMALCONTROLLER_VEGA12     25
+#घोषणा ATOM_VEGA12_PP_THERMALCONTROLLER_NONE           0
+#घोषणा ATOM_VEGA12_PP_THERMALCONTROLLER_VEGA12     25
 
-#define ATOM_VEGA12_PP_PLATFORM_CAP_POWERPLAY                   0x1
-#define ATOM_VEGA12_PP_PLATFORM_CAP_SBIOSPOWERSOURCE            0x2
-#define ATOM_VEGA12_PP_PLATFORM_CAP_HARDWAREDC                  0x4
-#define ATOM_VEGA12_PP_PLATFORM_CAP_BACO                        0x8
-#define ATOM_VEGA12_PP_PLATFORM_CAP_BAMACO                      0x10
-#define ATOM_VEGA12_PP_PLATFORM_CAP_ENABLESHADOWPSTATE          0x20
+#घोषणा ATOM_VEGA12_PP_PLATFORM_CAP_POWERPLAY                   0x1
+#घोषणा ATOM_VEGA12_PP_PLATFORM_CAP_SBIOSPOWERSOURCE            0x2
+#घोषणा ATOM_VEGA12_PP_PLATFORM_CAP_HARDWAREDC                  0x4
+#घोषणा ATOM_VEGA12_PP_PLATFORM_CAP_BACO                        0x8
+#घोषणा ATOM_VEGA12_PP_PLATFORM_CAP_BAMACO                      0x10
+#घोषणा ATOM_VEGA12_PP_PLATFORM_CAP_ENABLESHADOWPSTATE          0x20
 
-#define ATOM_VEGA12_TABLE_REVISION_VEGA12         9
+#घोषणा ATOM_VEGA12_TABLE_REVISION_VEGA12         9
 
-enum ATOM_VEGA12_ODSETTING_ID {
+क्रमागत ATOM_VEGA12_ODSETTING_ID अणु
   ATOM_VEGA12_ODSETTING_GFXCLKFMAX = 0,
   ATOM_VEGA12_ODSETTING_GFXCLKFMIN,
   ATOM_VEGA12_ODSETTING_VDDGFXCURVEFREQ_P1,
-  ATOM_VEGA12_ODSETTING_VDDGFXCURVEVOLTAGEOFFSET_P1,
+  ATOM_VEGA12_ODSETTING_VDDGFXCURVEVOLTAGखातापूर्णFSET_P1,
   ATOM_VEGA12_ODSETTING_VDDGFXCURVEFREQ_P2,
-  ATOM_VEGA12_ODSETTING_VDDGFXCURVEVOLTAGEOFFSET_P2,
+  ATOM_VEGA12_ODSETTING_VDDGFXCURVEVOLTAGखातापूर्णFSET_P2,
   ATOM_VEGA12_ODSETTING_VDDGFXCURVEFREQ_P3,
-  ATOM_VEGA12_ODSETTING_VDDGFXCURVEVOLTAGEOFFSET_P3,
+  ATOM_VEGA12_ODSETTING_VDDGFXCURVEVOLTAGखातापूर्णFSET_P3,
   ATOM_VEGA12_ODSETTING_UCLKFMAX,
   ATOM_VEGA12_ODSETTING_POWERPERCENTAGE,
   ATOM_VEGA12_ODSETTING_FANRPMMIN,
@@ -53,10 +54,10 @@ enum ATOM_VEGA12_ODSETTING_ID {
   ATOM_VEGA12_ODSETTING_FANTARGETTEMPERATURE,
   ATOM_VEGA12_ODSETTING_OPERATINGTEMPMAX,
   ATOM_VEGA12_ODSETTING_COUNT,
-};
-typedef enum ATOM_VEGA12_ODSETTING_ID ATOM_VEGA12_ODSETTING_ID;
+पूर्ण;
+प्रकार क्रमागत ATOM_VEGA12_ODSETTING_ID ATOM_VEGA12_ODSETTING_ID;
 
-enum ATOM_VEGA12_PPCLOCK_ID {
+क्रमागत ATOM_VEGA12_PPCLOCK_ID अणु
   ATOM_VEGA12_PPCLOCK_GFXCLK = 0,
   ATOM_VEGA12_PPCLOCK_VCLK,
   ATOM_VEGA12_PPCLOCK_DCLK,
@@ -68,20 +69,20 @@ enum ATOM_VEGA12_PPCLOCK_ID {
   ATOM_VEGA12_PPCLOCK_PIXCLK,
   ATOM_VEGA12_PPCLOCK_PHYCLK,
   ATOM_VEGA12_PPCLOCK_COUNT,
-};
-typedef enum ATOM_VEGA12_PPCLOCK_ID ATOM_VEGA12_PPCLOCK_ID;
+पूर्ण;
+प्रकार क्रमागत ATOM_VEGA12_PPCLOCK_ID ATOM_VEGA12_PPCLOCK_ID;
 
 
-typedef struct _ATOM_VEGA12_POWERPLAYTABLE
-{
-      struct atom_common_table_header sHeader;
+प्रकार काष्ठा _ATOM_VEGA12_POWERPLAYTABLE
+अणु
+      काष्ठा atom_common_table_header sHeader;
       UCHAR  ucTableRevision;
       USHORT usTableSize;
       ULONG  ulGoldenPPID;
       ULONG  ulGoldenRevision;
       USHORT usFormatID;
 
-      ULONG  ulPlatformCaps;
+      ULONG  ulPlatक्रमmCaps;
 
       UCHAR  ucThermalControllerType;
 
@@ -90,7 +91,7 @@ typedef struct _ATOM_VEGA12_POWERPLAYTABLE
       USHORT usBoostPowerLimit;
       USHORT usODTurboPowerLimit;
       USHORT usODPowerSavePowerLimit;
-      USHORT usSoftwareShutdownTemp;
+      USHORT usSoftwareShutकरोwnTemp;
 
       ULONG PowerSavingClockMax  [ATOM_VEGA12_PPCLOCK_COUNT];
       ULONG PowerSavingClockMin  [ATOM_VEGA12_PPCLOCK_COUNT];
@@ -102,8 +103,8 @@ typedef struct _ATOM_VEGA12_POWERPLAYTABLE
 
       PPTable_t smcPPTable;
 
-} ATOM_Vega12_POWERPLAYTABLE;
+पूर्ण ATOM_Vega12_POWERPLAYTABLE;
 
-#pragma pack(pop)
+#आशय pack(pop)
 
-#endif
+#पूर्ण_अगर

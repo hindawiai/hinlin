@@ -1,117 +1,118 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2018-2019, Linaro Ltd.
  * Author: Georgi Djakov <georgi.djakov@linaro.org>
  */
 
-#ifndef __LINUX_INTERCONNECT_H
-#define __LINUX_INTERCONNECT_H
+#अगर_अघोषित __LINUX_INTERCONNECT_H
+#घोषणा __LINUX_INTERCONNECT_H
 
-#include <linux/mutex.h>
-#include <linux/types.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/types.h>
 
-/* macros for converting to icc units */
-#define Bps_to_icc(x)	((x) / 1000)
-#define kBps_to_icc(x)	(x)
-#define MBps_to_icc(x)	((x) * 1000)
-#define GBps_to_icc(x)	((x) * 1000 * 1000)
-#define bps_to_icc(x)	(1)
-#define kbps_to_icc(x)	((x) / 8 + ((x) % 8 ? 1 : 0))
-#define Mbps_to_icc(x)	((x) * 1000 / 8)
-#define Gbps_to_icc(x)	((x) * 1000 * 1000 / 8)
+/* macros क्रम converting to icc units */
+#घोषणा Bps_to_icc(x)	((x) / 1000)
+#घोषणा kBps_to_icc(x)	(x)
+#घोषणा MBps_to_icc(x)	((x) * 1000)
+#घोषणा GBps_to_icc(x)	((x) * 1000 * 1000)
+#घोषणा bps_to_icc(x)	(1)
+#घोषणा kbps_to_icc(x)	((x) / 8 + ((x) % 8 ? 1 : 0))
+#घोषणा Mbps_to_icc(x)	((x) * 1000 / 8)
+#घोषणा Gbps_to_icc(x)	((x) * 1000 * 1000 / 8)
 
-struct icc_path;
-struct device;
+काष्ठा icc_path;
+काष्ठा device;
 
 /**
- * struct icc_bulk_data - Data used for bulk icc operations.
+ * काष्ठा icc_bulk_data - Data used क्रम bulk icc operations.
  *
- * @path: reference to the interconnect path (internal use)
+ * @path: reference to the पूर्णांकerconnect path (पूर्णांकernal use)
  * @name: the name from the "interconnect-names" DT property
  * @avg_bw: average bandwidth in icc units
  * @peak_bw: peak bandwidth in icc units
  */
-struct icc_bulk_data {
-	struct icc_path	*path;
-	const char *name;
+काष्ठा icc_bulk_data अणु
+	काष्ठा icc_path	*path;
+	स्थिर अक्षर *name;
 	u32 avg_bw;
 	u32 peak_bw;
-};
+पूर्ण;
 
-int __must_check of_icc_bulk_get(struct device *dev, int num_paths,
-				 struct icc_bulk_data *paths);
-void icc_bulk_put(int num_paths, struct icc_bulk_data *paths);
-int icc_bulk_set_bw(int num_paths, const struct icc_bulk_data *paths);
-int icc_bulk_enable(int num_paths, const struct icc_bulk_data *paths);
-void icc_bulk_disable(int num_paths, const struct icc_bulk_data *paths);
+पूर्णांक __must_check of_icc_bulk_get(काष्ठा device *dev, पूर्णांक num_paths,
+				 काष्ठा icc_bulk_data *paths);
+व्योम icc_bulk_put(पूर्णांक num_paths, काष्ठा icc_bulk_data *paths);
+पूर्णांक icc_bulk_set_bw(पूर्णांक num_paths, स्थिर काष्ठा icc_bulk_data *paths);
+पूर्णांक icc_bulk_enable(पूर्णांक num_paths, स्थिर काष्ठा icc_bulk_data *paths);
+व्योम icc_bulk_disable(पूर्णांक num_paths, स्थिर काष्ठा icc_bulk_data *paths);
 
-#if IS_ENABLED(CONFIG_INTERCONNECT)
+#अगर IS_ENABLED(CONFIG_INTERCONNECT)
 
-struct icc_path *icc_get(struct device *dev, const int src_id,
-			 const int dst_id);
-struct icc_path *of_icc_get(struct device *dev, const char *name);
-struct icc_path *devm_of_icc_get(struct device *dev, const char *name);
-struct icc_path *of_icc_get_by_index(struct device *dev, int idx);
-void icc_put(struct icc_path *path);
-int icc_enable(struct icc_path *path);
-int icc_disable(struct icc_path *path);
-int icc_set_bw(struct icc_path *path, u32 avg_bw, u32 peak_bw);
-void icc_set_tag(struct icc_path *path, u32 tag);
-const char *icc_get_name(struct icc_path *path);
+काष्ठा icc_path *icc_get(काष्ठा device *dev, स्थिर पूर्णांक src_id,
+			 स्थिर पूर्णांक dst_id);
+काष्ठा icc_path *of_icc_get(काष्ठा device *dev, स्थिर अक्षर *name);
+काष्ठा icc_path *devm_of_icc_get(काष्ठा device *dev, स्थिर अक्षर *name);
+काष्ठा icc_path *of_icc_get_by_index(काष्ठा device *dev, पूर्णांक idx);
+व्योम icc_put(काष्ठा icc_path *path);
+पूर्णांक icc_enable(काष्ठा icc_path *path);
+पूर्णांक icc_disable(काष्ठा icc_path *path);
+पूर्णांक icc_set_bw(काष्ठा icc_path *path, u32 avg_bw, u32 peak_bw);
+व्योम icc_set_tag(काष्ठा icc_path *path, u32 tag);
+स्थिर अक्षर *icc_get_name(काष्ठा icc_path *path);
 
-#else
+#अन्यथा
 
-static inline struct icc_path *icc_get(struct device *dev, const int src_id,
-				       const int dst_id)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा icc_path *icc_get(काष्ठा device *dev, स्थिर पूर्णांक src_id,
+				       स्थिर पूर्णांक dst_id)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct icc_path *of_icc_get(struct device *dev,
-					  const char *name)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा icc_path *of_icc_get(काष्ठा device *dev,
+					  स्थिर अक्षर *name)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct icc_path *devm_of_icc_get(struct device *dev,
-						const char *name)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा icc_path *devm_of_icc_get(काष्ठा device *dev,
+						स्थिर अक्षर *name)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct icc_path *of_icc_get_by_index(struct device *dev, int idx)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा icc_path *of_icc_get_by_index(काष्ठा device *dev, पूर्णांक idx)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void icc_put(struct icc_path *path)
-{
-}
+अटल अंतरभूत व्योम icc_put(काष्ठा icc_path *path)
+अणु
+पूर्ण
 
-static inline int icc_enable(struct icc_path *path)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक icc_enable(काष्ठा icc_path *path)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int icc_disable(struct icc_path *path)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक icc_disable(काष्ठा icc_path *path)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int icc_set_bw(struct icc_path *path, u32 avg_bw, u32 peak_bw)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक icc_set_bw(काष्ठा icc_path *path, u32 avg_bw, u32 peak_bw)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void icc_set_tag(struct icc_path *path, u32 tag)
-{
-}
+अटल अंतरभूत व्योम icc_set_tag(काष्ठा icc_path *path, u32 tag)
+अणु
+पूर्ण
 
-static inline const char *icc_get_name(struct icc_path *path)
-{
-	return NULL;
-}
+अटल अंतरभूत स्थिर अक्षर *icc_get_name(काष्ठा icc_path *path)
+अणु
+	वापस शून्य;
+पूर्ण
 
-#endif /* CONFIG_INTERCONNECT */
+#पूर्ण_अगर /* CONFIG_INTERCONNECT */
 
-#endif /* __LINUX_INTERCONNECT_H */
+#पूर्ण_अगर /* __LINUX_INTERCONNECT_H */

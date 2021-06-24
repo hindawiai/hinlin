@@ -1,100 +1,101 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ALPHA_PCI_H
-#define __ALPHA_PCI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ALPHA_PCI_H
+#घोषणा __ALPHA_PCI_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <linux/spinlock.h>
-#include <linux/dma-mapping.h>
-#include <linux/scatterlist.h>
-#include <asm/machvec.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <यंत्र/machvec.h>
 
 /*
- * The following structure is used to manage multiple PCI busses.
+ * The following काष्ठाure is used to manage multiple PCI busses.
  */
 
-struct pci_iommu_arena;
-struct page;
+काष्ठा pci_iommu_arena;
+काष्ठा page;
 
 /* A controller.  Used to manage multiple PCI busses.  */
 
-struct pci_controller {
-	struct pci_controller *next;
-        struct pci_bus *bus;
-	struct resource *io_space;
-	struct resource *mem_space;
+काष्ठा pci_controller अणु
+	काष्ठा pci_controller *next;
+        काष्ठा pci_bus *bus;
+	काष्ठा resource *io_space;
+	काष्ठा resource *mem_space;
 
-	/* The following are for reporting to userland.  The invariant is
-	   that if we report a BWX-capable dense memory, we do not report
-	   a sparse memory at all, even if it exists.  */
-	unsigned long sparse_mem_base;
-	unsigned long dense_mem_base;
-	unsigned long sparse_io_base;
-	unsigned long dense_io_base;
+	/* The following are क्रम reporting to userland.  The invariant is
+	   that अगर we report a BWX-capable dense memory, we करो not report
+	   a sparse memory at all, even अगर it exists.  */
+	अचिन्हित दीर्घ sparse_mem_base;
+	अचिन्हित दीर्घ dense_mem_base;
+	अचिन्हित दीर्घ sparse_io_base;
+	अचिन्हित दीर्घ dense_io_base;
 
 	/* This one's for the kernel only.  It's in KSEG somewhere.  */
-	unsigned long config_space_base;
+	अचिन्हित दीर्घ config_space_base;
 
-	unsigned int index;
+	अचिन्हित पूर्णांक index;
 	/* For compatibility with current (as of July 2003) pciutils
-	   and XFree86. Eventually will be removed. */
-	unsigned int need_domain_info;
+	   and XFree86. Eventually will be हटाओd. */
+	अचिन्हित पूर्णांक need_करोमुख्य_info;
 
-	struct pci_iommu_arena *sg_pci;
-	struct pci_iommu_arena *sg_isa;
+	काष्ठा pci_iommu_arena *sg_pci;
+	काष्ठा pci_iommu_arena *sg_isa;
 
-	void *sysdata;
-};
+	व्योम *sysdata;
+पूर्ण;
 
-/* Override the logic in pci_scan_bus for skipping already-configured
+/* Override the logic in pci_scan_bus क्रम skipping alपढ़ोy-configured
    bus numbers.  */
 
-#define pcibios_assign_all_busses()	1
+#घोषणा pcibios_assign_all_busses()	1
 
-#define PCIBIOS_MIN_IO		alpha_mv.min_io_address
-#define PCIBIOS_MIN_MEM		alpha_mv.min_mem_address
+#घोषणा PCIBIOS_MIN_IO		alpha_mv.min_io_address
+#घोषणा PCIBIOS_MIN_MEM		alpha_mv.min_mem_address
 
 /* IOMMU controls.  */
 
-/* TODO: integrate with include/asm-generic/pci.h ? */
-static inline int pci_get_legacy_ide_irq(struct pci_dev *dev, int channel)
-{
-	return channel ? 15 : 14;
-}
+/* TODO: पूर्णांकegrate with include/यंत्र-generic/pci.h ? */
+अटल अंतरभूत पूर्णांक pci_get_legacy_ide_irq(काष्ठा pci_dev *dev, पूर्णांक channel)
+अणु
+	वापस channel ? 15 : 14;
+पूर्ण
 
-#define pci_domain_nr(bus) ((struct pci_controller *)(bus)->sysdata)->index
+#घोषणा pci_करोमुख्य_nr(bus) ((काष्ठा pci_controller *)(bus)->sysdata)->index
 
-static inline int pci_proc_domain(struct pci_bus *bus)
-{
-	struct pci_controller *hose = bus->sysdata;
-	return hose->need_domain_info;
-}
+अटल अंतरभूत पूर्णांक pci_proc_करोमुख्य(काष्ठा pci_bus *bus)
+अणु
+	काष्ठा pci_controller *hose = bus->sysdata;
+	वापस hose->need_करोमुख्य_info;
+पूर्ण
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-/* Values for the `which' argument to sys_pciconfig_iobase.  */
-#define IOBASE_HOSE		0
-#define IOBASE_SPARSE_MEM	1
-#define IOBASE_DENSE_MEM	2
-#define IOBASE_SPARSE_IO	3
-#define IOBASE_DENSE_IO		4
-#define IOBASE_ROOT_BUS		5
-#define IOBASE_FROM_HOSE	0x10000
+/* Values क्रम the `which' argument to sys_pciconfig_iobase.  */
+#घोषणा IOBASE_HOSE		0
+#घोषणा IOBASE_SPARSE_MEM	1
+#घोषणा IOBASE_DENSE_MEM	2
+#घोषणा IOBASE_SPARSE_IO	3
+#घोषणा IOBASE_DENSE_IO		4
+#घोषणा IOBASE_ROOT_BUS		5
+#घोषणा IOBASE_FROM_HOSE	0x10000
 
-extern struct pci_dev *isa_bridge;
+बाह्य काष्ठा pci_dev *isa_bridge;
 
-extern int pci_legacy_read(struct pci_bus *bus, loff_t port, u32 *val,
-			   size_t count);
-extern int pci_legacy_write(struct pci_bus *bus, loff_t port, u32 val,
-			    size_t count);
-extern int pci_mmap_legacy_page_range(struct pci_bus *bus,
-				      struct vm_area_struct *vma,
-				      enum pci_mmap_state mmap_state);
-extern void pci_adjust_legacy_attr(struct pci_bus *bus,
-				   enum pci_mmap_state mmap_type);
-#define HAVE_PCI_LEGACY	1
+बाह्य पूर्णांक pci_legacy_पढ़ो(काष्ठा pci_bus *bus, loff_t port, u32 *val,
+			   माप_प्रकार count);
+बाह्य पूर्णांक pci_legacy_ग_लिखो(काष्ठा pci_bus *bus, loff_t port, u32 val,
+			    माप_प्रकार count);
+बाह्य पूर्णांक pci_mmap_legacy_page_range(काष्ठा pci_bus *bus,
+				      काष्ठा vm_area_काष्ठा *vma,
+				      क्रमागत pci_mmap_state mmap_state);
+बाह्य व्योम pci_adjust_legacy_attr(काष्ठा pci_bus *bus,
+				   क्रमागत pci_mmap_state mmap_type);
+#घोषणा HAVE_PCI_LEGACY	1
 
-extern int pci_create_resource_files(struct pci_dev *dev);
-extern void pci_remove_resource_files(struct pci_dev *dev);
+बाह्य पूर्णांक pci_create_resource_files(काष्ठा pci_dev *dev);
+बाह्य व्योम pci_हटाओ_resource_files(काष्ठा pci_dev *dev);
 
-#endif /* __ALPHA_PCI_H */
+#पूर्ण_अगर /* __ALPHA_PCI_H */

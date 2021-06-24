@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2020 Intel Corporation */
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
-#include <adf_accel_devices.h>
-#include <adf_cfg.h>
-#include <adf_common_drv.h>
+#समावेश <adf_accel_devices.h>
+#समावेश <adf_cfg.h>
+#समावेश <adf_common_drv.h>
 
-#include "adf_4xxx_hw_data.h"
-#include "qat_crypto.h"
-#include "adf_transport_access_macros.h"
+#समावेश "adf_4xxx_hw_data.h"
+#समावेश "qat_crypto.h"
+#समावेश "adf_transport_access_macros.h"
 
-static const struct pci_device_id adf_pci_tbl[] = {
-	{ PCI_VDEVICE(INTEL, ADF_4XXX_PCI_DEVICE_ID), },
-	{ }
-};
+अटल स्थिर काष्ठा pci_device_id adf_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(INTEL, ADF_4XXX_PCI_DEVICE_ID), पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, adf_pci_tbl);
 
-static void adf_cleanup_accel(struct adf_accel_dev *accel_dev)
-{
-	if (accel_dev->hw_device) {
+अटल व्योम adf_cleanup_accel(काष्ठा adf_accel_dev *accel_dev)
+अणु
+	अगर (accel_dev->hw_device) अणु
 		adf_clean_hw_data_4xxx(accel_dev->hw_device);
-		accel_dev->hw_device = NULL;
-	}
-	adf_cfg_dev_remove(accel_dev);
-	debugfs_remove(accel_dev->debugfs_dir);
-	adf_devmgr_rm_dev(accel_dev, NULL);
-}
+		accel_dev->hw_device = शून्य;
+	पूर्ण
+	adf_cfg_dev_हटाओ(accel_dev);
+	debugfs_हटाओ(accel_dev->debugfs_dir);
+	adf_devmgr_rm_dev(accel_dev, शून्य);
+पूर्ण
 
-static int adf_crypto_dev_config(struct adf_accel_dev *accel_dev)
-{
-	char key[ADF_CFG_MAX_KEY_LEN_IN_BYTES];
-	int banks = GET_MAX_BANKS(accel_dev);
-	int cpus = num_online_cpus();
-	unsigned long bank, val;
-	int instances;
-	int ret;
-	int i;
+अटल पूर्णांक adf_crypto_dev_config(काष्ठा adf_accel_dev *accel_dev)
+अणु
+	अक्षर key[ADF_CFG_MAX_KEY_LEN_IN_BYTES];
+	पूर्णांक banks = GET_MAX_BANKS(accel_dev);
+	पूर्णांक cpus = num_online_cpus();
+	अचिन्हित दीर्घ bank, val;
+	पूर्णांक instances;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (adf_hw_dev_has_crypto(accel_dev))
+	अगर (adf_hw_dev_has_crypto(accel_dev))
 		instances = min(cpus, banks / 2);
-	else
+	अन्यथा
 		instances = 0;
 
 	ret = adf_cfg_section_add(accel_dev, ADF_KERNEL_SEC);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	ret = adf_cfg_section_add(accel_dev, "Accelerator0");
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	for (i = 0; i < instances; i++) {
+	क्रम (i = 0; i < instances; i++) अणु
 		val = i;
 		bank = i * 2;
-		snprintf(key, sizeof(key), ADF_CY "%d" ADF_RING_ASYM_BANK_NUM, i);
+		snम_लिखो(key, माप(key), ADF_CY "%d" ADF_RING_ASYM_BANK_NUM, i);
 		ret = adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
 						  key, &bank, ADF_DEC);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		bank += 1;
-		snprintf(key, sizeof(key), ADF_CY "%d" ADF_RING_SYM_BANK_NUM, i);
+		snम_लिखो(key, माप(key), ADF_CY "%d" ADF_RING_SYM_BANK_NUM, i);
 		ret = adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
 						  key, &bank, ADF_DEC);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
-		snprintf(key, sizeof(key), ADF_CY "%d" ADF_ETRMGR_CORE_AFFINITY,
+		snम_लिखो(key, माप(key), ADF_CY "%d" ADF_ETRMGR_CORE_AFFINITY,
 			 i);
 		ret = adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
 						  key, &val, ADF_DEC);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
-		snprintf(key, sizeof(key), ADF_CY "%d" ADF_RING_ASYM_SIZE, i);
+		snम_लिखो(key, माप(key), ADF_CY "%d" ADF_RING_ASYM_SIZE, i);
 		val = 128;
 		ret = adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
 						  key, &val, ADF_DEC);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		val = 512;
-		snprintf(key, sizeof(key), ADF_CY "%d" ADF_RING_SYM_SIZE, i);
+		snम_लिखो(key, माप(key), ADF_CY "%d" ADF_RING_SYM_SIZE, i);
 		ret = adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
 						  key, &val, ADF_DEC);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		val = 0;
-		snprintf(key, sizeof(key), ADF_CY "%d" ADF_RING_ASYM_TX, i);
+		snम_लिखो(key, माप(key), ADF_CY "%d" ADF_RING_ASYM_TX, i);
 		ret = adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
 						  key, &val, ADF_DEC);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		val = 0;
-		snprintf(key, sizeof(key), ADF_CY "%d" ADF_RING_SYM_TX, i);
+		snम_लिखो(key, माप(key), ADF_CY "%d" ADF_RING_SYM_TX, i);
 		ret = adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
 						  key, &val, ADF_DEC);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		val = 1;
-		snprintf(key, sizeof(key), ADF_CY "%d" ADF_RING_ASYM_RX, i);
+		snम_लिखो(key, माप(key), ADF_CY "%d" ADF_RING_ASYM_RX, i);
 		ret = adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
 						  key, &val, ADF_DEC);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		val = 1;
-		snprintf(key, sizeof(key), ADF_CY "%d" ADF_RING_SYM_RX, i);
+		snम_लिखो(key, माप(key), ADF_CY "%d" ADF_RING_SYM_RX, i);
 		ret = adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC,
 						  key, &val, ADF_DEC);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		val = ADF_COALESCING_DEF_TIME;
-		snprintf(key, sizeof(key), ADF_ETRMGR_COALESCE_TIMER_FORMAT, i);
+		snम_लिखो(key, माप(key), ADF_ETRMGR_COALESCE_TIMER_FORMAT, i);
 		ret = adf_cfg_add_key_value_param(accel_dev, "Accelerator0",
 						  key, &val, ADF_DEC);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
 	val = i;
 	ret = adf_cfg_add_key_value_param(accel_dev, ADF_KERNEL_SEC, ADF_NUM_CY,
 					  &val, ADF_DEC);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	set_bit(ADF_STATUS_CONFIGURED, &accel_dev->status);
-	return 0;
+	वापस 0;
 err:
 	dev_err(&GET_DEV(accel_dev), "Failed to start QAT accel dev\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int adf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	struct adf_accel_dev *accel_dev;
-	struct adf_accel_pci *accel_pci_dev;
-	struct adf_hw_device_data *hw_data;
-	char name[ADF_DEVICE_NAME_LENGTH];
-	unsigned int i, bar_nr;
-	unsigned long bar_mask;
-	struct adf_bar *bar;
-	int ret;
+अटल पूर्णांक adf_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा adf_accel_dev *accel_dev;
+	काष्ठा adf_accel_pci *accel_pci_dev;
+	काष्ठा adf_hw_device_data *hw_data;
+	अक्षर name[ADF_DEVICE_NAME_LENGTH];
+	अचिन्हित पूर्णांक i, bar_nr;
+	अचिन्हित दीर्घ bar_mask;
+	काष्ठा adf_bar *bar;
+	पूर्णांक ret;
 
-	if (num_possible_nodes() > 1 && dev_to_node(&pdev->dev) < 0) {
+	अगर (num_possible_nodes() > 1 && dev_to_node(&pdev->dev) < 0) अणु
 		/*
 		 * If the accelerator is connected to a node with no memory
-		 * there is no point in using the accelerator since the remote
+		 * there is no poपूर्णांक in using the accelerator since the remote
 		 * memory transaction will be very slow.
 		 */
 		dev_err(&pdev->dev, "Invalid NUMA configuration.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	accel_dev = devm_kzalloc(&pdev->dev, sizeof(*accel_dev), GFP_KERNEL);
-	if (!accel_dev)
-		return -ENOMEM;
+	accel_dev = devm_kzalloc(&pdev->dev, माप(*accel_dev), GFP_KERNEL);
+	अगर (!accel_dev)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&accel_dev->crypto_list);
 	accel_pci_dev = &accel_dev->accel_pci_dev;
@@ -169,69 +170,69 @@ static int adf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	/*
 	 * Add accel device to accel table
-	 * This should be called before adf_cleanup_accel is called
+	 * This should be called beक्रमe adf_cleanup_accel is called
 	 */
-	if (adf_devmgr_add_dev(accel_dev, NULL)) {
+	अगर (adf_devmgr_add_dev(accel_dev, शून्य)) अणु
 		dev_err(&pdev->dev, "Failed to add new accelerator device.\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	accel_dev->owner = THIS_MODULE;
-	/* Allocate and initialise device hardware meta-data structure */
-	hw_data = devm_kzalloc(&pdev->dev, sizeof(*hw_data), GFP_KERNEL);
-	if (!hw_data) {
+	/* Allocate and initialise device hardware meta-data काष्ठाure */
+	hw_data = devm_kzalloc(&pdev->dev, माप(*hw_data), GFP_KERNEL);
+	अगर (!hw_data) अणु
 		ret = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	accel_dev->hw_device = hw_data;
 	adf_init_hw_data_4xxx(accel_dev->hw_device);
 
-	pci_read_config_byte(pdev, PCI_REVISION_ID, &accel_pci_dev->revid);
-	pci_read_config_dword(pdev, ADF_4XXX_FUSECTL4_OFFSET, &hw_data->fuses);
+	pci_पढ़ो_config_byte(pdev, PCI_REVISION_ID, &accel_pci_dev->revid);
+	pci_पढ़ो_config_dword(pdev, ADF_4XXX_FUSECTL4_OFFSET, &hw_data->fuses);
 
 	/* Get Accelerators and Accelerators Engines masks */
 	hw_data->accel_mask = hw_data->get_accel_mask(hw_data);
 	hw_data->ae_mask = hw_data->get_ae_mask(hw_data);
 	accel_pci_dev->sku = hw_data->get_sku(hw_data);
 	/* If the device has no acceleration engines then ignore it */
-	if (!hw_data->accel_mask || !hw_data->ae_mask ||
-	    (~hw_data->ae_mask & 0x01)) {
+	अगर (!hw_data->accel_mask || !hw_data->ae_mask ||
+	    (~hw_data->ae_mask & 0x01)) अणु
 		dev_err(&pdev->dev, "No acceleration units found.\n");
 		ret = -EFAULT;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* Create dev top level debugfs entry */
-	snprintf(name, sizeof(name), "%s%s_%s", ADF_DEVICE_NAME_PREFIX,
+	snम_लिखो(name, माप(name), "%s%s_%s", ADF_DEVICE_NAME_PREFIX,
 		 hw_data->dev_class->name, pci_name(pdev));
 
-	accel_dev->debugfs_dir = debugfs_create_dir(name, NULL);
+	accel_dev->debugfs_dir = debugfs_create_dir(name, शून्य);
 
 	/* Create device configuration table */
 	ret = adf_cfg_dev_add(accel_dev);
-	if (ret)
-		goto out_err;
+	अगर (ret)
+		जाओ out_err;
 
 	/* Enable PCI device */
 	ret = pcim_enable_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Can't enable PCI device.\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	/* Set DMA identifier */
-	if (pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) {
-		if ((pci_set_dma_mask(pdev, DMA_BIT_MASK(32)))) {
+	/* Set DMA identअगरier */
+	अगर (pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) अणु
+		अगर ((pci_set_dma_mask(pdev, DMA_BIT_MASK(32)))) अणु
 			dev_err(&pdev->dev, "No usable DMA configuration.\n");
 			ret = -EFAULT;
-			goto out_err;
-		} else {
+			जाओ out_err;
+		पूर्ण अन्यथा अणु
 			pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
-	}
+	पूर्ण
 
 	/* Get accelerator capabilities mask */
 	hw_data->accel_capabilities_mask = hw_data->get_accel_cap(accel_dev);
@@ -240,77 +241,77 @@ static int adf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	bar_mask = pci_select_bars(pdev, IORESOURCE_MEM) & ADF_4XXX_BAR_MASK;
 
 	ret = pcim_iomap_regions_request_all(pdev, bar_mask, pci_name(pdev));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to map pci regions.\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	i = 0;
-	for_each_set_bit(bar_nr, &bar_mask, PCI_STD_NUM_BARS) {
+	क्रम_each_set_bit(bar_nr, &bar_mask, PCI_STD_NUM_BARS) अणु
 		bar = &accel_pci_dev->pci_bars[i++];
 		bar->virt_addr = pcim_iomap_table(pdev)[bar_nr];
-	}
+	पूर्ण
 
 	pci_set_master(pdev);
 
-	if (adf_enable_aer(accel_dev)) {
+	अगर (adf_enable_aer(accel_dev)) अणु
 		dev_err(&pdev->dev, "Failed to enable aer.\n");
 		ret = -EFAULT;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	if (pci_save_state(pdev)) {
+	अगर (pci_save_state(pdev)) अणु
 		dev_err(&pdev->dev, "Failed to save pci state.\n");
 		ret = -ENOMEM;
-		goto out_err_disable_aer;
-	}
+		जाओ out_err_disable_aer;
+	पूर्ण
 
 	ret = adf_crypto_dev_config(accel_dev);
-	if (ret)
-		goto out_err_disable_aer;
+	अगर (ret)
+		जाओ out_err_disable_aer;
 
 	ret = adf_dev_init(accel_dev);
-	if (ret)
-		goto out_err_dev_shutdown;
+	अगर (ret)
+		जाओ out_err_dev_shutकरोwn;
 
 	ret = adf_dev_start(accel_dev);
-	if (ret)
-		goto out_err_dev_stop;
+	अगर (ret)
+		जाओ out_err_dev_stop;
 
-	return ret;
+	वापस ret;
 
 out_err_dev_stop:
 	adf_dev_stop(accel_dev);
-out_err_dev_shutdown:
-	adf_dev_shutdown(accel_dev);
+out_err_dev_shutकरोwn:
+	adf_dev_shutकरोwn(accel_dev);
 out_err_disable_aer:
 	adf_disable_aer(accel_dev);
 out_err:
 	adf_cleanup_accel(accel_dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void adf_remove(struct pci_dev *pdev)
-{
-	struct adf_accel_dev *accel_dev = adf_devmgr_pci_to_accel_dev(pdev);
+अटल व्योम adf_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा adf_accel_dev *accel_dev = adf_devmgr_pci_to_accel_dev(pdev);
 
-	if (!accel_dev) {
+	अगर (!accel_dev) अणु
 		pr_err("QAT: Driver removal failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	adf_dev_stop(accel_dev);
-	adf_dev_shutdown(accel_dev);
+	adf_dev_shutकरोwn(accel_dev);
 	adf_disable_aer(accel_dev);
 	adf_cleanup_accel(accel_dev);
-}
+पूर्ण
 
-static struct pci_driver adf_driver = {
+अटल काष्ठा pci_driver adf_driver = अणु
 	.id_table = adf_pci_tbl,
 	.name = ADF_4XXX_DEVICE_NAME,
 	.probe = adf_probe,
-	.remove = adf_remove,
+	.हटाओ = adf_हटाओ,
 	.sriov_configure = adf_sriov_configure,
-};
+पूर्ण;
 
 module_pci_driver(adf_driver);
 

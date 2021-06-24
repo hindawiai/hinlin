@@ -1,325 +1,326 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * OPAL IMC interface detection driver
- * Supported on POWERNV platform
+ * OPAL IMC पूर्णांकerface detection driver
+ * Supported on POWERNV platक्रमm
  *
  * Copyright	(C) 2017 Madhavan Srinivasan, IBM Corporation.
  *		(C) 2017 Anju T Sudhakar, IBM Corporation.
  *		(C) 2017 Hemant K Shaw, IBM Corporation.
  */
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/crash_dump.h>
-#include <asm/opal.h>
-#include <asm/io.h>
-#include <asm/imc-pmu.h>
-#include <asm/cputhreads.h>
-#include <asm/debugfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/crash_dump.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/imc-pmu.h>
+#समावेश <यंत्र/cputhपढ़ोs.h>
+#समावेश <यंत्र/debugfs.h>
 
-static struct dentry *imc_debugfs_parent;
+अटल काष्ठा dentry *imc_debugfs_parent;
 
 /* Helpers to export imc command and mode via debugfs */
-static int imc_mem_get(void *data, u64 *val)
-{
+अटल पूर्णांक imc_mem_get(व्योम *data, u64 *val)
+अणु
 	*val = cpu_to_be64(*(u64 *)data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int imc_mem_set(void *data, u64 val)
-{
+अटल पूर्णांक imc_mem_set(व्योम *data, u64 val)
+अणु
 	*(u64 *)data = cpu_to_be64(val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_DEBUGFS_ATTRIBUTE(fops_imc_x64, imc_mem_get, imc_mem_set, "0x%016llx\n");
 
-static void imc_debugfs_create_x64(const char *name, umode_t mode,
-				   struct dentry *parent, u64  *value)
-{
+अटल व्योम imc_debugfs_create_x64(स्थिर अक्षर *name, umode_t mode,
+				   काष्ठा dentry *parent, u64  *value)
+अणु
 	debugfs_create_file_unsafe(name, mode, parent, value, &fops_imc_x64);
-}
+पूर्ण
 
 /*
- * export_imc_mode_and_cmd: Create a debugfs interface
- *                     for imc_cmd and imc_mode
- *                     for each node in the system.
- *  imc_mode and imc_cmd can be changed by echo into
- *  this interface.
+ * export_imc_mode_and_cmd: Create a debugfs पूर्णांकerface
+ *                     क्रम imc_cmd and imc_mode
+ *                     क्रम each node in the प्रणाली.
+ *  imc_mode and imc_cmd can be changed by echo पूर्णांकo
+ *  this पूर्णांकerface.
  */
-static void export_imc_mode_and_cmd(struct device_node *node,
-				    struct imc_pmu *pmu_ptr)
-{
-	static u64 loc, *imc_mode_addr, *imc_cmd_addr;
-	char mode[16], cmd[16];
+अटल व्योम export_imc_mode_and_cmd(काष्ठा device_node *node,
+				    काष्ठा imc_pmu *pmu_ptr)
+अणु
+	अटल u64 loc, *imc_mode_addr, *imc_cmd_addr;
+	अक्षर mode[16], cmd[16];
 	u32 cb_offset;
-	struct imc_mem_info *ptr = pmu_ptr->mem_info;
+	काष्ठा imc_mem_info *ptr = pmu_ptr->mem_info;
 
-	imc_debugfs_parent = debugfs_create_dir("imc", powerpc_debugfs_root);
+	imc_debugfs_parent = debugfs_create_dir("imc", घातerpc_debugfs_root);
 
-	if (of_property_read_u32(node, "cb_offset", &cb_offset))
+	अगर (of_property_पढ़ो_u32(node, "cb_offset", &cb_offset))
 		cb_offset = IMC_CNTL_BLK_OFFSET;
 
-	while (ptr->vbase != NULL) {
+	जबतक (ptr->vbase != शून्य) अणु
 		loc = (u64)(ptr->vbase) + cb_offset;
 		imc_mode_addr = (u64 *)(loc + IMC_CNTL_BLK_MODE_OFFSET);
-		sprintf(mode, "imc_mode_%d", (u32)(ptr->id));
+		प्र_लिखो(mode, "imc_mode_%d", (u32)(ptr->id));
 		imc_debugfs_create_x64(mode, 0600, imc_debugfs_parent,
 				       imc_mode_addr);
 
 		imc_cmd_addr = (u64 *)(loc + IMC_CNTL_BLK_CMD_OFFSET);
-		sprintf(cmd, "imc_cmd_%d", (u32)(ptr->id));
+		प्र_लिखो(cmd, "imc_cmd_%d", (u32)(ptr->id));
 		imc_debugfs_create_x64(cmd, 0600, imc_debugfs_parent,
 				       imc_cmd_addr);
 		ptr++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * imc_get_mem_addr_nest: Function to get nest counter memory region
- * for each chip
+ * क्रम each chip
  */
-static int imc_get_mem_addr_nest(struct device_node *node,
-				 struct imc_pmu *pmu_ptr,
+अटल पूर्णांक imc_get_mem_addr_nest(काष्ठा device_node *node,
+				 काष्ठा imc_pmu *pmu_ptr,
 				 u32 offset)
-{
-	int nr_chips = 0, i;
+अणु
+	पूर्णांक nr_chips = 0, i;
 	u64 *base_addr_arr, baddr;
 	u32 *chipid_arr;
 
 	nr_chips = of_property_count_u32_elems(node, "chip-id");
-	if (nr_chips <= 0)
-		return -ENODEV;
+	अगर (nr_chips <= 0)
+		वापस -ENODEV;
 
-	base_addr_arr = kcalloc(nr_chips, sizeof(*base_addr_arr), GFP_KERNEL);
-	if (!base_addr_arr)
-		return -ENOMEM;
+	base_addr_arr = kसुस्मृति(nr_chips, माप(*base_addr_arr), GFP_KERNEL);
+	अगर (!base_addr_arr)
+		वापस -ENOMEM;
 
-	chipid_arr = kcalloc(nr_chips, sizeof(*chipid_arr), GFP_KERNEL);
-	if (!chipid_arr) {
-		kfree(base_addr_arr);
-		return -ENOMEM;
-	}
+	chipid_arr = kसुस्मृति(nr_chips, माप(*chipid_arr), GFP_KERNEL);
+	अगर (!chipid_arr) अणु
+		kमुक्त(base_addr_arr);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (of_property_read_u32_array(node, "chip-id", chipid_arr, nr_chips))
-		goto error;
+	अगर (of_property_पढ़ो_u32_array(node, "chip-id", chipid_arr, nr_chips))
+		जाओ error;
 
-	if (of_property_read_u64_array(node, "base-addr", base_addr_arr,
+	अगर (of_property_पढ़ो_u64_array(node, "base-addr", base_addr_arr,
 								nr_chips))
-		goto error;
+		जाओ error;
 
-	pmu_ptr->mem_info = kcalloc(nr_chips + 1, sizeof(*pmu_ptr->mem_info),
+	pmu_ptr->mem_info = kसुस्मृति(nr_chips + 1, माप(*pmu_ptr->mem_info),
 				    GFP_KERNEL);
-	if (!pmu_ptr->mem_info)
-		goto error;
+	अगर (!pmu_ptr->mem_info)
+		जाओ error;
 
-	for (i = 0; i < nr_chips; i++) {
+	क्रम (i = 0; i < nr_chips; i++) अणु
 		pmu_ptr->mem_info[i].id = chipid_arr[i];
 		baddr = base_addr_arr[i] + offset;
 		pmu_ptr->mem_info[i].vbase = phys_to_virt(baddr);
-	}
+	पूर्ण
 
 	pmu_ptr->imc_counter_mmaped = true;
-	kfree(base_addr_arr);
-	kfree(chipid_arr);
-	return 0;
+	kमुक्त(base_addr_arr);
+	kमुक्त(chipid_arr);
+	वापस 0;
 
 error:
-	kfree(base_addr_arr);
-	kfree(chipid_arr);
-	return -1;
-}
+	kमुक्त(base_addr_arr);
+	kमुक्त(chipid_arr);
+	वापस -1;
+पूर्ण
 
 /*
  * imc_pmu_create : Takes the parent device which is the pmu unit, pmu_index
- *		    and domain as the inputs.
- * Allocates memory for the struct imc_pmu, sets up its domain, size and offsets
+ *		    and करोमुख्य as the inमाला_दो.
+ * Allocates memory क्रम the काष्ठा imc_pmu, sets up its करोमुख्य, size and offsets
  */
-static struct imc_pmu *imc_pmu_create(struct device_node *parent, int pmu_index, int domain)
-{
-	int ret = 0;
-	struct imc_pmu *pmu_ptr;
+अटल काष्ठा imc_pmu *imc_pmu_create(काष्ठा device_node *parent, पूर्णांक pmu_index, पूर्णांक करोमुख्य)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा imc_pmu *pmu_ptr;
 	u32 offset;
 
-	/* Return for unknown domain */
-	if (domain < 0)
-		return NULL;
+	/* Return क्रम unknown करोमुख्य */
+	अगर (करोमुख्य < 0)
+		वापस शून्य;
 
-	/* memory for pmu */
-	pmu_ptr = kzalloc(sizeof(*pmu_ptr), GFP_KERNEL);
-	if (!pmu_ptr)
-		return NULL;
+	/* memory क्रम pmu */
+	pmu_ptr = kzalloc(माप(*pmu_ptr), GFP_KERNEL);
+	अगर (!pmu_ptr)
+		वापस शून्य;
 
-	/* Set the domain */
-	pmu_ptr->domain = domain;
+	/* Set the करोमुख्य */
+	pmu_ptr->करोमुख्य = करोमुख्य;
 
-	ret = of_property_read_u32(parent, "size", &pmu_ptr->counter_mem_size);
-	if (ret)
-		goto free_pmu;
+	ret = of_property_पढ़ो_u32(parent, "size", &pmu_ptr->counter_mem_size);
+	अगर (ret)
+		जाओ मुक्त_pmu;
 
-	if (!of_property_read_u32(parent, "offset", &offset)) {
-		if (imc_get_mem_addr_nest(parent, pmu_ptr, offset))
-			goto free_pmu;
-	}
+	अगर (!of_property_पढ़ो_u32(parent, "offset", &offset)) अणु
+		अगर (imc_get_mem_addr_nest(parent, pmu_ptr, offset))
+			जाओ मुक्त_pmu;
+	पूर्ण
 
-	/* Function to register IMC pmu */
+	/* Function to रेजिस्टर IMC pmu */
 	ret = init_imc_pmu(parent, pmu_ptr, pmu_index);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("IMC PMU %s Register failed\n", pmu_ptr->pmu.name);
-		kfree(pmu_ptr->pmu.name);
-		if (pmu_ptr->domain == IMC_DOMAIN_NEST)
-			kfree(pmu_ptr->mem_info);
-		kfree(pmu_ptr);
-		return NULL;
-	}
+		kमुक्त(pmu_ptr->pmu.name);
+		अगर (pmu_ptr->करोमुख्य == IMC_DOMAIN_NEST)
+			kमुक्त(pmu_ptr->mem_info);
+		kमुक्त(pmu_ptr);
+		वापस शून्य;
+	पूर्ण
 
-	return pmu_ptr;
+	वापस pmu_ptr;
 
-free_pmu:
-	kfree(pmu_ptr);
-	return NULL;
-}
+मुक्त_pmu:
+	kमुक्त(pmu_ptr);
+	वापस शून्य;
+पूर्ण
 
-static void disable_nest_pmu_counters(void)
-{
-	int nid, cpu;
-	const struct cpumask *l_cpumask;
+अटल व्योम disable_nest_pmu_counters(व्योम)
+अणु
+	पूर्णांक nid, cpu;
+	स्थिर काष्ठा cpumask *l_cpumask;
 
 	get_online_cpus();
-	for_each_node_with_cpus(nid) {
+	क्रम_each_node_with_cpus(nid) अणु
 		l_cpumask = cpumask_of_node(nid);
 		cpu = cpumask_first_and(l_cpumask, cpu_online_mask);
-		if (cpu >= nr_cpu_ids)
-			continue;
+		अगर (cpu >= nr_cpu_ids)
+			जारी;
 		opal_imc_counters_stop(OPAL_IMC_COUNTERS_NEST,
 				       get_hard_smp_processor_id(cpu));
-	}
+	पूर्ण
 	put_online_cpus();
-}
+पूर्ण
 
-static void disable_core_pmu_counters(void)
-{
+अटल व्योम disable_core_pmu_counters(व्योम)
+अणु
 	cpumask_t cores_map;
-	int cpu, rc;
+	पूर्णांक cpu, rc;
 
 	get_online_cpus();
 	/* Disable the IMC Core functions */
 	cores_map = cpu_online_cores_map();
-	for_each_cpu(cpu, &cores_map) {
+	क्रम_each_cpu(cpu, &cores_map) अणु
 		rc = opal_imc_counters_stop(OPAL_IMC_COUNTERS_CORE,
 					    get_hard_smp_processor_id(cpu));
-		if (rc)
+		अगर (rc)
 			pr_err("%s: Failed to stop Core (cpu = %d)\n",
 				__FUNCTION__, cpu);
-	}
+	पूर्ण
 	put_online_cpus();
-}
+पूर्ण
 
-int get_max_nest_dev(void)
-{
-	struct device_node *node;
+पूर्णांक get_max_nest_dev(व्योम)
+अणु
+	काष्ठा device_node *node;
 	u32 pmu_units = 0, type;
 
-	for_each_compatible_node(node, NULL, IMC_DTB_UNIT_COMPAT) {
-		if (of_property_read_u32(node, "type", &type))
-			continue;
+	क्रम_each_compatible_node(node, शून्य, IMC_DTB_UNIT_COMPAT) अणु
+		अगर (of_property_पढ़ो_u32(node, "type", &type))
+			जारी;
 
-		if (type == IMC_TYPE_CHIP)
+		अगर (type == IMC_TYPE_CHIP)
 			pmu_units++;
-	}
+	पूर्ण
 
-	return pmu_units;
-}
+	वापस pmu_units;
+पूर्ण
 
-static int opal_imc_counters_probe(struct platform_device *pdev)
-{
-	struct device_node *imc_dev = pdev->dev.of_node;
-	struct imc_pmu *pmu;
-	int pmu_count = 0, domain;
-	bool core_imc_reg = false, thread_imc_reg = false;
+अटल पूर्णांक opal_imc_counters_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *imc_dev = pdev->dev.of_node;
+	काष्ठा imc_pmu *pmu;
+	पूर्णांक pmu_count = 0, करोमुख्य;
+	bool core_imc_reg = false, thपढ़ो_imc_reg = false;
 	u32 type;
 
 	/*
-	 * Check whether this is kdump kernel. If yes, force the engines to
-	 * stop and return.
+	 * Check whether this is kdump kernel. If yes, क्रमce the engines to
+	 * stop and वापस.
 	 */
-	if (is_kdump_kernel()) {
+	अगर (is_kdump_kernel()) अणु
 		disable_nest_pmu_counters();
 		disable_core_pmu_counters();
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for_each_compatible_node(imc_dev, NULL, IMC_DTB_UNIT_COMPAT) {
-		pmu = NULL;
-		if (of_property_read_u32(imc_dev, "type", &type)) {
+	क्रम_each_compatible_node(imc_dev, शून्य, IMC_DTB_UNIT_COMPAT) अणु
+		pmu = शून्य;
+		अगर (of_property_पढ़ो_u32(imc_dev, "type", &type)) अणु
 			pr_warn("IMC Device without type property\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		switch (type) {
-		case IMC_TYPE_CHIP:
-			domain = IMC_DOMAIN_NEST;
-			break;
-		case IMC_TYPE_CORE:
-			domain =IMC_DOMAIN_CORE;
-			break;
-		case IMC_TYPE_THREAD:
-			domain = IMC_DOMAIN_THREAD;
-			break;
-		case IMC_TYPE_TRACE:
-			domain = IMC_DOMAIN_TRACE;
-			break;
-		default:
+		चयन (type) अणु
+		हाल IMC_TYPE_CHIP:
+			करोमुख्य = IMC_DOMAIN_NEST;
+			अवरोध;
+		हाल IMC_TYPE_CORE:
+			करोमुख्य =IMC_DOMAIN_CORE;
+			अवरोध;
+		हाल IMC_TYPE_THREAD:
+			करोमुख्य = IMC_DOMAIN_THREAD;
+			अवरोध;
+		हाल IMC_TYPE_TRACE:
+			करोमुख्य = IMC_DOMAIN_TRACE;
+			अवरोध;
+		शेष:
 			pr_warn("IMC Unknown Device type \n");
-			domain = -1;
-			break;
-		}
+			करोमुख्य = -1;
+			अवरोध;
+		पूर्ण
 
-		pmu = imc_pmu_create(imc_dev, pmu_count, domain);
-		if (pmu != NULL) {
-			if (domain == IMC_DOMAIN_NEST) {
-				if (!imc_debugfs_parent)
+		pmu = imc_pmu_create(imc_dev, pmu_count, करोमुख्य);
+		अगर (pmu != शून्य) अणु
+			अगर (करोमुख्य == IMC_DOMAIN_NEST) अणु
+				अगर (!imc_debugfs_parent)
 					export_imc_mode_and_cmd(imc_dev, pmu);
 				pmu_count++;
-			}
-			if (domain == IMC_DOMAIN_CORE)
+			पूर्ण
+			अगर (करोमुख्य == IMC_DOMAIN_CORE)
 				core_imc_reg = true;
-			if (domain == IMC_DOMAIN_THREAD)
-				thread_imc_reg = true;
-		}
-	}
+			अगर (करोमुख्य == IMC_DOMAIN_THREAD)
+				thपढ़ो_imc_reg = true;
+		पूर्ण
+	पूर्ण
 
-	/* If core imc is not registered, unregister thread-imc */
-	if (!core_imc_reg && thread_imc_reg)
-		unregister_thread_imc();
+	/* If core imc is not रेजिस्टरed, unरेजिस्टर thपढ़ो-imc */
+	अगर (!core_imc_reg && thपढ़ो_imc_reg)
+		unरेजिस्टर_thपढ़ो_imc();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void opal_imc_counters_shutdown(struct platform_device *pdev)
-{
+अटल व्योम opal_imc_counters_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
 	/*
 	 * Function only stops the engines which is bare minimum.
 	 * TODO: Need to handle proper memory cleanup and pmu
-	 * unregister.
+	 * unरेजिस्टर.
 	 */
 	disable_nest_pmu_counters();
 	disable_core_pmu_counters();
-}
+पूर्ण
 
-static const struct of_device_id opal_imc_match[] = {
-	{ .compatible = IMC_DTB_COMPAT },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id opal_imc_match[] = अणु
+	अणु .compatible = IMC_DTB_COMPAT पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver opal_imc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver opal_imc_driver = अणु
+	.driver = अणु
 		.name = "opal-imc-counters",
 		.of_match_table = opal_imc_match,
-	},
+	पूर्ण,
 	.probe = opal_imc_counters_probe,
-	.shutdown = opal_imc_counters_shutdown,
-};
+	.shutकरोwn = opal_imc_counters_shutकरोwn,
+पूर्ण;
 
-builtin_platform_driver(opal_imc_driver);
+builtin_platक्रमm_driver(opal_imc_driver);

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,251 +24,251 @@
  *
  */
 
-#include "dm_services.h"
+#समावेश "dm_services.h"
 
-#include "ObjectID.h"
-#include "atomfirmware.h"
+#समावेश "ObjectID.h"
+#समावेश "atomfirmware.h"
 
-#include "include/bios_parser_types.h"
+#समावेश "include/bios_parser_types.h"
 
-#include "command_table_helper2.h"
+#समावेश "command_table_helper2.h"
 
 bool dal_bios_parser_init_cmd_tbl_helper2(
-	const struct command_table_helper **h,
-	enum dce_version dce)
-{
-	switch (dce) {
-#if defined(CONFIG_DRM_AMD_DC_SI)
-	case DCE_VERSION_6_0:
-	case DCE_VERSION_6_1:
-	case DCE_VERSION_6_4:
+	स्थिर काष्ठा command_table_helper **h,
+	क्रमागत dce_version dce)
+अणु
+	चयन (dce) अणु
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+	हाल DCE_VERSION_6_0:
+	हाल DCE_VERSION_6_1:
+	हाल DCE_VERSION_6_4:
 		*h = dal_cmd_tbl_helper_dce60_get_table();
-		return true;
-#endif
+		वापस true;
+#पूर्ण_अगर
 
-	case DCE_VERSION_8_0:
-	case DCE_VERSION_8_1:
-	case DCE_VERSION_8_3:
+	हाल DCE_VERSION_8_0:
+	हाल DCE_VERSION_8_1:
+	हाल DCE_VERSION_8_3:
 		*h = dal_cmd_tbl_helper_dce80_get_table();
-		return true;
+		वापस true;
 
-	case DCE_VERSION_10_0:
+	हाल DCE_VERSION_10_0:
 		*h = dal_cmd_tbl_helper_dce110_get_table();
-		return true;
+		वापस true;
 
-	case DCE_VERSION_11_0:
+	हाल DCE_VERSION_11_0:
 		*h = dal_cmd_tbl_helper_dce110_get_table();
-		return true;
+		वापस true;
 
-	case DCE_VERSION_11_2:
-	case DCE_VERSION_11_22:
-	case DCE_VERSION_12_0:
-	case DCE_VERSION_12_1:
+	हाल DCE_VERSION_11_2:
+	हाल DCE_VERSION_11_22:
+	हाल DCE_VERSION_12_0:
+	हाल DCE_VERSION_12_1:
 		*h = dal_cmd_tbl_helper_dce112_get_table2();
-		return true;
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-	case DCN_VERSION_1_0:
-	case DCN_VERSION_1_01:
-	case DCN_VERSION_2_0:
-	case DCN_VERSION_2_1:
-	case DCN_VERSION_3_0:
-	case DCN_VERSION_3_01:
-	case DCN_VERSION_3_02:
+		वापस true;
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+	हाल DCN_VERSION_1_0:
+	हाल DCN_VERSION_1_01:
+	हाल DCN_VERSION_2_0:
+	हाल DCN_VERSION_2_1:
+	हाल DCN_VERSION_3_0:
+	हाल DCN_VERSION_3_01:
+	हाल DCN_VERSION_3_02:
 		*h = dal_cmd_tbl_helper_dce112_get_table2();
-		return true;
-#endif
-	default:
+		वापस true;
+#पूर्ण_अगर
+	शेष:
 		/* Unsupported DCE */
 		BREAK_TO_DEBUGGER();
-		return false;
-	}
-}
+		वापस false;
+	पूर्ण
+पूर्ण
 
 /* real implementations */
 
 bool dal_cmd_table_helper_controller_id_to_atom2(
-	enum controller_id id,
-	uint8_t *atom_id)
-{
-	if (atom_id == NULL) {
+	क्रमागत controller_id id,
+	uपूर्णांक8_t *atom_id)
+अणु
+	अगर (atom_id == शून्य) अणु
 		BREAK_TO_DEBUGGER();
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	switch (id) {
-	case CONTROLLER_ID_D0:
+	चयन (id) अणु
+	हाल CONTROLLER_ID_D0:
 		*atom_id = ATOM_CRTC1;
-		return true;
-	case CONTROLLER_ID_D1:
+		वापस true;
+	हाल CONTROLLER_ID_D1:
 		*atom_id = ATOM_CRTC2;
-		return true;
-	case CONTROLLER_ID_D2:
+		वापस true;
+	हाल CONTROLLER_ID_D2:
 		*atom_id = ATOM_CRTC3;
-		return true;
-	case CONTROLLER_ID_D3:
+		वापस true;
+	हाल CONTROLLER_ID_D3:
 		*atom_id = ATOM_CRTC4;
-		return true;
-	case CONTROLLER_ID_D4:
+		वापस true;
+	हाल CONTROLLER_ID_D4:
 		*atom_id = ATOM_CRTC5;
-		return true;
-	case CONTROLLER_ID_D5:
+		वापस true;
+	हाल CONTROLLER_ID_D5:
 		*atom_id = ATOM_CRTC6;
-		return true;
-	/* TODO :case CONTROLLER_ID_UNDERLAY0:
+		वापस true;
+	/* TODO :हाल CONTROLLER_ID_UNDERLAY0:
 		*atom_id = ATOM_UNDERLAY_PIPE0;
-		return true;
+		वापस true;
 	*/
-	case CONTROLLER_ID_UNDEFINED:
+	हाल CONTROLLER_ID_UNDEFINED:
 		*atom_id = ATOM_CRTC_INVALID;
-		return true;
-	default:
+		वापस true;
+	शेष:
 		/* Wrong controller id */
 		BREAK_TO_DEBUGGER();
-		return false;
-	}
-}
+		वापस false;
+	पूर्ण
+पूर्ण
 
 /**
  * translate_transmitter_bp_to_atom2 - Translate the Transmitter to the
  *                                     corresponding ATOM BIOS value
  *  @t: transmitter
- *  returns: digitalTransmitter
+ *  वापसs: digitalTransmitter
  *    // =00: Digital Transmitter1 ( UNIPHY linkAB )
  *    // =01: Digital Transmitter2 ( UNIPHY linkCD )
  *    // =02: Digital Transmitter3 ( UNIPHY linkEF )
  */
-uint8_t dal_cmd_table_helper_transmitter_bp_to_atom2(
-	enum transmitter t)
-{
-	switch (t) {
-	case TRANSMITTER_UNIPHY_A:
-	case TRANSMITTER_UNIPHY_B:
-	case TRANSMITTER_TRAVIS_LCD:
-		return 0;
-	case TRANSMITTER_UNIPHY_C:
-	case TRANSMITTER_UNIPHY_D:
-		return 1;
-	case TRANSMITTER_UNIPHY_E:
-	case TRANSMITTER_UNIPHY_F:
-		return 2;
-	default:
+uपूर्णांक8_t dal_cmd_table_helper_transmitter_bp_to_atom2(
+	क्रमागत transmitter t)
+अणु
+	चयन (t) अणु
+	हाल TRANSMITTER_UNIPHY_A:
+	हाल TRANSMITTER_UNIPHY_B:
+	हाल TRANSMITTER_TRAVIS_LCD:
+		वापस 0;
+	हाल TRANSMITTER_UNIPHY_C:
+	हाल TRANSMITTER_UNIPHY_D:
+		वापस 1;
+	हाल TRANSMITTER_UNIPHY_E:
+	हाल TRANSMITTER_UNIPHY_F:
+		वापस 2;
+	शेष:
 		/* Invalid Transmitter Type! */
 		BREAK_TO_DEBUGGER();
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-uint32_t dal_cmd_table_helper_encoder_mode_bp_to_atom2(
-	enum signal_type s,
+uपूर्णांक32_t dal_cmd_table_helper_encoder_mode_bp_to_atom2(
+	क्रमागत संकेत_type s,
 	bool enable_dp_audio)
-{
-	switch (s) {
-	case SIGNAL_TYPE_DVI_SINGLE_LINK:
-	case SIGNAL_TYPE_DVI_DUAL_LINK:
-		return ATOM_ENCODER_MODE_DVI;
-	case SIGNAL_TYPE_HDMI_TYPE_A:
-		return ATOM_ENCODER_MODE_HDMI;
-	case SIGNAL_TYPE_LVDS:
-		return ATOM_ENCODER_MODE_LVDS;
-	case SIGNAL_TYPE_EDP:
-	case SIGNAL_TYPE_DISPLAY_PORT_MST:
-	case SIGNAL_TYPE_DISPLAY_PORT:
-	case SIGNAL_TYPE_VIRTUAL:
-		if (enable_dp_audio)
-			return ATOM_ENCODER_MODE_DP_AUDIO;
-		else
-			return ATOM_ENCODER_MODE_DP;
-	case SIGNAL_TYPE_RGB:
-		return ATOM_ENCODER_MODE_CRT;
-	default:
-		return ATOM_ENCODER_MODE_CRT;
-	}
-}
+अणु
+	चयन (s) अणु
+	हाल SIGNAL_TYPE_DVI_SINGLE_LINK:
+	हाल SIGNAL_TYPE_DVI_DUAL_LINK:
+		वापस ATOM_ENCODER_MODE_DVI;
+	हाल SIGNAL_TYPE_HDMI_TYPE_A:
+		वापस ATOM_ENCODER_MODE_HDMI;
+	हाल SIGNAL_TYPE_LVDS:
+		वापस ATOM_ENCODER_MODE_LVDS;
+	हाल SIGNAL_TYPE_EDP:
+	हाल SIGNAL_TYPE_DISPLAY_PORT_MST:
+	हाल SIGNAL_TYPE_DISPLAY_PORT:
+	हाल SIGNAL_TYPE_VIRTUAL:
+		अगर (enable_dp_audio)
+			वापस ATOM_ENCODER_MODE_DP_AUDIO;
+		अन्यथा
+			वापस ATOM_ENCODER_MODE_DP;
+	हाल SIGNAL_TYPE_RGB:
+		वापस ATOM_ENCODER_MODE_CRT;
+	शेष:
+		वापस ATOM_ENCODER_MODE_CRT;
+	पूर्ण
+पूर्ण
 
-bool dal_cmd_table_helper_clock_source_id_to_ref_clk_src2(
-	enum clock_source_id id,
-	uint32_t *ref_clk_src_id)
-{
-	if (ref_clk_src_id == NULL) {
+bool dal_cmd_table_helper_घड़ी_source_id_to_ref_clk_src2(
+	क्रमागत घड़ी_source_id id,
+	uपूर्णांक32_t *ref_clk_src_id)
+अणु
+	अगर (ref_clk_src_id == शून्य) अणु
 		BREAK_TO_DEBUGGER();
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	switch (id) {
-	case CLOCK_SOURCE_ID_PLL1:
+	चयन (id) अणु
+	हाल CLOCK_SOURCE_ID_PLL1:
 		*ref_clk_src_id = ENCODER_REFCLK_SRC_P1PLL;
-		return true;
-	case CLOCK_SOURCE_ID_PLL2:
+		वापस true;
+	हाल CLOCK_SOURCE_ID_PLL2:
 		*ref_clk_src_id = ENCODER_REFCLK_SRC_P2PLL;
-		return true;
-	/*TODO:case CLOCK_SOURCE_ID_DCPLL:
+		वापस true;
+	/*TODO:हाल CLOCK_SOURCE_ID_DCPLL:
 		*ref_clk_src_id = ENCODER_REFCLK_SRC_DCPLL;
-		return true;
+		वापस true;
 	*/
-	case CLOCK_SOURCE_ID_EXTERNAL:
+	हाल CLOCK_SOURCE_ID_EXTERNAL:
 		*ref_clk_src_id = ENCODER_REFCLK_SRC_EXTCLK;
-		return true;
-	case CLOCK_SOURCE_ID_UNDEFINED:
+		वापस true;
+	हाल CLOCK_SOURCE_ID_UNDEFINED:
 		*ref_clk_src_id = ENCODER_REFCLK_SRC_INVALID;
-		return true;
-	default:
-		/* Unsupported clock source id */
+		वापस true;
+	शेष:
+		/* Unsupported घड़ी source id */
 		BREAK_TO_DEBUGGER();
-		return false;
-	}
-}
+		वापस false;
+	पूर्ण
+पूर्ण
 
-uint8_t dal_cmd_table_helper_encoder_id_to_atom2(
-	enum encoder_id id)
-{
-	switch (id) {
-	case ENCODER_ID_INTERNAL_LVDS:
-		return ENCODER_OBJECT_ID_INTERNAL_LVDS;
-	case ENCODER_ID_INTERNAL_TMDS1:
-		return ENCODER_OBJECT_ID_INTERNAL_TMDS1;
-	case ENCODER_ID_INTERNAL_TMDS2:
-		return ENCODER_OBJECT_ID_INTERNAL_TMDS2;
-	case ENCODER_ID_INTERNAL_DAC1:
-		return ENCODER_OBJECT_ID_INTERNAL_DAC1;
-	case ENCODER_ID_INTERNAL_DAC2:
-		return ENCODER_OBJECT_ID_INTERNAL_DAC2;
-	case ENCODER_ID_INTERNAL_LVTM1:
-		return ENCODER_OBJECT_ID_INTERNAL_LVTM1;
-	case ENCODER_ID_INTERNAL_HDMI:
-		return ENCODER_OBJECT_ID_HDMI_INTERNAL;
-	case ENCODER_ID_EXTERNAL_TRAVIS:
-		return ENCODER_OBJECT_ID_TRAVIS;
-	case ENCODER_ID_EXTERNAL_NUTMEG:
-		return ENCODER_OBJECT_ID_NUTMEG;
-	case ENCODER_ID_INTERNAL_KLDSCP_TMDS1:
-		return ENCODER_OBJECT_ID_INTERNAL_KLDSCP_TMDS1;
-	case ENCODER_ID_INTERNAL_KLDSCP_DAC1:
-		return ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC1;
-	case ENCODER_ID_INTERNAL_KLDSCP_DAC2:
-		return ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC2;
-	case ENCODER_ID_EXTERNAL_MVPU_FPGA:
-		return ENCODER_OBJECT_ID_MVPU_FPGA;
-	case ENCODER_ID_INTERNAL_DDI:
-		return ENCODER_OBJECT_ID_INTERNAL_DDI;
-	case ENCODER_ID_INTERNAL_UNIPHY:
-		return ENCODER_OBJECT_ID_INTERNAL_UNIPHY;
-	case ENCODER_ID_INTERNAL_KLDSCP_LVTMA:
-		return ENCODER_OBJECT_ID_INTERNAL_KLDSCP_LVTMA;
-	case ENCODER_ID_INTERNAL_UNIPHY1:
-		return ENCODER_OBJECT_ID_INTERNAL_UNIPHY1;
-	case ENCODER_ID_INTERNAL_UNIPHY2:
-		return ENCODER_OBJECT_ID_INTERNAL_UNIPHY2;
-	case ENCODER_ID_INTERNAL_UNIPHY3:
-		return ENCODER_OBJECT_ID_INTERNAL_UNIPHY3;
-	case ENCODER_ID_INTERNAL_WIRELESS:
-		return ENCODER_OBJECT_ID_INTERNAL_VCE;
-	case ENCODER_ID_INTERNAL_VIRTUAL:
-		return ENCODER_OBJECT_ID_NONE;
-	case ENCODER_ID_UNKNOWN:
-		return ENCODER_OBJECT_ID_NONE;
-	default:
+uपूर्णांक8_t dal_cmd_table_helper_encoder_id_to_atom2(
+	क्रमागत encoder_id id)
+अणु
+	चयन (id) अणु
+	हाल ENCODER_ID_INTERNAL_LVDS:
+		वापस ENCODER_OBJECT_ID_INTERNAL_LVDS;
+	हाल ENCODER_ID_INTERNAL_TMDS1:
+		वापस ENCODER_OBJECT_ID_INTERNAL_TMDS1;
+	हाल ENCODER_ID_INTERNAL_TMDS2:
+		वापस ENCODER_OBJECT_ID_INTERNAL_TMDS2;
+	हाल ENCODER_ID_INTERNAL_DAC1:
+		वापस ENCODER_OBJECT_ID_INTERNAL_DAC1;
+	हाल ENCODER_ID_INTERNAL_DAC2:
+		वापस ENCODER_OBJECT_ID_INTERNAL_DAC2;
+	हाल ENCODER_ID_INTERNAL_LVTM1:
+		वापस ENCODER_OBJECT_ID_INTERNAL_LVTM1;
+	हाल ENCODER_ID_INTERNAL_HDMI:
+		वापस ENCODER_OBJECT_ID_HDMI_INTERNAL;
+	हाल ENCODER_ID_EXTERNAL_TRAVIS:
+		वापस ENCODER_OBJECT_ID_TRAVIS;
+	हाल ENCODER_ID_EXTERNAL_NUTMEG:
+		वापस ENCODER_OBJECT_ID_NUTMEG;
+	हाल ENCODER_ID_INTERNAL_KLDSCP_TMDS1:
+		वापस ENCODER_OBJECT_ID_INTERNAL_KLDSCP_TMDS1;
+	हाल ENCODER_ID_INTERNAL_KLDSCP_DAC1:
+		वापस ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC1;
+	हाल ENCODER_ID_INTERNAL_KLDSCP_DAC2:
+		वापस ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC2;
+	हाल ENCODER_ID_EXTERNAL_MVPU_FPGA:
+		वापस ENCODER_OBJECT_ID_MVPU_FPGA;
+	हाल ENCODER_ID_INTERNAL_DDI:
+		वापस ENCODER_OBJECT_ID_INTERNAL_DDI;
+	हाल ENCODER_ID_INTERNAL_UNIPHY:
+		वापस ENCODER_OBJECT_ID_INTERNAL_UNIPHY;
+	हाल ENCODER_ID_INTERNAL_KLDSCP_LVTMA:
+		वापस ENCODER_OBJECT_ID_INTERNAL_KLDSCP_LVTMA;
+	हाल ENCODER_ID_INTERNAL_UNIPHY1:
+		वापस ENCODER_OBJECT_ID_INTERNAL_UNIPHY1;
+	हाल ENCODER_ID_INTERNAL_UNIPHY2:
+		वापस ENCODER_OBJECT_ID_INTERNAL_UNIPHY2;
+	हाल ENCODER_ID_INTERNAL_UNIPHY3:
+		वापस ENCODER_OBJECT_ID_INTERNAL_UNIPHY3;
+	हाल ENCODER_ID_INTERNAL_WIRELESS:
+		वापस ENCODER_OBJECT_ID_INTERNAL_VCE;
+	हाल ENCODER_ID_INTERNAL_VIRTUAL:
+		वापस ENCODER_OBJECT_ID_NONE;
+	हाल ENCODER_ID_UNKNOWN:
+		वापस ENCODER_OBJECT_ID_NONE;
+	शेष:
 		/* Invalid encoder id */
 		BREAK_TO_DEBUGGER();
-		return ENCODER_OBJECT_ID_NONE;
-	}
-}
+		वापस ENCODER_OBJECT_ID_NONE;
+	पूर्ण
+पूर्ण

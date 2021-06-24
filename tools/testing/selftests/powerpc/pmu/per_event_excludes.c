@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <elf.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <sys/prctl.h>
+#समावेश <elf.h>
+#समावेश <सीमा.स>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
+#समावेश <sys/prctl.h>
 
-#include "event.h"
-#include "lib.h"
-#include "utils.h"
+#समावेश "event.h"
+#समावेश "lib.h"
+#समावेश "utils.h"
 
 /*
  * Test that per-event excludes work.
  */
 
-static int per_event_excludes(void)
-{
-	struct event *e, events[4];
-	int i;
+अटल पूर्णांक per_event_excludes(व्योम)
+अणु
+	काष्ठा event *e, events[4];
+	पूर्णांक i;
 
 	SKIP_IF(!have_hwcap2(PPC_FEATURE2_ARCH_2_07));
 
 	/*
 	 * We need to create the events disabled, otherwise the running/enabled
-	 * counts don't match up.
+	 * counts करोn't match up.
 	 */
 	e = &events[0];
 	event_init_opts(e, PERF_COUNT_HW_INSTRUCTIONS,
@@ -57,15 +58,15 @@ static int per_event_excludes(void)
 	e->attr.exclude_hv = 1;
 	e->attr.exclude_kernel = 1;
 
-	FAIL_IF(event_open(&events[0]));
+	FAIL_IF(event_खोलो(&events[0]));
 
 	/*
-	 * The open here will fail if we don't have per event exclude support,
+	 * The खोलो here will fail अगर we करोn't have per event exclude support,
 	 * because the second event has an incompatible set of exclude settings
-	 * and we're asking for the events to be in a group.
+	 * and we're asking क्रम the events to be in a group.
 	 */
-	for (i = 1; i < 4; i++)
-		FAIL_IF(event_open_with_group(&events[i], events[0].fd));
+	क्रम (i = 1; i < 4; i++)
+		FAIL_IF(event_खोलो_with_group(&events[i], events[0].fd));
 
 	/*
 	 * Even though the above will fail without per-event excludes we keep
@@ -73,39 +74,39 @@ static int per_event_excludes(void)
 	 */
 	prctl(PR_TASK_PERF_EVENTS_ENABLE);
 
-	/* Spin for a while */
-	for (i = 0; i < INT_MAX; i++)
-		asm volatile("" : : : "memory");
+	/* Spin क्रम a जबतक */
+	क्रम (i = 0; i < पूर्णांक_उच्च; i++)
+		यंत्र अस्थिर("" : : : "memory");
 
 	prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
-	for (i = 0; i < 4; i++) {
-		FAIL_IF(event_read(&events[i]));
+	क्रम (i = 0; i < 4; i++) अणु
+		FAIL_IF(event_पढ़ो(&events[i]));
 		event_report(&events[i]);
-	}
+	पूर्ण
 
 	/*
 	 * We should see that all events have enabled == running. That
 	 * shows that they were all on the PMU at once.
 	 */
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		FAIL_IF(events[i].result.running != events[i].result.enabled);
 
 	/*
-	 * We can also check that the result for instructions is >= all the
-	 * other counts. That's because it is counting all instructions while
+	 * We can also check that the result क्रम inकाष्ठाions is >= all the
+	 * other counts. That's because it is counting all inकाष्ठाions जबतक
 	 * the others are counting a subset.
 	 */
-	for (i = 1; i < 4; i++)
+	क्रम (i = 1; i < 4; i++)
 		FAIL_IF(events[0].result.value < events[i].result.value);
 
-	for (i = 0; i < 4; i++)
-		event_close(&events[i]);
+	क्रम (i = 0; i < 4; i++)
+		event_बंद(&events[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(per_event_excludes, "per_event_excludes");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(per_event_excludes, "per_event_excludes");
+पूर्ण

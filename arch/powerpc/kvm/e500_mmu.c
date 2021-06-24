@@ -1,134 +1,135 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008-2013 Freescale Semiconductor, Inc. All rights reserved.
  *
- * Author: Yu Liu, yu.liu@freescale.com
- *         Scott Wood, scottwood@freescale.com
- *         Ashish Kalra, ashish.kalra@freescale.com
- *         Varun Sethi, varun.sethi@freescale.com
+ * Author: Yu Liu, yu.liu@मुक्तscale.com
+ *         Scott Wood, scottwood@मुक्तscale.com
+ *         Ashish Kalra, ashish.kalra@मुक्तscale.com
+ *         Varun Sethi, varun.sethi@मुक्तscale.com
  *         Alexander Graf, agraf@suse.de
  *
  * Description:
- * This file is based on arch/powerpc/kvm/44x_tlb.c,
- * by Hollis Blanchard <hollisb@us.ibm.com>.
+ * This file is based on arch/घातerpc/kvm/44x_tlb.c,
+ * by Hollis Blanअक्षरd <hollisb@us.ibm.com>.
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/kvm.h>
-#include <linux/kvm_host.h>
-#include <linux/highmem.h>
-#include <linux/log2.h>
-#include <linux/uaccess.h>
-#include <linux/sched.h>
-#include <linux/rwsem.h>
-#include <linux/vmalloc.h>
-#include <linux/hugetlb.h>
-#include <asm/kvm_ppc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kvm.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/log2.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <यंत्र/kvm_ppc.h>
 
-#include "e500.h"
-#include "trace_booke.h"
-#include "timing.h"
-#include "e500_mmu_host.h"
+#समावेश "e500.h"
+#समावेश "trace_booke.h"
+#समावेश "timing.h"
+#समावेश "e500_mmu_host.h"
 
-static inline unsigned int gtlb0_get_next_victim(
-		struct kvmppc_vcpu_e500 *vcpu_e500)
-{
-	unsigned int victim;
+अटल अंतरभूत अचिन्हित पूर्णांक gtlb0_get_next_victim(
+		काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
+	अचिन्हित पूर्णांक victim;
 
 	victim = vcpu_e500->gtlb_nv[0]++;
-	if (unlikely(vcpu_e500->gtlb_nv[0] >= vcpu_e500->gtlb_params[0].ways))
+	अगर (unlikely(vcpu_e500->gtlb_nv[0] >= vcpu_e500->gtlb_params[0].ways))
 		vcpu_e500->gtlb_nv[0] = 0;
 
-	return victim;
-}
+	वापस victim;
+पूर्ण
 
-static int tlb0_set_base(gva_t addr, int sets, int ways)
-{
-	int set_base;
+अटल पूर्णांक tlb0_set_base(gva_t addr, पूर्णांक sets, पूर्णांक ways)
+अणु
+	पूर्णांक set_base;
 
 	set_base = (addr >> PAGE_SHIFT) & (sets - 1);
 	set_base *= ways;
 
-	return set_base;
-}
+	वापस set_base;
+पूर्ण
 
-static int gtlb0_set_base(struct kvmppc_vcpu_e500 *vcpu_e500, gva_t addr)
-{
-	return tlb0_set_base(addr, vcpu_e500->gtlb_params[0].sets,
+अटल पूर्णांक gtlb0_set_base(काष्ठा kvmppc_vcpu_e500 *vcpu_e500, gva_t addr)
+अणु
+	वापस tlb0_set_base(addr, vcpu_e500->gtlb_params[0].sets,
 			     vcpu_e500->gtlb_params[0].ways);
-}
+पूर्ण
 
-static unsigned int get_tlb_esel(struct kvm_vcpu *vcpu, int tlbsel)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	int esel = get_tlb_esel_bit(vcpu);
+अटल अचिन्हित पूर्णांक get_tlb_esel(काष्ठा kvm_vcpu *vcpu, पूर्णांक tlbsel)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	पूर्णांक esel = get_tlb_esel_bit(vcpu);
 
-	if (tlbsel == 0) {
+	अगर (tlbsel == 0) अणु
 		esel &= vcpu_e500->gtlb_params[0].ways - 1;
 		esel += gtlb0_set_base(vcpu_e500, vcpu->arch.shared->mas2);
-	} else {
+	पूर्ण अन्यथा अणु
 		esel &= vcpu_e500->gtlb_params[tlbsel].entries - 1;
-	}
+	पूर्ण
 
-	return esel;
-}
+	वापस esel;
+पूर्ण
 
-/* Search the guest TLB for a matching entry. */
-static int kvmppc_e500_tlb_index(struct kvmppc_vcpu_e500 *vcpu_e500,
-		gva_t eaddr, int tlbsel, unsigned int pid, int as)
-{
-	int size = vcpu_e500->gtlb_params[tlbsel].entries;
-	unsigned int set_base, offset;
-	int i;
+/* Search the guest TLB क्रम a matching entry. */
+अटल पूर्णांक kvmppc_e500_tlb_index(काष्ठा kvmppc_vcpu_e500 *vcpu_e500,
+		gva_t eaddr, पूर्णांक tlbsel, अचिन्हित पूर्णांक pid, पूर्णांक as)
+अणु
+	पूर्णांक size = vcpu_e500->gtlb_params[tlbsel].entries;
+	अचिन्हित पूर्णांक set_base, offset;
+	पूर्णांक i;
 
-	if (tlbsel == 0) {
+	अगर (tlbsel == 0) अणु
 		set_base = gtlb0_set_base(vcpu_e500, eaddr);
 		size = vcpu_e500->gtlb_params[0].ways;
-	} else {
-		if (eaddr < vcpu_e500->tlb1_min_eaddr ||
+	पूर्ण अन्यथा अणु
+		अगर (eaddr < vcpu_e500->tlb1_min_eaddr ||
 				eaddr > vcpu_e500->tlb1_max_eaddr)
-			return -1;
+			वापस -1;
 		set_base = 0;
-	}
+	पूर्ण
 
 	offset = vcpu_e500->gtlb_offset[tlbsel];
 
-	for (i = 0; i < size; i++) {
-		struct kvm_book3e_206_tlb_entry *tlbe =
+	क्रम (i = 0; i < size; i++) अणु
+		काष्ठा kvm_book3e_206_tlb_entry *tlbe =
 			&vcpu_e500->gtlb_arch[offset + set_base + i];
-		unsigned int tid;
+		अचिन्हित पूर्णांक tid;
 
-		if (eaddr < get_tlb_eaddr(tlbe))
-			continue;
+		अगर (eaddr < get_tlb_eaddr(tlbe))
+			जारी;
 
-		if (eaddr > get_tlb_end(tlbe))
-			continue;
+		अगर (eaddr > get_tlb_end(tlbe))
+			जारी;
 
 		tid = get_tlb_tid(tlbe);
-		if (tid && (tid != pid))
-			continue;
+		अगर (tid && (tid != pid))
+			जारी;
 
-		if (!get_tlb_v(tlbe))
-			continue;
+		अगर (!get_tlb_v(tlbe))
+			जारी;
 
-		if (get_tlb_ts(tlbe) != as && as != -1)
-			continue;
+		अगर (get_tlb_ts(tlbe) != as && as != -1)
+			जारी;
 
-		return set_base + i;
-	}
+		वापस set_base + i;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static inline void kvmppc_e500_deliver_tlb_miss(struct kvm_vcpu *vcpu,
-		gva_t eaddr, int as)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	unsigned int victim, tsized;
-	int tlbsel;
+अटल अंतरभूत व्योम kvmppc_e500_deliver_tlb_miss(काष्ठा kvm_vcpu *vcpu,
+		gva_t eaddr, पूर्णांक as)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	अचिन्हित पूर्णांक victim, tsized;
+	पूर्णांक tlbsel;
 
 	/* since we only have two TLBs, only lower bit is used. */
 	tlbsel = (vcpu->arch.shared->mas4 >> 28) & 0x1;
@@ -146,25 +147,25 @@ static inline void kvmppc_e500_deliver_tlb_miss(struct kvm_vcpu *vcpu,
 	vcpu->arch.shared->mas6 = (vcpu->arch.shared->mas6 & MAS6_SPID1)
 		| (get_cur_pid(vcpu) << 16)
 		| (as ? MAS6_SAS : 0);
-}
+पूर्ण
 
-static void kvmppc_recalc_tlb1map_range(struct kvmppc_vcpu_e500 *vcpu_e500)
-{
-	int size = vcpu_e500->gtlb_params[1].entries;
-	unsigned int offset;
+अटल व्योम kvmppc_recalc_tlb1map_range(काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
+	पूर्णांक size = vcpu_e500->gtlb_params[1].entries;
+	अचिन्हित पूर्णांक offset;
 	gva_t eaddr;
-	int i;
+	पूर्णांक i;
 
 	vcpu_e500->tlb1_min_eaddr = ~0UL;
 	vcpu_e500->tlb1_max_eaddr = 0;
 	offset = vcpu_e500->gtlb_offset[1];
 
-	for (i = 0; i < size; i++) {
-		struct kvm_book3e_206_tlb_entry *tlbe =
+	क्रम (i = 0; i < size; i++) अणु
+		काष्ठा kvm_book3e_206_tlb_entry *tlbe =
 			&vcpu_e500->gtlb_arch[offset + i];
 
-		if (!get_tlb_v(tlbe))
-			continue;
+		अगर (!get_tlb_v(tlbe))
+			जारी;
 
 		eaddr = get_tlb_eaddr(tlbe);
 		vcpu_e500->tlb1_min_eaddr =
@@ -173,31 +174,31 @@ static void kvmppc_recalc_tlb1map_range(struct kvmppc_vcpu_e500 *vcpu_e500)
 		eaddr = get_tlb_end(tlbe);
 		vcpu_e500->tlb1_max_eaddr =
 				max(vcpu_e500->tlb1_max_eaddr, eaddr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int kvmppc_need_recalc_tlb1map_range(struct kvmppc_vcpu_e500 *vcpu_e500,
-				struct kvm_book3e_206_tlb_entry *gtlbe)
-{
-	unsigned long start, end, size;
+अटल पूर्णांक kvmppc_need_recalc_tlb1map_range(काष्ठा kvmppc_vcpu_e500 *vcpu_e500,
+				काष्ठा kvm_book3e_206_tlb_entry *gtlbe)
+अणु
+	अचिन्हित दीर्घ start, end, size;
 
 	size = get_tlb_bytes(gtlbe);
 	start = get_tlb_eaddr(gtlbe) & ~(size - 1);
 	end = start + size - 1;
 
-	return vcpu_e500->tlb1_min_eaddr == start ||
+	वापस vcpu_e500->tlb1_min_eaddr == start ||
 			vcpu_e500->tlb1_max_eaddr == end;
-}
+पूर्ण
 
-/* This function is supposed to be called for a adding a new valid tlb entry */
-static void kvmppc_set_tlb1map_range(struct kvm_vcpu *vcpu,
-				struct kvm_book3e_206_tlb_entry *gtlbe)
-{
-	unsigned long start, end, size;
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+/* This function is supposed to be called क्रम a adding a new valid tlb entry */
+अटल व्योम kvmppc_set_tlb1map_range(काष्ठा kvm_vcpu *vcpu,
+				काष्ठा kvm_book3e_206_tlb_entry *gtlbe)
+अणु
+	अचिन्हित दीर्घ start, end, size;
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
 
-	if (!get_tlb_v(gtlbe))
-		return;
+	अगर (!get_tlb_v(gtlbe))
+		वापस;
 
 	size = get_tlb_bytes(gtlbe);
 	start = get_tlb_eaddr(gtlbe) & ~(size - 1);
@@ -205,125 +206,125 @@ static void kvmppc_set_tlb1map_range(struct kvm_vcpu *vcpu,
 
 	vcpu_e500->tlb1_min_eaddr = min(vcpu_e500->tlb1_min_eaddr, start);
 	vcpu_e500->tlb1_max_eaddr = max(vcpu_e500->tlb1_max_eaddr, end);
-}
+पूर्ण
 
-static inline int kvmppc_e500_gtlbe_invalidate(
-				struct kvmppc_vcpu_e500 *vcpu_e500,
-				int tlbsel, int esel)
-{
-	struct kvm_book3e_206_tlb_entry *gtlbe =
+अटल अंतरभूत पूर्णांक kvmppc_e500_gtlbe_invalidate(
+				काष्ठा kvmppc_vcpu_e500 *vcpu_e500,
+				पूर्णांक tlbsel, पूर्णांक esel)
+अणु
+	काष्ठा kvm_book3e_206_tlb_entry *gtlbe =
 		get_entry(vcpu_e500, tlbsel, esel);
 
-	if (unlikely(get_tlb_iprot(gtlbe)))
-		return -1;
+	अगर (unlikely(get_tlb_iprot(gtlbe)))
+		वापस -1;
 
-	if (tlbsel == 1 && kvmppc_need_recalc_tlb1map_range(vcpu_e500, gtlbe))
+	अगर (tlbsel == 1 && kvmppc_need_recalc_tlb1map_range(vcpu_e500, gtlbe))
 		kvmppc_recalc_tlb1map_range(vcpu_e500);
 
 	gtlbe->mas1 = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvmppc_e500_emul_mt_mmucsr0(struct kvmppc_vcpu_e500 *vcpu_e500, ulong value)
-{
-	int esel;
+पूर्णांक kvmppc_e500_emul_mt_mmucsr0(काष्ठा kvmppc_vcpu_e500 *vcpu_e500, uदीर्घ value)
+अणु
+	पूर्णांक esel;
 
-	if (value & MMUCSR0_TLB0FI)
-		for (esel = 0; esel < vcpu_e500->gtlb_params[0].entries; esel++)
+	अगर (value & MMUCSR0_TLB0FI)
+		क्रम (esel = 0; esel < vcpu_e500->gtlb_params[0].entries; esel++)
 			kvmppc_e500_gtlbe_invalidate(vcpu_e500, 0, esel);
-	if (value & MMUCSR0_TLB1FI)
-		for (esel = 0; esel < vcpu_e500->gtlb_params[1].entries; esel++)
+	अगर (value & MMUCSR0_TLB1FI)
+		क्रम (esel = 0; esel < vcpu_e500->gtlb_params[1].entries; esel++)
 			kvmppc_e500_gtlbe_invalidate(vcpu_e500, 1, esel);
 
-	/* Invalidate all host shadow mappings */
+	/* Invalidate all host shaकरोw mappings */
 	kvmppc_core_flush_tlb(&vcpu_e500->vcpu);
 
-	return EMULATE_DONE;
-}
+	वापस EMULATE_DONE;
+पूर्ण
 
-int kvmppc_e500_emul_tlbivax(struct kvm_vcpu *vcpu, gva_t ea)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	unsigned int ia;
-	int esel, tlbsel;
+पूर्णांक kvmppc_e500_emul_tlbivax(काष्ठा kvm_vcpu *vcpu, gva_t ea)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	अचिन्हित पूर्णांक ia;
+	पूर्णांक esel, tlbsel;
 
 	ia = (ea >> 2) & 0x1;
 
 	/* since we only have two TLBs, only lower bit is used. */
 	tlbsel = (ea >> 3) & 0x1;
 
-	if (ia) {
+	अगर (ia) अणु
 		/* invalidate all entries */
-		for (esel = 0; esel < vcpu_e500->gtlb_params[tlbsel].entries;
+		क्रम (esel = 0; esel < vcpu_e500->gtlb_params[tlbsel].entries;
 		     esel++)
 			kvmppc_e500_gtlbe_invalidate(vcpu_e500, tlbsel, esel);
-	} else {
+	पूर्ण अन्यथा अणु
 		ea &= 0xfffff000;
 		esel = kvmppc_e500_tlb_index(vcpu_e500, ea, tlbsel,
 				get_cur_pid(vcpu), -1);
-		if (esel >= 0)
+		अगर (esel >= 0)
 			kvmppc_e500_gtlbe_invalidate(vcpu_e500, tlbsel, esel);
-	}
+	पूर्ण
 
-	/* Invalidate all host shadow mappings */
+	/* Invalidate all host shaकरोw mappings */
 	kvmppc_core_flush_tlb(&vcpu_e500->vcpu);
 
-	return EMULATE_DONE;
-}
+	वापस EMULATE_DONE;
+पूर्ण
 
-static void tlbilx_all(struct kvmppc_vcpu_e500 *vcpu_e500, int tlbsel,
-		       int pid, int type)
-{
-	struct kvm_book3e_206_tlb_entry *tlbe;
-	int tid, esel;
+अटल व्योम tlbilx_all(काष्ठा kvmppc_vcpu_e500 *vcpu_e500, पूर्णांक tlbsel,
+		       पूर्णांक pid, पूर्णांक type)
+अणु
+	काष्ठा kvm_book3e_206_tlb_entry *tlbe;
+	पूर्णांक tid, esel;
 
 	/* invalidate all entries */
-	for (esel = 0; esel < vcpu_e500->gtlb_params[tlbsel].entries; esel++) {
+	क्रम (esel = 0; esel < vcpu_e500->gtlb_params[tlbsel].entries; esel++) अणु
 		tlbe = get_entry(vcpu_e500, tlbsel, esel);
 		tid = get_tlb_tid(tlbe);
-		if (type == 0 || tid == pid) {
+		अगर (type == 0 || tid == pid) अणु
 			inval_gtlbe_on_host(vcpu_e500, tlbsel, esel);
 			kvmppc_e500_gtlbe_invalidate(vcpu_e500, tlbsel, esel);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void tlbilx_one(struct kvmppc_vcpu_e500 *vcpu_e500, int pid,
+अटल व्योम tlbilx_one(काष्ठा kvmppc_vcpu_e500 *vcpu_e500, पूर्णांक pid,
 		       gva_t ea)
-{
-	int tlbsel, esel;
+अणु
+	पूर्णांक tlbsel, esel;
 
-	for (tlbsel = 0; tlbsel < 2; tlbsel++) {
+	क्रम (tlbsel = 0; tlbsel < 2; tlbsel++) अणु
 		esel = kvmppc_e500_tlb_index(vcpu_e500, ea, tlbsel, pid, -1);
-		if (esel >= 0) {
+		अगर (esel >= 0) अणु
 			inval_gtlbe_on_host(vcpu_e500, tlbsel, esel);
 			kvmppc_e500_gtlbe_invalidate(vcpu_e500, tlbsel, esel);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int kvmppc_e500_emul_tlbilx(struct kvm_vcpu *vcpu, int type, gva_t ea)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	int pid = get_cur_spid(vcpu);
+पूर्णांक kvmppc_e500_emul_tlbilx(काष्ठा kvm_vcpu *vcpu, पूर्णांक type, gva_t ea)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	पूर्णांक pid = get_cur_spid(vcpu);
 
-	if (type == 0 || type == 1) {
+	अगर (type == 0 || type == 1) अणु
 		tlbilx_all(vcpu_e500, 0, pid, type);
 		tlbilx_all(vcpu_e500, 1, pid, type);
-	} else if (type == 3) {
+	पूर्ण अन्यथा अगर (type == 3) अणु
 		tlbilx_one(vcpu_e500, pid, ea);
-	}
+	पूर्ण
 
-	return EMULATE_DONE;
-}
+	वापस EMULATE_DONE;
+पूर्ण
 
-int kvmppc_e500_emul_tlbre(struct kvm_vcpu *vcpu)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	int tlbsel, esel;
-	struct kvm_book3e_206_tlb_entry *gtlbe;
+पूर्णांक kvmppc_e500_emul_tlbre(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	पूर्णांक tlbsel, esel;
+	काष्ठा kvm_book3e_206_tlb_entry *gtlbe;
 
 	tlbsel = get_tlb_tlbsel(vcpu);
 	esel = get_tlb_esel(vcpu, tlbsel);
@@ -335,26 +336,26 @@ int kvmppc_e500_emul_tlbre(struct kvm_vcpu *vcpu)
 	vcpu->arch.shared->mas2 = gtlbe->mas2;
 	vcpu->arch.shared->mas7_3 = gtlbe->mas7_3;
 
-	return EMULATE_DONE;
-}
+	वापस EMULATE_DONE;
+पूर्ण
 
-int kvmppc_e500_emul_tlbsx(struct kvm_vcpu *vcpu, gva_t ea)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	int as = !!get_cur_sas(vcpu);
-	unsigned int pid = get_cur_spid(vcpu);
-	int esel, tlbsel;
-	struct kvm_book3e_206_tlb_entry *gtlbe = NULL;
+पूर्णांक kvmppc_e500_emul_tlbsx(काष्ठा kvm_vcpu *vcpu, gva_t ea)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	पूर्णांक as = !!get_cur_sas(vcpu);
+	अचिन्हित पूर्णांक pid = get_cur_spid(vcpu);
+	पूर्णांक esel, tlbsel;
+	काष्ठा kvm_book3e_206_tlb_entry *gtlbe = शून्य;
 
-	for (tlbsel = 0; tlbsel < 2; tlbsel++) {
+	क्रम (tlbsel = 0; tlbsel < 2; tlbsel++) अणु
 		esel = kvmppc_e500_tlb_index(vcpu_e500, ea, tlbsel, pid, as);
-		if (esel >= 0) {
+		अगर (esel >= 0) अणु
 			gtlbe = get_entry(vcpu_e500, tlbsel, esel);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (gtlbe) {
+	अगर (gtlbe) अणु
 		esel &= vcpu_e500->gtlb_params[tlbsel].ways - 1;
 
 		vcpu->arch.shared->mas0 = MAS0_TLBSEL(tlbsel) | MAS0_ESEL(esel)
@@ -362,8 +363,8 @@ int kvmppc_e500_emul_tlbsx(struct kvm_vcpu *vcpu, gva_t ea)
 		vcpu->arch.shared->mas1 = gtlbe->mas1;
 		vcpu->arch.shared->mas2 = gtlbe->mas2;
 		vcpu->arch.shared->mas7_3 = gtlbe->mas7_3;
-	} else {
-		int victim;
+	पूर्ण अन्यथा अणु
+		पूर्णांक victim;
 
 		/* since we only have two TLBs, only lower bit is used. */
 		tlbsel = vcpu->arch.shared->mas4 >> 28 & 0x1;
@@ -381,95 +382,95 @@ int kvmppc_e500_emul_tlbsx(struct kvm_vcpu *vcpu, gva_t ea)
 					   MAS2_ATTRIB_MASK;
 		vcpu->arch.shared->mas7_3 &= MAS3_U0 | MAS3_U1 |
 					     MAS3_U2 | MAS3_U3;
-	}
+	पूर्ण
 
-	kvmppc_set_exit_type(vcpu, EMULATED_TLBSX_EXITS);
-	return EMULATE_DONE;
-}
+	kvmppc_set_निकास_type(vcpu, EMULATED_TLBSX_EXITS);
+	वापस EMULATE_DONE;
+पूर्ण
 
-int kvmppc_e500_emul_tlbwe(struct kvm_vcpu *vcpu)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	struct kvm_book3e_206_tlb_entry *gtlbe;
-	int tlbsel, esel;
-	int recal = 0;
-	int idx;
+पूर्णांक kvmppc_e500_emul_tlbwe(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	काष्ठा kvm_book3e_206_tlb_entry *gtlbe;
+	पूर्णांक tlbsel, esel;
+	पूर्णांक recal = 0;
+	पूर्णांक idx;
 
 	tlbsel = get_tlb_tlbsel(vcpu);
 	esel = get_tlb_esel(vcpu, tlbsel);
 
 	gtlbe = get_entry(vcpu_e500, tlbsel, esel);
 
-	if (get_tlb_v(gtlbe)) {
+	अगर (get_tlb_v(gtlbe)) अणु
 		inval_gtlbe_on_host(vcpu_e500, tlbsel, esel);
-		if ((tlbsel == 1) &&
+		अगर ((tlbsel == 1) &&
 			kvmppc_need_recalc_tlb1map_range(vcpu_e500, gtlbe))
 			recal = 1;
-	}
+	पूर्ण
 
 	gtlbe->mas1 = vcpu->arch.shared->mas1;
 	gtlbe->mas2 = vcpu->arch.shared->mas2;
-	if (!(vcpu->arch.shared->msr & MSR_CM))
+	अगर (!(vcpu->arch.shared->msr & MSR_CM))
 		gtlbe->mas2 &= 0xffffffffUL;
 	gtlbe->mas7_3 = vcpu->arch.shared->mas7_3;
 
-	trace_kvm_booke206_gtlb_write(vcpu->arch.shared->mas0, gtlbe->mas1,
+	trace_kvm_booke206_gtlb_ग_लिखो(vcpu->arch.shared->mas0, gtlbe->mas1,
 	                              gtlbe->mas2, gtlbe->mas7_3);
 
-	if (tlbsel == 1) {
+	अगर (tlbsel == 1) अणु
 		/*
 		 * If a valid tlb1 entry is overwritten then recalculate the
 		 * min/max TLB1 map address range otherwise no need to look
 		 * in tlb1 array.
 		 */
-		if (recal)
+		अगर (recal)
 			kvmppc_recalc_tlb1map_range(vcpu_e500);
-		else
+		अन्यथा
 			kvmppc_set_tlb1map_range(vcpu, gtlbe);
-	}
+	पूर्ण
 
-	idx = srcu_read_lock(&vcpu->kvm->srcu);
+	idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
 
-	/* Invalidate shadow mappings for the about-to-be-clobbered TLBE. */
-	if (tlbe_is_host_safe(vcpu, gtlbe)) {
+	/* Invalidate shaकरोw mappings क्रम the about-to-be-clobbered TLBE. */
+	अगर (tlbe_is_host_safe(vcpu, gtlbe)) अणु
 		u64 eaddr = get_tlb_eaddr(gtlbe);
 		u64 raddr = get_tlb_raddr(gtlbe);
 
-		if (tlbsel == 0) {
+		अगर (tlbsel == 0) अणु
 			gtlbe->mas1 &= ~MAS1_TSIZE(~0);
 			gtlbe->mas1 |= MAS1_TSIZE(BOOK3E_PAGESZ_4K);
-		}
+		पूर्ण
 
 		/* Premap the faulting page */
 		kvmppc_mmu_map(vcpu, eaddr, raddr, index_of(tlbsel, esel));
-	}
+	पूर्ण
 
-	srcu_read_unlock(&vcpu->kvm->srcu, idx);
+	srcu_पढ़ो_unlock(&vcpu->kvm->srcu, idx);
 
-	kvmppc_set_exit_type(vcpu, EMULATED_TLBWE_EXITS);
-	return EMULATE_DONE;
-}
+	kvmppc_set_निकास_type(vcpu, EMULATED_TLBWE_EXITS);
+	वापस EMULATE_DONE;
+पूर्ण
 
-static int kvmppc_e500_tlb_search(struct kvm_vcpu *vcpu,
-				  gva_t eaddr, unsigned int pid, int as)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	int esel, tlbsel;
+अटल पूर्णांक kvmppc_e500_tlb_search(काष्ठा kvm_vcpu *vcpu,
+				  gva_t eaddr, अचिन्हित पूर्णांक pid, पूर्णांक as)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	पूर्णांक esel, tlbsel;
 
-	for (tlbsel = 0; tlbsel < 2; tlbsel++) {
+	क्रम (tlbsel = 0; tlbsel < 2; tlbsel++) अणु
 		esel = kvmppc_e500_tlb_index(vcpu_e500, eaddr, tlbsel, pid, as);
-		if (esel >= 0)
-			return index_of(tlbsel, esel);
-	}
+		अगर (esel >= 0)
+			वापस index_of(tlbsel, esel);
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /* 'linear_address' is actually an encoding of AS|PID|EADDR . */
-int kvmppc_core_vcpu_translate(struct kvm_vcpu *vcpu,
-                               struct kvm_translation *tr)
-{
-	int index;
+पूर्णांक kvmppc_core_vcpu_translate(काष्ठा kvm_vcpu *vcpu,
+                               काष्ठा kvm_translation *tr)
+अणु
+	पूर्णांक index;
 	gva_t eaddr;
 	u8 pid;
 	u8 as;
@@ -479,93 +480,93 @@ int kvmppc_core_vcpu_translate(struct kvm_vcpu *vcpu,
 	as = (tr->linear_address >> 40) & 0x1;
 
 	index = kvmppc_e500_tlb_search(vcpu, eaddr, pid, as);
-	if (index < 0) {
+	अगर (index < 0) अणु
 		tr->valid = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	tr->physical_address = kvmppc_mmu_xlate(vcpu, index, eaddr);
-	/* XXX what does "writeable" and "usermode" even mean? */
+	/* XXX what करोes "writeable" and "usermode" even mean? */
 	tr->valid = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int kvmppc_mmu_itlb_index(struct kvm_vcpu *vcpu, gva_t eaddr)
-{
-	unsigned int as = !!(vcpu->arch.shared->msr & MSR_IS);
+पूर्णांक kvmppc_mmu_itlb_index(काष्ठा kvm_vcpu *vcpu, gva_t eaddr)
+अणु
+	अचिन्हित पूर्णांक as = !!(vcpu->arch.shared->msr & MSR_IS);
 
-	return kvmppc_e500_tlb_search(vcpu, eaddr, get_cur_pid(vcpu), as);
-}
+	वापस kvmppc_e500_tlb_search(vcpu, eaddr, get_cur_pid(vcpu), as);
+पूर्ण
 
-int kvmppc_mmu_dtlb_index(struct kvm_vcpu *vcpu, gva_t eaddr)
-{
-	unsigned int as = !!(vcpu->arch.shared->msr & MSR_DS);
+पूर्णांक kvmppc_mmu_dtlb_index(काष्ठा kvm_vcpu *vcpu, gva_t eaddr)
+अणु
+	अचिन्हित पूर्णांक as = !!(vcpu->arch.shared->msr & MSR_DS);
 
-	return kvmppc_e500_tlb_search(vcpu, eaddr, get_cur_pid(vcpu), as);
-}
+	वापस kvmppc_e500_tlb_search(vcpu, eaddr, get_cur_pid(vcpu), as);
+पूर्ण
 
-void kvmppc_mmu_itlb_miss(struct kvm_vcpu *vcpu)
-{
-	unsigned int as = !!(vcpu->arch.shared->msr & MSR_IS);
+व्योम kvmppc_mmu_itlb_miss(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित पूर्णांक as = !!(vcpu->arch.shared->msr & MSR_IS);
 
 	kvmppc_e500_deliver_tlb_miss(vcpu, vcpu->arch.regs.nip, as);
-}
+पूर्ण
 
-void kvmppc_mmu_dtlb_miss(struct kvm_vcpu *vcpu)
-{
-	unsigned int as = !!(vcpu->arch.shared->msr & MSR_DS);
+व्योम kvmppc_mmu_dtlb_miss(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित पूर्णांक as = !!(vcpu->arch.shared->msr & MSR_DS);
 
 	kvmppc_e500_deliver_tlb_miss(vcpu, vcpu->arch.fault_dear, as);
-}
+पूर्ण
 
-gpa_t kvmppc_mmu_xlate(struct kvm_vcpu *vcpu, unsigned int index,
+gpa_t kvmppc_mmu_xlate(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक index,
 			gva_t eaddr)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	struct kvm_book3e_206_tlb_entry *gtlbe;
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	काष्ठा kvm_book3e_206_tlb_entry *gtlbe;
 	u64 pgmask;
 
 	gtlbe = get_entry(vcpu_e500, tlbsel_of(index), esel_of(index));
 	pgmask = get_tlb_bytes(gtlbe) - 1;
 
-	return get_tlb_raddr(gtlbe) | (eaddr & pgmask);
-}
+	वापस get_tlb_raddr(gtlbe) | (eaddr & pgmask);
+पूर्ण
 
 /*****************************************/
 
-static void free_gtlb(struct kvmppc_vcpu_e500 *vcpu_e500)
-{
-	int i;
+अटल व्योम मुक्त_gtlb(काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
+	पूर्णांक i;
 
 	kvmppc_core_flush_tlb(&vcpu_e500->vcpu);
-	kfree(vcpu_e500->g2h_tlb1_map);
-	kfree(vcpu_e500->gtlb_priv[0]);
-	kfree(vcpu_e500->gtlb_priv[1]);
+	kमुक्त(vcpu_e500->g2h_tlb1_map);
+	kमुक्त(vcpu_e500->gtlb_priv[0]);
+	kमुक्त(vcpu_e500->gtlb_priv[1]);
 
-	if (vcpu_e500->shared_tlb_pages) {
-		vfree((void *)(round_down((uintptr_t)vcpu_e500->gtlb_arch,
+	अगर (vcpu_e500->shared_tlb_pages) अणु
+		vमुक्त((व्योम *)(round_करोwn((uपूर्णांकptr_t)vcpu_e500->gtlb_arch,
 					  PAGE_SIZE)));
 
-		for (i = 0; i < vcpu_e500->num_shared_tlb_pages; i++) {
+		क्रम (i = 0; i < vcpu_e500->num_shared_tlb_pages; i++) अणु
 			set_page_dirty_lock(vcpu_e500->shared_tlb_pages[i]);
 			put_page(vcpu_e500->shared_tlb_pages[i]);
-		}
+		पूर्ण
 
 		vcpu_e500->num_shared_tlb_pages = 0;
 
-		kfree(vcpu_e500->shared_tlb_pages);
-		vcpu_e500->shared_tlb_pages = NULL;
-	} else {
-		kfree(vcpu_e500->gtlb_arch);
-	}
+		kमुक्त(vcpu_e500->shared_tlb_pages);
+		vcpu_e500->shared_tlb_pages = शून्य;
+	पूर्ण अन्यथा अणु
+		kमुक्त(vcpu_e500->gtlb_arch);
+	पूर्ण
 
-	vcpu_e500->gtlb_arch = NULL;
-}
+	vcpu_e500->gtlb_arch = शून्य;
+पूर्ण
 
-void kvmppc_get_sregs_e500_tlb(struct kvm_vcpu *vcpu, struct kvm_sregs *sregs)
-{
+व्योम kvmppc_get_sregs_e500_tlb(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_sregs *sregs)
+अणु
 	sregs->u.e.mas0 = vcpu->arch.shared->mas0;
 	sregs->u.e.mas1 = vcpu->arch.shared->mas1;
 	sregs->u.e.mas2 = vcpu->arch.shared->mas2;
@@ -578,247 +579,247 @@ void kvmppc_get_sregs_e500_tlb(struct kvm_vcpu *vcpu, struct kvm_sregs *sregs)
 	sregs->u.e.tlbcfg[1] = vcpu->arch.tlbcfg[1];
 	sregs->u.e.tlbcfg[2] = 0;
 	sregs->u.e.tlbcfg[3] = 0;
-}
+पूर्ण
 
-int kvmppc_set_sregs_e500_tlb(struct kvm_vcpu *vcpu, struct kvm_sregs *sregs)
-{
-	if (sregs->u.e.features & KVM_SREGS_E_ARCH206_MMU) {
+पूर्णांक kvmppc_set_sregs_e500_tlb(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_sregs *sregs)
+अणु
+	अगर (sregs->u.e.features & KVM_SREGS_E_ARCH206_MMU) अणु
 		vcpu->arch.shared->mas0 = sregs->u.e.mas0;
 		vcpu->arch.shared->mas1 = sregs->u.e.mas1;
 		vcpu->arch.shared->mas2 = sregs->u.e.mas2;
 		vcpu->arch.shared->mas7_3 = sregs->u.e.mas7_3;
 		vcpu->arch.shared->mas4 = sregs->u.e.mas4;
 		vcpu->arch.shared->mas6 = sregs->u.e.mas6;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvmppc_get_one_reg_e500_tlb(struct kvm_vcpu *vcpu, u64 id,
-				union kvmppc_one_reg *val)
-{
-	int r = 0;
-	long int i;
+पूर्णांक kvmppc_get_one_reg_e500_tlb(काष्ठा kvm_vcpu *vcpu, u64 id,
+				जोड़ kvmppc_one_reg *val)
+अणु
+	पूर्णांक r = 0;
+	दीर्घ पूर्णांक i;
 
-	switch (id) {
-	case KVM_REG_PPC_MAS0:
+	चयन (id) अणु
+	हाल KVM_REG_PPC_MAS0:
 		*val = get_reg_val(id, vcpu->arch.shared->mas0);
-		break;
-	case KVM_REG_PPC_MAS1:
+		अवरोध;
+	हाल KVM_REG_PPC_MAS1:
 		*val = get_reg_val(id, vcpu->arch.shared->mas1);
-		break;
-	case KVM_REG_PPC_MAS2:
+		अवरोध;
+	हाल KVM_REG_PPC_MAS2:
 		*val = get_reg_val(id, vcpu->arch.shared->mas2);
-		break;
-	case KVM_REG_PPC_MAS7_3:
+		अवरोध;
+	हाल KVM_REG_PPC_MAS7_3:
 		*val = get_reg_val(id, vcpu->arch.shared->mas7_3);
-		break;
-	case KVM_REG_PPC_MAS4:
+		अवरोध;
+	हाल KVM_REG_PPC_MAS4:
 		*val = get_reg_val(id, vcpu->arch.shared->mas4);
-		break;
-	case KVM_REG_PPC_MAS6:
+		अवरोध;
+	हाल KVM_REG_PPC_MAS6:
 		*val = get_reg_val(id, vcpu->arch.shared->mas6);
-		break;
-	case KVM_REG_PPC_MMUCFG:
+		अवरोध;
+	हाल KVM_REG_PPC_MMUCFG:
 		*val = get_reg_val(id, vcpu->arch.mmucfg);
-		break;
-	case KVM_REG_PPC_EPTCFG:
+		अवरोध;
+	हाल KVM_REG_PPC_EPTCFG:
 		*val = get_reg_val(id, vcpu->arch.eptcfg);
-		break;
-	case KVM_REG_PPC_TLB0CFG:
-	case KVM_REG_PPC_TLB1CFG:
-	case KVM_REG_PPC_TLB2CFG:
-	case KVM_REG_PPC_TLB3CFG:
+		अवरोध;
+	हाल KVM_REG_PPC_TLB0CFG:
+	हाल KVM_REG_PPC_TLB1CFG:
+	हाल KVM_REG_PPC_TLB2CFG:
+	हाल KVM_REG_PPC_TLB3CFG:
 		i = id - KVM_REG_PPC_TLB0CFG;
 		*val = get_reg_val(id, vcpu->arch.tlbcfg[i]);
-		break;
-	case KVM_REG_PPC_TLB0PS:
-	case KVM_REG_PPC_TLB1PS:
-	case KVM_REG_PPC_TLB2PS:
-	case KVM_REG_PPC_TLB3PS:
+		अवरोध;
+	हाल KVM_REG_PPC_TLB0PS:
+	हाल KVM_REG_PPC_TLB1PS:
+	हाल KVM_REG_PPC_TLB2PS:
+	हाल KVM_REG_PPC_TLB3PS:
 		i = id - KVM_REG_PPC_TLB0PS;
 		*val = get_reg_val(id, vcpu->arch.tlbps[i]);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		r = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int kvmppc_set_one_reg_e500_tlb(struct kvm_vcpu *vcpu, u64 id,
-			       union kvmppc_one_reg *val)
-{
-	int r = 0;
-	long int i;
+पूर्णांक kvmppc_set_one_reg_e500_tlb(काष्ठा kvm_vcpu *vcpu, u64 id,
+			       जोड़ kvmppc_one_reg *val)
+अणु
+	पूर्णांक r = 0;
+	दीर्घ पूर्णांक i;
 
-	switch (id) {
-	case KVM_REG_PPC_MAS0:
+	चयन (id) अणु
+	हाल KVM_REG_PPC_MAS0:
 		vcpu->arch.shared->mas0 = set_reg_val(id, *val);
-		break;
-	case KVM_REG_PPC_MAS1:
+		अवरोध;
+	हाल KVM_REG_PPC_MAS1:
 		vcpu->arch.shared->mas1 = set_reg_val(id, *val);
-		break;
-	case KVM_REG_PPC_MAS2:
+		अवरोध;
+	हाल KVM_REG_PPC_MAS2:
 		vcpu->arch.shared->mas2 = set_reg_val(id, *val);
-		break;
-	case KVM_REG_PPC_MAS7_3:
+		अवरोध;
+	हाल KVM_REG_PPC_MAS7_3:
 		vcpu->arch.shared->mas7_3 = set_reg_val(id, *val);
-		break;
-	case KVM_REG_PPC_MAS4:
+		अवरोध;
+	हाल KVM_REG_PPC_MAS4:
 		vcpu->arch.shared->mas4 = set_reg_val(id, *val);
-		break;
-	case KVM_REG_PPC_MAS6:
+		अवरोध;
+	हाल KVM_REG_PPC_MAS6:
 		vcpu->arch.shared->mas6 = set_reg_val(id, *val);
-		break;
-	/* Only allow MMU registers to be set to the config supported by KVM */
-	case KVM_REG_PPC_MMUCFG: {
+		अवरोध;
+	/* Only allow MMU रेजिस्टरs to be set to the config supported by KVM */
+	हाल KVM_REG_PPC_MMUCFG: अणु
 		u32 reg = set_reg_val(id, *val);
-		if (reg != vcpu->arch.mmucfg)
+		अगर (reg != vcpu->arch.mmucfg)
 			r = -EINVAL;
-		break;
-	}
-	case KVM_REG_PPC_EPTCFG: {
+		अवरोध;
+	पूर्ण
+	हाल KVM_REG_PPC_EPTCFG: अणु
 		u32 reg = set_reg_val(id, *val);
-		if (reg != vcpu->arch.eptcfg)
+		अगर (reg != vcpu->arch.eptcfg)
 			r = -EINVAL;
-		break;
-	}
-	case KVM_REG_PPC_TLB0CFG:
-	case KVM_REG_PPC_TLB1CFG:
-	case KVM_REG_PPC_TLB2CFG:
-	case KVM_REG_PPC_TLB3CFG: {
+		अवरोध;
+	पूर्ण
+	हाल KVM_REG_PPC_TLB0CFG:
+	हाल KVM_REG_PPC_TLB1CFG:
+	हाल KVM_REG_PPC_TLB2CFG:
+	हाल KVM_REG_PPC_TLB3CFG: अणु
 		/* MMU geometry (N_ENTRY/ASSOC) can be set only using SW_TLB */
 		u32 reg = set_reg_val(id, *val);
 		i = id - KVM_REG_PPC_TLB0CFG;
-		if (reg != vcpu->arch.tlbcfg[i])
+		अगर (reg != vcpu->arch.tlbcfg[i])
 			r = -EINVAL;
-		break;
-	}
-	case KVM_REG_PPC_TLB0PS:
-	case KVM_REG_PPC_TLB1PS:
-	case KVM_REG_PPC_TLB2PS:
-	case KVM_REG_PPC_TLB3PS: {
+		अवरोध;
+	पूर्ण
+	हाल KVM_REG_PPC_TLB0PS:
+	हाल KVM_REG_PPC_TLB1PS:
+	हाल KVM_REG_PPC_TLB2PS:
+	हाल KVM_REG_PPC_TLB3PS: अणु
 		u32 reg = set_reg_val(id, *val);
 		i = id - KVM_REG_PPC_TLB0PS;
-		if (reg != vcpu->arch.tlbps[i])
+		अगर (reg != vcpu->arch.tlbps[i])
 			r = -EINVAL;
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		r = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int vcpu_mmu_geometry_update(struct kvm_vcpu *vcpu,
-		struct kvm_book3e_206_tlb_params *params)
-{
+अटल पूर्णांक vcpu_mmu_geometry_update(काष्ठा kvm_vcpu *vcpu,
+		काष्ठा kvm_book3e_206_tlb_params *params)
+अणु
 	vcpu->arch.tlbcfg[0] &= ~(TLBnCFG_N_ENTRY | TLBnCFG_ASSOC);
-	if (params->tlb_sizes[0] <= 2048)
+	अगर (params->tlb_sizes[0] <= 2048)
 		vcpu->arch.tlbcfg[0] |= params->tlb_sizes[0];
 	vcpu->arch.tlbcfg[0] |= params->tlb_ways[0] << TLBnCFG_ASSOC_SHIFT;
 
 	vcpu->arch.tlbcfg[1] &= ~(TLBnCFG_N_ENTRY | TLBnCFG_ASSOC);
 	vcpu->arch.tlbcfg[1] |= params->tlb_sizes[1];
 	vcpu->arch.tlbcfg[1] |= params->tlb_ways[1] << TLBnCFG_ASSOC_SHIFT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvm_vcpu_ioctl_config_tlb(struct kvm_vcpu *vcpu,
-			      struct kvm_config_tlb *cfg)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
-	struct kvm_book3e_206_tlb_params params;
-	char *virt;
-	struct page **pages;
-	struct tlbe_priv *privs[2] = {};
-	u64 *g2h_bitmap;
-	size_t array_len;
+पूर्णांक kvm_vcpu_ioctl_config_tlb(काष्ठा kvm_vcpu *vcpu,
+			      काष्ठा kvm_config_tlb *cfg)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+	काष्ठा kvm_book3e_206_tlb_params params;
+	अक्षर *virt;
+	काष्ठा page **pages;
+	काष्ठा tlbe_priv *privs[2] = अणुपूर्ण;
+	u64 *g2h_biपंचांगap;
+	माप_प्रकार array_len;
 	u32 sets;
-	int num_pages, ret, i;
+	पूर्णांक num_pages, ret, i;
 
-	if (cfg->mmu_type != KVM_MMU_FSL_BOOKE_NOHV)
-		return -EINVAL;
+	अगर (cfg->mmu_type != KVM_MMU_FSL_BOOKE_NOHV)
+		वापस -EINVAL;
 
-	if (copy_from_user(&params, (void __user *)(uintptr_t)cfg->params,
-			   sizeof(params)))
-		return -EFAULT;
+	अगर (copy_from_user(&params, (व्योम __user *)(uपूर्णांकptr_t)cfg->params,
+			   माप(params)))
+		वापस -EFAULT;
 
-	if (params.tlb_sizes[1] > 64)
-		return -EINVAL;
-	if (params.tlb_ways[1] != params.tlb_sizes[1])
-		return -EINVAL;
-	if (params.tlb_sizes[2] != 0 || params.tlb_sizes[3] != 0)
-		return -EINVAL;
-	if (params.tlb_ways[2] != 0 || params.tlb_ways[3] != 0)
-		return -EINVAL;
+	अगर (params.tlb_sizes[1] > 64)
+		वापस -EINVAL;
+	अगर (params.tlb_ways[1] != params.tlb_sizes[1])
+		वापस -EINVAL;
+	अगर (params.tlb_sizes[2] != 0 || params.tlb_sizes[3] != 0)
+		वापस -EINVAL;
+	अगर (params.tlb_ways[2] != 0 || params.tlb_ways[3] != 0)
+		वापस -EINVAL;
 
-	if (!is_power_of_2(params.tlb_ways[0]))
-		return -EINVAL;
+	अगर (!is_घातer_of_2(params.tlb_ways[0]))
+		वापस -EINVAL;
 
 	sets = params.tlb_sizes[0] >> ilog2(params.tlb_ways[0]);
-	if (!is_power_of_2(sets))
-		return -EINVAL;
+	अगर (!is_घातer_of_2(sets))
+		वापस -EINVAL;
 
 	array_len = params.tlb_sizes[0] + params.tlb_sizes[1];
-	array_len *= sizeof(struct kvm_book3e_206_tlb_entry);
+	array_len *= माप(काष्ठा kvm_book3e_206_tlb_entry);
 
-	if (cfg->array_len < array_len)
-		return -EINVAL;
+	अगर (cfg->array_len < array_len)
+		वापस -EINVAL;
 
 	num_pages = DIV_ROUND_UP(cfg->array + array_len - 1, PAGE_SIZE) -
 		    cfg->array / PAGE_SIZE;
-	pages = kmalloc_array(num_pages, sizeof(*pages), GFP_KERNEL);
-	if (!pages)
-		return -ENOMEM;
+	pages = kदो_स्मृति_array(num_pages, माप(*pages), GFP_KERNEL);
+	अगर (!pages)
+		वापस -ENOMEM;
 
 	ret = get_user_pages_fast(cfg->array, num_pages, FOLL_WRITE, pages);
-	if (ret < 0)
-		goto free_pages;
+	अगर (ret < 0)
+		जाओ मुक्त_pages;
 
-	if (ret != num_pages) {
+	अगर (ret != num_pages) अणु
 		num_pages = ret;
 		ret = -EFAULT;
-		goto put_pages;
-	}
+		जाओ put_pages;
+	पूर्ण
 
 	virt = vmap(pages, num_pages, VM_MAP, PAGE_KERNEL);
-	if (!virt) {
+	अगर (!virt) अणु
 		ret = -ENOMEM;
-		goto put_pages;
-	}
+		जाओ put_pages;
+	पूर्ण
 
-	privs[0] = kcalloc(params.tlb_sizes[0], sizeof(*privs[0]), GFP_KERNEL);
-	if (!privs[0]) {
+	privs[0] = kसुस्मृति(params.tlb_sizes[0], माप(*privs[0]), GFP_KERNEL);
+	अगर (!privs[0]) अणु
 		ret = -ENOMEM;
-		goto put_pages;
-	}
+		जाओ put_pages;
+	पूर्ण
 
-	privs[1] = kcalloc(params.tlb_sizes[1], sizeof(*privs[1]), GFP_KERNEL);
-	if (!privs[1]) {
+	privs[1] = kसुस्मृति(params.tlb_sizes[1], माप(*privs[1]), GFP_KERNEL);
+	अगर (!privs[1]) अणु
 		ret = -ENOMEM;
-		goto free_privs_first;
-	}
+		जाओ मुक्त_privs_first;
+	पूर्ण
 
-	g2h_bitmap = kcalloc(params.tlb_sizes[1],
-			     sizeof(*g2h_bitmap),
+	g2h_biपंचांगap = kसुस्मृति(params.tlb_sizes[1],
+			     माप(*g2h_biपंचांगap),
 			     GFP_KERNEL);
-	if (!g2h_bitmap) {
+	अगर (!g2h_biपंचांगap) अणु
 		ret = -ENOMEM;
-		goto free_privs_second;
-	}
+		जाओ मुक्त_privs_second;
+	पूर्ण
 
-	free_gtlb(vcpu_e500);
+	मुक्त_gtlb(vcpu_e500);
 
 	vcpu_e500->gtlb_priv[0] = privs[0];
 	vcpu_e500->gtlb_priv[1] = privs[1];
-	vcpu_e500->g2h_tlb1_map = g2h_bitmap;
+	vcpu_e500->g2h_tlb1_map = g2h_biपंचांगap;
 
-	vcpu_e500->gtlb_arch = (struct kvm_book3e_206_tlb_entry *)
+	vcpu_e500->gtlb_arch = (काष्ठा kvm_book3e_206_tlb_entry *)
 		(virt + (cfg->array & (PAGE_SIZE - 1)));
 
 	vcpu_e500->gtlb_params[0].entries = params.tlb_sizes[0];
@@ -840,32 +841,32 @@ int kvm_vcpu_ioctl_config_tlb(struct kvm_vcpu *vcpu,
 	vcpu_e500->gtlb_params[1].sets = 1;
 
 	kvmppc_recalc_tlb1map_range(vcpu_e500);
-	return 0;
- free_privs_second:
-	kfree(privs[1]);
- free_privs_first:
-	kfree(privs[0]);
+	वापस 0;
+ मुक्त_privs_second:
+	kमुक्त(privs[1]);
+ मुक्त_privs_first:
+	kमुक्त(privs[0]);
  put_pages:
-	for (i = 0; i < num_pages; i++)
+	क्रम (i = 0; i < num_pages; i++)
 		put_page(pages[i]);
- free_pages:
-	kfree(pages);
-	return ret;
-}
+ मुक्त_pages:
+	kमुक्त(pages);
+	वापस ret;
+पूर्ण
 
-int kvm_vcpu_ioctl_dirty_tlb(struct kvm_vcpu *vcpu,
-			     struct kvm_dirty_tlb *dirty)
-{
-	struct kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
+पूर्णांक kvm_vcpu_ioctl_dirty_tlb(काष्ठा kvm_vcpu *vcpu,
+			     काष्ठा kvm_dirty_tlb *dirty)
+अणु
+	काष्ठा kvmppc_vcpu_e500 *vcpu_e500 = to_e500(vcpu);
 	kvmppc_recalc_tlb1map_range(vcpu_e500);
 	kvmppc_core_flush_tlb(vcpu);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Vcpu's MMU default configuration */
-static int vcpu_mmu_init(struct kvm_vcpu *vcpu,
-		       struct kvmppc_e500_tlb_params *params)
-{
+/* Vcpu's MMU शेष configuration */
+अटल पूर्णांक vcpu_mmu_init(काष्ठा kvm_vcpu *vcpu,
+		       काष्ठा kvmppc_e500_tlb_params *params)
+अणु
 	/* Initialize RASIZE, PIDSIZE, NTLBS and MAVN fields with host values*/
 	vcpu->arch.mmucfg = mfspr(SPRN_MMUCFG) & ~MMUCFG_LPIDSIZE;
 
@@ -880,27 +881,27 @@ static int vcpu_mmu_init(struct kvm_vcpu *vcpu,
 	vcpu->arch.tlbcfg[1] |= params[1].entries;
 	vcpu->arch.tlbcfg[1] |= params[1].ways << TLBnCFG_ASSOC_SHIFT;
 
-	if (has_feature(vcpu, VCPU_FTR_MMU_V2)) {
+	अगर (has_feature(vcpu, VCPU_FTR_MMU_V2)) अणु
 		vcpu->arch.tlbps[0] = mfspr(SPRN_TLB0PS);
 		vcpu->arch.tlbps[1] = mfspr(SPRN_TLB1PS);
 
 		vcpu->arch.mmucfg &= ~MMUCFG_LRAT;
 
-		/* Guest mmu emulation currently doesn't handle E.PT */
+		/* Guest mmu emulation currently करोesn't handle E.PT */
 		vcpu->arch.eptcfg = 0;
 		vcpu->arch.tlbcfg[0] &= ~TLBnCFG_PT;
 		vcpu->arch.tlbcfg[1] &= ~TLBnCFG_IND;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvmppc_e500_tlb_init(struct kvmppc_vcpu_e500 *vcpu_e500)
-{
-	struct kvm_vcpu *vcpu = &vcpu_e500->vcpu;
+पूर्णांक kvmppc_e500_tlb_init(काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
+	काष्ठा kvm_vcpu *vcpu = &vcpu_e500->vcpu;
 
-	if (e500_mmu_host_init(vcpu_e500))
-		goto free_vcpu;
+	अगर (e500_mmu_host_init(vcpu_e500))
+		जाओ मुक्त_vcpu;
 
 	vcpu_e500->gtlb_params[0].entries = KVM_E500_TLB0_SIZE;
 	vcpu_e500->gtlb_params[1].entries = KVM_E500_TLB1_SIZE;
@@ -912,45 +913,45 @@ int kvmppc_e500_tlb_init(struct kvmppc_vcpu_e500 *vcpu_e500)
 	vcpu_e500->gtlb_params[1].ways = KVM_E500_TLB1_SIZE;
 	vcpu_e500->gtlb_params[1].sets = 1;
 
-	vcpu_e500->gtlb_arch = kmalloc_array(KVM_E500_TLB0_SIZE +
+	vcpu_e500->gtlb_arch = kदो_स्मृति_array(KVM_E500_TLB0_SIZE +
 					     KVM_E500_TLB1_SIZE,
-					     sizeof(*vcpu_e500->gtlb_arch),
+					     माप(*vcpu_e500->gtlb_arch),
 					     GFP_KERNEL);
-	if (!vcpu_e500->gtlb_arch)
-		return -ENOMEM;
+	अगर (!vcpu_e500->gtlb_arch)
+		वापस -ENOMEM;
 
 	vcpu_e500->gtlb_offset[0] = 0;
 	vcpu_e500->gtlb_offset[1] = KVM_E500_TLB0_SIZE;
 
-	vcpu_e500->gtlb_priv[0] = kcalloc(vcpu_e500->gtlb_params[0].entries,
-					  sizeof(struct tlbe_ref),
+	vcpu_e500->gtlb_priv[0] = kसुस्मृति(vcpu_e500->gtlb_params[0].entries,
+					  माप(काष्ठा tlbe_ref),
 					  GFP_KERNEL);
-	if (!vcpu_e500->gtlb_priv[0])
-		goto free_vcpu;
+	अगर (!vcpu_e500->gtlb_priv[0])
+		जाओ मुक्त_vcpu;
 
-	vcpu_e500->gtlb_priv[1] = kcalloc(vcpu_e500->gtlb_params[1].entries,
-					  sizeof(struct tlbe_ref),
+	vcpu_e500->gtlb_priv[1] = kसुस्मृति(vcpu_e500->gtlb_params[1].entries,
+					  माप(काष्ठा tlbe_ref),
 					  GFP_KERNEL);
-	if (!vcpu_e500->gtlb_priv[1])
-		goto free_vcpu;
+	अगर (!vcpu_e500->gtlb_priv[1])
+		जाओ मुक्त_vcpu;
 
-	vcpu_e500->g2h_tlb1_map = kcalloc(vcpu_e500->gtlb_params[1].entries,
-					  sizeof(*vcpu_e500->g2h_tlb1_map),
+	vcpu_e500->g2h_tlb1_map = kसुस्मृति(vcpu_e500->gtlb_params[1].entries,
+					  माप(*vcpu_e500->g2h_tlb1_map),
 					  GFP_KERNEL);
-	if (!vcpu_e500->g2h_tlb1_map)
-		goto free_vcpu;
+	अगर (!vcpu_e500->g2h_tlb1_map)
+		जाओ मुक्त_vcpu;
 
 	vcpu_mmu_init(vcpu, vcpu_e500->gtlb_params);
 
 	kvmppc_recalc_tlb1map_range(vcpu_e500);
-	return 0;
- free_vcpu:
-	free_gtlb(vcpu_e500);
-	return -1;
-}
+	वापस 0;
+ मुक्त_vcpu:
+	मुक्त_gtlb(vcpu_e500);
+	वापस -1;
+पूर्ण
 
-void kvmppc_e500_tlb_uninit(struct kvmppc_vcpu_e500 *vcpu_e500)
-{
-	free_gtlb(vcpu_e500);
+व्योम kvmppc_e500_tlb_uninit(काष्ठा kvmppc_vcpu_e500 *vcpu_e500)
+अणु
+	मुक्त_gtlb(vcpu_e500);
 	e500_mmu_host_uninit(vcpu_e500);
-}
+पूर्ण

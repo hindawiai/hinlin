@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  ARM HDLCD Controller register definition
+ *  ARM HDLCD Controller रेजिस्टर definition
  */
 
-#ifndef __HDLCD_DRV_H__
-#define __HDLCD_DRV_H__
+#अगर_अघोषित __HDLCD_DRV_H__
+#घोषणा __HDLCD_DRV_H__
 
-struct hdlcd_drm_private {
-	void __iomem			*mmio;
-	struct clk			*clk;
-	struct drm_crtc			crtc;
-	struct drm_plane		*plane;
-#ifdef CONFIG_DEBUG_FS
+काष्ठा hdlcd_drm_निजी अणु
+	व्योम __iomem			*mmio;
+	काष्ठा clk			*clk;
+	काष्ठा drm_crtc			crtc;
+	काष्ठा drm_plane		*plane;
+#अगर_घोषित CONFIG_DEBUG_FS
 	atomic_t buffer_underrun_count;
 	atomic_t bus_error_count;
 	atomic_t vsync_count;
 	atomic_t dma_end_count;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#define crtc_to_hdlcd_priv(x)	container_of(x, struct hdlcd_drm_private, crtc)
+#घोषणा crtc_to_hdlcd_priv(x)	container_of(x, काष्ठा hdlcd_drm_निजी, crtc)
 
-static inline void hdlcd_write(struct hdlcd_drm_private *hdlcd,
-			       unsigned int reg, u32 value)
-{
-	writel(value, hdlcd->mmio + reg);
-}
+अटल अंतरभूत व्योम hdlcd_ग_लिखो(काष्ठा hdlcd_drm_निजी *hdlcd,
+			       अचिन्हित पूर्णांक reg, u32 value)
+अणु
+	ग_लिखोl(value, hdlcd->mmio + reg);
+पूर्ण
 
-static inline u32 hdlcd_read(struct hdlcd_drm_private *hdlcd, unsigned int reg)
-{
-	return readl(hdlcd->mmio + reg);
-}
+अटल अंतरभूत u32 hdlcd_पढ़ो(काष्ठा hdlcd_drm_निजी *hdlcd, अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोl(hdlcd->mmio + reg);
+पूर्ण
 
-int hdlcd_setup_crtc(struct drm_device *dev);
-void hdlcd_set_scanout(struct hdlcd_drm_private *hdlcd);
+पूर्णांक hdlcd_setup_crtc(काष्ठा drm_device *dev);
+व्योम hdlcd_set_scanout(काष्ठा hdlcd_drm_निजी *hdlcd);
 
-#endif /* __HDLCD_DRV_H__ */
+#पूर्ण_अगर /* __HDLCD_DRV_H__ */

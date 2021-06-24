@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Vortex Mixer support.
  *
@@ -6,39 +7,39 @@
  *
  */
 
-#include <linux/time.h>
-#include <linux/init.h>
-#include <sound/core.h>
-#include "au88x0.h"
+#समावेश <linux/समय.स>
+#समावेश <linux/init.h>
+#समावेश <sound/core.h>
+#समावेश "au88x0.h"
 
-static int remove_ctl(struct snd_card *card, const char *name)
-{
-	struct snd_ctl_elem_id id;
-	memset(&id, 0, sizeof(id));
-	strcpy(id.name, name);
-	id.iface = SNDRV_CTL_ELEM_IFACE_MIXER;
-	return snd_ctl_remove_id(card, &id);
-}
+अटल पूर्णांक हटाओ_ctl(काष्ठा snd_card *card, स्थिर अक्षर *name)
+अणु
+	काष्ठा snd_ctl_elem_id id;
+	स_रखो(&id, 0, माप(id));
+	म_नकल(id.name, name);
+	id.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER;
+	वापस snd_ctl_हटाओ_id(card, &id);
+पूर्ण
 
-static int snd_vortex_mixer(vortex_t *vortex)
-{
-	struct snd_ac97_bus *pbus;
-	struct snd_ac97_template ac97;
-	int err;
-	static const struct snd_ac97_bus_ops ops = {
-		.write = vortex_codec_write,
-		.read = vortex_codec_read,
-	};
+अटल पूर्णांक snd_vortex_mixer(vortex_t *vortex)
+अणु
+	काष्ठा snd_ac97_bus *pbus;
+	काष्ठा snd_ac97_ढाँचा ac97;
+	पूर्णांक err;
+	अटल स्थिर काष्ठा snd_ac97_bus_ops ops = अणु
+		.ग_लिखो = vortex_codec_ग_लिखो,
+		.पढ़ो = vortex_codec_पढ़ो,
+	पूर्ण;
 
-	if ((err = snd_ac97_bus(vortex->card, 0, &ops, NULL, &pbus)) < 0)
-		return err;
-	memset(&ac97, 0, sizeof(ac97));
+	अगर ((err = snd_ac97_bus(vortex->card, 0, &ops, शून्य, &pbus)) < 0)
+		वापस err;
+	स_रखो(&ac97, 0, माप(ac97));
 	// Initialize AC97 codec stuff.
-	ac97.private_data = vortex;
+	ac97.निजी_data = vortex;
 	ac97.scaps = AC97_SCAP_NO_SPDIF;
 	err = snd_ac97_mixer(pbus, &ac97, &vortex->codec);
-	vortex->isquad = ((vortex->codec == NULL) ?  0 : (vortex->codec->ext_id&0x80));
-	remove_ctl(vortex->card, "Master Mono Playback Volume");
-	remove_ctl(vortex->card, "Master Mono Playback Switch");
-	return err;
-}
+	vortex->isquad = ((vortex->codec == शून्य) ?  0 : (vortex->codec->ext_id&0x80));
+	हटाओ_ctl(vortex->card, "Master Mono Playback Volume");
+	हटाओ_ctl(vortex->card, "Master Mono Playback Switch");
+	वापस err;
+पूर्ण

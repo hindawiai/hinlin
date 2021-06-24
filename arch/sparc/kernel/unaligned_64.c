@@ -1,709 +1,710 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * unaligned.c: Unaligned load/store trap handling with special
- *              cases for the kernel to do them more quickly.
+ *              हालs क्रम the kernel to करो them more quickly.
  *
  * Copyright (C) 1996,2008 David S. Miller (davem@davemloft.net)
  * Copyright (C) 1996,1997 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
 
 
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/mm.h>
-#include <linux/extable.h>
-#include <asm/asi.h>
-#include <asm/ptrace.h>
-#include <asm/pstate.h>
-#include <asm/processor.h>
-#include <linux/uaccess.h>
-#include <linux/smp.h>
-#include <linux/bitops.h>
-#include <linux/perf_event.h>
-#include <linux/ratelimit.h>
-#include <linux/context_tracking.h>
-#include <asm/fpumacro.h>
-#include <asm/cacheflush.h>
-#include <asm/setup.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/extable.h>
+#समावेश <यंत्र/asi.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/pstate.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/context_tracking.h>
+#समावेश <यंत्र/fpumacro.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/setup.h>
 
-#include "entry.h"
-#include "kernel.h"
+#समावेश "entry.h"
+#समावेश "kernel.h"
 
-enum direction {
+क्रमागत direction अणु
 	load,    /* ld, ldd, ldh, ldsh */
 	store,   /* st, std, sth, stsh */
 	both,    /* Swap, ldstub, cas, ... */
 	fpld,
 	fpst,
 	invalid,
-};
+पूर्ण;
 
-static inline enum direction decode_direction(unsigned int insn)
-{
-	unsigned long tmp = (insn >> 21) & 1;
+अटल अंतरभूत क्रमागत direction decode_direction(अचिन्हित पूर्णांक insn)
+अणु
+	अचिन्हित दीर्घ पंचांगp = (insn >> 21) & 1;
 
-	if (!tmp)
-		return load;
-	else {
-		switch ((insn>>19)&0xf) {
-		case 15: /* swap* */
-			return both;
-		default:
-			return store;
-		}
-	}
-}
+	अगर (!पंचांगp)
+		वापस load;
+	अन्यथा अणु
+		चयन ((insn>>19)&0xf) अणु
+		हाल 15: /* swap* */
+			वापस both;
+		शेष:
+			वापस store;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* 16 = double-word, 8 = extra-word, 4 = word, 2 = half-word */
-static inline int decode_access_size(struct pt_regs *regs, unsigned int insn)
-{
-	unsigned int tmp;
+/* 16 = द्विगुन-word, 8 = extra-word, 4 = word, 2 = half-word */
+अटल अंतरभूत पूर्णांक decode_access_size(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक insn)
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
 
-	tmp = ((insn >> 19) & 0xf);
-	if (tmp == 11 || tmp == 14) /* ldx/stx */
-		return 8;
-	tmp &= 3;
-	if (!tmp)
-		return 4;
-	else if (tmp == 3)
-		return 16;	/* ldd/std - Although it is actually 8 */
-	else if (tmp == 2)
-		return 2;
-	else {
-		printk("Impossible unaligned trap. insn=%08x\n", insn);
-		die_if_kernel("Byte sized unaligned access?!?!", regs);
+	पंचांगp = ((insn >> 19) & 0xf);
+	अगर (पंचांगp == 11 || पंचांगp == 14) /* ldx/stx */
+		वापस 8;
+	पंचांगp &= 3;
+	अगर (!पंचांगp)
+		वापस 4;
+	अन्यथा अगर (पंचांगp == 3)
+		वापस 16;	/* ldd/std - Although it is actually 8 */
+	अन्यथा अगर (पंचांगp == 2)
+		वापस 2;
+	अन्यथा अणु
+		prपूर्णांकk("Impossible unaligned trap. insn=%08x\n", insn);
+		die_अगर_kernel("Byte sized unaligned access?!?!", regs);
 
 		/* GCC should never warn that control reaches the end
-		 * of this function without returning a value because
-		 * die_if_kernel() is marked with attribute 'noreturn'.
-		 * Alas, some versions do...
+		 * of this function without वापसing a value because
+		 * die_अगर_kernel() is marked with attribute 'noreturn'.
+		 * Alas, some versions करो...
 		 */
 
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline int decode_asi(unsigned int insn, struct pt_regs *regs)
-{
-	if (insn & 0x800000) {
-		if (insn & 0x2000)
-			return (unsigned char)(regs->tstate >> 24);	/* %asi */
-		else
-			return (unsigned char)(insn >> 5);		/* imm_asi */
-	} else
-		return ASI_P;
-}
+अटल अंतरभूत पूर्णांक decode_asi(अचिन्हित पूर्णांक insn, काष्ठा pt_regs *regs)
+अणु
+	अगर (insn & 0x800000) अणु
+		अगर (insn & 0x2000)
+			वापस (अचिन्हित अक्षर)(regs->tstate >> 24);	/* %asi */
+		अन्यथा
+			वापस (अचिन्हित अक्षर)(insn >> 5);		/* imm_asi */
+	पूर्ण अन्यथा
+		वापस ASI_P;
+पूर्ण
 
-/* 0x400000 = signed, 0 = unsigned */
-static inline int decode_signedness(unsigned int insn)
-{
-	return (insn & 0x400000);
-}
+/* 0x400000 = चिन्हित, 0 = अचिन्हित */
+अटल अंतरभूत पूर्णांक decode_चिन्हितness(अचिन्हित पूर्णांक insn)
+अणु
+	वापस (insn & 0x400000);
+पूर्ण
 
-static inline void maybe_flush_windows(unsigned int rs1, unsigned int rs2,
-				       unsigned int rd, int from_kernel)
-{
-	if (rs2 >= 16 || rs1 >= 16 || rd >= 16) {
-		if (from_kernel != 0)
-			__asm__ __volatile__("flushw");
-		else
+अटल अंतरभूत व्योम maybe_flush_winकरोws(अचिन्हित पूर्णांक rs1, अचिन्हित पूर्णांक rs2,
+				       अचिन्हित पूर्णांक rd, पूर्णांक from_kernel)
+अणु
+	अगर (rs2 >= 16 || rs1 >= 16 || rd >= 16) अणु
+		अगर (from_kernel != 0)
+			__यंत्र__ __अस्थिर__("flushw");
+		अन्यथा
 			flushw_user();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline long sign_extend_imm13(long imm)
-{
-	return imm << 51 >> 51;
-}
+अटल अंतरभूत दीर्घ sign_extend_imm13(दीर्घ imm)
+अणु
+	वापस imm << 51 >> 51;
+पूर्ण
 
-static unsigned long fetch_reg(unsigned int reg, struct pt_regs *regs)
-{
-	unsigned long value, fp;
+अटल अचिन्हित दीर्घ fetch_reg(अचिन्हित पूर्णांक reg, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ value, fp;
 	
-	if (reg < 16)
-		return (!reg ? 0 : regs->u_regs[reg]);
+	अगर (reg < 16)
+		वापस (!reg ? 0 : regs->u_regs[reg]);
 
 	fp = regs->u_regs[UREG_FP];
 
-	if (regs->tstate & TSTATE_PRIV) {
-		struct reg_window *win;
-		win = (struct reg_window *)(fp + STACK_BIAS);
+	अगर (regs->tstate & TSTATE_PRIV) अणु
+		काष्ठा reg_winकरोw *win;
+		win = (काष्ठा reg_winकरोw *)(fp + STACK_BIAS);
 		value = win->locals[reg - 16];
-	} else if (!test_thread_64bit_stack(fp)) {
-		struct reg_window32 __user *win32;
-		win32 = (struct reg_window32 __user *)((unsigned long)((u32)fp));
+	पूर्ण अन्यथा अगर (!test_thपढ़ो_64bit_stack(fp)) अणु
+		काष्ठा reg_winकरोw32 __user *win32;
+		win32 = (काष्ठा reg_winकरोw32 __user *)((अचिन्हित दीर्घ)((u32)fp));
 		get_user(value, &win32->locals[reg - 16]);
-	} else {
-		struct reg_window __user *win;
-		win = (struct reg_window __user *)(fp + STACK_BIAS);
+	पूर्ण अन्यथा अणु
+		काष्ठा reg_winकरोw __user *win;
+		win = (काष्ठा reg_winकरोw __user *)(fp + STACK_BIAS);
 		get_user(value, &win->locals[reg - 16]);
-	}
-	return value;
-}
+	पूर्ण
+	वापस value;
+पूर्ण
 
-static unsigned long *fetch_reg_addr(unsigned int reg, struct pt_regs *regs)
-{
-	unsigned long fp;
+अटल अचिन्हित दीर्घ *fetch_reg_addr(अचिन्हित पूर्णांक reg, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ fp;
 
-	if (reg < 16)
-		return &regs->u_regs[reg];
+	अगर (reg < 16)
+		वापस &regs->u_regs[reg];
 
 	fp = regs->u_regs[UREG_FP];
 
-	if (regs->tstate & TSTATE_PRIV) {
-		struct reg_window *win;
-		win = (struct reg_window *)(fp + STACK_BIAS);
-		return &win->locals[reg - 16];
-	} else if (!test_thread_64bit_stack(fp)) {
-		struct reg_window32 *win32;
-		win32 = (struct reg_window32 *)((unsigned long)((u32)fp));
-		return (unsigned long *)&win32->locals[reg - 16];
-	} else {
-		struct reg_window *win;
-		win = (struct reg_window *)(fp + STACK_BIAS);
-		return &win->locals[reg - 16];
-	}
-}
+	अगर (regs->tstate & TSTATE_PRIV) अणु
+		काष्ठा reg_winकरोw *win;
+		win = (काष्ठा reg_winकरोw *)(fp + STACK_BIAS);
+		वापस &win->locals[reg - 16];
+	पूर्ण अन्यथा अगर (!test_thपढ़ो_64bit_stack(fp)) अणु
+		काष्ठा reg_winकरोw32 *win32;
+		win32 = (काष्ठा reg_winकरोw32 *)((अचिन्हित दीर्घ)((u32)fp));
+		वापस (अचिन्हित दीर्घ *)&win32->locals[reg - 16];
+	पूर्ण अन्यथा अणु
+		काष्ठा reg_winकरोw *win;
+		win = (काष्ठा reg_winकरोw *)(fp + STACK_BIAS);
+		वापस &win->locals[reg - 16];
+	पूर्ण
+पूर्ण
 
-unsigned long compute_effective_address(struct pt_regs *regs,
-					unsigned int insn, unsigned int rd)
-{
-	int from_kernel = (regs->tstate & TSTATE_PRIV) != 0;
-	unsigned int rs1 = (insn >> 14) & 0x1f;
-	unsigned int rs2 = insn & 0x1f;
-	unsigned long addr;
+अचिन्हित दीर्घ compute_effective_address(काष्ठा pt_regs *regs,
+					अचिन्हित पूर्णांक insn, अचिन्हित पूर्णांक rd)
+अणु
+	पूर्णांक from_kernel = (regs->tstate & TSTATE_PRIV) != 0;
+	अचिन्हित पूर्णांक rs1 = (insn >> 14) & 0x1f;
+	अचिन्हित पूर्णांक rs2 = insn & 0x1f;
+	अचिन्हित दीर्घ addr;
 
-	if (insn & 0x2000) {
-		maybe_flush_windows(rs1, 0, rd, from_kernel);
+	अगर (insn & 0x2000) अणु
+		maybe_flush_winकरोws(rs1, 0, rd, from_kernel);
 		addr = (fetch_reg(rs1, regs) + sign_extend_imm13(insn));
-	} else {
-		maybe_flush_windows(rs1, rs2, rd, from_kernel);
+	पूर्ण अन्यथा अणु
+		maybe_flush_winकरोws(rs1, rs2, rd, from_kernel);
 		addr = (fetch_reg(rs1, regs) + fetch_reg(rs2, regs));
-	}
+	पूर्ण
 
-	if (!from_kernel && test_thread_flag(TIF_32BIT))
+	अगर (!from_kernel && test_thपढ़ो_flag(TIF_32BIT))
 		addr &= 0xffffffff;
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-/* This is just to make gcc think die_if_kernel does return... */
-static void __used unaligned_panic(char *str, struct pt_regs *regs)
-{
-	die_if_kernel(str, regs);
-}
+/* This is just to make gcc think die_अगर_kernel करोes वापस... */
+अटल व्योम __used unaligned_panic(अक्षर *str, काष्ठा pt_regs *regs)
+अणु
+	die_अगर_kernel(str, regs);
+पूर्ण
 
-extern int do_int_load(unsigned long *dest_reg, int size,
-		       unsigned long *saddr, int is_signed, int asi);
+बाह्य पूर्णांक करो_पूर्णांक_load(अचिन्हित दीर्घ *dest_reg, पूर्णांक size,
+		       अचिन्हित दीर्घ *saddr, पूर्णांक is_चिन्हित, पूर्णांक asi);
 	
-extern int __do_int_store(unsigned long *dst_addr, int size,
-			  unsigned long src_val, int asi);
+बाह्य पूर्णांक __करो_पूर्णांक_store(अचिन्हित दीर्घ *dst_addr, पूर्णांक size,
+			  अचिन्हित दीर्घ src_val, पूर्णांक asi);
 
-static inline int do_int_store(int reg_num, int size, unsigned long *dst_addr,
-			       struct pt_regs *regs, int asi, int orig_asi)
-{
-	unsigned long zero = 0;
-	unsigned long *src_val_p = &zero;
-	unsigned long src_val;
+अटल अंतरभूत पूर्णांक करो_पूर्णांक_store(पूर्णांक reg_num, पूर्णांक size, अचिन्हित दीर्घ *dst_addr,
+			       काष्ठा pt_regs *regs, पूर्णांक asi, पूर्णांक orig_asi)
+अणु
+	अचिन्हित दीर्घ zero = 0;
+	अचिन्हित दीर्घ *src_val_p = &zero;
+	अचिन्हित दीर्घ src_val;
 
-	if (size == 16) {
+	अगर (size == 16) अणु
 		size = 8;
-		zero = (((long)(reg_num ?
-		        (unsigned int)fetch_reg(reg_num, regs) : 0)) << 32) |
-			(unsigned int)fetch_reg(reg_num + 1, regs);
-	} else if (reg_num) {
+		zero = (((दीर्घ)(reg_num ?
+		        (अचिन्हित पूर्णांक)fetch_reg(reg_num, regs) : 0)) << 32) |
+			(अचिन्हित पूर्णांक)fetch_reg(reg_num + 1, regs);
+	पूर्ण अन्यथा अगर (reg_num) अणु
 		src_val_p = fetch_reg_addr(reg_num, regs);
-	}
+	पूर्ण
 	src_val = *src_val_p;
-	if (unlikely(asi != orig_asi)) {
-		switch (size) {
-		case 2:
+	अगर (unlikely(asi != orig_asi)) अणु
+		चयन (size) अणु
+		हाल 2:
 			src_val = swab16(src_val);
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			src_val = swab32(src_val);
-			break;
-		case 8:
+			अवरोध;
+		हाल 8:
 			src_val = swab64(src_val);
-			break;
-		case 16:
-		default:
+			अवरोध;
+		हाल 16:
+		शेष:
 			BUG();
-			break;
-		}
-	}
-	return __do_int_store(dst_addr, size, src_val, asi);
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस __करो_पूर्णांक_store(dst_addr, size, src_val, asi);
+पूर्ण
 
-static inline void advance(struct pt_regs *regs)
-{
+अटल अंतरभूत व्योम advance(काष्ठा pt_regs *regs)
+अणु
 	regs->tpc   = regs->tnpc;
 	regs->tnpc += 4;
-	if (test_thread_flag(TIF_32BIT)) {
+	अगर (test_thपढ़ो_flag(TIF_32BIT)) अणु
 		regs->tpc &= 0xffffffff;
 		regs->tnpc &= 0xffffffff;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int floating_point_load_or_store_p(unsigned int insn)
-{
-	return (insn >> 24) & 1;
-}
+अटल अंतरभूत पूर्णांक भग्नing_poपूर्णांक_load_or_store_p(अचिन्हित पूर्णांक insn)
+अणु
+	वापस (insn >> 24) & 1;
+पूर्ण
 
-static inline int ok_for_kernel(unsigned int insn)
-{
-	return !floating_point_load_or_store_p(insn);
-}
+अटल अंतरभूत पूर्णांक ok_क्रम_kernel(अचिन्हित पूर्णांक insn)
+अणु
+	वापस !भग्नing_poपूर्णांक_load_or_store_p(insn);
+पूर्ण
 
-static void kernel_mna_trap_fault(int fixup_tstate_asi)
-{
-	struct pt_regs *regs = current_thread_info()->kern_una_regs;
-	unsigned int insn = current_thread_info()->kern_una_insn;
-	const struct exception_table_entry *entry;
+अटल व्योम kernel_mna_trap_fault(पूर्णांक fixup_tstate_asi)
+अणु
+	काष्ठा pt_regs *regs = current_thपढ़ो_info()->kern_una_regs;
+	अचिन्हित पूर्णांक insn = current_thपढ़ो_info()->kern_una_insn;
+	स्थिर काष्ठा exception_table_entry *entry;
 
 	entry = search_exception_tables(regs->tpc);
-	if (!entry) {
-		unsigned long address;
+	अगर (!entry) अणु
+		अचिन्हित दीर्घ address;
 
 		address = compute_effective_address(regs, insn,
 						    ((insn >> 25) & 0x1f));
-        	if (address < PAGE_SIZE) {
-                	printk(KERN_ALERT "Unable to handle kernel NULL "
+        	अगर (address < PAGE_SIZE) अणु
+                	prपूर्णांकk(KERN_ALERT "Unable to handle kernel NULL "
 			       "pointer dereference in mna handler");
-        	} else
-                	printk(KERN_ALERT "Unable to handle kernel paging "
+        	पूर्ण अन्यथा
+                	prपूर्णांकk(KERN_ALERT "Unable to handle kernel paging "
 			       "request in mna handler");
-	        printk(KERN_ALERT " at virtual address %016lx\n",address);
-		printk(KERN_ALERT "current->{active_,}mm->context = %016lx\n",
+	        prपूर्णांकk(KERN_ALERT " at virtual address %016lx\n",address);
+		prपूर्णांकk(KERN_ALERT "current->{active_,}mm->context = %016lx\n",
 			(current->mm ? CTX_HWBITS(current->mm->context) :
 			CTX_HWBITS(current->active_mm->context)));
-		printk(KERN_ALERT "current->{active_,}mm->pgd = %016lx\n",
-			(current->mm ? (unsigned long) current->mm->pgd :
-			(unsigned long) current->active_mm->pgd));
-	        die_if_kernel("Oops", regs);
+		prपूर्णांकk(KERN_ALERT "current->{active_,}mm->pgd = %016lx\n",
+			(current->mm ? (अचिन्हित दीर्घ) current->mm->pgd :
+			(अचिन्हित दीर्घ) current->active_mm->pgd));
+	        die_अगर_kernel("Oops", regs);
 		/* Not reached */
-	}
+	पूर्ण
 	regs->tpc = entry->fixup;
 	regs->tnpc = regs->tpc + 4;
 
-	if (fixup_tstate_asi) {
+	अगर (fixup_tstate_asi) अणु
 		regs->tstate &= ~TSTATE_ASI;
 		regs->tstate |= (ASI_AIUS << 24UL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void log_unaligned(struct pt_regs *regs)
-{
-	static DEFINE_RATELIMIT_STATE(ratelimit, 5 * HZ, 5);
+अटल व्योम log_unaligned(काष्ठा pt_regs *regs)
+अणु
+	अटल DEFINE_RATELIMIT_STATE(ratelimit, 5 * HZ, 5);
 
-	if (__ratelimit(&ratelimit)) {
-		printk("Kernel unaligned access at TPC[%lx] %pS\n",
-		       regs->tpc, (void *) regs->tpc);
-	}
-}
+	अगर (__ratelimit(&ratelimit)) अणु
+		prपूर्णांकk("Kernel unaligned access at TPC[%lx] %pS\n",
+		       regs->tpc, (व्योम *) regs->tpc);
+	पूर्ण
+पूर्ण
 
-asmlinkage void kernel_unaligned_trap(struct pt_regs *regs, unsigned int insn)
-{
-	enum direction dir = decode_direction(insn);
-	int size = decode_access_size(regs, insn);
-	int orig_asi, asi;
+यंत्रlinkage व्योम kernel_unaligned_trap(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक insn)
+अणु
+	क्रमागत direction dir = decode_direction(insn);
+	पूर्णांक size = decode_access_size(regs, insn);
+	पूर्णांक orig_asi, asi;
 
-	current_thread_info()->kern_una_regs = regs;
-	current_thread_info()->kern_una_insn = insn;
+	current_thपढ़ो_info()->kern_una_regs = regs;
+	current_thपढ़ो_info()->kern_una_insn = insn;
 
 	orig_asi = asi = decode_asi(insn, regs);
 
-	/* If this is a {get,put}_user() on an unaligned userspace pointer,
-	 * just signal a fault and do not log the event.
+	/* If this is a अणुget,putपूर्ण_user() on an unaligned userspace poपूर्णांकer,
+	 * just संकेत a fault and करो not log the event.
 	 */
-	if (asi == ASI_AIUS) {
+	अगर (asi == ASI_AIUS) अणु
 		kernel_mna_trap_fault(0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	log_unaligned(regs);
 
-	if (!ok_for_kernel(insn) || dir == both) {
-		printk("Unsupported unaligned load/store trap for kernel "
+	अगर (!ok_क्रम_kernel(insn) || dir == both) अणु
+		prपूर्णांकk("Unsupported unaligned load/store trap for kernel "
 		       "at <%016lx>.\n", regs->tpc);
 		unaligned_panic("Kernel does fpu/atomic "
 				"unaligned load/store.", regs);
 
 		kernel_mna_trap_fault(0);
-	} else {
-		unsigned long addr, *reg_addr;
-		int err;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ addr, *reg_addr;
+		पूर्णांक err;
 
 		addr = compute_effective_address(regs, insn,
 						 ((insn >> 25) & 0x1f));
 		perf_sw_event(PERF_COUNT_SW_ALIGNMENT_FAULTS, 1, regs, addr);
-		switch (asi) {
-		case ASI_NL:
-		case ASI_AIUPL:
-		case ASI_AIUSL:
-		case ASI_PL:
-		case ASI_SL:
-		case ASI_PNFL:
-		case ASI_SNFL:
+		चयन (asi) अणु
+		हाल ASI_NL:
+		हाल ASI_AIUPL:
+		हाल ASI_AIUSL:
+		हाल ASI_PL:
+		हाल ASI_SL:
+		हाल ASI_PNFL:
+		हाल ASI_SNFL:
 			asi &= ~0x08;
-			break;
-		}
-		switch (dir) {
-		case load:
+			अवरोध;
+		पूर्ण
+		चयन (dir) अणु
+		हाल load:
 			reg_addr = fetch_reg_addr(((insn>>25)&0x1f), regs);
-			err = do_int_load(reg_addr, size,
-					  (unsigned long *) addr,
-					  decode_signedness(insn), asi);
-			if (likely(!err) && unlikely(asi != orig_asi)) {
-				unsigned long val_in = *reg_addr;
-				switch (size) {
-				case 2:
+			err = करो_पूर्णांक_load(reg_addr, size,
+					  (अचिन्हित दीर्घ *) addr,
+					  decode_चिन्हितness(insn), asi);
+			अगर (likely(!err) && unlikely(asi != orig_asi)) अणु
+				अचिन्हित दीर्घ val_in = *reg_addr;
+				चयन (size) अणु
+				हाल 2:
 					val_in = swab16(val_in);
-					break;
-				case 4:
+					अवरोध;
+				हाल 4:
 					val_in = swab32(val_in);
-					break;
-				case 8:
+					अवरोध;
+				हाल 8:
 					val_in = swab64(val_in);
-					break;
-				case 16:
-				default:
+					अवरोध;
+				हाल 16:
+				शेष:
 					BUG();
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				*reg_addr = val_in;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case store:
-			err = do_int_store(((insn>>25)&0x1f), size,
-					   (unsigned long *) addr, regs,
+		हाल store:
+			err = करो_पूर्णांक_store(((insn>>25)&0x1f), size,
+					   (अचिन्हित दीर्घ *) addr, regs,
 					   asi, orig_asi);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			panic("Impossible kernel unaligned trap.");
 			/* Not reached... */
-		}
-		if (unlikely(err))
+		पूर्ण
+		अगर (unlikely(err))
 			kernel_mna_trap_fault(1);
-		else
+		अन्यथा
 			advance(regs);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int handle_popc(u32 insn, struct pt_regs *regs)
-{
-	int from_kernel = (regs->tstate & TSTATE_PRIV) != 0;
-	int ret, rd = ((insn >> 25) & 0x1f);
+पूर्णांक handle_popc(u32 insn, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक from_kernel = (regs->tstate & TSTATE_PRIV) != 0;
+	पूर्णांक ret, rd = ((insn >> 25) & 0x1f);
 	u64 value;
 	                        
 	perf_sw_event(PERF_COUNT_SW_EMULATION_FAULTS, 1, regs, 0);
-	if (insn & 0x2000) {
-		maybe_flush_windows(0, 0, rd, from_kernel);
+	अगर (insn & 0x2000) अणु
+		maybe_flush_winकरोws(0, 0, rd, from_kernel);
 		value = sign_extend_imm13(insn);
-	} else {
-		maybe_flush_windows(0, insn & 0x1f, rd, from_kernel);
+	पूर्ण अन्यथा अणु
+		maybe_flush_winकरोws(0, insn & 0x1f, rd, from_kernel);
 		value = fetch_reg(insn & 0x1f, regs);
-	}
+	पूर्ण
 	ret = hweight64(value);
-	if (rd < 16) {
-		if (rd)
+	अगर (rd < 16) अणु
+		अगर (rd)
 			regs->u_regs[rd] = ret;
-	} else {
-		unsigned long fp = regs->u_regs[UREG_FP];
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ fp = regs->u_regs[UREG_FP];
 
-		if (!test_thread_64bit_stack(fp)) {
-			struct reg_window32 __user *win32;
-			win32 = (struct reg_window32 __user *)((unsigned long)((u32)fp));
+		अगर (!test_thपढ़ो_64bit_stack(fp)) अणु
+			काष्ठा reg_winकरोw32 __user *win32;
+			win32 = (काष्ठा reg_winकरोw32 __user *)((अचिन्हित दीर्घ)((u32)fp));
 			put_user(ret, &win32->locals[rd - 16]);
-		} else {
-			struct reg_window __user *win;
-			win = (struct reg_window __user *)(fp + STACK_BIAS);
+		पूर्ण अन्यथा अणु
+			काष्ठा reg_winकरोw __user *win;
+			win = (काष्ठा reg_winकरोw __user *)(fp + STACK_BIAS);
 			put_user(ret, &win->locals[rd - 16]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	advance(regs);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-extern void do_fpother(struct pt_regs *regs);
-extern void do_privact(struct pt_regs *regs);
-extern void sun4v_data_access_exception(struct pt_regs *regs,
-					unsigned long addr,
-					unsigned long type_ctx);
+बाह्य व्योम करो_fpother(काष्ठा pt_regs *regs);
+बाह्य व्योम करो_privact(काष्ठा pt_regs *regs);
+बाह्य व्योम sun4v_data_access_exception(काष्ठा pt_regs *regs,
+					अचिन्हित दीर्घ addr,
+					अचिन्हित दीर्घ type_ctx);
 
-int handle_ldf_stq(u32 insn, struct pt_regs *regs)
-{
-	unsigned long addr = compute_effective_address(regs, insn, 0);
-	int freg;
-	struct fpustate *f = FPUSTATE;
-	int asi = decode_asi(insn, regs);
-	int flag;
+पूर्णांक handle_ldf_stq(u32 insn, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ addr = compute_effective_address(regs, insn, 0);
+	पूर्णांक freg;
+	काष्ठा fpustate *f = FPUSTATE;
+	पूर्णांक asi = decode_asi(insn, regs);
+	पूर्णांक flag;
 
 	perf_sw_event(PERF_COUNT_SW_EMULATION_FAULTS, 1, regs, 0);
 
 	save_and_clear_fpu();
-	current_thread_info()->xfsr[0] &= ~0x1c000;
-	if (insn & 0x200000) {
+	current_thपढ़ो_info()->xfsr[0] &= ~0x1c000;
+	अगर (insn & 0x200000) अणु
 		/* STQ */
 		u64 first = 0, second = 0;
 		
 		freg = ((insn >> 25) & 0x1e) | ((insn >> 20) & 0x20);
 		flag = (freg < 32) ? FPRS_DL : FPRS_DU;
-		if (freg & 3) {
-			current_thread_info()->xfsr[0] |= (6 << 14) /* invalid_fp_register */;
-			do_fpother(regs);
-			return 0;
-		}
-		if (current_thread_info()->fpsaved[0] & flag) {
+		अगर (freg & 3) अणु
+			current_thपढ़ो_info()->xfsr[0] |= (6 << 14) /* invalid_fp_रेजिस्टर */;
+			करो_fpother(regs);
+			वापस 0;
+		पूर्ण
+		अगर (current_thपढ़ो_info()->fpsaved[0] & flag) अणु
 			first = *(u64 *)&f->regs[freg];
 			second = *(u64 *)&f->regs[freg+2];
-		}
-		if (asi < 0x80) {
-			do_privact(regs);
-			return 1;
-		}
-		switch (asi) {
-		case ASI_P:
-		case ASI_S: break;
-		case ASI_PL:
-		case ASI_SL: 
-			{
+		पूर्ण
+		अगर (asi < 0x80) अणु
+			करो_privact(regs);
+			वापस 1;
+		पूर्ण
+		चयन (asi) अणु
+		हाल ASI_P:
+		हाल ASI_S: अवरोध;
+		हाल ASI_PL:
+		हाल ASI_SL: 
+			अणु
 				/* Need to convert endians */
-				u64 tmp = __swab64p(&first);
+				u64 पंचांगp = __swab64p(&first);
 				
 				first = __swab64p(&second);
-				second = tmp;
-				break;
-			}
-		default:
-			if (tlb_type == hypervisor)
+				second = पंचांगp;
+				अवरोध;
+			पूर्ण
+		शेष:
+			अगर (tlb_type == hypervisor)
 				sun4v_data_access_exception(regs, addr, 0);
-			else
+			अन्यथा
 				spitfire_data_access_exception(regs, 0, addr);
-			return 1;
-		}
-		if (put_user (first >> 32, (u32 __user *)addr) ||
+			वापस 1;
+		पूर्ण
+		अगर (put_user (first >> 32, (u32 __user *)addr) ||
 		    __put_user ((u32)first, (u32 __user *)(addr + 4)) ||
 		    __put_user (second >> 32, (u32 __user *)(addr + 8)) ||
-		    __put_user ((u32)second, (u32 __user *)(addr + 12))) {
-			if (tlb_type == hypervisor)
+		    __put_user ((u32)second, (u32 __user *)(addr + 12))) अणु
+			अगर (tlb_type == hypervisor)
 				sun4v_data_access_exception(regs, addr, 0);
-			else
+			अन्यथा
 				spitfire_data_access_exception(regs, 0, addr);
-		    	return 1;
-		}
-	} else {
+		    	वापस 1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* LDF, LDDF, LDQF */
 		u32 data[4] __attribute__ ((aligned(8)));
-		int size, i;
-		int err;
+		पूर्णांक size, i;
+		पूर्णांक err;
 
-		if (asi < 0x80) {
-			do_privact(regs);
-			return 1;
-		} else if (asi > ASI_SNFL) {
-			if (tlb_type == hypervisor)
+		अगर (asi < 0x80) अणु
+			करो_privact(regs);
+			वापस 1;
+		पूर्ण अन्यथा अगर (asi > ASI_SNFL) अणु
+			अगर (tlb_type == hypervisor)
 				sun4v_data_access_exception(regs, addr, 0);
-			else
+			अन्यथा
 				spitfire_data_access_exception(regs, 0, addr);
-			return 1;
-		}
-		switch (insn & 0x180000) {
-		case 0x000000: size = 1; break;
-		case 0x100000: size = 4; break;
-		default: size = 2; break;
-		}
-		if (size == 1)
+			वापस 1;
+		पूर्ण
+		चयन (insn & 0x180000) अणु
+		हाल 0x000000: size = 1; अवरोध;
+		हाल 0x100000: size = 4; अवरोध;
+		शेष: size = 2; अवरोध;
+		पूर्ण
+		अगर (size == 1)
 			freg = (insn >> 25) & 0x1f;
-		else
+		अन्यथा
 			freg = ((insn >> 25) & 0x1e) | ((insn >> 20) & 0x20);
 		flag = (freg < 32) ? FPRS_DL : FPRS_DU;
 
-		for (i = 0; i < size; i++)
+		क्रम (i = 0; i < size; i++)
 			data[i] = 0;
 		
 		err = get_user (data[0], (u32 __user *) addr);
-		if (!err) {
-			for (i = 1; i < size; i++)
+		अगर (!err) अणु
+			क्रम (i = 1; i < size; i++)
 				err |= __get_user (data[i], (u32 __user *)(addr + 4*i));
-		}
-		if (err && !(asi & 0x2 /* NF */)) {
-			if (tlb_type == hypervisor)
+		पूर्ण
+		अगर (err && !(asi & 0x2 /* NF */)) अणु
+			अगर (tlb_type == hypervisor)
 				sun4v_data_access_exception(regs, addr, 0);
-			else
+			अन्यथा
 				spitfire_data_access_exception(regs, 0, addr);
-			return 1;
-		}
-		if (asi & 0x8) /* Little */ {
-			u64 tmp;
+			वापस 1;
+		पूर्ण
+		अगर (asi & 0x8) /* Little */ अणु
+			u64 पंचांगp;
 
-			switch (size) {
-			case 1: data[0] = le32_to_cpup(data + 0); break;
-			default:*(u64 *)(data + 0) = le64_to_cpup((u64 *)(data + 0));
-				break;
-			case 4: tmp = le64_to_cpup((u64 *)(data + 0));
+			चयन (size) अणु
+			हाल 1: data[0] = le32_to_cpup(data + 0); अवरोध;
+			शेष:*(u64 *)(data + 0) = le64_to_cpup((u64 *)(data + 0));
+				अवरोध;
+			हाल 4: पंचांगp = le64_to_cpup((u64 *)(data + 0));
 				*(u64 *)(data + 0) = le64_to_cpup((u64 *)(data + 2));
-				*(u64 *)(data + 2) = tmp;
-				break;
-			}
-		}
-		if (!(current_thread_info()->fpsaved[0] & FPRS_FEF)) {
-			current_thread_info()->fpsaved[0] = FPRS_FEF;
-			current_thread_info()->gsr[0] = 0;
-		}
-		if (!(current_thread_info()->fpsaved[0] & flag)) {
-			if (freg < 32)
-				memset(f->regs, 0, 32*sizeof(u32));
-			else
-				memset(f->regs+32, 0, 32*sizeof(u32));
-		}
-		memcpy(f->regs + freg, data, size * 4);
-		current_thread_info()->fpsaved[0] |= flag;
-	}
+				*(u64 *)(data + 2) = पंचांगp;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (!(current_thपढ़ो_info()->fpsaved[0] & FPRS_FEF)) अणु
+			current_thपढ़ो_info()->fpsaved[0] = FPRS_FEF;
+			current_thपढ़ो_info()->gsr[0] = 0;
+		पूर्ण
+		अगर (!(current_thपढ़ो_info()->fpsaved[0] & flag)) अणु
+			अगर (freg < 32)
+				स_रखो(f->regs, 0, 32*माप(u32));
+			अन्यथा
+				स_रखो(f->regs+32, 0, 32*माप(u32));
+		पूर्ण
+		स_नकल(f->regs + freg, data, size * 4);
+		current_thपढ़ो_info()->fpsaved[0] |= flag;
+	पूर्ण
 	advance(regs);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void handle_ld_nf(u32 insn, struct pt_regs *regs)
-{
-	int rd = ((insn >> 25) & 0x1f);
-	int from_kernel = (regs->tstate & TSTATE_PRIV) != 0;
-	unsigned long *reg;
+व्योम handle_ld_nf(u32 insn, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक rd = ((insn >> 25) & 0x1f);
+	पूर्णांक from_kernel = (regs->tstate & TSTATE_PRIV) != 0;
+	अचिन्हित दीर्घ *reg;
 	                        
 	perf_sw_event(PERF_COUNT_SW_EMULATION_FAULTS, 1, regs, 0);
 
-	maybe_flush_windows(0, 0, rd, from_kernel);
+	maybe_flush_winकरोws(0, 0, rd, from_kernel);
 	reg = fetch_reg_addr(rd, regs);
-	if (from_kernel || rd < 16) {
+	अगर (from_kernel || rd < 16) अणु
 		reg[0] = 0;
-		if ((insn & 0x780000) == 0x180000)
+		अगर ((insn & 0x780000) == 0x180000)
 			reg[1] = 0;
-	} else if (!test_thread_64bit_stack(regs->u_regs[UREG_FP])) {
-		put_user(0, (int __user *) reg);
-		if ((insn & 0x780000) == 0x180000)
-			put_user(0, ((int __user *) reg) + 1);
-	} else {
-		put_user(0, (unsigned long __user *) reg);
-		if ((insn & 0x780000) == 0x180000)
-			put_user(0, (unsigned long __user *) reg + 1);
-	}
+	पूर्ण अन्यथा अगर (!test_thपढ़ो_64bit_stack(regs->u_regs[UREG_FP])) अणु
+		put_user(0, (पूर्णांक __user *) reg);
+		अगर ((insn & 0x780000) == 0x180000)
+			put_user(0, ((पूर्णांक __user *) reg) + 1);
+	पूर्ण अन्यथा अणु
+		put_user(0, (अचिन्हित दीर्घ __user *) reg);
+		अगर ((insn & 0x780000) == 0x180000)
+			put_user(0, (अचिन्हित दीर्घ __user *) reg + 1);
+	पूर्ण
 	advance(regs);
-}
+पूर्ण
 
-void handle_lddfmna(struct pt_regs *regs, unsigned long sfar, unsigned long sfsr)
-{
-	enum ctx_state prev_state = exception_enter();
-	unsigned long pc = regs->tpc;
-	unsigned long tstate = regs->tstate;
+व्योम handle_lddfmna(काष्ठा pt_regs *regs, अचिन्हित दीर्घ sfar, अचिन्हित दीर्घ sfsr)
+अणु
+	क्रमागत ctx_state prev_state = exception_enter();
+	अचिन्हित दीर्घ pc = regs->tpc;
+	अचिन्हित दीर्घ tstate = regs->tstate;
 	u32 insn;
 	u64 value;
 	u8 freg;
-	int flag;
-	struct fpustate *f = FPUSTATE;
+	पूर्णांक flag;
+	काष्ठा fpustate *f = FPUSTATE;
 
-	if (tstate & TSTATE_PRIV)
-		die_if_kernel("lddfmna from kernel", regs);
+	अगर (tstate & TSTATE_PRIV)
+		die_अगर_kernel("lddfmna from kernel", regs);
 	perf_sw_event(PERF_COUNT_SW_ALIGNMENT_FAULTS, 1, regs, sfar);
-	if (test_thread_flag(TIF_32BIT))
+	अगर (test_thपढ़ो_flag(TIF_32BIT))
 		pc = (u32)pc;
-	if (get_user(insn, (u32 __user *) pc) != -EFAULT) {
-		int asi = decode_asi(insn, regs);
+	अगर (get_user(insn, (u32 __user *) pc) != -EFAULT) अणु
+		पूर्णांक asi = decode_asi(insn, regs);
 		u32 first, second;
-		int err;
+		पूर्णांक err;
 
-		if ((asi > ASI_SNFL) ||
+		अगर ((asi > ASI_SNFL) ||
 		    (asi < ASI_P))
-			goto daex;
+			जाओ daex;
 		first = second = 0;
 		err = get_user(first, (u32 __user *)sfar);
-		if (!err)
+		अगर (!err)
 			err = get_user(second, (u32 __user *)(sfar + 4));
-		if (err) {
-			if (!(asi & 0x2))
-				goto daex;
+		अगर (err) अणु
+			अगर (!(asi & 0x2))
+				जाओ daex;
 			first = second = 0;
-		}
+		पूर्ण
 		save_and_clear_fpu();
 		freg = ((insn >> 25) & 0x1e) | ((insn >> 20) & 0x20);
 		value = (((u64)first) << 32) | second;
-		if (asi & 0x8) /* Little */
+		अगर (asi & 0x8) /* Little */
 			value = __swab64p(&value);
 		flag = (freg < 32) ? FPRS_DL : FPRS_DU;
-		if (!(current_thread_info()->fpsaved[0] & FPRS_FEF)) {
-			current_thread_info()->fpsaved[0] = FPRS_FEF;
-			current_thread_info()->gsr[0] = 0;
-		}
-		if (!(current_thread_info()->fpsaved[0] & flag)) {
-			if (freg < 32)
-				memset(f->regs, 0, 32*sizeof(u32));
-			else
-				memset(f->regs+32, 0, 32*sizeof(u32));
-		}
+		अगर (!(current_thपढ़ो_info()->fpsaved[0] & FPRS_FEF)) अणु
+			current_thपढ़ो_info()->fpsaved[0] = FPRS_FEF;
+			current_thपढ़ो_info()->gsr[0] = 0;
+		पूर्ण
+		अगर (!(current_thपढ़ो_info()->fpsaved[0] & flag)) अणु
+			अगर (freg < 32)
+				स_रखो(f->regs, 0, 32*माप(u32));
+			अन्यथा
+				स_रखो(f->regs+32, 0, 32*माप(u32));
+		पूर्ण
 		*(u64 *)(f->regs + freg) = value;
-		current_thread_info()->fpsaved[0] |= flag;
-	} else {
+		current_thपढ़ो_info()->fpsaved[0] |= flag;
+	पूर्ण अन्यथा अणु
 daex:
-		if (tlb_type == hypervisor)
+		अगर (tlb_type == hypervisor)
 			sun4v_data_access_exception(regs, sfar, sfsr);
-		else
+		अन्यथा
 			spitfire_data_access_exception(regs, sfsr, sfar);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	advance(regs);
 out:
-	exception_exit(prev_state);
-}
+	exception_निकास(prev_state);
+पूर्ण
 
-void handle_stdfmna(struct pt_regs *regs, unsigned long sfar, unsigned long sfsr)
-{
-	enum ctx_state prev_state = exception_enter();
-	unsigned long pc = regs->tpc;
-	unsigned long tstate = regs->tstate;
+व्योम handle_stdfmna(काष्ठा pt_regs *regs, अचिन्हित दीर्घ sfar, अचिन्हित दीर्घ sfsr)
+अणु
+	क्रमागत ctx_state prev_state = exception_enter();
+	अचिन्हित दीर्घ pc = regs->tpc;
+	अचिन्हित दीर्घ tstate = regs->tstate;
 	u32 insn;
 	u64 value;
 	u8 freg;
-	int flag;
-	struct fpustate *f = FPUSTATE;
+	पूर्णांक flag;
+	काष्ठा fpustate *f = FPUSTATE;
 
-	if (tstate & TSTATE_PRIV)
-		die_if_kernel("stdfmna from kernel", regs);
+	अगर (tstate & TSTATE_PRIV)
+		die_अगर_kernel("stdfmna from kernel", regs);
 	perf_sw_event(PERF_COUNT_SW_ALIGNMENT_FAULTS, 1, regs, sfar);
-	if (test_thread_flag(TIF_32BIT))
+	अगर (test_thपढ़ो_flag(TIF_32BIT))
 		pc = (u32)pc;
-	if (get_user(insn, (u32 __user *) pc) != -EFAULT) {
-		int asi = decode_asi(insn, regs);
+	अगर (get_user(insn, (u32 __user *) pc) != -EFAULT) अणु
+		पूर्णांक asi = decode_asi(insn, regs);
 		freg = ((insn >> 25) & 0x1e) | ((insn >> 20) & 0x20);
 		value = 0;
 		flag = (freg < 32) ? FPRS_DL : FPRS_DU;
-		if ((asi > ASI_SNFL) ||
+		अगर ((asi > ASI_SNFL) ||
 		    (asi < ASI_P))
-			goto daex;
+			जाओ daex;
 		save_and_clear_fpu();
-		if (current_thread_info()->fpsaved[0] & flag)
+		अगर (current_thपढ़ो_info()->fpsaved[0] & flag)
 			value = *(u64 *)&f->regs[freg];
-		switch (asi) {
-		case ASI_P:
-		case ASI_S: break;
-		case ASI_PL:
-		case ASI_SL: 
-			value = __swab64p(&value); break;
-		default: goto daex;
-		}
-		if (put_user (value >> 32, (u32 __user *) sfar) ||
+		चयन (asi) अणु
+		हाल ASI_P:
+		हाल ASI_S: अवरोध;
+		हाल ASI_PL:
+		हाल ASI_SL: 
+			value = __swab64p(&value); अवरोध;
+		शेष: जाओ daex;
+		पूर्ण
+		अगर (put_user (value >> 32, (u32 __user *) sfar) ||
 		    __put_user ((u32)value, (u32 __user *)(sfar + 4)))
-			goto daex;
-	} else {
+			जाओ daex;
+	पूर्ण अन्यथा अणु
 daex:
-		if (tlb_type == hypervisor)
+		अगर (tlb_type == hypervisor)
 			sun4v_data_access_exception(regs, sfar, sfsr);
-		else
+		अन्यथा
 			spitfire_data_access_exception(regs, sfsr, sfar);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	advance(regs);
 out:
-	exception_exit(prev_state);
-}
+	exception_निकास(prev_state);
+पूर्ण

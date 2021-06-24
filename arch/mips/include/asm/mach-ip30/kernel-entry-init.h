@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_MACH_IP30_KERNEL_ENTRY_H
-#define __ASM_MACH_IP30_KERNEL_ENTRY_H
+#अगर_अघोषित __ASM_MACH_IP30_KERNEL_ENTRY_H
+#घोषणा __ASM_MACH_IP30_KERNEL_ENTRY_H
 
 	.macro  kernel_entry_setup
 	.endm
@@ -10,4 +11,4 @@
 	move	gp, a0
 	.endm
 
-#endif /* __ASM_MACH_IP30_KERNEL_ENTRY_H */
+#पूर्ण_अगर /* __ASM_MACH_IP30_KERNEL_ENTRY_H */

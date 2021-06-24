@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007-2008 Intel Corporation
- *   Jesse Barnes <jesse.barnes@intel.com>
+ *   Jesse Barnes <jesse.barnes@पूर्णांकel.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,40 +24,40 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __INTEL_DISPLAY_TYPES_H__
-#define __INTEL_DISPLAY_TYPES_H__
+#अगर_अघोषित __INTEL_DISPLAY_TYPES_H__
+#घोषणा __INTEL_DISPLAY_TYPES_H__
 
-#include <linux/async.h>
-#include <linux/i2c.h>
-#include <linux/pwm.h>
-#include <linux/sched/clock.h>
+#समावेश <linux/async.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/sched/घड़ी.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_dp_dual_mode_helper.h>
-#include <drm/drm_dp_mst_helper.h>
-#include <drm/drm_encoder.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_rect.h>
-#include <drm/drm_vblank.h>
-#include <drm/i915_mei_hdcp_interface.h>
-#include <media/cec-notifier.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_dp_dual_mode_helper.h>
+#समावेश <drm/drm_dp_mst_helper.h>
+#समावेश <drm/drm_encoder.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_rect.h>
+#समावेश <drm/drm_vblank.h>
+#समावेश <drm/i915_mei_hdcp_पूर्णांकerface.h>
+#समावेश <media/cec-notअगरier.h>
 
-#include "i915_drv.h"
-#include "intel_de.h"
+#समावेश "i915_drv.h"
+#समावेश "intel_de.h"
 
-struct drm_printer;
-struct __intel_global_objs_state;
+काष्ठा drm_prपूर्णांकer;
+काष्ठा __पूर्णांकel_global_objs_state;
 
 /*
  * Display related stuff
  */
 
-/* these are outputs from the chip - integrated only
-   external chips are via DVO or SDVO output */
-enum intel_output_type {
+/* these are outमाला_दो from the chip - पूर्णांकegrated only
+   बाह्यal chips are via DVO or SDVO output */
+क्रमागत पूर्णांकel_output_type अणु
 	INTEL_OUTPUT_UNUSED = 0,
 	INTEL_OUTPUT_ANALOG = 1,
 	INTEL_OUTPUT_DVO = 2,
@@ -69,223 +70,223 @@ enum intel_output_type {
 	INTEL_OUTPUT_DSI = 9,
 	INTEL_OUTPUT_DDI = 10,
 	INTEL_OUTPUT_DP_MST = 11,
-};
+पूर्ण;
 
-enum hdmi_force_audio {
-	HDMI_AUDIO_OFF_DVI = -2,	/* no aux data for HDMI-DVI converter */
-	HDMI_AUDIO_OFF,			/* force turn off HDMI audio */
+क्रमागत hdmi_क्रमce_audio अणु
+	HDMI_AUDIO_OFF_DVI = -2,	/* no aux data क्रम HDMI-DVI converter */
+	HDMI_AUDIO_OFF,			/* क्रमce turn off HDMI audio */
 	HDMI_AUDIO_AUTO,		/* trust EDID */
-	HDMI_AUDIO_ON,			/* force turn on HDMI audio */
-};
+	HDMI_AUDIO_ON,			/* क्रमce turn on HDMI audio */
+पूर्ण;
 
 /* "Broadcast RGB" property */
-enum intel_broadcast_rgb {
+क्रमागत पूर्णांकel_broadcast_rgb अणु
 	INTEL_BROADCAST_RGB_AUTO,
 	INTEL_BROADCAST_RGB_FULL,
 	INTEL_BROADCAST_RGB_LIMITED,
-};
+पूर्ण;
 
-struct intel_fb_view {
+काष्ठा पूर्णांकel_fb_view अणु
 	/*
-	 * The remap information used in the remapped and rotated views to
-	 * create the DMA scatter-gather list for each FB color plane. This sg
-	 * list is created along with the view type (gtt.type) specific
+	 * The remap inक्रमmation used in the remapped and rotated views to
+	 * create the DMA scatter-gather list क्रम each FB color plane. This sg
+	 * list is created aदीर्घ with the view type (gtt.type) specअगरic
 	 * i915_vma object and contains the list of FB object pages (reordered
 	 * in the rotated view) that are visible in the view.
 	 * In the normal view the FB object's backing store sg list is used
-	 * directly and hence the remap information here is not used.
+	 * directly and hence the remap inक्रमmation here is not used.
 	 */
-	struct i915_ggtt_view gtt;
+	काष्ठा i915_ggtt_view gtt;
 
 	/*
-	 * The GTT view (gtt.type) specific information for each FB color
-	 * plane. In the normal GTT view all formats (up to 4 color planes),
-	 * in the rotated and remapped GTT view all no-CCS formats (up to 2
+	 * The GTT view (gtt.type) specअगरic inक्रमmation क्रम each FB color
+	 * plane. In the normal GTT view all क्रमmats (up to 4 color planes),
+	 * in the rotated and remapped GTT view all no-CCS क्रमmats (up to 2
 	 * color planes) are supported.
 	 *
-	 * TODO: add support for CCS formats in the remapped GTT view.
+	 * TODO: add support क्रम CCS क्रमmats in the remapped GTT view.
 	 *
-	 * The view information shared by all FB color planes in the FB,
+	 * The view inक्रमmation shared by all FB color planes in the FB,
 	 * like dst x/y and src/dst width, is stored separately in
-	 * intel_plane_state.
+	 * पूर्णांकel_plane_state.
 	 */
-	struct i915_color_plane_view {
+	काष्ठा i915_color_plane_view अणु
 		u32 offset;
-		unsigned int x, y;
+		अचिन्हित पूर्णांक x, y;
 		/*
 		 * Plane stride in:
-		 *   bytes for 0/180 degree rotation
-		 *   pixels for 90/270 degree rotation
+		 *   bytes क्रम 0/180 degree rotation
+		 *   pixels क्रम 90/270 degree rotation
 		 */
-		unsigned int stride;
-	} color_plane[4];
-};
+		अचिन्हित पूर्णांक stride;
+	पूर्ण color_plane[4];
+पूर्ण;
 
-struct intel_framebuffer {
-	struct drm_framebuffer base;
-	struct intel_frontbuffer *frontbuffer;
+काष्ठा पूर्णांकel_framebuffer अणु
+	काष्ठा drm_framebuffer base;
+	काष्ठा पूर्णांकel_frontbuffer *frontbuffer;
 
-	/* Params to remap the FB pages and program the plane registers in each view. */
-	struct intel_fb_view normal_view;
-	struct intel_fb_view rotated_view;
-	struct intel_fb_view remapped_view;
-};
+	/* Params to remap the FB pages and program the plane रेजिस्टरs in each view. */
+	काष्ठा पूर्णांकel_fb_view normal_view;
+	काष्ठा पूर्णांकel_fb_view rotated_view;
+	काष्ठा पूर्णांकel_fb_view remapped_view;
+पूर्ण;
 
-struct intel_fbdev {
-	struct drm_fb_helper helper;
-	struct intel_framebuffer *fb;
-	struct i915_vma *vma;
-	unsigned long vma_flags;
+काष्ठा पूर्णांकel_fbdev अणु
+	काष्ठा drm_fb_helper helper;
+	काष्ठा पूर्णांकel_framebuffer *fb;
+	काष्ठा i915_vma *vma;
+	अचिन्हित दीर्घ vma_flags;
 	async_cookie_t cookie;
-	int preferred_bpp;
+	पूर्णांक preferred_bpp;
 
 	/* Whether or not fbdev hpd processing is temporarily suspended */
 	bool hpd_suspended : 1;
-	/* Set when a hotplug was received while HPD processing was
+	/* Set when a hotplug was received जबतक HPD processing was
 	 * suspended
 	 */
-	bool hpd_waiting : 1;
+	bool hpd_रुकोing : 1;
 
 	/* Protects hpd_suspended */
-	struct mutex hpd_lock;
-};
+	काष्ठा mutex hpd_lock;
+पूर्ण;
 
-enum intel_hotplug_state {
+क्रमागत पूर्णांकel_hotplug_state अणु
 	INTEL_HOTPLUG_UNCHANGED,
 	INTEL_HOTPLUG_CHANGED,
 	INTEL_HOTPLUG_RETRY,
-};
+पूर्ण;
 
-struct intel_encoder {
-	struct drm_encoder base;
+काष्ठा पूर्णांकel_encoder अणु
+	काष्ठा drm_encoder base;
 
-	enum intel_output_type type;
-	enum port port;
+	क्रमागत पूर्णांकel_output_type type;
+	क्रमागत port port;
 	u16 cloneable;
 	u8 pipe_mask;
-	enum intel_hotplug_state (*hotplug)(struct intel_encoder *encoder,
-					    struct intel_connector *connector);
-	enum intel_output_type (*compute_output_type)(struct intel_encoder *,
-						      struct intel_crtc_state *,
-						      struct drm_connector_state *);
-	int (*compute_config)(struct intel_encoder *,
-			      struct intel_crtc_state *,
-			      struct drm_connector_state *);
-	int (*compute_config_late)(struct intel_encoder *,
-				   struct intel_crtc_state *,
-				   struct drm_connector_state *);
-	void (*update_prepare)(struct intel_atomic_state *,
-			       struct intel_encoder *,
-			       struct intel_crtc *);
-	void (*pre_pll_enable)(struct intel_atomic_state *,
-			       struct intel_encoder *,
-			       const struct intel_crtc_state *,
-			       const struct drm_connector_state *);
-	void (*pre_enable)(struct intel_atomic_state *,
-			   struct intel_encoder *,
-			   const struct intel_crtc_state *,
-			   const struct drm_connector_state *);
-	void (*enable)(struct intel_atomic_state *,
-		       struct intel_encoder *,
-		       const struct intel_crtc_state *,
-		       const struct drm_connector_state *);
-	void (*update_complete)(struct intel_atomic_state *,
-				struct intel_encoder *,
-				struct intel_crtc *);
-	void (*disable)(struct intel_atomic_state *,
-			struct intel_encoder *,
-			const struct intel_crtc_state *,
-			const struct drm_connector_state *);
-	void (*post_disable)(struct intel_atomic_state *,
-			     struct intel_encoder *,
-			     const struct intel_crtc_state *,
-			     const struct drm_connector_state *);
-	void (*post_pll_disable)(struct intel_atomic_state *,
-				 struct intel_encoder *,
-				 const struct intel_crtc_state *,
-				 const struct drm_connector_state *);
-	void (*update_pipe)(struct intel_atomic_state *,
-			    struct intel_encoder *,
-			    const struct intel_crtc_state *,
-			    const struct drm_connector_state *);
-	/* Read out the current hw state of this connector, returning true if
+	क्रमागत पूर्णांकel_hotplug_state (*hotplug)(काष्ठा पूर्णांकel_encoder *encoder,
+					    काष्ठा पूर्णांकel_connector *connector);
+	क्रमागत पूर्णांकel_output_type (*compute_output_type)(काष्ठा पूर्णांकel_encoder *,
+						      काष्ठा पूर्णांकel_crtc_state *,
+						      काष्ठा drm_connector_state *);
+	पूर्णांक (*compute_config)(काष्ठा पूर्णांकel_encoder *,
+			      काष्ठा पूर्णांकel_crtc_state *,
+			      काष्ठा drm_connector_state *);
+	पूर्णांक (*compute_config_late)(काष्ठा पूर्णांकel_encoder *,
+				   काष्ठा पूर्णांकel_crtc_state *,
+				   काष्ठा drm_connector_state *);
+	व्योम (*update_prepare)(काष्ठा पूर्णांकel_atomic_state *,
+			       काष्ठा पूर्णांकel_encoder *,
+			       काष्ठा पूर्णांकel_crtc *);
+	व्योम (*pre_pll_enable)(काष्ठा पूर्णांकel_atomic_state *,
+			       काष्ठा पूर्णांकel_encoder *,
+			       स्थिर काष्ठा पूर्णांकel_crtc_state *,
+			       स्थिर काष्ठा drm_connector_state *);
+	व्योम (*pre_enable)(काष्ठा पूर्णांकel_atomic_state *,
+			   काष्ठा पूर्णांकel_encoder *,
+			   स्थिर काष्ठा पूर्णांकel_crtc_state *,
+			   स्थिर काष्ठा drm_connector_state *);
+	व्योम (*enable)(काष्ठा पूर्णांकel_atomic_state *,
+		       काष्ठा पूर्णांकel_encoder *,
+		       स्थिर काष्ठा पूर्णांकel_crtc_state *,
+		       स्थिर काष्ठा drm_connector_state *);
+	व्योम (*update_complete)(काष्ठा पूर्णांकel_atomic_state *,
+				काष्ठा पूर्णांकel_encoder *,
+				काष्ठा पूर्णांकel_crtc *);
+	व्योम (*disable)(काष्ठा पूर्णांकel_atomic_state *,
+			काष्ठा पूर्णांकel_encoder *,
+			स्थिर काष्ठा पूर्णांकel_crtc_state *,
+			स्थिर काष्ठा drm_connector_state *);
+	व्योम (*post_disable)(काष्ठा पूर्णांकel_atomic_state *,
+			     काष्ठा पूर्णांकel_encoder *,
+			     स्थिर काष्ठा पूर्णांकel_crtc_state *,
+			     स्थिर काष्ठा drm_connector_state *);
+	व्योम (*post_pll_disable)(काष्ठा पूर्णांकel_atomic_state *,
+				 काष्ठा पूर्णांकel_encoder *,
+				 स्थिर काष्ठा पूर्णांकel_crtc_state *,
+				 स्थिर काष्ठा drm_connector_state *);
+	व्योम (*update_pipe)(काष्ठा पूर्णांकel_atomic_state *,
+			    काष्ठा पूर्णांकel_encoder *,
+			    स्थिर काष्ठा पूर्णांकel_crtc_state *,
+			    स्थिर काष्ठा drm_connector_state *);
+	/* Read out the current hw state of this connector, वापसing true अगर
 	 * the encoder is active. If the encoder is enabled it also set the pipe
 	 * it is connected to in the pipe parameter. */
-	bool (*get_hw_state)(struct intel_encoder *, enum pipe *pipe);
-	/* Reconstructs the equivalent mode flags for the current hardware
+	bool (*get_hw_state)(काष्ठा पूर्णांकel_encoder *, क्रमागत pipe *pipe);
+	/* Reस्थिरructs the equivalent mode flags क्रम the current hardware
 	 * state. This must be called _after_ display->get_pipe_config has
-	 * pre-filled the pipe config. Note that intel_encoder->base.crtc must
-	 * be set correctly before calling this function. */
-	void (*get_config)(struct intel_encoder *,
-			   struct intel_crtc_state *pipe_config);
+	 * pre-filled the pipe config. Note that पूर्णांकel_encoder->base.crtc must
+	 * be set correctly beक्रमe calling this function. */
+	व्योम (*get_config)(काष्ठा पूर्णांकel_encoder *,
+			   काष्ठा पूर्णांकel_crtc_state *pipe_config);
 
 	/*
 	 * Optional hook called during init/resume to sync any state
 	 * stored in the encoder (eg. DP link parameters) wrt. the HW state.
 	 */
-	void (*sync_state)(struct intel_encoder *encoder,
-			   const struct intel_crtc_state *crtc_state);
+	व्योम (*sync_state)(काष्ठा पूर्णांकel_encoder *encoder,
+			   स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
 
 	/*
-	 * Optional hook, returning true if this encoder allows a fastset
+	 * Optional hook, वापसing true अगर this encoder allows a fastset
 	 * during the initial commit, false otherwise.
 	 */
-	bool (*initial_fastset_check)(struct intel_encoder *encoder,
-				      struct intel_crtc_state *crtc_state);
+	bool (*initial_fastset_check)(काष्ठा पूर्णांकel_encoder *encoder,
+				      काष्ठा पूर्णांकel_crtc_state *crtc_state);
 
 	/*
-	 * Acquires the power domains needed for an active encoder during
-	 * hardware state readout.
+	 * Acquires the घातer करोमुख्यs needed क्रम an active encoder during
+	 * hardware state पढ़ोout.
 	 */
-	void (*get_power_domains)(struct intel_encoder *encoder,
-				  struct intel_crtc_state *crtc_state);
+	व्योम (*get_घातer_करोमुख्यs)(काष्ठा पूर्णांकel_encoder *encoder,
+				  काष्ठा पूर्णांकel_crtc_state *crtc_state);
 	/*
-	 * Called during system suspend after all pending requests for the
-	 * encoder are flushed (for example for DP AUX transactions) and
-	 * device interrupts are disabled.
+	 * Called during प्रणाली suspend after all pending requests क्रम the
+	 * encoder are flushed (क्रम example क्रम DP AUX transactions) and
+	 * device पूर्णांकerrupts are disabled.
 	 */
-	void (*suspend)(struct intel_encoder *);
+	व्योम (*suspend)(काष्ठा पूर्णांकel_encoder *);
 	/*
-	 * Called during system reboot/shutdown after all the
+	 * Called during प्रणाली reboot/shutकरोwn after all the
 	 * encoders have been disabled and suspended.
 	 */
-	void (*shutdown)(struct intel_encoder *encoder);
+	व्योम (*shutकरोwn)(काष्ठा पूर्णांकel_encoder *encoder);
 	/*
-	 * Enable/disable the clock to the port.
+	 * Enable/disable the घड़ी to the port.
 	 */
-	void (*enable_clock)(struct intel_encoder *encoder,
-			     const struct intel_crtc_state *crtc_state);
-	void (*disable_clock)(struct intel_encoder *encoder);
+	व्योम (*enable_घड़ी)(काष्ठा पूर्णांकel_encoder *encoder,
+			     स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+	व्योम (*disable_घड़ी)(काष्ठा पूर्णांकel_encoder *encoder);
 	/*
-	 * Returns whether the port clock is enabled or not.
+	 * Returns whether the port घड़ी is enabled or not.
 	 */
-	bool (*is_clock_enabled)(struct intel_encoder *encoder);
-	enum hpd_pin hpd_pin;
-	enum intel_display_power_domain power_domain;
-	/* for communication with audio component; protected by av_mutex */
-	const struct drm_connector *audio_connector;
+	bool (*is_घड़ी_enabled)(काष्ठा पूर्णांकel_encoder *encoder);
+	क्रमागत hpd_pin hpd_pin;
+	क्रमागत पूर्णांकel_display_घातer_करोमुख्य घातer_करोमुख्य;
+	/* क्रम communication with audio component; रक्षित by av_mutex */
+	स्थिर काष्ठा drm_connector *audio_connector;
 
-	/* VBT information for this encoder (may be NULL for older platforms) */
-	const struct intel_bios_encoder_data *devdata;
-};
+	/* VBT inक्रमmation क्रम this encoder (may be शून्य क्रम older platक्रमms) */
+	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata;
+पूर्ण;
 
-struct intel_panel_bl_funcs {
-	/* Connector and platform specific backlight functions */
-	int (*setup)(struct intel_connector *connector, enum pipe pipe);
-	u32 (*get)(struct intel_connector *connector, enum pipe pipe);
-	void (*set)(const struct drm_connector_state *conn_state, u32 level);
-	void (*disable)(const struct drm_connector_state *conn_state, u32 level);
-	void (*enable)(const struct intel_crtc_state *crtc_state,
-		       const struct drm_connector_state *conn_state, u32 level);
-	u32 (*hz_to_pwm)(struct intel_connector *connector, u32 hz);
-};
+काष्ठा पूर्णांकel_panel_bl_funcs अणु
+	/* Connector and platक्रमm specअगरic backlight functions */
+	पूर्णांक (*setup)(काष्ठा पूर्णांकel_connector *connector, क्रमागत pipe pipe);
+	u32 (*get)(काष्ठा पूर्णांकel_connector *connector, क्रमागत pipe pipe);
+	व्योम (*set)(स्थिर काष्ठा drm_connector_state *conn_state, u32 level);
+	व्योम (*disable)(स्थिर काष्ठा drm_connector_state *conn_state, u32 level);
+	व्योम (*enable)(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+		       स्थिर काष्ठा drm_connector_state *conn_state, u32 level);
+	u32 (*hz_to_pwm)(काष्ठा पूर्णांकel_connector *connector, u32 hz);
+पूर्ण;
 
-struct intel_panel {
-	struct drm_display_mode *fixed_mode;
-	struct drm_display_mode *downclock_mode;
+काष्ठा पूर्णांकel_panel अणु
+	काष्ठा drm_display_mode *fixed_mode;
+	काष्ठा drm_display_mode *करोwnघड़ी_mode;
 
 	/* backlight */
-	struct {
+	काष्ठा अणु
 		bool present;
 		u32 level;
 		u32 min;
@@ -301,158 +302,158 @@ struct intel_panel {
 		bool pwm_enabled;
 		bool util_pin_active_low;	/* bxt+ */
 		u8 controller;		/* bxt+ only */
-		struct pwm_device *pwm;
-		struct pwm_state pwm_state;
+		काष्ठा pwm_device *pwm;
+		काष्ठा pwm_state pwm_state;
 
 		/* DPCD backlight */
-		union {
-			struct {
+		जोड़ अणु
+			काष्ठा अणु
 				u8 pwmgen_bit_count;
-			} vesa;
-			struct {
+			पूर्ण vesa;
+			काष्ठा अणु
 				bool sdr_uses_aux;
-			} intel;
-		} edp;
+			पूर्ण पूर्णांकel;
+		पूर्ण edp;
 
-		struct backlight_device *device;
+		काष्ठा backlight_device *device;
 
-		const struct intel_panel_bl_funcs *funcs;
-		const struct intel_panel_bl_funcs *pwm_funcs;
-		void (*power)(struct intel_connector *, bool enable);
-	} backlight;
-};
+		स्थिर काष्ठा पूर्णांकel_panel_bl_funcs *funcs;
+		स्थिर काष्ठा पूर्णांकel_panel_bl_funcs *pwm_funcs;
+		व्योम (*घातer)(काष्ठा पूर्णांकel_connector *, bool enable);
+	पूर्ण backlight;
+पूर्ण;
 
-struct intel_digital_port;
+काष्ठा पूर्णांकel_digital_port;
 
-enum check_link_response {
+क्रमागत check_link_response अणु
 	HDCP_LINK_PROTECTED	= 0,
 	HDCP_TOPOLOGY_CHANGE,
 	HDCP_LINK_INTEGRITY_FAILURE,
 	HDCP_REAUTH_REQUEST
-};
+पूर्ण;
 
 /*
- * This structure serves as a translation layer between the generic HDCP code
- * and the bus-specific code. What that means is that HDCP over HDMI differs
- * from HDCP over DP, so to account for these differences, we need to
+ * This काष्ठाure serves as a translation layer between the generic HDCP code
+ * and the bus-specअगरic code. What that means is that HDCP over HDMI dअगरfers
+ * from HDCP over DP, so to account क्रम these dअगरferences, we need to
  * communicate with the receiver through this shim.
  *
- * For completeness, the 2 buses differ in the following ways:
+ * For completeness, the 2 buses dअगरfer in the following ways:
  *	- DP AUX vs. DDC
- *		HDCP registers on the receiver are set via DP AUX for DP, and
- *		they are set via DDC for HDMI.
- *	- Receiver register offsets
- *		The offsets of the registers are different for DP vs. HDMI
- *	- Receiver register masks/offsets
- *		For instance, the ready bit for the KSV fifo is in a different
+ *		HDCP रेजिस्टरs on the receiver are set via DP AUX क्रम DP, and
+ *		they are set via DDC क्रम HDMI.
+ *	- Receiver रेजिस्टर offsets
+ *		The offsets of the रेजिस्टरs are dअगरferent क्रम DP vs. HDMI
+ *	- Receiver रेजिस्टर masks/offsets
+ *		For instance, the पढ़ोy bit क्रम the KSV fअगरo is in a dअगरferent
  *		place on DP vs HDMI
- *	- Receiver register names
- *		Seriously. In the DP spec, the 16-bit register containing
- *		downstream information is called BINFO, on HDMI it's called
- *		BSTATUS. To confuse matters further, DP has a BSTATUS register
- *		with a completely different definition.
+ *	- Receiver रेजिस्टर names
+ *		Seriously. In the DP spec, the 16-bit रेजिस्टर containing
+ *		करोwnstream inक्रमmation is called BINFO, on HDMI it's called
+ *		BSTATUS. To confuse matters further, DP has a BSTATUS रेजिस्टर
+ *		with a completely dअगरferent definition.
  *	- KSV FIFO
- *		On HDMI, the ksv fifo is read all at once, whereas on DP it must
- *		be read 3 keys at a time
+ *		On HDMI, the ksv fअगरo is पढ़ो all at once, whereas on DP it must
+ *		be पढ़ो 3 keys at a समय
  *	- Aksv output
- *		Since Aksv is hidden in hardware, there's different procedures
+ *		Since Aksv is hidden in hardware, there's dअगरferent procedures
  *		to send it over DP AUX vs DDC
  */
-struct intel_hdcp_shim {
-	/* Outputs the transmitter's An and Aksv values to the receiver. */
-	int (*write_an_aksv)(struct intel_digital_port *dig_port, u8 *an);
+काष्ठा पूर्णांकel_hdcp_shim अणु
+	/* Outमाला_दो the transmitter's An and Aksv values to the receiver. */
+	पूर्णांक (*ग_लिखो_an_aksv)(काष्ठा पूर्णांकel_digital_port *dig_port, u8 *an);
 
 	/* Reads the receiver's key selection vector */
-	int (*read_bksv)(struct intel_digital_port *dig_port, u8 *bksv);
+	पूर्णांक (*पढ़ो_bksv)(काष्ठा पूर्णांकel_digital_port *dig_port, u8 *bksv);
 
 	/*
 	 * Reads BINFO from DP receivers and BSTATUS from HDMI receivers. The
 	 * definitions are the same in the respective specs, but the names are
-	 * different. Call it BSTATUS since that's the name the HDMI spec
+	 * dअगरferent. Call it BSTATUS since that's the name the HDMI spec
 	 * uses and it was there first.
 	 */
-	int (*read_bstatus)(struct intel_digital_port *dig_port,
+	पूर्णांक (*पढ़ो_bstatus)(काष्ठा पूर्णांकel_digital_port *dig_port,
 			    u8 *bstatus);
 
-	/* Determines whether a repeater is present downstream */
-	int (*repeater_present)(struct intel_digital_port *dig_port,
+	/* Determines whether a repeater is present करोwnstream */
+	पूर्णांक (*repeater_present)(काष्ठा पूर्णांकel_digital_port *dig_port,
 				bool *repeater_present);
 
 	/* Reads the receiver's Ri' value */
-	int (*read_ri_prime)(struct intel_digital_port *dig_port, u8 *ri);
+	पूर्णांक (*पढ़ो_ri_prime)(काष्ठा पूर्णांकel_digital_port *dig_port, u8 *ri);
 
-	/* Determines if the receiver's KSV FIFO is ready for consumption */
-	int (*read_ksv_ready)(struct intel_digital_port *dig_port,
-			      bool *ksv_ready);
+	/* Determines अगर the receiver's KSV FIFO is पढ़ोy क्रम consumption */
+	पूर्णांक (*पढ़ो_ksv_पढ़ोy)(काष्ठा पूर्णांकel_digital_port *dig_port,
+			      bool *ksv_पढ़ोy);
 
-	/* Reads the ksv fifo for num_downstream devices */
-	int (*read_ksv_fifo)(struct intel_digital_port *dig_port,
-			     int num_downstream, u8 *ksv_fifo);
+	/* Reads the ksv fअगरo क्रम num_करोwnstream devices */
+	पूर्णांक (*पढ़ो_ksv_fअगरo)(काष्ठा पूर्णांकel_digital_port *dig_port,
+			     पूर्णांक num_करोwnstream, u8 *ksv_fअगरo);
 
 	/* Reads a 32-bit part of V' from the receiver */
-	int (*read_v_prime_part)(struct intel_digital_port *dig_port,
-				 int i, u32 *part);
+	पूर्णांक (*पढ़ो_v_prime_part)(काष्ठा पूर्णांकel_digital_port *dig_port,
+				 पूर्णांक i, u32 *part);
 
-	/* Enables HDCP signalling on the port */
-	int (*toggle_signalling)(struct intel_digital_port *dig_port,
-				 enum transcoder cpu_transcoder,
+	/* Enables HDCP संकेतling on the port */
+	पूर्णांक (*toggle_संकेतling)(काष्ठा पूर्णांकel_digital_port *dig_port,
+				 क्रमागत transcoder cpu_transcoder,
 				 bool enable);
 
 	/* Enable/Disable stream encryption on DP MST Transport Link */
-	int (*stream_encryption)(struct intel_connector *connector,
+	पूर्णांक (*stream_encryption)(काष्ठा पूर्णांकel_connector *connector,
 				 bool enable);
 
-	/* Ensures the link is still protected */
-	bool (*check_link)(struct intel_digital_port *dig_port,
-			   struct intel_connector *connector);
+	/* Ensures the link is still रक्षित */
+	bool (*check_link)(काष्ठा पूर्णांकel_digital_port *dig_port,
+			   काष्ठा पूर्णांकel_connector *connector);
 
-	/* Detects panel's hdcp capability. This is optional for HDMI. */
-	int (*hdcp_capable)(struct intel_digital_port *dig_port,
+	/* Detects panel's hdcp capability. This is optional क्रम HDMI. */
+	पूर्णांक (*hdcp_capable)(काष्ठा पूर्णांकel_digital_port *dig_port,
 			    bool *hdcp_capable);
 
 	/* HDCP adaptation(DP/HDMI) required on the port */
-	enum hdcp_wired_protocol protocol;
+	क्रमागत hdcp_wired_protocol protocol;
 
 	/* Detects whether sink is HDCP2.2 capable */
-	int (*hdcp_2_2_capable)(struct intel_digital_port *dig_port,
+	पूर्णांक (*hdcp_2_2_capable)(काष्ठा पूर्णांकel_digital_port *dig_port,
 				bool *capable);
 
 	/* Detects whether a HDCP 1.4 sink connected in MST topology */
-	int (*streams_type1_capable)(struct intel_connector *connector,
+	पूर्णांक (*streams_type1_capable)(काष्ठा पूर्णांकel_connector *connector,
 				     bool *capable);
 
 	/* Write HDCP2.2 messages */
-	int (*write_2_2_msg)(struct intel_digital_port *dig_port,
-			     void *buf, size_t size);
+	पूर्णांक (*ग_लिखो_2_2_msg)(काष्ठा पूर्णांकel_digital_port *dig_port,
+			     व्योम *buf, माप_प्रकार size);
 
 	/* Read HDCP2.2 messages */
-	int (*read_2_2_msg)(struct intel_digital_port *dig_port,
-			    u8 msg_id, void *buf, size_t size);
+	पूर्णांक (*पढ़ो_2_2_msg)(काष्ठा पूर्णांकel_digital_port *dig_port,
+			    u8 msg_id, व्योम *buf, माप_प्रकार size);
 
 	/*
-	 * Implementation of DP HDCP2.2 Errata for the communication of stream
+	 * Implementation of DP HDCP2.2 Errata क्रम the communication of stream
 	 * type to Receivers. In DP HDCP2.2 Stream type is one of the input to
-	 * the HDCP2.2 Cipher for En/De-Cryption. Not applicable for HDMI.
+	 * the HDCP2.2 Cipher क्रम En/De-Cryption. Not applicable क्रम HDMI.
 	 */
-	int (*config_stream_type)(struct intel_digital_port *dig_port,
+	पूर्णांक (*config_stream_type)(काष्ठा पूर्णांकel_digital_port *dig_port,
 				  bool is_repeater, u8 type);
 
 	/* Enable/Disable HDCP 2.2 stream encryption on DP MST Transport Link */
-	int (*stream_2_2_encryption)(struct intel_connector *connector,
+	पूर्णांक (*stream_2_2_encryption)(काष्ठा पूर्णांकel_connector *connector,
 				     bool enable);
 
 	/* HDCP2.2 Link Integrity Check */
-	int (*check_2_2_link)(struct intel_digital_port *dig_port,
-			      struct intel_connector *connector);
-};
+	पूर्णांक (*check_2_2_link)(काष्ठा पूर्णांकel_digital_port *dig_port,
+			      काष्ठा पूर्णांकel_connector *connector);
+पूर्ण;
 
-struct intel_hdcp {
-	const struct intel_hdcp_shim *shim;
-	/* Mutex for hdcp state of the connector */
-	struct mutex mutex;
+काष्ठा पूर्णांकel_hdcp अणु
+	स्थिर काष्ठा पूर्णांकel_hdcp_shim *shim;
+	/* Mutex क्रम hdcp state of the connector */
+	काष्ठा mutex mutex;
 	u64 value;
-	struct delayed_work check_work;
-	struct work_struct prop_work;
+	काष्ठा delayed_work check_work;
+	काष्ठा work_काष्ठा prop_work;
 
 	/* HDCP1.4 Encryption status */
 	bool hdcp_encrypted;
@@ -466,8 +467,8 @@ struct intel_hdcp {
 
 	/*
 	 * Content Stream Type defined by content owner. TYPE0(0x0) content can
-	 * flow in the link protected by HDCP2.2 or HDCP1.4, where as TYPE1(0x1)
-	 * content can flow only through a link protected by HDCP2.2.
+	 * flow in the link रक्षित by HDCP2.2 or HDCP1.4, where as TYPE1(0x1)
+	 * content can flow only through a link रक्षित by HDCP2.2.
 	 */
 	u8 content_type;
 
@@ -490,140 +491,140 @@ struct intel_hdcp {
 	u32 seq_num_m;
 
 	/*
-	 * Work queue to signal the CP_IRQ. Used for the waiters to read the
-	 * available information from HDCP DP sink.
+	 * Work queue to संकेत the CP_IRQ. Used क्रम the रुकोers to पढ़ो the
+	 * available inक्रमmation from HDCP DP sink.
 	 */
-	wait_queue_head_t cp_irq_queue;
+	रुको_queue_head_t cp_irq_queue;
 	atomic_t cp_irq_count;
-	int cp_irq_count_cached;
+	पूर्णांक cp_irq_count_cached;
 
 	/*
-	 * HDCP register access for gen12+ need the transcoder associated.
+	 * HDCP रेजिस्टर access क्रम gen12+ need the transcoder associated.
 	 * Transcoder attached to the connector could be changed at modeset.
 	 * Hence caching the transcoder here.
 	 */
-	enum transcoder cpu_transcoder;
-	/* Only used for DP MST stream encryption */
-	enum transcoder stream_transcoder;
-};
+	क्रमागत transcoder cpu_transcoder;
+	/* Only used क्रम DP MST stream encryption */
+	क्रमागत transcoder stream_transcoder;
+पूर्ण;
 
-struct intel_connector {
-	struct drm_connector base;
+काष्ठा पूर्णांकel_connector अणु
+	काष्ठा drm_connector base;
 	/*
 	 * The fixed encoder this connector is connected to.
 	 */
-	struct intel_encoder *encoder;
+	काष्ठा पूर्णांकel_encoder *encoder;
 
-	/* ACPI device id for ACPI and driver cooperation */
+	/* ACPI device id क्रम ACPI and driver cooperation */
 	u32 acpi_device_id;
 
-	/* Reads out the current hw, returning true if the connector is enabled
+	/* Reads out the current hw, वापसing true अगर the connector is enabled
 	 * and active (i.e. dpms ON state). */
-	bool (*get_hw_state)(struct intel_connector *);
+	bool (*get_hw_state)(काष्ठा पूर्णांकel_connector *);
 
-	/* Panel info for eDP and LVDS */
-	struct intel_panel panel;
+	/* Panel info क्रम eDP and LVDS */
+	काष्ठा पूर्णांकel_panel panel;
 
-	/* Cached EDID for eDP and LVDS. May hold ERR_PTR for invalid EDID. */
-	struct edid *edid;
-	struct edid *detect_edid;
+	/* Cached EDID क्रम eDP and LVDS. May hold ERR_PTR क्रम invalid EDID. */
+	काष्ठा edid *edid;
+	काष्ठा edid *detect_edid;
 
-	/* Number of times hotplug detection was tried after an HPD interrupt */
-	int hotplug_retries;
+	/* Number of बार hotplug detection was tried after an HPD पूर्णांकerrupt */
+	पूर्णांक hotplug_retries;
 
 	/* since POLL and HPD connectors may use the same HPD line keep the native
-	   state of connector->polled in case hotplug storm detection changes it */
+	   state of connector->polled in हाल hotplug storm detection changes it */
 	u8 polled;
 
-	struct drm_dp_mst_port *port;
+	काष्ठा drm_dp_mst_port *port;
 
-	struct intel_dp *mst_port;
+	काष्ठा पूर्णांकel_dp *mst_port;
 
-	/* Work struct to schedule a uevent on link train failure */
-	struct work_struct modeset_retry_work;
+	/* Work काष्ठा to schedule a uevent on link train failure */
+	काष्ठा work_काष्ठा modeset_retry_work;
 
-	struct intel_hdcp hdcp;
-};
+	काष्ठा पूर्णांकel_hdcp hdcp;
+पूर्ण;
 
-struct intel_digital_connector_state {
-	struct drm_connector_state base;
+काष्ठा पूर्णांकel_digital_connector_state अणु
+	काष्ठा drm_connector_state base;
 
-	enum hdmi_force_audio force_audio;
-	int broadcast_rgb;
-};
+	क्रमागत hdmi_क्रमce_audio क्रमce_audio;
+	पूर्णांक broadcast_rgb;
+पूर्ण;
 
-#define to_intel_digital_connector_state(x) container_of(x, struct intel_digital_connector_state, base)
+#घोषणा to_पूर्णांकel_digital_connector_state(x) container_of(x, काष्ठा पूर्णांकel_digital_connector_state, base)
 
-struct dpll {
+काष्ठा dpll अणु
 	/* given values */
-	int n;
-	int m1, m2;
-	int p1, p2;
+	पूर्णांक n;
+	पूर्णांक m1, m2;
+	पूर्णांक p1, p2;
 	/* derived values */
-	int	dot;
-	int	vco;
-	int	m;
-	int	p;
-};
+	पूर्णांक	करोt;
+	पूर्णांक	vco;
+	पूर्णांक	m;
+	पूर्णांक	p;
+पूर्ण;
 
-struct intel_atomic_state {
-	struct drm_atomic_state base;
+काष्ठा पूर्णांकel_atomic_state अणु
+	काष्ठा drm_atomic_state base;
 
-	intel_wakeref_t wakeref;
+	पूर्णांकel_wakeref_t wakeref;
 
-	struct __intel_global_objs_state *global_objs;
-	int num_global_objs;
+	काष्ठा __पूर्णांकel_global_objs_state *global_objs;
+	पूर्णांक num_global_objs;
 
 	bool dpll_set, modeset;
 
-	struct intel_shared_dpll_state shared_dpll[I915_NUM_PLLS];
+	काष्ठा पूर्णांकel_shared_dpll_state shared_dpll[I915_NUM_PLLS];
 
 	/*
-	 * Current watermarks can't be trusted during hardware readout, so
-	 * don't bother calculating intermediate watermarks.
+	 * Current watermarks can't be trusted during hardware पढ़ोout, so
+	 * करोn't bother calculating पूर्णांकermediate watermarks.
 	 */
-	bool skip_intermediate_wm;
+	bool skip_पूर्णांकermediate_wm;
 
-	bool rps_interactive;
+	bool rps_पूर्णांकeractive;
 
-	struct i915_sw_fence commit_ready;
+	काष्ठा i915_sw_fence commit_पढ़ोy;
 
-	struct llist_node freed;
-};
+	काष्ठा llist_node मुक्तd;
+पूर्ण;
 
-struct intel_plane_state {
-	struct drm_plane_state uapi;
+काष्ठा पूर्णांकel_plane_state अणु
+	काष्ठा drm_plane_state uapi;
 
 	/*
 	 * actual hardware state, the state we program to the hardware.
-	 * The following members are used to verify the hardware state:
-	 * During initial hw readout, they need to be copied from uapi.
+	 * The following members are used to verअगरy the hardware state:
+	 * During initial hw पढ़ोout, they need to be copied from uapi.
 	 */
-	struct {
-		struct drm_crtc *crtc;
-		struct drm_framebuffer *fb;
+	काष्ठा अणु
+		काष्ठा drm_crtc *crtc;
+		काष्ठा drm_framebuffer *fb;
 
 		u16 alpha;
 		u16 pixel_blend_mode;
-		unsigned int rotation;
-		enum drm_color_encoding color_encoding;
-		enum drm_color_range color_range;
-		enum drm_scaling_filter scaling_filter;
-	} hw;
+		अचिन्हित पूर्णांक rotation;
+		क्रमागत drm_color_encoding color_encoding;
+		क्रमागत drm_color_range color_range;
+		क्रमागत drm_scaling_filter scaling_filter;
+	पूर्ण hw;
 
-	struct i915_vma *vma;
-	unsigned long flags;
-#define PLANE_HAS_FENCE BIT(0)
+	काष्ठा i915_vma *vma;
+	अचिन्हित दीर्घ flags;
+#घोषणा PLANE_HAS_FENCE BIT(0)
 
-	struct intel_fb_view view;
+	काष्ठा पूर्णांकel_fb_view view;
 
-	/* plane control register */
+	/* plane control रेजिस्टर */
 	u32 ctl;
 
-	/* plane color control register */
+	/* plane color control रेजिस्टर */
 	u32 color_ctl;
 
-	/* chroma upsampler control register */
+	/* chroma upsampler control रेजिस्टर */
 	u32 cus_ctl;
 
 	/*
@@ -635,30 +636,30 @@ struct intel_plane_state {
 	 *   - During check_plane, its bit is set in
 	 *     crtc_state->scaler_state.scaler_users by calling helper function
 	 *     update_scaler_plane.
-	 *   - scaler_id indicates the scaler it got assigned.
+	 *   - scaler_id indicates the scaler it got asचिन्हित.
 	 *
-	 * plane doesn't require a scaler:
+	 * plane करोesn't require a scaler:
 	 *   - this can happen when scaling is no more required or plane simply
 	 *     got disabled.
 	 *   - During check_plane, corresponding bit is reset in
 	 *     crtc_state->scaler_state.scaler_users by calling helper function
 	 *     update_scaler_plane.
 	 */
-	int scaler_id;
+	पूर्णांक scaler_id;
 
 	/*
 	 * planar_linked_plane:
 	 *
-	 * ICL planar formats require 2 planes that are updated as pairs.
+	 * ICL planar क्रमmats require 2 planes that are updated as pairs.
 	 * This member is used to make sure the other plane is also updated
-	 * when required, and for update_slave() to find the correct
+	 * when required, and क्रम update_slave() to find the correct
 	 * plane_state to pass as argument.
 	 */
-	struct intel_plane *planar_linked_plane;
+	काष्ठा पूर्णांकel_plane *planar_linked_plane;
 
 	/*
 	 * planar_slave:
-	 * If set don't update use the linked plane's state for updating
+	 * If set करोn't update use the linked plane's state क्रम updating
 	 * this plane during atomic commit with the update_slave() callback.
 	 *
 	 * It's also used by the watermark code to ignore wm calculations on
@@ -666,31 +667,31 @@ struct intel_plane_state {
 	 */
 	u32 planar_slave;
 
-	struct drm_intel_sprite_colorkey ckey;
+	काष्ठा drm_पूर्णांकel_sprite_colorkey ckey;
 
-	struct drm_rect psr2_sel_fetch_area;
+	काष्ठा drm_rect psr2_sel_fetch_area;
 
 	/* Clear Color Value */
 	u64 ccval;
-};
+पूर्ण;
 
-struct intel_initial_plane_config {
-	struct intel_framebuffer *fb;
-	struct i915_vma *vma;
-	unsigned int tiling;
-	int size;
+काष्ठा पूर्णांकel_initial_plane_config अणु
+	काष्ठा पूर्णांकel_framebuffer *fb;
+	काष्ठा i915_vma *vma;
+	अचिन्हित पूर्णांक tiling;
+	पूर्णांक size;
 	u32 base;
 	u8 rotation;
-};
+पूर्ण;
 
-struct intel_scaler {
-	int in_use;
+काष्ठा पूर्णांकel_scaler अणु
+	पूर्णांक in_use;
 	u32 mode;
-};
+पूर्ण;
 
-struct intel_crtc_scaler_state {
-#define SKL_NUM_SCALERS 2
-	struct intel_scaler scalers[SKL_NUM_SCALERS];
+काष्ठा पूर्णांकel_crtc_scaler_state अणु
+#घोषणा SKL_NUM_SCALERS 2
+	काष्ठा पूर्णांकel_scaler scalers[SKL_NUM_SCALERS];
 
 	/*
 	 * scaler_users: keeps track of users requesting scalers on this crtc.
@@ -701,121 +702,121 @@ struct intel_crtc_scaler_state {
 	 *       bit 31    - crtc
 	 *
 	 * Instead of creating a new index to cover planes and crtc, using
-	 * existing drm_plane_index for planes which is well less than 31
-	 * planes and bit 31 for crtc. This should be fine to cover all
-	 * our platforms.
+	 * existing drm_plane_index क्रम planes which is well less than 31
+	 * planes and bit 31 क्रम crtc. This should be fine to cover all
+	 * our platक्रमms.
 	 *
-	 * intel_atomic_setup_scalers will setup available scalers to users
-	 * requesting scalers. It will gracefully fail if request exceeds
+	 * पूर्णांकel_atomic_setup_scalers will setup available scalers to users
+	 * requesting scalers. It will gracefully fail अगर request exceeds
 	 * avilability.
 	 */
-#define SKL_CRTC_INDEX 31
-	unsigned scaler_users;
+#घोषणा SKL_CRTC_INDEX 31
+	अचिन्हित scaler_users;
 
-	/* scaler used by crtc for panel fitting purpose */
-	int scaler_id;
-};
+	/* scaler used by crtc क्रम panel fitting purpose */
+	पूर्णांक scaler_id;
+पूर्ण;
 
-/* {crtc,crtc_state}->mode_flags */
-/* Flag to get scanline using frame time stamps */
-#define I915_MODE_FLAG_GET_SCANLINE_FROM_TIMESTAMP (1<<1)
+/* अणुcrtc,crtc_stateपूर्ण->mode_flags */
+/* Flag to get scanline using frame समय stamps */
+#घोषणा I915_MODE_FLAG_GET_SCANLINE_FROM_TIMESTAMP (1<<1)
 /* Flag to use the scanline counter instead of the pixel counter */
-#define I915_MODE_FLAG_USE_SCANLINE_COUNTER (1<<2)
+#घोषणा I915_MODE_FLAG_USE_SCANLINE_COUNTER (1<<2)
 /*
- * TE0 or TE1 flag is set if the crtc has a DSI encoder which
+ * TE0 or TE1 flag is set अगर the crtc has a DSI encoder which
  * is operating in command mode.
  * Flag to use TE from DSI0 instead of VBI in command mode
  */
-#define I915_MODE_FLAG_DSI_USE_TE0 (1<<3)
+#घोषणा I915_MODE_FLAG_DSI_USE_TE0 (1<<3)
 /* Flag to use TE from DSI1 instead of VBI in command mode */
-#define I915_MODE_FLAG_DSI_USE_TE1 (1<<4)
-/* Flag to indicate mipi dsi periodic command mode where we do not get TE */
-#define I915_MODE_FLAG_DSI_PERIODIC_CMD_MODE (1<<5)
-/* Do tricks to make vblank timestamps sane with VRR? */
-#define I915_MODE_FLAG_VRR (1<<6)
+#घोषणा I915_MODE_FLAG_DSI_USE_TE1 (1<<4)
+/* Flag to indicate mipi dsi periodic command mode where we करो not get TE */
+#घोषणा I915_MODE_FLAG_DSI_PERIODIC_CMD_MODE (1<<5)
+/* Do tricks to make vblank बारtamps sane with VRR? */
+#घोषणा I915_MODE_FLAG_VRR (1<<6)
 
-struct intel_wm_level {
+काष्ठा पूर्णांकel_wm_level अणु
 	bool enable;
 	u32 pri_val;
 	u32 spr_val;
 	u32 cur_val;
 	u32 fbc_val;
-};
+पूर्ण;
 
-struct intel_pipe_wm {
-	struct intel_wm_level wm[5];
+काष्ठा पूर्णांकel_pipe_wm अणु
+	काष्ठा पूर्णांकel_wm_level wm[5];
 	bool fbc_wm_enabled;
 	bool pipe_enabled;
 	bool sprites_enabled;
 	bool sprites_scaled;
-};
+पूर्ण;
 
-struct skl_wm_level {
+काष्ठा skl_wm_level अणु
 	u16 min_ddb_alloc;
 	u16 blocks;
 	u8 lines;
 	bool enable;
 	bool ignore_lines;
 	bool can_sagv;
-};
+पूर्ण;
 
-struct skl_plane_wm {
-	struct skl_wm_level wm[8];
-	struct skl_wm_level uv_wm[8];
-	struct skl_wm_level trans_wm;
-	struct {
-		struct skl_wm_level wm0;
-		struct skl_wm_level trans_wm;
-	} sagv;
+काष्ठा skl_plane_wm अणु
+	काष्ठा skl_wm_level wm[8];
+	काष्ठा skl_wm_level uv_wm[8];
+	काष्ठा skl_wm_level trans_wm;
+	काष्ठा अणु
+		काष्ठा skl_wm_level wm0;
+		काष्ठा skl_wm_level trans_wm;
+	पूर्ण sagv;
 	bool is_planar;
-};
+पूर्ण;
 
-struct skl_pipe_wm {
-	struct skl_plane_wm planes[I915_MAX_PLANES];
+काष्ठा skl_pipe_wm अणु
+	काष्ठा skl_plane_wm planes[I915_MAX_PLANES];
 	bool use_sagv_wm;
-};
+पूर्ण;
 
-enum vlv_wm_level {
+क्रमागत vlv_wm_level अणु
 	VLV_WM_LEVEL_PM2,
 	VLV_WM_LEVEL_PM5,
 	VLV_WM_LEVEL_DDR_DVFS,
 	NUM_VLV_WM_LEVELS,
-};
+पूर्ण;
 
-struct vlv_wm_state {
-	struct g4x_pipe_wm wm[NUM_VLV_WM_LEVELS];
-	struct g4x_sr_wm sr[NUM_VLV_WM_LEVELS];
+काष्ठा vlv_wm_state अणु
+	काष्ठा g4x_pipe_wm wm[NUM_VLV_WM_LEVELS];
+	काष्ठा g4x_sr_wm sr[NUM_VLV_WM_LEVELS];
 	u8 num_levels;
 	bool cxsr;
-};
+पूर्ण;
 
-struct vlv_fifo_state {
+काष्ठा vlv_fअगरo_state अणु
 	u16 plane[I915_MAX_PLANES];
-};
+पूर्ण;
 
-enum g4x_wm_level {
+क्रमागत g4x_wm_level अणु
 	G4X_WM_LEVEL_NORMAL,
 	G4X_WM_LEVEL_SR,
 	G4X_WM_LEVEL_HPLL,
 	NUM_G4X_WM_LEVELS,
-};
+पूर्ण;
 
-struct g4x_wm_state {
-	struct g4x_pipe_wm wm;
-	struct g4x_sr_wm sr;
-	struct g4x_sr_wm hpll;
+काष्ठा g4x_wm_state अणु
+	काष्ठा g4x_pipe_wm wm;
+	काष्ठा g4x_sr_wm sr;
+	काष्ठा g4x_sr_wm hpll;
 	bool cxsr;
 	bool hpll_en;
 	bool fbc_en;
-};
+पूर्ण;
 
-struct intel_crtc_wm_state {
-	union {
+काष्ठा पूर्णांकel_crtc_wm_state अणु
+	जोड़ अणु
 		/*
 		 * raw:
-		 * The "raw" watermark values produced by the formula
-		 * given the plane's current state. They do not consider
-		 * how much FIFO is actually allocated for each plane.
+		 * The "raw" watermark values produced by the क्रमmula
+		 * given the plane's current state. They करो not consider
+		 * how much FIFO is actually allocated क्रम each plane.
 		 *
 		 * optimal:
 		 * The "optimal" watermark values given the current
@@ -823,63 +824,63 @@ struct intel_crtc_wm_state {
 		 * allocated to each, ignoring any previous state
 		 * of the planes.
 		 *
-		 * intermediate:
+		 * पूर्णांकermediate:
 		 * The "intermediate" watermark values when transitioning
 		 * between the old and new "optimal" values. Used when
-		 * the watermark registers are single buffered and hence
+		 * the watermark रेजिस्टरs are single buffered and hence
 		 * their state changes asynchronously with regards to the
-		 * actual plane registers. These are essentially the
-		 * worst case combination of the old and new "optimal"
-		 * watermarks, which are therefore safe to use when the
+		 * actual plane रेजिस्टरs. These are essentially the
+		 * worst हाल combination of the old and new "optimal"
+		 * watermarks, which are thereक्रमe safe to use when the
 		 * plane is in either its old or new state.
 		 */
-		struct {
-			struct intel_pipe_wm intermediate;
-			struct intel_pipe_wm optimal;
-		} ilk;
+		काष्ठा अणु
+			काष्ठा पूर्णांकel_pipe_wm पूर्णांकermediate;
+			काष्ठा पूर्णांकel_pipe_wm optimal;
+		पूर्ण ilk;
 
-		struct {
-			struct skl_pipe_wm raw;
+		काष्ठा अणु
+			काष्ठा skl_pipe_wm raw;
 			/* gen9+ only needs 1-step wm programming */
-			struct skl_pipe_wm optimal;
-			struct skl_ddb_entry ddb;
-			struct skl_ddb_entry plane_ddb_y[I915_MAX_PLANES];
-			struct skl_ddb_entry plane_ddb_uv[I915_MAX_PLANES];
-		} skl;
+			काष्ठा skl_pipe_wm optimal;
+			काष्ठा skl_ddb_entry ddb;
+			काष्ठा skl_ddb_entry plane_ddb_y[I915_MAX_PLANES];
+			काष्ठा skl_ddb_entry plane_ddb_uv[I915_MAX_PLANES];
+		पूर्ण skl;
 
-		struct {
-			struct g4x_pipe_wm raw[NUM_VLV_WM_LEVELS]; /* not inverted */
-			struct vlv_wm_state intermediate; /* inverted */
-			struct vlv_wm_state optimal; /* inverted */
-			struct vlv_fifo_state fifo_state;
-		} vlv;
+		काष्ठा अणु
+			काष्ठा g4x_pipe_wm raw[NUM_VLV_WM_LEVELS]; /* not inverted */
+			काष्ठा vlv_wm_state पूर्णांकermediate; /* inverted */
+			काष्ठा vlv_wm_state optimal; /* inverted */
+			काष्ठा vlv_fअगरo_state fअगरo_state;
+		पूर्ण vlv;
 
-		struct {
-			struct g4x_pipe_wm raw[NUM_G4X_WM_LEVELS];
-			struct g4x_wm_state intermediate;
-			struct g4x_wm_state optimal;
-		} g4x;
-	};
+		काष्ठा अणु
+			काष्ठा g4x_pipe_wm raw[NUM_G4X_WM_LEVELS];
+			काष्ठा g4x_wm_state पूर्णांकermediate;
+			काष्ठा g4x_wm_state optimal;
+		पूर्ण g4x;
+	पूर्ण;
 
 	/*
-	 * Platforms with two-step watermark programming will need to
-	 * update watermark programming post-vblank to switch from the
-	 * safe intermediate watermarks to the optimal final
+	 * Platक्रमms with two-step watermark programming will need to
+	 * update watermark programming post-vblank to चयन from the
+	 * safe पूर्णांकermediate watermarks to the optimal final
 	 * watermarks.
 	 */
 	bool need_postvbl_update;
-};
+पूर्ण;
 
-enum intel_output_format {
+क्रमागत पूर्णांकel_output_क्रमmat अणु
 	INTEL_OUTPUT_FORMAT_RGB,
 	INTEL_OUTPUT_FORMAT_YCBCR420,
 	INTEL_OUTPUT_FORMAT_YCBCR444,
-};
+पूर्ण;
 
-struct intel_crtc_state {
+काष्ठा पूर्णांकel_crtc_state अणु
 	/*
 	 * uapi (drm) state. This is the software state shown to userspace.
-	 * In particular, the following members are used for bookkeeping:
+	 * In particular, the following members are used क्रम bookkeeping:
 	 * - crtc
 	 * - state
 	 * - *_changed
@@ -887,62 +888,62 @@ struct intel_crtc_state {
 	 * - commit
 	 * - mode_blob
 	 */
-	struct drm_crtc_state uapi;
+	काष्ठा drm_crtc_state uapi;
 
 	/*
 	 * actual hardware state, the state we program to the hardware.
-	 * The following members are used to verify the hardware state:
+	 * The following members are used to verअगरy the hardware state:
 	 * - enable
 	 * - active
 	 * - mode / pipe_mode / adjusted_mode
 	 * - color property blobs.
 	 *
-	 * During initial hw readout, they need to be copied to uapi.
+	 * During initial hw पढ़ोout, they need to be copied to uapi.
 	 *
 	 * Bigjoiner will allow a transcoder mode that spans 2 pipes;
-	 * Use the pipe_mode for calculations like watermarks, pipe
+	 * Use the pipe_mode क्रम calculations like watermarks, pipe
 	 * scaler, and bandwidth.
 	 *
-	 * Use adjusted_mode for things that need to know the full
+	 * Use adjusted_mode क्रम things that need to know the full
 	 * mode on the transcoder, which spans all pipes.
 	 */
-	struct {
+	काष्ठा अणु
 		bool active, enable;
-		struct drm_property_blob *degamma_lut, *gamma_lut, *ctm;
-		struct drm_display_mode mode, pipe_mode, adjusted_mode;
-		enum drm_scaling_filter scaling_filter;
-	} hw;
+		काष्ठा drm_property_blob *degamma_lut, *gamma_lut, *cपंचांग;
+		काष्ठा drm_display_mode mode, pipe_mode, adjusted_mode;
+		क्रमागत drm_scaling_filter scaling_filter;
+	पूर्ण hw;
 
 	/**
-	 * quirks - bitfield with hw state readout quirks
+	 * quirks - bitfield with hw state पढ़ोout quirks
 	 *
-	 * For various reasons the hw state readout code might not be able to
-	 * completely faithfully read out the current state. These cases are
+	 * For various reasons the hw state पढ़ोout code might not be able to
+	 * completely faithfully पढ़ो out the current state. These हालs are
 	 * tracked with quirk flags so that fastboot and state checker can act
 	 * accordingly.
 	 */
-#define PIPE_CONFIG_QUIRK_MODE_SYNC_FLAGS	(1<<0) /* unreliable sync mode.flags */
-#define PIPE_CONFIG_QUIRK_BIGJOINER_SLAVE      (1<<1) /* bigjoiner slave, partial readout */
-	unsigned long quirks;
+#घोषणा PIPE_CONFIG_QUIRK_MODE_SYNC_FLAGS	(1<<0) /* unreliable sync mode.flags */
+#घोषणा PIPE_CONFIG_QUIRK_BIGJOINER_SLAVE      (1<<1) /* bigjoiner slave, partial पढ़ोout */
+	अचिन्हित दीर्घ quirks;
 
-	unsigned fb_bits; /* framebuffers to flip */
-	bool update_pipe; /* can a fast modeset be performed? */
+	अचिन्हित fb_bits; /* framebuffers to flip */
+	bool update_pipe; /* can a fast modeset be perक्रमmed? */
 	bool disable_cxsr;
 	bool update_wm_pre, update_wm_post; /* watermarks are updated */
-	bool fifo_changed; /* FIFO split is changed */
+	bool fअगरo_changed; /* FIFO split is changed */
 	bool preload_luts;
 	bool inherited; /* state inherited from BIOS? */
 
 	/* Pipe source size (ie. panel fitter input size)
 	 * All planes will be positioned inside this space,
 	 * and get clipped at the edges. */
-	int pipe_src_w, pipe_src_h;
+	पूर्णांक pipe_src_w, pipe_src_h;
 
 	/*
-	 * Pipe pixel rate, adjusted for
-	 * panel fitter/pipe scaler downscaling.
+	 * Pipe pixel rate, adjusted क्रम
+	 * panel fitter/pipe scaler करोwnscaling.
 	 */
-	unsigned int pixel_rate;
+	अचिन्हित पूर्णांक pixel_rate;
 
 	/* Whether to set up the PCH/FDI. Note that we never allow sharing
 	 * between pch encoders and cpu encoders. */
@@ -951,102 +952,102 @@ struct intel_crtc_state {
 	/* Are we sending infoframes on the attached port */
 	bool has_infoframe;
 
-	/* CPU Transcoder for the pipe. Currently this can only differ from the
+	/* CPU Transcoder क्रम the pipe. Currently this can only dअगरfer from the
 	 * pipe on Haswell and later (where we have a special eDP transcoder)
 	 * and Broxton (where we have special DSI transcoders). */
-	enum transcoder cpu_transcoder;
+	क्रमागत transcoder cpu_transcoder;
 
 	/*
 	 * Use reduced/limited/broadcast rbg range, compressing from the full
-	 * range fed into the crtcs.
+	 * range fed पूर्णांकo the crtcs.
 	 */
 	bool limited_color_range;
 
-	/* Bitmask of encoder types (enum intel_output_type)
+	/* Biपंचांगask of encoder types (क्रमागत पूर्णांकel_output_type)
 	 * driven by the pipe.
 	 */
-	unsigned int output_types;
+	अचिन्हित पूर्णांक output_types;
 
-	/* Whether we should send NULL infoframes. Required for audio. */
+	/* Whether we should send शून्य infoframes. Required क्रम audio. */
 	bool has_hdmi_sink;
 
-	/* Audio enabled on this pipe. Only valid if either has_hdmi_sink or
+	/* Audio enabled on this pipe. Only valid अगर either has_hdmi_sink or
 	 * has_dp_encoder is set. */
 	bool has_audio;
 
 	/*
-	 * Enable dithering, used when the selected pipe bpp doesn't match the
+	 * Enable dithering, used when the selected pipe bpp करोesn't match the
 	 * plane bpp.
 	 */
 	bool dither;
 
 	/*
-	 * Dither gets enabled for 18bpp which causes CRC mismatch errors for
+	 * Dither माला_लो enabled क्रम 18bpp which causes CRC mismatch errors क्रम
 	 * compliance video pattern tests.
-	 * Disable dither only if it is a compliance test request for
+	 * Disable dither only अगर it is a compliance test request क्रम
 	 * 18bpp.
 	 */
-	bool dither_force_disable;
+	bool dither_क्रमce_disable;
 
-	/* Controls for the clock computation, to override various stages. */
-	bool clock_set;
+	/* Controls क्रम the घड़ी computation, to override various stages. */
+	bool घड़ी_set;
 
-	/* SDVO TV has a bunch of special case. To make multifunction encoders
-	 * work correctly, we need to track this at runtime.*/
-	bool sdvo_tv_clock;
+	/* SDVO TV has a bunch of special हाल. To make multअगरunction encoders
+	 * work correctly, we need to track this at runसमय.*/
+	bool sdvo_tv_घड़ी;
 
 	/*
-	 * crtc bandwidth limit, don't increase pipe bpp or clock if not really
+	 * crtc bandwidth limit, करोn't increase pipe bpp or घड़ी अगर not really
 	 * required. This is set in the 2nd loop of calling encoder's
-	 * ->compute_config if the first pick doesn't work out.
+	 * ->compute_config अगर the first pick करोesn't work out.
 	 */
-	bool bw_constrained;
+	bool bw_स्थिरrained;
 
-	/* Settings for the intel dpll used on pretty much everything but
+	/* Settings क्रम the पूर्णांकel dpll used on pretty much everything but
 	 * haswell. */
-	struct dpll dpll;
+	काष्ठा dpll dpll;
 
-	/* Selected dpll when shared or NULL. */
-	struct intel_shared_dpll *shared_dpll;
+	/* Selected dpll when shared or शून्य. */
+	काष्ठा पूर्णांकel_shared_dpll *shared_dpll;
 
-	/* Actual register state of the dpll, for shared dpll cross-checking. */
-	struct intel_dpll_hw_state dpll_hw_state;
+	/* Actual रेजिस्टर state of the dpll, क्रम shared dpll cross-checking. */
+	काष्ठा पूर्णांकel_dpll_hw_state dpll_hw_state;
 
 	/*
-	 * ICL reserved DPLLs for the CRTC/port. The active PLL is selected by
+	 * ICL reserved DPLLs क्रम the CRTC/port. The active PLL is selected by
 	 * setting shared_dpll and dpll_hw_state to one of these reserved ones.
 	 */
-	struct icl_port_dpll {
-		struct intel_shared_dpll *pll;
-		struct intel_dpll_hw_state hw_state;
-	} icl_port_dplls[ICL_PORT_DPLL_COUNT];
+	काष्ठा icl_port_dpll अणु
+		काष्ठा पूर्णांकel_shared_dpll *pll;
+		काष्ठा पूर्णांकel_dpll_hw_state hw_state;
+	पूर्ण icl_port_dplls[ICL_PORT_DPLL_COUNT];
 
-	/* DSI PLL registers */
-	struct {
-		u32 ctrl, div;
-	} dsi_pll;
+	/* DSI PLL रेजिस्टरs */
+	काष्ठा अणु
+		u32 ctrl, भाग;
+	पूर्ण dsi_pll;
 
-	int pipe_bpp;
-	struct intel_link_m_n dp_m_n;
+	पूर्णांक pipe_bpp;
+	काष्ठा पूर्णांकel_link_m_n dp_m_n;
 
-	/* m2_n2 for eDP downclock */
-	struct intel_link_m_n dp_m2_n2;
+	/* m2_n2 क्रम eDP करोwnघड़ी */
+	काष्ठा पूर्णांकel_link_m_n dp_m2_n2;
 	bool has_drrs;
 
 	bool has_psr;
 	bool has_psr2;
 	bool enable_psr2_sel_fetch;
-	u32 dc3co_exitline;
+	u32 dc3co_निकासline;
 
 	/*
-	 * Frequence the dpll for the port should run at. Differs from the
-	 * adjusted dotclock e.g. for DP or 10/12bpc hdmi mode. This is also
-	 * already multiplied by pixel_multiplier.
+	 * Frequence the dpll क्रम the port should run at. Dअगरfers from the
+	 * adjusted करोtघड़ी e.g. क्रम DP or 10/12bpc hdmi mode. This is also
+	 * alपढ़ोy multiplied by pixel_multiplier.
 	 */
-	int port_clock;
+	पूर्णांक port_घड़ी;
 
-	/* Used by SDVO (and if we ever fix it, HDMI). */
-	unsigned pixel_multiplier;
+	/* Used by SDVO (and अगर we ever fix it, HDMI). */
+	अचिन्हित pixel_multiplier;
 
 	/* I915_MODE_FLAG_* */
 	u8 mode_flags;
@@ -1054,7 +1055,7 @@ struct intel_crtc_state {
 	u8 lane_count;
 
 	/*
-	 * Used by platforms having DP/HDMI PHY with programmable lane
+	 * Used by platक्रमms having DP/HDMI PHY with programmable lane
 	 * latency optimization.
 	 */
 	u8 lane_lat_optim_mask;
@@ -1062,23 +1063,23 @@ struct intel_crtc_state {
 	/* minimum acceptable voltage level */
 	u8 min_voltage_level;
 
-	/* Panel fitter controls for gen2-gen4 + VLV */
-	struct {
+	/* Panel fitter controls क्रम gen2-gen4 + VLV */
+	काष्ठा अणु
 		u32 control;
 		u32 pgm_ratios;
 		u32 lvds_border_bits;
-	} gmch_pfit;
+	पूर्ण gmch_pfit;
 
-	/* Panel fitter placement and size for Ironlake+ */
-	struct {
-		struct drm_rect dst;
+	/* Panel fitter placement and size क्रम Ironlake+ */
+	काष्ठा अणु
+		काष्ठा drm_rect dst;
 		bool enabled;
-		bool force_thru;
-	} pch_pfit;
+		bool क्रमce_thru;
+	पूर्ण pch_pfit;
 
-	/* FDI configuration, only valid if has_pch_encoder is set. */
-	int fdi_lanes;
-	struct intel_link_m_n fdi_m_n;
+	/* FDI configuration, only valid अगर has_pch_encoder is set. */
+	पूर्णांक fdi_lanes;
+	काष्ठा पूर्णांकel_link_m_n fdi_m_n;
 
 	bool ips_enabled;
 
@@ -1086,68 +1087,68 @@ struct intel_crtc_state {
 
 	bool enable_fbc;
 
-	bool double_wide;
+	bool द्विगुन_wide;
 
-	int pbn;
+	पूर्णांक pbn;
 
-	struct intel_crtc_scaler_state scaler_state;
+	काष्ठा पूर्णांकel_crtc_scaler_state scaler_state;
 
-	/* w/a for waiting 2 vblanks during crtc enable */
-	enum pipe hsw_workaround_pipe;
+	/* w/a क्रम रुकोing 2 vblanks during crtc enable */
+	क्रमागत pipe hsw_workaround_pipe;
 
 	/* IVB sprite scaling w/a (WaCxSRDisabledForSpriteScaling:ivb) */
 	bool disable_lp_wm;
 
-	struct intel_crtc_wm_state wm;
+	काष्ठा पूर्णांकel_crtc_wm_state wm;
 
-	int min_cdclk[I915_MAX_PLANES];
+	पूर्णांक min_cdclk[I915_MAX_PLANES];
 
 	u32 data_rate[I915_MAX_PLANES];
 
-	/* FIXME unify with data_rate[] */
+	/* FIXME unअगरy with data_rate[] */
 	u64 plane_data_rate[I915_MAX_PLANES];
 	u64 uv_plane_data_rate[I915_MAX_PLANES];
 
 	/* Gamma mode programmed on the pipe */
 	u32 gamma_mode;
 
-	union {
+	जोड़ अणु
 		/* CSC mode programmed on the pipe */
 		u32 csc_mode;
 
 		/* CHV CGM mode */
 		u32 cgm_mode;
-	};
+	पूर्ण;
 
-	/* bitmask of logically enabled planes (enum plane_id) */
+	/* biपंचांगask of logically enabled planes (क्रमागत plane_id) */
 	u8 enabled_planes;
 
-	/* bitmask of actually visible planes (enum plane_id) */
+	/* biपंचांगask of actually visible planes (क्रमागत plane_id) */
 	u8 active_planes;
 	u8 nv12_planes;
 	u8 c8_planes;
 
-	/* bitmask of planes that will be updated during the commit */
+	/* biपंचांगask of planes that will be updated during the commit */
 	u8 update_planes;
 
-	struct {
+	काष्ठा अणु
 		u32 enable;
 		u32 gcp;
-		union hdmi_infoframe avi;
-		union hdmi_infoframe spd;
-		union hdmi_infoframe hdmi;
-		union hdmi_infoframe drm;
-		struct drm_dp_vsc_sdp vsc;
-	} infoframes;
+		जोड़ hdmi_infoframe avi;
+		जोड़ hdmi_infoframe spd;
+		जोड़ hdmi_infoframe hdmi;
+		जोड़ hdmi_infoframe drm;
+		काष्ठा drm_dp_vsc_sdp vsc;
+	पूर्ण infoframes;
 
 	/* HDMI scrambling status */
 	bool hdmi_scrambling;
 
-	/* HDMI High TMDS char rate ratio */
-	bool hdmi_high_tmds_clock_ratio;
+	/* HDMI High TMDS अक्षर rate ratio */
+	bool hdmi_high_पंचांगds_घड़ी_ratio;
 
-	/* Output format RGB/YCBCR etc */
-	enum intel_output_format output_format;
+	/* Output क्रमmat RGB/YCBCR etc */
+	क्रमागत पूर्णांकel_output_क्रमmat output_क्रमmat;
 
 	/* enable pipe gamma? */
 	bool gamma_enable;
@@ -1161,55 +1162,55 @@ struct intel_crtc_state {
 	/* big joiner slave crtc? */
 	bool bigjoiner_slave;
 
-	/* linked crtc for bigjoiner, either slave or master */
-	struct intel_crtc *bigjoiner_linked_crtc;
+	/* linked crtc क्रम bigjoiner, either slave or master */
+	काष्ठा पूर्णांकel_crtc *bigjoiner_linked_crtc;
 
 	/* Display Stream compression state */
-	struct {
+	काष्ठा अणु
 		bool compression_enable;
 		bool dsc_split;
 		u16 compressed_bpp;
 		u8 slice_count;
-		struct drm_dsc_config config;
-	} dsc;
+		काष्ठा drm_dsc_config config;
+	पूर्ण dsc;
 
-	/* HSW+ linetime watermarks */
-	u16 linetime;
-	u16 ips_linetime;
+	/* HSW+ lineसमय watermarks */
+	u16 lineसमय;
+	u16 ips_lineसमय;
 
 	/* Forward Error correction State */
 	bool fec_enable;
 
-	/* Pointer to master transcoder in case of tiled displays */
-	enum transcoder master_transcoder;
+	/* Poपूर्णांकer to master transcoder in हाल of tiled displays */
+	क्रमागत transcoder master_transcoder;
 
-	/* Bitmask to indicate slaves attached */
+	/* Biपंचांगask to indicate slaves attached */
 	u8 sync_mode_slaves_mask;
 
 	/* Only valid on TGL+ */
-	enum transcoder mst_master_transcoder;
+	क्रमागत transcoder mst_master_transcoder;
 
 	/* For DSB related info */
-	struct intel_dsb *dsb;
+	काष्ठा पूर्णांकel_dsb *dsb;
 
 	u32 psr2_man_track_ctl;
 
 	/* Variable Refresh Rate state */
-	struct {
+	काष्ठा अणु
 		bool enable;
 		u8 pipeline_full;
 		u16 flipline, vmin, vmax;
-	} vrr;
+	पूर्ण vrr;
 
-	/* Stream Splitter for eDP MSO */
-	struct {
+	/* Stream Splitter क्रम eDP MSO */
+	काष्ठा अणु
 		bool enable;
 		u8 link_count;
 		u8 pixel_overlap;
-	} splitter;
-};
+	पूर्ण splitter;
+पूर्ण;
 
-enum intel_pipe_crc_source {
+क्रमागत पूर्णांकel_pipe_crc_source अणु
 	INTEL_PIPE_CRC_SOURCE_NONE,
 	INTEL_PIPE_CRC_SOURCE_PLANE1,
 	INTEL_PIPE_CRC_SOURCE_PLANE2,
@@ -1226,22 +1227,22 @@ enum intel_pipe_crc_source {
 	INTEL_PIPE_CRC_SOURCE_DP_D,
 	INTEL_PIPE_CRC_SOURCE_AUTO,
 	INTEL_PIPE_CRC_SOURCE_MAX,
-};
+पूर्ण;
 
-#define INTEL_PIPE_CRC_ENTRIES_NR	128
-struct intel_pipe_crc {
+#घोषणा INTEL_PIPE_CRC_ENTRIES_NR	128
+काष्ठा पूर्णांकel_pipe_crc अणु
 	spinlock_t lock;
-	int skipped;
-	enum intel_pipe_crc_source source;
-};
+	पूर्णांक skipped;
+	क्रमागत पूर्णांकel_pipe_crc_source source;
+पूर्ण;
 
-struct intel_crtc {
-	struct drm_crtc base;
-	enum pipe pipe;
+काष्ठा पूर्णांकel_crtc अणु
+	काष्ठा drm_crtc base;
+	क्रमागत pipe pipe;
 	/*
 	 * Whether the crtc and the connected output pipeline is active. Implies
 	 * that crtc->enabled is set, i.e. the current mode configuration has
-	 * some outputs connected to this crtc.
+	 * some outमाला_दो connected to this crtc.
 	 */
 	bool active;
 	u8 plane_ids_mask;
@@ -1251,110 +1252,110 @@ struct intel_crtc {
 
 	u16 vmax_vblank_start;
 
-	struct intel_display_power_domain_set enabled_power_domains;
-	struct intel_overlay *overlay;
+	काष्ठा पूर्णांकel_display_घातer_करोमुख्य_set enabled_घातer_करोमुख्यs;
+	काष्ठा पूर्णांकel_overlay *overlay;
 
-	struct intel_crtc_state *config;
+	काष्ठा पूर्णांकel_crtc_state *config;
 
-	/* Access to these should be protected by dev_priv->irq_lock. */
-	bool cpu_fifo_underrun_disabled;
-	bool pch_fifo_underrun_disabled;
+	/* Access to these should be रक्षित by dev_priv->irq_lock. */
+	bool cpu_fअगरo_underrun_disabled;
+	bool pch_fअगरo_underrun_disabled;
 
 	/* per-pipe watermark state */
-	struct {
+	काष्ठा अणु
 		/* watermarks currently being used  */
-		union {
-			struct intel_pipe_wm ilk;
-			struct vlv_wm_state vlv;
-			struct g4x_wm_state g4x;
-		} active;
-	} wm;
+		जोड़ अणु
+			काष्ठा पूर्णांकel_pipe_wm ilk;
+			काष्ठा vlv_wm_state vlv;
+			काष्ठा g4x_wm_state g4x;
+		पूर्ण active;
+	पूर्ण wm;
 
-	int scanline_offset;
+	पूर्णांक scanline_offset;
 
-	struct {
-		unsigned start_vbl_count;
-		ktime_t start_vbl_time;
-		int min_vbl, max_vbl;
-		int scanline_start;
-#ifdef CONFIG_DRM_I915_DEBUG_VBLANK_EVADE
-		struct {
+	काष्ठा अणु
+		अचिन्हित start_vbl_count;
+		kसमय_प्रकार start_vbl_समय;
+		पूर्णांक min_vbl, max_vbl;
+		पूर्णांक scanline_start;
+#अगर_घोषित CONFIG_DRM_I915_DEBUG_VBLANK_EVADE
+		काष्ठा अणु
 			u64 min;
 			u64 max;
 			u64 sum;
-			unsigned int over;
-			unsigned int times[17]; /* [1us, 16ms] */
-		} vbl;
-#endif
-	} debug;
+			अचिन्हित पूर्णांक over;
+			अचिन्हित पूर्णांक बार[17]; /* [1us, 16ms] */
+		पूर्ण vbl;
+#पूर्ण_अगर
+	पूर्ण debug;
 
 	/* scalers available on this crtc */
-	int num_scalers;
+	पूर्णांक num_scalers;
 
-#ifdef CONFIG_DEBUG_FS
-	struct intel_pipe_crc pipe_crc;
-#endif
-};
+#अगर_घोषित CONFIG_DEBUG_FS
+	काष्ठा पूर्णांकel_pipe_crc pipe_crc;
+#पूर्ण_अगर
+पूर्ण;
 
-struct intel_plane {
-	struct drm_plane base;
-	enum i9xx_plane_id i9xx_plane;
-	enum plane_id id;
-	enum pipe pipe;
+काष्ठा पूर्णांकel_plane अणु
+	काष्ठा drm_plane base;
+	क्रमागत i9xx_plane_id i9xx_plane;
+	क्रमागत plane_id id;
+	क्रमागत pipe pipe;
 	bool has_fbc;
 	bool has_ccs;
 	bool need_async_flip_disable_wa;
 	u32 frontbuffer_bit;
 
-	struct {
+	काष्ठा अणु
 		u32 base, cntl, size;
-	} cursor;
+	पूर्ण cursor;
 
 	/*
 	 * NOTE: Do not place new plane state fields here (e.g., when adding
-	 * new plane properties).  New runtime state should now be placed in
-	 * the intel_plane_state structure and accessed via plane_state.
+	 * new plane properties).  New runसमय state should now be placed in
+	 * the पूर्णांकel_plane_state काष्ठाure and accessed via plane_state.
 	 */
 
-	int (*min_width)(const struct drm_framebuffer *fb,
-			 int color_plane,
-			 unsigned int rotation);
-	int (*max_width)(const struct drm_framebuffer *fb,
-			 int color_plane,
-			 unsigned int rotation);
-	int (*max_height)(const struct drm_framebuffer *fb,
-			  int color_plane,
-			  unsigned int rotation);
-	unsigned int (*max_stride)(struct intel_plane *plane,
-				   u32 pixel_format, u64 modifier,
-				   unsigned int rotation);
-	void (*update_plane)(struct intel_plane *plane,
-			     const struct intel_crtc_state *crtc_state,
-			     const struct intel_plane_state *plane_state);
-	void (*disable_plane)(struct intel_plane *plane,
-			      const struct intel_crtc_state *crtc_state);
-	bool (*get_hw_state)(struct intel_plane *plane, enum pipe *pipe);
-	int (*check_plane)(struct intel_crtc_state *crtc_state,
-			   struct intel_plane_state *plane_state);
-	int (*min_cdclk)(const struct intel_crtc_state *crtc_state,
-			 const struct intel_plane_state *plane_state);
-	void (*async_flip)(struct intel_plane *plane,
-			   const struct intel_crtc_state *crtc_state,
-			   const struct intel_plane_state *plane_state,
+	पूर्णांक (*min_width)(स्थिर काष्ठा drm_framebuffer *fb,
+			 पूर्णांक color_plane,
+			 अचिन्हित पूर्णांक rotation);
+	पूर्णांक (*max_width)(स्थिर काष्ठा drm_framebuffer *fb,
+			 पूर्णांक color_plane,
+			 अचिन्हित पूर्णांक rotation);
+	पूर्णांक (*max_height)(स्थिर काष्ठा drm_framebuffer *fb,
+			  पूर्णांक color_plane,
+			  अचिन्हित पूर्णांक rotation);
+	अचिन्हित पूर्णांक (*max_stride)(काष्ठा पूर्णांकel_plane *plane,
+				   u32 pixel_क्रमmat, u64 modअगरier,
+				   अचिन्हित पूर्णांक rotation);
+	व्योम (*update_plane)(काष्ठा पूर्णांकel_plane *plane,
+			     स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			     स्थिर काष्ठा पूर्णांकel_plane_state *plane_state);
+	व्योम (*disable_plane)(काष्ठा पूर्णांकel_plane *plane,
+			      स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+	bool (*get_hw_state)(काष्ठा पूर्णांकel_plane *plane, क्रमागत pipe *pipe);
+	पूर्णांक (*check_plane)(काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			   काष्ठा पूर्णांकel_plane_state *plane_state);
+	पूर्णांक (*min_cdclk)(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			 स्थिर काष्ठा पूर्णांकel_plane_state *plane_state);
+	व्योम (*async_flip)(काष्ठा पूर्णांकel_plane *plane,
+			   स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			   स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
 			   bool async_flip);
-	void (*enable_flip_done)(struct intel_plane *plane);
-	void (*disable_flip_done)(struct intel_plane *plane);
-};
+	व्योम (*enable_flip_करोne)(काष्ठा पूर्णांकel_plane *plane);
+	व्योम (*disable_flip_करोne)(काष्ठा पूर्णांकel_plane *plane);
+पूर्ण;
 
-struct intel_watermark_params {
-	u16 fifo_size;
+काष्ठा पूर्णांकel_watermark_params अणु
+	u16 fअगरo_size;
 	u16 max_wm;
-	u8 default_wm;
+	u8 शेष_wm;
 	u8 guard_size;
 	u8 cacheline_size;
-};
+पूर्ण;
 
-struct cxsr_latency {
+काष्ठा cxsr_latency अणु
 	bool is_desktop : 1;
 	bool is_ddr3 : 1;
 	u16 fsb_freq;
@@ -1363,147 +1364,147 @@ struct cxsr_latency {
 	u16 display_hpll_disable;
 	u16 cursor_sr;
 	u16 cursor_hpll_disable;
-};
+पूर्ण;
 
-#define to_intel_atomic_state(x) container_of(x, struct intel_atomic_state, base)
-#define to_intel_crtc(x) container_of(x, struct intel_crtc, base)
-#define to_intel_crtc_state(x) container_of(x, struct intel_crtc_state, uapi)
-#define to_intel_connector(x) container_of(x, struct intel_connector, base)
-#define to_intel_encoder(x) container_of(x, struct intel_encoder, base)
-#define to_intel_framebuffer(x) container_of(x, struct intel_framebuffer, base)
-#define to_intel_plane(x) container_of(x, struct intel_plane, base)
-#define to_intel_plane_state(x) container_of(x, struct intel_plane_state, uapi)
-#define intel_fb_obj(x) ((x) ? to_intel_bo((x)->obj[0]) : NULL)
+#घोषणा to_पूर्णांकel_atomic_state(x) container_of(x, काष्ठा पूर्णांकel_atomic_state, base)
+#घोषणा to_पूर्णांकel_crtc(x) container_of(x, काष्ठा पूर्णांकel_crtc, base)
+#घोषणा to_पूर्णांकel_crtc_state(x) container_of(x, काष्ठा पूर्णांकel_crtc_state, uapi)
+#घोषणा to_पूर्णांकel_connector(x) container_of(x, काष्ठा पूर्णांकel_connector, base)
+#घोषणा to_पूर्णांकel_encoder(x) container_of(x, काष्ठा पूर्णांकel_encoder, base)
+#घोषणा to_पूर्णांकel_framebuffer(x) container_of(x, काष्ठा पूर्णांकel_framebuffer, base)
+#घोषणा to_पूर्णांकel_plane(x) container_of(x, काष्ठा पूर्णांकel_plane, base)
+#घोषणा to_पूर्णांकel_plane_state(x) container_of(x, काष्ठा पूर्णांकel_plane_state, uapi)
+#घोषणा पूर्णांकel_fb_obj(x) ((x) ? to_पूर्णांकel_bo((x)->obj[0]) : शून्य)
 
-struct intel_hdmi {
+काष्ठा पूर्णांकel_hdmi अणु
 	i915_reg_t hdmi_reg;
-	int ddc_bus;
-	struct {
-		enum drm_dp_dual_mode_type type;
-		int max_tmds_clock;
-	} dp_dual_mode;
+	पूर्णांक ddc_bus;
+	काष्ठा अणु
+		क्रमागत drm_dp_dual_mode_type type;
+		पूर्णांक max_पंचांगds_घड़ी;
+	पूर्ण dp_dual_mode;
 	bool has_hdmi_sink;
 	bool has_audio;
-	struct intel_connector *attached_connector;
-	struct cec_notifier *cec_notifier;
-};
+	काष्ठा पूर्णांकel_connector *attached_connector;
+	काष्ठा cec_notअगरier *cec_notअगरier;
+पूर्ण;
 
-struct intel_dp_mst_encoder;
+काष्ठा पूर्णांकel_dp_mst_encoder;
 /*
- * enum link_m_n_set:
- *	When platform provides two set of M_N registers for dp, we can
- *	program them and switch between them incase of DRRS.
- *	But When only one such register is provided, we have to program the
- *	required divider value on that registers itself based on the DRRS state.
+ * क्रमागत link_m_n_set:
+ *	When platक्रमm provides two set of M_N रेजिस्टरs क्रम dp, we can
+ *	program them and चयन between them inहाल of DRRS.
+ *	But When only one such रेजिस्टर is provided, we have to program the
+ *	required भागider value on that रेजिस्टरs itself based on the DRRS state.
  *
- * M1_N1	: Program dp_m_n on M1_N1 registers
- *			  dp_m2_n2 on M2_N2 registers (If supported)
+ * M1_N1	: Program dp_m_n on M1_N1 रेजिस्टरs
+ *			  dp_m2_n2 on M2_N2 रेजिस्टरs (If supported)
  *
- * M2_N2	: Program dp_m2_n2 on M1_N1 registers
- *			  M2_N2 registers are not supported
+ * M2_N2	: Program dp_m2_n2 on M1_N1 रेजिस्टरs
+ *			  M2_N2 रेजिस्टरs are not supported
  */
 
-enum link_m_n_set {
+क्रमागत link_m_n_set अणु
 	/* Sets the m1_n1 and m2_n2 */
 	M1_N1 = 0,
 	M2_N2
-};
+पूर्ण;
 
-struct intel_dp_compliance_data {
-	unsigned long edid;
+काष्ठा पूर्णांकel_dp_compliance_data अणु
+	अचिन्हित दीर्घ edid;
 	u8 video_pattern;
 	u16 hdisplay, vdisplay;
 	u8 bpc;
-	struct drm_dp_phy_test_params phytest;
-};
+	काष्ठा drm_dp_phy_test_params phytest;
+पूर्ण;
 
-struct intel_dp_compliance {
-	unsigned long test_type;
-	struct intel_dp_compliance_data test_data;
+काष्ठा पूर्णांकel_dp_compliance अणु
+	अचिन्हित दीर्घ test_type;
+	काष्ठा पूर्णांकel_dp_compliance_data test_data;
 	bool test_active;
-	int test_link_rate;
+	पूर्णांक test_link_rate;
 	u8 test_lane_count;
-};
+पूर्ण;
 
-struct intel_dp_pcon_frl {
+काष्ठा पूर्णांकel_dp_pcon_frl अणु
 	bool is_trained;
-	int trained_rate_gbps;
-};
+	पूर्णांक trained_rate_gbps;
+पूर्ण;
 
-struct intel_pps {
-	int panel_power_up_delay;
-	int panel_power_down_delay;
-	int panel_power_cycle_delay;
-	int backlight_on_delay;
-	int backlight_off_delay;
-	struct delayed_work panel_vdd_work;
+काष्ठा पूर्णांकel_pps अणु
+	पूर्णांक panel_घातer_up_delay;
+	पूर्णांक panel_घातer_करोwn_delay;
+	पूर्णांक panel_घातer_cycle_delay;
+	पूर्णांक backlight_on_delay;
+	पूर्णांक backlight_off_delay;
+	काष्ठा delayed_work panel_vdd_work;
 	bool want_panel_vdd;
-	unsigned long last_power_on;
-	unsigned long last_backlight_off;
-	ktime_t panel_power_off_time;
-	intel_wakeref_t vdd_wakeref;
+	अचिन्हित दीर्घ last_घातer_on;
+	अचिन्हित दीर्घ last_backlight_off;
+	kसमय_प्रकार panel_घातer_off_समय;
+	पूर्णांकel_wakeref_t vdd_wakeref;
 
 	/*
-	 * Pipe whose power sequencer is currently locked into
+	 * Pipe whose घातer sequencer is currently locked पूर्णांकo
 	 * this port. Only relevant on VLV/CHV.
 	 */
-	enum pipe pps_pipe;
+	क्रमागत pipe pps_pipe;
 	/*
-	 * Pipe currently driving the port. Used for preventing
-	 * the use of the PPS for any pipe currentrly driving
-	 * external DP as that will mess things up on VLV.
+	 * Pipe currently driving the port. Used क्रम preventing
+	 * the use of the PPS क्रम any pipe currentrly driving
+	 * बाह्यal DP as that will mess things up on VLV.
 	 */
-	enum pipe active_pipe;
+	क्रमागत pipe active_pipe;
 	/*
-	 * Set if the sequencer may be reset due to a power transition,
+	 * Set अगर the sequencer may be reset due to a घातer transition,
 	 * requiring a reinitialization. Only relevant on BXT.
 	 */
 	bool pps_reset;
-	struct edp_power_seq pps_delays;
-};
+	काष्ठा edp_घातer_seq pps_delays;
+पूर्ण;
 
-struct intel_psr {
-	/* Mutex for PSR state of the transcoder */
-	struct mutex lock;
+काष्ठा पूर्णांकel_psr अणु
+	/* Mutex क्रम PSR state of the transcoder */
+	काष्ठा mutex lock;
 
-#define I915_PSR_DEBUG_MODE_MASK	0x0f
-#define I915_PSR_DEBUG_DEFAULT		0x00
-#define I915_PSR_DEBUG_DISABLE		0x01
-#define I915_PSR_DEBUG_ENABLE		0x02
-#define I915_PSR_DEBUG_FORCE_PSR1	0x03
-#define I915_PSR_DEBUG_ENABLE_SEL_FETCH	0x4
-#define I915_PSR_DEBUG_IRQ		0x10
+#घोषणा I915_PSR_DEBUG_MODE_MASK	0x0f
+#घोषणा I915_PSR_DEBUG_DEFAULT		0x00
+#घोषणा I915_PSR_DEBUG_DISABLE		0x01
+#घोषणा I915_PSR_DEBUG_ENABLE		0x02
+#घोषणा I915_PSR_DEBUG_FORCE_PSR1	0x03
+#घोषणा I915_PSR_DEBUG_ENABLE_SEL_FETCH	0x4
+#घोषणा I915_PSR_DEBUG_IRQ		0x10
 
 	u32 debug;
 	bool sink_support;
 	bool source_support;
 	bool enabled;
-	enum pipe pipe;
-	enum transcoder transcoder;
+	क्रमागत pipe pipe;
+	क्रमागत transcoder transcoder;
 	bool active;
-	struct work_struct work;
-	unsigned int busy_frontbuffer_bits;
+	काष्ठा work_काष्ठा work;
+	अचिन्हित पूर्णांक busy_frontbuffer_bits;
 	bool sink_psr2_support;
 	bool link_standby;
 	bool colorimetry_support;
 	bool psr2_enabled;
 	bool psr2_sel_fetch_enabled;
 	u8 sink_sync_latency;
-	ktime_t last_entry_attempt;
-	ktime_t last_exit;
+	kसमय_प्रकार last_entry_attempt;
+	kसमय_प्रकार last_निकास;
 	bool sink_not_reliable;
 	bool irq_aux_error;
 	u16 su_x_granularity;
 	bool dc3co_enabled;
-	u32 dc3co_exit_delay;
-	struct delayed_work dc3co_work;
-	struct drm_dp_vsc_sdp vsc;
-};
+	u32 dc3co_निकास_delay;
+	काष्ठा delayed_work dc3co_work;
+	काष्ठा drm_dp_vsc_sdp vsc;
+पूर्ण;
 
-struct intel_dp {
+काष्ठा पूर्णांकel_dp अणु
 	i915_reg_t output_reg;
 	u32 DP;
-	int link_rate;
+	पूर्णांक link_rate;
 	u8 lane_count;
 	u8 sink_count;
 	bool link_trained;
@@ -1513,7 +1514,7 @@ struct intel_dp {
 	bool use_max_params;
 	u8 dpcd[DP_RECEIVER_CAP_SIZE];
 	u8 psr_dpcd[EDP_PSR_RECEIVER_CAP_SIZE];
-	u8 downstream_ports[DP_MAX_DOWNSTREAM_PORTS];
+	u8 करोwnstream_ports[DP_MAX_DOWNSTREAM_PORTS];
 	u8 edp_dpcd[EDP_DISPLAY_CTL_CAP_SIZE];
 	u8 dsc_dpcd[DP_DSC_RECEIVER_CAP_SIZE];
 	u8 lttpr_common_caps[DP_LTTPR_COMMON_CAP_SIZE];
@@ -1521,505 +1522,505 @@ struct intel_dp {
 	u8 fec_capable;
 	u8 pcon_dsc_dpcd[DP_PCON_DSC_ENCODER_CAP_SIZE];
 	/* source rates */
-	int num_source_rates;
-	const int *source_rates;
+	पूर्णांक num_source_rates;
+	स्थिर पूर्णांक *source_rates;
 	/* sink rates as reported by DP_MAX_LINK_RATE/DP_SUPPORTED_LINK_RATES */
-	int num_sink_rates;
-	int sink_rates[DP_MAX_SUPPORTED_RATES];
+	पूर्णांक num_sink_rates;
+	पूर्णांक sink_rates[DP_MAX_SUPPORTED_RATES];
 	bool use_rate_select;
-	/* intersection of source and sink rates */
-	int num_common_rates;
-	int common_rates[DP_MAX_SUPPORTED_RATES];
-	/* Max lane count for the current link */
-	int max_link_lane_count;
-	/* Max rate for the current link */
-	int max_link_rate;
-	int mso_link_count;
-	int mso_pixel_overlap;
+	/* पूर्णांकersection of source and sink rates */
+	पूर्णांक num_common_rates;
+	पूर्णांक common_rates[DP_MAX_SUPPORTED_RATES];
+	/* Max lane count क्रम the current link */
+	पूर्णांक max_link_lane_count;
+	/* Max rate क्रम the current link */
+	पूर्णांक max_link_rate;
+	पूर्णांक mso_link_count;
+	पूर्णांक mso_pixel_overlap;
 	/* sink or branch descriptor */
-	struct drm_dp_desc desc;
-	struct drm_dp_aux aux;
+	काष्ठा drm_dp_desc desc;
+	काष्ठा drm_dp_aux aux;
 	u32 aux_busy_last_status;
 	u8 train_set[4];
 
-	struct intel_pps pps;
+	काष्ठा पूर्णांकel_pps pps;
 
 	bool can_mst; /* this port supports mst */
 	bool is_mst;
-	int active_mst_links;
+	पूर्णांक active_mst_links;
 
-	/* connector directly attached - won't be use for modeset in mst world */
-	struct intel_connector *attached_connector;
+	/* connector directly attached - won't be use क्रम modeset in mst world */
+	काष्ठा पूर्णांकel_connector *attached_connector;
 
 	/* mst connector list */
-	struct intel_dp_mst_encoder *mst_encoders[I915_MAX_PIPES];
-	struct drm_dp_mst_topology_mgr mst_mgr;
+	काष्ठा पूर्णांकel_dp_mst_encoder *mst_encoders[I915_MAX_PIPES];
+	काष्ठा drm_dp_mst_topology_mgr mst_mgr;
 
-	u32 (*get_aux_clock_divider)(struct intel_dp *dp, int index);
+	u32 (*get_aux_घड़ी_भागider)(काष्ठा पूर्णांकel_dp *dp, पूर्णांक index);
 	/*
-	 * This function returns the value we have to program the AUX_CTL
-	 * register with to kick off an AUX transaction.
+	 * This function वापसs the value we have to program the AUX_CTL
+	 * रेजिस्टर with to kick off an AUX transaction.
 	 */
-	u32 (*get_aux_send_ctl)(struct intel_dp *dp, int send_bytes,
-				u32 aux_clock_divider);
+	u32 (*get_aux_send_ctl)(काष्ठा पूर्णांकel_dp *dp, पूर्णांक send_bytes,
+				u32 aux_घड़ी_भागider);
 
-	i915_reg_t (*aux_ch_ctl_reg)(struct intel_dp *dp);
-	i915_reg_t (*aux_ch_data_reg)(struct intel_dp *dp, int index);
+	i915_reg_t (*aux_ch_ctl_reg)(काष्ठा पूर्णांकel_dp *dp);
+	i915_reg_t (*aux_ch_data_reg)(काष्ठा पूर्णांकel_dp *dp, पूर्णांक index);
 
-	/* This is called before a link training is starterd */
-	void (*prepare_link_retrain)(struct intel_dp *intel_dp,
-				     const struct intel_crtc_state *crtc_state);
-	void (*set_link_train)(struct intel_dp *intel_dp,
-			       const struct intel_crtc_state *crtc_state,
+	/* This is called beक्रमe a link training is starterd */
+	व्योम (*prepare_link_retrain)(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp,
+				     स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+	व्योम (*set_link_train)(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp,
+			       स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
 			       u8 dp_train_pat);
-	void (*set_idle_link_train)(struct intel_dp *intel_dp,
-				    const struct intel_crtc_state *crtc_state);
-	void (*set_signal_levels)(struct intel_dp *intel_dp,
-				  const struct intel_crtc_state *crtc_state);
+	व्योम (*set_idle_link_train)(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp,
+				    स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+	व्योम (*set_संकेत_levels)(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp,
+				  स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
 
-	u8 (*preemph_max)(struct intel_dp *intel_dp);
-	u8 (*voltage_max)(struct intel_dp *intel_dp,
-			  const struct intel_crtc_state *crtc_state);
+	u8 (*preemph_max)(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
+	u8 (*voltage_max)(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp,
+			  स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
 
 	/* Displayport compliance testing */
-	struct intel_dp_compliance compliance;
+	काष्ठा पूर्णांकel_dp_compliance compliance;
 
 	/* Downstream facing port caps */
-	struct {
-		int min_tmds_clock, max_tmds_clock;
-		int max_dotclock;
-		int pcon_max_frl_bw;
+	काष्ठा अणु
+		पूर्णांक min_पंचांगds_घड़ी, max_पंचांगds_घड़ी;
+		पूर्णांक max_करोtघड़ी;
+		पूर्णांक pcon_max_frl_bw;
 		u8 max_bpc;
 		bool ycbcr_444_to_420;
 		bool rgb_to_ycbcr;
-	} dfp;
+	पूर्ण dfp;
 
-	/* To control wakeup latency, e.g. for irq-driven dp aux transfers. */
-	struct pm_qos_request pm_qos;
+	/* To control wakeup latency, e.g. क्रम irq-driven dp aux transfers. */
+	काष्ठा pm_qos_request pm_qos;
 
 	/* Display stream compression testing */
-	bool force_dsc_en;
+	bool क्रमce_dsc_en;
 
 	bool hobl_failed;
 	bool hobl_active;
 
-	struct intel_dp_pcon_frl frl;
+	काष्ठा पूर्णांकel_dp_pcon_frl frl;
 
-	struct intel_psr psr;
-};
+	काष्ठा पूर्णांकel_psr psr;
+पूर्ण;
 
-enum lspcon_vendor {
+क्रमागत lspcon_venकरोr अणु
 	LSPCON_VENDOR_MCA,
 	LSPCON_VENDOR_PARADE
-};
+पूर्ण;
 
-struct intel_lspcon {
+काष्ठा पूर्णांकel_lspcon अणु
 	bool active;
 	bool hdr_supported;
-	enum drm_lspcon_mode mode;
-	enum lspcon_vendor vendor;
-};
+	क्रमागत drm_lspcon_mode mode;
+	क्रमागत lspcon_venकरोr venकरोr;
+पूर्ण;
 
-struct intel_digital_port {
-	struct intel_encoder base;
+काष्ठा पूर्णांकel_digital_port अणु
+	काष्ठा पूर्णांकel_encoder base;
 	u32 saved_port_bits;
-	struct intel_dp dp;
-	struct intel_hdmi hdmi;
-	struct intel_lspcon lspcon;
-	enum irqreturn (*hpd_pulse)(struct intel_digital_port *, bool);
+	काष्ठा पूर्णांकel_dp dp;
+	काष्ठा पूर्णांकel_hdmi hdmi;
+	काष्ठा पूर्णांकel_lspcon lspcon;
+	क्रमागत irqवापस (*hpd_pulse)(काष्ठा पूर्णांकel_digital_port *, bool);
 	bool release_cl2_override;
 	u8 max_lanes;
-	/* Used for DP and ICL+ TypeC/DP and TypeC/HDMI ports. */
-	enum aux_ch aux_ch;
-	enum intel_display_power_domain ddi_io_power_domain;
-	intel_wakeref_t ddi_io_wakeref;
-	intel_wakeref_t aux_wakeref;
-	struct mutex tc_lock;	/* protects the TypeC port mode */
-	intel_wakeref_t tc_lock_wakeref;
-	int tc_link_refcount;
+	/* Used क्रम DP and ICL+ TypeC/DP and TypeC/HDMI ports. */
+	क्रमागत aux_ch aux_ch;
+	क्रमागत पूर्णांकel_display_घातer_करोमुख्य ddi_io_घातer_करोमुख्य;
+	पूर्णांकel_wakeref_t ddi_io_wakeref;
+	पूर्णांकel_wakeref_t aux_wakeref;
+	काष्ठा mutex tc_lock;	/* protects the TypeC port mode */
+	पूर्णांकel_wakeref_t tc_lock_wakeref;
+	पूर्णांक tc_link_refcount;
 	bool tc_legacy_port:1;
-	char tc_port_name[8];
-	enum tc_port_mode tc_mode;
-	enum phy_fia tc_phy_fia;
+	अक्षर tc_port_name[8];
+	क्रमागत tc_port_mode tc_mode;
+	क्रमागत phy_fia tc_phy_fia;
 	u8 tc_phy_fia_idx;
 
 	/* protects num_hdcp_streams reference count, hdcp_port_data and hdcp_auth_status */
-	struct mutex hdcp_mutex;
-	/* the number of pipes using HDCP signalling out of this port */
-	unsigned int num_hdcp_streams;
+	काष्ठा mutex hdcp_mutex;
+	/* the number of pipes using HDCP संकेतling out of this port */
+	अचिन्हित पूर्णांक num_hdcp_streams;
 	/* port HDCP auth status */
 	bool hdcp_auth_status;
 	/* HDCP port data need to pass to security f/w */
-	struct hdcp_port_data hdcp_port_data;
+	काष्ठा hdcp_port_data hdcp_port_data;
 
-	void (*write_infoframe)(struct intel_encoder *encoder,
-				const struct intel_crtc_state *crtc_state,
-				unsigned int type,
-				const void *frame, ssize_t len);
-	void (*read_infoframe)(struct intel_encoder *encoder,
-			       const struct intel_crtc_state *crtc_state,
-			       unsigned int type,
-			       void *frame, ssize_t len);
-	void (*set_infoframes)(struct intel_encoder *encoder,
+	व्योम (*ग_लिखो_infoframe)(काष्ठा पूर्णांकel_encoder *encoder,
+				स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+				अचिन्हित पूर्णांक type,
+				स्थिर व्योम *frame, sमाप_प्रकार len);
+	व्योम (*पढ़ो_infoframe)(काष्ठा पूर्णांकel_encoder *encoder,
+			       स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			       अचिन्हित पूर्णांक type,
+			       व्योम *frame, sमाप_प्रकार len);
+	व्योम (*set_infoframes)(काष्ठा पूर्णांकel_encoder *encoder,
 			       bool enable,
-			       const struct intel_crtc_state *crtc_state,
-			       const struct drm_connector_state *conn_state);
-	u32 (*infoframes_enabled)(struct intel_encoder *encoder,
-				  const struct intel_crtc_state *pipe_config);
-	bool (*connected)(struct intel_encoder *encoder);
-};
+			       स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			       स्थिर काष्ठा drm_connector_state *conn_state);
+	u32 (*infoframes_enabled)(काष्ठा पूर्णांकel_encoder *encoder,
+				  स्थिर काष्ठा पूर्णांकel_crtc_state *pipe_config);
+	bool (*connected)(काष्ठा पूर्णांकel_encoder *encoder);
+पूर्ण;
 
-struct intel_dp_mst_encoder {
-	struct intel_encoder base;
-	enum pipe pipe;
-	struct intel_digital_port *primary;
-	struct intel_connector *connector;
-};
+काष्ठा पूर्णांकel_dp_mst_encoder अणु
+	काष्ठा पूर्णांकel_encoder base;
+	क्रमागत pipe pipe;
+	काष्ठा पूर्णांकel_digital_port *primary;
+	काष्ठा पूर्णांकel_connector *connector;
+पूर्ण;
 
-static inline enum dpio_channel
-vlv_dig_port_to_channel(struct intel_digital_port *dig_port)
-{
-	switch (dig_port->base.port) {
-	case PORT_B:
-	case PORT_D:
-		return DPIO_CH0;
-	case PORT_C:
-		return DPIO_CH1;
-	default:
+अटल अंतरभूत क्रमागत dpio_channel
+vlv_dig_port_to_channel(काष्ठा पूर्णांकel_digital_port *dig_port)
+अणु
+	चयन (dig_port->base.port) अणु
+	हाल PORT_B:
+	हाल PORT_D:
+		वापस DPIO_CH0;
+	हाल PORT_C:
+		वापस DPIO_CH1;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline enum dpio_phy
-vlv_dig_port_to_phy(struct intel_digital_port *dig_port)
-{
-	switch (dig_port->base.port) {
-	case PORT_B:
-	case PORT_C:
-		return DPIO_PHY0;
-	case PORT_D:
-		return DPIO_PHY1;
-	default:
+अटल अंतरभूत क्रमागत dpio_phy
+vlv_dig_port_to_phy(काष्ठा पूर्णांकel_digital_port *dig_port)
+अणु
+	चयन (dig_port->base.port) अणु
+	हाल PORT_B:
+	हाल PORT_C:
+		वापस DPIO_PHY0;
+	हाल PORT_D:
+		वापस DPIO_PHY1;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline enum dpio_channel
-vlv_pipe_to_channel(enum pipe pipe)
-{
-	switch (pipe) {
-	case PIPE_A:
-	case PIPE_C:
-		return DPIO_CH0;
-	case PIPE_B:
-		return DPIO_CH1;
-	default:
+अटल अंतरभूत क्रमागत dpio_channel
+vlv_pipe_to_channel(क्रमागत pipe pipe)
+अणु
+	चयन (pipe) अणु
+	हाल PIPE_A:
+	हाल PIPE_C:
+		वापस DPIO_CH0;
+	हाल PIPE_B:
+		वापस DPIO_CH1;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline struct intel_crtc *
-intel_get_first_crtc(struct drm_i915_private *dev_priv)
-{
-	return to_intel_crtc(drm_crtc_from_index(&dev_priv->drm, 0));
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_crtc *
+पूर्णांकel_get_first_crtc(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	वापस to_पूर्णांकel_crtc(drm_crtc_from_index(&dev_priv->drm, 0));
+पूर्ण
 
-static inline struct intel_crtc *
-intel_get_crtc_for_pipe(struct drm_i915_private *dev_priv, enum pipe pipe)
-{
-	/* pipe_to_crtc_mapping may have hole on any of 3 display pipe system */
+अटल अंतरभूत काष्ठा पूर्णांकel_crtc *
+पूर्णांकel_get_crtc_क्रम_pipe(काष्ठा drm_i915_निजी *dev_priv, क्रमागत pipe pipe)
+अणु
+	/* pipe_to_crtc_mapping may have hole on any of 3 display pipe प्रणाली */
 	drm_WARN_ON(&dev_priv->drm,
 		    !(INTEL_INFO(dev_priv)->pipe_mask & BIT(pipe)));
-	return dev_priv->pipe_to_crtc_mapping[pipe];
-}
+	वापस dev_priv->pipe_to_crtc_mapping[pipe];
+पूर्ण
 
-static inline struct intel_crtc *
-intel_get_crtc_for_plane(struct drm_i915_private *dev_priv, enum i9xx_plane_id plane)
-{
-	return dev_priv->plane_to_crtc_mapping[plane];
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_crtc *
+पूर्णांकel_get_crtc_क्रम_plane(काष्ठा drm_i915_निजी *dev_priv, क्रमागत i9xx_plane_id plane)
+अणु
+	वापस dev_priv->plane_to_crtc_mapping[plane];
+पूर्ण
 
-struct intel_load_detect_pipe {
-	struct drm_atomic_state *restore_state;
-};
+काष्ठा पूर्णांकel_load_detect_pipe अणु
+	काष्ठा drm_atomic_state *restore_state;
+पूर्ण;
 
-static inline struct intel_encoder *
-intel_attached_encoder(struct intel_connector *connector)
-{
-	return connector->encoder;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_encoder *
+पूर्णांकel_attached_encoder(काष्ठा पूर्णांकel_connector *connector)
+अणु
+	वापस connector->encoder;
+पूर्ण
 
-static inline bool intel_encoder_is_dig_port(struct intel_encoder *encoder)
-{
-	switch (encoder->type) {
-	case INTEL_OUTPUT_DDI:
-	case INTEL_OUTPUT_DP:
-	case INTEL_OUTPUT_EDP:
-	case INTEL_OUTPUT_HDMI:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल अंतरभूत bool पूर्णांकel_encoder_is_dig_port(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	चयन (encoder->type) अणु
+	हाल INTEL_OUTPUT_DDI:
+	हाल INTEL_OUTPUT_DP:
+	हाल INTEL_OUTPUT_EDP:
+	हाल INTEL_OUTPUT_HDMI:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static inline bool intel_encoder_is_mst(struct intel_encoder *encoder)
-{
-	return encoder->type == INTEL_OUTPUT_DP_MST;
-}
+अटल अंतरभूत bool पूर्णांकel_encoder_is_mst(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	वापस encoder->type == INTEL_OUTPUT_DP_MST;
+पूर्ण
 
-static inline struct intel_dp_mst_encoder *
-enc_to_mst(struct intel_encoder *encoder)
-{
-	return container_of(&encoder->base, struct intel_dp_mst_encoder,
+अटल अंतरभूत काष्ठा पूर्णांकel_dp_mst_encoder *
+enc_to_mst(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	वापस container_of(&encoder->base, काष्ठा पूर्णांकel_dp_mst_encoder,
 			    base.base);
-}
+पूर्ण
 
-static inline struct intel_digital_port *
-enc_to_dig_port(struct intel_encoder *encoder)
-{
-	struct intel_encoder *intel_encoder = encoder;
+अटल अंतरभूत काष्ठा पूर्णांकel_digital_port *
+enc_to_dig_port(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	काष्ठा पूर्णांकel_encoder *पूर्णांकel_encoder = encoder;
 
-	if (intel_encoder_is_dig_port(intel_encoder))
-		return container_of(&encoder->base, struct intel_digital_port,
+	अगर (पूर्णांकel_encoder_is_dig_port(पूर्णांकel_encoder))
+		वापस container_of(&encoder->base, काष्ठा पूर्णांकel_digital_port,
 				    base.base);
-	else if (intel_encoder_is_mst(intel_encoder))
-		return enc_to_mst(encoder)->primary;
-	else
-		return NULL;
-}
+	अन्यथा अगर (पूर्णांकel_encoder_is_mst(पूर्णांकel_encoder))
+		वापस enc_to_mst(encoder)->primary;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-static inline struct intel_digital_port *
-intel_attached_dig_port(struct intel_connector *connector)
-{
-	return enc_to_dig_port(intel_attached_encoder(connector));
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_digital_port *
+पूर्णांकel_attached_dig_port(काष्ठा पूर्णांकel_connector *connector)
+अणु
+	वापस enc_to_dig_port(पूर्णांकel_attached_encoder(connector));
+पूर्ण
 
-static inline struct intel_hdmi *
-enc_to_intel_hdmi(struct intel_encoder *encoder)
-{
-	return &enc_to_dig_port(encoder)->hdmi;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_hdmi *
+enc_to_पूर्णांकel_hdmi(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	वापस &enc_to_dig_port(encoder)->hdmi;
+पूर्ण
 
-static inline struct intel_hdmi *
-intel_attached_hdmi(struct intel_connector *connector)
-{
-	return enc_to_intel_hdmi(intel_attached_encoder(connector));
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_hdmi *
+पूर्णांकel_attached_hdmi(काष्ठा पूर्णांकel_connector *connector)
+अणु
+	वापस enc_to_पूर्णांकel_hdmi(पूर्णांकel_attached_encoder(connector));
+पूर्ण
 
-static inline struct intel_dp *enc_to_intel_dp(struct intel_encoder *encoder)
-{
-	return &enc_to_dig_port(encoder)->dp;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_dp *enc_to_पूर्णांकel_dp(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	वापस &enc_to_dig_port(encoder)->dp;
+पूर्ण
 
-static inline struct intel_dp *intel_attached_dp(struct intel_connector *connector)
-{
-	return enc_to_intel_dp(intel_attached_encoder(connector));
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_dp *पूर्णांकel_attached_dp(काष्ठा पूर्णांकel_connector *connector)
+अणु
+	वापस enc_to_पूर्णांकel_dp(पूर्णांकel_attached_encoder(connector));
+पूर्ण
 
-static inline bool intel_encoder_is_dp(struct intel_encoder *encoder)
-{
-	switch (encoder->type) {
-	case INTEL_OUTPUT_DP:
-	case INTEL_OUTPUT_EDP:
-		return true;
-	case INTEL_OUTPUT_DDI:
+अटल अंतरभूत bool पूर्णांकel_encoder_is_dp(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	चयन (encoder->type) अणु
+	हाल INTEL_OUTPUT_DP:
+	हाल INTEL_OUTPUT_EDP:
+		वापस true;
+	हाल INTEL_OUTPUT_DDI:
 		/* Skip pure HDMI/DVI DDI encoders */
-		return i915_mmio_reg_valid(enc_to_intel_dp(encoder)->output_reg);
-	default:
-		return false;
-	}
-}
+		वापस i915_mmio_reg_valid(enc_to_पूर्णांकel_dp(encoder)->output_reg);
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static inline struct intel_lspcon *
-enc_to_intel_lspcon(struct intel_encoder *encoder)
-{
-	return &enc_to_dig_port(encoder)->lspcon;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_lspcon *
+enc_to_पूर्णांकel_lspcon(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	वापस &enc_to_dig_port(encoder)->lspcon;
+पूर्ण
 
-static inline struct intel_digital_port *
-dp_to_dig_port(struct intel_dp *intel_dp)
-{
-	return container_of(intel_dp, struct intel_digital_port, dp);
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_digital_port *
+dp_to_dig_port(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp)
+अणु
+	वापस container_of(पूर्णांकel_dp, काष्ठा पूर्णांकel_digital_port, dp);
+पूर्ण
 
-static inline struct intel_lspcon *
-dp_to_lspcon(struct intel_dp *intel_dp)
-{
-	return &dp_to_dig_port(intel_dp)->lspcon;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_lspcon *
+dp_to_lspcon(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp)
+अणु
+	वापस &dp_to_dig_port(पूर्णांकel_dp)->lspcon;
+पूर्ण
 
-static inline struct drm_i915_private *
-dp_to_i915(struct intel_dp *intel_dp)
-{
-	return to_i915(dp_to_dig_port(intel_dp)->base.base.dev);
-}
+अटल अंतरभूत काष्ठा drm_i915_निजी *
+dp_to_i915(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp)
+अणु
+	वापस to_i915(dp_to_dig_port(पूर्णांकel_dp)->base.base.dev);
+पूर्ण
 
-#define CAN_PSR(intel_dp) ((intel_dp)->psr.sink_support && \
-			   (intel_dp)->psr.source_support)
+#घोषणा CAN_PSR(पूर्णांकel_dp) ((पूर्णांकel_dp)->psr.sink_support && \
+			   (पूर्णांकel_dp)->psr.source_support)
 
-static inline bool intel_encoder_can_psr(struct intel_encoder *encoder)
-{
-	if (!intel_encoder_is_dp(encoder))
-		return false;
+अटल अंतरभूत bool पूर्णांकel_encoder_can_psr(काष्ठा पूर्णांकel_encoder *encoder)
+अणु
+	अगर (!पूर्णांकel_encoder_is_dp(encoder))
+		वापस false;
 
-	return CAN_PSR(enc_to_intel_dp(encoder));
-}
+	वापस CAN_PSR(enc_to_पूर्णांकel_dp(encoder));
+पूर्ण
 
-static inline struct intel_digital_port *
-hdmi_to_dig_port(struct intel_hdmi *intel_hdmi)
-{
-	return container_of(intel_hdmi, struct intel_digital_port, hdmi);
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_digital_port *
+hdmi_to_dig_port(काष्ठा पूर्णांकel_hdmi *पूर्णांकel_hdmi)
+अणु
+	वापस container_of(पूर्णांकel_hdmi, काष्ठा पूर्णांकel_digital_port, hdmi);
+पूर्ण
 
-static inline struct intel_plane_state *
-intel_atomic_get_plane_state(struct intel_atomic_state *state,
-				 struct intel_plane *plane)
-{
-	struct drm_plane_state *ret =
+अटल अंतरभूत काष्ठा पूर्णांकel_plane_state *
+पूर्णांकel_atomic_get_plane_state(काष्ठा पूर्णांकel_atomic_state *state,
+				 काष्ठा पूर्णांकel_plane *plane)
+अणु
+	काष्ठा drm_plane_state *ret =
 		drm_atomic_get_plane_state(&state->base, &plane->base);
 
-	if (IS_ERR(ret))
-		return ERR_CAST(ret);
+	अगर (IS_ERR(ret))
+		वापस ERR_CAST(ret);
 
-	return to_intel_plane_state(ret);
-}
+	वापस to_पूर्णांकel_plane_state(ret);
+पूर्ण
 
-static inline struct intel_plane_state *
-intel_atomic_get_old_plane_state(struct intel_atomic_state *state,
-				 struct intel_plane *plane)
-{
-	return to_intel_plane_state(drm_atomic_get_old_plane_state(&state->base,
+अटल अंतरभूत काष्ठा पूर्णांकel_plane_state *
+पूर्णांकel_atomic_get_old_plane_state(काष्ठा पूर्णांकel_atomic_state *state,
+				 काष्ठा पूर्णांकel_plane *plane)
+अणु
+	वापस to_पूर्णांकel_plane_state(drm_atomic_get_old_plane_state(&state->base,
 								   &plane->base));
-}
+पूर्ण
 
-static inline struct intel_plane_state *
-intel_atomic_get_new_plane_state(struct intel_atomic_state *state,
-				 struct intel_plane *plane)
-{
-	return to_intel_plane_state(drm_atomic_get_new_plane_state(&state->base,
+अटल अंतरभूत काष्ठा पूर्णांकel_plane_state *
+पूर्णांकel_atomic_get_new_plane_state(काष्ठा पूर्णांकel_atomic_state *state,
+				 काष्ठा पूर्णांकel_plane *plane)
+अणु
+	वापस to_पूर्णांकel_plane_state(drm_atomic_get_new_plane_state(&state->base,
 								   &plane->base));
-}
+पूर्ण
 
-static inline struct intel_crtc_state *
-intel_atomic_get_old_crtc_state(struct intel_atomic_state *state,
-				struct intel_crtc *crtc)
-{
-	return to_intel_crtc_state(drm_atomic_get_old_crtc_state(&state->base,
+अटल अंतरभूत काष्ठा पूर्णांकel_crtc_state *
+पूर्णांकel_atomic_get_old_crtc_state(काष्ठा पूर्णांकel_atomic_state *state,
+				काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	वापस to_पूर्णांकel_crtc_state(drm_atomic_get_old_crtc_state(&state->base,
 								 &crtc->base));
-}
+पूर्ण
 
-static inline struct intel_crtc_state *
-intel_atomic_get_new_crtc_state(struct intel_atomic_state *state,
-				struct intel_crtc *crtc)
-{
-	return to_intel_crtc_state(drm_atomic_get_new_crtc_state(&state->base,
+अटल अंतरभूत काष्ठा पूर्णांकel_crtc_state *
+पूर्णांकel_atomic_get_new_crtc_state(काष्ठा पूर्णांकel_atomic_state *state,
+				काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	वापस to_पूर्णांकel_crtc_state(drm_atomic_get_new_crtc_state(&state->base,
 								 &crtc->base));
-}
+पूर्ण
 
-static inline struct intel_digital_connector_state *
-intel_atomic_get_new_connector_state(struct intel_atomic_state *state,
-				     struct intel_connector *connector)
-{
-	return to_intel_digital_connector_state(
+अटल अंतरभूत काष्ठा पूर्णांकel_digital_connector_state *
+पूर्णांकel_atomic_get_new_connector_state(काष्ठा पूर्णांकel_atomic_state *state,
+				     काष्ठा पूर्णांकel_connector *connector)
+अणु
+	वापस to_पूर्णांकel_digital_connector_state(
 			drm_atomic_get_new_connector_state(&state->base,
 			&connector->base));
-}
+पूर्ण
 
-static inline struct intel_digital_connector_state *
-intel_atomic_get_old_connector_state(struct intel_atomic_state *state,
-				     struct intel_connector *connector)
-{
-	return to_intel_digital_connector_state(
+अटल अंतरभूत काष्ठा पूर्णांकel_digital_connector_state *
+पूर्णांकel_atomic_get_old_connector_state(काष्ठा पूर्णांकel_atomic_state *state,
+				     काष्ठा पूर्णांकel_connector *connector)
+अणु
+	वापस to_पूर्णांकel_digital_connector_state(
 			drm_atomic_get_old_connector_state(&state->base,
 			&connector->base));
-}
+पूर्ण
 
-/* intel_display.c */
-static inline bool
-intel_crtc_has_type(const struct intel_crtc_state *crtc_state,
-		    enum intel_output_type type)
-{
-	return crtc_state->output_types & (1 << type);
-}
-static inline bool
-intel_crtc_has_dp_encoder(const struct intel_crtc_state *crtc_state)
-{
-	return crtc_state->output_types &
+/* पूर्णांकel_display.c */
+अटल अंतरभूत bool
+पूर्णांकel_crtc_has_type(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+		    क्रमागत पूर्णांकel_output_type type)
+अणु
+	वापस crtc_state->output_types & (1 << type);
+पूर्ण
+अटल अंतरभूत bool
+पूर्णांकel_crtc_has_dp_encoder(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
+अणु
+	वापस crtc_state->output_types &
 		((1 << INTEL_OUTPUT_DP) |
 		 (1 << INTEL_OUTPUT_DP_MST) |
 		 (1 << INTEL_OUTPUT_EDP));
-}
+पूर्ण
 
-static inline bool
-intel_crtc_needs_modeset(const struct intel_crtc_state *crtc_state)
-{
-	return drm_atomic_crtc_needs_modeset(&crtc_state->uapi);
-}
+अटल अंतरभूत bool
+पूर्णांकel_crtc_needs_modeset(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
+अणु
+	वापस drm_atomic_crtc_needs_modeset(&crtc_state->uapi);
+पूर्ण
 
-static inline void
-intel_wait_for_vblank(struct drm_i915_private *dev_priv, enum pipe pipe)
-{
-	struct intel_crtc *crtc = intel_get_crtc_for_pipe(dev_priv, pipe);
+अटल अंतरभूत व्योम
+पूर्णांकel_रुको_क्रम_vblank(काष्ठा drm_i915_निजी *dev_priv, क्रमागत pipe pipe)
+अणु
+	काष्ठा पूर्णांकel_crtc *crtc = पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, pipe);
 
-	drm_crtc_wait_one_vblank(&crtc->base);
-}
+	drm_crtc_रुको_one_vblank(&crtc->base);
+पूर्ण
 
-static inline void
-intel_wait_for_vblank_if_active(struct drm_i915_private *dev_priv, enum pipe pipe)
-{
-	const struct intel_crtc *crtc = intel_get_crtc_for_pipe(dev_priv, pipe);
+अटल अंतरभूत व्योम
+पूर्णांकel_रुको_क्रम_vblank_अगर_active(काष्ठा drm_i915_निजी *dev_priv, क्रमागत pipe pipe)
+अणु
+	स्थिर काष्ठा पूर्णांकel_crtc *crtc = पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, pipe);
 
-	if (crtc->active)
-		intel_wait_for_vblank(dev_priv, pipe);
-}
+	अगर (crtc->active)
+		पूर्णांकel_रुको_क्रम_vblank(dev_priv, pipe);
+पूर्ण
 
-static inline u32 intel_plane_ggtt_offset(const struct intel_plane_state *state)
-{
-	return i915_ggtt_offset(state->vma);
-}
+अटल अंतरभूत u32 पूर्णांकel_plane_ggtt_offset(स्थिर काष्ठा पूर्णांकel_plane_state *state)
+अणु
+	वापस i915_ggtt_offset(state->vma);
+पूर्ण
 
-static inline struct intel_frontbuffer *
-to_intel_frontbuffer(struct drm_framebuffer *fb)
-{
-	return fb ? to_intel_framebuffer(fb)->frontbuffer : NULL;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_frontbuffer *
+to_पूर्णांकel_frontbuffer(काष्ठा drm_framebuffer *fb)
+अणु
+	वापस fb ? to_पूर्णांकel_framebuffer(fb)->frontbuffer : शून्य;
+पूर्ण
 
-static inline bool intel_panel_use_ssc(struct drm_i915_private *dev_priv)
-{
-	if (dev_priv->params.panel_use_ssc >= 0)
-		return dev_priv->params.panel_use_ssc != 0;
-	return dev_priv->vbt.lvds_use_ssc
+अटल अंतरभूत bool पूर्णांकel_panel_use_ssc(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	अगर (dev_priv->params.panel_use_ssc >= 0)
+		वापस dev_priv->params.panel_use_ssc != 0;
+	वापस dev_priv->vbt.lvds_use_ssc
 		&& !(dev_priv->quirks & QUIRK_LVDS_SSC_DISABLE);
-}
+पूर्ण
 
-static inline u32 i9xx_dpll_compute_fp(struct dpll *dpll)
-{
-	return dpll->n << 16 | dpll->m1 << 8 | dpll->m2;
-}
+अटल अंतरभूत u32 i9xx_dpll_compute_fp(काष्ठा dpll *dpll)
+अणु
+	वापस dpll->n << 16 | dpll->m1 << 8 | dpll->m2;
+पूर्ण
 
-static inline u32 intel_fdi_link_freq(struct drm_i915_private *dev_priv,
-				      const struct intel_crtc_state *pipe_config)
-{
-	if (HAS_DDI(dev_priv))
-		return pipe_config->port_clock; /* SPLL */
-	else
-		return dev_priv->fdi_pll_freq;
-}
+अटल अंतरभूत u32 पूर्णांकel_fdi_link_freq(काष्ठा drm_i915_निजी *dev_priv,
+				      स्थिर काष्ठा पूर्णांकel_crtc_state *pipe_config)
+अणु
+	अगर (HAS_DDI(dev_priv))
+		वापस pipe_config->port_घड़ी; /* SPLL */
+	अन्यथा
+		वापस dev_priv->fdi_pll_freq;
+पूर्ण
 
-static inline bool is_ccs_modifier(u64 modifier)
-{
-	return modifier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS ||
-	       modifier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC ||
-	       modifier == I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS ||
-	       modifier == I915_FORMAT_MOD_Y_TILED_CCS ||
-	       modifier == I915_FORMAT_MOD_Yf_TILED_CCS;
-}
+अटल अंतरभूत bool is_ccs_modअगरier(u64 modअगरier)
+अणु
+	वापस modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS ||
+	       modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC ||
+	       modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS ||
+	       modअगरier == I915_FORMAT_MOD_Y_TILED_CCS ||
+	       modअगरier == I915_FORMAT_MOD_Yf_TILED_CCS;
+पूर्ण
 
-static inline bool is_gen12_ccs_modifier(u64 modifier)
-{
-	return modifier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS ||
-	       modifier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC ||
-	       modifier == I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS;
-}
+अटल अंतरभूत bool is_gen12_ccs_modअगरier(u64 modअगरier)
+अणु
+	वापस modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS ||
+	       modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC ||
+	       modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS;
+पूर्ण
 
-#endif /*  __INTEL_DISPLAY_TYPES_H__ */
+#पूर्ण_अगर /*  __INTEL_DISPLAY_TYPES_H__ */

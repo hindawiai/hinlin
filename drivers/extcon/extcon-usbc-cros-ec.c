@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // ChromeOS Embedded Controller extcon
 //
 // Copyright (C) 2017 Google, Inc.
 // Author: Benson Leung <bleung@chromium.org>
 
-#include <linux/extcon-provider.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/notifier.h>
-#include <linux/of.h>
-#include <linux/platform_data/cros_ec_commands.h>
-#include <linux/platform_data/cros_ec_proto.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
+#समावेश <linux/extcon-provider.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_data/cros_ec_commands.h>
+#समावेश <linux/platक्रमm_data/cros_ec_proto.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
 
-struct cros_ec_extcon_info {
-	struct device *dev;
-	struct extcon_dev *edev;
+काष्ठा cros_ec_extcon_info अणु
+	काष्ठा device *dev;
+	काष्ठा extcon_dev *edev;
 
-	int port_id;
+	पूर्णांक port_id;
 
-	struct cros_ec_device *ec;
+	काष्ठा cros_ec_device *ec;
 
-	struct notifier_block notifier;
+	काष्ठा notअगरier_block notअगरier;
 
-	unsigned int dr; /* data role */
-	bool pr; /* power role (true if VBUS enabled) */
+	अचिन्हित पूर्णांक dr; /* data role */
+	bool pr; /* घातer role (true अगर VBUS enabled) */
 	bool dp; /* DisplayPort enabled */
 	bool mux; /* SuperSpeed (usb3) enabled */
-	unsigned int power_type;
-};
+	अचिन्हित पूर्णांक घातer_type;
+पूर्ण;
 
-static const unsigned int usb_type_c_cable[] = {
+अटल स्थिर अचिन्हित पूर्णांक usb_type_c_cable[] = अणु
 	EXTCON_USB,
 	EXTCON_USB_HOST,
 	EXTCON_DISP_DP,
 	EXTCON_NONE,
-};
+पूर्ण;
 
-enum usb_data_roles {
+क्रमागत usb_data_roles अणु
 	DR_NONE,
 	DR_HOST,
 	DR_DEVICE,
-};
+पूर्ण;
 
 /**
  * cros_ec_pd_command() - Send a command to the EC.
- * @info: pointer to struct cros_ec_extcon_info
+ * @info: poपूर्णांकer to काष्ठा cros_ec_extcon_info
  * @command: EC command
  * @version: EC command version
  * @outdata: EC command output data
@@ -57,226 +58,226 @@ enum usb_data_roles {
  *
  * Return: 0 on success, <0 on failure.
  */
-static int cros_ec_pd_command(struct cros_ec_extcon_info *info,
-			      unsigned int command,
-			      unsigned int version,
-			      void *outdata,
-			      unsigned int outsize,
-			      void *indata,
-			      unsigned int insize)
-{
-	struct cros_ec_command *msg;
-	int ret;
+अटल पूर्णांक cros_ec_pd_command(काष्ठा cros_ec_extcon_info *info,
+			      अचिन्हित पूर्णांक command,
+			      अचिन्हित पूर्णांक version,
+			      व्योम *outdata,
+			      अचिन्हित पूर्णांक outsize,
+			      व्योम *indata,
+			      अचिन्हित पूर्णांक insize)
+अणु
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक ret;
 
-	msg = kzalloc(sizeof(*msg) + max(outsize, insize), GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	msg = kzalloc(माप(*msg) + max(outsize, insize), GFP_KERNEL);
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	msg->version = version;
 	msg->command = command;
 	msg->outsize = outsize;
 	msg->insize = insize;
 
-	if (outsize)
-		memcpy(msg->data, outdata, outsize);
+	अगर (outsize)
+		स_नकल(msg->data, outdata, outsize);
 
 	ret = cros_ec_cmd_xfer_status(info->ec, msg);
-	if (ret >= 0 && insize)
-		memcpy(indata, msg->data, insize);
+	अगर (ret >= 0 && insize)
+		स_नकल(indata, msg->data, insize);
 
-	kfree(msg);
-	return ret;
-}
+	kमुक्त(msg);
+	वापस ret;
+पूर्ण
 
 /**
- * cros_ec_usb_get_power_type() - Get power type info about PD device attached
+ * cros_ec_usb_get_घातer_type() - Get घातer type info about PD device attached
  * to given port.
- * @info: pointer to struct cros_ec_extcon_info
+ * @info: poपूर्णांकer to काष्ठा cros_ec_extcon_info
  *
- * Return: power type on success, <0 on failure.
+ * Return: घातer type on success, <0 on failure.
  */
-static int cros_ec_usb_get_power_type(struct cros_ec_extcon_info *info)
-{
-	struct ec_params_usb_pd_power_info req;
-	struct ec_response_usb_pd_power_info resp;
-	int ret;
+अटल पूर्णांक cros_ec_usb_get_घातer_type(काष्ठा cros_ec_extcon_info *info)
+अणु
+	काष्ठा ec_params_usb_pd_घातer_info req;
+	काष्ठा ec_response_usb_pd_घातer_info resp;
+	पूर्णांक ret;
 
 	req.port = info->port_id;
 	ret = cros_ec_pd_command(info, EC_CMD_USB_PD_POWER_INFO, 0,
-				 &req, sizeof(req), &resp, sizeof(resp));
-	if (ret < 0)
-		return ret;
+				 &req, माप(req), &resp, माप(resp));
+	अगर (ret < 0)
+		वापस ret;
 
-	return resp.type;
-}
+	वापस resp.type;
+पूर्ण
 
 /**
- * cros_ec_usb_get_pd_mux_state() - Get PD mux state for given port.
- * @info: pointer to struct cros_ec_extcon_info
+ * cros_ec_usb_get_pd_mux_state() - Get PD mux state क्रम given port.
+ * @info: poपूर्णांकer to काष्ठा cros_ec_extcon_info
  *
  * Return: PD mux state on success, <0 on failure.
  */
-static int cros_ec_usb_get_pd_mux_state(struct cros_ec_extcon_info *info)
-{
-	struct ec_params_usb_pd_mux_info req;
-	struct ec_response_usb_pd_mux_info resp;
-	int ret;
+अटल पूर्णांक cros_ec_usb_get_pd_mux_state(काष्ठा cros_ec_extcon_info *info)
+अणु
+	काष्ठा ec_params_usb_pd_mux_info req;
+	काष्ठा ec_response_usb_pd_mux_info resp;
+	पूर्णांक ret;
 
 	req.port = info->port_id;
 	ret = cros_ec_pd_command(info, EC_CMD_USB_PD_MUX_INFO, 0,
-				 &req, sizeof(req),
-				 &resp, sizeof(resp));
-	if (ret < 0)
-		return ret;
+				 &req, माप(req),
+				 &resp, माप(resp));
+	अगर (ret < 0)
+		वापस ret;
 
-	return resp.flags;
-}
+	वापस resp.flags;
+पूर्ण
 
 /**
  * cros_ec_usb_get_role() - Get role info about possible PD device attached to a
  * given port.
- * @info: pointer to struct cros_ec_extcon_info
- * @polarity: pointer to cable polarity (return value)
+ * @info: poपूर्णांकer to काष्ठा cros_ec_extcon_info
+ * @polarity: poपूर्णांकer to cable polarity (वापस value)
  *
- * Return: role info on success, -ENOTCONN if no cable is connected, <0 on
+ * Return: role info on success, -ENOTCONN अगर no cable is connected, <0 on
  * failure.
  */
-static int cros_ec_usb_get_role(struct cros_ec_extcon_info *info,
+अटल पूर्णांक cros_ec_usb_get_role(काष्ठा cros_ec_extcon_info *info,
 				bool *polarity)
-{
-	struct ec_params_usb_pd_control pd_control;
-	struct ec_response_usb_pd_control_v1 resp;
-	int ret;
+अणु
+	काष्ठा ec_params_usb_pd_control pd_control;
+	काष्ठा ec_response_usb_pd_control_v1 resp;
+	पूर्णांक ret;
 
 	pd_control.port = info->port_id;
 	pd_control.role = USB_PD_CTRL_ROLE_NO_CHANGE;
 	pd_control.mux = USB_PD_CTRL_MUX_NO_CHANGE;
 	pd_control.swap = USB_PD_CTRL_SWAP_NONE;
 	ret = cros_ec_pd_command(info, EC_CMD_USB_PD_CONTROL, 1,
-				 &pd_control, sizeof(pd_control),
-				 &resp, sizeof(resp));
-	if (ret < 0)
-		return ret;
+				 &pd_control, माप(pd_control),
+				 &resp, माप(resp));
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!(resp.enabled & PD_CTRL_RESP_ENABLED_CONNECTED))
-		return -ENOTCONN;
+	अगर (!(resp.enabled & PD_CTRL_RESP_ENABLED_CONNECTED))
+		वापस -ENOTCONN;
 
 	*polarity = resp.polarity;
 
-	return resp.role;
-}
+	वापस resp.role;
+पूर्ण
 
 /**
- * cros_ec_pd_get_num_ports() - Get number of EC charge ports.
- * @info: pointer to struct cros_ec_extcon_info
+ * cros_ec_pd_get_num_ports() - Get number of EC अक्षरge ports.
+ * @info: poपूर्णांकer to काष्ठा cros_ec_extcon_info
  *
  * Return: number of ports on success, <0 on failure.
  */
-static int cros_ec_pd_get_num_ports(struct cros_ec_extcon_info *info)
-{
-	struct ec_response_usb_pd_ports resp;
-	int ret;
+अटल पूर्णांक cros_ec_pd_get_num_ports(काष्ठा cros_ec_extcon_info *info)
+अणु
+	काष्ठा ec_response_usb_pd_ports resp;
+	पूर्णांक ret;
 
 	ret = cros_ec_pd_command(info, EC_CMD_USB_PD_PORTS,
-				 0, NULL, 0, &resp, sizeof(resp));
-	if (ret < 0)
-		return ret;
+				 0, शून्य, 0, &resp, माप(resp));
+	अगर (ret < 0)
+		वापस ret;
 
-	return resp.num_ports;
-}
+	वापस resp.num_ports;
+पूर्ण
 
-static const char *cros_ec_usb_role_string(unsigned int role)
-{
-	return role == DR_NONE ? "DISCONNECTED" :
+अटल स्थिर अक्षर *cros_ec_usb_role_string(अचिन्हित पूर्णांक role)
+अणु
+	वापस role == DR_NONE ? "DISCONNECTED" :
 		(role == DR_HOST ? "DFP" : "UFP");
-}
+पूर्ण
 
-static const char *cros_ec_usb_power_type_string(unsigned int type)
-{
-	switch (type) {
-	case USB_CHG_TYPE_NONE:
-		return "USB_CHG_TYPE_NONE";
-	case USB_CHG_TYPE_PD:
-		return "USB_CHG_TYPE_PD";
-	case USB_CHG_TYPE_PROPRIETARY:
-		return "USB_CHG_TYPE_PROPRIETARY";
-	case USB_CHG_TYPE_C:
-		return "USB_CHG_TYPE_C";
-	case USB_CHG_TYPE_BC12_DCP:
-		return "USB_CHG_TYPE_BC12_DCP";
-	case USB_CHG_TYPE_BC12_CDP:
-		return "USB_CHG_TYPE_BC12_CDP";
-	case USB_CHG_TYPE_BC12_SDP:
-		return "USB_CHG_TYPE_BC12_SDP";
-	case USB_CHG_TYPE_OTHER:
-		return "USB_CHG_TYPE_OTHER";
-	case USB_CHG_TYPE_VBUS:
-		return "USB_CHG_TYPE_VBUS";
-	case USB_CHG_TYPE_UNKNOWN:
-		return "USB_CHG_TYPE_UNKNOWN";
-	default:
-		return "USB_CHG_TYPE_UNKNOWN";
-	}
-}
+अटल स्थिर अक्षर *cros_ec_usb_घातer_type_string(अचिन्हित पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल USB_CHG_TYPE_NONE:
+		वापस "USB_CHG_TYPE_NONE";
+	हाल USB_CHG_TYPE_PD:
+		वापस "USB_CHG_TYPE_PD";
+	हाल USB_CHG_TYPE_PROPRIETARY:
+		वापस "USB_CHG_TYPE_PROPRIETARY";
+	हाल USB_CHG_TYPE_C:
+		वापस "USB_CHG_TYPE_C";
+	हाल USB_CHG_TYPE_BC12_DCP:
+		वापस "USB_CHG_TYPE_BC12_DCP";
+	हाल USB_CHG_TYPE_BC12_CDP:
+		वापस "USB_CHG_TYPE_BC12_CDP";
+	हाल USB_CHG_TYPE_BC12_SDP:
+		वापस "USB_CHG_TYPE_BC12_SDP";
+	हाल USB_CHG_TYPE_OTHER:
+		वापस "USB_CHG_TYPE_OTHER";
+	हाल USB_CHG_TYPE_VBUS:
+		वापस "USB_CHG_TYPE_VBUS";
+	हाल USB_CHG_TYPE_UNKNOWN:
+		वापस "USB_CHG_TYPE_UNKNOWN";
+	शेष:
+		वापस "USB_CHG_TYPE_UNKNOWN";
+	पूर्ण
+पूर्ण
 
-static bool cros_ec_usb_power_type_is_wall_wart(unsigned int type,
-						unsigned int role)
-{
-	switch (type) {
-	/* FIXME : Guppy, Donnettes, and other chargers will be miscategorized
-	 * because they identify with USB_CHG_TYPE_C, but we can't return true
-	 * here from that code because that breaks Suzy-Q and other kinds of
+अटल bool cros_ec_usb_घातer_type_is_wall_wart(अचिन्हित पूर्णांक type,
+						अचिन्हित पूर्णांक role)
+अणु
+	चयन (type) अणु
+	/* FIXME : Guppy, Donnettes, and other अक्षरgers will be miscategorized
+	 * because they identअगरy with USB_CHG_TYPE_C, but we can't वापस true
+	 * here from that code because that अवरोधs Suzy-Q and other kinds of
 	 * USB Type-C cables and peripherals.
 	 */
-	case USB_CHG_TYPE_PROPRIETARY:
-	case USB_CHG_TYPE_BC12_DCP:
-		return true;
-	case USB_CHG_TYPE_PD:
-	case USB_CHG_TYPE_C:
-	case USB_CHG_TYPE_BC12_CDP:
-	case USB_CHG_TYPE_BC12_SDP:
-	case USB_CHG_TYPE_OTHER:
-	case USB_CHG_TYPE_VBUS:
-	case USB_CHG_TYPE_UNKNOWN:
-	case USB_CHG_TYPE_NONE:
-	default:
-		return false;
-	}
-}
+	हाल USB_CHG_TYPE_PROPRIETARY:
+	हाल USB_CHG_TYPE_BC12_DCP:
+		वापस true;
+	हाल USB_CHG_TYPE_PD:
+	हाल USB_CHG_TYPE_C:
+	हाल USB_CHG_TYPE_BC12_CDP:
+	हाल USB_CHG_TYPE_BC12_SDP:
+	हाल USB_CHG_TYPE_OTHER:
+	हाल USB_CHG_TYPE_VBUS:
+	हाल USB_CHG_TYPE_UNKNOWN:
+	हाल USB_CHG_TYPE_NONE:
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int extcon_cros_ec_detect_cable(struct cros_ec_extcon_info *info,
-				       bool force)
-{
-	struct device *dev = info->dev;
-	int role, power_type;
-	unsigned int dr = DR_NONE;
+अटल पूर्णांक extcon_cros_ec_detect_cable(काष्ठा cros_ec_extcon_info *info,
+				       bool क्रमce)
+अणु
+	काष्ठा device *dev = info->dev;
+	पूर्णांक role, घातer_type;
+	अचिन्हित पूर्णांक dr = DR_NONE;
 	bool pr = false;
 	bool polarity = false;
 	bool dp = false;
 	bool mux = false;
 	bool hpd = false;
 
-	power_type = cros_ec_usb_get_power_type(info);
-	if (power_type < 0) {
+	घातer_type = cros_ec_usb_get_घातer_type(info);
+	अगर (घातer_type < 0) अणु
 		dev_err(dev, "failed getting power type err = %d\n",
-			power_type);
-		return power_type;
-	}
+			घातer_type);
+		वापस घातer_type;
+	पूर्ण
 
 	role = cros_ec_usb_get_role(info, &polarity);
-	if (role < 0) {
-		if (role != -ENOTCONN) {
+	अगर (role < 0) अणु
+		अगर (role != -ENOTCONN) अणु
 			dev_err(dev, "failed getting role err = %d\n", role);
-			return role;
-		}
+			वापस role;
+		पूर्ण
 		dev_dbg(dev, "disconnected\n");
-	} else {
-		int pd_mux_state;
+	पूर्ण अन्यथा अणु
+		पूर्णांक pd_mux_state;
 
 		dr = (role & PD_CTRL_RESP_ROLE_DATA) ? DR_HOST : DR_DEVICE;
 		pr = (role & PD_CTRL_RESP_ROLE_POWER);
 		pd_mux_state = cros_ec_usb_get_pd_mux_state(info);
-		if (pd_mux_state < 0)
+		अगर (pd_mux_state < 0)
 			pd_mux_state = USB_PD_MUX_USB_ENABLED;
 
 		dp = pd_mux_state & USB_PD_MUX_DP_ENABLED;
@@ -285,33 +286,33 @@ static int extcon_cros_ec_detect_cable(struct cros_ec_extcon_info *info,
 
 		dev_dbg(dev,
 			"connected role 0x%x pwr type %d dr %d pr %d pol %d mux %d dp %d hpd %d\n",
-			role, power_type, dr, pr, polarity, mux, dp, hpd);
-	}
+			role, घातer_type, dr, pr, polarity, mux, dp, hpd);
+	पूर्ण
 
 	/*
-	 * When there is no USB host (e.g. USB PD charger),
-	 * we are not really a UFP for the AP.
+	 * When there is no USB host (e.g. USB PD अक्षरger),
+	 * we are not really a UFP क्रम the AP.
 	 */
-	if (dr == DR_DEVICE &&
-	    cros_ec_usb_power_type_is_wall_wart(power_type, role))
+	अगर (dr == DR_DEVICE &&
+	    cros_ec_usb_घातer_type_is_wall_wart(घातer_type, role))
 		dr = DR_NONE;
 
-	if (force || info->dr != dr || info->pr != pr || info->dp != dp ||
-	    info->mux != mux || info->power_type != power_type) {
+	अगर (क्रमce || info->dr != dr || info->pr != pr || info->dp != dp ||
+	    info->mux != mux || info->घातer_type != घातer_type) अणु
 		bool host_connected = false, device_connected = false;
 
 		dev_dbg(dev, "Type/Role switch! type = %s role = %s\n",
-			cros_ec_usb_power_type_string(power_type),
+			cros_ec_usb_घातer_type_string(घातer_type),
 			cros_ec_usb_role_string(dr));
 		info->dr = dr;
 		info->pr = pr;
 		info->dp = dp;
 		info->mux = mux;
-		info->power_type = power_type;
+		info->घातer_type = घातer_type;
 
-		if (dr == DR_DEVICE)
+		अगर (dr == DR_DEVICE)
 			device_connected = true;
-		else if (dr == DR_HOST)
+		अन्यथा अगर (dr == DR_HOST)
 			host_connected = true;
 
 		extcon_set_state(info->edev, EXTCON_USB, device_connected);
@@ -319,118 +320,118 @@ static int extcon_cros_ec_detect_cable(struct cros_ec_extcon_info *info,
 		extcon_set_state(info->edev, EXTCON_DISP_DP, dp);
 		extcon_set_property(info->edev, EXTCON_USB,
 				    EXTCON_PROP_USB_VBUS,
-				    (union extcon_property_value)(int)pr);
+				    (जोड़ extcon_property_value)(पूर्णांक)pr);
 		extcon_set_property(info->edev, EXTCON_USB_HOST,
 				    EXTCON_PROP_USB_VBUS,
-				    (union extcon_property_value)(int)pr);
+				    (जोड़ extcon_property_value)(पूर्णांक)pr);
 		extcon_set_property(info->edev, EXTCON_USB,
 				    EXTCON_PROP_USB_TYPEC_POLARITY,
-				    (union extcon_property_value)(int)polarity);
+				    (जोड़ extcon_property_value)(पूर्णांक)polarity);
 		extcon_set_property(info->edev, EXTCON_USB_HOST,
 				    EXTCON_PROP_USB_TYPEC_POLARITY,
-				    (union extcon_property_value)(int)polarity);
+				    (जोड़ extcon_property_value)(पूर्णांक)polarity);
 		extcon_set_property(info->edev, EXTCON_DISP_DP,
 				    EXTCON_PROP_USB_TYPEC_POLARITY,
-				    (union extcon_property_value)(int)polarity);
+				    (जोड़ extcon_property_value)(पूर्णांक)polarity);
 		extcon_set_property(info->edev, EXTCON_USB,
 				    EXTCON_PROP_USB_SS,
-				    (union extcon_property_value)(int)mux);
+				    (जोड़ extcon_property_value)(पूर्णांक)mux);
 		extcon_set_property(info->edev, EXTCON_USB_HOST,
 				    EXTCON_PROP_USB_SS,
-				    (union extcon_property_value)(int)mux);
+				    (जोड़ extcon_property_value)(पूर्णांक)mux);
 		extcon_set_property(info->edev, EXTCON_DISP_DP,
 				    EXTCON_PROP_USB_SS,
-				    (union extcon_property_value)(int)mux);
+				    (जोड़ extcon_property_value)(पूर्णांक)mux);
 		extcon_set_property(info->edev, EXTCON_DISP_DP,
 				    EXTCON_PROP_DISP_HPD,
-				    (union extcon_property_value)(int)hpd);
+				    (जोड़ extcon_property_value)(पूर्णांक)hpd);
 
 		extcon_sync(info->edev, EXTCON_USB);
 		extcon_sync(info->edev, EXTCON_USB_HOST);
 		extcon_sync(info->edev, EXTCON_DISP_DP);
 
-	} else if (hpd) {
+	पूर्ण अन्यथा अगर (hpd) अणु
 		extcon_set_property(info->edev, EXTCON_DISP_DP,
 				    EXTCON_PROP_DISP_HPD,
-				    (union extcon_property_value)(int)hpd);
+				    (जोड़ extcon_property_value)(पूर्णांक)hpd);
 		extcon_sync(info->edev, EXTCON_DISP_DP);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int extcon_cros_ec_event(struct notifier_block *nb,
-				unsigned long queued_during_suspend,
-				void *_notify)
-{
-	struct cros_ec_extcon_info *info;
-	struct cros_ec_device *ec;
+अटल पूर्णांक extcon_cros_ec_event(काष्ठा notअगरier_block *nb,
+				अचिन्हित दीर्घ queued_during_suspend,
+				व्योम *_notअगरy)
+अणु
+	काष्ठा cros_ec_extcon_info *info;
+	काष्ठा cros_ec_device *ec;
 	u32 host_event;
 
-	info = container_of(nb, struct cros_ec_extcon_info, notifier);
+	info = container_of(nb, काष्ठा cros_ec_extcon_info, notअगरier);
 	ec = info->ec;
 
 	host_event = cros_ec_get_host_event(ec);
-	if (host_event & (EC_HOST_EVENT_MASK(EC_HOST_EVENT_PD_MCU) |
-			  EC_HOST_EVENT_MASK(EC_HOST_EVENT_USB_MUX))) {
+	अगर (host_event & (EC_HOST_EVENT_MASK(EC_HOST_EVENT_PD_MCU) |
+			  EC_HOST_EVENT_MASK(EC_HOST_EVENT_USB_MUX))) अणु
 		extcon_cros_ec_detect_cable(info, false);
-		return NOTIFY_OK;
-	}
+		वापस NOTIFY_OK;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int extcon_cros_ec_probe(struct platform_device *pdev)
-{
-	struct cros_ec_extcon_info *info;
-	struct cros_ec_device *ec = dev_get_drvdata(pdev->dev.parent);
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	int numports, ret;
+अटल पूर्णांक extcon_cros_ec_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cros_ec_extcon_info *info;
+	काष्ठा cros_ec_device *ec = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	पूर्णांक numports, ret;
 
-	info = devm_kzalloc(dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->dev = dev;
 	info->ec = ec;
 
-	if (np) {
+	अगर (np) अणु
 		u32 port;
 
-		ret = of_property_read_u32(np, "google,usb-port-id", &port);
-		if (ret < 0) {
+		ret = of_property_पढ़ो_u32(np, "google,usb-port-id", &port);
+		अगर (ret < 0) अणु
 			dev_err(dev, "Missing google,usb-port-id property\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		info->port_id = port;
-	} else {
+	पूर्ण अन्यथा अणु
 		info->port_id = pdev->id;
-	}
+	पूर्ण
 
 	numports = cros_ec_pd_get_num_ports(info);
-	if (numports < 0) {
+	अगर (numports < 0) अणु
 		dev_err(dev, "failed getting number of ports! ret = %d\n",
 			numports);
-		return numports;
-	}
+		वापस numports;
+	पूर्ण
 
-	if (info->port_id >= numports) {
+	अगर (info->port_id >= numports) अणु
 		dev_err(dev, "This system only supports %d ports\n", numports);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	info->edev = devm_extcon_dev_allocate(dev, usb_type_c_cable);
-	if (IS_ERR(info->edev)) {
+	अगर (IS_ERR(info->edev)) अणु
 		dev_err(dev, "failed to allocate extcon device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	ret = devm_extcon_dev_register(dev, info->edev);
-	if (ret < 0) {
+	ret = devm_extcon_dev_रेजिस्टर(dev, info->edev);
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to register extcon device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	extcon_set_property_capability(info->edev, EXTCON_USB,
 				       EXTCON_PROP_USB_VBUS);
@@ -454,88 +455,88 @@ static int extcon_cros_ec_probe(struct platform_device *pdev)
 	info->dr = DR_NONE;
 	info->pr = false;
 
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 
 	/* Get PD events from the EC */
-	info->notifier.notifier_call = extcon_cros_ec_event;
-	ret = blocking_notifier_chain_register(&info->ec->event_notifier,
-					       &info->notifier);
-	if (ret < 0) {
+	info->notअगरier.notअगरier_call = extcon_cros_ec_event;
+	ret = blocking_notअगरier_chain_रेजिस्टर(&info->ec->event_notअगरier,
+					       &info->notअगरier);
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to register notifier\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Perform initial detection */
+	/* Perक्रमm initial detection */
 	ret = extcon_cros_ec_detect_cable(info, true);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to detect initial cable state\n");
-		goto unregister_notifier;
-	}
+		जाओ unरेजिस्टर_notअगरier;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-unregister_notifier:
-	blocking_notifier_chain_unregister(&info->ec->event_notifier,
-					   &info->notifier);
-	return ret;
-}
+unरेजिस्टर_notअगरier:
+	blocking_notअगरier_chain_unरेजिस्टर(&info->ec->event_notअगरier,
+					   &info->notअगरier);
+	वापस ret;
+पूर्ण
 
-static int extcon_cros_ec_remove(struct platform_device *pdev)
-{
-	struct cros_ec_extcon_info *info = platform_get_drvdata(pdev);
+अटल पूर्णांक extcon_cros_ec_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cros_ec_extcon_info *info = platक्रमm_get_drvdata(pdev);
 
-	blocking_notifier_chain_unregister(&info->ec->event_notifier,
-					   &info->notifier);
+	blocking_notअगरier_chain_unरेजिस्टर(&info->ec->event_notअगरier,
+					   &info->notअगरier);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int extcon_cros_ec_suspend(struct device *dev)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक extcon_cros_ec_suspend(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int extcon_cros_ec_resume(struct device *dev)
-{
-	int ret;
-	struct cros_ec_extcon_info *info = dev_get_drvdata(dev);
+अटल पूर्णांक extcon_cros_ec_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा cros_ec_extcon_info *info = dev_get_drvdata(dev);
 
 	ret = extcon_cros_ec_detect_cable(info, true);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(dev, "failed to detect cable state on resume\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops extcon_cros_ec_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops extcon_cros_ec_dev_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(extcon_cros_ec_suspend, extcon_cros_ec_resume)
-};
+पूर्ण;
 
-#define DEV_PM_OPS	(&extcon_cros_ec_dev_pm_ops)
-#else
-#define DEV_PM_OPS	NULL
-#endif /* CONFIG_PM_SLEEP */
+#घोषणा DEV_PM_OPS	(&extcon_cros_ec_dev_pm_ops)
+#अन्यथा
+#घोषणा DEV_PM_OPS	शून्य
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-#ifdef CONFIG_OF
-static const struct of_device_id extcon_cros_ec_of_match[] = {
-	{ .compatible = "google,extcon-usbc-cros-ec" },
-	{ /* sentinel */ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id extcon_cros_ec_of_match[] = अणु
+	अणु .compatible = "google,extcon-usbc-cros-ec" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, extcon_cros_ec_of_match);
-#endif /* CONFIG_OF */
+#पूर्ण_अगर /* CONFIG_OF */
 
-static struct platform_driver extcon_cros_ec_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver extcon_cros_ec_driver = अणु
+	.driver = अणु
 		.name  = "extcon-usbc-cros-ec",
 		.of_match_table = of_match_ptr(extcon_cros_ec_of_match),
 		.pm = DEV_PM_OPS,
-	},
-	.remove  = extcon_cros_ec_remove,
+	पूर्ण,
+	.हटाओ  = extcon_cros_ec_हटाओ,
 	.probe   = extcon_cros_ec_probe,
-};
+पूर्ण;
 
-module_platform_driver(extcon_cros_ec_driver);
+module_platक्रमm_driver(extcon_cros_ec_driver);
 
 MODULE_DESCRIPTION("ChromeOS Embedded Controller extcon driver");
 MODULE_AUTHOR("Benson Leung <bleung@chromium.org>");

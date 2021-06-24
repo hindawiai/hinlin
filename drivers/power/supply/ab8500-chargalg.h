@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson SA 2012
- * Author: Johan Gardsmark <johan.gardsmark@stericsson.com> for ST-Ericsson.
+ * Author: Johan Gardsmark <johan.gardsmark@stericsson.com> क्रम ST-Ericsson.
  */
 
-#ifndef _AB8500_CHARGALG_H_
-#define _AB8500_CHARGALG_H_
+#अगर_अघोषित _AB8500_CHARGALG_H_
+#घोषणा _AB8500_CHARGALG_H_
 
-#include <linux/power_supply.h>
+#समावेश <linux/घातer_supply.h>
 
 /*
- * Valid only for supplies of type:
+ * Valid only क्रम supplies of type:
  * - POWER_SUPPLY_TYPE_MAINS,
  * - POWER_SUPPLY_TYPE_USB,
- * because only them store as drv_data pointer to struct ux500_charger.
+ * because only them store as drv_data poपूर्णांकer to काष्ठा ux500_अक्षरger.
  */
-#define psy_to_ux500_charger(x) power_supply_get_drvdata(psy)
+#घोषणा psy_to_ux500_अक्षरger(x) घातer_supply_get_drvdata(psy)
 
 /* Forward declaration */
-struct ux500_charger;
+काष्ठा ux500_अक्षरger;
 
-struct ux500_charger_ops {
-	int (*enable) (struct ux500_charger *, int, int, int);
-	int (*check_enable) (struct ux500_charger *, int, int);
-	int (*kick_wd) (struct ux500_charger *);
-	int (*update_curr) (struct ux500_charger *, int);
-};
+काष्ठा ux500_अक्षरger_ops अणु
+	पूर्णांक (*enable) (काष्ठा ux500_अक्षरger *, पूर्णांक, पूर्णांक, पूर्णांक);
+	पूर्णांक (*check_enable) (काष्ठा ux500_अक्षरger *, पूर्णांक, पूर्णांक);
+	पूर्णांक (*kick_wd) (काष्ठा ux500_अक्षरger *);
+	पूर्णांक (*update_curr) (काष्ठा ux500_अक्षरger *, पूर्णांक);
+पूर्ण;
 
 /**
- * struct ux500_charger - power supply ux500 charger sub class
- * @psy			power supply base class
- * @ops			ux500 charger operations
- * @max_out_volt	maximum output charger voltage in mV
- * @max_out_curr	maximum output charger current in mA
- * @enabled		indicates if this charger is used or not
- * @external		external charger unit (pm2xxx)
+ * काष्ठा ux500_अक्षरger - घातer supply ux500 अक्षरger sub class
+ * @psy			घातer supply base class
+ * @ops			ux500 अक्षरger operations
+ * @max_out_volt	maximum output अक्षरger voltage in mV
+ * @max_out_curr	maximum output अक्षरger current in mA
+ * @enabled		indicates अगर this अक्षरger is used or not
+ * @बाह्यal		बाह्यal अक्षरger unit (pm2xxx)
  */
-struct ux500_charger {
-	struct power_supply *psy;
-	struct ux500_charger_ops ops;
-	int max_out_volt;
-	int max_out_curr;
-	int wdt_refresh;
+काष्ठा ux500_अक्षरger अणु
+	काष्ठा घातer_supply *psy;
+	काष्ठा ux500_अक्षरger_ops ops;
+	पूर्णांक max_out_volt;
+	पूर्णांक max_out_curr;
+	पूर्णांक wdt_refresh;
 	bool enabled;
-	bool external;
-};
+	bool बाह्यal;
+पूर्ण;
 
-extern struct blocking_notifier_head charger_notifier_list;
+बाह्य काष्ठा blocking_notअगरier_head अक्षरger_notअगरier_list;
 
-#endif /* _AB8500_CHARGALG_H_ */
+#पूर्ण_अगर /* _AB8500_CHARGALG_H_ */

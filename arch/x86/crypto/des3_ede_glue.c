@@ -1,146 +1,147 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Glue Code for assembler optimized version of 3DES
+ * Glue Code क्रम assembler optimized version of 3DES
  *
- * Copyright © 2014 Jussi Kivilinna <jussi.kivilinna@mbnet.fi>
+ * Copyright तऊ 2014 Jussi Kivilinna <jussi.kivilinna@mbnet.fi>
  *
  * CBC & ECB parts based on code (crypto/cbc.c,ecb.c) by:
- *   Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
+ *   Copyright (c) 2006 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#include <crypto/algapi.h>
-#include <crypto/des.h>
-#include <crypto/internal/skcipher.h>
-#include <linux/crypto.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/types.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/des.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
 
-struct des3_ede_x86_ctx {
-	struct des3_ede_ctx enc;
-	struct des3_ede_ctx dec;
-};
+काष्ठा des3_ede_x86_ctx अणु
+	काष्ठा des3_ede_ctx enc;
+	काष्ठा des3_ede_ctx dec;
+पूर्ण;
 
 /* regular block cipher functions */
-asmlinkage void des3_ede_x86_64_crypt_blk(const u32 *expkey, u8 *dst,
-					  const u8 *src);
+यंत्रlinkage व्योम des3_ede_x86_64_crypt_blk(स्थिर u32 *expkey, u8 *dst,
+					  स्थिर u8 *src);
 
 /* 3-way parallel cipher functions */
-asmlinkage void des3_ede_x86_64_crypt_blk_3way(const u32 *expkey, u8 *dst,
-					       const u8 *src);
+यंत्रlinkage व्योम des3_ede_x86_64_crypt_blk_3way(स्थिर u32 *expkey, u8 *dst,
+					       स्थिर u8 *src);
 
-static inline void des3_ede_enc_blk(struct des3_ede_x86_ctx *ctx, u8 *dst,
-				    const u8 *src)
-{
+अटल अंतरभूत व्योम des3_ede_enc_blk(काष्ठा des3_ede_x86_ctx *ctx, u8 *dst,
+				    स्थिर u8 *src)
+अणु
 	u32 *enc_ctx = ctx->enc.expkey;
 
 	des3_ede_x86_64_crypt_blk(enc_ctx, dst, src);
-}
+पूर्ण
 
-static inline void des3_ede_dec_blk(struct des3_ede_x86_ctx *ctx, u8 *dst,
-				    const u8 *src)
-{
+अटल अंतरभूत व्योम des3_ede_dec_blk(काष्ठा des3_ede_x86_ctx *ctx, u8 *dst,
+				    स्थिर u8 *src)
+अणु
 	u32 *dec_ctx = ctx->dec.expkey;
 
 	des3_ede_x86_64_crypt_blk(dec_ctx, dst, src);
-}
+पूर्ण
 
-static inline void des3_ede_enc_blk_3way(struct des3_ede_x86_ctx *ctx, u8 *dst,
-					 const u8 *src)
-{
+अटल अंतरभूत व्योम des3_ede_enc_blk_3way(काष्ठा des3_ede_x86_ctx *ctx, u8 *dst,
+					 स्थिर u8 *src)
+अणु
 	u32 *enc_ctx = ctx->enc.expkey;
 
 	des3_ede_x86_64_crypt_blk_3way(enc_ctx, dst, src);
-}
+पूर्ण
 
-static inline void des3_ede_dec_blk_3way(struct des3_ede_x86_ctx *ctx, u8 *dst,
-					 const u8 *src)
-{
+अटल अंतरभूत व्योम des3_ede_dec_blk_3way(काष्ठा des3_ede_x86_ctx *ctx, u8 *dst,
+					 स्थिर u8 *src)
+अणु
 	u32 *dec_ctx = ctx->dec.expkey;
 
 	des3_ede_x86_64_crypt_blk_3way(dec_ctx, dst, src);
-}
+पूर्ण
 
-static void des3_ede_x86_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
+अटल व्योम des3_ede_x86_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
 	des3_ede_enc_blk(crypto_tfm_ctx(tfm), dst, src);
-}
+पूर्ण
 
-static void des3_ede_x86_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
+अटल व्योम des3_ede_x86_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
 	des3_ede_dec_blk(crypto_tfm_ctx(tfm), dst, src);
-}
+पूर्ण
 
-static int ecb_crypt(struct skcipher_request *req, const u32 *expkey)
-{
-	const unsigned int bsize = DES3_EDE_BLOCK_SIZE;
-	struct skcipher_walk walk;
-	unsigned int nbytes;
-	int err;
+अटल पूर्णांक ecb_crypt(काष्ठा skcipher_request *req, स्थिर u32 *expkey)
+अणु
+	स्थिर अचिन्हित पूर्णांक bsize = DES3_EDE_BLOCK_SIZE;
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक nbytes;
+	पूर्णांक err;
 
 	err = skcipher_walk_virt(&walk, req, false);
 
-	while ((nbytes = walk.nbytes)) {
+	जबतक ((nbytes = walk.nbytes)) अणु
 		u8 *wsrc = walk.src.virt.addr;
 		u8 *wdst = walk.dst.virt.addr;
 
 		/* Process four block batch */
-		if (nbytes >= bsize * 3) {
-			do {
+		अगर (nbytes >= bsize * 3) अणु
+			करो अणु
 				des3_ede_x86_64_crypt_blk_3way(expkey, wdst,
 							       wsrc);
 
 				wsrc += bsize * 3;
 				wdst += bsize * 3;
 				nbytes -= bsize * 3;
-			} while (nbytes >= bsize * 3);
+			पूर्ण जबतक (nbytes >= bsize * 3);
 
-			if (nbytes < bsize)
-				goto done;
-		}
+			अगर (nbytes < bsize)
+				जाओ करोne;
+		पूर्ण
 
 		/* Handle leftovers */
-		do {
+		करो अणु
 			des3_ede_x86_64_crypt_blk(expkey, wdst, wsrc);
 
 			wsrc += bsize;
 			wdst += bsize;
 			nbytes -= bsize;
-		} while (nbytes >= bsize);
+		पूर्ण जबतक (nbytes >= bsize);
 
-done:
-		err = skcipher_walk_done(&walk, nbytes);
-	}
+करोne:
+		err = skcipher_walk_करोne(&walk, nbytes);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ecb_encrypt(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct des3_ede_x86_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक ecb_encrypt(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा des3_ede_x86_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	return ecb_crypt(req, ctx->enc.expkey);
-}
+	वापस ecb_crypt(req, ctx->enc.expkey);
+पूर्ण
 
-static int ecb_decrypt(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct des3_ede_x86_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक ecb_decrypt(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा des3_ede_x86_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	return ecb_crypt(req, ctx->dec.expkey);
-}
+	वापस ecb_crypt(req, ctx->dec.expkey);
+पूर्ण
 
-static unsigned int __cbc_encrypt(struct des3_ede_x86_ctx *ctx,
-				  struct skcipher_walk *walk)
-{
-	unsigned int bsize = DES3_EDE_BLOCK_SIZE;
-	unsigned int nbytes = walk->nbytes;
+अटल अचिन्हित पूर्णांक __cbc_encrypt(काष्ठा des3_ede_x86_ctx *ctx,
+				  काष्ठा skcipher_walk *walk)
+अणु
+	अचिन्हित पूर्णांक bsize = DES3_EDE_BLOCK_SIZE;
+	अचिन्हित पूर्णांक nbytes = walk->nbytes;
 	u64 *src = (u64 *)walk->src.virt.addr;
 	u64 *dst = (u64 *)walk->dst.virt.addr;
 	u64 *iv = (u64 *)walk->iv;
 
-	do {
+	करो अणु
 		*dst = *src ^ *iv;
 		des3_ede_enc_blk(ctx, (u8 *)dst, (u8 *)dst);
 		iv = dst;
@@ -148,35 +149,35 @@ static unsigned int __cbc_encrypt(struct des3_ede_x86_ctx *ctx,
 		src += 1;
 		dst += 1;
 		nbytes -= bsize;
-	} while (nbytes >= bsize);
+	पूर्ण जबतक (nbytes >= bsize);
 
 	*(u64 *)walk->iv = *iv;
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int cbc_encrypt(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct des3_ede_x86_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct skcipher_walk walk;
-	unsigned int nbytes;
-	int err;
+अटल पूर्णांक cbc_encrypt(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा des3_ede_x86_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक nbytes;
+	पूर्णांक err;
 
 	err = skcipher_walk_virt(&walk, req, false);
 
-	while ((nbytes = walk.nbytes)) {
+	जबतक ((nbytes = walk.nbytes)) अणु
 		nbytes = __cbc_encrypt(ctx, &walk);
-		err = skcipher_walk_done(&walk, nbytes);
-	}
+		err = skcipher_walk_करोne(&walk, nbytes);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static unsigned int __cbc_decrypt(struct des3_ede_x86_ctx *ctx,
-				  struct skcipher_walk *walk)
-{
-	unsigned int bsize = DES3_EDE_BLOCK_SIZE;
-	unsigned int nbytes = walk->nbytes;
+अटल अचिन्हित पूर्णांक __cbc_decrypt(काष्ठा des3_ede_x86_ctx *ctx,
+				  काष्ठा skcipher_walk *walk)
+अणु
+	अचिन्हित पूर्णांक bsize = DES3_EDE_BLOCK_SIZE;
+	अचिन्हित पूर्णांक nbytes = walk->nbytes;
 	u64 *src = (u64 *)walk->src.virt.addr;
 	u64 *dst = (u64 *)walk->dst.virt.addr;
 	u64 ivs[3 - 1];
@@ -189,8 +190,8 @@ static unsigned int __cbc_decrypt(struct des3_ede_x86_ctx *ctx,
 	last_iv = *src;
 
 	/* Process four block batch */
-	if (nbytes >= bsize * 3) {
-		do {
+	अगर (nbytes >= bsize * 3) अणु
+		करो अणु
 			nbytes -= bsize * 3 - bsize;
 			src -= 3 - 1;
 			dst -= 3 - 1;
@@ -204,133 +205,133 @@ static unsigned int __cbc_decrypt(struct des3_ede_x86_ctx *ctx,
 			dst[2] ^= ivs[1];
 
 			nbytes -= bsize;
-			if (nbytes < bsize)
-				goto done;
+			अगर (nbytes < bsize)
+				जाओ करोne;
 
 			*dst ^= *(src - 1);
 			src -= 1;
 			dst -= 1;
-		} while (nbytes >= bsize * 3);
-	}
+		पूर्ण जबतक (nbytes >= bsize * 3);
+	पूर्ण
 
 	/* Handle leftovers */
-	for (;;) {
+	क्रम (;;) अणु
 		des3_ede_dec_blk(ctx, (u8 *)dst, (u8 *)src);
 
 		nbytes -= bsize;
-		if (nbytes < bsize)
-			break;
+		अगर (nbytes < bsize)
+			अवरोध;
 
 		*dst ^= *(src - 1);
 		src -= 1;
 		dst -= 1;
-	}
+	पूर्ण
 
-done:
+करोne:
 	*dst ^= *(u64 *)walk->iv;
 	*(u64 *)walk->iv = last_iv;
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int cbc_decrypt(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct des3_ede_x86_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct skcipher_walk walk;
-	unsigned int nbytes;
-	int err;
+अटल पूर्णांक cbc_decrypt(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा des3_ede_x86_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक nbytes;
+	पूर्णांक err;
 
 	err = skcipher_walk_virt(&walk, req, false);
 
-	while ((nbytes = walk.nbytes)) {
+	जबतक ((nbytes = walk.nbytes)) अणु
 		nbytes = __cbc_decrypt(ctx, &walk);
-		err = skcipher_walk_done(&walk, nbytes);
-	}
+		err = skcipher_walk_करोne(&walk, nbytes);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int des3_ede_x86_setkey(struct crypto_tfm *tfm, const u8 *key,
-			       unsigned int keylen)
-{
-	struct des3_ede_x86_ctx *ctx = crypto_tfm_ctx(tfm);
-	u32 i, j, tmp;
-	int err;
+अटल पूर्णांक des3_ede_x86_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key,
+			       अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा des3_ede_x86_ctx *ctx = crypto_tfm_ctx(tfm);
+	u32 i, j, पंचांगp;
+	पूर्णांक err;
 
 	err = des3_ede_expand_key(&ctx->enc, key, keylen);
-	if (err == -ENOKEY) {
-		if (crypto_tfm_get_flags(tfm) & CRYPTO_TFM_REQ_FORBID_WEAK_KEYS)
+	अगर (err == -ENOKEY) अणु
+		अगर (crypto_tfm_get_flags(tfm) & CRYPTO_TFM_REQ_FORBID_WEAK_KEYS)
 			err = -EINVAL;
-		else
+		अन्यथा
 			err = 0;
-	}
+	पूर्ण
 
-	if (err) {
-		memset(ctx, 0, sizeof(*ctx));
-		return err;
-	}
+	अगर (err) अणु
+		स_रखो(ctx, 0, माप(*ctx));
+		वापस err;
+	पूर्ण
 
-	/* Fix encryption context for this implementation and form decryption
+	/* Fix encryption context क्रम this implementation and क्रमm decryption
 	 * context. */
 	j = DES3_EDE_EXPKEY_WORDS - 2;
-	for (i = 0; i < DES3_EDE_EXPKEY_WORDS; i += 2, j -= 2) {
-		tmp = ror32(ctx->enc.expkey[i + 1], 4);
-		ctx->enc.expkey[i + 1] = tmp;
+	क्रम (i = 0; i < DES3_EDE_EXPKEY_WORDS; i += 2, j -= 2) अणु
+		पंचांगp = ror32(ctx->enc.expkey[i + 1], 4);
+		ctx->enc.expkey[i + 1] = पंचांगp;
 
 		ctx->dec.expkey[j + 0] = ctx->enc.expkey[i + 0];
-		ctx->dec.expkey[j + 1] = tmp;
-	}
+		ctx->dec.expkey[j + 1] = पंचांगp;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int des3_ede_x86_setkey_skcipher(struct crypto_skcipher *tfm,
-					const u8 *key,
-					unsigned int keylen)
-{
-	return des3_ede_x86_setkey(&tfm->base, key, keylen);
-}
+अटल पूर्णांक des3_ede_x86_setkey_skcipher(काष्ठा crypto_skcipher *tfm,
+					स्थिर u8 *key,
+					अचिन्हित पूर्णांक keylen)
+अणु
+	वापस des3_ede_x86_setkey(&tfm->base, key, keylen);
+पूर्ण
 
-static struct crypto_alg des3_ede_cipher = {
+अटल काष्ठा crypto_alg des3_ede_cipher = अणु
 	.cra_name		= "des3_ede",
 	.cra_driver_name	= "des3_ede-asm",
 	.cra_priority		= 200,
 	.cra_flags		= CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		= DES3_EDE_BLOCK_SIZE,
-	.cra_ctxsize		= sizeof(struct des3_ede_x86_ctx),
+	.cra_ctxsize		= माप(काष्ठा des3_ede_x86_ctx),
 	.cra_alignmask		= 0,
 	.cra_module		= THIS_MODULE,
-	.cra_u = {
-		.cipher = {
+	.cra_u = अणु
+		.cipher = अणु
 			.cia_min_keysize	= DES3_EDE_KEY_SIZE,
 			.cia_max_keysize	= DES3_EDE_KEY_SIZE,
 			.cia_setkey		= des3_ede_x86_setkey,
 			.cia_encrypt		= des3_ede_x86_encrypt,
 			.cia_decrypt		= des3_ede_x86_decrypt,
-		}
-	}
-};
+		पूर्ण
+	पूर्ण
+पूर्ण;
 
-static struct skcipher_alg des3_ede_skciphers[] = {
-	{
+अटल काष्ठा skcipher_alg des3_ede_skciphers[] = अणु
+	अणु
 		.base.cra_name		= "ecb(des3_ede)",
 		.base.cra_driver_name	= "ecb-des3_ede-asm",
 		.base.cra_priority	= 300,
 		.base.cra_blocksize	= DES3_EDE_BLOCK_SIZE,
-		.base.cra_ctxsize	= sizeof(struct des3_ede_x86_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा des3_ede_x86_ctx),
 		.base.cra_module	= THIS_MODULE,
 		.min_keysize		= DES3_EDE_KEY_SIZE,
 		.max_keysize		= DES3_EDE_KEY_SIZE,
 		.setkey			= des3_ede_x86_setkey_skcipher,
 		.encrypt		= ecb_encrypt,
 		.decrypt		= ecb_decrypt,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "cbc(des3_ede)",
 		.base.cra_driver_name	= "cbc-des3_ede-asm",
 		.base.cra_priority	= 300,
 		.base.cra_blocksize	= DES3_EDE_BLOCK_SIZE,
-		.base.cra_ctxsize	= sizeof(struct des3_ede_x86_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा des3_ede_x86_ctx),
 		.base.cra_module	= THIS_MODULE,
 		.min_keysize		= DES3_EDE_KEY_SIZE,
 		.max_keysize		= DES3_EDE_KEY_SIZE,
@@ -338,60 +339,60 @@ static struct skcipher_alg des3_ede_skciphers[] = {
 		.setkey			= des3_ede_x86_setkey_skcipher,
 		.encrypt		= cbc_encrypt,
 		.decrypt		= cbc_decrypt,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static bool is_blacklisted_cpu(void)
-{
-	if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL)
-		return false;
+अटल bool is_blacklisted_cpu(व्योम)
+अणु
+	अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_INTEL)
+		वापस false;
 
-	if (boot_cpu_data.x86 == 0x0f) {
+	अगर (boot_cpu_data.x86 == 0x0f) अणु
 		/*
 		 * On Pentium 4, des3_ede-x86_64 is slower than generic C
 		 * implementation because use of 64bit rotates (which are really
-		 * slow on P4). Therefore blacklist P4s.
+		 * slow on P4). Thereक्रमe blacklist P4s.
 		 */
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int force;
-module_param(force, int, 0);
-MODULE_PARM_DESC(force, "Force module load, ignore CPU blacklist");
+अटल पूर्णांक क्रमce;
+module_param(क्रमce, पूर्णांक, 0);
+MODULE_PARM_DESC(क्रमce, "Force module load, ignore CPU blacklist");
 
-static int __init des3_ede_x86_init(void)
-{
-	int err;
+अटल पूर्णांक __init des3_ede_x86_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	if (!force && is_blacklisted_cpu()) {
+	अगर (!क्रमce && is_blacklisted_cpu()) अणु
 		pr_info("des3_ede-x86_64: performance on this CPU would be suboptimal: disabling des3_ede-x86_64.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	err = crypto_register_alg(&des3_ede_cipher);
-	if (err)
-		return err;
+	err = crypto_रेजिस्टर_alg(&des3_ede_cipher);
+	अगर (err)
+		वापस err;
 
-	err = crypto_register_skciphers(des3_ede_skciphers,
+	err = crypto_रेजिस्टर_skciphers(des3_ede_skciphers,
 					ARRAY_SIZE(des3_ede_skciphers));
-	if (err)
-		crypto_unregister_alg(&des3_ede_cipher);
+	अगर (err)
+		crypto_unरेजिस्टर_alg(&des3_ede_cipher);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit des3_ede_x86_fini(void)
-{
-	crypto_unregister_alg(&des3_ede_cipher);
-	crypto_unregister_skciphers(des3_ede_skciphers,
+अटल व्योम __निकास des3_ede_x86_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_alg(&des3_ede_cipher);
+	crypto_unरेजिस्टर_skciphers(des3_ede_skciphers,
 				    ARRAY_SIZE(des3_ede_skciphers));
-}
+पूर्ण
 
 module_init(des3_ede_x86_init);
-module_exit(des3_ede_x86_fini);
+module_निकास(des3_ede_x86_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Triple DES EDE Cipher Algorithm, asm optimized");

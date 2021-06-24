@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: LGPL-2.1
-#include <sched.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
+#समावेश <sched.h>
 
 /*
- * Not defined anywhere else, probably, just to make sure we
+ * Not defined anywhere अन्यथा, probably, just to make sure we
  * catch future flags
  */
-#define SCHED_POLICY_MASK 0xff
+#घोषणा SCHED_POLICY_MASK 0xff
 
-#ifndef SCHED_DEADLINE
-#define SCHED_DEADLINE 6
-#endif
-#ifndef SCHED_RESET_ON_FORK
-#define SCHED_RESET_ON_FORK 0x40000000
-#endif
+#अगर_अघोषित SCHED_DEADLINE
+#घोषणा SCHED_DEADLINE 6
+#पूर्ण_अगर
+#अगर_अघोषित SCHED_RESET_ON_FORK
+#घोषणा SCHED_RESET_ON_FORK 0x40000000
+#पूर्ण_अगर
 
-static size_t syscall_arg__scnprintf_sched_policy(char *bf, size_t size,
-						  struct syscall_arg *arg)
-{
+अटल माप_प्रकार syscall_arg__scnम_लिखो_sched_policy(अक्षर *bf, माप_प्रकार size,
+						  काष्ठा syscall_arg *arg)
+अणु
 	bool show_prefix = arg->show_string_prefix;
-	const char *prefix = "SCHED_";
-	const char *policies[] = {
+	स्थिर अक्षर *prefix = "SCHED_";
+	स्थिर अक्षर *policies[] = अणु
 		"NORMAL", "FIFO", "RR", "BATCH", "ISO", "IDLE", "DEADLINE",
-	};
-	size_t printed;
-	int policy = arg->val,
+	पूर्ण;
+	माप_प्रकार prपूर्णांकed;
+	पूर्णांक policy = arg->val,
 	    flags = policy & ~SCHED_POLICY_MASK;
 
 	policy &= SCHED_POLICY_MASK;
-	if (policy <= SCHED_DEADLINE)
-		printed = scnprintf(bf, size, "%s%s", show_prefix ? prefix : "", policies[policy]);
-	else
-		printed = scnprintf(bf, size, "%#x", policy);
+	अगर (policy <= SCHED_DEADLINE)
+		prपूर्णांकed = scnम_लिखो(bf, size, "%s%s", show_prefix ? prefix : "", policies[policy]);
+	अन्यथा
+		prपूर्णांकed = scnम_लिखो(bf, size, "%#x", policy);
 
-#define	P_POLICY_FLAG(n) \
-	if (flags & SCHED_##n) { \
-		printed += scnprintf(bf + printed, size - printed, "|%s%s", show_prefix ? prefix : "",  #n); \
+#घोषणा	P_POLICY_FLAG(n) \
+	अगर (flags & SCHED_##n) अणु \
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "|%s%s", show_prefix ? prefix : "",  #n); \
 		flags &= ~SCHED_##n; \
-	}
+	पूर्ण
 
 	P_POLICY_FLAG(RESET_ON_FORK);
-#undef P_POLICY_FLAG
+#अघोषित P_POLICY_FLAG
 
-	if (flags)
-		printed += scnprintf(bf + printed, size - printed, "|%#x", flags);
+	अगर (flags)
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "|%#x", flags);
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-#define SCA_SCHED_POLICY syscall_arg__scnprintf_sched_policy
+#घोषणा SCA_SCHED_POLICY syscall_arg__scnम_लिखो_sched_policy

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Device Tree support for Marvell Berlin SoCs.
+ * Device Tree support क्रम Marvell Berlin SoCs.
  *
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  *
@@ -8,22 +9,22 @@
  *  (c) Marvell International Ltd.
  */
 
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of_platform.h>
-#include <asm/hardware/cache-l2x0.h>
-#include <asm/mach/arch.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <यंत्र/hardware/cache-l2x0.h>
+#समावेश <यंत्र/mach/arch.h>
 
-static const char * const berlin_dt_compat[] = {
+अटल स्थिर अक्षर * स्थिर berlin_dt_compat[] = अणु
 	"marvell,berlin",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(BERLIN_DT, "Marvell Berlin")
 	.dt_compat	= berlin_dt_compat,
 	/*
-	 * with DT probing for L2CCs, berlin_init_machine can be removed.
+	 * with DT probing क्रम L2CCs, berlin_init_machine can be हटाओd.
 	 * Note: 88DE3005 (Armada 1500-mini) uses pl310 l2cc
 	 */
 	.l2c_aux_val	= 0x30c00000,

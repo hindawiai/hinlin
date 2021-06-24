@@ -1,254 +1,255 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016 Pablo Neira Ayuso <pablo@netfilter.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/atomic.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables.h>
 
-struct nft_quota {
+काष्ठा nft_quota अणु
 	atomic64_t	quota;
-	unsigned long	flags;
+	अचिन्हित दीर्घ	flags;
 	atomic64_t	consumed;
-};
+पूर्ण;
 
-static inline bool nft_overquota(struct nft_quota *priv,
-				 const struct sk_buff *skb)
-{
-	return atomic64_add_return(skb->len, &priv->consumed) >=
-	       atomic64_read(&priv->quota);
-}
+अटल अंतरभूत bool nft_overquota(काष्ठा nft_quota *priv,
+				 स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस atomic64_add_वापस(skb->len, &priv->consumed) >=
+	       atomic64_पढ़ो(&priv->quota);
+पूर्ण
 
-static inline bool nft_quota_invert(struct nft_quota *priv)
-{
-	return priv->flags & NFT_QUOTA_F_INV;
-}
+अटल अंतरभूत bool nft_quota_invert(काष्ठा nft_quota *priv)
+अणु
+	वापस priv->flags & NFT_QUOTA_F_INV;
+पूर्ण
 
-static inline void nft_quota_do_eval(struct nft_quota *priv,
-				     struct nft_regs *regs,
-				     const struct nft_pktinfo *pkt)
-{
-	if (nft_overquota(priv, pkt->skb) ^ nft_quota_invert(priv))
+अटल अंतरभूत व्योम nft_quota_करो_eval(काष्ठा nft_quota *priv,
+				     काष्ठा nft_regs *regs,
+				     स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	अगर (nft_overquota(priv, pkt->skb) ^ nft_quota_invert(priv))
 		regs->verdict.code = NFT_BREAK;
-}
+पूर्ण
 
-static const struct nla_policy nft_quota_policy[NFTA_QUOTA_MAX + 1] = {
-	[NFTA_QUOTA_BYTES]	= { .type = NLA_U64 },
-	[NFTA_QUOTA_FLAGS]	= { .type = NLA_U32 },
-	[NFTA_QUOTA_CONSUMED]	= { .type = NLA_U64 },
-};
+अटल स्थिर काष्ठा nla_policy nft_quota_policy[NFTA_QUOTA_MAX + 1] = अणु
+	[NFTA_QUOTA_BYTES]	= अणु .type = NLA_U64 पूर्ण,
+	[NFTA_QUOTA_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_QUOTA_CONSUMED]	= अणु .type = NLA_U64 पूर्ण,
+पूर्ण;
 
-#define NFT_QUOTA_DEPLETED_BIT	1	/* From NFT_QUOTA_F_DEPLETED. */
+#घोषणा NFT_QUOTA_DEPLETED_BIT	1	/* From NFT_QUOTA_F_DEPLETED. */
 
-static void nft_quota_obj_eval(struct nft_object *obj,
-			       struct nft_regs *regs,
-			       const struct nft_pktinfo *pkt)
-{
-	struct nft_quota *priv = nft_obj_data(obj);
+अटल व्योम nft_quota_obj_eval(काष्ठा nft_object *obj,
+			       काष्ठा nft_regs *regs,
+			       स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	काष्ठा nft_quota *priv = nft_obj_data(obj);
 	bool overquota;
 
 	overquota = nft_overquota(priv, pkt->skb);
-	if (overquota ^ nft_quota_invert(priv))
+	अगर (overquota ^ nft_quota_invert(priv))
 		regs->verdict.code = NFT_BREAK;
 
-	if (overquota &&
+	अगर (overquota &&
 	    !test_and_set_bit(NFT_QUOTA_DEPLETED_BIT, &priv->flags))
-		nft_obj_notify(nft_net(pkt), obj->key.table, obj, 0, 0,
+		nft_obj_notअगरy(nft_net(pkt), obj->key.table, obj, 0, 0,
 			       NFT_MSG_NEWOBJ, nft_pf(pkt), 0, GFP_ATOMIC);
-}
+पूर्ण
 
-static int nft_quota_do_init(const struct nlattr * const tb[],
-			     struct nft_quota *priv)
-{
-	unsigned long flags = 0;
+अटल पूर्णांक nft_quota_करो_init(स्थिर काष्ठा nlattr * स्थिर tb[],
+			     काष्ठा nft_quota *priv)
+अणु
+	अचिन्हित दीर्घ flags = 0;
 	u64 quota, consumed = 0;
 
-	if (!tb[NFTA_QUOTA_BYTES])
-		return -EINVAL;
+	अगर (!tb[NFTA_QUOTA_BYTES])
+		वापस -EINVAL;
 
 	quota = be64_to_cpu(nla_get_be64(tb[NFTA_QUOTA_BYTES]));
-	if (quota > S64_MAX)
-		return -EOVERFLOW;
+	अगर (quota > S64_MAX)
+		वापस -EOVERFLOW;
 
-	if (tb[NFTA_QUOTA_CONSUMED]) {
+	अगर (tb[NFTA_QUOTA_CONSUMED]) अणु
 		consumed = be64_to_cpu(nla_get_be64(tb[NFTA_QUOTA_CONSUMED]));
-		if (consumed > quota)
-			return -EINVAL;
-	}
+		अगर (consumed > quota)
+			वापस -EINVAL;
+	पूर्ण
 
-	if (tb[NFTA_QUOTA_FLAGS]) {
+	अगर (tb[NFTA_QUOTA_FLAGS]) अणु
 		flags = ntohl(nla_get_be32(tb[NFTA_QUOTA_FLAGS]));
-		if (flags & ~NFT_QUOTA_F_INV)
-			return -EINVAL;
-		if (flags & NFT_QUOTA_F_DEPLETED)
-			return -EOPNOTSUPP;
-	}
+		अगर (flags & ~NFT_QUOTA_F_INV)
+			वापस -EINVAL;
+		अगर (flags & NFT_QUOTA_F_DEPLETED)
+			वापस -EOPNOTSUPP;
+	पूर्ण
 
 	atomic64_set(&priv->quota, quota);
 	priv->flags = flags;
 	atomic64_set(&priv->consumed, consumed);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_quota_obj_init(const struct nft_ctx *ctx,
-			      const struct nlattr * const tb[],
-			      struct nft_object *obj)
-{
-	struct nft_quota *priv = nft_obj_data(obj);
+अटल पूर्णांक nft_quota_obj_init(स्थिर काष्ठा nft_ctx *ctx,
+			      स्थिर काष्ठा nlattr * स्थिर tb[],
+			      काष्ठा nft_object *obj)
+अणु
+	काष्ठा nft_quota *priv = nft_obj_data(obj);
 
-	return nft_quota_do_init(tb, priv);
-}
+	वापस nft_quota_करो_init(tb, priv);
+पूर्ण
 
-static void nft_quota_obj_update(struct nft_object *obj,
-				 struct nft_object *newobj)
-{
-	struct nft_quota *newpriv = nft_obj_data(newobj);
-	struct nft_quota *priv = nft_obj_data(obj);
+अटल व्योम nft_quota_obj_update(काष्ठा nft_object *obj,
+				 काष्ठा nft_object *newobj)
+अणु
+	काष्ठा nft_quota *newpriv = nft_obj_data(newobj);
+	काष्ठा nft_quota *priv = nft_obj_data(obj);
 	u64 newquota;
 
-	newquota = atomic64_read(&newpriv->quota);
+	newquota = atomic64_पढ़ो(&newpriv->quota);
 	atomic64_set(&priv->quota, newquota);
 	priv->flags = newpriv->flags;
-}
+पूर्ण
 
-static int nft_quota_do_dump(struct sk_buff *skb, struct nft_quota *priv,
+अटल पूर्णांक nft_quota_करो_dump(काष्ठा sk_buff *skb, काष्ठा nft_quota *priv,
 			     bool reset)
-{
+अणु
 	u64 consumed, consumed_cap, quota;
 	u32 flags = priv->flags;
 
-	/* Since we inconditionally increment consumed quota for each packet
-	 * that we see, don't go over the quota boundary in what we send to
+	/* Since we inconditionally increment consumed quota क्रम each packet
+	 * that we see, करोn't go over the quota boundary in what we send to
 	 * userspace.
 	 */
-	consumed = atomic64_read(&priv->consumed);
-	quota = atomic64_read(&priv->quota);
-	if (consumed >= quota) {
+	consumed = atomic64_पढ़ो(&priv->consumed);
+	quota = atomic64_पढ़ो(&priv->quota);
+	अगर (consumed >= quota) अणु
 		consumed_cap = quota;
 		flags |= NFT_QUOTA_F_DEPLETED;
-	} else {
+	पूर्ण अन्यथा अणु
 		consumed_cap = consumed;
-	}
+	पूर्ण
 
-	if (nla_put_be64(skb, NFTA_QUOTA_BYTES, cpu_to_be64(quota),
+	अगर (nla_put_be64(skb, NFTA_QUOTA_BYTES, cpu_to_be64(quota),
 			 NFTA_QUOTA_PAD) ||
 	    nla_put_be64(skb, NFTA_QUOTA_CONSUMED, cpu_to_be64(consumed_cap),
 			 NFTA_QUOTA_PAD) ||
 	    nla_put_be32(skb, NFTA_QUOTA_FLAGS, htonl(flags)))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (reset) {
+	अगर (reset) अणु
 		atomic64_sub(consumed, &priv->consumed);
 		clear_bit(NFT_QUOTA_DEPLETED_BIT, &priv->flags);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 nla_put_failure:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int nft_quota_obj_dump(struct sk_buff *skb, struct nft_object *obj,
+अटल पूर्णांक nft_quota_obj_dump(काष्ठा sk_buff *skb, काष्ठा nft_object *obj,
 			      bool reset)
-{
-	struct nft_quota *priv = nft_obj_data(obj);
+अणु
+	काष्ठा nft_quota *priv = nft_obj_data(obj);
 
-	return nft_quota_do_dump(skb, priv, reset);
-}
+	वापस nft_quota_करो_dump(skb, priv, reset);
+पूर्ण
 
-static struct nft_object_type nft_quota_obj_type;
-static const struct nft_object_ops nft_quota_obj_ops = {
+अटल काष्ठा nft_object_type nft_quota_obj_type;
+अटल स्थिर काष्ठा nft_object_ops nft_quota_obj_ops = अणु
 	.type		= &nft_quota_obj_type,
-	.size		= sizeof(struct nft_quota),
+	.size		= माप(काष्ठा nft_quota),
 	.init		= nft_quota_obj_init,
 	.eval		= nft_quota_obj_eval,
 	.dump		= nft_quota_obj_dump,
 	.update		= nft_quota_obj_update,
-};
+पूर्ण;
 
-static struct nft_object_type nft_quota_obj_type __read_mostly = {
+अटल काष्ठा nft_object_type nft_quota_obj_type __पढ़ो_mostly = अणु
 	.type		= NFT_OBJECT_QUOTA,
 	.ops		= &nft_quota_obj_ops,
 	.maxattr	= NFTA_QUOTA_MAX,
 	.policy		= nft_quota_policy,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static void nft_quota_eval(const struct nft_expr *expr,
-			   struct nft_regs *regs,
-			   const struct nft_pktinfo *pkt)
-{
-	struct nft_quota *priv = nft_expr_priv(expr);
+अटल व्योम nft_quota_eval(स्थिर काष्ठा nft_expr *expr,
+			   काष्ठा nft_regs *regs,
+			   स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	काष्ठा nft_quota *priv = nft_expr_priv(expr);
 
-	nft_quota_do_eval(priv, regs, pkt);
-}
+	nft_quota_करो_eval(priv, regs, pkt);
+पूर्ण
 
-static int nft_quota_init(const struct nft_ctx *ctx,
-			  const struct nft_expr *expr,
-			  const struct nlattr * const tb[])
-{
-	struct nft_quota *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_quota_init(स्थिर काष्ठा nft_ctx *ctx,
+			  स्थिर काष्ठा nft_expr *expr,
+			  स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_quota *priv = nft_expr_priv(expr);
 
-	return nft_quota_do_init(tb, priv);
-}
+	वापस nft_quota_करो_init(tb, priv);
+पूर्ण
 
-static int nft_quota_dump(struct sk_buff *skb, const struct nft_expr *expr)
-{
-	struct nft_quota *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_quota_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
+अणु
+	काष्ठा nft_quota *priv = nft_expr_priv(expr);
 
-	return nft_quota_do_dump(skb, priv, false);
-}
+	वापस nft_quota_करो_dump(skb, priv, false);
+पूर्ण
 
-static struct nft_expr_type nft_quota_type;
-static const struct nft_expr_ops nft_quota_ops = {
+अटल काष्ठा nft_expr_type nft_quota_type;
+अटल स्थिर काष्ठा nft_expr_ops nft_quota_ops = अणु
 	.type		= &nft_quota_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_quota)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_quota)),
 	.eval		= nft_quota_eval,
 	.init		= nft_quota_init,
 	.dump		= nft_quota_dump,
-};
+पूर्ण;
 
-static struct nft_expr_type nft_quota_type __read_mostly = {
+अटल काष्ठा nft_expr_type nft_quota_type __पढ़ो_mostly = अणु
 	.name		= "quota",
 	.ops		= &nft_quota_ops,
 	.policy		= nft_quota_policy,
 	.maxattr	= NFTA_QUOTA_MAX,
 	.flags		= NFT_EXPR_STATEFUL,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init nft_quota_module_init(void)
-{
-	int err;
+अटल पूर्णांक __init nft_quota_module_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = nft_register_obj(&nft_quota_obj_type);
-	if (err < 0)
-		return err;
+	err = nft_रेजिस्टर_obj(&nft_quota_obj_type);
+	अगर (err < 0)
+		वापस err;
 
-	err = nft_register_expr(&nft_quota_type);
-	if (err < 0)
-		goto err1;
+	err = nft_रेजिस्टर_expr(&nft_quota_type);
+	अगर (err < 0)
+		जाओ err1;
 
-	return 0;
+	वापस 0;
 err1:
-	nft_unregister_obj(&nft_quota_obj_type);
-	return err;
-}
+	nft_unरेजिस्टर_obj(&nft_quota_obj_type);
+	वापस err;
+पूर्ण
 
-static void __exit nft_quota_module_exit(void)
-{
-	nft_unregister_expr(&nft_quota_type);
-	nft_unregister_obj(&nft_quota_obj_type);
-}
+अटल व्योम __निकास nft_quota_module_निकास(व्योम)
+अणु
+	nft_unरेजिस्टर_expr(&nft_quota_type);
+	nft_unरेजिस्टर_obj(&nft_quota_obj_type);
+पूर्ण
 
 module_init(nft_quota_module_init);
-module_exit(nft_quota_module_exit);
+module_निकास(nft_quota_module_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pablo Neira Ayuso <pablo@netfilter.org>");

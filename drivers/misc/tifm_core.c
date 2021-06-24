@@ -1,364 +1,365 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  tifm_core.c - TI FlashMedia driver
+ *  tअगरm_core.c - TI FlashMedia driver
  *
  *  Copyright (C) 2006 Alex Dubov <oakad@yahoo.com>
  */
 
-#include <linux/tifm.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/idr.h>
-#include <linux/module.h>
+#समावेश <linux/tअगरm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/module.h>
 
-#define DRIVER_NAME "tifm_core"
-#define DRIVER_VERSION "0.8"
+#घोषणा DRIVER_NAME "tifm_core"
+#घोषणा DRIVER_VERSION "0.8"
 
-static struct workqueue_struct *workqueue;
-static DEFINE_IDR(tifm_adapter_idr);
-static DEFINE_SPINLOCK(tifm_adapter_lock);
+अटल काष्ठा workqueue_काष्ठा *workqueue;
+अटल DEFINE_IDR(tअगरm_adapter_idr);
+अटल DEFINE_SPINLOCK(tअगरm_adapter_lock);
 
-static const char *tifm_media_type_name(unsigned char type, unsigned char nt)
-{
-	const char *card_type_name[3][3] = {
-		{ "SmartMedia/xD", "MemoryStick", "MMC/SD" },
-		{ "XD", "MS", "SD"},
-		{ "xd", "ms", "sd"}
-	};
+अटल स्थिर अक्षर *tअगरm_media_type_name(अचिन्हित अक्षर type, अचिन्हित अक्षर nt)
+अणु
+	स्थिर अक्षर *card_type_name[3][3] = अणु
+		अणु "SmartMedia/xD", "MemoryStick", "MMC/SD" पूर्ण,
+		अणु "XD", "MS", "SD"पूर्ण,
+		अणु "xd", "ms", "sd"पूर्ण
+	पूर्ण;
 
-	if (nt > 2 || type < 1 || type > 3)
-		return NULL;
-	return card_type_name[nt][type - 1];
-}
+	अगर (nt > 2 || type < 1 || type > 3)
+		वापस शून्य;
+	वापस card_type_name[nt][type - 1];
+पूर्ण
 
-static int tifm_dev_match(struct tifm_dev *sock, struct tifm_device_id *id)
-{
-	if (sock->type == id->type)
-		return 1;
-	return 0;
-}
+अटल पूर्णांक tअगरm_dev_match(काष्ठा tअगरm_dev *sock, काष्ठा tअगरm_device_id *id)
+अणु
+	अगर (sock->type == id->type)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int tifm_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct tifm_dev *sock = container_of(dev, struct tifm_dev, dev);
-	struct tifm_driver *fm_drv = container_of(drv, struct tifm_driver,
+अटल पूर्णांक tअगरm_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा tअगरm_dev *sock = container_of(dev, काष्ठा tअगरm_dev, dev);
+	काष्ठा tअगरm_driver *fm_drv = container_of(drv, काष्ठा tअगरm_driver,
 						  driver);
-	struct tifm_device_id *ids = fm_drv->id_table;
+	काष्ठा tअगरm_device_id *ids = fm_drv->id_table;
 
-	if (ids) {
-		while (ids->type) {
-			if (tifm_dev_match(sock, ids))
-				return 1;
+	अगर (ids) अणु
+		जबतक (ids->type) अणु
+			अगर (tअगरm_dev_match(sock, ids))
+				वापस 1;
 			++ids;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int tifm_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct tifm_dev *sock = container_of(dev, struct tifm_dev, dev);
+अटल पूर्णांक tअगरm_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा tअगरm_dev *sock = container_of(dev, काष्ठा tअगरm_dev, dev);
 
-	if (add_uevent_var(env, "TIFM_CARD_TYPE=%s", tifm_media_type_name(sock->type, 1)))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "TIFM_CARD_TYPE=%s", tअगरm_media_type_name(sock->type, 1)))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tifm_device_probe(struct device *dev)
-{
-	struct tifm_dev *sock = container_of(dev, struct tifm_dev, dev);
-	struct tifm_driver *drv = container_of(dev->driver, struct tifm_driver,
+अटल पूर्णांक tअगरm_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा tअगरm_dev *sock = container_of(dev, काष्ठा tअगरm_dev, dev);
+	काष्ठा tअगरm_driver *drv = container_of(dev->driver, काष्ठा tअगरm_driver,
 					       driver);
-	int rc = -ENODEV;
+	पूर्णांक rc = -ENODEV;
 
 	get_device(dev);
-	if (dev->driver && drv->probe) {
+	अगर (dev->driver && drv->probe) अणु
 		rc = drv->probe(sock);
-		if (!rc)
-			return 0;
-	}
+		अगर (!rc)
+			वापस 0;
+	पूर्ण
 	put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void tifm_dummy_event(struct tifm_dev *sock)
-{
-	return;
-}
+अटल व्योम tअगरm_dummy_event(काष्ठा tअगरm_dev *sock)
+अणु
+	वापस;
+पूर्ण
 
-static int tifm_device_remove(struct device *dev)
-{
-	struct tifm_dev *sock = container_of(dev, struct tifm_dev, dev);
-	struct tifm_driver *drv = container_of(dev->driver, struct tifm_driver,
+अटल पूर्णांक tअगरm_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा tअगरm_dev *sock = container_of(dev, काष्ठा tअगरm_dev, dev);
+	काष्ठा tअगरm_driver *drv = container_of(dev->driver, काष्ठा tअगरm_driver,
 					       driver);
 
-	if (dev->driver && drv->remove) {
-		sock->card_event = tifm_dummy_event;
-		sock->data_event = tifm_dummy_event;
-		drv->remove(sock);
-		sock->dev.driver = NULL;
-	}
+	अगर (dev->driver && drv->हटाओ) अणु
+		sock->card_event = tअगरm_dummy_event;
+		sock->data_event = tअगरm_dummy_event;
+		drv->हटाओ(sock);
+		sock->dev.driver = शून्य;
+	पूर्ण
 
 	put_device(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int tifm_device_suspend(struct device *dev, pm_message_t state)
-{
-	struct tifm_dev *sock = container_of(dev, struct tifm_dev, dev);
-	struct tifm_driver *drv = container_of(dev->driver, struct tifm_driver,
+अटल पूर्णांक tअगरm_device_suspend(काष्ठा device *dev, pm_message_t state)
+अणु
+	काष्ठा tअगरm_dev *sock = container_of(dev, काष्ठा tअगरm_dev, dev);
+	काष्ठा tअगरm_driver *drv = container_of(dev->driver, काष्ठा tअगरm_driver,
 					       driver);
 
-	if (dev->driver && drv->suspend)
-		return drv->suspend(sock, state);
-	return 0;
-}
+	अगर (dev->driver && drv->suspend)
+		वापस drv->suspend(sock, state);
+	वापस 0;
+पूर्ण
 
-static int tifm_device_resume(struct device *dev)
-{
-	struct tifm_dev *sock = container_of(dev, struct tifm_dev, dev);
-	struct tifm_driver *drv = container_of(dev->driver, struct tifm_driver,
+अटल पूर्णांक tअगरm_device_resume(काष्ठा device *dev)
+अणु
+	काष्ठा tअगरm_dev *sock = container_of(dev, काष्ठा tअगरm_dev, dev);
+	काष्ठा tअगरm_driver *drv = container_of(dev->driver, काष्ठा tअगरm_driver,
 					       driver);
 
-	if (dev->driver && drv->resume)
-		return drv->resume(sock);
-	return 0;
-}
+	अगर (dev->driver && drv->resume)
+		वापस drv->resume(sock);
+	वापस 0;
+पूर्ण
 
-#else
+#अन्यथा
 
-#define tifm_device_suspend NULL
-#define tifm_device_resume NULL
+#घोषणा tअगरm_device_suspend शून्य
+#घोषणा tअगरm_device_resume शून्य
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
-static ssize_t type_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct tifm_dev *sock = container_of(dev, struct tifm_dev, dev);
-	return sprintf(buf, "%x", sock->type);
-}
-static DEVICE_ATTR_RO(type);
+अटल sमाप_प्रकार type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा tअगरm_dev *sock = container_of(dev, काष्ठा tअगरm_dev, dev);
+	वापस प्र_लिखो(buf, "%x", sock->type);
+पूर्ण
+अटल DEVICE_ATTR_RO(type);
 
-static struct attribute *tifm_dev_attrs[] = {
+अटल काष्ठा attribute *tअगरm_dev_attrs[] = अणु
 	&dev_attr_type.attr,
-	NULL,
-};
-ATTRIBUTE_GROUPS(tifm_dev);
+	शून्य,
+पूर्ण;
+ATTRIBUTE_GROUPS(tअगरm_dev);
 
-static struct bus_type tifm_bus_type = {
+अटल काष्ठा bus_type tअगरm_bus_type = अणु
 	.name      = "tifm",
-	.dev_groups = tifm_dev_groups,
-	.match     = tifm_bus_match,
-	.uevent    = tifm_uevent,
-	.probe     = tifm_device_probe,
-	.remove    = tifm_device_remove,
-	.suspend   = tifm_device_suspend,
-	.resume    = tifm_device_resume
-};
+	.dev_groups = tअगरm_dev_groups,
+	.match     = tअगरm_bus_match,
+	.uevent    = tअगरm_uevent,
+	.probe     = tअगरm_device_probe,
+	.हटाओ    = tअगरm_device_हटाओ,
+	.suspend   = tअगरm_device_suspend,
+	.resume    = tअगरm_device_resume
+पूर्ण;
 
-static void tifm_free(struct device *dev)
-{
-	struct tifm_adapter *fm = container_of(dev, struct tifm_adapter, dev);
+अटल व्योम tअगरm_मुक्त(काष्ठा device *dev)
+अणु
+	काष्ठा tअगरm_adapter *fm = container_of(dev, काष्ठा tअगरm_adapter, dev);
 
-	kfree(fm);
-}
+	kमुक्त(fm);
+पूर्ण
 
-static struct class tifm_adapter_class = {
+अटल काष्ठा class tअगरm_adapter_class = अणु
 	.name    = "tifm_adapter",
-	.dev_release = tifm_free
-};
+	.dev_release = tअगरm_मुक्त
+पूर्ण;
 
-struct tifm_adapter *tifm_alloc_adapter(unsigned int num_sockets,
-					struct device *dev)
-{
-	struct tifm_adapter *fm;
+काष्ठा tअगरm_adapter *tअगरm_alloc_adapter(अचिन्हित पूर्णांक num_sockets,
+					काष्ठा device *dev)
+अणु
+	काष्ठा tअगरm_adapter *fm;
 
-	fm = kzalloc(sizeof(struct tifm_adapter)
-		     + sizeof(struct tifm_dev*) * num_sockets, GFP_KERNEL);
-	if (fm) {
-		fm->dev.class = &tifm_adapter_class;
+	fm = kzalloc(माप(काष्ठा tअगरm_adapter)
+		     + माप(काष्ठा tअगरm_dev*) * num_sockets, GFP_KERNEL);
+	अगर (fm) अणु
+		fm->dev.class = &tअगरm_adapter_class;
 		fm->dev.parent = dev;
 		device_initialize(&fm->dev);
 		spin_lock_init(&fm->lock);
 		fm->num_sockets = num_sockets;
-	}
-	return fm;
-}
-EXPORT_SYMBOL(tifm_alloc_adapter);
+	पूर्ण
+	वापस fm;
+पूर्ण
+EXPORT_SYMBOL(tअगरm_alloc_adapter);
 
-int tifm_add_adapter(struct tifm_adapter *fm)
-{
-	int rc;
+पूर्णांक tअगरm_add_adapter(काष्ठा tअगरm_adapter *fm)
+अणु
+	पूर्णांक rc;
 
 	idr_preload(GFP_KERNEL);
-	spin_lock(&tifm_adapter_lock);
-	rc = idr_alloc(&tifm_adapter_idr, fm, 0, 0, GFP_NOWAIT);
-	if (rc >= 0)
+	spin_lock(&tअगरm_adapter_lock);
+	rc = idr_alloc(&tअगरm_adapter_idr, fm, 0, 0, GFP_NOWAIT);
+	अगर (rc >= 0)
 		fm->id = rc;
-	spin_unlock(&tifm_adapter_lock);
+	spin_unlock(&tअगरm_adapter_lock);
 	idr_preload_end();
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	dev_set_name(&fm->dev, "tifm%u", fm->id);
 	rc = device_add(&fm->dev);
-	if (rc) {
-		spin_lock(&tifm_adapter_lock);
-		idr_remove(&tifm_adapter_idr, fm->id);
-		spin_unlock(&tifm_adapter_lock);
-	}
+	अगर (rc) अणु
+		spin_lock(&tअगरm_adapter_lock);
+		idr_हटाओ(&tअगरm_adapter_idr, fm->id);
+		spin_unlock(&tअगरm_adapter_lock);
+	पूर्ण
 
-	return rc;
-}
-EXPORT_SYMBOL(tifm_add_adapter);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL(tअगरm_add_adapter);
 
-void tifm_remove_adapter(struct tifm_adapter *fm)
-{
-	unsigned int cnt;
+व्योम tअगरm_हटाओ_adapter(काष्ठा tअगरm_adapter *fm)
+अणु
+	अचिन्हित पूर्णांक cnt;
 
 	flush_workqueue(workqueue);
-	for (cnt = 0; cnt < fm->num_sockets; ++cnt) {
-		if (fm->sockets[cnt])
-			device_unregister(&fm->sockets[cnt]->dev);
-	}
+	क्रम (cnt = 0; cnt < fm->num_sockets; ++cnt) अणु
+		अगर (fm->sockets[cnt])
+			device_unरेजिस्टर(&fm->sockets[cnt]->dev);
+	पूर्ण
 
-	spin_lock(&tifm_adapter_lock);
-	idr_remove(&tifm_adapter_idr, fm->id);
-	spin_unlock(&tifm_adapter_lock);
+	spin_lock(&tअगरm_adapter_lock);
+	idr_हटाओ(&tअगरm_adapter_idr, fm->id);
+	spin_unlock(&tअगरm_adapter_lock);
 	device_del(&fm->dev);
-}
-EXPORT_SYMBOL(tifm_remove_adapter);
+पूर्ण
+EXPORT_SYMBOL(tअगरm_हटाओ_adapter);
 
-void tifm_free_adapter(struct tifm_adapter *fm)
-{
+व्योम tअगरm_मुक्त_adapter(काष्ठा tअगरm_adapter *fm)
+अणु
 	put_device(&fm->dev);
-}
-EXPORT_SYMBOL(tifm_free_adapter);
+पूर्ण
+EXPORT_SYMBOL(tअगरm_मुक्त_adapter);
 
-void tifm_free_device(struct device *dev)
-{
-	struct tifm_dev *sock = container_of(dev, struct tifm_dev, dev);
-	kfree(sock);
-}
-EXPORT_SYMBOL(tifm_free_device);
+व्योम tअगरm_मुक्त_device(काष्ठा device *dev)
+अणु
+	काष्ठा tअगरm_dev *sock = container_of(dev, काष्ठा tअगरm_dev, dev);
+	kमुक्त(sock);
+पूर्ण
+EXPORT_SYMBOL(tअगरm_मुक्त_device);
 
-struct tifm_dev *tifm_alloc_device(struct tifm_adapter *fm, unsigned int id,
-				   unsigned char type)
-{
-	struct tifm_dev *sock = NULL;
+काष्ठा tअगरm_dev *tअगरm_alloc_device(काष्ठा tअगरm_adapter *fm, अचिन्हित पूर्णांक id,
+				   अचिन्हित अक्षर type)
+अणु
+	काष्ठा tअगरm_dev *sock = शून्य;
 
-	if (!tifm_media_type_name(type, 0))
-		return sock;
+	अगर (!tअगरm_media_type_name(type, 0))
+		वापस sock;
 
-	sock = kzalloc(sizeof(struct tifm_dev), GFP_KERNEL);
-	if (sock) {
+	sock = kzalloc(माप(काष्ठा tअगरm_dev), GFP_KERNEL);
+	अगर (sock) अणु
 		spin_lock_init(&sock->lock);
 		sock->type = type;
 		sock->socket_id = id;
-		sock->card_event = tifm_dummy_event;
-		sock->data_event = tifm_dummy_event;
+		sock->card_event = tअगरm_dummy_event;
+		sock->data_event = tअगरm_dummy_event;
 
 		sock->dev.parent = fm->dev.parent;
-		sock->dev.bus = &tifm_bus_type;
+		sock->dev.bus = &tअगरm_bus_type;
 		sock->dev.dma_mask = fm->dev.parent->dma_mask;
-		sock->dev.release = tifm_free_device;
+		sock->dev.release = tअगरm_मुक्त_device;
 
 		dev_set_name(&sock->dev, "tifm_%s%u:%u",
-			     tifm_media_type_name(type, 2), fm->id, id);
-		printk(KERN_INFO DRIVER_NAME
+			     tअगरm_media_type_name(type, 2), fm->id, id);
+		prपूर्णांकk(KERN_INFO DRIVER_NAME
 		       ": %s card detected in socket %u:%u\n",
-		       tifm_media_type_name(type, 0), fm->id, id);
-	}
-	return sock;
-}
-EXPORT_SYMBOL(tifm_alloc_device);
+		       tअगरm_media_type_name(type, 0), fm->id, id);
+	पूर्ण
+	वापस sock;
+पूर्ण
+EXPORT_SYMBOL(tअगरm_alloc_device);
 
-void tifm_eject(struct tifm_dev *sock)
-{
-	struct tifm_adapter *fm = dev_get_drvdata(sock->dev.parent);
+व्योम tअगरm_eject(काष्ठा tअगरm_dev *sock)
+अणु
+	काष्ठा tअगरm_adapter *fm = dev_get_drvdata(sock->dev.parent);
 	fm->eject(fm, sock);
-}
-EXPORT_SYMBOL(tifm_eject);
+पूर्ण
+EXPORT_SYMBOL(tअगरm_eject);
 
-int tifm_has_ms_pif(struct tifm_dev *sock)
-{
-	struct tifm_adapter *fm = dev_get_drvdata(sock->dev.parent);
-	return fm->has_ms_pif(fm, sock);
-}
-EXPORT_SYMBOL(tifm_has_ms_pif);
+पूर्णांक tअगरm_has_ms_pअगर(काष्ठा tअगरm_dev *sock)
+अणु
+	काष्ठा tअगरm_adapter *fm = dev_get_drvdata(sock->dev.parent);
+	वापस fm->has_ms_pअगर(fm, sock);
+पूर्ण
+EXPORT_SYMBOL(tअगरm_has_ms_pअगर);
 
-int tifm_map_sg(struct tifm_dev *sock, struct scatterlist *sg, int nents,
-		int direction)
-{
-	return pci_map_sg(to_pci_dev(sock->dev.parent), sg, nents, direction);
-}
-EXPORT_SYMBOL(tifm_map_sg);
+पूर्णांक tअगरm_map_sg(काष्ठा tअगरm_dev *sock, काष्ठा scatterlist *sg, पूर्णांक nents,
+		पूर्णांक direction)
+अणु
+	वापस pci_map_sg(to_pci_dev(sock->dev.parent), sg, nents, direction);
+पूर्ण
+EXPORT_SYMBOL(tअगरm_map_sg);
 
-void tifm_unmap_sg(struct tifm_dev *sock, struct scatterlist *sg, int nents,
-		   int direction)
-{
+व्योम tअगरm_unmap_sg(काष्ठा tअगरm_dev *sock, काष्ठा scatterlist *sg, पूर्णांक nents,
+		   पूर्णांक direction)
+अणु
 	pci_unmap_sg(to_pci_dev(sock->dev.parent), sg, nents, direction);
-}
-EXPORT_SYMBOL(tifm_unmap_sg);
+पूर्ण
+EXPORT_SYMBOL(tअगरm_unmap_sg);
 
-void tifm_queue_work(struct work_struct *work)
-{
+व्योम tअगरm_queue_work(काष्ठा work_काष्ठा *work)
+अणु
 	queue_work(workqueue, work);
-}
-EXPORT_SYMBOL(tifm_queue_work);
+पूर्ण
+EXPORT_SYMBOL(tअगरm_queue_work);
 
-int tifm_register_driver(struct tifm_driver *drv)
-{
-	drv->driver.bus = &tifm_bus_type;
+पूर्णांक tअगरm_रेजिस्टर_driver(काष्ठा tअगरm_driver *drv)
+अणु
+	drv->driver.bus = &tअगरm_bus_type;
 
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL(tifm_register_driver);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(tअगरm_रेजिस्टर_driver);
 
-void tifm_unregister_driver(struct tifm_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL(tifm_unregister_driver);
+व्योम tअगरm_unरेजिस्टर_driver(काष्ठा tअगरm_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(tअगरm_unरेजिस्टर_driver);
 
-static int __init tifm_init(void)
-{
-	int rc;
+अटल पूर्णांक __init tअगरm_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	workqueue = create_freezable_workqueue("tifm");
-	if (!workqueue)
-		return -ENOMEM;
+	workqueue = create_मुक्तzable_workqueue("tifm");
+	अगर (!workqueue)
+		वापस -ENOMEM;
 
-	rc = bus_register(&tifm_bus_type);
+	rc = bus_रेजिस्टर(&tअगरm_bus_type);
 
-	if (rc)
-		goto err_out_wq;
+	अगर (rc)
+		जाओ err_out_wq;
 
-	rc = class_register(&tifm_adapter_class);
-	if (!rc)
-		return 0;
+	rc = class_रेजिस्टर(&tअगरm_adapter_class);
+	अगर (!rc)
+		वापस 0;
 
-	bus_unregister(&tifm_bus_type);
+	bus_unरेजिस्टर(&tअगरm_bus_type);
 
 err_out_wq:
 	destroy_workqueue(workqueue);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit tifm_exit(void)
-{
-	class_unregister(&tifm_adapter_class);
-	bus_unregister(&tifm_bus_type);
+अटल व्योम __निकास tअगरm_निकास(व्योम)
+अणु
+	class_unरेजिस्टर(&tअगरm_adapter_class);
+	bus_unरेजिस्टर(&tअगरm_bus_type);
 	destroy_workqueue(workqueue);
-}
+पूर्ण
 
-subsys_initcall(tifm_init);
-module_exit(tifm_exit);
+subsys_initcall(tअगरm_init);
+module_निकास(tअगरm_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Alex Dubov");

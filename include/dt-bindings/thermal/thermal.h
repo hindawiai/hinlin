@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * This header provides constants for most thermal bindings.
+ * This header provides स्थिरants क्रम most thermal bindings.
  *
  * Copyright (C) 2013 Texas Instruments
- *	Eduardo Valentin <eduardo.valentin@ti.com>
+ *	Eduarकरो Valentin <eduarकरो.valentin@ti.com>
  */
 
-#ifndef _DT_BINDINGS_THERMAL_THERMAL_H
-#define _DT_BINDINGS_THERMAL_THERMAL_H
+#अगर_अघोषित _DT_BINDINGS_THERMAL_THERMAL_H
+#घोषणा _DT_BINDINGS_THERMAL_THERMAL_H
 
 /* On cooling devices upper and lower limits */
-#define THERMAL_NO_LIMIT		(~0)
+#घोषणा THERMAL_NO_LIMIT		(~0)
 
-#endif
+#पूर्ण_अगर
 

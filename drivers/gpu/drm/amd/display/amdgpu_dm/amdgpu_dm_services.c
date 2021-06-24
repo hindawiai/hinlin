@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,33 +24,33 @@
  *
  */
 
-#include <linux/string.h>
-#include <linux/acpi.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/acpi.h>
 
-#include <drm/drm_probe_helper.h>
-#include <drm/amdgpu_drm.h>
-#include "dm_services.h"
-#include "amdgpu.h"
-#include "amdgpu_dm.h"
-#include "amdgpu_dm_irq.h"
-#include "amdgpu_pm.h"
-#include "amdgpu_dm_trace.h"
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/amdgpu_drm.h>
+#समावेश "dm_services.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_dm.h"
+#समावेश "amdgpu_dm_irq.h"
+#समावेश "amdgpu_pm.h"
+#समावेश "amdgpu_dm_trace.h"
 
-	unsigned long long
-	dm_get_elapse_time_in_ns(struct dc_context *ctx,
-				 unsigned long long current_time_stamp,
-				 unsigned long long last_time_stamp)
-{
-	return current_time_stamp - last_time_stamp;
-}
+	अचिन्हित दीर्घ दीर्घ
+	dm_get_elapse_समय_in_ns(काष्ठा dc_context *ctx,
+				 अचिन्हित दीर्घ दीर्घ current_समय_stamp,
+				 अचिन्हित दीर्घ दीर्घ last_समय_stamp)
+अणु
+	वापस current_समय_stamp - last_समय_stamp;
+पूर्ण
 
-void dm_perf_trace_timestamp(const char *func_name, unsigned int line, struct dc_context *ctx)
-{
-	trace_amdgpu_dc_performance(ctx->perf_trace->read_count,
-				    ctx->perf_trace->write_count,
-				    &ctx->perf_trace->last_entry_read,
-				    &ctx->perf_trace->last_entry_write,
+व्योम dm_perf_trace_बारtamp(स्थिर अक्षर *func_name, अचिन्हित पूर्णांक line, काष्ठा dc_context *ctx)
+अणु
+	trace_amdgpu_dc_perक्रमmance(ctx->perf_trace->पढ़ो_count,
+				    ctx->perf_trace->ग_लिखो_count,
+				    &ctx->perf_trace->last_entry_पढ़ो,
+				    &ctx->perf_trace->last_entry_ग_लिखो,
 				    func_name, line);
-}
+पूर्ण
 
-/**** power component interfaces ****/
+/**** घातer component पूर्णांकerfaces ****/

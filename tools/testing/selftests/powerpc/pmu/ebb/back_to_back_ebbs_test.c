@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
 
-#include "ebb.h"
+#समावेश "ebb.h"
 
 
-#define NUMBER_OF_EBBS	50
+#घोषणा NUMBER_OF_EBBS	50
 
 /*
- * Test that if we overflow the counter while in the EBB handler, we take
- * another EBB on exiting from the handler.
+ * Test that अगर we overflow the counter जबतक in the EBB handler, we take
+ * another EBB on निकासing from the handler.
  *
- * We do this by counting with a stupidly low sample period, causing us to
- * overflow the PMU while we're still in the EBB handler, leading to another
+ * We करो this by counting with a stupidly low sample period, causing us to
+ * overflow the PMU जबतक we're still in the EBB handler, leading to another
  * EBB.
  *
  * We get out of what would otherwise be an infinite loop by leaving the
  * counter frozen once we've taken enough EBBs.
  */
 
-static void ebb_callee(void)
-{
-	uint64_t siar, val;
+अटल व्योम ebb_callee(व्योम)
+अणु
+	uपूर्णांक64_t siar, val;
 
 	val = mfspr(SPRN_BESCR);
-	if (!(val & BESCR_PMEO)) {
+	अगर (!(val & BESCR_PMEO)) अणु
 		ebb_state.stats.spurious++;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ebb_state.stats.ebb_count++;
 	trace_log_counter(ebb_state.trace, ebb_state.stats.ebb_count);
@@ -41,11 +42,11 @@ static void ebb_callee(void)
 	count_pmc(1, sample_period);
 
 out:
-	if (ebb_state.stats.ebb_count == NUMBER_OF_EBBS)
+	अगर (ebb_state.stats.ebb_count == NUMBER_OF_EBBS)
 		/* Reset but leave counters frozen */
 		reset_ebb_with_clear_mask(MMCR0_PMAO);
-	else
-		/* Unfreezes */
+	अन्यथा
+		/* Unमुक्तzes */
 		reset_ebb();
 
 	/* Do some stuff to chew some cycles and pop the counter */
@@ -57,11 +58,11 @@ out:
 
 	val = mfspr(SPRN_MMCR0);
 	trace_log_reg(ebb_state.trace, SPRN_MMCR0, val);
-}
+पूर्ण
 
-int back_to_back_ebbs(void)
-{
-	struct event event;
+पूर्णांक back_to_back_ebbs(व्योम)
+अणु
+	काष्ठा event event;
 
 	SKIP_IF(!ebb_is_supported());
 
@@ -72,7 +73,7 @@ int back_to_back_ebbs(void)
 	event.attr.exclude_hv = 1;
 	event.attr.exclude_idle = 1;
 
-	FAIL_IF(event_open(&event));
+	FAIL_IF(event_खोलो(&event));
 
 	setup_ebb_handler(ebb_callee);
 
@@ -80,27 +81,27 @@ int back_to_back_ebbs(void)
 
 	sample_period = 5;
 
-	ebb_freeze_pmcs();
+	ebb_मुक्तze_pmcs();
 	mtspr(SPRN_PMC1, pmc_sample_period(sample_period));
 	ebb_global_enable();
-	ebb_unfreeze_pmcs();
+	ebb_unमुक्तze_pmcs();
 
-	while (ebb_state.stats.ebb_count < NUMBER_OF_EBBS)
+	जबतक (ebb_state.stats.ebb_count < NUMBER_OF_EBBS)
 		FAIL_IF(core_busy_loop());
 
 	ebb_global_disable();
-	ebb_freeze_pmcs();
+	ebb_मुक्तze_pmcs();
 
 	dump_ebb_state();
 
-	event_close(&event);
+	event_बंद(&event);
 
 	FAIL_IF(ebb_state.stats.ebb_count != NUMBER_OF_EBBS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(back_to_back_ebbs, "back_to_back_ebbs");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(back_to_back_ebbs, "back_to_back_ebbs");
+पूर्ण

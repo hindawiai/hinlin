@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/proc/base.c
  *
@@ -8,9 +9,9 @@
  *
  *  1999, Al Viro. Rewritten. Now it covers the whole per-process part.
  *  Instead of using magical inumbers to determine the kind of object
- *  we allocate and fill in-core inodes upon lookup. They don't even
- *  go into icache. We cache the reference to task_struct upon lookup too.
- *  Eventually it should become a filesystem in its own. We don't use the
+ *  we allocate and fill in-core inodes upon lookup. They करोn't even
+ *  go पूर्णांकo icache. We cache the reference to task_काष्ठा upon lookup too.
+ *  Eventually it should become a fileप्रणाली in its own. We करोn't use the
  *  rest of procfs anymore.
  *
  *
@@ -24,12 +25,12 @@
  *
  *  Embedded Linux Lab - 10LE Instituto Nokia de Tecnologia - INdT
  *
- *  A new process specific entry (smaps) included in /proc. It shows the
- *  size of rss for each memory area. The maps entry lacks information
- *  about physical memory size (rss) for each mapped file, i.e.,
- *  rss information for executables and library files.
- *  This additional information is useful for any tools that need to know
- *  about physical memory consumption for a process specific library.
+ *  A new process specअगरic entry (smaps) included in /proc. It shows the
+ *  size of rss क्रम each memory area. The maps entry lacks inक्रमmation
+ *  about physical memory size (rss) क्रम each mapped file, i.e.,
+ *  rss inक्रमmation क्रम executables and library files.
+ *  This additional inक्रमmation is useful क्रम any tools that need to know
+ *  about physical memory consumption क्रम a process specअगरic library.
  *
  *  Changelog:
  *  21-Feb-2005
@@ -42,225 +43,225 @@
  *  A better way to walks through the page table as suggested by Hugh Dickins.
  *
  *  Simo Piiroinen <simo.piiroinen@nokia.com>:
- *  Smaps information related to shared, private, clean and dirty pages.
+ *  Smaps inक्रमmation related to shared, निजी, clean and dirty pages.
  *
  *  Paul Mundt <paul.mundt@nokia.com>:
  *  Overall revision about smaps.
  */
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include <linux/errno.h>
-#include <linux/time.h>
-#include <linux/proc_fs.h>
-#include <linux/stat.h>
-#include <linux/task_io_accounting_ops.h>
-#include <linux/init.h>
-#include <linux/capability.h>
-#include <linux/file.h>
-#include <linux/fdtable.h>
-#include <linux/generic-radix-tree.h>
-#include <linux/string.h>
-#include <linux/seq_file.h>
-#include <linux/namei.h>
-#include <linux/mnt_namespace.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/rcupdate.h>
-#include <linux/stacktrace.h>
-#include <linux/resource.h>
-#include <linux/module.h>
-#include <linux/mount.h>
-#include <linux/security.h>
-#include <linux/ptrace.h>
-#include <linux/tracehook.h>
-#include <linux/printk.h>
-#include <linux/cache.h>
-#include <linux/cgroup.h>
-#include <linux/cpuset.h>
-#include <linux/audit.h>
-#include <linux/poll.h>
-#include <linux/nsproxy.h>
-#include <linux/oom.h>
-#include <linux/elf.h>
-#include <linux/pid_namespace.h>
-#include <linux/user_namespace.h>
-#include <linux/fs_struct.h>
-#include <linux/slab.h>
-#include <linux/sched/autogroup.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/coredump.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/stat.h>
-#include <linux/posix-timers.h>
-#include <linux/time_namespace.h>
-#include <linux/resctrl.h>
-#include <trace/events/oom.h>
-#include "internal.h"
-#include "fd.h"
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/task_io_accounting_ops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fdtable.h>
+#समावेश <linux/generic-radix-tree.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/mnt_namespace.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/resource.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/security.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/cgroup.h>
+#समावेश <linux/cpuset.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/nsproxy.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <linux/fs_काष्ठा.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/स्वतःgroup.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/coredump.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/स्थिति.स>
+#समावेश <linux/posix-समयrs.h>
+#समावेश <linux/समय_namespace.h>
+#समावेश <linux/resctrl.h>
+#समावेश <trace/events/oom.h>
+#समावेश "internal.h"
+#समावेश "fd.h"
 
-#include "../../lib/kstrtox.h"
+#समावेश "../../lib/kstrtox.h"
 
 /* NOTE:
  *	Implementing inode permission operations in /proc is almost
  *	certainly an error.  Permission checks need to happen during
- *	each system call not at open time.  The reason is that most of
- *	what we wish to check for permissions in /proc varies at runtime.
+ *	each प्रणाली call not at खोलो समय.  The reason is that most of
+ *	what we wish to check क्रम permissions in /proc varies at runसमय.
  *
- *	The classic example of a problem is opening file descriptors
- *	in /proc for a task before it execs a suid executable.
+ *	The classic example of a problem is खोलोing file descriptors
+ *	in /proc क्रम a task beक्रमe it execs a suid executable.
  */
 
-static u8 nlink_tid __ro_after_init;
-static u8 nlink_tgid __ro_after_init;
+अटल u8 nlink_tid __ro_after_init;
+अटल u8 nlink_tgid __ro_after_init;
 
-struct pid_entry {
-	const char *name;
-	unsigned int len;
+काष्ठा pid_entry अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक len;
 	umode_t mode;
-	const struct inode_operations *iop;
-	const struct file_operations *fop;
-	union proc_op op;
-};
+	स्थिर काष्ठा inode_operations *iop;
+	स्थिर काष्ठा file_operations *fop;
+	जोड़ proc_op op;
+पूर्ण;
 
-#define NOD(NAME, MODE, IOP, FOP, OP) {			\
+#घोषणा NOD(NAME, MODE, IOP, FOP, OP) अणु			\
 	.name = (NAME),					\
-	.len  = sizeof(NAME) - 1,			\
+	.len  = माप(NAME) - 1,			\
 	.mode = MODE,					\
 	.iop  = IOP,					\
 	.fop  = FOP,					\
 	.op   = OP,					\
-}
+पूर्ण
 
-#define DIR(NAME, MODE, iops, fops)	\
-	NOD(NAME, (S_IFDIR|(MODE)), &iops, &fops, {} )
-#define LNK(NAME, get_link)					\
+#घोषणा सूची(NAME, MODE, iops, fops)	\
+	NOD(NAME, (S_IFसूची|(MODE)), &iops, &fops, अणुपूर्ण )
+#घोषणा LNK(NAME, get_link)					\
 	NOD(NAME, (S_IFLNK|S_IRWXUGO),				\
-		&proc_pid_link_inode_operations, NULL,		\
-		{ .proc_get_link = get_link } )
-#define REG(NAME, MODE, fops)				\
-	NOD(NAME, (S_IFREG|(MODE)), NULL, &fops, {})
-#define ONE(NAME, MODE, show)				\
+		&proc_pid_link_inode_operations, शून्य,		\
+		अणु .proc_get_link = get_link पूर्ण )
+#घोषणा REG(NAME, MODE, fops)				\
+	NOD(NAME, (S_IFREG|(MODE)), शून्य, &fops, अणुपूर्ण)
+#घोषणा ONE(NAME, MODE, show)				\
 	NOD(NAME, (S_IFREG|(MODE)),			\
-		NULL, &proc_single_file_operations,	\
-		{ .proc_show = show } )
-#define ATTR(LSM, NAME, MODE)				\
+		शून्य, &proc_single_file_operations,	\
+		अणु .proc_show = show पूर्ण )
+#घोषणा ATTR(LSM, NAME, MODE)				\
 	NOD(NAME, (S_IFREG|(MODE)),			\
-		NULL, &proc_pid_attr_operations,	\
-		{ .lsm = LSM })
+		शून्य, &proc_pid_attr_operations,	\
+		अणु .lsm = LSM पूर्ण)
 
 /*
- * Count the number of hardlinks for the pid_entry table, excluding the .
+ * Count the number of hardlinks क्रम the pid_entry table, excluding the .
  * and .. links.
  */
-static unsigned int __init pid_entry_nlink(const struct pid_entry *entries,
-	unsigned int n)
-{
-	unsigned int i;
-	unsigned int count;
+अटल अचिन्हित पूर्णांक __init pid_entry_nlink(स्थिर काष्ठा pid_entry *entries,
+	अचिन्हित पूर्णांक n)
+अणु
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक count;
 
 	count = 2;
-	for (i = 0; i < n; ++i) {
-		if (S_ISDIR(entries[i].mode))
+	क्रम (i = 0; i < n; ++i) अणु
+		अगर (S_ISसूची(entries[i].mode))
 			++count;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int get_task_root(struct task_struct *task, struct path *root)
-{
-	int result = -ENOENT;
+अटल पूर्णांक get_task_root(काष्ठा task_काष्ठा *task, काष्ठा path *root)
+अणु
+	पूर्णांक result = -ENOENT;
 
 	task_lock(task);
-	if (task->fs) {
+	अगर (task->fs) अणु
 		get_fs_root(task->fs, root);
 		result = 0;
-	}
+	पूर्ण
 	task_unlock(task);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int proc_cwd_link(struct dentry *dentry, struct path *path)
-{
-	struct task_struct *task = get_proc_task(d_inode(dentry));
-	int result = -ENOENT;
+अटल पूर्णांक proc_cwd_link(काष्ठा dentry *dentry, काष्ठा path *path)
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(d_inode(dentry));
+	पूर्णांक result = -ENOENT;
 
-	if (task) {
+	अगर (task) अणु
 		task_lock(task);
-		if (task->fs) {
+		अगर (task->fs) अणु
 			get_fs_pwd(task->fs, path);
 			result = 0;
-		}
+		पूर्ण
 		task_unlock(task);
-		put_task_struct(task);
-	}
-	return result;
-}
+		put_task_काष्ठा(task);
+	पूर्ण
+	वापस result;
+पूर्ण
 
-static int proc_root_link(struct dentry *dentry, struct path *path)
-{
-	struct task_struct *task = get_proc_task(d_inode(dentry));
-	int result = -ENOENT;
+अटल पूर्णांक proc_root_link(काष्ठा dentry *dentry, काष्ठा path *path)
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(d_inode(dentry));
+	पूर्णांक result = -ENOENT;
 
-	if (task) {
+	अगर (task) अणु
 		result = get_task_root(task, path);
-		put_task_struct(task);
-	}
-	return result;
-}
+		put_task_काष्ठा(task);
+	पूर्ण
+	वापस result;
+पूर्ण
 
 /*
  * If the user used setproctitle(), we just get the string from
  * user space at arg_start, and limit it to a maximum of one page.
  */
-static ssize_t get_mm_proctitle(struct mm_struct *mm, char __user *buf,
-				size_t count, unsigned long pos,
-				unsigned long arg_start)
-{
-	char *page;
-	int ret, got;
+अटल sमाप_प्रकार get_mm_proctitle(काष्ठा mm_काष्ठा *mm, अक्षर __user *buf,
+				माप_प्रकार count, अचिन्हित दीर्घ pos,
+				अचिन्हित दीर्घ arg_start)
+अणु
+	अक्षर *page;
+	पूर्णांक ret, got;
 
-	if (pos >= PAGE_SIZE)
-		return 0;
+	अगर (pos >= PAGE_SIZE)
+		वापस 0;
 
-	page = (char *)__get_free_page(GFP_KERNEL);
-	if (!page)
-		return -ENOMEM;
+	page = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!page)
+		वापस -ENOMEM;
 
 	ret = 0;
 	got = access_remote_vm(mm, arg_start, page, PAGE_SIZE, FOLL_ANON);
-	if (got > 0) {
-		int len = strnlen(page, got);
+	अगर (got > 0) अणु
+		पूर्णांक len = strnlen(page, got);
 
-		/* Include the NUL character if it was found */
-		if (len < got)
+		/* Include the NUL अक्षरacter अगर it was found */
+		अगर (len < got)
 			len++;
 
-		if (len > pos) {
+		अगर (len > pos) अणु
 			len -= pos;
-			if (len > count)
+			अगर (len > count)
 				len = count;
 			len -= copy_to_user(buf, page+pos, len);
-			if (!len)
+			अगर (!len)
 				len = -EFAULT;
 			ret = len;
-		}
-	}
-	free_page((unsigned long)page);
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	मुक्त_page((अचिन्हित दीर्घ)page);
+	वापस ret;
+पूर्ण
 
-static ssize_t get_mm_cmdline(struct mm_struct *mm, char __user *buf,
-			      size_t count, loff_t *ppos)
-{
-	unsigned long arg_start, arg_end, env_start, env_end;
-	unsigned long pos, len;
-	char *page, c;
+अटल sमाप_प्रकार get_mm_cmdline(काष्ठा mm_काष्ठा *mm, अक्षर __user *buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	अचिन्हित दीर्घ arg_start, arg_end, env_start, env_end;
+	अचिन्हित दीर्घ pos, len;
+	अक्षर *page, c;
 
-	/* Check if process spawned far enough to have cmdline. */
-	if (!mm->env_end)
-		return 0;
+	/* Check अगर process spawned far enough to have cmdline. */
+	अगर (!mm->env_end)
+		वापस 0;
 
 	spin_lock(&mm->arg_lock);
 	arg_start = mm->arg_start;
@@ -269,1747 +270,1747 @@ static ssize_t get_mm_cmdline(struct mm_struct *mm, char __user *buf,
 	env_end = mm->env_end;
 	spin_unlock(&mm->arg_lock);
 
-	if (arg_start >= arg_end)
-		return 0;
+	अगर (arg_start >= arg_end)
+		वापस 0;
 
 	/*
-	 * We allow setproctitle() to overwrite the argument
+	 * We allow setproctitle() to overग_लिखो the argument
 	 * strings, and overflow past the original end. But
-	 * only when it overflows into the environment area.
+	 * only when it overflows पूर्णांकo the environment area.
 	 */
-	if (env_start != arg_end || env_end < env_start)
+	अगर (env_start != arg_end || env_end < env_start)
 		env_start = env_end = arg_end;
 	len = env_end - arg_start;
 
-	/* We're not going to care if "*ppos" has high bits set */
+	/* We're not going to care अगर "*ppos" has high bits set */
 	pos = *ppos;
-	if (pos >= len)
-		return 0;
-	if (count > len - pos)
+	अगर (pos >= len)
+		वापस 0;
+	अगर (count > len - pos)
 		count = len - pos;
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
 	/*
-	 * Magical special case: if the argv[] end byte is not
+	 * Magical special हाल: अगर the argv[] end byte is not
 	 * zero, the user has overwritten it with setproctitle(3).
 	 *
-	 * Possible future enhancement: do this only once when
+	 * Possible future enhancement: करो this only once when
 	 * pos is 0, and set a flag in the 'struct file'.
 	 */
-	if (access_remote_vm(mm, arg_end-1, &c, 1, FOLL_ANON) == 1 && c)
-		return get_mm_proctitle(mm, buf, count, pos, arg_start);
+	अगर (access_remote_vm(mm, arg_end-1, &c, 1, FOLL_ANON) == 1 && c)
+		वापस get_mm_proctitle(mm, buf, count, pos, arg_start);
 
 	/*
-	 * For the non-setproctitle() case we limit things strictly
+	 * For the non-setproctitle() हाल we limit things strictly
 	 * to the [arg_start, arg_end[ range.
 	 */
 	pos += arg_start;
-	if (pos < arg_start || pos >= arg_end)
-		return 0;
-	if (count > arg_end - pos)
+	अगर (pos < arg_start || pos >= arg_end)
+		वापस 0;
+	अगर (count > arg_end - pos)
 		count = arg_end - pos;
 
-	page = (char *)__get_free_page(GFP_KERNEL);
-	if (!page)
-		return -ENOMEM;
+	page = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!page)
+		वापस -ENOMEM;
 
 	len = 0;
-	while (count) {
-		int got;
-		size_t size = min_t(size_t, PAGE_SIZE, count);
+	जबतक (count) अणु
+		पूर्णांक got;
+		माप_प्रकार size = min_t(माप_प्रकार, PAGE_SIZE, count);
 
 		got = access_remote_vm(mm, pos, page, size, FOLL_ANON);
-		if (got <= 0)
-			break;
+		अगर (got <= 0)
+			अवरोध;
 		got -= copy_to_user(buf, page, got);
-		if (unlikely(!got)) {
-			if (!len)
+		अगर (unlikely(!got)) अणु
+			अगर (!len)
 				len = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pos += got;
 		buf += got;
 		len += got;
 		count -= got;
-	}
+	पूर्ण
 
-	free_page((unsigned long)page);
-	return len;
-}
+	मुक्त_page((अचिन्हित दीर्घ)page);
+	वापस len;
+पूर्ण
 
-static ssize_t get_task_cmdline(struct task_struct *tsk, char __user *buf,
-				size_t count, loff_t *pos)
-{
-	struct mm_struct *mm;
-	ssize_t ret;
+अटल sमाप_प्रकार get_task_cmdline(काष्ठा task_काष्ठा *tsk, अक्षर __user *buf,
+				माप_प्रकार count, loff_t *pos)
+अणु
+	काष्ठा mm_काष्ठा *mm;
+	sमाप_प्रकार ret;
 
 	mm = get_task_mm(tsk);
-	if (!mm)
-		return 0;
+	अगर (!mm)
+		वापस 0;
 
 	ret = get_mm_cmdline(mm, buf, count, pos);
 	mmput(mm);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t proc_pid_cmdline_read(struct file *file, char __user *buf,
-				     size_t count, loff_t *pos)
-{
-	struct task_struct *tsk;
-	ssize_t ret;
+अटल sमाप_प्रकार proc_pid_cmdline_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				     माप_प्रकार count, loff_t *pos)
+अणु
+	काष्ठा task_काष्ठा *tsk;
+	sमाप_प्रकार ret;
 
 	BUG_ON(*pos < 0);
 
 	tsk = get_proc_task(file_inode(file));
-	if (!tsk)
-		return -ESRCH;
+	अगर (!tsk)
+		वापस -ESRCH;
 	ret = get_task_cmdline(tsk, buf, count, pos);
-	put_task_struct(tsk);
-	if (ret > 0)
+	put_task_काष्ठा(tsk);
+	अगर (ret > 0)
 		*pos += ret;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations proc_pid_cmdline_ops = {
-	.read	= proc_pid_cmdline_read,
+अटल स्थिर काष्ठा file_operations proc_pid_cmdline_ops = अणु
+	.पढ़ो	= proc_pid_cmdline_पढ़ो,
 	.llseek	= generic_file_llseek,
-};
+पूर्ण;
 
-#ifdef CONFIG_KALLSYMS
+#अगर_घोषित CONFIG_KALLSYMS
 /*
- * Provides a wchan file via kallsyms in a proper one-value-per-file format.
- * Returns the resolved symbol.  If that fails, simply return the address.
+ * Provides a wchan file via kallsyms in a proper one-value-per-file क्रमmat.
+ * Returns the resolved symbol.  If that fails, simply वापस the address.
  */
-static int proc_pid_wchan(struct seq_file *m, struct pid_namespace *ns,
-			  struct pid *pid, struct task_struct *task)
-{
-	unsigned long wchan;
+अटल पूर्णांक proc_pid_wchan(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+			  काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	अचिन्हित दीर्घ wchan;
 
-	if (ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
+	अगर (ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
 		wchan = get_wchan(task);
-	else
+	अन्यथा
 		wchan = 0;
 
-	if (wchan)
-		seq_printf(m, "%ps", (void *) wchan);
-	else
-		seq_putc(m, '0');
+	अगर (wchan)
+		seq_म_लिखो(m, "%ps", (व्योम *) wchan);
+	अन्यथा
+		seq_अ_दो(m, '0');
 
-	return 0;
-}
-#endif /* CONFIG_KALLSYMS */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_KALLSYMS */
 
-static int lock_trace(struct task_struct *task)
-{
-	int err = down_read_killable(&task->signal->exec_update_lock);
-	if (err)
-		return err;
-	if (!ptrace_may_access(task, PTRACE_MODE_ATTACH_FSCREDS)) {
-		up_read(&task->signal->exec_update_lock);
-		return -EPERM;
-	}
-	return 0;
-}
+अटल पूर्णांक lock_trace(काष्ठा task_काष्ठा *task)
+अणु
+	पूर्णांक err = करोwn_पढ़ो_समाप्तable(&task->संकेत->exec_update_lock);
+	अगर (err)
+		वापस err;
+	अगर (!ptrace_may_access(task, PTRACE_MODE_ATTACH_FSCREDS)) अणु
+		up_पढ़ो(&task->संकेत->exec_update_lock);
+		वापस -EPERM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void unlock_trace(struct task_struct *task)
-{
-	up_read(&task->signal->exec_update_lock);
-}
+अटल व्योम unlock_trace(काष्ठा task_काष्ठा *task)
+अणु
+	up_पढ़ो(&task->संकेत->exec_update_lock);
+पूर्ण
 
-#ifdef CONFIG_STACKTRACE
+#अगर_घोषित CONFIG_STACKTRACE
 
-#define MAX_STACK_TRACE_DEPTH	64
+#घोषणा MAX_STACK_TRACE_DEPTH	64
 
-static int proc_pid_stack(struct seq_file *m, struct pid_namespace *ns,
-			  struct pid *pid, struct task_struct *task)
-{
-	unsigned long *entries;
-	int err;
+अटल पूर्णांक proc_pid_stack(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+			  काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	अचिन्हित दीर्घ *entries;
+	पूर्णांक err;
 
 	/*
 	 * The ability to racily run the kernel stack unwinder on a running task
-	 * and then observe the unwinder output is scary; while it is useful for
+	 * and then observe the unwinder output is scary; जबतक it is useful क्रम
 	 * debugging kernel issues, it can also allow an attacker to leak kernel
 	 * stack contents.
 	 * Doing this in a manner that is at least safe from races would require
 	 * some work to ensure that the remote task can not be scheduled; and
 	 * even then, this would still expose the unwinder as local attack
 	 * surface.
-	 * Therefore, this interface is restricted to root.
+	 * Thereक्रमe, this पूर्णांकerface is restricted to root.
 	 */
-	if (!file_ns_capable(m->file, &init_user_ns, CAP_SYS_ADMIN))
-		return -EACCES;
+	अगर (!file_ns_capable(m->file, &init_user_ns, CAP_SYS_ADMIN))
+		वापस -EACCES;
 
-	entries = kmalloc_array(MAX_STACK_TRACE_DEPTH, sizeof(*entries),
+	entries = kदो_स्मृति_array(MAX_STACK_TRACE_DEPTH, माप(*entries),
 				GFP_KERNEL);
-	if (!entries)
-		return -ENOMEM;
+	अगर (!entries)
+		वापस -ENOMEM;
 
 	err = lock_trace(task);
-	if (!err) {
-		unsigned int i, nr_entries;
+	अगर (!err) अणु
+		अचिन्हित पूर्णांक i, nr_entries;
 
 		nr_entries = stack_trace_save_tsk(task, entries,
 						  MAX_STACK_TRACE_DEPTH, 0);
 
-		for (i = 0; i < nr_entries; i++) {
-			seq_printf(m, "[<0>] %pB\n", (void *)entries[i]);
-		}
+		क्रम (i = 0; i < nr_entries; i++) अणु
+			seq_म_लिखो(m, "[<0>] %pB\n", (व्योम *)entries[i]);
+		पूर्ण
 
 		unlock_trace(task);
-	}
-	kfree(entries);
+	पूर्ण
+	kमुक्त(entries);
 
-	return err;
-}
-#endif
+	वापस err;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_SCHED_INFO
+#अगर_घोषित CONFIG_SCHED_INFO
 /*
  * Provides /proc/PID/schedstat
  */
-static int proc_pid_schedstat(struct seq_file *m, struct pid_namespace *ns,
-			      struct pid *pid, struct task_struct *task)
-{
-	if (unlikely(!sched_info_on()))
-		seq_puts(m, "0 0 0\n");
-	else
-		seq_printf(m, "%llu %llu %lu\n",
-		   (unsigned long long)task->se.sum_exec_runtime,
-		   (unsigned long long)task->sched_info.run_delay,
+अटल पूर्णांक proc_pid_schedstat(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+			      काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	अगर (unlikely(!sched_info_on()))
+		seq_माला_दो(m, "0 0 0\n");
+	अन्यथा
+		seq_म_लिखो(m, "%llu %llu %lu\n",
+		   (अचिन्हित दीर्घ दीर्घ)task->se.sum_exec_runसमय,
+		   (अचिन्हित दीर्घ दीर्घ)task->sched_info.run_delay,
 		   task->sched_info.pcount);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_LATENCYTOP
-static int lstats_show_proc(struct seq_file *m, void *v)
-{
-	int i;
-	struct inode *inode = m->private;
-	struct task_struct *task = get_proc_task(inode);
+#अगर_घोषित CONFIG_LATENCYTOP
+अटल पूर्णांक lstats_show_proc(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक i;
+	काष्ठा inode *inode = m->निजी;
+	काष्ठा task_काष्ठा *task = get_proc_task(inode);
 
-	if (!task)
-		return -ESRCH;
-	seq_puts(m, "Latency Top version : v0.1\n");
-	for (i = 0; i < LT_SAVECOUNT; i++) {
-		struct latency_record *lr = &task->latency_record[i];
-		if (lr->backtrace[0]) {
-			int q;
-			seq_printf(m, "%i %li %li",
-				   lr->count, lr->time, lr->max);
-			for (q = 0; q < LT_BACKTRACEDEPTH; q++) {
-				unsigned long bt = lr->backtrace[q];
+	अगर (!task)
+		वापस -ESRCH;
+	seq_माला_दो(m, "Latency Top version : v0.1\n");
+	क्रम (i = 0; i < LT_SAVECOUNT; i++) अणु
+		काष्ठा latency_record *lr = &task->latency_record[i];
+		अगर (lr->backtrace[0]) अणु
+			पूर्णांक q;
+			seq_म_लिखो(m, "%i %li %li",
+				   lr->count, lr->समय, lr->max);
+			क्रम (q = 0; q < LT_BACKTRACEDEPTH; q++) अणु
+				अचिन्हित दीर्घ bt = lr->backtrace[q];
 
-				if (!bt)
-					break;
-				seq_printf(m, " %ps", (void *)bt);
-			}
-			seq_putc(m, '\n');
-		}
+				अगर (!bt)
+					अवरोध;
+				seq_म_लिखो(m, " %ps", (व्योम *)bt);
+			पूर्ण
+			seq_अ_दो(m, '\n');
+		पूर्ण
 
-	}
-	put_task_struct(task);
-	return 0;
-}
+	पूर्ण
+	put_task_काष्ठा(task);
+	वापस 0;
+पूर्ण
 
-static int lstats_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, lstats_show_proc, inode);
-}
+अटल पूर्णांक lstats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, lstats_show_proc, inode);
+पूर्ण
 
-static ssize_t lstats_write(struct file *file, const char __user *buf,
-			    size_t count, loff_t *offs)
-{
-	struct task_struct *task = get_proc_task(file_inode(file));
+अटल sमाप_प्रकार lstats_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			    माप_प्रकार count, loff_t *offs)
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(file_inode(file));
 
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 	clear_tsk_latency_tracing(task);
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations proc_lstats_operations = {
-	.open		= lstats_open,
-	.read		= seq_read,
-	.write		= lstats_write,
+अटल स्थिर काष्ठा file_operations proc_lstats_operations = अणु
+	.खोलो		= lstats_खोलो,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= lstats_ग_लिखो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 
-static int proc_oom_score(struct seq_file *m, struct pid_namespace *ns,
-			  struct pid *pid, struct task_struct *task)
-{
-	unsigned long totalpages = totalram_pages() + total_swap_pages;
-	unsigned long points = 0;
-	long badness;
+अटल पूर्णांक proc_oom_score(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+			  काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	अचिन्हित दीर्घ totalpages = totalram_pages() + total_swap_pages;
+	अचिन्हित दीर्घ poपूर्णांकs = 0;
+	दीर्घ badness;
 
 	badness = oom_badness(task, totalpages);
 	/*
-	 * Special case OOM_SCORE_ADJ_MIN for all others scale the
-	 * badness value into [0, 2000] range which we have been
-	 * exporting for a long time so userspace might depend on it.
+	 * Special हाल OOM_SCORE_ADJ_MIN क्रम all others scale the
+	 * badness value पूर्णांकo [0, 2000] range which we have been
+	 * exporting क्रम a दीर्घ समय so userspace might depend on it.
 	 */
-	if (badness != LONG_MIN)
-		points = (1000 + badness * 1000 / (long)totalpages) * 2 / 3;
+	अगर (badness != दीर्घ_न्यून)
+		poपूर्णांकs = (1000 + badness * 1000 / (दीर्घ)totalpages) * 2 / 3;
 
-	seq_printf(m, "%lu\n", points);
+	seq_म_लिखो(m, "%lu\n", poपूर्णांकs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct limit_names {
-	const char *name;
-	const char *unit;
-};
+काष्ठा limit_names अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *unit;
+पूर्ण;
 
-static const struct limit_names lnames[RLIM_NLIMITS] = {
-	[RLIMIT_CPU] = {"Max cpu time", "seconds"},
-	[RLIMIT_FSIZE] = {"Max file size", "bytes"},
-	[RLIMIT_DATA] = {"Max data size", "bytes"},
-	[RLIMIT_STACK] = {"Max stack size", "bytes"},
-	[RLIMIT_CORE] = {"Max core file size", "bytes"},
-	[RLIMIT_RSS] = {"Max resident set", "bytes"},
-	[RLIMIT_NPROC] = {"Max processes", "processes"},
-	[RLIMIT_NOFILE] = {"Max open files", "files"},
-	[RLIMIT_MEMLOCK] = {"Max locked memory", "bytes"},
-	[RLIMIT_AS] = {"Max address space", "bytes"},
-	[RLIMIT_LOCKS] = {"Max file locks", "locks"},
-	[RLIMIT_SIGPENDING] = {"Max pending signals", "signals"},
-	[RLIMIT_MSGQUEUE] = {"Max msgqueue size", "bytes"},
-	[RLIMIT_NICE] = {"Max nice priority", NULL},
-	[RLIMIT_RTPRIO] = {"Max realtime priority", NULL},
-	[RLIMIT_RTTIME] = {"Max realtime timeout", "us"},
-};
+अटल स्थिर काष्ठा limit_names lnames[RLIM_NLIMITS] = अणु
+	[RLIMIT_CPU] = अणु"Max cpu time", "seconds"पूर्ण,
+	[RLIMIT_FSIZE] = अणु"Max file size", "bytes"पूर्ण,
+	[RLIMIT_DATA] = अणु"Max data size", "bytes"पूर्ण,
+	[RLIMIT_STACK] = अणु"Max stack size", "bytes"पूर्ण,
+	[RLIMIT_CORE] = अणु"Max core file size", "bytes"पूर्ण,
+	[RLIMIT_RSS] = अणु"Max resident set", "bytes"पूर्ण,
+	[RLIMIT_NPROC] = अणु"Max processes", "processes"पूर्ण,
+	[RLIMIT_NOखाता] = अणु"Max open files", "files"पूर्ण,
+	[RLIMIT_MEMLOCK] = अणु"Max locked memory", "bytes"पूर्ण,
+	[RLIMIT_AS] = अणु"Max address space", "bytes"पूर्ण,
+	[RLIMIT_LOCKS] = अणु"Max file locks", "locks"पूर्ण,
+	[RLIMIT_SIGPENDING] = अणु"Max pending signals", "signals"पूर्ण,
+	[RLIMIT_MSGQUEUE] = अणु"Max msgqueue size", "bytes"पूर्ण,
+	[RLIMIT_NICE] = अणु"Max nice priority", शून्यपूर्ण,
+	[RLIMIT_RTPRIO] = अणु"Max realtime priority", शून्यपूर्ण,
+	[RLIMIT_RTTIME] = अणु"Max realtime timeout", "us"पूर्ण,
+पूर्ण;
 
-/* Display limits for a process */
-static int proc_pid_limits(struct seq_file *m, struct pid_namespace *ns,
-			   struct pid *pid, struct task_struct *task)
-{
-	unsigned int i;
-	unsigned long flags;
+/* Display limits क्रम a process */
+अटल पूर्णांक proc_pid_limits(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+			   काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	अचिन्हित पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
-	struct rlimit rlim[RLIM_NLIMITS];
+	काष्ठा rlimit rlim[RLIM_NLIMITS];
 
-	if (!lock_task_sighand(task, &flags))
-		return 0;
-	memcpy(rlim, task->signal->rlim, sizeof(struct rlimit) * RLIM_NLIMITS);
+	अगर (!lock_task_sighand(task, &flags))
+		वापस 0;
+	स_नकल(rlim, task->संकेत->rlim, माप(काष्ठा rlimit) * RLIM_NLIMITS);
 	unlock_task_sighand(task, &flags);
 
 	/*
-	 * print the file header
+	 * prपूर्णांक the file header
 	 */
-	seq_puts(m, "Limit                     "
+	seq_माला_दो(m, "Limit                     "
 		"Soft Limit           "
 		"Hard Limit           "
 		"Units     \n");
 
-	for (i = 0; i < RLIM_NLIMITS; i++) {
-		if (rlim[i].rlim_cur == RLIM_INFINITY)
-			seq_printf(m, "%-25s %-20s ",
+	क्रम (i = 0; i < RLIM_NLIMITS; i++) अणु
+		अगर (rlim[i].rlim_cur == RLIM_अनन्त)
+			seq_म_लिखो(m, "%-25s %-20s ",
 				   lnames[i].name, "unlimited");
-		else
-			seq_printf(m, "%-25s %-20lu ",
+		अन्यथा
+			seq_म_लिखो(m, "%-25s %-20lu ",
 				   lnames[i].name, rlim[i].rlim_cur);
 
-		if (rlim[i].rlim_max == RLIM_INFINITY)
-			seq_printf(m, "%-20s ", "unlimited");
-		else
-			seq_printf(m, "%-20lu ", rlim[i].rlim_max);
+		अगर (rlim[i].rlim_max == RLIM_अनन्त)
+			seq_म_लिखो(m, "%-20s ", "unlimited");
+		अन्यथा
+			seq_म_लिखो(m, "%-20lu ", rlim[i].rlim_max);
 
-		if (lnames[i].unit)
-			seq_printf(m, "%-10s\n", lnames[i].unit);
-		else
-			seq_putc(m, '\n');
-	}
+		अगर (lnames[i].unit)
+			seq_म_लिखो(m, "%-10s\n", lnames[i].unit);
+		अन्यथा
+			seq_अ_दो(m, '\n');
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HAVE_ARCH_TRACEHOOK
-static int proc_pid_syscall(struct seq_file *m, struct pid_namespace *ns,
-			    struct pid *pid, struct task_struct *task)
-{
-	struct syscall_info info;
+#अगर_घोषित CONFIG_HAVE_ARCH_TRACEHOOK
+अटल पूर्णांक proc_pid_syscall(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+			    काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा syscall_info info;
 	u64 *args = &info.data.args[0];
-	int res;
+	पूर्णांक res;
 
 	res = lock_trace(task);
-	if (res)
-		return res;
+	अगर (res)
+		वापस res;
 
-	if (task_current_syscall(task, &info))
-		seq_puts(m, "running\n");
-	else if (info.data.nr < 0)
-		seq_printf(m, "%d 0x%llx 0x%llx\n",
-			   info.data.nr, info.sp, info.data.instruction_pointer);
-	else
-		seq_printf(m,
+	अगर (task_current_syscall(task, &info))
+		seq_माला_दो(m, "running\n");
+	अन्यथा अगर (info.data.nr < 0)
+		seq_म_लिखो(m, "%d 0x%llx 0x%llx\n",
+			   info.data.nr, info.sp, info.data.inकाष्ठाion_poपूर्णांकer);
+	अन्यथा
+		seq_म_लिखो(m,
 		       "%d 0x%llx 0x%llx 0x%llx 0x%llx 0x%llx 0x%llx 0x%llx 0x%llx\n",
 		       info.data.nr,
 		       args[0], args[1], args[2], args[3], args[4], args[5],
-		       info.sp, info.data.instruction_pointer);
+		       info.sp, info.data.inकाष्ठाion_poपूर्णांकer);
 	unlock_trace(task);
 
-	return 0;
-}
-#endif /* CONFIG_HAVE_ARCH_TRACEHOOK */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HAVE_ARCH_TRACEHOOK */
 
 /************************************************************************/
 /*                       Here the fs part begins                        */
 /************************************************************************/
 
 /* permission checks */
-static int proc_fd_access_allowed(struct inode *inode)
-{
-	struct task_struct *task;
-	int allowed = 0;
-	/* Allow access to a task's file descriptors if it is us or we
+अटल पूर्णांक proc_fd_access_allowed(काष्ठा inode *inode)
+अणु
+	काष्ठा task_काष्ठा *task;
+	पूर्णांक allowed = 0;
+	/* Allow access to a task's file descriptors अगर it is us or we
 	 * may use ptrace attach to the process and find out that
-	 * information.
+	 * inक्रमmation.
 	 */
 	task = get_proc_task(inode);
-	if (task) {
+	अगर (task) अणु
 		allowed = ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS);
-		put_task_struct(task);
-	}
-	return allowed;
-}
+		put_task_काष्ठा(task);
+	पूर्ण
+	वापस allowed;
+पूर्ण
 
-int proc_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-		 struct iattr *attr)
-{
-	int error;
-	struct inode *inode = d_inode(dentry);
+पूर्णांक proc_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		 काष्ठा iattr *attr)
+अणु
+	पूर्णांक error;
+	काष्ठा inode *inode = d_inode(dentry);
 
-	if (attr->ia_valid & ATTR_MODE)
-		return -EPERM;
+	अगर (attr->ia_valid & ATTR_MODE)
+		वापस -EPERM;
 
 	error = setattr_prepare(&init_user_ns, dentry, attr);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	setattr_copy(&init_user_ns, inode, attr);
 	mark_inode_dirty(inode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * May current process learn task's sched/cmdline info (for hide_pid_min=1)
- * or euid/egid (for hide_pid_min=2)?
+ * May current process learn task's sched/cmdline info (क्रम hide_pid_min=1)
+ * or euid/egid (क्रम hide_pid_min=2)?
  */
-static bool has_pid_permissions(struct proc_fs_info *fs_info,
-				 struct task_struct *task,
-				 enum proc_hidepid hide_pid_min)
-{
+अटल bool has_pid_permissions(काष्ठा proc_fs_info *fs_info,
+				 काष्ठा task_काष्ठा *task,
+				 क्रमागत proc_hidepid hide_pid_min)
+अणु
 	/*
-	 * If 'hidpid' mount option is set force a ptrace check,
-	 * we indicate that we are using a filesystem syscall
+	 * If 'hidpid' mount option is set क्रमce a ptrace check,
+	 * we indicate that we are using a fileप्रणाली syscall
 	 * by passing PTRACE_MODE_READ_FSCREDS
 	 */
-	if (fs_info->hide_pid == HIDEPID_NOT_PTRACEABLE)
-		return ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS);
+	अगर (fs_info->hide_pid == HIDEPID_NOT_PTRACEABLE)
+		वापस ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS);
 
-	if (fs_info->hide_pid < hide_pid_min)
-		return true;
-	if (in_group_p(fs_info->pid_gid))
-		return true;
-	return ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS);
-}
+	अगर (fs_info->hide_pid < hide_pid_min)
+		वापस true;
+	अगर (in_group_p(fs_info->pid_gid))
+		वापस true;
+	वापस ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS);
+पूर्ण
 
 
-static int proc_pid_permission(struct user_namespace *mnt_userns,
-			       struct inode *inode, int mask)
-{
-	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
-	struct task_struct *task;
+अटल पूर्णांक proc_pid_permission(काष्ठा user_namespace *mnt_userns,
+			       काष्ठा inode *inode, पूर्णांक mask)
+अणु
+	काष्ठा proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
+	काष्ठा task_काष्ठा *task;
 	bool has_perms;
 
 	task = get_proc_task(inode);
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 	has_perms = has_pid_permissions(fs_info, task, HIDEPID_NO_ACCESS);
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 
-	if (!has_perms) {
-		if (fs_info->hide_pid == HIDEPID_INVISIBLE) {
+	अगर (!has_perms) अणु
+		अगर (fs_info->hide_pid == HIDEPID_INVISIBLE) अणु
 			/*
-			 * Let's make getdents(), stat(), and open()
+			 * Let's make getdents(), stat(), and खोलो()
 			 * consistent with each other.  If a process
 			 * may not stat() a file, it shouldn't be seen
 			 * in procfs at all.
 			 */
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 
-		return -EPERM;
-	}
-	return generic_permission(&init_user_ns, inode, mask);
-}
+		वापस -EPERM;
+	पूर्ण
+	वापस generic_permission(&init_user_ns, inode, mask);
+पूर्ण
 
 
 
-static const struct inode_operations proc_def_inode_operations = {
+अटल स्थिर काष्ठा inode_operations proc_def_inode_operations = अणु
 	.setattr	= proc_setattr,
-};
+पूर्ण;
 
-static int proc_single_show(struct seq_file *m, void *v)
-{
-	struct inode *inode = m->private;
-	struct pid_namespace *ns = proc_pid_ns(inode->i_sb);
-	struct pid *pid = proc_pid(inode);
-	struct task_struct *task;
-	int ret;
+अटल पूर्णांक proc_single_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा inode *inode = m->निजी;
+	काष्ठा pid_namespace *ns = proc_pid_ns(inode->i_sb);
+	काष्ठा pid *pid = proc_pid(inode);
+	काष्ठा task_काष्ठा *task;
+	पूर्णांक ret;
 
 	task = get_pid_task(pid, PIDTYPE_PID);
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 
 	ret = PROC_I(inode)->op.proc_show(m, ns, pid, task);
 
-	put_task_struct(task);
-	return ret;
-}
+	put_task_काष्ठा(task);
+	वापस ret;
+पूर्ण
 
-static int proc_single_open(struct inode *inode, struct file *filp)
-{
-	return single_open(filp, proc_single_show, inode);
-}
+अटल पूर्णांक proc_single_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस single_खोलो(filp, proc_single_show, inode);
+पूर्ण
 
-static const struct file_operations proc_single_file_operations = {
-	.open		= proc_single_open,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations proc_single_file_operations = अणु
+	.खोलो		= proc_single_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
 
-struct mm_struct *proc_mem_open(struct inode *inode, unsigned int mode)
-{
-	struct task_struct *task = get_proc_task(inode);
-	struct mm_struct *mm = ERR_PTR(-ESRCH);
+काष्ठा mm_काष्ठा *proc_mem_खोलो(काष्ठा inode *inode, अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(inode);
+	काष्ठा mm_काष्ठा *mm = ERR_PTR(-ESRCH);
 
-	if (task) {
+	अगर (task) अणु
 		mm = mm_access(task, mode | PTRACE_MODE_FSCREDS);
-		put_task_struct(task);
+		put_task_काष्ठा(task);
 
-		if (!IS_ERR_OR_NULL(mm)) {
-			/* ensure this mm_struct can't be freed */
+		अगर (!IS_ERR_OR_शून्य(mm)) अणु
+			/* ensure this mm_काष्ठा can't be मुक्तd */
 			mmgrab(mm);
-			/* but do not pin its memory */
+			/* but करो not pin its memory */
 			mmput(mm);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return mm;
-}
+	वापस mm;
+पूर्ण
 
-static int __mem_open(struct inode *inode, struct file *file, unsigned int mode)
-{
-	struct mm_struct *mm = proc_mem_open(inode, mode);
+अटल पूर्णांक __mem_खोलो(काष्ठा inode *inode, काष्ठा file *file, अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा mm_काष्ठा *mm = proc_mem_खोलो(inode, mode);
 
-	if (IS_ERR(mm))
-		return PTR_ERR(mm);
+	अगर (IS_ERR(mm))
+		वापस PTR_ERR(mm);
 
-	file->private_data = mm;
-	return 0;
-}
+	file->निजी_data = mm;
+	वापस 0;
+पूर्ण
 
-static int mem_open(struct inode *inode, struct file *file)
-{
-	int ret = __mem_open(inode, file, PTRACE_MODE_ATTACH);
+अटल पूर्णांक mem_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret = __mem_खोलो(inode, file, PTRACE_MODE_ATTACH);
 
 	/* OK to pass negative loff_t, we can catch out-of-range */
 	file->f_mode |= FMODE_UNSIGNED_OFFSET;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t mem_rw(struct file *file, char __user *buf,
-			size_t count, loff_t *ppos, int write)
-{
-	struct mm_struct *mm = file->private_data;
-	unsigned long addr = *ppos;
-	ssize_t copied;
-	char *page;
-	unsigned int flags;
+अटल sमाप_प्रकार mem_rw(काष्ठा file *file, अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos, पूर्णांक ग_लिखो)
+अणु
+	काष्ठा mm_काष्ठा *mm = file->निजी_data;
+	अचिन्हित दीर्घ addr = *ppos;
+	sमाप_प्रकार copied;
+	अक्षर *page;
+	अचिन्हित पूर्णांक flags;
 
-	if (!mm)
-		return 0;
+	अगर (!mm)
+		वापस 0;
 
-	page = (char *)__get_free_page(GFP_KERNEL);
-	if (!page)
-		return -ENOMEM;
+	page = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!page)
+		वापस -ENOMEM;
 
 	copied = 0;
-	if (!mmget_not_zero(mm))
-		goto free;
+	अगर (!mmget_not_zero(mm))
+		जाओ मुक्त;
 
-	flags = FOLL_FORCE | (write ? FOLL_WRITE : 0);
+	flags = FOLL_FORCE | (ग_लिखो ? FOLL_WRITE : 0);
 
-	while (count > 0) {
-		int this_len = min_t(int, count, PAGE_SIZE);
+	जबतक (count > 0) अणु
+		पूर्णांक this_len = min_t(पूर्णांक, count, PAGE_SIZE);
 
-		if (write && copy_from_user(page, buf, this_len)) {
+		अगर (ग_लिखो && copy_from_user(page, buf, this_len)) अणु
 			copied = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		this_len = access_remote_vm(mm, addr, page, this_len, flags);
-		if (!this_len) {
-			if (!copied)
+		अगर (!this_len) अणु
+			अगर (!copied)
 				copied = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!write && copy_to_user(buf, page, this_len)) {
+		अगर (!ग_लिखो && copy_to_user(buf, page, this_len)) अणु
 			copied = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		buf += this_len;
 		addr += this_len;
 		copied += this_len;
 		count -= this_len;
-	}
+	पूर्ण
 	*ppos = addr;
 
 	mmput(mm);
-free:
-	free_page((unsigned long) page);
-	return copied;
-}
+मुक्त:
+	मुक्त_page((अचिन्हित दीर्घ) page);
+	वापस copied;
+पूर्ण
 
-static ssize_t mem_read(struct file *file, char __user *buf,
-			size_t count, loff_t *ppos)
-{
-	return mem_rw(file, buf, count, ppos, 0);
-}
+अटल sमाप_प्रकार mem_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस mem_rw(file, buf, count, ppos, 0);
+पूर्ण
 
-static ssize_t mem_write(struct file *file, const char __user *buf,
-			 size_t count, loff_t *ppos)
-{
-	return mem_rw(file, (char __user*)buf, count, ppos, 1);
-}
+अटल sमाप_प्रकार mem_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस mem_rw(file, (अक्षर __user*)buf, count, ppos, 1);
+पूर्ण
 
-loff_t mem_lseek(struct file *file, loff_t offset, int orig)
-{
-	switch (orig) {
-	case 0:
+loff_t mem_lseek(काष्ठा file *file, loff_t offset, पूर्णांक orig)
+अणु
+	चयन (orig) अणु
+	हाल 0:
 		file->f_pos = offset;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		file->f_pos += offset;
-		break;
-	default:
-		return -EINVAL;
-	}
-	force_successful_syscall_return();
-	return file->f_pos;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	क्रमce_successful_syscall_वापस();
+	वापस file->f_pos;
+पूर्ण
 
-static int mem_release(struct inode *inode, struct file *file)
-{
-	struct mm_struct *mm = file->private_data;
-	if (mm)
+अटल पूर्णांक mem_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा mm_काष्ठा *mm = file->निजी_data;
+	अगर (mm)
 		mmdrop(mm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations proc_mem_operations = {
+अटल स्थिर काष्ठा file_operations proc_mem_operations = अणु
 	.llseek		= mem_lseek,
-	.read		= mem_read,
-	.write		= mem_write,
-	.open		= mem_open,
+	.पढ़ो		= mem_पढ़ो,
+	.ग_लिखो		= mem_ग_लिखो,
+	.खोलो		= mem_खोलो,
 	.release	= mem_release,
-};
+पूर्ण;
 
-static int environ_open(struct inode *inode, struct file *file)
-{
-	return __mem_open(inode, file, PTRACE_MODE_READ);
-}
+अटल पूर्णांक environ_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस __mem_खोलो(inode, file, PTRACE_MODE_READ);
+पूर्ण
 
-static ssize_t environ_read(struct file *file, char __user *buf,
-			size_t count, loff_t *ppos)
-{
-	char *page;
-	unsigned long src = *ppos;
-	int ret = 0;
-	struct mm_struct *mm = file->private_data;
-	unsigned long env_start, env_end;
+अटल sमाप_प्रकार environ_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *page;
+	अचिन्हित दीर्घ src = *ppos;
+	पूर्णांक ret = 0;
+	काष्ठा mm_काष्ठा *mm = file->निजी_data;
+	अचिन्हित दीर्घ env_start, env_end;
 
 	/* Ensure the process spawned far enough to have an environment. */
-	if (!mm || !mm->env_end)
-		return 0;
+	अगर (!mm || !mm->env_end)
+		वापस 0;
 
-	page = (char *)__get_free_page(GFP_KERNEL);
-	if (!page)
-		return -ENOMEM;
+	page = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!page)
+		वापस -ENOMEM;
 
 	ret = 0;
-	if (!mmget_not_zero(mm))
-		goto free;
+	अगर (!mmget_not_zero(mm))
+		जाओ मुक्त;
 
 	spin_lock(&mm->arg_lock);
 	env_start = mm->env_start;
 	env_end = mm->env_end;
 	spin_unlock(&mm->arg_lock);
 
-	while (count > 0) {
-		size_t this_len, max_len;
-		int retval;
+	जबतक (count > 0) अणु
+		माप_प्रकार this_len, max_len;
+		पूर्णांक retval;
 
-		if (src >= (env_end - env_start))
-			break;
+		अगर (src >= (env_end - env_start))
+			अवरोध;
 
 		this_len = env_end - (env_start + src);
 
-		max_len = min_t(size_t, PAGE_SIZE, count);
+		max_len = min_t(माप_प्रकार, PAGE_SIZE, count);
 		this_len = min(max_len, this_len);
 
 		retval = access_remote_vm(mm, (env_start + src), page, this_len, FOLL_ANON);
 
-		if (retval <= 0) {
+		अगर (retval <= 0) अणु
 			ret = retval;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (copy_to_user(buf, page, retval)) {
+		अगर (copy_to_user(buf, page, retval)) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret += retval;
 		src += retval;
 		buf += retval;
 		count -= retval;
-	}
+	पूर्ण
 	*ppos = src;
 	mmput(mm);
 
-free:
-	free_page((unsigned long) page);
-	return ret;
-}
+मुक्त:
+	मुक्त_page((अचिन्हित दीर्घ) page);
+	वापस ret;
+पूर्ण
 
-static const struct file_operations proc_environ_operations = {
-	.open		= environ_open,
-	.read		= environ_read,
+अटल स्थिर काष्ठा file_operations proc_environ_operations = अणु
+	.खोलो		= environ_खोलो,
+	.पढ़ो		= environ_पढ़ो,
 	.llseek		= generic_file_llseek,
 	.release	= mem_release,
-};
+पूर्ण;
 
-static int auxv_open(struct inode *inode, struct file *file)
-{
-	return __mem_open(inode, file, PTRACE_MODE_READ_FSCREDS);
-}
+अटल पूर्णांक auxv_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस __mem_खोलो(inode, file, PTRACE_MODE_READ_FSCREDS);
+पूर्ण
 
-static ssize_t auxv_read(struct file *file, char __user *buf,
-			size_t count, loff_t *ppos)
-{
-	struct mm_struct *mm = file->private_data;
-	unsigned int nwords = 0;
+अटल sमाप_प्रकार auxv_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mm_काष्ठा *mm = file->निजी_data;
+	अचिन्हित पूर्णांक nwords = 0;
 
-	if (!mm)
-		return 0;
-	do {
+	अगर (!mm)
+		वापस 0;
+	करो अणु
 		nwords += 2;
-	} while (mm->saved_auxv[nwords - 2] != 0); /* AT_NULL */
-	return simple_read_from_buffer(buf, count, ppos, mm->saved_auxv,
-				       nwords * sizeof(mm->saved_auxv[0]));
-}
+	पूर्ण जबतक (mm->saved_auxv[nwords - 2] != 0); /* AT_शून्य */
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, mm->saved_auxv,
+				       nwords * माप(mm->saved_auxv[0]));
+पूर्ण
 
-static const struct file_operations proc_auxv_operations = {
-	.open		= auxv_open,
-	.read		= auxv_read,
+अटल स्थिर काष्ठा file_operations proc_auxv_operations = अणु
+	.खोलो		= auxv_खोलो,
+	.पढ़ो		= auxv_पढ़ो,
 	.llseek		= generic_file_llseek,
 	.release	= mem_release,
-};
+पूर्ण;
 
-static ssize_t oom_adj_read(struct file *file, char __user *buf, size_t count,
+अटल sमाप_प्रकार oom_adj_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
 			    loff_t *ppos)
-{
-	struct task_struct *task = get_proc_task(file_inode(file));
-	char buffer[PROC_NUMBUF];
-	int oom_adj = OOM_ADJUST_MIN;
-	size_t len;
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(file_inode(file));
+	अक्षर buffer[PROC_NUMBUF];
+	पूर्णांक oom_adj = OOM_ADJUST_MIN;
+	माप_प्रकार len;
 
-	if (!task)
-		return -ESRCH;
-	if (task->signal->oom_score_adj == OOM_SCORE_ADJ_MAX)
+	अगर (!task)
+		वापस -ESRCH;
+	अगर (task->संकेत->oom_score_adj == OOM_SCORE_ADJ_MAX)
 		oom_adj = OOM_ADJUST_MAX;
-	else
-		oom_adj = (task->signal->oom_score_adj * -OOM_DISABLE) /
+	अन्यथा
+		oom_adj = (task->संकेत->oom_score_adj * -OOM_DISABLE) /
 			  OOM_SCORE_ADJ_MAX;
-	put_task_struct(task);
-	if (oom_adj > OOM_ADJUST_MAX)
+	put_task_काष्ठा(task);
+	अगर (oom_adj > OOM_ADJUST_MAX)
 		oom_adj = OOM_ADJUST_MAX;
-	len = snprintf(buffer, sizeof(buffer), "%d\n", oom_adj);
-	return simple_read_from_buffer(buf, count, ppos, buffer, len);
-}
+	len = snम_लिखो(buffer, माप(buffer), "%d\n", oom_adj);
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, buffer, len);
+पूर्ण
 
-static int __set_oom_adj(struct file *file, int oom_adj, bool legacy)
-{
-	struct mm_struct *mm = NULL;
-	struct task_struct *task;
-	int err = 0;
+अटल पूर्णांक __set_oom_adj(काष्ठा file *file, पूर्णांक oom_adj, bool legacy)
+अणु
+	काष्ठा mm_काष्ठा *mm = शून्य;
+	काष्ठा task_काष्ठा *task;
+	पूर्णांक err = 0;
 
 	task = get_proc_task(file_inode(file));
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 
 	mutex_lock(&oom_adj_mutex);
-	if (legacy) {
-		if (oom_adj < task->signal->oom_score_adj &&
-				!capable(CAP_SYS_RESOURCE)) {
+	अगर (legacy) अणु
+		अगर (oom_adj < task->संकेत->oom_score_adj &&
+				!capable(CAP_SYS_RESOURCE)) अणु
 			err = -EACCES;
-			goto err_unlock;
-		}
+			जाओ err_unlock;
+		पूर्ण
 		/*
-		 * /proc/pid/oom_adj is provided for legacy purposes, ask users to use
+		 * /proc/pid/oom_adj is provided क्रम legacy purposes, ask users to use
 		 * /proc/pid/oom_score_adj instead.
 		 */
 		pr_warn_once("%s (%d): /proc/%d/oom_adj is deprecated, please use /proc/%d/oom_score_adj instead.\n",
 			  current->comm, task_pid_nr(current), task_pid_nr(task),
 			  task_pid_nr(task));
-	} else {
-		if ((short)oom_adj < task->signal->oom_score_adj_min &&
-				!capable(CAP_SYS_RESOURCE)) {
+	पूर्ण अन्यथा अणु
+		अगर ((लघु)oom_adj < task->संकेत->oom_score_adj_min &&
+				!capable(CAP_SYS_RESOURCE)) अणु
 			err = -EACCES;
-			goto err_unlock;
-		}
-	}
+			जाओ err_unlock;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Make sure we will check other processes sharing the mm if this is
+	 * Make sure we will check other processes sharing the mm अगर this is
 	 * not vfrok which wants its own oom_score_adj.
-	 * pin the mm so it doesn't go away and get reused after task_unlock
+	 * pin the mm so it करोesn't go away and get reused after task_unlock
 	 */
-	if (!task->vfork_done) {
-		struct task_struct *p = find_lock_task_mm(task);
+	अगर (!task->vविभाजन_करोne) अणु
+		काष्ठा task_काष्ठा *p = find_lock_task_mm(task);
 
-		if (p) {
-			if (test_bit(MMF_MULTIPROCESS, &p->mm->flags)) {
+		अगर (p) अणु
+			अगर (test_bit(MMF_MULTIPROCESS, &p->mm->flags)) अणु
 				mm = p->mm;
 				mmgrab(mm);
-			}
+			पूर्ण
 			task_unlock(p);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	task->signal->oom_score_adj = oom_adj;
-	if (!legacy && has_capability_noaudit(current, CAP_SYS_RESOURCE))
-		task->signal->oom_score_adj_min = (short)oom_adj;
+	task->संकेत->oom_score_adj = oom_adj;
+	अगर (!legacy && has_capability_noaudit(current, CAP_SYS_RESOURCE))
+		task->संकेत->oom_score_adj_min = (लघु)oom_adj;
 	trace_oom_score_adj_update(task);
 
-	if (mm) {
-		struct task_struct *p;
+	अगर (mm) अणु
+		काष्ठा task_काष्ठा *p;
 
-		rcu_read_lock();
-		for_each_process(p) {
-			if (same_thread_group(task, p))
-				continue;
+		rcu_पढ़ो_lock();
+		क्रम_each_process(p) अणु
+			अगर (same_thपढ़ो_group(task, p))
+				जारी;
 
-			/* do not touch kernel threads or the global init */
-			if (p->flags & PF_KTHREAD || is_global_init(p))
-				continue;
+			/* करो not touch kernel thपढ़ोs or the global init */
+			अगर (p->flags & PF_KTHREAD || is_global_init(p))
+				जारी;
 
 			task_lock(p);
-			if (!p->vfork_done && process_shares_mm(p, mm)) {
-				p->signal->oom_score_adj = oom_adj;
-				if (!legacy && has_capability_noaudit(current, CAP_SYS_RESOURCE))
-					p->signal->oom_score_adj_min = (short)oom_adj;
-			}
+			अगर (!p->vविभाजन_करोne && process_shares_mm(p, mm)) अणु
+				p->संकेत->oom_score_adj = oom_adj;
+				अगर (!legacy && has_capability_noaudit(current, CAP_SYS_RESOURCE))
+					p->संकेत->oom_score_adj_min = (लघु)oom_adj;
+			पूर्ण
 			task_unlock(p);
-		}
-		rcu_read_unlock();
+		पूर्ण
+		rcu_पढ़ो_unlock();
 		mmdrop(mm);
-	}
+	पूर्ण
 err_unlock:
 	mutex_unlock(&oom_adj_mutex);
-	put_task_struct(task);
-	return err;
-}
+	put_task_काष्ठा(task);
+	वापस err;
+पूर्ण
 
 /*
- * /proc/pid/oom_adj exists solely for backwards compatibility with previous
+ * /proc/pid/oom_adj exists solely क्रम backwards compatibility with previous
  * kernels.  The effective policy is defined by oom_score_adj, which has a
- * different scale: oom_adj grew exponentially and oom_score_adj grows linearly.
+ * dअगरferent scale: oom_adj grew exponentially and oom_score_adj grows linearly.
  * Values written to oom_adj are simply mapped linearly to oom_score_adj.
  * Processes that become oom disabled via oom_adj will still be oom disabled
  * with this implementation.
  *
- * oom_adj cannot be removed since existing userspace binaries use it.
+ * oom_adj cannot be हटाओd since existing userspace binaries use it.
  */
-static ssize_t oom_adj_write(struct file *file, const char __user *buf,
-			     size_t count, loff_t *ppos)
-{
-	char buffer[PROC_NUMBUF];
-	int oom_adj;
-	int err;
+अटल sमाप_प्रकार oom_adj_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			     माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buffer[PROC_NUMBUF];
+	पूर्णांक oom_adj;
+	पूर्णांक err;
 
-	memset(buffer, 0, sizeof(buffer));
-	if (count > sizeof(buffer) - 1)
-		count = sizeof(buffer) - 1;
-	if (copy_from_user(buffer, buf, count)) {
+	स_रखो(buffer, 0, माप(buffer));
+	अगर (count > माप(buffer) - 1)
+		count = माप(buffer) - 1;
+	अगर (copy_from_user(buffer, buf, count)) अणु
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = kstrtoint(strstrip(buffer), 0, &oom_adj);
-	if (err)
-		goto out;
-	if ((oom_adj < OOM_ADJUST_MIN || oom_adj > OOM_ADJUST_MAX) &&
-	     oom_adj != OOM_DISABLE) {
+	err = kstrtoपूर्णांक(म_मालाip(buffer), 0, &oom_adj);
+	अगर (err)
+		जाओ out;
+	अगर ((oom_adj < OOM_ADJUST_MIN || oom_adj > OOM_ADJUST_MAX) &&
+	     oom_adj != OOM_DISABLE) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Scale /proc/pid/oom_score_adj appropriately ensuring that a maximum
 	 * value is always attainable.
 	 */
-	if (oom_adj == OOM_ADJUST_MAX)
+	अगर (oom_adj == OOM_ADJUST_MAX)
 		oom_adj = OOM_SCORE_ADJ_MAX;
-	else
+	अन्यथा
 		oom_adj = (oom_adj * OOM_SCORE_ADJ_MAX) / -OOM_DISABLE;
 
 	err = __set_oom_adj(file, oom_adj, true);
 out:
-	return err < 0 ? err : count;
-}
+	वापस err < 0 ? err : count;
+पूर्ण
 
-static const struct file_operations proc_oom_adj_operations = {
-	.read		= oom_adj_read,
-	.write		= oom_adj_write,
+अटल स्थिर काष्ठा file_operations proc_oom_adj_operations = अणु
+	.पढ़ो		= oom_adj_पढ़ो,
+	.ग_लिखो		= oom_adj_ग_लिखो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-static ssize_t oom_score_adj_read(struct file *file, char __user *buf,
-					size_t count, loff_t *ppos)
-{
-	struct task_struct *task = get_proc_task(file_inode(file));
-	char buffer[PROC_NUMBUF];
-	short oom_score_adj = OOM_SCORE_ADJ_MIN;
-	size_t len;
+अटल sमाप_प्रकार oom_score_adj_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+					माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(file_inode(file));
+	अक्षर buffer[PROC_NUMBUF];
+	लघु oom_score_adj = OOM_SCORE_ADJ_MIN;
+	माप_प्रकार len;
 
-	if (!task)
-		return -ESRCH;
-	oom_score_adj = task->signal->oom_score_adj;
-	put_task_struct(task);
-	len = snprintf(buffer, sizeof(buffer), "%hd\n", oom_score_adj);
-	return simple_read_from_buffer(buf, count, ppos, buffer, len);
-}
+	अगर (!task)
+		वापस -ESRCH;
+	oom_score_adj = task->संकेत->oom_score_adj;
+	put_task_काष्ठा(task);
+	len = snम_लिखो(buffer, माप(buffer), "%hd\n", oom_score_adj);
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, buffer, len);
+पूर्ण
 
-static ssize_t oom_score_adj_write(struct file *file, const char __user *buf,
-					size_t count, loff_t *ppos)
-{
-	char buffer[PROC_NUMBUF];
-	int oom_score_adj;
-	int err;
+अटल sमाप_प्रकार oom_score_adj_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+					माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buffer[PROC_NUMBUF];
+	पूर्णांक oom_score_adj;
+	पूर्णांक err;
 
-	memset(buffer, 0, sizeof(buffer));
-	if (count > sizeof(buffer) - 1)
-		count = sizeof(buffer) - 1;
-	if (copy_from_user(buffer, buf, count)) {
+	स_रखो(buffer, 0, माप(buffer));
+	अगर (count > माप(buffer) - 1)
+		count = माप(buffer) - 1;
+	अगर (copy_from_user(buffer, buf, count)) अणु
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = kstrtoint(strstrip(buffer), 0, &oom_score_adj);
-	if (err)
-		goto out;
-	if (oom_score_adj < OOM_SCORE_ADJ_MIN ||
-			oom_score_adj > OOM_SCORE_ADJ_MAX) {
+	err = kstrtoपूर्णांक(म_मालाip(buffer), 0, &oom_score_adj);
+	अगर (err)
+		जाओ out;
+	अगर (oom_score_adj < OOM_SCORE_ADJ_MIN ||
+			oom_score_adj > OOM_SCORE_ADJ_MAX) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = __set_oom_adj(file, oom_score_adj, false);
 out:
-	return err < 0 ? err : count;
-}
+	वापस err < 0 ? err : count;
+पूर्ण
 
-static const struct file_operations proc_oom_score_adj_operations = {
-	.read		= oom_score_adj_read,
-	.write		= oom_score_adj_write,
-	.llseek		= default_llseek,
-};
+अटल स्थिर काष्ठा file_operations proc_oom_score_adj_operations = अणु
+	.पढ़ो		= oom_score_adj_पढ़ो,
+	.ग_लिखो		= oom_score_adj_ग_लिखो,
+	.llseek		= शेष_llseek,
+पूर्ण;
 
-#ifdef CONFIG_AUDIT
-#define TMPBUFLEN 11
-static ssize_t proc_loginuid_read(struct file * file, char __user * buf,
-				  size_t count, loff_t *ppos)
-{
-	struct inode * inode = file_inode(file);
-	struct task_struct *task = get_proc_task(inode);
-	ssize_t length;
-	char tmpbuf[TMPBUFLEN];
+#अगर_घोषित CONFIG_AUDIT
+#घोषणा TMPBUFLEN 11
+अटल sमाप_प्रकार proc_loginuid_पढ़ो(काष्ठा file * file, अक्षर __user * buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा inode * inode = file_inode(file);
+	काष्ठा task_काष्ठा *task = get_proc_task(inode);
+	sमाप_प्रकार length;
+	अक्षर पंचांगpbuf[TMPBUFLEN];
 
-	if (!task)
-		return -ESRCH;
-	length = scnprintf(tmpbuf, TMPBUFLEN, "%u",
+	अगर (!task)
+		वापस -ESRCH;
+	length = scnम_लिखो(पंचांगpbuf, TMPBUFLEN, "%u",
 			   from_kuid(file->f_cred->user_ns,
 				     audit_get_loginuid(task)));
-	put_task_struct(task);
-	return simple_read_from_buffer(buf, count, ppos, tmpbuf, length);
-}
+	put_task_काष्ठा(task);
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, पंचांगpbuf, length);
+पूर्ण
 
-static ssize_t proc_loginuid_write(struct file * file, const char __user * buf,
-				   size_t count, loff_t *ppos)
-{
-	struct inode * inode = file_inode(file);
+अटल sमाप_प्रकार proc_loginuid_ग_लिखो(काष्ठा file * file, स्थिर अक्षर __user * buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा inode * inode = file_inode(file);
 	uid_t loginuid;
 	kuid_t kloginuid;
-	int rv;
+	पूर्णांक rv;
 
-	/* Don't let kthreads write their own loginuid */
-	if (current->flags & PF_KTHREAD)
-		return -EPERM;
+	/* Don't let kthपढ़ोs ग_लिखो their own loginuid */
+	अगर (current->flags & PF_KTHREAD)
+		वापस -EPERM;
 
-	rcu_read_lock();
-	if (current != pid_task(proc_pid(inode), PIDTYPE_PID)) {
-		rcu_read_unlock();
-		return -EPERM;
-	}
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	अगर (current != pid_task(proc_pid(inode), PIDTYPE_PID)) अणु
+		rcu_पढ़ो_unlock();
+		वापस -EPERM;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (*ppos != 0) {
-		/* No partial writes. */
-		return -EINVAL;
-	}
+	अगर (*ppos != 0) अणु
+		/* No partial ग_लिखोs. */
+		वापस -EINVAL;
+	पूर्ण
 
 	rv = kstrtou32_from_user(buf, count, 10, &loginuid);
-	if (rv < 0)
-		return rv;
+	अगर (rv < 0)
+		वापस rv;
 
 	/* is userspace tring to explicitly UNSET the loginuid? */
-	if (loginuid == AUDIT_UID_UNSET) {
+	अगर (loginuid == AUDIT_UID_UNSET) अणु
 		kloginuid = INVALID_UID;
-	} else {
+	पूर्ण अन्यथा अणु
 		kloginuid = make_kuid(file->f_cred->user_ns, loginuid);
-		if (!uid_valid(kloginuid))
-			return -EINVAL;
-	}
+		अगर (!uid_valid(kloginuid))
+			वापस -EINVAL;
+	पूर्ण
 
 	rv = audit_set_loginuid(kloginuid);
-	if (rv < 0)
-		return rv;
-	return count;
-}
+	अगर (rv < 0)
+		वापस rv;
+	वापस count;
+पूर्ण
 
-static const struct file_operations proc_loginuid_operations = {
-	.read		= proc_loginuid_read,
-	.write		= proc_loginuid_write,
+अटल स्थिर काष्ठा file_operations proc_loginuid_operations = अणु
+	.पढ़ो		= proc_loginuid_पढ़ो,
+	.ग_लिखो		= proc_loginuid_ग_लिखो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-static ssize_t proc_sessionid_read(struct file * file, char __user * buf,
-				  size_t count, loff_t *ppos)
-{
-	struct inode * inode = file_inode(file);
-	struct task_struct *task = get_proc_task(inode);
-	ssize_t length;
-	char tmpbuf[TMPBUFLEN];
+अटल sमाप_प्रकार proc_sessionid_पढ़ो(काष्ठा file * file, अक्षर __user * buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा inode * inode = file_inode(file);
+	काष्ठा task_काष्ठा *task = get_proc_task(inode);
+	sमाप_प्रकार length;
+	अक्षर पंचांगpbuf[TMPBUFLEN];
 
-	if (!task)
-		return -ESRCH;
-	length = scnprintf(tmpbuf, TMPBUFLEN, "%u",
+	अगर (!task)
+		वापस -ESRCH;
+	length = scnम_लिखो(पंचांगpbuf, TMPBUFLEN, "%u",
 				audit_get_sessionid(task));
-	put_task_struct(task);
-	return simple_read_from_buffer(buf, count, ppos, tmpbuf, length);
-}
+	put_task_काष्ठा(task);
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, पंचांगpbuf, length);
+पूर्ण
 
-static const struct file_operations proc_sessionid_operations = {
-	.read		= proc_sessionid_read,
+अटल स्थिर काष्ठा file_operations proc_sessionid_operations = अणु
+	.पढ़ो		= proc_sessionid_पढ़ो,
 	.llseek		= generic_file_llseek,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_FAULT_INJECTION
-static ssize_t proc_fault_inject_read(struct file * file, char __user * buf,
-				      size_t count, loff_t *ppos)
-{
-	struct task_struct *task = get_proc_task(file_inode(file));
-	char buffer[PROC_NUMBUF];
-	size_t len;
-	int make_it_fail;
+#अगर_घोषित CONFIG_FAULT_INJECTION
+अटल sमाप_प्रकार proc_fault_inject_पढ़ो(काष्ठा file * file, अक्षर __user * buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(file_inode(file));
+	अक्षर buffer[PROC_NUMBUF];
+	माप_प्रकार len;
+	पूर्णांक make_it_fail;
 
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 	make_it_fail = task->make_it_fail;
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 
-	len = snprintf(buffer, sizeof(buffer), "%i\n", make_it_fail);
+	len = snम_लिखो(buffer, माप(buffer), "%i\n", make_it_fail);
 
-	return simple_read_from_buffer(buf, count, ppos, buffer, len);
-}
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, buffer, len);
+पूर्ण
 
-static ssize_t proc_fault_inject_write(struct file * file,
-			const char __user * buf, size_t count, loff_t *ppos)
-{
-	struct task_struct *task;
-	char buffer[PROC_NUMBUF];
-	int make_it_fail;
-	int rv;
+अटल sमाप_प्रकार proc_fault_inject_ग_लिखो(काष्ठा file * file,
+			स्थिर अक्षर __user * buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा task_काष्ठा *task;
+	अक्षर buffer[PROC_NUMBUF];
+	पूर्णांक make_it_fail;
+	पूर्णांक rv;
 
-	if (!capable(CAP_SYS_RESOURCE))
-		return -EPERM;
-	memset(buffer, 0, sizeof(buffer));
-	if (count > sizeof(buffer) - 1)
-		count = sizeof(buffer) - 1;
-	if (copy_from_user(buffer, buf, count))
-		return -EFAULT;
-	rv = kstrtoint(strstrip(buffer), 0, &make_it_fail);
-	if (rv < 0)
-		return rv;
-	if (make_it_fail < 0 || make_it_fail > 1)
-		return -EINVAL;
+	अगर (!capable(CAP_SYS_RESOURCE))
+		वापस -EPERM;
+	स_रखो(buffer, 0, माप(buffer));
+	अगर (count > माप(buffer) - 1)
+		count = माप(buffer) - 1;
+	अगर (copy_from_user(buffer, buf, count))
+		वापस -EFAULT;
+	rv = kstrtoपूर्णांक(म_मालाip(buffer), 0, &make_it_fail);
+	अगर (rv < 0)
+		वापस rv;
+	अगर (make_it_fail < 0 || make_it_fail > 1)
+		वापस -EINVAL;
 
 	task = get_proc_task(file_inode(file));
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 	task->make_it_fail = make_it_fail;
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations proc_fault_inject_operations = {
-	.read		= proc_fault_inject_read,
-	.write		= proc_fault_inject_write,
+अटल स्थिर काष्ठा file_operations proc_fault_inject_operations = अणु
+	.पढ़ो		= proc_fault_inject_पढ़ो,
+	.ग_लिखो		= proc_fault_inject_ग_लिखो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-static ssize_t proc_fail_nth_write(struct file *file, const char __user *buf,
-				   size_t count, loff_t *ppos)
-{
-	struct task_struct *task;
-	int err;
-	unsigned int n;
+अटल sमाप_प्रकार proc_fail_nth_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा task_काष्ठा *task;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक n;
 
-	err = kstrtouint_from_user(buf, count, 0, &n);
-	if (err)
-		return err;
+	err = kstrtouपूर्णांक_from_user(buf, count, 0, &n);
+	अगर (err)
+		वापस err;
 
 	task = get_proc_task(file_inode(file));
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 	task->fail_nth = n;
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t proc_fail_nth_read(struct file *file, char __user *buf,
-				  size_t count, loff_t *ppos)
-{
-	struct task_struct *task;
-	char numbuf[PROC_NUMBUF];
-	ssize_t len;
+अटल sमाप_प्रकार proc_fail_nth_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा task_काष्ठा *task;
+	अक्षर numbuf[PROC_NUMBUF];
+	sमाप_प्रकार len;
 
 	task = get_proc_task(file_inode(file));
-	if (!task)
-		return -ESRCH;
-	len = snprintf(numbuf, sizeof(numbuf), "%u\n", task->fail_nth);
-	put_task_struct(task);
-	return simple_read_from_buffer(buf, count, ppos, numbuf, len);
-}
+	अगर (!task)
+		वापस -ESRCH;
+	len = snम_लिखो(numbuf, माप(numbuf), "%u\n", task->fail_nth);
+	put_task_काष्ठा(task);
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, numbuf, len);
+पूर्ण
 
-static const struct file_operations proc_fail_nth_operations = {
-	.read		= proc_fail_nth_read,
-	.write		= proc_fail_nth_write,
-};
-#endif
+अटल स्थिर काष्ठा file_operations proc_fail_nth_operations = अणु
+	.पढ़ो		= proc_fail_nth_पढ़ो,
+	.ग_लिखो		= proc_fail_nth_ग_लिखो,
+पूर्ण;
+#पूर्ण_अगर
 
 
-#ifdef CONFIG_SCHED_DEBUG
+#अगर_घोषित CONFIG_SCHED_DEBUG
 /*
- * Print out various scheduling related per-task fields:
+ * Prपूर्णांक out various scheduling related per-task fields:
  */
-static int sched_show(struct seq_file *m, void *v)
-{
-	struct inode *inode = m->private;
-	struct pid_namespace *ns = proc_pid_ns(inode->i_sb);
-	struct task_struct *p;
+अटल पूर्णांक sched_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा inode *inode = m->निजी;
+	काष्ठा pid_namespace *ns = proc_pid_ns(inode->i_sb);
+	काष्ठा task_काष्ठा *p;
 
 	p = get_proc_task(inode);
-	if (!p)
-		return -ESRCH;
+	अगर (!p)
+		वापस -ESRCH;
 	proc_sched_show_task(p, ns, m);
 
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t
-sched_write(struct file *file, const char __user *buf,
-	    size_t count, loff_t *offset)
-{
-	struct inode *inode = file_inode(file);
-	struct task_struct *p;
+अटल sमाप_प्रकार
+sched_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+	    माप_प्रकार count, loff_t *offset)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा task_काष्ठा *p;
 
 	p = get_proc_task(inode);
-	if (!p)
-		return -ESRCH;
+	अगर (!p)
+		वापस -ESRCH;
 	proc_sched_set_task(p);
 
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int sched_open(struct inode *inode, struct file *filp)
-{
-	return single_open(filp, sched_show, inode);
-}
+अटल पूर्णांक sched_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस single_खोलो(filp, sched_show, inode);
+पूर्ण
 
-static const struct file_operations proc_pid_sched_operations = {
-	.open		= sched_open,
-	.read		= seq_read,
-	.write		= sched_write,
+अटल स्थिर काष्ठा file_operations proc_pid_sched_operations = अणु
+	.खोलो		= sched_खोलो,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= sched_ग_लिखो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_SCHED_AUTOGROUP
+#अगर_घोषित CONFIG_SCHED_AUTOGROUP
 /*
- * Print out autogroup related information:
+ * Prपूर्णांक out स्वतःgroup related inक्रमmation:
  */
-static int sched_autogroup_show(struct seq_file *m, void *v)
-{
-	struct inode *inode = m->private;
-	struct task_struct *p;
+अटल पूर्णांक sched_स्वतःgroup_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा inode *inode = m->निजी;
+	काष्ठा task_काष्ठा *p;
 
 	p = get_proc_task(inode);
-	if (!p)
-		return -ESRCH;
-	proc_sched_autogroup_show_task(p, m);
+	अगर (!p)
+		वापस -ESRCH;
+	proc_sched_स्वतःgroup_show_task(p, m);
 
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t
-sched_autogroup_write(struct file *file, const char __user *buf,
-	    size_t count, loff_t *offset)
-{
-	struct inode *inode = file_inode(file);
-	struct task_struct *p;
-	char buffer[PROC_NUMBUF];
-	int nice;
-	int err;
+अटल sमाप_प्रकार
+sched_स्वतःgroup_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+	    माप_प्रकार count, loff_t *offset)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा task_काष्ठा *p;
+	अक्षर buffer[PROC_NUMBUF];
+	पूर्णांक nice;
+	पूर्णांक err;
 
-	memset(buffer, 0, sizeof(buffer));
-	if (count > sizeof(buffer) - 1)
-		count = sizeof(buffer) - 1;
-	if (copy_from_user(buffer, buf, count))
-		return -EFAULT;
+	स_रखो(buffer, 0, माप(buffer));
+	अगर (count > माप(buffer) - 1)
+		count = माप(buffer) - 1;
+	अगर (copy_from_user(buffer, buf, count))
+		वापस -EFAULT;
 
-	err = kstrtoint(strstrip(buffer), 0, &nice);
-	if (err < 0)
-		return err;
+	err = kstrtoपूर्णांक(म_मालाip(buffer), 0, &nice);
+	अगर (err < 0)
+		वापस err;
 
 	p = get_proc_task(inode);
-	if (!p)
-		return -ESRCH;
+	अगर (!p)
+		वापस -ESRCH;
 
-	err = proc_sched_autogroup_set_nice(p, nice);
-	if (err)
+	err = proc_sched_स्वतःgroup_set_nice(p, nice);
+	अगर (err)
 		count = err;
 
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int sched_autogroup_open(struct inode *inode, struct file *filp)
-{
-	int ret;
+अटल पूर्णांक sched_स्वतःgroup_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	पूर्णांक ret;
 
-	ret = single_open(filp, sched_autogroup_show, NULL);
-	if (!ret) {
-		struct seq_file *m = filp->private_data;
+	ret = single_खोलो(filp, sched_स्वतःgroup_show, शून्य);
+	अगर (!ret) अणु
+		काष्ठा seq_file *m = filp->निजी_data;
 
-		m->private = inode;
-	}
-	return ret;
-}
+		m->निजी = inode;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct file_operations proc_pid_sched_autogroup_operations = {
-	.open		= sched_autogroup_open,
-	.read		= seq_read,
-	.write		= sched_autogroup_write,
+अटल स्थिर काष्ठा file_operations proc_pid_sched_स्वतःgroup_operations = अणु
+	.खोलो		= sched_स्वतःgroup_खोलो,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= sched_स्वतःgroup_ग_लिखो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
-#endif /* CONFIG_SCHED_AUTOGROUP */
+#पूर्ण_अगर /* CONFIG_SCHED_AUTOGROUP */
 
-#ifdef CONFIG_TIME_NS
-static int timens_offsets_show(struct seq_file *m, void *v)
-{
-	struct task_struct *p;
+#अगर_घोषित CONFIG_TIME_NS
+अटल पूर्णांक समयns_offsets_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा task_काष्ठा *p;
 
 	p = get_proc_task(file_inode(m->file));
-	if (!p)
-		return -ESRCH;
-	proc_timens_show_offsets(p, m);
+	अगर (!p)
+		वापस -ESRCH;
+	proc_समयns_show_offsets(p, m);
 
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t timens_offsets_write(struct file *file, const char __user *buf,
-				    size_t count, loff_t *ppos)
-{
-	struct inode *inode = file_inode(file);
-	struct proc_timens_offset offsets[2];
-	char *kbuf = NULL, *pos, *next_line;
-	struct task_struct *p;
-	int ret, noffsets;
+अटल sमाप_प्रकार समयns_offsets_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा proc_समयns_offset offsets[2];
+	अक्षर *kbuf = शून्य, *pos, *next_line;
+	काष्ठा task_काष्ठा *p;
+	पूर्णांक ret, noffsets;
 
-	/* Only allow < page size writes at the beginning of the file */
-	if ((*ppos != 0) || (count >= PAGE_SIZE))
-		return -EINVAL;
+	/* Only allow < page size ग_लिखोs at the beginning of the file */
+	अगर ((*ppos != 0) || (count >= PAGE_SIZE))
+		वापस -EINVAL;
 
 	/* Slurp in the user data */
 	kbuf = memdup_user_nul(buf, count);
-	if (IS_ERR(kbuf))
-		return PTR_ERR(kbuf);
+	अगर (IS_ERR(kbuf))
+		वापस PTR_ERR(kbuf);
 
 	/* Parse the user data */
 	ret = -EINVAL;
 	noffsets = 0;
-	for (pos = kbuf; pos; pos = next_line) {
-		struct proc_timens_offset *off = &offsets[noffsets];
-		char clock[10];
-		int err;
+	क्रम (pos = kbuf; pos; pos = next_line) अणु
+		काष्ठा proc_समयns_offset *off = &offsets[noffsets];
+		अक्षर घड़ी[10];
+		पूर्णांक err;
 
-		/* Find the end of line and ensure we don't look past it */
-		next_line = strchr(pos, '\n');
-		if (next_line) {
+		/* Find the end of line and ensure we करोn't look past it */
+		next_line = म_अक्षर(pos, '\n');
+		अगर (next_line) अणु
 			*next_line = '\0';
 			next_line++;
-			if (*next_line == '\0')
-				next_line = NULL;
-		}
+			अगर (*next_line == '\0')
+				next_line = शून्य;
+		पूर्ण
 
-		err = sscanf(pos, "%9s %lld %lu", clock,
+		err = माला_पूछो(pos, "%9s %lld %lu", घड़ी,
 				&off->val.tv_sec, &off->val.tv_nsec);
-		if (err != 3 || off->val.tv_nsec >= NSEC_PER_SEC)
-			goto out;
+		अगर (err != 3 || off->val.tv_nsec >= NSEC_PER_SEC)
+			जाओ out;
 
-		clock[sizeof(clock) - 1] = 0;
-		if (strcmp(clock, "monotonic") == 0 ||
-		    strcmp(clock, __stringify(CLOCK_MONOTONIC)) == 0)
-			off->clockid = CLOCK_MONOTONIC;
-		else if (strcmp(clock, "boottime") == 0 ||
-			 strcmp(clock, __stringify(CLOCK_BOOTTIME)) == 0)
-			off->clockid = CLOCK_BOOTTIME;
-		else
-			goto out;
+		घड़ी[माप(घड़ी) - 1] = 0;
+		अगर (म_भेद(घड़ी, "monotonic") == 0 ||
+		    म_भेद(घड़ी, __stringअगरy(CLOCK_MONOTONIC)) == 0)
+			off->घड़ीid = CLOCK_MONOTONIC;
+		अन्यथा अगर (म_भेद(घड़ी, "boottime") == 0 ||
+			 म_भेद(घड़ी, __stringअगरy(CLOCK_BOOTTIME)) == 0)
+			off->घड़ीid = CLOCK_BOOTTIME;
+		अन्यथा
+			जाओ out;
 
 		noffsets++;
-		if (noffsets == ARRAY_SIZE(offsets)) {
-			if (next_line)
+		अगर (noffsets == ARRAY_SIZE(offsets)) अणु
+			अगर (next_line)
 				count = next_line - kbuf;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ret = -ESRCH;
 	p = get_proc_task(inode);
-	if (!p)
-		goto out;
-	ret = proc_timens_set_offset(file, p, offsets, noffsets);
-	put_task_struct(p);
-	if (ret)
-		goto out;
+	अगर (!p)
+		जाओ out;
+	ret = proc_समयns_set_offset(file, p, offsets, noffsets);
+	put_task_काष्ठा(p);
+	अगर (ret)
+		जाओ out;
 
 	ret = count;
 out:
-	kfree(kbuf);
-	return ret;
-}
+	kमुक्त(kbuf);
+	वापस ret;
+पूर्ण
 
-static int timens_offsets_open(struct inode *inode, struct file *filp)
-{
-	return single_open(filp, timens_offsets_show, inode);
-}
+अटल पूर्णांक समयns_offsets_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस single_खोलो(filp, समयns_offsets_show, inode);
+पूर्ण
 
-static const struct file_operations proc_timens_offsets_operations = {
-	.open		= timens_offsets_open,
-	.read		= seq_read,
-	.write		= timens_offsets_write,
+अटल स्थिर काष्ठा file_operations proc_समयns_offsets_operations = अणु
+	.खोलो		= समयns_offsets_खोलो,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= समयns_offsets_ग_लिखो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
-#endif /* CONFIG_TIME_NS */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_TIME_NS */
 
-static ssize_t comm_write(struct file *file, const char __user *buf,
-				size_t count, loff_t *offset)
-{
-	struct inode *inode = file_inode(file);
-	struct task_struct *p;
-	char buffer[TASK_COMM_LEN];
-	const size_t maxlen = sizeof(buffer) - 1;
+अटल sमाप_प्रकार comm_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				माप_प्रकार count, loff_t *offset)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा task_काष्ठा *p;
+	अक्षर buffer[TASK_COMM_LEN];
+	स्थिर माप_प्रकार maxlen = माप(buffer) - 1;
 
-	memset(buffer, 0, sizeof(buffer));
-	if (copy_from_user(buffer, buf, count > maxlen ? maxlen : count))
-		return -EFAULT;
+	स_रखो(buffer, 0, माप(buffer));
+	अगर (copy_from_user(buffer, buf, count > maxlen ? maxlen : count))
+		वापस -EFAULT;
 
 	p = get_proc_task(inode);
-	if (!p)
-		return -ESRCH;
+	अगर (!p)
+		वापस -ESRCH;
 
-	if (same_thread_group(current, p))
+	अगर (same_thपढ़ो_group(current, p))
 		set_task_comm(p, buffer);
-	else
+	अन्यथा
 		count = -EINVAL;
 
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int comm_show(struct seq_file *m, void *v)
-{
-	struct inode *inode = m->private;
-	struct task_struct *p;
+अटल पूर्णांक comm_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा inode *inode = m->निजी;
+	काष्ठा task_काष्ठा *p;
 
 	p = get_proc_task(inode);
-	if (!p)
-		return -ESRCH;
+	अगर (!p)
+		वापस -ESRCH;
 
 	proc_task_name(m, p, false);
-	seq_putc(m, '\n');
+	seq_अ_दो(m, '\n');
 
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int comm_open(struct inode *inode, struct file *filp)
-{
-	return single_open(filp, comm_show, inode);
-}
+अटल पूर्णांक comm_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस single_खोलो(filp, comm_show, inode);
+पूर्ण
 
-static const struct file_operations proc_pid_set_comm_operations = {
-	.open		= comm_open,
-	.read		= seq_read,
-	.write		= comm_write,
+अटल स्थिर काष्ठा file_operations proc_pid_set_comm_operations = अणु
+	.खोलो		= comm_खोलो,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= comm_ग_लिखो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
-static int proc_exe_link(struct dentry *dentry, struct path *exe_path)
-{
-	struct task_struct *task;
-	struct file *exe_file;
+अटल पूर्णांक proc_exe_link(काष्ठा dentry *dentry, काष्ठा path *exe_path)
+अणु
+	काष्ठा task_काष्ठा *task;
+	काष्ठा file *exe_file;
 
 	task = get_proc_task(d_inode(dentry));
-	if (!task)
-		return -ENOENT;
+	अगर (!task)
+		वापस -ENOENT;
 	exe_file = get_task_exe_file(task);
-	put_task_struct(task);
-	if (exe_file) {
+	put_task_काष्ठा(task);
+	अगर (exe_file) अणु
 		*exe_path = exe_file->f_path;
 		path_get(&exe_file->f_path);
 		fput(exe_file);
-		return 0;
-	} else
-		return -ENOENT;
-}
+		वापस 0;
+	पूर्ण अन्यथा
+		वापस -ENOENT;
+पूर्ण
 
-static const char *proc_pid_get_link(struct dentry *dentry,
-				     struct inode *inode,
-				     struct delayed_call *done)
-{
-	struct path path;
-	int error = -EACCES;
+अटल स्थिर अक्षर *proc_pid_get_link(काष्ठा dentry *dentry,
+				     काष्ठा inode *inode,
+				     काष्ठा delayed_call *करोne)
+अणु
+	काष्ठा path path;
+	पूर्णांक error = -EACCES;
 
-	if (!dentry)
-		return ERR_PTR(-ECHILD);
+	अगर (!dentry)
+		वापस ERR_PTR(-ECHILD);
 
 	/* Are we allowed to snoop on the tasks file descriptors? */
-	if (!proc_fd_access_allowed(inode))
-		goto out;
+	अगर (!proc_fd_access_allowed(inode))
+		जाओ out;
 
 	error = PROC_I(inode)->op.proc_get_link(dentry, &path);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	error = nd_jump_link(&path);
 out:
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण
 
-static int do_proc_readlink(struct path *path, char __user *buffer, int buflen)
-{
-	char *tmp = (char *)__get_free_page(GFP_KERNEL);
-	char *pathname;
-	int len;
+अटल पूर्णांक करो_proc_पढ़ोlink(काष्ठा path *path, अक्षर __user *buffer, पूर्णांक buflen)
+अणु
+	अक्षर *पंचांगp = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
+	अक्षर *pathname;
+	पूर्णांक len;
 
-	if (!tmp)
-		return -ENOMEM;
+	अगर (!पंचांगp)
+		वापस -ENOMEM;
 
-	pathname = d_path(path, tmp, PAGE_SIZE);
+	pathname = d_path(path, पंचांगp, PAGE_SIZE);
 	len = PTR_ERR(pathname);
-	if (IS_ERR(pathname))
-		goto out;
-	len = tmp + PAGE_SIZE - 1 - pathname;
+	अगर (IS_ERR(pathname))
+		जाओ out;
+	len = पंचांगp + PAGE_SIZE - 1 - pathname;
 
-	if (len > buflen)
+	अगर (len > buflen)
 		len = buflen;
-	if (copy_to_user(buffer, pathname, len))
+	अगर (copy_to_user(buffer, pathname, len))
 		len = -EFAULT;
  out:
-	free_page((unsigned long)tmp);
-	return len;
-}
+	मुक्त_page((अचिन्हित दीर्घ)पंचांगp);
+	वापस len;
+पूर्ण
 
-static int proc_pid_readlink(struct dentry * dentry, char __user * buffer, int buflen)
-{
-	int error = -EACCES;
-	struct inode *inode = d_inode(dentry);
-	struct path path;
+अटल पूर्णांक proc_pid_पढ़ोlink(काष्ठा dentry * dentry, अक्षर __user * buffer, पूर्णांक buflen)
+अणु
+	पूर्णांक error = -EACCES;
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा path path;
 
 	/* Are we allowed to snoop on the tasks file descriptors? */
-	if (!proc_fd_access_allowed(inode))
-		goto out;
+	अगर (!proc_fd_access_allowed(inode))
+		जाओ out;
 
 	error = PROC_I(inode)->op.proc_get_link(dentry, &path);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	error = do_proc_readlink(&path, buffer, buflen);
+	error = करो_proc_पढ़ोlink(&path, buffer, buflen);
 	path_put(&path);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-const struct inode_operations proc_pid_link_inode_operations = {
-	.readlink	= proc_pid_readlink,
+स्थिर काष्ठा inode_operations proc_pid_link_inode_operations = अणु
+	.पढ़ोlink	= proc_pid_पढ़ोlink,
 	.get_link	= proc_pid_get_link,
 	.setattr	= proc_setattr,
-};
+पूर्ण;
 
 
 /* building an inode */
 
-void task_dump_owner(struct task_struct *task, umode_t mode,
+व्योम task_dump_owner(काष्ठा task_काष्ठा *task, umode_t mode,
 		     kuid_t *ruid, kgid_t *rgid)
-{
+अणु
 	/* Depending on the state of dumpable compute who should own a
-	 * proc file for a task.
+	 * proc file क्रम a task.
 	 */
-	const struct cred *cred;
+	स्थिर काष्ठा cred *cred;
 	kuid_t uid;
 	kgid_t gid;
 
-	if (unlikely(task->flags & PF_KTHREAD)) {
+	अगर (unlikely(task->flags & PF_KTHREAD)) अणु
 		*ruid = GLOBAL_ROOT_UID;
 		*rgid = GLOBAL_ROOT_GID;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Default to the tasks effective ownership */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	cred = __task_cred(task);
 	uid = cred->euid;
 	gid = cred->egid;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	/*
-	 * Before the /proc/pid/status file was created the only way to read
+	 * Beक्रमe the /proc/pid/status file was created the only way to पढ़ो
 	 * the effective uid of a /process was to stat /proc/pid.  Reading
 	 * /proc/pid/status is slow enough that procps and other packages
 	 * kept stating /proc/pid.  To keep the rules in /proc simple I have
-	 * made this apply to all per process world readable and executable
+	 * made this apply to all per process world पढ़ोable and executable
 	 * directories.
 	 */
-	if (mode != (S_IFDIR|S_IRUGO|S_IXUGO)) {
-		struct mm_struct *mm;
+	अगर (mode != (S_IFसूची|S_IRUGO|S_IXUGO)) अणु
+		काष्ठा mm_काष्ठा *mm;
 		task_lock(task);
 		mm = task->mm;
 		/* Make non-dumpable tasks owned by some root */
-		if (mm) {
-			if (get_dumpable(mm) != SUID_DUMP_USER) {
-				struct user_namespace *user_ns = mm->user_ns;
+		अगर (mm) अणु
+			अगर (get_dumpable(mm) != SUID_DUMP_USER) अणु
+				काष्ठा user_namespace *user_ns = mm->user_ns;
 
 				uid = make_kuid(user_ns, 0);
-				if (!uid_valid(uid))
+				अगर (!uid_valid(uid))
 					uid = GLOBAL_ROOT_UID;
 
 				gid = make_kgid(user_ns, 0);
-				if (!gid_valid(gid))
+				अगर (!gid_valid(gid))
 					gid = GLOBAL_ROOT_GID;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			uid = GLOBAL_ROOT_UID;
 			gid = GLOBAL_ROOT_GID;
-		}
+		पूर्ण
 		task_unlock(task);
-	}
+	पूर्ण
 	*ruid = uid;
 	*rgid = gid;
-}
+पूर्ण
 
-void proc_pid_evict_inode(struct proc_inode *ei)
-{
-	struct pid *pid = ei->pid;
+व्योम proc_pid_evict_inode(काष्ठा proc_inode *ei)
+अणु
+	काष्ठा pid *pid = ei->pid;
 
-	if (S_ISDIR(ei->vfs_inode.i_mode)) {
+	अगर (S_ISसूची(ei->vfs_inode.i_mode)) अणु
 		spin_lock(&pid->lock);
 		hlist_del_init_rcu(&ei->sibling_inodes);
 		spin_unlock(&pid->lock);
-	}
+	पूर्ण
 
 	put_pid(pid);
-}
+पूर्ण
 
-struct inode *proc_pid_make_inode(struct super_block * sb,
-				  struct task_struct *task, umode_t mode)
-{
-	struct inode * inode;
-	struct proc_inode *ei;
-	struct pid *pid;
+काष्ठा inode *proc_pid_make_inode(काष्ठा super_block * sb,
+				  काष्ठा task_काष्ठा *task, umode_t mode)
+अणु
+	काष्ठा inode * inode;
+	काष्ठा proc_inode *ei;
+	काष्ठा pid *pid;
 
 	/* We need a new inode */
 
 	inode = new_inode(sb);
-	if (!inode)
-		goto out;
+	अगर (!inode)
+		जाओ out;
 
 	/* Common stuff */
 	ei = PROC_I(inode);
 	inode->i_mode = mode;
 	inode->i_ino = get_next_ino();
-	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
 	inode->i_op = &proc_def_inode_operations;
 
 	/*
 	 * grab the reference to task.
 	 */
 	pid = get_task_pid(task, PIDTYPE_PID);
-	if (!pid)
-		goto out_unlock;
+	अगर (!pid)
+		जाओ out_unlock;
 
-	/* Let the pid remember us for quick removal */
+	/* Let the pid remember us क्रम quick removal */
 	ei->pid = pid;
-	if (S_ISDIR(mode)) {
+	अगर (S_ISसूची(mode)) अणु
 		spin_lock(&pid->lock);
 		hlist_add_head_rcu(&ei->sibling_inodes, &pid->inodes);
 		spin_unlock(&pid->lock);
-	}
+	पूर्ण
 
 	task_dump_owner(task, 0, &inode->i_uid, &inode->i_gid);
 	security_task_to_inode(task, inode);
 
 out:
-	return inode;
+	वापस inode;
 
 out_unlock:
 	iput(inode);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int pid_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		struct kstat *stat, u32 request_mask, unsigned int query_flags)
-{
-	struct inode *inode = d_inode(path->dentry);
-	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
-	struct task_struct *task;
+पूर्णांक pid_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		काष्ठा kstat *stat, u32 request_mask, अचिन्हित पूर्णांक query_flags)
+अणु
+	काष्ठा inode *inode = d_inode(path->dentry);
+	काष्ठा proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
+	काष्ठा task_काष्ठा *task;
 
 	generic_fillattr(&init_user_ns, inode, stat);
 
 	stat->uid = GLOBAL_ROOT_UID;
 	stat->gid = GLOBAL_ROOT_GID;
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
-	if (task) {
-		if (!has_pid_permissions(fs_info, task, HIDEPID_INVISIBLE)) {
-			rcu_read_unlock();
+	अगर (task) अणु
+		अगर (!has_pid_permissions(fs_info, task, HIDEPID_INVISIBLE)) अणु
+			rcu_पढ़ो_unlock();
 			/*
-			 * This doesn't prevent learning whether PID exists,
-			 * it only makes getattr() consistent with readdir().
+			 * This करोesn't prevent learning whether PID exists,
+			 * it only makes getattr() consistent with सूची_पढ़ो().
 			 */
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 		task_dump_owner(task, inode->i_mode, &stat->uid, &stat->gid);
-	}
-	rcu_read_unlock();
-	return 0;
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस 0;
+पूर्ण
 
 /* dentry stuff */
 
 /*
  * Set <pid>/... inode ownership (can change due to setuid(), etc.)
  */
-void pid_update_inode(struct task_struct *task, struct inode *inode)
-{
+व्योम pid_update_inode(काष्ठा task_काष्ठा *task, काष्ठा inode *inode)
+अणु
 	task_dump_owner(task, inode->i_mode, &inode->i_uid, &inode->i_gid);
 
 	inode->i_mode &= ~(S_ISUID | S_ISGID);
 	security_task_to_inode(task, inode);
-}
+पूर्ण
 
 /*
- * Rewrite the inode's ownerships here because the owning task may have
- * performed a setuid(), etc.
+ * Reग_लिखो the inode's ownerships here because the owning task may have
+ * perक्रमmed a setuid(), etc.
  *
  */
-static int pid_revalidate(struct dentry *dentry, unsigned int flags)
-{
-	struct inode *inode;
-	struct task_struct *task;
+अटल पूर्णांक pid_revalidate(काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा task_काष्ठा *task;
 
-	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+	अगर (flags & LOOKUP_RCU)
+		वापस -ECHILD;
 
 	inode = d_inode(dentry);
 	task = get_proc_task(inode);
 
-	if (task) {
+	अगर (task) अणु
 		pid_update_inode(task, inode);
-		put_task_struct(task);
-		return 1;
-	}
-	return 0;
-}
+		put_task_काष्ठा(task);
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline bool proc_inode_is_dead(struct inode *inode)
-{
-	return !proc_pid(inode)->tasks[PIDTYPE_PID].first;
-}
+अटल अंतरभूत bool proc_inode_is_dead(काष्ठा inode *inode)
+अणु
+	वापस !proc_pid(inode)->tasks[PIDTYPE_PID].first;
+पूर्ण
 
-int pid_delete_dentry(const struct dentry *dentry)
-{
+पूर्णांक pid_delete_dentry(स्थिर काष्ठा dentry *dentry)
+अणु
 	/* Is the task we represent dead?
-	 * If so, then don't put the dentry on the lru list,
-	 * kill it immediately.
+	 * If so, then करोn't put the dentry on the lru list,
+	 * समाप्त it immediately.
 	 */
-	return proc_inode_is_dead(d_inode(dentry));
-}
+	वापस proc_inode_is_dead(d_inode(dentry));
+पूर्ण
 
-const struct dentry_operations pid_dentry_operations =
-{
+स्थिर काष्ठा dentry_operations pid_dentry_operations =
+अणु
 	.d_revalidate	= pid_revalidate,
 	.d_delete	= pid_delete_dentry,
-};
+पूर्ण;
 
 /* Lookups */
 
@@ -2020,225 +2021,225 @@ const struct dentry_operations pid_dentry_operations =
  * file type from dcache entry.
  *
  * Since all of the proc inode numbers are dynamically generated, the inode
- * numbers do not exist until the inode is cache.  This means creating
- * the dcache entry in readdir is necessary to keep the inode numbers
- * reported by readdir in sync with the inode numbers reported
+ * numbers करो not exist until the inode is cache.  This means creating
+ * the dcache entry in सूची_पढ़ो is necessary to keep the inode numbers
+ * reported by सूची_पढ़ो in sync with the inode numbers reported
  * by stat.
  */
-bool proc_fill_cache(struct file *file, struct dir_context *ctx,
-	const char *name, unsigned int len,
-	instantiate_t instantiate, struct task_struct *task, const void *ptr)
-{
-	struct dentry *child, *dir = file->f_path.dentry;
-	struct qstr qname = QSTR_INIT(name, len);
-	struct inode *inode;
-	unsigned type = DT_UNKNOWN;
+bool proc_fill_cache(काष्ठा file *file, काष्ठा dir_context *ctx,
+	स्थिर अक्षर *name, अचिन्हित पूर्णांक len,
+	instantiate_t instantiate, काष्ठा task_काष्ठा *task, स्थिर व्योम *ptr)
+अणु
+	काष्ठा dentry *child, *dir = file->f_path.dentry;
+	काष्ठा qstr qname = QSTR_INIT(name, len);
+	काष्ठा inode *inode;
+	अचिन्हित type = DT_UNKNOWN;
 	ino_t ino = 1;
 
 	child = d_hash_and_lookup(dir, &qname);
-	if (!child) {
+	अगर (!child) अणु
 		DECLARE_WAIT_QUEUE_HEAD_ONSTACK(wq);
 		child = d_alloc_parallel(dir, &qname, &wq);
-		if (IS_ERR(child))
-			goto end_instantiate;
-		if (d_in_lookup(child)) {
-			struct dentry *res;
+		अगर (IS_ERR(child))
+			जाओ end_instantiate;
+		अगर (d_in_lookup(child)) अणु
+			काष्ठा dentry *res;
 			res = instantiate(child, task, ptr);
-			d_lookup_done(child);
-			if (unlikely(res)) {
+			d_lookup_करोne(child);
+			अगर (unlikely(res)) अणु
 				dput(child);
 				child = res;
-				if (IS_ERR(child))
-					goto end_instantiate;
-			}
-		}
-	}
+				अगर (IS_ERR(child))
+					जाओ end_instantiate;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	inode = d_inode(child);
 	ino = inode->i_ino;
 	type = inode->i_mode >> 12;
 	dput(child);
 end_instantiate:
-	return dir_emit(ctx, name, len, ino, type);
-}
+	वापस dir_emit(ctx, name, len, ino, type);
+पूर्ण
 
 /*
- * dname_to_vma_addr - maps a dentry name into two unsigned longs
+ * dname_to_vma_addr - maps a dentry name पूर्णांकo two अचिन्हित दीर्घs
  * which represent vma start and end addresses.
  */
-static int dname_to_vma_addr(struct dentry *dentry,
-			     unsigned long *start, unsigned long *end)
-{
-	const char *str = dentry->d_name.name;
-	unsigned long long sval, eval;
-	unsigned int len;
+अटल पूर्णांक dname_to_vma_addr(काष्ठा dentry *dentry,
+			     अचिन्हित दीर्घ *start, अचिन्हित दीर्घ *end)
+अणु
+	स्थिर अक्षर *str = dentry->d_name.name;
+	अचिन्हित दीर्घ दीर्घ sval, eval;
+	अचिन्हित पूर्णांक len;
 
-	if (str[0] == '0' && str[1] != '-')
-		return -EINVAL;
-	len = _parse_integer(str, 16, &sval);
-	if (len & KSTRTOX_OVERFLOW)
-		return -EINVAL;
-	if (sval != (unsigned long)sval)
-		return -EINVAL;
+	अगर (str[0] == '0' && str[1] != '-')
+		वापस -EINVAL;
+	len = _parse_पूर्णांकeger(str, 16, &sval);
+	अगर (len & KSTRTOX_OVERFLOW)
+		वापस -EINVAL;
+	अगर (sval != (अचिन्हित दीर्घ)sval)
+		वापस -EINVAL;
 	str += len;
 
-	if (*str != '-')
-		return -EINVAL;
+	अगर (*str != '-')
+		वापस -EINVAL;
 	str++;
 
-	if (str[0] == '0' && str[1])
-		return -EINVAL;
-	len = _parse_integer(str, 16, &eval);
-	if (len & KSTRTOX_OVERFLOW)
-		return -EINVAL;
-	if (eval != (unsigned long)eval)
-		return -EINVAL;
+	अगर (str[0] == '0' && str[1])
+		वापस -EINVAL;
+	len = _parse_पूर्णांकeger(str, 16, &eval);
+	अगर (len & KSTRTOX_OVERFLOW)
+		वापस -EINVAL;
+	अगर (eval != (अचिन्हित दीर्घ)eval)
+		वापस -EINVAL;
 	str += len;
 
-	if (*str != '\0')
-		return -EINVAL;
+	अगर (*str != '\0')
+		वापस -EINVAL;
 
 	*start = sval;
 	*end = eval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int map_files_d_revalidate(struct dentry *dentry, unsigned int flags)
-{
-	unsigned long vm_start, vm_end;
+अटल पूर्णांक map_files_d_revalidate(काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित दीर्घ vm_start, vm_end;
 	bool exact_vma_exists = false;
-	struct mm_struct *mm = NULL;
-	struct task_struct *task;
-	struct inode *inode;
-	int status = 0;
+	काष्ठा mm_काष्ठा *mm = शून्य;
+	काष्ठा task_काष्ठा *task;
+	काष्ठा inode *inode;
+	पूर्णांक status = 0;
 
-	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+	अगर (flags & LOOKUP_RCU)
+		वापस -ECHILD;
 
 	inode = d_inode(dentry);
 	task = get_proc_task(inode);
-	if (!task)
-		goto out_notask;
+	अगर (!task)
+		जाओ out_notask;
 
 	mm = mm_access(task, PTRACE_MODE_READ_FSCREDS);
-	if (IS_ERR_OR_NULL(mm))
-		goto out;
+	अगर (IS_ERR_OR_शून्य(mm))
+		जाओ out;
 
-	if (!dname_to_vma_addr(dentry, &vm_start, &vm_end)) {
-		status = mmap_read_lock_killable(mm);
-		if (!status) {
+	अगर (!dname_to_vma_addr(dentry, &vm_start, &vm_end)) अणु
+		status = mmap_पढ़ो_lock_समाप्तable(mm);
+		अगर (!status) अणु
 			exact_vma_exists = !!find_exact_vma(mm, vm_start,
 							    vm_end);
-			mmap_read_unlock(mm);
-		}
-	}
+			mmap_पढ़ो_unlock(mm);
+		पूर्ण
+	पूर्ण
 
 	mmput(mm);
 
-	if (exact_vma_exists) {
+	अगर (exact_vma_exists) अणु
 		task_dump_owner(task, 0, &inode->i_uid, &inode->i_gid);
 
 		security_task_to_inode(task, inode);
 		status = 1;
-	}
+	पूर्ण
 
 out:
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 
 out_notask:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static const struct dentry_operations tid_map_files_dentry_operations = {
+अटल स्थिर काष्ठा dentry_operations tid_map_files_dentry_operations = अणु
 	.d_revalidate	= map_files_d_revalidate,
 	.d_delete	= pid_delete_dentry,
-};
+पूर्ण;
 
-static int map_files_get_link(struct dentry *dentry, struct path *path)
-{
-	unsigned long vm_start, vm_end;
-	struct vm_area_struct *vma;
-	struct task_struct *task;
-	struct mm_struct *mm;
-	int rc;
+अटल पूर्णांक map_files_get_link(काष्ठा dentry *dentry, काष्ठा path *path)
+अणु
+	अचिन्हित दीर्घ vm_start, vm_end;
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा task_काष्ठा *task;
+	काष्ठा mm_काष्ठा *mm;
+	पूर्णांक rc;
 
 	rc = -ENOENT;
 	task = get_proc_task(d_inode(dentry));
-	if (!task)
-		goto out;
+	अगर (!task)
+		जाओ out;
 
 	mm = get_task_mm(task);
-	put_task_struct(task);
-	if (!mm)
-		goto out;
+	put_task_काष्ठा(task);
+	अगर (!mm)
+		जाओ out;
 
 	rc = dname_to_vma_addr(dentry, &vm_start, &vm_end);
-	if (rc)
-		goto out_mmput;
+	अगर (rc)
+		जाओ out_mmput;
 
-	rc = mmap_read_lock_killable(mm);
-	if (rc)
-		goto out_mmput;
+	rc = mmap_पढ़ो_lock_समाप्तable(mm);
+	अगर (rc)
+		जाओ out_mmput;
 
 	rc = -ENOENT;
 	vma = find_exact_vma(mm, vm_start, vm_end);
-	if (vma && vma->vm_file) {
+	अगर (vma && vma->vm_file) अणु
 		*path = vma->vm_file->f_path;
 		path_get(path);
 		rc = 0;
-	}
-	mmap_read_unlock(mm);
+	पूर्ण
+	mmap_पढ़ो_unlock(mm);
 
 out_mmput:
 	mmput(mm);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-struct map_files_info {
-	unsigned long	start;
-	unsigned long	end;
-	fmode_t		mode;
-};
+काष्ठा map_files_info अणु
+	अचिन्हित दीर्घ	start;
+	अचिन्हित दीर्घ	end;
+	भ_शेषe_t		mode;
+पूर्ण;
 
 /*
  * Only allow CAP_SYS_ADMIN and CAP_CHECKPOINT_RESTORE to follow the links, due
  * to concerns about how the symlinks may be used to bypass permissions on
  * ancestor directories in the path to the file in question.
  */
-static const char *
-proc_map_files_get_link(struct dentry *dentry,
-			struct inode *inode,
-		        struct delayed_call *done)
-{
-	if (!checkpoint_restore_ns_capable(&init_user_ns))
-		return ERR_PTR(-EPERM);
+अटल स्थिर अक्षर *
+proc_map_files_get_link(काष्ठा dentry *dentry,
+			काष्ठा inode *inode,
+		        काष्ठा delayed_call *करोne)
+अणु
+	अगर (!checkpoपूर्णांक_restore_ns_capable(&init_user_ns))
+		वापस ERR_PTR(-EPERM);
 
-	return proc_pid_get_link(dentry, inode, done);
-}
+	वापस proc_pid_get_link(dentry, inode, करोne);
+पूर्ण
 
 /*
- * Identical to proc_pid_link_inode_operations except for get_link()
+ * Identical to proc_pid_link_inode_operations except क्रम get_link()
  */
-static const struct inode_operations proc_map_files_link_inode_operations = {
-	.readlink	= proc_pid_readlink,
+अटल स्थिर काष्ठा inode_operations proc_map_files_link_inode_operations = अणु
+	.पढ़ोlink	= proc_pid_पढ़ोlink,
 	.get_link	= proc_map_files_get_link,
 	.setattr	= proc_setattr,
-};
+पूर्ण;
 
-static struct dentry *
-proc_map_files_instantiate(struct dentry *dentry,
-			   struct task_struct *task, const void *ptr)
-{
-	fmode_t mode = (fmode_t)(unsigned long)ptr;
-	struct proc_inode *ei;
-	struct inode *inode;
+अटल काष्ठा dentry *
+proc_map_files_instantiate(काष्ठा dentry *dentry,
+			   काष्ठा task_काष्ठा *task, स्थिर व्योम *ptr)
+अणु
+	भ_शेषe_t mode = (भ_शेषe_t)(अचिन्हित दीर्घ)ptr;
+	काष्ठा proc_inode *ei;
+	काष्ठा inode *inode;
 
 	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFLNK |
 				    ((mode & FMODE_READ ) ? S_IRUSR : 0) |
 				    ((mode & FMODE_WRITE) ? S_IWUSR : 0));
-	if (!inode)
-		return ERR_PTR(-ENOENT);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOENT);
 
 	ei = PROC_I(inode);
 	ei->op.proc_get_link = map_files_get_link;
@@ -2247,99 +2248,99 @@ proc_map_files_instantiate(struct dentry *dentry,
 	inode->i_size = 64;
 
 	d_set_d_op(dentry, &tid_map_files_dentry_operations);
-	return d_splice_alias(inode, dentry);
-}
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
-static struct dentry *proc_map_files_lookup(struct inode *dir,
-		struct dentry *dentry, unsigned int flags)
-{
-	unsigned long vm_start, vm_end;
-	struct vm_area_struct *vma;
-	struct task_struct *task;
-	struct dentry *result;
-	struct mm_struct *mm;
+अटल काष्ठा dentry *proc_map_files_lookup(काष्ठा inode *dir,
+		काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित दीर्घ vm_start, vm_end;
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा task_काष्ठा *task;
+	काष्ठा dentry *result;
+	काष्ठा mm_काष्ठा *mm;
 
 	result = ERR_PTR(-ENOENT);
 	task = get_proc_task(dir);
-	if (!task)
-		goto out;
+	अगर (!task)
+		जाओ out;
 
 	result = ERR_PTR(-EACCES);
-	if (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
-		goto out_put_task;
+	अगर (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
+		जाओ out_put_task;
 
 	result = ERR_PTR(-ENOENT);
-	if (dname_to_vma_addr(dentry, &vm_start, &vm_end))
-		goto out_put_task;
+	अगर (dname_to_vma_addr(dentry, &vm_start, &vm_end))
+		जाओ out_put_task;
 
 	mm = get_task_mm(task);
-	if (!mm)
-		goto out_put_task;
+	अगर (!mm)
+		जाओ out_put_task;
 
 	result = ERR_PTR(-EINTR);
-	if (mmap_read_lock_killable(mm))
-		goto out_put_mm;
+	अगर (mmap_पढ़ो_lock_समाप्तable(mm))
+		जाओ out_put_mm;
 
 	result = ERR_PTR(-ENOENT);
 	vma = find_exact_vma(mm, vm_start, vm_end);
-	if (!vma)
-		goto out_no_vma;
+	अगर (!vma)
+		जाओ out_no_vma;
 
-	if (vma->vm_file)
+	अगर (vma->vm_file)
 		result = proc_map_files_instantiate(dentry, task,
-				(void *)(unsigned long)vma->vm_file->f_mode);
+				(व्योम *)(अचिन्हित दीर्घ)vma->vm_file->f_mode);
 
 out_no_vma:
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 out_put_mm:
 	mmput(mm);
 out_put_task:
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 out:
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static const struct inode_operations proc_map_files_inode_operations = {
+अटल स्थिर काष्ठा inode_operations proc_map_files_inode_operations = अणु
 	.lookup		= proc_map_files_lookup,
 	.permission	= proc_fd_permission,
 	.setattr	= proc_setattr,
-};
+पूर्ण;
 
-static int
-proc_map_files_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct vm_area_struct *vma;
-	struct task_struct *task;
-	struct mm_struct *mm;
-	unsigned long nr_files, pos, i;
-	GENRADIX(struct map_files_info) fa;
-	struct map_files_info *p;
-	int ret;
+अटल पूर्णांक
+proc_map_files_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा task_काष्ठा *task;
+	काष्ठा mm_काष्ठा *mm;
+	अचिन्हित दीर्घ nr_files, pos, i;
+	GENRADIX(काष्ठा map_files_info) fa;
+	काष्ठा map_files_info *p;
+	पूर्णांक ret;
 
 	genradix_init(&fa);
 
 	ret = -ENOENT;
 	task = get_proc_task(file_inode(file));
-	if (!task)
-		goto out;
+	अगर (!task)
+		जाओ out;
 
 	ret = -EACCES;
-	if (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
-		goto out_put_task;
+	अगर (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
+		जाओ out_put_task;
 
 	ret = 0;
-	if (!dir_emit_dots(file, ctx))
-		goto out_put_task;
+	अगर (!dir_emit_करोts(file, ctx))
+		जाओ out_put_task;
 
 	mm = get_task_mm(task);
-	if (!mm)
-		goto out_put_task;
+	अगर (!mm)
+		जाओ out_put_task;
 
-	ret = mmap_read_lock_killable(mm);
-	if (ret) {
+	ret = mmap_पढ़ो_lock_समाप्तable(mm);
+	अगर (ret) अणु
 		mmput(mm);
-		goto out_put_task;
-	}
+		जाओ out_put_task;
+	पूर्ण
 
 	nr_files = 0;
 
@@ -2353,614 +2354,614 @@ proc_map_files_readdir(struct file *file, struct dir_context *ctx)
 	 * routine might require mmap_lock taken in might_fault().
 	 */
 
-	for (vma = mm->mmap, pos = 2; vma; vma = vma->vm_next) {
-		if (!vma->vm_file)
-			continue;
-		if (++pos <= ctx->pos)
-			continue;
+	क्रम (vma = mm->mmap, pos = 2; vma; vma = vma->vm_next) अणु
+		अगर (!vma->vm_file)
+			जारी;
+		अगर (++pos <= ctx->pos)
+			जारी;
 
 		p = genradix_ptr_alloc(&fa, nr_files++, GFP_KERNEL);
-		if (!p) {
+		अगर (!p) अणु
 			ret = -ENOMEM;
-			mmap_read_unlock(mm);
+			mmap_पढ़ो_unlock(mm);
 			mmput(mm);
-			goto out_put_task;
-		}
+			जाओ out_put_task;
+		पूर्ण
 
 		p->start = vma->vm_start;
 		p->end = vma->vm_end;
 		p->mode = vma->vm_file->f_mode;
-	}
-	mmap_read_unlock(mm);
+	पूर्ण
+	mmap_पढ़ो_unlock(mm);
 	mmput(mm);
 
-	for (i = 0; i < nr_files; i++) {
-		char buf[4 * sizeof(long) + 2];	/* max: %lx-%lx\0 */
-		unsigned int len;
+	क्रम (i = 0; i < nr_files; i++) अणु
+		अक्षर buf[4 * माप(दीर्घ) + 2];	/* max: %lx-%lx\0 */
+		अचिन्हित पूर्णांक len;
 
 		p = genradix_ptr(&fa, i);
-		len = snprintf(buf, sizeof(buf), "%lx-%lx", p->start, p->end);
-		if (!proc_fill_cache(file, ctx,
+		len = snम_लिखो(buf, माप(buf), "%lx-%lx", p->start, p->end);
+		अगर (!proc_fill_cache(file, ctx,
 				      buf, len,
 				      proc_map_files_instantiate,
 				      task,
-				      (void *)(unsigned long)p->mode))
-			break;
+				      (व्योम *)(अचिन्हित दीर्घ)p->mode))
+			अवरोध;
 		ctx->pos++;
-	}
+	पूर्ण
 
 out_put_task:
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 out:
-	genradix_free(&fa);
-	return ret;
-}
+	genradix_मुक्त(&fa);
+	वापस ret;
+पूर्ण
 
-static const struct file_operations proc_map_files_operations = {
-	.read		= generic_read_dir,
-	.iterate_shared	= proc_map_files_readdir,
+अटल स्थिर काष्ठा file_operations proc_map_files_operations = अणु
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= proc_map_files_सूची_पढ़ो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-#if defined(CONFIG_CHECKPOINT_RESTORE) && defined(CONFIG_POSIX_TIMERS)
-struct timers_private {
-	struct pid *pid;
-	struct task_struct *task;
-	struct sighand_struct *sighand;
-	struct pid_namespace *ns;
-	unsigned long flags;
-};
+#अगर defined(CONFIG_CHECKPOINT_RESTORE) && defined(CONFIG_POSIX_TIMERS)
+काष्ठा समयrs_निजी अणु
+	काष्ठा pid *pid;
+	काष्ठा task_काष्ठा *task;
+	काष्ठा sighand_काष्ठा *sighand;
+	काष्ठा pid_namespace *ns;
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
-static void *timers_start(struct seq_file *m, loff_t *pos)
-{
-	struct timers_private *tp = m->private;
+अटल व्योम *समयrs_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	काष्ठा समयrs_निजी *tp = m->निजी;
 
 	tp->task = get_pid_task(tp->pid, PIDTYPE_PID);
-	if (!tp->task)
-		return ERR_PTR(-ESRCH);
+	अगर (!tp->task)
+		वापस ERR_PTR(-ESRCH);
 
 	tp->sighand = lock_task_sighand(tp->task, &tp->flags);
-	if (!tp->sighand)
-		return ERR_PTR(-ESRCH);
+	अगर (!tp->sighand)
+		वापस ERR_PTR(-ESRCH);
 
-	return seq_list_start(&tp->task->signal->posix_timers, *pos);
-}
+	वापस seq_list_start(&tp->task->संकेत->posix_समयrs, *pos);
+पूर्ण
 
-static void *timers_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	struct timers_private *tp = m->private;
-	return seq_list_next(v, &tp->task->signal->posix_timers, pos);
-}
+अटल व्योम *समयrs_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा समयrs_निजी *tp = m->निजी;
+	वापस seq_list_next(v, &tp->task->संकेत->posix_समयrs, pos);
+पूर्ण
 
-static void timers_stop(struct seq_file *m, void *v)
-{
-	struct timers_private *tp = m->private;
+अटल व्योम समयrs_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा समयrs_निजी *tp = m->निजी;
 
-	if (tp->sighand) {
+	अगर (tp->sighand) अणु
 		unlock_task_sighand(tp->task, &tp->flags);
-		tp->sighand = NULL;
-	}
+		tp->sighand = शून्य;
+	पूर्ण
 
-	if (tp->task) {
-		put_task_struct(tp->task);
-		tp->task = NULL;
-	}
-}
+	अगर (tp->task) अणु
+		put_task_काष्ठा(tp->task);
+		tp->task = शून्य;
+	पूर्ण
+पूर्ण
 
-static int show_timer(struct seq_file *m, void *v)
-{
-	struct k_itimer *timer;
-	struct timers_private *tp = m->private;
-	int notify;
-	static const char * const nstr[] = {
+अटल पूर्णांक show_समयr(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा k_iसमयr *समयr;
+	काष्ठा समयrs_निजी *tp = m->निजी;
+	पूर्णांक notअगरy;
+	अटल स्थिर अक्षर * स्थिर nstr[] = अणु
 		[SIGEV_SIGNAL] = "signal",
 		[SIGEV_NONE] = "none",
 		[SIGEV_THREAD] = "thread",
-	};
+	पूर्ण;
 
-	timer = list_entry((struct list_head *)v, struct k_itimer, list);
-	notify = timer->it_sigev_notify;
+	समयr = list_entry((काष्ठा list_head *)v, काष्ठा k_iसमयr, list);
+	notअगरy = समयr->it_sigev_notअगरy;
 
-	seq_printf(m, "ID: %d\n", timer->it_id);
-	seq_printf(m, "signal: %d/%px\n",
-		   timer->sigq->info.si_signo,
-		   timer->sigq->info.si_value.sival_ptr);
-	seq_printf(m, "notify: %s/%s.%d\n",
-		   nstr[notify & ~SIGEV_THREAD_ID],
-		   (notify & SIGEV_THREAD_ID) ? "tid" : "pid",
-		   pid_nr_ns(timer->it_pid, tp->ns));
-	seq_printf(m, "ClockID: %d\n", timer->it_clock);
+	seq_म_लिखो(m, "ID: %d\n", समयr->it_id);
+	seq_म_लिखो(m, "signal: %d/%px\n",
+		   समयr->sigq->info.si_signo,
+		   समयr->sigq->info.si_value.sival_ptr);
+	seq_म_लिखो(m, "notify: %s/%s.%d\n",
+		   nstr[notअगरy & ~SIGEV_THREAD_ID],
+		   (notअगरy & SIGEV_THREAD_ID) ? "tid" : "pid",
+		   pid_nr_ns(समयr->it_pid, tp->ns));
+	seq_म_लिखो(m, "ClockID: %d\n", समयr->it_घड़ी);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations proc_timers_seq_ops = {
-	.start	= timers_start,
-	.next	= timers_next,
-	.stop	= timers_stop,
-	.show	= show_timer,
-};
+अटल स्थिर काष्ठा seq_operations proc_समयrs_seq_ops = अणु
+	.start	= समयrs_start,
+	.next	= समयrs_next,
+	.stop	= समयrs_stop,
+	.show	= show_समयr,
+पूर्ण;
 
-static int proc_timers_open(struct inode *inode, struct file *file)
-{
-	struct timers_private *tp;
+अटल पूर्णांक proc_समयrs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा समयrs_निजी *tp;
 
-	tp = __seq_open_private(file, &proc_timers_seq_ops,
-			sizeof(struct timers_private));
-	if (!tp)
-		return -ENOMEM;
+	tp = __seq_खोलो_निजी(file, &proc_समयrs_seq_ops,
+			माप(काष्ठा समयrs_निजी));
+	अगर (!tp)
+		वापस -ENOMEM;
 
 	tp->pid = proc_pid(inode);
 	tp->ns = proc_pid_ns(inode->i_sb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations proc_timers_operations = {
-	.open		= proc_timers_open,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations proc_समयrs_operations = अणु
+	.खोलो		= proc_समयrs_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
-	.release	= seq_release_private,
-};
-#endif
+	.release	= seq_release_निजी,
+पूर्ण;
+#पूर्ण_अगर
 
-static ssize_t timerslack_ns_write(struct file *file, const char __user *buf,
-					size_t count, loff_t *offset)
-{
-	struct inode *inode = file_inode(file);
-	struct task_struct *p;
+अटल sमाप_प्रकार समयrslack_ns_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+					माप_प्रकार count, loff_t *offset)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा task_काष्ठा *p;
 	u64 slack_ns;
-	int err;
+	पूर्णांक err;
 
-	err = kstrtoull_from_user(buf, count, 10, &slack_ns);
-	if (err < 0)
-		return err;
+	err = kम_से_अदीर्घl_from_user(buf, count, 10, &slack_ns);
+	अगर (err < 0)
+		वापस err;
 
 	p = get_proc_task(inode);
-	if (!p)
-		return -ESRCH;
+	अगर (!p)
+		वापस -ESRCH;
 
-	if (p != current) {
-		rcu_read_lock();
-		if (!ns_capable(__task_cred(p)->user_ns, CAP_SYS_NICE)) {
-			rcu_read_unlock();
+	अगर (p != current) अणु
+		rcu_पढ़ो_lock();
+		अगर (!ns_capable(__task_cred(p)->user_ns, CAP_SYS_NICE)) अणु
+			rcu_पढ़ो_unlock();
 			count = -EPERM;
-			goto out;
-		}
-		rcu_read_unlock();
+			जाओ out;
+		पूर्ण
+		rcu_पढ़ो_unlock();
 
 		err = security_task_setscheduler(p);
-		if (err) {
+		अगर (err) अणु
 			count = err;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	task_lock(p);
-	if (slack_ns == 0)
-		p->timer_slack_ns = p->default_timer_slack_ns;
-	else
-		p->timer_slack_ns = slack_ns;
+	अगर (slack_ns == 0)
+		p->समयr_slack_ns = p->शेष_समयr_slack_ns;
+	अन्यथा
+		p->समयr_slack_ns = slack_ns;
 	task_unlock(p);
 
 out:
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int timerslack_ns_show(struct seq_file *m, void *v)
-{
-	struct inode *inode = m->private;
-	struct task_struct *p;
-	int err = 0;
+अटल पूर्णांक समयrslack_ns_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा inode *inode = m->निजी;
+	काष्ठा task_काष्ठा *p;
+	पूर्णांक err = 0;
 
 	p = get_proc_task(inode);
-	if (!p)
-		return -ESRCH;
+	अगर (!p)
+		वापस -ESRCH;
 
-	if (p != current) {
-		rcu_read_lock();
-		if (!ns_capable(__task_cred(p)->user_ns, CAP_SYS_NICE)) {
-			rcu_read_unlock();
+	अगर (p != current) अणु
+		rcu_पढ़ो_lock();
+		अगर (!ns_capable(__task_cred(p)->user_ns, CAP_SYS_NICE)) अणु
+			rcu_पढ़ो_unlock();
 			err = -EPERM;
-			goto out;
-		}
-		rcu_read_unlock();
+			जाओ out;
+		पूर्ण
+		rcu_पढ़ो_unlock();
 
-		err = security_task_getscheduler(p);
-		if (err)
-			goto out;
-	}
+		err = security_task_माला_लोcheduler(p);
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 	task_lock(p);
-	seq_printf(m, "%llu\n", p->timer_slack_ns);
+	seq_म_लिखो(m, "%llu\n", p->समयr_slack_ns);
 	task_unlock(p);
 
 out:
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int timerslack_ns_open(struct inode *inode, struct file *filp)
-{
-	return single_open(filp, timerslack_ns_show, inode);
-}
+अटल पूर्णांक समयrslack_ns_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस single_खोलो(filp, समयrslack_ns_show, inode);
+पूर्ण
 
-static const struct file_operations proc_pid_set_timerslack_ns_operations = {
-	.open		= timerslack_ns_open,
-	.read		= seq_read,
-	.write		= timerslack_ns_write,
+अटल स्थिर काष्ठा file_operations proc_pid_set_समयrslack_ns_operations = अणु
+	.खोलो		= समयrslack_ns_खोलो,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= समयrslack_ns_ग_लिखो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
-static struct dentry *proc_pident_instantiate(struct dentry *dentry,
-	struct task_struct *task, const void *ptr)
-{
-	const struct pid_entry *p = ptr;
-	struct inode *inode;
-	struct proc_inode *ei;
+अटल काष्ठा dentry *proc_pident_instantiate(काष्ठा dentry *dentry,
+	काष्ठा task_काष्ठा *task, स्थिर व्योम *ptr)
+अणु
+	स्थिर काष्ठा pid_entry *p = ptr;
+	काष्ठा inode *inode;
+	काष्ठा proc_inode *ei;
 
 	inode = proc_pid_make_inode(dentry->d_sb, task, p->mode);
-	if (!inode)
-		return ERR_PTR(-ENOENT);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOENT);
 
 	ei = PROC_I(inode);
-	if (S_ISDIR(inode->i_mode))
-		set_nlink(inode, 2);	/* Use getattr to fix if necessary */
-	if (p->iop)
+	अगर (S_ISसूची(inode->i_mode))
+		set_nlink(inode, 2);	/* Use getattr to fix अगर necessary */
+	अगर (p->iop)
 		inode->i_op = p->iop;
-	if (p->fop)
+	अगर (p->fop)
 		inode->i_fop = p->fop;
 	ei->op = p->op;
 	pid_update_inode(task, inode);
 	d_set_d_op(dentry, &pid_dentry_operations);
-	return d_splice_alias(inode, dentry);
-}
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
-static struct dentry *proc_pident_lookup(struct inode *dir, 
-					 struct dentry *dentry,
-					 const struct pid_entry *p,
-					 const struct pid_entry *end)
-{
-	struct task_struct *task = get_proc_task(dir);
-	struct dentry *res = ERR_PTR(-ENOENT);
+अटल काष्ठा dentry *proc_pident_lookup(काष्ठा inode *dir, 
+					 काष्ठा dentry *dentry,
+					 स्थिर काष्ठा pid_entry *p,
+					 स्थिर काष्ठा pid_entry *end)
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(dir);
+	काष्ठा dentry *res = ERR_PTR(-ENOENT);
 
-	if (!task)
-		goto out_no_task;
+	अगर (!task)
+		जाओ out_no_task;
 
 	/*
-	 * Yes, it does not scale. And it should not. Don't add
-	 * new entries into /proc/<tgid>/ without very good reasons.
+	 * Yes, it करोes not scale. And it should not. Don't add
+	 * new entries पूर्णांकo /proc/<tgid>/ without very good reasons.
 	 */
-	for (; p < end; p++) {
-		if (p->len != dentry->d_name.len)
-			continue;
-		if (!memcmp(dentry->d_name.name, p->name, p->len)) {
+	क्रम (; p < end; p++) अणु
+		अगर (p->len != dentry->d_name.len)
+			जारी;
+		अगर (!स_भेद(dentry->d_name.name, p->name, p->len)) अणु
 			res = proc_pident_instantiate(dentry, task, p);
-			break;
-		}
-	}
-	put_task_struct(task);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	put_task_काष्ठा(task);
 out_no_task:
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int proc_pident_readdir(struct file *file, struct dir_context *ctx,
-		const struct pid_entry *ents, unsigned int nents)
-{
-	struct task_struct *task = get_proc_task(file_inode(file));
-	const struct pid_entry *p;
+अटल पूर्णांक proc_pident_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx,
+		स्थिर काष्ठा pid_entry *ents, अचिन्हित पूर्णांक nents)
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(file_inode(file));
+	स्थिर काष्ठा pid_entry *p;
 
-	if (!task)
-		return -ENOENT;
+	अगर (!task)
+		वापस -ENOENT;
 
-	if (!dir_emit_dots(file, ctx))
-		goto out;
+	अगर (!dir_emit_करोts(file, ctx))
+		जाओ out;
 
-	if (ctx->pos >= nents + 2)
-		goto out;
+	अगर (ctx->pos >= nents + 2)
+		जाओ out;
 
-	for (p = ents + (ctx->pos - 2); p < ents + nents; p++) {
-		if (!proc_fill_cache(file, ctx, p->name, p->len,
+	क्रम (p = ents + (ctx->pos - 2); p < ents + nents; p++) अणु
+		अगर (!proc_fill_cache(file, ctx, p->name, p->len,
 				proc_pident_instantiate, task, p))
-			break;
+			अवरोध;
 		ctx->pos++;
-	}
+	पूर्ण
 out:
-	put_task_struct(task);
-	return 0;
-}
+	put_task_काष्ठा(task);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SECURITY
-static int proc_pid_attr_open(struct inode *inode, struct file *file)
-{
-	file->private_data = NULL;
-	__mem_open(inode, file, PTRACE_MODE_READ_FSCREDS);
-	return 0;
-}
+#अगर_घोषित CONFIG_SECURITY
+अटल पूर्णांक proc_pid_attr_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	file->निजी_data = शून्य;
+	__mem_खोलो(inode, file, PTRACE_MODE_READ_FSCREDS);
+	वापस 0;
+पूर्ण
 
-static ssize_t proc_pid_attr_read(struct file * file, char __user * buf,
-				  size_t count, loff_t *ppos)
-{
-	struct inode * inode = file_inode(file);
-	char *p = NULL;
-	ssize_t length;
-	struct task_struct *task = get_proc_task(inode);
+अटल sमाप_प्रकार proc_pid_attr_पढ़ो(काष्ठा file * file, अक्षर __user * buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा inode * inode = file_inode(file);
+	अक्षर *p = शून्य;
+	sमाप_प्रकार length;
+	काष्ठा task_काष्ठा *task = get_proc_task(inode);
 
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 
 	length = security_getprocattr(task, PROC_I(inode)->op.lsm,
-				      (char*)file->f_path.dentry->d_name.name,
+				      (अक्षर*)file->f_path.dentry->d_name.name,
 				      &p);
-	put_task_struct(task);
-	if (length > 0)
-		length = simple_read_from_buffer(buf, count, ppos, p, length);
-	kfree(p);
-	return length;
-}
+	put_task_काष्ठा(task);
+	अगर (length > 0)
+		length = simple_पढ़ो_from_buffer(buf, count, ppos, p, length);
+	kमुक्त(p);
+	वापस length;
+पूर्ण
 
-static ssize_t proc_pid_attr_write(struct file * file, const char __user * buf,
-				   size_t count, loff_t *ppos)
-{
-	struct inode * inode = file_inode(file);
-	struct task_struct *task;
-	void *page;
-	int rv;
+अटल sमाप_प्रकार proc_pid_attr_ग_लिखो(काष्ठा file * file, स्थिर अक्षर __user * buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा inode * inode = file_inode(file);
+	काष्ठा task_काष्ठा *task;
+	व्योम *page;
+	पूर्णांक rv;
 
-	/* A task may only write when it was the opener. */
-	if (file->private_data != current->mm)
-		return -EPERM;
+	/* A task may only ग_लिखो when it was the खोलोer. */
+	अगर (file->निजी_data != current->mm)
+		वापस -EPERM;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
-	if (!task) {
-		rcu_read_unlock();
-		return -ESRCH;
-	}
-	/* A task may only write its own attributes. */
-	if (current != task) {
-		rcu_read_unlock();
-		return -EACCES;
-	}
+	अगर (!task) अणु
+		rcu_पढ़ो_unlock();
+		वापस -ESRCH;
+	पूर्ण
+	/* A task may only ग_लिखो its own attributes. */
+	अगर (current != task) अणु
+		rcu_पढ़ो_unlock();
+		वापस -EACCES;
+	पूर्ण
 	/* Prevent changes to overridden credentials. */
-	if (current_cred() != current_real_cred()) {
-		rcu_read_unlock();
-		return -EBUSY;
-	}
-	rcu_read_unlock();
+	अगर (current_cred() != current_real_cred()) अणु
+		rcu_पढ़ो_unlock();
+		वापस -EBUSY;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (count > PAGE_SIZE)
+	अगर (count > PAGE_SIZE)
 		count = PAGE_SIZE;
 
-	/* No partial writes. */
-	if (*ppos != 0)
-		return -EINVAL;
+	/* No partial ग_लिखोs. */
+	अगर (*ppos != 0)
+		वापस -EINVAL;
 
 	page = memdup_user(buf, count);
-	if (IS_ERR(page)) {
+	अगर (IS_ERR(page)) अणु
 		rv = PTR_ERR(page);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Guard against adverse ptrace interaction */
-	rv = mutex_lock_interruptible(&current->signal->cred_guard_mutex);
-	if (rv < 0)
-		goto out_free;
+	/* Guard against adverse ptrace पूर्णांकeraction */
+	rv = mutex_lock_पूर्णांकerruptible(&current->संकेत->cred_guard_mutex);
+	अगर (rv < 0)
+		जाओ out_मुक्त;
 
 	rv = security_setprocattr(PROC_I(inode)->op.lsm,
 				  file->f_path.dentry->d_name.name, page,
 				  count);
-	mutex_unlock(&current->signal->cred_guard_mutex);
-out_free:
-	kfree(page);
+	mutex_unlock(&current->संकेत->cred_guard_mutex);
+out_मुक्त:
+	kमुक्त(page);
 out:
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static const struct file_operations proc_pid_attr_operations = {
-	.open		= proc_pid_attr_open,
-	.read		= proc_pid_attr_read,
-	.write		= proc_pid_attr_write,
+अटल स्थिर काष्ठा file_operations proc_pid_attr_operations = अणु
+	.खोलो		= proc_pid_attr_खोलो,
+	.पढ़ो		= proc_pid_attr_पढ़ो,
+	.ग_लिखो		= proc_pid_attr_ग_लिखो,
 	.llseek		= generic_file_llseek,
 	.release	= mem_release,
-};
+पूर्ण;
 
-#define LSM_DIR_OPS(LSM) \
-static int proc_##LSM##_attr_dir_iterate(struct file *filp, \
-			     struct dir_context *ctx) \
-{ \
-	return proc_pident_readdir(filp, ctx, \
+#घोषणा LSM_सूची_OPS(LSM) \
+अटल पूर्णांक proc_##LSM##_attr_dir_iterate(काष्ठा file *filp, \
+			     काष्ठा dir_context *ctx) \
+अणु \
+	वापस proc_pident_सूची_पढ़ो(filp, ctx, \
 				   LSM##_attr_dir_stuff, \
 				   ARRAY_SIZE(LSM##_attr_dir_stuff)); \
-} \
+पूर्ण \
 \
-static const struct file_operations proc_##LSM##_attr_dir_ops = { \
-	.read		= generic_read_dir, \
+अटल स्थिर काष्ठा file_operations proc_##LSM##_attr_dir_ops = अणु \
+	.पढ़ो		= generic_पढ़ो_dir, \
 	.iterate	= proc_##LSM##_attr_dir_iterate, \
-	.llseek		= default_llseek, \
-}; \
+	.llseek		= शेष_llseek, \
+पूर्ण; \
 \
-static struct dentry *proc_##LSM##_attr_dir_lookup(struct inode *dir, \
-				struct dentry *dentry, unsigned int flags) \
-{ \
-	return proc_pident_lookup(dir, dentry, \
+अटल काष्ठा dentry *proc_##LSM##_attr_dir_lookup(काष्ठा inode *dir, \
+				काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags) \
+अणु \
+	वापस proc_pident_lookup(dir, dentry, \
 				  LSM##_attr_dir_stuff, \
 				  LSM##_attr_dir_stuff + ARRAY_SIZE(LSM##_attr_dir_stuff)); \
-} \
+पूर्ण \
 \
-static const struct inode_operations proc_##LSM##_attr_dir_inode_ops = { \
+अटल स्थिर काष्ठा inode_operations proc_##LSM##_attr_dir_inode_ops = अणु \
 	.lookup		= proc_##LSM##_attr_dir_lookup, \
 	.getattr	= pid_getattr, \
 	.setattr	= proc_setattr, \
-}
+पूर्ण
 
-#ifdef CONFIG_SECURITY_SMACK
-static const struct pid_entry smack_attr_dir_stuff[] = {
+#अगर_घोषित CONFIG_SECURITY_SMACK
+अटल स्थिर काष्ठा pid_entry smack_attr_dir_stuff[] = अणु
 	ATTR("smack", "current",	0666),
-};
-LSM_DIR_OPS(smack);
-#endif
+पूर्ण;
+LSM_सूची_OPS(smack);
+#पूर्ण_अगर
 
-#ifdef CONFIG_SECURITY_APPARMOR
-static const struct pid_entry apparmor_attr_dir_stuff[] = {
+#अगर_घोषित CONFIG_SECURITY_APPARMOR
+अटल स्थिर काष्ठा pid_entry apparmor_attr_dir_stuff[] = अणु
 	ATTR("apparmor", "current",	0666),
 	ATTR("apparmor", "prev",	0444),
 	ATTR("apparmor", "exec",	0666),
-};
-LSM_DIR_OPS(apparmor);
-#endif
+पूर्ण;
+LSM_सूची_OPS(apparmor);
+#पूर्ण_अगर
 
-static const struct pid_entry attr_dir_stuff[] = {
-	ATTR(NULL, "current",		0666),
-	ATTR(NULL, "prev",		0444),
-	ATTR(NULL, "exec",		0666),
-	ATTR(NULL, "fscreate",		0666),
-	ATTR(NULL, "keycreate",		0666),
-	ATTR(NULL, "sockcreate",	0666),
-#ifdef CONFIG_SECURITY_SMACK
-	DIR("smack",			0555,
+अटल स्थिर काष्ठा pid_entry attr_dir_stuff[] = अणु
+	ATTR(शून्य, "current",		0666),
+	ATTR(शून्य, "prev",		0444),
+	ATTR(शून्य, "exec",		0666),
+	ATTR(शून्य, "fscreate",		0666),
+	ATTR(शून्य, "keycreate",		0666),
+	ATTR(शून्य, "sockcreate",	0666),
+#अगर_घोषित CONFIG_SECURITY_SMACK
+	सूची("smack",			0555,
 	    proc_smack_attr_dir_inode_ops, proc_smack_attr_dir_ops),
-#endif
-#ifdef CONFIG_SECURITY_APPARMOR
-	DIR("apparmor",			0555,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SECURITY_APPARMOR
+	सूची("apparmor",			0555,
 	    proc_apparmor_attr_dir_inode_ops, proc_apparmor_attr_dir_ops),
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int proc_attr_dir_readdir(struct file *file, struct dir_context *ctx)
-{
-	return proc_pident_readdir(file, ctx, 
+अटल पूर्णांक proc_attr_dir_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	वापस proc_pident_सूची_पढ़ो(file, ctx, 
 				   attr_dir_stuff, ARRAY_SIZE(attr_dir_stuff));
-}
+पूर्ण
 
-static const struct file_operations proc_attr_dir_operations = {
-	.read		= generic_read_dir,
-	.iterate_shared	= proc_attr_dir_readdir,
+अटल स्थिर काष्ठा file_operations proc_attr_dir_operations = अणु
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= proc_attr_dir_सूची_पढ़ो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-static struct dentry *proc_attr_dir_lookup(struct inode *dir,
-				struct dentry *dentry, unsigned int flags)
-{
-	return proc_pident_lookup(dir, dentry,
+अटल काष्ठा dentry *proc_attr_dir_lookup(काष्ठा inode *dir,
+				काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	वापस proc_pident_lookup(dir, dentry,
 				  attr_dir_stuff,
 				  attr_dir_stuff + ARRAY_SIZE(attr_dir_stuff));
-}
+पूर्ण
 
-static const struct inode_operations proc_attr_dir_inode_operations = {
+अटल स्थिर काष्ठा inode_operations proc_attr_dir_inode_operations = अणु
 	.lookup		= proc_attr_dir_lookup,
 	.getattr	= pid_getattr,
 	.setattr	= proc_setattr,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ELF_CORE
-static ssize_t proc_coredump_filter_read(struct file *file, char __user *buf,
-					 size_t count, loff_t *ppos)
-{
-	struct task_struct *task = get_proc_task(file_inode(file));
-	struct mm_struct *mm;
-	char buffer[PROC_NUMBUF];
-	size_t len;
-	int ret;
+#अगर_घोषित CONFIG_ELF_CORE
+अटल sमाप_प्रकार proc_coredump_filter_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+					 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा task_काष्ठा *task = get_proc_task(file_inode(file));
+	काष्ठा mm_काष्ठा *mm;
+	अक्षर buffer[PROC_NUMBUF];
+	माप_प्रकार len;
+	पूर्णांक ret;
 
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 
 	ret = 0;
 	mm = get_task_mm(task);
-	if (mm) {
-		len = snprintf(buffer, sizeof(buffer), "%08lx\n",
+	अगर (mm) अणु
+		len = snम_लिखो(buffer, माप(buffer), "%08lx\n",
 			       ((mm->flags & MMF_DUMP_FILTER_MASK) >>
 				MMF_DUMP_FILTER_SHIFT));
 		mmput(mm);
-		ret = simple_read_from_buffer(buf, count, ppos, buffer, len);
-	}
+		ret = simple_पढ़ो_from_buffer(buf, count, ppos, buffer, len);
+	पूर्ण
 
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t proc_coredump_filter_write(struct file *file,
-					  const char __user *buf,
-					  size_t count,
+अटल sमाप_प्रकार proc_coredump_filter_ग_लिखो(काष्ठा file *file,
+					  स्थिर अक्षर __user *buf,
+					  माप_प्रकार count,
 					  loff_t *ppos)
-{
-	struct task_struct *task;
-	struct mm_struct *mm;
-	unsigned int val;
-	int ret;
-	int i;
-	unsigned long mask;
+अणु
+	काष्ठा task_काष्ठा *task;
+	काष्ठा mm_काष्ठा *mm;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
+	पूर्णांक i;
+	अचिन्हित दीर्घ mask;
 
-	ret = kstrtouint_from_user(buf, count, 0, &val);
-	if (ret < 0)
-		return ret;
+	ret = kstrtouपूर्णांक_from_user(buf, count, 0, &val);
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = -ESRCH;
 	task = get_proc_task(file_inode(file));
-	if (!task)
-		goto out_no_task;
+	अगर (!task)
+		जाओ out_no_task;
 
 	mm = get_task_mm(task);
-	if (!mm)
-		goto out_no_mm;
+	अगर (!mm)
+		जाओ out_no_mm;
 	ret = 0;
 
-	for (i = 0, mask = 1; i < MMF_DUMP_FILTER_BITS; i++, mask <<= 1) {
-		if (val & mask)
+	क्रम (i = 0, mask = 1; i < MMF_DUMP_FILTER_BITS; i++, mask <<= 1) अणु
+		अगर (val & mask)
 			set_bit(i + MMF_DUMP_FILTER_SHIFT, &mm->flags);
-		else
+		अन्यथा
 			clear_bit(i + MMF_DUMP_FILTER_SHIFT, &mm->flags);
-	}
+	पूर्ण
 
 	mmput(mm);
  out_no_mm:
-	put_task_struct(task);
+	put_task_काष्ठा(task);
  out_no_task:
-	if (ret < 0)
-		return ret;
-	return count;
-}
+	अगर (ret < 0)
+		वापस ret;
+	वापस count;
+पूर्ण
 
-static const struct file_operations proc_coredump_filter_operations = {
-	.read		= proc_coredump_filter_read,
-	.write		= proc_coredump_filter_write,
+अटल स्थिर काष्ठा file_operations proc_coredump_filter_operations = अणु
+	.पढ़ो		= proc_coredump_filter_पढ़ो,
+	.ग_लिखो		= proc_coredump_filter_ग_लिखो,
 	.llseek		= generic_file_llseek,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_TASK_IO_ACCOUNTING
-static int do_io_accounting(struct task_struct *task, struct seq_file *m, int whole)
-{
-	struct task_io_accounting acct = task->ioac;
-	unsigned long flags;
-	int result;
+#अगर_घोषित CONFIG_TASK_IO_ACCOUNTING
+अटल पूर्णांक करो_io_accounting(काष्ठा task_काष्ठा *task, काष्ठा seq_file *m, पूर्णांक whole)
+अणु
+	काष्ठा task_io_accounting acct = task->ioac;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result;
 
-	result = down_read_killable(&task->signal->exec_update_lock);
-	if (result)
-		return result;
+	result = करोwn_पढ़ो_समाप्तable(&task->संकेत->exec_update_lock);
+	अगर (result)
+		वापस result;
 
-	if (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS)) {
+	अगर (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS)) अणु
 		result = -EACCES;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (whole && lock_task_sighand(task, &flags)) {
-		struct task_struct *t = task;
+	अगर (whole && lock_task_sighand(task, &flags)) अणु
+		काष्ठा task_काष्ठा *t = task;
 
-		task_io_accounting_add(&acct, &task->signal->ioac);
-		while_each_thread(task, t)
+		task_io_accounting_add(&acct, &task->संकेत->ioac);
+		जबतक_each_thपढ़ो(task, t)
 			task_io_accounting_add(&acct, &t->ioac);
 
 		unlock_task_sighand(task, &flags);
-	}
-	seq_printf(m,
+	पूर्ण
+	seq_म_लिखो(m,
 		   "rchar: %llu\n"
 		   "wchar: %llu\n"
 		   "syscr: %llu\n"
@@ -2968,240 +2969,240 @@ static int do_io_accounting(struct task_struct *task, struct seq_file *m, int wh
 		   "read_bytes: %llu\n"
 		   "write_bytes: %llu\n"
 		   "cancelled_write_bytes: %llu\n",
-		   (unsigned long long)acct.rchar,
-		   (unsigned long long)acct.wchar,
-		   (unsigned long long)acct.syscr,
-		   (unsigned long long)acct.syscw,
-		   (unsigned long long)acct.read_bytes,
-		   (unsigned long long)acct.write_bytes,
-		   (unsigned long long)acct.cancelled_write_bytes);
+		   (अचिन्हित दीर्घ दीर्घ)acct.rअक्षर,
+		   (अचिन्हित दीर्घ दीर्घ)acct.wअक्षर,
+		   (अचिन्हित दीर्घ दीर्घ)acct.syscr,
+		   (अचिन्हित दीर्घ दीर्घ)acct.syscw,
+		   (अचिन्हित दीर्घ दीर्घ)acct.पढ़ो_bytes,
+		   (अचिन्हित दीर्घ दीर्घ)acct.ग_लिखो_bytes,
+		   (अचिन्हित दीर्घ दीर्घ)acct.cancelled_ग_लिखो_bytes);
 	result = 0;
 
 out_unlock:
-	up_read(&task->signal->exec_update_lock);
-	return result;
-}
+	up_पढ़ो(&task->संकेत->exec_update_lock);
+	वापस result;
+पूर्ण
 
-static int proc_tid_io_accounting(struct seq_file *m, struct pid_namespace *ns,
-				  struct pid *pid, struct task_struct *task)
-{
-	return do_io_accounting(task, m, 0);
-}
+अटल पूर्णांक proc_tid_io_accounting(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+				  काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	वापस करो_io_accounting(task, m, 0);
+पूर्ण
 
-static int proc_tgid_io_accounting(struct seq_file *m, struct pid_namespace *ns,
-				   struct pid *pid, struct task_struct *task)
-{
-	return do_io_accounting(task, m, 1);
-}
-#endif /* CONFIG_TASK_IO_ACCOUNTING */
+अटल पूर्णांक proc_tgid_io_accounting(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+				   काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	वापस करो_io_accounting(task, m, 1);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_TASK_IO_ACCOUNTING */
 
-#ifdef CONFIG_USER_NS
-static int proc_id_map_open(struct inode *inode, struct file *file,
-	const struct seq_operations *seq_ops)
-{
-	struct user_namespace *ns = NULL;
-	struct task_struct *task;
-	struct seq_file *seq;
-	int ret = -EINVAL;
+#अगर_घोषित CONFIG_USER_NS
+अटल पूर्णांक proc_id_map_खोलो(काष्ठा inode *inode, काष्ठा file *file,
+	स्थिर काष्ठा seq_operations *seq_ops)
+अणु
+	काष्ठा user_namespace *ns = शून्य;
+	काष्ठा task_काष्ठा *task;
+	काष्ठा seq_file *seq;
+	पूर्णांक ret = -EINVAL;
 
 	task = get_proc_task(inode);
-	if (task) {
-		rcu_read_lock();
+	अगर (task) अणु
+		rcu_पढ़ो_lock();
 		ns = get_user_ns(task_cred_xxx(task, user_ns));
-		rcu_read_unlock();
-		put_task_struct(task);
-	}
-	if (!ns)
-		goto err;
+		rcu_पढ़ो_unlock();
+		put_task_काष्ठा(task);
+	पूर्ण
+	अगर (!ns)
+		जाओ err;
 
-	ret = seq_open(file, seq_ops);
-	if (ret)
-		goto err_put_ns;
+	ret = seq_खोलो(file, seq_ops);
+	अगर (ret)
+		जाओ err_put_ns;
 
-	seq = file->private_data;
-	seq->private = ns;
+	seq = file->निजी_data;
+	seq->निजी = ns;
 
-	return 0;
+	वापस 0;
 err_put_ns:
 	put_user_ns(ns);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int proc_id_map_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	struct user_namespace *ns = seq->private;
+अटल पूर्णांक proc_id_map_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा user_namespace *ns = seq->निजी;
 	put_user_ns(ns);
-	return seq_release(inode, file);
-}
+	वापस seq_release(inode, file);
+पूर्ण
 
-static int proc_uid_map_open(struct inode *inode, struct file *file)
-{
-	return proc_id_map_open(inode, file, &proc_uid_seq_operations);
-}
+अटल पूर्णांक proc_uid_map_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस proc_id_map_खोलो(inode, file, &proc_uid_seq_operations);
+पूर्ण
 
-static int proc_gid_map_open(struct inode *inode, struct file *file)
-{
-	return proc_id_map_open(inode, file, &proc_gid_seq_operations);
-}
+अटल पूर्णांक proc_gid_map_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस proc_id_map_खोलो(inode, file, &proc_gid_seq_operations);
+पूर्ण
 
-static int proc_projid_map_open(struct inode *inode, struct file *file)
-{
-	return proc_id_map_open(inode, file, &proc_projid_seq_operations);
-}
+अटल पूर्णांक proc_projid_map_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस proc_id_map_खोलो(inode, file, &proc_projid_seq_operations);
+पूर्ण
 
-static const struct file_operations proc_uid_map_operations = {
-	.open		= proc_uid_map_open,
-	.write		= proc_uid_map_write,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations proc_uid_map_operations = अणु
+	.खोलो		= proc_uid_map_खोलो,
+	.ग_लिखो		= proc_uid_map_ग_लिखो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= proc_id_map_release,
-};
+पूर्ण;
 
-static const struct file_operations proc_gid_map_operations = {
-	.open		= proc_gid_map_open,
-	.write		= proc_gid_map_write,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations proc_gid_map_operations = अणु
+	.खोलो		= proc_gid_map_खोलो,
+	.ग_लिखो		= proc_gid_map_ग_लिखो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= proc_id_map_release,
-};
+पूर्ण;
 
-static const struct file_operations proc_projid_map_operations = {
-	.open		= proc_projid_map_open,
-	.write		= proc_projid_map_write,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations proc_projid_map_operations = अणु
+	.खोलो		= proc_projid_map_खोलो,
+	.ग_लिखो		= proc_projid_map_ग_लिखो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= proc_id_map_release,
-};
+पूर्ण;
 
-static int proc_setgroups_open(struct inode *inode, struct file *file)
-{
-	struct user_namespace *ns = NULL;
-	struct task_struct *task;
-	int ret;
+अटल पूर्णांक proc_setgroups_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा user_namespace *ns = शून्य;
+	काष्ठा task_काष्ठा *task;
+	पूर्णांक ret;
 
 	ret = -ESRCH;
 	task = get_proc_task(inode);
-	if (task) {
-		rcu_read_lock();
+	अगर (task) अणु
+		rcu_पढ़ो_lock();
 		ns = get_user_ns(task_cred_xxx(task, user_ns));
-		rcu_read_unlock();
-		put_task_struct(task);
-	}
-	if (!ns)
-		goto err;
+		rcu_पढ़ो_unlock();
+		put_task_काष्ठा(task);
+	पूर्ण
+	अगर (!ns)
+		जाओ err;
 
-	if (file->f_mode & FMODE_WRITE) {
+	अगर (file->f_mode & FMODE_WRITE) अणु
 		ret = -EACCES;
-		if (!ns_capable(ns, CAP_SYS_ADMIN))
-			goto err_put_ns;
-	}
+		अगर (!ns_capable(ns, CAP_SYS_ADMIN))
+			जाओ err_put_ns;
+	पूर्ण
 
-	ret = single_open(file, &proc_setgroups_show, ns);
-	if (ret)
-		goto err_put_ns;
+	ret = single_खोलो(file, &proc_setgroups_show, ns);
+	अगर (ret)
+		जाओ err_put_ns;
 
-	return 0;
+	वापस 0;
 err_put_ns:
 	put_user_ns(ns);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int proc_setgroups_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	struct user_namespace *ns = seq->private;
-	int ret = single_release(inode, file);
+अटल पूर्णांक proc_setgroups_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा user_namespace *ns = seq->निजी;
+	पूर्णांक ret = single_release(inode, file);
 	put_user_ns(ns);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations proc_setgroups_operations = {
-	.open		= proc_setgroups_open,
-	.write		= proc_setgroups_write,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations proc_setgroups_operations = अणु
+	.खोलो		= proc_setgroups_खोलो,
+	.ग_लिखो		= proc_setgroups_ग_लिखो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= proc_setgroups_release,
-};
-#endif /* CONFIG_USER_NS */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_USER_NS */
 
-static int proc_pid_personality(struct seq_file *m, struct pid_namespace *ns,
-				struct pid *pid, struct task_struct *task)
-{
-	int err = lock_trace(task);
-	if (!err) {
-		seq_printf(m, "%08x\n", task->personality);
+अटल पूर्णांक proc_pid_personality(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+				काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	पूर्णांक err = lock_trace(task);
+	अगर (!err) अणु
+		seq_म_लिखो(m, "%08x\n", task->personality);
 		unlock_trace(task);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_LIVEPATCH
-static int proc_pid_patch_state(struct seq_file *m, struct pid_namespace *ns,
-				struct pid *pid, struct task_struct *task)
-{
-	seq_printf(m, "%d\n", task->patch_state);
-	return 0;
-}
-#endif /* CONFIG_LIVEPATCH */
+#अगर_घोषित CONFIG_LIVEPATCH
+अटल पूर्णांक proc_pid_patch_state(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+				काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	seq_म_लिखो(m, "%d\n", task->patch_state);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_LIVEPATCH */
 
-#ifdef CONFIG_STACKLEAK_METRICS
-static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
-				struct pid *pid, struct task_struct *task)
-{
-	unsigned long prev_depth = THREAD_SIZE -
+#अगर_घोषित CONFIG_STACKLEAK_METRICS
+अटल पूर्णांक proc_stack_depth(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+				काष्ठा pid *pid, काष्ठा task_काष्ठा *task)
+अणु
+	अचिन्हित दीर्घ prev_depth = THREAD_SIZE -
 				(task->prev_lowest_stack & (THREAD_SIZE - 1));
-	unsigned long depth = THREAD_SIZE -
+	अचिन्हित दीर्घ depth = THREAD_SIZE -
 				(task->lowest_stack & (THREAD_SIZE - 1));
 
-	seq_printf(m, "previous stack depth: %lu\nstack depth: %lu\n",
+	seq_म_लिखो(m, "previous stack depth: %lu\nstack depth: %lu\n",
 							prev_depth, depth);
-	return 0;
-}
-#endif /* CONFIG_STACKLEAK_METRICS */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_STACKLEAK_METRICS */
 
 /*
- * Thread groups
+ * Thपढ़ो groups
  */
-static const struct file_operations proc_task_operations;
-static const struct inode_operations proc_task_inode_operations;
+अटल स्थिर काष्ठा file_operations proc_task_operations;
+अटल स्थिर काष्ठा inode_operations proc_task_inode_operations;
 
-static const struct pid_entry tgid_base_stuff[] = {
-	DIR("task",       S_IRUGO|S_IXUGO, proc_task_inode_operations, proc_task_operations),
-	DIR("fd",         S_IRUSR|S_IXUSR, proc_fd_inode_operations, proc_fd_operations),
-	DIR("map_files",  S_IRUSR|S_IXUSR, proc_map_files_inode_operations, proc_map_files_operations),
-	DIR("fdinfo",     S_IRUSR|S_IXUSR, proc_fdinfo_inode_operations, proc_fdinfo_operations),
-	DIR("ns",	  S_IRUSR|S_IXUGO, proc_ns_dir_inode_operations, proc_ns_dir_operations),
-#ifdef CONFIG_NET
-	DIR("net",        S_IRUGO|S_IXUGO, proc_net_inode_operations, proc_net_operations),
-#endif
+अटल स्थिर काष्ठा pid_entry tgid_base_stuff[] = अणु
+	सूची("task",       S_IRUGO|S_IXUGO, proc_task_inode_operations, proc_task_operations),
+	सूची("fd",         S_IRUSR|S_IXUSR, proc_fd_inode_operations, proc_fd_operations),
+	सूची("map_files",  S_IRUSR|S_IXUSR, proc_map_files_inode_operations, proc_map_files_operations),
+	सूची("fdinfo",     S_IRUSR|S_IXUSR, proc_fdinfo_inode_operations, proc_fdinfo_operations),
+	सूची("ns",	  S_IRUSR|S_IXUGO, proc_ns_dir_inode_operations, proc_ns_dir_operations),
+#अगर_घोषित CONFIG_NET
+	सूची("net",        S_IRUGO|S_IXUGO, proc_net_inode_operations, proc_net_operations),
+#पूर्ण_अगर
 	REG("environ",    S_IRUSR, proc_environ_operations),
 	REG("auxv",       S_IRUSR, proc_auxv_operations),
 	ONE("status",     S_IRUGO, proc_pid_status),
 	ONE("personality", S_IRUSR, proc_pid_personality),
 	ONE("limits",	  S_IRUGO, proc_pid_limits),
-#ifdef CONFIG_SCHED_DEBUG
+#अगर_घोषित CONFIG_SCHED_DEBUG
 	REG("sched",      S_IRUGO|S_IWUSR, proc_pid_sched_operations),
-#endif
-#ifdef CONFIG_SCHED_AUTOGROUP
-	REG("autogroup",  S_IRUGO|S_IWUSR, proc_pid_sched_autogroup_operations),
-#endif
-#ifdef CONFIG_TIME_NS
-	REG("timens_offsets",  S_IRUGO|S_IWUSR, proc_timens_offsets_operations),
-#endif
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SCHED_AUTOGROUP
+	REG("autogroup",  S_IRUGO|S_IWUSR, proc_pid_sched_स्वतःgroup_operations),
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_TIME_NS
+	REG("timens_offsets",  S_IRUGO|S_IWUSR, proc_समयns_offsets_operations),
+#पूर्ण_अगर
 	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
-#ifdef CONFIG_HAVE_ARCH_TRACEHOOK
+#अगर_घोषित CONFIG_HAVE_ARCH_TRACEHOOK
 	ONE("syscall",    S_IRUSR, proc_pid_syscall),
-#endif
+#पूर्ण_अगर
 	REG("cmdline",    S_IRUGO, proc_pid_cmdline_ops),
 	ONE("stat",       S_IRUGO, proc_tgid_stat),
-	ONE("statm",      S_IRUGO, proc_pid_statm),
+	ONE("statm",      S_IRUGO, proc_pid_staपंचांग),
 	REG("maps",       S_IRUGO, proc_pid_maps_operations),
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 	REG("numa_maps",  S_IRUGO, proc_pid_numa_maps_operations),
-#endif
+#पूर्ण_अगर
 	REG("mem",        S_IRUSR|S_IWUSR, proc_mem_operations),
 	LNK("cwd",        proc_cwd_link),
 	LNK("root",       proc_root_link),
@@ -3209,143 +3210,143 @@ static const struct pid_entry tgid_base_stuff[] = {
 	REG("mounts",     S_IRUGO, proc_mounts_operations),
 	REG("mountinfo",  S_IRUGO, proc_mountinfo_operations),
 	REG("mountstats", S_IRUSR, proc_mountstats_operations),
-#ifdef CONFIG_PROC_PAGE_MONITOR
+#अगर_घोषित CONFIG_PROC_PAGE_MONITOR
 	REG("clear_refs", S_IWUSR, proc_clear_refs_operations),
 	REG("smaps",      S_IRUGO, proc_pid_smaps_operations),
 	REG("smaps_rollup", S_IRUGO, proc_pid_smaps_rollup_operations),
 	REG("pagemap",    S_IRUSR, proc_pagemap_operations),
-#endif
-#ifdef CONFIG_SECURITY
-	DIR("attr",       S_IRUGO|S_IXUGO, proc_attr_dir_inode_operations, proc_attr_dir_operations),
-#endif
-#ifdef CONFIG_KALLSYMS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SECURITY
+	सूची("attr",       S_IRUGO|S_IXUGO, proc_attr_dir_inode_operations, proc_attr_dir_operations),
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_KALLSYMS
 	ONE("wchan",      S_IRUGO, proc_pid_wchan),
-#endif
-#ifdef CONFIG_STACKTRACE
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_STACKTRACE
 	ONE("stack",      S_IRUSR, proc_pid_stack),
-#endif
-#ifdef CONFIG_SCHED_INFO
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SCHED_INFO
 	ONE("schedstat",  S_IRUGO, proc_pid_schedstat),
-#endif
-#ifdef CONFIG_LATENCYTOP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_LATENCYTOP
 	REG("latency",  S_IRUGO, proc_lstats_operations),
-#endif
-#ifdef CONFIG_PROC_PID_CPUSET
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PROC_PID_CPUSET
 	ONE("cpuset",     S_IRUGO, proc_cpuset_show),
-#endif
-#ifdef CONFIG_CGROUPS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_CGROUPS
 	ONE("cgroup",  S_IRUGO, proc_cgroup_show),
-#endif
-#ifdef CONFIG_PROC_CPU_RESCTRL
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PROC_CPU_RESCTRL
 	ONE("cpu_resctrl_groups", S_IRUGO, proc_resctrl_show),
-#endif
+#पूर्ण_अगर
 	ONE("oom_score",  S_IRUGO, proc_oom_score),
 	REG("oom_adj",    S_IRUGO|S_IWUSR, proc_oom_adj_operations),
 	REG("oom_score_adj", S_IRUGO|S_IWUSR, proc_oom_score_adj_operations),
-#ifdef CONFIG_AUDIT
+#अगर_घोषित CONFIG_AUDIT
 	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
 	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
-#endif
-#ifdef CONFIG_FAULT_INJECTION
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FAULT_INJECTION
 	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
 	REG("fail-nth", 0644, proc_fail_nth_operations),
-#endif
-#ifdef CONFIG_ELF_CORE
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ELF_CORE
 	REG("coredump_filter", S_IRUGO|S_IWUSR, proc_coredump_filter_operations),
-#endif
-#ifdef CONFIG_TASK_IO_ACCOUNTING
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_TASK_IO_ACCOUNTING
 	ONE("io",	S_IRUSR, proc_tgid_io_accounting),
-#endif
-#ifdef CONFIG_USER_NS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_USER_NS
 	REG("uid_map",    S_IRUGO|S_IWUSR, proc_uid_map_operations),
 	REG("gid_map",    S_IRUGO|S_IWUSR, proc_gid_map_operations),
 	REG("projid_map", S_IRUGO|S_IWUSR, proc_projid_map_operations),
 	REG("setgroups",  S_IRUGO|S_IWUSR, proc_setgroups_operations),
-#endif
-#if defined(CONFIG_CHECKPOINT_RESTORE) && defined(CONFIG_POSIX_TIMERS)
-	REG("timers",	  S_IRUGO, proc_timers_operations),
-#endif
-	REG("timerslack_ns", S_IRUGO|S_IWUGO, proc_pid_set_timerslack_ns_operations),
-#ifdef CONFIG_LIVEPATCH
+#पूर्ण_अगर
+#अगर defined(CONFIG_CHECKPOINT_RESTORE) && defined(CONFIG_POSIX_TIMERS)
+	REG("timers",	  S_IRUGO, proc_समयrs_operations),
+#पूर्ण_अगर
+	REG("timerslack_ns", S_IRUGO|S_IWUGO, proc_pid_set_समयrslack_ns_operations),
+#अगर_घोषित CONFIG_LIVEPATCH
 	ONE("patch_state",  S_IRUSR, proc_pid_patch_state),
-#endif
-#ifdef CONFIG_STACKLEAK_METRICS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_STACKLEAK_METRICS
 	ONE("stack_depth", S_IRUGO, proc_stack_depth),
-#endif
-#ifdef CONFIG_PROC_PID_ARCH_STATUS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PROC_PID_ARCH_STATUS
 	ONE("arch_status", S_IRUGO, proc_pid_arch_status),
-#endif
-#ifdef CONFIG_SECCOMP_CACHE_DEBUG
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SECCOMP_CACHE_DEBUG
 	ONE("seccomp_cache", S_IRUSR, proc_pid_seccomp_cache),
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int proc_tgid_base_readdir(struct file *file, struct dir_context *ctx)
-{
-	return proc_pident_readdir(file, ctx,
+अटल पूर्णांक proc_tgid_base_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	वापस proc_pident_सूची_पढ़ो(file, ctx,
 				   tgid_base_stuff, ARRAY_SIZE(tgid_base_stuff));
-}
+पूर्ण
 
-static const struct file_operations proc_tgid_base_operations = {
-	.read		= generic_read_dir,
-	.iterate_shared	= proc_tgid_base_readdir,
+अटल स्थिर काष्ठा file_operations proc_tgid_base_operations = अणु
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= proc_tgid_base_सूची_पढ़ो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-struct pid *tgid_pidfd_to_pid(const struct file *file)
-{
-	if (file->f_op != &proc_tgid_base_operations)
-		return ERR_PTR(-EBADF);
+काष्ठा pid *tgid_pidfd_to_pid(स्थिर काष्ठा file *file)
+अणु
+	अगर (file->f_op != &proc_tgid_base_operations)
+		वापस ERR_PTR(-EBADF);
 
-	return proc_pid(file_inode(file));
-}
+	वापस proc_pid(file_inode(file));
+पूर्ण
 
-static struct dentry *proc_tgid_base_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
-{
-	return proc_pident_lookup(dir, dentry,
+अटल काष्ठा dentry *proc_tgid_base_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	वापस proc_pident_lookup(dir, dentry,
 				  tgid_base_stuff,
 				  tgid_base_stuff + ARRAY_SIZE(tgid_base_stuff));
-}
+पूर्ण
 
-static const struct inode_operations proc_tgid_base_inode_operations = {
+अटल स्थिर काष्ठा inode_operations proc_tgid_base_inode_operations = अणु
 	.lookup		= proc_tgid_base_lookup,
 	.getattr	= pid_getattr,
 	.setattr	= proc_setattr,
 	.permission	= proc_pid_permission,
-};
+पूर्ण;
 
 /**
- * proc_flush_pid -  Remove dcache entries for @pid from the /proc dcache.
+ * proc_flush_pid -  Remove dcache entries क्रम @pid from the /proc dcache.
  * @pid: pid that should be flushed.
  *
- * This function walks a list of inodes (that belong to any proc
- * filesystem) that are attached to the pid and flushes them from
+ * This function walks a list of inodes (that beदीर्घ to any proc
+ * fileप्रणाली) that are attached to the pid and flushes them from
  * the dentry cache.
  *
- * It is safe and reasonable to cache /proc entries for a task until
- * that task exits.  After that they just clog up the dcache with
+ * It is safe and reasonable to cache /proc entries क्रम a task until
+ * that task निकासs.  After that they just clog up the dcache with
  * useless entries, possibly causing useful dcache entries to be
  * flushed instead.  This routine is provided to flush those useless
  * dcache entries when a process is reaped.
  *
- * NOTE: This routine is just an optimization so it does not guarantee
+ * NOTE: This routine is just an optimization so it करोes not guarantee
  *       that no dcache entries will exist after a process is reaped
  *       it just makes it very unlikely that any will persist.
  */
 
-void proc_flush_pid(struct pid *pid)
-{
+व्योम proc_flush_pid(काष्ठा pid *pid)
+अणु
 	proc_invalidate_siblings_dcache(&pid->inodes, &pid->lock);
-}
+पूर्ण
 
-static struct dentry *proc_pid_instantiate(struct dentry * dentry,
-				   struct task_struct *task, const void *ptr)
-{
-	struct inode *inode;
+अटल काष्ठा dentry *proc_pid_instantiate(काष्ठा dentry * dentry,
+				   काष्ठा task_काष्ठा *task, स्थिर व्योम *ptr)
+अणु
+	काष्ठा inode *inode;
 
-	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFDIR | S_IRUGO | S_IXUGO);
-	if (!inode)
-		return ERR_PTR(-ENOENT);
+	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFसूची | S_IRUGO | S_IXUGO);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOENT);
 
 	inode->i_op = &proc_tgid_base_inode_operations;
 	inode->i_fop = &proc_tgid_base_operations;
@@ -3355,296 +3356,296 @@ static struct dentry *proc_pid_instantiate(struct dentry * dentry,
 	pid_update_inode(task, inode);
 
 	d_set_d_op(dentry, &pid_dentry_operations);
-	return d_splice_alias(inode, dentry);
-}
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
-struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
-{
-	struct task_struct *task;
-	unsigned tgid;
-	struct proc_fs_info *fs_info;
-	struct pid_namespace *ns;
-	struct dentry *result = ERR_PTR(-ENOENT);
+काष्ठा dentry *proc_pid_lookup(काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा task_काष्ठा *task;
+	अचिन्हित tgid;
+	काष्ठा proc_fs_info *fs_info;
+	काष्ठा pid_namespace *ns;
+	काष्ठा dentry *result = ERR_PTR(-ENOENT);
 
-	tgid = name_to_int(&dentry->d_name);
-	if (tgid == ~0U)
-		goto out;
+	tgid = name_to_पूर्णांक(&dentry->d_name);
+	अगर (tgid == ~0U)
+		जाओ out;
 
 	fs_info = proc_sb_info(dentry->d_sb);
 	ns = fs_info->pid_ns;
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task = find_task_by_pid_ns(tgid, ns);
-	if (task)
-		get_task_struct(task);
-	rcu_read_unlock();
-	if (!task)
-		goto out;
+	अगर (task)
+		get_task_काष्ठा(task);
+	rcu_पढ़ो_unlock();
+	अगर (!task)
+		जाओ out;
 
 	/* Limit procfs to only ptraceable tasks */
-	if (fs_info->hide_pid == HIDEPID_NOT_PTRACEABLE) {
-		if (!has_pid_permissions(fs_info, task, HIDEPID_NO_ACCESS))
-			goto out_put_task;
-	}
+	अगर (fs_info->hide_pid == HIDEPID_NOT_PTRACEABLE) अणु
+		अगर (!has_pid_permissions(fs_info, task, HIDEPID_NO_ACCESS))
+			जाओ out_put_task;
+	पूर्ण
 
-	result = proc_pid_instantiate(dentry, task, NULL);
+	result = proc_pid_instantiate(dentry, task, शून्य);
 out_put_task:
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 out:
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
  * Find the first task with tgid >= tgid
  *
  */
-struct tgid_iter {
-	unsigned int tgid;
-	struct task_struct *task;
-};
-static struct tgid_iter next_tgid(struct pid_namespace *ns, struct tgid_iter iter)
-{
-	struct pid *pid;
+काष्ठा tgid_iter अणु
+	अचिन्हित पूर्णांक tgid;
+	काष्ठा task_काष्ठा *task;
+पूर्ण;
+अटल काष्ठा tgid_iter next_tgid(काष्ठा pid_namespace *ns, काष्ठा tgid_iter iter)
+अणु
+	काष्ठा pid *pid;
 
-	if (iter.task)
-		put_task_struct(iter.task);
-	rcu_read_lock();
+	अगर (iter.task)
+		put_task_काष्ठा(iter.task);
+	rcu_पढ़ो_lock();
 retry:
-	iter.task = NULL;
+	iter.task = शून्य;
 	pid = find_ge_pid(iter.tgid, ns);
-	if (pid) {
+	अगर (pid) अणु
 		iter.tgid = pid_nr_ns(pid, ns);
 		iter.task = pid_task(pid, PIDTYPE_TGID);
-		if (!iter.task) {
+		अगर (!iter.task) अणु
 			iter.tgid += 1;
-			goto retry;
-		}
-		get_task_struct(iter.task);
-	}
-	rcu_read_unlock();
-	return iter;
-}
+			जाओ retry;
+		पूर्ण
+		get_task_काष्ठा(iter.task);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस iter;
+पूर्ण
 
-#define TGID_OFFSET (FIRST_PROCESS_ENTRY + 2)
+#घोषणा TGID_OFFSET (FIRST_PROCESS_ENTRY + 2)
 
-/* for the /proc/ directory itself, after non-process stuff has been done */
-int proc_pid_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct tgid_iter iter;
-	struct proc_fs_info *fs_info = proc_sb_info(file_inode(file)->i_sb);
-	struct pid_namespace *ns = proc_pid_ns(file_inode(file)->i_sb);
+/* क्रम the /proc/ directory itself, after non-process stuff has been करोne */
+पूर्णांक proc_pid_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा tgid_iter iter;
+	काष्ठा proc_fs_info *fs_info = proc_sb_info(file_inode(file)->i_sb);
+	काष्ठा pid_namespace *ns = proc_pid_ns(file_inode(file)->i_sb);
 	loff_t pos = ctx->pos;
 
-	if (pos >= PID_MAX_LIMIT + TGID_OFFSET)
-		return 0;
+	अगर (pos >= PID_MAX_LIMIT + TGID_OFFSET)
+		वापस 0;
 
-	if (pos == TGID_OFFSET - 2) {
-		struct inode *inode = d_inode(fs_info->proc_self);
-		if (!dir_emit(ctx, "self", 4, inode->i_ino, DT_LNK))
-			return 0;
+	अगर (pos == TGID_OFFSET - 2) अणु
+		काष्ठा inode *inode = d_inode(fs_info->proc_self);
+		अगर (!dir_emit(ctx, "self", 4, inode->i_ino, DT_LNK))
+			वापस 0;
 		ctx->pos = pos = pos + 1;
-	}
-	if (pos == TGID_OFFSET - 1) {
-		struct inode *inode = d_inode(fs_info->proc_thread_self);
-		if (!dir_emit(ctx, "thread-self", 11, inode->i_ino, DT_LNK))
-			return 0;
+	पूर्ण
+	अगर (pos == TGID_OFFSET - 1) अणु
+		काष्ठा inode *inode = d_inode(fs_info->proc_thपढ़ो_self);
+		अगर (!dir_emit(ctx, "thread-self", 11, inode->i_ino, DT_LNK))
+			वापस 0;
 		ctx->pos = pos = pos + 1;
-	}
+	पूर्ण
 	iter.tgid = pos - TGID_OFFSET;
-	iter.task = NULL;
-	for (iter = next_tgid(ns, iter);
+	iter.task = शून्य;
+	क्रम (iter = next_tgid(ns, iter);
 	     iter.task;
-	     iter.tgid += 1, iter = next_tgid(ns, iter)) {
-		char name[10 + 1];
-		unsigned int len;
+	     iter.tgid += 1, iter = next_tgid(ns, iter)) अणु
+		अक्षर name[10 + 1];
+		अचिन्हित पूर्णांक len;
 
 		cond_resched();
-		if (!has_pid_permissions(fs_info, iter.task, HIDEPID_INVISIBLE))
-			continue;
+		अगर (!has_pid_permissions(fs_info, iter.task, HIDEPID_INVISIBLE))
+			जारी;
 
-		len = snprintf(name, sizeof(name), "%u", iter.tgid);
+		len = snम_लिखो(name, माप(name), "%u", iter.tgid);
 		ctx->pos = iter.tgid + TGID_OFFSET;
-		if (!proc_fill_cache(file, ctx, name, len,
-				     proc_pid_instantiate, iter.task, NULL)) {
-			put_task_struct(iter.task);
-			return 0;
-		}
-	}
+		अगर (!proc_fill_cache(file, ctx, name, len,
+				     proc_pid_instantiate, iter.task, शून्य)) अणु
+			put_task_काष्ठा(iter.task);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	ctx->pos = PID_MAX_LIMIT + TGID_OFFSET;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * proc_tid_comm_permission is a special permission function exclusively
- * used for the node /proc/<pid>/task/<tid>/comm.
- * It bypasses generic permission checks in the case where a task of the same
+ * used क्रम the node /proc/<pid>/task/<tid>/comm.
+ * It bypasses generic permission checks in the हाल where a task of the same
  * task group attempts to access the node.
- * The rationale behind this is that glibc and bionic access this node for
- * cross thread naming (pthread_set/getname_np(!self)). However, if
- * PR_SET_DUMPABLE gets set to 0 this node among others becomes uid=0 gid=0,
- * which locks out the cross thread naming implementation.
- * This function makes sure that the node is always accessible for members of
- * same thread group.
+ * The rationale behind this is that glibc and bionic access this node क्रम
+ * cross thपढ़ो naming (pthपढ़ो_set/getname_np(!self)). However, अगर
+ * PR_SET_DUMPABLE माला_लो set to 0 this node among others becomes uid=0 gid=0,
+ * which locks out the cross thपढ़ो naming implementation.
+ * This function makes sure that the node is always accessible क्रम members of
+ * same thपढ़ो group.
  */
-static int proc_tid_comm_permission(struct user_namespace *mnt_userns,
-				    struct inode *inode, int mask)
-{
+अटल पूर्णांक proc_tid_comm_permission(काष्ठा user_namespace *mnt_userns,
+				    काष्ठा inode *inode, पूर्णांक mask)
+अणु
 	bool is_same_tgroup;
-	struct task_struct *task;
+	काष्ठा task_काष्ठा *task;
 
 	task = get_proc_task(inode);
-	if (!task)
-		return -ESRCH;
-	is_same_tgroup = same_thread_group(current, task);
-	put_task_struct(task);
+	अगर (!task)
+		वापस -ESRCH;
+	is_same_tgroup = same_thपढ़ो_group(current, task);
+	put_task_काष्ठा(task);
 
-	if (likely(is_same_tgroup && !(mask & MAY_EXEC))) {
+	अगर (likely(is_same_tgroup && !(mask & MAY_EXEC))) अणु
 		/* This file (/proc/<pid>/task/<tid>/comm) can always be
-		 * read or written by the members of the corresponding
-		 * thread group.
+		 * पढ़ो or written by the members of the corresponding
+		 * thपढ़ो group.
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return generic_permission(&init_user_ns, inode, mask);
-}
+	वापस generic_permission(&init_user_ns, inode, mask);
+पूर्ण
 
-static const struct inode_operations proc_tid_comm_inode_operations = {
+अटल स्थिर काष्ठा inode_operations proc_tid_comm_inode_operations = अणु
 		.permission = proc_tid_comm_permission,
-};
+पूर्ण;
 
 /*
  * Tasks
  */
-static const struct pid_entry tid_base_stuff[] = {
-	DIR("fd",        S_IRUSR|S_IXUSR, proc_fd_inode_operations, proc_fd_operations),
-	DIR("fdinfo",    S_IRUSR|S_IXUSR, proc_fdinfo_inode_operations, proc_fdinfo_operations),
-	DIR("ns",	 S_IRUSR|S_IXUGO, proc_ns_dir_inode_operations, proc_ns_dir_operations),
-#ifdef CONFIG_NET
-	DIR("net",        S_IRUGO|S_IXUGO, proc_net_inode_operations, proc_net_operations),
-#endif
+अटल स्थिर काष्ठा pid_entry tid_base_stuff[] = अणु
+	सूची("fd",        S_IRUSR|S_IXUSR, proc_fd_inode_operations, proc_fd_operations),
+	सूची("fdinfo",    S_IRUSR|S_IXUSR, proc_fdinfo_inode_operations, proc_fdinfo_operations),
+	सूची("ns",	 S_IRUSR|S_IXUGO, proc_ns_dir_inode_operations, proc_ns_dir_operations),
+#अगर_घोषित CONFIG_NET
+	सूची("net",        S_IRUGO|S_IXUGO, proc_net_inode_operations, proc_net_operations),
+#पूर्ण_अगर
 	REG("environ",   S_IRUSR, proc_environ_operations),
 	REG("auxv",      S_IRUSR, proc_auxv_operations),
 	ONE("status",    S_IRUGO, proc_pid_status),
 	ONE("personality", S_IRUSR, proc_pid_personality),
 	ONE("limits",	 S_IRUGO, proc_pid_limits),
-#ifdef CONFIG_SCHED_DEBUG
+#अगर_घोषित CONFIG_SCHED_DEBUG
 	REG("sched",     S_IRUGO|S_IWUSR, proc_pid_sched_operations),
-#endif
+#पूर्ण_अगर
 	NOD("comm",      S_IFREG|S_IRUGO|S_IWUSR,
 			 &proc_tid_comm_inode_operations,
-			 &proc_pid_set_comm_operations, {}),
-#ifdef CONFIG_HAVE_ARCH_TRACEHOOK
+			 &proc_pid_set_comm_operations, अणुपूर्ण),
+#अगर_घोषित CONFIG_HAVE_ARCH_TRACEHOOK
 	ONE("syscall",   S_IRUSR, proc_pid_syscall),
-#endif
+#पूर्ण_अगर
 	REG("cmdline",   S_IRUGO, proc_pid_cmdline_ops),
 	ONE("stat",      S_IRUGO, proc_tid_stat),
-	ONE("statm",     S_IRUGO, proc_pid_statm),
+	ONE("statm",     S_IRUGO, proc_pid_staपंचांग),
 	REG("maps",      S_IRUGO, proc_pid_maps_operations),
-#ifdef CONFIG_PROC_CHILDREN
+#अगर_घोषित CONFIG_PROC_CHILDREN
 	REG("children",  S_IRUGO, proc_tid_children_operations),
-#endif
-#ifdef CONFIG_NUMA
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NUMA
 	REG("numa_maps", S_IRUGO, proc_pid_numa_maps_operations),
-#endif
+#पूर्ण_अगर
 	REG("mem",       S_IRUSR|S_IWUSR, proc_mem_operations),
 	LNK("cwd",       proc_cwd_link),
 	LNK("root",      proc_root_link),
 	LNK("exe",       proc_exe_link),
 	REG("mounts",    S_IRUGO, proc_mounts_operations),
 	REG("mountinfo",  S_IRUGO, proc_mountinfo_operations),
-#ifdef CONFIG_PROC_PAGE_MONITOR
+#अगर_घोषित CONFIG_PROC_PAGE_MONITOR
 	REG("clear_refs", S_IWUSR, proc_clear_refs_operations),
 	REG("smaps",     S_IRUGO, proc_pid_smaps_operations),
 	REG("smaps_rollup", S_IRUGO, proc_pid_smaps_rollup_operations),
 	REG("pagemap",    S_IRUSR, proc_pagemap_operations),
-#endif
-#ifdef CONFIG_SECURITY
-	DIR("attr",      S_IRUGO|S_IXUGO, proc_attr_dir_inode_operations, proc_attr_dir_operations),
-#endif
-#ifdef CONFIG_KALLSYMS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SECURITY
+	सूची("attr",      S_IRUGO|S_IXUGO, proc_attr_dir_inode_operations, proc_attr_dir_operations),
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_KALLSYMS
 	ONE("wchan",     S_IRUGO, proc_pid_wchan),
-#endif
-#ifdef CONFIG_STACKTRACE
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_STACKTRACE
 	ONE("stack",      S_IRUSR, proc_pid_stack),
-#endif
-#ifdef CONFIG_SCHED_INFO
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SCHED_INFO
 	ONE("schedstat", S_IRUGO, proc_pid_schedstat),
-#endif
-#ifdef CONFIG_LATENCYTOP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_LATENCYTOP
 	REG("latency",  S_IRUGO, proc_lstats_operations),
-#endif
-#ifdef CONFIG_PROC_PID_CPUSET
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PROC_PID_CPUSET
 	ONE("cpuset",    S_IRUGO, proc_cpuset_show),
-#endif
-#ifdef CONFIG_CGROUPS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_CGROUPS
 	ONE("cgroup",  S_IRUGO, proc_cgroup_show),
-#endif
-#ifdef CONFIG_PROC_CPU_RESCTRL
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PROC_CPU_RESCTRL
 	ONE("cpu_resctrl_groups", S_IRUGO, proc_resctrl_show),
-#endif
+#पूर्ण_अगर
 	ONE("oom_score", S_IRUGO, proc_oom_score),
 	REG("oom_adj",   S_IRUGO|S_IWUSR, proc_oom_adj_operations),
 	REG("oom_score_adj", S_IRUGO|S_IWUSR, proc_oom_score_adj_operations),
-#ifdef CONFIG_AUDIT
+#अगर_घोषित CONFIG_AUDIT
 	REG("loginuid",  S_IWUSR|S_IRUGO, proc_loginuid_operations),
 	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
-#endif
-#ifdef CONFIG_FAULT_INJECTION
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FAULT_INJECTION
 	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
 	REG("fail-nth", 0644, proc_fail_nth_operations),
-#endif
-#ifdef CONFIG_TASK_IO_ACCOUNTING
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_TASK_IO_ACCOUNTING
 	ONE("io",	S_IRUSR, proc_tid_io_accounting),
-#endif
-#ifdef CONFIG_USER_NS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_USER_NS
 	REG("uid_map",    S_IRUGO|S_IWUSR, proc_uid_map_operations),
 	REG("gid_map",    S_IRUGO|S_IWUSR, proc_gid_map_operations),
 	REG("projid_map", S_IRUGO|S_IWUSR, proc_projid_map_operations),
 	REG("setgroups",  S_IRUGO|S_IWUSR, proc_setgroups_operations),
-#endif
-#ifdef CONFIG_LIVEPATCH
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_LIVEPATCH
 	ONE("patch_state",  S_IRUSR, proc_pid_patch_state),
-#endif
-#ifdef CONFIG_PROC_PID_ARCH_STATUS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PROC_PID_ARCH_STATUS
 	ONE("arch_status", S_IRUGO, proc_pid_arch_status),
-#endif
-#ifdef CONFIG_SECCOMP_CACHE_DEBUG
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SECCOMP_CACHE_DEBUG
 	ONE("seccomp_cache", S_IRUSR, proc_pid_seccomp_cache),
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int proc_tid_base_readdir(struct file *file, struct dir_context *ctx)
-{
-	return proc_pident_readdir(file, ctx,
+अटल पूर्णांक proc_tid_base_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	वापस proc_pident_सूची_पढ़ो(file, ctx,
 				   tid_base_stuff, ARRAY_SIZE(tid_base_stuff));
-}
+पूर्ण
 
-static struct dentry *proc_tid_base_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
-{
-	return proc_pident_lookup(dir, dentry,
+अटल काष्ठा dentry *proc_tid_base_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	वापस proc_pident_lookup(dir, dentry,
 				  tid_base_stuff,
 				  tid_base_stuff + ARRAY_SIZE(tid_base_stuff));
-}
+पूर्ण
 
-static const struct file_operations proc_tid_base_operations = {
-	.read		= generic_read_dir,
-	.iterate_shared	= proc_tid_base_readdir,
+अटल स्थिर काष्ठा file_operations proc_tid_base_operations = अणु
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= proc_tid_base_सूची_पढ़ो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-static const struct inode_operations proc_tid_base_inode_operations = {
+अटल स्थिर काष्ठा inode_operations proc_tid_base_inode_operations = अणु
 	.lookup		= proc_tid_base_lookup,
 	.getattr	= pid_getattr,
 	.setattr	= proc_setattr,
-};
+पूर्ण;
 
-static struct dentry *proc_task_instantiate(struct dentry *dentry,
-	struct task_struct *task, const void *ptr)
-{
-	struct inode *inode;
-	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFDIR | S_IRUGO | S_IXUGO);
-	if (!inode)
-		return ERR_PTR(-ENOENT);
+अटल काष्ठा dentry *proc_task_instantiate(काष्ठा dentry *dentry,
+	काष्ठा task_काष्ठा *task, स्थिर व्योम *ptr)
+अणु
+	काष्ठा inode *inode;
+	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFसूची | S_IRUGO | S_IXUGO);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOENT);
 
 	inode->i_op = &proc_tid_base_inode_operations;
 	inode->i_fop = &proc_tid_base_operations;
@@ -3654,194 +3655,194 @@ static struct dentry *proc_task_instantiate(struct dentry *dentry,
 	pid_update_inode(task, inode);
 
 	d_set_d_op(dentry, &pid_dentry_operations);
-	return d_splice_alias(inode, dentry);
-}
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
-static struct dentry *proc_task_lookup(struct inode *dir, struct dentry * dentry, unsigned int flags)
-{
-	struct task_struct *task;
-	struct task_struct *leader = get_proc_task(dir);
-	unsigned tid;
-	struct proc_fs_info *fs_info;
-	struct pid_namespace *ns;
-	struct dentry *result = ERR_PTR(-ENOENT);
+अटल काष्ठा dentry *proc_task_lookup(काष्ठा inode *dir, काष्ठा dentry * dentry, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा task_काष्ठा *task;
+	काष्ठा task_काष्ठा *leader = get_proc_task(dir);
+	अचिन्हित tid;
+	काष्ठा proc_fs_info *fs_info;
+	काष्ठा pid_namespace *ns;
+	काष्ठा dentry *result = ERR_PTR(-ENOENT);
 
-	if (!leader)
-		goto out_no_task;
+	अगर (!leader)
+		जाओ out_no_task;
 
-	tid = name_to_int(&dentry->d_name);
-	if (tid == ~0U)
-		goto out;
+	tid = name_to_पूर्णांक(&dentry->d_name);
+	अगर (tid == ~0U)
+		जाओ out;
 
 	fs_info = proc_sb_info(dentry->d_sb);
 	ns = fs_info->pid_ns;
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task = find_task_by_pid_ns(tid, ns);
-	if (task)
-		get_task_struct(task);
-	rcu_read_unlock();
-	if (!task)
-		goto out;
-	if (!same_thread_group(leader, task))
-		goto out_drop_task;
+	अगर (task)
+		get_task_काष्ठा(task);
+	rcu_पढ़ो_unlock();
+	अगर (!task)
+		जाओ out;
+	अगर (!same_thपढ़ो_group(leader, task))
+		जाओ out_drop_task;
 
-	result = proc_task_instantiate(dentry, task, NULL);
+	result = proc_task_instantiate(dentry, task, शून्य);
 out_drop_task:
-	put_task_struct(task);
+	put_task_काष्ठा(task);
 out:
-	put_task_struct(leader);
+	put_task_काष्ठा(leader);
 out_no_task:
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
- * Find the first tid of a thread group to return to user space.
+ * Find the first tid of a thपढ़ो group to वापस to user space.
  *
- * Usually this is just the thread group leader, but if the users
- * buffer was too small or there was a seek into the middle of the
- * directory we have more work todo.
+ * Usually this is just the thपढ़ो group leader, but अगर the users
+ * buffer was too small or there was a seek पूर्णांकo the middle of the
+ * directory we have more work toकरो.
  *
- * In the case of a short read we start with find_task_by_pid.
+ * In the हाल of a लघु पढ़ो we start with find_task_by_pid.
  *
- * In the case of a seek we start with the leader and walk nr
- * threads past it.
+ * In the हाल of a seek we start with the leader and walk nr
+ * thपढ़ोs past it.
  */
-static struct task_struct *first_tid(struct pid *pid, int tid, loff_t f_pos,
-					struct pid_namespace *ns)
-{
-	struct task_struct *pos, *task;
-	unsigned long nr = f_pos;
+अटल काष्ठा task_काष्ठा *first_tid(काष्ठा pid *pid, पूर्णांक tid, loff_t f_pos,
+					काष्ठा pid_namespace *ns)
+अणु
+	काष्ठा task_काष्ठा *pos, *task;
+	अचिन्हित दीर्घ nr = f_pos;
 
-	if (nr != f_pos)	/* 32bit overflow? */
-		return NULL;
+	अगर (nr != f_pos)	/* 32bit overflow? */
+		वापस शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task = pid_task(pid, PIDTYPE_PID);
-	if (!task)
-		goto fail;
+	अगर (!task)
+		जाओ fail;
 
-	/* Attempt to start with the tid of a thread */
-	if (tid && nr) {
+	/* Attempt to start with the tid of a thपढ़ो */
+	अगर (tid && nr) अणु
 		pos = find_task_by_pid_ns(tid, ns);
-		if (pos && same_thread_group(pos, task))
-			goto found;
-	}
+		अगर (pos && same_thपढ़ो_group(pos, task))
+			जाओ found;
+	पूर्ण
 
-	/* If nr exceeds the number of threads there is nothing todo */
-	if (nr >= get_nr_threads(task))
-		goto fail;
+	/* If nr exceeds the number of thपढ़ोs there is nothing toकरो */
+	अगर (nr >= get_nr_thपढ़ोs(task))
+		जाओ fail;
 
 	/* If we haven't found our starting place yet start
-	 * with the leader and walk nr threads forward.
+	 * with the leader and walk nr thपढ़ोs क्रमward.
 	 */
 	pos = task = task->group_leader;
-	do {
-		if (!nr--)
-			goto found;
-	} while_each_thread(task, pos);
+	करो अणु
+		अगर (!nr--)
+			जाओ found;
+	पूर्ण जबतक_each_thपढ़ो(task, pos);
 fail:
-	pos = NULL;
-	goto out;
+	pos = शून्य;
+	जाओ out;
 found:
-	get_task_struct(pos);
+	get_task_काष्ठा(pos);
 out:
-	rcu_read_unlock();
-	return pos;
-}
+	rcu_पढ़ो_unlock();
+	वापस pos;
+पूर्ण
 
 /*
- * Find the next thread in the thread list.
- * Return NULL if there is an error or no next thread.
+ * Find the next thपढ़ो in the thपढ़ो list.
+ * Return शून्य अगर there is an error or no next thपढ़ो.
  *
- * The reference to the input task_struct is released.
+ * The reference to the input task_काष्ठा is released.
  */
-static struct task_struct *next_tid(struct task_struct *start)
-{
-	struct task_struct *pos = NULL;
-	rcu_read_lock();
-	if (pid_alive(start)) {
-		pos = next_thread(start);
-		if (thread_group_leader(pos))
-			pos = NULL;
-		else
-			get_task_struct(pos);
-	}
-	rcu_read_unlock();
-	put_task_struct(start);
-	return pos;
-}
+अटल काष्ठा task_काष्ठा *next_tid(काष्ठा task_काष्ठा *start)
+अणु
+	काष्ठा task_काष्ठा *pos = शून्य;
+	rcu_पढ़ो_lock();
+	अगर (pid_alive(start)) अणु
+		pos = next_thपढ़ो(start);
+		अगर (thपढ़ो_group_leader(pos))
+			pos = शून्य;
+		अन्यथा
+			get_task_काष्ठा(pos);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	put_task_काष्ठा(start);
+	वापस pos;
+पूर्ण
 
-/* for the /proc/TGID/task/ directories */
-static int proc_task_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct inode *inode = file_inode(file);
-	struct task_struct *task;
-	struct pid_namespace *ns;
-	int tid;
+/* क्रम the /proc/TGID/task/ directories */
+अटल पूर्णांक proc_task_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा task_काष्ठा *task;
+	काष्ठा pid_namespace *ns;
+	पूर्णांक tid;
 
-	if (proc_inode_is_dead(inode))
-		return -ENOENT;
+	अगर (proc_inode_is_dead(inode))
+		वापस -ENOENT;
 
-	if (!dir_emit_dots(file, ctx))
-		return 0;
+	अगर (!dir_emit_करोts(file, ctx))
+		वापस 0;
 
-	/* f_version caches the tgid value that the last readdir call couldn't
-	 * return. lseek aka telldir automagically resets f_version to 0.
+	/* f_version caches the tgid value that the last सूची_पढ़ो call couldn't
+	 * वापस. lseek aka telldir स्वतःmagically resets f_version to 0.
 	 */
 	ns = proc_pid_ns(inode->i_sb);
-	tid = (int)file->f_version;
+	tid = (पूर्णांक)file->f_version;
 	file->f_version = 0;
-	for (task = first_tid(proc_pid(inode), tid, ctx->pos - 2, ns);
+	क्रम (task = first_tid(proc_pid(inode), tid, ctx->pos - 2, ns);
 	     task;
-	     task = next_tid(task), ctx->pos++) {
-		char name[10 + 1];
-		unsigned int len;
+	     task = next_tid(task), ctx->pos++) अणु
+		अक्षर name[10 + 1];
+		अचिन्हित पूर्णांक len;
 		tid = task_pid_nr_ns(task, ns);
-		len = snprintf(name, sizeof(name), "%u", tid);
-		if (!proc_fill_cache(file, ctx, name, len,
-				proc_task_instantiate, task, NULL)) {
-			/* returning this tgid failed, save it as the first
-			 * pid for the next readir call */
+		len = snम_लिखो(name, माप(name), "%u", tid);
+		अगर (!proc_fill_cache(file, ctx, name, len,
+				proc_task_instantiate, task, शून्य)) अणु
+			/* वापसing this tgid failed, save it as the first
+			 * pid क्रम the next पढ़ोir call */
 			file->f_version = (u64)tid;
-			put_task_struct(task);
-			break;
-		}
-	}
+			put_task_काष्ठा(task);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int proc_task_getattr(struct user_namespace *mnt_userns,
-			     const struct path *path, struct kstat *stat,
-			     u32 request_mask, unsigned int query_flags)
-{
-	struct inode *inode = d_inode(path->dentry);
-	struct task_struct *p = get_proc_task(inode);
+अटल पूर्णांक proc_task_getattr(काष्ठा user_namespace *mnt_userns,
+			     स्थिर काष्ठा path *path, काष्ठा kstat *stat,
+			     u32 request_mask, अचिन्हित पूर्णांक query_flags)
+अणु
+	काष्ठा inode *inode = d_inode(path->dentry);
+	काष्ठा task_काष्ठा *p = get_proc_task(inode);
 	generic_fillattr(&init_user_ns, inode, stat);
 
-	if (p) {
-		stat->nlink += get_nr_threads(p);
-		put_task_struct(p);
-	}
+	अगर (p) अणु
+		stat->nlink += get_nr_thपढ़ोs(p);
+		put_task_काष्ठा(p);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct inode_operations proc_task_inode_operations = {
+अटल स्थिर काष्ठा inode_operations proc_task_inode_operations = अणु
 	.lookup		= proc_task_lookup,
 	.getattr	= proc_task_getattr,
 	.setattr	= proc_setattr,
 	.permission	= proc_pid_permission,
-};
+पूर्ण;
 
-static const struct file_operations proc_task_operations = {
-	.read		= generic_read_dir,
-	.iterate_shared	= proc_task_readdir,
+अटल स्थिर काष्ठा file_operations proc_task_operations = अणु
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= proc_task_सूची_पढ़ो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-void __init set_proc_pid_nlink(void)
-{
+व्योम __init set_proc_pid_nlink(व्योम)
+अणु
 	nlink_tid = pid_entry_nlink(tid_base_stuff, ARRAY_SIZE(tid_base_stuff));
 	nlink_tgid = pid_entry_nlink(tgid_base_stuff, ARRAY_SIZE(tgid_base_stuff));
-}
+पूर्ण

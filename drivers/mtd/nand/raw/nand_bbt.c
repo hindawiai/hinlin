@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Overview:
- *   Bad block table support for the NAND driver
+ *   Bad block table support क्रम the न_अंकD driver
  *
- *  Copyright © 2004 Thomas Gleixner (tglx@linutronix.de)
+ *  Copyright तऊ 2004 Thomas Gleixner (tglx@linutronix.de)
  *
  * Description:
  *
  * When nand_scan_bbt is called, then it tries to find the bad block table
  * depending on the options in the BBT descriptor(s). If no flash based BBT
- * (NAND_BBT_USE_FLASH) is specified then the device is scanned for factory
- * marked good / bad blocks. This information is used to create a memory BBT.
- * Once a new bad block is discovered then the "factory" information is updated
+ * (न_अंकD_BBT_USE_FLASH) is specअगरied then the device is scanned क्रम factory
+ * marked good / bad blocks. This inक्रमmation is used to create a memory BBT.
+ * Once a new bad block is discovered then the "factory" inक्रमmation is updated
  * on the device.
- * If a flash based BBT is specified then the function first tries to find the
- * BBT on flash. If a BBT is found then the contents are read and the memory
+ * If a flash based BBT is specअगरied then the function first tries to find the
+ * BBT on flash. If a BBT is found then the contents are पढ़ो and the memory
  * based BBT is created. If a mirrored BBT is selected then the mirror is
  * searched too and the versions are compared. If the mirror has a greater
  * version number, then the mirror BBT is used to build the memory based BBT.
- * If the tables are not versioned, then we "or" the bad block information.
- * If one of the BBTs is out of date or does not exist it is (re)created.
- * If no BBT exists at all then the device is scanned for factory marked
+ * If the tables are not versioned, then we "or" the bad block inक्रमmation.
+ * If one of the BBTs is out of date or करोes not exist it is (re)created.
+ * If no BBT exists at all then the device is scanned क्रम factory marked
  * good / bad blocks and the bad block tables are created.
  *
  * For manufacturer created BBTs like the one found on M-SYS DOC devices
- * the BBT is searched and read but never created
+ * the BBT is searched and पढ़ो but never created
  *
- * The auto generated bad block table is located in the last good blocks
+ * The स्वतः generated bad block table is located in the last good blocks
  * of the device. The table is mirrored, so it can be updated eventually.
  * The table is marked in the OOB area with an ident pattern and a version
- * number which indicates which of both tables is more up to date. If the NAND
- * controller needs the complete OOB area for the ECC information then the
- * option NAND_BBT_NO_OOB should be used (along with NAND_BBT_USE_FLASH, of
- * course): it moves the ident pattern and the version byte into the data area
- * and the OOB area will remain untouched.
+ * number which indicates which of both tables is more up to date. If the न_अंकD
+ * controller needs the complete OOB area क्रम the ECC inक्रमmation then the
+ * option न_अंकD_BBT_NO_OOB should be used (aदीर्घ with न_अंकD_BBT_USE_FLASH, of
+ * course): it moves the ident pattern and the version byte पूर्णांकo the data area
+ * and the OOB area will reमुख्य untouched.
  *
  * The table uses 2 bits per block
  * 11b:		block is good
@@ -46,315 +47,315 @@
  * 10b:		block is reserved (to protect the bbt area)
  * 11b:		block is factory marked bad
  *
- * Multichip devices like DOC store the bad block info per floor.
+ * Multichip devices like DOC store the bad block info per न्यूनमान.
  *
  * Following assumptions are made:
- * - bbts start at a page boundary, if autolocated on a block boundary
- * - the space necessary for a bbt in FLASH does not exceed a block boundary
+ * - bbts start at a page boundary, अगर स्वतःlocated on a block boundary
+ * - the space necessary क्रम a bbt in FLASH करोes not exceed a block boundary
  */
 
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/bbm.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/vmalloc.h>
-#include <linux/export.h>
-#include <linux/string.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/bbm.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/export.h>
+#समावेश <linux/माला.स>
 
-#include "internals.h"
+#समावेश "internals.h"
 
-#define BBT_BLOCK_GOOD		0x00
-#define BBT_BLOCK_WORN		0x01
-#define BBT_BLOCK_RESERVED	0x02
-#define BBT_BLOCK_FACTORY_BAD	0x03
+#घोषणा BBT_BLOCK_GOOD		0x00
+#घोषणा BBT_BLOCK_WORN		0x01
+#घोषणा BBT_BLOCK_RESERVED	0x02
+#घोषणा BBT_BLOCK_FACTORY_BAD	0x03
 
-#define BBT_ENTRY_MASK		0x03
-#define BBT_ENTRY_SHIFT		2
+#घोषणा BBT_ENTRY_MASK		0x03
+#घोषणा BBT_ENTRY_SHIFT		2
 
-static inline uint8_t bbt_get_entry(struct nand_chip *chip, int block)
-{
-	uint8_t entry = chip->bbt[block >> BBT_ENTRY_SHIFT];
+अटल अंतरभूत uपूर्णांक8_t bbt_get_entry(काष्ठा nand_chip *chip, पूर्णांक block)
+अणु
+	uपूर्णांक8_t entry = chip->bbt[block >> BBT_ENTRY_SHIFT];
 	entry >>= (block & BBT_ENTRY_MASK) * 2;
-	return entry & BBT_ENTRY_MASK;
-}
+	वापस entry & BBT_ENTRY_MASK;
+पूर्ण
 
-static inline void bbt_mark_entry(struct nand_chip *chip, int block,
-		uint8_t mark)
-{
-	uint8_t msk = (mark & BBT_ENTRY_MASK) << ((block & BBT_ENTRY_MASK) * 2);
+अटल अंतरभूत व्योम bbt_mark_entry(काष्ठा nand_chip *chip, पूर्णांक block,
+		uपूर्णांक8_t mark)
+अणु
+	uपूर्णांक8_t msk = (mark & BBT_ENTRY_MASK) << ((block & BBT_ENTRY_MASK) * 2);
 	chip->bbt[block >> BBT_ENTRY_SHIFT] |= msk;
-}
+पूर्ण
 
-static int check_pattern_no_oob(uint8_t *buf, struct nand_bbt_descr *td)
-{
-	if (memcmp(buf, td->pattern, td->len))
-		return -1;
-	return 0;
-}
+अटल पूर्णांक check_pattern_no_oob(uपूर्णांक8_t *buf, काष्ठा nand_bbt_descr *td)
+अणु
+	अगर (स_भेद(buf, td->pattern, td->len))
+		वापस -1;
+	वापस 0;
+पूर्ण
 
 /**
- * check_pattern - [GENERIC] check if a pattern is in the buffer
+ * check_pattern - [GENERIC] check अगर a pattern is in the buffer
  * @buf: the buffer to search
  * @len: the length of buffer to search
  * @paglen: the pagelength
  * @td: search pattern descriptor
  *
- * Check for a pattern at the given place. Used to search bad block tables and
- * good / bad block identifiers.
+ * Check क्रम a pattern at the given place. Used to search bad block tables and
+ * good / bad block identअगरiers.
  */
-static int check_pattern(uint8_t *buf, int len, int paglen, struct nand_bbt_descr *td)
-{
-	if (td->options & NAND_BBT_NO_OOB)
-		return check_pattern_no_oob(buf, td);
+अटल पूर्णांक check_pattern(uपूर्णांक8_t *buf, पूर्णांक len, पूर्णांक paglen, काष्ठा nand_bbt_descr *td)
+अणु
+	अगर (td->options & न_अंकD_BBT_NO_OOB)
+		वापस check_pattern_no_oob(buf, td);
 
 	/* Compare the pattern */
-	if (memcmp(buf + paglen + td->offs, td->pattern, td->len))
-		return -1;
+	अगर (स_भेद(buf + paglen + td->offs, td->pattern, td->len))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * check_short_pattern - [GENERIC] check if a pattern is in the buffer
+ * check_लघु_pattern - [GENERIC] check अगर a pattern is in the buffer
  * @buf: the buffer to search
  * @td:	search pattern descriptor
  *
- * Check for a pattern at the given place. Used to search bad block tables and
- * good / bad block identifiers. Same as check_pattern, but no optional empty
+ * Check क्रम a pattern at the given place. Used to search bad block tables and
+ * good / bad block identअगरiers. Same as check_pattern, but no optional empty
  * check.
  */
-static int check_short_pattern(uint8_t *buf, struct nand_bbt_descr *td)
-{
+अटल पूर्णांक check_लघु_pattern(uपूर्णांक8_t *buf, काष्ठा nand_bbt_descr *td)
+अणु
 	/* Compare the pattern */
-	if (memcmp(buf + td->offs, td->pattern, td->len))
-		return -1;
-	return 0;
-}
+	अगर (स_भेद(buf + td->offs, td->pattern, td->len))
+		वापस -1;
+	वापस 0;
+पूर्ण
 
 /**
  * add_marker_len - compute the length of the marker in data area
- * @td: BBT descriptor used for computation
+ * @td: BBT descriptor used क्रम computation
  *
- * The length will be 0 if the marker is located in OOB area.
+ * The length will be 0 अगर the marker is located in OOB area.
  */
-static u32 add_marker_len(struct nand_bbt_descr *td)
-{
+अटल u32 add_marker_len(काष्ठा nand_bbt_descr *td)
+अणु
 	u32 len;
 
-	if (!(td->options & NAND_BBT_NO_OOB))
-		return 0;
+	अगर (!(td->options & न_अंकD_BBT_NO_OOB))
+		वापस 0;
 
 	len = td->len;
-	if (td->options & NAND_BBT_VERSION)
+	अगर (td->options & न_अंकD_BBT_VERSION)
 		len++;
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /**
- * read_bbt - [GENERIC] Read the bad block table starting from page
- * @this: NAND chip object
+ * पढ़ो_bbt - [GENERIC] Read the bad block table starting from page
+ * @this: न_अंकD chip object
  * @buf: temporary buffer
  * @page: the starting page
- * @num: the number of bbt descriptors to read
+ * @num: the number of bbt descriptors to पढ़ो
  * @td: the bbt describtion table
  * @offs: block number offset in the table
  *
  * Read the bad block table starting from page.
  */
-static int read_bbt(struct nand_chip *this, uint8_t *buf, int page, int num,
-		    struct nand_bbt_descr *td, int offs)
-{
-	struct mtd_info *mtd = nand_to_mtd(this);
-	int res, ret = 0, i, j, act = 0;
-	size_t retlen, len, totlen;
+अटल पूर्णांक पढ़ो_bbt(काष्ठा nand_chip *this, uपूर्णांक8_t *buf, पूर्णांक page, पूर्णांक num,
+		    काष्ठा nand_bbt_descr *td, पूर्णांक offs)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	पूर्णांक res, ret = 0, i, j, act = 0;
+	माप_प्रकार retlen, len, totlen;
 	loff_t from;
-	int bits = td->options & NAND_BBT_NRBITS_MSK;
-	uint8_t msk = (uint8_t)((1 << bits) - 1);
+	पूर्णांक bits = td->options & न_अंकD_BBT_NRBITS_MSK;
+	uपूर्णांक8_t msk = (uपूर्णांक8_t)((1 << bits) - 1);
 	u32 marker_len;
-	int reserved_block_code = td->reserved_block_code;
+	पूर्णांक reserved_block_code = td->reserved_block_code;
 
 	totlen = (num * bits) >> 3;
 	marker_len = add_marker_len(td);
-	from = ((loff_t)page) << this->page_shift;
+	from = ((loff_t)page) << this->page_shअगरt;
 
-	while (totlen) {
-		len = min(totlen, (size_t)(1 << this->bbt_erase_shift));
-		if (marker_len) {
+	जबतक (totlen) अणु
+		len = min(totlen, (माप_प्रकार)(1 << this->bbt_erase_shअगरt));
+		अगर (marker_len) अणु
 			/*
-			 * In case the BBT marker is not in the OOB area it
+			 * In हाल the BBT marker is not in the OOB area it
 			 * will be just in the first page.
 			 */
 			len -= marker_len;
 			from += marker_len;
 			marker_len = 0;
-		}
-		res = mtd_read(mtd, from, len, &retlen, buf);
-		if (res < 0) {
-			if (mtd_is_eccerr(res)) {
+		पूर्ण
+		res = mtd_पढ़ो(mtd, from, len, &retlen, buf);
+		अगर (res < 0) अणु
+			अगर (mtd_is_eccerr(res)) अणु
 				pr_info("nand_bbt: ECC error in BBT at 0x%012llx\n",
-					from & ~mtd->writesize);
-				return res;
-			} else if (mtd_is_bitflip(res)) {
+					from & ~mtd->ग_लिखोsize);
+				वापस res;
+			पूर्ण अन्यथा अगर (mtd_is_bitflip(res)) अणु
 				pr_info("nand_bbt: corrected error in BBT at 0x%012llx\n",
-					from & ~mtd->writesize);
+					from & ~mtd->ग_लिखोsize);
 				ret = res;
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_info("nand_bbt: error reading BBT\n");
-				return res;
-			}
-		}
+				वापस res;
+			पूर्ण
+		पूर्ण
 
 		/* Analyse data */
-		for (i = 0; i < len; i++) {
-			uint8_t dat = buf[i];
-			for (j = 0; j < 8; j += bits, act++) {
-				uint8_t tmp = (dat >> j) & msk;
-				if (tmp == msk)
-					continue;
-				if (reserved_block_code && (tmp == reserved_block_code)) {
+		क्रम (i = 0; i < len; i++) अणु
+			uपूर्णांक8_t dat = buf[i];
+			क्रम (j = 0; j < 8; j += bits, act++) अणु
+				uपूर्णांक8_t पंचांगp = (dat >> j) & msk;
+				अगर (पंचांगp == msk)
+					जारी;
+				अगर (reserved_block_code && (पंचांगp == reserved_block_code)) अणु
 					pr_info("nand_read_bbt: reserved block at 0x%012llx\n",
 						 (loff_t)(offs + act) <<
-						 this->bbt_erase_shift);
+						 this->bbt_erase_shअगरt);
 					bbt_mark_entry(this, offs + act,
 							BBT_BLOCK_RESERVED);
 					mtd->ecc_stats.bbtblocks++;
-					continue;
-				}
+					जारी;
+				पूर्ण
 				/*
-				 * Leave it for now, if it's matured we can
+				 * Leave it क्रम now, अगर it's matured we can
 				 * move this message to pr_debug.
 				 */
 				pr_info("nand_read_bbt: bad block at 0x%012llx\n",
 					 (loff_t)(offs + act) <<
-					 this->bbt_erase_shift);
+					 this->bbt_erase_shअगरt);
 				/* Factory marked bad or worn out? */
-				if (tmp == 0)
+				अगर (पंचांगp == 0)
 					bbt_mark_entry(this, offs + act,
 							BBT_BLOCK_FACTORY_BAD);
-				else
+				अन्यथा
 					bbt_mark_entry(this, offs + act,
 							BBT_BLOCK_WORN);
 				mtd->ecc_stats.badblocks++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		totlen -= len;
 		from += len;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
- * read_abs_bbt - [GENERIC] Read the bad block table starting at a given page
- * @this: NAND chip object
+ * पढ़ो_असल_bbt - [GENERIC] Read the bad block table starting at a given page
+ * @this: न_अंकD chip object
  * @buf: temporary buffer
- * @td: descriptor for the bad block table
- * @chip: read the table for a specific chip, -1 read all chips; applies only if
- *        NAND_BBT_PERCHIP option is set
+ * @td: descriptor क्रम the bad block table
+ * @chip: पढ़ो the table क्रम a specअगरic chip, -1 पढ़ो all chips; applies only अगर
+ *        न_अंकD_BBT_PERCHIP option is set
  *
- * Read the bad block table for all chips starting at a given page. We assume
+ * Read the bad block table क्रम all chips starting at a given page. We assume
  * that the bbt bits are in consecutive order.
  */
-static int read_abs_bbt(struct nand_chip *this, uint8_t *buf,
-			struct nand_bbt_descr *td, int chip)
-{
-	struct mtd_info *mtd = nand_to_mtd(this);
-	u64 targetsize = nanddev_target_size(&this->base);
-	int res = 0, i;
+अटल पूर्णांक पढ़ो_असल_bbt(काष्ठा nand_chip *this, uपूर्णांक8_t *buf,
+			काष्ठा nand_bbt_descr *td, पूर्णांक chip)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	u64 tarमाला_लोize = nanddev_target_size(&this->base);
+	पूर्णांक res = 0, i;
 
-	if (td->options & NAND_BBT_PERCHIP) {
-		int offs = 0;
-		for (i = 0; i < nanddev_ntargets(&this->base); i++) {
-			if (chip == -1 || chip == i)
-				res = read_bbt(this, buf, td->pages[i],
-					targetsize >> this->bbt_erase_shift,
+	अगर (td->options & न_अंकD_BBT_PERCHIP) अणु
+		पूर्णांक offs = 0;
+		क्रम (i = 0; i < nanddev_ntarमाला_लो(&this->base); i++) अणु
+			अगर (chip == -1 || chip == i)
+				res = पढ़ो_bbt(this, buf, td->pages[i],
+					tarमाला_लोize >> this->bbt_erase_shअगरt,
 					td, offs);
-			if (res)
-				return res;
-			offs += targetsize >> this->bbt_erase_shift;
-		}
-	} else {
-		res = read_bbt(this, buf, td->pages[0],
-				mtd->size >> this->bbt_erase_shift, td, 0);
-		if (res)
-			return res;
-	}
-	return 0;
-}
+			अगर (res)
+				वापस res;
+			offs += tarमाला_लोize >> this->bbt_erase_shअगरt;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		res = पढ़ो_bbt(this, buf, td->pages[0],
+				mtd->size >> this->bbt_erase_shअगरt, td, 0);
+		अगर (res)
+			वापस res;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* BBT marker is in the first page, no OOB */
-static int scan_read_data(struct nand_chip *this, uint8_t *buf, loff_t offs,
-			  struct nand_bbt_descr *td)
-{
-	struct mtd_info *mtd = nand_to_mtd(this);
-	size_t retlen;
-	size_t len;
+अटल पूर्णांक scan_पढ़ो_data(काष्ठा nand_chip *this, uपूर्णांक8_t *buf, loff_t offs,
+			  काष्ठा nand_bbt_descr *td)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	माप_प्रकार retlen;
+	माप_प्रकार len;
 
 	len = td->len;
-	if (td->options & NAND_BBT_VERSION)
+	अगर (td->options & न_अंकD_BBT_VERSION)
 		len++;
 
-	return mtd_read(mtd, offs, len, &retlen, buf);
-}
+	वापस mtd_पढ़ो(mtd, offs, len, &retlen, buf);
+पूर्ण
 
 /**
- * scan_read_oob - [GENERIC] Scan data+OOB region to buffer
- * @this: NAND chip object
+ * scan_पढ़ो_oob - [GENERIC] Scan data+OOB region to buffer
+ * @this: न_अंकD chip object
  * @buf: temporary buffer
  * @offs: offset at which to scan
- * @len: length of data region to read
+ * @len: length of data region to पढ़ो
  *
- * Scan read data from data+OOB. May traverse multiple pages, interleaving
- * page,OOB,page,OOB,... in buf. Completes transfer and returns the "strongest"
+ * Scan पढ़ो data from data+OOB. May traverse multiple pages, पूर्णांकerleaving
+ * page,OOB,page,OOB,... in buf. Completes transfer and वापसs the "strongest"
  * ECC condition (error or bitflip). May quit on the first (non-ECC) error.
  */
-static int scan_read_oob(struct nand_chip *this, uint8_t *buf, loff_t offs,
-			 size_t len)
-{
-	struct mtd_info *mtd = nand_to_mtd(this);
-	struct mtd_oob_ops ops;
-	int res, ret = 0;
+अटल पूर्णांक scan_पढ़ो_oob(काष्ठा nand_chip *this, uपूर्णांक8_t *buf, loff_t offs,
+			 माप_प्रकार len)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	काष्ठा mtd_oob_ops ops;
+	पूर्णांक res, ret = 0;
 
 	ops.mode = MTD_OPS_PLACE_OOB;
 	ops.ooboffs = 0;
 	ops.ooblen = mtd->oobsize;
 
-	while (len > 0) {
+	जबतक (len > 0) अणु
 		ops.datbuf = buf;
-		ops.len = min(len, (size_t)mtd->writesize);
+		ops.len = min(len, (माप_प्रकार)mtd->ग_लिखोsize);
 		ops.oobbuf = buf + ops.len;
 
-		res = mtd_read_oob(mtd, offs, &ops);
-		if (res) {
-			if (!mtd_is_bitflip_or_eccerr(res))
-				return res;
-			else if (mtd_is_eccerr(res) || !ret)
+		res = mtd_पढ़ो_oob(mtd, offs, &ops);
+		अगर (res) अणु
+			अगर (!mtd_is_bitflip_or_eccerr(res))
+				वापस res;
+			अन्यथा अगर (mtd_is_eccerr(res) || !ret)
 				ret = res;
-		}
+		पूर्ण
 
-		buf += mtd->oobsize + mtd->writesize;
-		len -= mtd->writesize;
-		offs += mtd->writesize;
-	}
-	return ret;
-}
+		buf += mtd->oobsize + mtd->ग_लिखोsize;
+		len -= mtd->ग_लिखोsize;
+		offs += mtd->ग_लिखोsize;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int scan_read(struct nand_chip *this, uint8_t *buf, loff_t offs,
-		     size_t len, struct nand_bbt_descr *td)
-{
-	if (td->options & NAND_BBT_NO_OOB)
-		return scan_read_data(this, buf, offs, td);
-	else
-		return scan_read_oob(this, buf, offs, len);
-}
+अटल पूर्णांक scan_पढ़ो(काष्ठा nand_chip *this, uपूर्णांक8_t *buf, loff_t offs,
+		     माप_प्रकार len, काष्ठा nand_bbt_descr *td)
+अणु
+	अगर (td->options & न_अंकD_BBT_NO_OOB)
+		वापस scan_पढ़ो_data(this, buf, offs, td);
+	अन्यथा
+		वापस scan_पढ़ो_oob(this, buf, offs, len);
+पूर्ण
 
-/* Scan write data with oob to flash */
-static int scan_write_bbt(struct nand_chip *this, loff_t offs, size_t len,
-			  uint8_t *buf, uint8_t *oob)
-{
-	struct mtd_info *mtd = nand_to_mtd(this);
-	struct mtd_oob_ops ops;
+/* Scan ग_लिखो data with oob to flash */
+अटल पूर्णांक scan_ग_लिखो_bbt(काष्ठा nand_chip *this, loff_t offs, माप_प्रकार len,
+			  uपूर्णांक8_t *buf, uपूर्णांक8_t *oob)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	काष्ठा mtd_oob_ops ops;
 
 	ops.mode = MTD_OPS_PLACE_OOB;
 	ops.ooboffs = 0;
@@ -363,1093 +364,1093 @@ static int scan_write_bbt(struct nand_chip *this, loff_t offs, size_t len,
 	ops.oobbuf = oob;
 	ops.len = len;
 
-	return mtd_write_oob(mtd, offs, &ops);
-}
+	वापस mtd_ग_लिखो_oob(mtd, offs, &ops);
+पूर्ण
 
-static u32 bbt_get_ver_offs(struct nand_chip *this, struct nand_bbt_descr *td)
-{
-	struct mtd_info *mtd = nand_to_mtd(this);
+अटल u32 bbt_get_ver_offs(काष्ठा nand_chip *this, काष्ठा nand_bbt_descr *td)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
 	u32 ver_offs = td->veroffs;
 
-	if (!(td->options & NAND_BBT_NO_OOB))
-		ver_offs += mtd->writesize;
-	return ver_offs;
-}
+	अगर (!(td->options & न_अंकD_BBT_NO_OOB))
+		ver_offs += mtd->ग_लिखोsize;
+	वापस ver_offs;
+पूर्ण
 
 /**
- * read_abs_bbts - [GENERIC] Read the bad block table(s) for all chips starting at a given page
- * @this: NAND chip object
+ * पढ़ो_असल_bbts - [GENERIC] Read the bad block table(s) क्रम all chips starting at a given page
+ * @this: न_अंकD chip object
  * @buf: temporary buffer
- * @td: descriptor for the bad block table
- * @md:	descriptor for the bad block table mirror
+ * @td: descriptor क्रम the bad block table
+ * @md:	descriptor क्रम the bad block table mirror
  *
- * Read the bad block table(s) for all chips starting at a given page. We
+ * Read the bad block table(s) क्रम all chips starting at a given page. We
  * assume that the bbt bits are in consecutive order.
  */
-static void read_abs_bbts(struct nand_chip *this, uint8_t *buf,
-			  struct nand_bbt_descr *td, struct nand_bbt_descr *md)
-{
-	struct mtd_info *mtd = nand_to_mtd(this);
+अटल व्योम पढ़ो_असल_bbts(काष्ठा nand_chip *this, uपूर्णांक8_t *buf,
+			  काष्ठा nand_bbt_descr *td, काष्ठा nand_bbt_descr *md)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
 
-	/* Read the primary version, if available */
-	if (td->options & NAND_BBT_VERSION) {
-		scan_read(this, buf, (loff_t)td->pages[0] << this->page_shift,
-			  mtd->writesize, td);
+	/* Read the primary version, अगर available */
+	अगर (td->options & न_अंकD_BBT_VERSION) अणु
+		scan_पढ़ो(this, buf, (loff_t)td->pages[0] << this->page_shअगरt,
+			  mtd->ग_लिखोsize, td);
 		td->version[0] = buf[bbt_get_ver_offs(this, td)];
 		pr_info("Bad block table at page %d, version 0x%02X\n",
 			 td->pages[0], td->version[0]);
-	}
+	पूर्ण
 
-	/* Read the mirror version, if available */
-	if (md && (md->options & NAND_BBT_VERSION)) {
-		scan_read(this, buf, (loff_t)md->pages[0] << this->page_shift,
-			  mtd->writesize, md);
+	/* Read the mirror version, अगर available */
+	अगर (md && (md->options & न_अंकD_BBT_VERSION)) अणु
+		scan_पढ़ो(this, buf, (loff_t)md->pages[0] << this->page_shअगरt,
+			  mtd->ग_लिखोsize, md);
 		md->version[0] = buf[bbt_get_ver_offs(this, md)];
 		pr_info("Bad block table at page %d, version 0x%02X\n",
 			 md->pages[0], md->version[0]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Scan a given block partially */
-static int scan_block_fast(struct nand_chip *this, struct nand_bbt_descr *bd,
-			   loff_t offs, uint8_t *buf)
-{
-	struct mtd_info *mtd = nand_to_mtd(this);
+अटल पूर्णांक scan_block_fast(काष्ठा nand_chip *this, काष्ठा nand_bbt_descr *bd,
+			   loff_t offs, uपूर्णांक8_t *buf)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
 
-	struct mtd_oob_ops ops;
-	int ret, page_offset;
+	काष्ठा mtd_oob_ops ops;
+	पूर्णांक ret, page_offset;
 
 	ops.ooblen = mtd->oobsize;
 	ops.oobbuf = buf;
 	ops.ooboffs = 0;
-	ops.datbuf = NULL;
+	ops.datbuf = शून्य;
 	ops.mode = MTD_OPS_PLACE_OOB;
 
 	page_offset = nand_bbm_get_next_page(this, 0);
 
-	while (page_offset >= 0) {
+	जबतक (page_offset >= 0) अणु
 		/*
-		 * Read the full oob until read_oob is fixed to handle single
-		 * byte reads for 16 bit buswidth.
+		 * Read the full oob until पढ़ो_oob is fixed to handle single
+		 * byte पढ़ोs क्रम 16 bit buswidth.
 		 */
-		ret = mtd_read_oob(mtd, offs + (page_offset * mtd->writesize),
+		ret = mtd_पढ़ो_oob(mtd, offs + (page_offset * mtd->ग_लिखोsize),
 				   &ops);
-		/* Ignore ECC errors when checking for BBM */
-		if (ret && !mtd_is_bitflip_or_eccerr(ret))
-			return ret;
+		/* Ignore ECC errors when checking क्रम BBM */
+		अगर (ret && !mtd_is_bitflip_or_eccerr(ret))
+			वापस ret;
 
-		if (check_short_pattern(buf, bd))
-			return 1;
+		अगर (check_लघु_pattern(buf, bd))
+			वापस 1;
 
 		page_offset = nand_bbm_get_next_page(this, page_offset + 1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * create_bbt - [GENERIC] Create a bad block table by scanning the device
- * @this: NAND chip object
+ * @this: न_अंकD chip object
  * @buf: temporary buffer
- * @bd: descriptor for the good/bad block search pattern
- * @chip: create the table for a specific chip, -1 read all chips; applies only
- *        if NAND_BBT_PERCHIP option is set
+ * @bd: descriptor क्रम the good/bad block search pattern
+ * @chip: create the table क्रम a specअगरic chip, -1 पढ़ो all chips; applies only
+ *        अगर न_अंकD_BBT_PERCHIP option is set
  *
- * Create a bad block table by scanning the device for the given good/bad block
- * identify pattern.
+ * Create a bad block table by scanning the device क्रम the given good/bad block
+ * identअगरy pattern.
  */
-static int create_bbt(struct nand_chip *this, uint8_t *buf,
-		      struct nand_bbt_descr *bd, int chip)
-{
-	u64 targetsize = nanddev_target_size(&this->base);
-	struct mtd_info *mtd = nand_to_mtd(this);
-	int i, numblocks, startblock;
+अटल पूर्णांक create_bbt(काष्ठा nand_chip *this, uपूर्णांक8_t *buf,
+		      काष्ठा nand_bbt_descr *bd, पूर्णांक chip)
+अणु
+	u64 tarमाला_लोize = nanddev_target_size(&this->base);
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	पूर्णांक i, numblocks, startblock;
 	loff_t from;
 
 	pr_info("Scanning device for bad blocks\n");
 
-	if (chip == -1) {
-		numblocks = mtd->size >> this->bbt_erase_shift;
+	अगर (chip == -1) अणु
+		numblocks = mtd->size >> this->bbt_erase_shअगरt;
 		startblock = 0;
 		from = 0;
-	} else {
-		if (chip >= nanddev_ntargets(&this->base)) {
+	पूर्ण अन्यथा अणु
+		अगर (chip >= nanddev_ntarमाला_लो(&this->base)) अणु
 			pr_warn("create_bbt(): chipnr (%d) > available chips (%d)\n",
-			        chip + 1, nanddev_ntargets(&this->base));
-			return -EINVAL;
-		}
-		numblocks = targetsize >> this->bbt_erase_shift;
+			        chip + 1, nanddev_ntarमाला_लो(&this->base));
+			वापस -EINVAL;
+		पूर्ण
+		numblocks = tarमाला_लोize >> this->bbt_erase_shअगरt;
 		startblock = chip * numblocks;
 		numblocks += startblock;
-		from = (loff_t)startblock << this->bbt_erase_shift;
-	}
+		from = (loff_t)startblock << this->bbt_erase_shअगरt;
+	पूर्ण
 
-	for (i = startblock; i < numblocks; i++) {
-		int ret;
+	क्रम (i = startblock; i < numblocks; i++) अणु
+		पूर्णांक ret;
 
-		BUG_ON(bd->options & NAND_BBT_NO_OOB);
+		BUG_ON(bd->options & न_अंकD_BBT_NO_OOB);
 
 		ret = scan_block_fast(this, bd, from, buf);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		if (ret) {
+		अगर (ret) अणु
 			bbt_mark_entry(this, i, BBT_BLOCK_FACTORY_BAD);
 			pr_warn("Bad eraseblock %d at 0x%012llx\n",
-				i, (unsigned long long)from);
+				i, (अचिन्हित दीर्घ दीर्घ)from);
 			mtd->ecc_stats.badblocks++;
-		}
+		पूर्ण
 
-		from += (1 << this->bbt_erase_shift);
-	}
-	return 0;
-}
+		from += (1 << this->bbt_erase_shअगरt);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * search_bbt - [GENERIC] scan the device for a specific bad block table
- * @this: NAND chip object
+ * search_bbt - [GENERIC] scan the device क्रम a specअगरic bad block table
+ * @this: न_अंकD chip object
  * @buf: temporary buffer
- * @td: descriptor for the bad block table
+ * @td: descriptor क्रम the bad block table
  *
- * Read the bad block table by searching for a given ident pattern. Search is
- * preformed either from the beginning up or from the end of the device
- * downwards. The search starts always at the start of a block. If the option
- * NAND_BBT_PERCHIP is given, each chip is searched for a bbt, which contains
- * the bad block information of this chip. This is necessary to provide support
- * for certain DOC devices.
+ * Read the bad block table by searching क्रम a given ident pattern. Search is
+ * preक्रमmed either from the beginning up or from the end of the device
+ * करोwnwards. The search starts always at the start of a block. If the option
+ * न_अंकD_BBT_PERCHIP is given, each chip is searched क्रम a bbt, which contains
+ * the bad block inक्रमmation of this chip. This is necessary to provide support
+ * क्रम certain DOC devices.
  *
  * The bbt ident pattern resides in the oob area of the first page in a block.
  */
-static int search_bbt(struct nand_chip *this, uint8_t *buf,
-		      struct nand_bbt_descr *td)
-{
-	u64 targetsize = nanddev_target_size(&this->base);
-	struct mtd_info *mtd = nand_to_mtd(this);
-	int i, chips;
-	int startblock, block, dir;
-	int scanlen = mtd->writesize + mtd->oobsize;
-	int bbtblocks;
-	int blocktopage = this->bbt_erase_shift - this->page_shift;
+अटल पूर्णांक search_bbt(काष्ठा nand_chip *this, uपूर्णांक8_t *buf,
+		      काष्ठा nand_bbt_descr *td)
+अणु
+	u64 tarमाला_लोize = nanddev_target_size(&this->base);
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	पूर्णांक i, chips;
+	पूर्णांक startblock, block, dir;
+	पूर्णांक scanlen = mtd->ग_लिखोsize + mtd->oobsize;
+	पूर्णांक bbtblocks;
+	पूर्णांक blocktopage = this->bbt_erase_shअगरt - this->page_shअगरt;
 
-	/* Search direction top -> down? */
-	if (td->options & NAND_BBT_LASTBLOCK) {
-		startblock = (mtd->size >> this->bbt_erase_shift) - 1;
+	/* Search direction top -> करोwn? */
+	अगर (td->options & न_अंकD_BBT_LASTBLOCK) अणु
+		startblock = (mtd->size >> this->bbt_erase_shअगरt) - 1;
 		dir = -1;
-	} else {
+	पूर्ण अन्यथा अणु
 		startblock = 0;
 		dir = 1;
-	}
+	पूर्ण
 
 	/* Do we have a bbt per chip? */
-	if (td->options & NAND_BBT_PERCHIP) {
-		chips = nanddev_ntargets(&this->base);
-		bbtblocks = targetsize >> this->bbt_erase_shift;
+	अगर (td->options & न_अंकD_BBT_PERCHIP) अणु
+		chips = nanddev_ntarमाला_लो(&this->base);
+		bbtblocks = tarमाला_लोize >> this->bbt_erase_shअगरt;
 		startblock &= bbtblocks - 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		chips = 1;
-		bbtblocks = mtd->size >> this->bbt_erase_shift;
-	}
+		bbtblocks = mtd->size >> this->bbt_erase_shअगरt;
+	पूर्ण
 
-	for (i = 0; i < chips; i++) {
-		/* Reset version information */
+	क्रम (i = 0; i < chips; i++) अणु
+		/* Reset version inक्रमmation */
 		td->version[i] = 0;
 		td->pages[i] = -1;
 		/* Scan the maximum number of blocks */
-		for (block = 0; block < td->maxblocks; block++) {
+		क्रम (block = 0; block < td->maxblocks; block++) अणु
 
-			int actblock = startblock + dir * block;
-			loff_t offs = (loff_t)actblock << this->bbt_erase_shift;
+			पूर्णांक actblock = startblock + dir * block;
+			loff_t offs = (loff_t)actblock << this->bbt_erase_shअगरt;
 
 			/* Read first page */
-			scan_read(this, buf, offs, mtd->writesize, td);
-			if (!check_pattern(buf, scanlen, mtd->writesize, td)) {
+			scan_पढ़ो(this, buf, offs, mtd->ग_लिखोsize, td);
+			अगर (!check_pattern(buf, scanlen, mtd->ग_लिखोsize, td)) अणु
 				td->pages[i] = actblock << blocktopage;
-				if (td->options & NAND_BBT_VERSION) {
+				अगर (td->options & न_अंकD_BBT_VERSION) अणु
 					offs = bbt_get_ver_offs(this, td);
 					td->version[i] = buf[offs];
-				}
-				break;
-			}
-		}
-		startblock += targetsize >> this->bbt_erase_shift;
-	}
-	/* Check, if we found a bbt for each requested chip */
-	for (i = 0; i < chips; i++) {
-		if (td->pages[i] == -1)
+				पूर्ण
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		startblock += tarमाला_लोize >> this->bbt_erase_shअगरt;
+	पूर्ण
+	/* Check, अगर we found a bbt क्रम each requested chip */
+	क्रम (i = 0; i < chips; i++) अणु
+		अगर (td->pages[i] == -1)
 			pr_warn("Bad block table not found for chip %d\n", i);
-		else
+		अन्यथा
 			pr_info("Bad block table found at page %d, version 0x%02X\n",
 				td->pages[i], td->version[i]);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * search_read_bbts - [GENERIC] scan the device for bad block table(s)
- * @this: NAND chip object
+ * search_पढ़ो_bbts - [GENERIC] scan the device क्रम bad block table(s)
+ * @this: न_अंकD chip object
  * @buf: temporary buffer
- * @td: descriptor for the bad block table
- * @md: descriptor for the bad block table mirror
+ * @td: descriptor क्रम the bad block table
+ * @md: descriptor क्रम the bad block table mirror
  *
- * Search and read the bad block table(s).
+ * Search and पढ़ो the bad block table(s).
  */
-static void search_read_bbts(struct nand_chip *this, uint8_t *buf,
-			     struct nand_bbt_descr *td,
-			     struct nand_bbt_descr *md)
-{
+अटल व्योम search_पढ़ो_bbts(काष्ठा nand_chip *this, uपूर्णांक8_t *buf,
+			     काष्ठा nand_bbt_descr *td,
+			     काष्ठा nand_bbt_descr *md)
+अणु
 	/* Search the primary table */
 	search_bbt(this, buf, td);
 
 	/* Search the mirror table */
-	if (md)
+	अगर (md)
 		search_bbt(this, buf, md);
-}
+पूर्ण
 
 /**
  * get_bbt_block - Get the first valid eraseblock suitable to store a BBT
- * @this: the NAND device
+ * @this: the न_अंकD device
  * @td: the BBT description
  * @md: the mirror BBT descriptor
  * @chip: the CHIP selector
  *
- * This functions returns a positive block number pointing a valid eraseblock
- * suitable to store a BBT (i.e. in the range reserved for BBT), or -ENOSPC if
- * all blocks are already used of marked bad. If td->pages[chip] was already
- * pointing to a valid block we re-use it, otherwise we search for the next
+ * This functions वापसs a positive block number poपूर्णांकing a valid eraseblock
+ * suitable to store a BBT (i.e. in the range reserved क्रम BBT), or -ENOSPC अगर
+ * all blocks are alपढ़ोy used of marked bad. If td->pages[chip] was alपढ़ोy
+ * poपूर्णांकing to a valid block we re-use it, otherwise we search क्रम the next
  * valid one.
  */
-static int get_bbt_block(struct nand_chip *this, struct nand_bbt_descr *td,
-			 struct nand_bbt_descr *md, int chip)
-{
-	u64 targetsize = nanddev_target_size(&this->base);
-	int startblock, dir, page, numblocks, i;
+अटल पूर्णांक get_bbt_block(काष्ठा nand_chip *this, काष्ठा nand_bbt_descr *td,
+			 काष्ठा nand_bbt_descr *md, पूर्णांक chip)
+अणु
+	u64 tarमाला_लोize = nanddev_target_size(&this->base);
+	पूर्णांक startblock, dir, page, numblocks, i;
 
 	/*
-	 * There was already a version of the table, reuse the page. This
-	 * applies for absolute placement too, as we have the page number in
+	 * There was alपढ़ोy a version of the table, reuse the page. This
+	 * applies क्रम असलolute placement too, as we have the page number in
 	 * td->pages.
 	 */
-	if (td->pages[chip] != -1)
-		return td->pages[chip] >>
-				(this->bbt_erase_shift - this->page_shift);
+	अगर (td->pages[chip] != -1)
+		वापस td->pages[chip] >>
+				(this->bbt_erase_shअगरt - this->page_shअगरt);
 
-	numblocks = (int)(targetsize >> this->bbt_erase_shift);
-	if (!(td->options & NAND_BBT_PERCHIP))
-		numblocks *= nanddev_ntargets(&this->base);
+	numblocks = (पूर्णांक)(tarमाला_लोize >> this->bbt_erase_shअगरt);
+	अगर (!(td->options & न_अंकD_BBT_PERCHIP))
+		numblocks *= nanddev_ntarमाला_लो(&this->base);
 
 	/*
 	 * Automatic placement of the bad block table. Search direction
-	 * top -> down?
+	 * top -> करोwn?
 	 */
-	if (td->options & NAND_BBT_LASTBLOCK) {
+	अगर (td->options & न_अंकD_BBT_LASTBLOCK) अणु
 		startblock = numblocks * (chip + 1) - 1;
 		dir = -1;
-	} else {
+	पूर्ण अन्यथा अणु
 		startblock = chip * numblocks;
 		dir = 1;
-	}
+	पूर्ण
 
-	for (i = 0; i < td->maxblocks; i++) {
-		int block = startblock + dir * i;
+	क्रम (i = 0; i < td->maxblocks; i++) अणु
+		पूर्णांक block = startblock + dir * i;
 
-		/* Check, if the block is bad */
-		switch (bbt_get_entry(this, block)) {
-		case BBT_BLOCK_WORN:
-		case BBT_BLOCK_FACTORY_BAD:
-			continue;
-		}
+		/* Check, अगर the block is bad */
+		चयन (bbt_get_entry(this, block)) अणु
+		हाल BBT_BLOCK_WORN:
+		हाल BBT_BLOCK_FACTORY_BAD:
+			जारी;
+		पूर्ण
 
-		page = block << (this->bbt_erase_shift - this->page_shift);
+		page = block << (this->bbt_erase_shअगरt - this->page_shअगरt);
 
-		/* Check, if the block is used by the mirror table */
-		if (!md || md->pages[chip] != page)
-			return block;
-	}
+		/* Check, अगर the block is used by the mirror table */
+		अगर (!md || md->pages[chip] != page)
+			वापस block;
+	पूर्ण
 
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
 /**
- * mark_bbt_block_bad - Mark one of the block reserved for BBT bad
- * @this: the NAND device
+ * mark_bbt_block_bad - Mark one of the block reserved क्रम BBT bad
+ * @this: the न_अंकD device
  * @td: the BBT description
  * @chip: the CHIP selector
  * @block: the BBT block to mark
  *
- * Blocks reserved for BBT can become bad. This functions is an helper to mark
+ * Blocks reserved क्रम BBT can become bad. This functions is an helper to mark
  * such blocks as bad. It takes care of updating the in-memory BBT, marking the
  * block as bad using a bad block marker and invalidating the associated
  * td->pages[] entry.
  */
-static void mark_bbt_block_bad(struct nand_chip *this,
-			       struct nand_bbt_descr *td,
-			       int chip, int block)
-{
+अटल व्योम mark_bbt_block_bad(काष्ठा nand_chip *this,
+			       काष्ठा nand_bbt_descr *td,
+			       पूर्णांक chip, पूर्णांक block)
+अणु
 	loff_t to;
-	int res;
+	पूर्णांक res;
 
 	bbt_mark_entry(this, block, BBT_BLOCK_WORN);
 
-	to = (loff_t)block << this->bbt_erase_shift;
+	to = (loff_t)block << this->bbt_erase_shअगरt;
 	res = nand_markbad_bbm(this, to);
-	if (res)
+	अगर (res)
 		pr_warn("nand_bbt: error %d while marking block %d bad\n",
 			res, block);
 
 	td->pages[chip] = -1;
-}
+पूर्ण
 
 /**
- * write_bbt - [GENERIC] (Re)write the bad block table
- * @this: NAND chip object
+ * ग_लिखो_bbt - [GENERIC] (Re)ग_लिखो the bad block table
+ * @this: न_अंकD chip object
  * @buf: temporary buffer
- * @td: descriptor for the bad block table
- * @md: descriptor for the bad block table mirror
- * @chipsel: selector for a specific chip, -1 for all
+ * @td: descriptor क्रम the bad block table
+ * @md: descriptor क्रम the bad block table mirror
+ * @chipsel: selector क्रम a specअगरic chip, -1 क्रम all
  *
- * (Re)write the bad block table.
+ * (Re)ग_लिखो the bad block table.
  */
-static int write_bbt(struct nand_chip *this, uint8_t *buf,
-		     struct nand_bbt_descr *td, struct nand_bbt_descr *md,
-		     int chipsel)
-{
-	u64 targetsize = nanddev_target_size(&this->base);
-	struct mtd_info *mtd = nand_to_mtd(this);
-	struct erase_info einfo;
-	int i, res, chip = 0;
-	int bits, page, offs, numblocks, sft, sftmsk;
-	int nrchips, pageoffs, ooboffs;
-	uint8_t msk[4];
-	uint8_t rcode = td->reserved_block_code;
-	size_t retlen, len = 0;
+अटल पूर्णांक ग_लिखो_bbt(काष्ठा nand_chip *this, uपूर्णांक8_t *buf,
+		     काष्ठा nand_bbt_descr *td, काष्ठा nand_bbt_descr *md,
+		     पूर्णांक chipsel)
+अणु
+	u64 tarमाला_लोize = nanddev_target_size(&this->base);
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	काष्ठा erase_info einfo;
+	पूर्णांक i, res, chip = 0;
+	पूर्णांक bits, page, offs, numblocks, sft, sfपंचांगsk;
+	पूर्णांक nrchips, pageoffs, ooboffs;
+	uपूर्णांक8_t msk[4];
+	uपूर्णांक8_t rcode = td->reserved_block_code;
+	माप_प्रकार retlen, len = 0;
 	loff_t to;
-	struct mtd_oob_ops ops;
+	काष्ठा mtd_oob_ops ops;
 
 	ops.ooblen = mtd->oobsize;
 	ops.ooboffs = 0;
-	ops.datbuf = NULL;
+	ops.datbuf = शून्य;
 	ops.mode = MTD_OPS_PLACE_OOB;
 
-	if (!rcode)
+	अगर (!rcode)
 		rcode = 0xff;
 	/* Write bad block table per chip rather than per device? */
-	if (td->options & NAND_BBT_PERCHIP) {
-		numblocks = (int)(targetsize >> this->bbt_erase_shift);
-		/* Full device write or specific chip? */
-		if (chipsel == -1) {
-			nrchips = nanddev_ntargets(&this->base);
-		} else {
+	अगर (td->options & न_अंकD_BBT_PERCHIP) अणु
+		numblocks = (पूर्णांक)(tarमाला_लोize >> this->bbt_erase_shअगरt);
+		/* Full device ग_लिखो or specअगरic chip? */
+		अगर (chipsel == -1) अणु
+			nrchips = nanddev_ntarमाला_लो(&this->base);
+		पूर्ण अन्यथा अणु
 			nrchips = chipsel + 1;
 			chip = chipsel;
-		}
-	} else {
-		numblocks = (int)(mtd->size >> this->bbt_erase_shift);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		numblocks = (पूर्णांक)(mtd->size >> this->bbt_erase_shअगरt);
 		nrchips = 1;
-	}
+	पूर्ण
 
 	/* Loop through the chips */
-	while (chip < nrchips) {
-		int block;
+	जबतक (chip < nrchips) अणु
+		पूर्णांक block;
 
 		block = get_bbt_block(this, td, md, chip);
-		if (block < 0) {
+		अगर (block < 0) अणु
 			pr_err("No space left to write bad block table\n");
 			res = block;
-			goto outerr;
-		}
+			जाओ outerr;
+		पूर्ण
 
 		/*
-		 * get_bbt_block() returns a block number, shift the value to
+		 * get_bbt_block() वापसs a block number, shअगरt the value to
 		 * get a page number.
 		 */
-		page = block << (this->bbt_erase_shift - this->page_shift);
+		page = block << (this->bbt_erase_shअगरt - this->page_shअगरt);
 
-		/* Set up shift count and masks for the flash table */
-		bits = td->options & NAND_BBT_NRBITS_MSK;
+		/* Set up shअगरt count and masks क्रम the flash table */
+		bits = td->options & न_अंकD_BBT_NRBITS_MSK;
 		msk[2] = ~rcode;
-		switch (bits) {
-		case 1: sft = 3; sftmsk = 0x07; msk[0] = 0x00; msk[1] = 0x01;
+		चयन (bits) अणु
+		हाल 1: sft = 3; sfपंचांगsk = 0x07; msk[0] = 0x00; msk[1] = 0x01;
 			msk[3] = 0x01;
-			break;
-		case 2: sft = 2; sftmsk = 0x06; msk[0] = 0x00; msk[1] = 0x01;
+			अवरोध;
+		हाल 2: sft = 2; sfपंचांगsk = 0x06; msk[0] = 0x00; msk[1] = 0x01;
 			msk[3] = 0x03;
-			break;
-		case 4: sft = 1; sftmsk = 0x04; msk[0] = 0x00; msk[1] = 0x0C;
+			अवरोध;
+		हाल 4: sft = 1; sfपंचांगsk = 0x04; msk[0] = 0x00; msk[1] = 0x0C;
 			msk[3] = 0x0f;
-			break;
-		case 8: sft = 0; sftmsk = 0x00; msk[0] = 0x00; msk[1] = 0x0F;
+			अवरोध;
+		हाल 8: sft = 0; sfपंचांगsk = 0x00; msk[0] = 0x00; msk[1] = 0x0F;
 			msk[3] = 0xff;
-			break;
-		default: return -EINVAL;
-		}
+			अवरोध;
+		शेष: वापस -EINVAL;
+		पूर्ण
 
-		to = ((loff_t)page) << this->page_shift;
+		to = ((loff_t)page) << this->page_shअगरt;
 
 		/* Must we save the block contents? */
-		if (td->options & NAND_BBT_SAVECONTENT) {
+		अगर (td->options & न_अंकD_BBT_SAVECONTENT) अणु
 			/* Make it block aligned */
-			to &= ~(((loff_t)1 << this->bbt_erase_shift) - 1);
-			len = 1 << this->bbt_erase_shift;
-			res = mtd_read(mtd, to, len, &retlen, buf);
-			if (res < 0) {
-				if (retlen != len) {
+			to &= ~(((loff_t)1 << this->bbt_erase_shअगरt) - 1);
+			len = 1 << this->bbt_erase_shअगरt;
+			res = mtd_पढ़ो(mtd, to, len, &retlen, buf);
+			अगर (res < 0) अणु
+				अगर (retlen != len) अणु
 					pr_info("nand_bbt: error reading block for writing the bad block table\n");
-					return res;
-				}
+					वापस res;
+				पूर्ण
 				pr_warn("nand_bbt: ECC error while reading block for writing bad block table\n");
-			}
+			पूर्ण
 			/* Read oob data */
-			ops.ooblen = (len >> this->page_shift) * mtd->oobsize;
+			ops.ooblen = (len >> this->page_shअगरt) * mtd->oobsize;
 			ops.oobbuf = &buf[len];
-			res = mtd_read_oob(mtd, to + mtd->writesize, &ops);
-			if (res < 0 || ops.oobretlen != ops.ooblen)
-				goto outerr;
+			res = mtd_पढ़ो_oob(mtd, to + mtd->ग_लिखोsize, &ops);
+			अगर (res < 0 || ops.oobretlen != ops.ooblen)
+				जाओ outerr;
 
 			/* Calc the byte offset in the buffer */
-			pageoffs = page - (int)(to >> this->page_shift);
-			offs = pageoffs << this->page_shift;
+			pageoffs = page - (पूर्णांक)(to >> this->page_shअगरt);
+			offs = pageoffs << this->page_shअगरt;
 			/* Preset the bbt area with 0xff */
-			memset(&buf[offs], 0xff, (size_t)(numblocks >> sft));
+			स_रखो(&buf[offs], 0xff, (माप_प्रकार)(numblocks >> sft));
 			ooboffs = len + (pageoffs * mtd->oobsize);
 
-		} else if (td->options & NAND_BBT_NO_OOB) {
+		पूर्ण अन्यथा अगर (td->options & न_अंकD_BBT_NO_OOB) अणु
 			ooboffs = 0;
 			offs = td->len;
 			/* The version byte */
-			if (td->options & NAND_BBT_VERSION)
+			अगर (td->options & न_अंकD_BBT_VERSION)
 				offs++;
 			/* Calc length */
-			len = (size_t)(numblocks >> sft);
+			len = (माप_प्रकार)(numblocks >> sft);
 			len += offs;
 			/* Make it page aligned! */
-			len = ALIGN(len, mtd->writesize);
+			len = ALIGN(len, mtd->ग_लिखोsize);
 			/* Preset the buffer with 0xff */
-			memset(buf, 0xff, len);
+			स_रखो(buf, 0xff, len);
 			/* Pattern is located at the begin of first page */
-			memcpy(buf, td->pattern, td->len);
-		} else {
+			स_नकल(buf, td->pattern, td->len);
+		पूर्ण अन्यथा अणु
 			/* Calc length */
-			len = (size_t)(numblocks >> sft);
+			len = (माप_प्रकार)(numblocks >> sft);
 			/* Make it page aligned! */
-			len = ALIGN(len, mtd->writesize);
+			len = ALIGN(len, mtd->ग_लिखोsize);
 			/* Preset the buffer with 0xff */
-			memset(buf, 0xff, len +
-			       (len >> this->page_shift)* mtd->oobsize);
+			स_रखो(buf, 0xff, len +
+			       (len >> this->page_shअगरt)* mtd->oobsize);
 			offs = 0;
 			ooboffs = len;
 			/* Pattern is located in oob area of first page */
-			memcpy(&buf[ooboffs + td->offs], td->pattern, td->len);
-		}
+			स_नकल(&buf[ooboffs + td->offs], td->pattern, td->len);
+		पूर्ण
 
-		if (td->options & NAND_BBT_VERSION)
+		अगर (td->options & न_अंकD_BBT_VERSION)
 			buf[ooboffs + td->veroffs] = td->version[chip];
 
 		/* Walk through the memory table */
-		for (i = 0; i < numblocks; i++) {
-			uint8_t dat;
-			int sftcnt = (i << (3 - sft)) & sftmsk;
+		क्रम (i = 0; i < numblocks; i++) अणु
+			uपूर्णांक8_t dat;
+			पूर्णांक sftcnt = (i << (3 - sft)) & sfपंचांगsk;
 			dat = bbt_get_entry(this, chip * numblocks + i);
 			/* Do not store the reserved bbt blocks! */
 			buf[offs + (i >> sft)] &= ~(msk[dat] << sftcnt);
-		}
+		पूर्ण
 
-		memset(&einfo, 0, sizeof(einfo));
+		स_रखो(&einfo, 0, माप(einfo));
 		einfo.addr = to;
-		einfo.len = 1 << this->bbt_erase_shift;
+		einfo.len = 1 << this->bbt_erase_shअगरt;
 		res = nand_erase_nand(this, &einfo, 1);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			pr_warn("nand_bbt: error while erasing BBT block %d\n",
 				res);
 			mark_bbt_block_bad(this, td, chip, block);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		res = scan_write_bbt(this, to, len, buf,
-				     td->options & NAND_BBT_NO_OOB ?
-				     NULL : &buf[len]);
-		if (res < 0) {
+		res = scan_ग_लिखो_bbt(this, to, len, buf,
+				     td->options & न_अंकD_BBT_NO_OOB ?
+				     शून्य : &buf[len]);
+		अगर (res < 0) अणु
 			pr_warn("nand_bbt: error while writing BBT block %d\n",
 				res);
 			mark_bbt_block_bad(this, td, chip, block);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		pr_info("Bad block table written to 0x%012llx, version 0x%02X\n",
-			 (unsigned long long)to, td->version[chip]);
+			 (अचिन्हित दीर्घ दीर्घ)to, td->version[chip]);
 
 		/* Mark it as used */
 		td->pages[chip++] = page;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
  outerr:
 	pr_warn("nand_bbt: error while writing bad block table %d\n", res);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
  * nand_memory_bbt - [GENERIC] create a memory based bad block table
- * @this: NAND chip object
- * @bd: descriptor for the good/bad block search pattern
+ * @this: न_अंकD chip object
+ * @bd: descriptor क्रम the good/bad block search pattern
  *
- * The function creates a memory based bbt by scanning the device for
+ * The function creates a memory based bbt by scanning the device क्रम
  * manufacturer / software marked good / bad blocks.
  */
-static inline int nand_memory_bbt(struct nand_chip *this,
-				  struct nand_bbt_descr *bd)
-{
+अटल अंतरभूत पूर्णांक nand_memory_bbt(काष्ठा nand_chip *this,
+				  काष्ठा nand_bbt_descr *bd)
+अणु
 	u8 *pagebuf = nand_get_data_buf(this);
 
-	return create_bbt(this, pagebuf, bd, -1);
-}
+	वापस create_bbt(this, pagebuf, bd, -1);
+पूर्ण
 
 /**
- * check_create - [GENERIC] create and write bbt(s) if necessary
- * @this: the NAND device
+ * check_create - [GENERIC] create and ग_लिखो bbt(s) अगर necessary
+ * @this: the न_अंकD device
  * @buf: temporary buffer
- * @bd: descriptor for the good/bad block search pattern
+ * @bd: descriptor क्रम the good/bad block search pattern
  *
- * The function checks the results of the previous call to read_bbt and creates
- * / updates the bbt(s) if necessary. Creation is necessary if no bbt was found
- * for the chip/device. Update is necessary if one of the tables is missing or
+ * The function checks the results of the previous call to पढ़ो_bbt and creates
+ * / updates the bbt(s) अगर necessary. Creation is necessary अगर no bbt was found
+ * क्रम the chip/device. Update is necessary अगर one of the tables is missing or
  * the version nr. of one table is less than the other.
  */
-static int check_create(struct nand_chip *this, uint8_t *buf,
-			struct nand_bbt_descr *bd)
-{
-	int i, chips, writeops, create, chipsel, res, res2;
-	struct nand_bbt_descr *td = this->bbt_td;
-	struct nand_bbt_descr *md = this->bbt_md;
-	struct nand_bbt_descr *rd, *rd2;
+अटल पूर्णांक check_create(काष्ठा nand_chip *this, uपूर्णांक8_t *buf,
+			काष्ठा nand_bbt_descr *bd)
+अणु
+	पूर्णांक i, chips, ग_लिखोops, create, chipsel, res, res2;
+	काष्ठा nand_bbt_descr *td = this->bbt_td;
+	काष्ठा nand_bbt_descr *md = this->bbt_md;
+	काष्ठा nand_bbt_descr *rd, *rd2;
 
 	/* Do we have a bbt per chip? */
-	if (td->options & NAND_BBT_PERCHIP)
-		chips = nanddev_ntargets(&this->base);
-	else
+	अगर (td->options & न_अंकD_BBT_PERCHIP)
+		chips = nanddev_ntarमाला_लो(&this->base);
+	अन्यथा
 		chips = 1;
 
-	for (i = 0; i < chips; i++) {
-		writeops = 0;
+	क्रम (i = 0; i < chips; i++) अणु
+		ग_लिखोops = 0;
 		create = 0;
-		rd = NULL;
-		rd2 = NULL;
+		rd = शून्य;
+		rd2 = शून्य;
 		res = res2 = 0;
 		/* Per chip or per device? */
-		chipsel = (td->options & NAND_BBT_PERCHIP) ? i : -1;
+		chipsel = (td->options & न_अंकD_BBT_PERCHIP) ? i : -1;
 		/* Mirrored table available? */
-		if (md) {
-			if (td->pages[i] == -1 && md->pages[i] == -1) {
+		अगर (md) अणु
+			अगर (td->pages[i] == -1 && md->pages[i] == -1) अणु
 				create = 1;
-				writeops = 0x03;
-			} else if (td->pages[i] == -1) {
+				ग_लिखोops = 0x03;
+			पूर्ण अन्यथा अगर (td->pages[i] == -1) अणु
 				rd = md;
-				writeops = 0x01;
-			} else if (md->pages[i] == -1) {
+				ग_लिखोops = 0x01;
+			पूर्ण अन्यथा अगर (md->pages[i] == -1) अणु
 				rd = td;
-				writeops = 0x02;
-			} else if (td->version[i] == md->version[i]) {
+				ग_लिखोops = 0x02;
+			पूर्ण अन्यथा अगर (td->version[i] == md->version[i]) अणु
 				rd = td;
-				if (!(td->options & NAND_BBT_VERSION))
+				अगर (!(td->options & न_अंकD_BBT_VERSION))
 					rd2 = md;
-			} else if (((int8_t)(td->version[i] - md->version[i])) > 0) {
+			पूर्ण अन्यथा अगर (((पूर्णांक8_t)(td->version[i] - md->version[i])) > 0) अणु
 				rd = td;
-				writeops = 0x02;
-			} else {
+				ग_लिखोops = 0x02;
+			पूर्ण अन्यथा अणु
 				rd = md;
-				writeops = 0x01;
-			}
-		} else {
-			if (td->pages[i] == -1) {
+				ग_लिखोops = 0x01;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (td->pages[i] == -1) अणु
 				create = 1;
-				writeops = 0x01;
-			} else {
+				ग_लिखोops = 0x01;
+			पूर्ण अन्यथा अणु
 				rd = td;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (create) {
+		अगर (create) अणु
 			/* Create the bad block table by scanning the device? */
-			if (!(td->options & NAND_BBT_CREATE))
-				continue;
+			अगर (!(td->options & न_अंकD_BBT_CREATE))
+				जारी;
 
 			/* Create the table in memory by scanning the chip(s) */
-			if (!(this->bbt_options & NAND_BBT_CREATE_EMPTY))
+			अगर (!(this->bbt_options & न_अंकD_BBT_CREATE_EMPTY))
 				create_bbt(this, buf, bd, chipsel);
 
 			td->version[i] = 1;
-			if (md)
+			अगर (md)
 				md->version[i] = 1;
-		}
+		पूर्ण
 
 		/* Read back first? */
-		if (rd) {
-			res = read_abs_bbt(this, buf, rd, chipsel);
-			if (mtd_is_eccerr(res)) {
+		अगर (rd) अणु
+			res = पढ़ो_असल_bbt(this, buf, rd, chipsel);
+			अगर (mtd_is_eccerr(res)) अणु
 				/* Mark table as invalid */
 				rd->pages[i] = -1;
 				rd->version[i] = 0;
 				i--;
-				continue;
-			}
-		}
-		/* If they weren't versioned, read both */
-		if (rd2) {
-			res2 = read_abs_bbt(this, buf, rd2, chipsel);
-			if (mtd_is_eccerr(res2)) {
+				जारी;
+			पूर्ण
+		पूर्ण
+		/* If they weren't versioned, पढ़ो both */
+		अगर (rd2) अणु
+			res2 = पढ़ो_असल_bbt(this, buf, rd2, chipsel);
+			अगर (mtd_is_eccerr(res2)) अणु
 				/* Mark table as invalid */
 				rd2->pages[i] = -1;
 				rd2->version[i] = 0;
 				i--;
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		/* Scrub the flash table(s)? */
-		if (mtd_is_bitflip(res) || mtd_is_bitflip(res2))
-			writeops = 0x03;
+		अगर (mtd_is_bitflip(res) || mtd_is_bitflip(res2))
+			ग_लिखोops = 0x03;
 
-		/* Update version numbers before writing */
-		if (md) {
+		/* Update version numbers beक्रमe writing */
+		अगर (md) अणु
 			td->version[i] = max(td->version[i], md->version[i]);
 			md->version[i] = td->version[i];
-		}
+		पूर्ण
 
 		/* Write the bad block table to the device? */
-		if ((writeops & 0x01) && (td->options & NAND_BBT_WRITE)) {
-			res = write_bbt(this, buf, td, md, chipsel);
-			if (res < 0)
-				return res;
-		}
+		अगर ((ग_लिखोops & 0x01) && (td->options & न_अंकD_BBT_WRITE)) अणु
+			res = ग_लिखो_bbt(this, buf, td, md, chipsel);
+			अगर (res < 0)
+				वापस res;
+		पूर्ण
 
 		/* Write the mirror bad block table to the device? */
-		if ((writeops & 0x02) && md && (md->options & NAND_BBT_WRITE)) {
-			res = write_bbt(this, buf, md, td, chipsel);
-			if (res < 0)
-				return res;
-		}
-	}
-	return 0;
-}
+		अगर ((ग_लिखोops & 0x02) && md && (md->options & न_अंकD_BBT_WRITE)) अणु
+			res = ग_लिखो_bbt(this, buf, md, td, chipsel);
+			अगर (res < 0)
+				वापस res;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * nand_update_bbt - update bad block table(s)
- * @this: the NAND device
+ * @this: the न_अंकD device
  * @offs: the offset of the newly marked block
  *
  * The function updates the bad block table(s).
  */
-static int nand_update_bbt(struct nand_chip *this, loff_t offs)
-{
-	struct mtd_info *mtd = nand_to_mtd(this);
-	int len, res = 0;
-	int chip, chipsel;
-	uint8_t *buf;
-	struct nand_bbt_descr *td = this->bbt_td;
-	struct nand_bbt_descr *md = this->bbt_md;
+अटल पूर्णांक nand_update_bbt(काष्ठा nand_chip *this, loff_t offs)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	पूर्णांक len, res = 0;
+	पूर्णांक chip, chipsel;
+	uपूर्णांक8_t *buf;
+	काष्ठा nand_bbt_descr *td = this->bbt_td;
+	काष्ठा nand_bbt_descr *md = this->bbt_md;
 
-	if (!this->bbt || !td)
-		return -EINVAL;
+	अगर (!this->bbt || !td)
+		वापस -EINVAL;
 
-	/* Allocate a temporary buffer for one eraseblock incl. oob */
-	len = (1 << this->bbt_erase_shift);
-	len += (len >> this->page_shift) * mtd->oobsize;
-	buf = kmalloc(len, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	/* Allocate a temporary buffer क्रम one eraseblock incl. oob */
+	len = (1 << this->bbt_erase_shअगरt);
+	len += (len >> this->page_shअगरt) * mtd->oobsize;
+	buf = kदो_स्मृति(len, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	/* Do we have a bbt per chip? */
-	if (td->options & NAND_BBT_PERCHIP) {
-		chip = (int)(offs >> this->chip_shift);
+	अगर (td->options & न_अंकD_BBT_PERCHIP) अणु
+		chip = (पूर्णांक)(offs >> this->chip_shअगरt);
 		chipsel = chip;
-	} else {
+	पूर्ण अन्यथा अणु
 		chip = 0;
 		chipsel = -1;
-	}
+	पूर्ण
 
 	td->version[chip]++;
-	if (md)
+	अगर (md)
 		md->version[chip]++;
 
 	/* Write the bad block table to the device? */
-	if (td->options & NAND_BBT_WRITE) {
-		res = write_bbt(this, buf, td, md, chipsel);
-		if (res < 0)
-			goto out;
-	}
+	अगर (td->options & न_अंकD_BBT_WRITE) अणु
+		res = ग_लिखो_bbt(this, buf, td, md, chipsel);
+		अगर (res < 0)
+			जाओ out;
+	पूर्ण
 	/* Write the mirror bad block table to the device? */
-	if (md && (md->options & NAND_BBT_WRITE)) {
-		res = write_bbt(this, buf, md, td, chipsel);
-	}
+	अगर (md && (md->options & न_अंकD_BBT_WRITE)) अणु
+		res = ग_लिखो_bbt(this, buf, md, td, chipsel);
+	पूर्ण
 
  out:
-	kfree(buf);
-	return res;
-}
+	kमुक्त(buf);
+	वापस res;
+पूर्ण
 
 /**
  * mark_bbt_region - [GENERIC] mark the bad block table regions
- * @this: the NAND device
+ * @this: the न_अंकD device
  * @td: bad block table descriptor
  *
  * The bad block table regions are marked as "bad" to prevent accidental
- * erasures / writes. The regions are identified by the mark 0x02.
+ * erasures / ग_लिखोs. The regions are identअगरied by the mark 0x02.
  */
-static void mark_bbt_region(struct nand_chip *this, struct nand_bbt_descr *td)
-{
-	u64 targetsize = nanddev_target_size(&this->base);
-	struct mtd_info *mtd = nand_to_mtd(this);
-	int i, j, chips, block, nrblocks, update;
-	uint8_t oldval;
+अटल व्योम mark_bbt_region(काष्ठा nand_chip *this, काष्ठा nand_bbt_descr *td)
+अणु
+	u64 tarमाला_लोize = nanddev_target_size(&this->base);
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	पूर्णांक i, j, chips, block, nrblocks, update;
+	uपूर्णांक8_t oldval;
 
 	/* Do we have a bbt per chip? */
-	if (td->options & NAND_BBT_PERCHIP) {
-		chips = nanddev_ntargets(&this->base);
-		nrblocks = (int)(targetsize >> this->bbt_erase_shift);
-	} else {
+	अगर (td->options & न_अंकD_BBT_PERCHIP) अणु
+		chips = nanddev_ntarमाला_लो(&this->base);
+		nrblocks = (पूर्णांक)(tarमाला_लोize >> this->bbt_erase_shअगरt);
+	पूर्ण अन्यथा अणु
 		chips = 1;
-		nrblocks = (int)(mtd->size >> this->bbt_erase_shift);
-	}
+		nrblocks = (पूर्णांक)(mtd->size >> this->bbt_erase_shअगरt);
+	पूर्ण
 
-	for (i = 0; i < chips; i++) {
-		if ((td->options & NAND_BBT_ABSPAGE) ||
-		    !(td->options & NAND_BBT_WRITE)) {
-			if (td->pages[i] == -1)
-				continue;
-			block = td->pages[i] >> (this->bbt_erase_shift - this->page_shift);
+	क्रम (i = 0; i < chips; i++) अणु
+		अगर ((td->options & न_अंकD_BBT_ABSPAGE) ||
+		    !(td->options & न_अंकD_BBT_WRITE)) अणु
+			अगर (td->pages[i] == -1)
+				जारी;
+			block = td->pages[i] >> (this->bbt_erase_shअगरt - this->page_shअगरt);
 			oldval = bbt_get_entry(this, block);
 			bbt_mark_entry(this, block, BBT_BLOCK_RESERVED);
-			if ((oldval != BBT_BLOCK_RESERVED) &&
+			अगर ((oldval != BBT_BLOCK_RESERVED) &&
 					td->reserved_block_code)
 				nand_update_bbt(this, (loff_t)block <<
-						this->bbt_erase_shift);
-			continue;
-		}
+						this->bbt_erase_shअगरt);
+			जारी;
+		पूर्ण
 		update = 0;
-		if (td->options & NAND_BBT_LASTBLOCK)
+		अगर (td->options & न_अंकD_BBT_LASTBLOCK)
 			block = ((i + 1) * nrblocks) - td->maxblocks;
-		else
+		अन्यथा
 			block = i * nrblocks;
-		for (j = 0; j < td->maxblocks; j++) {
+		क्रम (j = 0; j < td->maxblocks; j++) अणु
 			oldval = bbt_get_entry(this, block);
 			bbt_mark_entry(this, block, BBT_BLOCK_RESERVED);
-			if (oldval != BBT_BLOCK_RESERVED)
+			अगर (oldval != BBT_BLOCK_RESERVED)
 				update = 1;
 			block++;
-		}
+		पूर्ण
 		/*
 		 * If we want reserved blocks to be recorded to flash, and some
 		 * new ones have been marked, then we need to update the stored
 		 * bbts.  This should only happen once.
 		 */
-		if (update && td->reserved_block_code)
+		अगर (update && td->reserved_block_code)
 			nand_update_bbt(this, (loff_t)(block - 1) <<
-					this->bbt_erase_shift);
-	}
-}
+					this->bbt_erase_shअगरt);
+	पूर्ण
+पूर्ण
 
 /**
- * verify_bbt_descr - verify the bad block description
- * @this: the NAND device
- * @bd: the table to verify
+ * verअगरy_bbt_descr - verअगरy the bad block description
+ * @this: the न_अंकD device
+ * @bd: the table to verअगरy
  *
- * This functions performs a few sanity checks on the bad block description
+ * This functions perक्रमms a few sanity checks on the bad block description
  * table.
  */
-static void verify_bbt_descr(struct nand_chip *this, struct nand_bbt_descr *bd)
-{
-	u64 targetsize = nanddev_target_size(&this->base);
-	struct mtd_info *mtd = nand_to_mtd(this);
+अटल व्योम verअगरy_bbt_descr(काष्ठा nand_chip *this, काष्ठा nand_bbt_descr *bd)
+अणु
+	u64 tarमाला_लोize = nanddev_target_size(&this->base);
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
 	u32 pattern_len;
 	u32 bits;
 	u32 table_size;
 
-	if (!bd)
-		return;
+	अगर (!bd)
+		वापस;
 
 	pattern_len = bd->len;
-	bits = bd->options & NAND_BBT_NRBITS_MSK;
+	bits = bd->options & न_अंकD_BBT_NRBITS_MSK;
 
-	BUG_ON((this->bbt_options & NAND_BBT_NO_OOB) &&
-			!(this->bbt_options & NAND_BBT_USE_FLASH));
+	BUG_ON((this->bbt_options & न_अंकD_BBT_NO_OOB) &&
+			!(this->bbt_options & न_अंकD_BBT_USE_FLASH));
 	BUG_ON(!bits);
 
-	if (bd->options & NAND_BBT_VERSION)
+	अगर (bd->options & न_अंकD_BBT_VERSION)
 		pattern_len++;
 
-	if (bd->options & NAND_BBT_NO_OOB) {
-		BUG_ON(!(this->bbt_options & NAND_BBT_USE_FLASH));
-		BUG_ON(!(this->bbt_options & NAND_BBT_NO_OOB));
+	अगर (bd->options & न_अंकD_BBT_NO_OOB) अणु
+		BUG_ON(!(this->bbt_options & न_अंकD_BBT_USE_FLASH));
+		BUG_ON(!(this->bbt_options & न_अंकD_BBT_NO_OOB));
 		BUG_ON(bd->offs);
-		if (bd->options & NAND_BBT_VERSION)
+		अगर (bd->options & न_अंकD_BBT_VERSION)
 			BUG_ON(bd->veroffs != bd->len);
-		BUG_ON(bd->options & NAND_BBT_SAVECONTENT);
-	}
+		BUG_ON(bd->options & न_अंकD_BBT_SAVECONTENT);
+	पूर्ण
 
-	if (bd->options & NAND_BBT_PERCHIP)
-		table_size = targetsize >> this->bbt_erase_shift;
-	else
-		table_size = mtd->size >> this->bbt_erase_shift;
+	अगर (bd->options & न_अंकD_BBT_PERCHIP)
+		table_size = tarमाला_लोize >> this->bbt_erase_shअगरt;
+	अन्यथा
+		table_size = mtd->size >> this->bbt_erase_shअगरt;
 	table_size >>= 3;
 	table_size *= bits;
-	if (bd->options & NAND_BBT_NO_OOB)
+	अगर (bd->options & न_अंकD_BBT_NO_OOB)
 		table_size += pattern_len;
-	BUG_ON(table_size > (1 << this->bbt_erase_shift));
-}
+	BUG_ON(table_size > (1 << this->bbt_erase_shअगरt));
+पूर्ण
 
 /**
- * nand_scan_bbt - [NAND Interface] scan, find, read and maybe create bad block table(s)
- * @this: the NAND device
- * @bd: descriptor for the good/bad block search pattern
+ * nand_scan_bbt - [न_अंकD Interface] scan, find, पढ़ो and maybe create bad block table(s)
+ * @this: the न_अंकD device
+ * @bd: descriptor क्रम the good/bad block search pattern
  *
- * The function checks, if a bad block table(s) is/are already available. If
- * not it scans the device for manufacturer marked good / bad blocks and writes
+ * The function checks, अगर a bad block table(s) is/are alपढ़ोy available. If
+ * not it scans the device क्रम manufacturer marked good / bad blocks and ग_लिखोs
  * the bad block table(s) to the selected place.
  *
- * The bad block table memory is allocated here. It must be freed by calling
- * the nand_free_bbt function.
+ * The bad block table memory is allocated here. It must be मुक्तd by calling
+ * the nand_मुक्त_bbt function.
  */
-static int nand_scan_bbt(struct nand_chip *this, struct nand_bbt_descr *bd)
-{
-	struct mtd_info *mtd = nand_to_mtd(this);
-	int len, res;
-	uint8_t *buf;
-	struct nand_bbt_descr *td = this->bbt_td;
-	struct nand_bbt_descr *md = this->bbt_md;
+अटल पूर्णांक nand_scan_bbt(काष्ठा nand_chip *this, काष्ठा nand_bbt_descr *bd)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(this);
+	पूर्णांक len, res;
+	uपूर्णांक8_t *buf;
+	काष्ठा nand_bbt_descr *td = this->bbt_td;
+	काष्ठा nand_bbt_descr *md = this->bbt_md;
 
-	len = (mtd->size >> (this->bbt_erase_shift + 2)) ? : 1;
+	len = (mtd->size >> (this->bbt_erase_shअगरt + 2)) ? : 1;
 	/*
 	 * Allocate memory (2bit per block) and clear the memory bad block
 	 * table.
 	 */
 	this->bbt = kzalloc(len, GFP_KERNEL);
-	if (!this->bbt)
-		return -ENOMEM;
+	अगर (!this->bbt)
+		वापस -ENOMEM;
 
 	/*
 	 * If no primary table descriptor is given, scan the device to build a
 	 * memory based bad block table.
 	 */
-	if (!td) {
-		if ((res = nand_memory_bbt(this, bd))) {
+	अगर (!td) अणु
+		अगर ((res = nand_memory_bbt(this, bd))) अणु
 			pr_err("nand_bbt: can't scan flash and build the RAM-based BBT\n");
-			goto err_free_bbt;
-		}
-		return 0;
-	}
-	verify_bbt_descr(this, td);
-	verify_bbt_descr(this, md);
+			जाओ err_मुक्त_bbt;
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	verअगरy_bbt_descr(this, td);
+	verअगरy_bbt_descr(this, md);
 
-	/* Allocate a temporary buffer for one eraseblock incl. oob */
-	len = (1 << this->bbt_erase_shift);
-	len += (len >> this->page_shift) * mtd->oobsize;
-	buf = vmalloc(len);
-	if (!buf) {
+	/* Allocate a temporary buffer क्रम one eraseblock incl. oob */
+	len = (1 << this->bbt_erase_shअगरt);
+	len += (len >> this->page_shअगरt) * mtd->oobsize;
+	buf = vदो_स्मृति(len);
+	अगर (!buf) अणु
 		res = -ENOMEM;
-		goto err_free_bbt;
-	}
+		जाओ err_मुक्त_bbt;
+	पूर्ण
 
 	/* Is the bbt at a given page? */
-	if (td->options & NAND_BBT_ABSPAGE) {
-		read_abs_bbts(this, buf, td, md);
-	} else {
+	अगर (td->options & न_अंकD_BBT_ABSPAGE) अणु
+		पढ़ो_असल_bbts(this, buf, td, md);
+	पूर्ण अन्यथा अणु
 		/* Search the bad block table using a pattern in oob */
-		search_read_bbts(this, buf, td, md);
-	}
+		search_पढ़ो_bbts(this, buf, td, md);
+	पूर्ण
 
 	res = check_create(this, buf, bd);
-	if (res)
-		goto err_free_buf;
+	अगर (res)
+		जाओ err_मुक्त_buf;
 
 	/* Prevent the bbt regions from erasing / writing */
 	mark_bbt_region(this, td);
-	if (md)
+	अगर (md)
 		mark_bbt_region(this, md);
 
-	vfree(buf);
-	return 0;
+	vमुक्त(buf);
+	वापस 0;
 
-err_free_buf:
-	vfree(buf);
-err_free_bbt:
-	kfree(this->bbt);
-	this->bbt = NULL;
-	return res;
-}
+err_मुक्त_buf:
+	vमुक्त(buf);
+err_मुक्त_bbt:
+	kमुक्त(this->bbt);
+	this->bbt = शून्य;
+	वापस res;
+पूर्ण
 
 /*
  * Define some generic bad / good block scan pattern which are used
- * while scanning a device for factory marked good / bad blocks.
+ * जबतक scanning a device क्रम factory marked good / bad blocks.
  */
-static uint8_t scan_ff_pattern[] = { 0xff, 0xff };
+अटल uपूर्णांक8_t scan_ff_pattern[] = अणु 0xff, 0xff पूर्ण;
 
 /* Generic flash bbt descriptors */
-static uint8_t bbt_pattern[] = {'B', 'b', 't', '0' };
-static uint8_t mirror_pattern[] = {'1', 't', 'b', 'B' };
+अटल uपूर्णांक8_t bbt_pattern[] = अणु'B', 'b', 't', '0' पूर्ण;
+अटल uपूर्णांक8_t mirror_pattern[] = अणु'1', 't', 'b', 'B' पूर्ण;
 
-static struct nand_bbt_descr bbt_main_descr = {
-	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
-		| NAND_BBT_2BIT | NAND_BBT_VERSION | NAND_BBT_PERCHIP,
+अटल काष्ठा nand_bbt_descr bbt_मुख्य_descr = अणु
+	.options = न_अंकD_BBT_LASTBLOCK | न_अंकD_BBT_CREATE | न_अंकD_BBT_WRITE
+		| न_अंकD_BBT_2BIT | न_अंकD_BBT_VERSION | न_अंकD_BBT_PERCHIP,
 	.offs =	8,
 	.len = 4,
 	.veroffs = 12,
-	.maxblocks = NAND_BBT_SCAN_MAXBLOCKS,
+	.maxblocks = न_अंकD_BBT_SCAN_MAXBLOCKS,
 	.pattern = bbt_pattern
-};
+पूर्ण;
 
-static struct nand_bbt_descr bbt_mirror_descr = {
-	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
-		| NAND_BBT_2BIT | NAND_BBT_VERSION | NAND_BBT_PERCHIP,
+अटल काष्ठा nand_bbt_descr bbt_mirror_descr = अणु
+	.options = न_अंकD_BBT_LASTBLOCK | न_अंकD_BBT_CREATE | न_अंकD_BBT_WRITE
+		| न_अंकD_BBT_2BIT | न_अंकD_BBT_VERSION | न_अंकD_BBT_PERCHIP,
 	.offs =	8,
 	.len = 4,
 	.veroffs = 12,
-	.maxblocks = NAND_BBT_SCAN_MAXBLOCKS,
+	.maxblocks = न_अंकD_BBT_SCAN_MAXBLOCKS,
 	.pattern = mirror_pattern
-};
+पूर्ण;
 
-static struct nand_bbt_descr bbt_main_no_oob_descr = {
-	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
-		| NAND_BBT_2BIT | NAND_BBT_VERSION | NAND_BBT_PERCHIP
-		| NAND_BBT_NO_OOB,
+अटल काष्ठा nand_bbt_descr bbt_मुख्य_no_oob_descr = अणु
+	.options = न_अंकD_BBT_LASTBLOCK | न_अंकD_BBT_CREATE | न_अंकD_BBT_WRITE
+		| न_अंकD_BBT_2BIT | न_अंकD_BBT_VERSION | न_अंकD_BBT_PERCHIP
+		| न_अंकD_BBT_NO_OOB,
 	.len = 4,
 	.veroffs = 4,
-	.maxblocks = NAND_BBT_SCAN_MAXBLOCKS,
+	.maxblocks = न_अंकD_BBT_SCAN_MAXBLOCKS,
 	.pattern = bbt_pattern
-};
+पूर्ण;
 
-static struct nand_bbt_descr bbt_mirror_no_oob_descr = {
-	.options = NAND_BBT_LASTBLOCK | NAND_BBT_CREATE | NAND_BBT_WRITE
-		| NAND_BBT_2BIT | NAND_BBT_VERSION | NAND_BBT_PERCHIP
-		| NAND_BBT_NO_OOB,
+अटल काष्ठा nand_bbt_descr bbt_mirror_no_oob_descr = अणु
+	.options = न_अंकD_BBT_LASTBLOCK | न_अंकD_BBT_CREATE | न_अंकD_BBT_WRITE
+		| न_अंकD_BBT_2BIT | न_अंकD_BBT_VERSION | न_अंकD_BBT_PERCHIP
+		| न_अंकD_BBT_NO_OOB,
 	.len = 4,
 	.veroffs = 4,
-	.maxblocks = NAND_BBT_SCAN_MAXBLOCKS,
+	.maxblocks = न_अंकD_BBT_SCAN_MAXBLOCKS,
 	.pattern = mirror_pattern
-};
+पूर्ण;
 
-#define BADBLOCK_SCAN_MASK (~NAND_BBT_NO_OOB)
+#घोषणा BADBLOCK_SCAN_MASK (~न_अंकD_BBT_NO_OOB)
 /**
- * nand_create_badblock_pattern - [INTERN] Creates a BBT descriptor structure
- * @this: NAND chip to create descriptor for
+ * nand_create_badblock_pattern - [INTERN] Creates a BBT descriptor काष्ठाure
+ * @this: न_अंकD chip to create descriptor क्रम
  *
- * This function allocates and initializes a nand_bbt_descr for BBM detection
+ * This function allocates and initializes a nand_bbt_descr क्रम BBM detection
  * based on the properties of @this. The new descriptor is stored in
- * this->badblock_pattern. Thus, this->badblock_pattern should be NULL when
+ * this->badblock_pattern. Thus, this->badblock_pattern should be शून्य when
  * passed to this function.
  */
-static int nand_create_badblock_pattern(struct nand_chip *this)
-{
-	struct nand_bbt_descr *bd;
-	if (this->badblock_pattern) {
+अटल पूर्णांक nand_create_badblock_pattern(काष्ठा nand_chip *this)
+अणु
+	काष्ठा nand_bbt_descr *bd;
+	अगर (this->badblock_pattern) अणु
 		pr_warn("Bad block pattern already allocated; not replacing\n");
-		return -EINVAL;
-	}
-	bd = kzalloc(sizeof(*bd), GFP_KERNEL);
-	if (!bd)
-		return -ENOMEM;
+		वापस -EINVAL;
+	पूर्ण
+	bd = kzalloc(माप(*bd), GFP_KERNEL);
+	अगर (!bd)
+		वापस -ENOMEM;
 	bd->options = this->bbt_options & BADBLOCK_SCAN_MASK;
 	bd->offs = this->badblockpos;
-	bd->len = (this->options & NAND_BUSWIDTH_16) ? 2 : 1;
+	bd->len = (this->options & न_अंकD_BUSWIDTH_16) ? 2 : 1;
 	bd->pattern = scan_ff_pattern;
-	bd->options |= NAND_BBT_DYNAMICSTRUCT;
+	bd->options |= न_अंकD_BBT_DYNAMICSTRUCT;
 	this->badblock_pattern = bd;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nand_create_bbt - [NAND Interface] Select a default bad block table for the device
- * @this: NAND chip object
+ * nand_create_bbt - [न_अंकD Interface] Select a शेष bad block table क्रम the device
+ * @this: न_अंकD chip object
  *
- * This function selects the default bad block table support for the device and
+ * This function selects the शेष bad block table support क्रम the device and
  * calls the nand_scan_bbt function.
  */
-int nand_create_bbt(struct nand_chip *this)
-{
-	int ret;
+पूर्णांक nand_create_bbt(काष्ठा nand_chip *this)
+अणु
+	पूर्णांक ret;
 
 	/* Is a flash based bad block table requested? */
-	if (this->bbt_options & NAND_BBT_USE_FLASH) {
-		/* Use the default pattern descriptors */
-		if (!this->bbt_td) {
-			if (this->bbt_options & NAND_BBT_NO_OOB) {
-				this->bbt_td = &bbt_main_no_oob_descr;
+	अगर (this->bbt_options & न_अंकD_BBT_USE_FLASH) अणु
+		/* Use the शेष pattern descriptors */
+		अगर (!this->bbt_td) अणु
+			अगर (this->bbt_options & न_अंकD_BBT_NO_OOB) अणु
+				this->bbt_td = &bbt_मुख्य_no_oob_descr;
 				this->bbt_md = &bbt_mirror_no_oob_descr;
-			} else {
-				this->bbt_td = &bbt_main_descr;
+			पूर्ण अन्यथा अणु
+				this->bbt_td = &bbt_मुख्य_descr;
 				this->bbt_md = &bbt_mirror_descr;
-			}
-		}
-	} else {
-		this->bbt_td = NULL;
-		this->bbt_md = NULL;
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		this->bbt_td = शून्य;
+		this->bbt_md = शून्य;
+	पूर्ण
 
-	if (!this->badblock_pattern) {
+	अगर (!this->badblock_pattern) अणु
 		ret = nand_create_badblock_pattern(this);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return nand_scan_bbt(this, this->badblock_pattern);
-}
+	वापस nand_scan_bbt(this, this->badblock_pattern);
+पूर्ण
 EXPORT_SYMBOL(nand_create_bbt);
 
 /**
- * nand_isreserved_bbt - [NAND Interface] Check if a block is reserved
- * @this: NAND chip object
+ * nand_isreserved_bbt - [न_अंकD Interface] Check अगर a block is reserved
+ * @this: न_अंकD chip object
  * @offs: offset in the device
  */
-int nand_isreserved_bbt(struct nand_chip *this, loff_t offs)
-{
-	int block;
+पूर्णांक nand_isreserved_bbt(काष्ठा nand_chip *this, loff_t offs)
+अणु
+	पूर्णांक block;
 
-	block = (int)(offs >> this->bbt_erase_shift);
-	return bbt_get_entry(this, block) == BBT_BLOCK_RESERVED;
-}
+	block = (पूर्णांक)(offs >> this->bbt_erase_shअगरt);
+	वापस bbt_get_entry(this, block) == BBT_BLOCK_RESERVED;
+पूर्ण
 
 /**
- * nand_isbad_bbt - [NAND Interface] Check if a block is bad
- * @this: NAND chip object
+ * nand_isbad_bbt - [न_अंकD Interface] Check अगर a block is bad
+ * @this: न_अंकD chip object
  * @offs: offset in the device
  * @allowbbt: allow access to bad block table region
  */
-int nand_isbad_bbt(struct nand_chip *this, loff_t offs, int allowbbt)
-{
-	int block, res;
+पूर्णांक nand_isbad_bbt(काष्ठा nand_chip *this, loff_t offs, पूर्णांक allowbbt)
+अणु
+	पूर्णांक block, res;
 
-	block = (int)(offs >> this->bbt_erase_shift);
+	block = (पूर्णांक)(offs >> this->bbt_erase_shअगरt);
 	res = bbt_get_entry(this, block);
 
 	pr_debug("nand_isbad_bbt(): bbt info for offs 0x%08x: (block %d) 0x%02x\n",
-		 (unsigned int)offs, block, res);
+		 (अचिन्हित पूर्णांक)offs, block, res);
 
-	switch (res) {
-	case BBT_BLOCK_GOOD:
-		return 0;
-	case BBT_BLOCK_WORN:
-		return 1;
-	case BBT_BLOCK_RESERVED:
-		return allowbbt ? 0 : 1;
-	}
-	return 1;
-}
+	चयन (res) अणु
+	हाल BBT_BLOCK_GOOD:
+		वापस 0;
+	हाल BBT_BLOCK_WORN:
+		वापस 1;
+	हाल BBT_BLOCK_RESERVED:
+		वापस allowbbt ? 0 : 1;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /**
- * nand_markbad_bbt - [NAND Interface] Mark a block bad in the BBT
- * @this: NAND chip object
+ * nand_markbad_bbt - [न_अंकD Interface] Mark a block bad in the BBT
+ * @this: न_अंकD chip object
  * @offs: offset of the bad block
  */
-int nand_markbad_bbt(struct nand_chip *this, loff_t offs)
-{
-	int block, ret = 0;
+पूर्णांक nand_markbad_bbt(काष्ठा nand_chip *this, loff_t offs)
+अणु
+	पूर्णांक block, ret = 0;
 
-	block = (int)(offs >> this->bbt_erase_shift);
+	block = (पूर्णांक)(offs >> this->bbt_erase_shअगरt);
 
 	/* Mark bad block in memory */
 	bbt_mark_entry(this, block, BBT_BLOCK_WORN);
 
 	/* Update flash-based bad block table */
-	if (this->bbt_options & NAND_BBT_USE_FLASH)
+	अगर (this->bbt_options & न_अंकD_BBT_USE_FLASH)
 		ret = nand_update_bbt(this, offs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

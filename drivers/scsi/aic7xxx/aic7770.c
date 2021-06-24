@@ -1,24 +1,25 @@
+<शैली गुरु>
 /*
- * Product specific probe and attach routines for:
+ * Product specअगरic probe and attach routines क्रम:
  * 	27/284X and aic7770 motherboard SCSI controllers
  *
  * Copyright (c) 1994-1998, 2000, 2001 Justin T. Gibbs.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    without modअगरication.
+ * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement for further
+ *    including a substantially similar Disclaimer requirement क्रम further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    of any contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -42,206 +43,206 @@
  * $FreeBSD$
  */
 
-#include "aic7xxx_osm.h"
-#include "aic7xxx_inline.h"
-#include "aic7xxx_93cx6.h"
+#समावेश "aic7xxx_osm.h"
+#समावेश "aic7xxx_inline.h"
+#समावेश "aic7xxx_93cx6.h"
 
-#define ID_AIC7770	0x04907770
-#define ID_AHA_274x	0x04907771
-#define ID_AHA_284xB	0x04907756 /* BIOS enabled */
-#define ID_AHA_284x	0x04907757 /* BIOS disabled*/
-#define	ID_OLV_274x	0x04907782 /* Olivetti OEM */
-#define	ID_OLV_274xD	0x04907783 /* Olivetti OEM (Differential) */
+#घोषणा ID_AIC7770	0x04907770
+#घोषणा ID_AHA_274x	0x04907771
+#घोषणा ID_AHA_284xB	0x04907756 /* BIOS enabled */
+#घोषणा ID_AHA_284x	0x04907757 /* BIOS disabled*/
+#घोषणा	ID_OLV_274x	0x04907782 /* Olivetti OEM */
+#घोषणा	ID_OLV_274xD	0x04907783 /* Olivetti OEM (Dअगरferential) */
 
-static int aic7770_chip_init(struct ahc_softc *ahc);
-static int aha2840_load_seeprom(struct ahc_softc *ahc);
-static ahc_device_setup_t ahc_aic7770_VL_setup;
-static ahc_device_setup_t ahc_aic7770_EISA_setup;
-static ahc_device_setup_t ahc_aic7770_setup;
+अटल पूर्णांक aic7770_chip_init(काष्ठा ahc_softc *ahc);
+अटल पूर्णांक aha2840_load_seeprom(काष्ठा ahc_softc *ahc);
+अटल ahc_device_setup_t ahc_aic7770_VL_setup;
+अटल ahc_device_setup_t ahc_aic7770_EISA_setup;
+अटल ahc_device_setup_t ahc_aic7770_setup;
 
-struct aic7770_identity aic7770_ident_table[] =
-{
-	{
+काष्ठा aic7770_identity aic7770_ident_table[] =
+अणु
+	अणु
 		ID_AHA_274x,
 		0xFFFFFFFF,
 		"Adaptec 274X SCSI adapter",
 		ahc_aic7770_EISA_setup
-	},
-	{
+	पूर्ण,
+	अणु
 		ID_AHA_284xB,
 		0xFFFFFFFE,
 		"Adaptec 284X SCSI adapter",
 		ahc_aic7770_VL_setup
-	},
-	{
+	पूर्ण,
+	अणु
 		ID_AHA_284x,
 		0xFFFFFFFE,
 		"Adaptec 284X SCSI adapter (BIOS Disabled)",
 		ahc_aic7770_VL_setup
-	},
-	{
+	पूर्ण,
+	अणु
 		ID_OLV_274x,
 		0xFFFFFFFF,
 		"Adaptec (Olivetti OEM) 274X SCSI adapter",
 		ahc_aic7770_EISA_setup
-	},
-	{
+	पूर्ण,
+	अणु
 		ID_OLV_274xD,
 		0xFFFFFFFF,
 		"Adaptec (Olivetti OEM) 274X Differential SCSI adapter",
 		ahc_aic7770_EISA_setup
-	},
-	/* Generic chip probes for devices we don't know 'exactly' */
-	{
+	पूर्ण,
+	/* Generic chip probes क्रम devices we करोn't know 'exactly' */
+	अणु
 		ID_AIC7770,
 		0xFFFFFFFF,
 		"Adaptec aic7770 SCSI adapter",
 		ahc_aic7770_EISA_setup
-	}
-};
-const int ahc_num_aic7770_devs = ARRAY_SIZE(aic7770_ident_table);
+	पूर्ण
+पूर्ण;
+स्थिर पूर्णांक ahc_num_aic7770_devs = ARRAY_SIZE(aic7770_ident_table);
 
-struct aic7770_identity *
-aic7770_find_device(uint32_t id)
-{
-	struct	aic7770_identity *entry;
-	int	i;
+काष्ठा aic7770_identity *
+aic7770_find_device(uपूर्णांक32_t id)
+अणु
+	काष्ठा	aic7770_identity *entry;
+	पूर्णांक	i;
 
-	for (i = 0; i < ahc_num_aic7770_devs; i++) {
+	क्रम (i = 0; i < ahc_num_aic7770_devs; i++) अणु
 		entry = &aic7770_ident_table[i];
-		if (entry->full_id == (id & entry->id_mask))
-			return (entry);
-	}
-	return (NULL);
-}
+		अगर (entry->full_id == (id & entry->id_mask))
+			वापस (entry);
+	पूर्ण
+	वापस (शून्य);
+पूर्ण
 
-int
-aic7770_config(struct ahc_softc *ahc, struct aic7770_identity *entry, u_int io)
-{
-	int	error;
-	int	have_seeprom;
-	u_int	hostconf;
-	u_int   irq;
-	u_int	intdef;
+पूर्णांक
+aic7770_config(काष्ठा ahc_softc *ahc, काष्ठा aic7770_identity *entry, u_पूर्णांक io)
+अणु
+	पूर्णांक	error;
+	पूर्णांक	have_seeprom;
+	u_पूर्णांक	hostconf;
+	u_पूर्णांक   irq;
+	u_पूर्णांक	पूर्णांकdef;
 
 	error = entry->setup(ahc);
 	have_seeprom = 0;
-	if (error != 0)
-		return (error);
+	अगर (error != 0)
+		वापस (error);
 
-	error = aic7770_map_registers(ahc, io);
-	if (error != 0)
-		return (error);
+	error = aic7770_map_रेजिस्टरs(ahc, io);
+	अगर (error != 0)
+		वापस (error);
 
 	/*
-	 * Before we continue probing the card, ensure that
-	 * its interrupts are *disabled*.  We don't want
-	 * a misstep to hang the machine in an interrupt
+	 * Beक्रमe we जारी probing the card, ensure that
+	 * its पूर्णांकerrupts are *disabled*.  We करोn't want
+	 * a misstep to hang the machine in an पूर्णांकerrupt
 	 * storm.
 	 */
-	ahc_intr_enable(ahc, FALSE);
+	ahc_पूर्णांकr_enable(ahc, FALSE);
 
 	ahc->description = entry->name;
 	error = ahc_softc_init(ahc);
-	if (error != 0)
-		return (error);
+	अगर (error != 0)
+		वापस (error);
 
 	ahc->bus_chip_init = aic7770_chip_init;
 
 	error = ahc_reset(ahc, /*reinit*/FALSE);
-	if (error != 0)
-		return (error);
+	अगर (error != 0)
+		वापस (error);
 
-	/* Make sure we have a valid interrupt vector */
-	intdef = ahc_inb(ahc, INTDEF);
-	irq = intdef & VECTOR;
-	switch (irq) {
-	case 9:
-	case 10:
-	case 11:
-	case 12:
-	case 14:
-	case 15:
-		break;
-	default:
-		printk("aic7770_config: invalid irq setting %d\n", intdef);
-		return (ENXIO);
-	}
+	/* Make sure we have a valid पूर्णांकerrupt vector */
+	पूर्णांकdef = ahc_inb(ahc, INTDEF);
+	irq = पूर्णांकdef & VECTOR;
+	चयन (irq) अणु
+	हाल 9:
+	हाल 10:
+	हाल 11:
+	हाल 12:
+	हाल 14:
+	हाल 15:
+		अवरोध;
+	शेष:
+		prपूर्णांकk("aic7770_config: invalid irq setting %d\n", पूर्णांकdef);
+		वापस (ENXIO);
+	पूर्ण
 
-	if ((intdef & EDGE_TRIG) != 0)
+	अगर ((पूर्णांकdef & EDGE_TRIG) != 0)
 		ahc->flags |= AHC_EDGE_INTERRUPT;
 
-	switch (ahc->chip & (AHC_EISA|AHC_VL)) {
-	case AHC_EISA:
-	{
-		u_int biosctrl;
-		u_int scsiconf;
-		u_int scsiconf1;
+	चयन (ahc->chip & (AHC_EISA|AHC_VL)) अणु
+	हाल AHC_EISA:
+	अणु
+		u_पूर्णांक biosctrl;
+		u_पूर्णांक scsiconf;
+		u_पूर्णांक scsiconf1;
 
 		biosctrl = ahc_inb(ahc, HA_274_BIOSCTRL);
 		scsiconf = ahc_inb(ahc, SCSICONF);
 		scsiconf1 = ahc_inb(ahc, SCSICONF + 1);
 
-		/* Get the primary channel information */
-		if ((biosctrl & CHANNEL_B_PRIMARY) != 0)
+		/* Get the primary channel inक्रमmation */
+		अगर ((biosctrl & CHANNEL_B_PRIMARY) != 0)
 			ahc->flags |= 1;
 
-		if ((biosctrl & BIOSMODE) == BIOSDISABLED) {
+		अगर ((biosctrl & BIOSMODE) == BIOSDISABLED) अणु
 			ahc->flags |= AHC_USEDEFAULTS;
-		} else {
-			if ((ahc->features & AHC_WIDE) != 0) {
+		पूर्ण अन्यथा अणु
+			अगर ((ahc->features & AHC_WIDE) != 0) अणु
 				ahc->our_id = scsiconf1 & HWSCSIID;
-				if (scsiconf & TERM_ENB)
+				अगर (scsiconf & TERM_ENB)
 					ahc->flags |= AHC_TERM_ENB_A;
-			} else {
+			पूर्ण अन्यथा अणु
 				ahc->our_id = scsiconf & HSCSIID;
 				ahc->our_id_b = scsiconf1 & HSCSIID;
-				if (scsiconf & TERM_ENB)
+				अगर (scsiconf & TERM_ENB)
 					ahc->flags |= AHC_TERM_ENB_A;
-				if (scsiconf1 & TERM_ENB)
+				अगर (scsiconf1 & TERM_ENB)
 					ahc->flags |= AHC_TERM_ENB_B;
-			}
-		}
-		if ((ahc_inb(ahc, HA_274_BIOSGLOBAL) & HA_274_EXTENDED_TRANS))
+			पूर्ण
+		पूर्ण
+		अगर ((ahc_inb(ahc, HA_274_BIOSGLOBAL) & HA_274_EXTENDED_TRANS))
 			ahc->flags |= AHC_EXTENDED_TRANS_A|AHC_EXTENDED_TRANS_B;
-		break;
-	}
-	case AHC_VL:
-	{
+		अवरोध;
+	पूर्ण
+	हाल AHC_VL:
+	अणु
 		have_seeprom = aha2840_load_seeprom(ahc);
-		break;
-	}
-	default:
-		break;
-	}
-	if (have_seeprom == 0) {
-		kfree(ahc->seep_config);
-		ahc->seep_config = NULL;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
+	अगर (have_seeprom == 0) अणु
+		kमुक्त(ahc->seep_config);
+		ahc->seep_config = शून्य;
+	पूर्ण
 
 	/*
-	 * Ensure autoflush is enabled
+	 * Ensure स्वतःflush is enabled
 	 */
 	ahc_outb(ahc, SBLKCTL, ahc_inb(ahc, SBLKCTL) & ~AUTOFLUSHDIS);
 
-	/* Setup the FIFO threshold and the bus off time */
+	/* Setup the FIFO threshold and the bus off समय */
 	hostconf = ahc_inb(ahc, HOSTCONF);
 	ahc_outb(ahc, BUSSPD, hostconf & DFTHRSH);
 	ahc_outb(ahc, BUSTIME, (hostconf << 2) & BOFF);
 
 	ahc->bus_softc.aic7770_softc.busspd = hostconf & DFTHRSH;
-	ahc->bus_softc.aic7770_softc.bustime = (hostconf << 2) & BOFF;
+	ahc->bus_softc.aic7770_softc.busसमय = (hostconf << 2) & BOFF;
 
 	/*
 	 * Generic aic7xxx initialization.
 	 */
 	error = ahc_init(ahc);
-	if (error != 0)
-		return (error);
+	अगर (error != 0)
+		वापस (error);
 
-	error = aic7770_map_int(ahc, irq);
-	if (error != 0)
-		return (error);
+	error = aic7770_map_पूर्णांक(ahc, irq);
+	अगर (error != 0)
+		वापस (error);
 
 	ahc->init_level++;
 
@@ -249,29 +250,29 @@ aic7770_config(struct ahc_softc *ahc, struct aic7770_identity *entry, u_int io)
 	 * Enable the board's BUS drivers
 	 */
 	ahc_outb(ahc, BCTL, ENABLE);
-	return (0);
-}
+	वापस (0);
+पूर्ण
 
-static int
-aic7770_chip_init(struct ahc_softc *ahc)
-{
+अटल पूर्णांक
+aic7770_chip_init(काष्ठा ahc_softc *ahc)
+अणु
 	ahc_outb(ahc, BUSSPD, ahc->bus_softc.aic7770_softc.busspd);
-	ahc_outb(ahc, BUSTIME, ahc->bus_softc.aic7770_softc.bustime);
+	ahc_outb(ahc, BUSTIME, ahc->bus_softc.aic7770_softc.busसमय);
 	ahc_outb(ahc, SBLKCTL, ahc_inb(ahc, SBLKCTL) & ~AUTOFLUSHDIS);
 	ahc_outb(ahc, BCTL, ENABLE);
-	return (ahc_chip_init(ahc));
-}
+	वापस (ahc_chip_init(ahc));
+पूर्ण
 
 /*
  * Read the 284x SEEPROM.
  */
-static int
-aha2840_load_seeprom(struct ahc_softc *ahc)
-{
-	struct	seeprom_descriptor sd;
-	struct	seeprom_config *sc;
-	int	have_seeprom;
-	uint8_t scsi_conf;
+अटल पूर्णांक
+aha2840_load_seeprom(काष्ठा ahc_softc *ahc)
+अणु
+	काष्ठा	seeprom_descriptor sd;
+	काष्ठा	seeprom_config *sc;
+	पूर्णांक	have_seeprom;
+	uपूर्णांक8_t scsi_conf;
 
 	sd.sd_ahc = ahc;
 	sd.sd_control_offset = SEECTL_2840;
@@ -286,100 +287,100 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 	sd.sd_DI = DI_2840;
 	sc = ahc->seep_config;
 
-	if (bootverbose)
-		printk("%s: Reading SEEPROM...", ahc_name(ahc));
-	have_seeprom = ahc_read_seeprom(&sd, (uint16_t *)sc,
-					/*start_addr*/0, sizeof(*sc)/2);
+	अगर (bootverbose)
+		prपूर्णांकk("%s: Reading SEEPROM...", ahc_name(ahc));
+	have_seeprom = ahc_पढ़ो_seeprom(&sd, (uपूर्णांक16_t *)sc,
+					/*start_addr*/0, माप(*sc)/2);
 
-	if (have_seeprom) {
+	अगर (have_seeprom) अणु
 
-		if (ahc_verify_cksum(sc) == 0) {
-			if(bootverbose)
-				printk ("checksum error\n");
+		अगर (ahc_verअगरy_cksum(sc) == 0) अणु
+			अगर(bootverbose)
+				prपूर्णांकk ("checksum error\n");
 			have_seeprom = 0;
-		} else if (bootverbose) {
-			printk("done.\n");
-		}
-	}
+		पूर्ण अन्यथा अगर (bootverbose) अणु
+			prपूर्णांकk("done.\n");
+		पूर्ण
+	पूर्ण
 
-	if (!have_seeprom) {
-		if (bootverbose)
-			printk("%s: No SEEPROM available\n", ahc_name(ahc));
+	अगर (!have_seeprom) अणु
+		अगर (bootverbose)
+			prपूर्णांकk("%s: No SEEPROM available\n", ahc_name(ahc));
 		ahc->flags |= AHC_USEDEFAULTS;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Put the data we've collected down into SRAM
+		 * Put the data we've collected करोwn पूर्णांकo SRAM
 		 * where ahc_init will find it.
 		 */
-		int	 i;
-		int	 max_targ;
-		uint16_t discenable;
+		पूर्णांक	 i;
+		पूर्णांक	 max_targ;
+		uपूर्णांक16_t discenable;
 
 		max_targ = (ahc->features & AHC_WIDE) != 0 ? 16 : 8;
 		discenable = 0;
-		for (i = 0; i < max_targ; i++){
-			uint8_t target_settings;
+		क्रम (i = 0; i < max_targ; i++)अणु
+			uपूर्णांक8_t target_settings;
 
 			target_settings = (sc->device_flags[i] & CFXFER) << 4;
-			if (sc->device_flags[i] & CFSYNCH)
+			अगर (sc->device_flags[i] & CFSYNCH)
 				target_settings |= SOFS;
-			if (sc->device_flags[i] & CFWIDEB)
+			अगर (sc->device_flags[i] & CFWIDEB)
 				target_settings |= WIDEXFER;
-			if (sc->device_flags[i] & CFDISC)
+			अगर (sc->device_flags[i] & CFDISC)
 				discenable |= (0x01 << i);
 			ahc_outb(ahc, TARG_SCSIRATE + i, target_settings);
-		}
+		पूर्ण
 		ahc_outb(ahc, DISC_DSB, ~(discenable & 0xff));
 		ahc_outb(ahc, DISC_DSB + 1, ~((discenable >> 8) & 0xff));
 
-		ahc->our_id = sc->brtime_id & CFSCSIID;
+		ahc->our_id = sc->brसमय_id & CFSCSIID;
 
 		scsi_conf = (ahc->our_id & 0x7);
-		if (sc->adapter_control & CFSPARITY)
+		अगर (sc->adapter_control & CFSPARITY)
 			scsi_conf |= ENSPCHK;
-		if (sc->adapter_control & CFRESETB)
+		अगर (sc->adapter_control & CFRESETB)
 			scsi_conf |= RESET_SCSI;
 
-		if (sc->bios_control & CF284XEXTEND)		
+		अगर (sc->bios_control & CF284XEXTEND)		
 			ahc->flags |= AHC_EXTENDED_TRANS_A;
 		/* Set SCSICONF info */
 		ahc_outb(ahc, SCSICONF, scsi_conf);
 
-		if (sc->adapter_control & CF284XSTERM)
+		अगर (sc->adapter_control & CF284XSTERM)
 			ahc->flags |= AHC_TERM_ENB_A;
-	}
-	return (have_seeprom);
-}
+	पूर्ण
+	वापस (have_seeprom);
+पूर्ण
 
-static int
-ahc_aic7770_VL_setup(struct ahc_softc *ahc)
-{
-	int error;
+अटल पूर्णांक
+ahc_aic7770_VL_setup(काष्ठा ahc_softc *ahc)
+अणु
+	पूर्णांक error;
 
 	error = ahc_aic7770_setup(ahc);
 	ahc->chip |= AHC_VL;
-	return (error);
-}
+	वापस (error);
+पूर्ण
 
-static int
-ahc_aic7770_EISA_setup(struct ahc_softc *ahc)
-{
-	int error;
+अटल पूर्णांक
+ahc_aic7770_EISA_setup(काष्ठा ahc_softc *ahc)
+अणु
+	पूर्णांक error;
 
 	error = ahc_aic7770_setup(ahc);
 	ahc->chip |= AHC_EISA;
-	return (error);
-}
+	वापस (error);
+पूर्ण
 
-static int
-ahc_aic7770_setup(struct ahc_softc *ahc)
-{
+अटल पूर्णांक
+ahc_aic7770_setup(काष्ठा ahc_softc *ahc)
+अणु
 	ahc->channel = 'A';
 	ahc->channel_b = 'B';
 	ahc->chip = AHC_AIC7770;
 	ahc->features = AHC_AIC7770_FE;
 	ahc->bugs |= AHC_TMODE_WIDEODD_BUG;
 	ahc->flags |= AHC_PAGESCBS;
-	ahc->instruction_ram_size = 448;
-	return (0);
-}
+	ahc->inकाष्ठाion_ram_size = 448;
+	वापस (0);
+पूर्ण

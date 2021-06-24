@@ -1,151 +1,152 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <arpa/inet.h>
-#include <errno.h>
-#include <error.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <unistd.h>
+#समावेश <arpa/inet.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <error.h>
+#समावेश <netinet/in.h>
+#समावेश <netinet/tcp.h>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/socket.h>
+#समावेश <sys/समय.स>
+#समावेश <unistd.h>
 
-static int child_pid;
+अटल पूर्णांक child_pid;
 
-static unsigned long timediff(struct timeval s, struct timeval e)
-{
-	unsigned long s_us, e_us;
+अटल अचिन्हित दीर्घ समयdअगरf(काष्ठा समयval s, काष्ठा समयval e)
+अणु
+	अचिन्हित दीर्घ s_us, e_us;
 
 	s_us = s.tv_sec * 1000000 + s.tv_usec;
 	e_us = e.tv_sec * 1000000 + e.tv_usec;
-	if (s_us > e_us)
-		return 0;
-	return e_us - s_us;
-}
+	अगर (s_us > e_us)
+		वापस 0;
+	वापस e_us - s_us;
+पूर्ण
 
-static void client(int port)
-{
-	int sock = 0;
-	struct sockaddr_in addr, laddr;
-	socklen_t len = sizeof(laddr);
-	struct linger sl;
-	int flag = 1;
-	int buffer;
-	struct timeval start, end;
-	unsigned long lat, sum_lat = 0, nr_lat = 0;
+अटल व्योम client(पूर्णांक port)
+अणु
+	पूर्णांक sock = 0;
+	काष्ठा sockaddr_in addr, laddr;
+	socklen_t len = माप(laddr);
+	काष्ठा linger sl;
+	पूर्णांक flag = 1;
+	पूर्णांक buffer;
+	काष्ठा समयval start, end;
+	अचिन्हित दीर्घ lat, sum_lat = 0, nr_lat = 0;
 
-	while (1) {
-		gettimeofday(&start, NULL);
+	जबतक (1) अणु
+		समय_लोofday(&start, शून्य);
 
 		sock = socket(AF_INET, SOCK_STREAM, 0);
-		if (sock < 0)
-			error(-1, errno, "socket creation");
+		अगर (sock < 0)
+			error(-1, त्रुटि_सं, "socket creation");
 
 		sl.l_onoff = 1;
 		sl.l_linger = 0;
-		if (setsockopt(sock, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl)))
-			error(-1, errno, "setsockopt(linger)");
+		अगर (setsockopt(sock, SOL_SOCKET, SO_LINGER, &sl, माप(sl)))
+			error(-1, त्रुटि_सं, "setsockopt(linger)");
 
-		if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
-					&flag, sizeof(flag)))
-			error(-1, errno, "setsockopt(nodelay)");
+		अगर (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
+					&flag, माप(flag)))
+			error(-1, त्रुटि_सं, "setsockopt(nodelay)");
 
 		addr.sin_family = AF_INET;
 		addr.sin_port = htons(port);
 
-		if (inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr) <= 0)
-			error(-1, errno, "inet_pton");
+		अगर (inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr) <= 0)
+			error(-1, त्रुटि_सं, "inet_pton");
 
-		if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-			error(-1, errno, "connect");
+		अगर (connect(sock, (काष्ठा sockaddr *)&addr, माप(addr)) < 0)
+			error(-1, त्रुटि_सं, "connect");
 
-		send(sock, &buffer, sizeof(buffer), 0);
-		if (read(sock, &buffer, sizeof(buffer)) == -1)
-			error(-1, errno, "waiting read");
+		send(sock, &buffer, माप(buffer), 0);
+		अगर (पढ़ो(sock, &buffer, माप(buffer)) == -1)
+			error(-1, त्रुटि_सं, "waiting read");
 
-		gettimeofday(&end, NULL);
-		lat = timediff(start, end);
+		समय_लोofday(&end, शून्य);
+		lat = समयdअगरf(start, end);
 		sum_lat += lat;
 		nr_lat++;
-		if (lat < 100000)
-			goto close;
+		अगर (lat < 100000)
+			जाओ बंद;
 
-		if (getsockname(sock, (struct sockaddr *)&laddr, &len) == -1)
-			error(-1, errno, "getsockname");
-		printf("port: %d, lat: %lu, avg: %lu, nr: %lu\n",
+		अगर (माला_लोockname(sock, (काष्ठा sockaddr *)&laddr, &len) == -1)
+			error(-1, त्रुटि_सं, "getsockname");
+		म_लिखो("port: %d, lat: %lu, avg: %lu, nr: %lu\n",
 				ntohs(laddr.sin_port), lat,
 				sum_lat / nr_lat, nr_lat);
-close:
-		fflush(stdout);
-		close(sock);
-	}
-}
+बंद:
+		ख_साफ(मानक_निकास);
+		बंद(sock);
+	पूर्ण
+पूर्ण
 
-static void server(int sock, struct sockaddr_in address)
-{
-	int accepted;
-	int addrlen = sizeof(address);
-	int buffer;
+अटल व्योम server(पूर्णांक sock, काष्ठा sockaddr_in address)
+अणु
+	पूर्णांक accepted;
+	पूर्णांक addrlen = माप(address);
+	पूर्णांक buffer;
 
-	while (1) {
-		accepted = accept(sock, (struct sockaddr *)&address,
+	जबतक (1) अणु
+		accepted = accept(sock, (काष्ठा sockaddr *)&address,
 				(socklen_t *)&addrlen);
-		if (accepted < 0)
-			error(-1, errno, "accept");
+		अगर (accepted < 0)
+			error(-1, त्रुटि_सं, "accept");
 
-		if (read(accepted, &buffer, sizeof(buffer)) == -1)
-			error(-1, errno, "read");
-		close(accepted);
-	}
-}
+		अगर (पढ़ो(accepted, &buffer, माप(buffer)) == -1)
+			error(-1, त्रुटि_सं, "read");
+		बंद(accepted);
+	पूर्ण
+पूर्ण
 
-static void sig_handler(int signum)
-{
-	kill(SIGTERM, child_pid);
-	exit(0);
-}
+अटल व्योम sig_handler(पूर्णांक signum)
+अणु
+	समाप्त(संक_इति, child_pid);
+	निकास(0);
+पूर्ण
 
-int main(int argc, char const *argv[])
-{
-	int sock;
-	int opt = 1;
-	struct sockaddr_in address;
-	struct sockaddr_in laddr;
-	socklen_t len = sizeof(laddr);
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर स्थिर *argv[])
+अणु
+	पूर्णांक sock;
+	पूर्णांक opt = 1;
+	काष्ठा sockaddr_in address;
+	काष्ठा sockaddr_in laddr;
+	socklen_t len = माप(laddr);
 
-	if (signal(SIGTERM, sig_handler) == SIG_ERR)
-		error(-1, errno, "signal");
+	अगर (संकेत(संक_इति, sig_handler) == संक_त्रुटि)
+		error(-1, त्रुटि_सं, "signal");
 
 	sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock < 0)
-		error(-1, errno, "socket");
+	अगर (sock < 0)
+		error(-1, त्रुटि_सं, "socket");
 
-	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-				&opt, sizeof(opt)) == -1)
-		error(-1, errno, "setsockopt");
+	अगर (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
+				&opt, माप(opt)) == -1)
+		error(-1, त्रुटि_सं, "setsockopt");
 
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	/* dynamically allocate unused port */
 	address.sin_port = 0;
 
-	if (bind(sock, (struct sockaddr *)&address, sizeof(address)) < 0)
-		error(-1, errno, "bind");
+	अगर (bind(sock, (काष्ठा sockaddr *)&address, माप(address)) < 0)
+		error(-1, त्रुटि_सं, "bind");
 
-	if (listen(sock, 3) < 0)
-		error(-1, errno, "listen");
+	अगर (listen(sock, 3) < 0)
+		error(-1, त्रुटि_सं, "listen");
 
-	if (getsockname(sock, (struct sockaddr *)&laddr, &len) == -1)
-		error(-1, errno, "getsockname");
+	अगर (माला_लोockname(sock, (काष्ठा sockaddr *)&laddr, &len) == -1)
+		error(-1, त्रुटि_सं, "getsockname");
 
-	fprintf(stderr, "server port: %d\n", ntohs(laddr.sin_port));
-	child_pid = fork();
-	if (!child_pid)
+	ख_लिखो(मानक_त्रुटि, "server port: %d\n", ntohs(laddr.sin_port));
+	child_pid = विभाजन();
+	अगर (!child_pid)
 		client(ntohs(laddr.sin_port));
-	else
+	अन्यथा
 		server(sock, laddr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

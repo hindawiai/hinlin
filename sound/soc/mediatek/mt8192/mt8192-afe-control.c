@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // MediaTek ALSA SoC Audio Control
 //
@@ -6,11 +7,11 @@
 // Author: Shane Chien <shane.chien@mediatek.com>
 //
 
-#include <linux/pm_runtime.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "mt8192-afe-common.h"
+#समावेश "mt8192-afe-common.h"
 
-enum {
+क्रमागत अणु
 	MTK_AFE_RATE_8K = 0,
 	MTK_AFE_RATE_11K = 1,
 	MTK_AFE_RATE_12K = 2,
@@ -27,137 +28,137 @@ enum {
 	MTK_AFE_RATE_176K = 13,
 	MTK_AFE_RATE_192K = 14,
 	MTK_AFE_RATE_260K = 15,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MTK_AFE_DAI_MEMIF_RATE_8K = 0,
 	MTK_AFE_DAI_MEMIF_RATE_16K = 1,
 	MTK_AFE_DAI_MEMIF_RATE_32K = 2,
 	MTK_AFE_DAI_MEMIF_RATE_48K = 3,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MTK_AFE_PCM_RATE_8K = 0,
 	MTK_AFE_PCM_RATE_16K = 1,
 	MTK_AFE_PCM_RATE_32K = 2,
 	MTK_AFE_PCM_RATE_48K = 3,
-};
+पूर्ण;
 
-unsigned int mt8192_general_rate_transform(struct device *dev,
-					   unsigned int rate)
-{
-	switch (rate) {
-	case 8000:
-		return MTK_AFE_RATE_8K;
-	case 11025:
-		return MTK_AFE_RATE_11K;
-	case 12000:
-		return MTK_AFE_RATE_12K;
-	case 16000:
-		return MTK_AFE_RATE_16K;
-	case 22050:
-		return MTK_AFE_RATE_22K;
-	case 24000:
-		return MTK_AFE_RATE_24K;
-	case 32000:
-		return MTK_AFE_RATE_32K;
-	case 44100:
-		return MTK_AFE_RATE_44K;
-	case 48000:
-		return MTK_AFE_RATE_48K;
-	case 88200:
-		return MTK_AFE_RATE_88K;
-	case 96000:
-		return MTK_AFE_RATE_96K;
-	case 176400:
-		return MTK_AFE_RATE_176K;
-	case 192000:
-		return MTK_AFE_RATE_192K;
-	case 260000:
-		return MTK_AFE_RATE_260K;
-	case 352800:
-		return MTK_AFE_RATE_352K;
-	case 384000:
-		return MTK_AFE_RATE_384K;
-	default:
+अचिन्हित पूर्णांक mt8192_general_rate_transक्रमm(काष्ठा device *dev,
+					   अचिन्हित पूर्णांक rate)
+अणु
+	चयन (rate) अणु
+	हाल 8000:
+		वापस MTK_AFE_RATE_8K;
+	हाल 11025:
+		वापस MTK_AFE_RATE_11K;
+	हाल 12000:
+		वापस MTK_AFE_RATE_12K;
+	हाल 16000:
+		वापस MTK_AFE_RATE_16K;
+	हाल 22050:
+		वापस MTK_AFE_RATE_22K;
+	हाल 24000:
+		वापस MTK_AFE_RATE_24K;
+	हाल 32000:
+		वापस MTK_AFE_RATE_32K;
+	हाल 44100:
+		वापस MTK_AFE_RATE_44K;
+	हाल 48000:
+		वापस MTK_AFE_RATE_48K;
+	हाल 88200:
+		वापस MTK_AFE_RATE_88K;
+	हाल 96000:
+		वापस MTK_AFE_RATE_96K;
+	हाल 176400:
+		वापस MTK_AFE_RATE_176K;
+	हाल 192000:
+		वापस MTK_AFE_RATE_192K;
+	हाल 260000:
+		वापस MTK_AFE_RATE_260K;
+	हाल 352800:
+		वापस MTK_AFE_RATE_352K;
+	हाल 384000:
+		वापस MTK_AFE_RATE_384K;
+	शेष:
 		dev_warn(dev, "%s(), rate %u invalid, use %d!!!\n",
 			 __func__,
 			 rate, MTK_AFE_RATE_48K);
-		return MTK_AFE_RATE_48K;
-	}
-}
+		वापस MTK_AFE_RATE_48K;
+	पूर्ण
+पूर्ण
 
-static unsigned int dai_memif_rate_transform(struct device *dev,
-					     unsigned int rate)
-{
-	switch (rate) {
-	case 8000:
-		return MTK_AFE_DAI_MEMIF_RATE_8K;
-	case 16000:
-		return MTK_AFE_DAI_MEMIF_RATE_16K;
-	case 32000:
-		return MTK_AFE_DAI_MEMIF_RATE_32K;
-	case 48000:
-		return MTK_AFE_DAI_MEMIF_RATE_48K;
-	default:
+अटल अचिन्हित पूर्णांक dai_memअगर_rate_transक्रमm(काष्ठा device *dev,
+					     अचिन्हित पूर्णांक rate)
+अणु
+	चयन (rate) अणु
+	हाल 8000:
+		वापस MTK_AFE_DAI_MEMIF_RATE_8K;
+	हाल 16000:
+		वापस MTK_AFE_DAI_MEMIF_RATE_16K;
+	हाल 32000:
+		वापस MTK_AFE_DAI_MEMIF_RATE_32K;
+	हाल 48000:
+		वापस MTK_AFE_DAI_MEMIF_RATE_48K;
+	शेष:
 		dev_warn(dev, "%s(), rate %u invalid, use %d!!!\n",
 			 __func__,
 			 rate, MTK_AFE_DAI_MEMIF_RATE_16K);
-		return MTK_AFE_DAI_MEMIF_RATE_16K;
-	}
-}
+		वापस MTK_AFE_DAI_MEMIF_RATE_16K;
+	पूर्ण
+पूर्ण
 
-static unsigned int pcm_rate_transform(struct device *dev,
-				       unsigned int rate)
-{
-	switch (rate) {
-	case 8000:
-		return MTK_AFE_PCM_RATE_8K;
-	case 16000:
-		return MTK_AFE_PCM_RATE_16K;
-	case 32000:
-		return MTK_AFE_PCM_RATE_32K;
-	case 48000:
-		return MTK_AFE_PCM_RATE_48K;
-	default:
+अटल अचिन्हित पूर्णांक pcm_rate_transक्रमm(काष्ठा device *dev,
+				       अचिन्हित पूर्णांक rate)
+अणु
+	चयन (rate) अणु
+	हाल 8000:
+		वापस MTK_AFE_PCM_RATE_8K;
+	हाल 16000:
+		वापस MTK_AFE_PCM_RATE_16K;
+	हाल 32000:
+		वापस MTK_AFE_PCM_RATE_32K;
+	हाल 48000:
+		वापस MTK_AFE_PCM_RATE_48K;
+	शेष:
 		dev_warn(dev, "%s(), rate %u invalid, use %d!!!\n",
 			 __func__,
 			 rate, MTK_AFE_PCM_RATE_32K);
-		return MTK_AFE_PCM_RATE_32K;
-	}
-}
+		वापस MTK_AFE_PCM_RATE_32K;
+	पूर्ण
+पूर्ण
 
-unsigned int mt8192_rate_transform(struct device *dev,
-				   unsigned int rate, int aud_blk)
-{
-	switch (aud_blk) {
-	case MT8192_MEMIF_DAI:
-	case MT8192_MEMIF_MOD_DAI:
-		return dai_memif_rate_transform(dev, rate);
-	case MT8192_DAI_PCM_1:
-	case MT8192_DAI_PCM_2:
-		return pcm_rate_transform(dev, rate);
-	default:
-		return mt8192_general_rate_transform(dev, rate);
-	}
-}
+अचिन्हित पूर्णांक mt8192_rate_transक्रमm(काष्ठा device *dev,
+				   अचिन्हित पूर्णांक rate, पूर्णांक aud_blk)
+अणु
+	चयन (aud_blk) अणु
+	हाल MT8192_MEMIF_DAI:
+	हाल MT8192_MEMIF_MOD_DAI:
+		वापस dai_memअगर_rate_transक्रमm(dev, rate);
+	हाल MT8192_DAI_PCM_1:
+	हाल MT8192_DAI_PCM_2:
+		वापस pcm_rate_transक्रमm(dev, rate);
+	शेष:
+		वापस mt8192_general_rate_transक्रमm(dev, rate);
+	पूर्ण
+पूर्ण
 
-int mt8192_dai_set_priv(struct mtk_base_afe *afe, int id,
-			int priv_size, const void *priv_data)
-{
-	struct mt8192_afe_private *afe_priv = afe->platform_priv;
-	void *temp_data;
+पूर्णांक mt8192_dai_set_priv(काष्ठा mtk_base_afe *afe, पूर्णांक id,
+			पूर्णांक priv_size, स्थिर व्योम *priv_data)
+अणु
+	काष्ठा mt8192_afe_निजी *afe_priv = afe->platक्रमm_priv;
+	व्योम *temp_data;
 
 	temp_data = devm_kzalloc(afe->dev,
 				 priv_size,
 				 GFP_KERNEL);
-	if (!temp_data)
-		return -ENOMEM;
+	अगर (!temp_data)
+		वापस -ENOMEM;
 
-	if (priv_data)
-		memcpy(temp_data, priv_data, priv_size);
+	अगर (priv_data)
+		स_नकल(temp_data, priv_data, priv_size);
 
 	afe_priv->dai_priv[id] = temp_data;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

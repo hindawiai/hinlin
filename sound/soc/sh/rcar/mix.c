@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // mix.c
 //
@@ -30,63 +31,63 @@
  *	amixer set "MIX",1 100%  // DAI1 Volume Up
  */
 
-#include "rsnd.h"
+#समावेश "rsnd.h"
 
-#define MIX_NAME_SIZE	16
-#define MIX_NAME "mix"
+#घोषणा MIX_NAME_SIZE	16
+#घोषणा MIX_NAME "mix"
 
-struct rsnd_mix {
-	struct rsnd_mod mod;
-	struct rsnd_kctrl_cfg_s volumeA; /* MDBAR */
-	struct rsnd_kctrl_cfg_s volumeB; /* MDBBR */
-	struct rsnd_kctrl_cfg_s volumeC; /* MDBCR */
-	struct rsnd_kctrl_cfg_s volumeD; /* MDBDR */
-	struct rsnd_kctrl_cfg_s ren;	/* Ramp Enable */
-	struct rsnd_kctrl_cfg_s rup;	/* Ramp Rate Up */
-	struct rsnd_kctrl_cfg_s rdw;	/* Ramp Rate Down */
+काष्ठा rsnd_mix अणु
+	काष्ठा rsnd_mod mod;
+	काष्ठा rsnd_kctrl_cfg_s volumeA; /* MDBAR */
+	काष्ठा rsnd_kctrl_cfg_s volumeB; /* MDBBR */
+	काष्ठा rsnd_kctrl_cfg_s volumeC; /* MDBCR */
+	काष्ठा rsnd_kctrl_cfg_s volumeD; /* MDBDR */
+	काष्ठा rsnd_kctrl_cfg_s ren;	/* Ramp Enable */
+	काष्ठा rsnd_kctrl_cfg_s rup;	/* Ramp Rate Up */
+	काष्ठा rsnd_kctrl_cfg_s rdw;	/* Ramp Rate Down */
 	u32 flags;
-};
+पूर्ण;
 
-#define ONCE_KCTRL_INITIALIZED		(1 << 0)
-#define HAS_VOLA			(1 << 1)
-#define HAS_VOLB			(1 << 2)
-#define HAS_VOLC			(1 << 3)
-#define HAS_VOLD			(1 << 4)
+#घोषणा ONCE_KCTRL_INITIALIZED		(1 << 0)
+#घोषणा HAS_VOLA			(1 << 1)
+#घोषणा HAS_VOLB			(1 << 2)
+#घोषणा HAS_VOLC			(1 << 3)
+#घोषणा HAS_VOLD			(1 << 4)
 
-#define VOL_MAX				0x3ff
+#घोषणा VOL_MAX				0x3ff
 
-#define rsnd_mod_to_mix(_mod)	\
-	container_of((_mod), struct rsnd_mix, mod)
+#घोषणा rsnd_mod_to_mix(_mod)	\
+	container_of((_mod), काष्ठा rsnd_mix, mod)
 
-#define rsnd_mix_get(priv, id) ((struct rsnd_mix *)(priv->mix) + id)
-#define rsnd_mix_nr(priv) ((priv)->mix_nr)
-#define for_each_rsnd_mix(pos, priv, i)					\
-	for ((i) = 0;							\
+#घोषणा rsnd_mix_get(priv, id) ((काष्ठा rsnd_mix *)(priv->mix) + id)
+#घोषणा rsnd_mix_nr(priv) ((priv)->mix_nr)
+#घोषणा क्रम_each_rsnd_mix(pos, priv, i)					\
+	क्रम ((i) = 0;							\
 	     ((i) < rsnd_mix_nr(priv)) &&				\
-		     ((pos) = (struct rsnd_mix *)(priv)->mix + i);	\
+		     ((pos) = (काष्ठा rsnd_mix *)(priv)->mix + i);	\
 	     i++)
 
-static void rsnd_mix_activation(struct rsnd_mod *mod)
-{
-	rsnd_mod_write(mod, MIX_SWRSR, 0);
-	rsnd_mod_write(mod, MIX_SWRSR, 1);
-}
+अटल व्योम rsnd_mix_activation(काष्ठा rsnd_mod *mod)
+अणु
+	rsnd_mod_ग_लिखो(mod, MIX_SWRSR, 0);
+	rsnd_mod_ग_लिखो(mod, MIX_SWRSR, 1);
+पूर्ण
 
-static void rsnd_mix_halt(struct rsnd_mod *mod)
-{
-	rsnd_mod_write(mod, MIX_MIXIR, 1);
-	rsnd_mod_write(mod, MIX_SWRSR, 0);
-}
+अटल व्योम rsnd_mix_halt(काष्ठा rsnd_mod *mod)
+अणु
+	rsnd_mod_ग_लिखो(mod, MIX_MIXIR, 1);
+	rsnd_mod_ग_लिखो(mod, MIX_SWRSR, 0);
+पूर्ण
 
-#define rsnd_mix_get_vol(mix, X) \
+#घोषणा rsnd_mix_get_vol(mix, X) \
 	rsnd_flags_has(mix, HAS_VOL##X) ? \
 		(VOL_MAX - rsnd_kctrl_vals(mix->volume##X)) : 0
-static void rsnd_mix_volume_parameter(struct rsnd_dai_stream *io,
-				      struct rsnd_mod *mod)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_mix *mix = rsnd_mod_to_mix(mod);
+अटल व्योम rsnd_mix_volume_parameter(काष्ठा rsnd_dai_stream *io,
+				      काष्ठा rsnd_mod *mod)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_mix *mix = rsnd_mod_to_mix(mod);
 	u32 volA = rsnd_mix_get_vol(mix, A);
 	u32 volB = rsnd_mix_get_vol(mix, B);
 	u32 volC = rsnd_mix_get_vol(mix, C);
@@ -95,58 +96,58 @@ static void rsnd_mix_volume_parameter(struct rsnd_dai_stream *io,
 	dev_dbg(dev, "MIX A/B/C/D = %02x/%02x/%02x/%02x\n",
 		volA, volB, volC, volD);
 
-	rsnd_mod_write(mod, MIX_MDBAR, volA);
-	rsnd_mod_write(mod, MIX_MDBBR, volB);
-	rsnd_mod_write(mod, MIX_MDBCR, volC);
-	rsnd_mod_write(mod, MIX_MDBDR, volD);
-}
+	rsnd_mod_ग_लिखो(mod, MIX_MDBAR, volA);
+	rsnd_mod_ग_लिखो(mod, MIX_MDBBR, volB);
+	rsnd_mod_ग_लिखो(mod, MIX_MDBCR, volC);
+	rsnd_mod_ग_लिखो(mod, MIX_MDBDR, volD);
+पूर्ण
 
-static void rsnd_mix_volume_init(struct rsnd_dai_stream *io,
-				 struct rsnd_mod *mod)
-{
-	struct rsnd_mix *mix = rsnd_mod_to_mix(mod);
+अटल व्योम rsnd_mix_volume_init(काष्ठा rsnd_dai_stream *io,
+				 काष्ठा rsnd_mod *mod)
+अणु
+	काष्ठा rsnd_mix *mix = rsnd_mod_to_mix(mod);
 
-	rsnd_mod_write(mod, MIX_MIXIR, 1);
+	rsnd_mod_ग_लिखो(mod, MIX_MIXIR, 1);
 
-	/* General Information */
-	rsnd_mod_write(mod, MIX_ADINR, rsnd_runtime_channel_after_ctu(io));
+	/* General Inक्रमmation */
+	rsnd_mod_ग_लिखो(mod, MIX_ADINR, rsnd_runसमय_channel_after_ctu(io));
 
 	/* volume step */
-	rsnd_mod_write(mod, MIX_MIXMR, rsnd_kctrl_vals(mix->ren));
-	rsnd_mod_write(mod, MIX_MVPDR, rsnd_kctrl_vals(mix->rup) << 8 |
+	rsnd_mod_ग_लिखो(mod, MIX_MIXMR, rsnd_kctrl_vals(mix->ren));
+	rsnd_mod_ग_लिखो(mod, MIX_MVPDR, rsnd_kctrl_vals(mix->rup) << 8 |
 				       rsnd_kctrl_vals(mix->rdw));
 
 	/* common volume parameter */
 	rsnd_mix_volume_parameter(io, mod);
 
-	rsnd_mod_write(mod, MIX_MIXIR, 0);
-}
+	rsnd_mod_ग_लिखो(mod, MIX_MIXIR, 0);
+पूर्ण
 
-static void rsnd_mix_volume_update(struct rsnd_dai_stream *io,
-				  struct rsnd_mod *mod)
-{
+अटल व्योम rsnd_mix_volume_update(काष्ठा rsnd_dai_stream *io,
+				  काष्ठा rsnd_mod *mod)
+अणु
 	/* Disable MIX dB setting */
-	rsnd_mod_write(mod, MIX_MDBER, 0);
+	rsnd_mod_ग_लिखो(mod, MIX_MDBER, 0);
 
 	/* common volume parameter */
 	rsnd_mix_volume_parameter(io, mod);
 
 	/* Enable MIX dB setting */
-	rsnd_mod_write(mod, MIX_MDBER, 1);
-}
+	rsnd_mod_ग_लिखो(mod, MIX_MDBER, 1);
+पूर्ण
 
-static int rsnd_mix_probe_(struct rsnd_mod *mod,
-			   struct rsnd_dai_stream *io,
-			   struct rsnd_priv *priv)
-{
-	return rsnd_cmd_attach(io, rsnd_mod_id(mod));
-}
+अटल पूर्णांक rsnd_mix_probe_(काष्ठा rsnd_mod *mod,
+			   काष्ठा rsnd_dai_stream *io,
+			   काष्ठा rsnd_priv *priv)
+अणु
+	वापस rsnd_cmd_attach(io, rsnd_mod_id(mod));
+पूर्ण
 
-static int rsnd_mix_init(struct rsnd_mod *mod,
-			 struct rsnd_dai_stream *io,
-			 struct rsnd_priv *priv)
-{
-	rsnd_mod_power_on(mod);
+अटल पूर्णांक rsnd_mix_init(काष्ठा rsnd_mod *mod,
+			 काष्ठा rsnd_dai_stream *io,
+			 काष्ठा rsnd_priv *priv)
+अणु
+	rsnd_mod_घातer_on(mod);
 
 	rsnd_mix_activation(mod);
 
@@ -154,92 +155,92 @@ static int rsnd_mix_init(struct rsnd_mod *mod,
 
 	rsnd_mix_volume_update(io, mod);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_mix_quit(struct rsnd_mod *mod,
-			 struct rsnd_dai_stream *io,
-			 struct rsnd_priv *priv)
-{
+अटल पूर्णांक rsnd_mix_quit(काष्ठा rsnd_mod *mod,
+			 काष्ठा rsnd_dai_stream *io,
+			 काष्ठा rsnd_priv *priv)
+अणु
 	rsnd_mix_halt(mod);
 
-	rsnd_mod_power_off(mod);
+	rsnd_mod_घातer_off(mod);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_mix_pcm_new(struct rsnd_mod *mod,
-			    struct rsnd_dai_stream *io,
-			    struct snd_soc_pcm_runtime *rtd)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_mix *mix = rsnd_mod_to_mix(mod);
-	struct rsnd_mod *src_mod = rsnd_io_to_mod_src(io);
-	struct rsnd_kctrl_cfg_s *volume;
-	int ret;
+अटल पूर्णांक rsnd_mix_pcm_new(काष्ठा rsnd_mod *mod,
+			    काष्ठा rsnd_dai_stream *io,
+			    काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_mix *mix = rsnd_mod_to_mix(mod);
+	काष्ठा rsnd_mod *src_mod = rsnd_io_to_mod_src(io);
+	काष्ठा rsnd_kctrl_cfg_s *volume;
+	पूर्णांक ret;
 
-	switch (rsnd_mod_id(src_mod)) {
-	case 3:
-	case 6:	/* MDBAR */
+	चयन (rsnd_mod_id(src_mod)) अणु
+	हाल 3:
+	हाल 6:	/* MDBAR */
 		volume = &mix->volumeA;
 		rsnd_flags_set(mix, HAS_VOLA);
-		break;
-	case 4:
-	case 9:	/* MDBBR */
+		अवरोध;
+	हाल 4:
+	हाल 9:	/* MDBBR */
 		volume = &mix->volumeB;
 		rsnd_flags_set(mix, HAS_VOLB);
-		break;
-	case 0:
-	case 1:	/* MDBCR */
+		अवरोध;
+	हाल 0:
+	हाल 1:	/* MDBCR */
 		volume = &mix->volumeC;
 		rsnd_flags_set(mix, HAS_VOLC);
-		break;
-	case 2:
-	case 5:	/* MDBDR */
+		अवरोध;
+	हाल 2:
+	हाल 5:	/* MDBDR */
 		volume = &mix->volumeD;
 		rsnd_flags_set(mix, HAS_VOLD);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "unknown SRC is connected\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Volume */
 	ret = rsnd_kctrl_new_s(mod, io, rtd,
 			       "MIX Playback Volume",
-			       rsnd_kctrl_accept_anytime,
+			       rsnd_kctrl_accept_anyसमय,
 			       rsnd_mix_volume_update,
 			       volume, VOL_MAX);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	rsnd_kctrl_vals(*volume) = VOL_MAX;
 
-	if (rsnd_flags_has(mix, ONCE_KCTRL_INITIALIZED))
-		return ret;
+	अगर (rsnd_flags_has(mix, ONCE_KCTRL_INITIALIZED))
+		वापस ret;
 
 	/* Ramp */
 	ret = rsnd_kctrl_new_s(mod, io, rtd,
 			       "MIX Ramp Switch",
-			       rsnd_kctrl_accept_anytime,
+			       rsnd_kctrl_accept_anyसमय,
 			       rsnd_mix_volume_update,
 			       &mix->ren, 1);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = rsnd_kctrl_new_e(mod, io, rtd,
 			       "MIX Ramp Up Rate",
-			       rsnd_kctrl_accept_anytime,
+			       rsnd_kctrl_accept_anyसमय,
 			       rsnd_mix_volume_update,
 			       &mix->rup,
 			       volume_ramp_rate,
 			       VOLUME_RAMP_MAX_MIX);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = rsnd_kctrl_new_e(mod, io, rtd,
 			       "MIX Ramp Down Rate",
-			       rsnd_kctrl_accept_anytime,
+			       rsnd_kctrl_accept_anyसमय,
 			       rsnd_mix_volume_update,
 			       &mix->rdw,
 			       volume_ramp_rate,
@@ -247,96 +248,96 @@ static int rsnd_mix_pcm_new(struct rsnd_mod *mod,
 
 	rsnd_flags_set(mix, ONCE_KCTRL_INITIALIZED);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct rsnd_mod_ops rsnd_mix_ops = {
+अटल काष्ठा rsnd_mod_ops rsnd_mix_ops = अणु
 	.name		= MIX_NAME,
 	.probe		= rsnd_mix_probe_,
 	.init		= rsnd_mix_init,
 	.quit		= rsnd_mix_quit,
 	.pcm_new	= rsnd_mix_pcm_new,
 	.get_status	= rsnd_mod_get_status,
-};
+पूर्ण;
 
-struct rsnd_mod *rsnd_mix_mod_get(struct rsnd_priv *priv, int id)
-{
-	if (WARN_ON(id < 0 || id >= rsnd_mix_nr(priv)))
+काष्ठा rsnd_mod *rsnd_mix_mod_get(काष्ठा rsnd_priv *priv, पूर्णांक id)
+अणु
+	अगर (WARN_ON(id < 0 || id >= rsnd_mix_nr(priv)))
 		id = 0;
 
-	return rsnd_mod_get(rsnd_mix_get(priv, id));
-}
+	वापस rsnd_mod_get(rsnd_mix_get(priv, id));
+पूर्ण
 
-int rsnd_mix_probe(struct rsnd_priv *priv)
-{
-	struct device_node *node;
-	struct device_node *np;
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_mix *mix;
-	struct clk *clk;
-	char name[MIX_NAME_SIZE];
-	int i, nr, ret;
+पूर्णांक rsnd_mix_probe(काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा device_node *node;
+	काष्ठा device_node *np;
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_mix *mix;
+	काष्ठा clk *clk;
+	अक्षर name[MIX_NAME_SIZE];
+	पूर्णांक i, nr, ret;
 
-	/* This driver doesn't support Gen1 at this point */
-	if (rsnd_is_gen1(priv))
-		return 0;
+	/* This driver करोesn't support Gen1 at this poपूर्णांक */
+	अगर (rsnd_is_gen1(priv))
+		वापस 0;
 
 	node = rsnd_mix_of_node(priv);
-	if (!node)
-		return 0; /* not used is not error */
+	अगर (!node)
+		वापस 0; /* not used is not error */
 
 	nr = of_get_child_count(node);
-	if (!nr) {
+	अगर (!nr) अणु
 		ret = -EINVAL;
-		goto rsnd_mix_probe_done;
-	}
+		जाओ rsnd_mix_probe_करोne;
+	पूर्ण
 
-	mix	= devm_kcalloc(dev, nr, sizeof(*mix), GFP_KERNEL);
-	if (!mix) {
+	mix	= devm_kसुस्मृति(dev, nr, माप(*mix), GFP_KERNEL);
+	अगर (!mix) अणु
 		ret = -ENOMEM;
-		goto rsnd_mix_probe_done;
-	}
+		जाओ rsnd_mix_probe_करोne;
+	पूर्ण
 
 	priv->mix_nr	= nr;
 	priv->mix	= mix;
 
 	i = 0;
 	ret = 0;
-	for_each_child_of_node(node, np) {
+	क्रम_each_child_of_node(node, np) अणु
 		mix = rsnd_mix_get(priv, i);
 
-		snprintf(name, MIX_NAME_SIZE, "%s.%d",
+		snम_लिखो(name, MIX_NAME_SIZE, "%s.%d",
 			 MIX_NAME, i);
 
 		clk = devm_clk_get(dev, name);
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			ret = PTR_ERR(clk);
 			of_node_put(np);
-			goto rsnd_mix_probe_done;
-		}
+			जाओ rsnd_mix_probe_करोne;
+		पूर्ण
 
 		ret = rsnd_mod_init(priv, rsnd_mod_get(mix), &rsnd_mix_ops,
 				    clk, RSND_MOD_MIX, i);
-		if (ret) {
+		अगर (ret) अणु
 			of_node_put(np);
-			goto rsnd_mix_probe_done;
-		}
+			जाओ rsnd_mix_probe_करोne;
+		पूर्ण
 
 		i++;
-	}
+	पूर्ण
 
-rsnd_mix_probe_done:
+rsnd_mix_probe_करोne:
 	of_node_put(node);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void rsnd_mix_remove(struct rsnd_priv *priv)
-{
-	struct rsnd_mix *mix;
-	int i;
+व्योम rsnd_mix_हटाओ(काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_mix *mix;
+	पूर्णांक i;
 
-	for_each_rsnd_mix(mix, priv, i) {
+	क्रम_each_rsnd_mix(mix, priv, i) अणु
 		rsnd_mod_quit(rsnd_mod_get(mix));
-	}
-}
+	पूर्ण
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Mantis PCI bridge driver
 
@@ -6,116 +7,116 @@
 
 */
 
-#ifndef __MANTIS_COMMON_H
-#define __MANTIS_COMMON_H
+#अगर_अघोषित __MANTIS_COMMON_H
+#घोषणा __MANTIS_COMMON_H
 
-#include <linux/interrupt.h>
-#include <linux/mutex.h>
-#include <linux/workqueue.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/workqueue.h>
 
-#include "mantis_reg.h"
-#include "mantis_uart.h"
+#समावेश "mantis_reg.h"
+#समावेश "mantis_uart.h"
 
-#include "mantis_link.h"
+#समावेश "mantis_link.h"
 
-#define MANTIS_ERROR		0
-#define MANTIS_NOTICE		1
-#define MANTIS_INFO		2
-#define MANTIS_DEBUG		3
-#define MANTIS_TMG		9
+#घोषणा MANTIS_ERROR		0
+#घोषणा MANTIS_NOTICE		1
+#घोषणा MANTIS_INFO		2
+#घोषणा MANTIS_DEBUG		3
+#घोषणा MANTIS_TMG		9
 
-#define dprintk(y, z, format, arg...) do {								\
-	if (z) {											\
-		if	((mantis->verbose > MANTIS_ERROR) && (mantis->verbose > y))			\
-			printk(KERN_ERR "%s (%d): " format "\n" , __func__ , mantis->num , ##arg);	\
-		else if	((mantis->verbose > MANTIS_NOTICE) && (mantis->verbose > y))			\
-			printk(KERN_NOTICE "%s (%d): " format "\n" , __func__ , mantis->num , ##arg);	\
-		else if ((mantis->verbose > MANTIS_INFO) && (mantis->verbose > y))			\
-			printk(KERN_INFO "%s (%d): " format "\n" , __func__ , mantis->num , ##arg);	\
-		else if ((mantis->verbose > MANTIS_DEBUG) && (mantis->verbose > y))			\
-			printk(KERN_DEBUG "%s (%d): " format "\n" , __func__ , mantis->num , ##arg);	\
-		else if ((mantis->verbose > MANTIS_TMG) && (mantis->verbose > y))			\
-			printk(KERN_DEBUG "%s (%d): " format "\n" , __func__ , mantis->num , ##arg);	\
-	} else {											\
-		if (mantis->verbose > y)								\
-			printk(format , ##arg);								\
-	}												\
-} while(0)
+#घोषणा dprपूर्णांकk(y, z, क्रमmat, arg...) करो अणु								\
+	अगर (z) अणु											\
+		अगर	((mantis->verbose > MANTIS_ERROR) && (mantis->verbose > y))			\
+			prपूर्णांकk(KERN_ERR "%s (%d): " क्रमmat "\n" , __func__ , mantis->num , ##arg);	\
+		अन्यथा अगर	((mantis->verbose > MANTIS_NOTICE) && (mantis->verbose > y))			\
+			prपूर्णांकk(KERN_NOTICE "%s (%d): " क्रमmat "\n" , __func__ , mantis->num , ##arg);	\
+		अन्यथा अगर ((mantis->verbose > MANTIS_INFO) && (mantis->verbose > y))			\
+			prपूर्णांकk(KERN_INFO "%s (%d): " क्रमmat "\n" , __func__ , mantis->num , ##arg);	\
+		अन्यथा अगर ((mantis->verbose > MANTIS_DEBUG) && (mantis->verbose > y))			\
+			prपूर्णांकk(KERN_DEBUG "%s (%d): " क्रमmat "\n" , __func__ , mantis->num , ##arg);	\
+		अन्यथा अगर ((mantis->verbose > MANTIS_TMG) && (mantis->verbose > y))			\
+			prपूर्णांकk(KERN_DEBUG "%s (%d): " क्रमmat "\n" , __func__ , mantis->num , ##arg);	\
+	पूर्ण अन्यथा अणु											\
+		अगर (mantis->verbose > y)								\
+			prपूर्णांकk(क्रमmat , ##arg);								\
+	पूर्ण												\
+पूर्ण जबतक(0)
 
-#define mwrite(dat, addr)	writel((dat), addr)
-#define mread(addr)		readl(addr)
+#घोषणा mग_लिखो(dat, addr)	ग_लिखोl((dat), addr)
+#घोषणा mपढ़ो(addr)		पढ़ोl(addr)
 
-#define mmwrite(dat, addr)	mwrite((dat), (mantis->mmio + (addr)))
-#define mmread(addr)		mread(mantis->mmio + (addr))
+#घोषणा mmग_लिखो(dat, addr)	mग_लिखो((dat), (mantis->mmio + (addr)))
+#घोषणा mmपढ़ो(addr)		mपढ़ो(mantis->mmio + (addr))
 
-#define MANTIS_TS_188		0
-#define MANTIS_TS_204		1
+#घोषणा MANTIS_TS_188		0
+#घोषणा MANTIS_TS_204		1
 
-#define TWINHAN_TECHNOLOGIES	0x1822
-#define MANTIS			0x4e35
+#घोषणा TWINHAN_TECHNOLOGIES	0x1822
+#घोषणा MANTIS			0x4e35
 
-#define TECHNISAT		0x1ae4
-#define TERRATEC		0x153b
+#घोषणा TECHNISAT		0x1ae4
+#घोषणा TERRATEC		0x153b
 
-#define MAKE_ENTRY(__subven, __subdev, __configptr, __rc) {		\
-		.vendor		= TWINHAN_TECHNOLOGIES,			\
+#घोषणा MAKE_ENTRY(__subven, __subdev, __configptr, __rc) अणु		\
+		.venकरोr		= TWINHAN_TECHNOLOGIES,			\
 		.device		= MANTIS,				\
-		.subvendor	= (__subven),				\
+		.subvenकरोr	= (__subven),				\
 		.subdevice	= (__subdev),				\
-		.driver_data	= (unsigned long)			\
-			&(struct mantis_pci_drvdata){__configptr, __rc}	\
-}
+		.driver_data	= (अचिन्हित दीर्घ)			\
+			&(काष्ठा mantis_pci_drvdata)अणु__configptr, __rcपूर्ण	\
+पूर्ण
 
-enum mantis_i2c_mode {
+क्रमागत mantis_i2c_mode अणु
 	MANTIS_PAGE_MODE = 0,
 	MANTIS_BYTE_MODE,
-};
+पूर्ण;
 
-struct mantis_pci;
+काष्ठा mantis_pci;
 
-struct mantis_hwconfig {
-	char			*model_name;
-	char			*dev_type;
+काष्ठा mantis_hwconfig अणु
+	अक्षर			*model_name;
+	अक्षर			*dev_type;
 	u32			ts_size;
 
-	enum mantis_baud	baud_rate;
-	enum mantis_parity	parity;
+	क्रमागत mantis_baud	baud_rate;
+	क्रमागत mantis_parity	parity;
 	u32			bytes;
 
-	irqreturn_t (*irq_handler)(int irq, void *dev_id);
-	int (*frontend_init)(struct mantis_pci *mantis, struct dvb_frontend *fe);
+	irqवापस_t (*irq_handler)(पूर्णांक irq, व्योम *dev_id);
+	पूर्णांक (*frontend_init)(काष्ठा mantis_pci *mantis, काष्ठा dvb_frontend *fe);
 
-	u8			power;
+	u8			घातer;
 	u8			reset;
 
-	enum mantis_i2c_mode	i2c_mode;
-};
+	क्रमागत mantis_i2c_mode	i2c_mode;
+पूर्ण;
 
-struct mantis_pci_drvdata {
-	struct mantis_hwconfig *hwconfig;
-	char *rc_map_name;
-};
+काष्ठा mantis_pci_drvdata अणु
+	काष्ठा mantis_hwconfig *hwconfig;
+	अक्षर *rc_map_name;
+पूर्ण;
 
-struct mantis_pci {
-	unsigned int		verbose;
+काष्ठा mantis_pci अणु
+	अचिन्हित पूर्णांक		verbose;
 
 	/*	PCI stuff		*/
-	u16			vendor_id;
+	u16			venकरोr_id;
 	u16			device_id;
-	u16			subsystem_vendor;
-	u16			subsystem_device;
+	u16			subप्रणाली_venकरोr;
+	u16			subप्रणाली_device;
 
 	u8			latency;
 
-	struct pci_dev		*pdev;
+	काष्ठा pci_dev		*pdev;
 
-	unsigned long		mantis_addr;
-	void __iomem		*mmio;
+	अचिन्हित दीर्घ		mantis_addr;
+	व्योम __iomem		*mmio;
 
 	u8			irq;
 	u8			revision;
 
-	unsigned int		num;
+	अचिन्हित पूर्णांक		num;
 
 	/*	RISC Core		*/
 	u32			busy_block;
@@ -125,68 +126,68 @@ struct mantis_pci {
 	__le32			*risc_cpu;
 	dma_addr_t		risc_dma;
 
-	struct tasklet_struct	tasklet;
-	spinlock_t		intmask_lock;
+	काष्ठा tasklet_काष्ठा	tasklet;
+	spinlock_t		पूर्णांकmask_lock;
 
-	struct i2c_adapter	adapter;
-	int			i2c_rc;
-	wait_queue_head_t	i2c_wq;
-	struct mutex		i2c_lock;
+	काष्ठा i2c_adapter	adapter;
+	पूर्णांक			i2c_rc;
+	रुको_queue_head_t	i2c_wq;
+	काष्ठा mutex		i2c_lock;
 
 	/*	DVB stuff		*/
-	struct dvb_adapter	dvb_adapter;
-	struct dvb_frontend	*fe;
-	struct dvb_demux	demux;
-	struct dmxdev		dmxdev;
-	struct dmx_frontend	fe_hw;
-	struct dmx_frontend	fe_mem;
-	struct dvb_net		dvbnet;
+	काष्ठा dvb_adapter	dvb_adapter;
+	काष्ठा dvb_frontend	*fe;
+	काष्ठा dvb_demux	demux;
+	काष्ठा dmxdev		dmxdev;
+	काष्ठा dmx_frontend	fe_hw;
+	काष्ठा dmx_frontend	fe_mem;
+	काष्ठा dvb_net		dvbnet;
 
 	u8			feeds;
 
-	struct mantis_hwconfig	*hwconfig;
+	काष्ठा mantis_hwconfig	*hwconfig;
 
-	u32			mantis_int_stat;
-	u32			mantis_int_mask;
+	u32			mantis_पूर्णांक_stat;
+	u32			mantis_पूर्णांक_mask;
 
-	/*	board specific		*/
+	/*	board specअगरic		*/
 	u8			mac_address[8];
-	u32			sub_vendor_id;
+	u32			sub_venकरोr_id;
 	u32			sub_device_id;
 
 	 /*	A12 A13 A14		*/
 	u32			gpio_status;
 
-	u32			gpif_status;
+	u32			gpअगर_status;
 
-	struct mantis_ca	*mantis_ca;
+	काष्ठा mantis_ca	*mantis_ca;
 
-	struct work_struct	uart_work;
+	काष्ठा work_काष्ठा	uart_work;
 
-	struct rc_dev		*rc;
-	char			device_name[80];
-	char			input_phys[80];
-	char			*rc_map_name;
-};
+	काष्ठा rc_dev		*rc;
+	अक्षर			device_name[80];
+	अक्षर			input_phys[80];
+	अक्षर			*rc_map_name;
+पूर्ण;
 
-#define MANTIS_HIF_STATUS	(mantis->gpio_status)
+#घोषणा MANTIS_HIF_STATUS	(mantis->gpio_status)
 
-static inline void mantis_mask_ints(struct mantis_pci *mantis, u32 mask)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम mantis_mask_पूर्णांकs(काष्ठा mantis_pci *mantis, u32 mask)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&mantis->intmask_lock, flags);
-	mmwrite(mmread(MANTIS_INT_MASK) & ~mask, MANTIS_INT_MASK);
-	spin_unlock_irqrestore(&mantis->intmask_lock, flags);
-}
+	spin_lock_irqsave(&mantis->पूर्णांकmask_lock, flags);
+	mmग_लिखो(mmपढ़ो(MANTIS_INT_MASK) & ~mask, MANTIS_INT_MASK);
+	spin_unlock_irqrestore(&mantis->पूर्णांकmask_lock, flags);
+पूर्ण
 
-static inline void mantis_unmask_ints(struct mantis_pci *mantis, u32 mask)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम mantis_unmask_पूर्णांकs(काष्ठा mantis_pci *mantis, u32 mask)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&mantis->intmask_lock, flags);
-	mmwrite(mmread(MANTIS_INT_MASK) | mask, MANTIS_INT_MASK);
-	spin_unlock_irqrestore(&mantis->intmask_lock, flags);
-}
+	spin_lock_irqsave(&mantis->पूर्णांकmask_lock, flags);
+	mmग_लिखो(mmपढ़ो(MANTIS_INT_MASK) | mask, MANTIS_INT_MASK);
+	spin_unlock_irqrestore(&mantis->पूर्णांकmask_lock, flags);
+पूर्ण
 
-#endif /* __MANTIS_COMMON_H */
+#पूर्ण_अगर /* __MANTIS_COMMON_H */

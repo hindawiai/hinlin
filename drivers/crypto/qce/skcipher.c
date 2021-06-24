@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2010-2014, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <crypto/aes.h>
-#include <crypto/internal/des.h>
-#include <crypto/internal/skcipher.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/पूर्णांकernal/des.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
 
-#include "cipher.h"
+#समावेश "cipher.h"
 
-static unsigned int aes_sw_max_len = CONFIG_CRYPTO_DEV_QCE_SW_MAX_LEN;
-module_param(aes_sw_max_len, uint, 0644);
+अटल अचिन्हित पूर्णांक aes_sw_max_len = CONFIG_CRYPTO_DEV_QCE_SW_MAX_LEN;
+module_param(aes_sw_max_len, uपूर्णांक, 0644);
 MODULE_PARM_DESC(aes_sw_max_len,
 		 "Only use hardware for AES requests larger than this "
 		 "[0=always use hardware; anything <16 breaks AES-GCM; default="
-		 __stringify(CONFIG_CRYPTO_DEV_QCE_SW_MAX_LEN)"]");
+		 __stringअगरy(CONFIG_CRYPTO_DEV_QCE_SW_MAX_LEN)"]");
 
-static LIST_HEAD(skcipher_algs);
+अटल LIST_HEAD(skcipher_algs);
 
-static void qce_skcipher_done(void *data)
-{
-	struct crypto_async_request *async_req = data;
-	struct skcipher_request *req = skcipher_request_cast(async_req);
-	struct qce_cipher_reqctx *rctx = skcipher_request_ctx(req);
-	struct qce_alg_template *tmpl = to_cipher_tmpl(crypto_skcipher_reqtfm(req));
-	struct qce_device *qce = tmpl->qce;
-	struct qce_result_dump *result_buf = qce->dma.result_buf;
-	enum dma_data_direction dir_src, dir_dst;
+अटल व्योम qce_skcipher_करोne(व्योम *data)
+अणु
+	काष्ठा crypto_async_request *async_req = data;
+	काष्ठा skcipher_request *req = skcipher_request_cast(async_req);
+	काष्ठा qce_cipher_reqctx *rctx = skcipher_request_ctx(req);
+	काष्ठा qce_alg_ढाँचा *पंचांगpl = to_cipher_पंचांगpl(crypto_skcipher_reqtfm(req));
+	काष्ठा qce_device *qce = पंचांगpl->qce;
+	काष्ठा qce_result_dump *result_buf = qce->dma.result_buf;
+	क्रमागत dma_data_direction dir_src, dir_dst;
 	u32 status;
-	int error;
-	bool diff_dst;
+	पूर्णांक error;
+	bool dअगरf_dst;
 
-	diff_dst = (req->src != req->dst) ? true : false;
-	dir_src = diff_dst ? DMA_TO_DEVICE : DMA_BIDIRECTIONAL;
-	dir_dst = diff_dst ? DMA_FROM_DEVICE : DMA_BIDIRECTIONAL;
+	dअगरf_dst = (req->src != req->dst) ? true : false;
+	dir_src = dअगरf_dst ? DMA_TO_DEVICE : DMA_BIसूचीECTIONAL;
+	dir_dst = dअगरf_dst ? DMA_FROM_DEVICE : DMA_BIसूचीECTIONAL;
 
 	error = qce_dma_terminate_all(&qce->dma);
-	if (error)
+	अगर (error)
 		dev_dbg(qce->dev, "skcipher dma termination error (%d)\n",
 			error);
 
-	if (diff_dst)
+	अगर (dअगरf_dst)
 		dma_unmap_sg(qce->dev, rctx->src_sg, rctx->src_nents, dir_src);
 	dma_unmap_sg(qce->dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
 
-	sg_free_table(&rctx->dst_tbl);
+	sg_मुक्त_table(&rctx->dst_tbl);
 
 	error = qce_check_status(qce, &status);
-	if (error < 0)
+	अगर (error < 0)
 		dev_dbg(qce->dev, "skcipher operation error (%x)\n", status);
 
-	memcpy(rctx->iv, result_buf->encr_cntr_iv, rctx->ivsize);
-	qce->async_req_done(tmpl->qce, error);
-}
+	स_नकल(rctx->iv, result_buf->encr_cntr_iv, rctx->ivsize);
+	qce->async_req_करोne(पंचांगpl->qce, error);
+पूर्ण
 
-static int
-qce_skcipher_async_req_handle(struct crypto_async_request *async_req)
-{
-	struct skcipher_request *req = skcipher_request_cast(async_req);
-	struct qce_cipher_reqctx *rctx = skcipher_request_ctx(req);
-	struct crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
-	struct qce_alg_template *tmpl = to_cipher_tmpl(crypto_skcipher_reqtfm(req));
-	struct qce_device *qce = tmpl->qce;
-	enum dma_data_direction dir_src, dir_dst;
-	struct scatterlist *sg;
-	bool diff_dst;
+अटल पूर्णांक
+qce_skcipher_async_req_handle(काष्ठा crypto_async_request *async_req)
+अणु
+	काष्ठा skcipher_request *req = skcipher_request_cast(async_req);
+	काष्ठा qce_cipher_reqctx *rctx = skcipher_request_ctx(req);
+	काष्ठा crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
+	काष्ठा qce_alg_ढाँचा *पंचांगpl = to_cipher_पंचांगpl(crypto_skcipher_reqtfm(req));
+	काष्ठा qce_device *qce = पंचांगpl->qce;
+	क्रमागत dma_data_direction dir_src, dir_dst;
+	काष्ठा scatterlist *sg;
+	bool dअगरf_dst;
 	gfp_t gfp;
-	int ret;
+	पूर्णांक ret;
 
 	rctx->iv = req->iv;
 	rctx->ivsize = crypto_skcipher_ivsize(skcipher);
 	rctx->cryptlen = req->cryptlen;
 
-	diff_dst = (req->src != req->dst) ? true : false;
-	dir_src = diff_dst ? DMA_TO_DEVICE : DMA_BIDIRECTIONAL;
-	dir_dst = diff_dst ? DMA_FROM_DEVICE : DMA_BIDIRECTIONAL;
+	dअगरf_dst = (req->src != req->dst) ? true : false;
+	dir_src = dअगरf_dst ? DMA_TO_DEVICE : DMA_BIसूचीECTIONAL;
+	dir_dst = dअगरf_dst ? DMA_FROM_DEVICE : DMA_BIसूचीECTIONAL;
 
-	rctx->src_nents = sg_nents_for_len(req->src, req->cryptlen);
-	if (diff_dst)
-		rctx->dst_nents = sg_nents_for_len(req->dst, req->cryptlen);
-	else
+	rctx->src_nents = sg_nents_क्रम_len(req->src, req->cryptlen);
+	अगर (dअगरf_dst)
+		rctx->dst_nents = sg_nents_क्रम_len(req->dst, req->cryptlen);
+	अन्यथा
 		rctx->dst_nents = rctx->src_nents;
-	if (rctx->src_nents < 0) {
+	अगर (rctx->src_nents < 0) अणु
 		dev_err(qce->dev, "Invalid numbers of src SG.\n");
-		return rctx->src_nents;
-	}
-	if (rctx->dst_nents < 0) {
+		वापस rctx->src_nents;
+	पूर्ण
+	अगर (rctx->dst_nents < 0) अणु
 		dev_err(qce->dev, "Invalid numbers of dst SG.\n");
-		return -rctx->dst_nents;
-	}
+		वापस -rctx->dst_nents;
+	पूर्ण
 
 	rctx->dst_nents += 1;
 
@@ -102,191 +103,191 @@ qce_skcipher_async_req_handle(struct crypto_async_request *async_req)
 						GFP_KERNEL : GFP_ATOMIC;
 
 	ret = sg_alloc_table(&rctx->dst_tbl, rctx->dst_nents, gfp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	sg_init_one(&rctx->result_sg, qce->dma.result_buf, QCE_RESULT_BUF_SZ);
 
 	sg = qce_sgtable_add(&rctx->dst_tbl, req->dst, req->cryptlen);
-	if (IS_ERR(sg)) {
+	अगर (IS_ERR(sg)) अणु
 		ret = PTR_ERR(sg);
-		goto error_free;
-	}
+		जाओ error_मुक्त;
+	पूर्ण
 
 	sg = qce_sgtable_add(&rctx->dst_tbl, &rctx->result_sg,
 			     QCE_RESULT_BUF_SZ);
-	if (IS_ERR(sg)) {
+	अगर (IS_ERR(sg)) अणु
 		ret = PTR_ERR(sg);
-		goto error_free;
-	}
+		जाओ error_मुक्त;
+	पूर्ण
 
 	sg_mark_end(sg);
 	rctx->dst_sg = rctx->dst_tbl.sgl;
 
 	ret = dma_map_sg(qce->dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
-	if (ret < 0)
-		goto error_free;
+	अगर (ret < 0)
+		जाओ error_मुक्त;
 
-	if (diff_dst) {
+	अगर (dअगरf_dst) अणु
 		ret = dma_map_sg(qce->dev, req->src, rctx->src_nents, dir_src);
-		if (ret < 0)
-			goto error_unmap_dst;
+		अगर (ret < 0)
+			जाओ error_unmap_dst;
 		rctx->src_sg = req->src;
-	} else {
+	पूर्ण अन्यथा अणु
 		rctx->src_sg = rctx->dst_sg;
-	}
+	पूर्ण
 
 	ret = qce_dma_prep_sgs(&qce->dma, rctx->src_sg, rctx->src_nents,
 			       rctx->dst_sg, rctx->dst_nents,
-			       qce_skcipher_done, async_req);
-	if (ret)
-		goto error_unmap_src;
+			       qce_skcipher_करोne, async_req);
+	अगर (ret)
+		जाओ error_unmap_src;
 
 	qce_dma_issue_pending(&qce->dma);
 
-	ret = qce_start(async_req, tmpl->crypto_alg_type);
-	if (ret)
-		goto error_terminate;
+	ret = qce_start(async_req, पंचांगpl->crypto_alg_type);
+	अगर (ret)
+		जाओ error_terminate;
 
-	return 0;
+	वापस 0;
 
 error_terminate:
 	qce_dma_terminate_all(&qce->dma);
 error_unmap_src:
-	if (diff_dst)
+	अगर (dअगरf_dst)
 		dma_unmap_sg(qce->dev, req->src, rctx->src_nents, dir_src);
 error_unmap_dst:
 	dma_unmap_sg(qce->dev, rctx->dst_sg, rctx->dst_nents, dir_dst);
-error_free:
-	sg_free_table(&rctx->dst_tbl);
-	return ret;
-}
+error_मुक्त:
+	sg_मुक्त_table(&rctx->dst_tbl);
+	वापस ret;
+पूर्ण
 
-static int qce_skcipher_setkey(struct crypto_skcipher *ablk, const u8 *key,
-				 unsigned int keylen)
-{
-	struct crypto_tfm *tfm = crypto_skcipher_tfm(ablk);
-	struct qce_cipher_ctx *ctx = crypto_tfm_ctx(tfm);
-	unsigned long flags = to_cipher_tmpl(ablk)->alg_flags;
-	unsigned int __keylen;
-	int ret;
+अटल पूर्णांक qce_skcipher_setkey(काष्ठा crypto_skcipher *ablk, स्थिर u8 *key,
+				 अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा crypto_tfm *tfm = crypto_skcipher_tfm(ablk);
+	काष्ठा qce_cipher_ctx *ctx = crypto_tfm_ctx(tfm);
+	अचिन्हित दीर्घ flags = to_cipher_पंचांगpl(ablk)->alg_flags;
+	अचिन्हित पूर्णांक __keylen;
+	पूर्णांक ret;
 
-	if (!key || !keylen)
-		return -EINVAL;
+	अगर (!key || !keylen)
+		वापस -EINVAL;
 
 	/*
 	 * AES XTS key1 = key2 not supported by crypto engine.
-	 * Revisit to request a fallback cipher in this case.
+	 * Revisit to request a fallback cipher in this हाल.
 	 */
-	if (IS_XTS(flags)) {
+	अगर (IS_XTS(flags)) अणु
 		__keylen = keylen >> 1;
-		if (!memcmp(key, key + __keylen, __keylen))
-			return -ENOKEY;
-	} else {
+		अगर (!स_भेद(key, key + __keylen, __keylen))
+			वापस -ENOKEY;
+	पूर्ण अन्यथा अणु
 		__keylen = keylen;
-	}
+	पूर्ण
 
-	switch (__keylen) {
-	case AES_KEYSIZE_128:
-	case AES_KEYSIZE_256:
-		memcpy(ctx->enc_key, key, keylen);
-		break;
-	case AES_KEYSIZE_192:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (__keylen) अणु
+	हाल AES_KEYSIZE_128:
+	हाल AES_KEYSIZE_256:
+		स_नकल(ctx->enc_key, key, keylen);
+		अवरोध;
+	हाल AES_KEYSIZE_192:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = crypto_skcipher_setkey(ctx->fallback, key, keylen);
-	if (!ret)
+	अगर (!ret)
 		ctx->enc_keylen = keylen;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qce_des_setkey(struct crypto_skcipher *ablk, const u8 *key,
-			  unsigned int keylen)
-{
-	struct qce_cipher_ctx *ctx = crypto_skcipher_ctx(ablk);
-	int err;
+अटल पूर्णांक qce_des_setkey(काष्ठा crypto_skcipher *ablk, स्थिर u8 *key,
+			  अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा qce_cipher_ctx *ctx = crypto_skcipher_ctx(ablk);
+	पूर्णांक err;
 
-	err = verify_skcipher_des_key(ablk, key);
-	if (err)
-		return err;
+	err = verअगरy_skcipher_des_key(ablk, key);
+	अगर (err)
+		वापस err;
 
 	ctx->enc_keylen = keylen;
-	memcpy(ctx->enc_key, key, keylen);
-	return 0;
-}
+	स_नकल(ctx->enc_key, key, keylen);
+	वापस 0;
+पूर्ण
 
-static int qce_des3_setkey(struct crypto_skcipher *ablk, const u8 *key,
-			   unsigned int keylen)
-{
-	struct qce_cipher_ctx *ctx = crypto_skcipher_ctx(ablk);
+अटल पूर्णांक qce_des3_setkey(काष्ठा crypto_skcipher *ablk, स्थिर u8 *key,
+			   अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा qce_cipher_ctx *ctx = crypto_skcipher_ctx(ablk);
 	u32 _key[6];
-	int err;
+	पूर्णांक err;
 
-	err = verify_skcipher_des3_key(ablk, key);
-	if (err)
-		return err;
+	err = verअगरy_skcipher_des3_key(ablk, key);
+	अगर (err)
+		वापस err;
 
 	/*
-	 * The crypto engine does not support any two keys
-	 * being the same for triple des algorithms. The
-	 * verify_skcipher_des3_key does not check for all the
-	 * below conditions. Return -ENOKEY in case any two keys
-	 * are the same. Revisit to see if a fallback cipher
+	 * The crypto engine करोes not support any two keys
+	 * being the same क्रम triple des algorithms. The
+	 * verअगरy_skcipher_des3_key करोes not check क्रम all the
+	 * below conditions. Return -ENOKEY in हाल any two keys
+	 * are the same. Revisit to see अगर a fallback cipher
 	 * is needed to handle this condition.
 	 */
-	memcpy(_key, key, DES3_EDE_KEY_SIZE);
-	if (!((_key[0] ^ _key[2]) | (_key[1] ^ _key[3])) ||
+	स_नकल(_key, key, DES3_EDE_KEY_SIZE);
+	अगर (!((_key[0] ^ _key[2]) | (_key[1] ^ _key[3])) ||
 	    !((_key[2] ^ _key[4]) | (_key[3] ^ _key[5])) ||
 	    !((_key[0] ^ _key[4]) | (_key[1] ^ _key[5])))
-		return -ENOKEY;
+		वापस -ENOKEY;
 
 	ctx->enc_keylen = keylen;
-	memcpy(ctx->enc_key, key, keylen);
-	return 0;
-}
+	स_नकल(ctx->enc_key, key, keylen);
+	वापस 0;
+पूर्ण
 
-static int qce_skcipher_crypt(struct skcipher_request *req, int encrypt)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct qce_cipher_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct qce_cipher_reqctx *rctx = skcipher_request_ctx(req);
-	struct qce_alg_template *tmpl = to_cipher_tmpl(tfm);
-	unsigned int blocksize = crypto_skcipher_blocksize(tfm);
-	int keylen;
-	int ret;
+अटल पूर्णांक qce_skcipher_crypt(काष्ठा skcipher_request *req, पूर्णांक encrypt)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा qce_cipher_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा qce_cipher_reqctx *rctx = skcipher_request_ctx(req);
+	काष्ठा qce_alg_ढाँचा *पंचांगpl = to_cipher_पंचांगpl(tfm);
+	अचिन्हित पूर्णांक blocksize = crypto_skcipher_blocksize(tfm);
+	पूर्णांक keylen;
+	पूर्णांक ret;
 
-	rctx->flags = tmpl->alg_flags;
+	rctx->flags = पंचांगpl->alg_flags;
 	rctx->flags |= encrypt ? QCE_ENCRYPT : QCE_DECRYPT;
 	keylen = IS_XTS(rctx->flags) ? ctx->enc_keylen >> 1 : ctx->enc_keylen;
 
-	/* CE does not handle 0 length messages */
-	if (!req->cryptlen)
-		return 0;
+	/* CE करोes not handle 0 length messages */
+	अगर (!req->cryptlen)
+		वापस 0;
 
 	/*
 	 * ECB and CBC algorithms require message lengths to be
 	 * multiples of block size.
 	 */
-	if (IS_ECB(rctx->flags) || IS_CBC(rctx->flags))
-		if (!IS_ALIGNED(req->cryptlen, blocksize))
-			return -EINVAL;
+	अगर (IS_ECB(rctx->flags) || IS_CBC(rctx->flags))
+		अगर (!IS_ALIGNED(req->cryptlen, blocksize))
+			वापस -EINVAL;
 
 	/*
-	 * Conditions for requesting a fallback cipher
+	 * Conditions क्रम requesting a fallback cipher
 	 * AES-192 (not supported by crypto engine (CE))
 	 * AES-XTS request with len <= 512 byte (not recommended to use CE)
 	 * AES-XTS request with len > QCE_SECTOR_SIZE and
-	 * is not a multiple of it.(Revisit this condition to check if it is
+	 * is not a multiple of it.(Revisit this condition to check अगर it is
 	 * needed in all versions of CE)
 	 */
-	if (IS_AES(rctx->flags) &&
+	अगर (IS_AES(rctx->flags) &&
 	    ((keylen != AES_KEYSIZE_128 && keylen != AES_KEYSIZE_256) ||
 	    (IS_XTS(rctx->flags) && ((req->cryptlen <= aes_sw_max_len) ||
 	    (req->cryptlen > QCE_SECTOR_SIZE &&
-	    req->cryptlen % QCE_SECTOR_SIZE))))) {
+	    req->cryptlen % QCE_SECTOR_SIZE))))) अणु
 		skcipher_request_set_tfm(&rctx->fallback_req, ctx->fallback);
 		skcipher_request_set_callback(&rctx->fallback_req,
 					      req->base.flags,
@@ -296,64 +297,64 @@ static int qce_skcipher_crypt(struct skcipher_request *req, int encrypt)
 					   req->dst, req->cryptlen, req->iv);
 		ret = encrypt ? crypto_skcipher_encrypt(&rctx->fallback_req) :
 				crypto_skcipher_decrypt(&rctx->fallback_req);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return tmpl->qce->async_req_enqueue(tmpl->qce, &req->base);
-}
+	वापस पंचांगpl->qce->async_req_enqueue(पंचांगpl->qce, &req->base);
+पूर्ण
 
-static int qce_skcipher_encrypt(struct skcipher_request *req)
-{
-	return qce_skcipher_crypt(req, 1);
-}
+अटल पूर्णांक qce_skcipher_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस qce_skcipher_crypt(req, 1);
+पूर्ण
 
-static int qce_skcipher_decrypt(struct skcipher_request *req)
-{
-	return qce_skcipher_crypt(req, 0);
-}
+अटल पूर्णांक qce_skcipher_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस qce_skcipher_crypt(req, 0);
+पूर्ण
 
-static int qce_skcipher_init(struct crypto_skcipher *tfm)
-{
+अटल पूर्णांक qce_skcipher_init(काष्ठा crypto_skcipher *tfm)
+अणु
 	/* take the size without the fallback skcipher_request at the end */
-	crypto_skcipher_set_reqsize(tfm, offsetof(struct qce_cipher_reqctx,
+	crypto_skcipher_set_reqsize(tfm, दुरत्व(काष्ठा qce_cipher_reqctx,
 						  fallback_req));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qce_skcipher_init_fallback(struct crypto_skcipher *tfm)
-{
-	struct qce_cipher_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक qce_skcipher_init_fallback(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा qce_cipher_ctx *ctx = crypto_skcipher_ctx(tfm);
 
 	ctx->fallback = crypto_alloc_skcipher(crypto_tfm_alg_name(&tfm->base),
 					      0, CRYPTO_ALG_NEED_FALLBACK);
-	if (IS_ERR(ctx->fallback))
-		return PTR_ERR(ctx->fallback);
+	अगर (IS_ERR(ctx->fallback))
+		वापस PTR_ERR(ctx->fallback);
 
-	crypto_skcipher_set_reqsize(tfm, sizeof(struct qce_cipher_reqctx) +
+	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा qce_cipher_reqctx) +
 					 crypto_skcipher_reqsize(ctx->fallback));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qce_skcipher_exit(struct crypto_skcipher *tfm)
-{
-	struct qce_cipher_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल व्योम qce_skcipher_निकास(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा qce_cipher_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	crypto_free_skcipher(ctx->fallback);
-}
+	crypto_मुक्त_skcipher(ctx->fallback);
+पूर्ण
 
-struct qce_skcipher_def {
-	unsigned long flags;
-	const char *name;
-	const char *drv_name;
-	unsigned int blocksize;
-	unsigned int chunksize;
-	unsigned int ivsize;
-	unsigned int min_keysize;
-	unsigned int max_keysize;
-};
+काष्ठा qce_skcipher_def अणु
+	अचिन्हित दीर्घ flags;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *drv_name;
+	अचिन्हित पूर्णांक blocksize;
+	अचिन्हित पूर्णांक chunksize;
+	अचिन्हित पूर्णांक ivsize;
+	अचिन्हित पूर्णांक min_keysize;
+	अचिन्हित पूर्णांक max_keysize;
+पूर्ण;
 
-static const struct qce_skcipher_def skcipher_def[] = {
-	{
+अटल स्थिर काष्ठा qce_skcipher_def skcipher_def[] = अणु
+	अणु
 		.flags		= QCE_ALG_AES | QCE_MODE_ECB,
 		.name		= "ecb(aes)",
 		.drv_name	= "ecb-aes-qce",
@@ -361,8 +362,8 @@ static const struct qce_skcipher_def skcipher_def[] = {
 		.ivsize		= 0,
 		.min_keysize	= AES_MIN_KEY_SIZE,
 		.max_keysize	= AES_MAX_KEY_SIZE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.flags		= QCE_ALG_AES | QCE_MODE_CBC,
 		.name		= "cbc(aes)",
 		.drv_name	= "cbc-aes-qce",
@@ -370,8 +371,8 @@ static const struct qce_skcipher_def skcipher_def[] = {
 		.ivsize		= AES_BLOCK_SIZE,
 		.min_keysize	= AES_MIN_KEY_SIZE,
 		.max_keysize	= AES_MAX_KEY_SIZE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.flags		= QCE_ALG_AES | QCE_MODE_CTR,
 		.name		= "ctr(aes)",
 		.drv_name	= "ctr-aes-qce",
@@ -380,8 +381,8 @@ static const struct qce_skcipher_def skcipher_def[] = {
 		.ivsize		= AES_BLOCK_SIZE,
 		.min_keysize	= AES_MIN_KEY_SIZE,
 		.max_keysize	= AES_MAX_KEY_SIZE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.flags		= QCE_ALG_AES | QCE_MODE_XTS,
 		.name		= "xts(aes)",
 		.drv_name	= "xts-aes-qce",
@@ -389,8 +390,8 @@ static const struct qce_skcipher_def skcipher_def[] = {
 		.ivsize		= AES_BLOCK_SIZE,
 		.min_keysize	= AES_MIN_KEY_SIZE * 2,
 		.max_keysize	= AES_MAX_KEY_SIZE * 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		.flags		= QCE_ALG_DES | QCE_MODE_ECB,
 		.name		= "ecb(des)",
 		.drv_name	= "ecb-des-qce",
@@ -398,8 +399,8 @@ static const struct qce_skcipher_def skcipher_def[] = {
 		.ivsize		= 0,
 		.min_keysize	= DES_KEY_SIZE,
 		.max_keysize	= DES_KEY_SIZE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.flags		= QCE_ALG_DES | QCE_MODE_CBC,
 		.name		= "cbc(des)",
 		.drv_name	= "cbc-des-qce",
@@ -407,8 +408,8 @@ static const struct qce_skcipher_def skcipher_def[] = {
 		.ivsize		= DES_BLOCK_SIZE,
 		.min_keysize	= DES_KEY_SIZE,
 		.max_keysize	= DES_KEY_SIZE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.flags		= QCE_ALG_3DES | QCE_MODE_ECB,
 		.name		= "ecb(des3_ede)",
 		.drv_name	= "ecb-3des-qce",
@@ -416,8 +417,8 @@ static const struct qce_skcipher_def skcipher_def[] = {
 		.ivsize		= 0,
 		.min_keysize	= DES3_EDE_KEY_SIZE,
 		.max_keysize	= DES3_EDE_KEY_SIZE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.flags		= QCE_ALG_3DES | QCE_MODE_CBC,
 		.name		= "cbc(des3_ede)",
 		.drv_name	= "cbc-3des-qce",
@@ -425,24 +426,24 @@ static const struct qce_skcipher_def skcipher_def[] = {
 		.ivsize		= DES3_EDE_BLOCK_SIZE,
 		.min_keysize	= DES3_EDE_KEY_SIZE,
 		.max_keysize	= DES3_EDE_KEY_SIZE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int qce_skcipher_register_one(const struct qce_skcipher_def *def,
-				       struct qce_device *qce)
-{
-	struct qce_alg_template *tmpl;
-	struct skcipher_alg *alg;
-	int ret;
+अटल पूर्णांक qce_skcipher_रेजिस्टर_one(स्थिर काष्ठा qce_skcipher_def *def,
+				       काष्ठा qce_device *qce)
+अणु
+	काष्ठा qce_alg_ढाँचा *पंचांगpl;
+	काष्ठा skcipher_alg *alg;
+	पूर्णांक ret;
 
-	tmpl = kzalloc(sizeof(*tmpl), GFP_KERNEL);
-	if (!tmpl)
-		return -ENOMEM;
+	पंचांगpl = kzalloc(माप(*पंचांगpl), GFP_KERNEL);
+	अगर (!पंचांगpl)
+		वापस -ENOMEM;
 
-	alg = &tmpl->alg.skcipher;
+	alg = &पंचांगpl->alg.skcipher;
 
-	snprintf(alg->base.cra_name, CRYPTO_MAX_ALG_NAME, "%s", def->name);
-	snprintf(alg->base.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s",
+	snम_लिखो(alg->base.cra_name, CRYPTO_MAX_ALG_NAME, "%s", def->name);
+	snम_लिखो(alg->base.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s",
 		 def->drv_name);
 
 	alg->base.cra_blocksize		= def->blocksize;
@@ -460,65 +461,65 @@ static int qce_skcipher_register_one(const struct qce_skcipher_def *def,
 	alg->base.cra_flags		= CRYPTO_ALG_ASYNC |
 					  CRYPTO_ALG_ALLOCATES_MEMORY |
 					  CRYPTO_ALG_KERN_DRIVER_ONLY;
-	alg->base.cra_ctxsize		= sizeof(struct qce_cipher_ctx);
+	alg->base.cra_ctxsize		= माप(काष्ठा qce_cipher_ctx);
 	alg->base.cra_alignmask		= 0;
 	alg->base.cra_module		= THIS_MODULE;
 
-	if (IS_AES(def->flags)) {
+	अगर (IS_AES(def->flags)) अणु
 		alg->base.cra_flags    |= CRYPTO_ALG_NEED_FALLBACK;
 		alg->init		= qce_skcipher_init_fallback;
-		alg->exit		= qce_skcipher_exit;
-	} else {
+		alg->निकास		= qce_skcipher_निकास;
+	पूर्ण अन्यथा अणु
 		alg->init		= qce_skcipher_init;
-	}
+	पूर्ण
 
-	INIT_LIST_HEAD(&tmpl->entry);
-	tmpl->crypto_alg_type = CRYPTO_ALG_TYPE_SKCIPHER;
-	tmpl->alg_flags = def->flags;
-	tmpl->qce = qce;
+	INIT_LIST_HEAD(&पंचांगpl->entry);
+	पंचांगpl->crypto_alg_type = CRYPTO_ALG_TYPE_SKCIPHER;
+	पंचांगpl->alg_flags = def->flags;
+	पंचांगpl->qce = qce;
 
-	ret = crypto_register_skcipher(alg);
-	if (ret) {
-		kfree(tmpl);
+	ret = crypto_रेजिस्टर_skcipher(alg);
+	अगर (ret) अणु
+		kमुक्त(पंचांगpl);
 		dev_err(qce->dev, "%s registration failed\n", alg->base.cra_name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	list_add_tail(&tmpl->entry, &skcipher_algs);
+	list_add_tail(&पंचांगpl->entry, &skcipher_algs);
 	dev_dbg(qce->dev, "%s is registered\n", alg->base.cra_name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qce_skcipher_unregister(struct qce_device *qce)
-{
-	struct qce_alg_template *tmpl, *n;
+अटल व्योम qce_skcipher_unरेजिस्टर(काष्ठा qce_device *qce)
+अणु
+	काष्ठा qce_alg_ढाँचा *पंचांगpl, *n;
 
-	list_for_each_entry_safe(tmpl, n, &skcipher_algs, entry) {
-		crypto_unregister_skcipher(&tmpl->alg.skcipher);
-		list_del(&tmpl->entry);
-		kfree(tmpl);
-	}
-}
+	list_क्रम_each_entry_safe(पंचांगpl, n, &skcipher_algs, entry) अणु
+		crypto_unरेजिस्टर_skcipher(&पंचांगpl->alg.skcipher);
+		list_del(&पंचांगpl->entry);
+		kमुक्त(पंचांगpl);
+	पूर्ण
+पूर्ण
 
-static int qce_skcipher_register(struct qce_device *qce)
-{
-	int ret, i;
+अटल पूर्णांक qce_skcipher_रेजिस्टर(काष्ठा qce_device *qce)
+अणु
+	पूर्णांक ret, i;
 
-	for (i = 0; i < ARRAY_SIZE(skcipher_def); i++) {
-		ret = qce_skcipher_register_one(&skcipher_def[i], qce);
-		if (ret)
-			goto err;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(skcipher_def); i++) अणु
+		ret = qce_skcipher_रेजिस्टर_one(&skcipher_def[i], qce);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	qce_skcipher_unregister(qce);
-	return ret;
-}
+	qce_skcipher_unरेजिस्टर(qce);
+	वापस ret;
+पूर्ण
 
-const struct qce_algo_ops skcipher_ops = {
+स्थिर काष्ठा qce_algo_ops skcipher_ops = अणु
 	.type = CRYPTO_ALG_TYPE_SKCIPHER,
-	.register_algs = qce_skcipher_register,
-	.unregister_algs = qce_skcipher_unregister,
+	.रेजिस्टर_algs = qce_skcipher_रेजिस्टर,
+	.unरेजिस्टर_algs = qce_skcipher_unरेजिस्टर,
 	.async_req_handle = qce_skcipher_async_req_handle,
-};
+पूर्ण;

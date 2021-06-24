@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2009, Microsoft Corporation.
  *
@@ -6,384 +7,384 @@
  *   Haiyang Zhang <haiyangz@microsoft.com>
  *   Hank Janssen  <hjanssen@microsoft.com>
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/atomic.h>
-#include <linux/ethtool.h>
-#include <linux/module.h>
-#include <linux/highmem.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/inetdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/pci.h>
-#include <linux/skbuff.h>
-#include <linux/if_vlan.h>
-#include <linux/in.h>
-#include <linux/slab.h>
-#include <linux/rtnetlink.h>
-#include <linux/netpoll.h>
-#include <linux/bpf.h>
+#समावेश <linux/init.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/module.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/in.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/netpoll.h>
+#समावेश <linux/bpf.h>
 
-#include <net/arp.h>
-#include <net/route.h>
-#include <net/sock.h>
-#include <net/pkt_sched.h>
-#include <net/checksum.h>
-#include <net/ip6_checksum.h>
+#समावेश <net/arp.h>
+#समावेश <net/route.h>
+#समावेश <net/sock.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/checksum.h>
+#समावेश <net/ip6_checksum.h>
 
-#include "hyperv_net.h"
+#समावेश "hyperv_net.h"
 
-#define RING_SIZE_MIN	64
+#घोषणा RING_SIZE_MIN	64
 
-#define LINKCHANGE_INT (2 * HZ)
-#define VF_TAKEOVER_INT (HZ / 10)
+#घोषणा LINKCHANGE_INT (2 * HZ)
+#घोषणा VF_TAKEOVER_INT (HZ / 10)
 
-static unsigned int ring_size __ro_after_init = 128;
-module_param(ring_size, uint, 0444);
+अटल अचिन्हित पूर्णांक ring_size __ro_after_init = 128;
+module_param(ring_size, uपूर्णांक, 0444);
 MODULE_PARM_DESC(ring_size, "Ring buffer size (# of pages)");
-unsigned int netvsc_ring_bytes __ro_after_init;
+अचिन्हित पूर्णांक netvsc_ring_bytes __ro_after_init;
 
-static const u32 default_msg = NETIF_MSG_DRV | NETIF_MSG_PROBE |
+अटल स्थिर u32 शेष_msg = NETIF_MSG_DRV | NETIF_MSG_PROBE |
 				NETIF_MSG_LINK | NETIF_MSG_IFUP |
 				NETIF_MSG_IFDOWN | NETIF_MSG_RX_ERR |
 				NETIF_MSG_TX_ERR;
 
-static int debug = -1;
-module_param(debug, int, 0444);
+अटल पूर्णांक debug = -1;
+module_param(debug, पूर्णांक, 0444);
 MODULE_PARM_DESC(debug, "Debug level (0=none,...,16=all)");
 
-static LIST_HEAD(netvsc_dev_list);
+अटल LIST_HEAD(netvsc_dev_list);
 
-static void netvsc_change_rx_flags(struct net_device *net, int change)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(net);
-	struct net_device *vf_netdev = rtnl_dereference(ndev_ctx->vf_netdev);
-	int inc;
+अटल व्योम netvsc_change_rx_flags(काष्ठा net_device *net, पूर्णांक change)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(net);
+	काष्ठा net_device *vf_netdev = rtnl_dereference(ndev_ctx->vf_netdev);
+	पूर्णांक inc;
 
-	if (!vf_netdev)
-		return;
+	अगर (!vf_netdev)
+		वापस;
 
-	if (change & IFF_PROMISC) {
+	अगर (change & IFF_PROMISC) अणु
 		inc = (net->flags & IFF_PROMISC) ? 1 : -1;
 		dev_set_promiscuity(vf_netdev, inc);
-	}
+	पूर्ण
 
-	if (change & IFF_ALLMULTI) {
+	अगर (change & IFF_ALLMULTI) अणु
 		inc = (net->flags & IFF_ALLMULTI) ? 1 : -1;
 		dev_set_allmulti(vf_netdev, inc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void netvsc_set_rx_mode(struct net_device *net)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(net);
-	struct net_device *vf_netdev;
-	struct netvsc_device *nvdev;
+अटल व्योम netvsc_set_rx_mode(काष्ठा net_device *net)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(net);
+	काष्ठा net_device *vf_netdev;
+	काष्ठा netvsc_device *nvdev;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	vf_netdev = rcu_dereference(ndev_ctx->vf_netdev);
-	if (vf_netdev) {
+	अगर (vf_netdev) अणु
 		dev_uc_sync(vf_netdev, net);
 		dev_mc_sync(vf_netdev, net);
-	}
+	पूर्ण
 
 	nvdev = rcu_dereference(ndev_ctx->nvdev);
-	if (nvdev)
+	अगर (nvdev)
 		rndis_filter_update(nvdev);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void netvsc_tx_enable(struct netvsc_device *nvscdev,
-			     struct net_device *ndev)
-{
+अटल व्योम netvsc_tx_enable(काष्ठा netvsc_device *nvscdev,
+			     काष्ठा net_device *ndev)
+अणु
 	nvscdev->tx_disable = false;
 	virt_wmb(); /* ensure queue wake up mechanism is on */
 
-	netif_tx_wake_all_queues(ndev);
-}
+	netअगर_tx_wake_all_queues(ndev);
+पूर्ण
 
-static int netvsc_open(struct net_device *net)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(net);
-	struct net_device *vf_netdev = rtnl_dereference(ndev_ctx->vf_netdev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndev_ctx->nvdev);
-	struct rndis_device *rdev;
-	int ret = 0;
+अटल पूर्णांक netvsc_खोलो(काष्ठा net_device *net)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(net);
+	काष्ठा net_device *vf_netdev = rtnl_dereference(ndev_ctx->vf_netdev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndev_ctx->nvdev);
+	काष्ठा rndis_device *rdev;
+	पूर्णांक ret = 0;
 
-	netif_carrier_off(net);
+	netअगर_carrier_off(net);
 
 	/* Open up the device */
-	ret = rndis_filter_open(nvdev);
-	if (ret != 0) {
+	ret = rndis_filter_खोलो(nvdev);
+	अगर (ret != 0) अणु
 		netdev_err(net, "unable to open device (ret %d).\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	rdev = nvdev->extension;
-	if (!rdev->link_state) {
-		netif_carrier_on(net);
+	अगर (!rdev->link_state) अणु
+		netअगर_carrier_on(net);
 		netvsc_tx_enable(nvdev, net);
-	}
+	पूर्ण
 
-	if (vf_netdev) {
+	अगर (vf_netdev) अणु
 		/* Setting synthetic device up transparently sets
-		 * slave as up. If open fails, then slave will be
+		 * slave as up. If खोलो fails, then slave will be
 		 * still be offline (and not used).
 		 */
-		ret = dev_open(vf_netdev, NULL);
-		if (ret)
+		ret = dev_खोलो(vf_netdev, शून्य);
+		अगर (ret)
 			netdev_warn(net,
 				    "unable to open slave: %s: %d\n",
 				    vf_netdev->name, ret);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int netvsc_wait_until_empty(struct netvsc_device *nvdev)
-{
-	unsigned int retry = 0;
-	int i;
+अटल पूर्णांक netvsc_रुको_until_empty(काष्ठा netvsc_device *nvdev)
+अणु
+	अचिन्हित पूर्णांक retry = 0;
+	पूर्णांक i;
 
-	/* Ensure pending bytes in ring are read */
-	for (;;) {
-		u32 aread = 0;
+	/* Ensure pending bytes in ring are पढ़ो */
+	क्रम (;;) अणु
+		u32 aपढ़ो = 0;
 
-		for (i = 0; i < nvdev->num_chn; i++) {
-			struct vmbus_channel *chn
+		क्रम (i = 0; i < nvdev->num_chn; i++) अणु
+			काष्ठा vmbus_channel *chn
 				= nvdev->chan_table[i].channel;
 
-			if (!chn)
-				continue;
+			अगर (!chn)
+				जारी;
 
 			/* make sure receive not running now */
 			napi_synchronize(&nvdev->chan_table[i].napi);
 
-			aread = hv_get_bytes_to_read(&chn->inbound);
-			if (aread)
-				break;
+			aपढ़ो = hv_get_bytes_to_पढ़ो(&chn->inbound);
+			अगर (aपढ़ो)
+				अवरोध;
 
-			aread = hv_get_bytes_to_read(&chn->outbound);
-			if (aread)
-				break;
-		}
+			aपढ़ो = hv_get_bytes_to_पढ़ो(&chn->outbound);
+			अगर (aपढ़ो)
+				अवरोध;
+		पूर्ण
 
-		if (aread == 0)
-			return 0;
+		अगर (aपढ़ो == 0)
+			वापस 0;
 
-		if (++retry > RETRY_MAX)
-			return -ETIMEDOUT;
+		अगर (++retry > RETRY_MAX)
+			वापस -ETIMEDOUT;
 
 		usleep_range(RETRY_US_LO, RETRY_US_HI);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void netvsc_tx_disable(struct netvsc_device *nvscdev,
-			      struct net_device *ndev)
-{
-	if (nvscdev) {
+अटल व्योम netvsc_tx_disable(काष्ठा netvsc_device *nvscdev,
+			      काष्ठा net_device *ndev)
+अणु
+	अगर (nvscdev) अणु
 		nvscdev->tx_disable = true;
 		virt_wmb(); /* ensure txq will not wake up after stop */
-	}
+	पूर्ण
 
-	netif_tx_disable(ndev);
-}
+	netअगर_tx_disable(ndev);
+पूर्ण
 
-static int netvsc_close(struct net_device *net)
-{
-	struct net_device_context *net_device_ctx = netdev_priv(net);
-	struct net_device *vf_netdev
+अटल पूर्णांक netvsc_बंद(काष्ठा net_device *net)
+अणु
+	काष्ठा net_device_context *net_device_ctx = netdev_priv(net);
+	काष्ठा net_device *vf_netdev
 		= rtnl_dereference(net_device_ctx->vf_netdev);
-	struct netvsc_device *nvdev = rtnl_dereference(net_device_ctx->nvdev);
-	int ret;
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(net_device_ctx->nvdev);
+	पूर्णांक ret;
 
 	netvsc_tx_disable(nvdev, net);
 
-	/* No need to close rndis filter if it is removed already */
-	if (!nvdev)
-		return 0;
+	/* No need to बंद rndis filter अगर it is हटाओd alपढ़ोy */
+	अगर (!nvdev)
+		वापस 0;
 
-	ret = rndis_filter_close(nvdev);
-	if (ret != 0) {
+	ret = rndis_filter_बंद(nvdev);
+	अगर (ret != 0) अणु
 		netdev_err(net, "unable to close device (ret %d).\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = netvsc_wait_until_empty(nvdev);
-	if (ret)
+	ret = netvsc_रुको_until_empty(nvdev);
+	अगर (ret)
 		netdev_err(net, "Ring buffer not empty after closing rndis\n");
 
-	if (vf_netdev)
-		dev_close(vf_netdev);
+	अगर (vf_netdev)
+		dev_बंद(vf_netdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void *init_ppi_data(struct rndis_message *msg,
+अटल अंतरभूत व्योम *init_ppi_data(काष्ठा rndis_message *msg,
 				  u32 ppi_size, u32 pkt_type)
-{
-	struct rndis_packet *rndis_pkt = &msg->msg.pkt;
-	struct rndis_per_packet_info *ppi;
+अणु
+	काष्ठा rndis_packet *rndis_pkt = &msg->msg.pkt;
+	काष्ठा rndis_per_packet_info *ppi;
 
 	rndis_pkt->data_offset += ppi_size;
-	ppi = (void *)rndis_pkt + rndis_pkt->per_pkt_info_offset
+	ppi = (व्योम *)rndis_pkt + rndis_pkt->per_pkt_info_offset
 		+ rndis_pkt->per_pkt_info_len;
 
 	ppi->size = ppi_size;
 	ppi->type = pkt_type;
-	ppi->internal = 0;
-	ppi->ppi_offset = sizeof(struct rndis_per_packet_info);
+	ppi->पूर्णांकernal = 0;
+	ppi->ppi_offset = माप(काष्ठा rndis_per_packet_info);
 
 	rndis_pkt->per_pkt_info_len += ppi_size;
 
-	return ppi + 1;
-}
+	वापस ppi + 1;
+पूर्ण
 
-/* Azure hosts don't support non-TCP port numbers in hashing for fragmented
+/* Azure hosts करोn't support non-TCP port numbers in hashing क्रम fragmented
  * packets. We can use ethtool to change UDP hash level when necessary.
  */
-static inline u32 netvsc_get_hash(
-	struct sk_buff *skb,
-	const struct net_device_context *ndc)
-{
-	struct flow_keys flow;
+अटल अंतरभूत u32 netvsc_get_hash(
+	काष्ठा sk_buff *skb,
+	स्थिर काष्ठा net_device_context *ndc)
+अणु
+	काष्ठा flow_keys flow;
 	u32 hash, pkt_proto = 0;
-	static u32 hashrnd __read_mostly;
+	अटल u32 hashrnd __पढ़ो_mostly;
 
-	net_get_random_once(&hashrnd, sizeof(hashrnd));
+	net_get_अक्रमom_once(&hashrnd, माप(hashrnd));
 
-	if (!skb_flow_dissect_flow_keys(skb, &flow, 0))
-		return 0;
+	अगर (!skb_flow_dissect_flow_keys(skb, &flow, 0))
+		वापस 0;
 
-	switch (flow.basic.ip_proto) {
-	case IPPROTO_TCP:
-		if (flow.basic.n_proto == htons(ETH_P_IP))
+	चयन (flow.basic.ip_proto) अणु
+	हाल IPPROTO_TCP:
+		अगर (flow.basic.n_proto == htons(ETH_P_IP))
 			pkt_proto = HV_TCP4_L4HASH;
-		else if (flow.basic.n_proto == htons(ETH_P_IPV6))
+		अन्यथा अगर (flow.basic.n_proto == htons(ETH_P_IPV6))
 			pkt_proto = HV_TCP6_L4HASH;
 
-		break;
+		अवरोध;
 
-	case IPPROTO_UDP:
-		if (flow.basic.n_proto == htons(ETH_P_IP))
+	हाल IPPROTO_UDP:
+		अगर (flow.basic.n_proto == htons(ETH_P_IP))
 			pkt_proto = HV_UDP4_L4HASH;
-		else if (flow.basic.n_proto == htons(ETH_P_IPV6))
+		अन्यथा अगर (flow.basic.n_proto == htons(ETH_P_IPV6))
 			pkt_proto = HV_UDP6_L4HASH;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (pkt_proto & ndc->l4_hash) {
-		return skb_get_hash(skb);
-	} else {
-		if (flow.basic.n_proto == htons(ETH_P_IP))
+	अगर (pkt_proto & ndc->l4_hash) अणु
+		वापस skb_get_hash(skb);
+	पूर्ण अन्यथा अणु
+		अगर (flow.basic.n_proto == htons(ETH_P_IP))
 			hash = jhash2((u32 *)&flow.addrs.v4addrs, 2, hashrnd);
-		else if (flow.basic.n_proto == htons(ETH_P_IPV6))
+		अन्यथा अगर (flow.basic.n_proto == htons(ETH_P_IPV6))
 			hash = jhash2((u32 *)&flow.addrs.v6addrs, 8, hashrnd);
-		else
-			return 0;
+		अन्यथा
+			वापस 0;
 
 		__skb_set_sw_hash(skb, hash, false);
-	}
+	पूर्ण
 
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
-static inline int netvsc_get_tx_queue(struct net_device *ndev,
-				      struct sk_buff *skb, int old_idx)
-{
-	const struct net_device_context *ndc = netdev_priv(ndev);
-	struct sock *sk = skb->sk;
-	int q_idx;
+अटल अंतरभूत पूर्णांक netvsc_get_tx_queue(काष्ठा net_device *ndev,
+				      काष्ठा sk_buff *skb, पूर्णांक old_idx)
+अणु
+	स्थिर काष्ठा net_device_context *ndc = netdev_priv(ndev);
+	काष्ठा sock *sk = skb->sk;
+	पूर्णांक q_idx;
 
 	q_idx = ndc->tx_table[netvsc_get_hash(skb, ndc) &
 			      (VRSS_SEND_TAB_SIZE - 1)];
 
 	/* If queue index changed record the new value */
-	if (q_idx != old_idx &&
-	    sk && sk_fullsock(sk) && rcu_access_pointer(sk->sk_dst_cache))
+	अगर (q_idx != old_idx &&
+	    sk && sk_fullsock(sk) && rcu_access_poपूर्णांकer(sk->sk_dst_cache))
 		sk_tx_queue_set(sk, q_idx);
 
-	return q_idx;
-}
+	वापस q_idx;
+पूर्ण
 
 /*
- * Select queue for transmit.
+ * Select queue क्रम transmit.
  *
- * If a valid queue has already been assigned, then use that.
+ * If a valid queue has alपढ़ोy been asचिन्हित, then use that.
  * Otherwise compute tx queue based on hash and the send table.
  *
- * This is basically similar to default (netdev_pick_tx) with the added step
- * of using the host send_table when no other queue has been assigned.
+ * This is basically similar to शेष (netdev_pick_tx) with the added step
+ * of using the host send_table when no other queue has been asचिन्हित.
  *
  * TODO support XPS - but get_xps_queue not exported
  */
-static u16 netvsc_pick_tx(struct net_device *ndev, struct sk_buff *skb)
-{
-	int q_idx = sk_tx_queue_get(skb->sk);
+अटल u16 netvsc_pick_tx(काष्ठा net_device *ndev, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक q_idx = sk_tx_queue_get(skb->sk);
 
-	if (q_idx < 0 || skb->ooo_okay || q_idx >= ndev->real_num_tx_queues) {
-		/* If forwarding a packet, we use the recorded queue when
-		 * available for better cache locality.
+	अगर (q_idx < 0 || skb->ooo_okay || q_idx >= ndev->real_num_tx_queues) अणु
+		/* If क्रमwarding a packet, we use the recorded queue when
+		 * available क्रम better cache locality.
 		 */
-		if (skb_rx_queue_recorded(skb))
+		अगर (skb_rx_queue_recorded(skb))
 			q_idx = skb_get_rx_queue(skb);
-		else
+		अन्यथा
 			q_idx = netvsc_get_tx_queue(ndev, skb, q_idx);
-	}
+	पूर्ण
 
-	return q_idx;
-}
+	वापस q_idx;
+पूर्ण
 
-static u16 netvsc_select_queue(struct net_device *ndev, struct sk_buff *skb,
-			       struct net_device *sb_dev)
-{
-	struct net_device_context *ndc = netdev_priv(ndev);
-	struct net_device *vf_netdev;
+अटल u16 netvsc_select_queue(काष्ठा net_device *ndev, काष्ठा sk_buff *skb,
+			       काष्ठा net_device *sb_dev)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(ndev);
+	काष्ठा net_device *vf_netdev;
 	u16 txq;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	vf_netdev = rcu_dereference(ndc->vf_netdev);
-	if (vf_netdev) {
-		const struct net_device_ops *vf_ops = vf_netdev->netdev_ops;
+	अगर (vf_netdev) अणु
+		स्थिर काष्ठा net_device_ops *vf_ops = vf_netdev->netdev_ops;
 
-		if (vf_ops->ndo_select_queue)
-			txq = vf_ops->ndo_select_queue(vf_netdev, skb, sb_dev);
-		else
-			txq = netdev_pick_tx(vf_netdev, skb, NULL);
+		अगर (vf_ops->nकरो_select_queue)
+			txq = vf_ops->nकरो_select_queue(vf_netdev, skb, sb_dev);
+		अन्यथा
+			txq = netdev_pick_tx(vf_netdev, skb, शून्य);
 
 		/* Record the queue selected by VF so that it can be
-		 * used for common case where VF has more queues than
+		 * used क्रम common हाल where VF has more queues than
 		 * the synthetic device.
 		 */
 		qdisc_skb_cb(skb)->slave_dev_queue_mapping = txq;
-	} else {
+	पूर्ण अन्यथा अणु
 		txq = netvsc_pick_tx(ndev, skb);
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	while (txq >= ndev->real_num_tx_queues)
+	जबतक (txq >= ndev->real_num_tx_queues)
 		txq -= ndev->real_num_tx_queues;
 
-	return txq;
-}
+	वापस txq;
+पूर्ण
 
-static u32 fill_pg_buf(unsigned long hvpfn, u32 offset, u32 len,
-		       struct hv_page_buffer *pb)
-{
-	int j = 0;
+अटल u32 fill_pg_buf(अचिन्हित दीर्घ hvpfn, u32 offset, u32 len,
+		       काष्ठा hv_page_buffer *pb)
+अणु
+	पूर्णांक j = 0;
 
 	hvpfn += offset >> HV_HYP_PAGE_SHIFT;
 	offset = offset & ~HV_HYP_PAGE_MASK;
 
-	while (len > 0) {
-		unsigned long bytes;
+	जबतक (len > 0) अणु
+		अचिन्हित दीर्घ bytes;
 
 		bytes = HV_HYP_PAGE_SIZE - offset;
-		if (bytes > len)
+		अगर (bytes > len)
 			bytes = len;
 		pb[j].pfn = hvpfn;
 		pb[j].offset = offset;
@@ -392,24 +393,24 @@ static u32 fill_pg_buf(unsigned long hvpfn, u32 offset, u32 len,
 		offset += bytes;
 		len -= bytes;
 
-		if (offset == HV_HYP_PAGE_SIZE && len) {
+		अगर (offset == HV_HYP_PAGE_SIZE && len) अणु
 			hvpfn++;
 			offset = 0;
 			j++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return j + 1;
-}
+	वापस j + 1;
+पूर्ण
 
-static u32 init_page_array(void *hdr, u32 len, struct sk_buff *skb,
-			   struct hv_netvsc_packet *packet,
-			   struct hv_page_buffer *pb)
-{
+अटल u32 init_page_array(व्योम *hdr, u32 len, काष्ठा sk_buff *skb,
+			   काष्ठा hv_netvsc_packet *packet,
+			   काष्ठा hv_page_buffer *pb)
+अणु
 	u32 slots_used = 0;
-	char *data = skb->data;
-	int frags = skb_shinfo(skb)->nr_frags;
-	int i;
+	अक्षर *data = skb->data;
+	पूर्णांक frags = skb_shinfo(skb)->nr_frags;
+	पूर्णांक i;
 
 	/* The packet is laid out thus:
 	 * 1. hdr: RNDIS header and PPI
@@ -429,118 +430,118 @@ static u32 init_page_array(void *hdr, u32 len, struct sk_buff *skb,
 				  skb_headlen(skb),
 				  &pb[slots_used]);
 
-	for (i = 0; i < frags; i++) {
+	क्रम (i = 0; i < frags; i++) अणु
 		skb_frag_t *frag = skb_shinfo(skb)->frags + i;
 
 		slots_used += fill_pg_buf(page_to_hvpfn(skb_frag_page(frag)),
 					  skb_frag_off(frag),
 					  skb_frag_size(frag),
 					  &pb[slots_used]);
-	}
-	return slots_used;
-}
+	पूर्ण
+	वापस slots_used;
+पूर्ण
 
-static int count_skb_frag_slots(struct sk_buff *skb)
-{
-	int i, frags = skb_shinfo(skb)->nr_frags;
-	int pages = 0;
+अटल पूर्णांक count_skb_frag_slots(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक i, frags = skb_shinfo(skb)->nr_frags;
+	पूर्णांक pages = 0;
 
-	for (i = 0; i < frags; i++) {
+	क्रम (i = 0; i < frags; i++) अणु
 		skb_frag_t *frag = skb_shinfo(skb)->frags + i;
-		unsigned long size = skb_frag_size(frag);
-		unsigned long offset = skb_frag_off(frag);
+		अचिन्हित दीर्घ size = skb_frag_size(frag);
+		अचिन्हित दीर्घ offset = skb_frag_off(frag);
 
 		/* Skip unused frames from start of page */
 		offset &= ~HV_HYP_PAGE_MASK;
 		pages += HVPFN_UP(offset + size);
-	}
-	return pages;
-}
+	पूर्ण
+	वापस pages;
+पूर्ण
 
-static int netvsc_get_slots(struct sk_buff *skb)
-{
-	char *data = skb->data;
-	unsigned int offset = offset_in_hvpage(data);
-	unsigned int len = skb_headlen(skb);
-	int slots;
-	int frag_slots;
+अटल पूर्णांक netvsc_get_slots(काष्ठा sk_buff *skb)
+अणु
+	अक्षर *data = skb->data;
+	अचिन्हित पूर्णांक offset = offset_in_hvpage(data);
+	अचिन्हित पूर्णांक len = skb_headlen(skb);
+	पूर्णांक slots;
+	पूर्णांक frag_slots;
 
 	slots = DIV_ROUND_UP(offset + len, HV_HYP_PAGE_SIZE);
 	frag_slots = count_skb_frag_slots(skb);
-	return slots + frag_slots;
-}
+	वापस slots + frag_slots;
+पूर्ण
 
-static u32 net_checksum_info(struct sk_buff *skb)
-{
-	if (skb->protocol == htons(ETH_P_IP)) {
-		struct iphdr *ip = ip_hdr(skb);
+अटल u32 net_checksum_info(काष्ठा sk_buff *skb)
+अणु
+	अगर (skb->protocol == htons(ETH_P_IP)) अणु
+		काष्ठा iphdr *ip = ip_hdr(skb);
 
-		if (ip->protocol == IPPROTO_TCP)
-			return TRANSPORT_INFO_IPV4_TCP;
-		else if (ip->protocol == IPPROTO_UDP)
-			return TRANSPORT_INFO_IPV4_UDP;
-	} else {
-		struct ipv6hdr *ip6 = ipv6_hdr(skb);
+		अगर (ip->protocol == IPPROTO_TCP)
+			वापस TRANSPORT_INFO_IPV4_TCP;
+		अन्यथा अगर (ip->protocol == IPPROTO_UDP)
+			वापस TRANSPORT_INFO_IPV4_UDP;
+	पूर्ण अन्यथा अणु
+		काष्ठा ipv6hdr *ip6 = ipv6_hdr(skb);
 
-		if (ip6->nexthdr == IPPROTO_TCP)
-			return TRANSPORT_INFO_IPV6_TCP;
-		else if (ip6->nexthdr == IPPROTO_UDP)
-			return TRANSPORT_INFO_IPV6_UDP;
-	}
+		अगर (ip6->nexthdr == IPPROTO_TCP)
+			वापस TRANSPORT_INFO_IPV6_TCP;
+		अन्यथा अगर (ip6->nexthdr == IPPROTO_UDP)
+			वापस TRANSPORT_INFO_IPV6_UDP;
+	पूर्ण
 
-	return TRANSPORT_INFO_NOT_IP;
-}
+	वापस TRANSPORT_INFO_NOT_IP;
+पूर्ण
 
 /* Send skb on the slave VF device. */
-static int netvsc_vf_xmit(struct net_device *net, struct net_device *vf_netdev,
-			  struct sk_buff *skb)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(net);
-	unsigned int len = skb->len;
-	int rc;
+अटल पूर्णांक netvsc_vf_xmit(काष्ठा net_device *net, काष्ठा net_device *vf_netdev,
+			  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(net);
+	अचिन्हित पूर्णांक len = skb->len;
+	पूर्णांक rc;
 
 	skb->dev = vf_netdev;
 	skb_record_rx_queue(skb, qdisc_skb_cb(skb)->slave_dev_queue_mapping);
 
 	rc = dev_queue_xmit(skb);
-	if (likely(rc == NET_XMIT_SUCCESS || rc == NET_XMIT_CN)) {
-		struct netvsc_vf_pcpu_stats *pcpu_stats
+	अगर (likely(rc == NET_XMIT_SUCCESS || rc == NET_XMIT_CN)) अणु
+		काष्ठा netvsc_vf_pcpu_stats *pcpu_stats
 			= this_cpu_ptr(ndev_ctx->vf_stats);
 
 		u64_stats_update_begin(&pcpu_stats->syncp);
 		pcpu_stats->tx_packets++;
 		pcpu_stats->tx_bytes += len;
 		u64_stats_update_end(&pcpu_stats->syncp);
-	} else {
+	पूर्ण अन्यथा अणु
 		this_cpu_inc(ndev_ctx->vf_stats->tx_dropped);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int netvsc_xmit(struct sk_buff *skb, struct net_device *net, bool xdp_tx)
-{
-	struct net_device_context *net_device_ctx = netdev_priv(net);
-	struct hv_netvsc_packet *packet = NULL;
-	int ret;
-	unsigned int num_data_pgs;
-	struct rndis_message *rndis_msg;
-	struct net_device *vf_netdev;
+अटल पूर्णांक netvsc_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *net, bool xdp_tx)
+अणु
+	काष्ठा net_device_context *net_device_ctx = netdev_priv(net);
+	काष्ठा hv_netvsc_packet *packet = शून्य;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक num_data_pgs;
+	काष्ठा rndis_message *rndis_msg;
+	काष्ठा net_device *vf_netdev;
 	u32 rndis_msg_size;
 	u32 hash;
-	struct hv_page_buffer pb[MAX_PAGE_BUFFER_COUNT];
+	काष्ठा hv_page_buffer pb[MAX_PAGE_BUFFER_COUNT];
 
 	/* If VF is present and up then redirect packets to it.
-	 * Skip the VF if it is marked down or has no carrier.
+	 * Skip the VF अगर it is marked करोwn or has no carrier.
 	 * If netpoll is in uses, then VF can not be used either.
 	 */
 	vf_netdev = rcu_dereference_bh(net_device_ctx->vf_netdev);
-	if (vf_netdev && netif_running(vf_netdev) &&
-	    netif_carrier_ok(vf_netdev) && !netpoll_tx_running(net) &&
+	अगर (vf_netdev && netअगर_running(vf_netdev) &&
+	    netअगर_carrier_ok(vf_netdev) && !netpoll_tx_running(net) &&
 	    net_device_ctx->data_path_is_vf)
-		return netvsc_vf_xmit(net, vf_netdev, skb);
+		वापस netvsc_vf_xmit(net, vf_netdev, skb);
 
-	/* We will atmost need two pages to describe the rndis
+	/* We will aपंचांगost need two pages to describe the rndis
 	 * header. We can only transmit MAX_PAGE_BUFFER_COUNT number
 	 * of pages in a single packet. If skb is scattered around
 	 * more pages we try linearizing it.
@@ -548,32 +549,32 @@ static int netvsc_xmit(struct sk_buff *skb, struct net_device *net, bool xdp_tx)
 
 	num_data_pgs = netvsc_get_slots(skb) + 2;
 
-	if (unlikely(num_data_pgs > MAX_PAGE_BUFFER_COUNT)) {
+	अगर (unlikely(num_data_pgs > MAX_PAGE_BUFFER_COUNT)) अणु
 		++net_device_ctx->eth_stats.tx_scattered;
 
-		if (skb_linearize(skb))
-			goto no_memory;
+		अगर (skb_linearize(skb))
+			जाओ no_memory;
 
 		num_data_pgs = netvsc_get_slots(skb) + 2;
-		if (num_data_pgs > MAX_PAGE_BUFFER_COUNT) {
+		अगर (num_data_pgs > MAX_PAGE_BUFFER_COUNT) अणु
 			++net_device_ctx->eth_stats.tx_too_big;
-			goto drop;
-		}
-	}
+			जाओ drop;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Place the rndis header in the skb head room and
-	 * the skb->cb will be used for hv_netvsc_packet
-	 * structure.
+	 * the skb->cb will be used क्रम hv_netvsc_packet
+	 * काष्ठाure.
 	 */
 	ret = skb_cow_head(skb, RNDIS_AND_PPI_SIZE);
-	if (ret)
-		goto no_memory;
+	अगर (ret)
+		जाओ no_memory;
 
-	/* Use the skb control buffer for building up the packet */
-	BUILD_BUG_ON(sizeof(struct hv_netvsc_packet) >
-			sizeof_field(struct sk_buff, cb));
-	packet = (struct hv_netvsc_packet *)skb->cb;
+	/* Use the skb control buffer क्रम building up the packet */
+	BUILD_BUG_ON(माप(काष्ठा hv_netvsc_packet) >
+			माप_field(काष्ठा sk_buff, cb));
+	packet = (काष्ठा hv_netvsc_packet *)skb->cb;
 
 	packet->q_idx = skb_get_queue_mapping(skb);
 
@@ -581,43 +582,43 @@ static int netvsc_xmit(struct sk_buff *skb, struct net_device *net, bool xdp_tx)
 	packet->total_bytes = skb->len;
 	packet->total_packets = 1;
 
-	rndis_msg = (struct rndis_message *)skb->head;
+	rndis_msg = (काष्ठा rndis_message *)skb->head;
 
 	/* Add the rndis header */
 	rndis_msg->ndis_msg_type = RNDIS_MSG_PACKET;
 	rndis_msg->msg_len = packet->total_data_buflen;
 
-	rndis_msg->msg.pkt = (struct rndis_packet) {
-		.data_offset = sizeof(struct rndis_packet),
+	rndis_msg->msg.pkt = (काष्ठा rndis_packet) अणु
+		.data_offset = माप(काष्ठा rndis_packet),
 		.data_len = packet->total_data_buflen,
-		.per_pkt_info_offset = sizeof(struct rndis_packet),
-	};
+		.per_pkt_info_offset = माप(काष्ठा rndis_packet),
+	पूर्ण;
 
-	rndis_msg_size = RNDIS_MESSAGE_SIZE(struct rndis_packet);
+	rndis_msg_size = RNDIS_MESSAGE_SIZE(काष्ठा rndis_packet);
 
 	hash = skb_get_hash_raw(skb);
-	if (hash != 0 && net->real_num_tx_queues > 1) {
+	अगर (hash != 0 && net->real_num_tx_queues > 1) अणु
 		u32 *hash_info;
 
 		rndis_msg_size += NDIS_HASH_PPI_SIZE;
 		hash_info = init_ppi_data(rndis_msg, NDIS_HASH_PPI_SIZE,
 					  NBL_HASH_VALUE);
 		*hash_info = hash;
-	}
+	पूर्ण
 
 	/* When using AF_PACKET we need to drop VLAN header from
 	 * the frame and update the SKB to allow the HOST OS
 	 * to transmit the 802.1Q packet
 	 */
-	if (skb->protocol == htons(ETH_P_8021Q)) {
+	अगर (skb->protocol == htons(ETH_P_8021Q)) अणु
 		u16 vlan_tci;
 
 		skb_reset_mac_header(skb);
-		if (eth_type_vlan(eth_hdr(skb)->h_proto)) {
-			if (unlikely(__skb_vlan_pop(skb, &vlan_tci) != 0)) {
+		अगर (eth_type_vlan(eth_hdr(skb)->h_proto)) अणु
+			अगर (unlikely(__skb_vlan_pop(skb, &vlan_tci) != 0)) अणु
 				++net_device_ctx->eth_stats.vlan_error;
-				goto drop;
-			}
+				जाओ drop;
+			पूर्ण
 
 			__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlan_tci);
 			/* Update the NDIS header pkt lengths */
@@ -625,11 +626,11 @@ static int netvsc_xmit(struct sk_buff *skb, struct net_device *net, bool xdp_tx)
 			packet->total_bytes -= VLAN_HLEN;
 			rndis_msg->msg_len = packet->total_data_buflen;
 			rndis_msg->msg.pkt.data_len = packet->total_data_buflen;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (skb_vlan_tag_present(skb)) {
-		struct ndis_pkt_8021q_info *vlan;
+	अगर (skb_vlan_tag_present(skb)) अणु
+		काष्ठा ndis_pkt_8021q_info *vlan;
 
 		rndis_msg_size += NDIS_VLAN_PPI_SIZE;
 		vlan = init_ppi_data(rndis_msg, NDIS_VLAN_PPI_SIZE,
@@ -639,10 +640,10 @@ static int netvsc_xmit(struct sk_buff *skb, struct net_device *net, bool xdp_tx)
 		vlan->vlanid = skb_vlan_tag_get_id(skb);
 		vlan->cfi = skb_vlan_tag_get_cfi(skb);
 		vlan->pri = skb_vlan_tag_get_prio(skb);
-	}
+	पूर्ण
 
-	if (skb_is_gso(skb)) {
-		struct ndis_tcp_lso_info *lso_info;
+	अगर (skb_is_gso(skb)) अणु
+		काष्ठा ndis_tcp_lso_info *lso_info;
 
 		rndis_msg_size += NDIS_LSO_PPI_SIZE;
 		lso_info = init_ppi_data(rndis_msg, NDIS_LSO_PPI_SIZE,
@@ -650,7 +651,7 @@ static int netvsc_xmit(struct sk_buff *skb, struct net_device *net, bool xdp_tx)
 
 		lso_info->value = 0;
 		lso_info->lso_v2_transmit.type = NDIS_TCP_LARGE_SEND_OFFLOAD_V2_TYPE;
-		if (skb->protocol == htons(ETH_P_IP)) {
+		अगर (skb->protocol == htons(ETH_P_IP)) अणु
 			lso_info->lso_v2_transmit.ip_version =
 				NDIS_TCP_LARGE_SEND_OFFLOAD_IPV4;
 			ip_hdr(skb)->tot_len = 0;
@@ -658,16 +659,16 @@ static int netvsc_xmit(struct sk_buff *skb, struct net_device *net, bool xdp_tx)
 			tcp_hdr(skb)->check =
 				~csum_tcpudp_magic(ip_hdr(skb)->saddr,
 						   ip_hdr(skb)->daddr, 0, IPPROTO_TCP, 0);
-		} else {
+		पूर्ण अन्यथा अणु
 			lso_info->lso_v2_transmit.ip_version =
 				NDIS_TCP_LARGE_SEND_OFFLOAD_IPV6;
 			tcp_v6_gso_csum_prep(skb);
-		}
+		पूर्ण
 		lso_info->lso_v2_transmit.tcp_header_offset = skb_transport_offset(skb);
 		lso_info->lso_v2_transmit.mss = skb_shinfo(skb)->gso_size;
-	} else if (skb->ip_summed == CHECKSUM_PARTIAL) {
-		if (net_checksum_info(skb) & net_device_ctx->tx_checksum_mask) {
-			struct ndis_tcp_ip_checksum_info *csum_info;
+	पूर्ण अन्यथा अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+		अगर (net_checksum_info(skb) & net_device_ctx->tx_checksum_mask) अणु
+			काष्ठा ndis_tcp_ip_checksum_info *csum_info;
 
 			rndis_msg_size += NDIS_CSUM_PPI_SIZE;
 			csum_info = init_ppi_data(rndis_msg, NDIS_CSUM_PPI_SIZE,
@@ -676,27 +677,27 @@ static int netvsc_xmit(struct sk_buff *skb, struct net_device *net, bool xdp_tx)
 			csum_info->value = 0;
 			csum_info->transmit.tcp_header_offset = skb_transport_offset(skb);
 
-			if (skb->protocol == htons(ETH_P_IP)) {
+			अगर (skb->protocol == htons(ETH_P_IP)) अणु
 				csum_info->transmit.is_ipv4 = 1;
 
-				if (ip_hdr(skb)->protocol == IPPROTO_TCP)
+				अगर (ip_hdr(skb)->protocol == IPPROTO_TCP)
 					csum_info->transmit.tcp_checksum = 1;
-				else
+				अन्यथा
 					csum_info->transmit.udp_checksum = 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				csum_info->transmit.is_ipv6 = 1;
 
-				if (ipv6_hdr(skb)->nexthdr == IPPROTO_TCP)
+				अगर (ipv6_hdr(skb)->nexthdr == IPPROTO_TCP)
 					csum_info->transmit.tcp_checksum = 1;
-				else
+				अन्यथा
 					csum_info->transmit.udp_checksum = 1;
-			}
-		} else {
-			/* Can't do offload of this type of checksum */
-			if (skb_checksum_help(skb))
-				goto drop;
-		}
-	}
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* Can't करो offload of this type of checksum */
+			अगर (skb_checksum_help(skb))
+				जाओ drop;
+		पूर्ण
+	पूर्ण
 
 	/* Start filling in the page buffers with the rndis hdr */
 	rndis_msg->msg_len += rndis_msg_size;
@@ -704,96 +705,96 @@ static int netvsc_xmit(struct sk_buff *skb, struct net_device *net, bool xdp_tx)
 	packet->page_buf_cnt = init_page_array(rndis_msg, rndis_msg_size,
 					       skb, packet, pb);
 
-	/* timestamp packet in software */
-	skb_tx_timestamp(skb);
+	/* बारtamp packet in software */
+	skb_tx_बारtamp(skb);
 
 	ret = netvsc_send(net, packet, rndis_msg, pb, skb, xdp_tx);
-	if (likely(ret == 0))
-		return NETDEV_TX_OK;
+	अगर (likely(ret == 0))
+		वापस NETDEV_TX_OK;
 
-	if (ret == -EAGAIN) {
+	अगर (ret == -EAGAIN) अणु
 		++net_device_ctx->eth_stats.tx_busy;
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (ret == -ENOSPC)
+	अगर (ret == -ENOSPC)
 		++net_device_ctx->eth_stats.tx_no_space;
 
 drop:
-	dev_kfree_skb_any(skb);
+	dev_kमुक्त_skb_any(skb);
 	net->stats.tx_dropped++;
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 no_memory:
 	++net_device_ctx->eth_stats.tx_no_memory;
-	goto drop;
-}
+	जाओ drop;
+पूर्ण
 
-static netdev_tx_t netvsc_start_xmit(struct sk_buff *skb,
-				     struct net_device *ndev)
-{
-	return netvsc_xmit(skb, ndev, false);
-}
+अटल netdev_tx_t netvsc_start_xmit(काष्ठा sk_buff *skb,
+				     काष्ठा net_device *ndev)
+अणु
+	वापस netvsc_xmit(skb, ndev, false);
+पूर्ण
 
 /*
- * netvsc_linkstatus_callback - Link up/down notification
+ * netvsc_linkstatus_callback - Link up/करोwn notअगरication
  */
-void netvsc_linkstatus_callback(struct net_device *net,
-				struct rndis_message *resp,
-				void *data, u32 data_buflen)
-{
-	struct rndis_indicate_status *indicate = &resp->msg.indicate_status;
-	struct net_device_context *ndev_ctx = netdev_priv(net);
-	struct netvsc_reconfig *event;
-	unsigned long flags;
+व्योम netvsc_linkstatus_callback(काष्ठा net_device *net,
+				काष्ठा rndis_message *resp,
+				व्योम *data, u32 data_buflen)
+अणु
+	काष्ठा rndis_indicate_status *indicate = &resp->msg.indicate_status;
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(net);
+	काष्ठा netvsc_reconfig *event;
+	अचिन्हित दीर्घ flags;
 
 	/* Ensure the packet is big enough to access its fields */
-	if (resp->msg_len - RNDIS_HEADER_SIZE < sizeof(struct rndis_indicate_status)) {
+	अगर (resp->msg_len - RNDIS_HEADER_SIZE < माप(काष्ठा rndis_indicate_status)) अणु
 		netdev_err(net, "invalid rndis_indicate_status packet, len: %u\n",
 			   resp->msg_len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Copy the RNDIS indicate status into nvchan->recv_buf */
-	memcpy(indicate, data + RNDIS_HEADER_SIZE, sizeof(*indicate));
+	/* Copy the RNDIS indicate status पूर्णांकo nvchan->recv_buf */
+	स_नकल(indicate, data + RNDIS_HEADER_SIZE, माप(*indicate));
 
 	/* Update the physical link speed when changing to another vSwitch */
-	if (indicate->status == RNDIS_STATUS_LINK_SPEED_CHANGE) {
+	अगर (indicate->status == RNDIS_STATUS_LINK_SPEED_CHANGE) अणु
 		u32 speed;
 
 		/* Validate status_buf_offset and status_buflen.
 		 *
 		 * Certain (pre-Fe) implementations of Hyper-V's vSwitch didn't account
-		 * for the status buffer field in resp->msg_len; perform the validation
+		 * क्रम the status buffer field in resp->msg_len; perक्रमm the validation
 		 * using data_buflen (>= resp->msg_len).
 		 */
-		if (indicate->status_buflen < sizeof(speed) ||
-		    indicate->status_buf_offset < sizeof(*indicate) ||
+		अगर (indicate->status_buflen < माप(speed) ||
+		    indicate->status_buf_offset < माप(*indicate) ||
 		    data_buflen - RNDIS_HEADER_SIZE < indicate->status_buf_offset ||
 		    data_buflen - RNDIS_HEADER_SIZE - indicate->status_buf_offset
-				< indicate->status_buflen) {
+				< indicate->status_buflen) अणु
 			netdev_err(net, "invalid rndis_indicate_status packet\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		speed = *(u32 *)(data + RNDIS_HEADER_SIZE + indicate->status_buf_offset) / 10000;
 		ndev_ctx->speed = speed;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Handle these link change statuses below */
-	if (indicate->status != RNDIS_STATUS_NETWORK_CHANGE &&
+	अगर (indicate->status != RNDIS_STATUS_NETWORK_CHANGE &&
 	    indicate->status != RNDIS_STATUS_MEDIA_CONNECT &&
 	    indicate->status != RNDIS_STATUS_MEDIA_DISCONNECT)
-		return;
+		वापस;
 
-	if (net->reg_state != NETREG_REGISTERED)
-		return;
+	अगर (net->reg_state != NETREG_REGISTERED)
+		वापस;
 
-	event = kzalloc(sizeof(*event), GFP_ATOMIC);
-	if (!event)
-		return;
+	event = kzalloc(माप(*event), GFP_ATOMIC);
+	अगर (!event)
+		वापस;
 	event->event = indicate->status;
 
 	spin_lock_irqsave(&ndev_ctx->lock, flags);
@@ -801,214 +802,214 @@ void netvsc_linkstatus_callback(struct net_device *net,
 	spin_unlock_irqrestore(&ndev_ctx->lock, flags);
 
 	schedule_delayed_work(&ndev_ctx->dwork, 0);
-}
+पूर्ण
 
-static void netvsc_xdp_xmit(struct sk_buff *skb, struct net_device *ndev)
-{
-	int rc;
+अटल व्योम netvsc_xdp_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
+अणु
+	पूर्णांक rc;
 
 	skb->queue_mapping = skb_get_rx_queue(skb);
 	__skb_push(skb, ETH_HLEN);
 
 	rc = netvsc_xmit(skb, ndev, true);
 
-	if (dev_xmit_complete(rc))
-		return;
+	अगर (dev_xmit_complete(rc))
+		वापस;
 
-	dev_kfree_skb_any(skb);
+	dev_kमुक्त_skb_any(skb);
 	ndev->stats.tx_dropped++;
-}
+पूर्ण
 
-static void netvsc_comp_ipcsum(struct sk_buff *skb)
-{
-	struct iphdr *iph = (struct iphdr *)skb->data;
+अटल व्योम netvsc_comp_ipcsum(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा iphdr *iph = (काष्ठा iphdr *)skb->data;
 
 	iph->check = 0;
 	iph->check = ip_fast_csum(iph, iph->ihl);
-}
+पूर्ण
 
-static struct sk_buff *netvsc_alloc_recv_skb(struct net_device *net,
-					     struct netvsc_channel *nvchan,
-					     struct xdp_buff *xdp)
-{
-	struct napi_struct *napi = &nvchan->napi;
-	const struct ndis_pkt_8021q_info *vlan = &nvchan->rsc.vlan;
-	const struct ndis_tcp_ip_checksum_info *csum_info =
+अटल काष्ठा sk_buff *netvsc_alloc_recv_skb(काष्ठा net_device *net,
+					     काष्ठा netvsc_channel *nvchan,
+					     काष्ठा xdp_buff *xdp)
+अणु
+	काष्ठा napi_काष्ठा *napi = &nvchan->napi;
+	स्थिर काष्ठा ndis_pkt_8021q_info *vlan = &nvchan->rsc.vlan;
+	स्थिर काष्ठा ndis_tcp_ip_checksum_info *csum_info =
 						&nvchan->rsc.csum_info;
-	const u32 *hash_info = &nvchan->rsc.hash_info;
+	स्थिर u32 *hash_info = &nvchan->rsc.hash_info;
 	u8 ppi_flags = nvchan->rsc.ppi_flags;
-	struct sk_buff *skb;
-	void *xbuf = xdp->data_hard_start;
-	int i;
+	काष्ठा sk_buff *skb;
+	व्योम *xbuf = xdp->data_hard_start;
+	पूर्णांक i;
 
-	if (xbuf) {
-		unsigned int hdroom = xdp->data - xdp->data_hard_start;
-		unsigned int xlen = xdp->data_end - xdp->data;
-		unsigned int frag_size = xdp->frame_sz;
+	अगर (xbuf) अणु
+		अचिन्हित पूर्णांक hdroom = xdp->data - xdp->data_hard_start;
+		अचिन्हित पूर्णांक xlen = xdp->data_end - xdp->data;
+		अचिन्हित पूर्णांक frag_size = xdp->frame_sz;
 
 		skb = build_skb(xbuf, frag_size);
 
-		if (!skb) {
-			__free_page(virt_to_page(xbuf));
-			return NULL;
-		}
+		अगर (!skb) अणु
+			__मुक्त_page(virt_to_page(xbuf));
+			वापस शून्य;
+		पूर्ण
 
 		skb_reserve(skb, hdroom);
 		skb_put(skb, xlen);
 		skb->dev = napi->dev;
-	} else {
+	पूर्ण अन्यथा अणु
 		skb = napi_alloc_skb(napi, nvchan->rsc.pktlen);
 
-		if (!skb)
-			return NULL;
+		अगर (!skb)
+			वापस शून्य;
 
 		/* Copy to skb. This copy is needed here since the memory
-		 * pointed by hv_netvsc_packet cannot be deallocated.
+		 * poपूर्णांकed by hv_netvsc_packet cannot be deallocated.
 		 */
-		for (i = 0; i < nvchan->rsc.cnt; i++)
+		क्रम (i = 0; i < nvchan->rsc.cnt; i++)
 			skb_put_data(skb, nvchan->rsc.data[i],
 				     nvchan->rsc.len[i]);
-	}
+	पूर्ण
 
 	skb->protocol = eth_type_trans(skb, net);
 
-	/* skb is already created with CHECKSUM_NONE */
-	skb_checksum_none_assert(skb);
+	/* skb is alपढ़ोy created with CHECKSUM_NONE */
+	skb_checksum_none_निश्चित(skb);
 
-	/* Incoming packets may have IP header checksum verified by the host.
+	/* Incoming packets may have IP header checksum verअगरied by the host.
 	 * They may not have IP header checksum computed after coalescing.
-	 * We compute it here if the flags are set, because on Linux, the IP
+	 * We compute it here अगर the flags are set, because on Linux, the IP
 	 * checksum is always checked.
 	 */
-	if ((ppi_flags & NVSC_RSC_CSUM_INFO) && csum_info->receive.ip_checksum_value_invalid &&
+	अगर ((ppi_flags & NVSC_RSC_CSUM_INFO) && csum_info->receive.ip_checksum_value_invalid &&
 	    csum_info->receive.ip_checksum_succeeded &&
-	    skb->protocol == htons(ETH_P_IP)) {
+	    skb->protocol == htons(ETH_P_IP)) अणु
 		/* Check that there is enough space to hold the IP header. */
-		if (skb_headlen(skb) < sizeof(struct iphdr)) {
-			kfree_skb(skb);
-			return NULL;
-		}
+		अगर (skb_headlen(skb) < माप(काष्ठा iphdr)) अणु
+			kमुक्त_skb(skb);
+			वापस शून्य;
+		पूर्ण
 		netvsc_comp_ipcsum(skb);
-	}
+	पूर्ण
 
-	/* Do L4 checksum offload if enabled and present. */
-	if ((ppi_flags & NVSC_RSC_CSUM_INFO) && (net->features & NETIF_F_RXCSUM)) {
-		if (csum_info->receive.tcp_checksum_succeeded ||
+	/* Do L4 checksum offload अगर enabled and present. */
+	अगर ((ppi_flags & NVSC_RSC_CSUM_INFO) && (net->features & NETIF_F_RXCSUM)) अणु
+		अगर (csum_info->receive.tcp_checksum_succeeded ||
 		    csum_info->receive.udp_checksum_succeeded)
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-	}
+	पूर्ण
 
-	if ((ppi_flags & NVSC_RSC_HASH_INFO) && (net->features & NETIF_F_RXHASH))
+	अगर ((ppi_flags & NVSC_RSC_HASH_INFO) && (net->features & NETIF_F_RXHASH))
 		skb_set_hash(skb, *hash_info, PKT_HASH_TYPE_L4);
 
-	if (ppi_flags & NVSC_RSC_VLAN) {
+	अगर (ppi_flags & NVSC_RSC_VLAN) अणु
 		u16 vlan_tci = vlan->vlanid | (vlan->pri << VLAN_PRIO_SHIFT) |
 			(vlan->cfi ? VLAN_CFI_MASK : 0);
 
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q),
 				       vlan_tci);
-	}
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /*
  * netvsc_recv_callback -  Callback when we receive a packet from the
- * "wire" on the specified device.
+ * "wire" on the specअगरied device.
  */
-int netvsc_recv_callback(struct net_device *net,
-			 struct netvsc_device *net_device,
-			 struct netvsc_channel *nvchan)
-{
-	struct net_device_context *net_device_ctx = netdev_priv(net);
-	struct vmbus_channel *channel = nvchan->channel;
+पूर्णांक netvsc_recv_callback(काष्ठा net_device *net,
+			 काष्ठा netvsc_device *net_device,
+			 काष्ठा netvsc_channel *nvchan)
+अणु
+	काष्ठा net_device_context *net_device_ctx = netdev_priv(net);
+	काष्ठा vmbus_channel *channel = nvchan->channel;
 	u16 q_idx = channel->offermsg.offer.sub_channel_index;
-	struct sk_buff *skb;
-	struct netvsc_stats *rx_stats = &nvchan->rx_stats;
-	struct xdp_buff xdp;
+	काष्ठा sk_buff *skb;
+	काष्ठा netvsc_stats *rx_stats = &nvchan->rx_stats;
+	काष्ठा xdp_buff xdp;
 	u32 act;
 
-	if (net->reg_state != NETREG_REGISTERED)
-		return NVSP_STAT_FAIL;
+	अगर (net->reg_state != NETREG_REGISTERED)
+		वापस NVSP_STAT_FAIL;
 
 	act = netvsc_run_xdp(net, nvchan, &xdp);
 
-	if (act != XDP_PASS && act != XDP_TX) {
+	अगर (act != XDP_PASS && act != XDP_TX) अणु
 		u64_stats_update_begin(&rx_stats->syncp);
 		rx_stats->xdp_drop++;
 		u64_stats_update_end(&rx_stats->syncp);
 
-		return NVSP_STAT_SUCCESS; /* consumed by XDP */
-	}
+		वापस NVSP_STAT_SUCCESS; /* consumed by XDP */
+	पूर्ण
 
 	/* Allocate a skb - TODO direct I/O to pages? */
 	skb = netvsc_alloc_recv_skb(net, nvchan, &xdp);
 
-	if (unlikely(!skb)) {
+	अगर (unlikely(!skb)) अणु
 		++net_device_ctx->eth_stats.rx_no_memory;
-		return NVSP_STAT_FAIL;
-	}
+		वापस NVSP_STAT_FAIL;
+	पूर्ण
 
 	skb_record_rx_queue(skb, q_idx);
 
 	/*
-	 * Even if injecting the packet, record the statistics
-	 * on the synthetic device because modifying the VF device
+	 * Even अगर injecting the packet, record the statistics
+	 * on the synthetic device because modअगरying the VF device
 	 * statistics will not work correctly.
 	 */
 	u64_stats_update_begin(&rx_stats->syncp);
 	rx_stats->packets++;
 	rx_stats->bytes += nvchan->rsc.pktlen;
 
-	if (skb->pkt_type == PACKET_BROADCAST)
+	अगर (skb->pkt_type == PACKET_BROADCAST)
 		++rx_stats->broadcast;
-	else if (skb->pkt_type == PACKET_MULTICAST)
+	अन्यथा अगर (skb->pkt_type == PACKET_MULTICAST)
 		++rx_stats->multicast;
 	u64_stats_update_end(&rx_stats->syncp);
 
-	if (act == XDP_TX) {
+	अगर (act == XDP_TX) अणु
 		netvsc_xdp_xmit(skb, net);
-		return NVSP_STAT_SUCCESS;
-	}
+		वापस NVSP_STAT_SUCCESS;
+	पूर्ण
 
 	napi_gro_receive(&nvchan->napi, skb);
-	return NVSP_STAT_SUCCESS;
-}
+	वापस NVSP_STAT_SUCCESS;
+पूर्ण
 
-static void netvsc_get_drvinfo(struct net_device *net,
-			       struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, KBUILD_MODNAME, sizeof(info->driver));
-	strlcpy(info->fw_version, "N/A", sizeof(info->fw_version));
-}
+अटल व्योम netvsc_get_drvinfo(काष्ठा net_device *net,
+			       काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, KBUILD_MODNAME, माप(info->driver));
+	strlcpy(info->fw_version, "N/A", माप(info->fw_version));
+पूर्ण
 
-static void netvsc_get_channels(struct net_device *net,
-				struct ethtool_channels *channel)
-{
-	struct net_device_context *net_device_ctx = netdev_priv(net);
-	struct netvsc_device *nvdev = rtnl_dereference(net_device_ctx->nvdev);
+अटल व्योम netvsc_get_channels(काष्ठा net_device *net,
+				काष्ठा ethtool_channels *channel)
+अणु
+	काष्ठा net_device_context *net_device_ctx = netdev_priv(net);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(net_device_ctx->nvdev);
 
-	if (nvdev) {
+	अगर (nvdev) अणु
 		channel->max_combined	= nvdev->max_chn;
 		channel->combined_count = nvdev->num_chn;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Alloc struct netvsc_device_info, and initialize it from either existing
- * struct netvsc_device, or from default values.
+/* Alloc काष्ठा netvsc_device_info, and initialize it from either existing
+ * काष्ठा netvsc_device, or from शेष values.
  */
-static
-struct netvsc_device_info *netvsc_devinfo_get(struct netvsc_device *nvdev)
-{
-	struct netvsc_device_info *dev_info;
-	struct bpf_prog *prog;
+अटल
+काष्ठा netvsc_device_info *netvsc_devinfo_get(काष्ठा netvsc_device *nvdev)
+अणु
+	काष्ठा netvsc_device_info *dev_info;
+	काष्ठा bpf_prog *prog;
 
-	dev_info = kzalloc(sizeof(*dev_info), GFP_ATOMIC);
+	dev_info = kzalloc(माप(*dev_info), GFP_ATOMIC);
 
-	if (!dev_info)
-		return NULL;
+	अगर (!dev_info)
+		वापस शून्य;
 
-	if (nvdev) {
+	अगर (nvdev) अणु
 		ASSERT_RTNL();
 
 		dev_info->num_chn = nvdev->num_chn;
@@ -1017,188 +1018,188 @@ struct netvsc_device_info *netvsc_devinfo_get(struct netvsc_device *nvdev)
 		dev_info->recv_sections = nvdev->recv_section_cnt;
 		dev_info->recv_section_size = nvdev->recv_section_size;
 
-		memcpy(dev_info->rss_key, nvdev->extension->rss_key,
+		स_नकल(dev_info->rss_key, nvdev->extension->rss_key,
 		       NETVSC_HASH_KEYLEN);
 
 		prog = netvsc_xdp_get(nvdev);
-		if (prog) {
+		अगर (prog) अणु
 			bpf_prog_inc(prog);
 			dev_info->bprog = prog;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_info->num_chn = VRSS_CHANNEL_DEFAULT;
 		dev_info->send_sections = NETVSC_DEFAULT_TX;
 		dev_info->send_section_size = NETVSC_SEND_SECTION_SIZE;
 		dev_info->recv_sections = NETVSC_DEFAULT_RX;
 		dev_info->recv_section_size = NETVSC_RECV_SECTION_SIZE;
-	}
+	पूर्ण
 
-	return dev_info;
-}
+	वापस dev_info;
+पूर्ण
 
-/* Free struct netvsc_device_info */
-static void netvsc_devinfo_put(struct netvsc_device_info *dev_info)
-{
-	if (dev_info->bprog) {
+/* Free काष्ठा netvsc_device_info */
+अटल व्योम netvsc_devinfo_put(काष्ठा netvsc_device_info *dev_info)
+अणु
+	अगर (dev_info->bprog) अणु
 		ASSERT_RTNL();
 		bpf_prog_put(dev_info->bprog);
-	}
+	पूर्ण
 
-	kfree(dev_info);
-}
+	kमुक्त(dev_info);
+पूर्ण
 
-static int netvsc_detach(struct net_device *ndev,
-			 struct netvsc_device *nvdev)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(ndev);
-	struct hv_device *hdev = ndev_ctx->device_ctx;
-	int ret;
+अटल पूर्णांक netvsc_detach(काष्ठा net_device *ndev,
+			 काष्ठा netvsc_device *nvdev)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(ndev);
+	काष्ठा hv_device *hdev = ndev_ctx->device_ctx;
+	पूर्णांक ret;
 
 	/* Don't try continuing to try and setup sub channels */
-	if (cancel_work_sync(&nvdev->subchan_work))
+	अगर (cancel_work_sync(&nvdev->subchan_work))
 		nvdev->num_chn = 1;
 
-	netvsc_xdp_set(ndev, NULL, NULL, nvdev);
+	netvsc_xdp_set(ndev, शून्य, शून्य, nvdev);
 
-	/* If device was up (receiving) then shutdown */
-	if (netif_running(ndev)) {
+	/* If device was up (receiving) then shutकरोwn */
+	अगर (netअगर_running(ndev)) अणु
 		netvsc_tx_disable(nvdev, ndev);
 
-		ret = rndis_filter_close(nvdev);
-		if (ret) {
+		ret = rndis_filter_बंद(nvdev);
+		अगर (ret) अणु
 			netdev_err(ndev,
 				   "unable to close device (ret %d).\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = netvsc_wait_until_empty(nvdev);
-		if (ret) {
+		ret = netvsc_रुको_until_empty(nvdev);
+		अगर (ret) अणु
 			netdev_err(ndev,
 				   "Ring buffer not empty after closing rndis\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	netif_device_detach(ndev);
+	netअगर_device_detach(ndev);
 
-	rndis_filter_device_remove(hdev, nvdev);
+	rndis_filter_device_हटाओ(hdev, nvdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int netvsc_attach(struct net_device *ndev,
-			 struct netvsc_device_info *dev_info)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(ndev);
-	struct hv_device *hdev = ndev_ctx->device_ctx;
-	struct netvsc_device *nvdev;
-	struct rndis_device *rdev;
-	struct bpf_prog *prog;
-	int ret = 0;
+अटल पूर्णांक netvsc_attach(काष्ठा net_device *ndev,
+			 काष्ठा netvsc_device_info *dev_info)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(ndev);
+	काष्ठा hv_device *hdev = ndev_ctx->device_ctx;
+	काष्ठा netvsc_device *nvdev;
+	काष्ठा rndis_device *rdev;
+	काष्ठा bpf_prog *prog;
+	पूर्णांक ret = 0;
 
 	nvdev = rndis_filter_device_add(hdev, dev_info);
-	if (IS_ERR(nvdev))
-		return PTR_ERR(nvdev);
+	अगर (IS_ERR(nvdev))
+		वापस PTR_ERR(nvdev);
 
-	if (nvdev->num_chn > 1) {
+	अगर (nvdev->num_chn > 1) अणु
 		ret = rndis_set_subchannel(ndev, nvdev, dev_info);
 
-		/* if unavailable, just proceed with one queue */
-		if (ret) {
+		/* अगर unavailable, just proceed with one queue */
+		अगर (ret) अणु
 			nvdev->max_chn = 1;
 			nvdev->num_chn = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	prog = dev_info->bprog;
-	if (prog) {
+	अगर (prog) अणु
 		bpf_prog_inc(prog);
-		ret = netvsc_xdp_set(ndev, prog, NULL, nvdev);
-		if (ret) {
+		ret = netvsc_xdp_set(ndev, prog, शून्य, nvdev);
+		अगर (ret) अणु
 			bpf_prog_put(prog);
-			goto err1;
-		}
-	}
+			जाओ err1;
+		पूर्ण
+	पूर्ण
 
-	/* In any case device is now ready */
+	/* In any हाल device is now पढ़ोy */
 	nvdev->tx_disable = false;
-	netif_device_attach(ndev);
+	netअगर_device_attach(ndev);
 
 	/* Note: enable and attach happen when sub-channels setup */
-	netif_carrier_off(ndev);
+	netअगर_carrier_off(ndev);
 
-	if (netif_running(ndev)) {
-		ret = rndis_filter_open(nvdev);
-		if (ret)
-			goto err2;
+	अगर (netअगर_running(ndev)) अणु
+		ret = rndis_filter_खोलो(nvdev);
+		अगर (ret)
+			जाओ err2;
 
 		rdev = nvdev->extension;
-		if (!rdev->link_state)
-			netif_carrier_on(ndev);
-	}
+		अगर (!rdev->link_state)
+			netअगर_carrier_on(ndev);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err2:
-	netif_device_detach(ndev);
+	netअगर_device_detach(ndev);
 
 err1:
-	rndis_filter_device_remove(hdev, nvdev);
+	rndis_filter_device_हटाओ(hdev, nvdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int netvsc_set_channels(struct net_device *net,
-			       struct ethtool_channels *channels)
-{
-	struct net_device_context *net_device_ctx = netdev_priv(net);
-	struct netvsc_device *nvdev = rtnl_dereference(net_device_ctx->nvdev);
-	unsigned int orig, count = channels->combined_count;
-	struct netvsc_device_info *device_info;
-	int ret;
+अटल पूर्णांक netvsc_set_channels(काष्ठा net_device *net,
+			       काष्ठा ethtool_channels *channels)
+अणु
+	काष्ठा net_device_context *net_device_ctx = netdev_priv(net);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(net_device_ctx->nvdev);
+	अचिन्हित पूर्णांक orig, count = channels->combined_count;
+	काष्ठा netvsc_device_info *device_info;
+	पूर्णांक ret;
 
-	/* We do not support separate count for rx, tx, or other */
-	if (count == 0 ||
+	/* We करो not support separate count क्रम rx, tx, or other */
+	अगर (count == 0 ||
 	    channels->rx_count || channels->tx_count || channels->other_count)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!nvdev || nvdev->destroy)
-		return -ENODEV;
+	अगर (!nvdev || nvdev->destroy)
+		वापस -ENODEV;
 
-	if (nvdev->nvsp_version < NVSP_PROTOCOL_VERSION_5)
-		return -EINVAL;
+	अगर (nvdev->nvsp_version < NVSP_PROTOCOL_VERSION_5)
+		वापस -EINVAL;
 
-	if (count > nvdev->max_chn)
-		return -EINVAL;
+	अगर (count > nvdev->max_chn)
+		वापस -EINVAL;
 
 	orig = nvdev->num_chn;
 
 	device_info = netvsc_devinfo_get(nvdev);
 
-	if (!device_info)
-		return -ENOMEM;
+	अगर (!device_info)
+		वापस -ENOMEM;
 
 	device_info->num_chn = count;
 
 	ret = netvsc_detach(net, nvdev);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = netvsc_attach(net, device_info);
-	if (ret) {
+	अगर (ret) अणु
 		device_info->num_chn = orig;
-		if (netvsc_attach(net, device_info))
+		अगर (netvsc_attach(net, device_info))
 			netdev_err(net, "restoring channel setting failed\n");
-	}
+	पूर्ण
 
 out:
 	netvsc_devinfo_put(device_info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void netvsc_init_settings(struct net_device *dev)
-{
-	struct net_device_context *ndc = netdev_priv(dev);
+अटल व्योम netvsc_init_settings(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(dev);
 
 	ndc->l4_hash = HV_DEFAULT_L4HASH;
 
@@ -1206,193 +1207,193 @@ static void netvsc_init_settings(struct net_device *dev)
 	ndc->duplex = DUPLEX_FULL;
 
 	dev->features = NETIF_F_LRO;
-}
+पूर्ण
 
-static int netvsc_get_link_ksettings(struct net_device *dev,
-				     struct ethtool_link_ksettings *cmd)
-{
-	struct net_device_context *ndc = netdev_priv(dev);
-	struct net_device *vf_netdev;
+अटल पूर्णांक netvsc_get_link_ksettings(काष्ठा net_device *dev,
+				     काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(dev);
+	काष्ठा net_device *vf_netdev;
 
 	vf_netdev = rtnl_dereference(ndc->vf_netdev);
 
-	if (vf_netdev)
-		return __ethtool_get_link_ksettings(vf_netdev, cmd);
+	अगर (vf_netdev)
+		वापस __ethtool_get_link_ksettings(vf_netdev, cmd);
 
 	cmd->base.speed = ndc->speed;
 	cmd->base.duplex = ndc->duplex;
 	cmd->base.port = PORT_OTHER;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int netvsc_set_link_ksettings(struct net_device *dev,
-				     const struct ethtool_link_ksettings *cmd)
-{
-	struct net_device_context *ndc = netdev_priv(dev);
-	struct net_device *vf_netdev = rtnl_dereference(ndc->vf_netdev);
+अटल पूर्णांक netvsc_set_link_ksettings(काष्ठा net_device *dev,
+				     स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(dev);
+	काष्ठा net_device *vf_netdev = rtnl_dereference(ndc->vf_netdev);
 
-	if (vf_netdev) {
-		if (!vf_netdev->ethtool_ops->set_link_ksettings)
-			return -EOPNOTSUPP;
+	अगर (vf_netdev) अणु
+		अगर (!vf_netdev->ethtool_ops->set_link_ksettings)
+			वापस -EOPNOTSUPP;
 
-		return vf_netdev->ethtool_ops->set_link_ksettings(vf_netdev,
+		वापस vf_netdev->ethtool_ops->set_link_ksettings(vf_netdev,
 								  cmd);
-	}
+	पूर्ण
 
-	return ethtool_virtdev_set_link_ksettings(dev, cmd,
+	वापस ethtool_virtdev_set_link_ksettings(dev, cmd,
 						  &ndc->speed, &ndc->duplex);
-}
+पूर्ण
 
-static int netvsc_change_mtu(struct net_device *ndev, int mtu)
-{
-	struct net_device_context *ndevctx = netdev_priv(ndev);
-	struct net_device *vf_netdev = rtnl_dereference(ndevctx->vf_netdev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndevctx->nvdev);
-	int orig_mtu = ndev->mtu;
-	struct netvsc_device_info *device_info;
-	int ret = 0;
+अटल पूर्णांक netvsc_change_mtu(काष्ठा net_device *ndev, पूर्णांक mtu)
+अणु
+	काष्ठा net_device_context *ndevctx = netdev_priv(ndev);
+	काष्ठा net_device *vf_netdev = rtnl_dereference(ndevctx->vf_netdev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndevctx->nvdev);
+	पूर्णांक orig_mtu = ndev->mtu;
+	काष्ठा netvsc_device_info *device_info;
+	पूर्णांक ret = 0;
 
-	if (!nvdev || nvdev->destroy)
-		return -ENODEV;
+	अगर (!nvdev || nvdev->destroy)
+		वापस -ENODEV;
 
 	device_info = netvsc_devinfo_get(nvdev);
 
-	if (!device_info)
-		return -ENOMEM;
+	अगर (!device_info)
+		वापस -ENOMEM;
 
 	/* Change MTU of underlying VF netdev first. */
-	if (vf_netdev) {
+	अगर (vf_netdev) अणु
 		ret = dev_set_mtu(vf_netdev, mtu);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	ret = netvsc_detach(ndev, nvdev);
-	if (ret)
-		goto rollback_vf;
+	अगर (ret)
+		जाओ rollback_vf;
 
 	ndev->mtu = mtu;
 
 	ret = netvsc_attach(ndev, device_info);
-	if (!ret)
-		goto out;
+	अगर (!ret)
+		जाओ out;
 
 	/* Attempt rollback to original MTU */
 	ndev->mtu = orig_mtu;
 
-	if (netvsc_attach(ndev, device_info))
+	अगर (netvsc_attach(ndev, device_info))
 		netdev_err(ndev, "restoring mtu failed\n");
 rollback_vf:
-	if (vf_netdev)
+	अगर (vf_netdev)
 		dev_set_mtu(vf_netdev, orig_mtu);
 
 out:
 	netvsc_devinfo_put(device_info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void netvsc_get_vf_stats(struct net_device *net,
-				struct netvsc_vf_pcpu_stats *tot)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(net);
-	int i;
+अटल व्योम netvsc_get_vf_stats(काष्ठा net_device *net,
+				काष्ठा netvsc_vf_pcpu_stats *tot)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(net);
+	पूर्णांक i;
 
-	memset(tot, 0, sizeof(*tot));
+	स_रखो(tot, 0, माप(*tot));
 
-	for_each_possible_cpu(i) {
-		const struct netvsc_vf_pcpu_stats *stats
+	क्रम_each_possible_cpu(i) अणु
+		स्थिर काष्ठा netvsc_vf_pcpu_stats *stats
 			= per_cpu_ptr(ndev_ctx->vf_stats, i);
 		u64 rx_packets, rx_bytes, tx_packets, tx_bytes;
-		unsigned int start;
+		अचिन्हित पूर्णांक start;
 
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
 			rx_packets = stats->rx_packets;
 			tx_packets = stats->tx_packets;
 			rx_bytes = stats->rx_bytes;
 			tx_bytes = stats->tx_bytes;
-		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
 		tot->rx_packets += rx_packets;
 		tot->tx_packets += tx_packets;
 		tot->rx_bytes   += rx_bytes;
 		tot->tx_bytes   += tx_bytes;
 		tot->tx_dropped += stats->tx_dropped;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void netvsc_get_pcpu_stats(struct net_device *net,
-				  struct netvsc_ethtool_pcpu_stats *pcpu_tot)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(net);
-	struct netvsc_device *nvdev = rcu_dereference_rtnl(ndev_ctx->nvdev);
-	int i;
+अटल व्योम netvsc_get_pcpu_stats(काष्ठा net_device *net,
+				  काष्ठा netvsc_ethtool_pcpu_stats *pcpu_tot)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(net);
+	काष्ठा netvsc_device *nvdev = rcu_dereference_rtnl(ndev_ctx->nvdev);
+	पूर्णांक i;
 
 	/* fetch percpu stats of vf */
-	for_each_possible_cpu(i) {
-		const struct netvsc_vf_pcpu_stats *stats =
+	क्रम_each_possible_cpu(i) अणु
+		स्थिर काष्ठा netvsc_vf_pcpu_stats *stats =
 			per_cpu_ptr(ndev_ctx->vf_stats, i);
-		struct netvsc_ethtool_pcpu_stats *this_tot = &pcpu_tot[i];
-		unsigned int start;
+		काष्ठा netvsc_ethtool_pcpu_stats *this_tot = &pcpu_tot[i];
+		अचिन्हित पूर्णांक start;
 
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
 			this_tot->vf_rx_packets = stats->rx_packets;
 			this_tot->vf_tx_packets = stats->tx_packets;
 			this_tot->vf_rx_bytes = stats->rx_bytes;
 			this_tot->vf_tx_bytes = stats->tx_bytes;
-		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
 		this_tot->rx_packets = this_tot->vf_rx_packets;
 		this_tot->tx_packets = this_tot->vf_tx_packets;
 		this_tot->rx_bytes   = this_tot->vf_rx_bytes;
 		this_tot->tx_bytes   = this_tot->vf_tx_bytes;
-	}
+	पूर्ण
 
 	/* fetch percpu stats of netvsc */
-	for (i = 0; i < nvdev->num_chn; i++) {
-		const struct netvsc_channel *nvchan = &nvdev->chan_table[i];
-		const struct netvsc_stats *stats;
-		struct netvsc_ethtool_pcpu_stats *this_tot =
+	क्रम (i = 0; i < nvdev->num_chn; i++) अणु
+		स्थिर काष्ठा netvsc_channel *nvchan = &nvdev->chan_table[i];
+		स्थिर काष्ठा netvsc_stats *stats;
+		काष्ठा netvsc_ethtool_pcpu_stats *this_tot =
 			&pcpu_tot[nvchan->channel->target_cpu];
 		u64 packets, bytes;
-		unsigned int start;
+		अचिन्हित पूर्णांक start;
 
 		stats = &nvchan->tx_stats;
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
 			packets = stats->packets;
 			bytes = stats->bytes;
-		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
 		this_tot->tx_bytes	+= bytes;
 		this_tot->tx_packets	+= packets;
 
 		stats = &nvchan->rx_stats;
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
 			packets = stats->packets;
 			bytes = stats->bytes;
-		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
 		this_tot->rx_bytes	+= bytes;
 		this_tot->rx_packets	+= packets;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void netvsc_get_stats64(struct net_device *net,
-			       struct rtnl_link_stats64 *t)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(net);
-	struct netvsc_device *nvdev;
-	struct netvsc_vf_pcpu_stats vf_tot;
-	int i;
+अटल व्योम netvsc_get_stats64(काष्ठा net_device *net,
+			       काष्ठा rtnl_link_stats64 *t)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(net);
+	काष्ठा netvsc_device *nvdev;
+	काष्ठा netvsc_vf_pcpu_stats vf_tot;
+	पूर्णांक i;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	nvdev = rcu_dereference(ndev_ctx->nvdev);
-	if (!nvdev)
-		goto out;
+	अगर (!nvdev)
+		जाओ out;
 
 	netdev_stats_to_stats64(t, &net->stats);
 
@@ -1403,485 +1404,485 @@ static void netvsc_get_stats64(struct net_device *net,
 	t->tx_bytes   += vf_tot.tx_bytes;
 	t->tx_dropped += vf_tot.tx_dropped;
 
-	for (i = 0; i < nvdev->num_chn; i++) {
-		const struct netvsc_channel *nvchan = &nvdev->chan_table[i];
-		const struct netvsc_stats *stats;
+	क्रम (i = 0; i < nvdev->num_chn; i++) अणु
+		स्थिर काष्ठा netvsc_channel *nvchan = &nvdev->chan_table[i];
+		स्थिर काष्ठा netvsc_stats *stats;
 		u64 packets, bytes, multicast;
-		unsigned int start;
+		अचिन्हित पूर्णांक start;
 
 		stats = &nvchan->tx_stats;
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
 			packets = stats->packets;
 			bytes = stats->bytes;
-		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
 		t->tx_bytes	+= bytes;
 		t->tx_packets	+= packets;
 
 		stats = &nvchan->rx_stats;
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
 			packets = stats->packets;
 			bytes = stats->bytes;
 			multicast = stats->multicast + stats->broadcast;
-		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
 		t->rx_bytes	+= bytes;
 		t->rx_packets	+= packets;
 		t->multicast	+= multicast;
-	}
+	पूर्ण
 out:
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int netvsc_set_mac_addr(struct net_device *ndev, void *p)
-{
-	struct net_device_context *ndc = netdev_priv(ndev);
-	struct net_device *vf_netdev = rtnl_dereference(ndc->vf_netdev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndc->nvdev);
-	struct sockaddr *addr = p;
-	int err;
+अटल पूर्णांक netvsc_set_mac_addr(काष्ठा net_device *ndev, व्योम *p)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(ndev);
+	काष्ठा net_device *vf_netdev = rtnl_dereference(ndc->vf_netdev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndc->nvdev);
+	काष्ठा sockaddr *addr = p;
+	पूर्णांक err;
 
 	err = eth_prepare_mac_addr_change(ndev, p);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!nvdev)
-		return -ENODEV;
+	अगर (!nvdev)
+		वापस -ENODEV;
 
-	if (vf_netdev) {
-		err = dev_set_mac_address(vf_netdev, addr, NULL);
-		if (err)
-			return err;
-	}
+	अगर (vf_netdev) अणु
+		err = dev_set_mac_address(vf_netdev, addr, शून्य);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	err = rndis_filter_set_device_mac(nvdev, addr->sa_data);
-	if (!err) {
+	अगर (!err) अणु
 		eth_commit_mac_addr_change(ndev, p);
-	} else if (vf_netdev) {
+	पूर्ण अन्यथा अगर (vf_netdev) अणु
 		/* rollback change on VF */
-		memcpy(addr->sa_data, ndev->dev_addr, ETH_ALEN);
-		dev_set_mac_address(vf_netdev, addr, NULL);
-	}
+		स_नकल(addr->sa_data, ndev->dev_addr, ETH_ALEN);
+		dev_set_mac_address(vf_netdev, addr, शून्य);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct {
-	char name[ETH_GSTRING_LEN];
+अटल स्थिर काष्ठा अणु
+	अक्षर name[ETH_GSTRING_LEN];
 	u16 offset;
-} netvsc_stats[] = {
-	{ "tx_scattered", offsetof(struct netvsc_ethtool_stats, tx_scattered) },
-	{ "tx_no_memory", offsetof(struct netvsc_ethtool_stats, tx_no_memory) },
-	{ "tx_no_space",  offsetof(struct netvsc_ethtool_stats, tx_no_space) },
-	{ "tx_too_big",	  offsetof(struct netvsc_ethtool_stats, tx_too_big) },
-	{ "tx_busy",	  offsetof(struct netvsc_ethtool_stats, tx_busy) },
-	{ "tx_send_full", offsetof(struct netvsc_ethtool_stats, tx_send_full) },
-	{ "rx_comp_busy", offsetof(struct netvsc_ethtool_stats, rx_comp_busy) },
-	{ "rx_no_memory", offsetof(struct netvsc_ethtool_stats, rx_no_memory) },
-	{ "stop_queue", offsetof(struct netvsc_ethtool_stats, stop_queue) },
-	{ "wake_queue", offsetof(struct netvsc_ethtool_stats, wake_queue) },
-	{ "vlan_error", offsetof(struct netvsc_ethtool_stats, vlan_error) },
-}, pcpu_stats[] = {
-	{ "cpu%u_rx_packets",
-		offsetof(struct netvsc_ethtool_pcpu_stats, rx_packets) },
-	{ "cpu%u_rx_bytes",
-		offsetof(struct netvsc_ethtool_pcpu_stats, rx_bytes) },
-	{ "cpu%u_tx_packets",
-		offsetof(struct netvsc_ethtool_pcpu_stats, tx_packets) },
-	{ "cpu%u_tx_bytes",
-		offsetof(struct netvsc_ethtool_pcpu_stats, tx_bytes) },
-	{ "cpu%u_vf_rx_packets",
-		offsetof(struct netvsc_ethtool_pcpu_stats, vf_rx_packets) },
-	{ "cpu%u_vf_rx_bytes",
-		offsetof(struct netvsc_ethtool_pcpu_stats, vf_rx_bytes) },
-	{ "cpu%u_vf_tx_packets",
-		offsetof(struct netvsc_ethtool_pcpu_stats, vf_tx_packets) },
-	{ "cpu%u_vf_tx_bytes",
-		offsetof(struct netvsc_ethtool_pcpu_stats, vf_tx_bytes) },
-}, vf_stats[] = {
-	{ "vf_rx_packets", offsetof(struct netvsc_vf_pcpu_stats, rx_packets) },
-	{ "vf_rx_bytes",   offsetof(struct netvsc_vf_pcpu_stats, rx_bytes) },
-	{ "vf_tx_packets", offsetof(struct netvsc_vf_pcpu_stats, tx_packets) },
-	{ "vf_tx_bytes",   offsetof(struct netvsc_vf_pcpu_stats, tx_bytes) },
-	{ "vf_tx_dropped", offsetof(struct netvsc_vf_pcpu_stats, tx_dropped) },
-};
+पूर्ण netvsc_stats[] = अणु
+	अणु "tx_scattered", दुरत्व(काष्ठा netvsc_ethtool_stats, tx_scattered) पूर्ण,
+	अणु "tx_no_memory", दुरत्व(काष्ठा netvsc_ethtool_stats, tx_no_memory) पूर्ण,
+	अणु "tx_no_space",  दुरत्व(काष्ठा netvsc_ethtool_stats, tx_no_space) पूर्ण,
+	अणु "tx_too_big",	  दुरत्व(काष्ठा netvsc_ethtool_stats, tx_too_big) पूर्ण,
+	अणु "tx_busy",	  दुरत्व(काष्ठा netvsc_ethtool_stats, tx_busy) पूर्ण,
+	अणु "tx_send_full", दुरत्व(काष्ठा netvsc_ethtool_stats, tx_send_full) पूर्ण,
+	अणु "rx_comp_busy", दुरत्व(काष्ठा netvsc_ethtool_stats, rx_comp_busy) पूर्ण,
+	अणु "rx_no_memory", दुरत्व(काष्ठा netvsc_ethtool_stats, rx_no_memory) पूर्ण,
+	अणु "stop_queue", दुरत्व(काष्ठा netvsc_ethtool_stats, stop_queue) पूर्ण,
+	अणु "wake_queue", दुरत्व(काष्ठा netvsc_ethtool_stats, wake_queue) पूर्ण,
+	अणु "vlan_error", दुरत्व(काष्ठा netvsc_ethtool_stats, vlan_error) पूर्ण,
+पूर्ण, pcpu_stats[] = अणु
+	अणु "cpu%u_rx_packets",
+		दुरत्व(काष्ठा netvsc_ethtool_pcpu_stats, rx_packets) पूर्ण,
+	अणु "cpu%u_rx_bytes",
+		दुरत्व(काष्ठा netvsc_ethtool_pcpu_stats, rx_bytes) पूर्ण,
+	अणु "cpu%u_tx_packets",
+		दुरत्व(काष्ठा netvsc_ethtool_pcpu_stats, tx_packets) पूर्ण,
+	अणु "cpu%u_tx_bytes",
+		दुरत्व(काष्ठा netvsc_ethtool_pcpu_stats, tx_bytes) पूर्ण,
+	अणु "cpu%u_vf_rx_packets",
+		दुरत्व(काष्ठा netvsc_ethtool_pcpu_stats, vf_rx_packets) पूर्ण,
+	अणु "cpu%u_vf_rx_bytes",
+		दुरत्व(काष्ठा netvsc_ethtool_pcpu_stats, vf_rx_bytes) पूर्ण,
+	अणु "cpu%u_vf_tx_packets",
+		दुरत्व(काष्ठा netvsc_ethtool_pcpu_stats, vf_tx_packets) पूर्ण,
+	अणु "cpu%u_vf_tx_bytes",
+		दुरत्व(काष्ठा netvsc_ethtool_pcpu_stats, vf_tx_bytes) पूर्ण,
+पूर्ण, vf_stats[] = अणु
+	अणु "vf_rx_packets", दुरत्व(काष्ठा netvsc_vf_pcpu_stats, rx_packets) पूर्ण,
+	अणु "vf_rx_bytes",   दुरत्व(काष्ठा netvsc_vf_pcpu_stats, rx_bytes) पूर्ण,
+	अणु "vf_tx_packets", दुरत्व(काष्ठा netvsc_vf_pcpu_stats, tx_packets) पूर्ण,
+	अणु "vf_tx_bytes",   दुरत्व(काष्ठा netvsc_vf_pcpu_stats, tx_bytes) पूर्ण,
+	अणु "vf_tx_dropped", दुरत्व(काष्ठा netvsc_vf_pcpu_stats, tx_dropped) पूर्ण,
+पूर्ण;
 
-#define NETVSC_GLOBAL_STATS_LEN	ARRAY_SIZE(netvsc_stats)
-#define NETVSC_VF_STATS_LEN	ARRAY_SIZE(vf_stats)
+#घोषणा NETVSC_GLOBAL_STATS_LEN	ARRAY_SIZE(netvsc_stats)
+#घोषणा NETVSC_VF_STATS_LEN	ARRAY_SIZE(vf_stats)
 
 /* statistics per queue (rx/tx packets/bytes) */
-#define NETVSC_PCPU_STATS_LEN (num_present_cpus() * ARRAY_SIZE(pcpu_stats))
+#घोषणा NETVSC_PCPU_STATS_LEN (num_present_cpus() * ARRAY_SIZE(pcpu_stats))
 
 /* 5 statistics per queue (rx/tx packets/bytes, rx xdp_drop) */
-#define NETVSC_QUEUE_STATS_LEN(dev) ((dev)->num_chn * 5)
+#घोषणा NETVSC_QUEUE_STATS_LEN(dev) ((dev)->num_chn * 5)
 
-static int netvsc_get_sset_count(struct net_device *dev, int string_set)
-{
-	struct net_device_context *ndc = netdev_priv(dev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndc->nvdev);
+अटल पूर्णांक netvsc_get_sset_count(काष्ठा net_device *dev, पूर्णांक string_set)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(dev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndc->nvdev);
 
-	if (!nvdev)
-		return -ENODEV;
+	अगर (!nvdev)
+		वापस -ENODEV;
 
-	switch (string_set) {
-	case ETH_SS_STATS:
-		return NETVSC_GLOBAL_STATS_LEN
+	चयन (string_set) अणु
+	हाल ETH_SS_STATS:
+		वापस NETVSC_GLOBAL_STATS_LEN
 			+ NETVSC_VF_STATS_LEN
 			+ NETVSC_QUEUE_STATS_LEN(nvdev)
 			+ NETVSC_PCPU_STATS_LEN;
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void netvsc_get_ethtool_stats(struct net_device *dev,
-				     struct ethtool_stats *stats, u64 *data)
-{
-	struct net_device_context *ndc = netdev_priv(dev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndc->nvdev);
-	const void *nds = &ndc->eth_stats;
-	const struct netvsc_stats *qstats;
-	struct netvsc_vf_pcpu_stats sum;
-	struct netvsc_ethtool_pcpu_stats *pcpu_sum;
-	unsigned int start;
+अटल व्योम netvsc_get_ethtool_stats(काष्ठा net_device *dev,
+				     काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(dev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndc->nvdev);
+	स्थिर व्योम *nds = &ndc->eth_stats;
+	स्थिर काष्ठा netvsc_stats *qstats;
+	काष्ठा netvsc_vf_pcpu_stats sum;
+	काष्ठा netvsc_ethtool_pcpu_stats *pcpu_sum;
+	अचिन्हित पूर्णांक start;
 	u64 packets, bytes;
 	u64 xdp_drop;
-	int i, j, cpu;
+	पूर्णांक i, j, cpu;
 
-	if (!nvdev)
-		return;
+	अगर (!nvdev)
+		वापस;
 
-	for (i = 0; i < NETVSC_GLOBAL_STATS_LEN; i++)
-		data[i] = *(unsigned long *)(nds + netvsc_stats[i].offset);
+	क्रम (i = 0; i < NETVSC_GLOBAL_STATS_LEN; i++)
+		data[i] = *(अचिन्हित दीर्घ *)(nds + netvsc_stats[i].offset);
 
 	netvsc_get_vf_stats(dev, &sum);
-	for (j = 0; j < NETVSC_VF_STATS_LEN; j++)
-		data[i++] = *(u64 *)((void *)&sum + vf_stats[j].offset);
+	क्रम (j = 0; j < NETVSC_VF_STATS_LEN; j++)
+		data[i++] = *(u64 *)((व्योम *)&sum + vf_stats[j].offset);
 
-	for (j = 0; j < nvdev->num_chn; j++) {
+	क्रम (j = 0; j < nvdev->num_chn; j++) अणु
 		qstats = &nvdev->chan_table[j].tx_stats;
 
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&qstats->syncp);
 			packets = qstats->packets;
 			bytes = qstats->bytes;
-		} while (u64_stats_fetch_retry_irq(&qstats->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&qstats->syncp, start));
 		data[i++] = packets;
 		data[i++] = bytes;
 
 		qstats = &nvdev->chan_table[j].rx_stats;
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&qstats->syncp);
 			packets = qstats->packets;
 			bytes = qstats->bytes;
 			xdp_drop = qstats->xdp_drop;
-		} while (u64_stats_fetch_retry_irq(&qstats->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&qstats->syncp, start));
 		data[i++] = packets;
 		data[i++] = bytes;
 		data[i++] = xdp_drop;
-	}
+	पूर्ण
 
-	pcpu_sum = kvmalloc_array(num_possible_cpus(),
-				  sizeof(struct netvsc_ethtool_pcpu_stats),
+	pcpu_sum = kvदो_स्मृति_array(num_possible_cpus(),
+				  माप(काष्ठा netvsc_ethtool_pcpu_stats),
 				  GFP_KERNEL);
 	netvsc_get_pcpu_stats(dev, pcpu_sum);
-	for_each_present_cpu(cpu) {
-		struct netvsc_ethtool_pcpu_stats *this_sum = &pcpu_sum[cpu];
+	क्रम_each_present_cpu(cpu) अणु
+		काष्ठा netvsc_ethtool_pcpu_stats *this_sum = &pcpu_sum[cpu];
 
-		for (j = 0; j < ARRAY_SIZE(pcpu_stats); j++)
-			data[i++] = *(u64 *)((void *)this_sum
+		क्रम (j = 0; j < ARRAY_SIZE(pcpu_stats); j++)
+			data[i++] = *(u64 *)((व्योम *)this_sum
 					     + pcpu_stats[j].offset);
-	}
-	kvfree(pcpu_sum);
-}
+	पूर्ण
+	kvमुक्त(pcpu_sum);
+पूर्ण
 
-static void netvsc_get_strings(struct net_device *dev, u32 stringset, u8 *data)
-{
-	struct net_device_context *ndc = netdev_priv(dev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndc->nvdev);
+अटल व्योम netvsc_get_strings(काष्ठा net_device *dev, u32 stringset, u8 *data)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(dev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndc->nvdev);
 	u8 *p = data;
-	int i, cpu;
+	पूर्णांक i, cpu;
 
-	if (!nvdev)
-		return;
+	अगर (!nvdev)
+		वापस;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < ARRAY_SIZE(netvsc_stats); i++)
-			ethtool_sprintf(&p, netvsc_stats[i].name);
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < ARRAY_SIZE(netvsc_stats); i++)
+			ethtool_प्र_लिखो(&p, netvsc_stats[i].name);
 
-		for (i = 0; i < ARRAY_SIZE(vf_stats); i++)
-			ethtool_sprintf(&p, vf_stats[i].name);
+		क्रम (i = 0; i < ARRAY_SIZE(vf_stats); i++)
+			ethtool_प्र_लिखो(&p, vf_stats[i].name);
 
-		for (i = 0; i < nvdev->num_chn; i++) {
-			ethtool_sprintf(&p, "tx_queue_%u_packets", i);
-			ethtool_sprintf(&p, "tx_queue_%u_bytes", i);
-			ethtool_sprintf(&p, "rx_queue_%u_packets", i);
-			ethtool_sprintf(&p, "rx_queue_%u_bytes", i);
-			ethtool_sprintf(&p, "rx_queue_%u_xdp_drop", i);
-		}
+		क्रम (i = 0; i < nvdev->num_chn; i++) अणु
+			ethtool_प्र_लिखो(&p, "tx_queue_%u_packets", i);
+			ethtool_प्र_लिखो(&p, "tx_queue_%u_bytes", i);
+			ethtool_प्र_लिखो(&p, "rx_queue_%u_packets", i);
+			ethtool_प्र_लिखो(&p, "rx_queue_%u_bytes", i);
+			ethtool_प्र_लिखो(&p, "rx_queue_%u_xdp_drop", i);
+		पूर्ण
 
-		for_each_present_cpu(cpu) {
-			for (i = 0; i < ARRAY_SIZE(pcpu_stats); i++)
-				ethtool_sprintf(&p, pcpu_stats[i].name, cpu);
-		}
+		क्रम_each_present_cpu(cpu) अणु
+			क्रम (i = 0; i < ARRAY_SIZE(pcpu_stats); i++)
+				ethtool_प्र_लिखो(&p, pcpu_stats[i].name, cpu);
+		पूर्ण
 
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int
-netvsc_get_rss_hash_opts(struct net_device_context *ndc,
-			 struct ethtool_rxnfc *info)
-{
-	const u32 l4_flag = RXH_L4_B_0_1 | RXH_L4_B_2_3;
+अटल पूर्णांक
+netvsc_get_rss_hash_opts(काष्ठा net_device_context *ndc,
+			 काष्ठा ethtool_rxnfc *info)
+अणु
+	स्थिर u32 l4_flag = RXH_L4_B_0_1 | RXH_L4_B_2_3;
 
 	info->data = RXH_IP_SRC | RXH_IP_DST;
 
-	switch (info->flow_type) {
-	case TCP_V4_FLOW:
-		if (ndc->l4_hash & HV_TCP4_L4HASH)
+	चयन (info->flow_type) अणु
+	हाल TCP_V4_FLOW:
+		अगर (ndc->l4_hash & HV_TCP4_L4HASH)
 			info->data |= l4_flag;
 
-		break;
+		अवरोध;
 
-	case TCP_V6_FLOW:
-		if (ndc->l4_hash & HV_TCP6_L4HASH)
+	हाल TCP_V6_FLOW:
+		अगर (ndc->l4_hash & HV_TCP6_L4HASH)
 			info->data |= l4_flag;
 
-		break;
+		अवरोध;
 
-	case UDP_V4_FLOW:
-		if (ndc->l4_hash & HV_UDP4_L4HASH)
+	हाल UDP_V4_FLOW:
+		अगर (ndc->l4_hash & HV_UDP4_L4HASH)
 			info->data |= l4_flag;
 
-		break;
+		अवरोध;
 
-	case UDP_V6_FLOW:
-		if (ndc->l4_hash & HV_UDP6_L4HASH)
+	हाल UDP_V6_FLOW:
+		अगर (ndc->l4_hash & HV_UDP6_L4HASH)
 			info->data |= l4_flag;
 
-		break;
+		अवरोध;
 
-	case IPV4_FLOW:
-	case IPV6_FLOW:
-		break;
-	default:
+	हाल IPV4_FLOW:
+	हाल IPV6_FLOW:
+		अवरोध;
+	शेष:
 		info->data = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-netvsc_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *info,
+अटल पूर्णांक
+netvsc_get_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *info,
 		 u32 *rules)
-{
-	struct net_device_context *ndc = netdev_priv(dev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndc->nvdev);
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(dev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndc->nvdev);
 
-	if (!nvdev)
-		return -ENODEV;
+	अगर (!nvdev)
+		वापस -ENODEV;
 
-	switch (info->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (info->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		info->data = nvdev->num_chn;
-		return 0;
+		वापस 0;
 
-	case ETHTOOL_GRXFH:
-		return netvsc_get_rss_hash_opts(ndc, info);
-	}
-	return -EOPNOTSUPP;
-}
+	हाल ETHTOOL_GRXFH:
+		वापस netvsc_get_rss_hash_opts(ndc, info);
+	पूर्ण
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int netvsc_set_rss_hash_opts(struct net_device_context *ndc,
-				    struct ethtool_rxnfc *info)
-{
-	if (info->data == (RXH_IP_SRC | RXH_IP_DST |
-			   RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
-		switch (info->flow_type) {
-		case TCP_V4_FLOW:
+अटल पूर्णांक netvsc_set_rss_hash_opts(काष्ठा net_device_context *ndc,
+				    काष्ठा ethtool_rxnfc *info)
+अणु
+	अगर (info->data == (RXH_IP_SRC | RXH_IP_DST |
+			   RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
+		चयन (info->flow_type) अणु
+		हाल TCP_V4_FLOW:
 			ndc->l4_hash |= HV_TCP4_L4HASH;
-			break;
+			अवरोध;
 
-		case TCP_V6_FLOW:
+		हाल TCP_V6_FLOW:
 			ndc->l4_hash |= HV_TCP6_L4HASH;
-			break;
+			अवरोध;
 
-		case UDP_V4_FLOW:
+		हाल UDP_V4_FLOW:
 			ndc->l4_hash |= HV_UDP4_L4HASH;
-			break;
+			अवरोध;
 
-		case UDP_V6_FLOW:
+		हाल UDP_V6_FLOW:
 			ndc->l4_hash |= HV_UDP6_L4HASH;
-			break;
+			अवरोध;
 
-		default:
-			return -EOPNOTSUPP;
-		}
+		शेष:
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (info->data == (RXH_IP_SRC | RXH_IP_DST)) {
-		switch (info->flow_type) {
-		case TCP_V4_FLOW:
+	अगर (info->data == (RXH_IP_SRC | RXH_IP_DST)) अणु
+		चयन (info->flow_type) अणु
+		हाल TCP_V4_FLOW:
 			ndc->l4_hash &= ~HV_TCP4_L4HASH;
-			break;
+			अवरोध;
 
-		case TCP_V6_FLOW:
+		हाल TCP_V6_FLOW:
 			ndc->l4_hash &= ~HV_TCP6_L4HASH;
-			break;
+			अवरोध;
 
-		case UDP_V4_FLOW:
+		हाल UDP_V4_FLOW:
 			ndc->l4_hash &= ~HV_UDP4_L4HASH;
-			break;
+			अवरोध;
 
-		case UDP_V6_FLOW:
+		हाल UDP_V6_FLOW:
 			ndc->l4_hash &= ~HV_UDP6_L4HASH;
-			break;
+			अवरोध;
 
-		default:
-			return -EOPNOTSUPP;
-		}
+		शेष:
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int
-netvsc_set_rxnfc(struct net_device *ndev, struct ethtool_rxnfc *info)
-{
-	struct net_device_context *ndc = netdev_priv(ndev);
+अटल पूर्णांक
+netvsc_set_rxnfc(काष्ठा net_device *ndev, काष्ठा ethtool_rxnfc *info)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(ndev);
 
-	if (info->cmd == ETHTOOL_SRXFH)
-		return netvsc_set_rss_hash_opts(ndc, info);
+	अगर (info->cmd == ETHTOOL_SRXFH)
+		वापस netvsc_set_rss_hash_opts(ndc, info);
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static u32 netvsc_get_rxfh_key_size(struct net_device *dev)
-{
-	return NETVSC_HASH_KEYLEN;
-}
+अटल u32 netvsc_get_rxfh_key_size(काष्ठा net_device *dev)
+अणु
+	वापस NETVSC_HASH_KEYLEN;
+पूर्ण
 
-static u32 netvsc_rss_indir_size(struct net_device *dev)
-{
-	return ITAB_NUM;
-}
+अटल u32 netvsc_rss_indir_size(काष्ठा net_device *dev)
+अणु
+	वापस ITAB_NUM;
+पूर्ण
 
-static int netvsc_get_rxfh(struct net_device *dev, u32 *indir, u8 *key,
+अटल पूर्णांक netvsc_get_rxfh(काष्ठा net_device *dev, u32 *indir, u8 *key,
 			   u8 *hfunc)
-{
-	struct net_device_context *ndc = netdev_priv(dev);
-	struct netvsc_device *ndev = rtnl_dereference(ndc->nvdev);
-	struct rndis_device *rndis_dev;
-	int i;
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(dev);
+	काष्ठा netvsc_device *ndev = rtnl_dereference(ndc->nvdev);
+	काष्ठा rndis_device *rndis_dev;
+	पूर्णांक i;
 
-	if (!ndev)
-		return -ENODEV;
+	अगर (!ndev)
+		वापस -ENODEV;
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;	/* Toeplitz */
 
 	rndis_dev = ndev->extension;
-	if (indir) {
-		for (i = 0; i < ITAB_NUM; i++)
+	अगर (indir) अणु
+		क्रम (i = 0; i < ITAB_NUM; i++)
 			indir[i] = ndc->rx_table[i];
-	}
+	पूर्ण
 
-	if (key)
-		memcpy(key, rndis_dev->rss_key, NETVSC_HASH_KEYLEN);
+	अगर (key)
+		स_नकल(key, rndis_dev->rss_key, NETVSC_HASH_KEYLEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int netvsc_set_rxfh(struct net_device *dev, const u32 *indir,
-			   const u8 *key, const u8 hfunc)
-{
-	struct net_device_context *ndc = netdev_priv(dev);
-	struct netvsc_device *ndev = rtnl_dereference(ndc->nvdev);
-	struct rndis_device *rndis_dev;
-	int i;
+अटल पूर्णांक netvsc_set_rxfh(काष्ठा net_device *dev, स्थिर u32 *indir,
+			   स्थिर u8 *key, स्थिर u8 hfunc)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(dev);
+	काष्ठा netvsc_device *ndev = rtnl_dereference(ndc->nvdev);
+	काष्ठा rndis_device *rndis_dev;
+	पूर्णांक i;
 
-	if (!ndev)
-		return -ENODEV;
+	अगर (!ndev)
+		वापस -ENODEV;
 
-	if (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
-		return -EOPNOTSUPP;
+	अगर (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
+		वापस -EOPNOTSUPP;
 
 	rndis_dev = ndev->extension;
-	if (indir) {
-		for (i = 0; i < ITAB_NUM; i++)
-			if (indir[i] >= ndev->num_chn)
-				return -EINVAL;
+	अगर (indir) अणु
+		क्रम (i = 0; i < ITAB_NUM; i++)
+			अगर (indir[i] >= ndev->num_chn)
+				वापस -EINVAL;
 
-		for (i = 0; i < ITAB_NUM; i++)
+		क्रम (i = 0; i < ITAB_NUM; i++)
 			ndc->rx_table[i] = indir[i];
-	}
+	पूर्ण
 
-	if (!key) {
-		if (!indir)
-			return 0;
+	अगर (!key) अणु
+		अगर (!indir)
+			वापस 0;
 
 		key = rndis_dev->rss_key;
-	}
+	पूर्ण
 
-	return rndis_filter_set_rss_param(rndis_dev, key);
-}
+	वापस rndis_filter_set_rss_param(rndis_dev, key);
+पूर्ण
 
-/* Hyper-V RNDIS protocol does not have ring in the HW sense.
- * It does have pre-allocated receive area which is divided into sections.
+/* Hyper-V RNDIS protocol करोes not have ring in the HW sense.
+ * It करोes have pre-allocated receive area which is भागided पूर्णांकo sections.
  */
-static void __netvsc_get_ringparam(struct netvsc_device *nvdev,
-				   struct ethtool_ringparam *ring)
-{
+अटल व्योम __netvsc_get_ringparam(काष्ठा netvsc_device *nvdev,
+				   काष्ठा ethtool_ringparam *ring)
+अणु
 	u32 max_buf_size;
 
 	ring->rx_pending = nvdev->recv_section_cnt;
 	ring->tx_pending = nvdev->send_section_cnt;
 
-	if (nvdev->nvsp_version <= NVSP_PROTOCOL_VERSION_2)
+	अगर (nvdev->nvsp_version <= NVSP_PROTOCOL_VERSION_2)
 		max_buf_size = NETVSC_RECEIVE_BUFFER_SIZE_LEGACY;
-	else
+	अन्यथा
 		max_buf_size = NETVSC_RECEIVE_BUFFER_SIZE;
 
 	ring->rx_max_pending = max_buf_size / nvdev->recv_section_size;
 	ring->tx_max_pending = NETVSC_SEND_BUFFER_SIZE
 		/ nvdev->send_section_size;
-}
+पूर्ण
 
-static void netvsc_get_ringparam(struct net_device *ndev,
-				 struct ethtool_ringparam *ring)
-{
-	struct net_device_context *ndevctx = netdev_priv(ndev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndevctx->nvdev);
+अटल व्योम netvsc_get_ringparam(काष्ठा net_device *ndev,
+				 काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा net_device_context *ndevctx = netdev_priv(ndev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndevctx->nvdev);
 
-	if (!nvdev)
-		return;
+	अगर (!nvdev)
+		वापस;
 
 	__netvsc_get_ringparam(nvdev, ring);
-}
+पूर्ण
 
-static int netvsc_set_ringparam(struct net_device *ndev,
-				struct ethtool_ringparam *ring)
-{
-	struct net_device_context *ndevctx = netdev_priv(ndev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndevctx->nvdev);
-	struct netvsc_device_info *device_info;
-	struct ethtool_ringparam orig;
+अटल पूर्णांक netvsc_set_ringparam(काष्ठा net_device *ndev,
+				काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा net_device_context *ndevctx = netdev_priv(ndev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndevctx->nvdev);
+	काष्ठा netvsc_device_info *device_info;
+	काष्ठा ethtool_ringparam orig;
 	u32 new_tx, new_rx;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!nvdev || nvdev->destroy)
-		return -ENODEV;
+	अगर (!nvdev || nvdev->destroy)
+		वापस -ENODEV;
 
-	memset(&orig, 0, sizeof(orig));
+	स_रखो(&orig, 0, माप(orig));
 	__netvsc_get_ringparam(nvdev, &orig);
 
 	new_tx = clamp_t(u32, ring->tx_pending,
@@ -1889,128 +1890,128 @@ static int netvsc_set_ringparam(struct net_device *ndev,
 	new_rx = clamp_t(u32, ring->rx_pending,
 			 NETVSC_MIN_RX_SECTIONS, orig.rx_max_pending);
 
-	if (new_tx == orig.tx_pending &&
+	अगर (new_tx == orig.tx_pending &&
 	    new_rx == orig.rx_pending)
-		return 0;	 /* no change */
+		वापस 0;	 /* no change */
 
 	device_info = netvsc_devinfo_get(nvdev);
 
-	if (!device_info)
-		return -ENOMEM;
+	अगर (!device_info)
+		वापस -ENOMEM;
 
 	device_info->send_sections = new_tx;
 	device_info->recv_sections = new_rx;
 
 	ret = netvsc_detach(ndev, nvdev);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = netvsc_attach(ndev, device_info);
-	if (ret) {
+	अगर (ret) अणु
 		device_info->send_sections = orig.tx_pending;
 		device_info->recv_sections = orig.rx_pending;
 
-		if (netvsc_attach(ndev, device_info))
+		अगर (netvsc_attach(ndev, device_info))
 			netdev_err(ndev, "restoring ringparam failed");
-	}
+	पूर्ण
 
 out:
 	netvsc_devinfo_put(device_info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static netdev_features_t netvsc_fix_features(struct net_device *ndev,
+अटल netdev_features_t netvsc_fix_features(काष्ठा net_device *ndev,
 					     netdev_features_t features)
-{
-	struct net_device_context *ndevctx = netdev_priv(ndev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndevctx->nvdev);
+अणु
+	काष्ठा net_device_context *ndevctx = netdev_priv(ndev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndevctx->nvdev);
 
-	if (!nvdev || nvdev->destroy)
-		return features;
+	अगर (!nvdev || nvdev->destroy)
+		वापस features;
 
-	if ((features & NETIF_F_LRO) && netvsc_xdp_get(nvdev)) {
+	अगर ((features & NETIF_F_LRO) && netvsc_xdp_get(nvdev)) अणु
 		features ^= NETIF_F_LRO;
 		netdev_info(ndev, "Skip LRO - unsupported with XDP\n");
-	}
+	पूर्ण
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static int netvsc_set_features(struct net_device *ndev,
+अटल पूर्णांक netvsc_set_features(काष्ठा net_device *ndev,
 			       netdev_features_t features)
-{
+अणु
 	netdev_features_t change = features ^ ndev->features;
-	struct net_device_context *ndevctx = netdev_priv(ndev);
-	struct netvsc_device *nvdev = rtnl_dereference(ndevctx->nvdev);
-	struct net_device *vf_netdev = rtnl_dereference(ndevctx->vf_netdev);
-	struct ndis_offload_params offloads;
-	int ret = 0;
+	काष्ठा net_device_context *ndevctx = netdev_priv(ndev);
+	काष्ठा netvsc_device *nvdev = rtnl_dereference(ndevctx->nvdev);
+	काष्ठा net_device *vf_netdev = rtnl_dereference(ndevctx->vf_netdev);
+	काष्ठा ndis_offload_params offloads;
+	पूर्णांक ret = 0;
 
-	if (!nvdev || nvdev->destroy)
-		return -ENODEV;
+	अगर (!nvdev || nvdev->destroy)
+		वापस -ENODEV;
 
-	if (!(change & NETIF_F_LRO))
-		goto syncvf;
+	अगर (!(change & NETIF_F_LRO))
+		जाओ syncvf;
 
-	memset(&offloads, 0, sizeof(struct ndis_offload_params));
+	स_रखो(&offloads, 0, माप(काष्ठा ndis_offload_params));
 
-	if (features & NETIF_F_LRO) {
+	अगर (features & NETIF_F_LRO) अणु
 		offloads.rsc_ip_v4 = NDIS_OFFLOAD_PARAMETERS_RSC_ENABLED;
 		offloads.rsc_ip_v6 = NDIS_OFFLOAD_PARAMETERS_RSC_ENABLED;
-	} else {
+	पूर्ण अन्यथा अणु
 		offloads.rsc_ip_v4 = NDIS_OFFLOAD_PARAMETERS_RSC_DISABLED;
 		offloads.rsc_ip_v6 = NDIS_OFFLOAD_PARAMETERS_RSC_DISABLED;
-	}
+	पूर्ण
 
 	ret = rndis_filter_set_offload_params(ndev, nvdev, &offloads);
 
-	if (ret) {
+	अगर (ret) अणु
 		features ^= NETIF_F_LRO;
 		ndev->features = features;
-	}
+	पूर्ण
 
 syncvf:
-	if (!vf_netdev)
-		return ret;
+	अगर (!vf_netdev)
+		वापस ret;
 
 	vf_netdev->wanted_features = features;
 	netdev_update_features(vf_netdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int netvsc_get_regs_len(struct net_device *netdev)
-{
-	return VRSS_SEND_TAB_SIZE * sizeof(u32);
-}
+अटल पूर्णांक netvsc_get_regs_len(काष्ठा net_device *netdev)
+अणु
+	वापस VRSS_SEND_TAB_SIZE * माप(u32);
+पूर्ण
 
-static void netvsc_get_regs(struct net_device *netdev,
-			    struct ethtool_regs *regs, void *p)
-{
-	struct net_device_context *ndc = netdev_priv(netdev);
+अटल व्योम netvsc_get_regs(काष्ठा net_device *netdev,
+			    काष्ठा ethtool_regs *regs, व्योम *p)
+अणु
+	काष्ठा net_device_context *ndc = netdev_priv(netdev);
 	u32 *regs_buff = p;
 
-	/* increase the version, if buffer format is changed. */
+	/* increase the version, अगर buffer क्रमmat is changed. */
 	regs->version = 1;
 
-	memcpy(regs_buff, ndc->tx_table, VRSS_SEND_TAB_SIZE * sizeof(u32));
-}
+	स_नकल(regs_buff, ndc->tx_table, VRSS_SEND_TAB_SIZE * माप(u32));
+पूर्ण
 
-static u32 netvsc_get_msglevel(struct net_device *ndev)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(ndev);
+अटल u32 netvsc_get_msglevel(काष्ठा net_device *ndev)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(ndev);
 
-	return ndev_ctx->msg_enable;
-}
+	वापस ndev_ctx->msg_enable;
+पूर्ण
 
-static void netvsc_set_msglevel(struct net_device *ndev, u32 val)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(ndev);
+अटल व्योम netvsc_set_msglevel(काष्ठा net_device *ndev, u32 val)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(ndev);
 
 	ndev_ctx->msg_enable = val;
-}
+पूर्ण
 
-static const struct ethtool_ops ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops ethtool_ops = अणु
 	.get_drvinfo	= netvsc_get_drvinfo,
 	.get_regs_len	= netvsc_get_regs_len,
 	.get_regs	= netvsc_get_regs,
@@ -2033,160 +2034,160 @@ static const struct ethtool_ops ethtool_ops = {
 	.set_link_ksettings = netvsc_set_link_ksettings,
 	.get_ringparam	= netvsc_get_ringparam,
 	.set_ringparam	= netvsc_set_ringparam,
-};
+पूर्ण;
 
-static const struct net_device_ops device_ops = {
-	.ndo_open =			netvsc_open,
-	.ndo_stop =			netvsc_close,
-	.ndo_start_xmit =		netvsc_start_xmit,
-	.ndo_change_rx_flags =		netvsc_change_rx_flags,
-	.ndo_set_rx_mode =		netvsc_set_rx_mode,
-	.ndo_fix_features =		netvsc_fix_features,
-	.ndo_set_features =		netvsc_set_features,
-	.ndo_change_mtu =		netvsc_change_mtu,
-	.ndo_validate_addr =		eth_validate_addr,
-	.ndo_set_mac_address =		netvsc_set_mac_addr,
-	.ndo_select_queue =		netvsc_select_queue,
-	.ndo_get_stats64 =		netvsc_get_stats64,
-	.ndo_bpf =			netvsc_bpf,
-};
+अटल स्थिर काष्ठा net_device_ops device_ops = अणु
+	.nकरो_खोलो =			netvsc_खोलो,
+	.nकरो_stop =			netvsc_बंद,
+	.nकरो_start_xmit =		netvsc_start_xmit,
+	.nकरो_change_rx_flags =		netvsc_change_rx_flags,
+	.nकरो_set_rx_mode =		netvsc_set_rx_mode,
+	.nकरो_fix_features =		netvsc_fix_features,
+	.nकरो_set_features =		netvsc_set_features,
+	.nकरो_change_mtu =		netvsc_change_mtu,
+	.nकरो_validate_addr =		eth_validate_addr,
+	.nकरो_set_mac_address =		netvsc_set_mac_addr,
+	.nकरो_select_queue =		netvsc_select_queue,
+	.nकरो_get_stats64 =		netvsc_get_stats64,
+	.nकरो_bpf =			netvsc_bpf,
+पूर्ण;
 
 /*
  * Handle link status changes. For RNDIS_STATUS_NETWORK_CHANGE emulate link
- * down/up sequence. In case of RNDIS_STATUS_MEDIA_CONNECT when carrier is
- * present send GARP packet to network peers with netif_notify_peers().
+ * करोwn/up sequence. In हाल of RNDIS_STATUS_MEDIA_CONNECT when carrier is
+ * present send GARP packet to network peers with netअगर_notअगरy_peers().
  */
-static void netvsc_link_change(struct work_struct *w)
-{
-	struct net_device_context *ndev_ctx =
-		container_of(w, struct net_device_context, dwork.work);
-	struct hv_device *device_obj = ndev_ctx->device_ctx;
-	struct net_device *net = hv_get_drvdata(device_obj);
-	unsigned long flags, next_reconfig, delay;
-	struct netvsc_reconfig *event = NULL;
-	struct netvsc_device *net_device;
-	struct rndis_device *rdev;
+अटल व्योम netvsc_link_change(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा net_device_context *ndev_ctx =
+		container_of(w, काष्ठा net_device_context, dwork.work);
+	काष्ठा hv_device *device_obj = ndev_ctx->device_ctx;
+	काष्ठा net_device *net = hv_get_drvdata(device_obj);
+	अचिन्हित दीर्घ flags, next_reconfig, delay;
+	काष्ठा netvsc_reconfig *event = शून्य;
+	काष्ठा netvsc_device *net_device;
+	काष्ठा rndis_device *rdev;
 	bool reschedule = false;
 
-	/* if changes are happening, comeback later */
-	if (!rtnl_trylock()) {
+	/* अगर changes are happening, comeback later */
+	अगर (!rtnl_trylock()) अणु
 		schedule_delayed_work(&ndev_ctx->dwork, LINKCHANGE_INT);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	net_device = rtnl_dereference(ndev_ctx->nvdev);
-	if (!net_device)
-		goto out_unlock;
+	अगर (!net_device)
+		जाओ out_unlock;
 
 	rdev = net_device->extension;
 
 	next_reconfig = ndev_ctx->last_reconfig + LINKCHANGE_INT;
-	if (time_is_after_jiffies(next_reconfig)) {
-		/* link_watch only sends one notification with current state
-		 * per second, avoid doing reconfig more frequently. Handle
+	अगर (समय_is_after_jअगरfies(next_reconfig)) अणु
+		/* link_watch only sends one notअगरication with current state
+		 * per second, aव्योम करोing reconfig more frequently. Handle
 		 * wrap around.
 		 */
-		delay = next_reconfig - jiffies;
+		delay = next_reconfig - jअगरfies;
 		delay = delay < LINKCHANGE_INT ? delay : LINKCHANGE_INT;
 		schedule_delayed_work(&ndev_ctx->dwork, delay);
-		goto out_unlock;
-	}
-	ndev_ctx->last_reconfig = jiffies;
+		जाओ out_unlock;
+	पूर्ण
+	ndev_ctx->last_reconfig = jअगरfies;
 
 	spin_lock_irqsave(&ndev_ctx->lock, flags);
-	if (!list_empty(&ndev_ctx->reconfig_events)) {
+	अगर (!list_empty(&ndev_ctx->reconfig_events)) अणु
 		event = list_first_entry(&ndev_ctx->reconfig_events,
-					 struct netvsc_reconfig, list);
+					 काष्ठा netvsc_reconfig, list);
 		list_del(&event->list);
 		reschedule = !list_empty(&ndev_ctx->reconfig_events);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&ndev_ctx->lock, flags);
 
-	if (!event)
-		goto out_unlock;
+	अगर (!event)
+		जाओ out_unlock;
 
-	switch (event->event) {
+	चयन (event->event) अणु
 		/* Only the following events are possible due to the check in
 		 * netvsc_linkstatus_callback()
 		 */
-	case RNDIS_STATUS_MEDIA_CONNECT:
-		if (rdev->link_state) {
+	हाल RNDIS_STATUS_MEDIA_CONNECT:
+		अगर (rdev->link_state) अणु
 			rdev->link_state = false;
-			netif_carrier_on(net);
+			netअगर_carrier_on(net);
 			netvsc_tx_enable(net_device, net);
-		} else {
-			__netdev_notify_peers(net);
-		}
-		kfree(event);
-		break;
-	case RNDIS_STATUS_MEDIA_DISCONNECT:
-		if (!rdev->link_state) {
+		पूर्ण अन्यथा अणु
+			__netdev_notअगरy_peers(net);
+		पूर्ण
+		kमुक्त(event);
+		अवरोध;
+	हाल RNDIS_STATUS_MEDIA_DISCONNECT:
+		अगर (!rdev->link_state) अणु
 			rdev->link_state = true;
-			netif_carrier_off(net);
+			netअगर_carrier_off(net);
 			netvsc_tx_disable(net_device, net);
-		}
-		kfree(event);
-		break;
-	case RNDIS_STATUS_NETWORK_CHANGE:
-		/* Only makes sense if carrier is present */
-		if (!rdev->link_state) {
+		पूर्ण
+		kमुक्त(event);
+		अवरोध;
+	हाल RNDIS_STATUS_NETWORK_CHANGE:
+		/* Only makes sense अगर carrier is present */
+		अगर (!rdev->link_state) अणु
 			rdev->link_state = true;
-			netif_carrier_off(net);
+			netअगर_carrier_off(net);
 			netvsc_tx_disable(net_device, net);
 			event->event = RNDIS_STATUS_MEDIA_CONNECT;
 			spin_lock_irqsave(&ndev_ctx->lock, flags);
 			list_add(&event->list, &ndev_ctx->reconfig_events);
 			spin_unlock_irqrestore(&ndev_ctx->lock, flags);
 			reschedule = true;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	rtnl_unlock();
 
-	/* link_watch only sends one notification with current state per
+	/* link_watch only sends one notअगरication with current state per
 	 * second, handle next reconfig event in 2 seconds.
 	 */
-	if (reschedule)
+	अगर (reschedule)
 		schedule_delayed_work(&ndev_ctx->dwork, LINKCHANGE_INT);
 
-	return;
+	वापस;
 
 out_unlock:
 	rtnl_unlock();
-}
+पूर्ण
 
-static struct net_device *get_netvsc_byref(struct net_device *vf_netdev)
-{
-	struct net_device_context *net_device_ctx;
-	struct net_device *dev;
+अटल काष्ठा net_device *get_netvsc_byref(काष्ठा net_device *vf_netdev)
+अणु
+	काष्ठा net_device_context *net_device_ctx;
+	काष्ठा net_device *dev;
 
 	dev = netdev_master_upper_dev_get(vf_netdev);
-	if (!dev || dev->netdev_ops != &device_ops)
-		return NULL;	/* not a netvsc device */
+	अगर (!dev || dev->netdev_ops != &device_ops)
+		वापस शून्य;	/* not a netvsc device */
 
 	net_device_ctx = netdev_priv(dev);
-	if (!rtnl_dereference(net_device_ctx->nvdev))
-		return NULL;	/* device is removed */
+	अगर (!rtnl_dereference(net_device_ctx->nvdev))
+		वापस शून्य;	/* device is हटाओd */
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-/* Called when VF is injecting data into network stack.
+/* Called when VF is injecting data पूर्णांकo network stack.
  * Change the associated network device from VF to netvsc.
- * note: already called with rcu_read_lock
+ * note: alपढ़ोy called with rcu_पढ़ो_lock
  */
-static rx_handler_result_t netvsc_vf_handle_frame(struct sk_buff **pskb)
-{
-	struct sk_buff *skb = *pskb;
-	struct net_device *ndev = rcu_dereference(skb->dev->rx_handler_data);
-	struct net_device_context *ndev_ctx = netdev_priv(ndev);
-	struct netvsc_vf_pcpu_stats *pcpu_stats
+अटल rx_handler_result_t netvsc_vf_handle_frame(काष्ठा sk_buff **pskb)
+अणु
+	काष्ठा sk_buff *skb = *pskb;
+	काष्ठा net_device *ndev = rcu_dereference(skb->dev->rx_handler_data);
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(ndev);
+	काष्ठा netvsc_vf_pcpu_stats *pcpu_stats
 		 = this_cpu_ptr(ndev_ctx->vf_stats);
 
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	if (unlikely(!skb))
-		return RX_HANDLER_CONSUMED;
+	अगर (unlikely(!skb))
+		वापस RX_HANDLER_CONSUMED;
 
 	*pskb = skb;
 
@@ -2197,192 +2198,192 @@ static rx_handler_result_t netvsc_vf_handle_frame(struct sk_buff **pskb)
 	pcpu_stats->rx_bytes += skb->len;
 	u64_stats_update_end(&pcpu_stats->syncp);
 
-	return RX_HANDLER_ANOTHER;
-}
+	वापस RX_HANDLER_ANOTHER;
+पूर्ण
 
-static int netvsc_vf_join(struct net_device *vf_netdev,
-			  struct net_device *ndev)
-{
-	struct net_device_context *ndev_ctx = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक netvsc_vf_join(काष्ठा net_device *vf_netdev,
+			  काष्ठा net_device *ndev)
+अणु
+	काष्ठा net_device_context *ndev_ctx = netdev_priv(ndev);
+	पूर्णांक ret;
 
-	ret = netdev_rx_handler_register(vf_netdev,
+	ret = netdev_rx_handler_रेजिस्टर(vf_netdev,
 					 netvsc_vf_handle_frame, ndev);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		netdev_err(vf_netdev,
 			   "can not register netvsc VF receive handler (err = %d)\n",
 			   ret);
-		goto rx_handler_failed;
-	}
+		जाओ rx_handler_failed;
+	पूर्ण
 
 	ret = netdev_master_upper_dev_link(vf_netdev, ndev,
-					   NULL, NULL, NULL);
-	if (ret != 0) {
+					   शून्य, शून्य, शून्य);
+	अगर (ret != 0) अणु
 		netdev_err(vf_netdev,
 			   "can not set master device %s (err = %d)\n",
 			   ndev->name, ret);
-		goto upper_link_failed;
-	}
+		जाओ upper_link_failed;
+	पूर्ण
 
-	/* set slave flag before open to prevent IPv6 addrconf */
+	/* set slave flag beक्रमe खोलो to prevent IPv6 addrconf */
 	vf_netdev->flags |= IFF_SLAVE;
 
 	schedule_delayed_work(&ndev_ctx->vf_takeover, VF_TAKEOVER_INT);
 
-	call_netdevice_notifiers(NETDEV_JOIN, vf_netdev);
+	call_netdevice_notअगरiers(NETDEV_JOIN, vf_netdev);
 
 	netdev_info(vf_netdev, "joined to %s\n", ndev->name);
-	return 0;
+	वापस 0;
 
 upper_link_failed:
-	netdev_rx_handler_unregister(vf_netdev);
+	netdev_rx_handler_unरेजिस्टर(vf_netdev);
 rx_handler_failed:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __netvsc_vf_setup(struct net_device *ndev,
-			      struct net_device *vf_netdev)
-{
-	int ret;
+अटल व्योम __netvsc_vf_setup(काष्ठा net_device *ndev,
+			      काष्ठा net_device *vf_netdev)
+अणु
+	पूर्णांक ret;
 
 	/* Align MTU of VF with master */
 	ret = dev_set_mtu(vf_netdev, ndev->mtu);
-	if (ret)
+	अगर (ret)
 		netdev_warn(vf_netdev,
 			    "unable to change mtu to %u\n", ndev->mtu);
 
 	/* set multicast etc flags on VF */
-	dev_change_flags(vf_netdev, ndev->flags | IFF_SLAVE, NULL);
+	dev_change_flags(vf_netdev, ndev->flags | IFF_SLAVE, शून्य);
 
 	/* sync address list from ndev to VF */
-	netif_addr_lock_bh(ndev);
+	netअगर_addr_lock_bh(ndev);
 	dev_uc_sync(vf_netdev, ndev);
 	dev_mc_sync(vf_netdev, ndev);
-	netif_addr_unlock_bh(ndev);
+	netअगर_addr_unlock_bh(ndev);
 
-	if (netif_running(ndev)) {
-		ret = dev_open(vf_netdev, NULL);
-		if (ret)
+	अगर (netअगर_running(ndev)) अणु
+		ret = dev_खोलो(vf_netdev, शून्य);
+		अगर (ret)
 			netdev_warn(vf_netdev,
 				    "unable to open: %d\n", ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Setup VF as slave of the synthetic device.
- * Runs in workqueue to avoid recursion in netlink callbacks.
+ * Runs in workqueue to aव्योम recursion in netlink callbacks.
  */
-static void netvsc_vf_setup(struct work_struct *w)
-{
-	struct net_device_context *ndev_ctx
-		= container_of(w, struct net_device_context, vf_takeover.work);
-	struct net_device *ndev = hv_get_drvdata(ndev_ctx->device_ctx);
-	struct net_device *vf_netdev;
+अटल व्योम netvsc_vf_setup(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा net_device_context *ndev_ctx
+		= container_of(w, काष्ठा net_device_context, vf_takeover.work);
+	काष्ठा net_device *ndev = hv_get_drvdata(ndev_ctx->device_ctx);
+	काष्ठा net_device *vf_netdev;
 
-	if (!rtnl_trylock()) {
+	अगर (!rtnl_trylock()) अणु
 		schedule_delayed_work(&ndev_ctx->vf_takeover, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	vf_netdev = rtnl_dereference(ndev_ctx->vf_netdev);
-	if (vf_netdev)
+	अगर (vf_netdev)
 		__netvsc_vf_setup(ndev, vf_netdev);
 
 	rtnl_unlock();
-}
+पूर्ण
 
 /* Find netvsc by VF serial number.
  * The PCI hyperv controller records the serial number as the slot kobj name.
  */
-static struct net_device *get_netvsc_byslot(const struct net_device *vf_netdev)
-{
-	struct device *parent = vf_netdev->dev.parent;
-	struct net_device_context *ndev_ctx;
-	struct net_device *ndev;
-	struct pci_dev *pdev;
+अटल काष्ठा net_device *get_netvsc_byslot(स्थिर काष्ठा net_device *vf_netdev)
+अणु
+	काष्ठा device *parent = vf_netdev->dev.parent;
+	काष्ठा net_device_context *ndev_ctx;
+	काष्ठा net_device *ndev;
+	काष्ठा pci_dev *pdev;
 	u32 serial;
 
-	if (!parent || !dev_is_pci(parent))
-		return NULL; /* not a PCI device */
+	अगर (!parent || !dev_is_pci(parent))
+		वापस शून्य; /* not a PCI device */
 
 	pdev = to_pci_dev(parent);
-	if (!pdev->slot) {
+	अगर (!pdev->slot) अणु
 		netdev_notice(vf_netdev, "no PCI slot information\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (kstrtou32(pci_slot_name(pdev->slot), 10, &serial)) {
+	अगर (kstrtou32(pci_slot_name(pdev->slot), 10, &serial)) अणु
 		netdev_notice(vf_netdev, "Invalid vf serial:%s\n",
 			      pci_slot_name(pdev->slot));
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	list_for_each_entry(ndev_ctx, &netvsc_dev_list, list) {
-		if (!ndev_ctx->vf_alloc)
-			continue;
+	list_क्रम_each_entry(ndev_ctx, &netvsc_dev_list, list) अणु
+		अगर (!ndev_ctx->vf_alloc)
+			जारी;
 
-		if (ndev_ctx->vf_serial != serial)
-			continue;
+		अगर (ndev_ctx->vf_serial != serial)
+			जारी;
 
 		ndev = hv_get_drvdata(ndev_ctx->device_ctx);
-		if (ndev->addr_len != vf_netdev->addr_len ||
-		    memcmp(ndev->perm_addr, vf_netdev->perm_addr,
+		अगर (ndev->addr_len != vf_netdev->addr_len ||
+		    स_भेद(ndev->perm_addr, vf_netdev->perm_addr,
 			   ndev->addr_len) != 0)
-			continue;
+			जारी;
 
-		return ndev;
+		वापस ndev;
 
-	}
+	पूर्ण
 
 	netdev_notice(vf_netdev,
 		      "no netdev found for vf serial:%u\n", serial);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int netvsc_register_vf(struct net_device *vf_netdev)
-{
-	struct net_device_context *net_device_ctx;
-	struct netvsc_device *netvsc_dev;
-	struct bpf_prog *prog;
-	struct net_device *ndev;
-	int ret;
+अटल पूर्णांक netvsc_रेजिस्टर_vf(काष्ठा net_device *vf_netdev)
+अणु
+	काष्ठा net_device_context *net_device_ctx;
+	काष्ठा netvsc_device *netvsc_dev;
+	काष्ठा bpf_prog *prog;
+	काष्ठा net_device *ndev;
+	पूर्णांक ret;
 
-	if (vf_netdev->addr_len != ETH_ALEN)
-		return NOTIFY_DONE;
+	अगर (vf_netdev->addr_len != ETH_ALEN)
+		वापस NOTIFY_DONE;
 
 	ndev = get_netvsc_byslot(vf_netdev);
-	if (!ndev)
-		return NOTIFY_DONE;
+	अगर (!ndev)
+		वापस NOTIFY_DONE;
 
 	net_device_ctx = netdev_priv(ndev);
 	netvsc_dev = rtnl_dereference(net_device_ctx->nvdev);
-	if (!netvsc_dev || rtnl_dereference(net_device_ctx->vf_netdev))
-		return NOTIFY_DONE;
+	अगर (!netvsc_dev || rtnl_dereference(net_device_ctx->vf_netdev))
+		वापस NOTIFY_DONE;
 
-	/* if synthetic interface is a different namespace,
+	/* अगर synthetic पूर्णांकerface is a dअगरferent namespace,
 	 * then move the VF to that namespace; join will be
-	 * done again in that context.
+	 * करोne again in that context.
 	 */
-	if (!net_eq(dev_net(ndev), dev_net(vf_netdev))) {
+	अगर (!net_eq(dev_net(ndev), dev_net(vf_netdev))) अणु
 		ret = dev_change_net_namespace(vf_netdev,
 					       dev_net(ndev), "eth%d");
-		if (ret)
+		अगर (ret)
 			netdev_err(vf_netdev,
 				   "could not move to same namespace as %s: %d\n",
 				   ndev->name, ret);
-		else
+		अन्यथा
 			netdev_info(vf_netdev,
 				    "VF moved to namespace with: %s\n",
 				    ndev->name);
-		return NOTIFY_DONE;
-	}
+		वापस NOTIFY_DONE;
+	पूर्ण
 
 	netdev_info(ndev, "VF registering: %s\n", vf_netdev->name);
 
-	if (netvsc_vf_join(vf_netdev, ndev) != 0)
-		return NOTIFY_DONE;
+	अगर (netvsc_vf_join(vf_netdev, ndev) != 0)
+		वापस NOTIFY_DONE;
 
 	dev_hold(vf_netdev);
-	rcu_assign_pointer(net_device_ctx->vf_netdev, vf_netdev);
+	rcu_assign_poपूर्णांकer(net_device_ctx->vf_netdev, vf_netdev);
 
 	vf_netdev->wanted_features = ndev->features;
 	netdev_update_features(vf_netdev);
@@ -2390,103 +2391,103 @@ static int netvsc_register_vf(struct net_device *vf_netdev)
 	prog = netvsc_xdp_get(netvsc_dev);
 	netvsc_vf_setxdp(vf_netdev, prog);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
 /* Change the data path when VF UP/DOWN/CHANGE are detected.
  *
  * Typically a UP or DOWN event is followed by a CHANGE event, so
  * net_device_ctx->data_path_is_vf is used to cache the current data path
- * to avoid the duplicate call of netvsc_switch_datapath() and the duplicate
+ * to aव्योम the duplicate call of netvsc_चयन_datapath() and the duplicate
  * message.
  *
- * During hibernation, if a VF NIC driver (e.g. mlx5) preserves the network
- * interface, there is only the CHANGE event and no UP or DOWN event.
+ * During hibernation, अगर a VF NIC driver (e.g. mlx5) preserves the network
+ * पूर्णांकerface, there is only the CHANGE event and no UP or DOWN event.
  */
-static int netvsc_vf_changed(struct net_device *vf_netdev, unsigned long event)
-{
-	struct net_device_context *net_device_ctx;
-	struct netvsc_device *netvsc_dev;
-	struct net_device *ndev;
+अटल पूर्णांक netvsc_vf_changed(काष्ठा net_device *vf_netdev, अचिन्हित दीर्घ event)
+अणु
+	काष्ठा net_device_context *net_device_ctx;
+	काष्ठा netvsc_device *netvsc_dev;
+	काष्ठा net_device *ndev;
 	bool vf_is_up = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (event != NETDEV_GOING_DOWN)
-		vf_is_up = netif_running(vf_netdev);
+	अगर (event != NETDEV_GOING_DOWN)
+		vf_is_up = netअगर_running(vf_netdev);
 
 	ndev = get_netvsc_byref(vf_netdev);
-	if (!ndev)
-		return NOTIFY_DONE;
+	अगर (!ndev)
+		वापस NOTIFY_DONE;
 
 	net_device_ctx = netdev_priv(ndev);
 	netvsc_dev = rtnl_dereference(net_device_ctx->nvdev);
-	if (!netvsc_dev)
-		return NOTIFY_DONE;
+	अगर (!netvsc_dev)
+		वापस NOTIFY_DONE;
 
-	if (net_device_ctx->data_path_is_vf == vf_is_up)
-		return NOTIFY_OK;
+	अगर (net_device_ctx->data_path_is_vf == vf_is_up)
+		वापस NOTIFY_OK;
 
-	ret = netvsc_switch_datapath(ndev, vf_is_up);
+	ret = netvsc_चयन_datapath(ndev, vf_is_up);
 
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(ndev,
 			   "Data path failed to switch %s VF: %s, err: %d\n",
 			   vf_is_up ? "to" : "from", vf_netdev->name, ret);
-		return NOTIFY_DONE;
-	} else {
+		वापस NOTIFY_DONE;
+	पूर्ण अन्यथा अणु
 		netdev_info(ndev, "Data path switched %s VF: %s\n",
 			    vf_is_up ? "to" : "from", vf_netdev->name);
-	}
+	पूर्ण
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static int netvsc_unregister_vf(struct net_device *vf_netdev)
-{
-	struct net_device *ndev;
-	struct net_device_context *net_device_ctx;
+अटल पूर्णांक netvsc_unरेजिस्टर_vf(काष्ठा net_device *vf_netdev)
+अणु
+	काष्ठा net_device *ndev;
+	काष्ठा net_device_context *net_device_ctx;
 
 	ndev = get_netvsc_byref(vf_netdev);
-	if (!ndev)
-		return NOTIFY_DONE;
+	अगर (!ndev)
+		वापस NOTIFY_DONE;
 
 	net_device_ctx = netdev_priv(ndev);
 	cancel_delayed_work_sync(&net_device_ctx->vf_takeover);
 
 	netdev_info(ndev, "VF unregistering: %s\n", vf_netdev->name);
 
-	netvsc_vf_setxdp(vf_netdev, NULL);
+	netvsc_vf_setxdp(vf_netdev, शून्य);
 
-	netdev_rx_handler_unregister(vf_netdev);
+	netdev_rx_handler_unरेजिस्टर(vf_netdev);
 	netdev_upper_dev_unlink(vf_netdev, ndev);
-	RCU_INIT_POINTER(net_device_ctx->vf_netdev, NULL);
+	RCU_INIT_POINTER(net_device_ctx->vf_netdev, शून्य);
 	dev_put(vf_netdev);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static int netvsc_probe(struct hv_device *dev,
-			const struct hv_vmbus_device_id *dev_id)
-{
-	struct net_device *net = NULL;
-	struct net_device_context *net_device_ctx;
-	struct netvsc_device_info *device_info = NULL;
-	struct netvsc_device *nvdev;
-	int ret = -ENOMEM;
+अटल पूर्णांक netvsc_probe(काष्ठा hv_device *dev,
+			स्थिर काष्ठा hv_vmbus_device_id *dev_id)
+अणु
+	काष्ठा net_device *net = शून्य;
+	काष्ठा net_device_context *net_device_ctx;
+	काष्ठा netvsc_device_info *device_info = शून्य;
+	काष्ठा netvsc_device *nvdev;
+	पूर्णांक ret = -ENOMEM;
 
-	net = alloc_etherdev_mq(sizeof(struct net_device_context),
+	net = alloc_etherdev_mq(माप(काष्ठा net_device_context),
 				VRSS_CHANNEL_MAX);
-	if (!net)
-		goto no_net;
+	अगर (!net)
+		जाओ no_net;
 
-	netif_carrier_off(net);
+	netअगर_carrier_off(net);
 
 	netvsc_init_settings(net);
 
 	net_device_ctx = netdev_priv(net);
 	net_device_ctx->device_ctx = dev;
-	net_device_ctx->msg_enable = netif_msg_init(debug, default_msg);
-	if (netif_msg_probe(net_device_ctx))
+	net_device_ctx->msg_enable = netअगर_msg_init(debug, शेष_msg);
+	अगर (netअगर_msg_probe(net_device_ctx))
 		netdev_dbg(net, "netvsc msg_enable: %d\n",
 			   net_device_ctx->msg_enable);
 
@@ -2499,51 +2500,51 @@ static int netvsc_probe(struct hv_device *dev,
 	INIT_DELAYED_WORK(&net_device_ctx->vf_takeover, netvsc_vf_setup);
 
 	net_device_ctx->vf_stats
-		= netdev_alloc_pcpu_stats(struct netvsc_vf_pcpu_stats);
-	if (!net_device_ctx->vf_stats)
-		goto no_stats;
+		= netdev_alloc_pcpu_stats(काष्ठा netvsc_vf_pcpu_stats);
+	अगर (!net_device_ctx->vf_stats)
+		जाओ no_stats;
 
 	net->netdev_ops = &device_ops;
 	net->ethtool_ops = &ethtool_ops;
 	SET_NETDEV_DEV(net, &dev->device);
 
-	/* We always need headroom for rndis header */
+	/* We always need headroom क्रम rndis header */
 	net->needed_headroom = RNDIS_AND_PPI_SIZE;
 
-	/* Initialize the number of queues to be 1, we may change it if more
+	/* Initialize the number of queues to be 1, we may change it अगर more
 	 * channels are offered later.
 	 */
-	netif_set_real_num_tx_queues(net, 1);
-	netif_set_real_num_rx_queues(net, 1);
+	netअगर_set_real_num_tx_queues(net, 1);
+	netअगर_set_real_num_rx_queues(net, 1);
 
-	/* Notify the netvsc driver of the new device */
-	device_info = netvsc_devinfo_get(NULL);
+	/* Notअगरy the netvsc driver of the new device */
+	device_info = netvsc_devinfo_get(शून्य);
 
-	if (!device_info) {
+	अगर (!device_info) अणु
 		ret = -ENOMEM;
-		goto devinfo_failed;
-	}
+		जाओ devinfo_failed;
+	पूर्ण
 
 	nvdev = rndis_filter_device_add(dev, device_info);
-	if (IS_ERR(nvdev)) {
+	अगर (IS_ERR(nvdev)) अणु
 		ret = PTR_ERR(nvdev);
 		netdev_err(net, "unable to add netvsc device (ret %d)\n", ret);
-		goto rndis_failed;
-	}
+		जाओ rndis_failed;
+	पूर्ण
 
-	memcpy(net->dev_addr, device_info->mac_adr, ETH_ALEN);
+	स_नकल(net->dev_addr, device_info->mac_adr, ETH_ALEN);
 
-	/* We must get rtnl lock before scheduling nvdev->subchan_work,
-	 * otherwise netvsc_subchan_work() can get rtnl lock first and wait
+	/* We must get rtnl lock beक्रमe scheduling nvdev->subchan_work,
+	 * otherwise netvsc_subchan_work() can get rtnl lock first and रुको
 	 * all subchannels to show up, but that may not happen because
 	 * netvsc_probe() can't get rtnl lock and as a result vmbus_onoffer()
 	 * -> ... -> device_add() -> ... -> __device_attach() can't get
 	 * the device lock, so all the subchannels can't be processed --
-	 * finally netvsc_subchan_work() hangs forever.
+	 * finally netvsc_subchan_work() hangs क्रमever.
 	 */
 	rtnl_lock();
 
-	if (nvdev->num_chn > 1)
+	अगर (nvdev->num_chn > 1)
 		schedule_work(&nvdev->subchan_work);
 
 	/* hw_features computed in rndis_netdev_set_hwcaps() */
@@ -2556,50 +2557,50 @@ static int netvsc_probe(struct hv_device *dev,
 
 	/* MTU range: 68 - 1500 or 65521 */
 	net->min_mtu = NETVSC_MTU_MIN;
-	if (nvdev->nvsp_version >= NVSP_PROTOCOL_VERSION_2)
+	अगर (nvdev->nvsp_version >= NVSP_PROTOCOL_VERSION_2)
 		net->max_mtu = NETVSC_MTU - ETH_HLEN;
-	else
+	अन्यथा
 		net->max_mtu = ETH_DATA_LEN;
 
 	nvdev->tx_disable = false;
 
-	ret = register_netdevice(net);
-	if (ret != 0) {
+	ret = रेजिस्टर_netdevice(net);
+	अगर (ret != 0) अणु
 		pr_err("Unable to register netdev.\n");
-		goto register_failed;
-	}
+		जाओ रेजिस्टर_failed;
+	पूर्ण
 
 	list_add(&net_device_ctx->list, &netvsc_dev_list);
 	rtnl_unlock();
 
 	netvsc_devinfo_put(device_info);
-	return 0;
+	वापस 0;
 
-register_failed:
+रेजिस्टर_failed:
 	rtnl_unlock();
-	rndis_filter_device_remove(dev, nvdev);
+	rndis_filter_device_हटाओ(dev, nvdev);
 rndis_failed:
 	netvsc_devinfo_put(device_info);
 devinfo_failed:
-	free_percpu(net_device_ctx->vf_stats);
+	मुक्त_percpu(net_device_ctx->vf_stats);
 no_stats:
-	hv_set_drvdata(dev, NULL);
-	free_netdev(net);
+	hv_set_drvdata(dev, शून्य);
+	मुक्त_netdev(net);
 no_net:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int netvsc_remove(struct hv_device *dev)
-{
-	struct net_device_context *ndev_ctx;
-	struct net_device *vf_netdev, *net;
-	struct netvsc_device *nvdev;
+अटल पूर्णांक netvsc_हटाओ(काष्ठा hv_device *dev)
+अणु
+	काष्ठा net_device_context *ndev_ctx;
+	काष्ठा net_device *vf_netdev, *net;
+	काष्ठा netvsc_device *nvdev;
 
 	net = hv_get_drvdata(dev);
-	if (net == NULL) {
+	अगर (net == शून्य) अणु
 		dev_err(&dev->device, "No net device to remove\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ndev_ctx = netdev_priv(net);
 
@@ -2607,40 +2608,40 @@ static int netvsc_remove(struct hv_device *dev)
 
 	rtnl_lock();
 	nvdev = rtnl_dereference(ndev_ctx->nvdev);
-	if (nvdev) {
+	अगर (nvdev) अणु
 		cancel_work_sync(&nvdev->subchan_work);
-		netvsc_xdp_set(net, NULL, NULL, nvdev);
-	}
+		netvsc_xdp_set(net, शून्य, शून्य, nvdev);
+	पूर्ण
 
 	/*
 	 * Call to the vsc driver to let it know that the device is being
-	 * removed. Also blocks mtu and channel changes.
+	 * हटाओd. Also blocks mtu and channel changes.
 	 */
 	vf_netdev = rtnl_dereference(ndev_ctx->vf_netdev);
-	if (vf_netdev)
-		netvsc_unregister_vf(vf_netdev);
+	अगर (vf_netdev)
+		netvsc_unरेजिस्टर_vf(vf_netdev);
 
-	if (nvdev)
-		rndis_filter_device_remove(dev, nvdev);
+	अगर (nvdev)
+		rndis_filter_device_हटाओ(dev, nvdev);
 
-	unregister_netdevice(net);
+	unरेजिस्टर_netdevice(net);
 	list_del(&ndev_ctx->list);
 
 	rtnl_unlock();
 
-	hv_set_drvdata(dev, NULL);
+	hv_set_drvdata(dev, शून्य);
 
-	free_percpu(ndev_ctx->vf_stats);
-	free_netdev(net);
-	return 0;
-}
+	मुक्त_percpu(ndev_ctx->vf_stats);
+	मुक्त_netdev(net);
+	वापस 0;
+पूर्ण
 
-static int netvsc_suspend(struct hv_device *dev)
-{
-	struct net_device_context *ndev_ctx;
-	struct netvsc_device *nvdev;
-	struct net_device *net;
-	int ret;
+अटल पूर्णांक netvsc_suspend(काष्ठा hv_device *dev)
+अणु
+	काष्ठा net_device_context *ndev_ctx;
+	काष्ठा netvsc_device *nvdev;
+	काष्ठा net_device *net;
+	पूर्णांक ret;
 
 	net = hv_get_drvdata(dev);
 
@@ -2650,10 +2651,10 @@ static int netvsc_suspend(struct hv_device *dev)
 	rtnl_lock();
 
 	nvdev = rtnl_dereference(ndev_ctx->nvdev);
-	if (nvdev == NULL) {
+	अगर (nvdev == शून्य) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Save the current config info */
 	ndev_ctx->saved_netvsc_dev_info = netvsc_devinfo_get(nvdev);
@@ -2662,22 +2663,22 @@ static int netvsc_suspend(struct hv_device *dev)
 out:
 	rtnl_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int netvsc_resume(struct hv_device *dev)
-{
-	struct net_device *net = hv_get_drvdata(dev);
-	struct net_device_context *net_device_ctx;
-	struct netvsc_device_info *device_info;
-	int ret;
+अटल पूर्णांक netvsc_resume(काष्ठा hv_device *dev)
+अणु
+	काष्ठा net_device *net = hv_get_drvdata(dev);
+	काष्ठा net_device_context *net_device_ctx;
+	काष्ठा netvsc_device_info *device_info;
+	पूर्णांक ret;
 
 	rtnl_lock();
 
 	net_device_ctx = netdev_priv(net);
 
-	/* Reset the data path to the netvsc NIC before re-opening the vmbus
-	 * channel. Later netvsc_netdev_event() will switch the data path to
+	/* Reset the data path to the netvsc NIC beक्रमe re-खोलोing the vmbus
+	 * channel. Later netvsc_netdev_event() will चयन the data path to
 	 * the VF upon the UP or CHANGE event.
 	 */
 	net_device_ctx->data_path_is_vf = false;
@@ -2686,107 +2687,107 @@ static int netvsc_resume(struct hv_device *dev)
 	ret = netvsc_attach(net, device_info);
 
 	netvsc_devinfo_put(device_info);
-	net_device_ctx->saved_netvsc_dev_info = NULL;
+	net_device_ctx->saved_netvsc_dev_info = शून्य;
 
 	rtnl_unlock();
 
-	return ret;
-}
-static const struct hv_vmbus_device_id id_table[] = {
+	वापस ret;
+पूर्ण
+अटल स्थिर काष्ठा hv_vmbus_device_id id_table[] = अणु
 	/* Network guid */
-	{ HV_NIC_GUID, },
-	{ },
-};
+	अणु HV_NIC_GUID, पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(vmbus, id_table);
 
 /* The one and only one */
-static struct  hv_driver netvsc_drv = {
+अटल काष्ठा  hv_driver netvsc_drv = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = id_table,
 	.probe = netvsc_probe,
-	.remove = netvsc_remove,
+	.हटाओ = netvsc_हटाओ,
 	.suspend = netvsc_suspend,
 	.resume = netvsc_resume,
-	.driver = {
+	.driver = अणु
 		.probe_type = PROBE_FORCE_SYNCHRONOUS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * On Hyper-V, every VF interface is matched with a corresponding
- * synthetic interface. The synthetic interface is presented first
- * to the guest. When the corresponding VF instance is registered,
- * we will take care of switching the data path.
+ * On Hyper-V, every VF पूर्णांकerface is matched with a corresponding
+ * synthetic पूर्णांकerface. The synthetic पूर्णांकerface is presented first
+ * to the guest. When the corresponding VF instance is रेजिस्टरed,
+ * we will take care of चयनing the data path.
  */
-static int netvsc_netdev_event(struct notifier_block *this,
-			       unsigned long event, void *ptr)
-{
-	struct net_device *event_dev = netdev_notifier_info_to_dev(ptr);
+अटल पूर्णांक netvsc_netdev_event(काष्ठा notअगरier_block *this,
+			       अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *event_dev = netdev_notअगरier_info_to_dev(ptr);
 
 	/* Skip our own events */
-	if (event_dev->netdev_ops == &device_ops)
-		return NOTIFY_DONE;
+	अगर (event_dev->netdev_ops == &device_ops)
+		वापस NOTIFY_DONE;
 
-	/* Avoid non-Ethernet type devices */
-	if (event_dev->type != ARPHRD_ETHER)
-		return NOTIFY_DONE;
+	/* Aव्योम non-Ethernet type devices */
+	अगर (event_dev->type != ARPHRD_ETHER)
+		वापस NOTIFY_DONE;
 
-	/* Avoid Vlan dev with same MAC registering as VF */
-	if (is_vlan_dev(event_dev))
-		return NOTIFY_DONE;
+	/* Aव्योम Vlan dev with same MAC रेजिस्टरing as VF */
+	अगर (is_vlan_dev(event_dev))
+		वापस NOTIFY_DONE;
 
-	/* Avoid Bonding master dev with same MAC registering as VF */
-	if ((event_dev->priv_flags & IFF_BONDING) &&
+	/* Aव्योम Bonding master dev with same MAC रेजिस्टरing as VF */
+	अगर ((event_dev->priv_flags & IFF_BONDING) &&
 	    (event_dev->flags & IFF_MASTER))
-		return NOTIFY_DONE;
+		वापस NOTIFY_DONE;
 
-	switch (event) {
-	case NETDEV_REGISTER:
-		return netvsc_register_vf(event_dev);
-	case NETDEV_UNREGISTER:
-		return netvsc_unregister_vf(event_dev);
-	case NETDEV_UP:
-	case NETDEV_DOWN:
-	case NETDEV_CHANGE:
-	case NETDEV_GOING_DOWN:
-		return netvsc_vf_changed(event_dev, event);
-	default:
-		return NOTIFY_DONE;
-	}
-}
+	चयन (event) अणु
+	हाल NETDEV_REGISTER:
+		वापस netvsc_रेजिस्टर_vf(event_dev);
+	हाल NETDEV_UNREGISTER:
+		वापस netvsc_unरेजिस्टर_vf(event_dev);
+	हाल NETDEV_UP:
+	हाल NETDEV_DOWN:
+	हाल NETDEV_CHANGE:
+	हाल NETDEV_GOING_DOWN:
+		वापस netvsc_vf_changed(event_dev, event);
+	शेष:
+		वापस NOTIFY_DONE;
+	पूर्ण
+पूर्ण
 
-static struct notifier_block netvsc_netdev_notifier = {
-	.notifier_call = netvsc_netdev_event,
-};
+अटल काष्ठा notअगरier_block netvsc_netdev_notअगरier = अणु
+	.notअगरier_call = netvsc_netdev_event,
+पूर्ण;
 
-static void __exit netvsc_drv_exit(void)
-{
-	unregister_netdevice_notifier(&netvsc_netdev_notifier);
-	vmbus_driver_unregister(&netvsc_drv);
-}
+अटल व्योम __निकास netvsc_drv_निकास(व्योम)
+अणु
+	unरेजिस्टर_netdevice_notअगरier(&netvsc_netdev_notअगरier);
+	vmbus_driver_unरेजिस्टर(&netvsc_drv);
+पूर्ण
 
-static int __init netvsc_drv_init(void)
-{
-	int ret;
+अटल पूर्णांक __init netvsc_drv_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (ring_size < RING_SIZE_MIN) {
+	अगर (ring_size < RING_SIZE_MIN) अणु
 		ring_size = RING_SIZE_MIN;
 		pr_info("Increased ring_size to %u (min allowed)\n",
 			ring_size);
-	}
+	पूर्ण
 	netvsc_ring_bytes = ring_size * PAGE_SIZE;
 
-	ret = vmbus_driver_register(&netvsc_drv);
-	if (ret)
-		return ret;
+	ret = vmbus_driver_रेजिस्टर(&netvsc_drv);
+	अगर (ret)
+		वापस ret;
 
-	register_netdevice_notifier(&netvsc_netdev_notifier);
-	return 0;
-}
+	रेजिस्टर_netdevice_notअगरier(&netvsc_netdev_notअगरier);
+	वापस 0;
+पूर्ण
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Microsoft Hyper-V network driver");
 
 module_init(netvsc_drv_init);
-module_exit(netvsc_drv_exit);
+module_निकास(netvsc_drv_निकास);

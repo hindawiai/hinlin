@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2005 Oracle.  All rights reserved.
  */
 
-#ifndef O2CLUSTER_QUORUM_H
-#define O2CLUSTER_QUORUM_H
+#अगर_अघोषित O2CLUSTER_QUORUM_H
+#घोषणा O2CLUSTER_QUORUM_H
 
-void o2quo_init(void);
-void o2quo_exit(void);
+व्योम o2quo_init(व्योम);
+व्योम o2quo_निकास(व्योम);
 
-void o2quo_hb_up(u8 node);
-void o2quo_hb_down(u8 node);
-void o2quo_hb_still_up(u8 node);
-void o2quo_conn_up(u8 node);
-void o2quo_conn_err(u8 node);
-void o2quo_disk_timeout(void);
+व्योम o2quo_hb_up(u8 node);
+व्योम o2quo_hb_करोwn(u8 node);
+व्योम o2quo_hb_still_up(u8 node);
+व्योम o2quo_conn_up(u8 node);
+व्योम o2quo_conn_err(u8 node);
+व्योम o2quo_disk_समयout(व्योम);
 
-#endif /* O2CLUSTER_QUORUM_H */
+#पूर्ण_अगर /* O2CLUSTER_QUORUM_H */

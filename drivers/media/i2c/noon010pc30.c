@@ -1,518 +1,519 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for SiliconFile NOON010PC30 CIF (1/11") Image Sensor with ISP
+ * Driver क्रम SiliconFile NOON010PC30 CIF (1/11") Image Sensor with ISP
  *
  * Copyright (C) 2010 - 2011 Samsung Electronics Co., Ltd.
  * Contact: Sylwester Nawrocki, <s.nawrocki@samsung.com>
  *
- * Initial register configuration based on a driver authored by
+ * Initial रेजिस्टर configuration based on a driver authored by
  * HeungJun Kim <riverful.kim@samsung.com>.
  */
 
-#include <linux/delay.h>
-#include <linux/gpio.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/regulator/consumer.h>
-#include <media/i2c/noon010pc30.h>
-#include <linux/videodev2.h>
-#include <linux/module.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-mediabus.h>
-#include <media/v4l2-subdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <media/i2c/noon010pc30.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/module.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-mediabus.h>
+#समावेश <media/v4l2-subdev.h>
 
-static int debug;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Enable module debug trace. Set to 1 to enable.");
 
-#define MODULE_NAME		"NOON010PC30"
+#घोषणा MODULE_NAME		"NOON010PC30"
 
 /*
  * Register offsets within a page
- * b15..b8 - page id, b7..b0 - register address
+ * b15..b8 - page id, b7..b0 - रेजिस्टर address
  */
-#define POWER_CTRL_REG		0x0001
-#define PAGEMODE_REG		0x03
-#define DEVICE_ID_REG		0x0004
-#define NOON010PC30_ID		0x86
-#define VDO_CTL_REG(n)		(0x0010 + (n))
-#define SYNC_CTL_REG		0x0012
-/* Window size and position */
-#define WIN_ROWH_REG		0x0013
-#define WIN_ROWL_REG		0x0014
-#define WIN_COLH_REG		0x0015
-#define WIN_COLL_REG		0x0016
-#define WIN_HEIGHTH_REG		0x0017
-#define WIN_HEIGHTL_REG		0x0018
-#define WIN_WIDTHH_REG		0x0019
-#define WIN_WIDTHL_REG		0x001A
-#define HBLANKH_REG		0x001B
-#define HBLANKL_REG		0x001C
-#define VSYNCH_REG		0x001D
-#define VSYNCL_REG		0x001E
+#घोषणा POWER_CTRL_REG		0x0001
+#घोषणा PAGEMODE_REG		0x03
+#घोषणा DEVICE_ID_REG		0x0004
+#घोषणा NOON010PC30_ID		0x86
+#घोषणा VDO_CTL_REG(n)		(0x0010 + (n))
+#घोषणा SYNC_CTL_REG		0x0012
+/* Winकरोw size and position */
+#घोषणा WIN_ROWH_REG		0x0013
+#घोषणा WIN_ROWL_REG		0x0014
+#घोषणा WIN_COLH_REG		0x0015
+#घोषणा WIN_COLL_REG		0x0016
+#घोषणा WIN_HEIGHTH_REG		0x0017
+#घोषणा WIN_HEIGHTL_REG		0x0018
+#घोषणा WIN_WIDTHH_REG		0x0019
+#घोषणा WIN_WIDTHL_REG		0x001A
+#घोषणा HBLANKH_REG		0x001B
+#घोषणा HBLANKL_REG		0x001C
+#घोषणा VSYNCH_REG		0x001D
+#घोषणा VSYNCL_REG		0x001E
 /* VSYNC control */
-#define VS_CTL_REG(n)		(0x00A1 + (n))
+#घोषणा VS_CTL_REG(n)		(0x00A1 + (n))
 /* page 1 */
-#define ISP_CTL_REG(n)		(0x0110 + (n))
-#define YOFS_REG		0x0119
-#define DARK_YOFS_REG		0x011A
-#define SAT_CTL_REG		0x0120
-#define BSAT_REG		0x0121
-#define RSAT_REG		0x0122
+#घोषणा ISP_CTL_REG(n)		(0x0110 + (n))
+#घोषणा YOFS_REG		0x0119
+#घोषणा DARK_YOFS_REG		0x011A
+#घोषणा SAT_CTL_REG		0x0120
+#घोषणा BSAT_REG		0x0121
+#घोषणा RSAT_REG		0x0122
 /* Color correction */
-#define CMC_CTL_REG		0x0130
-#define CMC_OFSGH_REG		0x0133
-#define CMC_OFSGL_REG		0x0135
-#define CMC_SIGN_REG		0x0136
-#define CMC_GOFS_REG		0x0137
-#define CMC_COEF_REG(n)		(0x0138 + (n))
-#define CMC_OFS_REG(n)		(0x0141 + (n))
+#घोषणा CMC_CTL_REG		0x0130
+#घोषणा CMC_OFSGH_REG		0x0133
+#घोषणा CMC_OFSGL_REG		0x0135
+#घोषणा CMC_SIGN_REG		0x0136
+#घोषणा CMC_GOFS_REG		0x0137
+#घोषणा CMC_COEF_REG(n)		(0x0138 + (n))
+#घोषणा CMC_OFS_REG(n)		(0x0141 + (n))
 /* Gamma correction */
-#define GMA_CTL_REG		0x0160
-#define GMA_COEF_REG(n)		(0x0161 + (n))
+#घोषणा GMA_CTL_REG		0x0160
+#घोषणा GMA_COEF_REG(n)		(0x0161 + (n))
 /* Lens Shading */
-#define LENS_CTRL_REG		0x01D0
-#define LENS_XCEN_REG		0x01D1
-#define LENS_YCEN_REG		0x01D2
-#define LENS_RC_REG		0x01D3
-#define LENS_GC_REG		0x01D4
-#define LENS_BC_REG		0x01D5
-#define L_AGON_REG		0x01D6
-#define L_AGOFF_REG		0x01D7
+#घोषणा LENS_CTRL_REG		0x01D0
+#घोषणा LENS_XCEN_REG		0x01D1
+#घोषणा LENS_YCEN_REG		0x01D2
+#घोषणा LENS_RC_REG		0x01D3
+#घोषणा LENS_GC_REG		0x01D4
+#घोषणा LENS_BC_REG		0x01D5
+#घोषणा L_AGON_REG		0x01D6
+#घोषणा L_AGOFF_REG		0x01D7
 /* Page 3 - Auto Exposure */
-#define AE_CTL_REG(n)		(0x0310 + (n))
-#define AE_CTL9_REG		0x032C
-#define AE_CTL10_REG		0x032D
-#define AE_YLVL_REG		0x031C
-#define AE_YTH_REG(n)		(0x031D + (n))
-#define AE_WGT_REG		0x0326
-#define EXP_TIMEH_REG		0x0333
-#define EXP_TIMEM_REG		0x0334
-#define EXP_TIMEL_REG		0x0335
-#define EXP_MMINH_REG		0x0336
-#define EXP_MMINL_REG		0x0337
-#define EXP_MMAXH_REG		0x0338
-#define EXP_MMAXM_REG		0x0339
-#define EXP_MMAXL_REG		0x033A
+#घोषणा AE_CTL_REG(n)		(0x0310 + (n))
+#घोषणा AE_CTL9_REG		0x032C
+#घोषणा AE_CTL10_REG		0x032D
+#घोषणा AE_YLVL_REG		0x031C
+#घोषणा AE_YTH_REG(n)		(0x031D + (n))
+#घोषणा AE_WGT_REG		0x0326
+#घोषणा EXP_TIMEH_REG		0x0333
+#घोषणा EXP_TIMEM_REG		0x0334
+#घोषणा EXP_TIMEL_REG		0x0335
+#घोषणा EXP_MMINH_REG		0x0336
+#घोषणा EXP_MMINL_REG		0x0337
+#घोषणा EXP_MMAXH_REG		0x0338
+#घोषणा EXP_MMAXM_REG		0x0339
+#घोषणा EXP_MMAXL_REG		0x033A
 /* Page 4 - Auto White Balance */
-#define AWB_CTL_REG(n)		(0x0410 + (n))
-#define AWB_ENABE		0x80
-#define AWB_WGHT_REG		0x0419
-#define BGAIN_PAR_REG(n)	(0x044F + (n))
+#घोषणा AWB_CTL_REG(n)		(0x0410 + (n))
+#घोषणा AWB_ENABE		0x80
+#घोषणा AWB_WGHT_REG		0x0419
+#घोषणा BGAIN_PAR_REG(n)	(0x044F + (n))
 /* Manual white balance, when AWB_CTL2[0]=1 */
-#define MWB_RGAIN_REG		0x0466
-#define MWB_BGAIN_REG		0x0467
+#घोषणा MWB_RGAIN_REG		0x0466
+#घोषणा MWB_BGAIN_REG		0x0467
 
 /* The token to mark an array end */
-#define REG_TERM		0xFFFF
+#घोषणा REG_TERM		0xFFFF
 
-struct noon010_format {
+काष्ठा noon010_क्रमmat अणु
 	u32 code;
-	enum v4l2_colorspace colorspace;
+	क्रमागत v4l2_colorspace colorspace;
 	u16 ispctl1_reg;
-};
+पूर्ण;
 
-struct noon010_frmsize {
+काष्ठा noon010_frmsize अणु
 	u16 width;
 	u16 height;
-	int vid_ctl1;
-};
+	पूर्णांक vid_ctl1;
+पूर्ण;
 
-static const char * const noon010_supply_name[] = {
+अटल स्थिर अक्षर * स्थिर noon010_supply_name[] = अणु
 	"vdd_core", "vddio", "vdda"
-};
+पूर्ण;
 
-#define NOON010_NUM_SUPPLIES ARRAY_SIZE(noon010_supply_name)
+#घोषणा NOON010_NUM_SUPPLIES ARRAY_SIZE(noon010_supply_name)
 
-struct noon010_info {
-	struct v4l2_subdev sd;
-	struct media_pad pad;
-	struct v4l2_ctrl_handler hdl;
-	struct regulator_bulk_data supply[NOON010_NUM_SUPPLIES];
+काष्ठा noon010_info अणु
+	काष्ठा v4l2_subdev sd;
+	काष्ठा media_pad pad;
+	काष्ठा v4l2_ctrl_handler hdl;
+	काष्ठा regulator_bulk_data supply[NOON010_NUM_SUPPLIES];
 	u32 gpio_nreset;
 	u32 gpio_nstby;
 
-	/* Protects the struct members below */
-	struct mutex lock;
+	/* Protects the काष्ठा members below */
+	काष्ठा mutex lock;
 
-	const struct noon010_format *curr_fmt;
-	const struct noon010_frmsize *curr_win;
-	unsigned int apply_new_cfg:1;
-	unsigned int streaming:1;
-	unsigned int hflip:1;
-	unsigned int vflip:1;
-	unsigned int power:1;
+	स्थिर काष्ठा noon010_क्रमmat *curr_fmt;
+	स्थिर काष्ठा noon010_frmsize *curr_win;
+	अचिन्हित पूर्णांक apply_new_cfg:1;
+	अचिन्हित पूर्णांक streaming:1;
+	अचिन्हित पूर्णांक hflip:1;
+	अचिन्हित पूर्णांक vflip:1;
+	अचिन्हित पूर्णांक घातer:1;
 	u8 i2c_reg_page;
-};
+पूर्ण;
 
-struct i2c_regval {
+काष्ठा i2c_regval अणु
 	u16 addr;
 	u16 val;
-};
+पूर्ण;
 
 /* Supported resolutions. */
-static const struct noon010_frmsize noon010_sizes[] = {
-	{
+अटल स्थिर काष्ठा noon010_frmsize noon010_sizes[] = अणु
+	अणु
 		.width		= 352,
 		.height		= 288,
 		.vid_ctl1	= 0,
-	}, {
+	पूर्ण, अणु
 		.width		= 176,
 		.height		= 144,
 		.vid_ctl1	= 0x10,
-	}, {
+	पूर्ण, अणु
 		.width		= 88,
 		.height		= 72,
 		.vid_ctl1	= 0x20,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* Supported pixel formats. */
-static const struct noon010_format noon010_formats[] = {
-	{
+/* Supported pixel क्रमmats. */
+अटल स्थिर काष्ठा noon010_क्रमmat noon010_क्रमmats[] = अणु
+	अणु
 		.code		= MEDIA_BUS_FMT_YUYV8_2X8,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
 		.ispctl1_reg	= 0x03,
-	}, {
+	पूर्ण, अणु
 		.code		= MEDIA_BUS_FMT_YVYU8_2X8,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
 		.ispctl1_reg	= 0x02,
-	}, {
+	पूर्ण, अणु
 		.code		= MEDIA_BUS_FMT_VYUY8_2X8,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
 		.ispctl1_reg	= 0,
-	}, {
+	पूर्ण, अणु
 		.code		= MEDIA_BUS_FMT_UYVY8_2X8,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
 		.ispctl1_reg	= 0x01,
-	}, {
+	पूर्ण, अणु
 		.code		= MEDIA_BUS_FMT_RGB565_2X8_BE,
 		.colorspace	= V4L2_COLORSPACE_JPEG,
 		.ispctl1_reg	= 0x40,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct i2c_regval noon010_base_regs[] = {
-	{ WIN_COLL_REG,		0x06 },	{ HBLANKL_REG,		0x7C },
+अटल स्थिर काष्ठा i2c_regval noon010_base_regs[] = अणु
+	अणु WIN_COLL_REG,		0x06 पूर्ण,	अणु HBLANKL_REG,		0x7C पूर्ण,
 	/* Color corection and saturation */
-	{ ISP_CTL_REG(0),	0x30 }, { ISP_CTL_REG(2),	0x30 },
-	{ YOFS_REG,		0x80 }, { DARK_YOFS_REG,	0x04 },
-	{ SAT_CTL_REG,		0x1F }, { BSAT_REG,		0x90 },
-	{ CMC_CTL_REG,		0x0F }, { CMC_OFSGH_REG,	0x3C },
-	{ CMC_OFSGL_REG,	0x2C }, { CMC_SIGN_REG,		0x3F },
-	{ CMC_COEF_REG(0),	0x79 }, { CMC_OFS_REG(0),	0x00 },
-	{ CMC_COEF_REG(1),	0x39 }, { CMC_OFS_REG(1),	0x00 },
-	{ CMC_COEF_REG(2),	0x00 }, { CMC_OFS_REG(2),	0x00 },
-	{ CMC_COEF_REG(3),	0x11 }, { CMC_OFS_REG(3),	0x8B },
-	{ CMC_COEF_REG(4),	0x65 }, { CMC_OFS_REG(4),	0x07 },
-	{ CMC_COEF_REG(5),	0x14 }, { CMC_OFS_REG(5),	0x04 },
-	{ CMC_COEF_REG(6),	0x01 }, { CMC_OFS_REG(6),	0x9C },
-	{ CMC_COEF_REG(7),	0x33 }, { CMC_OFS_REG(7),	0x89 },
-	{ CMC_COEF_REG(8),	0x74 }, { CMC_OFS_REG(8),	0x25 },
+	अणु ISP_CTL_REG(0),	0x30 पूर्ण, अणु ISP_CTL_REG(2),	0x30 पूर्ण,
+	अणु YOFS_REG,		0x80 पूर्ण, अणु DARK_YOFS_REG,	0x04 पूर्ण,
+	अणु SAT_CTL_REG,		0x1F पूर्ण, अणु BSAT_REG,		0x90 पूर्ण,
+	अणु CMC_CTL_REG,		0x0F पूर्ण, अणु CMC_OFSGH_REG,	0x3C पूर्ण,
+	अणु CMC_OFSGL_REG,	0x2C पूर्ण, अणु CMC_SIGN_REG,		0x3F पूर्ण,
+	अणु CMC_COEF_REG(0),	0x79 पूर्ण, अणु CMC_OFS_REG(0),	0x00 पूर्ण,
+	अणु CMC_COEF_REG(1),	0x39 पूर्ण, अणु CMC_OFS_REG(1),	0x00 पूर्ण,
+	अणु CMC_COEF_REG(2),	0x00 पूर्ण, अणु CMC_OFS_REG(2),	0x00 पूर्ण,
+	अणु CMC_COEF_REG(3),	0x11 पूर्ण, अणु CMC_OFS_REG(3),	0x8B पूर्ण,
+	अणु CMC_COEF_REG(4),	0x65 पूर्ण, अणु CMC_OFS_REG(4),	0x07 पूर्ण,
+	अणु CMC_COEF_REG(5),	0x14 पूर्ण, अणु CMC_OFS_REG(5),	0x04 पूर्ण,
+	अणु CMC_COEF_REG(6),	0x01 पूर्ण, अणु CMC_OFS_REG(6),	0x9C पूर्ण,
+	अणु CMC_COEF_REG(7),	0x33 पूर्ण, अणु CMC_OFS_REG(7),	0x89 पूर्ण,
+	अणु CMC_COEF_REG(8),	0x74 पूर्ण, अणु CMC_OFS_REG(8),	0x25 पूर्ण,
 	/* Automatic white balance */
-	{ AWB_CTL_REG(0),	0x78 }, { AWB_CTL_REG(1),	0x2E },
-	{ AWB_CTL_REG(2),	0x20 }, { AWB_CTL_REG(3),	0x85 },
+	अणु AWB_CTL_REG(0),	0x78 पूर्ण, अणु AWB_CTL_REG(1),	0x2E पूर्ण,
+	अणु AWB_CTL_REG(2),	0x20 पूर्ण, अणु AWB_CTL_REG(3),	0x85 पूर्ण,
 	/* Auto exposure */
-	{ AE_CTL_REG(0),	0xDC }, { AE_CTL_REG(1),	0x81 },
-	{ AE_CTL_REG(2),	0x30 }, { AE_CTL_REG(3),	0xA5 },
-	{ AE_CTL_REG(4),	0x40 }, { AE_CTL_REG(5),	0x51 },
-	{ AE_CTL_REG(6),	0x33 }, { AE_CTL_REG(7),	0x7E },
-	{ AE_CTL9_REG,		0x00 }, { AE_CTL10_REG,		0x02 },
-	{ AE_YLVL_REG,		0x44 },	{ AE_YTH_REG(0),	0x34 },
-	{ AE_YTH_REG(1),	0x30 },	{ AE_WGT_REG,		0xD5 },
+	अणु AE_CTL_REG(0),	0xDC पूर्ण, अणु AE_CTL_REG(1),	0x81 पूर्ण,
+	अणु AE_CTL_REG(2),	0x30 पूर्ण, अणु AE_CTL_REG(3),	0xA5 पूर्ण,
+	अणु AE_CTL_REG(4),	0x40 पूर्ण, अणु AE_CTL_REG(5),	0x51 पूर्ण,
+	अणु AE_CTL_REG(6),	0x33 पूर्ण, अणु AE_CTL_REG(7),	0x7E पूर्ण,
+	अणु AE_CTL9_REG,		0x00 पूर्ण, अणु AE_CTL10_REG,		0x02 पूर्ण,
+	अणु AE_YLVL_REG,		0x44 पूर्ण,	अणु AE_YTH_REG(0),	0x34 पूर्ण,
+	अणु AE_YTH_REG(1),	0x30 पूर्ण,	अणु AE_WGT_REG,		0xD5 पूर्ण,
 	/* Lens shading compensation */
-	{ LENS_CTRL_REG,	0x01 }, { LENS_XCEN_REG,	0x80 },
-	{ LENS_YCEN_REG,	0x70 }, { LENS_RC_REG,		0x53 },
-	{ LENS_GC_REG,		0x40 }, { LENS_BC_REG,		0x3E },
-	{ REG_TERM,		0 },
-};
+	अणु LENS_CTRL_REG,	0x01 पूर्ण, अणु LENS_XCEN_REG,	0x80 पूर्ण,
+	अणु LENS_YCEN_REG,	0x70 पूर्ण, अणु LENS_RC_REG,		0x53 पूर्ण,
+	अणु LENS_GC_REG,		0x40 पूर्ण, अणु LENS_BC_REG,		0x3E पूर्ण,
+	अणु REG_TERM,		0 पूर्ण,
+पूर्ण;
 
-static inline struct noon010_info *to_noon010(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct noon010_info, sd);
-}
+अटल अंतरभूत काष्ठा noon010_info *to_noon010(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा noon010_info, sd);
+पूर्ण
 
-static inline struct v4l2_subdev *to_sd(struct v4l2_ctrl *ctrl)
-{
-	return &container_of(ctrl->handler, struct noon010_info, hdl)->sd;
-}
+अटल अंतरभूत काष्ठा v4l2_subdev *to_sd(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	वापस &container_of(ctrl->handler, काष्ठा noon010_info, hdl)->sd;
+पूर्ण
 
-static inline int set_i2c_page(struct noon010_info *info,
-			       struct i2c_client *client, unsigned int reg)
-{
+अटल अंतरभूत पूर्णांक set_i2c_page(काष्ठा noon010_info *info,
+			       काष्ठा i2c_client *client, अचिन्हित पूर्णांक reg)
+अणु
 	u32 page = reg >> 8 & 0xFF;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (info->i2c_reg_page != page && (reg & 0xFF) != 0x03) {
-		ret = i2c_smbus_write_byte_data(client, PAGEMODE_REG, page);
-		if (!ret)
+	अगर (info->i2c_reg_page != page && (reg & 0xFF) != 0x03) अणु
+		ret = i2c_smbus_ग_लिखो_byte_data(client, PAGEMODE_REG, page);
+		अगर (!ret)
 			info->i2c_reg_page = page;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cam_i2c_read(struct v4l2_subdev *sd, u32 reg_addr)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct noon010_info *info = to_noon010(sd);
-	int ret = set_i2c_page(info, client, reg_addr);
+अटल पूर्णांक cam_i2c_पढ़ो(काष्ठा v4l2_subdev *sd, u32 reg_addr)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा noon010_info *info = to_noon010(sd);
+	पूर्णांक ret = set_i2c_page(info, client, reg_addr);
 
-	if (ret)
-		return ret;
-	return i2c_smbus_read_byte_data(client, reg_addr & 0xFF);
-}
+	अगर (ret)
+		वापस ret;
+	वापस i2c_smbus_पढ़ो_byte_data(client, reg_addr & 0xFF);
+पूर्ण
 
-static int cam_i2c_write(struct v4l2_subdev *sd, u32 reg_addr, u32 val)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct noon010_info *info = to_noon010(sd);
-	int ret = set_i2c_page(info, client, reg_addr);
+अटल पूर्णांक cam_i2c_ग_लिखो(काष्ठा v4l2_subdev *sd, u32 reg_addr, u32 val)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा noon010_info *info = to_noon010(sd);
+	पूर्णांक ret = set_i2c_page(info, client, reg_addr);
 
-	if (ret)
-		return ret;
-	return i2c_smbus_write_byte_data(client, reg_addr & 0xFF, val);
-}
+	अगर (ret)
+		वापस ret;
+	वापस i2c_smbus_ग_लिखो_byte_data(client, reg_addr & 0xFF, val);
+पूर्ण
 
-static inline int noon010_bulk_write_reg(struct v4l2_subdev *sd,
-					 const struct i2c_regval *msg)
-{
-	while (msg->addr != REG_TERM) {
-		int ret = cam_i2c_write(sd, msg->addr, msg->val);
+अटल अंतरभूत पूर्णांक noon010_bulk_ग_लिखो_reg(काष्ठा v4l2_subdev *sd,
+					 स्थिर काष्ठा i2c_regval *msg)
+अणु
+	जबतक (msg->addr != REG_TERM) अणु
+		पूर्णांक ret = cam_i2c_ग_लिखो(sd, msg->addr, msg->val);
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		msg++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Device reset and sleep mode control */
-static int noon010_power_ctrl(struct v4l2_subdev *sd, bool reset, bool sleep)
-{
-	struct noon010_info *info = to_noon010(sd);
+अटल पूर्णांक noon010_घातer_ctrl(काष्ठा v4l2_subdev *sd, bool reset, bool sleep)
+अणु
+	काष्ठा noon010_info *info = to_noon010(sd);
 	u8 reg = sleep ? 0xF1 : 0xF0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (reset) {
-		ret = cam_i2c_write(sd, POWER_CTRL_REG, reg | 0x02);
+	अगर (reset) अणु
+		ret = cam_i2c_ग_लिखो(sd, POWER_CTRL_REG, reg | 0x02);
 		udelay(20);
-	}
-	if (!ret) {
-		ret = cam_i2c_write(sd, POWER_CTRL_REG, reg);
-		if (reset && !ret)
+	पूर्ण
+	अगर (!ret) अणु
+		ret = cam_i2c_ग_लिखो(sd, POWER_CTRL_REG, reg);
+		अगर (reset && !ret)
 			info->i2c_reg_page = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* Automatic white balance control */
-static int noon010_enable_autowhitebalance(struct v4l2_subdev *sd, int on)
-{
-	int ret;
+अटल पूर्णांक noon010_enable_स्वतःwhitebalance(काष्ठा v4l2_subdev *sd, पूर्णांक on)
+अणु
+	पूर्णांक ret;
 
-	ret = cam_i2c_write(sd, AWB_CTL_REG(1), on ? 0x2E : 0x2F);
-	if (!ret)
-		ret = cam_i2c_write(sd, AWB_CTL_REG(0), on ? 0xFB : 0x7B);
-	return ret;
-}
+	ret = cam_i2c_ग_लिखो(sd, AWB_CTL_REG(1), on ? 0x2E : 0x2F);
+	अगर (!ret)
+		ret = cam_i2c_ग_लिखो(sd, AWB_CTL_REG(0), on ? 0xFB : 0x7B);
+	वापस ret;
+पूर्ण
 
-/* Called with struct noon010_info.lock mutex held */
-static int noon010_set_flip(struct v4l2_subdev *sd, int hflip, int vflip)
-{
-	struct noon010_info *info = to_noon010(sd);
-	int reg, ret;
+/* Called with काष्ठा noon010_info.lock mutex held */
+अटल पूर्णांक noon010_set_flip(काष्ठा v4l2_subdev *sd, पूर्णांक hflip, पूर्णांक vflip)
+अणु
+	काष्ठा noon010_info *info = to_noon010(sd);
+	पूर्णांक reg, ret;
 
-	reg = cam_i2c_read(sd, VDO_CTL_REG(1));
-	if (reg < 0)
-		return reg;
+	reg = cam_i2c_पढ़ो(sd, VDO_CTL_REG(1));
+	अगर (reg < 0)
+		वापस reg;
 
 	reg &= 0x7C;
-	if (hflip)
+	अगर (hflip)
 		reg |= 0x01;
-	if (vflip)
+	अगर (vflip)
 		reg |= 0x02;
 
-	ret = cam_i2c_write(sd, VDO_CTL_REG(1), reg | 0x80);
-	if (!ret) {
+	ret = cam_i2c_ग_लिखो(sd, VDO_CTL_REG(1), reg | 0x80);
+	अगर (!ret) अणु
 		info->hflip = hflip;
 		info->vflip = vflip;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-/* Configure resolution and color format */
-static int noon010_set_params(struct v4l2_subdev *sd)
-{
-	struct noon010_info *info = to_noon010(sd);
+/* Configure resolution and color क्रमmat */
+अटल पूर्णांक noon010_set_params(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा noon010_info *info = to_noon010(sd);
 
-	int ret = cam_i2c_write(sd, VDO_CTL_REG(0),
+	पूर्णांक ret = cam_i2c_ग_लिखो(sd, VDO_CTL_REG(0),
 				info->curr_win->vid_ctl1);
-	if (ret)
-		return ret;
-	return cam_i2c_write(sd, ISP_CTL_REG(0),
+	अगर (ret)
+		वापस ret;
+	वापस cam_i2c_ग_लिखो(sd, ISP_CTL_REG(0),
 			     info->curr_fmt->ispctl1_reg);
-}
+पूर्ण
 
 /* Find nearest matching image pixel size. */
-static int noon010_try_frame_size(struct v4l2_mbus_framefmt *mf,
-				  const struct noon010_frmsize **size)
-{
-	unsigned int min_err = ~0;
-	int i = ARRAY_SIZE(noon010_sizes);
-	const struct noon010_frmsize *fsize = &noon010_sizes[0],
-		*match = NULL;
+अटल पूर्णांक noon010_try_frame_size(काष्ठा v4l2_mbus_framefmt *mf,
+				  स्थिर काष्ठा noon010_frmsize **size)
+अणु
+	अचिन्हित पूर्णांक min_err = ~0;
+	पूर्णांक i = ARRAY_SIZE(noon010_sizes);
+	स्थिर काष्ठा noon010_frmsize *fsize = &noon010_sizes[0],
+		*match = शून्य;
 
-	while (i--) {
-		int err = abs(fsize->width - mf->width)
-				+ abs(fsize->height - mf->height);
+	जबतक (i--) अणु
+		पूर्णांक err = असल(fsize->width - mf->width)
+				+ असल(fsize->height - mf->height);
 
-		if (err < min_err) {
+		अगर (err < min_err) अणु
 			min_err = err;
 			match = fsize;
-		}
+		पूर्ण
 		fsize++;
-	}
-	if (match) {
+	पूर्ण
+	अगर (match) अणु
 		mf->width  = match->width;
 		mf->height = match->height;
-		if (size)
+		अगर (size)
 			*size = match;
-		return 0;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
 /* Called with info.lock mutex held */
-static int power_enable(struct noon010_info *info)
-{
-	int ret;
+अटल पूर्णांक घातer_enable(काष्ठा noon010_info *info)
+अणु
+	पूर्णांक ret;
 
-	if (info->power) {
+	अगर (info->घातer) अणु
 		v4l2_info(&info->sd, "%s: sensor is already on\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (gpio_is_valid(info->gpio_nstby))
+	अगर (gpio_is_valid(info->gpio_nstby))
 		gpio_set_value(info->gpio_nstby, 0);
 
-	if (gpio_is_valid(info->gpio_nreset))
+	अगर (gpio_is_valid(info->gpio_nreset))
 		gpio_set_value(info->gpio_nreset, 0);
 
 	ret = regulator_bulk_enable(NOON010_NUM_SUPPLIES, info->supply);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (gpio_is_valid(info->gpio_nreset)) {
+	अगर (gpio_is_valid(info->gpio_nreset)) अणु
 		msleep(50);
 		gpio_set_value(info->gpio_nreset, 1);
-	}
-	if (gpio_is_valid(info->gpio_nstby)) {
+	पूर्ण
+	अगर (gpio_is_valid(info->gpio_nstby)) अणु
 		udelay(1000);
 		gpio_set_value(info->gpio_nstby, 1);
-	}
-	if (gpio_is_valid(info->gpio_nreset)) {
+	पूर्ण
+	अगर (gpio_is_valid(info->gpio_nreset)) अणु
 		udelay(1000);
 		gpio_set_value(info->gpio_nreset, 0);
 		msleep(100);
 		gpio_set_value(info->gpio_nreset, 1);
 		msleep(20);
-	}
-	info->power = 1;
+	पूर्ण
+	info->घातer = 1;
 
 	v4l2_dbg(1, debug, &info->sd,  "%s: sensor is on\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Called with info.lock mutex held */
-static int power_disable(struct noon010_info *info)
-{
-	int ret;
+अटल पूर्णांक घातer_disable(काष्ठा noon010_info *info)
+अणु
+	पूर्णांक ret;
 
-	if (!info->power) {
+	अगर (!info->घातer) अणु
 		v4l2_info(&info->sd, "%s: sensor is already off\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = regulator_bulk_disable(NOON010_NUM_SUPPLIES, info->supply);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (gpio_is_valid(info->gpio_nstby))
+	अगर (gpio_is_valid(info->gpio_nstby))
 		gpio_set_value(info->gpio_nstby, 0);
 
-	if (gpio_is_valid(info->gpio_nreset))
+	अगर (gpio_is_valid(info->gpio_nreset))
 		gpio_set_value(info->gpio_nreset, 0);
 
-	info->power = 0;
+	info->घातer = 0;
 
 	v4l2_dbg(1, debug, &info->sd,  "%s: sensor is off\n", __func__);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int noon010_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct v4l2_subdev *sd = to_sd(ctrl);
-	struct noon010_info *info = to_noon010(sd);
-	int ret = 0;
+अटल पूर्णांक noon010_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा v4l2_subdev *sd = to_sd(ctrl);
+	काष्ठा noon010_info *info = to_noon010(sd);
+	पूर्णांक ret = 0;
 
 	v4l2_dbg(1, debug, sd, "%s: ctrl_id: %d, value: %d\n",
 		 __func__, ctrl->id, ctrl->val);
 
 	mutex_lock(&info->lock);
 	/*
-	 * If the device is not powered up by the host driver do
-	 * not apply any controls to H/W at this time. Instead
-	 * the controls will be restored right after power-up.
+	 * If the device is not घातered up by the host driver करो
+	 * not apply any controls to H/W at this समय. Instead
+	 * the controls will be restored right after घातer-up.
 	 */
-	if (!info->power)
-		goto unlock;
+	अगर (!info->घातer)
+		जाओ unlock;
 
-	switch (ctrl->id) {
-	case V4L2_CID_AUTO_WHITE_BALANCE:
-		ret = noon010_enable_autowhitebalance(sd, ctrl->val);
-		break;
-	case V4L2_CID_BLUE_BALANCE:
-		ret = cam_i2c_write(sd, MWB_BGAIN_REG, ctrl->val);
-		break;
-	case V4L2_CID_RED_BALANCE:
-		ret =  cam_i2c_write(sd, MWB_RGAIN_REG, ctrl->val);
-		break;
-	default:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_AUTO_WHITE_BALANCE:
+		ret = noon010_enable_स्वतःwhitebalance(sd, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_BLUE_BALANCE:
+		ret = cam_i2c_ग_लिखो(sd, MWB_BGAIN_REG, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_RED_BALANCE:
+		ret =  cam_i2c_ग_लिखो(sd, MWB_RGAIN_REG, ctrl->val);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 unlock:
 	mutex_unlock(&info->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int noon010_enum_mbus_code(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_pad_config *cfg,
-				  struct v4l2_subdev_mbus_code_enum *code)
-{
-	if (code->index >= ARRAY_SIZE(noon010_formats))
-		return -EINVAL;
+अटल पूर्णांक noon010_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_subdev_pad_config *cfg,
+				  काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
+अणु
+	अगर (code->index >= ARRAY_SIZE(noon010_क्रमmats))
+		वापस -EINVAL;
 
-	code->code = noon010_formats[code->index].code;
-	return 0;
-}
+	code->code = noon010_क्रमmats[code->index].code;
+	वापस 0;
+पूर्ण
 
-static int noon010_get_fmt(struct v4l2_subdev *sd,
-			   struct v4l2_subdev_pad_config *cfg,
-			   struct v4l2_subdev_format *fmt)
-{
-	struct noon010_info *info = to_noon010(sd);
-	struct v4l2_mbus_framefmt *mf;
+अटल पूर्णांक noon010_get_fmt(काष्ठा v4l2_subdev *sd,
+			   काष्ठा v4l2_subdev_pad_config *cfg,
+			   काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा noon010_info *info = to_noon010(sd);
+	काष्ठा v4l2_mbus_framefmt *mf;
 
-	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
-		if (cfg) {
-			mf = v4l2_subdev_get_try_format(sd, cfg, 0);
-			fmt->format = *mf;
-		}
-		return 0;
-	}
-	mf = &fmt->format;
+	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+		अगर (cfg) अणु
+			mf = v4l2_subdev_get_try_क्रमmat(sd, cfg, 0);
+			fmt->क्रमmat = *mf;
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	mf = &fmt->क्रमmat;
 
 	mutex_lock(&info->lock);
 	mf->width = info->curr_win->width;
@@ -522,204 +523,204 @@ static int noon010_get_fmt(struct v4l2_subdev *sd,
 	mf->field = V4L2_FIELD_NONE;
 
 	mutex_unlock(&info->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Return nearest media bus frame format. */
-static const struct noon010_format *noon010_try_fmt(struct v4l2_subdev *sd,
-					    struct v4l2_mbus_framefmt *mf)
-{
-	int i = ARRAY_SIZE(noon010_formats);
+/* Return nearest media bus frame क्रमmat. */
+अटल स्थिर काष्ठा noon010_क्रमmat *noon010_try_fmt(काष्ठा v4l2_subdev *sd,
+					    काष्ठा v4l2_mbus_framefmt *mf)
+अणु
+	पूर्णांक i = ARRAY_SIZE(noon010_क्रमmats);
 
-	while (--i)
-		if (mf->code == noon010_formats[i].code)
-			break;
-	mf->code = noon010_formats[i].code;
+	जबतक (--i)
+		अगर (mf->code == noon010_क्रमmats[i].code)
+			अवरोध;
+	mf->code = noon010_क्रमmats[i].code;
 
-	return &noon010_formats[i];
-}
+	वापस &noon010_क्रमmats[i];
+पूर्ण
 
-static int noon010_set_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_pad_config *cfg,
-			   struct v4l2_subdev_format *fmt)
-{
-	struct noon010_info *info = to_noon010(sd);
-	const struct noon010_frmsize *size = NULL;
-	const struct noon010_format *nf;
-	struct v4l2_mbus_framefmt *mf;
-	int ret = 0;
+अटल पूर्णांक noon010_set_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_pad_config *cfg,
+			   काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा noon010_info *info = to_noon010(sd);
+	स्थिर काष्ठा noon010_frmsize *size = शून्य;
+	स्थिर काष्ठा noon010_क्रमmat *nf;
+	काष्ठा v4l2_mbus_framefmt *mf;
+	पूर्णांक ret = 0;
 
-	nf = noon010_try_fmt(sd, &fmt->format);
-	noon010_try_frame_size(&fmt->format, &size);
-	fmt->format.colorspace = V4L2_COLORSPACE_JPEG;
-	fmt->format.field = V4L2_FIELD_NONE;
+	nf = noon010_try_fmt(sd, &fmt->क्रमmat);
+	noon010_try_frame_size(&fmt->क्रमmat, &size);
+	fmt->क्रमmat.colorspace = V4L2_COLORSPACE_JPEG;
+	fmt->क्रमmat.field = V4L2_FIELD_NONE;
 
-	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
-		if (cfg) {
-			mf = v4l2_subdev_get_try_format(sd, cfg, 0);
-			*mf = fmt->format;
-		}
-		return 0;
-	}
+	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY) अणु
+		अगर (cfg) अणु
+			mf = v4l2_subdev_get_try_क्रमmat(sd, cfg, 0);
+			*mf = fmt->क्रमmat;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 	mutex_lock(&info->lock);
-	if (!info->streaming) {
+	अगर (!info->streaming) अणु
 		info->apply_new_cfg = 1;
 		info->curr_fmt = nf;
 		info->curr_win = size;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EBUSY;
-	}
+	पूर्ण
 	mutex_unlock(&info->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Called with struct noon010_info.lock mutex held */
-static int noon010_base_config(struct v4l2_subdev *sd)
-{
-	int ret = noon010_bulk_write_reg(sd, noon010_base_regs);
-	if (!ret)
+/* Called with काष्ठा noon010_info.lock mutex held */
+अटल पूर्णांक noon010_base_config(काष्ठा v4l2_subdev *sd)
+अणु
+	पूर्णांक ret = noon010_bulk_ग_लिखो_reg(sd, noon010_base_regs);
+	अगर (!ret)
 		ret = noon010_set_params(sd);
-	if (!ret)
+	अगर (!ret)
 		ret = noon010_set_flip(sd, 1, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int noon010_s_power(struct v4l2_subdev *sd, int on)
-{
-	struct noon010_info *info = to_noon010(sd);
-	int ret;
+अटल पूर्णांक noon010_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
+अणु
+	काष्ठा noon010_info *info = to_noon010(sd);
+	पूर्णांक ret;
 
 	mutex_lock(&info->lock);
-	if (on) {
-		ret = power_enable(info);
-		if (!ret)
+	अगर (on) अणु
+		ret = घातer_enable(info);
+		अगर (!ret)
 			ret = noon010_base_config(sd);
-	} else {
-		noon010_power_ctrl(sd, false, true);
-		ret = power_disable(info);
-	}
+	पूर्ण अन्यथा अणु
+		noon010_घातer_ctrl(sd, false, true);
+		ret = घातer_disable(info);
+	पूर्ण
 	mutex_unlock(&info->lock);
 
 	/* Restore the controls state */
-	if (!ret && on)
+	अगर (!ret && on)
 		ret = v4l2_ctrl_handler_setup(&info->hdl);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int noon010_s_stream(struct v4l2_subdev *sd, int on)
-{
-	struct noon010_info *info = to_noon010(sd);
-	int ret = 0;
+अटल पूर्णांक noon010_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक on)
+अणु
+	काष्ठा noon010_info *info = to_noon010(sd);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&info->lock);
-	if (!info->streaming != !on) {
-		ret = noon010_power_ctrl(sd, false, !on);
-		if (!ret)
+	अगर (!info->streaming != !on) अणु
+		ret = noon010_घातer_ctrl(sd, false, !on);
+		अगर (!ret)
 			info->streaming = on;
-	}
-	if (!ret && on && info->apply_new_cfg) {
+	पूर्ण
+	अगर (!ret && on && info->apply_new_cfg) अणु
 		ret = noon010_set_params(sd);
-		if (!ret)
+		अगर (!ret)
 			info->apply_new_cfg = 0;
-	}
+	पूर्ण
 	mutex_unlock(&info->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int noon010_log_status(struct v4l2_subdev *sd)
-{
-	struct noon010_info *info = to_noon010(sd);
+अटल पूर्णांक noon010_log_status(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा noon010_info *info = to_noon010(sd);
 
 	v4l2_ctrl_handler_log_status(&info->hdl, sd->name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int noon010_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
-{
-	struct v4l2_mbus_framefmt *mf = v4l2_subdev_get_try_format(sd, fh->pad, 0);
+अटल पूर्णांक noon010_खोलो(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
+अणु
+	काष्ठा v4l2_mbus_framefmt *mf = v4l2_subdev_get_try_क्रमmat(sd, fh->pad, 0);
 
 	mf->width = noon010_sizes[0].width;
 	mf->height = noon010_sizes[0].height;
-	mf->code = noon010_formats[0].code;
+	mf->code = noon010_क्रमmats[0].code;
 	mf->colorspace = V4L2_COLORSPACE_JPEG;
 	mf->field = V4L2_FIELD_NONE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_internal_ops noon010_subdev_internal_ops = {
-	.open = noon010_open,
-};
+अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops noon010_subdev_पूर्णांकernal_ops = अणु
+	.खोलो = noon010_खोलो,
+पूर्ण;
 
-static const struct v4l2_ctrl_ops noon010_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops noon010_ctrl_ops = अणु
 	.s_ctrl = noon010_s_ctrl,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_core_ops noon010_core_ops = {
-	.s_power	= noon010_s_power,
+अटल स्थिर काष्ठा v4l2_subdev_core_ops noon010_core_ops = अणु
+	.s_घातer	= noon010_s_घातer,
 	.log_status	= noon010_log_status,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_pad_ops noon010_pad_ops = {
-	.enum_mbus_code	= noon010_enum_mbus_code,
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops noon010_pad_ops = अणु
+	.क्रमागत_mbus_code	= noon010_क्रमागत_mbus_code,
 	.get_fmt	= noon010_get_fmt,
 	.set_fmt	= noon010_set_fmt,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_video_ops noon010_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops noon010_video_ops = अणु
 	.s_stream	= noon010_s_stream,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops noon010_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops noon010_ops = अणु
 	.core	= &noon010_core_ops,
 	.pad	= &noon010_pad_ops,
 	.video	= &noon010_video_ops,
-};
+पूर्ण;
 
-/* Return 0 if NOON010PC30L sensor type was detected or -ENODEV otherwise. */
-static int noon010_detect(struct i2c_client *client, struct noon010_info *info)
-{
-	int ret;
+/* Return 0 अगर NOON010PC30L sensor type was detected or -ENODEV otherwise. */
+अटल पूर्णांक noon010_detect(काष्ठा i2c_client *client, काष्ठा noon010_info *info)
+अणु
+	पूर्णांक ret;
 
-	ret = power_enable(info);
-	if (ret)
-		return ret;
+	ret = घातer_enable(info);
+	अगर (ret)
+		वापस ret;
 
-	ret = i2c_smbus_read_byte_data(client, DEVICE_ID_REG);
-	if (ret < 0)
+	ret = i2c_smbus_पढ़ो_byte_data(client, DEVICE_ID_REG);
+	अगर (ret < 0)
 		dev_err(&client->dev, "I2C read failed: 0x%X\n", ret);
 
-	power_disable(info);
+	घातer_disable(info);
 
-	return ret == NOON010PC30_ID ? 0 : -ENODEV;
-}
+	वापस ret == NOON010PC30_ID ? 0 : -ENODEV;
+पूर्ण
 
-static int noon010_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct noon010_info *info;
-	struct v4l2_subdev *sd;
-	const struct noon010pc30_platform_data *pdata
-		= client->dev.platform_data;
-	int ret;
-	int i;
+अटल पूर्णांक noon010_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा noon010_info *info;
+	काष्ठा v4l2_subdev *sd;
+	स्थिर काष्ठा noon010pc30_platक्रमm_data *pdata
+		= client->dev.platक्रमm_data;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&client->dev, "No platform data!\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	info = devm_kzalloc(&client->dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(&client->dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	mutex_init(&info->lock);
 	sd = &info->sd;
 	v4l2_i2c_subdev_init(sd, client, &noon010_ops);
 	/* Static name; NEVER use in new drivers! */
-	strscpy(sd->name, MODULE_NAME, sizeof(sd->name));
+	strscpy(sd->name, MODULE_NAME, माप(sd->name));
 
-	sd->internal_ops = &noon010_subdev_internal_ops;
+	sd->पूर्णांकernal_ops = &noon010_subdev_पूर्णांकernal_ops;
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
 	v4l2_ctrl_handler_init(&info->hdl, 3);
@@ -734,90 +735,90 @@ static int noon010_probe(struct i2c_client *client,
 	sd->ctrl_handler = &info->hdl;
 
 	ret = info->hdl.error;
-	if (ret)
-		goto np_err;
+	अगर (ret)
+		जाओ np_err;
 
 	info->i2c_reg_page	= -1;
 	info->gpio_nreset	= -EINVAL;
 	info->gpio_nstby	= -EINVAL;
-	info->curr_fmt		= &noon010_formats[0];
+	info->curr_fmt		= &noon010_क्रमmats[0];
 	info->curr_win		= &noon010_sizes[0];
 
-	if (gpio_is_valid(pdata->gpio_nreset)) {
+	अगर (gpio_is_valid(pdata->gpio_nreset)) अणु
 		ret = devm_gpio_request_one(&client->dev, pdata->gpio_nreset,
 					    GPIOF_OUT_INIT_LOW,
 					    "NOON010PC30 NRST");
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&client->dev, "GPIO request error: %d\n", ret);
-			goto np_err;
-		}
+			जाओ np_err;
+		पूर्ण
 		info->gpio_nreset = pdata->gpio_nreset;
 		gpio_export(info->gpio_nreset, 0);
-	}
+	पूर्ण
 
-	if (gpio_is_valid(pdata->gpio_nstby)) {
+	अगर (gpio_is_valid(pdata->gpio_nstby)) अणु
 		ret = devm_gpio_request_one(&client->dev, pdata->gpio_nstby,
 					    GPIOF_OUT_INIT_LOW,
 					    "NOON010PC30 NSTBY");
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&client->dev, "GPIO request error: %d\n", ret);
-			goto np_err;
-		}
+			जाओ np_err;
+		पूर्ण
 		info->gpio_nstby = pdata->gpio_nstby;
 		gpio_export(info->gpio_nstby, 0);
-	}
+	पूर्ण
 
-	for (i = 0; i < NOON010_NUM_SUPPLIES; i++)
+	क्रम (i = 0; i < NOON010_NUM_SUPPLIES; i++)
 		info->supply[i].supply = noon010_supply_name[i];
 
 	ret = devm_regulator_bulk_get(&client->dev, NOON010_NUM_SUPPLIES,
 				 info->supply);
-	if (ret)
-		goto np_err;
+	अगर (ret)
+		जाओ np_err;
 
 	info->pad.flags = MEDIA_PAD_FL_SOURCE;
 	sd->entity.function = MEDIA_ENT_F_CAM_SENSOR;
 	ret = media_entity_pads_init(&sd->entity, 1, &info->pad);
-	if (ret < 0)
-		goto np_err;
+	अगर (ret < 0)
+		जाओ np_err;
 
 	ret = noon010_detect(client, info);
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
 np_err:
-	v4l2_ctrl_handler_free(&info->hdl);
-	v4l2_device_unregister_subdev(sd);
-	return ret;
-}
+	v4l2_ctrl_handler_मुक्त(&info->hdl);
+	v4l2_device_unरेजिस्टर_subdev(sd);
+	वापस ret;
+पूर्ण
 
-static int noon010_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct noon010_info *info = to_noon010(sd);
+अटल पूर्णांक noon010_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा noon010_info *info = to_noon010(sd);
 
-	v4l2_device_unregister_subdev(sd);
-	v4l2_ctrl_handler_free(&info->hdl);
+	v4l2_device_unरेजिस्टर_subdev(sd);
+	v4l2_ctrl_handler_मुक्त(&info->hdl);
 	media_entity_cleanup(&sd->entity);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id noon010_id[] = {
-	{ MODULE_NAME, 0 },
-	{ },
-};
+अटल स्थिर काष्ठा i2c_device_id noon010_id[] = अणु
+	अणु MODULE_NAME, 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, noon010_id);
 
 
-static struct i2c_driver noon010_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver noon010_i2c_driver = अणु
+	.driver = अणु
 		.name = MODULE_NAME
-	},
+	पूर्ण,
 	.probe		= noon010_probe,
-	.remove		= noon010_remove,
+	.हटाओ		= noon010_हटाओ,
 	.id_table	= noon010_id,
-};
+पूर्ण;
 
 module_i2c_driver(noon010_i2c_driver);
 

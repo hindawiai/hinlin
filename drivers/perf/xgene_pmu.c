@@ -1,343 +1,344 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * APM X-Gene SoC PMU (Performance Monitor Unit)
+ * APM X-Gene SoC PMU (Perक्रमmance Monitor Unit)
  *
  * Copyright (c) 2016, Applied Micro Circuits Corporation
  * Author: Hoan Tran <hotran@apm.com>
  *         Tai Nguyen <ttnguyen@apm.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/clk.h>
-#include <linux/cpuhotplug.h>
-#include <linux/cpumask.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_fdt.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/perf_event.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/cpuhotplug.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#define CSW_CSWCR                       0x0000
-#define  CSW_CSWCR_DUALMCB_MASK         BIT(0)
-#define  CSW_CSWCR_MCB0_ROUTING(x)	(((x) & 0x0C) >> 2)
-#define  CSW_CSWCR_MCB1_ROUTING(x)	(((x) & 0x30) >> 4)
-#define MCBADDRMR                       0x0000
-#define  MCBADDRMR_DUALMCU_MODE_MASK    BIT(2)
+#घोषणा CSW_CSWCR                       0x0000
+#घोषणा  CSW_CSWCR_DUALMCB_MASK         BIT(0)
+#घोषणा  CSW_CSWCR_MCB0_ROUTING(x)	(((x) & 0x0C) >> 2)
+#घोषणा  CSW_CSWCR_MCB1_ROUTING(x)	(((x) & 0x30) >> 4)
+#घोषणा MCBADDRMR                       0x0000
+#घोषणा  MCBADDRMR_DUALMCU_MODE_MASK    BIT(2)
 
-#define PCPPMU_INTSTATUS_REG	0x000
-#define PCPPMU_INTMASK_REG	0x004
-#define  PCPPMU_INTMASK		0x0000000F
-#define  PCPPMU_INTENMASK	0xFFFFFFFF
-#define  PCPPMU_INTCLRMASK	0xFFFFFFF0
-#define  PCPPMU_INT_MCU		BIT(0)
-#define  PCPPMU_INT_MCB		BIT(1)
-#define  PCPPMU_INT_L3C		BIT(2)
-#define  PCPPMU_INT_IOB		BIT(3)
+#घोषणा PCPPMU_INTSTATUS_REG	0x000
+#घोषणा PCPPMU_INTMASK_REG	0x004
+#घोषणा  PCPPMU_INTMASK		0x0000000F
+#घोषणा  PCPPMU_INTENMASK	0xFFFFFFFF
+#घोषणा  PCPPMU_INTCLRMASK	0xFFFFFFF0
+#घोषणा  PCPPMU_INT_MCU		BIT(0)
+#घोषणा  PCPPMU_INT_MCB		BIT(1)
+#घोषणा  PCPPMU_INT_L3C		BIT(2)
+#घोषणा  PCPPMU_INT_IOB		BIT(3)
 
-#define  PCPPMU_V3_INTMASK	0x00FF33FF
-#define  PCPPMU_V3_INTENMASK	0xFFFFFFFF
-#define  PCPPMU_V3_INTCLRMASK	0xFF00CC00
-#define  PCPPMU_V3_INT_MCU	0x000000FF
-#define  PCPPMU_V3_INT_MCB	0x00000300
-#define  PCPPMU_V3_INT_L3C	0x00FF0000
-#define  PCPPMU_V3_INT_IOB	0x00003000
+#घोषणा  PCPPMU_V3_INTMASK	0x00FF33FF
+#घोषणा  PCPPMU_V3_INTENMASK	0xFFFFFFFF
+#घोषणा  PCPPMU_V3_INTCLRMASK	0xFF00CC00
+#घोषणा  PCPPMU_V3_INT_MCU	0x000000FF
+#घोषणा  PCPPMU_V3_INT_MCB	0x00000300
+#घोषणा  PCPPMU_V3_INT_L3C	0x00FF0000
+#घोषणा  PCPPMU_V3_INT_IOB	0x00003000
 
-#define PMU_MAX_COUNTERS	4
-#define PMU_CNT_MAX_PERIOD	0xFFFFFFFFULL
-#define PMU_V3_CNT_MAX_PERIOD	0xFFFFFFFFFFFFFFFFULL
-#define PMU_OVERFLOW_MASK	0xF
-#define PMU_PMCR_E		BIT(0)
-#define PMU_PMCR_P		BIT(1)
+#घोषणा PMU_MAX_COUNTERS	4
+#घोषणा PMU_CNT_MAX_PERIOD	0xFFFFFFFFULL
+#घोषणा PMU_V3_CNT_MAX_PERIOD	0xFFFFFFFFFFFFFFFFULL
+#घोषणा PMU_OVERFLOW_MASK	0xF
+#घोषणा PMU_PMCR_E		BIT(0)
+#घोषणा PMU_PMCR_P		BIT(1)
 
-#define PMU_PMEVCNTR0		0x000
-#define PMU_PMEVCNTR1		0x004
-#define PMU_PMEVCNTR2		0x008
-#define PMU_PMEVCNTR3		0x00C
-#define PMU_PMEVTYPER0		0x400
-#define PMU_PMEVTYPER1		0x404
-#define PMU_PMEVTYPER2		0x408
-#define PMU_PMEVTYPER3		0x40C
-#define PMU_PMAMR0		0xA00
-#define PMU_PMAMR1		0xA04
-#define PMU_PMCNTENSET		0xC00
-#define PMU_PMCNTENCLR		0xC20
-#define PMU_PMINTENSET		0xC40
-#define PMU_PMINTENCLR		0xC60
-#define PMU_PMOVSR		0xC80
-#define PMU_PMCR		0xE04
+#घोषणा PMU_PMEVCNTR0		0x000
+#घोषणा PMU_PMEVCNTR1		0x004
+#घोषणा PMU_PMEVCNTR2		0x008
+#घोषणा PMU_PMEVCNTR3		0x00C
+#घोषणा PMU_PMEVTYPER0		0x400
+#घोषणा PMU_PMEVTYPER1		0x404
+#घोषणा PMU_PMEVTYPER2		0x408
+#घोषणा PMU_PMEVTYPER3		0x40C
+#घोषणा PMU_PMAMR0		0xA00
+#घोषणा PMU_PMAMR1		0xA04
+#घोषणा PMU_PMCNTENSET		0xC00
+#घोषणा PMU_PMCNTENCLR		0xC20
+#घोषणा PMU_PMINTENSET		0xC40
+#घोषणा PMU_PMINTENCLR		0xC60
+#घोषणा PMU_PMOVSR		0xC80
+#घोषणा PMU_PMCR		0xE04
 
-/* PMU registers for V3 */
-#define PMU_PMOVSCLR		0xC80
-#define PMU_PMOVSSET		0xCC0
+/* PMU रेजिस्टरs क्रम V3 */
+#घोषणा PMU_PMOVSCLR		0xC80
+#घोषणा PMU_PMOVSSET		0xCC0
 
-#define to_pmu_dev(p)     container_of(p, struct xgene_pmu_dev, pmu)
-#define GET_CNTR(ev)      (ev->hw.idx)
-#define GET_EVENTID(ev)   (ev->hw.config & 0xFFULL)
-#define GET_AGENTID(ev)   (ev->hw.config_base & 0xFFFFFFFFUL)
-#define GET_AGENT1ID(ev)  ((ev->hw.config_base >> 32) & 0xFFFFFFFFUL)
+#घोषणा to_pmu_dev(p)     container_of(p, काष्ठा xgene_pmu_dev, pmu)
+#घोषणा GET_CNTR(ev)      (ev->hw.idx)
+#घोषणा GET_EVENTID(ev)   (ev->hw.config & 0xFFULL)
+#घोषणा GET_AGENTID(ev)   (ev->hw.config_base & 0xFFFFFFFFUL)
+#घोषणा GET_AGENT1ID(ev)  ((ev->hw.config_base >> 32) & 0xFFFFFFFFUL)
 
-struct hw_pmu_info {
+काष्ठा hw_pmu_info अणु
 	u32 type;
 	u32 enable_mask;
-	void __iomem *csr;
-};
+	व्योम __iomem *csr;
+पूर्ण;
 
-struct xgene_pmu_dev {
-	struct hw_pmu_info *inf;
-	struct xgene_pmu *parent;
-	struct pmu pmu;
+काष्ठा xgene_pmu_dev अणु
+	काष्ठा hw_pmu_info *inf;
+	काष्ठा xgene_pmu *parent;
+	काष्ठा pmu pmu;
 	u8 max_counters;
 	DECLARE_BITMAP(cntr_assign_mask, PMU_MAX_COUNTERS);
 	u64 max_period;
-	const struct attribute_group **attr_groups;
-	struct perf_event *pmu_counter_event[PMU_MAX_COUNTERS];
-};
+	स्थिर काष्ठा attribute_group **attr_groups;
+	काष्ठा perf_event *pmu_counter_event[PMU_MAX_COUNTERS];
+पूर्ण;
 
-struct xgene_pmu_ops {
-	void (*mask_int)(struct xgene_pmu *pmu);
-	void (*unmask_int)(struct xgene_pmu *pmu);
-	u64 (*read_counter)(struct xgene_pmu_dev *pmu, int idx);
-	void (*write_counter)(struct xgene_pmu_dev *pmu, int idx, u64 val);
-	void (*write_evttype)(struct xgene_pmu_dev *pmu_dev, int idx, u32 val);
-	void (*write_agentmsk)(struct xgene_pmu_dev *pmu_dev, u32 val);
-	void (*write_agent1msk)(struct xgene_pmu_dev *pmu_dev, u32 val);
-	void (*enable_counter)(struct xgene_pmu_dev *pmu_dev, int idx);
-	void (*disable_counter)(struct xgene_pmu_dev *pmu_dev, int idx);
-	void (*enable_counter_int)(struct xgene_pmu_dev *pmu_dev, int idx);
-	void (*disable_counter_int)(struct xgene_pmu_dev *pmu_dev, int idx);
-	void (*reset_counters)(struct xgene_pmu_dev *pmu_dev);
-	void (*start_counters)(struct xgene_pmu_dev *pmu_dev);
-	void (*stop_counters)(struct xgene_pmu_dev *pmu_dev);
-};
+काष्ठा xgene_pmu_ops अणु
+	व्योम (*mask_पूर्णांक)(काष्ठा xgene_pmu *pmu);
+	व्योम (*unmask_पूर्णांक)(काष्ठा xgene_pmu *pmu);
+	u64 (*पढ़ो_counter)(काष्ठा xgene_pmu_dev *pmu, पूर्णांक idx);
+	व्योम (*ग_लिखो_counter)(काष्ठा xgene_pmu_dev *pmu, पूर्णांक idx, u64 val);
+	व्योम (*ग_लिखो_evttype)(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx, u32 val);
+	व्योम (*ग_लिखो_agenपंचांगsk)(काष्ठा xgene_pmu_dev *pmu_dev, u32 val);
+	व्योम (*ग_लिखो_agent1msk)(काष्ठा xgene_pmu_dev *pmu_dev, u32 val);
+	व्योम (*enable_counter)(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx);
+	व्योम (*disable_counter)(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx);
+	व्योम (*enable_counter_पूर्णांक)(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx);
+	व्योम (*disable_counter_पूर्णांक)(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx);
+	व्योम (*reset_counters)(काष्ठा xgene_pmu_dev *pmu_dev);
+	व्योम (*start_counters)(काष्ठा xgene_pmu_dev *pmu_dev);
+	व्योम (*stop_counters)(काष्ठा xgene_pmu_dev *pmu_dev);
+पूर्ण;
 
-struct xgene_pmu {
-	struct device *dev;
-	struct hlist_node node;
-	int version;
-	void __iomem *pcppmu_csr;
+काष्ठा xgene_pmu अणु
+	काष्ठा device *dev;
+	काष्ठा hlist_node node;
+	पूर्णांक version;
+	व्योम __iomem *pcppmu_csr;
 	u32 mcb_active_mask;
 	u32 mc_active_mask;
 	u32 l3c_active_mask;
 	cpumask_t cpu;
-	int irq;
+	पूर्णांक irq;
 	raw_spinlock_t lock;
-	const struct xgene_pmu_ops *ops;
-	struct list_head l3cpmus;
-	struct list_head iobpmus;
-	struct list_head mcbpmus;
-	struct list_head mcpmus;
-};
+	स्थिर काष्ठा xgene_pmu_ops *ops;
+	काष्ठा list_head l3cpmus;
+	काष्ठा list_head iobpmus;
+	काष्ठा list_head mcbpmus;
+	काष्ठा list_head mcpmus;
+पूर्ण;
 
-struct xgene_pmu_dev_ctx {
-	char *name;
-	struct list_head next;
-	struct xgene_pmu_dev *pmu_dev;
-	struct hw_pmu_info inf;
-};
+काष्ठा xgene_pmu_dev_ctx अणु
+	अक्षर *name;
+	काष्ठा list_head next;
+	काष्ठा xgene_pmu_dev *pmu_dev;
+	काष्ठा hw_pmu_info inf;
+पूर्ण;
 
-struct xgene_pmu_data {
-	int id;
+काष्ठा xgene_pmu_data अणु
+	पूर्णांक id;
 	u32 data;
-};
+पूर्ण;
 
-enum xgene_pmu_version {
+क्रमागत xgene_pmu_version अणु
 	PCP_PMU_V1 = 1,
 	PCP_PMU_V2,
 	PCP_PMU_V3,
-};
+पूर्ण;
 
-enum xgene_pmu_dev_type {
+क्रमागत xgene_pmu_dev_type अणु
 	PMU_TYPE_L3C = 0,
 	PMU_TYPE_IOB,
 	PMU_TYPE_IOB_SLOW,
 	PMU_TYPE_MCB,
 	PMU_TYPE_MC,
-};
+पूर्ण;
 
 /*
- * sysfs format attributes
+ * sysfs क्रमmat attributes
  */
-static ssize_t xgene_pmu_format_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct dev_ext_attribute *eattr;
+अटल sमाप_प्रकार xgene_pmu_क्रमmat_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *eattr;
 
-	eattr = container_of(attr, struct dev_ext_attribute, attr);
-	return sysfs_emit(buf, "%s\n", (char *) eattr->var);
-}
+	eattr = container_of(attr, काष्ठा dev_ext_attribute, attr);
+	वापस sysfs_emit(buf, "%s\n", (अक्षर *) eattr->var);
+पूर्ण
 
-#define XGENE_PMU_FORMAT_ATTR(_name, _config)		\
-	(&((struct dev_ext_attribute[]) {		\
-		{ .attr = __ATTR(_name, S_IRUGO, xgene_pmu_format_show, NULL), \
-		  .var = (void *) _config, }		\
-	})[0].attr.attr)
+#घोषणा XGENE_PMU_FORMAT_ATTR(_name, _config)		\
+	(&((काष्ठा dev_ext_attribute[]) अणु		\
+		अणु .attr = __ATTR(_name, S_IRUGO, xgene_pmu_क्रमmat_show, शून्य), \
+		  .var = (व्योम *) _config, पूर्ण		\
+	पूर्ण)[0].attr.attr)
 
-static struct attribute *l3c_pmu_format_attrs[] = {
+अटल काष्ठा attribute *l3c_pmu_क्रमmat_attrs[] = अणु
 	XGENE_PMU_FORMAT_ATTR(l3c_eventid, "config:0-7"),
 	XGENE_PMU_FORMAT_ATTR(l3c_agentid, "config1:0-9"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *iob_pmu_format_attrs[] = {
+अटल काष्ठा attribute *iob_pmu_क्रमmat_attrs[] = अणु
 	XGENE_PMU_FORMAT_ATTR(iob_eventid, "config:0-7"),
 	XGENE_PMU_FORMAT_ATTR(iob_agentid, "config1:0-63"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *mcb_pmu_format_attrs[] = {
+अटल काष्ठा attribute *mcb_pmu_क्रमmat_attrs[] = अणु
 	XGENE_PMU_FORMAT_ATTR(mcb_eventid, "config:0-5"),
 	XGENE_PMU_FORMAT_ATTR(mcb_agentid, "config1:0-9"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *mc_pmu_format_attrs[] = {
+अटल काष्ठा attribute *mc_pmu_क्रमmat_attrs[] = अणु
 	XGENE_PMU_FORMAT_ATTR(mc_eventid, "config:0-28"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group l3c_pmu_format_attr_group = {
+अटल स्थिर काष्ठा attribute_group l3c_pmu_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = l3c_pmu_format_attrs,
-};
+	.attrs = l3c_pmu_क्रमmat_attrs,
+पूर्ण;
 
-static const struct attribute_group iob_pmu_format_attr_group = {
+अटल स्थिर काष्ठा attribute_group iob_pmu_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = iob_pmu_format_attrs,
-};
+	.attrs = iob_pmu_क्रमmat_attrs,
+पूर्ण;
 
-static const struct attribute_group mcb_pmu_format_attr_group = {
+अटल स्थिर काष्ठा attribute_group mcb_pmu_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = mcb_pmu_format_attrs,
-};
+	.attrs = mcb_pmu_क्रमmat_attrs,
+पूर्ण;
 
-static const struct attribute_group mc_pmu_format_attr_group = {
+अटल स्थिर काष्ठा attribute_group mc_pmu_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = mc_pmu_format_attrs,
-};
+	.attrs = mc_pmu_क्रमmat_attrs,
+पूर्ण;
 
-static struct attribute *l3c_pmu_v3_format_attrs[] = {
+अटल काष्ठा attribute *l3c_pmu_v3_क्रमmat_attrs[] = अणु
 	XGENE_PMU_FORMAT_ATTR(l3c_eventid, "config:0-39"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *iob_pmu_v3_format_attrs[] = {
+अटल काष्ठा attribute *iob_pmu_v3_क्रमmat_attrs[] = अणु
 	XGENE_PMU_FORMAT_ATTR(iob_eventid, "config:0-47"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *iob_slow_pmu_v3_format_attrs[] = {
+अटल काष्ठा attribute *iob_slow_pmu_v3_क्रमmat_attrs[] = अणु
 	XGENE_PMU_FORMAT_ATTR(iob_slow_eventid, "config:0-16"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *mcb_pmu_v3_format_attrs[] = {
+अटल काष्ठा attribute *mcb_pmu_v3_क्रमmat_attrs[] = अणु
 	XGENE_PMU_FORMAT_ATTR(mcb_eventid, "config:0-35"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *mc_pmu_v3_format_attrs[] = {
+अटल काष्ठा attribute *mc_pmu_v3_क्रमmat_attrs[] = अणु
 	XGENE_PMU_FORMAT_ATTR(mc_eventid, "config:0-44"),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group l3c_pmu_v3_format_attr_group = {
+अटल स्थिर काष्ठा attribute_group l3c_pmu_v3_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = l3c_pmu_v3_format_attrs,
-};
+	.attrs = l3c_pmu_v3_क्रमmat_attrs,
+पूर्ण;
 
-static const struct attribute_group iob_pmu_v3_format_attr_group = {
+अटल स्थिर काष्ठा attribute_group iob_pmu_v3_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = iob_pmu_v3_format_attrs,
-};
+	.attrs = iob_pmu_v3_क्रमmat_attrs,
+पूर्ण;
 
-static const struct attribute_group iob_slow_pmu_v3_format_attr_group = {
+अटल स्थिर काष्ठा attribute_group iob_slow_pmu_v3_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = iob_slow_pmu_v3_format_attrs,
-};
+	.attrs = iob_slow_pmu_v3_क्रमmat_attrs,
+पूर्ण;
 
-static const struct attribute_group mcb_pmu_v3_format_attr_group = {
+अटल स्थिर काष्ठा attribute_group mcb_pmu_v3_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = mcb_pmu_v3_format_attrs,
-};
+	.attrs = mcb_pmu_v3_क्रमmat_attrs,
+पूर्ण;
 
-static const struct attribute_group mc_pmu_v3_format_attr_group = {
+अटल स्थिर काष्ठा attribute_group mc_pmu_v3_क्रमmat_attr_group = अणु
 	.name = "format",
-	.attrs = mc_pmu_v3_format_attrs,
-};
+	.attrs = mc_pmu_v3_क्रमmat_attrs,
+पूर्ण;
 
 /*
  * sysfs event attributes
  */
-static ssize_t xgene_pmu_event_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct dev_ext_attribute *eattr;
+अटल sमाप_प्रकार xgene_pmu_event_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *eattr;
 
-	eattr = container_of(attr, struct dev_ext_attribute, attr);
-	return sysfs_emit(buf, "config=0x%lx\n", (unsigned long) eattr->var);
-}
+	eattr = container_of(attr, काष्ठा dev_ext_attribute, attr);
+	वापस sysfs_emit(buf, "config=0x%lx\n", (अचिन्हित दीर्घ) eattr->var);
+पूर्ण
 
-#define XGENE_PMU_EVENT_ATTR(_name, _config)		\
-	(&((struct dev_ext_attribute[]) {		\
-		{ .attr = __ATTR(_name, S_IRUGO, xgene_pmu_event_show, NULL), \
-		  .var = (void *) _config, }		\
-	 })[0].attr.attr)
+#घोषणा XGENE_PMU_EVENT_ATTR(_name, _config)		\
+	(&((काष्ठा dev_ext_attribute[]) अणु		\
+		अणु .attr = __ATTR(_name, S_IRUGO, xgene_pmu_event_show, शून्य), \
+		  .var = (व्योम *) _config, पूर्ण		\
+	 पूर्ण)[0].attr.attr)
 
-static struct attribute *l3c_pmu_events_attrs[] = {
+अटल काष्ठा attribute *l3c_pmu_events_attrs[] = अणु
 	XGENE_PMU_EVENT_ATTR(cycle-count,			0x00),
-	XGENE_PMU_EVENT_ATTR(cycle-count-div-64,		0x01),
-	XGENE_PMU_EVENT_ATTR(read-hit,				0x02),
-	XGENE_PMU_EVENT_ATTR(read-miss,				0x03),
-	XGENE_PMU_EVENT_ATTR(write-need-replacement,		0x06),
-	XGENE_PMU_EVENT_ATTR(write-not-need-replacement,	0x07),
+	XGENE_PMU_EVENT_ATTR(cycle-count-भाग-64,		0x01),
+	XGENE_PMU_EVENT_ATTR(पढ़ो-hit,				0x02),
+	XGENE_PMU_EVENT_ATTR(पढ़ो-miss,				0x03),
+	XGENE_PMU_EVENT_ATTR(ग_लिखो-need-replacement,		0x06),
+	XGENE_PMU_EVENT_ATTR(ग_लिखो-not-need-replacement,	0x07),
 	XGENE_PMU_EVENT_ATTR(tq-full,				0x08),
 	XGENE_PMU_EVENT_ATTR(ackq-full,				0x09),
 	XGENE_PMU_EVENT_ATTR(wdb-full,				0x0a),
-	XGENE_PMU_EVENT_ATTR(bank-fifo-full,			0x0b),
+	XGENE_PMU_EVENT_ATTR(bank-fअगरo-full,			0x0b),
 	XGENE_PMU_EVENT_ATTR(odb-full,				0x0c),
 	XGENE_PMU_EVENT_ATTR(wbq-full,				0x0d),
-	XGENE_PMU_EVENT_ATTR(bank-conflict-fifo-issue,		0x0e),
-	XGENE_PMU_EVENT_ATTR(bank-fifo-issue,			0x0f),
-	NULL,
-};
+	XGENE_PMU_EVENT_ATTR(bank-conflict-fअगरo-issue,		0x0e),
+	XGENE_PMU_EVENT_ATTR(bank-fअगरo-issue,			0x0f),
+	शून्य,
+पूर्ण;
 
-static struct attribute *iob_pmu_events_attrs[] = {
+अटल काष्ठा attribute *iob_pmu_events_attrs[] = अणु
 	XGENE_PMU_EVENT_ATTR(cycle-count,			0x00),
-	XGENE_PMU_EVENT_ATTR(cycle-count-div-64,		0x01),
-	XGENE_PMU_EVENT_ATTR(axi0-read,				0x02),
-	XGENE_PMU_EVENT_ATTR(axi0-read-partial,			0x03),
-	XGENE_PMU_EVENT_ATTR(axi1-read,				0x04),
-	XGENE_PMU_EVENT_ATTR(axi1-read-partial,			0x05),
-	XGENE_PMU_EVENT_ATTR(csw-read-block,			0x06),
-	XGENE_PMU_EVENT_ATTR(csw-read-partial,			0x07),
-	XGENE_PMU_EVENT_ATTR(axi0-write,			0x10),
-	XGENE_PMU_EVENT_ATTR(axi0-write-partial,		0x11),
-	XGENE_PMU_EVENT_ATTR(axi1-write,			0x13),
-	XGENE_PMU_EVENT_ATTR(axi1-write-partial,		0x14),
+	XGENE_PMU_EVENT_ATTR(cycle-count-भाग-64,		0x01),
+	XGENE_PMU_EVENT_ATTR(axi0-पढ़ो,				0x02),
+	XGENE_PMU_EVENT_ATTR(axi0-पढ़ो-partial,			0x03),
+	XGENE_PMU_EVENT_ATTR(axi1-पढ़ो,				0x04),
+	XGENE_PMU_EVENT_ATTR(axi1-पढ़ो-partial,			0x05),
+	XGENE_PMU_EVENT_ATTR(csw-पढ़ो-block,			0x06),
+	XGENE_PMU_EVENT_ATTR(csw-पढ़ो-partial,			0x07),
+	XGENE_PMU_EVENT_ATTR(axi0-ग_लिखो,			0x10),
+	XGENE_PMU_EVENT_ATTR(axi0-ग_लिखो-partial,		0x11),
+	XGENE_PMU_EVENT_ATTR(axi1-ग_लिखो,			0x13),
+	XGENE_PMU_EVENT_ATTR(axi1-ग_लिखो-partial,		0x14),
 	XGENE_PMU_EVENT_ATTR(csw-inbound-dirty,			0x16),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *mcb_pmu_events_attrs[] = {
+अटल काष्ठा attribute *mcb_pmu_events_attrs[] = अणु
 	XGENE_PMU_EVENT_ATTR(cycle-count,			0x00),
-	XGENE_PMU_EVENT_ATTR(cycle-count-div-64,		0x01),
-	XGENE_PMU_EVENT_ATTR(csw-read,				0x02),
-	XGENE_PMU_EVENT_ATTR(csw-write-request,			0x03),
+	XGENE_PMU_EVENT_ATTR(cycle-count-भाग-64,		0x01),
+	XGENE_PMU_EVENT_ATTR(csw-पढ़ो,				0x02),
+	XGENE_PMU_EVENT_ATTR(csw-ग_लिखो-request,			0x03),
 	XGENE_PMU_EVENT_ATTR(mcb-csw-stall,			0x04),
-	XGENE_PMU_EVENT_ATTR(cancel-read-gack,			0x05),
-	NULL,
-};
+	XGENE_PMU_EVENT_ATTR(cancel-पढ़ो-gack,			0x05),
+	शून्य,
+पूर्ण;
 
-static struct attribute *mc_pmu_events_attrs[] = {
+अटल काष्ठा attribute *mc_pmu_events_attrs[] = अणु
 	XGENE_PMU_EVENT_ATTR(cycle-count,			0x00),
-	XGENE_PMU_EVENT_ATTR(cycle-count-div-64,		0x01),
+	XGENE_PMU_EVENT_ATTR(cycle-count-भाग-64,		0x01),
 	XGENE_PMU_EVENT_ATTR(act-cmd-sent,			0x02),
 	XGENE_PMU_EVENT_ATTR(pre-cmd-sent,			0x03),
 	XGENE_PMU_EVENT_ATTR(rd-cmd-sent,			0x04),
@@ -365,40 +366,40 @@ static struct attribute *mc_pmu_events_attrs[] = {
 	XGENE_PMU_EVENT_ATTR(mcu-rd-proceed-speculative-cancel,	0x1a),
 	XGENE_PMU_EVENT_ATTR(mcu-wr-proceed-all,		0x1b),
 	XGENE_PMU_EVENT_ATTR(mcu-wr-proceed-cancel,		0x1c),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group l3c_pmu_events_attr_group = {
+अटल स्थिर काष्ठा attribute_group l3c_pmu_events_attr_group = अणु
 	.name = "events",
 	.attrs = l3c_pmu_events_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group iob_pmu_events_attr_group = {
+अटल स्थिर काष्ठा attribute_group iob_pmu_events_attr_group = अणु
 	.name = "events",
 	.attrs = iob_pmu_events_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group mcb_pmu_events_attr_group = {
+अटल स्थिर काष्ठा attribute_group mcb_pmu_events_attr_group = अणु
 	.name = "events",
 	.attrs = mcb_pmu_events_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group mc_pmu_events_attr_group = {
+अटल स्थिर काष्ठा attribute_group mc_pmu_events_attr_group = अणु
 	.name = "events",
 	.attrs = mc_pmu_events_attrs,
-};
+पूर्ण;
 
-static struct attribute *l3c_pmu_v3_events_attrs[] = {
+अटल काष्ठा attribute *l3c_pmu_v3_events_attrs[] = अणु
 	XGENE_PMU_EVENT_ATTR(cycle-count,			0x00),
-	XGENE_PMU_EVENT_ATTR(read-hit,				0x01),
-	XGENE_PMU_EVENT_ATTR(read-miss,				0x02),
+	XGENE_PMU_EVENT_ATTR(पढ़ो-hit,				0x01),
+	XGENE_PMU_EVENT_ATTR(पढ़ो-miss,				0x02),
 	XGENE_PMU_EVENT_ATTR(index-flush-eviction,		0x03),
-	XGENE_PMU_EVENT_ATTR(write-caused-replacement,		0x04),
-	XGENE_PMU_EVENT_ATTR(write-not-caused-replacement,	0x05),
+	XGENE_PMU_EVENT_ATTR(ग_लिखो-caused-replacement,		0x04),
+	XGENE_PMU_EVENT_ATTR(ग_लिखो-not-caused-replacement,	0x05),
 	XGENE_PMU_EVENT_ATTR(clean-eviction,			0x06),
 	XGENE_PMU_EVENT_ATTR(dirty-eviction,			0x07),
-	XGENE_PMU_EVENT_ATTR(read,				0x08),
-	XGENE_PMU_EVENT_ATTR(write,				0x09),
+	XGENE_PMU_EVENT_ATTR(पढ़ो,				0x08),
+	XGENE_PMU_EVENT_ATTR(ग_लिखो,				0x09),
 	XGENE_PMU_EVENT_ATTR(request,				0x0a),
 	XGENE_PMU_EVENT_ATTR(tq-bank-conflict-issue-stall,	0x0b),
 	XGENE_PMU_EVENT_ATTR(tq-full,				0x0c),
@@ -406,15 +407,15 @@ static struct attribute *l3c_pmu_v3_events_attrs[] = {
 	XGENE_PMU_EVENT_ATTR(wdb-full,				0x0e),
 	XGENE_PMU_EVENT_ATTR(odb-full,				0x10),
 	XGENE_PMU_EVENT_ATTR(wbq-full,				0x11),
-	XGENE_PMU_EVENT_ATTR(input-req-async-fifo-stall,	0x12),
-	XGENE_PMU_EVENT_ATTR(output-req-async-fifo-stall,	0x13),
-	XGENE_PMU_EVENT_ATTR(output-data-async-fifo-stall,	0x14),
+	XGENE_PMU_EVENT_ATTR(input-req-async-fअगरo-stall,	0x12),
+	XGENE_PMU_EVENT_ATTR(output-req-async-fअगरo-stall,	0x13),
+	XGENE_PMU_EVENT_ATTR(output-data-async-fअगरo-stall,	0x14),
 	XGENE_PMU_EVENT_ATTR(total-insertion,			0x15),
 	XGENE_PMU_EVENT_ATTR(sip-insertions-r-set,		0x16),
 	XGENE_PMU_EVENT_ATTR(sip-insertions-r-clear,		0x17),
 	XGENE_PMU_EVENT_ATTR(dip-insertions-r-set,		0x18),
 	XGENE_PMU_EVENT_ATTR(dip-insertions-r-clear,		0x19),
-	XGENE_PMU_EVENT_ATTR(dip-insertions-force-r-set,	0x1a),
+	XGENE_PMU_EVENT_ATTR(dip-insertions-क्रमce-r-set,	0x1a),
 	XGENE_PMU_EVENT_ATTR(egression,				0x1b),
 	XGENE_PMU_EVENT_ATTR(replacement,			0x1c),
 	XGENE_PMU_EVENT_ATTR(old-replacement,			0x1d),
@@ -428,10 +429,10 @@ static struct attribute *l3c_pmu_v3_events_attrs[] = {
 	XGENE_PMU_EVENT_ATTR(bloomfilter-clearing,		0x25),
 	XGENE_PMU_EVENT_ATTR(generation-flip,			0x26),
 	XGENE_PMU_EVENT_ATTR(vcc-droop-detected,		0x27),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *iob_fast_pmu_v3_events_attrs[] = {
+अटल काष्ठा attribute *iob_fast_pmu_v3_events_attrs[] = अणु
 	XGENE_PMU_EVENT_ATTR(cycle-count,			0x00),
 	XGENE_PMU_EVENT_ATTR(pa-req-buf-alloc-all,		0x01),
 	XGENE_PMU_EVENT_ATTR(pa-req-buf-alloc-rd,		0x02),
@@ -464,17 +465,17 @@ static struct attribute *iob_fast_pmu_v3_events_attrs[] = {
 	XGENE_PMU_EVENT_ATTR(pa-rd-wr-invalid-snoop,		0x25),
 	XGENE_PMU_EVENT_ATTR(pa-rd-wr-invalid-snoop-hit,	0x26),
 	XGENE_PMU_EVENT_ATTR(pa-req-buffer-full,		0x28),
-	XGENE_PMU_EVENT_ATTR(cswlf-outbound-req-fifo-full,	0x29),
-	XGENE_PMU_EVENT_ATTR(cswlf-inbound-snoop-fifo-backpressure, 0x2a),
-	XGENE_PMU_EVENT_ATTR(cswlf-outbound-lack-fifo-full,	0x2b),
-	XGENE_PMU_EVENT_ATTR(cswlf-inbound-gack-fifo-backpressure, 0x2c),
-	XGENE_PMU_EVENT_ATTR(cswlf-outbound-data-fifo-full,	0x2d),
-	XGENE_PMU_EVENT_ATTR(cswlf-inbound-data-fifo-backpressure, 0x2e),
+	XGENE_PMU_EVENT_ATTR(cswlf-outbound-req-fअगरo-full,	0x29),
+	XGENE_PMU_EVENT_ATTR(cswlf-inbound-snoop-fअगरo-backpressure, 0x2a),
+	XGENE_PMU_EVENT_ATTR(cswlf-outbound-lack-fअगरo-full,	0x2b),
+	XGENE_PMU_EVENT_ATTR(cswlf-inbound-gack-fअगरo-backpressure, 0x2c),
+	XGENE_PMU_EVENT_ATTR(cswlf-outbound-data-fअगरo-full,	0x2d),
+	XGENE_PMU_EVENT_ATTR(cswlf-inbound-data-fअगरo-backpressure, 0x2e),
 	XGENE_PMU_EVENT_ATTR(cswlf-inbound-req-backpressure,	0x2f),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *iob_slow_pmu_v3_events_attrs[] = {
+अटल काष्ठा attribute *iob_slow_pmu_v3_events_attrs[] = अणु
 	XGENE_PMU_EVENT_ATTR(cycle-count,			0x00),
 	XGENE_PMU_EVENT_ATTR(pa-axi0-rd-req,			0x01),
 	XGENE_PMU_EVENT_ATTR(pa-axi0-wr-req,			0x02),
@@ -483,11 +484,11 @@ static struct attribute *iob_slow_pmu_v3_events_attrs[] = {
 	XGENE_PMU_EVENT_ATTR(ba-all-axi-req,			0x07),
 	XGENE_PMU_EVENT_ATTR(ba-axi-rd-req,			0x08),
 	XGENE_PMU_EVENT_ATTR(ba-axi-wr-req,			0x09),
-	XGENE_PMU_EVENT_ATTR(ba-free-list-empty,		0x10),
-	NULL,
-};
+	XGENE_PMU_EVENT_ATTR(ba-मुक्त-list-empty,		0x10),
+	शून्य,
+पूर्ण;
 
-static struct attribute *mcb_pmu_v3_events_attrs[] = {
+अटल काष्ठा attribute *mcb_pmu_v3_events_attrs[] = अणु
 	XGENE_PMU_EVENT_ATTR(cycle-count,			0x00),
 	XGENE_PMU_EVENT_ATTR(req-receive,			0x01),
 	XGENE_PMU_EVENT_ATTR(rd-req-recv,			0x02),
@@ -498,9 +499,9 @@ static struct attribute *mcb_pmu_v3_events_attrs[] = {
 	XGENE_PMU_EVENT_ATTR(rd-req-sent-to-mcu-2,		0x07),
 	XGENE_PMU_EVENT_ATTR(rd-req-sent-to-spec-mcu,		0x08),
 	XGENE_PMU_EVENT_ATTR(rd-req-sent-to-spec-mcu-2,		0x09),
-	XGENE_PMU_EVENT_ATTR(glbl-ack-recv-for-rd-sent-to-spec-mcu, 0x0a),
-	XGENE_PMU_EVENT_ATTR(glbl-ack-go-recv-for-rd-sent-to-spec-mcu, 0x0b),
-	XGENE_PMU_EVENT_ATTR(glbl-ack-nogo-recv-for-rd-sent-to-spec-mcu, 0x0c),
+	XGENE_PMU_EVENT_ATTR(glbl-ack-recv-क्रम-rd-sent-to-spec-mcu, 0x0a),
+	XGENE_PMU_EVENT_ATTR(glbl-ack-go-recv-क्रम-rd-sent-to-spec-mcu, 0x0b),
+	XGENE_PMU_EVENT_ATTR(glbl-ack-nogo-recv-क्रम-rd-sent-to-spec-mcu, 0x0c),
 	XGENE_PMU_EVENT_ATTR(glbl-ack-go-recv-any-rd-req,	0x0d),
 	XGENE_PMU_EVENT_ATTR(glbl-ack-go-recv-any-rd-req-2,	0x0e),
 	XGENE_PMU_EVENT_ATTR(wr-req-sent-to-mcu,		0x0f),
@@ -510,10 +511,10 @@ static struct attribute *mcb_pmu_v3_events_attrs[] = {
 	XGENE_PMU_EVENT_ATTR(cancel-rd-gack,			0x13),
 	XGENE_PMU_EVENT_ATTR(cancel-wr-gack,			0x14),
 	XGENE_PMU_EVENT_ATTR(mcb-csw-req-stall,			0x15),
-	XGENE_PMU_EVENT_ATTR(mcu-req-intf-blocked,		0x16),
-	XGENE_PMU_EVENT_ATTR(mcb-mcu-rd-intf-stall,		0x17),
-	XGENE_PMU_EVENT_ATTR(csw-rd-intf-blocked,		0x18),
-	XGENE_PMU_EVENT_ATTR(csw-local-ack-intf-blocked,	0x19),
+	XGENE_PMU_EVENT_ATTR(mcu-req-पूर्णांकf-blocked,		0x16),
+	XGENE_PMU_EVENT_ATTR(mcb-mcu-rd-पूर्णांकf-stall,		0x17),
+	XGENE_PMU_EVENT_ATTR(csw-rd-पूर्णांकf-blocked,		0x18),
+	XGENE_PMU_EVENT_ATTR(csw-local-ack-पूर्णांकf-blocked,	0x19),
 	XGENE_PMU_EVENT_ATTR(mcu-req-table-full,		0x1a),
 	XGENE_PMU_EVENT_ATTR(mcu-stat-table-full,		0x1b),
 	XGENE_PMU_EVENT_ATTR(mcu-wr-table-full,			0x1c),
@@ -524,10 +525,10 @@ static struct attribute *mcb_pmu_v3_events_attrs[] = {
 	XGENE_PMU_EVENT_ATTR(mcu-req-from-lastload,		0x21),
 	XGENE_PMU_EVENT_ATTR(mcu-req-from-bypass,		0x22),
 	XGENE_PMU_EVENT_ATTR(volt-droop-detect,			0x23),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *mc_pmu_v3_events_attrs[] = {
+अटल काष्ठा attribute *mc_pmu_v3_events_attrs[] = अणु
 	XGENE_PMU_EVENT_ATTR(cycle-count,			0x00),
 	XGENE_PMU_EVENT_ATTR(act-sent,				0x01),
 	XGENE_PMU_EVENT_ATTR(pre-sent,				0x02),
@@ -571,349 +572,349 @@ static struct attribute *mc_pmu_v3_events_attrs[] = {
 	XGENE_PMU_EVENT_ATTR(dram-errd,				0x28),
 	XGENE_PMU_EVENT_ATTR(rd-enq,				0x29),
 	XGENE_PMU_EVENT_ATTR(wr-enq,				0x2a),
-	XGENE_PMU_EVENT_ATTR(tmac-limit-reached,		0x2b),
-	XGENE_PMU_EVENT_ATTR(tmaw-tracker-full,			0x2c),
-	NULL,
-};
+	XGENE_PMU_EVENT_ATTR(पंचांगac-limit-reached,		0x2b),
+	XGENE_PMU_EVENT_ATTR(पंचांगaw-tracker-full,			0x2c),
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group l3c_pmu_v3_events_attr_group = {
+अटल स्थिर काष्ठा attribute_group l3c_pmu_v3_events_attr_group = अणु
 	.name = "events",
 	.attrs = l3c_pmu_v3_events_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group iob_fast_pmu_v3_events_attr_group = {
+अटल स्थिर काष्ठा attribute_group iob_fast_pmu_v3_events_attr_group = अणु
 	.name = "events",
 	.attrs = iob_fast_pmu_v3_events_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group iob_slow_pmu_v3_events_attr_group = {
+अटल स्थिर काष्ठा attribute_group iob_slow_pmu_v3_events_attr_group = अणु
 	.name = "events",
 	.attrs = iob_slow_pmu_v3_events_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group mcb_pmu_v3_events_attr_group = {
+अटल स्थिर काष्ठा attribute_group mcb_pmu_v3_events_attr_group = अणु
 	.name = "events",
 	.attrs = mcb_pmu_v3_events_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group mc_pmu_v3_events_attr_group = {
+अटल स्थिर काष्ठा attribute_group mc_pmu_v3_events_attr_group = अणु
 	.name = "events",
 	.attrs = mc_pmu_v3_events_attrs,
-};
+पूर्ण;
 
 /*
  * sysfs cpumask attributes
  */
-static ssize_t xgene_pmu_cpumask_show(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(dev_get_drvdata(dev));
+अटल sमाप_प्रकार xgene_pmu_cpumask_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(dev_get_drvdata(dev));
 
-	return cpumap_print_to_pagebuf(true, buf, &pmu_dev->parent->cpu);
-}
+	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, &pmu_dev->parent->cpu);
+पूर्ण
 
-static DEVICE_ATTR(cpumask, S_IRUGO, xgene_pmu_cpumask_show, NULL);
+अटल DEVICE_ATTR(cpumask, S_IRUGO, xgene_pmu_cpumask_show, शून्य);
 
-static struct attribute *xgene_pmu_cpumask_attrs[] = {
+अटल काष्ठा attribute *xgene_pmu_cpumask_attrs[] = अणु
 	&dev_attr_cpumask.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group pmu_cpumask_attr_group = {
+अटल स्थिर काष्ठा attribute_group pmu_cpumask_attr_group = अणु
 	.attrs = xgene_pmu_cpumask_attrs,
-};
+पूर्ण;
 
 /*
  * Per PMU device attribute groups of PMU v1 and v2
  */
-static const struct attribute_group *l3c_pmu_attr_groups[] = {
-	&l3c_pmu_format_attr_group,
+अटल स्थिर काष्ठा attribute_group *l3c_pmu_attr_groups[] = अणु
+	&l3c_pmu_क्रमmat_attr_group,
 	&pmu_cpumask_attr_group,
 	&l3c_pmu_events_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group *iob_pmu_attr_groups[] = {
-	&iob_pmu_format_attr_group,
+अटल स्थिर काष्ठा attribute_group *iob_pmu_attr_groups[] = अणु
+	&iob_pmu_क्रमmat_attr_group,
 	&pmu_cpumask_attr_group,
 	&iob_pmu_events_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group *mcb_pmu_attr_groups[] = {
-	&mcb_pmu_format_attr_group,
+अटल स्थिर काष्ठा attribute_group *mcb_pmu_attr_groups[] = अणु
+	&mcb_pmu_क्रमmat_attr_group,
 	&pmu_cpumask_attr_group,
 	&mcb_pmu_events_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group *mc_pmu_attr_groups[] = {
-	&mc_pmu_format_attr_group,
+अटल स्थिर काष्ठा attribute_group *mc_pmu_attr_groups[] = अणु
+	&mc_pmu_क्रमmat_attr_group,
 	&pmu_cpumask_attr_group,
 	&mc_pmu_events_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /*
  * Per PMU device attribute groups of PMU v3
  */
-static const struct attribute_group *l3c_pmu_v3_attr_groups[] = {
-	&l3c_pmu_v3_format_attr_group,
+अटल स्थिर काष्ठा attribute_group *l3c_pmu_v3_attr_groups[] = अणु
+	&l3c_pmu_v3_क्रमmat_attr_group,
 	&pmu_cpumask_attr_group,
 	&l3c_pmu_v3_events_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group *iob_fast_pmu_v3_attr_groups[] = {
-	&iob_pmu_v3_format_attr_group,
+अटल स्थिर काष्ठा attribute_group *iob_fast_pmu_v3_attr_groups[] = अणु
+	&iob_pmu_v3_क्रमmat_attr_group,
 	&pmu_cpumask_attr_group,
 	&iob_fast_pmu_v3_events_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group *iob_slow_pmu_v3_attr_groups[] = {
-	&iob_slow_pmu_v3_format_attr_group,
+अटल स्थिर काष्ठा attribute_group *iob_slow_pmu_v3_attr_groups[] = अणु
+	&iob_slow_pmu_v3_क्रमmat_attr_group,
 	&pmu_cpumask_attr_group,
 	&iob_slow_pmu_v3_events_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group *mcb_pmu_v3_attr_groups[] = {
-	&mcb_pmu_v3_format_attr_group,
+अटल स्थिर काष्ठा attribute_group *mcb_pmu_v3_attr_groups[] = अणु
+	&mcb_pmu_v3_क्रमmat_attr_group,
 	&pmu_cpumask_attr_group,
 	&mcb_pmu_v3_events_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group *mc_pmu_v3_attr_groups[] = {
-	&mc_pmu_v3_format_attr_group,
+अटल स्थिर काष्ठा attribute_group *mc_pmu_v3_attr_groups[] = अणु
+	&mc_pmu_v3_क्रमmat_attr_group,
 	&pmu_cpumask_attr_group,
 	&mc_pmu_v3_events_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static int get_next_avail_cntr(struct xgene_pmu_dev *pmu_dev)
-{
-	int cntr;
+अटल पूर्णांक get_next_avail_cntr(काष्ठा xgene_pmu_dev *pmu_dev)
+अणु
+	पूर्णांक cntr;
 
 	cntr = find_first_zero_bit(pmu_dev->cntr_assign_mask,
 				pmu_dev->max_counters);
-	if (cntr == pmu_dev->max_counters)
-		return -ENOSPC;
+	अगर (cntr == pmu_dev->max_counters)
+		वापस -ENOSPC;
 	set_bit(cntr, pmu_dev->cntr_assign_mask);
 
-	return cntr;
-}
+	वापस cntr;
+पूर्ण
 
-static void clear_avail_cntr(struct xgene_pmu_dev *pmu_dev, int cntr)
-{
+अटल व्योम clear_avail_cntr(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक cntr)
+अणु
 	clear_bit(cntr, pmu_dev->cntr_assign_mask);
-}
+पूर्ण
 
-static inline void xgene_pmu_mask_int(struct xgene_pmu *xgene_pmu)
-{
-	writel(PCPPMU_INTENMASK, xgene_pmu->pcppmu_csr + PCPPMU_INTMASK_REG);
-}
+अटल अंतरभूत व्योम xgene_pmu_mask_पूर्णांक(काष्ठा xgene_pmu *xgene_pmu)
+अणु
+	ग_लिखोl(PCPPMU_INTENMASK, xgene_pmu->pcppmu_csr + PCPPMU_INTMASK_REG);
+पूर्ण
 
-static inline void xgene_pmu_v3_mask_int(struct xgene_pmu *xgene_pmu)
-{
-	writel(PCPPMU_V3_INTENMASK, xgene_pmu->pcppmu_csr + PCPPMU_INTMASK_REG);
-}
+अटल अंतरभूत व्योम xgene_pmu_v3_mask_पूर्णांक(काष्ठा xgene_pmu *xgene_pmu)
+अणु
+	ग_लिखोl(PCPPMU_V3_INTENMASK, xgene_pmu->pcppmu_csr + PCPPMU_INTMASK_REG);
+पूर्ण
 
-static inline void xgene_pmu_unmask_int(struct xgene_pmu *xgene_pmu)
-{
-	writel(PCPPMU_INTCLRMASK, xgene_pmu->pcppmu_csr + PCPPMU_INTMASK_REG);
-}
+अटल अंतरभूत व्योम xgene_pmu_unmask_पूर्णांक(काष्ठा xgene_pmu *xgene_pmu)
+अणु
+	ग_लिखोl(PCPPMU_INTCLRMASK, xgene_pmu->pcppmu_csr + PCPPMU_INTMASK_REG);
+पूर्ण
 
-static inline void xgene_pmu_v3_unmask_int(struct xgene_pmu *xgene_pmu)
-{
-	writel(PCPPMU_V3_INTCLRMASK,
+अटल अंतरभूत व्योम xgene_pmu_v3_unmask_पूर्णांक(काष्ठा xgene_pmu *xgene_pmu)
+अणु
+	ग_लिखोl(PCPPMU_V3_INTCLRMASK,
 	       xgene_pmu->pcppmu_csr + PCPPMU_INTMASK_REG);
-}
+पूर्ण
 
-static inline u64 xgene_pmu_read_counter32(struct xgene_pmu_dev *pmu_dev,
-					   int idx)
-{
-	return readl(pmu_dev->inf->csr + PMU_PMEVCNTR0 + (4 * idx));
-}
+अटल अंतरभूत u64 xgene_pmu_पढ़ो_counter32(काष्ठा xgene_pmu_dev *pmu_dev,
+					   पूर्णांक idx)
+अणु
+	वापस पढ़ोl(pmu_dev->inf->csr + PMU_PMEVCNTR0 + (4 * idx));
+पूर्ण
 
-static inline u64 xgene_pmu_read_counter64(struct xgene_pmu_dev *pmu_dev,
-					   int idx)
-{
+अटल अंतरभूत u64 xgene_pmu_पढ़ो_counter64(काष्ठा xgene_pmu_dev *pmu_dev,
+					   पूर्णांक idx)
+अणु
 	u32 lo, hi;
 
 	/*
-	 * v3 has 64-bit counter registers composed by 2 32-bit registers
-	 * This can be a problem if the counter increases and carries
-	 * out of bit [31] between 2 reads. The extra reads would help
+	 * v3 has 64-bit counter रेजिस्टरs composed by 2 32-bit रेजिस्टरs
+	 * This can be a problem अगर the counter increases and carries
+	 * out of bit [31] between 2 पढ़ोs. The extra पढ़ोs would help
 	 * to prevent this issue.
 	 */
-	do {
-		hi = xgene_pmu_read_counter32(pmu_dev, 2 * idx + 1);
-		lo = xgene_pmu_read_counter32(pmu_dev, 2 * idx);
-	} while (hi != xgene_pmu_read_counter32(pmu_dev, 2 * idx + 1));
+	करो अणु
+		hi = xgene_pmu_पढ़ो_counter32(pmu_dev, 2 * idx + 1);
+		lo = xgene_pmu_पढ़ो_counter32(pmu_dev, 2 * idx);
+	पूर्ण जबतक (hi != xgene_pmu_पढ़ो_counter32(pmu_dev, 2 * idx + 1));
 
-	return (((u64)hi << 32) | lo);
-}
+	वापस (((u64)hi << 32) | lo);
+पूर्ण
 
-static inline void
-xgene_pmu_write_counter32(struct xgene_pmu_dev *pmu_dev, int idx, u64 val)
-{
-	writel(val, pmu_dev->inf->csr + PMU_PMEVCNTR0 + (4 * idx));
-}
+अटल अंतरभूत व्योम
+xgene_pmu_ग_लिखो_counter32(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx, u64 val)
+अणु
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMEVCNTR0 + (4 * idx));
+पूर्ण
 
-static inline void
-xgene_pmu_write_counter64(struct xgene_pmu_dev *pmu_dev, int idx, u64 val)
-{
+अटल अंतरभूत व्योम
+xgene_pmu_ग_लिखो_counter64(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx, u64 val)
+अणु
 	u32 cnt_lo, cnt_hi;
 
 	cnt_hi = upper_32_bits(val);
 	cnt_lo = lower_32_bits(val);
 
-	/* v3 has 64-bit counter registers composed by 2 32-bit registers */
-	xgene_pmu_write_counter32(pmu_dev, 2 * idx, cnt_lo);
-	xgene_pmu_write_counter32(pmu_dev, 2 * idx + 1, cnt_hi);
-}
+	/* v3 has 64-bit counter रेजिस्टरs composed by 2 32-bit रेजिस्टरs */
+	xgene_pmu_ग_लिखो_counter32(pmu_dev, 2 * idx, cnt_lo);
+	xgene_pmu_ग_लिखो_counter32(pmu_dev, 2 * idx + 1, cnt_hi);
+पूर्ण
 
-static inline void
-xgene_pmu_write_evttype(struct xgene_pmu_dev *pmu_dev, int idx, u32 val)
-{
-	writel(val, pmu_dev->inf->csr + PMU_PMEVTYPER0 + (4 * idx));
-}
+अटल अंतरभूत व्योम
+xgene_pmu_ग_लिखो_evttype(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx, u32 val)
+अणु
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMEVTYPER0 + (4 * idx));
+पूर्ण
 
-static inline void
-xgene_pmu_write_agentmsk(struct xgene_pmu_dev *pmu_dev, u32 val)
-{
-	writel(val, pmu_dev->inf->csr + PMU_PMAMR0);
-}
+अटल अंतरभूत व्योम
+xgene_pmu_ग_लिखो_agenपंचांगsk(काष्ठा xgene_pmu_dev *pmu_dev, u32 val)
+अणु
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMAMR0);
+पूर्ण
 
-static inline void
-xgene_pmu_v3_write_agentmsk(struct xgene_pmu_dev *pmu_dev, u32 val) { }
+अटल अंतरभूत व्योम
+xgene_pmu_v3_ग_लिखो_agenपंचांगsk(काष्ठा xgene_pmu_dev *pmu_dev, u32 val) अणु पूर्ण
 
-static inline void
-xgene_pmu_write_agent1msk(struct xgene_pmu_dev *pmu_dev, u32 val)
-{
-	writel(val, pmu_dev->inf->csr + PMU_PMAMR1);
-}
+अटल अंतरभूत व्योम
+xgene_pmu_ग_लिखो_agent1msk(काष्ठा xgene_pmu_dev *pmu_dev, u32 val)
+अणु
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMAMR1);
+पूर्ण
 
-static inline void
-xgene_pmu_v3_write_agent1msk(struct xgene_pmu_dev *pmu_dev, u32 val) { }
+अटल अंतरभूत व्योम
+xgene_pmu_v3_ग_लिखो_agent1msk(काष्ठा xgene_pmu_dev *pmu_dev, u32 val) अणु पूर्ण
 
-static inline void
-xgene_pmu_enable_counter(struct xgene_pmu_dev *pmu_dev, int idx)
-{
+अटल अंतरभूत व्योम
+xgene_pmu_enable_counter(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx)
+अणु
 	u32 val;
 
-	val = readl(pmu_dev->inf->csr + PMU_PMCNTENSET);
+	val = पढ़ोl(pmu_dev->inf->csr + PMU_PMCNTENSET);
 	val |= 1 << idx;
-	writel(val, pmu_dev->inf->csr + PMU_PMCNTENSET);
-}
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMCNTENSET);
+पूर्ण
 
-static inline void
-xgene_pmu_disable_counter(struct xgene_pmu_dev *pmu_dev, int idx)
-{
+अटल अंतरभूत व्योम
+xgene_pmu_disable_counter(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx)
+अणु
 	u32 val;
 
-	val = readl(pmu_dev->inf->csr + PMU_PMCNTENCLR);
+	val = पढ़ोl(pmu_dev->inf->csr + PMU_PMCNTENCLR);
 	val |= 1 << idx;
-	writel(val, pmu_dev->inf->csr + PMU_PMCNTENCLR);
-}
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMCNTENCLR);
+पूर्ण
 
-static inline void
-xgene_pmu_enable_counter_int(struct xgene_pmu_dev *pmu_dev, int idx)
-{
+अटल अंतरभूत व्योम
+xgene_pmu_enable_counter_पूर्णांक(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx)
+अणु
 	u32 val;
 
-	val = readl(pmu_dev->inf->csr + PMU_PMINTENSET);
+	val = पढ़ोl(pmu_dev->inf->csr + PMU_PMINTENSET);
 	val |= 1 << idx;
-	writel(val, pmu_dev->inf->csr + PMU_PMINTENSET);
-}
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMINTENSET);
+पूर्ण
 
-static inline void
-xgene_pmu_disable_counter_int(struct xgene_pmu_dev *pmu_dev, int idx)
-{
+अटल अंतरभूत व्योम
+xgene_pmu_disable_counter_पूर्णांक(काष्ठा xgene_pmu_dev *pmu_dev, पूर्णांक idx)
+अणु
 	u32 val;
 
-	val = readl(pmu_dev->inf->csr + PMU_PMINTENCLR);
+	val = पढ़ोl(pmu_dev->inf->csr + PMU_PMINTENCLR);
 	val |= 1 << idx;
-	writel(val, pmu_dev->inf->csr + PMU_PMINTENCLR);
-}
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMINTENCLR);
+पूर्ण
 
-static inline void xgene_pmu_reset_counters(struct xgene_pmu_dev *pmu_dev)
-{
+अटल अंतरभूत व्योम xgene_pmu_reset_counters(काष्ठा xgene_pmu_dev *pmu_dev)
+अणु
 	u32 val;
 
-	val = readl(pmu_dev->inf->csr + PMU_PMCR);
+	val = पढ़ोl(pmu_dev->inf->csr + PMU_PMCR);
 	val |= PMU_PMCR_P;
-	writel(val, pmu_dev->inf->csr + PMU_PMCR);
-}
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMCR);
+पूर्ण
 
-static inline void xgene_pmu_start_counters(struct xgene_pmu_dev *pmu_dev)
-{
+अटल अंतरभूत व्योम xgene_pmu_start_counters(काष्ठा xgene_pmu_dev *pmu_dev)
+अणु
 	u32 val;
 
-	val = readl(pmu_dev->inf->csr + PMU_PMCR);
+	val = पढ़ोl(pmu_dev->inf->csr + PMU_PMCR);
 	val |= PMU_PMCR_E;
-	writel(val, pmu_dev->inf->csr + PMU_PMCR);
-}
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMCR);
+पूर्ण
 
-static inline void xgene_pmu_stop_counters(struct xgene_pmu_dev *pmu_dev)
-{
+अटल अंतरभूत व्योम xgene_pmu_stop_counters(काष्ठा xgene_pmu_dev *pmu_dev)
+अणु
 	u32 val;
 
-	val = readl(pmu_dev->inf->csr + PMU_PMCR);
+	val = पढ़ोl(pmu_dev->inf->csr + PMU_PMCR);
 	val &= ~PMU_PMCR_E;
-	writel(val, pmu_dev->inf->csr + PMU_PMCR);
-}
+	ग_लिखोl(val, pmu_dev->inf->csr + PMU_PMCR);
+पूर्ण
 
-static void xgene_perf_pmu_enable(struct pmu *pmu)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(pmu);
-	struct xgene_pmu *xgene_pmu = pmu_dev->parent;
-	int enabled = bitmap_weight(pmu_dev->cntr_assign_mask,
+अटल व्योम xgene_perf_pmu_enable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(pmu);
+	काष्ठा xgene_pmu *xgene_pmu = pmu_dev->parent;
+	पूर्णांक enabled = biपंचांगap_weight(pmu_dev->cntr_assign_mask,
 			pmu_dev->max_counters);
 
-	if (!enabled)
-		return;
+	अगर (!enabled)
+		वापस;
 
 	xgene_pmu->ops->start_counters(pmu_dev);
-}
+पूर्ण
 
-static void xgene_perf_pmu_disable(struct pmu *pmu)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(pmu);
-	struct xgene_pmu *xgene_pmu = pmu_dev->parent;
+अटल व्योम xgene_perf_pmu_disable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(pmu);
+	काष्ठा xgene_pmu *xgene_pmu = pmu_dev->parent;
 
 	xgene_pmu->ops->stop_counters(pmu_dev);
-}
+पूर्ण
 
-static int xgene_perf_event_init(struct perf_event *event)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
-	struct hw_perf_event *hw = &event->hw;
-	struct perf_event *sibling;
+अटल पूर्णांक xgene_perf_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
+	काष्ठा hw_perf_event *hw = &event->hw;
+	काष्ठा perf_event *sibling;
 
-	/* Test the event attr type check for PMU enumeration */
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
+	/* Test the event attr type check क्रम PMU क्रमागतeration */
+	अगर (event->attr.type != event->pmu->type)
+		वापस -ENOENT;
 
 	/*
 	 * SOC PMU counters are shared across all cores.
-	 * Therefore, it does not support per-process mode.
-	 * Also, it does not support event sampling mode.
+	 * Thereक्रमe, it करोes not support per-process mode.
+	 * Also, it करोes not support event sampling mode.
 	 */
-	if (is_sampling_event(event) || event->attach_state & PERF_ATTACH_TASK)
-		return -EINVAL;
+	अगर (is_sampling_event(event) || event->attach_state & PERF_ATTACH_TASK)
+		वापस -EINVAL;
 
-	if (event->cpu < 0)
-		return -EINVAL;
+	अगर (event->cpu < 0)
+		वापस -EINVAL;
 	/*
 	 * Many perf core operations (eg. events rotation) operate on a
-	 * single CPU context. This is obvious for CPU PMUs, where one
+	 * single CPU context. This is obvious क्रम CPU PMUs, where one
 	 * expects the same sets of events being observed on all CPUs,
-	 * but can lead to issues for off-core PMUs, where each
-	 * event could be theoretically assigned to a different CPU. To
-	 * mitigate this, we enforce CPU assignment to one, selected
+	 * but can lead to issues क्रम off-core PMUs, where each
+	 * event could be theoretically asचिन्हित to a dअगरferent CPU. To
+	 * mitigate this, we enक्रमce CPU assignment to one, selected
 	 * processor (the one described in the "cpumask" attribute).
 	 */
 	event->cpu = cpumask_first(&pmu_dev->parent->cpu);
@@ -921,9 +922,9 @@ static int xgene_perf_event_init(struct perf_event *event)
 	hw->config = event->attr.config;
 	/*
 	 * Each bit of the config1 field represents an agent from which the
-	 * request of the event come. The event is counted only if it's caused
+	 * request of the event come. The event is counted only अगर it's caused
 	 * by a request of an agent has the bit cleared.
-	 * By default, the event is counted for all agents.
+	 * By शेष, the event is counted क्रम all agents.
 	 */
 	hw->config_base = event->attr.config1;
 
@@ -931,182 +932,182 @@ static int xgene_perf_event_init(struct perf_event *event)
 	 * We must NOT create groups containing mixed PMUs, although software
 	 * events are acceptable
 	 */
-	if (event->group_leader->pmu != event->pmu &&
+	अगर (event->group_leader->pmu != event->pmu &&
 			!is_software_event(event->group_leader))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	for_each_sibling_event(sibling, event->group_leader) {
-		if (sibling->pmu != event->pmu &&
+	क्रम_each_sibling_event(sibling, event->group_leader) अणु
+		अगर (sibling->pmu != event->pmu &&
 				!is_software_event(sibling))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgene_perf_enable_event(struct perf_event *event)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
-	struct xgene_pmu *xgene_pmu = pmu_dev->parent;
+अटल व्योम xgene_perf_enable_event(काष्ठा perf_event *event)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
+	काष्ठा xgene_pmu *xgene_pmu = pmu_dev->parent;
 
-	xgene_pmu->ops->write_evttype(pmu_dev, GET_CNTR(event),
+	xgene_pmu->ops->ग_लिखो_evttype(pmu_dev, GET_CNTR(event),
 				      GET_EVENTID(event));
-	xgene_pmu->ops->write_agentmsk(pmu_dev, ~((u32)GET_AGENTID(event)));
-	if (pmu_dev->inf->type == PMU_TYPE_IOB)
-		xgene_pmu->ops->write_agent1msk(pmu_dev,
+	xgene_pmu->ops->ग_लिखो_agenपंचांगsk(pmu_dev, ~((u32)GET_AGENTID(event)));
+	अगर (pmu_dev->inf->type == PMU_TYPE_IOB)
+		xgene_pmu->ops->ग_लिखो_agent1msk(pmu_dev,
 						~((u32)GET_AGENT1ID(event)));
 
 	xgene_pmu->ops->enable_counter(pmu_dev, GET_CNTR(event));
-	xgene_pmu->ops->enable_counter_int(pmu_dev, GET_CNTR(event));
-}
+	xgene_pmu->ops->enable_counter_पूर्णांक(pmu_dev, GET_CNTR(event));
+पूर्ण
 
-static void xgene_perf_disable_event(struct perf_event *event)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
-	struct xgene_pmu *xgene_pmu = pmu_dev->parent;
+अटल व्योम xgene_perf_disable_event(काष्ठा perf_event *event)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
+	काष्ठा xgene_pmu *xgene_pmu = pmu_dev->parent;
 
 	xgene_pmu->ops->disable_counter(pmu_dev, GET_CNTR(event));
-	xgene_pmu->ops->disable_counter_int(pmu_dev, GET_CNTR(event));
-}
+	xgene_pmu->ops->disable_counter_पूर्णांक(pmu_dev, GET_CNTR(event));
+पूर्ण
 
-static void xgene_perf_event_set_period(struct perf_event *event)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
-	struct xgene_pmu *xgene_pmu = pmu_dev->parent;
-	struct hw_perf_event *hw = &event->hw;
+अटल व्योम xgene_perf_event_set_period(काष्ठा perf_event *event)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
+	काष्ठा xgene_pmu *xgene_pmu = pmu_dev->parent;
+	काष्ठा hw_perf_event *hw = &event->hw;
 	/*
-	 * For 32 bit counter, it has a period of 2^32. To account for the
-	 * possibility of extreme interrupt latency we program for a period of
-	 * half that. Hopefully, we can handle the interrupt before another 2^31
+	 * For 32 bit counter, it has a period of 2^32. To account क्रम the
+	 * possibility of extreme पूर्णांकerrupt latency we program क्रम a period of
+	 * half that. Hopefully, we can handle the पूर्णांकerrupt beक्रमe another 2^31
 	 * events occur and the counter overtakes its previous value.
-	 * For 64 bit counter, we don't expect it overflow.
+	 * For 64 bit counter, we करोn't expect it overflow.
 	 */
 	u64 val = 1ULL << 31;
 
 	local64_set(&hw->prev_count, val);
-	xgene_pmu->ops->write_counter(pmu_dev, hw->idx, val);
-}
+	xgene_pmu->ops->ग_लिखो_counter(pmu_dev, hw->idx, val);
+पूर्ण
 
-static void xgene_perf_event_update(struct perf_event *event)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
-	struct xgene_pmu *xgene_pmu = pmu_dev->parent;
-	struct hw_perf_event *hw = &event->hw;
+अटल व्योम xgene_perf_event_update(काष्ठा perf_event *event)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
+	काष्ठा xgene_pmu *xgene_pmu = pmu_dev->parent;
+	काष्ठा hw_perf_event *hw = &event->hw;
 	u64 delta, prev_raw_count, new_raw_count;
 
 again:
-	prev_raw_count = local64_read(&hw->prev_count);
-	new_raw_count = xgene_pmu->ops->read_counter(pmu_dev, GET_CNTR(event));
+	prev_raw_count = local64_पढ़ो(&hw->prev_count);
+	new_raw_count = xgene_pmu->ops->पढ़ो_counter(pmu_dev, GET_CNTR(event));
 
-	if (local64_cmpxchg(&hw->prev_count, prev_raw_count,
+	अगर (local64_cmpxchg(&hw->prev_count, prev_raw_count,
 			    new_raw_count) != prev_raw_count)
-		goto again;
+		जाओ again;
 
 	delta = (new_raw_count - prev_raw_count) & pmu_dev->max_period;
 
 	local64_add(delta, &event->count);
-}
+पूर्ण
 
-static void xgene_perf_read(struct perf_event *event)
-{
+अटल व्योम xgene_perf_पढ़ो(काष्ठा perf_event *event)
+अणु
 	xgene_perf_event_update(event);
-}
+पूर्ण
 
-static void xgene_perf_start(struct perf_event *event, int flags)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
-	struct xgene_pmu *xgene_pmu = pmu_dev->parent;
-	struct hw_perf_event *hw = &event->hw;
+अटल व्योम xgene_perf_start(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
+	काष्ठा xgene_pmu *xgene_pmu = pmu_dev->parent;
+	काष्ठा hw_perf_event *hw = &event->hw;
 
-	if (WARN_ON_ONCE(!(hw->state & PERF_HES_STOPPED)))
-		return;
+	अगर (WARN_ON_ONCE(!(hw->state & PERF_HES_STOPPED)))
+		वापस;
 
 	WARN_ON_ONCE(!(hw->state & PERF_HES_UPTODATE));
 	hw->state = 0;
 
 	xgene_perf_event_set_period(event);
 
-	if (flags & PERF_EF_RELOAD) {
-		u64 prev_raw_count =  local64_read(&hw->prev_count);
+	अगर (flags & PERF_EF_RELOAD) अणु
+		u64 prev_raw_count =  local64_पढ़ो(&hw->prev_count);
 
-		xgene_pmu->ops->write_counter(pmu_dev, GET_CNTR(event),
+		xgene_pmu->ops->ग_लिखो_counter(pmu_dev, GET_CNTR(event),
 					      prev_raw_count);
-	}
+	पूर्ण
 
 	xgene_perf_enable_event(event);
 	perf_event_update_userpage(event);
-}
+पूर्ण
 
-static void xgene_perf_stop(struct perf_event *event, int flags)
-{
-	struct hw_perf_event *hw = &event->hw;
+अटल व्योम xgene_perf_stop(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा hw_perf_event *hw = &event->hw;
 
-	if (hw->state & PERF_HES_UPTODATE)
-		return;
+	अगर (hw->state & PERF_HES_UPTODATE)
+		वापस;
 
 	xgene_perf_disable_event(event);
 	WARN_ON_ONCE(hw->state & PERF_HES_STOPPED);
 	hw->state |= PERF_HES_STOPPED;
 
-	if (hw->state & PERF_HES_UPTODATE)
-		return;
+	अगर (hw->state & PERF_HES_UPTODATE)
+		वापस;
 
-	xgene_perf_read(event);
+	xgene_perf_पढ़ो(event);
 	hw->state |= PERF_HES_UPTODATE;
-}
+पूर्ण
 
-static int xgene_perf_add(struct perf_event *event, int flags)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
-	struct hw_perf_event *hw = &event->hw;
+अटल पूर्णांक xgene_perf_add(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
+	काष्ठा hw_perf_event *hw = &event->hw;
 
 	hw->state = PERF_HES_UPTODATE | PERF_HES_STOPPED;
 
 	/* Allocate an event counter */
 	hw->idx = get_next_avail_cntr(pmu_dev);
-	if (hw->idx < 0)
-		return -EAGAIN;
+	अगर (hw->idx < 0)
+		वापस -EAGAIN;
 
-	/* Update counter event pointer for Interrupt handler */
+	/* Update counter event poपूर्णांकer क्रम Interrupt handler */
 	pmu_dev->pmu_counter_event[hw->idx] = event;
 
-	if (flags & PERF_EF_START)
+	अगर (flags & PERF_EF_START)
 		xgene_perf_start(event, PERF_EF_RELOAD);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgene_perf_del(struct perf_event *event, int flags)
-{
-	struct xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
-	struct hw_perf_event *hw = &event->hw;
+अटल व्योम xgene_perf_del(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा xgene_pmu_dev *pmu_dev = to_pmu_dev(event->pmu);
+	काष्ठा hw_perf_event *hw = &event->hw;
 
 	xgene_perf_stop(event, PERF_EF_UPDATE);
 
-	/* clear the assigned counter */
+	/* clear the asचिन्हित counter */
 	clear_avail_cntr(pmu_dev, GET_CNTR(event));
 
 	perf_event_update_userpage(event);
-	pmu_dev->pmu_counter_event[hw->idx] = NULL;
-}
+	pmu_dev->pmu_counter_event[hw->idx] = शून्य;
+पूर्ण
 
-static int xgene_init_perf(struct xgene_pmu_dev *pmu_dev, char *name)
-{
-	struct xgene_pmu *xgene_pmu;
+अटल पूर्णांक xgene_init_perf(काष्ठा xgene_pmu_dev *pmu_dev, अक्षर *name)
+अणु
+	काष्ठा xgene_pmu *xgene_pmu;
 
-	if (pmu_dev->parent->version == PCP_PMU_V3)
+	अगर (pmu_dev->parent->version == PCP_PMU_V3)
 		pmu_dev->max_period = PMU_V3_CNT_MAX_PERIOD;
-	else
+	अन्यथा
 		pmu_dev->max_period = PMU_CNT_MAX_PERIOD;
 	/* First version PMU supports only single event counter */
 	xgene_pmu = pmu_dev->parent;
-	if (xgene_pmu->version == PCP_PMU_V1)
+	अगर (xgene_pmu->version == PCP_PMU_V1)
 		pmu_dev->max_counters = 1;
-	else
+	अन्यथा
 		pmu_dev->max_counters = PMU_MAX_COUNTERS;
 
 	/* Perf driver registration */
-	pmu_dev->pmu = (struct pmu) {
+	pmu_dev->pmu = (काष्ठा pmu) अणु
 		.attr_groups	= pmu_dev->attr_groups,
 		.task_ctx_nr	= perf_invalid_context,
 		.pmu_enable	= xgene_perf_pmu_enable,
@@ -1116,768 +1117,768 @@ static int xgene_init_perf(struct xgene_pmu_dev *pmu_dev, char *name)
 		.del		= xgene_perf_del,
 		.start		= xgene_perf_start,
 		.stop		= xgene_perf_stop,
-		.read		= xgene_perf_read,
+		.पढ़ो		= xgene_perf_पढ़ो,
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
-	};
+	पूर्ण;
 
 	/* Hardware counter init */
 	xgene_pmu->ops->stop_counters(pmu_dev);
 	xgene_pmu->ops->reset_counters(pmu_dev);
 
-	return perf_pmu_register(&pmu_dev->pmu, name, -1);
-}
+	वापस perf_pmu_रेजिस्टर(&pmu_dev->pmu, name, -1);
+पूर्ण
 
-static int
-xgene_pmu_dev_add(struct xgene_pmu *xgene_pmu, struct xgene_pmu_dev_ctx *ctx)
-{
-	struct device *dev = xgene_pmu->dev;
-	struct xgene_pmu_dev *pmu;
+अटल पूर्णांक
+xgene_pmu_dev_add(काष्ठा xgene_pmu *xgene_pmu, काष्ठा xgene_pmu_dev_ctx *ctx)
+अणु
+	काष्ठा device *dev = xgene_pmu->dev;
+	काष्ठा xgene_pmu_dev *pmu;
 
-	pmu = devm_kzalloc(dev, sizeof(*pmu), GFP_KERNEL);
-	if (!pmu)
-		return -ENOMEM;
+	pmu = devm_kzalloc(dev, माप(*pmu), GFP_KERNEL);
+	अगर (!pmu)
+		वापस -ENOMEM;
 	pmu->parent = xgene_pmu;
 	pmu->inf = &ctx->inf;
 	ctx->pmu_dev = pmu;
 
-	switch (pmu->inf->type) {
-	case PMU_TYPE_L3C:
-		if (!(xgene_pmu->l3c_active_mask & pmu->inf->enable_mask))
-			return -ENODEV;
-		if (xgene_pmu->version == PCP_PMU_V3)
+	चयन (pmu->inf->type) अणु
+	हाल PMU_TYPE_L3C:
+		अगर (!(xgene_pmu->l3c_active_mask & pmu->inf->enable_mask))
+			वापस -ENODEV;
+		अगर (xgene_pmu->version == PCP_PMU_V3)
 			pmu->attr_groups = l3c_pmu_v3_attr_groups;
-		else
+		अन्यथा
 			pmu->attr_groups = l3c_pmu_attr_groups;
-		break;
-	case PMU_TYPE_IOB:
-		if (xgene_pmu->version == PCP_PMU_V3)
+		अवरोध;
+	हाल PMU_TYPE_IOB:
+		अगर (xgene_pmu->version == PCP_PMU_V3)
 			pmu->attr_groups = iob_fast_pmu_v3_attr_groups;
-		else
+		अन्यथा
 			pmu->attr_groups = iob_pmu_attr_groups;
-		break;
-	case PMU_TYPE_IOB_SLOW:
-		if (xgene_pmu->version == PCP_PMU_V3)
+		अवरोध;
+	हाल PMU_TYPE_IOB_SLOW:
+		अगर (xgene_pmu->version == PCP_PMU_V3)
 			pmu->attr_groups = iob_slow_pmu_v3_attr_groups;
-		break;
-	case PMU_TYPE_MCB:
-		if (!(xgene_pmu->mcb_active_mask & pmu->inf->enable_mask))
-			return -ENODEV;
-		if (xgene_pmu->version == PCP_PMU_V3)
+		अवरोध;
+	हाल PMU_TYPE_MCB:
+		अगर (!(xgene_pmu->mcb_active_mask & pmu->inf->enable_mask))
+			वापस -ENODEV;
+		अगर (xgene_pmu->version == PCP_PMU_V3)
 			pmu->attr_groups = mcb_pmu_v3_attr_groups;
-		else
+		अन्यथा
 			pmu->attr_groups = mcb_pmu_attr_groups;
-		break;
-	case PMU_TYPE_MC:
-		if (!(xgene_pmu->mc_active_mask & pmu->inf->enable_mask))
-			return -ENODEV;
-		if (xgene_pmu->version == PCP_PMU_V3)
+		अवरोध;
+	हाल PMU_TYPE_MC:
+		अगर (!(xgene_pmu->mc_active_mask & pmu->inf->enable_mask))
+			वापस -ENODEV;
+		अगर (xgene_pmu->version == PCP_PMU_V3)
 			pmu->attr_groups = mc_pmu_v3_attr_groups;
-		else
+		अन्यथा
 			pmu->attr_groups = mc_pmu_attr_groups;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (xgene_init_perf(pmu, ctx->name)) {
+	अगर (xgene_init_perf(pmu, ctx->name)) अणु
 		dev_err(dev, "%s PMU: Failed to init perf driver\n", ctx->name);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dev_info(dev, "%s PMU registered\n", ctx->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void _xgene_pmu_isr(int irq, struct xgene_pmu_dev *pmu_dev)
-{
-	struct xgene_pmu *xgene_pmu = pmu_dev->parent;
-	void __iomem *csr = pmu_dev->inf->csr;
+अटल व्योम _xgene_pmu_isr(पूर्णांक irq, काष्ठा xgene_pmu_dev *pmu_dev)
+अणु
+	काष्ठा xgene_pmu *xgene_pmu = pmu_dev->parent;
+	व्योम __iomem *csr = pmu_dev->inf->csr;
 	u32 pmovsr;
-	int idx;
+	पूर्णांक idx;
 
 	xgene_pmu->ops->stop_counters(pmu_dev);
 
-	if (xgene_pmu->version == PCP_PMU_V3)
-		pmovsr = readl(csr + PMU_PMOVSSET) & PMU_OVERFLOW_MASK;
-	else
-		pmovsr = readl(csr + PMU_PMOVSR) & PMU_OVERFLOW_MASK;
+	अगर (xgene_pmu->version == PCP_PMU_V3)
+		pmovsr = पढ़ोl(csr + PMU_PMOVSSET) & PMU_OVERFLOW_MASK;
+	अन्यथा
+		pmovsr = पढ़ोl(csr + PMU_PMOVSR) & PMU_OVERFLOW_MASK;
 
-	if (!pmovsr)
-		goto out;
+	अगर (!pmovsr)
+		जाओ out;
 
-	/* Clear interrupt flag */
-	if (xgene_pmu->version == PCP_PMU_V1)
-		writel(0x0, csr + PMU_PMOVSR);
-	else if (xgene_pmu->version == PCP_PMU_V2)
-		writel(pmovsr, csr + PMU_PMOVSR);
-	else
-		writel(pmovsr, csr + PMU_PMOVSCLR);
+	/* Clear पूर्णांकerrupt flag */
+	अगर (xgene_pmu->version == PCP_PMU_V1)
+		ग_लिखोl(0x0, csr + PMU_PMOVSR);
+	अन्यथा अगर (xgene_pmu->version == PCP_PMU_V2)
+		ग_लिखोl(pmovsr, csr + PMU_PMOVSR);
+	अन्यथा
+		ग_लिखोl(pmovsr, csr + PMU_PMOVSCLR);
 
-	for (idx = 0; idx < PMU_MAX_COUNTERS; idx++) {
-		struct perf_event *event = pmu_dev->pmu_counter_event[idx];
-		int overflowed = pmovsr & BIT(idx);
+	क्रम (idx = 0; idx < PMU_MAX_COUNTERS; idx++) अणु
+		काष्ठा perf_event *event = pmu_dev->pmu_counter_event[idx];
+		पूर्णांक overflowed = pmovsr & BIT(idx);
 
-		/* Ignore if we don't have an event. */
-		if (!event || !overflowed)
-			continue;
+		/* Ignore अगर we करोn't have an event. */
+		अगर (!event || !overflowed)
+			जारी;
 		xgene_perf_event_update(event);
 		xgene_perf_event_set_period(event);
-	}
+	पूर्ण
 
 out:
 	xgene_pmu->ops->start_counters(pmu_dev);
-}
+पूर्ण
 
-static irqreturn_t xgene_pmu_isr(int irq, void *dev_id)
-{
-	u32 intr_mcu, intr_mcb, intr_l3c, intr_iob;
-	struct xgene_pmu_dev_ctx *ctx;
-	struct xgene_pmu *xgene_pmu = dev_id;
+अटल irqवापस_t xgene_pmu_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	u32 पूर्णांकr_mcu, पूर्णांकr_mcb, पूर्णांकr_l3c, पूर्णांकr_iob;
+	काष्ठा xgene_pmu_dev_ctx *ctx;
+	काष्ठा xgene_pmu *xgene_pmu = dev_id;
 	u32 val;
 
 	raw_spin_lock(&xgene_pmu->lock);
 
 	/* Get Interrupt PMU source */
-	val = readl(xgene_pmu->pcppmu_csr + PCPPMU_INTSTATUS_REG);
-	if (xgene_pmu->version == PCP_PMU_V3) {
-		intr_mcu = PCPPMU_V3_INT_MCU;
-		intr_mcb = PCPPMU_V3_INT_MCB;
-		intr_l3c = PCPPMU_V3_INT_L3C;
-		intr_iob = PCPPMU_V3_INT_IOB;
-	} else {
-		intr_mcu = PCPPMU_INT_MCU;
-		intr_mcb = PCPPMU_INT_MCB;
-		intr_l3c = PCPPMU_INT_L3C;
-		intr_iob = PCPPMU_INT_IOB;
-	}
-	if (val & intr_mcu) {
-		list_for_each_entry(ctx, &xgene_pmu->mcpmus, next) {
+	val = पढ़ोl(xgene_pmu->pcppmu_csr + PCPPMU_INTSTATUS_REG);
+	अगर (xgene_pmu->version == PCP_PMU_V3) अणु
+		पूर्णांकr_mcu = PCPPMU_V3_INT_MCU;
+		पूर्णांकr_mcb = PCPPMU_V3_INT_MCB;
+		पूर्णांकr_l3c = PCPPMU_V3_INT_L3C;
+		पूर्णांकr_iob = PCPPMU_V3_INT_IOB;
+	पूर्ण अन्यथा अणु
+		पूर्णांकr_mcu = PCPPMU_INT_MCU;
+		पूर्णांकr_mcb = PCPPMU_INT_MCB;
+		पूर्णांकr_l3c = PCPPMU_INT_L3C;
+		पूर्णांकr_iob = PCPPMU_INT_IOB;
+	पूर्ण
+	अगर (val & पूर्णांकr_mcu) अणु
+		list_क्रम_each_entry(ctx, &xgene_pmu->mcpmus, next) अणु
 			_xgene_pmu_isr(irq, ctx->pmu_dev);
-		}
-	}
-	if (val & intr_mcb) {
-		list_for_each_entry(ctx, &xgene_pmu->mcbpmus, next) {
+		पूर्ण
+	पूर्ण
+	अगर (val & पूर्णांकr_mcb) अणु
+		list_क्रम_each_entry(ctx, &xgene_pmu->mcbpmus, next) अणु
 			_xgene_pmu_isr(irq, ctx->pmu_dev);
-		}
-	}
-	if (val & intr_l3c) {
-		list_for_each_entry(ctx, &xgene_pmu->l3cpmus, next) {
+		पूर्ण
+	पूर्ण
+	अगर (val & पूर्णांकr_l3c) अणु
+		list_क्रम_each_entry(ctx, &xgene_pmu->l3cpmus, next) अणु
 			_xgene_pmu_isr(irq, ctx->pmu_dev);
-		}
-	}
-	if (val & intr_iob) {
-		list_for_each_entry(ctx, &xgene_pmu->iobpmus, next) {
+		पूर्ण
+	पूर्ण
+	अगर (val & पूर्णांकr_iob) अणु
+		list_क्रम_each_entry(ctx, &xgene_pmu->iobpmus, next) अणु
 			_xgene_pmu_isr(irq, ctx->pmu_dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	raw_spin_unlock(&xgene_pmu->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int acpi_pmu_probe_active_mcb_mcu_l3c(struct xgene_pmu *xgene_pmu,
-					     struct platform_device *pdev)
-{
-	void __iomem *csw_csr, *mcba_csr, *mcbb_csr;
-	unsigned int reg;
+अटल पूर्णांक acpi_pmu_probe_active_mcb_mcu_l3c(काष्ठा xgene_pmu *xgene_pmu,
+					     काष्ठा platक्रमm_device *pdev)
+अणु
+	व्योम __iomem *csw_csr, *mcba_csr, *mcbb_csr;
+	अचिन्हित पूर्णांक reg;
 
-	csw_csr = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(csw_csr)) {
+	csw_csr = devm_platक्रमm_ioremap_resource(pdev, 1);
+	अगर (IS_ERR(csw_csr)) अणु
 		dev_err(&pdev->dev, "ioremap failed for CSW CSR resource\n");
-		return PTR_ERR(csw_csr);
-	}
+		वापस PTR_ERR(csw_csr);
+	पूर्ण
 
-	mcba_csr = devm_platform_ioremap_resource(pdev, 2);
-	if (IS_ERR(mcba_csr)) {
+	mcba_csr = devm_platक्रमm_ioremap_resource(pdev, 2);
+	अगर (IS_ERR(mcba_csr)) अणु
 		dev_err(&pdev->dev, "ioremap failed for MCBA CSR resource\n");
-		return PTR_ERR(mcba_csr);
-	}
+		वापस PTR_ERR(mcba_csr);
+	पूर्ण
 
-	mcbb_csr = devm_platform_ioremap_resource(pdev, 3);
-	if (IS_ERR(mcbb_csr)) {
+	mcbb_csr = devm_platक्रमm_ioremap_resource(pdev, 3);
+	अगर (IS_ERR(mcbb_csr)) अणु
 		dev_err(&pdev->dev, "ioremap failed for MCBB CSR resource\n");
-		return PTR_ERR(mcbb_csr);
-	}
+		वापस PTR_ERR(mcbb_csr);
+	पूर्ण
 
 	xgene_pmu->l3c_active_mask = 0x1;
 
-	reg = readl(csw_csr + CSW_CSWCR);
-	if (reg & CSW_CSWCR_DUALMCB_MASK) {
+	reg = पढ़ोl(csw_csr + CSW_CSWCR);
+	अगर (reg & CSW_CSWCR_DUALMCB_MASK) अणु
 		/* Dual MCB active */
 		xgene_pmu->mcb_active_mask = 0x3;
 		/* Probe all active MC(s) */
-		reg = readl(mcbb_csr + CSW_CSWCR);
+		reg = पढ़ोl(mcbb_csr + CSW_CSWCR);
 		xgene_pmu->mc_active_mask =
 			(reg & MCBADDRMR_DUALMCU_MODE_MASK) ? 0xF : 0x5;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Single MCB active */
 		xgene_pmu->mcb_active_mask = 0x1;
 		/* Probe all active MC(s) */
-		reg = readl(mcba_csr + CSW_CSWCR);
+		reg = पढ़ोl(mcba_csr + CSW_CSWCR);
 		xgene_pmu->mc_active_mask =
 			(reg & MCBADDRMR_DUALMCU_MODE_MASK) ? 0x3 : 0x1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_pmu_v3_probe_active_mcb_mcu_l3c(struct xgene_pmu *xgene_pmu,
-						struct platform_device *pdev)
-{
-	void __iomem *csw_csr;
-	unsigned int reg;
+अटल पूर्णांक acpi_pmu_v3_probe_active_mcb_mcu_l3c(काष्ठा xgene_pmu *xgene_pmu,
+						काष्ठा platक्रमm_device *pdev)
+अणु
+	व्योम __iomem *csw_csr;
+	अचिन्हित पूर्णांक reg;
 	u32 mcb0routing;
 	u32 mcb1routing;
 
-	csw_csr = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(csw_csr)) {
+	csw_csr = devm_platक्रमm_ioremap_resource(pdev, 1);
+	अगर (IS_ERR(csw_csr)) अणु
 		dev_err(&pdev->dev, "ioremap failed for CSW CSR resource\n");
-		return PTR_ERR(csw_csr);
-	}
+		वापस PTR_ERR(csw_csr);
+	पूर्ण
 
-	reg = readl(csw_csr + CSW_CSWCR);
+	reg = पढ़ोl(csw_csr + CSW_CSWCR);
 	mcb0routing = CSW_CSWCR_MCB0_ROUTING(reg);
 	mcb1routing = CSW_CSWCR_MCB1_ROUTING(reg);
-	if (reg & CSW_CSWCR_DUALMCB_MASK) {
+	अगर (reg & CSW_CSWCR_DUALMCB_MASK) अणु
 		/* Dual MCB active */
 		xgene_pmu->mcb_active_mask = 0x3;
 		/* Probe all active L3C(s), maximum is 8 */
 		xgene_pmu->l3c_active_mask = 0xFF;
 		/* Probe all active MC(s), maximum is 8 */
-		if ((mcb0routing == 0x2) && (mcb1routing == 0x2))
+		अगर ((mcb0routing == 0x2) && (mcb1routing == 0x2))
 			xgene_pmu->mc_active_mask = 0xFF;
-		else if ((mcb0routing == 0x1) && (mcb1routing == 0x1))
+		अन्यथा अगर ((mcb0routing == 0x1) && (mcb1routing == 0x1))
 			xgene_pmu->mc_active_mask =  0x33;
-		else
+		अन्यथा
 			xgene_pmu->mc_active_mask =  0x11;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Single MCB active */
 		xgene_pmu->mcb_active_mask = 0x1;
 		/* Probe all active L3C(s), maximum is 4 */
 		xgene_pmu->l3c_active_mask = 0x0F;
 		/* Probe all active MC(s), maximum is 4 */
-		if (mcb0routing == 0x2)
+		अगर (mcb0routing == 0x2)
 			xgene_pmu->mc_active_mask = 0x0F;
-		else if (mcb0routing == 0x1)
+		अन्यथा अगर (mcb0routing == 0x1)
 			xgene_pmu->mc_active_mask =  0x03;
-		else
+		अन्यथा
 			xgene_pmu->mc_active_mask =  0x01;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fdt_pmu_probe_active_mcb_mcu_l3c(struct xgene_pmu *xgene_pmu,
-					    struct platform_device *pdev)
-{
-	struct regmap *csw_map, *mcba_map, *mcbb_map;
-	struct device_node *np = pdev->dev.of_node;
-	unsigned int reg;
+अटल पूर्णांक fdt_pmu_probe_active_mcb_mcu_l3c(काष्ठा xgene_pmu *xgene_pmu,
+					    काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा regmap *csw_map, *mcba_map, *mcbb_map;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	अचिन्हित पूर्णांक reg;
 
 	csw_map = syscon_regmap_lookup_by_phandle(np, "regmap-csw");
-	if (IS_ERR(csw_map)) {
+	अगर (IS_ERR(csw_map)) अणु
 		dev_err(&pdev->dev, "unable to get syscon regmap csw\n");
-		return PTR_ERR(csw_map);
-	}
+		वापस PTR_ERR(csw_map);
+	पूर्ण
 
 	mcba_map = syscon_regmap_lookup_by_phandle(np, "regmap-mcba");
-	if (IS_ERR(mcba_map)) {
+	अगर (IS_ERR(mcba_map)) अणु
 		dev_err(&pdev->dev, "unable to get syscon regmap mcba\n");
-		return PTR_ERR(mcba_map);
-	}
+		वापस PTR_ERR(mcba_map);
+	पूर्ण
 
 	mcbb_map = syscon_regmap_lookup_by_phandle(np, "regmap-mcbb");
-	if (IS_ERR(mcbb_map)) {
+	अगर (IS_ERR(mcbb_map)) अणु
 		dev_err(&pdev->dev, "unable to get syscon regmap mcbb\n");
-		return PTR_ERR(mcbb_map);
-	}
+		वापस PTR_ERR(mcbb_map);
+	पूर्ण
 
 	xgene_pmu->l3c_active_mask = 0x1;
-	if (regmap_read(csw_map, CSW_CSWCR, &reg))
-		return -EINVAL;
+	अगर (regmap_पढ़ो(csw_map, CSW_CSWCR, &reg))
+		वापस -EINVAL;
 
-	if (reg & CSW_CSWCR_DUALMCB_MASK) {
+	अगर (reg & CSW_CSWCR_DUALMCB_MASK) अणु
 		/* Dual MCB active */
 		xgene_pmu->mcb_active_mask = 0x3;
 		/* Probe all active MC(s) */
-		if (regmap_read(mcbb_map, MCBADDRMR, &reg))
-			return 0;
+		अगर (regmap_पढ़ो(mcbb_map, MCBADDRMR, &reg))
+			वापस 0;
 		xgene_pmu->mc_active_mask =
 			(reg & MCBADDRMR_DUALMCU_MODE_MASK) ? 0xF : 0x5;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Single MCB active */
 		xgene_pmu->mcb_active_mask = 0x1;
 		/* Probe all active MC(s) */
-		if (regmap_read(mcba_map, MCBADDRMR, &reg))
-			return 0;
+		अगर (regmap_पढ़ो(mcba_map, MCBADDRMR, &reg))
+			वापस 0;
 		xgene_pmu->mc_active_mask =
 			(reg & MCBADDRMR_DUALMCU_MODE_MASK) ? 0x3 : 0x1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgene_pmu_probe_active_mcb_mcu_l3c(struct xgene_pmu *xgene_pmu,
-					      struct platform_device *pdev)
-{
-	if (has_acpi_companion(&pdev->dev)) {
-		if (xgene_pmu->version == PCP_PMU_V3)
-			return acpi_pmu_v3_probe_active_mcb_mcu_l3c(xgene_pmu,
+अटल पूर्णांक xgene_pmu_probe_active_mcb_mcu_l3c(काष्ठा xgene_pmu *xgene_pmu,
+					      काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (has_acpi_companion(&pdev->dev)) अणु
+		अगर (xgene_pmu->version == PCP_PMU_V3)
+			वापस acpi_pmu_v3_probe_active_mcb_mcu_l3c(xgene_pmu,
 								    pdev);
-		else
-			return acpi_pmu_probe_active_mcb_mcu_l3c(xgene_pmu,
+		अन्यथा
+			वापस acpi_pmu_probe_active_mcb_mcu_l3c(xgene_pmu,
 								 pdev);
-	}
-	return fdt_pmu_probe_active_mcb_mcu_l3c(xgene_pmu, pdev);
-}
+	पूर्ण
+	वापस fdt_pmu_probe_active_mcb_mcu_l3c(xgene_pmu, pdev);
+पूर्ण
 
-static char *xgene_pmu_dev_name(struct device *dev, u32 type, int id)
-{
-	switch (type) {
-	case PMU_TYPE_L3C:
-		return devm_kasprintf(dev, GFP_KERNEL, "l3c%d", id);
-	case PMU_TYPE_IOB:
-		return devm_kasprintf(dev, GFP_KERNEL, "iob%d", id);
-	case PMU_TYPE_IOB_SLOW:
-		return devm_kasprintf(dev, GFP_KERNEL, "iob_slow%d", id);
-	case PMU_TYPE_MCB:
-		return devm_kasprintf(dev, GFP_KERNEL, "mcb%d", id);
-	case PMU_TYPE_MC:
-		return devm_kasprintf(dev, GFP_KERNEL, "mc%d", id);
-	default:
-		return devm_kasprintf(dev, GFP_KERNEL, "unknown");
-	}
-}
+अटल अक्षर *xgene_pmu_dev_name(काष्ठा device *dev, u32 type, पूर्णांक id)
+अणु
+	चयन (type) अणु
+	हाल PMU_TYPE_L3C:
+		वापस devm_kaप्र_लिखो(dev, GFP_KERNEL, "l3c%d", id);
+	हाल PMU_TYPE_IOB:
+		वापस devm_kaप्र_लिखो(dev, GFP_KERNEL, "iob%d", id);
+	हाल PMU_TYPE_IOB_SLOW:
+		वापस devm_kaप्र_लिखो(dev, GFP_KERNEL, "iob_slow%d", id);
+	हाल PMU_TYPE_MCB:
+		वापस devm_kaप्र_लिखो(dev, GFP_KERNEL, "mcb%d", id);
+	हाल PMU_TYPE_MC:
+		वापस devm_kaप्र_लिखो(dev, GFP_KERNEL, "mc%d", id);
+	शेष:
+		वापस devm_kaप्र_लिखो(dev, GFP_KERNEL, "unknown");
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_ACPI)
-static struct
-xgene_pmu_dev_ctx *acpi_get_pmu_hw_inf(struct xgene_pmu *xgene_pmu,
-				       struct acpi_device *adev, u32 type)
-{
-	struct device *dev = xgene_pmu->dev;
-	struct list_head resource_list;
-	struct xgene_pmu_dev_ctx *ctx;
-	const union acpi_object *obj;
-	struct hw_pmu_info *inf;
-	void __iomem *dev_csr;
-	struct resource res;
-	struct resource_entry *rentry;
-	int enable_bit;
-	int rc;
+#अगर defined(CONFIG_ACPI)
+अटल काष्ठा
+xgene_pmu_dev_ctx *acpi_get_pmu_hw_inf(काष्ठा xgene_pmu *xgene_pmu,
+				       काष्ठा acpi_device *adev, u32 type)
+अणु
+	काष्ठा device *dev = xgene_pmu->dev;
+	काष्ठा list_head resource_list;
+	काष्ठा xgene_pmu_dev_ctx *ctx;
+	स्थिर जोड़ acpi_object *obj;
+	काष्ठा hw_pmu_info *inf;
+	व्योम __iomem *dev_csr;
+	काष्ठा resource res;
+	काष्ठा resource_entry *rentry;
+	पूर्णांक enable_bit;
+	पूर्णांक rc;
 
-	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return NULL;
+	ctx = devm_kzalloc(dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&resource_list);
-	rc = acpi_dev_get_resources(adev, &resource_list, NULL, NULL);
-	if (rc <= 0) {
+	rc = acpi_dev_get_resources(adev, &resource_list, शून्य, शून्य);
+	अगर (rc <= 0) अणु
 		dev_err(dev, "PMU type %d: No resources found\n", type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	list_for_each_entry(rentry, &resource_list, node) {
-		if (resource_type(rentry->res) == IORESOURCE_MEM) {
+	list_क्रम_each_entry(rentry, &resource_list, node) अणु
+		अगर (resource_type(rentry->res) == IORESOURCE_MEM) अणु
 			res = *rentry->res;
-			rentry = NULL;
-			break;
-		}
-	}
-	acpi_dev_free_resource_list(&resource_list);
+			rentry = शून्य;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	acpi_dev_मुक्त_resource_list(&resource_list);
 
-	if (rentry) {
+	अगर (rentry) अणु
 		dev_err(dev, "PMU type %d: No memory resource found\n", type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	dev_csr = devm_ioremap_resource(dev, &res);
-	if (IS_ERR(dev_csr)) {
+	अगर (IS_ERR(dev_csr)) अणु
 		dev_err(dev, "PMU type %d: Fail to map resource\n", type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* A PMU device node without enable-bit-index is always enabled */
 	rc = acpi_dev_get_property(adev, "enable-bit-index",
 				   ACPI_TYPE_INTEGER, &obj);
-	if (rc < 0)
+	अगर (rc < 0)
 		enable_bit = 0;
-	else
-		enable_bit = (int) obj->integer.value;
+	अन्यथा
+		enable_bit = (पूर्णांक) obj->पूर्णांकeger.value;
 
 	ctx->name = xgene_pmu_dev_name(dev, type, enable_bit);
-	if (!ctx->name) {
+	अगर (!ctx->name) अणु
 		dev_err(dev, "PMU type %d: Fail to get device name\n", type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	inf = &ctx->inf;
 	inf->type = type;
 	inf->csr = dev_csr;
 	inf->enable_mask = 1 << enable_bit;
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-static const struct acpi_device_id xgene_pmu_acpi_type_match[] = {
-	{"APMC0D5D", PMU_TYPE_L3C},
-	{"APMC0D5E", PMU_TYPE_IOB},
-	{"APMC0D5F", PMU_TYPE_MCB},
-	{"APMC0D60", PMU_TYPE_MC},
-	{"APMC0D84", PMU_TYPE_L3C},
-	{"APMC0D85", PMU_TYPE_IOB},
-	{"APMC0D86", PMU_TYPE_IOB_SLOW},
-	{"APMC0D87", PMU_TYPE_MCB},
-	{"APMC0D88", PMU_TYPE_MC},
-	{},
-};
+अटल स्थिर काष्ठा acpi_device_id xgene_pmu_acpi_type_match[] = अणु
+	अणु"APMC0D5D", PMU_TYPE_L3Cपूर्ण,
+	अणु"APMC0D5E", PMU_TYPE_IOBपूर्ण,
+	अणु"APMC0D5F", PMU_TYPE_MCBपूर्ण,
+	अणु"APMC0D60", PMU_TYPE_MCपूर्ण,
+	अणु"APMC0D84", PMU_TYPE_L3Cपूर्ण,
+	अणु"APMC0D85", PMU_TYPE_IOBपूर्ण,
+	अणु"APMC0D86", PMU_TYPE_IOB_SLOWपूर्ण,
+	अणु"APMC0D87", PMU_TYPE_MCBपूर्ण,
+	अणु"APMC0D88", PMU_TYPE_MCपूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct acpi_device_id *xgene_pmu_acpi_match_type(
-					const struct acpi_device_id *ids,
-					struct acpi_device *adev)
-{
-	const struct acpi_device_id *match_id = NULL;
-	const struct acpi_device_id *id;
+अटल स्थिर काष्ठा acpi_device_id *xgene_pmu_acpi_match_type(
+					स्थिर काष्ठा acpi_device_id *ids,
+					काष्ठा acpi_device *adev)
+अणु
+	स्थिर काष्ठा acpi_device_id *match_id = शून्य;
+	स्थिर काष्ठा acpi_device_id *id;
 
-	for (id = ids; id->id[0] || id->cls; id++) {
-		if (!acpi_match_device_ids(adev, id))
+	क्रम (id = ids; id->id[0] || id->cls; id++) अणु
+		अगर (!acpi_match_device_ids(adev, id))
 			match_id = id;
-		else if (match_id)
-			break;
-	}
+		अन्यथा अगर (match_id)
+			अवरोध;
+	पूर्ण
 
-	return match_id;
-}
+	वापस match_id;
+पूर्ण
 
-static acpi_status acpi_pmu_dev_add(acpi_handle handle, u32 level,
-				    void *data, void **return_value)
-{
-	const struct acpi_device_id *acpi_id;
-	struct xgene_pmu *xgene_pmu = data;
-	struct xgene_pmu_dev_ctx *ctx;
-	struct acpi_device *adev;
+अटल acpi_status acpi_pmu_dev_add(acpi_handle handle, u32 level,
+				    व्योम *data, व्योम **वापस_value)
+अणु
+	स्थिर काष्ठा acpi_device_id *acpi_id;
+	काष्ठा xgene_pmu *xgene_pmu = data;
+	काष्ठा xgene_pmu_dev_ctx *ctx;
+	काष्ठा acpi_device *adev;
 
-	if (acpi_bus_get_device(handle, &adev))
-		return AE_OK;
-	if (acpi_bus_get_status(adev) || !adev->status.present)
-		return AE_OK;
+	अगर (acpi_bus_get_device(handle, &adev))
+		वापस AE_OK;
+	अगर (acpi_bus_get_status(adev) || !adev->status.present)
+		वापस AE_OK;
 
 	acpi_id = xgene_pmu_acpi_match_type(xgene_pmu_acpi_type_match, adev);
-	if (!acpi_id)
-		return AE_OK;
+	अगर (!acpi_id)
+		वापस AE_OK;
 
 	ctx = acpi_get_pmu_hw_inf(xgene_pmu, adev, (u32)acpi_id->driver_data);
-	if (!ctx)
-		return AE_OK;
+	अगर (!ctx)
+		वापस AE_OK;
 
-	if (xgene_pmu_dev_add(xgene_pmu, ctx)) {
+	अगर (xgene_pmu_dev_add(xgene_pmu, ctx)) अणु
 		/* Can't add the PMU device, skip it */
-		devm_kfree(xgene_pmu->dev, ctx);
-		return AE_OK;
-	}
+		devm_kमुक्त(xgene_pmu->dev, ctx);
+		वापस AE_OK;
+	पूर्ण
 
-	switch (ctx->inf.type) {
-	case PMU_TYPE_L3C:
+	चयन (ctx->inf.type) अणु
+	हाल PMU_TYPE_L3C:
 		list_add(&ctx->next, &xgene_pmu->l3cpmus);
-		break;
-	case PMU_TYPE_IOB:
+		अवरोध;
+	हाल PMU_TYPE_IOB:
 		list_add(&ctx->next, &xgene_pmu->iobpmus);
-		break;
-	case PMU_TYPE_IOB_SLOW:
+		अवरोध;
+	हाल PMU_TYPE_IOB_SLOW:
 		list_add(&ctx->next, &xgene_pmu->iobpmus);
-		break;
-	case PMU_TYPE_MCB:
+		अवरोध;
+	हाल PMU_TYPE_MCB:
 		list_add(&ctx->next, &xgene_pmu->mcbpmus);
-		break;
-	case PMU_TYPE_MC:
+		अवरोध;
+	हाल PMU_TYPE_MC:
 		list_add(&ctx->next, &xgene_pmu->mcpmus);
-		break;
-	}
-	return AE_OK;
-}
+		अवरोध;
+	पूर्ण
+	वापस AE_OK;
+पूर्ण
 
-static int acpi_pmu_probe_pmu_dev(struct xgene_pmu *xgene_pmu,
-				  struct platform_device *pdev)
-{
-	struct device *dev = xgene_pmu->dev;
+अटल पूर्णांक acpi_pmu_probe_pmu_dev(काष्ठा xgene_pmu *xgene_pmu,
+				  काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = xgene_pmu->dev;
 	acpi_handle handle;
 	acpi_status status;
 
 	handle = ACPI_HANDLE(dev);
-	if (!handle)
-		return -EINVAL;
+	अगर (!handle)
+		वापस -EINVAL;
 
 	status = acpi_walk_namespace(ACPI_TYPE_DEVICE, handle, 1,
-				     acpi_pmu_dev_add, NULL, xgene_pmu, NULL);
-	if (ACPI_FAILURE(status)) {
+				     acpi_pmu_dev_add, शून्य, xgene_pmu, शून्य);
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_err(dev, "failed to probe PMU devices\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
-#else
-static int acpi_pmu_probe_pmu_dev(struct xgene_pmu *xgene_pmu,
-				  struct platform_device *pdev)
-{
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक acpi_pmu_probe_pmu_dev(काष्ठा xgene_pmu *xgene_pmu,
+				  काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static struct
-xgene_pmu_dev_ctx *fdt_get_pmu_hw_inf(struct xgene_pmu *xgene_pmu,
-				      struct device_node *np, u32 type)
-{
-	struct device *dev = xgene_pmu->dev;
-	struct xgene_pmu_dev_ctx *ctx;
-	struct hw_pmu_info *inf;
-	void __iomem *dev_csr;
-	struct resource res;
-	int enable_bit;
+अटल काष्ठा
+xgene_pmu_dev_ctx *fdt_get_pmu_hw_inf(काष्ठा xgene_pmu *xgene_pmu,
+				      काष्ठा device_node *np, u32 type)
+अणु
+	काष्ठा device *dev = xgene_pmu->dev;
+	काष्ठा xgene_pmu_dev_ctx *ctx;
+	काष्ठा hw_pmu_info *inf;
+	व्योम __iomem *dev_csr;
+	काष्ठा resource res;
+	पूर्णांक enable_bit;
 
-	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return NULL;
+	ctx = devm_kzalloc(dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस शून्य;
 
-	if (of_address_to_resource(np, 0, &res) < 0) {
+	अगर (of_address_to_resource(np, 0, &res) < 0) अणु
 		dev_err(dev, "PMU type %d: No resource address found\n", type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	dev_csr = devm_ioremap_resource(dev, &res);
-	if (IS_ERR(dev_csr)) {
+	अगर (IS_ERR(dev_csr)) अणु
 		dev_err(dev, "PMU type %d: Fail to map resource\n", type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* A PMU device node without enable-bit-index is always enabled */
-	if (of_property_read_u32(np, "enable-bit-index", &enable_bit))
+	अगर (of_property_पढ़ो_u32(np, "enable-bit-index", &enable_bit))
 		enable_bit = 0;
 
 	ctx->name = xgene_pmu_dev_name(dev, type, enable_bit);
-	if (!ctx->name) {
+	अगर (!ctx->name) अणु
 		dev_err(dev, "PMU type %d: Fail to get device name\n", type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	inf = &ctx->inf;
 	inf->type = type;
 	inf->csr = dev_csr;
 	inf->enable_mask = 1 << enable_bit;
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-static int fdt_pmu_probe_pmu_dev(struct xgene_pmu *xgene_pmu,
-				 struct platform_device *pdev)
-{
-	struct xgene_pmu_dev_ctx *ctx;
-	struct device_node *np;
+अटल पूर्णांक fdt_pmu_probe_pmu_dev(काष्ठा xgene_pmu *xgene_pmu,
+				 काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा xgene_pmu_dev_ctx *ctx;
+	काष्ठा device_node *np;
 
-	for_each_child_of_node(pdev->dev.of_node, np) {
-		if (!of_device_is_available(np))
-			continue;
+	क्रम_each_child_of_node(pdev->dev.of_node, np) अणु
+		अगर (!of_device_is_available(np))
+			जारी;
 
-		if (of_device_is_compatible(np, "apm,xgene-pmu-l3c"))
+		अगर (of_device_is_compatible(np, "apm,xgene-pmu-l3c"))
 			ctx = fdt_get_pmu_hw_inf(xgene_pmu, np, PMU_TYPE_L3C);
-		else if (of_device_is_compatible(np, "apm,xgene-pmu-iob"))
+		अन्यथा अगर (of_device_is_compatible(np, "apm,xgene-pmu-iob"))
 			ctx = fdt_get_pmu_hw_inf(xgene_pmu, np, PMU_TYPE_IOB);
-		else if (of_device_is_compatible(np, "apm,xgene-pmu-mcb"))
+		अन्यथा अगर (of_device_is_compatible(np, "apm,xgene-pmu-mcb"))
 			ctx = fdt_get_pmu_hw_inf(xgene_pmu, np, PMU_TYPE_MCB);
-		else if (of_device_is_compatible(np, "apm,xgene-pmu-mc"))
+		अन्यथा अगर (of_device_is_compatible(np, "apm,xgene-pmu-mc"))
 			ctx = fdt_get_pmu_hw_inf(xgene_pmu, np, PMU_TYPE_MC);
-		else
-			ctx = NULL;
+		अन्यथा
+			ctx = शून्य;
 
-		if (!ctx)
-			continue;
+		अगर (!ctx)
+			जारी;
 
-		if (xgene_pmu_dev_add(xgene_pmu, ctx)) {
+		अगर (xgene_pmu_dev_add(xgene_pmu, ctx)) अणु
 			/* Can't add the PMU device, skip it */
-			devm_kfree(xgene_pmu->dev, ctx);
-			continue;
-		}
+			devm_kमुक्त(xgene_pmu->dev, ctx);
+			जारी;
+		पूर्ण
 
-		switch (ctx->inf.type) {
-		case PMU_TYPE_L3C:
+		चयन (ctx->inf.type) अणु
+		हाल PMU_TYPE_L3C:
 			list_add(&ctx->next, &xgene_pmu->l3cpmus);
-			break;
-		case PMU_TYPE_IOB:
+			अवरोध;
+		हाल PMU_TYPE_IOB:
 			list_add(&ctx->next, &xgene_pmu->iobpmus);
-			break;
-		case PMU_TYPE_IOB_SLOW:
+			अवरोध;
+		हाल PMU_TYPE_IOB_SLOW:
 			list_add(&ctx->next, &xgene_pmu->iobpmus);
-			break;
-		case PMU_TYPE_MCB:
+			अवरोध;
+		हाल PMU_TYPE_MCB:
 			list_add(&ctx->next, &xgene_pmu->mcbpmus);
-			break;
-		case PMU_TYPE_MC:
+			अवरोध;
+		हाल PMU_TYPE_MC:
 			list_add(&ctx->next, &xgene_pmu->mcpmus);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgene_pmu_probe_pmu_dev(struct xgene_pmu *xgene_pmu,
-				   struct platform_device *pdev)
-{
-	if (has_acpi_companion(&pdev->dev))
-		return acpi_pmu_probe_pmu_dev(xgene_pmu, pdev);
-	return fdt_pmu_probe_pmu_dev(xgene_pmu, pdev);
-}
+अटल पूर्णांक xgene_pmu_probe_pmu_dev(काष्ठा xgene_pmu *xgene_pmu,
+				   काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (has_acpi_companion(&pdev->dev))
+		वापस acpi_pmu_probe_pmu_dev(xgene_pmu, pdev);
+	वापस fdt_pmu_probe_pmu_dev(xgene_pmu, pdev);
+पूर्ण
 
-static const struct xgene_pmu_data xgene_pmu_data = {
+अटल स्थिर काष्ठा xgene_pmu_data xgene_pmu_data = अणु
 	.id   = PCP_PMU_V1,
-};
+पूर्ण;
 
-static const struct xgene_pmu_data xgene_pmu_v2_data = {
+अटल स्थिर काष्ठा xgene_pmu_data xgene_pmu_v2_data = अणु
 	.id   = PCP_PMU_V2,
-};
+पूर्ण;
 
-static const struct xgene_pmu_ops xgene_pmu_ops = {
-	.mask_int = xgene_pmu_mask_int,
-	.unmask_int = xgene_pmu_unmask_int,
-	.read_counter = xgene_pmu_read_counter32,
-	.write_counter = xgene_pmu_write_counter32,
-	.write_evttype = xgene_pmu_write_evttype,
-	.write_agentmsk = xgene_pmu_write_agentmsk,
-	.write_agent1msk = xgene_pmu_write_agent1msk,
+अटल स्थिर काष्ठा xgene_pmu_ops xgene_pmu_ops = अणु
+	.mask_पूर्णांक = xgene_pmu_mask_पूर्णांक,
+	.unmask_पूर्णांक = xgene_pmu_unmask_पूर्णांक,
+	.पढ़ो_counter = xgene_pmu_पढ़ो_counter32,
+	.ग_लिखो_counter = xgene_pmu_ग_लिखो_counter32,
+	.ग_लिखो_evttype = xgene_pmu_ग_लिखो_evttype,
+	.ग_लिखो_agenपंचांगsk = xgene_pmu_ग_लिखो_agenपंचांगsk,
+	.ग_लिखो_agent1msk = xgene_pmu_ग_लिखो_agent1msk,
 	.enable_counter = xgene_pmu_enable_counter,
 	.disable_counter = xgene_pmu_disable_counter,
-	.enable_counter_int = xgene_pmu_enable_counter_int,
-	.disable_counter_int = xgene_pmu_disable_counter_int,
+	.enable_counter_पूर्णांक = xgene_pmu_enable_counter_पूर्णांक,
+	.disable_counter_पूर्णांक = xgene_pmu_disable_counter_पूर्णांक,
 	.reset_counters = xgene_pmu_reset_counters,
 	.start_counters = xgene_pmu_start_counters,
 	.stop_counters = xgene_pmu_stop_counters,
-};
+पूर्ण;
 
-static const struct xgene_pmu_ops xgene_pmu_v3_ops = {
-	.mask_int = xgene_pmu_v3_mask_int,
-	.unmask_int = xgene_pmu_v3_unmask_int,
-	.read_counter = xgene_pmu_read_counter64,
-	.write_counter = xgene_pmu_write_counter64,
-	.write_evttype = xgene_pmu_write_evttype,
-	.write_agentmsk = xgene_pmu_v3_write_agentmsk,
-	.write_agent1msk = xgene_pmu_v3_write_agent1msk,
+अटल स्थिर काष्ठा xgene_pmu_ops xgene_pmu_v3_ops = अणु
+	.mask_पूर्णांक = xgene_pmu_v3_mask_पूर्णांक,
+	.unmask_पूर्णांक = xgene_pmu_v3_unmask_पूर्णांक,
+	.पढ़ो_counter = xgene_pmu_पढ़ो_counter64,
+	.ग_लिखो_counter = xgene_pmu_ग_लिखो_counter64,
+	.ग_लिखो_evttype = xgene_pmu_ग_लिखो_evttype,
+	.ग_लिखो_agenपंचांगsk = xgene_pmu_v3_ग_लिखो_agenपंचांगsk,
+	.ग_लिखो_agent1msk = xgene_pmu_v3_ग_लिखो_agent1msk,
 	.enable_counter = xgene_pmu_enable_counter,
 	.disable_counter = xgene_pmu_disable_counter,
-	.enable_counter_int = xgene_pmu_enable_counter_int,
-	.disable_counter_int = xgene_pmu_disable_counter_int,
+	.enable_counter_पूर्णांक = xgene_pmu_enable_counter_पूर्णांक,
+	.disable_counter_पूर्णांक = xgene_pmu_disable_counter_पूर्णांक,
 	.reset_counters = xgene_pmu_reset_counters,
 	.start_counters = xgene_pmu_start_counters,
 	.stop_counters = xgene_pmu_stop_counters,
-};
+पूर्ण;
 
-static const struct of_device_id xgene_pmu_of_match[] = {
-	{ .compatible	= "apm,xgene-pmu",	.data = &xgene_pmu_data },
-	{ .compatible	= "apm,xgene-pmu-v2",	.data = &xgene_pmu_v2_data },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id xgene_pmu_of_match[] = अणु
+	अणु .compatible	= "apm,xgene-pmu",	.data = &xgene_pmu_data पूर्ण,
+	अणु .compatible	= "apm,xgene-pmu-v2",	.data = &xgene_pmu_v2_data पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, xgene_pmu_of_match);
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id xgene_pmu_acpi_match[] = {
-	{"APMC0D5B", PCP_PMU_V1},
-	{"APMC0D5C", PCP_PMU_V2},
-	{"APMC0D83", PCP_PMU_V3},
-	{},
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id xgene_pmu_acpi_match[] = अणु
+	अणु"APMC0D5B", PCP_PMU_V1पूर्ण,
+	अणु"APMC0D5C", PCP_PMU_V2पूर्ण,
+	अणु"APMC0D83", PCP_PMU_V3पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, xgene_pmu_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static int xgene_pmu_online_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct xgene_pmu *xgene_pmu = hlist_entry_safe(node, struct xgene_pmu,
+अटल पूर्णांक xgene_pmu_online_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा xgene_pmu *xgene_pmu = hlist_entry_safe(node, काष्ठा xgene_pmu,
 						       node);
 
-	if (cpumask_empty(&xgene_pmu->cpu))
+	अगर (cpumask_empty(&xgene_pmu->cpu))
 		cpumask_set_cpu(cpu, &xgene_pmu->cpu);
 
-	/* Overflow interrupt also should use the same CPU */
+	/* Overflow पूर्णांकerrupt also should use the same CPU */
 	WARN_ON(irq_set_affinity(xgene_pmu->irq, &xgene_pmu->cpu));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgene_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct xgene_pmu *xgene_pmu = hlist_entry_safe(node, struct xgene_pmu,
+अटल पूर्णांक xgene_pmu_offline_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा xgene_pmu *xgene_pmu = hlist_entry_safe(node, काष्ठा xgene_pmu,
 						       node);
-	struct xgene_pmu_dev_ctx *ctx;
-	unsigned int target;
+	काष्ठा xgene_pmu_dev_ctx *ctx;
+	अचिन्हित पूर्णांक target;
 
-	if (!cpumask_test_and_clear_cpu(cpu, &xgene_pmu->cpu))
-		return 0;
+	अगर (!cpumask_test_and_clear_cpu(cpu, &xgene_pmu->cpu))
+		वापस 0;
 	target = cpumask_any_but(cpu_online_mask, cpu);
-	if (target >= nr_cpu_ids)
-		return 0;
+	अगर (target >= nr_cpu_ids)
+		वापस 0;
 
-	list_for_each_entry(ctx, &xgene_pmu->mcpmus, next) {
+	list_क्रम_each_entry(ctx, &xgene_pmu->mcpmus, next) अणु
 		perf_pmu_migrate_context(&ctx->pmu_dev->pmu, cpu, target);
-	}
-	list_for_each_entry(ctx, &xgene_pmu->mcbpmus, next) {
+	पूर्ण
+	list_क्रम_each_entry(ctx, &xgene_pmu->mcbpmus, next) अणु
 		perf_pmu_migrate_context(&ctx->pmu_dev->pmu, cpu, target);
-	}
-	list_for_each_entry(ctx, &xgene_pmu->l3cpmus, next) {
+	पूर्ण
+	list_क्रम_each_entry(ctx, &xgene_pmu->l3cpmus, next) अणु
 		perf_pmu_migrate_context(&ctx->pmu_dev->pmu, cpu, target);
-	}
-	list_for_each_entry(ctx, &xgene_pmu->iobpmus, next) {
+	पूर्ण
+	list_क्रम_each_entry(ctx, &xgene_pmu->iobpmus, next) अणु
 		perf_pmu_migrate_context(&ctx->pmu_dev->pmu, cpu, target);
-	}
+	पूर्ण
 
 	cpumask_set_cpu(target, &xgene_pmu->cpu);
-	/* Overflow interrupt also should use the same CPU */
+	/* Overflow पूर्णांकerrupt also should use the same CPU */
 	WARN_ON(irq_set_affinity(xgene_pmu->irq, &xgene_pmu->cpu));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgene_pmu_probe(struct platform_device *pdev)
-{
-	const struct xgene_pmu_data *dev_data;
-	const struct of_device_id *of_id;
-	struct xgene_pmu *xgene_pmu;
-	struct resource *res;
-	int irq, rc;
-	int version;
+अटल पूर्णांक xgene_pmu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा xgene_pmu_data *dev_data;
+	स्थिर काष्ठा of_device_id *of_id;
+	काष्ठा xgene_pmu *xgene_pmu;
+	काष्ठा resource *res;
+	पूर्णांक irq, rc;
+	पूर्णांक version;
 
-	/* Install a hook to update the reader CPU in case it goes offline */
+	/* Install a hook to update the पढ़ोer CPU in हाल it goes offline */
 	rc = cpuhp_setup_state_multi(CPUHP_AP_PERF_ARM_APM_XGENE_ONLINE,
 				      "CPUHP_AP_PERF_ARM_APM_XGENE_ONLINE",
 				      xgene_pmu_online_cpu,
 				      xgene_pmu_offline_cpu);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	xgene_pmu = devm_kzalloc(&pdev->dev, sizeof(*xgene_pmu), GFP_KERNEL);
-	if (!xgene_pmu)
-		return -ENOMEM;
+	xgene_pmu = devm_kzalloc(&pdev->dev, माप(*xgene_pmu), GFP_KERNEL);
+	अगर (!xgene_pmu)
+		वापस -ENOMEM;
 	xgene_pmu->dev = &pdev->dev;
-	platform_set_drvdata(pdev, xgene_pmu);
+	platक्रमm_set_drvdata(pdev, xgene_pmu);
 
 	version = -EINVAL;
 	of_id = of_match_device(xgene_pmu_of_match, &pdev->dev);
-	if (of_id) {
-		dev_data = (const struct xgene_pmu_data *) of_id->data;
+	अगर (of_id) अणु
+		dev_data = (स्थिर काष्ठा xgene_pmu_data *) of_id->data;
 		version = dev_data->id;
-	}
+	पूर्ण
 
-#ifdef CONFIG_ACPI
-	if (ACPI_COMPANION(&pdev->dev)) {
-		const struct acpi_device_id *acpi_id;
+#अगर_घोषित CONFIG_ACPI
+	अगर (ACPI_COMPANION(&pdev->dev)) अणु
+		स्थिर काष्ठा acpi_device_id *acpi_id;
 
 		acpi_id = acpi_match_device(xgene_pmu_acpi_match, &pdev->dev);
-		if (acpi_id)
-			version = (int) acpi_id->driver_data;
-	}
-#endif
-	if (version < 0)
-		return -ENODEV;
+		अगर (acpi_id)
+			version = (पूर्णांक) acpi_id->driver_data;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (version < 0)
+		वापस -ENODEV;
 
-	if (version == PCP_PMU_V3)
+	अगर (version == PCP_PMU_V3)
 		xgene_pmu->ops = &xgene_pmu_v3_ops;
-	else
+	अन्यथा
 		xgene_pmu->ops = &xgene_pmu_ops;
 
 	INIT_LIST_HEAD(&xgene_pmu->l3cpmus);
@@ -1888,96 +1889,96 @@ static int xgene_pmu_probe(struct platform_device *pdev)
 	xgene_pmu->version = version;
 	dev_info(&pdev->dev, "X-Gene PMU version %d\n", xgene_pmu->version);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	xgene_pmu->pcppmu_csr = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(xgene_pmu->pcppmu_csr)) {
+	अगर (IS_ERR(xgene_pmu->pcppmu_csr)) अणु
 		dev_err(&pdev->dev, "ioremap failed for PCP PMU resource\n");
-		return PTR_ERR(xgene_pmu->pcppmu_csr);
-	}
+		वापस PTR_ERR(xgene_pmu->pcppmu_csr);
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return -EINVAL;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस -EINVAL;
 
 	rc = devm_request_irq(&pdev->dev, irq, xgene_pmu_isr,
 				IRQF_NOBALANCING | IRQF_NO_THREAD,
 				dev_name(&pdev->dev), xgene_pmu);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "Could not request IRQ %d\n", irq);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	xgene_pmu->irq = irq;
 
 	raw_spin_lock_init(&xgene_pmu->lock);
 
-	/* Check for active MCBs and MCUs */
+	/* Check क्रम active MCBs and MCUs */
 	rc = xgene_pmu_probe_active_mcb_mcu_l3c(xgene_pmu, pdev);
-	if (rc) {
+	अगर (rc) अणु
 		dev_warn(&pdev->dev, "Unknown MCB/MCU active status\n");
 		xgene_pmu->mcb_active_mask = 0x1;
 		xgene_pmu->mc_active_mask = 0x1;
-	}
+	पूर्ण
 
 	/* Add this instance to the list used by the hotplug callback */
 	rc = cpuhp_state_add_instance(CPUHP_AP_PERF_ARM_APM_XGENE_ONLINE,
 				      &xgene_pmu->node);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "Error %d registering hotplug", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Walk through the tree for all PMU perf devices */
+	/* Walk through the tree क्रम all PMU perf devices */
 	rc = xgene_pmu_probe_pmu_dev(xgene_pmu, pdev);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "No PMU perf devices found!\n");
-		goto out_unregister;
-	}
+		जाओ out_unरेजिस्टर;
+	पूर्ण
 
-	/* Enable interrupt */
-	xgene_pmu->ops->unmask_int(xgene_pmu);
+	/* Enable पूर्णांकerrupt */
+	xgene_pmu->ops->unmask_पूर्णांक(xgene_pmu);
 
-	return 0;
+	वापस 0;
 
-out_unregister:
-	cpuhp_state_remove_instance(CPUHP_AP_PERF_ARM_APM_XGENE_ONLINE,
+out_unरेजिस्टर:
+	cpuhp_state_हटाओ_instance(CPUHP_AP_PERF_ARM_APM_XGENE_ONLINE,
 				    &xgene_pmu->node);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void
-xgene_pmu_dev_cleanup(struct xgene_pmu *xgene_pmu, struct list_head *pmus)
-{
-	struct xgene_pmu_dev_ctx *ctx;
+अटल व्योम
+xgene_pmu_dev_cleanup(काष्ठा xgene_pmu *xgene_pmu, काष्ठा list_head *pmus)
+अणु
+	काष्ठा xgene_pmu_dev_ctx *ctx;
 
-	list_for_each_entry(ctx, pmus, next) {
-		perf_pmu_unregister(&ctx->pmu_dev->pmu);
-	}
-}
+	list_क्रम_each_entry(ctx, pmus, next) अणु
+		perf_pmu_unरेजिस्टर(&ctx->pmu_dev->pmu);
+	पूर्ण
+पूर्ण
 
-static int xgene_pmu_remove(struct platform_device *pdev)
-{
-	struct xgene_pmu *xgene_pmu = dev_get_drvdata(&pdev->dev);
+अटल पूर्णांक xgene_pmu_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा xgene_pmu *xgene_pmu = dev_get_drvdata(&pdev->dev);
 
 	xgene_pmu_dev_cleanup(xgene_pmu, &xgene_pmu->l3cpmus);
 	xgene_pmu_dev_cleanup(xgene_pmu, &xgene_pmu->iobpmus);
 	xgene_pmu_dev_cleanup(xgene_pmu, &xgene_pmu->mcbpmus);
 	xgene_pmu_dev_cleanup(xgene_pmu, &xgene_pmu->mcpmus);
-	cpuhp_state_remove_instance(CPUHP_AP_PERF_ARM_APM_XGENE_ONLINE,
+	cpuhp_state_हटाओ_instance(CPUHP_AP_PERF_ARM_APM_XGENE_ONLINE,
 				    &xgene_pmu->node);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver xgene_pmu_driver = {
+अटल काष्ठा platक्रमm_driver xgene_pmu_driver = अणु
 	.probe = xgene_pmu_probe,
-	.remove = xgene_pmu_remove,
-	.driver = {
+	.हटाओ = xgene_pmu_हटाओ,
+	.driver = अणु
 		.name		= "xgene-pmu",
 		.of_match_table = xgene_pmu_of_match,
 		.acpi_match_table = ACPI_PTR(xgene_pmu_acpi_match),
 		.suppress_bind_attrs = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-builtin_platform_driver(xgene_pmu_driver);
+builtin_platक्रमm_driver(xgene_pmu_driver);

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wl1251
  *
@@ -6,60 +7,60 @@
  * Copyright (C) 2008 Nokia Corporation
  */
 
-#ifndef __WL1251_RX_H__
-#define __WL1251_RX_H__
+#अगर_अघोषित __WL1251_RX_H__
+#घोषणा __WL1251_RX_H__
 
-#include <linux/bitops.h>
+#समावेश <linux/bitops.h>
 
-#include "wl1251.h"
+#समावेश "wl1251.h"
 
 /*
  * RX PATH
  *
- * The Rx path uses a double buffer and an rx_contro structure, each located
+ * The Rx path uses a द्विगुन buffer and an rx_contro काष्ठाure, each located
  * at a fixed address in the device memory. The host keeps track of which
  * buffer is available and alternates between them on a per packet basis.
- * The size of each of the two buffers is large enough to hold the longest
+ * The size of each of the two buffers is large enough to hold the दीर्घest
  * 802.3 packet.
  * The RX path goes like that:
- * 1) The target generates an interrupt each time a new packet is received.
- *   There are 2 RX interrupts, one for each buffer.
- * 2) The host reads the received packet from one of the double buffers.
- * 3) The host triggers a target interrupt.
+ * 1) The target generates an पूर्णांकerrupt each समय a new packet is received.
+ *   There are 2 RX पूर्णांकerrupts, one क्रम each buffer.
+ * 2) The host पढ़ोs the received packet from one of the द्विगुन buffers.
+ * 3) The host triggers a target पूर्णांकerrupt.
  * 4) The target prepares the next RX packet.
  */
 
-#define WL1251_RX_MAX_RSSI -30
-#define WL1251_RX_MIN_RSSI -95
+#घोषणा WL1251_RX_MAX_RSSI -30
+#घोषणा WL1251_RX_MIN_RSSI -95
 
-#define WL1251_RX_ALIGN_TO 4
-#define WL1251_RX_ALIGN(len) (((len) + WL1251_RX_ALIGN_TO - 1) & \
+#घोषणा WL1251_RX_ALIGN_TO 4
+#घोषणा WL1251_RX_ALIGN(len) (((len) + WL1251_RX_ALIGN_TO - 1) & \
 			     ~(WL1251_RX_ALIGN_TO - 1))
 
-#define SHORT_PREAMBLE_BIT   BIT(0)
-#define OFDM_RATE_BIT        BIT(6)
-#define PBCC_RATE_BIT        BIT(7)
+#घोषणा SHORT_PREAMBLE_BIT   BIT(0)
+#घोषणा OFDM_RATE_BIT        BIT(6)
+#घोषणा PBCC_RATE_BIT        BIT(7)
 
-#define PLCP_HEADER_LENGTH 8
-#define RX_DESC_PACKETID_SHIFT 11
-#define RX_MAX_PACKET_ID 3
+#घोषणा PLCP_HEADER_LENGTH 8
+#घोषणा RX_DESC_PACKETID_SHIFT 11
+#घोषणा RX_MAX_PACKET_ID 3
 
-#define RX_DESC_VALID_FCS         0x0001
-#define RX_DESC_MATCH_RXADDR1     0x0002
-#define RX_DESC_MCAST             0x0004
-#define RX_DESC_STAINTIM          0x0008
-#define RX_DESC_VIRTUAL_BM        0x0010
-#define RX_DESC_BCAST             0x0020
-#define RX_DESC_MATCH_SSID        0x0040
-#define RX_DESC_MATCH_BSSID       0x0080
-#define RX_DESC_ENCRYPTION_MASK   0x0300
-#define RX_DESC_MEASURMENT        0x0400
-#define RX_DESC_SEQNUM_MASK       0x1800
-#define	RX_DESC_MIC_FAIL	  0x2000
-#define	RX_DESC_DECRYPT_FAIL	  0x4000
+#घोषणा RX_DESC_VALID_FCS         0x0001
+#घोषणा RX_DESC_MATCH_RXADDR1     0x0002
+#घोषणा RX_DESC_MCAST             0x0004
+#घोषणा RX_DESC_STAINTIM          0x0008
+#घोषणा RX_DESC_VIRTUAL_BM        0x0010
+#घोषणा RX_DESC_BCAST             0x0020
+#घोषणा RX_DESC_MATCH_SSID        0x0040
+#घोषणा RX_DESC_MATCH_BSSID       0x0080
+#घोषणा RX_DESC_ENCRYPTION_MASK   0x0300
+#घोषणा RX_DESC_MEASURMENT        0x0400
+#घोषणा RX_DESC_SEQNUM_MASK       0x1800
+#घोषणा	RX_DESC_MIC_FAIL	  0x2000
+#घोषणा	RX_DESC_DECRYPT_FAIL	  0x4000
 
-struct wl1251_rx_descriptor {
-	u32 timestamp; /* In microseconds */
+काष्ठा wl1251_rx_descriptor अणु
+	u32 बारtamp; /* In microseconds */
 	u16 length; /* Paylod length, including headers */
 	u16 flags;
 
@@ -101,8 +102,8 @@ struct wl1251_rx_descriptor {
 	s8 rssi; /* in dB */
 	u8 rcpi; /* in dB */
 	u8 snr; /* in dB */
-} __packed;
+पूर्ण __packed;
 
-void wl1251_rx(struct wl1251 *wl);
+व्योम wl1251_rx(काष्ठा wl1251 *wl);
 
-#endif
+#पूर्ण_अगर

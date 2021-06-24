@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Fuel gauge driver for Maxim 17042 / 8966 / 8997
+ * Fuel gauge driver क्रम Maxim 17042 / 8966 / 8997
  *  Note that Maxim 8966 and 8997 are mfd and this is its subdevice.
  *
  * Copyright (C) 2011 Samsung Electronics
  * MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
-#ifndef __MAX17042_BATTERY_H_
-#define __MAX17042_BATTERY_H_
+#अगर_अघोषित __MAX17042_BATTERY_H_
+#घोषणा __MAX17042_BATTERY_H_
 
-#define MAX17042_STATUS_BattAbsent	(1 << 3)
-#define MAX17042_BATTERY_FULL		(95)   /* Recommend. FullSOCThr value */
-#define MAX17042_DEFAULT_SNS_RESISTOR	(10000)
-#define MAX17042_DEFAULT_VMIN		(3000)
-#define MAX17042_DEFAULT_VMAX		(4500) /* LiHV cell max */
-#define MAX17042_DEFAULT_TEMP_MIN	(0)    /* For sys without temp sensor */
-#define MAX17042_DEFAULT_TEMP_MAX	(700)  /* 70 degrees Celcius */
+#घोषणा MAX17042_STATUS_BattAbsent	(1 << 3)
+#घोषणा MAX17042_BATTERY_FULL		(95)   /* Recommend. FullSOCThr value */
+#घोषणा MAX17042_DEFAULT_SNS_RESISTOR	(10000)
+#घोषणा MAX17042_DEFAULT_VMIN		(3000)
+#घोषणा MAX17042_DEFAULT_VMAX		(4500) /* LiHV cell max */
+#घोषणा MAX17042_DEFAULT_TEMP_MIN	(0)    /* For sys without temp sensor */
+#घोषणा MAX17042_DEFAULT_TEMP_MAX	(700)  /* 70 degrees Celcius */
 
 /* Consider RepCap which is less then 10 units below FullCAP full */
-#define MAX17042_FULL_THRESHOLD		10
+#घोषणा MAX17042_FULL_THRESHOLD		10
 
-#define MAX17042_CHARACTERIZATION_DATA_SIZE 48
+#घोषणा MAX17042_CHARACTERIZATION_DATA_SIZE 48
 
-enum max17042_register {
+क्रमागत max17042_रेजिस्टर अणु
 	MAX17042_STATUS		= 0x00,
 	MAX17042_VALRT_Th	= 0x01,
 	MAX17042_TALRT_Th	= 0x02,
@@ -108,9 +109,9 @@ enum max17042_register {
 	MAX17042_OCVInternal	= 0xFB,  /* MAX17055 VFOCV */
 
 	MAX17042_VFSOC		= 0xFF,
-};
+पूर्ण;
 
-enum max17055_register {
+क्रमागत max17055_रेजिस्टर अणु
 	MAX17055_QRes		= 0x0C,
 	MAX17055_TTF		= 0x20,
 	MAX17055_V_empty	= 0x3A,
@@ -153,19 +154,19 @@ enum max17055_register {
 	MAX17055_AtTTE		= 0xDD,
 	MAX17055_AtAvSOC	= 0xDE,
 	MAX17055_AtAvCap	= 0xDF,
-};
+पूर्ण;
 
-/* Registers specific to max17047/50 */
-enum max17047_register {
+/* Registers specअगरic to max17047/50 */
+क्रमागत max17047_रेजिस्टर अणु
 	MAX17047_QRTbl00	= 0x12,
 	MAX17047_FullSOCThr	= 0x13,
 	MAX17047_QRTbl10	= 0x22,
 	MAX17047_QRTbl20	= 0x32,
 	MAX17047_V_empty	= 0x3A,
 	MAX17047_QRTbl30	= 0x42,
-};
+पूर्ण;
 
-enum max170xx_chip_type {
+क्रमागत max170xx_chip_type अणु
 	MAXIM_DEVICE_TYPE_UNKNOWN	= 0,
 	MAXIM_DEVICE_TYPE_MAX17042,
 	MAXIM_DEVICE_TYPE_MAX17047,
@@ -173,19 +174,19 @@ enum max170xx_chip_type {
 	MAXIM_DEVICE_TYPE_MAX17055,
 
 	MAXIM_DEVICE_TYPE_NUM
-};
+पूर्ण;
 
 /*
- * used for setting a register to a desired value
- * addr : address for a register
- * data : setting value for the register
+ * used क्रम setting a रेजिस्टर to a desired value
+ * addr : address क्रम a रेजिस्टर
+ * data : setting value क्रम the रेजिस्टर
  */
-struct max17042_reg_data {
+काष्ठा max17042_reg_data अणु
 	u8 addr;
 	u16 data;
-};
+पूर्ण;
 
-struct max17042_config_data {
+काष्ठा max17042_config_data अणु
 	/* External current sense resistor value in milli-ohms */
 	u32	cur_sense_val;
 
@@ -200,7 +201,7 @@ struct max17042_config_data {
 	u16	talrt_thresh;	/* 0x02 */
 	u16	soc_alrt_thresh;	/* 0x03 */
 	u16	config;		/* 0x01D */
-	u16	shdntimer;	/* 0x03F */
+	u16	shdnसमयr;	/* 0x03F */
 
 	/* App data */
 	u16	full_soc_thresh;	/* 0x13 */
@@ -227,7 +228,7 @@ struct max17042_config_data {
 	u16	qrtbl20;	/* 0x32 */
 	u16	qrtbl30;	/* 0x42 */
 
-	/* Cell technology from power_supply.h */
+	/* Cell technology from घातer_supply.h */
 	u16	cell_technology;
 
 	/* Cell Data */
@@ -239,26 +240,26 @@ struct max17042_config_data {
 	u16	tcompc0;	/* 0x39 */
 	u16	empty_tempco;	/* 0x3A */
 	u16	kempty0;	/* 0x3B */
-	u16	cell_char_tbl[MAX17042_CHARACTERIZATION_DATA_SIZE];
-} __packed;
+	u16	cell_अक्षर_tbl[MAX17042_CHARACTERIZATION_DATA_SIZE];
+पूर्ण __packed;
 
-struct max17042_platform_data {
-	struct max17042_reg_data *init_data;
-	struct max17042_config_data *config_data;
-	int num_init_data; /* Number of enties in init_data array */
+काष्ठा max17042_platक्रमm_data अणु
+	काष्ठा max17042_reg_data *init_data;
+	काष्ठा max17042_config_data *config_data;
+	पूर्णांक num_init_data; /* Number of enties in init_data array */
 	bool enable_current_sense;
 	bool enable_por_init; /* Use POR init from Maxim appnote */
 
 	/*
 	 * R_sns in micro-ohms.
-	 * default 10000 (if r_sns = 0) as it is the recommended value by
+	 * शेष 10000 (अगर r_sns = 0) as it is the recommended value by
 	 * the datasheet although it can be changed by board designers.
 	 */
-	unsigned int r_sns;
-	int         vmin;	/* in millivolts */
-	int         vmax;	/* in millivolts */
-	int         temp_min;	/* in tenths of degree Celsius */
-	int         temp_max;	/* in tenths of degree Celsius */
-};
+	अचिन्हित पूर्णांक r_sns;
+	पूर्णांक         vmin;	/* in millivolts */
+	पूर्णांक         vmax;	/* in millivolts */
+	पूर्णांक         temp_min;	/* in tenths of degree Celsius */
+	पूर्णांक         temp_max;	/* in tenths of degree Celsius */
+पूर्ण;
 
-#endif /* __MAX17042_BATTERY_H_ */
+#पूर्ण_अगर /* __MAX17042_BATTERY_H_ */

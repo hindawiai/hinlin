@@ -1,518 +1,519 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2005-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2014,2016-2017 Qualcomm Atheros, Inc.
  */
 
-#include "bmi.h"
-#include "hif.h"
-#include "debug.h"
-#include "htc.h"
-#include "hw.h"
+#समावेश "bmi.h"
+#समावेश "hif.h"
+#समावेश "debug.h"
+#समावेश "htc.h"
+#समावेश "hw.h"
 
-void ath10k_bmi_start(struct ath10k *ar)
-{
+व्योम ath10k_bmi_start(काष्ठा ath10k *ar)
+अणु
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi start\n");
 
-	ar->bmi.done_sent = false;
-}
+	ar->bmi.करोne_sent = false;
+पूर्ण
 EXPORT_SYMBOL(ath10k_bmi_start);
 
-int ath10k_bmi_done(struct ath10k *ar)
-{
-	struct bmi_cmd cmd;
-	u32 cmdlen = sizeof(cmd.id) + sizeof(cmd.done);
-	int ret;
+पूर्णांक ath10k_bmi_करोne(काष्ठा ath10k *ar)
+अणु
+	काष्ठा bmi_cmd cmd;
+	u32 cmdlen = माप(cmd.id) + माप(cmd.करोne);
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi done\n");
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi skipped\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ar->bmi.done_sent = true;
+	ar->bmi.करोne_sent = true;
 	cmd.id = __cpu_to_le32(BMI_DONE);
 
-	ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, cmdlen, NULL, NULL);
-	if (ret) {
+	ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, cmdlen, शून्य, शून्य);
+	अगर (ret) अणु
 		ath10k_warn(ar, "unable to write to the device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath10k_bmi_get_target_info(struct ath10k *ar,
-			       struct bmi_target_info *target_info)
-{
-	struct bmi_cmd cmd;
-	union bmi_resp resp;
-	u32 cmdlen = sizeof(cmd.id) + sizeof(cmd.get_target_info);
-	u32 resplen = sizeof(resp.get_target_info);
-	int ret;
+पूर्णांक ath10k_bmi_get_target_info(काष्ठा ath10k *ar,
+			       काष्ठा bmi_target_info *target_info)
+अणु
+	काष्ठा bmi_cmd cmd;
+	जोड़ bmi_resp resp;
+	u32 cmdlen = माप(cmd.id) + माप(cmd.get_target_info);
+	u32 resplen = माप(resp.get_target_info);
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi get target info\n");
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "BMI Get Target Info Command disallowed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	cmd.id = __cpu_to_le32(BMI_GET_TARGET_INFO);
 
-	ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, cmdlen, &resp, &resplen);
-	if (ret) {
+	ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, cmdlen, &resp, &resplen);
+	अगर (ret) अणु
 		ath10k_warn(ar, "unable to get target info from device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (resplen < sizeof(resp.get_target_info)) {
+	अगर (resplen < माप(resp.get_target_info)) अणु
 		ath10k_warn(ar, "invalid get_target_info response length (%d)\n",
 			    resplen);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	target_info->version = __le32_to_cpu(resp.get_target_info.version);
 	target_info->type    = __le32_to_cpu(resp.get_target_info.type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define TARGET_VERSION_SENTINAL 0xffffffffu
+#घोषणा TARGET_VERSION_SENTINAL 0xffffffffu
 
-int ath10k_bmi_get_target_info_sdio(struct ath10k *ar,
-				    struct bmi_target_info *target_info)
-{
-	struct bmi_cmd cmd;
-	union bmi_resp resp;
-	u32 cmdlen = sizeof(cmd.id) + sizeof(cmd.get_target_info);
+पूर्णांक ath10k_bmi_get_target_info_sdio(काष्ठा ath10k *ar,
+				    काष्ठा bmi_target_info *target_info)
+अणु
+	काष्ठा bmi_cmd cmd;
+	जोड़ bmi_resp resp;
+	u32 cmdlen = माप(cmd.id) + माप(cmd.get_target_info);
 	u32 resplen, ver_len;
-	__le32 tmp;
-	int ret;
+	__le32 पंचांगp;
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi get target info SDIO\n");
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "BMI Get Target Info Command disallowed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	cmd.id = __cpu_to_le32(BMI_GET_TARGET_INFO);
 
-	/* Step 1: Read 4 bytes of the target info and check if it is
+	/* Step 1: Read 4 bytes of the target info and check अगर it is
 	 * the special sentinal version word or the first word in the
 	 * version response.
 	 */
-	resplen = sizeof(u32);
-	ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, cmdlen, &tmp, &resplen);
-	if (ret) {
+	resplen = माप(u32);
+	ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, cmdlen, &पंचांगp, &resplen);
+	अगर (ret) अणु
 		ath10k_warn(ar, "unable to read from device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Some SDIO boards have a special sentinal byte before the real
+	/* Some SDIO boards have a special sentinal byte beक्रमe the real
 	 * version response.
 	 */
-	if (__le32_to_cpu(tmp) == TARGET_VERSION_SENTINAL) {
+	अगर (__le32_to_cpu(पंचांगp) == TARGET_VERSION_SENTINAL) अणु
 		/* Step 1b: Read the version length */
-		resplen = sizeof(u32);
-		ret = ath10k_hif_exchange_bmi_msg(ar, NULL, 0, &tmp,
+		resplen = माप(u32);
+		ret = ath10k_hअगर_exchange_bmi_msg(ar, शून्य, 0, &पंचांगp,
 						  &resplen);
-		if (ret) {
+		अगर (ret) अणु
 			ath10k_warn(ar, "unable to read from device\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	ver_len = __le32_to_cpu(tmp);
+	ver_len = __le32_to_cpu(पंचांगp);
 
 	/* Step 2: Check the target info length */
-	if (ver_len != sizeof(resp.get_target_info)) {
+	अगर (ver_len != माप(resp.get_target_info)) अणु
 		ath10k_warn(ar, "Unexpected target info len: %u. Expected: %zu\n",
-			    ver_len, sizeof(resp.get_target_info));
-		return -EINVAL;
-	}
+			    ver_len, माप(resp.get_target_info));
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Step 3: Read the rest of the version response */
-	resplen = sizeof(resp.get_target_info) - sizeof(u32);
-	ret = ath10k_hif_exchange_bmi_msg(ar, NULL, 0,
+	resplen = माप(resp.get_target_info) - माप(u32);
+	ret = ath10k_hअगर_exchange_bmi_msg(ar, शून्य, 0,
 					  &resp.get_target_info.version,
 					  &resplen);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_warn(ar, "unable to read from device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	target_info->version = __le32_to_cpu(resp.get_target_info.version);
 	target_info->type    = __le32_to_cpu(resp.get_target_info.type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath10k_bmi_read_memory(struct ath10k *ar,
-			   u32 address, void *buffer, u32 length)
-{
-	struct bmi_cmd cmd;
-	union bmi_resp resp;
-	u32 cmdlen = sizeof(cmd.id) + sizeof(cmd.read_mem);
+पूर्णांक ath10k_bmi_पढ़ो_memory(काष्ठा ath10k *ar,
+			   u32 address, व्योम *buffer, u32 length)
+अणु
+	काष्ठा bmi_cmd cmd;
+	जोड़ bmi_resp resp;
+	u32 cmdlen = माप(cmd.id) + माप(cmd.पढ़ो_mem);
 	u32 rxlen;
-	int ret;
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi read address 0x%x length %d\n",
 		   address, length);
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "command disallowed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	while (length) {
+	जबतक (length) अणु
 		rxlen = min_t(u32, length, BMI_MAX_DATA_SIZE);
 
 		cmd.id            = __cpu_to_le32(BMI_READ_MEMORY);
-		cmd.read_mem.addr = __cpu_to_le32(address);
-		cmd.read_mem.len  = __cpu_to_le32(rxlen);
+		cmd.पढ़ो_mem.addr = __cpu_to_le32(address);
+		cmd.पढ़ो_mem.len  = __cpu_to_le32(rxlen);
 
-		ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, cmdlen,
+		ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, cmdlen,
 						  &resp, &rxlen);
-		if (ret) {
+		अगर (ret) अणु
 			ath10k_warn(ar, "unable to read from the device (%d)\n",
 				    ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		memcpy(buffer, resp.read_mem.payload, rxlen);
+		स_नकल(buffer, resp.पढ़ो_mem.payload, rxlen);
 		address += rxlen;
 		buffer  += rxlen;
 		length  -= rxlen;
-	}
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(ath10k_bmi_read_memory);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ath10k_bmi_पढ़ो_memory);
 
-int ath10k_bmi_write_soc_reg(struct ath10k *ar, u32 address, u32 reg_val)
-{
-	struct bmi_cmd cmd;
-	u32 cmdlen = sizeof(cmd.id) + sizeof(cmd.write_soc_reg);
-	int ret;
+पूर्णांक ath10k_bmi_ग_लिखो_soc_reg(काष्ठा ath10k *ar, u32 address, u32 reg_val)
+अणु
+	काष्ठा bmi_cmd cmd;
+	u32 cmdlen = माप(cmd.id) + माप(cmd.ग_लिखो_soc_reg);
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI,
 		   "bmi write soc register 0x%08x val 0x%08x\n",
 		   address, reg_val);
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "bmi write soc register command in progress\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	cmd.id = __cpu_to_le32(BMI_WRITE_SOC_REGISTER);
-	cmd.write_soc_reg.addr = __cpu_to_le32(address);
-	cmd.write_soc_reg.value = __cpu_to_le32(reg_val);
+	cmd.ग_लिखो_soc_reg.addr = __cpu_to_le32(address);
+	cmd.ग_लिखो_soc_reg.value = __cpu_to_le32(reg_val);
 
-	ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, cmdlen, NULL, NULL);
-	if (ret) {
+	ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, cmdlen, शून्य, शून्य);
+	अगर (ret) अणु
 		ath10k_warn(ar, "Unable to write soc register to device: %d\n",
 			    ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath10k_bmi_read_soc_reg(struct ath10k *ar, u32 address, u32 *reg_val)
-{
-	struct bmi_cmd cmd;
-	union bmi_resp resp;
-	u32 cmdlen = sizeof(cmd.id) + sizeof(cmd.read_soc_reg);
-	u32 resplen = sizeof(resp.read_soc_reg);
-	int ret;
+पूर्णांक ath10k_bmi_पढ़ो_soc_reg(काष्ठा ath10k *ar, u32 address, u32 *reg_val)
+अणु
+	काष्ठा bmi_cmd cmd;
+	जोड़ bmi_resp resp;
+	u32 cmdlen = माप(cmd.id) + माप(cmd.पढ़ो_soc_reg);
+	u32 resplen = माप(resp.पढ़ो_soc_reg);
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi read soc register 0x%08x\n",
 		   address);
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "bmi read soc register command in progress\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	cmd.id = __cpu_to_le32(BMI_READ_SOC_REGISTER);
-	cmd.read_soc_reg.addr = __cpu_to_le32(address);
+	cmd.पढ़ो_soc_reg.addr = __cpu_to_le32(address);
 
-	ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, cmdlen, &resp, &resplen);
-	if (ret) {
+	ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, cmdlen, &resp, &resplen);
+	अगर (ret) अणु
 		ath10k_warn(ar, "Unable to read soc register from device: %d\n",
 			    ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	*reg_val = __le32_to_cpu(resp.read_soc_reg.value);
+	*reg_val = __le32_to_cpu(resp.पढ़ो_soc_reg.value);
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi read soc register value 0x%08x\n",
 		   *reg_val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath10k_bmi_write_memory(struct ath10k *ar,
-			    u32 address, const void *buffer, u32 length)
-{
-	struct bmi_cmd cmd;
-	u32 hdrlen = sizeof(cmd.id) + sizeof(cmd.write_mem);
+पूर्णांक ath10k_bmi_ग_लिखो_memory(काष्ठा ath10k *ar,
+			    u32 address, स्थिर व्योम *buffer, u32 length)
+अणु
+	काष्ठा bmi_cmd cmd;
+	u32 hdrlen = माप(cmd.id) + माप(cmd.ग_लिखो_mem);
 	u32 txlen;
-	int ret;
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi write address 0x%x length %d\n",
 		   address, length);
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "command disallowed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	while (length) {
+	जबतक (length) अणु
 		txlen = min(length, BMI_MAX_DATA_SIZE - hdrlen);
 
-		/* copy before roundup to avoid reading beyond buffer*/
-		memcpy(cmd.write_mem.payload, buffer, txlen);
+		/* copy beक्रमe roundup to aव्योम पढ़ोing beyond buffer*/
+		स_नकल(cmd.ग_लिखो_mem.payload, buffer, txlen);
 		txlen = roundup(txlen, 4);
 
 		cmd.id             = __cpu_to_le32(BMI_WRITE_MEMORY);
-		cmd.write_mem.addr = __cpu_to_le32(address);
-		cmd.write_mem.len  = __cpu_to_le32(txlen);
+		cmd.ग_लिखो_mem.addr = __cpu_to_le32(address);
+		cmd.ग_लिखो_mem.len  = __cpu_to_le32(txlen);
 
-		ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, hdrlen + txlen,
-						  NULL, NULL);
-		if (ret) {
+		ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, hdrlen + txlen,
+						  शून्य, शून्य);
+		अगर (ret) अणु
 			ath10k_warn(ar, "unable to write to the device (%d)\n",
 				    ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		/* fixup roundup() so `length` zeroes out for last chunk */
+		/* fixup roundup() so `length` zeroes out क्रम last chunk */
 		txlen = min(txlen, length);
 
 		address += txlen;
 		buffer  += txlen;
 		length  -= txlen;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath10k_bmi_execute(struct ath10k *ar, u32 address, u32 param, u32 *result)
-{
-	struct bmi_cmd cmd;
-	union bmi_resp resp;
-	u32 cmdlen = sizeof(cmd.id) + sizeof(cmd.execute);
-	u32 resplen = sizeof(resp.execute);
-	int ret;
+पूर्णांक ath10k_bmi_execute(काष्ठा ath10k *ar, u32 address, u32 param, u32 *result)
+अणु
+	काष्ठा bmi_cmd cmd;
+	जोड़ bmi_resp resp;
+	u32 cmdlen = माप(cmd.id) + माप(cmd.execute);
+	u32 resplen = माप(resp.execute);
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi execute address 0x%x param 0x%x\n",
 		   address, param);
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "command disallowed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	cmd.id            = __cpu_to_le32(BMI_EXECUTE);
 	cmd.execute.addr  = __cpu_to_le32(address);
 	cmd.execute.param = __cpu_to_le32(param);
 
-	ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, cmdlen, &resp, &resplen);
-	if (ret) {
+	ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, cmdlen, &resp, &resplen);
+	अगर (ret) अणु
 		ath10k_warn(ar, "unable to read from the device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (resplen < sizeof(resp.execute)) {
+	अगर (resplen < माप(resp.execute)) अणु
 		ath10k_warn(ar, "invalid execute response length (%d)\n",
 			    resplen);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	*result = __le32_to_cpu(resp.execute.result);
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi execute result 0x%x\n", *result);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath10k_bmi_lz_data_large(struct ath10k *ar, const void *buffer, u32 length)
-{
-	struct bmi_cmd *cmd;
-	u32 hdrlen = sizeof(cmd->id) + sizeof(cmd->lz_data);
+अटल पूर्णांक ath10k_bmi_lz_data_large(काष्ठा ath10k *ar, स्थिर व्योम *buffer, u32 length)
+अणु
+	काष्ठा bmi_cmd *cmd;
+	u32 hdrlen = माप(cmd->id) + माप(cmd->lz_data);
 	u32 txlen;
-	int ret;
-	size_t buf_len;
+	पूर्णांक ret;
+	माप_प्रकार buf_len;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "large bmi lz data buffer 0x%pK length %d\n",
 		   buffer, length);
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "command disallowed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	buf_len = sizeof(*cmd) + BMI_MAX_LARGE_DATA_SIZE - BMI_MAX_DATA_SIZE;
+	buf_len = माप(*cmd) + BMI_MAX_LARGE_DATA_SIZE - BMI_MAX_DATA_SIZE;
 	cmd = kzalloc(buf_len, GFP_KERNEL);
-	if (!cmd)
-		return -ENOMEM;
+	अगर (!cmd)
+		वापस -ENOMEM;
 
-	while (length) {
+	जबतक (length) अणु
 		txlen = min(length, BMI_MAX_LARGE_DATA_SIZE - hdrlen);
 
 		WARN_ON_ONCE(txlen & 3);
 
 		cmd->id          = __cpu_to_le32(BMI_LZ_DATA);
 		cmd->lz_data.len = __cpu_to_le32(txlen);
-		memcpy(cmd->lz_data.payload, buffer, txlen);
+		स_नकल(cmd->lz_data.payload, buffer, txlen);
 
-		ret = ath10k_hif_exchange_bmi_msg(ar, cmd, hdrlen + txlen,
-						  NULL, NULL);
-		if (ret) {
+		ret = ath10k_hअगर_exchange_bmi_msg(ar, cmd, hdrlen + txlen,
+						  शून्य, शून्य);
+		अगर (ret) अणु
 			ath10k_warn(ar, "unable to write to the device\n");
-			kfree(cmd);
-			return ret;
-		}
+			kमुक्त(cmd);
+			वापस ret;
+		पूर्ण
 
 		buffer += txlen;
 		length -= txlen;
-	}
+	पूर्ण
 
-	kfree(cmd);
+	kमुक्त(cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath10k_bmi_lz_data(struct ath10k *ar, const void *buffer, u32 length)
-{
-	struct bmi_cmd cmd;
-	u32 hdrlen = sizeof(cmd.id) + sizeof(cmd.lz_data);
+पूर्णांक ath10k_bmi_lz_data(काष्ठा ath10k *ar, स्थिर व्योम *buffer, u32 length)
+अणु
+	काष्ठा bmi_cmd cmd;
+	u32 hdrlen = माप(cmd.id) + माप(cmd.lz_data);
 	u32 txlen;
-	int ret;
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi lz data buffer 0x%pK length %d\n",
 		   buffer, length);
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "command disallowed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	while (length) {
+	जबतक (length) अणु
 		txlen = min(length, BMI_MAX_DATA_SIZE - hdrlen);
 
 		WARN_ON_ONCE(txlen & 3);
 
 		cmd.id          = __cpu_to_le32(BMI_LZ_DATA);
 		cmd.lz_data.len = __cpu_to_le32(txlen);
-		memcpy(cmd.lz_data.payload, buffer, txlen);
+		स_नकल(cmd.lz_data.payload, buffer, txlen);
 
-		ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, hdrlen + txlen,
-						  NULL, NULL);
-		if (ret) {
+		ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, hdrlen + txlen,
+						  शून्य, शून्य);
+		अगर (ret) अणु
 			ath10k_warn(ar, "unable to write to the device\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		buffer += txlen;
 		length -= txlen;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath10k_bmi_lz_stream_start(struct ath10k *ar, u32 address)
-{
-	struct bmi_cmd cmd;
-	u32 cmdlen = sizeof(cmd.id) + sizeof(cmd.lz_start);
-	int ret;
+पूर्णांक ath10k_bmi_lz_stream_start(काष्ठा ath10k *ar, u32 address)
+अणु
+	काष्ठा bmi_cmd cmd;
+	u32 cmdlen = माप(cmd.id) + माप(cmd.lz_start);
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI, "bmi lz stream start address 0x%x\n",
 		   address);
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "command disallowed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	cmd.id            = __cpu_to_le32(BMI_LZ_STREAM_START);
 	cmd.lz_start.addr = __cpu_to_le32(address);
 
-	ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, cmdlen, NULL, NULL);
-	if (ret) {
+	ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, cmdlen, शून्य, शून्य);
+	अगर (ret) अणु
 		ath10k_warn(ar, "unable to Start LZ Stream to the device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath10k_bmi_fast_download(struct ath10k *ar,
-			     u32 address, const void *buffer, u32 length)
-{
-	u8 trailer[4] = {};
-	u32 head_len = rounddown(length, 4);
+पूर्णांक ath10k_bmi_fast_करोwnload(काष्ठा ath10k *ar,
+			     u32 address, स्थिर व्योम *buffer, u32 length)
+अणु
+	u8 trailer[4] = अणुपूर्ण;
+	u32 head_len = roundकरोwn(length, 4);
 	u32 trailer_len = length - head_len;
-	int ret;
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_BMI,
 		   "bmi fast download address 0x%x buffer 0x%pK length %d\n",
 		   address, buffer, length);
 
 	ret = ath10k_bmi_lz_stream_start(ar, address);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* copy the last word into a zero padded buffer */
-	if (trailer_len > 0)
-		memcpy(trailer, buffer + head_len, trailer_len);
+	/* copy the last word पूर्णांकo a zero padded buffer */
+	अगर (trailer_len > 0)
+		स_नकल(trailer, buffer + head_len, trailer_len);
 
-	if (ar->hw_params.bmi_large_size_download)
+	अगर (ar->hw_params.bmi_large_size_करोwnload)
 		ret = ath10k_bmi_lz_data_large(ar, buffer, head_len);
-	else
+	अन्यथा
 		ret = ath10k_bmi_lz_data(ar, buffer, head_len);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (trailer_len > 0)
+	अगर (trailer_len > 0)
 		ret = ath10k_bmi_lz_data(ar, trailer, 4);
 
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
 	/*
-	 * Close compressed stream and open a new (fake) one.
-	 * This serves mainly to flush Target caches.
+	 * Close compressed stream and खोलो a new (fake) one.
+	 * This serves मुख्यly to flush Target caches.
 	 */
 	ret = ath10k_bmi_lz_stream_start(ar, 0x00);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ath10k_bmi_set_start(struct ath10k *ar, u32 address)
-{
-	struct bmi_cmd cmd;
-	u32 cmdlen = sizeof(cmd.id) + sizeof(cmd.set_app_start);
-	int ret;
+पूर्णांक ath10k_bmi_set_start(काष्ठा ath10k *ar, u32 address)
+अणु
+	काष्ठा bmi_cmd cmd;
+	u32 cmdlen = माप(cmd.id) + माप(cmd.set_app_start);
+	पूर्णांक ret;
 
-	if (ar->bmi.done_sent) {
+	अगर (ar->bmi.करोne_sent) अणु
 		ath10k_warn(ar, "bmi set start command disallowed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	cmd.id = __cpu_to_le32(BMI_SET_APP_START);
 	cmd.set_app_start.addr = __cpu_to_le32(address);
 
-	ret = ath10k_hif_exchange_bmi_msg(ar, &cmd, cmdlen, NULL, NULL);
-	if (ret) {
+	ret = ath10k_hअगर_exchange_bmi_msg(ar, &cmd, cmdlen, शून्य, शून्य);
+	अगर (ret) अणु
 		ath10k_warn(ar, "unable to set start to the device:%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

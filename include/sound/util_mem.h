@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __SOUND_UTIL_MEM_H
-#define __SOUND_UTIL_MEM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __SOUND_UTIL_MEM_H
+#घोषणा __SOUND_UTIL_MEM_H
 
-#include <linux/mutex.h>
+#समावेश <linux/mutex.h>
 /*
  *  Copyright (C) 2000 Takashi Iwai <tiwai@suse.de>
  *
- *  Generic memory management routines for soundcard memory allocation
+ *  Generic memory management routines क्रम soundcard memory allocation
  */
 
 /*
  * memory block
  */
-struct snd_util_memblk {
-	unsigned int size;		/* size of this block */
-	unsigned int offset;		/* zero-offset of this block */
-	struct list_head list;		/* link */
-};
+काष्ठा snd_util_memblk अणु
+	अचिन्हित पूर्णांक size;		/* size of this block */
+	अचिन्हित पूर्णांक offset;		/* zero-offset of this block */
+	काष्ठा list_head list;		/* link */
+पूर्ण;
 
-#define snd_util_memblk_argptr(blk)	(void*)((char*)(blk) + sizeof(struct snd_util_memblk))
+#घोषणा snd_util_memblk_argptr(blk)	(व्योम*)((अक्षर*)(blk) + माप(काष्ठा snd_util_memblk))
 
 /*
- * memory management information
+ * memory management inक्रमmation
  */
-struct snd_util_memhdr {
-	unsigned int size;		/* size of whole data */
-	struct list_head block;		/* block linked-list header */
-	int nblocks;			/* # of allocated blocks */
-	unsigned int used;		/* used memory size */
-	int block_extra_size;		/* extra data size of chunk */
-	struct mutex block_mutex;	/* lock */
-};
+काष्ठा snd_util_memhdr अणु
+	अचिन्हित पूर्णांक size;		/* size of whole data */
+	काष्ठा list_head block;		/* block linked-list header */
+	पूर्णांक nblocks;			/* # of allocated blocks */
+	अचिन्हित पूर्णांक used;		/* used memory size */
+	पूर्णांक block_extra_size;		/* extra data size of chunk */
+	काष्ठा mutex block_mutex;	/* lock */
+पूर्ण;
 
 /*
  * prototypes
  */
-struct snd_util_memhdr *snd_util_memhdr_new(int memsize);
-void snd_util_memhdr_free(struct snd_util_memhdr *hdr);
-struct snd_util_memblk *snd_util_mem_alloc(struct snd_util_memhdr *hdr, int size);
-int snd_util_mem_free(struct snd_util_memhdr *hdr, struct snd_util_memblk *blk);
-int snd_util_mem_avail(struct snd_util_memhdr *hdr);
+काष्ठा snd_util_memhdr *snd_util_memhdr_new(पूर्णांक memsize);
+व्योम snd_util_memhdr_मुक्त(काष्ठा snd_util_memhdr *hdr);
+काष्ठा snd_util_memblk *snd_util_mem_alloc(काष्ठा snd_util_memhdr *hdr, पूर्णांक size);
+पूर्णांक snd_util_mem_मुक्त(काष्ठा snd_util_memhdr *hdr, काष्ठा snd_util_memblk *blk);
+पूर्णांक snd_util_mem_avail(काष्ठा snd_util_memhdr *hdr);
 
 /* functions without mutex */
-struct snd_util_memblk *__snd_util_mem_alloc(struct snd_util_memhdr *hdr, int size);
-void __snd_util_mem_free(struct snd_util_memhdr *hdr, struct snd_util_memblk *blk);
-struct snd_util_memblk *__snd_util_memblk_new(struct snd_util_memhdr *hdr,
-					      unsigned int units,
-					      struct list_head *prev);
+काष्ठा snd_util_memblk *__snd_util_mem_alloc(काष्ठा snd_util_memhdr *hdr, पूर्णांक size);
+व्योम __snd_util_mem_मुक्त(काष्ठा snd_util_memhdr *hdr, काष्ठा snd_util_memblk *blk);
+काष्ठा snd_util_memblk *__snd_util_memblk_new(काष्ठा snd_util_memhdr *hdr,
+					      अचिन्हित पूर्णांक units,
+					      काष्ठा list_head *prev);
 
-#endif /* __SOUND_UTIL_MEM_H */
+#पूर्ण_अगर /* __SOUND_UTIL_MEM_H */

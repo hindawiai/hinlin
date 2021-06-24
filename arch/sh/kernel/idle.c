@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * The idle loop for all SuperH platforms.
+ * The idle loop क्रम all SuperH platक्रमms.
  *
  *  Copyright (C) 2002 - 2009  Paul Mundt
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/pm.h>
-#include <linux/tick.h>
-#include <linux/preempt.h>
-#include <linux/thread_info.h>
-#include <linux/irqflags.h>
-#include <linux/smp.h>
-#include <linux/atomic.h>
-#include <asm/smp.h>
-#include <asm/bl_bit.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/tick.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/thपढ़ो_info.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/bl_bit.h>
 
-static void (*sh_idle)(void);
+अटल व्योम (*sh_idle)(व्योम);
 
-void default_idle(void)
-{
+व्योम शेष_idle(व्योम)
+अणु
 	set_bl_bit();
 	raw_local_irq_enable();
 	/* Isn't this racy ? */
 	cpu_sleep();
 	clear_bl_bit();
-}
+पूर्ण
 
-void arch_cpu_idle_dead(void)
-{
+व्योम arch_cpu_idle_dead(व्योम)
+अणु
 	play_dead();
-}
+पूर्ण
 
-void arch_cpu_idle(void)
-{
+व्योम arch_cpu_idle(व्योम)
+अणु
 	sh_idle();
-}
+पूर्ण
 
-void __init select_idle_routine(void)
-{
+व्योम __init select_idle_routine(व्योम)
+अणु
 	/*
-	 * If a platform has set its own idle routine, leave it alone.
+	 * If a platक्रमm has set its own idle routine, leave it alone.
 	 */
-	if (!sh_idle)
-		sh_idle = default_idle;
-}
+	अगर (!sh_idle)
+		sh_idle = शेष_idle;
+पूर्ण
 
-void stop_this_cpu(void *unused)
-{
+व्योम stop_this_cpu(व्योम *unused)
+अणु
 	local_irq_disable();
 	set_cpu_online(smp_processor_id(), false);
 
-	for (;;)
+	क्रम (;;)
 		cpu_sleep();
-}
+पूर्ण

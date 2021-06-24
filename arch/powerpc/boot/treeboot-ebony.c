@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Old U-boot compatibility for Ebony
+ * Old U-boot compatibility क्रम Ebony
  *
  * Author: David Gibson <david@gibson.dropbear.id.au>
  *
@@ -9,21 +10,21 @@
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
 
-#include "ops.h"
-#include "stdio.h"
-#include "44x.h"
+#समावेश "ops.h"
+#समावेश "stdio.h"
+#समावेश "44x.h"
 
 BSS_STACK(4096);
 
-#define OPENBIOS_MAC_BASE	0xfffffe0c
-#define OPENBIOS_MAC_OFFSET	0xc
+#घोषणा OPENBIOS_MAC_BASE	0xfffffe0c
+#घोषणा OPENBIOS_MAC_OFFSET	0xc
 
-void platform_init(void)
-{
-	unsigned long end_of_ram = 0x8000000;
-	unsigned long avail_ram = end_of_ram - (unsigned long)_end;
+व्योम platक्रमm_init(व्योम)
+अणु
+	अचिन्हित दीर्घ end_of_ram = 0x8000000;
+	अचिन्हित दीर्घ avail_ram = end_of_ram - (अचिन्हित दीर्घ)_end;
 
 	simple_alloc_init(_end, avail_ram, 32, 64);
 	ebony_init((u8 *)OPENBIOS_MAC_BASE,
 		   (u8 *)(OPENBIOS_MAC_BASE + OPENBIOS_MAC_OFFSET));
-}
+पूर्ण

@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  * Copyright (C) Joerg Reuter DL1BKE (jreuter@yaina.de)
  */
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/spinlock.h>
-#include <linux/net.h>
-#include <linux/gfp.h>
-#include <net/ax25.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/net.h>
+#समावेश <linux/gfp.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-void ax25_ds_nr_error_recovery(ax25_cb *ax25)
-{
+व्योम ax25_ds_nr_error_recovery(ax25_cb *ax25)
+अणु
 	ax25_ds_establish_data_link(ax25);
-}
+पूर्ण
 
 /*
  *	dl1bke 960114: transmit I frames on DAMA poll
  */
-void ax25_ds_enquiry_response(ax25_cb *ax25)
-{
+व्योम ax25_ds_enquiry_response(ax25_cb *ax25)
+अणु
 	ax25_cb *ax25o;
 
 	/* Please note that neither DK4EG's nor DG2FEF's
@@ -54,83 +55,83 @@ void ax25_ds_enquiry_response(ax25_cb *ax25)
 	 *	DL1BKE->DB0ACH <I NR=0 NS=0>
 	 *	DL1BKE-7->DB0PRA-6 DB0ACH <I C S3 R5>
 	 *
-	 * Flexnet refuses to send us *any* I frame if we send
-	 * a REJ in case AX25_COND_REJECT is set. It is superfluous in
+	 * Flexnet refuses to send us *any* I frame अगर we send
+	 * a REJ in हाल AX25_COND_REJECT is set. It is superfluous in
 	 * this mode anyway (a RR or RNR invokes the retransmission).
 	 * Is this a Flexnet bug?
 	 */
 
 	ax25_std_enquiry_response(ax25);
 
-	if (!(ax25->condition & AX25_COND_PEER_RX_BUSY)) {
+	अगर (!(ax25->condition & AX25_COND_PEER_RX_BUSY)) अणु
 		ax25_requeue_frames(ax25);
 		ax25_kick(ax25);
-	}
+	पूर्ण
 
-	if (ax25->state == AX25_STATE_1 || ax25->state == AX25_STATE_2 || skb_peek(&ax25->ack_queue) != NULL)
-		ax25_ds_t1_timeout(ax25);
-	else
+	अगर (ax25->state == AX25_STATE_1 || ax25->state == AX25_STATE_2 || skb_peek(&ax25->ack_queue) != शून्य)
+		ax25_ds_t1_समयout(ax25);
+	अन्यथा
 		ax25->n2count = 0;
 
-	ax25_start_t3timer(ax25);
-	ax25_ds_set_timer(ax25->ax25_dev);
+	ax25_start_t3समयr(ax25);
+	ax25_ds_set_समयr(ax25->ax25_dev);
 
 	spin_lock(&ax25_list_lock);
-	ax25_for_each(ax25o, &ax25_list) {
-		if (ax25o == ax25)
-			continue;
+	ax25_क्रम_each(ax25o, &ax25_list) अणु
+		अगर (ax25o == ax25)
+			जारी;
 
-		if (ax25o->ax25_dev != ax25->ax25_dev)
-			continue;
+		अगर (ax25o->ax25_dev != ax25->ax25_dev)
+			जारी;
 
-		if (ax25o->state == AX25_STATE_1 || ax25o->state == AX25_STATE_2) {
-			ax25_ds_t1_timeout(ax25o);
-			continue;
-		}
+		अगर (ax25o->state == AX25_STATE_1 || ax25o->state == AX25_STATE_2) अणु
+			ax25_ds_t1_समयout(ax25o);
+			जारी;
+		पूर्ण
 
-		if (!(ax25o->condition & AX25_COND_PEER_RX_BUSY) && ax25o->state == AX25_STATE_3) {
+		अगर (!(ax25o->condition & AX25_COND_PEER_RX_BUSY) && ax25o->state == AX25_STATE_3) अणु
 			ax25_requeue_frames(ax25o);
 			ax25_kick(ax25o);
-		}
+		पूर्ण
 
-		if (ax25o->state == AX25_STATE_1 || ax25o->state == AX25_STATE_2 || skb_peek(&ax25o->ack_queue) != NULL)
-			ax25_ds_t1_timeout(ax25o);
+		अगर (ax25o->state == AX25_STATE_1 || ax25o->state == AX25_STATE_2 || skb_peek(&ax25o->ack_queue) != शून्य)
+			ax25_ds_t1_समयout(ax25o);
 
-		/* do not start T3 for listening sockets (tnx DD8NE) */
+		/* करो not start T3 क्रम listening sockets (tnx DD8NE) */
 
-		if (ax25o->state != AX25_STATE_0)
-			ax25_start_t3timer(ax25o);
-	}
+		अगर (ax25o->state != AX25_STATE_0)
+			ax25_start_t3समयr(ax25o);
+	पूर्ण
 	spin_unlock(&ax25_list_lock);
-}
+पूर्ण
 
-void ax25_ds_establish_data_link(ax25_cb *ax25)
-{
+व्योम ax25_ds_establish_data_link(ax25_cb *ax25)
+अणु
 	ax25->condition &= AX25_COND_DAMA_MODE;
 	ax25->n2count    = 0;
 	ax25_calculate_t1(ax25);
-	ax25_start_t1timer(ax25);
-	ax25_stop_t2timer(ax25);
-	ax25_start_t3timer(ax25);
-}
+	ax25_start_t1समयr(ax25);
+	ax25_stop_t2समयr(ax25);
+	ax25_start_t3समयr(ax25);
+पूर्ण
 
 /*
  *	:::FIXME:::
  *	This is a kludge. Not all drivers recognize kiss commands.
- *	We need a driver level  request to switch duplex mode, that does
+ *	We need a driver level  request to चयन duplex mode, that करोes
  *	either SCC changing, PI config or KISS as required. Currently
  *	this request isn't reliable.
  */
-static void ax25_kiss_cmd(ax25_dev *ax25_dev, unsigned char cmd, unsigned char param)
-{
-	struct sk_buff *skb;
-	unsigned char *p;
+अटल व्योम ax25_kiss_cmd(ax25_dev *ax25_dev, अचिन्हित अक्षर cmd, अचिन्हित अक्षर param)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *p;
 
-	if (ax25_dev->dev == NULL)
-		return;
+	अगर (ax25_dev->dev == शून्य)
+		वापस;
 
-	if ((skb = alloc_skb(2, GFP_ATOMIC)) == NULL)
-		return;
+	अगर ((skb = alloc_skb(2, GFP_ATOMIC)) == शून्य)
+		वापस;
 
 	skb_reset_network_header(skb);
 	p = skb_put(skb, 2);
@@ -141,64 +142,64 @@ static void ax25_kiss_cmd(ax25_dev *ax25_dev, unsigned char cmd, unsigned char p
 	skb->protocol = ax25_type_trans(skb, ax25_dev->dev);
 
 	dev_queue_xmit(skb);
-}
+पूर्ण
 
 /*
- *	A nasty problem arises if we count the number of DAMA connections
- *	wrong, especially when connections on the device already existed
+ *	A nasty problem arises अगर we count the number of DAMA connections
+ *	wrong, especially when connections on the device alपढ़ोy existed
  *	and our network node (or the sysop) decides to turn on DAMA Master
  *	mode. We thus flag the 'real' slave connections with
- *	ax25->dama_slave=1 and look on every disconnect if still slave
+ *	ax25->dama_slave=1 and look on every disconnect अगर still slave
  *	connections exist.
  */
-static int ax25_check_dama_slave(ax25_dev *ax25_dev)
-{
+अटल पूर्णांक ax25_check_dama_slave(ax25_dev *ax25_dev)
+अणु
 	ax25_cb *ax25;
-	int res = 0;
+	पूर्णांक res = 0;
 
 	spin_lock(&ax25_list_lock);
-	ax25_for_each(ax25, &ax25_list)
-		if (ax25->ax25_dev == ax25_dev && (ax25->condition & AX25_COND_DAMA_MODE) && ax25->state > AX25_STATE_1) {
+	ax25_क्रम_each(ax25, &ax25_list)
+		अगर (ax25->ax25_dev == ax25_dev && (ax25->condition & AX25_COND_DAMA_MODE) && ax25->state > AX25_STATE_1) अणु
 			res = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 	spin_unlock(&ax25_list_lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void ax25_dev_dama_on(ax25_dev *ax25_dev)
-{
-	if (ax25_dev == NULL)
-		return;
+अटल व्योम ax25_dev_dama_on(ax25_dev *ax25_dev)
+अणु
+	अगर (ax25_dev == शून्य)
+		वापस;
 
-	if (ax25_dev->dama.slave == 0)
+	अगर (ax25_dev->dama.slave == 0)
 		ax25_kiss_cmd(ax25_dev, 5, 1);
 
 	ax25_dev->dama.slave = 1;
-	ax25_ds_set_timer(ax25_dev);
-}
+	ax25_ds_set_समयr(ax25_dev);
+पूर्ण
 
-void ax25_dev_dama_off(ax25_dev *ax25_dev)
-{
-	if (ax25_dev == NULL)
-		return;
+व्योम ax25_dev_dama_off(ax25_dev *ax25_dev)
+अणु
+	अगर (ax25_dev == शून्य)
+		वापस;
 
-	if (ax25_dev->dama.slave && !ax25_check_dama_slave(ax25_dev)) {
+	अगर (ax25_dev->dama.slave && !ax25_check_dama_slave(ax25_dev)) अणु
 		ax25_kiss_cmd(ax25_dev, 5, 0);
 		ax25_dev->dama.slave = 0;
-		ax25_ds_del_timer(ax25_dev);
-	}
-}
+		ax25_ds_del_समयr(ax25_dev);
+	पूर्ण
+पूर्ण
 
-void ax25_dama_on(ax25_cb *ax25)
-{
+व्योम ax25_dama_on(ax25_cb *ax25)
+अणु
 	ax25_dev_dama_on(ax25->ax25_dev);
 	ax25->condition |= AX25_COND_DAMA_MODE;
-}
+पूर्ण
 
-void ax25_dama_off(ax25_cb *ax25)
-{
+व्योम ax25_dama_off(ax25_cb *ax25)
+अणु
 	ax25->condition &= ~AX25_COND_DAMA_MODE;
 	ax25_dev_dama_off(ax25->ax25_dev);
-}
+पूर्ण

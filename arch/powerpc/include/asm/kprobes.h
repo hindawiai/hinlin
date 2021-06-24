@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_POWERPC_KPROBES_H
-#define _ASM_POWERPC_KPROBES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_POWERPC_KPROBES_H
+#घोषणा _ASM_POWERPC_KPROBES_H
 
-#include <asm-generic/kprobes.h>
+#समावेश <यंत्र-generic/kprobes.h>
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 /*
  *  Kernel Probes (KProbes)
  *
@@ -13,85 +14,85 @@
  * 2002-Oct	Created by Vamsi Krishna S <vamsi_krishna@in.ibm.com> Kernel
  *		Probes initial implementation ( includes suggestions from
  *		Rusty Russell).
- * 2004-Nov	Modified for PPC64 by Ananth N Mavinakayanahalli
+ * 2004-Nov	Modअगरied क्रम PPC64 by Ananth N Mavinakayanahalli
  *		<ananth@in.ibm.com>
  */
-#include <linux/types.h>
-#include <linux/ptrace.h>
-#include <linux/percpu.h>
-#include <linux/module.h>
-#include <asm/probes.h>
-#include <asm/code-patching.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/probes.h>
+#समावेश <यंत्र/code-patching.h>
 
-#ifdef CONFIG_KPROBES
-#define  __ARCH_WANT_KPROBES_INSN_SLOT
+#अगर_घोषित CONFIG_KPROBES
+#घोषणा  __ARCH_WANT_KPROBES_INSN_SLOT
 
-struct pt_regs;
-struct kprobe;
+काष्ठा pt_regs;
+काष्ठा kprobe;
 
-typedef ppc_opcode_t kprobe_opcode_t;
+प्रकार ppc_opcode_t kprobe_opcode_t;
 
-extern kprobe_opcode_t optinsn_slot;
+बाह्य kprobe_opcode_t optinsn_slot;
 
-/* Optinsn template address */
-extern kprobe_opcode_t optprobe_template_entry[];
-extern kprobe_opcode_t optprobe_template_op_address[];
-extern kprobe_opcode_t optprobe_template_call_handler[];
-extern kprobe_opcode_t optprobe_template_insn[];
-extern kprobe_opcode_t optprobe_template_call_emulate[];
-extern kprobe_opcode_t optprobe_template_ret[];
-extern kprobe_opcode_t optprobe_template_end[];
+/* Optinsn ढाँचा address */
+बाह्य kprobe_opcode_t optprobe_ढाँचा_entry[];
+बाह्य kprobe_opcode_t optprobe_ढाँचा_op_address[];
+बाह्य kprobe_opcode_t optprobe_ढाँचा_call_handler[];
+बाह्य kprobe_opcode_t optprobe_ढाँचा_insn[];
+बाह्य kprobe_opcode_t optprobe_ढाँचा_call_emulate[];
+बाह्य kprobe_opcode_t optprobe_ढाँचा_ret[];
+बाह्य kprobe_opcode_t optprobe_ढाँचा_end[];
 
-/* Fixed instruction size for powerpc */
-#define MAX_INSN_SIZE		2
-#define MAX_OPTIMIZED_LENGTH	sizeof(kprobe_opcode_t)	/* 4 bytes */
-#define MAX_OPTINSN_SIZE	(optprobe_template_end - optprobe_template_entry)
-#define RELATIVEJUMP_SIZE	sizeof(kprobe_opcode_t)	/* 4 bytes */
+/* Fixed inकाष्ठाion size क्रम घातerpc */
+#घोषणा MAX_INSN_SIZE		2
+#घोषणा MAX_OPTIMIZED_LENGTH	माप(kprobe_opcode_t)	/* 4 bytes */
+#घोषणा MAX_OPTINSN_SIZE	(optprobe_ढाँचा_end - optprobe_ढाँचा_entry)
+#घोषणा RELATIVEJUMP_SIZE	माप(kprobe_opcode_t)	/* 4 bytes */
 
-#define flush_insn_slot(p)	do { } while (0)
-#define kretprobe_blacklist_size 0
+#घोषणा flush_insn_slot(p)	करो अणु पूर्ण जबतक (0)
+#घोषणा kretprobe_blacklist_size 0
 
-void kretprobe_trampoline(void);
-extern void arch_remove_kprobe(struct kprobe *p);
+व्योम kretprobe_trampoline(व्योम);
+बाह्य व्योम arch_हटाओ_kprobe(काष्ठा kprobe *p);
 
-/* Architecture specific copy of original instruction */
-struct arch_specific_insn {
-	/* copy of original instruction */
+/* Architecture specअगरic copy of original inकाष्ठाion */
+काष्ठा arch_specअगरic_insn अणु
+	/* copy of original inकाष्ठाion */
 	kprobe_opcode_t *insn;
 	/*
-	 * Set in kprobes code, initially to 0. If the instruction can be
-	 * eumulated, this is set to 1, if not, to -1.
+	 * Set in kprobes code, initially to 0. If the inकाष्ठाion can be
+	 * eumulated, this is set to 1, अगर not, to -1.
 	 */
-	int boostable;
-};
+	पूर्णांक boostable;
+पूर्ण;
 
-struct prev_kprobe {
-	struct kprobe *kp;
-	unsigned long status;
-	unsigned long saved_msr;
-};
+काष्ठा prev_kprobe अणु
+	काष्ठा kprobe *kp;
+	अचिन्हित दीर्घ status;
+	अचिन्हित दीर्घ saved_msr;
+पूर्ण;
 
 /* per-cpu kprobe control block */
-struct kprobe_ctlblk {
-	unsigned long kprobe_status;
-	unsigned long kprobe_saved_msr;
-	struct prev_kprobe prev_kprobe;
-};
+काष्ठा kprobe_ctlblk अणु
+	अचिन्हित दीर्घ kprobe_status;
+	अचिन्हित दीर्घ kprobe_saved_msr;
+	काष्ठा prev_kprobe prev_kprobe;
+पूर्ण;
 
-struct arch_optimized_insn {
+काष्ठा arch_optimized_insn अणु
 	kprobe_opcode_t copied_insn[1];
 	/* detour buffer */
 	kprobe_opcode_t *insn;
-};
+पूर्ण;
 
-extern int kprobe_exceptions_notify(struct notifier_block *self,
-					unsigned long val, void *data);
-extern int kprobe_fault_handler(struct pt_regs *regs, int trapnr);
-extern int kprobe_handler(struct pt_regs *regs);
-extern int kprobe_post_handler(struct pt_regs *regs);
-#else
-static inline int kprobe_handler(struct pt_regs *regs) { return 0; }
-static inline int kprobe_post_handler(struct pt_regs *regs) { return 0; }
-#endif /* CONFIG_KPROBES */
-#endif /* __KERNEL__ */
-#endif	/* _ASM_POWERPC_KPROBES_H */
+बाह्य पूर्णांक kprobe_exceptions_notअगरy(काष्ठा notअगरier_block *self,
+					अचिन्हित दीर्घ val, व्योम *data);
+बाह्य पूर्णांक kprobe_fault_handler(काष्ठा pt_regs *regs, पूर्णांक trapnr);
+बाह्य पूर्णांक kprobe_handler(काष्ठा pt_regs *regs);
+बाह्य पूर्णांक kprobe_post_handler(काष्ठा pt_regs *regs);
+#अन्यथा
+अटल अंतरभूत पूर्णांक kprobe_handler(काष्ठा pt_regs *regs) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक kprobe_post_handler(काष्ठा pt_regs *regs) अणु वापस 0; पूर्ण
+#पूर्ण_अगर /* CONFIG_KPROBES */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर	/* _ASM_POWERPC_KPROBES_H */

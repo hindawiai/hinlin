@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM gfs2
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM gfs2
 
-#if !defined(_TRACE_GFS2_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_GFS2_H
+#अगर !defined(_TRACE_GFS2_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_GFS2_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#include <linux/fs.h>
-#include <linux/buffer_head.h>
-#include <linux/dlmconstants.h>
-#include <linux/gfs2_ondisk.h>
-#include <linux/writeback.h>
-#include <linux/ktime.h>
-#include <linux/iomap.h>
-#include "incore.h"
-#include "glock.h"
-#include "rgrp.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/dlmस्थिरants.h>
+#समावेश <linux/gfs2_ondisk.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/iomap.h>
+#समावेश "incore.h"
+#समावेश "glock.h"
+#समावेश "rgrp.h"
 
-#define dlm_state_name(nn) { DLM_LOCK_##nn, #nn }
-#define glock_trace_name(x) __print_symbolic(x,		\
+#घोषणा dlm_state_name(nn) अणु DLM_LOCK_##nn, #nn पूर्ण
+#घोषणा glock_trace_name(x) __prपूर्णांक_symbolic(x,		\
 			    dlm_state_name(IV),		\
 			    dlm_state_name(NL),		\
 			    dlm_state_name(CR),		\
@@ -28,53 +29,53 @@
 			    dlm_state_name(PW),		\
 			    dlm_state_name(EX))
 
-#define block_state_name(x) __print_symbolic(x,			\
-			    { GFS2_BLKST_FREE, "free" },	\
-			    { GFS2_BLKST_USED, "used" },	\
-			    { GFS2_BLKST_DINODE, "dinode" },	\
-			    { GFS2_BLKST_UNLINKED, "unlinked" })
+#घोषणा block_state_name(x) __prपूर्णांक_symbolic(x,			\
+			    अणु GFS2_BLKST_FREE, "free" पूर्ण,	\
+			    अणु GFS2_BLKST_USED, "used" पूर्ण,	\
+			    अणु GFS2_BLKST_DINODE, "dinode" पूर्ण,	\
+			    अणु GFS2_BLKST_UNLINKED, "unlinked" पूर्ण)
 
-#define TRACE_RS_DELETE  0
-#define TRACE_RS_TREEDEL 1
-#define TRACE_RS_INSERT  2
-#define TRACE_RS_CLAIM   3
+#घोषणा TRACE_RS_DELETE  0
+#घोषणा TRACE_RS_TREEDEL 1
+#घोषणा TRACE_RS_INSERT  2
+#घोषणा TRACE_RS_CLAIM   3
 
-#define rs_func_name(x) __print_symbolic(x,	\
-					 { 0, "del " },	\
-					 { 1, "tdel" },	\
-					 { 2, "ins " },	\
-					 { 3, "clm " })
+#घोषणा rs_func_name(x) __prपूर्णांक_symbolic(x,	\
+					 अणु 0, "del " पूर्ण,	\
+					 अणु 1, "tdel" पूर्ण,	\
+					 अणु 2, "ins " पूर्ण,	\
+					 अणु 3, "clm " पूर्ण)
 
-#define show_glock_flags(flags) __print_flags(flags, "",	\
-	{(1UL << GLF_LOCK),			"l" },		\
-	{(1UL << GLF_DEMOTE),			"D" },		\
-	{(1UL << GLF_PENDING_DEMOTE),		"d" },		\
-	{(1UL << GLF_DEMOTE_IN_PROGRESS),	"p" },		\
-	{(1UL << GLF_DIRTY),			"y" },		\
-	{(1UL << GLF_LFLUSH),			"f" },		\
-	{(1UL << GLF_INVALIDATE_IN_PROGRESS),	"i" },		\
-	{(1UL << GLF_REPLY_PENDING),		"r" },		\
-	{(1UL << GLF_INITIAL),			"I" },		\
-	{(1UL << GLF_FROZEN),			"F" },		\
-	{(1UL << GLF_LRU),			"L" },		\
-	{(1UL << GLF_OBJECT),			"o" },		\
-	{(1UL << GLF_BLOCKING),			"b" })
+#घोषणा show_glock_flags(flags) __prपूर्णांक_flags(flags, "",	\
+	अणु(1UL << GLF_LOCK),			"l" पूर्ण,		\
+	अणु(1UL << GLF_DEMOTE),			"D" पूर्ण,		\
+	अणु(1UL << GLF_PENDING_DEMOTE),		"d" पूर्ण,		\
+	अणु(1UL << GLF_DEMOTE_IN_PROGRESS),	"p" पूर्ण,		\
+	अणु(1UL << GLF_सूचीTY),			"y" पूर्ण,		\
+	अणु(1UL << GLF_LFLUSH),			"f" पूर्ण,		\
+	अणु(1UL << GLF_INVALIDATE_IN_PROGRESS),	"i" पूर्ण,		\
+	अणु(1UL << GLF_REPLY_PENDING),		"r" पूर्ण,		\
+	अणु(1UL << GLF_INITIAL),			"I" पूर्ण,		\
+	अणु(1UL << GLF_FROZEN),			"F" पूर्ण,		\
+	अणु(1UL << GLF_LRU),			"L" पूर्ण,		\
+	अणु(1UL << GLF_OBJECT),			"o" पूर्ण,		\
+	अणु(1UL << GLF_BLOCKING),			"b" पूर्ण)
 
-#ifndef NUMPTY
-#define NUMPTY
-static inline u8 glock_trace_state(unsigned int state)
-{
-	switch(state) {
-	case LM_ST_SHARED:
-		return DLM_LOCK_PR;
-	case LM_ST_DEFERRED:
-		return DLM_LOCK_CW;
-	case LM_ST_EXCLUSIVE:
-		return DLM_LOCK_EX;
-	}
-	return DLM_LOCK_NL;
-}
-#endif
+#अगर_अघोषित NUMPTY
+#घोषणा NUMPTY
+अटल अंतरभूत u8 glock_trace_state(अचिन्हित पूर्णांक state)
+अणु
+	चयन(state) अणु
+	हाल LM_ST_SHARED:
+		वापस DLM_LOCK_PR;
+	हाल LM_ST_DEFERRED:
+		वापस DLM_LOCK_CW;
+	हाल LM_ST_EXCLUSIVE:
+		वापस DLM_LOCK_EX;
+	पूर्ण
+	वापस DLM_LOCK_NL;
+पूर्ण
+#पूर्ण_अगर
 
 /* Section 1 - Locking
  *
@@ -89,7 +90,7 @@ static inline u8 glock_trace_state(unsigned int state)
 /* General glock state change (DLM lock request completes) */
 TRACE_EVENT(gfs2_glock_state_change,
 
-	TP_PROTO(const struct gfs2_glock *gl, unsigned int new_state),
+	TP_PROTO(स्थिर काष्ठा gfs2_glock *gl, अचिन्हित पूर्णांक new_state),
 
 	TP_ARGS(gl, new_state),
 
@@ -101,7 +102,7 @@ TRACE_EVENT(gfs2_glock_state_change,
 		__field(	u8,	new_state		)
 		__field(	u8,	dmt_state		)
 		__field(	u8,	tgt_state		)
-		__field(	unsigned long,	flags		)
+		__field(	अचिन्हित दीर्घ,	flags		)
 	),
 
 	TP_fast_assign(
@@ -115,9 +116,9 @@ TRACE_EVENT(gfs2_glock_state_change,
 		__entry->flags		= gl->gl_flags | (gl->gl_object ? (1UL<<GLF_OBJECT) : 0);
 	),
 
-	TP_printk("%u,%u glock %d:%lld state %s to %s tgt:%s dmt:%s flags:%s",
+	TP_prपूर्णांकk("%u,%u glock %d:%lld state %s to %s tgt:%s dmt:%s flags:%s",
 		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->gltype,
-		 (unsigned long long)__entry->glnum,
+		 (अचिन्हित दीर्घ दीर्घ)__entry->glnum,
 		  glock_trace_name(__entry->cur_state),
 		  glock_trace_name(__entry->new_state),
 		  glock_trace_name(__entry->tgt_state),
@@ -128,7 +129,7 @@ TRACE_EVENT(gfs2_glock_state_change,
 /* State change -> unlocked, glock is being deallocated */
 TRACE_EVENT(gfs2_glock_put,
 
-	TP_PROTO(const struct gfs2_glock *gl),
+	TP_PROTO(स्थिर काष्ठा gfs2_glock *gl),
 
 	TP_ARGS(gl),
 
@@ -137,7 +138,7 @@ TRACE_EVENT(gfs2_glock_put,
 		__field(	u64,	glnum			)
 		__field(	u32,	gltype			)
 		__field(	u8,	cur_state		)
-		__field(	unsigned long,	flags		)
+		__field(	अचिन्हित दीर्घ,	flags		)
 	),
 
 	TP_fast_assign(
@@ -148,9 +149,9 @@ TRACE_EVENT(gfs2_glock_put,
 		__entry->flags		= gl->gl_flags  | (gl->gl_object ? (1UL<<GLF_OBJECT) : 0);
 	),
 
-	TP_printk("%u,%u glock %d:%lld state %s => %s flags:%s",
+	TP_prपूर्णांकk("%u,%u glock %d:%lld state %s => %s flags:%s",
 		  MAJOR(__entry->dev), MINOR(__entry->dev),
-                  __entry->gltype, (unsigned long long)__entry->glnum,
+                  __entry->gltype, (अचिन्हित दीर्घ दीर्घ)__entry->glnum,
                   glock_trace_name(__entry->cur_state),
 		  glock_trace_name(DLM_LOCK_IV),
 		  show_glock_flags(__entry->flags))
@@ -160,7 +161,7 @@ TRACE_EVENT(gfs2_glock_put,
 /* Callback (local or remote) requesting lock demotion */
 TRACE_EVENT(gfs2_demote_rq,
 
-	TP_PROTO(const struct gfs2_glock *gl, bool remote),
+	TP_PROTO(स्थिर काष्ठा gfs2_glock *gl, bool remote),
 
 	TP_ARGS(gl, remote),
 
@@ -170,7 +171,7 @@ TRACE_EVENT(gfs2_demote_rq,
 		__field(	u32,	gltype			)
 		__field(	u8,	cur_state		)
 		__field(	u8,	dmt_state		)
-		__field(	unsigned long,	flags		)
+		__field(	अचिन्हित दीर्घ,	flags		)
 		__field(	bool,	remote			)
 	),
 
@@ -184,9 +185,9 @@ TRACE_EVENT(gfs2_demote_rq,
 		__entry->remote		= remote;
 	),
 
-	TP_printk("%u,%u glock %d:%lld demote %s to %s flags:%s %s",
+	TP_prपूर्णांकk("%u,%u glock %d:%lld demote %s to %s flags:%s %s",
 		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->gltype,
-		  (unsigned long long)__entry->glnum,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->glnum,
                   glock_trace_name(__entry->cur_state),
                   glock_trace_name(__entry->dmt_state),
 		  show_glock_flags(__entry->flags),
@@ -197,7 +198,7 @@ TRACE_EVENT(gfs2_demote_rq,
 /* Promotion/grant of a glock */
 TRACE_EVENT(gfs2_promote,
 
-	TP_PROTO(const struct gfs2_holder *gh, int first),
+	TP_PROTO(स्थिर काष्ठा gfs2_holder *gh, पूर्णांक first),
 
 	TP_ARGS(gh, first),
 
@@ -205,7 +206,7 @@ TRACE_EVENT(gfs2_promote,
 		__field(        dev_t,  dev                     )
 		__field(	u64,	glnum			)
 		__field(	u32,	gltype			)
-		__field(	int,	first			)
+		__field(	पूर्णांक,	first			)
 		__field(	u8,	state			)
 	),
 
@@ -217,9 +218,9 @@ TRACE_EVENT(gfs2_promote,
 		__entry->state	= glock_trace_state(gh->gh_state);
 	),
 
-	TP_printk("%u,%u glock %u:%llu promote %s %s",
+	TP_prपूर्णांकk("%u,%u glock %u:%llu promote %s %s",
 		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->gltype,
-		  (unsigned long long)__entry->glnum,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->glnum,
 		  __entry->first ? "first": "other",
 		  glock_trace_name(__entry->state))
 );
@@ -227,7 +228,7 @@ TRACE_EVENT(gfs2_promote,
 /* Queue/dequeue a lock request */
 TRACE_EVENT(gfs2_glock_queue,
 
-	TP_PROTO(const struct gfs2_holder *gh, int queue),
+	TP_PROTO(स्थिर काष्ठा gfs2_holder *gh, पूर्णांक queue),
 
 	TP_ARGS(gh, queue),
 
@@ -235,7 +236,7 @@ TRACE_EVENT(gfs2_glock_queue,
 		__field(        dev_t,  dev                     )
 		__field(	u64,	glnum			)
 		__field(	u32,	gltype			)
-		__field(	int,	queue			)
+		__field(	पूर्णांक,	queue			)
 		__field(	u8,	state			)
 	),
 
@@ -247,27 +248,27 @@ TRACE_EVENT(gfs2_glock_queue,
 		__entry->state	= glock_trace_state(gh->gh_state);
 	),
 
-	TP_printk("%u,%u glock %u:%llu %squeue %s",
+	TP_prपूर्णांकk("%u,%u glock %u:%llu %squeue %s",
 		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->gltype,
-		  (unsigned long long)__entry->glnum,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->glnum,
 		  __entry->queue ? "" : "de",
 		  glock_trace_name(__entry->state))
 );
 
 /* DLM sends a reply to GFS2 */
-TRACE_EVENT(gfs2_glock_lock_time,
+TRACE_EVENT(gfs2_glock_lock_समय,
 
-	TP_PROTO(const struct gfs2_glock *gl, s64 tdiff),
+	TP_PROTO(स्थिर काष्ठा gfs2_glock *gl, s64 tdअगरf),
 
-	TP_ARGS(gl, tdiff),
+	TP_ARGS(gl, tdअगरf),
 
 	TP_STRUCT__entry(
 		__field(	dev_t,	dev		)
 		__field(	u64,	glnum		)
 		__field(	u32,	gltype		)
-		__field(	int,	status		)
-		__field(	char,	flags		)
-		__field(	s64,	tdiff		)
+		__field(	पूर्णांक,	status		)
+		__field(	अक्षर,	flags		)
+		__field(	s64,	tdअगरf		)
 		__field(	u64,	srtt		)
 		__field(	u64,	srttvar		)
 		__field(	u64,	srttb		)
@@ -284,7 +285,7 @@ TRACE_EVENT(gfs2_glock_lock_time,
 		__entry->gltype         = gl->gl_name.ln_type;
 		__entry->status		= gl->gl_lksb.sb_status;
 		__entry->flags		= gl->gl_lksb.sb_flags;
-		__entry->tdiff		= tdiff;
+		__entry->tdअगरf		= tdअगरf;
 		__entry->srtt		= gl->gl_stats.stats[GFS2_LKS_SRTT];
 		__entry->srttvar	= gl->gl_stats.stats[GFS2_LKS_SRTTVAR];
 		__entry->srttb		= gl->gl_stats.stats[GFS2_LKS_SRTTB];
@@ -295,39 +296,39 @@ TRACE_EVENT(gfs2_glock_lock_time,
 		__entry->qcount		= gl->gl_stats.stats[GFS2_LKS_QCOUNT];
 	),
 
-	TP_printk("%u,%u glock %d:%lld status:%d flags:%02x tdiff:%lld srtt:%lld/%lld srttb:%lld/%lld sirt:%lld/%lld dcnt:%lld qcnt:%lld",
+	TP_prपूर्णांकk("%u,%u glock %d:%lld status:%d flags:%02x tdiff:%lld srtt:%lld/%lld srttb:%lld/%lld sirt:%lld/%lld dcnt:%lld qcnt:%lld",
 		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->gltype,
-		  (unsigned long long)__entry->glnum,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->glnum,
 		  __entry->status, __entry->flags,
-		  (long long)__entry->tdiff,
-		  (long long)__entry->srtt,
-		  (long long)__entry->srttvar,
-		  (long long)__entry->srttb,
-		  (long long)__entry->srttvarb,
-		  (long long)__entry->sirt,
-		  (long long)__entry->sirtvar,
-		  (long long)__entry->dcount,
-		  (long long)__entry->qcount)
+		  (दीर्घ दीर्घ)__entry->tdअगरf,
+		  (दीर्घ दीर्घ)__entry->srtt,
+		  (दीर्घ दीर्घ)__entry->srttvar,
+		  (दीर्घ दीर्घ)__entry->srttb,
+		  (दीर्घ दीर्घ)__entry->srttvarb,
+		  (दीर्घ दीर्घ)__entry->sirt,
+		  (दीर्घ दीर्घ)__entry->sirtvar,
+		  (दीर्घ दीर्घ)__entry->dcount,
+		  (दीर्घ दीर्घ)__entry->qcount)
 );
 
 /* Section 2 - Log/journal
  *
  * Objectives:
- * Latency: Log flush time
+ * Latency: Log flush समय
  * Correctness: pin/unpin vs. disk I/O ordering
- * Performance: Log usage stats
+ * Perक्रमmance: Log usage stats
  */
 
 /* Pin/unpin a block in the log */
 TRACE_EVENT(gfs2_pin,
 
-	TP_PROTO(const struct gfs2_bufdata *bd, int pin),
+	TP_PROTO(स्थिर काष्ठा gfs2_bufdata *bd, पूर्णांक pin),
 
 	TP_ARGS(bd, pin),
 
 	TP_STRUCT__entry(
 		__field(        dev_t,  dev                     )
-		__field(	int,	pin			)
+		__field(	पूर्णांक,	pin			)
 		__field(	u32,	len			)
 		__field(	sector_t,	block		)
 		__field(	u64,	ino			)
@@ -341,24 +342,24 @@ TRACE_EVENT(gfs2_pin,
 		__entry->ino		= bd->bd_gl->gl_name.ln_number;
 	),
 
-	TP_printk("%u,%u log %s %llu/%lu inode %llu",
+	TP_prपूर्णांकk("%u,%u log %s %llu/%lu inode %llu",
 		  MAJOR(__entry->dev), MINOR(__entry->dev),
 		  __entry->pin ? "pin" : "unpin",
-		  (unsigned long long)__entry->block,
-		  (unsigned long)__entry->len,
-		  (unsigned long long)__entry->ino)
+		  (अचिन्हित दीर्घ दीर्घ)__entry->block,
+		  (अचिन्हित दीर्घ)__entry->len,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->ino)
 );
 
 /* Flushing the log */
 TRACE_EVENT(gfs2_log_flush,
 
-	TP_PROTO(const struct gfs2_sbd *sdp, int start, u32 flags),
+	TP_PROTO(स्थिर काष्ठा gfs2_sbd *sdp, पूर्णांक start, u32 flags),
 
 	TP_ARGS(sdp, start, flags),
 
 	TP_STRUCT__entry(
 		__field(        dev_t,  dev                     )
-		__field(	int,	start			)
+		__field(	पूर्णांक,	start			)
 		__field(	u64,	log_seq			)
 		__field(	u32,	flags			)
 	),
@@ -370,88 +371,88 @@ TRACE_EVENT(gfs2_log_flush,
 		__entry->flags		= flags;
 	),
 
-	TP_printk("%u,%u log flush %s %llu %llx",
+	TP_prपूर्णांकk("%u,%u log flush %s %llu %llx",
 		  MAJOR(__entry->dev), MINOR(__entry->dev),
 		  __entry->start ? "start" : "end",
-		  (unsigned long long)__entry->log_seq,
-		  (unsigned long long)__entry->flags)
+		  (अचिन्हित दीर्घ दीर्घ)__entry->log_seq,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->flags)
 );
 
 /* Reserving/releasing blocks in the log */
 TRACE_EVENT(gfs2_log_blocks,
 
-	TP_PROTO(const struct gfs2_sbd *sdp, int blocks),
+	TP_PROTO(स्थिर काष्ठा gfs2_sbd *sdp, पूर्णांक blocks),
 
 	TP_ARGS(sdp, blocks),
 
 	TP_STRUCT__entry(
 		__field(        dev_t,  dev                     )
-		__field(	int,	blocks			)
-		__field(	int,	blks_free		)
+		__field(	पूर्णांक,	blocks			)
+		__field(	पूर्णांक,	blks_मुक्त		)
 	),
 
 	TP_fast_assign(
 		__entry->dev		= sdp->sd_vfs->s_dev;
 		__entry->blocks		= blocks;
-		__entry->blks_free	= atomic_read(&sdp->sd_log_blks_free);
+		__entry->blks_मुक्त	= atomic_पढ़ो(&sdp->sd_log_blks_मुक्त);
 	),
 
-	TP_printk("%u,%u log reserve %d %d", MAJOR(__entry->dev),
-		  MINOR(__entry->dev), __entry->blocks, __entry->blks_free)
+	TP_prपूर्णांकk("%u,%u log reserve %d %d", MAJOR(__entry->dev),
+		  MINOR(__entry->dev), __entry->blocks, __entry->blks_मुक्त)
 );
 
 /* Writing back the AIL */
 TRACE_EVENT(gfs2_ail_flush,
 
-	TP_PROTO(const struct gfs2_sbd *sdp, const struct writeback_control *wbc, int start),
+	TP_PROTO(स्थिर काष्ठा gfs2_sbd *sdp, स्थिर काष्ठा ग_लिखोback_control *wbc, पूर्णांक start),
 
 	TP_ARGS(sdp, wbc, start),
 
 	TP_STRUCT__entry(
 		__field(	dev_t,	dev			)
-		__field(	int, start			)
-		__field(	int, sync_mode			)
-		__field(	long, nr_to_write		)
+		__field(	पूर्णांक, start			)
+		__field(	पूर्णांक, sync_mode			)
+		__field(	दीर्घ, nr_to_ग_लिखो		)
 	),
 
 	TP_fast_assign(
 		__entry->dev		= sdp->sd_vfs->s_dev;
 		__entry->start		= start;
 		__entry->sync_mode	= wbc->sync_mode;
-		__entry->nr_to_write	= wbc->nr_to_write;
+		__entry->nr_to_ग_लिखो	= wbc->nr_to_ग_लिखो;
 	),
 
-	TP_printk("%u,%u ail flush %s %s %ld", MAJOR(__entry->dev),
+	TP_prपूर्णांकk("%u,%u ail flush %s %s %ld", MAJOR(__entry->dev),
 		  MINOR(__entry->dev), __entry->start ? "start" : "end",
 		  __entry->sync_mode == WB_SYNC_ALL ? "all" : "none",
-		  __entry->nr_to_write)
+		  __entry->nr_to_ग_लिखो)
 );
 
 /* Section 3 - bmap
  *
  * Objectives:
- * Latency: Bmap request time
- * Performance: Block allocator tracing
+ * Latency: Bmap request समय
+ * Perक्रमmance: Block allocator tracing
  * Correctness: Test of disard generation vs. blocks allocated
  */
 
 /* Map an extent of blocks, possibly a new allocation */
 TRACE_EVENT(gfs2_bmap,
 
-	TP_PROTO(const struct gfs2_inode *ip, const struct buffer_head *bh,
-		sector_t lblock, int create, int errno),
+	TP_PROTO(स्थिर काष्ठा gfs2_inode *ip, स्थिर काष्ठा buffer_head *bh,
+		sector_t lblock, पूर्णांक create, पूर्णांक त्रुटि_सं),
 
-	TP_ARGS(ip, bh, lblock, create, errno),
+	TP_ARGS(ip, bh, lblock, create, त्रुटि_सं),
 
 	TP_STRUCT__entry(
 		__field(        dev_t,  dev                     )
 		__field(	sector_t, lblock		)
 		__field(	sector_t, pblock		)
 		__field(	u64,	inum			)
-		__field(	unsigned long, state		)
+		__field(	अचिन्हित दीर्घ, state		)
 		__field(	u32,	len			)
-		__field(	int,	create			)
-		__field(	int,	errno			)
+		__field(	पूर्णांक,	create			)
+		__field(	पूर्णांक,	त्रुटि_सं			)
 	),
 
 	TP_fast_assign(
@@ -462,22 +463,22 @@ TRACE_EVENT(gfs2_bmap,
 		__entry->state		= bh->b_state;
 		__entry->len		= bh->b_size;
 		__entry->create		= create;
-		__entry->errno		= errno;
+		__entry->त्रुटि_सं		= त्रुटि_सं;
 	),
 
-	TP_printk("%u,%u bmap %llu map %llu/%lu to %llu flags:%08lx %s %d",
+	TP_prपूर्णांकk("%u,%u bmap %llu map %llu/%lu to %llu flags:%08lx %s %d",
 		  MAJOR(__entry->dev), MINOR(__entry->dev),
-		  (unsigned long long)__entry->inum,
-		  (unsigned long long)__entry->lblock,
-		  (unsigned long)__entry->len,
-		  (unsigned long long)__entry->pblock,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->inum,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->lblock,
+		  (अचिन्हित दीर्घ)__entry->len,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->pblock,
 		  __entry->state, __entry->create ? "create " : "nocreate",
-		  __entry->errno)
+		  __entry->त्रुटि_सं)
 );
 
 TRACE_EVENT(gfs2_iomap_start,
 
-	TP_PROTO(const struct gfs2_inode *ip, loff_t pos, ssize_t length,
+	TP_PROTO(स्थिर काष्ठा gfs2_inode *ip, loff_t pos, sमाप_प्रकार length,
 		 u16 flags),
 
 	TP_ARGS(ip, pos, length, flags),
@@ -486,7 +487,7 @@ TRACE_EVENT(gfs2_iomap_start,
 		__field(        dev_t,  dev                     )
 		__field(	u64,	inum			)
 		__field(	loff_t, pos			)
-		__field(	ssize_t, length			)
+		__field(	sमाप_प्रकार, length			)
 		__field(	u16,	flags			)
 	),
 
@@ -498,16 +499,16 @@ TRACE_EVENT(gfs2_iomap_start,
 		__entry->flags		= flags;
 	),
 
-	TP_printk("%u,%u bmap %llu iomap start %llu/%lu flags:%08x",
+	TP_prपूर्णांकk("%u,%u bmap %llu iomap start %llu/%lu flags:%08x",
 		  MAJOR(__entry->dev), MINOR(__entry->dev),
-		  (unsigned long long)__entry->inum,
-		  (unsigned long long)__entry->pos,
-		  (unsigned long)__entry->length, (u16)__entry->flags)
+		  (अचिन्हित दीर्घ दीर्घ)__entry->inum,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->pos,
+		  (अचिन्हित दीर्घ)__entry->length, (u16)__entry->flags)
 );
 
 TRACE_EVENT(gfs2_iomap_end,
 
-	TP_PROTO(const struct gfs2_inode *ip, struct iomap *iomap, int ret),
+	TP_PROTO(स्थिर काष्ठा gfs2_inode *ip, काष्ठा iomap *iomap, पूर्णांक ret),
 
 	TP_ARGS(ip, iomap, ret),
 
@@ -515,11 +516,11 @@ TRACE_EVENT(gfs2_iomap_end,
 		__field(        dev_t,  dev                     )
 		__field(	u64,	inum			)
 		__field(	loff_t, offset			)
-		__field(	ssize_t, length			)
+		__field(	sमाप_प्रकार, length			)
 		__field(	sector_t, pblock		)
 		__field(	u16,	flags			)
 		__field(	u16,	type			)
-		__field(	int,	ret			)
+		__field(	पूर्णांक,	ret			)
 	),
 
 	TP_fast_assign(
@@ -527,28 +528,28 @@ TRACE_EVENT(gfs2_iomap_end,
 		__entry->inum		= ip->i_no_addr;
 		__entry->offset		= iomap->offset;
 		__entry->length		= iomap->length;
-		__entry->pblock		= iomap->addr == IOMAP_NULL_ADDR ? 0 :
+		__entry->pblock		= iomap->addr == IOMAP_शून्य_ADDR ? 0 :
 					 (iomap->addr >> ip->i_inode.i_blkbits);
 		__entry->flags		= iomap->flags;
 		__entry->type		= iomap->type;
 		__entry->ret		= ret;
 	),
 
-	TP_printk("%u,%u bmap %llu iomap end %llu/%lu to %llu ty:%d flags:%08x rc:%d",
+	TP_prपूर्णांकk("%u,%u bmap %llu iomap end %llu/%lu to %llu ty:%d flags:%08x rc:%d",
 		  MAJOR(__entry->dev), MINOR(__entry->dev),
-		  (unsigned long long)__entry->inum,
-		  (unsigned long long)__entry->offset,
-		  (unsigned long)__entry->length,
-		  (long long)__entry->pblock,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->inum,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->offset,
+		  (अचिन्हित दीर्घ)__entry->length,
+		  (दीर्घ दीर्घ)__entry->pblock,
 		  (u16)__entry->type,
 		  (u16)__entry->flags, __entry->ret)
 );
 
-/* Keep track of blocks as they are allocated/freed */
+/* Keep track of blocks as they are allocated/मुक्तd */
 TRACE_EVENT(gfs2_block_alloc,
 
-	TP_PROTO(const struct gfs2_inode *ip, struct gfs2_rgrpd *rgd,
-		 u64 block, unsigned len, u8 block_state),
+	TP_PROTO(स्थिर काष्ठा gfs2_inode *ip, काष्ठा gfs2_rgrpd *rgd,
+		 u64 block, अचिन्हित len, u8 block_state),
 
 	TP_ARGS(ip, rgd, block, len, block_state),
 
@@ -559,7 +560,7 @@ TRACE_EVENT(gfs2_block_alloc,
 		__field(	u32,	len			)
 		__field(	u8,	block_state		)
 		__field(        u64,	rd_addr			)
-		__field(        u32,	rd_free_clone		)
+		__field(        u32,	rd_मुक्त_clone		)
 		__field(	u32,	rd_requested		)
 		__field(	u32,	rd_reserved		)
 	),
@@ -571,34 +572,34 @@ TRACE_EVENT(gfs2_block_alloc,
 		__entry->len		= len;
 		__entry->block_state	= block_state;
 		__entry->rd_addr	= rgd->rd_addr;
-		__entry->rd_free_clone	= rgd->rd_free_clone;
+		__entry->rd_मुक्त_clone	= rgd->rd_मुक्त_clone;
 		__entry->rd_requested	= rgd->rd_requested;
 		__entry->rd_reserved	= rgd->rd_reserved;
 	),
 
-	TP_printk("%u,%u bmap %llu alloc %llu/%lu %s rg:%llu rf:%u rq:%u rr:%u",
+	TP_prपूर्णांकk("%u,%u bmap %llu alloc %llu/%lu %s rg:%llu rf:%u rq:%u rr:%u",
 		  MAJOR(__entry->dev), MINOR(__entry->dev),
-		  (unsigned long long)__entry->inum,
-		  (unsigned long long)__entry->start,
-		  (unsigned long)__entry->len,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->inum,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->start,
+		  (अचिन्हित दीर्घ)__entry->len,
 		  block_state_name(__entry->block_state),
-		  (unsigned long long)__entry->rd_addr,
-		  __entry->rd_free_clone,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->rd_addr,
+		  __entry->rd_मुक्त_clone,
 		  __entry->rd_requested,
 		  __entry->rd_reserved)
 );
 
-/* Keep track of multi-block reservations as they are allocated/freed */
+/* Keep track of multi-block reservations as they are allocated/मुक्तd */
 TRACE_EVENT(gfs2_rs,
 
-	TP_PROTO(const struct gfs2_blkreserv *rs, u8 func),
+	TP_PROTO(स्थिर काष्ठा gfs2_blkreserv *rs, u8 func),
 
 	TP_ARGS(rs, func),
 
 	TP_STRUCT__entry(
 		__field(        dev_t,  dev                     )
 		__field(	u64,	rd_addr			)
-		__field(	u32,	rd_free_clone		)
+		__field(	u32,	rd_मुक्त_clone		)
 		__field(	u32,	rd_requested		)
 		__field(	u32,	rd_reserved		)
 		__field(	u64,	inum			)
@@ -611,10 +612,10 @@ TRACE_EVENT(gfs2_rs,
 	TP_fast_assign(
 		__entry->dev		= rs->rs_rgd->rd_sbd->sd_vfs->s_dev;
 		__entry->rd_addr	= rs->rs_rgd->rd_addr;
-		__entry->rd_free_clone	= rs->rs_rgd->rd_free_clone;
+		__entry->rd_मुक्त_clone	= rs->rs_rgd->rd_मुक्त_clone;
 		__entry->rd_requested	= rs->rs_rgd->rd_requested;
 		__entry->rd_reserved	= rs->rs_rgd->rd_reserved;
-		__entry->inum		= container_of(rs, struct gfs2_inode,
+		__entry->inum		= container_of(rs, काष्ठा gfs2_inode,
 						       i_res)->i_no_addr;
 		__entry->start		= rs->rs_start;
 		__entry->requested	= rs->rs_requested;
@@ -622,12 +623,12 @@ TRACE_EVENT(gfs2_rs,
 		__entry->func		= func;
 	),
 
-	TP_printk("%u,%u bmap %llu resrv %llu rg:%llu rf:%u rq:%u rr:%u %s q:%u r:%u",
+	TP_prपूर्णांकk("%u,%u bmap %llu resrv %llu rg:%llu rf:%u rq:%u rr:%u %s q:%u r:%u",
 		  MAJOR(__entry->dev), MINOR(__entry->dev),
-		  (unsigned long long)__entry->inum,
-		  (unsigned long long)__entry->start,
-		  (unsigned long long)__entry->rd_addr,
-		  __entry->rd_free_clone,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->inum,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->start,
+		  (अचिन्हित दीर्घ दीर्घ)__entry->rd_addr,
+		  __entry->rd_मुक्त_clone,
 		  __entry->rd_requested,
 		  __entry->rd_reserved,
 		  rs_func_name(__entry->func),
@@ -635,11 +636,11 @@ TRACE_EVENT(gfs2_rs,
 		  __entry->reserved)
 );
 
-#endif /* _TRACE_GFS2_H */
+#पूर्ण_अगर /* _TRACE_GFS2_H */
 
 /* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#define TRACE_INCLUDE_FILE trace_gfs2
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#घोषणा TRACE_INCLUDE_खाता trace_gfs2
+#समावेश <trace/define_trace.h>
 

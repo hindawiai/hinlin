@@ -1,245 +1,246 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * platform_device probing code for ARM performance counters.
+ * platक्रमm_device probing code क्रम ARM perक्रमmance counters.
  *
  * Copyright (C) 2009 picoChip Designs, Ltd., Jamie Iles
  * Copyright (C) 2010 ARM Ltd., Will Deacon <will.deacon@arm.com>
  */
-#define pr_fmt(fmt) "hw perfevents: " fmt
-#define dev_fmt pr_fmt
+#घोषणा pr_fmt(fmt) "hw perfevents: " fmt
+#घोषणा dev_fmt pr_fmt
 
-#include <linux/bug.h>
-#include <linux/cpumask.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/irq.h>
-#include <linux/irqdesc.h>
-#include <linux/kconfig.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/percpu.h>
-#include <linux/perf/arm_pmu.h>
-#include <linux/platform_device.h>
-#include <linux/printk.h>
-#include <linux/smp.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqdesc.h>
+#समावेश <linux/kconfig.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/perf/arm_pmu.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/smp.h>
 
-static int probe_current_pmu(struct arm_pmu *pmu,
-			     const struct pmu_probe_info *info)
-{
-	int cpu = get_cpu();
-	unsigned int cpuid = read_cpuid_id();
-	int ret = -ENODEV;
+अटल पूर्णांक probe_current_pmu(काष्ठा arm_pmu *pmu,
+			     स्थिर काष्ठा pmu_probe_info *info)
+अणु
+	पूर्णांक cpu = get_cpu();
+	अचिन्हित पूर्णांक cpuid = पढ़ो_cpuid_id();
+	पूर्णांक ret = -ENODEV;
 
 	pr_info("probing PMU on CPU %d\n", cpu);
 
-	for (; info->init != NULL; info++) {
-		if ((cpuid & info->mask) != info->cpuid)
-			continue;
+	क्रम (; info->init != शून्य; info++) अणु
+		अगर ((cpuid & info->mask) != info->cpuid)
+			जारी;
 		ret = info->init(pmu);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	put_cpu();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pmu_parse_percpu_irq(struct arm_pmu *pmu, int irq)
-{
-	int cpu, ret;
-	struct pmu_hw_events __percpu *hw_events = pmu->hw_events;
+अटल पूर्णांक pmu_parse_percpu_irq(काष्ठा arm_pmu *pmu, पूर्णांक irq)
+अणु
+	पूर्णांक cpu, ret;
+	काष्ठा pmu_hw_events __percpu *hw_events = pmu->hw_events;
 
 	ret = irq_get_percpu_devid_partition(irq, &pmu->supported_cpus);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for_each_cpu(cpu, &pmu->supported_cpus)
+	क्रम_each_cpu(cpu, &pmu->supported_cpus)
 		per_cpu(hw_events->irq, cpu) = irq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool pmu_has_irq_affinity(struct device_node *node)
-{
-	return !!of_find_property(node, "interrupt-affinity", NULL);
-}
+अटल bool pmu_has_irq_affinity(काष्ठा device_node *node)
+अणु
+	वापस !!of_find_property(node, "interrupt-affinity", शून्य);
+पूर्ण
 
-static int pmu_parse_irq_affinity(struct device *dev, int i)
-{
-	struct device_node *dn;
-	int cpu;
+अटल पूर्णांक pmu_parse_irq_affinity(काष्ठा device *dev, पूर्णांक i)
+अणु
+	काष्ठा device_node *dn;
+	पूर्णांक cpu;
 
 	/*
-	 * If we don't have an interrupt-affinity property, we guess irq
+	 * If we करोn't have an पूर्णांकerrupt-affinity property, we guess irq
 	 * affinity matches our logical CPU order, as we used to assume.
 	 * This is fragile, so we'll warn in pmu_parse_irqs().
 	 */
-	if (!pmu_has_irq_affinity(dev->of_node))
-		return i;
+	अगर (!pmu_has_irq_affinity(dev->of_node))
+		वापस i;
 
 	dn = of_parse_phandle(dev->of_node, "interrupt-affinity", i);
-	if (!dn) {
+	अगर (!dn) अणु
 		dev_warn(dev, "failed to parse interrupt-affinity[%d]\n", i);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	cpu = of_cpu_node_to_id(dn);
-	if (cpu < 0) {
+	अगर (cpu < 0) अणु
 		dev_warn(dev, "failed to find logical CPU for %pOFn\n", dn);
 		cpu = nr_cpu_ids;
-	}
+	पूर्ण
 
 	of_node_put(dn);
 
-	return cpu;
-}
+	वापस cpu;
+पूर्ण
 
-static int pmu_parse_irqs(struct arm_pmu *pmu)
-{
-	int i = 0, num_irqs;
-	struct platform_device *pdev = pmu->plat_device;
-	struct pmu_hw_events __percpu *hw_events = pmu->hw_events;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक pmu_parse_irqs(काष्ठा arm_pmu *pmu)
+अणु
+	पूर्णांक i = 0, num_irqs;
+	काष्ठा platक्रमm_device *pdev = pmu->plat_device;
+	काष्ठा pmu_hw_events __percpu *hw_events = pmu->hw_events;
+	काष्ठा device *dev = &pdev->dev;
 
-	num_irqs = platform_irq_count(pdev);
-	if (num_irqs < 0)
-		return dev_err_probe(dev, num_irqs, "unable to count PMU IRQs\n");
+	num_irqs = platक्रमm_irq_count(pdev);
+	अगर (num_irqs < 0)
+		वापस dev_err_probe(dev, num_irqs, "unable to count PMU IRQs\n");
 
 	/*
-	 * In this case we have no idea which CPUs are covered by the PMU.
-	 * To match our prior behaviour, we assume all CPUs in this case.
+	 * In this हाल we have no idea which CPUs are covered by the PMU.
+	 * To match our prior behaviour, we assume all CPUs in this हाल.
 	 */
-	if (num_irqs == 0) {
+	अगर (num_irqs == 0) अणु
 		dev_warn(dev, "no irqs for PMU, sampling events not supported\n");
 		pmu->pmu.capabilities |= PERF_PMU_CAP_NO_INTERRUPT;
 		cpumask_setall(&pmu->supported_cpus);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (num_irqs == 1) {
-		int irq = platform_get_irq(pdev, 0);
-		if (irq && irq_is_percpu_devid(irq))
-			return pmu_parse_percpu_irq(pmu, irq);
-	}
+	अगर (num_irqs == 1) अणु
+		पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
+		अगर (irq && irq_is_percpu_devid(irq))
+			वापस pmu_parse_percpu_irq(pmu, irq);
+	पूर्ण
 
-	if (nr_cpu_ids != 1 && !pmu_has_irq_affinity(dev->of_node))
+	अगर (nr_cpu_ids != 1 && !pmu_has_irq_affinity(dev->of_node))
 		dev_warn(dev, "no interrupt-affinity property, guessing.\n");
 
-	for (i = 0; i < num_irqs; i++) {
-		int cpu, irq;
+	क्रम (i = 0; i < num_irqs; i++) अणु
+		पूर्णांक cpu, irq;
 
-		irq = platform_get_irq(pdev, i);
-		if (WARN_ON(irq <= 0))
-			continue;
+		irq = platक्रमm_get_irq(pdev, i);
+		अगर (WARN_ON(irq <= 0))
+			जारी;
 
-		if (irq_is_percpu_devid(irq)) {
+		अगर (irq_is_percpu_devid(irq)) अणु
 			dev_warn(dev, "multiple PPIs or mismatched SPI/PPI detected\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		cpu = pmu_parse_irq_affinity(dev, i);
-		if (cpu < 0)
-			return cpu;
-		if (cpu >= nr_cpu_ids)
-			continue;
+		अगर (cpu < 0)
+			वापस cpu;
+		अगर (cpu >= nr_cpu_ids)
+			जारी;
 
-		if (per_cpu(hw_events->irq, cpu)) {
+		अगर (per_cpu(hw_events->irq, cpu)) अणु
 			dev_warn(dev, "multiple PMU IRQs for the same CPU detected\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		per_cpu(hw_events->irq, cpu) = irq;
 		cpumask_set_cpu(cpu, &pmu->supported_cpus);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int armpmu_request_irqs(struct arm_pmu *armpmu)
-{
-	struct pmu_hw_events __percpu *hw_events = armpmu->hw_events;
-	int cpu, err = 0;
+अटल पूर्णांक armpmu_request_irqs(काष्ठा arm_pmu *armpmu)
+अणु
+	काष्ठा pmu_hw_events __percpu *hw_events = armpmu->hw_events;
+	पूर्णांक cpu, err = 0;
 
-	for_each_cpu(cpu, &armpmu->supported_cpus) {
-		int irq = per_cpu(hw_events->irq, cpu);
-		if (!irq)
-			continue;
+	क्रम_each_cpu(cpu, &armpmu->supported_cpus) अणु
+		पूर्णांक irq = per_cpu(hw_events->irq, cpu);
+		अगर (!irq)
+			जारी;
 
 		err = armpmu_request_irq(irq, cpu);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void armpmu_free_irqs(struct arm_pmu *armpmu)
-{
-	int cpu;
-	struct pmu_hw_events __percpu *hw_events = armpmu->hw_events;
+अटल व्योम armpmu_मुक्त_irqs(काष्ठा arm_pmu *armpmu)
+अणु
+	पूर्णांक cpu;
+	काष्ठा pmu_hw_events __percpu *hw_events = armpmu->hw_events;
 
-	for_each_cpu(cpu, &armpmu->supported_cpus) {
-		int irq = per_cpu(hw_events->irq, cpu);
+	क्रम_each_cpu(cpu, &armpmu->supported_cpus) अणु
+		पूर्णांक irq = per_cpu(hw_events->irq, cpu);
 
-		armpmu_free_irq(irq, cpu);
-	}
-}
+		armpmu_मुक्त_irq(irq, cpu);
+	पूर्ण
+पूर्ण
 
-int arm_pmu_device_probe(struct platform_device *pdev,
-			 const struct of_device_id *of_table,
-			 const struct pmu_probe_info *probe_table)
-{
+पूर्णांक arm_pmu_device_probe(काष्ठा platक्रमm_device *pdev,
+			 स्थिर काष्ठा of_device_id *of_table,
+			 स्थिर काष्ठा pmu_probe_info *probe_table)
+अणु
 	armpmu_init_fn init_fn;
-	struct device *dev = &pdev->dev;
-	struct arm_pmu *pmu;
-	int ret = -ENODEV;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा arm_pmu *pmu;
+	पूर्णांक ret = -ENODEV;
 
 	pmu = armpmu_alloc();
-	if (!pmu)
-		return -ENOMEM;
+	अगर (!pmu)
+		वापस -ENOMEM;
 
 	pmu->plat_device = pdev;
 
 	ret = pmu_parse_irqs(pmu);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	init_fn = of_device_get_match_data(dev);
-	if (init_fn) {
-		pmu->secure_access = of_property_read_bool(dev->of_node,
+	अगर (init_fn) अणु
+		pmu->secure_access = of_property_पढ़ो_bool(dev->of_node,
 							   "secure-reg-access");
 
-		/* arm64 systems boot only as non-secure */
-		if (IS_ENABLED(CONFIG_ARM64) && pmu->secure_access) {
+		/* arm64 प्रणालीs boot only as non-secure */
+		अगर (IS_ENABLED(CONFIG_ARM64) && pmu->secure_access) अणु
 			dev_warn(dev, "ignoring \"secure-reg-access\" property for arm64\n");
 			pmu->secure_access = false;
-		}
+		पूर्ण
 
 		ret = init_fn(pmu);
-	} else if (probe_table) {
+	पूर्ण अन्यथा अगर (probe_table) अणु
 		cpumask_setall(&pmu->supported_cpus);
 		ret = probe_current_pmu(pmu, probe_table);
-	}
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to probe PMU!\n");
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	ret = armpmu_request_irqs(pmu);
-	if (ret)
-		goto out_free_irqs;
+	अगर (ret)
+		जाओ out_मुक्त_irqs;
 
-	ret = armpmu_register(pmu);
-	if (ret) {
+	ret = armpmu_रेजिस्टर(pmu);
+	अगर (ret) अणु
 		dev_err(dev, "failed to register PMU devices!\n");
-		goto out_free_irqs;
-	}
+		जाओ out_मुक्त_irqs;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_free_irqs:
-	armpmu_free_irqs(pmu);
-out_free:
-	armpmu_free(pmu);
-	return ret;
-}
+out_मुक्त_irqs:
+	armpmu_मुक्त_irqs(pmu);
+out_मुक्त:
+	armpmu_मुक्त(pmu);
+	वापस ret;
+पूर्ण

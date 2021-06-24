@@ -1,907 +1,908 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * config.c
  *
- * Helper functions for parsing config items.
+ * Helper functions क्रम parsing config items.
  * Originally copied from GIT source.
  *
  * Copyright (C) Linus Torvalds, 2005
  * Copyright (C) Johannes Schindelin, 2005
  *
  */
-#include <errno.h>
-#include <sys/param.h>
-#include "cache.h"
-#include "callchain.h"
-#include <subcmd/exec-cmd.h>
-#include "util/event.h"  /* proc_map_timeout */
-#include "util/hist.h"  /* perf_hist_config */
-#include "util/llvm-utils.h"   /* perf_llvm_config */
-#include "util/stat.h"  /* perf_stat__set_big_num */
-#include "util/evsel.h"  /* evsel__hw_names, evsel__use_bpf_counters */
-#include "build-id.h"
-#include "debug.h"
-#include "config.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <linux/string.h>
-#include <linux/zalloc.h>
-#include <linux/ctype.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <sys/param.h>
+#समावेश "cache.h"
+#समावेश "callchain.h"
+#समावेश <subcmd/exec-cmd.h>
+#समावेश "util/event.h"  /* proc_map_समयout */
+#समावेश "util/hist.h"  /* perf_hist_config */
+#समावेश "util/llvm-utils.h"   /* perf_llvm_config */
+#समावेश "util/stat.h"  /* perf_stat__set_big_num */
+#समावेश "util/evsel.h"  /* evsel__hw_names, evsel__use_bpf_counters */
+#समावेश "build-id.h"
+#समावेश "debug.h"
+#समावेश "config.h"
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/zभाग.स>
+#समावेश <linux/प्रकार.स>
 
-#define MAXNAME (256)
+#घोषणा MAXNAME (256)
 
-#define DEBUG_CACHE_DIR ".debug"
+#घोषणा DEBUG_CACHE_सूची ".debug"
 
 
-char buildid_dir[MAXPATHLEN]; /* root dir for buildid, binary cache */
+अक्षर buildid_dir[MAXPATHLEN]; /* root dir क्रम buildid, binary cache */
 
-static FILE *config_file;
-static const char *config_file_name;
-static int config_linenr;
-static int config_file_eof;
-static struct perf_config_set *config_set;
+अटल खाता *config_file;
+अटल स्थिर अक्षर *config_file_name;
+अटल पूर्णांक config_linenr;
+अटल पूर्णांक config_file_eof;
+अटल काष्ठा perf_config_set *config_set;
 
-const char *config_exclusive_filename;
+स्थिर अक्षर *config_exclusive_filename;
 
-static int get_next_char(void)
-{
-	int c;
-	FILE *f;
+अटल पूर्णांक get_next_अक्षर(व्योम)
+अणु
+	पूर्णांक c;
+	खाता *f;
 
 	c = '\n';
-	if ((f = config_file) != NULL) {
-		c = fgetc(f);
-		if (c == '\r') {
-			/* DOS like systems */
-			c = fgetc(f);
-			if (c != '\n') {
-				ungetc(c, f);
+	अगर ((f = config_file) != शून्य) अणु
+		c = ख_अक्षर_लो(f);
+		अगर (c == '\r') अणु
+			/* DOS like प्रणालीs */
+			c = ख_अक्षर_लो(f);
+			अगर (c != '\n') अणु
+				अक्षर_वापस(c, f);
 				c = '\r';
-			}
-		}
-		if (c == '\n')
+			पूर्ण
+		पूर्ण
+		अगर (c == '\n')
 			config_linenr++;
-		if (c == EOF) {
+		अगर (c == खातापूर्ण) अणु
 			config_file_eof = 1;
 			c = '\n';
-		}
-	}
-	return c;
-}
+		पूर्ण
+	पूर्ण
+	वापस c;
+पूर्ण
 
-static char *parse_value(void)
-{
-	static char value[1024];
-	int quote = 0, comment = 0, space = 0;
-	size_t len = 0;
+अटल अक्षर *parse_value(व्योम)
+अणु
+	अटल अक्षर value[1024];
+	पूर्णांक quote = 0, comment = 0, space = 0;
+	माप_प्रकार len = 0;
 
-	for (;;) {
-		int c = get_next_char();
+	क्रम (;;) अणु
+		पूर्णांक c = get_next_अक्षर();
 
-		if (len >= sizeof(value) - 1)
-			return NULL;
-		if (c == '\n') {
-			if (quote)
-				return NULL;
+		अगर (len >= माप(value) - 1)
+			वापस शून्य;
+		अगर (c == '\n') अणु
+			अगर (quote)
+				वापस शून्य;
 			value[len] = 0;
-			return value;
-		}
-		if (comment)
-			continue;
-		if (isspace(c) && !quote) {
+			वापस value;
+		पूर्ण
+		अगर (comment)
+			जारी;
+		अगर (है_खाली(c) && !quote) अणु
 			space = 1;
-			continue;
-		}
-		if (!quote) {
-			if (c == ';' || c == '#') {
+			जारी;
+		पूर्ण
+		अगर (!quote) अणु
+			अगर (c == ';' || c == '#') अणु
 				comment = 1;
-				continue;
-			}
-		}
-		if (space) {
-			if (len)
+				जारी;
+			पूर्ण
+		पूर्ण
+		अगर (space) अणु
+			अगर (len)
 				value[len++] = ' ';
 			space = 0;
-		}
-		if (c == '\\') {
-			c = get_next_char();
-			switch (c) {
-			case '\n':
-				continue;
-			case 't':
+		पूर्ण
+		अगर (c == '\\') अणु
+			c = get_next_अक्षर();
+			चयन (c) अणु
+			हाल '\n':
+				जारी;
+			हाल 't':
 				c = '\t';
-				break;
-			case 'b':
+				अवरोध;
+			हाल 'b':
 				c = '\b';
-				break;
-			case 'n':
+				अवरोध;
+			हाल 'n':
 				c = '\n';
-				break;
-			/* Some characters escape as themselves */
-			case '\\': case '"':
-				break;
+				अवरोध;
+			/* Some अक्षरacters escape as themselves */
+			हाल '\\': case '"':
+				अवरोध;
 			/* Reject unknown escape sequences */
-			default:
-				return NULL;
-			}
+			शेष:
+				वापस शून्य;
+			पूर्ण
 			value[len++] = c;
-			continue;
-		}
-		if (c == '"') {
+			जारी;
+		पूर्ण
+		अगर (c == '"') अणु
 			quote = 1-quote;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		value[len++] = c;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int iskeychar(int c)
-{
-	return isalnum(c) || c == '-' || c == '_';
-}
+अटल अंतरभूत पूर्णांक iskeyअक्षर(पूर्णांक c)
+अणु
+	वापस है_अक्षर_अंक(c) || c == '-' || c == '_';
+पूर्ण
 
-static int get_value(config_fn_t fn, void *data, char *name, unsigned int len)
-{
-	int c;
-	char *value;
+अटल पूर्णांक get_value(config_fn_t fn, व्योम *data, अक्षर *name, अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक c;
+	अक्षर *value;
 
 	/* Get the full name */
-	for (;;) {
-		c = get_next_char();
-		if (config_file_eof)
-			break;
-		if (!iskeychar(c))
-			break;
+	क्रम (;;) अणु
+		c = get_next_अक्षर();
+		अगर (config_file_eof)
+			अवरोध;
+		अगर (!iskeyअक्षर(c))
+			अवरोध;
 		name[len++] = c;
-		if (len >= MAXNAME)
-			return -1;
-	}
+		अगर (len >= MAXNAME)
+			वापस -1;
+	पूर्ण
 	name[len] = 0;
-	while (c == ' ' || c == '\t')
-		c = get_next_char();
+	जबतक (c == ' ' || c == '\t')
+		c = get_next_अक्षर();
 
-	value = NULL;
-	if (c != '\n') {
-		if (c != '=')
-			return -1;
+	value = शून्य;
+	अगर (c != '\n') अणु
+		अगर (c != '=')
+			वापस -1;
 		value = parse_value();
-		if (!value)
-			return -1;
-	}
-	return fn(name, value, data);
-}
+		अगर (!value)
+			वापस -1;
+	पूर्ण
+	वापस fn(name, value, data);
+पूर्ण
 
-static int get_extended_base_var(char *name, int baselen, int c)
-{
-	do {
-		if (c == '\n')
-			return -1;
-		c = get_next_char();
-	} while (isspace(c));
+अटल पूर्णांक get_extended_base_var(अक्षर *name, पूर्णांक baselen, पूर्णांक c)
+अणु
+	करो अणु
+		अगर (c == '\n')
+			वापस -1;
+		c = get_next_अक्षर();
+	पूर्ण जबतक (है_खाली(c));
 
-	/* We require the format to be '[base "extension"]' */
-	if (c != '"')
-		return -1;
+	/* We require the क्रमmat to be '[base "extension"]' */
+	अगर (c != '"')
+		वापस -1;
 	name[baselen++] = '.';
 
-	for (;;) {
-		int ch = get_next_char();
+	क्रम (;;) अणु
+		पूर्णांक ch = get_next_अक्षर();
 
-		if (ch == '\n')
-			return -1;
-		if (ch == '"')
-			break;
-		if (ch == '\\') {
-			ch = get_next_char();
-			if (ch == '\n')
-				return -1;
-		}
+		अगर (ch == '\n')
+			वापस -1;
+		अगर (ch == '"')
+			अवरोध;
+		अगर (ch == '\\') अणु
+			ch = get_next_अक्षर();
+			अगर (ch == '\n')
+				वापस -1;
+		पूर्ण
 		name[baselen++] = ch;
-		if (baselen > MAXNAME / 2)
-			return -1;
-	}
+		अगर (baselen > MAXNAME / 2)
+			वापस -1;
+	पूर्ण
 
 	/* Final ']' */
-	if (get_next_char() != ']')
-		return -1;
-	return baselen;
-}
+	अगर (get_next_अक्षर() != ']')
+		वापस -1;
+	वापस baselen;
+पूर्ण
 
-static int get_base_var(char *name)
-{
-	int baselen = 0;
+अटल पूर्णांक get_base_var(अक्षर *name)
+अणु
+	पूर्णांक baselen = 0;
 
-	for (;;) {
-		int c = get_next_char();
-		if (config_file_eof)
-			return -1;
-		if (c == ']')
-			return baselen;
-		if (isspace(c))
-			return get_extended_base_var(name, baselen, c);
-		if (!iskeychar(c) && c != '.')
-			return -1;
-		if (baselen > MAXNAME / 2)
-			return -1;
-		name[baselen++] = tolower(c);
-	}
-}
+	क्रम (;;) अणु
+		पूर्णांक c = get_next_अक्षर();
+		अगर (config_file_eof)
+			वापस -1;
+		अगर (c == ']')
+			वापस baselen;
+		अगर (है_खाली(c))
+			वापस get_extended_base_var(name, baselen, c);
+		अगर (!iskeyअक्षर(c) && c != '.')
+			वापस -1;
+		अगर (baselen > MAXNAME / 2)
+			वापस -1;
+		name[baselen++] = छोटे(c);
+	पूर्ण
+पूर्ण
 
-static int perf_parse_file(config_fn_t fn, void *data)
-{
-	int comment = 0;
-	int baselen = 0;
-	static char var[MAXNAME];
+अटल पूर्णांक perf_parse_file(config_fn_t fn, व्योम *data)
+अणु
+	पूर्णांक comment = 0;
+	पूर्णांक baselen = 0;
+	अटल अक्षर var[MAXNAME];
 
 	/* U+FEFF Byte Order Mark in UTF8 */
-	static const unsigned char *utf8_bom = (unsigned char *) "\xef\xbb\xbf";
-	const unsigned char *bomptr = utf8_bom;
+	अटल स्थिर अचिन्हित अक्षर *utf8_bom = (अचिन्हित अक्षर *) "\xef\xbb\xbf";
+	स्थिर अचिन्हित अक्षर *bomptr = utf8_bom;
 
-	for (;;) {
-		int line, c = get_next_char();
+	क्रम (;;) अणु
+		पूर्णांक line, c = get_next_अक्षर();
 
-		if (bomptr && *bomptr) {
+		अगर (bomptr && *bomptr) अणु
 			/* We are at the file beginning; skip UTF8-encoded BOM
-			 * if present. Sane editors won't put this in on their
-			 * own, but e.g. Windows Notepad will do it happily. */
-			if ((unsigned char) c == *bomptr) {
+			 * अगर present. Sane editors won't put this in on their
+			 * own, but e.g. Winकरोws Notepad will करो it happily. */
+			अगर ((अचिन्हित अक्षर) c == *bomptr) अणु
 				bomptr++;
-				continue;
-			} else {
+				जारी;
+			पूर्ण अन्यथा अणु
 				/* Do not tolerate partial BOM. */
-				if (bomptr != utf8_bom)
-					break;
+				अगर (bomptr != utf8_bom)
+					अवरोध;
 				/* No BOM at file beginning. Cool. */
-				bomptr = NULL;
-			}
-		}
-		if (c == '\n') {
-			if (config_file_eof)
-				return 0;
+				bomptr = शून्य;
+			पूर्ण
+		पूर्ण
+		अगर (c == '\n') अणु
+			अगर (config_file_eof)
+				वापस 0;
 			comment = 0;
-			continue;
-		}
-		if (comment || isspace(c))
-			continue;
-		if (c == '#' || c == ';') {
+			जारी;
+		पूर्ण
+		अगर (comment || है_खाली(c))
+			जारी;
+		अगर (c == '#' || c == ';') अणु
 			comment = 1;
-			continue;
-		}
-		if (c == '[') {
+			जारी;
+		पूर्ण
+		अगर (c == '[') अणु
 			baselen = get_base_var(var);
-			if (baselen <= 0)
-				break;
+			अगर (baselen <= 0)
+				अवरोध;
 			var[baselen++] = '.';
 			var[baselen] = 0;
-			continue;
-		}
-		if (!isalpha(c))
-			break;
-		var[baselen] = tolower(c);
+			जारी;
+		पूर्ण
+		अगर (!है_अक्षर(c))
+			अवरोध;
+		var[baselen] = छोटे(c);
 
 		/*
 		 * The get_value function might or might not reach the '\n',
-		 * so saving the current line number for error reporting.
+		 * so saving the current line number क्रम error reporting.
 		 */
 		line = config_linenr;
-		if (get_value(fn, data, var, baselen+1) < 0) {
+		अगर (get_value(fn, data, var, baselen+1) < 0) अणु
 			config_linenr = line;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	pr_err("bad config file line %d in %s\n", config_linenr, config_file_name);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int parse_unit_factor(const char *end, unsigned long *val)
-{
-	if (!*end)
-		return 1;
-	else if (!strcasecmp(end, "k")) {
+अटल पूर्णांक parse_unit_factor(स्थिर अक्षर *end, अचिन्हित दीर्घ *val)
+अणु
+	अगर (!*end)
+		वापस 1;
+	अन्यथा अगर (!strहालcmp(end, "k")) अणु
 		*val *= 1024;
-		return 1;
-	}
-	else if (!strcasecmp(end, "m")) {
+		वापस 1;
+	पूर्ण
+	अन्यथा अगर (!strहालcmp(end, "m")) अणु
 		*val *= 1024 * 1024;
-		return 1;
-	}
-	else if (!strcasecmp(end, "g")) {
+		वापस 1;
+	पूर्ण
+	अन्यथा अगर (!strहालcmp(end, "g")) अणु
 		*val *= 1024 * 1024 * 1024;
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int perf_parse_llong(const char *value, long long *ret)
-{
-	if (value && *value) {
-		char *end;
-		long long val = strtoll(value, &end, 0);
-		unsigned long factor = 1;
+अटल पूर्णांक perf_parse_lदीर्घ(स्थिर अक्षर *value, दीर्घ दीर्घ *ret)
+अणु
+	अगर (value && *value) अणु
+		अक्षर *end;
+		दीर्घ दीर्घ val = म_से_दीर्घl(value, &end, 0);
+		अचिन्हित दीर्घ factor = 1;
 
-		if (!parse_unit_factor(end, &factor))
-			return 0;
+		अगर (!parse_unit_factor(end, &factor))
+			वापस 0;
 		*ret = val * factor;
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int perf_parse_long(const char *value, long *ret)
-{
-	if (value && *value) {
-		char *end;
-		long val = strtol(value, &end, 0);
-		unsigned long factor = 1;
-		if (!parse_unit_factor(end, &factor))
-			return 0;
+अटल पूर्णांक perf_parse_दीर्घ(स्थिर अक्षर *value, दीर्घ *ret)
+अणु
+	अगर (value && *value) अणु
+		अक्षर *end;
+		दीर्घ val = म_से_दीर्घ(value, &end, 0);
+		अचिन्हित दीर्घ factor = 1;
+		अगर (!parse_unit_factor(end, &factor))
+			वापस 0;
 		*ret = val * factor;
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bad_config(const char *name)
-{
-	if (config_file_name)
+अटल व्योम bad_config(स्थिर अक्षर *name)
+अणु
+	अगर (config_file_name)
 		pr_warning("bad config value for '%s' in %s, ignoring...\n", name, config_file_name);
-	else
+	अन्यथा
 		pr_warning("bad config value for '%s', ignoring...\n", name);
-}
+पूर्ण
 
-int perf_config_u64(u64 *dest, const char *name, const char *value)
-{
-	long long ret = 0;
+पूर्णांक perf_config_u64(u64 *dest, स्थिर अक्षर *name, स्थिर अक्षर *value)
+अणु
+	दीर्घ दीर्घ ret = 0;
 
-	if (!perf_parse_llong(value, &ret)) {
+	अगर (!perf_parse_lदीर्घ(value, &ret)) अणु
 		bad_config(name);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	*dest = ret;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int perf_config_int(int *dest, const char *name, const char *value)
-{
-	long ret = 0;
-	if (!perf_parse_long(value, &ret)) {
+पूर्णांक perf_config_पूर्णांक(पूर्णांक *dest, स्थिर अक्षर *name, स्थिर अक्षर *value)
+अणु
+	दीर्घ ret = 0;
+	अगर (!perf_parse_दीर्घ(value, &ret)) अणु
 		bad_config(name);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	*dest = ret;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int perf_config_u8(u8 *dest, const char *name, const char *value)
-{
-	long ret = 0;
+पूर्णांक perf_config_u8(u8 *dest, स्थिर अक्षर *name, स्थिर अक्षर *value)
+अणु
+	दीर्घ ret = 0;
 
-	if (!perf_parse_long(value, &ret)) {
+	अगर (!perf_parse_दीर्घ(value, &ret)) अणु
 		bad_config(name);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	*dest = ret;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_config_bool_or_int(const char *name, const char *value, int *is_bool)
-{
-	int ret;
+अटल पूर्णांक perf_config_bool_or_पूर्णांक(स्थिर अक्षर *name, स्थिर अक्षर *value, पूर्णांक *is_bool)
+अणु
+	पूर्णांक ret;
 
 	*is_bool = 1;
-	if (!value)
-		return 1;
-	if (!*value)
-		return 0;
-	if (!strcasecmp(value, "true") || !strcasecmp(value, "yes") || !strcasecmp(value, "on"))
-		return 1;
-	if (!strcasecmp(value, "false") || !strcasecmp(value, "no") || !strcasecmp(value, "off"))
-		return 0;
+	अगर (!value)
+		वापस 1;
+	अगर (!*value)
+		वापस 0;
+	अगर (!strहालcmp(value, "true") || !strहालcmp(value, "yes") || !strहालcmp(value, "on"))
+		वापस 1;
+	अगर (!strहालcmp(value, "false") || !strहालcmp(value, "no") || !strहालcmp(value, "off"))
+		वापस 0;
 	*is_bool = 0;
-	return perf_config_int(&ret, name, value) < 0 ? -1 : ret;
-}
+	वापस perf_config_पूर्णांक(&ret, name, value) < 0 ? -1 : ret;
+पूर्ण
 
-int perf_config_bool(const char *name, const char *value)
-{
-	int discard;
-	return !!perf_config_bool_or_int(name, value, &discard);
-}
+पूर्णांक perf_config_bool(स्थिर अक्षर *name, स्थिर अक्षर *value)
+अणु
+	पूर्णांक discard;
+	वापस !!perf_config_bool_or_पूर्णांक(name, value, &discard);
+पूर्ण
 
-static const char *perf_config_dirname(const char *name, const char *value)
-{
-	if (!name)
-		return NULL;
-	return value;
-}
+अटल स्थिर अक्षर *perf_config_स_नाम(स्थिर अक्षर *name, स्थिर अक्षर *value)
+अणु
+	अगर (!name)
+		वापस शून्य;
+	वापस value;
+पूर्ण
 
-static int perf_buildid_config(const char *var, const char *value)
-{
-	/* same dir for all commands */
-	if (!strcmp(var, "buildid.dir")) {
-		const char *dir = perf_config_dirname(var, value);
+अटल पूर्णांक perf_buildid_config(स्थिर अक्षर *var, स्थिर अक्षर *value)
+अणु
+	/* same dir क्रम all commands */
+	अगर (!म_भेद(var, "buildid.dir")) अणु
+		स्थिर अक्षर *dir = perf_config_स_नाम(var, value);
 
-		if (!dir) {
+		अगर (!dir) अणु
 			pr_err("Invalid buildid directory!\n");
-			return -1;
-		}
-		strncpy(buildid_dir, dir, MAXPATHLEN-1);
+			वापस -1;
+		पूर्ण
+		म_नकलन(buildid_dir, dir, MAXPATHLEN-1);
 		buildid_dir[MAXPATHLEN-1] = '\0';
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_default_core_config(const char *var __maybe_unused,
-				    const char *value __maybe_unused)
-{
-	if (!strcmp(var, "core.proc-map-timeout"))
-		proc_map_timeout = strtoul(value, NULL, 10);
+अटल पूर्णांक perf_शेष_core_config(स्थिर अक्षर *var __maybe_unused,
+				    स्थिर अक्षर *value __maybe_unused)
+अणु
+	अगर (!म_भेद(var, "core.proc-map-timeout"))
+		proc_map_समयout = म_से_अदीर्घ(value, शून्य, 10);
 
 	/* Add other config variables here. */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_ui_config(const char *var, const char *value)
-{
+अटल पूर्णांक perf_ui_config(स्थिर अक्षर *var, स्थिर अक्षर *value)
+अणु
 	/* Add other config variables here. */
-	if (!strcmp(var, "ui.show-headers"))
+	अगर (!म_भेद(var, "ui.show-headers"))
 		symbol_conf.show_hist_headers = perf_config_bool(var, value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_stat_config(const char *var, const char *value)
-{
-	if (!strcmp(var, "stat.big-num"))
+अटल पूर्णांक perf_stat_config(स्थिर अक्षर *var, स्थिर अक्षर *value)
+अणु
+	अगर (!म_भेद(var, "stat.big-num"))
 		perf_stat__set_big_num(perf_config_bool(var, value));
 
-	if (!strcmp(var, "stat.no-csv-summary"))
+	अगर (!म_भेद(var, "stat.no-csv-summary"))
 		perf_stat__set_no_csv_summary(perf_config_bool(var, value));
 
-	if (!strcmp(var, "stat.bpf-counter-events"))
+	अगर (!म_भेद(var, "stat.bpf-counter-events"))
 		evsel__bpf_counter_events = strdup(value);
 
 	/* Add other config variables here. */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int perf_default_config(const char *var, const char *value,
-			void *dummy __maybe_unused)
-{
-	if (strstarts(var, "core."))
-		return perf_default_core_config(var, value);
+पूर्णांक perf_शेष_config(स्थिर अक्षर *var, स्थिर अक्षर *value,
+			व्योम *dummy __maybe_unused)
+अणु
+	अगर (strstarts(var, "core."))
+		वापस perf_शेष_core_config(var, value);
 
-	if (strstarts(var, "hist."))
-		return perf_hist_config(var, value);
+	अगर (strstarts(var, "hist."))
+		वापस perf_hist_config(var, value);
 
-	if (strstarts(var, "ui."))
-		return perf_ui_config(var, value);
+	अगर (strstarts(var, "ui."))
+		वापस perf_ui_config(var, value);
 
-	if (strstarts(var, "call-graph."))
-		return perf_callchain_config(var, value);
+	अगर (strstarts(var, "call-graph."))
+		वापस perf_callchain_config(var, value);
 
-	if (strstarts(var, "llvm."))
-		return perf_llvm_config(var, value);
+	अगर (strstarts(var, "llvm."))
+		वापस perf_llvm_config(var, value);
 
-	if (strstarts(var, "buildid."))
-		return perf_buildid_config(var, value);
+	अगर (strstarts(var, "buildid."))
+		वापस perf_buildid_config(var, value);
 
-	if (strstarts(var, "stat."))
-		return perf_stat_config(var, value);
+	अगर (strstarts(var, "stat."))
+		वापस perf_stat_config(var, value);
 
 	/* Add other config variables here. */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_config_from_file(config_fn_t fn, const char *filename, void *data)
-{
-	int ret;
-	FILE *f = fopen(filename, "r");
+अटल पूर्णांक perf_config_from_file(config_fn_t fn, स्थिर अक्षर *filename, व्योम *data)
+अणु
+	पूर्णांक ret;
+	खाता *f = ख_खोलो(filename, "r");
 
 	ret = -1;
-	if (f) {
+	अगर (f) अणु
 		config_file = f;
 		config_file_name = filename;
 		config_linenr = 1;
 		config_file_eof = 0;
 		ret = perf_parse_file(fn, data);
-		fclose(f);
-		config_file_name = NULL;
-	}
-	return ret;
-}
+		ख_बंद(f);
+		config_file_name = शून्य;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-const char *perf_etc_perfconfig(void)
-{
-	static const char *system_wide;
-	if (!system_wide)
-		system_wide = system_path(ETC_PERFCONFIG);
-	return system_wide;
-}
+स्थिर अक्षर *perf_etc_perfconfig(व्योम)
+अणु
+	अटल स्थिर अक्षर *प्रणाली_wide;
+	अगर (!प्रणाली_wide)
+		प्रणाली_wide = प्रणाली_path(ETC_PERFCONFIG);
+	वापस प्रणाली_wide;
+पूर्ण
 
-static int perf_env_bool(const char *k, int def)
-{
-	const char *v = getenv(k);
-	return v ? perf_config_bool(k, v) : def;
-}
+अटल पूर्णांक perf_env_bool(स्थिर अक्षर *k, पूर्णांक def)
+अणु
+	स्थिर अक्षर *v = दो_पर्या(k);
+	वापस v ? perf_config_bool(k, v) : def;
+पूर्ण
 
-int perf_config_system(void)
-{
-	return !perf_env_bool("PERF_CONFIG_NOSYSTEM", 0);
-}
+पूर्णांक perf_config_प्रणाली(व्योम)
+अणु
+	वापस !perf_env_bool("PERF_CONFIG_NOSYSTEM", 0);
+पूर्ण
 
-int perf_config_global(void)
-{
-	return !perf_env_bool("PERF_CONFIG_NOGLOBAL", 0);
-}
+पूर्णांक perf_config_global(व्योम)
+अणु
+	वापस !perf_env_bool("PERF_CONFIG_NOGLOBAL", 0);
+पूर्ण
 
-static char *home_perfconfig(void)
-{
-	const char *home = NULL;
-	char *config;
-	struct stat st;
+अटल अक्षर *home_perfconfig(व्योम)
+अणु
+	स्थिर अक्षर *home = शून्य;
+	अक्षर *config;
+	काष्ठा stat st;
 
-	home = getenv("HOME");
+	home = दो_पर्या("HOME");
 
 	/*
-	 * Skip reading user config if:
-	 *   - there is no place to read it from (HOME)
+	 * Skip पढ़ोing user config अगर:
+	 *   - there is no place to पढ़ो it from (HOME)
 	 *   - we are asked not to (PERF_CONFIG_NOGLOBAL=1)
 	 */
-	if (!home || !*home || !perf_config_global())
-		return NULL;
+	अगर (!home || !*home || !perf_config_global())
+		वापस शून्य;
 
 	config = strdup(mkpath("%s/.perfconfig", home));
-	if (config == NULL) {
+	अगर (config == शून्य) अणु
 		pr_warning("Not enough memory to process %s/.perfconfig, ignoring it.", home);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (stat(config, &st) < 0)
-		goto out_free;
+	अगर (stat(config, &st) < 0)
+		जाओ out_मुक्त;
 
-	if (st.st_uid && (st.st_uid != geteuid())) {
+	अगर (st.st_uid && (st.st_uid != geteuid())) अणु
 		pr_warning("File %s not owned by current user or root, ignoring it.", config);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (st.st_size)
-		return config;
+	अगर (st.st_size)
+		वापस config;
 
-out_free:
-	free(config);
-	return NULL;
-}
+out_मुक्त:
+	मुक्त(config);
+	वापस शून्य;
+पूर्ण
 
-const char *perf_home_perfconfig(void)
-{
-	static const char *config;
-	static bool failed;
+स्थिर अक्षर *perf_home_perfconfig(व्योम)
+अणु
+	अटल स्थिर अक्षर *config;
+	अटल bool failed;
 
-	config = failed ? NULL : home_perfconfig();
-	if (!config)
+	config = failed ? शून्य : home_perfconfig();
+	अगर (!config)
 		failed = true;
 
-	return config;
-}
+	वापस config;
+पूर्ण
 
-static struct perf_config_section *find_section(struct list_head *sections,
-						const char *section_name)
-{
-	struct perf_config_section *section;
+अटल काष्ठा perf_config_section *find_section(काष्ठा list_head *sections,
+						स्थिर अक्षर *section_name)
+अणु
+	काष्ठा perf_config_section *section;
 
-	list_for_each_entry(section, sections, node)
-		if (!strcmp(section->name, section_name))
-			return section;
+	list_क्रम_each_entry(section, sections, node)
+		अगर (!म_भेद(section->name, section_name))
+			वापस section;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct perf_config_item *find_config_item(const char *name,
-						 struct perf_config_section *section)
-{
-	struct perf_config_item *item;
+अटल काष्ठा perf_config_item *find_config_item(स्थिर अक्षर *name,
+						 काष्ठा perf_config_section *section)
+अणु
+	काष्ठा perf_config_item *item;
 
-	list_for_each_entry(item, &section->items, node)
-		if (!strcmp(item->name, name))
-			return item;
+	list_क्रम_each_entry(item, &section->items, node)
+		अगर (!म_भेद(item->name, name))
+			वापस item;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct perf_config_section *add_section(struct list_head *sections,
-					       const char *section_name)
-{
-	struct perf_config_section *section = zalloc(sizeof(*section));
+अटल काष्ठा perf_config_section *add_section(काष्ठा list_head *sections,
+					       स्थिर अक्षर *section_name)
+अणु
+	काष्ठा perf_config_section *section = zalloc(माप(*section));
 
-	if (!section)
-		return NULL;
+	अगर (!section)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&section->items);
 	section->name = strdup(section_name);
-	if (!section->name) {
+	अगर (!section->name) अणु
 		pr_debug("%s: strdup failed\n", __func__);
-		free(section);
-		return NULL;
-	}
+		मुक्त(section);
+		वापस शून्य;
+	पूर्ण
 
 	list_add_tail(&section->node, sections);
-	return section;
-}
+	वापस section;
+पूर्ण
 
-static struct perf_config_item *add_config_item(struct perf_config_section *section,
-						const char *name)
-{
-	struct perf_config_item *item = zalloc(sizeof(*item));
+अटल काष्ठा perf_config_item *add_config_item(काष्ठा perf_config_section *section,
+						स्थिर अक्षर *name)
+अणु
+	काष्ठा perf_config_item *item = zalloc(माप(*item));
 
-	if (!item)
-		return NULL;
+	अगर (!item)
+		वापस शून्य;
 
 	item->name = strdup(name);
-	if (!item->name) {
+	अगर (!item->name) अणु
 		pr_debug("%s: strdup failed\n", __func__);
-		free(item);
-		return NULL;
-	}
+		मुक्त(item);
+		वापस शून्य;
+	पूर्ण
 
 	list_add_tail(&item->node, &section->items);
-	return item;
-}
+	वापस item;
+पूर्ण
 
-static int set_value(struct perf_config_item *item, const char *value)
-{
-	char *val = strdup(value);
+अटल पूर्णांक set_value(काष्ठा perf_config_item *item, स्थिर अक्षर *value)
+अणु
+	अक्षर *val = strdup(value);
 
-	if (!val)
-		return -1;
+	अगर (!val)
+		वापस -1;
 
-	zfree(&item->value);
+	zमुक्त(&item->value);
 	item->value = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int collect_config(const char *var, const char *value,
-			  void *perf_config_set)
-{
-	int ret = -1;
-	char *ptr, *key;
-	char *section_name, *name;
-	struct perf_config_section *section = NULL;
-	struct perf_config_item *item = NULL;
-	struct perf_config_set *set = perf_config_set;
-	struct list_head *sections;
+अटल पूर्णांक collect_config(स्थिर अक्षर *var, स्थिर अक्षर *value,
+			  व्योम *perf_config_set)
+अणु
+	पूर्णांक ret = -1;
+	अक्षर *ptr, *key;
+	अक्षर *section_name, *name;
+	काष्ठा perf_config_section *section = शून्य;
+	काष्ठा perf_config_item *item = शून्य;
+	काष्ठा perf_config_set *set = perf_config_set;
+	काष्ठा list_head *sections;
 
-	if (set == NULL)
-		return -1;
+	अगर (set == शून्य)
+		वापस -1;
 
 	sections = &set->sections;
 	key = ptr = strdup(var);
-	if (!key) {
+	अगर (!key) अणु
 		pr_debug("%s: strdup failed\n", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	section_name = strsep(&ptr, ".");
 	name = ptr;
-	if (name == NULL || value == NULL)
-		goto out_free;
+	अगर (name == शून्य || value == शून्य)
+		जाओ out_मुक्त;
 
 	section = find_section(sections, section_name);
-	if (!section) {
+	अगर (!section) अणु
 		section = add_section(sections, section_name);
-		if (!section)
-			goto out_free;
-	}
+		अगर (!section)
+			जाओ out_मुक्त;
+	पूर्ण
 
 	item = find_config_item(name, section);
-	if (!item) {
+	अगर (!item) अणु
 		item = add_config_item(section, name);
-		if (!item)
-			goto out_free;
-	}
+		अगर (!item)
+			जाओ out_मुक्त;
+	पूर्ण
 
-	/* perf_config_set can contain both user and system config items.
+	/* perf_config_set can contain both user and प्रणाली config items.
 	 * So we should know where each value is from.
-	 * The classification would be needed when a particular config file
+	 * The classअगरication would be needed when a particular config file
 	 * is overwritten by setting feature i.e. set_config().
 	 */
-	if (strcmp(config_file_name, perf_etc_perfconfig()) == 0) {
-		section->from_system_config = true;
-		item->from_system_config = true;
-	} else {
-		section->from_system_config = false;
-		item->from_system_config = false;
-	}
+	अगर (म_भेद(config_file_name, perf_etc_perfconfig()) == 0) अणु
+		section->from_प्रणाली_config = true;
+		item->from_प्रणाली_config = true;
+	पूर्ण अन्यथा अणु
+		section->from_प्रणाली_config = false;
+		item->from_प्रणाली_config = false;
+	पूर्ण
 
 	ret = set_value(item, value);
 
-out_free:
-	free(key);
-	return ret;
-}
+out_मुक्त:
+	मुक्त(key);
+	वापस ret;
+पूर्ण
 
-int perf_config_set__collect(struct perf_config_set *set, const char *file_name,
-			     const char *var, const char *value)
-{
+पूर्णांक perf_config_set__collect(काष्ठा perf_config_set *set, स्थिर अक्षर *file_name,
+			     स्थिर अक्षर *var, स्थिर अक्षर *value)
+अणु
 	config_file_name = file_name;
-	return collect_config(var, value, set);
-}
+	वापस collect_config(var, value, set);
+पूर्ण
 
-static int perf_config_set__init(struct perf_config_set *set)
-{
-	int ret = -1;
+अटल पूर्णांक perf_config_set__init(काष्ठा perf_config_set *set)
+अणु
+	पूर्णांक ret = -1;
 
-	/* Setting $PERF_CONFIG makes perf read _only_ the given config file. */
-	if (config_exclusive_filename)
-		return perf_config_from_file(collect_config, config_exclusive_filename, set);
-	if (perf_config_system() && !access(perf_etc_perfconfig(), R_OK)) {
-		if (perf_config_from_file(collect_config, perf_etc_perfconfig(), set) < 0)
-			goto out;
-	}
-	if (perf_config_global() && perf_home_perfconfig()) {
-		if (perf_config_from_file(collect_config, perf_home_perfconfig(), set) < 0)
-			goto out;
-	}
+	/* Setting $PERF_CONFIG makes perf पढ़ो _only_ the given config file. */
+	अगर (config_exclusive_filename)
+		वापस perf_config_from_file(collect_config, config_exclusive_filename, set);
+	अगर (perf_config_प्रणाली() && !access(perf_etc_perfconfig(), R_OK)) अणु
+		अगर (perf_config_from_file(collect_config, perf_etc_perfconfig(), set) < 0)
+			जाओ out;
+	पूर्ण
+	अगर (perf_config_global() && perf_home_perfconfig()) अणु
+		अगर (perf_config_from_file(collect_config, perf_home_perfconfig(), set) < 0)
+			जाओ out;
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct perf_config_set *perf_config_set__new(void)
-{
-	struct perf_config_set *set = zalloc(sizeof(*set));
+काष्ठा perf_config_set *perf_config_set__new(व्योम)
+अणु
+	काष्ठा perf_config_set *set = zalloc(माप(*set));
 
-	if (set) {
+	अगर (set) अणु
 		INIT_LIST_HEAD(&set->sections);
 		perf_config_set__init(set);
-	}
+	पूर्ण
 
-	return set;
-}
+	वापस set;
+पूर्ण
 
-struct perf_config_set *perf_config_set__load_file(const char *file)
-{
-	struct perf_config_set *set = zalloc(sizeof(*set));
+काष्ठा perf_config_set *perf_config_set__load_file(स्थिर अक्षर *file)
+अणु
+	काष्ठा perf_config_set *set = zalloc(माप(*set));
 
-	if (set) {
+	अगर (set) अणु
 		INIT_LIST_HEAD(&set->sections);
 		perf_config_from_file(collect_config, file, set);
-	}
+	पूर्ण
 
-	return set;
-}
+	वापस set;
+पूर्ण
 
-static int perf_config__init(void)
-{
-	if (config_set == NULL)
+अटल पूर्णांक perf_config__init(व्योम)
+अणु
+	अगर (config_set == शून्य)
 		config_set = perf_config_set__new();
 
-	return config_set == NULL;
-}
+	वापस config_set == शून्य;
+पूर्ण
 
-int perf_config_set(struct perf_config_set *set,
-		    config_fn_t fn, void *data)
-{
-	int ret = 0;
-	char key[BUFSIZ];
-	struct perf_config_section *section;
-	struct perf_config_item *item;
+पूर्णांक perf_config_set(काष्ठा perf_config_set *set,
+		    config_fn_t fn, व्योम *data)
+अणु
+	पूर्णांक ret = 0;
+	अक्षर key[बफ_मान];
+	काष्ठा perf_config_section *section;
+	काष्ठा perf_config_item *item;
 
-	perf_config_set__for_each_entry(set, section, item) {
-		char *value = item->value;
+	perf_config_set__क्रम_each_entry(set, section, item) अणु
+		अक्षर *value = item->value;
 
-		if (value) {
-			scnprintf(key, sizeof(key), "%s.%s",
+		अगर (value) अणु
+			scnम_लिखो(key, माप(key), "%s.%s",
 				  section->name, item->name);
 			ret = fn(key, value, data);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				pr_err("Error: wrong config key-value pair %s=%s\n",
 				       key, value);
 				/*
-				 * Can't be just a 'break', as perf_config_set__for_each_entry()
-				 * expands to two nested for() loops.
+				 * Can't be just a 'break', as perf_config_set__क्रम_each_entry()
+				 * expands to two nested क्रम() loops.
 				 */
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int perf_config(config_fn_t fn, void *data)
-{
-	if (config_set == NULL && perf_config__init())
-		return -1;
+पूर्णांक perf_config(config_fn_t fn, व्योम *data)
+अणु
+	अगर (config_set == शून्य && perf_config__init())
+		वापस -1;
 
-	return perf_config_set(config_set, fn, data);
-}
+	वापस perf_config_set(config_set, fn, data);
+पूर्ण
 
-void perf_config__exit(void)
-{
+व्योम perf_config__निकास(व्योम)
+अणु
 	perf_config_set__delete(config_set);
-	config_set = NULL;
-}
+	config_set = शून्य;
+पूर्ण
 
-void perf_config__refresh(void)
-{
-	perf_config__exit();
+व्योम perf_config__refresh(व्योम)
+अणु
+	perf_config__निकास();
 	perf_config__init();
-}
+पूर्ण
 
-static void perf_config_item__delete(struct perf_config_item *item)
-{
-	zfree(&item->name);
-	zfree(&item->value);
-	free(item);
-}
+अटल व्योम perf_config_item__delete(काष्ठा perf_config_item *item)
+अणु
+	zमुक्त(&item->name);
+	zमुक्त(&item->value);
+	मुक्त(item);
+पूर्ण
 
-static void perf_config_section__purge(struct perf_config_section *section)
-{
-	struct perf_config_item *item, *tmp;
+अटल व्योम perf_config_section__purge(काष्ठा perf_config_section *section)
+अणु
+	काष्ठा perf_config_item *item, *पंचांगp;
 
-	list_for_each_entry_safe(item, tmp, &section->items, node) {
+	list_क्रम_each_entry_safe(item, पंचांगp, &section->items, node) अणु
 		list_del_init(&item->node);
 		perf_config_item__delete(item);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void perf_config_section__delete(struct perf_config_section *section)
-{
+अटल व्योम perf_config_section__delete(काष्ठा perf_config_section *section)
+अणु
 	perf_config_section__purge(section);
-	zfree(&section->name);
-	free(section);
-}
+	zमुक्त(&section->name);
+	मुक्त(section);
+पूर्ण
 
-static void perf_config_set__purge(struct perf_config_set *set)
-{
-	struct perf_config_section *section, *tmp;
+अटल व्योम perf_config_set__purge(काष्ठा perf_config_set *set)
+अणु
+	काष्ठा perf_config_section *section, *पंचांगp;
 
-	list_for_each_entry_safe(section, tmp, &set->sections, node) {
+	list_क्रम_each_entry_safe(section, पंचांगp, &set->sections, node) अणु
 		list_del_init(&section->node);
 		perf_config_section__delete(section);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void perf_config_set__delete(struct perf_config_set *set)
-{
-	if (set == NULL)
-		return;
+व्योम perf_config_set__delete(काष्ठा perf_config_set *set)
+अणु
+	अगर (set == शून्य)
+		वापस;
 
 	perf_config_set__purge(set);
-	free(set);
-}
+	मुक्त(set);
+पूर्ण
 
 /*
- * Call this to report error for your variable that should not
+ * Call this to report error क्रम your variable that should not
  * get a boolean value (i.e. "[my] var" means "true").
  */
-int config_error_nonbool(const char *var)
-{
+पूर्णांक config_error_nonbool(स्थिर अक्षर *var)
+अणु
 	pr_err("Missing value for '%s'", var);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-void set_buildid_dir(const char *dir)
-{
-	if (dir)
-		scnprintf(buildid_dir, MAXPATHLEN, "%s", dir);
+व्योम set_buildid_dir(स्थिर अक्षर *dir)
+अणु
+	अगर (dir)
+		scnम_लिखो(buildid_dir, MAXPATHLEN, "%s", dir);
 
-	/* default to $HOME/.debug */
-	if (buildid_dir[0] == '\0') {
-		char *home = getenv("HOME");
+	/* शेष to $HOME/.debug */
+	अगर (buildid_dir[0] == '\0') अणु
+		अक्षर *home = दो_पर्या("HOME");
 
-		if (home) {
-			snprintf(buildid_dir, MAXPATHLEN, "%s/%s",
-				 home, DEBUG_CACHE_DIR);
-		} else {
-			strncpy(buildid_dir, DEBUG_CACHE_DIR, MAXPATHLEN-1);
-		}
+		अगर (home) अणु
+			snम_लिखो(buildid_dir, MAXPATHLEN, "%s/%s",
+				 home, DEBUG_CACHE_सूची);
+		पूर्ण अन्यथा अणु
+			म_नकलन(buildid_dir, DEBUG_CACHE_सूची, MAXPATHLEN-1);
+		पूर्ण
 		buildid_dir[MAXPATHLEN-1] = '\0';
-	}
-	/* for communicating with external commands */
+	पूर्ण
+	/* क्रम communicating with बाह्यal commands */
 	setenv("PERF_BUILDID_DIR", buildid_dir, 1);
-}
+पूर्ण

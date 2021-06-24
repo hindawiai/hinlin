@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Keystone Queue Manager subsystem driver
+ * Keystone Queue Manager subप्रणाली driver
  *
  * Copyright (C) 2014 Texas Instruments Incorporated - http://www.ti.com
  * Authors:	Sandeep Nair <sandeep_n@ti.com>
@@ -8,226 +9,226 @@
  *		Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
-#include <linux/debugfs.h>
-#include <linux/dma-mapping.h>
-#include <linux/firmware.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/soc/ti/knav_qmss.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/soc/ti/knav_qmss.h>
 
-#include "knav_qmss.h"
+#समावेश "knav_qmss.h"
 
-static struct knav_device *kdev;
-static DEFINE_MUTEX(knav_dev_lock);
-#define knav_dev_lock_held() \
+अटल काष्ठा knav_device *kdev;
+अटल DEFINE_MUTEX(knav_dev_lock);
+#घोषणा knav_dev_lock_held() \
 	lockdep_is_held(&knav_dev_lock)
 
-/* Queue manager register indices in DTS */
-#define KNAV_QUEUE_PEEK_REG_INDEX	0
-#define KNAV_QUEUE_STATUS_REG_INDEX	1
-#define KNAV_QUEUE_CONFIG_REG_INDEX	2
-#define KNAV_QUEUE_REGION_REG_INDEX	3
-#define KNAV_QUEUE_PUSH_REG_INDEX	4
-#define KNAV_QUEUE_POP_REG_INDEX	5
+/* Queue manager रेजिस्टर indices in DTS */
+#घोषणा KNAV_QUEUE_PEEK_REG_INDEX	0
+#घोषणा KNAV_QUEUE_STATUS_REG_INDEX	1
+#घोषणा KNAV_QUEUE_CONFIG_REG_INDEX	2
+#घोषणा KNAV_QUEUE_REGION_REG_INDEX	3
+#घोषणा KNAV_QUEUE_PUSH_REG_INDEX	4
+#घोषणा KNAV_QUEUE_POP_REG_INDEX	5
 
-/* Queue manager register indices in DTS for QMSS in K2G NAVSS.
- * There are no status and vbusm push registers on this version
- * of QMSS. Push registers are same as pop, So all indices above 1
+/* Queue manager रेजिस्टर indices in DTS क्रम QMSS in K2G NAVSS.
+ * There are no status and vbusm push रेजिस्टरs on this version
+ * of QMSS. Push रेजिस्टरs are same as pop, So all indices above 1
  * are to be re-defined
  */
-#define KNAV_L_QUEUE_CONFIG_REG_INDEX	1
-#define KNAV_L_QUEUE_REGION_REG_INDEX	2
-#define KNAV_L_QUEUE_PUSH_REG_INDEX	3
+#घोषणा KNAV_L_QUEUE_CONFIG_REG_INDEX	1
+#घोषणा KNAV_L_QUEUE_REGION_REG_INDEX	2
+#घोषणा KNAV_L_QUEUE_PUSH_REG_INDEX	3
 
-/* PDSP register indices in DTS */
-#define KNAV_QUEUE_PDSP_IRAM_REG_INDEX	0
-#define KNAV_QUEUE_PDSP_REGS_REG_INDEX	1
-#define KNAV_QUEUE_PDSP_INTD_REG_INDEX	2
-#define KNAV_QUEUE_PDSP_CMD_REG_INDEX	3
+/* PDSP रेजिस्टर indices in DTS */
+#घोषणा KNAV_QUEUE_PDSP_IRAM_REG_INDEX	0
+#घोषणा KNAV_QUEUE_PDSP_REGS_REG_INDEX	1
+#घोषणा KNAV_QUEUE_PDSP_INTD_REG_INDEX	2
+#घोषणा KNAV_QUEUE_PDSP_CMD_REG_INDEX	3
 
-#define knav_queue_idx_to_inst(kdev, idx)			\
-	(kdev->instances + (idx << kdev->inst_shift))
+#घोषणा knav_queue_idx_to_inst(kdev, idx)			\
+	(kdev->instances + (idx << kdev->inst_shअगरt))
 
-#define for_each_handle_rcu(qh, inst)				\
-	list_for_each_entry_rcu(qh, &inst->handles, list,	\
+#घोषणा क्रम_each_handle_rcu(qh, inst)				\
+	list_क्रम_each_entry_rcu(qh, &inst->handles, list,	\
 				knav_dev_lock_held())
 
-#define for_each_instance(idx, inst, kdev)		\
-	for (idx = 0, inst = kdev->instances;		\
+#घोषणा क्रम_each_instance(idx, inst, kdev)		\
+	क्रम (idx = 0, inst = kdev->instances;		\
 	     idx < (kdev)->num_queues_in_use;			\
 	     idx++, inst = knav_queue_idx_to_inst(kdev, idx))
 
 /* All firmware file names end up here. List the firmware file names below.
- * Newest followed by older ones. Search is done from start of the array
+ * Newest followed by older ones. Search is करोne from start of the array
  * until a firmware file is found.
  */
-const char *knav_acc_firmwares[] = {"ks2_qmss_pdsp_acc48.bin"};
+स्थिर अक्षर *knav_acc_firmwares[] = अणु"ks2_qmss_pdsp_acc48.bin"पूर्ण;
 
-static bool device_ready;
-bool knav_qmss_device_ready(void)
-{
-	return device_ready;
-}
-EXPORT_SYMBOL_GPL(knav_qmss_device_ready);
+अटल bool device_पढ़ोy;
+bool knav_qmss_device_पढ़ोy(व्योम)
+अणु
+	वापस device_पढ़ोy;
+पूर्ण
+EXPORT_SYMBOL_GPL(knav_qmss_device_पढ़ोy);
 
 /**
- * knav_queue_notify: qmss queue notfier call
+ * knav_queue_notअगरy: qmss queue notfier call
  *
  * @inst:		- qmss queue instance like accumulator
  */
-void knav_queue_notify(struct knav_queue_inst *inst)
-{
-	struct knav_queue *qh;
+व्योम knav_queue_notअगरy(काष्ठा knav_queue_inst *inst)
+अणु
+	काष्ठा knav_queue *qh;
 
-	if (!inst)
-		return;
+	अगर (!inst)
+		वापस;
 
-	rcu_read_lock();
-	for_each_handle_rcu(qh, inst) {
-		if (atomic_read(&qh->notifier_enabled) <= 0)
-			continue;
-		if (WARN_ON(!qh->notifier_fn))
-			continue;
-		this_cpu_inc(qh->stats->notifies);
-		qh->notifier_fn(qh->notifier_fn_arg);
-	}
-	rcu_read_unlock();
-}
-EXPORT_SYMBOL_GPL(knav_queue_notify);
+	rcu_पढ़ो_lock();
+	क्रम_each_handle_rcu(qh, inst) अणु
+		अगर (atomic_पढ़ो(&qh->notअगरier_enabled) <= 0)
+			जारी;
+		अगर (WARN_ON(!qh->notअगरier_fn))
+			जारी;
+		this_cpu_inc(qh->stats->notअगरies);
+		qh->notअगरier_fn(qh->notअगरier_fn_arg);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
+EXPORT_SYMBOL_GPL(knav_queue_notअगरy);
 
-static irqreturn_t knav_queue_int_handler(int irq, void *_instdata)
-{
-	struct knav_queue_inst *inst = _instdata;
+अटल irqवापस_t knav_queue_पूर्णांक_handler(पूर्णांक irq, व्योम *_instdata)
+अणु
+	काष्ठा knav_queue_inst *inst = _instdata;
 
-	knav_queue_notify(inst);
-	return IRQ_HANDLED;
-}
+	knav_queue_notअगरy(inst);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int knav_queue_setup_irq(struct knav_range_info *range,
-			  struct knav_queue_inst *inst)
-{
-	unsigned queue = inst->id - range->queue_base;
-	int ret = 0, irq;
+अटल पूर्णांक knav_queue_setup_irq(काष्ठा knav_range_info *range,
+			  काष्ठा knav_queue_inst *inst)
+अणु
+	अचिन्हित queue = inst->id - range->queue_base;
+	पूर्णांक ret = 0, irq;
 
-	if (range->flags & RANGE_HAS_IRQ) {
+	अगर (range->flags & RANGE_HAS_IRQ) अणु
 		irq = range->irqs[queue].irq;
-		ret = request_irq(irq, knav_queue_int_handler, 0,
+		ret = request_irq(irq, knav_queue_पूर्णांक_handler, 0,
 					inst->irq_name, inst);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		disable_irq(irq);
-		if (range->irqs[queue].cpu_mask) {
-			ret = irq_set_affinity_hint(irq, range->irqs[queue].cpu_mask);
-			if (ret) {
+		अगर (range->irqs[queue].cpu_mask) अणु
+			ret = irq_set_affinity_hपूर्णांक(irq, range->irqs[queue].cpu_mask);
+			अगर (ret) अणु
 				dev_warn(range->kdev->dev,
 					 "Failed to set IRQ affinity\n");
-				return ret;
-			}
-		}
-	}
-	return ret;
-}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void knav_queue_free_irq(struct knav_queue_inst *inst)
-{
-	struct knav_range_info *range = inst->range;
-	unsigned queue = inst->id - inst->range->queue_base;
-	int irq;
+अटल व्योम knav_queue_मुक्त_irq(काष्ठा knav_queue_inst *inst)
+अणु
+	काष्ठा knav_range_info *range = inst->range;
+	अचिन्हित queue = inst->id - inst->range->queue_base;
+	पूर्णांक irq;
 
-	if (range->flags & RANGE_HAS_IRQ) {
+	अगर (range->flags & RANGE_HAS_IRQ) अणु
 		irq = range->irqs[queue].irq;
-		irq_set_affinity_hint(irq, NULL);
-		free_irq(irq, inst);
-	}
-}
+		irq_set_affinity_hपूर्णांक(irq, शून्य);
+		मुक्त_irq(irq, inst);
+	पूर्ण
+पूर्ण
 
-static inline bool knav_queue_is_busy(struct knav_queue_inst *inst)
-{
-	return !list_empty(&inst->handles);
-}
+अटल अंतरभूत bool knav_queue_is_busy(काष्ठा knav_queue_inst *inst)
+अणु
+	वापस !list_empty(&inst->handles);
+पूर्ण
 
-static inline bool knav_queue_is_reserved(struct knav_queue_inst *inst)
-{
-	return inst->range->flags & RANGE_RESERVED;
-}
+अटल अंतरभूत bool knav_queue_is_reserved(काष्ठा knav_queue_inst *inst)
+अणु
+	वापस inst->range->flags & RANGE_RESERVED;
+पूर्ण
 
-static inline bool knav_queue_is_shared(struct knav_queue_inst *inst)
-{
-	struct knav_queue *tmp;
+अटल अंतरभूत bool knav_queue_is_shared(काष्ठा knav_queue_inst *inst)
+अणु
+	काष्ठा knav_queue *पंचांगp;
 
-	rcu_read_lock();
-	for_each_handle_rcu(tmp, inst) {
-		if (tmp->flags & KNAV_QUEUE_SHARED) {
-			rcu_read_unlock();
-			return true;
-		}
-	}
-	rcu_read_unlock();
-	return false;
-}
+	rcu_पढ़ो_lock();
+	क्रम_each_handle_rcu(पंचांगp, inst) अणु
+		अगर (पंचांगp->flags & KNAV_QUEUE_SHARED) अणु
+			rcu_पढ़ो_unlock();
+			वापस true;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस false;
+पूर्ण
 
-static inline bool knav_queue_match_type(struct knav_queue_inst *inst,
-						unsigned type)
-{
-	if ((type == KNAV_QUEUE_QPEND) &&
-	    (inst->range->flags & RANGE_HAS_IRQ)) {
-		return true;
-	} else if ((type == KNAV_QUEUE_ACC) &&
-		(inst->range->flags & RANGE_HAS_ACCUMULATOR)) {
-		return true;
-	} else if ((type == KNAV_QUEUE_GP) &&
+अटल अंतरभूत bool knav_queue_match_type(काष्ठा knav_queue_inst *inst,
+						अचिन्हित type)
+अणु
+	अगर ((type == KNAV_QUEUE_QPEND) &&
+	    (inst->range->flags & RANGE_HAS_IRQ)) अणु
+		वापस true;
+	पूर्ण अन्यथा अगर ((type == KNAV_QUEUE_ACC) &&
+		(inst->range->flags & RANGE_HAS_ACCUMULATOR)) अणु
+		वापस true;
+	पूर्ण अन्यथा अगर ((type == KNAV_QUEUE_GP) &&
 		!(inst->range->flags &
-			(RANGE_HAS_ACCUMULATOR | RANGE_HAS_IRQ))) {
-		return true;
-	}
-	return false;
-}
+			(RANGE_HAS_ACCUMULATOR | RANGE_HAS_IRQ))) अणु
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static inline struct knav_queue_inst *
-knav_queue_match_id_to_inst(struct knav_device *kdev, unsigned id)
-{
-	struct knav_queue_inst *inst;
-	int idx;
+अटल अंतरभूत काष्ठा knav_queue_inst *
+knav_queue_match_id_to_inst(काष्ठा knav_device *kdev, अचिन्हित id)
+अणु
+	काष्ठा knav_queue_inst *inst;
+	पूर्णांक idx;
 
-	for_each_instance(idx, inst, kdev) {
-		if (inst->id == id)
-			return inst;
-	}
-	return NULL;
-}
+	क्रम_each_instance(idx, inst, kdev) अणु
+		अगर (inst->id == id)
+			वापस inst;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static inline struct knav_queue_inst *knav_queue_find_by_id(int id)
-{
-	if (kdev->base_id <= id &&
-	    kdev->base_id + kdev->num_queues > id) {
+अटल अंतरभूत काष्ठा knav_queue_inst *knav_queue_find_by_id(पूर्णांक id)
+अणु
+	अगर (kdev->base_id <= id &&
+	    kdev->base_id + kdev->num_queues > id) अणु
 		id -= kdev->base_id;
-		return knav_queue_match_id_to_inst(kdev, id);
-	}
-	return NULL;
-}
+		वापस knav_queue_match_id_to_inst(kdev, id);
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct knav_queue *__knav_queue_open(struct knav_queue_inst *inst,
-				      const char *name, unsigned flags)
-{
-	struct knav_queue *qh;
-	unsigned id;
-	int ret = 0;
+अटल काष्ठा knav_queue *__knav_queue_खोलो(काष्ठा knav_queue_inst *inst,
+				      स्थिर अक्षर *name, अचिन्हित flags)
+अणु
+	काष्ठा knav_queue *qh;
+	अचिन्हित id;
+	पूर्णांक ret = 0;
 
-	qh = devm_kzalloc(inst->kdev->dev, sizeof(*qh), GFP_KERNEL);
-	if (!qh)
-		return ERR_PTR(-ENOMEM);
+	qh = devm_kzalloc(inst->kdev->dev, माप(*qh), GFP_KERNEL);
+	अगर (!qh)
+		वापस ERR_PTR(-ENOMEM);
 
-	qh->stats = alloc_percpu(struct knav_queue_stats);
-	if (!qh->stats) {
+	qh->stats = alloc_percpu(काष्ठा knav_queue_stats);
+	अगर (!qh->stats) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	qh->flags = flags;
 	qh->inst = inst;
@@ -236,387 +237,387 @@ static struct knav_queue *__knav_queue_open(struct knav_queue_inst *inst,
 	qh->reg_pop = &inst->qmgr->reg_pop[id];
 	qh->reg_peek = &inst->qmgr->reg_peek[id];
 
-	/* first opener? */
-	if (!knav_queue_is_busy(inst)) {
-		struct knav_range_info *range = inst->range;
+	/* first खोलोer? */
+	अगर (!knav_queue_is_busy(inst)) अणु
+		काष्ठा knav_range_info *range = inst->range;
 
 		inst->name = kstrndup(name, KNAV_NAME_SIZE - 1, GFP_KERNEL);
-		if (range->ops && range->ops->open_queue)
-			ret = range->ops->open_queue(range, inst, flags);
+		अगर (range->ops && range->ops->खोलो_queue)
+			ret = range->ops->खोलो_queue(range, inst, flags);
 
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 	list_add_tail_rcu(&qh->list, &inst->handles);
-	return qh;
+	वापस qh;
 
 err:
-	if (qh->stats)
-		free_percpu(qh->stats);
-	devm_kfree(inst->kdev->dev, qh);
-	return ERR_PTR(ret);
-}
+	अगर (qh->stats)
+		मुक्त_percpu(qh->stats);
+	devm_kमुक्त(inst->kdev->dev, qh);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static struct knav_queue *
-knav_queue_open_by_id(const char *name, unsigned id, unsigned flags)
-{
-	struct knav_queue_inst *inst;
-	struct knav_queue *qh;
+अटल काष्ठा knav_queue *
+knav_queue_खोलो_by_id(स्थिर अक्षर *name, अचिन्हित id, अचिन्हित flags)
+अणु
+	काष्ठा knav_queue_inst *inst;
+	काष्ठा knav_queue *qh;
 
 	mutex_lock(&knav_dev_lock);
 
 	qh = ERR_PTR(-ENODEV);
 	inst = knav_queue_find_by_id(id);
-	if (!inst)
-		goto unlock_ret;
+	अगर (!inst)
+		जाओ unlock_ret;
 
 	qh = ERR_PTR(-EEXIST);
-	if (!(flags & KNAV_QUEUE_SHARED) && knav_queue_is_busy(inst))
-		goto unlock_ret;
+	अगर (!(flags & KNAV_QUEUE_SHARED) && knav_queue_is_busy(inst))
+		जाओ unlock_ret;
 
 	qh = ERR_PTR(-EBUSY);
-	if ((flags & KNAV_QUEUE_SHARED) &&
+	अगर ((flags & KNAV_QUEUE_SHARED) &&
 	    (knav_queue_is_busy(inst) && !knav_queue_is_shared(inst)))
-		goto unlock_ret;
+		जाओ unlock_ret;
 
-	qh = __knav_queue_open(inst, name, flags);
+	qh = __knav_queue_खोलो(inst, name, flags);
 
 unlock_ret:
 	mutex_unlock(&knav_dev_lock);
 
-	return qh;
-}
+	वापस qh;
+पूर्ण
 
-static struct knav_queue *knav_queue_open_by_type(const char *name,
-						unsigned type, unsigned flags)
-{
-	struct knav_queue_inst *inst;
-	struct knav_queue *qh = ERR_PTR(-EINVAL);
-	int idx;
+अटल काष्ठा knav_queue *knav_queue_खोलो_by_type(स्थिर अक्षर *name,
+						अचिन्हित type, अचिन्हित flags)
+अणु
+	काष्ठा knav_queue_inst *inst;
+	काष्ठा knav_queue *qh = ERR_PTR(-EINVAL);
+	पूर्णांक idx;
 
 	mutex_lock(&knav_dev_lock);
 
-	for_each_instance(idx, inst, kdev) {
-		if (knav_queue_is_reserved(inst))
-			continue;
-		if (!knav_queue_match_type(inst, type))
-			continue;
-		if (knav_queue_is_busy(inst))
-			continue;
-		qh = __knav_queue_open(inst, name, flags);
-		goto unlock_ret;
-	}
+	क्रम_each_instance(idx, inst, kdev) अणु
+		अगर (knav_queue_is_reserved(inst))
+			जारी;
+		अगर (!knav_queue_match_type(inst, type))
+			जारी;
+		अगर (knav_queue_is_busy(inst))
+			जारी;
+		qh = __knav_queue_खोलो(inst, name, flags);
+		जाओ unlock_ret;
+	पूर्ण
 
 unlock_ret:
 	mutex_unlock(&knav_dev_lock);
-	return qh;
-}
+	वापस qh;
+पूर्ण
 
-static void knav_queue_set_notify(struct knav_queue_inst *inst, bool enabled)
-{
-	struct knav_range_info *range = inst->range;
+अटल व्योम knav_queue_set_notअगरy(काष्ठा knav_queue_inst *inst, bool enabled)
+अणु
+	काष्ठा knav_range_info *range = inst->range;
 
-	if (range->ops && range->ops->set_notify)
-		range->ops->set_notify(range, inst, enabled);
-}
+	अगर (range->ops && range->ops->set_notअगरy)
+		range->ops->set_notअगरy(range, inst, enabled);
+पूर्ण
 
-static int knav_queue_enable_notifier(struct knav_queue *qh)
-{
-	struct knav_queue_inst *inst = qh->inst;
+अटल पूर्णांक knav_queue_enable_notअगरier(काष्ठा knav_queue *qh)
+अणु
+	काष्ठा knav_queue_inst *inst = qh->inst;
 	bool first;
 
-	if (WARN_ON(!qh->notifier_fn))
-		return -EINVAL;
+	अगर (WARN_ON(!qh->notअगरier_fn))
+		वापस -EINVAL;
 
-	/* Adjust the per handle notifier count */
-	first = (atomic_inc_return(&qh->notifier_enabled) == 1);
-	if (!first)
-		return 0; /* nothing to do */
+	/* Adjust the per handle notअगरier count */
+	first = (atomic_inc_वापस(&qh->notअगरier_enabled) == 1);
+	अगर (!first)
+		वापस 0; /* nothing to करो */
 
-	/* Now adjust the per instance notifier count */
-	first = (atomic_inc_return(&inst->num_notifiers) == 1);
-	if (first)
-		knav_queue_set_notify(inst, true);
+	/* Now adjust the per instance notअगरier count */
+	first = (atomic_inc_वापस(&inst->num_notअगरiers) == 1);
+	अगर (first)
+		knav_queue_set_notअगरy(inst, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int knav_queue_disable_notifier(struct knav_queue *qh)
-{
-	struct knav_queue_inst *inst = qh->inst;
+अटल पूर्णांक knav_queue_disable_notअगरier(काष्ठा knav_queue *qh)
+अणु
+	काष्ठा knav_queue_inst *inst = qh->inst;
 	bool last;
 
-	last = (atomic_dec_return(&qh->notifier_enabled) == 0);
-	if (!last)
-		return 0; /* nothing to do */
+	last = (atomic_dec_वापस(&qh->notअगरier_enabled) == 0);
+	अगर (!last)
+		वापस 0; /* nothing to करो */
 
-	last = (atomic_dec_return(&inst->num_notifiers) == 0);
-	if (last)
-		knav_queue_set_notify(inst, false);
+	last = (atomic_dec_वापस(&inst->num_notअगरiers) == 0);
+	अगर (last)
+		knav_queue_set_notअगरy(inst, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int knav_queue_set_notifier(struct knav_queue *qh,
-				struct knav_queue_notify_config *cfg)
-{
-	knav_queue_notify_fn old_fn = qh->notifier_fn;
+अटल पूर्णांक knav_queue_set_notअगरier(काष्ठा knav_queue *qh,
+				काष्ठा knav_queue_notअगरy_config *cfg)
+अणु
+	knav_queue_notअगरy_fn old_fn = qh->notअगरier_fn;
 
-	if (!cfg)
-		return -EINVAL;
+	अगर (!cfg)
+		वापस -EINVAL;
 
-	if (!(qh->inst->range->flags & (RANGE_HAS_ACCUMULATOR | RANGE_HAS_IRQ)))
-		return -ENOTSUPP;
+	अगर (!(qh->inst->range->flags & (RANGE_HAS_ACCUMULATOR | RANGE_HAS_IRQ)))
+		वापस -ENOTSUPP;
 
-	if (!cfg->fn && old_fn)
-		knav_queue_disable_notifier(qh);
+	अगर (!cfg->fn && old_fn)
+		knav_queue_disable_notअगरier(qh);
 
-	qh->notifier_fn = cfg->fn;
-	qh->notifier_fn_arg = cfg->fn_arg;
+	qh->notअगरier_fn = cfg->fn;
+	qh->notअगरier_fn_arg = cfg->fn_arg;
 
-	if (cfg->fn && !old_fn)
-		knav_queue_enable_notifier(qh);
+	अगर (cfg->fn && !old_fn)
+		knav_queue_enable_notअगरier(qh);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int knav_gp_set_notify(struct knav_range_info *range,
-			       struct knav_queue_inst *inst,
+अटल पूर्णांक knav_gp_set_notअगरy(काष्ठा knav_range_info *range,
+			       काष्ठा knav_queue_inst *inst,
 			       bool enabled)
-{
-	unsigned queue;
+अणु
+	अचिन्हित queue;
 
-	if (range->flags & RANGE_HAS_IRQ) {
+	अगर (range->flags & RANGE_HAS_IRQ) अणु
 		queue = inst->id - range->queue_base;
-		if (enabled)
+		अगर (enabled)
 			enable_irq(range->irqs[queue].irq);
-		else
+		अन्यथा
 			disable_irq_nosync(range->irqs[queue].irq);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int knav_gp_open_queue(struct knav_range_info *range,
-				struct knav_queue_inst *inst, unsigned flags)
-{
-	return knav_queue_setup_irq(range, inst);
-}
+अटल पूर्णांक knav_gp_खोलो_queue(काष्ठा knav_range_info *range,
+				काष्ठा knav_queue_inst *inst, अचिन्हित flags)
+अणु
+	वापस knav_queue_setup_irq(range, inst);
+पूर्ण
 
-static int knav_gp_close_queue(struct knav_range_info *range,
-				struct knav_queue_inst *inst)
-{
-	knav_queue_free_irq(inst);
-	return 0;
-}
+अटल पूर्णांक knav_gp_बंद_queue(काष्ठा knav_range_info *range,
+				काष्ठा knav_queue_inst *inst)
+अणु
+	knav_queue_मुक्त_irq(inst);
+	वापस 0;
+पूर्ण
 
-static struct knav_range_ops knav_gp_range_ops = {
-	.set_notify	= knav_gp_set_notify,
-	.open_queue	= knav_gp_open_queue,
-	.close_queue	= knav_gp_close_queue,
-};
+अटल काष्ठा knav_range_ops knav_gp_range_ops = अणु
+	.set_notअगरy	= knav_gp_set_notअगरy,
+	.खोलो_queue	= knav_gp_खोलो_queue,
+	.बंद_queue	= knav_gp_बंद_queue,
+पूर्ण;
 
 
-static int knav_queue_get_count(void *qhandle)
-{
-	struct knav_queue *qh = qhandle;
-	struct knav_queue_inst *inst = qh->inst;
+अटल पूर्णांक knav_queue_get_count(व्योम *qhandle)
+अणु
+	काष्ठा knav_queue *qh = qhandle;
+	काष्ठा knav_queue_inst *inst = qh->inst;
 
-	return readl_relaxed(&qh->reg_peek[0].entry_count) +
-		atomic_read(&inst->desc_count);
-}
+	वापस पढ़ोl_relaxed(&qh->reg_peek[0].entry_count) +
+		atomic_पढ़ो(&inst->desc_count);
+पूर्ण
 
-static void knav_queue_debug_show_instance(struct seq_file *s,
-					struct knav_queue_inst *inst)
-{
-	struct knav_device *kdev = inst->kdev;
-	struct knav_queue *qh;
-	int cpu = 0;
-	int pushes = 0;
-	int pops = 0;
-	int push_errors = 0;
-	int pop_errors = 0;
-	int notifies = 0;
+अटल व्योम knav_queue_debug_show_instance(काष्ठा seq_file *s,
+					काष्ठा knav_queue_inst *inst)
+अणु
+	काष्ठा knav_device *kdev = inst->kdev;
+	काष्ठा knav_queue *qh;
+	पूर्णांक cpu = 0;
+	पूर्णांक pushes = 0;
+	पूर्णांक pops = 0;
+	पूर्णांक push_errors = 0;
+	पूर्णांक pop_errors = 0;
+	पूर्णांक notअगरies = 0;
 
-	if (!knav_queue_is_busy(inst))
-		return;
+	अगर (!knav_queue_is_busy(inst))
+		वापस;
 
-	seq_printf(s, "\tqueue id %d (%s)\n",
+	seq_म_लिखो(s, "\tqueue id %d (%s)\n",
 		   kdev->base_id + inst->id, inst->name);
-	for_each_handle_rcu(qh, inst) {
-		for_each_possible_cpu(cpu) {
+	क्रम_each_handle_rcu(qh, inst) अणु
+		क्रम_each_possible_cpu(cpu) अणु
 			pushes += per_cpu_ptr(qh->stats, cpu)->pushes;
 			pops += per_cpu_ptr(qh->stats, cpu)->pops;
 			push_errors += per_cpu_ptr(qh->stats, cpu)->push_errors;
 			pop_errors += per_cpu_ptr(qh->stats, cpu)->pop_errors;
-			notifies += per_cpu_ptr(qh->stats, cpu)->notifies;
-		}
+			notअगरies += per_cpu_ptr(qh->stats, cpu)->notअगरies;
+		पूर्ण
 
-		seq_printf(s, "\t\thandle %p: pushes %8d, pops %8d, count %8d, notifies %8d, push errors %8d, pop errors %8d\n",
+		seq_म_लिखो(s, "\t\thandle %p: pushes %8d, pops %8d, count %8d, notifies %8d, push errors %8d, pop errors %8d\n",
 				qh,
 				pushes,
 				pops,
 				knav_queue_get_count(qh),
-				notifies,
+				notअगरies,
 				push_errors,
 				pop_errors);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int knav_queue_debug_show(struct seq_file *s, void *v)
-{
-	struct knav_queue_inst *inst;
-	int idx;
+अटल पूर्णांक knav_queue_debug_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	काष्ठा knav_queue_inst *inst;
+	पूर्णांक idx;
 
 	mutex_lock(&knav_dev_lock);
-	seq_printf(s, "%s: %u-%u\n",
+	seq_म_लिखो(s, "%s: %u-%u\n",
 		   dev_name(kdev->dev), kdev->base_id,
 		   kdev->base_id + kdev->num_queues - 1);
-	for_each_instance(idx, inst, kdev)
+	क्रम_each_instance(idx, inst, kdev)
 		knav_queue_debug_show_instance(s, inst);
 	mutex_unlock(&knav_dev_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(knav_queue_debug);
 
-static inline int knav_queue_pdsp_wait(u32 * __iomem addr, unsigned timeout,
+अटल अंतरभूत पूर्णांक knav_queue_pdsp_रुको(u32 * __iomem addr, अचिन्हित समयout,
 					u32 flags)
-{
-	unsigned long end;
+अणु
+	अचिन्हित दीर्घ end;
 	u32 val = 0;
 
-	end = jiffies + msecs_to_jiffies(timeout);
-	while (time_after(end, jiffies)) {
-		val = readl_relaxed(addr);
-		if (flags)
+	end = jअगरfies + msecs_to_jअगरfies(समयout);
+	जबतक (समय_after(end, jअगरfies)) अणु
+		val = पढ़ोl_relaxed(addr);
+		अगर (flags)
 			val &= flags;
-		if (!val)
-			break;
+		अगर (!val)
+			अवरोध;
 		cpu_relax();
-	}
-	return val ? -ETIMEDOUT : 0;
-}
+	पूर्ण
+	वापस val ? -ETIMEDOUT : 0;
+पूर्ण
 
 
-static int knav_queue_flush(struct knav_queue *qh)
-{
-	struct knav_queue_inst *inst = qh->inst;
-	unsigned id = inst->id - inst->qmgr->start_queue;
+अटल पूर्णांक knav_queue_flush(काष्ठा knav_queue *qh)
+अणु
+	काष्ठा knav_queue_inst *inst = qh->inst;
+	अचिन्हित id = inst->id - inst->qmgr->start_queue;
 
 	atomic_set(&inst->desc_count, 0);
-	writel_relaxed(0, &inst->qmgr->reg_push[id].ptr_size_thresh);
-	return 0;
-}
+	ग_लिखोl_relaxed(0, &inst->qmgr->reg_push[id].ptr_माप_प्रकारhresh);
+	वापस 0;
+पूर्ण
 
 /**
- * knav_queue_open()	- open a hardware queue
+ * knav_queue_खोलो()	- खोलो a hardware queue
  * @name:		- name to give the queue handle
- * @id:			- desired queue number if any or specifes the type
+ * @id:			- desired queue number अगर any or specअगरes the type
  *			  of queue
  * @flags:		- the following flags are applicable to queues:
  *	KNAV_QUEUE_SHARED - allow the queue to be shared. Queues are
- *			     exclusive by default.
- *			     Subsequent attempts to open a shared queue should
+ *			     exclusive by शेष.
+ *			     Subsequent attempts to खोलो a shared queue should
  *			     also have this flag.
  *
- * Returns a handle to the open hardware queue if successful. Use IS_ERR()
- * to check the returned value for error codes.
+ * Returns a handle to the खोलो hardware queue अगर successful. Use IS_ERR()
+ * to check the वापसed value क्रम error codes.
  */
-void *knav_queue_open(const char *name, unsigned id,
-					unsigned flags)
-{
-	struct knav_queue *qh = ERR_PTR(-EINVAL);
+व्योम *knav_queue_खोलो(स्थिर अक्षर *name, अचिन्हित id,
+					अचिन्हित flags)
+अणु
+	काष्ठा knav_queue *qh = ERR_PTR(-EINVAL);
 
-	switch (id) {
-	case KNAV_QUEUE_QPEND:
-	case KNAV_QUEUE_ACC:
-	case KNAV_QUEUE_GP:
-		qh = knav_queue_open_by_type(name, id, flags);
-		break;
+	चयन (id) अणु
+	हाल KNAV_QUEUE_QPEND:
+	हाल KNAV_QUEUE_ACC:
+	हाल KNAV_QUEUE_GP:
+		qh = knav_queue_खोलो_by_type(name, id, flags);
+		अवरोध;
 
-	default:
-		qh = knav_queue_open_by_id(name, id, flags);
-		break;
-	}
-	return qh;
-}
-EXPORT_SYMBOL_GPL(knav_queue_open);
+	शेष:
+		qh = knav_queue_खोलो_by_id(name, id, flags);
+		अवरोध;
+	पूर्ण
+	वापस qh;
+पूर्ण
+EXPORT_SYMBOL_GPL(knav_queue_खोलो);
 
 /**
- * knav_queue_close()	- close a hardware queue handle
- * @qhandle:		- handle to close
+ * knav_queue_बंद()	- बंद a hardware queue handle
+ * @qhandle:		- handle to बंद
  */
-void knav_queue_close(void *qhandle)
-{
-	struct knav_queue *qh = qhandle;
-	struct knav_queue_inst *inst = qh->inst;
+व्योम knav_queue_बंद(व्योम *qhandle)
+अणु
+	काष्ठा knav_queue *qh = qhandle;
+	काष्ठा knav_queue_inst *inst = qh->inst;
 
-	while (atomic_read(&qh->notifier_enabled) > 0)
-		knav_queue_disable_notifier(qh);
+	जबतक (atomic_पढ़ो(&qh->notअगरier_enabled) > 0)
+		knav_queue_disable_notअगरier(qh);
 
 	mutex_lock(&knav_dev_lock);
 	list_del_rcu(&qh->list);
 	mutex_unlock(&knav_dev_lock);
 	synchronize_rcu();
-	if (!knav_queue_is_busy(inst)) {
-		struct knav_range_info *range = inst->range;
+	अगर (!knav_queue_is_busy(inst)) अणु
+		काष्ठा knav_range_info *range = inst->range;
 
-		if (range->ops && range->ops->close_queue)
-			range->ops->close_queue(range, inst);
-	}
-	free_percpu(qh->stats);
-	devm_kfree(inst->kdev->dev, qh);
-}
-EXPORT_SYMBOL_GPL(knav_queue_close);
+		अगर (range->ops && range->ops->बंद_queue)
+			range->ops->बंद_queue(range, inst);
+	पूर्ण
+	मुक्त_percpu(qh->stats);
+	devm_kमुक्त(inst->kdev->dev, qh);
+पूर्ण
+EXPORT_SYMBOL_GPL(knav_queue_बंद);
 
 /**
- * knav_queue_device_control()	- Perform control operations on a queue
+ * knav_queue_device_control()	- Perक्रमm control operations on a queue
  * @qhandle:			- queue handle
  * @cmd:			- control commands
  * @arg:			- command argument
  *
- * Returns 0 on success, errno otherwise.
+ * Returns 0 on success, त्रुटि_सं otherwise.
  */
-int knav_queue_device_control(void *qhandle, enum knav_queue_ctrl_cmd cmd,
-				unsigned long arg)
-{
-	struct knav_queue *qh = qhandle;
-	struct knav_queue_notify_config *cfg;
-	int ret;
+पूर्णांक knav_queue_device_control(व्योम *qhandle, क्रमागत knav_queue_ctrl_cmd cmd,
+				अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा knav_queue *qh = qhandle;
+	काष्ठा knav_queue_notअगरy_config *cfg;
+	पूर्णांक ret;
 
-	switch ((int)cmd) {
-	case KNAV_QUEUE_GET_ID:
+	चयन ((पूर्णांक)cmd) अणु
+	हाल KNAV_QUEUE_GET_ID:
 		ret = qh->inst->kdev->base_id + qh->inst->id;
-		break;
+		अवरोध;
 
-	case KNAV_QUEUE_FLUSH:
+	हाल KNAV_QUEUE_FLUSH:
 		ret = knav_queue_flush(qh);
-		break;
+		अवरोध;
 
-	case KNAV_QUEUE_SET_NOTIFIER:
-		cfg = (void *)arg;
-		ret = knav_queue_set_notifier(qh, cfg);
-		break;
+	हाल KNAV_QUEUE_SET_NOTIFIER:
+		cfg = (व्योम *)arg;
+		ret = knav_queue_set_notअगरier(qh, cfg);
+		अवरोध;
 
-	case KNAV_QUEUE_ENABLE_NOTIFY:
-		ret = knav_queue_enable_notifier(qh);
-		break;
+	हाल KNAV_QUEUE_ENABLE_NOTIFY:
+		ret = knav_queue_enable_notअगरier(qh);
+		अवरोध;
 
-	case KNAV_QUEUE_DISABLE_NOTIFY:
-		ret = knav_queue_disable_notifier(qh);
-		break;
+	हाल KNAV_QUEUE_DISABLE_NOTIFY:
+		ret = knav_queue_disable_notअगरier(qh);
+		अवरोध;
 
-	case KNAV_QUEUE_GET_COUNT:
+	हाल KNAV_QUEUE_GET_COUNT:
 		ret = knav_queue_get_count(qh);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -ENOTSUPP;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_queue_device_control);
 
 
@@ -626,22 +627,22 @@ EXPORT_SYMBOL_GPL(knav_queue_device_control);
  * @qhandle:		- hardware queue handle
  * @dma:		- DMA data to push
  * @size:		- size of data to push
- * @flags:		- can be used to pass additional information
+ * @flags:		- can be used to pass additional inक्रमmation
  *
- * Returns 0 on success, errno otherwise.
+ * Returns 0 on success, त्रुटि_सं otherwise.
  */
-int knav_queue_push(void *qhandle, dma_addr_t dma,
-					unsigned size, unsigned flags)
-{
-	struct knav_queue *qh = qhandle;
+पूर्णांक knav_queue_push(व्योम *qhandle, dma_addr_t dma,
+					अचिन्हित size, अचिन्हित flags)
+अणु
+	काष्ठा knav_queue *qh = qhandle;
 	u32 val;
 
 	val = (u32)dma | ((size / 16) - 1);
-	writel_relaxed(val, &qh->reg_push[0].ptr_size_thresh);
+	ग_लिखोl_relaxed(val, &qh->reg_push[0].ptr_माप_प्रकारhresh);
 
 	this_cpu_inc(qh->stats->pushes);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_queue_push);
 
 /**
@@ -651,97 +652,97 @@ EXPORT_SYMBOL_GPL(knav_queue_push);
  *
  * Returns a DMA address on success, 0 on failure.
  */
-dma_addr_t knav_queue_pop(void *qhandle, unsigned *size)
-{
-	struct knav_queue *qh = qhandle;
-	struct knav_queue_inst *inst = qh->inst;
+dma_addr_t knav_queue_pop(व्योम *qhandle, अचिन्हित *size)
+अणु
+	काष्ठा knav_queue *qh = qhandle;
+	काष्ठा knav_queue_inst *inst = qh->inst;
 	dma_addr_t dma;
 	u32 val, idx;
 
 	/* are we accumulated? */
-	if (inst->descs) {
-		if (unlikely(atomic_dec_return(&inst->desc_count) < 0)) {
+	अगर (inst->descs) अणु
+		अगर (unlikely(atomic_dec_वापस(&inst->desc_count) < 0)) अणु
 			atomic_inc(&inst->desc_count);
-			return 0;
-		}
-		idx  = atomic_inc_return(&inst->desc_head);
+			वापस 0;
+		पूर्ण
+		idx  = atomic_inc_वापस(&inst->desc_head);
 		idx &= ACC_DESCS_MASK;
 		val = inst->descs[idx];
-	} else {
-		val = readl_relaxed(&qh->reg_pop[0].ptr_size_thresh);
-		if (unlikely(!val))
-			return 0;
-	}
+	पूर्ण अन्यथा अणु
+		val = पढ़ोl_relaxed(&qh->reg_pop[0].ptr_माप_प्रकारhresh);
+		अगर (unlikely(!val))
+			वापस 0;
+	पूर्ण
 
 	dma = val & DESC_PTR_MASK;
-	if (size)
+	अगर (size)
 		*size = ((val & DESC_SIZE_MASK) + 1) * 16;
 
 	this_cpu_inc(qh->stats->pops);
-	return dma;
-}
+	वापस dma;
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_queue_pop);
 
-/* carve out descriptors and push into queue */
-static void kdesc_fill_pool(struct knav_pool *pool)
-{
-	struct knav_region *region;
-	int i;
+/* carve out descriptors and push पूर्णांकo queue */
+अटल व्योम kdesc_fill_pool(काष्ठा knav_pool *pool)
+अणु
+	काष्ठा knav_region *region;
+	पूर्णांक i;
 
 	region = pool->region;
 	pool->desc_size = region->desc_size;
-	for (i = 0; i < pool->num_desc; i++) {
-		int index = pool->region_offset + i;
+	क्रम (i = 0; i < pool->num_desc; i++) अणु
+		पूर्णांक index = pool->region_offset + i;
 		dma_addr_t dma_addr;
-		unsigned dma_size;
+		अचिन्हित dma_size;
 		dma_addr = region->dma_start + (region->desc_size * index);
 		dma_size = ALIGN(pool->desc_size, SMP_CACHE_BYTES);
-		dma_sync_single_for_device(pool->dev, dma_addr, dma_size,
+		dma_sync_single_क्रम_device(pool->dev, dma_addr, dma_size,
 					   DMA_TO_DEVICE);
 		knav_queue_push(pool->queue, dma_addr, dma_size, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* pop out descriptors and close the queue */
-static void kdesc_empty_pool(struct knav_pool *pool)
-{
+/* pop out descriptors and बंद the queue */
+अटल व्योम kdesc_empty_pool(काष्ठा knav_pool *pool)
+अणु
 	dma_addr_t dma;
-	unsigned size;
-	void *desc;
-	int i;
+	अचिन्हित size;
+	व्योम *desc;
+	पूर्णांक i;
 
-	if (!pool->queue)
-		return;
+	अगर (!pool->queue)
+		वापस;
 
-	for (i = 0;; i++) {
+	क्रम (i = 0;; i++) अणु
 		dma = knav_queue_pop(pool->queue, &size);
-		if (!dma)
-			break;
+		अगर (!dma)
+			अवरोध;
 		desc = knav_pool_desc_dma_to_virt(pool, dma);
-		if (!desc) {
+		अगर (!desc) अणु
 			dev_dbg(pool->kdev->dev,
 				"couldn't unmap desc, continuing\n");
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 	WARN_ON(i != pool->num_desc);
-	knav_queue_close(pool->queue);
-}
+	knav_queue_बंद(pool->queue);
+पूर्ण
 
 
 /* Get the DMA address of a descriptor */
-dma_addr_t knav_pool_desc_virt_to_dma(void *ph, void *virt)
-{
-	struct knav_pool *pool = ph;
-	return pool->region->dma_start + (virt - pool->region->virt_start);
-}
+dma_addr_t knav_pool_desc_virt_to_dma(व्योम *ph, व्योम *virt)
+अणु
+	काष्ठा knav_pool *pool = ph;
+	वापस pool->region->dma_start + (virt - pool->region->virt_start);
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_pool_desc_virt_to_dma);
 
-void *knav_pool_desc_dma_to_virt(void *ph, dma_addr_t dma)
-{
-	struct knav_pool *pool = ph;
-	return pool->region->virt_start + (dma - pool->region->dma_start);
-}
+व्योम *knav_pool_desc_dma_to_virt(व्योम *ph, dma_addr_t dma)
+अणु
+	काष्ठा knav_pool *pool = ph;
+	वापस pool->region->virt_start + (dma - pool->region->dma_start);
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_pool_desc_dma_to_virt);
 
 /**
@@ -752,51 +753,51 @@ EXPORT_SYMBOL_GPL(knav_pool_desc_dma_to_virt);
  *			  allocated.
  *
  * Returns a pool handle on success.
- * Use IS_ERR_OR_NULL() to identify error values on return.
+ * Use IS_ERR_OR_शून्य() to identअगरy error values on वापस.
  */
-void *knav_pool_create(const char *name,
-					int num_desc, int region_id)
-{
-	struct knav_region *reg_itr, *region = NULL;
-	struct knav_pool *pool, *pi;
-	struct list_head *node;
-	unsigned last_offset;
+व्योम *knav_pool_create(स्थिर अक्षर *name,
+					पूर्णांक num_desc, पूर्णांक region_id)
+अणु
+	काष्ठा knav_region *reg_itr, *region = शून्य;
+	काष्ठा knav_pool *pool, *pi;
+	काष्ठा list_head *node;
+	अचिन्हित last_offset;
 	bool slot_found;
-	int ret;
+	पूर्णांक ret;
 
-	if (!kdev)
-		return ERR_PTR(-EPROBE_DEFER);
+	अगर (!kdev)
+		वापस ERR_PTR(-EPROBE_DEFER);
 
-	if (!kdev->dev)
-		return ERR_PTR(-ENODEV);
+	अगर (!kdev->dev)
+		वापस ERR_PTR(-ENODEV);
 
-	pool = devm_kzalloc(kdev->dev, sizeof(*pool), GFP_KERNEL);
-	if (!pool) {
+	pool = devm_kzalloc(kdev->dev, माप(*pool), GFP_KERNEL);
+	अगर (!pool) अणु
 		dev_err(kdev->dev, "out of memory allocating pool\n");
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	for_each_region(kdev, reg_itr) {
-		if (reg_itr->id != region_id)
-			continue;
+	क्रम_each_region(kdev, reg_itr) अणु
+		अगर (reg_itr->id != region_id)
+			जारी;
 		region = reg_itr;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!region) {
+	अगर (!region) अणु
 		dev_err(kdev->dev, "region-id(%d) not found\n", region_id);
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	pool->queue = knav_queue_open(name, KNAV_QUEUE_GP, 0);
-	if (IS_ERR_OR_NULL(pool->queue)) {
+	pool->queue = knav_queue_खोलो(name, KNAV_QUEUE_GP, 0);
+	अगर (IS_ERR_OR_शून्य(pool->queue)) अणु
 		dev_err(kdev->dev,
 			"failed to open queue for pool(%s), error %ld\n",
 			name, PTR_ERR(pool->queue));
 		ret = PTR_ERR(pool->queue);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	pool->name = kstrndup(name, KNAV_NAME_SIZE - 1, GFP_KERNEL);
 	pool->kdev = kdev;
@@ -804,69 +805,69 @@ void *knav_pool_create(const char *name,
 
 	mutex_lock(&knav_dev_lock);
 
-	if (num_desc > (region->num_desc - region->used_desc)) {
+	अगर (num_desc > (region->num_desc - region->used_desc)) अणु
 		dev_err(kdev->dev, "out of descs in region(%d) for pool(%s)\n",
 			region_id, name);
 		ret = -ENOMEM;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
-	/* Region maintains a sorted (by region offset) list of pools
-	 * use the first free slot which is large enough to accomodate
+	/* Region मुख्यtains a sorted (by region offset) list of pools
+	 * use the first मुक्त slot which is large enough to accomodate
 	 * the request
 	 */
 	last_offset = 0;
 	slot_found = false;
 	node = &region->pools;
-	list_for_each_entry(pi, &region->pools, region_inst) {
-		if ((pi->region_offset - last_offset) >= num_desc) {
+	list_क्रम_each_entry(pi, &region->pools, region_inst) अणु
+		अगर ((pi->region_offset - last_offset) >= num_desc) अणु
 			slot_found = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		last_offset = pi->region_offset + pi->num_desc;
-	}
+	पूर्ण
 	node = &pi->region_inst;
 
-	if (slot_found) {
+	अगर (slot_found) अणु
 		pool->region = region;
 		pool->num_desc = num_desc;
 		pool->region_offset = last_offset;
 		region->used_desc += num_desc;
 		list_add_tail(&pool->list, &kdev->pools);
 		list_add_tail(&pool->region_inst, node);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(kdev->dev, "pool(%s) create failed: fragmented desc pool in region(%d)\n",
 			name, region_id);
 		ret = -ENOMEM;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
 	mutex_unlock(&knav_dev_lock);
 	kdesc_fill_pool(pool);
-	return pool;
+	वापस pool;
 
 err_unlock:
 	mutex_unlock(&knav_dev_lock);
 err:
-	kfree(pool->name);
-	devm_kfree(kdev->dev, pool);
-	return ERR_PTR(ret);
-}
+	kमुक्त(pool->name);
+	devm_kमुक्त(kdev->dev, pool);
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_pool_create);
 
 /**
  * knav_pool_destroy()	- Free a pool of descriptors
  * @ph:		- pool handle
  */
-void knav_pool_destroy(void *ph)
-{
-	struct knav_pool *pool = ph;
+व्योम knav_pool_destroy(व्योम *ph)
+अणु
+	काष्ठा knav_pool *pool = ph;
 
-	if (!pool)
-		return;
+	अगर (!pool)
+		वापस;
 
-	if (!pool->region)
-		return;
+	अगर (!pool->region)
+		वापस;
 
 	kdesc_empty_pool(pool);
 	mutex_lock(&knav_dev_lock);
@@ -876,9 +877,9 @@ void knav_pool_destroy(void *ph)
 	list_del(&pool->list);
 
 	mutex_unlock(&knav_dev_lock);
-	kfree(pool->name);
-	devm_kfree(kdev->dev, pool);
-}
+	kमुक्त(pool->name);
+	devm_kमुक्त(kdev->dev, pool);
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_pool_destroy);
 
 
@@ -888,60 +889,60 @@ EXPORT_SYMBOL_GPL(knav_pool_destroy);
  *
  * Returns descriptor from the pool.
  */
-void *knav_pool_desc_get(void *ph)
-{
-	struct knav_pool *pool = ph;
+व्योम *knav_pool_desc_get(व्योम *ph)
+अणु
+	काष्ठा knav_pool *pool = ph;
 	dma_addr_t dma;
-	unsigned size;
-	void *data;
+	अचिन्हित size;
+	व्योम *data;
 
 	dma = knav_queue_pop(pool->queue, &size);
-	if (unlikely(!dma))
-		return ERR_PTR(-ENOMEM);
+	अगर (unlikely(!dma))
+		वापस ERR_PTR(-ENOMEM);
 	data = knav_pool_desc_dma_to_virt(pool, dma);
-	return data;
-}
+	वापस data;
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_pool_desc_get);
 
 /**
- * knav_pool_desc_put()	- return a descriptor to the pool
+ * knav_pool_desc_put()	- वापस a descriptor to the pool
  * @ph:		- pool handle
- * @desc:	- virtual address
+ * @desc:	- भव address
  */
-void knav_pool_desc_put(void *ph, void *desc)
-{
-	struct knav_pool *pool = ph;
+व्योम knav_pool_desc_put(व्योम *ph, व्योम *desc)
+अणु
+	काष्ठा knav_pool *pool = ph;
 	dma_addr_t dma;
 	dma = knav_pool_desc_virt_to_dma(pool, desc);
 	knav_queue_push(pool->queue, dma, pool->region->desc_size, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_pool_desc_put);
 
 /**
- * knav_pool_desc_map()	- Map descriptor for DMA transfer
+ * knav_pool_desc_map()	- Map descriptor क्रम DMA transfer
  * @ph:				- pool handle
  * @desc:			- address of descriptor to map
  * @size:			- size of descriptor to map
- * @dma:			- DMA address return pointer
- * @dma_sz:			- adjusted return pointer
+ * @dma:			- DMA address वापस poपूर्णांकer
+ * @dma_sz:			- adjusted वापस poपूर्णांकer
  *
- * Returns 0 on success, errno otherwise.
+ * Returns 0 on success, त्रुटि_सं otherwise.
  */
-int knav_pool_desc_map(void *ph, void *desc, unsigned size,
-					dma_addr_t *dma, unsigned *dma_sz)
-{
-	struct knav_pool *pool = ph;
+पूर्णांक knav_pool_desc_map(व्योम *ph, व्योम *desc, अचिन्हित size,
+					dma_addr_t *dma, अचिन्हित *dma_sz)
+अणु
+	काष्ठा knav_pool *pool = ph;
 	*dma = knav_pool_desc_virt_to_dma(pool, desc);
 	size = min(size, pool->region->desc_size);
 	size = ALIGN(size, SMP_CACHE_BYTES);
 	*dma_sz = size;
-	dma_sync_single_for_device(pool->dev, *dma, size, DMA_TO_DEVICE);
+	dma_sync_single_क्रम_device(pool->dev, *dma, size, DMA_TO_DEVICE);
 
 	/* Ensure the descriptor reaches to the memory */
 	__iowmb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_pool_desc_map);
 
 /**
@@ -950,21 +951,21 @@ EXPORT_SYMBOL_GPL(knav_pool_desc_map);
  * @dma:			- DMA address of descriptor to unmap
  * @dma_sz:			- size of descriptor to unmap
  *
- * Returns descriptor address on success, Use IS_ERR_OR_NULL() to identify
- * error values on return.
+ * Returns descriptor address on success, Use IS_ERR_OR_शून्य() to identअगरy
+ * error values on वापस.
  */
-void *knav_pool_desc_unmap(void *ph, dma_addr_t dma, unsigned dma_sz)
-{
-	struct knav_pool *pool = ph;
-	unsigned desc_sz;
-	void *desc;
+व्योम *knav_pool_desc_unmap(व्योम *ph, dma_addr_t dma, अचिन्हित dma_sz)
+अणु
+	काष्ठा knav_pool *pool = ph;
+	अचिन्हित desc_sz;
+	व्योम *desc;
 
 	desc_sz = min(dma_sz, pool->region->desc_size);
 	desc = knav_pool_desc_dma_to_virt(pool, dma);
-	dma_sync_single_for_cpu(pool->dev, dma, desc_sz, DMA_FROM_DEVICE);
+	dma_sync_single_क्रम_cpu(pool->dev, dma, desc_sz, DMA_FROM_DEVICE);
 	prefetch(desc);
-	return desc;
-}
+	वापस desc;
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_pool_desc_unmap);
 
 /**
@@ -972,66 +973,66 @@ EXPORT_SYMBOL_GPL(knav_pool_desc_unmap);
  * @ph:			- pool handle
  * Returns number of elements in the pool.
  */
-int knav_pool_count(void *ph)
-{
-	struct knav_pool *pool = ph;
-	return knav_queue_get_count(pool->queue);
-}
+पूर्णांक knav_pool_count(व्योम *ph)
+अणु
+	काष्ठा knav_pool *pool = ph;
+	वापस knav_queue_get_count(pool->queue);
+पूर्ण
 EXPORT_SYMBOL_GPL(knav_pool_count);
 
-static void knav_queue_setup_region(struct knav_device *kdev,
-					struct knav_region *region)
-{
-	unsigned hw_num_desc, hw_desc_size, size;
-	struct knav_reg_region __iomem  *regs;
-	struct knav_qmgr_info *qmgr;
-	struct knav_pool *pool;
-	int id = region->id;
-	struct page *page;
+अटल व्योम knav_queue_setup_region(काष्ठा knav_device *kdev,
+					काष्ठा knav_region *region)
+अणु
+	अचिन्हित hw_num_desc, hw_desc_size, size;
+	काष्ठा knav_reg_region __iomem  *regs;
+	काष्ठा knav_qmgr_info *qmgr;
+	काष्ठा knav_pool *pool;
+	पूर्णांक id = region->id;
+	काष्ठा page *page;
 
 	/* unused region? */
-	if (!region->num_desc) {
+	अगर (!region->num_desc) अणु
 		dev_warn(kdev->dev, "unused region %s\n", region->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* get hardware descriptor value */
 	hw_num_desc = ilog2(region->num_desc - 1) + 1;
 
-	/* did we force fit ourselves into nothingness? */
-	if (region->num_desc < 32) {
+	/* did we क्रमce fit ourselves पूर्णांकo nothingness? */
+	अगर (region->num_desc < 32) अणु
 		region->num_desc = 0;
 		dev_warn(kdev->dev, "too few descriptors in region %s\n",
 			 region->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	size = region->num_desc * region->desc_size;
 	region->virt_start = alloc_pages_exact(size, GFP_KERNEL | GFP_DMA |
 						GFP_DMA32);
-	if (!region->virt_start) {
+	अगर (!region->virt_start) अणु
 		region->num_desc = 0;
 		dev_err(kdev->dev, "memory alloc failed for region %s\n",
 			region->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 	region->virt_end = region->virt_start + size;
 	page = virt_to_page(region->virt_start);
 
 	region->dma_start = dma_map_page(kdev->dev, page, 0, size,
-					 DMA_BIDIRECTIONAL);
-	if (dma_mapping_error(kdev->dev, region->dma_start)) {
+					 DMA_BIसूचीECTIONAL);
+	अगर (dma_mapping_error(kdev->dev, region->dma_start)) अणु
 		dev_err(kdev->dev, "dma map failed for region %s\n",
 			region->name);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	region->dma_end = region->dma_start + size;
 
-	pool = devm_kzalloc(kdev->dev, sizeof(*pool), GFP_KERNEL);
-	if (!pool) {
+	pool = devm_kzalloc(kdev->dev, माप(*pool), GFP_KERNEL);
+	अगर (!pool) अणु
 		dev_err(kdev->dev, "out of memory allocating dummy pool\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	pool->num_desc = 0;
 	pool->region_offset = region->num_desc;
 	list_add(&pool->region_inst, &region->pools);
@@ -1045,253 +1046,253 @@ static void knav_queue_setup_region(struct knav_device *kdev,
 	hw_desc_size = (region->desc_size / 16) - 1;
 	hw_num_desc -= 5;
 
-	for_each_qmgr(kdev, qmgr) {
+	क्रम_each_qmgr(kdev, qmgr) अणु
 		regs = qmgr->reg_region + id;
-		writel_relaxed((u32)region->dma_start, &regs->base);
-		writel_relaxed(region->link_index, &regs->start_index);
-		writel_relaxed(hw_desc_size << 16 | hw_num_desc,
+		ग_लिखोl_relaxed((u32)region->dma_start, &regs->base);
+		ग_लिखोl_relaxed(region->link_index, &regs->start_index);
+		ग_लिखोl_relaxed(hw_desc_size << 16 | hw_num_desc,
 			       &regs->size_count);
-	}
-	return;
+	पूर्ण
+	वापस;
 
 fail:
-	if (region->dma_start)
+	अगर (region->dma_start)
 		dma_unmap_page(kdev->dev, region->dma_start, size,
-				DMA_BIDIRECTIONAL);
-	if (region->virt_start)
-		free_pages_exact(region->virt_start, size);
+				DMA_BIसूचीECTIONAL);
+	अगर (region->virt_start)
+		मुक्त_pages_exact(region->virt_start, size);
 	region->num_desc = 0;
-	return;
-}
+	वापस;
+पूर्ण
 
-static const char *knav_queue_find_name(struct device_node *node)
-{
-	const char *name;
+अटल स्थिर अक्षर *knav_queue_find_name(काष्ठा device_node *node)
+अणु
+	स्थिर अक्षर *name;
 
-	if (of_property_read_string(node, "label", &name) < 0)
+	अगर (of_property_पढ़ो_string(node, "label", &name) < 0)
 		name = node->name;
-	if (!name)
+	अगर (!name)
 		name = "unknown";
-	return name;
-}
+	वापस name;
+पूर्ण
 
-static int knav_queue_setup_regions(struct knav_device *kdev,
-					struct device_node *regions)
-{
-	struct device *dev = kdev->dev;
-	struct knav_region *region;
-	struct device_node *child;
+अटल पूर्णांक knav_queue_setup_regions(काष्ठा knav_device *kdev,
+					काष्ठा device_node *regions)
+अणु
+	काष्ठा device *dev = kdev->dev;
+	काष्ठा knav_region *region;
+	काष्ठा device_node *child;
 	u32 temp[2];
-	int ret;
+	पूर्णांक ret;
 
-	for_each_child_of_node(regions, child) {
-		region = devm_kzalloc(dev, sizeof(*region), GFP_KERNEL);
-		if (!region) {
+	क्रम_each_child_of_node(regions, child) अणु
+		region = devm_kzalloc(dev, माप(*region), GFP_KERNEL);
+		अगर (!region) अणु
 			of_node_put(child);
 			dev_err(dev, "out of memory allocating region\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		region->name = knav_queue_find_name(child);
-		of_property_read_u32(child, "id", &region->id);
-		ret = of_property_read_u32_array(child, "region-spec", temp, 2);
-		if (!ret) {
+		of_property_पढ़ो_u32(child, "id", &region->id);
+		ret = of_property_पढ़ो_u32_array(child, "region-spec", temp, 2);
+		अगर (!ret) अणु
 			region->num_desc  = temp[0];
 			region->desc_size = temp[1];
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "invalid region info %s\n", region->name);
-			devm_kfree(dev, region);
-			continue;
-		}
+			devm_kमुक्त(dev, region);
+			जारी;
+		पूर्ण
 
-		if (!of_get_property(child, "link-index", NULL)) {
+		अगर (!of_get_property(child, "link-index", शून्य)) अणु
 			dev_err(dev, "No link info for %s\n", region->name);
-			devm_kfree(dev, region);
-			continue;
-		}
-		ret = of_property_read_u32(child, "link-index",
+			devm_kमुक्त(dev, region);
+			जारी;
+		पूर्ण
+		ret = of_property_पढ़ो_u32(child, "link-index",
 					   &region->link_index);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "link index not found for %s\n",
 				region->name);
-			devm_kfree(dev, region);
-			continue;
-		}
+			devm_kमुक्त(dev, region);
+			जारी;
+		पूर्ण
 
 		INIT_LIST_HEAD(&region->pools);
 		list_add_tail(&region->list, &kdev->regions);
-	}
-	if (list_empty(&kdev->regions)) {
+	पूर्ण
+	अगर (list_empty(&kdev->regions)) अणु
 		dev_err(dev, "no valid region information found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Next, we run through the regions and set things up */
-	for_each_region(kdev, region)
+	क्रम_each_region(kdev, region)
 		knav_queue_setup_region(kdev, region);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int knav_get_link_ram(struct knav_device *kdev,
-				       const char *name,
-				       struct knav_link_ram_block *block)
-{
-	struct platform_device *pdev = to_platform_device(kdev->dev);
-	struct device_node *node = pdev->dev.of_node;
+अटल पूर्णांक knav_get_link_ram(काष्ठा knav_device *kdev,
+				       स्थिर अक्षर *name,
+				       काष्ठा knav_link_ram_block *block)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(kdev->dev);
+	काष्ठा device_node *node = pdev->dev.of_node;
 	u32 temp[2];
 
 	/*
-	 * Note: link ram resources are specified in "entry" sized units. In
+	 * Note: link ram resources are specअगरied in "entry" sized units. In
 	 * reality, although entries are ~40bits in hardware, we treat them as
 	 * 64-bit entities here.
 	 *
-	 * For example, to specify the internal link ram for Keystone-I class
+	 * For example, to specअगरy the पूर्णांकernal link ram क्रम Keystone-I class
 	 * devices, we would set the linkram0 resource to 0x80000-0x83fff.
 	 *
-	 * This gets a bit weird when other link rams are used.  For example,
-	 * if the range specified is 0x0c000000-0x0c003fff (i.e., 16K entries
+	 * This माला_लो a bit weird when other link rams are used.  For example,
+	 * अगर the range specअगरied is 0x0c000000-0x0c003fff (i.e., 16K entries
 	 * in MSMC SRAM), the actual memory used is 0x0c000000-0x0c020000,
-	 * which accounts for 64-bits per entry, for 16K entries.
+	 * which accounts क्रम 64-bits per entry, क्रम 16K entries.
 	 */
-	if (!of_property_read_u32_array(node, name , temp, 2)) {
-		if (temp[0]) {
+	अगर (!of_property_पढ़ो_u32_array(node, name , temp, 2)) अणु
+		अगर (temp[0]) अणु
 			/*
-			 * queue_base specified => using internal or onchip
-			 * link ram WARNING - we do not "reserve" this block
+			 * queue_base specअगरied => using पूर्णांकernal or onchip
+			 * link ram WARNING - we करो not "reserve" this block
 			 */
 			block->dma = (dma_addr_t)temp[0];
-			block->virt = NULL;
+			block->virt = शून्य;
 			block->size = temp[1];
-		} else {
+		पूर्ण अन्यथा अणु
 			block->size = temp[1];
-			/* queue_base not specific => allocate requested size */
+			/* queue_base not specअगरic => allocate requested size */
 			block->virt = dmam_alloc_coherent(kdev->dev,
 						  8 * block->size, &block->dma,
 						  GFP_KERNEL);
-			if (!block->virt) {
+			अगर (!block->virt) अणु
 				dev_err(kdev->dev, "failed to alloc linkram\n");
-				return -ENOMEM;
-			}
-		}
-	} else {
-		return -ENODEV;
-	}
-	return 0;
-}
+				वापस -ENOMEM;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int knav_queue_setup_link_ram(struct knav_device *kdev)
-{
-	struct knav_link_ram_block *block;
-	struct knav_qmgr_info *qmgr;
+अटल पूर्णांक knav_queue_setup_link_ram(काष्ठा knav_device *kdev)
+अणु
+	काष्ठा knav_link_ram_block *block;
+	काष्ठा knav_qmgr_info *qmgr;
 
-	for_each_qmgr(kdev, qmgr) {
+	क्रम_each_qmgr(kdev, qmgr) अणु
 		block = &kdev->link_rams[0];
 		dev_dbg(kdev->dev, "linkram0: dma:%pad, virt:%p, size:%x\n",
 			&block->dma, block->virt, block->size);
-		writel_relaxed((u32)block->dma, &qmgr->reg_config->link_ram_base0);
-		if (kdev->version == QMSS_66AK2G)
-			writel_relaxed(block->size,
+		ग_लिखोl_relaxed((u32)block->dma, &qmgr->reg_config->link_ram_base0);
+		अगर (kdev->version == QMSS_66AK2G)
+			ग_लिखोl_relaxed(block->size,
 				       &qmgr->reg_config->link_ram_size0);
-		else
-			writel_relaxed(block->size - 1,
+		अन्यथा
+			ग_लिखोl_relaxed(block->size - 1,
 				       &qmgr->reg_config->link_ram_size0);
 		block++;
-		if (!block->size)
-			continue;
+		अगर (!block->size)
+			जारी;
 
 		dev_dbg(kdev->dev, "linkram1: dma:%pad, virt:%p, size:%x\n",
 			&block->dma, block->virt, block->size);
-		writel_relaxed(block->dma, &qmgr->reg_config->link_ram_base1);
-	}
+		ग_लिखोl_relaxed(block->dma, &qmgr->reg_config->link_ram_base1);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int knav_setup_queue_range(struct knav_device *kdev,
-					struct device_node *node)
-{
-	struct device *dev = kdev->dev;
-	struct knav_range_info *range;
-	struct knav_qmgr_info *qmgr;
+अटल पूर्णांक knav_setup_queue_range(काष्ठा knav_device *kdev,
+					काष्ठा device_node *node)
+अणु
+	काष्ठा device *dev = kdev->dev;
+	काष्ठा knav_range_info *range;
+	काष्ठा knav_qmgr_info *qmgr;
 	u32 temp[2], start, end, id, index;
-	int ret, i;
+	पूर्णांक ret, i;
 
-	range = devm_kzalloc(dev, sizeof(*range), GFP_KERNEL);
-	if (!range) {
+	range = devm_kzalloc(dev, माप(*range), GFP_KERNEL);
+	अगर (!range) अणु
 		dev_err(dev, "out of memory allocating range\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	range->kdev = kdev;
 	range->name = knav_queue_find_name(node);
-	ret = of_property_read_u32_array(node, "qrange", temp, 2);
-	if (!ret) {
+	ret = of_property_पढ़ो_u32_array(node, "qrange", temp, 2);
+	अगर (!ret) अणु
 		range->queue_base = temp[0] - kdev->base_id;
 		range->num_queues = temp[1];
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "invalid queue range %s\n", range->name);
-		devm_kfree(dev, range);
-		return -EINVAL;
-	}
+		devm_kमुक्त(dev, range);
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < RANGE_MAX_IRQS; i++) {
-		struct of_phandle_args oirq;
+	क्रम (i = 0; i < RANGE_MAX_IRQS; i++) अणु
+		काष्ठा of_phandle_args oirq;
 
-		if (of_irq_parse_one(node, i, &oirq))
-			break;
+		अगर (of_irq_parse_one(node, i, &oirq))
+			अवरोध;
 
 		range->irqs[i].irq = irq_create_of_mapping(&oirq);
-		if (range->irqs[i].irq == IRQ_NONE)
-			break;
+		अगर (range->irqs[i].irq == IRQ_NONE)
+			अवरोध;
 
 		range->num_irqs++;
 
-		if (IS_ENABLED(CONFIG_SMP) && oirq.args_count == 3) {
-			unsigned long mask;
-			int bit;
+		अगर (IS_ENABLED(CONFIG_SMP) && oirq.args_count == 3) अणु
+			अचिन्हित दीर्घ mask;
+			पूर्णांक bit;
 
 			range->irqs[i].cpu_mask = devm_kzalloc(dev,
 							       cpumask_size(), GFP_KERNEL);
-			if (!range->irqs[i].cpu_mask)
-				return -ENOMEM;
+			अगर (!range->irqs[i].cpu_mask)
+				वापस -ENOMEM;
 
 			mask = (oirq.args[2] & 0x0000ff00) >> 8;
-			for_each_set_bit(bit, &mask, BITS_PER_LONG)
+			क्रम_each_set_bit(bit, &mask, BITS_PER_LONG)
 				cpumask_set_cpu(bit, range->irqs[i].cpu_mask);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	range->num_irqs = min(range->num_irqs, range->num_queues);
-	if (range->num_irqs)
+	अगर (range->num_irqs)
 		range->flags |= RANGE_HAS_IRQ;
 
-	if (of_get_property(node, "qalloc-by-id", NULL))
+	अगर (of_get_property(node, "qalloc-by-id", शून्य))
 		range->flags |= RANGE_RESERVED;
 
-	if (of_get_property(node, "accumulator", NULL)) {
+	अगर (of_get_property(node, "accumulator", शून्य)) अणु
 		ret = knav_init_acc_range(kdev, node, range);
-		if (ret < 0) {
-			devm_kfree(dev, range);
-			return ret;
-		}
-	} else {
+		अगर (ret < 0) अणु
+			devm_kमुक्त(dev, range);
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		range->ops = &knav_gp_range_ops;
-	}
+	पूर्ण
 
 	/* set threshold to 1, and flush out the queues */
-	for_each_qmgr(kdev, qmgr) {
+	क्रम_each_qmgr(kdev, qmgr) अणु
 		start = max(qmgr->start_queue, range->queue_base);
 		end   = min(qmgr->start_queue + qmgr->num_queues,
 			    range->queue_base + range->num_queues);
-		for (id = start; id < end; id++) {
+		क्रम (id = start; id < end; id++) अणु
 			index = id - qmgr->start_queue;
-			writel_relaxed(THRESH_GTE | 1,
-				       &qmgr->reg_peek[index].ptr_size_thresh);
-			writel_relaxed(0,
-				       &qmgr->reg_push[index].ptr_size_thresh);
-		}
-	}
+			ग_लिखोl_relaxed(THRESH_GTE | 1,
+				       &qmgr->reg_peek[index].ptr_माप_प्रकारhresh);
+			ग_लिखोl_relaxed(0,
+				       &qmgr->reg_push[index].ptr_माप_प्रकारhresh);
+		पूर्ण
+	पूर्ण
 
 	list_add_tail(&range->list, &kdev->queue_ranges);
 	dev_dbg(dev, "added range %s: %d-%d, %d irqs%s%s%s\n",
@@ -1302,119 +1303,119 @@ static int knav_setup_queue_range(struct knav_device *kdev,
 		(range->flags & RANGE_RESERVED) ? ", reserved" : "",
 		(range->flags & RANGE_HAS_ACCUMULATOR) ? ", acc" : "");
 	kdev->num_queues_in_use += range->num_queues;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int knav_setup_queue_pools(struct knav_device *kdev,
-				   struct device_node *queue_pools)
-{
-	struct device_node *type, *range;
+अटल पूर्णांक knav_setup_queue_pools(काष्ठा knav_device *kdev,
+				   काष्ठा device_node *queue_pools)
+अणु
+	काष्ठा device_node *type, *range;
 
-	for_each_child_of_node(queue_pools, type) {
-		for_each_child_of_node(type, range) {
-			/* return value ignored, we init the rest... */
+	क्रम_each_child_of_node(queue_pools, type) अणु
+		क्रम_each_child_of_node(type, range) अणु
+			/* वापस value ignored, we init the rest... */
 			knav_setup_queue_range(kdev, range);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* ... and barf if they all failed! */
-	if (list_empty(&kdev->queue_ranges)) {
+	/* ... and barf अगर they all failed! */
+	अगर (list_empty(&kdev->queue_ranges)) अणु
 		dev_err(kdev->dev, "no valid queue range found\n");
-		return -ENODEV;
-	}
-	return 0;
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void knav_free_queue_range(struct knav_device *kdev,
-				  struct knav_range_info *range)
-{
-	if (range->ops && range->ops->free_range)
-		range->ops->free_range(range);
+अटल व्योम knav_मुक्त_queue_range(काष्ठा knav_device *kdev,
+				  काष्ठा knav_range_info *range)
+अणु
+	अगर (range->ops && range->ops->मुक्त_range)
+		range->ops->मुक्त_range(range);
 	list_del(&range->list);
-	devm_kfree(kdev->dev, range);
-}
+	devm_kमुक्त(kdev->dev, range);
+पूर्ण
 
-static void knav_free_queue_ranges(struct knav_device *kdev)
-{
-	struct knav_range_info *range;
+अटल व्योम knav_मुक्त_queue_ranges(काष्ठा knav_device *kdev)
+अणु
+	काष्ठा knav_range_info *range;
 
-	for (;;) {
+	क्रम (;;) अणु
 		range = first_queue_range(kdev);
-		if (!range)
-			break;
-		knav_free_queue_range(kdev, range);
-	}
-}
+		अगर (!range)
+			अवरोध;
+		knav_मुक्त_queue_range(kdev, range);
+	पूर्ण
+पूर्ण
 
-static void knav_queue_free_regions(struct knav_device *kdev)
-{
-	struct knav_region *region;
-	struct knav_pool *pool, *tmp;
-	unsigned size;
+अटल व्योम knav_queue_मुक्त_regions(काष्ठा knav_device *kdev)
+अणु
+	काष्ठा knav_region *region;
+	काष्ठा knav_pool *pool, *पंचांगp;
+	अचिन्हित size;
 
-	for (;;) {
+	क्रम (;;) अणु
 		region = first_region(kdev);
-		if (!region)
-			break;
-		list_for_each_entry_safe(pool, tmp, &region->pools, region_inst)
+		अगर (!region)
+			अवरोध;
+		list_क्रम_each_entry_safe(pool, पंचांगp, &region->pools, region_inst)
 			knav_pool_destroy(pool);
 
 		size = region->virt_end - region->virt_start;
-		if (size)
-			free_pages_exact(region->virt_start, size);
+		अगर (size)
+			मुक्त_pages_exact(region->virt_start, size);
 		list_del(&region->list);
-		devm_kfree(kdev->dev, region);
-	}
-}
+		devm_kमुक्त(kdev->dev, region);
+	पूर्ण
+पूर्ण
 
-static void __iomem *knav_queue_map_reg(struct knav_device *kdev,
-					struct device_node *node, int index)
-{
-	struct resource res;
-	void __iomem *regs;
-	int ret;
+अटल व्योम __iomem *knav_queue_map_reg(काष्ठा knav_device *kdev,
+					काष्ठा device_node *node, पूर्णांक index)
+अणु
+	काष्ठा resource res;
+	व्योम __iomem *regs;
+	पूर्णांक ret;
 
 	ret = of_address_to_resource(node, index, &res);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(kdev->dev, "Can't translate of node(%pOFn) address for index(%d)\n",
 			node, index);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	regs = devm_ioremap_resource(kdev->dev, &res);
-	if (IS_ERR(regs))
+	अगर (IS_ERR(regs))
 		dev_err(kdev->dev, "Failed to map register base for index(%d) node(%pOFn)\n",
 			index, node);
-	return regs;
-}
+	वापस regs;
+पूर्ण
 
-static int knav_queue_init_qmgrs(struct knav_device *kdev,
-					struct device_node *qmgrs)
-{
-	struct device *dev = kdev->dev;
-	struct knav_qmgr_info *qmgr;
-	struct device_node *child;
+अटल पूर्णांक knav_queue_init_qmgrs(काष्ठा knav_device *kdev,
+					काष्ठा device_node *qmgrs)
+अणु
+	काष्ठा device *dev = kdev->dev;
+	काष्ठा knav_qmgr_info *qmgr;
+	काष्ठा device_node *child;
 	u32 temp[2];
-	int ret;
+	पूर्णांक ret;
 
-	for_each_child_of_node(qmgrs, child) {
-		qmgr = devm_kzalloc(dev, sizeof(*qmgr), GFP_KERNEL);
-		if (!qmgr) {
+	क्रम_each_child_of_node(qmgrs, child) अणु
+		qmgr = devm_kzalloc(dev, माप(*qmgr), GFP_KERNEL);
+		अगर (!qmgr) अणु
 			of_node_put(child);
 			dev_err(dev, "out of memory allocating qmgr\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		ret = of_property_read_u32_array(child, "managed-queues",
+		ret = of_property_पढ़ो_u32_array(child, "managed-queues",
 						 temp, 2);
-		if (!ret) {
+		अगर (!ret) अणु
 			qmgr->start_queue = temp[0];
 			qmgr->num_queues = temp[1];
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "invalid qmgr queue range\n");
-			devm_kfree(dev, qmgr);
-			continue;
-		}
+			devm_kमुक्त(dev, qmgr);
+			जारी;
+		पूर्ण
 
 		dev_info(dev, "qmgr start queue %d, number of queues %d\n",
 			 qmgr->start_queue, qmgr->num_queues);
@@ -1423,11 +1424,11 @@ static int knav_queue_init_qmgrs(struct knav_device *kdev,
 			knav_queue_map_reg(kdev, child,
 					   KNAV_QUEUE_PEEK_REG_INDEX);
 
-		if (kdev->version == QMSS) {
+		अगर (kdev->version == QMSS) अणु
 			qmgr->reg_status =
 				knav_queue_map_reg(kdev, child,
 						   KNAV_QUEUE_STATUS_REG_INDEX);
-		}
+		पूर्ण
 
 		qmgr->reg_config =
 			knav_queue_map_reg(kdev, child,
@@ -1446,38 +1447,38 @@ static int knav_queue_init_qmgrs(struct knav_device *kdev,
 					    KNAV_L_QUEUE_PUSH_REG_INDEX :
 					    KNAV_QUEUE_PUSH_REG_INDEX);
 
-		if (kdev->version == QMSS) {
+		अगर (kdev->version == QMSS) अणु
 			qmgr->reg_pop =
 				knav_queue_map_reg(kdev, child,
 						   KNAV_QUEUE_POP_REG_INDEX);
-		}
+		पूर्ण
 
-		if (IS_ERR(qmgr->reg_peek) ||
+		अगर (IS_ERR(qmgr->reg_peek) ||
 		    ((kdev->version == QMSS) &&
 		    (IS_ERR(qmgr->reg_status) || IS_ERR(qmgr->reg_pop))) ||
 		    IS_ERR(qmgr->reg_config) || IS_ERR(qmgr->reg_region) ||
-		    IS_ERR(qmgr->reg_push)) {
+		    IS_ERR(qmgr->reg_push)) अणु
 			dev_err(dev, "failed to map qmgr regs\n");
-			if (kdev->version == QMSS) {
-				if (!IS_ERR(qmgr->reg_status))
+			अगर (kdev->version == QMSS) अणु
+				अगर (!IS_ERR(qmgr->reg_status))
 					devm_iounmap(dev, qmgr->reg_status);
-				if (!IS_ERR(qmgr->reg_pop))
+				अगर (!IS_ERR(qmgr->reg_pop))
 					devm_iounmap(dev, qmgr->reg_pop);
-			}
-			if (!IS_ERR(qmgr->reg_peek))
+			पूर्ण
+			अगर (!IS_ERR(qmgr->reg_peek))
 				devm_iounmap(dev, qmgr->reg_peek);
-			if (!IS_ERR(qmgr->reg_config))
+			अगर (!IS_ERR(qmgr->reg_config))
 				devm_iounmap(dev, qmgr->reg_config);
-			if (!IS_ERR(qmgr->reg_region))
+			अगर (!IS_ERR(qmgr->reg_region))
 				devm_iounmap(dev, qmgr->reg_region);
-			if (!IS_ERR(qmgr->reg_push))
+			अगर (!IS_ERR(qmgr->reg_push))
 				devm_iounmap(dev, qmgr->reg_push);
-			devm_kfree(dev, qmgr);
-			continue;
-		}
+			devm_kमुक्त(dev, qmgr);
+			जारी;
+		पूर्ण
 
-		/* Use same push register for pop as well */
-		if (kdev->version == QMSS_66AK2G)
+		/* Use same push रेजिस्टर क्रम pop as well */
+		अगर (kdev->version == QMSS_66AK2G)
 			qmgr->reg_pop = qmgr->reg_push;
 
 		list_add_tail(&qmgr->list, &kdev->qmgrs);
@@ -1486,24 +1487,24 @@ static int knav_queue_init_qmgrs(struct knav_device *kdev,
 			 qmgr->reg_peek, qmgr->reg_status,
 			 qmgr->reg_config, qmgr->reg_region,
 			 qmgr->reg_push, qmgr->reg_pop);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int knav_queue_init_pdsps(struct knav_device *kdev,
-					struct device_node *pdsps)
-{
-	struct device *dev = kdev->dev;
-	struct knav_pdsp_info *pdsp;
-	struct device_node *child;
+अटल पूर्णांक knav_queue_init_pdsps(काष्ठा knav_device *kdev,
+					काष्ठा device_node *pdsps)
+अणु
+	काष्ठा device *dev = kdev->dev;
+	काष्ठा knav_pdsp_info *pdsp;
+	काष्ठा device_node *child;
 
-	for_each_child_of_node(pdsps, child) {
-		pdsp = devm_kzalloc(dev, sizeof(*pdsp), GFP_KERNEL);
-		if (!pdsp) {
+	क्रम_each_child_of_node(pdsps, child) अणु
+		pdsp = devm_kzalloc(dev, माप(*pdsp), GFP_KERNEL);
+		अगर (!pdsp) अणु
 			of_node_put(child);
 			dev_err(dev, "out of memory allocating pdsp\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		pdsp->name = knav_queue_find_name(child);
 		pdsp->iram =
 			knav_queue_map_reg(kdev, child,
@@ -1511,272 +1512,272 @@ static int knav_queue_init_pdsps(struct knav_device *kdev,
 		pdsp->regs =
 			knav_queue_map_reg(kdev, child,
 					   KNAV_QUEUE_PDSP_REGS_REG_INDEX);
-		pdsp->intd =
+		pdsp->पूर्णांकd =
 			knav_queue_map_reg(kdev, child,
 					   KNAV_QUEUE_PDSP_INTD_REG_INDEX);
 		pdsp->command =
 			knav_queue_map_reg(kdev, child,
 					   KNAV_QUEUE_PDSP_CMD_REG_INDEX);
 
-		if (IS_ERR(pdsp->command) || IS_ERR(pdsp->iram) ||
-		    IS_ERR(pdsp->regs) || IS_ERR(pdsp->intd)) {
+		अगर (IS_ERR(pdsp->command) || IS_ERR(pdsp->iram) ||
+		    IS_ERR(pdsp->regs) || IS_ERR(pdsp->पूर्णांकd)) अणु
 			dev_err(dev, "failed to map pdsp %s regs\n",
 				pdsp->name);
-			if (!IS_ERR(pdsp->command))
+			अगर (!IS_ERR(pdsp->command))
 				devm_iounmap(dev, pdsp->command);
-			if (!IS_ERR(pdsp->iram))
+			अगर (!IS_ERR(pdsp->iram))
 				devm_iounmap(dev, pdsp->iram);
-			if (!IS_ERR(pdsp->regs))
+			अगर (!IS_ERR(pdsp->regs))
 				devm_iounmap(dev, pdsp->regs);
-			if (!IS_ERR(pdsp->intd))
-				devm_iounmap(dev, pdsp->intd);
-			devm_kfree(dev, pdsp);
-			continue;
-		}
-		of_property_read_u32(child, "id", &pdsp->id);
+			अगर (!IS_ERR(pdsp->पूर्णांकd))
+				devm_iounmap(dev, pdsp->पूर्णांकd);
+			devm_kमुक्त(dev, pdsp);
+			जारी;
+		पूर्ण
+		of_property_पढ़ो_u32(child, "id", &pdsp->id);
 		list_add_tail(&pdsp->list, &kdev->pdsps);
 		dev_dbg(dev, "added pdsp %s: command %p, iram %p, regs %p, intd %p\n",
 			pdsp->name, pdsp->command, pdsp->iram, pdsp->regs,
-			pdsp->intd);
-	}
-	return 0;
-}
+			pdsp->पूर्णांकd);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int knav_queue_stop_pdsp(struct knav_device *kdev,
-			  struct knav_pdsp_info *pdsp)
-{
-	u32 val, timeout = 1000;
-	int ret;
+अटल पूर्णांक knav_queue_stop_pdsp(काष्ठा knav_device *kdev,
+			  काष्ठा knav_pdsp_info *pdsp)
+अणु
+	u32 val, समयout = 1000;
+	पूर्णांक ret;
 
-	val = readl_relaxed(&pdsp->regs->control) & ~PDSP_CTRL_ENABLE;
-	writel_relaxed(val, &pdsp->regs->control);
-	ret = knav_queue_pdsp_wait(&pdsp->regs->control, timeout,
+	val = पढ़ोl_relaxed(&pdsp->regs->control) & ~PDSP_CTRL_ENABLE;
+	ग_लिखोl_relaxed(val, &pdsp->regs->control);
+	ret = knav_queue_pdsp_रुको(&pdsp->regs->control, समयout,
 					PDSP_CTRL_RUNNING);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(kdev->dev, "timed out on pdsp %s stop\n", pdsp->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	pdsp->loaded = false;
 	pdsp->started = false;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int knav_queue_load_pdsp(struct knav_device *kdev,
-			  struct knav_pdsp_info *pdsp)
-{
-	int i, ret, fwlen;
-	const struct firmware *fw;
+अटल पूर्णांक knav_queue_load_pdsp(काष्ठा knav_device *kdev,
+			  काष्ठा knav_pdsp_info *pdsp)
+अणु
+	पूर्णांक i, ret, fwlen;
+	स्थिर काष्ठा firmware *fw;
 	bool found = false;
 	u32 *fwdata;
 
-	for (i = 0; i < ARRAY_SIZE(knav_acc_firmwares); i++) {
-		if (knav_acc_firmwares[i]) {
+	क्रम (i = 0; i < ARRAY_SIZE(knav_acc_firmwares); i++) अणु
+		अगर (knav_acc_firmwares[i]) अणु
 			ret = request_firmware_direct(&fw,
 						      knav_acc_firmwares[i],
 						      kdev->dev);
-			if (!ret) {
+			अगर (!ret) अणु
 				found = true;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!found) {
+	अगर (!found) अणु
 		dev_err(kdev->dev, "failed to get firmware for pdsp\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dev_info(kdev->dev, "firmware file %s downloaded for PDSP\n",
 		 knav_acc_firmwares[i]);
 
-	writel_relaxed(pdsp->id + 1, pdsp->command + 0x18);
-	/* download the firmware */
+	ग_लिखोl_relaxed(pdsp->id + 1, pdsp->command + 0x18);
+	/* करोwnload the firmware */
 	fwdata = (u32 *)fw->data;
-	fwlen = (fw->size + sizeof(u32) - 1) / sizeof(u32);
-	for (i = 0; i < fwlen; i++)
-		writel_relaxed(be32_to_cpu(fwdata[i]), pdsp->iram + i);
+	fwlen = (fw->size + माप(u32) - 1) / माप(u32);
+	क्रम (i = 0; i < fwlen; i++)
+		ग_लिखोl_relaxed(be32_to_cpu(fwdata[i]), pdsp->iram + i);
 
 	release_firmware(fw);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int knav_queue_start_pdsp(struct knav_device *kdev,
-			   struct knav_pdsp_info *pdsp)
-{
-	u32 val, timeout = 1000;
-	int ret;
+अटल पूर्णांक knav_queue_start_pdsp(काष्ठा knav_device *kdev,
+			   काष्ठा knav_pdsp_info *pdsp)
+अणु
+	u32 val, समयout = 1000;
+	पूर्णांक ret;
 
-	/* write a command for sync */
-	writel_relaxed(0xffffffff, pdsp->command);
-	while (readl_relaxed(pdsp->command) != 0xffffffff)
+	/* ग_लिखो a command क्रम sync */
+	ग_लिखोl_relaxed(0xffffffff, pdsp->command);
+	जबतक (पढ़ोl_relaxed(pdsp->command) != 0xffffffff)
 		cpu_relax();
 
 	/* soft reset the PDSP */
-	val  = readl_relaxed(&pdsp->regs->control);
+	val  = पढ़ोl_relaxed(&pdsp->regs->control);
 	val &= ~(PDSP_CTRL_PC_MASK | PDSP_CTRL_SOFT_RESET);
-	writel_relaxed(val, &pdsp->regs->control);
+	ग_लिखोl_relaxed(val, &pdsp->regs->control);
 
 	/* enable pdsp */
-	val = readl_relaxed(&pdsp->regs->control) | PDSP_CTRL_ENABLE;
-	writel_relaxed(val, &pdsp->regs->control);
+	val = पढ़ोl_relaxed(&pdsp->regs->control) | PDSP_CTRL_ENABLE;
+	ग_लिखोl_relaxed(val, &pdsp->regs->control);
 
-	/* wait for command register to clear */
-	ret = knav_queue_pdsp_wait(pdsp->command, timeout, 0);
-	if (ret < 0) {
+	/* रुको क्रम command रेजिस्टर to clear */
+	ret = knav_queue_pdsp_रुको(pdsp->command, समयout, 0);
+	अगर (ret < 0) अणु
 		dev_err(kdev->dev,
 			"timed out on pdsp %s command register wait\n",
 			pdsp->name);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void knav_queue_stop_pdsps(struct knav_device *kdev)
-{
-	struct knav_pdsp_info *pdsp;
+अटल व्योम knav_queue_stop_pdsps(काष्ठा knav_device *kdev)
+अणु
+	काष्ठा knav_pdsp_info *pdsp;
 
 	/* disable all pdsps */
-	for_each_pdsp(kdev, pdsp)
+	क्रम_each_pdsp(kdev, pdsp)
 		knav_queue_stop_pdsp(kdev, pdsp);
-}
+पूर्ण
 
-static int knav_queue_start_pdsps(struct knav_device *kdev)
-{
-	struct knav_pdsp_info *pdsp;
-	int ret;
+अटल पूर्णांक knav_queue_start_pdsps(काष्ठा knav_device *kdev)
+अणु
+	काष्ठा knav_pdsp_info *pdsp;
+	पूर्णांक ret;
 
 	knav_queue_stop_pdsps(kdev);
-	/* now load them all. We return success even if pdsp
+	/* now load them all. We वापस success even अगर pdsp
 	 * is not loaded as acc channels are optional on having
-	 * firmware availability in the system. We set the loaded
+	 * firmware availability in the प्रणाली. We set the loaded
 	 * and stated flag and when initialize the acc range, check
-	 * it and init the range only if pdsp is started.
+	 * it and init the range only अगर pdsp is started.
 	 */
-	for_each_pdsp(kdev, pdsp) {
+	क्रम_each_pdsp(kdev, pdsp) अणु
 		ret = knav_queue_load_pdsp(kdev, pdsp);
-		if (!ret)
+		अगर (!ret)
 			pdsp->loaded = true;
-	}
+	पूर्ण
 
-	for_each_pdsp(kdev, pdsp) {
-		if (pdsp->loaded) {
+	क्रम_each_pdsp(kdev, pdsp) अणु
+		अगर (pdsp->loaded) अणु
 			ret = knav_queue_start_pdsp(kdev, pdsp);
-			if (!ret)
+			अगर (!ret)
 				pdsp->started = true;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline struct knav_qmgr_info *knav_find_qmgr(unsigned id)
-{
-	struct knav_qmgr_info *qmgr;
+अटल अंतरभूत काष्ठा knav_qmgr_info *knav_find_qmgr(अचिन्हित id)
+अणु
+	काष्ठा knav_qmgr_info *qmgr;
 
-	for_each_qmgr(kdev, qmgr) {
-		if ((id >= qmgr->start_queue) &&
+	क्रम_each_qmgr(kdev, qmgr) अणु
+		अगर ((id >= qmgr->start_queue) &&
 		    (id < qmgr->start_queue + qmgr->num_queues))
-			return qmgr;
-	}
-	return NULL;
-}
+			वापस qmgr;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int knav_queue_init_queue(struct knav_device *kdev,
-					struct knav_range_info *range,
-					struct knav_queue_inst *inst,
-					unsigned id)
-{
-	char irq_name[KNAV_NAME_SIZE];
+अटल पूर्णांक knav_queue_init_queue(काष्ठा knav_device *kdev,
+					काष्ठा knav_range_info *range,
+					काष्ठा knav_queue_inst *inst,
+					अचिन्हित id)
+अणु
+	अक्षर irq_name[KNAV_NAME_SIZE];
 	inst->qmgr = knav_find_qmgr(id);
-	if (!inst->qmgr)
-		return -1;
+	अगर (!inst->qmgr)
+		वापस -1;
 
 	INIT_LIST_HEAD(&inst->handles);
 	inst->kdev = kdev;
 	inst->range = range;
 	inst->irq_num = -1;
 	inst->id = id;
-	scnprintf(irq_name, sizeof(irq_name), "hwqueue-%d", id);
-	inst->irq_name = kstrndup(irq_name, sizeof(irq_name), GFP_KERNEL);
+	scnम_लिखो(irq_name, माप(irq_name), "hwqueue-%d", id);
+	inst->irq_name = kstrndup(irq_name, माप(irq_name), GFP_KERNEL);
 
-	if (range->ops && range->ops->init_queue)
-		return range->ops->init_queue(range, inst);
-	else
-		return 0;
-}
+	अगर (range->ops && range->ops->init_queue)
+		वापस range->ops->init_queue(range, inst);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int knav_queue_init_queues(struct knav_device *kdev)
-{
-	struct knav_range_info *range;
-	int size, id, base_idx;
-	int idx = 0, ret = 0;
+अटल पूर्णांक knav_queue_init_queues(काष्ठा knav_device *kdev)
+अणु
+	काष्ठा knav_range_info *range;
+	पूर्णांक size, id, base_idx;
+	पूर्णांक idx = 0, ret = 0;
 
-	/* how much do we need for instance data? */
-	size = sizeof(struct knav_queue_inst);
+	/* how much करो we need क्रम instance data? */
+	size = माप(काष्ठा knav_queue_inst);
 
-	/* round this up to a power of 2, keep the index to instance
+	/* round this up to a घातer of 2, keep the index to instance
 	 * arithmetic fast.
 	 * */
-	kdev->inst_shift = order_base_2(size);
-	size = (1 << kdev->inst_shift) * kdev->num_queues_in_use;
+	kdev->inst_shअगरt = order_base_2(size);
+	size = (1 << kdev->inst_shअगरt) * kdev->num_queues_in_use;
 	kdev->instances = devm_kzalloc(kdev->dev, size, GFP_KERNEL);
-	if (!kdev->instances)
-		return -ENOMEM;
+	अगर (!kdev->instances)
+		वापस -ENOMEM;
 
-	for_each_queue_range(kdev, range) {
-		if (range->ops && range->ops->init_range)
+	क्रम_each_queue_range(kdev, range) अणु
+		अगर (range->ops && range->ops->init_range)
 			range->ops->init_range(range);
 		base_idx = idx;
-		for (id = range->queue_base;
-		     id < range->queue_base + range->num_queues; id++, idx++) {
+		क्रम (id = range->queue_base;
+		     id < range->queue_base + range->num_queues; id++, idx++) अणु
 			ret = knav_queue_init_queue(kdev, range,
 					knav_queue_idx_to_inst(kdev, idx), id);
-			if (ret < 0)
-				return ret;
-		}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
 		range->queue_base_inst =
 			knav_queue_idx_to_inst(kdev, base_idx);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Match table for of_platform binding */
-static const struct of_device_id keystone_qmss_of_match[] = {
-	{
+/* Match table क्रम of_platक्रमm binding */
+अटल स्थिर काष्ठा of_device_id keystone_qmss_of_match[] = अणु
+	अणु
 		.compatible = "ti,keystone-navigator-qmss",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "ti,66ak2g-navss-qm",
-		.data	= (void *)QMSS_66AK2G,
-	},
-	{},
-};
+		.data	= (व्योम *)QMSS_66AK2G,
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, keystone_qmss_of_match);
 
-static int knav_queue_probe(struct platform_device *pdev)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct device_node *qmgrs, *queue_pools, *regions, *pdsps;
-	const struct of_device_id *match;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक knav_queue_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा device_node *qmgrs, *queue_pools, *regions, *pdsps;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device *dev = &pdev->dev;
 	u32 temp[2];
-	int ret;
+	पूर्णांक ret;
 
-	if (!node) {
+	अगर (!node) अणु
 		dev_err(dev, "device tree info unavailable\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	kdev = devm_kzalloc(dev, sizeof(struct knav_device), GFP_KERNEL);
-	if (!kdev) {
+	kdev = devm_kzalloc(dev, माप(काष्ठा knav_device), GFP_KERNEL);
+	अगर (!kdev) अणु
 		dev_err(dev, "memory allocation failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	match = of_match_device(of_match_ptr(keystone_qmss_of_match), dev);
-	if (match && match->data)
+	अगर (match && match->data)
 		kdev->version = QMSS_66AK2G;
 
-	platform_set_drvdata(pdev, kdev);
+	platक्रमm_set_drvdata(pdev, kdev);
 	kdev->dev = dev;
 	INIT_LIST_HEAD(&kdev->queue_ranges);
 	INIT_LIST_HEAD(&kdev->qmgrs);
@@ -1784,125 +1785,125 @@ static int knav_queue_probe(struct platform_device *pdev)
 	INIT_LIST_HEAD(&kdev->regions);
 	INIT_LIST_HEAD(&kdev->pdsps);
 
-	pm_runtime_enable(&pdev->dev);
-	ret = pm_runtime_get_sync(&pdev->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
+	ret = pm_runसमय_get_sync(&pdev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(&pdev->dev);
 		dev_err(dev, "Failed to enable QMSS\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (of_property_read_u32_array(node, "queue-range", temp, 2)) {
+	अगर (of_property_पढ़ो_u32_array(node, "queue-range", temp, 2)) अणु
 		dev_err(dev, "queue-range not specified\n");
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	kdev->base_id    = temp[0];
 	kdev->num_queues = temp[1];
 
 	/* Initialize queue managers using device tree configuration */
 	qmgrs =  of_get_child_by_name(node, "qmgrs");
-	if (!qmgrs) {
+	अगर (!qmgrs) अणु
 		dev_err(dev, "queue manager info not specified\n");
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	ret = knav_queue_init_qmgrs(kdev, qmgrs);
 	of_node_put(qmgrs);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	/* get pdsp configuration values from device tree */
 	pdsps =  of_get_child_by_name(node, "pdsps");
-	if (pdsps) {
+	अगर (pdsps) अणु
 		ret = knav_queue_init_pdsps(kdev, pdsps);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		ret = knav_queue_start_pdsps(kdev);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 	of_node_put(pdsps);
 
 	/* get usable queue range values from device tree */
 	queue_pools = of_get_child_by_name(node, "queue-pools");
-	if (!queue_pools) {
+	अगर (!queue_pools) अणु
 		dev_err(dev, "queue-pools not specified\n");
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	ret = knav_setup_queue_pools(kdev, queue_pools);
 	of_node_put(queue_pools);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	ret = knav_get_link_ram(kdev, "linkram0", &kdev->link_rams[0]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(kdev->dev, "could not setup linking ram\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = knav_get_link_ram(kdev, "linkram1", &kdev->link_rams[1]);
-	if (ret) {
+	अगर (ret) अणु
 		/*
-		 * nothing really, we have one linking ram already, so we just
+		 * nothing really, we have one linking ram alपढ़ोy, so we just
 		 * live within our means
 		 */
-	}
+	पूर्ण
 
 	ret = knav_queue_setup_link_ram(kdev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	regions = of_get_child_by_name(node, "descriptor-regions");
-	if (!regions) {
+	अगर (!regions) अणु
 		dev_err(dev, "descriptor-regions not specified\n");
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	ret = knav_queue_setup_regions(kdev, regions);
 	of_node_put(regions);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	ret = knav_queue_init_queues(kdev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "hwqueue initialization failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	debugfs_create_file("qmss", S_IFREG | S_IRUGO, NULL, NULL,
+	debugfs_create_file("qmss", S_IFREG | S_IRUGO, शून्य, शून्य,
 			    &knav_queue_debug_fops);
-	device_ready = true;
-	return 0;
+	device_पढ़ोy = true;
+	वापस 0;
 
 err:
 	knav_queue_stop_pdsps(kdev);
-	knav_queue_free_regions(kdev);
-	knav_free_queue_ranges(kdev);
-	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
-	return ret;
-}
+	knav_queue_मुक्त_regions(kdev);
+	knav_मुक्त_queue_ranges(kdev);
+	pm_runसमय_put_sync(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	वापस ret;
+पूर्ण
 
-static int knav_queue_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक knav_queue_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	/* TODO: Free resources */
-	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
-	return 0;
-}
+	pm_runसमय_put_sync(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver keystone_qmss_driver = {
+अटल काष्ठा platक्रमm_driver keystone_qmss_driver = अणु
 	.probe		= knav_queue_probe,
-	.remove		= knav_queue_remove,
-	.driver		= {
+	.हटाओ		= knav_queue_हटाओ,
+	.driver		= अणु
 		.name	= "keystone-navigator-qmss",
 		.of_match_table = keystone_qmss_of_match,
-	},
-};
-module_platform_driver(keystone_qmss_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(keystone_qmss_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("TI QMSS driver for Keystone SOCs");

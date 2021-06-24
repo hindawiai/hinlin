@@ -1,24 +1,25 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004 Topspin Corporation.  All rights reserved.
- * Copyright (c) 2005 Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2005 Sun Microप्रणालीs, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,171 +32,171 @@
  * SOFTWARE.
  */
 
-#include <linux/export.h>
-#include <linux/string.h>
+#समावेश <linux/export.h>
+#समावेश <linux/माला.स>
 
-#include <rdma/ib_pack.h>
+#समावेश <rdma/ib_pack.h>
 
-static u64 value_read(int offset, int size, void *structure)
-{
-	switch (size) {
-	case 1: return                *(u8  *) (structure + offset);
-	case 2: return be16_to_cpup((__be16 *) (structure + offset));
-	case 4: return be32_to_cpup((__be32 *) (structure + offset));
-	case 8: return be64_to_cpup((__be64 *) (structure + offset));
-	default:
+अटल u64 value_पढ़ो(पूर्णांक offset, पूर्णांक size, व्योम *काष्ठाure)
+अणु
+	चयन (size) अणु
+	हाल 1: वापस                *(u8  *) (काष्ठाure + offset);
+	हाल 2: वापस be16_to_cpup((__be16 *) (काष्ठाure + offset));
+	हाल 4: वापस be32_to_cpup((__be32 *) (काष्ठाure + offset));
+	हाल 8: वापस be64_to_cpup((__be64 *) (काष्ठाure + offset));
+	शेष:
 		pr_warn("Field size %d bits not handled\n", size * 8);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /**
- * ib_pack - Pack a structure into a buffer
- * @desc:Array of structure field descriptions
+ * ib_pack - Pack a काष्ठाure पूर्णांकo a buffer
+ * @desc:Array of काष्ठाure field descriptions
  * @desc_len:Number of entries in @desc
- * @structure:Structure to pack from
- * @buf:Buffer to pack into
+ * @काष्ठाure:Structure to pack from
+ * @buf:Buffer to pack पूर्णांकo
  *
- * ib_pack() packs a list of structure fields into a buffer,
+ * ib_pack() packs a list of काष्ठाure fields पूर्णांकo a buffer,
  * controlled by the array of fields in @desc.
  */
-void ib_pack(const struct ib_field        *desc,
-	     int                           desc_len,
-	     void                         *structure,
-	     void                         *buf)
-{
-	int i;
+व्योम ib_pack(स्थिर काष्ठा ib_field        *desc,
+	     पूर्णांक                           desc_len,
+	     व्योम                         *काष्ठाure,
+	     व्योम                         *buf)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < desc_len; ++i) {
-		if (desc[i].size_bits <= 32) {
-			int shift;
+	क्रम (i = 0; i < desc_len; ++i) अणु
+		अगर (desc[i].size_bits <= 32) अणु
+			पूर्णांक shअगरt;
 			u32 val;
 			__be32 mask;
 			__be32 *addr;
 
-			shift = 32 - desc[i].offset_bits - desc[i].size_bits;
-			if (desc[i].struct_size_bytes)
-				val = value_read(desc[i].struct_offset_bytes,
-						 desc[i].struct_size_bytes,
-						 structure) << shift;
-			else
+			shअगरt = 32 - desc[i].offset_bits - desc[i].size_bits;
+			अगर (desc[i].काष्ठा_size_bytes)
+				val = value_पढ़ो(desc[i].काष्ठा_offset_bytes,
+						 desc[i].काष्ठा_size_bytes,
+						 काष्ठाure) << shअगरt;
+			अन्यथा
 				val = 0;
 
-			mask = cpu_to_be32(((1ull << desc[i].size_bits) - 1) << shift);
+			mask = cpu_to_be32(((1ull << desc[i].size_bits) - 1) << shअगरt);
 			addr = (__be32 *) buf + desc[i].offset_words;
 			*addr = (*addr & ~mask) | (cpu_to_be32(val) & mask);
-		} else if (desc[i].size_bits <= 64) {
-			int shift;
+		पूर्ण अन्यथा अगर (desc[i].size_bits <= 64) अणु
+			पूर्णांक shअगरt;
 			u64 val;
 			__be64 mask;
 			__be64 *addr;
 
-			shift = 64 - desc[i].offset_bits - desc[i].size_bits;
-			if (desc[i].struct_size_bytes)
-				val = value_read(desc[i].struct_offset_bytes,
-						 desc[i].struct_size_bytes,
-						 structure) << shift;
-			else
+			shअगरt = 64 - desc[i].offset_bits - desc[i].size_bits;
+			अगर (desc[i].काष्ठा_size_bytes)
+				val = value_पढ़ो(desc[i].काष्ठा_offset_bytes,
+						 desc[i].काष्ठा_size_bytes,
+						 काष्ठाure) << shअगरt;
+			अन्यथा
 				val = 0;
 
-			mask = cpu_to_be64((~0ull >> (64 - desc[i].size_bits)) << shift);
+			mask = cpu_to_be64((~0ull >> (64 - desc[i].size_bits)) << shअगरt);
 			addr = (__be64 *) ((__be32 *) buf + desc[i].offset_words);
 			*addr = (*addr & ~mask) | (cpu_to_be64(val) & mask);
-		} else {
-			if (desc[i].offset_bits % 8 ||
-			    desc[i].size_bits   % 8) {
+		पूर्ण अन्यथा अणु
+			अगर (desc[i].offset_bits % 8 ||
+			    desc[i].size_bits   % 8) अणु
 				pr_warn("Structure field %s of size %d bits is not byte-aligned\n",
 					desc[i].field_name, desc[i].size_bits);
-			}
+			पूर्ण
 
-			if (desc[i].struct_size_bytes)
-				memcpy(buf + desc[i].offset_words * 4 +
+			अगर (desc[i].काष्ठा_size_bytes)
+				स_नकल(buf + desc[i].offset_words * 4 +
 				       desc[i].offset_bits / 8,
-				       structure + desc[i].struct_offset_bytes,
+				       काष्ठाure + desc[i].काष्ठा_offset_bytes,
 				       desc[i].size_bits / 8);
-			else
-				memset(buf + desc[i].offset_words * 4 +
+			अन्यथा
+				स_रखो(buf + desc[i].offset_words * 4 +
 				       desc[i].offset_bits / 8,
 				       0,
 				       desc[i].size_bits / 8);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(ib_pack);
 
-static void value_write(int offset, int size, u64 val, void *structure)
-{
-	switch (size * 8) {
-	case 8:  *(    u8 *) (structure + offset) = val; break;
-	case 16: *(__be16 *) (structure + offset) = cpu_to_be16(val); break;
-	case 32: *(__be32 *) (structure + offset) = cpu_to_be32(val); break;
-	case 64: *(__be64 *) (structure + offset) = cpu_to_be64(val); break;
-	default:
+अटल व्योम value_ग_लिखो(पूर्णांक offset, पूर्णांक size, u64 val, व्योम *काष्ठाure)
+अणु
+	चयन (size * 8) अणु
+	हाल 8:  *(    u8 *) (काष्ठाure + offset) = val; अवरोध;
+	हाल 16: *(__be16 *) (काष्ठाure + offset) = cpu_to_be16(val); अवरोध;
+	हाल 32: *(__be32 *) (काष्ठाure + offset) = cpu_to_be32(val); अवरोध;
+	हाल 64: *(__be64 *) (काष्ठाure + offset) = cpu_to_be64(val); अवरोध;
+	शेष:
 		pr_warn("Field size %d bits not handled\n", size * 8);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ib_unpack - Unpack a buffer into a structure
- * @desc:Array of structure field descriptions
+ * ib_unpack - Unpack a buffer पूर्णांकo a काष्ठाure
+ * @desc:Array of काष्ठाure field descriptions
  * @desc_len:Number of entries in @desc
  * @buf:Buffer to unpack from
- * @structure:Structure to unpack into
+ * @काष्ठाure:Structure to unpack पूर्णांकo
  *
- * ib_pack() unpacks a list of structure fields from a buffer,
+ * ib_pack() unpacks a list of काष्ठाure fields from a buffer,
  * controlled by the array of fields in @desc.
  */
-void ib_unpack(const struct ib_field        *desc,
-	       int                           desc_len,
-	       void                         *buf,
-	       void                         *structure)
-{
-	int i;
+व्योम ib_unpack(स्थिर काष्ठा ib_field        *desc,
+	       पूर्णांक                           desc_len,
+	       व्योम                         *buf,
+	       व्योम                         *काष्ठाure)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < desc_len; ++i) {
-		if (!desc[i].struct_size_bytes)
-			continue;
+	क्रम (i = 0; i < desc_len; ++i) अणु
+		अगर (!desc[i].काष्ठा_size_bytes)
+			जारी;
 
-		if (desc[i].size_bits <= 32) {
-			int shift;
+		अगर (desc[i].size_bits <= 32) अणु
+			पूर्णांक shअगरt;
 			u32  val;
 			u32  mask;
 			__be32 *addr;
 
-			shift = 32 - desc[i].offset_bits - desc[i].size_bits;
-			mask = ((1ull << desc[i].size_bits) - 1) << shift;
+			shअगरt = 32 - desc[i].offset_bits - desc[i].size_bits;
+			mask = ((1ull << desc[i].size_bits) - 1) << shअगरt;
 			addr = (__be32 *) buf + desc[i].offset_words;
-			val = (be32_to_cpup(addr) & mask) >> shift;
-			value_write(desc[i].struct_offset_bytes,
-				    desc[i].struct_size_bytes,
+			val = (be32_to_cpup(addr) & mask) >> shअगरt;
+			value_ग_लिखो(desc[i].काष्ठा_offset_bytes,
+				    desc[i].काष्ठा_size_bytes,
 				    val,
-				    structure);
-		} else if (desc[i].size_bits <= 64) {
-			int shift;
+				    काष्ठाure);
+		पूर्ण अन्यथा अगर (desc[i].size_bits <= 64) अणु
+			पूर्णांक shअगरt;
 			u64  val;
 			u64  mask;
 			__be64 *addr;
 
-			shift = 64 - desc[i].offset_bits - desc[i].size_bits;
-			mask = (~0ull >> (64 - desc[i].size_bits)) << shift;
+			shअगरt = 64 - desc[i].offset_bits - desc[i].size_bits;
+			mask = (~0ull >> (64 - desc[i].size_bits)) << shअगरt;
 			addr = (__be64 *) buf + desc[i].offset_words;
-			val = (be64_to_cpup(addr) & mask) >> shift;
-			value_write(desc[i].struct_offset_bytes,
-				    desc[i].struct_size_bytes,
+			val = (be64_to_cpup(addr) & mask) >> shअगरt;
+			value_ग_लिखो(desc[i].काष्ठा_offset_bytes,
+				    desc[i].काष्ठा_size_bytes,
 				    val,
-				    structure);
-		} else {
-			if (desc[i].offset_bits % 8 ||
-			    desc[i].size_bits   % 8) {
+				    काष्ठाure);
+		पूर्ण अन्यथा अणु
+			अगर (desc[i].offset_bits % 8 ||
+			    desc[i].size_bits   % 8) अणु
 				pr_warn("Structure field %s of size %d bits is not byte-aligned\n",
 					desc[i].field_name, desc[i].size_bits);
-			}
+			पूर्ण
 
-			memcpy(structure + desc[i].struct_offset_bytes,
+			स_नकल(काष्ठाure + desc[i].काष्ठा_offset_bytes,
 			       buf + desc[i].offset_words * 4 +
 			       desc[i].offset_bits / 8,
 			       desc[i].size_bits / 8);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(ib_unpack);

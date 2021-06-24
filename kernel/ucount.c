@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include <linux/stat.h>
-#include <linux/sysctl.h>
-#include <linux/slab.h>
-#include <linux/cred.h>
-#include <linux/hash.h>
-#include <linux/kmemleak.h>
-#include <linux/user_namespace.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/kmemleak.h>
+#समावेश <linux/user_namespace.h>
 
-#define UCOUNTS_HASHTABLE_BITS 10
-static struct hlist_head ucounts_hashtable[(1 << UCOUNTS_HASHTABLE_BITS)];
-static DEFINE_SPINLOCK(ucounts_lock);
+#घोषणा UCOUNTS_HASHTABLE_BITS 10
+अटल काष्ठा hlist_head ucounts_hashtable[(1 << UCOUNTS_HASHTABLE_BITS)];
+अटल DEFINE_SPINLOCK(ucounts_lock);
 
-#define ucounts_hashfn(ns, uid)						\
-	hash_long((unsigned long)__kuid_val(uid) + (unsigned long)(ns), \
+#घोषणा ucounts_hashfn(ns, uid)						\
+	hash_दीर्घ((अचिन्हित दीर्घ)__kuid_val(uid) + (अचिन्हित दीर्घ)(ns), \
 		  UCOUNTS_HASHTABLE_BITS)
-#define ucounts_hashentry(ns, uid)	\
+#घोषणा ucounts_hashentry(ns, uid)	\
 	(ucounts_hashtable + ucounts_hashfn(ns, uid))
 
 
-#ifdef CONFIG_SYSCTL
-static struct ctl_table_set *
-set_lookup(struct ctl_table_root *root)
-{
-	return &current_user_ns()->set;
-}
+#अगर_घोषित CONFIG_SYSCTL
+अटल काष्ठा ctl_table_set *
+set_lookup(काष्ठा ctl_table_root *root)
+अणु
+	वापस &current_user_ns()->set;
+पूर्ण
 
-static int set_is_seen(struct ctl_table_set *set)
-{
-	return &current_user_ns()->set == set;
-}
+अटल पूर्णांक set_is_seen(काष्ठा ctl_table_set *set)
+अणु
+	वापस &current_user_ns()->set == set;
+पूर्ण
 
-static int set_permissions(struct ctl_table_header *head,
-				  struct ctl_table *table)
-{
-	struct user_namespace *user_ns =
-		container_of(head->set, struct user_namespace, set);
-	int mode;
+अटल पूर्णांक set_permissions(काष्ठा ctl_table_header *head,
+				  काष्ठा ctl_table *table)
+अणु
+	काष्ठा user_namespace *user_ns =
+		container_of(head->set, काष्ठा user_namespace, set);
+	पूर्णांक mode;
 
 	/* Allow users with CAP_SYS_RESOURCE unrestrained access */
-	if (ns_capable(user_ns, CAP_SYS_RESOURCE))
+	अगर (ns_capable(user_ns, CAP_SYS_RESOURCE))
 		mode = (table->mode & S_IRWXU) >> 6;
-	else
-	/* Allow all others at most read-only access */
+	अन्यथा
+	/* Allow all others at most पढ़ो-only access */
 		mode = table->mode & S_IROTH;
-	return (mode << 6) | (mode << 3) | mode;
-}
+	वापस (mode << 6) | (mode << 3) | mode;
+पूर्ण
 
-static struct ctl_table_root set_root = {
+अटल काष्ठा ctl_table_root set_root = अणु
 	.lookup = set_lookup,
 	.permissions = set_permissions,
-};
+पूर्ण;
 
-#define UCOUNT_ENTRY(name)				\
-	{						\
+#घोषणा UCOUNT_ENTRY(name)				\
+	अणु						\
 		.procname	= name,			\
-		.maxlen		= sizeof(int),		\
+		.maxlen		= माप(पूर्णांक),		\
 		.mode		= 0644,			\
-		.proc_handler	= proc_dointvec_minmax,	\
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,	\
 		.extra1		= SYSCTL_ZERO,		\
-		.extra2		= SYSCTL_INT_MAX,	\
-	}
-static struct ctl_table user_table[] = {
+		.extra2		= SYSCTL_पूर्णांक_उच्च,	\
+	पूर्ण
+अटल काष्ठा ctl_table user_table[] = अणु
 	UCOUNT_ENTRY("max_user_namespaces"),
 	UCOUNT_ENTRY("max_pid_namespaces"),
 	UCOUNT_ENTRY("max_uts_namespaces"),
@@ -70,78 +71,78 @@ static struct ctl_table user_table[] = {
 	UCOUNT_ENTRY("max_mnt_namespaces"),
 	UCOUNT_ENTRY("max_cgroup_namespaces"),
 	UCOUNT_ENTRY("max_time_namespaces"),
-#ifdef CONFIG_INOTIFY_USER
+#अगर_घोषित CONFIG_INOTIFY_USER
 	UCOUNT_ENTRY("max_inotify_instances"),
 	UCOUNT_ENTRY("max_inotify_watches"),
-#endif
-#ifdef CONFIG_FANOTIFY
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FANOTIFY
 	UCOUNT_ENTRY("max_fanotify_groups"),
 	UCOUNT_ENTRY("max_fanotify_marks"),
-#endif
-	{ }
-};
-#endif /* CONFIG_SYSCTL */
+#पूर्ण_अगर
+	अणु पूर्ण
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_SYSCTL */
 
-bool setup_userns_sysctls(struct user_namespace *ns)
-{
-#ifdef CONFIG_SYSCTL
-	struct ctl_table *tbl;
+bool setup_userns_sysctls(काष्ठा user_namespace *ns)
+अणु
+#अगर_घोषित CONFIG_SYSCTL
+	काष्ठा ctl_table *tbl;
 
 	BUILD_BUG_ON(ARRAY_SIZE(user_table) != UCOUNT_COUNTS + 1);
 	setup_sysctl_set(&ns->set, &set_root, set_is_seen);
-	tbl = kmemdup(user_table, sizeof(user_table), GFP_KERNEL);
-	if (tbl) {
-		int i;
-		for (i = 0; i < UCOUNT_COUNTS; i++) {
+	tbl = kmemdup(user_table, माप(user_table), GFP_KERNEL);
+	अगर (tbl) अणु
+		पूर्णांक i;
+		क्रम (i = 0; i < UCOUNT_COUNTS; i++) अणु
 			tbl[i].data = &ns->ucount_max[i];
-		}
-		ns->sysctls = __register_sysctl_table(&ns->set, "user", tbl);
-	}
-	if (!ns->sysctls) {
-		kfree(tbl);
+		पूर्ण
+		ns->sysctls = __रेजिस्टर_sysctl_table(&ns->set, "user", tbl);
+	पूर्ण
+	अगर (!ns->sysctls) अणु
+		kमुक्त(tbl);
 		retire_sysctl_set(&ns->set);
-		return false;
-	}
-#endif
-	return true;
-}
+		वापस false;
+	पूर्ण
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-void retire_userns_sysctls(struct user_namespace *ns)
-{
-#ifdef CONFIG_SYSCTL
-	struct ctl_table *tbl;
+व्योम retire_userns_sysctls(काष्ठा user_namespace *ns)
+अणु
+#अगर_घोषित CONFIG_SYSCTL
+	काष्ठा ctl_table *tbl;
 
 	tbl = ns->sysctls->ctl_table_arg;
-	unregister_sysctl_table(ns->sysctls);
+	unरेजिस्टर_sysctl_table(ns->sysctls);
 	retire_sysctl_set(&ns->set);
-	kfree(tbl);
-#endif
-}
+	kमुक्त(tbl);
+#पूर्ण_अगर
+पूर्ण
 
-static struct ucounts *find_ucounts(struct user_namespace *ns, kuid_t uid, struct hlist_head *hashent)
-{
-	struct ucounts *ucounts;
+अटल काष्ठा ucounts *find_ucounts(काष्ठा user_namespace *ns, kuid_t uid, काष्ठा hlist_head *hashent)
+अणु
+	काष्ठा ucounts *ucounts;
 
-	hlist_for_each_entry(ucounts, hashent, node) {
-		if (uid_eq(ucounts->uid, uid) && (ucounts->ns == ns))
-			return ucounts;
-	}
-	return NULL;
-}
+	hlist_क्रम_each_entry(ucounts, hashent, node) अणु
+		अगर (uid_eq(ucounts->uid, uid) && (ucounts->ns == ns))
+			वापस ucounts;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct ucounts *get_ucounts(struct user_namespace *ns, kuid_t uid)
-{
-	struct hlist_head *hashent = ucounts_hashentry(ns, uid);
-	struct ucounts *ucounts, *new;
+अटल काष्ठा ucounts *get_ucounts(काष्ठा user_namespace *ns, kuid_t uid)
+अणु
+	काष्ठा hlist_head *hashent = ucounts_hashentry(ns, uid);
+	काष्ठा ucounts *ucounts, *new;
 
 	spin_lock_irq(&ucounts_lock);
 	ucounts = find_ucounts(ns, uid, hashent);
-	if (!ucounts) {
+	अगर (!ucounts) अणु
 		spin_unlock_irq(&ucounts_lock);
 
-		new = kzalloc(sizeof(*new), GFP_KERNEL);
-		if (!new)
-			return NULL;
+		new = kzalloc(माप(*new), GFP_KERNEL);
+		अगर (!new)
+			वापस शून्य;
 
 		new->ns = ns;
 		new->uid = uid;
@@ -149,98 +150,98 @@ static struct ucounts *get_ucounts(struct user_namespace *ns, kuid_t uid)
 
 		spin_lock_irq(&ucounts_lock);
 		ucounts = find_ucounts(ns, uid, hashent);
-		if (ucounts) {
-			kfree(new);
-		} else {
+		अगर (ucounts) अणु
+			kमुक्त(new);
+		पूर्ण अन्यथा अणु
 			hlist_add_head(&new->node, hashent);
 			ucounts = new;
-		}
-	}
-	if (ucounts->count == INT_MAX)
-		ucounts = NULL;
-	else
+		पूर्ण
+	पूर्ण
+	अगर (ucounts->count == पूर्णांक_उच्च)
+		ucounts = शून्य;
+	अन्यथा
 		ucounts->count += 1;
 	spin_unlock_irq(&ucounts_lock);
-	return ucounts;
-}
+	वापस ucounts;
+पूर्ण
 
-static void put_ucounts(struct ucounts *ucounts)
-{
-	unsigned long flags;
+अटल व्योम put_ucounts(काष्ठा ucounts *ucounts)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ucounts_lock, flags);
 	ucounts->count -= 1;
-	if (!ucounts->count)
+	अगर (!ucounts->count)
 		hlist_del_init(&ucounts->node);
-	else
-		ucounts = NULL;
+	अन्यथा
+		ucounts = शून्य;
 	spin_unlock_irqrestore(&ucounts_lock, flags);
 
-	kfree(ucounts);
-}
+	kमुक्त(ucounts);
+पूर्ण
 
-static inline bool atomic_inc_below(atomic_t *v, int u)
-{
-	int c, old;
-	c = atomic_read(v);
-	for (;;) {
-		if (unlikely(c >= u))
-			return false;
+अटल अंतरभूत bool atomic_inc_below(atomic_t *v, पूर्णांक u)
+अणु
+	पूर्णांक c, old;
+	c = atomic_पढ़ो(v);
+	क्रम (;;) अणु
+		अगर (unlikely(c >= u))
+			वापस false;
 		old = atomic_cmpxchg(v, c, c+1);
-		if (likely(old == c))
-			return true;
+		अगर (likely(old == c))
+			वापस true;
 		c = old;
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct ucounts *inc_ucount(struct user_namespace *ns, kuid_t uid,
-			   enum ucount_type type)
-{
-	struct ucounts *ucounts, *iter, *bad;
-	struct user_namespace *tns;
+काष्ठा ucounts *inc_ucount(काष्ठा user_namespace *ns, kuid_t uid,
+			   क्रमागत ucount_type type)
+अणु
+	काष्ठा ucounts *ucounts, *iter, *bad;
+	काष्ठा user_namespace *tns;
 	ucounts = get_ucounts(ns, uid);
-	for (iter = ucounts; iter; iter = tns->ucounts) {
-		int max;
+	क्रम (iter = ucounts; iter; iter = tns->ucounts) अणु
+		पूर्णांक max;
 		tns = iter->ns;
 		max = READ_ONCE(tns->ucount_max[type]);
-		if (!atomic_inc_below(&iter->ucount[type], max))
-			goto fail;
-	}
-	return ucounts;
+		अगर (!atomic_inc_below(&iter->ucount[type], max))
+			जाओ fail;
+	पूर्ण
+	वापस ucounts;
 fail:
 	bad = iter;
-	for (iter = ucounts; iter != bad; iter = iter->ns->ucounts)
+	क्रम (iter = ucounts; iter != bad; iter = iter->ns->ucounts)
 		atomic_dec(&iter->ucount[type]);
 
 	put_ucounts(ucounts);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void dec_ucount(struct ucounts *ucounts, enum ucount_type type)
-{
-	struct ucounts *iter;
-	for (iter = ucounts; iter; iter = iter->ns->ucounts) {
-		int dec = atomic_dec_if_positive(&iter->ucount[type]);
+व्योम dec_ucount(काष्ठा ucounts *ucounts, क्रमागत ucount_type type)
+अणु
+	काष्ठा ucounts *iter;
+	क्रम (iter = ucounts; iter; iter = iter->ns->ucounts) अणु
+		पूर्णांक dec = atomic_dec_अगर_positive(&iter->ucount[type]);
 		WARN_ON_ONCE(dec < 0);
-	}
+	पूर्ण
 	put_ucounts(ucounts);
-}
+पूर्ण
 
-static __init int user_namespace_sysctl_init(void)
-{
-#ifdef CONFIG_SYSCTL
-	static struct ctl_table_header *user_header;
-	static struct ctl_table empty[1];
+अटल __init पूर्णांक user_namespace_sysctl_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_SYSCTL
+	अटल काष्ठा ctl_table_header *user_header;
+	अटल काष्ठा ctl_table empty[1];
 	/*
-	 * It is necessary to register the user directory in the
-	 * default set so that registrations in the child sets work
+	 * It is necessary to रेजिस्टर the user directory in the
+	 * शेष set so that registrations in the child sets work
 	 * properly.
 	 */
-	user_header = register_sysctl("user", empty);
+	user_header = रेजिस्टर_sysctl("user", empty);
 	kmemleak_ignore(user_header);
 	BUG_ON(!user_header);
 	BUG_ON(!setup_userns_sysctls(&init_user_ns));
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 subsys_initcall(user_namespace_sysctl_init);

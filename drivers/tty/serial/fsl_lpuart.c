@@ -1,482 +1,483 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *  Freescale lpuart serial port driver
  *
  *  Copyright 2012-2014 Freescale Semiconductor, Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/console.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/dmapool.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_dma.h>
-#include <linux/serial_core.h>
-#include <linux/slab.h>
-#include <linux/tty_flip.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/console.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty_flip.h>
 
-/* All registers are 8-bit width */
-#define UARTBDH			0x00
-#define UARTBDL			0x01
-#define UARTCR1			0x02
-#define UARTCR2			0x03
-#define UARTSR1			0x04
-#define UARTCR3			0x06
-#define UARTDR			0x07
-#define UARTCR4			0x0a
-#define UARTCR5			0x0b
-#define UARTMODEM		0x0d
-#define UARTPFIFO		0x10
-#define UARTCFIFO		0x11
-#define UARTSFIFO		0x12
-#define UARTTWFIFO		0x13
-#define UARTTCFIFO		0x14
-#define UARTRWFIFO		0x15
+/* All रेजिस्टरs are 8-bit width */
+#घोषणा UARTBDH			0x00
+#घोषणा UARTBDL			0x01
+#घोषणा UARTCR1			0x02
+#घोषणा UARTCR2			0x03
+#घोषणा UARTSR1			0x04
+#घोषणा UARTCR3			0x06
+#घोषणा UARTDR			0x07
+#घोषणा UARTCR4			0x0a
+#घोषणा UARTCR5			0x0b
+#घोषणा UARTMODEM		0x0d
+#घोषणा UARTPFIFO		0x10
+#घोषणा UARTCFIFO		0x11
+#घोषणा UARTSFIFO		0x12
+#घोषणा UARTTWFIFO		0x13
+#घोषणा UARTTCFIFO		0x14
+#घोषणा UARTRWFIFO		0x15
 
-#define UARTBDH_LBKDIE		0x80
-#define UARTBDH_RXEDGIE		0x40
-#define UARTBDH_SBR_MASK	0x1f
+#घोषणा UARTBDH_LBKDIE		0x80
+#घोषणा UARTBDH_RXEDGIE		0x40
+#घोषणा UARTBDH_SBR_MASK	0x1f
 
-#define UARTCR1_LOOPS		0x80
-#define UARTCR1_RSRC		0x20
-#define UARTCR1_M		0x10
-#define UARTCR1_WAKE		0x08
-#define UARTCR1_ILT		0x04
-#define UARTCR1_PE		0x02
-#define UARTCR1_PT		0x01
+#घोषणा UARTCR1_LOOPS		0x80
+#घोषणा UARTCR1_RSRC		0x20
+#घोषणा UARTCR1_M		0x10
+#घोषणा UARTCR1_WAKE		0x08
+#घोषणा UARTCR1_ILT		0x04
+#घोषणा UARTCR1_PE		0x02
+#घोषणा UARTCR1_PT		0x01
 
-#define UARTCR2_TIE		0x80
-#define UARTCR2_TCIE		0x40
-#define UARTCR2_RIE		0x20
-#define UARTCR2_ILIE		0x10
-#define UARTCR2_TE		0x08
-#define UARTCR2_RE		0x04
-#define UARTCR2_RWU		0x02
-#define UARTCR2_SBK		0x01
+#घोषणा UARTCR2_TIE		0x80
+#घोषणा UARTCR2_TCIE		0x40
+#घोषणा UARTCR2_RIE		0x20
+#घोषणा UARTCR2_ILIE		0x10
+#घोषणा UARTCR2_TE		0x08
+#घोषणा UARTCR2_RE		0x04
+#घोषणा UARTCR2_RWU		0x02
+#घोषणा UARTCR2_SBK		0x01
 
-#define UARTSR1_TDRE		0x80
-#define UARTSR1_TC		0x40
-#define UARTSR1_RDRF		0x20
-#define UARTSR1_IDLE		0x10
-#define UARTSR1_OR		0x08
-#define UARTSR1_NF		0x04
-#define UARTSR1_FE		0x02
-#define UARTSR1_PE		0x01
+#घोषणा UARTSR1_TDRE		0x80
+#घोषणा UARTSR1_TC		0x40
+#घोषणा UARTSR1_RDRF		0x20
+#घोषणा UARTSR1_IDLE		0x10
+#घोषणा UARTSR1_OR		0x08
+#घोषणा UARTSR1_NF		0x04
+#घोषणा UARTSR1_FE		0x02
+#घोषणा UARTSR1_PE		0x01
 
-#define UARTCR3_R8		0x80
-#define UARTCR3_T8		0x40
-#define UARTCR3_TXDIR		0x20
-#define UARTCR3_TXINV		0x10
-#define UARTCR3_ORIE		0x08
-#define UARTCR3_NEIE		0x04
-#define UARTCR3_FEIE		0x02
-#define UARTCR3_PEIE		0x01
+#घोषणा UARTCR3_R8		0x80
+#घोषणा UARTCR3_T8		0x40
+#घोषणा UARTCR3_TXसूची		0x20
+#घोषणा UARTCR3_TXINV		0x10
+#घोषणा UARTCR3_ORIE		0x08
+#घोषणा UARTCR3_NEIE		0x04
+#घोषणा UARTCR3_FEIE		0x02
+#घोषणा UARTCR3_PEIE		0x01
 
-#define UARTCR4_MAEN1		0x80
-#define UARTCR4_MAEN2		0x40
-#define UARTCR4_M10		0x20
-#define UARTCR4_BRFA_MASK	0x1f
-#define UARTCR4_BRFA_OFF	0
+#घोषणा UARTCR4_MAEN1		0x80
+#घोषणा UARTCR4_MAEN2		0x40
+#घोषणा UARTCR4_M10		0x20
+#घोषणा UARTCR4_BRFA_MASK	0x1f
+#घोषणा UARTCR4_BRFA_OFF	0
 
-#define UARTCR5_TDMAS		0x80
-#define UARTCR5_RDMAS		0x20
+#घोषणा UARTCR5_TDMAS		0x80
+#घोषणा UARTCR5_RDMAS		0x20
 
-#define UARTMODEM_RXRTSE	0x08
-#define UARTMODEM_TXRTSPOL	0x04
-#define UARTMODEM_TXRTSE	0x02
-#define UARTMODEM_TXCTSE	0x01
+#घोषणा UARTMODEM_RXRTSE	0x08
+#घोषणा UARTMODEM_TXRTSPOL	0x04
+#घोषणा UARTMODEM_TXRTSE	0x02
+#घोषणा UARTMODEM_TXCTSE	0x01
 
-#define UARTPFIFO_TXFE		0x80
-#define UARTPFIFO_FIFOSIZE_MASK	0x7
-#define UARTPFIFO_TXSIZE_OFF	4
-#define UARTPFIFO_RXFE		0x08
-#define UARTPFIFO_RXSIZE_OFF	0
+#घोषणा UARTPFIFO_TXFE		0x80
+#घोषणा UARTPFIFO_FIFOSIZE_MASK	0x7
+#घोषणा UARTPFIFO_TXSIZE_OFF	4
+#घोषणा UARTPFIFO_RXFE		0x08
+#घोषणा UARTPFIFO_RXSIZE_OFF	0
 
-#define UARTCFIFO_TXFLUSH	0x80
-#define UARTCFIFO_RXFLUSH	0x40
-#define UARTCFIFO_RXOFE		0x04
-#define UARTCFIFO_TXOFE		0x02
-#define UARTCFIFO_RXUFE		0x01
+#घोषणा UARTCFIFO_TXFLUSH	0x80
+#घोषणा UARTCFIFO_RXFLUSH	0x40
+#घोषणा UARTCFIFO_RXOFE		0x04
+#घोषणा UARTCFIFO_TXOFE		0x02
+#घोषणा UARTCFIFO_RXUFE		0x01
 
-#define UARTSFIFO_TXEMPT	0x80
-#define UARTSFIFO_RXEMPT	0x40
-#define UARTSFIFO_RXOF		0x04
-#define UARTSFIFO_TXOF		0x02
-#define UARTSFIFO_RXUF		0x01
+#घोषणा UARTSFIFO_TXEMPT	0x80
+#घोषणा UARTSFIFO_RXEMPT	0x40
+#घोषणा UARTSFIFO_RXOF		0x04
+#घोषणा UARTSFIFO_TXOF		0x02
+#घोषणा UARTSFIFO_RXUF		0x01
 
-/* 32-bit register definition */
-#define UARTBAUD		0x00
-#define UARTSTAT		0x04
-#define UARTCTRL		0x08
-#define UARTDATA		0x0C
-#define UARTMATCH		0x10
-#define UARTMODIR		0x14
-#define UARTFIFO		0x18
-#define UARTWATER		0x1c
+/* 32-bit रेजिस्टर definition */
+#घोषणा UARTBAUD		0x00
+#घोषणा UARTSTAT		0x04
+#घोषणा UARTCTRL		0x08
+#घोषणा UARTDATA		0x0C
+#घोषणा UARTMATCH		0x10
+#घोषणा UARTMOसूची		0x14
+#घोषणा UARTFIFO		0x18
+#घोषणा UARTWATER		0x1c
 
-#define UARTBAUD_MAEN1		0x80000000
-#define UARTBAUD_MAEN2		0x40000000
-#define UARTBAUD_M10		0x20000000
-#define UARTBAUD_TDMAE		0x00800000
-#define UARTBAUD_RDMAE		0x00200000
-#define UARTBAUD_MATCFG		0x00400000
-#define UARTBAUD_BOTHEDGE	0x00020000
-#define UARTBAUD_RESYNCDIS	0x00010000
-#define UARTBAUD_LBKDIE		0x00008000
-#define UARTBAUD_RXEDGIE	0x00004000
-#define UARTBAUD_SBNS		0x00002000
-#define UARTBAUD_SBR		0x00000000
-#define UARTBAUD_SBR_MASK	0x1fff
-#define UARTBAUD_OSR_MASK       0x1f
-#define UARTBAUD_OSR_SHIFT      24
+#घोषणा UARTBAUD_MAEN1		0x80000000
+#घोषणा UARTBAUD_MAEN2		0x40000000
+#घोषणा UARTBAUD_M10		0x20000000
+#घोषणा UARTBAUD_TDMAE		0x00800000
+#घोषणा UARTBAUD_RDMAE		0x00200000
+#घोषणा UARTBAUD_MATCFG		0x00400000
+#घोषणा UARTBAUD_BOTHEDGE	0x00020000
+#घोषणा UARTBAUD_RESYNCDIS	0x00010000
+#घोषणा UARTBAUD_LBKDIE		0x00008000
+#घोषणा UARTBAUD_RXEDGIE	0x00004000
+#घोषणा UARTBAUD_SBNS		0x00002000
+#घोषणा UARTBAUD_SBR		0x00000000
+#घोषणा UARTBAUD_SBR_MASK	0x1fff
+#घोषणा UARTBAUD_OSR_MASK       0x1f
+#घोषणा UARTBAUD_OSR_SHIFT      24
 
-#define UARTSTAT_LBKDIF		0x80000000
-#define UARTSTAT_RXEDGIF	0x40000000
-#define UARTSTAT_MSBF		0x20000000
-#define UARTSTAT_RXINV		0x10000000
-#define UARTSTAT_RWUID		0x08000000
-#define UARTSTAT_BRK13		0x04000000
-#define UARTSTAT_LBKDE		0x02000000
-#define UARTSTAT_RAF		0x01000000
-#define UARTSTAT_TDRE		0x00800000
-#define UARTSTAT_TC		0x00400000
-#define UARTSTAT_RDRF		0x00200000
-#define UARTSTAT_IDLE		0x00100000
-#define UARTSTAT_OR		0x00080000
-#define UARTSTAT_NF		0x00040000
-#define UARTSTAT_FE		0x00020000
-#define UARTSTAT_PE		0x00010000
-#define UARTSTAT_MA1F		0x00008000
-#define UARTSTAT_M21F		0x00004000
+#घोषणा UARTSTAT_LBKDIF		0x80000000
+#घोषणा UARTSTAT_RXEDGIF	0x40000000
+#घोषणा UARTSTAT_MSBF		0x20000000
+#घोषणा UARTSTAT_RXINV		0x10000000
+#घोषणा UARTSTAT_RWUID		0x08000000
+#घोषणा UARTSTAT_BRK13		0x04000000
+#घोषणा UARTSTAT_LBKDE		0x02000000
+#घोषणा UARTSTAT_RAF		0x01000000
+#घोषणा UARTSTAT_TDRE		0x00800000
+#घोषणा UARTSTAT_TC		0x00400000
+#घोषणा UARTSTAT_RDRF		0x00200000
+#घोषणा UARTSTAT_IDLE		0x00100000
+#घोषणा UARTSTAT_OR		0x00080000
+#घोषणा UARTSTAT_NF		0x00040000
+#घोषणा UARTSTAT_FE		0x00020000
+#घोषणा UARTSTAT_PE		0x00010000
+#घोषणा UARTSTAT_MA1F		0x00008000
+#घोषणा UARTSTAT_M21F		0x00004000
 
-#define UARTCTRL_R8T9		0x80000000
-#define UARTCTRL_R9T8		0x40000000
-#define UARTCTRL_TXDIR		0x20000000
-#define UARTCTRL_TXINV		0x10000000
-#define UARTCTRL_ORIE		0x08000000
-#define UARTCTRL_NEIE		0x04000000
-#define UARTCTRL_FEIE		0x02000000
-#define UARTCTRL_PEIE		0x01000000
-#define UARTCTRL_TIE		0x00800000
-#define UARTCTRL_TCIE		0x00400000
-#define UARTCTRL_RIE		0x00200000
-#define UARTCTRL_ILIE		0x00100000
-#define UARTCTRL_TE		0x00080000
-#define UARTCTRL_RE		0x00040000
-#define UARTCTRL_RWU		0x00020000
-#define UARTCTRL_SBK		0x00010000
-#define UARTCTRL_MA1IE		0x00008000
-#define UARTCTRL_MA2IE		0x00004000
-#define UARTCTRL_IDLECFG	0x00000100
-#define UARTCTRL_LOOPS		0x00000080
-#define UARTCTRL_DOZEEN		0x00000040
-#define UARTCTRL_RSRC		0x00000020
-#define UARTCTRL_M		0x00000010
-#define UARTCTRL_WAKE		0x00000008
-#define UARTCTRL_ILT		0x00000004
-#define UARTCTRL_PE		0x00000002
-#define UARTCTRL_PT		0x00000001
+#घोषणा UARTCTRL_R8T9		0x80000000
+#घोषणा UARTCTRL_R9T8		0x40000000
+#घोषणा UARTCTRL_TXसूची		0x20000000
+#घोषणा UARTCTRL_TXINV		0x10000000
+#घोषणा UARTCTRL_ORIE		0x08000000
+#घोषणा UARTCTRL_NEIE		0x04000000
+#घोषणा UARTCTRL_FEIE		0x02000000
+#घोषणा UARTCTRL_PEIE		0x01000000
+#घोषणा UARTCTRL_TIE		0x00800000
+#घोषणा UARTCTRL_TCIE		0x00400000
+#घोषणा UARTCTRL_RIE		0x00200000
+#घोषणा UARTCTRL_ILIE		0x00100000
+#घोषणा UARTCTRL_TE		0x00080000
+#घोषणा UARTCTRL_RE		0x00040000
+#घोषणा UARTCTRL_RWU		0x00020000
+#घोषणा UARTCTRL_SBK		0x00010000
+#घोषणा UARTCTRL_MA1IE		0x00008000
+#घोषणा UARTCTRL_MA2IE		0x00004000
+#घोषणा UARTCTRL_IDLECFG	0x00000100
+#घोषणा UARTCTRL_LOOPS		0x00000080
+#घोषणा UARTCTRL_DOZEEN		0x00000040
+#घोषणा UARTCTRL_RSRC		0x00000020
+#घोषणा UARTCTRL_M		0x00000010
+#घोषणा UARTCTRL_WAKE		0x00000008
+#घोषणा UARTCTRL_ILT		0x00000004
+#घोषणा UARTCTRL_PE		0x00000002
+#घोषणा UARTCTRL_PT		0x00000001
 
-#define UARTDATA_NOISY		0x00008000
-#define UARTDATA_PARITYE	0x00004000
-#define UARTDATA_FRETSC		0x00002000
-#define UARTDATA_RXEMPT		0x00001000
-#define UARTDATA_IDLINE		0x00000800
-#define UARTDATA_MASK		0x3ff
+#घोषणा UARTDATA_NOISY		0x00008000
+#घोषणा UARTDATA_PARITYE	0x00004000
+#घोषणा UARTDATA_FRETSC		0x00002000
+#घोषणा UARTDATA_RXEMPT		0x00001000
+#घोषणा UARTDATA_IDLINE		0x00000800
+#घोषणा UARTDATA_MASK		0x3ff
 
-#define UARTMODIR_IREN		0x00020000
-#define UARTMODIR_TXCTSSRC	0x00000020
-#define UARTMODIR_TXCTSC	0x00000010
-#define UARTMODIR_RXRTSE	0x00000008
-#define UARTMODIR_TXRTSPOL	0x00000004
-#define UARTMODIR_TXRTSE	0x00000002
-#define UARTMODIR_TXCTSE	0x00000001
+#घोषणा UARTMOसूची_IREN		0x00020000
+#घोषणा UARTMOसूची_TXCTSSRC	0x00000020
+#घोषणा UARTMOसूची_TXCTSC	0x00000010
+#घोषणा UARTMOसूची_RXRTSE	0x00000008
+#घोषणा UARTMOसूची_TXRTSPOL	0x00000004
+#घोषणा UARTMOसूची_TXRTSE	0x00000002
+#घोषणा UARTMOसूची_TXCTSE	0x00000001
 
-#define UARTFIFO_TXEMPT		0x00800000
-#define UARTFIFO_RXEMPT		0x00400000
-#define UARTFIFO_TXOF		0x00020000
-#define UARTFIFO_RXUF		0x00010000
-#define UARTFIFO_TXFLUSH	0x00008000
-#define UARTFIFO_RXFLUSH	0x00004000
-#define UARTFIFO_TXOFE		0x00000200
-#define UARTFIFO_RXUFE		0x00000100
-#define UARTFIFO_TXFE		0x00000080
-#define UARTFIFO_FIFOSIZE_MASK	0x7
-#define UARTFIFO_TXSIZE_OFF	4
-#define UARTFIFO_RXFE		0x00000008
-#define UARTFIFO_RXSIZE_OFF	0
-#define UARTFIFO_DEPTH(x)	(0x1 << ((x) ? ((x) + 1) : 0))
+#घोषणा UARTFIFO_TXEMPT		0x00800000
+#घोषणा UARTFIFO_RXEMPT		0x00400000
+#घोषणा UARTFIFO_TXOF		0x00020000
+#घोषणा UARTFIFO_RXUF		0x00010000
+#घोषणा UARTFIFO_TXFLUSH	0x00008000
+#घोषणा UARTFIFO_RXFLUSH	0x00004000
+#घोषणा UARTFIFO_TXOFE		0x00000200
+#घोषणा UARTFIFO_RXUFE		0x00000100
+#घोषणा UARTFIFO_TXFE		0x00000080
+#घोषणा UARTFIFO_FIFOSIZE_MASK	0x7
+#घोषणा UARTFIFO_TXSIZE_OFF	4
+#घोषणा UARTFIFO_RXFE		0x00000008
+#घोषणा UARTFIFO_RXSIZE_OFF	0
+#घोषणा UARTFIFO_DEPTH(x)	(0x1 << ((x) ? ((x) + 1) : 0))
 
-#define UARTWATER_COUNT_MASK	0xff
-#define UARTWATER_TXCNT_OFF	8
-#define UARTWATER_RXCNT_OFF	24
-#define UARTWATER_WATER_MASK	0xff
-#define UARTWATER_TXWATER_OFF	0
-#define UARTWATER_RXWATER_OFF	16
+#घोषणा UARTWATER_COUNT_MASK	0xff
+#घोषणा UARTWATER_TXCNT_OFF	8
+#घोषणा UARTWATER_RXCNT_OFF	24
+#घोषणा UARTWATER_WATER_MASK	0xff
+#घोषणा UARTWATER_TXWATER_OFF	0
+#घोषणा UARTWATER_RXWATER_OFF	16
 
-/* Rx DMA timeout in ms, which is used to calculate Rx ring buffer size */
-#define DMA_RX_TIMEOUT		(10)
+/* Rx DMA समयout in ms, which is used to calculate Rx ring buffer size */
+#घोषणा DMA_RX_TIMEOUT		(10)
 
-#define DRIVER_NAME	"fsl-lpuart"
-#define DEV_NAME	"ttyLP"
-#define UART_NR		6
+#घोषणा DRIVER_NAME	"fsl-lpuart"
+#घोषणा DEV_NAME	"ttyLP"
+#घोषणा UART_NR		6
 
 /* IMX lpuart has four extra unused regs located at the beginning */
-#define IMX_REG_OFF	0x10
+#घोषणा IMX_REG_OFF	0x10
 
-static DEFINE_IDA(fsl_lpuart_ida);
+अटल DEFINE_IDA(fsl_lpuart_ida);
 
-enum lpuart_type {
+क्रमागत lpuart_type अणु
 	VF610_LPUART,
 	LS1021A_LPUART,
 	LS1028A_LPUART,
 	IMX7ULP_LPUART,
 	IMX8QXP_LPUART,
-};
+पूर्ण;
 
-struct lpuart_port {
-	struct uart_port	port;
-	enum lpuart_type	devtype;
-	struct clk		*ipg_clk;
-	struct clk		*baud_clk;
-	unsigned int		txfifo_size;
-	unsigned int		rxfifo_size;
+काष्ठा lpuart_port अणु
+	काष्ठा uart_port	port;
+	क्रमागत lpuart_type	devtype;
+	काष्ठा clk		*ipg_clk;
+	काष्ठा clk		*baud_clk;
+	अचिन्हित पूर्णांक		txfअगरo_size;
+	अचिन्हित पूर्णांक		rxfअगरo_size;
 
 	bool			lpuart_dma_tx_use;
 	bool			lpuart_dma_rx_use;
-	struct dma_chan		*dma_tx_chan;
-	struct dma_chan		*dma_rx_chan;
-	struct dma_async_tx_descriptor  *dma_tx_desc;
-	struct dma_async_tx_descriptor  *dma_rx_desc;
+	काष्ठा dma_chan		*dma_tx_chan;
+	काष्ठा dma_chan		*dma_rx_chan;
+	काष्ठा dma_async_tx_descriptor  *dma_tx_desc;
+	काष्ठा dma_async_tx_descriptor  *dma_rx_desc;
 	dma_cookie_t		dma_tx_cookie;
 	dma_cookie_t		dma_rx_cookie;
-	unsigned int		dma_tx_bytes;
-	unsigned int		dma_rx_bytes;
+	अचिन्हित पूर्णांक		dma_tx_bytes;
+	अचिन्हित पूर्णांक		dma_rx_bytes;
 	bool			dma_tx_in_progress;
-	unsigned int		dma_rx_timeout;
-	struct timer_list	lpuart_timer;
-	struct scatterlist	rx_sgl, tx_sgl[2];
-	struct circ_buf		rx_ring;
-	int			rx_dma_rng_buf_len;
-	unsigned int		dma_tx_nents;
-	wait_queue_head_t	dma_wait;
+	अचिन्हित पूर्णांक		dma_rx_समयout;
+	काष्ठा समयr_list	lpuart_समयr;
+	काष्ठा scatterlist	rx_sgl, tx_sgl[2];
+	काष्ठा circ_buf		rx_ring;
+	पूर्णांक			rx_dma_rng_buf_len;
+	अचिन्हित पूर्णांक		dma_tx_nents;
+	रुको_queue_head_t	dma_रुको;
 	bool			id_allocated;
-};
+पूर्ण;
 
-struct lpuart_soc_data {
-	enum lpuart_type devtype;
-	char iotype;
+काष्ठा lpuart_soc_data अणु
+	क्रमागत lpuart_type devtype;
+	अक्षर iotype;
 	u8 reg_off;
-};
+पूर्ण;
 
-static const struct lpuart_soc_data vf_data = {
+अटल स्थिर काष्ठा lpuart_soc_data vf_data = अणु
 	.devtype = VF610_LPUART,
 	.iotype = UPIO_MEM,
-};
+पूर्ण;
 
-static const struct lpuart_soc_data ls1021a_data = {
+अटल स्थिर काष्ठा lpuart_soc_data ls1021a_data = अणु
 	.devtype = LS1021A_LPUART,
 	.iotype = UPIO_MEM32BE,
-};
+पूर्ण;
 
-static const struct lpuart_soc_data ls1028a_data = {
+अटल स्थिर काष्ठा lpuart_soc_data ls1028a_data = अणु
 	.devtype = LS1028A_LPUART,
 	.iotype = UPIO_MEM32,
-};
+पूर्ण;
 
-static struct lpuart_soc_data imx7ulp_data = {
+अटल काष्ठा lpuart_soc_data imx7ulp_data = अणु
 	.devtype = IMX7ULP_LPUART,
 	.iotype = UPIO_MEM32,
 	.reg_off = IMX_REG_OFF,
-};
+पूर्ण;
 
-static struct lpuart_soc_data imx8qxp_data = {
+अटल काष्ठा lpuart_soc_data imx8qxp_data = अणु
 	.devtype = IMX8QXP_LPUART,
 	.iotype = UPIO_MEM32,
 	.reg_off = IMX_REG_OFF,
-};
+पूर्ण;
 
-static const struct of_device_id lpuart_dt_ids[] = {
-	{ .compatible = "fsl,vf610-lpuart",	.data = &vf_data, },
-	{ .compatible = "fsl,ls1021a-lpuart",	.data = &ls1021a_data, },
-	{ .compatible = "fsl,ls1028a-lpuart",	.data = &ls1028a_data, },
-	{ .compatible = "fsl,imx7ulp-lpuart",	.data = &imx7ulp_data, },
-	{ .compatible = "fsl,imx8qxp-lpuart",	.data = &imx8qxp_data, },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id lpuart_dt_ids[] = अणु
+	अणु .compatible = "fsl,vf610-lpuart",	.data = &vf_data, पूर्ण,
+	अणु .compatible = "fsl,ls1021a-lpuart",	.data = &ls1021a_data, पूर्ण,
+	अणु .compatible = "fsl,ls1028a-lpuart",	.data = &ls1028a_data, पूर्ण,
+	अणु .compatible = "fsl,imx7ulp-lpuart",	.data = &imx7ulp_data, पूर्ण,
+	अणु .compatible = "fsl,imx8qxp-lpuart",	.data = &imx8qxp_data, पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, lpuart_dt_ids);
 
-/* Forward declare this for the dma callbacks*/
-static void lpuart_dma_tx_complete(void *arg);
+/* Forward declare this क्रम the dma callbacks*/
+अटल व्योम lpuart_dma_tx_complete(व्योम *arg);
 
-static inline bool is_layerscape_lpuart(struct lpuart_port *sport)
-{
-	return (sport->devtype == LS1021A_LPUART ||
+अटल अंतरभूत bool is_layerscape_lpuart(काष्ठा lpuart_port *sport)
+अणु
+	वापस (sport->devtype == LS1021A_LPUART ||
 		sport->devtype == LS1028A_LPUART);
-}
+पूर्ण
 
-static inline bool is_imx8qxp_lpuart(struct lpuart_port *sport)
-{
-	return sport->devtype == IMX8QXP_LPUART;
-}
+अटल अंतरभूत bool is_imx8qxp_lpuart(काष्ठा lpuart_port *sport)
+अणु
+	वापस sport->devtype == IMX8QXP_LPUART;
+पूर्ण
 
-static inline u32 lpuart32_read(struct uart_port *port, u32 off)
-{
-	switch (port->iotype) {
-	case UPIO_MEM32:
-		return readl(port->membase + off);
-	case UPIO_MEM32BE:
-		return ioread32be(port->membase + off);
-	default:
-		return 0;
-	}
-}
+अटल अंतरभूत u32 lpuart32_पढ़ो(काष्ठा uart_port *port, u32 off)
+अणु
+	चयन (port->iotype) अणु
+	हाल UPIO_MEM32:
+		वापस पढ़ोl(port->membase + off);
+	हाल UPIO_MEM32BE:
+		वापस ioपढ़ो32be(port->membase + off);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline void lpuart32_write(struct uart_port *port, u32 val,
+अटल अंतरभूत व्योम lpuart32_ग_लिखो(काष्ठा uart_port *port, u32 val,
 				  u32 off)
-{
-	switch (port->iotype) {
-	case UPIO_MEM32:
-		writel(val, port->membase + off);
-		break;
-	case UPIO_MEM32BE:
-		iowrite32be(val, port->membase + off);
-		break;
-	}
-}
+अणु
+	चयन (port->iotype) अणु
+	हाल UPIO_MEM32:
+		ग_लिखोl(val, port->membase + off);
+		अवरोध;
+	हाल UPIO_MEM32BE:
+		ioग_लिखो32be(val, port->membase + off);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int __lpuart_enable_clks(struct lpuart_port *sport, bool is_en)
-{
-	int ret = 0;
+अटल पूर्णांक __lpuart_enable_clks(काष्ठा lpuart_port *sport, bool is_en)
+अणु
+	पूर्णांक ret = 0;
 
-	if (is_en) {
+	अगर (is_en) अणु
 		ret = clk_prepare_enable(sport->ipg_clk);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = clk_prepare_enable(sport->baud_clk);
-		if (ret) {
+		अगर (ret) अणु
 			clk_disable_unprepare(sport->ipg_clk);
-			return ret;
-		}
-	} else {
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		clk_disable_unprepare(sport->baud_clk);
 		clk_disable_unprepare(sport->ipg_clk);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int lpuart_get_baud_clk_rate(struct lpuart_port *sport)
-{
-	if (is_imx8qxp_lpuart(sport))
-		return clk_get_rate(sport->baud_clk);
+अटल अचिन्हित पूर्णांक lpuart_get_baud_clk_rate(काष्ठा lpuart_port *sport)
+अणु
+	अगर (is_imx8qxp_lpuart(sport))
+		वापस clk_get_rate(sport->baud_clk);
 
-	return clk_get_rate(sport->ipg_clk);
-}
+	वापस clk_get_rate(sport->ipg_clk);
+पूर्ण
 
-#define lpuart_enable_clks(x)	__lpuart_enable_clks(x, true)
-#define lpuart_disable_clks(x)	__lpuart_enable_clks(x, false)
+#घोषणा lpuart_enable_clks(x)	__lpuart_enable_clks(x, true)
+#घोषणा lpuart_disable_clks(x)	__lpuart_enable_clks(x, false)
 
-static void lpuart_stop_tx(struct uart_port *port)
-{
-	unsigned char temp;
+अटल व्योम lpuart_stop_tx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित अक्षर temp;
 
-	temp = readb(port->membase + UARTCR2);
+	temp = पढ़ोb(port->membase + UARTCR2);
 	temp &= ~(UARTCR2_TIE | UARTCR2_TCIE);
-	writeb(temp, port->membase + UARTCR2);
-}
+	ग_लिखोb(temp, port->membase + UARTCR2);
+पूर्ण
 
-static void lpuart32_stop_tx(struct uart_port *port)
-{
-	unsigned long temp;
+अटल व्योम lpuart32_stop_tx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ temp;
 
-	temp = lpuart32_read(port, UARTCTRL);
+	temp = lpuart32_पढ़ो(port, UARTCTRL);
 	temp &= ~(UARTCTRL_TIE | UARTCTRL_TCIE);
-	lpuart32_write(port, temp, UARTCTRL);
-}
+	lpuart32_ग_लिखो(port, temp, UARTCTRL);
+पूर्ण
 
-static void lpuart_stop_rx(struct uart_port *port)
-{
-	unsigned char temp;
+अटल व्योम lpuart_stop_rx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित अक्षर temp;
 
-	temp = readb(port->membase + UARTCR2);
-	writeb(temp & ~UARTCR2_RE, port->membase + UARTCR2);
-}
+	temp = पढ़ोb(port->membase + UARTCR2);
+	ग_लिखोb(temp & ~UARTCR2_RE, port->membase + UARTCR2);
+पूर्ण
 
-static void lpuart32_stop_rx(struct uart_port *port)
-{
-	unsigned long temp;
+अटल व्योम lpuart32_stop_rx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ temp;
 
-	temp = lpuart32_read(port, UARTCTRL);
-	lpuart32_write(port, temp & ~UARTCTRL_RE, UARTCTRL);
-}
+	temp = lpuart32_पढ़ो(port, UARTCTRL);
+	lpuart32_ग_लिखो(port, temp & ~UARTCTRL_RE, UARTCTRL);
+पूर्ण
 
-static void lpuart_dma_tx(struct lpuart_port *sport)
-{
-	struct circ_buf *xmit = &sport->port.state->xmit;
-	struct scatterlist *sgl = sport->tx_sgl;
-	struct device *dev = sport->port.dev;
-	struct dma_chan *chan = sport->dma_tx_chan;
-	int ret;
+अटल व्योम lpuart_dma_tx(काष्ठा lpuart_port *sport)
+अणु
+	काष्ठा circ_buf *xmit = &sport->port.state->xmit;
+	काष्ठा scatterlist *sgl = sport->tx_sgl;
+	काष्ठा device *dev = sport->port.dev;
+	काष्ठा dma_chan *chan = sport->dma_tx_chan;
+	पूर्णांक ret;
 
-	if (sport->dma_tx_in_progress)
-		return;
+	अगर (sport->dma_tx_in_progress)
+		वापस;
 
-	sport->dma_tx_bytes = uart_circ_chars_pending(xmit);
+	sport->dma_tx_bytes = uart_circ_अक्षरs_pending(xmit);
 
-	if (xmit->tail < xmit->head || xmit->head == 0) {
+	अगर (xmit->tail < xmit->head || xmit->head == 0) अणु
 		sport->dma_tx_nents = 1;
 		sg_init_one(sgl, xmit->buf + xmit->tail, sport->dma_tx_bytes);
-	} else {
+	पूर्ण अन्यथा अणु
 		sport->dma_tx_nents = 2;
 		sg_init_table(sgl, 2);
 		sg_set_buf(sgl, xmit->buf + xmit->tail,
 				UART_XMIT_SIZE - xmit->tail);
 		sg_set_buf(sgl + 1, xmit->buf, xmit->head);
-	}
+	पूर्ण
 
 	ret = dma_map_sg(chan->device->dev, sgl, sport->dma_tx_nents,
 			 DMA_TO_DEVICE);
-	if (!ret) {
+	अगर (!ret) अणु
 		dev_err(dev, "DMA mapping error for TX.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sport->dma_tx_desc = dmaengine_prep_slave_sg(chan, sgl,
 					ret, DMA_MEM_TO_DEV,
 					DMA_PREP_INTERRUPT);
-	if (!sport->dma_tx_desc) {
+	अगर (!sport->dma_tx_desc) अणु
 		dma_unmap_sg(chan->device->dev, sgl, sport->dma_tx_nents,
 			      DMA_TO_DEVICE);
 		dev_err(dev, "Cannot prepare TX slave DMA!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sport->dma_tx_desc->callback = lpuart_dma_tx_complete;
 	sport->dma_tx_desc->callback_param = sport;
 	sport->dma_tx_in_progress = true;
 	sport->dma_tx_cookie = dmaengine_submit(sport->dma_tx_desc);
 	dma_async_issue_pending(chan);
-}
+पूर्ण
 
-static bool lpuart_stopped_or_empty(struct uart_port *port)
-{
-	return uart_circ_empty(&port->state->xmit) || uart_tx_stopped(port);
-}
+अटल bool lpuart_stopped_or_empty(काष्ठा uart_port *port)
+अणु
+	वापस uart_circ_empty(&port->state->xmit) || uart_tx_stopped(port);
+पूर्ण
 
-static void lpuart_dma_tx_complete(void *arg)
-{
-	struct lpuart_port *sport = arg;
-	struct scatterlist *sgl = &sport->tx_sgl[0];
-	struct circ_buf *xmit = &sport->port.state->xmit;
-	struct dma_chan *chan = sport->dma_tx_chan;
-	unsigned long flags;
+अटल व्योम lpuart_dma_tx_complete(व्योम *arg)
+अणु
+	काष्ठा lpuart_port *sport = arg;
+	काष्ठा scatterlist *sgl = &sport->tx_sgl[0];
+	काष्ठा circ_buf *xmit = &sport->port.state->xmit;
+	काष्ठा dma_chan *chan = sport->dma_tx_chan;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
@@ -489,39 +490,39 @@ static void lpuart_dma_tx_complete(void *arg)
 	sport->dma_tx_in_progress = false;
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(&sport->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&sport->port);
 
-	if (waitqueue_active(&sport->dma_wait)) {
-		wake_up(&sport->dma_wait);
-		return;
-	}
+	अगर (रुकोqueue_active(&sport->dma_रुको)) अणु
+		wake_up(&sport->dma_रुको);
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
-	if (!lpuart_stopped_or_empty(&sport->port))
+	अगर (!lpuart_stopped_or_empty(&sport->port))
 		lpuart_dma_tx(sport);
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
-static dma_addr_t lpuart_dma_datareg_addr(struct lpuart_port *sport)
-{
-	switch (sport->port.iotype) {
-	case UPIO_MEM32:
-		return sport->port.mapbase + UARTDATA;
-	case UPIO_MEM32BE:
-		return sport->port.mapbase + UARTDATA + sizeof(u32) - 1;
-	}
-	return sport->port.mapbase + UARTDR;
-}
+अटल dma_addr_t lpuart_dma_datareg_addr(काष्ठा lpuart_port *sport)
+अणु
+	चयन (sport->port.iotype) अणु
+	हाल UPIO_MEM32:
+		वापस sport->port.mapbase + UARTDATA;
+	हाल UPIO_MEM32BE:
+		वापस sport->port.mapbase + UARTDATA + माप(u32) - 1;
+	पूर्ण
+	वापस sport->port.mapbase + UARTDR;
+पूर्ण
 
-static int lpuart_dma_tx_request(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port,
-					struct lpuart_port, port);
-	struct dma_slave_config dma_tx_sconfig = {};
-	int ret;
+अटल पूर्णांक lpuart_dma_tx_request(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port,
+					काष्ठा lpuart_port, port);
+	काष्ठा dma_slave_config dma_tx_sconfig = अणुपूर्ण;
+	पूर्णांक ret;
 
 	dma_tx_sconfig.dst_addr = lpuart_dma_datareg_addr(sport);
 	dma_tx_sconfig.dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
@@ -529,602 +530,602 @@ static int lpuart_dma_tx_request(struct uart_port *port)
 	dma_tx_sconfig.direction = DMA_MEM_TO_DEV;
 	ret = dmaengine_slave_config(sport->dma_tx_chan, &dma_tx_sconfig);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(sport->port.dev,
 				"DMA slave config failed, err = %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool lpuart_is_32(struct lpuart_port *sport)
-{
-	return sport->port.iotype == UPIO_MEM32 ||
+अटल bool lpuart_is_32(काष्ठा lpuart_port *sport)
+अणु
+	वापस sport->port.iotype == UPIO_MEM32 ||
 	       sport->port.iotype ==  UPIO_MEM32BE;
-}
+पूर्ण
 
-static void lpuart_flush_buffer(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port, struct lpuart_port, port);
-	struct dma_chan *chan = sport->dma_tx_chan;
+अटल व्योम lpuart_flush_buffer(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port, काष्ठा lpuart_port, port);
+	काष्ठा dma_chan *chan = sport->dma_tx_chan;
 	u32 val;
 
-	if (sport->lpuart_dma_tx_use) {
-		if (sport->dma_tx_in_progress) {
+	अगर (sport->lpuart_dma_tx_use) अणु
+		अगर (sport->dma_tx_in_progress) अणु
 			dma_unmap_sg(chan->device->dev, &sport->tx_sgl[0],
 				sport->dma_tx_nents, DMA_TO_DEVICE);
 			sport->dma_tx_in_progress = false;
-		}
+		पूर्ण
 		dmaengine_terminate_all(chan);
-	}
+	पूर्ण
 
-	if (lpuart_is_32(sport)) {
-		val = lpuart32_read(&sport->port, UARTFIFO);
+	अगर (lpuart_is_32(sport)) अणु
+		val = lpuart32_पढ़ो(&sport->port, UARTFIFO);
 		val |= UARTFIFO_TXFLUSH | UARTFIFO_RXFLUSH;
-		lpuart32_write(&sport->port, val, UARTFIFO);
-	} else {
-		val = readb(sport->port.membase + UARTCFIFO);
+		lpuart32_ग_लिखो(&sport->port, val, UARTFIFO);
+	पूर्ण अन्यथा अणु
+		val = पढ़ोb(sport->port.membase + UARTCFIFO);
 		val |= UARTCFIFO_TXFLUSH | UARTCFIFO_RXFLUSH;
-		writeb(val, sport->port.membase + UARTCFIFO);
-	}
-}
+		ग_लिखोb(val, sport->port.membase + UARTCFIFO);
+	पूर्ण
+पूर्ण
 
-static void lpuart_wait_bit_set(struct uart_port *port, unsigned int offset,
+अटल व्योम lpuart_रुको_bit_set(काष्ठा uart_port *port, अचिन्हित पूर्णांक offset,
 				u8 bit)
-{
-	while (!(readb(port->membase + offset) & bit))
+अणु
+	जबतक (!(पढ़ोb(port->membase + offset) & bit))
 		cpu_relax();
-}
+पूर्ण
 
-static void lpuart32_wait_bit_set(struct uart_port *port, unsigned int offset,
+अटल व्योम lpuart32_रुको_bit_set(काष्ठा uart_port *port, अचिन्हित पूर्णांक offset,
 				  u32 bit)
-{
-	while (!(lpuart32_read(port, offset) & bit))
+अणु
+	जबतक (!(lpuart32_पढ़ो(port, offset) & bit))
 		cpu_relax();
-}
+पूर्ण
 
-#if defined(CONFIG_CONSOLE_POLL)
+#अगर defined(CONFIG_CONSOLE_POLL)
 
-static int lpuart_poll_init(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port,
-					struct lpuart_port, port);
-	unsigned long flags;
-	unsigned char temp;
+अटल पूर्णांक lpuart_poll_init(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port,
+					काष्ठा lpuart_port, port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर temp;
 
-	sport->port.fifosize = 0;
+	sport->port.fअगरosize = 0;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 	/* Disable Rx & Tx */
-	writeb(0, sport->port.membase + UARTCR2);
+	ग_लिखोb(0, sport->port.membase + UARTCR2);
 
-	temp = readb(sport->port.membase + UARTPFIFO);
+	temp = पढ़ोb(sport->port.membase + UARTPFIFO);
 	/* Enable Rx and Tx FIFO */
-	writeb(temp | UARTPFIFO_RXFE | UARTPFIFO_TXFE,
+	ग_लिखोb(temp | UARTPFIFO_RXFE | UARTPFIFO_TXFE,
 			sport->port.membase + UARTPFIFO);
 
 	/* flush Tx and Rx FIFO */
-	writeb(UARTCFIFO_TXFLUSH | UARTCFIFO_RXFLUSH,
+	ग_लिखोb(UARTCFIFO_TXFLUSH | UARTCFIFO_RXFLUSH,
 			sport->port.membase + UARTCFIFO);
 
 	/* explicitly clear RDRF */
-	if (readb(sport->port.membase + UARTSR1) & UARTSR1_RDRF) {
-		readb(sport->port.membase + UARTDR);
-		writeb(UARTSFIFO_RXUF, sport->port.membase + UARTSFIFO);
-	}
+	अगर (पढ़ोb(sport->port.membase + UARTSR1) & UARTSR1_RDRF) अणु
+		पढ़ोb(sport->port.membase + UARTDR);
+		ग_लिखोb(UARTSFIFO_RXUF, sport->port.membase + UARTSFIFO);
+	पूर्ण
 
-	writeb(0, sport->port.membase + UARTTWFIFO);
-	writeb(1, sport->port.membase + UARTRWFIFO);
+	ग_लिखोb(0, sport->port.membase + UARTTWFIFO);
+	ग_लिखोb(1, sport->port.membase + UARTRWFIFO);
 
 	/* Enable Rx and Tx */
-	writeb(UARTCR2_RE | UARTCR2_TE, sport->port.membase + UARTCR2);
+	ग_लिखोb(UARTCR2_RE | UARTCR2_TE, sport->port.membase + UARTCR2);
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lpuart_poll_put_char(struct uart_port *port, unsigned char c)
-{
+अटल व्योम lpuart_poll_put_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर c)
+अणु
 	/* drain */
-	lpuart_wait_bit_set(port, UARTSR1, UARTSR1_TDRE);
-	writeb(c, port->membase + UARTDR);
-}
+	lpuart_रुको_bit_set(port, UARTSR1, UARTSR1_TDRE);
+	ग_लिखोb(c, port->membase + UARTDR);
+पूर्ण
 
-static int lpuart_poll_get_char(struct uart_port *port)
-{
-	if (!(readb(port->membase + UARTSR1) & UARTSR1_RDRF))
-		return NO_POLL_CHAR;
+अटल पूर्णांक lpuart_poll_get_अक्षर(काष्ठा uart_port *port)
+अणु
+	अगर (!(पढ़ोb(port->membase + UARTSR1) & UARTSR1_RDRF))
+		वापस NO_POLL_CHAR;
 
-	return readb(port->membase + UARTDR);
-}
+	वापस पढ़ोb(port->membase + UARTDR);
+पूर्ण
 
-static int lpuart32_poll_init(struct uart_port *port)
-{
-	unsigned long flags;
-	struct lpuart_port *sport = container_of(port, struct lpuart_port, port);
+अटल पूर्णांक lpuart32_poll_init(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा lpuart_port *sport = container_of(port, काष्ठा lpuart_port, port);
 	u32 temp;
 
-	sport->port.fifosize = 0;
+	sport->port.fअगरosize = 0;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
 	/* Disable Rx & Tx */
-	lpuart32_write(&sport->port, 0, UARTCTRL);
+	lpuart32_ग_लिखो(&sport->port, 0, UARTCTRL);
 
-	temp = lpuart32_read(&sport->port, UARTFIFO);
+	temp = lpuart32_पढ़ो(&sport->port, UARTFIFO);
 
 	/* Enable Rx and Tx FIFO */
-	lpuart32_write(&sport->port, temp | UARTFIFO_RXFE | UARTFIFO_TXFE, UARTFIFO);
+	lpuart32_ग_लिखो(&sport->port, temp | UARTFIFO_RXFE | UARTFIFO_TXFE, UARTFIFO);
 
 	/* flush Tx and Rx FIFO */
-	lpuart32_write(&sport->port, UARTFIFO_TXFLUSH | UARTFIFO_RXFLUSH, UARTFIFO);
+	lpuart32_ग_लिखो(&sport->port, UARTFIFO_TXFLUSH | UARTFIFO_RXFLUSH, UARTFIFO);
 
 	/* explicitly clear RDRF */
-	if (lpuart32_read(&sport->port, UARTSTAT) & UARTSTAT_RDRF) {
-		lpuart32_read(&sport->port, UARTDATA);
-		lpuart32_write(&sport->port, UARTFIFO_RXUF, UARTFIFO);
-	}
+	अगर (lpuart32_पढ़ो(&sport->port, UARTSTAT) & UARTSTAT_RDRF) अणु
+		lpuart32_पढ़ो(&sport->port, UARTDATA);
+		lpuart32_ग_लिखो(&sport->port, UARTFIFO_RXUF, UARTFIFO);
+	पूर्ण
 
 	/* Enable Rx and Tx */
-	lpuart32_write(&sport->port, UARTCTRL_RE | UARTCTRL_TE, UARTCTRL);
+	lpuart32_ग_लिखो(&sport->port, UARTCTRL_RE | UARTCTRL_TE, UARTCTRL);
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lpuart32_poll_put_char(struct uart_port *port, unsigned char c)
-{
-	lpuart32_wait_bit_set(port, UARTSTAT, UARTSTAT_TDRE);
-	lpuart32_write(port, c, UARTDATA);
-}
+अटल व्योम lpuart32_poll_put_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर c)
+अणु
+	lpuart32_रुको_bit_set(port, UARTSTAT, UARTSTAT_TDRE);
+	lpuart32_ग_लिखो(port, c, UARTDATA);
+पूर्ण
 
-static int lpuart32_poll_get_char(struct uart_port *port)
-{
-	if (!(lpuart32_read(port, UARTWATER) >> UARTWATER_RXCNT_OFF))
-		return NO_POLL_CHAR;
+अटल पूर्णांक lpuart32_poll_get_अक्षर(काष्ठा uart_port *port)
+अणु
+	अगर (!(lpuart32_पढ़ो(port, UARTWATER) >> UARTWATER_RXCNT_OFF))
+		वापस NO_POLL_CHAR;
 
-	return lpuart32_read(port, UARTDATA);
-}
-#endif
+	वापस lpuart32_पढ़ो(port, UARTDATA);
+पूर्ण
+#पूर्ण_अगर
 
-static inline void lpuart_transmit_buffer(struct lpuart_port *sport)
-{
-	struct circ_buf *xmit = &sport->port.state->xmit;
+अटल अंतरभूत व्योम lpuart_transmit_buffer(काष्ठा lpuart_port *sport)
+अणु
+	काष्ठा circ_buf *xmit = &sport->port.state->xmit;
 
-	if (sport->port.x_char) {
-		writeb(sport->port.x_char, sport->port.membase + UARTDR);
+	अगर (sport->port.x_अक्षर) अणु
+		ग_लिखोb(sport->port.x_अक्षर, sport->port.membase + UARTDR);
 		sport->port.icount.tx++;
-		sport->port.x_char = 0;
-		return;
-	}
+		sport->port.x_अक्षर = 0;
+		वापस;
+	पूर्ण
 
-	if (lpuart_stopped_or_empty(&sport->port)) {
+	अगर (lpuart_stopped_or_empty(&sport->port)) अणु
 		lpuart_stop_tx(&sport->port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while (!uart_circ_empty(xmit) &&
-		(readb(sport->port.membase + UARTTCFIFO) < sport->txfifo_size)) {
-		writeb(xmit->buf[xmit->tail], sport->port.membase + UARTDR);
+	जबतक (!uart_circ_empty(xmit) &&
+		(पढ़ोb(sport->port.membase + UARTTCFIFO) < sport->txfअगरo_size)) अणु
+		ग_लिखोb(xmit->buf[xmit->tail], sport->port.membase + UARTDR);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		sport->port.icount.tx++;
-	}
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(&sport->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&sport->port);
 
-	if (uart_circ_empty(xmit))
+	अगर (uart_circ_empty(xmit))
 		lpuart_stop_tx(&sport->port);
-}
+पूर्ण
 
-static inline void lpuart32_transmit_buffer(struct lpuart_port *sport)
-{
-	struct circ_buf *xmit = &sport->port.state->xmit;
-	unsigned long txcnt;
+अटल अंतरभूत व्योम lpuart32_transmit_buffer(काष्ठा lpuart_port *sport)
+अणु
+	काष्ठा circ_buf *xmit = &sport->port.state->xmit;
+	अचिन्हित दीर्घ txcnt;
 
-	if (sport->port.x_char) {
-		lpuart32_write(&sport->port, sport->port.x_char, UARTDATA);
+	अगर (sport->port.x_अक्षर) अणु
+		lpuart32_ग_लिखो(&sport->port, sport->port.x_अक्षर, UARTDATA);
 		sport->port.icount.tx++;
-		sport->port.x_char = 0;
-		return;
-	}
+		sport->port.x_अक्षर = 0;
+		वापस;
+	पूर्ण
 
-	if (lpuart_stopped_or_empty(&sport->port)) {
+	अगर (lpuart_stopped_or_empty(&sport->port)) अणु
 		lpuart32_stop_tx(&sport->port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	txcnt = lpuart32_read(&sport->port, UARTWATER);
+	txcnt = lpuart32_पढ़ो(&sport->port, UARTWATER);
 	txcnt = txcnt >> UARTWATER_TXCNT_OFF;
 	txcnt &= UARTWATER_COUNT_MASK;
-	while (!uart_circ_empty(xmit) && (txcnt < sport->txfifo_size)) {
-		lpuart32_write(&sport->port, xmit->buf[xmit->tail], UARTDATA);
+	जबतक (!uart_circ_empty(xmit) && (txcnt < sport->txfअगरo_size)) अणु
+		lpuart32_ग_लिखो(&sport->port, xmit->buf[xmit->tail], UARTDATA);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		sport->port.icount.tx++;
-		txcnt = lpuart32_read(&sport->port, UARTWATER);
+		txcnt = lpuart32_पढ़ो(&sport->port, UARTWATER);
 		txcnt = txcnt >> UARTWATER_TXCNT_OFF;
 		txcnt &= UARTWATER_COUNT_MASK;
-	}
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(&sport->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&sport->port);
 
-	if (uart_circ_empty(xmit))
+	अगर (uart_circ_empty(xmit))
 		lpuart32_stop_tx(&sport->port);
-}
+पूर्ण
 
-static void lpuart_start_tx(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port,
-			struct lpuart_port, port);
-	unsigned char temp;
+अटल व्योम lpuart_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port,
+			काष्ठा lpuart_port, port);
+	अचिन्हित अक्षर temp;
 
-	temp = readb(port->membase + UARTCR2);
-	writeb(temp | UARTCR2_TIE, port->membase + UARTCR2);
+	temp = पढ़ोb(port->membase + UARTCR2);
+	ग_लिखोb(temp | UARTCR2_TIE, port->membase + UARTCR2);
 
-	if (sport->lpuart_dma_tx_use) {
-		if (!lpuart_stopped_or_empty(port))
+	अगर (sport->lpuart_dma_tx_use) अणु
+		अगर (!lpuart_stopped_or_empty(port))
 			lpuart_dma_tx(sport);
-	} else {
-		if (readb(port->membase + UARTSR1) & UARTSR1_TDRE)
+	पूर्ण अन्यथा अणु
+		अगर (पढ़ोb(port->membase + UARTSR1) & UARTSR1_TDRE)
 			lpuart_transmit_buffer(sport);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void lpuart32_start_tx(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port, struct lpuart_port, port);
-	unsigned long temp;
+अटल व्योम lpuart32_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port, काष्ठा lpuart_port, port);
+	अचिन्हित दीर्घ temp;
 
-	if (sport->lpuart_dma_tx_use) {
-		if (!lpuart_stopped_or_empty(port))
+	अगर (sport->lpuart_dma_tx_use) अणु
+		अगर (!lpuart_stopped_or_empty(port))
 			lpuart_dma_tx(sport);
-	} else {
-		temp = lpuart32_read(port, UARTCTRL);
-		lpuart32_write(port, temp | UARTCTRL_TIE, UARTCTRL);
+	पूर्ण अन्यथा अणु
+		temp = lpuart32_पढ़ो(port, UARTCTRL);
+		lpuart32_ग_लिखो(port, temp | UARTCTRL_TIE, UARTCTRL);
 
-		if (lpuart32_read(port, UARTSTAT) & UARTSTAT_TDRE)
+		अगर (lpuart32_पढ़ो(port, UARTSTAT) & UARTSTAT_TDRE)
 			lpuart32_transmit_buffer(sport);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* return TIOCSER_TEMT when transmitter is not busy */
-static unsigned int lpuart_tx_empty(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port,
-			struct lpuart_port, port);
-	unsigned char sr1 = readb(port->membase + UARTSR1);
-	unsigned char sfifo = readb(port->membase + UARTSFIFO);
+/* वापस TIOCSER_TEMT when transmitter is not busy */
+अटल अचिन्हित पूर्णांक lpuart_tx_empty(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port,
+			काष्ठा lpuart_port, port);
+	अचिन्हित अक्षर sr1 = पढ़ोb(port->membase + UARTSR1);
+	अचिन्हित अक्षर sfअगरo = पढ़ोb(port->membase + UARTSFIFO);
 
-	if (sport->dma_tx_in_progress)
-		return 0;
+	अगर (sport->dma_tx_in_progress)
+		वापस 0;
 
-	if (sr1 & UARTSR1_TC && sfifo & UARTSFIFO_TXEMPT)
-		return TIOCSER_TEMT;
+	अगर (sr1 & UARTSR1_TC && sfअगरo & UARTSFIFO_TXEMPT)
+		वापस TIOCSER_TEMT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int lpuart32_tx_empty(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port,
-			struct lpuart_port, port);
-	unsigned long stat = lpuart32_read(port, UARTSTAT);
-	unsigned long sfifo = lpuart32_read(port, UARTFIFO);
+अटल अचिन्हित पूर्णांक lpuart32_tx_empty(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port,
+			काष्ठा lpuart_port, port);
+	अचिन्हित दीर्घ stat = lpuart32_पढ़ो(port, UARTSTAT);
+	अचिन्हित दीर्घ sfअगरo = lpuart32_पढ़ो(port, UARTFIFO);
 
-	if (sport->dma_tx_in_progress)
-		return 0;
+	अगर (sport->dma_tx_in_progress)
+		वापस 0;
 
-	if (stat & UARTSTAT_TC && sfifo & UARTFIFO_TXEMPT)
-		return TIOCSER_TEMT;
+	अगर (stat & UARTSTAT_TC && sfअगरo & UARTFIFO_TXEMPT)
+		वापस TIOCSER_TEMT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lpuart_txint(struct lpuart_port *sport)
-{
-	unsigned long flags;
+अटल व्योम lpuart_txपूर्णांक(काष्ठा lpuart_port *sport)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 	lpuart_transmit_buffer(sport);
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
-static void lpuart_rxint(struct lpuart_port *sport)
-{
-	unsigned int flg, ignored = 0, overrun = 0;
-	struct tty_port *port = &sport->port.state->port;
-	unsigned long flags;
-	unsigned char rx, sr;
+अटल व्योम lpuart_rxपूर्णांक(काष्ठा lpuart_port *sport)
+अणु
+	अचिन्हित पूर्णांक flg, ignored = 0, overrun = 0;
+	काष्ठा tty_port *port = &sport->port.state->port;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर rx, sr;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
-	while (!(readb(sport->port.membase + UARTSFIFO) & UARTSFIFO_RXEMPT)) {
+	जबतक (!(पढ़ोb(sport->port.membase + UARTSFIFO) & UARTSFIFO_RXEMPT)) अणु
 		flg = TTY_NORMAL;
 		sport->port.icount.rx++;
 		/*
 		 * to clear the FE, OR, NF, FE, PE flags,
-		 * read SR1 then read DR
+		 * पढ़ो SR1 then पढ़ो DR
 		 */
-		sr = readb(sport->port.membase + UARTSR1);
-		rx = readb(sport->port.membase + UARTDR);
+		sr = पढ़ोb(sport->port.membase + UARTSR1);
+		rx = पढ़ोb(sport->port.membase + UARTDR);
 
-		if (uart_handle_sysrq_char(&sport->port, (unsigned char)rx))
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(&sport->port, (अचिन्हित अक्षर)rx))
+			जारी;
 
-		if (sr & (UARTSR1_PE | UARTSR1_OR | UARTSR1_FE)) {
-			if (sr & UARTSR1_PE)
+		अगर (sr & (UARTSR1_PE | UARTSR1_OR | UARTSR1_FE)) अणु
+			अगर (sr & UARTSR1_PE)
 				sport->port.icount.parity++;
-			else if (sr & UARTSR1_FE)
+			अन्यथा अगर (sr & UARTSR1_FE)
 				sport->port.icount.frame++;
 
-			if (sr & UARTSR1_OR)
+			अगर (sr & UARTSR1_OR)
 				overrun++;
 
-			if (sr & sport->port.ignore_status_mask) {
-				if (++ignored > 100)
-					goto out;
-				continue;
-			}
+			अगर (sr & sport->port.ignore_status_mask) अणु
+				अगर (++ignored > 100)
+					जाओ out;
+				जारी;
+			पूर्ण
 
-			sr &= sport->port.read_status_mask;
+			sr &= sport->port.पढ़ो_status_mask;
 
-			if (sr & UARTSR1_PE)
+			अगर (sr & UARTSR1_PE)
 				flg = TTY_PARITY;
-			else if (sr & UARTSR1_FE)
+			अन्यथा अगर (sr & UARTSR1_FE)
 				flg = TTY_FRAME;
 
-			if (sr & UARTSR1_OR)
+			अगर (sr & UARTSR1_OR)
 				flg = TTY_OVERRUN;
 
 			sport->port.sysrq = 0;
-		}
+		पूर्ण
 
-		tty_insert_flip_char(port, rx, flg);
-	}
+		tty_insert_flip_अक्षर(port, rx, flg);
+	पूर्ण
 
 out:
-	if (overrun) {
+	अगर (overrun) अणु
 		sport->port.icount.overrun += overrun;
 
 		/*
-		 * Overruns cause FIFO pointers to become missaligned.
-		 * Flushing the receive FIFO reinitializes the pointers.
+		 * Overruns cause FIFO poपूर्णांकers to become missaligned.
+		 * Flushing the receive FIFO reinitializes the poपूर्णांकers.
 		 */
-		writeb(UARTCFIFO_RXFLUSH, sport->port.membase + UARTCFIFO);
-		writeb(UARTSFIFO_RXOF, sport->port.membase + UARTSFIFO);
-	}
+		ग_लिखोb(UARTCFIFO_RXFLUSH, sport->port.membase + UARTCFIFO);
+		ग_लिखोb(UARTSFIFO_RXOF, sport->port.membase + UARTSFIFO);
+	पूर्ण
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
 	tty_flip_buffer_push(port);
-}
+पूर्ण
 
-static void lpuart32_txint(struct lpuart_port *sport)
-{
-	unsigned long flags;
+अटल व्योम lpuart32_txपूर्णांक(काष्ठा lpuart_port *sport)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 	lpuart32_transmit_buffer(sport);
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
-static void lpuart32_rxint(struct lpuart_port *sport)
-{
-	unsigned int flg, ignored = 0;
-	struct tty_port *port = &sport->port.state->port;
-	unsigned long flags;
-	unsigned long rx, sr;
+अटल व्योम lpuart32_rxपूर्णांक(काष्ठा lpuart_port *sport)
+अणु
+	अचिन्हित पूर्णांक flg, ignored = 0;
+	काष्ठा tty_port *port = &sport->port.state->port;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ rx, sr;
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
-	while (!(lpuart32_read(&sport->port, UARTFIFO) & UARTFIFO_RXEMPT)) {
+	जबतक (!(lpuart32_पढ़ो(&sport->port, UARTFIFO) & UARTFIFO_RXEMPT)) अणु
 		flg = TTY_NORMAL;
 		sport->port.icount.rx++;
 		/*
 		 * to clear the FE, OR, NF, FE, PE flags,
-		 * read STAT then read DATA reg
+		 * पढ़ो STAT then पढ़ो DATA reg
 		 */
-		sr = lpuart32_read(&sport->port, UARTSTAT);
-		rx = lpuart32_read(&sport->port, UARTDATA);
+		sr = lpuart32_पढ़ो(&sport->port, UARTSTAT);
+		rx = lpuart32_पढ़ो(&sport->port, UARTDATA);
 		rx &= 0x3ff;
 
-		if (uart_handle_sysrq_char(&sport->port, (unsigned char)rx))
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(&sport->port, (अचिन्हित अक्षर)rx))
+			जारी;
 
-		if (sr & (UARTSTAT_PE | UARTSTAT_OR | UARTSTAT_FE)) {
-			if (sr & UARTSTAT_PE)
+		अगर (sr & (UARTSTAT_PE | UARTSTAT_OR | UARTSTAT_FE)) अणु
+			अगर (sr & UARTSTAT_PE)
 				sport->port.icount.parity++;
-			else if (sr & UARTSTAT_FE)
+			अन्यथा अगर (sr & UARTSTAT_FE)
 				sport->port.icount.frame++;
 
-			if (sr & UARTSTAT_OR)
+			अगर (sr & UARTSTAT_OR)
 				sport->port.icount.overrun++;
 
-			if (sr & sport->port.ignore_status_mask) {
-				if (++ignored > 100)
-					goto out;
-				continue;
-			}
+			अगर (sr & sport->port.ignore_status_mask) अणु
+				अगर (++ignored > 100)
+					जाओ out;
+				जारी;
+			पूर्ण
 
-			sr &= sport->port.read_status_mask;
+			sr &= sport->port.पढ़ो_status_mask;
 
-			if (sr & UARTSTAT_PE)
+			अगर (sr & UARTSTAT_PE)
 				flg = TTY_PARITY;
-			else if (sr & UARTSTAT_FE)
+			अन्यथा अगर (sr & UARTSTAT_FE)
 				flg = TTY_FRAME;
 
-			if (sr & UARTSTAT_OR)
+			अगर (sr & UARTSTAT_OR)
 				flg = TTY_OVERRUN;
 
 			sport->port.sysrq = 0;
-		}
+		पूर्ण
 
-		tty_insert_flip_char(port, rx, flg);
-	}
+		tty_insert_flip_अक्षर(port, rx, flg);
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
 	tty_flip_buffer_push(port);
-}
+पूर्ण
 
-static irqreturn_t lpuart_int(int irq, void *dev_id)
-{
-	struct lpuart_port *sport = dev_id;
-	unsigned char sts;
+अटल irqवापस_t lpuart_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा lpuart_port *sport = dev_id;
+	अचिन्हित अक्षर sts;
 
-	sts = readb(sport->port.membase + UARTSR1);
+	sts = पढ़ोb(sport->port.membase + UARTSR1);
 
-	/* SysRq, using dma, check for linebreak by framing err. */
-	if (sts & UARTSR1_FE && sport->lpuart_dma_rx_use) {
-		readb(sport->port.membase + UARTDR);
-		uart_handle_break(&sport->port);
-		/* linebreak produces some garbage, removing it */
-		writeb(UARTCFIFO_RXFLUSH, sport->port.membase + UARTCFIFO);
-		return IRQ_HANDLED;
-	}
+	/* SysRq, using dma, check क्रम lineअवरोध by framing err. */
+	अगर (sts & UARTSR1_FE && sport->lpuart_dma_rx_use) अणु
+		पढ़ोb(sport->port.membase + UARTDR);
+		uart_handle_अवरोध(&sport->port);
+		/* lineअवरोध produces some garbage, removing it */
+		ग_लिखोb(UARTCFIFO_RXFLUSH, sport->port.membase + UARTCFIFO);
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (sts & UARTSR1_RDRF && !sport->lpuart_dma_rx_use)
-		lpuart_rxint(sport);
+	अगर (sts & UARTSR1_RDRF && !sport->lpuart_dma_rx_use)
+		lpuart_rxपूर्णांक(sport);
 
-	if (sts & UARTSR1_TDRE && !sport->lpuart_dma_tx_use)
-		lpuart_txint(sport);
+	अगर (sts & UARTSR1_TDRE && !sport->lpuart_dma_tx_use)
+		lpuart_txपूर्णांक(sport);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t lpuart32_int(int irq, void *dev_id)
-{
-	struct lpuart_port *sport = dev_id;
-	unsigned long sts, rxcount;
+अटल irqवापस_t lpuart32_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा lpuart_port *sport = dev_id;
+	अचिन्हित दीर्घ sts, rxcount;
 
-	sts = lpuart32_read(&sport->port, UARTSTAT);
-	rxcount = lpuart32_read(&sport->port, UARTWATER);
+	sts = lpuart32_पढ़ो(&sport->port, UARTSTAT);
+	rxcount = lpuart32_पढ़ो(&sport->port, UARTWATER);
 	rxcount = rxcount >> UARTWATER_RXCNT_OFF;
 
-	if ((sts & UARTSTAT_RDRF || rxcount > 0) && !sport->lpuart_dma_rx_use)
-		lpuart32_rxint(sport);
+	अगर ((sts & UARTSTAT_RDRF || rxcount > 0) && !sport->lpuart_dma_rx_use)
+		lpuart32_rxपूर्णांक(sport);
 
-	if ((sts & UARTSTAT_TDRE) && !sport->lpuart_dma_tx_use)
-		lpuart32_txint(sport);
+	अगर ((sts & UARTSTAT_TDRE) && !sport->lpuart_dma_tx_use)
+		lpuart32_txपूर्णांक(sport);
 
-	lpuart32_write(&sport->port, sts, UARTSTAT);
-	return IRQ_HANDLED;
-}
+	lpuart32_ग_लिखो(&sport->port, sts, UARTSTAT);
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-static inline void lpuart_handle_sysrq_chars(struct uart_port *port,
-					     unsigned char *p, int count)
-{
-	while (count--) {
-		if (*p && uart_handle_sysrq_char(port, *p))
-			return;
+अटल अंतरभूत व्योम lpuart_handle_sysrq_अक्षरs(काष्ठा uart_port *port,
+					     अचिन्हित अक्षर *p, पूर्णांक count)
+अणु
+	जबतक (count--) अणु
+		अगर (*p && uart_handle_sysrq_अक्षर(port, *p))
+			वापस;
 		p++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void lpuart_handle_sysrq(struct lpuart_port *sport)
-{
-	struct circ_buf *ring = &sport->rx_ring;
-	int count;
+अटल व्योम lpuart_handle_sysrq(काष्ठा lpuart_port *sport)
+अणु
+	काष्ठा circ_buf *ring = &sport->rx_ring;
+	पूर्णांक count;
 
-	if (ring->head < ring->tail) {
+	अगर (ring->head < ring->tail) अणु
 		count = sport->rx_sgl.length - ring->tail;
-		lpuart_handle_sysrq_chars(&sport->port,
+		lpuart_handle_sysrq_अक्षरs(&sport->port,
 					  ring->buf + ring->tail, count);
 		ring->tail = 0;
-	}
+	पूर्ण
 
-	if (ring->head > ring->tail) {
+	अगर (ring->head > ring->tail) अणु
 		count = ring->head - ring->tail;
-		lpuart_handle_sysrq_chars(&sport->port,
+		lpuart_handle_sysrq_अक्षरs(&sport->port,
 					  ring->buf + ring->tail, count);
 		ring->tail = ring->head;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void lpuart_copy_rx_to_tty(struct lpuart_port *sport)
-{
-	struct tty_port *port = &sport->port.state->port;
-	struct dma_tx_state state;
-	enum dma_status dmastat;
-	struct dma_chan *chan = sport->dma_rx_chan;
-	struct circ_buf *ring = &sport->rx_ring;
-	unsigned long flags;
-	int count = 0;
+अटल व्योम lpuart_copy_rx_to_tty(काष्ठा lpuart_port *sport)
+अणु
+	काष्ठा tty_port *port = &sport->port.state->port;
+	काष्ठा dma_tx_state state;
+	क्रमागत dma_status dmastat;
+	काष्ठा dma_chan *chan = sport->dma_rx_chan;
+	काष्ठा circ_buf *ring = &sport->rx_ring;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count = 0;
 
-	if (lpuart_is_32(sport)) {
-		unsigned long sr = lpuart32_read(&sport->port, UARTSTAT);
+	अगर (lpuart_is_32(sport)) अणु
+		अचिन्हित दीर्घ sr = lpuart32_पढ़ो(&sport->port, UARTSTAT);
 
-		if (sr & (UARTSTAT_PE | UARTSTAT_FE)) {
+		अगर (sr & (UARTSTAT_PE | UARTSTAT_FE)) अणु
 			/* Read DR to clear the error flags */
-			lpuart32_read(&sport->port, UARTDATA);
+			lpuart32_पढ़ो(&sport->port, UARTDATA);
 
-			if (sr & UARTSTAT_PE)
+			अगर (sr & UARTSTAT_PE)
 				sport->port.icount.parity++;
-			else if (sr & UARTSTAT_FE)
+			अन्यथा अगर (sr & UARTSTAT_FE)
 				sport->port.icount.frame++;
-		}
-	} else {
-		unsigned char sr = readb(sport->port.membase + UARTSR1);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अचिन्हित अक्षर sr = पढ़ोb(sport->port.membase + UARTSR1);
 
-		if (sr & (UARTSR1_PE | UARTSR1_FE)) {
-			unsigned char cr2;
+		अगर (sr & (UARTSR1_PE | UARTSR1_FE)) अणु
+			अचिन्हित अक्षर cr2;
 
 			/* Disable receiver during this operation... */
-			cr2 = readb(sport->port.membase + UARTCR2);
+			cr2 = पढ़ोb(sport->port.membase + UARTCR2);
 			cr2 &= ~UARTCR2_RE;
-			writeb(cr2, sport->port.membase + UARTCR2);
+			ग_लिखोb(cr2, sport->port.membase + UARTCR2);
 
 			/* Read DR to clear the error flags */
-			readb(sport->port.membase + UARTDR);
+			पढ़ोb(sport->port.membase + UARTDR);
 
-			if (sr & UARTSR1_PE)
+			अगर (sr & UARTSR1_PE)
 				sport->port.icount.parity++;
-			else if (sr & UARTSR1_FE)
+			अन्यथा अगर (sr & UARTSR1_FE)
 				sport->port.icount.frame++;
 			/*
-			 * At this point parity/framing error is
-			 * cleared However, since the DMA already read
-			 * the data register and we had to read it
-			 * again after reading the status register to
+			 * At this poपूर्णांक parity/framing error is
+			 * cleared However, since the DMA alपढ़ोy पढ़ो
+			 * the data रेजिस्टर and we had to पढ़ो it
+			 * again after पढ़ोing the status रेजिस्टर to
 			 * properly clear the flags, the FIFO actually
 			 * underflowed... This requires a clearing of
 			 * the FIFO...
 			 */
-			if (readb(sport->port.membase + UARTSFIFO) &
-			    UARTSFIFO_RXUF) {
-				writeb(UARTSFIFO_RXUF,
+			अगर (पढ़ोb(sport->port.membase + UARTSFIFO) &
+			    UARTSFIFO_RXUF) अणु
+				ग_लिखोb(UARTSFIFO_RXUF,
 				       sport->port.membase + UARTSFIFO);
-				writeb(UARTCFIFO_RXFLUSH,
+				ग_लिखोb(UARTCFIFO_RXFLUSH,
 				       sport->port.membase + UARTCFIFO);
-			}
+			पूर्ण
 
 			cr2 |= UARTCR2_RE;
-			writeb(cr2, sport->port.membase + UARTCR2);
-		}
-	}
+			ग_लिखोb(cr2, sport->port.membase + UARTCR2);
+		पूर्ण
+	पूर्ण
 
 	async_tx_ack(sport->dma_rx_desc);
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
 	dmastat = dmaengine_tx_status(chan, sport->dma_rx_cookie, &state);
-	if (dmastat == DMA_ERROR) {
+	अगर (dmastat == DMA_ERROR) अणु
 		dev_err(sport->port.dev, "Rx DMA transfer failed!\n");
 		spin_unlock_irqrestore(&sport->port.lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* CPU claims ownership of RX DMA buffer */
-	dma_sync_sg_for_cpu(chan->device->dev, &sport->rx_sgl, 1,
+	dma_sync_sg_क्रम_cpu(chan->device->dev, &sport->rx_sgl, 1,
 			    DMA_FROM_DEVICE);
 
 	/*
-	 * ring->head points to the end of data already written by the DMA.
-	 * ring->tail points to the beginning of data to be read by the
+	 * ring->head poपूर्णांकs to the end of data alपढ़ोy written by the DMA.
+	 * ring->tail poपूर्णांकs to the beginning of data to be पढ़ो by the
 	 * framework.
 	 * The current transfer size should not be larger than the dma buffer
 	 * length.
@@ -1133,83 +1134,83 @@ static void lpuart_copy_rx_to_tty(struct lpuart_port *sport)
 	BUG_ON(ring->head > sport->rx_sgl.length);
 
 	/*
-	 * Silent handling of keys pressed in the sysrq timeframe
+	 * Silent handling of keys pressed in the sysrq समयframe
 	 */
-	if (sport->port.sysrq) {
+	अगर (sport->port.sysrq) अणु
 		lpuart_handle_sysrq(sport);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/*
-	 * At this point ring->head may point to the first byte right after the
+	 * At this poपूर्णांक ring->head may poपूर्णांक to the first byte right after the
 	 * last byte of the dma buffer:
 	 * 0 <= ring->head <= sport->rx_sgl.length
 	 *
-	 * However ring->tail must always points inside the dma buffer:
+	 * However ring->tail must always poपूर्णांकs inside the dma buffer:
 	 * 0 <= ring->tail <= sport->rx_sgl.length - 1
 	 *
-	 * Since we use a ring buffer, we have to handle the case
-	 * where head is lower than tail. In such a case, we first read from
+	 * Since we use a ring buffer, we have to handle the हाल
+	 * where head is lower than tail. In such a हाल, we first पढ़ो from
 	 * tail to the end of the buffer then reset tail.
 	 */
-	if (ring->head < ring->tail) {
+	अगर (ring->head < ring->tail) अणु
 		count = sport->rx_sgl.length - ring->tail;
 
 		tty_insert_flip_string(port, ring->buf + ring->tail, count);
 		ring->tail = 0;
 		sport->port.icount.rx += count;
-	}
+	पूर्ण
 
-	/* Finally we read data from tail to head */
-	if (ring->tail < ring->head) {
+	/* Finally we पढ़ो data from tail to head */
+	अगर (ring->tail < ring->head) अणु
 		count = ring->head - ring->tail;
 		tty_insert_flip_string(port, ring->buf + ring->tail, count);
-		/* Wrap ring->head if needed */
-		if (ring->head >= sport->rx_sgl.length)
+		/* Wrap ring->head अगर needed */
+		अगर (ring->head >= sport->rx_sgl.length)
 			ring->head = 0;
 		ring->tail = ring->head;
 		sport->port.icount.rx += count;
-	}
+	पूर्ण
 
-exit:
-	dma_sync_sg_for_device(chan->device->dev, &sport->rx_sgl, 1,
+निकास:
+	dma_sync_sg_क्रम_device(chan->device->dev, &sport->rx_sgl, 1,
 			       DMA_FROM_DEVICE);
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
 	tty_flip_buffer_push(port);
-	mod_timer(&sport->lpuart_timer, jiffies + sport->dma_rx_timeout);
-}
+	mod_समयr(&sport->lpuart_समयr, jअगरfies + sport->dma_rx_समयout);
+पूर्ण
 
-static void lpuart_dma_rx_complete(void *arg)
-{
-	struct lpuart_port *sport = arg;
-
-	lpuart_copy_rx_to_tty(sport);
-}
-
-static void lpuart_timer_func(struct timer_list *t)
-{
-	struct lpuart_port *sport = from_timer(sport, t, lpuart_timer);
+अटल व्योम lpuart_dma_rx_complete(व्योम *arg)
+अणु
+	काष्ठा lpuart_port *sport = arg;
 
 	lpuart_copy_rx_to_tty(sport);
-}
+पूर्ण
 
-static inline int lpuart_start_rx_dma(struct lpuart_port *sport)
-{
-	struct dma_slave_config dma_rx_sconfig = {};
-	struct circ_buf *ring = &sport->rx_ring;
-	int ret, nent;
-	int bits, baud;
-	struct tty_port *port = &sport->port.state->port;
-	struct tty_struct *tty = port->tty;
-	struct ktermios *termios = &tty->termios;
-	struct dma_chan *chan = sport->dma_rx_chan;
+अटल व्योम lpuart_समयr_func(काष्ठा समयr_list *t)
+अणु
+	काष्ठा lpuart_port *sport = from_समयr(sport, t, lpuart_समयr);
+
+	lpuart_copy_rx_to_tty(sport);
+पूर्ण
+
+अटल अंतरभूत पूर्णांक lpuart_start_rx_dma(काष्ठा lpuart_port *sport)
+अणु
+	काष्ठा dma_slave_config dma_rx_sconfig = अणुपूर्ण;
+	काष्ठा circ_buf *ring = &sport->rx_ring;
+	पूर्णांक ret, nent;
+	पूर्णांक bits, baud;
+	काष्ठा tty_port *port = &sport->port.state->port;
+	काष्ठा tty_काष्ठा *tty = port->tty;
+	काष्ठा ktermios *termios = &tty->termios;
+	काष्ठा dma_chan *chan = sport->dma_rx_chan;
 
 	baud = tty_get_baud_rate(tty);
 
 	bits = (termios->c_cflag & CSIZE) == CS7 ? 9 : 10;
-	if (termios->c_cflag & PARENB)
+	अगर (termios->c_cflag & PARENB)
 		bits++;
 
 	/*
@@ -1218,21 +1219,21 @@ static inline int lpuart_start_rx_dma(struct lpuart_port *sport)
 	 */
 	sport->rx_dma_rng_buf_len = (DMA_RX_TIMEOUT * baud /  bits / 1000) * 2;
 	sport->rx_dma_rng_buf_len = (1 << (fls(sport->rx_dma_rng_buf_len) - 1));
-	if (sport->rx_dma_rng_buf_len < 16)
+	अगर (sport->rx_dma_rng_buf_len < 16)
 		sport->rx_dma_rng_buf_len = 16;
 
 	ring->buf = kzalloc(sport->rx_dma_rng_buf_len, GFP_ATOMIC);
-	if (!ring->buf)
-		return -ENOMEM;
+	अगर (!ring->buf)
+		वापस -ENOMEM;
 
 	sg_init_one(&sport->rx_sgl, ring->buf, sport->rx_dma_rng_buf_len);
 	nent = dma_map_sg(chan->device->dev, &sport->rx_sgl, 1,
 			  DMA_FROM_DEVICE);
 
-	if (!nent) {
+	अगर (!nent) अणु
 		dev_err(sport->port.dev, "DMA Rx mapping error\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dma_rx_sconfig.src_addr = lpuart_dma_datareg_addr(sport);
 	dma_rx_sconfig.src_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
@@ -1240,11 +1241,11 @@ static inline int lpuart_start_rx_dma(struct lpuart_port *sport)
 	dma_rx_sconfig.direction = DMA_DEV_TO_MEM;
 	ret = dmaengine_slave_config(chan, &dma_rx_sconfig);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(sport->port.dev,
 				"DMA Rx slave config failed, err = %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sport->dma_rx_desc = dmaengine_prep_dma_cyclic(chan,
 				 sg_dma_address(&sport->rx_sgl),
@@ -1252,60 +1253,60 @@ static inline int lpuart_start_rx_dma(struct lpuart_port *sport)
 				 sport->rx_sgl.length / 2,
 				 DMA_DEV_TO_MEM,
 				 DMA_PREP_INTERRUPT);
-	if (!sport->dma_rx_desc) {
+	अगर (!sport->dma_rx_desc) अणु
 		dev_err(sport->port.dev, "Cannot prepare cyclic DMA\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	sport->dma_rx_desc->callback = lpuart_dma_rx_complete;
 	sport->dma_rx_desc->callback_param = sport;
 	sport->dma_rx_cookie = dmaengine_submit(sport->dma_rx_desc);
 	dma_async_issue_pending(chan);
 
-	if (lpuart_is_32(sport)) {
-		unsigned long temp = lpuart32_read(&sport->port, UARTBAUD);
+	अगर (lpuart_is_32(sport)) अणु
+		अचिन्हित दीर्घ temp = lpuart32_पढ़ो(&sport->port, UARTBAUD);
 
-		lpuart32_write(&sport->port, temp | UARTBAUD_RDMAE, UARTBAUD);
-	} else {
-		writeb(readb(sport->port.membase + UARTCR5) | UARTCR5_RDMAS,
+		lpuart32_ग_लिखो(&sport->port, temp | UARTBAUD_RDMAE, UARTBAUD);
+	पूर्ण अन्यथा अणु
+		ग_लिखोb(पढ़ोb(sport->port.membase + UARTCR5) | UARTCR5_RDMAS,
 		       sport->port.membase + UARTCR5);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lpuart_dma_rx_free(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port,
-					struct lpuart_port, port);
-	struct dma_chan *chan = sport->dma_rx_chan;
+अटल व्योम lpuart_dma_rx_मुक्त(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port,
+					काष्ठा lpuart_port, port);
+	काष्ठा dma_chan *chan = sport->dma_rx_chan;
 
 	dmaengine_terminate_all(chan);
 	dma_unmap_sg(chan->device->dev, &sport->rx_sgl, 1, DMA_FROM_DEVICE);
-	kfree(sport->rx_ring.buf);
+	kमुक्त(sport->rx_ring.buf);
 	sport->rx_ring.tail = 0;
 	sport->rx_ring.head = 0;
-	sport->dma_rx_desc = NULL;
+	sport->dma_rx_desc = शून्य;
 	sport->dma_rx_cookie = -EINVAL;
-}
+पूर्ण
 
-static int lpuart_config_rs485(struct uart_port *port,
-			struct serial_rs485 *rs485)
-{
-	struct lpuart_port *sport = container_of(port,
-			struct lpuart_port, port);
+अटल पूर्णांक lpuart_config_rs485(काष्ठा uart_port *port,
+			काष्ठा serial_rs485 *rs485)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port,
+			काष्ठा lpuart_port, port);
 
-	u8 modem = readb(sport->port.membase + UARTMODEM) &
+	u8 modem = पढ़ोb(sport->port.membase + UARTMODEM) &
 		~(UARTMODEM_TXRTSPOL | UARTMODEM_TXRTSE);
-	writeb(modem, sport->port.membase + UARTMODEM);
+	ग_लिखोb(modem, sport->port.membase + UARTMODEM);
 
 	/* clear unsupported configurations */
-	rs485->delay_rts_before_send = 0;
+	rs485->delay_rts_beक्रमe_send = 0;
 	rs485->delay_rts_after_send = 0;
 	rs485->flags &= ~SER_RS485_RX_DURING_TX;
 
-	if (rs485->flags & SER_RS485_ENABLED) {
-		/* Enable auto RS-485 RTS mode */
+	अगर (rs485->flags & SER_RS485_ENABLED) अणु
+		/* Enable स्वतः RS-485 RTS mode */
 		modem |= UARTMODEM_TXRTSE;
 
 		/*
@@ -1313,50 +1314,50 @@ static int lpuart_config_rs485(struct uart_port *port,
 		 * transfer, other variants are not supported by the hardware.
 		 */
 
-		if (!(rs485->flags & (SER_RS485_RTS_ON_SEND |
+		अगर (!(rs485->flags & (SER_RS485_RTS_ON_SEND |
 				SER_RS485_RTS_AFTER_SEND)))
 			rs485->flags |= SER_RS485_RTS_ON_SEND;
 
-		if (rs485->flags & SER_RS485_RTS_ON_SEND &&
+		अगर (rs485->flags & SER_RS485_RTS_ON_SEND &&
 				rs485->flags & SER_RS485_RTS_AFTER_SEND)
 			rs485->flags &= ~SER_RS485_RTS_AFTER_SEND;
 
 		/*
-		 * The hardware defaults to RTS logic HIGH while transfer.
-		 * Switch polarity in case RTS shall be logic HIGH
+		 * The hardware शेषs to RTS logic HIGH जबतक transfer.
+		 * Switch polarity in हाल RTS shall be logic HIGH
 		 * after transfer.
 		 * Note: UART is assumed to be active high.
 		 */
-		if (rs485->flags & SER_RS485_RTS_ON_SEND)
+		अगर (rs485->flags & SER_RS485_RTS_ON_SEND)
 			modem &= ~UARTMODEM_TXRTSPOL;
-		else if (rs485->flags & SER_RS485_RTS_AFTER_SEND)
+		अन्यथा अगर (rs485->flags & SER_RS485_RTS_AFTER_SEND)
 			modem |= UARTMODEM_TXRTSPOL;
-	}
+	पूर्ण
 
 	/* Store the new configuration */
 	sport->port.rs485 = *rs485;
 
-	writeb(modem, sport->port.membase + UARTMODEM);
-	return 0;
-}
+	ग_लिखोb(modem, sport->port.membase + UARTMODEM);
+	वापस 0;
+पूर्ण
 
-static int lpuart32_config_rs485(struct uart_port *port,
-			struct serial_rs485 *rs485)
-{
-	struct lpuart_port *sport = container_of(port,
-			struct lpuart_port, port);
+अटल पूर्णांक lpuart32_config_rs485(काष्ठा uart_port *port,
+			काष्ठा serial_rs485 *rs485)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port,
+			काष्ठा lpuart_port, port);
 
-	unsigned long modem = lpuart32_read(&sport->port, UARTMODIR)
+	अचिन्हित दीर्घ modem = lpuart32_पढ़ो(&sport->port, UARTMOसूची)
 				& ~(UARTMODEM_TXRTSPOL | UARTMODEM_TXRTSE);
-	lpuart32_write(&sport->port, modem, UARTMODIR);
+	lpuart32_ग_लिखो(&sport->port, modem, UARTMOसूची);
 
 	/* clear unsupported configurations */
-	rs485->delay_rts_before_send = 0;
+	rs485->delay_rts_beक्रमe_send = 0;
 	rs485->delay_rts_after_send = 0;
 	rs485->flags &= ~SER_RS485_RX_DURING_TX;
 
-	if (rs485->flags & SER_RS485_ENABLED) {
-		/* Enable auto RS-485 RTS mode */
+	अगर (rs485->flags & SER_RS485_ENABLED) अणु
+		/* Enable स्वतः RS-485 RTS mode */
 		modem |= UARTMODEM_TXRTSE;
 
 		/*
@@ -1364,293 +1365,293 @@ static int lpuart32_config_rs485(struct uart_port *port,
 		 * transfer, other variants are not supported by the hardware.
 		 */
 
-		if (!(rs485->flags & (SER_RS485_RTS_ON_SEND |
+		अगर (!(rs485->flags & (SER_RS485_RTS_ON_SEND |
 				SER_RS485_RTS_AFTER_SEND)))
 			rs485->flags |= SER_RS485_RTS_ON_SEND;
 
-		if (rs485->flags & SER_RS485_RTS_ON_SEND &&
+		अगर (rs485->flags & SER_RS485_RTS_ON_SEND &&
 				rs485->flags & SER_RS485_RTS_AFTER_SEND)
 			rs485->flags &= ~SER_RS485_RTS_AFTER_SEND;
 
 		/*
-		 * The hardware defaults to RTS logic HIGH while transfer.
-		 * Switch polarity in case RTS shall be logic HIGH
+		 * The hardware शेषs to RTS logic HIGH जबतक transfer.
+		 * Switch polarity in हाल RTS shall be logic HIGH
 		 * after transfer.
 		 * Note: UART is assumed to be active high.
 		 */
-		if (rs485->flags & SER_RS485_RTS_ON_SEND)
+		अगर (rs485->flags & SER_RS485_RTS_ON_SEND)
 			modem &= ~UARTMODEM_TXRTSPOL;
-		else if (rs485->flags & SER_RS485_RTS_AFTER_SEND)
+		अन्यथा अगर (rs485->flags & SER_RS485_RTS_AFTER_SEND)
 			modem |= UARTMODEM_TXRTSPOL;
-	}
+	पूर्ण
 
 	/* Store the new configuration */
 	sport->port.rs485 = *rs485;
 
-	lpuart32_write(&sport->port, modem, UARTMODIR);
-	return 0;
-}
+	lpuart32_ग_लिखो(&sport->port, modem, UARTMOसूची);
+	वापस 0;
+पूर्ण
 
-static unsigned int lpuart_get_mctrl(struct uart_port *port)
-{
-	unsigned int temp = 0;
-	unsigned char reg;
+अटल अचिन्हित पूर्णांक lpuart_get_mctrl(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक temp = 0;
+	अचिन्हित अक्षर reg;
 
-	reg = readb(port->membase + UARTMODEM);
-	if (reg & UARTMODEM_TXCTSE)
+	reg = पढ़ोb(port->membase + UARTMODEM);
+	अगर (reg & UARTMODEM_TXCTSE)
 		temp |= TIOCM_CTS;
 
-	if (reg & UARTMODEM_RXRTSE)
+	अगर (reg & UARTMODEM_RXRTSE)
 		temp |= TIOCM_RTS;
 
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
-static unsigned int lpuart32_get_mctrl(struct uart_port *port)
-{
-	unsigned int temp = 0;
-	unsigned long reg;
+अटल अचिन्हित पूर्णांक lpuart32_get_mctrl(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक temp = 0;
+	अचिन्हित दीर्घ reg;
 
-	reg = lpuart32_read(port, UARTMODIR);
-	if (reg & UARTMODIR_TXCTSE)
+	reg = lpuart32_पढ़ो(port, UARTMOसूची);
+	अगर (reg & UARTMOसूची_TXCTSE)
 		temp |= TIOCM_CTS;
 
-	if (reg & UARTMODIR_RXRTSE)
+	अगर (reg & UARTMOसूची_RXRTSE)
 		temp |= TIOCM_RTS;
 
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
-static void lpuart_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	unsigned char temp;
-	struct lpuart_port *sport = container_of(port,
-				struct lpuart_port, port);
+अटल व्योम lpuart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	अचिन्हित अक्षर temp;
+	काष्ठा lpuart_port *sport = container_of(port,
+				काष्ठा lpuart_port, port);
 
 	/* Make sure RXRTSE bit is not set when RS485 is enabled */
-	if (!(sport->port.rs485.flags & SER_RS485_ENABLED)) {
-		temp = readb(sport->port.membase + UARTMODEM) &
+	अगर (!(sport->port.rs485.flags & SER_RS485_ENABLED)) अणु
+		temp = पढ़ोb(sport->port.membase + UARTMODEM) &
 			~(UARTMODEM_RXRTSE | UARTMODEM_TXCTSE);
 
-		if (mctrl & TIOCM_RTS)
+		अगर (mctrl & TIOCM_RTS)
 			temp |= UARTMODEM_RXRTSE;
 
-		if (mctrl & TIOCM_CTS)
+		अगर (mctrl & TIOCM_CTS)
 			temp |= UARTMODEM_TXCTSE;
 
-		writeb(temp, port->membase + UARTMODEM);
-	}
-}
+		ग_लिखोb(temp, port->membase + UARTMODEM);
+	पूर्ण
+पूर्ण
 
-static void lpuart32_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
+अटल व्योम lpuart32_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
 
-}
+पूर्ण
 
-static void lpuart_break_ctl(struct uart_port *port, int break_state)
-{
-	unsigned char temp;
+अटल व्योम lpuart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	अचिन्हित अक्षर temp;
 
-	temp = readb(port->membase + UARTCR2) & ~UARTCR2_SBK;
+	temp = पढ़ोb(port->membase + UARTCR2) & ~UARTCR2_SBK;
 
-	if (break_state != 0)
+	अगर (अवरोध_state != 0)
 		temp |= UARTCR2_SBK;
 
-	writeb(temp, port->membase + UARTCR2);
-}
+	ग_लिखोb(temp, port->membase + UARTCR2);
+पूर्ण
 
-static void lpuart32_break_ctl(struct uart_port *port, int break_state)
-{
-	unsigned long temp;
+अटल व्योम lpuart32_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	अचिन्हित दीर्घ temp;
 
-	temp = lpuart32_read(port, UARTCTRL) & ~UARTCTRL_SBK;
+	temp = lpuart32_पढ़ो(port, UARTCTRL) & ~UARTCTRL_SBK;
 
-	if (break_state != 0)
+	अगर (अवरोध_state != 0)
 		temp |= UARTCTRL_SBK;
 
-	lpuart32_write(port, temp, UARTCTRL);
-}
+	lpuart32_ग_लिखो(port, temp, UARTCTRL);
+पूर्ण
 
-static void lpuart_setup_watermark(struct lpuart_port *sport)
-{
-	unsigned char val, cr2;
-	unsigned char cr2_saved;
+अटल व्योम lpuart_setup_watermark(काष्ठा lpuart_port *sport)
+अणु
+	अचिन्हित अक्षर val, cr2;
+	अचिन्हित अक्षर cr2_saved;
 
-	cr2 = readb(sport->port.membase + UARTCR2);
+	cr2 = पढ़ोb(sport->port.membase + UARTCR2);
 	cr2_saved = cr2;
 	cr2 &= ~(UARTCR2_TIE | UARTCR2_TCIE | UARTCR2_TE |
 			UARTCR2_RIE | UARTCR2_RE);
-	writeb(cr2, sport->port.membase + UARTCR2);
+	ग_लिखोb(cr2, sport->port.membase + UARTCR2);
 
-	val = readb(sport->port.membase + UARTPFIFO);
-	writeb(val | UARTPFIFO_TXFE | UARTPFIFO_RXFE,
+	val = पढ़ोb(sport->port.membase + UARTPFIFO);
+	ग_लिखोb(val | UARTPFIFO_TXFE | UARTPFIFO_RXFE,
 			sport->port.membase + UARTPFIFO);
 
 	/* flush Tx and Rx FIFO */
-	writeb(UARTCFIFO_TXFLUSH | UARTCFIFO_RXFLUSH,
+	ग_लिखोb(UARTCFIFO_TXFLUSH | UARTCFIFO_RXFLUSH,
 			sport->port.membase + UARTCFIFO);
 
 	/* explicitly clear RDRF */
-	if (readb(sport->port.membase + UARTSR1) & UARTSR1_RDRF) {
-		readb(sport->port.membase + UARTDR);
-		writeb(UARTSFIFO_RXUF, sport->port.membase + UARTSFIFO);
-	}
+	अगर (पढ़ोb(sport->port.membase + UARTSR1) & UARTSR1_RDRF) अणु
+		पढ़ोb(sport->port.membase + UARTDR);
+		ग_लिखोb(UARTSFIFO_RXUF, sport->port.membase + UARTSFIFO);
+	पूर्ण
 
-	writeb(0, sport->port.membase + UARTTWFIFO);
-	writeb(1, sport->port.membase + UARTRWFIFO);
+	ग_लिखोb(0, sport->port.membase + UARTTWFIFO);
+	ग_लिखोb(1, sport->port.membase + UARTRWFIFO);
 
 	/* Restore cr2 */
-	writeb(cr2_saved, sport->port.membase + UARTCR2);
-}
+	ग_लिखोb(cr2_saved, sport->port.membase + UARTCR2);
+पूर्ण
 
-static void lpuart_setup_watermark_enable(struct lpuart_port *sport)
-{
-	unsigned char cr2;
+अटल व्योम lpuart_setup_watermark_enable(काष्ठा lpuart_port *sport)
+अणु
+	अचिन्हित अक्षर cr2;
 
 	lpuart_setup_watermark(sport);
 
-	cr2 = readb(sport->port.membase + UARTCR2);
+	cr2 = पढ़ोb(sport->port.membase + UARTCR2);
 	cr2 |= UARTCR2_RIE | UARTCR2_RE | UARTCR2_TE;
-	writeb(cr2, sport->port.membase + UARTCR2);
-}
+	ग_लिखोb(cr2, sport->port.membase + UARTCR2);
+पूर्ण
 
-static void lpuart32_setup_watermark(struct lpuart_port *sport)
-{
-	unsigned long val, ctrl;
-	unsigned long ctrl_saved;
+अटल व्योम lpuart32_setup_watermark(काष्ठा lpuart_port *sport)
+अणु
+	अचिन्हित दीर्घ val, ctrl;
+	अचिन्हित दीर्घ ctrl_saved;
 
-	ctrl = lpuart32_read(&sport->port, UARTCTRL);
+	ctrl = lpuart32_पढ़ो(&sport->port, UARTCTRL);
 	ctrl_saved = ctrl;
 	ctrl &= ~(UARTCTRL_TIE | UARTCTRL_TCIE | UARTCTRL_TE |
 			UARTCTRL_RIE | UARTCTRL_RE);
-	lpuart32_write(&sport->port, ctrl, UARTCTRL);
+	lpuart32_ग_लिखो(&sport->port, ctrl, UARTCTRL);
 
 	/* enable FIFO mode */
-	val = lpuart32_read(&sport->port, UARTFIFO);
+	val = lpuart32_पढ़ो(&sport->port, UARTFIFO);
 	val |= UARTFIFO_TXFE | UARTFIFO_RXFE;
 	val |= UARTFIFO_TXFLUSH | UARTFIFO_RXFLUSH;
-	lpuart32_write(&sport->port, val, UARTFIFO);
+	lpuart32_ग_लिखो(&sport->port, val, UARTFIFO);
 
 	/* set the watermark */
 	val = (0x1 << UARTWATER_RXWATER_OFF) | (0x0 << UARTWATER_TXWATER_OFF);
-	lpuart32_write(&sport->port, val, UARTWATER);
+	lpuart32_ग_लिखो(&sport->port, val, UARTWATER);
 
 	/* Restore cr2 */
-	lpuart32_write(&sport->port, ctrl_saved, UARTCTRL);
-}
+	lpuart32_ग_लिखो(&sport->port, ctrl_saved, UARTCTRL);
+पूर्ण
 
-static void lpuart32_setup_watermark_enable(struct lpuart_port *sport)
-{
+अटल व्योम lpuart32_setup_watermark_enable(काष्ठा lpuart_port *sport)
+अणु
 	u32 temp;
 
 	lpuart32_setup_watermark(sport);
 
-	temp = lpuart32_read(&sport->port, UARTCTRL);
+	temp = lpuart32_पढ़ो(&sport->port, UARTCTRL);
 	temp |= UARTCTRL_RE | UARTCTRL_TE | UARTCTRL_ILIE;
-	lpuart32_write(&sport->port, temp, UARTCTRL);
-}
+	lpuart32_ग_लिखो(&sport->port, temp, UARTCTRL);
+पूर्ण
 
-static void rx_dma_timer_init(struct lpuart_port *sport)
-{
-	timer_setup(&sport->lpuart_timer, lpuart_timer_func, 0);
-	sport->lpuart_timer.expires = jiffies + sport->dma_rx_timeout;
-	add_timer(&sport->lpuart_timer);
-}
+अटल व्योम rx_dma_समयr_init(काष्ठा lpuart_port *sport)
+अणु
+	समयr_setup(&sport->lpuart_समयr, lpuart_समयr_func, 0);
+	sport->lpuart_समयr.expires = jअगरfies + sport->dma_rx_समयout;
+	add_समयr(&sport->lpuart_समयr);
+पूर्ण
 
-static void lpuart_request_dma(struct lpuart_port *sport)
-{
+अटल व्योम lpuart_request_dma(काष्ठा lpuart_port *sport)
+अणु
 	sport->dma_tx_chan = dma_request_chan(sport->port.dev, "tx");
-	if (IS_ERR(sport->dma_tx_chan)) {
+	अगर (IS_ERR(sport->dma_tx_chan)) अणु
 		dev_dbg_once(sport->port.dev,
 			     "DMA tx channel request failed, operating without tx DMA (%ld)\n",
 			     PTR_ERR(sport->dma_tx_chan));
-		sport->dma_tx_chan = NULL;
-	}
+		sport->dma_tx_chan = शून्य;
+	पूर्ण
 
 	sport->dma_rx_chan = dma_request_chan(sport->port.dev, "rx");
-	if (IS_ERR(sport->dma_rx_chan)) {
+	अगर (IS_ERR(sport->dma_rx_chan)) अणु
 		dev_dbg_once(sport->port.dev,
 			     "DMA rx channel request failed, operating without rx DMA (%ld)\n",
 			     PTR_ERR(sport->dma_rx_chan));
-		sport->dma_rx_chan = NULL;
-	}
-}
+		sport->dma_rx_chan = शून्य;
+	पूर्ण
+पूर्ण
 
-static void lpuart_tx_dma_startup(struct lpuart_port *sport)
-{
+अटल व्योम lpuart_tx_dma_startup(काष्ठा lpuart_port *sport)
+अणु
 	u32 uartbaud;
-	int ret;
+	पूर्णांक ret;
 
-	if (!sport->dma_tx_chan)
-		goto err;
+	अगर (!sport->dma_tx_chan)
+		जाओ err;
 
 	ret = lpuart_dma_tx_request(&sport->port);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	init_waitqueue_head(&sport->dma_wait);
+	init_रुकोqueue_head(&sport->dma_रुको);
 	sport->lpuart_dma_tx_use = true;
-	if (lpuart_is_32(sport)) {
-		uartbaud = lpuart32_read(&sport->port, UARTBAUD);
-		lpuart32_write(&sport->port,
+	अगर (lpuart_is_32(sport)) अणु
+		uartbaud = lpuart32_पढ़ो(&sport->port, UARTBAUD);
+		lpuart32_ग_लिखो(&sport->port,
 			       uartbaud | UARTBAUD_TDMAE, UARTBAUD);
-	} else {
-		writeb(readb(sport->port.membase + UARTCR5) |
+	पूर्ण अन्यथा अणु
+		ग_लिखोb(पढ़ोb(sport->port.membase + UARTCR5) |
 		       UARTCR5_TDMAS, sport->port.membase + UARTCR5);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
 err:
 	sport->lpuart_dma_tx_use = false;
-}
+पूर्ण
 
-static void lpuart_rx_dma_startup(struct lpuart_port *sport)
-{
-	int ret;
-	unsigned char cr3;
+अटल व्योम lpuart_rx_dma_startup(काष्ठा lpuart_port *sport)
+अणु
+	पूर्णांक ret;
+	अचिन्हित अक्षर cr3;
 
-	if (!sport->dma_rx_chan)
-		goto err;
+	अगर (!sport->dma_rx_chan)
+		जाओ err;
 
 	ret = lpuart_start_rx_dma(sport);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	/* set Rx DMA timeout */
-	sport->dma_rx_timeout = msecs_to_jiffies(DMA_RX_TIMEOUT);
-	if (!sport->dma_rx_timeout)
-		sport->dma_rx_timeout = 1;
+	/* set Rx DMA समयout */
+	sport->dma_rx_समयout = msecs_to_jअगरfies(DMA_RX_TIMEOUT);
+	अगर (!sport->dma_rx_समयout)
+		sport->dma_rx_समयout = 1;
 
 	sport->lpuart_dma_rx_use = true;
-	rx_dma_timer_init(sport);
+	rx_dma_समयr_init(sport);
 
-	if (sport->port.has_sysrq) {
-		cr3 = readb(sport->port.membase + UARTCR3);
+	अगर (sport->port.has_sysrq) अणु
+		cr3 = पढ़ोb(sport->port.membase + UARTCR3);
 		cr3 |= UARTCR3_FEIE;
-		writeb(cr3, sport->port.membase + UARTCR3);
-	}
+		ग_लिखोb(cr3, sport->port.membase + UARTCR3);
+	पूर्ण
 
-	return;
+	वापस;
 
 err:
 	sport->lpuart_dma_rx_use = false;
-}
+पूर्ण
 
-static int lpuart_startup(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port, struct lpuart_port, port);
-	unsigned long flags;
-	unsigned char temp;
+अटल पूर्णांक lpuart_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port, काष्ठा lpuart_port, port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर temp;
 
 	/* determine FIFO size and enable FIFO mode */
-	temp = readb(sport->port.membase + UARTPFIFO);
+	temp = पढ़ोb(sport->port.membase + UARTPFIFO);
 
-	sport->txfifo_size = UARTFIFO_DEPTH((temp >> UARTPFIFO_TXSIZE_OFF) &
+	sport->txfअगरo_size = UARTFIFO_DEPTH((temp >> UARTPFIFO_TXSIZE_OFF) &
 					    UARTPFIFO_FIFOSIZE_MASK);
-	sport->port.fifosize = sport->txfifo_size;
+	sport->port.fअगरosize = sport->txfअगरo_size;
 
-	sport->rxfifo_size = UARTFIFO_DEPTH((temp >> UARTPFIFO_RXSIZE_OFF) &
+	sport->rxfअगरo_size = UARTFIFO_DEPTH((temp >> UARTPFIFO_RXSIZE_OFF) &
 					    UARTPFIFO_FIFOSIZE_MASK);
 
 	lpuart_request_dma(sport);
@@ -1664,53 +1665,53 @@ static int lpuart_startup(struct uart_port *port)
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lpuart32_configure(struct lpuart_port *sport)
-{
-	unsigned long temp;
+अटल व्योम lpuart32_configure(काष्ठा lpuart_port *sport)
+अणु
+	अचिन्हित दीर्घ temp;
 
-	if (sport->lpuart_dma_rx_use) {
+	अगर (sport->lpuart_dma_rx_use) अणु
 		/* RXWATER must be 0 */
-		temp = lpuart32_read(&sport->port, UARTWATER);
+		temp = lpuart32_पढ़ो(&sport->port, UARTWATER);
 		temp &= ~(UARTWATER_WATER_MASK << UARTWATER_RXWATER_OFF);
-		lpuart32_write(&sport->port, temp, UARTWATER);
-	}
-	temp = lpuart32_read(&sport->port, UARTCTRL);
-	if (!sport->lpuart_dma_rx_use)
+		lpuart32_ग_लिखो(&sport->port, temp, UARTWATER);
+	पूर्ण
+	temp = lpuart32_पढ़ो(&sport->port, UARTCTRL);
+	अगर (!sport->lpuart_dma_rx_use)
 		temp |= UARTCTRL_RIE;
-	if (!sport->lpuart_dma_tx_use)
+	अगर (!sport->lpuart_dma_tx_use)
 		temp |= UARTCTRL_TIE;
-	lpuart32_write(&sport->port, temp, UARTCTRL);
-}
+	lpuart32_ग_लिखो(&sport->port, temp, UARTCTRL);
+पूर्ण
 
-static int lpuart32_startup(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port, struct lpuart_port, port);
-	unsigned long flags;
-	unsigned long temp;
+अटल पूर्णांक lpuart32_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port, काष्ठा lpuart_port, port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ temp;
 
 	/* determine FIFO size */
-	temp = lpuart32_read(&sport->port, UARTFIFO);
+	temp = lpuart32_पढ़ो(&sport->port, UARTFIFO);
 
-	sport->txfifo_size = UARTFIFO_DEPTH((temp >> UARTFIFO_TXSIZE_OFF) &
+	sport->txfअगरo_size = UARTFIFO_DEPTH((temp >> UARTFIFO_TXSIZE_OFF) &
 					    UARTFIFO_FIFOSIZE_MASK);
-	sport->port.fifosize = sport->txfifo_size;
+	sport->port.fअगरosize = sport->txfअगरo_size;
 
-	sport->rxfifo_size = UARTFIFO_DEPTH((temp >> UARTFIFO_RXSIZE_OFF) &
+	sport->rxfअगरo_size = UARTFIFO_DEPTH((temp >> UARTFIFO_RXSIZE_OFF) &
 					    UARTFIFO_FIFOSIZE_MASK);
 
 	/*
 	 * The LS1021A and LS1028A have a fixed FIFO depth of 16 words.
 	 * Although they support the RX/TXSIZE fields, their encoding is
-	 * different. Eg the reference manual states 0b101 is 16 words.
+	 * dअगरferent. Eg the reference manual states 0b101 is 16 words.
 	 */
-	if (is_layerscape_lpuart(sport)) {
-		sport->rxfifo_size = 16;
-		sport->txfifo_size = 16;
-		sport->port.fifosize = sport->txfifo_size;
-	}
+	अगर (is_layerscape_lpuart(sport)) अणु
+		sport->rxfअगरo_size = 16;
+		sport->txfअगरo_size = 16;
+		sport->port.fअगरosize = sport->txfअगरo_size;
+	पूर्ण
 
 	lpuart_request_dma(sport);
 
@@ -1724,196 +1725,196 @@ static int lpuart32_startup(struct uart_port *port)
 	lpuart32_configure(sport);
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lpuart_dma_shutdown(struct lpuart_port *sport)
-{
-	if (sport->lpuart_dma_rx_use) {
-		del_timer_sync(&sport->lpuart_timer);
-		lpuart_dma_rx_free(&sport->port);
-	}
+अटल व्योम lpuart_dma_shutकरोwn(काष्ठा lpuart_port *sport)
+अणु
+	अगर (sport->lpuart_dma_rx_use) अणु
+		del_समयr_sync(&sport->lpuart_समयr);
+		lpuart_dma_rx_मुक्त(&sport->port);
+	पूर्ण
 
-	if (sport->lpuart_dma_tx_use) {
-		if (wait_event_interruptible(sport->dma_wait,
-			!sport->dma_tx_in_progress) != false) {
+	अगर (sport->lpuart_dma_tx_use) अणु
+		अगर (रुको_event_पूर्णांकerruptible(sport->dma_रुको,
+			!sport->dma_tx_in_progress) != false) अणु
 			sport->dma_tx_in_progress = false;
 			dmaengine_terminate_all(sport->dma_tx_chan);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sport->dma_tx_chan)
+	अगर (sport->dma_tx_chan)
 		dma_release_channel(sport->dma_tx_chan);
-	if (sport->dma_rx_chan)
+	अगर (sport->dma_rx_chan)
 		dma_release_channel(sport->dma_rx_chan);
-}
+पूर्ण
 
-static void lpuart_shutdown(struct uart_port *port)
-{
-	struct lpuart_port *sport = container_of(port, struct lpuart_port, port);
-	unsigned char temp;
-	unsigned long flags;
+अटल व्योम lpuart_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port, काष्ठा lpuart_port, port);
+	अचिन्हित अक्षर temp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* disable Rx/Tx and interrupts */
-	temp = readb(port->membase + UARTCR2);
+	/* disable Rx/Tx and पूर्णांकerrupts */
+	temp = पढ़ोb(port->membase + UARTCR2);
 	temp &= ~(UARTCR2_TE | UARTCR2_RE |
 			UARTCR2_TIE | UARTCR2_TCIE | UARTCR2_RIE);
-	writeb(temp, port->membase + UARTCR2);
+	ग_लिखोb(temp, port->membase + UARTCR2);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	lpuart_dma_shutdown(sport);
-}
+	lpuart_dma_shutकरोwn(sport);
+पूर्ण
 
-static void lpuart32_shutdown(struct uart_port *port)
-{
-	struct lpuart_port *sport =
-		container_of(port, struct lpuart_port, port);
-	unsigned long temp;
-	unsigned long flags;
+अटल व्योम lpuart32_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा lpuart_port *sport =
+		container_of(port, काष्ठा lpuart_port, port);
+	अचिन्हित दीर्घ temp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* disable Rx/Tx and interrupts */
-	temp = lpuart32_read(port, UARTCTRL);
+	/* disable Rx/Tx and पूर्णांकerrupts */
+	temp = lpuart32_पढ़ो(port, UARTCTRL);
 	temp &= ~(UARTCTRL_TE | UARTCTRL_RE |
 			UARTCTRL_TIE | UARTCTRL_TCIE | UARTCTRL_RIE);
-	lpuart32_write(port, temp, UARTCTRL);
+	lpuart32_ग_लिखो(port, temp, UARTCTRL);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	lpuart_dma_shutdown(sport);
-}
+	lpuart_dma_shutकरोwn(sport);
+पूर्ण
 
-static void
-lpuart_set_termios(struct uart_port *port, struct ktermios *termios,
-		   struct ktermios *old)
-{
-	struct lpuart_port *sport = container_of(port, struct lpuart_port, port);
-	unsigned long flags;
-	unsigned char cr1, old_cr1, old_cr2, cr3, cr4, bdh, modem;
-	unsigned int  baud;
-	unsigned int old_csize = old ? old->c_cflag & CSIZE : CS8;
-	unsigned int sbr, brfa;
+अटल व्योम
+lpuart_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+		   काष्ठा ktermios *old)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port, काष्ठा lpuart_port, port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर cr1, old_cr1, old_cr2, cr3, cr4, bdh, modem;
+	अचिन्हित पूर्णांक  baud;
+	अचिन्हित पूर्णांक old_csize = old ? old->c_cflag & CSIZE : CS8;
+	अचिन्हित पूर्णांक sbr, brfa;
 
-	cr1 = old_cr1 = readb(sport->port.membase + UARTCR1);
-	old_cr2 = readb(sport->port.membase + UARTCR2);
-	cr3 = readb(sport->port.membase + UARTCR3);
-	cr4 = readb(sport->port.membase + UARTCR4);
-	bdh = readb(sport->port.membase + UARTBDH);
-	modem = readb(sport->port.membase + UARTMODEM);
+	cr1 = old_cr1 = पढ़ोb(sport->port.membase + UARTCR1);
+	old_cr2 = पढ़ोb(sport->port.membase + UARTCR2);
+	cr3 = पढ़ोb(sport->port.membase + UARTCR3);
+	cr4 = पढ़ोb(sport->port.membase + UARTCR4);
+	bdh = पढ़ोb(sport->port.membase + UARTBDH);
+	modem = पढ़ोb(sport->port.membase + UARTMODEM);
 	/*
-	 * only support CS8 and CS7, and for CS7 must enable PE.
+	 * only support CS8 and CS7, and क्रम CS7 must enable PE.
 	 * supported mode:
 	 *  - (7,e/o,1)
 	 *  - (8,n,1)
 	 *  - (8,m/s,1)
 	 *  - (8,e/o,1)
 	 */
-	while ((termios->c_cflag & CSIZE) != CS8 &&
-		(termios->c_cflag & CSIZE) != CS7) {
+	जबतक ((termios->c_cflag & CSIZE) != CS8 &&
+		(termios->c_cflag & CSIZE) != CS7) अणु
 		termios->c_cflag &= ~CSIZE;
 		termios->c_cflag |= old_csize;
 		old_csize = CS8;
-	}
+	पूर्ण
 
-	if ((termios->c_cflag & CSIZE) == CS8 ||
+	अगर ((termios->c_cflag & CSIZE) == CS8 ||
 		(termios->c_cflag & CSIZE) == CS7)
 		cr1 = old_cr1 & ~UARTCR1_M;
 
-	if (termios->c_cflag & CMSPAR) {
-		if ((termios->c_cflag & CSIZE) != CS8) {
+	अगर (termios->c_cflag & CMSPAR) अणु
+		अगर ((termios->c_cflag & CSIZE) != CS8) अणु
 			termios->c_cflag &= ~CSIZE;
 			termios->c_cflag |= CS8;
-		}
+		पूर्ण
 		cr1 |= UARTCR1_M;
-	}
+	पूर्ण
 
 	/*
-	 * When auto RS-485 RTS mode is enabled,
+	 * When स्वतः RS-485 RTS mode is enabled,
 	 * hardware flow control need to be disabled.
 	 */
-	if (sport->port.rs485.flags & SER_RS485_ENABLED)
+	अगर (sport->port.rs485.flags & SER_RS485_ENABLED)
 		termios->c_cflag &= ~CRTSCTS;
 
-	if (termios->c_cflag & CRTSCTS)
+	अगर (termios->c_cflag & CRTSCTS)
 		modem |= UARTMODEM_RXRTSE | UARTMODEM_TXCTSE;
-	else
+	अन्यथा
 		modem &= ~(UARTMODEM_RXRTSE | UARTMODEM_TXCTSE);
 
 	termios->c_cflag &= ~CSTOPB;
 
-	/* parity must be enabled when CS7 to match 8-bits format */
-	if ((termios->c_cflag & CSIZE) == CS7)
+	/* parity must be enabled when CS7 to match 8-bits क्रमmat */
+	अगर ((termios->c_cflag & CSIZE) == CS7)
 		termios->c_cflag |= PARENB;
 
-	if (termios->c_cflag & PARENB) {
-		if (termios->c_cflag & CMSPAR) {
+	अगर (termios->c_cflag & PARENB) अणु
+		अगर (termios->c_cflag & CMSPAR) अणु
 			cr1 &= ~UARTCR1_PE;
-			if (termios->c_cflag & PARODD)
+			अगर (termios->c_cflag & PARODD)
 				cr3 |= UARTCR3_T8;
-			else
+			अन्यथा
 				cr3 &= ~UARTCR3_T8;
-		} else {
+		पूर्ण अन्यथा अणु
 			cr1 |= UARTCR1_PE;
-			if ((termios->c_cflag & CSIZE) == CS8)
+			अगर ((termios->c_cflag & CSIZE) == CS8)
 				cr1 |= UARTCR1_M;
-			if (termios->c_cflag & PARODD)
+			अगर (termios->c_cflag & PARODD)
 				cr1 |= UARTCR1_PT;
-			else
+			अन्यथा
 				cr1 &= ~UARTCR1_PT;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		cr1 &= ~UARTCR1_PE;
-	}
+	पूर्ण
 
-	/* ask the core to calculate the divisor */
+	/* ask the core to calculate the भागisor */
 	baud = uart_get_baud_rate(port, termios, old, 50, port->uartclk / 16);
 
 	/*
 	 * Need to update the Ring buffer length according to the selected
 	 * baud rate and restart Rx DMA path.
 	 *
-	 * Since timer function acqures sport->port.lock, need to stop before
-	 * acquring same lock because otherwise del_timer_sync() can deadlock.
+	 * Since समयr function acqures sport->port.lock, need to stop beक्रमe
+	 * acquring same lock because otherwise del_समयr_sync() can deadlock.
 	 */
-	if (old && sport->lpuart_dma_rx_use) {
-		del_timer_sync(&sport->lpuart_timer);
-		lpuart_dma_rx_free(&sport->port);
-	}
+	अगर (old && sport->lpuart_dma_rx_use) अणु
+		del_समयr_sync(&sport->lpuart_समयr);
+		lpuart_dma_rx_मुक्त(&sport->port);
+	पूर्ण
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
-	sport->port.read_status_mask = 0;
-	if (termios->c_iflag & INPCK)
-		sport->port.read_status_mask |= UARTSR1_FE | UARTSR1_PE;
-	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
-		sport->port.read_status_mask |= UARTSR1_FE;
+	sport->port.पढ़ो_status_mask = 0;
+	अगर (termios->c_अगरlag & INPCK)
+		sport->port.पढ़ो_status_mask |= UARTSR1_FE | UARTSR1_PE;
+	अगर (termios->c_अगरlag & (IGNBRK | BRKINT | PARMRK))
+		sport->port.पढ़ो_status_mask |= UARTSR1_FE;
 
-	/* characters to ignore */
+	/* अक्षरacters to ignore */
 	sport->port.ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		sport->port.ignore_status_mask |= UARTSR1_PE;
-	if (termios->c_iflag & IGNBRK) {
+	अगर (termios->c_अगरlag & IGNBRK) अणु
 		sport->port.ignore_status_mask |= UARTSR1_FE;
 		/*
-		 * if we're ignoring parity and break indicators,
-		 * ignore overruns too (for real raw support).
+		 * अगर we're ignoring parity and अवरोध indicators,
+		 * ignore overruns too (क्रम real raw support).
 		 */
-		if (termios->c_iflag & IGNPAR)
+		अगर (termios->c_अगरlag & IGNPAR)
 			sport->port.ignore_status_mask |= UARTSR1_OR;
-	}
+	पूर्ण
 
-	/* update the per-port timeout */
-	uart_update_timeout(port, termios->c_cflag, baud);
+	/* update the per-port समयout */
+	uart_update_समयout(port, termios->c_cflag, baud);
 
-	/* wait transmit engin complete */
-	lpuart_wait_bit_set(&sport->port, UARTSR1, UARTSR1_TC);
+	/* रुको transmit engin complete */
+	lpuart_रुको_bit_set(&sport->port, UARTSR1, UARTSR1_TC);
 
 	/* disable transmit and receive */
-	writeb(old_cr2 & ~(UARTCR2_TE | UARTCR2_RE),
+	ग_लिखोb(old_cr2 & ~(UARTCR2_TE | UARTCR2_RE),
 			sport->port.membase + UARTCR2);
 
 	sbr = sport->port.uartclk / (16 * baud);
@@ -1922,454 +1923,454 @@ lpuart_set_termios(struct uart_port *port, struct ktermios *termios,
 	bdh |= (sbr >> 8) & 0x1F;
 	cr4 &= ~UARTCR4_BRFA_MASK;
 	brfa &= UARTCR4_BRFA_MASK;
-	writeb(cr4 | brfa, sport->port.membase + UARTCR4);
-	writeb(bdh, sport->port.membase + UARTBDH);
-	writeb(sbr & 0xFF, sport->port.membase + UARTBDL);
-	writeb(cr3, sport->port.membase + UARTCR3);
-	writeb(cr1, sport->port.membase + UARTCR1);
-	writeb(modem, sport->port.membase + UARTMODEM);
+	ग_लिखोb(cr4 | brfa, sport->port.membase + UARTCR4);
+	ग_लिखोb(bdh, sport->port.membase + UARTBDH);
+	ग_लिखोb(sbr & 0xFF, sport->port.membase + UARTBDL);
+	ग_लिखोb(cr3, sport->port.membase + UARTCR3);
+	ग_लिखोb(cr1, sport->port.membase + UARTCR1);
+	ग_लिखोb(modem, sport->port.membase + UARTMODEM);
 
-	/* restore control register */
-	writeb(old_cr2, sport->port.membase + UARTCR2);
+	/* restore control रेजिस्टर */
+	ग_लिखोb(old_cr2, sport->port.membase + UARTCR2);
 
-	if (old && sport->lpuart_dma_rx_use) {
-		if (!lpuart_start_rx_dma(sport))
-			rx_dma_timer_init(sport);
-		else
+	अगर (old && sport->lpuart_dma_rx_use) अणु
+		अगर (!lpuart_start_rx_dma(sport))
+			rx_dma_समयr_init(sport);
+		अन्यथा
 			sport->lpuart_dma_rx_use = false;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
-static void __lpuart32_serial_setbrg(struct uart_port *port,
-				     unsigned int baudrate, bool use_rx_dma,
+अटल व्योम __lpuart32_serial_setbrg(काष्ठा uart_port *port,
+				     अचिन्हित पूर्णांक baudrate, bool use_rx_dma,
 				     bool use_tx_dma)
-{
-	u32 sbr, osr, baud_diff, tmp_osr, tmp_sbr, tmp_diff, tmp;
+अणु
+	u32 sbr, osr, baud_dअगरf, पंचांगp_osr, पंचांगp_sbr, पंचांगp_dअगरf, पंचांगp;
 	u32 clk = port->uartclk;
 
 	/*
 	 * The idea is to use the best OSR (over-sampling rate) possible.
 	 * Note, OSR is typically hard-set to 16 in other LPUART instantiations.
 	 * Loop to find the best OSR value possible, one that generates minimum
-	 * baud_diff iterate through the rest of the supported values of OSR.
+	 * baud_dअगरf iterate through the rest of the supported values of OSR.
 	 *
 	 * Calculation Formula:
-	 *  Baud Rate = baud clock / ((OSR+1) × SBR)
+	 *  Baud Rate = baud घड़ी / ((OSR+1) थ SBR)
 	 */
-	baud_diff = baudrate;
+	baud_dअगरf = baudrate;
 	osr = 0;
 	sbr = 0;
 
-	for (tmp_osr = 4; tmp_osr <= 32; tmp_osr++) {
+	क्रम (पंचांगp_osr = 4; पंचांगp_osr <= 32; पंचांगp_osr++) अणु
 		/* calculate the temporary sbr value  */
-		tmp_sbr = (clk / (baudrate * tmp_osr));
-		if (tmp_sbr == 0)
-			tmp_sbr = 1;
+		पंचांगp_sbr = (clk / (baudrate * पंचांगp_osr));
+		अगर (पंचांगp_sbr == 0)
+			पंचांगp_sbr = 1;
 
 		/*
-		 * calculate the baud rate difference based on the temporary
+		 * calculate the baud rate dअगरference based on the temporary
 		 * osr and sbr values
 		 */
-		tmp_diff = clk / (tmp_osr * tmp_sbr) - baudrate;
+		पंचांगp_dअगरf = clk / (पंचांगp_osr * पंचांगp_sbr) - baudrate;
 
 		/* select best values between sbr and sbr+1 */
-		tmp = clk / (tmp_osr * (tmp_sbr + 1));
-		if (tmp_diff > (baudrate - tmp)) {
-			tmp_diff = baudrate - tmp;
-			tmp_sbr++;
-		}
+		पंचांगp = clk / (पंचांगp_osr * (पंचांगp_sbr + 1));
+		अगर (पंचांगp_dअगरf > (baudrate - पंचांगp)) अणु
+			पंचांगp_dअगरf = baudrate - पंचांगp;
+			पंचांगp_sbr++;
+		पूर्ण
 
-		if (tmp_sbr > UARTBAUD_SBR_MASK)
-			continue;
+		अगर (पंचांगp_sbr > UARTBAUD_SBR_MASK)
+			जारी;
 
-		if (tmp_diff <= baud_diff) {
-			baud_diff = tmp_diff;
-			osr = tmp_osr;
-			sbr = tmp_sbr;
+		अगर (पंचांगp_dअगरf <= baud_dअगरf) अणु
+			baud_dअगरf = पंचांगp_dअगरf;
+			osr = पंचांगp_osr;
+			sbr = पंचांगp_sbr;
 
-			if (!baud_diff)
-				break;
-		}
-	}
+			अगर (!baud_dअगरf)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* handle buadrate outside acceptable rate */
-	if (baud_diff > ((baudrate / 100) * 3))
+	अगर (baud_dअगरf > ((baudrate / 100) * 3))
 		dev_warn(port->dev,
 			 "unacceptable baud rate difference of more than 3%%\n");
 
-	tmp = lpuart32_read(port, UARTBAUD);
+	पंचांगp = lpuart32_पढ़ो(port, UARTBAUD);
 
-	if ((osr > 3) && (osr < 8))
-		tmp |= UARTBAUD_BOTHEDGE;
+	अगर ((osr > 3) && (osr < 8))
+		पंचांगp |= UARTBAUD_BOTHEDGE;
 
-	tmp &= ~(UARTBAUD_OSR_MASK << UARTBAUD_OSR_SHIFT);
-	tmp |= ((osr-1) & UARTBAUD_OSR_MASK) << UARTBAUD_OSR_SHIFT;
+	पंचांगp &= ~(UARTBAUD_OSR_MASK << UARTBAUD_OSR_SHIFT);
+	पंचांगp |= ((osr-1) & UARTBAUD_OSR_MASK) << UARTBAUD_OSR_SHIFT;
 
-	tmp &= ~UARTBAUD_SBR_MASK;
-	tmp |= sbr & UARTBAUD_SBR_MASK;
+	पंचांगp &= ~UARTBAUD_SBR_MASK;
+	पंचांगp |= sbr & UARTBAUD_SBR_MASK;
 
-	if (!use_rx_dma)
-		tmp &= ~UARTBAUD_RDMAE;
-	if (!use_tx_dma)
-		tmp &= ~UARTBAUD_TDMAE;
+	अगर (!use_rx_dma)
+		पंचांगp &= ~UARTBAUD_RDMAE;
+	अगर (!use_tx_dma)
+		पंचांगp &= ~UARTBAUD_TDMAE;
 
-	lpuart32_write(port, tmp, UARTBAUD);
-}
+	lpuart32_ग_लिखो(port, पंचांगp, UARTBAUD);
+पूर्ण
 
-static void lpuart32_serial_setbrg(struct lpuart_port *sport,
-				   unsigned int baudrate)
-{
+अटल व्योम lpuart32_serial_setbrg(काष्ठा lpuart_port *sport,
+				   अचिन्हित पूर्णांक baudrate)
+अणु
 	__lpuart32_serial_setbrg(&sport->port, baudrate,
 				 sport->lpuart_dma_rx_use,
 				 sport->lpuart_dma_tx_use);
-}
+पूर्ण
 
 
-static void
-lpuart32_set_termios(struct uart_port *port, struct ktermios *termios,
-		   struct ktermios *old)
-{
-	struct lpuart_port *sport = container_of(port, struct lpuart_port, port);
-	unsigned long flags;
-	unsigned long ctrl, old_ctrl, modem;
-	unsigned int  baud;
-	unsigned int old_csize = old ? old->c_cflag & CSIZE : CS8;
+अटल व्योम
+lpuart32_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+		   काष्ठा ktermios *old)
+अणु
+	काष्ठा lpuart_port *sport = container_of(port, काष्ठा lpuart_port, port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ ctrl, old_ctrl, modem;
+	अचिन्हित पूर्णांक  baud;
+	अचिन्हित पूर्णांक old_csize = old ? old->c_cflag & CSIZE : CS8;
 
-	ctrl = old_ctrl = lpuart32_read(&sport->port, UARTCTRL);
-	modem = lpuart32_read(&sport->port, UARTMODIR);
+	ctrl = old_ctrl = lpuart32_पढ़ो(&sport->port, UARTCTRL);
+	modem = lpuart32_पढ़ो(&sport->port, UARTMOसूची);
 	/*
-	 * only support CS8 and CS7, and for CS7 must enable PE.
+	 * only support CS8 and CS7, and क्रम CS7 must enable PE.
 	 * supported mode:
 	 *  - (7,e/o,1)
 	 *  - (8,n,1)
 	 *  - (8,m/s,1)
 	 *  - (8,e/o,1)
 	 */
-	while ((termios->c_cflag & CSIZE) != CS8 &&
-		(termios->c_cflag & CSIZE) != CS7) {
+	जबतक ((termios->c_cflag & CSIZE) != CS8 &&
+		(termios->c_cflag & CSIZE) != CS7) अणु
 		termios->c_cflag &= ~CSIZE;
 		termios->c_cflag |= old_csize;
 		old_csize = CS8;
-	}
+	पूर्ण
 
-	if ((termios->c_cflag & CSIZE) == CS8 ||
+	अगर ((termios->c_cflag & CSIZE) == CS8 ||
 		(termios->c_cflag & CSIZE) == CS7)
 		ctrl = old_ctrl & ~UARTCTRL_M;
 
-	if (termios->c_cflag & CMSPAR) {
-		if ((termios->c_cflag & CSIZE) != CS8) {
+	अगर (termios->c_cflag & CMSPAR) अणु
+		अगर ((termios->c_cflag & CSIZE) != CS8) अणु
 			termios->c_cflag &= ~CSIZE;
 			termios->c_cflag |= CS8;
-		}
+		पूर्ण
 		ctrl |= UARTCTRL_M;
-	}
+	पूर्ण
 
 	/*
-	 * When auto RS-485 RTS mode is enabled,
+	 * When स्वतः RS-485 RTS mode is enabled,
 	 * hardware flow control need to be disabled.
 	 */
-	if (sport->port.rs485.flags & SER_RS485_ENABLED)
+	अगर (sport->port.rs485.flags & SER_RS485_ENABLED)
 		termios->c_cflag &= ~CRTSCTS;
 
-	if (termios->c_cflag & CRTSCTS) {
-		modem |= (UARTMODIR_RXRTSE | UARTMODIR_TXCTSE);
-	} else {
+	अगर (termios->c_cflag & CRTSCTS) अणु
+		modem |= (UARTMOसूची_RXRTSE | UARTMOसूची_TXCTSE);
+	पूर्ण अन्यथा अणु
 		termios->c_cflag &= ~CRTSCTS;
-		modem &= ~(UARTMODIR_RXRTSE | UARTMODIR_TXCTSE);
-	}
+		modem &= ~(UARTMOसूची_RXRTSE | UARTMOसूची_TXCTSE);
+	पूर्ण
 
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		termios->c_cflag &= ~CSTOPB;
 
-	/* parity must be enabled when CS7 to match 8-bits format */
-	if ((termios->c_cflag & CSIZE) == CS7)
+	/* parity must be enabled when CS7 to match 8-bits क्रमmat */
+	अगर ((termios->c_cflag & CSIZE) == CS7)
 		termios->c_cflag |= PARENB;
 
-	if ((termios->c_cflag & PARENB)) {
-		if (termios->c_cflag & CMSPAR) {
+	अगर ((termios->c_cflag & PARENB)) अणु
+		अगर (termios->c_cflag & CMSPAR) अणु
 			ctrl &= ~UARTCTRL_PE;
 			ctrl |= UARTCTRL_M;
-		} else {
+		पूर्ण अन्यथा अणु
 			ctrl |= UARTCTRL_PE;
-			if ((termios->c_cflag & CSIZE) == CS8)
+			अगर ((termios->c_cflag & CSIZE) == CS8)
 				ctrl |= UARTCTRL_M;
-			if (termios->c_cflag & PARODD)
+			अगर (termios->c_cflag & PARODD)
 				ctrl |= UARTCTRL_PT;
-			else
+			अन्यथा
 				ctrl &= ~UARTCTRL_PT;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ctrl &= ~UARTCTRL_PE;
-	}
+	पूर्ण
 
-	/* ask the core to calculate the divisor */
+	/* ask the core to calculate the भागisor */
 	baud = uart_get_baud_rate(port, termios, old, 50, port->uartclk / 4);
 
 	/*
 	 * Need to update the Ring buffer length according to the selected
 	 * baud rate and restart Rx DMA path.
 	 *
-	 * Since timer function acqures sport->port.lock, need to stop before
-	 * acquring same lock because otherwise del_timer_sync() can deadlock.
+	 * Since समयr function acqures sport->port.lock, need to stop beक्रमe
+	 * acquring same lock because otherwise del_समयr_sync() can deadlock.
 	 */
-	if (old && sport->lpuart_dma_rx_use) {
-		del_timer_sync(&sport->lpuart_timer);
-		lpuart_dma_rx_free(&sport->port);
-	}
+	अगर (old && sport->lpuart_dma_rx_use) अणु
+		del_समयr_sync(&sport->lpuart_समयr);
+		lpuart_dma_rx_मुक्त(&sport->port);
+	पूर्ण
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
-	sport->port.read_status_mask = 0;
-	if (termios->c_iflag & INPCK)
-		sport->port.read_status_mask |= UARTSTAT_FE | UARTSTAT_PE;
-	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
-		sport->port.read_status_mask |= UARTSTAT_FE;
+	sport->port.पढ़ो_status_mask = 0;
+	अगर (termios->c_अगरlag & INPCK)
+		sport->port.पढ़ो_status_mask |= UARTSTAT_FE | UARTSTAT_PE;
+	अगर (termios->c_अगरlag & (IGNBRK | BRKINT | PARMRK))
+		sport->port.पढ़ो_status_mask |= UARTSTAT_FE;
 
-	/* characters to ignore */
+	/* अक्षरacters to ignore */
 	sport->port.ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		sport->port.ignore_status_mask |= UARTSTAT_PE;
-	if (termios->c_iflag & IGNBRK) {
+	अगर (termios->c_अगरlag & IGNBRK) अणु
 		sport->port.ignore_status_mask |= UARTSTAT_FE;
 		/*
-		 * if we're ignoring parity and break indicators,
-		 * ignore overruns too (for real raw support).
+		 * अगर we're ignoring parity and अवरोध indicators,
+		 * ignore overruns too (क्रम real raw support).
 		 */
-		if (termios->c_iflag & IGNPAR)
+		अगर (termios->c_अगरlag & IGNPAR)
 			sport->port.ignore_status_mask |= UARTSTAT_OR;
-	}
+	पूर्ण
 
-	/* update the per-port timeout */
-	uart_update_timeout(port, termios->c_cflag, baud);
+	/* update the per-port समयout */
+	uart_update_समयout(port, termios->c_cflag, baud);
 
-	/* wait transmit engin complete */
-	lpuart32_wait_bit_set(&sport->port, UARTSTAT, UARTSTAT_TC);
+	/* रुको transmit engin complete */
+	lpuart32_रुको_bit_set(&sport->port, UARTSTAT, UARTSTAT_TC);
 
 	/* disable transmit and receive */
-	lpuart32_write(&sport->port, old_ctrl & ~(UARTCTRL_TE | UARTCTRL_RE),
+	lpuart32_ग_लिखो(&sport->port, old_ctrl & ~(UARTCTRL_TE | UARTCTRL_RE),
 		       UARTCTRL);
 
 	lpuart32_serial_setbrg(sport, baud);
-	lpuart32_write(&sport->port, modem, UARTMODIR);
-	lpuart32_write(&sport->port, ctrl, UARTCTRL);
-	/* restore control register */
+	lpuart32_ग_लिखो(&sport->port, modem, UARTMOसूची);
+	lpuart32_ग_लिखो(&sport->port, ctrl, UARTCTRL);
+	/* restore control रेजिस्टर */
 
-	if (old && sport->lpuart_dma_rx_use) {
-		if (!lpuart_start_rx_dma(sport))
-			rx_dma_timer_init(sport);
-		else
+	अगर (old && sport->lpuart_dma_rx_use) अणु
+		अगर (!lpuart_start_rx_dma(sport))
+			rx_dma_समयr_init(sport);
+		अन्यथा
 			sport->lpuart_dma_rx_use = false;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
-static const char *lpuart_type(struct uart_port *port)
-{
-	return "FSL_LPUART";
-}
+अटल स्थिर अक्षर *lpuart_type(काष्ठा uart_port *port)
+अणु
+	वापस "FSL_LPUART";
+पूर्ण
 
-static void lpuart_release_port(struct uart_port *port)
-{
-	/* nothing to do */
-}
+अटल व्योम lpuart_release_port(काष्ठा uart_port *port)
+अणु
+	/* nothing to करो */
+पूर्ण
 
-static int lpuart_request_port(struct uart_port *port)
-{
-	return  0;
-}
+अटल पूर्णांक lpuart_request_port(काष्ठा uart_port *port)
+अणु
+	वापस  0;
+पूर्ण
 
-/* configure/autoconfigure the port */
-static void lpuart_config_port(struct uart_port *port, int flags)
-{
-	if (flags & UART_CONFIG_TYPE)
+/* configure/स्वतःconfigure the port */
+अटल व्योम lpuart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	अगर (flags & UART_CONFIG_TYPE)
 		port->type = PORT_LPUART;
-}
+पूर्ण
 
-static int lpuart_verify_port(struct uart_port *port, struct serial_struct *ser)
-{
-	int ret = 0;
+अटल पूर्णांक lpuart_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
+अणु
+	पूर्णांक ret = 0;
 
-	if (ser->type != PORT_UNKNOWN && ser->type != PORT_LPUART)
+	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_LPUART)
 		ret = -EINVAL;
-	if (port->irq != ser->irq)
+	अगर (port->irq != ser->irq)
 		ret = -EINVAL;
-	if (ser->io_type != UPIO_MEM)
+	अगर (ser->io_type != UPIO_MEM)
 		ret = -EINVAL;
-	if (port->uartclk / 16 != ser->baud_base)
+	अगर (port->uartclk / 16 != ser->baud_base)
 		ret = -EINVAL;
-	if (port->iobase != ser->port)
+	अगर (port->iobase != ser->port)
 		ret = -EINVAL;
-	if (ser->hub6 != 0)
+	अगर (ser->hub6 != 0)
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct uart_ops lpuart_pops = {
+अटल स्थिर काष्ठा uart_ops lpuart_pops = अणु
 	.tx_empty	= lpuart_tx_empty,
 	.set_mctrl	= lpuart_set_mctrl,
 	.get_mctrl	= lpuart_get_mctrl,
 	.stop_tx	= lpuart_stop_tx,
 	.start_tx	= lpuart_start_tx,
 	.stop_rx	= lpuart_stop_rx,
-	.break_ctl	= lpuart_break_ctl,
+	.अवरोध_ctl	= lpuart_अवरोध_ctl,
 	.startup	= lpuart_startup,
-	.shutdown	= lpuart_shutdown,
+	.shutकरोwn	= lpuart_shutकरोwn,
 	.set_termios	= lpuart_set_termios,
 	.type		= lpuart_type,
 	.request_port	= lpuart_request_port,
 	.release_port	= lpuart_release_port,
 	.config_port	= lpuart_config_port,
-	.verify_port	= lpuart_verify_port,
+	.verअगरy_port	= lpuart_verअगरy_port,
 	.flush_buffer	= lpuart_flush_buffer,
-#if defined(CONFIG_CONSOLE_POLL)
+#अगर defined(CONFIG_CONSOLE_POLL)
 	.poll_init	= lpuart_poll_init,
-	.poll_get_char	= lpuart_poll_get_char,
-	.poll_put_char	= lpuart_poll_put_char,
-#endif
-};
+	.poll_get_अक्षर	= lpuart_poll_get_अक्षर,
+	.poll_put_अक्षर	= lpuart_poll_put_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct uart_ops lpuart32_pops = {
+अटल स्थिर काष्ठा uart_ops lpuart32_pops = अणु
 	.tx_empty	= lpuart32_tx_empty,
 	.set_mctrl	= lpuart32_set_mctrl,
 	.get_mctrl	= lpuart32_get_mctrl,
 	.stop_tx	= lpuart32_stop_tx,
 	.start_tx	= lpuart32_start_tx,
 	.stop_rx	= lpuart32_stop_rx,
-	.break_ctl	= lpuart32_break_ctl,
+	.अवरोध_ctl	= lpuart32_अवरोध_ctl,
 	.startup	= lpuart32_startup,
-	.shutdown	= lpuart32_shutdown,
+	.shutकरोwn	= lpuart32_shutकरोwn,
 	.set_termios	= lpuart32_set_termios,
 	.type		= lpuart_type,
 	.request_port	= lpuart_request_port,
 	.release_port	= lpuart_release_port,
 	.config_port	= lpuart_config_port,
-	.verify_port	= lpuart_verify_port,
+	.verअगरy_port	= lpuart_verअगरy_port,
 	.flush_buffer	= lpuart_flush_buffer,
-#if defined(CONFIG_CONSOLE_POLL)
+#अगर defined(CONFIG_CONSOLE_POLL)
 	.poll_init	= lpuart32_poll_init,
-	.poll_get_char	= lpuart32_poll_get_char,
-	.poll_put_char	= lpuart32_poll_put_char,
-#endif
-};
+	.poll_get_अक्षर	= lpuart32_poll_get_अक्षर,
+	.poll_put_अक्षर	= lpuart32_poll_put_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-static struct lpuart_port *lpuart_ports[UART_NR];
+अटल काष्ठा lpuart_port *lpuart_ports[UART_NR];
 
-#ifdef CONFIG_SERIAL_FSL_LPUART_CONSOLE
-static void lpuart_console_putchar(struct uart_port *port, int ch)
-{
-	lpuart_wait_bit_set(port, UARTSR1, UARTSR1_TDRE);
-	writeb(ch, port->membase + UARTDR);
-}
+#अगर_घोषित CONFIG_SERIAL_FSL_LPUART_CONSOLE
+अटल व्योम lpuart_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	lpuart_रुको_bit_set(port, UARTSR1, UARTSR1_TDRE);
+	ग_लिखोb(ch, port->membase + UARTDR);
+पूर्ण
 
-static void lpuart32_console_putchar(struct uart_port *port, int ch)
-{
-	lpuart32_wait_bit_set(port, UARTSTAT, UARTSTAT_TDRE);
-	lpuart32_write(port, ch, UARTDATA);
-}
+अटल व्योम lpuart32_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	lpuart32_रुको_bit_set(port, UARTSTAT, UARTSTAT_TDRE);
+	lpuart32_ग_लिखो(port, ch, UARTDATA);
+पूर्ण
 
-static void
-lpuart_console_write(struct console *co, const char *s, unsigned int count)
-{
-	struct lpuart_port *sport = lpuart_ports[co->index];
-	unsigned char  old_cr2, cr2;
-	unsigned long flags;
-	int locked = 1;
+अटल व्योम
+lpuart_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा lpuart_port *sport = lpuart_ports[co->index];
+	अचिन्हित अक्षर  old_cr2, cr2;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक locked = 1;
 
-	if (sport->port.sysrq || oops_in_progress)
+	अगर (sport->port.sysrq || oops_in_progress)
 		locked = spin_trylock_irqsave(&sport->port.lock, flags);
-	else
+	अन्यथा
 		spin_lock_irqsave(&sport->port.lock, flags);
 
-	/* first save CR2 and then disable interrupts */
-	cr2 = old_cr2 = readb(sport->port.membase + UARTCR2);
+	/* first save CR2 and then disable पूर्णांकerrupts */
+	cr2 = old_cr2 = पढ़ोb(sport->port.membase + UARTCR2);
 	cr2 |= UARTCR2_TE | UARTCR2_RE;
 	cr2 &= ~(UARTCR2_TIE | UARTCR2_TCIE | UARTCR2_RIE);
-	writeb(cr2, sport->port.membase + UARTCR2);
+	ग_लिखोb(cr2, sport->port.membase + UARTCR2);
 
-	uart_console_write(&sport->port, s, count, lpuart_console_putchar);
+	uart_console_ग_लिखो(&sport->port, s, count, lpuart_console_अक्षर_दो);
 
-	/* wait for transmitter finish complete and restore CR2 */
-	lpuart_wait_bit_set(&sport->port, UARTSR1, UARTSR1_TC);
+	/* रुको क्रम transmitter finish complete and restore CR2 */
+	lpuart_रुको_bit_set(&sport->port, UARTSR1, UARTSR1_TC);
 
-	writeb(old_cr2, sport->port.membase + UARTCR2);
+	ग_लिखोb(old_cr2, sport->port.membase + UARTCR2);
 
-	if (locked)
+	अगर (locked)
 		spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
-static void
-lpuart32_console_write(struct console *co, const char *s, unsigned int count)
-{
-	struct lpuart_port *sport = lpuart_ports[co->index];
-	unsigned long  old_cr, cr;
-	unsigned long flags;
-	int locked = 1;
+अटल व्योम
+lpuart32_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा lpuart_port *sport = lpuart_ports[co->index];
+	अचिन्हित दीर्घ  old_cr, cr;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक locked = 1;
 
-	if (sport->port.sysrq || oops_in_progress)
+	अगर (sport->port.sysrq || oops_in_progress)
 		locked = spin_trylock_irqsave(&sport->port.lock, flags);
-	else
+	अन्यथा
 		spin_lock_irqsave(&sport->port.lock, flags);
 
-	/* first save CR2 and then disable interrupts */
-	cr = old_cr = lpuart32_read(&sport->port, UARTCTRL);
+	/* first save CR2 and then disable पूर्णांकerrupts */
+	cr = old_cr = lpuart32_पढ़ो(&sport->port, UARTCTRL);
 	cr |= UARTCTRL_TE | UARTCTRL_RE;
 	cr &= ~(UARTCTRL_TIE | UARTCTRL_TCIE | UARTCTRL_RIE);
-	lpuart32_write(&sport->port, cr, UARTCTRL);
+	lpuart32_ग_लिखो(&sport->port, cr, UARTCTRL);
 
-	uart_console_write(&sport->port, s, count, lpuart32_console_putchar);
+	uart_console_ग_लिखो(&sport->port, s, count, lpuart32_console_अक्षर_दो);
 
-	/* wait for transmitter finish complete and restore CR2 */
-	lpuart32_wait_bit_set(&sport->port, UARTSTAT, UARTSTAT_TC);
+	/* रुको क्रम transmitter finish complete and restore CR2 */
+	lpuart32_रुको_bit_set(&sport->port, UARTSTAT, UARTSTAT_TC);
 
-	lpuart32_write(&sport->port, old_cr, UARTCTRL);
+	lpuart32_ग_लिखो(&sport->port, old_cr, UARTCTRL);
 
-	if (locked)
+	अगर (locked)
 		spin_unlock_irqrestore(&sport->port.lock, flags);
-}
+पूर्ण
 
 /*
- * if the port was already initialised (eg, by a boot loader),
+ * अगर the port was alपढ़ोy initialised (eg, by a boot loader),
  * try to determine the current setup.
  */
-static void __init
-lpuart_console_get_options(struct lpuart_port *sport, int *baud,
-			   int *parity, int *bits)
-{
-	unsigned char cr, bdh, bdl, brfa;
-	unsigned int sbr, uartclk, baud_raw;
+अटल व्योम __init
+lpuart_console_get_options(काष्ठा lpuart_port *sport, पूर्णांक *baud,
+			   पूर्णांक *parity, पूर्णांक *bits)
+अणु
+	अचिन्हित अक्षर cr, bdh, bdl, brfa;
+	अचिन्हित पूर्णांक sbr, uartclk, baud_raw;
 
-	cr = readb(sport->port.membase + UARTCR2);
+	cr = पढ़ोb(sport->port.membase + UARTCR2);
 	cr &= UARTCR2_TE | UARTCR2_RE;
-	if (!cr)
-		return;
+	अगर (!cr)
+		वापस;
 
 	/* ok, the port was enabled */
 
-	cr = readb(sport->port.membase + UARTCR1);
+	cr = पढ़ोb(sport->port.membase + UARTCR1);
 
 	*parity = 'n';
-	if (cr & UARTCR1_PE) {
-		if (cr & UARTCR1_PT)
+	अगर (cr & UARTCR1_PE) अणु
+		अगर (cr & UARTCR1_PT)
 			*parity = 'o';
-		else
+		अन्यथा
 			*parity = 'e';
-	}
+	पूर्ण
 
-	if (cr & UARTCR1_M)
+	अगर (cr & UARTCR1_M)
 		*bits = 9;
-	else
+	अन्यथा
 		*bits = 8;
 
-	bdh = readb(sport->port.membase + UARTBDH);
+	bdh = पढ़ोb(sport->port.membase + UARTBDH);
 	bdh &= UARTBDH_SBR_MASK;
-	bdl = readb(sport->port.membase + UARTBDL);
+	bdl = पढ़ोb(sport->port.membase + UARTBDL);
 	sbr = bdh;
 	sbr <<= 8;
 	sbr |= bdl;
-	brfa = readb(sport->port.membase + UARTCR4);
+	brfa = पढ़ोb(sport->port.membase + UARTCR4);
 	brfa &= UARTCR4_BRFA_MASK;
 
 	uartclk = lpuart_get_baud_clk_rate(sport);
@@ -2378,41 +2379,41 @@ lpuart_console_get_options(struct lpuart_port *sport, int *baud,
 	 */
 	baud_raw = uartclk / (16 * (sbr + brfa / 32));
 
-	if (*baud != baud_raw)
+	अगर (*baud != baud_raw)
 		dev_info(sport->port.dev, "Serial: Console lpuart rounded baud rate"
 				"from %d to %d\n", baud_raw, *baud);
-}
+पूर्ण
 
-static void __init
-lpuart32_console_get_options(struct lpuart_port *sport, int *baud,
-			   int *parity, int *bits)
-{
-	unsigned long cr, bd;
-	unsigned int sbr, uartclk, baud_raw;
+अटल व्योम __init
+lpuart32_console_get_options(काष्ठा lpuart_port *sport, पूर्णांक *baud,
+			   पूर्णांक *parity, पूर्णांक *bits)
+अणु
+	अचिन्हित दीर्घ cr, bd;
+	अचिन्हित पूर्णांक sbr, uartclk, baud_raw;
 
-	cr = lpuart32_read(&sport->port, UARTCTRL);
+	cr = lpuart32_पढ़ो(&sport->port, UARTCTRL);
 	cr &= UARTCTRL_TE | UARTCTRL_RE;
-	if (!cr)
-		return;
+	अगर (!cr)
+		वापस;
 
 	/* ok, the port was enabled */
 
-	cr = lpuart32_read(&sport->port, UARTCTRL);
+	cr = lpuart32_पढ़ो(&sport->port, UARTCTRL);
 
 	*parity = 'n';
-	if (cr & UARTCTRL_PE) {
-		if (cr & UARTCTRL_PT)
+	अगर (cr & UARTCTRL_PE) अणु
+		अगर (cr & UARTCTRL_PT)
 			*parity = 'o';
-		else
+		अन्यथा
 			*parity = 'e';
-	}
+	पूर्ण
 
-	if (cr & UARTCTRL_M)
+	अगर (cr & UARTCTRL_M)
 		*bits = 9;
-	else
+	अन्यथा
 		*bits = 8;
 
-	bd = lpuart32_read(&sport->port, UARTBAUD);
+	bd = lpuart32_पढ़ो(&sport->port, UARTBAUD);
 	bd &= UARTBAUD_SBR_MASK;
 	sbr = bd;
 	uartclk = lpuart_get_baud_clk_rate(sport);
@@ -2421,141 +2422,141 @@ lpuart32_console_get_options(struct lpuart_port *sport, int *baud,
 	 */
 	baud_raw = uartclk / (16 * sbr);
 
-	if (*baud != baud_raw)
+	अगर (*baud != baud_raw)
 		dev_info(sport->port.dev, "Serial: Console lpuart rounded baud rate"
 				"from %d to %d\n", baud_raw, *baud);
-}
+पूर्ण
 
-static int __init lpuart_console_setup(struct console *co, char *options)
-{
-	struct lpuart_port *sport;
-	int baud = 115200;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक __init lpuart_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा lpuart_port *sport;
+	पूर्णांक baud = 115200;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
 	/*
-	 * check whether an invalid uart number has been specified, and
-	 * if so, search for the first available port that does have
+	 * check whether an invalid uart number has been specअगरied, and
+	 * अगर so, search क्रम the first available port that करोes have
 	 * console support.
 	 */
-	if (co->index == -1 || co->index >= ARRAY_SIZE(lpuart_ports))
+	अगर (co->index == -1 || co->index >= ARRAY_SIZE(lpuart_ports))
 		co->index = 0;
 
 	sport = lpuart_ports[co->index];
-	if (sport == NULL)
-		return -ENODEV;
+	अगर (sport == शून्य)
+		वापस -ENODEV;
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	else
-		if (lpuart_is_32(sport))
+	अन्यथा
+		अगर (lpuart_is_32(sport))
 			lpuart32_console_get_options(sport, &baud, &parity, &bits);
-		else
+		अन्यथा
 			lpuart_console_get_options(sport, &baud, &parity, &bits);
 
-	if (lpuart_is_32(sport))
+	अगर (lpuart_is_32(sport))
 		lpuart32_setup_watermark(sport);
-	else
+	अन्यथा
 		lpuart_setup_watermark(sport);
 
-	return uart_set_options(&sport->port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(&sport->port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver lpuart_reg;
-static struct console lpuart_console = {
+अटल काष्ठा uart_driver lpuart_reg;
+अटल काष्ठा console lpuart_console = अणु
 	.name		= DEV_NAME,
-	.write		= lpuart_console_write,
+	.ग_लिखो		= lpuart_console_ग_लिखो,
 	.device		= uart_console_device,
 	.setup		= lpuart_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &lpuart_reg,
-};
+पूर्ण;
 
-static struct console lpuart32_console = {
+अटल काष्ठा console lpuart32_console = अणु
 	.name		= DEV_NAME,
-	.write		= lpuart32_console_write,
+	.ग_लिखो		= lpuart32_console_ग_लिखो,
 	.device		= uart_console_device,
 	.setup		= lpuart_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &lpuart_reg,
-};
+पूर्ण;
 
-static void lpuart_early_write(struct console *con, const char *s, unsigned n)
-{
-	struct earlycon_device *dev = con->data;
+अटल व्योम lpuart_early_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
+अणु
+	काष्ठा earlycon_device *dev = con->data;
 
-	uart_console_write(&dev->port, s, n, lpuart_console_putchar);
-}
+	uart_console_ग_लिखो(&dev->port, s, n, lpuart_console_अक्षर_दो);
+पूर्ण
 
-static void lpuart32_early_write(struct console *con, const char *s, unsigned n)
-{
-	struct earlycon_device *dev = con->data;
+अटल व्योम lpuart32_early_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
+अणु
+	काष्ठा earlycon_device *dev = con->data;
 
-	uart_console_write(&dev->port, s, n, lpuart32_console_putchar);
-}
+	uart_console_ग_लिखो(&dev->port, s, n, lpuart32_console_अक्षर_दो);
+पूर्ण
 
-static int __init lpuart_early_console_setup(struct earlycon_device *device,
-					  const char *opt)
-{
-	if (!device->port.membase)
-		return -ENODEV;
+अटल पूर्णांक __init lpuart_early_console_setup(काष्ठा earlycon_device *device,
+					  स्थिर अक्षर *opt)
+अणु
+	अगर (!device->port.membase)
+		वापस -ENODEV;
 
-	device->con->write = lpuart_early_write;
-	return 0;
-}
+	device->con->ग_लिखो = lpuart_early_ग_लिखो;
+	वापस 0;
+पूर्ण
 
-static int __init lpuart32_early_console_setup(struct earlycon_device *device,
-					  const char *opt)
-{
-	if (!device->port.membase)
-		return -ENODEV;
+अटल पूर्णांक __init lpuart32_early_console_setup(काष्ठा earlycon_device *device,
+					  स्थिर अक्षर *opt)
+अणु
+	अगर (!device->port.membase)
+		वापस -ENODEV;
 
-	if (device->port.iotype != UPIO_MEM32)
+	अगर (device->port.iotype != UPIO_MEM32)
 		device->port.iotype = UPIO_MEM32BE;
 
-	device->con->write = lpuart32_early_write;
-	return 0;
-}
+	device->con->ग_लिखो = lpuart32_early_ग_लिखो;
+	वापस 0;
+पूर्ण
 
-static int __init ls1028a_early_console_setup(struct earlycon_device *device,
-					      const char *opt)
-{
+अटल पूर्णांक __init ls1028a_early_console_setup(काष्ठा earlycon_device *device,
+					      स्थिर अक्षर *opt)
+अणु
 	u32 cr;
 
-	if (!device->port.membase)
-		return -ENODEV;
+	अगर (!device->port.membase)
+		वापस -ENODEV;
 
 	device->port.iotype = UPIO_MEM32;
-	device->con->write = lpuart32_early_write;
+	device->con->ग_लिखो = lpuart32_early_ग_लिखो;
 
 	/* set the baudrate */
-	if (device->port.uartclk && device->baud)
+	अगर (device->port.uartclk && device->baud)
 		__lpuart32_serial_setbrg(&device->port, device->baud,
 					 false, false);
 
 	/* enable transmitter */
-	cr = lpuart32_read(&device->port, UARTCTRL);
+	cr = lpuart32_पढ़ो(&device->port, UARTCTRL);
 	cr |= UARTCTRL_TE;
-	lpuart32_write(&device->port, cr, UARTCTRL);
+	lpuart32_ग_लिखो(&device->port, cr, UARTCTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init lpuart32_imx_early_console_setup(struct earlycon_device *device,
-						   const char *opt)
-{
-	if (!device->port.membase)
-		return -ENODEV;
+अटल पूर्णांक __init lpuart32_imx_early_console_setup(काष्ठा earlycon_device *device,
+						   स्थिर अक्षर *opt)
+अणु
+	अगर (!device->port.membase)
+		वापस -ENODEV;
 
 	device->port.iotype = UPIO_MEM32;
 	device->port.membase += IMX_REG_OFF;
-	device->con->write = lpuart32_early_write;
+	device->con->ग_लिखो = lpuart32_early_ग_लिखो;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 OF_EARLYCON_DECLARE(lpuart, "fsl,vf610-lpuart", lpuart_early_console_setup);
 OF_EARLYCON_DECLARE(lpuart32, "fsl,ls1021a-lpuart", lpuart32_early_console_setup);
 OF_EARLYCON_DECLARE(lpuart32, "fsl,ls1028a-lpuart", ls1028a_early_console_setup);
@@ -2563,290 +2564,290 @@ OF_EARLYCON_DECLARE(lpuart32, "fsl,imx7ulp-lpuart", lpuart32_imx_early_console_s
 EARLYCON_DECLARE(lpuart, lpuart_early_console_setup);
 EARLYCON_DECLARE(lpuart32, lpuart32_early_console_setup);
 
-#define LPUART_CONSOLE	(&lpuart_console)
-#define LPUART32_CONSOLE	(&lpuart32_console)
-#else
-#define LPUART_CONSOLE	NULL
-#define LPUART32_CONSOLE	NULL
-#endif
+#घोषणा LPUART_CONSOLE	(&lpuart_console)
+#घोषणा LPUART32_CONSOLE	(&lpuart32_console)
+#अन्यथा
+#घोषणा LPUART_CONSOLE	शून्य
+#घोषणा LPUART32_CONSOLE	शून्य
+#पूर्ण_अगर
 
-static struct uart_driver lpuart_reg = {
+अटल काष्ठा uart_driver lpuart_reg = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= DRIVER_NAME,
 	.dev_name	= DEV_NAME,
 	.nr		= ARRAY_SIZE(lpuart_ports),
 	.cons		= LPUART_CONSOLE,
-};
+पूर्ण;
 
-static int lpuart_probe(struct platform_device *pdev)
-{
-	const struct lpuart_soc_data *sdata = of_device_get_match_data(&pdev->dev);
-	struct device_node *np = pdev->dev.of_node;
-	struct lpuart_port *sport;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक lpuart_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा lpuart_soc_data *sdata = of_device_get_match_data(&pdev->dev);
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा lpuart_port *sport;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	sport = devm_kzalloc(&pdev->dev, sizeof(*sport), GFP_KERNEL);
-	if (!sport)
-		return -ENOMEM;
+	sport = devm_kzalloc(&pdev->dev, माप(*sport), GFP_KERNEL);
+	अगर (!sport)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	sport->port.membase = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(sport->port.membase))
-		return PTR_ERR(sport->port.membase);
+	अगर (IS_ERR(sport->port.membase))
+		वापस PTR_ERR(sport->port.membase);
 
 	sport->port.membase += sdata->reg_off;
 	sport->port.mapbase = res->start;
 	sport->port.dev = &pdev->dev;
 	sport->port.type = PORT_LPUART;
 	sport->devtype = sdata->devtype;
-	ret = platform_get_irq(pdev, 0);
-	if (ret < 0)
-		return ret;
+	ret = platक्रमm_get_irq(pdev, 0);
+	अगर (ret < 0)
+		वापस ret;
 	sport->port.irq = ret;
 	sport->port.iotype = sdata->iotype;
-	if (lpuart_is_32(sport))
+	अगर (lpuart_is_32(sport))
 		sport->port.ops = &lpuart32_pops;
-	else
+	अन्यथा
 		sport->port.ops = &lpuart_pops;
 	sport->port.has_sysrq = IS_ENABLED(CONFIG_SERIAL_FSL_LPUART_CONSOLE);
 	sport->port.flags = UPF_BOOT_AUTOCONF;
 
-	if (lpuart_is_32(sport))
+	अगर (lpuart_is_32(sport))
 		sport->port.rs485_config = lpuart32_config_rs485;
-	else
+	अन्यथा
 		sport->port.rs485_config = lpuart_config_rs485;
 
 	sport->ipg_clk = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(sport->ipg_clk)) {
+	अगर (IS_ERR(sport->ipg_clk)) अणु
 		ret = PTR_ERR(sport->ipg_clk);
 		dev_err(&pdev->dev, "failed to get uart ipg clk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	sport->baud_clk = NULL;
-	if (is_imx8qxp_lpuart(sport)) {
+	sport->baud_clk = शून्य;
+	अगर (is_imx8qxp_lpuart(sport)) अणु
 		sport->baud_clk = devm_clk_get(&pdev->dev, "baud");
-		if (IS_ERR(sport->baud_clk)) {
+		अगर (IS_ERR(sport->baud_clk)) अणु
 			ret = PTR_ERR(sport->baud_clk);
 			dev_err(&pdev->dev, "failed to get uart baud clk: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = of_alias_get_id(np, "serial");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		ret = ida_simple_get(&fsl_lpuart_ida, 0, UART_NR, GFP_KERNEL);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&pdev->dev, "port line is full, add device failed\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		sport->id_allocated = true;
-	}
-	if (ret >= ARRAY_SIZE(lpuart_ports)) {
+	पूर्ण
+	अगर (ret >= ARRAY_SIZE(lpuart_ports)) अणु
 		dev_err(&pdev->dev, "serial%d out of range\n", ret);
 		ret = -EINVAL;
-		goto failed_out_of_range;
-	}
+		जाओ failed_out_of_range;
+	पूर्ण
 	sport->port.line = ret;
 
 	ret = lpuart_enable_clks(sport);
-	if (ret)
-		goto failed_clock_enable;
+	अगर (ret)
+		जाओ failed_घड़ी_enable;
 	sport->port.uartclk = lpuart_get_baud_clk_rate(sport);
 
 	lpuart_ports[sport->port.line] = sport;
 
-	platform_set_drvdata(pdev, &sport->port);
+	platक्रमm_set_drvdata(pdev, &sport->port);
 
-	if (lpuart_is_32(sport)) {
+	अगर (lpuart_is_32(sport)) अणु
 		lpuart_reg.cons = LPUART32_CONSOLE;
-		ret = devm_request_irq(&pdev->dev, sport->port.irq, lpuart32_int, 0,
+		ret = devm_request_irq(&pdev->dev, sport->port.irq, lpuart32_पूर्णांक, 0,
 					DRIVER_NAME, sport);
-	} else {
+	पूर्ण अन्यथा अणु
 		lpuart_reg.cons = LPUART_CONSOLE;
-		ret = devm_request_irq(&pdev->dev, sport->port.irq, lpuart_int, 0,
+		ret = devm_request_irq(&pdev->dev, sport->port.irq, lpuart_पूर्णांक, 0,
 					DRIVER_NAME, sport);
-	}
+	पूर्ण
 
-	if (ret)
-		goto failed_irq_request;
+	अगर (ret)
+		जाओ failed_irq_request;
 
 	ret = uart_add_one_port(&lpuart_reg, &sport->port);
-	if (ret)
-		goto failed_attach_port;
+	अगर (ret)
+		जाओ failed_attach_port;
 
 	ret = uart_get_rs485_mode(&sport->port);
-	if (ret)
-		goto failed_get_rs485;
+	अगर (ret)
+		जाओ failed_get_rs485;
 
-	if (sport->port.rs485.flags & SER_RS485_RX_DURING_TX)
+	अगर (sport->port.rs485.flags & SER_RS485_RX_DURING_TX)
 		dev_err(&pdev->dev, "driver doesn't support RX during TX\n");
 
-	if (sport->port.rs485.delay_rts_before_send ||
+	अगर (sport->port.rs485.delay_rts_beक्रमe_send ||
 	    sport->port.rs485.delay_rts_after_send)
 		dev_err(&pdev->dev, "driver doesn't support RTS delays\n");
 
 	sport->port.rs485_config(&sport->port, &sport->port.rs485);
 
-	return 0;
+	वापस 0;
 
 failed_get_rs485:
 failed_attach_port:
 failed_irq_request:
 	lpuart_disable_clks(sport);
-failed_clock_enable:
+failed_घड़ी_enable:
 failed_out_of_range:
-	if (sport->id_allocated)
-		ida_simple_remove(&fsl_lpuart_ida, sport->port.line);
-	return ret;
-}
+	अगर (sport->id_allocated)
+		ida_simple_हटाओ(&fsl_lpuart_ida, sport->port.line);
+	वापस ret;
+पूर्ण
 
-static int lpuart_remove(struct platform_device *pdev)
-{
-	struct lpuart_port *sport = platform_get_drvdata(pdev);
+अटल पूर्णांक lpuart_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpuart_port *sport = platक्रमm_get_drvdata(pdev);
 
-	uart_remove_one_port(&lpuart_reg, &sport->port);
+	uart_हटाओ_one_port(&lpuart_reg, &sport->port);
 
-	if (sport->id_allocated)
-		ida_simple_remove(&fsl_lpuart_ida, sport->port.line);
+	अगर (sport->id_allocated)
+		ida_simple_हटाओ(&fsl_lpuart_ida, sport->port.line);
 
 	lpuart_disable_clks(sport);
 
-	if (sport->dma_tx_chan)
+	अगर (sport->dma_tx_chan)
 		dma_release_channel(sport->dma_tx_chan);
 
-	if (sport->dma_rx_chan)
+	अगर (sport->dma_rx_chan)
 		dma_release_channel(sport->dma_rx_chan);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused lpuart_suspend(struct device *dev)
-{
-	struct lpuart_port *sport = dev_get_drvdata(dev);
-	unsigned long temp;
+अटल पूर्णांक __maybe_unused lpuart_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा lpuart_port *sport = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ temp;
 	bool irq_wake;
 
-	if (lpuart_is_32(sport)) {
-		/* disable Rx/Tx and interrupts */
-		temp = lpuart32_read(&sport->port, UARTCTRL);
+	अगर (lpuart_is_32(sport)) अणु
+		/* disable Rx/Tx and पूर्णांकerrupts */
+		temp = lpuart32_पढ़ो(&sport->port, UARTCTRL);
 		temp &= ~(UARTCTRL_TE | UARTCTRL_TIE | UARTCTRL_TCIE);
-		lpuart32_write(&sport->port, temp, UARTCTRL);
-	} else {
-		/* disable Rx/Tx and interrupts */
-		temp = readb(sport->port.membase + UARTCR2);
+		lpuart32_ग_लिखो(&sport->port, temp, UARTCTRL);
+	पूर्ण अन्यथा अणु
+		/* disable Rx/Tx and पूर्णांकerrupts */
+		temp = पढ़ोb(sport->port.membase + UARTCR2);
 		temp &= ~(UARTCR2_TE | UARTCR2_TIE | UARTCR2_TCIE);
-		writeb(temp, sport->port.membase + UARTCR2);
-	}
+		ग_लिखोb(temp, sport->port.membase + UARTCR2);
+	पूर्ण
 
 	uart_suspend_port(&lpuart_reg, &sport->port);
 
 	/* uart_suspend_port() might set wakeup flag */
 	irq_wake = irqd_is_wakeup_set(irq_get_irq_data(sport->port.irq));
 
-	if (sport->lpuart_dma_rx_use) {
+	अगर (sport->lpuart_dma_rx_use) अणु
 		/*
-		 * EDMA driver during suspend will forcefully release any
-		 * non-idle DMA channels. If port wakeup is enabled or if port
+		 * EDMA driver during suspend will क्रमcefully release any
+		 * non-idle DMA channels. If port wakeup is enabled or अगर port
 		 * is console port or 'no_console_suspend' is set the Rx DMA
 		 * cannot resume as as expected, hence gracefully release the
-		 * Rx DMA path before suspend and start Rx DMA path on resume.
+		 * Rx DMA path beक्रमe suspend and start Rx DMA path on resume.
 		 */
-		if (irq_wake) {
-			del_timer_sync(&sport->lpuart_timer);
-			lpuart_dma_rx_free(&sport->port);
-		}
+		अगर (irq_wake) अणु
+			del_समयr_sync(&sport->lpuart_समयr);
+			lpuart_dma_rx_मुक्त(&sport->port);
+		पूर्ण
 
 		/* Disable Rx DMA to use UART port as wakeup source */
-		if (lpuart_is_32(sport)) {
-			temp = lpuart32_read(&sport->port, UARTBAUD);
-			lpuart32_write(&sport->port, temp & ~UARTBAUD_RDMAE,
+		अगर (lpuart_is_32(sport)) अणु
+			temp = lpuart32_पढ़ो(&sport->port, UARTBAUD);
+			lpuart32_ग_लिखो(&sport->port, temp & ~UARTBAUD_RDMAE,
 				       UARTBAUD);
-		} else {
-			writeb(readb(sport->port.membase + UARTCR5) &
+		पूर्ण अन्यथा अणु
+			ग_लिखोb(पढ़ोb(sport->port.membase + UARTCR5) &
 			       ~UARTCR5_RDMAS, sport->port.membase + UARTCR5);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sport->lpuart_dma_tx_use) {
+	अगर (sport->lpuart_dma_tx_use) अणु
 		sport->dma_tx_in_progress = false;
 		dmaengine_terminate_all(sport->dma_tx_chan);
-	}
+	पूर्ण
 
-	if (sport->port.suspended && !irq_wake)
+	अगर (sport->port.suspended && !irq_wake)
 		lpuart_disable_clks(sport);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused lpuart_resume(struct device *dev)
-{
-	struct lpuart_port *sport = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused lpuart_resume(काष्ठा device *dev)
+अणु
+	काष्ठा lpuart_port *sport = dev_get_drvdata(dev);
 	bool irq_wake = irqd_is_wakeup_set(irq_get_irq_data(sport->port.irq));
 
-	if (sport->port.suspended && !irq_wake)
+	अगर (sport->port.suspended && !irq_wake)
 		lpuart_enable_clks(sport);
 
-	if (lpuart_is_32(sport))
+	अगर (lpuart_is_32(sport))
 		lpuart32_setup_watermark_enable(sport);
-	else
+	अन्यथा
 		lpuart_setup_watermark_enable(sport);
 
-	if (sport->lpuart_dma_rx_use) {
-		if (irq_wake) {
-			if (!lpuart_start_rx_dma(sport))
-				rx_dma_timer_init(sport);
-			else
+	अगर (sport->lpuart_dma_rx_use) अणु
+		अगर (irq_wake) अणु
+			अगर (!lpuart_start_rx_dma(sport))
+				rx_dma_समयr_init(sport);
+			अन्यथा
 				sport->lpuart_dma_rx_use = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	lpuart_tx_dma_startup(sport);
 
-	if (lpuart_is_32(sport))
+	अगर (lpuart_is_32(sport))
 		lpuart32_configure(sport);
 
 	uart_resume_port(&lpuart_reg, &sport->port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(lpuart_pm_ops, lpuart_suspend, lpuart_resume);
+अटल SIMPLE_DEV_PM_OPS(lpuart_pm_ops, lpuart_suspend, lpuart_resume);
 
-static struct platform_driver lpuart_driver = {
+अटल काष्ठा platक्रमm_driver lpuart_driver = अणु
 	.probe		= lpuart_probe,
-	.remove		= lpuart_remove,
-	.driver		= {
+	.हटाओ		= lpuart_हटाओ,
+	.driver		= अणु
 		.name	= "fsl-lpuart",
 		.of_match_table = lpuart_dt_ids,
 		.pm	= &lpuart_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init lpuart_serial_init(void)
-{
-	int ret = uart_register_driver(&lpuart_reg);
+अटल पूर्णांक __init lpuart_serial_init(व्योम)
+अणु
+	पूर्णांक ret = uart_रेजिस्टर_driver(&lpuart_reg);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&lpuart_driver);
-	if (ret)
-		uart_unregister_driver(&lpuart_reg);
+	ret = platक्रमm_driver_रेजिस्टर(&lpuart_driver);
+	अगर (ret)
+		uart_unरेजिस्टर_driver(&lpuart_reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit lpuart_serial_exit(void)
-{
+अटल व्योम __निकास lpuart_serial_निकास(व्योम)
+अणु
 	ida_destroy(&fsl_lpuart_ida);
-	platform_driver_unregister(&lpuart_driver);
-	uart_unregister_driver(&lpuart_reg);
-}
+	platक्रमm_driver_unरेजिस्टर(&lpuart_driver);
+	uart_unरेजिस्टर_driver(&lpuart_reg);
+पूर्ण
 
 module_init(lpuart_serial_init);
-module_exit(lpuart_serial_exit);
+module_निकास(lpuart_serial_निकास);
 
 MODULE_DESCRIPTION("Freescale lpuart serial port driver");
 MODULE_LICENSE("GPL v2");

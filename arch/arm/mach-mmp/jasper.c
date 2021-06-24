@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-mmp/jasper.c
  *
- *  Support for the Marvell Jasper Development Platform.
+ *  Support क्रम the Marvell Jasper Development Platक्रमm.
  *
  *  Copyright (C) 2009-2010 Marvell International Ltd.
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/gpio-pxa.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/regulator/machine.h>
-#include <linux/regulator/max8649.h>
-#include <linux/mfd/max8925.h>
-#include <linux/interrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/gpio-pxa.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/regulator/max8649.h>
+#समावेश <linux/mfd/max8925.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "irqs.h"
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include "addr-map.h"
-#include "mfp-mmp2.h"
-#include "mmp2.h"
+#समावेश "irqs.h"
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश "addr-map.h"
+#समावेश "mfp-mmp2.h"
+#समावेश "mmp2.h"
 
-#include "common.h"
+#समावेश "common.h"
 
-#define JASPER_NR_IRQS		(MMP_NR_IRQS + 48)
+#घोषणा JASPER_NR_IRQS		(MMP_NR_IRQS + 48)
 
-static unsigned long jasper_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ jasper_pin_config[] __initdata = अणु
 	/* UART1 */
 	GPIO29_UART1_RXD,
 	GPIO30_UART1_TXD,
@@ -95,91 +96,91 @@ static unsigned long jasper_pin_config[] __initdata = {
 	GPIO111_MMC3_DAT0,
 	GPIO112_MMC3_CMD,
 	GPIO151_MMC3_CLK,
-};
+पूर्ण;
 
-static struct pxa_gpio_platform_data mmp2_gpio_pdata = {
+अटल काष्ठा pxa_gpio_platक्रमm_data mmp2_gpio_pdata = अणु
 	.irq_base	= MMP_GPIO_TO_IRQ(0),
-};
+पूर्ण;
 
-static struct regulator_consumer_supply max8649_supply[] = {
-	REGULATOR_SUPPLY("vcc_core", NULL),
-};
+अटल काष्ठा regulator_consumer_supply max8649_supply[] = अणु
+	REGULATOR_SUPPLY("vcc_core", शून्य),
+पूर्ण;
 
-static struct regulator_init_data max8649_init_data = {
-	.constraints	= {
+अटल काष्ठा regulator_init_data max8649_init_data = अणु
+	.स्थिरraपूर्णांकs	= अणु
 		.name		= "vcc_core range",
 		.min_uV		= 1150000,
 		.max_uV		= 1280000,
 		.always_on	= 1,
 		.boot_on	= 1,
 		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE,
-	},
+	पूर्ण,
 	.num_consumer_supplies	= 1,
 	.consumer_supplies	= &max8649_supply[0],
-};
+पूर्ण;
 
-static struct max8649_platform_data jasper_max8649_info = {
+अटल काष्ठा max8649_platक्रमm_data jasper_max8649_info = अणु
 	.mode		= 2,	/* VID1 = 1, VID0 = 0 */
 	.extclk		= 0,
 	.ramp_timing	= MAX8649_RAMP_32MV,
 	.regulator	= &max8649_init_data,
-};
+पूर्ण;
 
-static struct max8925_backlight_pdata jasper_backlight_data = {
+अटल काष्ठा max8925_backlight_pdata jasper_backlight_data = अणु
 	.dual_string	= 0,
-};
+पूर्ण;
 
-static struct max8925_power_pdata jasper_power_data = {
+अटल काष्ठा max8925_घातer_pdata jasper_घातer_data = अणु
 	.batt_detect		= 0,	/* can't detect battery by ID pin */
 	.topoff_threshold	= MAX8925_TOPOFF_THR_10PER,
-	.fast_charge		= MAX8925_FCHG_1000MA,
-};
+	.fast_अक्षरge		= MAX8925_FCHG_1000MA,
+पूर्ण;
 
-static struct max8925_platform_data jasper_max8925_info = {
+अटल काष्ठा max8925_platक्रमm_data jasper_max8925_info = अणु
 	.backlight		= &jasper_backlight_data,
-	.power			= &jasper_power_data,
+	.घातer			= &jasper_घातer_data,
 	.irq_base		= MMP_NR_IRQS,
-};
+पूर्ण;
 
-static struct i2c_board_info jasper_twsi1_info[] = {
-	[0] = {
+अटल काष्ठा i2c_board_info jasper_twsi1_info[] = अणु
+	[0] = अणु
 		.type		= "max8649",
 		.addr		= 0x60,
-		.platform_data	= &jasper_max8649_info,
-	},
-	[1] = {
+		.platक्रमm_data	= &jasper_max8649_info,
+	पूर्ण,
+	[1] = अणु
 		.type		= "max8925",
 		.addr		= 0x3c,
 		.irq		= IRQ_MMP2_PMIC,
-		.platform_data	= &jasper_max8925_info,
-	},
-};
+		.platक्रमm_data	= &jasper_max8925_info,
+	पूर्ण,
+पूर्ण;
 
-static struct sdhci_pxa_platdata mmp2_sdh_platdata_mmc0 = {
+अटल काष्ठा sdhci_pxa_platdata mmp2_sdh_platdata_mmc0 = अणु
 	.clk_delay_cycles = 0x1f,
-};
+पूर्ण;
 
-static void __init jasper_init(void)
-{
+अटल व्योम __init jasper_init(व्योम)
+अणु
 	mfp_config(ARRAY_AND_SIZE(jasper_pin_config));
 
 	/* on-chip devices */
 	mmp2_add_uart(1);
 	mmp2_add_uart(3);
-	mmp2_add_twsi(1, NULL, ARRAY_AND_SIZE(jasper_twsi1_info));
-	platform_device_add_data(&mmp2_device_gpio, &mmp2_gpio_pdata,
-				 sizeof(struct pxa_gpio_platform_data));
-	platform_device_register(&mmp2_device_gpio);
+	mmp2_add_twsi(1, शून्य, ARRAY_AND_SIZE(jasper_twsi1_info));
+	platक्रमm_device_add_data(&mmp2_device_gpio, &mmp2_gpio_pdata,
+				 माप(काष्ठा pxa_gpio_platक्रमm_data));
+	platक्रमm_device_रेजिस्टर(&mmp2_device_gpio);
 	mmp2_add_sdhost(0, &mmp2_sdh_platdata_mmc0); /* SD/MMC */
 
-	regulator_has_full_constraints();
-}
+	regulator_has_full_स्थिरraपूर्णांकs();
+पूर्ण
 
 MACHINE_START(MARVELL_JASPER, "Jasper Development Platform")
 	.map_io		= mmp_map_io,
 	.nr_irqs	= JASPER_NR_IRQS,
 	.init_irq       = mmp2_init_irq,
-	.init_time	= mmp2_timer_init,
+	.init_समय	= mmp2_समयr_init,
 	.init_machine   = jasper_init,
 	.restart	= mmp_restart,
 MACHINE_END

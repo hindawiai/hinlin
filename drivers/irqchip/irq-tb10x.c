@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Abilis Systems interrupt controller driver
+ * Abilis Systems पूर्णांकerrupt controller driver
  *
  * Copyright (C) Abilis Systems 2012
  *
  * Author: Christian Ruppert <christian.ruppert@abilis.com>
  */
 
-#include <linux/interrupt.h>
-#include <linux/irqdomain.h>
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/of_irq.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/bitops.h>
 
-#define AB_IRQCTL_INT_ENABLE   0x00
-#define AB_IRQCTL_INT_STATUS   0x04
-#define AB_IRQCTL_SRC_MODE     0x08
-#define AB_IRQCTL_SRC_POLARITY 0x0C
-#define AB_IRQCTL_INT_MODE     0x10
-#define AB_IRQCTL_INT_POLARITY 0x14
-#define AB_IRQCTL_INT_FORCE    0x18
+#घोषणा AB_IRQCTL_INT_ENABLE   0x00
+#घोषणा AB_IRQCTL_INT_STATUS   0x04
+#घोषणा AB_IRQCTL_SRC_MODE     0x08
+#घोषणा AB_IRQCTL_SRC_POLARITY 0x0C
+#घोषणा AB_IRQCTL_INT_MODE     0x10
+#घोषणा AB_IRQCTL_INT_POLARITY 0x14
+#घोषणा AB_IRQCTL_INT_FORCE    0x18
 
-#define AB_IRQCTL_MAXIRQ       32
+#घोषणा AB_IRQCTL_MAXIRQ       32
 
-static inline void ab_irqctl_writereg(struct irq_chip_generic *gc, u32 reg,
+अटल अंतरभूत व्योम ab_irqctl_ग_लिखोreg(काष्ठा irq_chip_generic *gc, u32 reg,
 	u32 val)
-{
-	irq_reg_writel(gc, val, reg);
-}
+अणु
+	irq_reg_ग_लिखोl(gc, val, reg);
+पूर्ण
 
-static inline u32 ab_irqctl_readreg(struct irq_chip_generic *gc, u32 reg)
-{
-	return irq_reg_readl(gc, reg);
-}
+अटल अंतरभूत u32 ab_irqctl_पढ़ोreg(काष्ठा irq_chip_generic *gc, u32 reg)
+अणु
+	वापस irq_reg_पढ़ोl(gc, reg);
+पूर्ण
 
-static int tb10x_irq_set_type(struct irq_data *data, unsigned int flow_type)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(data);
-	uint32_t im, mod, pol;
+अटल पूर्णांक tb10x_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक flow_type)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(data);
+	uपूर्णांक32_t im, mod, pol;
 
 	im = data->mask;
 
 	irq_gc_lock(gc);
 
-	mod = ab_irqctl_readreg(gc, AB_IRQCTL_SRC_MODE) | im;
-	pol = ab_irqctl_readreg(gc, AB_IRQCTL_SRC_POLARITY) | im;
+	mod = ab_irqctl_पढ़ोreg(gc, AB_IRQCTL_SRC_MODE) | im;
+	pol = ab_irqctl_पढ़ोreg(gc, AB_IRQCTL_SRC_POLARITY) | im;
 
-	switch (flow_type & IRQF_TRIGGER_MASK) {
-	case IRQ_TYPE_EDGE_FALLING:
+	चयन (flow_type & IRQF_TRIGGER_MASK) अणु
+	हाल IRQ_TYPE_EDGE_FALLING:
 		pol ^= im;
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		mod ^= im;
-		break;
-	case IRQ_TYPE_NONE:
+		अवरोध;
+	हाल IRQ_TYPE_NONE:
 		flow_type = IRQ_TYPE_LEVEL_LOW;
 		fallthrough;
-	case IRQ_TYPE_LEVEL_LOW:
+	हाल IRQ_TYPE_LEVEL_LOW:
 		mod ^= im;
 		pol ^= im;
-		break;
-	case IRQ_TYPE_EDGE_RISING:
-		break;
-	default:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_RISING:
+		अवरोध;
+	शेष:
 		irq_gc_unlock(gc);
 		pr_err("%s: Cannot assign multiple trigger modes to IRQ %d.\n",
 			__func__, data->irq);
-		return -EBADR;
-	}
+		वापस -EBADR;
+	पूर्ण
 
 	irqd_set_trigger_type(data, flow_type);
 	irq_setup_alt_chip(data, flow_type);
 
-	ab_irqctl_writereg(gc, AB_IRQCTL_SRC_MODE, mod);
-	ab_irqctl_writereg(gc, AB_IRQCTL_SRC_POLARITY, pol);
-	ab_irqctl_writereg(gc, AB_IRQCTL_INT_STATUS, im);
+	ab_irqctl_ग_लिखोreg(gc, AB_IRQCTL_SRC_MODE, mod);
+	ab_irqctl_ग_लिखोreg(gc, AB_IRQCTL_SRC_POLARITY, pol);
+	ab_irqctl_ग_लिखोreg(gc, AB_IRQCTL_INT_STATUS, im);
 
 	irq_gc_unlock(gc);
 
-	return IRQ_SET_MASK_OK;
-}
+	वापस IRQ_SET_MASK_OK;
+पूर्ण
 
-static void tb10x_irq_cascade(struct irq_desc *desc)
-{
-	struct irq_domain *domain = irq_desc_get_handler_data(desc);
-	unsigned int irq = irq_desc_get_irq(desc);
+अटल व्योम tb10x_irq_cascade(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य = irq_desc_get_handler_data(desc);
+	अचिन्हित पूर्णांक irq = irq_desc_get_irq(desc);
 
-	generic_handle_irq(irq_find_mapping(domain, irq));
-}
+	generic_handle_irq(irq_find_mapping(करोमुख्य, irq));
+पूर्ण
 
-static int __init of_tb10x_init_irq(struct device_node *ictl,
-					struct device_node *parent)
-{
-	int i, ret, nrirqs = of_irq_count(ictl);
-	struct resource mem;
-	struct irq_chip_generic *gc;
-	struct irq_domain *domain;
-	void __iomem *reg_base;
+अटल पूर्णांक __init of_tb10x_init_irq(काष्ठा device_node *ictl,
+					काष्ठा device_node *parent)
+अणु
+	पूर्णांक i, ret, nrirqs = of_irq_count(ictl);
+	काष्ठा resource mem;
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+	व्योम __iomem *reg_base;
 
-	if (of_address_to_resource(ictl, 0, &mem)) {
+	अगर (of_address_to_resource(ictl, 0, &mem)) अणु
 		pr_err("%pOFn: No registers declared in DeviceTree.\n",
 			ictl);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!request_mem_region(mem.start, resource_size(&mem),
-		ictl->full_name)) {
+	अगर (!request_mem_region(mem.start, resource_size(&mem),
+		ictl->full_name)) अणु
 		pr_err("%pOFn: Request mem region failed.\n", ictl);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	reg_base = ioremap(mem.start, resource_size(&mem));
-	if (!reg_base) {
+	अगर (!reg_base) अणु
 		ret = -EBUSY;
 		pr_err("%pOFn: ioremap failed.\n", ictl);
-		goto ioremap_fail;
-	}
+		जाओ ioremap_fail;
+	पूर्ण
 
-	domain = irq_domain_add_linear(ictl, AB_IRQCTL_MAXIRQ,
-					&irq_generic_chip_ops, NULL);
-	if (!domain) {
+	करोमुख्य = irq_करोमुख्य_add_linear(ictl, AB_IRQCTL_MAXIRQ,
+					&irq_generic_chip_ops, शून्य);
+	अगर (!करोमुख्य) अणु
 		ret = -ENOMEM;
 		pr_err("%pOFn: Could not register interrupt domain.\n",
 			ictl);
-		goto irq_domain_add_fail;
-	}
+		जाओ irq_करोमुख्य_add_fail;
+	पूर्ण
 
-	ret = irq_alloc_domain_generic_chips(domain, AB_IRQCTL_MAXIRQ,
+	ret = irq_alloc_करोमुख्य_generic_chips(करोमुख्य, AB_IRQCTL_MAXIRQ,
 				2, ictl->name, handle_level_irq,
 				IRQ_NOREQUEST, IRQ_NOPROBE,
 				IRQ_GC_INIT_MASK_CACHE);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%pOFn: Could not allocate generic interrupt chip.\n",
 			ictl);
-		goto gc_alloc_fail;
-	}
+		जाओ gc_alloc_fail;
+	पूर्ण
 
-	gc = domain->gc->gc[0];
+	gc = करोमुख्य->gc->gc[0];
 	gc->reg_base                         = reg_base;
 
 	gc->chip_types[0].type               = IRQ_TYPE_LEVEL_MASK;
@@ -160,26 +161,26 @@ static int __init of_tb10x_init_irq(struct device_node *ictl,
 	gc->chip_types[1].regs.mask          = AB_IRQCTL_INT_ENABLE;
 	gc->chip_types[1].handler            = handle_edge_irq;
 
-	for (i = 0; i < nrirqs; i++) {
-		unsigned int irq = irq_of_parse_and_map(ictl, i);
+	क्रम (i = 0; i < nrirqs; i++) अणु
+		अचिन्हित पूर्णांक irq = irq_of_parse_and_map(ictl, i);
 
 		irq_set_chained_handler_and_data(irq, tb10x_irq_cascade,
-						 domain);
-	}
+						 करोमुख्य);
+	पूर्ण
 
-	ab_irqctl_writereg(gc, AB_IRQCTL_INT_ENABLE, 0);
-	ab_irqctl_writereg(gc, AB_IRQCTL_INT_MODE, 0);
-	ab_irqctl_writereg(gc, AB_IRQCTL_INT_POLARITY, 0);
-	ab_irqctl_writereg(gc, AB_IRQCTL_INT_STATUS, ~0UL);
+	ab_irqctl_ग_लिखोreg(gc, AB_IRQCTL_INT_ENABLE, 0);
+	ab_irqctl_ग_लिखोreg(gc, AB_IRQCTL_INT_MODE, 0);
+	ab_irqctl_ग_लिखोreg(gc, AB_IRQCTL_INT_POLARITY, 0);
+	ab_irqctl_ग_लिखोreg(gc, AB_IRQCTL_INT_STATUS, ~0UL);
 
-	return 0;
+	वापस 0;
 
 gc_alloc_fail:
-	irq_domain_remove(domain);
-irq_domain_add_fail:
+	irq_करोमुख्य_हटाओ(करोमुख्य);
+irq_करोमुख्य_add_fail:
 	iounmap(reg_base);
 ioremap_fail:
 	release_mem_region(mem.start, resource_size(&mem));
-	return ret;
-}
-IRQCHIP_DECLARE(tb10x_intc, "abilis,tb10x-ictl", of_tb10x_init_irq);
+	वापस ret;
+पूर्ण
+IRQCHIP_DECLARE(tb10x_पूर्णांकc, "abilis,tb10x-ictl", of_tb10x_init_irq);

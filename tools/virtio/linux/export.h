@@ -1,3 +1,4 @@
-#define EXPORT_SYMBOL_GPL(sym) extern typeof(sym) sym
-#define EXPORT_SYMBOL(sym) extern typeof(sym) sym
+<शैली गुरु>
+#घोषणा EXPORT_SYMBOL_GPL(sym) बाह्य typeof(sym) sym
+#घोषणा EXPORT_SYMBOL(sym) बाह्य typeof(sym) sym
 

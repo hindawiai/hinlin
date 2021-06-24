@@ -1,186 +1,187 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCI Endpoint *Function* (EPF) library
+ * PCI Endpoपूर्णांक *Function* (EPF) library
  *
  * Copyright (C) 2017 Texas Instruments
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#include <linux/pci-epc.h>
-#include <linux/pci-epf.h>
-#include <linux/pci-ep-cfs.h>
+#समावेश <linux/pci-epc.h>
+#समावेश <linux/pci-epf.h>
+#समावेश <linux/pci-ep-cfs.h>
 
-static DEFINE_MUTEX(pci_epf_mutex);
+अटल DEFINE_MUTEX(pci_epf_mutex);
 
-static struct bus_type pci_epf_bus_type;
-static const struct device_type pci_epf_type;
+अटल काष्ठा bus_type pci_epf_bus_type;
+अटल स्थिर काष्ठा device_type pci_epf_type;
 
 /**
- * pci_epf_type_add_cfs() - Help function drivers to expose function specific
+ * pci_epf_type_add_cfs() - Help function drivers to expose function specअगरic
  *                          attributes in configfs
  * @epf: the EPF device that has to be configured using configfs
  * @group: the parent configfs group (corresponding to entries in
  *         pci_epf_device_id)
  *
- * Invoke to expose function specific attributes in configfs. If the function
- * driver does not have anything to expose (attributes configured by user),
- * return NULL.
+ * Invoke to expose function specअगरic attributes in configfs. If the function
+ * driver करोes not have anything to expose (attributes configured by user),
+ * वापस शून्य.
  */
-struct config_group *pci_epf_type_add_cfs(struct pci_epf *epf,
-					  struct config_group *group)
-{
-	struct config_group *epf_type_group;
+काष्ठा config_group *pci_epf_type_add_cfs(काष्ठा pci_epf *epf,
+					  काष्ठा config_group *group)
+अणु
+	काष्ठा config_group *epf_type_group;
 
-	if (!epf->driver) {
+	अगर (!epf->driver) अणु
 		dev_err(&epf->dev, "epf device not bound to driver\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!epf->driver->ops->add_cfs)
-		return NULL;
+	अगर (!epf->driver->ops->add_cfs)
+		वापस शून्य;
 
 	mutex_lock(&epf->lock);
 	epf_type_group = epf->driver->ops->add_cfs(epf, group);
 	mutex_unlock(&epf->lock);
 
-	return epf_type_group;
-}
+	वापस epf_type_group;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epf_type_add_cfs);
 
 /**
- * pci_epf_unbind() - Notify the function driver that the binding between the
+ * pci_epf_unbind() - Notअगरy the function driver that the binding between the
  *		      EPF device and EPC device has been lost
  * @epf: the EPF device which has lost the binding with the EPC device
  *
- * Invoke to notify the function driver that the binding between the EPF device
+ * Invoke to notअगरy the function driver that the binding between the EPF device
  * and EPC device has been lost.
  */
-void pci_epf_unbind(struct pci_epf *epf)
-{
-	if (!epf->driver) {
+व्योम pci_epf_unbind(काष्ठा pci_epf *epf)
+अणु
+	अगर (!epf->driver) अणु
 		dev_WARN(&epf->dev, "epf device not bound to driver\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&epf->lock);
 	epf->driver->ops->unbind(epf);
 	mutex_unlock(&epf->lock);
 	module_put(epf->driver->owner);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epf_unbind);
 
 /**
- * pci_epf_bind() - Notify the function driver that the EPF device has been
+ * pci_epf_bind() - Notअगरy the function driver that the EPF device has been
  *		    bound to a EPC device
  * @epf: the EPF device which has been bound to the EPC device
  *
- * Invoke to notify the function driver that it has been bound to a EPC device
+ * Invoke to notअगरy the function driver that it has been bound to a EPC device
  */
-int pci_epf_bind(struct pci_epf *epf)
-{
-	int ret;
+पूर्णांक pci_epf_bind(काष्ठा pci_epf *epf)
+अणु
+	पूर्णांक ret;
 
-	if (!epf->driver) {
+	अगर (!epf->driver) अणु
 		dev_WARN(&epf->dev, "epf device not bound to driver\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!try_module_get(epf->driver->owner))
-		return -EAGAIN;
+	अगर (!try_module_get(epf->driver->owner))
+		वापस -EAGAIN;
 
 	mutex_lock(&epf->lock);
 	ret = epf->driver->ops->bind(epf);
 	mutex_unlock(&epf->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epf_bind);
 
 /**
- * pci_epf_free_space() - free the allocated PCI EPF register space
- * @epf: the EPF device from whom to free the memory
- * @addr: the virtual address of the PCI EPF register space
- * @bar: the BAR number corresponding to the register space
- * @type: Identifies if the allocated space is for primary EPC or secondary EPC
+ * pci_epf_मुक्त_space() - मुक्त the allocated PCI EPF रेजिस्टर space
+ * @epf: the EPF device from whom to मुक्त the memory
+ * @addr: the भव address of the PCI EPF रेजिस्टर space
+ * @bar: the BAR number corresponding to the रेजिस्टर space
+ * @type: Identअगरies अगर the allocated space is क्रम primary EPC or secondary EPC
  *
- * Invoke to free the allocated PCI EPF register space.
+ * Invoke to मुक्त the allocated PCI EPF रेजिस्टर space.
  */
-void pci_epf_free_space(struct pci_epf *epf, void *addr, enum pci_barno bar,
-			enum pci_epc_interface_type type)
-{
-	struct device *dev;
-	struct pci_epf_bar *epf_bar;
-	struct pci_epc *epc;
+व्योम pci_epf_मुक्त_space(काष्ठा pci_epf *epf, व्योम *addr, क्रमागत pci_barno bar,
+			क्रमागत pci_epc_पूर्णांकerface_type type)
+अणु
+	काष्ठा device *dev;
+	काष्ठा pci_epf_bar *epf_bar;
+	काष्ठा pci_epc *epc;
 
-	if (!addr)
-		return;
+	अगर (!addr)
+		वापस;
 
-	if (type == PRIMARY_INTERFACE) {
+	अगर (type == PRIMARY_INTERFACE) अणु
 		epc = epf->epc;
 		epf_bar = epf->bar;
-	} else {
+	पूर्ण अन्यथा अणु
 		epc = epf->sec_epc;
 		epf_bar = epf->sec_epc_bar;
-	}
+	पूर्ण
 
 	dev = epc->dev.parent;
-	dma_free_coherent(dev, epf_bar[bar].size, addr,
+	dma_मुक्त_coherent(dev, epf_bar[bar].size, addr,
 			  epf_bar[bar].phys_addr);
 
 	epf_bar[bar].phys_addr = 0;
-	epf_bar[bar].addr = NULL;
+	epf_bar[bar].addr = शून्य;
 	epf_bar[bar].size = 0;
 	epf_bar[bar].barno = 0;
 	epf_bar[bar].flags = 0;
-}
-EXPORT_SYMBOL_GPL(pci_epf_free_space);
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_epf_मुक्त_space);
 
 /**
- * pci_epf_alloc_space() - allocate memory for the PCI EPF register space
+ * pci_epf_alloc_space() - allocate memory क्रम the PCI EPF रेजिस्टर space
  * @epf: the EPF device to whom allocate the memory
  * @size: the size of the memory that has to be allocated
- * @bar: the BAR number corresponding to the allocated register space
- * @align: alignment size for the allocation region
- * @type: Identifies if the allocation is for primary EPC or secondary EPC
+ * @bar: the BAR number corresponding to the allocated रेजिस्टर space
+ * @align: alignment size क्रम the allocation region
+ * @type: Identअगरies अगर the allocation is क्रम primary EPC or secondary EPC
  *
- * Invoke to allocate memory for the PCI EPF register space.
+ * Invoke to allocate memory क्रम the PCI EPF रेजिस्टर space.
  */
-void *pci_epf_alloc_space(struct pci_epf *epf, size_t size, enum pci_barno bar,
-			  size_t align, enum pci_epc_interface_type type)
-{
-	struct pci_epf_bar *epf_bar;
+व्योम *pci_epf_alloc_space(काष्ठा pci_epf *epf, माप_प्रकार size, क्रमागत pci_barno bar,
+			  माप_प्रकार align, क्रमागत pci_epc_पूर्णांकerface_type type)
+अणु
+	काष्ठा pci_epf_bar *epf_bar;
 	dma_addr_t phys_addr;
-	struct pci_epc *epc;
-	struct device *dev;
-	void *space;
+	काष्ठा pci_epc *epc;
+	काष्ठा device *dev;
+	व्योम *space;
 
-	if (size < 128)
+	अगर (size < 128)
 		size = 128;
 
-	if (align)
+	अगर (align)
 		size = ALIGN(size, align);
-	else
-		size = roundup_pow_of_two(size);
+	अन्यथा
+		size = roundup_घात_of_two(size);
 
-	if (type == PRIMARY_INTERFACE) {
+	अगर (type == PRIMARY_INTERFACE) अणु
 		epc = epf->epc;
 		epf_bar = epf->bar;
-	} else {
+	पूर्ण अन्यथा अणु
 		epc = epf->sec_epc;
 		epf_bar = epf->sec_epc_bar;
-	}
+	पूर्ण
 
 	dev = epc->dev.parent;
 	space = dma_alloc_coherent(dev, size, &phys_addr, GFP_KERNEL);
-	if (!space) {
+	अगर (!space) अणु
 		dev_err(dev, "failed to allocate mem space\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	epf_bar[bar].phys_addr = phys_addr;
 	epf_bar[bar].addr = space;
@@ -190,94 +191,94 @@ void *pci_epf_alloc_space(struct pci_epf *epf, size_t size, enum pci_barno bar,
 				PCI_BASE_ADDRESS_MEM_TYPE_64 :
 				PCI_BASE_ADDRESS_MEM_TYPE_32;
 
-	return space;
-}
+	वापस space;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epf_alloc_space);
 
-static void pci_epf_remove_cfs(struct pci_epf_driver *driver)
-{
-	struct config_group *group, *tmp;
+अटल व्योम pci_epf_हटाओ_cfs(काष्ठा pci_epf_driver *driver)
+अणु
+	काष्ठा config_group *group, *पंचांगp;
 
-	if (!IS_ENABLED(CONFIG_PCI_ENDPOINT_CONFIGFS))
-		return;
+	अगर (!IS_ENABLED(CONFIG_PCI_ENDPOINT_CONFIGFS))
+		वापस;
 
 	mutex_lock(&pci_epf_mutex);
-	list_for_each_entry_safe(group, tmp, &driver->epf_group, group_entry)
-		pci_ep_cfs_remove_epf_group(group);
+	list_क्रम_each_entry_safe(group, पंचांगp, &driver->epf_group, group_entry)
+		pci_ep_cfs_हटाओ_epf_group(group);
 	list_del(&driver->epf_group);
 	mutex_unlock(&pci_epf_mutex);
-}
+पूर्ण
 
 /**
- * pci_epf_unregister_driver() - unregister the PCI EPF driver
- * @driver: the PCI EPF driver that has to be unregistered
+ * pci_epf_unरेजिस्टर_driver() - unरेजिस्टर the PCI EPF driver
+ * @driver: the PCI EPF driver that has to be unरेजिस्टरed
  *
- * Invoke to unregister the PCI EPF driver.
+ * Invoke to unरेजिस्टर the PCI EPF driver.
  */
-void pci_epf_unregister_driver(struct pci_epf_driver *driver)
-{
-	pci_epf_remove_cfs(driver);
-	driver_unregister(&driver->driver);
-}
-EXPORT_SYMBOL_GPL(pci_epf_unregister_driver);
+व्योम pci_epf_unरेजिस्टर_driver(काष्ठा pci_epf_driver *driver)
+अणु
+	pci_epf_हटाओ_cfs(driver);
+	driver_unरेजिस्टर(&driver->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_epf_unरेजिस्टर_driver);
 
-static int pci_epf_add_cfs(struct pci_epf_driver *driver)
-{
-	struct config_group *group;
-	const struct pci_epf_device_id *id;
+अटल पूर्णांक pci_epf_add_cfs(काष्ठा pci_epf_driver *driver)
+अणु
+	काष्ठा config_group *group;
+	स्थिर काष्ठा pci_epf_device_id *id;
 
-	if (!IS_ENABLED(CONFIG_PCI_ENDPOINT_CONFIGFS))
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_PCI_ENDPOINT_CONFIGFS))
+		वापस 0;
 
 	INIT_LIST_HEAD(&driver->epf_group);
 
 	id = driver->id_table;
-	while (id->name[0]) {
+	जबतक (id->name[0]) अणु
 		group = pci_ep_cfs_add_epf_group(id->name);
-		if (IS_ERR(group)) {
-			pci_epf_remove_cfs(driver);
-			return PTR_ERR(group);
-		}
+		अगर (IS_ERR(group)) अणु
+			pci_epf_हटाओ_cfs(driver);
+			वापस PTR_ERR(group);
+		पूर्ण
 
 		mutex_lock(&pci_epf_mutex);
 		list_add_tail(&group->group_entry, &driver->epf_group);
 		mutex_unlock(&pci_epf_mutex);
 		id++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * __pci_epf_register_driver() - register a new PCI EPF driver
- * @driver: structure representing PCI EPF driver
- * @owner: the owner of the module that registers the PCI EPF driver
+ * __pci_epf_रेजिस्टर_driver() - रेजिस्टर a new PCI EPF driver
+ * @driver: काष्ठाure representing PCI EPF driver
+ * @owner: the owner of the module that रेजिस्टरs the PCI EPF driver
  *
- * Invoke to register a new PCI EPF driver.
+ * Invoke to रेजिस्टर a new PCI EPF driver.
  */
-int __pci_epf_register_driver(struct pci_epf_driver *driver,
-			      struct module *owner)
-{
-	int ret;
+पूर्णांक __pci_epf_रेजिस्टर_driver(काष्ठा pci_epf_driver *driver,
+			      काष्ठा module *owner)
+अणु
+	पूर्णांक ret;
 
-	if (!driver->ops)
-		return -EINVAL;
+	अगर (!driver->ops)
+		वापस -EINVAL;
 
-	if (!driver->ops->bind || !driver->ops->unbind)
-		return -EINVAL;
+	अगर (!driver->ops->bind || !driver->ops->unbind)
+		वापस -EINVAL;
 
 	driver->driver.bus = &pci_epf_bus_type;
 	driver->driver.owner = owner;
 
-	ret = driver_register(&driver->driver);
-	if (ret)
-		return ret;
+	ret = driver_रेजिस्टर(&driver->driver);
+	अगर (ret)
+		वापस ret;
 
 	pci_epf_add_cfs(driver);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(__pci_epf_register_driver);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(__pci_epf_रेजिस्टर_driver);
 
 /**
  * pci_epf_destroy() - destroy the created PCI EPF device
@@ -285,10 +286,10 @@ EXPORT_SYMBOL_GPL(__pci_epf_register_driver);
  *
  * Invoke to destroy the PCI EPF device created by invoking pci_epf_create().
  */
-void pci_epf_destroy(struct pci_epf *epf)
-{
-	device_unregister(&epf->dev);
-}
+व्योम pci_epf_destroy(काष्ठा pci_epf *epf)
+अणु
+	device_unरेजिस्टर(&epf->dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epf_destroy);
 
 /**
@@ -299,23 +300,23 @@ EXPORT_SYMBOL_GPL(pci_epf_destroy);
  * Invoke to create a new PCI EPF device by providing the name of the function
  * device.
  */
-struct pci_epf *pci_epf_create(const char *name)
-{
-	int ret;
-	struct pci_epf *epf;
-	struct device *dev;
-	int len;
+काष्ठा pci_epf *pci_epf_create(स्थिर अक्षर *name)
+अणु
+	पूर्णांक ret;
+	काष्ठा pci_epf *epf;
+	काष्ठा device *dev;
+	पूर्णांक len;
 
-	epf = kzalloc(sizeof(*epf), GFP_KERNEL);
-	if (!epf)
-		return ERR_PTR(-ENOMEM);
+	epf = kzalloc(माप(*epf), GFP_KERNEL);
+	अगर (!epf)
+		वापस ERR_PTR(-ENOMEM);
 
-	len = strchrnul(name, '.') - name;
+	len = म_अक्षरnul(name, '.') - name;
 	epf->name = kstrndup(name, len, GFP_KERNEL);
-	if (!epf->name) {
-		kfree(epf);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!epf->name) अणु
+		kमुक्त(epf);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	dev = &epf->dev;
 	device_initialize(dev);
@@ -324,108 +325,108 @@ struct pci_epf *pci_epf_create(const char *name)
 	mutex_init(&epf->lock);
 
 	ret = dev_set_name(dev, "%s", name);
-	if (ret) {
+	अगर (ret) अणु
 		put_device(dev);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	ret = device_add(dev);
-	if (ret) {
+	अगर (ret) अणु
 		put_device(dev);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return epf;
-}
+	वापस epf;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epf_create);
 
-static void pci_epf_dev_release(struct device *dev)
-{
-	struct pci_epf *epf = to_pci_epf(dev);
+अटल व्योम pci_epf_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा pci_epf *epf = to_pci_epf(dev);
 
-	kfree(epf->name);
-	kfree(epf);
-}
+	kमुक्त(epf->name);
+	kमुक्त(epf);
+पूर्ण
 
-static const struct device_type pci_epf_type = {
+अटल स्थिर काष्ठा device_type pci_epf_type = अणु
 	.release	= pci_epf_dev_release,
-};
+पूर्ण;
 
-static int
-pci_epf_match_id(const struct pci_epf_device_id *id, const struct pci_epf *epf)
-{
-	while (id->name[0]) {
-		if (strcmp(epf->name, id->name) == 0)
-			return true;
+अटल पूर्णांक
+pci_epf_match_id(स्थिर काष्ठा pci_epf_device_id *id, स्थिर काष्ठा pci_epf *epf)
+अणु
+	जबतक (id->name[0]) अणु
+		अगर (म_भेद(epf->name, id->name) == 0)
+			वापस true;
 		id++;
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int pci_epf_device_match(struct device *dev, struct device_driver *drv)
-{
-	struct pci_epf *epf = to_pci_epf(dev);
-	struct pci_epf_driver *driver = to_pci_epf_driver(drv);
+अटल पूर्णांक pci_epf_device_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा pci_epf *epf = to_pci_epf(dev);
+	काष्ठा pci_epf_driver *driver = to_pci_epf_driver(drv);
 
-	if (driver->id_table)
-		return pci_epf_match_id(driver->id_table, epf);
+	अगर (driver->id_table)
+		वापस pci_epf_match_id(driver->id_table, epf);
 
-	return !strcmp(epf->name, drv->name);
-}
+	वापस !म_भेद(epf->name, drv->name);
+पूर्ण
 
-static int pci_epf_device_probe(struct device *dev)
-{
-	struct pci_epf *epf = to_pci_epf(dev);
-	struct pci_epf_driver *driver = to_pci_epf_driver(dev->driver);
+अटल पूर्णांक pci_epf_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा pci_epf *epf = to_pci_epf(dev);
+	काष्ठा pci_epf_driver *driver = to_pci_epf_driver(dev->driver);
 
-	if (!driver->probe)
-		return -ENODEV;
+	अगर (!driver->probe)
+		वापस -ENODEV;
 
 	epf->driver = driver;
 
-	return driver->probe(epf);
-}
+	वापस driver->probe(epf);
+पूर्ण
 
-static int pci_epf_device_remove(struct device *dev)
-{
-	int ret = 0;
-	struct pci_epf *epf = to_pci_epf(dev);
-	struct pci_epf_driver *driver = to_pci_epf_driver(dev->driver);
+अटल पूर्णांक pci_epf_device_हटाओ(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा pci_epf *epf = to_pci_epf(dev);
+	काष्ठा pci_epf_driver *driver = to_pci_epf_driver(dev->driver);
 
-	if (driver->remove)
-		ret = driver->remove(epf);
-	epf->driver = NULL;
+	अगर (driver->हटाओ)
+		ret = driver->हटाओ(epf);
+	epf->driver = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct bus_type pci_epf_bus_type = {
+अटल काष्ठा bus_type pci_epf_bus_type = अणु
 	.name		= "pci-epf",
 	.match		= pci_epf_device_match,
 	.probe		= pci_epf_device_probe,
-	.remove		= pci_epf_device_remove,
-};
+	.हटाओ		= pci_epf_device_हटाओ,
+पूर्ण;
 
-static int __init pci_epf_init(void)
-{
-	int ret;
+अटल पूर्णांक __init pci_epf_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = bus_register(&pci_epf_bus_type);
-	if (ret) {
+	ret = bus_रेजिस्टर(&pci_epf_bus_type);
+	अगर (ret) अणु
 		pr_err("failed to register pci epf bus --> %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 module_init(pci_epf_init);
 
-static void __exit pci_epf_exit(void)
-{
-	bus_unregister(&pci_epf_bus_type);
-}
-module_exit(pci_epf_exit);
+अटल व्योम __निकास pci_epf_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&pci_epf_bus_type);
+पूर्ण
+module_निकास(pci_epf_निकास);
 
 MODULE_DESCRIPTION("PCI EPF Library");
 MODULE_AUTHOR("Kishon Vijay Abraham I <kishon@ti.com>");

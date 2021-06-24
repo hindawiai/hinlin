@@ -1,395 +1,396 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * SMBus driver for ACPI SMBus CMI
+ * SMBus driver क्रम ACPI SMBus CMI
  *
  * Copyright (C) 2009 Crane Cai <crane.cai@amd.com>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/stddef.h>
-#include <linux/i2c.h>
-#include <linux/acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/acpi.h>
 
-#define ACPI_SMBUS_HC_CLASS		"smbus"
-#define ACPI_SMBUS_HC_DEVICE_NAME	"cmi"
+#घोषणा ACPI_SMBUS_HC_CLASS		"smbus"
+#घोषणा ACPI_SMBUS_HC_DEVICE_NAME	"cmi"
 
-/* SMBUS HID definition as supported by Microsoft Windows */
-#define ACPI_SMBUS_MS_HID		"SMB0001"
+/* SMBUS HID definition as supported by Microsoft Winकरोws */
+#घोषणा ACPI_SMBUS_MS_HID		"SMB0001"
 
-struct smbus_methods_t {
-	char *mt_info;
-	char *mt_sbr;
-	char *mt_sbw;
-};
+काष्ठा smbus_methods_t अणु
+	अक्षर *mt_info;
+	अक्षर *mt_sbr;
+	अक्षर *mt_sbw;
+पूर्ण;
 
-struct acpi_smbus_cmi {
+काष्ठा acpi_smbus_cmi अणु
 	acpi_handle handle;
-	struct i2c_adapter adapter;
+	काष्ठा i2c_adapter adapter;
 	u8 cap_info:1;
-	u8 cap_read:1;
-	u8 cap_write:1;
-	struct smbus_methods_t *methods;
-};
+	u8 cap_पढ़ो:1;
+	u8 cap_ग_लिखो:1;
+	काष्ठा smbus_methods_t *methods;
+पूर्ण;
 
-static const struct smbus_methods_t smbus_methods = {
+अटल स्थिर काष्ठा smbus_methods_t smbus_methods = अणु
 	.mt_info = "_SBI",
 	.mt_sbr  = "_SBR",
 	.mt_sbw  = "_SBW",
-};
+पूर्ण;
 
 /* Some IBM BIOSes omit the leading underscore */
-static const struct smbus_methods_t ibm_smbus_methods = {
+अटल स्थिर काष्ठा smbus_methods_t ibm_smbus_methods = अणु
 	.mt_info = "SBI_",
 	.mt_sbr  = "SBR_",
 	.mt_sbw  = "SBW_",
-};
+पूर्ण;
 
-static const struct acpi_device_id acpi_smbus_cmi_ids[] = {
-	{"SMBUS01", (kernel_ulong_t)&smbus_methods},
-	{ACPI_SMBUS_IBM_HID, (kernel_ulong_t)&ibm_smbus_methods},
-	{ACPI_SMBUS_MS_HID, (kernel_ulong_t)&smbus_methods},
-	{"", 0}
-};
+अटल स्थिर काष्ठा acpi_device_id acpi_smbus_cmi_ids[] = अणु
+	अणु"SMBUS01", (kernel_uदीर्घ_t)&smbus_methodsपूर्ण,
+	अणुACPI_SMBUS_IBM_HID, (kernel_uदीर्घ_t)&ibm_smbus_methodsपूर्ण,
+	अणुACPI_SMBUS_MS_HID, (kernel_uदीर्घ_t)&smbus_methodsपूर्ण,
+	अणु"", 0पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, acpi_smbus_cmi_ids);
 
-#define ACPI_SMBUS_STATUS_OK			0x00
-#define ACPI_SMBUS_STATUS_FAIL			0x07
-#define ACPI_SMBUS_STATUS_DNAK			0x10
-#define ACPI_SMBUS_STATUS_DERR			0x11
-#define ACPI_SMBUS_STATUS_CMD_DENY		0x12
-#define ACPI_SMBUS_STATUS_UNKNOWN		0x13
-#define ACPI_SMBUS_STATUS_ACC_DENY		0x17
-#define ACPI_SMBUS_STATUS_TIMEOUT		0x18
-#define ACPI_SMBUS_STATUS_NOTSUP		0x19
-#define ACPI_SMBUS_STATUS_BUSY			0x1a
-#define ACPI_SMBUS_STATUS_PEC			0x1f
+#घोषणा ACPI_SMBUS_STATUS_OK			0x00
+#घोषणा ACPI_SMBUS_STATUS_FAIL			0x07
+#घोषणा ACPI_SMBUS_STATUS_DNAK			0x10
+#घोषणा ACPI_SMBUS_STATUS_DERR			0x11
+#घोषणा ACPI_SMBUS_STATUS_CMD_DENY		0x12
+#घोषणा ACPI_SMBUS_STATUS_UNKNOWN		0x13
+#घोषणा ACPI_SMBUS_STATUS_ACC_DENY		0x17
+#घोषणा ACPI_SMBUS_STATUS_TIMEOUT		0x18
+#घोषणा ACPI_SMBUS_STATUS_NOTSUP		0x19
+#घोषणा ACPI_SMBUS_STATUS_BUSY			0x1a
+#घोषणा ACPI_SMBUS_STATUS_PEC			0x1f
 
-#define ACPI_SMBUS_PRTCL_WRITE			0x00
-#define ACPI_SMBUS_PRTCL_READ			0x01
-#define ACPI_SMBUS_PRTCL_QUICK			0x02
-#define ACPI_SMBUS_PRTCL_BYTE			0x04
-#define ACPI_SMBUS_PRTCL_BYTE_DATA		0x06
-#define ACPI_SMBUS_PRTCL_WORD_DATA		0x08
-#define ACPI_SMBUS_PRTCL_BLOCK_DATA		0x0a
+#घोषणा ACPI_SMBUS_PRTCL_WRITE			0x00
+#घोषणा ACPI_SMBUS_PRTCL_READ			0x01
+#घोषणा ACPI_SMBUS_PRTCL_QUICK			0x02
+#घोषणा ACPI_SMBUS_PRTCL_BYTE			0x04
+#घोषणा ACPI_SMBUS_PRTCL_BYTE_DATA		0x06
+#घोषणा ACPI_SMBUS_PRTCL_WORD_DATA		0x08
+#घोषणा ACPI_SMBUS_PRTCL_BLOCK_DATA		0x0a
 
 
-static int
-acpi_smbus_cmi_access(struct i2c_adapter *adap, u16 addr, unsigned short flags,
-		   char read_write, u8 command, int size,
-		   union i2c_smbus_data *data)
-{
-	int result = 0;
-	struct acpi_smbus_cmi *smbus_cmi = adap->algo_data;
-	unsigned char protocol;
+अटल पूर्णांक
+acpi_smbus_cmi_access(काष्ठा i2c_adapter *adap, u16 addr, अचिन्हित लघु flags,
+		   अक्षर पढ़ो_ग_लिखो, u8 command, पूर्णांक size,
+		   जोड़ i2c_smbus_data *data)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा acpi_smbus_cmi *smbus_cmi = adap->algo_data;
+	अचिन्हित अक्षर protocol;
 	acpi_status status = 0;
-	struct acpi_object_list input;
-	union acpi_object mt_params[5];
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *obj;
-	union acpi_object *pkg;
-	char *method;
-	int len = 0;
+	काष्ठा acpi_object_list input;
+	जोड़ acpi_object mt_params[5];
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *obj;
+	जोड़ acpi_object *pkg;
+	अक्षर *method;
+	पूर्णांक len = 0;
 
 	dev_dbg(&adap->dev, "access size: %d %s\n", size,
-		(read_write) ? "READ" : "WRITE");
-	switch (size) {
-	case I2C_SMBUS_QUICK:
+		(पढ़ो_ग_लिखो) ? "READ" : "WRITE");
+	चयन (size) अणु
+	हाल I2C_SMBUS_QUICK:
 		protocol = ACPI_SMBUS_PRTCL_QUICK;
 		command = 0;
-		if (read_write == I2C_SMBUS_WRITE) {
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
 			mt_params[3].type = ACPI_TYPE_INTEGER;
-			mt_params[3].integer.value = 0;
+			mt_params[3].पूर्णांकeger.value = 0;
 			mt_params[4].type = ACPI_TYPE_INTEGER;
-			mt_params[4].integer.value = 0;
-		}
-		break;
+			mt_params[4].पूर्णांकeger.value = 0;
+		पूर्ण
+		अवरोध;
 
-	case I2C_SMBUS_BYTE:
+	हाल I2C_SMBUS_BYTE:
 		protocol = ACPI_SMBUS_PRTCL_BYTE;
-		if (read_write == I2C_SMBUS_WRITE) {
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
 			mt_params[3].type = ACPI_TYPE_INTEGER;
-			mt_params[3].integer.value = 0;
+			mt_params[3].पूर्णांकeger.value = 0;
 			mt_params[4].type = ACPI_TYPE_INTEGER;
-			mt_params[4].integer.value = 0;
-		} else {
+			mt_params[4].पूर्णांकeger.value = 0;
+		पूर्ण अन्यथा अणु
 			command = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case I2C_SMBUS_BYTE_DATA:
+	हाल I2C_SMBUS_BYTE_DATA:
 		protocol = ACPI_SMBUS_PRTCL_BYTE_DATA;
-		if (read_write == I2C_SMBUS_WRITE) {
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
 			mt_params[3].type = ACPI_TYPE_INTEGER;
-			mt_params[3].integer.value = 1;
+			mt_params[3].पूर्णांकeger.value = 1;
 			mt_params[4].type = ACPI_TYPE_INTEGER;
-			mt_params[4].integer.value = data->byte;
-		}
-		break;
+			mt_params[4].पूर्णांकeger.value = data->byte;
+		पूर्ण
+		अवरोध;
 
-	case I2C_SMBUS_WORD_DATA:
+	हाल I2C_SMBUS_WORD_DATA:
 		protocol = ACPI_SMBUS_PRTCL_WORD_DATA;
-		if (read_write == I2C_SMBUS_WRITE) {
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
 			mt_params[3].type = ACPI_TYPE_INTEGER;
-			mt_params[3].integer.value = 2;
+			mt_params[3].पूर्णांकeger.value = 2;
 			mt_params[4].type = ACPI_TYPE_INTEGER;
-			mt_params[4].integer.value = data->word;
-		}
-		break;
+			mt_params[4].पूर्णांकeger.value = data->word;
+		पूर्ण
+		अवरोध;
 
-	case I2C_SMBUS_BLOCK_DATA:
+	हाल I2C_SMBUS_BLOCK_DATA:
 		protocol = ACPI_SMBUS_PRTCL_BLOCK_DATA;
-		if (read_write == I2C_SMBUS_WRITE) {
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
 			len = data->block[0];
-			if (len == 0 || len > I2C_SMBUS_BLOCK_MAX)
-				return -EINVAL;
+			अगर (len == 0 || len > I2C_SMBUS_BLOCK_MAX)
+				वापस -EINVAL;
 			mt_params[3].type = ACPI_TYPE_INTEGER;
-			mt_params[3].integer.value = len;
+			mt_params[3].पूर्णांकeger.value = len;
 			mt_params[4].type = ACPI_TYPE_BUFFER;
 			mt_params[4].buffer.length = len;
-			mt_params[4].buffer.pointer = data->block + 1;
-		}
-		break;
+			mt_params[4].buffer.poपूर्णांकer = data->block + 1;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(&adap->dev, "Unsupported transaction %d\n", size);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (read_write == I2C_SMBUS_READ) {
+	अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ) अणु
 		protocol |= ACPI_SMBUS_PRTCL_READ;
 		method = smbus_cmi->methods->mt_sbr;
 		input.count = 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		protocol |= ACPI_SMBUS_PRTCL_WRITE;
 		method = smbus_cmi->methods->mt_sbw;
 		input.count = 5;
-	}
+	पूर्ण
 
-	input.pointer = mt_params;
+	input.poपूर्णांकer = mt_params;
 	mt_params[0].type = ACPI_TYPE_INTEGER;
-	mt_params[0].integer.value = protocol;
+	mt_params[0].पूर्णांकeger.value = protocol;
 	mt_params[1].type = ACPI_TYPE_INTEGER;
-	mt_params[1].integer.value = addr;
+	mt_params[1].पूर्णांकeger.value = addr;
 	mt_params[2].type = ACPI_TYPE_INTEGER;
-	mt_params[2].integer.value = command;
+	mt_params[2].पूर्णांकeger.value = command;
 
 	status = acpi_evaluate_object(smbus_cmi->handle, method, &input,
 				      &buffer);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_handle_err(smbus_cmi->handle,
 				"Failed to evaluate %s: %i\n", method, status);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	pkg = buffer.pointer;
-	if (pkg && pkg->type == ACPI_TYPE_PACKAGE)
+	pkg = buffer.poपूर्णांकer;
+	अगर (pkg && pkg->type == ACPI_TYPE_PACKAGE)
 		obj = pkg->package.elements;
-	else {
+	अन्यथा अणु
 		acpi_handle_err(smbus_cmi->handle, "Invalid argument type\n");
 		result = -EIO;
-		goto out;
-	}
-	if (obj == NULL || obj->type != ACPI_TYPE_INTEGER) {
+		जाओ out;
+	पूर्ण
+	अगर (obj == शून्य || obj->type != ACPI_TYPE_INTEGER) अणु
 		acpi_handle_err(smbus_cmi->handle, "Invalid argument type\n");
 		result = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	result = obj->integer.value;
+	result = obj->पूर्णांकeger.value;
 	acpi_handle_debug(smbus_cmi->handle,  "%s return status: %i\n", method,
 			  result);
 
-	switch (result) {
-	case ACPI_SMBUS_STATUS_OK:
+	चयन (result) अणु
+	हाल ACPI_SMBUS_STATUS_OK:
 		result = 0;
-		break;
-	case ACPI_SMBUS_STATUS_BUSY:
+		अवरोध;
+	हाल ACPI_SMBUS_STATUS_BUSY:
 		result = -EBUSY;
-		goto out;
-	case ACPI_SMBUS_STATUS_TIMEOUT:
+		जाओ out;
+	हाल ACPI_SMBUS_STATUS_TIMEOUT:
 		result = -ETIMEDOUT;
-		goto out;
-	case ACPI_SMBUS_STATUS_DNAK:
+		जाओ out;
+	हाल ACPI_SMBUS_STATUS_DNAK:
 		result = -ENXIO;
-		goto out;
-	default:
+		जाओ out;
+	शेष:
 		result = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (read_write == I2C_SMBUS_WRITE || size == I2C_SMBUS_QUICK)
-		goto out;
+	अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE || size == I2C_SMBUS_QUICK)
+		जाओ out;
 
 	obj = pkg->package.elements + 1;
-	if (obj->type != ACPI_TYPE_INTEGER) {
+	अगर (obj->type != ACPI_TYPE_INTEGER) अणु
 		acpi_handle_err(smbus_cmi->handle, "Invalid argument type\n");
 		result = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = obj->integer.value;
+	len = obj->पूर्णांकeger.value;
 	obj = pkg->package.elements + 2;
-	switch (size) {
-	case I2C_SMBUS_BYTE:
-	case I2C_SMBUS_BYTE_DATA:
-	case I2C_SMBUS_WORD_DATA:
-		if (obj->type != ACPI_TYPE_INTEGER) {
+	चयन (size) अणु
+	हाल I2C_SMBUS_BYTE:
+	हाल I2C_SMBUS_BYTE_DATA:
+	हाल I2C_SMBUS_WORD_DATA:
+		अगर (obj->type != ACPI_TYPE_INTEGER) अणु
 			acpi_handle_err(smbus_cmi->handle,
 					"Invalid argument type\n");
 			result = -EIO;
-			goto out;
-		}
-		if (len == 2)
-			data->word = obj->integer.value;
-		else
-			data->byte = obj->integer.value;
-		break;
-	case I2C_SMBUS_BLOCK_DATA:
-		if (obj->type != ACPI_TYPE_BUFFER) {
+			जाओ out;
+		पूर्ण
+		अगर (len == 2)
+			data->word = obj->पूर्णांकeger.value;
+		अन्यथा
+			data->byte = obj->पूर्णांकeger.value;
+		अवरोध;
+	हाल I2C_SMBUS_BLOCK_DATA:
+		अगर (obj->type != ACPI_TYPE_BUFFER) अणु
 			acpi_handle_err(smbus_cmi->handle,
 					"Invalid argument type\n");
 			result = -EIO;
-			goto out;
-		}
-		if (len == 0 || len > I2C_SMBUS_BLOCK_MAX)
-			return -EPROTO;
+			जाओ out;
+		पूर्ण
+		अगर (len == 0 || len > I2C_SMBUS_BLOCK_MAX)
+			वापस -EPROTO;
 		data->block[0] = len;
-		memcpy(data->block + 1, obj->buffer.pointer, len);
-		break;
-	}
+		स_नकल(data->block + 1, obj->buffer.poपूर्णांकer, len);
+		अवरोध;
+	पूर्ण
 
 out:
-	kfree(buffer.pointer);
+	kमुक्त(buffer.poपूर्णांकer);
 	dev_dbg(&adap->dev, "Transaction status: %i\n", result);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static u32 acpi_smbus_cmi_func(struct i2c_adapter *adapter)
-{
-	struct acpi_smbus_cmi *smbus_cmi = adapter->algo_data;
+अटल u32 acpi_smbus_cmi_func(काष्ठा i2c_adapter *adapter)
+अणु
+	काष्ठा acpi_smbus_cmi *smbus_cmi = adapter->algo_data;
 	u32 ret;
 
-	ret = smbus_cmi->cap_read | smbus_cmi->cap_write ?
+	ret = smbus_cmi->cap_पढ़ो | smbus_cmi->cap_ग_लिखो ?
 		I2C_FUNC_SMBUS_QUICK : 0;
 
-	ret |= smbus_cmi->cap_read ?
+	ret |= smbus_cmi->cap_पढ़ो ?
 		(I2C_FUNC_SMBUS_READ_BYTE |
 		I2C_FUNC_SMBUS_READ_BYTE_DATA |
 		I2C_FUNC_SMBUS_READ_WORD_DATA |
 		I2C_FUNC_SMBUS_READ_BLOCK_DATA) : 0;
 
-	ret |= smbus_cmi->cap_write ?
+	ret |= smbus_cmi->cap_ग_लिखो ?
 		(I2C_FUNC_SMBUS_WRITE_BYTE |
 		I2C_FUNC_SMBUS_WRITE_BYTE_DATA |
 		I2C_FUNC_SMBUS_WRITE_WORD_DATA |
 		I2C_FUNC_SMBUS_WRITE_BLOCK_DATA) : 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct i2c_algorithm acpi_smbus_cmi_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm acpi_smbus_cmi_algorithm = अणु
 	.smbus_xfer = acpi_smbus_cmi_access,
 	.functionality = acpi_smbus_cmi_func,
-};
+पूर्ण;
 
 
-static int acpi_smbus_cmi_add_cap(struct acpi_smbus_cmi *smbus_cmi,
-				  const char *name)
-{
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	struct acpi_handle *handle = smbus_cmi->handle;
-	union acpi_object *obj;
+अटल पूर्णांक acpi_smbus_cmi_add_cap(काष्ठा acpi_smbus_cmi *smbus_cmi,
+				  स्थिर अक्षर *name)
+अणु
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	काष्ठा acpi_handle *handle = smbus_cmi->handle;
+	जोड़ acpi_object *obj;
 	acpi_status status;
 
-	if (!strcmp(name, smbus_cmi->methods->mt_info)) {
+	अगर (!म_भेद(name, smbus_cmi->methods->mt_info)) अणु
 		status = acpi_evaluate_object(smbus_cmi->handle,
 					smbus_cmi->methods->mt_info,
-					NULL, &buffer);
-		if (ACPI_FAILURE(status)) {
+					शून्य, &buffer);
+		अगर (ACPI_FAILURE(status)) अणु
 			acpi_handle_err(handle, "Failed to evaluate %s: %i\n",
 					smbus_cmi->methods->mt_info, status);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		obj = buffer.pointer;
-		if (obj && obj->type == ACPI_TYPE_PACKAGE)
+		obj = buffer.poपूर्णांकer;
+		अगर (obj && obj->type == ACPI_TYPE_PACKAGE)
 			obj = obj->package.elements;
-		else {
+		अन्यथा अणु
 			acpi_handle_err(handle, "Invalid argument type\n");
-			kfree(buffer.pointer);
-			return -EIO;
-		}
+			kमुक्त(buffer.poपूर्णांकer);
+			वापस -EIO;
+		पूर्ण
 
-		if (obj->type != ACPI_TYPE_INTEGER) {
+		अगर (obj->type != ACPI_TYPE_INTEGER) अणु
 			acpi_handle_err(handle, "Invalid argument type\n");
-			kfree(buffer.pointer);
-			return -EIO;
-		} else
+			kमुक्त(buffer.poपूर्णांकer);
+			वापस -EIO;
+		पूर्ण अन्यथा
 			acpi_handle_debug(handle, "SMBus CMI Version %x\n",
-					  (int)obj->integer.value);
+					  (पूर्णांक)obj->पूर्णांकeger.value);
 
-		kfree(buffer.pointer);
+		kमुक्त(buffer.poपूर्णांकer);
 		smbus_cmi->cap_info = 1;
-	} else if (!strcmp(name, smbus_cmi->methods->mt_sbr))
-		smbus_cmi->cap_read = 1;
-	else if (!strcmp(name, smbus_cmi->methods->mt_sbw))
-		smbus_cmi->cap_write = 1;
-	else
+	पूर्ण अन्यथा अगर (!म_भेद(name, smbus_cmi->methods->mt_sbr))
+		smbus_cmi->cap_पढ़ो = 1;
+	अन्यथा अगर (!म_भेद(name, smbus_cmi->methods->mt_sbw))
+		smbus_cmi->cap_ग_लिखो = 1;
+	अन्यथा
 		acpi_handle_debug(handle, "Unsupported CMI method: %s\n", name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static acpi_status acpi_smbus_cmi_query_methods(acpi_handle handle, u32 level,
-			void *context, void **return_value)
-{
-	char node_name[5];
-	struct acpi_buffer buffer = { sizeof(node_name), node_name };
-	struct acpi_smbus_cmi *smbus_cmi = context;
+अटल acpi_status acpi_smbus_cmi_query_methods(acpi_handle handle, u32 level,
+			व्योम *context, व्योम **वापस_value)
+अणु
+	अक्षर node_name[5];
+	काष्ठा acpi_buffer buffer = अणु माप(node_name), node_name पूर्ण;
+	काष्ठा acpi_smbus_cmi *smbus_cmi = context;
 	acpi_status status;
 
 	status = acpi_get_name(handle, ACPI_SINGLE_NAME, &buffer);
 
-	if (ACPI_SUCCESS(status))
+	अगर (ACPI_SUCCESS(status))
 		acpi_smbus_cmi_add_cap(smbus_cmi, node_name);
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static int acpi_smbus_cmi_add(struct acpi_device *device)
-{
-	struct acpi_smbus_cmi *smbus_cmi;
-	const struct acpi_device_id *id;
-	int ret;
+अटल पूर्णांक acpi_smbus_cmi_add(काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_smbus_cmi *smbus_cmi;
+	स्थिर काष्ठा acpi_device_id *id;
+	पूर्णांक ret;
 
-	smbus_cmi = kzalloc(sizeof(struct acpi_smbus_cmi), GFP_KERNEL);
-	if (!smbus_cmi)
-		return -ENOMEM;
+	smbus_cmi = kzalloc(माप(काष्ठा acpi_smbus_cmi), GFP_KERNEL);
+	अगर (!smbus_cmi)
+		वापस -ENOMEM;
 
 	smbus_cmi->handle = device->handle;
-	strcpy(acpi_device_name(device), ACPI_SMBUS_HC_DEVICE_NAME);
-	strcpy(acpi_device_class(device), ACPI_SMBUS_HC_CLASS);
+	म_नकल(acpi_device_name(device), ACPI_SMBUS_HC_DEVICE_NAME);
+	म_नकल(acpi_device_class(device), ACPI_SMBUS_HC_CLASS);
 	device->driver_data = smbus_cmi;
 	smbus_cmi->cap_info = 0;
-	smbus_cmi->cap_read = 0;
-	smbus_cmi->cap_write = 0;
+	smbus_cmi->cap_पढ़ो = 0;
+	smbus_cmi->cap_ग_लिखो = 0;
 
-	for (id = acpi_smbus_cmi_ids; id->id[0]; id++)
-		if (!strcmp(id->id, acpi_device_hid(device)))
+	क्रम (id = acpi_smbus_cmi_ids; id->id[0]; id++)
+		अगर (!म_भेद(id->id, acpi_device_hid(device)))
 			smbus_cmi->methods =
-				(struct smbus_methods_t *) id->driver_data;
+				(काष्ठा smbus_methods_t *) id->driver_data;
 
 	acpi_walk_namespace(ACPI_TYPE_METHOD, smbus_cmi->handle, 1,
-			    acpi_smbus_cmi_query_methods, NULL, smbus_cmi, NULL);
+			    acpi_smbus_cmi_query_methods, शून्य, smbus_cmi, शून्य);
 
-	if (smbus_cmi->cap_info == 0) {
+	अगर (smbus_cmi->cap_info == 0) अणु
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	snprintf(smbus_cmi->adapter.name, sizeof(smbus_cmi->adapter.name),
+	snम_लिखो(smbus_cmi->adapter.name, माप(smbus_cmi->adapter.name),
 		"SMBus CMI adapter %s",
 		acpi_device_name(device));
 	smbus_cmi->adapter.owner = THIS_MODULE;
@@ -399,39 +400,39 @@ static int acpi_smbus_cmi_add(struct acpi_device *device)
 	smbus_cmi->adapter.dev.parent = &device->dev;
 
 	ret = i2c_add_adapter(&smbus_cmi->adapter);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&device->dev, "Couldn't register adapter!\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	kfree(smbus_cmi);
-	device->driver_data = NULL;
-	return ret;
-}
+	kमुक्त(smbus_cmi);
+	device->driver_data = शून्य;
+	वापस ret;
+पूर्ण
 
-static int acpi_smbus_cmi_remove(struct acpi_device *device)
-{
-	struct acpi_smbus_cmi *smbus_cmi = acpi_driver_data(device);
+अटल पूर्णांक acpi_smbus_cmi_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_smbus_cmi *smbus_cmi = acpi_driver_data(device);
 
 	i2c_del_adapter(&smbus_cmi->adapter);
-	kfree(smbus_cmi);
-	device->driver_data = NULL;
+	kमुक्त(smbus_cmi);
+	device->driver_data = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct acpi_driver acpi_smbus_cmi_driver = {
+अटल काष्ठा acpi_driver acpi_smbus_cmi_driver = अणु
 	.name = ACPI_SMBUS_HC_DEVICE_NAME,
 	.class = ACPI_SMBUS_HC_CLASS,
 	.ids = acpi_smbus_cmi_ids,
-	.ops = {
+	.ops = अणु
 		.add = acpi_smbus_cmi_add,
-		.remove = acpi_smbus_cmi_remove,
-	},
-};
+		.हटाओ = acpi_smbus_cmi_हटाओ,
+	पूर्ण,
+पूर्ण;
 module_acpi_driver(acpi_smbus_cmi_driver);
 
 MODULE_LICENSE("GPL");

@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2012-2019 ARM Limited (or its affiliates). */
 
-#ifndef __CC_SRAM_MGR_H__
-#define __CC_SRAM_MGR_H__
+#अगर_अघोषित __CC_SRAM_MGR_H__
+#घोषणा __CC_SRAM_MGR_H__
 
-#ifndef CC_CC_SRAM_SIZE
-#define CC_CC_SRAM_SIZE 4096
-#endif
+#अगर_अघोषित CC_CC_SRAM_SIZE
+#घोषणा CC_CC_SRAM_SIZE 4096
+#पूर्ण_अगर
 
-struct cc_drvdata;
+काष्ठा cc_drvdata;
 
-#define NULL_SRAM_ADDR ((u32)-1)
+#घोषणा शून्य_SRAM_ADDR ((u32)-1)
 
 /**
  * cc_sram_mgr_init() - Initializes SRAM pool.
- * The first X bytes of SRAM are reserved for ROM usage, hence, pool
+ * The first X bytes of SRAM are reserved क्रम ROM usage, hence, pool
  * starts right after X bytes.
  *
  * @drvdata: Associated device driver context
  *
  * Return:
- * Zero for success, negative value otherwise.
+ * Zero क्रम success, negative value otherwise.
  */
-int cc_sram_mgr_init(struct cc_drvdata *drvdata);
+पूर्णांक cc_sram_mgr_init(काष्ठा cc_drvdata *drvdata);
 
 /**
  * cc_sram_alloc() - Allocate buffer from SRAM pool.
@@ -31,22 +32,22 @@ int cc_sram_mgr_init(struct cc_drvdata *drvdata);
  * @size: The requested bytes to allocate
  *
  * Return:
- * Address offset in SRAM or NULL_SRAM_ADDR for failure.
+ * Address offset in SRAM or शून्य_SRAM_ADDR क्रम failure.
  */
-u32 cc_sram_alloc(struct cc_drvdata *drvdata, u32 size);
+u32 cc_sram_alloc(काष्ठा cc_drvdata *drvdata, u32 size);
 
 /**
- * cc_set_sram_desc() - Create const descriptors sequence to
- *	set values in given array into SRAM.
- * Note: each const value can't exceed word size.
+ * cc_set_sram_desc() - Create स्थिर descriptors sequence to
+ *	set values in given array पूर्णांकo SRAM.
+ * Note: each स्थिर value can't exceed word size.
  *
- * @src:	  A pointer to array of words to set as consts.
- * @dst:	  The target SRAM buffer to set into
+ * @src:	  A poपूर्णांकer to array of words to set as स्थिरs.
+ * @dst:	  The target SRAM buffer to set पूर्णांकo
  * @nelement:	  The number of words in "src" array
- * @seq:	  A pointer to the given IN/OUT descriptor sequence
- * @seq_len:	  A pointer to the given IN/OUT sequence length
+ * @seq:	  A poपूर्णांकer to the given IN/OUT descriptor sequence
+ * @seq_len:	  A poपूर्णांकer to the given IN/OUT sequence length
  */
-void cc_set_sram_desc(const u32 *src, u32 dst, unsigned int nelement,
-		      struct cc_hw_desc *seq, unsigned int *seq_len);
+व्योम cc_set_sram_desc(स्थिर u32 *src, u32 dst, अचिन्हित पूर्णांक nelement,
+		      काष्ठा cc_hw_desc *seq, अचिन्हित पूर्णांक *seq_len);
 
-#endif /*__CC_SRAM_MGR_H__*/
+#पूर्ण_अगर /*__CC_SRAM_MGR_H__*/

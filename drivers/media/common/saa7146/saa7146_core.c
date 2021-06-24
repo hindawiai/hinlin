@@ -1,367 +1,368 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-    saa7146.o - driver for generic saa7146-based hardware
+    saa7146.o - driver क्रम generic saa7146-based hardware
 
     Copyright (C) 1998-2003 Michael Hunold <michael@mihu.de>
 
 */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <media/drv-intf/saa7146.h>
-#include <linux/module.h>
+#समावेश <media/drv-पूर्णांकf/saa7146.h>
+#समावेश <linux/module.h>
 
-static int saa7146_num;
+अटल पूर्णांक saa7146_num;
 
-unsigned int saa7146_debug;
+अचिन्हित पूर्णांक saa7146_debug;
 
-module_param(saa7146_debug, uint, 0644);
+module_param(saa7146_debug, uपूर्णांक, 0644);
 MODULE_PARM_DESC(saa7146_debug, "debug level (default: 0)");
 
-#if 0
-static void dump_registers(struct saa7146_dev* dev)
-{
-	int i = 0;
+#अगर 0
+अटल व्योम dump_रेजिस्टरs(काष्ठा saa7146_dev* dev)
+अणु
+	पूर्णांक i = 0;
 
-	pr_info(" @ %li jiffies:\n", jiffies);
-	for (i = 0; i <= 0x148; i += 4)
-		pr_info("0x%03x: 0x%08x\n", i, saa7146_read(dev, i));
-}
-#endif
+	pr_info(" @ %li jiffies:\n", jअगरfies);
+	क्रम (i = 0; i <= 0x148; i += 4)
+		pr_info("0x%03x: 0x%08x\n", i, saa7146_पढ़ो(dev, i));
+पूर्ण
+#पूर्ण_अगर
 
 /****************************************************************************
  * gpio and debi helper functions
  ****************************************************************************/
 
-void saa7146_setgpio(struct saa7146_dev *dev, int port, u32 data)
-{
+व्योम saa7146_setgpio(काष्ठा saa7146_dev *dev, पूर्णांक port, u32 data)
+अणु
 	u32 value = 0;
 
 	BUG_ON(port > 3);
 
-	value = saa7146_read(dev, GPIO_CTRL);
+	value = saa7146_पढ़ो(dev, GPIO_CTRL);
 	value &= ~(0xff << (8*port));
 	value |= (data << (8*port));
-	saa7146_write(dev, GPIO_CTRL, value);
-}
+	saa7146_ग_लिखो(dev, GPIO_CTRL, value);
+पूर्ण
 
-/* This DEBI code is based on the saa7146 Stradis driver by Nathan Laredo */
-static inline int saa7146_wait_for_debi_done_sleep(struct saa7146_dev *dev,
-				unsigned long us1, unsigned long us2)
-{
-	unsigned long timeout;
-	int err;
+/* This DEBI code is based on the saa7146 Stradis driver by Nathan Lareकरो */
+अटल अंतरभूत पूर्णांक saa7146_रुको_क्रम_debi_करोne_sleep(काष्ठा saa7146_dev *dev,
+				अचिन्हित दीर्घ us1, अचिन्हित दीर्घ us2)
+अणु
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक err;
 
-	/* wait for registers to be programmed */
-	timeout = jiffies + usecs_to_jiffies(us1);
-	while (1) {
-		err = time_after(jiffies, timeout);
-		if (saa7146_read(dev, MC2) & 2)
-			break;
-		if (err) {
+	/* रुको क्रम रेजिस्टरs to be programmed */
+	समयout = jअगरfies + usecs_to_jअगरfies(us1);
+	जबतक (1) अणु
+		err = समय_after(jअगरfies, समयout);
+		अगर (saa7146_पढ़ो(dev, MC2) & 2)
+			अवरोध;
+		अगर (err) अणु
 			pr_debug("%s: %s timed out while waiting for registers getting programmed\n",
 			       dev->name, __func__);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		msleep(1);
-	}
+	पूर्ण
 
-	/* wait for transfer to complete */
-	timeout = jiffies + usecs_to_jiffies(us2);
-	while (1) {
-		err = time_after(jiffies, timeout);
-		if (!(saa7146_read(dev, PSR) & SPCI_DEBI_S))
-			break;
-		saa7146_read(dev, MC2);
-		if (err) {
+	/* रुको क्रम transfer to complete */
+	समयout = jअगरfies + usecs_to_jअगरfies(us2);
+	जबतक (1) अणु
+		err = समय_after(jअगरfies, समयout);
+		अगर (!(saa7146_पढ़ो(dev, PSR) & SPCI_DEBI_S))
+			अवरोध;
+		saa7146_पढ़ो(dev, MC2);
+		अगर (err) अणु
 			DEB_S("%s: %s timed out while waiting for transfer completion\n",
 			      dev->name, __func__);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		msleep(1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int saa7146_wait_for_debi_done_busyloop(struct saa7146_dev *dev,
-				unsigned long us1, unsigned long us2)
-{
-	unsigned long loops;
+अटल अंतरभूत पूर्णांक saa7146_रुको_क्रम_debi_करोne_busyloop(काष्ठा saa7146_dev *dev,
+				अचिन्हित दीर्घ us1, अचिन्हित दीर्घ us2)
+अणु
+	अचिन्हित दीर्घ loops;
 
-	/* wait for registers to be programmed */
+	/* रुको क्रम रेजिस्टरs to be programmed */
 	loops = us1;
-	while (1) {
-		if (saa7146_read(dev, MC2) & 2)
-			break;
-		if (!loops--) {
+	जबतक (1) अणु
+		अगर (saa7146_पढ़ो(dev, MC2) & 2)
+			अवरोध;
+		अगर (!loops--) अणु
 			pr_err("%s: %s timed out while waiting for registers getting programmed\n",
 			       dev->name, __func__);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		udelay(1);
-	}
+	पूर्ण
 
-	/* wait for transfer to complete */
+	/* रुको क्रम transfer to complete */
 	loops = us2 / 5;
-	while (1) {
-		if (!(saa7146_read(dev, PSR) & SPCI_DEBI_S))
-			break;
-		saa7146_read(dev, MC2);
-		if (!loops--) {
+	जबतक (1) अणु
+		अगर (!(saa7146_पढ़ो(dev, PSR) & SPCI_DEBI_S))
+			अवरोध;
+		saa7146_पढ़ो(dev, MC2);
+		अगर (!loops--) अणु
 			DEB_S("%s: %s timed out while waiting for transfer completion\n",
 			      dev->name, __func__);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		udelay(5);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int saa7146_wait_for_debi_done(struct saa7146_dev *dev, int nobusyloop)
-{
-	if (nobusyloop)
-		return saa7146_wait_for_debi_done_sleep(dev, 50000, 250000);
-	else
-		return saa7146_wait_for_debi_done_busyloop(dev, 50000, 250000);
-}
+पूर्णांक saa7146_रुको_क्रम_debi_करोne(काष्ठा saa7146_dev *dev, पूर्णांक nobusyloop)
+अणु
+	अगर (nobusyloop)
+		वापस saa7146_रुको_क्रम_debi_करोne_sleep(dev, 50000, 250000);
+	अन्यथा
+		वापस saa7146_रुको_क्रम_debi_करोne_busyloop(dev, 50000, 250000);
+पूर्ण
 
 /****************************************************************************
  * general helper functions
  ****************************************************************************/
 
-/* this is videobuf_vmalloc_to_sg() from videobuf-dma-sg.c
-   make sure virt has been allocated with vmalloc_32(), otherwise the BUG()
+/* this is videobuf_vदो_स्मृति_to_sg() from videobuf-dma-sg.c
+   make sure virt has been allocated with vदो_स्मृति_32(), otherwise the BUG()
    may be triggered on highmem machines */
-static struct scatterlist* vmalloc_to_sg(unsigned char *virt, int nr_pages)
-{
-	struct scatterlist *sglist;
-	struct page *pg;
-	int i;
+अटल काष्ठा scatterlist* vदो_स्मृति_to_sg(अचिन्हित अक्षर *virt, पूर्णांक nr_pages)
+अणु
+	काष्ठा scatterlist *sglist;
+	काष्ठा page *pg;
+	पूर्णांक i;
 
-	sglist = kmalloc_array(nr_pages, sizeof(struct scatterlist), GFP_KERNEL);
-	if (NULL == sglist)
-		return NULL;
+	sglist = kदो_स्मृति_array(nr_pages, माप(काष्ठा scatterlist), GFP_KERNEL);
+	अगर (शून्य == sglist)
+		वापस शून्य;
 	sg_init_table(sglist, nr_pages);
-	for (i = 0; i < nr_pages; i++, virt += PAGE_SIZE) {
-		pg = vmalloc_to_page(virt);
-		if (NULL == pg)
-			goto err;
+	क्रम (i = 0; i < nr_pages; i++, virt += PAGE_SIZE) अणु
+		pg = vदो_स्मृति_to_page(virt);
+		अगर (शून्य == pg)
+			जाओ err;
 		BUG_ON(PageHighMem(pg));
 		sg_set_page(&sglist[i], pg, PAGE_SIZE, 0);
-	}
-	return sglist;
+	पूर्ण
+	वापस sglist;
 
  err:
-	kfree(sglist);
-	return NULL;
-}
+	kमुक्त(sglist);
+	वापस शून्य;
+पूर्ण
 
 /********************************************************************************/
 /* common page table functions */
 
-void *saa7146_vmalloc_build_pgtable(struct pci_dev *pci, long length, struct saa7146_pgtable *pt)
-{
-	int pages = (length+PAGE_SIZE-1)/PAGE_SIZE;
-	void *mem = vmalloc_32(length);
-	int slen = 0;
+व्योम *saa7146_vदो_स्मृति_build_pgtable(काष्ठा pci_dev *pci, दीर्घ length, काष्ठा saa7146_pgtable *pt)
+अणु
+	पूर्णांक pages = (length+PAGE_SIZE-1)/PAGE_SIZE;
+	व्योम *mem = vदो_स्मृति_32(length);
+	पूर्णांक slen = 0;
 
-	if (NULL == mem)
-		goto err_null;
+	अगर (शून्य == mem)
+		जाओ err_null;
 
-	if (!(pt->slist = vmalloc_to_sg(mem, pages)))
-		goto err_free_mem;
+	अगर (!(pt->slist = vदो_स्मृति_to_sg(mem, pages)))
+		जाओ err_मुक्त_mem;
 
-	if (saa7146_pgtable_alloc(pci, pt))
-		goto err_free_slist;
+	अगर (saa7146_pgtable_alloc(pci, pt))
+		जाओ err_मुक्त_slist;
 
 	pt->nents = pages;
 	slen = dma_map_sg(&pci->dev, pt->slist, pt->nents, DMA_FROM_DEVICE);
-	if (0 == slen)
-		goto err_free_pgtable;
+	अगर (0 == slen)
+		जाओ err_मुक्त_pgtable;
 
-	if (0 != saa7146_pgtable_build_single(pci, pt, pt->slist, slen))
-		goto err_unmap_sg;
+	अगर (0 != saa7146_pgtable_build_single(pci, pt, pt->slist, slen))
+		जाओ err_unmap_sg;
 
-	return mem;
+	वापस mem;
 
 err_unmap_sg:
 	dma_unmap_sg(&pci->dev, pt->slist, pt->nents, DMA_FROM_DEVICE);
-err_free_pgtable:
-	saa7146_pgtable_free(pci, pt);
-err_free_slist:
-	kfree(pt->slist);
-	pt->slist = NULL;
-err_free_mem:
-	vfree(mem);
+err_मुक्त_pgtable:
+	saa7146_pgtable_मुक्त(pci, pt);
+err_मुक्त_slist:
+	kमुक्त(pt->slist);
+	pt->slist = शून्य;
+err_मुक्त_mem:
+	vमुक्त(mem);
 err_null:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void saa7146_vfree_destroy_pgtable(struct pci_dev *pci, void *mem, struct saa7146_pgtable *pt)
-{
+व्योम saa7146_vमुक्त_destroy_pgtable(काष्ठा pci_dev *pci, व्योम *mem, काष्ठा saa7146_pgtable *pt)
+अणु
 	dma_unmap_sg(&pci->dev, pt->slist, pt->nents, DMA_FROM_DEVICE);
-	saa7146_pgtable_free(pci, pt);
-	kfree(pt->slist);
-	pt->slist = NULL;
-	vfree(mem);
-}
+	saa7146_pgtable_मुक्त(pci, pt);
+	kमुक्त(pt->slist);
+	pt->slist = शून्य;
+	vमुक्त(mem);
+पूर्ण
 
-void saa7146_pgtable_free(struct pci_dev *pci, struct saa7146_pgtable *pt)
-{
-	if (NULL == pt->cpu)
-		return;
-	dma_free_coherent(&pci->dev, pt->size, pt->cpu, pt->dma);
-	pt->cpu = NULL;
-}
+व्योम saa7146_pgtable_मुक्त(काष्ठा pci_dev *pci, काष्ठा saa7146_pgtable *pt)
+अणु
+	अगर (शून्य == pt->cpu)
+		वापस;
+	dma_मुक्त_coherent(&pci->dev, pt->size, pt->cpu, pt->dma);
+	pt->cpu = शून्य;
+पूर्ण
 
-int saa7146_pgtable_alloc(struct pci_dev *pci, struct saa7146_pgtable *pt)
-{
+पूर्णांक saa7146_pgtable_alloc(काष्ठा pci_dev *pci, काष्ठा saa7146_pgtable *pt)
+अणु
 	__le32       *cpu;
 	dma_addr_t   dma_addr = 0;
 
 	cpu = dma_alloc_coherent(&pci->dev, PAGE_SIZE, &dma_addr, GFP_KERNEL);
-	if (NULL == cpu) {
-		return -ENOMEM;
-	}
+	अगर (शून्य == cpu) अणु
+		वापस -ENOMEM;
+	पूर्ण
 	pt->size = PAGE_SIZE;
 	pt->cpu  = cpu;
 	pt->dma  = dma_addr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int saa7146_pgtable_build_single(struct pci_dev *pci, struct saa7146_pgtable *pt,
-	struct scatterlist *list, int sglen  )
-{
+पूर्णांक saa7146_pgtable_build_single(काष्ठा pci_dev *pci, काष्ठा saa7146_pgtable *pt,
+	काष्ठा scatterlist *list, पूर्णांक sglen  )
+अणु
 	__le32 *ptr, fill;
-	int nr_pages = 0;
-	int i,p;
+	पूर्णांक nr_pages = 0;
+	पूर्णांक i,p;
 
 	BUG_ON(0 == sglen);
 	BUG_ON(list->offset > PAGE_SIZE);
 
-	/* if we have a user buffer, the first page may not be
+	/* अगर we have a user buffer, the first page may not be
 	   aligned to a page boundary. */
 	pt->offset = list->offset;
 
 	ptr = pt->cpu;
-	for (i = 0; i < sglen; i++, list++) {
+	क्रम (i = 0; i < sglen; i++, list++) अणु
 /*
 		pr_debug("i:%d, adr:0x%08x, len:%d, offset:%d\n",
 			 i, sg_dma_address(list), sg_dma_len(list),
 			 list->offset);
 */
-		for (p = 0; p * 4096 < sg_dma_len(list); p++, ptr++) {
+		क्रम (p = 0; p * 4096 < sg_dma_len(list); p++, ptr++) अणु
 			*ptr = cpu_to_le32(sg_dma_address(list) + p * 4096);
 			nr_pages++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 
 	/* safety; fill the page table up with the last valid page */
 	fill = *(ptr-1);
-	for(i=nr_pages;i<1024;i++) {
+	क्रम(i=nr_pages;i<1024;i++) अणु
 		*ptr++ = fill;
-	}
+	पूर्ण
 
 /*
 	ptr = pt->cpu;
 	pr_debug("offset: %d\n", pt->offset);
-	for(i=0;i<5;i++) {
+	क्रम(i=0;i<5;i++) अणु
 		pr_debug("ptr1 %d: 0x%08x\n", i, ptr[i]);
-	}
+	पूर्ण
 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /********************************************************************************/
-/* interrupt handler */
-static irqreturn_t interrupt_hw(int irq, void *dev_id)
-{
-	struct saa7146_dev *dev = dev_id;
+/* पूर्णांकerrupt handler */
+अटल irqवापस_t पूर्णांकerrupt_hw(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा saa7146_dev *dev = dev_id;
 	u32 isr;
 	u32 ack_isr;
 
-	/* read out the interrupt status register */
-	ack_isr = isr = saa7146_read(dev, ISR);
+	/* पढ़ो out the पूर्णांकerrupt status रेजिस्टर */
+	ack_isr = isr = saa7146_पढ़ो(dev, ISR);
 
-	/* is this our interrupt? */
-	if ( 0 == isr ) {
+	/* is this our पूर्णांकerrupt? */
+	अगर ( 0 == isr ) अणु
 		/* nope, some other device */
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (dev->ext) {
-		if (dev->ext->irq_mask & isr) {
-			if (dev->ext->irq_func)
+	अगर (dev->ext) अणु
+		अगर (dev->ext->irq_mask & isr) अणु
+			अगर (dev->ext->irq_func)
 				dev->ext->irq_func(dev, &isr);
 			isr &= ~dev->ext->irq_mask;
-		}
-	}
-	if (0 != (isr & (MASK_27))) {
+		पूर्ण
+	पूर्ण
+	अगर (0 != (isr & (MASK_27))) अणु
 		DEB_INT("irq: RPS0 (0x%08x)\n", isr);
-		if (dev->vv_data && dev->vv_callback)
+		अगर (dev->vv_data && dev->vv_callback)
 			dev->vv_callback(dev,isr);
 		isr &= ~MASK_27;
-	}
-	if (0 != (isr & (MASK_28))) {
-		if (dev->vv_data && dev->vv_callback)
+	पूर्ण
+	अगर (0 != (isr & (MASK_28))) अणु
+		अगर (dev->vv_data && dev->vv_callback)
 			dev->vv_callback(dev,isr);
 		isr &= ~MASK_28;
-	}
-	if (0 != (isr & (MASK_16|MASK_17))) {
+	पूर्ण
+	अगर (0 != (isr & (MASK_16|MASK_17))) अणु
 		SAA7146_IER_DISABLE(dev, MASK_16|MASK_17);
-		/* only wake up if we expect something */
-		if (0 != dev->i2c_op) {
+		/* only wake up अगर we expect something */
+		अगर (0 != dev->i2c_op) अणु
 			dev->i2c_op = 0;
 			wake_up(&dev->i2c_wq);
-		} else {
-			u32 psr = saa7146_read(dev, PSR);
-			u32 ssr = saa7146_read(dev, SSR);
+		पूर्ण अन्यथा अणु
+			u32 psr = saa7146_पढ़ो(dev, PSR);
+			u32 ssr = saa7146_पढ़ो(dev, SSR);
 			pr_warn("%s: unexpected i2c irq: isr %08x psr %08x ssr %08x\n",
 				dev->name, isr, psr, ssr);
-		}
+		पूर्ण
 		isr &= ~(MASK_16|MASK_17);
-	}
-	if( 0 != isr ) {
+	पूर्ण
+	अगर( 0 != isr ) अणु
 		ERR("warning: interrupt enabled, but not handled properly.(0x%08x)\n",
 		    isr);
 		ERR("disabling interrupt source(s)!\n");
 		SAA7146_IER_DISABLE(dev,isr);
-	}
-	saa7146_write(dev, ISR, ack_isr);
-	return IRQ_HANDLED;
-}
+	पूर्ण
+	saa7146_ग_लिखो(dev, ISR, ack_isr);
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*********************************************************************************/
 /* configuration-functions                                                       */
 
-static int saa7146_init_one(struct pci_dev *pci, const struct pci_device_id *ent)
-{
-	struct saa7146_pci_extension_data *pci_ext = (struct saa7146_pci_extension_data *)ent->driver_data;
-	struct saa7146_extension *ext = pci_ext->ext;
-	struct saa7146_dev *dev;
-	int err = -ENOMEM;
+अटल पूर्णांक saa7146_init_one(काष्ठा pci_dev *pci, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा saa7146_pci_extension_data *pci_ext = (काष्ठा saa7146_pci_extension_data *)ent->driver_data;
+	काष्ठा saa7146_extension *ext = pci_ext->ext;
+	काष्ठा saa7146_dev *dev;
+	पूर्णांक err = -ENOMEM;
 
-	/* clear out mem for sure */
-	dev = kzalloc(sizeof(struct saa7146_dev), GFP_KERNEL);
-	if (!dev) {
+	/* clear out mem क्रम sure */
+	dev = kzalloc(माप(काष्ठा saa7146_dev), GFP_KERNEL);
+	अगर (!dev) अणु
 		ERR("out of memory\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* create a nice device name */
-	sprintf(dev->name, "saa7146 (%d)", saa7146_num);
+	प्र_लिखो(dev->name, "saa7146 (%d)", saa7146_num);
 
 	DEB_EE("pci:%p\n", pci);
 
 	err = pci_enable_device(pci);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		ERR("pci_enable_device() failed\n");
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	/* enable bus-mastering */
 	pci_set_master(pci);
@@ -371,98 +372,98 @@ static int saa7146_init_one(struct pci_dev *pci, const struct pci_device_id *ent
 	/* get chip-revision; this is needed to enable bug-fixes */
 	dev->revision = pci->revision;
 
-	/* remap the memory from virtual to physical address */
+	/* remap the memory from भव to physical address */
 
 	err = pci_request_region(pci, 0, "saa7146");
-	if (err < 0)
-		goto err_disable;
+	अगर (err < 0)
+		जाओ err_disable;
 
 	dev->mem = ioremap(pci_resource_start(pci, 0),
 			   pci_resource_len(pci, 0));
-	if (!dev->mem) {
+	अगर (!dev->mem) अणु
 		ERR("ioremap() failed\n");
 		err = -ENODEV;
-		goto err_release;
-	}
+		जाओ err_release;
+	पूर्ण
 
-	/* we don't do a master reset here anymore, it screws up
-	   some boards that don't have an i2c-eeprom for configuration
+	/* we करोn't करो a master reset here anymore, it screws up
+	   some boards that करोn't have an i2c-eeprom क्रम configuration
 	   values */
 /*
-	saa7146_write(dev, MC1, MASK_31);
+	saa7146_ग_लिखो(dev, MC1, MASK_31);
 */
 
 	/* disable all irqs */
-	saa7146_write(dev, IER, 0);
+	saa7146_ग_लिखो(dev, IER, 0);
 
-	/* shut down all dma transfers and rps tasks */
-	saa7146_write(dev, MC1, 0x30ff0000);
+	/* shut करोwn all dma transfers and rps tasks */
+	saa7146_ग_लिखो(dev, MC1, 0x30ff0000);
 
-	/* clear out any rps-signals pending */
-	saa7146_write(dev, MC2, 0xf8000000);
+	/* clear out any rps-संकेतs pending */
+	saa7146_ग_लिखो(dev, MC2, 0xf8000000);
 
-	/* request an interrupt for the saa7146 */
-	err = request_irq(pci->irq, interrupt_hw, IRQF_SHARED,
+	/* request an पूर्णांकerrupt क्रम the saa7146 */
+	err = request_irq(pci->irq, पूर्णांकerrupt_hw, IRQF_SHARED,
 			  dev->name, dev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		ERR("request_irq() failed\n");
-		goto err_unmap;
-	}
+		जाओ err_unmap;
+	पूर्ण
 
 	err = -ENOMEM;
 
-	/* get memory for various stuff */
+	/* get memory क्रम various stuff */
 	dev->d_rps0.cpu_addr = dma_alloc_coherent(&pci->dev, SAA7146_RPS_MEM,
 						  &dev->d_rps0.dma_handle,
 						  GFP_KERNEL);
-	if (!dev->d_rps0.cpu_addr)
-		goto err_free_irq;
+	अगर (!dev->d_rps0.cpu_addr)
+		जाओ err_मुक्त_irq;
 
 	dev->d_rps1.cpu_addr = dma_alloc_coherent(&pci->dev, SAA7146_RPS_MEM,
 						  &dev->d_rps1.dma_handle,
 						  GFP_KERNEL);
-	if (!dev->d_rps1.cpu_addr)
-		goto err_free_rps0;
+	अगर (!dev->d_rps1.cpu_addr)
+		जाओ err_मुक्त_rps0;
 
 	dev->d_i2c.cpu_addr = dma_alloc_coherent(&pci->dev, SAA7146_RPS_MEM,
 						 &dev->d_i2c.dma_handle, GFP_KERNEL);
-	if (!dev->d_i2c.cpu_addr)
-		goto err_free_rps1;
+	अगर (!dev->d_i2c.cpu_addr)
+		जाओ err_मुक्त_rps1;
 
-	/* the rest + print status message */
+	/* the rest + prपूर्णांक status message */
 
 	pr_info("found saa7146 @ mem %p (revision %d, irq %d) (0x%04x,0x%04x)\n",
 		dev->mem, dev->revision, pci->irq,
-		pci->subsystem_vendor, pci->subsystem_device);
+		pci->subप्रणाली_venकरोr, pci->subप्रणाली_device);
 	dev->ext = ext;
 
 	mutex_init(&dev->v4l2_lock);
-	spin_lock_init(&dev->int_slock);
+	spin_lock_init(&dev->पूर्णांक_slock);
 	spin_lock_init(&dev->slock);
 
 	mutex_init(&dev->i2c_lock);
 
 	dev->module = THIS_MODULE;
-	init_waitqueue_head(&dev->i2c_wq);
+	init_रुकोqueue_head(&dev->i2c_wq);
 
 	/* set some sane pci arbitrition values */
-	saa7146_write(dev, PCI_BT_V1, 0x1c00101f);
+	saa7146_ग_लिखो(dev, PCI_BT_V1, 0x1c00101f);
 
 	/* TODO: use the status code of the callback */
 
 	err = -ENODEV;
 
-	if (ext->probe && ext->probe(dev)) {
+	अगर (ext->probe && ext->probe(dev)) अणु
 		DEB_D("ext->probe() failed for %p. skipping device.\n", dev);
-		goto err_free_i2c;
-	}
+		जाओ err_मुक्त_i2c;
+	पूर्ण
 
-	if (ext->attach(dev, pci_ext)) {
+	अगर (ext->attach(dev, pci_ext)) अणु
 		DEB_D("ext->attach() failed for %p. skipping device.\n", dev);
-		goto err_free_i2c;
-	}
+		जाओ err_मुक्त_i2c;
+	पूर्ण
 	/* V4L extensions will set the pci drvdata to the v4l2_device in the
-	   attach() above. So for those cards that do not use V4L we have to
+	   attach() above. So क्रम those cards that करो not use V4L we have to
 	   set it explicitly. */
 	pci_set_drvdata(pci, &dev->v4l2_dev);
 
@@ -470,102 +471,102 @@ static int saa7146_init_one(struct pci_dev *pci, const struct pci_device_id *ent
 
 	err = 0;
 out:
-	return err;
+	वापस err;
 
-err_free_i2c:
-	dma_free_coherent(&pci->dev, SAA7146_RPS_MEM, dev->d_i2c.cpu_addr,
+err_मुक्त_i2c:
+	dma_मुक्त_coherent(&pci->dev, SAA7146_RPS_MEM, dev->d_i2c.cpu_addr,
 			  dev->d_i2c.dma_handle);
-err_free_rps1:
-	dma_free_coherent(&pci->dev, SAA7146_RPS_MEM, dev->d_rps1.cpu_addr,
+err_मुक्त_rps1:
+	dma_मुक्त_coherent(&pci->dev, SAA7146_RPS_MEM, dev->d_rps1.cpu_addr,
 			  dev->d_rps1.dma_handle);
-err_free_rps0:
-	dma_free_coherent(&pci->dev, SAA7146_RPS_MEM, dev->d_rps0.cpu_addr,
+err_मुक्त_rps0:
+	dma_मुक्त_coherent(&pci->dev, SAA7146_RPS_MEM, dev->d_rps0.cpu_addr,
 			  dev->d_rps0.dma_handle);
-err_free_irq:
-	free_irq(pci->irq, (void *)dev);
+err_मुक्त_irq:
+	मुक्त_irq(pci->irq, (व्योम *)dev);
 err_unmap:
 	iounmap(dev->mem);
 err_release:
 	pci_release_region(pci, 0);
 err_disable:
 	pci_disable_device(pci);
-err_free:
-	kfree(dev);
-	goto out;
-}
+err_मुक्त:
+	kमुक्त(dev);
+	जाओ out;
+पूर्ण
 
-static void saa7146_remove_one(struct pci_dev *pdev)
-{
-	struct v4l2_device *v4l2_dev = pci_get_drvdata(pdev);
-	struct saa7146_dev *dev = to_saa7146_dev(v4l2_dev);
-	struct {
-		void *addr;
+अटल व्योम saa7146_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा v4l2_device *v4l2_dev = pci_get_drvdata(pdev);
+	काष्ठा saa7146_dev *dev = to_saa7146_dev(v4l2_dev);
+	काष्ठा अणु
+		व्योम *addr;
 		dma_addr_t dma;
-	} dev_map[] = {
-		{ dev->d_i2c.cpu_addr, dev->d_i2c.dma_handle },
-		{ dev->d_rps1.cpu_addr, dev->d_rps1.dma_handle },
-		{ dev->d_rps0.cpu_addr, dev->d_rps0.dma_handle },
-		{ NULL, 0 }
-	}, *p;
+	पूर्ण dev_map[] = अणु
+		अणु dev->d_i2c.cpu_addr, dev->d_i2c.dma_handle पूर्ण,
+		अणु dev->d_rps1.cpu_addr, dev->d_rps1.dma_handle पूर्ण,
+		अणु dev->d_rps0.cpu_addr, dev->d_rps0.dma_handle पूर्ण,
+		अणु शून्य, 0 पूर्ण
+	पूर्ण, *p;
 
 	DEB_EE("dev:%p\n", dev);
 
 	dev->ext->detach(dev);
 
-	/* shut down all video dma transfers */
-	saa7146_write(dev, MC1, 0x00ff0000);
+	/* shut करोwn all video dma transfers */
+	saa7146_ग_लिखो(dev, MC1, 0x00ff0000);
 
 	/* disable all irqs, release irq-routine */
-	saa7146_write(dev, IER, 0);
+	saa7146_ग_लिखो(dev, IER, 0);
 
-	free_irq(pdev->irq, dev);
+	मुक्त_irq(pdev->irq, dev);
 
-	for (p = dev_map; p->addr; p++)
-		dma_free_coherent(&pdev->dev, SAA7146_RPS_MEM, p->addr,
+	क्रम (p = dev_map; p->addr; p++)
+		dma_मुक्त_coherent(&pdev->dev, SAA7146_RPS_MEM, p->addr,
 				  p->dma);
 
 	iounmap(dev->mem);
 	pci_release_region(pdev, 0);
 	pci_disable_device(pdev);
-	kfree(dev);
+	kमुक्त(dev);
 
 	saa7146_num--;
-}
+पूर्ण
 
 /*********************************************************************************/
 /* extension handling functions                                                  */
 
-int saa7146_register_extension(struct saa7146_extension* ext)
-{
+पूर्णांक saa7146_रेजिस्टर_extension(काष्ठा saa7146_extension* ext)
+अणु
 	DEB_EE("ext:%p\n", ext);
 
 	ext->driver.name = ext->name;
 	ext->driver.id_table = ext->pci_tbl;
 	ext->driver.probe = saa7146_init_one;
-	ext->driver.remove = saa7146_remove_one;
+	ext->driver.हटाओ = saa7146_हटाओ_one;
 
 	pr_info("register extension '%s'\n", ext->name);
-	return pci_register_driver(&ext->driver);
-}
+	वापस pci_रेजिस्टर_driver(&ext->driver);
+पूर्ण
 
-int saa7146_unregister_extension(struct saa7146_extension* ext)
-{
+पूर्णांक saa7146_unरेजिस्टर_extension(काष्ठा saa7146_extension* ext)
+अणु
 	DEB_EE("ext:%p\n", ext);
 	pr_info("unregister extension '%s'\n", ext->name);
-	pci_unregister_driver(&ext->driver);
-	return 0;
-}
+	pci_unरेजिस्टर_driver(&ext->driver);
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL_GPL(saa7146_register_extension);
-EXPORT_SYMBOL_GPL(saa7146_unregister_extension);
+EXPORT_SYMBOL_GPL(saa7146_रेजिस्टर_extension);
+EXPORT_SYMBOL_GPL(saa7146_unरेजिस्टर_extension);
 
 /* misc functions used by extension modules */
 EXPORT_SYMBOL_GPL(saa7146_pgtable_alloc);
-EXPORT_SYMBOL_GPL(saa7146_pgtable_free);
+EXPORT_SYMBOL_GPL(saa7146_pgtable_मुक्त);
 EXPORT_SYMBOL_GPL(saa7146_pgtable_build_single);
-EXPORT_SYMBOL_GPL(saa7146_vmalloc_build_pgtable);
-EXPORT_SYMBOL_GPL(saa7146_vfree_destroy_pgtable);
-EXPORT_SYMBOL_GPL(saa7146_wait_for_debi_done);
+EXPORT_SYMBOL_GPL(saa7146_vदो_स्मृति_build_pgtable);
+EXPORT_SYMBOL_GPL(saa7146_vमुक्त_destroy_pgtable);
+EXPORT_SYMBOL_GPL(saa7146_रुको_क्रम_debi_करोne);
 
 EXPORT_SYMBOL_GPL(saa7146_setgpio);
 

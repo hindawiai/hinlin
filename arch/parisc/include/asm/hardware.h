@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PARISC_HARDWARE_H
-#define _PARISC_HARDWARE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PARISC_HARDWARE_H
+#घोषणा _PARISC_HARDWARE_H
 
-#include <linux/mod_devicetable.h>
+#समावेश <linux/mod_devicetable.h>
 
-#define HWTYPE_ANY_ID		PA_HWTYPE_ANY_ID
-#define HVERSION_ANY_ID		PA_HVERSION_ANY_ID
-#define HVERSION_REV_ANY_ID	PA_HVERSION_REV_ANY_ID
-#define SVERSION_ANY_ID		PA_SVERSION_ANY_ID
+#घोषणा HWTYPE_ANY_ID		PA_HWTYPE_ANY_ID
+#घोषणा HVERSION_ANY_ID		PA_HVERSION_ANY_ID
+#घोषणा HVERSION_REV_ANY_ID	PA_HVERSION_REV_ANY_ID
+#घोषणा SVERSION_ANY_ID		PA_SVERSION_ANY_ID
 
-struct hp_hardware {
-	unsigned short	hw_type:5;	/* HPHW_xxx */
-	unsigned short	hversion;
-	unsigned long	sversion:28;
-	unsigned short	opt;
-	const char	name[80];	/* The hardware description */
-};
+काष्ठा hp_hardware अणु
+	अचिन्हित लघु	hw_type:5;	/* HPHW_xxx */
+	अचिन्हित लघु	hversion;
+	अचिन्हित दीर्घ	sversion:28;
+	अचिन्हित लघु	opt;
+	स्थिर अक्षर	name[80];	/* The hardware description */
+पूर्ण;
 
-struct parisc_device;
+काष्ठा parisc_device;
 
-enum cpu_type {
+क्रमागत cpu_type अणु
 	pcx	= 0, /* pa7000		pa 1.0  */
 	pcxs	= 1, /* pa7000		pa 1.1a */
 	pcxt	= 2, /* pa7100		pa 1.1b */
@@ -33,97 +34,97 @@ enum cpu_type {
 	pcxw2	= 10, /* pa8700		pa 2.0  */
 	mako	= 11, /* pa8800		pa 2.0  */
 	mako2	= 12  /* pa8900		pa 2.0  */
-};
+पूर्ण;
 
-extern const char * const cpu_name_version[][2]; /* mapping from enum cpu_type to strings */
+बाह्य स्थिर अक्षर * स्थिर cpu_name_version[][2]; /* mapping from क्रमागत cpu_type to strings */
 
-struct parisc_driver;
+काष्ठा parisc_driver;
 
-struct io_module {
-        volatile uint32_t nothing;		/* reg 0 */
-        volatile uint32_t io_eim;
-        volatile uint32_t io_dc_adata;
-        volatile uint32_t io_ii_cdata;
-        volatile uint32_t io_dma_link;		/* reg 4 */
-        volatile uint32_t io_dma_command;
-        volatile uint32_t io_dma_address;
-        volatile uint32_t io_dma_count;
-        volatile uint32_t io_flex;		/* reg 8 */
-        volatile uint32_t io_spa_address;
-        volatile uint32_t reserved1[2];
-        volatile uint32_t io_command;		/* reg 12 */
-        volatile uint32_t io_status;
-        volatile uint32_t io_control;
-        volatile uint32_t io_data;
-        volatile uint32_t reserved2;		/* reg 16 */
-        volatile uint32_t chain_addr;
-        volatile uint32_t sub_mask_clr;
-        volatile uint32_t reserved3[13];
-        volatile uint32_t undefined[480];
-        volatile uint32_t unpriv[512];
-};
+काष्ठा io_module अणु
+        अस्थिर uपूर्णांक32_t nothing;		/* reg 0 */
+        अस्थिर uपूर्णांक32_t io_eim;
+        अस्थिर uपूर्णांक32_t io_dc_adata;
+        अस्थिर uपूर्णांक32_t io_ii_cdata;
+        अस्थिर uपूर्णांक32_t io_dma_link;		/* reg 4 */
+        अस्थिर uपूर्णांक32_t io_dma_command;
+        अस्थिर uपूर्णांक32_t io_dma_address;
+        अस्थिर uपूर्णांक32_t io_dma_count;
+        अस्थिर uपूर्णांक32_t io_flex;		/* reg 8 */
+        अस्थिर uपूर्णांक32_t io_spa_address;
+        अस्थिर uपूर्णांक32_t reserved1[2];
+        अस्थिर uपूर्णांक32_t io_command;		/* reg 12 */
+        अस्थिर uपूर्णांक32_t io_status;
+        अस्थिर uपूर्णांक32_t io_control;
+        अस्थिर uपूर्णांक32_t io_data;
+        अस्थिर uपूर्णांक32_t reserved2;		/* reg 16 */
+        अस्थिर uपूर्णांक32_t chain_addr;
+        अस्थिर uपूर्णांक32_t sub_mask_clr;
+        अस्थिर uपूर्णांक32_t reserved3[13];
+        अस्थिर uपूर्णांक32_t undefined[480];
+        अस्थिर uपूर्णांक32_t unpriv[512];
+पूर्ण;
 
-struct bc_module {
-        volatile uint32_t unused1[12];
-        volatile uint32_t io_command;
-        volatile uint32_t io_status;
-        volatile uint32_t io_control;
-        volatile uint32_t unused2[1];
-        volatile uint32_t io_err_resp;
-        volatile uint32_t io_err_info;
-        volatile uint32_t io_err_req;
-        volatile uint32_t unused3[11];
-        volatile uint32_t io_io_low;
-        volatile uint32_t io_io_high;
-};
+काष्ठा bc_module अणु
+        अस्थिर uपूर्णांक32_t unused1[12];
+        अस्थिर uपूर्णांक32_t io_command;
+        अस्थिर uपूर्णांक32_t io_status;
+        अस्थिर uपूर्णांक32_t io_control;
+        अस्थिर uपूर्णांक32_t unused2[1];
+        अस्थिर uपूर्णांक32_t io_err_resp;
+        अस्थिर uपूर्णांक32_t io_err_info;
+        अस्थिर uपूर्णांक32_t io_err_req;
+        अस्थिर uपूर्णांक32_t unused3[11];
+        अस्थिर uपूर्णांक32_t io_io_low;
+        अस्थिर uपूर्णांक32_t io_io_high;
+पूर्ण;
 
-#define HPHW_NPROC     0 
-#define HPHW_MEMORY    1       
-#define HPHW_B_DMA     2
-#define HPHW_OBSOLETE  3
-#define HPHW_A_DMA     4
-#define HPHW_A_DIRECT  5
-#define HPHW_OTHER     6
-#define HPHW_BCPORT    7
-#define HPHW_CIO       8
-#define HPHW_CONSOLE   9
-#define HPHW_FIO       10
-#define HPHW_BA        11
-#define HPHW_IOA       12
-#define HPHW_BRIDGE    13
-#define HPHW_FABRIC    14
-#define HPHW_MC	       15
-#define HPHW_FAULTY    31
+#घोषणा HPHW_NPROC     0 
+#घोषणा HPHW_MEMORY    1       
+#घोषणा HPHW_B_DMA     2
+#घोषणा HPHW_OBSOLETE  3
+#घोषणा HPHW_A_DMA     4
+#घोषणा HPHW_A_सूचीECT  5
+#घोषणा HPHW_OTHER     6
+#घोषणा HPHW_BCPORT    7
+#घोषणा HPHW_CIO       8
+#घोषणा HPHW_CONSOLE   9
+#घोषणा HPHW_FIO       10
+#घोषणा HPHW_BA        11
+#घोषणा HPHW_IOA       12
+#घोषणा HPHW_BRIDGE    13
+#घोषणा HPHW_FABRIC    14
+#घोषणा HPHW_MC	       15
+#घोषणा HPHW_FAULTY    31
 
-struct parisc_device_id;
+काष्ठा parisc_device_id;
 
 /* hardware.c: */
-extern const char *parisc_hardware_description(struct parisc_device_id *id);
-extern enum cpu_type parisc_get_cpu_type(unsigned long hversion);
+बाह्य स्थिर अक्षर *parisc_hardware_description(काष्ठा parisc_device_id *id);
+बाह्य क्रमागत cpu_type parisc_get_cpu_type(अचिन्हित दीर्घ hversion);
 
-struct pci_dev;
-struct hardware_path;
+काष्ठा pci_dev;
+काष्ठा hardware_path;
 
 /* drivers.c: */
-extern struct parisc_device *alloc_pa_dev(unsigned long hpa,
-		struct hardware_path *path);
-extern int register_parisc_device(struct parisc_device *dev);
-extern int register_parisc_driver(struct parisc_driver *driver);
-extern int count_parisc_driver(struct parisc_driver *driver);
-extern int unregister_parisc_driver(struct parisc_driver *driver);
-extern void walk_central_bus(void);
-extern const struct parisc_device *find_pa_parent_type(const struct parisc_device *, int);
-extern void print_parisc_devices(void);
-extern char *print_pa_hwpath(struct parisc_device *dev, char *path);
-extern char *print_pci_hwpath(struct pci_dev *dev, char *path);
-extern void get_pci_node_path(struct pci_dev *dev, struct hardware_path *path);
-extern void init_parisc_bus(void);
-extern struct device *hwpath_to_device(struct hardware_path *modpath);
-extern void device_to_hwpath(struct device *dev, struct hardware_path *path);
-extern int machine_has_merced_bus(void);
+बाह्य काष्ठा parisc_device *alloc_pa_dev(अचिन्हित दीर्घ hpa,
+		काष्ठा hardware_path *path);
+बाह्य पूर्णांक रेजिस्टर_parisc_device(काष्ठा parisc_device *dev);
+बाह्य पूर्णांक रेजिस्टर_parisc_driver(काष्ठा parisc_driver *driver);
+बाह्य पूर्णांक count_parisc_driver(काष्ठा parisc_driver *driver);
+बाह्य पूर्णांक unरेजिस्टर_parisc_driver(काष्ठा parisc_driver *driver);
+बाह्य व्योम walk_central_bus(व्योम);
+बाह्य स्थिर काष्ठा parisc_device *find_pa_parent_type(स्थिर काष्ठा parisc_device *, पूर्णांक);
+बाह्य व्योम prपूर्णांक_parisc_devices(व्योम);
+बाह्य अक्षर *prपूर्णांक_pa_hwpath(काष्ठा parisc_device *dev, अक्षर *path);
+बाह्य अक्षर *prपूर्णांक_pci_hwpath(काष्ठा pci_dev *dev, अक्षर *path);
+बाह्य व्योम get_pci_node_path(काष्ठा pci_dev *dev, काष्ठा hardware_path *path);
+बाह्य व्योम init_parisc_bus(व्योम);
+बाह्य काष्ठा device *hwpath_to_device(काष्ठा hardware_path *modpath);
+बाह्य व्योम device_to_hwpath(काष्ठा device *dev, काष्ठा hardware_path *path);
+बाह्य पूर्णांक machine_has_merced_bus(व्योम);
 
 /* inventory.c: */
-extern void do_memory_inventory(void);
-extern void do_device_inventory(void);
+बाह्य व्योम करो_memory_inventory(व्योम);
+बाह्य व्योम करो_device_inventory(व्योम);
 
-#endif /* _PARISC_HARDWARE_H */
+#पूर्ण_अगर /* _PARISC_HARDWARE_H */

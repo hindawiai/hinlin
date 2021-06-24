@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* atlx.c -- common functions for Attansic network drivers
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* atlx.c -- common functions क्रम Attansic network drivers
  *
  * Copyright(c) 2005 - 2006 Attansic Corporation. All rights reserved.
  * Copyright(c) 2006 - 2007 Chris Snook <csnook@redhat.com>
@@ -11,256 +12,256 @@
  */
 
 /* Including this file like a header is a temporary hack, I promise. -- CHS */
-#ifndef ATLX_C
-#define ATLX_C
+#अगर_अघोषित ATLX_C
+#घोषणा ATLX_C
 
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/etherdevice.h>
-#include <linux/if.h>
-#include <linux/netdevice.h>
-#include <linux/socket.h>
-#include <linux/sockios.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/sockios.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
 
-#include "atlx.h"
+#समावेश "atlx.h"
 
-static s32 atlx_read_phy_reg(struct atl1_hw *hw, u16 reg_addr, u16 *phy_data);
-static u32 atlx_hash_mc_addr(struct atl1_hw *hw, u8 *mc_addr);
-static void atlx_set_mac_addr(struct atl1_hw *hw);
+अटल s32 atlx_पढ़ो_phy_reg(काष्ठा atl1_hw *hw, u16 reg_addr, u16 *phy_data);
+अटल u32 atlx_hash_mc_addr(काष्ठा atl1_hw *hw, u8 *mc_addr);
+अटल व्योम atlx_set_mac_addr(काष्ठा atl1_hw *hw);
 
-static struct atlx_spi_flash_dev flash_table[] = {
+अटल काष्ठा atlx_spi_flash_dev flash_table[] = अणु
 /*	MFR_NAME  WRSR  READ  PRGM  WREN  WRDI  RDSR  RDID  SEC_ERS CHIP_ERS */
-	{"Atmel", 0x00, 0x03, 0x02, 0x06, 0x04, 0x05, 0x15, 0x52,   0x62},
-	{"SST",   0x01, 0x03, 0x02, 0x06, 0x04, 0x05, 0x90, 0x20,   0x60},
-	{"ST",    0x01, 0x03, 0x02, 0x06, 0x04, 0x05, 0xAB, 0xD8,   0xC7},
-};
+	अणु"Atmel", 0x00, 0x03, 0x02, 0x06, 0x04, 0x05, 0x15, 0x52,   0x62पूर्ण,
+	अणु"SST",   0x01, 0x03, 0x02, 0x06, 0x04, 0x05, 0x90, 0x20,   0x60पूर्ण,
+	अणु"ST",    0x01, 0x03, 0x02, 0x06, 0x04, 0x05, 0xAB, 0xD8,   0xC7पूर्ण,
+पूर्ण;
 
-static int atlx_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
-{
-	switch (cmd) {
-	case SIOCGMIIPHY:
-	case SIOCGMIIREG:
-	case SIOCSMIIREG:
-		return atlx_mii_ioctl(netdev, ifr, cmd);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक atlx_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	चयन (cmd) अणु
+	हाल SIOCGMIIPHY:
+	हाल SIOCGMIIREG:
+	हाल SIOCSMIIREG:
+		वापस atlx_mii_ioctl(netdev, अगरr, cmd);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
 /**
  * atlx_set_mac - Change the Ethernet Address of the NIC
- * @netdev: network interface device structure
- * @p: pointer to an address structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @p: poपूर्णांकer to an address काष्ठाure
  *
  * Returns 0 on success, negative on failure
  */
-static int atlx_set_mac(struct net_device *netdev, void *p)
-{
-	struct atlx_adapter *adapter = netdev_priv(netdev);
-	struct sockaddr *addr = p;
+अटल पूर्णांक atlx_set_mac(काष्ठा net_device *netdev, व्योम *p)
+अणु
+	काष्ठा atlx_adapter *adapter = netdev_priv(netdev);
+	काष्ठा sockaddr *addr = p;
 
-	if (netif_running(netdev))
-		return -EBUSY;
+	अगर (netअगर_running(netdev))
+		वापस -EBUSY;
 
-	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(addr->sa_data))
+		वापस -EADDRNOTAVAIL;
 
-	memcpy(netdev->dev_addr, addr->sa_data, netdev->addr_len);
-	memcpy(adapter->hw.mac_addr, addr->sa_data, netdev->addr_len);
+	स_नकल(netdev->dev_addr, addr->sa_data, netdev->addr_len);
+	स_नकल(adapter->hw.mac_addr, addr->sa_data, netdev->addr_len);
 
 	atlx_set_mac_addr(&adapter->hw);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atlx_check_for_link(struct atlx_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
+अटल व्योम atlx_check_क्रम_link(काष्ठा atlx_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
 	u16 phy_data = 0;
 
 	spin_lock(&adapter->lock);
-	adapter->phy_timer_pending = false;
-	atlx_read_phy_reg(&adapter->hw, MII_BMSR, &phy_data);
-	atlx_read_phy_reg(&adapter->hw, MII_BMSR, &phy_data);
+	adapter->phy_समयr_pending = false;
+	atlx_पढ़ो_phy_reg(&adapter->hw, MII_BMSR, &phy_data);
+	atlx_पढ़ो_phy_reg(&adapter->hw, MII_BMSR, &phy_data);
 	spin_unlock(&adapter->lock);
 
-	/* notify upper layer link down ASAP */
-	if (!(phy_data & BMSR_LSTATUS)) {
+	/* notअगरy upper layer link करोwn ASAP */
+	अगर (!(phy_data & BMSR_LSTATUS)) अणु
 		/* Link Down */
-		if (netif_carrier_ok(netdev)) {
+		अगर (netअगर_carrier_ok(netdev)) अणु
 			/* old link state: Up */
 			dev_info(&adapter->pdev->dev, "%s link is down\n",
 				netdev->name);
 			adapter->link_speed = SPEED_0;
-			netif_carrier_off(netdev);
-		}
-	}
+			netअगर_carrier_off(netdev);
+		पूर्ण
+	पूर्ण
 	schedule_work(&adapter->link_chg_task);
-}
+पूर्ण
 
 /**
  * atlx_set_multi - Multicast and Promiscuous mode set
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
- * The set_multi entry point is called whenever the multicast address
- * list or the network interface flags are updated.  This routine is
- * responsible for configuring the hardware for proper multicast,
+ * The set_multi entry poपूर्णांक is called whenever the multicast address
+ * list or the network पूर्णांकerface flags are updated.  This routine is
+ * responsible क्रम configuring the hardware क्रम proper multicast,
  * promiscuous mode, and all-multi behavior.
  */
-static void atlx_set_multi(struct net_device *netdev)
-{
-	struct atlx_adapter *adapter = netdev_priv(netdev);
-	struct atlx_hw *hw = &adapter->hw;
-	struct netdev_hw_addr *ha;
+अटल व्योम atlx_set_multi(काष्ठा net_device *netdev)
+अणु
+	काष्ठा atlx_adapter *adapter = netdev_priv(netdev);
+	काष्ठा atlx_hw *hw = &adapter->hw;
+	काष्ठा netdev_hw_addr *ha;
 	u32 rctl;
 	u32 hash_value;
 
-	/* Check for Promiscuous and All Multicast modes */
-	rctl = ioread32(hw->hw_addr + REG_MAC_CTRL);
-	if (netdev->flags & IFF_PROMISC)
+	/* Check क्रम Promiscuous and All Multicast modes */
+	rctl = ioपढ़ो32(hw->hw_addr + REG_MAC_CTRL);
+	अगर (netdev->flags & IFF_PROMISC)
 		rctl |= MAC_CTRL_PROMIS_EN;
-	else if (netdev->flags & IFF_ALLMULTI) {
+	अन्यथा अगर (netdev->flags & IFF_ALLMULTI) अणु
 		rctl |= MAC_CTRL_MC_ALL_EN;
 		rctl &= ~MAC_CTRL_PROMIS_EN;
-	} else
+	पूर्ण अन्यथा
 		rctl &= ~(MAC_CTRL_PROMIS_EN | MAC_CTRL_MC_ALL_EN);
 
-	iowrite32(rctl, hw->hw_addr + REG_MAC_CTRL);
+	ioग_लिखो32(rctl, hw->hw_addr + REG_MAC_CTRL);
 
 	/* clear the old settings from the multicast hash table */
-	iowrite32(0, hw->hw_addr + REG_RX_HASH_TABLE);
-	iowrite32(0, (hw->hw_addr + REG_RX_HASH_TABLE) + (1 << 2));
+	ioग_लिखो32(0, hw->hw_addr + REG_RX_HASH_TABLE);
+	ioग_लिखो32(0, (hw->hw_addr + REG_RX_HASH_TABLE) + (1 << 2));
 
-	/* compute mc addresses' hash value ,and put it into hash table */
-	netdev_for_each_mc_addr(ha, netdev) {
+	/* compute mc addresses' hash value ,and put it पूर्णांकo hash table */
+	netdev_क्रम_each_mc_addr(ha, netdev) अणु
 		hash_value = atlx_hash_mc_addr(hw, ha->addr);
 		atlx_hash_set(hw, hash_value);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void atlx_imr_set(struct atlx_adapter *adapter,
-				unsigned int imr)
-{
-	iowrite32(imr, adapter->hw.hw_addr + REG_IMR);
-	ioread32(adapter->hw.hw_addr + REG_IMR);
-}
+अटल अंतरभूत व्योम atlx_imr_set(काष्ठा atlx_adapter *adapter,
+				अचिन्हित पूर्णांक imr)
+अणु
+	ioग_लिखो32(imr, adapter->hw.hw_addr + REG_IMR);
+	ioपढ़ो32(adapter->hw.hw_addr + REG_IMR);
+पूर्ण
 
 /**
- * atlx_irq_enable - Enable default interrupt generation settings
- * @adapter: board private structure
+ * atlx_irq_enable - Enable शेष पूर्णांकerrupt generation settings
+ * @adapter: board निजी काष्ठाure
  */
-static void atlx_irq_enable(struct atlx_adapter *adapter)
-{
+अटल व्योम atlx_irq_enable(काष्ठा atlx_adapter *adapter)
+अणु
 	atlx_imr_set(adapter, IMR_NORMAL_MASK);
-	adapter->int_enabled = true;
-}
+	adapter->पूर्णांक_enabled = true;
+पूर्ण
 
 /**
- * atlx_irq_disable - Mask off interrupt generation on the NIC
- * @adapter: board private structure
+ * atlx_irq_disable - Mask off पूर्णांकerrupt generation on the NIC
+ * @adapter: board निजी काष्ठाure
  */
-static void atlx_irq_disable(struct atlx_adapter *adapter)
-{
-	adapter->int_enabled = false;
+अटल व्योम atlx_irq_disable(काष्ठा atlx_adapter *adapter)
+अणु
+	adapter->पूर्णांक_enabled = false;
 	atlx_imr_set(adapter, 0);
 	synchronize_irq(adapter->pdev->irq);
-}
+पूर्ण
 
-static void atlx_clear_phy_int(struct atlx_adapter *adapter)
-{
+अटल व्योम atlx_clear_phy_पूर्णांक(काष्ठा atlx_adapter *adapter)
+अणु
 	u16 phy_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&adapter->lock, flags);
-	atlx_read_phy_reg(&adapter->hw, 19, &phy_data);
+	atlx_पढ़ो_phy_reg(&adapter->hw, 19, &phy_data);
 	spin_unlock_irqrestore(&adapter->lock, flags);
-}
+पूर्ण
 
 /**
- * atlx_tx_timeout - Respond to a Tx Hang
- * @netdev: network interface device structure
+ * atlx_tx_समयout - Respond to a Tx Hang
+ * @netdev: network पूर्णांकerface device काष्ठाure
  */
-static void atlx_tx_timeout(struct net_device *netdev, unsigned int txqueue)
-{
-	struct atlx_adapter *adapter = netdev_priv(netdev);
-	/* Do the reset outside of interrupt context */
+अटल व्योम atlx_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा atlx_adapter *adapter = netdev_priv(netdev);
+	/* Do the reset outside of पूर्णांकerrupt context */
 	schedule_work(&adapter->reset_dev_task);
-}
+पूर्ण
 
 /*
- * atlx_link_chg_task - deal with link change event Out of interrupt context
+ * atlx_link_chg_task - deal with link change event Out of पूर्णांकerrupt context
  */
-static void atlx_link_chg_task(struct work_struct *work)
-{
-	struct atlx_adapter *adapter;
-	unsigned long flags;
+अटल व्योम atlx_link_chg_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा atlx_adapter *adapter;
+	अचिन्हित दीर्घ flags;
 
-	adapter = container_of(work, struct atlx_adapter, link_chg_task);
+	adapter = container_of(work, काष्ठा atlx_adapter, link_chg_task);
 
 	spin_lock_irqsave(&adapter->lock, flags);
 	atlx_check_link(adapter);
 	spin_unlock_irqrestore(&adapter->lock, flags);
-}
+पूर्ण
 
-static void __atlx_vlan_mode(netdev_features_t features, u32 *ctrl)
-{
-	if (features & NETIF_F_HW_VLAN_CTAG_RX) {
+अटल व्योम __atlx_vlan_mode(netdev_features_t features, u32 *ctrl)
+अणु
+	अगर (features & NETIF_F_HW_VLAN_CTAG_RX) अणु
 		/* enable VLAN tag insert/strip */
 		*ctrl |= MAC_CTRL_RMV_VLAN;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* disable VLAN tag insert/strip */
 		*ctrl &= ~MAC_CTRL_RMV_VLAN;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void atlx_vlan_mode(struct net_device *netdev,
+अटल व्योम atlx_vlan_mode(काष्ठा net_device *netdev,
 	netdev_features_t features)
-{
-	struct atlx_adapter *adapter = netdev_priv(netdev);
-	unsigned long flags;
+अणु
+	काष्ठा atlx_adapter *adapter = netdev_priv(netdev);
+	अचिन्हित दीर्घ flags;
 	u32 ctrl;
 
 	spin_lock_irqsave(&adapter->lock, flags);
-	/* atlx_irq_disable(adapter); FIXME: confirm/remove */
-	ctrl = ioread32(adapter->hw.hw_addr + REG_MAC_CTRL);
+	/* atlx_irq_disable(adapter); FIXME: confirm/हटाओ */
+	ctrl = ioपढ़ो32(adapter->hw.hw_addr + REG_MAC_CTRL);
 	__atlx_vlan_mode(features, &ctrl);
-	iowrite32(ctrl, adapter->hw.hw_addr + REG_MAC_CTRL);
+	ioग_लिखो32(ctrl, adapter->hw.hw_addr + REG_MAC_CTRL);
 	/* atlx_irq_enable(adapter); FIXME */
 	spin_unlock_irqrestore(&adapter->lock, flags);
-}
+पूर्ण
 
-static void atlx_restore_vlan(struct atlx_adapter *adapter)
-{
+अटल व्योम atlx_restore_vlan(काष्ठा atlx_adapter *adapter)
+अणु
 	atlx_vlan_mode(adapter->netdev, adapter->netdev->features);
-}
+पूर्ण
 
-static netdev_features_t atlx_fix_features(struct net_device *netdev,
+अटल netdev_features_t atlx_fix_features(काष्ठा net_device *netdev,
 	netdev_features_t features)
-{
+अणु
 	/*
-	 * Since there is no support for separate rx/tx vlan accel
+	 * Since there is no support क्रम separate rx/tx vlan accel
 	 * enable/disable make sure tx flag is always in same state as rx.
 	 */
-	if (features & NETIF_F_HW_VLAN_CTAG_RX)
+	अगर (features & NETIF_F_HW_VLAN_CTAG_RX)
 		features |= NETIF_F_HW_VLAN_CTAG_TX;
-	else
+	अन्यथा
 		features &= ~NETIF_F_HW_VLAN_CTAG_TX;
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static int atlx_set_features(struct net_device *netdev,
+अटल पूर्णांक atlx_set_features(काष्ठा net_device *netdev,
 	netdev_features_t features)
-{
+अणु
 	netdev_features_t changed = netdev->features ^ features;
 
-	if (changed & NETIF_F_HW_VLAN_CTAG_RX)
+	अगर (changed & NETIF_F_HW_VLAN_CTAG_RX)
 		atlx_vlan_mode(netdev, features);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* ATLX_C */
+#पूर्ण_अगर /* ATLX_C */

@@ -1,2 +1,3 @@
-#include <linux/libfdt_env.h>
-#include "../scripts/dtc/libfdt/fdt_sw.c"
+<शैली गुरु>
+#समावेश <linux/libfdt_env.h>
+#समावेश "../scripts/dtc/libfdt/fdt_sw.c"

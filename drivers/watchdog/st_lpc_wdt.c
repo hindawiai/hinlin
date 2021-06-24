@@ -1,306 +1,307 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * ST's LPC Watchdog
+ * ST's LPC Watchकरोg
  *
  * Copyright (C) 2014 STMicroelectronics -- All Rights Reserved
  *
- * Author: David Paris <david.paris@st.com> for STMicroelectronics
- *         Lee Jones <lee.jones@linaro.org> for STMicroelectronics
+ * Author: David Paris <david.paris@st.com> क्रम STMicroelectronics
+ *         Lee Jones <lee.jones@linaro.org> क्रम STMicroelectronics
  */
 
-#include <linux/clk.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/watchdog.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/watchकरोg.h>
 
-#include <dt-bindings/mfd/st-lpc.h>
+#समावेश <dt-bindings/mfd/st-lpc.h>
 
 /* Low Power Alarm */
-#define LPC_LPA_LSB_OFF			0x410
-#define LPC_LPA_START_OFF		0x418
+#घोषणा LPC_LPA_LSB_OFF			0x410
+#घोषणा LPC_LPA_START_OFF		0x418
 
 /* LPC as WDT */
-#define LPC_WDT_OFF			0x510
+#घोषणा LPC_WDT_OFF			0x510
 
-static struct watchdog_device st_wdog_dev;
+अटल काष्ठा watchकरोg_device st_wकरोg_dev;
 
-struct st_wdog_syscfg {
-	unsigned int reset_type_reg;
-	unsigned int reset_type_mask;
-	unsigned int enable_reg;
-	unsigned int enable_mask;
-};
+काष्ठा st_wकरोg_syscfg अणु
+	अचिन्हित पूर्णांक reset_type_reg;
+	अचिन्हित पूर्णांक reset_type_mask;
+	अचिन्हित पूर्णांक enable_reg;
+	अचिन्हित पूर्णांक enable_mask;
+पूर्ण;
 
-struct st_wdog {
-	void __iomem *base;
-	struct device *dev;
-	struct regmap *regmap;
-	struct st_wdog_syscfg *syscfg;
-	struct clk *clk;
-	unsigned long clkrate;
+काष्ठा st_wकरोg अणु
+	व्योम __iomem *base;
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	काष्ठा st_wकरोg_syscfg *syscfg;
+	काष्ठा clk *clk;
+	अचिन्हित दीर्घ clkrate;
 	bool warm_reset;
-};
+पूर्ण;
 
-static struct st_wdog_syscfg stih407_syscfg = {
+अटल काष्ठा st_wकरोg_syscfg stih407_syscfg = अणु
 	.enable_reg		= 0x204,
 	.enable_mask		= BIT(19),
-};
+पूर्ण;
 
-static const struct of_device_id st_wdog_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id st_wकरोg_match[] = अणु
+	अणु
 		.compatible = "st,stih407-lpc",
 		.data = &stih407_syscfg,
-	},
-	{},
-};
-MODULE_DEVICE_TABLE(of, st_wdog_match);
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, st_wकरोg_match);
 
-static void st_wdog_setup(struct st_wdog *st_wdog, bool enable)
-{
-	/* Type of watchdog reset - 0: Cold 1: Warm */
-	if (st_wdog->syscfg->reset_type_reg)
-		regmap_update_bits(st_wdog->regmap,
-				   st_wdog->syscfg->reset_type_reg,
-				   st_wdog->syscfg->reset_type_mask,
-				   st_wdog->warm_reset);
+अटल व्योम st_wकरोg_setup(काष्ठा st_wकरोg *st_wकरोg, bool enable)
+अणु
+	/* Type of watchकरोg reset - 0: Cold 1: Warm */
+	अगर (st_wकरोg->syscfg->reset_type_reg)
+		regmap_update_bits(st_wकरोg->regmap,
+				   st_wकरोg->syscfg->reset_type_reg,
+				   st_wकरोg->syscfg->reset_type_mask,
+				   st_wकरोg->warm_reset);
 
-	/* Mask/unmask watchdog reset */
-	regmap_update_bits(st_wdog->regmap,
-			   st_wdog->syscfg->enable_reg,
-			   st_wdog->syscfg->enable_mask,
-			   enable ? 0 : st_wdog->syscfg->enable_mask);
-}
+	/* Mask/unmask watchकरोg reset */
+	regmap_update_bits(st_wकरोg->regmap,
+			   st_wकरोg->syscfg->enable_reg,
+			   st_wकरोg->syscfg->enable_mask,
+			   enable ? 0 : st_wकरोg->syscfg->enable_mask);
+पूर्ण
 
-static void st_wdog_load_timer(struct st_wdog *st_wdog, unsigned int timeout)
-{
-	unsigned long clkrate = st_wdog->clkrate;
+अटल व्योम st_wकरोg_load_समयr(काष्ठा st_wकरोg *st_wकरोg, अचिन्हित पूर्णांक समयout)
+अणु
+	अचिन्हित दीर्घ clkrate = st_wकरोg->clkrate;
 
-	writel_relaxed(timeout * clkrate, st_wdog->base + LPC_LPA_LSB_OFF);
-	writel_relaxed(1, st_wdog->base + LPC_LPA_START_OFF);
-}
+	ग_लिखोl_relaxed(समयout * clkrate, st_wकरोg->base + LPC_LPA_LSB_OFF);
+	ग_लिखोl_relaxed(1, st_wकरोg->base + LPC_LPA_START_OFF);
+पूर्ण
 
-static int st_wdog_start(struct watchdog_device *wdd)
-{
-	struct st_wdog *st_wdog = watchdog_get_drvdata(wdd);
+अटल पूर्णांक st_wकरोg_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा st_wकरोg *st_wकरोg = watchकरोg_get_drvdata(wdd);
 
-	writel_relaxed(1, st_wdog->base + LPC_WDT_OFF);
+	ग_लिखोl_relaxed(1, st_wकरोg->base + LPC_WDT_OFF);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_wdog_stop(struct watchdog_device *wdd)
-{
-	struct st_wdog *st_wdog = watchdog_get_drvdata(wdd);
+अटल पूर्णांक st_wकरोg_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा st_wकरोg *st_wकरोg = watchकरोg_get_drvdata(wdd);
 
-	writel_relaxed(0, st_wdog->base + LPC_WDT_OFF);
+	ग_लिखोl_relaxed(0, st_wकरोg->base + LPC_WDT_OFF);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_wdog_set_timeout(struct watchdog_device *wdd,
-			       unsigned int timeout)
-{
-	struct st_wdog *st_wdog = watchdog_get_drvdata(wdd);
+अटल पूर्णांक st_wकरोg_set_समयout(काष्ठा watchकरोg_device *wdd,
+			       अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा st_wकरोg *st_wकरोg = watchकरोg_get_drvdata(wdd);
 
-	wdd->timeout = timeout;
-	st_wdog_load_timer(st_wdog, timeout);
+	wdd->समयout = समयout;
+	st_wकरोg_load_समयr(st_wकरोg, समयout);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_wdog_keepalive(struct watchdog_device *wdd)
-{
-	struct st_wdog *st_wdog = watchdog_get_drvdata(wdd);
+अटल पूर्णांक st_wकरोg_keepalive(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा st_wकरोg *st_wकरोg = watchकरोg_get_drvdata(wdd);
 
-	st_wdog_load_timer(st_wdog, wdd->timeout);
+	st_wकरोg_load_समयr(st_wकरोg, wdd->समयout);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info st_wdog_info = {
+अटल स्थिर काष्ठा watchकरोg_info st_wकरोg_info = अणु
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "ST LPC WDT",
-};
+पूर्ण;
 
-static const struct watchdog_ops st_wdog_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops st_wकरोg_ops = अणु
 	.owner		= THIS_MODULE,
-	.start		= st_wdog_start,
-	.stop		= st_wdog_stop,
-	.ping		= st_wdog_keepalive,
-	.set_timeout	= st_wdog_set_timeout,
-};
+	.start		= st_wकरोg_start,
+	.stop		= st_wकरोg_stop,
+	.ping		= st_wकरोg_keepalive,
+	.set_समयout	= st_wकरोg_set_समयout,
+पूर्ण;
 
-static struct watchdog_device st_wdog_dev = {
-	.info		= &st_wdog_info,
-	.ops		= &st_wdog_ops,
-};
+अटल काष्ठा watchकरोg_device st_wकरोg_dev = अणु
+	.info		= &st_wकरोg_info,
+	.ops		= &st_wकरोg_ops,
+पूर्ण;
 
-static void st_clk_disable_unprepare(void *data)
-{
+अटल व्योम st_clk_disable_unprepare(व्योम *data)
+अणु
 	clk_disable_unprepare(data);
-}
+पूर्ण
 
-static int st_wdog_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	const struct of_device_id *match;
-	struct device_node *np = dev->of_node;
-	struct st_wdog *st_wdog;
-	struct regmap *regmap;
-	struct clk *clk;
-	void __iomem *base;
-	uint32_t mode;
-	int ret;
+अटल पूर्णांक st_wकरोg_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा st_wकरोg *st_wकरोg;
+	काष्ठा regmap *regmap;
+	काष्ठा clk *clk;
+	व्योम __iomem *base;
+	uपूर्णांक32_t mode;
+	पूर्णांक ret;
 
-	ret = of_property_read_u32(np, "st,lpc-mode", &mode);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "st,lpc-mode", &mode);
+	अगर (ret) अणु
 		dev_err(dev, "An LPC mode must be provided\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* LPC can either run as a Clocksource or in RTC or WDT mode */
-	if (mode != ST_LPC_MODE_WDT)
-		return -ENODEV;
+	अगर (mode != ST_LPC_MODE_WDT)
+		वापस -ENODEV;
 
-	st_wdog = devm_kzalloc(dev, sizeof(*st_wdog), GFP_KERNEL);
-	if (!st_wdog)
-		return -ENOMEM;
+	st_wकरोg = devm_kzalloc(dev, माप(*st_wकरोg), GFP_KERNEL);
+	अगर (!st_wकरोg)
+		वापस -ENOMEM;
 
-	match = of_match_device(st_wdog_match, dev);
-	if (!match) {
+	match = of_match_device(st_wकरोg_match, dev);
+	अगर (!match) अणु
 		dev_err(dev, "Couldn't match device\n");
-		return -ENODEV;
-	}
-	st_wdog->syscfg	= (struct st_wdog_syscfg *)match->data;
+		वापस -ENODEV;
+	पूर्ण
+	st_wकरोg->syscfg	= (काष्ठा st_wकरोg_syscfg *)match->data;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	regmap = syscon_regmap_lookup_by_phandle(np, "st,syscfg");
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(dev, "No syscfg phandle specified\n");
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(clk)) {
+	clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(clk)) अणु
 		dev_err(dev, "Unable to request clock\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
-	st_wdog->dev		= dev;
-	st_wdog->base		= base;
-	st_wdog->clk		= clk;
-	st_wdog->regmap		= regmap;
-	st_wdog->warm_reset	= of_property_read_bool(np, "st,warm_reset");
-	st_wdog->clkrate	= clk_get_rate(st_wdog->clk);
+	st_wकरोg->dev		= dev;
+	st_wकरोg->base		= base;
+	st_wकरोg->clk		= clk;
+	st_wकरोg->regmap		= regmap;
+	st_wकरोg->warm_reset	= of_property_पढ़ो_bool(np, "st,warm_reset");
+	st_wकरोg->clkrate	= clk_get_rate(st_wकरोg->clk);
 
-	if (!st_wdog->clkrate) {
+	अगर (!st_wकरोg->clkrate) अणु
 		dev_err(dev, "Unable to fetch clock rate\n");
-		return -EINVAL;
-	}
-	st_wdog_dev.max_timeout = 0xFFFFFFFF / st_wdog->clkrate;
-	st_wdog_dev.parent = dev;
+		वापस -EINVAL;
+	पूर्ण
+	st_wकरोg_dev.max_समयout = 0xFFFFFFFF / st_wकरोg->clkrate;
+	st_wकरोg_dev.parent = dev;
 
 	ret = clk_prepare_enable(clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Unable to enable clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = devm_add_action_or_reset(dev, st_clk_disable_unprepare, clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	watchdog_set_drvdata(&st_wdog_dev, st_wdog);
-	watchdog_set_nowayout(&st_wdog_dev, WATCHDOG_NOWAYOUT);
+	watchकरोg_set_drvdata(&st_wकरोg_dev, st_wकरोg);
+	watchकरोg_set_nowayout(&st_wकरोg_dev, WATCHDOG_NOWAYOUT);
 
-	/* Init Watchdog timeout with value in DT */
-	ret = watchdog_init_timeout(&st_wdog_dev, 0, dev);
-	if (ret)
-		return ret;
+	/* Init Watchकरोg समयout with value in DT */
+	ret = watchकरोg_init_समयout(&st_wकरोg_dev, 0, dev);
+	अगर (ret)
+		वापस ret;
 
-	ret = devm_watchdog_register_device(dev, &st_wdog_dev);
-	if (ret)
-		return ret;
+	ret = devm_watchकरोg_रेजिस्टर_device(dev, &st_wकरोg_dev);
+	अगर (ret)
+		वापस ret;
 
-	st_wdog_setup(st_wdog, true);
+	st_wकरोg_setup(st_wकरोg, true);
 
 	dev_info(dev, "LPC Watchdog driver registered, reset type is %s",
-		 st_wdog->warm_reset ? "warm" : "cold");
+		 st_wकरोg->warm_reset ? "warm" : "cold");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int st_wdog_remove(struct platform_device *pdev)
-{
-	struct st_wdog *st_wdog = watchdog_get_drvdata(&st_wdog_dev);
+अटल पूर्णांक st_wकरोg_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा st_wकरोg *st_wकरोg = watchकरोg_get_drvdata(&st_wकरोg_dev);
 
-	st_wdog_setup(st_wdog, false);
+	st_wकरोg_setup(st_wकरोg, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int st_wdog_suspend(struct device *dev)
-{
-	struct st_wdog *st_wdog = watchdog_get_drvdata(&st_wdog_dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक st_wकरोg_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा st_wकरोg *st_wकरोg = watchकरोg_get_drvdata(&st_wकरोg_dev);
 
-	if (watchdog_active(&st_wdog_dev))
-		st_wdog_stop(&st_wdog_dev);
+	अगर (watchकरोg_active(&st_wकरोg_dev))
+		st_wकरोg_stop(&st_wकरोg_dev);
 
-	st_wdog_setup(st_wdog, false);
+	st_wकरोg_setup(st_wकरोg, false);
 
-	clk_disable(st_wdog->clk);
+	clk_disable(st_wकरोg->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_wdog_resume(struct device *dev)
-{
-	struct st_wdog *st_wdog = watchdog_get_drvdata(&st_wdog_dev);
-	int ret;
+अटल पूर्णांक st_wकरोg_resume(काष्ठा device *dev)
+अणु
+	काष्ठा st_wकरोg *st_wकरोg = watchकरोg_get_drvdata(&st_wकरोg_dev);
+	पूर्णांक ret;
 
-	ret = clk_enable(st_wdog->clk);
-	if (ret) {
+	ret = clk_enable(st_wकरोg->clk);
+	अगर (ret) अणु
 		dev_err(dev, "Unable to re-enable clock\n");
-		watchdog_unregister_device(&st_wdog_dev);
-		clk_unprepare(st_wdog->clk);
-		return ret;
-	}
+		watchकरोg_unरेजिस्टर_device(&st_wकरोg_dev);
+		clk_unprepare(st_wकरोg->clk);
+		वापस ret;
+	पूर्ण
 
-	st_wdog_setup(st_wdog, true);
+	st_wकरोg_setup(st_wकरोg, true);
 
-	if (watchdog_active(&st_wdog_dev)) {
-		st_wdog_load_timer(st_wdog, st_wdog_dev.timeout);
-		st_wdog_start(&st_wdog_dev);
-	}
+	अगर (watchकरोg_active(&st_wकरोg_dev)) अणु
+		st_wकरोg_load_समयr(st_wकरोg, st_wकरोg_dev.समयout);
+		st_wकरोg_start(&st_wकरोg_dev);
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(st_wdog_pm_ops,
-			 st_wdog_suspend,
-			 st_wdog_resume);
+अटल SIMPLE_DEV_PM_OPS(st_wकरोg_pm_ops,
+			 st_wकरोg_suspend,
+			 st_wकरोg_resume);
 
-static struct platform_driver st_wdog_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver st_wकरोg_driver = अणु
+	.driver	= अणु
 		.name = "st-lpc-wdt",
-		.pm = &st_wdog_pm_ops,
-		.of_match_table = st_wdog_match,
-	},
-	.probe = st_wdog_probe,
-	.remove = st_wdog_remove,
-};
-module_platform_driver(st_wdog_driver);
+		.pm = &st_wकरोg_pm_ops,
+		.of_match_table = st_wकरोg_match,
+	पूर्ण,
+	.probe = st_wकरोg_probe,
+	.हटाओ = st_wकरोg_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(st_wकरोg_driver);
 
 MODULE_AUTHOR("David Paris <david.paris@st.com>");
 MODULE_DESCRIPTION("ST LPC Watchdog Driver");

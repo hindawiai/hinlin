@@ -1,182 +1,183 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2000 Takashi Iwai <tiwai@suse.de>
  *
- *  Generic memory management routines for soundcard memory allocation
+ *  Generic memory management routines क्रम soundcard memory allocation
  */
 
-#include <linux/mutex.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/util_mem.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/util_स्मृति.स>
 
 MODULE_AUTHOR("Takashi Iwai");
 MODULE_DESCRIPTION("Generic memory management routines for soundcard memory allocation");
 MODULE_LICENSE("GPL");
 
-#define get_memblk(p)	list_entry(p, struct snd_util_memblk, list)
+#घोषणा get_memblk(p)	list_entry(p, काष्ठा snd_util_memblk, list)
 
 /*
  * create a new memory manager
  */
-struct snd_util_memhdr *
-snd_util_memhdr_new(int memsize)
-{
-	struct snd_util_memhdr *hdr;
+काष्ठा snd_util_memhdr *
+snd_util_memhdr_new(पूर्णांक memsize)
+अणु
+	काष्ठा snd_util_memhdr *hdr;
 
-	hdr = kzalloc(sizeof(*hdr), GFP_KERNEL);
-	if (hdr == NULL)
-		return NULL;
+	hdr = kzalloc(माप(*hdr), GFP_KERNEL);
+	अगर (hdr == शून्य)
+		वापस शून्य;
 	hdr->size = memsize;
 	mutex_init(&hdr->block_mutex);
 	INIT_LIST_HEAD(&hdr->block);
 
-	return hdr;
-}
+	वापस hdr;
+पूर्ण
 
 /*
- * free a memory manager
+ * मुक्त a memory manager
  */
-void snd_util_memhdr_free(struct snd_util_memhdr *hdr)
-{
-	struct list_head *p;
+व्योम snd_util_memhdr_मुक्त(काष्ठा snd_util_memhdr *hdr)
+अणु
+	काष्ठा list_head *p;
 
-	if (!hdr)
-		return;
+	अगर (!hdr)
+		वापस;
 	/* release all blocks */
-	while ((p = hdr->block.next) != &hdr->block) {
+	जबतक ((p = hdr->block.next) != &hdr->block) अणु
 		list_del(p);
-		kfree(get_memblk(p));
-	}
-	kfree(hdr);
-}
+		kमुक्त(get_memblk(p));
+	पूर्ण
+	kमुक्त(hdr);
+पूर्ण
 
 /*
  * allocate a memory block (without mutex)
  */
-struct snd_util_memblk *
-__snd_util_mem_alloc(struct snd_util_memhdr *hdr, int size)
-{
-	struct snd_util_memblk *blk;
-	unsigned int units, prev_offset;
-	struct list_head *p;
+काष्ठा snd_util_memblk *
+__snd_util_mem_alloc(काष्ठा snd_util_memhdr *hdr, पूर्णांक size)
+अणु
+	काष्ठा snd_util_memblk *blk;
+	अचिन्हित पूर्णांक units, prev_offset;
+	काष्ठा list_head *p;
 
-	if (snd_BUG_ON(!hdr || size <= 0))
-		return NULL;
+	अगर (snd_BUG_ON(!hdr || size <= 0))
+		वापस शून्य;
 
 	/* word alignment */
 	units = size;
-	if (units & 1)
+	अगर (units & 1)
 		units++;
-	if (units > hdr->size)
-		return NULL;
+	अगर (units > hdr->size)
+		वापस शून्य;
 
-	/* look for empty block */
+	/* look क्रम empty block */
 	prev_offset = 0;
-	list_for_each(p, &hdr->block) {
+	list_क्रम_each(p, &hdr->block) अणु
 		blk = get_memblk(p);
-		if (blk->offset - prev_offset >= units)
-			goto __found;
+		अगर (blk->offset - prev_offset >= units)
+			जाओ __found;
 		prev_offset = blk->offset + blk->size;
-	}
-	if (hdr->size - prev_offset < units)
-		return NULL;
+	पूर्ण
+	अगर (hdr->size - prev_offset < units)
+		वापस शून्य;
 
 __found:
-	return __snd_util_memblk_new(hdr, units, p->prev);
-}
+	वापस __snd_util_memblk_new(hdr, units, p->prev);
+पूर्ण
 
 
 /*
  * create a new memory block with the given size
  * the block is linked next to prev
  */
-struct snd_util_memblk *
-__snd_util_memblk_new(struct snd_util_memhdr *hdr, unsigned int units,
-		      struct list_head *prev)
-{
-	struct snd_util_memblk *blk;
+काष्ठा snd_util_memblk *
+__snd_util_memblk_new(काष्ठा snd_util_memhdr *hdr, अचिन्हित पूर्णांक units,
+		      काष्ठा list_head *prev)
+अणु
+	काष्ठा snd_util_memblk *blk;
 
-	blk = kmalloc(sizeof(struct snd_util_memblk) + hdr->block_extra_size,
+	blk = kदो_स्मृति(माप(काष्ठा snd_util_memblk) + hdr->block_extra_size,
 		      GFP_KERNEL);
-	if (blk == NULL)
-		return NULL;
+	अगर (blk == शून्य)
+		वापस शून्य;
 
-	if (prev == &hdr->block)
+	अगर (prev == &hdr->block)
 		blk->offset = 0;
-	else {
-		struct snd_util_memblk *p = get_memblk(prev);
+	अन्यथा अणु
+		काष्ठा snd_util_memblk *p = get_memblk(prev);
 		blk->offset = p->offset + p->size;
-	}
+	पूर्ण
 	blk->size = units;
 	list_add(&blk->list, prev);
 	hdr->nblocks++;
 	hdr->used += units;
-	return blk;
-}
+	वापस blk;
+पूर्ण
 
 
 /*
  * allocate a memory block (with mutex)
  */
-struct snd_util_memblk *
-snd_util_mem_alloc(struct snd_util_memhdr *hdr, int size)
-{
-	struct snd_util_memblk *blk;
+काष्ठा snd_util_memblk *
+snd_util_mem_alloc(काष्ठा snd_util_memhdr *hdr, पूर्णांक size)
+अणु
+	काष्ठा snd_util_memblk *blk;
 	mutex_lock(&hdr->block_mutex);
 	blk = __snd_util_mem_alloc(hdr, size);
 	mutex_unlock(&hdr->block_mutex);
-	return blk;
-}
+	वापस blk;
+पूर्ण
 
 
 /*
- * remove the block from linked-list and free resource
+ * हटाओ the block from linked-list and मुक्त resource
  * (without mutex)
  */
-void
-__snd_util_mem_free(struct snd_util_memhdr *hdr, struct snd_util_memblk *blk)
-{
+व्योम
+__snd_util_mem_मुक्त(काष्ठा snd_util_memhdr *hdr, काष्ठा snd_util_memblk *blk)
+अणु
 	list_del(&blk->list);
 	hdr->nblocks--;
 	hdr->used -= blk->size;
-	kfree(blk);
-}
+	kमुक्त(blk);
+पूर्ण
 
 /*
- * free a memory block (with mutex)
+ * मुक्त a memory block (with mutex)
  */
-int snd_util_mem_free(struct snd_util_memhdr *hdr, struct snd_util_memblk *blk)
-{
-	if (snd_BUG_ON(!hdr || !blk))
-		return -EINVAL;
+पूर्णांक snd_util_mem_मुक्त(काष्ठा snd_util_memhdr *hdr, काष्ठा snd_util_memblk *blk)
+अणु
+	अगर (snd_BUG_ON(!hdr || !blk))
+		वापस -EINVAL;
 
 	mutex_lock(&hdr->block_mutex);
-	__snd_util_mem_free(hdr, blk);
+	__snd_util_mem_मुक्त(hdr, blk);
 	mutex_unlock(&hdr->block_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * return available memory size
+ * वापस available memory size
  */
-int snd_util_mem_avail(struct snd_util_memhdr *hdr)
-{
-	unsigned int size;
+पूर्णांक snd_util_mem_avail(काष्ठा snd_util_memhdr *hdr)
+अणु
+	अचिन्हित पूर्णांक size;
 	mutex_lock(&hdr->block_mutex);
 	size = hdr->size - hdr->used;
 	mutex_unlock(&hdr->block_mutex);
-	return size;
-}
+	वापस size;
+पूर्ण
 
 
 EXPORT_SYMBOL(snd_util_memhdr_new);
-EXPORT_SYMBOL(snd_util_memhdr_free);
+EXPORT_SYMBOL(snd_util_memhdr_मुक्त);
 EXPORT_SYMBOL(snd_util_mem_alloc);
-EXPORT_SYMBOL(snd_util_mem_free);
+EXPORT_SYMBOL(snd_util_mem_मुक्त);
 EXPORT_SYMBOL(snd_util_mem_avail);
 EXPORT_SYMBOL(__snd_util_mem_alloc);
-EXPORT_SYMBOL(__snd_util_mem_free);
+EXPORT_SYMBOL(__snd_util_mem_मुक्त);
 EXPORT_SYMBOL(__snd_util_memblk_new);

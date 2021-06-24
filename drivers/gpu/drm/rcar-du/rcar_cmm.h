@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * rcar_cmm.h -- R-Car Display Unit Color Management Module
  *
  * Copyright (C) 2019 Jacopo Mondi <jacopo+renesas@jmondi.org>
  */
 
-#ifndef __RCAR_CMM_H__
-#define __RCAR_CMM_H__
+#अगर_अघोषित __RCAR_CMM_H__
+#घोषणा __RCAR_CMM_H__
 
-#define CM2_LUT_SIZE		256
+#घोषणा CM2_LUT_SIZE		256
 
-struct drm_color_lut;
-struct platform_device;
+काष्ठा drm_color_lut;
+काष्ठा platक्रमm_device;
 
 /**
- * struct rcar_cmm_config - CMM configuration
+ * काष्ठा rcar_cmm_config - CMM configuration
  *
  * @lut:	1D-LUT configuration
- * @lut.table:	1D-LUT table entries. Disable LUT operations when NULL
+ * @lut.table:	1D-LUT table entries. Disable LUT operations when शून्य
  */
-struct rcar_cmm_config {
-	struct {
-		struct drm_color_lut *table;
-	} lut;
-};
+काष्ठा rcar_cmm_config अणु
+	काष्ठा अणु
+		काष्ठा drm_color_lut *table;
+	पूर्ण lut;
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_DRM_RCAR_CMM)
-int rcar_cmm_init(struct platform_device *pdev);
+#अगर IS_ENABLED(CONFIG_DRM_RCAR_CMM)
+पूर्णांक rcar_cmm_init(काष्ठा platक्रमm_device *pdev);
 
-int rcar_cmm_enable(struct platform_device *pdev);
-void rcar_cmm_disable(struct platform_device *pdev);
+पूर्णांक rcar_cmm_enable(काष्ठा platक्रमm_device *pdev);
+व्योम rcar_cmm_disable(काष्ठा platक्रमm_device *pdev);
 
-int rcar_cmm_setup(struct platform_device *pdev,
-		   const struct rcar_cmm_config *config);
-#else
-static inline int rcar_cmm_init(struct platform_device *pdev)
-{
-	return -ENODEV;
-}
+पूर्णांक rcar_cmm_setup(काष्ठा platक्रमm_device *pdev,
+		   स्थिर काष्ठा rcar_cmm_config *config);
+#अन्यथा
+अटल अंतरभूत पूर्णांक rcar_cmm_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int rcar_cmm_enable(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक rcar_cmm_enable(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void rcar_cmm_disable(struct platform_device *pdev)
-{
-}
+अटल अंतरभूत व्योम rcar_cmm_disable(काष्ठा platक्रमm_device *pdev)
+अणु
+पूर्ण
 
-static inline int rcar_cmm_setup(struct platform_device *pdev,
-				 const struct rcar_cmm_config *config)
-{
-	return 0;
-}
-#endif /* IS_ENABLED(CONFIG_DRM_RCAR_CMM) */
+अटल अंतरभूत पूर्णांक rcar_cmm_setup(काष्ठा platक्रमm_device *pdev,
+				 स्थिर काष्ठा rcar_cmm_config *config)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_DRM_RCAR_CMM) */
 
-#endif /* __RCAR_CMM_H__ */
+#पूर्ण_अगर /* __RCAR_CMM_H__ */

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,30 +21,30 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef _FIJI_SMUMANAGER_H_
-#define _FIJI_SMUMANAGER_H_
+#अगर_अघोषित _FIJI_SMUMANAGER_H_
+#घोषणा _FIJI_SMUMANAGER_H_
 
-#include "smu73_discrete.h"
-#include <pp_endian.h>
-#include "smu7_smumgr.h"
+#समावेश "smu73_discrete.h"
+#समावेश <pp_endian.h>
+#समावेश "smu7_smumgr.h"
 
 
-struct fiji_pt_defaults {
-	uint8_t   SviLoadLineEn;
-	uint8_t   SviLoadLineVddC;
-	uint8_t   TDC_VDDC_ThrottleReleaseLimitPerc;
-	uint8_t   TDC_MAWt;
-	uint8_t   TdcWaterfallCtl;
-	uint8_t   DTEAmbientTempBase;
-};
+काष्ठा fiji_pt_शेषs अणु
+	uपूर्णांक8_t   SviLoadLineEn;
+	uपूर्णांक8_t   SviLoadLineVddC;
+	uपूर्णांक8_t   TDC_VDDC_ThrottleReleaseLimitPerc;
+	uपूर्णांक8_t   TDC_MAWt;
+	uपूर्णांक8_t   TdcWaterfallCtl;
+	uपूर्णांक8_t   DTEAmbientTempBase;
+पूर्ण;
 
-struct fiji_smumgr {
-	struct smu7_smumgr                   smu7_data;
-	struct SMU73_Discrete_DpmTable       smc_state_table;
-	struct SMU73_Discrete_Ulv            ulv_setting;
-	struct SMU73_Discrete_PmFuses  power_tune_table;
-	const struct fiji_pt_defaults  *power_tune_defaults;
-};
+काष्ठा fiji_smumgr अणु
+	काष्ठा smu7_smumgr                   smu7_data;
+	काष्ठा SMU73_Discrete_DpmTable       smc_state_table;
+	काष्ठा SMU73_Discrete_Ulv            ulv_setting;
+	काष्ठा SMU73_Discrete_PmFuses  घातer_tune_table;
+	स्थिर काष्ठा fiji_pt_शेषs  *घातer_tune_शेषs;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 

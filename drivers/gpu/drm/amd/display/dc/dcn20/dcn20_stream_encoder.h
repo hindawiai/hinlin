@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,14 +24,14 @@
  *
  */
 
-#ifndef __DC_STREAM_ENCODER_DCN20_H__
-#define __DC_STREAM_ENCODER_DCN20_H__
+#अगर_अघोषित __DC_STREAM_ENCODER_DCN20_H__
+#घोषणा __DC_STREAM_ENCODER_DCN20_H__
 
-#include "stream_encoder.h"
-#include "dcn10/dcn10_stream_encoder.h"
+#समावेश "stream_encoder.h"
+#समावेश "dcn10/dcn10_stream_encoder.h"
 
 
-#define SE_DCN2_REG_LIST(id)\
+#घोषणा SE_DCN2_REG_LIST(id)\
 	SE_COMMON_DCN_REG_LIST(id),\
 	SRI(HDMI_GENERIC_PACKET_CONTROL4, DIG, id), \
 	SRI(HDMI_GENERIC_PACKET_CONTROL5, DIG, id), \
@@ -41,7 +42,7 @@
 	SRI(HDMI_METADATA_PACKET_CONTROL, DIG, id), \
 	SRI(DP_SEC_FRAMING4, DP, id)
 
-#define SE_COMMON_MASK_SH_LIST_DCN20(mask_sh)\
+#घोषणा SE_COMMON_MASK_SH_LIST_DCN20(mask_sh)\
 	SE_COMMON_MASK_SH_LIST_SOC(mask_sh),\
 	SE_SF(DIG0_HDMI_GENERIC_PACKET_CONTROL0, HDMI_GENERIC0_CONT, mask_sh),\
 	SE_SF(DIG0_HDMI_GENERIC_PACKET_CONTROL0, HDMI_GENERIC0_SEND, mask_sh),\
@@ -87,29 +88,29 @@
 	SE_SF(DP0_DP_SEC_CNTL5, DP_SEC_GSP5_LINE_NUM, mask_sh),\
 	SE_SF(DP0_DP_SEC_FRAMING4, DP_SST_SDP_SPLITTING, mask_sh)
 
-void dcn20_stream_encoder_construct(
-	struct dcn10_stream_encoder *enc1,
-	struct dc_context *ctx,
-	struct dc_bios *bp,
-	enum engine_id eng_id,
-	const struct dcn10_stream_enc_registers *regs,
-	const struct dcn10_stream_encoder_shift *se_shift,
-	const struct dcn10_stream_encoder_mask *se_mask);
+व्योम dcn20_stream_encoder_स्थिरruct(
+	काष्ठा dcn10_stream_encoder *enc1,
+	काष्ठा dc_context *ctx,
+	काष्ठा dc_bios *bp,
+	क्रमागत engine_id eng_id,
+	स्थिर काष्ठा dcn10_stream_enc_रेजिस्टरs *regs,
+	स्थिर काष्ठा dcn10_stream_encoder_shअगरt *se_shअगरt,
+	स्थिर काष्ठा dcn10_stream_encoder_mask *se_mask);
 
-void enc2_stream_encoder_dp_set_stream_attribute(
-	struct stream_encoder *enc,
-	struct dc_crtc_timing *crtc_timing,
-	enum dc_color_space output_color_space,
-	bool use_vsc_sdp_for_colorimetry,
-	uint32_t enable_sdp_splitting);
+व्योम enc2_stream_encoder_dp_set_stream_attribute(
+	काष्ठा stream_encoder *enc,
+	काष्ठा dc_crtc_timing *crtc_timing,
+	क्रमागत dc_color_space output_color_space,
+	bool use_vsc_sdp_क्रम_colorimetry,
+	uपूर्णांक32_t enable_sdp_splitting);
 
-void enc2_stream_encoder_dp_unblank(
-	struct stream_encoder *enc,
-	const struct encoder_unblank_param *param);
+व्योम enc2_stream_encoder_dp_unblank(
+	काष्ठा stream_encoder *enc,
+	स्थिर काष्ठा encoder_unblank_param *param);
 
-void enc2_set_dynamic_metadata(struct stream_encoder *enc,
+व्योम enc2_set_dynamic_metadata(काष्ठा stream_encoder *enc,
 		bool enable_dme,
-		uint32_t hubp_requestor_id,
-		enum dynamic_metadata_mode dmdata_mode);
+		uपूर्णांक32_t hubp_requestor_id,
+		क्रमागत dynamic_metadata_mode dmdata_mode);
 
-#endif /* __DC_STREAM_ENCODER_DCN20_H__ */
+#पूर्ण_अगर /* __DC_STREAM_ENCODER_DCN20_H__ */

@@ -1,54 +1,55 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Joshua Henderson <joshua.henderson@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
-#include <linux/init.h>
-#include <linux/pm.h>
-#include <asm/reboot.h>
-#include <asm/mach-pic32/pic32.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pm.h>
+#समावेश <यंत्र/reboot.h>
+#समावेश <यंत्र/mach-pic32/pic32.h>
 
-#define PIC32_RSWRST		0x10
+#घोषणा PIC32_RSWRST		0x10
 
-static void pic32_halt(void)
-{
-	while (1) {
-		__asm__(".set push;\n"
+अटल व्योम pic32_halt(व्योम)
+अणु
+	जबतक (1) अणु
+		__यंत्र__(".set push;\n"
 			".set arch=r4000;\n"
 			"wait;\n"
 			".set pop;\n"
 		);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pic32_machine_restart(char *command)
-{
-	void __iomem *reg =
-		ioremap(PIC32_BASE_RESET + PIC32_RSWRST, sizeof(u32));
+अटल व्योम pic32_machine_restart(अक्षर *command)
+अणु
+	व्योम __iomem *reg =
+		ioremap(PIC32_BASE_RESET + PIC32_RSWRST, माप(u32));
 
 	pic32_syskey_unlock();
 
-	/* magic write/read */
-	__raw_writel(1, reg);
-	(void)__raw_readl(reg);
+	/* magic ग_लिखो/पढ़ो */
+	__raw_ग_लिखोl(1, reg);
+	(व्योम)__raw_पढ़ोl(reg);
 
 	pic32_halt();
-}
+पूर्ण
 
-static void pic32_machine_halt(void)
-{
+अटल व्योम pic32_machine_halt(व्योम)
+अणु
 	local_irq_disable();
 
 	pic32_halt();
-}
+पूर्ण
 
-static int __init mips_reboot_setup(void)
-{
+अटल पूर्णांक __init mips_reboot_setup(व्योम)
+अणु
 	_machine_restart = pic32_machine_restart;
 	_machine_halt = pic32_machine_halt;
-	pm_power_off = pic32_machine_halt;
+	pm_घातer_off = pic32_machine_halt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 arch_initcall(mips_reboot_setup);

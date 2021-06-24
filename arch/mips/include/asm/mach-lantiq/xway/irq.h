@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  *  Copyright (C) 2010 John Crispin <john@phrozen.org>
  */
 
-#ifndef __LANTIQ_IRQ_H
-#define __LANTIQ_IRQ_H
+#अगर_अघोषित __LANTIQ_IRQ_H
+#घोषणा __LANTIQ_IRQ_H
 
-#include <lantiq_irq.h>
+#समावेश <lantiq_irq.h>
 
-#define NR_IRQS 256
+#घोषणा NR_IRQS 256
 
-#include <asm/mach-generic/irq.h>
+#समावेश <यंत्र/mach-generic/irq.h>
 
-#endif
+#पूर्ण_अगर

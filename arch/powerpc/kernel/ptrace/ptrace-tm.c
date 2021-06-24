@@ -1,788 +1,789 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/regset.h>
+#समावेश <linux/regset.h>
 
-#include <asm/switch_to.h>
-#include <asm/tm.h>
-#include <asm/asm-prototypes.h>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <यंत्र/पंचांग.h>
+#समावेश <यंत्र/यंत्र-prototypes.h>
 
-#include "ptrace-decl.h"
+#समावेश "ptrace-decl.h"
 
-void flush_tmregs_to_thread(struct task_struct *tsk)
-{
+व्योम flush_पंचांगregs_to_thपढ़ो(काष्ठा task_काष्ठा *tsk)
+अणु
 	/*
-	 * If task is not current, it will have been flushed already to
-	 * it's thread_struct during __switch_to().
+	 * If task is not current, it will have been flushed alपढ़ोy to
+	 * it's thपढ़ो_काष्ठा during __चयन_to().
 	 *
-	 * A reclaim flushes ALL the state or if not in TM save TM SPRs
-	 * in the appropriate thread structures from live.
+	 * A reclaim flushes ALL the state or अगर not in TM save TM SPRs
+	 * in the appropriate thपढ़ो काष्ठाures from live.
 	 */
 
-	if (!cpu_has_feature(CPU_FTR_TM) || tsk != current)
-		return;
+	अगर (!cpu_has_feature(CPU_FTR_TM) || tsk != current)
+		वापस;
 
-	if (MSR_TM_SUSPENDED(mfmsr())) {
-		tm_reclaim_current(TM_CAUSE_SIGNAL);
-	} else {
-		tm_enable();
-		tm_save_sprs(&tsk->thread);
-	}
-}
+	अगर (MSR_TM_SUSPENDED(mfmsr())) अणु
+		पंचांग_reclaim_current(TM_CAUSE_SIGNAL);
+	पूर्ण अन्यथा अणु
+		पंचांग_enable();
+		पंचांग_save_sprs(&tsk->thपढ़ो);
+	पूर्ण
+पूर्ण
 
-static unsigned long get_user_ckpt_msr(struct task_struct *task)
-{
-	return task->thread.ckpt_regs.msr | task->thread.fpexc_mode;
-}
+अटल अचिन्हित दीर्घ get_user_ckpt_msr(काष्ठा task_काष्ठा *task)
+अणु
+	वापस task->thपढ़ो.ckpt_regs.msr | task->thपढ़ो.fpexc_mode;
+पूर्ण
 
-static int set_user_ckpt_msr(struct task_struct *task, unsigned long msr)
-{
-	task->thread.ckpt_regs.msr &= ~MSR_DEBUGCHANGE;
-	task->thread.ckpt_regs.msr |= msr & MSR_DEBUGCHANGE;
-	return 0;
-}
+अटल पूर्णांक set_user_ckpt_msr(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ msr)
+अणु
+	task->thपढ़ो.ckpt_regs.msr &= ~MSR_DEBUGCHANGE;
+	task->thपढ़ो.ckpt_regs.msr |= msr & MSR_DEBUGCHANGE;
+	वापस 0;
+पूर्ण
 
-static int set_user_ckpt_trap(struct task_struct *task, unsigned long trap)
-{
-	set_trap(&task->thread.ckpt_regs, trap);
-	return 0;
-}
+अटल पूर्णांक set_user_ckpt_trap(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ trap)
+अणु
+	set_trap(&task->thपढ़ो.ckpt_regs, trap);
+	वापस 0;
+पूर्ण
 
 /**
- * tm_cgpr_active - get active number of registers in CGPR
+ * पंचांग_cgpr_active - get active number of रेजिस्टरs in CGPR
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  *
- * This function checks for the active number of available
- * regisers in transaction checkpointed GPR category.
+ * This function checks क्रम the active number of available
+ * regisers in transaction checkpoपूर्णांकed GPR category.
  */
-int tm_cgpr_active(struct task_struct *target, const struct user_regset *regset)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+पूर्णांक पंचांग_cgpr_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return 0;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस 0;
 
-	return regset->n;
-}
+	वापस regset->n;
+पूर्ण
 
 /**
- * tm_cgpr_get - get CGPR registers
+ * पंचांग_cgpr_get - get CGPR रेजिस्टरs
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  * @to:		Destination of copy.
  *
- * This function gets transaction checkpointed GPR registers.
+ * This function माला_लो transaction checkpoपूर्णांकed GPR रेजिस्टरs.
  *
- * When the transaction is active, 'ckpt_regs' holds all the checkpointed
- * GPR register values for the current transaction to fall back on if it
- * aborts in between. This function gets those checkpointed GPR registers.
- * The userspace interface buffer layout is as follows.
+ * When the transaction is active, 'ckpt_regs' holds all the checkpoपूर्णांकed
+ * GPR रेजिस्टर values क्रम the current transaction to fall back on अगर it
+ * पातs in between. This function माला_लो those checkpoपूर्णांकed GPR रेजिस्टरs.
+ * The userspace पूर्णांकerface buffer layout is as follows.
  *
- * struct data {
- *	struct pt_regs ckpt_regs;
- * };
+ * काष्ठा data अणु
+ *	काष्ठा pt_regs ckpt_regs;
+ * पूर्ण;
  */
-int tm_cgpr_get(struct task_struct *target, const struct user_regset *regset,
-		struct membuf to)
-{
-	struct membuf to_msr = membuf_at(&to, offsetof(struct pt_regs, msr));
-#ifdef CONFIG_PPC64
-	struct membuf to_softe = membuf_at(&to, offsetof(struct pt_regs, softe));
-#endif
+पूर्णांक पंचांग_cgpr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		काष्ठा membuf to)
+अणु
+	काष्ठा membuf to_msr = membuf_at(&to, दुरत्व(काष्ठा pt_regs, msr));
+#अगर_घोषित CONFIG_PPC64
+	काष्ठा membuf to_softe = membuf_at(&to, दुरत्व(काष्ठा pt_regs, softe));
+#पूर्ण_अगर
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
 
-	membuf_write(&to, &target->thread.ckpt_regs, sizeof(struct user_pt_regs));
+	membuf_ग_लिखो(&to, &target->thपढ़ो.ckpt_regs, माप(काष्ठा user_pt_regs));
 
 	membuf_store(&to_msr, get_user_ckpt_msr(target));
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 	membuf_store(&to_softe, 0x1ul);
-#endif
-	return membuf_zero(&to, ELF_NGREG * sizeof(unsigned long) -
-			sizeof(struct user_pt_regs));
-}
+#पूर्ण_अगर
+	वापस membuf_zero(&to, ELF_NGREG * माप(अचिन्हित दीर्घ) -
+			माप(काष्ठा user_pt_regs));
+पूर्ण
 
 /*
- * tm_cgpr_set - set the CGPR registers
+ * पंचांग_cgpr_set - set the CGPR रेजिस्टरs
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  * @pos:	The buffer position.
  * @count:	Number of bytes to copy.
- * @kbuf:	Kernel buffer to copy into.
+ * @kbuf:	Kernel buffer to copy पूर्णांकo.
  * @ubuf:	User buffer to copy from.
  *
- * This function sets in transaction checkpointed GPR registers.
+ * This function sets in transaction checkpoपूर्णांकed GPR रेजिस्टरs.
  *
- * When the transaction is active, 'ckpt_regs' holds the checkpointed
- * GPR register values for the current transaction to fall back on if it
- * aborts in between. This function sets those checkpointed GPR registers.
- * The userspace interface buffer layout is as follows.
+ * When the transaction is active, 'ckpt_regs' holds the checkpoपूर्णांकed
+ * GPR रेजिस्टर values क्रम the current transaction to fall back on अगर it
+ * पातs in between. This function sets those checkpoपूर्णांकed GPR रेजिस्टरs.
+ * The userspace पूर्णांकerface buffer layout is as follows.
  *
- * struct data {
- *	struct pt_regs ckpt_regs;
- * };
+ * काष्ठा data अणु
+ *	काष्ठा pt_regs ckpt_regs;
+ * पूर्ण;
  */
-int tm_cgpr_set(struct task_struct *target, const struct user_regset *regset,
-		unsigned int pos, unsigned int count,
-		const void *kbuf, const void __user *ubuf)
-{
-	unsigned long reg;
-	int ret;
+पूर्णांक पंचांग_cgpr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	अचिन्हित दीर्घ reg;
+	पूर्णांक ret;
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.ckpt_regs,
-				 0, PT_MSR * sizeof(reg));
+				 &target->thपढ़ो.ckpt_regs,
+				 0, PT_MSR * माप(reg));
 
-	if (!ret && count > 0) {
+	अगर (!ret && count > 0) अणु
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &reg,
-					 PT_MSR * sizeof(reg),
-					 (PT_MSR + 1) * sizeof(reg));
-		if (!ret)
+					 PT_MSR * माप(reg),
+					 (PT_MSR + 1) * माप(reg));
+		अगर (!ret)
 			ret = set_user_ckpt_msr(target, reg);
-	}
+	पूर्ण
 
-	BUILD_BUG_ON(offsetof(struct pt_regs, orig_gpr3) !=
-		     offsetof(struct pt_regs, msr) + sizeof(long));
+	BUILD_BUG_ON(दुरत्व(काष्ठा pt_regs, orig_gpr3) !=
+		     दुरत्व(काष्ठा pt_regs, msr) + माप(दीर्घ));
 
-	if (!ret)
+	अगर (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.ckpt_regs.orig_gpr3,
-					 PT_ORIG_R3 * sizeof(reg),
-					 (PT_MAX_PUT_REG + 1) * sizeof(reg));
+					 &target->thपढ़ो.ckpt_regs.orig_gpr3,
+					 PT_ORIG_R3 * माप(reg),
+					 (PT_MAX_PUT_REG + 1) * माप(reg));
 
-	if (PT_MAX_PUT_REG + 1 < PT_TRAP && !ret)
+	अगर (PT_MAX_PUT_REG + 1 < PT_TRAP && !ret)
 		ret = user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-						(PT_MAX_PUT_REG + 1) * sizeof(reg),
-						PT_TRAP * sizeof(reg));
+						(PT_MAX_PUT_REG + 1) * माप(reg),
+						PT_TRAP * माप(reg));
 
-	if (!ret && count > 0) {
+	अगर (!ret && count > 0) अणु
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &reg,
-					 PT_TRAP * sizeof(reg),
-					 (PT_TRAP + 1) * sizeof(reg));
-		if (!ret)
+					 PT_TRAP * माप(reg),
+					 (PT_TRAP + 1) * माप(reg));
+		अगर (!ret)
 			ret = set_user_ckpt_trap(target, reg);
-	}
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		ret = user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
-						(PT_TRAP + 1) * sizeof(reg), -1);
+						(PT_TRAP + 1) * माप(reg), -1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * tm_cfpr_active - get active number of registers in CFPR
+ * पंचांग_cfpr_active - get active number of रेजिस्टरs in CFPR
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  *
- * This function checks for the active number of available
- * regisers in transaction checkpointed FPR category.
+ * This function checks क्रम the active number of available
+ * regisers in transaction checkpoपूर्णांकed FPR category.
  */
-int tm_cfpr_active(struct task_struct *target, const struct user_regset *regset)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+पूर्णांक पंचांग_cfpr_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return 0;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस 0;
 
-	return regset->n;
-}
+	वापस regset->n;
+पूर्ण
 
 /**
- * tm_cfpr_get - get CFPR registers
+ * पंचांग_cfpr_get - get CFPR रेजिस्टरs
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  * @to:		Destination of copy.
  *
- * This function gets in transaction checkpointed FPR registers.
+ * This function माला_लो in transaction checkpoपूर्णांकed FPR रेजिस्टरs.
  *
- * When the transaction is active 'ckfp_state' holds the checkpointed
- * values for the current transaction to fall back on if it aborts
- * in between. This function gets those checkpointed FPR registers.
- * The userspace interface buffer layout is as follows.
+ * When the transaction is active 'ckfp_state' holds the checkpoपूर्णांकed
+ * values क्रम the current transaction to fall back on अगर it पातs
+ * in between. This function माला_लो those checkpoपूर्णांकed FPR रेजिस्टरs.
+ * The userspace पूर्णांकerface buffer layout is as follows.
  *
- * struct data {
+ * काष्ठा data अणु
  *	u64	fpr[32];
  *	u64	fpscr;
- *};
+ *पूर्ण;
  */
-int tm_cfpr_get(struct task_struct *target, const struct user_regset *regset,
-		struct membuf to)
-{
+पूर्णांक पंचांग_cfpr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		काष्ठा membuf to)
+अणु
 	u64 buf[33];
-	int i;
+	पूर्णांक i;
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
 
-	/* copy to local buffer then write that out */
-	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.TS_CKFPR(i);
-	buf[32] = target->thread.ckfp_state.fpscr;
-	return membuf_write(&to, buf, sizeof(buf));
-}
+	/* copy to local buffer then ग_लिखो that out */
+	क्रम (i = 0; i < 32 ; i++)
+		buf[i] = target->thपढ़ो.TS_CKFPR(i);
+	buf[32] = target->thपढ़ो.ckfp_state.fpscr;
+	वापस membuf_ग_लिखो(&to, buf, माप(buf));
+पूर्ण
 
 /**
- * tm_cfpr_set - set CFPR registers
+ * पंचांग_cfpr_set - set CFPR रेजिस्टरs
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  * @pos:	The buffer position.
  * @count:	Number of bytes to copy.
- * @kbuf:	Kernel buffer to copy into.
+ * @kbuf:	Kernel buffer to copy पूर्णांकo.
  * @ubuf:	User buffer to copy from.
  *
- * This function sets in transaction checkpointed FPR registers.
+ * This function sets in transaction checkpoपूर्णांकed FPR रेजिस्टरs.
  *
- * When the transaction is active 'ckfp_state' holds the checkpointed
- * FPR register values for the current transaction to fall back on
- * if it aborts in between. This function sets these checkpointed
- * FPR registers. The userspace interface buffer layout is as follows.
+ * When the transaction is active 'ckfp_state' holds the checkpoपूर्णांकed
+ * FPR रेजिस्टर values क्रम the current transaction to fall back on
+ * अगर it पातs in between. This function sets these checkpoपूर्णांकed
+ * FPR रेजिस्टरs. The userspace पूर्णांकerface buffer layout is as follows.
  *
- * struct data {
+ * काष्ठा data अणु
  *	u64	fpr[32];
  *	u64	fpscr;
- *};
+ *पूर्ण;
  */
-int tm_cfpr_set(struct task_struct *target, const struct user_regset *regset,
-		unsigned int pos, unsigned int count,
-		const void *kbuf, const void __user *ubuf)
-{
+पूर्णांक पंचांग_cfpr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
 	u64 buf[33];
-	int i;
+	पूर्णांक i;
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
 
-	for (i = 0; i < 32; i++)
-		buf[i] = target->thread.TS_CKFPR(i);
-	buf[32] = target->thread.ckfp_state.fpscr;
+	क्रम (i = 0; i < 32; i++)
+		buf[i] = target->thपढ़ो.TS_CKFPR(i);
+	buf[32] = target->thपढ़ो.ckfp_state.fpscr;
 
-	/* copy to local buffer then write that out */
+	/* copy to local buffer then ग_लिखो that out */
 	i = user_regset_copyin(&pos, &count, &kbuf, &ubuf, buf, 0, -1);
-	if (i)
-		return i;
-	for (i = 0; i < 32 ; i++)
-		target->thread.TS_CKFPR(i) = buf[i];
-	target->thread.ckfp_state.fpscr = buf[32];
-	return 0;
-}
+	अगर (i)
+		वापस i;
+	क्रम (i = 0; i < 32 ; i++)
+		target->thपढ़ो.TS_CKFPR(i) = buf[i];
+	target->thपढ़ो.ckfp_state.fpscr = buf[32];
+	वापस 0;
+पूर्ण
 
 /**
- * tm_cvmx_active - get active number of registers in CVMX
+ * पंचांग_cvmx_active - get active number of रेजिस्टरs in CVMX
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  *
- * This function checks for the active number of available
- * regisers in checkpointed VMX category.
+ * This function checks क्रम the active number of available
+ * regisers in checkpoपूर्णांकed VMX category.
  */
-int tm_cvmx_active(struct task_struct *target, const struct user_regset *regset)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+पूर्णांक पंचांग_cvmx_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return 0;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस 0;
 
-	return regset->n;
-}
+	वापस regset->n;
+पूर्ण
 
 /**
- * tm_cvmx_get - get CMVX registers
+ * पंचांग_cvmx_get - get CMVX रेजिस्टरs
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  * @to:		Destination of copy.
  *
- * This function gets in transaction checkpointed VMX registers.
+ * This function माला_लो in transaction checkpoपूर्णांकed VMX रेजिस्टरs.
  *
  * When the transaction is active 'ckvr_state' and 'ckvrsave' hold
- * the checkpointed values for the current transaction to fall
- * back on if it aborts in between. The userspace interface buffer
+ * the checkpoपूर्णांकed values क्रम the current transaction to fall
+ * back on अगर it पातs in between. The userspace पूर्णांकerface buffer
  * layout is as follows.
  *
- * struct data {
+ * काष्ठा data अणु
  *	vector128	vr[32];
  *	vector128	vscr;
  *	vector128	vrsave;
- *};
+ *पूर्ण;
  */
-int tm_cvmx_get(struct task_struct *target, const struct user_regset *regset,
-		struct membuf to)
-{
-	union {
+पूर्णांक पंचांग_cvmx_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		काष्ठा membuf to)
+अणु
+	जोड़ अणु
 		elf_vrreg_t reg;
 		u32 word;
-	} vrsave;
+	पूर्ण vrsave;
 	BUILD_BUG_ON(TVSO(vscr) != TVSO(vr[32]));
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
 	/* Flush the state */
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
 
-	membuf_write(&to, &target->thread.ckvr_state, 33 * sizeof(vector128));
+	membuf_ग_लिखो(&to, &target->thपढ़ो.ckvr_state, 33 * माप(vector128));
 	/*
 	 * Copy out only the low-order word of vrsave.
 	 */
-	memset(&vrsave, 0, sizeof(vrsave));
-	vrsave.word = target->thread.ckvrsave;
-	return membuf_write(&to, &vrsave, sizeof(vrsave));
-}
+	स_रखो(&vrsave, 0, माप(vrsave));
+	vrsave.word = target->thपढ़ो.ckvrsave;
+	वापस membuf_ग_लिखो(&to, &vrsave, माप(vrsave));
+पूर्ण
 
 /**
- * tm_cvmx_set - set CMVX registers
+ * पंचांग_cvmx_set - set CMVX रेजिस्टरs
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  * @pos:	The buffer position.
  * @count:	Number of bytes to copy.
- * @kbuf:	Kernel buffer to copy into.
+ * @kbuf:	Kernel buffer to copy पूर्णांकo.
  * @ubuf:	User buffer to copy from.
  *
- * This function sets in transaction checkpointed VMX registers.
+ * This function sets in transaction checkpoपूर्णांकed VMX रेजिस्टरs.
  *
  * When the transaction is active 'ckvr_state' and 'ckvrsave' hold
- * the checkpointed values for the current transaction to fall
- * back on if it aborts in between. The userspace interface buffer
+ * the checkpoपूर्णांकed values क्रम the current transaction to fall
+ * back on अगर it पातs in between. The userspace पूर्णांकerface buffer
  * layout is as follows.
  *
- * struct data {
+ * काष्ठा data अणु
  *	vector128	vr[32];
  *	vector128	vscr;
  *	vector128	vrsave;
- *};
+ *पूर्ण;
  */
-int tm_cvmx_set(struct task_struct *target, const struct user_regset *regset,
-		unsigned int pos, unsigned int count,
-		const void *kbuf, const void __user *ubuf)
-{
-	int ret;
+पूर्णांक पंचांग_cvmx_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
 
 	BUILD_BUG_ON(TVSO(vscr) != TVSO(vr[32]));
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
 
-	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &target->thread.ckvr_state,
-				 0, 33 * sizeof(vector128));
-	if (!ret && count > 0) {
+	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &target->thपढ़ो.ckvr_state,
+				 0, 33 * माप(vector128));
+	अगर (!ret && count > 0) अणु
 		/*
 		 * We use only the low-order word of vrsave.
 		 */
-		union {
+		जोड़ अणु
 			elf_vrreg_t reg;
 			u32 word;
-		} vrsave;
-		memset(&vrsave, 0, sizeof(vrsave));
-		vrsave.word = target->thread.ckvrsave;
+		पूर्ण vrsave;
+		स_रखो(&vrsave, 0, माप(vrsave));
+		vrsave.word = target->thपढ़ो.ckvrsave;
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &vrsave,
-					 33 * sizeof(vector128), -1);
-		if (!ret)
-			target->thread.ckvrsave = vrsave.word;
-	}
+					 33 * माप(vector128), -1);
+		अगर (!ret)
+			target->thपढ़ो.ckvrsave = vrsave.word;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * tm_cvsx_active - get active number of registers in CVSX
+ * पंचांग_cvsx_active - get active number of रेजिस्टरs in CVSX
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  *
- * This function checks for the active number of available
- * regisers in transaction checkpointed VSX category.
+ * This function checks क्रम the active number of available
+ * regisers in transaction checkpoपूर्णांकed VSX category.
  */
-int tm_cvsx_active(struct task_struct *target, const struct user_regset *regset)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+पूर्णांक पंचांग_cvsx_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return 0;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस 0;
 
-	flush_vsx_to_thread(target);
-	return target->thread.used_vsr ? regset->n : 0;
-}
+	flush_vsx_to_thपढ़ो(target);
+	वापस target->thपढ़ो.used_vsr ? regset->n : 0;
+पूर्ण
 
 /**
- * tm_cvsx_get - get CVSX registers
+ * पंचांग_cvsx_get - get CVSX रेजिस्टरs
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  * @to:		Destination of copy.
  *
- * This function gets in transaction checkpointed VSX registers.
+ * This function माला_लो in transaction checkpoपूर्णांकed VSX रेजिस्टरs.
  *
- * When the transaction is active 'ckfp_state' holds the checkpointed
- * values for the current transaction to fall back on if it aborts
- * in between. This function gets those checkpointed VSX registers.
- * The userspace interface buffer layout is as follows.
+ * When the transaction is active 'ckfp_state' holds the checkpoपूर्णांकed
+ * values क्रम the current transaction to fall back on अगर it पातs
+ * in between. This function माला_लो those checkpoपूर्णांकed VSX रेजिस्टरs.
+ * The userspace पूर्णांकerface buffer layout is as follows.
  *
- * struct data {
+ * काष्ठा data अणु
  *	u64	vsx[32];
- *};
+ *पूर्ण;
  */
-int tm_cvsx_get(struct task_struct *target, const struct user_regset *regset,
-		struct membuf to)
-{
+पूर्णांक पंचांग_cvsx_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		काष्ठा membuf to)
+अणु
 	u64 buf[32];
-	int i;
+	पूर्णांक i;
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
 	/* Flush the state */
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
-	flush_vsx_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
+	flush_vsx_to_thपढ़ो(target);
 
-	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET];
-	return membuf_write(&to, buf, 32 * sizeof(double));
-}
+	क्रम (i = 0; i < 32 ; i++)
+		buf[i] = target->thपढ़ो.ckfp_state.fpr[i][TS_VSRLOWOFFSET];
+	वापस membuf_ग_लिखो(&to, buf, 32 * माप(द्विगुन));
+पूर्ण
 
 /**
- * tm_cvsx_set - set CFPR registers
+ * पंचांग_cvsx_set - set CFPR रेजिस्टरs
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  * @pos:	The buffer position.
  * @count:	Number of bytes to copy.
- * @kbuf:	Kernel buffer to copy into.
+ * @kbuf:	Kernel buffer to copy पूर्णांकo.
  * @ubuf:	User buffer to copy from.
  *
- * This function sets in transaction checkpointed VSX registers.
+ * This function sets in transaction checkpoपूर्णांकed VSX रेजिस्टरs.
  *
- * When the transaction is active 'ckfp_state' holds the checkpointed
- * VSX register values for the current transaction to fall back on
- * if it aborts in between. This function sets these checkpointed
- * FPR registers. The userspace interface buffer layout is as follows.
+ * When the transaction is active 'ckfp_state' holds the checkpoपूर्णांकed
+ * VSX रेजिस्टर values क्रम the current transaction to fall back on
+ * अगर it पातs in between. This function sets these checkpoपूर्णांकed
+ * FPR रेजिस्टरs. The userspace पूर्णांकerface buffer layout is as follows.
  *
- * struct data {
+ * काष्ठा data अणु
  *	u64	vsx[32];
- *};
+ *पूर्ण;
  */
-int tm_cvsx_set(struct task_struct *target, const struct user_regset *regset,
-		unsigned int pos, unsigned int count,
-		const void *kbuf, const void __user *ubuf)
-{
+पूर्णांक पंचांग_cvsx_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
 	u64 buf[32];
-	int ret, i;
+	पूर्णांक ret, i;
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
 	/* Flush the state */
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
-	flush_vsx_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
+	flush_vsx_to_thपढ़ो(target);
 
-	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET];
+	क्रम (i = 0; i < 32 ; i++)
+		buf[i] = target->thपढ़ो.ckfp_state.fpr[i][TS_VSRLOWOFFSET];
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 buf, 0, 32 * sizeof(double));
-	if (!ret)
-		for (i = 0; i < 32 ; i++)
-			target->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
+				 buf, 0, 32 * माप(द्विगुन));
+	अगर (!ret)
+		क्रम (i = 0; i < 32 ; i++)
+			target->thपढ़ो.ckfp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * tm_spr_active - get active number of registers in TM SPR
+ * पंचांग_spr_active - get active number of रेजिस्टरs in TM SPR
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  *
  * This function checks the active number of available
  * regisers in the transactional memory SPR category.
  */
-int tm_spr_active(struct task_struct *target, const struct user_regset *regset)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+पूर्णांक पंचांग_spr_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	return regset->n;
-}
+	वापस regset->n;
+पूर्ण
 
 /**
- * tm_spr_get - get the TM related SPR registers
+ * पंचांग_spr_get - get the TM related SPR रेजिस्टरs
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  * @to:		Destination of copy.
  *
- * This function gets transactional memory related SPR registers.
- * The userspace interface buffer layout is as follows.
+ * This function माला_लो transactional memory related SPR रेजिस्टरs.
+ * The userspace पूर्णांकerface buffer layout is as follows.
  *
- * struct {
- *	u64		tm_tfhar;
- *	u64		tm_texasr;
- *	u64		tm_tfiar;
- * };
+ * काष्ठा अणु
+ *	u64		पंचांग_tfhar;
+ *	u64		पंचांग_texasr;
+ *	u64		पंचांग_tfiar;
+ * पूर्ण;
  */
-int tm_spr_get(struct task_struct *target, const struct user_regset *regset,
-	       struct membuf to)
-{
+पूर्णांक पंचांग_spr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	       काष्ठा membuf to)
+अणु
 	/* Build tests */
-	BUILD_BUG_ON(TSO(tm_tfhar) + sizeof(u64) != TSO(tm_texasr));
-	BUILD_BUG_ON(TSO(tm_texasr) + sizeof(u64) != TSO(tm_tfiar));
-	BUILD_BUG_ON(TSO(tm_tfiar) + sizeof(u64) != TSO(ckpt_regs));
+	BUILD_BUG_ON(TSO(पंचांग_tfhar) + माप(u64) != TSO(पंचांग_texasr));
+	BUILD_BUG_ON(TSO(पंचांग_texasr) + माप(u64) != TSO(पंचांग_tfiar));
+	BUILD_BUG_ON(TSO(पंचांग_tfiar) + माप(u64) != TSO(ckpt_regs));
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
 	/* Flush the states */
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
 
-	/* TFHAR register */
-	membuf_write(&to, &target->thread.tm_tfhar, sizeof(u64));
-	/* TEXASR register */
-	membuf_write(&to, &target->thread.tm_texasr, sizeof(u64));
-	/* TFIAR register */
-	return membuf_write(&to, &target->thread.tm_tfiar, sizeof(u64));
-}
+	/* TFHAR रेजिस्टर */
+	membuf_ग_लिखो(&to, &target->thपढ़ो.पंचांग_tfhar, माप(u64));
+	/* TEXASR रेजिस्टर */
+	membuf_ग_लिखो(&to, &target->thपढ़ो.पंचांग_texasr, माप(u64));
+	/* TFIAR रेजिस्टर */
+	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.पंचांग_tfiar, माप(u64));
+पूर्ण
 
 /**
- * tm_spr_set - set the TM related SPR registers
+ * पंचांग_spr_set - set the TM related SPR रेजिस्टरs
  * @target:	The target task.
- * @regset:	The user regset structure.
+ * @regset:	The user regset काष्ठाure.
  * @pos:	The buffer position.
  * @count:	Number of bytes to copy.
- * @kbuf:	Kernel buffer to copy into.
+ * @kbuf:	Kernel buffer to copy पूर्णांकo.
  * @ubuf:	User buffer to copy from.
  *
- * This function sets transactional memory related SPR registers.
- * The userspace interface buffer layout is as follows.
+ * This function sets transactional memory related SPR रेजिस्टरs.
+ * The userspace पूर्णांकerface buffer layout is as follows.
  *
- * struct {
- *	u64		tm_tfhar;
- *	u64		tm_texasr;
- *	u64		tm_tfiar;
- * };
+ * काष्ठा अणु
+ *	u64		पंचांग_tfhar;
+ *	u64		पंचांग_texasr;
+ *	u64		पंचांग_tfiar;
+ * पूर्ण;
  */
-int tm_spr_set(struct task_struct *target, const struct user_regset *regset,
-	       unsigned int pos, unsigned int count,
-	       const void *kbuf, const void __user *ubuf)
-{
-	int ret;
+पूर्णांक पंचांग_spr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	       अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+	       स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
 
 	/* Build tests */
-	BUILD_BUG_ON(TSO(tm_tfhar) + sizeof(u64) != TSO(tm_texasr));
-	BUILD_BUG_ON(TSO(tm_texasr) + sizeof(u64) != TSO(tm_tfiar));
-	BUILD_BUG_ON(TSO(tm_tfiar) + sizeof(u64) != TSO(ckpt_regs));
+	BUILD_BUG_ON(TSO(पंचांग_tfhar) + माप(u64) != TSO(पंचांग_texasr));
+	BUILD_BUG_ON(TSO(पंचांग_texasr) + माप(u64) != TSO(पंचांग_tfiar));
+	BUILD_BUG_ON(TSO(पंचांग_tfiar) + माप(u64) != TSO(ckpt_regs));
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
 	/* Flush the states */
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
 
-	/* TFHAR register */
+	/* TFHAR रेजिस्टर */
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.tm_tfhar, 0, sizeof(u64));
+				 &target->thपढ़ो.पंचांग_tfhar, 0, माप(u64));
 
-	/* TEXASR register */
-	if (!ret)
+	/* TEXASR रेजिस्टर */
+	अगर (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.tm_texasr, sizeof(u64),
-					 2 * sizeof(u64));
+					 &target->thपढ़ो.पंचांग_texasr, माप(u64),
+					 2 * माप(u64));
 
-	/* TFIAR register */
-	if (!ret)
+	/* TFIAR रेजिस्टर */
+	अगर (!ret)
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-					 &target->thread.tm_tfiar,
-					 2 * sizeof(u64), 3 * sizeof(u64));
-	return ret;
-}
+					 &target->thपढ़ो.पंचांग_tfiar,
+					 2 * माप(u64), 3 * माप(u64));
+	वापस ret;
+पूर्ण
 
-int tm_tar_active(struct task_struct *target, const struct user_regset *regset)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+पूर्णांक पंचांग_tar_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (MSR_TM_ACTIVE(target->thread.regs->msr))
-		return regset->n;
+	अगर (MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस regset->n;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int tm_tar_get(struct task_struct *target, const struct user_regset *regset,
-	       struct membuf to)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+पूर्णांक पंचांग_tar_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	       काष्ठा membuf to)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
-	return membuf_write(&to, &target->thread.tm_tar, sizeof(u64));
-}
+	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.पंचांग_tar, माप(u64));
+पूर्ण
 
-int tm_tar_set(struct task_struct *target, const struct user_regset *regset,
-	       unsigned int pos, unsigned int count,
-	       const void *kbuf, const void __user *ubuf)
-{
-	int ret;
+पूर्णांक पंचांग_tar_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	       अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+	       स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
-
-	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.tm_tar, 0, sizeof(u64));
-	return ret;
-}
-
-int tm_ppr_active(struct task_struct *target, const struct user_regset *regset)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
-
-	if (MSR_TM_ACTIVE(target->thread.regs->msr))
-		return regset->n;
-
-	return 0;
-}
-
-
-int tm_ppr_get(struct task_struct *target, const struct user_regset *regset,
-	       struct membuf to)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
-
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
-
-	return membuf_write(&to, &target->thread.tm_ppr, sizeof(u64));
-}
-
-int tm_ppr_set(struct task_struct *target, const struct user_regset *regset,
-	       unsigned int pos, unsigned int count,
-	       const void *kbuf, const void __user *ubuf)
-{
-	int ret;
-
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
-
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.tm_ppr, 0, sizeof(u64));
-	return ret;
-}
+				 &target->thपढ़ो.पंचांग_tar, 0, माप(u64));
+	वापस ret;
+पूर्ण
 
-int tm_dscr_active(struct task_struct *target, const struct user_regset *regset)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+पूर्णांक पंचांग_ppr_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	if (MSR_TM_ACTIVE(target->thread.regs->msr))
-		return regset->n;
+	अगर (MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस regset->n;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int tm_dscr_get(struct task_struct *target, const struct user_regset *regset,
-		struct membuf to)
-{
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+पूर्णांक पंचांग_ppr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	       काष्ठा membuf to)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
 
-	return membuf_write(&to, &target->thread.tm_dscr, sizeof(u64));
-}
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
-int tm_dscr_set(struct task_struct *target, const struct user_regset *regset,
-		unsigned int pos, unsigned int count,
-		const void *kbuf, const void __user *ubuf)
-{
-	int ret;
+	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.पंचांग_ppr, माप(u64));
+पूर्ण
 
-	if (!cpu_has_feature(CPU_FTR_TM))
-		return -ENODEV;
+पूर्णांक पंचांग_ppr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	       अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+	       स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
 
-	if (!MSR_TM_ACTIVE(target->thread.regs->msr))
-		return -ENODATA;
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
+
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.tm_dscr, 0, sizeof(u64));
-	return ret;
-}
+				 &target->thपढ़ो.पंचांग_ppr, 0, माप(u64));
+	वापस ret;
+पूर्ण
 
-int tm_cgpr32_get(struct task_struct *target, const struct user_regset *regset,
-		  struct membuf to)
-{
+पूर्णांक पंचांग_dscr_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
+
+	अगर (MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस regset->n;
+
+	वापस 0;
+पूर्ण
+
+पूर्णांक पंचांग_dscr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		काष्ठा membuf to)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
+
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
+
+	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.पंचांग_dscr, माप(u64));
+पूर्ण
+
+पूर्णांक पंचांग_dscr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
+
+	अगर (!cpu_has_feature(CPU_FTR_TM))
+		वापस -ENODEV;
+
+	अगर (!MSR_TM_ACTIVE(target->thपढ़ो.regs->msr))
+		वापस -ENODATA;
+
+	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
+				 &target->thपढ़ो.पंचांग_dscr, 0, माप(u64));
+	वापस ret;
+पूर्ण
+
+पूर्णांक पंचांग_cgpr32_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		  काष्ठा membuf to)
+अणु
 	gpr32_get_common(target, regset, to,
-				&target->thread.ckpt_regs.gpr[0]);
-	return membuf_zero(&to, ELF_NGREG * sizeof(u32));
-}
+				&target->thपढ़ो.ckpt_regs.gpr[0]);
+	वापस membuf_zero(&to, ELF_NGREG * माप(u32));
+पूर्ण
 
-int tm_cgpr32_set(struct task_struct *target, const struct user_regset *regset,
-		  unsigned int pos, unsigned int count,
-		  const void *kbuf, const void __user *ubuf)
-{
-	return gpr32_set_common(target, regset, pos, count, kbuf, ubuf,
-				&target->thread.ckpt_regs.gpr[0]);
-}
+पूर्णांक पंचांग_cgpr32_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		  अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		  स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	वापस gpr32_set_common(target, regset, pos, count, kbuf, ubuf,
+				&target->thपढ़ो.ckpt_regs.gpr[0]);
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,34 +22,34 @@
  *
  * Authors: Ben Skeggs
  */
-#include <core/client.h>
-#include <core/device.h>
-#include <core/notify.h>
-#include <core/option.h>
+#समावेश <core/client.h>
+#समावेश <core/device.h>
+#समावेश <core/notअगरy.h>
+#समावेश <core/option.h>
 
-#include <nvif/class.h>
-#include <nvif/event.h>
-#include <nvif/if0000.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/class.h>
+#समावेश <nvअगर/event.h>
+#समावेश <nvअगर/अगर0000.h>
+#समावेश <nvअगर/unpack.h>
 
-static int
-nvkm_uclient_new(const struct nvkm_oclass *oclass, void *argv, u32 argc,
-		 struct nvkm_object **pobject)
-{
-	union {
-		struct nvif_client_v0 v0;
-	} *args = argv;
-	struct nvkm_client *client;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+nvkm_uclient_new(स्थिर काष्ठा nvkm_oclass *oclass, व्योम *argv, u32 argc,
+		 काष्ठा nvkm_object **pobject)
+अणु
+	जोड़ अणु
+		काष्ठा nvअगर_client_v0 v0;
+	पूर्ण *args = argv;
+	काष्ठा nvkm_client *client;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))){
-		args->v0.name[sizeof(args->v0.name) - 1] = 0;
-		ret = nvkm_client_new(args->v0.name, args->v0.device, NULL,
-				      NULL, oclass->client->ntfy, &client);
-		if (ret)
-			return ret;
-	} else
-		return ret;
+	अगर (!(ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, false)))अणु
+		args->v0.name[माप(args->v0.name) - 1] = 0;
+		ret = nvkm_client_new(args->v0.name, args->v0.device, शून्य,
+				      शून्य, oclass->client->ntfy, &client);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा
+		वापस ret;
 
 	client->object.client = oclass->client;
 	client->object.handle = oclass->handle;
@@ -57,251 +58,251 @@ nvkm_uclient_new(const struct nvkm_oclass *oclass, void *argv, u32 argc,
 	client->object.object = oclass->object;
 	client->debug = oclass->client->debug;
 	*pobject = &client->object;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct nvkm_sclass
-nvkm_uclient_sclass = {
+स्थिर काष्ठा nvkm_sclass
+nvkm_uclient_sclass = अणु
 	.oclass = NVIF_CLASS_CLIENT,
 	.minver = 0,
 	.maxver = 0,
 	.ctor = nvkm_uclient_new,
-};
+पूर्ण;
 
-struct nvkm_client_notify {
-	struct nvkm_client *client;
-	struct nvkm_notify n;
+काष्ठा nvkm_client_notअगरy अणु
+	काष्ठा nvkm_client *client;
+	काष्ठा nvkm_notअगरy n;
 	u8 version;
 	u8 size;
-	union {
-		struct nvif_notify_rep_v0 v0;
-	} rep;
-};
+	जोड़ अणु
+		काष्ठा nvअगर_notअगरy_rep_v0 v0;
+	पूर्ण rep;
+पूर्ण;
 
-static int
-nvkm_client_notify(struct nvkm_notify *n)
-{
-	struct nvkm_client_notify *notify = container_of(n, typeof(*notify), n);
-	struct nvkm_client *client = notify->client;
-	return client->ntfy(&notify->rep, notify->size, n->data, n->size);
-}
+अटल पूर्णांक
+nvkm_client_notअगरy(काष्ठा nvkm_notअगरy *n)
+अणु
+	काष्ठा nvkm_client_notअगरy *notअगरy = container_of(n, typeof(*notअगरy), n);
+	काष्ठा nvkm_client *client = notअगरy->client;
+	वापस client->ntfy(&notअगरy->rep, notअगरy->size, n->data, n->size);
+पूर्ण
 
-int
-nvkm_client_notify_put(struct nvkm_client *client, int index)
-{
-	if (index < ARRAY_SIZE(client->notify)) {
-		if (client->notify[index]) {
-			nvkm_notify_put(&client->notify[index]->n);
-			return 0;
-		}
-	}
-	return -ENOENT;
-}
+पूर्णांक
+nvkm_client_notअगरy_put(काष्ठा nvkm_client *client, पूर्णांक index)
+अणु
+	अगर (index < ARRAY_SIZE(client->notअगरy)) अणु
+		अगर (client->notअगरy[index]) अणु
+			nvkm_notअगरy_put(&client->notअगरy[index]->n);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-int
-nvkm_client_notify_get(struct nvkm_client *client, int index)
-{
-	if (index < ARRAY_SIZE(client->notify)) {
-		if (client->notify[index]) {
-			nvkm_notify_get(&client->notify[index]->n);
-			return 0;
-		}
-	}
-	return -ENOENT;
-}
+पूर्णांक
+nvkm_client_notअगरy_get(काष्ठा nvkm_client *client, पूर्णांक index)
+अणु
+	अगर (index < ARRAY_SIZE(client->notअगरy)) अणु
+		अगर (client->notअगरy[index]) अणु
+			nvkm_notअगरy_get(&client->notअगरy[index]->n);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-int
-nvkm_client_notify_del(struct nvkm_client *client, int index)
-{
-	if (index < ARRAY_SIZE(client->notify)) {
-		if (client->notify[index]) {
-			nvkm_notify_fini(&client->notify[index]->n);
-			kfree(client->notify[index]);
-			client->notify[index] = NULL;
-			return 0;
-		}
-	}
-	return -ENOENT;
-}
+पूर्णांक
+nvkm_client_notअगरy_del(काष्ठा nvkm_client *client, पूर्णांक index)
+अणु
+	अगर (index < ARRAY_SIZE(client->notअगरy)) अणु
+		अगर (client->notअगरy[index]) अणु
+			nvkm_notअगरy_fini(&client->notअगरy[index]->n);
+			kमुक्त(client->notअगरy[index]);
+			client->notअगरy[index] = शून्य;
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-int
-nvkm_client_notify_new(struct nvkm_object *object,
-		       struct nvkm_event *event, void *data, u32 size)
-{
-	struct nvkm_client *client = object->client;
-	struct nvkm_client_notify *notify;
-	union {
-		struct nvif_notify_req_v0 v0;
-	} *req = data;
+पूर्णांक
+nvkm_client_notअगरy_new(काष्ठा nvkm_object *object,
+		       काष्ठा nvkm_event *event, व्योम *data, u32 size)
+अणु
+	काष्ठा nvkm_client *client = object->client;
+	काष्ठा nvkm_client_notअगरy *notअगरy;
+	जोड़ अणु
+		काष्ठा nvअगर_notअगरy_req_v0 v0;
+	पूर्ण *req = data;
 	u8  index, reply;
-	int ret = -ENOSYS;
+	पूर्णांक ret = -ENOSYS;
 
-	for (index = 0; index < ARRAY_SIZE(client->notify); index++) {
-		if (!client->notify[index])
-			break;
-	}
+	क्रम (index = 0; index < ARRAY_SIZE(client->notअगरy); index++) अणु
+		अगर (!client->notअगरy[index])
+			अवरोध;
+	पूर्ण
 
-	if (index == ARRAY_SIZE(client->notify))
-		return -ENOSPC;
+	अगर (index == ARRAY_SIZE(client->notअगरy))
+		वापस -ENOSPC;
 
-	notify = kzalloc(sizeof(*notify), GFP_KERNEL);
-	if (!notify)
-		return -ENOMEM;
+	notअगरy = kzalloc(माप(*notअगरy), GFP_KERNEL);
+	अगर (!notअगरy)
+		वापस -ENOMEM;
 
-	nvif_ioctl(object, "notify new size %d\n", size);
-	if (!(ret = nvif_unpack(ret, &data, &size, req->v0, 0, 0, true))) {
-		nvif_ioctl(object, "notify new vers %d reply %d route %02x "
+	nvअगर_ioctl(object, "notify new size %d\n", size);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, req->v0, 0, 0, true))) अणु
+		nvअगर_ioctl(object, "notify new vers %d reply %d route %02x "
 				   "token %llx\n", req->v0.version,
 			   req->v0.reply, req->v0.route, req->v0.token);
-		notify->version = req->v0.version;
-		notify->size = sizeof(notify->rep.v0);
-		notify->rep.v0.version = req->v0.version;
-		notify->rep.v0.route = req->v0.route;
-		notify->rep.v0.token = req->v0.token;
+		notअगरy->version = req->v0.version;
+		notअगरy->size = माप(notअगरy->rep.v0);
+		notअगरy->rep.v0.version = req->v0.version;
+		notअगरy->rep.v0.route = req->v0.route;
+		notअगरy->rep.v0.token = req->v0.token;
 		reply = req->v0.reply;
-	}
+	पूर्ण
 
-	if (ret == 0) {
-		ret = nvkm_notify_init(object, event, nvkm_client_notify,
-				       false, data, size, reply, &notify->n);
-		if (ret == 0) {
-			client->notify[index] = notify;
-			notify->client = client;
-			return index;
-		}
-	}
+	अगर (ret == 0) अणु
+		ret = nvkm_notअगरy_init(object, event, nvkm_client_notअगरy,
+				       false, data, size, reply, &notअगरy->n);
+		अगर (ret == 0) अणु
+			client->notअगरy[index] = notअगरy;
+			notअगरy->client = client;
+			वापस index;
+		पूर्ण
+	पूर्ण
 
-	kfree(notify);
-	return ret;
-}
+	kमुक्त(notअगरy);
+	वापस ret;
+पूर्ण
 
-static const struct nvkm_object_func nvkm_client;
-struct nvkm_client *
-nvkm_client_search(struct nvkm_client *client, u64 handle)
-{
-	struct nvkm_object *object;
+अटल स्थिर काष्ठा nvkm_object_func nvkm_client;
+काष्ठा nvkm_client *
+nvkm_client_search(काष्ठा nvkm_client *client, u64 handle)
+अणु
+	काष्ठा nvkm_object *object;
 
 	object = nvkm_object_search(client, handle, &nvkm_client);
-	if (IS_ERR(object))
-		return (void *)object;
+	अगर (IS_ERR(object))
+		वापस (व्योम *)object;
 
-	return nvkm_client(object);
-}
+	वापस nvkm_client(object);
+पूर्ण
 
-static int
-nvkm_client_mthd_devlist(struct nvkm_client *client, void *data, u32 size)
-{
-	union {
-		struct nvif_client_devlist_v0 v0;
-	} *args = data;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+nvkm_client_mthd_devlist(काष्ठा nvkm_client *client, व्योम *data, u32 size)
+अणु
+	जोड़ अणु
+		काष्ठा nvअगर_client_devlist_v0 v0;
+	पूर्ण *args = data;
+	पूर्णांक ret = -ENOSYS;
 
-	nvif_ioctl(&client->object, "client devlist size %d\n", size);
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
-		nvif_ioctl(&client->object, "client devlist vers %d count %d\n",
+	nvअगर_ioctl(&client->object, "client devlist size %d\n", size);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, true))) अणु
+		nvअगर_ioctl(&client->object, "client devlist vers %d count %d\n",
 			   args->v0.version, args->v0.count);
-		if (size == sizeof(args->v0.device[0]) * args->v0.count) {
+		अगर (size == माप(args->v0.device[0]) * args->v0.count) अणु
 			ret = nvkm_device_list(args->v0.device, args->v0.count);
-			if (ret >= 0) {
+			अगर (ret >= 0) अणु
 				args->v0.count = ret;
 				ret = 0;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ret = -EINVAL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-nvkm_client_mthd(struct nvkm_object *object, u32 mthd, void *data, u32 size)
-{
-	struct nvkm_client *client = nvkm_client(object);
-	switch (mthd) {
-	case NVIF_CLIENT_V0_DEVLIST:
-		return nvkm_client_mthd_devlist(client, data, size);
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+अटल पूर्णांक
+nvkm_client_mthd(काष्ठा nvkm_object *object, u32 mthd, व्योम *data, u32 size)
+अणु
+	काष्ठा nvkm_client *client = nvkm_client(object);
+	चयन (mthd) अणु
+	हाल NVIF_CLIENT_V0_DEVLIST:
+		वापस nvkm_client_mthd_devlist(client, data, size);
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int
-nvkm_client_child_new(const struct nvkm_oclass *oclass,
-		      void *data, u32 size, struct nvkm_object **pobject)
-{
-	return oclass->base.ctor(oclass, data, size, pobject);
-}
+अटल पूर्णांक
+nvkm_client_child_new(स्थिर काष्ठा nvkm_oclass *oclass,
+		      व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
+अणु
+	वापस oclass->base.ctor(oclass, data, size, pobject);
+पूर्ण
 
-static int
-nvkm_client_child_get(struct nvkm_object *object, int index,
-		      struct nvkm_oclass *oclass)
-{
-	const struct nvkm_sclass *sclass;
+अटल पूर्णांक
+nvkm_client_child_get(काष्ठा nvkm_object *object, पूर्णांक index,
+		      काष्ठा nvkm_oclass *oclass)
+अणु
+	स्थिर काष्ठा nvkm_sclass *sclass;
 
-	switch (index) {
-	case 0: sclass = &nvkm_uclient_sclass; break;
-	case 1: sclass = &nvkm_udevice_sclass; break;
-	default:
-		return -EINVAL;
-	}
+	चयन (index) अणु
+	हाल 0: sclass = &nvkm_uclient_sclass; अवरोध;
+	हाल 1: sclass = &nvkm_udevice_sclass; अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	oclass->ctor = nvkm_client_child_new;
 	oclass->base = *sclass;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_client_fini(struct nvkm_object *object, bool suspend)
-{
-	struct nvkm_client *client = nvkm_client(object);
-	const char *name[2] = { "fini", "suspend" };
-	int i;
-	nvif_debug(object, "%s notify\n", name[suspend]);
-	for (i = 0; i < ARRAY_SIZE(client->notify); i++)
-		nvkm_client_notify_put(client, i);
-	return 0;
-}
+अटल पूर्णांक
+nvkm_client_fini(काष्ठा nvkm_object *object, bool suspend)
+अणु
+	काष्ठा nvkm_client *client = nvkm_client(object);
+	स्थिर अक्षर *name[2] = अणु "fini", "suspend" पूर्ण;
+	पूर्णांक i;
+	nvअगर_debug(object, "%s notify\n", name[suspend]);
+	क्रम (i = 0; i < ARRAY_SIZE(client->notअगरy); i++)
+		nvkm_client_notअगरy_put(client, i);
+	वापस 0;
+पूर्ण
 
-static void *
-nvkm_client_dtor(struct nvkm_object *object)
-{
-	struct nvkm_client *client = nvkm_client(object);
-	int i;
-	for (i = 0; i < ARRAY_SIZE(client->notify); i++)
-		nvkm_client_notify_del(client, i);
-	return client;
-}
+अटल व्योम *
+nvkm_client_dtor(काष्ठा nvkm_object *object)
+अणु
+	काष्ठा nvkm_client *client = nvkm_client(object);
+	पूर्णांक i;
+	क्रम (i = 0; i < ARRAY_SIZE(client->notअगरy); i++)
+		nvkm_client_notअगरy_del(client, i);
+	वापस client;
+पूर्ण
 
-static const struct nvkm_object_func
-nvkm_client = {
+अटल स्थिर काष्ठा nvkm_object_func
+nvkm_client = अणु
 	.dtor = nvkm_client_dtor,
 	.fini = nvkm_client_fini,
 	.mthd = nvkm_client_mthd,
 	.sclass = nvkm_client_child_get,
-};
+पूर्ण;
 
-int
-nvkm_client_new(const char *name, u64 device, const char *cfg,
-		const char *dbg,
-		int (*ntfy)(const void *, u32, const void *, u32),
-		struct nvkm_client **pclient)
-{
-	struct nvkm_oclass oclass = { .base = nvkm_uclient_sclass };
-	struct nvkm_client *client;
+पूर्णांक
+nvkm_client_new(स्थिर अक्षर *name, u64 device, स्थिर अक्षर *cfg,
+		स्थिर अक्षर *dbg,
+		पूर्णांक (*ntfy)(स्थिर व्योम *, u32, स्थिर व्योम *, u32),
+		काष्ठा nvkm_client **pclient)
+अणु
+	काष्ठा nvkm_oclass oclass = अणु .base = nvkm_uclient_sclass पूर्ण;
+	काष्ठा nvkm_client *client;
 
-	if (!(client = *pclient = kzalloc(sizeof(*client), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(client = *pclient = kzalloc(माप(*client), GFP_KERNEL)))
+		वापस -ENOMEM;
 	oclass.client = client;
 
 	nvkm_object_ctor(&nvkm_client, &oclass, &client->object);
-	snprintf(client->name, sizeof(client->name), "%s", name);
+	snम_लिखो(client->name, माप(client->name), "%s", name);
 	client->device = device;
 	client->debug = nvkm_dbgopt(dbg, "CLIENT");
 	client->objroot = RB_ROOT;
 	client->ntfy = ntfy;
 	INIT_LIST_HEAD(&client->umem);
 	spin_lock_init(&client->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण

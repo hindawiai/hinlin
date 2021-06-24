@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* acpi_thermal_rel.c driver for exporting ACPI thermal relationship
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* acpi_thermal_rel.c driver क्रम exporting ACPI thermal relationship
  *
  * Copyright (c) 2014 Intel Corp
  */
 
 /*
  * Two functionalities included:
- * 1. Export _TRT, _ART, via misc device interface to the userspace.
+ * 1. Export _TRT, _ART, via misc device पूर्णांकerface to the userspace.
  * 2. Provide parsing result to kernel drivers
  *
  */
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/acpi.h>
-#include <linux/uaccess.h>
-#include <linux/miscdevice.h>
-#include <linux/fs.h>
-#include "acpi_thermal_rel.h"
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/acpi.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/fs.h>
+#समावेश "acpi_thermal_rel.h"
 
-static acpi_handle acpi_thermal_rel_handle;
-static DEFINE_SPINLOCK(acpi_thermal_rel_chrdev_lock);
-static int acpi_thermal_rel_chrdev_count;	/* #times opened */
-static int acpi_thermal_rel_chrdev_exclu;	/* already open exclusive? */
+अटल acpi_handle acpi_thermal_rel_handle;
+अटल DEFINE_SPINLOCK(acpi_thermal_rel_chrdev_lock);
+अटल पूर्णांक acpi_thermal_rel_chrdev_count;	/* #बार खोलोed */
+अटल पूर्णांक acpi_thermal_rel_chrdev_exclu;	/* alपढ़ोy खोलो exclusive? */
 
-static int acpi_thermal_rel_open(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक acpi_thermal_rel_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	spin_lock(&acpi_thermal_rel_chrdev_lock);
-	if (acpi_thermal_rel_chrdev_exclu ||
-	    (acpi_thermal_rel_chrdev_count && (file->f_flags & O_EXCL))) {
+	अगर (acpi_thermal_rel_chrdev_exclu ||
+	    (acpi_thermal_rel_chrdev_count && (file->f_flags & O_EXCL))) अणु
 		spin_unlock(&acpi_thermal_rel_chrdev_lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (file->f_flags & O_EXCL)
+	अगर (file->f_flags & O_EXCL)
 		acpi_thermal_rel_chrdev_exclu = 1;
 	acpi_thermal_rel_chrdev_count++;
 
 	spin_unlock(&acpi_thermal_rel_chrdev_lock);
 
-	return nonseekable_open(inode, file);
-}
+	वापस nonseekable_खोलो(inode, file);
+पूर्ण
 
-static int acpi_thermal_rel_release(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक acpi_thermal_rel_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	spin_lock(&acpi_thermal_rel_chrdev_lock);
 	acpi_thermal_rel_chrdev_count--;
 	acpi_thermal_rel_chrdev_exclu = 0;
 	spin_unlock(&acpi_thermal_rel_chrdev_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * acpi_parse_trt - Thermal Relationship Table _TRT for passive cooling
+ * acpi_parse_trt - Thermal Relationship Table _TRT क्रम passive cooling
  *
  * @handle: ACPI handle of the device contains _TRT
  * @trt_count: the number of valid entries resulted from parsing _TRT
- * @trtp: pointer to pointer of array of _TRT entries in parsing result
- * @create_dev: whether to create platform devices for target and source
+ * @trtp: poपूर्णांकer to poपूर्णांकer of array of _TRT entries in parsing result
+ * @create_dev: whether to create platक्रमm devices क्रम target and source
  *
  */
-int acpi_parse_trt(acpi_handle handle, int *trt_count, struct trt **trtp,
+पूर्णांक acpi_parse_trt(acpi_handle handle, पूर्णांक *trt_count, काष्ठा trt **trtp,
 		bool create_dev)
-{
+अणु
 	acpi_status status;
-	int result = 0;
-	int i;
-	int nr_bad_entries = 0;
-	struct trt *trts;
-	struct acpi_device *adev;
-	union acpi_object *p;
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	struct acpi_buffer element = { 0, NULL };
-	struct acpi_buffer trt_format = { sizeof("RRNNNNNN"), "RRNNNNNN" };
+	पूर्णांक result = 0;
+	पूर्णांक i;
+	पूर्णांक nr_bad_entries = 0;
+	काष्ठा trt *trts;
+	काष्ठा acpi_device *adev;
+	जोड़ acpi_object *p;
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	काष्ठा acpi_buffer element = अणु 0, शून्य पूर्ण;
+	काष्ठा acpi_buffer trt_क्रमmat = अणु माप("RRNNNNNN"), "RRNNNNNN" पूर्ण;
 
-	status = acpi_evaluate_object(handle, "_TRT", NULL, &buffer);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	status = acpi_evaluate_object(handle, "_TRT", शून्य, &buffer);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	p = buffer.pointer;
-	if (!p || (p->type != ACPI_TYPE_PACKAGE)) {
+	p = buffer.poपूर्णांकer;
+	अगर (!p || (p->type != ACPI_TYPE_PACKAGE)) अणु
 		pr_err("Invalid _TRT data\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	*trt_count = p->package.count;
-	trts = kcalloc(*trt_count, sizeof(struct trt), GFP_KERNEL);
-	if (!trts) {
+	trts = kसुस्मृति(*trt_count, माप(काष्ठा trt), GFP_KERNEL);
+	अगर (!trts) अणु
 		result = -ENOMEM;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	for (i = 0; i < *trt_count; i++) {
-		struct trt *trt = &trts[i - nr_bad_entries];
+	क्रम (i = 0; i < *trt_count; i++) अणु
+		काष्ठा trt *trt = &trts[i - nr_bad_entries];
 
-		element.length = sizeof(struct trt);
-		element.pointer = trt;
+		element.length = माप(काष्ठा trt);
+		element.poपूर्णांकer = trt;
 
 		status = acpi_extract_package(&(p->package.elements[i]),
-					      &trt_format, &element);
-		if (ACPI_FAILURE(status)) {
+					      &trt_क्रमmat, &element);
+		अगर (ACPI_FAILURE(status)) अणु
 			nr_bad_entries++;
 			pr_warn("_TRT package %d is invalid, ignored\n", i);
-			continue;
-		}
-		if (!create_dev)
-			continue;
+			जारी;
+		पूर्ण
+		अगर (!create_dev)
+			जारी;
 
 		result = acpi_bus_get_device(trt->source, &adev);
-		if (result)
+		अगर (result)
 			pr_warn("Failed to get source ACPI device\n");
 
 		result = acpi_bus_get_device(trt->target, &adev);
-		if (result)
+		अगर (result)
 			pr_warn("Failed to get target ACPI device\n");
-	}
+	पूर्ण
 
 	result = 0;
 
 	*trtp = trts;
-	/* don't count bad entries */
+	/* करोn't count bad entries */
 	*trt_count -= nr_bad_entries;
 end:
-	kfree(buffer.pointer);
-	return result;
-}
+	kमुक्त(buffer.poपूर्णांकer);
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(acpi_parse_trt);
 
 /**
@@ -137,247 +138,247 @@ EXPORT_SYMBOL(acpi_parse_trt);
  *
  * @handle: ACPI handle of the device contains _ART
  * @art_count: the number of valid entries resulted from parsing _ART
- * @artp: pointer to pointer of array of art entries in parsing result
- * @create_dev: whether to create platform devices for target and source
+ * @artp: poपूर्णांकer to poपूर्णांकer of array of art entries in parsing result
+ * @create_dev: whether to create platक्रमm devices क्रम target and source
  *
  */
-int acpi_parse_art(acpi_handle handle, int *art_count, struct art **artp,
+पूर्णांक acpi_parse_art(acpi_handle handle, पूर्णांक *art_count, काष्ठा art **artp,
 		bool create_dev)
-{
+अणु
 	acpi_status status;
-	int result = 0;
-	int i;
-	int nr_bad_entries = 0;
-	struct art *arts;
-	struct acpi_device *adev;
-	union acpi_object *p;
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	struct acpi_buffer element = { 0, NULL };
-	struct acpi_buffer art_format =	{
-		sizeof("RRNNNNNNNNNNN"), "RRNNNNNNNNNNN" };
+	पूर्णांक result = 0;
+	पूर्णांक i;
+	पूर्णांक nr_bad_entries = 0;
+	काष्ठा art *arts;
+	काष्ठा acpi_device *adev;
+	जोड़ acpi_object *p;
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	काष्ठा acpi_buffer element = अणु 0, शून्य पूर्ण;
+	काष्ठा acpi_buffer art_क्रमmat =	अणु
+		माप("RRNNNNNNNNNNN"), "RRNNNNNNNNNNN" पूर्ण;
 
-	status = acpi_evaluate_object(handle, "_ART", NULL, &buffer);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	status = acpi_evaluate_object(handle, "_ART", शून्य, &buffer);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	p = buffer.pointer;
-	if (!p || (p->type != ACPI_TYPE_PACKAGE)) {
+	p = buffer.poपूर्णांकer;
+	अगर (!p || (p->type != ACPI_TYPE_PACKAGE)) अणु
 		pr_err("Invalid _ART data\n");
 		result = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	/* ignore p->package.elements[0], as this is _ART Revision field */
 	*art_count = p->package.count - 1;
-	arts = kcalloc(*art_count, sizeof(struct art), GFP_KERNEL);
-	if (!arts) {
+	arts = kसुस्मृति(*art_count, माप(काष्ठा art), GFP_KERNEL);
+	अगर (!arts) अणु
 		result = -ENOMEM;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	for (i = 0; i < *art_count; i++) {
-		struct art *art = &arts[i - nr_bad_entries];
+	क्रम (i = 0; i < *art_count; i++) अणु
+		काष्ठा art *art = &arts[i - nr_bad_entries];
 
-		element.length = sizeof(struct art);
-		element.pointer = art;
+		element.length = माप(काष्ठा art);
+		element.poपूर्णांकer = art;
 
 		status = acpi_extract_package(&(p->package.elements[i + 1]),
-					      &art_format, &element);
-		if (ACPI_FAILURE(status)) {
+					      &art_क्रमmat, &element);
+		अगर (ACPI_FAILURE(status)) अणु
 			pr_warn("_ART package %d is invalid, ignored", i);
 			nr_bad_entries++;
-			continue;
-		}
-		if (!create_dev)
-			continue;
+			जारी;
+		पूर्ण
+		अगर (!create_dev)
+			जारी;
 
-		if (art->source) {
+		अगर (art->source) अणु
 			result = acpi_bus_get_device(art->source, &adev);
-			if (result)
+			अगर (result)
 				pr_warn("Failed to get source ACPI device\n");
-		}
-		if (art->target) {
+		पूर्ण
+		अगर (art->target) अणु
 			result = acpi_bus_get_device(art->target, &adev);
-			if (result)
+			अगर (result)
 				pr_warn("Failed to get target ACPI device\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*artp = arts;
-	/* don't count bad entries */
+	/* करोn't count bad entries */
 	*art_count -= nr_bad_entries;
 end:
-	kfree(buffer.pointer);
-	return result;
-}
+	kमुक्त(buffer.poपूर्णांकer);
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(acpi_parse_art);
 
 
 /* get device name from acpi handle */
-static void get_single_name(acpi_handle handle, char *name)
-{
-	struct acpi_buffer buffer = {ACPI_ALLOCATE_BUFFER};
+अटल व्योम get_single_name(acpi_handle handle, अक्षर *name)
+अणु
+	काष्ठा acpi_buffer buffer = अणुACPI_ALLOCATE_BUFFERपूर्ण;
 
-	if (ACPI_FAILURE(acpi_get_name(handle, ACPI_SINGLE_NAME, &buffer)))
+	अगर (ACPI_FAILURE(acpi_get_name(handle, ACPI_SINGLE_NAME, &buffer)))
 		pr_warn("Failed to get device name from acpi handle\n");
-	else {
-		memcpy(name, buffer.pointer, ACPI_NAMESEG_SIZE);
-		kfree(buffer.pointer);
-	}
-}
+	अन्यथा अणु
+		स_नकल(name, buffer.poपूर्णांकer, ACPI_NAMESEG_SIZE);
+		kमुक्त(buffer.poपूर्णांकer);
+	पूर्ण
+पूर्ण
 
-static int fill_art(char __user *ubuf)
-{
-	int i;
-	int ret;
-	int count;
-	int art_len;
-	struct art *arts = NULL;
-	union art_object *art_user;
+अटल पूर्णांक fill_art(अक्षर __user *ubuf)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
+	पूर्णांक count;
+	पूर्णांक art_len;
+	काष्ठा art *arts = शून्य;
+	जोड़ art_object *art_user;
 
 	ret = acpi_parse_art(acpi_thermal_rel_handle, &count, &arts, false);
-	if (ret)
-		goto free_art;
-	art_len = count * sizeof(union art_object);
+	अगर (ret)
+		जाओ मुक्त_art;
+	art_len = count * माप(जोड़ art_object);
 	art_user = kzalloc(art_len, GFP_KERNEL);
-	if (!art_user) {
+	अगर (!art_user) अणु
 		ret = -ENOMEM;
-		goto free_art;
-	}
+		जाओ मुक्त_art;
+	पूर्ण
 	/* now fill in user art data */
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		/* userspace art needs device name instead of acpi reference */
 		get_single_name(arts[i].source, art_user[i].source_device);
 		get_single_name(arts[i].target, art_user[i].target_device);
-		/* copy the rest int data in addition to source and target */
-		memcpy(&art_user[i].weight, &arts[i].weight,
-			sizeof(u64) * (ACPI_NR_ART_ELEMENTS - 2));
-	}
+		/* copy the rest पूर्णांक data in addition to source and target */
+		स_नकल(&art_user[i].weight, &arts[i].weight,
+			माप(u64) * (ACPI_NR_ART_ELEMENTS - 2));
+	पूर्ण
 
-	if (copy_to_user(ubuf, art_user, art_len))
+	अगर (copy_to_user(ubuf, art_user, art_len))
 		ret = -EFAULT;
-	kfree(art_user);
-free_art:
-	kfree(arts);
-	return ret;
-}
+	kमुक्त(art_user);
+मुक्त_art:
+	kमुक्त(arts);
+	वापस ret;
+पूर्ण
 
-static int fill_trt(char __user *ubuf)
-{
-	int i;
-	int ret;
-	int count;
-	int trt_len;
-	struct trt *trts = NULL;
-	union trt_object *trt_user;
+अटल पूर्णांक fill_trt(अक्षर __user *ubuf)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
+	पूर्णांक count;
+	पूर्णांक trt_len;
+	काष्ठा trt *trts = शून्य;
+	जोड़ trt_object *trt_user;
 
 	ret = acpi_parse_trt(acpi_thermal_rel_handle, &count, &trts, false);
-	if (ret)
-		goto free_trt;
-	trt_len = count * sizeof(union trt_object);
+	अगर (ret)
+		जाओ मुक्त_trt;
+	trt_len = count * माप(जोड़ trt_object);
 	trt_user = kzalloc(trt_len, GFP_KERNEL);
-	if (!trt_user) {
+	अगर (!trt_user) अणु
 		ret = -ENOMEM;
-		goto free_trt;
-	}
+		जाओ मुक्त_trt;
+	पूर्ण
 	/* now fill in user trt data */
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		/* userspace trt needs device name instead of acpi reference */
 		get_single_name(trts[i].source, trt_user[i].source_device);
 		get_single_name(trts[i].target, trt_user[i].target_device);
 		trt_user[i].sample_period = trts[i].sample_period;
 		trt_user[i].influence = trts[i].influence;
-	}
+	पूर्ण
 
-	if (copy_to_user(ubuf, trt_user, trt_len))
+	अगर (copy_to_user(ubuf, trt_user, trt_len))
 		ret = -EFAULT;
-	kfree(trt_user);
-free_trt:
-	kfree(trts);
-	return ret;
-}
+	kमुक्त(trt_user);
+मुक्त_trt:
+	kमुक्त(trts);
+	वापस ret;
+पूर्ण
 
-static long acpi_thermal_rel_ioctl(struct file *f, unsigned int cmd,
-				   unsigned long __arg)
-{
-	int ret = 0;
-	unsigned long length = 0;
-	int count = 0;
-	char __user *arg = (void __user *)__arg;
-	struct trt *trts = NULL;
-	struct art *arts = NULL;
+अटल दीर्घ acpi_thermal_rel_ioctl(काष्ठा file *f, अचिन्हित पूर्णांक cmd,
+				   अचिन्हित दीर्घ __arg)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ length = 0;
+	पूर्णांक count = 0;
+	अक्षर __user *arg = (व्योम __user *)__arg;
+	काष्ठा trt *trts = शून्य;
+	काष्ठा art *arts = शून्य;
 
-	switch (cmd) {
-	case ACPI_THERMAL_GET_TRT_COUNT:
+	चयन (cmd) अणु
+	हाल ACPI_THERMAL_GET_TRT_COUNT:
 		ret = acpi_parse_trt(acpi_thermal_rel_handle, &count,
 				&trts, false);
-		kfree(trts);
-		if (!ret)
-			return put_user(count, (unsigned long __user *)__arg);
-		return ret;
-	case ACPI_THERMAL_GET_TRT_LEN:
+		kमुक्त(trts);
+		अगर (!ret)
+			वापस put_user(count, (अचिन्हित दीर्घ __user *)__arg);
+		वापस ret;
+	हाल ACPI_THERMAL_GET_TRT_LEN:
 		ret = acpi_parse_trt(acpi_thermal_rel_handle, &count,
 				&trts, false);
-		kfree(trts);
-		length = count * sizeof(union trt_object);
-		if (!ret)
-			return put_user(length, (unsigned long __user *)__arg);
-		return ret;
-	case ACPI_THERMAL_GET_TRT:
-		return fill_trt(arg);
-	case ACPI_THERMAL_GET_ART_COUNT:
+		kमुक्त(trts);
+		length = count * माप(जोड़ trt_object);
+		अगर (!ret)
+			वापस put_user(length, (अचिन्हित दीर्घ __user *)__arg);
+		वापस ret;
+	हाल ACPI_THERMAL_GET_TRT:
+		वापस fill_trt(arg);
+	हाल ACPI_THERMAL_GET_ART_COUNT:
 		ret = acpi_parse_art(acpi_thermal_rel_handle, &count,
 				&arts, false);
-		kfree(arts);
-		if (!ret)
-			return put_user(count, (unsigned long __user *)__arg);
-		return ret;
-	case ACPI_THERMAL_GET_ART_LEN:
+		kमुक्त(arts);
+		अगर (!ret)
+			वापस put_user(count, (अचिन्हित दीर्घ __user *)__arg);
+		वापस ret;
+	हाल ACPI_THERMAL_GET_ART_LEN:
 		ret = acpi_parse_art(acpi_thermal_rel_handle, &count,
 				&arts, false);
-		kfree(arts);
-		length = count * sizeof(union art_object);
-		if (!ret)
-			return put_user(length, (unsigned long __user *)__arg);
-		return ret;
+		kमुक्त(arts);
+		length = count * माप(जोड़ art_object);
+		अगर (!ret)
+			वापस put_user(length, (अचिन्हित दीर्घ __user *)__arg);
+		वापस ret;
 
-	case ACPI_THERMAL_GET_ART:
-		return fill_art(arg);
+	हाल ACPI_THERMAL_GET_ART:
+		वापस fill_art(arg);
 
-	default:
-		return -ENOTTY;
-	}
-}
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
-static const struct file_operations acpi_thermal_rel_fops = {
+अटल स्थिर काष्ठा file_operations acpi_thermal_rel_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= acpi_thermal_rel_open,
+	.खोलो		= acpi_thermal_rel_खोलो,
 	.release	= acpi_thermal_rel_release,
 	.unlocked_ioctl	= acpi_thermal_rel_ioctl,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static struct miscdevice acpi_thermal_rel_misc_device = {
+अटल काष्ठा miscdevice acpi_thermal_rel_misc_device = अणु
 	.minor	= MISC_DYNAMIC_MINOR,
 	"acpi_thermal_rel",
 	&acpi_thermal_rel_fops
-};
+पूर्ण;
 
-int acpi_thermal_rel_misc_device_add(acpi_handle handle)
-{
+पूर्णांक acpi_thermal_rel_misc_device_add(acpi_handle handle)
+अणु
 	acpi_thermal_rel_handle = handle;
 
-	return misc_register(&acpi_thermal_rel_misc_device);
-}
+	वापस misc_रेजिस्टर(&acpi_thermal_rel_misc_device);
+पूर्ण
 EXPORT_SYMBOL(acpi_thermal_rel_misc_device_add);
 
-int acpi_thermal_rel_misc_device_remove(acpi_handle handle)
-{
-	misc_deregister(&acpi_thermal_rel_misc_device);
+पूर्णांक acpi_thermal_rel_misc_device_हटाओ(acpi_handle handle)
+अणु
+	misc_deरेजिस्टर(&acpi_thermal_rel_misc_device);
 
-	return 0;
-}
-EXPORT_SYMBOL(acpi_thermal_rel_misc_device_remove);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(acpi_thermal_rel_misc_device_हटाओ);
 
 MODULE_AUTHOR("Zhang Rui <rui.zhang@intel.com>");
 MODULE_AUTHOR("Jacob Pan <jacob.jun.pan@intel.com");

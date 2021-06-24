@@ -1,206 +1,207 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * SGI O2 MACE PS2 controller driver for linux
+ * SGI O2 MACE PS2 controller driver क्रम linux
  *
  * Copyright (C) 2002 Vivien Chappelier
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/serio.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serपन.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/err.h>
 
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/ip32/mace.h>
-#include <asm/ip32/ip32_ints.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/ip32/mace.h>
+#समावेश <यंत्र/ip32/ip32_पूर्णांकs.h>
 
 MODULE_AUTHOR("Vivien Chappelier <vivien.chappelier@linux-mips.org");
 MODULE_DESCRIPTION("SGI O2 MACE PS2 controller driver");
 MODULE_LICENSE("GPL");
 
-#define MACE_PS2_TIMEOUT 10000 /* in 50us unit */
+#घोषणा MACE_PS2_TIMEOUT 10000 /* in 50us unit */
 
-#define PS2_STATUS_CLOCK_SIGNAL  BIT(0) /* external clock signal */
-#define PS2_STATUS_CLOCK_INHIBIT BIT(1) /* clken output signal */
-#define PS2_STATUS_TX_INPROGRESS BIT(2) /* transmission in progress */
-#define PS2_STATUS_TX_EMPTY      BIT(3) /* empty transmit buffer */
-#define PS2_STATUS_RX_FULL       BIT(4) /* full receive buffer */
-#define PS2_STATUS_RX_INPROGRESS BIT(5) /* reception in progress */
-#define PS2_STATUS_ERROR_PARITY  BIT(6) /* parity error */
-#define PS2_STATUS_ERROR_FRAMING BIT(7) /* framing error */
+#घोषणा PS2_STATUS_CLOCK_SIGNAL  BIT(0) /* बाह्यal घड़ी संकेत */
+#घोषणा PS2_STATUS_CLOCK_INHIBIT BIT(1) /* clken output संकेत */
+#घोषणा PS2_STATUS_TX_INPROGRESS BIT(2) /* transmission in progress */
+#घोषणा PS2_STATUS_TX_EMPTY      BIT(3) /* empty transmit buffer */
+#घोषणा PS2_STATUS_RX_FULL       BIT(4) /* full receive buffer */
+#घोषणा PS2_STATUS_RX_INPROGRESS BIT(5) /* reception in progress */
+#घोषणा PS2_STATUS_ERROR_PARITY  BIT(6) /* parity error */
+#घोषणा PS2_STATUS_ERROR_FRAMING BIT(7) /* framing error */
 
-#define PS2_CONTROL_TX_CLOCK_DISABLE BIT(0) /* inhibit clock signal after TX */
-#define PS2_CONTROL_TX_ENABLE        BIT(1) /* transmit enable */
-#define PS2_CONTROL_TX_INT_ENABLE    BIT(2) /* enable transmit interrupt */
-#define PS2_CONTROL_RX_INT_ENABLE    BIT(3) /* enable receive interrupt */
-#define PS2_CONTROL_RX_CLOCK_ENABLE  BIT(4) /* pause reception if set to 0 */
-#define PS2_CONTROL_RESET            BIT(5) /* reset */
+#घोषणा PS2_CONTROL_TX_CLOCK_DISABLE BIT(0) /* inhibit घड़ी संकेत after TX */
+#घोषणा PS2_CONTROL_TX_ENABLE        BIT(1) /* transmit enable */
+#घोषणा PS2_CONTROL_TX_INT_ENABLE    BIT(2) /* enable transmit पूर्णांकerrupt */
+#घोषणा PS2_CONTROL_RX_INT_ENABLE    BIT(3) /* enable receive पूर्णांकerrupt */
+#घोषणा PS2_CONTROL_RX_CLOCK_ENABLE  BIT(4) /* छोड़ो reception अगर set to 0 */
+#घोषणा PS2_CONTROL_RESET            BIT(5) /* reset */
 
-struct maceps2_data {
-	struct mace_ps2port *port;
-	int irq;
-};
+काष्ठा maceps2_data अणु
+	काष्ठा mace_ps2port *port;
+	पूर्णांक irq;
+पूर्ण;
 
-static struct maceps2_data port_data[2];
-static struct serio *maceps2_port[2];
-static struct platform_device *maceps2_device;
+अटल काष्ठा maceps2_data port_data[2];
+अटल काष्ठा serio *maceps2_port[2];
+अटल काष्ठा platक्रमm_device *maceps2_device;
 
-static int maceps2_write(struct serio *dev, unsigned char val)
-{
-	struct mace_ps2port *port = ((struct maceps2_data *)dev->port_data)->port;
-	unsigned int timeout = MACE_PS2_TIMEOUT;
+अटल पूर्णांक maceps2_ग_लिखो(काष्ठा serio *dev, अचिन्हित अक्षर val)
+अणु
+	काष्ठा mace_ps2port *port = ((काष्ठा maceps2_data *)dev->port_data)->port;
+	अचिन्हित पूर्णांक समयout = MACE_PS2_TIMEOUT;
 
-	do {
-		if (port->status & PS2_STATUS_TX_EMPTY) {
+	करो अणु
+		अगर (port->status & PS2_STATUS_TX_EMPTY) अणु
 			port->tx = val;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		udelay(50);
-	} while (timeout--);
+	पूर्ण जबतक (समयout--);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static irqreturn_t maceps2_interrupt(int irq, void *dev_id)
-{
-	struct serio *dev = dev_id;
-	struct mace_ps2port *port = ((struct maceps2_data *)dev->port_data)->port;
-	unsigned long byte;
+अटल irqवापस_t maceps2_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा serio *dev = dev_id;
+	काष्ठा mace_ps2port *port = ((काष्ठा maceps2_data *)dev->port_data)->port;
+	अचिन्हित दीर्घ byte;
 
-	if (port->status & PS2_STATUS_RX_FULL) {
+	अगर (port->status & PS2_STATUS_RX_FULL) अणु
 		byte = port->rx;
-		serio_interrupt(dev, byte & 0xff, 0);
-        }
+		serio_पूर्णांकerrupt(dev, byte & 0xff, 0);
+        पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int maceps2_open(struct serio *dev)
-{
-	struct maceps2_data *data = (struct maceps2_data *)dev->port_data;
+अटल पूर्णांक maceps2_खोलो(काष्ठा serio *dev)
+अणु
+	काष्ठा maceps2_data *data = (काष्ठा maceps2_data *)dev->port_data;
 
-	if (request_irq(data->irq, maceps2_interrupt, 0, "PS2 port", dev)) {
-		printk(KERN_ERR "Could not allocate PS/2 IRQ\n");
-		return -EBUSY;
-	}
+	अगर (request_irq(data->irq, maceps2_पूर्णांकerrupt, 0, "PS2 port", dev)) अणु
+		prपूर्णांकk(KERN_ERR "Could not allocate PS/2 IRQ\n");
+		वापस -EBUSY;
+	पूर्ण
 
 	/* Reset port */
 	data->port->control = PS2_CONTROL_TX_CLOCK_DISABLE | PS2_CONTROL_RESET;
 	udelay(100);
 
-        /* Enable interrupts */
+        /* Enable पूर्णांकerrupts */
 	data->port->control = PS2_CONTROL_RX_CLOCK_ENABLE |
 			      PS2_CONTROL_TX_ENABLE |
 			      PS2_CONTROL_RX_INT_ENABLE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void maceps2_close(struct serio *dev)
-{
-	struct maceps2_data *data = (struct maceps2_data *)dev->port_data;
+अटल व्योम maceps2_बंद(काष्ठा serio *dev)
+अणु
+	काष्ठा maceps2_data *data = (काष्ठा maceps2_data *)dev->port_data;
 
 	data->port->control = PS2_CONTROL_TX_CLOCK_DISABLE | PS2_CONTROL_RESET;
 	udelay(100);
-	free_irq(data->irq, dev);
-}
+	मुक्त_irq(data->irq, dev);
+पूर्ण
 
 
-static struct serio *maceps2_allocate_port(int idx)
-{
-	struct serio *serio;
+अटल काष्ठा serio *maceps2_allocate_port(पूर्णांक idx)
+अणु
+	काष्ठा serio *serio;
 
-	serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
-	if (serio) {
+	serio = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
+	अगर (serio) अणु
 		serio->id.type		= SERIO_8042;
-		serio->write		= maceps2_write;
-		serio->open		= maceps2_open;
-		serio->close		= maceps2_close;
-		snprintf(serio->name, sizeof(serio->name), "MACE PS/2 port%d", idx);
-		snprintf(serio->phys, sizeof(serio->phys), "mace/serio%d", idx);
+		serio->ग_लिखो		= maceps2_ग_लिखो;
+		serio->खोलो		= maceps2_खोलो;
+		serio->बंद		= maceps2_बंद;
+		snम_लिखो(serio->name, माप(serio->name), "MACE PS/2 port%d", idx);
+		snम_लिखो(serio->phys, माप(serio->phys), "mace/serio%d", idx);
 		serio->port_data	= &port_data[idx];
 		serio->dev.parent	= &maceps2_device->dev;
-	}
+	पूर्ण
 
-	return serio;
-}
+	वापस serio;
+पूर्ण
 
-static int maceps2_probe(struct platform_device *dev)
-{
+अटल पूर्णांक maceps2_probe(काष्ठा platक्रमm_device *dev)
+अणु
 	maceps2_port[0] = maceps2_allocate_port(0);
 	maceps2_port[1] = maceps2_allocate_port(1);
-	if (!maceps2_port[0] || !maceps2_port[1]) {
-		kfree(maceps2_port[0]);
-		kfree(maceps2_port[1]);
-		return -ENOMEM;
-	}
+	अगर (!maceps2_port[0] || !maceps2_port[1]) अणु
+		kमुक्त(maceps2_port[0]);
+		kमुक्त(maceps2_port[1]);
+		वापस -ENOMEM;
+	पूर्ण
 
-	serio_register_port(maceps2_port[0]);
-	serio_register_port(maceps2_port[1]);
+	serio_रेजिस्टर_port(maceps2_port[0]);
+	serio_रेजिस्टर_port(maceps2_port[1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int maceps2_remove(struct platform_device *dev)
-{
-	serio_unregister_port(maceps2_port[0]);
-	serio_unregister_port(maceps2_port[1]);
+अटल पूर्णांक maceps2_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	serio_unरेजिस्टर_port(maceps2_port[0]);
+	serio_unरेजिस्टर_port(maceps2_port[1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver maceps2_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver maceps2_driver = अणु
+	.driver		= अणु
 		.name	= "maceps2",
-	},
+	पूर्ण,
 	.probe		= maceps2_probe,
-	.remove		= maceps2_remove,
-};
+	.हटाओ		= maceps2_हटाओ,
+पूर्ण;
 
-static int __init maceps2_init(void)
-{
-	int error;
+अटल पूर्णांक __init maceps2_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	error = platform_driver_register(&maceps2_driver);
-	if (error)
-		return error;
+	error = platक्रमm_driver_रेजिस्टर(&maceps2_driver);
+	अगर (error)
+		वापस error;
 
-	maceps2_device = platform_device_alloc("maceps2", -1);
-	if (!maceps2_device) {
+	maceps2_device = platक्रमm_device_alloc("maceps2", -1);
+	अगर (!maceps2_device) अणु
 		error = -ENOMEM;
-		goto err_unregister_driver;
-	}
+		जाओ err_unरेजिस्टर_driver;
+	पूर्ण
 
-	port_data[0].port = &mace->perif.ps2.keyb;
+	port_data[0].port = &mace->perअगर.ps2.keyb;
 	port_data[0].irq  = MACEISA_KEYB_IRQ;
-	port_data[1].port = &mace->perif.ps2.mouse;
+	port_data[1].port = &mace->perअगर.ps2.mouse;
 	port_data[1].irq  = MACEISA_MOUSE_IRQ;
 
-	error = platform_device_add(maceps2_device);
-	if (error)
-		goto err_free_device;
+	error = platक्रमm_device_add(maceps2_device);
+	अगर (error)
+		जाओ err_मुक्त_device;
 
-	return 0;
+	वापस 0;
 
- err_free_device:
-	platform_device_put(maceps2_device);
- err_unregister_driver:
-	platform_driver_unregister(&maceps2_driver);
-	return error;
-}
+ err_मुक्त_device:
+	platक्रमm_device_put(maceps2_device);
+ err_unरेजिस्टर_driver:
+	platक्रमm_driver_unरेजिस्टर(&maceps2_driver);
+	वापस error;
+पूर्ण
 
-static void __exit maceps2_exit(void)
-{
-	platform_device_unregister(maceps2_device);
-	platform_driver_unregister(&maceps2_driver);
-}
+अटल व्योम __निकास maceps2_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(maceps2_device);
+	platक्रमm_driver_unरेजिस्टर(&maceps2_driver);
+पूर्ण
 
 module_init(maceps2_init);
-module_exit(maceps2_exit);
+module_निकास(maceps2_निकास);

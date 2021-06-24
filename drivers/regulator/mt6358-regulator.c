@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2019 MediaTek Inc.
 
-#include <linux/mfd/mt6358/registers.h>
-#include <linux/mfd/mt6397/core.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
-#include <linux/regulator/mt6358-regulator.h>
-#include <linux/regulator/of_regulator.h>
+#समावेश <linux/mfd/mt6358/रेजिस्टरs.h>
+#समावेश <linux/mfd/mt6397/core.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/regulator/mt6358-regulator.h>
+#समावेश <linux/regulator/of_regulator.h>
 
-#define MT6358_BUCK_MODE_AUTO	0
-#define MT6358_BUCK_MODE_FORCE_PWM	1
+#घोषणा MT6358_BUCK_MODE_AUTO	0
+#घोषणा MT6358_BUCK_MODE_FORCE_PWM	1
 
 /*
- * MT6358 regulators' information
+ * MT6358 regulators' inक्रमmation
  *
  * @desc: standard fields of regulator description.
- * @qi: Mask for query enable signal status of regulators
+ * @qi: Mask क्रम query enable संकेत status of regulators
  */
-struct mt6358_regulator_info {
-	struct regulator_desc desc;
+काष्ठा mt6358_regulator_info अणु
+	काष्ठा regulator_desc desc;
 	u32 status_reg;
 	u32 qi;
-	const u32 *index_table;
-	unsigned int n_table;
-	u32 vsel_shift;
+	स्थिर u32 *index_table;
+	अचिन्हित पूर्णांक n_table;
+	u32 vsel_shअगरt;
 	u32 da_vsel_reg;
 	u32 da_vsel_mask;
-	u32 da_vsel_shift;
+	u32 da_vsel_shअगरt;
 	u32 modeset_reg;
 	u32 modeset_mask;
-	u32 modeset_shift;
-};
+	u32 modeset_shअगरt;
+पूर्ण;
 
-#define MT6358_BUCK(match, vreg, min, max, step,		\
+#घोषणा MT6358_BUCK(match, vreg, min, max, step,		\
 	volt_ranges, vosel_mask, _da_vsel_reg, _da_vsel_mask,	\
-	_da_vsel_shift, _modeset_reg, _modeset_shift)		\
-[MT6358_ID_##vreg] = {	\
-	.desc = {	\
+	_da_vsel_shअगरt, _modeset_reg, _modeset_shअगरt)		\
+[MT6358_ID_##vreg] = अणु	\
+	.desc = अणु	\
 		.name = #vreg,	\
 		.of_match = of_match_ptr(match),	\
 		.ops = &mt6358_volt_range_ops,	\
@@ -56,47 +57,47 @@ struct mt6358_regulator_info {
 		.enable_reg = MT6358_BUCK_##vreg##_CON0,	\
 		.enable_mask = BIT(0),	\
 		.of_map_mode = mt6358_map_mode,	\
-	},	\
+	पूर्ण,	\
 	.status_reg = MT6358_BUCK_##vreg##_DBG1,	\
 	.qi = BIT(0),	\
 	.da_vsel_reg = _da_vsel_reg,	\
 	.da_vsel_mask = _da_vsel_mask,	\
-	.da_vsel_shift = _da_vsel_shift,	\
+	.da_vsel_shअगरt = _da_vsel_shअगरt,	\
 	.modeset_reg = _modeset_reg,	\
-	.modeset_mask = BIT(_modeset_shift),	\
-	.modeset_shift = _modeset_shift	\
-}
+	.modeset_mask = BIT(_modeset_shअगरt),	\
+	.modeset_shअगरt = _modeset_shअगरt	\
+पूर्ण
 
-#define MT6358_LDO(match, vreg, ldo_volt_table,	\
-	ldo_index_table, enreg, enbit, vosel,	\
-	vosel_mask, vosel_shift)	\
-[MT6358_ID_##vreg] = {	\
-	.desc = {	\
+#घोषणा MT6358_LDO(match, vreg, lकरो_volt_table,	\
+	lकरो_index_table, enreg, enbit, vosel,	\
+	vosel_mask, vosel_shअगरt)	\
+[MT6358_ID_##vreg] = अणु	\
+	.desc = अणु	\
 		.name = #vreg,	\
 		.of_match = of_match_ptr(match),	\
 		.ops = &mt6358_volt_table_ops,	\
 		.type = REGULATOR_VOLTAGE,	\
 		.id = MT6358_ID_##vreg,	\
 		.owner = THIS_MODULE,	\
-		.n_voltages = ARRAY_SIZE(ldo_volt_table),	\
-		.volt_table = ldo_volt_table,	\
+		.n_voltages = ARRAY_SIZE(lकरो_volt_table),	\
+		.volt_table = lकरो_volt_table,	\
 		.vsel_reg = vosel,	\
 		.vsel_mask = vosel_mask,	\
 		.enable_reg = enreg,	\
 		.enable_mask = BIT(enbit),	\
-	},	\
+	पूर्ण,	\
 	.status_reg = MT6358_LDO_##vreg##_CON1,	\
 	.qi = BIT(15),	\
-	.index_table = ldo_index_table,	\
-	.n_table = ARRAY_SIZE(ldo_index_table),	\
-	.vsel_shift = vosel_shift,	\
-}
+	.index_table = lकरो_index_table,	\
+	.n_table = ARRAY_SIZE(lकरो_index_table),	\
+	.vsel_shअगरt = vosel_shअगरt,	\
+पूर्ण
 
-#define MT6358_LDO1(match, vreg, min, max, step,	\
+#घोषणा MT6358_LDO1(match, vreg, min, max, step,	\
 	volt_ranges, _da_vsel_reg, _da_vsel_mask,	\
-	_da_vsel_shift, vosel, vosel_mask)	\
-[MT6358_ID_##vreg] = {	\
-	.desc = {	\
+	_da_vsel_shअगरt, vosel, vosel_mask)	\
+[MT6358_ID_##vreg] = अणु	\
+	.desc = अणु	\
 		.name = #vreg,	\
 		.of_match = of_match_ptr(match),	\
 		.ops = &mt6358_volt_range_ops,	\
@@ -110,18 +111,18 @@ struct mt6358_regulator_info {
 		.vsel_mask = vosel_mask,	\
 		.enable_reg = MT6358_LDO_##vreg##_CON0,	\
 		.enable_mask = BIT(0),	\
-	},	\
+	पूर्ण,	\
 	.da_vsel_reg = _da_vsel_reg,	\
 	.da_vsel_mask = _da_vsel_mask,	\
-	.da_vsel_shift = _da_vsel_shift,	\
+	.da_vsel_shअगरt = _da_vsel_shअगरt,	\
 	.status_reg = MT6358_LDO_##vreg##_DBG1,	\
 	.qi = BIT(0),	\
-}
+पूर्ण
 
-#define MT6358_REG_FIXED(match, vreg,	\
+#घोषणा MT6358_REG_FIXED(match, vreg,	\
 	enreg, enbit, volt)	\
-[MT6358_ID_##vreg] = {	\
-	.desc = {	\
+[MT6358_ID_##vreg] = अणु	\
+	.desc = अणु	\
 		.name = #vreg,	\
 		.of_match = of_match_ptr(match),	\
 		.ops = &mt6358_volt_fixed_ops,	\
@@ -132,284 +133,284 @@ struct mt6358_regulator_info {
 		.enable_reg = enreg,	\
 		.enable_mask = BIT(enbit),	\
 		.min_uV = volt,	\
-	},	\
+	पूर्ण,	\
 	.status_reg = MT6358_LDO_##vreg##_CON1,	\
 	.qi = BIT(15),							\
-}
+पूर्ण
 
-static const struct linear_range buck_volt_range1[] = {
+अटल स्थिर काष्ठा linear_range buck_volt_range1[] = अणु
 	REGULATOR_LINEAR_RANGE(500000, 0, 0x7f, 6250),
-};
+पूर्ण;
 
-static const struct linear_range buck_volt_range2[] = {
+अटल स्थिर काष्ठा linear_range buck_volt_range2[] = अणु
 	REGULATOR_LINEAR_RANGE(500000, 0, 0x7f, 12500),
-};
+पूर्ण;
 
-static const struct linear_range buck_volt_range3[] = {
+अटल स्थिर काष्ठा linear_range buck_volt_range3[] = अणु
 	REGULATOR_LINEAR_RANGE(500000, 0, 0x3f, 50000),
-};
+पूर्ण;
 
-static const struct linear_range buck_volt_range4[] = {
+अटल स्थिर काष्ठा linear_range buck_volt_range4[] = अणु
 	REGULATOR_LINEAR_RANGE(1000000, 0, 0x7f, 12500),
-};
+पूर्ण;
 
-static const u32 vdram2_voltages[] = {
+अटल स्थिर u32 vdram2_voltages[] = अणु
 	600000, 1800000,
-};
+पूर्ण;
 
-static const u32 vsim_voltages[] = {
+अटल स्थिर u32 vsim_voltages[] = अणु
 	1700000, 1800000, 2700000, 3000000, 3100000,
-};
+पूर्ण;
 
-static const u32 vibr_voltages[] = {
+अटल स्थिर u32 vibr_voltages[] = अणु
 	1200000, 1300000, 1500000, 1800000,
 	2000000, 2800000, 3000000, 3300000,
-};
+पूर्ण;
 
-static const u32 vusb_voltages[] = {
+अटल स्थिर u32 vusb_voltages[] = अणु
 	3000000, 3100000,
-};
+पूर्ण;
 
-static const u32 vcamd_voltages[] = {
+अटल स्थिर u32 vcamd_voltages[] = अणु
 	900000, 1000000, 1100000, 1200000,
 	1300000, 1500000, 1800000,
-};
+पूर्ण;
 
-static const u32 vefuse_voltages[] = {
+अटल स्थिर u32 vefuse_voltages[] = अणु
 	1700000, 1800000, 1900000,
-};
+पूर्ण;
 
-static const u32 vmch_vemc_voltages[] = {
+अटल स्थिर u32 vmch_vemc_voltages[] = अणु
 	2900000, 3000000, 3300000,
-};
+पूर्ण;
 
-static const u32 vcama_voltages[] = {
+अटल स्थिर u32 vcama_voltages[] = अणु
 	1800000, 2500000, 2700000,
 	2800000, 2900000, 3000000,
-};
+पूर्ण;
 
-static const u32 vcn33_bt_wifi_voltages[] = {
+अटल स्थिर u32 vcn33_bt_wअगरi_voltages[] = अणु
 	3300000, 3400000, 3500000,
-};
+पूर्ण;
 
-static const u32 vmc_voltages[] = {
+अटल स्थिर u32 vmc_voltages[] = अणु
 	1800000, 2900000, 3000000, 3300000,
-};
+पूर्ण;
 
-static const u32 vldo28_voltages[] = {
+अटल स्थिर u32 vlकरो28_voltages[] = अणु
 	2800000, 3000000,
-};
+पूर्ण;
 
-static const u32 vdram2_idx[] = {
+अटल स्थिर u32 vdram2_idx[] = अणु
 	0, 12,
-};
+पूर्ण;
 
-static const u32 vsim_idx[] = {
+अटल स्थिर u32 vsim_idx[] = अणु
 	3, 4, 8, 11, 12,
-};
+पूर्ण;
 
-static const u32 vibr_idx[] = {
+अटल स्थिर u32 vibr_idx[] = अणु
 	0, 1, 2, 4, 5, 9, 11, 13,
-};
+पूर्ण;
 
-static const u32 vusb_idx[] = {
+अटल स्थिर u32 vusb_idx[] = अणु
 	3, 4,
-};
+पूर्ण;
 
-static const u32 vcamd_idx[] = {
+अटल स्थिर u32 vcamd_idx[] = अणु
 	3, 4, 5, 6, 7, 9, 12,
-};
+पूर्ण;
 
-static const u32 vefuse_idx[] = {
+अटल स्थिर u32 vefuse_idx[] = अणु
 	11, 12, 13,
-};
+पूर्ण;
 
-static const u32 vmch_vemc_idx[] = {
+अटल स्थिर u32 vmch_vemc_idx[] = अणु
 	2, 3, 5,
-};
+पूर्ण;
 
-static const u32 vcama_idx[] = {
+अटल स्थिर u32 vcama_idx[] = अणु
 	0, 7, 9, 10, 11, 12,
-};
+पूर्ण;
 
-static const u32 vcn33_bt_wifi_idx[] = {
+अटल स्थिर u32 vcn33_bt_wअगरi_idx[] = अणु
 	1, 2, 3,
-};
+पूर्ण;
 
-static const u32 vmc_idx[] = {
+अटल स्थिर u32 vmc_idx[] = अणु
 	4, 10, 11, 13,
-};
+पूर्ण;
 
-static const u32 vldo28_idx[] = {
+अटल स्थिर u32 vlकरो28_idx[] = अणु
 	1, 3,
-};
+पूर्ण;
 
-static unsigned int mt6358_map_mode(unsigned int mode)
-{
-	return mode == MT6358_BUCK_MODE_AUTO ?
+अटल अचिन्हित पूर्णांक mt6358_map_mode(अचिन्हित पूर्णांक mode)
+अणु
+	वापस mode == MT6358_BUCK_MODE_AUTO ?
 		REGULATOR_MODE_NORMAL : REGULATOR_MODE_FAST;
-}
+पूर्ण
 
-static int mt6358_set_voltage_sel(struct regulator_dev *rdev,
-				  unsigned int selector)
-{
-	int idx, ret;
-	const u32 *pvol;
-	struct mt6358_regulator_info *info = rdev_get_drvdata(rdev);
+अटल पूर्णांक mt6358_set_voltage_sel(काष्ठा regulator_dev *rdev,
+				  अचिन्हित पूर्णांक selector)
+अणु
+	पूर्णांक idx, ret;
+	स्थिर u32 *pvol;
+	काष्ठा mt6358_regulator_info *info = rdev_get_drvdata(rdev);
 
 	pvol = info->index_table;
 
 	idx = pvol[selector];
 	ret = regmap_update_bits(rdev->regmap, info->desc.vsel_reg,
 				 info->desc.vsel_mask,
-				 idx << info->vsel_shift);
+				 idx << info->vsel_shअगरt);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mt6358_get_voltage_sel(struct regulator_dev *rdev)
-{
-	int idx, ret;
+अटल पूर्णांक mt6358_get_voltage_sel(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक idx, ret;
 	u32 selector;
-	struct mt6358_regulator_info *info = rdev_get_drvdata(rdev);
-	const u32 *pvol;
+	काष्ठा mt6358_regulator_info *info = rdev_get_drvdata(rdev);
+	स्थिर u32 *pvol;
 
-	ret = regmap_read(rdev->regmap, info->desc.vsel_reg, &selector);
-	if (ret != 0) {
+	ret = regmap_पढ़ो(rdev->regmap, info->desc.vsel_reg, &selector);
+	अगर (ret != 0) अणु
 		dev_info(&rdev->dev,
 			 "Failed to get mt6358 %s vsel reg: %d\n",
 			 info->desc.name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	selector = (selector & info->desc.vsel_mask) >> info->vsel_shift;
+	selector = (selector & info->desc.vsel_mask) >> info->vsel_shअगरt;
 	pvol = info->index_table;
-	for (idx = 0; idx < info->desc.n_voltages; idx++) {
-		if (pvol[idx] == selector)
-			return idx;
-	}
+	क्रम (idx = 0; idx < info->desc.n_voltages; idx++) अणु
+		अगर (pvol[idx] == selector)
+			वापस idx;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int mt6358_get_buck_voltage_sel(struct regulator_dev *rdev)
-{
-	int ret, regval;
-	struct mt6358_regulator_info *info = rdev_get_drvdata(rdev);
+अटल पूर्णांक mt6358_get_buck_voltage_sel(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret, regval;
+	काष्ठा mt6358_regulator_info *info = rdev_get_drvdata(rdev);
 
-	ret = regmap_read(rdev->regmap, info->da_vsel_reg, &regval);
-	if (ret != 0) {
+	ret = regmap_पढ़ो(rdev->regmap, info->da_vsel_reg, &regval);
+	अगर (ret != 0) अणु
 		dev_err(&rdev->dev,
 			"Failed to get mt6358 Buck %s vsel reg: %d\n",
 			info->desc.name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = (regval >> info->da_vsel_shift) & info->da_vsel_mask;
+	ret = (regval >> info->da_vsel_shअगरt) & info->da_vsel_mask;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mt6358_get_status(struct regulator_dev *rdev)
-{
-	int ret;
+अटल पूर्णांक mt6358_get_status(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret;
 	u32 regval;
-	struct mt6358_regulator_info *info = rdev_get_drvdata(rdev);
+	काष्ठा mt6358_regulator_info *info = rdev_get_drvdata(rdev);
 
-	ret = regmap_read(rdev->regmap, info->status_reg, &regval);
-	if (ret != 0) {
+	ret = regmap_पढ़ो(rdev->regmap, info->status_reg, &regval);
+	अगर (ret != 0) अणु
 		dev_info(&rdev->dev, "Failed to get enable reg: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return (regval & info->qi) ? REGULATOR_STATUS_ON : REGULATOR_STATUS_OFF;
-}
+	वापस (regval & info->qi) ? REGULATOR_STATUS_ON : REGULATOR_STATUS_OFF;
+पूर्ण
 
-static int mt6358_regulator_set_mode(struct regulator_dev *rdev,
-				     unsigned int mode)
-{
-	struct mt6358_regulator_info *info = rdev_get_drvdata(rdev);
-	int val;
+अटल पूर्णांक mt6358_regulator_set_mode(काष्ठा regulator_dev *rdev,
+				     अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा mt6358_regulator_info *info = rdev_get_drvdata(rdev);
+	पूर्णांक val;
 
-	switch (mode) {
-	case REGULATOR_MODE_FAST:
+	चयन (mode) अणु
+	हाल REGULATOR_MODE_FAST:
 		val = MT6358_BUCK_MODE_FORCE_PWM;
-		break;
-	case REGULATOR_MODE_NORMAL:
+		अवरोध;
+	हाल REGULATOR_MODE_NORMAL:
 		val = MT6358_BUCK_MODE_AUTO;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(&rdev->dev, "mt6358 buck set_mode %#x, %#x, %#x, %#x\n",
 		info->modeset_reg, info->modeset_mask,
-		info->modeset_shift, val);
+		info->modeset_shअगरt, val);
 
-	val <<= info->modeset_shift;
+	val <<= info->modeset_shअगरt;
 
-	return regmap_update_bits(rdev->regmap, info->modeset_reg,
+	वापस regmap_update_bits(rdev->regmap, info->modeset_reg,
 				  info->modeset_mask, val);
-}
+पूर्ण
 
-static unsigned int mt6358_regulator_get_mode(struct regulator_dev *rdev)
-{
-	struct mt6358_regulator_info *info = rdev_get_drvdata(rdev);
-	int ret, regval;
+अटल अचिन्हित पूर्णांक mt6358_regulator_get_mode(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा mt6358_regulator_info *info = rdev_get_drvdata(rdev);
+	पूर्णांक ret, regval;
 
-	ret = regmap_read(rdev->regmap, info->modeset_reg, &regval);
-	if (ret != 0) {
+	ret = regmap_पढ़ो(rdev->regmap, info->modeset_reg, &regval);
+	अगर (ret != 0) अणु
 		dev_err(&rdev->dev,
 			"Failed to get mt6358 buck mode: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch ((regval & info->modeset_mask) >> info->modeset_shift) {
-	case MT6358_BUCK_MODE_AUTO:
-		return REGULATOR_MODE_NORMAL;
-	case MT6358_BUCK_MODE_FORCE_PWM:
-		return REGULATOR_MODE_FAST;
-	default:
-		return -EINVAL;
-	}
-}
+	चयन ((regval & info->modeset_mask) >> info->modeset_shअगरt) अणु
+	हाल MT6358_BUCK_MODE_AUTO:
+		वापस REGULATOR_MODE_NORMAL;
+	हाल MT6358_BUCK_MODE_FORCE_PWM:
+		वापस REGULATOR_MODE_FAST;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct regulator_ops mt6358_volt_range_ops = {
+अटल स्थिर काष्ठा regulator_ops mt6358_volt_range_ops = अणु
 	.list_voltage = regulator_list_voltage_linear_range,
 	.map_voltage = regulator_map_voltage_linear_range,
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
 	.get_voltage_sel = mt6358_get_buck_voltage_sel,
-	.set_voltage_time_sel = regulator_set_voltage_time_sel,
+	.set_voltage_समय_sel = regulator_set_voltage_समय_sel,
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
 	.get_status = mt6358_get_status,
 	.set_mode = mt6358_regulator_set_mode,
 	.get_mode = mt6358_regulator_get_mode,
-};
+पूर्ण;
 
-static const struct regulator_ops mt6358_volt_table_ops = {
+अटल स्थिर काष्ठा regulator_ops mt6358_volt_table_ops = अणु
 	.list_voltage = regulator_list_voltage_table,
 	.map_voltage = regulator_map_voltage_iterate,
 	.set_voltage_sel = mt6358_set_voltage_sel,
 	.get_voltage_sel = mt6358_get_voltage_sel,
-	.set_voltage_time_sel = regulator_set_voltage_time_sel,
+	.set_voltage_समय_sel = regulator_set_voltage_समय_sel,
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
 	.get_status = mt6358_get_status,
-};
+पूर्ण;
 
-static const struct regulator_ops mt6358_volt_fixed_ops = {
+अटल स्थिर काष्ठा regulator_ops mt6358_volt_fixed_ops = अणु
 	.list_voltage = regulator_list_voltage_linear,
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
 	.get_status = mt6358_get_status,
-};
+पूर्ण;
 
 /* The array is indexed by id(MT6358_ID_XXX) */
-static struct mt6358_regulator_info mt6358_regulators[] = {
+अटल काष्ठा mt6358_regulator_info mt6358_regulators[] = अणु
 	MT6358_BUCK("buck_vdram1", VDRAM1, 500000, 2087500, 12500,
 		    buck_volt_range2, 0x7f, MT6358_BUCK_VDRAM1_DBG0, 0x7f,
 		    0, MT6358_VDRAM1_ANA_CON0, 8),
@@ -474,17 +475,17 @@ static struct mt6358_regulator_info mt6358_regulators[] = {
 		   MT6358_LDO_VCAMA1_CON0, 0, MT6358_VCAMA1_ANA_CON0, 0xf00, 8),
 	MT6358_LDO("ldo_vemc", VEMC, vmch_vemc_voltages, vmch_vemc_idx,
 		   MT6358_LDO_VEMC_CON0, 0, MT6358_VEMC_ANA_CON0, 0x700, 8),
-	MT6358_LDO("ldo_vcn33_bt", VCN33_BT, vcn33_bt_wifi_voltages,
-		   vcn33_bt_wifi_idx, MT6358_LDO_VCN33_CON0_0,
+	MT6358_LDO("ldo_vcn33_bt", VCN33_BT, vcn33_bt_wअगरi_voltages,
+		   vcn33_bt_wअगरi_idx, MT6358_LDO_VCN33_CON0_0,
 		   0, MT6358_VCN33_ANA_CON0, 0x300, 8),
-	MT6358_LDO("ldo_vcn33_wifi", VCN33_WIFI, vcn33_bt_wifi_voltages,
-		   vcn33_bt_wifi_idx, MT6358_LDO_VCN33_CON0_1,
+	MT6358_LDO("ldo_vcn33_wifi", VCN33_WIFI, vcn33_bt_wअगरi_voltages,
+		   vcn33_bt_wअगरi_idx, MT6358_LDO_VCN33_CON0_1,
 		   0, MT6358_VCN33_ANA_CON0, 0x300, 8),
 	MT6358_LDO("ldo_vcama2", VCAMA2, vcama_voltages, vcama_idx,
 		   MT6358_LDO_VCAMA2_CON0, 0, MT6358_VCAMA2_ANA_CON0, 0xf00, 8),
 	MT6358_LDO("ldo_vmc", VMC, vmc_voltages, vmc_idx,
 		   MT6358_LDO_VMC_CON0, 0, MT6358_VMC_ANA_CON0, 0xf00, 8),
-	MT6358_LDO("ldo_vldo28", VLDO28, vldo28_voltages, vldo28_idx,
+	MT6358_LDO("ldo_vldo28", VLDO28, vlकरो28_voltages, vlकरो28_idx,
 		   MT6358_LDO_VLDO28_CON0_0, 0,
 		   MT6358_VLDO28_ANA_CON0, 0x300, 8),
 	MT6358_LDO("ldo_vsim2", VSIM2, vsim_voltages, vsim_idx,
@@ -501,48 +502,48 @@ static struct mt6358_regulator_info mt6358_regulators[] = {
 	MT6358_LDO1("ldo_vsram_proc12", VSRAM_PROC12, 500000, 1293750, 6250,
 		    buck_volt_range1, MT6358_LDO_VSRAM_PROC12_DBG0, 0x7f, 8,
 		    MT6358_LDO_VSRAM_CON1, 0x7f),
-};
+पूर्ण;
 
-static int mt6358_regulator_probe(struct platform_device *pdev)
-{
-	struct mt6397_chip *mt6397 = dev_get_drvdata(pdev->dev.parent);
-	struct regulator_config config = {};
-	struct regulator_dev *rdev;
-	int i;
+अटल पूर्णांक mt6358_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mt6397_chip *mt6397 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा regulator_config config = अणुपूर्ण;
+	काष्ठा regulator_dev *rdev;
+	पूर्णांक i;
 
-	for (i = 0; i < MT6358_MAX_REGULATOR; i++) {
+	क्रम (i = 0; i < MT6358_MAX_REGULATOR; i++) अणु
 		config.dev = &pdev->dev;
 		config.driver_data = &mt6358_regulators[i];
 		config.regmap = mt6397->regmap;
 
-		rdev = devm_regulator_register(&pdev->dev,
+		rdev = devm_regulator_रेजिस्टर(&pdev->dev,
 					       &mt6358_regulators[i].desc,
 					       &config);
-		if (IS_ERR(rdev)) {
+		अगर (IS_ERR(rdev)) अणु
 			dev_err(&pdev->dev, "failed to register %s\n",
 				mt6358_regulators[i].desc.name);
-			return PTR_ERR(rdev);
-		}
-	}
+			वापस PTR_ERR(rdev);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id mt6358_platform_ids[] = {
-	{"mt6358-regulator", 0},
-	{ /* sentinel */ },
-};
-MODULE_DEVICE_TABLE(platform, mt6358_platform_ids);
+अटल स्थिर काष्ठा platक्रमm_device_id mt6358_platक्रमm_ids[] = अणु
+	अणु"mt6358-regulator", 0पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, mt6358_platक्रमm_ids);
 
-static struct platform_driver mt6358_regulator_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mt6358_regulator_driver = अणु
+	.driver = अणु
 		.name = "mt6358-regulator",
-	},
+	पूर्ण,
 	.probe = mt6358_regulator_probe,
-	.id_table = mt6358_platform_ids,
-};
+	.id_table = mt6358_platक्रमm_ids,
+पूर्ण;
 
-module_platform_driver(mt6358_regulator_driver);
+module_platक्रमm_driver(mt6358_regulator_driver);
 
 MODULE_AUTHOR("Hsin-Hsiung Wang <hsin-hsiung.wang@mediatek.com>");
 MODULE_DESCRIPTION("Regulator Driver for MediaTek MT6358 PMIC");

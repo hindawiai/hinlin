@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Cannon Lake PCH pinctrl/GPIO driver
  *
  * Copyright (C) 2017, Intel Corporation
- * Authors: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
- *          Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Authors: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
+ *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define CNL_PAD_OWN		0x020
-#define CNL_PADCFGLOCK		0x080
-#define CNL_LP_HOSTSW_OWN	0x0b0
-#define CNL_H_HOSTSW_OWN	0x0c0
-#define CNL_GPI_IS		0x100
-#define CNL_GPI_IE		0x120
+#घोषणा CNL_PAD_OWN		0x020
+#घोषणा CNL_PADCFGLOCK		0x080
+#घोषणा CNL_LP_HOSTSW_OWN	0x0b0
+#घोषणा CNL_H_HOSTSW_OWN	0x0c0
+#घोषणा CNL_GPI_IS		0x100
+#घोषणा CNL_GPI_IE		0x120
 
-#define CNL_GPP(r, s, e, g)				\
-	{						\
+#घोषणा CNL_GPP(r, s, e, g)				\
+	अणु						\
 		.reg_num = (r),				\
 		.base = (s),				\
 		.size = ((e) - (s) + 1),		\
 		.gpio_base = (g),			\
-	}
+	पूर्ण
 
-#define CNL_COMMUNITY(b, s, e, ho, g)			\
-	{						\
+#घोषणा CNL_COMMUNITY(b, s, e, ho, g)			\
+	अणु						\
 		.barno = (b),				\
-		.padown_offset = CNL_PAD_OWN,		\
+		.paकरोwn_offset = CNL_PAD_OWN,		\
 		.padcfglock_offset = CNL_PADCFGLOCK,	\
 		.hostown_offset = (ho),			\
 		.is_offset = CNL_GPI_IS,		\
@@ -42,16 +43,16 @@
 		.npins = ((e) - (s) + 1),		\
 		.gpps = (g),				\
 		.ngpps = ARRAY_SIZE(g),			\
-	}
+	पूर्ण
 
-#define CNL_LP_COMMUNITY(b, s, e, g)			\
+#घोषणा CNL_LP_COMMUNITY(b, s, e, g)			\
 	CNL_COMMUNITY(b, s, e, CNL_LP_HOSTSW_OWN, g)
 
-#define CNL_H_COMMUNITY(b, s, e, g)			\
+#घोषणा CNL_H_COMMUNITY(b, s, e, g)			\
 	CNL_COMMUNITY(b, s, e, CNL_H_HOSTSW_OWN, g)
 
 /* Cannon Lake-H */
-static const struct pinctrl_pin_desc cnlh_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc cnlh_pins[] = अणु
 	/* GPP_A */
 	PINCTRL_PIN(0, "RCINB"),
 	PINCTRL_PIN(1, "LAD_0"),
@@ -367,51 +368,51 @@ static const struct pinctrl_pin_desc cnlh_pins[] = {
 	PINCTRL_PIN(296, "CNV_MFUART2_TXD"),
 	PINCTRL_PIN(297, "CNV_MODEM_CLKREQ"),
 	PINCTRL_PIN(298, "A4WP_PRESENT"),
-};
+पूर्ण;
 
-static const struct intel_padgroup cnlh_community0_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup cnlh_community0_gpps[] = अणु
 	CNL_GPP(0, 0, 24, 0),			/* GPP_A */
 	CNL_GPP(1, 25, 50, 32),			/* GPP_B */
-};
+पूर्ण;
 
-static const struct intel_padgroup cnlh_community1_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup cnlh_community1_gpps[] = अणु
 	CNL_GPP(0, 51, 74, 64),				/* GPP_C */
 	CNL_GPP(1, 75, 98, 96),				/* GPP_D */
 	CNL_GPP(2, 99, 106, 128),			/* GPP_G */
 	CNL_GPP(3, 107, 114, INTEL_GPIO_BASE_NOMAP),	/* AZA */
 	CNL_GPP(4, 115, 146, 160),			/* vGPIO_0 */
 	CNL_GPP(5, 147, 154, INTEL_GPIO_BASE_NOMAP),	/* vGPIO_1 */
-};
+पूर्ण;
 
-static const struct intel_padgroup cnlh_community3_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup cnlh_community3_gpps[] = अणु
 	CNL_GPP(0, 155, 178, 192),			/* GPP_K */
 	CNL_GPP(1, 179, 202, 224),			/* GPP_H */
 	CNL_GPP(2, 203, 215, 256),			/* GPP_E */
 	CNL_GPP(3, 216, 239, 288),			/* GPP_F */
 	CNL_GPP(4, 240, 248, INTEL_GPIO_BASE_NOMAP),	/* SPI */
-};
+पूर्ण;
 
-static const struct intel_padgroup cnlh_community4_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup cnlh_community4_gpps[] = अणु
 	CNL_GPP(0, 249, 259, INTEL_GPIO_BASE_NOMAP),	/* CPU */
 	CNL_GPP(1, 260, 268, INTEL_GPIO_BASE_NOMAP),	/* JTAG */
 	CNL_GPP(2, 269, 286, 320),			/* GPP_I */
 	CNL_GPP(3, 287, 298, 352),			/* GPP_J */
-};
+पूर्ण;
 
-static const unsigned int cnlh_spi0_pins[] = { 40, 41, 42, 43 };
-static const unsigned int cnlh_spi1_pins[] = { 44, 45, 46, 47 };
-static const unsigned int cnlh_spi2_pins[] = { 84, 85, 86, 87 };
+अटल स्थिर अचिन्हित पूर्णांक cnlh_spi0_pins[] = अणु 40, 41, 42, 43 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnlh_spi1_pins[] = अणु 44, 45, 46, 47 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnlh_spi2_pins[] = अणु 84, 85, 86, 87 पूर्ण;
 
-static const unsigned int cnlh_uart0_pins[] = { 59, 60, 61, 62 };
-static const unsigned int cnlh_uart1_pins[] = { 63, 64, 65, 66 };
-static const unsigned int cnlh_uart2_pins[] = { 71, 72, 73, 74 };
+अटल स्थिर अचिन्हित पूर्णांक cnlh_uart0_pins[] = अणु 59, 60, 61, 62 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnlh_uart1_pins[] = अणु 63, 64, 65, 66 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnlh_uart2_pins[] = अणु 71, 72, 73, 74 पूर्ण;
 
-static const unsigned int cnlh_i2c0_pins[] = { 67, 68 };
-static const unsigned int cnlh_i2c1_pins[] = { 69, 70 };
-static const unsigned int cnlh_i2c2_pins[] = { 88, 89 };
-static const unsigned int cnlh_i2c3_pins[] = { 79, 98 };
+अटल स्थिर अचिन्हित पूर्णांक cnlh_i2c0_pins[] = अणु 67, 68 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnlh_i2c1_pins[] = अणु 69, 70 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnlh_i2c2_pins[] = अणु 88, 89 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnlh_i2c3_pins[] = अणु 79, 98 पूर्ण;
 
-static const struct intel_pingroup cnlh_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup cnlh_groups[] = अणु
 	PIN_GROUP("spi0_grp", cnlh_spi0_pins, 1),
 	PIN_GROUP("spi1_grp", cnlh_spi1_pins, 1),
 	PIN_GROUP("spi2_grp", cnlh_spi2_pins, 3),
@@ -422,20 +423,20 @@ static const struct intel_pingroup cnlh_groups[] = {
 	PIN_GROUP("i2c1_grp", cnlh_i2c1_pins, 1),
 	PIN_GROUP("i2c2_grp", cnlh_i2c2_pins, 3),
 	PIN_GROUP("i2c3_grp", cnlh_i2c3_pins, 2),
-};
+पूर्ण;
 
-static const char * const cnlh_spi0_groups[] = { "spi0_grp" };
-static const char * const cnlh_spi1_groups[] = { "spi1_grp" };
-static const char * const cnlh_spi2_groups[] = { "spi2_grp" };
-static const char * const cnlh_uart0_groups[] = { "uart0_grp" };
-static const char * const cnlh_uart1_groups[] = { "uart1_grp" };
-static const char * const cnlh_uart2_groups[] = { "uart2_grp" };
-static const char * const cnlh_i2c0_groups[] = { "i2c0_grp" };
-static const char * const cnlh_i2c1_groups[] = { "i2c1_grp" };
-static const char * const cnlh_i2c2_groups[] = { "i2c2_grp" };
-static const char * const cnlh_i2c3_groups[] = { "i2c3_grp" };
+अटल स्थिर अक्षर * स्थिर cnlh_spi0_groups[] = अणु "spi0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnlh_spi1_groups[] = अणु "spi1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnlh_spi2_groups[] = अणु "spi2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnlh_uart0_groups[] = अणु "uart0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnlh_uart1_groups[] = अणु "uart1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnlh_uart2_groups[] = अणु "uart2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnlh_i2c0_groups[] = अणु "i2c0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnlh_i2c1_groups[] = अणु "i2c1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnlh_i2c2_groups[] = अणु "i2c2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnlh_i2c3_groups[] = अणु "i2c3_grp" पूर्ण;
 
-static const struct intel_function cnlh_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function cnlh_functions[] = अणु
 	FUNCTION("spi0", cnlh_spi0_groups),
 	FUNCTION("spi1", cnlh_spi1_groups),
 	FUNCTION("spi2", cnlh_spi2_groups),
@@ -446,16 +447,16 @@ static const struct intel_function cnlh_functions[] = {
 	FUNCTION("i2c1", cnlh_i2c1_groups),
 	FUNCTION("i2c2", cnlh_i2c2_groups),
 	FUNCTION("i2c3", cnlh_i2c3_groups),
-};
+पूर्ण;
 
-static const struct intel_community cnlh_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community cnlh_communities[] = अणु
 	CNL_H_COMMUNITY(0, 0, 50, cnlh_community0_gpps),
 	CNL_H_COMMUNITY(1, 51, 154, cnlh_community1_gpps),
 	CNL_H_COMMUNITY(2, 155, 248, cnlh_community3_gpps),
 	CNL_H_COMMUNITY(3, 249, 298, cnlh_community4_gpps),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data cnlh_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data cnlh_soc_data = अणु
 	.pins = cnlh_pins,
 	.npins = ARRAY_SIZE(cnlh_pins),
 	.groups = cnlh_groups,
@@ -464,10 +465,10 @@ static const struct intel_pinctrl_soc_data cnlh_soc_data = {
 	.nfunctions = ARRAY_SIZE(cnlh_functions),
 	.communities = cnlh_communities,
 	.ncommunities = ARRAY_SIZE(cnlh_communities),
-};
+पूर्ण;
 
 /* Cannon Lake-LP */
-static const struct pinctrl_pin_desc cnllp_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc cnllp_pins[] = अणु
 	/* GPP_A */
 	PINCTRL_PIN(0, "RCINB"),
 	PINCTRL_PIN(1, "LAD_0"),
@@ -724,27 +725,27 @@ static const struct pinctrl_pin_desc cnllp_pins[] = {
 	PINCTRL_PIN(241, "SYS_PWROK"),
 	PINCTRL_PIN(242, "SYS_RESETB"),
 	PINCTRL_PIN(243, "MLK_RSTB"),
-};
+पूर्ण;
 
-static const unsigned int cnllp_spi0_pins[] = { 40, 41, 42, 43, 7 };
-static const unsigned int cnllp_spi0_modes[] = { 1, 1, 1, 1, 2 };
-static const unsigned int cnllp_spi1_pins[] = { 44, 45, 46, 47, 11 };
-static const unsigned int cnllp_spi1_modes[] = { 1, 1, 1, 1, 2 };
-static const unsigned int cnllp_spi2_pins[] = { 77, 78, 79, 80, 83 };
-static const unsigned int cnllp_spi2_modes[] = { 3, 3, 3, 3, 2 };
+अटल स्थिर अचिन्हित पूर्णांक cnllp_spi0_pins[] = अणु 40, 41, 42, 43, 7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_spi0_modes[] = अणु 1, 1, 1, 1, 2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_spi1_pins[] = अणु 44, 45, 46, 47, 11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_spi1_modes[] = अणु 1, 1, 1, 1, 2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_spi2_pins[] = अणु 77, 78, 79, 80, 83 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_spi2_modes[] = अणु 3, 3, 3, 3, 2 पूर्ण;
 
-static const unsigned int cnllp_i2c0_pins[] = { 197, 198 };
-static const unsigned int cnllp_i2c1_pins[] = { 199, 200 };
-static const unsigned int cnllp_i2c2_pins[] = { 121, 122 };
-static const unsigned int cnllp_i2c3_pins[] = { 123, 124 };
-static const unsigned int cnllp_i2c4_pins[] = { 125, 126 };
-static const unsigned int cnllp_i2c5_pins[] = { 127, 128 };
+अटल स्थिर अचिन्हित पूर्णांक cnllp_i2c0_pins[] = अणु 197, 198 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_i2c1_pins[] = अणु 199, 200 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_i2c2_pins[] = अणु 121, 122 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_i2c3_pins[] = अणु 123, 124 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_i2c4_pins[] = अणु 125, 126 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_i2c5_pins[] = अणु 127, 128 पूर्ण;
 
-static const unsigned int cnllp_uart0_pins[] = { 189, 190, 191, 192 };
-static const unsigned int cnllp_uart1_pins[] = { 193, 194, 195, 196 };
-static const unsigned int cnllp_uart2_pins[] = { 201, 202, 203, 204 };
+अटल स्थिर अचिन्हित पूर्णांक cnllp_uart0_pins[] = अणु 189, 190, 191, 192 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_uart1_pins[] = अणु 193, 194, 195, 196 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cnllp_uart2_pins[] = अणु 201, 202, 203, 204 पूर्ण;
 
-static const struct intel_pingroup cnllp_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup cnllp_groups[] = अणु
 	PIN_GROUP("spi0_grp", cnllp_spi0_pins, cnllp_spi0_modes),
 	PIN_GROUP("spi1_grp", cnllp_spi1_pins, cnllp_spi1_modes),
 	PIN_GROUP("spi2_grp", cnllp_spi2_pins, cnllp_spi2_modes),
@@ -757,22 +758,22 @@ static const struct intel_pingroup cnllp_groups[] = {
 	PIN_GROUP("uart0_grp", cnllp_uart0_pins, 1),
 	PIN_GROUP("uart1_grp", cnllp_uart1_pins, 1),
 	PIN_GROUP("uart2_grp", cnllp_uart2_pins, 1),
-};
+पूर्ण;
 
-static const char * const cnllp_spi0_groups[] = { "spi0_grp" };
-static const char * const cnllp_spi1_groups[] = { "spi1_grp" };
-static const char * const cnllp_spi2_groups[] = { "spi2_grp" };
-static const char * const cnllp_i2c0_groups[] = { "i2c0_grp" };
-static const char * const cnllp_i2c1_groups[] = { "i2c1_grp" };
-static const char * const cnllp_i2c2_groups[] = { "i2c2_grp" };
-static const char * const cnllp_i2c3_groups[] = { "i2c3_grp" };
-static const char * const cnllp_i2c4_groups[] = { "i2c4_grp" };
-static const char * const cnllp_i2c5_groups[] = { "i2c5_grp" };
-static const char * const cnllp_uart0_groups[] = { "uart0_grp" };
-static const char * const cnllp_uart1_groups[] = { "uart1_grp" };
-static const char * const cnllp_uart2_groups[] = { "uart2_grp" };
+अटल स्थिर अक्षर * स्थिर cnllp_spi0_groups[] = अणु "spi0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_spi1_groups[] = अणु "spi1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_spi2_groups[] = अणु "spi2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_i2c0_groups[] = अणु "i2c0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_i2c1_groups[] = अणु "i2c1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_i2c2_groups[] = अणु "i2c2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_i2c3_groups[] = अणु "i2c3_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_i2c4_groups[] = अणु "i2c4_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_i2c5_groups[] = अणु "i2c5_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_uart0_groups[] = अणु "uart0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_uart1_groups[] = अणु "uart1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cnllp_uart2_groups[] = अणु "uart2_grp" पूर्ण;
 
-static const struct intel_function cnllp_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function cnllp_functions[] = अणु
 	FUNCTION("spi0", cnllp_spi0_groups),
 	FUNCTION("spi1", cnllp_spi1_groups),
 	FUNCTION("spi2", cnllp_spi2_groups),
@@ -785,37 +786,37 @@ static const struct intel_function cnllp_functions[] = {
 	FUNCTION("uart0", cnllp_uart0_groups),
 	FUNCTION("uart1", cnllp_uart1_groups),
 	FUNCTION("uart2", cnllp_uart2_groups),
-};
+पूर्ण;
 
-static const struct intel_padgroup cnllp_community0_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup cnllp_community0_gpps[] = अणु
 	CNL_GPP(0, 0, 24, 0),				/* GPP_A */
 	CNL_GPP(1, 25, 50, 32),				/* GPP_B */
 	CNL_GPP(2, 51, 58, 64),				/* GPP_G */
 	CNL_GPP(3, 59, 67, INTEL_GPIO_BASE_NOMAP),	/* SPI */
-};
+पूर्ण;
 
-static const struct intel_padgroup cnllp_community1_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup cnllp_community1_gpps[] = अणु
 	CNL_GPP(0, 68, 92, 96),				/* GPP_D */
 	CNL_GPP(1, 93, 116, 128),			/* GPP_F */
 	CNL_GPP(2, 117, 140, 160),			/* GPP_H */
 	CNL_GPP(3, 141, 172, 192),			/* vGPIO */
 	CNL_GPP(4, 173, 180, 224),			/* vGPIO */
-};
+पूर्ण;
 
-static const struct intel_padgroup cnllp_community4_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup cnllp_community4_gpps[] = अणु
 	CNL_GPP(0, 181, 204, 256),			/* GPP_C */
 	CNL_GPP(1, 205, 228, 288),			/* GPP_E */
 	CNL_GPP(2, 229, 237, INTEL_GPIO_BASE_NOMAP),	/* JTAG */
 	CNL_GPP(3, 238, 243, INTEL_GPIO_BASE_NOMAP),	/* HVCMOS */
-};
+पूर्ण;
 
-static const struct intel_community cnllp_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community cnllp_communities[] = अणु
 	CNL_LP_COMMUNITY(0, 0, 67, cnllp_community0_gpps),
 	CNL_LP_COMMUNITY(1, 68, 180, cnllp_community1_gpps),
 	CNL_LP_COMMUNITY(2, 181, 243, cnllp_community4_gpps),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data cnllp_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data cnllp_soc_data = अणु
 	.pins = cnllp_pins,
 	.npins = ARRAY_SIZE(cnllp_pins),
 	.groups = cnllp_groups,
@@ -824,27 +825,27 @@ static const struct intel_pinctrl_soc_data cnllp_soc_data = {
 	.nfunctions = ARRAY_SIZE(cnllp_functions),
 	.communities = cnllp_communities,
 	.ncommunities = ARRAY_SIZE(cnllp_communities),
-};
+पूर्ण;
 
-static const struct acpi_device_id cnl_pinctrl_acpi_match[] = {
-	{ "INT3450", (kernel_ulong_t)&cnlh_soc_data },
-	{ "INT34BB", (kernel_ulong_t)&cnllp_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id cnl_pinctrl_acpi_match[] = अणु
+	अणु "INT3450", (kernel_uदीर्घ_t)&cnlh_soc_data पूर्ण,
+	अणु "INT34BB", (kernel_uदीर्घ_t)&cnllp_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, cnl_pinctrl_acpi_match);
 
-static INTEL_PINCTRL_PM_OPS(cnl_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(cnl_pinctrl_pm_ops);
 
-static struct platform_driver cnl_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_hid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver cnl_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_hid,
+	.driver = अणु
 		.name = "cannonlake-pinctrl",
 		.acpi_match_table = cnl_pinctrl_acpi_match,
 		.pm = &cnl_pinctrl_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(cnl_pinctrl_driver);
+module_platक्रमm_driver(cnl_pinctrl_driver);
 
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Cannon Lake PCH pinctrl/GPIO driver");

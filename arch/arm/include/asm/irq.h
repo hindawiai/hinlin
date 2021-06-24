@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_ARM_IRQ_H
-#define __ASM_ARM_IRQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_ARM_IRQ_H
+#घोषणा __ASM_ARM_IRQ_H
 
-#define NR_IRQS_LEGACY	16
+#घोषणा NR_IRQS_LEGACY	16
 
-#ifndef CONFIG_SPARSE_IRQ
-#include <mach/irqs.h>
-#else
-#define NR_IRQS NR_IRQS_LEGACY
-#endif
+#अगर_अघोषित CONFIG_SPARSE_IRQ
+#समावेश <mach/irqs.h>
+#अन्यथा
+#घोषणा NR_IRQS NR_IRQS_LEGACY
+#पूर्ण_अगर
 
-#ifndef irq_canonicalize
-#define irq_canonicalize(i)	(i)
-#endif
+#अगर_अघोषित irq_canonicalize
+#घोषणा irq_canonicalize(i)	(i)
+#पूर्ण_अगर
 
 /*
- * Use this value to indicate lack of interrupt
+ * Use this value to indicate lack of पूर्णांकerrupt
  * capability
  */
-#ifndef NO_IRQ
-#define NO_IRQ	((unsigned int)(-1))
-#endif
+#अगर_अघोषित NO_IRQ
+#घोषणा NO_IRQ	((अचिन्हित पूर्णांक)(-1))
+#पूर्ण_अगर
 
-#ifndef __ASSEMBLY__
-struct irqaction;
-struct pt_regs;
+#अगर_अघोषित __ASSEMBLY__
+काष्ठा irqaction;
+काष्ठा pt_regs;
 
-extern void asm_do_IRQ(unsigned int, struct pt_regs *);
-void handle_IRQ(unsigned int, struct pt_regs *);
-void init_IRQ(void);
+बाह्य व्योम यंत्र_करो_IRQ(अचिन्हित पूर्णांक, काष्ठा pt_regs *);
+व्योम handle_IRQ(अचिन्हित पूर्णांक, काष्ठा pt_regs *);
+व्योम init_IRQ(व्योम);
 
-#ifdef CONFIG_SMP
-#include <linux/cpumask.h>
+#अगर_घोषित CONFIG_SMP
+#समावेश <linux/cpumask.h>
 
-extern void arch_trigger_cpumask_backtrace(const cpumask_t *mask,
+बाह्य व्योम arch_trigger_cpumask_backtrace(स्थिर cpumask_t *mask,
 					   bool exclude_self);
-#define arch_trigger_cpumask_backtrace arch_trigger_cpumask_backtrace
-#endif
+#घोषणा arch_trigger_cpumask_backtrace arch_trigger_cpumask_backtrace
+#पूर्ण_अगर
 
-static inline int nr_legacy_irqs(void)
-{
-	return NR_IRQS_LEGACY;
-}
+अटल अंतरभूत पूर्णांक nr_legacy_irqs(व्योम)
+अणु
+	वापस NR_IRQS_LEGACY;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर
 

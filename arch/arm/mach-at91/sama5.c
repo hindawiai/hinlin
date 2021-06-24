@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Setup code for SAMA5
+ *  Setup code क्रम SAMA5
  *
- *  Copyright (C) 2013 Atmel,
- *                2013 Ludovic Desroches <ludovic.desroches@atmel.com>
+ *  Copyright (C) 2013 Aपंचांगel,
+ *                2013 Luकरोvic Desroches <luकरोvic.desroches@aपंचांगel.com>
  */
 
-#include <linux/of.h>
-#include <linux/of_platform.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
-#include <asm/system_misc.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#include "generic.h"
+#समावेश "generic.h"
 
-static void __init sama5_dt_device_init(void)
-{
-	of_platform_default_populate(NULL, NULL, NULL);
+अटल व्योम __init sama5_dt_device_init(व्योम)
+अणु
+	of_platक्रमm_शेष_populate(शून्य, शून्य, शून्य);
 	sama5_pm_init();
-}
+पूर्ण
 
-static const char *const sama5_dt_board_compat[] __initconst = {
+अटल स्थिर अक्षर *स्थिर sama5_dt_board_compat[] __initस्थिर = अणु
 	"atmel,sama5",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 DT_MACHINE_START(sama5_dt, "Atmel SAMA5")
-	/* Maintainer: Atmel */
+	/* Maपूर्णांकainer: Aपंचांगel */
 	.init_machine	= sama5_dt_device_init,
 	.dt_compat	= sama5_dt_board_compat,
 MACHINE_END
 
-static const char *const sama5_alt_dt_board_compat[] __initconst = {
+अटल स्थिर अक्षर *स्थिर sama5_alt_dt_board_compat[] __initस्थिर = अणु
 	"atmel,sama5d4",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 DT_MACHINE_START(sama5_alt_dt, "Atmel SAMA5")
-	/* Maintainer: Atmel */
+	/* Maपूर्णांकainer: Aपंचांगel */
 	.init_machine	= sama5_dt_device_init,
 	.dt_compat	= sama5_alt_dt_board_compat,
 	.l2c_aux_mask	= ~0UL,
 MACHINE_END
 
-static void __init sama5d2_init(void)
-{
-	of_platform_default_populate(NULL, NULL, NULL);
+अटल व्योम __init sama5d2_init(व्योम)
+अणु
+	of_platक्रमm_शेष_populate(शून्य, शून्य, शून्य);
 	sama5d2_pm_init();
-}
+पूर्ण
 
-static const char *const sama5d2_compat[] __initconst = {
+अटल स्थिर अक्षर *स्थिर sama5d2_compat[] __initस्थिर = अणु
 	"atmel,sama5d2",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 DT_MACHINE_START(sama5d2, "Atmel SAMA5")
-	/* Maintainer: Atmel */
+	/* Maपूर्णांकainer: Aपंचांगel */
 	.init_machine	= sama5d2_init,
 	.dt_compat	= sama5d2_compat,
 	.l2c_aux_mask	= ~0UL,

@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _LINUX_PTDUMP_H
-#define _LINUX_PTDUMP_H
+#अगर_अघोषित _LINUX_PTDUMP_H
+#घोषणा _LINUX_PTDUMP_H
 
-#include <linux/mm_types.h>
+#समावेश <linux/mm_types.h>
 
-struct ptdump_range {
-	unsigned long start;
-	unsigned long end;
-};
+काष्ठा ptdump_range अणु
+	अचिन्हित दीर्घ start;
+	अचिन्हित दीर्घ end;
+पूर्ण;
 
-struct ptdump_state {
-	/* level is 0:PGD to 4:PTE, or -1 if unknown */
-	void (*note_page)(struct ptdump_state *st, unsigned long addr,
-			  int level, u64 val);
-	void (*effective_prot)(struct ptdump_state *st, int level, u64 val);
-	const struct ptdump_range *range;
-};
+काष्ठा ptdump_state अणु
+	/* level is 0:PGD to 4:PTE, or -1 अगर unknown */
+	व्योम (*note_page)(काष्ठा ptdump_state *st, अचिन्हित दीर्घ addr,
+			  पूर्णांक level, u64 val);
+	व्योम (*effective_prot)(काष्ठा ptdump_state *st, पूर्णांक level, u64 val);
+	स्थिर काष्ठा ptdump_range *range;
+पूर्ण;
 
-void ptdump_walk_pgd(struct ptdump_state *st, struct mm_struct *mm, pgd_t *pgd);
+व्योम ptdump_walk_pgd(काष्ठा ptdump_state *st, काष्ठा mm_काष्ठा *mm, pgd_t *pgd);
 
-#endif /* _LINUX_PTDUMP_H */
+#पूर्ण_अगर /* _LINUX_PTDUMP_H */

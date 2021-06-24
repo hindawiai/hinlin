@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_DMA_MAPPING_H
-#define _ASM_IA64_DMA_MAPPING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_DMA_MAPPING_H
+#घोषणा _ASM_IA64_DMA_MAPPING_H
 
 /*
  * Copyright (C) 2003-2004 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
-extern const struct dma_map_ops *dma_ops;
+बाह्य स्थिर काष्ठा dma_map_ops *dma_ops;
 
-static inline const struct dma_map_ops *get_arch_dma_ops(struct bus_type *bus)
-{
-	return dma_ops;
-}
+अटल अंतरभूत स्थिर काष्ठा dma_map_ops *get_arch_dma_ops(काष्ठा bus_type *bus)
+अणु
+	वापस dma_ops;
+पूर्ण
 
-#endif /* _ASM_IA64_DMA_MAPPING_H */
+#पूर्ण_अगर /* _ASM_IA64_DMA_MAPPING_H */

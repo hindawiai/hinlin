@@ -1,294 +1,295 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for Atmel AT32 and AT91 SPI Controllers
+ * Driver क्रम Aपंचांगel AT32 and AT91 SPI Controllers
  *
- * Copyright (C) 2006 Atmel Corporation
+ * Copyright (C) 2006 Aपंचांगel Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/spi/spi.h>
-#include <linux/slab.h>
-#include <linux/of.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
 
-#include <linux/io.h>
-#include <linux/gpio/consumer.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/pm_runtime.h>
-#include <trace/events/spi.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <trace/events/spi.h>
 
-/* SPI register offsets */
-#define SPI_CR					0x0000
-#define SPI_MR					0x0004
-#define SPI_RDR					0x0008
-#define SPI_TDR					0x000c
-#define SPI_SR					0x0010
-#define SPI_IER					0x0014
-#define SPI_IDR					0x0018
-#define SPI_IMR					0x001c
-#define SPI_CSR0				0x0030
-#define SPI_CSR1				0x0034
-#define SPI_CSR2				0x0038
-#define SPI_CSR3				0x003c
-#define SPI_FMR					0x0040
-#define SPI_FLR					0x0044
-#define SPI_VERSION				0x00fc
-#define SPI_RPR					0x0100
-#define SPI_RCR					0x0104
-#define SPI_TPR					0x0108
-#define SPI_TCR					0x010c
-#define SPI_RNPR				0x0110
-#define SPI_RNCR				0x0114
-#define SPI_TNPR				0x0118
-#define SPI_TNCR				0x011c
-#define SPI_PTCR				0x0120
-#define SPI_PTSR				0x0124
+/* SPI रेजिस्टर offsets */
+#घोषणा SPI_CR					0x0000
+#घोषणा SPI_MR					0x0004
+#घोषणा SPI_RDR					0x0008
+#घोषणा SPI_TDR					0x000c
+#घोषणा SPI_SR					0x0010
+#घोषणा SPI_IER					0x0014
+#घोषणा SPI_IDR					0x0018
+#घोषणा SPI_IMR					0x001c
+#घोषणा SPI_CSR0				0x0030
+#घोषणा SPI_CSR1				0x0034
+#घोषणा SPI_CSR2				0x0038
+#घोषणा SPI_CSR3				0x003c
+#घोषणा SPI_FMR					0x0040
+#घोषणा SPI_FLR					0x0044
+#घोषणा SPI_VERSION				0x00fc
+#घोषणा SPI_RPR					0x0100
+#घोषणा SPI_RCR					0x0104
+#घोषणा SPI_TPR					0x0108
+#घोषणा SPI_TCR					0x010c
+#घोषणा SPI_RNPR				0x0110
+#घोषणा SPI_RNCR				0x0114
+#घोषणा SPI_TNPR				0x0118
+#घोषणा SPI_TNCR				0x011c
+#घोषणा SPI_PTCR				0x0120
+#घोषणा SPI_PTSR				0x0124
 
 /* Bitfields in CR */
-#define SPI_SPIEN_OFFSET			0
-#define SPI_SPIEN_SIZE				1
-#define SPI_SPIDIS_OFFSET			1
-#define SPI_SPIDIS_SIZE				1
-#define SPI_SWRST_OFFSET			7
-#define SPI_SWRST_SIZE				1
-#define SPI_LASTXFER_OFFSET			24
-#define SPI_LASTXFER_SIZE			1
-#define SPI_TXFCLR_OFFSET			16
-#define SPI_TXFCLR_SIZE				1
-#define SPI_RXFCLR_OFFSET			17
-#define SPI_RXFCLR_SIZE				1
-#define SPI_FIFOEN_OFFSET			30
-#define SPI_FIFOEN_SIZE				1
-#define SPI_FIFODIS_OFFSET			31
-#define SPI_FIFODIS_SIZE			1
+#घोषणा SPI_SPIEN_OFFSET			0
+#घोषणा SPI_SPIEN_SIZE				1
+#घोषणा SPI_SPIDIS_OFFSET			1
+#घोषणा SPI_SPIDIS_SIZE				1
+#घोषणा SPI_SWRST_OFFSET			7
+#घोषणा SPI_SWRST_SIZE				1
+#घोषणा SPI_LASTXFER_OFFSET			24
+#घोषणा SPI_LASTXFER_SIZE			1
+#घोषणा SPI_TXFCLR_OFFSET			16
+#घोषणा SPI_TXFCLR_SIZE				1
+#घोषणा SPI_RXFCLR_OFFSET			17
+#घोषणा SPI_RXFCLR_SIZE				1
+#घोषणा SPI_FIFOEN_OFFSET			30
+#घोषणा SPI_FIFOEN_SIZE				1
+#घोषणा SPI_FIFODIS_OFFSET			31
+#घोषणा SPI_FIFODIS_SIZE			1
 
 /* Bitfields in MR */
-#define SPI_MSTR_OFFSET				0
-#define SPI_MSTR_SIZE				1
-#define SPI_PS_OFFSET				1
-#define SPI_PS_SIZE				1
-#define SPI_PCSDEC_OFFSET			2
-#define SPI_PCSDEC_SIZE				1
-#define SPI_FDIV_OFFSET				3
-#define SPI_FDIV_SIZE				1
-#define SPI_MODFDIS_OFFSET			4
-#define SPI_MODFDIS_SIZE			1
-#define SPI_WDRBT_OFFSET			5
-#define SPI_WDRBT_SIZE				1
-#define SPI_LLB_OFFSET				7
-#define SPI_LLB_SIZE				1
-#define SPI_PCS_OFFSET				16
-#define SPI_PCS_SIZE				4
-#define SPI_DLYBCS_OFFSET			24
-#define SPI_DLYBCS_SIZE				8
+#घोषणा SPI_MSTR_OFFSET				0
+#घोषणा SPI_MSTR_SIZE				1
+#घोषणा SPI_PS_OFFSET				1
+#घोषणा SPI_PS_SIZE				1
+#घोषणा SPI_PCSDEC_OFFSET			2
+#घोषणा SPI_PCSDEC_SIZE				1
+#घोषणा SPI_FDIV_OFFSET				3
+#घोषणा SPI_FDIV_SIZE				1
+#घोषणा SPI_MODFDIS_OFFSET			4
+#घोषणा SPI_MODFDIS_SIZE			1
+#घोषणा SPI_WDRBT_OFFSET			5
+#घोषणा SPI_WDRBT_SIZE				1
+#घोषणा SPI_LLB_OFFSET				7
+#घोषणा SPI_LLB_SIZE				1
+#घोषणा SPI_PCS_OFFSET				16
+#घोषणा SPI_PCS_SIZE				4
+#घोषणा SPI_DLYBCS_OFFSET			24
+#घोषणा SPI_DLYBCS_SIZE				8
 
 /* Bitfields in RDR */
-#define SPI_RD_OFFSET				0
-#define SPI_RD_SIZE				16
+#घोषणा SPI_RD_OFFSET				0
+#घोषणा SPI_RD_SIZE				16
 
 /* Bitfields in TDR */
-#define SPI_TD_OFFSET				0
-#define SPI_TD_SIZE				16
+#घोषणा SPI_TD_OFFSET				0
+#घोषणा SPI_TD_SIZE				16
 
 /* Bitfields in SR */
-#define SPI_RDRF_OFFSET				0
-#define SPI_RDRF_SIZE				1
-#define SPI_TDRE_OFFSET				1
-#define SPI_TDRE_SIZE				1
-#define SPI_MODF_OFFSET				2
-#define SPI_MODF_SIZE				1
-#define SPI_OVRES_OFFSET			3
-#define SPI_OVRES_SIZE				1
-#define SPI_ENDRX_OFFSET			4
-#define SPI_ENDRX_SIZE				1
-#define SPI_ENDTX_OFFSET			5
-#define SPI_ENDTX_SIZE				1
-#define SPI_RXBUFF_OFFSET			6
-#define SPI_RXBUFF_SIZE				1
-#define SPI_TXBUFE_OFFSET			7
-#define SPI_TXBUFE_SIZE				1
-#define SPI_NSSR_OFFSET				8
-#define SPI_NSSR_SIZE				1
-#define SPI_TXEMPTY_OFFSET			9
-#define SPI_TXEMPTY_SIZE			1
-#define SPI_SPIENS_OFFSET			16
-#define SPI_SPIENS_SIZE				1
-#define SPI_TXFEF_OFFSET			24
-#define SPI_TXFEF_SIZE				1
-#define SPI_TXFFF_OFFSET			25
-#define SPI_TXFFF_SIZE				1
-#define SPI_TXFTHF_OFFSET			26
-#define SPI_TXFTHF_SIZE				1
-#define SPI_RXFEF_OFFSET			27
-#define SPI_RXFEF_SIZE				1
-#define SPI_RXFFF_OFFSET			28
-#define SPI_RXFFF_SIZE				1
-#define SPI_RXFTHF_OFFSET			29
-#define SPI_RXFTHF_SIZE				1
-#define SPI_TXFPTEF_OFFSET			30
-#define SPI_TXFPTEF_SIZE			1
-#define SPI_RXFPTEF_OFFSET			31
-#define SPI_RXFPTEF_SIZE			1
+#घोषणा SPI_RDRF_OFFSET				0
+#घोषणा SPI_RDRF_SIZE				1
+#घोषणा SPI_TDRE_OFFSET				1
+#घोषणा SPI_TDRE_SIZE				1
+#घोषणा SPI_MODF_OFFSET				2
+#घोषणा SPI_MODF_SIZE				1
+#घोषणा SPI_OVRES_OFFSET			3
+#घोषणा SPI_OVRES_SIZE				1
+#घोषणा SPI_ENDRX_OFFSET			4
+#घोषणा SPI_ENDRX_SIZE				1
+#घोषणा SPI_ENDTX_OFFSET			5
+#घोषणा SPI_ENDTX_SIZE				1
+#घोषणा SPI_RXBUFF_OFFSET			6
+#घोषणा SPI_RXBUFF_SIZE				1
+#घोषणा SPI_TXBUFE_OFFSET			7
+#घोषणा SPI_TXBUFE_SIZE				1
+#घोषणा SPI_NSSR_OFFSET				8
+#घोषणा SPI_NSSR_SIZE				1
+#घोषणा SPI_TXEMPTY_OFFSET			9
+#घोषणा SPI_TXEMPTY_SIZE			1
+#घोषणा SPI_SPIENS_OFFSET			16
+#घोषणा SPI_SPIENS_SIZE				1
+#घोषणा SPI_TXFEF_OFFSET			24
+#घोषणा SPI_TXFEF_SIZE				1
+#घोषणा SPI_TXFFF_OFFSET			25
+#घोषणा SPI_TXFFF_SIZE				1
+#घोषणा SPI_TXFTHF_OFFSET			26
+#घोषणा SPI_TXFTHF_SIZE				1
+#घोषणा SPI_RXFEF_OFFSET			27
+#घोषणा SPI_RXFEF_SIZE				1
+#घोषणा SPI_RXFFF_OFFSET			28
+#घोषणा SPI_RXFFF_SIZE				1
+#घोषणा SPI_RXFTHF_OFFSET			29
+#घोषणा SPI_RXFTHF_SIZE				1
+#घोषणा SPI_TXFPTEF_OFFSET			30
+#घोषणा SPI_TXFPTEF_SIZE			1
+#घोषणा SPI_RXFPTEF_OFFSET			31
+#घोषणा SPI_RXFPTEF_SIZE			1
 
 /* Bitfields in CSR0 */
-#define SPI_CPOL_OFFSET				0
-#define SPI_CPOL_SIZE				1
-#define SPI_NCPHA_OFFSET			1
-#define SPI_NCPHA_SIZE				1
-#define SPI_CSAAT_OFFSET			3
-#define SPI_CSAAT_SIZE				1
-#define SPI_BITS_OFFSET				4
-#define SPI_BITS_SIZE				4
-#define SPI_SCBR_OFFSET				8
-#define SPI_SCBR_SIZE				8
-#define SPI_DLYBS_OFFSET			16
-#define SPI_DLYBS_SIZE				8
-#define SPI_DLYBCT_OFFSET			24
-#define SPI_DLYBCT_SIZE				8
+#घोषणा SPI_CPOL_OFFSET				0
+#घोषणा SPI_CPOL_SIZE				1
+#घोषणा SPI_NCPHA_OFFSET			1
+#घोषणा SPI_NCPHA_SIZE				1
+#घोषणा SPI_CSAAT_OFFSET			3
+#घोषणा SPI_CSAAT_SIZE				1
+#घोषणा SPI_BITS_OFFSET				4
+#घोषणा SPI_BITS_SIZE				4
+#घोषणा SPI_SCBR_OFFSET				8
+#घोषणा SPI_SCBR_SIZE				8
+#घोषणा SPI_DLYBS_OFFSET			16
+#घोषणा SPI_DLYBS_SIZE				8
+#घोषणा SPI_DLYBCT_OFFSET			24
+#घोषणा SPI_DLYBCT_SIZE				8
 
 /* Bitfields in RCR */
-#define SPI_RXCTR_OFFSET			0
-#define SPI_RXCTR_SIZE				16
+#घोषणा SPI_RXCTR_OFFSET			0
+#घोषणा SPI_RXCTR_SIZE				16
 
 /* Bitfields in TCR */
-#define SPI_TXCTR_OFFSET			0
-#define SPI_TXCTR_SIZE				16
+#घोषणा SPI_TXCTR_OFFSET			0
+#घोषणा SPI_TXCTR_SIZE				16
 
 /* Bitfields in RNCR */
-#define SPI_RXNCR_OFFSET			0
-#define SPI_RXNCR_SIZE				16
+#घोषणा SPI_RXNCR_OFFSET			0
+#घोषणा SPI_RXNCR_SIZE				16
 
 /* Bitfields in TNCR */
-#define SPI_TXNCR_OFFSET			0
-#define SPI_TXNCR_SIZE				16
+#घोषणा SPI_TXNCR_OFFSET			0
+#घोषणा SPI_TXNCR_SIZE				16
 
 /* Bitfields in PTCR */
-#define SPI_RXTEN_OFFSET			0
-#define SPI_RXTEN_SIZE				1
-#define SPI_RXTDIS_OFFSET			1
-#define SPI_RXTDIS_SIZE				1
-#define SPI_TXTEN_OFFSET			8
-#define SPI_TXTEN_SIZE				1
-#define SPI_TXTDIS_OFFSET			9
-#define SPI_TXTDIS_SIZE				1
+#घोषणा SPI_RXTEN_OFFSET			0
+#घोषणा SPI_RXTEN_SIZE				1
+#घोषणा SPI_RXTDIS_OFFSET			1
+#घोषणा SPI_RXTDIS_SIZE				1
+#घोषणा SPI_TXTEN_OFFSET			8
+#घोषणा SPI_TXTEN_SIZE				1
+#घोषणा SPI_TXTDIS_OFFSET			9
+#घोषणा SPI_TXTDIS_SIZE				1
 
 /* Bitfields in FMR */
-#define SPI_TXRDYM_OFFSET			0
-#define SPI_TXRDYM_SIZE				2
-#define SPI_RXRDYM_OFFSET			4
-#define SPI_RXRDYM_SIZE				2
-#define SPI_TXFTHRES_OFFSET			16
-#define SPI_TXFTHRES_SIZE			6
-#define SPI_RXFTHRES_OFFSET			24
-#define SPI_RXFTHRES_SIZE			6
+#घोषणा SPI_TXRDYM_OFFSET			0
+#घोषणा SPI_TXRDYM_SIZE				2
+#घोषणा SPI_RXRDYM_OFFSET			4
+#घोषणा SPI_RXRDYM_SIZE				2
+#घोषणा SPI_TXFTHRES_OFFSET			16
+#घोषणा SPI_TXFTHRES_SIZE			6
+#घोषणा SPI_RXFTHRES_OFFSET			24
+#घोषणा SPI_RXFTHRES_SIZE			6
 
 /* Bitfields in FLR */
-#define SPI_TXFL_OFFSET				0
-#define SPI_TXFL_SIZE				6
-#define SPI_RXFL_OFFSET				16
-#define SPI_RXFL_SIZE				6
+#घोषणा SPI_TXFL_OFFSET				0
+#घोषणा SPI_TXFL_SIZE				6
+#घोषणा SPI_RXFL_OFFSET				16
+#घोषणा SPI_RXFL_SIZE				6
 
-/* Constants for BITS */
-#define SPI_BITS_8_BPT				0
-#define SPI_BITS_9_BPT				1
-#define SPI_BITS_10_BPT				2
-#define SPI_BITS_11_BPT				3
-#define SPI_BITS_12_BPT				4
-#define SPI_BITS_13_BPT				5
-#define SPI_BITS_14_BPT				6
-#define SPI_BITS_15_BPT				7
-#define SPI_BITS_16_BPT				8
-#define SPI_ONE_DATA				0
-#define SPI_TWO_DATA				1
-#define SPI_FOUR_DATA				2
+/* Constants क्रम BITS */
+#घोषणा SPI_BITS_8_BPT				0
+#घोषणा SPI_BITS_9_BPT				1
+#घोषणा SPI_BITS_10_BPT				2
+#घोषणा SPI_BITS_11_BPT				3
+#घोषणा SPI_BITS_12_BPT				4
+#घोषणा SPI_BITS_13_BPT				5
+#घोषणा SPI_BITS_14_BPT				6
+#घोषणा SPI_BITS_15_BPT				7
+#घोषणा SPI_BITS_16_BPT				8
+#घोषणा SPI_ONE_DATA				0
+#घोषणा SPI_TWO_DATA				1
+#घोषणा SPI_FOUR_DATA				2
 
 /* Bit manipulation macros */
-#define SPI_BIT(name) \
+#घोषणा SPI_BIT(name) \
 	(1 << SPI_##name##_OFFSET)
-#define SPI_BF(name, value) \
+#घोषणा SPI_BF(name, value) \
 	(((value) & ((1 << SPI_##name##_SIZE) - 1)) << SPI_##name##_OFFSET)
-#define SPI_BFEXT(name, value) \
+#घोषणा SPI_BFEXT(name, value) \
 	(((value) >> SPI_##name##_OFFSET) & ((1 << SPI_##name##_SIZE) - 1))
-#define SPI_BFINS(name, value, old) \
+#घोषणा SPI_BFINS(name, value, old) \
 	(((old) & ~(((1 << SPI_##name##_SIZE) - 1) << SPI_##name##_OFFSET)) \
 	  | SPI_BF(name, value))
 
 /* Register access macros */
-#define spi_readl(port, reg) \
-	readl_relaxed((port)->regs + SPI_##reg)
-#define spi_writel(port, reg, value) \
-	writel_relaxed((value), (port)->regs + SPI_##reg)
-#define spi_writew(port, reg, value) \
-	writew_relaxed((value), (port)->regs + SPI_##reg)
+#घोषणा spi_पढ़ोl(port, reg) \
+	पढ़ोl_relaxed((port)->regs + SPI_##reg)
+#घोषणा spi_ग_लिखोl(port, reg, value) \
+	ग_लिखोl_relaxed((value), (port)->regs + SPI_##reg)
+#घोषणा spi_ग_लिखोw(port, reg, value) \
+	ग_लिखोw_relaxed((value), (port)->regs + SPI_##reg)
 
-/* use PIO for small transfers, avoiding DMA setup/teardown overhead and
+/* use PIO क्रम small transfers, aव्योमing DMA setup/tearकरोwn overhead and
  * cache operations; better heuristics consider wordsize and bitrate.
  */
-#define DMA_MIN_BYTES	16
+#घोषणा DMA_MIN_BYTES	16
 
-#define SPI_DMA_TIMEOUT		(msecs_to_jiffies(1000))
+#घोषणा SPI_DMA_TIMEOUT		(msecs_to_jअगरfies(1000))
 
-#define AUTOSUSPEND_TIMEOUT	2000
+#घोषणा AUTOSUSPEND_TIMEOUT	2000
 
-struct atmel_spi_caps {
+काष्ठा aपंचांगel_spi_caps अणु
 	bool	is_spi2;
 	bool	has_wdrbt;
 	bool	has_dma_support;
 	bool	has_pdc_support;
-};
+पूर्ण;
 
 /*
- * The core SPI transfer engine just talks to a register bank to set up
- * DMA transfers; transfer queue progress is driven by IRQs.  The clock
- * framework provides the base clock, subdivided for each spi_device.
+ * The core SPI transfer engine just talks to a रेजिस्टर bank to set up
+ * DMA transfers; transfer queue progress is driven by IRQs.  The घड़ी
+ * framework provides the base घड़ी, subभागided क्रम each spi_device.
  */
-struct atmel_spi {
+काष्ठा aपंचांगel_spi अणु
 	spinlock_t		lock;
-	unsigned long		flags;
+	अचिन्हित दीर्घ		flags;
 
 	phys_addr_t		phybase;
-	void __iomem		*regs;
-	int			irq;
-	struct clk		*clk;
-	struct platform_device	*pdev;
-	unsigned long		spi_clk;
+	व्योम __iomem		*regs;
+	पूर्णांक			irq;
+	काष्ठा clk		*clk;
+	काष्ठा platक्रमm_device	*pdev;
+	अचिन्हित दीर्घ		spi_clk;
 
-	struct spi_transfer	*current_transfer;
-	int			current_remaining_bytes;
-	int			done_status;
+	काष्ठा spi_transfer	*current_transfer;
+	पूर्णांक			current_reमुख्यing_bytes;
+	पूर्णांक			करोne_status;
 	dma_addr_t		dma_addr_rx_bbuf;
 	dma_addr_t		dma_addr_tx_bbuf;
-	void			*addr_rx_bbuf;
-	void			*addr_tx_bbuf;
+	व्योम			*addr_rx_bbuf;
+	व्योम			*addr_tx_bbuf;
 
-	struct completion	xfer_completion;
+	काष्ठा completion	xfer_completion;
 
-	struct atmel_spi_caps	caps;
+	काष्ठा aपंचांगel_spi_caps	caps;
 
 	bool			use_dma;
 	bool			use_pdc;
 
 	bool			keep_cs;
 
-	u32			fifo_size;
-	u8			native_cs_free;
-	u8			native_cs_for_gpio;
-};
+	u32			fअगरo_size;
+	u8			native_cs_मुक्त;
+	u8			native_cs_क्रम_gpio;
+पूर्ण;
 
-/* Controller-specific per-slave state */
-struct atmel_spi_device {
+/* Controller-specअगरic per-slave state */
+काष्ठा aपंचांगel_spi_device अणु
 	u32			csr;
-};
+पूर्ण;
 
-#define SPI_MAX_DMA_XFER	65535 /* true for both PDC and DMA */
-#define INVALID_DMA_ADDRESS	0xffffffff
+#घोषणा SPI_MAX_DMA_XFER	65535 /* true क्रम both PDC and DMA */
+#घोषणा INVALID_DMA_ADDRESS	0xffffffff
 
 /*
  * Version 2 of the SPI controller has
@@ -296,163 +297,163 @@ struct atmel_spi_device {
  *  - SPI_MR.DIV32 may become FDIV or must-be-zero (here: always zero)
  *  - SPI_SR.TXEMPTY, SPI_SR.NSSR (and corresponding irqs)
  *  - SPI_CSRx.CSAAT
- *  - SPI_CSRx.SBCR allows faster clocking
+ *  - SPI_CSRx.SBCR allows faster घड़ीing
  */
-static bool atmel_spi_is_v2(struct atmel_spi *as)
-{
-	return as->caps.is_spi2;
-}
+अटल bool aपंचांगel_spi_is_v2(काष्ठा aपंचांगel_spi *as)
+अणु
+	वापस as->caps.is_spi2;
+पूर्ण
 
 /*
  * Earlier SPI controllers (e.g. on at91rm9200) have a design bug whereby
  * they assume that spi slave device state will not change on deselect, so
- * that automagic deselection is OK.  ("NPCSx rises if no data is to be
+ * that स्वतःmagic deselection is OK.  ("NPCSx rises अगर no data is to be
  * transmitted")  Not so!  Workaround uses nCSx pins as GPIOs; or newer
- * controllers have CSAAT and friends.
+ * controllers have CSAAT and मित्रs.
  *
  * Even controller newer than ar91rm9200, using GPIOs can make sens as
  * it lets us support active-high chipselects despite the controller's
- * belief that only active-low devices/systems exists.
+ * belief that only active-low devices/प्रणालीs exists.
  *
- * However, at91rm9200 has a second erratum whereby nCS0 doesn't work
- * right when driven with GPIO.  ("Mode Fault does not allow more than one
- * Master on Chip Select 0.")  No workaround exists for that ... so for
- * nCS0 on that chip, we (a) don't use the GPIO, (b) can't support CS_HIGH,
- * and (c) will trigger that first erratum in some cases.
+ * However, at91rm9200 has a second erratum whereby nCS0 करोesn't work
+ * right when driven with GPIO.  ("Mode Fault करोes not allow more than one
+ * Master on Chip Select 0.")  No workaround exists क्रम that ... so क्रम
+ * nCS0 on that chip, we (a) करोn't use the GPIO, (b) can't support CS_HIGH,
+ * and (c) will trigger that first erratum in some हालs.
  */
 
-static void cs_activate(struct atmel_spi *as, struct spi_device *spi)
-{
-	struct atmel_spi_device *asd = spi->controller_state;
-	int chip_select;
+अटल व्योम cs_activate(काष्ठा aपंचांगel_spi *as, काष्ठा spi_device *spi)
+अणु
+	काष्ठा aपंचांगel_spi_device *asd = spi->controller_state;
+	पूर्णांक chip_select;
 	u32 mr;
 
-	if (spi->cs_gpiod)
-		chip_select = as->native_cs_for_gpio;
-	else
+	अगर (spi->cs_gpiod)
+		chip_select = as->native_cs_क्रम_gpio;
+	अन्यथा
 		chip_select = spi->chip_select;
 
-	if (atmel_spi_is_v2(as)) {
-		spi_writel(as, CSR0 + 4 * chip_select, asd->csr);
+	अगर (aपंचांगel_spi_is_v2(as)) अणु
+		spi_ग_लिखोl(as, CSR0 + 4 * chip_select, asd->csr);
 		/* For the low SPI version, there is a issue that PDC transfer
 		 * on CS1,2,3 needs SPI_CSR0.BITS config as SPI_CSR1,2,3.BITS
 		 */
-		spi_writel(as, CSR0, asd->csr);
-		if (as->caps.has_wdrbt) {
-			spi_writel(as, MR,
+		spi_ग_लिखोl(as, CSR0, asd->csr);
+		अगर (as->caps.has_wdrbt) अणु
+			spi_ग_लिखोl(as, MR,
 					SPI_BF(PCS, ~(0x01 << chip_select))
 					| SPI_BIT(WDRBT)
 					| SPI_BIT(MODFDIS)
 					| SPI_BIT(MSTR));
-		} else {
-			spi_writel(as, MR,
+		पूर्ण अन्यथा अणु
+			spi_ग_लिखोl(as, MR,
 					SPI_BF(PCS, ~(0x01 << chip_select))
 					| SPI_BIT(MODFDIS)
 					| SPI_BIT(MSTR));
-		}
+		पूर्ण
 
-		mr = spi_readl(as, MR);
-		if (spi->cs_gpiod)
+		mr = spi_पढ़ोl(as, MR);
+		अगर (spi->cs_gpiod)
 			gpiod_set_value(spi->cs_gpiod, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		u32 cpol = (spi->mode & SPI_CPOL) ? SPI_BIT(CPOL) : 0;
-		int i;
+		पूर्णांक i;
 		u32 csr;
 
-		/* Make sure clock polarity is correct */
-		for (i = 0; i < spi->master->num_chipselect; i++) {
-			csr = spi_readl(as, CSR0 + 4 * i);
-			if ((csr ^ cpol) & SPI_BIT(CPOL))
-				spi_writel(as, CSR0 + 4 * i,
+		/* Make sure घड़ी polarity is correct */
+		क्रम (i = 0; i < spi->master->num_chipselect; i++) अणु
+			csr = spi_पढ़ोl(as, CSR0 + 4 * i);
+			अगर ((csr ^ cpol) & SPI_BIT(CPOL))
+				spi_ग_लिखोl(as, CSR0 + 4 * i,
 						csr ^ SPI_BIT(CPOL));
-		}
+		पूर्ण
 
-		mr = spi_readl(as, MR);
+		mr = spi_पढ़ोl(as, MR);
 		mr = SPI_BFINS(PCS, ~(1 << chip_select), mr);
-		if (spi->cs_gpiod)
+		अगर (spi->cs_gpiod)
 			gpiod_set_value(spi->cs_gpiod, 1);
-		spi_writel(as, MR, mr);
-	}
+		spi_ग_लिखोl(as, MR, mr);
+	पूर्ण
 
 	dev_dbg(&spi->dev, "activate NPCS, mr %08x\n", mr);
-}
+पूर्ण
 
-static void cs_deactivate(struct atmel_spi *as, struct spi_device *spi)
-{
-	int chip_select;
+अटल व्योम cs_deactivate(काष्ठा aपंचांगel_spi *as, काष्ठा spi_device *spi)
+अणु
+	पूर्णांक chip_select;
 	u32 mr;
 
-	if (spi->cs_gpiod)
-		chip_select = as->native_cs_for_gpio;
-	else
+	अगर (spi->cs_gpiod)
+		chip_select = as->native_cs_क्रम_gpio;
+	अन्यथा
 		chip_select = spi->chip_select;
 
-	/* only deactivate *this* device; sometimes transfers to
+	/* only deactivate *this* device; someबार transfers to
 	 * another device may be active when this routine is called.
 	 */
-	mr = spi_readl(as, MR);
-	if (~SPI_BFEXT(PCS, mr) & (1 << chip_select)) {
+	mr = spi_पढ़ोl(as, MR);
+	अगर (~SPI_BFEXT(PCS, mr) & (1 << chip_select)) अणु
 		mr = SPI_BFINS(PCS, 0xf, mr);
-		spi_writel(as, MR, mr);
-	}
+		spi_ग_लिखोl(as, MR, mr);
+	पूर्ण
 
 	dev_dbg(&spi->dev, "DEactivate NPCS, mr %08x\n", mr);
 
-	if (!spi->cs_gpiod)
-		spi_writel(as, CR, SPI_BIT(LASTXFER));
-	else
+	अगर (!spi->cs_gpiod)
+		spi_ग_लिखोl(as, CR, SPI_BIT(LASTXFER));
+	अन्यथा
 		gpiod_set_value(spi->cs_gpiod, 0);
-}
+पूर्ण
 
-static void atmel_spi_lock(struct atmel_spi *as) __acquires(&as->lock)
-{
+अटल व्योम aपंचांगel_spi_lock(काष्ठा aपंचांगel_spi *as) __acquires(&as->lock)
+अणु
 	spin_lock_irqsave(&as->lock, as->flags);
-}
+पूर्ण
 
-static void atmel_spi_unlock(struct atmel_spi *as) __releases(&as->lock)
-{
+अटल व्योम aपंचांगel_spi_unlock(काष्ठा aपंचांगel_spi *as) __releases(&as->lock)
+अणु
 	spin_unlock_irqrestore(&as->lock, as->flags);
-}
+पूर्ण
 
-static inline bool atmel_spi_is_vmalloc_xfer(struct spi_transfer *xfer)
-{
-	return is_vmalloc_addr(xfer->tx_buf) || is_vmalloc_addr(xfer->rx_buf);
-}
+अटल अंतरभूत bool aपंचांगel_spi_is_vदो_स्मृति_xfer(काष्ठा spi_transfer *xfer)
+अणु
+	वापस is_vदो_स्मृति_addr(xfer->tx_buf) || is_vदो_स्मृति_addr(xfer->rx_buf);
+पूर्ण
 
-static inline bool atmel_spi_use_dma(struct atmel_spi *as,
-				struct spi_transfer *xfer)
-{
-	return as->use_dma && xfer->len >= DMA_MIN_BYTES;
-}
+अटल अंतरभूत bool aपंचांगel_spi_use_dma(काष्ठा aपंचांगel_spi *as,
+				काष्ठा spi_transfer *xfer)
+अणु
+	वापस as->use_dma && xfer->len >= DMA_MIN_BYTES;
+पूर्ण
 
-static bool atmel_spi_can_dma(struct spi_master *master,
-			      struct spi_device *spi,
-			      struct spi_transfer *xfer)
-{
-	struct atmel_spi *as = spi_master_get_devdata(master);
+अटल bool aपंचांगel_spi_can_dma(काष्ठा spi_master *master,
+			      काष्ठा spi_device *spi,
+			      काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा aपंचांगel_spi *as = spi_master_get_devdata(master);
 
-	if (IS_ENABLED(CONFIG_SOC_SAM_V4_V5))
-		return atmel_spi_use_dma(as, xfer) &&
-			!atmel_spi_is_vmalloc_xfer(xfer);
-	else
-		return atmel_spi_use_dma(as, xfer);
+	अगर (IS_ENABLED(CONFIG_SOC_SAM_V4_V5))
+		वापस aपंचांगel_spi_use_dma(as, xfer) &&
+			!aपंचांगel_spi_is_vदो_स्मृति_xfer(xfer);
+	अन्यथा
+		वापस aपंचांगel_spi_use_dma(as, xfer);
 
-}
+पूर्ण
 
-static int atmel_spi_dma_slave_config(struct atmel_spi *as,
-				struct dma_slave_config *slave_config,
+अटल पूर्णांक aपंचांगel_spi_dma_slave_config(काष्ठा aपंचांगel_spi *as,
+				काष्ठा dma_slave_config *slave_config,
 				u8 bits_per_word)
-{
-	struct spi_master *master = platform_get_drvdata(as->pdev);
-	int err = 0;
+अणु
+	काष्ठा spi_master *master = platक्रमm_get_drvdata(as->pdev);
+	पूर्णांक err = 0;
 
-	if (bits_per_word > 8) {
+	अगर (bits_per_word > 8) अणु
 		slave_config->dst_addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 		slave_config->src_addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
-	} else {
+	पूर्ण अन्यथा अणु
 		slave_config->dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
 		slave_config->src_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
-	}
+	पूर्ण
 
 	slave_config->dst_addr = (dma_addr_t)as->phybase + SPI_TDR;
 	slave_config->src_addr = (dma_addr_t)as->phybase + SPI_RDR;
@@ -465,24 +466,24 @@ static int atmel_spi_dma_slave_config(struct atmel_spi *as,
 	 * the Mode Register).
 	 * So according to the datasheet, when FIFOs are available (and
 	 * enabled), the Transmit FIFO operates in Multiple Data Mode.
-	 * In this mode, up to 2 data, not 4, can be written into the Transmit
+	 * In this mode, up to 2 data, not 4, can be written पूर्णांकo the Transmit
 	 * Data Register in a single access.
-	 * However, the first data has to be written into the lowest 16 bits and
-	 * the second data into the highest 16 bits of the Transmit
-	 * Data Register. For 8bit data (the most frequent case), it would
+	 * However, the first data has to be written पूर्णांकo the lowest 16 bits and
+	 * the second data पूर्णांकo the highest 16 bits of the Transmit
+	 * Data Register. For 8bit data (the most frequent हाल), it would
 	 * require to rework tx_buf so each data would actualy fit 16 bits.
-	 * So we'd rather write only one data at the time. Hence the transmit
+	 * So we'd rather ग_लिखो only one data at the समय. Hence the transmit
 	 * path works the same whether FIFOs are available (and enabled) or not.
 	 */
 	slave_config->direction = DMA_MEM_TO_DEV;
-	if (dmaengine_slave_config(master->dma_tx, slave_config)) {
+	अगर (dmaengine_slave_config(master->dma_tx, slave_config)) अणु
 		dev_err(&as->pdev->dev,
 			"failed to configure tx dma channel\n");
 		err = -EINVAL;
-	}
+	पूर्ण
 
 	/*
-	 * This driver configures the spi controller for master mode (MSTR bit
+	 * This driver configures the spi controller क्रम master mode (MSTR bit
 	 * set to '1' in the Mode Register).
 	 * So according to the datasheet, when FIFOs are available (and
 	 * enabled), the Receive FIFO operates in Single Data Mode.
@@ -490,183 +491,183 @@ static int atmel_spi_dma_slave_config(struct atmel_spi *as,
 	 * enabled) or not.
 	 */
 	slave_config->direction = DMA_DEV_TO_MEM;
-	if (dmaengine_slave_config(master->dma_rx, slave_config)) {
+	अगर (dmaengine_slave_config(master->dma_rx, slave_config)) अणु
 		dev_err(&as->pdev->dev,
 			"failed to configure rx dma channel\n");
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int atmel_spi_configure_dma(struct spi_master *master,
-				   struct atmel_spi *as)
-{
-	struct dma_slave_config	slave_config;
-	struct device *dev = &as->pdev->dev;
-	int err;
+अटल पूर्णांक aपंचांगel_spi_configure_dma(काष्ठा spi_master *master,
+				   काष्ठा aपंचांगel_spi *as)
+अणु
+	काष्ठा dma_slave_config	slave_config;
+	काष्ठा device *dev = &as->pdev->dev;
+	पूर्णांक err;
 
 	master->dma_tx = dma_request_chan(dev, "tx");
-	if (IS_ERR(master->dma_tx)) {
+	अगर (IS_ERR(master->dma_tx)) अणु
 		err = PTR_ERR(master->dma_tx);
 		dev_dbg(dev, "No TX DMA channel, DMA is disabled\n");
-		goto error_clear;
-	}
+		जाओ error_clear;
+	पूर्ण
 
 	master->dma_rx = dma_request_chan(dev, "rx");
-	if (IS_ERR(master->dma_rx)) {
+	अगर (IS_ERR(master->dma_rx)) अणु
 		err = PTR_ERR(master->dma_rx);
 		/*
-		 * No reason to check EPROBE_DEFER here since we have already
+		 * No reason to check EPROBE_DEFER here since we have alपढ़ोy
 		 * requested tx channel.
 		 */
 		dev_dbg(dev, "No RX DMA channel, DMA is disabled\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	err = atmel_spi_dma_slave_config(as, &slave_config, 8);
-	if (err)
-		goto error;
+	err = aपंचांगel_spi_dma_slave_config(as, &slave_config, 8);
+	अगर (err)
+		जाओ error;
 
 	dev_info(&as->pdev->dev,
 			"Using %s (tx) and %s (rx) for DMA transfers\n",
 			dma_chan_name(master->dma_tx),
 			dma_chan_name(master->dma_rx));
 
-	return 0;
+	वापस 0;
 error:
-	if (!IS_ERR(master->dma_rx))
+	अगर (!IS_ERR(master->dma_rx))
 		dma_release_channel(master->dma_rx);
-	if (!IS_ERR(master->dma_tx))
+	अगर (!IS_ERR(master->dma_tx))
 		dma_release_channel(master->dma_tx);
 error_clear:
-	master->dma_tx = master->dma_rx = NULL;
-	return err;
-}
+	master->dma_tx = master->dma_rx = शून्य;
+	वापस err;
+पूर्ण
 
-static void atmel_spi_stop_dma(struct spi_master *master)
-{
-	if (master->dma_rx)
+अटल व्योम aपंचांगel_spi_stop_dma(काष्ठा spi_master *master)
+अणु
+	अगर (master->dma_rx)
 		dmaengine_terminate_all(master->dma_rx);
-	if (master->dma_tx)
+	अगर (master->dma_tx)
 		dmaengine_terminate_all(master->dma_tx);
-}
+पूर्ण
 
-static void atmel_spi_release_dma(struct spi_master *master)
-{
-	if (master->dma_rx) {
+अटल व्योम aपंचांगel_spi_release_dma(काष्ठा spi_master *master)
+अणु
+	अगर (master->dma_rx) अणु
 		dma_release_channel(master->dma_rx);
-		master->dma_rx = NULL;
-	}
-	if (master->dma_tx) {
+		master->dma_rx = शून्य;
+	पूर्ण
+	अगर (master->dma_tx) अणु
 		dma_release_channel(master->dma_tx);
-		master->dma_tx = NULL;
-	}
-}
+		master->dma_tx = शून्य;
+	पूर्ण
+पूर्ण
 
 /* This function is called by the DMA driver from tasklet context */
-static void dma_callback(void *data)
-{
-	struct spi_master	*master = data;
-	struct atmel_spi	*as = spi_master_get_devdata(master);
+अटल व्योम dma_callback(व्योम *data)
+अणु
+	काष्ठा spi_master	*master = data;
+	काष्ठा aपंचांगel_spi	*as = spi_master_get_devdata(master);
 
-	if (is_vmalloc_addr(as->current_transfer->rx_buf) &&
-	    IS_ENABLED(CONFIG_SOC_SAM_V4_V5)) {
-		memcpy(as->current_transfer->rx_buf, as->addr_rx_bbuf,
+	अगर (is_vदो_स्मृति_addr(as->current_transfer->rx_buf) &&
+	    IS_ENABLED(CONFIG_SOC_SAM_V4_V5)) अणु
+		स_नकल(as->current_transfer->rx_buf, as->addr_rx_bbuf,
 		       as->current_transfer->len);
-	}
+	पूर्ण
 	complete(&as->xfer_completion);
-}
+पूर्ण
 
 /*
  * Next transfer using PIO without FIFO.
  */
-static void atmel_spi_next_xfer_single(struct spi_master *master,
-				       struct spi_transfer *xfer)
-{
-	struct atmel_spi	*as = spi_master_get_devdata(master);
-	unsigned long xfer_pos = xfer->len - as->current_remaining_bytes;
+अटल व्योम aपंचांगel_spi_next_xfer_single(काष्ठा spi_master *master,
+				       काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा aपंचांगel_spi	*as = spi_master_get_devdata(master);
+	अचिन्हित दीर्घ xfer_pos = xfer->len - as->current_reमुख्यing_bytes;
 
 	dev_vdbg(master->dev.parent, "atmel_spi_next_xfer_pio\n");
 
-	/* Make sure data is not remaining in RDR */
-	spi_readl(as, RDR);
-	while (spi_readl(as, SR) & SPI_BIT(RDRF)) {
-		spi_readl(as, RDR);
+	/* Make sure data is not reमुख्यing in RDR */
+	spi_पढ़ोl(as, RDR);
+	जबतक (spi_पढ़ोl(as, SR) & SPI_BIT(RDRF)) अणु
+		spi_पढ़ोl(as, RDR);
 		cpu_relax();
-	}
+	पूर्ण
 
-	if (xfer->bits_per_word > 8)
-		spi_writel(as, TDR, *(u16 *)(xfer->tx_buf + xfer_pos));
-	else
-		spi_writel(as, TDR, *(u8 *)(xfer->tx_buf + xfer_pos));
+	अगर (xfer->bits_per_word > 8)
+		spi_ग_लिखोl(as, TDR, *(u16 *)(xfer->tx_buf + xfer_pos));
+	अन्यथा
+		spi_ग_लिखोl(as, TDR, *(u8 *)(xfer->tx_buf + xfer_pos));
 
 	dev_dbg(master->dev.parent,
 		"  start pio xfer %p: len %u tx %p rx %p bitpw %d\n",
 		xfer, xfer->len, xfer->tx_buf, xfer->rx_buf,
 		xfer->bits_per_word);
 
-	/* Enable relevant interrupts */
-	spi_writel(as, IER, SPI_BIT(RDRF) | SPI_BIT(OVRES));
-}
+	/* Enable relevant पूर्णांकerrupts */
+	spi_ग_लिखोl(as, IER, SPI_BIT(RDRF) | SPI_BIT(OVRES));
+पूर्ण
 
 /*
  * Next transfer using PIO with FIFO.
  */
-static void atmel_spi_next_xfer_fifo(struct spi_master *master,
-				     struct spi_transfer *xfer)
-{
-	struct atmel_spi *as = spi_master_get_devdata(master);
-	u32 current_remaining_data, num_data;
-	u32 offset = xfer->len - as->current_remaining_bytes;
-	const u16 *words = (const u16 *)((u8 *)xfer->tx_buf + offset);
-	const u8  *bytes = (const u8  *)((u8 *)xfer->tx_buf + offset);
+अटल व्योम aपंचांगel_spi_next_xfer_fअगरo(काष्ठा spi_master *master,
+				     काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा aपंचांगel_spi *as = spi_master_get_devdata(master);
+	u32 current_reमुख्यing_data, num_data;
+	u32 offset = xfer->len - as->current_reमुख्यing_bytes;
+	स्थिर u16 *words = (स्थिर u16 *)((u8 *)xfer->tx_buf + offset);
+	स्थिर u8  *bytes = (स्थिर u8  *)((u8 *)xfer->tx_buf + offset);
 	u16 td0, td1;
-	u32 fifomr;
+	u32 fअगरomr;
 
 	dev_vdbg(master->dev.parent, "atmel_spi_next_xfer_fifo\n");
 
 	/* Compute the number of data to transfer in the current iteration */
-	current_remaining_data = ((xfer->bits_per_word > 8) ?
-				  ((u32)as->current_remaining_bytes >> 1) :
-				  (u32)as->current_remaining_bytes);
-	num_data = min(current_remaining_data, as->fifo_size);
+	current_reमुख्यing_data = ((xfer->bits_per_word > 8) ?
+				  ((u32)as->current_reमुख्यing_bytes >> 1) :
+				  (u32)as->current_reमुख्यing_bytes);
+	num_data = min(current_reमुख्यing_data, as->fअगरo_size);
 
 	/* Flush RX and TX FIFOs */
-	spi_writel(as, CR, SPI_BIT(RXFCLR) | SPI_BIT(TXFCLR));
-	while (spi_readl(as, FLR))
+	spi_ग_लिखोl(as, CR, SPI_BIT(RXFCLR) | SPI_BIT(TXFCLR));
+	जबतक (spi_पढ़ोl(as, FLR))
 		cpu_relax();
 
 	/* Set RX FIFO Threshold to the number of data to transfer */
-	fifomr = spi_readl(as, FMR);
-	spi_writel(as, FMR, SPI_BFINS(RXFTHRES, num_data, fifomr));
+	fअगरomr = spi_पढ़ोl(as, FMR);
+	spi_ग_लिखोl(as, FMR, SPI_BFINS(RXFTHRES, num_data, fअगरomr));
 
 	/* Clear FIFO flags in the Status Register, especially RXFTHF */
-	(void)spi_readl(as, SR);
+	(व्योम)spi_पढ़ोl(as, SR);
 
 	/* Fill TX FIFO */
-	while (num_data >= 2) {
-		if (xfer->bits_per_word > 8) {
+	जबतक (num_data >= 2) अणु
+		अगर (xfer->bits_per_word > 8) अणु
 			td0 = *words++;
 			td1 = *words++;
-		} else {
+		पूर्ण अन्यथा अणु
 			td0 = *bytes++;
 			td1 = *bytes++;
-		}
+		पूर्ण
 
-		spi_writel(as, TDR, (td1 << 16) | td0);
+		spi_ग_लिखोl(as, TDR, (td1 << 16) | td0);
 		num_data -= 2;
-	}
+	पूर्ण
 
-	if (num_data) {
-		if (xfer->bits_per_word > 8)
+	अगर (num_data) अणु
+		अगर (xfer->bits_per_word > 8)
 			td0 = *words++;
-		else
+		अन्यथा
 			td0 = *bytes++;
 
-		spi_writew(as, TDR, td0);
+		spi_ग_लिखोw(as, TDR, td0);
 		num_data--;
-	}
+	पूर्ण
 
 	dev_dbg(master->dev.parent,
 		"  start fifo xfer %p: len %u tx %p rx %p bitpw %d\n",
@@ -674,405 +675,405 @@ static void atmel_spi_next_xfer_fifo(struct spi_master *master,
 		xfer->bits_per_word);
 
 	/*
-	 * Enable RX FIFO Threshold Flag interrupt to be notified about
+	 * Enable RX FIFO Threshold Flag पूर्णांकerrupt to be notअगरied about
 	 * transfer completion.
 	 */
-	spi_writel(as, IER, SPI_BIT(RXFTHF) | SPI_BIT(OVRES));
-}
+	spi_ग_लिखोl(as, IER, SPI_BIT(RXFTHF) | SPI_BIT(OVRES));
+पूर्ण
 
 /*
  * Next transfer using PIO.
  */
-static void atmel_spi_next_xfer_pio(struct spi_master *master,
-				    struct spi_transfer *xfer)
-{
-	struct atmel_spi *as = spi_master_get_devdata(master);
+अटल व्योम aपंचांगel_spi_next_xfer_pio(काष्ठा spi_master *master,
+				    काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा aपंचांगel_spi *as = spi_master_get_devdata(master);
 
-	if (as->fifo_size)
-		atmel_spi_next_xfer_fifo(master, xfer);
-	else
-		atmel_spi_next_xfer_single(master, xfer);
-}
+	अगर (as->fअगरo_size)
+		aपंचांगel_spi_next_xfer_fअगरo(master, xfer);
+	अन्यथा
+		aपंचांगel_spi_next_xfer_single(master, xfer);
+पूर्ण
 
 /*
- * Submit next transfer for DMA.
+ * Submit next transfer क्रम DMA.
  */
-static int atmel_spi_next_xfer_dma_submit(struct spi_master *master,
-				struct spi_transfer *xfer,
+अटल पूर्णांक aपंचांगel_spi_next_xfer_dma_submit(काष्ठा spi_master *master,
+				काष्ठा spi_transfer *xfer,
 				u32 *plen)
 	__must_hold(&as->lock)
-{
-	struct atmel_spi	*as = spi_master_get_devdata(master);
-	struct dma_chan		*rxchan = master->dma_rx;
-	struct dma_chan		*txchan = master->dma_tx;
-	struct dma_async_tx_descriptor *rxdesc;
-	struct dma_async_tx_descriptor *txdesc;
-	struct dma_slave_config	slave_config;
+अणु
+	काष्ठा aपंचांगel_spi	*as = spi_master_get_devdata(master);
+	काष्ठा dma_chan		*rxchan = master->dma_rx;
+	काष्ठा dma_chan		*txchan = master->dma_tx;
+	काष्ठा dma_async_tx_descriptor *rxdesc;
+	काष्ठा dma_async_tx_descriptor *txdesc;
+	काष्ठा dma_slave_config	slave_config;
 	dma_cookie_t		cookie;
 
 	dev_vdbg(master->dev.parent, "atmel_spi_next_xfer_dma_submit\n");
 
 	/* Check that the channels are available */
-	if (!rxchan || !txchan)
-		return -ENODEV;
+	अगर (!rxchan || !txchan)
+		वापस -ENODEV;
 
-	/* release lock for DMA operations */
-	atmel_spi_unlock(as);
+	/* release lock क्रम DMA operations */
+	aपंचांगel_spi_unlock(as);
 
 	*plen = xfer->len;
 
-	if (atmel_spi_dma_slave_config(as, &slave_config,
+	अगर (aपंचांगel_spi_dma_slave_config(as, &slave_config,
 				       xfer->bits_per_word))
-		goto err_exit;
+		जाओ err_निकास;
 
 	/* Send both scatterlists */
-	if (atmel_spi_is_vmalloc_xfer(xfer) &&
-	    IS_ENABLED(CONFIG_SOC_SAM_V4_V5)) {
+	अगर (aपंचांगel_spi_is_vदो_स्मृति_xfer(xfer) &&
+	    IS_ENABLED(CONFIG_SOC_SAM_V4_V5)) अणु
 		rxdesc = dmaengine_prep_slave_single(rxchan,
 						     as->dma_addr_rx_bbuf,
 						     xfer->len,
 						     DMA_DEV_TO_MEM,
 						     DMA_PREP_INTERRUPT |
 						     DMA_CTRL_ACK);
-	} else {
+	पूर्ण अन्यथा अणु
 		rxdesc = dmaengine_prep_slave_sg(rxchan,
 						 xfer->rx_sg.sgl,
 						 xfer->rx_sg.nents,
 						 DMA_DEV_TO_MEM,
 						 DMA_PREP_INTERRUPT |
 						 DMA_CTRL_ACK);
-	}
-	if (!rxdesc)
-		goto err_dma;
+	पूर्ण
+	अगर (!rxdesc)
+		जाओ err_dma;
 
-	if (atmel_spi_is_vmalloc_xfer(xfer) &&
-	    IS_ENABLED(CONFIG_SOC_SAM_V4_V5)) {
-		memcpy(as->addr_tx_bbuf, xfer->tx_buf, xfer->len);
+	अगर (aपंचांगel_spi_is_vदो_स्मृति_xfer(xfer) &&
+	    IS_ENABLED(CONFIG_SOC_SAM_V4_V5)) अणु
+		स_नकल(as->addr_tx_bbuf, xfer->tx_buf, xfer->len);
 		txdesc = dmaengine_prep_slave_single(txchan,
 						     as->dma_addr_tx_bbuf,
 						     xfer->len, DMA_MEM_TO_DEV,
 						     DMA_PREP_INTERRUPT |
 						     DMA_CTRL_ACK);
-	} else {
+	पूर्ण अन्यथा अणु
 		txdesc = dmaengine_prep_slave_sg(txchan,
 						 xfer->tx_sg.sgl,
 						 xfer->tx_sg.nents,
 						 DMA_MEM_TO_DEV,
 						 DMA_PREP_INTERRUPT |
 						 DMA_CTRL_ACK);
-	}
-	if (!txdesc)
-		goto err_dma;
+	पूर्ण
+	अगर (!txdesc)
+		जाओ err_dma;
 
 	dev_dbg(master->dev.parent,
 		"  start dma xfer %p: len %u tx %p/%08llx rx %p/%08llx\n",
-		xfer, xfer->len, xfer->tx_buf, (unsigned long long)xfer->tx_dma,
-		xfer->rx_buf, (unsigned long long)xfer->rx_dma);
+		xfer, xfer->len, xfer->tx_buf, (अचिन्हित दीर्घ दीर्घ)xfer->tx_dma,
+		xfer->rx_buf, (अचिन्हित दीर्घ दीर्घ)xfer->rx_dma);
 
-	/* Enable relevant interrupts */
-	spi_writel(as, IER, SPI_BIT(OVRES));
+	/* Enable relevant पूर्णांकerrupts */
+	spi_ग_लिखोl(as, IER, SPI_BIT(OVRES));
 
 	/* Put the callback on the RX transfer only, that should finish last */
 	rxdesc->callback = dma_callback;
 	rxdesc->callback_param = master;
 
-	/* Submit and fire RX and TX with TX last so we're ready to read! */
+	/* Submit and fire RX and TX with TX last so we're पढ़ोy to पढ़ो! */
 	cookie = rxdesc->tx_submit(rxdesc);
-	if (dma_submit_error(cookie))
-		goto err_dma;
+	अगर (dma_submit_error(cookie))
+		जाओ err_dma;
 	cookie = txdesc->tx_submit(txdesc);
-	if (dma_submit_error(cookie))
-		goto err_dma;
+	अगर (dma_submit_error(cookie))
+		जाओ err_dma;
 	rxchan->device->device_issue_pending(rxchan);
 	txchan->device->device_issue_pending(txchan);
 
 	/* take back lock */
-	atmel_spi_lock(as);
-	return 0;
+	aपंचांगel_spi_lock(as);
+	वापस 0;
 
 err_dma:
-	spi_writel(as, IDR, SPI_BIT(OVRES));
-	atmel_spi_stop_dma(master);
-err_exit:
-	atmel_spi_lock(as);
-	return -ENOMEM;
-}
+	spi_ग_लिखोl(as, IDR, SPI_BIT(OVRES));
+	aपंचांगel_spi_stop_dma(master);
+err_निकास:
+	aपंचांगel_spi_lock(as);
+	वापस -ENOMEM;
+पूर्ण
 
-static void atmel_spi_next_xfer_data(struct spi_master *master,
-				struct spi_transfer *xfer,
+अटल व्योम aपंचांगel_spi_next_xfer_data(काष्ठा spi_master *master,
+				काष्ठा spi_transfer *xfer,
 				dma_addr_t *tx_dma,
 				dma_addr_t *rx_dma,
 				u32 *plen)
-{
+अणु
 	*rx_dma = xfer->rx_dma + xfer->len - *plen;
 	*tx_dma = xfer->tx_dma + xfer->len - *plen;
-	if (*plen > master->max_dma_len)
+	अगर (*plen > master->max_dma_len)
 		*plen = master->max_dma_len;
-}
+पूर्ण
 
-static int atmel_spi_set_xfer_speed(struct atmel_spi *as,
-				    struct spi_device *spi,
-				    struct spi_transfer *xfer)
-{
+अटल पूर्णांक aपंचांगel_spi_set_xfer_speed(काष्ठा aपंचांगel_spi *as,
+				    काष्ठा spi_device *spi,
+				    काष्ठा spi_transfer *xfer)
+अणु
 	u32			scbr, csr;
-	unsigned long		bus_hz;
-	int chip_select;
+	अचिन्हित दीर्घ		bus_hz;
+	पूर्णांक chip_select;
 
-	if (spi->cs_gpiod)
-		chip_select = as->native_cs_for_gpio;
-	else
+	अगर (spi->cs_gpiod)
+		chip_select = as->native_cs_क्रम_gpio;
+	अन्यथा
 		chip_select = spi->chip_select;
 
 	/* v1 chips start out at half the peripheral bus speed. */
 	bus_hz = as->spi_clk;
-	if (!atmel_spi_is_v2(as))
+	अगर (!aपंचांगel_spi_is_v2(as))
 		bus_hz /= 2;
 
 	/*
-	 * Calculate the lowest divider that satisfies the
-	 * constraint, assuming div32/fdiv/mbz == 0.
+	 * Calculate the lowest भागider that satisfies the
+	 * स्थिरraपूर्णांक, assuming भाग32/fभाग/mbz == 0.
 	 */
 	scbr = DIV_ROUND_UP(bus_hz, xfer->speed_hz);
 
 	/*
-	 * If the resulting divider doesn't fit into the
-	 * register bitfield, we can't satisfy the constraint.
+	 * If the resulting भागider करोesn't fit पूर्णांकo the
+	 * रेजिस्टर bitfield, we can't satisfy the स्थिरraपूर्णांक.
 	 */
-	if (scbr >= (1 << SPI_SCBR_SIZE)) {
+	अगर (scbr >= (1 << SPI_SCBR_SIZE)) अणु
 		dev_err(&spi->dev,
 			"setup: %d Hz too slow, scbr %u; min %ld Hz\n",
 			xfer->speed_hz, scbr, bus_hz/255);
-		return -EINVAL;
-	}
-	if (scbr == 0) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (scbr == 0) अणु
 		dev_err(&spi->dev,
 			"setup: %d Hz too high, scbr %u; max %ld Hz\n",
 			xfer->speed_hz, scbr, bus_hz);
-		return -EINVAL;
-	}
-	csr = spi_readl(as, CSR0 + 4 * chip_select);
+		वापस -EINVAL;
+	पूर्ण
+	csr = spi_पढ़ोl(as, CSR0 + 4 * chip_select);
 	csr = SPI_BFINS(SCBR, scbr, csr);
-	spi_writel(as, CSR0 + 4 * chip_select, csr);
+	spi_ग_लिखोl(as, CSR0 + 4 * chip_select, csr);
 	xfer->effective_speed_hz = bus_hz / scbr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Submit next transfer for PDC.
+ * Submit next transfer क्रम PDC.
  * lock is held, spi irq is blocked
  */
-static void atmel_spi_pdc_next_xfer(struct spi_master *master,
-					struct spi_message *msg,
-					struct spi_transfer *xfer)
-{
-	struct atmel_spi	*as = spi_master_get_devdata(master);
+अटल व्योम aपंचांगel_spi_pdc_next_xfer(काष्ठा spi_master *master,
+					काष्ठा spi_message *msg,
+					काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा aपंचांगel_spi	*as = spi_master_get_devdata(master);
 	u32			len;
 	dma_addr_t		tx_dma, rx_dma;
 
-	spi_writel(as, PTCR, SPI_BIT(RXTDIS) | SPI_BIT(TXTDIS));
+	spi_ग_लिखोl(as, PTCR, SPI_BIT(RXTDIS) | SPI_BIT(TXTDIS));
 
-	len = as->current_remaining_bytes;
-	atmel_spi_next_xfer_data(master, xfer, &tx_dma, &rx_dma, &len);
-	as->current_remaining_bytes -= len;
+	len = as->current_reमुख्यing_bytes;
+	aपंचांगel_spi_next_xfer_data(master, xfer, &tx_dma, &rx_dma, &len);
+	as->current_reमुख्यing_bytes -= len;
 
-	spi_writel(as, RPR, rx_dma);
-	spi_writel(as, TPR, tx_dma);
+	spi_ग_लिखोl(as, RPR, rx_dma);
+	spi_ग_लिखोl(as, TPR, tx_dma);
 
-	if (msg->spi->bits_per_word > 8)
+	अगर (msg->spi->bits_per_word > 8)
 		len >>= 1;
-	spi_writel(as, RCR, len);
-	spi_writel(as, TCR, len);
+	spi_ग_लिखोl(as, RCR, len);
+	spi_ग_लिखोl(as, TCR, len);
 
 	dev_dbg(&msg->spi->dev,
 		"  start xfer %p: len %u tx %p/%08llx rx %p/%08llx\n",
 		xfer, xfer->len, xfer->tx_buf,
-		(unsigned long long)xfer->tx_dma, xfer->rx_buf,
-		(unsigned long long)xfer->rx_dma);
+		(अचिन्हित दीर्घ दीर्घ)xfer->tx_dma, xfer->rx_buf,
+		(अचिन्हित दीर्घ दीर्घ)xfer->rx_dma);
 
-	if (as->current_remaining_bytes) {
-		len = as->current_remaining_bytes;
-		atmel_spi_next_xfer_data(master, xfer, &tx_dma, &rx_dma, &len);
-		as->current_remaining_bytes -= len;
+	अगर (as->current_reमुख्यing_bytes) अणु
+		len = as->current_reमुख्यing_bytes;
+		aपंचांगel_spi_next_xfer_data(master, xfer, &tx_dma, &rx_dma, &len);
+		as->current_reमुख्यing_bytes -= len;
 
-		spi_writel(as, RNPR, rx_dma);
-		spi_writel(as, TNPR, tx_dma);
+		spi_ग_लिखोl(as, RNPR, rx_dma);
+		spi_ग_लिखोl(as, TNPR, tx_dma);
 
-		if (msg->spi->bits_per_word > 8)
+		अगर (msg->spi->bits_per_word > 8)
 			len >>= 1;
-		spi_writel(as, RNCR, len);
-		spi_writel(as, TNCR, len);
+		spi_ग_लिखोl(as, RNCR, len);
+		spi_ग_लिखोl(as, TNCR, len);
 
 		dev_dbg(&msg->spi->dev,
 			"  next xfer %p: len %u tx %p/%08llx rx %p/%08llx\n",
 			xfer, xfer->len, xfer->tx_buf,
-			(unsigned long long)xfer->tx_dma, xfer->rx_buf,
-			(unsigned long long)xfer->rx_dma);
-	}
+			(अचिन्हित दीर्घ दीर्घ)xfer->tx_dma, xfer->rx_buf,
+			(अचिन्हित दीर्घ दीर्घ)xfer->rx_dma);
+	पूर्ण
 
-	/* REVISIT: We're waiting for RXBUFF before we start the next
-	 * transfer because we need to handle some difficult timing
-	 * issues otherwise. If we wait for TXBUFE in one transfer and
-	 * then starts waiting for RXBUFF in the next, it's difficult
-	 * to tell the difference between the RXBUFF interrupt we're
-	 * actually waiting for and the RXBUFF interrupt of the
+	/* REVISIT: We're रुकोing क्रम RXBUFF beक्रमe we start the next
+	 * transfer because we need to handle some dअगरficult timing
+	 * issues otherwise. If we रुको क्रम TXBUFE in one transfer and
+	 * then starts रुकोing क्रम RXBUFF in the next, it's dअगरficult
+	 * to tell the dअगरference between the RXBUFF पूर्णांकerrupt we're
+	 * actually रुकोing क्रम and the RXBUFF पूर्णांकerrupt of the
 	 * previous transfer.
 	 *
-	 * It should be doable, though. Just not now...
+	 * It should be करोable, though. Just not now...
 	 */
-	spi_writel(as, IER, SPI_BIT(RXBUFF) | SPI_BIT(OVRES));
-	spi_writel(as, PTCR, SPI_BIT(TXTEN) | SPI_BIT(RXTEN));
-}
+	spi_ग_लिखोl(as, IER, SPI_BIT(RXBUFF) | SPI_BIT(OVRES));
+	spi_ग_लिखोl(as, PTCR, SPI_BIT(TXTEN) | SPI_BIT(RXTEN));
+पूर्ण
 
 /*
  * For DMA, tx_buf/tx_dma have the same relationship as rx_buf/rx_dma:
- *  - The buffer is either valid for CPU access, else NULL
+ *  - The buffer is either valid क्रम CPU access, अन्यथा शून्य
  *  - If the buffer is valid, so is its DMA address
  *
  * This driver manages the dma address unless message->is_dma_mapped.
  */
-static int
-atmel_spi_dma_map_xfer(struct atmel_spi *as, struct spi_transfer *xfer)
-{
-	struct device	*dev = &as->pdev->dev;
+अटल पूर्णांक
+aपंचांगel_spi_dma_map_xfer(काष्ठा aपंचांगel_spi *as, काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा device	*dev = &as->pdev->dev;
 
 	xfer->tx_dma = xfer->rx_dma = INVALID_DMA_ADDRESS;
-	if (xfer->tx_buf) {
-		/* tx_buf is a const void* where we need a void * for the dma
+	अगर (xfer->tx_buf) अणु
+		/* tx_buf is a स्थिर व्योम* where we need a व्योम * क्रम the dma
 		 * mapping */
-		void *nonconst_tx = (void *)xfer->tx_buf;
+		व्योम *nonस्थिर_tx = (व्योम *)xfer->tx_buf;
 
 		xfer->tx_dma = dma_map_single(dev,
-				nonconst_tx, xfer->len,
+				nonस्थिर_tx, xfer->len,
 				DMA_TO_DEVICE);
-		if (dma_mapping_error(dev, xfer->tx_dma))
-			return -ENOMEM;
-	}
-	if (xfer->rx_buf) {
+		अगर (dma_mapping_error(dev, xfer->tx_dma))
+			वापस -ENOMEM;
+	पूर्ण
+	अगर (xfer->rx_buf) अणु
 		xfer->rx_dma = dma_map_single(dev,
 				xfer->rx_buf, xfer->len,
 				DMA_FROM_DEVICE);
-		if (dma_mapping_error(dev, xfer->rx_dma)) {
-			if (xfer->tx_buf)
+		अगर (dma_mapping_error(dev, xfer->rx_dma)) अणु
+			अगर (xfer->tx_buf)
 				dma_unmap_single(dev,
 						xfer->tx_dma, xfer->len,
 						DMA_TO_DEVICE);
-			return -ENOMEM;
-		}
-	}
-	return 0;
-}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void atmel_spi_dma_unmap_xfer(struct spi_master *master,
-				     struct spi_transfer *xfer)
-{
-	if (xfer->tx_dma != INVALID_DMA_ADDRESS)
+अटल व्योम aपंचांगel_spi_dma_unmap_xfer(काष्ठा spi_master *master,
+				     काष्ठा spi_transfer *xfer)
+अणु
+	अगर (xfer->tx_dma != INVALID_DMA_ADDRESS)
 		dma_unmap_single(master->dev.parent, xfer->tx_dma,
 				 xfer->len, DMA_TO_DEVICE);
-	if (xfer->rx_dma != INVALID_DMA_ADDRESS)
+	अगर (xfer->rx_dma != INVALID_DMA_ADDRESS)
 		dma_unmap_single(master->dev.parent, xfer->rx_dma,
 				 xfer->len, DMA_FROM_DEVICE);
-}
+पूर्ण
 
-static void atmel_spi_disable_pdc_transfer(struct atmel_spi *as)
-{
-	spi_writel(as, PTCR, SPI_BIT(RXTDIS) | SPI_BIT(TXTDIS));
-}
+अटल व्योम aपंचांगel_spi_disable_pdc_transfer(काष्ठा aपंचांगel_spi *as)
+अणु
+	spi_ग_लिखोl(as, PTCR, SPI_BIT(RXTDIS) | SPI_BIT(TXTDIS));
+पूर्ण
 
-static void
-atmel_spi_pump_single_data(struct atmel_spi *as, struct spi_transfer *xfer)
-{
+अटल व्योम
+aपंचांगel_spi_pump_single_data(काष्ठा aपंचांगel_spi *as, काष्ठा spi_transfer *xfer)
+अणु
 	u8		*rxp;
 	u16		*rxp16;
-	unsigned long	xfer_pos = xfer->len - as->current_remaining_bytes;
+	अचिन्हित दीर्घ	xfer_pos = xfer->len - as->current_reमुख्यing_bytes;
 
-	if (xfer->bits_per_word > 8) {
+	अगर (xfer->bits_per_word > 8) अणु
 		rxp16 = (u16 *)(((u8 *)xfer->rx_buf) + xfer_pos);
-		*rxp16 = spi_readl(as, RDR);
-	} else {
+		*rxp16 = spi_पढ़ोl(as, RDR);
+	पूर्ण अन्यथा अणु
 		rxp = ((u8 *)xfer->rx_buf) + xfer_pos;
-		*rxp = spi_readl(as, RDR);
-	}
-	if (xfer->bits_per_word > 8) {
-		if (as->current_remaining_bytes > 2)
-			as->current_remaining_bytes -= 2;
-		else
-			as->current_remaining_bytes = 0;
-	} else {
-		as->current_remaining_bytes--;
-	}
-}
+		*rxp = spi_पढ़ोl(as, RDR);
+	पूर्ण
+	अगर (xfer->bits_per_word > 8) अणु
+		अगर (as->current_reमुख्यing_bytes > 2)
+			as->current_reमुख्यing_bytes -= 2;
+		अन्यथा
+			as->current_reमुख्यing_bytes = 0;
+	पूर्ण अन्यथा अणु
+		as->current_reमुख्यing_bytes--;
+	पूर्ण
+पूर्ण
 
-static void
-atmel_spi_pump_fifo_data(struct atmel_spi *as, struct spi_transfer *xfer)
-{
-	u32 fifolr = spi_readl(as, FLR);
-	u32 num_bytes, num_data = SPI_BFEXT(RXFL, fifolr);
-	u32 offset = xfer->len - as->current_remaining_bytes;
+अटल व्योम
+aपंचांगel_spi_pump_fअगरo_data(काष्ठा aपंचांगel_spi *as, काष्ठा spi_transfer *xfer)
+अणु
+	u32 fअगरolr = spi_पढ़ोl(as, FLR);
+	u32 num_bytes, num_data = SPI_BFEXT(RXFL, fअगरolr);
+	u32 offset = xfer->len - as->current_reमुख्यing_bytes;
 	u16 *words = (u16 *)((u8 *)xfer->rx_buf + offset);
 	u8  *bytes = (u8  *)((u8 *)xfer->rx_buf + offset);
 	u16 rd; /* RD field is the lowest 16 bits of RDR */
 
-	/* Update the number of remaining bytes to transfer */
+	/* Update the number of reमुख्यing bytes to transfer */
 	num_bytes = ((xfer->bits_per_word > 8) ?
 		     (num_data << 1) :
 		     num_data);
 
-	if (as->current_remaining_bytes > num_bytes)
-		as->current_remaining_bytes -= num_bytes;
-	else
-		as->current_remaining_bytes = 0;
+	अगर (as->current_reमुख्यing_bytes > num_bytes)
+		as->current_reमुख्यing_bytes -= num_bytes;
+	अन्यथा
+		as->current_reमुख्यing_bytes = 0;
 
 	/* Handle odd number of bytes when data are more than 8bit width */
-	if (xfer->bits_per_word > 8)
-		as->current_remaining_bytes &= ~0x1;
+	अगर (xfer->bits_per_word > 8)
+		as->current_reमुख्यing_bytes &= ~0x1;
 
 	/* Read data */
-	while (num_data) {
-		rd = spi_readl(as, RDR);
-		if (xfer->bits_per_word > 8)
+	जबतक (num_data) अणु
+		rd = spi_पढ़ोl(as, RDR);
+		अगर (xfer->bits_per_word > 8)
 			*words++ = rd;
-		else
+		अन्यथा
 			*bytes++ = rd;
 		num_data--;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Called from IRQ
  *
  * Must update "current_remaining_bytes" to keep track of data
  * to transfer.
  */
-static void
-atmel_spi_pump_pio_data(struct atmel_spi *as, struct spi_transfer *xfer)
-{
-	if (as->fifo_size)
-		atmel_spi_pump_fifo_data(as, xfer);
-	else
-		atmel_spi_pump_single_data(as, xfer);
-}
+अटल व्योम
+aपंचांगel_spi_pump_pio_data(काष्ठा aपंचांगel_spi *as, काष्ठा spi_transfer *xfer)
+अणु
+	अगर (as->fअगरo_size)
+		aपंचांगel_spi_pump_fअगरo_data(as, xfer);
+	अन्यथा
+		aपंचांगel_spi_pump_single_data(as, xfer);
+पूर्ण
 
 /* Interrupt
  *
- * No need for locking in this Interrupt handler: done_status is the
- * only information modified.
+ * No need क्रम locking in this Interrupt handler: करोne_status is the
+ * only inक्रमmation modअगरied.
  */
-static irqreturn_t
-atmel_spi_pio_interrupt(int irq, void *dev_id)
-{
-	struct spi_master	*master = dev_id;
-	struct atmel_spi	*as = spi_master_get_devdata(master);
+अटल irqवापस_t
+aपंचांगel_spi_pio_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा spi_master	*master = dev_id;
+	काष्ठा aपंचांगel_spi	*as = spi_master_get_devdata(master);
 	u32			status, pending, imr;
-	struct spi_transfer	*xfer;
-	int			ret = IRQ_NONE;
+	काष्ठा spi_transfer	*xfer;
+	पूर्णांक			ret = IRQ_NONE;
 
-	imr = spi_readl(as, IMR);
-	status = spi_readl(as, SR);
+	imr = spi_पढ़ोl(as, IMR);
+	status = spi_पढ़ोl(as, SR);
 	pending = status & imr;
 
-	if (pending & SPI_BIT(OVRES)) {
+	अगर (pending & SPI_BIT(OVRES)) अणु
 		ret = IRQ_HANDLED;
-		spi_writel(as, IDR, SPI_BIT(OVRES));
+		spi_ग_लिखोl(as, IDR, SPI_BIT(OVRES));
 		dev_warn(master->dev.parent, "overrun\n");
 
 		/*
@@ -1084,182 +1085,182 @@ atmel_spi_pio_interrupt(int irq, void *dev_id)
 		 * We will also not process any remaning transfers in
 		 * the message.
 		 */
-		as->done_status = -EIO;
+		as->करोne_status = -EIO;
 		smp_wmb();
 
-		/* Clear any overrun happening while cleaning up */
-		spi_readl(as, SR);
+		/* Clear any overrun happening जबतक cleaning up */
+		spi_पढ़ोl(as, SR);
 
 		complete(&as->xfer_completion);
 
-	} else if (pending & (SPI_BIT(RDRF) | SPI_BIT(RXFTHF))) {
-		atmel_spi_lock(as);
+	पूर्ण अन्यथा अगर (pending & (SPI_BIT(RDRF) | SPI_BIT(RXFTHF))) अणु
+		aपंचांगel_spi_lock(as);
 
-		if (as->current_remaining_bytes) {
+		अगर (as->current_reमुख्यing_bytes) अणु
 			ret = IRQ_HANDLED;
 			xfer = as->current_transfer;
-			atmel_spi_pump_pio_data(as, xfer);
-			if (!as->current_remaining_bytes)
-				spi_writel(as, IDR, pending);
+			aपंचांगel_spi_pump_pio_data(as, xfer);
+			अगर (!as->current_reमुख्यing_bytes)
+				spi_ग_लिखोl(as, IDR, pending);
 
 			complete(&as->xfer_completion);
-		}
+		पूर्ण
 
-		atmel_spi_unlock(as);
-	} else {
+		aपंचांगel_spi_unlock(as);
+	पूर्ण अन्यथा अणु
 		WARN_ONCE(pending, "IRQ not handled, pending = %x\n", pending);
 		ret = IRQ_HANDLED;
-		spi_writel(as, IDR, pending);
-	}
+		spi_ग_लिखोl(as, IDR, pending);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t
-atmel_spi_pdc_interrupt(int irq, void *dev_id)
-{
-	struct spi_master	*master = dev_id;
-	struct atmel_spi	*as = spi_master_get_devdata(master);
+अटल irqवापस_t
+aपंचांगel_spi_pdc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा spi_master	*master = dev_id;
+	काष्ठा aपंचांगel_spi	*as = spi_master_get_devdata(master);
 	u32			status, pending, imr;
-	int			ret = IRQ_NONE;
+	पूर्णांक			ret = IRQ_NONE;
 
-	imr = spi_readl(as, IMR);
-	status = spi_readl(as, SR);
+	imr = spi_पढ़ोl(as, IMR);
+	status = spi_पढ़ोl(as, SR);
 	pending = status & imr;
 
-	if (pending & SPI_BIT(OVRES)) {
+	अगर (pending & SPI_BIT(OVRES)) अणु
 
 		ret = IRQ_HANDLED;
 
-		spi_writel(as, IDR, (SPI_BIT(RXBUFF) | SPI_BIT(ENDRX)
+		spi_ग_लिखोl(as, IDR, (SPI_BIT(RXBUFF) | SPI_BIT(ENDRX)
 				     | SPI_BIT(OVRES)));
 
-		/* Clear any overrun happening while cleaning up */
-		spi_readl(as, SR);
+		/* Clear any overrun happening जबतक cleaning up */
+		spi_पढ़ोl(as, SR);
 
-		as->done_status = -EIO;
+		as->करोne_status = -EIO;
 
 		complete(&as->xfer_completion);
 
-	} else if (pending & (SPI_BIT(RXBUFF) | SPI_BIT(ENDRX))) {
+	पूर्ण अन्यथा अगर (pending & (SPI_BIT(RXBUFF) | SPI_BIT(ENDRX))) अणु
 		ret = IRQ_HANDLED;
 
-		spi_writel(as, IDR, pending);
+		spi_ग_लिखोl(as, IDR, pending);
 
 		complete(&as->xfer_completion);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int atmel_word_delay_csr(struct spi_device *spi, struct atmel_spi *as)
-{
-	struct spi_delay *delay = &spi->word_delay;
+अटल पूर्णांक aपंचांगel_word_delay_csr(काष्ठा spi_device *spi, काष्ठा aपंचांगel_spi *as)
+अणु
+	काष्ठा spi_delay *delay = &spi->word_delay;
 	u32 value = delay->value;
 
-	switch (delay->unit) {
-	case SPI_DELAY_UNIT_NSECS:
+	चयन (delay->unit) अणु
+	हाल SPI_DELAY_UNIT_NSECS:
 		value /= 1000;
-		break;
-	case SPI_DELAY_UNIT_USECS:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SPI_DELAY_UNIT_USECS:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return (as->spi_clk / 1000000 * value) >> 5;
-}
+	वापस (as->spi_clk / 1000000 * value) >> 5;
+पूर्ण
 
-static void initialize_native_cs_for_gpio(struct atmel_spi *as)
-{
-	int i;
-	struct spi_master *master = platform_get_drvdata(as->pdev);
+अटल व्योम initialize_native_cs_क्रम_gpio(काष्ठा aपंचांगel_spi *as)
+अणु
+	पूर्णांक i;
+	काष्ठा spi_master *master = platक्रमm_get_drvdata(as->pdev);
 
-	if (!as->native_cs_free)
-		return; /* already initialized */
+	अगर (!as->native_cs_मुक्त)
+		वापस; /* alपढ़ोy initialized */
 
-	if (!master->cs_gpiods)
-		return; /* No CS GPIO */
+	अगर (!master->cs_gpiods)
+		वापस; /* No CS GPIO */
 
 	/*
 	 * On the first version of the controller (AT91RM9200), CS0
 	 * can't be used associated with GPIO
 	 */
-	if (atmel_spi_is_v2(as))
+	अगर (aपंचांगel_spi_is_v2(as))
 		i = 0;
-	else
+	अन्यथा
 		i = 1;
 
-	for (; i < 4; i++)
-		if (master->cs_gpiods[i])
-			as->native_cs_free |= BIT(i);
+	क्रम (; i < 4; i++)
+		अगर (master->cs_gpiods[i])
+			as->native_cs_मुक्त |= BIT(i);
 
-	if (as->native_cs_free)
-		as->native_cs_for_gpio = ffs(as->native_cs_free);
-}
+	अगर (as->native_cs_मुक्त)
+		as->native_cs_क्रम_gpio = ffs(as->native_cs_मुक्त);
+पूर्ण
 
-static int atmel_spi_setup(struct spi_device *spi)
-{
-	struct atmel_spi	*as;
-	struct atmel_spi_device	*asd;
+अटल पूर्णांक aपंचांगel_spi_setup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा aपंचांगel_spi	*as;
+	काष्ठा aपंचांगel_spi_device	*asd;
 	u32			csr;
-	unsigned int		bits = spi->bits_per_word;
-	int chip_select;
-	int			word_delay_csr;
+	अचिन्हित पूर्णांक		bits = spi->bits_per_word;
+	पूर्णांक chip_select;
+	पूर्णांक			word_delay_csr;
 
 	as = spi_master_get_devdata(spi->master);
 
 	/* see notes above re chipselect */
-	if (!spi->cs_gpiod && (spi->mode & SPI_CS_HIGH)) {
+	अगर (!spi->cs_gpiod && (spi->mode & SPI_CS_HIGH)) अणु
 		dev_warn(&spi->dev, "setup: non GPIO CS can't be active-high\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Setup() is called during spi_register_controller(aka
-	 * spi_register_master) but after all membmers of the cs_gpiod
-	 * array have been filled, so we can looked for which native
-	 * CS will be free for using with GPIO
+	/* Setup() is called during spi_रेजिस्टर_controller(aka
+	 * spi_रेजिस्टर_master) but after all membmers of the cs_gpiod
+	 * array have been filled, so we can looked क्रम which native
+	 * CS will be मुक्त क्रम using with GPIO
 	 */
-	initialize_native_cs_for_gpio(as);
+	initialize_native_cs_क्रम_gpio(as);
 
-	if (spi->cs_gpiod && as->native_cs_free) {
+	अगर (spi->cs_gpiod && as->native_cs_मुक्त) अणु
 		dev_err(&spi->dev,
 			"No native CS available to support this GPIO CS\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (spi->cs_gpiod)
-		chip_select = as->native_cs_for_gpio;
-	else
+	अगर (spi->cs_gpiod)
+		chip_select = as->native_cs_क्रम_gpio;
+	अन्यथा
 		chip_select = spi->chip_select;
 
 	csr = SPI_BF(BITS, bits - 8);
-	if (spi->mode & SPI_CPOL)
+	अगर (spi->mode & SPI_CPOL)
 		csr |= SPI_BIT(CPOL);
-	if (!(spi->mode & SPI_CPHA))
+	अगर (!(spi->mode & SPI_CPHA))
 		csr |= SPI_BIT(NCPHA);
 
-	if (!spi->cs_gpiod)
+	अगर (!spi->cs_gpiod)
 		csr |= SPI_BIT(CSAAT);
 	csr |= SPI_BF(DLYBS, 0);
 
-	word_delay_csr = atmel_word_delay_csr(spi, as);
-	if (word_delay_csr < 0)
-		return word_delay_csr;
+	word_delay_csr = aपंचांगel_word_delay_csr(spi, as);
+	अगर (word_delay_csr < 0)
+		वापस word_delay_csr;
 
-	/* DLYBCT adds delays between words.  This is useful for slow devices
-	 * that need a bit of time to setup the next transfer.
+	/* DLYBCT adds delays between words.  This is useful क्रम slow devices
+	 * that need a bit of समय to setup the next transfer.
 	 */
 	csr |= SPI_BF(DLYBCT, word_delay_csr);
 
 	asd = spi->controller_state;
-	if (!asd) {
-		asd = kzalloc(sizeof(struct atmel_spi_device), GFP_KERNEL);
-		if (!asd)
-			return -ENOMEM;
+	अगर (!asd) अणु
+		asd = kzalloc(माप(काष्ठा aपंचांगel_spi_device), GFP_KERNEL);
+		अगर (!asd)
+			वापस -ENOMEM;
 
 		spi->controller_state = asd;
-	}
+	पूर्ण
 
 	asd->csr = csr;
 
@@ -1267,166 +1268,166 @@ static int atmel_spi_setup(struct spi_device *spi)
 		"setup: bpw %u mode 0x%x -> csr%d %08x\n",
 		bits, spi->mode, spi->chip_select, csr);
 
-	if (!atmel_spi_is_v2(as))
-		spi_writel(as, CSR0 + 4 * chip_select, csr);
+	अगर (!aपंचांगel_spi_is_v2(as))
+		spi_ग_लिखोl(as, CSR0 + 4 * chip_select, csr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_spi_one_transfer(struct spi_master *master,
-					struct spi_message *msg,
-					struct spi_transfer *xfer)
-{
-	struct atmel_spi	*as;
-	struct spi_device	*spi = msg->spi;
+अटल पूर्णांक aपंचांगel_spi_one_transfer(काष्ठा spi_master *master,
+					काष्ठा spi_message *msg,
+					काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा aपंचांगel_spi	*as;
+	काष्ठा spi_device	*spi = msg->spi;
 	u8			bits;
 	u32			len;
-	struct atmel_spi_device	*asd;
-	int			timeout;
-	int			ret;
-	unsigned long		dma_timeout;
+	काष्ठा aपंचांगel_spi_device	*asd;
+	पूर्णांक			समयout;
+	पूर्णांक			ret;
+	अचिन्हित दीर्घ		dma_समयout;
 
 	as = spi_master_get_devdata(master);
 
-	if (!(xfer->tx_buf || xfer->rx_buf) && xfer->len) {
+	अगर (!(xfer->tx_buf || xfer->rx_buf) && xfer->len) अणु
 		dev_dbg(&spi->dev, "missing rx or tx buf\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	asd = spi->controller_state;
 	bits = (asd->csr >> 4) & 0xf;
-	if (bits != xfer->bits_per_word - 8) {
+	अगर (bits != xfer->bits_per_word - 8) अणु
 		dev_dbg(&spi->dev,
 			"you can't yet change bits_per_word in transfers\n");
-		return -ENOPROTOOPT;
-	}
+		वापस -ENOPROTOOPT;
+	पूर्ण
 
 	/*
-	 * DMA map early, for performance (empties dcache ASAP) and
+	 * DMA map early, क्रम perक्रमmance (empties dcache ASAP) and
 	 * better fault reporting.
 	 */
-	if ((!msg->is_dma_mapped)
-		&& as->use_pdc) {
-		if (atmel_spi_dma_map_xfer(as, xfer) < 0)
-			return -ENOMEM;
-	}
+	अगर ((!msg->is_dma_mapped)
+		&& as->use_pdc) अणु
+		अगर (aपंचांगel_spi_dma_map_xfer(as, xfer) < 0)
+			वापस -ENOMEM;
+	पूर्ण
 
-	atmel_spi_set_xfer_speed(as, msg->spi, xfer);
+	aपंचांगel_spi_set_xfer_speed(as, msg->spi, xfer);
 
-	as->done_status = 0;
+	as->करोne_status = 0;
 	as->current_transfer = xfer;
-	as->current_remaining_bytes = xfer->len;
-	while (as->current_remaining_bytes) {
+	as->current_reमुख्यing_bytes = xfer->len;
+	जबतक (as->current_reमुख्यing_bytes) अणु
 		reinit_completion(&as->xfer_completion);
 
-		if (as->use_pdc) {
-			atmel_spi_pdc_next_xfer(master, msg, xfer);
-		} else if (atmel_spi_use_dma(as, xfer)) {
-			len = as->current_remaining_bytes;
-			ret = atmel_spi_next_xfer_dma_submit(master,
+		अगर (as->use_pdc) अणु
+			aपंचांगel_spi_pdc_next_xfer(master, msg, xfer);
+		पूर्ण अन्यथा अगर (aपंचांगel_spi_use_dma(as, xfer)) अणु
+			len = as->current_reमुख्यing_bytes;
+			ret = aपंचांगel_spi_next_xfer_dma_submit(master,
 								xfer, &len);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(&spi->dev,
 					"unable to use DMA, fallback to PIO\n");
-				atmel_spi_next_xfer_pio(master, xfer);
-			} else {
-				as->current_remaining_bytes -= len;
-				if (as->current_remaining_bytes < 0)
-					as->current_remaining_bytes = 0;
-			}
-		} else {
-			atmel_spi_next_xfer_pio(master, xfer);
-		}
+				aपंचांगel_spi_next_xfer_pio(master, xfer);
+			पूर्ण अन्यथा अणु
+				as->current_reमुख्यing_bytes -= len;
+				अगर (as->current_reमुख्यing_bytes < 0)
+					as->current_reमुख्यing_bytes = 0;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			aपंचांगel_spi_next_xfer_pio(master, xfer);
+		पूर्ण
 
-		/* interrupts are disabled, so free the lock for schedule */
-		atmel_spi_unlock(as);
-		dma_timeout = wait_for_completion_timeout(&as->xfer_completion,
+		/* पूर्णांकerrupts are disabled, so मुक्त the lock क्रम schedule */
+		aपंचांगel_spi_unlock(as);
+		dma_समयout = रुको_क्रम_completion_समयout(&as->xfer_completion,
 							  SPI_DMA_TIMEOUT);
-		atmel_spi_lock(as);
-		if (WARN_ON(dma_timeout == 0)) {
+		aपंचांगel_spi_lock(as);
+		अगर (WARN_ON(dma_समयout == 0)) अणु
 			dev_err(&spi->dev, "spi transfer timeout\n");
-			as->done_status = -EIO;
-		}
+			as->करोne_status = -EIO;
+		पूर्ण
 
-		if (as->done_status)
-			break;
-	}
+		अगर (as->करोne_status)
+			अवरोध;
+	पूर्ण
 
-	if (as->done_status) {
-		if (as->use_pdc) {
+	अगर (as->करोne_status) अणु
+		अगर (as->use_pdc) अणु
 			dev_warn(master->dev.parent,
 				"overrun (%u/%u remaining)\n",
-				spi_readl(as, TCR), spi_readl(as, RCR));
+				spi_पढ़ोl(as, TCR), spi_पढ़ोl(as, RCR));
 
 			/*
-			 * Clean up DMA registers and make sure the data
-			 * registers are empty.
+			 * Clean up DMA रेजिस्टरs and make sure the data
+			 * रेजिस्टरs are empty.
 			 */
-			spi_writel(as, RNCR, 0);
-			spi_writel(as, TNCR, 0);
-			spi_writel(as, RCR, 0);
-			spi_writel(as, TCR, 0);
-			for (timeout = 1000; timeout; timeout--)
-				if (spi_readl(as, SR) & SPI_BIT(TXEMPTY))
-					break;
-			if (!timeout)
+			spi_ग_लिखोl(as, RNCR, 0);
+			spi_ग_लिखोl(as, TNCR, 0);
+			spi_ग_लिखोl(as, RCR, 0);
+			spi_ग_लिखोl(as, TCR, 0);
+			क्रम (समयout = 1000; समयout; समयout--)
+				अगर (spi_पढ़ोl(as, SR) & SPI_BIT(TXEMPTY))
+					अवरोध;
+			अगर (!समयout)
 				dev_warn(master->dev.parent,
 					 "timeout waiting for TXEMPTY");
-			while (spi_readl(as, SR) & SPI_BIT(RDRF))
-				spi_readl(as, RDR);
+			जबतक (spi_पढ़ोl(as, SR) & SPI_BIT(RDRF))
+				spi_पढ़ोl(as, RDR);
 
-			/* Clear any overrun happening while cleaning up */
-			spi_readl(as, SR);
+			/* Clear any overrun happening जबतक cleaning up */
+			spi_पढ़ोl(as, SR);
 
-		} else if (atmel_spi_use_dma(as, xfer)) {
-			atmel_spi_stop_dma(master);
-		}
+		पूर्ण अन्यथा अगर (aपंचांगel_spi_use_dma(as, xfer)) अणु
+			aपंचांगel_spi_stop_dma(master);
+		पूर्ण
 
-		if (!msg->is_dma_mapped
+		अगर (!msg->is_dma_mapped
 			&& as->use_pdc)
-			atmel_spi_dma_unmap_xfer(master, xfer);
+			aपंचांगel_spi_dma_unmap_xfer(master, xfer);
 
-		return 0;
+		वापस 0;
 
-	} else {
-		/* only update length if no error */
+	पूर्ण अन्यथा अणु
+		/* only update length अगर no error */
 		msg->actual_length += xfer->len;
-	}
+	पूर्ण
 
-	if (!msg->is_dma_mapped
+	अगर (!msg->is_dma_mapped
 		&& as->use_pdc)
-		atmel_spi_dma_unmap_xfer(master, xfer);
+		aपंचांगel_spi_dma_unmap_xfer(master, xfer);
 
 	spi_transfer_delay_exec(xfer);
 
-	if (xfer->cs_change) {
-		if (list_is_last(&xfer->transfer_list,
-				 &msg->transfers)) {
+	अगर (xfer->cs_change) अणु
+		अगर (list_is_last(&xfer->transfer_list,
+				 &msg->transfers)) अणु
 			as->keep_cs = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			cs_deactivate(as, msg->spi);
 			udelay(10);
 			cs_activate(as, msg->spi);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_spi_transfer_one_message(struct spi_master *master,
-						struct spi_message *msg)
-{
-	struct atmel_spi *as;
-	struct spi_transfer *xfer;
-	struct spi_device *spi = msg->spi;
-	int ret = 0;
+अटल पूर्णांक aपंचांगel_spi_transfer_one_message(काष्ठा spi_master *master,
+						काष्ठा spi_message *msg)
+अणु
+	काष्ठा aपंचांगel_spi *as;
+	काष्ठा spi_transfer *xfer;
+	काष्ठा spi_device *spi = msg->spi;
+	पूर्णांक ret = 0;
 
 	as = spi_master_get_devdata(master);
 
 	dev_dbg(&spi->dev, "new message %p submitted for %s\n",
 					msg, dev_name(&spi->dev));
 
-	atmel_spi_lock(as);
+	aपंचांगel_spi_lock(as);
 	cs_activate(as, spi);
 
 	as->keep_cs = false;
@@ -1434,116 +1435,116 @@ static int atmel_spi_transfer_one_message(struct spi_master *master,
 	msg->status = 0;
 	msg->actual_length = 0;
 
-	list_for_each_entry(xfer, &msg->transfers, transfer_list) {
+	list_क्रम_each_entry(xfer, &msg->transfers, transfer_list) अणु
 		trace_spi_transfer_start(msg, xfer);
 
-		ret = atmel_spi_one_transfer(master, msg, xfer);
-		if (ret)
-			goto msg_done;
+		ret = aपंचांगel_spi_one_transfer(master, msg, xfer);
+		अगर (ret)
+			जाओ msg_करोne;
 
 		trace_spi_transfer_stop(msg, xfer);
-	}
+	पूर्ण
 
-	if (as->use_pdc)
-		atmel_spi_disable_pdc_transfer(as);
+	अगर (as->use_pdc)
+		aपंचांगel_spi_disable_pdc_transfer(as);
 
-	list_for_each_entry(xfer, &msg->transfers, transfer_list) {
+	list_क्रम_each_entry(xfer, &msg->transfers, transfer_list) अणु
 		dev_dbg(&spi->dev,
 			"  xfer %p: len %u tx %p/%pad rx %p/%pad\n",
 			xfer, xfer->len,
 			xfer->tx_buf, &xfer->tx_dma,
 			xfer->rx_buf, &xfer->rx_dma);
-	}
+	पूर्ण
 
-msg_done:
-	if (!as->keep_cs)
+msg_करोne:
+	अगर (!as->keep_cs)
 		cs_deactivate(as, msg->spi);
 
-	atmel_spi_unlock(as);
+	aपंचांगel_spi_unlock(as);
 
-	msg->status = as->done_status;
+	msg->status = as->करोne_status;
 	spi_finalize_current_message(spi->master);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void atmel_spi_cleanup(struct spi_device *spi)
-{
-	struct atmel_spi_device	*asd = spi->controller_state;
+अटल व्योम aपंचांगel_spi_cleanup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा aपंचांगel_spi_device	*asd = spi->controller_state;
 
-	if (!asd)
-		return;
+	अगर (!asd)
+		वापस;
 
-	spi->controller_state = NULL;
-	kfree(asd);
-}
+	spi->controller_state = शून्य;
+	kमुक्त(asd);
+पूर्ण
 
-static inline unsigned int atmel_get_version(struct atmel_spi *as)
-{
-	return spi_readl(as, VERSION) & 0x00000fff;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक aपंचांगel_get_version(काष्ठा aपंचांगel_spi *as)
+अणु
+	वापस spi_पढ़ोl(as, VERSION) & 0x00000fff;
+पूर्ण
 
-static void atmel_get_caps(struct atmel_spi *as)
-{
-	unsigned int version;
+अटल व्योम aपंचांगel_get_caps(काष्ठा aपंचांगel_spi *as)
+अणु
+	अचिन्हित पूर्णांक version;
 
-	version = atmel_get_version(as);
+	version = aपंचांगel_get_version(as);
 
 	as->caps.is_spi2 = version > 0x121;
 	as->caps.has_wdrbt = version >= 0x210;
 	as->caps.has_dma_support = version >= 0x212;
 	as->caps.has_pdc_support = version < 0x212;
-}
+पूर्ण
 
-static void atmel_spi_init(struct atmel_spi *as)
-{
-	spi_writel(as, CR, SPI_BIT(SWRST));
-	spi_writel(as, CR, SPI_BIT(SWRST)); /* AT91SAM9263 Rev B workaround */
+अटल व्योम aपंचांगel_spi_init(काष्ठा aपंचांगel_spi *as)
+अणु
+	spi_ग_लिखोl(as, CR, SPI_BIT(SWRST));
+	spi_ग_लिखोl(as, CR, SPI_BIT(SWRST)); /* AT91SAM9263 Rev B workaround */
 
 	/* It is recommended to enable FIFOs first thing after reset */
-	if (as->fifo_size)
-		spi_writel(as, CR, SPI_BIT(FIFOEN));
+	अगर (as->fअगरo_size)
+		spi_ग_लिखोl(as, CR, SPI_BIT(FIFOEN));
 
-	if (as->caps.has_wdrbt) {
-		spi_writel(as, MR, SPI_BIT(WDRBT) | SPI_BIT(MODFDIS)
+	अगर (as->caps.has_wdrbt) अणु
+		spi_ग_लिखोl(as, MR, SPI_BIT(WDRBT) | SPI_BIT(MODFDIS)
 				| SPI_BIT(MSTR));
-	} else {
-		spi_writel(as, MR, SPI_BIT(MSTR) | SPI_BIT(MODFDIS));
-	}
+	पूर्ण अन्यथा अणु
+		spi_ग_लिखोl(as, MR, SPI_BIT(MSTR) | SPI_BIT(MODFDIS));
+	पूर्ण
 
-	if (as->use_pdc)
-		spi_writel(as, PTCR, SPI_BIT(RXTDIS) | SPI_BIT(TXTDIS));
-	spi_writel(as, CR, SPI_BIT(SPIEN));
-}
+	अगर (as->use_pdc)
+		spi_ग_लिखोl(as, PTCR, SPI_BIT(RXTDIS) | SPI_BIT(TXTDIS));
+	spi_ग_लिखोl(as, CR, SPI_BIT(SPIEN));
+पूर्ण
 
-static int atmel_spi_probe(struct platform_device *pdev)
-{
-	struct resource		*regs;
-	int			irq;
-	struct clk		*clk;
-	int			ret;
-	struct spi_master	*master;
-	struct atmel_spi	*as;
+अटल पूर्णांक aपंचांगel_spi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource		*regs;
+	पूर्णांक			irq;
+	काष्ठा clk		*clk;
+	पूर्णांक			ret;
+	काष्ठा spi_master	*master;
+	काष्ठा aपंचांगel_spi	*as;
 
-	/* Select default pin state */
-	pinctrl_pm_select_default_state(&pdev->dev);
+	/* Select शेष pin state */
+	pinctrl_pm_select_शेष_state(&pdev->dev);
 
-	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!regs)
-		return -ENXIO;
+	regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!regs)
+		वापस -ENXIO;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	clk = devm_clk_get(&pdev->dev, "spi_clk");
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
-	/* setup spi core then atmel-specific driver state */
-	master = spi_alloc_master(&pdev->dev, sizeof(*as));
-	if (!master)
-		return -ENOMEM;
+	/* setup spi core then aपंचांगel-specअगरic driver state */
+	master = spi_alloc_master(&pdev->dev, माप(*as));
+	अगर (!master)
+		वापस -ENOMEM;
 
 	/* the spi->mode bits understood by this driver: */
 	master->use_gpio_descriptors = true;
@@ -1552,14 +1553,14 @@ static int atmel_spi_probe(struct platform_device *pdev)
 	master->dev.of_node = pdev->dev.of_node;
 	master->bus_num = pdev->id;
 	master->num_chipselect = 4;
-	master->setup = atmel_spi_setup;
+	master->setup = aपंचांगel_spi_setup;
 	master->flags = (SPI_MASTER_MUST_RX | SPI_MASTER_MUST_TX);
-	master->transfer_one_message = atmel_spi_transfer_one_message;
-	master->cleanup = atmel_spi_cleanup;
-	master->auto_runtime_pm = true;
+	master->transfer_one_message = aपंचांगel_spi_transfer_one_message;
+	master->cleanup = aपंचांगel_spi_cleanup;
+	master->स्वतः_runसमय_pm = true;
 	master->max_dma_len = SPI_MAX_DMA_XFER;
-	master->can_dma = atmel_spi_can_dma;
-	platform_set_drvdata(pdev, master);
+	master->can_dma = aपंचांगel_spi_can_dma;
+	platक्रमm_set_drvdata(pdev, master);
 
 	as = spi_master_get_devdata(master);
 
@@ -1567,241 +1568,241 @@ static int atmel_spi_probe(struct platform_device *pdev)
 
 	as->pdev = pdev;
 	as->regs = devm_ioremap_resource(&pdev->dev, regs);
-	if (IS_ERR(as->regs)) {
+	अगर (IS_ERR(as->regs)) अणु
 		ret = PTR_ERR(as->regs);
-		goto out_unmap_regs;
-	}
+		जाओ out_unmap_regs;
+	पूर्ण
 	as->phybase = regs->start;
 	as->irq = irq;
 	as->clk = clk;
 
 	init_completion(&as->xfer_completion);
 
-	atmel_get_caps(as);
+	aपंचांगel_get_caps(as);
 
 	as->use_dma = false;
 	as->use_pdc = false;
-	if (as->caps.has_dma_support) {
-		ret = atmel_spi_configure_dma(master, as);
-		if (ret == 0) {
+	अगर (as->caps.has_dma_support) अणु
+		ret = aपंचांगel_spi_configure_dma(master, as);
+		अगर (ret == 0) अणु
 			as->use_dma = true;
-		} else if (ret == -EPROBE_DEFER) {
-			goto out_unmap_regs;
-		}
-	} else if (as->caps.has_pdc_support) {
+		पूर्ण अन्यथा अगर (ret == -EPROBE_DEFER) अणु
+			जाओ out_unmap_regs;
+		पूर्ण
+	पूर्ण अन्यथा अगर (as->caps.has_pdc_support) अणु
 		as->use_pdc = true;
-	}
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_SOC_SAM_V4_V5)) {
+	अगर (IS_ENABLED(CONFIG_SOC_SAM_V4_V5)) अणु
 		as->addr_rx_bbuf = dma_alloc_coherent(&pdev->dev,
 						      SPI_MAX_DMA_XFER,
 						      &as->dma_addr_rx_bbuf,
 						      GFP_KERNEL | GFP_DMA);
-		if (!as->addr_rx_bbuf) {
+		अगर (!as->addr_rx_bbuf) अणु
 			as->use_dma = false;
-		} else {
+		पूर्ण अन्यथा अणु
 			as->addr_tx_bbuf = dma_alloc_coherent(&pdev->dev,
 					SPI_MAX_DMA_XFER,
 					&as->dma_addr_tx_bbuf,
 					GFP_KERNEL | GFP_DMA);
-			if (!as->addr_tx_bbuf) {
+			अगर (!as->addr_tx_bbuf) अणु
 				as->use_dma = false;
-				dma_free_coherent(&pdev->dev, SPI_MAX_DMA_XFER,
+				dma_मुक्त_coherent(&pdev->dev, SPI_MAX_DMA_XFER,
 						  as->addr_rx_bbuf,
 						  as->dma_addr_rx_bbuf);
-			}
-		}
-		if (!as->use_dma)
+			पूर्ण
+		पूर्ण
+		अगर (!as->use_dma)
 			dev_info(master->dev.parent,
 				 "  can not allocate dma coherent memory\n");
-	}
+	पूर्ण
 
-	if (as->caps.has_dma_support && !as->use_dma)
+	अगर (as->caps.has_dma_support && !as->use_dma)
 		dev_info(&pdev->dev, "Atmel SPI Controller using PIO only\n");
 
-	if (as->use_pdc) {
-		ret = devm_request_irq(&pdev->dev, irq, atmel_spi_pdc_interrupt,
+	अगर (as->use_pdc) अणु
+		ret = devm_request_irq(&pdev->dev, irq, aपंचांगel_spi_pdc_पूर्णांकerrupt,
 					0, dev_name(&pdev->dev), master);
-	} else {
-		ret = devm_request_irq(&pdev->dev, irq, atmel_spi_pio_interrupt,
+	पूर्ण अन्यथा अणु
+		ret = devm_request_irq(&pdev->dev, irq, aपंचांगel_spi_pio_पूर्णांकerrupt,
 					0, dev_name(&pdev->dev), master);
-	}
-	if (ret)
-		goto out_unmap_regs;
+	पूर्ण
+	अगर (ret)
+		जाओ out_unmap_regs;
 
 	/* Initialize the hardware */
 	ret = clk_prepare_enable(clk);
-	if (ret)
-		goto out_free_irq;
+	अगर (ret)
+		जाओ out_मुक्त_irq;
 
 	as->spi_clk = clk_get_rate(clk);
 
-	as->fifo_size = 0;
-	if (!of_property_read_u32(pdev->dev.of_node, "atmel,fifo-size",
-				  &as->fifo_size)) {
-		dev_info(&pdev->dev, "Using FIFO (%u data)\n", as->fifo_size);
-	}
+	as->fअगरo_size = 0;
+	अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "atmel,fifo-size",
+				  &as->fअगरo_size)) अणु
+		dev_info(&pdev->dev, "Using FIFO (%u data)\n", as->fअगरo_size);
+	पूर्ण
 
-	atmel_spi_init(as);
+	aपंचांगel_spi_init(as);
 
-	pm_runtime_set_autosuspend_delay(&pdev->dev, AUTOSUSPEND_TIMEOUT);
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_set_active(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, AUTOSUSPEND_TIMEOUT);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_set_active(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	ret = devm_spi_register_master(&pdev->dev, master);
-	if (ret)
-		goto out_free_dma;
+	ret = devm_spi_रेजिस्टर_master(&pdev->dev, master);
+	अगर (ret)
+		जाओ out_मुक्त_dma;
 
 	/* go! */
 	dev_info(&pdev->dev, "Atmel SPI Controller version 0x%x at 0x%08lx (irq %d)\n",
-			atmel_get_version(as), (unsigned long)regs->start,
+			aपंचांगel_get_version(as), (अचिन्हित दीर्घ)regs->start,
 			irq);
 
-	return 0;
+	वापस 0;
 
-out_free_dma:
-	pm_runtime_disable(&pdev->dev);
-	pm_runtime_set_suspended(&pdev->dev);
+out_मुक्त_dma:
+	pm_runसमय_disable(&pdev->dev);
+	pm_runसमय_set_suspended(&pdev->dev);
 
-	if (as->use_dma)
-		atmel_spi_release_dma(master);
+	अगर (as->use_dma)
+		aपंचांगel_spi_release_dma(master);
 
-	spi_writel(as, CR, SPI_BIT(SWRST));
-	spi_writel(as, CR, SPI_BIT(SWRST)); /* AT91SAM9263 Rev B workaround */
+	spi_ग_लिखोl(as, CR, SPI_BIT(SWRST));
+	spi_ग_लिखोl(as, CR, SPI_BIT(SWRST)); /* AT91SAM9263 Rev B workaround */
 	clk_disable_unprepare(clk);
-out_free_irq:
+out_मुक्त_irq:
 out_unmap_regs:
 	spi_master_put(master);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int atmel_spi_remove(struct platform_device *pdev)
-{
-	struct spi_master	*master = platform_get_drvdata(pdev);
-	struct atmel_spi	*as = spi_master_get_devdata(master);
+अटल पूर्णांक aपंचांगel_spi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master	*master = platक्रमm_get_drvdata(pdev);
+	काष्ठा aपंचांगel_spi	*as = spi_master_get_devdata(master);
 
-	pm_runtime_get_sync(&pdev->dev);
+	pm_runसमय_get_sync(&pdev->dev);
 
 	/* reset the hardware and block queue progress */
-	if (as->use_dma) {
-		atmel_spi_stop_dma(master);
-		atmel_spi_release_dma(master);
-		if (IS_ENABLED(CONFIG_SOC_SAM_V4_V5)) {
-			dma_free_coherent(&pdev->dev, SPI_MAX_DMA_XFER,
+	अगर (as->use_dma) अणु
+		aपंचांगel_spi_stop_dma(master);
+		aपंचांगel_spi_release_dma(master);
+		अगर (IS_ENABLED(CONFIG_SOC_SAM_V4_V5)) अणु
+			dma_मुक्त_coherent(&pdev->dev, SPI_MAX_DMA_XFER,
 					  as->addr_tx_bbuf,
 					  as->dma_addr_tx_bbuf);
-			dma_free_coherent(&pdev->dev, SPI_MAX_DMA_XFER,
+			dma_मुक्त_coherent(&pdev->dev, SPI_MAX_DMA_XFER,
 					  as->addr_rx_bbuf,
 					  as->dma_addr_rx_bbuf);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irq(&as->lock);
-	spi_writel(as, CR, SPI_BIT(SWRST));
-	spi_writel(as, CR, SPI_BIT(SWRST)); /* AT91SAM9263 Rev B workaround */
-	spi_readl(as, SR);
+	spi_ग_लिखोl(as, CR, SPI_BIT(SWRST));
+	spi_ग_लिखोl(as, CR, SPI_BIT(SWRST)); /* AT91SAM9263 Rev B workaround */
+	spi_पढ़ोl(as, SR);
 	spin_unlock_irq(&as->lock);
 
 	clk_disable_unprepare(as->clk);
 
-	pm_runtime_put_noidle(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_put_noidle(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int atmel_spi_runtime_suspend(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct atmel_spi *as = spi_master_get_devdata(master);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक aपंचांगel_spi_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा aपंचांगel_spi *as = spi_master_get_devdata(master);
 
 	clk_disable_unprepare(as->clk);
 	pinctrl_pm_select_sleep_state(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_spi_runtime_resume(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct atmel_spi *as = spi_master_get_devdata(master);
+अटल पूर्णांक aपंचांगel_spi_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा aपंचांगel_spi *as = spi_master_get_devdata(master);
 
-	pinctrl_pm_select_default_state(dev);
+	pinctrl_pm_select_शेष_state(dev);
 
-	return clk_prepare_enable(as->clk);
-}
+	वापस clk_prepare_enable(as->clk);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int atmel_spi_suspend(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक aपंचांगel_spi_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	/* Stop the queue running */
 	ret = spi_master_suspend(master);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!pm_runtime_suspended(dev))
-		atmel_spi_runtime_suspend(dev);
+	अगर (!pm_runसमय_suspended(dev))
+		aपंचांगel_spi_runसमय_suspend(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_spi_resume(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct atmel_spi *as = spi_master_get_devdata(master);
-	int ret;
+अटल पूर्णांक aपंचांगel_spi_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा aपंचांगel_spi *as = spi_master_get_devdata(master);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(as->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	atmel_spi_init(as);
+	aपंचांगel_spi_init(as);
 
 	clk_disable_unprepare(as->clk);
 
-	if (!pm_runtime_suspended(dev)) {
-		ret = atmel_spi_runtime_resume(dev);
-		if (ret)
-			return ret;
-	}
+	अगर (!pm_runसमय_suspended(dev)) अणु
+		ret = aपंचांगel_spi_runसमय_resume(dev);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* Start the queue running */
-	return spi_master_resume(master);
-}
-#endif
+	वापस spi_master_resume(master);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops atmel_spi_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(atmel_spi_suspend, atmel_spi_resume)
-	SET_RUNTIME_PM_OPS(atmel_spi_runtime_suspend,
-			   atmel_spi_runtime_resume, NULL)
-};
-#define ATMEL_SPI_PM_OPS	(&atmel_spi_pm_ops)
-#else
-#define ATMEL_SPI_PM_OPS	NULL
-#endif
+अटल स्थिर काष्ठा dev_pm_ops aपंचांगel_spi_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(aपंचांगel_spi_suspend, aपंचांगel_spi_resume)
+	SET_RUNTIME_PM_OPS(aपंचांगel_spi_runसमय_suspend,
+			   aपंचांगel_spi_runसमय_resume, शून्य)
+पूर्ण;
+#घोषणा ATMEL_SPI_PM_OPS	(&aपंचांगel_spi_pm_ops)
+#अन्यथा
+#घोषणा ATMEL_SPI_PM_OPS	शून्य
+#पूर्ण_अगर
 
-static const struct of_device_id atmel_spi_dt_ids[] = {
-	{ .compatible = "atmel,at91rm9200-spi" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id aपंचांगel_spi_dt_ids[] = अणु
+	अणु .compatible = "atmel,at91rm9200-spi" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-MODULE_DEVICE_TABLE(of, atmel_spi_dt_ids);
+MODULE_DEVICE_TABLE(of, aपंचांगel_spi_dt_ids);
 
-static struct platform_driver atmel_spi_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver aपंचांगel_spi_driver = अणु
+	.driver		= अणु
 		.name	= "atmel_spi",
 		.pm	= ATMEL_SPI_PM_OPS,
-		.of_match_table	= atmel_spi_dt_ids,
-	},
-	.probe		= atmel_spi_probe,
-	.remove		= atmel_spi_remove,
-};
-module_platform_driver(atmel_spi_driver);
+		.of_match_table	= aपंचांगel_spi_dt_ids,
+	पूर्ण,
+	.probe		= aपंचांगel_spi_probe,
+	.हटाओ		= aपंचांगel_spi_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(aपंचांगel_spi_driver);
 
 MODULE_DESCRIPTION("Atmel AT32/AT91 SPI Controller driver");
 MODULE_AUTHOR("Haavard Skinnemoen (Atmel)");

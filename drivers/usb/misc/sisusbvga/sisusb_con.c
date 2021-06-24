@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
 /*
- * sisusb - usb kernel driver for SiS315(E) based USB2VGA dongles
+ * sisusb - usb kernel driver क्रम SiS315(E) based USB2VGA करोngles
  *
  * VGA text mode console part
  *
@@ -11,21 +12,21 @@
  *
  * Otherwise, the following license terms apply:
  *
- * * Redistribution and use in source and binary forms, with or without
- * * modification, are permitted provided that the following conditions
+ * * Redistribution and use in source and binary क्रमms, with or without
+ * * modअगरication, are permitted provided that the following conditions
  * * are met:
  * * 1) Redistributions of source code must retain the above copyright
  * *    notice, this list of conditions and the following disclaimer.
- * * 2) Redistributions in binary form must reproduce the above copyright
+ * * 2) Redistributions in binary क्रमm must reproduce the above copyright
  * *    notice, this list of conditions and the following disclaimer in the
- * *    documentation and/or other materials provided with the distribution.
- * * 3) The name of the author may not be used to endorse or promote products
- * *    derived from this software without specific psisusbr written permission.
+ * *    करोcumentation and/or other materials provided with the distribution.
+ * * 3) The name of the author may not be used to enकरोrse or promote products
+ * *    derived from this software without specअगरic psisusbr written permission.
  * *
  * * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESSED OR
  * * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY सूचीECT, INसूचीECT,
  * * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -43,72 +44,72 @@
  *
  * A note on using in_atomic() in here: We can't handle console
  * calls from non-schedulable context due to our USB-dependend
- * nature. For now, this driver just ignores any calls if it
+ * nature. For now, this driver just ignores any calls अगर it
  * detects this state.
  *
  */
 
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/signal.h>
-#include <linux/fs.h>
-#include <linux/usb.h>
-#include <linux/tty.h>
-#include <linux/console.h>
-#include <linux/string.h>
-#include <linux/kd.h>
-#include <linux/init.h>
-#include <linux/vt_kern.h>
-#include <linux/selection.h>
-#include <linux/spinlock.h>
-#include <linux/kref.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/console.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kd.h>
+#समावेश <linux/init.h>
+#समावेश <linux/vt_kern.h>
+#समावेश <linux/selection.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "sisusb.h"
-#include "sisusb_init.h"
+#समावेश "sisusb.h"
+#समावेश "sisusb_init.h"
 
 /* vc_data -> sisusb conversion table */
-static struct sisusb_usb_data *mysisusbs[MAX_NR_CONSOLES];
+अटल काष्ठा sisusb_usb_data *mysisusbs[MAX_NR_CONSOLES];
 
 /* Forward declaration */
-static const struct consw sisusb_con;
+अटल स्थिर काष्ठा consw sisusb_con;
 
-static inline void
-sisusbcon_memsetw(u16 *s, u16 c, unsigned int count)
-{
-	memset16(s, c, count / 2);
-}
+अटल अंतरभूत व्योम
+sisusbcon_स_रखोw(u16 *s, u16 c, अचिन्हित पूर्णांक count)
+अणु
+	स_रखो16(s, c, count / 2);
+पूर्ण
 
-static inline void
-sisusb_initialize(struct sisusb_usb_data *sisusb)
-{
+अटल अंतरभूत व्योम
+sisusb_initialize(काष्ठा sisusb_usb_data *sisusb)
+अणु
 	/* Reset cursor and start address */
-	if (sisusb_setidxreg(sisusb, SISCR, 0x0c, 0x00))
-		return;
-	if (sisusb_setidxreg(sisusb, SISCR, 0x0d, 0x00))
-		return;
-	if (sisusb_setidxreg(sisusb, SISCR, 0x0e, 0x00))
-		return;
+	अगर (sisusb_setidxreg(sisusb, SISCR, 0x0c, 0x00))
+		वापस;
+	अगर (sisusb_setidxreg(sisusb, SISCR, 0x0d, 0x00))
+		वापस;
+	अगर (sisusb_setidxreg(sisusb, SISCR, 0x0e, 0x00))
+		वापस;
 	sisusb_setidxreg(sisusb, SISCR, 0x0f, 0x00);
-}
+पूर्ण
 
-static inline void
-sisusbcon_set_start_address(struct sisusb_usb_data *sisusb, struct vc_data *c)
-{
+अटल अंतरभूत व्योम
+sisusbcon_set_start_address(काष्ठा sisusb_usb_data *sisusb, काष्ठा vc_data *c)
+अणु
 	sisusb->cur_start_addr = (c->vc_visible_origin - sisusb->scrbuf) / 2;
 
 	sisusb_setidxreg(sisusb, SISCR, 0x0c, (sisusb->cur_start_addr >> 8));
 	sisusb_setidxreg(sisusb, SISCR, 0x0d, (sisusb->cur_start_addr & 0xff));
-}
+पूर्ण
 
-void
-sisusb_set_cursor(struct sisusb_usb_data *sisusb, unsigned int location)
-{
-	if (sisusb->sisusb_cursor_loc == location)
-		return;
+व्योम
+sisusb_set_cursor(काष्ठा sisusb_usb_data *sisusb, अचिन्हित पूर्णांक location)
+अणु
+	अगर (sisusb->sisusb_cursor_loc == location)
+		वापस;
 
 	sisusb->sisusb_cursor_loc = location;
 
@@ -117,108 +118,108 @@ sisusb_set_cursor(struct sisusb_usb_data *sisusb, unsigned int location)
 	 * bits.
 	 */
 
-	if ((location & 0x0007) == 0x0007) {
+	अगर ((location & 0x0007) == 0x0007) अणु
 		sisusb->bad_cursor_pos = 1;
 		location--;
-		if (sisusb_setidxregandor(sisusb, SISCR, 0x0b, 0x1f, 0x20))
-			return;
-	} else if (sisusb->bad_cursor_pos) {
-		if (sisusb_setidxregand(sisusb, SISCR, 0x0b, 0x1f))
-			return;
+		अगर (sisusb_setidxreganकरोr(sisusb, SISCR, 0x0b, 0x1f, 0x20))
+			वापस;
+	पूर्ण अन्यथा अगर (sisusb->bad_cursor_pos) अणु
+		अगर (sisusb_setidxregand(sisusb, SISCR, 0x0b, 0x1f))
+			वापस;
 		sisusb->bad_cursor_pos = 0;
-	}
+	पूर्ण
 
-	if (sisusb_setidxreg(sisusb, SISCR, 0x0e, (location >> 8)))
-		return;
+	अगर (sisusb_setidxreg(sisusb, SISCR, 0x0e, (location >> 8)))
+		वापस;
 	sisusb_setidxreg(sisusb, SISCR, 0x0f, (location & 0xff));
-}
+पूर्ण
 
-static inline struct sisusb_usb_data *
-sisusb_get_sisusb(unsigned short console)
-{
-	return mysisusbs[console];
-}
+अटल अंतरभूत काष्ठा sisusb_usb_data *
+sisusb_get_sisusb(अचिन्हित लघु console)
+अणु
+	वापस mysisusbs[console];
+पूर्ण
 
-static inline int
-sisusb_sisusb_valid(struct sisusb_usb_data *sisusb)
-{
-	if (!sisusb->present || !sisusb->ready || !sisusb->sisusb_dev)
-		return 0;
+अटल अंतरभूत पूर्णांक
+sisusb_sisusb_valid(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	अगर (!sisusb->present || !sisusb->पढ़ोy || !sisusb->sisusb_dev)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static struct sisusb_usb_data *
-sisusb_get_sisusb_lock_and_check(unsigned short console)
-{
-	struct sisusb_usb_data *sisusb;
+अटल काष्ठा sisusb_usb_data *
+sisusb_get_sisusb_lock_and_check(अचिन्हित लघु console)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
 
 	/* We can't handle console calls in non-schedulable
 	 * context due to our locks and the USB transport.
 	 * So we simply ignore them. This should only affect
-	 * some calls to printk.
+	 * some calls to prपूर्णांकk.
 	 */
-	if (in_atomic())
-		return NULL;
+	अगर (in_atomic())
+		वापस शून्य;
 
 	sisusb = sisusb_get_sisusb(console);
-	if (!sisusb)
-		return NULL;
+	अगर (!sisusb)
+		वापस शून्य;
 
 	mutex_lock(&sisusb->lock);
 
-	if (!sisusb_sisusb_valid(sisusb) ||
-	    !sisusb->havethisconsole[console]) {
+	अगर (!sisusb_sisusb_valid(sisusb) ||
+	    !sisusb->havethisconsole[console]) अणु
 		mutex_unlock(&sisusb->lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return sisusb;
-}
+	वापस sisusb;
+पूर्ण
 
-static int
-sisusb_is_inactive(struct vc_data *c, struct sisusb_usb_data *sisusb)
-{
-	if (sisusb->is_gfx ||
-	    sisusb->textmodedestroyed ||
+अटल पूर्णांक
+sisusb_is_inactive(काष्ठा vc_data *c, काष्ठा sisusb_usb_data *sisusb)
+अणु
+	अगर (sisusb->is_gfx ||
+	    sisusb->texपंचांगodedestroyed ||
 	    c->vc_mode != KD_TEXT)
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* con_startup console interface routine */
-static const char *
-sisusbcon_startup(void)
-{
-	return "SISUSBCON";
-}
+/* con_startup console पूर्णांकerface routine */
+अटल स्थिर अक्षर *
+sisusbcon_startup(व्योम)
+अणु
+	वापस "SISUSBCON";
+पूर्ण
 
-/* con_init console interface routine */
-static void
-sisusbcon_init(struct vc_data *c, int init)
-{
-	struct sisusb_usb_data *sisusb;
-	int cols, rows;
+/* con_init console पूर्णांकerface routine */
+अटल व्योम
+sisusbcon_init(काष्ठा vc_data *c, पूर्णांक init)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	पूर्णांक cols, rows;
 
-	/* This is called by do_take_over_console(),
+	/* This is called by करो_take_over_console(),
 	 * ie by us/under our control. It is
 	 * only called after text mode and fonts
 	 * are set up/restored.
 	 */
 
 	sisusb = sisusb_get_sisusb(c->vc_num);
-	if (!sisusb)
-		return;
+	अगर (!sisusb)
+		वापस;
 
 	mutex_lock(&sisusb->lock);
 
-	if (!sisusb_sisusb_valid(sisusb)) {
+	अगर (!sisusb_sisusb_valid(sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	c->vc_can_do_color = 1;
+	c->vc_can_करो_color = 1;
 
 	c->vc_complement_mask = 0x7700;
 
@@ -237,203 +238,203 @@ sisusbcon_init(struct vc_data *c, int init)
 	cols = 80;
 	rows = c->vc_scan_lines / c->vc_font.height;
 
-	/* Increment usage count for our sisusb.
-	 * Doing so saves us from upping/downing
+	/* Increment usage count क्रम our sisusb.
+	 * Doing so saves us from upping/करोwning
 	 * the disconnect semaphore; we can't
-	 * lose our sisusb until this is undone
+	 * lose our sisusb until this is unकरोne
 	 * in con_deinit. For all other console
-	 * interface functions, it suffices to
-	 * use sisusb->lock and do a quick check
-	 * of sisusb for device disconnection.
+	 * पूर्णांकerface functions, it suffices to
+	 * use sisusb->lock and करो a quick check
+	 * of sisusb क्रम device disconnection.
 	 */
 	kref_get(&sisusb->kref);
 
-	if (!*c->vc_uni_pagedir_loc)
-		con_set_default_unimap(c);
+	अगर (!*c->vc_uni_pagedir_loc)
+		con_set_शेष_unimap(c);
 
 	mutex_unlock(&sisusb->lock);
 
-	if (init) {
+	अगर (init) अणु
 		c->vc_cols = cols;
 		c->vc_rows = rows;
-	} else
+	पूर्ण अन्यथा
 		vc_resize(c, cols, rows);
-}
+पूर्ण
 
-/* con_deinit console interface routine */
-static void
-sisusbcon_deinit(struct vc_data *c)
-{
-	struct sisusb_usb_data *sisusb;
-	int i;
+/* con_deinit console पूर्णांकerface routine */
+अटल व्योम
+sisusbcon_deinit(काष्ठा vc_data *c)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	पूर्णांक i;
 
-	/* This is called by do_take_over_console()
+	/* This is called by करो_take_over_console()
 	 * and others, ie not under our control.
 	 */
 
 	sisusb = sisusb_get_sisusb(c->vc_num);
-	if (!sisusb)
-		return;
+	अगर (!sisusb)
+		वापस;
 
 	mutex_lock(&sisusb->lock);
 
 	/* Clear ourselves in mysisusbs */
-	mysisusbs[c->vc_num] = NULL;
+	mysisusbs[c->vc_num] = शून्य;
 
 	sisusb->havethisconsole[c->vc_num] = 0;
 
-	/* Free our font buffer if all consoles are gone */
-	if (sisusb->font_backup) {
-		for(i = 0; i < MAX_NR_CONSOLES; i++) {
-			if (sisusb->havethisconsole[c->vc_num])
-				break;
-		}
-		if (i == MAX_NR_CONSOLES) {
-			vfree(sisusb->font_backup);
-			sisusb->font_backup = NULL;
-		}
-	}
+	/* Free our font buffer अगर all consoles are gone */
+	अगर (sisusb->font_backup) अणु
+		क्रम(i = 0; i < MAX_NR_CONSOLES; i++) अणु
+			अगर (sisusb->havethisconsole[c->vc_num])
+				अवरोध;
+		पूर्ण
+		अगर (i == MAX_NR_CONSOLES) अणु
+			vमुक्त(sisusb->font_backup);
+			sisusb->font_backup = शून्य;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&sisusb->lock);
 
 	/* decrement the usage count on our sisusb */
 	kref_put(&sisusb->kref, sisusb_delete);
-}
+पूर्ण
 
-/* interface routine */
-static u8
-sisusbcon_build_attr(struct vc_data *c, u8 color, enum vc_intensity intensity,
+/* पूर्णांकerface routine */
+अटल u8
+sisusbcon_build_attr(काष्ठा vc_data *c, u8 color, क्रमागत vc_पूर्णांकensity पूर्णांकensity,
 			    bool blink, bool underline, bool reverse,
 			    bool unused)
-{
+अणु
 	u8 attr = color;
 
-	if (underline)
+	अगर (underline)
 		attr = (attr & 0xf0) | c->vc_ulcolor;
-	else if (intensity == VCI_HALF_BRIGHT)
+	अन्यथा अगर (पूर्णांकensity == VCI_HALF_BRIGHT)
 		attr = (attr & 0xf0) | c->vc_halfcolor;
 
-	if (reverse)
+	अगर (reverse)
 		attr = ((attr) & 0x88) |
 		       ((((attr) >> 4) |
 		       ((attr) << 4)) & 0x77);
 
-	if (blink)
+	अगर (blink)
 		attr ^= 0x80;
 
-	if (intensity == VCI_BOLD)
+	अगर (पूर्णांकensity == VCI_BOLD)
 		attr ^= 0x08;
 
-	return attr;
-}
+	वापस attr;
+पूर्ण
 
 /* Interface routine */
-static void
-sisusbcon_invert_region(struct vc_data *vc, u16 *p, int count)
-{
-	/* Invert a region. This is called with a pointer
-	 * to the console's internal screen buffer. So we
-	 * simply do the inversion there and rely on
-	 * a call to putc(s) to update the real screen.
+अटल व्योम
+sisusbcon_invert_region(काष्ठा vc_data *vc, u16 *p, पूर्णांक count)
+अणु
+	/* Invert a region. This is called with a poपूर्णांकer
+	 * to the console's पूर्णांकernal screen buffer. So we
+	 * simply करो the inversion there and rely on
+	 * a call to अ_दो(s) to update the real screen.
 	 */
 
-	while (count--) {
+	जबतक (count--) अणु
 		u16 a = *p;
 
 		*p++ = ((a) & 0x88ff)        |
 		       (((a) & 0x7000) >> 4) |
 		       (((a) & 0x0700) << 4);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void *sisusb_vaddr(const struct sisusb_usb_data *sisusb,
-		const struct vc_data *c, unsigned int x, unsigned int y)
-{
-	return (u16 *)c->vc_origin + y * sisusb->sisusb_num_columns + x;
-}
+अटल अंतरभूत व्योम *sisusb_vaddr(स्थिर काष्ठा sisusb_usb_data *sisusb,
+		स्थिर काष्ठा vc_data *c, अचिन्हित पूर्णांक x, अचिन्हित पूर्णांक y)
+अणु
+	वापस (u16 *)c->vc_origin + y * sisusb->sisusb_num_columns + x;
+पूर्ण
 
-static inline unsigned long sisusb_haddr(const struct sisusb_usb_data *sisusb,
-	      const struct vc_data *c, unsigned int x, unsigned int y)
-{
-	unsigned long offset = c->vc_origin - sisusb->scrbuf;
+अटल अंतरभूत अचिन्हित दीर्घ sisusb_haddr(स्थिर काष्ठा sisusb_usb_data *sisusb,
+	      स्थिर काष्ठा vc_data *c, अचिन्हित पूर्णांक x, अचिन्हित पूर्णांक y)
+अणु
+	अचिन्हित दीर्घ offset = c->vc_origin - sisusb->scrbuf;
 
-	/* 2 bytes per each character */
+	/* 2 bytes per each अक्षरacter */
 	offset += 2 * (y * sisusb->sisusb_num_columns + x);
 
-	return sisusb->vrambase + offset;
-}
+	वापस sisusb->vrambase + offset;
+पूर्ण
 
 /* Interface routine */
-static void
-sisusbcon_putc(struct vc_data *c, int ch, int y, int x)
-{
-	struct sisusb_usb_data *sisusb;
+अटल व्योम
+sisusbcon_अ_दो(काष्ठा vc_data *c, पूर्णांक ch, पूर्णांक y, पूर्णांक x)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return;
+	अगर (!sisusb)
+		वापस;
 
-	/* sisusb->lock is down */
-	if (sisusb_is_inactive(c, sisusb)) {
+	/* sisusb->lock is करोwn */
+	अगर (sisusb_is_inactive(c, sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sisusb_copy_memory(sisusb, sisusb_vaddr(sisusb, c, x, y),
 				sisusb_haddr(sisusb, c, x, y), 2);
 
 	mutex_unlock(&sisusb->lock);
-}
+पूर्ण
 
 /* Interface routine */
-static void
-sisusbcon_putcs(struct vc_data *c, const unsigned short *s,
-		         int count, int y, int x)
-{
-	struct sisusb_usb_data *sisusb;
+अटल व्योम
+sisusbcon_अ_दोs(काष्ठा vc_data *c, स्थिर अचिन्हित लघु *s,
+		         पूर्णांक count, पूर्णांक y, पूर्णांक x)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return;
+	अगर (!sisusb)
+		वापस;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	/* Need to put the characters into the buffer ourselves,
-	 * because the vt does this AFTER calling us.
+	/* Need to put the अक्षरacters पूर्णांकo the buffer ourselves,
+	 * because the vt करोes this AFTER calling us.
 	 */
 
-	memcpy(sisusb_vaddr(sisusb, c, x, y), s, count * 2);
+	स_नकल(sisusb_vaddr(sisusb, c, x, y), s, count * 2);
 
-	if (sisusb_is_inactive(c, sisusb)) {
+	अगर (sisusb_is_inactive(c, sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sisusb_copy_memory(sisusb, sisusb_vaddr(sisusb, c, x, y),
 			sisusb_haddr(sisusb, c, x, y), count * 2);
 
 	mutex_unlock(&sisusb->lock);
-}
+पूर्ण
 
 /* Interface routine */
-static void
-sisusbcon_clear(struct vc_data *c, int y, int x, int height, int width)
-{
-	struct sisusb_usb_data *sisusb;
-	u16 eattr = c->vc_video_erase_char;
-	int i, length, cols;
+अटल व्योम
+sisusbcon_clear(काष्ठा vc_data *c, पूर्णांक y, पूर्णांक x, पूर्णांक height, पूर्णांक width)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	u16 eattr = c->vc_video_erase_अक्षर;
+	पूर्णांक i, length, cols;
 	u16 *dest;
 
-	if (width <= 0 || height <= 0)
-		return;
+	अगर (width <= 0 || height <= 0)
+		वापस;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return;
+	अगर (!sisusb)
+		वापस;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	/* Need to clear buffer ourselves, because the vt does
+	/* Need to clear buffer ourselves, because the vt करोes
 	 * this AFTER calling us.
 	 */
 
@@ -441,24 +442,24 @@ sisusbcon_clear(struct vc_data *c, int y, int x, int height, int width)
 
 	cols = sisusb->sisusb_num_columns;
 
-	if (width > cols)
+	अगर (width > cols)
 		width = cols;
 
-	if (x == 0 && width >= c->vc_cols) {
+	अगर (x == 0 && width >= c->vc_cols) अणु
 
-		sisusbcon_memsetw(dest, eattr, height * cols * 2);
+		sisusbcon_स_रखोw(dest, eattr, height * cols * 2);
 
-	} else {
+	पूर्ण अन्यथा अणु
 
-		for (i = height; i > 0; i--, dest += cols)
-			sisusbcon_memsetw(dest, eattr, width * 2);
+		क्रम (i = height; i > 0; i--, dest += cols)
+			sisusbcon_स_रखोw(dest, eattr, width * 2);
 
-	}
+	पूर्ण
 
-	if (sisusb_is_inactive(c, sisusb)) {
+	अगर (sisusb_is_inactive(c, sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	length = ((height * cols) - x - (cols - width - x)) * 2;
 
@@ -467,447 +468,447 @@ sisusbcon_clear(struct vc_data *c, int y, int x, int height, int width)
 			sisusb_haddr(sisusb, c, x, y), length);
 
 	mutex_unlock(&sisusb->lock);
-}
+पूर्ण
 
-/* interface routine */
-static int
-sisusbcon_switch(struct vc_data *c)
-{
-	struct sisusb_usb_data *sisusb;
-	int length;
+/* पूर्णांकerface routine */
+अटल पूर्णांक
+sisusbcon_चयन(काष्ठा vc_data *c)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	पूर्णांक length;
 
 	/* Returnvalue 0 means we have fully restored screen,
-	 *	and vt doesn't need to call do_update_region().
+	 *	and vt करोesn't need to call करो_update_region().
 	 * Returnvalue != 0 naturally means the opposite.
 	 */
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return 0;
+	अगर (!sisusb)
+		वापस 0;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	/* Don't write to screen if in gfx mode */
-	if (sisusb_is_inactive(c, sisusb)) {
+	/* Don't ग_लिखो to screen अगर in gfx mode */
+	अगर (sisusb_is_inactive(c, sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* That really should not happen. It would mean we are
-	 * being called while the vc is using its private buffer
+	 * being called जबतक the vc is using its निजी buffer
 	 * as origin.
 	 */
-	if (c->vc_origin == (unsigned long)c->vc_screenbuf) {
+	अगर (c->vc_origin == (अचिन्हित दीर्घ)c->vc_screenbuf) अणु
 		mutex_unlock(&sisusb->lock);
 		dev_dbg(&sisusb->sisusb_dev->dev, "ASSERT ORIGIN != SCREENBUF!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Check that we don't copy too much */
-	length = min((int)c->vc_screenbuf_size,
-			(int)(sisusb->scrbuf + sisusb->scrbuf_size - c->vc_origin));
+	/* Check that we करोn't copy too much */
+	length = min((पूर्णांक)c->vc_screenbuf_size,
+			(पूर्णांक)(sisusb->scrbuf + sisusb->scrbuf_size - c->vc_origin));
 
 	/* Restore the screen contents */
-	memcpy((u16 *)c->vc_origin, (u16 *)c->vc_screenbuf, length);
+	स_नकल((u16 *)c->vc_origin, (u16 *)c->vc_screenbuf, length);
 
 	sisusb_copy_memory(sisusb, (u8 *)c->vc_origin,
 			sisusb_haddr(sisusb, c, 0, 0), length);
 
 	mutex_unlock(&sisusb->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* interface routine */
-static void
-sisusbcon_save_screen(struct vc_data *c)
-{
-	struct sisusb_usb_data *sisusb;
-	int length;
+/* पूर्णांकerface routine */
+अटल व्योम
+sisusbcon_save_screen(काष्ठा vc_data *c)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	पूर्णांक length;
 
-	/* Save the current screen contents to vc's private
+	/* Save the current screen contents to vc's निजी
 	 * buffer.
 	 */
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return;
+	अगर (!sisusb)
+		वापस;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	if (sisusb_is_inactive(c, sisusb)) {
+	अगर (sisusb_is_inactive(c, sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Check that we don't copy too much */
-	length = min((int)c->vc_screenbuf_size,
-			(int)(sisusb->scrbuf + sisusb->scrbuf_size - c->vc_origin));
+	/* Check that we करोn't copy too much */
+	length = min((पूर्णांक)c->vc_screenbuf_size,
+			(पूर्णांक)(sisusb->scrbuf + sisusb->scrbuf_size - c->vc_origin));
 
-	/* Save the screen contents to vc's private buffer */
-	memcpy((u16 *)c->vc_screenbuf, (u16 *)c->vc_origin, length);
+	/* Save the screen contents to vc's निजी buffer */
+	स_नकल((u16 *)c->vc_screenbuf, (u16 *)c->vc_origin, length);
 
 	mutex_unlock(&sisusb->lock);
-}
+पूर्ण
 
-/* interface routine */
-static void
-sisusbcon_set_palette(struct vc_data *c, const unsigned char *table)
-{
-	struct sisusb_usb_data *sisusb;
-	int i, j;
+/* पूर्णांकerface routine */
+अटल व्योम
+sisusbcon_set_palette(काष्ठा vc_data *c, स्थिर अचिन्हित अक्षर *table)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	पूर्णांक i, j;
 
 	/* Return value not used by vt */
 
-	if (!con_is_visible(c))
-		return;
+	अगर (!con_is_visible(c))
+		वापस;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return;
+	अगर (!sisusb)
+		वापस;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	if (sisusb_is_inactive(c, sisusb)) {
+	अगर (sisusb_is_inactive(c, sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = j = 0; i < 16; i++) {
-		if (sisusb_setreg(sisusb, SISCOLIDX, table[i]))
-			break;
-		if (sisusb_setreg(sisusb, SISCOLDATA, c->vc_palette[j++] >> 2))
-			break;
-		if (sisusb_setreg(sisusb, SISCOLDATA, c->vc_palette[j++] >> 2))
-			break;
-		if (sisusb_setreg(sisusb, SISCOLDATA, c->vc_palette[j++] >> 2))
-			break;
-	}
+	क्रम (i = j = 0; i < 16; i++) अणु
+		अगर (sisusb_setreg(sisusb, SISCOLIDX, table[i]))
+			अवरोध;
+		अगर (sisusb_setreg(sisusb, SISCOLDATA, c->vc_palette[j++] >> 2))
+			अवरोध;
+		अगर (sisusb_setreg(sisusb, SISCOLDATA, c->vc_palette[j++] >> 2))
+			अवरोध;
+		अगर (sisusb_setreg(sisusb, SISCOLDATA, c->vc_palette[j++] >> 2))
+			अवरोध;
+	पूर्ण
 
 	mutex_unlock(&sisusb->lock);
-}
+पूर्ण
 
-/* interface routine */
-static int
-sisusbcon_blank(struct vc_data *c, int blank, int mode_switch)
-{
-	struct sisusb_usb_data *sisusb;
+/* पूर्णांकerface routine */
+अटल पूर्णांक
+sisusbcon_blank(काष्ठा vc_data *c, पूर्णांक blank, पूर्णांक mode_चयन)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
 	u8 sr1, cr17, pmreg, cr63;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return 0;
+	अगर (!sisusb)
+		वापस 0;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	if (mode_switch)
+	अगर (mode_चयन)
 		sisusb->is_gfx = blank ? 1 : 0;
 
-	if (sisusb_is_inactive(c, sisusb)) {
+	अगर (sisusb_is_inactive(c, sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (blank) {
+	चयन (blank) अणु
 
-	case 1:		/* Normal blanking: Clear screen */
-	case -1:
-		sisusbcon_memsetw((u16 *)c->vc_origin,
-				c->vc_video_erase_char,
+	हाल 1:		/* Normal blanking: Clear screen */
+	हाल -1:
+		sisusbcon_स_रखोw((u16 *)c->vc_origin,
+				c->vc_video_erase_अक्षर,
 				c->vc_screenbuf_size);
 		sisusb_copy_memory(sisusb, (u8 *)c->vc_origin,
 				sisusb_haddr(sisusb, c, 0, 0),
 				c->vc_screenbuf_size);
 		sisusb->con_blanked = 1;
 		ret = 1;
-		break;
+		अवरोध;
 
-	default:	/* VESA blanking */
-		switch (blank) {
-		case 0: /* Unblank */
+	शेष:	/* VESA blanking */
+		चयन (blank) अणु
+		हाल 0: /* Unblank */
 			sr1   = 0x00;
 			cr17  = 0x80;
 			pmreg = 0x00;
 			cr63  = 0x00;
 			ret = 1;
 			sisusb->con_blanked = 0;
-			break;
-		case VESA_VSYNC_SUSPEND + 1:
+			अवरोध;
+		हाल VESA_VSYNC_SUSPEND + 1:
 			sr1   = 0x20;
 			cr17  = 0x80;
 			pmreg = 0x80;
 			cr63  = 0x40;
-			break;
-		case VESA_HSYNC_SUSPEND + 1:
+			अवरोध;
+		हाल VESA_HSYNC_SUSPEND + 1:
 			sr1   = 0x20;
 			cr17  = 0x80;
 			pmreg = 0x40;
 			cr63  = 0x40;
-			break;
-		case VESA_POWERDOWN + 1:
+			अवरोध;
+		हाल VESA_POWERDOWN + 1:
 			sr1   = 0x20;
 			cr17  = 0x00;
 			pmreg = 0xc0;
 			cr63  = 0x40;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			mutex_unlock(&sisusb->lock);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		sisusb_setidxregandor(sisusb, SISSR, 0x01, ~0x20, sr1);
-		sisusb_setidxregandor(sisusb, SISCR, 0x17, 0x7f, cr17);
-		sisusb_setidxregandor(sisusb, SISSR, 0x1f, 0x3f, pmreg);
-		sisusb_setidxregandor(sisusb, SISCR, 0x63, 0xbf, cr63);
+		sisusb_setidxreganकरोr(sisusb, SISSR, 0x01, ~0x20, sr1);
+		sisusb_setidxreganकरोr(sisusb, SISCR, 0x17, 0x7f, cr17);
+		sisusb_setidxreganकरोr(sisusb, SISSR, 0x1f, 0x3f, pmreg);
+		sisusb_setidxreganकरोr(sisusb, SISCR, 0x63, 0xbf, cr63);
 
-	}
+	पूर्ण
 
 	mutex_unlock(&sisusb->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* interface routine */
-static void
-sisusbcon_scrolldelta(struct vc_data *c, int lines)
-{
-	struct sisusb_usb_data *sisusb;
+/* पूर्णांकerface routine */
+अटल व्योम
+sisusbcon_scrolldelta(काष्ठा vc_data *c, पूर्णांक lines)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return;
+	अगर (!sisusb)
+		वापस;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	if (sisusb_is_inactive(c, sisusb)) {
+	अगर (sisusb_is_inactive(c, sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	vc_scrolldelta_helper(c, lines, sisusb->con_rolled_over,
-			(void *)sisusb->scrbuf, sisusb->scrbuf_size);
+			(व्योम *)sisusb->scrbuf, sisusb->scrbuf_size);
 
 	sisusbcon_set_start_address(sisusb, c);
 
 	mutex_unlock(&sisusb->lock);
-}
+पूर्ण
 
 /* Interface routine */
-static void
-sisusbcon_cursor(struct vc_data *c, int mode)
-{
-	struct sisusb_usb_data *sisusb;
-	int from, to, baseline;
+अटल व्योम
+sisusbcon_cursor(काष्ठा vc_data *c, पूर्णांक mode)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	पूर्णांक from, to, baseline;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return;
+	अगर (!sisusb)
+		वापस;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	if (sisusb_is_inactive(c, sisusb)) {
+	अगर (sisusb_is_inactive(c, sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (c->vc_origin != c->vc_visible_origin) {
+	अगर (c->vc_origin != c->vc_visible_origin) अणु
 		c->vc_visible_origin = c->vc_origin;
 		sisusbcon_set_start_address(sisusb, c);
-	}
+	पूर्ण
 
-	if (mode == CM_ERASE) {
+	अगर (mode == CM_ERASE) अणु
 		sisusb_setidxregor(sisusb, SISCR, 0x0a, 0x20);
-		sisusb->sisusb_cursor_size_to = -1;
+		sisusb->sisusb_cursor_माप_प्रकारo = -1;
 		mutex_unlock(&sisusb->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sisusb_set_cursor(sisusb, (c->vc_pos - sisusb->scrbuf) / 2);
 
 	baseline = c->vc_font.height - (c->vc_font.height < 10 ? 1 : 2);
 
-	switch (CUR_SIZE(c->vc_cursor_type)) {
-		case CUR_BLOCK:		from = 1;
+	चयन (CUR_SIZE(c->vc_cursor_type)) अणु
+		हाल CUR_BLOCK:		from = 1;
 					to   = c->vc_font.height;
-					break;
-		case CUR_TWO_THIRDS:	from = c->vc_font.height / 3;
+					अवरोध;
+		हाल CUR_TWO_THIRDS:	from = c->vc_font.height / 3;
 					to   = baseline;
-					break;
-		case CUR_LOWER_HALF:	from = c->vc_font.height / 2;
+					अवरोध;
+		हाल CUR_LOWER_HALF:	from = c->vc_font.height / 2;
 					to   = baseline;
-					break;
-		case CUR_LOWER_THIRD:	from = (c->vc_font.height * 2) / 3;
+					अवरोध;
+		हाल CUR_LOWER_THIRD:	from = (c->vc_font.height * 2) / 3;
 					to   = baseline;
-					break;
-		case CUR_NONE:		from = 31;
+					अवरोध;
+		हाल CUR_NONE:		from = 31;
 					to = 30;
-					break;
-		default:
-		case CUR_UNDERLINE:	from = baseline - 1;
+					अवरोध;
+		शेष:
+		हाल CUR_UNDERLINE:	from = baseline - 1;
 					to   = baseline;
-					break;
-	}
+					अवरोध;
+	पूर्ण
 
-	if (sisusb->sisusb_cursor_size_from != from ||
-	    sisusb->sisusb_cursor_size_to != to) {
+	अगर (sisusb->sisusb_cursor_size_from != from ||
+	    sisusb->sisusb_cursor_माप_प्रकारo != to) अणु
 
 		sisusb_setidxreg(sisusb, SISCR, 0x0a, from);
-		sisusb_setidxregandor(sisusb, SISCR, 0x0b, 0xe0, to);
+		sisusb_setidxreganकरोr(sisusb, SISCR, 0x0b, 0xe0, to);
 
 		sisusb->sisusb_cursor_size_from = from;
-		sisusb->sisusb_cursor_size_to   = to;
-	}
+		sisusb->sisusb_cursor_माप_प्रकारo   = to;
+	पूर्ण
 
 	mutex_unlock(&sisusb->lock);
-}
+पूर्ण
 
-static bool
-sisusbcon_scroll_area(struct vc_data *c, struct sisusb_usb_data *sisusb,
-		unsigned int t, unsigned int b, enum con_scroll dir,
-		unsigned int lines)
-{
-	int cols = sisusb->sisusb_num_columns;
-	int length = ((b - t) * cols) * 2;
-	u16 eattr = c->vc_video_erase_char;
+अटल bool
+sisusbcon_scroll_area(काष्ठा vc_data *c, काष्ठा sisusb_usb_data *sisusb,
+		अचिन्हित पूर्णांक t, अचिन्हित पूर्णांक b, क्रमागत con_scroll dir,
+		अचिन्हित पूर्णांक lines)
+अणु
+	पूर्णांक cols = sisusb->sisusb_num_columns;
+	पूर्णांक length = ((b - t) * cols) * 2;
+	u16 eattr = c->vc_video_erase_अक्षर;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	/* Scroll an area which does not match the
+	/* Scroll an area which करोes not match the
 	 * visible screen's dimensions. This needs
-	 * to be done separately, as it does not
+	 * to be करोne separately, as it करोes not
 	 * use hardware panning.
 	 */
 
-	switch (dir) {
+	चयन (dir) अणु
 
-		case SM_UP:
-			memmove(sisusb_vaddr(sisusb, c, 0, t),
+		हाल SM_UP:
+			स_हटाओ(sisusb_vaddr(sisusb, c, 0, t),
 					   sisusb_vaddr(sisusb, c, 0, t + lines),
 					   (b - t - lines) * cols * 2);
-			sisusbcon_memsetw(sisusb_vaddr(sisusb, c, 0, b - lines),
+			sisusbcon_स_रखोw(sisusb_vaddr(sisusb, c, 0, b - lines),
 					eattr, lines * cols * 2);
-			break;
+			अवरोध;
 
-		case SM_DOWN:
-			memmove(sisusb_vaddr(sisusb, c, 0, t + lines),
+		हाल SM_DOWN:
+			स_हटाओ(sisusb_vaddr(sisusb, c, 0, t + lines),
 					   sisusb_vaddr(sisusb, c, 0, t),
 					   (b - t - lines) * cols * 2);
-			sisusbcon_memsetw(sisusb_vaddr(sisusb, c, 0, t), eattr,
+			sisusbcon_स_रखोw(sisusb_vaddr(sisusb, c, 0, t), eattr,
 					  lines * cols * 2);
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
 	sisusb_copy_memory(sisusb, sisusb_vaddr(sisusb, c, 0, t),
 			sisusb_haddr(sisusb, c, 0, t), length);
 
 	mutex_unlock(&sisusb->lock);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /* Interface routine */
-static bool
-sisusbcon_scroll(struct vc_data *c, unsigned int t, unsigned int b,
-		enum con_scroll dir, unsigned int lines)
-{
-	struct sisusb_usb_data *sisusb;
-	u16 eattr = c->vc_video_erase_char;
-	int copyall = 0;
-	unsigned long oldorigin;
-	unsigned int delta = lines * c->vc_size_row;
+अटल bool
+sisusbcon_scroll(काष्ठा vc_data *c, अचिन्हित पूर्णांक t, अचिन्हित पूर्णांक b,
+		क्रमागत con_scroll dir, अचिन्हित पूर्णांक lines)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	u16 eattr = c->vc_video_erase_अक्षर;
+	पूर्णांक copyall = 0;
+	अचिन्हित दीर्घ olकरोrigin;
+	अचिन्हित पूर्णांक delta = lines * c->vc_size_row;
 
-	/* Returning != 0 means we have done the scrolling successfully.
-	 * Returning 0 makes vt do the scrolling on its own.
-	 * Note that con_scroll is only called if the console is
-	 * visible. In that case, the origin should be our buffer,
-	 * not the vt's private one.
+	/* Returning != 0 means we have करोne the scrolling successfully.
+	 * Returning 0 makes vt करो the scrolling on its own.
+	 * Note that con_scroll is only called अगर the console is
+	 * visible. In that हाल, the origin should be our buffer,
+	 * not the vt's निजी one.
 	 */
 
-	if (!lines)
-		return true;
+	अगर (!lines)
+		वापस true;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return false;
+	अगर (!sisusb)
+		वापस false;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	if (sisusb_is_inactive(c, sisusb)) {
+	अगर (sisusb_is_inactive(c, sisusb)) अणु
 		mutex_unlock(&sisusb->lock);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* Special case */
-	if (t || b != c->vc_rows)
-		return sisusbcon_scroll_area(c, sisusb, t, b, dir, lines);
+	/* Special हाल */
+	अगर (t || b != c->vc_rows)
+		वापस sisusbcon_scroll_area(c, sisusb, t, b, dir, lines);
 
-	if (c->vc_origin != c->vc_visible_origin) {
+	अगर (c->vc_origin != c->vc_visible_origin) अणु
 		c->vc_visible_origin = c->vc_origin;
 		sisusbcon_set_start_address(sisusb, c);
-	}
+	पूर्ण
 
 	/* limit amount to maximum realistic size */
-	if (lines > c->vc_rows)
+	अगर (lines > c->vc_rows)
 		lines = c->vc_rows;
 
-	oldorigin = c->vc_origin;
+	olकरोrigin = c->vc_origin;
 
-	switch (dir) {
+	चयन (dir) अणु
 
-	case SM_UP:
+	हाल SM_UP:
 
-		if (c->vc_scr_end + delta >=
-				sisusb->scrbuf + sisusb->scrbuf_size) {
-			memcpy((u16 *)sisusb->scrbuf,
-					  (u16 *)(oldorigin + delta),
+		अगर (c->vc_scr_end + delta >=
+				sisusb->scrbuf + sisusb->scrbuf_size) अणु
+			स_नकल((u16 *)sisusb->scrbuf,
+					  (u16 *)(olकरोrigin + delta),
 					  c->vc_screenbuf_size - delta);
 			c->vc_origin = sisusb->scrbuf;
-			sisusb->con_rolled_over = oldorigin - sisusb->scrbuf;
+			sisusb->con_rolled_over = olकरोrigin - sisusb->scrbuf;
 			copyall = 1;
-		} else
+		पूर्ण अन्यथा
 			c->vc_origin += delta;
 
-		sisusbcon_memsetw(
+		sisusbcon_स_रखोw(
 			(u16 *)(c->vc_origin + c->vc_screenbuf_size - delta),
 					eattr, delta);
 
-		break;
+		अवरोध;
 
-	case SM_DOWN:
+	हाल SM_DOWN:
 
-		if (oldorigin - delta < sisusb->scrbuf) {
-			memmove((void *)sisusb->scrbuf + sisusb->scrbuf_size -
+		अगर (olकरोrigin - delta < sisusb->scrbuf) अणु
+			स_हटाओ((व्योम *)sisusb->scrbuf + sisusb->scrbuf_size -
 					c->vc_screenbuf_size + delta,
-					(u16 *)oldorigin,
+					(u16 *)olकरोrigin,
 					c->vc_screenbuf_size - delta);
 			c->vc_origin = sisusb->scrbuf +
 					sisusb->scrbuf_size -
 					c->vc_screenbuf_size;
 			sisusb->con_rolled_over = 0;
 			copyall = 1;
-		} else
+		पूर्ण अन्यथा
 			c->vc_origin -= delta;
 
 		c->vc_scr_end = c->vc_origin + c->vc_screenbuf_size;
 
-		scr_memsetw((u16 *)(c->vc_origin), eattr, delta);
+		scr_स_रखोw((u16 *)(c->vc_origin), eattr, delta);
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (copyall)
+	अगर (copyall)
 		sisusb_copy_memory(sisusb,
 			(u8 *)c->vc_origin,
 			sisusb_haddr(sisusb, c, 0, 0),
 			c->vc_screenbuf_size);
-	else if (dir == SM_UP)
+	अन्यथा अगर (dir == SM_UP)
 		sisusb_copy_memory(sisusb,
 			(u8 *)c->vc_origin + c->vc_screenbuf_size - delta,
 			sisusb_haddr(sisusb, c, 0, 0) +
 					c->vc_screenbuf_size - delta,
 			delta);
-	else
+	अन्यथा
 		sisusb_copy_memory(sisusb,
 			(u8 *)c->vc_origin,
 			sisusb_haddr(sisusb, c, 0, 0),
@@ -918,18 +919,18 @@ sisusbcon_scroll(struct vc_data *c, unsigned int t, unsigned int b,
 
 	sisusbcon_set_start_address(sisusb, c);
 
-	c->vc_pos = c->vc_pos - oldorigin + c->vc_origin;
+	c->vc_pos = c->vc_pos - olकरोrigin + c->vc_origin;
 
 	mutex_unlock(&sisusb->lock);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /* Interface routine */
-static int
-sisusbcon_set_origin(struct vc_data *c)
-{
-	struct sisusb_usb_data *sisusb;
+अटल पूर्णांक
+sisusbcon_set_origin(काष्ठा vc_data *c)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
 
 	/* Returning != 0 means we were successful.
 	 * Returning 0 will vt make to use its own
@@ -937,15 +938,15 @@ sisusbcon_set_origin(struct vc_data *c)
 	 */
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return 0;
+	अगर (!sisusb)
+		वापस 0;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	if (sisusb_is_inactive(c, sisusb) || sisusb->con_blanked) {
+	अगर (sisusb_is_inactive(c, sisusb) || sisusb->con_blanked) अणु
 		mutex_unlock(&sisusb->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	c->vc_origin = c->vc_visible_origin = sisusb->scrbuf;
 
@@ -955,20 +956,20 @@ sisusbcon_set_origin(struct vc_data *c)
 
 	mutex_unlock(&sisusb->lock);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /* Interface routine */
-static int
-sisusbcon_resize(struct vc_data *c, unsigned int newcols, unsigned int newrows,
-		 unsigned int user)
-{
-	struct sisusb_usb_data *sisusb;
-	int fh;
+अटल पूर्णांक
+sisusbcon_resize(काष्ठा vc_data *c, अचिन्हित पूर्णांक newcols, अचिन्हित पूर्णांक newrows,
+		 अचिन्हित पूर्णांक user)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	पूर्णांक fh;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return -ENODEV;
+	अगर (!sisusb)
+		वापस -ENODEV;
 
 	fh = sisusb->current_font_height;
 
@@ -977,46 +978,46 @@ sisusbcon_resize(struct vc_data *c, unsigned int newcols, unsigned int newrows,
 	/* We are quite unflexible as regards resizing. The vt code
 	 * handles sizes where the line length isn't equal the pitch
 	 * quite badly. As regards the rows, our panning tricks only
-	 * work well if the number of rows equals the visible number
+	 * work well अगर the number of rows equals the visible number
 	 * of rows.
 	 */
 
-	if (newcols != 80 || c->vc_scan_lines / fh != newrows)
-		return -EINVAL;
+	अगर (newcols != 80 || c->vc_scan_lines / fh != newrows)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-sisusbcon_do_font_op(struct sisusb_usb_data *sisusb, int set, int slot,
-			u8 *arg, int cmapsz, int ch512, int dorecalc,
-			struct vc_data *c, int fh, int uplock)
-{
-	int font_select = 0x00, i, err = 0;
+पूर्णांक
+sisusbcon_करो_font_op(काष्ठा sisusb_usb_data *sisusb, पूर्णांक set, पूर्णांक slot,
+			u8 *arg, पूर्णांक cmapsz, पूर्णांक ch512, पूर्णांक करोrecalc,
+			काष्ठा vc_data *c, पूर्णांक fh, पूर्णांक uplock)
+अणु
+	पूर्णांक font_select = 0x00, i, err = 0;
 	u32 offset = 0;
 	u8 dummy;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
 	/*
-	 * The default font is kept in slot 0.
+	 * The शेष font is kept in slot 0.
 	 * A user font is loaded in slot 2 (256 ch)
 	 * or 2+3 (512 ch).
 	 */
 
-	if ((slot != 0 && slot != 2) || !fh) {
-		if (uplock)
+	अगर ((slot != 0 && slot != 2) || !fh) अणु
+		अगर (uplock)
 			mutex_unlock(&sisusb->lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (set)
+	अगर (set)
 		sisusb->font_slot = slot;
 
 	/* Default font is always 256 */
-	if (slot == 0)
+	अगर (slot == 0)
 		ch512 = 0;
-	else
+	अन्यथा
 		offset = 4 * cmapsz;
 
 	font_select = (slot == 0) ? 0x00 : (ch512 ? 0x0e : 0x0a);
@@ -1026,97 +1027,97 @@ sisusbcon_do_font_op(struct sisusb_usb_data *sisusb, int set, int slot,
 	err |= sisusb_setidxreg(sisusb, SISSR, 0x04, 0x07); /* Memory mode a0-bf */
 	err |= sisusb_setidxreg(sisusb, SISSR, 0x00, 0x03); /* Reset */
 
-	if (err)
-		goto font_op_error;
+	अगर (err)
+		जाओ font_op_error;
 
-	err |= sisusb_setidxreg(sisusb, SISGR, 0x04, 0x03); /* Select plane read 2 */
+	err |= sisusb_setidxreg(sisusb, SISGR, 0x04, 0x03); /* Select plane पढ़ो 2 */
 	err |= sisusb_setidxreg(sisusb, SISGR, 0x05, 0x00); /* Disable odd/even */
 	err |= sisusb_setidxreg(sisusb, SISGR, 0x06, 0x00); /* Address range a0-bf */
 
-	if (err)
-		goto font_op_error;
+	अगर (err)
+		जाओ font_op_error;
 
-	if (arg) {
-		if (set)
-			for (i = 0; i < cmapsz; i++) {
-				err |= sisusb_writeb(sisusb,
+	अगर (arg) अणु
+		अगर (set)
+			क्रम (i = 0; i < cmapsz; i++) अणु
+				err |= sisusb_ग_लिखोb(sisusb,
 					sisusb->vrambase + offset + i,
 					arg[i]);
-				if (err)
-					break;
-			}
-		else
-			for (i = 0; i < cmapsz; i++) {
-				err |= sisusb_readb(sisusb,
+				अगर (err)
+					अवरोध;
+			पूर्ण
+		अन्यथा
+			क्रम (i = 0; i < cmapsz; i++) अणु
+				err |= sisusb_पढ़ोb(sisusb,
 					sisusb->vrambase + offset + i,
 					&arg[i]);
-				if (err)
-					break;
-			}
+				अगर (err)
+					अवरोध;
+			पूर्ण
 
 		/*
-		 * In 512-character mode, the character map is not contiguous if
-		 * we want to remain EGA compatible -- which we do
+		 * In 512-अक्षरacter mode, the अक्षरacter map is not contiguous अगर
+		 * we want to reमुख्य EGA compatible -- which we करो
 		 */
 
-		if (ch512) {
-			if (set)
-				for (i = 0; i < cmapsz; i++) {
-					err |= sisusb_writeb(sisusb,
+		अगर (ch512) अणु
+			अगर (set)
+				क्रम (i = 0; i < cmapsz; i++) अणु
+					err |= sisusb_ग_लिखोb(sisusb,
 						sisusb->vrambase + offset +
 							(2 * cmapsz) + i,
 						arg[cmapsz + i]);
-					if (err)
-						break;
-				}
-			else
-				for (i = 0; i < cmapsz; i++) {
-					err |= sisusb_readb(sisusb,
+					अगर (err)
+						अवरोध;
+				पूर्ण
+			अन्यथा
+				क्रम (i = 0; i < cmapsz; i++) अणु
+					err |= sisusb_पढ़ोb(sisusb,
 						sisusb->vrambase + offset +
 							(2 * cmapsz) + i,
 						&arg[cmapsz + i]);
-					if (err)
-						break;
-				}
-		}
-	}
+					अगर (err)
+						अवरोध;
+				पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (err)
-		goto font_op_error;
+	अगर (err)
+		जाओ font_op_error;
 
 	err |= sisusb_setidxreg(sisusb, SISSR, 0x00, 0x01); /* Reset */
 	err |= sisusb_setidxreg(sisusb, SISSR, 0x02, 0x03); /* Write to planes 0+1 */
 	err |= sisusb_setidxreg(sisusb, SISSR, 0x04, 0x03); /* Memory mode a0-bf */
-	if (set)
+	अगर (set)
 		sisusb_setidxreg(sisusb, SISSR, 0x03, font_select);
 	err |= sisusb_setidxreg(sisusb, SISSR, 0x00, 0x03); /* Reset end */
 
-	if (err)
-		goto font_op_error;
+	अगर (err)
+		जाओ font_op_error;
 
-	err |= sisusb_setidxreg(sisusb, SISGR, 0x04, 0x00); /* Select plane read 0 */
+	err |= sisusb_setidxreg(sisusb, SISGR, 0x04, 0x00); /* Select plane पढ़ो 0 */
 	err |= sisusb_setidxreg(sisusb, SISGR, 0x05, 0x10); /* Enable odd/even */
 	err |= sisusb_setidxreg(sisusb, SISGR, 0x06, 0x06); /* Address range b8-bf */
 
-	if (err)
-		goto font_op_error;
+	अगर (err)
+		जाओ font_op_error;
 
-	if ((set) && (ch512 != sisusb->current_font_512)) {
+	अगर ((set) && (ch512 != sisusb->current_font_512)) अणु
 
 		/* Font is shared among all our consoles.
 		 * And so is the hi_font_mask.
 		 */
-		for (i = 0; i < MAX_NR_CONSOLES; i++) {
-			struct vc_data *d = vc_cons[i].d;
-			if (d && d->vc_sw == &sisusb_con)
+		क्रम (i = 0; i < MAX_NR_CONSOLES; i++) अणु
+			काष्ठा vc_data *d = vc_cons[i].d;
+			अगर (d && d->vc_sw == &sisusb_con)
 				d->vc_hi_font_mask = ch512 ? 0x0800 : 0;
-		}
+		पूर्ण
 
 		sisusb->current_font_512 = ch512;
 
-		/* color plane enable register:
-			256-char: enable intensity bit
-			512-char: disable intensity bit */
+		/* color plane enable रेजिस्टर:
+			256-अक्षर: enable पूर्णांकensity bit
+			512-अक्षर: disable पूर्णांकensity bit */
 		sisusb_getreg(sisusb, SISINPSTAT, &dummy);
 		sisusb_setreg(sisusb, SISAR, 0x12);
 		sisusb_setreg(sisusb, SISAR, ch512 ? 0x07 : 0x0f);
@@ -1124,25 +1125,25 @@ sisusbcon_do_font_op(struct sisusb_usb_data *sisusb, int set, int slot,
 		sisusb_getreg(sisusb, SISINPSTAT, &dummy);
 		sisusb_setreg(sisusb, SISAR, 0x20);
 		sisusb_getreg(sisusb, SISINPSTAT, &dummy);
-	}
+	पूर्ण
 
-	if (dorecalc) {
+	अगर (करोrecalc) अणु
 
 		/*
 		 * Adjust the screen to fit a font of a certain height
 		 */
 
-		unsigned char ovr, vde, fsr;
-		int rows = 0, maxscan = 0;
+		अचिन्हित अक्षर ovr, vde, fsr;
+		पूर्णांक rows = 0, maxscan = 0;
 
-		if (c) {
+		अगर (c) अणु
 
 			/* Number of video rows */
 			rows = c->vc_scan_lines / fh;
 			/* Scan lines to actually display-1 */
 			maxscan = rows * fh - 1;
 
-			/*printk(KERN_DEBUG "sisusb recalc rows %d maxscan %d fh %d sl %d\n",
+			/*prपूर्णांकk(KERN_DEBUG "sisusb recalc rows %d maxscan %d fh %d sl %d\n",
 				rows, maxscan, fh, c->vc_scan_lines);*/
 
 			sisusb_getidxreg(sisusb, SISCR, 0x07, &ovr);
@@ -1153,7 +1154,7 @@ sisusbcon_do_font_op(struct sisusb_usb_data *sisusb, int set, int slot,
 			sisusb_setidxreg(sisusb, SISCR, 0x07, ovr);
 			sisusb_setidxreg(sisusb, SISCR, 0x12, vde);
 
-		}
+		पूर्ण
 
 		sisusb_getidxreg(sisusb, SISCR, 0x09, &fsr);
 		fsr = (fsr & 0xe0) | (fh - 1);
@@ -1161,135 +1162,135 @@ sisusbcon_do_font_op(struct sisusb_usb_data *sisusb, int set, int slot,
 		sisusb->current_font_height = fh;
 
 		sisusb->sisusb_cursor_size_from = -1;
-		sisusb->sisusb_cursor_size_to   = -1;
+		sisusb->sisusb_cursor_माप_प्रकारo   = -1;
 
-	}
+	पूर्ण
 
-	if (uplock)
+	अगर (uplock)
 		mutex_unlock(&sisusb->lock);
 
-	if (dorecalc && c) {
-		int rows = c->vc_scan_lines / fh;
+	अगर (करोrecalc && c) अणु
+		पूर्णांक rows = c->vc_scan_lines / fh;
 
 		/* Now adjust our consoles' size */
 
-		for (i = 0; i < MAX_NR_CONSOLES; i++) {
-			struct vc_data *vc = vc_cons[i].d;
+		क्रम (i = 0; i < MAX_NR_CONSOLES; i++) अणु
+			काष्ठा vc_data *vc = vc_cons[i].d;
 
-			if (vc && vc->vc_sw == &sisusb_con) {
-				if (con_is_visible(vc)) {
+			अगर (vc && vc->vc_sw == &sisusb_con) अणु
+				अगर (con_is_visible(vc)) अणु
 					vc->vc_sw->con_cursor(vc, CM_DRAW);
-				}
+				पूर्ण
 				vc->vc_font.height = fh;
 				vc_resize(vc, 0, rows);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 font_op_error:
-	if (uplock)
+	अगर (uplock)
 		mutex_unlock(&sisusb->lock);
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /* Interface routine */
-static int
-sisusbcon_font_set(struct vc_data *c, struct console_font *font,
-		   unsigned int flags)
-{
-	struct sisusb_usb_data *sisusb;
-	unsigned charcount = font->charcount;
+अटल पूर्णांक
+sisusbcon_font_set(काष्ठा vc_data *c, काष्ठा console_font *font,
+		   अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	अचिन्हित अक्षरcount = font->अक्षरcount;
 
-	if (font->width != 8 || (charcount != 256 && charcount != 512))
-		return -EINVAL;
+	अगर (font->width != 8 || (अक्षरcount != 256 && अक्षरcount != 512))
+		वापस -EINVAL;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return -ENODEV;
+	अगर (!sisusb)
+		वापस -ENODEV;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	/* Save the user-provided font into a buffer. This
-	 * is used for restoring text mode after quitting
-	 * from X and for the con_getfont routine.
+	/* Save the user-provided font पूर्णांकo a buffer. This
+	 * is used क्रम restoring text mode after quitting
+	 * from X and क्रम the con_getfont routine.
 	 */
-	if (sisusb->font_backup) {
-		if (sisusb->font_backup_size < charcount) {
-			vfree(sisusb->font_backup);
-			sisusb->font_backup = NULL;
-		}
-	}
+	अगर (sisusb->font_backup) अणु
+		अगर (sisusb->font_backup_size < अक्षरcount) अणु
+			vमुक्त(sisusb->font_backup);
+			sisusb->font_backup = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (!sisusb->font_backup)
-		sisusb->font_backup = vmalloc(array_size(charcount, 32));
+	अगर (!sisusb->font_backup)
+		sisusb->font_backup = vदो_स्मृति(array_size(अक्षरcount, 32));
 
-	if (sisusb->font_backup) {
-		memcpy(sisusb->font_backup, font->data, array_size(charcount, 32));
-		sisusb->font_backup_size = charcount;
+	अगर (sisusb->font_backup) अणु
+		स_नकल(sisusb->font_backup, font->data, array_size(अक्षरcount, 32));
+		sisusb->font_backup_size = अक्षरcount;
 		sisusb->font_backup_height = font->height;
-		sisusb->font_backup_512 = (charcount == 512) ? 1 : 0;
-	}
+		sisusb->font_backup_512 = (अक्षरcount == 512) ? 1 : 0;
+	पूर्ण
 
-	/* do_font_op ups sisusb->lock */
+	/* करो_font_op ups sisusb->lock */
 
-	return sisusbcon_do_font_op(sisusb, 1, 2, font->data,
-			8192, (charcount == 512),
+	वापस sisusbcon_करो_font_op(sisusb, 1, 2, font->data,
+			8192, (अक्षरcount == 512),
 			(!(flags & KD_FONT_FLAG_DONT_RECALC)) ? 1 : 0,
 			c, font->height, 1);
-}
+पूर्ण
 
 /* Interface routine */
-static int
-sisusbcon_font_get(struct vc_data *c, struct console_font *font)
-{
-	struct sisusb_usb_data *sisusb;
+अटल पूर्णांक
+sisusbcon_font_get(काष्ठा vc_data *c, काष्ठा console_font *font)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
 
 	sisusb = sisusb_get_sisusb_lock_and_check(c->vc_num);
-	if (!sisusb)
-		return -ENODEV;
+	अगर (!sisusb)
+		वापस -ENODEV;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
 	font->width = 8;
 	font->height = c->vc_font.height;
-	font->charcount = 256;
+	font->अक्षरcount = 256;
 
-	if (!font->data) {
+	अगर (!font->data) अणु
 		mutex_unlock(&sisusb->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!sisusb->font_backup) {
+	अगर (!sisusb->font_backup) अणु
 		mutex_unlock(&sisusb->lock);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Copy 256 chars only, like vgacon */
-	memcpy(font->data, sisusb->font_backup, 256 * 32);
+	/* Copy 256 अक्षरs only, like vgacon */
+	स_नकल(font->data, sisusb->font_backup, 256 * 32);
 
 	mutex_unlock(&sisusb->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *  The console `switch' structure for the sisusb console
+ *  The console `चयन' काष्ठाure क्रम the sisusb console
  */
 
-static const struct consw sisusb_con = {
+अटल स्थिर काष्ठा consw sisusb_con = अणु
 	.owner =		THIS_MODULE,
 	.con_startup =		sisusbcon_startup,
 	.con_init =		sisusbcon_init,
 	.con_deinit =		sisusbcon_deinit,
 	.con_clear =		sisusbcon_clear,
-	.con_putc =		sisusbcon_putc,
-	.con_putcs =		sisusbcon_putcs,
+	.con_अ_दो =		sisusbcon_अ_दो,
+	.con_अ_दोs =		sisusbcon_अ_दोs,
 	.con_cursor =		sisusbcon_cursor,
 	.con_scroll =		sisusbcon_scroll,
-	.con_switch =		sisusbcon_switch,
+	.con_चयन =		sisusbcon_चयन,
 	.con_blank =		sisusbcon_blank,
 	.con_font_set =		sisusbcon_font_set,
 	.con_font_get =		sisusbcon_font_get,
@@ -1300,112 +1301,112 @@ static const struct consw sisusb_con = {
 	.con_set_origin =	sisusbcon_set_origin,
 	.con_save_screen =	sisusbcon_save_screen,
 	.con_resize =		sisusbcon_resize,
-};
+पूर्ण;
 
 /* Our very own dummy console driver */
 
-static const char *sisusbdummycon_startup(void)
-{
-    return "SISUSBVGADUMMY";
-}
+अटल स्थिर अक्षर *sisusbdummycon_startup(व्योम)
+अणु
+    वापस "SISUSBVGADUMMY";
+पूर्ण
 
-static void sisusbdummycon_init(struct vc_data *vc, int init)
-{
-    vc->vc_can_do_color = 1;
-    if (init) {
+अटल व्योम sisusbdummycon_init(काष्ठा vc_data *vc, पूर्णांक init)
+अणु
+    vc->vc_can_करो_color = 1;
+    अगर (init) अणु
 	vc->vc_cols = 80;
 	vc->vc_rows = 25;
-    } else
+    पूर्ण अन्यथा
 	vc_resize(vc, 80, 25);
-}
+पूर्ण
 
-static void sisusbdummycon_deinit(struct vc_data *vc) { }
-static void sisusbdummycon_clear(struct vc_data *vc, int sy, int sx,
-				 int height, int width) { }
-static void sisusbdummycon_putc(struct vc_data *vc, int c, int ypos,
-				int xpos) { }
-static void sisusbdummycon_putcs(struct vc_data *vc, const unsigned short *s,
-				 int count, int ypos, int xpos) { }
-static void sisusbdummycon_cursor(struct vc_data *vc, int mode) { }
+अटल व्योम sisusbdummycon_deinit(काष्ठा vc_data *vc) अणु पूर्ण
+अटल व्योम sisusbdummycon_clear(काष्ठा vc_data *vc, पूर्णांक sy, पूर्णांक sx,
+				 पूर्णांक height, पूर्णांक width) अणु पूर्ण
+अटल व्योम sisusbdummycon_अ_दो(काष्ठा vc_data *vc, पूर्णांक c, पूर्णांक ypos,
+				पूर्णांक xpos) अणु पूर्ण
+अटल व्योम sisusbdummycon_अ_दोs(काष्ठा vc_data *vc, स्थिर अचिन्हित लघु *s,
+				 पूर्णांक count, पूर्णांक ypos, पूर्णांक xpos) अणु पूर्ण
+अटल व्योम sisusbdummycon_cursor(काष्ठा vc_data *vc, पूर्णांक mode) अणु पूर्ण
 
-static bool sisusbdummycon_scroll(struct vc_data *vc, unsigned int top,
-				  unsigned int bottom, enum con_scroll dir,
-				  unsigned int lines)
-{
-	return false;
-}
+अटल bool sisusbdummycon_scroll(काष्ठा vc_data *vc, अचिन्हित पूर्णांक top,
+				  अचिन्हित पूर्णांक bottom, क्रमागत con_scroll dir,
+				  अचिन्हित पूर्णांक lines)
+अणु
+	वापस false;
+पूर्ण
 
-static int sisusbdummycon_switch(struct vc_data *vc)
-{
-	return 0;
-}
+अटल पूर्णांक sisusbdummycon_चयन(काष्ठा vc_data *vc)
+अणु
+	वापस 0;
+पूर्ण
 
-static int sisusbdummycon_blank(struct vc_data *vc, int blank, int mode_switch)
-{
-	return 0;
-}
+अटल पूर्णांक sisusbdummycon_blank(काष्ठा vc_data *vc, पूर्णांक blank, पूर्णांक mode_चयन)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct consw sisusb_dummy_con = {
+अटल स्थिर काष्ठा consw sisusb_dummy_con = अणु
 	.owner =		THIS_MODULE,
 	.con_startup =		sisusbdummycon_startup,
 	.con_init =		sisusbdummycon_init,
 	.con_deinit =		sisusbdummycon_deinit,
 	.con_clear =		sisusbdummycon_clear,
-	.con_putc =		sisusbdummycon_putc,
-	.con_putcs =		sisusbdummycon_putcs,
+	.con_अ_दो =		sisusbdummycon_अ_दो,
+	.con_अ_दोs =		sisusbdummycon_अ_दोs,
 	.con_cursor =		sisusbdummycon_cursor,
 	.con_scroll =		sisusbdummycon_scroll,
-	.con_switch =		sisusbdummycon_switch,
+	.con_चयन =		sisusbdummycon_चयन,
 	.con_blank =		sisusbdummycon_blank,
-};
+पूर्ण;
 
-int
-sisusb_console_init(struct sisusb_usb_data *sisusb, int first, int last)
-{
-	int i, ret;
+पूर्णांक
+sisusb_console_init(काष्ठा sisusb_usb_data *sisusb, पूर्णांक first, पूर्णांक last)
+अणु
+	पूर्णांक i, ret;
 
 	mutex_lock(&sisusb->lock);
 
 	/* Erm.. that should not happen */
-	if (sisusb->haveconsole || !sisusb->SiS_Pr) {
+	अगर (sisusb->haveconsole || !sisusb->SiS_Pr) अणु
 		mutex_unlock(&sisusb->lock);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	sisusb->con_first = first;
 	sisusb->con_last  = last;
 
-	if (first > last ||
+	अगर (first > last ||
 	    first > MAX_NR_CONSOLES ||
-	    last > MAX_NR_CONSOLES) {
+	    last > MAX_NR_CONSOLES) अणु
 		mutex_unlock(&sisusb->lock);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* If gfxcore not initialized or no consoles given, quit graciously */
-	if (!sisusb->gfxinit || first < 1 || last < 1) {
+	अगर (!sisusb->gfxinit || first < 1 || last < 1) अणु
 		mutex_unlock(&sisusb->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	sisusb->sisusb_cursor_loc       = -1;
 	sisusb->sisusb_cursor_size_from = -1;
-	sisusb->sisusb_cursor_size_to   = -1;
+	sisusb->sisusb_cursor_माप_प्रकारo   = -1;
 
-	/* Set up text mode (and upload  default font) */
-	if (sisusb_reset_text_mode(sisusb, 1)) {
+	/* Set up text mode (and upload  शेष font) */
+	अगर (sisusb_reset_text_mode(sisusb, 1)) अणु
 		mutex_unlock(&sisusb->lock);
 		dev_err(&sisusb->sisusb_dev->dev, "Failed to set up text mode\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* Initialize some gfx registers */
+	/* Initialize some gfx रेजिस्टरs */
 	sisusb_initialize(sisusb);
 
-	for (i = first - 1; i <= last - 1; i++) {
-		/* Save sisusb for our interface routines */
+	क्रम (i = first - 1; i <= last - 1; i++) अणु
+		/* Save sisusb क्रम our पूर्णांकerface routines */
 		mysisusbs[i] = sisusb;
-	}
+	पूर्ण
 
 	/* Initial console setup */
 	sisusb->sisusb_num_columns = 80;
@@ -1414,83 +1415,83 @@ sisusb_console_init(struct sisusb_usb_data *sisusb, int first, int last)
 	sisusb->scrbuf_size = 32 * 1024;
 
 	/* Allocate screen buffer */
-	if (!(sisusb->scrbuf = (unsigned long)vmalloc(sisusb->scrbuf_size))) {
+	अगर (!(sisusb->scrbuf = (अचिन्हित दीर्घ)vदो_स्मृति(sisusb->scrbuf_size))) अणु
 		mutex_unlock(&sisusb->lock);
 		dev_err(&sisusb->sisusb_dev->dev, "Failed to allocate screen buffer\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	mutex_unlock(&sisusb->lock);
 
 	/* Now grab the desired console(s) */
 	console_lock();
-	ret = do_take_over_console(&sisusb_con, first - 1, last - 1, 0);
+	ret = करो_take_over_console(&sisusb_con, first - 1, last - 1, 0);
 	console_unlock();
-	if (!ret)
+	अगर (!ret)
 		sisusb->haveconsole = 1;
-	else {
-		for (i = first - 1; i <= last - 1; i++)
-			mysisusbs[i] = NULL;
-	}
+	अन्यथा अणु
+		क्रम (i = first - 1; i <= last - 1; i++)
+			mysisusbs[i] = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-sisusb_console_exit(struct sisusb_usb_data *sisusb)
-{
-	int i;
+व्योम
+sisusb_console_निकास(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक i;
 
-	/* This is called if the device is disconnected
-	 * and while disconnect and lock semaphores
+	/* This is called अगर the device is disconnected
+	 * and जबतक disconnect and lock semaphores
 	 * are up. This should be save because we
 	 * can't lose our sisusb any other way but by
 	 * disconnection (and hence, the disconnect
-	 * sema is for protecting all other access
+	 * sema is क्रम protecting all other access
 	 * functions from disconnection, not the
 	 * other way round).
 	 */
 
-	/* Now what do we do in case of disconnection:
+	/* Now what करो we करो in हाल of disconnection:
 	 * One alternative would be to simply call
 	 * give_up_console(). Nah, not a good idea.
 	 * give_up_console() is obviously buggy as it
-	 * only discards the consw pointer from the
-	 * driver_map, but doesn't adapt vc->vc_sw
+	 * only discards the consw poपूर्णांकer from the
+	 * driver_map, but करोesn't adapt vc->vc_sw
 	 * of the affected consoles. Hence, the next
 	 * call to any of the console functions will
 	 * eventually take a trip to oops county.
-	 * Also, give_up_console for some reason
-	 * doesn't decrement our module refcount.
-	 * Instead, we switch our consoles to a private
+	 * Also, give_up_console क्रम some reason
+	 * करोesn't decrement our module refcount.
+	 * Instead, we चयन our consoles to a निजी
 	 * dummy console. This, of course, keeps our
 	 * refcount up as well, but it works perfectly.
 	 */
 
-	if (sisusb->haveconsole) {
-		for (i = 0; i < MAX_NR_CONSOLES; i++)
-			if (sisusb->havethisconsole[i]) {
+	अगर (sisusb->haveconsole) अणु
+		क्रम (i = 0; i < MAX_NR_CONSOLES; i++)
+			अगर (sisusb->havethisconsole[i]) अणु
 				console_lock();
-				do_take_over_console(&sisusb_dummy_con, i, i, 0);
+				करो_take_over_console(&sisusb_dummy_con, i, i, 0);
 				console_unlock();
-				/* At this point, con_deinit for all our
-				 * consoles is executed by do_take_over_console().
+				/* At this poपूर्णांक, con_deinit क्रम all our
+				 * consoles is executed by करो_take_over_console().
 				 */
-			}
+			पूर्ण
 		sisusb->haveconsole = 0;
-	}
+	पूर्ण
 
-	vfree((void *)sisusb->scrbuf);
+	vमुक्त((व्योम *)sisusb->scrbuf);
 	sisusb->scrbuf = 0;
 
-	vfree(sisusb->font_backup);
-	sisusb->font_backup = NULL;
-}
+	vमुक्त(sisusb->font_backup);
+	sisusb->font_backup = शून्य;
+पूर्ण
 
-void __init sisusb_init_concode(void)
-{
-	int i;
+व्योम __init sisusb_init_concode(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_NR_CONSOLES; i++)
-		mysisusbs[i] = NULL;
-}
+	क्रम (i = 0; i < MAX_NR_CONSOLES; i++)
+		mysisusbs[i] = शून्य;
+पूर्ण

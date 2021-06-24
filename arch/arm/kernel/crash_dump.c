@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * arch/arm/kernel/crash_dump.c
  *
@@ -10,45 +11,45 @@
  *   Copyright (C) IBM Corporation, 2004. All rights reserved
  */
 
-#include <linux/errno.h>
-#include <linux/crash_dump.h>
-#include <linux/uaccess.h>
-#include <linux/io.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/crash_dump.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/पन.स>
 
 /**
  * copy_oldmem_page() - copy one page from old kernel memory
  * @pfn: page frame number to be copied
  * @buf: buffer where the copied page is placed
  * @csize: number of bytes to copy
- * @offset: offset in bytes into the page
- * @userbuf: if set, @buf is int he user address space
+ * @offset: offset in bytes पूर्णांकo the page
+ * @userbuf: अगर set, @buf is पूर्णांक he user address space
  *
- * This function copies one page from old kernel memory into buffer pointed by
+ * This function copies one page from old kernel memory पूर्णांकo buffer poपूर्णांकed by
  * @buf. If @buf is in userspace, set @userbuf to %1. Returns number of bytes
- * copied or negative error in case of failure.
+ * copied or negative error in हाल of failure.
  */
-ssize_t copy_oldmem_page(unsigned long pfn, char *buf,
-			 size_t csize, unsigned long offset,
-			 int userbuf)
-{
-	void *vaddr;
+sमाप_प्रकार copy_oldmem_page(अचिन्हित दीर्घ pfn, अक्षर *buf,
+			 माप_प्रकार csize, अचिन्हित दीर्घ offset,
+			 पूर्णांक userbuf)
+अणु
+	व्योम *vaddr;
 
-	if (!csize)
-		return 0;
+	अगर (!csize)
+		वापस 0;
 
 	vaddr = ioremap(__pfn_to_phys(pfn), PAGE_SIZE);
-	if (!vaddr)
-		return -ENOMEM;
+	अगर (!vaddr)
+		वापस -ENOMEM;
 
-	if (userbuf) {
-		if (copy_to_user(buf, vaddr + offset, csize)) {
+	अगर (userbuf) अणु
+		अगर (copy_to_user(buf, vaddr + offset, csize)) अणु
 			iounmap(vaddr);
-			return -EFAULT;
-		}
-	} else {
-		memcpy(buf, vaddr + offset, csize);
-	}
+			वापस -EFAULT;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		स_नकल(buf, vaddr + offset, csize);
+	पूर्ण
 
 	iounmap(vaddr);
-	return csize;
-}
+	वापस csize;
+पूर्ण

@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * VMware Balloon driver.
  *
  * Copyright (C) 2000-2018, VMware, Inc. All Rights Reserved.
  *
- * This is VMware physical memory management driver for Linux. The driver
+ * This is VMware physical memory management driver क्रम Linux. The driver
  * acts like a "balloon" that can be inflated to reclaim physical pages by
  * reserving them in the guest and invalidating them in the monitor,
- * freeing up the underlying machine pages so they can be allocated to
+ * मुक्तing up the underlying machine pages so they can be allocated to
  * other guests.  The balloon can also be deflated to allow the guest to
  * use more physical memory. Higher level policies can control the sizes
  * of balloons in VMs in order to manage physical memory resources.
  */
 
-//#define DEBUG
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+//#घोषणा DEBUG
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/types.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/vmalloc.h>
-#include <linux/sched.h>
-#include <linux/module.h>
-#include <linux/workqueue.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/rwsem.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/mount.h>
-#include <linux/pseudo_fs.h>
-#include <linux/balloon_compaction.h>
-#include <linux/vmw_vmci_defs.h>
-#include <linux/vmw_vmci_api.h>
-#include <asm/hypervisor.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/module.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/pseuकरो_fs.h>
+#समावेश <linux/balloon_compaction.h>
+#समावेश <linux/vmw_vmci_defs.h>
+#समावेश <linux/vmw_vmci_api.h>
+#समावेश <यंत्र/hypervisor.h>
 
 MODULE_AUTHOR("VMware, Inc.");
 MODULE_DESCRIPTION("VMware Memory Control (Balloon) Driver");
@@ -42,28 +43,28 @@ MODULE_ALIAS("dmi:*:svnVMware*:*");
 MODULE_ALIAS("vmware_vmmemctl");
 MODULE_LICENSE("GPL");
 
-static bool __read_mostly vmwballoon_shrinker_enable;
+अटल bool __पढ़ो_mostly vmwballoon_shrinker_enable;
 module_param(vmwballoon_shrinker_enable, bool, 0444);
 MODULE_PARM_DESC(vmwballoon_shrinker_enable,
 	"Enable non-cooperative out-of-memory protection. Disabled by default as it may degrade performance.");
 
-/* Delay in seconds after shrink before inflation. */
-#define VMBALLOON_SHRINK_DELAY		(5)
+/* Delay in seconds after shrink beक्रमe inflation. */
+#घोषणा VMBALLOON_SHRINK_DELAY		(5)
 
 /* Maximum number of refused pages we accumulate during inflation cycle */
-#define VMW_BALLOON_MAX_REFUSED		16
+#घोषणा VMW_BALLOON_MAX_REFUSED		16
 
-/* Magic number for the balloon mount-point */
-#define BALLOON_VMW_MAGIC		0x0ba11007
+/* Magic number क्रम the balloon mount-poपूर्णांक */
+#घोषणा BALLOON_VMW_MAGIC		0x0ba11007
 
 /*
  * Hypervisor communication port definitions.
  */
-#define VMW_BALLOON_HV_PORT		0x5670
-#define VMW_BALLOON_HV_MAGIC		0x456c6d6f
-#define VMW_BALLOON_GUEST_ID		1	/* Linux */
+#घोषणा VMW_BALLOON_HV_PORT		0x5670
+#घोषणा VMW_BALLOON_HV_MAGIC		0x456c6d6f
+#घोषणा VMW_BALLOON_GUEST_ID		1	/* Linux */
 
-enum vmwballoon_capabilities {
+क्रमागत vmwballoon_capabilities अणु
 	/*
 	 * Bit 0 is reserved and not associated to any capability.
 	 */
@@ -72,52 +73,52 @@ enum vmwballoon_capabilities {
 	VMW_BALLOON_BATCHED_2M_CMDS		= (1 << 3),
 	VMW_BALLOON_SIGNALLED_WAKEUP_CMD	= (1 << 4),
 	VMW_BALLOON_64_BIT_TARGET		= (1 << 5)
-};
+पूर्ण;
 
-#define VMW_BALLOON_CAPABILITIES_COMMON	(VMW_BALLOON_BASIC_CMDS \
+#घोषणा VMW_BALLOON_CAPABILITIES_COMMON	(VMW_BALLOON_BASIC_CMDS \
 					| VMW_BALLOON_BATCHED_CMDS \
 					| VMW_BALLOON_BATCHED_2M_CMDS \
 					| VMW_BALLOON_SIGNALLED_WAKEUP_CMD)
 
-#define VMW_BALLOON_2M_ORDER		(PMD_SHIFT - PAGE_SHIFT)
+#घोषणा VMW_BALLOON_2M_ORDER		(PMD_SHIFT - PAGE_SHIFT)
 
 /*
- * 64-bit targets are only supported in 64-bit
+ * 64-bit tarमाला_लो are only supported in 64-bit
  */
-#ifdef CONFIG_64BIT
-#define VMW_BALLOON_CAPABILITIES	(VMW_BALLOON_CAPABILITIES_COMMON \
+#अगर_घोषित CONFIG_64BIT
+#घोषणा VMW_BALLOON_CAPABILITIES	(VMW_BALLOON_CAPABILITIES_COMMON \
 					| VMW_BALLOON_64_BIT_TARGET)
-#else
-#define VMW_BALLOON_CAPABILITIES	VMW_BALLOON_CAPABILITIES_COMMON
-#endif
+#अन्यथा
+#घोषणा VMW_BALLOON_CAPABILITIES	VMW_BALLOON_CAPABILITIES_COMMON
+#पूर्ण_अगर
 
-enum vmballoon_page_size_type {
+क्रमागत vmballoon_page_माप_प्रकारype अणु
 	VMW_BALLOON_4K_PAGE,
 	VMW_BALLOON_2M_PAGE,
 	VMW_BALLOON_LAST_SIZE = VMW_BALLOON_2M_PAGE
-};
+पूर्ण;
 
-#define VMW_BALLOON_NUM_PAGE_SIZES	(VMW_BALLOON_LAST_SIZE + 1)
+#घोषणा VMW_BALLOON_NUM_PAGE_SIZES	(VMW_BALLOON_LAST_SIZE + 1)
 
-static const char * const vmballoon_page_size_names[] = {
+अटल स्थिर अक्षर * स्थिर vmballoon_page_size_names[] = अणु
 	[VMW_BALLOON_4K_PAGE]			= "4k",
 	[VMW_BALLOON_2M_PAGE]			= "2M"
-};
+पूर्ण;
 
-enum vmballoon_op {
+क्रमागत vmballoon_op अणु
 	VMW_BALLOON_INFLATE,
 	VMW_BALLOON_DEFLATE
-};
+पूर्ण;
 
-enum vmballoon_op_stat_type {
+क्रमागत vmballoon_op_stat_type अणु
 	VMW_BALLOON_OP_STAT,
 	VMW_BALLOON_OP_FAIL_STAT
-};
+पूर्ण;
 
-#define VMW_BALLOON_OP_STAT_TYPES	(VMW_BALLOON_OP_FAIL_STAT + 1)
+#घोषणा VMW_BALLOON_OP_STAT_TYPES	(VMW_BALLOON_OP_FAIL_STAT + 1)
 
 /**
- * enum vmballoon_cmd_type - backdoor commands.
+ * क्रमागत vmballoon_cmd_type - backकरोor commands.
  *
  * Availability of the commands is as followed:
  *
@@ -140,27 +141,27 @@ enum vmballoon_op_stat_type {
  *
  * @VMW_BALLOON_CMD_START: Communicating supported version with the hypervisor.
  * @VMW_BALLOON_CMD_GET_TARGET: Gets the balloon target size.
- * @VMW_BALLOON_CMD_LOCK: Informs the hypervisor about a ballooned page.
- * @VMW_BALLOON_CMD_UNLOCK: Informs the hypervisor about a page that is about
+ * @VMW_BALLOON_CMD_LOCK: Inक्रमms the hypervisor about a ballooned page.
+ * @VMW_BALLOON_CMD_UNLOCK: Inक्रमms the hypervisor about a page that is about
  *			    to be deflated from the balloon.
- * @VMW_BALLOON_CMD_GUEST_ID: Informs the hypervisor about the type of OS that
+ * @VMW_BALLOON_CMD_GUEST_ID: Inक्रमms the hypervisor about the type of OS that
  *			      runs in the VM.
- * @VMW_BALLOON_CMD_BATCHED_LOCK: Inform the hypervisor about a batch of
+ * @VMW_BALLOON_CMD_BATCHED_LOCK: Inक्रमm the hypervisor about a batch of
  *				  ballooned pages (up to 512).
- * @VMW_BALLOON_CMD_BATCHED_UNLOCK: Inform the hypervisor about a batch of
+ * @VMW_BALLOON_CMD_BATCHED_UNLOCK: Inक्रमm the hypervisor about a batch of
  *				  pages that are about to be deflated from the
  *				  balloon (up to 512).
  * @VMW_BALLOON_CMD_BATCHED_2M_LOCK: Similar to @VMW_BALLOON_CMD_BATCHED_LOCK
- *				     for 2MB pages.
+ *				     क्रम 2MB pages.
  * @VMW_BALLOON_CMD_BATCHED_2M_UNLOCK: Similar to
- *				       @VMW_BALLOON_CMD_BATCHED_UNLOCK for 2MB
+ *				       @VMW_BALLOON_CMD_BATCHED_UNLOCK क्रम 2MB
  *				       pages.
- * @VMW_BALLOON_CMD_VMCI_DOORBELL_SET: A command to set doorbell notification
+ * @VMW_BALLOON_CMD_VMCI_DOORBELL_SET: A command to set करोorbell notअगरication
  *				       that would be invoked when the balloon
  *				       size changes.
  * @VMW_BALLOON_CMD_LAST: Value of the last command.
  */
-enum vmballoon_cmd_type {
+क्रमागत vmballoon_cmd_type अणु
 	VMW_BALLOON_CMD_START,
 	VMW_BALLOON_CMD_GET_TARGET,
 	VMW_BALLOON_CMD_LOCK,
@@ -173,11 +174,11 @@ enum vmballoon_cmd_type {
 	VMW_BALLOON_CMD_BATCHED_2M_UNLOCK,
 	VMW_BALLOON_CMD_VMCI_DOORBELL_SET,
 	VMW_BALLOON_CMD_LAST = VMW_BALLOON_CMD_VMCI_DOORBELL_SET,
-};
+पूर्ण;
 
-#define VMW_BALLOON_CMD_NUM	(VMW_BALLOON_CMD_LAST + 1)
+#घोषणा VMW_BALLOON_CMD_NUM	(VMW_BALLOON_CMD_LAST + 1)
 
-enum vmballoon_error_codes {
+क्रमागत vmballoon_error_codes अणु
 	VMW_BALLOON_SUCCESS,
 	VMW_BALLOON_ERROR_CMD_INVALID,
 	VMW_BALLOON_ERROR_PPN_INVALID,
@@ -187,11 +188,11 @@ enum vmballoon_error_codes {
 	VMW_BALLOON_ERROR_PPN_NOTNEEDED,
 	VMW_BALLOON_ERROR_RESET,
 	VMW_BALLOON_ERROR_BUSY
-};
+पूर्ण;
 
-#define VMW_BALLOON_SUCCESS_WITH_CAPABILITIES	(0x03000000)
+#घोषणा VMW_BALLOON_SUCCESS_WITH_CAPABILITIES	(0x03000000)
 
-#define VMW_BALLOON_CMD_WITH_TARGET_MASK			\
+#घोषणा VMW_BALLOON_CMD_WITH_TARGET_MASK			\
 	((1UL << VMW_BALLOON_CMD_GET_TARGET)		|	\
 	 (1UL << VMW_BALLOON_CMD_LOCK)			|	\
 	 (1UL << VMW_BALLOON_CMD_UNLOCK)		|	\
@@ -200,7 +201,7 @@ enum vmballoon_error_codes {
 	 (1UL << VMW_BALLOON_CMD_BATCHED_2M_LOCK)	|	\
 	 (1UL << VMW_BALLOON_CMD_BATCHED_2M_UNLOCK))
 
-static const char * const vmballoon_cmd_names[] = {
+अटल स्थिर अक्षर * स्थिर vmballoon_cmd_names[] = अणु
 	[VMW_BALLOON_CMD_START]			= "start",
 	[VMW_BALLOON_CMD_GET_TARGET]		= "target",
 	[VMW_BALLOON_CMD_LOCK]			= "lock",
@@ -211,90 +212,90 @@ static const char * const vmballoon_cmd_names[] = {
 	[VMW_BALLOON_CMD_BATCHED_2M_LOCK]	= "2m-lock",
 	[VMW_BALLOON_CMD_BATCHED_2M_UNLOCK]	= "2m-unlock",
 	[VMW_BALLOON_CMD_VMCI_DOORBELL_SET]	= "doorbellSet"
-};
+पूर्ण;
 
-enum vmballoon_stat_page {
+क्रमागत vmballoon_stat_page अणु
 	VMW_BALLOON_PAGE_STAT_ALLOC,
 	VMW_BALLOON_PAGE_STAT_ALLOC_FAIL,
 	VMW_BALLOON_PAGE_STAT_REFUSED_ALLOC,
 	VMW_BALLOON_PAGE_STAT_REFUSED_FREE,
 	VMW_BALLOON_PAGE_STAT_FREE,
 	VMW_BALLOON_PAGE_STAT_LAST = VMW_BALLOON_PAGE_STAT_FREE
-};
+पूर्ण;
 
-#define VMW_BALLOON_PAGE_STAT_NUM	(VMW_BALLOON_PAGE_STAT_LAST + 1)
+#घोषणा VMW_BALLOON_PAGE_STAT_NUM	(VMW_BALLOON_PAGE_STAT_LAST + 1)
 
-enum vmballoon_stat_general {
+क्रमागत vmballoon_stat_general अणु
 	VMW_BALLOON_STAT_TIMER,
 	VMW_BALLOON_STAT_DOORBELL,
 	VMW_BALLOON_STAT_RESET,
 	VMW_BALLOON_STAT_SHRINK,
 	VMW_BALLOON_STAT_SHRINK_FREE,
 	VMW_BALLOON_STAT_LAST = VMW_BALLOON_STAT_SHRINK_FREE
-};
+पूर्ण;
 
-#define VMW_BALLOON_STAT_NUM		(VMW_BALLOON_STAT_LAST + 1)
+#घोषणा VMW_BALLOON_STAT_NUM		(VMW_BALLOON_STAT_LAST + 1)
 
-static DEFINE_STATIC_KEY_TRUE(vmw_balloon_batching);
-static DEFINE_STATIC_KEY_FALSE(balloon_stat_enabled);
+अटल DEFINE_STATIC_KEY_TRUE(vmw_balloon_batching);
+अटल DEFINE_STATIC_KEY_FALSE(balloon_stat_enabled);
 
-struct vmballoon_ctl {
-	struct list_head pages;
-	struct list_head refused_pages;
-	struct list_head prealloc_pages;
-	unsigned int n_refused_pages;
-	unsigned int n_pages;
-	enum vmballoon_page_size_type page_size;
-	enum vmballoon_op op;
-};
+काष्ठा vmballoon_ctl अणु
+	काष्ठा list_head pages;
+	काष्ठा list_head refused_pages;
+	काष्ठा list_head pपुनः_स्मृति_pages;
+	अचिन्हित पूर्णांक n_refused_pages;
+	अचिन्हित पूर्णांक n_pages;
+	क्रमागत vmballoon_page_माप_प्रकारype page_size;
+	क्रमागत vmballoon_op op;
+पूर्ण;
 
 /**
- * struct vmballoon_batch_entry - a batch entry for lock or unlock.
+ * काष्ठा vmballoon_batch_entry - a batch entry क्रम lock or unlock.
  *
  * @status: the status of the operation, which is written by the hypervisor.
- * @reserved: reserved for future use. Must be set to zero.
+ * @reserved: reserved क्रम future use. Must be set to zero.
  * @pfn: the physical frame number of the page to be locked or unlocked.
  */
-struct vmballoon_batch_entry {
+काष्ठा vmballoon_batch_entry अणु
 	u64 status : 5;
 	u64 reserved : PAGE_SHIFT - 5;
 	u64 pfn : 52;
-} __packed;
+पूर्ण __packed;
 
-struct vmballoon {
+काष्ठा vmballoon अणु
 	/**
-	 * @max_page_size: maximum supported page size for ballooning.
+	 * @max_page_size: maximum supported page size क्रम ballooning.
 	 *
 	 * Protected by @conf_sem
 	 */
-	enum vmballoon_page_size_type max_page_size;
+	क्रमागत vmballoon_page_माप_प्रकारype max_page_size;
 
 	/**
 	 * @size: balloon actual size in basic page size (frames).
 	 *
-	 * While we currently do not support size which is bigger than 32-bit,
-	 * in preparation for future support, use 64-bits.
+	 * While we currently करो not support size which is bigger than 32-bit,
+	 * in preparation क्रम future support, use 64-bits.
 	 */
 	atomic64_t size;
 
 	/**
 	 * @target: balloon target size in basic page size (frames).
 	 *
-	 * We do not protect the target under the assumption that setting the
-	 * value is always done through a single write. If this assumption ever
-	 * breaks, we would have to use X_ONCE for accesses, and suffer the less
-	 * optimized code. Although we may read stale target value if multiple
-	 * accesses happen at once, the performance impact should be minor.
+	 * We करो not protect the target under the assumption that setting the
+	 * value is always करोne through a single ग_लिखो. If this assumption ever
+	 * अवरोधs, we would have to use X_ONCE क्रम accesses, and suffer the less
+	 * optimized code. Although we may पढ़ो stale target value अगर multiple
+	 * accesses happen at once, the perक्रमmance impact should be minor.
 	 */
-	unsigned long target;
+	अचिन्हित दीर्घ target;
 
 	/**
 	 * @reset_required: reset flag
 	 *
-	 * Setting this flag may introduce races, but the code is expected to
-	 * handle them gracefully. In the worst case, another operation will
-	 * fail as reset did not take place. Clearing the flag is done while
-	 * holding @conf_sem for write.
+	 * Setting this flag may पूर्णांकroduce races, but the code is expected to
+	 * handle them gracefully. In the worst हाल, another operation will
+	 * fail as reset did not take place. Clearing the flag is करोne जबतक
+	 * holding @conf_sem क्रम ग_लिखो.
 	 */
 	bool reset_required;
 
@@ -303,15 +304,15 @@ struct vmballoon {
 	 *
 	 * Protected by @conf_sem.
 	 */
-	unsigned long capabilities;
+	अचिन्हित दीर्घ capabilities;
 
 	/**
-	 * @batch_page: pointer to communication batch page.
+	 * @batch_page: poपूर्णांकer to communication batch page.
 	 *
-	 * When batching is used, batch_page points to a page, which holds up to
-	 * %VMW_BALLOON_BATCH_MAX_PAGES entries for locking or unlocking.
+	 * When batching is used, batch_page poपूर्णांकs to a page, which holds up to
+	 * %VMW_BALLOON_BATCH_MAX_PAGES entries क्रम locking or unlocking.
 	 */
-	struct vmballoon_batch_entry *batch_page;
+	काष्ठा vmballoon_batch_entry *batch_page;
 
 	/**
 	 * @batch_max_pages: maximum pages that can be locked/unlocked.
@@ -322,7 +323,7 @@ struct vmballoon {
 	 *
 	 * Protected by @conf_sem.
 	 */
-	unsigned int batch_max_pages;
+	अचिन्हित पूर्णांक batch_max_pages;
 
 	/**
 	 * @page: page to be locked/unlocked by the hypervisor
@@ -332,45 +333,45 @@ struct vmballoon {
 	 *
 	 * Protected by @comm_lock.
 	 */
-	struct page *page;
+	काष्ठा page *page;
 
 	/**
-	 * @shrink_timeout: timeout until the next inflation.
+	 * @shrink_समयout: समयout until the next inflation.
 	 *
-	 * After an shrink event, indicates the time in jiffies after which
-	 * inflation is allowed again. Can be written concurrently with reads,
+	 * After an shrink event, indicates the समय in jअगरfies after which
+	 * inflation is allowed again. Can be written concurrently with पढ़ोs,
 	 * so must use READ_ONCE/WRITE_ONCE when accessing.
 	 */
-	unsigned long shrink_timeout;
+	अचिन्हित दीर्घ shrink_समयout;
 
 	/* statistics */
-	struct vmballoon_stats *stats;
+	काष्ठा vmballoon_stats *stats;
 
 	/**
-	 * @b_dev_info: balloon device information descriptor.
+	 * @b_dev_info: balloon device inक्रमmation descriptor.
 	 */
-	struct balloon_dev_info b_dev_info;
+	काष्ठा balloon_dev_info b_dev_info;
 
-	struct delayed_work dwork;
+	काष्ठा delayed_work dwork;
 
 	/**
 	 * @huge_pages - list of the inflated 2MB pages.
 	 *
 	 * Protected by @b_dev_info.pages_lock .
 	 */
-	struct list_head huge_pages;
+	काष्ठा list_head huge_pages;
 
 	/**
-	 * @vmci_doorbell.
+	 * @vmci_करोorbell.
 	 *
 	 * Protected by @conf_sem.
 	 */
-	struct vmci_handle vmci_doorbell;
+	काष्ठा vmci_handle vmci_करोorbell;
 
 	/**
 	 * @conf_sem: semaphore to protect the configuration and the statistics.
 	 */
-	struct rw_semaphore conf_sem;
+	काष्ठा rw_semaphore conf_sem;
 
 	/**
 	 * @comm_lock: lock to protect the communication with the host.
@@ -380,88 +381,88 @@ struct vmballoon {
 	spinlock_t comm_lock;
 
 	/**
-	 * @shrinker: shrinker interface that is used to avoid over-inflation.
+	 * @shrinker: shrinker पूर्णांकerface that is used to aव्योम over-inflation.
 	 */
-	struct shrinker shrinker;
+	काष्ठा shrinker shrinker;
 
 	/**
-	 * @shrinker_registered: whether the shrinker was registered.
+	 * @shrinker_रेजिस्टरed: whether the shrinker was रेजिस्टरed.
 	 *
-	 * The shrinker interface does not handle gracefully the removal of
-	 * shrinker that was not registered before. This indication allows to
-	 * simplify the unregistration process.
+	 * The shrinker पूर्णांकerface करोes not handle gracefully the removal of
+	 * shrinker that was not रेजिस्टरed beक्रमe. This indication allows to
+	 * simplअगरy the unregistration process.
 	 */
-	bool shrinker_registered;
-};
+	bool shrinker_रेजिस्टरed;
+पूर्ण;
 
-static struct vmballoon balloon;
+अटल काष्ठा vmballoon balloon;
 
-struct vmballoon_stats {
-	/* timer / doorbell operations */
+काष्ठा vmballoon_stats अणु
+	/* समयr / करोorbell operations */
 	atomic64_t general_stat[VMW_BALLOON_STAT_NUM];
 
-	/* allocation statistics for huge and small pages */
+	/* allocation statistics क्रम huge and small pages */
 	atomic64_t
 	       page_stat[VMW_BALLOON_PAGE_STAT_NUM][VMW_BALLOON_NUM_PAGE_SIZES];
 
 	/* Monitor operations: total operations, and failures */
 	atomic64_t ops[VMW_BALLOON_CMD_NUM][VMW_BALLOON_OP_STAT_TYPES];
-};
+पूर्ण;
 
-static inline bool is_vmballoon_stats_on(void)
-{
-	return IS_ENABLED(CONFIG_DEBUG_FS) &&
-		static_branch_unlikely(&balloon_stat_enabled);
-}
+अटल अंतरभूत bool is_vmballoon_stats_on(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_DEBUG_FS) &&
+		अटल_branch_unlikely(&balloon_stat_enabled);
+पूर्ण
 
-static inline void vmballoon_stats_op_inc(struct vmballoon *b, unsigned int op,
-					  enum vmballoon_op_stat_type type)
-{
-	if (is_vmballoon_stats_on())
+अटल अंतरभूत व्योम vmballoon_stats_op_inc(काष्ठा vmballoon *b, अचिन्हित पूर्णांक op,
+					  क्रमागत vmballoon_op_stat_type type)
+अणु
+	अगर (is_vmballoon_stats_on())
 		atomic64_inc(&b->stats->ops[op][type]);
-}
+पूर्ण
 
-static inline void vmballoon_stats_gen_inc(struct vmballoon *b,
-					   enum vmballoon_stat_general stat)
-{
-	if (is_vmballoon_stats_on())
+अटल अंतरभूत व्योम vmballoon_stats_gen_inc(काष्ठा vmballoon *b,
+					   क्रमागत vmballoon_stat_general stat)
+अणु
+	अगर (is_vmballoon_stats_on())
 		atomic64_inc(&b->stats->general_stat[stat]);
-}
+पूर्ण
 
-static inline void vmballoon_stats_gen_add(struct vmballoon *b,
-					   enum vmballoon_stat_general stat,
-					   unsigned int val)
-{
-	if (is_vmballoon_stats_on())
+अटल अंतरभूत व्योम vmballoon_stats_gen_add(काष्ठा vmballoon *b,
+					   क्रमागत vmballoon_stat_general stat,
+					   अचिन्हित पूर्णांक val)
+अणु
+	अगर (is_vmballoon_stats_on())
 		atomic64_add(val, &b->stats->general_stat[stat]);
-}
+पूर्ण
 
-static inline void vmballoon_stats_page_inc(struct vmballoon *b,
-					    enum vmballoon_stat_page stat,
-					    enum vmballoon_page_size_type size)
-{
-	if (is_vmballoon_stats_on())
+अटल अंतरभूत व्योम vmballoon_stats_page_inc(काष्ठा vmballoon *b,
+					    क्रमागत vmballoon_stat_page stat,
+					    क्रमागत vmballoon_page_माप_प्रकारype size)
+अणु
+	अगर (is_vmballoon_stats_on())
 		atomic64_inc(&b->stats->page_stat[stat][size]);
-}
+पूर्ण
 
-static inline void vmballoon_stats_page_add(struct vmballoon *b,
-					    enum vmballoon_stat_page stat,
-					    enum vmballoon_page_size_type size,
-					    unsigned int val)
-{
-	if (is_vmballoon_stats_on())
+अटल अंतरभूत व्योम vmballoon_stats_page_add(काष्ठा vmballoon *b,
+					    क्रमागत vmballoon_stat_page stat,
+					    क्रमागत vmballoon_page_माप_प्रकारype size,
+					    अचिन्हित पूर्णांक val)
+अणु
+	अगर (is_vmballoon_stats_on())
 		atomic64_add(val, &b->stats->page_stat[stat][size]);
-}
+पूर्ण
 
-static inline unsigned long
-__vmballoon_cmd(struct vmballoon *b, unsigned long cmd, unsigned long arg1,
-		unsigned long arg2, unsigned long *result)
-{
-	unsigned long status, dummy1, dummy2, dummy3, local_result;
+अटल अंतरभूत अचिन्हित दीर्घ
+__vmballoon_cmd(काष्ठा vmballoon *b, अचिन्हित दीर्घ cmd, अचिन्हित दीर्घ arg1,
+		अचिन्हित दीर्घ arg2, अचिन्हित दीर्घ *result)
+अणु
+	अचिन्हित दीर्घ status, dummy1, dummy2, dummy3, local_result;
 
 	vmballoon_stats_op_inc(b, cmd, VMW_BALLOON_OP_STAT);
 
-	asm volatile ("inl %%dx" :
+	यंत्र अस्थिर ("inl %%dx" :
 		"=a"(status),
 		"=c"(dummy1),
 		"=d"(dummy2),
@@ -474,183 +475,183 @@ __vmballoon_cmd(struct vmballoon *b, unsigned long cmd, unsigned long arg1,
 		"4"(arg2) :
 		"memory");
 
-	/* update the result if needed */
-	if (result)
+	/* update the result अगर needed */
+	अगर (result)
 		*result = (cmd == VMW_BALLOON_CMD_START) ? dummy1 :
 							   local_result;
 
 	/* update target when applicable */
-	if (status == VMW_BALLOON_SUCCESS &&
+	अगर (status == VMW_BALLOON_SUCCESS &&
 	    ((1ul << cmd) & VMW_BALLOON_CMD_WITH_TARGET_MASK))
 		WRITE_ONCE(b->target, local_result);
 
-	if (status != VMW_BALLOON_SUCCESS &&
-	    status != VMW_BALLOON_SUCCESS_WITH_CAPABILITIES) {
+	अगर (status != VMW_BALLOON_SUCCESS &&
+	    status != VMW_BALLOON_SUCCESS_WITH_CAPABILITIES) अणु
 		vmballoon_stats_op_inc(b, cmd, VMW_BALLOON_OP_FAIL_STAT);
 		pr_debug("%s: %s [0x%lx,0x%lx) failed, returned %ld\n",
 			 __func__, vmballoon_cmd_names[cmd], arg1, arg2,
 			 status);
-	}
+	पूर्ण
 
 	/* mark reset required accordingly */
-	if (status == VMW_BALLOON_ERROR_RESET)
+	अगर (status == VMW_BALLOON_ERROR_RESET)
 		b->reset_required = true;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static __always_inline unsigned long
-vmballoon_cmd(struct vmballoon *b, unsigned long cmd, unsigned long arg1,
-	      unsigned long arg2)
-{
-	unsigned long dummy;
+अटल __always_अंतरभूत अचिन्हित दीर्घ
+vmballoon_cmd(काष्ठा vmballoon *b, अचिन्हित दीर्घ cmd, अचिन्हित दीर्घ arg1,
+	      अचिन्हित दीर्घ arg2)
+अणु
+	अचिन्हित दीर्घ dummy;
 
-	return __vmballoon_cmd(b, cmd, arg1, arg2, &dummy);
-}
+	वापस __vmballoon_cmd(b, cmd, arg1, arg2, &dummy);
+पूर्ण
 
 /*
  * Send "start" command to the host, communicating supported version
  * of the protocol.
  */
-static int vmballoon_send_start(struct vmballoon *b, unsigned long req_caps)
-{
-	unsigned long status, capabilities;
+अटल पूर्णांक vmballoon_send_start(काष्ठा vmballoon *b, अचिन्हित दीर्घ req_caps)
+अणु
+	अचिन्हित दीर्घ status, capabilities;
 
 	status = __vmballoon_cmd(b, VMW_BALLOON_CMD_START, req_caps, 0,
 				 &capabilities);
 
-	switch (status) {
-	case VMW_BALLOON_SUCCESS_WITH_CAPABILITIES:
+	चयन (status) अणु
+	हाल VMW_BALLOON_SUCCESS_WITH_CAPABILITIES:
 		b->capabilities = capabilities;
-		break;
-	case VMW_BALLOON_SUCCESS:
+		अवरोध;
+	हाल VMW_BALLOON_SUCCESS:
 		b->capabilities = VMW_BALLOON_BASIC_CMDS;
-		break;
-	default:
-		return -EIO;
-	}
+		अवरोध;
+	शेष:
+		वापस -EIO;
+	पूर्ण
 
 	/*
-	 * 2MB pages are only supported with batching. If batching is for some
-	 * reason disabled, do not use 2MB pages, since otherwise the legacy
+	 * 2MB pages are only supported with batching. If batching is क्रम some
+	 * reason disabled, करो not use 2MB pages, since otherwise the legacy
 	 * mechanism is used with 2MB pages, causing a failure.
 	 */
 	b->max_page_size = VMW_BALLOON_4K_PAGE;
-	if ((b->capabilities & VMW_BALLOON_BATCHED_2M_CMDS) &&
+	अगर ((b->capabilities & VMW_BALLOON_BATCHED_2M_CMDS) &&
 	    (b->capabilities & VMW_BALLOON_BATCHED_CMDS))
 		b->max_page_size = VMW_BALLOON_2M_PAGE;
 
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vmballoon_send_guest_id - communicate guest type to the host.
  *
- * @b: pointer to the balloon.
+ * @b: poपूर्णांकer to the balloon.
  *
  * Communicate guest type to the host so that it can adjust ballooning
- * algorithm to the one most appropriate for the guest. This command
+ * algorithm to the one most appropriate क्रम the guest. This command
  * is normally issued after sending "start" command and is part of
  * standard reset sequence.
  *
  * Return: zero on success or appropriate error code.
  */
-static int vmballoon_send_guest_id(struct vmballoon *b)
-{
-	unsigned long status;
+अटल पूर्णांक vmballoon_send_guest_id(काष्ठा vmballoon *b)
+अणु
+	अचिन्हित दीर्घ status;
 
 	status = vmballoon_cmd(b, VMW_BALLOON_CMD_GUEST_ID,
 			       VMW_BALLOON_GUEST_ID, 0);
 
-	return status == VMW_BALLOON_SUCCESS ? 0 : -EIO;
-}
+	वापस status == VMW_BALLOON_SUCCESS ? 0 : -EIO;
+पूर्ण
 
 /**
- * vmballoon_page_order() - return the order of the page
+ * vmballoon_page_order() - वापस the order of the page
  * @page_size: the size of the page.
  *
  * Return: the allocation order.
  */
-static inline
-unsigned int vmballoon_page_order(enum vmballoon_page_size_type page_size)
-{
-	return page_size == VMW_BALLOON_2M_PAGE ? VMW_BALLOON_2M_ORDER : 0;
-}
+अटल अंतरभूत
+अचिन्हित पूर्णांक vmballoon_page_order(क्रमागत vmballoon_page_माप_प्रकारype page_size)
+अणु
+	वापस page_size == VMW_BALLOON_2M_PAGE ? VMW_BALLOON_2M_ORDER : 0;
+पूर्ण
 
 /**
- * vmballoon_page_in_frames() - returns the number of frames in a page.
+ * vmballoon_page_in_frames() - वापसs the number of frames in a page.
  * @page_size: the size of the page.
  *
  * Return: the number of 4k frames.
  */
-static inline unsigned int
-vmballoon_page_in_frames(enum vmballoon_page_size_type page_size)
-{
-	return 1 << vmballoon_page_order(page_size);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक
+vmballoon_page_in_frames(क्रमागत vmballoon_page_माप_प्रकारype page_size)
+अणु
+	वापस 1 << vmballoon_page_order(page_size);
+पूर्ण
 
 /**
  * vmballoon_mark_page_offline() - mark a page as offline
- * @page: pointer for the page.
+ * @page: poपूर्णांकer क्रम the page.
  * @page_size: the size of the page.
  */
-static void
-vmballoon_mark_page_offline(struct page *page,
-			    enum vmballoon_page_size_type page_size)
-{
-	int i;
+अटल व्योम
+vmballoon_mark_page_offline(काष्ठा page *page,
+			    क्रमागत vmballoon_page_माप_प्रकारype page_size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < vmballoon_page_in_frames(page_size); i++)
+	क्रम (i = 0; i < vmballoon_page_in_frames(page_size); i++)
 		__SetPageOffline(page + i);
-}
+पूर्ण
 
 /**
  * vmballoon_mark_page_online() - mark a page as online
- * @page: pointer for the page.
+ * @page: poपूर्णांकer क्रम the page.
  * @page_size: the size of the page.
  */
-static void
-vmballoon_mark_page_online(struct page *page,
-			   enum vmballoon_page_size_type page_size)
-{
-	int i;
+अटल व्योम
+vmballoon_mark_page_online(काष्ठा page *page,
+			   क्रमागत vmballoon_page_माप_प्रकारype page_size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < vmballoon_page_in_frames(page_size); i++)
+	क्रम (i = 0; i < vmballoon_page_in_frames(page_size); i++)
 		__ClearPageOffline(page + i);
-}
+पूर्ण
 
 /**
  * vmballoon_send_get_target() - Retrieve desired balloon size from the host.
  *
- * @b: pointer to the balloon.
+ * @b: poपूर्णांकer to the balloon.
  *
- * Return: zero on success, EINVAL if limit does not fit in 32-bit, as required
- * by the host-guest protocol and EIO if an error occurred in communicating with
+ * Return: zero on success, EINVAL अगर limit करोes not fit in 32-bit, as required
+ * by the host-guest protocol and EIO अगर an error occurred in communicating with
  * the host.
  */
-static int vmballoon_send_get_target(struct vmballoon *b)
-{
-	unsigned long status;
-	unsigned long limit;
+अटल पूर्णांक vmballoon_send_get_target(काष्ठा vmballoon *b)
+अणु
+	अचिन्हित दीर्घ status;
+	अचिन्हित दीर्घ limit;
 
 	limit = totalram_pages();
 
-	/* Ensure limit fits in 32-bits if 64-bit targets are not supported */
-	if (!(b->capabilities & VMW_BALLOON_64_BIT_TARGET) &&
+	/* Ensure limit fits in 32-bits अगर 64-bit tarमाला_लो are not supported */
+	अगर (!(b->capabilities & VMW_BALLOON_64_BIT_TARGET) &&
 	    limit != (u32)limit)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	status = vmballoon_cmd(b, VMW_BALLOON_CMD_GET_TARGET, limit, 0);
 
-	return status == VMW_BALLOON_SUCCESS ? 0 : -EIO;
-}
+	वापस status == VMW_BALLOON_SUCCESS ? 0 : -EIO;
+पूर्ण
 
 /**
  * vmballoon_alloc_page_list - allocates a list of pages.
  *
- * @b: pointer to the balloon.
- * @ctl: pointer for the %struct vmballoon_ctl, which defines the operation.
+ * @b: poपूर्णांकer to the balloon.
+ * @ctl: poपूर्णांकer क्रम the %काष्ठा vmballoon_ctl, which defines the operation.
  * @req_n_pages: the number of requested pages.
  *
  * Tries to allocate @req_n_pages. Add them to the list of balloon pages in
@@ -658,66 +659,66 @@ static int vmballoon_send_get_target(struct vmballoon *b)
  *
  * Return: zero on success or error code otherwise.
  */
-static int vmballoon_alloc_page_list(struct vmballoon *b,
-				     struct vmballoon_ctl *ctl,
-				     unsigned int req_n_pages)
-{
-	struct page *page;
-	unsigned int i;
+अटल पूर्णांक vmballoon_alloc_page_list(काष्ठा vmballoon *b,
+				     काष्ठा vmballoon_ctl *ctl,
+				     अचिन्हित पूर्णांक req_n_pages)
+अणु
+	काष्ठा page *page;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < req_n_pages; i++) {
+	क्रम (i = 0; i < req_n_pages; i++) अणु
 		/*
-		 * First check if we happen to have pages that were allocated
-		 * before. This happens when 2MB page rejected during inflation
-		 * by the hypervisor, and then split into 4KB pages.
+		 * First check अगर we happen to have pages that were allocated
+		 * beक्रमe. This happens when 2MB page rejected during inflation
+		 * by the hypervisor, and then split पूर्णांकo 4KB pages.
 		 */
-		if (!list_empty(&ctl->prealloc_pages)) {
-			page = list_first_entry(&ctl->prealloc_pages,
-						struct page, lru);
+		अगर (!list_empty(&ctl->pपुनः_स्मृति_pages)) अणु
+			page = list_first_entry(&ctl->pपुनः_स्मृति_pages,
+						काष्ठा page, lru);
 			list_del(&page->lru);
-		} else {
-			if (ctl->page_size == VMW_BALLOON_2M_PAGE)
+		पूर्ण अन्यथा अणु
+			अगर (ctl->page_size == VMW_BALLOON_2M_PAGE)
 				page = alloc_pages(__GFP_HIGHMEM|__GFP_NOWARN|
 					__GFP_NOMEMALLOC, VMW_BALLOON_2M_ORDER);
-			else
+			अन्यथा
 				page = balloon_page_alloc();
 
 			vmballoon_stats_page_inc(b, VMW_BALLOON_PAGE_STAT_ALLOC,
 						 ctl->page_size);
-		}
+		पूर्ण
 
-		if (page) {
-			/* Success. Add the page to the list and continue. */
+		अगर (page) अणु
+			/* Success. Add the page to the list and जारी. */
 			list_add(&page->lru, &ctl->pages);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Allocation failed. Update statistics and stop. */
 		vmballoon_stats_page_inc(b, VMW_BALLOON_PAGE_STAT_ALLOC_FAIL,
 					 ctl->page_size);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ctl->n_pages = i;
 
-	return req_n_pages == ctl->n_pages ? 0 : -ENOMEM;
-}
+	वापस req_n_pages == ctl->n_pages ? 0 : -ENOMEM;
+पूर्ण
 
 /**
- * vmballoon_handle_one_result - Handle lock/unlock result for a single page.
+ * vmballoon_handle_one_result - Handle lock/unlock result क्रम a single page.
  *
- * @b: pointer for %struct vmballoon.
- * @page: pointer for the page whose result should be handled.
+ * @b: poपूर्णांकer क्रम %काष्ठा vmballoon.
+ * @page: poपूर्णांकer क्रम the page whose result should be handled.
  * @page_size: size of the page.
  * @status: status of the operation as provided by the hypervisor.
  */
-static int vmballoon_handle_one_result(struct vmballoon *b, struct page *page,
-				       enum vmballoon_page_size_type page_size,
-				       unsigned long status)
-{
-	/* On success do nothing. The page is already on the balloon list. */
-	if (likely(status == VMW_BALLOON_SUCCESS))
-		return 0;
+अटल पूर्णांक vmballoon_handle_one_result(काष्ठा vmballoon *b, काष्ठा page *page,
+				       क्रमागत vmballoon_page_माप_प्रकारype page_size,
+				       अचिन्हित दीर्घ status)
+अणु
+	/* On success करो nothing. The page is alपढ़ोy on the balloon list. */
+	अगर (likely(status == VMW_BALLOON_SUCCESS))
+		वापस 0;
 
 	pr_debug("%s: failed comm pfn %lx status %lu page_size %s\n", __func__,
 		 page_to_pfn(page), status,
@@ -727,146 +728,146 @@ static int vmballoon_handle_one_result(struct vmballoon *b, struct page *page,
 	vmballoon_stats_page_inc(b, VMW_BALLOON_PAGE_STAT_REFUSED_ALLOC,
 				 page_size);
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /**
- * vmballoon_status_page - returns the status of (un)lock operation
+ * vmballoon_status_page - वापसs the status of (un)lock operation
  *
- * @b: pointer to the balloon.
- * @idx: index for the page for which the operation is performed.
- * @p: pointer to where the page struct is returned.
+ * @b: poपूर्णांकer to the balloon.
+ * @idx: index क्रम the page क्रम which the operation is perक्रमmed.
+ * @p: poपूर्णांकer to where the page काष्ठा is वापसed.
  *
- * Following a lock or unlock operation, returns the status of the operation for
- * an individual page. Provides the page that the operation was performed on on
+ * Following a lock or unlock operation, वापसs the status of the operation क्रम
+ * an inभागidual page. Provides the page that the operation was perक्रमmed on on
  * the @page argument.
  *
- * Returns: The status of a lock or unlock operation for an individual page.
+ * Returns: The status of a lock or unlock operation क्रम an inभागidual page.
  */
-static unsigned long vmballoon_status_page(struct vmballoon *b, int idx,
-					   struct page **p)
-{
-	if (static_branch_likely(&vmw_balloon_batching)) {
+अटल अचिन्हित दीर्घ vmballoon_status_page(काष्ठा vmballoon *b, पूर्णांक idx,
+					   काष्ठा page **p)
+अणु
+	अगर (अटल_branch_likely(&vmw_balloon_batching)) अणु
 		/* batching mode */
 		*p = pfn_to_page(b->batch_page[idx].pfn);
-		return b->batch_page[idx].status;
-	}
+		वापस b->batch_page[idx].status;
+	पूर्ण
 
 	/* non-batching mode */
 	*p = b->page;
 
 	/*
 	 * If a failure occurs, the indication will be provided in the status
-	 * of the entire operation, which is considered before the individual
-	 * page status. So for non-batching mode, the indication is always of
+	 * of the entire operation, which is considered beक्रमe the inभागidual
+	 * page status. So क्रम non-batching mode, the indication is always of
 	 * success.
 	 */
-	return VMW_BALLOON_SUCCESS;
-}
+	वापस VMW_BALLOON_SUCCESS;
+पूर्ण
 
 /**
- * vmballoon_lock_op - notifies the host about inflated/deflated pages.
- * @b: pointer to the balloon.
+ * vmballoon_lock_op - notअगरies the host about inflated/deflated pages.
+ * @b: poपूर्णांकer to the balloon.
  * @num_pages: number of inflated/deflated pages.
  * @page_size: size of the page.
  * @op: the type of operation (lock or unlock).
  *
- * Notify the host about page(s) that were ballooned (or removed from the
+ * Notअगरy the host about page(s) that were ballooned (or हटाओd from the
  * balloon) so that host can use it without fear that guest will need it (or
- * stop using them since the VM does). Host may reject some pages, we need to
- * check the return value and maybe submit a different page. The pages that are
- * inflated/deflated are pointed by @b->page.
+ * stop using them since the VM करोes). Host may reject some pages, we need to
+ * check the वापस value and maybe submit a dअगरferent page. The pages that are
+ * inflated/deflated are poपूर्णांकed by @b->page.
  *
  * Return: result as provided by the hypervisor.
  */
-static unsigned long vmballoon_lock_op(struct vmballoon *b,
-				       unsigned int num_pages,
-				       enum vmballoon_page_size_type page_size,
-				       enum vmballoon_op op)
-{
-	unsigned long cmd, pfn;
+अटल अचिन्हित दीर्घ vmballoon_lock_op(काष्ठा vmballoon *b,
+				       अचिन्हित पूर्णांक num_pages,
+				       क्रमागत vmballoon_page_माप_प्रकारype page_size,
+				       क्रमागत vmballoon_op op)
+अणु
+	अचिन्हित दीर्घ cmd, pfn;
 
-	lockdep_assert_held(&b->comm_lock);
+	lockdep_निश्चित_held(&b->comm_lock);
 
-	if (static_branch_likely(&vmw_balloon_batching)) {
-		if (op == VMW_BALLOON_INFLATE)
+	अगर (अटल_branch_likely(&vmw_balloon_batching)) अणु
+		अगर (op == VMW_BALLOON_INFLATE)
 			cmd = page_size == VMW_BALLOON_2M_PAGE ?
 				VMW_BALLOON_CMD_BATCHED_2M_LOCK :
 				VMW_BALLOON_CMD_BATCHED_LOCK;
-		else
+		अन्यथा
 			cmd = page_size == VMW_BALLOON_2M_PAGE ?
 				VMW_BALLOON_CMD_BATCHED_2M_UNLOCK :
 				VMW_BALLOON_CMD_BATCHED_UNLOCK;
 
 		pfn = PHYS_PFN(virt_to_phys(b->batch_page));
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd = op == VMW_BALLOON_INFLATE ? VMW_BALLOON_CMD_LOCK :
 						  VMW_BALLOON_CMD_UNLOCK;
 		pfn = page_to_pfn(b->page);
 
 		/* In non-batching mode, PFNs must fit in 32-bit */
-		if (unlikely(pfn != (u32)pfn))
-			return VMW_BALLOON_ERROR_PPN_INVALID;
-	}
+		अगर (unlikely(pfn != (u32)pfn))
+			वापस VMW_BALLOON_ERROR_PPN_INVALID;
+	पूर्ण
 
-	return vmballoon_cmd(b, cmd, pfn, num_pages);
-}
+	वापस vmballoon_cmd(b, cmd, pfn, num_pages);
+पूर्ण
 
 /**
  * vmballoon_add_page - adds a page towards lock/unlock operation.
  *
- * @b: pointer to the balloon.
+ * @b: poपूर्णांकer to the balloon.
  * @idx: index of the page to be ballooned in this batch.
- * @p: pointer to the page that is about to be ballooned.
+ * @p: poपूर्णांकer to the page that is about to be ballooned.
  *
- * Adds the page to be ballooned. Must be called while holding @comm_lock.
+ * Adds the page to be ballooned. Must be called जबतक holding @comm_lock.
  */
-static void vmballoon_add_page(struct vmballoon *b, unsigned int idx,
-			       struct page *p)
-{
-	lockdep_assert_held(&b->comm_lock);
+अटल व्योम vmballoon_add_page(काष्ठा vmballoon *b, अचिन्हित पूर्णांक idx,
+			       काष्ठा page *p)
+अणु
+	lockdep_निश्चित_held(&b->comm_lock);
 
-	if (static_branch_likely(&vmw_balloon_batching))
-		b->batch_page[idx] = (struct vmballoon_batch_entry)
-					{ .pfn = page_to_pfn(p) };
-	else
+	अगर (अटल_branch_likely(&vmw_balloon_batching))
+		b->batch_page[idx] = (काष्ठा vmballoon_batch_entry)
+					अणु .pfn = page_to_pfn(p) पूर्ण;
+	अन्यथा
 		b->page = p;
-}
+पूर्ण
 
 /**
  * vmballoon_lock - lock or unlock a batch of pages.
  *
- * @b: pointer to the balloon.
- * @ctl: pointer for the %struct vmballoon_ctl, which defines the operation.
+ * @b: poपूर्णांकer to the balloon.
+ * @ctl: poपूर्णांकer क्रम the %काष्ठा vmballoon_ctl, which defines the operation.
  *
- * Notifies the host of about ballooned pages (after inflation or deflation,
+ * Notअगरies the host of about ballooned pages (after inflation or deflation,
  * according to @ctl). If the host rejects the page put it on the
  * @ctl refuse list. These refused page are then released when moving to the
  * next size of pages.
  *
- * Note that we neither free any @page here nor put them back on the ballooned
- * pages list. Instead we queue it for later processing. We do that for several
- * reasons. First, we do not want to free the page under the lock. Second, it
- * allows us to unify the handling of lock and unlock. In the inflate case, the
- * caller will check if there are too many refused pages and release them.
+ * Note that we neither मुक्त any @page here nor put them back on the ballooned
+ * pages list. Instead we queue it क्रम later processing. We करो that क्रम several
+ * reasons. First, we करो not want to मुक्त the page under the lock. Second, it
+ * allows us to unअगरy the handling of lock and unlock. In the inflate हाल, the
+ * caller will check अगर there are too many refused pages and release them.
  * Although it is not identical to the past behavior, it should not affect
- * performance.
+ * perक्रमmance.
  */
-static int vmballoon_lock(struct vmballoon *b, struct vmballoon_ctl *ctl)
-{
-	unsigned long batch_status;
-	struct page *page;
-	unsigned int i, num_pages;
+अटल पूर्णांक vmballoon_lock(काष्ठा vmballoon *b, काष्ठा vmballoon_ctl *ctl)
+अणु
+	अचिन्हित दीर्घ batch_status;
+	काष्ठा page *page;
+	अचिन्हित पूर्णांक i, num_pages;
 
 	num_pages = ctl->n_pages;
-	if (num_pages == 0)
-		return 0;
+	अगर (num_pages == 0)
+		वापस 0;
 
-	/* communication with the host is done under the communication lock */
+	/* communication with the host is करोne under the communication lock */
 	spin_lock(&b->comm_lock);
 
 	i = 0;
-	list_for_each_entry(page, &ctl->pages, lru)
+	list_क्रम_each_entry(page, &ctl->pages, lru)
 		vmballoon_add_page(b, i++, page);
 
 	batch_status = vmballoon_lock_op(b, ctl->n_pages, ctl->page_size,
@@ -877,8 +878,8 @@ static int vmballoon_lock(struct vmballoon *b, struct vmballoon_ctl *ctl)
 	 * @ctl->n_pages we are saving the original value in @num_pages and
 	 * use this value to bound the loop.
 	 */
-	for (i = 0; i < num_pages; i++) {
-		unsigned long status;
+	क्रम (i = 0; i < num_pages; i++) अणु
+		अचिन्हित दीर्घ status;
 
 		status = vmballoon_status_page(b, i, &page);
 
@@ -886,13 +887,13 @@ static int vmballoon_lock(struct vmballoon *b, struct vmballoon_ctl *ctl)
 		 * Failure of the whole batch overrides a single operation
 		 * results.
 		 */
-		if (batch_status != VMW_BALLOON_SUCCESS)
+		अगर (batch_status != VMW_BALLOON_SUCCESS)
 			status = batch_status;
 
-		/* Continue if no error happened */
-		if (!vmballoon_handle_one_result(b, page, ctl->page_size,
+		/* Continue अगर no error happened */
+		अगर (!vmballoon_handle_one_result(b, page, ctl->page_size,
 						 status))
-			continue;
+			जारी;
 
 		/*
 		 * Error happened. Move the pages to the refused list and update
@@ -901,226 +902,226 @@ static int vmballoon_lock(struct vmballoon *b, struct vmballoon_ctl *ctl)
 		list_move(&page->lru, &ctl->refused_pages);
 		ctl->n_pages--;
 		ctl->n_refused_pages++;
-	}
+	पूर्ण
 
 	spin_unlock(&b->comm_lock);
 
-	return batch_status == VMW_BALLOON_SUCCESS ? 0 : -EIO;
-}
+	वापस batch_status == VMW_BALLOON_SUCCESS ? 0 : -EIO;
+पूर्ण
 
 /**
  * vmballoon_release_page_list() - Releases a page list
  *
  * @page_list: list of pages to release.
- * @n_pages: pointer to the number of pages.
- * @page_size: whether the pages in the list are 2MB (or else 4KB).
+ * @n_pages: poपूर्णांकer to the number of pages.
+ * @page_size: whether the pages in the list are 2MB (or अन्यथा 4KB).
  *
  * Releases the list of pages and zeros the number of pages.
  */
-static void vmballoon_release_page_list(struct list_head *page_list,
-				       int *n_pages,
-				       enum vmballoon_page_size_type page_size)
-{
-	struct page *page, *tmp;
+अटल व्योम vmballoon_release_page_list(काष्ठा list_head *page_list,
+				       पूर्णांक *n_pages,
+				       क्रमागत vmballoon_page_माप_प्रकारype page_size)
+अणु
+	काष्ठा page *page, *पंचांगp;
 
-	list_for_each_entry_safe(page, tmp, page_list, lru) {
+	list_क्रम_each_entry_safe(page, पंचांगp, page_list, lru) अणु
 		list_del(&page->lru);
-		__free_pages(page, vmballoon_page_order(page_size));
-	}
+		__मुक्त_pages(page, vmballoon_page_order(page_size));
+	पूर्ण
 
-	if (n_pages)
+	अगर (n_pages)
 		*n_pages = 0;
-}
+पूर्ण
 
 
 /*
- * Release pages that were allocated while attempting to inflate the
- * balloon but were refused by the host for one reason or another.
+ * Release pages that were allocated जबतक attempting to inflate the
+ * balloon but were refused by the host क्रम one reason or another.
  */
-static void vmballoon_release_refused_pages(struct vmballoon *b,
-					    struct vmballoon_ctl *ctl)
-{
+अटल व्योम vmballoon_release_refused_pages(काष्ठा vmballoon *b,
+					    काष्ठा vmballoon_ctl *ctl)
+अणु
 	vmballoon_stats_page_inc(b, VMW_BALLOON_PAGE_STAT_REFUSED_FREE,
 				 ctl->page_size);
 
 	vmballoon_release_page_list(&ctl->refused_pages, &ctl->n_refused_pages,
 				    ctl->page_size);
-}
+पूर्ण
 
 /**
  * vmballoon_change - retrieve the required balloon change
  *
- * @b: pointer for the balloon.
+ * @b: poपूर्णांकer क्रम the balloon.
  *
- * Return: the required change for the balloon size. A positive number
+ * Return: the required change क्रम the balloon size. A positive number
  * indicates inflation, a negative number indicates a deflation.
  */
-static int64_t vmballoon_change(struct vmballoon *b)
-{
-	int64_t size, target;
+अटल पूर्णांक64_t vmballoon_change(काष्ठा vmballoon *b)
+अणु
+	पूर्णांक64_t size, target;
 
-	size = atomic64_read(&b->size);
+	size = atomic64_पढ़ो(&b->size);
 	target = READ_ONCE(b->target);
 
 	/*
-	 * We must cast first because of int sizes
+	 * We must cast first because of पूर्णांक sizes
 	 * Otherwise we might get huge positives instead of negatives
 	 */
 
-	if (b->reset_required)
-		return 0;
+	अगर (b->reset_required)
+		वापस 0;
 
 	/* consider a 2MB slack on deflate, unless the balloon is emptied */
-	if (target < size && target != 0 &&
+	अगर (target < size && target != 0 &&
 	    size - target < vmballoon_page_in_frames(VMW_BALLOON_2M_PAGE))
-		return 0;
+		वापस 0;
 
 	/* If an out-of-memory recently occurred, inflation is disallowed. */
-	if (target > size && time_before(jiffies, READ_ONCE(b->shrink_timeout)))
-		return 0;
+	अगर (target > size && समय_beक्रमe(jअगरfies, READ_ONCE(b->shrink_समयout)))
+		वापस 0;
 
-	return target - size;
-}
+	वापस target - size;
+पूर्ण
 
 /**
  * vmballoon_enqueue_page_list() - Enqueues list of pages after inflation.
  *
- * @b: pointer to balloon.
+ * @b: poपूर्णांकer to balloon.
  * @pages: list of pages to enqueue.
- * @n_pages: pointer to number of pages in list. The value is zeroed.
+ * @n_pages: poपूर्णांकer to number of pages in list. The value is zeroed.
  * @page_size: whether the pages are 2MB or 4KB pages.
  *
  * Enqueues the provides list of pages in the ballooned page list, clears the
  * list and zeroes the number of pages that was provided.
  */
-static void vmballoon_enqueue_page_list(struct vmballoon *b,
-					struct list_head *pages,
-					unsigned int *n_pages,
-					enum vmballoon_page_size_type page_size)
-{
-	unsigned long flags;
-	struct page *page;
+अटल व्योम vmballoon_enqueue_page_list(काष्ठा vmballoon *b,
+					काष्ठा list_head *pages,
+					अचिन्हित पूर्णांक *n_pages,
+					क्रमागत vmballoon_page_माप_प्रकारype page_size)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा page *page;
 
-	if (page_size == VMW_BALLOON_4K_PAGE) {
+	अगर (page_size == VMW_BALLOON_4K_PAGE) अणु
 		balloon_page_list_enqueue(&b->b_dev_info, pages);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Keep the huge pages in a local list which is not available
-		 * for the balloon compaction mechanism.
+		 * क्रम the balloon compaction mechanism.
 		 */
 		spin_lock_irqsave(&b->b_dev_info.pages_lock, flags);
 
-		list_for_each_entry(page, pages, lru) {
+		list_क्रम_each_entry(page, pages, lru) अणु
 			vmballoon_mark_page_offline(page, VMW_BALLOON_2M_PAGE);
-		}
+		पूर्ण
 
 		list_splice_init(pages, &b->huge_pages);
 		__count_vm_events(BALLOON_INFLATE, *n_pages *
 				  vmballoon_page_in_frames(VMW_BALLOON_2M_PAGE));
 		spin_unlock_irqrestore(&b->b_dev_info.pages_lock, flags);
-	}
+	पूर्ण
 
 	*n_pages = 0;
-}
+पूर्ण
 
 /**
- * vmballoon_dequeue_page_list() - Dequeues page lists for deflation.
+ * vmballoon_dequeue_page_list() - Dequeues page lists क्रम deflation.
  *
- * @b: pointer to balloon.
+ * @b: poपूर्णांकer to balloon.
  * @pages: list of pages to enqueue.
- * @n_pages: pointer to number of pages in list. The value is zeroed.
+ * @n_pages: poपूर्णांकer to number of pages in list. The value is zeroed.
  * @page_size: whether the pages are 2MB or 4KB pages.
  * @n_req_pages: the number of requested pages.
  *
- * Dequeues the number of requested pages from the balloon for deflation. The
- * number of dequeued pages may be lower, if not enough pages in the requested
+ * Dequeues the number of requested pages from the balloon क्रम deflation. The
+ * number of dequeued pages may be lower, अगर not enough pages in the requested
  * size are available.
  */
-static void vmballoon_dequeue_page_list(struct vmballoon *b,
-					struct list_head *pages,
-					unsigned int *n_pages,
-					enum vmballoon_page_size_type page_size,
-					unsigned int n_req_pages)
-{
-	struct page *page, *tmp;
-	unsigned int i = 0;
-	unsigned long flags;
+अटल व्योम vmballoon_dequeue_page_list(काष्ठा vmballoon *b,
+					काष्ठा list_head *pages,
+					अचिन्हित पूर्णांक *n_pages,
+					क्रमागत vmballoon_page_माप_प्रकारype page_size,
+					अचिन्हित पूर्णांक n_req_pages)
+अणु
+	काष्ठा page *page, *पंचांगp;
+	अचिन्हित पूर्णांक i = 0;
+	अचिन्हित दीर्घ flags;
 
-	/* In the case of 4k pages, use the compaction infrastructure */
-	if (page_size == VMW_BALLOON_4K_PAGE) {
+	/* In the हाल of 4k pages, use the compaction infraकाष्ठाure */
+	अगर (page_size == VMW_BALLOON_4K_PAGE) अणु
 		*n_pages = balloon_page_list_dequeue(&b->b_dev_info, pages,
 						     n_req_pages);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* 2MB pages */
 	spin_lock_irqsave(&b->b_dev_info.pages_lock, flags);
-	list_for_each_entry_safe(page, tmp, &b->huge_pages, lru) {
+	list_क्रम_each_entry_safe(page, पंचांगp, &b->huge_pages, lru) अणु
 		vmballoon_mark_page_online(page, VMW_BALLOON_2M_PAGE);
 
 		list_move(&page->lru, pages);
-		if (++i == n_req_pages)
-			break;
-	}
+		अगर (++i == n_req_pages)
+			अवरोध;
+	पूर्ण
 
 	__count_vm_events(BALLOON_DEFLATE,
 			  i * vmballoon_page_in_frames(VMW_BALLOON_2M_PAGE));
 	spin_unlock_irqrestore(&b->b_dev_info.pages_lock, flags);
 	*n_pages = i;
-}
+पूर्ण
 
 /**
  * vmballoon_split_refused_pages() - Split the 2MB refused pages to 4k.
  *
  * If inflation of 2MB pages was denied by the hypervisor, it is likely to be
  * due to one or few 4KB pages. These 2MB pages may keep being allocated and
- * then being refused. To prevent this case, this function splits the refused
- * pages into 4KB pages and adds them into @prealloc_pages list.
+ * then being refused. To prevent this हाल, this function splits the refused
+ * pages पूर्णांकo 4KB pages and adds them पूर्णांकo @pपुनः_स्मृति_pages list.
  *
- * @ctl: pointer for the %struct vmballoon_ctl, which defines the operation.
+ * @ctl: poपूर्णांकer क्रम the %काष्ठा vmballoon_ctl, which defines the operation.
  */
-static void vmballoon_split_refused_pages(struct vmballoon_ctl *ctl)
-{
-	struct page *page, *tmp;
-	unsigned int i, order;
+अटल व्योम vmballoon_split_refused_pages(काष्ठा vmballoon_ctl *ctl)
+अणु
+	काष्ठा page *page, *पंचांगp;
+	अचिन्हित पूर्णांक i, order;
 
 	order = vmballoon_page_order(ctl->page_size);
 
-	list_for_each_entry_safe(page, tmp, &ctl->refused_pages, lru) {
+	list_क्रम_each_entry_safe(page, पंचांगp, &ctl->refused_pages, lru) अणु
 		list_del(&page->lru);
 		split_page(page, order);
-		for (i = 0; i < (1 << order); i++)
-			list_add(&page[i].lru, &ctl->prealloc_pages);
-	}
+		क्रम (i = 0; i < (1 << order); i++)
+			list_add(&page[i].lru, &ctl->pपुनः_स्मृति_pages);
+	पूर्ण
 	ctl->n_refused_pages = 0;
-}
+पूर्ण
 
 /**
  * vmballoon_inflate() - Inflate the balloon towards its target size.
  *
- * @b: pointer to the balloon.
+ * @b: poपूर्णांकer to the balloon.
  */
-static void vmballoon_inflate(struct vmballoon *b)
-{
-	int64_t to_inflate_frames;
-	struct vmballoon_ctl ctl = {
+अटल व्योम vmballoon_inflate(काष्ठा vmballoon *b)
+अणु
+	पूर्णांक64_t to_inflate_frames;
+	काष्ठा vmballoon_ctl ctl = अणु
 		.pages = LIST_HEAD_INIT(ctl.pages),
 		.refused_pages = LIST_HEAD_INIT(ctl.refused_pages),
-		.prealloc_pages = LIST_HEAD_INIT(ctl.prealloc_pages),
+		.pपुनः_स्मृति_pages = LIST_HEAD_INIT(ctl.pपुनः_स्मृति_pages),
 		.page_size = b->max_page_size,
 		.op = VMW_BALLOON_INFLATE
-	};
+	पूर्ण;
 
-	while ((to_inflate_frames = vmballoon_change(b)) > 0) {
-		unsigned int to_inflate_pages, page_in_frames;
-		int alloc_error, lock_error = 0;
+	जबतक ((to_inflate_frames = vmballoon_change(b)) > 0) अणु
+		अचिन्हित पूर्णांक to_inflate_pages, page_in_frames;
+		पूर्णांक alloc_error, lock_error = 0;
 
 		VM_BUG_ON(!list_empty(&ctl.pages));
 		VM_BUG_ON(ctl.n_pages != 0);
 
 		page_in_frames = vmballoon_page_in_frames(ctl.page_size);
 
-		to_inflate_pages = min_t(unsigned long, b->batch_max_pages,
+		to_inflate_pages = min_t(अचिन्हित दीर्घ, b->batch_max_pages,
 					 DIV_ROUND_UP_ULL(to_inflate_frames,
 							  page_in_frames));
 
@@ -1135,8 +1136,8 @@ static void vmballoon_inflate(struct vmballoon *b)
 		 * If an error indicates that something serious went wrong,
 		 * stop the inflation.
 		 */
-		if (lock_error)
-			break;
+		अगर (lock_error)
+			अवरोध;
 
 		/* Update the balloon size */
 		atomic64_add(ctl.n_pages * page_in_frames, &b->size);
@@ -1148,10 +1149,10 @@ static void vmballoon_inflate(struct vmballoon *b)
 		 * If allocation failed or the number of refused pages exceeds
 		 * the maximum allowed, move to the next page size.
 		 */
-		if (alloc_error ||
-		    ctl.n_refused_pages >= VMW_BALLOON_MAX_REFUSED) {
-			if (ctl.page_size == VMW_BALLOON_4K_PAGE)
-				break;
+		अगर (alloc_error ||
+		    ctl.n_refused_pages >= VMW_BALLOON_MAX_REFUSED) अणु
+			अगर (ctl.page_size == VMW_BALLOON_4K_PAGE)
+				अवरोध;
 
 			/*
 			 * Split the refused pages to 4k. This will also empty
@@ -1159,27 +1160,27 @@ static void vmballoon_inflate(struct vmballoon *b)
 			 */
 			vmballoon_split_refused_pages(&ctl);
 			ctl.page_size--;
-		}
+		पूर्ण
 
 		cond_resched();
-	}
+	पूर्ण
 
 	/*
-	 * Release pages that were allocated while attempting to inflate the
-	 * balloon but were refused by the host for one reason or another,
+	 * Release pages that were allocated जबतक attempting to inflate the
+	 * balloon but were refused by the host क्रम one reason or another,
 	 * and update the statistics.
 	 */
-	if (ctl.n_refused_pages != 0)
+	अगर (ctl.n_refused_pages != 0)
 		vmballoon_release_refused_pages(b, &ctl);
 
-	vmballoon_release_page_list(&ctl.prealloc_pages, NULL, ctl.page_size);
-}
+	vmballoon_release_page_list(&ctl.pपुनः_स्मृति_pages, शून्य, ctl.page_size);
+पूर्ण
 
 /**
  * vmballoon_deflate() - Decrease the size of the balloon.
  *
- * @b: pointer to the balloon
- * @n_frames: the number of frames to deflate. If zero, automatically
+ * @b: poपूर्णांकer to the balloon
+ * @n_frames: the number of frames to deflate. If zero, स्वतःmatically
  * calculated according to the target size.
  * @coordinated: whether to coordinate with the host
  *
@@ -1187,23 +1188,23 @@ static void vmballoon_inflate(struct vmballoon *b)
  *
  * Return: The number of deflated frames (i.e., basic page size units)
  */
-static unsigned long vmballoon_deflate(struct vmballoon *b, uint64_t n_frames,
+अटल अचिन्हित दीर्घ vmballoon_deflate(काष्ठा vmballoon *b, uपूर्णांक64_t n_frames,
 				       bool coordinated)
-{
-	unsigned long deflated_frames = 0;
-	unsigned long tried_frames = 0;
-	struct vmballoon_ctl ctl = {
+अणु
+	अचिन्हित दीर्घ deflated_frames = 0;
+	अचिन्हित दीर्घ tried_frames = 0;
+	काष्ठा vmballoon_ctl ctl = अणु
 		.pages = LIST_HEAD_INIT(ctl.pages),
 		.refused_pages = LIST_HEAD_INIT(ctl.refused_pages),
 		.page_size = VMW_BALLOON_4K_PAGE,
 		.op = VMW_BALLOON_DEFLATE
-	};
+	पूर्ण;
 
-	/* free pages to reach target */
-	while (true) {
-		unsigned int to_deflate_pages, n_unlocked_frames;
-		unsigned int page_in_frames;
-		int64_t to_deflate_frames;
+	/* मुक्त pages to reach target */
+	जबतक (true) अणु
+		अचिन्हित पूर्णांक to_deflate_pages, n_unlocked_frames;
+		अचिन्हित पूर्णांक page_in_frames;
+		पूर्णांक64_t to_deflate_frames;
 		bool deflated_all;
 
 		page_in_frames = vmballoon_page_in_frames(ctl.page_size);
@@ -1214,22 +1215,22 @@ static unsigned long vmballoon_deflate(struct vmballoon *b, uint64_t n_frames,
 		VM_BUG_ON(ctl.n_refused_pages);
 
 		/*
-		 * If we were requested a specific number of frames, we try to
+		 * If we were requested a specअगरic number of frames, we try to
 		 * deflate this number of frames. Otherwise, deflation is
-		 * performed according to the target and balloon size.
+		 * perक्रमmed according to the target and balloon size.
 		 */
 		to_deflate_frames = n_frames ? n_frames - tried_frames :
 					       -vmballoon_change(b);
 
-		/* break if no work to do */
-		if (to_deflate_frames <= 0)
-			break;
+		/* अवरोध अगर no work to करो */
+		अगर (to_deflate_frames <= 0)
+			अवरोध;
 
 		/*
 		 * Calculate the number of frames based on current page size,
 		 * but limit the deflated frames to a single chunk
 		 */
-		to_deflate_pages = min_t(unsigned long, b->batch_max_pages,
+		to_deflate_pages = min_t(अचिन्हित दीर्घ, b->batch_max_pages,
 					 DIV_ROUND_UP_ULL(to_deflate_frames,
 							  page_in_frames));
 
@@ -1238,24 +1239,24 @@ static unsigned long vmballoon_deflate(struct vmballoon *b, uint64_t n_frames,
 					    ctl.page_size, to_deflate_pages);
 
 		/*
-		 * Before pages are moving to the refused list, count their
+		 * Beक्रमe pages are moving to the refused list, count their
 		 * frames as frames that we tried to deflate.
 		 */
 		tried_frames += ctl.n_pages * page_in_frames;
 
 		/*
-		 * Unlock the pages by communicating with the hypervisor if the
+		 * Unlock the pages by communicating with the hypervisor अगर the
 		 * communication is coordinated (i.e., not pop). We ignore the
-		 * return code. Instead we check if all the pages we manage to
+		 * वापस code. Instead we check अगर all the pages we manage to
 		 * unlock all the pages. If we failed, we will move to the next
 		 * page size, and would eventually try again later.
 		 */
-		if (coordinated)
+		अगर (coordinated)
 			vmballoon_lock(b, &ctl);
 
 		/*
-		 * Check if we deflated enough. We will move to the next page
-		 * size if we did not manage to do so. This calculation takes
+		 * Check अगर we deflated enough. We will move to the next page
+		 * size अगर we did not manage to करो so. This calculation takes
 		 * place now, as once the pages are released, the number of
 		 * pages is zeroed.
 		 */
@@ -1269,7 +1270,7 @@ static unsigned long vmballoon_deflate(struct vmballoon *b, uint64_t n_frames,
 		vmballoon_stats_page_add(b, VMW_BALLOON_PAGE_STAT_FREE,
 					 ctl.page_size, ctl.n_pages);
 
-		/* free the ballooned pages */
+		/* मुक्त the ballooned pages */
 		vmballoon_release_page_list(&ctl.pages, &ctl.n_pages,
 					    ctl.page_size);
 
@@ -1279,261 +1280,261 @@ static unsigned long vmballoon_deflate(struct vmballoon *b, uint64_t n_frames,
 					    ctl.page_size);
 
 		/* If we failed to unlock all the pages, move to next size. */
-		if (!deflated_all) {
-			if (ctl.page_size == b->max_page_size)
-				break;
+		अगर (!deflated_all) अणु
+			अगर (ctl.page_size == b->max_page_size)
+				अवरोध;
 			ctl.page_size++;
-		}
+		पूर्ण
 
 		cond_resched();
-	}
+	पूर्ण
 
-	return deflated_frames;
-}
+	वापस deflated_frames;
+पूर्ण
 
 /**
  * vmballoon_deinit_batching - disables batching mode.
  *
- * @b: pointer to &struct vmballoon.
+ * @b: poपूर्णांकer to &काष्ठा vmballoon.
  *
- * Disables batching, by deallocating the page for communication with the
- * hypervisor and disabling the static key to indicate that batching is off.
+ * Disables batching, by deallocating the page क्रम communication with the
+ * hypervisor and disabling the अटल key to indicate that batching is off.
  */
-static void vmballoon_deinit_batching(struct vmballoon *b)
-{
-	free_page((unsigned long)b->batch_page);
-	b->batch_page = NULL;
-	static_branch_disable(&vmw_balloon_batching);
+अटल व्योम vmballoon_deinit_batching(काष्ठा vmballoon *b)
+अणु
+	मुक्त_page((अचिन्हित दीर्घ)b->batch_page);
+	b->batch_page = शून्य;
+	अटल_branch_disable(&vmw_balloon_batching);
 	b->batch_max_pages = 1;
-}
+पूर्ण
 
 /**
  * vmballoon_init_batching - enable batching mode.
  *
- * @b: pointer to &struct vmballoon.
+ * @b: poपूर्णांकer to &काष्ठा vmballoon.
  *
- * Enables batching, by allocating a page for communication with the hypervisor
- * and enabling the static_key to use batching.
+ * Enables batching, by allocating a page क्रम communication with the hypervisor
+ * and enabling the अटल_key to use batching.
  *
  * Return: zero on success or an appropriate error-code.
  */
-static int vmballoon_init_batching(struct vmballoon *b)
-{
-	struct page *page;
+अटल पूर्णांक vmballoon_init_batching(काष्ठा vmballoon *b)
+अणु
+	काष्ठा page *page;
 
 	page = alloc_page(GFP_KERNEL | __GFP_ZERO);
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 
 	b->batch_page = page_address(page);
-	b->batch_max_pages = PAGE_SIZE / sizeof(struct vmballoon_batch_entry);
+	b->batch_max_pages = PAGE_SIZE / माप(काष्ठा vmballoon_batch_entry);
 
-	static_branch_enable(&vmw_balloon_batching);
+	अटल_branch_enable(&vmw_balloon_batching);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Receive notification and resize balloon
+ * Receive notअगरication and resize balloon
  */
-static void vmballoon_doorbell(void *client_data)
-{
-	struct vmballoon *b = client_data;
+अटल व्योम vmballoon_करोorbell(व्योम *client_data)
+अणु
+	काष्ठा vmballoon *b = client_data;
 
 	vmballoon_stats_gen_inc(b, VMW_BALLOON_STAT_DOORBELL);
 
-	mod_delayed_work(system_freezable_wq, &b->dwork, 0);
-}
+	mod_delayed_work(प्रणाली_मुक्तzable_wq, &b->dwork, 0);
+पूर्ण
 
 /*
- * Clean up vmci doorbell
+ * Clean up vmci करोorbell
  */
-static void vmballoon_vmci_cleanup(struct vmballoon *b)
-{
+अटल व्योम vmballoon_vmci_cleanup(काष्ठा vmballoon *b)
+अणु
 	vmballoon_cmd(b, VMW_BALLOON_CMD_VMCI_DOORBELL_SET,
 		      VMCI_INVALID_ID, VMCI_INVALID_ID);
 
-	if (!vmci_handle_is_invalid(b->vmci_doorbell)) {
-		vmci_doorbell_destroy(b->vmci_doorbell);
-		b->vmci_doorbell = VMCI_INVALID_HANDLE;
-	}
-}
+	अगर (!vmci_handle_is_invalid(b->vmci_करोorbell)) अणु
+		vmci_करोorbell_destroy(b->vmci_करोorbell);
+		b->vmci_करोorbell = VMCI_INVALID_HANDLE;
+	पूर्ण
+पूर्ण
 
 /**
- * vmballoon_vmci_init - Initialize vmci doorbell.
+ * vmballoon_vmci_init - Initialize vmci करोorbell.
  *
- * @b: pointer to the balloon.
+ * @b: poपूर्णांकer to the balloon.
  *
  * Return: zero on success or when wakeup command not supported. Error-code
  * otherwise.
  *
- * Initialize vmci doorbell, to get notified as soon as balloon changes.
+ * Initialize vmci करोorbell, to get notअगरied as soon as balloon changes.
  */
-static int vmballoon_vmci_init(struct vmballoon *b)
-{
-	unsigned long error;
+अटल पूर्णांक vmballoon_vmci_init(काष्ठा vmballoon *b)
+अणु
+	अचिन्हित दीर्घ error;
 
-	if ((b->capabilities & VMW_BALLOON_SIGNALLED_WAKEUP_CMD) == 0)
-		return 0;
+	अगर ((b->capabilities & VMW_BALLOON_SIGNALLED_WAKEUP_CMD) == 0)
+		वापस 0;
 
-	error = vmci_doorbell_create(&b->vmci_doorbell, VMCI_FLAG_DELAYED_CB,
+	error = vmci_करोorbell_create(&b->vmci_करोorbell, VMCI_FLAG_DELAYED_CB,
 				     VMCI_PRIVILEGE_FLAG_RESTRICTED,
-				     vmballoon_doorbell, b);
+				     vmballoon_करोorbell, b);
 
-	if (error != VMCI_SUCCESS)
-		goto fail;
+	अगर (error != VMCI_SUCCESS)
+		जाओ fail;
 
 	error =	__vmballoon_cmd(b, VMW_BALLOON_CMD_VMCI_DOORBELL_SET,
-				b->vmci_doorbell.context,
-				b->vmci_doorbell.resource, NULL);
+				b->vmci_करोorbell.context,
+				b->vmci_करोorbell.resource, शून्य);
 
-	if (error != VMW_BALLOON_SUCCESS)
-		goto fail;
+	अगर (error != VMW_BALLOON_SUCCESS)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 fail:
 	vmballoon_vmci_cleanup(b);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /**
- * vmballoon_pop - Quickly release all pages allocate for the balloon.
+ * vmballoon_pop - Quickly release all pages allocate क्रम the balloon.
  *
- * @b: pointer to the balloon.
+ * @b: poपूर्णांकer to the balloon.
  *
- * This function is called when host decides to "reset" balloon for one reason
- * or another. Unlike normal "deflate" we do not (shall not) notify host of the
+ * This function is called when host decides to "reset" balloon क्रम one reason
+ * or another. Unlike normal "deflate" we करो not (shall not) notअगरy host of the
  * pages being released.
  */
-static void vmballoon_pop(struct vmballoon *b)
-{
-	unsigned long size;
+अटल व्योम vmballoon_pop(काष्ठा vmballoon *b)
+अणु
+	अचिन्हित दीर्घ size;
 
-	while ((size = atomic64_read(&b->size)))
+	जबतक ((size = atomic64_पढ़ो(&b->size)))
 		vmballoon_deflate(b, size, false);
-}
+पूर्ण
 
 /*
- * Perform standard reset sequence by popping the balloon (in case it
+ * Perक्रमm standard reset sequence by popping the balloon (in हाल it
  * is not  empty) and then restarting protocol. This operation normally
  * happens when host responds with VMW_BALLOON_ERROR_RESET to a command.
  */
-static void vmballoon_reset(struct vmballoon *b)
-{
-	int error;
+अटल व्योम vmballoon_reset(काष्ठा vmballoon *b)
+अणु
+	पूर्णांक error;
 
-	down_write(&b->conf_sem);
+	करोwn_ग_लिखो(&b->conf_sem);
 
 	vmballoon_vmci_cleanup(b);
 
-	/* free all pages, skipping monitor unlock */
+	/* मुक्त all pages, skipping monitor unlock */
 	vmballoon_pop(b);
 
-	if (vmballoon_send_start(b, VMW_BALLOON_CAPABILITIES))
-		goto unlock;
+	अगर (vmballoon_send_start(b, VMW_BALLOON_CAPABILITIES))
+		जाओ unlock;
 
-	if ((b->capabilities & VMW_BALLOON_BATCHED_CMDS) != 0) {
-		if (vmballoon_init_batching(b)) {
+	अगर ((b->capabilities & VMW_BALLOON_BATCHED_CMDS) != 0) अणु
+		अगर (vmballoon_init_batching(b)) अणु
 			/*
-			 * We failed to initialize batching, inform the monitor
+			 * We failed to initialize batching, inक्रमm the monitor
 			 * about it by sending a null capability.
 			 *
 			 * The guest will retry in one second.
 			 */
 			vmballoon_send_start(b, 0);
-			goto unlock;
-		}
-	} else if ((b->capabilities & VMW_BALLOON_BASIC_CMDS) != 0) {
+			जाओ unlock;
+		पूर्ण
+	पूर्ण अन्यथा अगर ((b->capabilities & VMW_BALLOON_BASIC_CMDS) != 0) अणु
 		vmballoon_deinit_batching(b);
-	}
+	पूर्ण
 
 	vmballoon_stats_gen_inc(b, VMW_BALLOON_STAT_RESET);
 	b->reset_required = false;
 
 	error = vmballoon_vmci_init(b);
-	if (error)
+	अगर (error)
 		pr_err("failed to initialize vmci doorbell\n");
 
-	if (vmballoon_send_guest_id(b))
+	अगर (vmballoon_send_guest_id(b))
 		pr_err("failed to send guest ID to the host\n");
 
 unlock:
-	up_write(&b->conf_sem);
-}
+	up_ग_लिखो(&b->conf_sem);
+पूर्ण
 
 /**
- * vmballoon_work - periodic balloon worker for reset, inflation and deflation.
+ * vmballoon_work - periodic balloon worker क्रम reset, inflation and deflation.
  *
- * @work: pointer to the &work_struct which is provided by the workqueue.
+ * @work: poपूर्णांकer to the &work_काष्ठा which is provided by the workqueue.
  *
- * Resets the protocol if needed, gets the new size and adjusts balloon as
+ * Resets the protocol अगर needed, माला_लो the new size and adjusts balloon as
  * needed. Repeat in 1 sec.
  */
-static void vmballoon_work(struct work_struct *work)
-{
-	struct delayed_work *dwork = to_delayed_work(work);
-	struct vmballoon *b = container_of(dwork, struct vmballoon, dwork);
-	int64_t change = 0;
+अटल व्योम vmballoon_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा delayed_work *dwork = to_delayed_work(work);
+	काष्ठा vmballoon *b = container_of(dwork, काष्ठा vmballoon, dwork);
+	पूर्णांक64_t change = 0;
 
-	if (b->reset_required)
+	अगर (b->reset_required)
 		vmballoon_reset(b);
 
-	down_read(&b->conf_sem);
+	करोwn_पढ़ो(&b->conf_sem);
 
 	/*
-	 * Update the stats while holding the semaphore to ensure that
+	 * Update the stats जबतक holding the semaphore to ensure that
 	 * @stats_enabled is consistent with whether the stats are actually
 	 * enabled
 	 */
 	vmballoon_stats_gen_inc(b, VMW_BALLOON_STAT_TIMER);
 
-	if (!vmballoon_send_get_target(b))
+	अगर (!vmballoon_send_get_target(b))
 		change = vmballoon_change(b);
 
-	if (change != 0) {
+	अगर (change != 0) अणु
 		pr_debug("%s - size: %llu, target %lu\n", __func__,
-			 atomic64_read(&b->size), READ_ONCE(b->target));
+			 atomic64_पढ़ो(&b->size), READ_ONCE(b->target));
 
-		if (change > 0)
+		अगर (change > 0)
 			vmballoon_inflate(b);
-		else  /* (change < 0) */
+		अन्यथा  /* (change < 0) */
 			vmballoon_deflate(b, 0, true);
-	}
+	पूर्ण
 
-	up_read(&b->conf_sem);
+	up_पढ़ो(&b->conf_sem);
 
 	/*
-	 * We are using a freezable workqueue so that balloon operations are
-	 * stopped while the system transitions to/from sleep/hibernation.
+	 * We are using a मुक्तzable workqueue so that balloon operations are
+	 * stopped जबतक the प्रणाली transitions to/from sleep/hibernation.
 	 */
-	queue_delayed_work(system_freezable_wq,
-			   dwork, round_jiffies_relative(HZ));
+	queue_delayed_work(प्रणाली_मुक्तzable_wq,
+			   dwork, round_jअगरfies_relative(HZ));
 
-}
+पूर्ण
 
 /**
  * vmballoon_shrinker_scan() - deflate the balloon due to memory pressure.
- * @shrinker: pointer to the balloon shrinker.
- * @sc: page reclaim information.
+ * @shrinker: poपूर्णांकer to the balloon shrinker.
+ * @sc: page reclaim inक्रमmation.
  *
- * Returns: number of pages that were freed during deflation.
+ * Returns: number of pages that were मुक्तd during deflation.
  */
-static unsigned long vmballoon_shrinker_scan(struct shrinker *shrinker,
-					     struct shrink_control *sc)
-{
-	struct vmballoon *b = &balloon;
-	unsigned long deflated_frames;
+अटल अचिन्हित दीर्घ vmballoon_shrinker_scan(काष्ठा shrinker *shrinker,
+					     काष्ठा shrink_control *sc)
+अणु
+	काष्ठा vmballoon *b = &balloon;
+	अचिन्हित दीर्घ deflated_frames;
 
-	pr_debug("%s - size: %llu", __func__, atomic64_read(&b->size));
+	pr_debug("%s - size: %llu", __func__, atomic64_पढ़ो(&b->size));
 
 	vmballoon_stats_gen_inc(b, VMW_BALLOON_STAT_SHRINK);
 
 	/*
-	 * If the lock is also contended for read, we cannot easily reclaim and
+	 * If the lock is also contended क्रम पढ़ो, we cannot easily reclaim and
 	 * we bail out.
 	 */
-	if (!down_read_trylock(&b->conf_sem))
-		return 0;
+	अगर (!करोwn_पढ़ो_trylock(&b->conf_sem))
+		वापस 0;
 
 	deflated_frames = vmballoon_deflate(b, sc->nr_to_scan, true);
 
@@ -1541,264 +1542,264 @@ static unsigned long vmballoon_shrinker_scan(struct shrinker *shrinker,
 				deflated_frames);
 
 	/*
-	 * Delay future inflation for some time to mitigate the situations in
+	 * Delay future inflation क्रम some समय to mitigate the situations in
 	 * which balloon continuously grows and shrinks. Use WRITE_ONCE() since
 	 * the access is asynchronous.
 	 */
-	WRITE_ONCE(b->shrink_timeout, jiffies + HZ * VMBALLOON_SHRINK_DELAY);
+	WRITE_ONCE(b->shrink_समयout, jअगरfies + HZ * VMBALLOON_SHRINK_DELAY);
 
-	up_read(&b->conf_sem);
+	up_पढ़ो(&b->conf_sem);
 
-	return deflated_frames;
-}
+	वापस deflated_frames;
+पूर्ण
 
 /**
- * vmballoon_shrinker_count() - return the number of ballooned pages.
- * @shrinker: pointer to the balloon shrinker.
- * @sc: page reclaim information.
+ * vmballoon_shrinker_count() - वापस the number of ballooned pages.
+ * @shrinker: poपूर्णांकer to the balloon shrinker.
+ * @sc: page reclaim inक्रमmation.
  *
- * Returns: number of 4k pages that are allocated for the balloon and can
- *	    therefore be reclaimed under pressure.
+ * Returns: number of 4k pages that are allocated क्रम the balloon and can
+ *	    thereक्रमe be reclaimed under pressure.
  */
-static unsigned long vmballoon_shrinker_count(struct shrinker *shrinker,
-					      struct shrink_control *sc)
-{
-	struct vmballoon *b = &balloon;
+अटल अचिन्हित दीर्घ vmballoon_shrinker_count(काष्ठा shrinker *shrinker,
+					      काष्ठा shrink_control *sc)
+अणु
+	काष्ठा vmballoon *b = &balloon;
 
-	return atomic64_read(&b->size);
-}
+	वापस atomic64_पढ़ो(&b->size);
+पूर्ण
 
-static void vmballoon_unregister_shrinker(struct vmballoon *b)
-{
-	if (b->shrinker_registered)
-		unregister_shrinker(&b->shrinker);
-	b->shrinker_registered = false;
-}
+अटल व्योम vmballoon_unरेजिस्टर_shrinker(काष्ठा vmballoon *b)
+अणु
+	अगर (b->shrinker_रेजिस्टरed)
+		unरेजिस्टर_shrinker(&b->shrinker);
+	b->shrinker_रेजिस्टरed = false;
+पूर्ण
 
-static int vmballoon_register_shrinker(struct vmballoon *b)
-{
-	int r;
+अटल पूर्णांक vmballoon_रेजिस्टर_shrinker(काष्ठा vmballoon *b)
+अणु
+	पूर्णांक r;
 
-	/* Do nothing if the shrinker is not enabled */
-	if (!vmwballoon_shrinker_enable)
-		return 0;
+	/* Do nothing अगर the shrinker is not enabled */
+	अगर (!vmwballoon_shrinker_enable)
+		वापस 0;
 
 	b->shrinker.scan_objects = vmballoon_shrinker_scan;
 	b->shrinker.count_objects = vmballoon_shrinker_count;
 	b->shrinker.seeks = DEFAULT_SEEKS;
 
-	r = register_shrinker(&b->shrinker);
+	r = रेजिस्टर_shrinker(&b->shrinker);
 
-	if (r == 0)
-		b->shrinker_registered = true;
+	अगर (r == 0)
+		b->shrinker_रेजिस्टरed = true;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * DEBUGFS Interface
  */
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-static const char * const vmballoon_stat_page_names[] = {
+अटल स्थिर अक्षर * स्थिर vmballoon_stat_page_names[] = अणु
 	[VMW_BALLOON_PAGE_STAT_ALLOC]		= "alloc",
 	[VMW_BALLOON_PAGE_STAT_ALLOC_FAIL]	= "allocFail",
 	[VMW_BALLOON_PAGE_STAT_REFUSED_ALLOC]	= "errAlloc",
 	[VMW_BALLOON_PAGE_STAT_REFUSED_FREE]	= "errFree",
 	[VMW_BALLOON_PAGE_STAT_FREE]		= "free"
-};
+पूर्ण;
 
-static const char * const vmballoon_stat_names[] = {
+अटल स्थिर अक्षर * स्थिर vmballoon_stat_names[] = अणु
 	[VMW_BALLOON_STAT_TIMER]		= "timer",
 	[VMW_BALLOON_STAT_DOORBELL]		= "doorbell",
 	[VMW_BALLOON_STAT_RESET]		= "reset",
 	[VMW_BALLOON_STAT_SHRINK]		= "shrink",
 	[VMW_BALLOON_STAT_SHRINK_FREE]		= "shrinkFree"
-};
+पूर्ण;
 
-static int vmballoon_enable_stats(struct vmballoon *b)
-{
-	int r = 0;
+अटल पूर्णांक vmballoon_enable_stats(काष्ठा vmballoon *b)
+अणु
+	पूर्णांक r = 0;
 
-	down_write(&b->conf_sem);
+	करोwn_ग_लिखो(&b->conf_sem);
 
-	/* did we somehow race with another reader which enabled stats? */
-	if (b->stats)
-		goto out;
+	/* did we somehow race with another पढ़ोer which enabled stats? */
+	अगर (b->stats)
+		जाओ out;
 
-	b->stats = kzalloc(sizeof(*b->stats), GFP_KERNEL);
+	b->stats = kzalloc(माप(*b->stats), GFP_KERNEL);
 
-	if (!b->stats) {
+	अगर (!b->stats) अणु
 		/* allocation failed */
 		r = -ENOMEM;
-		goto out;
-	}
-	static_key_enable(&balloon_stat_enabled.key);
+		जाओ out;
+	पूर्ण
+	अटल_key_enable(&balloon_stat_enabled.key);
 out:
-	up_write(&b->conf_sem);
-	return r;
-}
+	up_ग_लिखो(&b->conf_sem);
+	वापस r;
+पूर्ण
 
 /**
  * vmballoon_debug_show - shows statistics of balloon operations.
- * @f: pointer to the &struct seq_file.
+ * @f: poपूर्णांकer to the &काष्ठा seq_file.
  * @offset: ignored.
  *
  * Provides the statistics that can be accessed in vmmemctl in the debugfs.
- * To avoid the overhead - mainly that of memory - of collecting the statistics,
- * we only collect statistics after the first time the counters are read.
+ * To aव्योम the overhead - मुख्यly that of memory - of collecting the statistics,
+ * we only collect statistics after the first समय the counters are पढ़ो.
  *
  * Return: zero on success or an error code.
  */
-static int vmballoon_debug_show(struct seq_file *f, void *offset)
-{
-	struct vmballoon *b = f->private;
-	int i, j;
+अटल पूर्णांक vmballoon_debug_show(काष्ठा seq_file *f, व्योम *offset)
+अणु
+	काष्ठा vmballoon *b = f->निजी;
+	पूर्णांक i, j;
 
-	/* enables stats if they are disabled */
-	if (!b->stats) {
-		int r = vmballoon_enable_stats(b);
+	/* enables stats अगर they are disabled */
+	अगर (!b->stats) अणु
+		पूर्णांक r = vmballoon_enable_stats(b);
 
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	/* format capabilities info */
-	seq_printf(f, "%-22s: %#16x\n", "balloon capabilities",
+	/* क्रमmat capabilities info */
+	seq_म_लिखो(f, "%-22s: %#16x\n", "balloon capabilities",
 		   VMW_BALLOON_CAPABILITIES);
-	seq_printf(f, "%-22s: %#16lx\n", "used capabilities", b->capabilities);
-	seq_printf(f, "%-22s: %16s\n", "is resetting",
+	seq_म_लिखो(f, "%-22s: %#16lx\n", "used capabilities", b->capabilities);
+	seq_म_लिखो(f, "%-22s: %16s\n", "is resetting",
 		   b->reset_required ? "y" : "n");
 
-	/* format size info */
-	seq_printf(f, "%-22s: %16lu\n", "target", READ_ONCE(b->target));
-	seq_printf(f, "%-22s: %16llu\n", "current", atomic64_read(&b->size));
+	/* क्रमmat size info */
+	seq_म_लिखो(f, "%-22s: %16lu\n", "target", READ_ONCE(b->target));
+	seq_म_लिखो(f, "%-22s: %16llu\n", "current", atomic64_पढ़ो(&b->size));
 
-	for (i = 0; i < VMW_BALLOON_CMD_NUM; i++) {
-		if (vmballoon_cmd_names[i] == NULL)
-			continue;
+	क्रम (i = 0; i < VMW_BALLOON_CMD_NUM; i++) अणु
+		अगर (vmballoon_cmd_names[i] == शून्य)
+			जारी;
 
-		seq_printf(f, "%-22s: %16llu (%llu failed)\n",
+		seq_म_लिखो(f, "%-22s: %16llu (%llu failed)\n",
 			   vmballoon_cmd_names[i],
-			   atomic64_read(&b->stats->ops[i][VMW_BALLOON_OP_STAT]),
-			   atomic64_read(&b->stats->ops[i][VMW_BALLOON_OP_FAIL_STAT]));
-	}
+			   atomic64_पढ़ो(&b->stats->ops[i][VMW_BALLOON_OP_STAT]),
+			   atomic64_पढ़ो(&b->stats->ops[i][VMW_BALLOON_OP_FAIL_STAT]));
+	पूर्ण
 
-	for (i = 0; i < VMW_BALLOON_STAT_NUM; i++)
-		seq_printf(f, "%-22s: %16llu\n",
+	क्रम (i = 0; i < VMW_BALLOON_STAT_NUM; i++)
+		seq_म_लिखो(f, "%-22s: %16llu\n",
 			   vmballoon_stat_names[i],
-			   atomic64_read(&b->stats->general_stat[i]));
+			   atomic64_पढ़ो(&b->stats->general_stat[i]));
 
-	for (i = 0; i < VMW_BALLOON_PAGE_STAT_NUM; i++) {
-		for (j = 0; j < VMW_BALLOON_NUM_PAGE_SIZES; j++)
-			seq_printf(f, "%-18s(%s): %16llu\n",
+	क्रम (i = 0; i < VMW_BALLOON_PAGE_STAT_NUM; i++) अणु
+		क्रम (j = 0; j < VMW_BALLOON_NUM_PAGE_SIZES; j++)
+			seq_म_लिखो(f, "%-18s(%s): %16llu\n",
 				   vmballoon_stat_page_names[i],
 				   vmballoon_page_size_names[j],
-				   atomic64_read(&b->stats->page_stat[i][j]));
-	}
+				   atomic64_पढ़ो(&b->stats->page_stat[i][j]));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(vmballoon_debug);
 
-static void __init vmballoon_debugfs_init(struct vmballoon *b)
-{
-	debugfs_create_file("vmmemctl", S_IRUGO, NULL, b,
+अटल व्योम __init vmballoon_debugfs_init(काष्ठा vmballoon *b)
+अणु
+	debugfs_create_file("vmmemctl", S_IRUGO, शून्य, b,
 			    &vmballoon_debug_fops);
-}
+पूर्ण
 
-static void __exit vmballoon_debugfs_exit(struct vmballoon *b)
-{
-	static_key_disable(&balloon_stat_enabled.key);
-	debugfs_remove(debugfs_lookup("vmmemctl", NULL));
-	kfree(b->stats);
-	b->stats = NULL;
-}
+अटल व्योम __निकास vmballoon_debugfs_निकास(काष्ठा vmballoon *b)
+अणु
+	अटल_key_disable(&balloon_stat_enabled.key);
+	debugfs_हटाओ(debugfs_lookup("vmmemctl", शून्य));
+	kमुक्त(b->stats);
+	b->stats = शून्य;
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void vmballoon_debugfs_init(struct vmballoon *b)
-{
-}
+अटल अंतरभूत व्योम vmballoon_debugfs_init(काष्ठा vmballoon *b)
+अणु
+पूर्ण
 
-static inline void vmballoon_debugfs_exit(struct vmballoon *b)
-{
-}
+अटल अंतरभूत व्योम vmballoon_debugfs_निकास(काष्ठा vmballoon *b)
+अणु
+पूर्ण
 
-#endif	/* CONFIG_DEBUG_FS */
+#पूर्ण_अगर	/* CONFIG_DEBUG_FS */
 
 
-#ifdef CONFIG_BALLOON_COMPACTION
+#अगर_घोषित CONFIG_BALLOON_COMPACTION
 
-static int vmballoon_init_fs_context(struct fs_context *fc)
-{
-	return init_pseudo(fc, BALLOON_VMW_MAGIC) ? 0 : -ENOMEM;
-}
+अटल पूर्णांक vmballoon_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	वापस init_pseuकरो(fc, BALLOON_VMW_MAGIC) ? 0 : -ENOMEM;
+पूर्ण
 
-static struct file_system_type vmballoon_fs = {
+अटल काष्ठा file_प्रणाली_type vmballoon_fs = अणु
 	.name           	= "balloon-vmware",
 	.init_fs_context	= vmballoon_init_fs_context,
-	.kill_sb        	= kill_anon_super,
-};
+	.समाप्त_sb        	= समाप्त_anon_super,
+पूर्ण;
 
-static struct vfsmount *vmballoon_mnt;
+अटल काष्ठा vfsmount *vmballoon_mnt;
 
 /**
  * vmballoon_migratepage() - migrates a balloon page.
- * @b_dev_info: balloon device information descriptor.
+ * @b_dev_info: balloon device inक्रमmation descriptor.
  * @newpage: the page to which @page should be migrated.
  * @page: a ballooned page that should be migrated.
  * @mode: migration mode, ignored.
  *
- * This function is really open-coded, but that is according to the interface
+ * This function is really खोलो-coded, but that is according to the पूर्णांकerface
  * that balloon_compaction provides.
  *
- * Return: zero on success, -EAGAIN when migration cannot be performed
- *	   momentarily, and -EBUSY if migration failed and should be retried
- *	   with that specific page.
+ * Return: zero on success, -EAGAIN when migration cannot be perक्रमmed
+ *	   momentarily, and -EBUSY अगर migration failed and should be retried
+ *	   with that specअगरic page.
  */
-static int vmballoon_migratepage(struct balloon_dev_info *b_dev_info,
-				 struct page *newpage, struct page *page,
-				 enum migrate_mode mode)
-{
-	unsigned long status, flags;
-	struct vmballoon *b;
-	int ret;
+अटल पूर्णांक vmballoon_migratepage(काष्ठा balloon_dev_info *b_dev_info,
+				 काष्ठा page *newpage, काष्ठा page *page,
+				 क्रमागत migrate_mode mode)
+अणु
+	अचिन्हित दीर्घ status, flags;
+	काष्ठा vmballoon *b;
+	पूर्णांक ret;
 
-	b = container_of(b_dev_info, struct vmballoon, b_dev_info);
+	b = container_of(b_dev_info, काष्ठा vmballoon, b_dev_info);
 
 	/*
 	 * If the semaphore is taken, there is ongoing configuration change
 	 * (i.e., balloon reset), so try again.
 	 */
-	if (!down_read_trylock(&b->conf_sem))
-		return -EAGAIN;
+	अगर (!करोwn_पढ़ो_trylock(&b->conf_sem))
+		वापस -EAGAIN;
 
 	spin_lock(&b->comm_lock);
 	/*
 	 * We must start by deflating and not inflating, as otherwise the
 	 * hypervisor may tell us that it has enough memory and the new page is
 	 * not needed. Since the old page is isolated, we cannot use the list
-	 * interface to unlock it, as the LRU field is used for isolation.
-	 * Instead, we use the native interface directly.
+	 * पूर्णांकerface to unlock it, as the LRU field is used क्रम isolation.
+	 * Instead, we use the native पूर्णांकerface directly.
 	 */
 	vmballoon_add_page(b, 0, page);
 	status = vmballoon_lock_op(b, 1, VMW_BALLOON_4K_PAGE,
 				   VMW_BALLOON_DEFLATE);
 
-	if (status == VMW_BALLOON_SUCCESS)
+	अगर (status == VMW_BALLOON_SUCCESS)
 		status = vmballoon_status_page(b, 0, &page);
 
 	/*
 	 * If a failure happened, let the migration mechanism know that it
 	 * should not retry.
 	 */
-	if (status != VMW_BALLOON_SUCCESS) {
+	अगर (status != VMW_BALLOON_SUCCESS) अणु
 		spin_unlock(&b->comm_lock);
 		ret = -EBUSY;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/*
 	 * The page is isolated, so it is safe to delete it without holding
@@ -1814,12 +1815,12 @@ static int vmballoon_migratepage(struct balloon_dev_info *b_dev_info,
 	status = vmballoon_lock_op(b, 1, VMW_BALLOON_4K_PAGE,
 				   VMW_BALLOON_INFLATE);
 
-	if (status == VMW_BALLOON_SUCCESS)
+	अगर (status == VMW_BALLOON_SUCCESS)
 		status = vmballoon_status_page(b, 0, &newpage);
 
 	spin_unlock(&b->comm_lock);
 
-	if (status != VMW_BALLOON_SUCCESS) {
+	अगर (status != VMW_BALLOON_SUCCESS) अणु
 		/*
 		 * A failure happened. While we can deflate the page we just
 		 * inflated, this deflation can also encounter an error. Instead
@@ -1828,27 +1829,27 @@ static int vmballoon_migratepage(struct balloon_dev_info *b_dev_info,
 		 */
 		atomic64_dec(&b->size);
 		ret = -EBUSY;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Success. Take a reference for the page, and we will add it to
+		 * Success. Take a reference क्रम the page, and we will add it to
 		 * the list after acquiring the lock.
 		 */
 		get_page(newpage);
 		ret = MIGRATEPAGE_SUCCESS;
-	}
+	पूर्ण
 
 	/* Update the balloon list under the @pages_lock */
 	spin_lock_irqsave(&b->b_dev_info.pages_lock, flags);
 
 	/*
-	 * On inflation success, we already took a reference for the @newpage.
+	 * On inflation success, we alपढ़ोy took a reference क्रम the @newpage.
 	 * If we succeed just insert it to the list and update the statistics
 	 * under the lock.
 	 */
-	if (ret == MIGRATEPAGE_SUCCESS) {
+	अगर (ret == MIGRATEPAGE_SUCCESS) अणु
 		balloon_page_insert(&b->b_dev_info, newpage);
 		__count_vm_event(BALLOON_MIGRATE);
-	}
+	पूर्ण
 
 	/*
 	 * We deflated successfully, so regardless to the inflation success, we
@@ -1858,129 +1859,129 @@ static int vmballoon_migratepage(struct balloon_dev_info *b_dev_info,
 	spin_unlock_irqrestore(&b->b_dev_info.pages_lock, flags);
 
 out_unlock:
-	up_read(&b->conf_sem);
-	return ret;
-}
+	up_पढ़ो(&b->conf_sem);
+	वापस ret;
+पूर्ण
 
 /**
- * vmballoon_compaction_deinit() - removes compaction related data.
+ * vmballoon_compaction_deinit() - हटाओs compaction related data.
  *
- * @b: pointer to the balloon.
+ * @b: poपूर्णांकer to the balloon.
  */
-static void vmballoon_compaction_deinit(struct vmballoon *b)
-{
-	if (!IS_ERR(b->b_dev_info.inode))
+अटल व्योम vmballoon_compaction_deinit(काष्ठा vmballoon *b)
+अणु
+	अगर (!IS_ERR(b->b_dev_info.inode))
 		iput(b->b_dev_info.inode);
 
-	b->b_dev_info.inode = NULL;
+	b->b_dev_info.inode = शून्य;
 	kern_unmount(vmballoon_mnt);
-	vmballoon_mnt = NULL;
-}
+	vmballoon_mnt = शून्य;
+पूर्ण
 
 /**
- * vmballoon_compaction_init() - initialized compaction for the balloon.
+ * vmballoon_compaction_init() - initialized compaction क्रम the balloon.
  *
- * @b: pointer to the balloon.
+ * @b: poपूर्णांकer to the balloon.
  *
- * If during the initialization a failure occurred, this function does not
- * perform cleanup. The caller must call vmballoon_compaction_deinit() in this
- * case.
+ * If during the initialization a failure occurred, this function करोes not
+ * perक्रमm cleanup. The caller must call vmballoon_compaction_deinit() in this
+ * हाल.
  *
  * Return: zero on success or error code on failure.
  */
-static __init int vmballoon_compaction_init(struct vmballoon *b)
-{
+अटल __init पूर्णांक vmballoon_compaction_init(काष्ठा vmballoon *b)
+अणु
 	vmballoon_mnt = kern_mount(&vmballoon_fs);
-	if (IS_ERR(vmballoon_mnt))
-		return PTR_ERR(vmballoon_mnt);
+	अगर (IS_ERR(vmballoon_mnt))
+		वापस PTR_ERR(vmballoon_mnt);
 
 	b->b_dev_info.migratepage = vmballoon_migratepage;
 	b->b_dev_info.inode = alloc_anon_inode(vmballoon_mnt->mnt_sb);
 
-	if (IS_ERR(b->b_dev_info.inode))
-		return PTR_ERR(b->b_dev_info.inode);
+	अगर (IS_ERR(b->b_dev_info.inode))
+		वापस PTR_ERR(b->b_dev_info.inode);
 
 	b->b_dev_info.inode->i_mapping->a_ops = &balloon_aops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* CONFIG_BALLOON_COMPACTION */
+#अन्यथा /* CONFIG_BALLOON_COMPACTION */
 
-static void vmballoon_compaction_deinit(struct vmballoon *b)
-{
-}
+अटल व्योम vmballoon_compaction_deinit(काष्ठा vmballoon *b)
+अणु
+पूर्ण
 
-static int vmballoon_compaction_init(struct vmballoon *b)
-{
-	return 0;
-}
+अटल पूर्णांक vmballoon_compaction_init(काष्ठा vmballoon *b)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_BALLOON_COMPACTION */
+#पूर्ण_अगर /* CONFIG_BALLOON_COMPACTION */
 
-static int __init vmballoon_init(void)
-{
-	int error;
+अटल पूर्णांक __init vmballoon_init(व्योम)
+अणु
+	पूर्णांक error;
 
 	/*
-	 * Check if we are running on VMware's hypervisor and bail out
-	 * if we are not.
+	 * Check अगर we are running on VMware's hypervisor and bail out
+	 * अगर we are not.
 	 */
-	if (x86_hyper_type != X86_HYPER_VMWARE)
-		return -ENODEV;
+	अगर (x86_hyper_type != X86_HYPER_VMWARE)
+		वापस -ENODEV;
 
 	INIT_DELAYED_WORK(&balloon.dwork, vmballoon_work);
 
-	error = vmballoon_register_shrinker(&balloon);
-	if (error)
-		goto fail;
+	error = vmballoon_रेजिस्टर_shrinker(&balloon);
+	अगर (error)
+		जाओ fail;
 
 	/*
-	 * Initialization of compaction must be done after the call to
+	 * Initialization of compaction must be करोne after the call to
 	 * balloon_devinfo_init() .
 	 */
 	balloon_devinfo_init(&balloon.b_dev_info);
 	error = vmballoon_compaction_init(&balloon);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
 	INIT_LIST_HEAD(&balloon.huge_pages);
 	spin_lock_init(&balloon.comm_lock);
 	init_rwsem(&balloon.conf_sem);
-	balloon.vmci_doorbell = VMCI_INVALID_HANDLE;
-	balloon.batch_page = NULL;
-	balloon.page = NULL;
+	balloon.vmci_करोorbell = VMCI_INVALID_HANDLE;
+	balloon.batch_page = शून्य;
+	balloon.page = शून्य;
 	balloon.reset_required = true;
 
-	queue_delayed_work(system_freezable_wq, &balloon.dwork, 0);
+	queue_delayed_work(प्रणाली_मुक्तzable_wq, &balloon.dwork, 0);
 
 	vmballoon_debugfs_init(&balloon);
 
-	return 0;
+	वापस 0;
 fail:
-	vmballoon_unregister_shrinker(&balloon);
+	vmballoon_unरेजिस्टर_shrinker(&balloon);
 	vmballoon_compaction_deinit(&balloon);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * Using late_initcall() instead of module_init() allows the balloon to use the
- * VMCI doorbell even when the balloon is built into the kernel. Otherwise the
+ * VMCI करोorbell even when the balloon is built पूर्णांकo the kernel. Otherwise the
  * VMCI is probed only after the balloon is initialized. If the balloon is used
  * as a module, late_initcall() is equivalent to module_init().
  */
 late_initcall(vmballoon_init);
 
-static void __exit vmballoon_exit(void)
-{
-	vmballoon_unregister_shrinker(&balloon);
+अटल व्योम __निकास vmballoon_निकास(व्योम)
+अणु
+	vmballoon_unरेजिस्टर_shrinker(&balloon);
 	vmballoon_vmci_cleanup(&balloon);
 	cancel_delayed_work_sync(&balloon.dwork);
 
-	vmballoon_debugfs_exit(&balloon);
+	vmballoon_debugfs_निकास(&balloon);
 
 	/*
 	 * Deallocate all reserved memory, and reset connection with monitor.
-	 * Reset connection before deallocating memory to avoid potential for
+	 * Reset connection beक्रमe deallocating memory to aव्योम potential क्रम
 	 * additional spurious resets from guest touching deallocated pages.
 	 */
 	vmballoon_send_start(&balloon, 0);
@@ -1988,5 +1989,5 @@ static void __exit vmballoon_exit(void)
 
 	/* Only once we popped the balloon, compaction can be deinit */
 	vmballoon_compaction_deinit(&balloon);
-}
-module_exit(vmballoon_exit);
+पूर्ण
+module_निकास(vmballoon_निकास);

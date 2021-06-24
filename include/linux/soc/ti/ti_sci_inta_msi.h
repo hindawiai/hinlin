@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Texas Instruments' K3 TI SCI INTA MSI helper
  *
@@ -6,18 +7,18 @@
  *	Lokesh Vutla <lokeshvutla@ti.com>
  */
 
-#ifndef __INCLUDE_LINUX_TI_SCI_INTA_MSI_H
-#define __INCLUDE_LINUX_TI_SCI_INTA_MSI_H
+#अगर_अघोषित __INCLUDE_LINUX_TI_SCI_INTA_MSI_H
+#घोषणा __INCLUDE_LINUX_TI_SCI_INTA_MSI_H
 
-#include <linux/msi.h>
-#include <linux/soc/ti/ti_sci_protocol.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/soc/ti/ti_sci_protocol.h>
 
-struct irq_domain
-*ti_sci_inta_msi_create_irq_domain(struct fwnode_handle *fwnode,
-				   struct msi_domain_info *info,
-				   struct irq_domain *parent);
-int ti_sci_inta_msi_domain_alloc_irqs(struct device *dev,
-				      struct ti_sci_resource *res);
-unsigned int ti_sci_inta_msi_get_virq(struct device *dev, u32 index);
-void ti_sci_inta_msi_domain_free_irqs(struct device *dev);
-#endif /* __INCLUDE_LINUX_IRQCHIP_TI_SCI_INTA_H */
+काष्ठा irq_करोमुख्य
+*ti_sci_पूर्णांकa_msi_create_irq_करोमुख्य(काष्ठा fwnode_handle *fwnode,
+				   काष्ठा msi_करोमुख्य_info *info,
+				   काष्ठा irq_करोमुख्य *parent);
+पूर्णांक ti_sci_पूर्णांकa_msi_करोमुख्य_alloc_irqs(काष्ठा device *dev,
+				      काष्ठा ti_sci_resource *res);
+अचिन्हित पूर्णांक ti_sci_पूर्णांकa_msi_get_virq(काष्ठा device *dev, u32 index);
+व्योम ti_sci_पूर्णांकa_msi_करोमुख्य_मुक्त_irqs(काष्ठा device *dev);
+#पूर्ण_अगर /* __INCLUDE_LINUX_IRQCHIP_TI_SCI_INTA_H */

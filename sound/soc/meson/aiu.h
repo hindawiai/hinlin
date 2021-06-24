@@ -1,89 +1,90 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0 OR MIT) */
 /*
  * Copyright (c) 2018 BayLibre, SAS.
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  */
 
-#ifndef _MESON_AIU_H
-#define _MESON_AIU_H
+#अगर_अघोषित _MESON_AIU_H
+#घोषणा _MESON_AIU_H
 
-struct clk;
-struct clk_bulk_data;
-struct device;
-struct of_phandle_args;
-struct snd_soc_dai;
-struct snd_soc_dai_ops;
+काष्ठा clk;
+काष्ठा clk_bulk_data;
+काष्ठा device;
+काष्ठा of_phandle_args;
+काष्ठा snd_soc_dai;
+काष्ठा snd_soc_dai_ops;
 
-enum aiu_clk_ids {
+क्रमागत aiu_clk_ids अणु
 	PCLK = 0,
 	AOCLK,
 	MCLK,
 	MIXER
-};
+पूर्ण;
 
-struct aiu_interface {
-	struct clk_bulk_data *clks;
-	unsigned int clk_num;
-	int irq;
-};
+काष्ठा aiu_पूर्णांकerface अणु
+	काष्ठा clk_bulk_data *clks;
+	अचिन्हित पूर्णांक clk_num;
+	पूर्णांक irq;
+पूर्ण;
 
-struct aiu_platform_data {
+काष्ठा aiu_platक्रमm_data अणु
 	bool has_acodec;
-	bool has_clk_ctrl_more_i2s_div;
-};
+	bool has_clk_ctrl_more_i2s_भाग;
+पूर्ण;
 
-struct aiu {
-	struct clk *pclk;
-	struct clk *spdif_mclk;
-	struct aiu_interface i2s;
-	struct aiu_interface spdif;
-	const struct aiu_platform_data *platform;
-};
+काष्ठा aiu अणु
+	काष्ठा clk *pclk;
+	काष्ठा clk *spdअगर_mclk;
+	काष्ठा aiu_पूर्णांकerface i2s;
+	काष्ठा aiu_पूर्णांकerface spdअगर;
+	स्थिर काष्ठा aiu_platक्रमm_data *platक्रमm;
+पूर्ण;
 
-#define AIU_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |	\
+#घोषणा AIU_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |	\
 		     SNDRV_PCM_FMTBIT_S20_LE |	\
 		     SNDRV_PCM_FMTBIT_S24_LE)
 
-int aiu_of_xlate_dai_name(struct snd_soc_component *component,
-			  const struct of_phandle_args *args,
-			  const char **dai_name,
-			  unsigned int component_id);
+पूर्णांक aiu_of_xlate_dai_name(काष्ठा snd_soc_component *component,
+			  स्थिर काष्ठा of_phandle_args *args,
+			  स्थिर अक्षर **dai_name,
+			  अचिन्हित पूर्णांक component_id);
 
-int aiu_hdmi_ctrl_register_component(struct device *dev);
-int aiu_acodec_ctrl_register_component(struct device *dev);
+पूर्णांक aiu_hdmi_ctrl_रेजिस्टर_component(काष्ठा device *dev);
+पूर्णांक aiu_acodec_ctrl_रेजिस्टर_component(काष्ठा device *dev);
 
-int aiu_fifo_i2s_dai_probe(struct snd_soc_dai *dai);
-int aiu_fifo_spdif_dai_probe(struct snd_soc_dai *dai);
+पूर्णांक aiu_fअगरo_i2s_dai_probe(काष्ठा snd_soc_dai *dai);
+पूर्णांक aiu_fअगरo_spdअगर_dai_probe(काष्ठा snd_soc_dai *dai);
 
-extern const struct snd_soc_dai_ops aiu_fifo_i2s_dai_ops;
-extern const struct snd_soc_dai_ops aiu_fifo_spdif_dai_ops;
-extern const struct snd_soc_dai_ops aiu_encoder_i2s_dai_ops;
-extern const struct snd_soc_dai_ops aiu_encoder_spdif_dai_ops;
+बाह्य स्थिर काष्ठा snd_soc_dai_ops aiu_fअगरo_i2s_dai_ops;
+बाह्य स्थिर काष्ठा snd_soc_dai_ops aiu_fअगरo_spdअगर_dai_ops;
+बाह्य स्थिर काष्ठा snd_soc_dai_ops aiu_encoder_i2s_dai_ops;
+बाह्य स्थिर काष्ठा snd_soc_dai_ops aiu_encoder_spdअगर_dai_ops;
 
-#define AIU_IEC958_BPF			0x000
-#define AIU_958_MISC			0x010
-#define AIU_IEC958_DCU_FF_CTRL		0x01c
-#define AIU_958_CHSTAT_L0		0x020
-#define AIU_958_CHSTAT_L1		0x024
-#define AIU_958_CTRL			0x028
-#define AIU_I2S_SOURCE_DESC		0x034
-#define AIU_I2S_DAC_CFG			0x040
-#define AIU_I2S_SYNC			0x044
-#define AIU_I2S_MISC			0x048
-#define AIU_RST_SOFT			0x054
-#define AIU_CLK_CTRL			0x058
-#define AIU_CLK_CTRL_MORE		0x064
-#define AIU_CODEC_DAC_LRCLK_CTRL	0x0a0
-#define AIU_HDMI_CLK_DATA_CTRL		0x0a8
-#define AIU_ACODEC_CTRL			0x0b0
-#define AIU_958_CHSTAT_R0		0x0c0
-#define AIU_958_CHSTAT_R1		0x0c4
-#define AIU_MEM_I2S_START		0x180
-#define AIU_MEM_I2S_MASKS		0x18c
-#define AIU_MEM_I2S_CONTROL		0x190
-#define AIU_MEM_IEC958_START		0x194
-#define AIU_MEM_IEC958_CONTROL		0x1a4
-#define AIU_MEM_I2S_BUF_CNTL		0x1d8
-#define AIU_MEM_IEC958_BUF_CNTL		0x1fc
+#घोषणा AIU_IEC958_BPF			0x000
+#घोषणा AIU_958_MISC			0x010
+#घोषणा AIU_IEC958_DCU_FF_CTRL		0x01c
+#घोषणा AIU_958_CHSTAT_L0		0x020
+#घोषणा AIU_958_CHSTAT_L1		0x024
+#घोषणा AIU_958_CTRL			0x028
+#घोषणा AIU_I2S_SOURCE_DESC		0x034
+#घोषणा AIU_I2S_DAC_CFG			0x040
+#घोषणा AIU_I2S_SYNC			0x044
+#घोषणा AIU_I2S_MISC			0x048
+#घोषणा AIU_RST_SOFT			0x054
+#घोषणा AIU_CLK_CTRL			0x058
+#घोषणा AIU_CLK_CTRL_MORE		0x064
+#घोषणा AIU_CODEC_DAC_LRCLK_CTRL	0x0a0
+#घोषणा AIU_HDMI_CLK_DATA_CTRL		0x0a8
+#घोषणा AIU_ACODEC_CTRL			0x0b0
+#घोषणा AIU_958_CHSTAT_R0		0x0c0
+#घोषणा AIU_958_CHSTAT_R1		0x0c4
+#घोषणा AIU_MEM_I2S_START		0x180
+#घोषणा AIU_MEM_I2S_MASKS		0x18c
+#घोषणा AIU_MEM_I2S_CONTROL		0x190
+#घोषणा AIU_MEM_IEC958_START		0x194
+#घोषणा AIU_MEM_IEC958_CONTROL		0x1a4
+#घोषणा AIU_MEM_I2S_BUF_CNTL		0x1d8
+#घोषणा AIU_MEM_IEC958_BUF_CNTL		0x1fc
 
-#endif /* _MESON_AIU_H */
+#पूर्ण_अगर /* _MESON_AIU_H */

@@ -1,285 +1,286 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright 2005-2020 IBM Corporation.
  *
- * Includes code from librtas (https://github.com/ibm-power-utilities/librtas/)
+ * Includes code from librtas (https://github.com/ibm-घातer-utilities/librtas/)
  */
 
-#include <byteswap.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <errno.h>
-#include "utils.h"
+#समावेश <byteswap.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <sys/syscall.h>
+#समावेश <sys/types.h>
+#समावेश <unistd.h>
+#समावेश <मानकतर्क.स>
+#समावेश <मानककोष.स>
+#समावेश <fcntl.h>
+#समावेश <त्रुटिसं.स>
+#समावेश "utils.h"
 
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#define cpu_to_be32(x)		bswap_32(x)
-#define be32_to_cpu(x)		bswap_32(x)
-#else
-#define cpu_to_be32(x)		(x)
-#define be32_to_cpu(x)		(x)
-#endif
+#अगर __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#घोषणा cpu_to_be32(x)		bswap_32(x)
+#घोषणा be32_to_cpu(x)		bswap_32(x)
+#अन्यथा
+#घोषणा cpu_to_be32(x)		(x)
+#घोषणा be32_to_cpu(x)		(x)
+#पूर्ण_अगर
 
-#define RTAS_IO_ASSERT	-1098	/* Unexpected I/O Error */
-#define RTAS_UNKNOWN_OP -1099	/* No Firmware Implementation of Function */
-#define BLOCK_SIZE 4096
-#define PAGE_SIZE 4096
-#define MAX_PAGES 64
+#घोषणा RTAS_IO_ASSERT	-1098	/* Unexpected I/O Error */
+#घोषणा RTAS_UNKNOWN_OP -1099	/* No Firmware Implementation of Function */
+#घोषणा BLOCK_SIZE 4096
+#घोषणा PAGE_SIZE 4096
+#घोषणा MAX_PAGES 64
 
-static const char *ofdt_rtas_path = "/proc/device-tree/rtas";
+अटल स्थिर अक्षर *ofdt_rtas_path = "/proc/device-tree/rtas";
 
-typedef __be32 uint32_t;
-struct rtas_args {
+प्रकार __be32 uपूर्णांक32_t;
+काष्ठा rtas_args अणु
 	__be32 token;
 	__be32 nargs;
 	__be32 nret;
 	__be32 args[16];
-	__be32 *rets;	  /* Pointer to return values in args[]. */
-};
+	__be32 *rets;	  /* Poपूर्णांकer to वापस values in args[]. */
+पूर्ण;
 
-struct region {
-	uint64_t addr;
-	uint32_t size;
-	struct region *next;
-};
+काष्ठा region अणु
+	uपूर्णांक64_t addr;
+	uपूर्णांक32_t size;
+	काष्ठा region *next;
+पूर्ण;
 
-int read_entire_file(int fd, char **buf, size_t *len)
-{
-	size_t buf_size = 0;
-	size_t off = 0;
-	int rc;
+पूर्णांक पढ़ो_entire_file(पूर्णांक fd, अक्षर **buf, माप_प्रकार *len)
+अणु
+	माप_प्रकार buf_size = 0;
+	माप_प्रकार off = 0;
+	पूर्णांक rc;
 
-	*buf = NULL;
-	do {
+	*buf = शून्य;
+	करो अणु
 		buf_size += BLOCK_SIZE;
-		if (*buf == NULL)
-			*buf = malloc(buf_size);
-		else
-			*buf = realloc(*buf, buf_size);
+		अगर (*buf == शून्य)
+			*buf = दो_स्मृति(buf_size);
+		अन्यथा
+			*buf = पुनः_स्मृति(*buf, buf_size);
 
-		if (*buf == NULL)
-			return -ENOMEM;
+		अगर (*buf == शून्य)
+			वापस -ENOMEM;
 
-		rc = read(fd, *buf + off, BLOCK_SIZE);
-		if (rc < 0)
-			return -EIO;
+		rc = पढ़ो(fd, *buf + off, BLOCK_SIZE);
+		अगर (rc < 0)
+			वापस -EIO;
 
 		off += rc;
-	} while (rc == BLOCK_SIZE);
+	पूर्ण जबतक (rc == BLOCK_SIZE);
 
-	if (len)
+	अगर (len)
 		*len = off;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int open_prop_file(const char *prop_path, const char *prop_name, int *fd)
-{
-	char *path;
-	int len;
+अटल पूर्णांक खोलो_prop_file(स्थिर अक्षर *prop_path, स्थिर अक्षर *prop_name, पूर्णांक *fd)
+अणु
+	अक्षर *path;
+	पूर्णांक len;
 
-	/* allocate enough for two string, a slash and trailing NULL */
-	len = strlen(prop_path) + strlen(prop_name) + 1 + 1;
-	path = malloc(len);
-	if (path == NULL)
-		return -ENOMEM;
+	/* allocate enough क्रम two string, a slash and trailing शून्य */
+	len = म_माप(prop_path) + म_माप(prop_name) + 1 + 1;
+	path = दो_स्मृति(len);
+	अगर (path == शून्य)
+		वापस -ENOMEM;
 
-	snprintf(path, len, "%s/%s", prop_path, prop_name);
+	snम_लिखो(path, len, "%s/%s", prop_path, prop_name);
 
-	*fd = open(path, O_RDONLY);
-	free(path);
-	if (*fd < 0)
-		return -errno;
+	*fd = खोलो(path, O_RDONLY);
+	मुक्त(path);
+	अगर (*fd < 0)
+		वापस -त्रुटि_सं;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_property(const char *prop_path, const char *prop_name,
-			char **prop_val, size_t *prop_len)
-{
-	int rc, fd;
+अटल पूर्णांक get_property(स्थिर अक्षर *prop_path, स्थिर अक्षर *prop_name,
+			अक्षर **prop_val, माप_प्रकार *prop_len)
+अणु
+	पूर्णांक rc, fd;
 
-	rc = open_prop_file(prop_path, prop_name, &fd);
-	if (rc)
-		return rc;
+	rc = खोलो_prop_file(prop_path, prop_name, &fd);
+	अगर (rc)
+		वापस rc;
 
-	rc = read_entire_file(fd, prop_val, prop_len);
-	close(fd);
+	rc = पढ़ो_entire_file(fd, prop_val, prop_len);
+	बंद(fd);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int rtas_token(const char *call_name)
-{
-	char *prop_buf = NULL;
-	size_t len;
-	int rc;
+पूर्णांक rtas_token(स्थिर अक्षर *call_name)
+अणु
+	अक्षर *prop_buf = शून्य;
+	माप_प्रकार len;
+	पूर्णांक rc;
 
 	rc = get_property(ofdt_rtas_path, call_name, &prop_buf, &len);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		rc = RTAS_UNKNOWN_OP;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	rc = be32_to_cpu(*(int *)prop_buf);
+	rc = be32_to_cpu(*(पूर्णांक *)prop_buf);
 
 err:
-	free(prop_buf);
-	return rc;
-}
+	मुक्त(prop_buf);
+	वापस rc;
+पूर्ण
 
-static int read_kregion_bounds(struct region *kregion)
-{
-	char *buf;
-	int fd;
-	int rc;
+अटल पूर्णांक पढ़ो_kregion_bounds(काष्ठा region *kregion)
+अणु
+	अक्षर *buf;
+	पूर्णांक fd;
+	पूर्णांक rc;
 
-	fd = open("/proc/ppc64/rtas/rmo_buffer", O_RDONLY);
-	if (fd < 0) {
-		printf("Could not open rmo_buffer file\n");
-		return RTAS_IO_ASSERT;
-	}
+	fd = खोलो("/proc/ppc64/rtas/rmo_buffer", O_RDONLY);
+	अगर (fd < 0) अणु
+		म_लिखो("Could not open rmo_buffer file\n");
+		वापस RTAS_IO_ASSERT;
+	पूर्ण
 
-	rc = read_entire_file(fd, &buf, NULL);
-	close(fd);
-	if (rc) {
-		free(buf);
-		return rc;
-	}
+	rc = पढ़ो_entire_file(fd, &buf, शून्य);
+	बंद(fd);
+	अगर (rc) अणु
+		मुक्त(buf);
+		वापस rc;
+	पूर्ण
 
-	sscanf(buf, "%" SCNx64 " %x", &kregion->addr, &kregion->size);
-	free(buf);
+	माला_पूछो(buf, "%" SCNx64 " %x", &kregion->addr, &kregion->size);
+	मुक्त(buf);
 
-	if (!(kregion->size && kregion->addr) ||
-	    (kregion->size > (PAGE_SIZE * MAX_PAGES))) {
-		printf("Unexpected kregion bounds\n");
-		return RTAS_IO_ASSERT;
-	}
+	अगर (!(kregion->size && kregion->addr) ||
+	    (kregion->size > (PAGE_SIZE * MAX_PAGES))) अणु
+		म_लिखो("Unexpected kregion bounds\n");
+		वापस RTAS_IO_ASSERT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtas_call(const char *name, int nargs,
-		     int nrets, ...)
-{
-	struct rtas_args args;
+अटल पूर्णांक rtas_call(स्थिर अक्षर *name, पूर्णांक nargs,
+		     पूर्णांक nrets, ...)
+अणु
+	काष्ठा rtas_args args;
 	__be32 *rets[16];
-	int i, rc, token;
-	va_list ap;
+	पूर्णांक i, rc, token;
+	बहु_सूची ap;
 
-	va_start(ap, nrets);
+	बहु_शुरू(ap, nrets);
 
 	token = rtas_token(name);
-	if (token == RTAS_UNKNOWN_OP) {
-		// We don't care if the call doesn't exist
-		printf("call '%s' not available, skipping...", name);
+	अगर (token == RTAS_UNKNOWN_OP) अणु
+		// We करोn't care if the call doesn't exist
+		म_लिखो("call '%s' not available, skipping...", name);
 		rc = RTAS_UNKNOWN_OP;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	args.token = cpu_to_be32(token);
 	args.nargs = cpu_to_be32(nargs);
 	args.nret = cpu_to_be32(nrets);
 
-	for (i = 0; i < nargs; i++)
-		args.args[i] = (__be32) va_arg(ap, unsigned long);
+	क्रम (i = 0; i < nargs; i++)
+		args.args[i] = (__be32) बहु_तर्क(ap, अचिन्हित दीर्घ);
 
-	for (i = 0; i < nrets; i++)
-		rets[i] = (__be32 *) va_arg(ap, unsigned long);
+	क्रम (i = 0; i < nrets; i++)
+		rets[i] = (__be32 *) बहु_तर्क(ap, अचिन्हित दीर्घ);
 
 	rc = syscall(__NR_rtas, &args);
-	if (rc) {
-		rc = -errno;
-		goto err;
-	}
+	अगर (rc) अणु
+		rc = -त्रुटि_सं;
+		जाओ err;
+	पूर्ण
 
-	if (nrets) {
+	अगर (nrets) अणु
 		*(rets[0]) = be32_to_cpu(args.args[nargs]);
 
-		for (i = 1; i < nrets; i++) {
+		क्रम (i = 1; i < nrets; i++) अणु
 			*(rets[i]) = args.args[nargs + i];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 err:
-	va_end(ap);
-	return rc;
-}
+	बहु_पूर्ण(ap);
+	वापस rc;
+पूर्ण
 
-static int test(void)
-{
-	struct region rmo_region;
-	uint32_t rmo_start;
-	uint32_t rmo_end;
+अटल पूर्णांक test(व्योम)
+अणु
+	काष्ठा region rmo_region;
+	uपूर्णांक32_t rmo_start;
+	uपूर्णांक32_t rmo_end;
 	__be32 rets[1];
-	int rc;
+	पूर्णांक rc;
 
 	// Test a legitimate harmless call
 	// Expected: call succeeds
-	printf("Test a permitted call, no parameters... ");
+	म_लिखो("Test a permitted call, no parameters... ");
 	rc = rtas_call("get-time-of-day", 0, 1, rets);
-	printf("rc: %d\n", rc);
+	म_लिखो("rc: %d\n", rc);
 	FAIL_IF(rc != 0 && rc != RTAS_UNKNOWN_OP);
 
 	// Test a prohibited call
-	// Expected: call returns -EINVAL
-	printf("Test a prohibited call... ");
+	// Expected: call वापसs -EINVAL
+	म_लिखो("Test a prohibited call... ");
 	rc = rtas_call("nvram-fetch", 0, 1, rets);
-	printf("rc: %d\n", rc);
+	म_लिखो("rc: %d\n", rc);
 	FAIL_IF(rc != -EINVAL && rc != RTAS_UNKNOWN_OP);
 
 	// Get RMO
-	rc = read_kregion_bounds(&rmo_region);
-	if (rc) {
-		printf("Couldn't read RMO region bounds, skipping remaining cases\n");
-		return 0;
-	}
+	rc = पढ़ो_kregion_bounds(&rmo_region);
+	अगर (rc) अणु
+		म_लिखो("Couldn't read RMO region bounds, skipping remaining cases\n");
+		वापस 0;
+	पूर्ण
 	rmo_start = rmo_region.addr;
 	rmo_end = rmo_start + rmo_region.size - 1;
-	printf("RMO range: %08x - %08x\n", rmo_start, rmo_end);
+	म_लिखो("RMO range: %08x - %08x\n", rmo_start, rmo_end);
 
 	// Test a permitted call, user-supplied size, buffer inside RMO
 	// Expected: call succeeds
-	printf("Test a permitted call, user-supplied size, buffer inside RMO... ");
+	म_लिखो("Test a permitted call, user-supplied size, buffer inside RMO... ");
 	rc = rtas_call("ibm,get-system-parameter", 3, 1, 0, cpu_to_be32(rmo_start),
 		       cpu_to_be32(rmo_end - rmo_start + 1), rets);
-	printf("rc: %d\n", rc);
+	म_लिखो("rc: %d\n", rc);
 	FAIL_IF(rc != 0 && rc != RTAS_UNKNOWN_OP);
 
 	// Test a permitted call, user-supplied size, buffer start outside RMO
-	// Expected: call returns -EINVAL
-	printf("Test a permitted call, user-supplied size, buffer start outside RMO... ");
+	// Expected: call वापसs -EINVAL
+	म_लिखो("Test a permitted call, user-supplied size, buffer start outside RMO... ");
 	rc = rtas_call("ibm,get-system-parameter", 3, 1, 0, cpu_to_be32(rmo_end + 1),
 		       cpu_to_be32(4000), rets);
-	printf("rc: %d\n", rc);
+	म_लिखो("rc: %d\n", rc);
 	FAIL_IF(rc != -EINVAL && rc != RTAS_UNKNOWN_OP);
 
 	// Test a permitted call, user-supplied size, buffer end outside RMO
-	// Expected: call returns -EINVAL
-	printf("Test a permitted call, user-supplied size, buffer end outside RMO... ");
+	// Expected: call वापसs -EINVAL
+	म_लिखो("Test a permitted call, user-supplied size, buffer end outside RMO... ");
 	rc = rtas_call("ibm,get-system-parameter", 3, 1, 0, cpu_to_be32(rmo_start),
 		       cpu_to_be32(rmo_end - rmo_start + 2), rets);
-	printf("rc: %d\n", rc);
+	म_लिखो("rc: %d\n", rc);
 	FAIL_IF(rc != -EINVAL && rc != RTAS_UNKNOWN_OP);
 
 	// Test a permitted call, fixed size, buffer end outside RMO
-	// Expected: call returns -EINVAL
-	printf("Test a permitted call, fixed size, buffer end outside RMO... ");
+	// Expected: call वापसs -EINVAL
+	म_लिखो("Test a permitted call, fixed size, buffer end outside RMO... ");
 	rc = rtas_call("ibm,configure-connector", 2, 1, cpu_to_be32(rmo_end - 4000), 0, rets);
-	printf("rc: %d\n", rc);
+	म_लिखो("rc: %d\n", rc);
 	FAIL_IF(rc != -EINVAL && rc != RTAS_UNKNOWN_OP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	return test_harness(test, "rtas_filter");
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	वापस test_harness(test, "rtas_filter");
+पूर्ण

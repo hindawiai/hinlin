@@ -1,107 +1,108 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * GPIO driver for AMD
+ * GPIO driver क्रम AMD
  *
  * Copyright (c) 2014,2015 Ken Xue <Ken.Xue@amd.com>
  *		Jeff Wu <Jeff.Wu@amd.com>
  */
 
-#ifndef _PINCTRL_AMD_H
-#define _PINCTRL_AMD_H
+#अगर_अघोषित _PINCTRL_AMD_H
+#घोषणा _PINCTRL_AMD_H
 
-#define AMD_GPIO_PINS_PER_BANK  64
+#घोषणा AMD_GPIO_PINS_PER_BANK  64
 
-#define AMD_GPIO_PINS_BANK0     63
-#define AMD_GPIO_PINS_BANK1     64
-#define AMD_GPIO_PINS_BANK2     56
-#define AMD_GPIO_PINS_BANK3     32
+#घोषणा AMD_GPIO_PINS_BANK0     63
+#घोषणा AMD_GPIO_PINS_BANK1     64
+#घोषणा AMD_GPIO_PINS_BANK2     56
+#घोषणा AMD_GPIO_PINS_BANK3     32
 
-#define WAKE_INT_MASTER_REG 0xfc
-#define EOI_MASK (1 << 29)
+#घोषणा WAKE_INT_MASTER_REG 0xfc
+#घोषणा EOI_MASK (1 << 29)
 
-#define WAKE_INT_STATUS_REG0 0x2f8
-#define WAKE_INT_STATUS_REG1 0x2fc
+#घोषणा WAKE_INT_STATUS_REG0 0x2f8
+#घोषणा WAKE_INT_STATUS_REG1 0x2fc
 
-#define DB_TMR_OUT_OFF			0
-#define DB_TMR_OUT_UNIT_OFF		4
-#define DB_CNTRL_OFF			5
-#define DB_TMR_LARGE_OFF		7
-#define LEVEL_TRIG_OFF			8
-#define ACTIVE_LEVEL_OFF		9
-#define INTERRUPT_ENABLE_OFF		11
-#define INTERRUPT_MASK_OFF		12
-#define WAKE_CNTRL_OFF_S0I3             13
-#define WAKE_CNTRL_OFF_S3               14
-#define WAKE_CNTRL_OFF_S4               15
-#define PIN_STS_OFF			16
-#define DRV_STRENGTH_SEL_OFF		17
-#define PULL_UP_SEL_OFF			19
-#define PULL_UP_ENABLE_OFF		20
-#define PULL_DOWN_ENABLE_OFF		21
-#define OUTPUT_VALUE_OFF		22
-#define OUTPUT_ENABLE_OFF		23
-#define SW_CNTRL_IN_OFF			24
-#define SW_CNTRL_EN_OFF			25
-#define INTERRUPT_STS_OFF		28
-#define WAKE_STS_OFF			29
+#घोषणा DB_TMR_OUT_OFF			0
+#घोषणा DB_TMR_OUT_UNIT_OFF		4
+#घोषणा DB_CNTRL_OFF			5
+#घोषणा DB_TMR_LARGE_OFF		7
+#घोषणा LEVEL_TRIG_OFF			8
+#घोषणा ACTIVE_LEVEL_OFF		9
+#घोषणा INTERRUPT_ENABLE_OFF		11
+#घोषणा INTERRUPT_MASK_OFF		12
+#घोषणा WAKE_CNTRL_OFF_S0I3             13
+#घोषणा WAKE_CNTRL_OFF_S3               14
+#घोषणा WAKE_CNTRL_OFF_S4               15
+#घोषणा PIN_STS_OFF			16
+#घोषणा DRV_STRENGTH_SEL_OFF		17
+#घोषणा PULL_UP_SEL_OFF			19
+#घोषणा PULL_UP_ENABLE_OFF		20
+#घोषणा PULL_DOWN_ENABLE_OFF		21
+#घोषणा OUTPUT_VALUE_OFF		22
+#घोषणा OUTPUT_ENABLE_OFF		23
+#घोषणा SW_CNTRL_IN_OFF			24
+#घोषणा SW_CNTRL_EN_OFF			25
+#घोषणा INTERRUPT_STS_OFF		28
+#घोषणा WAKE_STS_OFF			29
 
-#define DB_TMR_OUT_MASK	0xFUL
-#define DB_CNTRl_MASK	0x3UL
-#define ACTIVE_LEVEL_MASK	0x3UL
-#define DRV_STRENGTH_SEL_MASK	0x3UL
+#घोषणा DB_TMR_OUT_MASK	0xFUL
+#घोषणा DB_CNTRl_MASK	0x3UL
+#घोषणा ACTIVE_LEVEL_MASK	0x3UL
+#घोषणा DRV_STRENGTH_SEL_MASK	0x3UL
 
-#define ACTIVE_LEVEL_HIGH	0x0UL
-#define ACTIVE_LEVEL_LOW	0x1UL
-#define ACTIVE_LEVEL_BOTH	0x2UL
+#घोषणा ACTIVE_LEVEL_HIGH	0x0UL
+#घोषणा ACTIVE_LEVEL_LOW	0x1UL
+#घोषणा ACTIVE_LEVEL_BOTH	0x2UL
 
-#define DB_TYPE_NO_DEBOUNCE               0x0UL
-#define DB_TYPE_PRESERVE_LOW_GLITCH       0x1UL
-#define DB_TYPE_PRESERVE_HIGH_GLITCH      0x2UL
-#define DB_TYPE_REMOVE_GLITCH             0x3UL
+#घोषणा DB_TYPE_NO_DEBOUNCE               0x0UL
+#घोषणा DB_TYPE_PRESERVE_LOW_GLITCH       0x1UL
+#घोषणा DB_TYPE_PRESERVE_HIGH_GLITCH      0x2UL
+#घोषणा DB_TYPE_REMOVE_GLITCH             0x3UL
 
-#define EDGE_TRAGGER	0x0UL
-#define LEVEL_TRIGGER	0x1UL
+#घोषणा EDGE_TRAGGER	0x0UL
+#घोषणा LEVEL_TRIGGER	0x1UL
 
-#define ACTIVE_HIGH	0x0UL
-#define ACTIVE_LOW	0x1UL
-#define BOTH_EADGE	0x2UL
+#घोषणा ACTIVE_HIGH	0x0UL
+#घोषणा ACTIVE_LOW	0x1UL
+#घोषणा BOTH_EADGE	0x2UL
 
-#define ENABLE_INTERRUPT	0x1UL
-#define DISABLE_INTERRUPT	0x0UL
+#घोषणा ENABLE_INTERRUPT	0x1UL
+#घोषणा DISABLE_INTERRUPT	0x0UL
 
-#define ENABLE_INTERRUPT_MASK	0x0UL
-#define DISABLE_INTERRUPT_MASK	0x1UL
+#घोषणा ENABLE_INTERRUPT_MASK	0x0UL
+#घोषणा DISABLE_INTERRUPT_MASK	0x1UL
 
-#define CLR_INTR_STAT	0x1UL
+#घोषणा CLR_INTR_STAT	0x1UL
 
-struct amd_pingroup {
-	const char *name;
-	const unsigned *pins;
-	unsigned npins;
-};
+काष्ठा amd_pingroup अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित *pins;
+	अचिन्हित npins;
+पूर्ण;
 
-struct amd_function {
-	const char *name;
-	const char * const *groups;
-	unsigned ngroups;
-};
+काष्ठा amd_function अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *groups;
+	अचिन्हित ngroups;
+पूर्ण;
 
-struct amd_gpio {
+काष्ठा amd_gpio अणु
 	raw_spinlock_t          lock;
-	void __iomem            *base;
+	व्योम __iomem            *base;
 
-	const struct amd_pingroup *groups;
+	स्थिर काष्ठा amd_pingroup *groups;
 	u32 ngroups;
-	struct pinctrl_dev *pctrl;
-	struct gpio_chip        gc;
-	unsigned int            hwbank_num;
-	struct resource         *res;
-	struct platform_device  *pdev;
+	काष्ठा pinctrl_dev *pctrl;
+	काष्ठा gpio_chip        gc;
+	अचिन्हित पूर्णांक            hwbank_num;
+	काष्ठा resource         *res;
+	काष्ठा platक्रमm_device  *pdev;
 	u32			*saved_regs;
-};
+पूर्ण;
 
 /*  KERNCZ configuration*/
-static const struct pinctrl_pin_desc kerncz_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc kerncz_pins[] = अणु
 	PINCTRL_PIN(0, "GPIO_0"),
 	PINCTRL_PIN(1, "GPIO_1"),
 	PINCTRL_PIN(2, "GPIO_2"),
@@ -285,47 +286,47 @@ static const struct pinctrl_pin_desc kerncz_pins[] = {
 	PINCTRL_PIN(181, "GPIO_181"),
 	PINCTRL_PIN(182, "GPIO_182"),
 	PINCTRL_PIN(183, "GPIO_183"),
-};
+पूर्ण;
 
-static const unsigned i2c0_pins[] = {145, 146};
-static const unsigned i2c1_pins[] = {147, 148};
-static const unsigned i2c2_pins[] = {113, 114};
-static const unsigned i2c3_pins[] = {19, 20};
+अटल स्थिर अचिन्हित i2c0_pins[] = अणु145, 146पूर्ण;
+अटल स्थिर अचिन्हित i2c1_pins[] = अणु147, 148पूर्ण;
+अटल स्थिर अचिन्हित i2c2_pins[] = अणु113, 114पूर्ण;
+अटल स्थिर अचिन्हित i2c3_pins[] = अणु19, 20पूर्ण;
 
-static const unsigned uart0_pins[] = {135, 136, 137, 138, 139};
-static const unsigned uart1_pins[] = {140, 141, 142, 143, 144};
+अटल स्थिर अचिन्हित uart0_pins[] = अणु135, 136, 137, 138, 139पूर्ण;
+अटल स्थिर अचिन्हित uart1_pins[] = अणु140, 141, 142, 143, 144पूर्ण;
 
-static const struct amd_pingroup kerncz_groups[] = {
-	{
+अटल स्थिर काष्ठा amd_pingroup kerncz_groups[] = अणु
+	अणु
 		.name = "i2c0",
 		.pins = i2c0_pins,
 		.npins = 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "i2c1",
 		.pins = i2c1_pins,
 		.npins = 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "i2c2",
 		.pins = i2c2_pins,
 		.npins = 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "i2c3",
 		.pins = i2c3_pins,
 		.npins = 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "uart0",
 		.pins = uart0_pins,
 		.npins = 5,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "uart1",
 		.pins = uart1_pins,
 		.npins = 5,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

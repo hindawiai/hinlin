@@ -1,3 +1,4 @@
+<शैली गुरु>
 /***********************license start***************
  * Author: Cavium Networks
  *
@@ -6,23 +7,23 @@
  *
  * Copyright (c) 2003-2017 Cavium, Inc.
  *
- * This file is free software; you can redistribute it and/or modify
+ * This file is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License for more
+ * NONINFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this file; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * aदीर्घ with this file; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA
  * or visit http://www.gnu.org/licenses/.
  *
- * This file may also be available under a different license from Cavium.
- * Contact Cavium Networks for more information
+ * This file may also be available under a dअगरferent license from Cavium.
+ * Contact Cavium Networks क्रम more inक्रमmation
  ***********************license end**************************************/
 
 /*
@@ -30,43 +31,43 @@
  * facilities.
  */
 
-#ifndef __CVMX_L2C_H__
-#define __CVMX_L2C_H__
+#अगर_अघोषित __CVMX_L2C_H__
+#घोषणा __CVMX_L2C_H__
 
-#include <uapi/asm/bitfield.h>
+#समावेश <uapi/यंत्र/bitfield.h>
 
-#define CVMX_L2_ASSOC	 cvmx_l2c_get_num_assoc()	/* Deprecated macro */
-#define CVMX_L2_SET_BITS cvmx_l2c_get_set_bits()	/* Deprecated macro */
-#define CVMX_L2_SETS	 cvmx_l2c_get_num_sets()	/* Deprecated macro */
+#घोषणा CVMX_L2_ASSOC	 cvmx_l2c_get_num_assoc()	/* Deprecated macro */
+#घोषणा CVMX_L2_SET_BITS cvmx_l2c_get_set_bits()	/* Deprecated macro */
+#घोषणा CVMX_L2_SETS	 cvmx_l2c_get_num_sets()	/* Deprecated macro */
 
 /* Based on 128 byte cache line size */
-#define CVMX_L2C_IDX_ADDR_SHIFT	7
-#define CVMX_L2C_IDX_MASK	(cvmx_l2c_get_num_sets() - 1)
+#घोषणा CVMX_L2C_IDX_ADDR_SHIFT	7
+#घोषणा CVMX_L2C_IDX_MASK	(cvmx_l2c_get_num_sets() - 1)
 
-/* Defines for index aliasing computations */
-#define CVMX_L2C_TAG_ADDR_ALIAS_SHIFT (CVMX_L2C_IDX_ADDR_SHIFT +	       \
+/* Defines क्रम index aliasing computations */
+#घोषणा CVMX_L2C_TAG_ADDR_ALIAS_SHIFT (CVMX_L2C_IDX_ADDR_SHIFT +	       \
 		cvmx_l2c_get_set_bits())
-#define CVMX_L2C_ALIAS_MASK (CVMX_L2C_IDX_MASK << CVMX_L2C_TAG_ADDR_ALIAS_SHIFT)
-#define CVMX_L2C_MEMBANK_SELECT_SIZE 4096
+#घोषणा CVMX_L2C_ALIAS_MASK (CVMX_L2C_IDX_MASK << CVMX_L2C_TAG_ADDR_ALIAS_SHIFT)
+#घोषणा CVMX_L2C_MEMBANK_SELECT_SIZE 4096
 
 /* Number of L2C Tag-and-data sections (TADs) that are connected to LMC. */
-#define CVMX_L2C_TADS  1
+#घोषणा CVMX_L2C_TADS  1
 
-union cvmx_l2c_tag {
-	uint64_t u64;
-	struct {
-		__BITFIELD_FIELD(uint64_t reserved:28,
-		__BITFIELD_FIELD(uint64_t V:1,
-		__BITFIELD_FIELD(uint64_t D:1,
-		__BITFIELD_FIELD(uint64_t L:1,
-		__BITFIELD_FIELD(uint64_t U:1,
-		__BITFIELD_FIELD(uint64_t addr:32,
+जोड़ cvmx_l2c_tag अणु
+	uपूर्णांक64_t u64;
+	काष्ठा अणु
+		__BITFIELD_FIELD(uपूर्णांक64_t reserved:28,
+		__BITFIELD_FIELD(uपूर्णांक64_t V:1,
+		__BITFIELD_FIELD(uपूर्णांक64_t D:1,
+		__BITFIELD_FIELD(uपूर्णांक64_t L:1,
+		__BITFIELD_FIELD(uपूर्णांक64_t U:1,
+		__BITFIELD_FIELD(uपूर्णांक64_t addr:32,
 		;))))))
-	} s;
-};
+	पूर्ण s;
+पूर्ण;
 
-/* L2C Performance Counter events. */
-enum cvmx_l2c_event {
+/* L2C Perक्रमmance Counter events. */
+क्रमागत cvmx_l2c_event अणु
 	CVMX_L2C_EVENT_CYCLES		=  0,
 	CVMX_L2C_EVENT_INSTRUCTION_MISS =  1,
 	CVMX_L2C_EVENT_INSTRUCTION_HIT	=  2,
@@ -79,7 +80,7 @@ enum cvmx_l2c_event {
 	CVMX_L2C_EVENT_TAG_PROBE	=  9,
 	CVMX_L2C_EVENT_TAG_UPDATE	= 10,
 	CVMX_L2C_EVENT_TAG_COMPLETE	= 11,
-	CVMX_L2C_EVENT_TAG_DIRTY	= 12,
+	CVMX_L2C_EVENT_TAG_सूचीTY	= 12,
 	CVMX_L2C_EVENT_DATA_STORE_NOP	= 13,
 	CVMX_L2C_EVENT_DATA_STORE_READ	= 14,
 	CVMX_L2C_EVENT_DATA_STORE_WRITE = 15,
@@ -122,10 +123,10 @@ enum cvmx_l2c_event {
 	CVMX_L2C_EVENT_DT_RD_ALLOC	= 52,
 	CVMX_L2C_EVENT_DT_WR_INVAL	= 53,
 	CVMX_L2C_EVENT_MAX
-};
+पूर्ण;
 
-/* L2C Performance Counter events for Octeon2. */
-enum cvmx_l2c_tad_event {
+/* L2C Perक्रमmance Counter events क्रम Octeon2. */
+क्रमागत cvmx_l2c_tad_event अणु
 	CVMX_L2C_TAD_EVENT_NONE		 = 0,
 	CVMX_L2C_TAD_EVENT_TAG_HIT	 = 1,
 	CVMX_L2C_TAD_EVENT_TAG_MISS	 = 2,
@@ -153,107 +154,107 @@ enum cvmx_l2c_tad_event {
 	CVMX_L2C_TAD_EVENT_QUAD3_BANK	 = 178,
 	CVMX_L2C_TAD_EVENT_QUAD3_WDAT	 = 179,
 	CVMX_L2C_TAD_EVENT_MAX
-};
+पूर्ण;
 
 /**
- * Configure one of the four L2 Cache performance counters to capture event
+ * Configure one of the four L2 Cache perक्रमmance counters to capture event
  * occurrences.
  *
  * @counter:	    The counter to configure. Range 0..3.
  * @event:	    The type of L2 Cache event occurrence to count.
- * @clear_on_read:  When asserted, any read of the performance counter
+ * @clear_on_पढ़ो:  When निश्चितed, any पढ़ो of the perक्रमmance counter
  *			 clears the counter.
  *
- * @note The routine does not clear the counter.
+ * @note The routine करोes not clear the counter.
  */
-void cvmx_l2c_config_perf(uint32_t counter, enum cvmx_l2c_event event,
-			  uint32_t clear_on_read);
+व्योम cvmx_l2c_config_perf(uपूर्णांक32_t counter, क्रमागत cvmx_l2c_event event,
+			  uपूर्णांक32_t clear_on_पढ़ो);
 
 /**
- * Read the given L2 Cache performance counter. The counter must be configured
- * before reading, but this routine does not enforce this requirement.
+ * Read the given L2 Cache perक्रमmance counter. The counter must be configured
+ * beक्रमe पढ़ोing, but this routine करोes not enक्रमce this requirement.
  *
  * @counter:  The counter to configure. Range 0..3.
  *
  * Returns The current counter value.
  */
-uint64_t cvmx_l2c_read_perf(uint32_t counter);
+uपूर्णांक64_t cvmx_l2c_पढ़ो_perf(uपूर्णांक32_t counter);
 
 /**
- * Return the L2 Cache way partitioning for a given core.
+ * Return the L2 Cache way partitioning क्रम a given core.
  *
- * @core:  The core processor of interest.
+ * @core:  The core processor of पूर्णांकerest.
  *
- * Returns    The mask specifying the partitioning. 0 bits in mask indicates
+ * Returns    The mask specअगरying the partitioning. 0 bits in mask indicates
  *		the cache 'ways' that a core can evict from.
  *	      -1 on error
  */
-int cvmx_l2c_get_core_way_partition(uint32_t core);
+पूर्णांक cvmx_l2c_get_core_way_partition(uपूर्णांक32_t core);
 
 /**
- * Partitions the L2 cache for a core
+ * Partitions the L2 cache क्रम a core
  *
  * @core: The core that the partitioning applies to.
  * @mask: The partitioning of the ways expressed as a binary
  *	       mask. A 0 bit allows the core to evict cache lines from
- *	       a way, while a 1 bit blocks the core from evicting any
+ *	       a way, जबतक a 1 bit blocks the core from evicting any
  *	       lines from that way. There must be at least one allowed
  *	       way (0 bit) in the mask.
  *
 
- * @note If any ways are blocked for all cores and the HW blocks, then
+ * @note If any ways are blocked क्रम all cores and the HW blocks, then
  *	 those ways will never have any cache lines evicted from them.
- *	 All cores and the hardware blocks are free to read from all
+ *	 All cores and the hardware blocks are मुक्त to पढ़ो from all
  *	 ways regardless of the partitioning.
  */
-int cvmx_l2c_set_core_way_partition(uint32_t core, uint32_t mask);
+पूर्णांक cvmx_l2c_set_core_way_partition(uपूर्णांक32_t core, uपूर्णांक32_t mask);
 
 /**
- * Return the L2 Cache way partitioning for the hw blocks.
+ * Return the L2 Cache way partitioning क्रम the hw blocks.
  *
- * Returns    The mask specifying the reserved way. 0 bits in mask indicates
+ * Returns    The mask specअगरying the reserved way. 0 bits in mask indicates
  *		the cache 'ways' that a core can evict from.
  *	      -1 on error
  */
-int cvmx_l2c_get_hw_way_partition(void);
+पूर्णांक cvmx_l2c_get_hw_way_partition(व्योम);
 
 /**
- * Partitions the L2 cache for the hardware blocks.
+ * Partitions the L2 cache क्रम the hardware blocks.
  *
  * @mask: The partitioning of the ways expressed as a binary
  *	       mask. A 0 bit allows the core to evict cache lines from
- *	       a way, while a 1 bit blocks the core from evicting any
+ *	       a way, जबतक a 1 bit blocks the core from evicting any
  *	       lines from that way. There must be at least one allowed
  *	       way (0 bit) in the mask.
  *
 
- * @note If any ways are blocked for all cores and the HW blocks, then
+ * @note If any ways are blocked क्रम all cores and the HW blocks, then
  *	 those ways will never have any cache lines evicted from them.
- *	 All cores and the hardware blocks are free to read from all
+ *	 All cores and the hardware blocks are मुक्त to पढ़ो from all
  *	 ways regardless of the partitioning.
  */
-int cvmx_l2c_set_hw_way_partition(uint32_t mask);
+पूर्णांक cvmx_l2c_set_hw_way_partition(uपूर्णांक32_t mask);
 
 
 /**
- * Locks a line in the L2 cache at the specified physical address
+ * Locks a line in the L2 cache at the specअगरied physical address
  *
  * @addr:   physical address of line to lock
  *
  * Returns 0 on success,
- *	   1 if line not locked.
+ *	   1 अगर line not locked.
  */
-int cvmx_l2c_lock_line(uint64_t addr);
+पूर्णांक cvmx_l2c_lock_line(uपूर्णांक64_t addr);
 
 /**
- * Locks a specified memory region in the L2 cache.
+ * Locks a specअगरied memory region in the L2 cache.
  *
- * Note that if not all lines can be locked, that means that all
+ * Note that अगर not all lines can be locked, that means that all
  * but one of the ways (associations) available to the locking
- * core are locked.  Having only 1 association available for
- * normal caching may have a significant adverse affect on performance.
+ * core are locked.  Having only 1 association available क्रम
+ * normal caching may have a signअगरicant adverse affect on perक्रमmance.
  * Care should be taken to ensure that enough of the L2 cache is left
- * unlocked to allow for normal caching of DRAM.
+ * unlocked to allow क्रम normal caching of DRAM.
  *
  * @start:  Physical address of the start of the region to lock
  * @len:    Length (in bytes) of region to lock
@@ -261,11 +262,11 @@ int cvmx_l2c_lock_line(uint64_t addr);
  * Returns Number of requested lines that where not locked.
  *	   0 on success (all locked)
  */
-int cvmx_l2c_lock_mem_region(uint64_t start, uint64_t len);
+पूर्णांक cvmx_l2c_lock_mem_region(uपूर्णांक64_t start, uपूर्णांक64_t len);
 
 /**
  * Unlock and flush a cache line from the L2 cache.
- * IMPORTANT: Must only be run by one core at a time due to use
+ * IMPORTANT: Must only be run by one core at a समय due to use
  * of L2C debug features.
  * Note that this function will flush a matching but unlocked cache line.
  * (If address is not in L2, no lines are flushed.)
@@ -275,7 +276,7 @@ int cvmx_l2c_lock_mem_region(uint64_t start, uint64_t len);
  * Returns 0: line not unlocked
  *	   1: line unlocked
  */
-int cvmx_l2c_unlock_line(uint64_t address);
+पूर्णांक cvmx_l2c_unlock_line(uपूर्णांक64_t address);
 
 /**
  * Unlocks a region of memory that is locked in the L2 cache
@@ -285,80 +286,80 @@ int cvmx_l2c_unlock_line(uint64_t address);
  *
  * Returns Number of locked lines that the call unlocked
  */
-int cvmx_l2c_unlock_mem_region(uint64_t start, uint64_t len);
+पूर्णांक cvmx_l2c_unlock_mem_region(uपूर्णांक64_t start, uपूर्णांक64_t len);
 
 /**
- * Read the L2 controller tag for a given location in L2
+ * Read the L2 controller tag क्रम a given location in L2
  *
  * @association:
- *		 Which association to read line from
- * @index:  Which way to read from.
+ *		 Which association to पढ़ो line from
+ * @index:  Which way to पढ़ो from.
  *
- * Returns l2c tag structure for line requested.
+ * Returns l2c tag काष्ठाure क्रम line requested.
  */
-union cvmx_l2c_tag cvmx_l2c_get_tag(uint32_t association, uint32_t index);
+जोड़ cvmx_l2c_tag cvmx_l2c_get_tag(uपूर्णांक32_t association, uपूर्णांक32_t index);
 
 /* Wrapper providing a deprecated old function name */
-static inline union cvmx_l2c_tag cvmx_get_l2c_tag(uint32_t association,
-						  uint32_t index)
+अटल अंतरभूत जोड़ cvmx_l2c_tag cvmx_get_l2c_tag(uपूर्णांक32_t association,
+						  uपूर्णांक32_t index)
 						  __attribute__((deprecated));
-static inline union cvmx_l2c_tag cvmx_get_l2c_tag(uint32_t association,
-						  uint32_t index)
-{
-	return cvmx_l2c_get_tag(association, index);
-}
+अटल अंतरभूत जोड़ cvmx_l2c_tag cvmx_get_l2c_tag(uपूर्णांक32_t association,
+						  uपूर्णांक32_t index)
+अणु
+	वापस cvmx_l2c_get_tag(association, index);
+पूर्ण
 
 
 /**
- * Returns the cache index for a given physical address
+ * Returns the cache index क्रम a given physical address
  *
  * @addr:   physical address
  *
  * Returns L2 cache index
  */
-uint32_t cvmx_l2c_address_to_index(uint64_t addr);
+uपूर्णांक32_t cvmx_l2c_address_to_index(uपूर्णांक64_t addr);
 
 /**
  * Flushes (and unlocks) the entire L2 cache.
- * IMPORTANT: Must only be run by one core at a time due to use
+ * IMPORTANT: Must only be run by one core at a समय due to use
  * of L2C debug features.
  */
-void cvmx_l2c_flush(void);
+व्योम cvmx_l2c_flush(व्योम);
 
 /**
  *
  * Returns the size of the L2 cache in bytes,
  * -1 on error (unrecognized model)
  */
-int cvmx_l2c_get_cache_size_bytes(void);
+पूर्णांक cvmx_l2c_get_cache_size_bytes(व्योम);
 
 /**
  * Return the number of sets in the L2 Cache
  *
  * Returns
  */
-int cvmx_l2c_get_num_sets(void);
+पूर्णांक cvmx_l2c_get_num_sets(व्योम);
 
 /**
  * Return log base 2 of the number of sets in the L2 cache
  * Returns
  */
-int cvmx_l2c_get_set_bits(void);
+पूर्णांक cvmx_l2c_get_set_bits(व्योम);
 /**
  * Return the number of associations in the L2 Cache
  *
  * Returns
  */
-int cvmx_l2c_get_num_assoc(void);
+पूर्णांक cvmx_l2c_get_num_assoc(व्योम);
 
 /**
  * Flush a line from the L2 cache
- * This should only be called from one core at a time, as this routine
+ * This should only be called from one core at a समय, as this routine
  * sets the core to the 'debug' core in order to flush the line.
  *
  * @assoc:  Association (or way) to flush
  * @index:  Index to flush
  */
-void cvmx_l2c_flush_line(uint32_t assoc, uint32_t index);
+व्योम cvmx_l2c_flush_line(uपूर्णांक32_t assoc, uपूर्णांक32_t index);
 
-#endif /* __CVMX_L2C_H__ */
+#पूर्ण_अगर /* __CVMX_L2C_H__ */

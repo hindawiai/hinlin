@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2019 Facebook */
 
-#include <test_progs.h>
+#समावेश <test_progs.h>
 
-struct s {
-	int a;
-	long long b;
-} __attribute__((packed));
+काष्ठा s अणु
+	पूर्णांक a;
+	दीर्घ दीर्घ b;
+पूर्ण __attribute__((packed));
 
-#include "test_skeleton.skel.h"
+#समावेश "test_skeleton.skel.h"
 
-void test_skeleton(void)
-{
-	int duration = 0, err;
-	struct test_skeleton* skel;
-	struct test_skeleton__bss *bss;
-	struct test_skeleton__data *data;
-	struct test_skeleton__rodata *rodata;
-	struct test_skeleton__kconfig *kcfg;
+व्योम test_skeleton(व्योम)
+अणु
+	पूर्णांक duration = 0, err;
+	काष्ठा test_skeleton* skel;
+	काष्ठा test_skeleton__bss *bss;
+	काष्ठा test_skeleton__data *data;
+	काष्ठा test_skeleton__rodata *rodata;
+	काष्ठा test_skeleton__kconfig *kcfg;
 
-	skel = test_skeleton__open();
-	if (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
-		return;
+	skel = test_skeleton__खोलो();
+	अगर (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
+		वापस;
 
-	if (CHECK(skel->kconfig, "skel_kconfig", "kconfig is mmaped()!\n"))
-		goto cleanup;
+	अगर (CHECK(skel->kconfig, "skel_kconfig", "kconfig is mmaped()!\n"))
+		जाओ cleanup;
 
 	bss = skel->bss;
 	data = skel->data;
@@ -52,8 +53,8 @@ void test_skeleton(void)
 	rodata->in.in6 = 14;
 
 	err = test_skeleton__load(skel);
-	if (CHECK(err, "skel_load", "failed to load skeleton: %d\n", err))
-		goto cleanup;
+	अगर (CHECK(err, "skel_load", "failed to load skeleton: %d\n", err))
+		जाओ cleanup;
 
 	/* validate pre-setup values are still there */
 	CHECK(data->in1 != 10, "in1", "got %d != exp %d\n", data->in1, 10);
@@ -62,7 +63,7 @@ void test_skeleton(void)
 	CHECK(bss->in4 != 13, "in4", "got %lld != exp %lld\n", bss->in4, 13LL);
 	CHECK(rodata->in.in6 != 14, "in6", "got %d != exp %d\n", rodata->in.in6, 14);
 
-	/* now set new values and attach to get them into outX variables */
+	/* now set new values and attach to get them पूर्णांकo outX variables */
 	data->in1 = 1;
 	data->in2 = 2;
 	bss->in3 = 3;
@@ -72,15 +73,15 @@ void test_skeleton(void)
 	kcfg = skel->kconfig;
 
 	err = test_skeleton__attach(skel);
-	if (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
-		goto cleanup;
+	अगर (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
+		जाओ cleanup;
 
-	/* trigger tracepoint */
+	/* trigger tracepoपूर्णांक */
 	usleep(1);
 
 	CHECK(data->out1 != 1, "res1", "got %d != exp %d\n", data->out1, 1);
 	CHECK(data->out2 != 2, "res2", "got %lld != exp %d\n", data->out2, 2);
-	CHECK(bss->out3 != 3, "res3", "got %d != exp %d\n", (int)bss->out3, 3);
+	CHECK(bss->out3 != 3, "res3", "got %d != exp %d\n", (पूर्णांक)bss->out3, 3);
 	CHECK(bss->out4 != 4, "res4", "got %lld != exp %d\n", bss->out4, 4);
 	CHECK(bss->handler_out5.a != 5, "res5", "got %d != exp %d\n",
 	      bss->handler_out5.a, 5);
@@ -95,4 +96,4 @@ void test_skeleton(void)
 
 cleanup:
 	test_skeleton__destroy(skel);
-}
+पूर्ण

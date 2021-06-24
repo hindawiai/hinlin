@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <asm/bug.h>
-#include <linux/rbtree_augmented.h>
-#include "drbd_interval.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <यंत्र/bug.h>
+#समावेश <linux/rbtree_augmented.h>
+#समावेश "drbd_interval.h"
 
 /*
- * interval_end  -  return end of @node
+ * पूर्णांकerval_end  -  वापस end of @node
  */
-static inline
-sector_t interval_end(struct rb_node *node)
-{
-	struct drbd_interval *this = rb_entry(node, struct drbd_interval, rb);
-	return this->end;
-}
+अटल अंतरभूत
+sector_t पूर्णांकerval_end(काष्ठा rb_node *node)
+अणु
+	काष्ठा drbd_पूर्णांकerval *this = rb_entry(node, काष्ठा drbd_पूर्णांकerval, rb);
+	वापस this->end;
+पूर्ण
 
-#define NODE_END(node) ((node)->sector + ((node)->size >> 9))
+#घोषणा NODE_END(node) ((node)->sector + ((node)->size >> 9))
 
-RB_DECLARE_CALLBACKS_MAX(static, augment_callbacks,
-			 struct drbd_interval, rb, sector_t, end, NODE_END);
+RB_DECLARE_CALLBACKS_MAX(अटल, augment_callbacks,
+			 काष्ठा drbd_पूर्णांकerval, rb, sector_t, end, NODE_END);
 
 /*
- * drbd_insert_interval  -  insert a new interval into a tree
+ * drbd_insert_पूर्णांकerval  -  insert a new पूर्णांकerval पूर्णांकo a tree
  */
 bool
-drbd_insert_interval(struct rb_root *root, struct drbd_interval *this)
-{
-	struct rb_node **new = &root->rb_node, *parent = NULL;
+drbd_insert_पूर्णांकerval(काष्ठा rb_root *root, काष्ठा drbd_पूर्णांकerval *this)
+अणु
+	काष्ठा rb_node **new = &root->rb_node, *parent = शून्य;
 	sector_t this_end = this->sector + (this->size >> 9);
 
 	BUG_ON(!IS_ALIGNED(this->size, 512));
 
-	while (*new) {
-		struct drbd_interval *here =
-			rb_entry(*new, struct drbd_interval, rb);
+	जबतक (*new) अणु
+		काष्ठा drbd_पूर्णांकerval *here =
+			rb_entry(*new, काष्ठा drbd_पूर्णांकerval, rb);
 
 		parent = *new;
-		if (here->end < this_end)
+		अगर (here->end < this_end)
 			here->end = this_end;
-		if (this->sector < here->sector)
+		अगर (this->sector < here->sector)
 			new = &(*new)->rb_left;
-		else if (this->sector > here->sector)
+		अन्यथा अगर (this->sector > here->sector)
 			new = &(*new)->rb_right;
-		else if (this < here)
+		अन्यथा अगर (this < here)
 			new = &(*new)->rb_left;
-		else if (this > here)
+		अन्यथा अगर (this > here)
 			new = &(*new)->rb_right;
-		else
-			return false;
-	}
+		अन्यथा
+			वापस false;
+	पूर्ण
 
 	this->end = this_end;
 	rb_link_node(&this->rb, parent, new);
 	rb_insert_augmented(&this->rb, root, &augment_callbacks);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * drbd_contains_interval  -  check if a tree contains a given interval
+ * drbd_contains_पूर्णांकerval  -  check अगर a tree contains a given पूर्णांकerval
  * @root:	red black tree root
- * @sector:	start sector of @interval
- * @interval:	may not be a valid pointer
+ * @sector:	start sector of @पूर्णांकerval
+ * @पूर्णांकerval:	may not be a valid poपूर्णांकer
  *
- * Returns if the tree contains the node @interval with start sector @start.
- * Does not dereference @interval until @interval is known to be a valid object
- * in @tree.  Returns %false if @interval is in the tree but with a different
+ * Returns अगर the tree contains the node @पूर्णांकerval with start sector @start.
+ * Does not dereference @पूर्णांकerval until @पूर्णांकerval is known to be a valid object
+ * in @tree.  Returns %false अगर @पूर्णांकerval is in the tree but with a dअगरferent
  * sector number.
  */
 bool
-drbd_contains_interval(struct rb_root *root, sector_t sector,
-		       struct drbd_interval *interval)
-{
-	struct rb_node *node = root->rb_node;
+drbd_contains_पूर्णांकerval(काष्ठा rb_root *root, sector_t sector,
+		       काष्ठा drbd_पूर्णांकerval *पूर्णांकerval)
+अणु
+	काष्ठा rb_node *node = root->rb_node;
 
-	while (node) {
-		struct drbd_interval *here =
-			rb_entry(node, struct drbd_interval, rb);
+	जबतक (node) अणु
+		काष्ठा drbd_पूर्णांकerval *here =
+			rb_entry(node, काष्ठा drbd_पूर्णांकerval, rb);
 
-		if (sector < here->sector)
+		अगर (sector < here->sector)
 			node = node->rb_left;
-		else if (sector > here->sector)
+		अन्यथा अगर (sector > here->sector)
 			node = node->rb_right;
-		else if (interval < here)
+		अन्यथा अगर (पूर्णांकerval < here)
 			node = node->rb_left;
-		else if (interval > here)
+		अन्यथा अगर (पूर्णांकerval > here)
 			node = node->rb_right;
-		else
-			return true;
-	}
-	return false;
-}
+		अन्यथा
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
- * drbd_remove_interval  -  remove an interval from a tree
+ * drbd_हटाओ_पूर्णांकerval  -  हटाओ an पूर्णांकerval from a tree
  */
-void
-drbd_remove_interval(struct rb_root *root, struct drbd_interval *this)
-{
+व्योम
+drbd_हटाओ_पूर्णांकerval(काष्ठा rb_root *root, काष्ठा drbd_पूर्णांकerval *this)
+अणु
 	rb_erase_augmented(&this->rb, root, &augment_callbacks);
-}
+पूर्ण
 
 /**
- * drbd_find_overlap  - search for an interval overlapping with [sector, sector + size)
+ * drbd_find_overlap  - search क्रम an पूर्णांकerval overlapping with [sector, sector + size)
  * @root:	red black tree root
  * @sector:	start sector
  * @size:	size, aligned to 512 bytes
  *
- * Returns an interval overlapping with [sector, sector + size), or NULL if
- * there is none.  When there is more than one overlapping interval in the
- * tree, the interval with the lowest start sector is returned, and all other
- * overlapping intervals will be on the right side of the tree, reachable with
+ * Returns an पूर्णांकerval overlapping with [sector, sector + size), or शून्य अगर
+ * there is none.  When there is more than one overlapping पूर्णांकerval in the
+ * tree, the पूर्णांकerval with the lowest start sector is वापसed, and all other
+ * overlapping पूर्णांकervals will be on the right side of the tree, reachable with
  * rb_next().
  */
-struct drbd_interval *
-drbd_find_overlap(struct rb_root *root, sector_t sector, unsigned int size)
-{
-	struct rb_node *node = root->rb_node;
-	struct drbd_interval *overlap = NULL;
+काष्ठा drbd_पूर्णांकerval *
+drbd_find_overlap(काष्ठा rb_root *root, sector_t sector, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा rb_node *node = root->rb_node;
+	काष्ठा drbd_पूर्णांकerval *overlap = शून्य;
 	sector_t end = sector + (size >> 9);
 
 	BUG_ON(!IS_ALIGNED(size, 512));
 
-	while (node) {
-		struct drbd_interval *here =
-			rb_entry(node, struct drbd_interval, rb);
+	जबतक (node) अणु
+		काष्ठा drbd_पूर्णांकerval *here =
+			rb_entry(node, काष्ठा drbd_पूर्णांकerval, rb);
 
-		if (node->rb_left &&
-		    sector < interval_end(node->rb_left)) {
-			/* Overlap if any must be on left side */
+		अगर (node->rb_left &&
+		    sector < पूर्णांकerval_end(node->rb_left)) अणु
+			/* Overlap अगर any must be on left side */
 			node = node->rb_left;
-		} else if (here->sector < end &&
-			   sector < here->sector + (here->size >> 9)) {
+		पूर्ण अन्यथा अगर (here->sector < end &&
+			   sector < here->sector + (here->size >> 9)) अणु
 			overlap = here;
-			break;
-		} else if (sector >= here->sector) {
-			/* Overlap if any must be on right side */
+			अवरोध;
+		पूर्ण अन्यथा अगर (sector >= here->sector) अणु
+			/* Overlap अगर any must be on right side */
 			node = node->rb_right;
-		} else
-			break;
-	}
-	return overlap;
-}
+		पूर्ण अन्यथा
+			अवरोध;
+	पूर्ण
+	वापस overlap;
+पूर्ण
 
-struct drbd_interval *
-drbd_next_overlap(struct drbd_interval *i, sector_t sector, unsigned int size)
-{
+काष्ठा drbd_पूर्णांकerval *
+drbd_next_overlap(काष्ठा drbd_पूर्णांकerval *i, sector_t sector, अचिन्हित पूर्णांक size)
+अणु
 	sector_t end = sector + (size >> 9);
-	struct rb_node *node;
+	काष्ठा rb_node *node;
 
-	for (;;) {
+	क्रम (;;) अणु
 		node = rb_next(&i->rb);
-		if (!node)
-			return NULL;
-		i = rb_entry(node, struct drbd_interval, rb);
-		if (i->sector >= end)
-			return NULL;
-		if (sector < i->sector + (i->size >> 9))
-			return i;
-	}
-}
+		अगर (!node)
+			वापस शून्य;
+		i = rb_entry(node, काष्ठा drbd_पूर्णांकerval, rb);
+		अगर (i->sector >= end)
+			वापस शून्य;
+		अगर (sector < i->sector + (i->size >> 9))
+			वापस i;
+	पूर्ण
+पूर्ण

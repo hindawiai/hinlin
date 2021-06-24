@@ -1,147 +1,148 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * ngene.h: nGene PCIe bridge driver
  *
  * Copyright (C) 2005-2007 Micronas
  */
 
-#ifndef _NGENE_H_
-#define _NGENE_H_
+#अगर_अघोषित _NGENE_H_
+#घोषणा _NGENE_H_
 
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/i2c.h>
-#include <asm/dma.h>
-#include <linux/scatterlist.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/i2c.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <linux/scatterlist.h>
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-#include <media/dmxdev.h>
-#include <media/dvbdev.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_ca_en50221.h>
-#include <media/dvb_frontend.h>
-#include <media/dvb_ringbuffer.h>
-#include <media/dvb_net.h>
-#include "cxd2099.h"
+#समावेश <media/dmxdev.h>
+#समावेश <media/dvbdev.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_ca_en50221.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_ringbuffer.h>
+#समावेश <media/dvb_net.h>
+#समावेश "cxd2099.h"
 
-#define DEVICE_NAME "ngene"
+#घोषणा DEVICE_NAME "ngene"
 
-#define NGENE_VID       0x18c3
-#define NGENE_PID       0x0720
+#घोषणा NGENE_VID       0x18c3
+#घोषणा NGENE_PID       0x0720
 
-#ifndef VIDEO_CAP_VC1
-#define VIDEO_CAP_AVC   128
-#define VIDEO_CAP_H264  128
-#define VIDEO_CAP_VC1   256
-#define VIDEO_CAP_WMV9  256
-#define VIDEO_CAP_MPEG4 512
-#endif
+#अगर_अघोषित VIDEO_CAP_VC1
+#घोषणा VIDEO_CAP_AVC   128
+#घोषणा VIDEO_CAP_H264  128
+#घोषणा VIDEO_CAP_VC1   256
+#घोषणा VIDEO_CAP_WMV9  256
+#घोषणा VIDEO_CAP_MPEG4 512
+#पूर्ण_अगर
 
-#define DEMOD_TYPE_STV090X	0
-#define DEMOD_TYPE_DRXK		1
-#define DEMOD_TYPE_STV0367	2
+#घोषणा DEMOD_TYPE_STV090X	0
+#घोषणा DEMOD_TYPE_DRXK		1
+#घोषणा DEMOD_TYPE_STV0367	2
 
-#define DEMOD_TYPE_XO2		32
-#define DEMOD_TYPE_STV0910	(DEMOD_TYPE_XO2 + 0)
-#define DEMOD_TYPE_SONY_CT2	(DEMOD_TYPE_XO2 + 1)
-#define DEMOD_TYPE_SONY_ISDBT	(DEMOD_TYPE_XO2 + 2)
-#define DEMOD_TYPE_SONY_C2T2	(DEMOD_TYPE_XO2 + 3)
-#define DEMOD_TYPE_ST_ATSC	(DEMOD_TYPE_XO2 + 4)
-#define DEMOD_TYPE_SONY_C2T2I	(DEMOD_TYPE_XO2 + 5)
+#घोषणा DEMOD_TYPE_XO2		32
+#घोषणा DEMOD_TYPE_STV0910	(DEMOD_TYPE_XO2 + 0)
+#घोषणा DEMOD_TYPE_SONY_CT2	(DEMOD_TYPE_XO2 + 1)
+#घोषणा DEMOD_TYPE_SONY_ISDBT	(DEMOD_TYPE_XO2 + 2)
+#घोषणा DEMOD_TYPE_SONY_C2T2	(DEMOD_TYPE_XO2 + 3)
+#घोषणा DEMOD_TYPE_ST_ATSC	(DEMOD_TYPE_XO2 + 4)
+#घोषणा DEMOD_TYPE_SONY_C2T2I	(DEMOD_TYPE_XO2 + 5)
 
-#define NGENE_XO2_TYPE_NONE	0
-#define NGENE_XO2_TYPE_DUOFLEX	1
-#define NGENE_XO2_TYPE_CI	2
+#घोषणा NGENE_XO2_TYPE_NONE	0
+#घोषणा NGENE_XO2_TYPE_DUOFLEX	1
+#घोषणा NGENE_XO2_TYPE_CI	2
 
-enum STREAM {
+क्रमागत STREAM अणु
 	STREAM_VIDEOIN1 = 0,        /* ITU656 or TS Input */
 	STREAM_VIDEOIN2,
 	STREAM_AUDIOIN1,            /* I2S or SPI Input */
 	STREAM_AUDIOIN2,
 	STREAM_AUDIOOUT,
 	MAX_STREAM
-};
+पूर्ण;
 
-enum SMODE_BITS {
+क्रमागत SMODE_BITS अणु
 	SMODE_AUDIO_SPDIF = 0x20,
 	SMODE_AVSYNC = 0x10,
 	SMODE_TRANSPORT_STREAM = 0x08,
 	SMODE_AUDIO_CAPTURE = 0x04,
 	SMODE_VBI_CAPTURE = 0x02,
 	SMODE_VIDEO_CAPTURE = 0x01
-};
+पूर्ण;
 
-enum STREAM_FLAG_BITS {
+क्रमागत STREAM_FLAG_BITS अणु
 	SFLAG_CHROMA_FORMAT_2COMP  = 0x01, /* Chroma Format : 2's complement */
 	SFLAG_CHROMA_FORMAT_OFFSET = 0x00, /* Chroma Format : Binary offset */
 	SFLAG_ORDER_LUMA_CHROMA    = 0x02, /* Byte order: Y,Cb,Y,Cr */
 	SFLAG_ORDER_CHROMA_LUMA    = 0x00, /* Byte order: Cb,Y,Cr,Y */
 	SFLAG_COLORBAR             = 0x04, /* Select colorbar */
-};
+पूर्ण;
 
-#define PROGRAM_ROM     0x0000
-#define PROGRAM_SRAM    0x1000
-#define PERIPHERALS0    0x8000
-#define PERIPHERALS1    0x9000
-#define SHARED_BUFFER   0xC000
+#घोषणा PROGRAM_ROM     0x0000
+#घोषणा PROGRAM_SRAM    0x1000
+#घोषणा PERIPHERALS0    0x8000
+#घोषणा PERIPHERALS1    0x9000
+#घोषणा SHARED_BUFFER   0xC000
 
-#define HOST_TO_NGENE    (SHARED_BUFFER+0x0000)
-#define NGENE_TO_HOST    (SHARED_BUFFER+0x0100)
-#define NGENE_COMMAND    (SHARED_BUFFER+0x0200)
-#define NGENE_COMMAND_HI (SHARED_BUFFER+0x0204)
-#define NGENE_STATUS     (SHARED_BUFFER+0x0208)
-#define NGENE_STATUS_HI  (SHARED_BUFFER+0x020C)
-#define NGENE_EVENT      (SHARED_BUFFER+0x0210)
-#define NGENE_EVENT_HI   (SHARED_BUFFER+0x0214)
-#define VARIABLES        (SHARED_BUFFER+0x0210)
+#घोषणा HOST_TO_NGENE    (SHARED_BUFFER+0x0000)
+#घोषणा NGENE_TO_HOST    (SHARED_BUFFER+0x0100)
+#घोषणा NGENE_COMMAND    (SHARED_BUFFER+0x0200)
+#घोषणा NGENE_COMMAND_HI (SHARED_BUFFER+0x0204)
+#घोषणा NGENE_STATUS     (SHARED_BUFFER+0x0208)
+#घोषणा NGENE_STATUS_HI  (SHARED_BUFFER+0x020C)
+#घोषणा NGENE_EVENT      (SHARED_BUFFER+0x0210)
+#घोषणा NGENE_EVENT_HI   (SHARED_BUFFER+0x0214)
+#घोषणा VARIABLES        (SHARED_BUFFER+0x0210)
 
-#define NGENE_INT_COUNTS       (SHARED_BUFFER+0x0260)
-#define NGENE_INT_ENABLE       (SHARED_BUFFER+0x0264)
-#define NGENE_VBI_LINE_COUNT   (SHARED_BUFFER+0x0268)
+#घोषणा NGENE_INT_COUNTS       (SHARED_BUFFER+0x0260)
+#घोषणा NGENE_INT_ENABLE       (SHARED_BUFFER+0x0264)
+#घोषणा NGENE_VBI_LINE_COUNT   (SHARED_BUFFER+0x0268)
 
-#define BUFFER_GP_XMIT  (SHARED_BUFFER+0x0800)
-#define BUFFER_GP_RECV  (SHARED_BUFFER+0x0900)
-#define EEPROM_AREA     (SHARED_BUFFER+0x0A00)
+#घोषणा BUFFER_GP_XMIT  (SHARED_BUFFER+0x0800)
+#घोषणा BUFFER_GP_RECV  (SHARED_BUFFER+0x0900)
+#घोषणा EEPROM_AREA     (SHARED_BUFFER+0x0A00)
 
-#define SG_V_IN_1       (SHARED_BUFFER+0x0A80)
-#define SG_VBI_1        (SHARED_BUFFER+0x0B00)
-#define SG_A_IN_1       (SHARED_BUFFER+0x0B80)
-#define SG_V_IN_2       (SHARED_BUFFER+0x0C00)
-#define SG_VBI_2        (SHARED_BUFFER+0x0C80)
-#define SG_A_IN_2       (SHARED_BUFFER+0x0D00)
-#define SG_V_OUT        (SHARED_BUFFER+0x0D80)
-#define SG_A_OUT2       (SHARED_BUFFER+0x0E00)
+#घोषणा SG_V_IN_1       (SHARED_BUFFER+0x0A80)
+#घोषणा SG_VBI_1        (SHARED_BUFFER+0x0B00)
+#घोषणा SG_A_IN_1       (SHARED_BUFFER+0x0B80)
+#घोषणा SG_V_IN_2       (SHARED_BUFFER+0x0C00)
+#घोषणा SG_VBI_2        (SHARED_BUFFER+0x0C80)
+#घोषणा SG_A_IN_2       (SHARED_BUFFER+0x0D00)
+#घोषणा SG_V_OUT        (SHARED_BUFFER+0x0D80)
+#घोषणा SG_A_OUT2       (SHARED_BUFFER+0x0E00)
 
-#define DATA_A_IN_1     (SHARED_BUFFER+0x0E80)
-#define DATA_A_IN_2     (SHARED_BUFFER+0x0F00)
-#define DATA_A_OUT      (SHARED_BUFFER+0x0F80)
-#define DATA_V_IN_1     (SHARED_BUFFER+0x1000)
-#define DATA_V_IN_2     (SHARED_BUFFER+0x2000)
-#define DATA_V_OUT      (SHARED_BUFFER+0x3000)
+#घोषणा DATA_A_IN_1     (SHARED_BUFFER+0x0E80)
+#घोषणा DATA_A_IN_2     (SHARED_BUFFER+0x0F00)
+#घोषणा DATA_A_OUT      (SHARED_BUFFER+0x0F80)
+#घोषणा DATA_V_IN_1     (SHARED_BUFFER+0x1000)
+#घोषणा DATA_V_IN_2     (SHARED_BUFFER+0x2000)
+#घोषणा DATA_V_OUT      (SHARED_BUFFER+0x3000)
 
-#define DATA_FIFO_AREA  (SHARED_BUFFER+0x1000)
+#घोषणा DATA_FIFO_AREA  (SHARED_BUFFER+0x1000)
 
-#define TIMESTAMPS      0xA000
-#define SCRATCHPAD      0xA080
-#define FORCE_INT       0xA088
-#define FORCE_NMI       0xA090
-#define INT_STATUS      0xA0A0
+#घोषणा TIMESTAMPS      0xA000
+#घोषणा SCRATCHPAD      0xA080
+#घोषणा FORCE_INT       0xA088
+#घोषणा FORCE_NMI       0xA090
+#घोषणा INT_STATUS      0xA0A0
 
-#define DEV_VER         0x9004
+#घोषणा DEV_VER         0x9004
 
-#define FW_DEBUG_DEFAULT (PROGRAM_SRAM+0x00FF)
+#घोषणा FW_DEBUG_DEFAULT (PROGRAM_SRAM+0x00FF)
 
-struct SG_ADDR {
+काष्ठा SG_ADDR अणु
 	u64 start;
 	u64 curr;
 	u16 curr_ptr;
 	u16 elements;
 	u32 pad[3];
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct SHARED_MEMORY {
+काष्ठा SHARED_MEMORY अणु
 	/* C000 */
 	u32 HostToNgene[64];
 
@@ -163,29 +164,29 @@ struct SHARED_MEMORY {
 	/* C268 */
 	u8 pad2[0xd000 - 0xc268];
 
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct BUFFER_STREAM_RESULTS {
-	u32 Clock;           /* Stream time in 100ns units */
-	u16 RemainingLines;  /* Remaining lines in this field.
-				0 for complete field */
+काष्ठा BUFFER_STREAM_RESULTS अणु
+	u32 Clock;           /* Stream समय in 100ns units */
+	u16 Reमुख्यingLines;  /* Reमुख्यing lines in this field.
+				0 क्रम complete field */
 	u8  FieldCount;      /* Video field number */
 	u8  Flags;           /* Bit 7 = Done, Bit 6 = seen, Bit 5 = overflow,
 				Bit 0 = FieldID */
 	u16 BlockCount;      /* Audio block count (unused) */
 	u8  Reserved[2];
 	u32 DTOUpdate;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct HW_SCATTER_GATHER_ELEMENT {
+काष्ठा HW_SCATTER_GATHER_ELEMENT अणु
 	u64 Address;
 	u32 Length;
 	u32 Reserved;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct BUFFER_HEADER {
+काष्ठा BUFFER_HEADER अणु
 	u64    Next;
-	struct BUFFER_STREAM_RESULTS SR;
+	काष्ठा BUFFER_STREAM_RESULTS SR;
 
 	u32    Number_of_entries_1;
 	u32    Reserved5;
@@ -194,20 +195,20 @@ struct BUFFER_HEADER {
 	u32    Number_of_entries_2;
 	u32    Reserved7;
 	u64    Address_of_first_entry_2;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct EVENT_BUFFER {
+काष्ठा EVENT_BUFFER अणु
 	u32    TimeStamp;
 	u8     GPIOStatus;
 	u8     UARTStatus;
 	u8     RXCharacter;
 	u8     EventStatus;
 	u32    Reserved[2];
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
 /* Firmware commands. */
 
-enum OPCODES {
+क्रमागत OPCODES अणु
 	CMD_NOP = 0,
 	CMD_FWLOAD_PREPARE  = 0x01,
 	CMD_FWLOAD_FINISH   = 0x02,
@@ -238,56 +239,56 @@ enum OPCODES {
 	CMD_CONFIGURE_UART  = 0x28,
 	CMD_WRITE_UART      = 0x29,
 	MAX_CMD
-};
+पूर्ण;
 
-enum RESPONSES {
+क्रमागत RESPONSES अणु
 	OK = 0,
 	ERROR = 1
-};
+पूर्ण;
 
-struct FW_HEADER {
+काष्ठा FW_HEADER अणु
 	u8 Opcode;
 	u8 Length;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_I2C_WRITE {
-	struct FW_HEADER hdr;
+काष्ठा FW_I2C_WRITE अणु
+	काष्ठा FW_HEADER hdr;
 	u8 Device;
 	u8 Data[250];
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_I2C_CONTINUE_WRITE {
-	struct FW_HEADER hdr;
+काष्ठा FW_I2C_CONTINUE_WRITE अणु
+	काष्ठा FW_HEADER hdr;
 	u8 Data[250];
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_I2C_READ {
-	struct FW_HEADER hdr;
+काष्ठा FW_I2C_READ अणु
+	काष्ठा FW_HEADER hdr;
 	u8 Device;
-	u8 Data[252];    /* followed by two bytes of read data count */
-} __attribute__ ((__packed__));
+	u8 Data[252];    /* followed by two bytes of पढ़ो data count */
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_SPI_WRITE {
-	struct FW_HEADER hdr;
+काष्ठा FW_SPI_WRITE अणु
+	काष्ठा FW_HEADER hdr;
 	u8 ModeSelect;
 	u8 Data[250];
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_SPI_READ {
-	struct FW_HEADER hdr;
+काष्ठा FW_SPI_READ अणु
+	काष्ठा FW_HEADER hdr;
 	u8 ModeSelect;
-	u8 Data[252];    /* followed by two bytes of read data count */
-} __attribute__ ((__packed__));
+	u8 Data[252];    /* followed by two bytes of पढ़ो data count */
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_FWLOAD_PREPARE {
-	struct FW_HEADER hdr;
-} __attribute__ ((__packed__));
+काष्ठा FW_FWLOAD_PREPARE अणु
+	काष्ठा FW_HEADER hdr;
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_FWLOAD_FINISH {
-	struct FW_HEADER hdr;
+काष्ठा FW_FWLOAD_FINISH अणु
+	काष्ठा FW_HEADER hdr;
 	u16 Address;     /* address of final block */
 	u16 Length;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
 /*
  * Meaning of FW_STREAM_CONTROL::Mode bits:
@@ -307,11 +308,11 @@ struct FW_FWLOAD_FINISH {
  *  Bit 4: unused
  *  Bit 3: starting field; 0=odd, 1=even
  *  Bit 2: sample size; 0=8-bit, 1=10-bit
- *  Bit 1: data format; 0=UYVY, 1=YUY2
- *  Bit 0: resets buffer pointers
+ *  Bit 1: data क्रमmat; 0=UYVY, 1=YUY2
+ *  Bit 0: resets buffer poपूर्णांकers
 */
 
-enum FSC_MODE_BITS {
+क्रमागत FSC_MODE_BITS अणु
 	SMODE_LOOPBACK          = 0x80,
 	SMODE_AVLOOP            = 0x40,
 	_SMODE_AUDIO_SPDIF      = 0x20,
@@ -320,24 +321,24 @@ enum FSC_MODE_BITS {
 	_SMODE_AUDIO_CAPTURE    = 0x04,
 	_SMODE_VBI_CAPTURE      = 0x02,
 	_SMODE_VIDEO_CAPTURE    = 0x01
-};
+पूर्ण;
 
 
 /* Meaning of FW_STREAM_CONTROL::Stream bits:
- * Bit 3: Audio sample count:  0 = relative, 1 = absolute
+ * Bit 3: Audio sample count:  0 = relative, 1 = असलolute
  * Bit 2: color bar select; 1=color bars, 0=CV3 decoder
  * Bits 1-0: stream select, UVI1, UVI2, TVOUT
  */
 
-struct FW_STREAM_CONTROL {
-	struct FW_HEADER hdr;
+काष्ठा FW_STREAM_CONTROL अणु
+	काष्ठा FW_HEADER hdr;
 	u8     Stream;             /* Stream number (UVI1, UVI2, TVOUT) */
 	u8     Control;            /* Value written to UVI1_CTL */
-	u8     Mode;               /* Controls clock source */
-	u8     SetupDataLen;	   /* Length of setup data, MSB=1 write
+	u8     Mode;               /* Controls घड़ी source */
+	u8     SetupDataLen;	   /* Length of setup data, MSB=1 ग_लिखो
 				      backwards */
 	u16    CaptureBlockCount;  /* Blocks (a 256 Bytes) to capture per buffer
-				      for TS and Audio */
+				      क्रम TS and Audio */
 	u64    Buffer_Address;	   /* Address of first buffer header */
 	u16    BytesPerVideoLine;
 	u16    MaxLinesPerField;
@@ -348,54 +349,54 @@ struct FW_STREAM_CONTROL {
 	u16    MinVBILinesPerField;
 	u16    SetupDataAddr;      /* ngene relative address of setup data */
 	u8     SetupData[32];      /* setup data */
-} __attribute__((__packed__));
+पूर्ण __attribute__((__packed__));
 
-#define AUDIO_BLOCK_SIZE    256
-#define TS_BLOCK_SIZE       256
+#घोषणा AUDIO_BLOCK_SIZE    256
+#घोषणा TS_BLOCK_SIZE       256
 
-struct FW_MEM_READ {
-	struct FW_HEADER hdr;
+काष्ठा FW_MEM_READ अणु
+	काष्ठा FW_HEADER hdr;
 	u16   address;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_MEM_WRITE {
-	struct FW_HEADER hdr;
+काष्ठा FW_MEM_WRITE अणु
+	काष्ठा FW_HEADER hdr;
 	u16   address;
 	u8    data;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_SFR_IRAM_READ {
-	struct FW_HEADER hdr;
+काष्ठा FW_SFR_IRAM_READ अणु
+	काष्ठा FW_HEADER hdr;
 	u8    address;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_SFR_IRAM_WRITE {
-	struct FW_HEADER hdr;
+काष्ठा FW_SFR_IRAM_WRITE अणु
+	काष्ठा FW_HEADER hdr;
 	u8    address;
 	u8    data;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_SET_GPIO_PIN {
-	struct FW_HEADER hdr;
+काष्ठा FW_SET_GPIO_PIN अणु
+	काष्ठा FW_HEADER hdr;
 	u8    select;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_SET_GPIO_INT {
-	struct FW_HEADER hdr;
+काष्ठा FW_SET_GPIO_INT अणु
+	काष्ठा FW_HEADER hdr;
 	u8    select;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_SET_DEBUGMODE {
-	struct FW_HEADER hdr;
+काष्ठा FW_SET_DEBUGMODE अणु
+	काष्ठा FW_HEADER hdr;
 	u8   debug_flags;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_CONFIGURE_BUFFERS {
-	struct FW_HEADER hdr;
+काष्ठा FW_CONFIGURE_BUFFERS अणु
+	काष्ठा FW_HEADER hdr;
 	u8   config;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-enum _BUFFER_CONFIGS {
+क्रमागत _BUFFER_CONFIGS अणु
 	/* 4k UVI1, 4k UVI2, 2k AUD1, 2k AUD2  (standard usage) */
 	BUFFER_CONFIG_4422 = 0,
 	/* 3k UVI1, 3k UVI2, 3k AUD1, 3k AUD2  (4x TS input usage) */
@@ -403,84 +404,84 @@ enum _BUFFER_CONFIGS {
 	/* 8k UVI1, 0k UVI2, 2k AUD1, 2k I2SOut  (HDTV decoder usage) */
 	BUFFER_CONFIG_8022 = 2,
 	BUFFER_CONFIG_FW17 = 255, /* Use new FW 17 command */
-};
+पूर्ण;
 
-struct FW_CONFIGURE_FREE_BUFFERS {
-	struct FW_HEADER hdr;
+काष्ठा FW_CONFIGURE_FREE_BUFFERS अणु
+	काष्ठा FW_HEADER hdr;
 	u8   UVI1_BufferLength;
 	u8   UVI2_BufferLength;
 	u8   TVO_BufferLength;
 	u8   AUD1_BufferLength;
 	u8   AUD2_BufferLength;
 	u8   TVA_BufferLength;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-struct FW_CONFIGURE_UART {
-	struct FW_HEADER hdr;
+काष्ठा FW_CONFIGURE_UART अणु
+	काष्ठा FW_HEADER hdr;
 	u8 UartControl;
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
-enum _UART_CONFIG {
+क्रमागत _UART_CONFIG अणु
 	_UART_BAUDRATE_19200 = 0,
 	_UART_BAUDRATE_9600  = 1,
 	_UART_BAUDRATE_4800  = 2,
 	_UART_BAUDRATE_2400  = 3,
 	_UART_RX_ENABLE      = 0x40,
 	_UART_TX_ENABLE      = 0x80,
-};
+पूर्ण;
 
-struct FW_WRITE_UART {
-	struct FW_HEADER hdr;
+काष्ठा FW_WRITE_UART अणु
+	काष्ठा FW_HEADER hdr;
 	u8 Data[252];
-} __attribute__ ((__packed__));
+पूर्ण __attribute__ ((__packed__));
 
 
-struct ngene_command {
+काष्ठा ngene_command अणु
 	u32 in_len;
 	u32 out_len;
-	union {
+	जोड़ अणु
 		u32                              raw[64];
 		u8                               raw8[256];
-		struct FW_HEADER                 hdr;
-		struct FW_I2C_WRITE              I2CWrite;
-		struct FW_I2C_CONTINUE_WRITE     I2CContinueWrite;
-		struct FW_I2C_READ               I2CRead;
-		struct FW_STREAM_CONTROL         StreamControl;
-		struct FW_FWLOAD_PREPARE         FWLoadPrepare;
-		struct FW_FWLOAD_FINISH          FWLoadFinish;
-		struct FW_MEM_READ		 MemoryRead;
-		struct FW_MEM_WRITE		 MemoryWrite;
-		struct FW_SFR_IRAM_READ		 SfrIramRead;
-		struct FW_SFR_IRAM_WRITE         SfrIramWrite;
-		struct FW_SPI_WRITE              SPIWrite;
-		struct FW_SPI_READ               SPIRead;
-		struct FW_SET_GPIO_PIN           SetGpioPin;
-		struct FW_SET_GPIO_INT           SetGpioInt;
-		struct FW_SET_DEBUGMODE          SetDebugMode;
-		struct FW_CONFIGURE_BUFFERS      ConfigureBuffers;
-		struct FW_CONFIGURE_FREE_BUFFERS ConfigureFreeBuffers;
-		struct FW_CONFIGURE_UART         ConfigureUart;
-		struct FW_WRITE_UART             WriteUart;
-	} cmd;
-} __attribute__ ((__packed__));
+		काष्ठा FW_HEADER                 hdr;
+		काष्ठा FW_I2C_WRITE              I2CWrite;
+		काष्ठा FW_I2C_CONTINUE_WRITE     I2CContinueWrite;
+		काष्ठा FW_I2C_READ               I2CRead;
+		काष्ठा FW_STREAM_CONTROL         StreamControl;
+		काष्ठा FW_FWLOAD_PREPARE         FWLoadPrepare;
+		काष्ठा FW_FWLOAD_FINISH          FWLoadFinish;
+		काष्ठा FW_MEM_READ		 MemoryRead;
+		काष्ठा FW_MEM_WRITE		 MemoryWrite;
+		काष्ठा FW_SFR_IRAM_READ		 SfrIramRead;
+		काष्ठा FW_SFR_IRAM_WRITE         SfrIramWrite;
+		काष्ठा FW_SPI_WRITE              SPIWrite;
+		काष्ठा FW_SPI_READ               SPIRead;
+		काष्ठा FW_SET_GPIO_PIN           SetGpioPin;
+		काष्ठा FW_SET_GPIO_INT           SetGpioInt;
+		काष्ठा FW_SET_DEBUGMODE          SetDebugMode;
+		काष्ठा FW_CONFIGURE_BUFFERS      ConfigureBuffers;
+		काष्ठा FW_CONFIGURE_FREE_BUFFERS ConfigureFreeBuffers;
+		काष्ठा FW_CONFIGURE_UART         ConfigureUart;
+		काष्ठा FW_WRITE_UART             WriteUart;
+	पूर्ण cmd;
+पूर्ण __attribute__ ((__packed__));
 
-#define NGENE_INTERFACE_VERSION 0x103
-#define MAX_VIDEO_BUFFER_SIZE   (417792) /* 288*1440 rounded up to next page */
-#define MAX_AUDIO_BUFFER_SIZE     (8192) /* Gives room for about 23msec@48KHz */
-#define MAX_VBI_BUFFER_SIZE      (28672) /* 1144*18 rounded up to next page */
-#define MAX_TS_BUFFER_SIZE       (98304) /* 512*188 rounded up to next page */
-#define MAX_HDTV_BUFFER_SIZE   (2080768) /* 541*1920*2 rounded up to next page
+#घोषणा NGENE_INTERFACE_VERSION 0x103
+#घोषणा MAX_VIDEO_BUFFER_SIZE   (417792) /* 288*1440 rounded up to next page */
+#घोषणा MAX_AUDIO_BUFFER_SIZE     (8192) /* Gives room क्रम about 23msec@48KHz */
+#घोषणा MAX_VBI_BUFFER_SIZE      (28672) /* 1144*18 rounded up to next page */
+#घोषणा MAX_TS_BUFFER_SIZE       (98304) /* 512*188 rounded up to next page */
+#घोषणा MAX_HDTV_BUFFER_SIZE   (2080768) /* 541*1920*2 rounded up to next page
 					    Max: (1920x1080i60) */
 
-#define OVERFLOW_BUFFER_SIZE    (8192)
+#घोषणा OVERFLOW_BUFFER_SIZE    (8192)
 
-#define RING_SIZE_VIDEO     4
-#define RING_SIZE_AUDIO     8
-#define RING_SIZE_TS        8
+#घोषणा RING_SIZE_VIDEO     4
+#घोषणा RING_SIZE_AUDIO     8
+#घोषणा RING_SIZE_TS        8
 
-#define NUM_SCATTER_GATHER_ENTRIES  8
+#घोषणा NUM_SCATTER_GATHER_ENTRIES  8
 
-#define MAX_DMA_LENGTH (((MAX_VIDEO_BUFFER_SIZE + MAX_VBI_BUFFER_SIZE) * \
+#घोषणा MAX_DMA_LENGTH (((MAX_VIDEO_BUFFER_SIZE + MAX_VBI_BUFFER_SIZE) * \
 			RING_SIZE_VIDEO * 2) + \
 			(MAX_AUDIO_BUFFER_SIZE * RING_SIZE_AUDIO * 2) + \
 			(MAX_TS_BUFFER_SIZE * RING_SIZE_TS * 4) + \
@@ -489,72 +490,72 @@ struct ngene_command {
 			(RING_SIZE_TS    * PAGE_SIZE * 4) + \
 			 8 * PAGE_SIZE + OVERFLOW_BUFFER_SIZE + PAGE_SIZE)
 
-#define EVENT_QUEUE_SIZE    16
+#घोषणा EVENT_QUEUE_SIZE    16
 
 /* Gathers the current state of a single channel. */
 
-struct SBufferHeader {
-	struct BUFFER_HEADER   ngeneBuffer; /* Physical descriptor */
-	struct SBufferHeader  *Next;
-	void                  *Buffer1;
-	struct HW_SCATTER_GATHER_ELEMENT *scList1;
-	void                  *Buffer2;
-	struct HW_SCATTER_GATHER_ELEMENT *scList2;
-};
+काष्ठा SBufferHeader अणु
+	काष्ठा BUFFER_HEADER   ngeneBuffer; /* Physical descriptor */
+	काष्ठा SBufferHeader  *Next;
+	व्योम                  *Buffer1;
+	काष्ठा HW_SCATTER_GATHER_ELEMENT *scList1;
+	व्योम                  *Buffer2;
+	काष्ठा HW_SCATTER_GATHER_ELEMENT *scList2;
+पूर्ण;
 
 /* Sizeof SBufferHeader aligned to next 64 Bit boundary (hw restriction) */
-#define SIZEOF_SBufferHeader ((sizeof(struct SBufferHeader) + 63) & ~63)
+#घोषणा SIZखातापूर्ण_SBufferHeader ((माप(काष्ठा SBufferHeader) + 63) & ~63)
 
-enum HWSTATE {
+क्रमागत HWSTATE अणु
 	HWSTATE_STOP,
 	HWSTATE_STARTUP,
 	HWSTATE_RUN,
 	HWSTATE_PAUSE,
-};
+पूर्ण;
 
-enum KSSTATE {
+क्रमागत KSSTATE अणु
 	KSSTATE_STOP,
 	KSSTATE_ACQUIRE,
 	KSSTATE_PAUSE,
 	KSSTATE_RUN,
-};
+पूर्ण;
 
-struct SRingBufferDescriptor {
-	struct SBufferHeader *Head; /* Points to first buffer in ring buffer
-				       structure*/
+काष्ठा SRingBufferDescriptor अणु
+	काष्ठा SBufferHeader *Head; /* Poपूर्णांकs to first buffer in ring buffer
+				       काष्ठाure*/
 	u64   PAHead;         /* Physical address of first buffer */
 	u32   MemSize;        /* Memory size of allocated ring buffers
-				 (needed for freeing) */
+				 (needed क्रम मुक्तing) */
 	u32   NumBuffers;     /* Number of buffers in the ring */
 	u32   Buffer1Length;  /* Allocated length of Buffer 1 */
 	u32   Buffer2Length;  /* Allocated length of Buffer 2 */
-	void *SCListMem;      /* Memory to hold scatter gather lists for this
+	व्योम *SCListMem;      /* Memory to hold scatter gather lists क्रम this
 				 ring */
 	u64   PASCListMem;    /* Physical address  .. */
 	u32   SCListMemSize;  /* Size of this memory */
-};
+पूर्ण;
 
-enum STREAMMODEFLAGS {
+क्रमागत STREAMMODEFLAGS अणु
 	StreamMode_NONE   = 0, /* Stream not used */
 	StreamMode_ANALOG = 1, /* Analog: Stream 0,1 = Video, 2,3 = Audio */
 	StreamMode_TSIN   = 2, /* Transport stream input (all) */
 	StreamMode_HDTV   = 4, /* HDTV: Maximum 1920x1080p30,1920x1080i60
 				  (only stream 0) */
 	StreamMode_TSOUT  = 8, /* Transport stream output (only stream 3) */
-};
+पूर्ण;
 
 
-enum BufferExchangeFlags {
+क्रमागत BufferExchangeFlags अणु
 	BEF_EVEN_FIELD   = 0x00000001,
 	BEF_CONTINUATION = 0x00000002,
 	BEF_MORE_DATA    = 0x00000004,
 	BEF_OVERFLOW     = 0x00000008,
 	DF_SWAP32        = 0x00010000,
-};
+पूर्ण;
 
-typedef void *(IBufferExchange)(void *, void *, u32, u32, u32);
+प्रकार व्योम *(IBufferExchange)(व्योम *, व्योम *, u32, u32, u32);
 
-struct MICI_STREAMINFO {
+काष्ठा MICI_STREAMINFO अणु
 	IBufferExchange    *pExchange;
 	IBufferExchange    *pExchangeVBI;     /* Secondary (VBI, ancillary) */
 	u8  Stream;
@@ -565,102 +566,102 @@ struct MICI_STREAMINFO {
 	u16 nBytesPerLineVideo;
 	u16 nLinesVBI;
 	u16 nBytesPerLineVBI;
-	u32 CaptureLength;    /* Used for audio and transport stream */
-};
+	u32 CaptureLength;    /* Used क्रम audio and transport stream */
+पूर्ण;
 
 /****************************************************************************/
 /* STRUCTS ******************************************************************/
 /****************************************************************************/
 
 /* sound hardware definition */
-#define MIXER_ADDR_TVTUNER      0
-#define MIXER_ADDR_LAST         0
+#घोषणा MIXER_ADDR_TVTUNER      0
+#घोषणा MIXER_ADDR_LAST         0
 
-struct ngene_channel;
+काष्ठा ngene_channel;
 
-/*struct sound chip*/
+/*काष्ठा sound chip*/
 
-struct mychip {
-	struct ngene_channel *chan;
-	struct snd_card *card;
-	struct pci_dev *pci;
-	struct snd_pcm_substream *substream;
-	struct snd_pcm *pcm;
-	unsigned long port;
-	int irq;
+काष्ठा mychip अणु
+	काष्ठा ngene_channel *chan;
+	काष्ठा snd_card *card;
+	काष्ठा pci_dev *pci;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_pcm *pcm;
+	अचिन्हित दीर्घ port;
+	पूर्णांक irq;
 	spinlock_t mixer_lock;
 	spinlock_t lock;
-	int mixer_volume[MIXER_ADDR_LAST + 1][2];
-	int capture_source[MIXER_ADDR_LAST + 1][2];
-};
+	पूर्णांक mixer_volume[MIXER_ADDR_LAST + 1][2];
+	पूर्णांक capture_source[MIXER_ADDR_LAST + 1][2];
+पूर्ण;
 
-#ifdef NGENE_V4L
-struct ngene_overlay {
-	int                    tvnorm;
-	struct v4l2_rect       w;
-	enum v4l2_field        field;
-	struct v4l2_clip       *clips;
-	int                    nclips;
-	int                    setup_ok;
-};
+#अगर_घोषित NGENE_V4L
+काष्ठा ngene_overlay अणु
+	पूर्णांक                    tvnorm;
+	काष्ठा v4l2_rect       w;
+	क्रमागत v4l2_field        field;
+	काष्ठा v4l2_clip       *clips;
+	पूर्णांक                    nclips;
+	पूर्णांक                    setup_ok;
+पूर्ण;
 
-struct ngene_tvnorm {
-	int   v4l2_id;
-	char  *name;
+काष्ठा ngene_tvnorm अणु
+	पूर्णांक   v4l2_id;
+	अक्षर  *name;
 	u16   swidth, sheight; /* scaled standard width, height */
-	int   tuner_norm;
-	int   soundstd;
-};
+	पूर्णांक   tuner_norm;
+	पूर्णांक   soundstd;
+पूर्ण;
 
-struct ngene_vopen {
-	struct ngene_channel      *ch;
-	enum v4l2_priority         prio;
-	int                        width;
-	int                        height;
-	int                        depth;
-	struct videobuf_queue      vbuf_q;
-	struct videobuf_queue      vbi;
-	int                        fourcc;
-	int                        picxcount;
-	int                        resources;
-	enum v4l2_buf_type         type;
-	const struct ngene_format *fmt;
+काष्ठा ngene_vखोलो अणु
+	काष्ठा ngene_channel      *ch;
+	क्रमागत v4l2_priority         prio;
+	पूर्णांक                        width;
+	पूर्णांक                        height;
+	पूर्णांक                        depth;
+	काष्ठा videobuf_queue      vbuf_q;
+	काष्ठा videobuf_queue      vbi;
+	पूर्णांक                        fourcc;
+	पूर्णांक                        picxcount;
+	पूर्णांक                        resources;
+	क्रमागत v4l2_buf_type         type;
+	स्थिर काष्ठा ngene_क्रमmat *fmt;
 
-	const struct ngene_format *ovfmt;
-	struct ngene_overlay       ov;
-};
-#endif
+	स्थिर काष्ठा ngene_क्रमmat *ovfmt;
+	काष्ठा ngene_overlay       ov;
+पूर्ण;
+#पूर्ण_अगर
 
-struct ngene_channel {
-	struct device         device;
-	struct i2c_adapter    i2c_adapter;
-	struct i2c_client    *i2c_client[1];
-	int                   i2c_client_fe;
+काष्ठा ngene_channel अणु
+	काष्ठा device         device;
+	काष्ठा i2c_adapter    i2c_adapter;
+	काष्ठा i2c_client    *i2c_client[1];
+	पूर्णांक                   i2c_client_fe;
 
-	struct ngene         *dev;
-	int                   number;
-	int                   type;
-	int                   mode;
+	काष्ठा ngene         *dev;
+	पूर्णांक                   number;
+	पूर्णांक                   type;
+	पूर्णांक                   mode;
 	bool                  has_adapter;
 	bool                  has_demux;
-	int                   demod_type;
-	int (*gate_ctrl)(struct dvb_frontend *, int);
+	पूर्णांक                   demod_type;
+	पूर्णांक (*gate_ctrl)(काष्ठा dvb_frontend *, पूर्णांक);
 
-	struct dvb_frontend  *fe;
-	struct dvb_frontend  *fe2;
-	struct dmxdev         dmxdev;
-	struct dvb_demux      demux;
-	struct dvb_net        dvbnet;
-	struct dmx_frontend   hw_frontend;
-	struct dmx_frontend   mem_frontend;
-	int                   users;
-	struct video_device  *v4l_dev;
-	struct dvb_device    *ci_dev;
-	struct tasklet_struct demux_tasklet;
+	काष्ठा dvb_frontend  *fe;
+	काष्ठा dvb_frontend  *fe2;
+	काष्ठा dmxdev         dmxdev;
+	काष्ठा dvb_demux      demux;
+	काष्ठा dvb_net        dvbnet;
+	काष्ठा dmx_frontend   hw_frontend;
+	काष्ठा dmx_frontend   mem_frontend;
+	पूर्णांक                   users;
+	काष्ठा video_device  *v4l_dev;
+	काष्ठा dvb_device    *ci_dev;
+	काष्ठा tasklet_काष्ठा demux_tasklet;
 
-	struct SBufferHeader *nextBuffer;
-	enum KSSTATE          State;
-	enum HWSTATE          HWState;
+	काष्ठा SBufferHeader *nextBuffer;
+	क्रमागत KSSTATE          State;
+	क्रमागत HWSTATE          HWState;
 	u8                    Stream;
 	u8                    Flags;
 	u8                    Mode;
@@ -675,254 +676,254 @@ struct ngene_channel {
 	u16                   itumode;
 	u32                   Capture1Length;
 	u32                   Capture2Length;
-	struct SRingBufferDescriptor RingBuffer;
-	struct SRingBufferDescriptor TSRingBuffer;
-	struct SRingBufferDescriptor TSIdleBuffer;
+	काष्ठा SRingBufferDescriptor RingBuffer;
+	काष्ठा SRingBufferDescriptor TSRingBuffer;
+	काष्ठा SRingBufferDescriptor TSIdleBuffer;
 
 	u32                   DataFormatFlags;
 
-	int                   AudioDTOUpdated;
+	पूर्णांक                   AudioDTOUpdated;
 	u32                   AudioDTOValue;
 
-	int (*set_tone)(struct dvb_frontend *, enum fe_sec_tone_mode);
+	पूर्णांक (*set_tone)(काष्ठा dvb_frontend *, क्रमागत fe_sec_tone_mode);
 	u8 lnbh;
 
 	/* stuff from analog driver */
 
-	int minor;
-	struct mychip        *mychip;
-	struct snd_card      *soundcard;
+	पूर्णांक minor;
+	काष्ठा mychip        *mychip;
+	काष्ठा snd_card      *soundcard;
 	u8                   *evenbuffer;
 	u8                    dma_on;
-	int                   soundstreamon;
-	int                   audiomute;
-	int                   soundbuffisallocated;
-	int                   sndbuffflag;
-	int                   tun_rdy;
-	int                   dec_rdy;
-	int                   tun_dec_rdy;
-	int                   lastbufferflag;
+	पूर्णांक                   soundstreamon;
+	पूर्णांक                   audiomute;
+	पूर्णांक                   soundbuffisallocated;
+	पूर्णांक                   sndbuffflag;
+	पूर्णांक                   tun_rdy;
+	पूर्णांक                   dec_rdy;
+	पूर्णांक                   tun_dec_rdy;
+	पूर्णांक                   lastbufferflag;
 
-	struct ngene_tvnorm  *tvnorms;
-	int                   tvnorm_num;
-	int                   tvnorm;
+	काष्ठा ngene_tvnorm  *tvnorms;
+	पूर्णांक                   tvnorm_num;
+	पूर्णांक                   tvnorm;
 
-#ifdef NGENE_V4L
-	int                   videousers;
-	struct v4l2_prio_state prio;
-	struct ngene_vopen    init;
-	int                   resources;
-	struct v4l2_framebuffer fbuf;
-	struct ngene_buffer  *screen;     /* overlay             */
-	struct list_head      capture;    /* video capture queue */
+#अगर_घोषित NGENE_V4L
+	पूर्णांक                   videousers;
+	काष्ठा v4l2_prio_state prio;
+	काष्ठा ngene_vखोलो    init;
+	पूर्णांक                   resources;
+	काष्ठा v4l2_framebuffer fbuf;
+	काष्ठा ngene_buffer  *screen;     /* overlay             */
+	काष्ठा list_head      capture;    /* video capture queue */
 	spinlock_t s_lock;
-	struct semaphore reslock;
-#endif
+	काष्ठा semaphore reslock;
+#पूर्ण_अगर
 
-	int running;
+	पूर्णांक running;
 
-	int tsin_offset;
+	पूर्णांक tsin_offset;
 	u8  tsin_buffer[188];
-};
+पूर्ण;
 
 
-struct ngene_ci {
-	struct device         device;
-	struct i2c_adapter    i2c_adapter;
+काष्ठा ngene_ci अणु
+	काष्ठा device         device;
+	काष्ठा i2c_adapter    i2c_adapter;
 
-	struct ngene         *dev;
-	struct dvb_ca_en50221 *en;
-};
+	काष्ठा ngene         *dev;
+	काष्ठा dvb_ca_en50221 *en;
+पूर्ण;
 
-struct ngene;
+काष्ठा ngene;
 
-typedef void (rx_cb_t)(struct ngene *, u32, u8);
-typedef void (tx_cb_t)(struct ngene *, u32);
+प्रकार व्योम (rx_cb_t)(काष्ठा ngene *, u32, u8);
+प्रकार व्योम (tx_cb_t)(काष्ठा ngene *, u32);
 
-struct ngene {
-	int                   nr;
-	struct pci_dev       *pci_dev;
-	unsigned char __iomem *iomem;
+काष्ठा ngene अणु
+	पूर्णांक                   nr;
+	काष्ठा pci_dev       *pci_dev;
+	अचिन्हित अक्षर __iomem *iomem;
 
-	/*struct i2c_adapter  i2c_adapter;*/
+	/*काष्ठा i2c_adapter  i2c_adapter;*/
 
 	u32                   device_version;
-	u32                   fw_interface_version;
+	u32                   fw_पूर्णांकerface_version;
 	u32                   icounts;
 	bool                  msi_enabled;
-	bool                  cmd_timeout_workaround;
+	bool                  cmd_समयout_workaround;
 
 	u8                   *CmdDoneByte;
-	int                   BootFirmware;
-	void                 *OverflowBuffer;
+	पूर्णांक                   BootFirmware;
+	व्योम                 *OverflowBuffer;
 	dma_addr_t            PAOverflowBuffer;
-	void                 *FWInterfaceBuffer;
+	व्योम                 *FWInterfaceBuffer;
 	dma_addr_t            PAFWInterfaceBuffer;
 	u8                   *ngenetohost;
 	u8                   *hosttongene;
 
-	struct EVENT_BUFFER   EventQueue[EVENT_QUEUE_SIZE];
-	int                   EventQueueOverflowCount;
-	int                   EventQueueOverflowFlag;
-	struct tasklet_struct event_tasklet;
-	struct EVENT_BUFFER  *EventBuffer;
-	int                   EventQueueWriteIndex;
-	int                   EventQueueReadIndex;
+	काष्ठा EVENT_BUFFER   EventQueue[EVENT_QUEUE_SIZE];
+	पूर्णांक                   EventQueueOverflowCount;
+	पूर्णांक                   EventQueueOverflowFlag;
+	काष्ठा tasklet_काष्ठा event_tasklet;
+	काष्ठा EVENT_BUFFER  *EventBuffer;
+	पूर्णांक                   EventQueueWriteIndex;
+	पूर्णांक                   EventQueueReadIndex;
 
-	wait_queue_head_t     cmd_wq;
-	int                   cmd_done;
-	struct mutex          cmd_mutex;
-	struct mutex          stream_mutex;
-	struct semaphore      pll_mutex;
-	struct mutex          i2c_switch_mutex;
-	int                   i2c_current_channel;
-	int                   i2c_current_bus;
+	रुको_queue_head_t     cmd_wq;
+	पूर्णांक                   cmd_करोne;
+	काष्ठा mutex          cmd_mutex;
+	काष्ठा mutex          stream_mutex;
+	काष्ठा semaphore      pll_mutex;
+	काष्ठा mutex          i2c_चयन_mutex;
+	पूर्णांक                   i2c_current_channel;
+	पूर्णांक                   i2c_current_bus;
 	spinlock_t            cmd_lock;
 
-	struct dvb_adapter    adapter[MAX_STREAM];
-	struct dvb_adapter    *first_adapter; /* "one_adapter" modprobe opt */
-	struct ngene_channel  channel[MAX_STREAM];
+	काष्ठा dvb_adapter    adapter[MAX_STREAM];
+	काष्ठा dvb_adapter    *first_adapter; /* "one_adapter" modprobe opt */
+	काष्ठा ngene_channel  channel[MAX_STREAM];
 
-	struct ngene_info    *card_info;
+	काष्ठा ngene_info    *card_info;
 
-	tx_cb_t              *TxEventNotify;
-	rx_cb_t              *RxEventNotify;
-	int                   tx_busy;
-	wait_queue_head_t     tx_wq;
-	wait_queue_head_t     rx_wq;
-#define UART_RBUF_LEN 4096
+	tx_cb_t              *TxEventNotअगरy;
+	rx_cb_t              *RxEventNotअगरy;
+	पूर्णांक                   tx_busy;
+	रुको_queue_head_t     tx_wq;
+	रुको_queue_head_t     rx_wq;
+#घोषणा UART_RBUF_LEN 4096
 	u8                    uart_rbuf[UART_RBUF_LEN];
-	int                   uart_rp, uart_wp;
+	पूर्णांक                   uart_rp, uart_wp;
 
-#define TS_FILLER  0x6f
+#घोषणा TS_FILLER  0x6f
 
 	u8                   *tsout_buf;
-#define TSOUT_BUF_SIZE (512*188*8)
-	struct dvb_ringbuffer tsout_rbuf;
+#घोषणा TSOUT_BUF_SIZE (512*188*8)
+	काष्ठा dvb_ringbuffer tsout_rbuf;
 
 	u8                   *tsin_buf;
-#define TSIN_BUF_SIZE (512*188*8)
-	struct dvb_ringbuffer tsin_rbuf;
+#घोषणा TSIN_BUF_SIZE (512*188*8)
+	काष्ठा dvb_ringbuffer tsin_rbuf;
 
 	u8                   *ain_buf;
-#define AIN_BUF_SIZE (128*1024)
-	struct dvb_ringbuffer ain_rbuf;
+#घोषणा AIN_BUF_SIZE (128*1024)
+	काष्ठा dvb_ringbuffer ain_rbuf;
 
 
 	u8                   *vin_buf;
-#define VIN_BUF_SIZE (4*1920*1080)
-	struct dvb_ringbuffer vin_rbuf;
+#घोषणा VIN_BUF_SIZE (4*1920*1080)
+	काष्ठा dvb_ringbuffer vin_rbuf;
 
-	unsigned long         exp_val;
-	int prev_cmd;
+	अचिन्हित दीर्घ         exp_val;
+	पूर्णांक prev_cmd;
 
-	struct ngene_ci       ci;
-};
+	काष्ठा ngene_ci       ci;
+पूर्ण;
 
-struct ngene_info {
-	int   type;
-#define NGENE_APP        0
-#define NGENE_TERRATEC   1
-#define NGENE_SIDEWINDER 2
-#define NGENE_RACER      3
-#define NGENE_VIPER      4
-#define NGENE_PYTHON     5
-#define NGENE_VBOX_V1	 6
-#define NGENE_VBOX_V2	 7
+काष्ठा ngene_info अणु
+	पूर्णांक   type;
+#घोषणा NGENE_APP        0
+#घोषणा NGENE_TERRATEC   1
+#घोषणा NGENE_SIDEWINDER 2
+#घोषणा NGENE_RACER      3
+#घोषणा NGENE_VIPER      4
+#घोषणा NGENE_PYTHON     5
+#घोषणा NGENE_VBOX_V1	 6
+#घोषणा NGENE_VBOX_V2	 7
 
-	int   fw_version;
+	पूर्णांक   fw_version;
 	bool  msi_supported;
-	char *name;
+	अक्षर *name;
 
-	int   io_type[MAX_STREAM];
-#define NGENE_IO_NONE    0
-#define NGENE_IO_TV      1
-#define NGENE_IO_HDTV    2
-#define NGENE_IO_TSIN    4
-#define NGENE_IO_TSOUT   8
-#define NGENE_IO_AIN     16
+	पूर्णांक   io_type[MAX_STREAM];
+#घोषणा NGENE_IO_NONE    0
+#घोषणा NGENE_IO_TV      1
+#घोषणा NGENE_IO_HDTV    2
+#घोषणा NGENE_IO_TSIN    4
+#घोषणा NGENE_IO_TSOUT   8
+#घोषणा NGENE_IO_AIN     16
 
-	void *fe_config[4];
-	void *tuner_config[4];
+	व्योम *fe_config[4];
+	व्योम *tuner_config[4];
 
-	int (*demod_attach[4])(struct ngene_channel *);
-	int (*tuner_attach[4])(struct ngene_channel *);
+	पूर्णांक (*demod_attach[4])(काष्ठा ngene_channel *);
+	पूर्णांक (*tuner_attach[4])(काष्ठा ngene_channel *);
 
 	u8    avf[4];
 	u8    msp[4];
 	u8    demoda[4];
 	u8    lnb[4];
-	int   i2c_access;
+	पूर्णांक   i2c_access;
 	u8    ntsc;
 	u8    tsf[4];
 	u8    i2s[4];
 
-	int (*gate_ctrl)(struct dvb_frontend *, int);
-	int (*switch_ctrl)(struct ngene_channel *, int, int);
-};
+	पूर्णांक (*gate_ctrl)(काष्ठा dvb_frontend *, पूर्णांक);
+	पूर्णांक (*चयन_ctrl)(काष्ठा ngene_channel *, पूर्णांक, पूर्णांक);
+पूर्ण;
 
-#ifdef NGENE_V4L
-struct ngene_format {
-	char *name;
-	int   fourcc;          /* video4linux 2      */
-	int   btformat;        /* BT848_COLOR_FMT_*  */
-	int   format;
-	int   btswap;          /* BT848_COLOR_CTL_*  */
-	int   depth;           /* bit/pixel          */
-	int   flags;
-	int   hshift, vshift;  /* for planar modes   */
-	int   palette;
-};
+#अगर_घोषित NGENE_V4L
+काष्ठा ngene_क्रमmat अणु
+	अक्षर *name;
+	पूर्णांक   fourcc;          /* video4linux 2      */
+	पूर्णांक   btक्रमmat;        /* BT848_COLOR_FMT_*  */
+	पूर्णांक   क्रमmat;
+	पूर्णांक   btswap;          /* BT848_COLOR_CTL_*  */
+	पूर्णांक   depth;           /* bit/pixel          */
+	पूर्णांक   flags;
+	पूर्णांक   hshअगरt, vshअगरt;  /* क्रम planar modes   */
+	पूर्णांक   palette;
+पूर्ण;
 
-#define RESOURCE_OVERLAY       1
-#define RESOURCE_VIDEO         2
-#define RESOURCE_VBI           4
+#घोषणा RESOURCE_OVERLAY       1
+#घोषणा RESOURCE_VIDEO         2
+#घोषणा RESOURCE_VBI           4
 
-struct ngene_buffer {
+काष्ठा ngene_buffer अणु
 	/* common v4l buffer stuff -- must be first */
-	struct videobuf_buffer     vb;
+	काष्ठा videobuf_buffer     vb;
 
-	/* ngene specific */
-	const struct ngene_format *fmt;
-	int                        tvnorm;
-	int                        btformat;
-	int                        btswap;
-};
-#endif
+	/* ngene specअगरic */
+	स्थिर काष्ठा ngene_क्रमmat *fmt;
+	पूर्णांक                        tvnorm;
+	पूर्णांक                        btक्रमmat;
+	पूर्णांक                        btswap;
+पूर्ण;
+#पूर्ण_अगर
 
 
 /* Provided by ngene-core.c */
-int ngene_probe(struct pci_dev *pci_dev, const struct pci_device_id *id);
-void ngene_remove(struct pci_dev *pdev);
-void ngene_shutdown(struct pci_dev *pdev);
-int ngene_command(struct ngene *dev, struct ngene_command *com);
-int ngene_command_gpio_set(struct ngene *dev, u8 select, u8 level);
-void set_transfer(struct ngene_channel *chan, int state);
-void FillTSBuffer(void *Buffer, int Length, u32 Flags);
+पूर्णांक ngene_probe(काष्ठा pci_dev *pci_dev, स्थिर काष्ठा pci_device_id *id);
+व्योम ngene_हटाओ(काष्ठा pci_dev *pdev);
+व्योम ngene_shutकरोwn(काष्ठा pci_dev *pdev);
+पूर्णांक ngene_command(काष्ठा ngene *dev, काष्ठा ngene_command *com);
+पूर्णांक ngene_command_gpio_set(काष्ठा ngene *dev, u8 select, u8 level);
+व्योम set_transfer(काष्ठा ngene_channel *chan, पूर्णांक state);
+व्योम FillTSBuffer(व्योम *Buffer, पूर्णांक Length, u32 Flags);
 
 /* Provided by ngene-cards.c */
-int ngene_port_has_cxd2099(struct i2c_adapter *i2c, u8 *type);
+पूर्णांक ngene_port_has_cxd2099(काष्ठा i2c_adapter *i2c, u8 *type);
 
 /* Provided by ngene-i2c.c */
-int ngene_i2c_init(struct ngene *dev, int dev_nr);
+पूर्णांक ngene_i2c_init(काष्ठा ngene *dev, पूर्णांक dev_nr);
 
 /* Provided by ngene-dvb.c */
-extern struct dvb_device ngene_dvbdev_ci;
-void *tsout_exchange(void *priv, void *buf, u32 len, u32 clock, u32 flags);
-void *tsin_exchange(void *priv, void *buf, u32 len, u32 clock, u32 flags);
-int ngene_start_feed(struct dvb_demux_feed *dvbdmxfeed);
-int ngene_stop_feed(struct dvb_demux_feed *dvbdmxfeed);
-int my_dvb_dmx_ts_card_init(struct dvb_demux *dvbdemux, char *id,
-			    int (*start_feed)(struct dvb_demux_feed *),
-			    int (*stop_feed)(struct dvb_demux_feed *),
-			    void *priv);
-int my_dvb_dmxdev_ts_card_init(struct dmxdev *dmxdev,
-			       struct dvb_demux *dvbdemux,
-			       struct dmx_frontend *hw_frontend,
-			       struct dmx_frontend *mem_frontend,
-			       struct dvb_adapter *dvb_adapter);
+बाह्य काष्ठा dvb_device ngene_dvbdev_ci;
+व्योम *tsout_exchange(व्योम *priv, व्योम *buf, u32 len, u32 घड़ी, u32 flags);
+व्योम *tsin_exchange(व्योम *priv, व्योम *buf, u32 len, u32 घड़ी, u32 flags);
+पूर्णांक ngene_start_feed(काष्ठा dvb_demux_feed *dvbdmxfeed);
+पूर्णांक ngene_stop_feed(काष्ठा dvb_demux_feed *dvbdmxfeed);
+पूर्णांक my_dvb_dmx_ts_card_init(काष्ठा dvb_demux *dvbdemux, अक्षर *id,
+			    पूर्णांक (*start_feed)(काष्ठा dvb_demux_feed *),
+			    पूर्णांक (*stop_feed)(काष्ठा dvb_demux_feed *),
+			    व्योम *priv);
+पूर्णांक my_dvb_dmxdev_ts_card_init(काष्ठा dmxdev *dmxdev,
+			       काष्ठा dvb_demux *dvbdemux,
+			       काष्ठा dmx_frontend *hw_frontend,
+			       काष्ठा dmx_frontend *mem_frontend,
+			       काष्ठा dvb_adapter *dvb_adapter);
 
-#endif
+#पूर्ण_अगर
 
-/*  LocalWords:  Endif
+/*  LocalWords:  Endअगर
  */

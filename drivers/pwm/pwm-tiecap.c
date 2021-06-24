@@ -1,226 +1,227 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * ECAP PWM driver
  *
  * Copyright (C) 2012 Texas Instruments, Inc. - https://www.ti.com/
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/pm_runtime.h>
-#include <linux/pwm.h>
-#include <linux/of_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/pwm.h>
+#समावेश <linux/of_device.h>
 
-/* ECAP registers and bits definitions */
-#define CAP1			0x08
-#define CAP2			0x0C
-#define CAP3			0x10
-#define CAP4			0x14
-#define ECCTL2			0x2A
-#define ECCTL2_APWM_POL_LOW	BIT(10)
-#define ECCTL2_APWM_MODE	BIT(9)
-#define ECCTL2_SYNC_SEL_DISA	(BIT(7) | BIT(6))
-#define ECCTL2_TSCTR_FREERUN	BIT(4)
+/* ECAP रेजिस्टरs and bits definitions */
+#घोषणा CAP1			0x08
+#घोषणा CAP2			0x0C
+#घोषणा CAP3			0x10
+#घोषणा CAP4			0x14
+#घोषणा ECCTL2			0x2A
+#घोषणा ECCTL2_APWM_POL_LOW	BIT(10)
+#घोषणा ECCTL2_APWM_MODE	BIT(9)
+#घोषणा ECCTL2_SYNC_SEL_DISA	(BIT(7) | BIT(6))
+#घोषणा ECCTL2_TSCTR_FREERUN	BIT(4)
 
-struct ecap_context {
+काष्ठा ecap_context अणु
 	u32 cap3;
 	u32 cap4;
 	u16 ecctl2;
-};
+पूर्ण;
 
-struct ecap_pwm_chip {
-	struct pwm_chip chip;
-	unsigned int clk_rate;
-	void __iomem *mmio_base;
-	struct ecap_context ctx;
-};
+काष्ठा ecap_pwm_chip अणु
+	काष्ठा pwm_chip chip;
+	अचिन्हित पूर्णांक clk_rate;
+	व्योम __iomem *mmio_base;
+	काष्ठा ecap_context ctx;
+पूर्ण;
 
-static inline struct ecap_pwm_chip *to_ecap_pwm_chip(struct pwm_chip *chip)
-{
-	return container_of(chip, struct ecap_pwm_chip, chip);
-}
+अटल अंतरभूत काष्ठा ecap_pwm_chip *to_ecap_pwm_chip(काष्ठा pwm_chip *chip)
+अणु
+	वापस container_of(chip, काष्ठा ecap_pwm_chip, chip);
+पूर्ण
 
 /*
  * period_ns = 10^9 * period_cycles / PWM_CLK_RATE
  * duty_ns   = 10^9 * duty_cycles / PWM_CLK_RATE
  */
-static int ecap_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
-		int duty_ns, int period_ns)
-{
-	struct ecap_pwm_chip *pc = to_ecap_pwm_chip(chip);
+अटल पूर्णांक ecap_pwm_config(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+		पूर्णांक duty_ns, पूर्णांक period_ns)
+अणु
+	काष्ठा ecap_pwm_chip *pc = to_ecap_pwm_chip(chip);
 	u32 period_cycles, duty_cycles;
-	unsigned long long c;
+	अचिन्हित दीर्घ दीर्घ c;
 	u16 value;
 
-	if (period_ns > NSEC_PER_SEC)
-		return -ERANGE;
+	अगर (period_ns > NSEC_PER_SEC)
+		वापस -दुस्फल;
 
 	c = pc->clk_rate;
 	c = c * period_ns;
-	do_div(c, NSEC_PER_SEC);
+	करो_भाग(c, NSEC_PER_SEC);
 	period_cycles = (u32)c;
 
-	if (period_cycles < 1) {
+	अगर (period_cycles < 1) अणु
 		period_cycles = 1;
 		duty_cycles = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		c = pc->clk_rate;
 		c = c * duty_ns;
-		do_div(c, NSEC_PER_SEC);
+		करो_भाग(c, NSEC_PER_SEC);
 		duty_cycles = (u32)c;
-	}
+	पूर्ण
 
-	pm_runtime_get_sync(pc->chip.dev);
+	pm_runसमय_get_sync(pc->chip.dev);
 
-	value = readw(pc->mmio_base + ECCTL2);
+	value = पढ़ोw(pc->mmio_base + ECCTL2);
 
 	/* Configure APWM mode & disable sync option */
 	value |= ECCTL2_APWM_MODE | ECCTL2_SYNC_SEL_DISA;
 
-	writew(value, pc->mmio_base + ECCTL2);
+	ग_लिखोw(value, pc->mmio_base + ECCTL2);
 
-	if (!pwm_is_enabled(pwm)) {
-		/* Update active registers if not running */
-		writel(duty_cycles, pc->mmio_base + CAP2);
-		writel(period_cycles, pc->mmio_base + CAP1);
-	} else {
+	अगर (!pwm_is_enabled(pwm)) अणु
+		/* Update active रेजिस्टरs अगर not running */
+		ग_लिखोl(duty_cycles, pc->mmio_base + CAP2);
+		ग_लिखोl(period_cycles, pc->mmio_base + CAP1);
+	पूर्ण अन्यथा अणु
 		/*
-		 * Update shadow registers to configure period and
+		 * Update shaकरोw रेजिस्टरs to configure period and
 		 * compare values. This helps current PWM period to
 		 * complete on reconfiguring
 		 */
-		writel(duty_cycles, pc->mmio_base + CAP4);
-		writel(period_cycles, pc->mmio_base + CAP3);
-	}
+		ग_लिखोl(duty_cycles, pc->mmio_base + CAP4);
+		ग_लिखोl(period_cycles, pc->mmio_base + CAP3);
+	पूर्ण
 
-	if (!pwm_is_enabled(pwm)) {
-		value = readw(pc->mmio_base + ECCTL2);
+	अगर (!pwm_is_enabled(pwm)) अणु
+		value = पढ़ोw(pc->mmio_base + ECCTL2);
 		/* Disable APWM mode to put APWM output Low */
 		value &= ~ECCTL2_APWM_MODE;
-		writew(value, pc->mmio_base + ECCTL2);
-	}
+		ग_लिखोw(value, pc->mmio_base + ECCTL2);
+	पूर्ण
 
-	pm_runtime_put_sync(pc->chip.dev);
+	pm_runसमय_put_sync(pc->chip.dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ecap_pwm_set_polarity(struct pwm_chip *chip, struct pwm_device *pwm,
-				 enum pwm_polarity polarity)
-{
-	struct ecap_pwm_chip *pc = to_ecap_pwm_chip(chip);
+अटल पूर्णांक ecap_pwm_set_polarity(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+				 क्रमागत pwm_polarity polarity)
+अणु
+	काष्ठा ecap_pwm_chip *pc = to_ecap_pwm_chip(chip);
 	u16 value;
 
-	pm_runtime_get_sync(pc->chip.dev);
+	pm_runसमय_get_sync(pc->chip.dev);
 
-	value = readw(pc->mmio_base + ECCTL2);
+	value = पढ़ोw(pc->mmio_base + ECCTL2);
 
-	if (polarity == PWM_POLARITY_INVERSED)
+	अगर (polarity == PWM_POLARITY_INVERSED)
 		/* Duty cycle defines LOW period of PWM */
 		value |= ECCTL2_APWM_POL_LOW;
-	else
+	अन्यथा
 		/* Duty cycle defines HIGH period of PWM */
 		value &= ~ECCTL2_APWM_POL_LOW;
 
-	writew(value, pc->mmio_base + ECCTL2);
+	ग_लिखोw(value, pc->mmio_base + ECCTL2);
 
-	pm_runtime_put_sync(pc->chip.dev);
+	pm_runसमय_put_sync(pc->chip.dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ecap_pwm_enable(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct ecap_pwm_chip *pc = to_ecap_pwm_chip(chip);
+अटल पूर्णांक ecap_pwm_enable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा ecap_pwm_chip *pc = to_ecap_pwm_chip(chip);
 	u16 value;
 
-	/* Leave clock enabled on enabling PWM */
-	pm_runtime_get_sync(pc->chip.dev);
+	/* Leave घड़ी enabled on enabling PWM */
+	pm_runसमय_get_sync(pc->chip.dev);
 
 	/*
 	 * Enable 'Free run Time stamp counter mode' to start counter
 	 * and  'APWM mode' to enable APWM output
 	 */
-	value = readw(pc->mmio_base + ECCTL2);
+	value = पढ़ोw(pc->mmio_base + ECCTL2);
 	value |= ECCTL2_TSCTR_FREERUN | ECCTL2_APWM_MODE;
-	writew(value, pc->mmio_base + ECCTL2);
+	ग_लिखोw(value, pc->mmio_base + ECCTL2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ecap_pwm_disable(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct ecap_pwm_chip *pc = to_ecap_pwm_chip(chip);
+अटल व्योम ecap_pwm_disable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा ecap_pwm_chip *pc = to_ecap_pwm_chip(chip);
 	u16 value;
 
 	/*
 	 * Disable 'Free run Time stamp counter mode' to stop counter
 	 * and 'APWM mode' to put APWM output to low
 	 */
-	value = readw(pc->mmio_base + ECCTL2);
+	value = पढ़ोw(pc->mmio_base + ECCTL2);
 	value &= ~(ECCTL2_TSCTR_FREERUN | ECCTL2_APWM_MODE);
-	writew(value, pc->mmio_base + ECCTL2);
+	ग_लिखोw(value, pc->mmio_base + ECCTL2);
 
-	/* Disable clock on PWM disable */
-	pm_runtime_put_sync(pc->chip.dev);
-}
+	/* Disable घड़ी on PWM disable */
+	pm_runसमय_put_sync(pc->chip.dev);
+पूर्ण
 
-static void ecap_pwm_free(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	if (pwm_is_enabled(pwm)) {
+अटल व्योम ecap_pwm_मुक्त(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	अगर (pwm_is_enabled(pwm)) अणु
 		dev_warn(chip->dev, "Removing PWM device without disabling\n");
-		pm_runtime_put_sync(chip->dev);
-	}
-}
+		pm_runसमय_put_sync(chip->dev);
+	पूर्ण
+पूर्ण
 
-static const struct pwm_ops ecap_pwm_ops = {
-	.free = ecap_pwm_free,
+अटल स्थिर काष्ठा pwm_ops ecap_pwm_ops = अणु
+	.मुक्त = ecap_pwm_मुक्त,
 	.config = ecap_pwm_config,
 	.set_polarity = ecap_pwm_set_polarity,
 	.enable = ecap_pwm_enable,
 	.disable = ecap_pwm_disable,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct of_device_id ecap_of_match[] = {
-	{ .compatible	= "ti,am3352-ecap" },
-	{ .compatible	= "ti,am33xx-ecap" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ecap_of_match[] = अणु
+	अणु .compatible	= "ti,am3352-ecap" पूर्ण,
+	अणु .compatible	= "ti,am33xx-ecap" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ecap_of_match);
 
-static int ecap_pwm_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct ecap_pwm_chip *pc;
-	struct clk *clk;
-	int ret;
+अटल पूर्णांक ecap_pwm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा ecap_pwm_chip *pc;
+	काष्ठा clk *clk;
+	पूर्णांक ret;
 
-	pc = devm_kzalloc(&pdev->dev, sizeof(*pc), GFP_KERNEL);
-	if (!pc)
-		return -ENOMEM;
+	pc = devm_kzalloc(&pdev->dev, माप(*pc), GFP_KERNEL);
+	अगर (!pc)
+		वापस -ENOMEM;
 
 	clk = devm_clk_get(&pdev->dev, "fck");
-	if (IS_ERR(clk)) {
-		if (of_device_is_compatible(np, "ti,am33xx-ecap")) {
+	अगर (IS_ERR(clk)) अणु
+		अगर (of_device_is_compatible(np, "ti,am33xx-ecap")) अणु
 			dev_warn(&pdev->dev, "Binding is obsolete.\n");
 			clk = devm_clk_get(pdev->dev.parent, "fck");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		dev_err(&pdev->dev, "failed to get clock\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	pc->clk_rate = clk_get_rate(clk);
-	if (!pc->clk_rate) {
+	अगर (!pc->clk_rate) अणु
 		dev_err(&pdev->dev, "failed to get clock rate\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pc->chip.dev = &pdev->dev;
 	pc->chip.ops = &ecap_pwm_ops;
@@ -228,88 +229,88 @@ static int ecap_pwm_probe(struct platform_device *pdev)
 	pc->chip.of_pwm_n_cells = 3;
 	pc->chip.npwm = 1;
 
-	pc->mmio_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(pc->mmio_base))
-		return PTR_ERR(pc->mmio_base);
+	pc->mmio_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(pc->mmio_base))
+		वापस PTR_ERR(pc->mmio_base);
 
 	ret = pwmchip_add(&pc->chip);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "pwmchip_add() failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, pc);
-	pm_runtime_enable(&pdev->dev);
+	platक्रमm_set_drvdata(pdev, pc);
+	pm_runसमय_enable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ecap_pwm_remove(struct platform_device *pdev)
-{
-	struct ecap_pwm_chip *pc = platform_get_drvdata(pdev);
+अटल पूर्णांक ecap_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ecap_pwm_chip *pc = platक्रमm_get_drvdata(pdev);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return pwmchip_remove(&pc->chip);
-}
+	वापस pwmchip_हटाओ(&pc->chip);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static void ecap_pwm_save_context(struct ecap_pwm_chip *pc)
-{
-	pm_runtime_get_sync(pc->chip.dev);
-	pc->ctx.ecctl2 = readw(pc->mmio_base + ECCTL2);
-	pc->ctx.cap4 = readl(pc->mmio_base + CAP4);
-	pc->ctx.cap3 = readl(pc->mmio_base + CAP3);
-	pm_runtime_put_sync(pc->chip.dev);
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल व्योम ecap_pwm_save_context(काष्ठा ecap_pwm_chip *pc)
+अणु
+	pm_runसमय_get_sync(pc->chip.dev);
+	pc->ctx.ecctl2 = पढ़ोw(pc->mmio_base + ECCTL2);
+	pc->ctx.cap4 = पढ़ोl(pc->mmio_base + CAP4);
+	pc->ctx.cap3 = पढ़ोl(pc->mmio_base + CAP3);
+	pm_runसमय_put_sync(pc->chip.dev);
+पूर्ण
 
-static void ecap_pwm_restore_context(struct ecap_pwm_chip *pc)
-{
-	writel(pc->ctx.cap3, pc->mmio_base + CAP3);
-	writel(pc->ctx.cap4, pc->mmio_base + CAP4);
-	writew(pc->ctx.ecctl2, pc->mmio_base + ECCTL2);
-}
+अटल व्योम ecap_pwm_restore_context(काष्ठा ecap_pwm_chip *pc)
+अणु
+	ग_लिखोl(pc->ctx.cap3, pc->mmio_base + CAP3);
+	ग_लिखोl(pc->ctx.cap4, pc->mmio_base + CAP4);
+	ग_लिखोw(pc->ctx.ecctl2, pc->mmio_base + ECCTL2);
+पूर्ण
 
-static int ecap_pwm_suspend(struct device *dev)
-{
-	struct ecap_pwm_chip *pc = dev_get_drvdata(dev);
-	struct pwm_device *pwm = pc->chip.pwms;
+अटल पूर्णांक ecap_pwm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा ecap_pwm_chip *pc = dev_get_drvdata(dev);
+	काष्ठा pwm_device *pwm = pc->chip.pwms;
 
 	ecap_pwm_save_context(pc);
 
-	/* Disable explicitly if PWM is running */
-	if (pwm_is_enabled(pwm))
-		pm_runtime_put_sync(dev);
+	/* Disable explicitly अगर PWM is running */
+	अगर (pwm_is_enabled(pwm))
+		pm_runसमय_put_sync(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ecap_pwm_resume(struct device *dev)
-{
-	struct ecap_pwm_chip *pc = dev_get_drvdata(dev);
-	struct pwm_device *pwm = pc->chip.pwms;
+अटल पूर्णांक ecap_pwm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ecap_pwm_chip *pc = dev_get_drvdata(dev);
+	काष्ठा pwm_device *pwm = pc->chip.pwms;
 
-	/* Enable explicitly if PWM was running */
-	if (pwm_is_enabled(pwm))
-		pm_runtime_get_sync(dev);
+	/* Enable explicitly अगर PWM was running */
+	अगर (pwm_is_enabled(pwm))
+		pm_runसमय_get_sync(dev);
 
 	ecap_pwm_restore_context(pc);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(ecap_pwm_pm_ops, ecap_pwm_suspend, ecap_pwm_resume);
+अटल SIMPLE_DEV_PM_OPS(ecap_pwm_pm_ops, ecap_pwm_suspend, ecap_pwm_resume);
 
-static struct platform_driver ecap_pwm_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ecap_pwm_driver = अणु
+	.driver = अणु
 		.name = "ecap",
 		.of_match_table = ecap_of_match,
 		.pm = &ecap_pwm_pm_ops,
-	},
+	पूर्ण,
 	.probe = ecap_pwm_probe,
-	.remove = ecap_pwm_remove,
-};
-module_platform_driver(ecap_pwm_driver);
+	.हटाओ = ecap_pwm_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(ecap_pwm_driver);
 
 MODULE_DESCRIPTION("ECAP PWM driver");
 MODULE_AUTHOR("Texas Instruments");

@@ -1,100 +1,101 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 
-#include "radeon.h"
+#समावेश "radeon.h"
 
-#define R100_TRACK_MAX_TEXTURE 3
-#define R200_TRACK_MAX_TEXTURE 6
-#define R300_TRACK_MAX_TEXTURE 16
+#घोषणा R100_TRACK_MAX_TEXTURE 3
+#घोषणा R200_TRACK_MAX_TEXTURE 6
+#घोषणा R300_TRACK_MAX_TEXTURE 16
 
-#define R100_MAX_CB 1
-#define R300_MAX_CB 4
+#घोषणा R100_MAX_CB 1
+#घोषणा R300_MAX_CB 4
 
 /*
  * CS functions
  */
-struct r100_cs_track_cb {
-	struct radeon_bo	*robj;
-	unsigned		pitch;
-	unsigned		cpp;
-	unsigned		offset;
-};
+काष्ठा r100_cs_track_cb अणु
+	काष्ठा radeon_bo	*robj;
+	अचिन्हित		pitch;
+	अचिन्हित		cpp;
+	अचिन्हित		offset;
+पूर्ण;
 
-struct r100_cs_track_array {
-	struct radeon_bo	*robj;
-	unsigned		esize;
-};
+काष्ठा r100_cs_track_array अणु
+	काष्ठा radeon_bo	*robj;
+	अचिन्हित		esize;
+पूर्ण;
 
-struct r100_cs_cube_info {
-	struct radeon_bo	*robj;
-	unsigned		offset;
-	unsigned		width;
-	unsigned		height;
-};
+काष्ठा r100_cs_cube_info अणु
+	काष्ठा radeon_bo	*robj;
+	अचिन्हित		offset;
+	अचिन्हित		width;
+	अचिन्हित		height;
+पूर्ण;
 
-#define R100_TRACK_COMP_NONE   0
-#define R100_TRACK_COMP_DXT1   1
-#define R100_TRACK_COMP_DXT35  2
+#घोषणा R100_TRACK_COMP_NONE   0
+#घोषणा R100_TRACK_COMP_DXT1   1
+#घोषणा R100_TRACK_COMP_DXT35  2
 
-struct r100_cs_track_texture {
-	struct radeon_bo	*robj;
-	struct r100_cs_cube_info cube_info[5]; /* info for 5 non-primary faces */
-	unsigned		pitch;
-	unsigned		width;
-	unsigned		height;
-	unsigned		num_levels;
-	unsigned		cpp;
-	unsigned		tex_coord_type;
-	unsigned		txdepth;
-	unsigned		width_11;
-	unsigned		height_11;
+काष्ठा r100_cs_track_texture अणु
+	काष्ठा radeon_bo	*robj;
+	काष्ठा r100_cs_cube_info cube_info[5]; /* info क्रम 5 non-primary faces */
+	अचिन्हित		pitch;
+	अचिन्हित		width;
+	अचिन्हित		height;
+	अचिन्हित		num_levels;
+	अचिन्हित		cpp;
+	अचिन्हित		tex_coord_type;
+	अचिन्हित		txdepth;
+	अचिन्हित		width_11;
+	अचिन्हित		height_11;
 	bool			use_pitch;
 	bool			enabled;
 	bool                    lookup_disable;
 	bool			roundup_w;
 	bool			roundup_h;
-	unsigned                compress_format;
-};
+	अचिन्हित                compress_क्रमmat;
+पूर्ण;
 
-struct r100_cs_track {
-	unsigned			num_cb;
-	unsigned                        num_texture;
-	unsigned			maxy;
-	unsigned			vtx_size;
-	unsigned			vap_vf_cntl;
-	unsigned			vap_alt_nverts;
-	unsigned			immd_dwords;
-	unsigned			num_arrays;
-	unsigned			max_indx;
-	unsigned			color_channel_mask;
-	struct r100_cs_track_array	arrays[16];
-	struct r100_cs_track_cb 	cb[R300_MAX_CB];
-	struct r100_cs_track_cb 	zb;
-	struct r100_cs_track_cb 	aa;
-	struct r100_cs_track_texture	textures[R300_TRACK_MAX_TEXTURE];
+काष्ठा r100_cs_track अणु
+	अचिन्हित			num_cb;
+	अचिन्हित                        num_texture;
+	अचिन्हित			maxy;
+	अचिन्हित			vtx_size;
+	अचिन्हित			vap_vf_cntl;
+	अचिन्हित			vap_alt_nverts;
+	अचिन्हित			immd_dwords;
+	अचिन्हित			num_arrays;
+	अचिन्हित			max_indx;
+	अचिन्हित			color_channel_mask;
+	काष्ठा r100_cs_track_array	arrays[16];
+	काष्ठा r100_cs_track_cb 	cb[R300_MAX_CB];
+	काष्ठा r100_cs_track_cb 	zb;
+	काष्ठा r100_cs_track_cb 	aa;
+	काष्ठा r100_cs_track_texture	textures[R300_TRACK_MAX_TEXTURE];
 	bool				z_enabled;
 	bool                            separate_cube;
 	bool				zb_cb_clear;
-	bool				blend_read_enable;
+	bool				blend_पढ़ो_enable;
 	bool				cb_dirty;
 	bool				zb_dirty;
 	bool				tex_dirty;
 	bool				aa_dirty;
 	bool				aaresolve;
-};
+पूर्ण;
 
-int r100_cs_track_check(struct radeon_device *rdev, struct r100_cs_track *track);
-void r100_cs_track_clear(struct radeon_device *rdev, struct r100_cs_track *track);
+पूर्णांक r100_cs_track_check(काष्ठा radeon_device *rdev, काष्ठा r100_cs_track *track);
+व्योम r100_cs_track_clear(काष्ठा radeon_device *rdev, काष्ठा r100_cs_track *track);
 
-int r100_cs_packet_parse_vline(struct radeon_cs_parser *p);
+पूर्णांक r100_cs_packet_parse_vline(काष्ठा radeon_cs_parser *p);
 
-int r200_packet0_check(struct radeon_cs_parser *p,
-		       struct radeon_cs_packet *pkt,
-		       unsigned idx, unsigned reg);
+पूर्णांक r200_packet0_check(काष्ठा radeon_cs_parser *p,
+		       काष्ठा radeon_cs_packet *pkt,
+		       अचिन्हित idx, अचिन्हित reg);
 
-int r100_reloc_pitch_offset(struct radeon_cs_parser *p,
-			    struct radeon_cs_packet *pkt,
-			    unsigned idx,
-			    unsigned reg);
-int r100_packet3_load_vbpntr(struct radeon_cs_parser *p,
-			     struct radeon_cs_packet *pkt,
-			     int idx);
+पूर्णांक r100_reloc_pitch_offset(काष्ठा radeon_cs_parser *p,
+			    काष्ठा radeon_cs_packet *pkt,
+			    अचिन्हित idx,
+			    अचिन्हित reg);
+पूर्णांक r100_packet3_load_vbpntr(काष्ठा radeon_cs_parser *p,
+			     काष्ठा radeon_cs_packet *pkt,
+			     पूर्णांक idx);

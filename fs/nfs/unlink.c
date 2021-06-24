@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/nfs/unlink.c
  *
@@ -6,102 +7,102 @@
  *
  */
 
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/dcache.h>
-#include <linux/sunrpc/sched.h>
-#include <linux/sunrpc/clnt.h>
-#include <linux/nfs_fs.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
-#include <linux/namei.h>
-#include <linux/fsnotify.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/dcache.h>
+#समावेश <linux/sunrpc/sched.h>
+#समावेश <linux/sunrpc/clnt.h>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/fsnotअगरy.h>
 
-#include "internal.h"
-#include "nfs4_fs.h"
-#include "iostat.h"
-#include "delegation.h"
+#समावेश "internal.h"
+#समावेश "nfs4_fs.h"
+#समावेश "iostat.h"
+#समावेश "delegation.h"
 
-#include "nfstrace.h"
+#समावेश "nfstrace.h"
 
 /**
- * nfs_free_unlinkdata - release data from a sillydelete operation.
- * @data: pointer to unlink structure.
+ * nfs_मुक्त_unlinkdata - release data from a sillydelete operation.
+ * @data: poपूर्णांकer to unlink काष्ठाure.
  */
-static void
-nfs_free_unlinkdata(struct nfs_unlinkdata *data)
-{
+अटल व्योम
+nfs_मुक्त_unlinkdata(काष्ठा nfs_unlinkdata *data)
+अणु
 	put_cred(data->cred);
-	kfree(data->args.name.name);
-	kfree(data);
-}
+	kमुक्त(data->args.name.name);
+	kमुक्त(data);
+पूर्ण
 
 /**
- * nfs_async_unlink_done - Sillydelete post-processing
+ * nfs_async_unlink_करोne - Sillydelete post-processing
  * @task: rpc_task of the sillydelete
- * @calldata: pointer to nfs_unlinkdata
+ * @calldata: poपूर्णांकer to nfs_unlinkdata
  *
  * Do the directory attribute update.
  */
-static void nfs_async_unlink_done(struct rpc_task *task, void *calldata)
-{
-	struct nfs_unlinkdata *data = calldata;
-	struct inode *dir = d_inode(data->dentry->d_parent);
+अटल व्योम nfs_async_unlink_करोne(काष्ठा rpc_task *task, व्योम *calldata)
+अणु
+	काष्ठा nfs_unlinkdata *data = calldata;
+	काष्ठा inode *dir = d_inode(data->dentry->d_parent);
 
-	trace_nfs_sillyrename_unlink(data, task->tk_status);
-	if (!NFS_PROTO(dir)->unlink_done(task, dir))
+	trace_nfs_sillyनाम_unlink(data, task->tk_status);
+	अगर (!NFS_PROTO(dir)->unlink_करोne(task, dir))
 		rpc_restart_call_prepare(task);
-}
+पूर्ण
 
 /**
  * nfs_async_unlink_release - Release the sillydelete data.
- * @calldata: struct nfs_unlinkdata to release
+ * @calldata: काष्ठा nfs_unlinkdata to release
  *
  * We need to call nfs_put_unlinkdata as a 'tk_release' task since the
- * rpc_task would be freed too.
+ * rpc_task would be मुक्तd too.
  */
-static void nfs_async_unlink_release(void *calldata)
-{
-	struct nfs_unlinkdata	*data = calldata;
-	struct dentry *dentry = data->dentry;
-	struct super_block *sb = dentry->d_sb;
+अटल व्योम nfs_async_unlink_release(व्योम *calldata)
+अणु
+	काष्ठा nfs_unlinkdata	*data = calldata;
+	काष्ठा dentry *dentry = data->dentry;
+	काष्ठा super_block *sb = dentry->d_sb;
 
-	up_read_non_owner(&NFS_I(d_inode(dentry->d_parent))->rmdir_sem);
-	d_lookup_done(dentry);
-	nfs_free_unlinkdata(data);
+	up_पढ़ो_non_owner(&NFS_I(d_inode(dentry->d_parent))->सूची_हटाओ_sem);
+	d_lookup_करोne(dentry);
+	nfs_मुक्त_unlinkdata(data);
 	dput(dentry);
 	nfs_sb_deactive(sb);
-}
+पूर्ण
 
-static void nfs_unlink_prepare(struct rpc_task *task, void *calldata)
-{
-	struct nfs_unlinkdata *data = calldata;
-	struct inode *dir = d_inode(data->dentry->d_parent);
+अटल व्योम nfs_unlink_prepare(काष्ठा rpc_task *task, व्योम *calldata)
+अणु
+	काष्ठा nfs_unlinkdata *data = calldata;
+	काष्ठा inode *dir = d_inode(data->dentry->d_parent);
 	NFS_PROTO(dir)->unlink_rpc_prepare(task, data);
-}
+पूर्ण
 
-static const struct rpc_call_ops nfs_unlink_ops = {
-	.rpc_call_done = nfs_async_unlink_done,
+अटल स्थिर काष्ठा rpc_call_ops nfs_unlink_ops = अणु
+	.rpc_call_करोne = nfs_async_unlink_करोne,
 	.rpc_release = nfs_async_unlink_release,
 	.rpc_call_prepare = nfs_unlink_prepare,
-};
+पूर्ण;
 
-static void nfs_do_call_unlink(struct inode *inode, struct nfs_unlinkdata *data)
-{
-	struct rpc_message msg = {
+अटल व्योम nfs_करो_call_unlink(काष्ठा inode *inode, काष्ठा nfs_unlinkdata *data)
+अणु
+	काष्ठा rpc_message msg = अणु
 		.rpc_argp = &data->args,
 		.rpc_resp = &data->res,
 		.rpc_cred = data->cred,
-	};
-	struct rpc_task_setup task_setup_data = {
+	पूर्ण;
+	काष्ठा rpc_task_setup task_setup_data = अणु
 		.rpc_message = &msg,
 		.callback_ops = &nfs_unlink_ops,
 		.callback_data = data,
 		.workqueue = nfsiod_workqueue,
 		.flags = RPC_TASK_ASYNC | RPC_TASK_CRED_NOREF,
-	};
-	struct rpc_task *task;
-	struct inode *dir = d_inode(data->dentry->d_parent);
+	पूर्ण;
+	काष्ठा rpc_task *task;
+	काष्ठा inode *dir = d_inode(data->dentry->d_parent);
 	nfs_sb_active(dir->i_sb);
 	data->args.fh = NFS_FH(dir);
 	nfs_fattr_init(data->res.dir_attr);
@@ -110,102 +111,102 @@ static void nfs_do_call_unlink(struct inode *inode, struct nfs_unlinkdata *data)
 
 	task_setup_data.rpc_client = NFS_CLIENT(dir);
 	task = rpc_run_task(&task_setup_data);
-	if (!IS_ERR(task))
+	अगर (!IS_ERR(task))
 		rpc_put_task_async(task);
-}
+पूर्ण
 
-static int nfs_call_unlink(struct dentry *dentry, struct inode *inode, struct nfs_unlinkdata *data)
-{
-	struct inode *dir = d_inode(dentry->d_parent);
-	struct dentry *alias;
+अटल पूर्णांक nfs_call_unlink(काष्ठा dentry *dentry, काष्ठा inode *inode, काष्ठा nfs_unlinkdata *data)
+अणु
+	काष्ठा inode *dir = d_inode(dentry->d_parent);
+	काष्ठा dentry *alias;
 
-	down_read_non_owner(&NFS_I(dir)->rmdir_sem);
+	करोwn_पढ़ो_non_owner(&NFS_I(dir)->सूची_हटाओ_sem);
 	alias = d_alloc_parallel(dentry->d_parent, &data->args.name, &data->wq);
-	if (IS_ERR(alias)) {
-		up_read_non_owner(&NFS_I(dir)->rmdir_sem);
-		return 0;
-	}
-	if (!d_in_lookup(alias)) {
-		int ret;
-		void *devname_garbage = NULL;
+	अगर (IS_ERR(alias)) अणु
+		up_पढ़ो_non_owner(&NFS_I(dir)->सूची_हटाओ_sem);
+		वापस 0;
+	पूर्ण
+	अगर (!d_in_lookup(alias)) अणु
+		पूर्णांक ret;
+		व्योम *devname_garbage = शून्य;
 
 		/*
-		 * Hey, we raced with lookup... See if we need to transfer
-		 * the sillyrename information to the aliased dentry.
+		 * Hey, we raced with lookup... See अगर we need to transfer
+		 * the sillyनाम inक्रमmation to the aliased dentry.
 		 */
 		spin_lock(&alias->d_lock);
-		if (d_really_is_positive(alias) &&
-		    !(alias->d_flags & DCACHE_NFSFS_RENAMED)) {
+		अगर (d_really_is_positive(alias) &&
+		    !(alias->d_flags & DCACHE_NFSFS_RENAMED)) अणु
 			devname_garbage = alias->d_fsdata;
 			alias->d_fsdata = data;
 			alias->d_flags |= DCACHE_NFSFS_RENAMED;
 			ret = 1;
-		} else
+		पूर्ण अन्यथा
 			ret = 0;
 		spin_unlock(&alias->d_lock);
 		dput(alias);
-		up_read_non_owner(&NFS_I(dir)->rmdir_sem);
+		up_पढ़ो_non_owner(&NFS_I(dir)->सूची_हटाओ_sem);
 		/*
-		 * If we'd displaced old cached devname, free it.  At that
-		 * point dentry is definitely not a root, so we won't need
+		 * If we'd displaced old cached devname, मुक्त it.  At that
+		 * poपूर्णांक dentry is definitely not a root, so we won't need
 		 * that anymore.
 		 */
-		kfree(devname_garbage);
-		return ret;
-	}
+		kमुक्त(devname_garbage);
+		वापस ret;
+	पूर्ण
 	data->dentry = alias;
-	nfs_do_call_unlink(inode, data);
-	return 1;
-}
+	nfs_करो_call_unlink(inode, data);
+	वापस 1;
+पूर्ण
 
 /**
  * nfs_async_unlink - asynchronous unlinking of a file
  * @dentry: parent directory of dentry
  * @name: name of dentry to unlink
  */
-static int
-nfs_async_unlink(struct dentry *dentry, const struct qstr *name)
-{
-	struct nfs_unlinkdata *data;
-	int status = -ENOMEM;
-	void *devname_garbage = NULL;
+अटल पूर्णांक
+nfs_async_unlink(काष्ठा dentry *dentry, स्थिर काष्ठा qstr *name)
+अणु
+	काष्ठा nfs_unlinkdata *data;
+	पूर्णांक status = -ENOMEM;
+	व्योम *devname_garbage = शून्य;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (data == NULL)
-		goto out;
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (data == शून्य)
+		जाओ out;
 	data->args.name.name = kstrdup(name->name, GFP_KERNEL);
-	if (!data->args.name.name)
-		goto out_free;
+	अगर (!data->args.name.name)
+		जाओ out_मुक्त;
 	data->args.name.len = name->len;
 
 	data->cred = get_current_cred();
 	data->res.dir_attr = &data->dir_attr;
-	init_waitqueue_head(&data->wq);
+	init_रुकोqueue_head(&data->wq);
 
 	status = -EBUSY;
 	spin_lock(&dentry->d_lock);
-	if (dentry->d_flags & DCACHE_NFSFS_RENAMED)
-		goto out_unlock;
+	अगर (dentry->d_flags & DCACHE_NFSFS_RENAMED)
+		जाओ out_unlock;
 	dentry->d_flags |= DCACHE_NFSFS_RENAMED;
 	devname_garbage = dentry->d_fsdata;
 	dentry->d_fsdata = data;
 	spin_unlock(&dentry->d_lock);
 	/*
-	 * If we'd displaced old cached devname, free it.  At that
-	 * point dentry is definitely not a root, so we won't need
+	 * If we'd displaced old cached devname, मुक्त it.  At that
+	 * poपूर्णांक dentry is definitely not a root, so we won't need
 	 * that anymore.
 	 */
-	kfree(devname_garbage);
-	return 0;
+	kमुक्त(devname_garbage);
+	वापस 0;
 out_unlock:
 	spin_unlock(&dentry->d_lock);
 	put_cred(data->cred);
-	kfree(data->args.name.name);
-out_free:
-	kfree(data);
+	kमुक्त(data->args.name.name);
+out_मुक्त:
+	kमुक्त(data);
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
  * nfs_complete_unlink - Initialize completion of the sillydelete
@@ -214,89 +215,89 @@ out:
  *
  * Since we're most likely to be called by dentry_iput(), we
  * only use the dentry to find the sillydelete. We then copy the name
- * into the qstr.
+ * पूर्णांकo the qstr.
  */
-void
-nfs_complete_unlink(struct dentry *dentry, struct inode *inode)
-{
-	struct nfs_unlinkdata	*data;
+व्योम
+nfs_complete_unlink(काष्ठा dentry *dentry, काष्ठा inode *inode)
+अणु
+	काष्ठा nfs_unlinkdata	*data;
 
 	spin_lock(&dentry->d_lock);
 	dentry->d_flags &= ~DCACHE_NFSFS_RENAMED;
 	data = dentry->d_fsdata;
-	dentry->d_fsdata = NULL;
+	dentry->d_fsdata = शून्य;
 	spin_unlock(&dentry->d_lock);
 
-	if (NFS_STALE(inode) || !nfs_call_unlink(dentry, inode, data))
-		nfs_free_unlinkdata(data);
-}
+	अगर (NFS_STALE(inode) || !nfs_call_unlink(dentry, inode, data))
+		nfs_मुक्त_unlinkdata(data);
+पूर्ण
 
-/* Cancel a queued async unlink. Called when a sillyrename run fails. */
-static void
-nfs_cancel_async_unlink(struct dentry *dentry)
-{
+/* Cancel a queued async unlink. Called when a sillyनाम run fails. */
+अटल व्योम
+nfs_cancel_async_unlink(काष्ठा dentry *dentry)
+अणु
 	spin_lock(&dentry->d_lock);
-	if (dentry->d_flags & DCACHE_NFSFS_RENAMED) {
-		struct nfs_unlinkdata *data = dentry->d_fsdata;
+	अगर (dentry->d_flags & DCACHE_NFSFS_RENAMED) अणु
+		काष्ठा nfs_unlinkdata *data = dentry->d_fsdata;
 
 		dentry->d_flags &= ~DCACHE_NFSFS_RENAMED;
-		dentry->d_fsdata = NULL;
+		dentry->d_fsdata = शून्य;
 		spin_unlock(&dentry->d_lock);
-		nfs_free_unlinkdata(data);
-		return;
-	}
+		nfs_मुक्त_unlinkdata(data);
+		वापस;
+	पूर्ण
 	spin_unlock(&dentry->d_lock);
-}
+पूर्ण
 
 /**
- * nfs_async_rename_done - Sillyrename post-processing
- * @task: rpc_task of the sillyrename
- * @calldata: nfs_renamedata for the sillyrename
+ * nfs_async_नाम_करोne - Sillyनाम post-processing
+ * @task: rpc_task of the sillyनाम
+ * @calldata: nfs_नामdata क्रम the sillyनाम
  *
  * Do the directory attribute updates and the d_move
  */
-static void nfs_async_rename_done(struct rpc_task *task, void *calldata)
-{
-	struct nfs_renamedata *data = calldata;
-	struct inode *old_dir = data->old_dir;
-	struct inode *new_dir = data->new_dir;
-	struct dentry *old_dentry = data->old_dentry;
+अटल व्योम nfs_async_नाम_करोne(काष्ठा rpc_task *task, व्योम *calldata)
+अणु
+	काष्ठा nfs_नामdata *data = calldata;
+	काष्ठा inode *old_dir = data->old_dir;
+	काष्ठा inode *new_dir = data->new_dir;
+	काष्ठा dentry *old_dentry = data->old_dentry;
 
-	trace_nfs_sillyrename_rename(old_dir, old_dentry,
+	trace_nfs_sillyनाम_नाम(old_dir, old_dentry,
 			new_dir, data->new_dentry, task->tk_status);
-	if (!NFS_PROTO(old_dir)->rename_done(task, old_dir, new_dir)) {
+	अगर (!NFS_PROTO(old_dir)->नाम_करोne(task, old_dir, new_dir)) अणु
 		rpc_restart_call_prepare(task);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (data->complete)
+	अगर (data->complete)
 		data->complete(task, data);
-}
+पूर्ण
 
 /**
- * nfs_async_rename_release - Release the sillyrename data.
- * @calldata: the struct nfs_renamedata to be released
+ * nfs_async_नाम_release - Release the sillyनाम data.
+ * @calldata: the काष्ठा nfs_नामdata to be released
  */
-static void nfs_async_rename_release(void *calldata)
-{
-	struct nfs_renamedata	*data = calldata;
-	struct super_block *sb = data->old_dir->i_sb;
+अटल व्योम nfs_async_नाम_release(व्योम *calldata)
+अणु
+	काष्ठा nfs_नामdata	*data = calldata;
+	काष्ठा super_block *sb = data->old_dir->i_sb;
 
-	if (d_really_is_positive(data->old_dentry))
-		nfs_mark_for_revalidate(d_inode(data->old_dentry));
+	अगर (d_really_is_positive(data->old_dentry))
+		nfs_mark_क्रम_revalidate(d_inode(data->old_dentry));
 
-	/* The result of the rename is unknown. Play it safe by
-	 * forcing a new lookup */
-	if (data->cancelled) {
+	/* The result of the नाम is unknown. Play it safe by
+	 * क्रमcing a new lookup */
+	अगर (data->cancelled) अणु
 		spin_lock(&data->old_dir->i_lock);
-		nfs_force_lookup_revalidate(data->old_dir);
+		nfs_क्रमce_lookup_revalidate(data->old_dir);
 		spin_unlock(&data->old_dir->i_lock);
-		if (data->new_dir != data->old_dir) {
+		अगर (data->new_dir != data->old_dir) अणु
 			spin_lock(&data->new_dir->i_lock);
-			nfs_force_lookup_revalidate(data->new_dir);
+			nfs_क्रमce_lookup_revalidate(data->new_dir);
 			spin_unlock(&data->new_dir->i_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dput(data->old_dentry);
 	dput(data->new_dentry);
@@ -304,49 +305,49 @@ static void nfs_async_rename_release(void *calldata)
 	iput(data->new_dir);
 	nfs_sb_deactive(sb);
 	put_cred(data->cred);
-	kfree(data);
-}
+	kमुक्त(data);
+पूर्ण
 
-static void nfs_rename_prepare(struct rpc_task *task, void *calldata)
-{
-	struct nfs_renamedata *data = calldata;
-	NFS_PROTO(data->old_dir)->rename_rpc_prepare(task, data);
-}
+अटल व्योम nfs_नाम_prepare(काष्ठा rpc_task *task, व्योम *calldata)
+अणु
+	काष्ठा nfs_नामdata *data = calldata;
+	NFS_PROTO(data->old_dir)->नाम_rpc_prepare(task, data);
+पूर्ण
 
-static const struct rpc_call_ops nfs_rename_ops = {
-	.rpc_call_done = nfs_async_rename_done,
-	.rpc_release = nfs_async_rename_release,
-	.rpc_call_prepare = nfs_rename_prepare,
-};
+अटल स्थिर काष्ठा rpc_call_ops nfs_नाम_ops = अणु
+	.rpc_call_करोne = nfs_async_नाम_करोne,
+	.rpc_release = nfs_async_नाम_release,
+	.rpc_call_prepare = nfs_नाम_prepare,
+पूर्ण;
 
 /**
- * nfs_async_rename - perform an asynchronous rename operation
- * @old_dir: directory that currently holds the dentry to be renamed
- * @new_dir: target directory for the rename
- * @old_dentry: original dentry to be renamed
- * @new_dentry: dentry to which the old_dentry should be renamed
+ * nfs_async_नाम - perक्रमm an asynchronous नाम operation
+ * @old_dir: directory that currently holds the dentry to be नामd
+ * @new_dir: target directory क्रम the नाम
+ * @old_dentry: original dentry to be नामd
+ * @new_dentry: dentry to which the old_dentry should be नामd
  * @complete: Function to run on successful completion
  *
  * It's expected that valid references to the dentries and inodes are held
  */
-struct rpc_task *
-nfs_async_rename(struct inode *old_dir, struct inode *new_dir,
-		 struct dentry *old_dentry, struct dentry *new_dentry,
-		 void (*complete)(struct rpc_task *, struct nfs_renamedata *))
-{
-	struct nfs_renamedata *data;
-	struct rpc_message msg = { };
-	struct rpc_task_setup task_setup_data = {
+काष्ठा rpc_task *
+nfs_async_नाम(काष्ठा inode *old_dir, काष्ठा inode *new_dir,
+		 काष्ठा dentry *old_dentry, काष्ठा dentry *new_dentry,
+		 व्योम (*complete)(काष्ठा rpc_task *, काष्ठा nfs_नामdata *))
+अणु
+	काष्ठा nfs_नामdata *data;
+	काष्ठा rpc_message msg = अणु पूर्ण;
+	काष्ठा rpc_task_setup task_setup_data = अणु
 		.rpc_message = &msg,
-		.callback_ops = &nfs_rename_ops,
+		.callback_ops = &nfs_नाम_ops,
 		.workqueue = nfsiod_workqueue,
 		.rpc_client = NFS_CLIENT(old_dir),
 		.flags = RPC_TASK_ASYNC | RPC_TASK_CRED_NOREF,
-	};
+	पूर्ण;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (data == NULL)
-		return ERR_PTR(-ENOMEM);
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (data == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 	task_setup_data.callback_data = data;
 
 	data->cred = get_current_cred();
@@ -355,7 +356,7 @@ nfs_async_rename(struct inode *old_dir, struct inode *new_dir,
 	msg.rpc_resp = &data->res;
 	msg.rpc_cred = data->cred;
 
-	/* set up nfs_renamedata */
+	/* set up nfs_नामdata */
 	data->old_dir = old_dir;
 	ihold(old_dir);
 	data->new_dir = new_dir;
@@ -366,138 +367,138 @@ nfs_async_rename(struct inode *old_dir, struct inode *new_dir,
 	nfs_fattr_init(&data->new_fattr);
 	data->complete = complete;
 
-	/* set up nfs_renameargs */
+	/* set up nfs_नामargs */
 	data->args.old_dir = NFS_FH(old_dir);
 	data->args.old_name = &old_dentry->d_name;
 	data->args.new_dir = NFS_FH(new_dir);
 	data->args.new_name = &new_dentry->d_name;
 
-	/* set up nfs_renameres */
+	/* set up nfs_नामres */
 	data->res.old_fattr = &data->old_fattr;
 	data->res.new_fattr = &data->new_fattr;
 
 	nfs_sb_active(old_dir->i_sb);
 
-	NFS_PROTO(data->old_dir)->rename_setup(&msg, old_dentry, new_dentry);
+	NFS_PROTO(data->old_dir)->नाम_setup(&msg, old_dentry, new_dentry);
 
-	return rpc_run_task(&task_setup_data);
-}
+	वापस rpc_run_task(&task_setup_data);
+पूर्ण
 
 /*
- * Perform tasks needed when a sillyrename is done such as cancelling the
- * queued async unlink if it failed.
+ * Perक्रमm tasks needed when a sillyनाम is करोne such as cancelling the
+ * queued async unlink अगर it failed.
  */
-static void
-nfs_complete_sillyrename(struct rpc_task *task, struct nfs_renamedata *data)
-{
-	struct dentry *dentry = data->old_dentry;
+अटल व्योम
+nfs_complete_sillyनाम(काष्ठा rpc_task *task, काष्ठा nfs_नामdata *data)
+अणु
+	काष्ठा dentry *dentry = data->old_dentry;
 
-	if (task->tk_status != 0) {
+	अगर (task->tk_status != 0) अणु
 		nfs_cancel_async_unlink(dentry);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-#define SILLYNAME_PREFIX ".nfs"
-#define SILLYNAME_PREFIX_LEN ((unsigned)sizeof(SILLYNAME_PREFIX) - 1)
-#define SILLYNAME_FILEID_LEN ((unsigned)sizeof(u64) << 1)
-#define SILLYNAME_COUNTER_LEN ((unsigned)sizeof(unsigned int) << 1)
-#define SILLYNAME_LEN (SILLYNAME_PREFIX_LEN + \
-		SILLYNAME_FILEID_LEN + \
+#घोषणा SILLYNAME_PREFIX ".nfs"
+#घोषणा SILLYNAME_PREFIX_LEN ((अचिन्हित)माप(SILLYNAME_PREFIX) - 1)
+#घोषणा SILLYNAME_खाताID_LEN ((अचिन्हित)माप(u64) << 1)
+#घोषणा SILLYNAME_COUNTER_LEN ((अचिन्हित)माप(अचिन्हित पूर्णांक) << 1)
+#घोषणा SILLYNAME_LEN (SILLYNAME_PREFIX_LEN + \
+		SILLYNAME_खाताID_LEN + \
 		SILLYNAME_COUNTER_LEN)
 
 /**
- * nfs_sillyrename - Perform a silly-rename of a dentry
+ * nfs_sillyनाम - Perक्रमm a silly-नाम of a dentry
  * @dir: inode of directory that contains dentry
- * @dentry: dentry to be sillyrenamed
+ * @dentry: dentry to be sillyनामd
  *
- * NFSv2/3 is stateless and the server doesn't know when the client is
- * holding a file open. To prevent application problems when a file is
- * unlinked while it's still open, the client performs a "silly-rename".
- * That is, it renames the file to a hidden file in the same directory,
- * and only performs the unlink once the last reference to it is put.
+ * NFSv2/3 is stateless and the server करोesn't know when the client is
+ * holding a file खोलो. To prevent application problems when a file is
+ * unlinked जबतक it's still खोलो, the client perक्रमms a "silly-rename".
+ * That is, it नामs the file to a hidden file in the same directory,
+ * and only perक्रमms the unlink once the last reference to it is put.
  *
- * The final cleanup is done during dentry_iput.
+ * The final cleanup is करोne during dentry_iput.
  *
- * (Note: NFSv4 is stateful, and has opens, so in theory an NFSv4 server
- * could take responsibility for keeping open files referenced.  The server
- * would also need to ensure that opened-but-deleted files were kept over
- * reboots.  However, we may not assume a server does so.  (RFC 5661
- * does provide an OPEN4_RESULT_PRESERVE_UNLINKED flag that a server can
- * use to advertise that it does this; some day we may take advantage of
+ * (Note: NFSv4 is stateful, and has खोलोs, so in theory an NFSv4 server
+ * could take responsibility क्रम keeping खोलो files referenced.  The server
+ * would also need to ensure that खोलोed-but-deleted files were kept over
+ * reboots.  However, we may not assume a server करोes so.  (RFC 5661
+ * करोes provide an OPEN4_RESULT_PRESERVE_UNLINKED flag that a server can
+ * use to advertise that it करोes this; some day we may take advantage of
  * it.))
  */
-int
-nfs_sillyrename(struct inode *dir, struct dentry *dentry)
-{
-	static unsigned int sillycounter;
-	unsigned char silly[SILLYNAME_LEN + 1];
-	unsigned long long fileid;
-	struct dentry *sdentry;
-	struct inode *inode = d_inode(dentry);
-	struct rpc_task *task;
-	int            error = -EBUSY;
+पूर्णांक
+nfs_sillyनाम(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	अटल अचिन्हित पूर्णांक sillycounter;
+	अचिन्हित अक्षर silly[SILLYNAME_LEN + 1];
+	अचिन्हित दीर्घ दीर्घ fileid;
+	काष्ठा dentry *sdentry;
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा rpc_task *task;
+	पूर्णांक            error = -EBUSY;
 
-	dfprintk(VFS, "NFS: silly-rename(%pd2, ct=%d)\n",
+	dfprपूर्णांकk(VFS, "NFS: silly-rename(%pd2, ct=%d)\n",
 		dentry, d_count(dentry));
 	nfs_inc_stats(dir, NFSIOS_SILLYRENAME);
 
 	/*
-	 * We don't allow a dentry to be silly-renamed twice.
+	 * We करोn't allow a dentry to be silly-नामd twice.
 	 */
-	if (dentry->d_flags & DCACHE_NFSFS_RENAMED)
-		goto out;
+	अगर (dentry->d_flags & DCACHE_NFSFS_RENAMED)
+		जाओ out;
 
-	fileid = NFS_FILEID(d_inode(dentry));
+	fileid = NFS_खाताID(d_inode(dentry));
 
-	sdentry = NULL;
-	do {
-		int slen;
+	sdentry = शून्य;
+	करो अणु
+		पूर्णांक slen;
 		dput(sdentry);
 		sillycounter++;
-		slen = scnprintf(silly, sizeof(silly),
+		slen = scnम_लिखो(silly, माप(silly),
 				SILLYNAME_PREFIX "%0*llx%0*x",
-				SILLYNAME_FILEID_LEN, fileid,
+				SILLYNAME_खाताID_LEN, fileid,
 				SILLYNAME_COUNTER_LEN, sillycounter);
 
-		dfprintk(VFS, "NFS: trying to rename %pd to %s\n",
+		dfprपूर्णांकk(VFS, "NFS: trying to rename %pd to %s\n",
 				dentry, silly);
 
 		sdentry = lookup_one_len(silly, dentry->d_parent, slen);
 		/*
-		 * N.B. Better to return EBUSY here ... it could be
-		 * dangerous to delete the file while it's in use.
+		 * N.B. Better to वापस EBUSY here ... it could be
+		 * dangerous to delete the file जबतक it's in use.
 		 */
-		if (IS_ERR(sdentry))
-			goto out;
-	} while (d_inode(sdentry) != NULL); /* need negative lookup */
+		अगर (IS_ERR(sdentry))
+			जाओ out;
+	पूर्ण जबतक (d_inode(sdentry) != शून्य); /* need negative lookup */
 
 	ihold(inode);
 
-	/* queue unlink first. Can't do this from rpc_release as it
+	/* queue unlink first. Can't करो this from rpc_release as it
 	 * has to allocate memory
 	 */
 	error = nfs_async_unlink(dentry, &sdentry->d_name);
-	if (error)
-		goto out_dput;
+	अगर (error)
+		जाओ out_dput;
 
-	/* run the rename task, undo unlink if it fails */
-	task = nfs_async_rename(dir, dir, dentry, sdentry,
-					nfs_complete_sillyrename);
-	if (IS_ERR(task)) {
+	/* run the नाम task, unकरो unlink अगर it fails */
+	task = nfs_async_नाम(dir, dir, dentry, sdentry,
+					nfs_complete_sillyनाम);
+	अगर (IS_ERR(task)) अणु
 		error = -EBUSY;
 		nfs_cancel_async_unlink(dentry);
-		goto out_dput;
-	}
+		जाओ out_dput;
+	पूर्ण
 
-	/* wait for the RPC task to complete, unless a SIGKILL intervenes */
-	error = rpc_wait_for_completion_task(task);
-	if (error == 0)
+	/* रुको क्रम the RPC task to complete, unless a SIGKILL पूर्णांकervenes */
+	error = rpc_रुको_क्रम_completion_task(task);
+	अगर (error == 0)
 		error = task->tk_status;
-	switch (error) {
-	case 0:
-		/* The rename succeeded */
-		nfs_set_verifier(dentry, nfs_save_change_attribute(dir));
+	चयन (error) अणु
+	हाल 0:
+		/* The नाम succeeded */
+		nfs_set_verअगरier(dentry, nfs_save_change_attribute(dir));
 		spin_lock(&inode->i_lock);
 		NFS_I(inode)->attr_gencount = nfs_inc_attr_generation_counter();
 		nfs_set_cache_invalid(inode, NFS_INO_INVALID_CHANGE |
@@ -505,17 +506,17 @@ nfs_sillyrename(struct inode *dir, struct dentry *dentry)
 						     NFS_INO_REVAL_FORCED);
 		spin_unlock(&inode->i_lock);
 		d_move(dentry, sdentry);
-		break;
-	case -ERESTARTSYS:
-		/* The result of the rename is unknown. Play it safe by
-		 * forcing a new lookup */
+		अवरोध;
+	हाल -ERESTARTSYS:
+		/* The result of the नाम is unknown. Play it safe by
+		 * क्रमcing a new lookup */
 		d_drop(dentry);
 		d_drop(sdentry);
-	}
+	पूर्ण
 	rpc_put_task(task);
 out_dput:
 	iput(inode);
 	dput(sdentry);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण

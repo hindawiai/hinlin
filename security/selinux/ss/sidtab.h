@@ -1,159 +1,160 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * A security identifier table (sidtab) is a lookup table
- * of security context structures indexed by SID value.
+ * A security identअगरier table (sidtab) is a lookup table
+ * of security context काष्ठाures indexed by SID value.
  *
  * Original author: Stephen Smalley, <sds@tycho.nsa.gov>
  * Author: Ondrej Mosnacek, <omosnacek@gmail.com>
  *
  * Copyright (C) 2018 Red Hat, Inc.
  */
-#ifndef _SS_SIDTAB_H_
-#define _SS_SIDTAB_H_
+#अगर_अघोषित _SS_SIDTAB_H_
+#घोषणा _SS_SIDTAB_H_
 
-#include <linux/spinlock_types.h>
-#include <linux/log2.h>
-#include <linux/hashtable.h>
+#समावेश <linux/spinlock_types.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/hashtable.h>
 
-#include "context.h"
+#समावेश "context.h"
 
-struct sidtab_entry {
+काष्ठा sidtab_entry अणु
 	u32 sid;
 	u32 hash;
-	struct context context;
-#if CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
-	struct sidtab_str_cache __rcu *cache;
-#endif
-	struct hlist_node list;
-};
+	काष्ठा context context;
+#अगर CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
+	काष्ठा sidtab_str_cache __rcu *cache;
+#पूर्ण_अगर
+	काष्ठा hlist_node list;
+पूर्ण;
 
-union sidtab_entry_inner {
-	struct sidtab_node_inner *ptr_inner;
-	struct sidtab_node_leaf  *ptr_leaf;
-};
+जोड़ sidtab_entry_inner अणु
+	काष्ठा sidtab_node_inner *ptr_inner;
+	काष्ठा sidtab_node_leaf  *ptr_leaf;
+पूर्ण;
 
 /* align node size to page boundary */
-#define SIDTAB_NODE_ALLOC_SHIFT PAGE_SHIFT
-#define SIDTAB_NODE_ALLOC_SIZE  PAGE_SIZE
+#घोषणा SIDTAB_NODE_ALLOC_SHIFT PAGE_SHIFT
+#घोषणा SIDTAB_NODE_ALLOC_SIZE  PAGE_SIZE
 
-#define size_to_shift(size) ((size) == 1 ? 1 : (const_ilog2((size) - 1) + 1))
+#घोषणा माप_प्रकारo_shअगरt(size) ((size) == 1 ? 1 : (स्थिर_ilog2((size) - 1) + 1))
 
-#define SIDTAB_INNER_SHIFT \
-	(SIDTAB_NODE_ALLOC_SHIFT - size_to_shift(sizeof(union sidtab_entry_inner)))
-#define SIDTAB_INNER_ENTRIES ((size_t)1 << SIDTAB_INNER_SHIFT)
-#define SIDTAB_LEAF_ENTRIES \
-	(SIDTAB_NODE_ALLOC_SIZE / sizeof(struct sidtab_entry))
+#घोषणा SIDTAB_INNER_SHIFT \
+	(SIDTAB_NODE_ALLOC_SHIFT - माप_प्रकारo_shअगरt(माप(जोड़ sidtab_entry_inner)))
+#घोषणा SIDTAB_INNER_ENTRIES ((माप_प्रकार)1 << SIDTAB_INNER_SHIFT)
+#घोषणा SIDTAB_LEAF_ENTRIES \
+	(SIDTAB_NODE_ALLOC_SIZE / माप(काष्ठा sidtab_entry))
 
-#define SIDTAB_MAX_BITS 32
-#define SIDTAB_MAX U32_MAX
-/* ensure enough tree levels for SIDTAB_MAX entries */
-#define SIDTAB_MAX_LEVEL \
-	DIV_ROUND_UP(SIDTAB_MAX_BITS - size_to_shift(SIDTAB_LEAF_ENTRIES), \
+#घोषणा SIDTAB_MAX_BITS 32
+#घोषणा SIDTAB_MAX U32_MAX
+/* ensure enough tree levels क्रम SIDTAB_MAX entries */
+#घोषणा SIDTAB_MAX_LEVEL \
+	DIV_ROUND_UP(SIDTAB_MAX_BITS - माप_प्रकारo_shअगरt(SIDTAB_LEAF_ENTRIES), \
 		     SIDTAB_INNER_SHIFT)
 
-struct sidtab_node_leaf {
-	struct sidtab_entry entries[SIDTAB_LEAF_ENTRIES];
-};
+काष्ठा sidtab_node_leaf अणु
+	काष्ठा sidtab_entry entries[SIDTAB_LEAF_ENTRIES];
+पूर्ण;
 
-struct sidtab_node_inner {
-	union sidtab_entry_inner entries[SIDTAB_INNER_ENTRIES];
-};
+काष्ठा sidtab_node_inner अणु
+	जोड़ sidtab_entry_inner entries[SIDTAB_INNER_ENTRIES];
+पूर्ण;
 
-struct sidtab_isid_entry {
-	int set;
-	struct sidtab_entry entry;
-};
+काष्ठा sidtab_isid_entry अणु
+	पूर्णांक set;
+	काष्ठा sidtab_entry entry;
+पूर्ण;
 
-struct sidtab_convert_params {
-	int (*func)(struct context *oldc, struct context *newc, void *args);
-	void *args;
-	struct sidtab *target;
-};
+काष्ठा sidtab_convert_params अणु
+	पूर्णांक (*func)(काष्ठा context *oldc, काष्ठा context *newc, व्योम *args);
+	व्योम *args;
+	काष्ठा sidtab *target;
+पूर्ण;
 
-#define SIDTAB_HASH_BITS CONFIG_SECURITY_SELINUX_SIDTAB_HASH_BITS
-#define SIDTAB_HASH_BUCKETS (1 << SIDTAB_HASH_BITS)
+#घोषणा SIDTAB_HASH_BITS CONFIG_SECURITY_SELINUX_SIDTAB_HASH_BITS
+#घोषणा SIDTAB_HASH_BUCKETS (1 << SIDTAB_HASH_BITS)
 
-struct sidtab {
+काष्ठा sidtab अणु
 	/*
-	 * lock-free read access only for as many items as a prior read of
+	 * lock-मुक्त पढ़ो access only क्रम as many items as a prior पढ़ो of
 	 * 'count'
 	 */
-	union sidtab_entry_inner roots[SIDTAB_MAX_LEVEL + 1];
+	जोड़ sidtab_entry_inner roots[SIDTAB_MAX_LEVEL + 1];
 	/*
-	 * access atomically via {READ|WRITE}_ONCE(); only increment under
+	 * access atomically via अणुREAD|WRITEपूर्ण_ONCE(); only increment under
 	 * spinlock
 	 */
 	u32 count;
 	/* access only under spinlock */
-	struct sidtab_convert_params *convert;
+	काष्ठा sidtab_convert_params *convert;
 	bool frozen;
 	spinlock_t lock;
 
-#if CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
+#अगर CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
 	/* SID -> context string cache */
-	u32 cache_free_slots;
-	struct list_head cache_lru_list;
+	u32 cache_मुक्त_slots;
+	काष्ठा list_head cache_lru_list;
 	spinlock_t cache_lock;
-#endif
+#पूर्ण_अगर
 
-	/* index == SID - 1 (no entry for SECSID_NULL) */
-	struct sidtab_isid_entry isids[SECINITSID_NUM];
+	/* index == SID - 1 (no entry क्रम SECSID_शून्य) */
+	काष्ठा sidtab_isid_entry isids[SECINITSID_NUM];
 
-	/* Hash table for fast reverse context-to-sid lookups. */
+	/* Hash table क्रम fast reverse context-to-sid lookups. */
 	DECLARE_HASHTABLE(context_to_sid, SIDTAB_HASH_BITS);
-};
+पूर्ण;
 
-int sidtab_init(struct sidtab *s);
-int sidtab_set_initial(struct sidtab *s, u32 sid, struct context *context);
-struct sidtab_entry *sidtab_search_entry(struct sidtab *s, u32 sid);
-struct sidtab_entry *sidtab_search_entry_force(struct sidtab *s, u32 sid);
+पूर्णांक sidtab_init(काष्ठा sidtab *s);
+पूर्णांक sidtab_set_initial(काष्ठा sidtab *s, u32 sid, काष्ठा context *context);
+काष्ठा sidtab_entry *sidtab_search_entry(काष्ठा sidtab *s, u32 sid);
+काष्ठा sidtab_entry *sidtab_search_entry_क्रमce(काष्ठा sidtab *s, u32 sid);
 
-static inline struct context *sidtab_search(struct sidtab *s, u32 sid)
-{
-	struct sidtab_entry *entry = sidtab_search_entry(s, sid);
+अटल अंतरभूत काष्ठा context *sidtab_search(काष्ठा sidtab *s, u32 sid)
+अणु
+	काष्ठा sidtab_entry *entry = sidtab_search_entry(s, sid);
 
-	return entry ? &entry->context : NULL;
-}
+	वापस entry ? &entry->context : शून्य;
+पूर्ण
 
-static inline struct context *sidtab_search_force(struct sidtab *s, u32 sid)
-{
-	struct sidtab_entry *entry = sidtab_search_entry_force(s, sid);
+अटल अंतरभूत काष्ठा context *sidtab_search_क्रमce(काष्ठा sidtab *s, u32 sid)
+अणु
+	काष्ठा sidtab_entry *entry = sidtab_search_entry_क्रमce(s, sid);
 
-	return entry ? &entry->context : NULL;
-}
+	वापस entry ? &entry->context : शून्य;
+पूर्ण
 
-int sidtab_convert(struct sidtab *s, struct sidtab_convert_params *params);
+पूर्णांक sidtab_convert(काष्ठा sidtab *s, काष्ठा sidtab_convert_params *params);
 
-void sidtab_cancel_convert(struct sidtab *s);
+व्योम sidtab_cancel_convert(काष्ठा sidtab *s);
 
-void sidtab_freeze_begin(struct sidtab *s, unsigned long *flags) __acquires(&s->lock);
-void sidtab_freeze_end(struct sidtab *s, unsigned long *flags) __releases(&s->lock);
+व्योम sidtab_मुक्तze_begin(काष्ठा sidtab *s, अचिन्हित दीर्घ *flags) __acquires(&s->lock);
+व्योम sidtab_मुक्तze_end(काष्ठा sidtab *s, अचिन्हित दीर्घ *flags) __releases(&s->lock);
 
-int sidtab_context_to_sid(struct sidtab *s, struct context *context, u32 *sid);
+पूर्णांक sidtab_context_to_sid(काष्ठा sidtab *s, काष्ठा context *context, u32 *sid);
 
-void sidtab_destroy(struct sidtab *s);
+व्योम sidtab_destroy(काष्ठा sidtab *s);
 
-int sidtab_hash_stats(struct sidtab *sidtab, char *page);
+पूर्णांक sidtab_hash_stats(काष्ठा sidtab *sidtab, अक्षर *page);
 
-#if CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
-void sidtab_sid2str_put(struct sidtab *s, struct sidtab_entry *entry,
-			const char *str, u32 str_len);
-int sidtab_sid2str_get(struct sidtab *s, struct sidtab_entry *entry,
-		       char **out, u32 *out_len);
-#else
-static inline void sidtab_sid2str_put(struct sidtab *s,
-				      struct sidtab_entry *entry,
-				      const char *str, u32 str_len)
-{
-}
-static inline int sidtab_sid2str_get(struct sidtab *s,
-				     struct sidtab_entry *entry,
-				     char **out, u32 *out_len)
-{
-	return -ENOENT;
-}
-#endif /* CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0 */
+#अगर CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0
+व्योम sidtab_sid2str_put(काष्ठा sidtab *s, काष्ठा sidtab_entry *entry,
+			स्थिर अक्षर *str, u32 str_len);
+पूर्णांक sidtab_sid2str_get(काष्ठा sidtab *s, काष्ठा sidtab_entry *entry,
+		       अक्षर **out, u32 *out_len);
+#अन्यथा
+अटल अंतरभूत व्योम sidtab_sid2str_put(काष्ठा sidtab *s,
+				      काष्ठा sidtab_entry *entry,
+				      स्थिर अक्षर *str, u32 str_len)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक sidtab_sid2str_get(काष्ठा sidtab *s,
+				     काष्ठा sidtab_entry *entry,
+				     अक्षर **out, u32 *out_len)
+अणु
+	वापस -ENOENT;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0 */
 
-#endif	/* _SS_SIDTAB_H_ */
+#पूर्ण_अगर	/* _SS_SIDTAB_H_ */
 
 

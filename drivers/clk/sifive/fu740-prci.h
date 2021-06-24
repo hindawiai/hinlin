@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2020 SiFive, Inc.
  * Zong Li
  */
 
-#ifndef __SIFIVE_CLK_FU740_PRCI_H
-#define __SIFIVE_CLK_FU740_PRCI_H
+#अगर_अघोषित __SIFIVE_CLK_FU740_PRCI_H
+#घोषणा __SIFIVE_CLK_FU740_PRCI_H
 
-#include "sifive-prci.h"
+#समावेश "sifive-prci.h"
 
-#define NUM_CLOCK_FU740	9
+#घोषणा NUM_CLOCK_FU740	9
 
-extern struct __prci_clock __prci_init_clocks_fu740[NUM_CLOCK_FU740];
+बाह्य काष्ठा __prci_घड़ी __prci_init_घड़ीs_fu740[NUM_CLOCK_FU740];
 
-static const struct prci_clk_desc prci_clk_fu740 = {
-	.clks = __prci_init_clocks_fu740,
-	.num_clks = ARRAY_SIZE(__prci_init_clocks_fu740),
-};
+अटल स्थिर काष्ठा prci_clk_desc prci_clk_fu740 = अणु
+	.clks = __prci_init_घड़ीs_fu740,
+	.num_clks = ARRAY_SIZE(__prci_init_घड़ीs_fu740),
+पूर्ण;
 
-#endif /* __SIFIVE_CLK_FU740_PRCI_H */
+#पूर्ण_अगर /* __SIFIVE_CLK_FU740_PRCI_H */

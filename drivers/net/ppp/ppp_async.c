@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * PPP async serial channel driver for Linux.
+ * PPP async serial channel driver क्रम Linux.
  *
  * Copyright 1999 Paul Mackerras.
  *
- * This driver provides the encapsulation and framing for sending
+ * This driver provides the encapsulation and framing क्रम sending
  * and receiving PPP frames over async serial lines.  It relies on
  * the generic PPP layer to give it frames to send and to process
  * received frames.  It implements the PPP line discipline.
@@ -14,102 +15,102 @@
  * subsequently hacked by Paul Mackerras.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/tty.h>
-#include <linux/netdevice.h>
-#include <linux/poll.h>
-#include <linux/crc-ccitt.h>
-#include <linux/ppp_defs.h>
-#include <linux/ppp-ioctl.h>
-#include <linux/ppp_channel.h>
-#include <linux/spinlock.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/jiffies.h>
-#include <linux/slab.h>
-#include <asm/unaligned.h>
-#include <linux/uaccess.h>
-#include <asm/string.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/crc-ccitt.h>
+#समावेश <linux/ppp_defs.h>
+#समावेश <linux/ppp-ioctl.h>
+#समावेश <linux/ppp_channel.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/माला.स>
 
-#define PPP_VERSION	"2.4.2"
+#घोषणा PPP_VERSION	"2.4.2"
 
-#define OBUFSIZE	4096
+#घोषणा Oबफ_मानE	4096
 
-/* Structure for storing local state. */
-struct asyncppp {
-	struct tty_struct *tty;
-	unsigned int	flags;
-	unsigned int	state;
-	unsigned int	rbits;
-	int		mru;
+/* Structure क्रम storing local state. */
+काष्ठा asyncppp अणु
+	काष्ठा tty_काष्ठा *tty;
+	अचिन्हित पूर्णांक	flags;
+	अचिन्हित पूर्णांक	state;
+	अचिन्हित पूर्णांक	rbits;
+	पूर्णांक		mru;
 	spinlock_t	xmit_lock;
 	spinlock_t	recv_lock;
-	unsigned long	xmit_flags;
+	अचिन्हित दीर्घ	xmit_flags;
 	u32		xaccm[8];
 	u32		raccm;
-	unsigned int	bytes_sent;
-	unsigned int	bytes_rcvd;
+	अचिन्हित पूर्णांक	bytes_sent;
+	अचिन्हित पूर्णांक	bytes_rcvd;
 
-	struct sk_buff	*tpkt;
-	int		tpkt_pos;
+	काष्ठा sk_buff	*tpkt;
+	पूर्णांक		tpkt_pos;
 	u16		tfcs;
-	unsigned char	*optr;
-	unsigned char	*olim;
-	unsigned long	last_xmit;
+	अचिन्हित अक्षर	*optr;
+	अचिन्हित अक्षर	*olim;
+	अचिन्हित दीर्घ	last_xmit;
 
-	struct sk_buff	*rpkt;
-	int		lcp_fcs;
-	struct sk_buff_head rqueue;
+	काष्ठा sk_buff	*rpkt;
+	पूर्णांक		lcp_fcs;
+	काष्ठा sk_buff_head rqueue;
 
-	struct tasklet_struct tsk;
+	काष्ठा tasklet_काष्ठा tsk;
 
 	refcount_t	refcnt;
-	struct completion dead;
-	struct ppp_channel chan;	/* interface to generic ppp layer */
-	unsigned char	obuf[OBUFSIZE];
-};
+	काष्ठा completion dead;
+	काष्ठा ppp_channel chan;	/* पूर्णांकerface to generic ppp layer */
+	अचिन्हित अक्षर	obuf[Oबफ_मानE];
+पूर्ण;
 
 /* Bit numbers in xmit_flags */
-#define XMIT_WAKEUP	0
-#define XMIT_FULL	1
-#define XMIT_BUSY	2
+#घोषणा XMIT_WAKEUP	0
+#घोषणा XMIT_FULL	1
+#घोषणा XMIT_BUSY	2
 
 /* State bits */
-#define SC_TOSS		1
-#define SC_ESCAPE	2
-#define SC_PREV_ERROR	4
+#घोषणा SC_TOSS		1
+#घोषणा SC_ESCAPE	2
+#घोषणा SC_PREV_ERROR	4
 
 /* Bits in rbits */
-#define SC_RCV_BITS	(SC_RCV_B7_1|SC_RCV_B7_0|SC_RCV_ODDP|SC_RCV_EVNP)
+#घोषणा SC_RCV_BITS	(SC_RCV_B7_1|SC_RCV_B7_0|SC_RCV_ODDP|SC_RCV_EVNP)
 
-static int flag_time = HZ;
-module_param(flag_time, int, 0);
-MODULE_PARM_DESC(flag_time, "ppp_async: interval between flagged packets (in clock ticks)");
+अटल पूर्णांक flag_समय = HZ;
+module_param(flag_समय, पूर्णांक, 0);
+MODULE_PARM_DESC(flag_समय, "ppp_async: interval between flagged packets (in clock ticks)");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_LDISC(N_PPP);
 
 /*
  * Prototypes.
  */
-static int ppp_async_encode(struct asyncppp *ap);
-static int ppp_async_send(struct ppp_channel *chan, struct sk_buff *skb);
-static int ppp_async_push(struct asyncppp *ap);
-static void ppp_async_flush_output(struct asyncppp *ap);
-static void ppp_async_input(struct asyncppp *ap, const unsigned char *buf,
-			    char *flags, int count);
-static int ppp_async_ioctl(struct ppp_channel *chan, unsigned int cmd,
-			   unsigned long arg);
-static void ppp_async_process(struct tasklet_struct *t);
+अटल पूर्णांक ppp_async_encode(काष्ठा asyncppp *ap);
+अटल पूर्णांक ppp_async_send(काष्ठा ppp_channel *chan, काष्ठा sk_buff *skb);
+अटल पूर्णांक ppp_async_push(काष्ठा asyncppp *ap);
+अटल व्योम ppp_async_flush_output(काष्ठा asyncppp *ap);
+अटल व्योम ppp_async_input(काष्ठा asyncppp *ap, स्थिर अचिन्हित अक्षर *buf,
+			    अक्षर *flags, पूर्णांक count);
+अटल पूर्णांक ppp_async_ioctl(काष्ठा ppp_channel *chan, अचिन्हित पूर्णांक cmd,
+			   अचिन्हित दीर्घ arg);
+अटल व्योम ppp_async_process(काष्ठा tasklet_काष्ठा *t);
 
-static void async_lcp_peek(struct asyncppp *ap, unsigned char *data,
-			   int len, int inbound);
+अटल व्योम async_lcp_peek(काष्ठा asyncppp *ap, अचिन्हित अक्षर *data,
+			   पूर्णांक len, पूर्णांक inbound);
 
-static const struct ppp_channel_ops async_ops = {
+अटल स्थिर काष्ठा ppp_channel_ops async_ops = अणु
 	.start_xmit = ppp_async_send,
 	.ioctl      = ppp_async_ioctl,
-};
+पूर्ण;
 
 /*
  * Routines implementing the PPP line discipline.
@@ -118,55 +119,55 @@ static const struct ppp_channel_ops async_ops = {
 /*
  * We have a potential race on dereferencing tty->disc_data,
  * because the tty layer provides no locking at all - thus one
- * cpu could be running ppp_asynctty_receive while another
- * calls ppp_asynctty_close, which zeroes tty->disc_data and
- * frees the memory that ppp_asynctty_receive is using.  The best
- * way to fix this is to use a rwlock in the tty struct, but for now
- * we use a single global rwlock for all ttys in ppp line discipline.
+ * cpu could be running ppp_asynctty_receive जबतक another
+ * calls ppp_asynctty_बंद, which zeroes tty->disc_data and
+ * मुक्तs the memory that ppp_asynctty_receive is using.  The best
+ * way to fix this is to use a rwlock in the tty काष्ठा, but क्रम now
+ * we use a single global rwlock क्रम all ttys in ppp line discipline.
  *
- * FIXME: this is no longer true. The _close path for the ldisc is
+ * FIXME: this is no दीर्घer true. The _बंद path क्रम the ldisc is
  * now guaranteed to be sane.
  */
-static DEFINE_RWLOCK(disc_data_lock);
+अटल DEFINE_RWLOCK(disc_data_lock);
 
-static struct asyncppp *ap_get(struct tty_struct *tty)
-{
-	struct asyncppp *ap;
+अटल काष्ठा asyncppp *ap_get(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा asyncppp *ap;
 
-	read_lock(&disc_data_lock);
+	पढ़ो_lock(&disc_data_lock);
 	ap = tty->disc_data;
-	if (ap != NULL)
+	अगर (ap != शून्य)
 		refcount_inc(&ap->refcnt);
-	read_unlock(&disc_data_lock);
-	return ap;
-}
+	पढ़ो_unlock(&disc_data_lock);
+	वापस ap;
+पूर्ण
 
-static void ap_put(struct asyncppp *ap)
-{
-	if (refcount_dec_and_test(&ap->refcnt))
+अटल व्योम ap_put(काष्ठा asyncppp *ap)
+अणु
+	अगर (refcount_dec_and_test(&ap->refcnt))
 		complete(&ap->dead);
-}
+पूर्ण
 
 /*
- * Called when a tty is put into PPP line discipline. Called in process
+ * Called when a tty is put पूर्णांकo PPP line discipline. Called in process
  * context.
  */
-static int
-ppp_asynctty_open(struct tty_struct *tty)
-{
-	struct asyncppp *ap;
-	int err;
-	int speed;
+अटल पूर्णांक
+ppp_asynctty_खोलो(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा asyncppp *ap;
+	पूर्णांक err;
+	पूर्णांक speed;
 
-	if (tty->ops->write == NULL)
-		return -EOPNOTSUPP;
+	अगर (tty->ops->ग_लिखो == शून्य)
+		वापस -EOPNOTSUPP;
 
 	err = -ENOMEM;
-	ap = kzalloc(sizeof(*ap), GFP_KERNEL);
-	if (!ap)
-		goto out;
+	ap = kzalloc(माप(*ap), GFP_KERNEL);
+	अगर (!ap)
+		जाओ out;
 
-	/* initialize the asyncppp structure */
+	/* initialize the asyncppp काष्ठाure */
 	ap->tty = tty;
 	ap->mru = PPP_MRU;
 	spin_lock_init(&ap->xmit_lock);
@@ -184,354 +185,354 @@ ppp_asynctty_open(struct tty_struct *tty)
 	refcount_set(&ap->refcnt, 1);
 	init_completion(&ap->dead);
 
-	ap->chan.private = ap;
+	ap->chan.निजी = ap;
 	ap->chan.ops = &async_ops;
 	ap->chan.mtu = PPP_MRU;
 	speed = tty_get_baud_rate(tty);
 	ap->chan.speed = speed;
-	err = ppp_register_channel(&ap->chan);
-	if (err)
-		goto out_free;
+	err = ppp_रेजिस्टर_channel(&ap->chan);
+	अगर (err)
+		जाओ out_मुक्त;
 
 	tty->disc_data = ap;
 	tty->receive_room = 65536;
-	return 0;
+	वापस 0;
 
- out_free:
-	kfree(ap);
+ out_मुक्त:
+	kमुक्त(ap);
  out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Called when the tty is put into another line discipline
- * or it hangs up.  We have to wait for any cpu currently
+ * Called when the tty is put पूर्णांकo another line discipline
+ * or it hangs up.  We have to रुको क्रम any cpu currently
  * executing in any of the other ppp_asynctty_* routines to
- * finish before we can call ppp_unregister_channel and free
- * the asyncppp struct.  This routine must be called from
- * process context, not interrupt or softirq context.
+ * finish beक्रमe we can call ppp_unरेजिस्टर_channel and मुक्त
+ * the asyncppp काष्ठा.  This routine must be called from
+ * process context, not पूर्णांकerrupt or softirq context.
  */
-static void
-ppp_asynctty_close(struct tty_struct *tty)
-{
-	struct asyncppp *ap;
+अटल व्योम
+ppp_asynctty_बंद(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा asyncppp *ap;
 
-	write_lock_irq(&disc_data_lock);
+	ग_लिखो_lock_irq(&disc_data_lock);
 	ap = tty->disc_data;
-	tty->disc_data = NULL;
-	write_unlock_irq(&disc_data_lock);
-	if (!ap)
-		return;
+	tty->disc_data = शून्य;
+	ग_लिखो_unlock_irq(&disc_data_lock);
+	अगर (!ap)
+		वापस;
 
 	/*
 	 * We have now ensured that nobody can start using ap from now
-	 * on, but we have to wait for all existing users to finish.
-	 * Note that ppp_unregister_channel ensures that no calls to
+	 * on, but we have to रुको क्रम all existing users to finish.
+	 * Note that ppp_unरेजिस्टर_channel ensures that no calls to
 	 * our channel ops (i.e. ppp_async_send/ioctl) are in progress
-	 * by the time it returns.
+	 * by the समय it वापसs.
 	 */
-	if (!refcount_dec_and_test(&ap->refcnt))
-		wait_for_completion(&ap->dead);
-	tasklet_kill(&ap->tsk);
+	अगर (!refcount_dec_and_test(&ap->refcnt))
+		रुको_क्रम_completion(&ap->dead);
+	tasklet_समाप्त(&ap->tsk);
 
-	ppp_unregister_channel(&ap->chan);
-	kfree_skb(ap->rpkt);
+	ppp_unरेजिस्टर_channel(&ap->chan);
+	kमुक्त_skb(ap->rpkt);
 	skb_queue_purge(&ap->rqueue);
-	kfree_skb(ap->tpkt);
-	kfree(ap);
-}
+	kमुक्त_skb(ap->tpkt);
+	kमुक्त(ap);
+पूर्ण
 
 /*
  * Called on tty hangup in process context.
  *
- * Wait for I/O to driver to complete and unregister PPP channel.
- * This is already done by the close routine, so just call that.
+ * Wait क्रम I/O to driver to complete and unरेजिस्टर PPP channel.
+ * This is alपढ़ोy करोne by the बंद routine, so just call that.
  */
-static int ppp_asynctty_hangup(struct tty_struct *tty)
-{
-	ppp_asynctty_close(tty);
-	return 0;
-}
+अटल पूर्णांक ppp_asynctty_hangup(काष्ठा tty_काष्ठा *tty)
+अणु
+	ppp_asynctty_बंद(tty);
+	वापस 0;
+पूर्ण
 
 /*
- * Read does nothing - no data is ever available this way.
- * Pppd reads and writes packets via /dev/ppp instead.
+ * Read करोes nothing - no data is ever available this way.
+ * Pppd पढ़ोs and ग_लिखोs packets via /dev/ppp instead.
  */
-static ssize_t
-ppp_asynctty_read(struct tty_struct *tty, struct file *file,
-		  unsigned char *buf, size_t count,
-		  void **cookie, unsigned long offset)
-{
-	return -EAGAIN;
-}
+अटल sमाप_प्रकार
+ppp_asynctty_पढ़ो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+		  अचिन्हित अक्षर *buf, माप_प्रकार count,
+		  व्योम **cookie, अचिन्हित दीर्घ offset)
+अणु
+	वापस -EAGAIN;
+पूर्ण
 
 /*
- * Write on the tty does nothing, the packets all come in
+ * Write on the tty करोes nothing, the packets all come in
  * from the ppp generic stuff.
  */
-static ssize_t
-ppp_asynctty_write(struct tty_struct *tty, struct file *file,
-		   const unsigned char *buf, size_t count)
-{
-	return -EAGAIN;
-}
+अटल sमाप_प्रकार
+ppp_asynctty_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+		   स्थिर अचिन्हित अक्षर *buf, माप_प्रकार count)
+अणु
+	वापस -EAGAIN;
+पूर्ण
 
 /*
  * Called in process context only. May be re-entered by multiple
- * ioctl calling threads.
+ * ioctl calling thपढ़ोs.
  */
 
-static int
-ppp_asynctty_ioctl(struct tty_struct *tty, struct file *file,
-		   unsigned int cmd, unsigned long arg)
-{
-	struct asyncppp *ap = ap_get(tty);
-	int err, val;
-	int __user *p = (int __user *)arg;
+अटल पूर्णांक
+ppp_asynctty_ioctl(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+		   अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा asyncppp *ap = ap_get(tty);
+	पूर्णांक err, val;
+	पूर्णांक __user *p = (पूर्णांक __user *)arg;
 
-	if (!ap)
-		return -ENXIO;
+	अगर (!ap)
+		वापस -ENXIO;
 	err = -EFAULT;
-	switch (cmd) {
-	case PPPIOCGCHAN:
+	चयन (cmd) अणु
+	हाल PPPIOCGCHAN:
 		err = -EFAULT;
-		if (put_user(ppp_channel_index(&ap->chan), p))
-			break;
+		अगर (put_user(ppp_channel_index(&ap->chan), p))
+			अवरोध;
 		err = 0;
-		break;
+		अवरोध;
 
-	case PPPIOCGUNIT:
+	हाल PPPIOCGUNIT:
 		err = -EFAULT;
-		if (put_user(ppp_unit_number(&ap->chan), p))
-			break;
+		अगर (put_user(ppp_unit_number(&ap->chan), p))
+			अवरोध;
 		err = 0;
-		break;
+		अवरोध;
 
-	case TCFLSH:
+	हाल TCFLSH:
 		/* flush our buffers and the serial port's buffer */
-		if (arg == TCIOFLUSH || arg == TCOFLUSH)
+		अगर (arg == TCIOFLUSH || arg == TCOFLUSH)
 			ppp_async_flush_output(ap);
 		err = n_tty_ioctl_helper(tty, file, cmd, arg);
-		break;
+		अवरोध;
 
-	case FIONREAD:
+	हाल FIONREAD:
 		val = 0;
-		if (put_user(val, p))
-			break;
+		अगर (put_user(val, p))
+			अवरोध;
 		err = 0;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* Try the various mode ioctls */
 		err = tty_mode_ioctl(tty, file, cmd, arg);
-	}
+	पूर्ण
 
 	ap_put(ap);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* No kernel lock - fine */
-static __poll_t
-ppp_asynctty_poll(struct tty_struct *tty, struct file *file, poll_table *wait)
-{
-	return 0;
-}
+अटल __poll_t
+ppp_asynctty_poll(काष्ठा tty_काष्ठा *tty, काष्ठा file *file, poll_table *रुको)
+अणु
+	वापस 0;
+पूर्ण
 
-/* May sleep, don't call from interrupt level or with interrupts disabled */
-static void
-ppp_asynctty_receive(struct tty_struct *tty, const unsigned char *buf,
-		  char *cflags, int count)
-{
-	struct asyncppp *ap = ap_get(tty);
-	unsigned long flags;
+/* May sleep, करोn't call from पूर्णांकerrupt level or with पूर्णांकerrupts disabled */
+अटल व्योम
+ppp_asynctty_receive(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf,
+		  अक्षर *cflags, पूर्णांक count)
+अणु
+	काष्ठा asyncppp *ap = ap_get(tty);
+	अचिन्हित दीर्घ flags;
 
-	if (!ap)
-		return;
+	अगर (!ap)
+		वापस;
 	spin_lock_irqsave(&ap->recv_lock, flags);
 	ppp_async_input(ap, buf, cflags, count);
 	spin_unlock_irqrestore(&ap->recv_lock, flags);
-	if (!skb_queue_empty(&ap->rqueue))
+	अगर (!skb_queue_empty(&ap->rqueue))
 		tasklet_schedule(&ap->tsk);
 	ap_put(ap);
 	tty_unthrottle(tty);
-}
+पूर्ण
 
-static void
-ppp_asynctty_wakeup(struct tty_struct *tty)
-{
-	struct asyncppp *ap = ap_get(tty);
+अटल व्योम
+ppp_asynctty_wakeup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा asyncppp *ap = ap_get(tty);
 
 	clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
-	if (!ap)
-		return;
+	अगर (!ap)
+		वापस;
 	set_bit(XMIT_WAKEUP, &ap->xmit_flags);
 	tasklet_schedule(&ap->tsk);
 	ap_put(ap);
-}
+पूर्ण
 
 
-static struct tty_ldisc_ops ppp_ldisc = {
+अटल काष्ठा tty_ldisc_ops ppp_ldisc = अणु
 	.owner  = THIS_MODULE,
 	.name	= "ppp",
-	.open	= ppp_asynctty_open,
-	.close	= ppp_asynctty_close,
+	.खोलो	= ppp_asynctty_खोलो,
+	.बंद	= ppp_asynctty_बंद,
 	.hangup	= ppp_asynctty_hangup,
-	.read	= ppp_asynctty_read,
-	.write	= ppp_asynctty_write,
+	.पढ़ो	= ppp_asynctty_पढ़ो,
+	.ग_लिखो	= ppp_asynctty_ग_लिखो,
 	.ioctl	= ppp_asynctty_ioctl,
 	.poll	= ppp_asynctty_poll,
 	.receive_buf = ppp_asynctty_receive,
-	.write_wakeup = ppp_asynctty_wakeup,
-};
+	.ग_लिखो_wakeup = ppp_asynctty_wakeup,
+पूर्ण;
 
-static int __init
-ppp_async_init(void)
-{
-	int err;
+अटल पूर्णांक __init
+ppp_async_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = tty_register_ldisc(N_PPP, &ppp_ldisc);
-	if (err != 0)
-		printk(KERN_ERR "PPP_async: error %d registering line disc.\n",
+	err = tty_रेजिस्टर_ldisc(N_PPP, &ppp_ldisc);
+	अगर (err != 0)
+		prपूर्णांकk(KERN_ERR "PPP_async: error %d registering line disc.\n",
 		       err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * The following routines provide the PPP channel interface.
+ * The following routines provide the PPP channel पूर्णांकerface.
  */
-static int
-ppp_async_ioctl(struct ppp_channel *chan, unsigned int cmd, unsigned long arg)
-{
-	struct asyncppp *ap = chan->private;
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	int err, val;
+अटल पूर्णांक
+ppp_async_ioctl(काष्ठा ppp_channel *chan, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा asyncppp *ap = chan->निजी;
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	पूर्णांक err, val;
 	u32 accm[8];
 
 	err = -EFAULT;
-	switch (cmd) {
-	case PPPIOCGFLAGS:
+	चयन (cmd) अणु
+	हाल PPPIOCGFLAGS:
 		val = ap->flags | ap->rbits;
-		if (put_user(val, p))
-			break;
+		अगर (put_user(val, p))
+			अवरोध;
 		err = 0;
-		break;
-	case PPPIOCSFLAGS:
-		if (get_user(val, p))
-			break;
+		अवरोध;
+	हाल PPPIOCSFLAGS:
+		अगर (get_user(val, p))
+			अवरोध;
 		ap->flags = val & ~SC_RCV_BITS;
 		spin_lock_irq(&ap->recv_lock);
 		ap->rbits = val & SC_RCV_BITS;
 		spin_unlock_irq(&ap->recv_lock);
 		err = 0;
-		break;
+		अवरोध;
 
-	case PPPIOCGASYNCMAP:
-		if (put_user(ap->xaccm[0], (u32 __user *)argp))
-			break;
+	हाल PPPIOCGASYNCMAP:
+		अगर (put_user(ap->xaccm[0], (u32 __user *)argp))
+			अवरोध;
 		err = 0;
-		break;
-	case PPPIOCSASYNCMAP:
-		if (get_user(ap->xaccm[0], (u32 __user *)argp))
-			break;
+		अवरोध;
+	हाल PPPIOCSASYNCMAP:
+		अगर (get_user(ap->xaccm[0], (u32 __user *)argp))
+			अवरोध;
 		err = 0;
-		break;
+		अवरोध;
 
-	case PPPIOCGRASYNCMAP:
-		if (put_user(ap->raccm, (u32 __user *)argp))
-			break;
+	हाल PPPIOCGRASYNCMAP:
+		अगर (put_user(ap->raccm, (u32 __user *)argp))
+			अवरोध;
 		err = 0;
-		break;
-	case PPPIOCSRASYNCMAP:
-		if (get_user(ap->raccm, (u32 __user *)argp))
-			break;
+		अवरोध;
+	हाल PPPIOCSRASYNCMAP:
+		अगर (get_user(ap->raccm, (u32 __user *)argp))
+			अवरोध;
 		err = 0;
-		break;
+		अवरोध;
 
-	case PPPIOCGXASYNCMAP:
-		if (copy_to_user(argp, ap->xaccm, sizeof(ap->xaccm)))
-			break;
+	हाल PPPIOCGXASYNCMAP:
+		अगर (copy_to_user(argp, ap->xaccm, माप(ap->xaccm)))
+			अवरोध;
 		err = 0;
-		break;
-	case PPPIOCSXASYNCMAP:
-		if (copy_from_user(accm, argp, sizeof(accm)))
-			break;
+		अवरोध;
+	हाल PPPIOCSXASYNCMAP:
+		अगर (copy_from_user(accm, argp, माप(accm)))
+			अवरोध;
 		accm[2] &= ~0x40000000U;	/* can't escape 0x5e */
 		accm[3] |= 0x60000000U;		/* must escape 0x7d, 0x7e */
-		memcpy(ap->xaccm, accm, sizeof(ap->xaccm));
+		स_नकल(ap->xaccm, accm, माप(ap->xaccm));
 		err = 0;
-		break;
+		अवरोध;
 
-	case PPPIOCGMRU:
-		if (put_user(ap->mru, p))
-			break;
+	हाल PPPIOCGMRU:
+		अगर (put_user(ap->mru, p))
+			अवरोध;
 		err = 0;
-		break;
-	case PPPIOCSMRU:
-		if (get_user(val, p))
-			break;
-		if (val < PPP_MRU)
+		अवरोध;
+	हाल PPPIOCSMRU:
+		अगर (get_user(val, p))
+			अवरोध;
+		अगर (val < PPP_MRU)
 			val = PPP_MRU;
 		ap->mru = val;
 		err = 0;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOTTY;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * This is called at softirq level to deliver received packets
  * to the ppp_generic code, and to tell the ppp_generic code
- * if we can accept more output now.
+ * अगर we can accept more output now.
  */
-static void ppp_async_process(struct tasklet_struct *t)
-{
-	struct asyncppp *ap = from_tasklet(ap, t, tsk);
-	struct sk_buff *skb;
+अटल व्योम ppp_async_process(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा asyncppp *ap = from_tasklet(ap, t, tsk);
+	काष्ठा sk_buff *skb;
 
 	/* process received packets */
-	while ((skb = skb_dequeue(&ap->rqueue)) != NULL) {
-		if (skb->cb[0])
+	जबतक ((skb = skb_dequeue(&ap->rqueue)) != शून्य) अणु
+		अगर (skb->cb[0])
 			ppp_input_error(&ap->chan, 0);
 		ppp_input(&ap->chan, skb);
-	}
+	पूर्ण
 
 	/* try to push more stuff out */
-	if (test_bit(XMIT_WAKEUP, &ap->xmit_flags) && ppp_async_push(ap))
+	अगर (test_bit(XMIT_WAKEUP, &ap->xmit_flags) && ppp_async_push(ap))
 		ppp_output_wakeup(&ap->chan);
-}
+पूर्ण
 
 /*
- * Procedures for encapsulation and framing.
+ * Procedures क्रम encapsulation and framing.
  */
 
 /*
- * Procedure to encode the data for async serial transmission.
- * Does octet stuffing (escaping), puts the address/control bytes
- * on if A/C compression is disabled, and does protocol compression.
+ * Procedure to encode the data क्रम async serial transmission.
+ * Does octet stuffing (escaping), माला_दो the address/control bytes
+ * on अगर A/C compression is disabled, and करोes protocol compression.
  * Assumes ap->tpkt != 0 on entry.
- * Returns 1 if we finished the current frame, 0 otherwise.
+ * Returns 1 अगर we finished the current frame, 0 otherwise.
  */
 
-#define PUT_BYTE(ap, buf, c, islcp)	do {		\
-	if ((islcp && c < 0x20) || (ap->xaccm[c >> 5] & (1 << (c & 0x1f)))) {\
+#घोषणा PUT_BYTE(ap, buf, c, islcp)	करो अणु		\
+	अगर ((islcp && c < 0x20) || (ap->xaccm[c >> 5] & (1 << (c & 0x1f)))) अणु\
 		*buf++ = PPP_ESCAPE;			\
 		*buf++ = c ^ PPP_TRANS;			\
-	} else						\
+	पूर्ण अन्यथा						\
 		*buf++ = c;				\
-} while (0)
+पूर्ण जबतक (0)
 
-static int
-ppp_async_encode(struct asyncppp *ap)
-{
-	int fcs, i, count, c, proto;
-	unsigned char *buf, *buflim;
-	unsigned char *data;
-	int islcp;
+अटल पूर्णांक
+ppp_async_encode(काष्ठा asyncppp *ap)
+अणु
+	पूर्णांक fcs, i, count, c, proto;
+	अचिन्हित अक्षर *buf, *buflim;
+	अचिन्हित अक्षर *data;
+	पूर्णांक islcp;
 
 	buf = ap->obuf;
 	ap->olim = buf;
@@ -549,54 +550,54 @@ ppp_async_encode(struct asyncppp *ap)
 	 */
 	islcp = proto == PPP_LCP && 1 <= data[2] && data[2] <= 7;
 
-	if (i == 0) {
-		if (islcp)
+	अगर (i == 0) अणु
+		अगर (islcp)
 			async_lcp_peek(ap, data, count, 0);
 
 		/*
 		 * Start of a new packet - insert the leading FLAG
-		 * character if necessary.
+		 * अक्षरacter अगर necessary.
 		 */
-		if (islcp || flag_time == 0 ||
-		    time_after_eq(jiffies, ap->last_xmit + flag_time))
+		अगर (islcp || flag_समय == 0 ||
+		    समय_after_eq(jअगरfies, ap->last_xmit + flag_समय))
 			*buf++ = PPP_FLAG;
-		ap->last_xmit = jiffies;
+		ap->last_xmit = jअगरfies;
 		fcs = PPP_INITFCS;
 
 		/*
-		 * Put in the address/control bytes if necessary
+		 * Put in the address/control bytes अगर necessary
 		 */
-		if ((ap->flags & SC_COMP_AC) == 0 || islcp) {
+		अगर ((ap->flags & SC_COMP_AC) == 0 || islcp) अणु
 			PUT_BYTE(ap, buf, 0xff, islcp);
 			fcs = PPP_FCS(fcs, 0xff);
 			PUT_BYTE(ap, buf, 0x03, islcp);
 			fcs = PPP_FCS(fcs, 0x03);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Once we put in the last byte, we need to put in the FCS
 	 * and closing flag, so make sure there is at least 7 bytes
-	 * of free space in the output buffer.
+	 * of मुक्त space in the output buffer.
 	 */
-	buflim = ap->obuf + OBUFSIZE - 6;
-	while (i < count && buf < buflim) {
+	buflim = ap->obuf + Oबफ_मानE - 6;
+	जबतक (i < count && buf < buflim) अणु
 		c = data[i++];
-		if (i == 1 && c == 0 && (ap->flags & SC_COMP_PROT))
-			continue;	/* compress protocol field */
+		अगर (i == 1 && c == 0 && (ap->flags & SC_COMP_PROT))
+			जारी;	/* compress protocol field */
 		fcs = PPP_FCS(fcs, c);
 		PUT_BYTE(ap, buf, c, islcp);
-	}
+	पूर्ण
 
-	if (i < count) {
+	अगर (i < count) अणु
 		/*
 		 * Remember where we are up to in this packet.
 		 */
 		ap->olim = buf;
 		ap->tpkt_pos = i;
 		ap->tfcs = fcs;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * We have finished the packet.  Add the FCS and flag.
@@ -610,9 +611,9 @@ ppp_async_encode(struct asyncppp *ap)
 	ap->olim = buf;
 
 	consume_skb(ap->tpkt);
-	ap->tpkt = NULL;
-	return 1;
-}
+	ap->tpkt = शून्य;
+	वापस 1;
+पूर्ण
 
 /*
  * Transmit-side routines.
@@ -620,404 +621,404 @@ ppp_async_encode(struct asyncppp *ap)
 
 /*
  * Send a packet to the peer over an async tty line.
- * Returns 1 iff the packet was accepted.
+ * Returns 1 अगरf the packet was accepted.
  * If the packet was not accepted, we will call ppp_output_wakeup
- * at some later time.
+ * at some later समय.
  */
-static int
-ppp_async_send(struct ppp_channel *chan, struct sk_buff *skb)
-{
-	struct asyncppp *ap = chan->private;
+अटल पूर्णांक
+ppp_async_send(काष्ठा ppp_channel *chan, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा asyncppp *ap = chan->निजी;
 
 	ppp_async_push(ap);
 
-	if (test_and_set_bit(XMIT_FULL, &ap->xmit_flags))
-		return 0;	/* already full */
+	अगर (test_and_set_bit(XMIT_FULL, &ap->xmit_flags))
+		वापस 0;	/* alपढ़ोy full */
 	ap->tpkt = skb;
 	ap->tpkt_pos = 0;
 
 	ppp_async_push(ap);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Push as much data as possible out to the tty.
  */
-static int
-ppp_async_push(struct asyncppp *ap)
-{
-	int avail, sent, done = 0;
-	struct tty_struct *tty = ap->tty;
-	int tty_stuffed = 0;
+अटल पूर्णांक
+ppp_async_push(काष्ठा asyncppp *ap)
+अणु
+	पूर्णांक avail, sent, करोne = 0;
+	काष्ठा tty_काष्ठा *tty = ap->tty;
+	पूर्णांक tty_stuffed = 0;
 
 	/*
-	 * We can get called recursively here if the tty write
+	 * We can get called recursively here अगर the tty ग_लिखो
 	 * function calls our wakeup function.  This can happen
-	 * for example on a pty with both the master and slave
+	 * क्रम example on a pty with both the master and slave
 	 * set to PPP line discipline.
 	 * We use the XMIT_BUSY bit to detect this and get out,
 	 * leaving the XMIT_WAKEUP bit set to tell the other
-	 * instance that it may now be able to write more now.
+	 * instance that it may now be able to ग_लिखो more now.
 	 */
-	if (test_and_set_bit(XMIT_BUSY, &ap->xmit_flags))
-		return 0;
+	अगर (test_and_set_bit(XMIT_BUSY, &ap->xmit_flags))
+		वापस 0;
 	spin_lock_bh(&ap->xmit_lock);
-	for (;;) {
-		if (test_and_clear_bit(XMIT_WAKEUP, &ap->xmit_flags))
+	क्रम (;;) अणु
+		अगर (test_and_clear_bit(XMIT_WAKEUP, &ap->xmit_flags))
 			tty_stuffed = 0;
-		if (!tty_stuffed && ap->optr < ap->olim) {
+		अगर (!tty_stuffed && ap->optr < ap->olim) अणु
 			avail = ap->olim - ap->optr;
 			set_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
-			sent = tty->ops->write(tty, ap->optr, avail);
-			if (sent < 0)
-				goto flush;	/* error, e.g. loss of CD */
+			sent = tty->ops->ग_लिखो(tty, ap->optr, avail);
+			अगर (sent < 0)
+				जाओ flush;	/* error, e.g. loss of CD */
 			ap->optr += sent;
-			if (sent < avail)
+			अगर (sent < avail)
 				tty_stuffed = 1;
-			continue;
-		}
-		if (ap->optr >= ap->olim && ap->tpkt) {
-			if (ppp_async_encode(ap)) {
+			जारी;
+		पूर्ण
+		अगर (ap->optr >= ap->olim && ap->tpkt) अणु
+			अगर (ppp_async_encode(ap)) अणु
 				/* finished processing ap->tpkt */
 				clear_bit(XMIT_FULL, &ap->xmit_flags);
-				done = 1;
-			}
-			continue;
-		}
+				करोne = 1;
+			पूर्ण
+			जारी;
+		पूर्ण
 		/*
-		 * We haven't made any progress this time around.
+		 * We haven't made any progress this समय around.
 		 * Clear XMIT_BUSY to let other callers in, but
-		 * after doing so we have to check if anyone set
+		 * after करोing so we have to check अगर anyone set
 		 * XMIT_WAKEUP since we last checked it.  If they
 		 * did, we should try again to set XMIT_BUSY and go
-		 * around again in case XMIT_BUSY was still set when
+		 * around again in हाल XMIT_BUSY was still set when
 		 * the other caller tried.
 		 */
 		clear_bit(XMIT_BUSY, &ap->xmit_flags);
-		/* any more work to do? if not, exit the loop */
-		if (!(test_bit(XMIT_WAKEUP, &ap->xmit_flags) ||
+		/* any more work to करो? अगर not, निकास the loop */
+		अगर (!(test_bit(XMIT_WAKEUP, &ap->xmit_flags) ||
 		      (!tty_stuffed && ap->tpkt)))
-			break;
-		/* more work to do, see if we can do it now */
-		if (test_and_set_bit(XMIT_BUSY, &ap->xmit_flags))
-			break;
-	}
+			अवरोध;
+		/* more work to करो, see अगर we can करो it now */
+		अगर (test_and_set_bit(XMIT_BUSY, &ap->xmit_flags))
+			अवरोध;
+	पूर्ण
 	spin_unlock_bh(&ap->xmit_lock);
-	return done;
+	वापस करोne;
 
 flush:
 	clear_bit(XMIT_BUSY, &ap->xmit_flags);
-	if (ap->tpkt) {
-		kfree_skb(ap->tpkt);
-		ap->tpkt = NULL;
+	अगर (ap->tpkt) अणु
+		kमुक्त_skb(ap->tpkt);
+		ap->tpkt = शून्य;
 		clear_bit(XMIT_FULL, &ap->xmit_flags);
-		done = 1;
-	}
+		करोne = 1;
+	पूर्ण
 	ap->optr = ap->olim;
 	spin_unlock_bh(&ap->xmit_lock);
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
 /*
- * Flush output from our internal buffers.
- * Called for the TCFLSH ioctl. Can be entered in parallel
+ * Flush output from our पूर्णांकernal buffers.
+ * Called क्रम the TCFLSH ioctl. Can be entered in parallel
  * but this is covered by the xmit_lock.
  */
-static void
-ppp_async_flush_output(struct asyncppp *ap)
-{
-	int done = 0;
+अटल व्योम
+ppp_async_flush_output(काष्ठा asyncppp *ap)
+अणु
+	पूर्णांक करोne = 0;
 
 	spin_lock_bh(&ap->xmit_lock);
 	ap->optr = ap->olim;
-	if (ap->tpkt != NULL) {
-		kfree_skb(ap->tpkt);
-		ap->tpkt = NULL;
+	अगर (ap->tpkt != शून्य) अणु
+		kमुक्त_skb(ap->tpkt);
+		ap->tpkt = शून्य;
 		clear_bit(XMIT_FULL, &ap->xmit_flags);
-		done = 1;
-	}
+		करोne = 1;
+	पूर्ण
 	spin_unlock_bh(&ap->xmit_lock);
-	if (done)
+	अगर (करोne)
 		ppp_output_wakeup(&ap->chan);
-}
+पूर्ण
 
 /*
  * Receive-side routines.
  */
 
-/* see how many ordinary chars there are at the start of buf */
-static inline int
-scan_ordinary(struct asyncppp *ap, const unsigned char *buf, int count)
-{
-	int i, c;
+/* see how many ordinary अक्षरs there are at the start of buf */
+अटल अंतरभूत पूर्णांक
+scan_ordinary(काष्ठा asyncppp *ap, स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	पूर्णांक i, c;
 
-	for (i = 0; i < count; ++i) {
+	क्रम (i = 0; i < count; ++i) अणु
 		c = buf[i];
-		if (c == PPP_ESCAPE || c == PPP_FLAG ||
+		अगर (c == PPP_ESCAPE || c == PPP_FLAG ||
 		    (c < 0x20 && (ap->raccm & (1 << c)) != 0))
-			break;
-	}
-	return i;
-}
+			अवरोध;
+	पूर्ण
+	वापस i;
+पूर्ण
 
-/* called when a flag is seen - do end-of-packet processing */
-static void
-process_input_packet(struct asyncppp *ap)
-{
-	struct sk_buff *skb;
-	unsigned char *p;
-	unsigned int len, fcs;
+/* called when a flag is seen - करो end-of-packet processing */
+अटल व्योम
+process_input_packet(काष्ठा asyncppp *ap)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *p;
+	अचिन्हित पूर्णांक len, fcs;
 
 	skb = ap->rpkt;
-	if (ap->state & (SC_TOSS | SC_ESCAPE))
-		goto err;
+	अगर (ap->state & (SC_TOSS | SC_ESCAPE))
+		जाओ err;
 
-	if (skb == NULL)
-		return;		/* 0-length packet */
+	अगर (skb == शून्य)
+		वापस;		/* 0-length packet */
 
 	/* check the FCS */
 	p = skb->data;
 	len = skb->len;
-	if (len < 3)
-		goto err;	/* too short */
+	अगर (len < 3)
+		जाओ err;	/* too लघु */
 	fcs = PPP_INITFCS;
-	for (; len > 0; --len)
+	क्रम (; len > 0; --len)
 		fcs = PPP_FCS(fcs, *p++);
-	if (fcs != PPP_GOODFCS)
-		goto err;	/* bad FCS */
+	अगर (fcs != PPP_GOODFCS)
+		जाओ err;	/* bad FCS */
 	skb_trim(skb, skb->len - 2);
 
-	/* check for address/control and protocol compression */
+	/* check क्रम address/control and protocol compression */
 	p = skb->data;
-	if (p[0] == PPP_ALLSTATIONS) {
+	अगर (p[0] == PPP_ALLSTATIONS) अणु
 		/* chop off address/control */
-		if (p[1] != PPP_UI || skb->len < 3)
-			goto err;
+		अगर (p[1] != PPP_UI || skb->len < 3)
+			जाओ err;
 		p = skb_pull(skb, 2);
-	}
+	पूर्ण
 
 	/* If protocol field is not compressed, it can be LCP packet */
-	if (!(p[0] & 0x01)) {
-		unsigned int proto;
+	अगर (!(p[0] & 0x01)) अणु
+		अचिन्हित पूर्णांक proto;
 
-		if (skb->len < 2)
-			goto err;
+		अगर (skb->len < 2)
+			जाओ err;
 		proto = (p[0] << 8) + p[1];
-		if (proto == PPP_LCP)
+		अगर (proto == PPP_LCP)
 			async_lcp_peek(ap, p, skb->len, 1);
-	}
+	पूर्ण
 
 	/* queue the frame to be processed */
 	skb->cb[0] = ap->state;
 	skb_queue_tail(&ap->rqueue, skb);
-	ap->rpkt = NULL;
+	ap->rpkt = शून्य;
 	ap->state = 0;
-	return;
+	वापस;
 
  err:
 	/* frame had an error, remember that, reset SC_TOSS & SC_ESCAPE */
 	ap->state = SC_PREV_ERROR;
-	if (skb) {
+	अगर (skb) अणु
 		/* make skb appear as freshly allocated */
 		skb_trim(skb, 0);
 		skb_reserve(skb, - skb_headroom(skb));
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Called when the tty driver has data for us. Runs parallel with the
+/* Called when the tty driver has data क्रम us. Runs parallel with the
    other ldisc functions but will not be re-entered */
 
-static void
-ppp_async_input(struct asyncppp *ap, const unsigned char *buf,
-		char *flags, int count)
-{
-	struct sk_buff *skb;
-	int c, i, j, n, s, f;
-	unsigned char *sp;
+अटल व्योम
+ppp_async_input(काष्ठा asyncppp *ap, स्थिर अचिन्हित अक्षर *buf,
+		अक्षर *flags, पूर्णांक count)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक c, i, j, n, s, f;
+	अचिन्हित अक्षर *sp;
 
-	/* update bits used for 8-bit cleanness detection */
-	if (~ap->rbits & SC_RCV_BITS) {
+	/* update bits used क्रम 8-bit cleanness detection */
+	अगर (~ap->rbits & SC_RCV_BITS) अणु
 		s = 0;
-		for (i = 0; i < count; ++i) {
+		क्रम (i = 0; i < count; ++i) अणु
 			c = buf[i];
-			if (flags && flags[i] != 0)
-				continue;
+			अगर (flags && flags[i] != 0)
+				जारी;
 			s |= (c & 0x80)? SC_RCV_B7_1: SC_RCV_B7_0;
 			c = ((c >> 4) ^ c) & 0xf;
 			s |= (0x6996 & (1 << c))? SC_RCV_ODDP: SC_RCV_EVNP;
-		}
+		पूर्ण
 		ap->rbits |= s;
-	}
+	पूर्ण
 
-	while (count > 0) {
-		/* scan through and see how many chars we can do in bulk */
-		if ((ap->state & SC_ESCAPE) && buf[0] == PPP_ESCAPE)
+	जबतक (count > 0) अणु
+		/* scan through and see how many अक्षरs we can करो in bulk */
+		अगर ((ap->state & SC_ESCAPE) && buf[0] == PPP_ESCAPE)
 			n = 1;
-		else
+		अन्यथा
 			n = scan_ordinary(ap, buf, count);
 
 		f = 0;
-		if (flags && (ap->state & SC_TOSS) == 0) {
-			/* check the flags to see if any char had an error */
-			for (j = 0; j < n; ++j)
-				if ((f = flags[j]) != 0)
-					break;
-		}
-		if (f != 0) {
+		अगर (flags && (ap->state & SC_TOSS) == 0) अणु
+			/* check the flags to see अगर any अक्षर had an error */
+			क्रम (j = 0; j < n; ++j)
+				अगर ((f = flags[j]) != 0)
+					अवरोध;
+		पूर्ण
+		अगर (f != 0) अणु
 			/* start tossing */
 			ap->state |= SC_TOSS;
 
-		} else if (n > 0 && (ap->state & SC_TOSS) == 0) {
-			/* stuff the chars in the skb */
+		पूर्ण अन्यथा अगर (n > 0 && (ap->state & SC_TOSS) == 0) अणु
+			/* stuff the अक्षरs in the skb */
 			skb = ap->rpkt;
-			if (!skb) {
+			अगर (!skb) अणु
 				skb = dev_alloc_skb(ap->mru + PPP_HDRLEN + 2);
-				if (!skb)
-					goto nomem;
+				अगर (!skb)
+					जाओ nomem;
 				ap->rpkt = skb;
-			}
-			if (skb->len == 0) {
+			पूर्ण
+			अगर (skb->len == 0) अणु
 				/* Try to get the payload 4-byte aligned.
 				 * This should match the
 				 * PPP_ALLSTATIONS/PPP_UI/compressed tests in
-				 * process_input_packet, but we do not have
-				 * enough chars here to test buf[1] and buf[2].
+				 * process_input_packet, but we करो not have
+				 * enough अक्षरs here to test buf[1] and buf[2].
 				 */
-				if (buf[0] != PPP_ALLSTATIONS)
+				अगर (buf[0] != PPP_ALLSTATIONS)
 					skb_reserve(skb, 2 + (buf[0] & 1));
-			}
-			if (n > skb_tailroom(skb)) {
+			पूर्ण
+			अगर (n > skb_tailroom(skb)) अणु
 				/* packet overflowed MRU */
 				ap->state |= SC_TOSS;
-			} else {
+			पूर्ण अन्यथा अणु
 				sp = skb_put_data(skb, buf, n);
-				if (ap->state & SC_ESCAPE) {
+				अगर (ap->state & SC_ESCAPE) अणु
 					sp[0] ^= PPP_TRANS;
 					ap->state &= ~SC_ESCAPE;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (n >= count)
-			break;
+		अगर (n >= count)
+			अवरोध;
 
 		c = buf[n];
-		if (flags != NULL && flags[n] != 0) {
+		अगर (flags != शून्य && flags[n] != 0) अणु
 			ap->state |= SC_TOSS;
-		} else if (c == PPP_FLAG) {
+		पूर्ण अन्यथा अगर (c == PPP_FLAG) अणु
 			process_input_packet(ap);
-		} else if (c == PPP_ESCAPE) {
+		पूर्ण अन्यथा अगर (c == PPP_ESCAPE) अणु
 			ap->state |= SC_ESCAPE;
-		} else if (I_IXON(ap->tty)) {
-			if (c == START_CHAR(ap->tty))
+		पूर्ण अन्यथा अगर (I_IXON(ap->tty)) अणु
+			अगर (c == START_CHAR(ap->tty))
 				start_tty(ap->tty);
-			else if (c == STOP_CHAR(ap->tty))
+			अन्यथा अगर (c == STOP_CHAR(ap->tty))
 				stop_tty(ap->tty);
-		}
-		/* otherwise it's a char in the recv ACCM */
+		पूर्ण
+		/* otherwise it's a अक्षर in the recv ACCM */
 		++n;
 
 		buf += n;
-		if (flags)
+		अगर (flags)
 			flags += n;
 		count -= n;
-	}
-	return;
+	पूर्ण
+	वापस;
 
  nomem:
-	printk(KERN_ERR "PPPasync: no memory (input pkt)\n");
+	prपूर्णांकk(KERN_ERR "PPPasync: no memory (input pkt)\n");
 	ap->state |= SC_TOSS;
-}
+पूर्ण
 
 /*
  * We look at LCP frames going past so that we can notice
  * and react to the LCP configure-ack from the peer.
  * In the situation where the peer has been sent a configure-ack
- * already, LCP is up once it has sent its configure-ack
+ * alपढ़ोy, LCP is up once it has sent its configure-ack
  * so the immediately following packet can be sent with the
  * configured LCP options.  This allows us to process the following
  * packet correctly without pppd needing to respond quickly.
  *
- * We only respond to the received configure-ack if we have just
+ * We only respond to the received configure-ack अगर we have just
  * sent a configure-request, and the configure-ack contains the
  * same data (this is checked using a 16-bit crc of the data).
  */
-#define CONFREQ		1	/* LCP code field values */
-#define CONFACK		2
-#define LCP_MRU		1	/* LCP option numbers */
-#define LCP_ASYNCMAP	2
+#घोषणा CONFREQ		1	/* LCP code field values */
+#घोषणा CONFACK		2
+#घोषणा LCP_MRU		1	/* LCP option numbers */
+#घोषणा LCP_ASYNCMAP	2
 
-static void async_lcp_peek(struct asyncppp *ap, unsigned char *data,
-			   int len, int inbound)
-{
-	int dlen, fcs, i, code;
+अटल व्योम async_lcp_peek(काष्ठा asyncppp *ap, अचिन्हित अक्षर *data,
+			   पूर्णांक len, पूर्णांक inbound)
+अणु
+	पूर्णांक dlen, fcs, i, code;
 	u32 val;
 
 	data += 2;		/* skip protocol bytes */
 	len -= 2;
-	if (len < 4)		/* 4 = code, ID, length */
-		return;
+	अगर (len < 4)		/* 4 = code, ID, length */
+		वापस;
 	code = data[0];
-	if (code != CONFACK && code != CONFREQ)
-		return;
+	अगर (code != CONFACK && code != CONFREQ)
+		वापस;
 	dlen = get_unaligned_be16(data + 2);
-	if (len < dlen)
-		return;		/* packet got truncated or length is bogus */
+	अगर (len < dlen)
+		वापस;		/* packet got truncated or length is bogus */
 
-	if (code == (inbound? CONFACK: CONFREQ)) {
+	अगर (code == (inbound? CONFACK: CONFREQ)) अणु
 		/*
 		 * sent confreq or received confack:
 		 * calculate the crc of the data from the ID field on.
 		 */
 		fcs = PPP_INITFCS;
-		for (i = 1; i < dlen; ++i)
+		क्रम (i = 1; i < dlen; ++i)
 			fcs = PPP_FCS(fcs, data[i]);
 
-		if (!inbound) {
-			/* outbound confreq - remember the crc for later */
+		अगर (!inbound) अणु
+			/* outbound confreq - remember the crc क्रम later */
 			ap->lcp_fcs = fcs;
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/* received confack, check the crc */
 		fcs ^= ap->lcp_fcs;
 		ap->lcp_fcs = -1;
-		if (fcs != 0)
-			return;
-	} else if (inbound)
-		return;	/* not interested in received confreq */
+		अगर (fcs != 0)
+			वापस;
+	पूर्ण अन्यथा अगर (inbound)
+		वापस;	/* not पूर्णांकerested in received confreq */
 
 	/* process the options in the confack */
 	data += 4;
 	dlen -= 4;
 	/* data[0] is code, data[1] is length */
-	while (dlen >= 2 && dlen >= data[1] && data[1] >= 2) {
-		switch (data[0]) {
-		case LCP_MRU:
+	जबतक (dlen >= 2 && dlen >= data[1] && data[1] >= 2) अणु
+		चयन (data[0]) अणु
+		हाल LCP_MRU:
 			val = get_unaligned_be16(data + 2);
-			if (inbound)
+			अगर (inbound)
 				ap->mru = val;
-			else
+			अन्यथा
 				ap->chan.mtu = val;
-			break;
-		case LCP_ASYNCMAP:
+			अवरोध;
+		हाल LCP_ASYNCMAP:
 			val = get_unaligned_be32(data + 2);
-			if (inbound)
+			अगर (inbound)
 				ap->raccm = val;
-			else
+			अन्यथा
 				ap->xaccm[0] = val;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		dlen -= data[1];
 		data += data[1];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __exit ppp_async_cleanup(void)
-{
-	if (tty_unregister_ldisc(N_PPP) != 0)
-		printk(KERN_ERR "failed to unregister PPP line discipline\n");
-}
+अटल व्योम __निकास ppp_async_cleanup(व्योम)
+अणु
+	अगर (tty_unरेजिस्टर_ldisc(N_PPP) != 0)
+		prपूर्णांकk(KERN_ERR "failed to unregister PPP line discipline\n");
+पूर्ण
 
 module_init(ppp_async_init);
-module_exit(ppp_async_cleanup);
+module_निकास(ppp_async_cleanup);

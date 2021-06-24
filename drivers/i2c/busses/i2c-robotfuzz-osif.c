@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for RobotFuzz OSIF
+ * Driver क्रम RobotFuzz OSIF
  *
  * Copyright (c) 2013 Andrew Lunn <andrew@lunn.ch>
  * Copyright (c) 2007 Barry Carter <Barry.Carter@robotfuzz.com>
@@ -10,185 +11,185 @@
  * Copyright (C) 2006 Til Harbaum (Till@Harbaum.org)
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
 
-#define OSIFI2C_READ		20
-#define OSIFI2C_WRITE		21
-#define OSIFI2C_STOP		22
-#define OSIFI2C_STATUS		23
-#define OSIFI2C_SET_BIT_RATE	24
+#घोषणा OSIFI2C_READ		20
+#घोषणा OSIFI2C_WRITE		21
+#घोषणा OSIFI2C_STOP		22
+#घोषणा OSIFI2C_STATUS		23
+#घोषणा OSIFI2C_SET_BIT_RATE	24
 
-#define STATUS_ADDRESS_ACK	0
-#define STATUS_ADDRESS_NAK	2
+#घोषणा STATUS_ADDRESS_ACK	0
+#घोषणा STATUS_ADDRESS_NAK	2
 
-struct osif_priv {
-	struct usb_device *usb_dev;
-	struct usb_interface *interface;
-	struct i2c_adapter adapter;
-	unsigned char status;
-};
+काष्ठा osअगर_priv अणु
+	काष्ठा usb_device *usb_dev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
+	काष्ठा i2c_adapter adapter;
+	अचिन्हित अक्षर status;
+पूर्ण;
 
-static int osif_usb_read(struct i2c_adapter *adapter, int cmd,
-			 int value, int index, void *data, int len)
-{
-	struct osif_priv *priv = adapter->algo_data;
+अटल पूर्णांक osअगर_usb_पढ़ो(काष्ठा i2c_adapter *adapter, पूर्णांक cmd,
+			 पूर्णांक value, पूर्णांक index, व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा osअगर_priv *priv = adapter->algo_data;
 
-	return usb_control_msg(priv->usb_dev, usb_rcvctrlpipe(priv->usb_dev, 0),
+	वापस usb_control_msg(priv->usb_dev, usb_rcvctrlpipe(priv->usb_dev, 0),
 			       cmd, USB_TYPE_VENDOR | USB_RECIP_INTERFACE |
-			       USB_DIR_IN, value, index, data, len, 2000);
-}
+			       USB_सूची_IN, value, index, data, len, 2000);
+पूर्ण
 
-static int osif_usb_write(struct i2c_adapter *adapter, int cmd,
-			  int value, int index, void *data, int len)
-{
+अटल पूर्णांक osअगर_usb_ग_लिखो(काष्ठा i2c_adapter *adapter, पूर्णांक cmd,
+			  पूर्णांक value, पूर्णांक index, व्योम *data, पूर्णांक len)
+अणु
 
-	struct osif_priv *priv = adapter->algo_data;
+	काष्ठा osअगर_priv *priv = adapter->algo_data;
 
-	return usb_control_msg(priv->usb_dev, usb_sndctrlpipe(priv->usb_dev, 0),
+	वापस usb_control_msg(priv->usb_dev, usb_sndctrlpipe(priv->usb_dev, 0),
 			       cmd, USB_TYPE_VENDOR | USB_RECIP_INTERFACE,
 			       value, index, data, len, 2000);
-}
+पूर्ण
 
-static int osif_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs,
-			 int num)
-{
-	struct osif_priv *priv = adapter->algo_data;
-	struct i2c_msg *pmsg;
-	int ret;
-	int i;
+अटल पूर्णांक osअगर_xfer(काष्ठा i2c_adapter *adapter, काष्ठा i2c_msg *msgs,
+			 पूर्णांक num)
+अणु
+	काष्ठा osअगर_priv *priv = adapter->algo_data;
+	काष्ठा i2c_msg *pmsg;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		pmsg = &msgs[i];
 
-		if (pmsg->flags & I2C_M_RD) {
-			ret = osif_usb_read(adapter, OSIFI2C_READ,
+		अगर (pmsg->flags & I2C_M_RD) अणु
+			ret = osअगर_usb_पढ़ो(adapter, OSIFI2C_READ,
 					    pmsg->flags, pmsg->addr,
 					    pmsg->buf, pmsg->len);
-			if (ret != pmsg->len) {
+			अगर (ret != pmsg->len) अणु
 				dev_err(&adapter->dev, "failure reading data\n");
-				return -EREMOTEIO;
-			}
-		} else {
-			ret = osif_usb_write(adapter, OSIFI2C_WRITE,
+				वापस -EREMOTEIO;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			ret = osअगर_usb_ग_लिखो(adapter, OSIFI2C_WRITE,
 					     pmsg->flags, pmsg->addr,
 					     pmsg->buf, pmsg->len);
-			if (ret != pmsg->len) {
+			अगर (ret != pmsg->len) अणु
 				dev_err(&adapter->dev, "failure writing data\n");
-				return -EREMOTEIO;
-			}
-		}
+				वापस -EREMOTEIO;
+			पूर्ण
+		पूर्ण
 
-		ret = osif_usb_read(adapter, OSIFI2C_STOP, 0, 0, NULL, 0);
-		if (ret) {
+		ret = osअगर_usb_पढ़ो(adapter, OSIFI2C_STOP, 0, 0, शून्य, 0);
+		अगर (ret) अणु
 			dev_err(&adapter->dev, "failure sending STOP\n");
-			return -EREMOTEIO;
-		}
+			वापस -EREMOTEIO;
+		पूर्ण
 
-		/* read status */
-		ret = osif_usb_read(adapter, OSIFI2C_STATUS, 0, 0,
+		/* पढ़ो status */
+		ret = osअगर_usb_पढ़ो(adapter, OSIFI2C_STATUS, 0, 0,
 				    &priv->status, 1);
-		if (ret != 1) {
+		अगर (ret != 1) अणु
 			dev_err(&adapter->dev, "failure reading status\n");
-			return -EREMOTEIO;
-		}
+			वापस -EREMOTEIO;
+		पूर्ण
 
-		if (priv->status != STATUS_ADDRESS_ACK) {
+		अगर (priv->status != STATUS_ADDRESS_ACK) अणु
 			dev_dbg(&adapter->dev, "status = %d\n", priv->status);
-			return -EREMOTEIO;
-		}
-	}
+			वापस -EREMOTEIO;
+		पूर्ण
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static u32 osif_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
-}
+अटल u32 osअगर_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+पूर्ण
 
-static const struct i2c_algorithm osif_algorithm = {
-	.master_xfer	= osif_xfer,
-	.functionality	= osif_func,
-};
+अटल स्थिर काष्ठा i2c_algorithm osअगर_algorithm = अणु
+	.master_xfer	= osअगर_xfer,
+	.functionality	= osअगर_func,
+पूर्ण;
 
-#define USB_OSIF_VENDOR_ID	0x1964
-#define USB_OSIF_PRODUCT_ID	0x0001
+#घोषणा USB_OSIF_VENDOR_ID	0x1964
+#घोषणा USB_OSIF_PRODUCT_ID	0x0001
 
-static const struct usb_device_id osif_table[] = {
-	{ USB_DEVICE(USB_OSIF_VENDOR_ID, USB_OSIF_PRODUCT_ID) },
-	{ }
-};
-MODULE_DEVICE_TABLE(usb, osif_table);
+अटल स्थिर काष्ठा usb_device_id osअगर_table[] = अणु
+	अणु USB_DEVICE(USB_OSIF_VENDOR_ID, USB_OSIF_PRODUCT_ID) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(usb, osअगर_table);
 
-static int osif_probe(struct usb_interface *interface,
-			     const struct usb_device_id *id)
-{
-	int ret;
-	struct osif_priv *priv;
+अटल पूर्णांक osअगर_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+			     स्थिर काष्ठा usb_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा osअगर_priv *priv;
 	u16 version;
 
-	priv = devm_kzalloc(&interface->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&पूर्णांकerface->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	priv->usb_dev = usb_get_dev(interface_to_usbdev(interface));
-	priv->interface = interface;
+	priv->usb_dev = usb_get_dev(पूर्णांकerface_to_usbdev(पूर्णांकerface));
+	priv->पूर्णांकerface = पूर्णांकerface;
 
-	usb_set_intfdata(interface, priv);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, priv);
 
 	priv->adapter.owner = THIS_MODULE;
 	priv->adapter.class = I2C_CLASS_HWMON;
-	priv->adapter.algo = &osif_algorithm;
+	priv->adapter.algo = &osअगर_algorithm;
 	priv->adapter.algo_data = priv;
-	snprintf(priv->adapter.name, sizeof(priv->adapter.name),
+	snम_लिखो(priv->adapter.name, माप(priv->adapter.name),
 		 "OSIF at bus %03d device %03d",
 		 priv->usb_dev->bus->busnum, priv->usb_dev->devnum);
 
 	/*
 	 * Set bus frequency. The frequency is:
-	 * 120,000,000 / ( 16 + 2 * div * 4^prescale).
+	 * 120,000,000 / ( 16 + 2 * भाग * 4^prescale).
 	 * Using dev = 52, prescale = 0 give 100KHz */
-	ret = osif_usb_read(&priv->adapter, OSIFI2C_SET_BIT_RATE, 52, 0,
-			    NULL, 0);
-	if (ret) {
-		dev_err(&interface->dev, "failure sending bit rate");
+	ret = osअगर_usb_पढ़ो(&priv->adapter, OSIFI2C_SET_BIT_RATE, 52, 0,
+			    शून्य, 0);
+	अगर (ret) अणु
+		dev_err(&पूर्णांकerface->dev, "failure sending bit rate");
 		usb_put_dev(priv->usb_dev);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	i2c_add_adapter(&(priv->adapter));
 
 	version = le16_to_cpu(priv->usb_dev->descriptor.bcdDevice);
-	dev_info(&interface->dev,
+	dev_info(&पूर्णांकerface->dev,
 		 "version %x.%02x found at bus %03d address %03d",
 		 version >> 8, version & 0xff,
 		 priv->usb_dev->bus->busnum, priv->usb_dev->devnum);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void osif_disconnect(struct usb_interface *interface)
-{
-	struct osif_priv *priv = usb_get_intfdata(interface);
+अटल व्योम osअगर_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा osअगर_priv *priv = usb_get_पूर्णांकfdata(पूर्णांकerface);
 
 	i2c_del_adapter(&(priv->adapter));
-	usb_set_intfdata(interface, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
 	usb_put_dev(priv->usb_dev);
-}
+पूर्ण
 
-static struct usb_driver osif_driver = {
+अटल काष्ठा usb_driver osअगर_driver = अणु
 	.name		= "RobotFuzz Open Source InterFace, OSIF",
-	.probe		= osif_probe,
-	.disconnect	= osif_disconnect,
-	.id_table	= osif_table,
-};
+	.probe		= osअगर_probe,
+	.disconnect	= osअगर_disconnect,
+	.id_table	= osअगर_table,
+पूर्ण;
 
-module_usb_driver(osif_driver);
+module_usb_driver(osअगर_driver);
 
 MODULE_AUTHOR("Andrew Lunn <andrew@lunn.ch>");
 MODULE_AUTHOR("Barry Carter <barry.carter@robotfuzz.com>");

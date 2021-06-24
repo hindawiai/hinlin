@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * QLogic iSCSI Offload Driver
  * Copyright (c) 2016 Cavium Inc.
  */
 
-#include "qedi_dbg.h"
-#include <linux/vmalloc.h>
+#समावेश "qedi_dbg.h"
+#समावेश <linux/vदो_स्मृति.h>
 
-void
-qedi_dbg_err(struct qedi_dbg_ctx *qedi, const char *func, u32 line,
-	     const char *fmt, ...)
-{
-	va_list va;
-	struct va_format vaf;
+व्योम
+qedi_dbg_err(काष्ठा qedi_dbg_ctx *qedi, स्थिर अक्षर *func, u32 line,
+	     स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
+	काष्ठा va_क्रमmat vaf;
 
-	va_start(va, fmt);
+	बहु_शुरू(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	if (likely(qedi) && likely(qedi->pdev))
+	अगर (likely(qedi) && likely(qedi->pdev))
 		pr_err("[%s]:[%s:%d]:%d: %pV", dev_name(&qedi->pdev->dev),
 		       func, line, qedi->host_no, &vaf);
-	else
+	अन्यथा
 		pr_err("[0000:00:00.0]:[%s:%d]: %pV", func, line, &vaf);
 
-	va_end(va);
-}
+	बहु_पूर्ण(va);
+पूर्ण
 
-void
-qedi_dbg_warn(struct qedi_dbg_ctx *qedi, const char *func, u32 line,
-	      const char *fmt, ...)
-{
-	va_list va;
-	struct va_format vaf;
+व्योम
+qedi_dbg_warn(काष्ठा qedi_dbg_ctx *qedi, स्थिर अक्षर *func, u32 line,
+	      स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
+	काष्ठा va_क्रमmat vaf;
 
-	va_start(va, fmt);
+	बहु_शुरू(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	if (!(qedi_dbg_log & QEDI_LOG_WARN))
-		goto ret;
+	अगर (!(qedi_dbg_log & QEDI_LOG_WARN))
+		जाओ ret;
 
-	if (likely(qedi) && likely(qedi->pdev))
+	अगर (likely(qedi) && likely(qedi->pdev))
 		pr_warn("[%s]:[%s:%d]:%d: %pV", dev_name(&qedi->pdev->dev),
 			func, line, qedi->host_no, &vaf);
-	else
+	अन्यथा
 		pr_warn("[0000:00:00.0]:[%s:%d]: %pV", func, line, &vaf);
 
 ret:
-	va_end(va);
-}
+	बहु_पूर्ण(va);
+पूर्ण
 
-void
-qedi_dbg_notice(struct qedi_dbg_ctx *qedi, const char *func, u32 line,
-		const char *fmt, ...)
-{
-	va_list va;
-	struct va_format vaf;
+व्योम
+qedi_dbg_notice(काष्ठा qedi_dbg_ctx *qedi, स्थिर अक्षर *func, u32 line,
+		स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
+	काष्ठा va_क्रमmat vaf;
 
-	va_start(va, fmt);
+	बहु_शुरू(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	if (!(qedi_dbg_log & QEDI_LOG_NOTICE))
-		goto ret;
+	अगर (!(qedi_dbg_log & QEDI_LOG_NOTICE))
+		जाओ ret;
 
-	if (likely(qedi) && likely(qedi->pdev))
+	अगर (likely(qedi) && likely(qedi->pdev))
 		pr_notice("[%s]:[%s:%d]:%d: %pV",
 			  dev_name(&qedi->pdev->dev), func, line,
 			  qedi->host_no, &vaf);
-	else
+	अन्यथा
 		pr_notice("[0000:00:00.0]:[%s:%d]: %pV", func, line, &vaf);
 
 ret:
-	va_end(va);
-}
+	बहु_पूर्ण(va);
+पूर्ण
 
-void
-qedi_dbg_info(struct qedi_dbg_ctx *qedi, const char *func, u32 line,
-	      u32 level, const char *fmt, ...)
-{
-	va_list va;
-	struct va_format vaf;
+व्योम
+qedi_dbg_info(काष्ठा qedi_dbg_ctx *qedi, स्थिर अक्षर *func, u32 line,
+	      u32 level, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
+	काष्ठा va_क्रमmat vaf;
 
-	va_start(va, fmt);
+	बहु_शुरू(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	if (!(qedi_dbg_log & level))
-		goto ret;
+	अगर (!(qedi_dbg_log & level))
+		जाओ ret;
 
-	if (likely(qedi) && likely(qedi->pdev))
+	अगर (likely(qedi) && likely(qedi->pdev))
 		pr_info("[%s]:[%s:%d]:%d: %pV", dev_name(&qedi->pdev->dev),
 			func, line, qedi->host_no, &vaf);
-	else
+	अन्यथा
 		pr_info("[0000:00:00.0]:[%s:%d]: %pV", func, line, &vaf);
 
 ret:
-	va_end(va);
-}
+	बहु_पूर्ण(va);
+पूर्ण
 
-int
-qedi_create_sysfs_attr(struct Scsi_Host *shost, struct sysfs_bin_attrs *iter)
-{
-	int ret = 0;
+पूर्णांक
+qedi_create_sysfs_attr(काष्ठा Scsi_Host *shost, काष्ठा sysfs_bin_attrs *iter)
+अणु
+	पूर्णांक ret = 0;
 
-	for (; iter->name; iter++) {
+	क्रम (; iter->name; iter++) अणु
 		ret = sysfs_create_bin_file(&shost->shost_gendev.kobj,
 					    iter->attr);
-		if (ret)
+		अगर (ret)
 			pr_err("Unable to create sysfs %s attr, err(%d).\n",
 			       iter->name, ret);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void
-qedi_remove_sysfs_attr(struct Scsi_Host *shost, struct sysfs_bin_attrs *iter)
-{
-	for (; iter->name; iter++)
-		sysfs_remove_bin_file(&shost->shost_gendev.kobj, iter->attr);
-}
+व्योम
+qedi_हटाओ_sysfs_attr(काष्ठा Scsi_Host *shost, काष्ठा sysfs_bin_attrs *iter)
+अणु
+	क्रम (; iter->name; iter++)
+		sysfs_हटाओ_bin_file(&shost->shost_gendev.kobj, iter->attr);
+पूर्ण

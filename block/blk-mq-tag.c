@@ -1,126 +1,127 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Tag allocation using scalable bitmaps. Uses active queue tracking to support
+ * Tag allocation using scalable biपंचांगaps. Uses active queue tracking to support
  * fairer distribution of tags between multiple submitters when a shared tag map
  * is used.
  *
  * Copyright (C) 2013-2014 Jens Axboe
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include <linux/blk-mq.h>
-#include <linux/delay.h>
-#include "blk.h"
-#include "blk-mq.h"
-#include "blk-mq-tag.h"
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/delay.h>
+#समावेश "blk.h"
+#समावेश "blk-mq.h"
+#समावेश "blk-mq-tag.h"
 
 /*
  * If a previously inactive queue goes active, bump the active user count.
- * We need to do this before try to allocate driver tag, then even if fail
- * to get tag when first time, the other shared-tag users could reserve
- * budget for it.
+ * We need to करो this beक्रमe try to allocate driver tag, then even अगर fail
+ * to get tag when first समय, the other shared-tag users could reserve
+ * budget क्रम it.
  */
-bool __blk_mq_tag_busy(struct blk_mq_hw_ctx *hctx)
-{
-	if (blk_mq_is_sbitmap_shared(hctx->flags)) {
-		struct request_queue *q = hctx->queue;
-		struct blk_mq_tag_set *set = q->tag_set;
+bool __blk_mq_tag_busy(काष्ठा blk_mq_hw_ctx *hctx)
+अणु
+	अगर (blk_mq_is_sbiपंचांगap_shared(hctx->flags)) अणु
+		काष्ठा request_queue *q = hctx->queue;
+		काष्ठा blk_mq_tag_set *set = q->tag_set;
 
-		if (!test_bit(QUEUE_FLAG_HCTX_ACTIVE, &q->queue_flags) &&
+		अगर (!test_bit(QUEUE_FLAG_HCTX_ACTIVE, &q->queue_flags) &&
 		    !test_and_set_bit(QUEUE_FLAG_HCTX_ACTIVE, &q->queue_flags))
-			atomic_inc(&set->active_queues_shared_sbitmap);
-	} else {
-		if (!test_bit(BLK_MQ_S_TAG_ACTIVE, &hctx->state) &&
+			atomic_inc(&set->active_queues_shared_sbiपंचांगap);
+	पूर्ण अन्यथा अणु
+		अगर (!test_bit(BLK_MQ_S_TAG_ACTIVE, &hctx->state) &&
 		    !test_and_set_bit(BLK_MQ_S_TAG_ACTIVE, &hctx->state))
 			atomic_inc(&hctx->tags->active_queues);
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Wakeup all potentially sleeping on tags
  */
-void blk_mq_tag_wakeup_all(struct blk_mq_tags *tags, bool include_reserve)
-{
-	sbitmap_queue_wake_all(tags->bitmap_tags);
-	if (include_reserve)
-		sbitmap_queue_wake_all(tags->breserved_tags);
-}
+व्योम blk_mq_tag_wakeup_all(काष्ठा blk_mq_tags *tags, bool include_reserve)
+अणु
+	sbiपंचांगap_queue_wake_all(tags->biपंचांगap_tags);
+	अगर (include_reserve)
+		sbiपंचांगap_queue_wake_all(tags->breserved_tags);
+पूर्ण
 
 /*
- * If a previously busy queue goes inactive, potential waiters could now
+ * If a previously busy queue goes inactive, potential रुकोers could now
  * be allowed to queue. Wake them up and check.
  */
-void __blk_mq_tag_idle(struct blk_mq_hw_ctx *hctx)
-{
-	struct blk_mq_tags *tags = hctx->tags;
-	struct request_queue *q = hctx->queue;
-	struct blk_mq_tag_set *set = q->tag_set;
+व्योम __blk_mq_tag_idle(काष्ठा blk_mq_hw_ctx *hctx)
+अणु
+	काष्ठा blk_mq_tags *tags = hctx->tags;
+	काष्ठा request_queue *q = hctx->queue;
+	काष्ठा blk_mq_tag_set *set = q->tag_set;
 
-	if (blk_mq_is_sbitmap_shared(hctx->flags)) {
-		if (!test_and_clear_bit(QUEUE_FLAG_HCTX_ACTIVE,
+	अगर (blk_mq_is_sbiपंचांगap_shared(hctx->flags)) अणु
+		अगर (!test_and_clear_bit(QUEUE_FLAG_HCTX_ACTIVE,
 					&q->queue_flags))
-			return;
-		atomic_dec(&set->active_queues_shared_sbitmap);
-	} else {
-		if (!test_and_clear_bit(BLK_MQ_S_TAG_ACTIVE, &hctx->state))
-			return;
+			वापस;
+		atomic_dec(&set->active_queues_shared_sbiपंचांगap);
+	पूर्ण अन्यथा अणु
+		अगर (!test_and_clear_bit(BLK_MQ_S_TAG_ACTIVE, &hctx->state))
+			वापस;
 		atomic_dec(&tags->active_queues);
-	}
+	पूर्ण
 
 	blk_mq_tag_wakeup_all(tags, false);
-}
+पूर्ण
 
-static int __blk_mq_get_tag(struct blk_mq_alloc_data *data,
-			    struct sbitmap_queue *bt)
-{
-	if (!data->q->elevator && !(data->flags & BLK_MQ_REQ_RESERVED) &&
+अटल पूर्णांक __blk_mq_get_tag(काष्ठा blk_mq_alloc_data *data,
+			    काष्ठा sbiपंचांगap_queue *bt)
+अणु
+	अगर (!data->q->elevator && !(data->flags & BLK_MQ_REQ_RESERVED) &&
 			!hctx_may_queue(data->hctx, bt))
-		return BLK_MQ_NO_TAG;
+		वापस BLK_MQ_NO_TAG;
 
-	if (data->shallow_depth)
-		return __sbitmap_queue_get_shallow(bt, data->shallow_depth);
-	else
-		return __sbitmap_queue_get(bt);
-}
+	अगर (data->shallow_depth)
+		वापस __sbiपंचांगap_queue_get_shallow(bt, data->shallow_depth);
+	अन्यथा
+		वापस __sbiपंचांगap_queue_get(bt);
+पूर्ण
 
-unsigned int blk_mq_get_tag(struct blk_mq_alloc_data *data)
-{
-	struct blk_mq_tags *tags = blk_mq_tags_from_data(data);
-	struct sbitmap_queue *bt;
-	struct sbq_wait_state *ws;
-	DEFINE_SBQ_WAIT(wait);
-	unsigned int tag_offset;
-	int tag;
+अचिन्हित पूर्णांक blk_mq_get_tag(काष्ठा blk_mq_alloc_data *data)
+अणु
+	काष्ठा blk_mq_tags *tags = blk_mq_tags_from_data(data);
+	काष्ठा sbiपंचांगap_queue *bt;
+	काष्ठा sbq_रुको_state *ws;
+	DEFINE_SBQ_WAIT(रुको);
+	अचिन्हित पूर्णांक tag_offset;
+	पूर्णांक tag;
 
-	if (data->flags & BLK_MQ_REQ_RESERVED) {
-		if (unlikely(!tags->nr_reserved_tags)) {
+	अगर (data->flags & BLK_MQ_REQ_RESERVED) अणु
+		अगर (unlikely(!tags->nr_reserved_tags)) अणु
 			WARN_ON_ONCE(1);
-			return BLK_MQ_NO_TAG;
-		}
+			वापस BLK_MQ_NO_TAG;
+		पूर्ण
 		bt = tags->breserved_tags;
 		tag_offset = 0;
-	} else {
-		bt = tags->bitmap_tags;
+	पूर्ण अन्यथा अणु
+		bt = tags->biपंचांगap_tags;
 		tag_offset = tags->nr_reserved_tags;
-	}
+	पूर्ण
 
 	tag = __blk_mq_get_tag(data, bt);
-	if (tag != BLK_MQ_NO_TAG)
-		goto found_tag;
+	अगर (tag != BLK_MQ_NO_TAG)
+		जाओ found_tag;
 
-	if (data->flags & BLK_MQ_REQ_NOWAIT)
-		return BLK_MQ_NO_TAG;
+	अगर (data->flags & BLK_MQ_REQ_NOWAIT)
+		वापस BLK_MQ_NO_TAG;
 
-	ws = bt_wait_ptr(bt, data->hctx);
-	do {
-		struct sbitmap_queue *bt_prev;
+	ws = bt_रुको_ptr(bt, data->hctx);
+	करो अणु
+		काष्ठा sbiपंचांगap_queue *bt_prev;
 
 		/*
 		 * We're out of tags on this hardware queue, kick any
-		 * pending IO submits before going to sleep waiting for
+		 * pending IO submits beक्रमe going to sleep रुकोing क्रम
 		 * some to complete.
 		 */
 		blk_mq_run_hw_queue(data->hctx, false);
@@ -130,487 +131,487 @@ unsigned int blk_mq_get_tag(struct blk_mq_alloc_data *data)
 		 * as running the queue may also have found completions.
 		 */
 		tag = __blk_mq_get_tag(data, bt);
-		if (tag != BLK_MQ_NO_TAG)
-			break;
+		अगर (tag != BLK_MQ_NO_TAG)
+			अवरोध;
 
-		sbitmap_prepare_to_wait(bt, ws, &wait, TASK_UNINTERRUPTIBLE);
+		sbiपंचांगap_prepare_to_रुको(bt, ws, &रुको, TASK_UNINTERRUPTIBLE);
 
 		tag = __blk_mq_get_tag(data, bt);
-		if (tag != BLK_MQ_NO_TAG)
-			break;
+		अगर (tag != BLK_MQ_NO_TAG)
+			अवरोध;
 
 		bt_prev = bt;
 		io_schedule();
 
-		sbitmap_finish_wait(bt, ws, &wait);
+		sbiपंचांगap_finish_रुको(bt, ws, &रुको);
 
 		data->ctx = blk_mq_get_ctx(data->q);
 		data->hctx = blk_mq_map_queue(data->q, data->cmd_flags,
 						data->ctx);
 		tags = blk_mq_tags_from_data(data);
-		if (data->flags & BLK_MQ_REQ_RESERVED)
+		अगर (data->flags & BLK_MQ_REQ_RESERVED)
 			bt = tags->breserved_tags;
-		else
-			bt = tags->bitmap_tags;
+		अन्यथा
+			bt = tags->biपंचांगap_tags;
 
 		/*
 		 * If destination hw queue is changed, fake wake up on
-		 * previous queue for compensating the wake up miss, so
+		 * previous queue क्रम compensating the wake up miss, so
 		 * other allocations on previous queue won't be starved.
 		 */
-		if (bt != bt_prev)
-			sbitmap_queue_wake_up(bt_prev);
+		अगर (bt != bt_prev)
+			sbiपंचांगap_queue_wake_up(bt_prev);
 
-		ws = bt_wait_ptr(bt, data->hctx);
-	} while (1);
+		ws = bt_रुको_ptr(bt, data->hctx);
+	पूर्ण जबतक (1);
 
-	sbitmap_finish_wait(bt, ws, &wait);
+	sbiपंचांगap_finish_रुको(bt, ws, &रुको);
 
 found_tag:
 	/*
-	 * Give up this allocation if the hctx is inactive.  The caller will
+	 * Give up this allocation अगर the hctx is inactive.  The caller will
 	 * retry on an active hctx.
 	 */
-	if (unlikely(test_bit(BLK_MQ_S_INACTIVE, &data->hctx->state))) {
+	अगर (unlikely(test_bit(BLK_MQ_S_INACTIVE, &data->hctx->state))) अणु
 		blk_mq_put_tag(tags, data->ctx, tag + tag_offset);
-		return BLK_MQ_NO_TAG;
-	}
-	return tag + tag_offset;
-}
+		वापस BLK_MQ_NO_TAG;
+	पूर्ण
+	वापस tag + tag_offset;
+पूर्ण
 
-void blk_mq_put_tag(struct blk_mq_tags *tags, struct blk_mq_ctx *ctx,
-		    unsigned int tag)
-{
-	if (!blk_mq_tag_is_reserved(tags, tag)) {
-		const int real_tag = tag - tags->nr_reserved_tags;
+व्योम blk_mq_put_tag(काष्ठा blk_mq_tags *tags, काष्ठा blk_mq_ctx *ctx,
+		    अचिन्हित पूर्णांक tag)
+अणु
+	अगर (!blk_mq_tag_is_reserved(tags, tag)) अणु
+		स्थिर पूर्णांक real_tag = tag - tags->nr_reserved_tags;
 
 		BUG_ON(real_tag >= tags->nr_tags);
-		sbitmap_queue_clear(tags->bitmap_tags, real_tag, ctx->cpu);
-	} else {
+		sbiपंचांगap_queue_clear(tags->biपंचांगap_tags, real_tag, ctx->cpu);
+	पूर्ण अन्यथा अणु
 		BUG_ON(tag >= tags->nr_reserved_tags);
-		sbitmap_queue_clear(tags->breserved_tags, tag, ctx->cpu);
-	}
-}
+		sbiपंचांगap_queue_clear(tags->breserved_tags, tag, ctx->cpu);
+	पूर्ण
+पूर्ण
 
-struct bt_iter_data {
-	struct blk_mq_hw_ctx *hctx;
+काष्ठा bt_iter_data अणु
+	काष्ठा blk_mq_hw_ctx *hctx;
 	busy_iter_fn *fn;
-	void *data;
+	व्योम *data;
 	bool reserved;
-};
+पूर्ण;
 
-static bool bt_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
-{
-	struct bt_iter_data *iter_data = data;
-	struct blk_mq_hw_ctx *hctx = iter_data->hctx;
-	struct blk_mq_tags *tags = hctx->tags;
+अटल bool bt_iter(काष्ठा sbiपंचांगap *biपंचांगap, अचिन्हित पूर्णांक bitnr, व्योम *data)
+अणु
+	काष्ठा bt_iter_data *iter_data = data;
+	काष्ठा blk_mq_hw_ctx *hctx = iter_data->hctx;
+	काष्ठा blk_mq_tags *tags = hctx->tags;
 	bool reserved = iter_data->reserved;
-	struct request *rq;
+	काष्ठा request *rq;
 
-	if (!reserved)
+	अगर (!reserved)
 		bitnr += tags->nr_reserved_tags;
 	rq = tags->rqs[bitnr];
 
 	/*
-	 * We can hit rq == NULL here, because the tagging functions
-	 * test and set the bit before assigning ->rqs[].
+	 * We can hit rq == शून्य here, because the tagging functions
+	 * test and set the bit beक्रमe assigning ->rqs[].
 	 */
-	if (rq && rq->q == hctx->queue && rq->mq_hctx == hctx)
-		return iter_data->fn(hctx, rq, iter_data->data, reserved);
-	return true;
-}
+	अगर (rq && rq->q == hctx->queue && rq->mq_hctx == hctx)
+		वापस iter_data->fn(hctx, rq, iter_data->data, reserved);
+	वापस true;
+पूर्ण
 
 /**
- * bt_for_each - iterate over the requests associated with a hardware queue
+ * bt_क्रम_each - iterate over the requests associated with a hardware queue
  * @hctx:	Hardware queue to examine.
- * @bt:		sbitmap to examine. This is either the breserved_tags member
- *		or the bitmap_tags member of struct blk_mq_tags.
- * @fn:		Pointer to the function that will be called for each request
- *		associated with @hctx that has been assigned a driver tag.
+ * @bt:		sbiपंचांगap to examine. This is either the breserved_tags member
+ *		or the biपंचांगap_tags member of काष्ठा blk_mq_tags.
+ * @fn:		Poपूर्णांकer to the function that will be called क्रम each request
+ *		associated with @hctx that has been asचिन्हित a driver tag.
  *		@fn will be called as follows: @fn(@hctx, rq, @data, @reserved)
- *		where rq is a pointer to a request. Return true to continue
+ *		where rq is a poपूर्णांकer to a request. Return true to जारी
  *		iterating tags, false to stop.
  * @data:	Will be passed as third argument to @fn.
  * @reserved:	Indicates whether @bt is the breserved_tags member or the
- *		bitmap_tags member of struct blk_mq_tags.
+ *		biपंचांगap_tags member of काष्ठा blk_mq_tags.
  */
-static void bt_for_each(struct blk_mq_hw_ctx *hctx, struct sbitmap_queue *bt,
-			busy_iter_fn *fn, void *data, bool reserved)
-{
-	struct bt_iter_data iter_data = {
+अटल व्योम bt_क्रम_each(काष्ठा blk_mq_hw_ctx *hctx, काष्ठा sbiपंचांगap_queue *bt,
+			busy_iter_fn *fn, व्योम *data, bool reserved)
+अणु
+	काष्ठा bt_iter_data iter_data = अणु
 		.hctx = hctx,
 		.fn = fn,
 		.data = data,
 		.reserved = reserved,
-	};
+	पूर्ण;
 
-	sbitmap_for_each_set(&bt->sb, bt_iter, &iter_data);
-}
+	sbiपंचांगap_क्रम_each_set(&bt->sb, bt_iter, &iter_data);
+पूर्ण
 
-struct bt_tags_iter_data {
-	struct blk_mq_tags *tags;
+काष्ठा bt_tags_iter_data अणु
+	काष्ठा blk_mq_tags *tags;
 	busy_tag_iter_fn *fn;
-	void *data;
-	unsigned int flags;
-};
+	व्योम *data;
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
-#define BT_TAG_ITER_RESERVED		(1 << 0)
-#define BT_TAG_ITER_STARTED		(1 << 1)
-#define BT_TAG_ITER_STATIC_RQS		(1 << 2)
+#घोषणा BT_TAG_ITER_RESERVED		(1 << 0)
+#घोषणा BT_TAG_ITER_STARTED		(1 << 1)
+#घोषणा BT_TAG_ITER_STATIC_RQS		(1 << 2)
 
-static bool bt_tags_iter(struct sbitmap *bitmap, unsigned int bitnr, void *data)
-{
-	struct bt_tags_iter_data *iter_data = data;
-	struct blk_mq_tags *tags = iter_data->tags;
+अटल bool bt_tags_iter(काष्ठा sbiपंचांगap *biपंचांगap, अचिन्हित पूर्णांक bitnr, व्योम *data)
+अणु
+	काष्ठा bt_tags_iter_data *iter_data = data;
+	काष्ठा blk_mq_tags *tags = iter_data->tags;
 	bool reserved = iter_data->flags & BT_TAG_ITER_RESERVED;
-	struct request *rq;
+	काष्ठा request *rq;
 
-	if (!reserved)
+	अगर (!reserved)
 		bitnr += tags->nr_reserved_tags;
 
 	/*
-	 * We can hit rq == NULL here, because the tagging functions
-	 * test and set the bit before assigning ->rqs[].
+	 * We can hit rq == शून्य here, because the tagging functions
+	 * test and set the bit beक्रमe assigning ->rqs[].
 	 */
-	if (iter_data->flags & BT_TAG_ITER_STATIC_RQS)
-		rq = tags->static_rqs[bitnr];
-	else
+	अगर (iter_data->flags & BT_TAG_ITER_STATIC_RQS)
+		rq = tags->अटल_rqs[bitnr];
+	अन्यथा
 		rq = tags->rqs[bitnr];
-	if (!rq)
-		return true;
-	if ((iter_data->flags & BT_TAG_ITER_STARTED) &&
+	अगर (!rq)
+		वापस true;
+	अगर ((iter_data->flags & BT_TAG_ITER_STARTED) &&
 	    !blk_mq_request_started(rq))
-		return true;
-	return iter_data->fn(rq, iter_data->data, reserved);
-}
+		वापस true;
+	वापस iter_data->fn(rq, iter_data->data, reserved);
+पूर्ण
 
 /**
- * bt_tags_for_each - iterate over the requests in a tag map
+ * bt_tags_क्रम_each - iterate over the requests in a tag map
  * @tags:	Tag map to iterate over.
- * @bt:		sbitmap to examine. This is either the breserved_tags member
- *		or the bitmap_tags member of struct blk_mq_tags.
- * @fn:		Pointer to the function that will be called for each started
+ * @bt:		sbiपंचांगap to examine. This is either the breserved_tags member
+ *		or the biपंचांगap_tags member of काष्ठा blk_mq_tags.
+ * @fn:		Poपूर्णांकer to the function that will be called क्रम each started
  *		request. @fn will be called as follows: @fn(rq, @data,
- *		@reserved) where rq is a pointer to a request. Return true
- *		to continue iterating tags, false to stop.
+ *		@reserved) where rq is a poपूर्णांकer to a request. Return true
+ *		to जारी iterating tags, false to stop.
  * @data:	Will be passed as second argument to @fn.
  * @flags:	BT_TAG_ITER_*
  */
-static void bt_tags_for_each(struct blk_mq_tags *tags, struct sbitmap_queue *bt,
-			     busy_tag_iter_fn *fn, void *data, unsigned int flags)
-{
-	struct bt_tags_iter_data iter_data = {
+अटल व्योम bt_tags_क्रम_each(काष्ठा blk_mq_tags *tags, काष्ठा sbiपंचांगap_queue *bt,
+			     busy_tag_iter_fn *fn, व्योम *data, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा bt_tags_iter_data iter_data = अणु
 		.tags = tags,
 		.fn = fn,
 		.data = data,
 		.flags = flags,
-	};
+	पूर्ण;
 
-	if (tags->rqs)
-		sbitmap_for_each_set(&bt->sb, bt_tags_iter, &iter_data);
-}
+	अगर (tags->rqs)
+		sbiपंचांगap_क्रम_each_set(&bt->sb, bt_tags_iter, &iter_data);
+पूर्ण
 
-static void __blk_mq_all_tag_iter(struct blk_mq_tags *tags,
-		busy_tag_iter_fn *fn, void *priv, unsigned int flags)
-{
+अटल व्योम __blk_mq_all_tag_iter(काष्ठा blk_mq_tags *tags,
+		busy_tag_iter_fn *fn, व्योम *priv, अचिन्हित पूर्णांक flags)
+अणु
 	WARN_ON_ONCE(flags & BT_TAG_ITER_RESERVED);
 
-	if (tags->nr_reserved_tags)
-		bt_tags_for_each(tags, tags->breserved_tags, fn, priv,
+	अगर (tags->nr_reserved_tags)
+		bt_tags_क्रम_each(tags, tags->breserved_tags, fn, priv,
 				 flags | BT_TAG_ITER_RESERVED);
-	bt_tags_for_each(tags, tags->bitmap_tags, fn, priv, flags);
-}
+	bt_tags_क्रम_each(tags, tags->biपंचांगap_tags, fn, priv, flags);
+पूर्ण
 
 /**
  * blk_mq_all_tag_iter - iterate over all requests in a tag map
  * @tags:	Tag map to iterate over.
- * @fn:		Pointer to the function that will be called for each
+ * @fn:		Poपूर्णांकer to the function that will be called क्रम each
  *		request. @fn will be called as follows: @fn(rq, @priv,
- *		reserved) where rq is a pointer to a request. 'reserved'
+ *		reserved) where rq is a poपूर्णांकer to a request. 'reserved'
  *		indicates whether or not @rq is a reserved request. Return
- *		true to continue iterating tags, false to stop.
+ *		true to जारी iterating tags, false to stop.
  * @priv:	Will be passed as second argument to @fn.
  *
  * Caller has to pass the tag map from which requests are allocated.
  */
-void blk_mq_all_tag_iter(struct blk_mq_tags *tags, busy_tag_iter_fn *fn,
-		void *priv)
-{
+व्योम blk_mq_all_tag_iter(काष्ठा blk_mq_tags *tags, busy_tag_iter_fn *fn,
+		व्योम *priv)
+अणु
 	__blk_mq_all_tag_iter(tags, fn, priv, BT_TAG_ITER_STATIC_RQS);
-}
+पूर्ण
 
 /**
  * blk_mq_tagset_busy_iter - iterate over all started requests in a tag set
  * @tagset:	Tag set to iterate over.
- * @fn:		Pointer to the function that will be called for each started
+ * @fn:		Poपूर्णांकer to the function that will be called क्रम each started
  *		request. @fn will be called as follows: @fn(rq, @priv,
- *		reserved) where rq is a pointer to a request. 'reserved'
+ *		reserved) where rq is a poपूर्णांकer to a request. 'reserved'
  *		indicates whether or not @rq is a reserved request. Return
- *		true to continue iterating tags, false to stop.
+ *		true to जारी iterating tags, false to stop.
  * @priv:	Will be passed as second argument to @fn.
  */
-void blk_mq_tagset_busy_iter(struct blk_mq_tag_set *tagset,
-		busy_tag_iter_fn *fn, void *priv)
-{
-	int i;
+व्योम blk_mq_tagset_busy_iter(काष्ठा blk_mq_tag_set *tagset,
+		busy_tag_iter_fn *fn, व्योम *priv)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < tagset->nr_hw_queues; i++) {
-		if (tagset->tags && tagset->tags[i])
+	क्रम (i = 0; i < tagset->nr_hw_queues; i++) अणु
+		अगर (tagset->tags && tagset->tags[i])
 			__blk_mq_all_tag_iter(tagset->tags[i], fn, priv,
 					      BT_TAG_ITER_STARTED);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(blk_mq_tagset_busy_iter);
 
-static bool blk_mq_tagset_count_completed_rqs(struct request *rq,
-		void *data, bool reserved)
-{
-	unsigned *count = data;
+अटल bool blk_mq_tagset_count_completed_rqs(काष्ठा request *rq,
+		व्योम *data, bool reserved)
+अणु
+	अचिन्हित *count = data;
 
-	if (blk_mq_request_completed(rq))
+	अगर (blk_mq_request_completed(rq))
 		(*count)++;
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * blk_mq_tagset_wait_completed_request - Wait until all scheduled request
+ * blk_mq_tagset_रुको_completed_request - Wait until all scheduled request
  * completions have finished.
  * @tagset:	Tag set to drain completed request
  *
- * Note: This function has to be run after all IO queues are shutdown
+ * Note: This function has to be run after all IO queues are shutकरोwn
  */
-void blk_mq_tagset_wait_completed_request(struct blk_mq_tag_set *tagset)
-{
-	while (true) {
-		unsigned count = 0;
+व्योम blk_mq_tagset_रुको_completed_request(काष्ठा blk_mq_tag_set *tagset)
+अणु
+	जबतक (true) अणु
+		अचिन्हित count = 0;
 
 		blk_mq_tagset_busy_iter(tagset,
 				blk_mq_tagset_count_completed_rqs, &count);
-		if (!count)
-			break;
+		अगर (!count)
+			अवरोध;
 		msleep(5);
-	}
-}
-EXPORT_SYMBOL(blk_mq_tagset_wait_completed_request);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(blk_mq_tagset_रुको_completed_request);
 
 /**
  * blk_mq_queue_tag_busy_iter - iterate over all requests with a driver tag
  * @q:		Request queue to examine.
- * @fn:		Pointer to the function that will be called for each request
+ * @fn:		Poपूर्णांकer to the function that will be called क्रम each request
  *		on @q. @fn will be called as follows: @fn(hctx, rq, @priv,
- *		reserved) where rq is a pointer to a request and hctx points
+ *		reserved) where rq is a poपूर्णांकer to a request and hctx poपूर्णांकs
  *		to the hardware queue associated with the request. 'reserved'
  *		indicates whether or not @rq is a reserved request.
  * @priv:	Will be passed as third argument to @fn.
  *
- * Note: if @q->tag_set is shared with other request queues then @fn will be
- * called for all requests on all queues that share that tag set and not only
- * for requests associated with @q.
+ * Note: अगर @q->tag_set is shared with other request queues then @fn will be
+ * called क्रम all requests on all queues that share that tag set and not only
+ * क्रम requests associated with @q.
  */
-void blk_mq_queue_tag_busy_iter(struct request_queue *q, busy_iter_fn *fn,
-		void *priv)
-{
-	struct blk_mq_hw_ctx *hctx;
-	int i;
+व्योम blk_mq_queue_tag_busy_iter(काष्ठा request_queue *q, busy_iter_fn *fn,
+		व्योम *priv)
+अणु
+	काष्ठा blk_mq_hw_ctx *hctx;
+	पूर्णांक i;
 
 	/*
 	 * __blk_mq_update_nr_hw_queues() updates nr_hw_queues and queue_hw_ctx
-	 * while the queue is frozen. So we can use q_usage_counter to avoid
+	 * जबतक the queue is frozen. So we can use q_usage_counter to aव्योम
 	 * racing with it.
 	 */
-	if (!percpu_ref_tryget(&q->q_usage_counter))
-		return;
+	अगर (!percpu_ref_tryget(&q->q_usage_counter))
+		वापस;
 
-	queue_for_each_hw_ctx(q, hctx, i) {
-		struct blk_mq_tags *tags = hctx->tags;
+	queue_क्रम_each_hw_ctx(q, hctx, i) अणु
+		काष्ठा blk_mq_tags *tags = hctx->tags;
 
 		/*
 		 * If no software queues are currently mapped to this
 		 * hardware queue, there's nothing to check
 		 */
-		if (!blk_mq_hw_queue_mapped(hctx))
-			continue;
+		अगर (!blk_mq_hw_queue_mapped(hctx))
+			जारी;
 
-		if (tags->nr_reserved_tags)
-			bt_for_each(hctx, tags->breserved_tags, fn, priv, true);
-		bt_for_each(hctx, tags->bitmap_tags, fn, priv, false);
-	}
-	blk_queue_exit(q);
-}
+		अगर (tags->nr_reserved_tags)
+			bt_क्रम_each(hctx, tags->breserved_tags, fn, priv, true);
+		bt_क्रम_each(hctx, tags->biपंचांगap_tags, fn, priv, false);
+	पूर्ण
+	blk_queue_निकास(q);
+पूर्ण
 
-static int bt_alloc(struct sbitmap_queue *bt, unsigned int depth,
-		    bool round_robin, int node)
-{
-	return sbitmap_queue_init_node(bt, depth, -1, round_robin, GFP_KERNEL,
+अटल पूर्णांक bt_alloc(काष्ठा sbiपंचांगap_queue *bt, अचिन्हित पूर्णांक depth,
+		    bool round_robin, पूर्णांक node)
+अणु
+	वापस sbiपंचांगap_queue_init_node(bt, depth, -1, round_robin, GFP_KERNEL,
 				       node);
-}
+पूर्ण
 
-static int blk_mq_init_bitmap_tags(struct blk_mq_tags *tags,
-				   int node, int alloc_policy)
-{
-	unsigned int depth = tags->nr_tags - tags->nr_reserved_tags;
+अटल पूर्णांक blk_mq_init_biपंचांगap_tags(काष्ठा blk_mq_tags *tags,
+				   पूर्णांक node, पूर्णांक alloc_policy)
+अणु
+	अचिन्हित पूर्णांक depth = tags->nr_tags - tags->nr_reserved_tags;
 	bool round_robin = alloc_policy == BLK_TAG_ALLOC_RR;
 
-	if (bt_alloc(&tags->__bitmap_tags, depth, round_robin, node))
-		return -ENOMEM;
-	if (bt_alloc(&tags->__breserved_tags, tags->nr_reserved_tags,
+	अगर (bt_alloc(&tags->__biपंचांगap_tags, depth, round_robin, node))
+		वापस -ENOMEM;
+	अगर (bt_alloc(&tags->__breserved_tags, tags->nr_reserved_tags,
 		     round_robin, node))
-		goto free_bitmap_tags;
+		जाओ मुक्त_biपंचांगap_tags;
 
-	tags->bitmap_tags = &tags->__bitmap_tags;
+	tags->biपंचांगap_tags = &tags->__biपंचांगap_tags;
 	tags->breserved_tags = &tags->__breserved_tags;
 
-	return 0;
-free_bitmap_tags:
-	sbitmap_queue_free(&tags->__bitmap_tags);
-	return -ENOMEM;
-}
+	वापस 0;
+मुक्त_biपंचांगap_tags:
+	sbiपंचांगap_queue_मुक्त(&tags->__biपंचांगap_tags);
+	वापस -ENOMEM;
+पूर्ण
 
-int blk_mq_init_shared_sbitmap(struct blk_mq_tag_set *set, unsigned int flags)
-{
-	unsigned int depth = set->queue_depth - set->reserved_tags;
-	int alloc_policy = BLK_MQ_FLAG_TO_ALLOC_POLICY(set->flags);
+पूर्णांक blk_mq_init_shared_sbiपंचांगap(काष्ठा blk_mq_tag_set *set, अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित पूर्णांक depth = set->queue_depth - set->reserved_tags;
+	पूर्णांक alloc_policy = BLK_MQ_FLAG_TO_ALLOC_POLICY(set->flags);
 	bool round_robin = alloc_policy == BLK_TAG_ALLOC_RR;
-	int i, node = set->numa_node;
+	पूर्णांक i, node = set->numa_node;
 
-	if (bt_alloc(&set->__bitmap_tags, depth, round_robin, node))
-		return -ENOMEM;
-	if (bt_alloc(&set->__breserved_tags, set->reserved_tags,
+	अगर (bt_alloc(&set->__biपंचांगap_tags, depth, round_robin, node))
+		वापस -ENOMEM;
+	अगर (bt_alloc(&set->__breserved_tags, set->reserved_tags,
 		     round_robin, node))
-		goto free_bitmap_tags;
+		जाओ मुक्त_biपंचांगap_tags;
 
-	for (i = 0; i < set->nr_hw_queues; i++) {
-		struct blk_mq_tags *tags = set->tags[i];
+	क्रम (i = 0; i < set->nr_hw_queues; i++) अणु
+		काष्ठा blk_mq_tags *tags = set->tags[i];
 
-		tags->bitmap_tags = &set->__bitmap_tags;
+		tags->biपंचांगap_tags = &set->__biपंचांगap_tags;
 		tags->breserved_tags = &set->__breserved_tags;
-	}
+	पूर्ण
 
-	return 0;
-free_bitmap_tags:
-	sbitmap_queue_free(&set->__bitmap_tags);
-	return -ENOMEM;
-}
+	वापस 0;
+मुक्त_biपंचांगap_tags:
+	sbiपंचांगap_queue_मुक्त(&set->__biपंचांगap_tags);
+	वापस -ENOMEM;
+पूर्ण
 
-void blk_mq_exit_shared_sbitmap(struct blk_mq_tag_set *set)
-{
-	sbitmap_queue_free(&set->__bitmap_tags);
-	sbitmap_queue_free(&set->__breserved_tags);
-}
+व्योम blk_mq_निकास_shared_sbiपंचांगap(काष्ठा blk_mq_tag_set *set)
+अणु
+	sbiपंचांगap_queue_मुक्त(&set->__biपंचांगap_tags);
+	sbiपंचांगap_queue_मुक्त(&set->__breserved_tags);
+पूर्ण
 
-struct blk_mq_tags *blk_mq_init_tags(unsigned int total_tags,
-				     unsigned int reserved_tags,
-				     int node, unsigned int flags)
-{
-	int alloc_policy = BLK_MQ_FLAG_TO_ALLOC_POLICY(flags);
-	struct blk_mq_tags *tags;
+काष्ठा blk_mq_tags *blk_mq_init_tags(अचिन्हित पूर्णांक total_tags,
+				     अचिन्हित पूर्णांक reserved_tags,
+				     पूर्णांक node, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक alloc_policy = BLK_MQ_FLAG_TO_ALLOC_POLICY(flags);
+	काष्ठा blk_mq_tags *tags;
 
-	if (total_tags > BLK_MQ_TAG_MAX) {
+	अगर (total_tags > BLK_MQ_TAG_MAX) अणु
 		pr_err("blk-mq: tag depth too large\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	tags = kzalloc_node(sizeof(*tags), GFP_KERNEL, node);
-	if (!tags)
-		return NULL;
+	tags = kzalloc_node(माप(*tags), GFP_KERNEL, node);
+	अगर (!tags)
+		वापस शून्य;
 
 	tags->nr_tags = total_tags;
 	tags->nr_reserved_tags = reserved_tags;
 
-	if (blk_mq_is_sbitmap_shared(flags))
-		return tags;
+	अगर (blk_mq_is_sbiपंचांगap_shared(flags))
+		वापस tags;
 
-	if (blk_mq_init_bitmap_tags(tags, node, alloc_policy) < 0) {
-		kfree(tags);
-		return NULL;
-	}
-	return tags;
-}
+	अगर (blk_mq_init_biपंचांगap_tags(tags, node, alloc_policy) < 0) अणु
+		kमुक्त(tags);
+		वापस शून्य;
+	पूर्ण
+	वापस tags;
+पूर्ण
 
-void blk_mq_free_tags(struct blk_mq_tags *tags, unsigned int flags)
-{
-	if (!blk_mq_is_sbitmap_shared(flags)) {
-		sbitmap_queue_free(tags->bitmap_tags);
-		sbitmap_queue_free(tags->breserved_tags);
-	}
-	kfree(tags);
-}
+व्योम blk_mq_मुक्त_tags(काष्ठा blk_mq_tags *tags, अचिन्हित पूर्णांक flags)
+अणु
+	अगर (!blk_mq_is_sbiपंचांगap_shared(flags)) अणु
+		sbiपंचांगap_queue_मुक्त(tags->biपंचांगap_tags);
+		sbiपंचांगap_queue_मुक्त(tags->breserved_tags);
+	पूर्ण
+	kमुक्त(tags);
+पूर्ण
 
-int blk_mq_tag_update_depth(struct blk_mq_hw_ctx *hctx,
-			    struct blk_mq_tags **tagsptr, unsigned int tdepth,
+पूर्णांक blk_mq_tag_update_depth(काष्ठा blk_mq_hw_ctx *hctx,
+			    काष्ठा blk_mq_tags **tagsptr, अचिन्हित पूर्णांक tdepth,
 			    bool can_grow)
-{
-	struct blk_mq_tags *tags = *tagsptr;
+अणु
+	काष्ठा blk_mq_tags *tags = *tagsptr;
 
-	if (tdepth <= tags->nr_reserved_tags)
-		return -EINVAL;
+	अगर (tdepth <= tags->nr_reserved_tags)
+		वापस -EINVAL;
 
 	/*
 	 * If we are allowed to grow beyond the original size, allocate
-	 * a new set of tags before freeing the old one.
+	 * a new set of tags beक्रमe मुक्तing the old one.
 	 */
-	if (tdepth > tags->nr_tags) {
-		struct blk_mq_tag_set *set = hctx->queue->tag_set;
+	अगर (tdepth > tags->nr_tags) अणु
+		काष्ठा blk_mq_tag_set *set = hctx->queue->tag_set;
 		/* Only sched tags can grow, so clear HCTX_SHARED flag  */
-		unsigned int flags = set->flags & ~BLK_MQ_F_TAG_HCTX_SHARED;
-		struct blk_mq_tags *new;
+		अचिन्हित पूर्णांक flags = set->flags & ~BLK_MQ_F_TAG_HCTX_SHARED;
+		काष्ठा blk_mq_tags *new;
 		bool ret;
 
-		if (!can_grow)
-			return -EINVAL;
+		अगर (!can_grow)
+			वापस -EINVAL;
 
 		/*
 		 * We need some sort of upper limit, set it high enough that
-		 * no valid use cases should require more.
+		 * no valid use हालs should require more.
 		 */
-		if (tdepth > 16 * BLKDEV_MAX_RQ)
-			return -EINVAL;
+		अगर (tdepth > 16 * BLKDEV_MAX_RQ)
+			वापस -EINVAL;
 
 		new = blk_mq_alloc_rq_map(set, hctx->queue_num, tdepth,
 				tags->nr_reserved_tags, flags);
-		if (!new)
-			return -ENOMEM;
+		अगर (!new)
+			वापस -ENOMEM;
 		ret = blk_mq_alloc_rqs(set, new, hctx->queue_num, tdepth);
-		if (ret) {
-			blk_mq_free_rq_map(new, flags);
-			return -ENOMEM;
-		}
+		अगर (ret) अणु
+			blk_mq_मुक्त_rq_map(new, flags);
+			वापस -ENOMEM;
+		पूर्ण
 
-		blk_mq_free_rqs(set, *tagsptr, hctx->queue_num);
-		blk_mq_free_rq_map(*tagsptr, flags);
+		blk_mq_मुक्त_rqs(set, *tagsptr, hctx->queue_num);
+		blk_mq_मुक्त_rq_map(*tagsptr, flags);
 		*tagsptr = new;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Don't need (or can't) update reserved tags here, they
-		 * remain static and should never need resizing.
+		 * reमुख्य अटल and should never need resizing.
 		 */
-		sbitmap_queue_resize(tags->bitmap_tags,
+		sbiपंचांगap_queue_resize(tags->biपंचांगap_tags,
 				tdepth - tags->nr_reserved_tags);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void blk_mq_tag_resize_shared_sbitmap(struct blk_mq_tag_set *set, unsigned int size)
-{
-	sbitmap_queue_resize(&set->__bitmap_tags, size - set->reserved_tags);
-}
+व्योम blk_mq_tag_resize_shared_sbiपंचांगap(काष्ठा blk_mq_tag_set *set, अचिन्हित पूर्णांक size)
+अणु
+	sbiपंचांगap_queue_resize(&set->__biपंचांगap_tags, size - set->reserved_tags);
+पूर्ण
 
 /**
- * blk_mq_unique_tag() - return a tag that is unique queue-wide
- * @rq: request for which to compute a unique tag
+ * blk_mq_unique_tag() - वापस a tag that is unique queue-wide
+ * @rq: request क्रम which to compute a unique tag
  *
- * The tag field in struct request is unique per hardware queue but not over
- * all hardware queues. Hence this function that returns a tag with the
+ * The tag field in काष्ठा request is unique per hardware queue but not over
+ * all hardware queues. Hence this function that वापसs a tag with the
  * hardware context index in the upper bits and the per hardware queue tag in
  * the lower bits.
  *
- * Note: When called for a request that is queued on a non-multiqueue request
+ * Note: When called क्रम a request that is queued on a non-multiqueue request
  * queue, the hardware context index is set to zero.
  */
-u32 blk_mq_unique_tag(struct request *rq)
-{
-	return (rq->mq_hctx->queue_num << BLK_MQ_UNIQUE_TAG_BITS) |
+u32 blk_mq_unique_tag(काष्ठा request *rq)
+अणु
+	वापस (rq->mq_hctx->queue_num << BLK_MQ_UNIQUE_TAG_BITS) |
 		(rq->tag & BLK_MQ_UNIQUE_TAG_MASK);
-}
+पूर्ण
 EXPORT_SYMBOL(blk_mq_unique_tag);

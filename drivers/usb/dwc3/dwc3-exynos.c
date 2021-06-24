@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * dwc3-exynos.c - Samsung Exynos DWC3 Specific Glue layer
+ * dwc3-exynos.c - Samsung Exynos DWC3 Specअगरic Glue layer
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -8,250 +9,250 @@
  * Author: Anton Tikhomirov <av.tikhomirov@samsung.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/clk.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/regulator/consumer.h>
 
-#define DWC3_EXYNOS_MAX_CLOCKS	4
+#घोषणा DWC3_EXYNOS_MAX_CLOCKS	4
 
-struct dwc3_exynos_driverdata {
-	const char		*clk_names[DWC3_EXYNOS_MAX_CLOCKS];
-	int			num_clks;
-	int			suspend_clk_idx;
-};
+काष्ठा dwc3_exynos_driverdata अणु
+	स्थिर अक्षर		*clk_names[DWC3_EXYNOS_MAX_CLOCKS];
+	पूर्णांक			num_clks;
+	पूर्णांक			suspend_clk_idx;
+पूर्ण;
 
-struct dwc3_exynos {
-	struct device		*dev;
+काष्ठा dwc3_exynos अणु
+	काष्ठा device		*dev;
 
-	const char		**clk_names;
-	struct clk		*clks[DWC3_EXYNOS_MAX_CLOCKS];
-	int			num_clks;
-	int			suspend_clk_idx;
+	स्थिर अक्षर		**clk_names;
+	काष्ठा clk		*clks[DWC3_EXYNOS_MAX_CLOCKS];
+	पूर्णांक			num_clks;
+	पूर्णांक			suspend_clk_idx;
 
-	struct regulator	*vdd33;
-	struct regulator	*vdd10;
-};
+	काष्ठा regulator	*vdd33;
+	काष्ठा regulator	*vdd10;
+पूर्ण;
 
-static int dwc3_exynos_remove_child(struct device *dev, void *unused)
-{
-	struct platform_device *pdev = to_platform_device(dev);
+अटल पूर्णांक dwc3_exynos_हटाओ_child(काष्ठा device *dev, व्योम *unused)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
 
-	platform_device_unregister(pdev);
+	platक्रमm_device_unरेजिस्टर(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwc3_exynos_probe(struct platform_device *pdev)
-{
-	struct dwc3_exynos	*exynos;
-	struct device		*dev = &pdev->dev;
-	struct device_node	*node = dev->of_node;
-	const struct dwc3_exynos_driverdata *driver_data;
-	int			i, ret;
+अटल पूर्णांक dwc3_exynos_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dwc3_exynos	*exynos;
+	काष्ठा device		*dev = &pdev->dev;
+	काष्ठा device_node	*node = dev->of_node;
+	स्थिर काष्ठा dwc3_exynos_driverdata *driver_data;
+	पूर्णांक			i, ret;
 
-	exynos = devm_kzalloc(dev, sizeof(*exynos), GFP_KERNEL);
-	if (!exynos)
-		return -ENOMEM;
+	exynos = devm_kzalloc(dev, माप(*exynos), GFP_KERNEL);
+	अगर (!exynos)
+		वापस -ENOMEM;
 
 	driver_data = of_device_get_match_data(dev);
 	exynos->dev = dev;
 	exynos->num_clks = driver_data->num_clks;
-	exynos->clk_names = (const char **)driver_data->clk_names;
+	exynos->clk_names = (स्थिर अक्षर **)driver_data->clk_names;
 	exynos->suspend_clk_idx = driver_data->suspend_clk_idx;
 
-	platform_set_drvdata(pdev, exynos);
+	platक्रमm_set_drvdata(pdev, exynos);
 
-	for (i = 0; i < exynos->num_clks; i++) {
+	क्रम (i = 0; i < exynos->num_clks; i++) अणु
 		exynos->clks[i] = devm_clk_get(dev, exynos->clk_names[i]);
-		if (IS_ERR(exynos->clks[i])) {
+		अगर (IS_ERR(exynos->clks[i])) अणु
 			dev_err(dev, "failed to get clock: %s\n",
 				exynos->clk_names[i]);
-			return PTR_ERR(exynos->clks[i]);
-		}
-	}
+			वापस PTR_ERR(exynos->clks[i]);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < exynos->num_clks; i++) {
+	क्रम (i = 0; i < exynos->num_clks; i++) अणु
 		ret = clk_prepare_enable(exynos->clks[i]);
-		if (ret) {
-			while (i-- > 0)
+		अगर (ret) अणु
+			जबतक (i-- > 0)
 				clk_disable_unprepare(exynos->clks[i]);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (exynos->suspend_clk_idx >= 0)
+	अगर (exynos->suspend_clk_idx >= 0)
 		clk_prepare_enable(exynos->clks[exynos->suspend_clk_idx]);
 
 	exynos->vdd33 = devm_regulator_get(dev, "vdd33");
-	if (IS_ERR(exynos->vdd33)) {
+	अगर (IS_ERR(exynos->vdd33)) अणु
 		ret = PTR_ERR(exynos->vdd33);
-		goto vdd33_err;
-	}
+		जाओ vdd33_err;
+	पूर्ण
 	ret = regulator_enable(exynos->vdd33);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable VDD33 supply\n");
-		goto vdd33_err;
-	}
+		जाओ vdd33_err;
+	पूर्ण
 
 	exynos->vdd10 = devm_regulator_get(dev, "vdd10");
-	if (IS_ERR(exynos->vdd10)) {
+	अगर (IS_ERR(exynos->vdd10)) अणु
 		ret = PTR_ERR(exynos->vdd10);
-		goto vdd10_err;
-	}
+		जाओ vdd10_err;
+	पूर्ण
 	ret = regulator_enable(exynos->vdd10);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable VDD10 supply\n");
-		goto vdd10_err;
-	}
+		जाओ vdd10_err;
+	पूर्ण
 
-	if (node) {
-		ret = of_platform_populate(node, NULL, NULL, dev);
-		if (ret) {
+	अगर (node) अणु
+		ret = of_platक्रमm_populate(node, शून्य, शून्य, dev);
+		अगर (ret) अणु
 			dev_err(dev, "failed to add dwc3 core\n");
-			goto populate_err;
-		}
-	} else {
+			जाओ populate_err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "no device node, failed to add dwc3 core\n");
 		ret = -ENODEV;
-		goto populate_err;
-	}
+		जाओ populate_err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 populate_err:
 	regulator_disable(exynos->vdd10);
 vdd10_err:
 	regulator_disable(exynos->vdd33);
 vdd33_err:
-	for (i = exynos->num_clks - 1; i >= 0; i--)
+	क्रम (i = exynos->num_clks - 1; i >= 0; i--)
 		clk_disable_unprepare(exynos->clks[i]);
 
-	if (exynos->suspend_clk_idx >= 0)
+	अगर (exynos->suspend_clk_idx >= 0)
 		clk_disable_unprepare(exynos->clks[exynos->suspend_clk_idx]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dwc3_exynos_remove(struct platform_device *pdev)
-{
-	struct dwc3_exynos	*exynos = platform_get_drvdata(pdev);
-	int i;
+अटल पूर्णांक dwc3_exynos_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dwc3_exynos	*exynos = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
 
-	device_for_each_child(&pdev->dev, NULL, dwc3_exynos_remove_child);
+	device_क्रम_each_child(&pdev->dev, शून्य, dwc3_exynos_हटाओ_child);
 
-	for (i = exynos->num_clks - 1; i >= 0; i--)
+	क्रम (i = exynos->num_clks - 1; i >= 0; i--)
 		clk_disable_unprepare(exynos->clks[i]);
 
-	if (exynos->suspend_clk_idx >= 0)
+	अगर (exynos->suspend_clk_idx >= 0)
 		clk_disable_unprepare(exynos->clks[exynos->suspend_clk_idx]);
 
 	regulator_disable(exynos->vdd33);
 	regulator_disable(exynos->vdd10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dwc3_exynos_driverdata exynos5250_drvdata = {
-	.clk_names = { "usbdrd30" },
+अटल स्थिर काष्ठा dwc3_exynos_driverdata exynos5250_drvdata = अणु
+	.clk_names = अणु "usbdrd30" पूर्ण,
 	.num_clks = 1,
 	.suspend_clk_idx = -1,
-};
+पूर्ण;
 
-static const struct dwc3_exynos_driverdata exynos5433_drvdata = {
-	.clk_names = { "aclk", "susp_clk", "pipe_pclk", "phyclk" },
+अटल स्थिर काष्ठा dwc3_exynos_driverdata exynos5433_drvdata = अणु
+	.clk_names = अणु "aclk", "susp_clk", "pipe_pclk", "phyclk" पूर्ण,
 	.num_clks = 4,
 	.suspend_clk_idx = 1,
-};
+पूर्ण;
 
-static const struct dwc3_exynos_driverdata exynos7_drvdata = {
-	.clk_names = { "usbdrd30", "usbdrd30_susp_clk", "usbdrd30_axius_clk" },
+अटल स्थिर काष्ठा dwc3_exynos_driverdata exynos7_drvdata = अणु
+	.clk_names = अणु "usbdrd30", "usbdrd30_susp_clk", "usbdrd30_axius_clk" पूर्ण,
 	.num_clks = 3,
 	.suspend_clk_idx = 1,
-};
+पूर्ण;
 
-static const struct of_device_id exynos_dwc3_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id exynos_dwc3_match[] = अणु
+	अणु
 		.compatible = "samsung,exynos5250-dwusb3",
 		.data = &exynos5250_drvdata,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-dwusb3",
 		.data = &exynos5433_drvdata,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos7-dwusb3",
 		.data = &exynos7_drvdata,
-	}, {
-	}
-};
+	पूर्ण, अणु
+	पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, exynos_dwc3_match);
 
-#ifdef CONFIG_PM_SLEEP
-static int dwc3_exynos_suspend(struct device *dev)
-{
-	struct dwc3_exynos *exynos = dev_get_drvdata(dev);
-	int i;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक dwc3_exynos_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा dwc3_exynos *exynos = dev_get_drvdata(dev);
+	पूर्णांक i;
 
-	for (i = exynos->num_clks - 1; i >= 0; i--)
+	क्रम (i = exynos->num_clks - 1; i >= 0; i--)
 		clk_disable_unprepare(exynos->clks[i]);
 
 	regulator_disable(exynos->vdd33);
 	regulator_disable(exynos->vdd10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwc3_exynos_resume(struct device *dev)
-{
-	struct dwc3_exynos *exynos = dev_get_drvdata(dev);
-	int i, ret;
+अटल पूर्णांक dwc3_exynos_resume(काष्ठा device *dev)
+अणु
+	काष्ठा dwc3_exynos *exynos = dev_get_drvdata(dev);
+	पूर्णांक i, ret;
 
 	ret = regulator_enable(exynos->vdd33);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable VDD33 supply\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = regulator_enable(exynos->vdd10);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable VDD10 supply\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < exynos->num_clks; i++) {
+	क्रम (i = 0; i < exynos->num_clks; i++) अणु
 		ret = clk_prepare_enable(exynos->clks[i]);
-		if (ret) {
-			while (i-- > 0)
+		अगर (ret) अणु
+			जबतक (i-- > 0)
 				clk_disable_unprepare(exynos->clks[i]);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops dwc3_exynos_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops dwc3_exynos_dev_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(dwc3_exynos_suspend, dwc3_exynos_resume)
-};
+पूर्ण;
 
-#define DEV_PM_OPS	(&dwc3_exynos_dev_pm_ops)
-#else
-#define DEV_PM_OPS	NULL
-#endif /* CONFIG_PM_SLEEP */
+#घोषणा DEV_PM_OPS	(&dwc3_exynos_dev_pm_ops)
+#अन्यथा
+#घोषणा DEV_PM_OPS	शून्य
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static struct platform_driver dwc3_exynos_driver = {
+अटल काष्ठा platक्रमm_driver dwc3_exynos_driver = अणु
 	.probe		= dwc3_exynos_probe,
-	.remove		= dwc3_exynos_remove,
-	.driver		= {
+	.हटाओ		= dwc3_exynos_हटाओ,
+	.driver		= अणु
 		.name	= "exynos-dwc3",
 		.of_match_table = exynos_dwc3_match,
 		.pm	= DEV_PM_OPS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(dwc3_exynos_driver);
+module_platक्रमm_driver(dwc3_exynos_driver);
 
 MODULE_AUTHOR("Anton Tikhomirov <av.tikhomirov@samsung.com>");
 MODULE_LICENSE("GPL v2");

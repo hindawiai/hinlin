@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Allwinner H616 SoC pinctrl driver.
  *
@@ -7,15 +8,15 @@
  *   Copyright (C) 2017 Icenowy Zheng <icenowy@aosc.io>
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-sunxi.h"
+#समावेश "pinctrl-sunxi.h"
 
-static const struct sunxi_desc_pin h616_pins[] = {
+अटल स्थिर काष्ठा sunxi_desc_pin h616_pins[] = अणु
 	/* Internal connection to the AC200 part */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(A, 0),
 		  SUNXI_FUNCTION(0x2, "emac1")),	/* ERXD1 */
@@ -431,7 +432,7 @@ static const struct sunxi_desc_pin h616_pins[] = {
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(I, 6),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
-		  SUNXI_FUNCTION(0x2, "emac0"),		/* ENULL */
+		  SUNXI_FUNCTION(0x2, "emac0"),		/* Eशून्य */
 		  SUNXI_FUNCTION(0x3, "uart2"),		/* RX */
 		  SUNXI_FUNCTION(0x4, "ts0"),		/* ERR */
 		  SUNXI_FUNCTION(0x5, "i2c0"),		/* SDA */
@@ -516,33 +517,33 @@ static const struct sunxi_desc_pin h616_pins[] = {
 		  SUNXI_FUNCTION(0x4, "ts0"),		/* D7 */
 		  SUNXI_FUNCTION(0x5, "clock"),		/* CLK_FANOUT1 */
 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 7, 16)),	/* PI_EINT16 */
-};
-static const unsigned int h616_irq_bank_map[] = { 0, 2, 3, 4, 5, 6, 7, 8 };
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक h616_irq_bank_map[] = अणु 0, 2, 3, 4, 5, 6, 7, 8 पूर्ण;
 
-static const struct sunxi_pinctrl_desc h616_pinctrl_data = {
+अटल स्थिर काष्ठा sunxi_pinctrl_desc h616_pinctrl_data = अणु
 	.pins = h616_pins,
 	.npins = ARRAY_SIZE(h616_pins),
 	.irq_banks = ARRAY_SIZE(h616_irq_bank_map),
 	.irq_bank_map = h616_irq_bank_map,
-	.irq_read_needs_mux = true,
+	.irq_पढ़ो_needs_mux = true,
 	.io_bias_cfg_variant = BIAS_VOLTAGE_PIO_POW_MODE_SEL,
-};
+पूर्ण;
 
-static int h616_pinctrl_probe(struct platform_device *pdev)
-{
-	return sunxi_pinctrl_init(pdev, &h616_pinctrl_data);
-}
+अटल पूर्णांक h616_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस sunxi_pinctrl_init(pdev, &h616_pinctrl_data);
+पूर्ण
 
-static const struct of_device_id h616_pinctrl_match[] = {
-	{ .compatible = "allwinner,sun50i-h616-pinctrl", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id h616_pinctrl_match[] = अणु
+	अणु .compatible = "allwinner,sun50i-h616-pinctrl", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver h616_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver h616_pinctrl_driver = अणु
 	.probe	= h616_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "sun50i-h616-pinctrl",
 		.of_match_table	= h616_pinctrl_match,
-	},
-};
-builtin_platform_driver(h616_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(h616_pinctrl_driver);

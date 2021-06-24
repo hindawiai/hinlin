@@ -1,292 +1,293 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * oplib.h:  Describes the interface and available routines in the
+ * oplib.h:  Describes the पूर्णांकerface and available routines in the
  *           Linux Prom library.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#ifndef __SPARC_OPLIB_H
-#define __SPARC_OPLIB_H
+#अगर_अघोषित __SPARC_OPLIB_H
+#घोषणा __SPARC_OPLIB_H
 
-#include <asm/openprom.h>
+#समावेश <यंत्र/खोलोprom.h>
 
-/* The master romvec pointer... */
-extern struct linux_romvec *romvec;
+/* The master romvec poपूर्णांकer... */
+बाह्य काष्ठा linux_romvec *romvec;
 
 /* Enumeration to describe the prom major version we have detected. */
-enum prom_major_version {
+क्रमागत prom_major_version अणु
 	PROM_V0,      /* Original sun4c V0 prom */
 	PROM_V2,      /* sun4c and early sun4m V2 prom */
 	PROM_V3,      /* sun4m and later, up to sun4d/sun4e machines V3 */
 	PROM_P1275,   /* IEEE compliant ISA based Sun PROM, only sun4u */
-};
+पूर्ण;
 
-extern enum prom_major_version prom_vers;
+बाह्य क्रमागत prom_major_version prom_vers;
 /* Revision, and firmware revision. */
-extern unsigned int prom_rev, prom_prev;
+बाह्य अचिन्हित पूर्णांक prom_rev, prom_prev;
 
-/* Root node of the prom device tree, this stays constant after
+/* Root node of the prom device tree, this stays स्थिरant after
  * initialization is complete.
  */
-extern int prom_root_node;
+बाह्य पूर्णांक prom_root_node;
 
-/* Pointer to prom structure containing the device tree traversal
+/* Poपूर्णांकer to prom काष्ठाure containing the device tree traversal
  * and usage utility functions.  Only prom-lib should use these,
- * users use the interface defined by the library only!
+ * users use the पूर्णांकerface defined by the library only!
  */
-extern struct linux_nodeops *prom_nodeops;
+बाह्य काष्ठा linux_nodeops *prom_nodeops;
 
 /* The functions... */
 
-/* You must call prom_init() before using any of the library services,
- * preferably as early as possible.  Pass it the romvec pointer.
+/* You must call prom_init() beक्रमe using any of the library services,
+ * preferably as early as possible.  Pass it the romvec poपूर्णांकer.
  */
-extern void prom_init(struct linux_romvec *rom_ptr);
+बाह्य व्योम prom_init(काष्ठा linux_romvec *rom_ptr);
 
-/* Boot argument acquisition, returns the boot command line string. */
-extern char *prom_getbootargs(void);
+/* Boot argument acquisition, वापसs the boot command line string. */
+बाह्य अक्षर *prom_getbootargs(व्योम);
 
 /* Device utilities. */
 
-/* Map and unmap devices in IO space at virtual addresses. Note that the
- * virtual address you pass is a request and the prom may put your mappings
- * somewhere else, so check your return value as that is where your new
+/* Map and unmap devices in IO space at भव addresses. Note that the
+ * भव address you pass is a request and the prom may put your mappings
+ * somewhere अन्यथा, so check your वापस value as that is where your new
  * mappings really are!
  *
  * Another note, these are only available on V2 or higher proms!
  */
-extern char *prom_mapio(char *virt_hint, int io_space, unsigned int phys_addr, unsigned int num_bytes);
-extern void prom_unmapio(char *virt_addr, unsigned int num_bytes);
+बाह्य अक्षर *prom_mapio(अक्षर *virt_hपूर्णांक, पूर्णांक io_space, अचिन्हित पूर्णांक phys_addr, अचिन्हित पूर्णांक num_bytes);
+बाह्य व्योम prom_unmapio(अक्षर *virt_addr, अचिन्हित पूर्णांक num_bytes);
 
 /* Device operations. */
 
-/* Open the device described by the passed string.  Note, that the format
- * of the string is different on V0 vs. V2->higher proms.  The caller must
- * know what he/she is doing!  Returns the device descriptor, an int.
+/* Open the device described by the passed string.  Note, that the क्रमmat
+ * of the string is dअगरferent on V0 vs. V2->higher proms.  The caller must
+ * know what he/she is करोing!  Returns the device descriptor, an पूर्णांक.
  */
-extern int prom_devopen(char *device_string);
+बाह्य पूर्णांक prom_devखोलो(अक्षर *device_string);
 
-/* Close a previously opened device described by the passed integer
+/* Close a previously खोलोed device described by the passed पूर्णांकeger
  * descriptor.
  */
-extern int prom_devclose(int device_handle);
+बाह्य पूर्णांक prom_devबंद(पूर्णांक device_handle);
 
-/* Do a seek operation on the device described by the passed integer
+/* Do a seek operation on the device described by the passed पूर्णांकeger
  * descriptor.
  */
-extern void prom_seek(int device_handle, unsigned int seek_hival,
-		      unsigned int seek_lowval);
+बाह्य व्योम prom_seek(पूर्णांक device_handle, अचिन्हित पूर्णांक seek_hival,
+		      अचिन्हित पूर्णांक seek_lowval);
 
 /* Machine memory configuration routine. */
 
-/* This function returns a V0 format memory descriptor table, it has three
- * entries.  One for the total amount of physical ram on the machine, one
- * for the amount of physical ram available, and one describing the virtual
+/* This function वापसs a V0 क्रमmat memory descriptor table, it has three
+ * entries.  One क्रम the total amount of physical ram on the machine, one
+ * क्रम the amount of physical ram available, and one describing the भव
  * areas which are allocated by the prom.  So, in a sense the physical
  * available is a calculation of the total physical minus the physical mapped
- * by the prom with virtual mappings.
+ * by the prom with भव mappings.
  *
- * These lists are returned pre-sorted, this should make your life easier
- * since the prom itself is way too lazy to do such nice things.
+ * These lists are वापसed pre-sorted, this should make your lअगरe easier
+ * since the prom itself is way too lazy to करो such nice things.
  */
-extern struct linux_mem_v0 *prom_meminfo(void);
+बाह्य काष्ठा linux_mem_v0 *prom_meminfo(व्योम);
 
-/* Miscellaneous routines, don't really fit in any category per se. */
+/* Miscellaneous routines, करोn't really fit in any category per se. */
 
 /* Reboot the machine with the command line passed. */
-extern void prom_reboot(char *boot_command);
+बाह्य व्योम prom_reboot(अक्षर *boot_command);
 
-/* Evaluate the forth string passed. */
-extern void prom_feval(char *forth_string);
+/* Evaluate the क्रमth string passed. */
+बाह्य व्योम prom_feval(अक्षर *क्रमth_string);
 
 /* Enter the prom, with possibility of continuation with the 'go'
  * command in newer proms.
  */
-extern void prom_cmdline(void);
+बाह्य व्योम prom_cmdline(व्योम);
 
-/* Enter the prom, with no chance of continuation for the stand-alone
+/* Enter the prom, with no chance of continuation क्रम the stand-alone
  * which calls this.
  */
-extern void prom_halt(void);
+बाह्य व्योम prom_halt(व्योम);
 
-/* Set the PROM 'sync' callback function to the passed function pointer.
- * When the user gives the 'sync' command at the prom prompt while the
+/* Set the PROM 'sync' callback function to the passed function poपूर्णांकer.
+ * When the user gives the 'sync' command at the prom prompt जबतक the
  * kernel is still active, the prom will call this routine.
  *
- * XXX The arguments are different on V0 vs. V2->higher proms, grrr! XXX
+ * XXX The arguments are dअगरferent on V0 vs. V2->higher proms, grrr! XXX
  */
-typedef void (*sync_func_t)(void);
-extern void prom_setsync(sync_func_t func_ptr);
+प्रकार व्योम (*sync_func_t)(व्योम);
+बाह्य व्योम prom_setsync(sync_func_t func_ptr);
 
 /* Acquire the IDPROM of the root node in the prom device tree.  This
- * gets passed a buffer where you would like it stuffed.  The return value
- * is the format type of this idprom or 0xff on error.
+ * माला_लो passed a buffer where you would like it stuffed.  The वापस value
+ * is the क्रमmat type of this idprom or 0xff on error.
  */
-extern unsigned char prom_get_idprom(char *idp_buffer, int idpbuf_size);
+बाह्य अचिन्हित अक्षर prom_get_idprom(अक्षर *idp_buffer, पूर्णांक idpbuf_size);
 
 /* Get the prom major version. */
-extern int prom_version(void);
+बाह्य पूर्णांक prom_version(व्योम);
 
 /* Get the prom plugin revision. */
-extern int prom_getrev(void);
+बाह्य पूर्णांक prom_getrev(व्योम);
 
 /* Get the prom firmware revision. */
-extern int prom_getprev(void);
+बाह्य पूर्णांक prom_getprev(व्योम);
 
 /* Character operations to/from the console.... */
 
-/* Non-blocking get character from console. */
-extern int prom_nbgetchar(void);
+/* Non-blocking get अक्षरacter from console. */
+बाह्य पूर्णांक prom_nbअक्षर_लो(व्योम);
 
-/* Non-blocking put character to console. */
-extern int prom_nbputchar(char character);
+/* Non-blocking put अक्षरacter to console. */
+बाह्य पूर्णांक prom_nbअक्षर_दो(अक्षर अक्षरacter);
 
-/* Blocking get character from console. */
-extern char prom_getchar(void);
+/* Blocking get अक्षरacter from console. */
+बाह्य अक्षर prom_अक्षर_लो(व्योम);
 
-/* Blocking put character to console. */
-extern void prom_putchar(char character);
+/* Blocking put अक्षरacter to console. */
+बाह्य व्योम prom_अक्षर_दो(अक्षर अक्षरacter);
 
 /* Prom's internal printf routine, don't use in kernel/boot code. */
-void prom_printf(char *fmt, ...);
+व्योम prom_म_लिखो(अक्षर *fmt, ...);
 
-/* Query for input device type */
+/* Query क्रम input device type */
 
-enum prom_input_device {
+क्रमागत prom_input_device अणु
 	PROMDEV_IKBD,			/* input from keyboard */
 	PROMDEV_ITTYA,			/* input from ttya */
 	PROMDEV_ITTYB,			/* input from ttyb */
 	PROMDEV_I_UNK,
-};
+पूर्ण;
 
-extern enum prom_input_device prom_query_input_device(void);
+बाह्य क्रमागत prom_input_device prom_query_input_device(व्योम);
 
-/* Query for output device type */
+/* Query क्रम output device type */
 
-enum prom_output_device {
+क्रमागत prom_output_device अणु
 	PROMDEV_OSCREEN,		/* to screen */
 	PROMDEV_OTTYA,			/* to ttya */
 	PROMDEV_OTTYB,			/* to ttyb */
 	PROMDEV_O_UNK,
-};
+पूर्ण;
 
-extern enum prom_output_device prom_query_output_device(void);
+बाह्य क्रमागत prom_output_device prom_query_output_device(व्योम);
 
 /* Multiprocessor operations... */
 
 /* Start the CPU with the given device tree node, context table, and context
  * at the passed program counter.
  */
-extern int prom_startcpu(int cpunode, struct linux_prom_registers *context_table,
-			 int context, char *program_counter);
+बाह्य पूर्णांक prom_startcpu(पूर्णांक cpunode, काष्ठा linux_prom_रेजिस्टरs *context_table,
+			 पूर्णांक context, अक्षर *program_counter);
 
 /* Stop the CPU with the passed device tree node. */
-extern int prom_stopcpu(int cpunode);
+बाह्य पूर्णांक prom_stopcpu(पूर्णांक cpunode);
 
 /* Idle the CPU with the passed device tree node. */
-extern int prom_idlecpu(int cpunode);
+बाह्य पूर्णांक prom_idlecpu(पूर्णांक cpunode);
 
 /* Re-Start the CPU with the passed device tree node. */
-extern int prom_restartcpu(int cpunode);
+बाह्य पूर्णांक prom_restartcpu(पूर्णांक cpunode);
 
 /* PROM memory allocation facilities... */
 
-/* Allocated at possibly the given virtual address a chunk of the
+/* Allocated at possibly the given भव address a chunk of the
  * indicated size.
  */
-extern char *prom_alloc(char *virt_hint, unsigned int size);
+बाह्य अक्षर *prom_alloc(अक्षर *virt_hपूर्णांक, अचिन्हित पूर्णांक size);
 
 /* Free a previously allocated chunk. */
-extern void prom_free(char *virt_addr, unsigned int size);
+बाह्य व्योम prom_मुक्त(अक्षर *virt_addr, अचिन्हित पूर्णांक size);
 
-/* Sun4/sun4c specific memory-management startup hook. */
+/* Sun4/sun4c specअगरic memory-management startup hook. */
 
 /* Map the passed segment in the given context at the passed
- * virtual address.
+ * भव address.
  */
-extern void prom_putsegment(int context, unsigned long virt_addr,
-			    int physical_segment);
+बाह्य व्योम prom_माला_दोegment(पूर्णांक context, अचिन्हित दीर्घ virt_addr,
+			    पूर्णांक physical_segment);
 
 /* PROM device tree traversal functions... */
 
-/* Get the child node of the given node, or zero if no child exists. */
-extern int prom_getchild(int parent_node);
+/* Get the child node of the given node, or zero अगर no child exists. */
+बाह्य पूर्णांक prom_अ_लोhild(पूर्णांक parent_node);
 
-/* Get the next sibling node of the given node, or zero if no further
+/* Get the next sibling node of the given node, or zero अगर no further
  * siblings exist.
  */
-extern int prom_getsibling(int node);
+बाह्य पूर्णांक prom_माला_लोibling(पूर्णांक node);
 
 /* Get the length, at the passed node, of the given property type.
  * Returns -1 on error (ie. no such property at this node).
  */
-extern int prom_getproplen(int thisnode, char *property);
+बाह्य पूर्णांक prom_getproplen(पूर्णांक thisnode, अक्षर *property);
 
 /* Fetch the requested property using the given buffer.  Returns
- * the number of bytes the prom put into your buffer or -1 on error.
+ * the number of bytes the prom put पूर्णांकo your buffer or -1 on error.
  */
-extern int prom_getproperty(int thisnode, char *property,
-			    char *prop_buffer, int propbuf_size);
+बाह्य पूर्णांक prom_getproperty(पूर्णांक thisnode, अक्षर *property,
+			    अक्षर *prop_buffer, पूर्णांक propbuf_size);
 
-/* Acquire an integer property. */
-extern int prom_getint(int node, char *property);
+/* Acquire an पूर्णांकeger property. */
+बाह्य पूर्णांक prom_getपूर्णांक(पूर्णांक node, अक्षर *property);
 
-/* Acquire an integer property, with a default value. */
-extern int prom_getintdefault(int node, char *property, int defval);
+/* Acquire an पूर्णांकeger property, with a शेष value. */
+बाह्य पूर्णांक prom_getपूर्णांकशेष(पूर्णांक node, अक्षर *property, पूर्णांक defval);
 
 /* Acquire a boolean property, 0=FALSE 1=TRUE. */
-extern int prom_getbool(int node, char *prop);
+बाह्य पूर्णांक prom_getbool(पूर्णांक node, अक्षर *prop);
 
 /* Acquire a string property, null string on error. */
-extern void prom_getstring(int node, char *prop, char *buf, int bufsize);
+बाह्य व्योम prom_माला_लोtring(पूर्णांक node, अक्षर *prop, अक्षर *buf, पूर्णांक bufsize);
 
 /* Does the passed node have the given "name"? YES=1 NO=0 */
-extern int prom_nodematch(int thisnode, char *name);
+बाह्य पूर्णांक prom_nodematch(पूर्णांक thisnode, अक्षर *name);
 
-/* Search all siblings starting at the passed node for "name" matching
+/* Search all siblings starting at the passed node क्रम "name" matching
  * the given string.  Returns the node on success, zero on failure.
  */
-extern int prom_searchsiblings(int node_start, char *name);
+बाह्य पूर्णांक prom_searchsiblings(पूर्णांक node_start, अक्षर *name);
 
-/* Return the first property type, as a string, for the given node.
+/* Return the first property type, as a string, क्रम the given node.
  * Returns a null string on error.
  */
-extern char *prom_firstprop(int node);
+बाह्य अक्षर *prom_firstprop(पूर्णांक node);
 
-/* Returns the next property after the passed property for the given
+/* Returns the next property after the passed property क्रम the given
  * node.  Returns null string on failure.
  */
-extern char *prom_nextprop(int node, char *prev_property);
+बाह्य अक्षर *prom_nextprop(पूर्णांक node, अक्षर *prev_property);
 
-/* Returns 1 if the specified node has given property. */
-extern int prom_node_has_property(int node, char *property);
+/* Returns 1 अगर the specअगरied node has given property. */
+बाह्य पूर्णांक prom_node_has_property(पूर्णांक node, अक्षर *property);
 
 /* Set the indicated property at the given node with the passed value.
  * Returns the number of bytes of your value that the prom took.
  */
-extern int prom_setprop(int node, char *prop_name, char *prop_value,
-			int value_size);
+बाह्य पूर्णांक prom_setprop(पूर्णांक node, अक्षर *prop_name, अक्षर *prop_value,
+			पूर्णांक value_size);
 
-extern int prom_pathtoinode(char *path);
-extern int prom_inst2pkg(int);
+बाह्य पूर्णांक prom_pathtoinode(अक्षर *path);
+बाह्य पूर्णांक prom_inst2pkg(पूर्णांक);
 
 /* Dorking with Bus ranges... */
 
 /* Adjust reg values with the passed ranges. */
-extern void prom_adjust_regs(struct linux_prom_registers *regp, int nregs,
-			     struct linux_prom_ranges *rangep, int nranges);
+बाह्य व्योम prom_adjust_regs(काष्ठा linux_prom_रेजिस्टरs *regp, पूर्णांक nregs,
+			     काष्ठा linux_prom_ranges *rangep, पूर्णांक nranges);
 
 /* Adjust child ranges with the passed parent ranges. */
-extern void prom_adjust_ranges(struct linux_prom_ranges *cranges, int ncranges,
-			       struct linux_prom_ranges *pranges, int npranges);
+बाह्य व्योम prom_adjust_ranges(काष्ठा linux_prom_ranges *cranges, पूर्णांक ncranges,
+			       काष्ठा linux_prom_ranges *pranges, पूर्णांक npranges);
 
-/* Apply promlib probed OBIO ranges to registers. */
-extern void prom_apply_obio_ranges(struct linux_prom_registers *obioregs, int nregs);
+/* Apply promlib probed OBIO ranges to रेजिस्टरs. */
+बाह्य व्योम prom_apply_obio_ranges(काष्ठा linux_prom_रेजिस्टरs *obioregs, पूर्णांक nregs);
 
-/* Apply ranges of any prom node (and optionally parent node as well) to registers. */
-extern void prom_apply_generic_ranges(int node, int parent,
-				      struct linux_prom_registers *sbusregs, int nregs);
+/* Apply ranges of any prom node (and optionally parent node as well) to रेजिस्टरs. */
+बाह्य व्योम prom_apply_generic_ranges(पूर्णांक node, पूर्णांक parent,
+				      काष्ठा linux_prom_रेजिस्टरs *sbusregs, पूर्णांक nregs);
 
 
-#endif /* !(__SPARC_OPLIB_H) */
+#पूर्ण_अगर /* !(__SPARC_OPLIB_H) */

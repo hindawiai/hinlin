@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  PS3 pagetable management routines.
  *
@@ -6,46 +7,46 @@
  *  Copyright 2006, 2007 Sony Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/memblock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/memblock.h>
 
-#include <asm/machdep.h>
-#include <asm/prom.h>
-#include <asm/udbg.h>
-#include <asm/lv1call.h>
-#include <asm/ps3fb.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/udbg.h>
+#समावेश <यंत्र/lv1call.h>
+#समावेश <यंत्र/ps3fb.h>
 
-#define PS3_VERBOSE_RESULT
-#include "platform.h"
+#घोषणा PS3_VERBOSE_RESULT
+#समावेश "platform.h"
 
 /**
- * enum lpar_vas_id - id of LPAR virtual address space.
- * @lpar_vas_id_current: Current selected virtual address space
+ * क्रमागत lpar_vas_id - id of LPAR भव address space.
+ * @lpar_vas_id_current: Current selected भव address space
  *
- * Identify the target LPAR address space.
+ * Identअगरy the target LPAR address space.
  */
 
-enum ps3_lpar_vas_id {
+क्रमागत ps3_lpar_vas_id अणु
 	PS3_LPAR_VAS_ID_CURRENT = 0,
-};
+पूर्ण;
 
 
-static DEFINE_SPINLOCK(ps3_htab_lock);
+अटल DEFINE_SPINLOCK(ps3_htab_lock);
 
-static long ps3_hpte_insert(unsigned long hpte_group, unsigned long vpn,
-	unsigned long pa, unsigned long rflags, unsigned long vflags,
-	int psize, int apsize, int ssize)
-{
-	int result;
+अटल दीर्घ ps3_hpte_insert(अचिन्हित दीर्घ hpte_group, अचिन्हित दीर्घ vpn,
+	अचिन्हित दीर्घ pa, अचिन्हित दीर्घ rflags, अचिन्हित दीर्घ vflags,
+	पूर्णांक psize, पूर्णांक apsize, पूर्णांक ssize)
+अणु
+	पूर्णांक result;
 	u64 hpte_v, hpte_r;
 	u64 inserted_index;
 	u64 evicted_v, evicted_r;
 	u64 hpte_v_array[4], hpte_rs;
-	unsigned long flags;
-	long ret = -1;
+	अचिन्हित दीर्घ flags;
+	दीर्घ ret = -1;
 
 	/*
-	 * lv1_insert_htab_entry() will search for victim
+	 * lv1_insert_htab_entry() will search क्रम victim
 	 * entry in both primary and secondary pte group
 	 */
 	vflags &= ~HPTE_V_SECONDARY;
@@ -62,134 +63,134 @@ static long ps3_hpte_insert(unsigned long hpte_group, unsigned long vpn,
 				       &inserted_index,
 				       &evicted_v, &evicted_r);
 
-	if (result) {
+	अगर (result) अणु
 		/* all entries bolted !*/
 		pr_info("%s:result=%s vpn=%lx pa=%lx ix=%lx v=%llx r=%llx\n",
 			__func__, ps3_result(result), vpn, pa, hpte_group,
 			hpte_v, hpte_r);
 		BUG();
-	}
+	पूर्ण
 
 	/*
-	 * see if the entry is inserted into secondary pteg
+	 * see अगर the entry is inserted पूर्णांकo secondary pteg
 	 */
-	result = lv1_read_htab_entries(PS3_LPAR_VAS_ID_CURRENT,
+	result = lv1_पढ़ो_htab_entries(PS3_LPAR_VAS_ID_CURRENT,
 				       inserted_index & ~0x3UL,
 				       &hpte_v_array[0], &hpte_v_array[1],
 				       &hpte_v_array[2], &hpte_v_array[3],
 				       &hpte_rs);
 	BUG_ON(result);
 
-	if (hpte_v_array[inserted_index % 4] & HPTE_V_SECONDARY)
+	अगर (hpte_v_array[inserted_index % 4] & HPTE_V_SECONDARY)
 		ret = (inserted_index & 7) | (1 << 3);
-	else
+	अन्यथा
 		ret = inserted_index & 7;
 
 	spin_unlock_irqrestore(&ps3_htab_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long ps3_hpte_remove(unsigned long hpte_group)
-{
+अटल दीर्घ ps3_hpte_हटाओ(अचिन्हित दीर्घ hpte_group)
+अणु
 	panic("ps3_hpte_remove() not implemented");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long ps3_hpte_updatepp(unsigned long slot, unsigned long newpp,
-			      unsigned long vpn, int psize, int apsize,
-			      int ssize, unsigned long inv_flags)
-{
-	int result;
+अटल दीर्घ ps3_hpte_updatepp(अचिन्हित दीर्घ slot, अचिन्हित दीर्घ newpp,
+			      अचिन्हित दीर्घ vpn, पूर्णांक psize, पूर्णांक apsize,
+			      पूर्णांक ssize, अचिन्हित दीर्घ inv_flags)
+अणु
+	पूर्णांक result;
 	u64 hpte_v, want_v, hpte_rs;
 	u64 hpte_v_array[4];
-	unsigned long flags;
-	long ret;
+	अचिन्हित दीर्घ flags;
+	दीर्घ ret;
 
 	want_v = hpte_encode_avpn(vpn, psize, ssize);
 
 	spin_lock_irqsave(&ps3_htab_lock, flags);
 
-	result = lv1_read_htab_entries(PS3_LPAR_VAS_ID_CURRENT, slot & ~0x3UL,
+	result = lv1_पढ़ो_htab_entries(PS3_LPAR_VAS_ID_CURRENT, slot & ~0x3UL,
 				       &hpte_v_array[0], &hpte_v_array[1],
 				       &hpte_v_array[2], &hpte_v_array[3],
 				       &hpte_rs);
 
-	if (result) {
+	अगर (result) अणु
 		pr_info("%s: result=%s read vpn=%lx slot=%lx psize=%d\n",
 			__func__, ps3_result(result), vpn, slot, psize);
 		BUG();
-	}
+	पूर्ण
 
 	hpte_v = hpte_v_array[slot % 4];
 
 	/*
-	 * As lv1_read_htab_entries() does not give us the RPN, we can
-	 * not synthesize the new hpte_r value here, and therefore can
+	 * As lv1_पढ़ो_htab_entries() करोes not give us the RPN, we can
+	 * not synthesize the new hpte_r value here, and thereक्रमe can
 	 * not update the hpte with lv1_insert_htab_entry(), so we
 	 * instead invalidate it and ask the caller to update it via
-	 * ps3_hpte_insert() by returning a -1 value.
+	 * ps3_hpte_insert() by वापसing a -1 value.
 	 */
-	if (!HPTE_V_COMPARE(hpte_v, want_v) || !(hpte_v & HPTE_V_VALID)) {
+	अगर (!HPTE_V_COMPARE(hpte_v, want_v) || !(hpte_v & HPTE_V_VALID)) अणु
 		/* not found */
 		ret = -1;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* entry found, just invalidate it */
-		result = lv1_write_htab_entry(PS3_LPAR_VAS_ID_CURRENT,
+		result = lv1_ग_लिखो_htab_entry(PS3_LPAR_VAS_ID_CURRENT,
 					      slot, 0, 0);
 		ret = -1;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&ps3_htab_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ps3_hpte_updateboltedpp(unsigned long newpp, unsigned long ea,
-	int psize, int ssize)
-{
+अटल व्योम ps3_hpte_updateboltedpp(अचिन्हित दीर्घ newpp, अचिन्हित दीर्घ ea,
+	पूर्णांक psize, पूर्णांक ssize)
+अणु
 	panic("ps3_hpte_updateboltedpp() not implemented");
-}
+पूर्ण
 
-static void ps3_hpte_invalidate(unsigned long slot, unsigned long vpn,
-				int psize, int apsize, int ssize, int local)
-{
-	unsigned long flags;
-	int result;
+अटल व्योम ps3_hpte_invalidate(अचिन्हित दीर्घ slot, अचिन्हित दीर्घ vpn,
+				पूर्णांक psize, पूर्णांक apsize, पूर्णांक ssize, पूर्णांक local)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result;
 
 	spin_lock_irqsave(&ps3_htab_lock, flags);
 
-	result = lv1_write_htab_entry(PS3_LPAR_VAS_ID_CURRENT, slot, 0, 0);
+	result = lv1_ग_लिखो_htab_entry(PS3_LPAR_VAS_ID_CURRENT, slot, 0, 0);
 
-	if (result) {
+	अगर (result) अणु
 		pr_info("%s: result=%s vpn=%lx slot=%lx psize=%d\n",
 			__func__, ps3_result(result), vpn, slot, psize);
 		BUG();
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&ps3_htab_lock, flags);
-}
+पूर्ण
 
-static void ps3_hpte_clear(void)
-{
-	unsigned long hpte_count = (1UL << ppc64_pft_size) >> 4;
+अटल व्योम ps3_hpte_clear(व्योम)
+अणु
+	अचिन्हित दीर्घ hpte_count = (1UL << ppc64_pft_size) >> 4;
 	u64 i;
 
-	for (i = 0; i < hpte_count; i++)
-		lv1_write_htab_entry(PS3_LPAR_VAS_ID_CURRENT, i, 0, 0);
+	क्रम (i = 0; i < hpte_count; i++)
+		lv1_ग_लिखो_htab_entry(PS3_LPAR_VAS_ID_CURRENT, i, 0, 0);
 
-	ps3_mm_shutdown();
+	ps3_mm_shutकरोwn();
 	ps3_mm_vas_destroy();
-}
+पूर्ण
 
-void __init ps3_hpte_init(unsigned long htab_size)
-{
+व्योम __init ps3_hpte_init(अचिन्हित दीर्घ htab_size)
+अणु
 	mmu_hash_ops.hpte_invalidate = ps3_hpte_invalidate;
 	mmu_hash_ops.hpte_updatepp = ps3_hpte_updatepp;
 	mmu_hash_ops.hpte_updateboltedpp = ps3_hpte_updateboltedpp;
 	mmu_hash_ops.hpte_insert = ps3_hpte_insert;
-	mmu_hash_ops.hpte_remove = ps3_hpte_remove;
+	mmu_hash_ops.hpte_हटाओ = ps3_hpte_हटाओ;
 	mmu_hash_ops.hpte_clear_all = ps3_hpte_clear;
 
 	ppc64_pft_size = __ilog2(htab_size);
-}
+पूर्ण
 

@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: apdump - Dump routines for ACPI tables (acpidump)
+ * Module Name: apdump - Dump routines क्रम ACPI tables (acpidump)
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#include "acpidump.h"
+#समावेश "acpidump.h"
 
 /* Local prototypes */
 
-static int
-ap_dump_table_buffer(struct acpi_table_header *table,
+अटल पूर्णांक
+ap_dump_table_buffer(काष्ठा acpi_table_header *table,
 		     u32 instance, acpi_physical_address address);
 
 /******************************************************************************
  *
  * FUNCTION:    ap_is_valid_header
  *
- * PARAMETERS:  table               - Pointer to table to be validated
+ * PARAMETERS:  table               - Poपूर्णांकer to table to be validated
  *
- * RETURN:      TRUE if the header appears to be valid. FALSE otherwise
+ * RETURN:      TRUE अगर the header appears to be valid. FALSE otherwise
  *
- * DESCRIPTION: Check for a valid ACPI table header
+ * DESCRIPTION: Check क्रम a valid ACPI table header
  *
  ******************************************************************************/
 
-u8 ap_is_valid_header(struct acpi_table_header *table)
-{
+u8 ap_is_valid_header(काष्ठा acpi_table_header *table)
+अणु
 
-	if (!ACPI_VALIDATE_RSDP_SIG(table->signature)) {
+	अगर (!ACPI_VALIDATE_RSDP_SIG(table->signature)) अणु
 
 		/* Make sure signature is all ASCII and a valid ACPI name */
 
-		if (!acpi_ut_valid_nameseg(table->signature)) {
-			fprintf(stderr,
+		अगर (!acpi_ut_valid_nameseg(table->signature)) अणु
+			ख_लिखो(मानक_त्रुटि,
 				"Table signature (0x%8.8X) is invalid\n",
 				*(u32 *)table->signature);
-			return (FALSE);
-		}
+			वापस (FALSE);
+		पूर्ण
 
-		/* Check for minimum table length */
+		/* Check क्रम minimum table length */
 
-		if (table->length < sizeof(struct acpi_table_header)) {
-			fprintf(stderr, "Table length (0x%8.8X) is invalid\n",
+		अगर (table->length < माप(काष्ठा acpi_table_header)) अणु
+			ख_लिखो(मानक_त्रुटि, "Table length (0x%8.8X) is invalid\n",
 				table->length);
-			return (FALSE);
-		}
-	}
+			वापस (FALSE);
+		पूर्ण
+	पूर्ण
 
-	return (TRUE);
-}
+	वापस (TRUE);
+पूर्ण
 
 /******************************************************************************
  *
  * FUNCTION:    ap_is_valid_checksum
  *
- * PARAMETERS:  table               - Pointer to table to be validated
+ * PARAMETERS:  table               - Poपूर्णांकer to table to be validated
  *
- * RETURN:      TRUE if the checksum appears to be valid. FALSE otherwise.
+ * RETURN:      TRUE अगर the checksum appears to be valid. FALSE otherwise.
  *
- * DESCRIPTION: Check for a valid ACPI table checksum.
+ * DESCRIPTION: Check क्रम a valid ACPI table checksum.
  *
  ******************************************************************************/
 
-u8 ap_is_valid_checksum(struct acpi_table_header *table)
-{
+u8 ap_is_valid_checksum(काष्ठा acpi_table_header *table)
+अणु
 	acpi_status status;
-	struct acpi_table_rsdp *rsdp;
+	काष्ठा acpi_table_rsdp *rsdp;
 
-	if (ACPI_VALIDATE_RSDP_SIG(table->signature)) {
+	अगर (ACPI_VALIDATE_RSDP_SIG(table->signature)) अणु
 		/*
-		 * Checksum for RSDP.
+		 * Checksum क्रम RSDP.
 		 * Note: Other checksums are computed during the table dump.
 		 */
-		rsdp = ACPI_CAST_PTR(struct acpi_table_rsdp, table);
+		rsdp = ACPI_CAST_PTR(काष्ठा acpi_table_rsdp, table);
 		status = acpi_tb_validate_rsdp(rsdp);
-	} else {
-		status = acpi_tb_verify_checksum(table, table->length);
-	}
+	पूर्ण अन्यथा अणु
+		status = acpi_tb_verअगरy_checksum(table, table->length);
+	पूर्ण
 
-	if (ACPI_FAILURE(status)) {
-		fprintf(stderr, "%4.4s: Warning: wrong checksum in table\n",
+	अगर (ACPI_FAILURE(status)) अणु
+		ख_लिखो(मानक_त्रुटि, "%4.4s: Warning: wrong checksum in table\n",
 			table->signature);
-	}
+	पूर्ण
 
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /******************************************************************************
  *
  * FUNCTION:    ap_get_table_length
  *
- * PARAMETERS:  table               - Pointer to the table
+ * PARAMETERS:  table               - Poपूर्णांकer to the table
  *
  * RETURN:      Table length
  *
@@ -101,25 +102,25 @@ u8 ap_is_valid_checksum(struct acpi_table_header *table)
  *
  ******************************************************************************/
 
-u32 ap_get_table_length(struct acpi_table_header *table)
-{
-	struct acpi_table_rsdp *rsdp;
+u32 ap_get_table_length(काष्ठा acpi_table_header *table)
+अणु
+	काष्ठा acpi_table_rsdp *rsdp;
 
-	/* Check if table is valid */
+	/* Check अगर table is valid */
 
-	if (!ap_is_valid_header(table)) {
-		return (0);
-	}
+	अगर (!ap_is_valid_header(table)) अणु
+		वापस (0);
+	पूर्ण
 
-	if (ACPI_VALIDATE_RSDP_SIG(table->signature)) {
-		rsdp = ACPI_CAST_PTR(struct acpi_table_rsdp, table);
-		return (acpi_tb_get_rsdp_length(rsdp));
-	}
+	अगर (ACPI_VALIDATE_RSDP_SIG(table->signature)) अणु
+		rsdp = ACPI_CAST_PTR(काष्ठा acpi_table_rsdp, table);
+		वापस (acpi_tb_get_rsdp_length(rsdp));
+	पूर्ण
 
 	/* Normal ACPI table */
 
-	return (table->length);
-}
+	वापस (table->length);
+पूर्ण
 
 /******************************************************************************
  *
@@ -131,46 +132,46 @@ u32 ap_get_table_length(struct acpi_table_header *table)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Dump an ACPI table in standard ASCII hex format, with a
+ * DESCRIPTION: Dump an ACPI table in standard ASCII hex क्रमmat, with a
  *              header that is compatible with the acpi_xtract utility.
  *
  ******************************************************************************/
 
-static int
-ap_dump_table_buffer(struct acpi_table_header *table,
+अटल पूर्णांक
+ap_dump_table_buffer(काष्ठा acpi_table_header *table,
 		     u32 instance, acpi_physical_address address)
-{
+अणु
 	u32 table_length;
 
 	table_length = ap_get_table_length(table);
 
-	/* Print only the header if requested */
+	/* Prपूर्णांक only the header अगर requested */
 
-	if (gbl_summary_mode) {
-		acpi_tb_print_table_header(address, table);
-		return (0);
-	}
+	अगर (gbl_summary_mode) अणु
+		acpi_tb_prपूर्णांक_table_header(address, table);
+		वापस (0);
+	पूर्ण
 
-	/* Dump to binary file if requested */
+	/* Dump to binary file अगर requested */
 
-	if (gbl_binary_mode) {
-		return (ap_write_to_binary_file(table, instance));
-	}
+	अगर (gbl_binary_mode) अणु
+		वापस (ap_ग_लिखो_to_binary_file(table, instance));
+	पूर्ण
 
 	/*
-	 * Dump the table with header for use with acpixtract utility.
+	 * Dump the table with header क्रम use with acpixtract utility.
 	 * Note: simplest to just always emit a 64-bit address. acpi_xtract
 	 * utility can handle this.
 	 */
-	fprintf(gbl_output_file, "%4.4s @ 0x%8.8X%8.8X\n",
+	ख_लिखो(gbl_output_file, "%4.4s @ 0x%8.8X%8.8X\n",
 		table->signature, ACPI_FORMAT_UINT64(address));
 
 	acpi_ut_dump_buffer_to_file(gbl_output_file,
 				    ACPI_CAST_PTR(u8, table), table_length,
 				    DB_BYTE_DISPLAY, 0);
-	fprintf(gbl_output_file, "\n");
-	return (0);
-}
+	ख_लिखो(gbl_output_file, "\n");
+	वापस (0);
+पूर्ण
 
 /******************************************************************************
  *
@@ -185,57 +186,57 @@ ap_dump_table_buffer(struct acpi_table_header *table,
  *
  ******************************************************************************/
 
-int ap_dump_all_tables(void)
-{
-	struct acpi_table_header *table;
+पूर्णांक ap_dump_all_tables(व्योम)
+अणु
+	काष्ठा acpi_table_header *table;
 	u32 instance = 0;
 	acpi_physical_address address;
 	acpi_status status;
-	int table_status;
+	पूर्णांक table_status;
 	u32 i;
 
 	/* Get and dump all available ACPI tables */
 
-	for (i = 0; i < AP_MAX_ACPI_FILES; i++) {
+	क्रम (i = 0; i < AP_MAX_ACPI_खाताS; i++) अणु
 		status =
 		    acpi_os_get_table_by_index(i, &table, &instance, &address);
-		if (ACPI_FAILURE(status)) {
+		अगर (ACPI_FAILURE(status)) अणु
 
 			/* AE_LIMIT means that no more tables are available */
 
-			if (status == AE_LIMIT) {
-				return (0);
-			} else if (i == 0) {
-				fprintf(stderr,
+			अगर (status == AE_LIMIT) अणु
+				वापस (0);
+			पूर्ण अन्यथा अगर (i == 0) अणु
+				ख_लिखो(मानक_त्रुटि,
 					"Could not get ACPI tables, %s\n",
-					acpi_format_exception(status));
-				return (-1);
-			} else {
-				fprintf(stderr,
+					acpi_क्रमmat_exception(status));
+				वापस (-1);
+			पूर्ण अन्यथा अणु
+				ख_लिखो(मानक_त्रुटि,
 					"Could not get ACPI table at index %u, %s\n",
-					i, acpi_format_exception(status));
-				continue;
-			}
-		}
+					i, acpi_क्रमmat_exception(status));
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		table_status = ap_dump_table_buffer(table, instance, address);
 		ACPI_FREE(table);
 
-		if (table_status) {
-			break;
-		}
-	}
+		अगर (table_status) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Something seriously bad happened if the loop terminates here */
+	/* Something seriously bad happened अगर the loop terminates here */
 
-	return (-1);
-}
+	वापस (-1);
+पूर्ण
 
 /******************************************************************************
  *
  * FUNCTION:    ap_dump_table_by_address
  *
- * PARAMETERS:  ascii_address       - Address for requested ACPI table
+ * PARAMETERS:  ascii_address       - Address क्रम requested ACPI table
  *
  * RETURN:      Status
  *
@@ -243,36 +244,36 @@ int ap_dump_all_tables(void)
  *
  ******************************************************************************/
 
-int ap_dump_table_by_address(char *ascii_address)
-{
+पूर्णांक ap_dump_table_by_address(अक्षर *ascii_address)
+अणु
 	acpi_physical_address address;
-	struct acpi_table_header *table;
+	काष्ठा acpi_table_header *table;
 	acpi_status status;
-	int table_status;
-	u64 long_address;
+	पूर्णांक table_status;
+	u64 दीर्घ_address;
 
-	/* Convert argument to an integer physical address */
+	/* Convert argument to an पूर्णांकeger physical address */
 
-	status = acpi_ut_strtoul64(ascii_address, &long_address);
-	if (ACPI_FAILURE(status)) {
-		fprintf(stderr, "%s: Could not convert to a physical address\n",
+	status = acpi_ut_म_से_अदीर्घ64(ascii_address, &दीर्घ_address);
+	अगर (ACPI_FAILURE(status)) अणु
+		ख_लिखो(मानक_त्रुटि, "%s: Could not convert to a physical address\n",
 			ascii_address);
-		return (-1);
-	}
+		वापस (-1);
+	पूर्ण
 
-	address = (acpi_physical_address)long_address;
+	address = (acpi_physical_address)दीर्घ_address;
 	status = acpi_os_get_table_by_address(address, &table);
-	if (ACPI_FAILURE(status)) {
-		fprintf(stderr, "Could not get table at 0x%8.8X%8.8X, %s\n",
+	अगर (ACPI_FAILURE(status)) अणु
+		ख_लिखो(मानक_त्रुटि, "Could not get table at 0x%8.8X%8.8X, %s\n",
 			ACPI_FORMAT_UINT64(address),
-			acpi_format_exception(status));
-		return (-1);
-	}
+			acpi_क्रमmat_exception(status));
+		वापस (-1);
+	पूर्ण
 
 	table_status = ap_dump_table_buffer(table, 0, address);
 	ACPI_FREE(table);
-	return (table_status);
-}
+	वापस (table_status);
+पूर्ण
 
 /******************************************************************************
  *
@@ -287,66 +288,66 @@ int ap_dump_table_by_address(char *ascii_address)
  *
  ******************************************************************************/
 
-int ap_dump_table_by_name(char *signature)
-{
-	char local_signature[ACPI_NAMESEG_SIZE + 1];
+पूर्णांक ap_dump_table_by_name(अक्षर *signature)
+अणु
+	अक्षर local_signature[ACPI_NAMESEG_SIZE + 1];
 	u32 instance;
-	struct acpi_table_header *table;
+	काष्ठा acpi_table_header *table;
 	acpi_physical_address address;
 	acpi_status status;
-	int table_status;
+	पूर्णांक table_status;
 
-	if (strlen(signature) != ACPI_NAMESEG_SIZE) {
-		fprintf(stderr,
+	अगर (म_माप(signature) != ACPI_NAMESEG_SIZE) अणु
+		ख_लिखो(मानक_त्रुटि,
 			"Invalid table signature [%s]: must be exactly 4 characters\n",
 			signature);
-		return (-1);
-	}
+		वापस (-1);
+	पूर्ण
 
-	/* Table signatures are expected to be uppercase */
+	/* Table signatures are expected to be upperहाल */
 
-	strcpy(local_signature, signature);
+	म_नकल(local_signature, signature);
 	acpi_ut_strupr(local_signature);
 
-	/* To be friendly, handle tables whose signatures do not match the name */
+	/* To be मित्रly, handle tables whose signatures करो not match the name */
 
-	if (ACPI_COMPARE_NAMESEG(local_signature, "FADT")) {
-		strcpy(local_signature, ACPI_SIG_FADT);
-	} else if (ACPI_COMPARE_NAMESEG(local_signature, "MADT")) {
-		strcpy(local_signature, ACPI_SIG_MADT);
-	}
+	अगर (ACPI_COMPARE_NAMESEG(local_signature, "FADT")) अणु
+		म_नकल(local_signature, ACPI_SIG_FADT);
+	पूर्ण अन्यथा अगर (ACPI_COMPARE_NAMESEG(local_signature, "MADT")) अणु
+		म_नकल(local_signature, ACPI_SIG_MADT);
+	पूर्ण
 
 	/* Dump all instances of this signature (to handle multiple SSDTs) */
 
-	for (instance = 0; instance < AP_MAX_ACPI_FILES; instance++) {
+	क्रम (instance = 0; instance < AP_MAX_ACPI_खाताS; instance++) अणु
 		status = acpi_os_get_table_by_name(local_signature, instance,
 						   &table, &address);
-		if (ACPI_FAILURE(status)) {
+		अगर (ACPI_FAILURE(status)) अणु
 
 			/* AE_LIMIT means that no more tables are available */
 
-			if (status == AE_LIMIT) {
-				return (0);
-			}
+			अगर (status == AE_LIMIT) अणु
+				वापस (0);
+			पूर्ण
 
-			fprintf(stderr,
+			ख_लिखो(मानक_त्रुटि,
 				"Could not get ACPI table with signature [%s], %s\n",
-				local_signature, acpi_format_exception(status));
-			return (-1);
-		}
+				local_signature, acpi_क्रमmat_exception(status));
+			वापस (-1);
+		पूर्ण
 
 		table_status = ap_dump_table_buffer(table, instance, address);
 		ACPI_FREE(table);
 
-		if (table_status) {
-			break;
-		}
-	}
+		अगर (table_status) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Something seriously bad happened if the loop terminates here */
+	/* Something seriously bad happened अगर the loop terminates here */
 
-	return (-1);
-}
+	वापस (-1);
+पूर्ण
 
 /******************************************************************************
  *
@@ -360,43 +361,43 @@ int ap_dump_table_by_name(char *signature)
  *
  ******************************************************************************/
 
-int ap_dump_table_from_file(char *pathname)
-{
-	struct acpi_table_header *table;
+पूर्णांक ap_dump_table_from_file(अक्षर *pathname)
+अणु
+	काष्ठा acpi_table_header *table;
 	u32 file_size = 0;
-	int table_status = -1;
+	पूर्णांक table_status = -1;
 
 	/* Get the entire ACPI table from the file */
 
 	table = ap_get_table_from_file(pathname, &file_size);
-	if (!table) {
-		return (-1);
-	}
+	अगर (!table) अणु
+		वापस (-1);
+	पूर्ण
 
-	if (!acpi_ut_valid_nameseg(table->signature)) {
-		fprintf(stderr,
+	अगर (!acpi_ut_valid_nameseg(table->signature)) अणु
+		ख_लिखो(मानक_त्रुटि,
 			"No valid ACPI signature was found in input file %s\n",
 			pathname);
-	}
+	पूर्ण
 
-	/* File must be at least as long as the table length */
+	/* File must be at least as दीर्घ as the table length */
 
-	if (table->length > file_size) {
-		fprintf(stderr,
+	अगर (table->length > file_size) अणु
+		ख_लिखो(मानक_त्रुटि,
 			"Table length (0x%X) is too large for input file (0x%X) %s\n",
 			table->length, file_size, pathname);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (gbl_verbose_mode) {
-		fprintf(stderr,
+	अगर (gbl_verbose_mode) अणु
+		ख_लिखो(मानक_त्रुटि,
 			"Input file:  %s contains table [%4.4s], 0x%X (%u) bytes\n",
 			pathname, table->signature, file_size, file_size);
-	}
+	पूर्ण
 
 	table_status = ap_dump_table_buffer(table, 0, 0);
 
-exit:
+निकास:
 	ACPI_FREE(table);
-	return (table_status);
-}
+	वापस (table_status);
+पूर्ण

@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for NXP FXAS21002C Gyroscope - I2C
+ * Driver क्रम NXP FXAS21002C Gyroscope - I2C
  *
  * Copyright (C) 2018 Linaro Ltd.
  */
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
 
-#include "fxas21002c.h"
+#समावेश "fxas21002c.h"
 
-static const struct regmap_config fxas21002c_regmap_i2c_conf = {
+अटल स्थिर काष्ठा regmap_config fxas21002c_regmap_i2c_conf = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = FXAS21002C_REG_CTRL3,
-};
+	.max_रेजिस्टर = FXAS21002C_REG_CTRL3,
+पूर्ण;
 
-static int fxas21002c_i2c_probe(struct i2c_client *i2c)
-{
-	struct regmap *regmap;
+अटल पूर्णांक fxas21002c_i2c_probe(काष्ठा i2c_client *i2c)
+अणु
+	काष्ठा regmap *regmap;
 
 	regmap = devm_regmap_init_i2c(i2c, &fxas21002c_regmap_i2c_conf);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&i2c->dev, "Failed to register i2c regmap: %ld\n",
 			PTR_ERR(regmap));
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return fxas21002c_core_probe(&i2c->dev, regmap, i2c->irq, i2c->name);
-}
+	वापस fxas21002c_core_probe(&i2c->dev, regmap, i2c->irq, i2c->name);
+पूर्ण
 
-static int fxas21002c_i2c_remove(struct i2c_client *i2c)
-{
-	fxas21002c_core_remove(&i2c->dev);
+अटल पूर्णांक fxas21002c_i2c_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	fxas21002c_core_हटाओ(&i2c->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id fxas21002c_i2c_id[] = {
-	{ "fxas21002c", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id fxas21002c_i2c_id[] = अणु
+	अणु "fxas21002c", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, fxas21002c_i2c_id);
 
-static const struct of_device_id fxas21002c_i2c_of_match[] = {
-	{ .compatible = "nxp,fxas21002c", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id fxas21002c_i2c_of_match[] = अणु
+	अणु .compatible = "nxp,fxas21002c", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, fxas21002c_i2c_of_match);
 
-static struct i2c_driver fxas21002c_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver fxas21002c_i2c_driver = अणु
+	.driver = अणु
 		.name = "fxas21002c_i2c",
 		.pm = &fxas21002c_pm_ops,
 		.of_match_table = fxas21002c_i2c_of_match,
-	},
+	पूर्ण,
 	.probe_new	= fxas21002c_i2c_probe,
-	.remove		= fxas21002c_i2c_remove,
+	.हटाओ		= fxas21002c_i2c_हटाओ,
 	.id_table	= fxas21002c_i2c_id,
-};
+पूर्ण;
 module_i2c_driver(fxas21002c_i2c_driver);
 
 MODULE_AUTHOR("Rui Miguel Silva <rui.silva@linaro.org>");

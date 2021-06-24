@@ -1,282 +1,283 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef INTEL_WAKEREF_H
-#define INTEL_WAKEREF_H
+#अगर_अघोषित INTEL_WAKEREF_H
+#घोषणा INTEL_WAKEREF_H
 
-#include <linux/atomic.h>
-#include <linux/bitfield.h>
-#include <linux/bits.h>
-#include <linux/lockdep.h>
-#include <linux/mutex.h>
-#include <linux/refcount.h>
-#include <linux/stackdepot.h>
-#include <linux/timer.h>
-#include <linux/workqueue.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/stackdepot.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/workqueue.h>
 
-#if IS_ENABLED(CONFIG_DRM_I915_DEBUG)
-#define INTEL_WAKEREF_BUG_ON(expr) BUG_ON(expr)
-#else
-#define INTEL_WAKEREF_BUG_ON(expr) BUILD_BUG_ON_INVALID(expr)
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG)
+#घोषणा INTEL_WAKEREF_BUG_ON(expr) BUG_ON(expr)
+#अन्यथा
+#घोषणा INTEL_WAKEREF_BUG_ON(expr) BUILD_BUG_ON_INVALID(expr)
+#पूर्ण_अगर
 
-struct intel_runtime_pm;
-struct intel_wakeref;
+काष्ठा पूर्णांकel_runसमय_pm;
+काष्ठा पूर्णांकel_wakeref;
 
-typedef depot_stack_handle_t intel_wakeref_t;
+प्रकार depot_stack_handle_t पूर्णांकel_wakeref_t;
 
-struct intel_wakeref_ops {
-	int (*get)(struct intel_wakeref *wf);
-	int (*put)(struct intel_wakeref *wf);
-};
+काष्ठा पूर्णांकel_wakeref_ops अणु
+	पूर्णांक (*get)(काष्ठा पूर्णांकel_wakeref *wf);
+	पूर्णांक (*put)(काष्ठा पूर्णांकel_wakeref *wf);
+पूर्ण;
 
-struct intel_wakeref {
+काष्ठा पूर्णांकel_wakeref अणु
 	atomic_t count;
-	struct mutex mutex;
+	काष्ठा mutex mutex;
 
-	intel_wakeref_t wakeref;
+	पूर्णांकel_wakeref_t wakeref;
 
-	struct intel_runtime_pm *rpm;
-	const struct intel_wakeref_ops *ops;
+	काष्ठा पूर्णांकel_runसमय_pm *rpm;
+	स्थिर काष्ठा पूर्णांकel_wakeref_ops *ops;
 
-	struct delayed_work work;
-};
+	काष्ठा delayed_work work;
+पूर्ण;
 
-struct intel_wakeref_lockclass {
-	struct lock_class_key mutex;
-	struct lock_class_key work;
-};
+काष्ठा पूर्णांकel_wakeref_lockclass अणु
+	काष्ठा lock_class_key mutex;
+	काष्ठा lock_class_key work;
+पूर्ण;
 
-void __intel_wakeref_init(struct intel_wakeref *wf,
-			  struct intel_runtime_pm *rpm,
-			  const struct intel_wakeref_ops *ops,
-			  struct intel_wakeref_lockclass *key);
-#define intel_wakeref_init(wf, rpm, ops) do {				\
-	static struct intel_wakeref_lockclass __key;			\
+व्योम __पूर्णांकel_wakeref_init(काष्ठा पूर्णांकel_wakeref *wf,
+			  काष्ठा पूर्णांकel_runसमय_pm *rpm,
+			  स्थिर काष्ठा पूर्णांकel_wakeref_ops *ops,
+			  काष्ठा पूर्णांकel_wakeref_lockclass *key);
+#घोषणा पूर्णांकel_wakeref_init(wf, rpm, ops) करो अणु				\
+	अटल काष्ठा पूर्णांकel_wakeref_lockclass __key;			\
 									\
-	__intel_wakeref_init((wf), (rpm), (ops), &__key);		\
-} while (0)
+	__पूर्णांकel_wakeref_init((wf), (rpm), (ops), &__key);		\
+पूर्ण जबतक (0)
 
-int __intel_wakeref_get_first(struct intel_wakeref *wf);
-void __intel_wakeref_put_last(struct intel_wakeref *wf, unsigned long flags);
+पूर्णांक __पूर्णांकel_wakeref_get_first(काष्ठा पूर्णांकel_wakeref *wf);
+व्योम __पूर्णांकel_wakeref_put_last(काष्ठा पूर्णांकel_wakeref *wf, अचिन्हित दीर्घ flags);
 
 /**
- * intel_wakeref_get: Acquire the wakeref
+ * पूर्णांकel_wakeref_get: Acquire the wakeref
  * @wf: the wakeref
  *
- * Acquire a hold on the wakeref. The first user to do so, will acquire
- * the runtime pm wakeref and then call the @fn underneath the wakeref
+ * Acquire a hold on the wakeref. The first user to करो so, will acquire
+ * the runसमय pm wakeref and then call the @fn underneath the wakeref
  * mutex.
  *
- * Note that @fn is allowed to fail, in which case the runtime-pm wakeref
+ * Note that @fn is allowed to fail, in which हाल the runसमय-pm wakeref
  * will be released and the acquisition unwound, and an error reported.
  *
- * Returns: 0 if the wakeref was acquired successfully, or a negative error
+ * Returns: 0 अगर the wakeref was acquired successfully, or a negative error
  * code otherwise.
  */
-static inline int
-intel_wakeref_get(struct intel_wakeref *wf)
-{
+अटल अंतरभूत पूर्णांक
+पूर्णांकel_wakeref_get(काष्ठा पूर्णांकel_wakeref *wf)
+अणु
 	might_sleep();
-	if (unlikely(!atomic_inc_not_zero(&wf->count)))
-		return __intel_wakeref_get_first(wf);
+	अगर (unlikely(!atomic_inc_not_zero(&wf->count)))
+		वापस __पूर्णांकel_wakeref_get_first(wf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * __intel_wakeref_get: Acquire the wakeref, again
+ * __पूर्णांकel_wakeref_get: Acquire the wakeref, again
  * @wf: the wakeref
  *
- * Increment the wakeref counter, only valid if it is already held by
+ * Increment the wakeref counter, only valid अगर it is alपढ़ोy held by
  * the caller.
  *
- * See intel_wakeref_get().
+ * See पूर्णांकel_wakeref_get().
  */
-static inline void
-__intel_wakeref_get(struct intel_wakeref *wf)
-{
-	INTEL_WAKEREF_BUG_ON(atomic_read(&wf->count) <= 0);
+अटल अंतरभूत व्योम
+__पूर्णांकel_wakeref_get(काष्ठा पूर्णांकel_wakeref *wf)
+अणु
+	INTEL_WAKEREF_BUG_ON(atomic_पढ़ो(&wf->count) <= 0);
 	atomic_inc(&wf->count);
-}
+पूर्ण
 
 /**
- * intel_wakeref_get_if_in_use: Acquire the wakeref
+ * पूर्णांकel_wakeref_get_अगर_in_use: Acquire the wakeref
  * @wf: the wakeref
  *
- * Acquire a hold on the wakeref, but only if the wakeref is already
+ * Acquire a hold on the wakeref, but only अगर the wakeref is alपढ़ोy
  * active.
  *
- * Returns: true if the wakeref was acquired, false otherwise.
+ * Returns: true अगर the wakeref was acquired, false otherwise.
  */
-static inline bool
-intel_wakeref_get_if_active(struct intel_wakeref *wf)
-{
-	return atomic_inc_not_zero(&wf->count);
-}
+अटल अंतरभूत bool
+पूर्णांकel_wakeref_get_अगर_active(काष्ठा पूर्णांकel_wakeref *wf)
+अणु
+	वापस atomic_inc_not_zero(&wf->count);
+पूर्ण
 
-enum {
+क्रमागत अणु
 	INTEL_WAKEREF_PUT_ASYNC_BIT = 0,
 	__INTEL_WAKEREF_PUT_LAST_BIT__
-};
+पूर्ण;
 
 /**
- * intel_wakeref_put_flags: Release the wakeref
+ * पूर्णांकel_wakeref_put_flags: Release the wakeref
  * @wf: the wakeref
  * @flags: control flags
  *
  * Release our hold on the wakeref. When there are no more users,
- * the runtime pm wakeref will be released after the @fn callback is called
+ * the runसमय pm wakeref will be released after the @fn callback is called
  * underneath the wakeref mutex.
  *
- * Note that @fn is allowed to fail, in which case the runtime-pm wakeref
+ * Note that @fn is allowed to fail, in which हाल the runसमय-pm wakeref
  * is retained and an error reported.
  *
- * Returns: 0 if the wakeref was released successfully, or a negative error
+ * Returns: 0 अगर the wakeref was released successfully, or a negative error
  * code otherwise.
  */
-static inline void
-__intel_wakeref_put(struct intel_wakeref *wf, unsigned long flags)
-#define INTEL_WAKEREF_PUT_ASYNC BIT(INTEL_WAKEREF_PUT_ASYNC_BIT)
-#define INTEL_WAKEREF_PUT_DELAY \
+अटल अंतरभूत व्योम
+__पूर्णांकel_wakeref_put(काष्ठा पूर्णांकel_wakeref *wf, अचिन्हित दीर्घ flags)
+#घोषणा INTEL_WAKEREF_PUT_ASYNC BIT(INTEL_WAKEREF_PUT_ASYNC_BIT)
+#घोषणा INTEL_WAKEREF_PUT_DELAY \
 	GENMASK(BITS_PER_LONG - 1, __INTEL_WAKEREF_PUT_LAST_BIT__)
-{
-	INTEL_WAKEREF_BUG_ON(atomic_read(&wf->count) <= 0);
-	if (unlikely(!atomic_add_unless(&wf->count, -1, 1)))
-		__intel_wakeref_put_last(wf, flags);
-}
+अणु
+	INTEL_WAKEREF_BUG_ON(atomic_पढ़ो(&wf->count) <= 0);
+	अगर (unlikely(!atomic_add_unless(&wf->count, -1, 1)))
+		__पूर्णांकel_wakeref_put_last(wf, flags);
+पूर्ण
 
-static inline void
-intel_wakeref_put(struct intel_wakeref *wf)
-{
+अटल अंतरभूत व्योम
+पूर्णांकel_wakeref_put(काष्ठा पूर्णांकel_wakeref *wf)
+अणु
 	might_sleep();
-	__intel_wakeref_put(wf, 0);
-}
+	__पूर्णांकel_wakeref_put(wf, 0);
+पूर्ण
 
-static inline void
-intel_wakeref_put_async(struct intel_wakeref *wf)
-{
-	__intel_wakeref_put(wf, INTEL_WAKEREF_PUT_ASYNC);
-}
+अटल अंतरभूत व्योम
+पूर्णांकel_wakeref_put_async(काष्ठा पूर्णांकel_wakeref *wf)
+अणु
+	__पूर्णांकel_wakeref_put(wf, INTEL_WAKEREF_PUT_ASYNC);
+पूर्ण
 
-static inline void
-intel_wakeref_put_delay(struct intel_wakeref *wf, unsigned long delay)
-{
-	__intel_wakeref_put(wf,
+अटल अंतरभूत व्योम
+पूर्णांकel_wakeref_put_delay(काष्ठा पूर्णांकel_wakeref *wf, अचिन्हित दीर्घ delay)
+अणु
+	__पूर्णांकel_wakeref_put(wf,
 			    INTEL_WAKEREF_PUT_ASYNC |
 			    FIELD_PREP(INTEL_WAKEREF_PUT_DELAY, delay));
-}
+पूर्ण
 
 /**
- * intel_wakeref_lock: Lock the wakeref (mutex)
+ * पूर्णांकel_wakeref_lock: Lock the wakeref (mutex)
  * @wf: the wakeref
  *
  * Locks the wakeref to prevent it being acquired or released. New users
  * can still adjust the counter, but the wakeref itself (and callback)
  * cannot be acquired or released.
  */
-static inline void
-intel_wakeref_lock(struct intel_wakeref *wf)
+अटल अंतरभूत व्योम
+पूर्णांकel_wakeref_lock(काष्ठा पूर्णांकel_wakeref *wf)
 	__acquires(wf->mutex)
-{
+अणु
 	mutex_lock(&wf->mutex);
-}
+पूर्ण
 
 /**
- * intel_wakeref_unlock: Unlock the wakeref
+ * पूर्णांकel_wakeref_unlock: Unlock the wakeref
  * @wf: the wakeref
  *
- * Releases a previously acquired intel_wakeref_lock().
+ * Releases a previously acquired पूर्णांकel_wakeref_lock().
  */
-static inline void
-intel_wakeref_unlock(struct intel_wakeref *wf)
+अटल अंतरभूत व्योम
+पूर्णांकel_wakeref_unlock(काष्ठा पूर्णांकel_wakeref *wf)
 	__releases(wf->mutex)
-{
+अणु
 	mutex_unlock(&wf->mutex);
-}
+पूर्ण
 
 /**
- * intel_wakeref_unlock_wait: Wait until the active callback is complete
+ * पूर्णांकel_wakeref_unlock_रुको: Wait until the active callback is complete
  * @wf: the wakeref
  *
- * Waits for the active callback (under the @wf->mutex or another CPU) is
+ * Waits क्रम the active callback (under the @wf->mutex or another CPU) is
  * complete.
  */
-static inline void
-intel_wakeref_unlock_wait(struct intel_wakeref *wf)
-{
+अटल अंतरभूत व्योम
+पूर्णांकel_wakeref_unlock_रुको(काष्ठा पूर्णांकel_wakeref *wf)
+अणु
 	mutex_lock(&wf->mutex);
 	mutex_unlock(&wf->mutex);
 	flush_delayed_work(&wf->work);
-}
+पूर्ण
 
 /**
- * intel_wakeref_is_active: Query whether the wakeref is currently held
+ * पूर्णांकel_wakeref_is_active: Query whether the wakeref is currently held
  * @wf: the wakeref
  *
- * Returns: true if the wakeref is currently held.
+ * Returns: true अगर the wakeref is currently held.
  */
-static inline bool
-intel_wakeref_is_active(const struct intel_wakeref *wf)
-{
-	return READ_ONCE(wf->wakeref);
-}
+अटल अंतरभूत bool
+पूर्णांकel_wakeref_is_active(स्थिर काष्ठा पूर्णांकel_wakeref *wf)
+अणु
+	वापस READ_ONCE(wf->wakeref);
+पूर्ण
 
 /**
- * __intel_wakeref_defer_park: Defer the current park callback
+ * __पूर्णांकel_wakeref_defer_park: Defer the current park callback
  * @wf: the wakeref
  */
-static inline void
-__intel_wakeref_defer_park(struct intel_wakeref *wf)
-{
-	lockdep_assert_held(&wf->mutex);
-	INTEL_WAKEREF_BUG_ON(atomic_read(&wf->count));
+अटल अंतरभूत व्योम
+__पूर्णांकel_wakeref_defer_park(काष्ठा पूर्णांकel_wakeref *wf)
+अणु
+	lockdep_निश्चित_held(&wf->mutex);
+	INTEL_WAKEREF_BUG_ON(atomic_पढ़ो(&wf->count));
 	atomic_set_release(&wf->count, 1);
-}
+पूर्ण
 
 /**
- * intel_wakeref_wait_for_idle: Wait until the wakeref is idle
+ * पूर्णांकel_wakeref_रुको_क्रम_idle: Wait until the wakeref is idle
  * @wf: the wakeref
  *
- * Wait for the earlier asynchronous release of the wakeref. Note
- * this will wait for any third party as well, so make sure you only wait
- * when you have control over the wakeref and trust no one else is acquiring
+ * Wait क्रम the earlier asynchronous release of the wakeref. Note
+ * this will रुको क्रम any third party as well, so make sure you only रुको
+ * when you have control over the wakeref and trust no one अन्यथा is acquiring
  * it.
  *
- * Return: 0 on success, error code if killed.
+ * Return: 0 on success, error code अगर समाप्तed.
  */
-int intel_wakeref_wait_for_idle(struct intel_wakeref *wf);
+पूर्णांक पूर्णांकel_wakeref_रुको_क्रम_idle(काष्ठा पूर्णांकel_wakeref *wf);
 
-struct intel_wakeref_auto {
-	struct intel_runtime_pm *rpm;
-	struct timer_list timer;
-	intel_wakeref_t wakeref;
+काष्ठा पूर्णांकel_wakeref_स्वतः अणु
+	काष्ठा पूर्णांकel_runसमय_pm *rpm;
+	काष्ठा समयr_list समयr;
+	पूर्णांकel_wakeref_t wakeref;
 	spinlock_t lock;
 	refcount_t count;
-};
+पूर्ण;
 
 /**
- * intel_wakeref_auto: Delay the runtime-pm autosuspend
+ * पूर्णांकel_wakeref_स्वतः: Delay the runसमय-pm स्वतःsuspend
  * @wf: the wakeref
- * @timeout: relative timeout in jiffies
+ * @समयout: relative समयout in jअगरfies
  *
- * The runtime-pm core uses a suspend delay after the last wakeref
- * is released before triggering runtime suspend of the device. That
+ * The runसमय-pm core uses a suspend delay after the last wakeref
+ * is released beक्रमe triggering runसमय suspend of the device. That
  * delay is configurable via sysfs with little regard to the device
- * characteristics. Instead, we want to tune the autosuspend based on our
- * HW knowledge. intel_wakeref_auto() delays the sleep by the supplied
- * timeout.
+ * अक्षरacteristics. Instead, we want to tune the स्वतःsuspend based on our
+ * HW knowledge. पूर्णांकel_wakeref_स्वतः() delays the sleep by the supplied
+ * समयout.
  *
- * Pass @timeout = 0 to cancel a previous autosuspend by executing the
+ * Pass @समयout = 0 to cancel a previous स्वतःsuspend by executing the
  * suspend immediately.
  */
-void intel_wakeref_auto(struct intel_wakeref_auto *wf, unsigned long timeout);
+व्योम पूर्णांकel_wakeref_स्वतः(काष्ठा पूर्णांकel_wakeref_स्वतः *wf, अचिन्हित दीर्घ समयout);
 
-void intel_wakeref_auto_init(struct intel_wakeref_auto *wf,
-			     struct intel_runtime_pm *rpm);
-void intel_wakeref_auto_fini(struct intel_wakeref_auto *wf);
+व्योम पूर्णांकel_wakeref_स्वतः_init(काष्ठा पूर्णांकel_wakeref_स्वतः *wf,
+			     काष्ठा पूर्णांकel_runसमय_pm *rpm);
+व्योम पूर्णांकel_wakeref_स्वतः_fini(काष्ठा पूर्णांकel_wakeref_स्वतः *wf);
 
-#endif /* INTEL_WAKEREF_H */
+#पूर्ण_अगर /* INTEL_WAKEREF_H */

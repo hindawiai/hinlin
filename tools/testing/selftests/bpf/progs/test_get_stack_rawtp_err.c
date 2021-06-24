@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-#define MAX_STACK_RAWTP 10
+#घोषणा MAX_STACK_RAWTP 10
 
 SEC("raw_tracepoint/sys_enter")
-int bpf_prog2(void *ctx)
-{
+पूर्णांक bpf_prog2(व्योम *ctx)
+अणु
 	__u64 stack[MAX_STACK_RAWTP];
-	int error;
+	पूर्णांक error;
 
-	/* set all the flags which should return -EINVAL */
+	/* set all the flags which should वापस -EINVAL */
 	error = bpf_get_stack(ctx, stack, 0, -1);
-	if (error < 0)
-		goto loop;
+	अगर (error < 0)
+		जाओ loop;
 
-	return error;
+	वापस error;
 loop:
-	while (1) {
+	जबतक (1) अणु
 		error++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * TTUSB DEC Driver
  *
  * Copyright (C) 2003-2004 Alex Woods <linux-dvb@giblets.org>
  */
 
-#ifndef TTUSBDECFE_H
-#define TTUSBDECFE_H
+#अगर_अघोषित TTUSBDECFE_H
+#घोषणा TTUSBDECFE_H
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-struct ttusbdecfe_config
-{
-	int (*send_command)(struct dvb_frontend* fe, const u8 command,
-			    int param_length, const u8 params[],
-			    int *result_length, u8 cmd_result[]);
-};
+काष्ठा ttusbdecfe_config
+अणु
+	पूर्णांक (*send_command)(काष्ठा dvb_frontend* fe, स्थिर u8 command,
+			    पूर्णांक param_length, स्थिर u8 params[],
+			    पूर्णांक *result_length, u8 cmd_result[]);
+पूर्ण;
 
-extern struct dvb_frontend* ttusbdecfe_dvbs_attach(const struct ttusbdecfe_config* config);
+बाह्य काष्ठा dvb_frontend* ttusbdecfe_dvbs_attach(स्थिर काष्ठा ttusbdecfe_config* config);
 
-extern struct dvb_frontend* ttusbdecfe_dvbt_attach(const struct ttusbdecfe_config* config);
+बाह्य काष्ठा dvb_frontend* ttusbdecfe_dvbt_attach(स्थिर काष्ठा ttusbdecfe_config* config);
 
-#endif // TTUSBDECFE_H
+#पूर्ण_अगर // TTUSBDECFE_H

@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * IBM/3270 Driver - core functions.
  *
  * Author(s):
- *   Original 3270 Code for 2.4 written by Richard Hitt (UTS Global)
- *   Rewritten for 2.5 by Martin Schwidefsky <schwidefsky@de.ibm.com>
+ *   Original 3270 Code क्रम 2.4 written by Riअक्षरd Hitt (UTS Global)
+ *   Rewritten क्रम 2.5 by Martin Schwidefsky <schwidefsky@de.ibm.com>
  *     Copyright IBM Corp. 2003, 2009
  */
 
-#include <linux/module.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/wait.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/रुको.h>
 
-#include <asm/ccwdev.h>
-#include <asm/cio.h>
-#include <asm/ebcdic.h>
-#include <asm/diag.h>
+#समावेश <यंत्र/ccwdev.h>
+#समावेश <यंत्र/cपन.स>
+#समावेश <यंत्र/ebcdic.h>
+#समावेश <यंत्र/diag.h>
 
-#include "raw3270.h"
+#समावेश "raw3270.h"
 
-#include <linux/major.h>
-#include <linux/kdev_t.h>
-#include <linux/device.h>
-#include <linux/mutex.h>
+#समावेश <linux/major.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mutex.h>
 
-struct class *class3270;
+काष्ठा class *class3270;
 
-/* The main 3270 data structure. */
-struct raw3270 {
-	struct list_head list;
-	struct ccw_device *cdev;
-	int minor;
+/* The मुख्य 3270 data काष्ठाure. */
+काष्ठा raw3270 अणु
+	काष्ठा list_head list;
+	काष्ठा ccw_device *cdev;
+	पूर्णांक minor;
 
-	short model, rows, cols;
-	unsigned int state;
-	unsigned long flags;
+	लघु model, rows, cols;
+	अचिन्हित पूर्णांक state;
+	अचिन्हित दीर्घ flags;
 
-	struct list_head req_queue;	/* Request queue. */
-	struct list_head view_list;	/* List of available views. */
-	struct raw3270_view *view;	/* Active view. */
+	काष्ठा list_head req_queue;	/* Request queue. */
+	काष्ठा list_head view_list;	/* List of available views. */
+	काष्ठा raw3270_view *view;	/* Active view. */
 
-	struct timer_list timer;	/* Device timer. */
+	काष्ठा समयr_list समयr;	/* Device समयr. */
 
-	unsigned char *ascebc;		/* ascii -> ebcdic table */
+	अचिन्हित अक्षर *ascebc;		/* ascii -> ebcdic table */
 
-	struct raw3270_view init_view;
-	struct raw3270_request init_reset;
-	struct raw3270_request init_readpart;
-	struct raw3270_request init_readmod;
-	unsigned char init_data[256];
-};
+	काष्ठा raw3270_view init_view;
+	काष्ठा raw3270_request init_reset;
+	काष्ठा raw3270_request init_पढ़ोpart;
+	काष्ठा raw3270_request init_पढ़ोmod;
+	अचिन्हित अक्षर init_data[256];
+पूर्ण;
 
 /* raw3270->state */
-#define RAW3270_STATE_INIT	0	/* Initial state */
-#define RAW3270_STATE_RESET	1	/* Reset command is pending */
-#define RAW3270_STATE_W4ATTN	2	/* Wait for attention interrupt */
-#define RAW3270_STATE_READMOD	3	/* Read partition is pending */
-#define RAW3270_STATE_READY	4	/* Device is usable by views */
+#घोषणा RAW3270_STATE_INIT	0	/* Initial state */
+#घोषणा RAW3270_STATE_RESET	1	/* Reset command is pending */
+#घोषणा RAW3270_STATE_W4ATTN	2	/* Wait क्रम attention पूर्णांकerrupt */
+#घोषणा RAW3270_STATE_READMOD	3	/* Read partition is pending */
+#घोषणा RAW3270_STATE_READY	4	/* Device is usable by views */
 
 /* raw3270->flags */
-#define RAW3270_FLAGS_14BITADDR	0	/* 14-bit buffer addresses */
-#define RAW3270_FLAGS_BUSY	1	/* Device busy, leave it alone */
-#define RAW3270_FLAGS_CONSOLE	2	/* Device is the console. */
+#घोषणा RAW3270_FLAGS_14BITADDR	0	/* 14-bit buffer addresses */
+#घोषणा RAW3270_FLAGS_BUSY	1	/* Device busy, leave it alone */
+#घोषणा RAW3270_FLAGS_CONSOLE	2	/* Device is the console. */
 
 /* Semaphore to protect global data of raw3270 (devices, views, etc). */
-static DEFINE_MUTEX(raw3270_mutex);
+अटल DEFINE_MUTEX(raw3270_mutex);
 
 /* List of 3270 devices. */
-static LIST_HEAD(raw3270_devices);
+अटल LIST_HEAD(raw3270_devices);
 
 /*
- * Flag to indicate if the driver has been registered. Some operations
- * like waiting for the end of i/o need to be done differently as long
+ * Flag to indicate अगर the driver has been रेजिस्टरed. Some operations
+ * like रुकोing क्रम the end of i/o need to be करोne dअगरferently as दीर्घ
  * as the kernel is still starting up (console support).
  */
-static int raw3270_registered;
+अटल पूर्णांक raw3270_रेजिस्टरed;
 
 /* Module parameters */
-static bool tubxcorrect;
+अटल bool tubxcorrect;
 module_param(tubxcorrect, bool, 0);
 
 /*
- * Wait queue for device init/delete, view delete.
+ * Wait queue क्रम device init/delete, view delete.
  */
-DECLARE_WAIT_QUEUE_HEAD(raw3270_wait_queue);
+DECLARE_WAIT_QUEUE_HEAD(raw3270_रुको_queue);
 
-static void __raw3270_disconnect(struct raw3270 *rp);
+अटल व्योम __raw3270_disconnect(काष्ठा raw3270 *rp);
 
 /*
- * Encode array for 12 bit 3270 addresses.
+ * Encode array क्रम 12 bit 3270 addresses.
  */
-static unsigned char raw3270_ebcgraf[64] =	{
+अटल अचिन्हित अक्षर raw3270_ebcgraf[64] =	अणु
 	0x40, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
 	0xc8, 0xc9, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
 	0x50, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7,
@@ -104,52 +105,52 @@ static unsigned char raw3270_ebcgraf[64] =	{
 	0xe8, 0xe9, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
 	0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
 	0xf8, 0xf9, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f
-};
+पूर्ण;
 
-static inline int raw3270_state_ready(struct raw3270 *rp)
-{
-	return rp->state == RAW3270_STATE_READY;
-}
+अटल अंतरभूत पूर्णांक raw3270_state_पढ़ोy(काष्ठा raw3270 *rp)
+अणु
+	वापस rp->state == RAW3270_STATE_READY;
+पूर्ण
 
-static inline int raw3270_state_final(struct raw3270 *rp)
-{
-	return rp->state == RAW3270_STATE_INIT ||
+अटल अंतरभूत पूर्णांक raw3270_state_final(काष्ठा raw3270 *rp)
+अणु
+	वापस rp->state == RAW3270_STATE_INIT ||
 		rp->state == RAW3270_STATE_READY;
-}
+पूर्ण
 
-void
-raw3270_buffer_address(struct raw3270 *rp, char *cp, unsigned short addr)
-{
-	if (test_bit(RAW3270_FLAGS_14BITADDR, &rp->flags)) {
+व्योम
+raw3270_buffer_address(काष्ठा raw3270 *rp, अक्षर *cp, अचिन्हित लघु addr)
+अणु
+	अगर (test_bit(RAW3270_FLAGS_14BITADDR, &rp->flags)) अणु
 		cp[0] = (addr >> 8) & 0x3f;
 		cp[1] = addr & 0xff;
-	} else {
+	पूर्ण अन्यथा अणु
 		cp[0] = raw3270_ebcgraf[(addr >> 6) & 0x3f];
 		cp[1] = raw3270_ebcgraf[addr & 0x3f];
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Allocate a new 3270 ccw request
  */
-struct raw3270_request *
-raw3270_request_alloc(size_t size)
-{
-	struct raw3270_request *rq;
+काष्ठा raw3270_request *
+raw3270_request_alloc(माप_प्रकार size)
+अणु
+	काष्ठा raw3270_request *rq;
 
-	/* Allocate request structure */
-	rq = kzalloc(sizeof(struct raw3270_request), GFP_KERNEL | GFP_DMA);
-	if (!rq)
-		return ERR_PTR(-ENOMEM);
+	/* Allocate request काष्ठाure */
+	rq = kzalloc(माप(काष्ठा raw3270_request), GFP_KERNEL | GFP_DMA);
+	अगर (!rq)
+		वापस ERR_PTR(-ENOMEM);
 
 	/* alloc output buffer. */
-	if (size > 0) {
-		rq->buffer = kmalloc(size, GFP_KERNEL | GFP_DMA);
-		if (!rq->buffer) {
-			kfree(rq);
-			return ERR_PTR(-ENOMEM);
-		}
-	}
+	अगर (size > 0) अणु
+		rq->buffer = kदो_स्मृति(size, GFP_KERNEL | GFP_DMA);
+		अगर (!rq->buffer) अणु
+			kमुक्त(rq);
+			वापस ERR_PTR(-ENOMEM);
+		पूर्ण
+	पूर्ण
 	rq->size = size;
 	INIT_LIST_HEAD(&rq->list);
 
@@ -159,25 +160,25 @@ raw3270_request_alloc(size_t size)
 	rq->ccw.cda = __pa(rq->buffer);
 	rq->ccw.flags = CCW_FLAG_SLI;
 
-	return rq;
-}
+	वापस rq;
+पूर्ण
 
 /*
  * Free 3270 ccw request
  */
-void
-raw3270_request_free (struct raw3270_request *rq)
-{
-	kfree(rq->buffer);
-	kfree(rq);
-}
+व्योम
+raw3270_request_मुक्त (काष्ठा raw3270_request *rq)
+अणु
+	kमुक्त(rq->buffer);
+	kमुक्त(rq);
+पूर्ण
 
 /*
  * Reset request to initial state.
  */
-void
-raw3270_request_reset(struct raw3270_request *rq)
-{
+व्योम
+raw3270_request_reset(काष्ठा raw3270_request *rq)
+अणु
 	BUG_ON(!list_empty(&rq->list));
 	rq->ccw.cmd_code = 0;
 	rq->ccw.count = 0;
@@ -185,414 +186,414 @@ raw3270_request_reset(struct raw3270_request *rq)
 	rq->ccw.flags = CCW_FLAG_SLI;
 	rq->rescnt = 0;
 	rq->rc = 0;
-}
+पूर्ण
 
 /*
  * Set command code to ccw of a request.
  */
-void
-raw3270_request_set_cmd(struct raw3270_request *rq, u8 cmd)
-{
+व्योम
+raw3270_request_set_cmd(काष्ठा raw3270_request *rq, u8 cmd)
+अणु
 	rq->ccw.cmd_code = cmd;
-}
+पूर्ण
 
 /*
  * Add data fragment to output buffer.
  */
-int
-raw3270_request_add_data(struct raw3270_request *rq, void *data, size_t size)
-{
-	if (size + rq->ccw.count > rq->size)
-		return -E2BIG;
-	memcpy(rq->buffer + rq->ccw.count, data, size);
+पूर्णांक
+raw3270_request_add_data(काष्ठा raw3270_request *rq, व्योम *data, माप_प्रकार size)
+अणु
+	अगर (size + rq->ccw.count > rq->size)
+		वापस -E2BIG;
+	स_नकल(rq->buffer + rq->ccw.count, data, size);
 	rq->ccw.count += size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Set address/length pair to ccw of a request.
  */
-void
-raw3270_request_set_data(struct raw3270_request *rq, void *data, size_t size)
-{
+व्योम
+raw3270_request_set_data(काष्ठा raw3270_request *rq, व्योम *data, माप_प्रकार size)
+अणु
 	rq->ccw.cda = __pa(data);
 	rq->ccw.count = size;
-}
+पूर्ण
 
 /*
  * Set idal buffer to ccw of a request.
  */
-void
-raw3270_request_set_idal(struct raw3270_request *rq, struct idal_buffer *ib)
-{
+व्योम
+raw3270_request_set_idal(काष्ठा raw3270_request *rq, काष्ठा idal_buffer *ib)
+अणु
 	rq->ccw.cda = __pa(ib->data);
 	rq->ccw.count = ib->size;
 	rq->ccw.flags |= CCW_FLAG_IDA;
-}
+पूर्ण
 
 /*
- * Add the request to the request queue, try to start it if the
- * 3270 device is idle. Return without waiting for end of i/o.
+ * Add the request to the request queue, try to start it अगर the
+ * 3270 device is idle. Return without रुकोing क्रम end of i/o.
  */
-static int
-__raw3270_start(struct raw3270 *rp, struct raw3270_view *view,
-		struct raw3270_request *rq)
-{
+अटल पूर्णांक
+__raw3270_start(काष्ठा raw3270 *rp, काष्ठा raw3270_view *view,
+		काष्ठा raw3270_request *rq)
+अणु
 	rq->view = view;
 	raw3270_get_view(view);
-	if (list_empty(&rp->req_queue) &&
-	    !test_bit(RAW3270_FLAGS_BUSY, &rp->flags)) {
+	अगर (list_empty(&rp->req_queue) &&
+	    !test_bit(RAW3270_FLAGS_BUSY, &rp->flags)) अणु
 		/* No other requests are on the queue. Start this one. */
 		rq->rc = ccw_device_start(rp->cdev, &rq->ccw,
-					       (unsigned long) rq, 0, 0);
-		if (rq->rc) {
+					       (अचिन्हित दीर्घ) rq, 0, 0);
+		अगर (rq->rc) अणु
 			raw3270_put_view(view);
-			return rq->rc;
-		}
-	}
+			वापस rq->rc;
+		पूर्ण
+	पूर्ण
 	list_add_tail(&rq->list, &rp->req_queue);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-raw3270_view_active(struct raw3270_view *view)
-{
-	struct raw3270 *rp = view->dev;
+पूर्णांक
+raw3270_view_active(काष्ठा raw3270_view *view)
+अणु
+	काष्ठा raw3270 *rp = view->dev;
 
-	return rp && rp->view == view;
-}
+	वापस rp && rp->view == view;
+पूर्ण
 
-int
-raw3270_start(struct raw3270_view *view, struct raw3270_request *rq)
-{
-	unsigned long flags;
-	struct raw3270 *rp;
-	int rc;
+पूर्णांक
+raw3270_start(काष्ठा raw3270_view *view, काष्ठा raw3270_request *rq)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा raw3270 *rp;
+	पूर्णांक rc;
 
 	spin_lock_irqsave(get_ccwdev_lock(view->dev->cdev), flags);
 	rp = view->dev;
-	if (!rp || rp->view != view)
+	अगर (!rp || rp->view != view)
 		rc = -EACCES;
-	else if (!raw3270_state_ready(rp))
+	अन्यथा अगर (!raw3270_state_पढ़ोy(rp))
 		rc = -EBUSY;
-	else
+	अन्यथा
 		rc =  __raw3270_start(rp, view, rq);
 	spin_unlock_irqrestore(get_ccwdev_lock(view->dev->cdev), flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int
-raw3270_start_locked(struct raw3270_view *view, struct raw3270_request *rq)
-{
-	struct raw3270 *rp;
-	int rc;
+पूर्णांक
+raw3270_start_locked(काष्ठा raw3270_view *view, काष्ठा raw3270_request *rq)
+अणु
+	काष्ठा raw3270 *rp;
+	पूर्णांक rc;
 
 	rp = view->dev;
-	if (!rp || rp->view != view)
+	अगर (!rp || rp->view != view)
 		rc = -EACCES;
-	else if (!raw3270_state_ready(rp))
+	अन्यथा अगर (!raw3270_state_पढ़ोy(rp))
 		rc = -EBUSY;
-	else
+	अन्यथा
 		rc =  __raw3270_start(rp, view, rq);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int
-raw3270_start_irq(struct raw3270_view *view, struct raw3270_request *rq)
-{
-	struct raw3270 *rp;
+पूर्णांक
+raw3270_start_irq(काष्ठा raw3270_view *view, काष्ठा raw3270_request *rq)
+अणु
+	काष्ठा raw3270 *rp;
 
 	rp = view->dev;
 	rq->view = view;
 	raw3270_get_view(view);
 	list_add_tail(&rq->list, &rp->req_queue);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * 3270 interrupt routine, called from the ccw_device layer
+ * 3270 पूर्णांकerrupt routine, called from the ccw_device layer
  */
-static void
-raw3270_irq (struct ccw_device *cdev, unsigned long intparm, struct irb *irb)
-{
-	struct raw3270 *rp;
-	struct raw3270_view *view;
-	struct raw3270_request *rq;
+अटल व्योम
+raw3270_irq (काष्ठा ccw_device *cdev, अचिन्हित दीर्घ पूर्णांकparm, काष्ठा irb *irb)
+अणु
+	काष्ठा raw3270 *rp;
+	काष्ठा raw3270_view *view;
+	काष्ठा raw3270_request *rq;
 
 	rp = dev_get_drvdata(&cdev->dev);
-	if (!rp)
-		return;
-	rq = (struct raw3270_request *) intparm;
+	अगर (!rp)
+		वापस;
+	rq = (काष्ठा raw3270_request *) पूर्णांकparm;
 	view = rq ? rq->view : rp->view;
 
-	if (!IS_ERR(irb)) {
+	अगर (!IS_ERR(irb)) अणु
 		/* Handle CE-DE-UE and subsequent UDE */
-		if (irb->scsw.cmd.dstat & DEV_STAT_DEV_END)
+		अगर (irb->scsw.cmd.dstat & DEV_STAT_DEV_END)
 			clear_bit(RAW3270_FLAGS_BUSY, &rp->flags);
-		if (irb->scsw.cmd.dstat == (DEV_STAT_CHN_END |
+		अगर (irb->scsw.cmd.dstat == (DEV_STAT_CHN_END |
 					    DEV_STAT_DEV_END |
 					    DEV_STAT_UNIT_EXCEP))
 			set_bit(RAW3270_FLAGS_BUSY, &rp->flags);
 		/* Handle disconnected devices */
-		if ((irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK) &&
-		    (irb->ecw[0] & SNS0_INTERVENTION_REQ)) {
+		अगर ((irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK) &&
+		    (irb->ecw[0] & SNS0_INTERVENTION_REQ)) अणु
 			set_bit(RAW3270_FLAGS_BUSY, &rp->flags);
-			if (rp->state > RAW3270_STATE_RESET)
+			अगर (rp->state > RAW3270_STATE_RESET)
 				__raw3270_disconnect(rp);
-		}
-		/* Call interrupt handler of the view */
-		if (view)
-			view->fn->intv(view, rq, irb);
-	}
+		पूर्ण
+		/* Call पूर्णांकerrupt handler of the view */
+		अगर (view)
+			view->fn->पूर्णांकv(view, rq, irb);
+	पूर्ण
 
-	if (test_bit(RAW3270_FLAGS_BUSY, &rp->flags))
-		/* Device busy, do not start I/O */
-		return;
+	अगर (test_bit(RAW3270_FLAGS_BUSY, &rp->flags))
+		/* Device busy, करो not start I/O */
+		वापस;
 
-	if (rq && !list_empty(&rq->list)) {
-		/* The request completed, remove from queue and do callback. */
+	अगर (rq && !list_empty(&rq->list)) अणु
+		/* The request completed, हटाओ from queue and करो callback. */
 		list_del_init(&rq->list);
-		if (rq->callback)
+		अगर (rq->callback)
 			rq->callback(rq, rq->callback_data);
-		/* Do put_device for get_device in raw3270_start. */
+		/* Do put_device क्रम get_device in raw3270_start. */
 		raw3270_put_view(view);
-	}
+	पूर्ण
 
 	/*
 	 * Try to start each request on request queue until one is
 	 * started successful.
 	 */
-	while (!list_empty(&rp->req_queue)) {
-		rq = list_entry(rp->req_queue.next,struct raw3270_request,list);
+	जबतक (!list_empty(&rp->req_queue)) अणु
+		rq = list_entry(rp->req_queue.next,काष्ठा raw3270_request,list);
 		rq->rc = ccw_device_start(rp->cdev, &rq->ccw,
-					  (unsigned long) rq, 0, 0);
-		if (rq->rc == 0)
-			break;
-		/* Start failed. Remove request and do callback. */
+					  (अचिन्हित दीर्घ) rq, 0, 0);
+		अगर (rq->rc == 0)
+			अवरोध;
+		/* Start failed. Remove request and करो callback. */
 		list_del_init(&rq->list);
-		if (rq->callback)
+		अगर (rq->callback)
 			rq->callback(rq, rq->callback_data);
-		/* Do put_device for get_device in raw3270_start. */
+		/* Do put_device क्रम get_device in raw3270_start. */
 		raw3270_put_view(view);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * To determine the size of the 3270 device we need to do:
+ * To determine the size of the 3270 device we need to करो:
  * 1) send a 'read partition' data stream to the device
- * 2) wait for the attn interrupt that precedes the query reply
- * 3) do a read modified to get the query reply
- * To make things worse we have to cope with intervention
- * required (3270 device switched to 'stand-by') and command
+ * 2) रुको क्रम the attn पूर्णांकerrupt that precedes the query reply
+ * 3) करो a पढ़ो modअगरied to get the query reply
+ * To make things worse we have to cope with पूर्णांकervention
+ * required (3270 device चयनed to 'stand-by') and command
  * rejects (old devices that can't do 'read partition').
  */
-struct raw3270_ua {	/* Query Reply structure for Usable Area */
-	struct {	/* Usable Area Query Reply Base */
-		short l;	/* Length of this structured field */
-		char  sfid;	/* 0x81 if Query Reply */
-		char  qcode;	/* 0x81 if Usable Area */
-		char  flags0;
-		char  flags1;
-		short w;	/* Width of usable area */
-		short h;	/* Heigth of usavle area */
-		char  units;	/* 0x00:in; 0x01:mm */
-		int   xr;
-		int   yr;
-		char  aw;
-		char  ah;
-		short buffsz;	/* Character buffer size, bytes */
-		char  xmin;
-		char  ymin;
-		char  xmax;
-		char  ymax;
-	} __attribute__ ((packed)) uab;
-	struct {	/* Alternate Usable Area Self-Defining Parameter */
-		char  l;	/* Length of this Self-Defining Parm */
-		char  sdpid;	/* 0x02 if Alternate Usable Area */
-		char  res;
-		char  auaid;	/* 0x01 is Id for the A U A */
-		short wauai;	/* Width of AUAi */
-		short hauai;	/* Height of AUAi */
-		char  auaunits;	/* 0x00:in, 0x01:mm */
-		int   auaxr;
-		int   auayr;
-		char  awauai;
-		char  ahauai;
-	} __attribute__ ((packed)) aua;
-} __attribute__ ((packed));
+काष्ठा raw3270_ua अणु	/* Query Reply काष्ठाure क्रम Usable Area */
+	काष्ठा अणु	/* Usable Area Query Reply Base */
+		लघु l;	/* Length of this काष्ठाured field */
+		अक्षर  sfid;	/* 0x81 अगर Query Reply */
+		अक्षर  qcode;	/* 0x81 अगर Usable Area */
+		अक्षर  flags0;
+		अक्षर  flags1;
+		लघु w;	/* Width of usable area */
+		लघु h;	/* Heigth of usavle area */
+		अक्षर  units;	/* 0x00:in; 0x01:mm */
+		पूर्णांक   xr;
+		पूर्णांक   yr;
+		अक्षर  aw;
+		अक्षर  ah;
+		लघु buffsz;	/* Character buffer size, bytes */
+		अक्षर  xmin;
+		अक्षर  ymin;
+		अक्षर  xmax;
+		अक्षर  ymax;
+	पूर्ण __attribute__ ((packed)) uab;
+	काष्ठा अणु	/* Alternate Usable Area Self-Defining Parameter */
+		अक्षर  l;	/* Length of this Self-Defining Parm */
+		अक्षर  sdpid;	/* 0x02 अगर Alternate Usable Area */
+		अक्षर  res;
+		अक्षर  auaid;	/* 0x01 is Id क्रम the A U A */
+		लघु wauai;	/* Width of AUAi */
+		लघु hauai;	/* Height of AUAi */
+		अक्षर  auaunits;	/* 0x00:in, 0x01:mm */
+		पूर्णांक   auaxr;
+		पूर्णांक   auayr;
+		अक्षर  awauai;
+		अक्षर  ahauai;
+	पूर्ण __attribute__ ((packed)) aua;
+पूर्ण __attribute__ ((packed));
 
-static void
-raw3270_size_device_vm(struct raw3270 *rp)
-{
-	int rc, model;
-	struct ccw_dev_id dev_id;
-	struct diag210 diag_data;
+अटल व्योम
+raw3270_size_device_vm(काष्ठा raw3270 *rp)
+अणु
+	पूर्णांक rc, model;
+	काष्ठा ccw_dev_id dev_id;
+	काष्ठा diag210 diag_data;
 
 	ccw_device_get_id(rp->cdev, &dev_id);
 	diag_data.vrdcdvno = dev_id.devno;
-	diag_data.vrdclen = sizeof(struct diag210);
+	diag_data.vrdclen = माप(काष्ठा diag210);
 	rc = diag210(&diag_data);
 	model = diag_data.vrdccrmd;
-	/* Use default model 2 if the size could not be detected */
-	if (rc || model < 2 || model > 5)
+	/* Use शेष model 2 अगर the size could not be detected */
+	अगर (rc || model < 2 || model > 5)
 		model = 2;
-	switch (model) {
-	case 2:
+	चयन (model) अणु
+	हाल 2:
 		rp->model = model;
 		rp->rows = 24;
 		rp->cols = 80;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		rp->model = model;
 		rp->rows = 32;
 		rp->cols = 80;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		rp->model = model;
 		rp->rows = 43;
 		rp->cols = 80;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		rp->model = model;
 		rp->rows = 27;
 		rp->cols = 132;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-raw3270_size_device(struct raw3270 *rp)
-{
-	struct raw3270_ua *uap;
+अटल व्योम
+raw3270_size_device(काष्ठा raw3270 *rp)
+अणु
+	काष्ठा raw3270_ua *uap;
 
 	/* Got a Query Reply */
-	uap = (struct raw3270_ua *) (rp->init_data + 1);
+	uap = (काष्ठा raw3270_ua *) (rp->init_data + 1);
 	/* Paranoia check. */
-	if (rp->init_readmod.rc || rp->init_data[0] != 0x88 ||
-	    uap->uab.qcode != 0x81) {
-		/* Couldn't detect size. Use default model 2. */
+	अगर (rp->init_पढ़ोmod.rc || rp->init_data[0] != 0x88 ||
+	    uap->uab.qcode != 0x81) अणु
+		/* Couldn't detect size. Use शेष model 2. */
 		rp->model = 2;
 		rp->rows = 24;
 		rp->cols = 80;
-		return;
-	}
-	/* Copy rows/columns of default Usable Area */
+		वापस;
+	पूर्ण
+	/* Copy rows/columns of शेष Usable Area */
 	rp->rows = uap->uab.h;
 	rp->cols = uap->uab.w;
-	/* Check for 14 bit addressing */
-	if ((uap->uab.flags0 & 0x0d) == 0x01)
+	/* Check क्रम 14 bit addressing */
+	अगर ((uap->uab.flags0 & 0x0d) == 0x01)
 		set_bit(RAW3270_FLAGS_14BITADDR, &rp->flags);
-	/* Check for Alternate Usable Area */
-	if (uap->uab.l == sizeof(struct raw3270_ua) &&
-	    uap->aua.sdpid == 0x02) {
+	/* Check क्रम Alternate Usable Area */
+	अगर (uap->uab.l == माप(काष्ठा raw3270_ua) &&
+	    uap->aua.sdpid == 0x02) अणु
 		rp->rows = uap->aua.hauai;
 		rp->cols = uap->aua.wauai;
-	}
+	पूर्ण
 	/* Try to find a model. */
 	rp->model = 0;
-	if (rp->rows == 24 && rp->cols == 80)
+	अगर (rp->rows == 24 && rp->cols == 80)
 		rp->model = 2;
-	if (rp->rows == 32 && rp->cols == 80)
+	अगर (rp->rows == 32 && rp->cols == 80)
 		rp->model = 3;
-	if (rp->rows == 43 && rp->cols == 80)
+	अगर (rp->rows == 43 && rp->cols == 80)
 		rp->model = 4;
-	if (rp->rows == 27 && rp->cols == 132)
+	अगर (rp->rows == 27 && rp->cols == 132)
 		rp->model = 5;
-}
+पूर्ण
 
-static void
-raw3270_size_device_done(struct raw3270 *rp)
-{
-	struct raw3270_view *view;
+अटल व्योम
+raw3270_size_device_करोne(काष्ठा raw3270 *rp)
+अणु
+	काष्ठा raw3270_view *view;
 
-	rp->view = NULL;
+	rp->view = शून्य;
 	rp->state = RAW3270_STATE_READY;
-	/* Notify views about new size */
-	list_for_each_entry(view, &rp->view_list, list)
-		if (view->fn->resize)
+	/* Notअगरy views about new size */
+	list_क्रम_each_entry(view, &rp->view_list, list)
+		अगर (view->fn->resize)
 			view->fn->resize(view, rp->model, rp->rows, rp->cols);
-	/* Setup processing done, now activate a view */
-	list_for_each_entry(view, &rp->view_list, list) {
+	/* Setup processing करोne, now activate a view */
+	list_क्रम_each_entry(view, &rp->view_list, list) अणु
 		rp->view = view;
-		if (view->fn->activate(view) == 0)
-			break;
-		rp->view = NULL;
-	}
-}
+		अगर (view->fn->activate(view) == 0)
+			अवरोध;
+		rp->view = शून्य;
+	पूर्ण
+पूर्ण
 
-static void
-raw3270_read_modified_cb(struct raw3270_request *rq, void *data)
-{
-	struct raw3270 *rp = rq->view->dev;
+अटल व्योम
+raw3270_पढ़ो_modअगरied_cb(काष्ठा raw3270_request *rq, व्योम *data)
+अणु
+	काष्ठा raw3270 *rp = rq->view->dev;
 
 	raw3270_size_device(rp);
-	raw3270_size_device_done(rp);
-}
+	raw3270_size_device_करोne(rp);
+पूर्ण
 
-static void
-raw3270_read_modified(struct raw3270 *rp)
-{
-	if (rp->state != RAW3270_STATE_W4ATTN)
-		return;
-	/* Use 'read modified' to get the result of a read partition. */
-	memset(&rp->init_readmod, 0, sizeof(rp->init_readmod));
-	memset(&rp->init_data, 0, sizeof(rp->init_data));
-	rp->init_readmod.ccw.cmd_code = TC_READMOD;
-	rp->init_readmod.ccw.flags = CCW_FLAG_SLI;
-	rp->init_readmod.ccw.count = sizeof(rp->init_data);
-	rp->init_readmod.ccw.cda = (__u32) __pa(rp->init_data);
-	rp->init_readmod.callback = raw3270_read_modified_cb;
+अटल व्योम
+raw3270_पढ़ो_modअगरied(काष्ठा raw3270 *rp)
+अणु
+	अगर (rp->state != RAW3270_STATE_W4ATTN)
+		वापस;
+	/* Use 'read modified' to get the result of a पढ़ो partition. */
+	स_रखो(&rp->init_पढ़ोmod, 0, माप(rp->init_पढ़ोmod));
+	स_रखो(&rp->init_data, 0, माप(rp->init_data));
+	rp->init_पढ़ोmod.ccw.cmd_code = TC_READMOD;
+	rp->init_पढ़ोmod.ccw.flags = CCW_FLAG_SLI;
+	rp->init_पढ़ोmod.ccw.count = माप(rp->init_data);
+	rp->init_पढ़ोmod.ccw.cda = (__u32) __pa(rp->init_data);
+	rp->init_पढ़ोmod.callback = raw3270_पढ़ो_modअगरied_cb;
 	rp->state = RAW3270_STATE_READMOD;
-	raw3270_start_irq(&rp->init_view, &rp->init_readmod);
-}
+	raw3270_start_irq(&rp->init_view, &rp->init_पढ़ोmod);
+पूर्ण
 
-static void
-raw3270_writesf_readpart(struct raw3270 *rp)
-{
-	static const unsigned char wbuf[] =
-		{ 0x00, 0x07, 0x01, 0xff, 0x03, 0x00, 0x81 };
+अटल व्योम
+raw3270_ग_लिखोsf_पढ़ोpart(काष्ठा raw3270 *rp)
+अणु
+	अटल स्थिर अचिन्हित अक्षर wbuf[] =
+		अणु 0x00, 0x07, 0x01, 0xff, 0x03, 0x00, 0x81 पूर्ण;
 
 	/* Store 'read partition' data stream to init_data */
-	memset(&rp->init_readpart, 0, sizeof(rp->init_readpart));
-	memset(&rp->init_data, 0, sizeof(rp->init_data));
-	memcpy(&rp->init_data, wbuf, sizeof(wbuf));
-	rp->init_readpart.ccw.cmd_code = TC_WRITESF;
-	rp->init_readpart.ccw.flags = CCW_FLAG_SLI;
-	rp->init_readpart.ccw.count = sizeof(wbuf);
-	rp->init_readpart.ccw.cda = (__u32) __pa(&rp->init_data);
+	स_रखो(&rp->init_पढ़ोpart, 0, माप(rp->init_पढ़ोpart));
+	स_रखो(&rp->init_data, 0, माप(rp->init_data));
+	स_नकल(&rp->init_data, wbuf, माप(wbuf));
+	rp->init_पढ़ोpart.ccw.cmd_code = TC_WRITESF;
+	rp->init_पढ़ोpart.ccw.flags = CCW_FLAG_SLI;
+	rp->init_पढ़ोpart.ccw.count = माप(wbuf);
+	rp->init_पढ़ोpart.ccw.cda = (__u32) __pa(&rp->init_data);
 	rp->state = RAW3270_STATE_W4ATTN;
-	raw3270_start_irq(&rp->init_view, &rp->init_readpart);
-}
+	raw3270_start_irq(&rp->init_view, &rp->init_पढ़ोpart);
+पूर्ण
 
 /*
  * Device reset
  */
-static void
-raw3270_reset_device_cb(struct raw3270_request *rq, void *data)
-{
-	struct raw3270 *rp = rq->view->dev;
+अटल व्योम
+raw3270_reset_device_cb(काष्ठा raw3270_request *rq, व्योम *data)
+अणु
+	काष्ठा raw3270 *rp = rq->view->dev;
 
-	if (rp->state != RAW3270_STATE_RESET)
-		return;
-	if (rq->rc) {
+	अगर (rp->state != RAW3270_STATE_RESET)
+		वापस;
+	अगर (rq->rc) अणु
 		/* Reset command failed. */
 		rp->state = RAW3270_STATE_INIT;
-	} else if (MACHINE_IS_VM) {
+	पूर्ण अन्यथा अगर (MACHINE_IS_VM) अणु
 		raw3270_size_device_vm(rp);
-		raw3270_size_device_done(rp);
-	} else
-		raw3270_writesf_readpart(rp);
-	memset(&rp->init_reset, 0, sizeof(rp->init_reset));
-}
+		raw3270_size_device_करोne(rp);
+	पूर्ण अन्यथा
+		raw3270_ग_लिखोsf_पढ़ोpart(rp);
+	स_रखो(&rp->init_reset, 0, माप(rp->init_reset));
+पूर्ण
 
-static int
-__raw3270_reset_device(struct raw3270 *rp)
-{
-	int rc;
+अटल पूर्णांक
+__raw3270_reset_device(काष्ठा raw3270 *rp)
+अणु
+	पूर्णांक rc;
 
-	/* Check if reset is already pending */
-	if (rp->init_reset.view)
-		return -EBUSY;
+	/* Check अगर reset is alपढ़ोy pending */
+	अगर (rp->init_reset.view)
+		वापस -EBUSY;
 	/* Store reset data stream to init_data/init_reset */
 	rp->init_data[0] = TW_KR;
 	rp->init_reset.ccw.cmd_code = TC_EWRITEA;
@@ -601,108 +602,108 @@ __raw3270_reset_device(struct raw3270 *rp)
 	rp->init_reset.ccw.cda = (__u32) __pa(rp->init_data);
 	rp->init_reset.callback = raw3270_reset_device_cb;
 	rc = __raw3270_start(rp, &rp->init_view, &rp->init_reset);
-	if (rc == 0 && rp->state == RAW3270_STATE_INIT)
+	अगर (rc == 0 && rp->state == RAW3270_STATE_INIT)
 		rp->state = RAW3270_STATE_RESET;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-raw3270_reset_device(struct raw3270 *rp)
-{
-	unsigned long flags;
-	int rc;
+अटल पूर्णांक
+raw3270_reset_device(काष्ठा raw3270 *rp)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
 	spin_lock_irqsave(get_ccwdev_lock(rp->cdev), flags);
 	rc = __raw3270_reset_device(rp);
 	spin_unlock_irqrestore(get_ccwdev_lock(rp->cdev), flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int
-raw3270_reset(struct raw3270_view *view)
-{
-	struct raw3270 *rp;
-	int rc;
+पूर्णांक
+raw3270_reset(काष्ठा raw3270_view *view)
+अणु
+	काष्ठा raw3270 *rp;
+	पूर्णांक rc;
 
 	rp = view->dev;
-	if (!rp || rp->view != view)
+	अगर (!rp || rp->view != view)
 		rc = -EACCES;
-	else if (!raw3270_state_ready(rp))
+	अन्यथा अगर (!raw3270_state_पढ़ोy(rp))
 		rc = -EBUSY;
-	else
+	अन्यथा
 		rc = raw3270_reset_device(view->dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void
-__raw3270_disconnect(struct raw3270 *rp)
-{
-	struct raw3270_request *rq;
-	struct raw3270_view *view;
+अटल व्योम
+__raw3270_disconnect(काष्ठा raw3270 *rp)
+अणु
+	काष्ठा raw3270_request *rq;
+	काष्ठा raw3270_view *view;
 
 	rp->state = RAW3270_STATE_INIT;
 	rp->view = &rp->init_view;
 	/* Cancel all queued requests */
-	while (!list_empty(&rp->req_queue)) {
-		rq = list_entry(rp->req_queue.next,struct raw3270_request,list);
+	जबतक (!list_empty(&rp->req_queue)) अणु
+		rq = list_entry(rp->req_queue.next,काष्ठा raw3270_request,list);
 		view = rq->view;
 		rq->rc = -EACCES;
 		list_del_init(&rq->list);
-		if (rq->callback)
+		अगर (rq->callback)
 			rq->callback(rq, rq->callback_data);
 		raw3270_put_view(view);
-	}
+	पूर्ण
 	/* Start from scratch */
 	__raw3270_reset_device(rp);
-}
+पूर्ण
 
-static void
-raw3270_init_irq(struct raw3270_view *view, struct raw3270_request *rq,
-		 struct irb *irb)
-{
-	struct raw3270 *rp;
+अटल व्योम
+raw3270_init_irq(काष्ठा raw3270_view *view, काष्ठा raw3270_request *rq,
+		 काष्ठा irb *irb)
+अणु
+	काष्ठा raw3270 *rp;
 
-	if (rq) {
-		if (irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK) {
-			if (irb->ecw[0] & SNS0_CMD_REJECT)
+	अगर (rq) अणु
+		अगर (irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK) अणु
+			अगर (irb->ecw[0] & SNS0_CMD_REJECT)
 				rq->rc = -EOPNOTSUPP;
-			else
+			अन्यथा
 				rq->rc = -EIO;
-		}
-	}
-	if (irb->scsw.cmd.dstat & DEV_STAT_ATTENTION) {
-		/* Queue read modified after attention interrupt */
+		पूर्ण
+	पूर्ण
+	अगर (irb->scsw.cmd.dstat & DEV_STAT_ATTENTION) अणु
+		/* Queue पढ़ो modअगरied after attention पूर्णांकerrupt */
 		rp = view->dev;
-		raw3270_read_modified(rp);
-	}
-}
+		raw3270_पढ़ो_modअगरied(rp);
+	पूर्ण
+पूर्ण
 
-static struct raw3270_fn raw3270_init_fn = {
-	.intv = raw3270_init_irq
-};
+अटल काष्ठा raw3270_fn raw3270_init_fn = अणु
+	.पूर्णांकv = raw3270_init_irq
+पूर्ण;
 
 /*
  * Setup new 3270 device.
  */
-static int
-raw3270_setup_device(struct ccw_device *cdev, struct raw3270 *rp, char *ascebc)
-{
-	struct list_head *l;
-	struct raw3270 *tmp;
-	int minor;
+अटल पूर्णांक
+raw3270_setup_device(काष्ठा ccw_device *cdev, काष्ठा raw3270 *rp, अक्षर *ascebc)
+अणु
+	काष्ठा list_head *l;
+	काष्ठा raw3270 *पंचांगp;
+	पूर्णांक minor;
 
-	memset(rp, 0, sizeof(struct raw3270));
+	स_रखो(rp, 0, माप(काष्ठा raw3270));
 	/* Copy ebcdic -> ascii translation table. */
-	memcpy(ascebc, _ascebc, 256);
-	if (tubxcorrect) {
+	स_नकल(ascebc, _ascebc, 256);
+	अगर (tubxcorrect) अणु
 		/* correct brackets and circumflex */
 		ascebc['['] = 0xad;
 		ascebc[']'] = 0xbd;
 		ascebc['^'] = 0xb0;
-	}
+	पूर्ण
 	rp->ascebc = ascebc;
 
-	/* Set defaults. */
+	/* Set शेषs. */
 	rp->rows = 24;
 	rp->cols = 80;
 
@@ -715,216 +716,216 @@ raw3270_setup_device(struct ccw_device *cdev, struct raw3270 *rp, char *ascebc)
 
 	/*
 	 * Add device to list and find the smallest unused minor
-	 * number for it. Note: there is no device with minor 0,
-	 * see special case for fs3270.c:fs3270_open().
+	 * number क्रम it. Note: there is no device with minor 0,
+	 * see special हाल क्रम fs3270.c:fs3270_खोलो().
 	 */
 	mutex_lock(&raw3270_mutex);
 	/* Keep the list sorted. */
 	minor = RAW3270_FIRSTMINOR;
 	rp->minor = -1;
-	list_for_each(l, &raw3270_devices) {
-		tmp = list_entry(l, struct raw3270, list);
-		if (tmp->minor > minor) {
+	list_क्रम_each(l, &raw3270_devices) अणु
+		पंचांगp = list_entry(l, काष्ठा raw3270, list);
+		अगर (पंचांगp->minor > minor) अणु
 			rp->minor = minor;
 			__list_add(&rp->list, l->prev, l);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		minor++;
-	}
-	if (rp->minor == -1 && minor < RAW3270_MAXDEVS + RAW3270_FIRSTMINOR) {
+	पूर्ण
+	अगर (rp->minor == -1 && minor < RAW3270_MAXDEVS + RAW3270_FIRSTMINOR) अणु
 		rp->minor = minor;
 		list_add_tail(&rp->list, &raw3270_devices);
-	}
+	पूर्ण
 	mutex_unlock(&raw3270_mutex);
-	/* No free minor number? Then give up. */
-	if (rp->minor == -1)
-		return -EUSERS;
+	/* No मुक्त minor number? Then give up. */
+	अगर (rp->minor == -1)
+		वापस -EUSERS;
 	rp->cdev = cdev;
 	dev_set_drvdata(&cdev->dev, rp);
 	cdev->handler = raw3270_irq;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_TN3270_CONSOLE
-/* Tentative definition - see below for actual definition. */
-static struct ccw_driver raw3270_ccw_driver;
+#अगर_घोषित CONFIG_TN3270_CONSOLE
+/* Tentative definition - see below क्रम actual definition. */
+अटल काष्ठा ccw_driver raw3270_ccw_driver;
 
 /*
  * Setup 3270 device configured as console.
  */
-struct raw3270 __init *raw3270_setup_console(void)
-{
-	struct ccw_device *cdev;
-	unsigned long flags;
-	struct raw3270 *rp;
-	char *ascebc;
-	int rc;
+काष्ठा raw3270 __init *raw3270_setup_console(व्योम)
+अणु
+	काष्ठा ccw_device *cdev;
+	अचिन्हित दीर्घ flags;
+	काष्ठा raw3270 *rp;
+	अक्षर *ascebc;
+	पूर्णांक rc;
 
 	cdev = ccw_device_create_console(&raw3270_ccw_driver);
-	if (IS_ERR(cdev))
-		return ERR_CAST(cdev);
+	अगर (IS_ERR(cdev))
+		वापस ERR_CAST(cdev);
 
-	rp = kzalloc(sizeof(struct raw3270), GFP_KERNEL | GFP_DMA);
+	rp = kzalloc(माप(काष्ठा raw3270), GFP_KERNEL | GFP_DMA);
 	ascebc = kzalloc(256, GFP_KERNEL);
 	rc = raw3270_setup_device(cdev, rp, ascebc);
-	if (rc)
-		return ERR_PTR(rc);
+	अगर (rc)
+		वापस ERR_PTR(rc);
 	set_bit(RAW3270_FLAGS_CONSOLE, &rp->flags);
 
 	rc = ccw_device_enable_console(cdev);
-	if (rc) {
+	अगर (rc) अणु
 		ccw_device_destroy_console(cdev);
-		return ERR_PTR(rc);
-	}
+		वापस ERR_PTR(rc);
+	पूर्ण
 
 	spin_lock_irqsave(get_ccwdev_lock(rp->cdev), flags);
-	do {
+	करो अणु
 		__raw3270_reset_device(rp);
-		while (!raw3270_state_final(rp)) {
-			ccw_device_wait_idle(rp->cdev);
+		जबतक (!raw3270_state_final(rp)) अणु
+			ccw_device_रुको_idle(rp->cdev);
 			barrier();
-		}
-	} while (rp->state != RAW3270_STATE_READY);
+		पूर्ण
+	पूर्ण जबतक (rp->state != RAW3270_STATE_READY);
 	spin_unlock_irqrestore(get_ccwdev_lock(rp->cdev), flags);
-	return rp;
-}
+	वापस rp;
+पूर्ण
 
-void
-raw3270_wait_cons_dev(struct raw3270 *rp)
-{
-	unsigned long flags;
+व्योम
+raw3270_रुको_cons_dev(काष्ठा raw3270 *rp)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(get_ccwdev_lock(rp->cdev), flags);
-	ccw_device_wait_idle(rp->cdev);
+	ccw_device_रुको_idle(rp->cdev);
 	spin_unlock_irqrestore(get_ccwdev_lock(rp->cdev), flags);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
- * Create a 3270 device structure.
+ * Create a 3270 device काष्ठाure.
  */
-static struct raw3270 *
-raw3270_create_device(struct ccw_device *cdev)
-{
-	struct raw3270 *rp;
-	char *ascebc;
-	int rc;
+अटल काष्ठा raw3270 *
+raw3270_create_device(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा raw3270 *rp;
+	अक्षर *ascebc;
+	पूर्णांक rc;
 
-	rp = kzalloc(sizeof(struct raw3270), GFP_KERNEL | GFP_DMA);
-	if (!rp)
-		return ERR_PTR(-ENOMEM);
-	ascebc = kmalloc(256, GFP_KERNEL);
-	if (!ascebc) {
-		kfree(rp);
-		return ERR_PTR(-ENOMEM);
-	}
+	rp = kzalloc(माप(काष्ठा raw3270), GFP_KERNEL | GFP_DMA);
+	अगर (!rp)
+		वापस ERR_PTR(-ENOMEM);
+	ascebc = kदो_स्मृति(256, GFP_KERNEL);
+	अगर (!ascebc) अणु
+		kमुक्त(rp);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	rc = raw3270_setup_device(cdev, rp, ascebc);
-	if (rc) {
-		kfree(rp->ascebc);
-		kfree(rp);
+	अगर (rc) अणु
+		kमुक्त(rp->ascebc);
+		kमुक्त(rp);
 		rp = ERR_PTR(rc);
-	}
-	/* Get reference to ccw_device structure. */
+	पूर्ण
+	/* Get reference to ccw_device काष्ठाure. */
 	get_device(&cdev->dev);
-	return rp;
-}
+	वापस rp;
+पूर्ण
 
 /*
  * Activate a view.
  */
-int
-raw3270_activate_view(struct raw3270_view *view)
-{
-	struct raw3270 *rp;
-	struct raw3270_view *oldview, *nv;
-	unsigned long flags;
-	int rc;
+पूर्णांक
+raw3270_activate_view(काष्ठा raw3270_view *view)
+अणु
+	काष्ठा raw3270 *rp;
+	काष्ठा raw3270_view *oldview, *nv;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
 	rp = view->dev;
-	if (!rp)
-		return -ENODEV;
+	अगर (!rp)
+		वापस -ENODEV;
 	spin_lock_irqsave(get_ccwdev_lock(rp->cdev), flags);
-	if (rp->view == view)
+	अगर (rp->view == view)
 		rc = 0;
-	else if (!raw3270_state_ready(rp))
+	अन्यथा अगर (!raw3270_state_पढ़ोy(rp))
 		rc = -EBUSY;
-	else {
-		oldview = NULL;
-		if (rp->view && rp->view->fn->deactivate) {
+	अन्यथा अणु
+		oldview = शून्य;
+		अगर (rp->view && rp->view->fn->deactivate) अणु
 			oldview = rp->view;
 			oldview->fn->deactivate(oldview);
-		}
+		पूर्ण
 		rp->view = view;
 		rc = view->fn->activate(view);
-		if (rc) {
+		अगर (rc) अणु
 			/* Didn't work. Try to reactivate the old view. */
 			rp->view = oldview;
-			if (!oldview || oldview->fn->activate(oldview) != 0) {
+			अगर (!oldview || oldview->fn->activate(oldview) != 0) अणु
 				/* Didn't work as well. Try any other view. */
-				list_for_each_entry(nv, &rp->view_list, list)
-					if (nv != view && nv != oldview) {
+				list_क्रम_each_entry(nv, &rp->view_list, list)
+					अगर (nv != view && nv != oldview) अणु
 						rp->view = nv;
-						if (nv->fn->activate(nv) == 0)
-							break;
-						rp->view = NULL;
-					}
-			}
-		}
-	}
+						अगर (nv->fn->activate(nv) == 0)
+							अवरोध;
+						rp->view = शून्य;
+					पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(get_ccwdev_lock(rp->cdev), flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * Deactivate current view.
  */
-void
-raw3270_deactivate_view(struct raw3270_view *view)
-{
-	unsigned long flags;
-	struct raw3270 *rp;
+व्योम
+raw3270_deactivate_view(काष्ठा raw3270_view *view)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा raw3270 *rp;
 
 	rp = view->dev;
-	if (!rp)
-		return;
+	अगर (!rp)
+		वापस;
 	spin_lock_irqsave(get_ccwdev_lock(rp->cdev), flags);
-	if (rp->view == view) {
+	अगर (rp->view == view) अणु
 		view->fn->deactivate(view);
-		rp->view = NULL;
+		rp->view = शून्य;
 		/* Move deactivated view to end of list. */
 		list_del_init(&view->list);
 		list_add_tail(&view->list, &rp->view_list);
 		/* Try to activate another view. */
-		if (raw3270_state_ready(rp)) {
-			list_for_each_entry(view, &rp->view_list, list) {
+		अगर (raw3270_state_पढ़ोy(rp)) अणु
+			list_क्रम_each_entry(view, &rp->view_list, list) अणु
 				rp->view = view;
-				if (view->fn->activate(view) == 0)
-					break;
-				rp->view = NULL;
-			}
-		}
-	}
+				अगर (view->fn->activate(view) == 0)
+					अवरोध;
+				rp->view = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(get_ccwdev_lock(rp->cdev), flags);
-}
+पूर्ण
 
 /*
  * Add view to device with minor "minor".
  */
-int
-raw3270_add_view(struct raw3270_view *view, struct raw3270_fn *fn, int minor, int subclass)
-{
-	unsigned long flags;
-	struct raw3270 *rp;
-	int rc;
+पूर्णांक
+raw3270_add_view(काष्ठा raw3270_view *view, काष्ठा raw3270_fn *fn, पूर्णांक minor, पूर्णांक subclass)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा raw3270 *rp;
+	पूर्णांक rc;
 
-	if (minor <= 0)
-		return -ENODEV;
+	अगर (minor <= 0)
+		वापस -ENODEV;
 	mutex_lock(&raw3270_mutex);
 	rc = -ENODEV;
-	list_for_each_entry(rp, &raw3270_devices, list) {
-		if (rp->minor != minor)
-			continue;
+	list_क्रम_each_entry(rp, &raw3270_devices, list) अणु
+		अगर (rp->minor != minor)
+			जारी;
 		spin_lock_irqsave(get_ccwdev_lock(rp->cdev), flags);
 		atomic_set(&view->ref_count, 2);
 		view->dev = rp;
@@ -938,83 +939,83 @@ raw3270_add_view(struct raw3270_view *view, struct raw3270_fn *fn, int minor, in
 		list_add(&view->list, &rp->view_list);
 		rc = 0;
 		spin_unlock_irqrestore(get_ccwdev_lock(rp->cdev), flags);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&raw3270_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Find specific view of device with minor "minor".
+ * Find specअगरic view of device with minor "minor".
  */
-struct raw3270_view *
-raw3270_find_view(struct raw3270_fn *fn, int minor)
-{
-	struct raw3270 *rp;
-	struct raw3270_view *view, *tmp;
-	unsigned long flags;
+काष्ठा raw3270_view *
+raw3270_find_view(काष्ठा raw3270_fn *fn, पूर्णांक minor)
+अणु
+	काष्ठा raw3270 *rp;
+	काष्ठा raw3270_view *view, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	mutex_lock(&raw3270_mutex);
 	view = ERR_PTR(-ENODEV);
-	list_for_each_entry(rp, &raw3270_devices, list) {
-		if (rp->minor != minor)
-			continue;
+	list_क्रम_each_entry(rp, &raw3270_devices, list) अणु
+		अगर (rp->minor != minor)
+			जारी;
 		spin_lock_irqsave(get_ccwdev_lock(rp->cdev), flags);
-		list_for_each_entry(tmp, &rp->view_list, list) {
-			if (tmp->fn == fn) {
-				raw3270_get_view(tmp);
-				view = tmp;
-				break;
-			}
-		}
+		list_क्रम_each_entry(पंचांगp, &rp->view_list, list) अणु
+			अगर (पंचांगp->fn == fn) अणु
+				raw3270_get_view(पंचांगp);
+				view = पंचांगp;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		spin_unlock_irqrestore(get_ccwdev_lock(rp->cdev), flags);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&raw3270_mutex);
-	return view;
-}
+	वापस view;
+पूर्ण
 
 /*
- * Remove view from device and free view structure via call to view->fn->free.
+ * Remove view from device and मुक्त view काष्ठाure via call to view->fn->मुक्त.
  */
-void
-raw3270_del_view(struct raw3270_view *view)
-{
-	unsigned long flags;
-	struct raw3270 *rp;
-	struct raw3270_view *nv;
+व्योम
+raw3270_del_view(काष्ठा raw3270_view *view)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा raw3270 *rp;
+	काष्ठा raw3270_view *nv;
 
 	rp = view->dev;
 	spin_lock_irqsave(get_ccwdev_lock(rp->cdev), flags);
-	if (rp->view == view) {
+	अगर (rp->view == view) अणु
 		view->fn->deactivate(view);
-		rp->view = NULL;
-	}
+		rp->view = शून्य;
+	पूर्ण
 	list_del_init(&view->list);
-	if (!rp->view && raw3270_state_ready(rp)) {
+	अगर (!rp->view && raw3270_state_पढ़ोy(rp)) अणु
 		/* Try to activate another view. */
-		list_for_each_entry(nv, &rp->view_list, list) {
-			if (nv->fn->activate(nv) == 0) {
+		list_क्रम_each_entry(nv, &rp->view_list, list) अणु
+			अगर (nv->fn->activate(nv) == 0) अणु
 				rp->view = nv;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(get_ccwdev_lock(rp->cdev), flags);
-	/* Wait for reference counter to drop to zero. */
+	/* Wait क्रम reference counter to drop to zero. */
 	atomic_dec(&view->ref_count);
-	wait_event(raw3270_wait_queue, atomic_read(&view->ref_count) == 0);
-	if (view->fn->free)
-		view->fn->free(view);
-}
+	रुको_event(raw3270_रुको_queue, atomic_पढ़ो(&view->ref_count) == 0);
+	अगर (view->fn->मुक्त)
+		view->fn->मुक्त(view);
+पूर्ण
 
 /*
- * Remove a 3270 device structure.
+ * Remove a 3270 device काष्ठाure.
  */
-static void
-raw3270_delete_device(struct raw3270 *rp)
-{
-	struct ccw_device *cdev;
+अटल व्योम
+raw3270_delete_device(काष्ठा raw3270 *rp)
+अणु
+	काष्ठा ccw_device *cdev;
 
 	/* Remove from device chain. */
 	mutex_lock(&raw3270_mutex);
@@ -1023,255 +1024,255 @@ raw3270_delete_device(struct raw3270 *rp)
 
 	/* Disconnect from ccw_device. */
 	cdev = rp->cdev;
-	rp->cdev = NULL;
-	dev_set_drvdata(&cdev->dev, NULL);
-	cdev->handler = NULL;
+	rp->cdev = शून्य;
+	dev_set_drvdata(&cdev->dev, शून्य);
+	cdev->handler = शून्य;
 
-	/* Put ccw_device structure. */
+	/* Put ccw_device काष्ठाure. */
 	put_device(&cdev->dev);
 
-	/* Now free raw3270 structure. */
-	kfree(rp->ascebc);
-	kfree(rp);
-}
+	/* Now मुक्त raw3270 काष्ठाure. */
+	kमुक्त(rp->ascebc);
+	kमुक्त(rp);
+पूर्ण
 
-static int
-raw3270_probe (struct ccw_device *cdev)
-{
-	return 0;
-}
+अटल पूर्णांक
+raw3270_probe (काष्ठा ccw_device *cdev)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
- * Additional attributes for a 3270 device
+ * Additional attributes क्रम a 3270 device
  */
-static ssize_t
-raw3270_model_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%i\n",
-			((struct raw3270 *) dev_get_drvdata(dev))->model);
-}
-static DEVICE_ATTR(model, 0444, raw3270_model_show, NULL);
+अटल sमाप_प्रकार
+raw3270_model_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%i\n",
+			((काष्ठा raw3270 *) dev_get_drvdata(dev))->model);
+पूर्ण
+अटल DEVICE_ATTR(model, 0444, raw3270_model_show, शून्य);
 
-static ssize_t
-raw3270_rows_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%i\n",
-			((struct raw3270 *) dev_get_drvdata(dev))->rows);
-}
-static DEVICE_ATTR(rows, 0444, raw3270_rows_show, NULL);
+अटल sमाप_प्रकार
+raw3270_rows_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%i\n",
+			((काष्ठा raw3270 *) dev_get_drvdata(dev))->rows);
+पूर्ण
+अटल DEVICE_ATTR(rows, 0444, raw3270_rows_show, शून्य);
 
-static ssize_t
-raw3270_columns_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%i\n",
-			((struct raw3270 *) dev_get_drvdata(dev))->cols);
-}
-static DEVICE_ATTR(columns, 0444, raw3270_columns_show, NULL);
+अटल sमाप_प्रकार
+raw3270_columns_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%i\n",
+			((काष्ठा raw3270 *) dev_get_drvdata(dev))->cols);
+पूर्ण
+अटल DEVICE_ATTR(columns, 0444, raw3270_columns_show, शून्य);
 
-static struct attribute * raw3270_attrs[] = {
+अटल काष्ठा attribute * raw3270_attrs[] = अणु
 	&dev_attr_model.attr,
 	&dev_attr_rows.attr,
 	&dev_attr_columns.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group raw3270_attr_group = {
+अटल स्थिर काष्ठा attribute_group raw3270_attr_group = अणु
 	.attrs = raw3270_attrs,
-};
+पूर्ण;
 
-static int raw3270_create_attributes(struct raw3270 *rp)
-{
-	return sysfs_create_group(&rp->cdev->dev.kobj, &raw3270_attr_group);
-}
+अटल पूर्णांक raw3270_create_attributes(काष्ठा raw3270 *rp)
+अणु
+	वापस sysfs_create_group(&rp->cdev->dev.kobj, &raw3270_attr_group);
+पूर्ण
 
 /*
- * Notifier for device addition/removal
+ * Notअगरier क्रम device addition/removal
  */
-static LIST_HEAD(raw3270_notifier);
+अटल LIST_HEAD(raw3270_notअगरier);
 
-int raw3270_register_notifier(struct raw3270_notifier *notifier)
-{
-	struct raw3270 *rp;
-
-	mutex_lock(&raw3270_mutex);
-	list_add_tail(&notifier->list, &raw3270_notifier);
-	list_for_each_entry(rp, &raw3270_devices, list)
-		notifier->create(rp->minor);
-	mutex_unlock(&raw3270_mutex);
-	return 0;
-}
-
-void raw3270_unregister_notifier(struct raw3270_notifier *notifier)
-{
-	struct raw3270 *rp;
+पूर्णांक raw3270_रेजिस्टर_notअगरier(काष्ठा raw3270_notअगरier *notअगरier)
+अणु
+	काष्ठा raw3270 *rp;
 
 	mutex_lock(&raw3270_mutex);
-	list_for_each_entry(rp, &raw3270_devices, list)
-		notifier->destroy(rp->minor);
-	list_del(&notifier->list);
+	list_add_tail(&notअगरier->list, &raw3270_notअगरier);
+	list_क्रम_each_entry(rp, &raw3270_devices, list)
+		notअगरier->create(rp->minor);
 	mutex_unlock(&raw3270_mutex);
-}
+	वापस 0;
+पूर्ण
+
+व्योम raw3270_unरेजिस्टर_notअगरier(काष्ठा raw3270_notअगरier *notअगरier)
+अणु
+	काष्ठा raw3270 *rp;
+
+	mutex_lock(&raw3270_mutex);
+	list_क्रम_each_entry(rp, &raw3270_devices, list)
+		notअगरier->destroy(rp->minor);
+	list_del(&notअगरier->list);
+	mutex_unlock(&raw3270_mutex);
+पूर्ण
 
 /*
  * Set 3270 device online.
  */
-static int
-raw3270_set_online (struct ccw_device *cdev)
-{
-	struct raw3270_notifier *np;
-	struct raw3270 *rp;
-	int rc;
+अटल पूर्णांक
+raw3270_set_online (काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा raw3270_notअगरier *np;
+	काष्ठा raw3270 *rp;
+	पूर्णांक rc;
 
 	rp = raw3270_create_device(cdev);
-	if (IS_ERR(rp))
-		return PTR_ERR(rp);
+	अगर (IS_ERR(rp))
+		वापस PTR_ERR(rp);
 	rc = raw3270_create_attributes(rp);
-	if (rc)
-		goto failure;
+	अगर (rc)
+		जाओ failure;
 	raw3270_reset_device(rp);
 	mutex_lock(&raw3270_mutex);
-	list_for_each_entry(np, &raw3270_notifier, list)
+	list_क्रम_each_entry(np, &raw3270_notअगरier, list)
 		np->create(rp->minor);
 	mutex_unlock(&raw3270_mutex);
-	return 0;
+	वापस 0;
 
 failure:
 	raw3270_delete_device(rp);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Remove 3270 device structure.
+ * Remove 3270 device काष्ठाure.
  */
-static void
-raw3270_remove (struct ccw_device *cdev)
-{
-	unsigned long flags;
-	struct raw3270 *rp;
-	struct raw3270_view *v;
-	struct raw3270_notifier *np;
+अटल व्योम
+raw3270_हटाओ (काष्ठा ccw_device *cdev)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा raw3270 *rp;
+	काष्ठा raw3270_view *v;
+	काष्ठा raw3270_notअगरier *np;
 
 	rp = dev_get_drvdata(&cdev->dev);
 	/*
-	 * _remove is the opposite of _probe; it's probe that
-	 * should set up rp.  raw3270_remove gets entered for
-	 * devices even if they haven't been varied online.
-	 * Thus, rp may validly be NULL here.
+	 * _हटाओ is the opposite of _probe; it's probe that
+	 * should set up rp.  raw3270_हटाओ माला_लो entered क्रम
+	 * devices even अगर they haven't been varied online.
+	 * Thus, rp may validly be शून्य here.
 	 */
-	if (rp == NULL)
-		return;
+	अगर (rp == शून्य)
+		वापस;
 
-	sysfs_remove_group(&cdev->dev.kobj, &raw3270_attr_group);
+	sysfs_हटाओ_group(&cdev->dev.kobj, &raw3270_attr_group);
 
-	/* Deactivate current view and remove all views. */
+	/* Deactivate current view and हटाओ all views. */
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
-	if (rp->view) {
-		if (rp->view->fn->deactivate)
+	अगर (rp->view) अणु
+		अगर (rp->view->fn->deactivate)
 			rp->view->fn->deactivate(rp->view);
-		rp->view = NULL;
-	}
-	while (!list_empty(&rp->view_list)) {
-		v = list_entry(rp->view_list.next, struct raw3270_view, list);
-		if (v->fn->release)
+		rp->view = शून्य;
+	पूर्ण
+	जबतक (!list_empty(&rp->view_list)) अणु
+		v = list_entry(rp->view_list.next, काष्ठा raw3270_view, list);
+		अगर (v->fn->release)
 			v->fn->release(v);
 		spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
 		raw3270_del_view(v);
 		spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
 
 	mutex_lock(&raw3270_mutex);
-	list_for_each_entry(np, &raw3270_notifier, list)
+	list_क्रम_each_entry(np, &raw3270_notअगरier, list)
 		np->destroy(rp->minor);
 	mutex_unlock(&raw3270_mutex);
 
 	/* Reset 3270 device. */
 	raw3270_reset_device(rp);
-	/* And finally remove it. */
+	/* And finally हटाओ it. */
 	raw3270_delete_device(rp);
-}
+पूर्ण
 
 /*
  * Set 3270 device offline.
  */
-static int
-raw3270_set_offline (struct ccw_device *cdev)
-{
-	struct raw3270 *rp;
+अटल पूर्णांक
+raw3270_set_offline (काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा raw3270 *rp;
 
 	rp = dev_get_drvdata(&cdev->dev);
-	if (test_bit(RAW3270_FLAGS_CONSOLE, &rp->flags))
-		return -EBUSY;
-	raw3270_remove(cdev);
-	return 0;
-}
+	अगर (test_bit(RAW3270_FLAGS_CONSOLE, &rp->flags))
+		वापस -EBUSY;
+	raw3270_हटाओ(cdev);
+	वापस 0;
+पूर्ण
 
-static struct ccw_device_id raw3270_id[] = {
-	{ CCW_DEVICE(0x3270, 0) },
-	{ CCW_DEVICE(0x3271, 0) },
-	{ CCW_DEVICE(0x3272, 0) },
-	{ CCW_DEVICE(0x3273, 0) },
-	{ CCW_DEVICE(0x3274, 0) },
-	{ CCW_DEVICE(0x3275, 0) },
-	{ CCW_DEVICE(0x3276, 0) },
-	{ CCW_DEVICE(0x3277, 0) },
-	{ CCW_DEVICE(0x3278, 0) },
-	{ CCW_DEVICE(0x3279, 0) },
-	{ CCW_DEVICE(0x3174, 0) },
-	{ /* end of list */ },
-};
+अटल काष्ठा ccw_device_id raw3270_id[] = अणु
+	अणु CCW_DEVICE(0x3270, 0) पूर्ण,
+	अणु CCW_DEVICE(0x3271, 0) पूर्ण,
+	अणु CCW_DEVICE(0x3272, 0) पूर्ण,
+	अणु CCW_DEVICE(0x3273, 0) पूर्ण,
+	अणु CCW_DEVICE(0x3274, 0) पूर्ण,
+	अणु CCW_DEVICE(0x3275, 0) पूर्ण,
+	अणु CCW_DEVICE(0x3276, 0) पूर्ण,
+	अणु CCW_DEVICE(0x3277, 0) पूर्ण,
+	अणु CCW_DEVICE(0x3278, 0) पूर्ण,
+	अणु CCW_DEVICE(0x3279, 0) पूर्ण,
+	अणु CCW_DEVICE(0x3174, 0) पूर्ण,
+	अणु /* end of list */ पूर्ण,
+पूर्ण;
 
-static struct ccw_driver raw3270_ccw_driver = {
-	.driver = {
+अटल काष्ठा ccw_driver raw3270_ccw_driver = अणु
+	.driver = अणु
 		.name	= "3270",
 		.owner	= THIS_MODULE,
-	},
+	पूर्ण,
 	.ids		= raw3270_id,
 	.probe		= &raw3270_probe,
-	.remove		= &raw3270_remove,
+	.हटाओ		= &raw3270_हटाओ,
 	.set_online	= &raw3270_set_online,
 	.set_offline	= &raw3270_set_offline,
-	.int_class	= IRQIO_C70,
-};
+	.पूर्णांक_class	= IRQIO_C70,
+पूर्ण;
 
-static int
-raw3270_init(void)
-{
-	struct raw3270 *rp;
-	int rc;
+अटल पूर्णांक
+raw3270_init(व्योम)
+अणु
+	काष्ठा raw3270 *rp;
+	पूर्णांक rc;
 
-	if (raw3270_registered)
-		return 0;
-	raw3270_registered = 1;
-	rc = ccw_driver_register(&raw3270_ccw_driver);
-	if (rc == 0) {
-		/* Create attributes for early (= console) device. */
+	अगर (raw3270_रेजिस्टरed)
+		वापस 0;
+	raw3270_रेजिस्टरed = 1;
+	rc = ccw_driver_रेजिस्टर(&raw3270_ccw_driver);
+	अगर (rc == 0) अणु
+		/* Create attributes क्रम early (= console) device. */
 		mutex_lock(&raw3270_mutex);
 		class3270 = class_create(THIS_MODULE, "3270");
-		list_for_each_entry(rp, &raw3270_devices, list) {
+		list_क्रम_each_entry(rp, &raw3270_devices, list) अणु
 			get_device(&rp->cdev->dev);
 			raw3270_create_attributes(rp);
-		}
+		पूर्ण
 		mutex_unlock(&raw3270_mutex);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void
-raw3270_exit(void)
-{
-	ccw_driver_unregister(&raw3270_ccw_driver);
+अटल व्योम
+raw3270_निकास(व्योम)
+अणु
+	ccw_driver_unरेजिस्टर(&raw3270_ccw_driver);
 	class_destroy(class3270);
-}
+पूर्ण
 
 MODULE_LICENSE("GPL");
 
 module_init(raw3270_init);
-module_exit(raw3270_exit);
+module_निकास(raw3270_निकास);
 
 EXPORT_SYMBOL(class3270);
 EXPORT_SYMBOL(raw3270_request_alloc);
-EXPORT_SYMBOL(raw3270_request_free);
+EXPORT_SYMBOL(raw3270_request_मुक्त);
 EXPORT_SYMBOL(raw3270_request_reset);
 EXPORT_SYMBOL(raw3270_request_set_cmd);
 EXPORT_SYMBOL(raw3270_request_add_data);
@@ -1287,6 +1288,6 @@ EXPORT_SYMBOL(raw3270_start);
 EXPORT_SYMBOL(raw3270_start_locked);
 EXPORT_SYMBOL(raw3270_start_irq);
 EXPORT_SYMBOL(raw3270_reset);
-EXPORT_SYMBOL(raw3270_register_notifier);
-EXPORT_SYMBOL(raw3270_unregister_notifier);
-EXPORT_SYMBOL(raw3270_wait_queue);
+EXPORT_SYMBOL(raw3270_रेजिस्टर_notअगरier);
+EXPORT_SYMBOL(raw3270_unरेजिस्टर_notअगरier);
+EXPORT_SYMBOL(raw3270_रुको_queue);

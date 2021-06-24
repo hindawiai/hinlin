@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,54 +22,54 @@
  *
  * Authors: Ben Skeggs
  */
-#include <subdev/bios.h>
-#include <subdev/bios/gpio.h>
-#include <subdev/bios/xpio.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/gpपन.स>
+#समावेश <subdev/bios/xpपन.स>
 
-static u16
-dcb_xpiod_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
-{
+अटल u16
+dcb_xpiod_table(काष्ठा nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
+अणु
 	u16 data = dcb_gpio_table(bios, ver, hdr, cnt, len);
-	if (data && *ver >= 0x40 && *hdr >= 0x06) {
+	अगर (data && *ver >= 0x40 && *hdr >= 0x06) अणु
 		u16 xpio = nvbios_rd16(bios, data + 0x04);
-		if (xpio) {
+		अगर (xpio) अणु
 			*ver = nvbios_rd08(bios, data + 0x00);
 			*hdr = nvbios_rd08(bios, data + 0x01);
 			*cnt = nvbios_rd08(bios, data + 0x02);
 			*len = nvbios_rd08(bios, data + 0x03);
-			return xpio;
-		}
-	}
-	return 0x0000;
-}
+			वापस xpio;
+		पूर्ण
+	पूर्ण
+	वापस 0x0000;
+पूर्ण
 
 u16
-dcb_xpio_table(struct nvkm_bios *bios, u8 idx,
+dcb_xpio_table(काष्ठा nvkm_bios *bios, u8 idx,
 	       u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
-{
+अणु
 	u16 data = dcb_xpiod_table(bios, ver, hdr, cnt, len);
-	if (data && idx < *cnt) {
+	अगर (data && idx < *cnt) अणु
 		u16 xpio = nvbios_rd16(bios, data + *hdr + (idx * *len));
-		if (xpio) {
+		अगर (xpio) अणु
 			*ver = nvbios_rd08(bios, data + 0x00);
 			*hdr = nvbios_rd08(bios, data + 0x01);
 			*cnt = nvbios_rd08(bios, data + 0x02);
 			*len = nvbios_rd08(bios, data + 0x03);
-			return xpio;
-		}
-	}
-	return 0x0000;
-}
+			वापस xpio;
+		पूर्ण
+	पूर्ण
+	वापस 0x0000;
+पूर्ण
 
 u16
-dcb_xpio_parse(struct nvkm_bios *bios, u8 idx,
-	       u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_xpio *info)
-{
+dcb_xpio_parse(काष्ठा nvkm_bios *bios, u8 idx,
+	       u8 *ver, u8 *hdr, u8 *cnt, u8 *len, काष्ठा nvbios_xpio *info)
+अणु
 	u16 data = dcb_xpio_table(bios, idx, ver, hdr, cnt, len);
-	if (data && *len >= 6) {
+	अगर (data && *len >= 6) अणु
 		info->type = nvbios_rd08(bios, data + 0x04);
 		info->addr = nvbios_rd08(bios, data + 0x05);
 		info->flags = nvbios_rd08(bios, data + 0x06);
-	}
-	return 0x0000;
-}
+	पूर्ण
+	वापस 0x0000;
+पूर्ण

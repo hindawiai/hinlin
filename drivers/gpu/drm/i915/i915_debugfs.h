@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __I915_DEBUGFS_H__
-#define __I915_DEBUGFS_H__
+#अगर_अघोषित __I915_DEBUGFS_H__
+#घोषणा __I915_DEBUGFS_H__
 
-struct drm_connector;
-struct drm_i915_gem_object;
-struct drm_i915_private;
-struct seq_file;
+काष्ठा drm_connector;
+काष्ठा drm_i915_gem_object;
+काष्ठा drm_i915_निजी;
+काष्ठा seq_file;
 
-#ifdef CONFIG_DEBUG_FS
-void i915_debugfs_register(struct drm_i915_private *dev_priv);
-void i915_debugfs_describe_obj(struct seq_file *m, struct drm_i915_gem_object *obj);
-#else
-static inline void i915_debugfs_register(struct drm_i915_private *dev_priv) {}
-static inline void i915_debugfs_describe_obj(struct seq_file *m, struct drm_i915_gem_object *obj) {}
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम i915_debugfs_रेजिस्टर(काष्ठा drm_i915_निजी *dev_priv);
+व्योम i915_debugfs_describe_obj(काष्ठा seq_file *m, काष्ठा drm_i915_gem_object *obj);
+#अन्यथा
+अटल अंतरभूत व्योम i915_debugfs_रेजिस्टर(काष्ठा drm_i915_निजी *dev_priv) अणुपूर्ण
+अटल अंतरभूत व्योम i915_debugfs_describe_obj(काष्ठा seq_file *m, काष्ठा drm_i915_gem_object *obj) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* __I915_DEBUGFS_H__ */
+#पूर्ण_अगर /* __I915_DEBUGFS_H__ */

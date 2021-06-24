@@ -1,41 +1,42 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2015 - 2018 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
+ *  - Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,20 +46,20 @@
  *
  */
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-#include "hfi.h"
-#include "mad.h"
-#include "qp.h"
-#include "verbs_txreq.h"
-#include "trace.h"
+#समावेश "hfi.h"
+#समावेश "mad.h"
+#समावेश "qp.h"
+#समावेश "verbs_txreq.h"
+#समावेश "trace.h"
 
-static int gid_ok(union ib_gid *gid, __be64 gid_prefix, __be64 id)
-{
-	return (gid->global.interface_id == id &&
+अटल पूर्णांक gid_ok(जोड़ ib_gid *gid, __be64 gid_prefix, __be64 id)
+अणु
+	वापस (gid->global.पूर्णांकerface_id == id &&
 		(gid->global.subnet_prefix == gid_prefix ||
 		 gid->global.subnet_prefix == IB_DEFAULT_GID_PREFIX));
-}
+पूर्ण
 
 /*
  *
@@ -66,11 +67,11 @@ static int gid_ok(union ib_gid *gid, __be64 gid_prefix, __be64 id)
  *
  * The s_lock will be acquired around the hfi1_migrate_qp() call.
  */
-int hfi1_ruc_check_hdr(struct hfi1_ibport *ibp, struct hfi1_packet *packet)
-{
+पूर्णांक hfi1_ruc_check_hdr(काष्ठा hfi1_ibport *ibp, काष्ठा hfi1_packet *packet)
+अणु
 	__be64 guid;
-	unsigned long flags;
-	struct rvt_qp *qp = packet->qp;
+	अचिन्हित दीर्घ flags;
+	काष्ठा rvt_qp *qp = packet->qp;
 	u8 sc5 = ibp->sl_to_sc[rdma_ah_get_sl(&qp->remote_ah_attr)];
 	u32 dlid = packet->dlid;
 	u32 slid = packet->slid;
@@ -78,96 +79,96 @@ int hfi1_ruc_check_hdr(struct hfi1_ibport *ibp, struct hfi1_packet *packet)
 	bool migrated = packet->migrated;
 	u16 pkey = packet->pkey;
 
-	if (qp->s_mig_state == IB_MIG_ARMED && migrated) {
-		if (!packet->grh) {
-			if ((rdma_ah_get_ah_flags(&qp->alt_ah_attr) &
+	अगर (qp->s_mig_state == IB_MIG_ARMED && migrated) अणु
+		अगर (!packet->grh) अणु
+			अगर ((rdma_ah_get_ah_flags(&qp->alt_ah_attr) &
 			     IB_AH_GRH) &&
 			    (packet->etype != RHF_RCV_TYPE_BYPASS))
-				return 1;
-		} else {
-			const struct ib_global_route *grh;
+				वापस 1;
+		पूर्ण अन्यथा अणु
+			स्थिर काष्ठा ib_global_route *grh;
 
-			if (!(rdma_ah_get_ah_flags(&qp->alt_ah_attr) &
+			अगर (!(rdma_ah_get_ah_flags(&qp->alt_ah_attr) &
 			      IB_AH_GRH))
-				return 1;
-			grh = rdma_ah_read_grh(&qp->alt_ah_attr);
+				वापस 1;
+			grh = rdma_ah_पढ़ो_grh(&qp->alt_ah_attr);
 			guid = get_sguid(ibp, grh->sgid_index);
-			if (!gid_ok(&packet->grh->dgid, ibp->rvp.gid_prefix,
+			अगर (!gid_ok(&packet->grh->dgid, ibp->rvp.gid_prefix,
 				    guid))
-				return 1;
-			if (!gid_ok(
+				वापस 1;
+			अगर (!gid_ok(
 				&packet->grh->sgid,
 				grh->dgid.global.subnet_prefix,
-				grh->dgid.global.interface_id))
-				return 1;
-		}
-		if (unlikely(rcv_pkey_check(ppd_from_ibp(ibp), pkey,
-					    sc5, slid))) {
+				grh->dgid.global.पूर्णांकerface_id))
+				वापस 1;
+		पूर्ण
+		अगर (unlikely(rcv_pkey_check(ppd_from_ibp(ibp), pkey,
+					    sc5, slid))) अणु
 			hfi1_bad_pkey(ibp, pkey, sl, 0, qp->ibqp.qp_num,
 				      slid, dlid);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 		/* Validate the SLID. See Ch. 9.6.1.5 and 17.2.8 */
-		if (slid != rdma_ah_get_dlid(&qp->alt_ah_attr) ||
+		अगर (slid != rdma_ah_get_dlid(&qp->alt_ah_attr) ||
 		    ppd_from_ibp(ibp)->port !=
 			rdma_ah_get_port_num(&qp->alt_ah_attr))
-			return 1;
+			वापस 1;
 		spin_lock_irqsave(&qp->s_lock, flags);
 		hfi1_migrate_qp(qp);
 		spin_unlock_irqrestore(&qp->s_lock, flags);
-	} else {
-		if (!packet->grh) {
-			if ((rdma_ah_get_ah_flags(&qp->remote_ah_attr) &
+	पूर्ण अन्यथा अणु
+		अगर (!packet->grh) अणु
+			अगर ((rdma_ah_get_ah_flags(&qp->remote_ah_attr) &
 			     IB_AH_GRH) &&
 			    (packet->etype != RHF_RCV_TYPE_BYPASS))
-				return 1;
-		} else {
-			const struct ib_global_route *grh;
+				वापस 1;
+		पूर्ण अन्यथा अणु
+			स्थिर काष्ठा ib_global_route *grh;
 
-			if (!(rdma_ah_get_ah_flags(&qp->remote_ah_attr) &
+			अगर (!(rdma_ah_get_ah_flags(&qp->remote_ah_attr) &
 						   IB_AH_GRH))
-				return 1;
-			grh = rdma_ah_read_grh(&qp->remote_ah_attr);
+				वापस 1;
+			grh = rdma_ah_पढ़ो_grh(&qp->remote_ah_attr);
 			guid = get_sguid(ibp, grh->sgid_index);
-			if (!gid_ok(&packet->grh->dgid, ibp->rvp.gid_prefix,
+			अगर (!gid_ok(&packet->grh->dgid, ibp->rvp.gid_prefix,
 				    guid))
-				return 1;
-			if (!gid_ok(
+				वापस 1;
+			अगर (!gid_ok(
 			     &packet->grh->sgid,
 			     grh->dgid.global.subnet_prefix,
-			     grh->dgid.global.interface_id))
-				return 1;
-		}
-		if (unlikely(rcv_pkey_check(ppd_from_ibp(ibp), pkey,
-					    sc5, slid))) {
+			     grh->dgid.global.पूर्णांकerface_id))
+				वापस 1;
+		पूर्ण
+		अगर (unlikely(rcv_pkey_check(ppd_from_ibp(ibp), pkey,
+					    sc5, slid))) अणु
 			hfi1_bad_pkey(ibp, pkey, sl, 0, qp->ibqp.qp_num,
 				      slid, dlid);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 		/* Validate the SLID. See Ch. 9.6.1.5 */
-		if ((slid != rdma_ah_get_dlid(&qp->remote_ah_attr)) ||
+		अगर ((slid != rdma_ah_get_dlid(&qp->remote_ah_attr)) ||
 		    ppd_from_ibp(ibp)->port != qp->port_num)
-			return 1;
-		if (qp->s_mig_state == IB_MIG_REARM && !migrated)
+			वापस 1;
+		अगर (qp->s_mig_state == IB_MIG_REARM && !migrated)
 			qp->s_mig_state = IB_MIG_ARMED;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * hfi1_make_grh - construct a GRH header
- * @ibp: a pointer to the IB port
- * @hdr: a pointer to the GRH header being constructed
+ * hfi1_make_grh - स्थिरruct a GRH header
+ * @ibp: a poपूर्णांकer to the IB port
+ * @hdr: a poपूर्णांकer to the GRH header being स्थिरructed
  * @grh: the global route address to send to
  * @hwords: size of header after grh being sent in dwords
  * @nwords: the number of 32 bit words of data being sent
  *
  * Return the size of the header in 32 bit words.
  */
-u32 hfi1_make_grh(struct hfi1_ibport *ibp, struct ib_grh *hdr,
-		  const struct ib_global_route *grh, u32 hwords, u32 nwords)
-{
+u32 hfi1_make_grh(काष्ठा hfi1_ibport *ibp, काष्ठा ib_grh *hdr,
+		  स्थिर काष्ठा ib_global_route *grh, u32 hwords, u32 nwords)
+अणु
 	hdr->version_tclass_flow =
 		cpu_to_be32((IB_GRH_VERSION << IB_GRH_VERSION_SHIFT) |
 			    (grh->traffic_class << IB_GRH_TCLASS_SHIFT) |
@@ -178,23 +179,23 @@ u32 hfi1_make_grh(struct hfi1_ibport *ibp, struct ib_grh *hdr,
 	hdr->hop_limit = grh->hop_limit;
 	/* The SGID is 32-bit aligned. */
 	hdr->sgid.global.subnet_prefix = ibp->rvp.gid_prefix;
-	hdr->sgid.global.interface_id =
+	hdr->sgid.global.पूर्णांकerface_id =
 		grh->sgid_index < HFI1_GUIDS_PER_PORT ?
 		get_sguid(ibp, grh->sgid_index) :
 		get_sguid(ibp, HFI1_PORT_GUID_INDEX);
 	hdr->dgid = grh->dgid;
 
 	/* GRH header size in 32-bit words. */
-	return sizeof(struct ib_grh) / sizeof(u32);
-}
+	वापस माप(काष्ठा ib_grh) / माप(u32);
+पूर्ण
 
-#define BTH2_OFFSET (offsetof(struct hfi1_sdma_header, \
+#घोषणा BTH2_OFFSET (दुरत्व(काष्ठा hfi1_sdma_header, \
 			      hdr.ibh.u.oth.bth[2]) / 4)
 
 /**
  * build_ahg - create ahg in s_ahg
- * @qp: a pointer to QP
- * @npsn: the next PSN for the request/response
+ * @qp: a poपूर्णांकer to QP
+ * @npsn: the next PSN क्रम the request/response
  *
  * This routine handles the AHG by allocating an ahg entry and causing the
  * copy of the first middle.
@@ -202,63 +203,63 @@ u32 hfi1_make_grh(struct hfi1_ibport *ibp, struct ib_grh *hdr,
  * Subsequent middles use the copied entry, editing the
  * PSN with 1 or 2 edits.
  */
-static inline void build_ahg(struct rvt_qp *qp, u32 npsn)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+अटल अंतरभूत व्योम build_ahg(काष्ठा rvt_qp *qp, u32 npsn)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
-	if (unlikely(qp->s_flags & HFI1_S_AHG_CLEAR))
+	अगर (unlikely(qp->s_flags & HFI1_S_AHG_CLEAR))
 		clear_ahg(qp);
-	if (!(qp->s_flags & HFI1_S_AHG_VALID)) {
+	अगर (!(qp->s_flags & HFI1_S_AHG_VALID)) अणु
 		/* first middle that needs copy  */
-		if (qp->s_ahgidx < 0)
+		अगर (qp->s_ahgidx < 0)
 			qp->s_ahgidx = sdma_ahg_alloc(priv->s_sde);
-		if (qp->s_ahgidx >= 0) {
+		अगर (qp->s_ahgidx >= 0) अणु
 			qp->s_ahgpsn = npsn;
 			priv->s_ahg->tx_flags |= SDMA_TXREQ_F_AHG_COPY;
-			/* save to protect a change in another thread */
+			/* save to protect a change in another thपढ़ो */
 			priv->s_ahg->ahgidx = qp->s_ahgidx;
 			qp->s_flags |= HFI1_S_AHG_VALID;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* subsequent middle after valid */
-		if (qp->s_ahgidx >= 0) {
+		अगर (qp->s_ahgidx >= 0) अणु
 			priv->s_ahg->tx_flags |= SDMA_TXREQ_F_USE_AHG;
 			priv->s_ahg->ahgidx = qp->s_ahgidx;
 			priv->s_ahg->ahgcount++;
 			priv->s_ahg->ahgdesc[0] =
 				sdma_build_ahg_descriptor(
-					(__force u16)cpu_to_be16((u16)npsn),
+					(__क्रमce u16)cpu_to_be16((u16)npsn),
 					BTH2_OFFSET,
 					16,
 					16);
-			if ((npsn & 0xffff0000) !=
-					(qp->s_ahgpsn & 0xffff0000)) {
+			अगर ((npsn & 0xffff0000) !=
+					(qp->s_ahgpsn & 0xffff0000)) अणु
 				priv->s_ahg->ahgcount++;
 				priv->s_ahg->ahgdesc[1] =
 					sdma_build_ahg_descriptor(
-						(__force u16)cpu_to_be16(
+						(__क्रमce u16)cpu_to_be16(
 							(u16)(npsn >> 16)),
 						BTH2_OFFSET,
 						0,
 						16);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline void hfi1_make_ruc_bth(struct rvt_qp *qp,
-				     struct ib_other_headers *ohdr,
+अटल अंतरभूत व्योम hfi1_make_ruc_bth(काष्ठा rvt_qp *qp,
+				     काष्ठा ib_other_headers *ohdr,
 				     u32 bth0, u32 bth1, u32 bth2)
-{
+अणु
 	ohdr->bth[0] = cpu_to_be32(bth0);
 	ohdr->bth[1] = cpu_to_be32(bth1);
 	ohdr->bth[2] = cpu_to_be32(bth2);
-}
+पूर्ण
 
 /**
  * hfi1_make_ruc_header_16B - build a 16B header
  * @qp: the queue pair
- * @ohdr: a pointer to the destination header memory
+ * @ohdr: a poपूर्णांकer to the destination header memory
  * @bth0: bth0 passed in from the RC/UC builder
  * @bth1: bth1 passed in from the RC/UC builder
  * @bth2: bth2 passed in from the RC/UC builder
@@ -270,15 +271,15 @@ static inline void hfi1_make_ruc_bth(struct rvt_qp *qp,
  * - BECN needed
  * - migration state not IB_MIG_MIGRATED
  */
-static inline void hfi1_make_ruc_header_16B(struct rvt_qp *qp,
-					    struct ib_other_headers *ohdr,
+अटल अंतरभूत व्योम hfi1_make_ruc_header_16B(काष्ठा rvt_qp *qp,
+					    काष्ठा ib_other_headers *ohdr,
 					    u32 bth0, u32 bth1, u32 bth2,
-					    int middle,
-					    struct hfi1_pkt_state *ps)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
-	struct hfi1_ibport *ibp = ps->ibp;
-	struct hfi1_pportdata *ppd = ppd_from_ibp(ibp);
+					    पूर्णांक middle,
+					    काष्ठा hfi1_pkt_state *ps)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	काष्ठा hfi1_ibport *ibp = ps->ibp;
+	काष्ठा hfi1_pportdata *ppd = ppd_from_ibp(ibp);
 	u32 slid;
 	u16 pkey = hfi1_get_pkey(ibp, qp->s_pkey_index);
 	u8 l4 = OPA_16B_L4_IB_LOCAL;
@@ -289,16 +290,16 @@ static inline void hfi1_make_ruc_header_16B(struct rvt_qp *qp,
 				 extra_bytes + SIZE_OF_LT) >> 2);
 	bool becn = false;
 
-	if (unlikely(rdma_ah_get_ah_flags(&qp->remote_ah_attr) & IB_AH_GRH) &&
-	    hfi1_check_mcast(rdma_ah_get_dlid(&qp->remote_ah_attr))) {
-		struct ib_grh *grh;
-		struct ib_global_route *grd =
+	अगर (unlikely(rdma_ah_get_ah_flags(&qp->remote_ah_attr) & IB_AH_GRH) &&
+	    hfi1_check_mcast(rdma_ah_get_dlid(&qp->remote_ah_attr))) अणु
+		काष्ठा ib_grh *grh;
+		काष्ठा ib_global_route *grd =
 			rdma_ah_retrieve_grh(&qp->remote_ah_attr);
 		/*
-		 * Ensure OPA GIDs are transformed to IB gids
-		 * before creating the GRH.
+		 * Ensure OPA GIDs are transक्रमmed to IB gids
+		 * beक्रमe creating the GRH.
 		 */
-		if (grd->sgid_index == OPA_GID_INDEX)
+		अगर (grd->sgid_index == OPA_GID_INDEX)
 			grd->sgid_index = 0;
 		grh = &ps->s_txreq->phdr.hdr.opah.u.l.grh;
 		l4 = OPA_16B_L4_IB_GLOBAL;
@@ -307,31 +308,31 @@ static inline void hfi1_make_ruc_header_16B(struct rvt_qp *qp,
 				      ps->s_txreq->hdr_dwords - LRH_16B_DWORDS,
 				      nwords);
 		middle = 0;
-	}
+	पूर्ण
 
-	if (qp->s_mig_state == IB_MIG_MIGRATED)
+	अगर (qp->s_mig_state == IB_MIG_MIGRATED)
 		bth1 |= OPA_BTH_MIG_REQ;
-	else
+	अन्यथा
 		middle = 0;
 
-	if (qp->s_flags & RVT_S_ECN) {
+	अगर (qp->s_flags & RVT_S_ECN) अणु
 		qp->s_flags &= ~RVT_S_ECN;
-		/* we recently received a FECN, so return a BECN */
+		/* we recently received a FECN, so वापस a BECN */
 		becn = true;
 		middle = 0;
-	}
-	if (middle)
+	पूर्ण
+	अगर (middle)
 		build_ahg(qp, bth2);
-	else
+	अन्यथा
 		qp->s_flags &= ~HFI1_S_AHG_VALID;
 
 	bth0 |= pkey;
 	bth0 |= extra_bytes << 20;
 	hfi1_make_ruc_bth(qp, ohdr, bth0, bth1, bth2);
 
-	if (!ppd->lid)
+	अगर (!ppd->lid)
 		slid = be32_to_cpu(OPA_LID_PERMISSIVE);
-	else
+	अन्यथा
 		slid = ppd->lid |
 			(rdma_ah_get_path_bits(&qp->remote_ah_attr) &
 			((1 << ppd->lmc) - 1));
@@ -342,12 +343,12 @@ static inline void hfi1_make_ruc_header_16B(struct rvt_qp *qp,
 				      16B),
 			  (ps->s_txreq->hdr_dwords + nwords) >> 1,
 			  pkey, becn, 0, l4, priv->s_sc);
-}
+पूर्ण
 
 /**
  * hfi1_make_ruc_header_9B - build a 9B header
  * @qp: the queue pair
- * @ohdr: a pointer to the destination header memory
+ * @ohdr: a poपूर्णांकer to the destination header memory
  * @bth0: bth0 passed in from the RC/UC builder
  * @bth1: bth1 passed in from the RC/UC builder
  * @bth2: bth2 passed in from the RC/UC builder
@@ -359,48 +360,48 @@ static inline void hfi1_make_ruc_header_16B(struct rvt_qp *qp,
  * - BECN needed
  * - migration state not IB_MIG_MIGRATED
  */
-static inline void hfi1_make_ruc_header_9B(struct rvt_qp *qp,
-					   struct ib_other_headers *ohdr,
+अटल अंतरभूत व्योम hfi1_make_ruc_header_9B(काष्ठा rvt_qp *qp,
+					   काष्ठा ib_other_headers *ohdr,
 					   u32 bth0, u32 bth1, u32 bth2,
-					   int middle,
-					   struct hfi1_pkt_state *ps)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
-	struct hfi1_ibport *ibp = ps->ibp;
+					   पूर्णांक middle,
+					   काष्ठा hfi1_pkt_state *ps)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	काष्ठा hfi1_ibport *ibp = ps->ibp;
 	u16 pkey = hfi1_get_pkey(ibp, qp->s_pkey_index);
 	u16 lrh0 = HFI1_LRH_BTH;
 	u8 extra_bytes = -ps->s_txreq->s_cur_size & 3;
 	u32 nwords = SIZE_OF_CRC + ((ps->s_txreq->s_cur_size +
 					 extra_bytes) >> 2);
 
-	if (unlikely(rdma_ah_get_ah_flags(&qp->remote_ah_attr) & IB_AH_GRH)) {
-		struct ib_grh *grh = &ps->s_txreq->phdr.hdr.ibh.u.l.grh;
+	अगर (unlikely(rdma_ah_get_ah_flags(&qp->remote_ah_attr) & IB_AH_GRH)) अणु
+		काष्ठा ib_grh *grh = &ps->s_txreq->phdr.hdr.ibh.u.l.grh;
 
 		lrh0 = HFI1_LRH_GRH;
 		ps->s_txreq->hdr_dwords +=
 			hfi1_make_grh(ibp, grh,
-				      rdma_ah_read_grh(&qp->remote_ah_attr),
+				      rdma_ah_पढ़ो_grh(&qp->remote_ah_attr),
 				      ps->s_txreq->hdr_dwords - LRH_9B_DWORDS,
 				      nwords);
 		middle = 0;
-	}
+	पूर्ण
 	lrh0 |= (priv->s_sc & 0xf) << 12 |
 		(rdma_ah_get_sl(&qp->remote_ah_attr) & 0xf) << 4;
 
-	if (qp->s_mig_state == IB_MIG_MIGRATED)
+	अगर (qp->s_mig_state == IB_MIG_MIGRATED)
 		bth0 |= IB_BTH_MIG_REQ;
-	else
+	अन्यथा
 		middle = 0;
 
-	if (qp->s_flags & RVT_S_ECN) {
+	अगर (qp->s_flags & RVT_S_ECN) अणु
 		qp->s_flags &= ~RVT_S_ECN;
-		/* we recently received a FECN, so return a BECN */
+		/* we recently received a FECN, so वापस a BECN */
 		bth1 |= (IB_BECN_MASK << IB_BECN_SHIFT);
 		middle = 0;
-	}
-	if (middle)
+	पूर्ण
+	अगर (middle)
 		build_ahg(qp, bth2);
-	else
+	अन्यथा
 		qp->s_flags &= ~HFI1_S_AHG_VALID;
 
 	bth0 |= pkey;
@@ -412,34 +413,34 @@ static inline void hfi1_make_ruc_header_9B(struct rvt_qp *qp,
 			 opa_get_lid(rdma_ah_get_dlid(&qp->remote_ah_attr), 9B),
 			 ppd_from_ibp(ibp)->lid |
 				rdma_ah_get_path_bits(&qp->remote_ah_attr));
-}
+पूर्ण
 
-typedef void (*hfi1_make_ruc_hdr)(struct rvt_qp *qp,
-				  struct ib_other_headers *ohdr,
-				  u32 bth0, u32 bth1, u32 bth2, int middle,
-				  struct hfi1_pkt_state *ps);
+प्रकार व्योम (*hfi1_make_ruc_hdr)(काष्ठा rvt_qp *qp,
+				  काष्ठा ib_other_headers *ohdr,
+				  u32 bth0, u32 bth1, u32 bth2, पूर्णांक middle,
+				  काष्ठा hfi1_pkt_state *ps);
 
-/* We support only two types - 9B and 16B for now */
-static const hfi1_make_ruc_hdr hfi1_ruc_header_tbl[2] = {
+/* We support only two types - 9B and 16B क्रम now */
+अटल स्थिर hfi1_make_ruc_hdr hfi1_ruc_header_tbl[2] = अणु
 	[HFI1_PKT_TYPE_9B] = &hfi1_make_ruc_header_9B,
 	[HFI1_PKT_TYPE_16B] = &hfi1_make_ruc_header_16B
-};
+पूर्ण;
 
-void hfi1_make_ruc_header(struct rvt_qp *qp, struct ib_other_headers *ohdr,
-			  u32 bth0, u32 bth1, u32 bth2, int middle,
-			  struct hfi1_pkt_state *ps)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+व्योम hfi1_make_ruc_header(काष्ठा rvt_qp *qp, काष्ठा ib_other_headers *ohdr,
+			  u32 bth0, u32 bth1, u32 bth2, पूर्णांक middle,
+			  काष्ठा hfi1_pkt_state *ps)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
 	/*
 	 * reset s_ahg/AHG fields
 	 *
 	 * This insures that the ahgentry/ahgcount
-	 * are at a non-AHG default to protect
+	 * are at a non-AHG शेष to protect
 	 * build_verbs_tx_desc() from using
 	 * an include ahgidx.
 	 *
-	 * build_ahg() will modify as appropriate
+	 * build_ahg() will modअगरy as appropriate
 	 * to use the AHG feature.
 	 */
 	priv->s_ahg->tx_flags = 0;
@@ -449,169 +450,169 @@ void hfi1_make_ruc_header(struct rvt_qp *qp, struct ib_other_headers *ohdr,
 	/* Make the appropriate header */
 	hfi1_ruc_header_tbl[priv->hdr_type](qp, ohdr, bth0, bth1, bth2, middle,
 					    ps);
-}
+पूर्ण
 
-/* when sending, force a reschedule every one of these periods */
-#define SEND_RESCHED_TIMEOUT (5 * HZ)  /* 5s in jiffies */
+/* when sending, क्रमce a reschedule every one of these periods */
+#घोषणा SEND_RESCHED_TIMEOUT (5 * HZ)  /* 5s in jअगरfies */
 
 /**
- * hfi1_schedule_send_yield - test for a yield required for QP
+ * hfi1_schedule_send_yield - test क्रम a yield required क्रम QP
  * send engine
- * @qp: a pointer to QP
- * @ps: a pointer to a structure with commonly lookup values for
+ * @qp: a poपूर्णांकer to QP
+ * @ps: a poपूर्णांकer to a काष्ठाure with commonly lookup values क्रम
  *      the the send engine progress
- * @tid: true if it is the tid leg
+ * @tid: true अगर it is the tid leg
  *
- * This routine checks if the time slice for the QP has expired
- * for RC QPs, if so an additional work entry is queued. At this
- * point, other QPs have an opportunity to be scheduled. It
- * returns true if a yield is required, otherwise, false
- * is returned.
+ * This routine checks अगर the समय slice क्रम the QP has expired
+ * क्रम RC QPs, अगर so an additional work entry is queued. At this
+ * poपूर्णांक, other QPs have an opportunity to be scheduled. It
+ * वापसs true अगर a yield is required, otherwise, false
+ * is वापसed.
  */
-bool hfi1_schedule_send_yield(struct rvt_qp *qp, struct hfi1_pkt_state *ps,
+bool hfi1_schedule_send_yield(काष्ठा rvt_qp *qp, काष्ठा hfi1_pkt_state *ps,
 			      bool tid)
-{
+अणु
 	ps->pkts_sent = true;
 
-	if (unlikely(time_after(jiffies, ps->timeout))) {
-		if (!ps->in_thread ||
-		    workqueue_congested(ps->cpu, ps->ppd->hfi1_wq)) {
+	अगर (unlikely(समय_after(jअगरfies, ps->समयout))) अणु
+		अगर (!ps->in_thपढ़ो ||
+		    workqueue_congested(ps->cpu, ps->ppd->hfi1_wq)) अणु
 			spin_lock_irqsave(&qp->s_lock, ps->flags);
-			if (!tid) {
+			अगर (!tid) अणु
 				qp->s_flags &= ~RVT_S_BUSY;
 				hfi1_schedule_send(qp);
-			} else {
-				struct hfi1_qp_priv *priv = qp->priv;
+			पूर्ण अन्यथा अणु
+				काष्ठा hfi1_qp_priv *priv = qp->priv;
 
-				if (priv->s_flags &
-				    HFI1_S_TID_BUSY_SET) {
+				अगर (priv->s_flags &
+				    HFI1_S_TID_BUSY_SET) अणु
 					qp->s_flags &= ~RVT_S_BUSY;
 					priv->s_flags &=
 						~(HFI1_S_TID_BUSY_SET |
 						  RVT_S_BUSY);
-				} else {
+				पूर्ण अन्यथा अणु
 					priv->s_flags &= ~RVT_S_BUSY;
-				}
+				पूर्ण
 				hfi1_schedule_tid_send(qp);
-			}
+			पूर्ण
 
 			spin_unlock_irqrestore(&qp->s_lock, ps->flags);
 			this_cpu_inc(*ps->ppd->dd->send_schedule);
-			trace_hfi1_rc_expired_time_slice(qp, true);
-			return true;
-		}
+			trace_hfi1_rc_expired_समय_slice(qp, true);
+			वापस true;
+		पूर्ण
 
 		cond_resched();
 		this_cpu_inc(*ps->ppd->dd->send_schedule);
-		ps->timeout = jiffies + ps->timeout_int;
-	}
+		ps->समयout = jअगरfies + ps->समयout_पूर्णांक;
+	पूर्ण
 
-	trace_hfi1_rc_expired_time_slice(qp, false);
-	return false;
-}
+	trace_hfi1_rc_expired_समय_slice(qp, false);
+	वापस false;
+पूर्ण
 
-void hfi1_do_send_from_rvt(struct rvt_qp *qp)
-{
-	hfi1_do_send(qp, false);
-}
+व्योम hfi1_करो_send_from_rvt(काष्ठा rvt_qp *qp)
+अणु
+	hfi1_करो_send(qp, false);
+पूर्ण
 
-void _hfi1_do_send(struct work_struct *work)
-{
-	struct iowait_work *w = container_of(work, struct iowait_work, iowork);
-	struct rvt_qp *qp = iowait_to_qp(w->iow);
+व्योम _hfi1_करो_send(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ioरुको_work *w = container_of(work, काष्ठा ioरुको_work, iowork);
+	काष्ठा rvt_qp *qp = ioरुको_to_qp(w->iow);
 
-	hfi1_do_send(qp, true);
-}
+	hfi1_करो_send(qp, true);
+पूर्ण
 
 /**
- * hfi1_do_send - perform a send on a QP
- * @qp: a pointer to the QP
- * @in_thread: true if in a workqueue thread
+ * hfi1_करो_send - perक्रमm a send on a QP
+ * @qp: a poपूर्णांकer to the QP
+ * @in_thपढ़ो: true अगर in a workqueue thपढ़ो
  *
  * Process entries in the send work queue until credit or queue is
  * exhausted.  Only allow one CPU to send a packet per QP.
- * Otherwise, two threads could send packets out of order.
+ * Otherwise, two thपढ़ोs could send packets out of order.
  */
-void hfi1_do_send(struct rvt_qp *qp, bool in_thread)
-{
-	struct hfi1_pkt_state ps;
-	struct hfi1_qp_priv *priv = qp->priv;
-	int (*make_req)(struct rvt_qp *qp, struct hfi1_pkt_state *ps);
+व्योम hfi1_करो_send(काष्ठा rvt_qp *qp, bool in_thपढ़ो)
+अणु
+	काष्ठा hfi1_pkt_state ps;
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	पूर्णांक (*make_req)(काष्ठा rvt_qp *qp, काष्ठा hfi1_pkt_state *ps);
 
 	ps.dev = to_idev(qp->ibqp.device);
 	ps.ibp = to_iport(qp->ibqp.device, qp->port_num);
 	ps.ppd = ppd_from_ibp(ps.ibp);
-	ps.in_thread = in_thread;
-	ps.wait = iowait_get_ib_work(&priv->s_iowait);
+	ps.in_thपढ़ो = in_thपढ़ो;
+	ps.रुको = ioरुको_get_ib_work(&priv->s_ioरुको);
 
-	trace_hfi1_rc_do_send(qp, in_thread);
+	trace_hfi1_rc_करो_send(qp, in_thपढ़ो);
 
-	switch (qp->ibqp.qp_type) {
-	case IB_QPT_RC:
-		if (!loopback && ((rdma_ah_get_dlid(&qp->remote_ah_attr) &
+	चयन (qp->ibqp.qp_type) अणु
+	हाल IB_QPT_RC:
+		अगर (!loopback && ((rdma_ah_get_dlid(&qp->remote_ah_attr) &
 				   ~((1 << ps.ppd->lmc) - 1)) ==
-				  ps.ppd->lid)) {
+				  ps.ppd->lid)) अणु
 			rvt_ruc_loopback(qp);
-			return;
-		}
+			वापस;
+		पूर्ण
 		make_req = hfi1_make_rc_req;
-		ps.timeout_int = qp->timeout_jiffies;
-		break;
-	case IB_QPT_UC:
-		if (!loopback && ((rdma_ah_get_dlid(&qp->remote_ah_attr) &
+		ps.समयout_पूर्णांक = qp->समयout_jअगरfies;
+		अवरोध;
+	हाल IB_QPT_UC:
+		अगर (!loopback && ((rdma_ah_get_dlid(&qp->remote_ah_attr) &
 				   ~((1 << ps.ppd->lmc) - 1)) ==
-				  ps.ppd->lid)) {
+				  ps.ppd->lid)) अणु
 			rvt_ruc_loopback(qp);
-			return;
-		}
+			वापस;
+		पूर्ण
 		make_req = hfi1_make_uc_req;
-		ps.timeout_int = SEND_RESCHED_TIMEOUT;
-		break;
-	default:
+		ps.समयout_पूर्णांक = SEND_RESCHED_TIMEOUT;
+		अवरोध;
+	शेष:
 		make_req = hfi1_make_ud_req;
-		ps.timeout_int = SEND_RESCHED_TIMEOUT;
-	}
+		ps.समयout_पूर्णांक = SEND_RESCHED_TIMEOUT;
+	पूर्ण
 
 	spin_lock_irqsave(&qp->s_lock, ps.flags);
 
-	/* Return if we are already busy processing a work request. */
-	if (!hfi1_send_ok(qp)) {
-		if (qp->s_flags & HFI1_S_ANY_WAIT_IO)
-			iowait_set_flag(&priv->s_iowait, IOWAIT_PENDING_IB);
+	/* Return अगर we are alपढ़ोy busy processing a work request. */
+	अगर (!hfi1_send_ok(qp)) अणु
+		अगर (qp->s_flags & HFI1_S_ANY_WAIT_IO)
+			ioरुको_set_flag(&priv->s_ioरुको, IOWAIT_PENDING_IB);
 		spin_unlock_irqrestore(&qp->s_lock, ps.flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	qp->s_flags |= RVT_S_BUSY;
 
-	ps.timeout_int = ps.timeout_int / 8;
-	ps.timeout = jiffies + ps.timeout_int;
+	ps.समयout_पूर्णांक = ps.समयout_पूर्णांक / 8;
+	ps.समयout = jअगरfies + ps.समयout_पूर्णांक;
 	ps.cpu = priv->s_sde ? priv->s_sde->cpu :
 			cpumask_first(cpumask_of_node(ps.ppd->dd->node));
 	ps.pkts_sent = false;
 
 	/* insure a pre-built packet is handled  */
-	ps.s_txreq = get_waiting_verbs_txreq(ps.wait);
-	do {
-		/* Check for a constructed packet to be sent. */
-		if (ps.s_txreq) {
-			if (priv->s_flags & HFI1_S_TID_BUSY_SET)
+	ps.s_txreq = get_रुकोing_verbs_txreq(ps.रुको);
+	करो अणु
+		/* Check क्रम a स्थिरructed packet to be sent. */
+		अगर (ps.s_txreq) अणु
+			अगर (priv->s_flags & HFI1_S_TID_BUSY_SET)
 				qp->s_flags |= RVT_S_BUSY;
 			spin_unlock_irqrestore(&qp->s_lock, ps.flags);
 			/*
-			 * If the packet cannot be sent now, return and
+			 * If the packet cannot be sent now, वापस and
 			 * the send engine will be woken up later.
 			 */
-			if (hfi1_verbs_send(qp, &ps))
-				return;
+			अगर (hfi1_verbs_send(qp, &ps))
+				वापस;
 
 			/* allow other tasks to run */
-			if (hfi1_schedule_send_yield(qp, &ps, false))
-				return;
+			अगर (hfi1_schedule_send_yield(qp, &ps, false))
+				वापस;
 
 			spin_lock_irqsave(&qp->s_lock, ps.flags);
-		}
-	} while (make_req(qp, &ps));
-	iowait_starve_clear(ps.pkts_sent, &priv->s_iowait);
+		पूर्ण
+	पूर्ण जबतक (make_req(qp, &ps));
+	ioरुको_starve_clear(ps.pkts_sent, &priv->s_ioरुको);
 	spin_unlock_irqrestore(&qp->s_lock, ps.flags);
-}
+पूर्ण

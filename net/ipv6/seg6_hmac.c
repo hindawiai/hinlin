@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  SR-IPv6 implementation -- HMAC functions
  *
@@ -6,175 +7,175 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  */
 
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/netdevice.h>
-#include <linux/in6.h>
-#include <linux/icmpv6.h>
-#include <linux/mroute6.h>
-#include <linux/slab.h>
-#include <linux/rhashtable.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/mroute6.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rhashtable.h>
 
-#include <linux/netfilter.h>
-#include <linux/netfilter_ipv6.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter_ipv6.h>
 
-#include <net/sock.h>
-#include <net/snmp.h>
+#समावेश <net/sock.h>
+#समावेश <net/snmp.h>
 
-#include <net/ipv6.h>
-#include <net/protocol.h>
-#include <net/transp_v6.h>
-#include <net/rawv6.h>
-#include <net/ndisc.h>
-#include <net/ip6_route.h>
-#include <net/addrconf.h>
-#include <net/xfrm.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/protocol.h>
+#समावेश <net/transp_v6.h>
+#समावेश <net/rawv6.h>
+#समावेश <net/ndisc.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/xfrm.h>
 
-#include <crypto/hash.h>
-#include <net/seg6.h>
-#include <net/genetlink.h>
-#include <net/seg6_hmac.h>
-#include <linux/random.h>
+#समावेश <crypto/hash.h>
+#समावेश <net/seg6.h>
+#समावेश <net/genetlink.h>
+#समावेश <net/seg6_hmac.h>
+#समावेश <linux/अक्रमom.h>
 
-static DEFINE_PER_CPU(char [SEG6_HMAC_RING_SIZE], hmac_ring);
+अटल DEFINE_PER_CPU(अक्षर [SEG6_HMAC_RING_SIZE], hmac_ring);
 
-static int seg6_hmac_cmpfn(struct rhashtable_compare_arg *arg, const void *obj)
-{
-	const struct seg6_hmac_info *hinfo = obj;
+अटल पूर्णांक seg6_hmac_cmpfn(काष्ठा rhashtable_compare_arg *arg, स्थिर व्योम *obj)
+अणु
+	स्थिर काष्ठा seg6_hmac_info *hinfo = obj;
 
-	return (hinfo->hmackeyid != *(__u32 *)arg->key);
-}
+	वापस (hinfo->hmackeyid != *(__u32 *)arg->key);
+पूर्ण
 
-static inline void seg6_hinfo_release(struct seg6_hmac_info *hinfo)
-{
-	kfree_rcu(hinfo, rcu);
-}
+अटल अंतरभूत व्योम seg6_hinfo_release(काष्ठा seg6_hmac_info *hinfo)
+अणु
+	kमुक्त_rcu(hinfo, rcu);
+पूर्ण
 
-static void seg6_free_hi(void *ptr, void *arg)
-{
-	struct seg6_hmac_info *hinfo = (struct seg6_hmac_info *)ptr;
+अटल व्योम seg6_मुक्त_hi(व्योम *ptr, व्योम *arg)
+अणु
+	काष्ठा seg6_hmac_info *hinfo = (काष्ठा seg6_hmac_info *)ptr;
 
-	if (hinfo)
+	अगर (hinfo)
 		seg6_hinfo_release(hinfo);
-}
+पूर्ण
 
-static const struct rhashtable_params rht_params = {
-	.head_offset		= offsetof(struct seg6_hmac_info, node),
-	.key_offset		= offsetof(struct seg6_hmac_info, hmackeyid),
-	.key_len		= sizeof(u32),
-	.automatic_shrinking	= true,
+अटल स्थिर काष्ठा rhashtable_params rht_params = अणु
+	.head_offset		= दुरत्व(काष्ठा seg6_hmac_info, node),
+	.key_offset		= दुरत्व(काष्ठा seg6_hmac_info, hmackeyid),
+	.key_len		= माप(u32),
+	.स्वतःmatic_shrinking	= true,
 	.obj_cmpfn		= seg6_hmac_cmpfn,
-};
+पूर्ण;
 
-static struct seg6_hmac_algo hmac_algos[] = {
-	{
+अटल काष्ठा seg6_hmac_algo hmac_algos[] = अणु
+	अणु
 		.alg_id = SEG6_HMAC_ALGO_SHA1,
 		.name = "hmac(sha1)",
-	},
-	{
+	पूर्ण,
+	अणु
 		.alg_id = SEG6_HMAC_ALGO_SHA256,
 		.name = "hmac(sha256)",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct sr6_tlv_hmac *seg6_get_tlv_hmac(struct ipv6_sr_hdr *srh)
-{
-	struct sr6_tlv_hmac *tlv;
+अटल काष्ठा sr6_tlv_hmac *seg6_get_tlv_hmac(काष्ठा ipv6_sr_hdr *srh)
+अणु
+	काष्ठा sr6_tlv_hmac *tlv;
 
-	if (srh->hdrlen < (srh->first_segment + 1) * 2 + 5)
-		return NULL;
+	अगर (srh->hdrlen < (srh->first_segment + 1) * 2 + 5)
+		वापस शून्य;
 
-	if (!sr_has_hmac(srh))
-		return NULL;
+	अगर (!sr_has_hmac(srh))
+		वापस शून्य;
 
-	tlv = (struct sr6_tlv_hmac *)
-	      ((char *)srh + ((srh->hdrlen + 1) << 3) - 40);
+	tlv = (काष्ठा sr6_tlv_hmac *)
+	      ((अक्षर *)srh + ((srh->hdrlen + 1) << 3) - 40);
 
-	if (tlv->tlvhdr.type != SR6_TLV_HMAC || tlv->tlvhdr.len != 38)
-		return NULL;
+	अगर (tlv->tlvhdr.type != SR6_TLV_HMAC || tlv->tlvhdr.len != 38)
+		वापस शून्य;
 
-	return tlv;
-}
+	वापस tlv;
+पूर्ण
 
-static struct seg6_hmac_algo *__hmac_get_algo(u8 alg_id)
-{
-	struct seg6_hmac_algo *algo;
-	int i, alg_count;
+अटल काष्ठा seg6_hmac_algo *__hmac_get_algo(u8 alg_id)
+अणु
+	काष्ठा seg6_hmac_algo *algo;
+	पूर्णांक i, alg_count;
 
 	alg_count = ARRAY_SIZE(hmac_algos);
-	for (i = 0; i < alg_count; i++) {
+	क्रम (i = 0; i < alg_count; i++) अणु
 		algo = &hmac_algos[i];
-		if (algo->alg_id == alg_id)
-			return algo;
-	}
+		अगर (algo->alg_id == alg_id)
+			वापस algo;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int __do_hmac(struct seg6_hmac_info *hinfo, const char *text, u8 psize,
-		     u8 *output, int outlen)
-{
-	struct seg6_hmac_algo *algo;
-	struct crypto_shash *tfm;
-	struct shash_desc *shash;
-	int ret, dgsize;
+अटल पूर्णांक __करो_hmac(काष्ठा seg6_hmac_info *hinfo, स्थिर अक्षर *text, u8 psize,
+		     u8 *output, पूर्णांक outlen)
+अणु
+	काष्ठा seg6_hmac_algo *algo;
+	काष्ठा crypto_shash *tfm;
+	काष्ठा shash_desc *shash;
+	पूर्णांक ret, dgsize;
 
 	algo = __hmac_get_algo(hinfo->alg_id);
-	if (!algo)
-		return -ENOENT;
+	अगर (!algo)
+		वापस -ENOENT;
 
 	tfm = *this_cpu_ptr(algo->tfms);
 
 	dgsize = crypto_shash_digestsize(tfm);
-	if (dgsize > outlen) {
+	अगर (dgsize > outlen) अणु
 		pr_debug("sr-ipv6: __do_hmac: digest size too big (%d / %d)\n",
 			 dgsize, outlen);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = crypto_shash_setkey(tfm, hinfo->secret, hinfo->slen);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_debug("sr-ipv6: crypto_shash_setkey failed: err %d\n", ret);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	shash = *this_cpu_ptr(algo->shashs);
 	shash->tfm = tfm;
 
 	ret = crypto_shash_digest(shash, text, psize, output);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_debug("sr-ipv6: crypto_shash_digest failed: err %d\n", ret);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	return dgsize;
+	वापस dgsize;
 
 failed:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int seg6_hmac_compute(struct seg6_hmac_info *hinfo, struct ipv6_sr_hdr *hdr,
-		      struct in6_addr *saddr, u8 *output)
-{
+पूर्णांक seg6_hmac_compute(काष्ठा seg6_hmac_info *hinfo, काष्ठा ipv6_sr_hdr *hdr,
+		      काष्ठा in6_addr *saddr, u8 *output)
+अणु
 	__be32 hmackeyid = cpu_to_be32(hinfo->hmackeyid);
-	u8 tmp_out[SEG6_HMAC_MAX_DIGESTSIZE];
-	int plen, i, dgsize, wrsize;
-	char *ring, *off;
+	u8 पंचांगp_out[SEG6_HMAC_MAX_DIGESTSIZE];
+	पूर्णांक plen, i, dgsize, wrsize;
+	अक्षर *ring, *off;
 
-	/* a 160-byte buffer for digest output allows to store highest known
+	/* a 160-byte buffer क्रम digest output allows to store highest known
 	 * hash function (RadioGatun) with up to 1216 bits
 	 */
 
 	/* saddr(16) + first_seg(1) + flags(1) + keyid(4) + seglist(16n) */
 	plen = 16 + 1 + 1 + 4 + (hdr->first_segment + 1) * 16;
 
-	/* this limit allows for 14 segments */
-	if (plen >= SEG6_HMAC_RING_SIZE)
-		return -EMSGSIZE;
+	/* this limit allows क्रम 14 segments */
+	अगर (plen >= SEG6_HMAC_RING_SIZE)
+		वापस -EMSGSIZE;
 
 	/* Let's build the HMAC text on the ring buffer. The text is composed
 	 * as follows, in order:
@@ -191,7 +192,7 @@ int seg6_hmac_compute(struct seg6_hmac_info *hinfo, struct ipv6_sr_hdr *hdr,
 	off = ring;
 
 	/* source address */
-	memcpy(off, saddr, 16);
+	स_नकल(off, saddr, 16);
 	off += 16;
 
 	/* first_segment value */
@@ -201,243 +202,243 @@ int seg6_hmac_compute(struct seg6_hmac_info *hinfo, struct ipv6_sr_hdr *hdr,
 	*off++ = hdr->flags;
 
 	/* HMAC Key ID */
-	memcpy(off, &hmackeyid, 4);
+	स_नकल(off, &hmackeyid, 4);
 	off += 4;
 
 	/* all segments in the list */
-	for (i = 0; i < hdr->first_segment + 1; i++) {
-		memcpy(off, hdr->segments + i, 16);
+	क्रम (i = 0; i < hdr->first_segment + 1; i++) अणु
+		स_नकल(off, hdr->segments + i, 16);
 		off += 16;
-	}
+	पूर्ण
 
-	dgsize = __do_hmac(hinfo, ring, plen, tmp_out,
+	dgsize = __करो_hmac(hinfo, ring, plen, पंचांगp_out,
 			   SEG6_HMAC_MAX_DIGESTSIZE);
 	local_bh_enable();
 
-	if (dgsize < 0)
-		return dgsize;
+	अगर (dgsize < 0)
+		वापस dgsize;
 
 	wrsize = SEG6_HMAC_FIELD_LEN;
-	if (wrsize > dgsize)
+	अगर (wrsize > dgsize)
 		wrsize = dgsize;
 
-	memset(output, 0, SEG6_HMAC_FIELD_LEN);
-	memcpy(output, tmp_out, wrsize);
+	स_रखो(output, 0, SEG6_HMAC_FIELD_LEN);
+	स_नकल(output, पंचांगp_out, wrsize);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(seg6_hmac_compute);
 
-/* checks if an incoming SR-enabled packet's HMAC status matches
+/* checks अगर an incoming SR-enabled packet's HMAC status matches
  * the incoming policy.
  *
- * called with rcu_read_lock()
+ * called with rcu_पढ़ो_lock()
  */
-bool seg6_hmac_validate_skb(struct sk_buff *skb)
-{
+bool seg6_hmac_validate_skb(काष्ठा sk_buff *skb)
+अणु
 	u8 hmac_output[SEG6_HMAC_FIELD_LEN];
-	struct net *net = dev_net(skb->dev);
-	struct seg6_hmac_info *hinfo;
-	struct sr6_tlv_hmac *tlv;
-	struct ipv6_sr_hdr *srh;
-	struct inet6_dev *idev;
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा seg6_hmac_info *hinfo;
+	काष्ठा sr6_tlv_hmac *tlv;
+	काष्ठा ipv6_sr_hdr *srh;
+	काष्ठा inet6_dev *idev;
 
 	idev = __in6_dev_get(skb->dev);
 
-	srh = (struct ipv6_sr_hdr *)skb_transport_header(skb);
+	srh = (काष्ठा ipv6_sr_hdr *)skb_transport_header(skb);
 
 	tlv = seg6_get_tlv_hmac(srh);
 
 	/* mandatory check but no tlv */
-	if (idev->cnf.seg6_require_hmac > 0 && !tlv)
-		return false;
+	अगर (idev->cnf.seg6_require_hmac > 0 && !tlv)
+		वापस false;
 
 	/* no check */
-	if (idev->cnf.seg6_require_hmac < 0)
-		return true;
+	अगर (idev->cnf.seg6_require_hmac < 0)
+		वापस true;
 
-	/* check only if present */
-	if (idev->cnf.seg6_require_hmac == 0 && !tlv)
-		return true;
+	/* check only अगर present */
+	अगर (idev->cnf.seg6_require_hmac == 0 && !tlv)
+		वापस true;
 
 	/* now, seg6_require_hmac >= 0 && tlv */
 
 	hinfo = seg6_hmac_info_lookup(net, be32_to_cpu(tlv->hmackeyid));
-	if (!hinfo)
-		return false;
+	अगर (!hinfo)
+		वापस false;
 
-	if (seg6_hmac_compute(hinfo, srh, &ipv6_hdr(skb)->saddr, hmac_output))
-		return false;
+	अगर (seg6_hmac_compute(hinfo, srh, &ipv6_hdr(skb)->saddr, hmac_output))
+		वापस false;
 
-	if (memcmp(hmac_output, tlv->hmac, SEG6_HMAC_FIELD_LEN) != 0)
-		return false;
+	अगर (स_भेद(hmac_output, tlv->hmac, SEG6_HMAC_FIELD_LEN) != 0)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(seg6_hmac_validate_skb);
 
-/* called with rcu_read_lock() */
-struct seg6_hmac_info *seg6_hmac_info_lookup(struct net *net, u32 key)
-{
-	struct seg6_pernet_data *sdata = seg6_pernet(net);
-	struct seg6_hmac_info *hinfo;
+/* called with rcu_पढ़ो_lock() */
+काष्ठा seg6_hmac_info *seg6_hmac_info_lookup(काष्ठा net *net, u32 key)
+अणु
+	काष्ठा seg6_pernet_data *sdata = seg6_pernet(net);
+	काष्ठा seg6_hmac_info *hinfo;
 
 	hinfo = rhashtable_lookup_fast(&sdata->hmac_infos, &key, rht_params);
 
-	return hinfo;
-}
+	वापस hinfo;
+पूर्ण
 EXPORT_SYMBOL(seg6_hmac_info_lookup);
 
-int seg6_hmac_info_add(struct net *net, u32 key, struct seg6_hmac_info *hinfo)
-{
-	struct seg6_pernet_data *sdata = seg6_pernet(net);
-	int err;
+पूर्णांक seg6_hmac_info_add(काष्ठा net *net, u32 key, काष्ठा seg6_hmac_info *hinfo)
+अणु
+	काष्ठा seg6_pernet_data *sdata = seg6_pernet(net);
+	पूर्णांक err;
 
 	err = rhashtable_lookup_insert_fast(&sdata->hmac_infos, &hinfo->node,
 					    rht_params);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(seg6_hmac_info_add);
 
-int seg6_hmac_info_del(struct net *net, u32 key)
-{
-	struct seg6_pernet_data *sdata = seg6_pernet(net);
-	struct seg6_hmac_info *hinfo;
-	int err = -ENOENT;
+पूर्णांक seg6_hmac_info_del(काष्ठा net *net, u32 key)
+अणु
+	काष्ठा seg6_pernet_data *sdata = seg6_pernet(net);
+	काष्ठा seg6_hmac_info *hinfo;
+	पूर्णांक err = -ENOENT;
 
 	hinfo = rhashtable_lookup_fast(&sdata->hmac_infos, &key, rht_params);
-	if (!hinfo)
-		goto out;
+	अगर (!hinfo)
+		जाओ out;
 
-	err = rhashtable_remove_fast(&sdata->hmac_infos, &hinfo->node,
+	err = rhashtable_हटाओ_fast(&sdata->hmac_infos, &hinfo->node,
 				     rht_params);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	seg6_hinfo_release(hinfo);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(seg6_hmac_info_del);
 
-int seg6_push_hmac(struct net *net, struct in6_addr *saddr,
-		   struct ipv6_sr_hdr *srh)
-{
-	struct seg6_hmac_info *hinfo;
-	struct sr6_tlv_hmac *tlv;
-	int err = -ENOENT;
+पूर्णांक seg6_push_hmac(काष्ठा net *net, काष्ठा in6_addr *saddr,
+		   काष्ठा ipv6_sr_hdr *srh)
+अणु
+	काष्ठा seg6_hmac_info *hinfo;
+	काष्ठा sr6_tlv_hmac *tlv;
+	पूर्णांक err = -ENOENT;
 
 	tlv = seg6_get_tlv_hmac(srh);
-	if (!tlv)
-		return -EINVAL;
+	अगर (!tlv)
+		वापस -EINVAL;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	hinfo = seg6_hmac_info_lookup(net, be32_to_cpu(tlv->hmackeyid));
-	if (!hinfo)
-		goto out;
+	अगर (!hinfo)
+		जाओ out;
 
-	memset(tlv->hmac, 0, SEG6_HMAC_FIELD_LEN);
+	स_रखो(tlv->hmac, 0, SEG6_HMAC_FIELD_LEN);
 	err = seg6_hmac_compute(hinfo, srh, saddr, tlv->hmac);
 
 out:
-	rcu_read_unlock();
-	return err;
-}
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(seg6_push_hmac);
 
-static int seg6_hmac_init_algo(void)
-{
-	struct seg6_hmac_algo *algo;
-	struct crypto_shash *tfm;
-	struct shash_desc *shash;
-	int i, alg_count, cpu;
+अटल पूर्णांक seg6_hmac_init_algo(व्योम)
+अणु
+	काष्ठा seg6_hmac_algo *algo;
+	काष्ठा crypto_shash *tfm;
+	काष्ठा shash_desc *shash;
+	पूर्णांक i, alg_count, cpu;
 
 	alg_count = ARRAY_SIZE(hmac_algos);
 
-	for (i = 0; i < alg_count; i++) {
-		struct crypto_shash **p_tfm;
-		int shsize;
+	क्रम (i = 0; i < alg_count; i++) अणु
+		काष्ठा crypto_shash **p_tfm;
+		पूर्णांक shsize;
 
 		algo = &hmac_algos[i];
-		algo->tfms = alloc_percpu(struct crypto_shash *);
-		if (!algo->tfms)
-			return -ENOMEM;
+		algo->tfms = alloc_percpu(काष्ठा crypto_shash *);
+		अगर (!algo->tfms)
+			वापस -ENOMEM;
 
-		for_each_possible_cpu(cpu) {
+		क्रम_each_possible_cpu(cpu) अणु
 			tfm = crypto_alloc_shash(algo->name, 0, 0);
-			if (IS_ERR(tfm))
-				return PTR_ERR(tfm);
+			अगर (IS_ERR(tfm))
+				वापस PTR_ERR(tfm);
 			p_tfm = per_cpu_ptr(algo->tfms, cpu);
 			*p_tfm = tfm;
-		}
+		पूर्ण
 
 		p_tfm = raw_cpu_ptr(algo->tfms);
 		tfm = *p_tfm;
 
-		shsize = sizeof(*shash) + crypto_shash_descsize(tfm);
+		shsize = माप(*shash) + crypto_shash_descsize(tfm);
 
-		algo->shashs = alloc_percpu(struct shash_desc *);
-		if (!algo->shashs)
-			return -ENOMEM;
+		algo->shashs = alloc_percpu(काष्ठा shash_desc *);
+		अगर (!algo->shashs)
+			वापस -ENOMEM;
 
-		for_each_possible_cpu(cpu) {
+		क्रम_each_possible_cpu(cpu) अणु
 			shash = kzalloc_node(shsize, GFP_KERNEL,
 					     cpu_to_node(cpu));
-			if (!shash)
-				return -ENOMEM;
+			अगर (!shash)
+				वापस -ENOMEM;
 			*per_cpu_ptr(algo->shashs, cpu) = shash;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init seg6_hmac_init(void)
-{
-	return seg6_hmac_init_algo();
-}
+पूर्णांक __init seg6_hmac_init(व्योम)
+अणु
+	वापस seg6_hmac_init_algo();
+पूर्ण
 EXPORT_SYMBOL(seg6_hmac_init);
 
-int __net_init seg6_hmac_net_init(struct net *net)
-{
-	struct seg6_pernet_data *sdata = seg6_pernet(net);
+पूर्णांक __net_init seg6_hmac_net_init(काष्ठा net *net)
+अणु
+	काष्ठा seg6_pernet_data *sdata = seg6_pernet(net);
 
 	rhashtable_init(&sdata->hmac_infos, &rht_params);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(seg6_hmac_net_init);
 
-void seg6_hmac_exit(void)
-{
-	struct seg6_hmac_algo *algo = NULL;
-	int i, alg_count, cpu;
+व्योम seg6_hmac_निकास(व्योम)
+अणु
+	काष्ठा seg6_hmac_algo *algo = शून्य;
+	पूर्णांक i, alg_count, cpu;
 
 	alg_count = ARRAY_SIZE(hmac_algos);
-	for (i = 0; i < alg_count; i++) {
+	क्रम (i = 0; i < alg_count; i++) अणु
 		algo = &hmac_algos[i];
-		for_each_possible_cpu(cpu) {
-			struct crypto_shash *tfm;
-			struct shash_desc *shash;
+		क्रम_each_possible_cpu(cpu) अणु
+			काष्ठा crypto_shash *tfm;
+			काष्ठा shash_desc *shash;
 
 			shash = *per_cpu_ptr(algo->shashs, cpu);
-			kfree(shash);
+			kमुक्त(shash);
 			tfm = *per_cpu_ptr(algo->tfms, cpu);
-			crypto_free_shash(tfm);
-		}
-		free_percpu(algo->tfms);
-		free_percpu(algo->shashs);
-	}
-}
-EXPORT_SYMBOL(seg6_hmac_exit);
+			crypto_मुक्त_shash(tfm);
+		पूर्ण
+		मुक्त_percpu(algo->tfms);
+		मुक्त_percpu(algo->shashs);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(seg6_hmac_निकास);
 
-void __net_exit seg6_hmac_net_exit(struct net *net)
-{
-	struct seg6_pernet_data *sdata = seg6_pernet(net);
+व्योम __net_निकास seg6_hmac_net_निकास(काष्ठा net *net)
+अणु
+	काष्ठा seg6_pernet_data *sdata = seg6_pernet(net);
 
-	rhashtable_free_and_destroy(&sdata->hmac_infos, seg6_free_hi, NULL);
-}
-EXPORT_SYMBOL(seg6_hmac_net_exit);
+	rhashtable_मुक्त_and_destroy(&sdata->hmac_infos, seg6_मुक्त_hi, शून्य);
+पूर्ण
+EXPORT_SYMBOL(seg6_hmac_net_निकास);

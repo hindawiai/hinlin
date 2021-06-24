@@ -1,559 +1,560 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Midi synth routines for the Emu8k/Emu10k1
+ *  Midi synth routines क्रम the Emu8k/Emu10k1
  *
- *  Copyright (C) 1999 Steve Ratcliffe
+ *  Copyright (C) 1999 Steve Ratclअगरfe
  *  Copyright (c) 1999-2000 Takashi Iwai <tiwai@suse.de>
  *
  *  Contains code based on awe_wave.c by Takashi Iwai
  */
 
-#include <linux/export.h>
-#include "emux_voice.h"
-#include <sound/asoundef.h>
+#समावेश <linux/export.h>
+#समावेश "emux_voice.h"
+#समावेश <sound/asoundef.h>
 
 /*
  * Prototypes
  */
 
 /*
- * Ensure a value is between two points
- * macro evaluates its args more than once, so changed to upper-case.
+ * Ensure a value is between two poपूर्णांकs
+ * macro evaluates its args more than once, so changed to upper-हाल.
  */
-#define LIMITVALUE(x, a, b) do { if ((x) < (a)) (x) = (a); else if ((x) > (b)) (x) = (b); } while (0)
-#define LIMITMAX(x, a) do {if ((x) > (a)) (x) = (a); } while (0)
+#घोषणा LIMITVALUE(x, a, b) करो अणु अगर ((x) < (a)) (x) = (a); अन्यथा अगर ((x) > (b)) (x) = (b); पूर्ण जबतक (0)
+#घोषणा LIMITMAX(x, a) करो अणुअगर ((x) > (a)) (x) = (a); पूर्ण जबतक (0)
 
-static int get_zone(struct snd_emux *emu, struct snd_emux_port *port,
-		    int *notep, int vel, struct snd_midi_channel *chan,
-		    struct snd_sf_zone **table);
-static int get_bank(struct snd_emux_port *port, struct snd_midi_channel *chan);
-static void terminate_note1(struct snd_emux *emu, int note,
-			    struct snd_midi_channel *chan, int free);
-static void exclusive_note_off(struct snd_emux *emu, struct snd_emux_port *port,
-			       int exclass);
-static void terminate_voice(struct snd_emux *emu, struct snd_emux_voice *vp, int free);
-static void update_voice(struct snd_emux *emu, struct snd_emux_voice *vp, int update);
-static void setup_voice(struct snd_emux_voice *vp);
-static int calc_pan(struct snd_emux_voice *vp);
-static int calc_volume(struct snd_emux_voice *vp);
-static int calc_pitch(struct snd_emux_voice *vp);
+अटल पूर्णांक get_zone(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port,
+		    पूर्णांक *notep, पूर्णांक vel, काष्ठा snd_midi_channel *chan,
+		    काष्ठा snd_sf_zone **table);
+अटल पूर्णांक get_bank(काष्ठा snd_emux_port *port, काष्ठा snd_midi_channel *chan);
+अटल व्योम terminate_note1(काष्ठा snd_emux *emu, पूर्णांक note,
+			    काष्ठा snd_midi_channel *chan, पूर्णांक मुक्त);
+अटल व्योम exclusive_note_off(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port,
+			       पूर्णांक exclass);
+अटल व्योम terminate_voice(काष्ठा snd_emux *emu, काष्ठा snd_emux_voice *vp, पूर्णांक मुक्त);
+अटल व्योम update_voice(काष्ठा snd_emux *emu, काष्ठा snd_emux_voice *vp, पूर्णांक update);
+अटल व्योम setup_voice(काष्ठा snd_emux_voice *vp);
+अटल पूर्णांक calc_pan(काष्ठा snd_emux_voice *vp);
+अटल पूर्णांक calc_volume(काष्ठा snd_emux_voice *vp);
+अटल पूर्णांक calc_pitch(काष्ठा snd_emux_voice *vp);
 
 
 /*
  * Start a note.
  */
-void
-snd_emux_note_on(void *p, int note, int vel, struct snd_midi_channel *chan)
-{
-	struct snd_emux *emu;
-	int i, key, nvoices;
-	struct snd_emux_voice *vp;
-	struct snd_sf_zone *table[SNDRV_EMUX_MAX_MULTI_VOICES];
-	unsigned long flags;
-	struct snd_emux_port *port;
+व्योम
+snd_emux_note_on(व्योम *p, पूर्णांक note, पूर्णांक vel, काष्ठा snd_midi_channel *chan)
+अणु
+	काष्ठा snd_emux *emu;
+	पूर्णांक i, key, nvoices;
+	काष्ठा snd_emux_voice *vp;
+	काष्ठा snd_sf_zone *table[SNDRV_EMUX_MAX_MULTI_VOICES];
+	अचिन्हित दीर्घ flags;
+	काष्ठा snd_emux_port *port;
 
 	port = p;
-	if (snd_BUG_ON(!port || !chan))
-		return;
+	अगर (snd_BUG_ON(!port || !chan))
+		वापस;
 
 	emu = port->emu;
-	if (snd_BUG_ON(!emu || !emu->ops.get_voice || !emu->ops.trigger))
-		return;
+	अगर (snd_BUG_ON(!emu || !emu->ops.get_voice || !emu->ops.trigger))
+		वापस;
 
 	key = note; /* remember the original note */
 	nvoices = get_zone(emu, port, &note, vel, chan, table);
-	if (! nvoices)
-		return;
+	अगर (! nvoices)
+		वापस;
 
 	/* exclusive note off */
-	for (i = 0; i < nvoices; i++) {
-		struct snd_sf_zone *zp = table[i];
-		if (zp && zp->v.exclusiveClass)
+	क्रम (i = 0; i < nvoices; i++) अणु
+		काष्ठा snd_sf_zone *zp = table[i];
+		अगर (zp && zp->v.exclusiveClass)
 			exclusive_note_off(emu, port, zp->v.exclusiveClass);
-	}
+	पूर्ण
 
-#if 0 // seems not necessary
+#अगर 0 // seems not necessary
 	/* Turn off the same note on the same channel. */
 	terminate_note1(emu, key, chan, 0);
-#endif
+#पूर्ण_अगर
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (i = 0; i < nvoices; i++) {
+	क्रम (i = 0; i < nvoices; i++) अणु
 
 		/* set up each voice parameter */
-		/* at this stage, we don't trigger the voice yet. */
+		/* at this stage, we करोn't trigger the voice yet. */
 
-		if (table[i] == NULL)
-			continue;
+		अगर (table[i] == शून्य)
+			जारी;
 
 		vp = emu->ops.get_voice(emu, port);
-		if (vp == NULL || vp->ch < 0)
-			continue;
-		if (STATE_IS_PLAYING(vp->state))
+		अगर (vp == शून्य || vp->ch < 0)
+			जारी;
+		अगर (STATE_IS_PLAYING(vp->state))
 			emu->ops.terminate(vp);
 
-		vp->time = emu->use_time++;
+		vp->समय = emu->use_समय++;
 		vp->chan = chan;
 		vp->port = port;
 		vp->key = key;
 		vp->note = note;
 		vp->velocity = vel;
 		vp->zone = table[i];
-		if (vp->zone->sample)
+		अगर (vp->zone->sample)
 			vp->block = vp->zone->sample->block;
-		else
-			vp->block = NULL;
+		अन्यथा
+			vp->block = शून्य;
 
 		setup_voice(vp);
 
 		vp->state = SNDRV_EMUX_ST_STANDBY;
-		if (emu->ops.prepare) {
+		अगर (emu->ops.prepare) अणु
 			vp->state = SNDRV_EMUX_ST_OFF;
-			if (emu->ops.prepare(vp) >= 0)
+			अगर (emu->ops.prepare(vp) >= 0)
 				vp->state = SNDRV_EMUX_ST_STANDBY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* start envelope now */
-	for (i = 0; i < emu->max_voices; i++) {
+	क्रम (i = 0; i < emu->max_voices; i++) अणु
 		vp = &emu->voices[i];
-		if (vp->state == SNDRV_EMUX_ST_STANDBY &&
-		    vp->chan == chan) {
+		अगर (vp->state == SNDRV_EMUX_ST_STANDBY &&
+		    vp->chan == chan) अणु
 			emu->ops.trigger(vp);
 			vp->state = SNDRV_EMUX_ST_ON;
-			vp->ontime = jiffies; /* remember the trigger timing */
-		}
-	}
+			vp->onसमय = jअगरfies; /* remember the trigger timing */
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
 
-#ifdef SNDRV_EMUX_USE_RAW_EFFECT
-	if (port->port_mode == SNDRV_EMUX_PORT_MODE_OSS_SYNTH) {
-		/* clear voice position for the next note on this channel */
-		struct snd_emux_effect_table *fx = chan->private;
-		if (fx) {
+#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
+	अगर (port->port_mode == SNDRV_EMUX_PORT_MODE_OSS_SYNTH) अणु
+		/* clear voice position क्रम the next note on this channel */
+		काष्ठा snd_emux_effect_table *fx = chan->निजी;
+		अगर (fx) अणु
 			fx->flag[EMUX_FX_SAMPLE_START] = 0;
 			fx->flag[EMUX_FX_COARSE_SAMPLE_START] = 0;
-		}
-	}
-#endif
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * Release a note in response to a midi note off.
  */
-void
-snd_emux_note_off(void *p, int note, int vel, struct snd_midi_channel *chan)
-{
-	int ch;
-	struct snd_emux *emu;
-	struct snd_emux_voice *vp;
-	unsigned long flags;
-	struct snd_emux_port *port;
+व्योम
+snd_emux_note_off(व्योम *p, पूर्णांक note, पूर्णांक vel, काष्ठा snd_midi_channel *chan)
+अणु
+	पूर्णांक ch;
+	काष्ठा snd_emux *emu;
+	काष्ठा snd_emux_voice *vp;
+	अचिन्हित दीर्घ flags;
+	काष्ठा snd_emux_port *port;
 
 	port = p;
-	if (snd_BUG_ON(!port || !chan))
-		return;
+	अगर (snd_BUG_ON(!port || !chan))
+		वापस;
 
 	emu = port->emu;
-	if (snd_BUG_ON(!emu || !emu->ops.release))
-		return;
+	अगर (snd_BUG_ON(!emu || !emu->ops.release))
+		वापस;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (ch = 0; ch < emu->max_voices; ch++) {
+	क्रम (ch = 0; ch < emu->max_voices; ch++) अणु
 		vp = &emu->voices[ch];
-		if (STATE_IS_PLAYING(vp->state) &&
-		    vp->chan == chan && vp->key == note) {
+		अगर (STATE_IS_PLAYING(vp->state) &&
+		    vp->chan == chan && vp->key == note) अणु
 			vp->state = SNDRV_EMUX_ST_RELEASED;
-			if (vp->ontime == jiffies) {
-				/* if note-off is sent too shortly after
+			अगर (vp->onसमय == jअगरfies) अणु
+				/* अगर note-off is sent too लघुly after
 				 * note-on, emuX engine cannot produce the sound
 				 * correctly.  so we'll release this note
-				 * a bit later via timer callback.
+				 * a bit later via समयr callback.
 				 */
 				vp->state = SNDRV_EMUX_ST_PENDING;
-				if (! emu->timer_active) {
-					mod_timer(&emu->tlist, jiffies + 1);
-					emu->timer_active = 1;
-				}
-			} else
+				अगर (! emu->समयr_active) अणु
+					mod_समयr(&emu->tlist, jअगरfies + 1);
+					emu->समयr_active = 1;
+				पूर्ण
+			पूर्ण अन्यथा
 				/* ok now release the note */
 				emu->ops.release(vp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 /*
- * timer callback
+ * समयr callback
  *
  * release the pending note-offs
  */
-void snd_emux_timer_callback(struct timer_list *t)
-{
-	struct snd_emux *emu = from_timer(emu, t, tlist);
-	struct snd_emux_voice *vp;
-	unsigned long flags;
-	int ch, do_again = 0;
+व्योम snd_emux_समयr_callback(काष्ठा समयr_list *t)
+अणु
+	काष्ठा snd_emux *emu = from_समयr(emu, t, tlist);
+	काष्ठा snd_emux_voice *vp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ch, करो_again = 0;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (ch = 0; ch < emu->max_voices; ch++) {
+	क्रम (ch = 0; ch < emu->max_voices; ch++) अणु
 		vp = &emu->voices[ch];
-		if (vp->state == SNDRV_EMUX_ST_PENDING) {
-			if (vp->ontime == jiffies)
-				do_again++; /* release this at the next interrupt */
-			else {
+		अगर (vp->state == SNDRV_EMUX_ST_PENDING) अणु
+			अगर (vp->onसमय == jअगरfies)
+				करो_again++; /* release this at the next पूर्णांकerrupt */
+			अन्यथा अणु
 				emu->ops.release(vp);
 				vp->state = SNDRV_EMUX_ST_RELEASED;
-			}
-		}
-	}
-	if (do_again) {
-		mod_timer(&emu->tlist, jiffies + 1);
-		emu->timer_active = 1;
-	} else
-		emu->timer_active = 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (करो_again) अणु
+		mod_समयr(&emu->tlist, jअगरfies + 1);
+		emu->समयr_active = 1;
+	पूर्ण अन्यथा
+		emu->समयr_active = 0;
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 /*
  * key pressure change
  */
-void
-snd_emux_key_press(void *p, int note, int vel, struct snd_midi_channel *chan)
-{
-	int ch;
-	struct snd_emux *emu;
-	struct snd_emux_voice *vp;
-	unsigned long flags;
-	struct snd_emux_port *port;
+व्योम
+snd_emux_key_press(व्योम *p, पूर्णांक note, पूर्णांक vel, काष्ठा snd_midi_channel *chan)
+अणु
+	पूर्णांक ch;
+	काष्ठा snd_emux *emu;
+	काष्ठा snd_emux_voice *vp;
+	अचिन्हित दीर्घ flags;
+	काष्ठा snd_emux_port *port;
 
 	port = p;
-	if (snd_BUG_ON(!port || !chan))
-		return;
+	अगर (snd_BUG_ON(!port || !chan))
+		वापस;
 
 	emu = port->emu;
-	if (snd_BUG_ON(!emu || !emu->ops.update))
-		return;
+	अगर (snd_BUG_ON(!emu || !emu->ops.update))
+		वापस;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (ch = 0; ch < emu->max_voices; ch++) {
+	क्रम (ch = 0; ch < emu->max_voices; ch++) अणु
 		vp = &emu->voices[ch];
-		if (vp->state == SNDRV_EMUX_ST_ON &&
-		    vp->chan == chan && vp->key == note) {
+		अगर (vp->state == SNDRV_EMUX_ST_ON &&
+		    vp->chan == chan && vp->key == note) अणु
 			vp->velocity = vel;
 			update_voice(emu, vp, SNDRV_EMUX_UPDATE_VOLUME);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 
 /*
- * Modulate the voices which belong to the channel
+ * Modulate the voices which beदीर्घ to the channel
  */
-void
-snd_emux_update_channel(struct snd_emux_port *port, struct snd_midi_channel *chan, int update)
-{
-	struct snd_emux *emu;
-	struct snd_emux_voice *vp;
-	int i;
-	unsigned long flags;
+व्योम
+snd_emux_update_channel(काष्ठा snd_emux_port *port, काष्ठा snd_midi_channel *chan, पूर्णांक update)
+अणु
+	काष्ठा snd_emux *emu;
+	काष्ठा snd_emux_voice *vp;
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
-	if (! update)
-		return;
+	अगर (! update)
+		वापस;
 
 	emu = port->emu;
-	if (snd_BUG_ON(!emu || !emu->ops.update))
-		return;
+	अगर (snd_BUG_ON(!emu || !emu->ops.update))
+		वापस;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (i = 0; i < emu->max_voices; i++) {
+	क्रम (i = 0; i < emu->max_voices; i++) अणु
 		vp = &emu->voices[i];
-		if (vp->chan == chan)
+		अगर (vp->chan == chan)
 			update_voice(emu, vp, update);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 /*
- * Modulate all the voices which belong to the port.
+ * Modulate all the voices which beदीर्घ to the port.
  */
-void
-snd_emux_update_port(struct snd_emux_port *port, int update)
-{
-	struct snd_emux *emu; 
-	struct snd_emux_voice *vp;
-	int i;
-	unsigned long flags;
+व्योम
+snd_emux_update_port(काष्ठा snd_emux_port *port, पूर्णांक update)
+अणु
+	काष्ठा snd_emux *emu; 
+	काष्ठा snd_emux_voice *vp;
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
-	if (! update)
-		return;
+	अगर (! update)
+		वापस;
 
 	emu = port->emu;
-	if (snd_BUG_ON(!emu || !emu->ops.update))
-		return;
+	अगर (snd_BUG_ON(!emu || !emu->ops.update))
+		वापस;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (i = 0; i < emu->max_voices; i++) {
+	क्रम (i = 0; i < emu->max_voices; i++) अणु
 		vp = &emu->voices[i];
-		if (vp->port == port)
+		अगर (vp->port == port)
 			update_voice(emu, vp, update);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 
 /*
  * Deal with a controller type event.  This includes all types of
  * control events, not just the midi controllers
  */
-void
-snd_emux_control(void *p, int type, struct snd_midi_channel *chan)
-{
-	struct snd_emux_port *port;
+व्योम
+snd_emux_control(व्योम *p, पूर्णांक type, काष्ठा snd_midi_channel *chan)
+अणु
+	काष्ठा snd_emux_port *port;
 
 	port = p;
-	if (snd_BUG_ON(!port || !chan))
-		return;
+	अगर (snd_BUG_ON(!port || !chan))
+		वापस;
 
-	switch (type) {
-	case MIDI_CTL_MSB_MAIN_VOLUME:
-	case MIDI_CTL_MSB_EXPRESSION:
+	चयन (type) अणु
+	हाल MIDI_CTL_MSB_MAIN_VOLUME:
+	हाल MIDI_CTL_MSB_EXPRESSION:
 		snd_emux_update_channel(port, chan, SNDRV_EMUX_UPDATE_VOLUME);
-		break;
+		अवरोध;
 		
-	case MIDI_CTL_MSB_PAN:
+	हाल MIDI_CTL_MSB_PAN:
 		snd_emux_update_channel(port, chan, SNDRV_EMUX_UPDATE_PAN);
-		break;
+		अवरोध;
 
-	case MIDI_CTL_SOFT_PEDAL:
-#ifdef SNDRV_EMUX_USE_RAW_EFFECT
+	हाल MIDI_CTL_SOFT_PEDAL:
+#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
 		/* FIXME: this is an emulation */
-		if (chan->control[type] >= 64)
+		अगर (chan->control[type] >= 64)
 			snd_emux_send_effect(port, chan, EMUX_FX_CUTOFF, -160,
 				     EMUX_FX_FLAG_ADD);
-		else
+		अन्यथा
 			snd_emux_send_effect(port, chan, EMUX_FX_CUTOFF, 0,
 				     EMUX_FX_FLAG_OFF);
-#endif
-		break;
+#पूर्ण_अगर
+		अवरोध;
 
-	case MIDI_CTL_PITCHBEND:
+	हाल MIDI_CTL_PITCHBEND:
 		snd_emux_update_channel(port, chan, SNDRV_EMUX_UPDATE_PITCH);
-		break;
+		अवरोध;
 
-	case MIDI_CTL_MSB_MODWHEEL:
-	case MIDI_CTL_CHAN_PRESSURE:
+	हाल MIDI_CTL_MSB_MODWHEEL:
+	हाल MIDI_CTL_CHAN_PRESSURE:
 		snd_emux_update_channel(port, chan,
 					SNDRV_EMUX_UPDATE_FMMOD |
 					SNDRV_EMUX_UPDATE_FM2FRQ2);
-		break;
+		अवरोध;
 
-	}
+	पूर्ण
 
-	if (port->chset.midi_mode == SNDRV_MIDI_MODE_XG) {
+	अगर (port->chset.midi_mode == SNDRV_MIDI_MODE_XG) अणु
 		snd_emux_xg_control(port, chan, type);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /*
- * terminate note - if free flag is true, free the terminated voice
+ * terminate note - अगर मुक्त flag is true, मुक्त the terminated voice
  */
-static void
-terminate_note1(struct snd_emux *emu, int note, struct snd_midi_channel *chan, int free)
-{
-	int  i;
-	struct snd_emux_voice *vp;
-	unsigned long flags;
+अटल व्योम
+terminate_note1(काष्ठा snd_emux *emu, पूर्णांक note, काष्ठा snd_midi_channel *chan, पूर्णांक मुक्त)
+अणु
+	पूर्णांक  i;
+	काष्ठा snd_emux_voice *vp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (i = 0; i < emu->max_voices; i++) {
+	क्रम (i = 0; i < emu->max_voices; i++) अणु
 		vp = &emu->voices[i];
-		if (STATE_IS_PLAYING(vp->state) && vp->chan == chan &&
+		अगर (STATE_IS_PLAYING(vp->state) && vp->chan == chan &&
 		    vp->key == note)
-			terminate_voice(emu, vp, free);
-	}
+			terminate_voice(emu, vp, मुक्त);
+	पूर्ण
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 
 /*
- * terminate note - exported for midi emulation
+ * terminate note - exported क्रम midi emulation
  */
-void
-snd_emux_terminate_note(void *p, int note, struct snd_midi_channel *chan)
-{
-	struct snd_emux *emu;
-	struct snd_emux_port *port;
+व्योम
+snd_emux_terminate_note(व्योम *p, पूर्णांक note, काष्ठा snd_midi_channel *chan)
+अणु
+	काष्ठा snd_emux *emu;
+	काष्ठा snd_emux_port *port;
 
 	port = p;
-	if (snd_BUG_ON(!port || !chan))
-		return;
+	अगर (snd_BUG_ON(!port || !chan))
+		वापस;
 
 	emu = port->emu;
-	if (snd_BUG_ON(!emu || !emu->ops.terminate))
-		return;
+	अगर (snd_BUG_ON(!emu || !emu->ops.terminate))
+		वापस;
 
 	terminate_note1(emu, note, chan, 1);
-}
+पूर्ण
 
 
 /*
  * Terminate all the notes
  */
-void
-snd_emux_terminate_all(struct snd_emux *emu)
-{
-	int i;
-	struct snd_emux_voice *vp;
-	unsigned long flags;
+व्योम
+snd_emux_terminate_all(काष्ठा snd_emux *emu)
+अणु
+	पूर्णांक i;
+	काष्ठा snd_emux_voice *vp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (i = 0; i < emu->max_voices; i++) {
+	क्रम (i = 0; i < emu->max_voices; i++) अणु
 		vp = &emu->voices[i];
-		if (STATE_IS_PLAYING(vp->state))
+		अगर (STATE_IS_PLAYING(vp->state))
 			terminate_voice(emu, vp, 0);
-		if (vp->state == SNDRV_EMUX_ST_OFF) {
-			if (emu->ops.free_voice)
-				emu->ops.free_voice(vp);
-			if (emu->ops.reset)
+		अगर (vp->state == SNDRV_EMUX_ST_OFF) अणु
+			अगर (emu->ops.मुक्त_voice)
+				emu->ops.मुक्त_voice(vp);
+			अगर (emu->ops.reset)
 				emu->ops.reset(emu, i);
-		}
-		vp->time = 0;
-	}
-	/* initialize allocation time */
-	emu->use_time = 0;
+		पूर्ण
+		vp->समय = 0;
+	पूर्ण
+	/* initialize allocation समय */
+	emu->use_समय = 0;
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 EXPORT_SYMBOL(snd_emux_terminate_all);
 
 /*
  * Terminate all voices associated with the given port
  */
-void
-snd_emux_sounds_off_all(struct snd_emux_port *port)
-{
-	int i;
-	struct snd_emux *emu;
-	struct snd_emux_voice *vp;
-	unsigned long flags;
+व्योम
+snd_emux_sounds_off_all(काष्ठा snd_emux_port *port)
+अणु
+	पूर्णांक i;
+	काष्ठा snd_emux *emu;
+	काष्ठा snd_emux_voice *vp;
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!port))
-		return;
+	अगर (snd_BUG_ON(!port))
+		वापस;
 	emu = port->emu;
-	if (snd_BUG_ON(!emu || !emu->ops.terminate))
-		return;
+	अगर (snd_BUG_ON(!emu || !emu->ops.terminate))
+		वापस;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (i = 0; i < emu->max_voices; i++) {
+	क्रम (i = 0; i < emu->max_voices; i++) अणु
 		vp = &emu->voices[i];
-		if (STATE_IS_PLAYING(vp->state) &&
+		अगर (STATE_IS_PLAYING(vp->state) &&
 		    vp->port == port)
 			terminate_voice(emu, vp, 0);
-		if (vp->state == SNDRV_EMUX_ST_OFF) {
-			if (emu->ops.free_voice)
-				emu->ops.free_voice(vp);
-			if (emu->ops.reset)
+		अगर (vp->state == SNDRV_EMUX_ST_OFF) अणु
+			अगर (emu->ops.मुक्त_voice)
+				emu->ops.मुक्त_voice(vp);
+			अगर (emu->ops.reset)
 				emu->ops.reset(emu, i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 
 /*
  * Terminate all voices that have the same exclusive class.  This
- * is mainly for drums.
+ * is मुख्यly क्रम drums.
  */
-static void
-exclusive_note_off(struct snd_emux *emu, struct snd_emux_port *port, int exclass)
-{
-	struct snd_emux_voice *vp;
-	int  i;
-	unsigned long flags;
+अटल व्योम
+exclusive_note_off(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port, पूर्णांक exclass)
+अणु
+	काष्ठा snd_emux_voice *vp;
+	पूर्णांक  i;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (i = 0; i < emu->max_voices; i++) {
+	क्रम (i = 0; i < emu->max_voices; i++) अणु
 		vp = &emu->voices[i];
-		if (STATE_IS_PLAYING(vp->state) && vp->port == port &&
-		    vp->reg.exclusiveClass == exclass) {
+		अगर (STATE_IS_PLAYING(vp->state) && vp->port == port &&
+		    vp->reg.exclusiveClass == exclass) अणु
 			terminate_voice(emu, vp, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 /*
  * terminate a voice
- * if free flag is true, call free_voice after termination
+ * अगर मुक्त flag is true, call मुक्त_voice after termination
  */
-static void
-terminate_voice(struct snd_emux *emu, struct snd_emux_voice *vp, int free)
-{
+अटल व्योम
+terminate_voice(काष्ठा snd_emux *emu, काष्ठा snd_emux_voice *vp, पूर्णांक मुक्त)
+अणु
 	emu->ops.terminate(vp);
-	vp->time = emu->use_time++;
-	vp->chan = NULL;
-	vp->port = NULL;
-	vp->zone = NULL;
-	vp->block = NULL;
+	vp->समय = emu->use_समय++;
+	vp->chan = शून्य;
+	vp->port = शून्य;
+	vp->zone = शून्य;
+	vp->block = शून्य;
 	vp->state = SNDRV_EMUX_ST_OFF;
-	if (free && emu->ops.free_voice)
-		emu->ops.free_voice(vp);
-}
+	अगर (मुक्त && emu->ops.मुक्त_voice)
+		emu->ops.मुक्त_voice(vp);
+पूर्ण
 
 
 /*
  * Modulate the voice
  */
-static void
-update_voice(struct snd_emux *emu, struct snd_emux_voice *vp, int update)
-{
-	if (!STATE_IS_PLAYING(vp->state))
-		return;
+अटल व्योम
+update_voice(काष्ठा snd_emux *emu, काष्ठा snd_emux_voice *vp, पूर्णांक update)
+अणु
+	अगर (!STATE_IS_PLAYING(vp->state))
+		वापस;
 
-	if (vp->chan == NULL || vp->port == NULL)
-		return;
-	if (update & SNDRV_EMUX_UPDATE_VOLUME)
+	अगर (vp->chan == शून्य || vp->port == शून्य)
+		वापस;
+	अगर (update & SNDRV_EMUX_UPDATE_VOLUME)
 		calc_volume(vp);
-	if (update & SNDRV_EMUX_UPDATE_PITCH)
+	अगर (update & SNDRV_EMUX_UPDATE_PITCH)
 		calc_pitch(vp);
-	if (update & SNDRV_EMUX_UPDATE_PAN) {
-		if (! calc_pan(vp) && (update == SNDRV_EMUX_UPDATE_PAN))
-			return;
-	}
+	अगर (update & SNDRV_EMUX_UPDATE_PAN) अणु
+		अगर (! calc_pan(vp) && (update == SNDRV_EMUX_UPDATE_PAN))
+			वापस;
+	पूर्ण
 	emu->ops.update(vp, update);
-}
+पूर्ण
 
 
-#if 0 // not used
-/* table for volume target calculation */
-static const unsigned short voltarget[16] = {
+#अगर 0 // not used
+/* table क्रम volume target calculation */
+अटल स्थिर अचिन्हित लघु voltarget[16] = अणु
 	0xEAC0, 0xE0C8, 0xD740, 0xCE20, 0xC560, 0xBD08, 0xB500, 0xAD58,
 	0xA5F8, 0x9EF0, 0x9830, 0x91C0, 0x8B90, 0x85A8, 0x8000, 0x7A90
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#define LO_BYTE(v)	((v) & 0xff)
-#define HI_BYTE(v)	(((v) >> 8) & 0xff)
+#घोषणा LO_BYTE(v)	((v) & 0xff)
+#घोषणा HI_BYTE(v)	(((v) >> 8) & 0xff)
 
 /*
- * Sets up the voice structure by calculating some values that
+ * Sets up the voice काष्ठाure by calculating some values that
  * will be needed later.
  */
-static void
-setup_voice(struct snd_emux_voice *vp)
-{
-	struct soundfont_voice_parm *parm;
-	int pitch;
+अटल व्योम
+setup_voice(काष्ठा snd_emux_voice *vp)
+अणु
+	काष्ठा soundfont_voice_parm *parm;
+	पूर्णांक pitch;
 
-	/* copy the original register values */
+	/* copy the original रेजिस्टर values */
 	vp->reg = vp->zone->v;
 
-#ifdef SNDRV_EMUX_USE_RAW_EFFECT
+#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
 	snd_emux_setup_effect(vp);
-#endif
+#पूर्ण_अगर
 
 	/* reset status */
 	vp->apan = -1;
@@ -567,56 +568,56 @@ setup_voice(struct snd_emux_voice *vp)
 	parm = &vp->reg.parm;
 
 	/* compute filter target and correct modulation parameters */
-	if (LO_BYTE(parm->modatkhld) >= 0x80 && parm->moddelay >= 0x8000) {
+	अगर (LO_BYTE(parm->modatkhld) >= 0x80 && parm->moddelay >= 0x8000) अणु
 		parm->moddelay = 0xbfff;
 		pitch = (HI_BYTE(parm->pefe) << 4) + vp->apitch;
-		if (pitch > 0xffff)
+		अगर (pitch > 0xffff)
 			pitch = 0xffff;
 		/* calculate filter target */
 		vp->ftarget = parm->cutoff + LO_BYTE(parm->pefe);
 		LIMITVALUE(vp->ftarget, 0, 255);
 		vp->ftarget <<= 8;
-	} else {
+	पूर्ण अन्यथा अणु
 		vp->ftarget = parm->cutoff;
 		vp->ftarget <<= 8;
 		pitch = vp->apitch;
-	}
+	पूर्ण
 
 	/* compute pitch target */
-	if (pitch != 0xffff) {
+	अगर (pitch != 0xffff) अणु
 		vp->ptarget = 1 << (pitch >> 12);
-		if (pitch & 0x800) vp->ptarget += (vp->ptarget*0x102e)/0x2710;
-		if (pitch & 0x400) vp->ptarget += (vp->ptarget*0x764)/0x2710;
-		if (pitch & 0x200) vp->ptarget += (vp->ptarget*0x389)/0x2710;
+		अगर (pitch & 0x800) vp->ptarget += (vp->ptarget*0x102e)/0x2710;
+		अगर (pitch & 0x400) vp->ptarget += (vp->ptarget*0x764)/0x2710;
+		अगर (pitch & 0x200) vp->ptarget += (vp->ptarget*0x389)/0x2710;
 		vp->ptarget += (vp->ptarget >> 1);
-		if (vp->ptarget > 0xffff) vp->ptarget = 0xffff;
-	} else
+		अगर (vp->ptarget > 0xffff) vp->ptarget = 0xffff;
+	पूर्ण अन्यथा
 		vp->ptarget = 0xffff;
 
-	if (LO_BYTE(parm->modatkhld) >= 0x80) {
+	अगर (LO_BYTE(parm->modatkhld) >= 0x80) अणु
 		parm->modatkhld &= ~0xff;
 		parm->modatkhld |= 0x7f;
-	}
+	पूर्ण
 
 	/* compute volume target and correct volume parameters */
 	vp->vtarget = 0;
-#if 0 /* FIXME: this leads to some clicks.. */
-	if (LO_BYTE(parm->volatkhld) >= 0x80 && parm->voldelay >= 0x8000) {
+#अगर 0 /* FIXME: this leads to some clicks.. */
+	अगर (LO_BYTE(parm->volatkhld) >= 0x80 && parm->voldelay >= 0x8000) अणु
 		parm->voldelay = 0xbfff;
 		vp->vtarget = voltarget[vp->avol % 0x10] >> (vp->avol >> 4);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (LO_BYTE(parm->volatkhld) >= 0x80) {
+	अगर (LO_BYTE(parm->volatkhld) >= 0x80) अणु
 		parm->volatkhld &= ~0xff;
 		parm->volatkhld |= 0x7f;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * calculate pitch parameter
  */
-static const unsigned char pan_volumes[256] = {
+अटल स्थिर अचिन्हित अक्षर pan_volumes[256] = अणु
 0x00,0x03,0x06,0x09,0x0c,0x0f,0x12,0x14,0x17,0x1a,0x1d,0x20,0x22,0x25,0x28,0x2a,
 0x2d,0x30,0x32,0x35,0x37,0x3a,0x3c,0x3f,0x41,0x44,0x46,0x49,0x4b,0x4d,0x50,0x52,
 0x54,0x57,0x59,0x5b,0x5d,0x60,0x62,0x64,0x66,0x68,0x6a,0x6c,0x6f,0x71,0x73,0x75,
@@ -633,46 +634,46 @@ static const unsigned char pan_volumes[256] = {
 0xfd,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,
 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
-};
+पूर्ण;
 
-static int
-calc_pan(struct snd_emux_voice *vp)
-{
-	struct snd_midi_channel *chan = vp->chan;
-	int pan;
+अटल पूर्णांक
+calc_pan(काष्ठा snd_emux_voice *vp)
+अणु
+	काष्ठा snd_midi_channel *chan = vp->chan;
+	पूर्णांक pan;
 
 	/* pan & loop start (pan 8bit, MSB, 0:right, 0xff:left) */
-	if (vp->reg.fixpan > 0)	/* 0-127 */
-		pan = 255 - (int)vp->reg.fixpan * 2;
-	else {
+	अगर (vp->reg.fixpan > 0)	/* 0-127 */
+		pan = 255 - (पूर्णांक)vp->reg.fixpan * 2;
+	अन्यथा अणु
 		pan = chan->control[MIDI_CTL_MSB_PAN] - 64;
-		if (vp->reg.pan >= 0) /* 0-127 */
+		अगर (vp->reg.pan >= 0) /* 0-127 */
 			pan += vp->reg.pan - 64;
-		pan = 127 - (int)pan * 2;
-	}
+		pan = 127 - (पूर्णांक)pan * 2;
+	पूर्ण
 	LIMITVALUE(pan, 0, 255);
 
-	if (vp->emu->linear_panning) {
+	अगर (vp->emu->linear_panning) अणु
 		/* assuming linear volume */
-		if (pan != vp->apan) {
+		अगर (pan != vp->apan) अणु
 			vp->apan = pan;
-			if (pan == 0)
+			अगर (pan == 0)
 				vp->aaux = 0xff;
-			else
+			अन्यथा
 				vp->aaux = (-pan) & 0xff;
-			return 1;
-		} else
-			return 0;
-	} else {
+			वापस 1;
+		पूर्ण अन्यथा
+			वापस 0;
+	पूर्ण अन्यथा अणु
 		/* using volume table */
-		if (vp->apan != (int)pan_volumes[pan]) {
+		अगर (vp->apan != (पूर्णांक)pan_volumes[pan]) अणु
 			vp->apan = pan_volumes[pan];
 			vp->aaux = pan_volumes[255 - pan];
-			return 1;
-		}
-		return 0;
-	}
-}
+			वापस 1;
+		पूर्ण
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 
 /*
@@ -683,8 +684,8 @@ calc_pan(struct snd_emux_voice *vp)
  * minimum when 255 (-96dB or silence).
  */
 
-/* tables for volume->attenuation calculation */
-static const unsigned char voltab1[128] = {
+/* tables क्रम volume->attenuation calculation */
+अटल स्थिर अचिन्हित अक्षर voltab1[128] = अणु
    0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
    0x63, 0x2b, 0x29, 0x28, 0x27, 0x26, 0x25, 0x24, 0x23, 0x22,
    0x21, 0x20, 0x1f, 0x1e, 0x1e, 0x1d, 0x1c, 0x1b, 0x1b, 0x1a,
@@ -698,9 +699,9 @@ static const unsigned char voltab1[128] = {
    0x04, 0x04, 0x04, 0x04, 0x03, 0x03, 0x03, 0x03, 0x03, 0x02,
    0x02, 0x02, 0x02, 0x02, 0x02, 0x01, 0x01, 0x01, 0x01, 0x01,
    0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
+पूर्ण;
 
-static const unsigned char voltab2[128] = {
+अटल स्थिर अचिन्हित अक्षर voltab2[128] = अणु
    0x32, 0x31, 0x30, 0x2f, 0x2e, 0x2d, 0x2c, 0x2b, 0x2a, 0x2a,
    0x29, 0x28, 0x27, 0x26, 0x25, 0x24, 0x24, 0x23, 0x22, 0x21,
    0x21, 0x20, 0x1f, 0x1e, 0x1e, 0x1d, 0x1c, 0x1c, 0x1b, 0x1a,
@@ -714,9 +715,9 @@ static const unsigned char voltab2[128] = {
    0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x03, 0x03, 0x03, 0x03,
    0x03, 0x03, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x01, 0x01,
    0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00
-};
+पूर्ण;
 
-static const unsigned char expressiontab[128] = {
+अटल स्थिर अचिन्हित अक्षर expressiontab[128] = अणु
    0x7f, 0x6c, 0x62, 0x5a, 0x54, 0x50, 0x4b, 0x48, 0x45, 0x42,
    0x40, 0x3d, 0x3b, 0x39, 0x38, 0x36, 0x34, 0x33, 0x31, 0x30,
    0x2f, 0x2d, 0x2c, 0x2b, 0x2a, 0x29, 0x28, 0x27, 0x26, 0x25,
@@ -730,27 +731,27 @@ static const unsigned char expressiontab[128] = {
    0x06, 0x05, 0x05, 0x05, 0x04, 0x04, 0x04, 0x04, 0x04, 0x03,
    0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x02, 0x01, 0x01, 0x01,
    0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
+पूर्ण;
 
 /*
  * Magic to calculate the volume (actually attenuation) from all the
  * voice and channels parameters.
  */
-static int
-calc_volume(struct snd_emux_voice *vp)
-{
-	int vol;
-	int main_vol, expression_vol, master_vol;
-	struct snd_midi_channel *chan = vp->chan;
-	struct snd_emux_port *port = vp->port;
+अटल पूर्णांक
+calc_volume(काष्ठा snd_emux_voice *vp)
+अणु
+	पूर्णांक vol;
+	पूर्णांक मुख्य_vol, expression_vol, master_vol;
+	काष्ठा snd_midi_channel *chan = vp->chan;
+	काष्ठा snd_emux_port *port = vp->port;
 
 	expression_vol = chan->control[MIDI_CTL_MSB_EXPRESSION];
 	LIMITMAX(vp->velocity, 127);
 	LIMITVALUE(expression_vol, 0, 127);
-	if (port->port_mode == SNDRV_EMUX_PORT_MODE_OSS_SYNTH) {
+	अगर (port->port_mode == SNDRV_EMUX_PORT_MODE_OSS_SYNTH) अणु
 		/* 0 - 127 */
-		main_vol = chan->control[MIDI_CTL_MSB_MAIN_VOLUME];
-		vol = (vp->velocity * main_vol * expression_vol) / (127*127);
+		मुख्य_vol = chan->control[MIDI_CTL_MSB_MAIN_VOLUME];
+		vol = (vp->velocity * मुख्य_vol * expression_vol) / (127*127);
 		vol = vol * vp->reg.amplitude / 127;
 
 		LIMITVALUE(vol, 0, 127);
@@ -758,47 +759,47 @@ calc_volume(struct snd_emux_voice *vp)
 		/* calc to attenuation */
 		vol = snd_sf_vol_table[vol];
 
-	} else {
-		main_vol = chan->control[MIDI_CTL_MSB_MAIN_VOLUME] * vp->reg.amplitude / 127;
-		LIMITVALUE(main_vol, 0, 127);
+	पूर्ण अन्यथा अणु
+		मुख्य_vol = chan->control[MIDI_CTL_MSB_MAIN_VOLUME] * vp->reg.amplitude / 127;
+		LIMITVALUE(मुख्य_vol, 0, 127);
 
-		vol = voltab1[main_vol] + voltab2[vp->velocity];
+		vol = voltab1[मुख्य_vol] + voltab2[vp->velocity];
 		vol = (vol * 8) / 3;
 		vol += vp->reg.attenuation;
 		vol += ((0x100 - vol) * expressiontab[expression_vol])/128;
-	}
+	पूर्ण
 
 	master_vol = port->chset.gs_master_volume;
 	LIMITVALUE(master_vol, 0, 127);
 	vol += snd_sf_vol_table[master_vol];
 	vol += port->volume_atten;
 
-#ifdef SNDRV_EMUX_USE_RAW_EFFECT
-	if (chan->private) {
-		struct snd_emux_effect_table *fx = chan->private;
+#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
+	अगर (chan->निजी) अणु
+		काष्ठा snd_emux_effect_table *fx = chan->निजी;
 		vol += fx->val[EMUX_FX_ATTEN];
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	LIMITVALUE(vol, 0, 255);
-	if (vp->avol == vol)
-		return 0; /* value unchanged */
+	अगर (vp->avol == vol)
+		वापस 0; /* value unchanged */
 
 	vp->avol = vol;
-	if (!SF_IS_DRUM_BANK(get_bank(port, chan))
-	    && LO_BYTE(vp->reg.parm.volatkhld) < 0x7d) {
-		int atten;
-		if (vp->velocity < 70)
+	अगर (!SF_IS_DRUM_BANK(get_bank(port, chan))
+	    && LO_BYTE(vp->reg.parm.volatkhld) < 0x7d) अणु
+		पूर्णांक atten;
+		अगर (vp->velocity < 70)
 			atten = 70;
-		else
+		अन्यथा
 			atten = vp->velocity;
 		vp->acutoff = (atten * vp->reg.parm.cutoff + 0xa0) >> 7;
-	} else {
+	पूर्ण अन्यथा अणु
 		vp->acutoff = vp->reg.parm.cutoff;
-	}
+	पूर्ण
 
-	return 1; /* value changed */
-}
+	वापस 1; /* value changed */
+पूर्ण
 
 /*
  * calculate pitch offset
@@ -807,24 +808,24 @@ calc_volume(struct snd_emux_voice *vp)
  * Every 4096 is one octave.
  */
 
-static int
-calc_pitch(struct snd_emux_voice *vp)
-{
-	struct snd_midi_channel *chan = vp->chan;
-	int offset;
+अटल पूर्णांक
+calc_pitch(काष्ठा snd_emux_voice *vp)
+अणु
+	काष्ठा snd_midi_channel *chan = vp->chan;
+	पूर्णांक offset;
 
 	/* calculate offset */
-	if (vp->reg.fixkey >= 0) {
+	अगर (vp->reg.fixkey >= 0) अणु
 		offset = (vp->reg.fixkey - vp->reg.root) * 4096 / 12;
-	} else {
+	पूर्ण अन्यथा अणु
 		offset = (vp->note - vp->reg.root) * 4096 / 12;
-	}
+	पूर्ण
 	offset = (offset * vp->reg.scaleTuning) / 100;
 	offset += vp->reg.tune * 4096 / 1200;
-	if (chan->midi_pitchbend != 0) {
+	अगर (chan->midi_pitchbend != 0) अणु
 		/* (128 * 8192: 1 semitone) ==> (4096: 12 semitones) */
 		offset += chan->midi_pitchbend * chan->gm_rpn_pitch_bend_range / 3072;
-	}
+	पूर्ण
 
 	/* tuning via RPN:
 	 *   coarse = -8192 to 8192 (100 cent per 128)
@@ -834,135 +835,135 @@ calc_pitch(struct snd_emux_voice *vp)
 	offset += chan->gm_rpn_coarse_tuning * 4096 / (12 * 128);
 	offset += chan->gm_rpn_fine_tuning / 24;
 
-#ifdef SNDRV_EMUX_USE_RAW_EFFECT
+#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
 	/* add initial pitch correction */
-	if (chan->private) {
-		struct snd_emux_effect_table *fx = chan->private;
-		if (fx->flag[EMUX_FX_INIT_PITCH])
+	अगर (chan->निजी) अणु
+		काष्ठा snd_emux_effect_table *fx = chan->निजी;
+		अगर (fx->flag[EMUX_FX_INIT_PITCH])
 			offset += fx->val[EMUX_FX_INIT_PITCH];
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	/* 0xe000: root pitch */
 	offset += 0xe000 + vp->reg.rate_offset;
-	offset += vp->emu->pitch_shift;
+	offset += vp->emu->pitch_shअगरt;
 	LIMITVALUE(offset, 0, 0xffff);
-	if (offset == vp->apitch)
-		return 0; /* unchanged */
+	अगर (offset == vp->apitch)
+		वापस 0; /* unchanged */
 	vp->apitch = offset;
-	return 1; /* value changed */
-}
+	वापस 1; /* value changed */
+पूर्ण
 
 /*
- * Get the bank number assigned to the channel
+ * Get the bank number asचिन्हित to the channel
  */
-static int
-get_bank(struct snd_emux_port *port, struct snd_midi_channel *chan)
-{
-	int val;
+अटल पूर्णांक
+get_bank(काष्ठा snd_emux_port *port, काष्ठा snd_midi_channel *chan)
+अणु
+	पूर्णांक val;
 
-	switch (port->chset.midi_mode) {
-	case SNDRV_MIDI_MODE_XG:
+	चयन (port->chset.midi_mode) अणु
+	हाल SNDRV_MIDI_MODE_XG:
 		val = chan->control[MIDI_CTL_MSB_BANK];
-		if (val == 127)
-			return 128; /* return drum bank */
-		return chan->control[MIDI_CTL_LSB_BANK];
+		अगर (val == 127)
+			वापस 128; /* वापस drum bank */
+		वापस chan->control[MIDI_CTL_LSB_BANK];
 
-	case SNDRV_MIDI_MODE_GS:
-		if (chan->drum_channel)
-			return 128;
+	हाल SNDRV_MIDI_MODE_GS:
+		अगर (chan->drum_channel)
+			वापस 128;
 		/* ignore LSB (bank map) */
-		return chan->control[MIDI_CTL_MSB_BANK];
+		वापस chan->control[MIDI_CTL_MSB_BANK];
 		
-	default:
-		if (chan->drum_channel)
-			return 128;
-		return chan->control[MIDI_CTL_MSB_BANK];
-	}
-}
+	शेष:
+		अगर (chan->drum_channel)
+			वापस 128;
+		वापस chan->control[MIDI_CTL_MSB_BANK];
+	पूर्ण
+पूर्ण
 
 
-/* Look for the zones matching with the given note and velocity.
+/* Look क्रम the zones matching with the given note and velocity.
  * The resultant zones are stored on table.
  */
-static int
-get_zone(struct snd_emux *emu, struct snd_emux_port *port,
-	 int *notep, int vel, struct snd_midi_channel *chan,
-	 struct snd_sf_zone **table)
-{
-	int preset, bank, def_preset, def_bank;
+अटल पूर्णांक
+get_zone(काष्ठा snd_emux *emu, काष्ठा snd_emux_port *port,
+	 पूर्णांक *notep, पूर्णांक vel, काष्ठा snd_midi_channel *chan,
+	 काष्ठा snd_sf_zone **table)
+अणु
+	पूर्णांक preset, bank, def_preset, def_bank;
 
 	bank = get_bank(port, chan);
 	preset = chan->midi_program;
 
-	if (SF_IS_DRUM_BANK(bank)) {
+	अगर (SF_IS_DRUM_BANK(bank)) अणु
 		def_preset = port->ctrls[EMUX_MD_DEF_DRUM];
 		def_bank = bank;
-	} else {
+	पूर्ण अन्यथा अणु
 		def_preset = preset;
 		def_bank = port->ctrls[EMUX_MD_DEF_BANK];
-	}
+	पूर्ण
 
-	return snd_soundfont_search_zone(emu->sflist, notep, vel, preset, bank,
+	वापस snd_soundfont_search_zone(emu->sflist, notep, vel, preset, bank,
 					 def_preset, def_bank,
 					 table, SNDRV_EMUX_MAX_MULTI_VOICES);
-}
+पूर्ण
 
 /*
  */
-void
-snd_emux_init_voices(struct snd_emux *emu)
-{
-	struct snd_emux_voice *vp;
-	int i;
-	unsigned long flags;
+व्योम
+snd_emux_init_voices(काष्ठा snd_emux *emu)
+अणु
+	काष्ठा snd_emux_voice *vp;
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (i = 0; i < emu->max_voices; i++) {
+	क्रम (i = 0; i < emu->max_voices; i++) अणु
 		vp = &emu->voices[i];
 		vp->ch = -1; /* not used */
 		vp->state = SNDRV_EMUX_ST_OFF;
-		vp->chan = NULL;
-		vp->port = NULL;
-		vp->time = 0;
+		vp->chan = शून्य;
+		vp->port = शून्य;
+		vp->समय = 0;
 		vp->emu = emu;
 		vp->hw = emu->hw;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 /*
  */
-void snd_emux_lock_voice(struct snd_emux *emu, int voice)
-{
-	unsigned long flags;
+व्योम snd_emux_lock_voice(काष्ठा snd_emux *emu, पूर्णांक voice)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	if (emu->voices[voice].state == SNDRV_EMUX_ST_OFF)
+	अगर (emu->voices[voice].state == SNDRV_EMUX_ST_OFF)
 		emu->voices[voice].state = SNDRV_EMUX_ST_LOCKED;
-	else
-		snd_printk(KERN_WARNING
+	अन्यथा
+		snd_prपूर्णांकk(KERN_WARNING
 			   "invalid voice for lock %d (state = %x)\n",
 			   voice, emu->voices[voice].state);
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 EXPORT_SYMBOL(snd_emux_lock_voice);
 
 /*
  */
-void snd_emux_unlock_voice(struct snd_emux *emu, int voice)
-{
-	unsigned long flags;
+व्योम snd_emux_unlock_voice(काष्ठा snd_emux *emu, पूर्णांक voice)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	if (emu->voices[voice].state == SNDRV_EMUX_ST_LOCKED)
+	अगर (emu->voices[voice].state == SNDRV_EMUX_ST_LOCKED)
 		emu->voices[voice].state = SNDRV_EMUX_ST_OFF;
-	else
-		snd_printk(KERN_WARNING
+	अन्यथा
+		snd_prपूर्णांकk(KERN_WARNING
 			   "invalid voice for unlock %d (state = %x)\n",
 			   voice, emu->voices[voice].state);
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-}
+पूर्ण
 
 EXPORT_SYMBOL(snd_emux_unlock_voice);

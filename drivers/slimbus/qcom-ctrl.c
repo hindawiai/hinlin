@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2011-2017, The Linux Foundation
  */
 
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/of.h>
-#include <linux/pm_runtime.h>
-#include "slimbus.h"
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश "slimbus.h"
 
-/* Manager registers */
-#define	MGR_CFG		0x200
-#define	MGR_STATUS	0x204
-#define	MGR_INT_EN	0x210
-#define	MGR_INT_STAT	0x214
-#define	MGR_INT_CLR	0x218
-#define	MGR_TX_MSG	0x230
-#define	MGR_RX_MSG	0x270
-#define	MGR_IE_STAT	0x2F0
-#define	MGR_VE_STAT	0x300
-#define	MGR_CFG_ENABLE	1
+/* Manager रेजिस्टरs */
+#घोषणा	MGR_CFG		0x200
+#घोषणा	MGR_STATUS	0x204
+#घोषणा	MGR_INT_EN	0x210
+#घोषणा	MGR_INT_STAT	0x214
+#घोषणा	MGR_INT_CLR	0x218
+#घोषणा	MGR_TX_MSG	0x230
+#घोषणा	MGR_RX_MSG	0x270
+#घोषणा	MGR_IE_STAT	0x2F0
+#घोषणा	MGR_VE_STAT	0x300
+#घोषणा	MGR_CFG_ENABLE	1
 
-/* Framer registers */
-#define	FRM_CFG		0x400
-#define	FRM_STAT	0x404
-#define	FRM_INT_EN	0x410
-#define	FRM_INT_STAT	0x414
-#define	FRM_INT_CLR	0x418
-#define	FRM_WAKEUP	0x41C
-#define	FRM_CLKCTL_DONE	0x420
-#define	FRM_IE_STAT	0x430
-#define	FRM_VE_STAT	0x440
+/* Framer रेजिस्टरs */
+#घोषणा	FRM_CFG		0x400
+#घोषणा	FRM_STAT	0x404
+#घोषणा	FRM_INT_EN	0x410
+#घोषणा	FRM_INT_STAT	0x414
+#घोषणा	FRM_INT_CLR	0x418
+#घोषणा	FRM_WAKEUP	0x41C
+#घोषणा	FRM_CLKCTL_DONE	0x420
+#घोषणा	FRM_IE_STAT	0x430
+#घोषणा	FRM_VE_STAT	0x440
 
-/* Interface registers */
-#define	INTF_CFG	0x600
-#define	INTF_STAT	0x604
-#define	INTF_INT_EN	0x610
-#define	INTF_INT_STAT	0x614
-#define	INTF_INT_CLR	0x618
-#define	INTF_IE_STAT	0x630
-#define	INTF_VE_STAT	0x640
+/* Interface रेजिस्टरs */
+#घोषणा	INTF_CFG	0x600
+#घोषणा	INTF_STAT	0x604
+#घोषणा	INTF_INT_EN	0x610
+#घोषणा	INTF_INT_STAT	0x614
+#घोषणा	INTF_INT_CLR	0x618
+#घोषणा	INTF_IE_STAT	0x630
+#घोषणा	INTF_VE_STAT	0x640
 
 /* Interrupt status bits */
-#define	MGR_INT_TX_NACKED_2	BIT(25)
-#define	MGR_INT_MSG_BUF_CONTE	BIT(26)
-#define	MGR_INT_RX_MSG_RCVD	BIT(30)
-#define	MGR_INT_TX_MSG_SENT	BIT(31)
+#घोषणा	MGR_INT_TX_NACKED_2	BIT(25)
+#घोषणा	MGR_INT_MSG_BUF_CONTE	BIT(26)
+#घोषणा	MGR_INT_RX_MSG_RCVD	BIT(30)
+#घोषणा	MGR_INT_TX_MSG_SENT	BIT(31)
 
-/* Framer config register settings */
-#define	FRM_ACTIVE	1
-#define	CLK_GEAR	7
-#define	ROOT_FREQ	11
-#define	REF_CLK_GEAR	15
-#define	INTR_WAKE	19
+/* Framer config रेजिस्टर settings */
+#घोषणा	FRM_ACTIVE	1
+#घोषणा	CLK_GEAR	7
+#घोषणा	ROOT_FREQ	11
+#घोषणा	REF_CLK_GEAR	15
+#घोषणा	INTR_WAKE	19
 
-#define SLIM_MSG_ASM_FIRST_WORD(l, mt, mc, dt, ad) \
+#घोषणा SLIM_MSG_ASM_FIRST_WORD(l, mt, mc, dt, ad) \
 		((l) | ((mt) << 5) | ((mc) << 8) | ((dt) << 15) | ((ad) << 16))
 
-#define SLIM_ROOT_FREQ 24576000
-#define QCOM_SLIM_AUTOSUSPEND 1000
+#घोषणा SLIM_ROOT_FREQ 24576000
+#घोषणा QCOM_SLIM_AUTOSUSPEND 1000
 
 /* MAX message size over control channel */
-#define SLIM_MSGQ_BUF_LEN	40
-#define QCOM_TX_MSGS 2
-#define QCOM_RX_MSGS	8
-#define QCOM_BUF_ALLOC_RETRIES	10
+#घोषणा SLIM_MSGQ_BUF_LEN	40
+#घोषणा QCOM_TX_MSGS 2
+#घोषणा QCOM_RX_MSGS	8
+#घोषणा QCOM_BUF_ALLOC_RETRIES	10
 
-#define CFG_PORT(r, v) ((v) ? CFG_PORT_V2(r) : CFG_PORT_V1(r))
+#घोषणा CFG_PORT(r, v) ((v) ? CFG_PORT_V2(r) : CFG_PORT_V1(r))
 
-/* V2 Component registers */
-#define CFG_PORT_V2(r) ((r ## _V2))
-#define	COMP_CFG_V2		4
-#define	COMP_TRUST_CFG_V2	0x3000
+/* V2 Component रेजिस्टरs */
+#घोषणा CFG_PORT_V2(r) ((r ## _V2))
+#घोषणा	COMP_CFG_V2		4
+#घोषणा	COMP_TRUST_CFG_V2	0x3000
 
-/* V1 Component registers */
-#define CFG_PORT_V1(r) ((r ## _V1))
-#define	COMP_CFG_V1		0
-#define	COMP_TRUST_CFG_V1	0x14
+/* V1 Component रेजिस्टरs */
+#घोषणा CFG_PORT_V1(r) ((r ## _V1))
+#घोषणा	COMP_CFG_V1		0
+#घोषणा	COMP_TRUST_CFG_V1	0x14
 
-/* Resource group info for manager, and non-ported generic device-components */
-#define EE_MGR_RSC_GRP	(1 << 10)
-#define EE_NGD_2	(2 << 6)
-#define EE_NGD_1	0
+/* Resource group info क्रम manager, and non-ported generic device-components */
+#घोषणा EE_MGR_RSC_GRP	(1 << 10)
+#घोषणा EE_NGD_2	(2 << 6)
+#घोषणा EE_NGD_1	0
 
-struct slim_ctrl_buf {
-	void		*base;
+काष्ठा slim_ctrl_buf अणु
+	व्योम		*base;
 	spinlock_t	lock;
-	int		head;
-	int		tail;
-	int		sl_sz;
-	int		n;
-};
+	पूर्णांक		head;
+	पूर्णांक		tail;
+	पूर्णांक		sl_sz;
+	पूर्णांक		n;
+पूर्ण;
 
-struct qcom_slim_ctrl {
-	struct slim_controller  ctrl;
-	struct slim_framer	framer;
-	struct device		*dev;
-	void __iomem		*base;
-	void __iomem		*slew_reg;
+काष्ठा qcom_slim_ctrl अणु
+	काष्ठा slim_controller  ctrl;
+	काष्ठा slim_framer	framer;
+	काष्ठा device		*dev;
+	व्योम __iomem		*base;
+	व्योम __iomem		*slew_reg;
 
-	struct slim_ctrl_buf	rx;
-	struct slim_ctrl_buf	tx;
+	काष्ठा slim_ctrl_buf	rx;
+	काष्ठा slim_ctrl_buf	tx;
 
-	struct completion	**wr_comp;
-	int			irq;
-	struct workqueue_struct *rxwq;
-	struct work_struct	wd;
-	struct clk		*rclk;
-	struct clk		*hclk;
-};
+	काष्ठा completion	**wr_comp;
+	पूर्णांक			irq;
+	काष्ठा workqueue_काष्ठा *rxwq;
+	काष्ठा work_काष्ठा	wd;
+	काष्ठा clk		*rclk;
+	काष्ठा clk		*hclk;
+पूर्ण;
 
-static void qcom_slim_queue_tx(struct qcom_slim_ctrl *ctrl, void *buf,
+अटल व्योम qcom_slim_queue_tx(काष्ठा qcom_slim_ctrl *ctrl, व्योम *buf,
 			       u8 len, u32 tx_reg)
-{
-	int count = (len + 3) >> 2;
+अणु
+	पूर्णांक count = (len + 3) >> 2;
 
-	__iowrite32_copy(ctrl->base + tx_reg, buf, count);
+	__ioग_लिखो32_copy(ctrl->base + tx_reg, buf, count);
 
-	/* Ensure Oder of subsequent writes */
+	/* Ensure Oder of subsequent ग_लिखोs */
 	mb();
-}
+पूर्ण
 
-static void *slim_alloc_rxbuf(struct qcom_slim_ctrl *ctrl)
-{
-	unsigned long flags;
-	int idx;
+अटल व्योम *slim_alloc_rxbuf(काष्ठा qcom_slim_ctrl *ctrl)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक idx;
 
 	spin_lock_irqsave(&ctrl->rx.lock, flags);
-	if ((ctrl->rx.tail + 1) % ctrl->rx.n == ctrl->rx.head) {
+	अगर ((ctrl->rx.tail + 1) % ctrl->rx.n == ctrl->rx.head) अणु
 		spin_unlock_irqrestore(&ctrl->rx.lock, flags);
 		dev_err(ctrl->dev, "RX QUEUE full!");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	idx = ctrl->rx.tail;
 	ctrl->rx.tail = (ctrl->rx.tail + 1) % ctrl->rx.n;
 	spin_unlock_irqrestore(&ctrl->rx.lock, flags);
 
-	return ctrl->rx.base + (idx * ctrl->rx.sl_sz);
-}
+	वापस ctrl->rx.base + (idx * ctrl->rx.sl_sz);
+पूर्ण
 
-static void slim_ack_txn(struct qcom_slim_ctrl *ctrl, int err)
-{
-	struct completion *comp;
-	unsigned long flags;
-	int idx;
+अटल व्योम slim_ack_txn(काष्ठा qcom_slim_ctrl *ctrl, पूर्णांक err)
+अणु
+	काष्ठा completion *comp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक idx;
 
 	spin_lock_irqsave(&ctrl->tx.lock, flags);
 	idx = ctrl->tx.head;
@@ -158,60 +159,60 @@ static void slim_ack_txn(struct qcom_slim_ctrl *ctrl, int err)
 	spin_unlock_irqrestore(&ctrl->tx.lock, flags);
 
 	comp = ctrl->wr_comp[idx];
-	ctrl->wr_comp[idx] = NULL;
+	ctrl->wr_comp[idx] = शून्य;
 
 	complete(comp);
-}
+पूर्ण
 
-static irqreturn_t qcom_slim_handle_tx_irq(struct qcom_slim_ctrl *ctrl,
+अटल irqवापस_t qcom_slim_handle_tx_irq(काष्ठा qcom_slim_ctrl *ctrl,
 					   u32 stat)
-{
-	int err = 0;
+अणु
+	पूर्णांक err = 0;
 
-	if (stat & MGR_INT_TX_MSG_SENT)
-		writel_relaxed(MGR_INT_TX_MSG_SENT,
+	अगर (stat & MGR_INT_TX_MSG_SENT)
+		ग_लिखोl_relaxed(MGR_INT_TX_MSG_SENT,
 			       ctrl->base + MGR_INT_CLR);
 
-	if (stat & MGR_INT_TX_NACKED_2) {
-		u32 mgr_stat = readl_relaxed(ctrl->base + MGR_STATUS);
-		u32 mgr_ie_stat = readl_relaxed(ctrl->base + MGR_IE_STAT);
-		u32 frm_stat = readl_relaxed(ctrl->base + FRM_STAT);
-		u32 frm_cfg = readl_relaxed(ctrl->base + FRM_CFG);
-		u32 frm_intr_stat = readl_relaxed(ctrl->base + FRM_INT_STAT);
-		u32 frm_ie_stat = readl_relaxed(ctrl->base + FRM_IE_STAT);
-		u32 intf_stat = readl_relaxed(ctrl->base + INTF_STAT);
-		u32 intf_intr_stat = readl_relaxed(ctrl->base + INTF_INT_STAT);
-		u32 intf_ie_stat = readl_relaxed(ctrl->base + INTF_IE_STAT);
+	अगर (stat & MGR_INT_TX_NACKED_2) अणु
+		u32 mgr_stat = पढ़ोl_relaxed(ctrl->base + MGR_STATUS);
+		u32 mgr_ie_stat = पढ़ोl_relaxed(ctrl->base + MGR_IE_STAT);
+		u32 frm_stat = पढ़ोl_relaxed(ctrl->base + FRM_STAT);
+		u32 frm_cfg = पढ़ोl_relaxed(ctrl->base + FRM_CFG);
+		u32 frm_पूर्णांकr_stat = पढ़ोl_relaxed(ctrl->base + FRM_INT_STAT);
+		u32 frm_ie_stat = पढ़ोl_relaxed(ctrl->base + FRM_IE_STAT);
+		u32 पूर्णांकf_stat = पढ़ोl_relaxed(ctrl->base + INTF_STAT);
+		u32 पूर्णांकf_पूर्णांकr_stat = पढ़ोl_relaxed(ctrl->base + INTF_INT_STAT);
+		u32 पूर्णांकf_ie_stat = पढ़ोl_relaxed(ctrl->base + INTF_IE_STAT);
 
-		writel_relaxed(MGR_INT_TX_NACKED_2, ctrl->base + MGR_INT_CLR);
+		ग_लिखोl_relaxed(MGR_INT_TX_NACKED_2, ctrl->base + MGR_INT_CLR);
 
 		dev_err(ctrl->dev, "TX Nack MGR:int:0x%x, stat:0x%x\n",
 			stat, mgr_stat);
 		dev_err(ctrl->dev, "TX Nack MGR:ie:0x%x\n", mgr_ie_stat);
 		dev_err(ctrl->dev, "TX Nack FRM:int:0x%x, stat:0x%x\n",
-			frm_intr_stat, frm_stat);
+			frm_पूर्णांकr_stat, frm_stat);
 		dev_err(ctrl->dev, "TX Nack FRM:cfg:0x%x, ie:0x%x\n",
 			frm_cfg, frm_ie_stat);
 		dev_err(ctrl->dev, "TX Nack INTF:intr:0x%x, stat:0x%x\n",
-			intf_intr_stat, intf_stat);
+			पूर्णांकf_पूर्णांकr_stat, पूर्णांकf_stat);
 		dev_err(ctrl->dev, "TX Nack INTF:ie:0x%x\n",
-			intf_ie_stat);
+			पूर्णांकf_ie_stat);
 		err = -ENOTCONN;
-	}
+	पूर्ण
 
 	slim_ack_txn(ctrl, err);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t qcom_slim_handle_rx_irq(struct qcom_slim_ctrl *ctrl,
+अटल irqवापस_t qcom_slim_handle_rx_irq(काष्ठा qcom_slim_ctrl *ctrl,
 					   u32 stat)
-{
+अणु
 	u32 *rx_buf, pkt[10];
 	bool q_rx = false;
 	u8 mc, mt, len;
 
-	pkt[0] = readl_relaxed(ctrl->base + MGR_RX_MSG);
+	pkt[0] = पढ़ोl_relaxed(ctrl->base + MGR_RX_MSG);
 	mt = SLIM_HEADER_GET_MT(pkt[0]);
 	len = SLIM_HEADER_GET_RL(pkt[0]);
 	mc = SLIM_HEADER_GET_MC(pkt[0]>>8);
@@ -220,187 +221,187 @@ static irqreturn_t qcom_slim_handle_rx_irq(struct qcom_slim_ctrl *ctrl,
 	 * this message cannot be handled by ISR, so
 	 * let work-queue handle it
 	 */
-	if (mt == SLIM_MSG_MT_CORE && mc == SLIM_MSG_MC_REPORT_PRESENT) {
+	अगर (mt == SLIM_MSG_MT_CORE && mc == SLIM_MSG_MC_REPORT_PRESENT) अणु
 		rx_buf = (u32 *)slim_alloc_rxbuf(ctrl);
-		if (!rx_buf) {
+		अगर (!rx_buf) अणु
 			dev_err(ctrl->dev, "dropping RX:0x%x due to RX full\n",
 					pkt[0]);
-			goto rx_ret_irq;
-		}
+			जाओ rx_ret_irq;
+		पूर्ण
 		rx_buf[0] = pkt[0];
 
-	} else {
+	पूर्ण अन्यथा अणु
 		rx_buf = pkt;
-	}
+	पूर्ण
 
-	__ioread32_copy(rx_buf + 1, ctrl->base + MGR_RX_MSG + 4,
+	__ioपढ़ो32_copy(rx_buf + 1, ctrl->base + MGR_RX_MSG + 4,
 			DIV_ROUND_UP(len, 4));
 
-	switch (mc) {
+	चयन (mc) अणु
 
-	case SLIM_MSG_MC_REPORT_PRESENT:
+	हाल SLIM_MSG_MC_REPORT_PRESENT:
 		q_rx = true;
-		break;
-	case SLIM_MSG_MC_REPLY_INFORMATION:
-	case SLIM_MSG_MC_REPLY_VALUE:
+		अवरोध;
+	हाल SLIM_MSG_MC_REPLY_INFORMATION:
+	हाल SLIM_MSG_MC_REPLY_VALUE:
 		slim_msg_response(&ctrl->ctrl, (u8 *)(rx_buf + 1),
 				  (u8)(*rx_buf >> 24), (len - 4));
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(ctrl->dev, "unsupported MC,%x MT:%x\n",
 			mc, mt);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 rx_ret_irq:
-	writel(MGR_INT_RX_MSG_RCVD, ctrl->base +
+	ग_लिखोl(MGR_INT_RX_MSG_RCVD, ctrl->base +
 		       MGR_INT_CLR);
-	if (q_rx)
+	अगर (q_rx)
 		queue_work(ctrl->rxwq, &ctrl->wd);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t qcom_slim_interrupt(int irq, void *d)
-{
-	struct qcom_slim_ctrl *ctrl = d;
-	u32 stat = readl_relaxed(ctrl->base + MGR_INT_STAT);
-	int ret = IRQ_NONE;
+अटल irqवापस_t qcom_slim_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा qcom_slim_ctrl *ctrl = d;
+	u32 stat = पढ़ोl_relaxed(ctrl->base + MGR_INT_STAT);
+	पूर्णांक ret = IRQ_NONE;
 
-	if (stat & MGR_INT_TX_MSG_SENT || stat & MGR_INT_TX_NACKED_2)
+	अगर (stat & MGR_INT_TX_MSG_SENT || stat & MGR_INT_TX_NACKED_2)
 		ret = qcom_slim_handle_tx_irq(ctrl, stat);
 
-	if (stat & MGR_INT_RX_MSG_RCVD)
+	अगर (stat & MGR_INT_RX_MSG_RCVD)
 		ret = qcom_slim_handle_rx_irq(ctrl, stat);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qcom_clk_pause_wakeup(struct slim_controller *sctrl)
-{
-	struct qcom_slim_ctrl *ctrl = dev_get_drvdata(sctrl->dev);
+अटल पूर्णांक qcom_clk_छोड़ो_wakeup(काष्ठा slim_controller *sctrl)
+अणु
+	काष्ठा qcom_slim_ctrl *ctrl = dev_get_drvdata(sctrl->dev);
 
 	clk_prepare_enable(ctrl->hclk);
 	clk_prepare_enable(ctrl->rclk);
 	enable_irq(ctrl->irq);
 
-	writel_relaxed(1, ctrl->base + FRM_WAKEUP);
-	/* Make sure framer wakeup write goes through before ISR fires */
+	ग_लिखोl_relaxed(1, ctrl->base + FRM_WAKEUP);
+	/* Make sure framer wakeup ग_लिखो goes through beक्रमe ISR fires */
 	mb();
 	/*
 	 * HW Workaround: Currently, slave is reporting lost-sync messages
-	 * after SLIMbus comes out of clock pause.
-	 * Transaction with slave fail before slave reports that message
-	 * Give some time for that report to come
-	 * SLIMbus wakes up in clock gear 10 at 24.576MHz. With each superframe
-	 * being 250 usecs, we wait for 5-10 superframes here to ensure
+	 * after SLIMbus comes out of घड़ी छोड़ो.
+	 * Transaction with slave fail beक्रमe slave reports that message
+	 * Give some समय क्रम that report to come
+	 * SLIMbus wakes up in घड़ी gear 10 at 24.576MHz. With each superframe
+	 * being 250 usecs, we रुको क्रम 5-10 superframes here to ensure
 	 * we get the message
 	 */
 	usleep_range(1250, 2500);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *slim_alloc_txbuf(struct qcom_slim_ctrl *ctrl,
-			      struct slim_msg_txn *txn,
-			      struct completion *done)
-{
-	unsigned long flags;
-	int idx;
+अटल व्योम *slim_alloc_txbuf(काष्ठा qcom_slim_ctrl *ctrl,
+			      काष्ठा slim_msg_txn *txn,
+			      काष्ठा completion *करोne)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक idx;
 
 	spin_lock_irqsave(&ctrl->tx.lock, flags);
-	if (((ctrl->tx.head + 1) % ctrl->tx.n) == ctrl->tx.tail) {
+	अगर (((ctrl->tx.head + 1) % ctrl->tx.n) == ctrl->tx.tail) अणु
 		spin_unlock_irqrestore(&ctrl->tx.lock, flags);
 		dev_err(ctrl->dev, "controller TX buf unavailable");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	idx = ctrl->tx.tail;
-	ctrl->wr_comp[idx] = done;
+	ctrl->wr_comp[idx] = करोne;
 	ctrl->tx.tail = (ctrl->tx.tail + 1) % ctrl->tx.n;
 
 	spin_unlock_irqrestore(&ctrl->tx.lock, flags);
 
-	return ctrl->tx.base + (idx * ctrl->tx.sl_sz);
-}
+	वापस ctrl->tx.base + (idx * ctrl->tx.sl_sz);
+पूर्ण
 
 
-static int qcom_xfer_msg(struct slim_controller *sctrl,
-			 struct slim_msg_txn *txn)
-{
-	struct qcom_slim_ctrl *ctrl = dev_get_drvdata(sctrl->dev);
-	DECLARE_COMPLETION_ONSTACK(done);
-	void *pbuf = slim_alloc_txbuf(ctrl, txn, &done);
-	unsigned long ms = txn->rl + HZ;
+अटल पूर्णांक qcom_xfer_msg(काष्ठा slim_controller *sctrl,
+			 काष्ठा slim_msg_txn *txn)
+अणु
+	काष्ठा qcom_slim_ctrl *ctrl = dev_get_drvdata(sctrl->dev);
+	DECLARE_COMPLETION_ONSTACK(करोne);
+	व्योम *pbuf = slim_alloc_txbuf(ctrl, txn, &करोne);
+	अचिन्हित दीर्घ ms = txn->rl + HZ;
 	u8 *puc;
-	int ret = 0, timeout, retries = QCOM_BUF_ALLOC_RETRIES;
+	पूर्णांक ret = 0, समयout, retries = QCOM_BUF_ALLOC_RETRIES;
 	u8 la = txn->la;
 	u32 *head;
 	/* HW expects length field to be excluded */
 	txn->rl--;
 
 	/* spin till buffer is made available */
-	if (!pbuf) {
-		while (retries--) {
+	अगर (!pbuf) अणु
+		जबतक (retries--) अणु
 			usleep_range(10000, 15000);
-			pbuf = slim_alloc_txbuf(ctrl, txn, &done);
-			if (pbuf)
-				break;
-		}
-	}
+			pbuf = slim_alloc_txbuf(ctrl, txn, &करोne);
+			अगर (pbuf)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (retries < 0 && !pbuf)
-		return -ENOMEM;
+	अगर (retries < 0 && !pbuf)
+		वापस -ENOMEM;
 
 	puc = (u8 *)pbuf;
 	head = (u32 *)pbuf;
 
-	if (txn->dt == SLIM_MSG_DEST_LOGICALADDR) {
+	अगर (txn->dt == SLIM_MSG_DEST_LOGICALADDR) अणु
 		*head = SLIM_MSG_ASM_FIRST_WORD(txn->rl, txn->mt,
 						txn->mc, 0, la);
 		puc += 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		*head = SLIM_MSG_ASM_FIRST_WORD(txn->rl, txn->mt,
 						txn->mc, 1, la);
 		puc += 2;
-	}
+	पूर्ण
 
-	if (slim_tid_txn(txn->mt, txn->mc))
+	अगर (slim_tid_txn(txn->mt, txn->mc))
 		*(puc++) = txn->tid;
 
-	if (slim_ec_txn(txn->mt, txn->mc)) {
+	अगर (slim_ec_txn(txn->mt, txn->mc)) अणु
 		*(puc++) = (txn->ec & 0xFF);
 		*(puc++) = (txn->ec >> 8) & 0xFF;
-	}
+	पूर्ण
 
-	if (txn->msg && txn->msg->wbuf)
-		memcpy(puc, txn->msg->wbuf, txn->msg->num_bytes);
+	अगर (txn->msg && txn->msg->wbuf)
+		स_नकल(puc, txn->msg->wbuf, txn->msg->num_bytes);
 
 	qcom_slim_queue_tx(ctrl, head, txn->rl, MGR_TX_MSG);
-	timeout = wait_for_completion_timeout(&done, msecs_to_jiffies(ms));
+	समयout = रुको_क्रम_completion_समयout(&करोne, msecs_to_jअगरfies(ms));
 
-	if (!timeout) {
+	अगर (!समयout) अणु
 		dev_err(ctrl->dev, "TX timed out:MC:0x%x,mt:0x%x", txn->mc,
 					txn->mt);
 		ret = -ETIMEDOUT;
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static int qcom_set_laddr(struct slim_controller *sctrl,
-				struct slim_eaddr *ead, u8 laddr)
-{
-	struct qcom_slim_ctrl *ctrl = dev_get_drvdata(sctrl->dev);
-	struct {
+अटल पूर्णांक qcom_set_laddr(काष्ठा slim_controller *sctrl,
+				काष्ठा slim_eaddr *ead, u8 laddr)
+अणु
+	काष्ठा qcom_slim_ctrl *ctrl = dev_get_drvdata(sctrl->dev);
+	काष्ठा अणु
 		__be16 manf_id;
 		__be16 prod_code;
 		u8 dev_index;
 		u8 instance;
 		u8 laddr;
-	} __packed p;
-	struct slim_val_inf msg = {0};
+	पूर्ण __packed p;
+	काष्ठा slim_val_inf msg = अणु0पूर्ण;
 	DEFINE_SLIM_EDEST_TXN(txn, SLIM_MSG_MC_ASSIGN_LOGICAL_ADDRESS,
 			      10, laddr, &msg);
-	int ret;
+	पूर्णांक ret;
 
 	p.manf_id = cpu_to_be16(ead->manf_id);
 	p.prod_code = cpu_to_be16(ead->prod_code);
@@ -408,48 +409,48 @@ static int qcom_set_laddr(struct slim_controller *sctrl,
 	p.instance = ead->instance;
 	p.laddr = laddr;
 
-	msg.wbuf = (void *)&p;
+	msg.wbuf = (व्योम *)&p;
 	msg.num_bytes = 7;
-	ret = slim_do_transfer(&ctrl->ctrl, &txn);
+	ret = slim_करो_transfer(&ctrl->ctrl, &txn);
 
-	if (ret)
+	अगर (ret)
 		dev_err(ctrl->dev, "set LA:0x%x failed:ret:%d\n",
 				  laddr, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int slim_get_current_rxbuf(struct qcom_slim_ctrl *ctrl, void *buf)
-{
-	unsigned long flags;
+अटल पूर्णांक slim_get_current_rxbuf(काष्ठा qcom_slim_ctrl *ctrl, व्योम *buf)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ctrl->rx.lock, flags);
-	if (ctrl->rx.tail == ctrl->rx.head) {
+	अगर (ctrl->rx.tail == ctrl->rx.head) अणु
 		spin_unlock_irqrestore(&ctrl->rx.lock, flags);
-		return -ENODATA;
-	}
-	memcpy(buf, ctrl->rx.base + (ctrl->rx.head * ctrl->rx.sl_sz),
+		वापस -ENODATA;
+	पूर्ण
+	स_नकल(buf, ctrl->rx.base + (ctrl->rx.head * ctrl->rx.sl_sz),
 				ctrl->rx.sl_sz);
 
 	ctrl->rx.head = (ctrl->rx.head + 1) % ctrl->rx.n;
 	spin_unlock_irqrestore(&ctrl->rx.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qcom_slim_rxwq(struct work_struct *work)
-{
+अटल व्योम qcom_slim_rxwq(काष्ठा work_काष्ठा *work)
+अणु
 	u8 buf[SLIM_MSGQ_BUF_LEN];
 	u8 mc, mt;
-	int ret;
-	struct qcom_slim_ctrl *ctrl = container_of(work, struct qcom_slim_ctrl,
+	पूर्णांक ret;
+	काष्ठा qcom_slim_ctrl *ctrl = container_of(work, काष्ठा qcom_slim_ctrl,
 						 wd);
 
-	while ((slim_get_current_rxbuf(ctrl, buf)) != -ENODATA) {
+	जबतक ((slim_get_current_rxbuf(ctrl, buf)) != -ENODATA) अणु
 		mt = SLIM_HEADER_GET_MT(buf[0]);
 		mc = SLIM_HEADER_GET_MC(buf[1]);
-		if (mt == SLIM_MSG_MT_CORE &&
-			mc == SLIM_MSG_MC_REPORT_PRESENT) {
-			struct slim_eaddr ea;
+		अगर (mt == SLIM_MSG_MT_CORE &&
+			mc == SLIM_MSG_MC_REPORT_PRESENT) अणु
+			काष्ठा slim_eaddr ea;
 			u8 laddr;
 
 			ea.manf_id = be16_to_cpup((__be16 *)&buf[2]);
@@ -459,93 +460,93 @@ static void qcom_slim_rxwq(struct work_struct *work)
 
 			ret = slim_device_report_present(&ctrl->ctrl, &ea,
 							 &laddr);
-			if (ret < 0)
+			अगर (ret < 0)
 				dev_err(ctrl->dev, "assign laddr failed:%d\n",
 					ret);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(ctrl->dev, "unexpected message:mc:%x, mt:%x\n",
 				mc, mt);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void qcom_slim_prg_slew(struct platform_device *pdev,
-				struct qcom_slim_ctrl *ctrl)
-{
-	if (!ctrl->slew_reg) {
-		/* SLEW RATE register for this SLIMbus */
-		ctrl->slew_reg = devm_platform_ioremap_resource_byname(pdev, "slew");
-		if (IS_ERR(ctrl->slew_reg))
-			return;
-	}
+अटल व्योम qcom_slim_prg_slew(काष्ठा platक्रमm_device *pdev,
+				काष्ठा qcom_slim_ctrl *ctrl)
+अणु
+	अगर (!ctrl->slew_reg) अणु
+		/* SLEW RATE रेजिस्टर क्रम this SLIMbus */
+		ctrl->slew_reg = devm_platक्रमm_ioremap_resource_byname(pdev, "slew");
+		अगर (IS_ERR(ctrl->slew_reg))
+			वापस;
+	पूर्ण
 
-	writel_relaxed(1, ctrl->slew_reg);
+	ग_लिखोl_relaxed(1, ctrl->slew_reg);
 	/* Make sure SLIMbus-slew rate enabling goes through */
 	wmb();
-}
+पूर्ण
 
-static int qcom_slim_probe(struct platform_device *pdev)
-{
-	struct qcom_slim_ctrl *ctrl;
-	struct slim_controller *sctrl;
-	struct resource *slim_mem;
-	int ret, ver;
+अटल पूर्णांक qcom_slim_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_slim_ctrl *ctrl;
+	काष्ठा slim_controller *sctrl;
+	काष्ठा resource *slim_mem;
+	पूर्णांक ret, ver;
 
-	ctrl = devm_kzalloc(&pdev->dev, sizeof(*ctrl), GFP_KERNEL);
-	if (!ctrl)
-		return -ENOMEM;
+	ctrl = devm_kzalloc(&pdev->dev, माप(*ctrl), GFP_KERNEL);
+	अगर (!ctrl)
+		वापस -ENOMEM;
 
 	ctrl->hclk = devm_clk_get(&pdev->dev, "iface");
-	if (IS_ERR(ctrl->hclk))
-		return PTR_ERR(ctrl->hclk);
+	अगर (IS_ERR(ctrl->hclk))
+		वापस PTR_ERR(ctrl->hclk);
 
 	ctrl->rclk = devm_clk_get(&pdev->dev, "core");
-	if (IS_ERR(ctrl->rclk))
-		return PTR_ERR(ctrl->rclk);
+	अगर (IS_ERR(ctrl->rclk))
+		वापस PTR_ERR(ctrl->rclk);
 
 	ret = clk_set_rate(ctrl->rclk, SLIM_ROOT_FREQ);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "ref-clock set-rate failed:%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ctrl->irq = platform_get_irq(pdev, 0);
-	if (!ctrl->irq) {
+	ctrl->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (!ctrl->irq) अणु
 		dev_err(&pdev->dev, "no slimbus IRQ\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	sctrl = &ctrl->ctrl;
 	sctrl->dev = &pdev->dev;
 	ctrl->dev = &pdev->dev;
-	platform_set_drvdata(pdev, ctrl);
+	platक्रमm_set_drvdata(pdev, ctrl);
 	dev_set_drvdata(ctrl->dev, ctrl);
 
-	slim_mem = platform_get_resource_byname(pdev, IORESOURCE_MEM, "ctrl");
+	slim_mem = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "ctrl");
 	ctrl->base = devm_ioremap_resource(ctrl->dev, slim_mem);
-	if (IS_ERR(ctrl->base))
-		return PTR_ERR(ctrl->base);
+	अगर (IS_ERR(ctrl->base))
+		वापस PTR_ERR(ctrl->base);
 
 	sctrl->set_laddr = qcom_set_laddr;
 	sctrl->xfer_msg = qcom_xfer_msg;
-	sctrl->wakeup =  qcom_clk_pause_wakeup;
+	sctrl->wakeup =  qcom_clk_छोड़ो_wakeup;
 	ctrl->tx.n = QCOM_TX_MSGS;
 	ctrl->tx.sl_sz = SLIM_MSGQ_BUF_LEN;
 	ctrl->rx.n = QCOM_RX_MSGS;
 	ctrl->rx.sl_sz = SLIM_MSGQ_BUF_LEN;
-	ctrl->wr_comp = kcalloc(QCOM_TX_MSGS, sizeof(struct completion *),
+	ctrl->wr_comp = kसुस्मृति(QCOM_TX_MSGS, माप(काष्ठा completion *),
 				GFP_KERNEL);
-	if (!ctrl->wr_comp)
-		return -ENOMEM;
+	अगर (!ctrl->wr_comp)
+		वापस -ENOMEM;
 
 	spin_lock_init(&ctrl->rx.lock);
 	spin_lock_init(&ctrl->tx.lock);
 	INIT_WORK(&ctrl->wd, qcom_slim_rxwq);
-	ctrl->rxwq = create_singlethread_workqueue("qcom_slim_rx");
-	if (!ctrl->rxwq) {
+	ctrl->rxwq = create_singlethपढ़ो_workqueue("qcom_slim_rx");
+	अगर (!ctrl->rxwq) अणु
 		dev_err(ctrl->dev, "Failed to start Rx WQ\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ctrl->framer.rootfreq = SLIM_ROOT_FREQ / 8;
 	ctrl->framer.superfreq =
@@ -555,70 +556,70 @@ static int qcom_slim_probe(struct platform_device *pdev)
 
 	qcom_slim_prg_slew(pdev, ctrl);
 
-	ret = devm_request_irq(&pdev->dev, ctrl->irq, qcom_slim_interrupt,
+	ret = devm_request_irq(&pdev->dev, ctrl->irq, qcom_slim_पूर्णांकerrupt,
 				IRQF_TRIGGER_HIGH, "qcom_slim_irq", ctrl);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "request IRQ failed\n");
-		goto err_request_irq_failed;
-	}
+		जाओ err_request_irq_failed;
+	पूर्ण
 
 	ret = clk_prepare_enable(ctrl->hclk);
-	if (ret)
-		goto err_hclk_enable_failed;
+	अगर (ret)
+		जाओ err_hclk_enable_failed;
 
 	ret = clk_prepare_enable(ctrl->rclk);
-	if (ret)
-		goto err_rclk_enable_failed;
+	अगर (ret)
+		जाओ err_rclk_enable_failed;
 
-	ctrl->tx.base = devm_kcalloc(&pdev->dev, ctrl->tx.n, ctrl->tx.sl_sz,
+	ctrl->tx.base = devm_kसुस्मृति(&pdev->dev, ctrl->tx.n, ctrl->tx.sl_sz,
 				     GFP_KERNEL);
-	if (!ctrl->tx.base) {
+	अगर (!ctrl->tx.base) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ctrl->rx.base = devm_kcalloc(&pdev->dev,ctrl->rx.n, ctrl->rx.sl_sz,
+	ctrl->rx.base = devm_kसुस्मृति(&pdev->dev,ctrl->rx.n, ctrl->rx.sl_sz,
 				     GFP_KERNEL);
-	if (!ctrl->rx.base) {
+	अगर (!ctrl->rx.base) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* Register with framework before enabling frame, clock */
-	ret = slim_register_controller(&ctrl->ctrl);
-	if (ret) {
+	/* Register with framework beक्रमe enabling frame, घड़ी */
+	ret = slim_रेजिस्टर_controller(&ctrl->ctrl);
+	अगर (ret) अणु
 		dev_err(ctrl->dev, "error adding controller\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ver = readl_relaxed(ctrl->base);
+	ver = पढ़ोl_relaxed(ctrl->base);
 	/* Version info in 16 MSbits */
 	ver >>= 16;
-	/* Component register initialization */
-	writel(1, ctrl->base + CFG_PORT(COMP_CFG, ver));
-	writel((EE_MGR_RSC_GRP | EE_NGD_2 | EE_NGD_1),
+	/* Component रेजिस्टर initialization */
+	ग_लिखोl(1, ctrl->base + CFG_PORT(COMP_CFG, ver));
+	ग_लिखोl((EE_MGR_RSC_GRP | EE_NGD_2 | EE_NGD_1),
 				ctrl->base + CFG_PORT(COMP_TRUST_CFG, ver));
 
-	writel((MGR_INT_TX_NACKED_2 |
+	ग_लिखोl((MGR_INT_TX_NACKED_2 |
 			MGR_INT_MSG_BUF_CONTE | MGR_INT_RX_MSG_RCVD |
 			MGR_INT_TX_MSG_SENT), ctrl->base + MGR_INT_EN);
-	writel(1, ctrl->base + MGR_CFG);
-	/* Framer register initialization */
-	writel((1 << INTR_WAKE) | (0xA << REF_CLK_GEAR) |
+	ग_लिखोl(1, ctrl->base + MGR_CFG);
+	/* Framer रेजिस्टर initialization */
+	ग_लिखोl((1 << INTR_WAKE) | (0xA << REF_CLK_GEAR) |
 		(0xA << CLK_GEAR) | (1 << ROOT_FREQ) | (1 << FRM_ACTIVE) | 1,
 		ctrl->base + FRM_CFG);
-	writel(MGR_CFG_ENABLE, ctrl->base + MGR_CFG);
-	writel(1, ctrl->base + INTF_CFG);
-	writel(1, ctrl->base + CFG_PORT(COMP_CFG, ver));
+	ग_लिखोl(MGR_CFG_ENABLE, ctrl->base + MGR_CFG);
+	ग_लिखोl(1, ctrl->base + INTF_CFG);
+	ग_लिखोl(1, ctrl->base + CFG_PORT(COMP_CFG, ver));
 
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_set_autosuspend_delay(&pdev->dev, QCOM_SLIM_AUTOSUSPEND);
-	pm_runtime_set_active(&pdev->dev);
-	pm_runtime_mark_last_busy(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, QCOM_SLIM_AUTOSUSPEND);
+	pm_runसमय_set_active(&pdev->dev);
+	pm_runसमय_mark_last_busy(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
 	dev_dbg(ctrl->dev, "QCOM SB controller is up:ver:0x%x!\n", ver);
-	return 0;
+	वापस 0;
 
 err:
 	clk_disable_unprepare(ctrl->rclk);
@@ -627,113 +628,113 @@ err_rclk_enable_failed:
 err_hclk_enable_failed:
 err_request_irq_failed:
 	destroy_workqueue(ctrl->rxwq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qcom_slim_remove(struct platform_device *pdev)
-{
-	struct qcom_slim_ctrl *ctrl = platform_get_drvdata(pdev);
+अटल पूर्णांक qcom_slim_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_slim_ctrl *ctrl = platक्रमm_get_drvdata(pdev);
 
-	pm_runtime_disable(&pdev->dev);
-	slim_unregister_controller(&ctrl->ctrl);
+	pm_runसमय_disable(&pdev->dev);
+	slim_unरेजिस्टर_controller(&ctrl->ctrl);
 	clk_disable_unprepare(ctrl->rclk);
 	clk_disable_unprepare(ctrl->hclk);
 	destroy_workqueue(ctrl->rxwq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * If PM_RUNTIME is not defined, these 2 functions become helper
- * functions to be called from system suspend/resume.
+ * functions to be called from प्रणाली suspend/resume.
  */
-#ifdef CONFIG_PM
-static int qcom_slim_runtime_suspend(struct device *device)
-{
-	struct qcom_slim_ctrl *ctrl = dev_get_drvdata(device);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक qcom_slim_runसमय_suspend(काष्ठा device *device)
+अणु
+	काष्ठा qcom_slim_ctrl *ctrl = dev_get_drvdata(device);
+	पूर्णांक ret;
 
 	dev_dbg(device, "pm_runtime: suspending...\n");
-	ret = slim_ctrl_clk_pause(&ctrl->ctrl, false, SLIM_CLK_UNSPECIFIED);
-	if (ret) {
+	ret = slim_ctrl_clk_छोड़ो(&ctrl->ctrl, false, SLIM_CLK_UNSPECIFIED);
+	अगर (ret) अणु
 		dev_err(device, "clk pause not entered:%d", ret);
-	} else {
+	पूर्ण अन्यथा अणु
 		disable_irq(ctrl->irq);
 		clk_disable_unprepare(ctrl->hclk);
 		clk_disable_unprepare(ctrl->rclk);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int qcom_slim_runtime_resume(struct device *device)
-{
-	struct qcom_slim_ctrl *ctrl = dev_get_drvdata(device);
-	int ret = 0;
+अटल पूर्णांक qcom_slim_runसमय_resume(काष्ठा device *device)
+अणु
+	काष्ठा qcom_slim_ctrl *ctrl = dev_get_drvdata(device);
+	पूर्णांक ret = 0;
 
 	dev_dbg(device, "pm_runtime: resuming...\n");
-	ret = slim_ctrl_clk_pause(&ctrl->ctrl, true, 0);
-	if (ret)
+	ret = slim_ctrl_clk_छोड़ो(&ctrl->ctrl, true, 0);
+	अगर (ret)
 		dev_err(device, "clk pause not exited:%d", ret);
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_SLEEP
-static int qcom_slim_suspend(struct device *dev)
-{
-	int ret = 0;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक qcom_slim_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!pm_runtime_enabled(dev) ||
-		(!pm_runtime_suspended(dev))) {
+	अगर (!pm_runसमय_enabled(dev) ||
+		(!pm_runसमय_suspended(dev))) अणु
 		dev_dbg(dev, "system suspend");
-		ret = qcom_slim_runtime_suspend(dev);
-	}
+		ret = qcom_slim_runसमय_suspend(dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qcom_slim_resume(struct device *dev)
-{
-	if (!pm_runtime_enabled(dev) || !pm_runtime_suspended(dev)) {
-		int ret;
+अटल पूर्णांक qcom_slim_resume(काष्ठा device *dev)
+अणु
+	अगर (!pm_runसमय_enabled(dev) || !pm_runसमय_suspended(dev)) अणु
+		पूर्णांक ret;
 
 		dev_dbg(dev, "system resume");
-		ret = qcom_slim_runtime_resume(dev);
-		if (!ret) {
-			pm_runtime_mark_last_busy(dev);
-			pm_request_autosuspend(dev);
-		}
-		return ret;
+		ret = qcom_slim_runसमय_resume(dev);
+		अगर (!ret) अणु
+			pm_runसमय_mark_last_busy(dev);
+			pm_request_स्वतःsuspend(dev);
+		पूर्ण
+		वापस ret;
 
-	}
-	return 0;
-}
-#endif /* CONFIG_PM_SLEEP */
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static const struct dev_pm_ops qcom_slim_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops qcom_slim_dev_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(qcom_slim_suspend, qcom_slim_resume)
 	SET_RUNTIME_PM_OPS(
-			   qcom_slim_runtime_suspend,
-			   qcom_slim_runtime_resume,
-			   NULL
+			   qcom_slim_runसमय_suspend,
+			   qcom_slim_runसमय_resume,
+			   शून्य
 	)
-};
+पूर्ण;
 
-static const struct of_device_id qcom_slim_dt_match[] = {
-	{ .compatible = "qcom,slim", },
-	{ .compatible = "qcom,apq8064-slim", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id qcom_slim_dt_match[] = अणु
+	अणु .compatible = "qcom,slim", पूर्ण,
+	अणु .compatible = "qcom,apq8064-slim", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver qcom_slim_driver = {
+अटल काष्ठा platक्रमm_driver qcom_slim_driver = अणु
 	.probe = qcom_slim_probe,
-	.remove = qcom_slim_remove,
-	.driver	= {
+	.हटाओ = qcom_slim_हटाओ,
+	.driver	= अणु
 		.name = "qcom_slim_ctrl",
 		.of_match_table = qcom_slim_dt_match,
 		.pm = &qcom_slim_dev_pm_ops,
-	},
-};
-module_platform_driver(qcom_slim_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(qcom_slim_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Qualcomm SLIMbus Controller");

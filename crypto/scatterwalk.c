@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
  * Cipher operations.
  *
- * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
+ * Copyright (c) 2002 James Morris <jmorris@पूर्णांकercode.com.au>
  *               2002 Adam J. Richter <adam@yggdrasil.com>
  *               2004 Jean-Luc Cooke <jlcooke@certainkey.com>
  */
 
-#include <crypto/scatterwalk.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/scatterlist.h>
+#समावेश <crypto/scatterwalk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/scatterlist.h>
 
-static inline void memcpy_dir(void *buf, void *sgdata, size_t nbytes, int out)
-{
-	void *src = out ? buf : sgdata;
-	void *dst = out ? sgdata : buf;
+अटल अंतरभूत व्योम स_नकल_dir(व्योम *buf, व्योम *sgdata, माप_प्रकार nbytes, पूर्णांक out)
+अणु
+	व्योम *src = out ? buf : sgdata;
+	व्योम *dst = out ? sgdata : buf;
 
-	memcpy(dst, src, nbytes);
-}
+	स_नकल(dst, src, nbytes);
+पूर्ण
 
-void scatterwalk_copychunks(void *buf, struct scatter_walk *walk,
-			    size_t nbytes, int out)
-{
-	for (;;) {
-		unsigned int len_this_page = scatterwalk_pagelen(walk);
+व्योम scatterwalk_copychunks(व्योम *buf, काष्ठा scatter_walk *walk,
+			    माप_प्रकार nbytes, पूर्णांक out)
+अणु
+	क्रम (;;) अणु
+		अचिन्हित पूर्णांक len_this_page = scatterwalk_pagelen(walk);
 		u8 *vaddr;
 
-		if (len_this_page > nbytes)
+		अगर (len_this_page > nbytes)
 			len_this_page = nbytes;
 
-		if (out != 2) {
+		अगर (out != 2) अणु
 			vaddr = scatterwalk_map(walk);
-			memcpy_dir(buf, vaddr, len_this_page, out);
+			स_नकल_dir(buf, vaddr, len_this_page, out);
 			scatterwalk_unmap(vaddr);
-		}
+		पूर्ण
 
 		scatterwalk_advance(walk, len_this_page);
 
-		if (nbytes == len_this_page)
-			break;
+		अगर (nbytes == len_this_page)
+			अवरोध;
 
 		buf += len_this_page;
 		nbytes -= len_this_page;
 
-		scatterwalk_pagedone(walk, out & 1, 1);
-	}
-}
+		scatterwalk_pageकरोne(walk, out & 1, 1);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(scatterwalk_copychunks);
 
-void scatterwalk_map_and_copy(void *buf, struct scatterlist *sg,
-			      unsigned int start, unsigned int nbytes, int out)
-{
-	struct scatter_walk walk;
-	struct scatterlist tmp[2];
+व्योम scatterwalk_map_and_copy(व्योम *buf, काष्ठा scatterlist *sg,
+			      अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक nbytes, पूर्णांक out)
+अणु
+	काष्ठा scatter_walk walk;
+	काष्ठा scatterlist पंचांगp[2];
 
-	if (!nbytes)
-		return;
+	अगर (!nbytes)
+		वापस;
 
-	sg = scatterwalk_ffwd(tmp, sg, start);
+	sg = scatterwalk_ffwd(पंचांगp, sg, start);
 
 	scatterwalk_start(&walk, sg);
 	scatterwalk_copychunks(buf, &walk, nbytes, out);
-	scatterwalk_done(&walk, out, 0);
-}
+	scatterwalk_करोne(&walk, out, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(scatterwalk_map_and_copy);
 
-struct scatterlist *scatterwalk_ffwd(struct scatterlist dst[2],
-				     struct scatterlist *src,
-				     unsigned int len)
-{
-	for (;;) {
-		if (!len)
-			return src;
+काष्ठा scatterlist *scatterwalk_ffwd(काष्ठा scatterlist dst[2],
+				     काष्ठा scatterlist *src,
+				     अचिन्हित पूर्णांक len)
+अणु
+	क्रम (;;) अणु
+		अगर (!len)
+			वापस src;
 
-		if (src->length > len)
-			break;
+		अगर (src->length > len)
+			अवरोध;
 
 		len -= src->length;
 		src = sg_next(src);
-	}
+	पूर्ण
 
 	sg_init_table(dst, 2);
 	sg_set_page(dst, sg_page(src), src->length - len, src->offset + len);
 	scatterwalk_crypto_chain(dst, sg_next(src), 2);
 
-	return dst;
-}
+	वापस dst;
+पूर्ण
 EXPORT_SYMBOL_GPL(scatterwalk_ffwd);

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
  /*
   * Copyright (c) 1997-2000 LAN Media Corporation (LMC)
   * All rights reserved.  www.lanmedia.com
@@ -15,185 +16,185 @@
   * Ron Crane
   * Alan Cox
   *
-  * Driver for the LanMedia LMC5200, LMC5245, LMC1000, LMC1200 cards.
+  * Driver क्रम the LanMedia LMC5200, LMC5245, LMC1000, LMC1200 cards.
   *
-  * To control link specific options lmcctl is required.
+  * To control link specअगरic options lmcctl is required.
   * It can be obtained from ftp.lanmedia.com.
   *
   * Linux driver notes:
-  * Linux uses the device struct lmc_private to pass private information
+  * Linux uses the device काष्ठा lmc_निजी to pass निजी inक्रमmation
   * around.
   *
   * The initialization portion of this driver (the lmc_reset() and the
   * lmc_dec_reset() functions, as well as the led controls and the
   * lmc_initcsrs() functions.
   *
-  * The watchdog function runs every second and checks to see if
+  * The watchकरोg function runs every second and checks to see अगर
   * we still have link, and that the timing source is what we expected
-  * it to be.  If link is lost, the interface is marked down, and
-  * we no longer can transmit.
+  * it to be.  If link is lost, the पूर्णांकerface is marked करोwn, and
+  * we no दीर्घer can transmit.
   */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/ptrace.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/hdlc.h>
-#include <linux/in.h>
-#include <linux/if_arp.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/inet.h>
-#include <linux/bitops.h>
-#include <asm/processor.h>             /* Processor type for cache alignment. */
-#include <asm/io.h>
-#include <asm/dma.h>
-#include <linux/uaccess.h>
-//#include <asm/spinlock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hdlc.h>
+#समावेश <linux/in.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/bitops.h>
+#समावेश <यंत्र/processor.h>             /* Processor type क्रम cache alignment. */
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/dma.h>
+#समावेश <linux/uaccess.h>
+//#समावेश <यंत्र/spinlock.h>
 
-#define DRIVER_MAJOR_VERSION     1
-#define DRIVER_MINOR_VERSION    34
-#define DRIVER_SUB_VERSION       0
+#घोषणा DRIVER_MAJOR_VERSION     1
+#घोषणा DRIVER_MINOR_VERSION    34
+#घोषणा DRIVER_SUB_VERSION       0
 
-#define DRIVER_VERSION  ((DRIVER_MAJOR_VERSION << 8) + DRIVER_MINOR_VERSION)
+#घोषणा DRIVER_VERSION  ((DRIVER_MAJOR_VERSION << 8) + DRIVER_MINOR_VERSION)
 
-#include "lmc.h"
-#include "lmc_var.h"
-#include "lmc_ioctl.h"
-#include "lmc_debug.h"
-#include "lmc_proto.h"
+#समावेश "lmc.h"
+#समावेश "lmc_var.h"
+#समावेश "lmc_ioctl.h"
+#समावेश "lmc_debug.h"
+#समावेश "lmc_proto.h"
 
-static int LMC_PKT_BUF_SZ = 1542;
+अटल पूर्णांक LMC_PKT_BUF_SZ = 1542;
 
-static const struct pci_device_id lmc_pci_tbl[] = {
-	{ PCI_VENDOR_ID_DEC, PCI_DEVICE_ID_DEC_TULIP_FAST,
-	  PCI_VENDOR_ID_LMC, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_DEC, PCI_DEVICE_ID_DEC_TULIP_FAST,
-	  PCI_ANY_ID, PCI_VENDOR_ID_LMC },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id lmc_pci_tbl[] = अणु
+	अणु PCI_VENDOR_ID_DEC, PCI_DEVICE_ID_DEC_TULIP_FAST,
+	  PCI_VENDOR_ID_LMC, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_DEC, PCI_DEVICE_ID_DEC_TULIP_FAST,
+	  PCI_ANY_ID, PCI_VENDOR_ID_LMC पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, lmc_pci_tbl);
 MODULE_LICENSE("GPL v2");
 
 
-static netdev_tx_t lmc_start_xmit(struct sk_buff *skb,
-					struct net_device *dev);
-static int lmc_rx (struct net_device *dev);
-static int lmc_open(struct net_device *dev);
-static int lmc_close(struct net_device *dev);
-static struct net_device_stats *lmc_get_stats(struct net_device *dev);
-static irqreturn_t lmc_interrupt(int irq, void *dev_instance);
-static void lmc_initcsrs(lmc_softc_t * const sc, lmc_csrptr_t csr_base, size_t csr_size);
-static void lmc_softreset(lmc_softc_t * const);
-static void lmc_running_reset(struct net_device *dev);
-static int lmc_ifdown(struct net_device * const);
-static void lmc_watchdog(struct timer_list *t);
-static void lmc_reset(lmc_softc_t * const sc);
-static void lmc_dec_reset(lmc_softc_t * const sc);
-static void lmc_driver_timeout(struct net_device *dev, unsigned int txqueue);
+अटल netdev_tx_t lmc_start_xmit(काष्ठा sk_buff *skb,
+					काष्ठा net_device *dev);
+अटल पूर्णांक lmc_rx (काष्ठा net_device *dev);
+अटल पूर्णांक lmc_खोलो(काष्ठा net_device *dev);
+अटल पूर्णांक lmc_बंद(काष्ठा net_device *dev);
+अटल काष्ठा net_device_stats *lmc_get_stats(काष्ठा net_device *dev);
+अटल irqवापस_t lmc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance);
+अटल व्योम lmc_initcsrs(lmc_softc_t * स्थिर sc, lmc_csrptr_t csr_base, माप_प्रकार csr_size);
+अटल व्योम lmc_softreset(lmc_softc_t * स्थिर);
+अटल व्योम lmc_running_reset(काष्ठा net_device *dev);
+अटल पूर्णांक lmc_अगरकरोwn(काष्ठा net_device * स्थिर);
+अटल व्योम lmc_watchकरोg(काष्ठा समयr_list *t);
+अटल व्योम lmc_reset(lmc_softc_t * स्थिर sc);
+अटल व्योम lmc_dec_reset(lmc_softc_t * स्थिर sc);
+अटल व्योम lmc_driver_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
 
 /*
- * linux reserves 16 device specific IOCTLs.  We call them
+ * linux reserves 16 device specअगरic IOCTLs.  We call them
  * LMCIOC* to control various bits of our world.
  */
-int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
-{
+पूर्णांक lmc_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd) /*fold00*/
+अणु
     lmc_softc_t *sc = dev_to_sc(dev);
     lmc_ctl_t ctl;
-    int ret = -EOPNOTSUPP;
+    पूर्णांक ret = -EOPNOTSUPP;
     u16 regVal;
-    unsigned long flags;
+    अचिन्हित दीर्घ flags;
 
     /*
-     * Most functions mess with the structure
-     * Disable interrupts while we do the polling
+     * Most functions mess with the काष्ठाure
+     * Disable पूर्णांकerrupts जबतक we करो the polling
      */
 
-    switch (cmd) {
+    चयन (cmd) अणु
         /*
          * Return current driver state.  Since we keep this up
-         * To date internally, just copy this out to the user.
+         * To date पूर्णांकernally, just copy this out to the user.
          */
-    case LMCIOCGINFO: /*fold01*/
-	if (copy_to_user(ifr->ifr_data, &sc->ictl, sizeof(lmc_ctl_t)))
+    हाल LMCIOCGINFO: /*fold01*/
+	अगर (copy_to_user(अगरr->अगरr_data, &sc->ictl, माप(lmc_ctl_t)))
 		ret = -EFAULT;
-	else
+	अन्यथा
 		ret = 0;
-        break;
+        अवरोध;
 
-    case LMCIOCSINFO: /*fold01*/
-        if (!capable(CAP_NET_ADMIN)) {
+    हाल LMCIOCSINFO: /*fold01*/
+        अगर (!capable(CAP_NET_ADMIN)) अणु
             ret = -EPERM;
-            break;
-        }
+            अवरोध;
+        पूर्ण
 
-        if(dev->flags & IFF_UP){
+        अगर(dev->flags & IFF_UP)अणु
             ret = -EBUSY;
-            break;
-        }
+            अवरोध;
+        पूर्ण
 
-	if (copy_from_user(&ctl, ifr->ifr_data, sizeof(lmc_ctl_t))) {
+	अगर (copy_from_user(&ctl, अगरr->अगरr_data, माप(lmc_ctl_t))) अणु
 		ret = -EFAULT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_lock_irqsave(&sc->lmc_lock, flags);
         sc->lmc_media->set_status (sc, &ctl);
 
-        if(ctl.crc_length != sc->ictl.crc_length) {
+        अगर(ctl.crc_length != sc->ictl.crc_length) अणु
             sc->lmc_media->set_crc_length(sc, ctl.crc_length);
-	    if (sc->ictl.crc_length == LMC_CTL_CRC_LENGTH_16)
+	    अगर (sc->ictl.crc_length == LMC_CTL_CRC_LENGTH_16)
 		sc->TxDescriptControlInit |=  LMC_TDES_ADD_CRC_DISABLE;
-	    else
+	    अन्यथा
 		sc->TxDescriptControlInit &= ~LMC_TDES_ADD_CRC_DISABLE;
-        }
+        पूर्ण
 	spin_unlock_irqrestore(&sc->lmc_lock, flags);
 
         ret = 0;
-        break;
+        अवरोध;
 
-    case LMCIOCIFTYPE: /*fold01*/
-        {
-	    u16 old_type = sc->if_type;
+    हाल LMCIOCIFTYPE: /*fold01*/
+        अणु
+	    u16 old_type = sc->अगर_type;
 	    u16	new_type;
 
-	    if (!capable(CAP_NET_ADMIN)) {
+	    अगर (!capable(CAP_NET_ADMIN)) अणु
 		ret = -EPERM;
-		break;
-	    }
+		अवरोध;
+	    पूर्ण
 
-	    if (copy_from_user(&new_type, ifr->ifr_data, sizeof(u16))) {
+	    अगर (copy_from_user(&new_type, अगरr->अगरr_data, माप(u16))) अणु
 		ret = -EFAULT;
-		break;
-	    }
+		अवरोध;
+	    पूर्ण
 
             
-	    if (new_type == old_type)
-	    {
+	    अगर (new_type == old_type)
+	    अणु
 		ret = 0 ;
-		break;				/* no change */
-            }
+		अवरोध;				/* no change */
+            पूर्ण
             
 	    spin_lock_irqsave(&sc->lmc_lock, flags);
-            lmc_proto_close(sc);
+            lmc_proto_बंद(sc);
 
-            sc->if_type = new_type;
+            sc->अगर_type = new_type;
             lmc_proto_attach(sc);
-	    ret = lmc_proto_open(sc);
+	    ret = lmc_proto_खोलो(sc);
 	    spin_unlock_irqrestore(&sc->lmc_lock, flags);
-	    break;
-	}
+	    अवरोध;
+	पूर्ण
 
-    case LMCIOCGETXINFO: /*fold01*/
+    हाल LMCIOCGETXINFO: /*fold01*/
 	spin_lock_irqsave(&sc->lmc_lock, flags);
         sc->lmc_xinfo.Magic0 = 0xBEEFCAFE;
 
@@ -203,39 +204,39 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
         sc->lmc_xinfo.DriverMinorVersion = DRIVER_MINOR_VERSION;
         sc->lmc_xinfo.DriverSubVersion = DRIVER_SUB_VERSION;
         sc->lmc_xinfo.XilinxRevisionNumber =
-            lmc_mii_readreg (sc, 0, 3) & 0xf;
+            lmc_mii_पढ़ोreg (sc, 0, 3) & 0xf;
         sc->lmc_xinfo.MaxFrameSize = LMC_PKT_BUF_SZ;
         sc->lmc_xinfo.link_status = sc->lmc_media->get_link_status (sc);
-        sc->lmc_xinfo.mii_reg16 = lmc_mii_readreg (sc, 0, 16);
+        sc->lmc_xinfo.mii_reg16 = lmc_mii_पढ़ोreg (sc, 0, 16);
 	spin_unlock_irqrestore(&sc->lmc_lock, flags);
 
         sc->lmc_xinfo.Magic1 = 0xDEADBEEF;
 
-        if (copy_to_user(ifr->ifr_data, &sc->lmc_xinfo,
-			 sizeof(struct lmc_xinfo)))
+        अगर (copy_to_user(अगरr->अगरr_data, &sc->lmc_xinfo,
+			 माप(काष्ठा lmc_xinfo)))
 		ret = -EFAULT;
-	else
+	अन्यथा
 		ret = 0;
 
-        break;
+        अवरोध;
 
-    case LMCIOCGETLMCSTATS:
+    हाल LMCIOCGETLMCSTATS:
 	    spin_lock_irqsave(&sc->lmc_lock, flags);
-	    if (sc->lmc_cardtype == LMC_CARDTYPE_T1) {
-		    lmc_mii_writereg(sc, 0, 17, T1FRAMER_FERR_LSB);
+	    अगर (sc->lmc_cardtype == LMC_CARDTYPE_T1) अणु
+		    lmc_mii_ग_लिखोreg(sc, 0, 17, T1FRAMER_FERR_LSB);
 		    sc->extra_stats.framingBitErrorCount +=
-			    lmc_mii_readreg(sc, 0, 18) & 0xff;
-		    lmc_mii_writereg(sc, 0, 17, T1FRAMER_FERR_MSB);
+			    lmc_mii_पढ़ोreg(sc, 0, 18) & 0xff;
+		    lmc_mii_ग_लिखोreg(sc, 0, 17, T1FRAMER_FERR_MSB);
 		    sc->extra_stats.framingBitErrorCount +=
-			    (lmc_mii_readreg(sc, 0, 18) & 0xff) << 8;
-		    lmc_mii_writereg(sc, 0, 17, T1FRAMER_LCV_LSB);
+			    (lmc_mii_पढ़ोreg(sc, 0, 18) & 0xff) << 8;
+		    lmc_mii_ग_लिखोreg(sc, 0, 17, T1FRAMER_LCV_LSB);
 		    sc->extra_stats.lineCodeViolationCount +=
-			    lmc_mii_readreg(sc, 0, 18) & 0xff;
-		    lmc_mii_writereg(sc, 0, 17, T1FRAMER_LCV_MSB);
+			    lmc_mii_पढ़ोreg(sc, 0, 18) & 0xff;
+		    lmc_mii_ग_लिखोreg(sc, 0, 17, T1FRAMER_LCV_MSB);
 		    sc->extra_stats.lineCodeViolationCount +=
-			    (lmc_mii_readreg(sc, 0, 18) & 0xff) << 8;
-		    lmc_mii_writereg(sc, 0, 17, T1FRAMER_AERR);
-		    regVal = lmc_mii_readreg(sc, 0, 18) & 0xff;
+			    (lmc_mii_पढ़ोreg(sc, 0, 18) & 0xff) << 8;
+		    lmc_mii_ग_लिखोreg(sc, 0, 17, T1FRAMER_AERR);
+		    regVal = lmc_mii_पढ़ोreg(sc, 0, 18) & 0xff;
 
 		    sc->extra_stats.lossOfFrameCount +=
 			    (regVal & T1FRAMER_LOF_MASK) >> 4;
@@ -243,118 +244,118 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
 			    (regVal & T1FRAMER_COFA_MASK) >> 2;
 		    sc->extra_stats.severelyErroredFrameCount +=
 			    regVal & T1FRAMER_SEF_MASK;
-	    }
+	    पूर्ण
 	    spin_unlock_irqrestore(&sc->lmc_lock, flags);
-	    if (copy_to_user(ifr->ifr_data, &sc->lmc_device->stats,
-			     sizeof(sc->lmc_device->stats)) ||
-		copy_to_user(ifr->ifr_data + sizeof(sc->lmc_device->stats),
-			     &sc->extra_stats, sizeof(sc->extra_stats)))
+	    अगर (copy_to_user(अगरr->अगरr_data, &sc->lmc_device->stats,
+			     माप(sc->lmc_device->stats)) ||
+		copy_to_user(अगरr->अगरr_data + माप(sc->lmc_device->stats),
+			     &sc->extra_stats, माप(sc->extra_stats)))
 		    ret = -EFAULT;
-	    else
+	    अन्यथा
 		    ret = 0;
-	    break;
+	    अवरोध;
 
-    case LMCIOCCLEARLMCSTATS:
-	    if (!capable(CAP_NET_ADMIN)) {
+    हाल LMCIOCCLEARLMCSTATS:
+	    अगर (!capable(CAP_NET_ADMIN)) अणु
 		    ret = -EPERM;
-		    break;
-	    }
+		    अवरोध;
+	    पूर्ण
 
 	    spin_lock_irqsave(&sc->lmc_lock, flags);
-	    memset(&sc->lmc_device->stats, 0, sizeof(sc->lmc_device->stats));
-	    memset(&sc->extra_stats, 0, sizeof(sc->extra_stats));
+	    स_रखो(&sc->lmc_device->stats, 0, माप(sc->lmc_device->stats));
+	    स_रखो(&sc->extra_stats, 0, माप(sc->extra_stats));
 	    sc->extra_stats.check = STATCHECK;
 	    sc->extra_stats.version_size = (DRIVER_VERSION << 16) +
-		    sizeof(sc->lmc_device->stats) + sizeof(sc->extra_stats);
+		    माप(sc->lmc_device->stats) + माप(sc->extra_stats);
 	    sc->extra_stats.lmc_cardtype = sc->lmc_cardtype;
 	    spin_unlock_irqrestore(&sc->lmc_lock, flags);
 	    ret = 0;
-	    break;
+	    अवरोध;
 
-    case LMCIOCSETCIRCUIT: /*fold01*/
-        if (!capable(CAP_NET_ADMIN)){
+    हाल LMCIOCSETCIRCUIT: /*fold01*/
+        अगर (!capable(CAP_NET_ADMIN))अणु
             ret = -EPERM;
-            break;
-        }
+            अवरोध;
+        पूर्ण
 
-        if(dev->flags & IFF_UP){
+        अगर(dev->flags & IFF_UP)अणु
             ret = -EBUSY;
-            break;
-        }
+            अवरोध;
+        पूर्ण
 
-	if (copy_from_user(&ctl, ifr->ifr_data, sizeof(lmc_ctl_t))) {
+	अगर (copy_from_user(&ctl, अगरr->अगरr_data, माप(lmc_ctl_t))) अणु
 		ret = -EFAULT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_lock_irqsave(&sc->lmc_lock, flags);
         sc->lmc_media->set_circuit_type(sc, ctl.circuit_type);
         sc->ictl.circuit_type = ctl.circuit_type;
 	spin_unlock_irqrestore(&sc->lmc_lock, flags);
         ret = 0;
 
-        break;
+        अवरोध;
 
-    case LMCIOCRESET: /*fold01*/
-        if (!capable(CAP_NET_ADMIN)){
+    हाल LMCIOCRESET: /*fold01*/
+        अगर (!capable(CAP_NET_ADMIN))अणु
             ret = -EPERM;
-            break;
-        }
+            अवरोध;
+        पूर्ण
 
 	spin_lock_irqsave(&sc->lmc_lock, flags);
         /* Reset driver and bring back to current state */
-        printk (" REG16 before reset +%04x\n", lmc_mii_readreg (sc, 0, 16));
+        prपूर्णांकk (" REG16 before reset +%04x\n", lmc_mii_पढ़ोreg (sc, 0, 16));
         lmc_running_reset (dev);
-        printk (" REG16 after reset +%04x\n", lmc_mii_readreg (sc, 0, 16));
+        prपूर्णांकk (" REG16 after reset +%04x\n", lmc_mii_पढ़ोreg (sc, 0, 16));
 
-        LMC_EVENT_LOG(LMC_EVENT_FORCEDRESET, LMC_CSR_READ (sc, csr_status), lmc_mii_readreg (sc, 0, 16));
+        LMC_EVENT_LOG(LMC_EVENT_FORCEDRESET, LMC_CSR_READ (sc, csr_status), lmc_mii_पढ़ोreg (sc, 0, 16));
 	spin_unlock_irqrestore(&sc->lmc_lock, flags);
 
         ret = 0;
-        break;
+        अवरोध;
 
-#ifdef DEBUG
-    case LMCIOCDUMPEVENTLOG:
-	if (copy_to_user(ifr->ifr_data, &lmcEventLogIndex, sizeof(u32))) {
+#अगर_घोषित DEBUG
+    हाल LMCIOCDUMPEVENTLOG:
+	अगर (copy_to_user(अगरr->अगरr_data, &lmcEventLogIndex, माप(u32))) अणु
 		ret = -EFAULT;
-		break;
-	}
-	if (copy_to_user(ifr->ifr_data + sizeof(u32), lmcEventLogBuf,
-			 sizeof(lmcEventLogBuf)))
+		अवरोध;
+	पूर्ण
+	अगर (copy_to_user(अगरr->अगरr_data + माप(u32), lmcEventLogBuf,
+			 माप(lmcEventLogBuf)))
 		ret = -EFAULT;
-	else
+	अन्यथा
 		ret = 0;
 
-        break;
-#endif /* end ifdef _DBG_EVENTLOG */
-    case LMCIOCT1CONTROL: /*fold01*/
-        if (sc->lmc_cardtype != LMC_CARDTYPE_T1){
+        अवरोध;
+#पूर्ण_अगर /* end अगरdef _DBG_EVENTLOG */
+    हाल LMCIOCT1CONTROL: /*fold01*/
+        अगर (sc->lmc_cardtype != LMC_CARDTYPE_T1)अणु
             ret = -EOPNOTSUPP;
-            break;
-        }
-        break;
-    case LMCIOCXILINX: /*fold01*/
-        {
-            struct lmc_xilinx_control xc; /*fold02*/
+            अवरोध;
+        पूर्ण
+        अवरोध;
+    हाल LMCIOCXILINX: /*fold01*/
+        अणु
+            काष्ठा lmc_xilinx_control xc; /*fold02*/
 
-            if (!capable(CAP_NET_ADMIN)){
+            अगर (!capable(CAP_NET_ADMIN))अणु
                 ret = -EPERM;
-                break;
-            }
+                अवरोध;
+            पूर्ण
 
             /*
              * Stop the xwitter whlie we restart the hardware
              */
-            netif_stop_queue(dev);
+            netअगर_stop_queue(dev);
 
-	    if (copy_from_user(&xc, ifr->ifr_data, sizeof(struct lmc_xilinx_control))) {
+	    अगर (copy_from_user(&xc, अगरr->अगरr_data, माप(काष्ठा lmc_xilinx_control))) अणु
 		ret = -EFAULT;
-		break;
-	    }
-            switch(xc.command){
-            case lmc_xilinx_reset: /*fold02*/
-                {
+		अवरोध;
+	    पूर्ण
+            चयन(xc.command)अणु
+            हाल lmc_xilinx_reset: /*fold02*/
+                अणु
 		    spin_lock_irqsave(&sc->lmc_lock, flags);
-                    lmc_mii_readreg (sc, 0, 16);
+                    lmc_mii_पढ़ोreg (sc, 0, 16);
 
                     /*
                      * Make all of them 0 and make input
@@ -367,8 +368,8 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
                     lmc_gpio_mkoutput(sc, LMC_GEP_RESET);
 
                     /*
-                     * RESET low to force configuration.  This also forces
-                     * the transmitter clock to be internal, but we expect to reset
+                     * RESET low to क्रमce configuration.  This also क्रमces
+                     * the transmitter घड़ी to be पूर्णांकernal, but we expect to reset
                      * that later anyway.
                      */
 
@@ -377,7 +378,7 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
 
 
                     /*
-                     * hold for more than 10 microseconds
+                     * hold क्रम more than 10 microseconds
                      */
                     udelay(50);
 
@@ -386,18 +387,18 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
 
 
                     /*
-                     * stop driving Xilinx-related signals
+                     * stop driving Xilinx-related संकेतs
                      */
                     lmc_gpio_mkinput(sc, 0xff);
 
                     /* Reset the frammer hardware */
                     sc->lmc_media->set_link_status (sc, 1);
-                    sc->lmc_media->set_status (sc, NULL);
+                    sc->lmc_media->set_status (sc, शून्य);
 //                    lmc_softreset(sc);
 
-                    {
-                        int i;
-                        for(i = 0; i < 5; i++){
+                    अणु
+                        पूर्णांक i;
+                        क्रम(i = 0; i < 5; i++)अणु
                             lmc_led_on(sc, LMC_DS3_LED0);
                             mdelay(100);
                             lmc_led_off(sc, LMC_DS3_LED0);
@@ -410,22 +411,22 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
                             lmc_led_on(sc, LMC_DS3_LED2);
                             mdelay(100);
                             lmc_led_off(sc, LMC_DS3_LED2);
-                        }
-                    }
+                        पूर्ण
+                    पूर्ण
 		    spin_unlock_irqrestore(&sc->lmc_lock, flags);
                     
                     
 
                     ret = 0x0;
 
-                }
+                पूर्ण
 
-                break;
-            case lmc_xilinx_load_prom: /*fold02*/
-                {
-                    int timeout = 500000;
+                अवरोध;
+            हाल lmc_xilinx_load_prom: /*fold02*/
+                अणु
+                    पूर्णांक समयout = 500000;
 		    spin_lock_irqsave(&sc->lmc_lock, flags);
-                    lmc_mii_readreg (sc, 0, 16);
+                    lmc_mii_पढ़ोreg (sc, 0, 16);
 
                     /*
                      * Make all of them 0 and make input
@@ -438,8 +439,8 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
                     lmc_gpio_mkoutput(sc,  LMC_GEP_DP | LMC_GEP_RESET);
 
                     /*
-                     * RESET low to force configuration.  This also forces
-                     * the transmitter clock to be internal, but we expect to reset
+                     * RESET low to क्रमce configuration.  This also क्रमces
+                     * the transmitter घड़ी to be पूर्णांकernal, but we expect to reset
                      * that later anyway.
                      */
 
@@ -448,7 +449,7 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
 
 
                     /*
-                     * hold for more than 10 microseconds
+                     * hold क्रम more than 10 microseconds
                      */
                     udelay(50);
 
@@ -456,15 +457,15 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
                     LMC_CSR_WRITE(sc, csr_gp, sc->lmc_gpio);
 
                     /*
-                     * busy wait for the chip to reset
+                     * busy रुको क्रम the chip to reset
                      */
-                    while( (LMC_CSR_READ(sc, csr_gp) & LMC_GEP_INIT) == 0 &&
-                           (timeout-- > 0))
+                    जबतक( (LMC_CSR_READ(sc, csr_gp) & LMC_GEP_INIT) == 0 &&
+                           (समयout-- > 0))
                         cpu_relax();
 
 
                     /*
-                     * stop driving Xilinx-related signals
+                     * stop driving Xilinx-related संकेतs
                      */
                     lmc_gpio_mkinput(sc, 0xff);
 		    spin_unlock_irqrestore(&sc->lmc_lock, flags);
@@ -472,28 +473,28 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
                     ret = 0x0;
                     
 
-                    break;
+                    अवरोध;
 
-                }
+                पूर्ण
 
-            case lmc_xilinx_load: /*fold02*/
-                {
-                    char *data;
-                    int pos;
-                    int timeout = 500000;
+            हाल lmc_xilinx_load: /*fold02*/
+                अणु
+                    अक्षर *data;
+                    पूर्णांक pos;
+                    पूर्णांक समयout = 500000;
 
-                    if (!xc.data) {
+                    अगर (!xc.data) अणु
                             ret = -EINVAL;
-                            break;
-                    }
+                            अवरोध;
+                    पूर्ण
 
                     data = memdup_user(xc.data, xc.len);
-                    if (IS_ERR(data)) {
+                    अगर (IS_ERR(data)) अणु
                             ret = PTR_ERR(data);
-                            break;
-                    }
+                            अवरोध;
+                    पूर्ण
 
-                    printk("%s: Starting load of data Len: %d at 0x%p == 0x%p\n", dev->name, xc.len, xc.data, data);
+                    prपूर्णांकk("%s: Starting load of data Len: %d at 0x%p == 0x%p\n", dev->name, xc.len, xc.data, data);
 
 		    spin_lock_irqsave(&sc->lmc_lock, flags);
                     lmc_gpio_mkinput(sc, 0xff);
@@ -544,26 +545,26 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
                     lmc_gpio_mkoutput(sc, LMC_GEP_DATA | LMC_GEP_CLK | LMC_GEP_MODE );
 
                     /*
-                     * busy wait for the chip to reset
+                     * busy रुको क्रम the chip to reset
                      */
-                    while( (LMC_CSR_READ(sc, csr_gp) & LMC_GEP_INIT) == 0 &&
-                           (timeout-- > 0))
+                    जबतक( (LMC_CSR_READ(sc, csr_gp) & LMC_GEP_INIT) == 0 &&
+                           (समयout-- > 0))
                         cpu_relax();
 
-                    printk(KERN_DEBUG "%s: Waited %d for the Xilinx to clear it's memory\n", dev->name, 500000-timeout);
+                    prपूर्णांकk(KERN_DEBUG "%s: Waited %d for the Xilinx to clear it's memory\n", dev->name, 500000-समयout);
 
-                    for(pos = 0; pos < xc.len; pos++){
-                        switch(data[pos]){
-                        case 0:
+                    क्रम(pos = 0; pos < xc.len; pos++)अणु
+                        चयन(data[pos])अणु
+                        हाल 0:
                             sc->lmc_gpio &= ~LMC_GEP_DATA; /* Data is 0 */
-                            break;
-                        case 1:
+                            अवरोध;
+                        हाल 1:
                             sc->lmc_gpio |= LMC_GEP_DATA; /* Data is 1 */
-                            break;
-                        default:
-                            printk(KERN_WARNING "%s Bad data in xilinx programming data at %d, got %d wanted 0 or 1\n", dev->name, pos, data[pos]);
+                            अवरोध;
+                        शेष:
+                            prपूर्णांकk(KERN_WARNING "%s Bad data in xilinx programming data at %d, got %d wanted 0 or 1\n", dev->name, pos, data[pos]);
                             sc->lmc_gpio |= LMC_GEP_DATA; /* Assume it's 1 */
-                        }
+                        पूर्ण
                         sc->lmc_gpio &= ~LMC_GEP_CLK; /* Clock to zero */
                         sc->lmc_gpio |= LMC_GEP_MODE;
                         LMC_CSR_WRITE(sc, csr_gp, sc->lmc_gpio);
@@ -573,71 +574,71 @@ int lmc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd) /*fold00*/
                         sc->lmc_gpio |= LMC_GEP_MODE;
                         LMC_CSR_WRITE(sc, csr_gp, sc->lmc_gpio);
                         udelay(1);
-                    }
-                    if((LMC_CSR_READ(sc, csr_gp) & LMC_GEP_INIT) == 0){
-                        printk(KERN_WARNING "%s: Reprogramming FAILED. Needs to be reprogrammed. (corrupted data)\n", dev->name);
-                    }
-                    else if((LMC_CSR_READ(sc, csr_gp) & LMC_GEP_DP) == 0){
-                        printk(KERN_WARNING "%s: Reprogramming FAILED. Needs to be reprogrammed. (done)\n", dev->name);
-                    }
-                    else {
-                        printk(KERN_DEBUG "%s: Done reprogramming Xilinx, %d bits, good luck!\n", dev->name, pos);
-                    }
+                    पूर्ण
+                    अगर((LMC_CSR_READ(sc, csr_gp) & LMC_GEP_INIT) == 0)अणु
+                        prपूर्णांकk(KERN_WARNING "%s: Reprogramming FAILED. Needs to be reprogrammed. (corrupted data)\n", dev->name);
+                    पूर्ण
+                    अन्यथा अगर((LMC_CSR_READ(sc, csr_gp) & LMC_GEP_DP) == 0)अणु
+                        prपूर्णांकk(KERN_WARNING "%s: Reprogramming FAILED. Needs to be reprogrammed. (done)\n", dev->name);
+                    पूर्ण
+                    अन्यथा अणु
+                        prपूर्णांकk(KERN_DEBUG "%s: Done reprogramming Xilinx, %d bits, good luck!\n", dev->name, pos);
+                    पूर्ण
 
                     lmc_gpio_mkinput(sc, 0xff);
                     
                     sc->lmc_miireg16 |= LMC_MII16_FIFO_RESET;
-                    lmc_mii_writereg(sc, 0, 16, sc->lmc_miireg16);
+                    lmc_mii_ग_लिखोreg(sc, 0, 16, sc->lmc_miireg16);
 
                     sc->lmc_miireg16 &= ~LMC_MII16_FIFO_RESET;
-                    lmc_mii_writereg(sc, 0, 16, sc->lmc_miireg16);
+                    lmc_mii_ग_लिखोreg(sc, 0, 16, sc->lmc_miireg16);
 		    spin_unlock_irqrestore(&sc->lmc_lock, flags);
 
-                    kfree(data);
+                    kमुक्त(data);
                     
                     ret = 0;
                     
-                    break;
-                }
-            default: /*fold02*/
+                    अवरोध;
+                पूर्ण
+            शेष: /*fold02*/
                 ret = -EBADE;
-                break;
-            }
+                अवरोध;
+            पूर्ण
 
-            netif_wake_queue(dev);
+            netअगर_wake_queue(dev);
             sc->lmc_txfull = 0;
 
-        }
-        break;
-    default: /*fold01*/
-        /* If we don't know what to do, give the protocol a shot. */
-        ret = lmc_proto_ioctl (sc, ifr, cmd);
-        break;
-    }
+        पूर्ण
+        अवरोध;
+    शेष: /*fold01*/
+        /* If we करोn't know what to करो, give the protocol a shot. */
+        ret = lmc_proto_ioctl (sc, अगरr, cmd);
+        अवरोध;
+    पूर्ण
 
-    return ret;
-}
+    वापस ret;
+पूर्ण
 
 
-/* the watchdog process that cruises around */
-static void lmc_watchdog(struct timer_list *t) /*fold00*/
-{
-    lmc_softc_t *sc = from_timer(sc, t, timer);
-    struct net_device *dev = sc->lmc_device;
-    int link_status;
+/* the watchकरोg process that cruises around */
+अटल व्योम lmc_watchकरोg(काष्ठा समयr_list *t) /*fold00*/
+अणु
+    lmc_softc_t *sc = from_समयr(sc, t, समयr);
+    काष्ठा net_device *dev = sc->lmc_device;
+    पूर्णांक link_status;
     u32 ticks;
-    unsigned long flags;
+    अचिन्हित दीर्घ flags;
 
     spin_lock_irqsave(&sc->lmc_lock, flags);
 
-    if(sc->check != 0xBEAFCAFE){
-        printk("LMC: Corrupt net_device struct, breaking out\n");
+    अगर(sc->check != 0xBEAFCAFE)अणु
+        prपूर्णांकk("LMC: Corrupt net_device struct, breaking out\n");
 	spin_unlock_irqrestore(&sc->lmc_lock, flags);
-        return;
-    }
+        वापस;
+    पूर्ण
 
 
-    /* Make sure the tx jabber and rx watchdog are off,
+    /* Make sure the tx jabber and rx watchकरोg are off,
      * and the transmit and receive processes are running.
      */
 
@@ -645,26 +646,26 @@ static void lmc_watchdog(struct timer_list *t) /*fold00*/
     sc->lmc_cmdmode |= TULIP_CMD_TXRUN | TULIP_CMD_RXRUN;
     LMC_CSR_WRITE (sc, csr_command, sc->lmc_cmdmode);
 
-    if (sc->lmc_ok == 0)
-        goto kick_timer;
+    अगर (sc->lmc_ok == 0)
+        जाओ kick_समयr;
 
-    LMC_EVENT_LOG(LMC_EVENT_WATCHDOG, LMC_CSR_READ (sc, csr_status), lmc_mii_readreg (sc, 0, 16));
+    LMC_EVENT_LOG(LMC_EVENT_WATCHDOG, LMC_CSR_READ (sc, csr_status), lmc_mii_पढ़ोreg (sc, 0, 16));
 
-    /* --- begin time out check -----------------------------------
-     * check for a transmit interrupt timeout
+    /* --- begin समय out check -----------------------------------
+     * check क्रम a transmit पूर्णांकerrupt समयout
      * Has the packet xmt vs xmt serviced threshold been exceeded */
-    if (sc->lmc_taint_tx == sc->lastlmc_taint_tx &&
+    अगर (sc->lmc_taपूर्णांक_tx == sc->lastlmc_taपूर्णांक_tx &&
 	sc->lmc_device->stats.tx_packets > sc->lasttx_packets &&
 	sc->tx_TimeoutInd == 0)
-    {
+    अणु
 
-        /* wait for the watchdog to come around again */
+        /* रुको क्रम the watchकरोg to come around again */
         sc->tx_TimeoutInd = 1;
-    }
-    else if (sc->lmc_taint_tx == sc->lastlmc_taint_tx &&
+    पूर्ण
+    अन्यथा अगर (sc->lmc_taपूर्णांक_tx == sc->lastlmc_taपूर्णांक_tx &&
 	     sc->lmc_device->stats.tx_packets > sc->lasttx_packets &&
 	     sc->tx_TimeoutInd)
-    {
+    अणु
 
         LMC_EVENT_LOG(LMC_EVENT_XMTINTTMO, LMC_CSR_READ (sc, csr_status), 0);
 
@@ -678,165 +679,165 @@ static void lmc_watchdog(struct timer_list *t) /*fold00*/
         /* look at receive & transmit process state to make sure they are running */
         LMC_EVENT_LOG(LMC_EVENT_RESET1, LMC_CSR_READ (sc, csr_status), 0);
 
-        /* look at: DSR - 02  for Reg 16
+        /* look at: DSR - 02  क्रम Reg 16
          *                  CTS - 08
          *                  DCD - 10
          *                  RI  - 20
-         * for Reg 17
+         * क्रम Reg 17
          */
-        LMC_EVENT_LOG(LMC_EVENT_RESET2, lmc_mii_readreg (sc, 0, 16), lmc_mii_readreg (sc, 0, 17));
+        LMC_EVENT_LOG(LMC_EVENT_RESET2, lmc_mii_पढ़ोreg (sc, 0, 16), lmc_mii_पढ़ोreg (sc, 0, 17));
 
-        /* reset the transmit timeout detection flag */
+        /* reset the transmit समयout detection flag */
         sc->tx_TimeoutInd = 0;
-        sc->lastlmc_taint_tx = sc->lmc_taint_tx;
+        sc->lastlmc_taपूर्णांक_tx = sc->lmc_taपूर्णांक_tx;
 	sc->lasttx_packets = sc->lmc_device->stats.tx_packets;
-    } else {
+    पूर्ण अन्यथा अणु
         sc->tx_TimeoutInd = 0;
-        sc->lastlmc_taint_tx = sc->lmc_taint_tx;
+        sc->lastlmc_taपूर्णांक_tx = sc->lmc_taपूर्णांक_tx;
 	sc->lasttx_packets = sc->lmc_device->stats.tx_packets;
-    }
+    पूर्ण
 
-    /* --- end time out check ----------------------------------- */
+    /* --- end समय out check ----------------------------------- */
 
 
     link_status = sc->lmc_media->get_link_status (sc);
 
     /*
-     * hardware level link lost, but the interface is marked as up.
-     * Mark it as down.
+     * hardware level link lost, but the पूर्णांकerface is marked as up.
+     * Mark it as करोwn.
      */
-    if ((link_status == 0) && (sc->last_link_status != 0)) {
-        printk(KERN_WARNING "%s: hardware/physical link down\n", dev->name);
+    अगर ((link_status == 0) && (sc->last_link_status != 0)) अणु
+        prपूर्णांकk(KERN_WARNING "%s: hardware/physical link down\n", dev->name);
         sc->last_link_status = 0;
-        /* lmc_reset (sc); Why reset??? The link can go down ok */
+        /* lmc_reset (sc); Why reset??? The link can go करोwn ok */
 
-        /* Inform the world that link has been lost */
-	netif_carrier_off(dev);
-    }
+        /* Inक्रमm the world that link has been lost */
+	netअगर_carrier_off(dev);
+    पूर्ण
 
     /*
-     * hardware link is up, but the interface is marked as down.
+     * hardware link is up, but the पूर्णांकerface is marked as करोwn.
      * Bring it back up again.
      */
-     if (link_status != 0 && sc->last_link_status == 0) {
-         printk(KERN_WARNING "%s: hardware/physical link up\n", dev->name);
+     अगर (link_status != 0 && sc->last_link_status == 0) अणु
+         prपूर्णांकk(KERN_WARNING "%s: hardware/physical link up\n", dev->name);
          sc->last_link_status = 1;
          /* lmc_reset (sc); Again why reset??? */
 
-	 netif_carrier_on(dev);
-     }
+	 netअगर_carrier_on(dev);
+     पूर्ण
 
-    /* Call media specific watchdog functions */
-    sc->lmc_media->watchdog(sc);
+    /* Call media specअगरic watchकरोg functions */
+    sc->lmc_media->watchकरोg(sc);
 
     /*
      * Poke the transmitter to make sure it
-     * never stops, even if we run out of mem
+     * never stops, even अगर we run out of mem
      */
     LMC_CSR_WRITE(sc, csr_rxpoll, 0);
 
     /*
-     * Check for code that failed
+     * Check क्रम code that failed
      * and try and fix it as appropriate
      */
-    if(sc->failed_ring == 1){
+    अगर(sc->failed_ring == 1)अणु
         /*
          * Failed to setup the recv/xmit rin
          * Try again
          */
         sc->failed_ring = 0;
         lmc_softreset(sc);
-    }
-    if(sc->failed_recv_alloc == 1){
+    पूर्ण
+    अगर(sc->failed_recv_alloc == 1)अणु
         /*
          * We failed to alloc mem in the
-         * interrupt handler, go through the rings
+         * पूर्णांकerrupt handler, go through the rings
          * and rebuild them
          */
         sc->failed_recv_alloc = 0;
         lmc_softreset(sc);
-    }
+    पूर्ण
 
 
     /*
-     * remember the timer value
+     * remember the समयr value
      */
-kick_timer:
+kick_समयr:
 
-    ticks = LMC_CSR_READ (sc, csr_gp_timer);
-    LMC_CSR_WRITE (sc, csr_gp_timer, 0xffffffffUL);
+    ticks = LMC_CSR_READ (sc, csr_gp_समयr);
+    LMC_CSR_WRITE (sc, csr_gp_समयr, 0xffffffffUL);
     sc->ictl.ticks = 0x0000ffff - (ticks & 0x0000ffff);
 
     /*
-     * restart this timer.
+     * restart this समयr.
      */
-    sc->timer.expires = jiffies + (HZ);
-    add_timer (&sc->timer);
+    sc->समयr.expires = jअगरfies + (HZ);
+    add_समयr (&sc->समयr);
 
     spin_unlock_irqrestore(&sc->lmc_lock, flags);
-}
+पूर्ण
 
-static int lmc_attach(struct net_device *dev, unsigned short encoding,
-		      unsigned short parity)
-{
-	if (encoding == ENCODING_NRZ && parity == PARITY_CRC16_PR1_CCITT)
-		return 0;
-	return -EINVAL;
-}
+अटल पूर्णांक lmc_attach(काष्ठा net_device *dev, अचिन्हित लघु encoding,
+		      अचिन्हित लघु parity)
+अणु
+	अगर (encoding == ENCODING_NRZ && parity == PARITY_CRC16_PR1_CCITT)
+		वापस 0;
+	वापस -EINVAL;
+पूर्ण
 
-static const struct net_device_ops lmc_ops = {
-	.ndo_open       = lmc_open,
-	.ndo_stop       = lmc_close,
-	.ndo_start_xmit = hdlc_start_xmit,
-	.ndo_do_ioctl   = lmc_ioctl,
-	.ndo_tx_timeout = lmc_driver_timeout,
-	.ndo_get_stats  = lmc_get_stats,
-};
+अटल स्थिर काष्ठा net_device_ops lmc_ops = अणु
+	.nकरो_खोलो       = lmc_खोलो,
+	.nकरो_stop       = lmc_बंद,
+	.nकरो_start_xmit = hdlc_start_xmit,
+	.nकरो_करो_ioctl   = lmc_ioctl,
+	.nकरो_tx_समयout = lmc_driver_समयout,
+	.nकरो_get_stats  = lmc_get_stats,
+पूर्ण;
 
-static int lmc_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
+अटल पूर्णांक lmc_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
 	lmc_softc_t *sc;
-	struct net_device *dev;
+	काष्ठा net_device *dev;
 	u16 subdevice;
 	u16 AdapModelNum;
-	int err;
-	static int cards_found;
+	पूर्णांक err;
+	अटल पूर्णांक cards_found;
 
 	err = pcim_enable_device(pdev);
-	if (err) {
-		printk(KERN_ERR "lmc: pci enable failed: %d\n", err);
-		return err;
-	}
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "lmc: pci enable failed: %d\n", err);
+		वापस err;
+	पूर्ण
 
 	err = pci_request_regions(pdev, "lmc");
-	if (err) {
-		printk(KERN_ERR "lmc: pci_request_region failed\n");
-		return err;
-	}
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "lmc: pci_request_region failed\n");
+		वापस err;
+	पूर्ण
 
 	/*
-	 * Allocate our own device structure
+	 * Allocate our own device काष्ठाure
 	 */
-	sc = devm_kzalloc(&pdev->dev, sizeof(lmc_softc_t), GFP_KERNEL);
-	if (!sc)
-		return -ENOMEM;
+	sc = devm_kzalloc(&pdev->dev, माप(lmc_softc_t), GFP_KERNEL);
+	अगर (!sc)
+		वापस -ENOMEM;
 
 	dev = alloc_hdlcdev(sc);
-	if (!dev) {
-		printk(KERN_ERR "lmc:alloc_netdev for device failed\n");
-		return -ENOMEM;
-	}
+	अगर (!dev) अणु
+		prपूर्णांकk(KERN_ERR "lmc:alloc_netdev for device failed\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 
 	dev->type = ARPHRD_HDLC;
 	dev_to_hdlc(dev)->xmit = lmc_start_xmit;
 	dev_to_hdlc(dev)->attach = lmc_attach;
 	dev->netdev_ops = &lmc_ops;
-	dev->watchdog_timeo = HZ; /* 1 second */
+	dev->watchकरोg_समयo = HZ; /* 1 second */
 	dev->tx_queue_len = 100;
 	sc->lmc_device = dev;
 	sc->name = dev->name;
-	sc->if_type = LMC_PPP;
+	sc->अगर_type = LMC_PPP;
 	sc->check = 0xBEAFCAFE;
 	dev->base_addr = pci_resource_start(pdev, 0);
 	dev->irq = pdev->irq;
@@ -844,8 +845,8 @@ static int lmc_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	/*
-	 * This will get the protocol layer ready and do any 1 time init's
-	 * Must have a valid sc and dev structure
+	 * This will get the protocol layer पढ़ोy and करो any 1 समय init's
+	 * Must have a valid sc and dev काष्ठाure
 	 */
 	lmc_proto_attach(sc);
 
@@ -854,71 +855,71 @@ static int lmc_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	spin_lock_init(&sc->lmc_lock);
 	pci_set_master(pdev);
 
-	printk(KERN_INFO "hdlc: detected at %lx, irq %d\n",
+	prपूर्णांकk(KERN_INFO "hdlc: detected at %lx, irq %d\n",
 	       dev->base_addr, dev->irq);
 
-	err = register_hdlc_device(dev);
-	if (err) {
-		printk(KERN_ERR "%s: register_netdev failed.\n", dev->name);
-		free_netdev(dev);
-		return err;
-	}
+	err = रेजिस्टर_hdlc_device(dev);
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "%s: register_netdev failed.\n", dev->name);
+		मुक्त_netdev(dev);
+		वापस err;
+	पूर्ण
 
     sc->lmc_cardtype = LMC_CARDTYPE_UNKNOWN;
     sc->lmc_timing = LMC_CTL_CLOCK_SOURCE_EXT;
 
     /*
      *
-     * Check either the subvendor or the subdevice, some systems reverse
+     * Check either the subvenकरोr or the subdevice, some प्रणालीs reverse
      * the setting in the bois, seems to be version and arch dependent?
      * Fix the error, exchange the two values 
      */
-    if ((subdevice = pdev->subsystem_device) == PCI_VENDOR_ID_LMC)
-	    subdevice = pdev->subsystem_vendor;
+    अगर ((subdevice = pdev->subप्रणाली_device) == PCI_VENDOR_ID_LMC)
+	    subdevice = pdev->subप्रणाली_venकरोr;
 
-    switch (subdevice) {
-    case PCI_DEVICE_ID_LMC_HSSI:
-	printk(KERN_INFO "%s: LMC HSSI\n", dev->name);
+    चयन (subdevice) अणु
+    हाल PCI_DEVICE_ID_LMC_HSSI:
+	prपूर्णांकk(KERN_INFO "%s: LMC HSSI\n", dev->name);
         sc->lmc_cardtype = LMC_CARDTYPE_HSSI;
         sc->lmc_media = &lmc_hssi_media;
-        break;
-    case PCI_DEVICE_ID_LMC_DS3:
-	printk(KERN_INFO "%s: LMC DS3\n", dev->name);
+        अवरोध;
+    हाल PCI_DEVICE_ID_LMC_DS3:
+	prपूर्णांकk(KERN_INFO "%s: LMC DS3\n", dev->name);
         sc->lmc_cardtype = LMC_CARDTYPE_DS3;
         sc->lmc_media = &lmc_ds3_media;
-        break;
-    case PCI_DEVICE_ID_LMC_SSI:
-	printk(KERN_INFO "%s: LMC SSI\n", dev->name);
+        अवरोध;
+    हाल PCI_DEVICE_ID_LMC_SSI:
+	prपूर्णांकk(KERN_INFO "%s: LMC SSI\n", dev->name);
         sc->lmc_cardtype = LMC_CARDTYPE_SSI;
         sc->lmc_media = &lmc_ssi_media;
-        break;
-    case PCI_DEVICE_ID_LMC_T1:
-	printk(KERN_INFO "%s: LMC T1\n", dev->name);
+        अवरोध;
+    हाल PCI_DEVICE_ID_LMC_T1:
+	prपूर्णांकk(KERN_INFO "%s: LMC T1\n", dev->name);
         sc->lmc_cardtype = LMC_CARDTYPE_T1;
         sc->lmc_media = &lmc_t1_media;
-        break;
-    default:
-	printk(KERN_WARNING "%s: LMC UNKNOWN CARD!\n", dev->name);
-	unregister_hdlc_device(dev);
-	return -EIO;
-        break;
-    }
+        अवरोध;
+    शेष:
+	prपूर्णांकk(KERN_WARNING "%s: LMC UNKNOWN CARD!\n", dev->name);
+	unरेजिस्टर_hdlc_device(dev);
+	वापस -EIO;
+        अवरोध;
+    पूर्ण
 
     lmc_initcsrs (sc, dev->base_addr, 8);
 
     lmc_gpio_mkinput (sc, 0xff);
-    sc->lmc_gpio = 0;		/* drive no signals yet */
+    sc->lmc_gpio = 0;		/* drive no संकेतs yet */
 
-    sc->lmc_media->defaults (sc);
+    sc->lmc_media->शेषs (sc);
 
     sc->lmc_media->set_link_status (sc, LMC_LINK_UP);
 
-    /* verify that the PCI Sub System ID matches the Adapter Model number
-     * from the MII register
+    /* verअगरy that the PCI Sub System ID matches the Adapter Model number
+     * from the MII रेजिस्टर
      */
-    AdapModelNum = (lmc_mii_readreg (sc, 0, 3) & 0x3f0) >> 4;
+    AdapModelNum = (lmc_mii_पढ़ोreg (sc, 0, 3) & 0x3f0) >> 4;
 
-    if ((AdapModelNum != LMC_ADAP_T1 || /* detect LMC1200 */
+    अगर ((AdapModelNum != LMC_ADAP_T1 || /* detect LMC1200 */
 	 subdevice != PCI_DEVICE_ID_LMC_T1) &&
 	(AdapModelNum != LMC_ADAP_SSI || /* detect LMC1000 */
 	 subdevice != PCI_DEVICE_ID_LMC_SSI) &&
@@ -926,48 +927,48 @@ static int lmc_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	 subdevice != PCI_DEVICE_ID_LMC_DS3) &&
 	(AdapModelNum != LMC_ADAP_HSSI || /* detect LMC5200 */
 	 subdevice != PCI_DEVICE_ID_LMC_HSSI))
-	    printk(KERN_WARNING "%s: Model number (%d) miscompare for PCI"
+	    prपूर्णांकk(KERN_WARNING "%s: Model number (%d) miscompare for PCI"
 		   " Subsystem ID = 0x%04x\n",
 		   dev->name, AdapModelNum, subdevice);
 
     /*
-     * reset clock
+     * reset घड़ी
      */
-    LMC_CSR_WRITE (sc, csr_gp_timer, 0xFFFFFFFFUL);
+    LMC_CSR_WRITE (sc, csr_gp_समयr, 0xFFFFFFFFUL);
 
     sc->board_idx = cards_found++;
     sc->extra_stats.check = STATCHECK;
     sc->extra_stats.version_size = (DRIVER_VERSION << 16) +
-	    sizeof(sc->lmc_device->stats) + sizeof(sc->extra_stats);
+	    माप(sc->lmc_device->stats) + माप(sc->extra_stats);
     sc->extra_stats.lmc_cardtype = sc->lmc_cardtype;
 
     sc->lmc_ok = 0;
     sc->last_link_status = 0;
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 /*
  * Called from pci when removing module.
  */
-static void lmc_remove_one(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
+अटल व्योम lmc_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
 
-	if (dev) {
-		printk(KERN_DEBUG "%s: removing...\n", dev->name);
-		unregister_hdlc_device(dev);
-		free_netdev(dev);
-	}
-}
+	अगर (dev) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: removing...\n", dev->name);
+		unरेजिस्टर_hdlc_device(dev);
+		मुक्त_netdev(dev);
+	पूर्ण
+पूर्ण
 
 /* After this is called, packets can be sent.
  * Does not initialize the addresses
  */
-static int lmc_open(struct net_device *dev)
-{
+अटल पूर्णांक lmc_खोलो(काष्ठा net_device *dev)
+अणु
     lmc_softc_t *sc = dev_to_sc(dev);
-    int err;
+    पूर्णांक err;
 
     lmc_led_on(sc, LMC_DS3_LED0);
 
@@ -975,19 +976,19 @@ static int lmc_open(struct net_device *dev)
     lmc_reset(sc);
 
     LMC_EVENT_LOG(LMC_EVENT_RESET1, LMC_CSR_READ(sc, csr_status), 0);
-    LMC_EVENT_LOG(LMC_EVENT_RESET2, lmc_mii_readreg(sc, 0, 16),
-		  lmc_mii_readreg(sc, 0, 17));
+    LMC_EVENT_LOG(LMC_EVENT_RESET2, lmc_mii_पढ़ोreg(sc, 0, 16),
+		  lmc_mii_पढ़ोreg(sc, 0, 17));
 
-    if (sc->lmc_ok)
-        return 0;
+    अगर (sc->lmc_ok)
+        वापस 0;
 
     lmc_softreset (sc);
 
     /* Since we have to use PCI bus, this should work on x86,alpha,ppc */
-    if (request_irq (dev->irq, lmc_interrupt, IRQF_SHARED, dev->name, dev)){
-        printk(KERN_WARNING "%s: could not get irq: %d\n", dev->name, dev->irq);
-        return -EAGAIN;
-    }
+    अगर (request_irq (dev->irq, lmc_पूर्णांकerrupt, IRQF_SHARED, dev->name, dev))अणु
+        prपूर्णांकk(KERN_WARNING "%s: could not get irq: %d\n", dev->name, dev->irq);
+        वापस -EAGAIN;
+    पूर्ण
     sc->got_irq = 1;
 
     /* Assert Terminal Active */
@@ -997,9 +998,9 @@ static int lmc_open(struct net_device *dev)
     /*
      * reset to last state.
      */
-    sc->lmc_media->set_status (sc, NULL);
+    sc->lmc_media->set_status (sc, शून्य);
 
-    /* setup default bits to be used in tulip_desc_t transmit descriptor
+    /* setup शेष bits to be used in tulip_desc_t transmit descriptor
      * -baz */
     sc->TxDescriptControlInit = (
                                  LMC_TDES_INTERRUPT_ON_COMPLETION
@@ -1009,27 +1010,27 @@ static int lmc_open(struct net_device *dev)
                                  | LMC_TDES_DISABLE_PADDING
                                 );
 
-    if (sc->ictl.crc_length == LMC_CTL_CRC_LENGTH_16) {
+    अगर (sc->ictl.crc_length == LMC_CTL_CRC_LENGTH_16) अणु
         /* disable 32 bit CRC generated by ASIC */
         sc->TxDescriptControlInit |= LMC_TDES_ADD_CRC_DISABLE;
-    }
+    पूर्ण
     sc->lmc_media->set_crc_length(sc, sc->ictl.crc_length);
     /* Acknoledge the Terminal Active and light LEDs */
 
     /* dev->flags |= IFF_UP; */
 
-    if ((err = lmc_proto_open(sc)) != 0)
-	    return err;
+    अगर ((err = lmc_proto_खोलो(sc)) != 0)
+	    वापस err;
 
-    netif_start_queue(dev);
+    netअगर_start_queue(dev);
     sc->extra_stats.tx_tbusy0++;
 
     /*
-     * select what interrupts we want to get
+     * select what पूर्णांकerrupts we want to get
      */
-    sc->lmc_intrmask = 0;
-    /* Should be using the default interrupt mask defined in the .h file. */
-    sc->lmc_intrmask |= (TULIP_STS_NORMALINTR
+    sc->lmc_पूर्णांकrmask = 0;
+    /* Should be using the शेष पूर्णांकerrupt mask defined in the .h file. */
+    sc->lmc_पूर्णांकrmask |= (TULIP_STS_NORMALINTR
                          | TULIP_STS_RXINTR
                          | TULIP_STS_TXINTR
                          | TULIP_STS_ABNRMLINTR
@@ -1039,97 +1040,97 @@ static int lmc_open(struct net_device *dev)
                          | TULIP_STS_RXSTOPPED
 		         | TULIP_STS_RXNOBUF
                         );
-    LMC_CSR_WRITE (sc, csr_intr, sc->lmc_intrmask);
+    LMC_CSR_WRITE (sc, csr_पूर्णांकr, sc->lmc_पूर्णांकrmask);
 
     sc->lmc_cmdmode |= TULIP_CMD_TXRUN;
     sc->lmc_cmdmode |= TULIP_CMD_RXRUN;
     LMC_CSR_WRITE (sc, csr_command, sc->lmc_cmdmode);
 
-    sc->lmc_ok = 1; /* Run watchdog */
+    sc->lmc_ok = 1; /* Run watchकरोg */
 
     /*
-     * Set the if up now - pfb
+     * Set the अगर up now - pfb
      */
 
     sc->last_link_status = 1;
 
     /*
-     * Setup a timer for the watchdog on probe, and start it running.
-     * Since lmc_ok == 0, it will be a NOP for now.
+     * Setup a समयr क्रम the watchकरोg on probe, and start it running.
+     * Since lmc_ok == 0, it will be a NOP क्रम now.
      */
-    timer_setup(&sc->timer, lmc_watchdog, 0);
-    sc->timer.expires = jiffies + HZ;
-    add_timer (&sc->timer);
+    समयr_setup(&sc->समयr, lmc_watchकरोg, 0);
+    sc->समयr.expires = jअगरfies + HZ;
+    add_समयr (&sc->समयr);
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
-/* Total reset to compensate for the AdTran DSU doing bad things
+/* Total reset to compensate क्रम the AdTran DSU करोing bad things
  *  under heavy load
  */
 
-static void lmc_running_reset (struct net_device *dev) /*fold00*/
-{
+अटल व्योम lmc_running_reset (काष्ठा net_device *dev) /*fold00*/
+अणु
     lmc_softc_t *sc = dev_to_sc(dev);
 
-    /* stop interrupts */
-    /* Clear the interrupt mask */
-    LMC_CSR_WRITE (sc, csr_intr, 0x00000000);
+    /* stop पूर्णांकerrupts */
+    /* Clear the पूर्णांकerrupt mask */
+    LMC_CSR_WRITE (sc, csr_पूर्णांकr, 0x00000000);
 
     lmc_dec_reset (sc);
     lmc_reset (sc);
     lmc_softreset (sc);
     /* sc->lmc_miireg16 |= LMC_MII16_LED_ALL; */
     sc->lmc_media->set_link_status (sc, 1);
-    sc->lmc_media->set_status (sc, NULL);
+    sc->lmc_media->set_status (sc, शून्य);
 
-    netif_wake_queue(dev);
+    netअगर_wake_queue(dev);
 
     sc->lmc_txfull = 0;
     sc->extra_stats.tx_tbusy0++;
 
-    sc->lmc_intrmask = TULIP_DEFAULT_INTR_MASK;
-    LMC_CSR_WRITE (sc, csr_intr, sc->lmc_intrmask);
+    sc->lmc_पूर्णांकrmask = TULIP_DEFAULT_INTR_MASK;
+    LMC_CSR_WRITE (sc, csr_पूर्णांकr, sc->lmc_पूर्णांकrmask);
 
     sc->lmc_cmdmode |= (TULIP_CMD_TXRUN | TULIP_CMD_RXRUN);
     LMC_CSR_WRITE (sc, csr_command, sc->lmc_cmdmode);
-}
+पूर्ण
 
 
-/* This is what is called when you ifconfig down a device.
- * This disables the timer for the watchdog and keepalives,
- * and disables the irq for dev.
+/* This is what is called when you अगरconfig करोwn a device.
+ * This disables the समयr क्रम the watchकरोg and keepalives,
+ * and disables the irq क्रम dev.
  */
-static int lmc_close(struct net_device *dev)
-{
+अटल पूर्णांक lmc_बंद(काष्ठा net_device *dev)
+अणु
     /* not calling release_region() as we should */
     lmc_softc_t *sc = dev_to_sc(dev);
 
     sc->lmc_ok = 0;
     sc->lmc_media->set_link_status (sc, 0);
-    del_timer (&sc->timer);
-    lmc_proto_close(sc);
-    lmc_ifdown (dev);
+    del_समयr (&sc->समयr);
+    lmc_proto_बंद(sc);
+    lmc_अगरकरोwn (dev);
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 /* Ends the transfer of packets */
-/* When the interface goes down, this is called */
-static int lmc_ifdown (struct net_device *dev) /*fold00*/
-{
+/* When the पूर्णांकerface goes करोwn, this is called */
+अटल पूर्णांक lmc_अगरकरोwn (काष्ठा net_device *dev) /*fold00*/
+अणु
     lmc_softc_t *sc = dev_to_sc(dev);
     u32 csr6;
-    int i;
+    पूर्णांक i;
 
-    /* Don't let anything else go on right now */
+    /* Don't let anything अन्यथा go on right now */
     //    dev->start = 0;
-    netif_stop_queue(dev);
+    netअगर_stop_queue(dev);
     sc->extra_stats.tx_tbusy1++;
 
-    /* stop interrupts */
-    /* Clear the interrupt mask */
-    LMC_CSR_WRITE (sc, csr_intr, 0x00000000);
+    /* stop पूर्णांकerrupts */
+    /* Clear the पूर्णांकerrupt mask */
+    LMC_CSR_WRITE (sc, csr_पूर्णांकr, 0x00000000);
 
     /* Stop Tx and Rx on the chip */
     csr6 = LMC_CSR_READ (sc, csr_command);
@@ -1140,227 +1141,227 @@ static int lmc_ifdown (struct net_device *dev) /*fold00*/
     sc->lmc_device->stats.rx_missed_errors +=
 	    LMC_CSR_READ(sc, csr_missed_frames) & 0xffff;
 
-    /* release the interrupt */
-    if(sc->got_irq == 1){
-        free_irq (dev->irq, dev);
+    /* release the पूर्णांकerrupt */
+    अगर(sc->got_irq == 1)अणु
+        मुक्त_irq (dev->irq, dev);
         sc->got_irq = 0;
-    }
+    पूर्ण
 
-    /* free skbuffs in the Rx queue */
-    for (i = 0; i < LMC_RXDESCS; i++)
-    {
-        struct sk_buff *skb = sc->lmc_rxq[i];
-        sc->lmc_rxq[i] = NULL;
+    /* मुक्त skbuffs in the Rx queue */
+    क्रम (i = 0; i < LMC_RXDESCS; i++)
+    अणु
+        काष्ठा sk_buff *skb = sc->lmc_rxq[i];
+        sc->lmc_rxq[i] = शून्य;
         sc->lmc_rxring[i].status = 0;
         sc->lmc_rxring[i].length = 0;
         sc->lmc_rxring[i].buffer1 = 0xDEADBEEF;
-        if (skb != NULL)
-            dev_kfree_skb(skb);
-        sc->lmc_rxq[i] = NULL;
-    }
+        अगर (skb != शून्य)
+            dev_kमुक्त_skb(skb);
+        sc->lmc_rxq[i] = शून्य;
+    पूर्ण
 
-    for (i = 0; i < LMC_TXDESCS; i++)
-    {
-        if (sc->lmc_txq[i] != NULL)
-            dev_kfree_skb(sc->lmc_txq[i]);
-        sc->lmc_txq[i] = NULL;
-    }
+    क्रम (i = 0; i < LMC_TXDESCS; i++)
+    अणु
+        अगर (sc->lmc_txq[i] != शून्य)
+            dev_kमुक्त_skb(sc->lmc_txq[i]);
+        sc->lmc_txq[i] = शून्य;
+    पूर्ण
 
     lmc_led_off (sc, LMC_MII16_LED_ALL);
 
-    netif_wake_queue(dev);
+    netअगर_wake_queue(dev);
     sc->extra_stats.tx_tbusy0++;
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 /* Interrupt handling routine.  This will take an incoming packet, or clean
- * up after a trasmit.
+ * up after a trयंत्रit.
  */
-static irqreturn_t lmc_interrupt (int irq, void *dev_instance) /*fold00*/
-{
-    struct net_device *dev = (struct net_device *) dev_instance;
+अटल irqवापस_t lmc_पूर्णांकerrupt (पूर्णांक irq, व्योम *dev_instance) /*fold00*/
+अणु
+    काष्ठा net_device *dev = (काष्ठा net_device *) dev_instance;
     lmc_softc_t *sc = dev_to_sc(dev);
     u32 csr;
-    int i;
+    पूर्णांक i;
     s32 stat;
-    unsigned int badtx;
-    int max_work = LMC_RXDESCS;
-    int handled = 0;
+    अचिन्हित पूर्णांक badtx;
+    पूर्णांक max_work = LMC_RXDESCS;
+    पूर्णांक handled = 0;
 
     spin_lock(&sc->lmc_lock);
 
     /*
-     * Read the csr to find what interrupts we have (if any)
+     * Read the csr to find what पूर्णांकerrupts we have (अगर any)
      */
     csr = LMC_CSR_READ (sc, csr_status);
 
     /*
-     * Make sure this is our interrupt
+     * Make sure this is our पूर्णांकerrupt
      */
-    if ( ! (csr & sc->lmc_intrmask)) {
-        goto lmc_int_fail_out;
-    }
+    अगर ( ! (csr & sc->lmc_पूर्णांकrmask)) अणु
+        जाओ lmc_पूर्णांक_fail_out;
+    पूर्ण
 
     /* always go through this loop at least once */
-    while (csr & sc->lmc_intrmask) {
+    जबतक (csr & sc->lmc_पूर्णांकrmask) अणु
 	handled = 1;
 
         /*
-         * Clear interrupt bits, we handle all case below
+         * Clear पूर्णांकerrupt bits, we handle all हाल below
          */
         LMC_CSR_WRITE (sc, csr_status, csr);
 
         /*
          * One of
-         *  - Transmit process timed out CSR5<1>
-         *  - Transmit jabber timeout    CSR5<3>
+         *  - Transmit process समयd out CSR5<1>
+         *  - Transmit jabber समयout    CSR5<3>
          *  - Transmit underflow         CSR5<5>
          *  - Transmit Receiver buffer unavailable CSR5<7>
          *  - Receive process stopped    CSR5<8>
-         *  - Receive watchdog timeout   CSR5<9>
-         *  - Early transmit interrupt   CSR5<10>
+         *  - Receive watchकरोg समयout   CSR5<9>
+         *  - Early transmit पूर्णांकerrupt   CSR5<10>
          *
-         * Is this really right? Should we do a running reset for jabber?
+         * Is this really right? Should we करो a running reset क्रम jabber?
          * (being a WAN card and all)
          */
-        if (csr & TULIP_STS_ABNRMLINTR){
+        अगर (csr & TULIP_STS_ABNRMLINTR)अणु
             lmc_running_reset (dev);
-            break;
-        }
+            अवरोध;
+        पूर्ण
 
-        if (csr & TULIP_STS_RXINTR)
+        अगर (csr & TULIP_STS_RXINTR)
             lmc_rx (dev);
 
-        if (csr & (TULIP_STS_TXINTR | TULIP_STS_TXNOBUF | TULIP_STS_TXSTOPPED)) {
+        अगर (csr & (TULIP_STS_TXINTR | TULIP_STS_TXNOBUF | TULIP_STS_TXSTOPPED)) अणु
 
-	    int		n_compl = 0 ;
-            /* reset the transmit timeout detection flag -baz */
+	    पूर्णांक		n_compl = 0 ;
+            /* reset the transmit समयout detection flag -baz */
 	    sc->extra_stats.tx_NoCompleteCnt = 0;
 
-            badtx = sc->lmc_taint_tx;
+            badtx = sc->lmc_taपूर्णांक_tx;
             i = badtx % LMC_TXDESCS;
 
-            while ((badtx < sc->lmc_next_tx)) {
+            जबतक ((badtx < sc->lmc_next_tx)) अणु
                 stat = sc->lmc_txring[i].status;
 
                 LMC_EVENT_LOG (LMC_EVENT_XMTINT, stat,
 						 sc->lmc_txring[i].length);
                 /*
-                 * If bit 31 is 1 the tulip owns it break out of the loop
+                 * If bit 31 is 1 the tulip owns it अवरोध out of the loop
                  */
-                if (stat & 0x80000000)
-                    break;
+                अगर (stat & 0x80000000)
+                    अवरोध;
 
 		n_compl++ ;		/* i.e., have an empty slot in ring */
                 /*
                  * If we have no skbuff or have cleared it
-                 * Already continue to the next buffer
+                 * Alपढ़ोy जारी to the next buffer
                  */
-                if (sc->lmc_txq[i] == NULL)
-                    continue;
+                अगर (sc->lmc_txq[i] == शून्य)
+                    जारी;
 
 		/*
-		 * Check the total error summary to look for any errors
+		 * Check the total error summary to look क्रम any errors
 		 */
-		if (stat & 0x8000) {
+		अगर (stat & 0x8000) अणु
 			sc->lmc_device->stats.tx_errors++;
-			if (stat & 0x4104)
-				sc->lmc_device->stats.tx_aborted_errors++;
-			if (stat & 0x0C00)
+			अगर (stat & 0x4104)
+				sc->lmc_device->stats.tx_पातed_errors++;
+			अगर (stat & 0x0C00)
 				sc->lmc_device->stats.tx_carrier_errors++;
-			if (stat & 0x0200)
-				sc->lmc_device->stats.tx_window_errors++;
-			if (stat & 0x0002)
-				sc->lmc_device->stats.tx_fifo_errors++;
-		} else {
+			अगर (stat & 0x0200)
+				sc->lmc_device->stats.tx_winकरोw_errors++;
+			अगर (stat & 0x0002)
+				sc->lmc_device->stats.tx_fअगरo_errors++;
+		पूर्ण अन्यथा अणु
 			sc->lmc_device->stats.tx_bytes += sc->lmc_txring[i].length & 0x7ff;
 
 			sc->lmc_device->stats.tx_packets++;
-                }
+                पूर्ण
 
 		dev_consume_skb_irq(sc->lmc_txq[i]);
-                sc->lmc_txq[i] = NULL;
+                sc->lmc_txq[i] = शून्य;
 
                 badtx++;
                 i = badtx % LMC_TXDESCS;
-            }
+            पूर्ण
 
-            if (sc->lmc_next_tx - badtx > LMC_TXDESCS)
-            {
-                printk ("%s: out of sync pointer\n", dev->name);
+            अगर (sc->lmc_next_tx - badtx > LMC_TXDESCS)
+            अणु
+                prपूर्णांकk ("%s: out of sync pointer\n", dev->name);
                 badtx += LMC_TXDESCS;
-            }
+            पूर्ण
             LMC_EVENT_LOG(LMC_EVENT_TBUSY0, n_compl, 0);
             sc->lmc_txfull = 0;
-            netif_wake_queue(dev);
+            netअगर_wake_queue(dev);
 	    sc->extra_stats.tx_tbusy0++;
 
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	    sc->extra_stats.dirtyTx = badtx;
 	    sc->extra_stats.lmc_next_tx = sc->lmc_next_tx;
 	    sc->extra_stats.lmc_txfull = sc->lmc_txfull;
-#endif
-            sc->lmc_taint_tx = badtx;
+#पूर्ण_अगर
+            sc->lmc_taपूर्णांक_tx = badtx;
 
             /*
-             * Why was there a break here???
+             * Why was there a अवरोध here???
              */
-        }			/* end handle transmit interrupt */
+        पूर्ण			/* end handle transmit पूर्णांकerrupt */
 
-        if (csr & TULIP_STS_SYSERROR) {
+        अगर (csr & TULIP_STS_SYSERROR) अणु
             u32 error;
-            printk (KERN_WARNING "%s: system bus error csr: %#8.8x\n", dev->name, csr);
+            prपूर्णांकk (KERN_WARNING "%s: system bus error csr: %#8.8x\n", dev->name, csr);
             error = csr>>23 & 0x7;
-            switch(error){
-            case 0x000:
-                printk(KERN_WARNING "%s: Parity Fault (bad)\n", dev->name);
-                break;
-            case 0x001:
-                printk(KERN_WARNING "%s: Master Abort (naughty)\n", dev->name);
-                break;
-            case 0x002:
-                printk(KERN_WARNING "%s: Target Abort (not so naughty)\n", dev->name);
-                break;
-            default:
-                printk(KERN_WARNING "%s: This bus error code was supposed to be reserved!\n", dev->name);
-            }
+            चयन(error)अणु
+            हाल 0x000:
+                prपूर्णांकk(KERN_WARNING "%s: Parity Fault (bad)\n", dev->name);
+                अवरोध;
+            हाल 0x001:
+                prपूर्णांकk(KERN_WARNING "%s: Master Abort (naughty)\n", dev->name);
+                अवरोध;
+            हाल 0x002:
+                prपूर्णांकk(KERN_WARNING "%s: Target Abort (not so naughty)\n", dev->name);
+                अवरोध;
+            शेष:
+                prपूर्णांकk(KERN_WARNING "%s: This bus error code was supposed to be reserved!\n", dev->name);
+            पूर्ण
             lmc_dec_reset (sc);
             lmc_reset (sc);
             LMC_EVENT_LOG(LMC_EVENT_RESET1, LMC_CSR_READ (sc, csr_status), 0);
             LMC_EVENT_LOG(LMC_EVENT_RESET2,
-                          lmc_mii_readreg (sc, 0, 16),
-                          lmc_mii_readreg (sc, 0, 17));
+                          lmc_mii_पढ़ोreg (sc, 0, 16),
+                          lmc_mii_पढ़ोreg (sc, 0, 17));
 
-        }
+        पूर्ण
 
         
-        if(max_work-- <= 0)
-            break;
+        अगर(max_work-- <= 0)
+            अवरोध;
         
         /*
          * Get current csr status to make sure
-         * we've cleared all interrupts
+         * we've cleared all पूर्णांकerrupts
          */
         csr = LMC_CSR_READ (sc, csr_status);
-    }				/* end interrupt loop */
+    पूर्ण				/* end पूर्णांकerrupt loop */
     LMC_EVENT_LOG(LMC_EVENT_INT, firstcsr, csr);
 
-lmc_int_fail_out:
+lmc_पूर्णांक_fail_out:
 
     spin_unlock(&sc->lmc_lock);
 
-    return IRQ_RETVAL(handled);
-}
+    वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static netdev_tx_t lmc_start_xmit(struct sk_buff *skb,
-					struct net_device *dev)
-{
+अटल netdev_tx_t lmc_start_xmit(काष्ठा sk_buff *skb,
+					काष्ठा net_device *dev)
+अणु
     lmc_softc_t *sc = dev_to_sc(dev);
     u32 flag;
-    int entry;
-    unsigned long flags;
+    पूर्णांक entry;
+    अचिन्हित दीर्घ flags;
 
     spin_lock_irqsave(&sc->lmc_lock, flags);
 
@@ -1373,55 +1374,55 @@ static netdev_tx_t lmc_start_xmit(struct sk_buff *skb,
 
     LMC_CONSOLE_LOG("xmit", skb->data, skb->len);
 
-#ifndef GCOM
-    /* If the queue is less than half full, don't interrupt */
-    if (sc->lmc_next_tx - sc->lmc_taint_tx < LMC_TXDESCS / 2)
-    {
-        /* Do not interrupt on completion of this packet */
+#अगर_अघोषित GCOM
+    /* If the queue is less than half full, करोn't पूर्णांकerrupt */
+    अगर (sc->lmc_next_tx - sc->lmc_taपूर्णांक_tx < LMC_TXDESCS / 2)
+    अणु
+        /* Do not पूर्णांकerrupt on completion of this packet */
         flag = 0x60000000;
-        netif_wake_queue(dev);
-    }
-    else if (sc->lmc_next_tx - sc->lmc_taint_tx == LMC_TXDESCS / 2)
-    {
-        /* This generates an interrupt on completion of this packet */
+        netअगर_wake_queue(dev);
+    पूर्ण
+    अन्यथा अगर (sc->lmc_next_tx - sc->lmc_taपूर्णांक_tx == LMC_TXDESCS / 2)
+    अणु
+        /* This generates an पूर्णांकerrupt on completion of this packet */
         flag = 0xe0000000;
-        netif_wake_queue(dev);
-    }
-    else if (sc->lmc_next_tx - sc->lmc_taint_tx < LMC_TXDESCS - 1)
-    {
-        /* Do not interrupt on completion of this packet */
+        netअगर_wake_queue(dev);
+    पूर्ण
+    अन्यथा अगर (sc->lmc_next_tx - sc->lmc_taपूर्णांक_tx < LMC_TXDESCS - 1)
+    अणु
+        /* Do not पूर्णांकerrupt on completion of this packet */
         flag = 0x60000000;
-        netif_wake_queue(dev);
-    }
-    else
-    {
-        /* This generates an interrupt on completion of this packet */
+        netअगर_wake_queue(dev);
+    पूर्ण
+    अन्यथा
+    अणु
+        /* This generates an पूर्णांकerrupt on completion of this packet */
         flag = 0xe0000000;
         sc->lmc_txfull = 1;
-        netif_stop_queue(dev);
-    }
-#else
+        netअगर_stop_queue(dev);
+    पूर्ण
+#अन्यथा
     flag = LMC_TDES_INTERRUPT_ON_COMPLETION;
 
-    if (sc->lmc_next_tx - sc->lmc_taint_tx >= LMC_TXDESCS - 1)
-    {				/* ring full, go busy */
+    अगर (sc->lmc_next_tx - sc->lmc_taपूर्णांक_tx >= LMC_TXDESCS - 1)
+    अणु				/* ring full, go busy */
         sc->lmc_txfull = 1;
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	sc->extra_stats.tx_tbusy1++;
         LMC_EVENT_LOG(LMC_EVENT_TBUSY1, entry, 0);
-    }
-#endif
+    पूर्ण
+#पूर्ण_अगर
 
 
-    if (entry == LMC_TXDESCS - 1)	/* last descriptor in ring */
-	flag |= LMC_TDES_END_OF_RING;	/* flag as such for Tulip */
+    अगर (entry == LMC_TXDESCS - 1)	/* last descriptor in ring */
+	flag |= LMC_TDES_END_OF_RING;	/* flag as such क्रम Tulip */
 
-    /* don't pad small packets either */
+    /* करोn't pad small packets either */
     flag = sc->lmc_txring[entry].length = (skb->len) | flag |
 						sc->TxDescriptControlInit;
 
-    /* set the transmit timeout flag to be checked in
-     * the watchdog timer handler. -baz
+    /* set the transmit समयout flag to be checked in
+     * the watchकरोg समयr handler. -baz
      */
 
     sc->extra_stats.tx_NoCompleteCnt++;
@@ -1436,19 +1437,19 @@ static netdev_tx_t lmc_start_xmit(struct sk_buff *skb,
 
     spin_unlock_irqrestore(&sc->lmc_lock, flags);
 
-    return NETDEV_TX_OK;
-}
+    वापस NETDEV_TX_OK;
+पूर्ण
 
 
-static int lmc_rx(struct net_device *dev)
-{
+अटल पूर्णांक lmc_rx(काष्ठा net_device *dev)
+अणु
     lmc_softc_t *sc = dev_to_sc(dev);
-    int i;
-    int rx_work_limit = LMC_RXDESCS;
-    int rxIntLoopCnt;		/* debug -baz */
-    int localLengthErrCnt = 0;
-    long stat;
-    struct sk_buff *skb, *nsb;
+    पूर्णांक i;
+    पूर्णांक rx_work_limit = LMC_RXDESCS;
+    पूर्णांक rxIntLoopCnt;		/* debug -baz */
+    पूर्णांक localLengthErrCnt = 0;
+    दीर्घ stat;
+    काष्ठा sk_buff *skb, *nsb;
     u16 len;
 
     lmc_led_on(sc, LMC_DS3_LED3);
@@ -1457,67 +1458,67 @@ static int lmc_rx(struct net_device *dev)
 
     i = sc->lmc_next_rx % LMC_RXDESCS;
 
-    while (((stat = sc->lmc_rxring[i].status) & LMC_RDES_OWN_BIT) != DESC_OWNED_BY_DC21X4)
-    {
+    जबतक (((stat = sc->lmc_rxring[i].status) & LMC_RDES_OWN_BIT) != DESC_OWNED_BY_DC21X4)
+    अणु
         rxIntLoopCnt++;		/* debug -baz */
         len = ((stat & LMC_RDES_FRAME_LENGTH) >> RDES_FRAME_LENGTH_BIT_NUMBER);
-        if ((stat & 0x0300) != 0x0300) {  /* Check first segment and last segment */
-		if ((stat & 0x0000ffff) != 0x7fff) {
+        अगर ((stat & 0x0300) != 0x0300) अणु  /* Check first segment and last segment */
+		अगर ((stat & 0x0000ffff) != 0x7fff) अणु
 			/* Oversized frame */
 			sc->lmc_device->stats.rx_length_errors++;
-			goto skip_packet;
-		}
-	}
+			जाओ skip_packet;
+		पूर्ण
+	पूर्ण
 
-	if (stat & 0x00000008) { /* Catch a dribbling bit error */
+	अगर (stat & 0x00000008) अणु /* Catch a dribbling bit error */
 		sc->lmc_device->stats.rx_errors++;
 		sc->lmc_device->stats.rx_frame_errors++;
-		goto skip_packet;
-	}
+		जाओ skip_packet;
+	पूर्ण
 
 
-	if (stat & 0x00000004) { /* Catch a CRC error by the Xilinx */
+	अगर (stat & 0x00000004) अणु /* Catch a CRC error by the Xilinx */
 		sc->lmc_device->stats.rx_errors++;
 		sc->lmc_device->stats.rx_crc_errors++;
-		goto skip_packet;
-	}
+		जाओ skip_packet;
+	पूर्ण
 
-	if (len > LMC_PKT_BUF_SZ) {
+	अगर (len > LMC_PKT_BUF_SZ) अणु
 		sc->lmc_device->stats.rx_length_errors++;
 		localLengthErrCnt++;
-		goto skip_packet;
-	}
+		जाओ skip_packet;
+	पूर्ण
 
-	if (len < sc->lmc_crcSize + 2) {
+	अगर (len < sc->lmc_crcSize + 2) अणु
 		sc->lmc_device->stats.rx_length_errors++;
 		sc->extra_stats.rx_SmallPktCnt++;
 		localLengthErrCnt++;
-		goto skip_packet;
-	}
+		जाओ skip_packet;
+	पूर्ण
 
-        if(stat & 0x00004000){
-            printk(KERN_WARNING "%s: Receiver descriptor error, receiver out of sync?\n", dev->name);
-        }
+        अगर(stat & 0x00004000)अणु
+            prपूर्णांकk(KERN_WARNING "%s: Receiver descriptor error, receiver out of sync?\n", dev->name);
+        पूर्ण
 
         len -= sc->lmc_crcSize;
 
         skb = sc->lmc_rxq[i];
 
         /*
-         * We ran out of memory at some point
-         * just allocate an skb buff and continue.
+         * We ran out of memory at some poपूर्णांक
+         * just allocate an skb buff and जारी.
          */
         
-        if (!skb) {
+        अगर (!skb) अणु
             nsb = dev_alloc_skb (LMC_PKT_BUF_SZ + 2);
-            if (nsb) {
+            अगर (nsb) अणु
                 sc->lmc_rxq[i] = nsb;
                 nsb->dev = dev;
-                sc->lmc_rxring[i].buffer1 = virt_to_bus(skb_tail_pointer(nsb));
-            }
+                sc->lmc_rxring[i].buffer1 = virt_to_bus(skb_tail_poपूर्णांकer(nsb));
+            पूर्ण
             sc->failed_recv_alloc = 1;
-            goto skip_packet;
-        }
+            जाओ skip_packet;
+        पूर्ण
         
 	sc->lmc_device->stats.rx_packets++;
 	sc->lmc_device->stats.rx_bytes += len;
@@ -1526,18 +1527,18 @@ static int lmc_rx(struct net_device *dev)
 
         /*
          * I'm not sure of the sanity of this
-         * Packets could be arriving at a constant
+         * Packets could be arriving at a स्थिरant
          * 44.210mbits/sec and we're going to copy
-         * them into a new buffer??
+         * them पूर्णांकo a new buffer??
          */
         
-        if(len > (LMC_MTU - (LMC_MTU>>2))){ /* len > LMC_MTU * 0.75 */
+        अगर(len > (LMC_MTU - (LMC_MTU>>2)))अणु /* len > LMC_MTU * 0.75 */
             /*
              * If it's a large packet don't copy it just hand it up
              */
         give_it_anyways:
 
-            sc->lmc_rxq[i] = NULL;
+            sc->lmc_rxq[i] = शून्य;
             sc->lmc_rxring[i].buffer1 = 0x0;
 
             skb_put (skb, len);
@@ -1545,22 +1546,22 @@ static int lmc_rx(struct net_device *dev)
             skb_reset_mac_header(skb);
             /* skb_reset_network_header(skb); */
             skb->dev = dev;
-            lmc_proto_netif(sc, skb);
+            lmc_proto_netअगर(sc, skb);
 
             /*
              * This skb will be destroyed by the upper layers, make a new one
              */
             nsb = dev_alloc_skb (LMC_PKT_BUF_SZ + 2);
-            if (nsb) {
+            अगर (nsb) अणु
                 sc->lmc_rxq[i] = nsb;
                 nsb->dev = dev;
-                sc->lmc_rxring[i].buffer1 = virt_to_bus(skb_tail_pointer(nsb));
+                sc->lmc_rxring[i].buffer1 = virt_to_bus(skb_tail_poपूर्णांकer(nsb));
                 /* Transferred to 21140 below */
-            }
-            else {
+            पूर्ण
+            अन्यथा अणु
                 /*
                  * We've run out of memory, stop trying to allocate
-                 * memory and exit the interrupt handler
+                 * memory and निकास the पूर्णांकerrupt handler
                  *
                  * The chip may run out of receivers and stop
                  * in which care we'll try to allocate the buffer
@@ -1569,22 +1570,22 @@ static int lmc_rx(struct net_device *dev)
 		sc->extra_stats.rx_BuffAllocErr++;
                 LMC_EVENT_LOG(LMC_EVENT_RCVINT, stat, len);
                 sc->failed_recv_alloc = 1;
-                goto skip_out_of_mem;
-            }
-        }
-        else {
+                जाओ skip_out_of_mem;
+            पूर्ण
+        पूर्ण
+        अन्यथा अणु
             nsb = dev_alloc_skb(len);
-            if(!nsb) {
-                goto give_it_anyways;
-            }
+            अगर(!nsb) अणु
+                जाओ give_it_anyways;
+            पूर्ण
             skb_copy_from_linear_data(skb, skb_put(nsb, len), len);
             
             nsb->protocol = lmc_proto_type(sc, nsb);
             skb_reset_mac_header(nsb);
             /* skb_reset_network_header(nsb); */
             nsb->dev = dev;
-            lmc_proto_netif(sc, nsb);
-        }
+            lmc_proto_netअगर(sc, nsb);
+        पूर्ण
 
     skip_packet:
         LMC_EVENT_LOG(LMC_EVENT_RCVINT, stat, len);
@@ -1593,49 +1594,49 @@ static int lmc_rx(struct net_device *dev)
         sc->lmc_next_rx++;
         i = sc->lmc_next_rx % LMC_RXDESCS;
         rx_work_limit--;
-        if (rx_work_limit < 0)
-            break;
-    }
+        अगर (rx_work_limit < 0)
+            अवरोध;
+    पूर्ण
 
-    /* detect condition for LMC1000 where DSU cable attaches and fills
+    /* detect condition क्रम LMC1000 where DSU cable attaches and fills
      * descriptors with bogus packets
      *
-    if (localLengthErrCnt > LMC_RXDESCS - 3) {
+    अगर (localLengthErrCnt > LMC_RXDESCS - 3) अणु
 	sc->extra_stats.rx_BadPktSurgeCnt++;
 	LMC_EVENT_LOG(LMC_EVENT_BADPKTSURGE, localLengthErrCnt,
 		      sc->extra_stats.rx_BadPktSurgeCnt);
-    } */
+    पूर्ण */
 
     /* save max count of receive descriptors serviced */
-    if (rxIntLoopCnt > sc->extra_stats.rxIntLoopCnt)
+    अगर (rxIntLoopCnt > sc->extra_stats.rxIntLoopCnt)
 	    sc->extra_stats.rxIntLoopCnt = rxIntLoopCnt; /* debug -baz */
 
-#ifdef DEBUG
-    if (rxIntLoopCnt == 0)
-    {
-        for (i = 0; i < LMC_RXDESCS; i++)
-        {
-            if ((sc->lmc_rxring[i].status & LMC_RDES_OWN_BIT)
+#अगर_घोषित DEBUG
+    अगर (rxIntLoopCnt == 0)
+    अणु
+        क्रम (i = 0; i < LMC_RXDESCS; i++)
+        अणु
+            अगर ((sc->lmc_rxring[i].status & LMC_RDES_OWN_BIT)
                 != DESC_OWNED_BY_DC21X4)
-            {
+            अणु
                 rxIntLoopCnt++;
-            }
-        }
+            पूर्ण
+        पूर्ण
         LMC_EVENT_LOG(LMC_EVENT_RCVEND, rxIntLoopCnt, 0);
-    }
-#endif
+    पूर्ण
+#पूर्ण_अगर
 
 
     lmc_led_off(sc, LMC_DS3_LED3);
 
 skip_out_of_mem:
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
-static struct net_device_stats *lmc_get_stats(struct net_device *dev)
-{
+अटल काष्ठा net_device_stats *lmc_get_stats(काष्ठा net_device *dev)
+अणु
     lmc_softc_t *sc = dev_to_sc(dev);
-    unsigned long flags;
+    अचिन्हित दीर्घ flags;
 
     spin_lock_irqsave(&sc->lmc_lock, flags);
 
@@ -1643,29 +1644,29 @@ static struct net_device_stats *lmc_get_stats(struct net_device *dev)
 
     spin_unlock_irqrestore(&sc->lmc_lock, flags);
 
-    return &sc->lmc_device->stats;
-}
+    वापस &sc->lmc_device->stats;
+पूर्ण
 
-static struct pci_driver lmc_driver = {
+अटल काष्ठा pci_driver lmc_driver = अणु
 	.name		= "lmc",
 	.id_table	= lmc_pci_tbl,
 	.probe		= lmc_init_one,
-	.remove		= lmc_remove_one,
-};
+	.हटाओ		= lmc_हटाओ_one,
+पूर्ण;
 
 module_pci_driver(lmc_driver);
 
-unsigned lmc_mii_readreg (lmc_softc_t * const sc, unsigned devaddr, unsigned regno) /*fold00*/
-{
-    int i;
-    int command = (0xf6 << 10) | (devaddr << 5) | regno;
-    int retval = 0;
+अचिन्हित lmc_mii_पढ़ोreg (lmc_softc_t * स्थिर sc, अचिन्हित devaddr, अचिन्हित regno) /*fold00*/
+अणु
+    पूर्णांक i;
+    पूर्णांक command = (0xf6 << 10) | (devaddr << 5) | regno;
+    पूर्णांक retval = 0;
 
     LMC_MII_SYNC (sc);
 
-    for (i = 15; i >= 0; i--)
-    {
-        int dataval = (command & (1 << i)) ? 0x20000 : 0;
+    क्रम (i = 15; i >= 0; i--)
+    अणु
+        पूर्णांक dataval = (command & (1 << i)) ? 0x20000 : 0;
 
         LMC_CSR_WRITE (sc, csr_9, dataval);
         lmc_delay ();
@@ -1673,10 +1674,10 @@ unsigned lmc_mii_readreg (lmc_softc_t * const sc, unsigned devaddr, unsigned reg
         LMC_CSR_WRITE (sc, csr_9, dataval | 0x10000);
         lmc_delay ();
         /* __SLOW_DOWN_IO; */
-    }
+    पूर्ण
 
-    for (i = 19; i > 0; i--)
-    {
+    क्रम (i = 19; i > 0; i--)
+    अणु
         LMC_CSR_WRITE (sc, csr_9, 0x40000);
         lmc_delay ();
         /* __SLOW_DOWN_IO; */
@@ -1684,26 +1685,26 @@ unsigned lmc_mii_readreg (lmc_softc_t * const sc, unsigned devaddr, unsigned reg
         LMC_CSR_WRITE (sc, csr_9, 0x40000 | 0x10000);
         lmc_delay ();
         /* __SLOW_DOWN_IO; */
-    }
+    पूर्ण
 
-    return (retval >> 1) & 0xffff;
-}
+    वापस (retval >> 1) & 0xffff;
+पूर्ण
 
-void lmc_mii_writereg (lmc_softc_t * const sc, unsigned devaddr, unsigned regno, unsigned data) /*fold00*/
-{
-    int i = 32;
-    int command = (0x5002 << 16) | (devaddr << 23) | (regno << 18) | data;
+व्योम lmc_mii_ग_लिखोreg (lmc_softc_t * स्थिर sc, अचिन्हित devaddr, अचिन्हित regno, अचिन्हित data) /*fold00*/
+अणु
+    पूर्णांक i = 32;
+    पूर्णांक command = (0x5002 << 16) | (devaddr << 23) | (regno << 18) | data;
 
     LMC_MII_SYNC (sc);
 
     i = 31;
-    while (i >= 0)
-    {
-        int datav;
+    जबतक (i >= 0)
+    अणु
+        पूर्णांक datav;
 
-        if (command & (1 << i))
+        अगर (command & (1 << i))
             datav = 0x20000;
-        else
+        अन्यथा
             datav = 0x00000;
 
         LMC_CSR_WRITE (sc, csr_9, datav);
@@ -1713,11 +1714,11 @@ void lmc_mii_writereg (lmc_softc_t * const sc, unsigned devaddr, unsigned regno,
         lmc_delay ();
         /* __SLOW_DOWN_IO; */
         i--;
-    }
+    पूर्ण
 
     i = 2;
-    while (i > 0)
-    {
+    जबतक (i > 0)
+    अणु
         LMC_CSR_WRITE (sc, csr_9, 0x40000);
         lmc_delay ();
         /* __SLOW_DOWN_IO; */
@@ -1725,46 +1726,46 @@ void lmc_mii_writereg (lmc_softc_t * const sc, unsigned devaddr, unsigned regno,
         lmc_delay ();
         /* __SLOW_DOWN_IO; */
         i--;
-    }
-}
+    पूर्ण
+पूर्ण
 
-static void lmc_softreset (lmc_softc_t * const sc) /*fold00*/
-{
-    int i;
+अटल व्योम lmc_softreset (lmc_softc_t * स्थिर sc) /*fold00*/
+अणु
+    पूर्णांक i;
 
     /* Initialize the receive rings and buffers. */
     sc->lmc_txfull = 0;
     sc->lmc_next_rx = 0;
     sc->lmc_next_tx = 0;
-    sc->lmc_taint_rx = 0;
-    sc->lmc_taint_tx = 0;
+    sc->lmc_taपूर्णांक_rx = 0;
+    sc->lmc_taपूर्णांक_tx = 0;
 
     /*
      * Setup each one of the receiver buffers
-     * allocate an skbuff for each one, setup the descriptor table
-     * and point each buffer at the next one
+     * allocate an skbuff क्रम each one, setup the descriptor table
+     * and poपूर्णांक each buffer at the next one
      */
 
-    for (i = 0; i < LMC_RXDESCS; i++)
-    {
-        struct sk_buff *skb;
+    क्रम (i = 0; i < LMC_RXDESCS; i++)
+    अणु
+        काष्ठा sk_buff *skb;
 
-        if (sc->lmc_rxq[i] == NULL)
-        {
+        अगर (sc->lmc_rxq[i] == शून्य)
+        अणु
             skb = dev_alloc_skb (LMC_PKT_BUF_SZ + 2);
-            if(skb == NULL){
-                printk(KERN_WARNING "%s: Failed to allocate receiver ring, will try again\n", sc->name);
+            अगर(skb == शून्य)अणु
+                prपूर्णांकk(KERN_WARNING "%s: Failed to allocate receiver ring, will try again\n", sc->name);
                 sc->failed_ring = 1;
-                break;
-            }
-            else{
+                अवरोध;
+            पूर्ण
+            अन्यथाअणु
                 sc->lmc_rxq[i] = skb;
-            }
-        }
-        else
-        {
+            पूर्ण
+        पूर्ण
+        अन्यथा
+        अणु
             skb = sc->lmc_rxq[i];
-        }
+        पूर्ण
 
         skb->dev = sc->lmc_device;
 
@@ -1774,143 +1775,143 @@ static void lmc_softreset (lmc_softc_t * const sc) /*fold00*/
         /* used to be PKT_BUF_SZ now uses skb since we lose some to head room */
         sc->lmc_rxring[i].length = skb_tailroom(skb);
 
-        /* use to be tail which is dumb since you're thinking why write
+        /* use to be tail which is dumb since you're thinking why ग_लिखो
          * to the end of the packj,et but since there's nothing there tail == data
          */
         sc->lmc_rxring[i].buffer1 = virt_to_bus (skb->data);
 
-        /* This is fair since the structure is static and we have the next address */
+        /* This is fair since the काष्ठाure is अटल and we have the next address */
         sc->lmc_rxring[i].buffer2 = virt_to_bus (&sc->lmc_rxring[i + 1]);
 
-    }
+    पूर्ण
 
     /*
      * Sets end of ring
      */
-    if (i != 0) {
+    अगर (i != 0) अणु
         sc->lmc_rxring[i - 1].length |= 0x02000000; /* Set end of buffers flag */
-        sc->lmc_rxring[i - 1].buffer2 = virt_to_bus(&sc->lmc_rxring[0]); /* Point back to the start */
-    }
-    LMC_CSR_WRITE (sc, csr_rxlist, virt_to_bus (sc->lmc_rxring)); /* write base address */
+        sc->lmc_rxring[i - 1].buffer2 = virt_to_bus(&sc->lmc_rxring[0]); /* Poपूर्णांक back to the start */
+    पूर्ण
+    LMC_CSR_WRITE (sc, csr_rxlist, virt_to_bus (sc->lmc_rxring)); /* ग_लिखो base address */
 
     /* Initialize the transmit rings and buffers */
-    for (i = 0; i < LMC_TXDESCS; i++)
-    {
-        if (sc->lmc_txq[i] != NULL){		/* have buffer */
-            dev_kfree_skb(sc->lmc_txq[i]);	/* free it */
+    क्रम (i = 0; i < LMC_TXDESCS; i++)
+    अणु
+        अगर (sc->lmc_txq[i] != शून्य)अणु		/* have buffer */
+            dev_kमुक्त_skb(sc->lmc_txq[i]);	/* मुक्त it */
 	    sc->lmc_device->stats.tx_dropped++;	/* We just dropped a packet */
-        }
-        sc->lmc_txq[i] = NULL;
+        पूर्ण
+        sc->lmc_txq[i] = शून्य;
         sc->lmc_txring[i].status = 0x00000000;
         sc->lmc_txring[i].buffer2 = virt_to_bus (&sc->lmc_txring[i + 1]);
-    }
+    पूर्ण
     sc->lmc_txring[i - 1].buffer2 = virt_to_bus (&sc->lmc_txring[0]);
     LMC_CSR_WRITE (sc, csr_txlist, virt_to_bus (sc->lmc_txring));
-}
+पूर्ण
 
-void lmc_gpio_mkinput(lmc_softc_t * const sc, u32 bits) /*fold00*/
-{
+व्योम lmc_gpio_mkinput(lmc_softc_t * स्थिर sc, u32 bits) /*fold00*/
+अणु
     sc->lmc_gpio_io &= ~bits;
     LMC_CSR_WRITE(sc, csr_gp, TULIP_GP_PINSET | (sc->lmc_gpio_io));
-}
+पूर्ण
 
-void lmc_gpio_mkoutput(lmc_softc_t * const sc, u32 bits) /*fold00*/
-{
+व्योम lmc_gpio_mkoutput(lmc_softc_t * स्थिर sc, u32 bits) /*fold00*/
+अणु
     sc->lmc_gpio_io |= bits;
     LMC_CSR_WRITE(sc, csr_gp, TULIP_GP_PINSET | (sc->lmc_gpio_io));
-}
+पूर्ण
 
-void lmc_led_on(lmc_softc_t * const sc, u32 led) /*fold00*/
-{
-    if ((~sc->lmc_miireg16) & led) /* Already on! */
-        return;
+व्योम lmc_led_on(lmc_softc_t * स्थिर sc, u32 led) /*fold00*/
+अणु
+    अगर ((~sc->lmc_miireg16) & led) /* Alपढ़ोy on! */
+        वापस;
 
     sc->lmc_miireg16 &= ~led;
-    lmc_mii_writereg(sc, 0, 16, sc->lmc_miireg16);
-}
+    lmc_mii_ग_लिखोreg(sc, 0, 16, sc->lmc_miireg16);
+पूर्ण
 
-void lmc_led_off(lmc_softc_t * const sc, u32 led) /*fold00*/
-{
-    if (sc->lmc_miireg16 & led) /* Already set don't do anything */
-        return;
+व्योम lmc_led_off(lmc_softc_t * स्थिर sc, u32 led) /*fold00*/
+अणु
+    अगर (sc->lmc_miireg16 & led) /* Alपढ़ोy set करोn't करो anything */
+        वापस;
 
     sc->lmc_miireg16 |= led;
-    lmc_mii_writereg(sc, 0, 16, sc->lmc_miireg16);
-}
+    lmc_mii_ग_लिखोreg(sc, 0, 16, sc->lmc_miireg16);
+पूर्ण
 
-static void lmc_reset(lmc_softc_t * const sc) /*fold00*/
-{
+अटल व्योम lmc_reset(lmc_softc_t * स्थिर sc) /*fold00*/
+अणु
     sc->lmc_miireg16 |= LMC_MII16_FIFO_RESET;
-    lmc_mii_writereg(sc, 0, 16, sc->lmc_miireg16);
+    lmc_mii_ग_लिखोreg(sc, 0, 16, sc->lmc_miireg16);
 
     sc->lmc_miireg16 &= ~LMC_MII16_FIFO_RESET;
-    lmc_mii_writereg(sc, 0, 16, sc->lmc_miireg16);
+    lmc_mii_ग_लिखोreg(sc, 0, 16, sc->lmc_miireg16);
 
     /*
-     * make some of the GPIO pins be outputs
+     * make some of the GPIO pins be outमाला_दो
      */
     lmc_gpio_mkoutput(sc, LMC_GEP_RESET);
 
     /*
-     * RESET low to force state reset.  This also forces
-     * the transmitter clock to be internal, but we expect to reset
+     * RESET low to क्रमce state reset.  This also क्रमces
+     * the transmitter घड़ी to be पूर्णांकernal, but we expect to reset
      * that later anyway.
      */
     sc->lmc_gpio &= ~(LMC_GEP_RESET);
     LMC_CSR_WRITE(sc, csr_gp, sc->lmc_gpio);
 
     /*
-     * hold for more than 10 microseconds
+     * hold क्रम more than 10 microseconds
      */
     udelay(50);
 
     /*
-     * stop driving Xilinx-related signals
+     * stop driving Xilinx-related संकेतs
      */
     lmc_gpio_mkinput(sc, LMC_GEP_RESET);
 
     /*
-     * Call media specific init routine
+     * Call media specअगरic init routine
      */
     sc->lmc_media->init(sc);
 
     sc->extra_stats.resetCount++;
-}
+पूर्ण
 
-static void lmc_dec_reset(lmc_softc_t * const sc) /*fold00*/
-{
+अटल व्योम lmc_dec_reset(lmc_softc_t * स्थिर sc) /*fold00*/
+अणु
     u32 val;
 
     /*
-     * disable all interrupts
+     * disable all पूर्णांकerrupts
      */
-    sc->lmc_intrmask = 0;
-    LMC_CSR_WRITE(sc, csr_intr, sc->lmc_intrmask);
+    sc->lmc_पूर्णांकrmask = 0;
+    LMC_CSR_WRITE(sc, csr_पूर्णांकr, sc->lmc_पूर्णांकrmask);
 
     /*
      * Reset the chip with a software reset command.
      * Wait 10 microseconds (actually 50 PCI cycles but at
-     * 33MHz that comes to two microseconds but wait a
-     * bit longer anyways)
+     * 33MHz that comes to two microseconds but रुको a
+     * bit दीर्घer anyways)
      */
     LMC_CSR_WRITE(sc, csr_busmode, TULIP_BUSMODE_SWRESET);
     udelay(25);
-#ifdef __sparc__
+#अगर_घोषित __sparc__
     sc->lmc_busmode = LMC_CSR_READ(sc, csr_busmode);
     sc->lmc_busmode = 0x00100000;
     sc->lmc_busmode &= ~TULIP_BUSMODE_SWRESET;
     LMC_CSR_WRITE(sc, csr_busmode, sc->lmc_busmode);
-#endif
+#पूर्ण_अगर
     sc->lmc_cmdmode = LMC_CSR_READ(sc, csr_command);
 
     /*
      * We want:
-     *   no ethernet address in frames we write
+     *   no ethernet address in frames we ग_लिखो
      *   disable padding (txdesc, padding disable)
      *   ignore runt frames (rdes0 bit 15)
-     *   no receiver watchdog or transmitter jabber timer
+     *   no receiver watchकरोg or transmitter jabber समयr
      *       (csr15 bit 0,14 == 1)
-     *   if using 16-bit CRC, turn off CRC (trans desc, crc disable)
+     *   अगर using 16-bit CRC, turn off CRC (trans desc, crc disable)
      */
 
     sc->lmc_cmdmode |= ( TULIP_CMD_PROMISCUOUS
@@ -1930,16 +1931,16 @@ static void lmc_dec_reset(lmc_softc_t * const sc) /*fold00*/
     LMC_CSR_WRITE(sc, csr_command, sc->lmc_cmdmode);
 
     /*
-     * disable receiver watchdog and transmit jabber
+     * disable receiver watchकरोg and transmit jabber
      */
     val = LMC_CSR_READ(sc, csr_sia_general);
     val |= (TULIP_WATCHDOG_TXDISABLE | TULIP_WATCHDOG_RXDISABLE);
     LMC_CSR_WRITE(sc, csr_sia_general, val);
-}
+पूर्ण
 
-static void lmc_initcsrs(lmc_softc_t * const sc, lmc_csrptr_t csr_base, /*fold00*/
-                         size_t csr_size)
-{
+अटल व्योम lmc_initcsrs(lmc_softc_t * स्थिर sc, lmc_csrptr_t csr_base, /*fold00*/
+                         माप_प्रकार csr_size)
+अणु
     sc->lmc_csrs.csr_busmode	        = csr_base +  0 * csr_size;
     sc->lmc_csrs.csr_txpoll		= csr_base +  1 * csr_size;
     sc->lmc_csrs.csr_rxpoll		= csr_base +  2 * csr_size;
@@ -1947,7 +1948,7 @@ static void lmc_initcsrs(lmc_softc_t * const sc, lmc_csrptr_t csr_base, /*fold00
     sc->lmc_csrs.csr_txlist		= csr_base +  4 * csr_size;
     sc->lmc_csrs.csr_status		= csr_base +  5 * csr_size;
     sc->lmc_csrs.csr_command	        = csr_base +  6 * csr_size;
-    sc->lmc_csrs.csr_intr		= csr_base +  7 * csr_size;
+    sc->lmc_csrs.csr_पूर्णांकr		= csr_base +  7 * csr_size;
     sc->lmc_csrs.csr_missed_frames	= csr_base +  8 * csr_size;
     sc->lmc_csrs.csr_9		        = csr_base +  9 * csr_size;
     sc->lmc_csrs.csr_10		        = csr_base + 10 * csr_size;
@@ -1956,21 +1957,21 @@ static void lmc_initcsrs(lmc_softc_t * const sc, lmc_csrptr_t csr_base, /*fold00
     sc->lmc_csrs.csr_13		        = csr_base + 13 * csr_size;
     sc->lmc_csrs.csr_14		        = csr_base + 14 * csr_size;
     sc->lmc_csrs.csr_15		        = csr_base + 15 * csr_size;
-}
+पूर्ण
 
-static void lmc_driver_timeout(struct net_device *dev, unsigned int txqueue)
-{
+अटल व्योम lmc_driver_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
     lmc_softc_t *sc = dev_to_sc(dev);
     u32 csr6;
-    unsigned long flags;
+    अचिन्हित दीर्घ flags;
 
     spin_lock_irqsave(&sc->lmc_lock, flags);
 
-    printk("%s: Xmitter busy|\n", dev->name);
+    prपूर्णांकk("%s: Xmitter busy|\n", dev->name);
 
     sc->extra_stats.tx_tbusy_calls++;
-    if (jiffies - dev_trans_start(dev) < TX_TIMEOUT)
-	    goto bug_out;
+    अगर (jअगरfies - dev_trans_start(dev) < TX_TIMEOUT)
+	    जाओ bug_out;
 
     /*
      * Chip seems to have locked up
@@ -1987,8 +1988,8 @@ static void lmc_driver_timeout(struct net_device *dev, unsigned int txqueue)
 
     LMC_EVENT_LOG(LMC_EVENT_RESET1, LMC_CSR_READ (sc, csr_status), 0);
     LMC_EVENT_LOG(LMC_EVENT_RESET2,
-                  lmc_mii_readreg (sc, 0, 16),
-                  lmc_mii_readreg (sc, 0, 17));
+                  lmc_mii_पढ़ोreg (sc, 0, 16),
+                  lmc_mii_पढ़ोreg (sc, 0, 17));
 
     /* restart the tx processes */
     csr6 = LMC_CSR_READ (sc, csr_command);
@@ -2001,9 +2002,9 @@ static void lmc_driver_timeout(struct net_device *dev, unsigned int txqueue)
     sc->lmc_device->stats.tx_errors++;
     sc->extra_stats.tx_ProcTimeout++; /* -baz */
 
-    netif_trans_update(dev); /* prevent tx timeout */
+    netअगर_trans_update(dev); /* prevent tx समयout */
 
 bug_out:
 
     spin_unlock_irqrestore(&sc->lmc_lock, flags);
-}
+पूर्ण

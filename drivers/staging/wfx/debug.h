@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Debugfs interface.
+ * Debugfs पूर्णांकerface.
  *
  * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2011, ST-Ericsson
  */
-#ifndef WFX_DEBUG_H
-#define WFX_DEBUG_H
+#अगर_अघोषित WFX_DEBUG_H
+#घोषणा WFX_DEBUG_H
 
-struct wfx_dev;
+काष्ठा wfx_dev;
 
-int wfx_debug_init(struct wfx_dev *wdev);
+पूर्णांक wfx_debug_init(काष्ठा wfx_dev *wdev);
 
-const char *get_hif_name(unsigned long id);
-const char *get_mib_name(unsigned long id);
-const char *get_reg_name(unsigned long id);
+स्थिर अक्षर *get_hअगर_name(अचिन्हित दीर्घ id);
+स्थिर अक्षर *get_mib_name(अचिन्हित दीर्घ id);
+स्थिर अक्षर *get_reg_name(अचिन्हित दीर्घ id);
 
-#endif /* WFX_DEBUG_H */
+#पूर्ण_अगर /* WFX_DEBUG_H */

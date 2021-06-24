@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,309 +22,309 @@
  *
  * Authors: Ben Skeggs
  */
-#include "channv50.h"
-#include "rootnv50.h"
+#समावेश "channv50.h"
+#समावेश "rootnv50.h"
 
-#include <core/client.h>
-#include <core/notify.h>
-#include <core/oproxy.h>
-#include <core/ramht.h>
-#include <engine/dma.h>
+#समावेश <core/client.h>
+#समावेश <core/notअगरy.h>
+#समावेश <core/oproxy.h>
+#समावेश <core/ramht.h>
+#समावेश <engine/dma.h>
 
-#include <nvif/cl507d.h>
-#include <nvif/event.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/cl507d.h>
+#समावेश <nvअगर/event.h>
+#समावेश <nvअगर/unpack.h>
 
-static void
-nv50_disp_mthd_list(struct nv50_disp *disp, int debug, u32 base, int c,
-		    const struct nv50_disp_mthd_list *list, int inst)
-{
-	struct nvkm_subdev *subdev = &disp->base.engine.subdev;
-	struct nvkm_device *device = subdev->device;
-	int i;
+अटल व्योम
+nv50_disp_mthd_list(काष्ठा nv50_disp *disp, पूर्णांक debug, u32 base, पूर्णांक c,
+		    स्थिर काष्ठा nv50_disp_mthd_list *list, पूर्णांक inst)
+अणु
+	काष्ठा nvkm_subdev *subdev = &disp->base.engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	पूर्णांक i;
 
-	for (i = 0; list->data[i].mthd; i++) {
-		if (list->data[i].addr) {
+	क्रम (i = 0; list->data[i].mthd; i++) अणु
+		अगर (list->data[i].addr) अणु
 			u32 next = nvkm_rd32(device, list->data[i].addr + base + 0);
 			u32 prev = nvkm_rd32(device, list->data[i].addr + base + c);
 			u32 mthd = list->data[i].mthd + (list->mthd * inst);
-			const char *name = list->data[i].name;
-			char mods[16];
+			स्थिर अक्षर *name = list->data[i].name;
+			अक्षर mods[16];
 
-			if (prev != next)
-				snprintf(mods, sizeof(mods), "-> %08x", next);
-			else
-				snprintf(mods, sizeof(mods), "%13c", ' ');
+			अगर (prev != next)
+				snम_लिखो(mods, माप(mods), "-> %08x", next);
+			अन्यथा
+				snम_लिखो(mods, माप(mods), "%13c", ' ');
 
-			nvkm_printk_(subdev, debug, info,
+			nvkm_prपूर्णांकk_(subdev, debug, info,
 				     "\t%04x: %08x %s%s%s\n",
 				     mthd, prev, mods, name ? " // " : "",
 				     name ? name : "");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void
-nv50_disp_chan_mthd(struct nv50_disp_chan *chan, int debug)
-{
-	struct nv50_disp *disp = chan->disp;
-	struct nvkm_subdev *subdev = &disp->base.engine.subdev;
-	const struct nv50_disp_chan_mthd *mthd = chan->mthd;
-	const struct nv50_disp_mthd_list *list;
-	int i, j;
+व्योम
+nv50_disp_chan_mthd(काष्ठा nv50_disp_chan *chan, पूर्णांक debug)
+अणु
+	काष्ठा nv50_disp *disp = chan->disp;
+	काष्ठा nvkm_subdev *subdev = &disp->base.engine.subdev;
+	स्थिर काष्ठा nv50_disp_chan_mthd *mthd = chan->mthd;
+	स्थिर काष्ठा nv50_disp_mthd_list *list;
+	पूर्णांक i, j;
 
-	if (debug > subdev->debug)
-		return;
-	if (!mthd)
-		return;
+	अगर (debug > subdev->debug)
+		वापस;
+	अगर (!mthd)
+		वापस;
 
-	for (i = 0; (list = mthd->data[i].mthd) != NULL; i++) {
+	क्रम (i = 0; (list = mthd->data[i].mthd) != शून्य; i++) अणु
 		u32 base = chan->head * mthd->addr;
-		for (j = 0; j < mthd->data[i].nr; j++, base += list->addr) {
-			const char *cname = mthd->name;
-			const char *sname = "";
-			char cname_[16], sname_[16];
+		क्रम (j = 0; j < mthd->data[i].nr; j++, base += list->addr) अणु
+			स्थिर अक्षर *cname = mthd->name;
+			स्थिर अक्षर *sname = "";
+			अक्षर cname_[16], sname_[16];
 
-			if (mthd->addr) {
-				snprintf(cname_, sizeof(cname_), "%s %d",
+			अगर (mthd->addr) अणु
+				snम_लिखो(cname_, माप(cname_), "%s %d",
 					 mthd->name, chan->chid.user);
 				cname = cname_;
-			}
+			पूर्ण
 
-			if (mthd->data[i].nr > 1) {
-				snprintf(sname_, sizeof(sname_), " - %s %d",
+			अगर (mthd->data[i].nr > 1) अणु
+				snम_लिखो(sname_, माप(sname_), " - %s %d",
 					 mthd->data[i].name, j);
 				sname = sname_;
-			}
+			पूर्ण
 
-			nvkm_printk_(subdev, debug, info, "%s%s:\n", cname, sname);
+			nvkm_prपूर्णांकk_(subdev, debug, info, "%s%s:\n", cname, sname);
 			nv50_disp_mthd_list(disp, debug, base, mthd->prev,
 					    list, j);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void
-nv50_disp_chan_uevent_fini(struct nvkm_event *event, int type, int index)
-{
-	struct nv50_disp *disp = container_of(event, typeof(*disp), uevent);
-	struct nvkm_device *device = disp->base.engine.subdev.device;
+अटल व्योम
+nv50_disp_chan_uevent_fini(काष्ठा nvkm_event *event, पूर्णांक type, पूर्णांक index)
+अणु
+	काष्ठा nv50_disp *disp = container_of(event, typeof(*disp), uevent);
+	काष्ठा nvkm_device *device = disp->base.engine.subdev.device;
 	nvkm_mask(device, 0x610028, 0x00000001 << index, 0x00000000 << index);
 	nvkm_wr32(device, 0x610020, 0x00000001 << index);
-}
+पूर्ण
 
-static void
-nv50_disp_chan_uevent_init(struct nvkm_event *event, int types, int index)
-{
-	struct nv50_disp *disp = container_of(event, typeof(*disp), uevent);
-	struct nvkm_device *device = disp->base.engine.subdev.device;
+अटल व्योम
+nv50_disp_chan_uevent_init(काष्ठा nvkm_event *event, पूर्णांक types, पूर्णांक index)
+अणु
+	काष्ठा nv50_disp *disp = container_of(event, typeof(*disp), uevent);
+	काष्ठा nvkm_device *device = disp->base.engine.subdev.device;
 	nvkm_wr32(device, 0x610020, 0x00000001 << index);
 	nvkm_mask(device, 0x610028, 0x00000001 << index, 0x00000001 << index);
-}
+पूर्ण
 
-void
-nv50_disp_chan_uevent_send(struct nv50_disp *disp, int chid)
-{
-	struct nvif_notify_uevent_rep {
-	} rep;
+व्योम
+nv50_disp_chan_uevent_send(काष्ठा nv50_disp *disp, पूर्णांक chid)
+अणु
+	काष्ठा nvअगर_notअगरy_uevent_rep अणु
+	पूर्ण rep;
 
-	nvkm_event_send(&disp->uevent, 1, chid, &rep, sizeof(rep));
-}
+	nvkm_event_send(&disp->uevent, 1, chid, &rep, माप(rep));
+पूर्ण
 
-int
-nv50_disp_chan_uevent_ctor(struct nvkm_object *object, void *data, u32 size,
-			   struct nvkm_notify *notify)
-{
-	struct nv50_disp_chan *chan = nv50_disp_chan(object);
-	union {
-		struct nvif_notify_uevent_req none;
-	} *args = data;
-	int ret = -ENOSYS;
+पूर्णांक
+nv50_disp_chan_uevent_ctor(काष्ठा nvkm_object *object, व्योम *data, u32 size,
+			   काष्ठा nvkm_notअगरy *notअगरy)
+अणु
+	काष्ठा nv50_disp_chan *chan = nv50_disp_chan(object);
+	जोड़ अणु
+		काष्ठा nvअगर_notअगरy_uevent_req none;
+	पूर्ण *args = data;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unvers(ret, &data, &size, args->none))) {
-		notify->size  = sizeof(struct nvif_notify_uevent_rep);
-		notify->types = 1;
-		notify->index = chan->chid.user;
-		return 0;
-	}
+	अगर (!(ret = nvअगर_unvers(ret, &data, &size, args->none))) अणु
+		notअगरy->size  = माप(काष्ठा nvअगर_notअगरy_uevent_rep);
+		notअगरy->types = 1;
+		notअगरy->index = chan->chid.user;
+		वापस 0;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct nvkm_event_func
-nv50_disp_chan_uevent = {
+स्थिर काष्ठा nvkm_event_func
+nv50_disp_chan_uevent = अणु
 	.ctor = nv50_disp_chan_uevent_ctor,
 	.init = nv50_disp_chan_uevent_init,
 	.fini = nv50_disp_chan_uevent_fini,
-};
+पूर्ण;
 
 u64
-nv50_disp_chan_user(struct nv50_disp_chan *chan, u64 *psize)
-{
+nv50_disp_chan_user(काष्ठा nv50_disp_chan *chan, u64 *psize)
+अणु
 	*psize = 0x1000;
-	return 0x640000 + (chan->chid.user * 0x1000);
-}
+	वापस 0x640000 + (chan->chid.user * 0x1000);
+पूर्ण
 
-void
-nv50_disp_chan_intr(struct nv50_disp_chan *chan, bool en)
-{
-	struct nvkm_device *device = chan->disp->base.engine.subdev.device;
-	const u32 mask = 0x00010001 << chan->chid.user;
-	const u32 data = en ? 0x00010000 << chan->chid.user : 0x00000000;
+व्योम
+nv50_disp_chan_पूर्णांकr(काष्ठा nv50_disp_chan *chan, bool en)
+अणु
+	काष्ठा nvkm_device *device = chan->disp->base.engine.subdev.device;
+	स्थिर u32 mask = 0x00010001 << chan->chid.user;
+	स्थिर u32 data = en ? 0x00010000 << chan->chid.user : 0x00000000;
 	nvkm_mask(device, 0x610028, mask, data);
-}
+पूर्ण
 
-static int
-nv50_disp_chan_rd32(struct nvkm_object *object, u64 addr, u32 *data)
-{
-	struct nv50_disp_chan *chan = nv50_disp_chan(object);
-	struct nvkm_device *device = chan->disp->base.engine.subdev.device;
+अटल पूर्णांक
+nv50_disp_chan_rd32(काष्ठा nvkm_object *object, u64 addr, u32 *data)
+अणु
+	काष्ठा nv50_disp_chan *chan = nv50_disp_chan(object);
+	काष्ठा nvkm_device *device = chan->disp->base.engine.subdev.device;
 	u64 size, base = chan->func->user(chan, &size);
 	*data = nvkm_rd32(device, base + addr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nv50_disp_chan_wr32(struct nvkm_object *object, u64 addr, u32 data)
-{
-	struct nv50_disp_chan *chan = nv50_disp_chan(object);
-	struct nvkm_device *device = chan->disp->base.engine.subdev.device;
+अटल पूर्णांक
+nv50_disp_chan_wr32(काष्ठा nvkm_object *object, u64 addr, u32 data)
+अणु
+	काष्ठा nv50_disp_chan *chan = nv50_disp_chan(object);
+	काष्ठा nvkm_device *device = chan->disp->base.engine.subdev.device;
 	u64 size, base = chan->func->user(chan, &size);
 	nvkm_wr32(device, base + addr, data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nv50_disp_chan_ntfy(struct nvkm_object *object, u32 type,
-		    struct nvkm_event **pevent)
-{
-	struct nv50_disp_chan *chan = nv50_disp_chan(object);
-	struct nv50_disp *disp = chan->disp;
-	switch (type) {
-	case NV50_DISP_CORE_CHANNEL_DMA_V0_NTFY_UEVENT:
+अटल पूर्णांक
+nv50_disp_chan_ntfy(काष्ठा nvkm_object *object, u32 type,
+		    काष्ठा nvkm_event **pevent)
+अणु
+	काष्ठा nv50_disp_chan *chan = nv50_disp_chan(object);
+	काष्ठा nv50_disp *disp = chan->disp;
+	चयन (type) अणु
+	हाल NV50_DISP_CORE_CHANNEL_DMA_V0_NTFY_UEVENT:
 		*pevent = &disp->uevent;
-		return 0;
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int
-nv50_disp_chan_map(struct nvkm_object *object, void *argv, u32 argc,
-		   enum nvkm_object_map *type, u64 *addr, u64 *size)
-{
-	struct nv50_disp_chan *chan = nv50_disp_chan(object);
-	struct nvkm_device *device = chan->disp->base.engine.subdev.device;
-	const u64 base = device->func->resource_addr(device, 0);
+अटल पूर्णांक
+nv50_disp_chan_map(काष्ठा nvkm_object *object, व्योम *argv, u32 argc,
+		   क्रमागत nvkm_object_map *type, u64 *addr, u64 *size)
+अणु
+	काष्ठा nv50_disp_chan *chan = nv50_disp_chan(object);
+	काष्ठा nvkm_device *device = chan->disp->base.engine.subdev.device;
+	स्थिर u64 base = device->func->resource_addr(device, 0);
 	*type = NVKM_OBJECT_MAP_IO;
 	*addr = base + chan->func->user(chan, size);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct nv50_disp_chan_object {
-	struct nvkm_oproxy oproxy;
-	struct nv50_disp *disp;
-	int hash;
-};
+काष्ठा nv50_disp_chan_object अणु
+	काष्ठा nvkm_oproxy oproxy;
+	काष्ठा nv50_disp *disp;
+	पूर्णांक hash;
+पूर्ण;
 
-static void
-nv50_disp_chan_child_del_(struct nvkm_oproxy *base)
-{
-	struct nv50_disp_chan_object *object =
+अटल व्योम
+nv50_disp_chan_child_del_(काष्ठा nvkm_oproxy *base)
+अणु
+	काष्ठा nv50_disp_chan_object *object =
 		container_of(base, typeof(*object), oproxy);
-	nvkm_ramht_remove(object->disp->ramht, object->hash);
-}
+	nvkm_ramht_हटाओ(object->disp->ramht, object->hash);
+पूर्ण
 
-static const struct nvkm_oproxy_func
-nv50_disp_chan_child_func_ = {
+अटल स्थिर काष्ठा nvkm_oproxy_func
+nv50_disp_chan_child_func_ = अणु
 	.dtor[0] = nv50_disp_chan_child_del_,
-};
+पूर्ण;
 
-static int
-nv50_disp_chan_child_new(const struct nvkm_oclass *oclass,
-			 void *argv, u32 argc, struct nvkm_object **pobject)
-{
-	struct nv50_disp_chan *chan = nv50_disp_chan(oclass->parent);
-	struct nv50_disp *disp = chan->disp;
-	struct nvkm_device *device = disp->base.engine.subdev.device;
-	const struct nvkm_device_oclass *sclass = oclass->priv;
-	struct nv50_disp_chan_object *object;
-	int ret;
+अटल पूर्णांक
+nv50_disp_chan_child_new(स्थिर काष्ठा nvkm_oclass *oclass,
+			 व्योम *argv, u32 argc, काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nv50_disp_chan *chan = nv50_disp_chan(oclass->parent);
+	काष्ठा nv50_disp *disp = chan->disp;
+	काष्ठा nvkm_device *device = disp->base.engine.subdev.device;
+	स्थिर काष्ठा nvkm_device_oclass *sclass = oclass->priv;
+	काष्ठा nv50_disp_chan_object *object;
+	पूर्णांक ret;
 
-	if (!(object = kzalloc(sizeof(*object), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(object = kzalloc(माप(*object), GFP_KERNEL)))
+		वापस -ENOMEM;
 	nvkm_oproxy_ctor(&nv50_disp_chan_child_func_, oclass, &object->oproxy);
 	object->disp = disp;
 	*pobject = &object->oproxy.base;
 
 	ret = sclass->ctor(device, oclass, argv, argc, &object->oproxy.object);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	object->hash = chan->func->bind(chan, object->oproxy.object,
 					      oclass->handle);
-	if (object->hash < 0)
-		return object->hash;
+	अगर (object->hash < 0)
+		वापस object->hash;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nv50_disp_chan_child_get(struct nvkm_object *object, int index,
-			 struct nvkm_oclass *sclass)
-{
-	struct nv50_disp_chan *chan = nv50_disp_chan(object);
-	struct nvkm_device *device = chan->disp->base.engine.subdev.device;
-	const struct nvkm_device_oclass *oclass = NULL;
+अटल पूर्णांक
+nv50_disp_chan_child_get(काष्ठा nvkm_object *object, पूर्णांक index,
+			 काष्ठा nvkm_oclass *sclass)
+अणु
+	काष्ठा nv50_disp_chan *chan = nv50_disp_chan(object);
+	काष्ठा nvkm_device *device = chan->disp->base.engine.subdev.device;
+	स्थिर काष्ठा nvkm_device_oclass *oclass = शून्य;
 
-	if (chan->func->bind)
+	अगर (chan->func->bind)
 		sclass->engine = nvkm_device_engine(device, NVKM_ENGINE_DMAOBJ, 0);
-	else
-		sclass->engine = NULL;
+	अन्यथा
+		sclass->engine = शून्य;
 
-	if (sclass->engine && sclass->engine->func->base.sclass) {
+	अगर (sclass->engine && sclass->engine->func->base.sclass) अणु
 		sclass->engine->func->base.sclass(sclass, index, &oclass);
-		if (oclass) {
+		अगर (oclass) अणु
 			sclass->ctor = nv50_disp_chan_child_new,
 			sclass->priv = oclass;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int
-nv50_disp_chan_fini(struct nvkm_object *object, bool suspend)
-{
-	struct nv50_disp_chan *chan = nv50_disp_chan(object);
+अटल पूर्णांक
+nv50_disp_chan_fini(काष्ठा nvkm_object *object, bool suspend)
+अणु
+	काष्ठा nv50_disp_chan *chan = nv50_disp_chan(object);
 	chan->func->fini(chan);
-	chan->func->intr(chan, false);
-	return 0;
-}
+	chan->func->पूर्णांकr(chan, false);
+	वापस 0;
+पूर्ण
 
-static int
-nv50_disp_chan_init(struct nvkm_object *object)
-{
-	struct nv50_disp_chan *chan = nv50_disp_chan(object);
-	chan->func->intr(chan, true);
-	return chan->func->init(chan);
-}
+अटल पूर्णांक
+nv50_disp_chan_init(काष्ठा nvkm_object *object)
+अणु
+	काष्ठा nv50_disp_chan *chan = nv50_disp_chan(object);
+	chan->func->पूर्णांकr(chan, true);
+	वापस chan->func->init(chan);
+पूर्ण
 
-static void *
-nv50_disp_chan_dtor(struct nvkm_object *object)
-{
-	struct nv50_disp_chan *chan = nv50_disp_chan(object);
-	struct nv50_disp *disp = chan->disp;
-	if (chan->chid.user >= 0)
-		disp->chan[chan->chid.user] = NULL;
+अटल व्योम *
+nv50_disp_chan_dtor(काष्ठा nvkm_object *object)
+अणु
+	काष्ठा nv50_disp_chan *chan = nv50_disp_chan(object);
+	काष्ठा nv50_disp *disp = chan->disp;
+	अगर (chan->chid.user >= 0)
+		disp->chan[chan->chid.user] = शून्य;
 	nvkm_memory_unref(&chan->memory);
-	return chan;
-}
+	वापस chan;
+पूर्ण
 
-static const struct nvkm_object_func
-nv50_disp_chan = {
+अटल स्थिर काष्ठा nvkm_object_func
+nv50_disp_chan = अणु
 	.dtor = nv50_disp_chan_dtor,
 	.init = nv50_disp_chan_init,
 	.fini = nv50_disp_chan_fini,
@@ -332,19 +333,19 @@ nv50_disp_chan = {
 	.ntfy = nv50_disp_chan_ntfy,
 	.map = nv50_disp_chan_map,
 	.sclass = nv50_disp_chan_child_get,
-};
+पूर्ण;
 
-int
-nv50_disp_chan_new_(const struct nv50_disp_chan_func *func,
-		    const struct nv50_disp_chan_mthd *mthd,
-		    struct nv50_disp *disp, int ctrl, int user, int head,
-		    const struct nvkm_oclass *oclass,
-		    struct nvkm_object **pobject)
-{
-	struct nv50_disp_chan *chan;
+पूर्णांक
+nv50_disp_chan_new_(स्थिर काष्ठा nv50_disp_chan_func *func,
+		    स्थिर काष्ठा nv50_disp_chan_mthd *mthd,
+		    काष्ठा nv50_disp *disp, पूर्णांक ctrl, पूर्णांक user, पूर्णांक head,
+		    स्थिर काष्ठा nvkm_oclass *oclass,
+		    काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nv50_disp_chan *chan;
 
-	if (!(chan = kzalloc(sizeof(*chan), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(chan = kzalloc(माप(*chan), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*pobject = &chan->object;
 
 	nvkm_object_ctor(&nv50_disp_chan, oclass, &chan->object);
@@ -355,10 +356,10 @@ nv50_disp_chan_new_(const struct nv50_disp_chan_func *func,
 	chan->chid.user = user;
 	chan->head = head;
 
-	if (disp->chan[chan->chid.user]) {
+	अगर (disp->chan[chan->chid.user]) अणु
 		chan->chid.user = -1;
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	disp->chan[chan->chid.user] = chan;
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,894 +1,895 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *  Copyright (C) 2001  Andrea Arcangeli <andrea@suse.de> SuSE
  *  Copyright (C) 2016 - 2020 Christoph Hellwig
  */
 
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/fcntl.h>
-#include <linux/slab.h>
-#include <linux/kmod.h>
-#include <linux/major.h>
-#include <linux/device_cgroup.h>
-#include <linux/highmem.h>
-#include <linux/blkdev.h>
-#include <linux/backing-dev.h>
-#include <linux/module.h>
-#include <linux/blkpg.h>
-#include <linux/magic.h>
-#include <linux/buffer_head.h>
-#include <linux/swap.h>
-#include <linux/pagevec.h>
-#include <linux/writeback.h>
-#include <linux/mpage.h>
-#include <linux/mount.h>
-#include <linux/pseudo_fs.h>
-#include <linux/uio.h>
-#include <linux/namei.h>
-#include <linux/log2.h>
-#include <linux/cleancache.h>
-#include <linux/task_io_accounting_ops.h>
-#include <linux/falloc.h>
-#include <linux/part_stat.h>
-#include <linux/uaccess.h>
-#include <linux/suspend.h>
-#include "internal.h"
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/major.h>
+#समावेश <linux/device_cgroup.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/module.h>
+#समावेश <linux/blkpg.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/pagevec.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/mpage.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/pseuकरो_fs.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/namei.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/cleancache.h>
+#समावेश <linux/task_io_accounting_ops.h>
+#समावेश <linux/fभाग.स>
+#समावेश <linux/part_स्थिति.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/suspend.h>
+#समावेश "internal.h"
 
-struct bdev_inode {
-	struct block_device bdev;
-	struct inode vfs_inode;
-};
+काष्ठा bdev_inode अणु
+	काष्ठा block_device bdev;
+	काष्ठा inode vfs_inode;
+पूर्ण;
 
-static const struct address_space_operations def_blk_aops;
+अटल स्थिर काष्ठा address_space_operations def_blk_aops;
 
-static inline struct bdev_inode *BDEV_I(struct inode *inode)
-{
-	return container_of(inode, struct bdev_inode, vfs_inode);
-}
+अटल अंतरभूत काष्ठा bdev_inode *BDEV_I(काष्ठा inode *inode)
+अणु
+	वापस container_of(inode, काष्ठा bdev_inode, vfs_inode);
+पूर्ण
 
-struct block_device *I_BDEV(struct inode *inode)
-{
-	return &BDEV_I(inode)->bdev;
-}
+काष्ठा block_device *I_BDEV(काष्ठा inode *inode)
+अणु
+	वापस &BDEV_I(inode)->bdev;
+पूर्ण
 EXPORT_SYMBOL(I_BDEV);
 
-static void bdev_write_inode(struct block_device *bdev)
-{
-	struct inode *inode = bdev->bd_inode;
-	int ret;
+अटल व्योम bdev_ग_लिखो_inode(काष्ठा block_device *bdev)
+अणु
+	काष्ठा inode *inode = bdev->bd_inode;
+	पूर्णांक ret;
 
 	spin_lock(&inode->i_lock);
-	while (inode->i_state & I_DIRTY) {
+	जबतक (inode->i_state & I_सूचीTY) अणु
 		spin_unlock(&inode->i_lock);
-		ret = write_inode_now(inode, true);
-		if (ret) {
-			char name[BDEVNAME_SIZE];
+		ret = ग_लिखो_inode_now(inode, true);
+		अगर (ret) अणु
+			अक्षर name[BDEVNAME_SIZE];
 			pr_warn_ratelimited("VFS: Dirty inode writeback failed "
 					    "for block device %s (err=%d).\n",
 					    bdevname(bdev, name), ret);
-		}
+		पूर्ण
 		spin_lock(&inode->i_lock);
-	}
+	पूर्ण
 	spin_unlock(&inode->i_lock);
-}
+पूर्ण
 
 /* Kill _all_ buffers and pagecache , dirty or not.. */
-static void kill_bdev(struct block_device *bdev)
-{
-	struct address_space *mapping = bdev->bd_inode->i_mapping;
+अटल व्योम समाप्त_bdev(काष्ठा block_device *bdev)
+अणु
+	काष्ठा address_space *mapping = bdev->bd_inode->i_mapping;
 
-	if (mapping_empty(mapping))
-		return;
+	अगर (mapping_empty(mapping))
+		वापस;
 
 	invalidate_bh_lrus();
 	truncate_inode_pages(mapping, 0);
-}
+पूर्ण
 
 /* Invalidate clean unused buffers and pagecache. */
-void invalidate_bdev(struct block_device *bdev)
-{
-	struct address_space *mapping = bdev->bd_inode->i_mapping;
+व्योम invalidate_bdev(काष्ठा block_device *bdev)
+अणु
+	काष्ठा address_space *mapping = bdev->bd_inode->i_mapping;
 
-	if (mapping->nrpages) {
+	अगर (mapping->nrpages) अणु
 		invalidate_bh_lrus();
 		lru_add_drain_all();	/* make sure all lru add caches are flushed */
 		invalidate_mapping_pages(mapping, 0, -1);
-	}
-	/* 99% of the time, we don't need to flush the cleancache on the bdev.
-	 * But, for the strange corners, lets be cautious
+	पूर्ण
+	/* 99% of the समय, we करोn't need to flush the cleancache on the bdev.
+	 * But, क्रम the strange corners, lets be cautious
 	 */
 	cleancache_invalidate_inode(mapping);
-}
+पूर्ण
 EXPORT_SYMBOL(invalidate_bdev);
 
 /*
- * Drop all buffers & page cache for given bdev range. This function bails
- * with error if bdev has other exclusive owner (such as filesystem).
+ * Drop all buffers & page cache क्रम given bdev range. This function bails
+ * with error अगर bdev has other exclusive owner (such as fileप्रणाली).
  */
-int truncate_bdev_range(struct block_device *bdev, fmode_t mode,
+पूर्णांक truncate_bdev_range(काष्ठा block_device *bdev, भ_शेषe_t mode,
 			loff_t lstart, loff_t lend)
-{
+अणु
 	/*
-	 * If we don't hold exclusive handle for the device, upgrade to it
-	 * while we discard the buffer cache to avoid discarding buffers
-	 * under live filesystem.
+	 * If we करोn't hold exclusive handle क्रम the device, upgrade to it
+	 * जबतक we discard the buffer cache to aव्योम discarding buffers
+	 * under live fileप्रणाली.
 	 */
-	if (!(mode & FMODE_EXCL)) {
-		int err = bd_prepare_to_claim(bdev, truncate_bdev_range);
-		if (err)
-			goto invalidate;
-	}
+	अगर (!(mode & FMODE_EXCL)) अणु
+		पूर्णांक err = bd_prepare_to_claim(bdev, truncate_bdev_range);
+		अगर (err)
+			जाओ invalidate;
+	पूर्ण
 
 	truncate_inode_pages_range(bdev->bd_inode->i_mapping, lstart, lend);
-	if (!(mode & FMODE_EXCL))
-		bd_abort_claiming(bdev, truncate_bdev_range);
-	return 0;
+	अगर (!(mode & FMODE_EXCL))
+		bd_पात_claiming(bdev, truncate_bdev_range);
+	वापस 0;
 
 invalidate:
 	/*
-	 * Someone else has handle exclusively open. Try invalidating instead.
+	 * Someone अन्यथा has handle exclusively खोलो. Try invalidating instead.
 	 * The 'end' argument is inclusive so the rounding is safe.
 	 */
-	return invalidate_inode_pages2_range(bdev->bd_inode->i_mapping,
+	वापस invalidate_inode_pages2_range(bdev->bd_inode->i_mapping,
 					     lstart >> PAGE_SHIFT,
 					     lend >> PAGE_SHIFT);
-}
+पूर्ण
 
-static void set_init_blocksize(struct block_device *bdev)
-{
-	unsigned int bsize = bdev_logical_block_size(bdev);
-	loff_t size = i_size_read(bdev->bd_inode);
+अटल व्योम set_init_blocksize(काष्ठा block_device *bdev)
+अणु
+	अचिन्हित पूर्णांक bsize = bdev_logical_block_size(bdev);
+	loff_t size = i_size_पढ़ो(bdev->bd_inode);
 
-	while (bsize < PAGE_SIZE) {
-		if (size & bsize)
-			break;
+	जबतक (bsize < PAGE_SIZE) अणु
+		अगर (size & bsize)
+			अवरोध;
 		bsize <<= 1;
-	}
+	पूर्ण
 	bdev->bd_inode->i_blkbits = blksize_bits(bsize);
-}
+पूर्ण
 
-int set_blocksize(struct block_device *bdev, int size)
-{
-	/* Size must be a power of two, and between 512 and PAGE_SIZE */
-	if (size > PAGE_SIZE || size < 512 || !is_power_of_2(size))
-		return -EINVAL;
+पूर्णांक set_blocksize(काष्ठा block_device *bdev, पूर्णांक size)
+अणु
+	/* Size must be a घातer of two, and between 512 and PAGE_SIZE */
+	अगर (size > PAGE_SIZE || size < 512 || !is_घातer_of_2(size))
+		वापस -EINVAL;
 
 	/* Size cannot be smaller than the size supported by the device */
-	if (size < bdev_logical_block_size(bdev))
-		return -EINVAL;
+	अगर (size < bdev_logical_block_size(bdev))
+		वापस -EINVAL;
 
-	/* Don't change the size if it is same as current */
-	if (bdev->bd_inode->i_blkbits != blksize_bits(size)) {
+	/* Don't change the size अगर it is same as current */
+	अगर (bdev->bd_inode->i_blkbits != blksize_bits(size)) अणु
 		sync_blockdev(bdev);
 		bdev->bd_inode->i_blkbits = blksize_bits(size);
-		kill_bdev(bdev);
-	}
-	return 0;
-}
+		समाप्त_bdev(bdev);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(set_blocksize);
 
-int sb_set_blocksize(struct super_block *sb, int size)
-{
-	if (set_blocksize(sb->s_bdev, size))
-		return 0;
-	/* If we get here, we know size is power of two
+पूर्णांक sb_set_blocksize(काष्ठा super_block *sb, पूर्णांक size)
+अणु
+	अगर (set_blocksize(sb->s_bdev, size))
+		वापस 0;
+	/* If we get here, we know size is घातer of two
 	 * and it's value is between 512 and PAGE_SIZE */
 	sb->s_blocksize = size;
 	sb->s_blocksize_bits = blksize_bits(size);
-	return sb->s_blocksize;
-}
+	वापस sb->s_blocksize;
+पूर्ण
 
 EXPORT_SYMBOL(sb_set_blocksize);
 
-int sb_min_blocksize(struct super_block *sb, int size)
-{
-	int minsize = bdev_logical_block_size(sb->s_bdev);
-	if (size < minsize)
+पूर्णांक sb_min_blocksize(काष्ठा super_block *sb, पूर्णांक size)
+अणु
+	पूर्णांक minsize = bdev_logical_block_size(sb->s_bdev);
+	अगर (size < minsize)
 		size = minsize;
-	return sb_set_blocksize(sb, size);
-}
+	वापस sb_set_blocksize(sb, size);
+पूर्ण
 
 EXPORT_SYMBOL(sb_min_blocksize);
 
-static int
-blkdev_get_block(struct inode *inode, sector_t iblock,
-		struct buffer_head *bh, int create)
-{
+अटल पूर्णांक
+blkdev_get_block(काष्ठा inode *inode, sector_t iblock,
+		काष्ठा buffer_head *bh, पूर्णांक create)
+अणु
 	bh->b_bdev = I_BDEV(inode);
 	bh->b_blocknr = iblock;
 	set_buffer_mapped(bh);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct inode *bdev_file_inode(struct file *file)
-{
-	return file->f_mapping->host;
-}
+अटल काष्ठा inode *bdev_file_inode(काष्ठा file *file)
+अणु
+	वापस file->f_mapping->host;
+पूर्ण
 
-static unsigned int dio_bio_write_op(struct kiocb *iocb)
-{
-	unsigned int op = REQ_OP_WRITE | REQ_SYNC | REQ_IDLE;
+अटल अचिन्हित पूर्णांक dio_bio_ग_लिखो_op(काष्ठा kiocb *iocb)
+अणु
+	अचिन्हित पूर्णांक op = REQ_OP_WRITE | REQ_SYNC | REQ_IDLE;
 
-	/* avoid the need for a I/O completion work item */
-	if (iocb->ki_flags & IOCB_DSYNC)
+	/* aव्योम the need क्रम a I/O completion work item */
+	अगर (iocb->ki_flags & IOCB_DSYNC)
 		op |= REQ_FUA;
-	return op;
-}
+	वापस op;
+पूर्ण
 
-#define DIO_INLINE_BIO_VECS 4
+#घोषणा DIO_INLINE_BIO_VECS 4
 
-static void blkdev_bio_end_io_simple(struct bio *bio)
-{
-	struct task_struct *waiter = bio->bi_private;
+अटल व्योम blkdev_bio_end_io_simple(काष्ठा bio *bio)
+अणु
+	काष्ठा task_काष्ठा *रुकोer = bio->bi_निजी;
 
-	WRITE_ONCE(bio->bi_private, NULL);
-	blk_wake_io_task(waiter);
-}
+	WRITE_ONCE(bio->bi_निजी, शून्य);
+	blk_wake_io_task(रुकोer);
+पूर्ण
 
-static ssize_t
-__blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
-		unsigned int nr_pages)
-{
-	struct file *file = iocb->ki_filp;
-	struct block_device *bdev = I_BDEV(bdev_file_inode(file));
-	struct bio_vec inline_vecs[DIO_INLINE_BIO_VECS], *vecs;
+अटल sमाप_प्रकार
+__blkdev_direct_IO_simple(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter,
+		अचिन्हित पूर्णांक nr_pages)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा block_device *bdev = I_BDEV(bdev_file_inode(file));
+	काष्ठा bio_vec अंतरभूत_vecs[DIO_INLINE_BIO_VECS], *vecs;
 	loff_t pos = iocb->ki_pos;
 	bool should_dirty = false;
-	struct bio bio;
-	ssize_t ret;
+	काष्ठा bio bio;
+	sमाप_प्रकार ret;
 	blk_qc_t qc;
 
-	if ((pos | iov_iter_alignment(iter)) &
+	अगर ((pos | iov_iter_alignment(iter)) &
 	    (bdev_logical_block_size(bdev) - 1))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (nr_pages <= DIO_INLINE_BIO_VECS)
-		vecs = inline_vecs;
-	else {
-		vecs = kmalloc_array(nr_pages, sizeof(struct bio_vec),
+	अगर (nr_pages <= DIO_INLINE_BIO_VECS)
+		vecs = अंतरभूत_vecs;
+	अन्यथा अणु
+		vecs = kदो_स्मृति_array(nr_pages, माप(काष्ठा bio_vec),
 				     GFP_KERNEL);
-		if (!vecs)
-			return -ENOMEM;
-	}
+		अगर (!vecs)
+			वापस -ENOMEM;
+	पूर्ण
 
 	bio_init(&bio, vecs, nr_pages);
 	bio_set_dev(&bio, bdev);
 	bio.bi_iter.bi_sector = pos >> 9;
-	bio.bi_write_hint = iocb->ki_hint;
-	bio.bi_private = current;
+	bio.bi_ग_लिखो_hपूर्णांक = iocb->ki_hपूर्णांक;
+	bio.bi_निजी = current;
 	bio.bi_end_io = blkdev_bio_end_io_simple;
 	bio.bi_ioprio = iocb->ki_ioprio;
 
 	ret = bio_iov_iter_get_pages(&bio, iter);
-	if (unlikely(ret))
-		goto out;
+	अगर (unlikely(ret))
+		जाओ out;
 	ret = bio.bi_iter.bi_size;
 
-	if (iov_iter_rw(iter) == READ) {
+	अगर (iov_iter_rw(iter) == READ) अणु
 		bio.bi_opf = REQ_OP_READ;
-		if (iter_is_iovec(iter))
+		अगर (iter_is_iovec(iter))
 			should_dirty = true;
-	} else {
-		bio.bi_opf = dio_bio_write_op(iocb);
-		task_io_account_write(ret);
-	}
-	if (iocb->ki_flags & IOCB_NOWAIT)
+	पूर्ण अन्यथा अणु
+		bio.bi_opf = dio_bio_ग_लिखो_op(iocb);
+		task_io_account_ग_लिखो(ret);
+	पूर्ण
+	अगर (iocb->ki_flags & IOCB_NOWAIT)
 		bio.bi_opf |= REQ_NOWAIT;
-	if (iocb->ki_flags & IOCB_HIPRI)
+	अगर (iocb->ki_flags & IOCB_HIPRI)
 		bio_set_polled(&bio, iocb);
 
 	qc = submit_bio(&bio);
-	for (;;) {
+	क्रम (;;) अणु
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		if (!READ_ONCE(bio.bi_private))
-			break;
-		if (!(iocb->ki_flags & IOCB_HIPRI) ||
+		अगर (!READ_ONCE(bio.bi_निजी))
+			अवरोध;
+		अगर (!(iocb->ki_flags & IOCB_HIPRI) ||
 		    !blk_poll(bdev_get_queue(bdev), qc, true))
 			blk_io_schedule();
-	}
+	पूर्ण
 	__set_current_state(TASK_RUNNING);
 
 	bio_release_pages(&bio, should_dirty);
-	if (unlikely(bio.bi_status))
-		ret = blk_status_to_errno(bio.bi_status);
+	अगर (unlikely(bio.bi_status))
+		ret = blk_status_to_त्रुटि_सं(bio.bi_status);
 
 out:
-	if (vecs != inline_vecs)
-		kfree(vecs);
+	अगर (vecs != अंतरभूत_vecs)
+		kमुक्त(vecs);
 
 	bio_uninit(&bio);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct blkdev_dio {
-	union {
-		struct kiocb		*iocb;
-		struct task_struct	*waiter;
-	};
-	size_t			size;
+काष्ठा blkdev_dio अणु
+	जोड़ अणु
+		काष्ठा kiocb		*iocb;
+		काष्ठा task_काष्ठा	*रुकोer;
+	पूर्ण;
+	माप_प्रकार			size;
 	atomic_t		ref;
 	bool			multi_bio : 1;
 	bool			should_dirty : 1;
 	bool			is_sync : 1;
-	struct bio		bio;
-};
+	काष्ठा bio		bio;
+पूर्ण;
 
-static struct bio_set blkdev_dio_pool;
+अटल काष्ठा bio_set blkdev_dio_pool;
 
-static int blkdev_iopoll(struct kiocb *kiocb, bool wait)
-{
-	struct block_device *bdev = I_BDEV(kiocb->ki_filp->f_mapping->host);
-	struct request_queue *q = bdev_get_queue(bdev);
+अटल पूर्णांक blkdev_iopoll(काष्ठा kiocb *kiocb, bool रुको)
+अणु
+	काष्ठा block_device *bdev = I_BDEV(kiocb->ki_filp->f_mapping->host);
+	काष्ठा request_queue *q = bdev_get_queue(bdev);
 
-	return blk_poll(q, READ_ONCE(kiocb->ki_cookie), wait);
-}
+	वापस blk_poll(q, READ_ONCE(kiocb->ki_cookie), रुको);
+पूर्ण
 
-static void blkdev_bio_end_io(struct bio *bio)
-{
-	struct blkdev_dio *dio = bio->bi_private;
+अटल व्योम blkdev_bio_end_io(काष्ठा bio *bio)
+अणु
+	काष्ठा blkdev_dio *dio = bio->bi_निजी;
 	bool should_dirty = dio->should_dirty;
 
-	if (bio->bi_status && !dio->bio.bi_status)
+	अगर (bio->bi_status && !dio->bio.bi_status)
 		dio->bio.bi_status = bio->bi_status;
 
-	if (!dio->multi_bio || atomic_dec_and_test(&dio->ref)) {
-		if (!dio->is_sync) {
-			struct kiocb *iocb = dio->iocb;
-			ssize_t ret;
+	अगर (!dio->multi_bio || atomic_dec_and_test(&dio->ref)) अणु
+		अगर (!dio->is_sync) अणु
+			काष्ठा kiocb *iocb = dio->iocb;
+			sमाप_प्रकार ret;
 
-			if (likely(!dio->bio.bi_status)) {
+			अगर (likely(!dio->bio.bi_status)) अणु
 				ret = dio->size;
 				iocb->ki_pos += ret;
-			} else {
-				ret = blk_status_to_errno(dio->bio.bi_status);
-			}
+			पूर्ण अन्यथा अणु
+				ret = blk_status_to_त्रुटि_सं(dio->bio.bi_status);
+			पूर्ण
 
 			dio->iocb->ki_complete(iocb, ret, 0);
-			if (dio->multi_bio)
+			अगर (dio->multi_bio)
 				bio_put(&dio->bio);
-		} else {
-			struct task_struct *waiter = dio->waiter;
+		पूर्ण अन्यथा अणु
+			काष्ठा task_काष्ठा *रुकोer = dio->रुकोer;
 
-			WRITE_ONCE(dio->waiter, NULL);
-			blk_wake_io_task(waiter);
-		}
-	}
+			WRITE_ONCE(dio->रुकोer, शून्य);
+			blk_wake_io_task(रुकोer);
+		पूर्ण
+	पूर्ण
 
-	if (should_dirty) {
+	अगर (should_dirty) अणु
 		bio_check_pages_dirty(bio);
-	} else {
+	पूर्ण अन्यथा अणु
 		bio_release_pages(bio, false);
 		bio_put(bio);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static ssize_t __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
-		unsigned int nr_pages)
-{
-	struct file *file = iocb->ki_filp;
-	struct inode *inode = bdev_file_inode(file);
-	struct block_device *bdev = I_BDEV(inode);
-	struct blk_plug plug;
-	struct blkdev_dio *dio;
-	struct bio *bio;
+अटल sमाप_प्रकार __blkdev_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter,
+		अचिन्हित पूर्णांक nr_pages)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा inode *inode = bdev_file_inode(file);
+	काष्ठा block_device *bdev = I_BDEV(inode);
+	काष्ठा blk_plug plug;
+	काष्ठा blkdev_dio *dio;
+	काष्ठा bio *bio;
 	bool is_poll = (iocb->ki_flags & IOCB_HIPRI) != 0;
-	bool is_read = (iov_iter_rw(iter) == READ), is_sync;
+	bool is_पढ़ो = (iov_iter_rw(iter) == READ), is_sync;
 	loff_t pos = iocb->ki_pos;
 	blk_qc_t qc = BLK_QC_T_NONE;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if ((pos | iov_iter_alignment(iter)) &
+	अगर ((pos | iov_iter_alignment(iter)) &
 	    (bdev_logical_block_size(bdev) - 1))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	bio = bio_alloc_bioset(GFP_KERNEL, nr_pages, &blkdev_dio_pool);
 
-	dio = container_of(bio, struct blkdev_dio, bio);
+	dio = container_of(bio, काष्ठा blkdev_dio, bio);
 	dio->is_sync = is_sync = is_sync_kiocb(iocb);
-	if (dio->is_sync) {
-		dio->waiter = current;
+	अगर (dio->is_sync) अणु
+		dio->रुकोer = current;
 		bio_get(bio);
-	} else {
+	पूर्ण अन्यथा अणु
 		dio->iocb = iocb;
-	}
+	पूर्ण
 
 	dio->size = 0;
 	dio->multi_bio = false;
-	dio->should_dirty = is_read && iter_is_iovec(iter);
+	dio->should_dirty = is_पढ़ो && iter_is_iovec(iter);
 
 	/*
-	 * Don't plug for HIPRI/polled IO, as those should go straight
+	 * Don't plug क्रम HIPRI/polled IO, as those should go straight
 	 * to issue
 	 */
-	if (!is_poll)
+	अगर (!is_poll)
 		blk_start_plug(&plug);
 
-	for (;;) {
+	क्रम (;;) अणु
 		bio_set_dev(bio, bdev);
 		bio->bi_iter.bi_sector = pos >> 9;
-		bio->bi_write_hint = iocb->ki_hint;
-		bio->bi_private = dio;
+		bio->bi_ग_लिखो_hपूर्णांक = iocb->ki_hपूर्णांक;
+		bio->bi_निजी = dio;
 		bio->bi_end_io = blkdev_bio_end_io;
 		bio->bi_ioprio = iocb->ki_ioprio;
 
 		ret = bio_iov_iter_get_pages(bio, iter);
-		if (unlikely(ret)) {
+		अगर (unlikely(ret)) अणु
 			bio->bi_status = BLK_STS_IOERR;
 			bio_endio(bio);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (is_read) {
+		अगर (is_पढ़ो) अणु
 			bio->bi_opf = REQ_OP_READ;
-			if (dio->should_dirty)
+			अगर (dio->should_dirty)
 				bio_set_pages_dirty(bio);
-		} else {
-			bio->bi_opf = dio_bio_write_op(iocb);
-			task_io_account_write(bio->bi_iter.bi_size);
-		}
-		if (iocb->ki_flags & IOCB_NOWAIT)
+		पूर्ण अन्यथा अणु
+			bio->bi_opf = dio_bio_ग_लिखो_op(iocb);
+			task_io_account_ग_लिखो(bio->bi_iter.bi_size);
+		पूर्ण
+		अगर (iocb->ki_flags & IOCB_NOWAIT)
 			bio->bi_opf |= REQ_NOWAIT;
 
 		dio->size += bio->bi_iter.bi_size;
 		pos += bio->bi_iter.bi_size;
 
 		nr_pages = bio_iov_vecs_to_alloc(iter, BIO_MAX_VECS);
-		if (!nr_pages) {
+		अगर (!nr_pages) अणु
 			bool polled = false;
 
-			if (iocb->ki_flags & IOCB_HIPRI) {
+			अगर (iocb->ki_flags & IOCB_HIPRI) अणु
 				bio_set_polled(bio, iocb);
 				polled = true;
-			}
+			पूर्ण
 
 			qc = submit_bio(bio);
 
-			if (polled)
+			अगर (polled)
 				WRITE_ONCE(iocb->ki_cookie, qc);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!dio->multi_bio) {
+		अगर (!dio->multi_bio) अणु
 			/*
 			 * AIO needs an extra reference to ensure the dio
-			 * structure which is embedded into the first bio
+			 * काष्ठाure which is embedded पूर्णांकo the first bio
 			 * stays around.
 			 */
-			if (!is_sync)
+			अगर (!is_sync)
 				bio_get(bio);
 			dio->multi_bio = true;
 			atomic_set(&dio->ref, 2);
-		} else {
+		पूर्ण अन्यथा अणु
 			atomic_inc(&dio->ref);
-		}
+		पूर्ण
 
 		submit_bio(bio);
 		bio = bio_alloc(GFP_KERNEL, nr_pages);
-	}
+	पूर्ण
 
-	if (!is_poll)
+	अगर (!is_poll)
 		blk_finish_plug(&plug);
 
-	if (!is_sync)
-		return -EIOCBQUEUED;
+	अगर (!is_sync)
+		वापस -EIOCBQUEUED;
 
-	for (;;) {
+	क्रम (;;) अणु
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		if (!READ_ONCE(dio->waiter))
-			break;
+		अगर (!READ_ONCE(dio->रुकोer))
+			अवरोध;
 
-		if (!(iocb->ki_flags & IOCB_HIPRI) ||
+		अगर (!(iocb->ki_flags & IOCB_HIPRI) ||
 		    !blk_poll(bdev_get_queue(bdev), qc, true))
 			blk_io_schedule();
-	}
+	पूर्ण
 	__set_current_state(TASK_RUNNING);
 
-	if (!ret)
-		ret = blk_status_to_errno(dio->bio.bi_status);
-	if (likely(!ret))
+	अगर (!ret)
+		ret = blk_status_to_त्रुटि_सं(dio->bio.bi_status);
+	अगर (likely(!ret))
 		ret = dio->size;
 
 	bio_put(&dio->bio);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
-{
-	unsigned int nr_pages;
+अटल sमाप_प्रकार
+blkdev_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
+अणु
+	अचिन्हित पूर्णांक nr_pages;
 
-	if (!iov_iter_count(iter))
-		return 0;
+	अगर (!iov_iter_count(iter))
+		वापस 0;
 
 	nr_pages = bio_iov_vecs_to_alloc(iter, BIO_MAX_VECS + 1);
-	if (is_sync_kiocb(iocb) && nr_pages <= BIO_MAX_VECS)
-		return __blkdev_direct_IO_simple(iocb, iter, nr_pages);
+	अगर (is_sync_kiocb(iocb) && nr_pages <= BIO_MAX_VECS)
+		वापस __blkdev_direct_IO_simple(iocb, iter, nr_pages);
 
-	return __blkdev_direct_IO(iocb, iter, bio_max_segs(nr_pages));
-}
+	वापस __blkdev_direct_IO(iocb, iter, bio_max_segs(nr_pages));
+पूर्ण
 
-static __init int blkdev_init(void)
-{
-	return bioset_init(&blkdev_dio_pool, 4, offsetof(struct blkdev_dio, bio), BIOSET_NEED_BVECS);
-}
+अटल __init पूर्णांक blkdev_init(व्योम)
+अणु
+	वापस bioset_init(&blkdev_dio_pool, 4, दुरत्व(काष्ठा blkdev_dio, bio), BIOSET_NEED_BVECS);
+पूर्ण
 module_init(blkdev_init);
 
-int __sync_blockdev(struct block_device *bdev, int wait)
-{
-	if (!bdev)
-		return 0;
-	if (!wait)
-		return filemap_flush(bdev->bd_inode->i_mapping);
-	return filemap_write_and_wait(bdev->bd_inode->i_mapping);
-}
+पूर्णांक __sync_blockdev(काष्ठा block_device *bdev, पूर्णांक रुको)
+अणु
+	अगर (!bdev)
+		वापस 0;
+	अगर (!रुको)
+		वापस filemap_flush(bdev->bd_inode->i_mapping);
+	वापस filemap_ग_लिखो_and_रुको(bdev->bd_inode->i_mapping);
+पूर्ण
 
 /*
- * Write out and wait upon all the dirty data associated with a block
+ * Write out and रुको upon all the dirty data associated with a block
  * device via its mapping.  Does not take the superblock lock.
  */
-int sync_blockdev(struct block_device *bdev)
-{
-	return __sync_blockdev(bdev, 1);
-}
+पूर्णांक sync_blockdev(काष्ठा block_device *bdev)
+अणु
+	वापस __sync_blockdev(bdev, 1);
+पूर्ण
 EXPORT_SYMBOL(sync_blockdev);
 
 /*
- * Write out and wait upon all dirty data associated with this
- * device.   Filesystem data as well as the underlying block
+ * Write out and रुको upon all dirty data associated with this
+ * device.   Fileप्रणाली data as well as the underlying block
  * device.  Takes the superblock lock.
  */
-int fsync_bdev(struct block_device *bdev)
-{
-	struct super_block *sb = get_super(bdev);
-	if (sb) {
-		int res = sync_filesystem(sb);
+पूर्णांक fsync_bdev(काष्ठा block_device *bdev)
+अणु
+	काष्ठा super_block *sb = get_super(bdev);
+	अगर (sb) अणु
+		पूर्णांक res = sync_fileप्रणाली(sb);
 		drop_super(sb);
-		return res;
-	}
-	return sync_blockdev(bdev);
-}
+		वापस res;
+	पूर्ण
+	वापस sync_blockdev(bdev);
+पूर्ण
 EXPORT_SYMBOL(fsync_bdev);
 
 /**
- * freeze_bdev  --  lock a filesystem and force it into a consistent state
+ * मुक्तze_bdev  --  lock a fileप्रणाली and क्रमce it पूर्णांकo a consistent state
  * @bdev:	blockdevice to lock
  *
  * If a superblock is found on this device, we take the s_umount semaphore
- * on it to make sure nobody unmounts until the snapshot creation is done.
- * The reference counter (bd_fsfreeze_count) guarantees that only the last
- * unfreeze process can unfreeze the frozen filesystem actually when multiple
- * freeze requests arrive simultaneously. It counts up in freeze_bdev() and
- * count down in thaw_bdev(). When it becomes 0, thaw_bdev() will unfreeze
+ * on it to make sure nobody unmounts until the snapshot creation is करोne.
+ * The reference counter (bd_fsमुक्तze_count) guarantees that only the last
+ * unमुक्तze process can unमुक्तze the frozen fileप्रणाली actually when multiple
+ * मुक्तze requests arrive simultaneously. It counts up in मुक्तze_bdev() and
+ * count करोwn in thaw_bdev(). When it becomes 0, thaw_bdev() will unमुक्तze
  * actually.
  */
-int freeze_bdev(struct block_device *bdev)
-{
-	struct super_block *sb;
-	int error = 0;
+पूर्णांक मुक्तze_bdev(काष्ठा block_device *bdev)
+अणु
+	काष्ठा super_block *sb;
+	पूर्णांक error = 0;
 
-	mutex_lock(&bdev->bd_fsfreeze_mutex);
-	if (++bdev->bd_fsfreeze_count > 1)
-		goto done;
+	mutex_lock(&bdev->bd_fsमुक्तze_mutex);
+	अगर (++bdev->bd_fsमुक्तze_count > 1)
+		जाओ करोne;
 
 	sb = get_active_super(bdev);
-	if (!sb)
-		goto sync;
-	if (sb->s_op->freeze_super)
-		error = sb->s_op->freeze_super(sb);
-	else
-		error = freeze_super(sb);
+	अगर (!sb)
+		जाओ sync;
+	अगर (sb->s_op->मुक्तze_super)
+		error = sb->s_op->मुक्तze_super(sb);
+	अन्यथा
+		error = मुक्तze_super(sb);
 	deactivate_super(sb);
 
-	if (error) {
-		bdev->bd_fsfreeze_count--;
-		goto done;
-	}
-	bdev->bd_fsfreeze_sb = sb;
+	अगर (error) अणु
+		bdev->bd_fsमुक्तze_count--;
+		जाओ करोne;
+	पूर्ण
+	bdev->bd_fsमुक्तze_sb = sb;
 
 sync:
 	sync_blockdev(bdev);
-done:
-	mutex_unlock(&bdev->bd_fsfreeze_mutex);
-	return error;
-}
-EXPORT_SYMBOL(freeze_bdev);
+करोne:
+	mutex_unlock(&bdev->bd_fsमुक्तze_mutex);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL(मुक्तze_bdev);
 
 /**
- * thaw_bdev  -- unlock filesystem
+ * thaw_bdev  -- unlock fileप्रणाली
  * @bdev:	blockdevice to unlock
  *
- * Unlocks the filesystem and marks it writeable again after freeze_bdev().
+ * Unlocks the fileप्रणाली and marks it ग_लिखोable again after मुक्तze_bdev().
  */
-int thaw_bdev(struct block_device *bdev)
-{
-	struct super_block *sb;
-	int error = -EINVAL;
+पूर्णांक thaw_bdev(काष्ठा block_device *bdev)
+अणु
+	काष्ठा super_block *sb;
+	पूर्णांक error = -EINVAL;
 
-	mutex_lock(&bdev->bd_fsfreeze_mutex);
-	if (!bdev->bd_fsfreeze_count)
-		goto out;
+	mutex_lock(&bdev->bd_fsमुक्तze_mutex);
+	अगर (!bdev->bd_fsमुक्तze_count)
+		जाओ out;
 
 	error = 0;
-	if (--bdev->bd_fsfreeze_count > 0)
-		goto out;
+	अगर (--bdev->bd_fsमुक्तze_count > 0)
+		जाओ out;
 
-	sb = bdev->bd_fsfreeze_sb;
-	if (!sb)
-		goto out;
+	sb = bdev->bd_fsमुक्तze_sb;
+	अगर (!sb)
+		जाओ out;
 
-	if (sb->s_op->thaw_super)
+	अगर (sb->s_op->thaw_super)
 		error = sb->s_op->thaw_super(sb);
-	else
+	अन्यथा
 		error = thaw_super(sb);
-	if (error)
-		bdev->bd_fsfreeze_count++;
-	else
-		bdev->bd_fsfreeze_sb = NULL;
+	अगर (error)
+		bdev->bd_fsमुक्तze_count++;
+	अन्यथा
+		bdev->bd_fsमुक्तze_sb = शून्य;
 out:
-	mutex_unlock(&bdev->bd_fsfreeze_mutex);
-	return error;
-}
+	mutex_unlock(&bdev->bd_fsमुक्तze_mutex);
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL(thaw_bdev);
 
-static int blkdev_writepage(struct page *page, struct writeback_control *wbc)
-{
-	return block_write_full_page(page, blkdev_get_block, wbc);
-}
+अटल पूर्णांक blkdev_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस block_ग_लिखो_full_page(page, blkdev_get_block, wbc);
+पूर्ण
 
-static int blkdev_readpage(struct file * file, struct page * page)
-{
-	return block_read_full_page(page, blkdev_get_block);
-}
+अटल पूर्णांक blkdev_पढ़ोpage(काष्ठा file * file, काष्ठा page * page)
+अणु
+	वापस block_पढ़ो_full_page(page, blkdev_get_block);
+पूर्ण
 
-static void blkdev_readahead(struct readahead_control *rac)
-{
-	mpage_readahead(rac, blkdev_get_block);
-}
+अटल व्योम blkdev_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
+अणु
+	mpage_पढ़ोahead(rac, blkdev_get_block);
+पूर्ण
 
-static int blkdev_write_begin(struct file *file, struct address_space *mapping,
-			loff_t pos, unsigned len, unsigned flags,
-			struct page **pagep, void **fsdata)
-{
-	return block_write_begin(mapping, pos, len, flags, pagep,
+अटल पूर्णांक blkdev_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
+			loff_t pos, अचिन्हित len, अचिन्हित flags,
+			काष्ठा page **pagep, व्योम **fsdata)
+अणु
+	वापस block_ग_लिखो_begin(mapping, pos, len, flags, pagep,
 				 blkdev_get_block);
-}
+पूर्ण
 
-static int blkdev_write_end(struct file *file, struct address_space *mapping,
-			loff_t pos, unsigned len, unsigned copied,
-			struct page *page, void *fsdata)
-{
-	int ret;
-	ret = block_write_end(file, mapping, pos, len, copied, page, fsdata);
+अटल पूर्णांक blkdev_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
+			loff_t pos, अचिन्हित len, अचिन्हित copied,
+			काष्ठा page *page, व्योम *fsdata)
+अणु
+	पूर्णांक ret;
+	ret = block_ग_लिखो_end(file, mapping, pos, len, copied, page, fsdata);
 
 	unlock_page(page);
 	put_page(page);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * private llseek:
- * for a block special file file_inode(file)->i_size is zero
- * so we compute the size by hand (just as in block_read/write above)
+ * निजी llseek:
+ * क्रम a block special file file_inode(file)->i_size is zero
+ * so we compute the size by hand (just as in block_पढ़ो/ग_लिखो above)
  */
-static loff_t block_llseek(struct file *file, loff_t offset, int whence)
-{
-	struct inode *bd_inode = bdev_file_inode(file);
+अटल loff_t block_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	काष्ठा inode *bd_inode = bdev_file_inode(file);
 	loff_t retval;
 
 	inode_lock(bd_inode);
-	retval = fixed_size_llseek(file, offset, whence, i_size_read(bd_inode));
+	retval = fixed_size_llseek(file, offset, whence, i_size_पढ़ो(bd_inode));
 	inode_unlock(bd_inode);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 	
-int blkdev_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
-{
-	struct inode *bd_inode = bdev_file_inode(filp);
-	struct block_device *bdev = I_BDEV(bd_inode);
-	int error;
+पूर्णांक blkdev_fsync(काष्ठा file *filp, loff_t start, loff_t end, पूर्णांक datasync)
+अणु
+	काष्ठा inode *bd_inode = bdev_file_inode(filp);
+	काष्ठा block_device *bdev = I_BDEV(bd_inode);
+	पूर्णांक error;
 	
-	error = file_write_and_wait_range(filp, start, end);
-	if (error)
-		return error;
+	error = file_ग_लिखो_and_रुको_range(filp, start, end);
+	अगर (error)
+		वापस error;
 
 	/*
 	 * There is no need to serialise calls to blkdev_issue_flush with
-	 * i_mutex and doing so causes performance issues with concurrent
-	 * O_SYNC writers to a block device.
+	 * i_mutex and करोing so causes perक्रमmance issues with concurrent
+	 * O_SYNC ग_लिखोrs to a block device.
 	 */
 	error = blkdev_issue_flush(bdev);
-	if (error == -EOPNOTSUPP)
+	अगर (error == -EOPNOTSUPP)
 		error = 0;
 
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL(blkdev_fsync);
 
 /**
- * bdev_read_page() - Start reading a page from a block device
- * @bdev: The device to read the page from
- * @sector: The offset on the device to read the page to (need not be aligned)
- * @page: The page to read
+ * bdev_पढ़ो_page() - Start पढ़ोing a page from a block device
+ * @bdev: The device to पढ़ो the page from
+ * @sector: The offset on the device to पढ़ो the page to (need not be aligned)
+ * @page: The page to पढ़ो
  *
  * On entry, the page should be locked.  It will be unlocked when the page
- * has been read.  If the block driver implements rw_page synchronously,
- * that will be true on exit from this function, but it need not be.
+ * has been पढ़ो.  If the block driver implements rw_page synchronously,
+ * that will be true on निकास from this function, but it need not be.
  *
- * Errors returned by this function are usually "soft", eg out of memory, or
- * queue full; callers should try a different route to read this page rather
+ * Errors वापसed by this function are usually "soft", eg out of memory, or
+ * queue full; callers should try a dअगरferent route to पढ़ो this page rather
  * than propagate an error back up the stack.
  *
- * Return: negative errno if an error occurs, 0 if submission was successful.
+ * Return: negative त्रुटि_सं अगर an error occurs, 0 अगर submission was successful.
  */
-int bdev_read_page(struct block_device *bdev, sector_t sector,
-			struct page *page)
-{
-	const struct block_device_operations *ops = bdev->bd_disk->fops;
-	int result = -EOPNOTSUPP;
+पूर्णांक bdev_पढ़ो_page(काष्ठा block_device *bdev, sector_t sector,
+			काष्ठा page *page)
+अणु
+	स्थिर काष्ठा block_device_operations *ops = bdev->bd_disk->fops;
+	पूर्णांक result = -EOPNOTSUPP;
 
-	if (!ops->rw_page || bdev_get_integrity(bdev))
-		return result;
+	अगर (!ops->rw_page || bdev_get_पूर्णांकegrity(bdev))
+		वापस result;
 
 	result = blk_queue_enter(bdev->bd_disk->queue, 0);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 	result = ops->rw_page(bdev, sector + get_start_sect(bdev), page,
 			      REQ_OP_READ);
-	blk_queue_exit(bdev->bd_disk->queue);
-	return result;
-}
+	blk_queue_निकास(bdev->bd_disk->queue);
+	वापस result;
+पूर्ण
 
 /**
- * bdev_write_page() - Start writing a page to a block device
- * @bdev: The device to write the page to
- * @sector: The offset on the device to write the page to (need not be aligned)
- * @page: The page to write
- * @wbc: The writeback_control for the write
+ * bdev_ग_लिखो_page() - Start writing a page to a block device
+ * @bdev: The device to ग_लिखो the page to
+ * @sector: The offset on the device to ग_लिखो the page to (need not be aligned)
+ * @page: The page to ग_लिखो
+ * @wbc: The ग_लिखोback_control क्रम the ग_लिखो
  *
- * On entry, the page should be locked and not currently under writeback.
- * On exit, if the write started successfully, the page will be unlocked and
- * under writeback.  If the write failed already (eg the driver failed to
+ * On entry, the page should be locked and not currently under ग_लिखोback.
+ * On निकास, अगर the ग_लिखो started successfully, the page will be unlocked and
+ * under ग_लिखोback.  If the ग_लिखो failed alपढ़ोy (eg the driver failed to
  * queue the page to the device), the page will still be locked.  If the
- * caller is a ->writepage implementation, it will need to unlock the page.
+ * caller is a ->ग_लिखोpage implementation, it will need to unlock the page.
  *
- * Errors returned by this function are usually "soft", eg out of memory, or
- * queue full; callers should try a different route to write this page rather
+ * Errors वापसed by this function are usually "soft", eg out of memory, or
+ * queue full; callers should try a dअगरferent route to ग_लिखो this page rather
  * than propagate an error back up the stack.
  *
- * Return: negative errno if an error occurs, 0 if submission was successful.
+ * Return: negative त्रुटि_सं अगर an error occurs, 0 अगर submission was successful.
  */
-int bdev_write_page(struct block_device *bdev, sector_t sector,
-			struct page *page, struct writeback_control *wbc)
-{
-	int result;
-	const struct block_device_operations *ops = bdev->bd_disk->fops;
+पूर्णांक bdev_ग_लिखो_page(काष्ठा block_device *bdev, sector_t sector,
+			काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	पूर्णांक result;
+	स्थिर काष्ठा block_device_operations *ops = bdev->bd_disk->fops;
 
-	if (!ops->rw_page || bdev_get_integrity(bdev))
-		return -EOPNOTSUPP;
+	अगर (!ops->rw_page || bdev_get_पूर्णांकegrity(bdev))
+		वापस -EOPNOTSUPP;
 	result = blk_queue_enter(bdev->bd_disk->queue, 0);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	set_page_writeback(page);
+	set_page_ग_लिखोback(page);
 	result = ops->rw_page(bdev, sector + get_start_sect(bdev), page,
 			      REQ_OP_WRITE);
-	if (result) {
-		end_page_writeback(page);
-	} else {
+	अगर (result) अणु
+		end_page_ग_लिखोback(page);
+	पूर्ण अन्यथा अणु
 		clean_page_buffers(page);
 		unlock_page(page);
-	}
-	blk_queue_exit(bdev->bd_disk->queue);
-	return result;
-}
+	पूर्ण
+	blk_queue_निकास(bdev->bd_disk->queue);
+	वापस result;
+पूर्ण
 
 /*
- * pseudo-fs
+ * pseuकरो-fs
  */
 
-static  __cacheline_aligned_in_smp DEFINE_SPINLOCK(bdev_lock);
-static struct kmem_cache * bdev_cachep __read_mostly;
+अटल  __cacheline_aligned_in_smp DEFINE_SPINLOCK(bdev_lock);
+अटल काष्ठा kmem_cache * bdev_cachep __पढ़ो_mostly;
 
-static struct inode *bdev_alloc_inode(struct super_block *sb)
-{
-	struct bdev_inode *ei = kmem_cache_alloc(bdev_cachep, GFP_KERNEL);
+अटल काष्ठा inode *bdev_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा bdev_inode *ei = kmem_cache_alloc(bdev_cachep, GFP_KERNEL);
 
-	if (!ei)
-		return NULL;
-	memset(&ei->bdev, 0, sizeof(ei->bdev));
+	अगर (!ei)
+		वापस शून्य;
+	स_रखो(&ei->bdev, 0, माप(ei->bdev));
 	ei->bdev.bd_bdi = &noop_backing_dev_info;
-	return &ei->vfs_inode;
-}
+	वापस &ei->vfs_inode;
+पूर्ण
 
-static void bdev_free_inode(struct inode *inode)
-{
-	struct block_device *bdev = I_BDEV(inode);
+अटल व्योम bdev_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा block_device *bdev = I_BDEV(inode);
 
-	free_percpu(bdev->bd_stats);
-	kfree(bdev->bd_meta_info);
+	मुक्त_percpu(bdev->bd_stats);
+	kमुक्त(bdev->bd_meta_info);
 
-	kmem_cache_free(bdev_cachep, BDEV_I(inode));
-}
+	kmem_cache_मुक्त(bdev_cachep, BDEV_I(inode));
+पूर्ण
 
-static void init_once(void *data)
-{
-	struct bdev_inode *ei = data;
+अटल व्योम init_once(व्योम *data)
+अणु
+	काष्ठा bdev_inode *ei = data;
 
 	inode_init_once(&ei->vfs_inode);
-}
+पूर्ण
 
-static void bdev_evict_inode(struct inode *inode)
-{
-	struct block_device *bdev = &BDEV_I(inode)->bdev;
+अटल व्योम bdev_evict_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा block_device *bdev = &BDEV_I(inode)->bdev;
 	truncate_inode_pages_final(&inode->i_data);
 	invalidate_inode_buffers(inode); /* is it needed here? */
 	clear_inode(inode);
-	/* Detach inode from wb early as bdi_put() may free bdi->wb */
+	/* Detach inode from wb early as bdi_put() may मुक्त bdi->wb */
 	inode_detach_wb(inode);
-	if (bdev->bd_bdi != &noop_backing_dev_info) {
+	अगर (bdev->bd_bdi != &noop_backing_dev_info) अणु
 		bdi_put(bdev->bd_bdi);
 		bdev->bd_bdi = &noop_backing_dev_info;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct super_operations bdev_sops = {
+अटल स्थिर काष्ठा super_operations bdev_sops = अणु
 	.statfs = simple_statfs,
 	.alloc_inode = bdev_alloc_inode,
-	.free_inode = bdev_free_inode,
+	.मुक्त_inode = bdev_मुक्त_inode,
 	.drop_inode = generic_delete_inode,
 	.evict_inode = bdev_evict_inode,
-};
+पूर्ण;
 
-static int bd_init_fs_context(struct fs_context *fc)
-{
-	struct pseudo_fs_context *ctx = init_pseudo(fc, BDEVFS_MAGIC);
-	if (!ctx)
-		return -ENOMEM;
-	fc->s_iflags |= SB_I_CGROUPWB;
+अटल पूर्णांक bd_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	काष्ठा pseuकरो_fs_context *ctx = init_pseuकरो(fc, BDEVFS_MAGIC);
+	अगर (!ctx)
+		वापस -ENOMEM;
+	fc->s_अगरlags |= SB_I_CGROUPWB;
 	ctx->ops = &bdev_sops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct file_system_type bd_type = {
+अटल काष्ठा file_प्रणाली_type bd_type = अणु
 	.name		= "bdev",
 	.init_fs_context = bd_init_fs_context,
-	.kill_sb	= kill_anon_super,
-};
+	.समाप्त_sb	= समाप्त_anon_super,
+पूर्ण;
 
-struct super_block *blockdev_superblock __read_mostly;
+काष्ठा super_block *blockdev_superblock __पढ़ो_mostly;
 EXPORT_SYMBOL_GPL(blockdev_superblock);
 
-void __init bdev_cache_init(void)
-{
-	int err;
-	static struct vfsmount *bd_mnt;
+व्योम __init bdev_cache_init(व्योम)
+अणु
+	पूर्णांक err;
+	अटल काष्ठा vfsmount *bd_mnt;
 
-	bdev_cachep = kmem_cache_create("bdev_cache", sizeof(struct bdev_inode),
+	bdev_cachep = kmem_cache_create("bdev_cache", माप(काष्ठा bdev_inode),
 			0, (SLAB_HWCACHE_ALIGN|SLAB_RECLAIM_ACCOUNT|
 				SLAB_MEM_SPREAD|SLAB_ACCOUNT|SLAB_PANIC),
 			init_once);
-	err = register_filesystem(&bd_type);
-	if (err)
+	err = रेजिस्टर_fileप्रणाली(&bd_type);
+	अगर (err)
 		panic("Cannot register bdev pseudo-fs");
 	bd_mnt = kern_mount(&bd_type);
-	if (IS_ERR(bd_mnt))
+	अगर (IS_ERR(bd_mnt))
 		panic("Cannot create bdev pseudo-fs");
-	blockdev_superblock = bd_mnt->mnt_sb;   /* For writeback */
-}
+	blockdev_superblock = bd_mnt->mnt_sb;   /* For ग_लिखोback */
+पूर्ण
 
-struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
-{
-	struct block_device *bdev;
-	struct inode *inode;
+काष्ठा block_device *bdev_alloc(काष्ठा gendisk *disk, u8 partno)
+अणु
+	काष्ठा block_device *bdev;
+	काष्ठा inode *inode;
 
 	inode = new_inode(blockdev_superblock);
-	if (!inode)
-		return NULL;
+	अगर (!inode)
+		वापस शून्य;
 	inode->i_mode = S_IFBLK;
 	inode->i_rdev = 0;
 	inode->i_data.a_ops = &def_blk_aops;
@@ -896,77 +897,77 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
 
 	bdev = I_BDEV(inode);
 	mutex_init(&bdev->bd_mutex);
-	mutex_init(&bdev->bd_fsfreeze_mutex);
+	mutex_init(&bdev->bd_fsमुक्तze_mutex);
 	spin_lock_init(&bdev->bd_size_lock);
 	bdev->bd_disk = disk;
 	bdev->bd_partno = partno;
 	bdev->bd_inode = inode;
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 	INIT_LIST_HEAD(&bdev->bd_holder_disks);
-#endif
-	bdev->bd_stats = alloc_percpu(struct disk_stats);
-	if (!bdev->bd_stats) {
+#पूर्ण_अगर
+	bdev->bd_stats = alloc_percpu(काष्ठा disk_stats);
+	अगर (!bdev->bd_stats) अणु
 		iput(inode);
-		return NULL;
-	}
-	return bdev;
-}
+		वापस शून्य;
+	पूर्ण
+	वापस bdev;
+पूर्ण
 
-void bdev_add(struct block_device *bdev, dev_t dev)
-{
+व्योम bdev_add(काष्ठा block_device *bdev, dev_t dev)
+अणु
 	bdev->bd_dev = dev;
 	bdev->bd_inode->i_rdev = dev;
 	bdev->bd_inode->i_ino = dev;
 	insert_inode_hash(bdev->bd_inode);
-}
+पूर्ण
 
-static struct block_device *bdget(dev_t dev)
-{
-	struct inode *inode;
+अटल काष्ठा block_device *bdget(dev_t dev)
+अणु
+	काष्ठा inode *inode;
 
 	inode = ilookup(blockdev_superblock, dev);
-	if (!inode)
-		return NULL;
-	return &BDEV_I(inode)->bdev;
-}
+	अगर (!inode)
+		वापस शून्य;
+	वापस &BDEV_I(inode)->bdev;
+पूर्ण
 
 /**
- * bdgrab -- Grab a reference to an already referenced block device
+ * bdgrab -- Grab a reference to an alपढ़ोy referenced block device
  * @bdev:	Block device to grab a reference to.
  *
  * Returns the block_device with an additional reference when successful,
- * or NULL if the inode is already beeing freed.
+ * or शून्य अगर the inode is alपढ़ोy beeing मुक्तd.
  */
-struct block_device *bdgrab(struct block_device *bdev)
-{
-	if (!igrab(bdev->bd_inode))
-		return NULL;
-	return bdev;
-}
+काष्ठा block_device *bdgrab(काष्ठा block_device *bdev)
+अणु
+	अगर (!igrab(bdev->bd_inode))
+		वापस शून्य;
+	वापस bdev;
+पूर्ण
 EXPORT_SYMBOL(bdgrab);
 
-long nr_blockdev_pages(void)
-{
-	struct inode *inode;
-	long ret = 0;
+दीर्घ nr_blockdev_pages(व्योम)
+अणु
+	काष्ठा inode *inode;
+	दीर्घ ret = 0;
 
 	spin_lock(&blockdev_superblock->s_inode_list_lock);
-	list_for_each_entry(inode, &blockdev_superblock->s_inodes, i_sb_list)
+	list_क्रम_each_entry(inode, &blockdev_superblock->s_inodes, i_sb_list)
 		ret += inode->i_mapping->nrpages;
 	spin_unlock(&blockdev_superblock->s_inode_list_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void bdput(struct block_device *bdev)
-{
+व्योम bdput(काष्ठा block_device *bdev)
+अणु
 	iput(bdev->bd_inode);
-}
+पूर्ण
 EXPORT_SYMBOL(bdput);
  
 /**
  * bd_may_claim - test whether a block device can be claimed
- * @bdev: block device of interest
+ * @bdev: block device of पूर्णांकerest
  * @whole: whole block device containing @bdev, may equal @bdev
  * @holder: holder trying to claim @bdev
  *
@@ -976,97 +977,97 @@ EXPORT_SYMBOL(bdput);
  * spin_lock(&bdev_lock).
  *
  * RETURNS:
- * %true if @bdev can be claimed, %false otherwise.
+ * %true अगर @bdev can be claimed, %false otherwise.
  */
-static bool bd_may_claim(struct block_device *bdev, struct block_device *whole,
-			 void *holder)
-{
-	if (bdev->bd_holder == holder)
-		return true;	 /* already a holder */
-	else if (bdev->bd_holder != NULL)
-		return false; 	 /* held by someone else */
-	else if (whole == bdev)
-		return true;  	 /* is a whole device which isn't held */
+अटल bool bd_may_claim(काष्ठा block_device *bdev, काष्ठा block_device *whole,
+			 व्योम *holder)
+अणु
+	अगर (bdev->bd_holder == holder)
+		वापस true;	 /* alपढ़ोy a holder */
+	अन्यथा अगर (bdev->bd_holder != शून्य)
+		वापस false; 	 /* held by someone अन्यथा */
+	अन्यथा अगर (whole == bdev)
+		वापस true;  	 /* is a whole device which isn't held */
 
-	else if (whole->bd_holder == bd_may_claim)
-		return true; 	 /* is a partition of a device that is being partitioned */
-	else if (whole->bd_holder != NULL)
-		return false;	 /* is a partition of a held device */
-	else
-		return true;	 /* is a partition of an un-held device */
-}
+	अन्यथा अगर (whole->bd_holder == bd_may_claim)
+		वापस true; 	 /* is a partition of a device that is being partitioned */
+	अन्यथा अगर (whole->bd_holder != शून्य)
+		वापस false;	 /* is a partition of a held device */
+	अन्यथा
+		वापस true;	 /* is a partition of an un-held device */
+पूर्ण
 
 /**
  * bd_prepare_to_claim - claim a block device
- * @bdev: block device of interest
+ * @bdev: block device of पूर्णांकerest
  * @holder: holder trying to claim @bdev
  *
- * Claim @bdev.  This function fails if @bdev is already claimed by another
- * holder and waits if another claiming is in progress. return, the caller
+ * Claim @bdev.  This function fails अगर @bdev is alपढ़ोy claimed by another
+ * holder and रुकोs अगर another claiming is in progress. वापस, the caller
  * has ownership of bd_claiming and bd_holder[s].
  *
  * RETURNS:
- * 0 if @bdev can be claimed, -EBUSY otherwise.
+ * 0 अगर @bdev can be claimed, -EBUSY otherwise.
  */
-int bd_prepare_to_claim(struct block_device *bdev, void *holder)
-{
-	struct block_device *whole = bdev_whole(bdev);
+पूर्णांक bd_prepare_to_claim(काष्ठा block_device *bdev, व्योम *holder)
+अणु
+	काष्ठा block_device *whole = bdev_whole(bdev);
 
-	if (WARN_ON_ONCE(!holder))
-		return -EINVAL;
+	अगर (WARN_ON_ONCE(!holder))
+		वापस -EINVAL;
 retry:
 	spin_lock(&bdev_lock);
-	/* if someone else claimed, fail */
-	if (!bd_may_claim(bdev, whole, holder)) {
+	/* अगर someone अन्यथा claimed, fail */
+	अगर (!bd_may_claim(bdev, whole, holder)) अणु
 		spin_unlock(&bdev_lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* if claiming is already in progress, wait for it to finish */
-	if (whole->bd_claiming) {
-		wait_queue_head_t *wq = bit_waitqueue(&whole->bd_claiming, 0);
-		DEFINE_WAIT(wait);
+	/* अगर claiming is alपढ़ोy in progress, रुको क्रम it to finish */
+	अगर (whole->bd_claiming) अणु
+		रुको_queue_head_t *wq = bit_रुकोqueue(&whole->bd_claiming, 0);
+		DEFINE_WAIT(रुको);
 
-		prepare_to_wait(wq, &wait, TASK_UNINTERRUPTIBLE);
+		prepare_to_रुको(wq, &रुको, TASK_UNINTERRUPTIBLE);
 		spin_unlock(&bdev_lock);
 		schedule();
-		finish_wait(wq, &wait);
-		goto retry;
-	}
+		finish_रुको(wq, &रुको);
+		जाओ retry;
+	पूर्ण
 
 	/* yay, all mine */
 	whole->bd_claiming = holder;
 	spin_unlock(&bdev_lock);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(bd_prepare_to_claim); /* only for the loop driver */
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(bd_prepare_to_claim); /* only क्रम the loop driver */
 
-static void bd_clear_claiming(struct block_device *whole, void *holder)
-{
-	lockdep_assert_held(&bdev_lock);
-	/* tell others that we're done */
+अटल व्योम bd_clear_claiming(काष्ठा block_device *whole, व्योम *holder)
+अणु
+	lockdep_निश्चित_held(&bdev_lock);
+	/* tell others that we're करोne */
 	BUG_ON(whole->bd_claiming != holder);
-	whole->bd_claiming = NULL;
+	whole->bd_claiming = शून्य;
 	wake_up_bit(&whole->bd_claiming, 0);
-}
+पूर्ण
 
 /**
  * bd_finish_claiming - finish claiming of a block device
- * @bdev: block device of interest
+ * @bdev: block device of पूर्णांकerest
  * @holder: holder that has claimed @bdev
  *
- * Finish exclusive open of a block device. Mark the device as exlusively
- * open by the holder and wake up all waiters for exclusive open to finish.
+ * Finish exclusive खोलो of a block device. Mark the device as exlusively
+ * खोलो by the holder and wake up all रुकोers क्रम exclusive खोलो to finish.
  */
-static void bd_finish_claiming(struct block_device *bdev, void *holder)
-{
-	struct block_device *whole = bdev_whole(bdev);
+अटल व्योम bd_finish_claiming(काष्ठा block_device *bdev, व्योम *holder)
+अणु
+	काष्ठा block_device *whole = bdev_whole(bdev);
 
 	spin_lock(&bdev_lock);
 	BUG_ON(!bd_may_claim(bdev, whole, holder));
 	/*
-	 * Note that for a whole device bd_holders will be incremented twice,
-	 * and bd_holder will be set to bd_may_claim before being set to holder
+	 * Note that क्रम a whole device bd_holders will be incremented twice,
+	 * and bd_holder will be set to bd_may_claim beक्रमe being set to holder
 	 */
 	whole->bd_holders++;
 	whole->bd_holder = bd_may_claim;
@@ -1074,52 +1075,52 @@ static void bd_finish_claiming(struct block_device *bdev, void *holder)
 	bdev->bd_holder = holder;
 	bd_clear_claiming(whole, holder);
 	spin_unlock(&bdev_lock);
-}
+पूर्ण
 
 /**
- * bd_abort_claiming - abort claiming of a block device
- * @bdev: block device of interest
+ * bd_पात_claiming - पात claiming of a block device
+ * @bdev: block device of पूर्णांकerest
  * @holder: holder that has claimed @bdev
  *
- * Abort claiming of a block device when the exclusive open failed. This can be
- * also used when exclusive open is not actually desired and we just needed
- * to block other exclusive openers for a while.
+ * Abort claiming of a block device when the exclusive खोलो failed. This can be
+ * also used when exclusive खोलो is not actually desired and we just needed
+ * to block other exclusive खोलोers क्रम a जबतक.
  */
-void bd_abort_claiming(struct block_device *bdev, void *holder)
-{
+व्योम bd_पात_claiming(काष्ठा block_device *bdev, व्योम *holder)
+अणु
 	spin_lock(&bdev_lock);
 	bd_clear_claiming(bdev_whole(bdev), holder);
 	spin_unlock(&bdev_lock);
-}
-EXPORT_SYMBOL(bd_abort_claiming);
+पूर्ण
+EXPORT_SYMBOL(bd_पात_claiming);
 
-#ifdef CONFIG_SYSFS
-struct bd_holder_disk {
-	struct list_head	list;
-	struct gendisk		*disk;
-	int			refcnt;
-};
+#अगर_घोषित CONFIG_SYSFS
+काष्ठा bd_holder_disk अणु
+	काष्ठा list_head	list;
+	काष्ठा gendisk		*disk;
+	पूर्णांक			refcnt;
+पूर्ण;
 
-static struct bd_holder_disk *bd_find_holder_disk(struct block_device *bdev,
-						  struct gendisk *disk)
-{
-	struct bd_holder_disk *holder;
+अटल काष्ठा bd_holder_disk *bd_find_holder_disk(काष्ठा block_device *bdev,
+						  काष्ठा gendisk *disk)
+अणु
+	काष्ठा bd_holder_disk *holder;
 
-	list_for_each_entry(holder, &bdev->bd_holder_disks, list)
-		if (holder->disk == disk)
-			return holder;
-	return NULL;
-}
+	list_क्रम_each_entry(holder, &bdev->bd_holder_disks, list)
+		अगर (holder->disk == disk)
+			वापस holder;
+	वापस शून्य;
+पूर्ण
 
-static int add_symlink(struct kobject *from, struct kobject *to)
-{
-	return sysfs_create_link(from, to, kobject_name(to));
-}
+अटल पूर्णांक add_symlink(काष्ठा kobject *from, काष्ठा kobject *to)
+अणु
+	वापस sysfs_create_link(from, to, kobject_name(to));
+पूर्ण
 
-static void del_symlink(struct kobject *from, struct kobject *to)
-{
-	sysfs_remove_link(from, kobject_name(to));
-}
+अटल व्योम del_symlink(काष्ठा kobject *from, काष्ठा kobject *to)
+अणु
+	sysfs_हटाओ_link(from, kobject_name(to));
+पूर्ण
 
 /**
  * bd_link_disk_holder - create symlinks between holding disk and slave bdev
@@ -1133,58 +1134,58 @@ static void del_symlink(struct kobject *from, struct kobject *to)
  * - from "slaves" directory of the holder @disk to the claimed @bdev
  * - from "holders" directory of the @bdev to the holder @disk
  *
- * For example, if /dev/dm-0 maps to /dev/sda and disk for dm-0 is
+ * For example, अगर /dev/dm-0 maps to /dev/sda and disk क्रम dm-0 is
  * passed to bd_link_disk_holder(), then:
  *
  *   /sys/block/dm-0/slaves/sda --> /sys/block/sda
  *   /sys/block/sda/holders/dm-0 --> /sys/block/dm-0
  *
- * The caller must have claimed @bdev before calling this function and
+ * The caller must have claimed @bdev beक्रमe calling this function and
  * ensure that both @bdev and @disk are valid during the creation and
- * lifetime of these symlinks.
+ * lअगरeसमय of these symlinks.
  *
  * CONTEXT:
  * Might sleep.
  *
  * RETURNS:
- * 0 on success, -errno on failure.
+ * 0 on success, -त्रुटि_सं on failure.
  */
-int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
-{
-	struct bd_holder_disk *holder;
-	int ret = 0;
+पूर्णांक bd_link_disk_holder(काष्ठा block_device *bdev, काष्ठा gendisk *disk)
+अणु
+	काष्ठा bd_holder_disk *holder;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&bdev->bd_mutex);
 
 	WARN_ON_ONCE(!bdev->bd_holder);
 
-	/* FIXME: remove the following once add_disk() handles errors */
-	if (WARN_ON(!disk->slave_dir || !bdev->bd_holder_dir))
-		goto out_unlock;
+	/* FIXME: हटाओ the following once add_disk() handles errors */
+	अगर (WARN_ON(!disk->slave_dir || !bdev->bd_holder_dir))
+		जाओ out_unlock;
 
 	holder = bd_find_holder_disk(bdev, disk);
-	if (holder) {
+	अगर (holder) अणु
 		holder->refcnt++;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	holder = kzalloc(sizeof(*holder), GFP_KERNEL);
-	if (!holder) {
+	holder = kzalloc(माप(*holder), GFP_KERNEL);
+	अगर (!holder) अणु
 		ret = -ENOMEM;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	INIT_LIST_HEAD(&holder->list);
 	holder->disk = disk;
 	holder->refcnt = 1;
 
 	ret = add_symlink(disk->slave_dir, bdev_kobj(bdev));
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	ret = add_symlink(bdev->bd_holder_dir, &disk_to_dev(disk)->kobj);
-	if (ret)
-		goto out_del;
+	अगर (ret)
+		जाओ out_del;
 	/*
 	 * bdev could be deleted beneath us which would implicitly destroy
 	 * the holder directory.  Hold on to it.
@@ -1192,16 +1193,16 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
 	kobject_get(bdev->bd_holder_dir);
 
 	list_add(&holder->list, &bdev->bd_holder_disks);
-	goto out_unlock;
+	जाओ out_unlock;
 
 out_del:
 	del_symlink(disk->slave_dir, bdev_kobj(bdev));
-out_free:
-	kfree(holder);
+out_मुक्त:
+	kमुक्त(holder);
 out_unlock:
 	mutex_unlock(&bdev->bd_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(bd_link_disk_holder);
 
 /**
@@ -1214,42 +1215,42 @@ EXPORT_SYMBOL_GPL(bd_link_disk_holder);
  * CONTEXT:
  * Might sleep.
  */
-void bd_unlink_disk_holder(struct block_device *bdev, struct gendisk *disk)
-{
-	struct bd_holder_disk *holder;
+व्योम bd_unlink_disk_holder(काष्ठा block_device *bdev, काष्ठा gendisk *disk)
+अणु
+	काष्ठा bd_holder_disk *holder;
 
 	mutex_lock(&bdev->bd_mutex);
 
 	holder = bd_find_holder_disk(bdev, disk);
 
-	if (!WARN_ON_ONCE(holder == NULL) && !--holder->refcnt) {
+	अगर (!WARN_ON_ONCE(holder == शून्य) && !--holder->refcnt) अणु
 		del_symlink(disk->slave_dir, bdev_kobj(bdev));
 		del_symlink(bdev->bd_holder_dir, &disk_to_dev(disk)->kobj);
 		kobject_put(bdev->bd_holder_dir);
 		list_del_init(&holder->list);
-		kfree(holder);
-	}
+		kमुक्त(holder);
+	पूर्ण
 
 	mutex_unlock(&bdev->bd_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(bd_unlink_disk_holder);
-#endif
+#पूर्ण_अगर
 
-static void __blkdev_put(struct block_device *bdev, fmode_t mode, int for_part);
+अटल व्योम __blkdev_put(काष्ठा block_device *bdev, भ_शेषe_t mode, पूर्णांक क्रम_part);
 
-int bdev_disk_changed(struct block_device *bdev, bool invalidate)
-{
-	struct gendisk *disk = bdev->bd_disk;
-	int ret = 0;
+पूर्णांक bdev_disk_changed(काष्ठा block_device *bdev, bool invalidate)
+अणु
+	काष्ठा gendisk *disk = bdev->bd_disk;
+	पूर्णांक ret = 0;
 
-	lockdep_assert_held(&bdev->bd_mutex);
+	lockdep_निश्चित_held(&bdev->bd_mutex);
 
-	if (!(disk->flags & GENHD_FL_UP))
-		return -ENXIO;
+	अगर (!(disk->flags & GENHD_FL_UP))
+		वापस -ENXIO;
 
 rescan:
-	if (bdev->bd_part_count)
-		return -EBUSY;
+	अगर (bdev->bd_part_count)
+		वापस -EBUSY;
 	sync_blockdev(bdev);
 	invalidate_bdev(bdev);
 	blk_drop_partitions(disk);
@@ -1257,35 +1258,35 @@ rescan:
 	clear_bit(GD_NEED_PART_SCAN, &disk->state);
 
 	/*
-	 * Historically we only set the capacity to zero for devices that
+	 * Historically we only set the capacity to zero क्रम devices that
 	 * support partitions (independ of actually having partitions created).
 	 * Doing that is rather inconsistent, but changing it broke legacy
-	 * udisks polling for legacy ide-cdrom devices.  Use the crude check
-	 * below to get the sane behavior for most device while not breaking
-	 * userspace for this particular setup.
+	 * udisks polling क्रम legacy ide-cdrom devices.  Use the crude check
+	 * below to get the sane behavior क्रम most device जबतक not अवरोधing
+	 * userspace क्रम this particular setup.
 	 */
-	if (invalidate) {
-		if (disk_part_scan_enabled(disk) ||
+	अगर (invalidate) अणु
+		अगर (disk_part_scan_enabled(disk) ||
 		    !(disk->flags & GENHD_FL_REMOVABLE))
 			set_capacity(disk, 0);
-	}
+	पूर्ण
 
-	if (get_capacity(disk)) {
+	अगर (get_capacity(disk)) अणु
 		ret = blk_add_partitions(disk, bdev);
-		if (ret == -EAGAIN)
-			goto rescan;
-	} else if (invalidate) {
+		अगर (ret == -EAGAIN)
+			जाओ rescan;
+	पूर्ण अन्यथा अगर (invalidate) अणु
 		/*
 		 * Tell userspace that the media / partition table may have
 		 * changed.
 		 */
 		kobject_uevent(&disk_to_dev(disk)->kobj, KOBJ_CHANGE);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 /*
- * Only exported for loop and dasd for historic reasons.  Don't use in new
+ * Only exported क्रम loop and dasd क्रम historic reasons.  Don't use in new
  * code!
  */
 EXPORT_SYMBOL_GPL(bdev_disk_changed);
@@ -1296,311 +1297,311 @@ EXPORT_SYMBOL_GPL(bdev_disk_changed);
  *  mutex_lock(part->bd_mutex)
  *    mutex_lock_nested(whole->bd_mutex, 1)
  */
-static int __blkdev_get(struct block_device *bdev, fmode_t mode)
-{
-	struct gendisk *disk = bdev->bd_disk;
-	int ret = 0;
+अटल पूर्णांक __blkdev_get(काष्ठा block_device *bdev, भ_शेषe_t mode)
+अणु
+	काष्ठा gendisk *disk = bdev->bd_disk;
+	पूर्णांक ret = 0;
 
-	if (!(disk->flags & GENHD_FL_UP))
-		return -ENXIO;
+	अगर (!(disk->flags & GENHD_FL_UP))
+		वापस -ENXIO;
 
-	if (!bdev->bd_openers) {
-		if (!bdev_is_partition(bdev)) {
+	अगर (!bdev->bd_खोलोers) अणु
+		अगर (!bdev_is_partition(bdev)) अणु
 			ret = 0;
-			if (disk->fops->open)
-				ret = disk->fops->open(bdev, mode);
+			अगर (disk->fops->खोलो)
+				ret = disk->fops->खोलो(bdev, mode);
 
-			if (!ret)
+			अगर (!ret)
 				set_init_blocksize(bdev);
 
 			/*
 			 * If the device is invalidated, rescan partition
-			 * if open succeeded or failed with -ENOMEDIUM.
+			 * अगर खोलो succeeded or failed with -ENOMEDIUM.
 			 * The latter is necessary to prevent ghost
-			 * partitions on a removed medium.
+			 * partitions on a हटाओd medium.
 			 */
-			if (test_bit(GD_NEED_PART_SCAN, &disk->state) &&
+			अगर (test_bit(GD_NEED_PART_SCAN, &disk->state) &&
 			    (!ret || ret == -ENOMEDIUM))
 				bdev_disk_changed(bdev, ret == -ENOMEDIUM);
 
-			if (ret)
-				return ret;
-		} else {
-			struct block_device *whole = bdgrab(disk->part0);
+			अगर (ret)
+				वापस ret;
+		पूर्ण अन्यथा अणु
+			काष्ठा block_device *whole = bdgrab(disk->part0);
 
 			mutex_lock_nested(&whole->bd_mutex, 1);
 			ret = __blkdev_get(whole, mode);
-			if (ret) {
+			अगर (ret) अणु
 				mutex_unlock(&whole->bd_mutex);
 				bdput(whole);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 			whole->bd_part_count++;
 			mutex_unlock(&whole->bd_mutex);
 
-			if (!bdev_nr_sectors(bdev)) {
+			अगर (!bdev_nr_sectors(bdev)) अणु
 				__blkdev_put(whole, mode, 1);
 				bdput(whole);
-				return -ENXIO;
-			}
+				वापस -ENXIO;
+			पूर्ण
 			set_init_blocksize(bdev);
-		}
+		पूर्ण
 
-		if (bdev->bd_bdi == &noop_backing_dev_info)
+		अगर (bdev->bd_bdi == &noop_backing_dev_info)
 			bdev->bd_bdi = bdi_get(disk->queue->backing_dev_info);
-	} else {
-		if (!bdev_is_partition(bdev)) {
-			if (bdev->bd_disk->fops->open)
-				ret = bdev->bd_disk->fops->open(bdev, mode);
-			/* the same as first opener case, read comment there */
-			if (test_bit(GD_NEED_PART_SCAN, &disk->state) &&
+	पूर्ण अन्यथा अणु
+		अगर (!bdev_is_partition(bdev)) अणु
+			अगर (bdev->bd_disk->fops->खोलो)
+				ret = bdev->bd_disk->fops->खोलो(bdev, mode);
+			/* the same as first खोलोer हाल, पढ़ो comment there */
+			अगर (test_bit(GD_NEED_PART_SCAN, &disk->state) &&
 			    (!ret || ret == -ENOMEDIUM))
 				bdev_disk_changed(bdev, ret == -ENOMEDIUM);
-			if (ret)
-				return ret;
-		}
-	}
-	bdev->bd_openers++;
-	return 0;
-}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
+	bdev->bd_खोलोers++;
+	वापस 0;
+पूर्ण
 
-struct block_device *blkdev_get_no_open(dev_t dev)
-{
-	struct block_device *bdev;
-	struct gendisk *disk;
+काष्ठा block_device *blkdev_get_no_खोलो(dev_t dev)
+अणु
+	काष्ठा block_device *bdev;
+	काष्ठा gendisk *disk;
 
 	bdev = bdget(dev);
-	if (!bdev) {
+	अगर (!bdev) अणु
 		blk_request_module(dev);
 		bdev = bdget(dev);
-		if (!bdev)
-			return NULL;
-	}
+		अगर (!bdev)
+			वापस शून्य;
+	पूर्ण
 
 	disk = bdev->bd_disk;
-	if (!kobject_get_unless_zero(&disk_to_dev(disk)->kobj))
-		goto bdput;
-	if ((disk->flags & (GENHD_FL_UP | GENHD_FL_HIDDEN)) != GENHD_FL_UP)
-		goto put_disk;
-	if (!try_module_get(bdev->bd_disk->fops->owner))
-		goto put_disk;
-	return bdev;
+	अगर (!kobject_get_unless_zero(&disk_to_dev(disk)->kobj))
+		जाओ bdput;
+	अगर ((disk->flags & (GENHD_FL_UP | GENHD_FL_HIDDEN)) != GENHD_FL_UP)
+		जाओ put_disk;
+	अगर (!try_module_get(bdev->bd_disk->fops->owner))
+		जाओ put_disk;
+	वापस bdev;
 put_disk:
 	put_disk(disk);
 bdput:
 	bdput(bdev);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void blkdev_put_no_open(struct block_device *bdev)
-{
+व्योम blkdev_put_no_खोलो(काष्ठा block_device *bdev)
+अणु
 	module_put(bdev->bd_disk->fops->owner);
 	put_disk(bdev->bd_disk);
 	bdput(bdev);
-}
+पूर्ण
 
 /**
- * blkdev_get_by_dev - open a block device by device number
- * @dev: device number of block device to open
+ * blkdev_get_by_dev - खोलो a block device by device number
+ * @dev: device number of block device to खोलो
  * @mode: FMODE_* mask
- * @holder: exclusive holder identifier
+ * @holder: exclusive holder identअगरier
  *
  * Open the block device described by device number @dev. If @mode includes
- * %FMODE_EXCL, the block device is opened with exclusive access.  Specifying
- * %FMODE_EXCL with a %NULL @holder is invalid.  Exclusive opens may nest for
+ * %FMODE_EXCL, the block device is खोलोed with exclusive access.  Specअगरying
+ * %FMODE_EXCL with a %शून्य @holder is invalid.  Exclusive खोलोs may nest क्रम
  * the same @holder.
  *
- * Use this interface ONLY if you really do not have anything better - i.e. when
- * you are behind a truly sucky interface and all you are given is a device
- * number.  Everything else should use blkdev_get_by_path().
+ * Use this पूर्णांकerface ONLY अगर you really करो not have anything better - i.e. when
+ * you are behind a truly sucky पूर्णांकerface and all you are given is a device
+ * number.  Everything अन्यथा should use blkdev_get_by_path().
  *
  * CONTEXT:
  * Might sleep.
  *
  * RETURNS:
- * Reference to the block_device on success, ERR_PTR(-errno) on failure.
+ * Reference to the block_device on success, ERR_PTR(-त्रुटि_सं) on failure.
  */
-struct block_device *blkdev_get_by_dev(dev_t dev, fmode_t mode, void *holder)
-{
+काष्ठा block_device *blkdev_get_by_dev(dev_t dev, भ_शेषe_t mode, व्योम *holder)
+अणु
 	bool unblock_events = true;
-	struct block_device *bdev;
-	struct gendisk *disk;
-	int ret;
+	काष्ठा block_device *bdev;
+	काष्ठा gendisk *disk;
+	पूर्णांक ret;
 
 	ret = devcgroup_check_permission(DEVCG_DEV_BLOCK,
 			MAJOR(dev), MINOR(dev),
 			((mode & FMODE_READ) ? DEVCG_ACC_READ : 0) |
 			((mode & FMODE_WRITE) ? DEVCG_ACC_WRITE : 0));
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	bdev = blkdev_get_no_open(dev);
-	if (!bdev)
-		return ERR_PTR(-ENXIO);
+	bdev = blkdev_get_no_खोलो(dev);
+	अगर (!bdev)
+		वापस ERR_PTR(-ENXIO);
 	disk = bdev->bd_disk;
 
-	if (mode & FMODE_EXCL) {
+	अगर (mode & FMODE_EXCL) अणु
 		ret = bd_prepare_to_claim(bdev, holder);
-		if (ret)
-			goto put_blkdev;
-	}
+		अगर (ret)
+			जाओ put_blkdev;
+	पूर्ण
 
 	disk_block_events(disk);
 
 	mutex_lock(&bdev->bd_mutex);
 	ret =__blkdev_get(bdev, mode);
-	if (ret)
-		goto abort_claiming;
-	if (mode & FMODE_EXCL) {
+	अगर (ret)
+		जाओ पात_claiming;
+	अगर (mode & FMODE_EXCL) अणु
 		bd_finish_claiming(bdev, holder);
 
 		/*
-		 * Block event polling for write claims if requested.  Any write
-		 * holder makes the write_holder state stick until all are
-		 * released.  This is good enough and tracking individual
-		 * writeable reference is too fragile given the way @mode is
+		 * Block event polling क्रम ग_लिखो claims अगर requested.  Any ग_लिखो
+		 * holder makes the ग_लिखो_holder state stick until all are
+		 * released.  This is good enough and tracking inभागidual
+		 * ग_लिखोable reference is too fragile given the way @mode is
 		 * used in blkdev_get/put().
 		 */
-		if ((mode & FMODE_WRITE) && !bdev->bd_write_holder &&
-		    (disk->flags & GENHD_FL_BLOCK_EVENTS_ON_EXCL_WRITE)) {
-			bdev->bd_write_holder = true;
+		अगर ((mode & FMODE_WRITE) && !bdev->bd_ग_लिखो_holder &&
+		    (disk->flags & GENHD_FL_BLOCK_EVENTS_ON_EXCL_WRITE)) अणु
+			bdev->bd_ग_लिखो_holder = true;
 			unblock_events = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&bdev->bd_mutex);
 
-	if (unblock_events)
+	अगर (unblock_events)
 		disk_unblock_events(disk);
-	return bdev;
+	वापस bdev;
 
-abort_claiming:
-	if (mode & FMODE_EXCL)
-		bd_abort_claiming(bdev, holder);
+पात_claiming:
+	अगर (mode & FMODE_EXCL)
+		bd_पात_claiming(bdev, holder);
 	mutex_unlock(&bdev->bd_mutex);
 	disk_unblock_events(disk);
 put_blkdev:
-	blkdev_put_no_open(bdev);
-	return ERR_PTR(ret);
-}
+	blkdev_put_no_खोलो(bdev);
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL(blkdev_get_by_dev);
 
 /**
- * blkdev_get_by_path - open a block device by name
- * @path: path to the block device to open
+ * blkdev_get_by_path - खोलो a block device by name
+ * @path: path to the block device to खोलो
  * @mode: FMODE_* mask
- * @holder: exclusive holder identifier
+ * @holder: exclusive holder identअगरier
  *
  * Open the block device described by the device file at @path.  If @mode
- * includes %FMODE_EXCL, the block device is opened with exclusive access.
- * Specifying %FMODE_EXCL with a %NULL @holder is invalid.  Exclusive opens may
- * nest for the same @holder.
+ * includes %FMODE_EXCL, the block device is खोलोed with exclusive access.
+ * Specअगरying %FMODE_EXCL with a %शून्य @holder is invalid.  Exclusive खोलोs may
+ * nest क्रम the same @holder.
  *
  * CONTEXT:
  * Might sleep.
  *
  * RETURNS:
- * Reference to the block_device on success, ERR_PTR(-errno) on failure.
+ * Reference to the block_device on success, ERR_PTR(-त्रुटि_सं) on failure.
  */
-struct block_device *blkdev_get_by_path(const char *path, fmode_t mode,
-					void *holder)
-{
-	struct block_device *bdev;
+काष्ठा block_device *blkdev_get_by_path(स्थिर अक्षर *path, भ_शेषe_t mode,
+					व्योम *holder)
+अणु
+	काष्ठा block_device *bdev;
 	dev_t dev;
-	int error;
+	पूर्णांक error;
 
 	error = lookup_bdev(path, &dev);
-	if (error)
-		return ERR_PTR(error);
+	अगर (error)
+		वापस ERR_PTR(error);
 
 	bdev = blkdev_get_by_dev(dev, mode, holder);
-	if (!IS_ERR(bdev) && (mode & FMODE_WRITE) && bdev_read_only(bdev)) {
+	अगर (!IS_ERR(bdev) && (mode & FMODE_WRITE) && bdev_पढ़ो_only(bdev)) अणु
 		blkdev_put(bdev, mode);
-		return ERR_PTR(-EACCES);
-	}
+		वापस ERR_PTR(-EACCES);
+	पूर्ण
 
-	return bdev;
-}
+	वापस bdev;
+पूर्ण
 EXPORT_SYMBOL(blkdev_get_by_path);
 
-static int blkdev_open(struct inode * inode, struct file * filp)
-{
-	struct block_device *bdev;
+अटल पूर्णांक blkdev_खोलो(काष्ठा inode * inode, काष्ठा file * filp)
+अणु
+	काष्ठा block_device *bdev;
 
 	/*
 	 * Preserve backwards compatibility and allow large file access
-	 * even if userspace doesn't ask for it explicitly. Some mkfs
+	 * even अगर userspace करोesn't ask क्रम it explicitly. Some mkfs
 	 * binary needs it. We might want to drop this workaround
 	 * during an unstable branch.
 	 */
-	filp->f_flags |= O_LARGEFILE;
+	filp->f_flags |= O_LARGEखाता;
 
 	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC;
 
-	if (filp->f_flags & O_NDELAY)
+	अगर (filp->f_flags & O_NDELAY)
 		filp->f_mode |= FMODE_NDELAY;
-	if (filp->f_flags & O_EXCL)
+	अगर (filp->f_flags & O_EXCL)
 		filp->f_mode |= FMODE_EXCL;
-	if ((filp->f_flags & O_ACCMODE) == 3)
+	अगर ((filp->f_flags & O_ACCMODE) == 3)
 		filp->f_mode |= FMODE_WRITE_IOCTL;
 
 	bdev = blkdev_get_by_dev(inode->i_rdev, filp->f_mode, filp);
-	if (IS_ERR(bdev))
-		return PTR_ERR(bdev);
+	अगर (IS_ERR(bdev))
+		वापस PTR_ERR(bdev);
 	filp->f_mapping = bdev->bd_inode->i_mapping;
 	filp->f_wb_err = filemap_sample_wb_err(filp->f_mapping);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __blkdev_put(struct block_device *bdev, fmode_t mode, int for_part)
-{
-	struct gendisk *disk = bdev->bd_disk;
-	struct block_device *victim = NULL;
+अटल व्योम __blkdev_put(काष्ठा block_device *bdev, भ_शेषe_t mode, पूर्णांक क्रम_part)
+अणु
+	काष्ठा gendisk *disk = bdev->bd_disk;
+	काष्ठा block_device *victim = शून्य;
 
 	/*
-	 * Sync early if it looks like we're the last one.  If someone else
-	 * opens the block device between now and the decrement of bd_openers
+	 * Sync early अगर it looks like we're the last one.  If someone अन्यथा
+	 * खोलोs the block device between now and the decrement of bd_खोलोers
 	 * then we did a sync that we didn't need to, but that's not the end
-	 * of the world and we want to avoid long (could be several minute)
-	 * syncs while holding the mutex.
+	 * of the world and we want to aव्योम दीर्घ (could be several minute)
+	 * syncs जबतक holding the mutex.
 	 */
-	if (bdev->bd_openers == 1)
+	अगर (bdev->bd_खोलोers == 1)
 		sync_blockdev(bdev);
 
-	mutex_lock_nested(&bdev->bd_mutex, for_part);
-	if (for_part)
+	mutex_lock_nested(&bdev->bd_mutex, क्रम_part);
+	अगर (क्रम_part)
 		bdev->bd_part_count--;
 
-	if (!--bdev->bd_openers) {
+	अगर (!--bdev->bd_खोलोers) अणु
 		WARN_ON_ONCE(bdev->bd_holders);
 		sync_blockdev(bdev);
-		kill_bdev(bdev);
-		bdev_write_inode(bdev);
-		if (bdev_is_partition(bdev))
+		समाप्त_bdev(bdev);
+		bdev_ग_लिखो_inode(bdev);
+		अगर (bdev_is_partition(bdev))
 			victim = bdev_whole(bdev);
-	}
+	पूर्ण
 
-	if (!bdev_is_partition(bdev) && disk->fops->release)
+	अगर (!bdev_is_partition(bdev) && disk->fops->release)
 		disk->fops->release(disk, mode);
 	mutex_unlock(&bdev->bd_mutex);
-	if (victim) {
+	अगर (victim) अणु
 		__blkdev_put(victim, mode, 1);
 		bdput(victim);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void blkdev_put(struct block_device *bdev, fmode_t mode)
-{
-	struct gendisk *disk = bdev->bd_disk;
+व्योम blkdev_put(काष्ठा block_device *bdev, भ_शेषe_t mode)
+अणु
+	काष्ठा gendisk *disk = bdev->bd_disk;
 
 	mutex_lock(&bdev->bd_mutex);
 
-	if (mode & FMODE_EXCL) {
-		struct block_device *whole = bdev_whole(bdev);
-		bool bdev_free;
+	अगर (mode & FMODE_EXCL) अणु
+		काष्ठा block_device *whole = bdev_whole(bdev);
+		bool bdev_मुक्त;
 
 		/*
 		 * Release a claim on the device.  The holder fields
-		 * are protected with bdev_lock.  bd_mutex is to
+		 * are रक्षित with bdev_lock.  bd_mutex is to
 		 * synchronize disk_holder unlinking.
 		 */
 		spin_lock(&bdev_lock);
@@ -1608,22 +1609,22 @@ void blkdev_put(struct block_device *bdev, fmode_t mode)
 		WARN_ON_ONCE(--bdev->bd_holders < 0);
 		WARN_ON_ONCE(--whole->bd_holders < 0);
 
-		if ((bdev_free = !bdev->bd_holders))
-			bdev->bd_holder = NULL;
-		if (!whole->bd_holders)
-			whole->bd_holder = NULL;
+		अगर ((bdev_मुक्त = !bdev->bd_holders))
+			bdev->bd_holder = शून्य;
+		अगर (!whole->bd_holders)
+			whole->bd_holder = शून्य;
 
 		spin_unlock(&bdev_lock);
 
 		/*
-		 * If this was the last claim, remove holder link and
-		 * unblock evpoll if it was a write holder.
+		 * If this was the last claim, हटाओ holder link and
+		 * unblock evpoll अगर it was a ग_लिखो holder.
 		 */
-		if (bdev_free && bdev->bd_write_holder) {
+		अगर (bdev_मुक्त && bdev->bd_ग_लिखो_holder) अणु
 			disk_unblock_events(disk);
-			bdev->bd_write_holder = false;
-		}
-	}
+			bdev->bd_ग_लिखो_holder = false;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Trigger event checking and tell drivers to flush MEDIA_CHANGE
@@ -1634,303 +1635,303 @@ void blkdev_put(struct block_device *bdev, fmode_t mode)
 	mutex_unlock(&bdev->bd_mutex);
 
 	__blkdev_put(bdev, mode, 0);
-	blkdev_put_no_open(bdev);
-}
+	blkdev_put_no_खोलो(bdev);
+पूर्ण
 EXPORT_SYMBOL(blkdev_put);
 
-static int blkdev_close(struct inode * inode, struct file * filp)
-{
-	struct block_device *bdev = I_BDEV(bdev_file_inode(filp));
+अटल पूर्णांक blkdev_बंद(काष्ठा inode * inode, काष्ठा file * filp)
+अणु
+	काष्ठा block_device *bdev = I_BDEV(bdev_file_inode(filp));
 	blkdev_put(bdev, filp->f_mode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long block_ioctl(struct file *file, unsigned cmd, unsigned long arg)
-{
-	struct block_device *bdev = I_BDEV(bdev_file_inode(file));
-	fmode_t mode = file->f_mode;
+अटल दीर्घ block_ioctl(काष्ठा file *file, अचिन्हित cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा block_device *bdev = I_BDEV(bdev_file_inode(file));
+	भ_शेषe_t mode = file->f_mode;
 
 	/*
 	 * O_NDELAY can be altered using fcntl(.., F_SETFL, ..), so we have
-	 * to updated it before every ioctl.
+	 * to updated it beक्रमe every ioctl.
 	 */
-	if (file->f_flags & O_NDELAY)
+	अगर (file->f_flags & O_NDELAY)
 		mode |= FMODE_NDELAY;
-	else
+	अन्यथा
 		mode &= ~FMODE_NDELAY;
 
-	return blkdev_ioctl(bdev, mode, cmd, arg);
-}
+	वापस blkdev_ioctl(bdev, mode, cmd, arg);
+पूर्ण
 
 /*
- * Write data to the block device.  Only intended for the block device itself
+ * Write data to the block device.  Only पूर्णांकended क्रम the block device itself
  * and the raw driver which basically is a fake block device.
  *
- * Does not take i_mutex for the write and thus is not for general purpose
+ * Does not take i_mutex क्रम the ग_लिखो and thus is not क्रम general purpose
  * use.
  */
-ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
-{
-	struct file *file = iocb->ki_filp;
-	struct inode *bd_inode = bdev_file_inode(file);
-	loff_t size = i_size_read(bd_inode);
-	struct blk_plug plug;
-	size_t shorted = 0;
-	ssize_t ret;
+sमाप_प्रकार blkdev_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा inode *bd_inode = bdev_file_inode(file);
+	loff_t size = i_size_पढ़ो(bd_inode);
+	काष्ठा blk_plug plug;
+	माप_प्रकार लघुed = 0;
+	sमाप_प्रकार ret;
 
-	if (bdev_read_only(I_BDEV(bd_inode)))
-		return -EPERM;
+	अगर (bdev_पढ़ो_only(I_BDEV(bd_inode)))
+		वापस -EPERM;
 
-	if (IS_SWAPFILE(bd_inode) && !is_hibernate_resume_dev(bd_inode->i_rdev))
-		return -ETXTBSY;
+	अगर (IS_SWAPखाता(bd_inode) && !is_hibernate_resume_dev(bd_inode->i_rdev))
+		वापस -ETXTBSY;
 
-	if (!iov_iter_count(from))
-		return 0;
+	अगर (!iov_iter_count(from))
+		वापस 0;
 
-	if (iocb->ki_pos >= size)
-		return -ENOSPC;
+	अगर (iocb->ki_pos >= size)
+		वापस -ENOSPC;
 
-	if ((iocb->ki_flags & (IOCB_NOWAIT | IOCB_DIRECT)) == IOCB_NOWAIT)
-		return -EOPNOTSUPP;
+	अगर ((iocb->ki_flags & (IOCB_NOWAIT | IOCB_सूचीECT)) == IOCB_NOWAIT)
+		वापस -EOPNOTSUPP;
 
 	size -= iocb->ki_pos;
-	if (iov_iter_count(from) > size) {
-		shorted = iov_iter_count(from) - size;
+	अगर (iov_iter_count(from) > size) अणु
+		लघुed = iov_iter_count(from) - size;
 		iov_iter_truncate(from, size);
-	}
+	पूर्ण
 
 	blk_start_plug(&plug);
-	ret = __generic_file_write_iter(iocb, from);
-	if (ret > 0)
-		ret = generic_write_sync(iocb, ret);
-	iov_iter_reexpand(from, iov_iter_count(from) + shorted);
+	ret = __generic_file_ग_लिखो_iter(iocb, from);
+	अगर (ret > 0)
+		ret = generic_ग_लिखो_sync(iocb, ret);
+	iov_iter_reexpand(from, iov_iter_count(from) + लघुed);
 	blk_finish_plug(&plug);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(blkdev_write_iter);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(blkdev_ग_लिखो_iter);
 
-ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
-{
-	struct file *file = iocb->ki_filp;
-	struct inode *bd_inode = bdev_file_inode(file);
-	loff_t size = i_size_read(bd_inode);
+sमाप_प्रकार blkdev_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा inode *bd_inode = bdev_file_inode(file);
+	loff_t size = i_size_पढ़ो(bd_inode);
 	loff_t pos = iocb->ki_pos;
-	size_t shorted = 0;
-	ssize_t ret;
+	माप_प्रकार लघुed = 0;
+	sमाप_प्रकार ret;
 
-	if (pos >= size)
-		return 0;
+	अगर (pos >= size)
+		वापस 0;
 
 	size -= pos;
-	if (iov_iter_count(to) > size) {
-		shorted = iov_iter_count(to) - size;
+	अगर (iov_iter_count(to) > size) अणु
+		लघुed = iov_iter_count(to) - size;
 		iov_iter_truncate(to, size);
-	}
+	पूर्ण
 
-	ret = generic_file_read_iter(iocb, to);
-	iov_iter_reexpand(to, iov_iter_count(to) + shorted);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(blkdev_read_iter);
+	ret = generic_file_पढ़ो_iter(iocb, to);
+	iov_iter_reexpand(to, iov_iter_count(to) + लघुed);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(blkdev_पढ़ो_iter);
 
 /*
- * Try to release a page associated with block device when the system
+ * Try to release a page associated with block device when the प्रणाली
  * is under memory pressure.
  */
-static int blkdev_releasepage(struct page *page, gfp_t wait)
-{
-	struct super_block *super = BDEV_I(page->mapping->host)->bdev.bd_super;
+अटल पूर्णांक blkdev_releasepage(काष्ठा page *page, gfp_t रुको)
+अणु
+	काष्ठा super_block *super = BDEV_I(page->mapping->host)->bdev.bd_super;
 
-	if (super && super->s_op->bdev_try_to_free_page)
-		return super->s_op->bdev_try_to_free_page(super, page, wait);
+	अगर (super && super->s_op->bdev_try_to_मुक्त_page)
+		वापस super->s_op->bdev_try_to_मुक्त_page(super, page, रुको);
 
-	return try_to_free_buffers(page);
-}
+	वापस try_to_मुक्त_buffers(page);
+पूर्ण
 
-static int blkdev_writepages(struct address_space *mapping,
-			     struct writeback_control *wbc)
-{
-	return generic_writepages(mapping, wbc);
-}
+अटल पूर्णांक blkdev_ग_लिखोpages(काष्ठा address_space *mapping,
+			     काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस generic_ग_लिखोpages(mapping, wbc);
+पूर्ण
 
-static const struct address_space_operations def_blk_aops = {
-	.readpage	= blkdev_readpage,
-	.readahead	= blkdev_readahead,
-	.writepage	= blkdev_writepage,
-	.write_begin	= blkdev_write_begin,
-	.write_end	= blkdev_write_end,
-	.writepages	= blkdev_writepages,
+अटल स्थिर काष्ठा address_space_operations def_blk_aops = अणु
+	.पढ़ोpage	= blkdev_पढ़ोpage,
+	.पढ़ोahead	= blkdev_पढ़ोahead,
+	.ग_लिखोpage	= blkdev_ग_लिखोpage,
+	.ग_लिखो_begin	= blkdev_ग_लिखो_begin,
+	.ग_लिखो_end	= blkdev_ग_लिखो_end,
+	.ग_लिखोpages	= blkdev_ग_लिखोpages,
 	.releasepage	= blkdev_releasepage,
 	.direct_IO	= blkdev_direct_IO,
 	.migratepage	= buffer_migrate_page_norefs,
-	.is_dirty_writeback = buffer_check_dirty_writeback,
-};
+	.is_dirty_ग_लिखोback = buffer_check_dirty_ग_लिखोback,
+पूर्ण;
 
-#define	BLKDEV_FALLOC_FL_SUPPORTED					\
+#घोषणा	BLKDEV_FALLOC_FL_SUPPORTED					\
 		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
 		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
 
-static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+अटल दीर्घ blkdev_fallocate(काष्ठा file *file, पूर्णांक mode, loff_t start,
 			     loff_t len)
-{
-	struct block_device *bdev = I_BDEV(bdev_file_inode(file));
+अणु
+	काष्ठा block_device *bdev = I_BDEV(bdev_file_inode(file));
 	loff_t end = start + len - 1;
 	loff_t isize;
-	int error;
+	पूर्णांक error;
 
-	/* Fail if we don't recognize the flags. */
-	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
-		return -EOPNOTSUPP;
+	/* Fail अगर we करोn't recognize the flags. */
+	अगर (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
+		वापस -EOPNOTSUPP;
 
 	/* Don't go off the end of the device. */
-	isize = i_size_read(bdev->bd_inode);
-	if (start >= isize)
-		return -EINVAL;
-	if (end >= isize) {
-		if (mode & FALLOC_FL_KEEP_SIZE) {
+	isize = i_size_पढ़ो(bdev->bd_inode);
+	अगर (start >= isize)
+		वापस -EINVAL;
+	अगर (end >= isize) अणु
+		अगर (mode & FALLOC_FL_KEEP_SIZE) अणु
 			len = isize - start;
 			end = start + len - 1;
-		} else
-			return -EINVAL;
-	}
+		पूर्ण अन्यथा
+			वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Don't allow IO that isn't aligned to logical block size.
 	 */
-	if ((start | len) & (bdev_logical_block_size(bdev) - 1))
-		return -EINVAL;
+	अगर ((start | len) & (bdev_logical_block_size(bdev) - 1))
+		वापस -EINVAL;
 
 	/* Invalidate the page cache, including dirty pages. */
 	error = truncate_bdev_range(bdev, file->f_mode, start, end);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	switch (mode) {
-	case FALLOC_FL_ZERO_RANGE:
-	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
+	चयन (mode) अणु
+	हाल FALLOC_FL_ZERO_RANGE:
+	हाल FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
 		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
 					    GFP_KERNEL, BLKDEV_ZERO_NOUNMAP);
-		break;
-	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
+		अवरोध;
+	हाल FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
 		error = blkdev_issue_zeroout(bdev, start >> 9, len >> 9,
 					     GFP_KERNEL, BLKDEV_ZERO_NOFALLBACK);
-		break;
-	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
+		अवरोध;
+	हाल FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
 		error = blkdev_issue_discard(bdev, start >> 9, len >> 9,
 					     GFP_KERNEL, 0);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
-	if (error)
-		return error;
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	अगर (error)
+		वापस error;
 
 	/*
-	 * Invalidate the page cache again; if someone wandered in and dirtied
+	 * Invalidate the page cache again; अगर someone wandered in and dirtied
 	 * a page, we just discard it - userspace has no way of knowing whether
-	 * the write happened before or after discard completing...
+	 * the ग_लिखो happened beक्रमe or after discard completing...
 	 */
-	return truncate_bdev_range(bdev, file->f_mode, start, end);
-}
+	वापस truncate_bdev_range(bdev, file->f_mode, start, end);
+पूर्ण
 
-const struct file_operations def_blk_fops = {
-	.open		= blkdev_open,
-	.release	= blkdev_close,
+स्थिर काष्ठा file_operations def_blk_fops = अणु
+	.खोलो		= blkdev_खोलो,
+	.release	= blkdev_बंद,
 	.llseek		= block_llseek,
-	.read_iter	= blkdev_read_iter,
-	.write_iter	= blkdev_write_iter,
+	.पढ़ो_iter	= blkdev_पढ़ो_iter,
+	.ग_लिखो_iter	= blkdev_ग_लिखो_iter,
 	.iopoll		= blkdev_iopoll,
 	.mmap		= generic_file_mmap,
 	.fsync		= blkdev_fsync,
 	.unlocked_ioctl	= block_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= compat_blkdev_ioctl,
-#endif
-	.splice_read	= generic_file_splice_read,
-	.splice_write	= iter_file_splice_write,
+#पूर्ण_अगर
+	.splice_पढ़ो	= generic_file_splice_पढ़ो,
+	.splice_ग_लिखो	= iter_file_splice_ग_लिखो,
 	.fallocate	= blkdev_fallocate,
-};
+पूर्ण;
 
 /**
- * lookup_bdev  - lookup a struct block_device by name
+ * lookup_bdev  - lookup a काष्ठा block_device by name
  * @pathname:	special file representing the block device
- * @dev:	return value of the block device's dev_t
+ * @dev:	वापस value of the block device's dev_t
  *
  * Get a reference to the blockdevice at @pathname in the current
- * namespace if possible and return it.  Return ERR_PTR(error)
+ * namespace अगर possible and वापस it.  Return ERR_PTR(error)
  * otherwise.
  */
-int lookup_bdev(const char *pathname, dev_t *dev)
-{
-	struct inode *inode;
-	struct path path;
-	int error;
+पूर्णांक lookup_bdev(स्थिर अक्षर *pathname, dev_t *dev)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा path path;
+	पूर्णांक error;
 
-	if (!pathname || !*pathname)
-		return -EINVAL;
+	अगर (!pathname || !*pathname)
+		वापस -EINVAL;
 
 	error = kern_path(pathname, LOOKUP_FOLLOW, &path);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	inode = d_backing_inode(path.dentry);
 	error = -ENOTBLK;
-	if (!S_ISBLK(inode->i_mode))
-		goto out_path_put;
+	अगर (!S_ISBLK(inode->i_mode))
+		जाओ out_path_put;
 	error = -EACCES;
-	if (!may_open_dev(&path))
-		goto out_path_put;
+	अगर (!may_खोलो_dev(&path))
+		जाओ out_path_put;
 
 	*dev = inode->i_rdev;
 	error = 0;
 out_path_put:
 	path_put(&path);
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL(lookup_bdev);
 
-int __invalidate_device(struct block_device *bdev, bool kill_dirty)
-{
-	struct super_block *sb = get_super(bdev);
-	int res = 0;
+पूर्णांक __invalidate_device(काष्ठा block_device *bdev, bool समाप्त_dirty)
+अणु
+	काष्ठा super_block *sb = get_super(bdev);
+	पूर्णांक res = 0;
 
-	if (sb) {
+	अगर (sb) अणु
 		/*
 		 * no need to lock the super, get_super holds the
-		 * read mutex so the filesystem cannot go away
-		 * under us (->put_super runs with the write lock
+		 * पढ़ो mutex so the fileप्रणाली cannot go away
+		 * under us (->put_super runs with the ग_लिखो lock
 		 * hold).
 		 */
 		shrink_dcache_sb(sb);
-		res = invalidate_inodes(sb, kill_dirty);
+		res = invalidate_inodes(sb, समाप्त_dirty);
 		drop_super(sb);
-	}
+	पूर्ण
 	invalidate_bdev(bdev);
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(__invalidate_device);
 
-void iterate_bdevs(void (*func)(struct block_device *, void *), void *arg)
-{
-	struct inode *inode, *old_inode = NULL;
+व्योम iterate_bdevs(व्योम (*func)(काष्ठा block_device *, व्योम *), व्योम *arg)
+अणु
+	काष्ठा inode *inode, *old_inode = शून्य;
 
 	spin_lock(&blockdev_superblock->s_inode_list_lock);
-	list_for_each_entry(inode, &blockdev_superblock->s_inodes, i_sb_list) {
-		struct address_space *mapping = inode->i_mapping;
-		struct block_device *bdev;
+	list_क्रम_each_entry(inode, &blockdev_superblock->s_inodes, i_sb_list) अणु
+		काष्ठा address_space *mapping = inode->i_mapping;
+		काष्ठा block_device *bdev;
 
 		spin_lock(&inode->i_lock);
-		if (inode->i_state & (I_FREEING|I_WILL_FREE|I_NEW) ||
-		    mapping->nrpages == 0) {
+		अगर (inode->i_state & (I_FREEING|I_WILL_FREE|I_NEW) ||
+		    mapping->nrpages == 0) अणु
 			spin_unlock(&inode->i_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		__iget(inode);
 		spin_unlock(&inode->i_lock);
 		spin_unlock(&blockdev_superblock->s_inode_list_lock);
 		/*
 		 * We hold a reference to 'inode' so it couldn't have been
-		 * removed from s_inodes list while we dropped the
+		 * हटाओd from s_inodes list जबतक we dropped the
 		 * s_inode_list_lock  We cannot iput the inode now as we can
 		 * be holding the last reference and we cannot iput it under
 		 * s_inode_list_lock. So we keep the reference and iput it
@@ -1941,12 +1942,12 @@ void iterate_bdevs(void (*func)(struct block_device *, void *), void *arg)
 		bdev = I_BDEV(inode);
 
 		mutex_lock(&bdev->bd_mutex);
-		if (bdev->bd_openers)
+		अगर (bdev->bd_खोलोers)
 			func(bdev, arg);
 		mutex_unlock(&bdev->bd_mutex);
 
 		spin_lock(&blockdev_superblock->s_inode_list_lock);
-	}
+	पूर्ण
 	spin_unlock(&blockdev_superblock->s_inode_list_lock);
 	iput(old_inode);
-}
+पूर्ण

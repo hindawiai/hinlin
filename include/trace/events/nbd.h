@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM nbd
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM nbd
 
-#if !defined(_TRACE_NBD_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_NBD_H
+#अगर !defined(_TRACE_NBD_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_NBD_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 DECLARE_EVENT_CLASS(nbd_transport_event,
 
-	TP_PROTO(struct request *req, u64 handle),
+	TP_PROTO(काष्ठा request *req, u64 handle),
 
 	TP_ARGS(req, handle),
 
 	TP_STRUCT__entry(
-		__field(struct request *, req)
+		__field(काष्ठा request *, req)
 		__field(u64, handle)
 	),
 
@@ -23,7 +24,7 @@ DECLARE_EVENT_CLASS(nbd_transport_event,
 		__entry->handle = handle;
 	),
 
-	TP_printk(
+	TP_prपूर्णांकk(
 		"nbd transport event: request %p, handle 0x%016llx",
 		__entry->req,
 		__entry->handle
@@ -32,43 +33,43 @@ DECLARE_EVENT_CLASS(nbd_transport_event,
 
 DEFINE_EVENT(nbd_transport_event, nbd_header_sent,
 
-	TP_PROTO(struct request *req, u64 handle),
+	TP_PROTO(काष्ठा request *req, u64 handle),
 
 	TP_ARGS(req, handle)
 );
 
 DEFINE_EVENT(nbd_transport_event, nbd_payload_sent,
 
-	TP_PROTO(struct request *req, u64 handle),
+	TP_PROTO(काष्ठा request *req, u64 handle),
 
 	TP_ARGS(req, handle)
 );
 
 DEFINE_EVENT(nbd_transport_event, nbd_header_received,
 
-	TP_PROTO(struct request *req, u64 handle),
+	TP_PROTO(काष्ठा request *req, u64 handle),
 
 	TP_ARGS(req, handle)
 );
 
 DEFINE_EVENT(nbd_transport_event, nbd_payload_received,
 
-	TP_PROTO(struct request *req, u64 handle),
+	TP_PROTO(काष्ठा request *req, u64 handle),
 
 	TP_ARGS(req, handle)
 );
 
 DECLARE_EVENT_CLASS(nbd_send_request,
 
-	TP_PROTO(struct nbd_request *nbd_request, int index,
-		 struct request *rq),
+	TP_PROTO(काष्ठा nbd_request *nbd_request, पूर्णांक index,
+		 काष्ठा request *rq),
 
 	TP_ARGS(nbd_request, index, rq),
 
 	TP_STRUCT__entry(
-		__field(struct nbd_request *, nbd_request)
+		__field(काष्ठा nbd_request *, nbd_request)
 		__field(u64, dev_index)
-		__field(struct request *, request)
+		__field(काष्ठा request *, request)
 	),
 
 	TP_fast_assign(
@@ -77,31 +78,31 @@ DECLARE_EVENT_CLASS(nbd_send_request,
 		__entry->request = rq;
 	),
 
-	TP_printk("nbd%lld: request %p", __entry->dev_index, __entry->request)
+	TP_prपूर्णांकk("nbd%lld: request %p", __entry->dev_index, __entry->request)
 );
 
-#ifdef DEFINE_EVENT_WRITABLE
-#undef NBD_DEFINE_EVENT
-#define NBD_DEFINE_EVENT(template, call, proto, args, size)		\
-	DEFINE_EVENT_WRITABLE(template, call, PARAMS(proto),		\
+#अगर_घोषित DEFINE_EVENT_WRITABLE
+#अघोषित NBD_DEFINE_EVENT
+#घोषणा NBD_DEFINE_EVENT(ढाँचा, call, proto, args, size)		\
+	DEFINE_EVENT_WRITABLE(ढाँचा, call, PARAMS(proto),		\
 			      PARAMS(args), size)
-#else
-#undef NBD_DEFINE_EVENT
-#define NBD_DEFINE_EVENT(template, call, proto, args, size)		\
-	DEFINE_EVENT(template, call, PARAMS(proto), PARAMS(args))
-#endif
+#अन्यथा
+#अघोषित NBD_DEFINE_EVENT
+#घोषणा NBD_DEFINE_EVENT(ढाँचा, call, proto, args, size)		\
+	DEFINE_EVENT(ढाँचा, call, PARAMS(proto), PARAMS(args))
+#पूर्ण_अगर
 
 NBD_DEFINE_EVENT(nbd_send_request, nbd_send_request,
 
-	TP_PROTO(struct nbd_request *nbd_request, int index,
-		 struct request *rq),
+	TP_PROTO(काष्ठा nbd_request *nbd_request, पूर्णांक index,
+		 काष्ठा request *rq),
 
 	TP_ARGS(nbd_request, index, rq),
 
-	sizeof(struct nbd_request)
+	माप(काष्ठा nbd_request)
 );
 
-#endif
+#पूर्ण_अगर
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

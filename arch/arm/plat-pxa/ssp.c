@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-pxa/ssp.c
  *
@@ -7,164 +8,164 @@
  *  Copyright (C) 2003 Russell King.
  *  Copyright (C) 2003 Wolfson Microelectronics PLC
  *
- *  PXA2xx SSP driver.  This provides the generic core for simple
- *  IO-based SSP applications and allows easy port setup for DMA access.
+ *  PXA2xx SSP driver.  This provides the generic core क्रम simple
+ *  IO-based SSP applications and allows easy port setup क्रम DMA access.
  *
  *  Author: Liam Girdwood <liam.girdwood@wolfsonmicro.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/spi/pxa2xx_spi.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/spi/pxa2xx_spi.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
 
-#include <asm/irq.h>
+#समावेश <यंत्र/irq.h>
 
-static DEFINE_MUTEX(ssp_lock);
-static LIST_HEAD(ssp_list);
+अटल DEFINE_MUTEX(ssp_lock);
+अटल LIST_HEAD(ssp_list);
 
-struct ssp_device *pxa_ssp_request(int port, const char *label)
-{
-	struct ssp_device *ssp = NULL;
+काष्ठा ssp_device *pxa_ssp_request(पूर्णांक port, स्थिर अक्षर *label)
+अणु
+	काष्ठा ssp_device *ssp = शून्य;
 
 	mutex_lock(&ssp_lock);
 
-	list_for_each_entry(ssp, &ssp_list, node) {
-		if (ssp->port_id == port && ssp->use_count == 0) {
+	list_क्रम_each_entry(ssp, &ssp_list, node) अणु
+		अगर (ssp->port_id == port && ssp->use_count == 0) अणु
 			ssp->use_count++;
 			ssp->label = label;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&ssp_lock);
 
-	if (&ssp->node == &ssp_list)
-		return NULL;
+	अगर (&ssp->node == &ssp_list)
+		वापस शून्य;
 
-	return ssp;
-}
+	वापस ssp;
+पूर्ण
 EXPORT_SYMBOL(pxa_ssp_request);
 
-struct ssp_device *pxa_ssp_request_of(const struct device_node *of_node,
-				      const char *label)
-{
-	struct ssp_device *ssp = NULL;
+काष्ठा ssp_device *pxa_ssp_request_of(स्थिर काष्ठा device_node *of_node,
+				      स्थिर अक्षर *label)
+अणु
+	काष्ठा ssp_device *ssp = शून्य;
 
 	mutex_lock(&ssp_lock);
 
-	list_for_each_entry(ssp, &ssp_list, node) {
-		if (ssp->of_node == of_node && ssp->use_count == 0) {
+	list_क्रम_each_entry(ssp, &ssp_list, node) अणु
+		अगर (ssp->of_node == of_node && ssp->use_count == 0) अणु
 			ssp->use_count++;
 			ssp->label = label;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&ssp_lock);
 
-	if (&ssp->node == &ssp_list)
-		return NULL;
+	अगर (&ssp->node == &ssp_list)
+		वापस शून्य;
 
-	return ssp;
-}
+	वापस ssp;
+पूर्ण
 EXPORT_SYMBOL(pxa_ssp_request_of);
 
-void pxa_ssp_free(struct ssp_device *ssp)
-{
+व्योम pxa_ssp_मुक्त(काष्ठा ssp_device *ssp)
+अणु
 	mutex_lock(&ssp_lock);
-	if (ssp->use_count) {
+	अगर (ssp->use_count) अणु
 		ssp->use_count--;
-		ssp->label = NULL;
-	} else
+		ssp->label = शून्य;
+	पूर्ण अन्यथा
 		dev_err(ssp->dev, "device already free\n");
 	mutex_unlock(&ssp_lock);
-}
-EXPORT_SYMBOL(pxa_ssp_free);
+पूर्ण
+EXPORT_SYMBOL(pxa_ssp_मुक्त);
 
-#ifdef CONFIG_OF
-static const struct of_device_id pxa_ssp_of_ids[] = {
-	{ .compatible = "mrvl,pxa25x-ssp",	.data = (void *) PXA25x_SSP },
-	{ .compatible = "mvrl,pxa25x-nssp",	.data = (void *) PXA25x_NSSP },
-	{ .compatible = "mrvl,pxa27x-ssp",	.data = (void *) PXA27x_SSP },
-	{ .compatible = "mrvl,pxa3xx-ssp",	.data = (void *) PXA3xx_SSP },
-	{ .compatible = "mvrl,pxa168-ssp",	.data = (void *) PXA168_SSP },
-	{ .compatible = "mrvl,pxa910-ssp",	.data = (void *) PXA910_SSP },
-	{ .compatible = "mrvl,ce4100-ssp",	.data = (void *) CE4100_SSP },
-	{ },
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id pxa_ssp_of_ids[] = अणु
+	अणु .compatible = "mrvl,pxa25x-ssp",	.data = (व्योम *) PXA25x_SSP पूर्ण,
+	अणु .compatible = "mvrl,pxa25x-nssp",	.data = (व्योम *) PXA25x_NSSP पूर्ण,
+	अणु .compatible = "mrvl,pxa27x-ssp",	.data = (व्योम *) PXA27x_SSP पूर्ण,
+	अणु .compatible = "mrvl,pxa3xx-ssp",	.data = (व्योम *) PXA3xx_SSP पूर्ण,
+	अणु .compatible = "mvrl,pxa168-ssp",	.data = (व्योम *) PXA168_SSP पूर्ण,
+	अणु .compatible = "mrvl,pxa910-ssp",	.data = (व्योम *) PXA910_SSP पूर्ण,
+	अणु .compatible = "mrvl,ce4100-ssp",	.data = (व्योम *) CE4100_SSP पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pxa_ssp_of_ids);
-#endif
+#पूर्ण_अगर
 
-static int pxa_ssp_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	struct ssp_device *ssp;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक pxa_ssp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा ssp_device *ssp;
+	काष्ठा device *dev = &pdev->dev;
 
-	ssp = devm_kzalloc(dev, sizeof(struct ssp_device), GFP_KERNEL);
-	if (ssp == NULL)
-		return -ENOMEM;
+	ssp = devm_kzalloc(dev, माप(काष्ठा ssp_device), GFP_KERNEL);
+	अगर (ssp == शून्य)
+		वापस -ENOMEM;
 
 	ssp->dev = dev;
 
-	ssp->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(ssp->clk))
-		return PTR_ERR(ssp->clk);
+	ssp->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(ssp->clk))
+		वापस PTR_ERR(ssp->clk);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य) अणु
 		dev_err(dev, "no memory resource defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	res = devm_request_mem_region(dev, res->start, resource_size(res),
 				      pdev->name);
-	if (res == NULL) {
+	अगर (res == शून्य) अणु
 		dev_err(dev, "failed to request memory resource\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	ssp->phys_base = res->start;
 
 	ssp->mmio_base = devm_ioremap(dev, res->start, resource_size(res));
-	if (ssp->mmio_base == NULL) {
+	अगर (ssp->mmio_base == शून्य) अणु
 		dev_err(dev, "failed to ioremap() registers\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ssp->irq = platform_get_irq(pdev, 0);
-	if (ssp->irq < 0) {
+	ssp->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (ssp->irq < 0) अणु
 		dev_err(dev, "no IRQ resource defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (dev->of_node) {
-		const struct of_device_id *id =
+	अगर (dev->of_node) अणु
+		स्थिर काष्ठा of_device_id *id =
 			of_match_device(of_match_ptr(pxa_ssp_of_ids), dev);
-		ssp->type = (int) id->data;
-	} else {
-		const struct platform_device_id *id =
-			platform_get_device_id(pdev);
-		ssp->type = (int) id->driver_data;
+		ssp->type = (पूर्णांक) id->data;
+	पूर्ण अन्यथा अणु
+		स्थिर काष्ठा platक्रमm_device_id *id =
+			platक्रमm_get_device_id(pdev);
+		ssp->type = (पूर्णांक) id->driver_data;
 
-		/* PXA2xx/3xx SSP ports starts from 1 and the internal pdev->id
-		 * starts from 0, do a translation here
+		/* PXA2xx/3xx SSP ports starts from 1 and the पूर्णांकernal pdev->id
+		 * starts from 0, करो a translation here
 		 */
 		ssp->port_id = pdev->id + 1;
-	}
+	पूर्ण
 
 	ssp->use_count = 0;
 	ssp->of_node = dev->of_node;
@@ -173,58 +174,58 @@ static int pxa_ssp_probe(struct platform_device *pdev)
 	list_add(&ssp->node, &ssp_list);
 	mutex_unlock(&ssp_lock);
 
-	platform_set_drvdata(pdev, ssp);
+	platक्रमm_set_drvdata(pdev, ssp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pxa_ssp_remove(struct platform_device *pdev)
-{
-	struct ssp_device *ssp;
+अटल पूर्णांक pxa_ssp_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ssp_device *ssp;
 
-	ssp = platform_get_drvdata(pdev);
-	if (ssp == NULL)
-		return -ENODEV;
+	ssp = platक्रमm_get_drvdata(pdev);
+	अगर (ssp == शून्य)
+		वापस -ENODEV;
 
 	mutex_lock(&ssp_lock);
 	list_del(&ssp->node);
 	mutex_unlock(&ssp_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id ssp_id_table[] = {
-	{ "pxa25x-ssp",		PXA25x_SSP },
-	{ "pxa25x-nssp",	PXA25x_NSSP },
-	{ "pxa27x-ssp",		PXA27x_SSP },
-	{ "pxa3xx-ssp",		PXA3xx_SSP },
-	{ "pxa168-ssp",		PXA168_SSP },
-	{ "pxa910-ssp",		PXA910_SSP },
-	{ },
-};
+अटल स्थिर काष्ठा platक्रमm_device_id ssp_id_table[] = अणु
+	अणु "pxa25x-ssp",		PXA25x_SSP पूर्ण,
+	अणु "pxa25x-nssp",	PXA25x_NSSP पूर्ण,
+	अणु "pxa27x-ssp",		PXA27x_SSP पूर्ण,
+	अणु "pxa3xx-ssp",		PXA3xx_SSP पूर्ण,
+	अणु "pxa168-ssp",		PXA168_SSP पूर्ण,
+	अणु "pxa910-ssp",		PXA910_SSP पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver pxa_ssp_driver = {
+अटल काष्ठा platक्रमm_driver pxa_ssp_driver = अणु
 	.probe		= pxa_ssp_probe,
-	.remove		= pxa_ssp_remove,
-	.driver		= {
+	.हटाओ		= pxa_ssp_हटाओ,
+	.driver		= अणु
 		.name		= "pxa2xx-ssp",
 		.of_match_table	= of_match_ptr(pxa_ssp_of_ids),
-	},
+	पूर्ण,
 	.id_table	= ssp_id_table,
-};
+पूर्ण;
 
-static int __init pxa_ssp_init(void)
-{
-	return platform_driver_register(&pxa_ssp_driver);
-}
+अटल पूर्णांक __init pxa_ssp_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&pxa_ssp_driver);
+पूर्ण
 
-static void __exit pxa_ssp_exit(void)
-{
-	platform_driver_unregister(&pxa_ssp_driver);
-}
+अटल व्योम __निकास pxa_ssp_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&pxa_ssp_driver);
+पूर्ण
 
 arch_initcall(pxa_ssp_init);
-module_exit(pxa_ssp_exit);
+module_निकास(pxa_ssp_निकास);
 
 MODULE_DESCRIPTION("PXA SSP driver");
 MODULE_AUTHOR("Liam Girdwood");

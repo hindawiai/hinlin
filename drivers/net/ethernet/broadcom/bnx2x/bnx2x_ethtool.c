@@ -1,14 +1,15 @@
+<शैली गुरु>
 /* bnx2x_ethtool.c: QLogic Everest network driver.
  *
  * Copyright (c) 2007-2013 Broadcom Corporation
  * Copyright (c) 2014 QLogic Corporation
  * All rights reserved
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  *
- * Maintained by: Ariel Elior <ariel.elior@qlogic.com>
+ * Maपूर्णांकained by: Ariel Elior <ariel.elior@qlogic.com>
  * Written by: Eliezer Tamir
  * Based on code from Michael Chan's bnx2 driver
  * UDP CSUM errata workaround by Arik Gendelman
@@ -17,211 +18,211 @@
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/ethtool.h>
-#include <linux/netdevice.h>
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/crc32.h>
-#include "bnx2x.h"
-#include "bnx2x_cmn.h"
-#include "bnx2x_dump.h"
-#include "bnx2x_init.h"
+#समावेश <linux/ethtool.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/crc32.h>
+#समावेश "bnx2x.h"
+#समावेश "bnx2x_cmn.h"
+#समावेश "bnx2x_dump.h"
+#समावेश "bnx2x_init.h"
 
-/* Note: in the format strings below %s is replaced by the queue-name which is
- * either its index or 'fcoe' for the fcoe queue. Make sure the format string
- * length does not exceed ETH_GSTRING_LEN - MAX_QUEUE_NAME_LEN + 2
+/* Note: in the क्रमmat strings below %s is replaced by the queue-name which is
+ * either its index or 'fcoe' क्रम the fcoe queue. Make sure the क्रमmat string
+ * length करोes not exceed ETH_GSTRING_LEN - MAX_QUEUE_NAME_LEN + 2
  */
-#define MAX_QUEUE_NAME_LEN	4
-static const struct {
-	long offset;
-	int size;
-	char string[ETH_GSTRING_LEN];
-} bnx2x_q_stats_arr[] = {
-/* 1 */	{ Q_STATS_OFFSET32(total_bytes_received_hi), 8, "[%s]: rx_bytes" },
-	{ Q_STATS_OFFSET32(total_unicast_packets_received_hi),
-						8, "[%s]: rx_ucast_packets" },
-	{ Q_STATS_OFFSET32(total_multicast_packets_received_hi),
-						8, "[%s]: rx_mcast_packets" },
-	{ Q_STATS_OFFSET32(total_broadcast_packets_received_hi),
-						8, "[%s]: rx_bcast_packets" },
-	{ Q_STATS_OFFSET32(no_buff_discard_hi),	8, "[%s]: rx_discards" },
-	{ Q_STATS_OFFSET32(rx_err_discard_pkt),
-					 4, "[%s]: rx_phy_ip_err_discards"},
-	{ Q_STATS_OFFSET32(rx_skb_alloc_failed),
-					 4, "[%s]: rx_skb_alloc_discard" },
-	{ Q_STATS_OFFSET32(hw_csum_err), 4, "[%s]: rx_csum_offload_errors" },
-	{ Q_STATS_OFFSET32(driver_xoff), 4, "[%s]: tx_exhaustion_events" },
-	{ Q_STATS_OFFSET32(total_bytes_transmitted_hi),	8, "[%s]: tx_bytes" },
-/* 10 */{ Q_STATS_OFFSET32(total_unicast_packets_transmitted_hi),
-						8, "[%s]: tx_ucast_packets" },
-	{ Q_STATS_OFFSET32(total_multicast_packets_transmitted_hi),
-						8, "[%s]: tx_mcast_packets" },
-	{ Q_STATS_OFFSET32(total_broadcast_packets_transmitted_hi),
-						8, "[%s]: tx_bcast_packets" },
-	{ Q_STATS_OFFSET32(total_tpa_aggregations_hi),
-						8, "[%s]: tpa_aggregations" },
-	{ Q_STATS_OFFSET32(total_tpa_aggregated_frames_hi),
-					8, "[%s]: tpa_aggregated_frames"},
-	{ Q_STATS_OFFSET32(total_tpa_bytes_hi),	8, "[%s]: tpa_bytes"},
-	{ Q_STATS_OFFSET32(driver_filtered_tx_pkt),
-					4, "[%s]: driver_filtered_tx_pkt" }
-};
+#घोषणा MAX_QUEUE_NAME_LEN	4
+अटल स्थिर काष्ठा अणु
+	दीर्घ offset;
+	पूर्णांक size;
+	अक्षर string[ETH_GSTRING_LEN];
+पूर्ण bnx2x_q_stats_arr[] = अणु
+/* 1 */	अणु Q_STATS_OFFSET32(total_bytes_received_hi), 8, "[%s]: rx_bytes" पूर्ण,
+	अणु Q_STATS_OFFSET32(total_unicast_packets_received_hi),
+						8, "[%s]: rx_ucast_packets" पूर्ण,
+	अणु Q_STATS_OFFSET32(total_multicast_packets_received_hi),
+						8, "[%s]: rx_mcast_packets" पूर्ण,
+	अणु Q_STATS_OFFSET32(total_broadcast_packets_received_hi),
+						8, "[%s]: rx_bcast_packets" पूर्ण,
+	अणु Q_STATS_OFFSET32(no_buff_discard_hi),	8, "[%s]: rx_discards" पूर्ण,
+	अणु Q_STATS_OFFSET32(rx_err_discard_pkt),
+					 4, "[%s]: rx_phy_ip_err_discards"पूर्ण,
+	अणु Q_STATS_OFFSET32(rx_skb_alloc_failed),
+					 4, "[%s]: rx_skb_alloc_discard" पूर्ण,
+	अणु Q_STATS_OFFSET32(hw_csum_err), 4, "[%s]: rx_csum_offload_errors" पूर्ण,
+	अणु Q_STATS_OFFSET32(driver_xoff), 4, "[%s]: tx_exhaustion_events" पूर्ण,
+	अणु Q_STATS_OFFSET32(total_bytes_transmitted_hi),	8, "[%s]: tx_bytes" पूर्ण,
+/* 10 */अणु Q_STATS_OFFSET32(total_unicast_packets_transmitted_hi),
+						8, "[%s]: tx_ucast_packets" पूर्ण,
+	अणु Q_STATS_OFFSET32(total_multicast_packets_transmitted_hi),
+						8, "[%s]: tx_mcast_packets" पूर्ण,
+	अणु Q_STATS_OFFSET32(total_broadcast_packets_transmitted_hi),
+						8, "[%s]: tx_bcast_packets" पूर्ण,
+	अणु Q_STATS_OFFSET32(total_tpa_aggregations_hi),
+						8, "[%s]: tpa_aggregations" पूर्ण,
+	अणु Q_STATS_OFFSET32(total_tpa_aggregated_frames_hi),
+					8, "[%s]: tpa_aggregated_frames"पूर्ण,
+	अणु Q_STATS_OFFSET32(total_tpa_bytes_hi),	8, "[%s]: tpa_bytes"पूर्ण,
+	अणु Q_STATS_OFFSET32(driver_filtered_tx_pkt),
+					4, "[%s]: driver_filtered_tx_pkt" पूर्ण
+पूर्ण;
 
-#define BNX2X_NUM_Q_STATS ARRAY_SIZE(bnx2x_q_stats_arr)
+#घोषणा BNX2X_NUM_Q_STATS ARRAY_SIZE(bnx2x_q_stats_arr)
 
-static const struct {
-	long offset;
-	int size;
+अटल स्थिर काष्ठा अणु
+	दीर्घ offset;
+	पूर्णांक size;
 	bool is_port_stat;
-	char string[ETH_GSTRING_LEN];
-} bnx2x_stats_arr[] = {
-/* 1 */	{ STATS_OFFSET32(total_bytes_received_hi),
-				8, false, "rx_bytes" },
-	{ STATS_OFFSET32(error_bytes_received_hi),
-				8, false, "rx_error_bytes" },
-	{ STATS_OFFSET32(total_unicast_packets_received_hi),
-				8, false, "rx_ucast_packets" },
-	{ STATS_OFFSET32(total_multicast_packets_received_hi),
-				8, false, "rx_mcast_packets" },
-	{ STATS_OFFSET32(total_broadcast_packets_received_hi),
-				8, false, "rx_bcast_packets" },
-	{ STATS_OFFSET32(rx_stat_dot3statsfcserrors_hi),
-				8, true, "rx_crc_errors" },
-	{ STATS_OFFSET32(rx_stat_dot3statsalignmenterrors_hi),
-				8, true, "rx_align_errors" },
-	{ STATS_OFFSET32(rx_stat_etherstatsundersizepkts_hi),
-				8, true, "rx_undersize_packets" },
-	{ STATS_OFFSET32(etherstatsoverrsizepkts_hi),
-				8, true, "rx_oversize_packets" },
-/* 10 */{ STATS_OFFSET32(rx_stat_etherstatsfragments_hi),
-				8, true, "rx_fragments" },
-	{ STATS_OFFSET32(rx_stat_etherstatsjabbers_hi),
-				8, true, "rx_jabbers" },
-	{ STATS_OFFSET32(no_buff_discard_hi),
-				8, false, "rx_discards" },
-	{ STATS_OFFSET32(mac_filter_discard),
-				4, true, "rx_filtered_packets" },
-	{ STATS_OFFSET32(mf_tag_discard),
-				4, true, "rx_mf_tag_discard" },
-	{ STATS_OFFSET32(pfc_frames_received_hi),
-				8, true, "pfc_frames_received" },
-	{ STATS_OFFSET32(pfc_frames_sent_hi),
-				8, true, "pfc_frames_sent" },
-	{ STATS_OFFSET32(brb_drop_hi),
-				8, true, "rx_brb_discard" },
-	{ STATS_OFFSET32(brb_truncate_hi),
-				8, true, "rx_brb_truncate" },
-	{ STATS_OFFSET32(pause_frames_received_hi),
-				8, true, "rx_pause_frames" },
-	{ STATS_OFFSET32(rx_stat_maccontrolframesreceived_hi),
-				8, true, "rx_mac_ctrl_frames" },
-	{ STATS_OFFSET32(nig_timer_max),
-				4, true, "rx_constant_pause_events" },
-/* 20 */{ STATS_OFFSET32(rx_err_discard_pkt),
-				4, false, "rx_phy_ip_err_discards"},
-	{ STATS_OFFSET32(rx_skb_alloc_failed),
-				4, false, "rx_skb_alloc_discard" },
-	{ STATS_OFFSET32(hw_csum_err),
-				4, false, "rx_csum_offload_errors" },
-	{ STATS_OFFSET32(driver_xoff),
-				4, false, "tx_exhaustion_events" },
-	{ STATS_OFFSET32(total_bytes_transmitted_hi),
-				8, false, "tx_bytes" },
-	{ STATS_OFFSET32(tx_stat_ifhcoutbadoctets_hi),
-				8, true, "tx_error_bytes" },
-	{ STATS_OFFSET32(total_unicast_packets_transmitted_hi),
-				8, false, "tx_ucast_packets" },
-	{ STATS_OFFSET32(total_multicast_packets_transmitted_hi),
-				8, false, "tx_mcast_packets" },
-	{ STATS_OFFSET32(total_broadcast_packets_transmitted_hi),
-				8, false, "tx_bcast_packets" },
-	{ STATS_OFFSET32(tx_stat_dot3statsinternalmactransmiterrors_hi),
-				8, true, "tx_mac_errors" },
-	{ STATS_OFFSET32(rx_stat_dot3statscarriersenseerrors_hi),
-				8, true, "tx_carrier_errors" },
-/* 30 */{ STATS_OFFSET32(tx_stat_dot3statssinglecollisionframes_hi),
-				8, true, "tx_single_collisions" },
-	{ STATS_OFFSET32(tx_stat_dot3statsmultiplecollisionframes_hi),
-				8, true, "tx_multi_collisions" },
-	{ STATS_OFFSET32(tx_stat_dot3statsdeferredtransmissions_hi),
-				8, true, "tx_deferred" },
-	{ STATS_OFFSET32(tx_stat_dot3statsexcessivecollisions_hi),
-				8, true, "tx_excess_collisions" },
-	{ STATS_OFFSET32(tx_stat_dot3statslatecollisions_hi),
-				8, true, "tx_late_collisions" },
-	{ STATS_OFFSET32(tx_stat_etherstatscollisions_hi),
-				8, true, "tx_total_collisions" },
-	{ STATS_OFFSET32(tx_stat_etherstatspkts64octets_hi),
-				8, true, "tx_64_byte_packets" },
-	{ STATS_OFFSET32(tx_stat_etherstatspkts65octetsto127octets_hi),
-				8, true, "tx_65_to_127_byte_packets" },
-	{ STATS_OFFSET32(tx_stat_etherstatspkts128octetsto255octets_hi),
-				8, true, "tx_128_to_255_byte_packets" },
-	{ STATS_OFFSET32(tx_stat_etherstatspkts256octetsto511octets_hi),
-				8, true, "tx_256_to_511_byte_packets" },
-/* 40 */{ STATS_OFFSET32(tx_stat_etherstatspkts512octetsto1023octets_hi),
-				8, true, "tx_512_to_1023_byte_packets" },
-	{ STATS_OFFSET32(etherstatspkts1024octetsto1522octets_hi),
-				8, true, "tx_1024_to_1522_byte_packets" },
-	{ STATS_OFFSET32(etherstatspktsover1522octets_hi),
-				8, true, "tx_1523_to_9022_byte_packets" },
-	{ STATS_OFFSET32(pause_frames_sent_hi),
-				8, true, "tx_pause_frames" },
-	{ STATS_OFFSET32(total_tpa_aggregations_hi),
-				8, false, "tpa_aggregations" },
-	{ STATS_OFFSET32(total_tpa_aggregated_frames_hi),
-				8, false, "tpa_aggregated_frames"},
-	{ STATS_OFFSET32(total_tpa_bytes_hi),
-				8, false, "tpa_bytes"},
-	{ STATS_OFFSET32(recoverable_error),
-				4, false, "recoverable_errors" },
-	{ STATS_OFFSET32(unrecoverable_error),
-				4, false, "unrecoverable_errors" },
-	{ STATS_OFFSET32(driver_filtered_tx_pkt),
-				4, false, "driver_filtered_tx_pkt" },
-	{ STATS_OFFSET32(eee_tx_lpi),
-				4, true, "Tx LPI entry count"},
-	{ STATS_OFFSET32(ptp_skip_tx_ts),
-				4, false, "ptp_skipped_tx_tstamp" },
-};
+	अक्षर string[ETH_GSTRING_LEN];
+पूर्ण bnx2x_stats_arr[] = अणु
+/* 1 */	अणु STATS_OFFSET32(total_bytes_received_hi),
+				8, false, "rx_bytes" पूर्ण,
+	अणु STATS_OFFSET32(error_bytes_received_hi),
+				8, false, "rx_error_bytes" पूर्ण,
+	अणु STATS_OFFSET32(total_unicast_packets_received_hi),
+				8, false, "rx_ucast_packets" पूर्ण,
+	अणु STATS_OFFSET32(total_multicast_packets_received_hi),
+				8, false, "rx_mcast_packets" पूर्ण,
+	अणु STATS_OFFSET32(total_broadcast_packets_received_hi),
+				8, false, "rx_bcast_packets" पूर्ण,
+	अणु STATS_OFFSET32(rx_stat_करोt3statsfcserrors_hi),
+				8, true, "rx_crc_errors" पूर्ण,
+	अणु STATS_OFFSET32(rx_stat_करोt3statsalignmenterrors_hi),
+				8, true, "rx_align_errors" पूर्ण,
+	अणु STATS_OFFSET32(rx_stat_etherstatsundersizepkts_hi),
+				8, true, "rx_undersize_packets" पूर्ण,
+	अणु STATS_OFFSET32(etherstatsoverrsizepkts_hi),
+				8, true, "rx_oversize_packets" पूर्ण,
+/* 10 */अणु STATS_OFFSET32(rx_stat_etherstatsfragments_hi),
+				8, true, "rx_fragments" पूर्ण,
+	अणु STATS_OFFSET32(rx_stat_etherstatsjabbers_hi),
+				8, true, "rx_jabbers" पूर्ण,
+	अणु STATS_OFFSET32(no_buff_discard_hi),
+				8, false, "rx_discards" पूर्ण,
+	अणु STATS_OFFSET32(mac_filter_discard),
+				4, true, "rx_filtered_packets" पूर्ण,
+	अणु STATS_OFFSET32(mf_tag_discard),
+				4, true, "rx_mf_tag_discard" पूर्ण,
+	अणु STATS_OFFSET32(pfc_frames_received_hi),
+				8, true, "pfc_frames_received" पूर्ण,
+	अणु STATS_OFFSET32(pfc_frames_sent_hi),
+				8, true, "pfc_frames_sent" पूर्ण,
+	अणु STATS_OFFSET32(brb_drop_hi),
+				8, true, "rx_brb_discard" पूर्ण,
+	अणु STATS_OFFSET32(brb_truncate_hi),
+				8, true, "rx_brb_truncate" पूर्ण,
+	अणु STATS_OFFSET32(छोड़ो_frames_received_hi),
+				8, true, "rx_pause_frames" पूर्ण,
+	अणु STATS_OFFSET32(rx_stat_maccontrolframesreceived_hi),
+				8, true, "rx_mac_ctrl_frames" पूर्ण,
+	अणु STATS_OFFSET32(nig_समयr_max),
+				4, true, "rx_constant_pause_events" पूर्ण,
+/* 20 */अणु STATS_OFFSET32(rx_err_discard_pkt),
+				4, false, "rx_phy_ip_err_discards"पूर्ण,
+	अणु STATS_OFFSET32(rx_skb_alloc_failed),
+				4, false, "rx_skb_alloc_discard" पूर्ण,
+	अणु STATS_OFFSET32(hw_csum_err),
+				4, false, "rx_csum_offload_errors" पूर्ण,
+	अणु STATS_OFFSET32(driver_xoff),
+				4, false, "tx_exhaustion_events" पूर्ण,
+	अणु STATS_OFFSET32(total_bytes_transmitted_hi),
+				8, false, "tx_bytes" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_अगरhcoutbaकरोctets_hi),
+				8, true, "tx_error_bytes" पूर्ण,
+	अणु STATS_OFFSET32(total_unicast_packets_transmitted_hi),
+				8, false, "tx_ucast_packets" पूर्ण,
+	अणु STATS_OFFSET32(total_multicast_packets_transmitted_hi),
+				8, false, "tx_mcast_packets" पूर्ण,
+	अणु STATS_OFFSET32(total_broadcast_packets_transmitted_hi),
+				8, false, "tx_bcast_packets" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_करोt3statsपूर्णांकernalmactransmiterrors_hi),
+				8, true, "tx_mac_errors" पूर्ण,
+	अणु STATS_OFFSET32(rx_stat_करोt3statscarriersenseerrors_hi),
+				8, true, "tx_carrier_errors" पूर्ण,
+/* 30 */अणु STATS_OFFSET32(tx_stat_करोt3statssinglecollisionframes_hi),
+				8, true, "tx_single_collisions" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_करोt3statsmultiplecollisionframes_hi),
+				8, true, "tx_multi_collisions" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_करोt3statsdeferredtransmissions_hi),
+				8, true, "tx_deferred" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_करोt3statsexcessivecollisions_hi),
+				8, true, "tx_excess_collisions" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_करोt3statslatecollisions_hi),
+				8, true, "tx_late_collisions" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_etherstatscollisions_hi),
+				8, true, "tx_total_collisions" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_etherstatspkts64octets_hi),
+				8, true, "tx_64_byte_packets" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_etherstatspkts65octetsto127octets_hi),
+				8, true, "tx_65_to_127_byte_packets" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_etherstatspkts128octetsto255octets_hi),
+				8, true, "tx_128_to_255_byte_packets" पूर्ण,
+	अणु STATS_OFFSET32(tx_stat_etherstatspkts256octetsto511octets_hi),
+				8, true, "tx_256_to_511_byte_packets" पूर्ण,
+/* 40 */अणु STATS_OFFSET32(tx_stat_etherstatspkts512octetsto1023octets_hi),
+				8, true, "tx_512_to_1023_byte_packets" पूर्ण,
+	अणु STATS_OFFSET32(etherstatspkts1024octetsto1522octets_hi),
+				8, true, "tx_1024_to_1522_byte_packets" पूर्ण,
+	अणु STATS_OFFSET32(etherstatspktsover1522octets_hi),
+				8, true, "tx_1523_to_9022_byte_packets" पूर्ण,
+	अणु STATS_OFFSET32(छोड़ो_frames_sent_hi),
+				8, true, "tx_pause_frames" पूर्ण,
+	अणु STATS_OFFSET32(total_tpa_aggregations_hi),
+				8, false, "tpa_aggregations" पूर्ण,
+	अणु STATS_OFFSET32(total_tpa_aggregated_frames_hi),
+				8, false, "tpa_aggregated_frames"पूर्ण,
+	अणु STATS_OFFSET32(total_tpa_bytes_hi),
+				8, false, "tpa_bytes"पूर्ण,
+	अणु STATS_OFFSET32(recoverable_error),
+				4, false, "recoverable_errors" पूर्ण,
+	अणु STATS_OFFSET32(unrecoverable_error),
+				4, false, "unrecoverable_errors" पूर्ण,
+	अणु STATS_OFFSET32(driver_filtered_tx_pkt),
+				4, false, "driver_filtered_tx_pkt" पूर्ण,
+	अणु STATS_OFFSET32(eee_tx_lpi),
+				4, true, "Tx LPI entry count"पूर्ण,
+	अणु STATS_OFFSET32(ptp_skip_tx_ts),
+				4, false, "ptp_skipped_tx_tstamp" पूर्ण,
+पूर्ण;
 
-#define BNX2X_NUM_STATS		ARRAY_SIZE(bnx2x_stats_arr)
+#घोषणा BNX2X_NUM_STATS		ARRAY_SIZE(bnx2x_stats_arr)
 
-static int bnx2x_get_port_type(struct bnx2x *bp)
-{
-	int port_type;
+अटल पूर्णांक bnx2x_get_port_type(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक port_type;
 	u32 phy_idx = bnx2x_get_cur_phy_idx(bp);
-	switch (bp->link_params.phy[phy_idx].media_type) {
-	case ETH_PHY_SFPP_10G_FIBER:
-	case ETH_PHY_SFP_1G_FIBER:
-	case ETH_PHY_XFP_FIBER:
-	case ETH_PHY_KR:
-	case ETH_PHY_CX4:
+	चयन (bp->link_params.phy[phy_idx].media_type) अणु
+	हाल ETH_PHY_SFPP_10G_FIBER:
+	हाल ETH_PHY_SFP_1G_FIBER:
+	हाल ETH_PHY_XFP_FIBER:
+	हाल ETH_PHY_KR:
+	हाल ETH_PHY_CX4:
 		port_type = PORT_FIBRE;
-		break;
-	case ETH_PHY_DA_TWINAX:
+		अवरोध;
+	हाल ETH_PHY_DA_TWINAX:
 		port_type = PORT_DA;
-		break;
-	case ETH_PHY_BASE_T:
+		अवरोध;
+	हाल ETH_PHY_BASE_T:
 		port_type = PORT_TP;
-		break;
-	case ETH_PHY_NOT_PRESENT:
+		अवरोध;
+	हाल ETH_PHY_NOT_PRESENT:
 		port_type = PORT_NONE;
-		break;
-	case ETH_PHY_UNSPECIFIED:
-	default:
+		अवरोध;
+	हाल ETH_PHY_UNSPECIFIED:
+	शेष:
 		port_type = PORT_OTHER;
-		break;
-	}
-	return port_type;
-}
+		अवरोध;
+	पूर्ण
+	वापस port_type;
+पूर्ण
 
-static int bnx2x_get_vf_link_ksettings(struct net_device *dev,
-				       struct ethtool_link_ksettings *cmd)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_get_vf_link_ksettings(काष्ठा net_device *dev,
+				       काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 	u32 supported, advertising;
 
 	ethtool_convert_link_mode_to_legacy_u32(&supported,
@@ -229,22 +230,22 @@ static int bnx2x_get_vf_link_ksettings(struct net_device *dev,
 	ethtool_convert_link_mode_to_legacy_u32(&advertising,
 						cmd->link_modes.advertising);
 
-	if (bp->state == BNX2X_STATE_OPEN) {
-		if (test_bit(BNX2X_LINK_REPORT_FD,
+	अगर (bp->state == BNX2X_STATE_OPEN) अणु
+		अगर (test_bit(BNX2X_LINK_REPORT_FD,
 			     &bp->vf_link_vars.link_report_flags))
 			cmd->base.duplex = DUPLEX_FULL;
-		else
+		अन्यथा
 			cmd->base.duplex = DUPLEX_HALF;
 
 		cmd->base.speed = bp->vf_link_vars.line_speed;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd->base.duplex = DUPLEX_UNKNOWN;
 		cmd->base.speed = SPEED_UNKNOWN;
-	}
+	पूर्ण
 
 	cmd->base.port		= PORT_OTHER;
 	cmd->base.phy_address	= 0;
-	cmd->base.autoneg	= AUTONEG_DISABLE;
+	cmd->base.स्वतःneg	= AUTONEG_DISABLE;
 
 	DP(BNX2X_MSG_ETHTOOL, "ethtool_cmd: cmd %d\n"
 	   "  supported 0x%x  advertising 0x%x  speed %u\n"
@@ -253,16 +254,16 @@ static int bnx2x_get_vf_link_ksettings(struct net_device *dev,
 	   cmd->base.cmd, supported, advertising,
 	   cmd->base.speed,
 	   cmd->base.duplex, cmd->base.port, cmd->base.phy_address,
-	   cmd->base.autoneg);
+	   cmd->base.स्वतःneg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_get_link_ksettings(struct net_device *dev,
-				    struct ethtool_link_ksettings *cmd)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	int cfg_idx = bnx2x_get_link_cfg_idx(bp);
+अटल पूर्णांक bnx2x_get_link_ksettings(काष्ठा net_device *dev,
+				    काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	पूर्णांक cfg_idx = bnx2x_get_link_cfg_idx(bp);
 	u32 media_type;
 	u32 supported, advertising, lp_advertising;
 
@@ -275,76 +276,76 @@ static int bnx2x_get_link_ksettings(struct net_device *dev,
 		 (SUPPORTED_TP | SUPPORTED_FIBRE));
 	advertising = bp->port.advertising[cfg_idx];
 	media_type = bp->link_params.phy[bnx2x_get_cur_phy_idx(bp)].media_type;
-	if (media_type == ETH_PHY_SFP_1G_FIBER) {
+	अगर (media_type == ETH_PHY_SFP_1G_FIBER) अणु
 		supported &= ~(SUPPORTED_10000baseT_Full);
 		advertising &= ~(ADVERTISED_10000baseT_Full);
-	}
+	पूर्ण
 
-	if ((bp->state == BNX2X_STATE_OPEN) && bp->link_vars.link_up &&
-	    !(bp->flags & MF_FUNC_DIS)) {
+	अगर ((bp->state == BNX2X_STATE_OPEN) && bp->link_vars.link_up &&
+	    !(bp->flags & MF_FUNC_DIS)) अणु
 		cmd->base.duplex = bp->link_vars.duplex;
 
-		if (IS_MF(bp) && !BP_NOMCP(bp))
+		अगर (IS_MF(bp) && !BP_NOMCP(bp))
 			cmd->base.speed = bnx2x_get_mf_speed(bp);
-		else
+		अन्यथा
 			cmd->base.speed = bp->link_vars.line_speed;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd->base.duplex = DUPLEX_UNKNOWN;
 		cmd->base.speed = SPEED_UNKNOWN;
-	}
+	पूर्ण
 
 	cmd->base.port = bnx2x_get_port_type(bp);
 
 	cmd->base.phy_address = bp->mdio.prtad;
 
-	if (bp->link_params.req_line_speed[cfg_idx] == SPEED_AUTO_NEG)
-		cmd->base.autoneg = AUTONEG_ENABLE;
-	else
-		cmd->base.autoneg = AUTONEG_DISABLE;
+	अगर (bp->link_params.req_line_speed[cfg_idx] == SPEED_AUTO_NEG)
+		cmd->base.स्वतःneg = AUTONEG_ENABLE;
+	अन्यथा
+		cmd->base.स्वतःneg = AUTONEG_DISABLE;
 
 	/* Publish LP advertised speeds and FC */
-	if (bp->link_vars.link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE) {
+	अगर (bp->link_vars.link_status & LINK_STATUS_AUTO_NEGOTIATE_COMPLETE) अणु
 		u32 status = bp->link_vars.link_status;
 
 		lp_advertising |= ADVERTISED_Autoneg;
-		if (status & LINK_STATUS_LINK_PARTNER_SYMMETRIC_PAUSE)
+		अगर (status & LINK_STATUS_LINK_PARTNER_SYMMETRIC_PAUSE)
 			lp_advertising |= ADVERTISED_Pause;
-		if (status & LINK_STATUS_LINK_PARTNER_ASYMMETRIC_PAUSE)
+		अगर (status & LINK_STATUS_LINK_PARTNER_ASYMMETRIC_PAUSE)
 			lp_advertising |= ADVERTISED_Asym_Pause;
 
-		if (status & LINK_STATUS_LINK_PARTNER_10THD_CAPABLE)
+		अगर (status & LINK_STATUS_LINK_PARTNER_10THD_CAPABLE)
 			lp_advertising |= ADVERTISED_10baseT_Half;
-		if (status & LINK_STATUS_LINK_PARTNER_10TFD_CAPABLE)
+		अगर (status & LINK_STATUS_LINK_PARTNER_10TFD_CAPABLE)
 			lp_advertising |= ADVERTISED_10baseT_Full;
-		if (status & LINK_STATUS_LINK_PARTNER_100TXHD_CAPABLE)
+		अगर (status & LINK_STATUS_LINK_PARTNER_100TXHD_CAPABLE)
 			lp_advertising |= ADVERTISED_100baseT_Half;
-		if (status & LINK_STATUS_LINK_PARTNER_100TXFD_CAPABLE)
+		अगर (status & LINK_STATUS_LINK_PARTNER_100TXFD_CAPABLE)
 			lp_advertising |= ADVERTISED_100baseT_Full;
-		if (status & LINK_STATUS_LINK_PARTNER_1000THD_CAPABLE)
+		अगर (status & LINK_STATUS_LINK_PARTNER_1000THD_CAPABLE)
 			lp_advertising |= ADVERTISED_1000baseT_Half;
-		if (status & LINK_STATUS_LINK_PARTNER_1000TFD_CAPABLE) {
-			if (media_type == ETH_PHY_KR) {
+		अगर (status & LINK_STATUS_LINK_PARTNER_1000TFD_CAPABLE) अणु
+			अगर (media_type == ETH_PHY_KR) अणु
 				lp_advertising |=
 					ADVERTISED_1000baseKX_Full;
-			} else {
+			पूर्ण अन्यथा अणु
 				lp_advertising |=
 					ADVERTISED_1000baseT_Full;
-			}
-		}
-		if (status & LINK_STATUS_LINK_PARTNER_2500XFD_CAPABLE)
+			पूर्ण
+		पूर्ण
+		अगर (status & LINK_STATUS_LINK_PARTNER_2500XFD_CAPABLE)
 			lp_advertising |= ADVERTISED_2500baseX_Full;
-		if (status & LINK_STATUS_LINK_PARTNER_10GXFD_CAPABLE) {
-			if (media_type == ETH_PHY_KR) {
+		अगर (status & LINK_STATUS_LINK_PARTNER_10GXFD_CAPABLE) अणु
+			अगर (media_type == ETH_PHY_KR) अणु
 				lp_advertising |=
 					ADVERTISED_10000baseKR_Full;
-			} else {
+			पूर्ण अन्यथा अणु
 				lp_advertising |=
 					ADVERTISED_10000baseT_Full;
-			}
-		}
-		if (status & LINK_STATUS_LINK_PARTNER_20GXFD_CAPABLE)
+			पूर्ण
+		पूर्ण
+		अगर (status & LINK_STATUS_LINK_PARTNER_20GXFD_CAPABLE)
 			lp_advertising |= ADVERTISED_20000baseKR2_Full;
-	}
+	पूर्ण
 
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.supported,
 						supported);
@@ -360,15 +361,15 @@ static int bnx2x_get_link_ksettings(struct net_device *dev,
 	   cmd->base.cmd, supported, advertising,
 	   cmd->base.speed,
 	   cmd->base.duplex, cmd->base.port, cmd->base.phy_address,
-	   cmd->base.autoneg);
+	   cmd->base.स्वतःneg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_set_link_ksettings(struct net_device *dev,
-				    const struct ethtool_link_ksettings *cmd)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_set_link_ksettings(काष्ठा net_device *dev,
+				    स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 	u32 advertising, cfg_idx, old_multi_phy_config, new_multi_phy_config;
 	u32 speed, phy_idx;
 	u32 supported;
@@ -379,8 +380,8 @@ static int bnx2x_set_link_ksettings(struct net_device *dev,
 	ethtool_convert_link_mode_to_legacy_u32(&advertising,
 						cmd->link_modes.advertising);
 
-	if (IS_MF_SD(bp))
-		return 0;
+	अगर (IS_MF_SD(bp))
+		वापस 0;
 
 	DP(BNX2X_MSG_ETHTOOL, "ethtool_cmd: cmd %d\n"
 	   "  supported 0x%x  advertising 0x%x  speed %u\n"
@@ -389,285 +390,285 @@ static int bnx2x_set_link_ksettings(struct net_device *dev,
 	   cmd->base.cmd, supported, advertising,
 	   cmd->base.speed,
 	   cmd->base.duplex, cmd->base.port, cmd->base.phy_address,
-	   cmd->base.autoneg);
+	   cmd->base.स्वतःneg);
 
 	speed = cmd->base.speed;
 
-	/* If received a request for an unknown duplex, assume full*/
-	if (duplex == DUPLEX_UNKNOWN)
+	/* If received a request क्रम an unknown duplex, assume full*/
+	अगर (duplex == DUPLEX_UNKNOWN)
 		duplex = DUPLEX_FULL;
 
-	if (IS_MF_SI(bp)) {
+	अगर (IS_MF_SI(bp)) अणु
 		u32 part;
 		u32 line_speed = bp->link_vars.line_speed;
 
-		/* use 10G if no link detected */
-		if (!line_speed)
+		/* use 10G अगर no link detected */
+		अगर (!line_speed)
 			line_speed = 10000;
 
-		if (bp->common.bc_ver < REQ_BC_VER_4_SET_MF_BW) {
+		अगर (bp->common.bc_ver < REQ_BC_VER_4_SET_MF_BW) अणु
 			DP(BNX2X_MSG_ETHTOOL,
 			   "To set speed BC %X or higher is required, please upgrade BC\n",
 			   REQ_BC_VER_4_SET_MF_BW);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		part = (speed * 100) / line_speed;
 
-		if (line_speed < speed || !part) {
+		अगर (line_speed < speed || !part) अणु
 			DP(BNX2X_MSG_ETHTOOL,
 			   "Speed setting should be in a range from 1%% to 100%% of actual line speed\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (bp->state != BNX2X_STATE_OPEN)
-			/* store value for following "load" */
+		अगर (bp->state != BNX2X_STATE_OPEN)
+			/* store value क्रम following "load" */
 			bp->pending_max = part;
-		else
+		अन्यथा
 			bnx2x_update_max_mf_config(bp, part);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	cfg_idx = bnx2x_get_link_cfg_idx(bp);
 	old_multi_phy_config = bp->link_params.multi_phy_config;
-	if (cmd->base.port != bnx2x_get_port_type(bp)) {
-		switch (cmd->base.port) {
-		case PORT_TP:
-			if (!(bp->port.supported[0] & SUPPORTED_TP ||
-			      bp->port.supported[1] & SUPPORTED_TP)) {
+	अगर (cmd->base.port != bnx2x_get_port_type(bp)) अणु
+		चयन (cmd->base.port) अणु
+		हाल PORT_TP:
+			अगर (!(bp->port.supported[0] & SUPPORTED_TP ||
+			      bp->port.supported[1] & SUPPORTED_TP)) अणु
 				DP(BNX2X_MSG_ETHTOOL,
 				   "Unsupported port type\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			bp->link_params.multi_phy_config &=
 				~PORT_HW_CFG_PHY_SELECTION_MASK;
-			if (bp->link_params.multi_phy_config &
+			अगर (bp->link_params.multi_phy_config &
 			    PORT_HW_CFG_PHY_SWAPPED_ENABLED)
 				bp->link_params.multi_phy_config |=
 				PORT_HW_CFG_PHY_SELECTION_SECOND_PHY;
-			else
+			अन्यथा
 				bp->link_params.multi_phy_config |=
 				PORT_HW_CFG_PHY_SELECTION_FIRST_PHY;
-			break;
-		case PORT_FIBRE:
-		case PORT_DA:
-		case PORT_NONE:
-			if (!(bp->port.supported[0] & SUPPORTED_FIBRE ||
-			      bp->port.supported[1] & SUPPORTED_FIBRE)) {
+			अवरोध;
+		हाल PORT_FIBRE:
+		हाल PORT_DA:
+		हाल PORT_NONE:
+			अगर (!(bp->port.supported[0] & SUPPORTED_FIBRE ||
+			      bp->port.supported[1] & SUPPORTED_FIBRE)) अणु
 				DP(BNX2X_MSG_ETHTOOL,
 				   "Unsupported port type\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			bp->link_params.multi_phy_config &=
 				~PORT_HW_CFG_PHY_SELECTION_MASK;
-			if (bp->link_params.multi_phy_config &
+			अगर (bp->link_params.multi_phy_config &
 			    PORT_HW_CFG_PHY_SWAPPED_ENABLED)
 				bp->link_params.multi_phy_config |=
 				PORT_HW_CFG_PHY_SELECTION_FIRST_PHY;
-			else
+			अन्यथा
 				bp->link_params.multi_phy_config |=
 				PORT_HW_CFG_PHY_SELECTION_SECOND_PHY;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DP(BNX2X_MSG_ETHTOOL, "Unsupported port type\n");
-			return -EINVAL;
-		}
-	}
-	/* Save new config in case command complete successfully */
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	/* Save new config in हाल command complete successfully */
 	new_multi_phy_config = bp->link_params.multi_phy_config;
 	/* Get the new cfg_idx */
 	cfg_idx = bnx2x_get_link_cfg_idx(bp);
-	/* Restore old config in case command failed */
+	/* Restore old config in हाल command failed */
 	bp->link_params.multi_phy_config = old_multi_phy_config;
 	DP(BNX2X_MSG_ETHTOOL, "cfg_idx = %x\n", cfg_idx);
 
-	if (cmd->base.autoneg == AUTONEG_ENABLE) {
+	अगर (cmd->base.स्वतःneg == AUTONEG_ENABLE) अणु
 		u32 an_supported_speed = bp->port.supported[cfg_idx];
-		if (bp->link_params.phy[EXT_PHY1].type ==
+		अगर (bp->link_params.phy[EXT_PHY1].type ==
 		    PORT_HW_CFG_XGXS_EXT_PHY_TYPE_BCM84833)
 			an_supported_speed |= (SUPPORTED_100baseT_Half |
 					       SUPPORTED_100baseT_Full);
-		if (!(bp->port.supported[cfg_idx] & SUPPORTED_Autoneg)) {
+		अगर (!(bp->port.supported[cfg_idx] & SUPPORTED_Autoneg)) अणु
 			DP(BNX2X_MSG_ETHTOOL, "Autoneg not supported\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* advertise the requested speed and duplex if supported */
-		if (advertising & ~an_supported_speed) {
+		/* advertise the requested speed and duplex अगर supported */
+		अगर (advertising & ~an_supported_speed) अणु
 			DP(BNX2X_MSG_ETHTOOL,
 			   "Advertisement parameters are not supported\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		bp->link_params.req_line_speed[cfg_idx] = SPEED_AUTO_NEG;
 		bp->link_params.req_duplex[cfg_idx] = duplex;
 		bp->port.advertising[cfg_idx] = (ADVERTISED_Autoneg |
 					 advertising);
-		if (advertising) {
+		अगर (advertising) अणु
 
 			bp->link_params.speed_cap_mask[cfg_idx] = 0;
-			if (advertising & ADVERTISED_10baseT_Half) {
+			अगर (advertising & ADVERTISED_10baseT_Half) अणु
 				bp->link_params.speed_cap_mask[cfg_idx] |=
 				PORT_HW_CFG_SPEED_CAPABILITY_D0_10M_HALF;
-			}
-			if (advertising & ADVERTISED_10baseT_Full)
+			पूर्ण
+			अगर (advertising & ADVERTISED_10baseT_Full)
 				bp->link_params.speed_cap_mask[cfg_idx] |=
 				PORT_HW_CFG_SPEED_CAPABILITY_D0_10M_FULL;
 
-			if (advertising & ADVERTISED_100baseT_Full)
+			अगर (advertising & ADVERTISED_100baseT_Full)
 				bp->link_params.speed_cap_mask[cfg_idx] |=
 				PORT_HW_CFG_SPEED_CAPABILITY_D0_100M_FULL;
 
-			if (advertising & ADVERTISED_100baseT_Half) {
+			अगर (advertising & ADVERTISED_100baseT_Half) अणु
 				bp->link_params.speed_cap_mask[cfg_idx] |=
 				     PORT_HW_CFG_SPEED_CAPABILITY_D0_100M_HALF;
-			}
-			if (advertising & ADVERTISED_1000baseT_Half) {
+			पूर्ण
+			अगर (advertising & ADVERTISED_1000baseT_Half) अणु
 				bp->link_params.speed_cap_mask[cfg_idx] |=
 					PORT_HW_CFG_SPEED_CAPABILITY_D0_1G;
-			}
-			if (advertising & (ADVERTISED_1000baseT_Full |
+			पूर्ण
+			अगर (advertising & (ADVERTISED_1000baseT_Full |
 						ADVERTISED_1000baseKX_Full))
 				bp->link_params.speed_cap_mask[cfg_idx] |=
 					PORT_HW_CFG_SPEED_CAPABILITY_D0_1G;
 
-			if (advertising & (ADVERTISED_10000baseT_Full |
+			अगर (advertising & (ADVERTISED_10000baseT_Full |
 						ADVERTISED_10000baseKX4_Full |
 						ADVERTISED_10000baseKR_Full))
 				bp->link_params.speed_cap_mask[cfg_idx] |=
 					PORT_HW_CFG_SPEED_CAPABILITY_D0_10G;
 
-			if (advertising & ADVERTISED_20000baseKR2_Full)
+			अगर (advertising & ADVERTISED_20000baseKR2_Full)
 				bp->link_params.speed_cap_mask[cfg_idx] |=
 					PORT_HW_CFG_SPEED_CAPABILITY_D0_20G;
-		}
-	} else { /* forced speed */
-		/* advertise the requested speed and duplex if supported */
-		switch (speed) {
-		case SPEED_10:
-			if (duplex == DUPLEX_FULL) {
-				if (!(bp->port.supported[cfg_idx] &
-				      SUPPORTED_10baseT_Full)) {
+		पूर्ण
+	पूर्ण अन्यथा अणु /* क्रमced speed */
+		/* advertise the requested speed and duplex अगर supported */
+		चयन (speed) अणु
+		हाल SPEED_10:
+			अगर (duplex == DUPLEX_FULL) अणु
+				अगर (!(bp->port.supported[cfg_idx] &
+				      SUPPORTED_10baseT_Full)) अणु
 					DP(BNX2X_MSG_ETHTOOL,
 					   "10M full not supported\n");
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
 				advertising = (ADVERTISED_10baseT_Full |
 					       ADVERTISED_TP);
-			} else {
-				if (!(bp->port.supported[cfg_idx] &
-				      SUPPORTED_10baseT_Half)) {
+			पूर्ण अन्यथा अणु
+				अगर (!(bp->port.supported[cfg_idx] &
+				      SUPPORTED_10baseT_Half)) अणु
 					DP(BNX2X_MSG_ETHTOOL,
 					   "10M half not supported\n");
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
 				advertising = (ADVERTISED_10baseT_Half |
 					       ADVERTISED_TP);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case SPEED_100:
-			if (duplex == DUPLEX_FULL) {
-				if (!(bp->port.supported[cfg_idx] &
-						SUPPORTED_100baseT_Full)) {
+		हाल SPEED_100:
+			अगर (duplex == DUPLEX_FULL) अणु
+				अगर (!(bp->port.supported[cfg_idx] &
+						SUPPORTED_100baseT_Full)) अणु
 					DP(BNX2X_MSG_ETHTOOL,
 					   "100M full not supported\n");
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
 				advertising = (ADVERTISED_100baseT_Full |
 					       ADVERTISED_TP);
-			} else {
-				if (!(bp->port.supported[cfg_idx] &
-						SUPPORTED_100baseT_Half)) {
+			पूर्ण अन्यथा अणु
+				अगर (!(bp->port.supported[cfg_idx] &
+						SUPPORTED_100baseT_Half)) अणु
 					DP(BNX2X_MSG_ETHTOOL,
 					   "100M half not supported\n");
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
 				advertising = (ADVERTISED_100baseT_Half |
 					       ADVERTISED_TP);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case SPEED_1000:
-			if (duplex != DUPLEX_FULL) {
+		हाल SPEED_1000:
+			अगर (duplex != DUPLEX_FULL) अणु
 				DP(BNX2X_MSG_ETHTOOL,
 				   "1G half not supported\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (bp->port.supported[cfg_idx] &
-			     SUPPORTED_1000baseT_Full) {
+			अगर (bp->port.supported[cfg_idx] &
+			     SUPPORTED_1000baseT_Full) अणु
 				advertising = (ADVERTISED_1000baseT_Full |
 					       ADVERTISED_TP);
 
-			} else if (bp->port.supported[cfg_idx] &
-				   SUPPORTED_1000baseKX_Full) {
+			पूर्ण अन्यथा अगर (bp->port.supported[cfg_idx] &
+				   SUPPORTED_1000baseKX_Full) अणु
 				advertising = ADVERTISED_1000baseKX_Full;
-			} else {
+			पूर्ण अन्यथा अणु
 				DP(BNX2X_MSG_ETHTOOL,
 				   "1G full not supported\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case SPEED_2500:
-			if (duplex != DUPLEX_FULL) {
+		हाल SPEED_2500:
+			अगर (duplex != DUPLEX_FULL) अणु
 				DP(BNX2X_MSG_ETHTOOL,
 				   "2.5G half not supported\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (!(bp->port.supported[cfg_idx]
-			      & SUPPORTED_2500baseX_Full)) {
+			अगर (!(bp->port.supported[cfg_idx]
+			      & SUPPORTED_2500baseX_Full)) अणु
 				DP(BNX2X_MSG_ETHTOOL,
 				   "2.5G full not supported\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			advertising = (ADVERTISED_2500baseX_Full |
 				       ADVERTISED_TP);
-			break;
+			अवरोध;
 
-		case SPEED_10000:
-			if (duplex != DUPLEX_FULL) {
+		हाल SPEED_10000:
+			अगर (duplex != DUPLEX_FULL) अणु
 				DP(BNX2X_MSG_ETHTOOL,
 				   "10G half not supported\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			phy_idx = bnx2x_get_cur_phy_idx(bp);
-			if ((bp->port.supported[cfg_idx] &
+			अगर ((bp->port.supported[cfg_idx] &
 			     SUPPORTED_10000baseT_Full) &&
 			    (bp->link_params.phy[phy_idx].media_type !=
-			     ETH_PHY_SFP_1G_FIBER)) {
+			     ETH_PHY_SFP_1G_FIBER)) अणु
 				advertising = (ADVERTISED_10000baseT_Full |
 					       ADVERTISED_FIBRE);
-			} else if (bp->port.supported[cfg_idx] &
-			       SUPPORTED_10000baseKR_Full) {
+			पूर्ण अन्यथा अगर (bp->port.supported[cfg_idx] &
+			       SUPPORTED_10000baseKR_Full) अणु
 				advertising = (ADVERTISED_10000baseKR_Full |
 					       ADVERTISED_FIBRE);
-			} else {
+			पूर्ण अन्यथा अणु
 				DP(BNX2X_MSG_ETHTOOL,
 				   "10G full not supported\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			DP(BNX2X_MSG_ETHTOOL, "Unsupported speed %u\n", speed);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		bp->link_params.req_line_speed[cfg_idx] = speed;
 		bp->link_params.req_duplex[cfg_idx] = duplex;
 		bp->port.advertising[cfg_idx] = advertising;
-	}
+	पूर्ण
 
 	DP(BNX2X_MSG_ETHTOOL, "req_line_speed %d\n"
 	   "  req_duplex %d  advertising 0x%x\n",
@@ -677,373 +678,373 @@ static int bnx2x_set_link_ksettings(struct net_device *dev,
 
 	/* Set new config */
 	bp->link_params.multi_phy_config = new_multi_phy_config;
-	if (netif_running(dev)) {
+	अगर (netअगर_running(dev)) अणु
 		bnx2x_stats_handle(bp, STATS_EVENT_STOP);
-		bnx2x_force_link_reset(bp);
+		bnx2x_क्रमce_link_reset(bp);
 		bnx2x_link_set(bp);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define DUMP_ALL_PRESETS		0x1FFF
-#define DUMP_MAX_PRESETS		13
+#घोषणा DUMP_ALL_PRESETS		0x1FFF
+#घोषणा DUMP_MAX_PRESETS		13
 
-static int __bnx2x_get_preset_regs_len(struct bnx2x *bp, u32 preset)
-{
-	if (CHIP_IS_E1(bp))
-		return dump_num_registers[0][preset-1];
-	else if (CHIP_IS_E1H(bp))
-		return dump_num_registers[1][preset-1];
-	else if (CHIP_IS_E2(bp))
-		return dump_num_registers[2][preset-1];
-	else if (CHIP_IS_E3A0(bp))
-		return dump_num_registers[3][preset-1];
-	else if (CHIP_IS_E3B0(bp))
-		return dump_num_registers[4][preset-1];
-	else
-		return 0;
-}
+अटल पूर्णांक __bnx2x_get_preset_regs_len(काष्ठा bnx2x *bp, u32 preset)
+अणु
+	अगर (CHIP_IS_E1(bp))
+		वापस dump_num_रेजिस्टरs[0][preset-1];
+	अन्यथा अगर (CHIP_IS_E1H(bp))
+		वापस dump_num_रेजिस्टरs[1][preset-1];
+	अन्यथा अगर (CHIP_IS_E2(bp))
+		वापस dump_num_रेजिस्टरs[2][preset-1];
+	अन्यथा अगर (CHIP_IS_E3A0(bp))
+		वापस dump_num_रेजिस्टरs[3][preset-1];
+	अन्यथा अगर (CHIP_IS_E3B0(bp))
+		वापस dump_num_रेजिस्टरs[4][preset-1];
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int __bnx2x_get_regs_len(struct bnx2x *bp)
-{
+अटल पूर्णांक __bnx2x_get_regs_len(काष्ठा bnx2x *bp)
+अणु
 	u32 preset_idx;
-	int regdump_len = 0;
+	पूर्णांक regdump_len = 0;
 
 	/* Calculate the total preset regs length */
-	for (preset_idx = 1; preset_idx <= DUMP_MAX_PRESETS; preset_idx++)
+	क्रम (preset_idx = 1; preset_idx <= DUMP_MAX_PRESETS; preset_idx++)
 		regdump_len += __bnx2x_get_preset_regs_len(bp, preset_idx);
 
-	return regdump_len;
-}
+	वापस regdump_len;
+पूर्ण
 
-static int bnx2x_get_regs_len(struct net_device *dev)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	int regdump_len = 0;
+अटल पूर्णांक bnx2x_get_regs_len(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	पूर्णांक regdump_len = 0;
 
-	if (IS_VF(bp))
-		return 0;
+	अगर (IS_VF(bp))
+		वापस 0;
 
 	regdump_len = __bnx2x_get_regs_len(bp);
 	regdump_len *= 4;
-	regdump_len += sizeof(struct dump_header);
+	regdump_len += माप(काष्ठा dump_header);
 
-	return regdump_len;
-}
+	वापस regdump_len;
+पूर्ण
 
-#define IS_E1_REG(chips)	((chips & DUMP_CHIP_E1) == DUMP_CHIP_E1)
-#define IS_E1H_REG(chips)	((chips & DUMP_CHIP_E1H) == DUMP_CHIP_E1H)
-#define IS_E2_REG(chips)	((chips & DUMP_CHIP_E2) == DUMP_CHIP_E2)
-#define IS_E3A0_REG(chips)	((chips & DUMP_CHIP_E3A0) == DUMP_CHIP_E3A0)
-#define IS_E3B0_REG(chips)	((chips & DUMP_CHIP_E3B0) == DUMP_CHIP_E3B0)
+#घोषणा IS_E1_REG(chips)	((chips & DUMP_CHIP_E1) == DUMP_CHIP_E1)
+#घोषणा IS_E1H_REG(chips)	((chips & DUMP_CHIP_E1H) == DUMP_CHIP_E1H)
+#घोषणा IS_E2_REG(chips)	((chips & DUMP_CHIP_E2) == DUMP_CHIP_E2)
+#घोषणा IS_E3A0_REG(chips)	((chips & DUMP_CHIP_E3A0) == DUMP_CHIP_E3A0)
+#घोषणा IS_E3B0_REG(chips)	((chips & DUMP_CHIP_E3B0) == DUMP_CHIP_E3B0)
 
-#define IS_REG_IN_PRESET(presets, idx)  \
+#घोषणा IS_REG_IN_PRESET(presets, idx)  \
 		((presets & (1 << (idx-1))) == (1 << (idx-1)))
 
-/******* Paged registers info selectors ********/
-static const u32 *__bnx2x_get_page_addr_ar(struct bnx2x *bp)
-{
-	if (CHIP_IS_E2(bp))
-		return page_vals_e2;
-	else if (CHIP_IS_E3(bp))
-		return page_vals_e3;
-	else
-		return NULL;
-}
+/******* Paged रेजिस्टरs info selectors ********/
+अटल स्थिर u32 *__bnx2x_get_page_addr_ar(काष्ठा bnx2x *bp)
+अणु
+	अगर (CHIP_IS_E2(bp))
+		वापस page_vals_e2;
+	अन्यथा अगर (CHIP_IS_E3(bp))
+		वापस page_vals_e3;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-static u32 __bnx2x_get_page_reg_num(struct bnx2x *bp)
-{
-	if (CHIP_IS_E2(bp))
-		return PAGE_MODE_VALUES_E2;
-	else if (CHIP_IS_E3(bp))
-		return PAGE_MODE_VALUES_E3;
-	else
-		return 0;
-}
+अटल u32 __bnx2x_get_page_reg_num(काष्ठा bnx2x *bp)
+अणु
+	अगर (CHIP_IS_E2(bp))
+		वापस PAGE_MODE_VALUES_E2;
+	अन्यथा अगर (CHIP_IS_E3(bp))
+		वापस PAGE_MODE_VALUES_E3;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static const u32 *__bnx2x_get_page_write_ar(struct bnx2x *bp)
-{
-	if (CHIP_IS_E2(bp))
-		return page_write_regs_e2;
-	else if (CHIP_IS_E3(bp))
-		return page_write_regs_e3;
-	else
-		return NULL;
-}
+अटल स्थिर u32 *__bnx2x_get_page_ग_लिखो_ar(काष्ठा bnx2x *bp)
+अणु
+	अगर (CHIP_IS_E2(bp))
+		वापस page_ग_लिखो_regs_e2;
+	अन्यथा अगर (CHIP_IS_E3(bp))
+		वापस page_ग_लिखो_regs_e3;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-static u32 __bnx2x_get_page_write_num(struct bnx2x *bp)
-{
-	if (CHIP_IS_E2(bp))
-		return PAGE_WRITE_REGS_E2;
-	else if (CHIP_IS_E3(bp))
-		return PAGE_WRITE_REGS_E3;
-	else
-		return 0;
-}
+अटल u32 __bnx2x_get_page_ग_लिखो_num(काष्ठा bnx2x *bp)
+अणु
+	अगर (CHIP_IS_E2(bp))
+		वापस PAGE_WRITE_REGS_E2;
+	अन्यथा अगर (CHIP_IS_E3(bp))
+		वापस PAGE_WRITE_REGS_E3;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static const struct reg_addr *__bnx2x_get_page_read_ar(struct bnx2x *bp)
-{
-	if (CHIP_IS_E2(bp))
-		return page_read_regs_e2;
-	else if (CHIP_IS_E3(bp))
-		return page_read_regs_e3;
-	else
-		return NULL;
-}
+अटल स्थिर काष्ठा reg_addr *__bnx2x_get_page_पढ़ो_ar(काष्ठा bnx2x *bp)
+अणु
+	अगर (CHIP_IS_E2(bp))
+		वापस page_पढ़ो_regs_e2;
+	अन्यथा अगर (CHIP_IS_E3(bp))
+		वापस page_पढ़ो_regs_e3;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-static u32 __bnx2x_get_page_read_num(struct bnx2x *bp)
-{
-	if (CHIP_IS_E2(bp))
-		return PAGE_READ_REGS_E2;
-	else if (CHIP_IS_E3(bp))
-		return PAGE_READ_REGS_E3;
-	else
-		return 0;
-}
+अटल u32 __bnx2x_get_page_पढ़ो_num(काष्ठा bnx2x *bp)
+अणु
+	अगर (CHIP_IS_E2(bp))
+		वापस PAGE_READ_REGS_E2;
+	अन्यथा अगर (CHIP_IS_E3(bp))
+		वापस PAGE_READ_REGS_E3;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static bool bnx2x_is_reg_in_chip(struct bnx2x *bp,
-				       const struct reg_addr *reg_info)
-{
-	if (CHIP_IS_E1(bp))
-		return IS_E1_REG(reg_info->chips);
-	else if (CHIP_IS_E1H(bp))
-		return IS_E1H_REG(reg_info->chips);
-	else if (CHIP_IS_E2(bp))
-		return IS_E2_REG(reg_info->chips);
-	else if (CHIP_IS_E3A0(bp))
-		return IS_E3A0_REG(reg_info->chips);
-	else if (CHIP_IS_E3B0(bp))
-		return IS_E3B0_REG(reg_info->chips);
-	else
-		return false;
-}
+अटल bool bnx2x_is_reg_in_chip(काष्ठा bnx2x *bp,
+				       स्थिर काष्ठा reg_addr *reg_info)
+अणु
+	अगर (CHIP_IS_E1(bp))
+		वापस IS_E1_REG(reg_info->chips);
+	अन्यथा अगर (CHIP_IS_E1H(bp))
+		वापस IS_E1H_REG(reg_info->chips);
+	अन्यथा अगर (CHIP_IS_E2(bp))
+		वापस IS_E2_REG(reg_info->chips);
+	अन्यथा अगर (CHIP_IS_E3A0(bp))
+		वापस IS_E3A0_REG(reg_info->chips);
+	अन्यथा अगर (CHIP_IS_E3B0(bp))
+		वापस IS_E3B0_REG(reg_info->chips);
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static bool bnx2x_is_wreg_in_chip(struct bnx2x *bp,
-	const struct wreg_addr *wreg_info)
-{
-	if (CHIP_IS_E1(bp))
-		return IS_E1_REG(wreg_info->chips);
-	else if (CHIP_IS_E1H(bp))
-		return IS_E1H_REG(wreg_info->chips);
-	else if (CHIP_IS_E2(bp))
-		return IS_E2_REG(wreg_info->chips);
-	else if (CHIP_IS_E3A0(bp))
-		return IS_E3A0_REG(wreg_info->chips);
-	else if (CHIP_IS_E3B0(bp))
-		return IS_E3B0_REG(wreg_info->chips);
-	else
-		return false;
-}
+अटल bool bnx2x_is_wreg_in_chip(काष्ठा bnx2x *bp,
+	स्थिर काष्ठा wreg_addr *wreg_info)
+अणु
+	अगर (CHIP_IS_E1(bp))
+		वापस IS_E1_REG(wreg_info->chips);
+	अन्यथा अगर (CHIP_IS_E1H(bp))
+		वापस IS_E1H_REG(wreg_info->chips);
+	अन्यथा अगर (CHIP_IS_E2(bp))
+		वापस IS_E2_REG(wreg_info->chips);
+	अन्यथा अगर (CHIP_IS_E3A0(bp))
+		वापस IS_E3A0_REG(wreg_info->chips);
+	अन्यथा अगर (CHIP_IS_E3B0(bp))
+		वापस IS_E3B0_REG(wreg_info->chips);
+	अन्यथा
+		वापस false;
+पूर्ण
 
 /**
- * bnx2x_read_pages_regs - read "paged" registers
+ * bnx2x_पढ़ो_pages_regs - पढ़ो "paged" रेजिस्टरs
  *
  * @bp:		device handle
  * @p:		output buffer
  * @preset:	the preset value
  *
- * Reads "paged" memories: memories that may only be read by first writing to a
- * specific address ("write address") and then reading from a specific address
- * ("read address"). There may be more than one write address per "page" and
- * more than one read address per write address.
+ * Reads "paged" memories: memories that may only be पढ़ो by first writing to a
+ * specअगरic address ("write address") and then पढ़ोing from a specअगरic address
+ * ("read address"). There may be more than one ग_लिखो address per "page" and
+ * more than one पढ़ो address per ग_लिखो address.
  */
-static void bnx2x_read_pages_regs(struct bnx2x *bp, u32 *p, u32 preset)
-{
+अटल व्योम bnx2x_पढ़ो_pages_regs(काष्ठा bnx2x *bp, u32 *p, u32 preset)
+अणु
 	u32 i, j, k, n;
 
-	/* addresses of the paged registers */
-	const u32 *page_addr = __bnx2x_get_page_addr_ar(bp);
-	/* number of paged registers */
-	int num_pages = __bnx2x_get_page_reg_num(bp);
-	/* write addresses */
-	const u32 *write_addr = __bnx2x_get_page_write_ar(bp);
-	/* number of write addresses */
-	int write_num = __bnx2x_get_page_write_num(bp);
-	/* read addresses info */
-	const struct reg_addr *read_addr = __bnx2x_get_page_read_ar(bp);
-	/* number of read addresses */
-	int read_num = __bnx2x_get_page_read_num(bp);
+	/* addresses of the paged रेजिस्टरs */
+	स्थिर u32 *page_addr = __bnx2x_get_page_addr_ar(bp);
+	/* number of paged रेजिस्टरs */
+	पूर्णांक num_pages = __bnx2x_get_page_reg_num(bp);
+	/* ग_लिखो addresses */
+	स्थिर u32 *ग_लिखो_addr = __bnx2x_get_page_ग_लिखो_ar(bp);
+	/* number of ग_लिखो addresses */
+	पूर्णांक ग_लिखो_num = __bnx2x_get_page_ग_लिखो_num(bp);
+	/* पढ़ो addresses info */
+	स्थिर काष्ठा reg_addr *पढ़ो_addr = __bnx2x_get_page_पढ़ो_ar(bp);
+	/* number of पढ़ो addresses */
+	पूर्णांक पढ़ो_num = __bnx2x_get_page_पढ़ो_num(bp);
 	u32 addr, size;
 
-	for (i = 0; i < num_pages; i++) {
-		for (j = 0; j < write_num; j++) {
-			REG_WR(bp, write_addr[j], page_addr[i]);
+	क्रम (i = 0; i < num_pages; i++) अणु
+		क्रम (j = 0; j < ग_लिखो_num; j++) अणु
+			REG_WR(bp, ग_लिखो_addr[j], page_addr[i]);
 
-			for (k = 0; k < read_num; k++) {
-				if (IS_REG_IN_PRESET(read_addr[k].presets,
-						     preset)) {
-					size = read_addr[k].size;
-					for (n = 0; n < size; n++) {
-						addr = read_addr[k].addr + n*4;
+			क्रम (k = 0; k < पढ़ो_num; k++) अणु
+				अगर (IS_REG_IN_PRESET(पढ़ो_addr[k].presets,
+						     preset)) अणु
+					size = पढ़ो_addr[k].size;
+					क्रम (n = 0; n < size; n++) अणु
+						addr = पढ़ो_addr[k].addr + n*4;
 						*p++ = REG_RD(bp, addr);
-					}
-				}
-			}
-		}
-	}
-}
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int __bnx2x_get_preset_regs(struct bnx2x *bp, u32 *p, u32 preset)
-{
+अटल पूर्णांक __bnx2x_get_preset_regs(काष्ठा bnx2x *bp, u32 *p, u32 preset)
+अणु
 	u32 i, j, addr;
-	const struct wreg_addr *wreg_addr_p = NULL;
+	स्थिर काष्ठा wreg_addr *wreg_addr_p = शून्य;
 
-	if (CHIP_IS_E1(bp))
+	अगर (CHIP_IS_E1(bp))
 		wreg_addr_p = &wreg_addr_e1;
-	else if (CHIP_IS_E1H(bp))
+	अन्यथा अगर (CHIP_IS_E1H(bp))
 		wreg_addr_p = &wreg_addr_e1h;
-	else if (CHIP_IS_E2(bp))
+	अन्यथा अगर (CHIP_IS_E2(bp))
 		wreg_addr_p = &wreg_addr_e2;
-	else if (CHIP_IS_E3A0(bp))
+	अन्यथा अगर (CHIP_IS_E3A0(bp))
 		wreg_addr_p = &wreg_addr_e3;
-	else if (CHIP_IS_E3B0(bp))
+	अन्यथा अगर (CHIP_IS_E3B0(bp))
 		wreg_addr_p = &wreg_addr_e3b0;
 
-	/* Read the idle_chk registers */
-	for (i = 0; i < IDLE_REGS_COUNT; i++) {
-		if (bnx2x_is_reg_in_chip(bp, &idle_reg_addrs[i]) &&
-		    IS_REG_IN_PRESET(idle_reg_addrs[i].presets, preset)) {
-			for (j = 0; j < idle_reg_addrs[i].size; j++)
+	/* Read the idle_chk रेजिस्टरs */
+	क्रम (i = 0; i < IDLE_REGS_COUNT; i++) अणु
+		अगर (bnx2x_is_reg_in_chip(bp, &idle_reg_addrs[i]) &&
+		    IS_REG_IN_PRESET(idle_reg_addrs[i].presets, preset)) अणु
+			क्रम (j = 0; j < idle_reg_addrs[i].size; j++)
 				*p++ = REG_RD(bp, idle_reg_addrs[i].addr + j*4);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Read the regular registers */
-	for (i = 0; i < REGS_COUNT; i++) {
-		if (bnx2x_is_reg_in_chip(bp, &reg_addrs[i]) &&
-		    IS_REG_IN_PRESET(reg_addrs[i].presets, preset)) {
-			for (j = 0; j < reg_addrs[i].size; j++)
+	/* Read the regular रेजिस्टरs */
+	क्रम (i = 0; i < REGS_COUNT; i++) अणु
+		अगर (bnx2x_is_reg_in_chip(bp, &reg_addrs[i]) &&
+		    IS_REG_IN_PRESET(reg_addrs[i].presets, preset)) अणु
+			क्रम (j = 0; j < reg_addrs[i].size; j++)
 				*p++ = REG_RD(bp, reg_addrs[i].addr + j*4);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Read the CAM registers */
-	if (bnx2x_is_wreg_in_chip(bp, wreg_addr_p) &&
-	    IS_REG_IN_PRESET(wreg_addr_p->presets, preset)) {
-		for (i = 0; i < wreg_addr_p->size; i++) {
+	/* Read the CAM रेजिस्टरs */
+	अगर (bnx2x_is_wreg_in_chip(bp, wreg_addr_p) &&
+	    IS_REG_IN_PRESET(wreg_addr_p->presets, preset)) अणु
+		क्रम (i = 0; i < wreg_addr_p->size; i++) अणु
 			*p++ = REG_RD(bp, wreg_addr_p->addr + i*4);
 
-			/* In case of wreg_addr register, read additional
-			   registers from read_regs array
+			/* In हाल of wreg_addr रेजिस्टर, पढ़ो additional
+			   रेजिस्टरs from पढ़ो_regs array
 			*/
-			for (j = 0; j < wreg_addr_p->read_regs_count; j++) {
-				addr = *(wreg_addr_p->read_regs);
+			क्रम (j = 0; j < wreg_addr_p->पढ़ो_regs_count; j++) अणु
+				addr = *(wreg_addr_p->पढ़ो_regs);
 				*p++ = REG_RD(bp, addr + j*4);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Paged registers are supported in E2 & E3 only */
-	if (CHIP_IS_E2(bp) || CHIP_IS_E3(bp)) {
-		/* Read "paged" registers */
-		bnx2x_read_pages_regs(bp, p, preset);
-	}
+	/* Paged रेजिस्टरs are supported in E2 & E3 only */
+	अगर (CHIP_IS_E2(bp) || CHIP_IS_E3(bp)) अणु
+		/* Read "paged" रेजिस्टरs */
+		bnx2x_पढ़ो_pages_regs(bp, p, preset);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __bnx2x_get_regs(struct bnx2x *bp, u32 *p)
-{
+अटल व्योम __bnx2x_get_regs(काष्ठा bnx2x *bp, u32 *p)
+अणु
 	u32 preset_idx;
 
-	/* Read all registers, by reading all preset registers */
-	for (preset_idx = 1; preset_idx <= DUMP_MAX_PRESETS; preset_idx++) {
+	/* Read all रेजिस्टरs, by पढ़ोing all preset रेजिस्टरs */
+	क्रम (preset_idx = 1; preset_idx <= DUMP_MAX_PRESETS; preset_idx++) अणु
 		/* Skip presets with IOR */
-		if ((preset_idx == 2) ||
+		अगर ((preset_idx == 2) ||
 		    (preset_idx == 5) ||
 		    (preset_idx == 8) ||
 		    (preset_idx == 11))
-			continue;
+			जारी;
 		__bnx2x_get_preset_regs(bp, p, preset_idx);
 		p += __bnx2x_get_preset_regs_len(bp, preset_idx);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnx2x_get_regs(struct net_device *dev,
-			   struct ethtool_regs *regs, void *_p)
-{
+अटल व्योम bnx2x_get_regs(काष्ठा net_device *dev,
+			   काष्ठा ethtool_regs *regs, व्योम *_p)
+अणु
 	u32 *p = _p;
-	struct bnx2x *bp = netdev_priv(dev);
-	struct dump_header dump_hdr = {0};
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	काष्ठा dump_header dump_hdr = अणु0पूर्ण;
 
 	regs->version = 2;
-	memset(p, 0, regs->len);
+	स_रखो(p, 0, regs->len);
 
-	if (!netif_running(bp->dev))
-		return;
+	अगर (!netअगर_running(bp->dev))
+		वापस;
 
-	/* Disable parity attentions as long as following dump may
-	 * cause false alarms by reading never written registers. We
+	/* Disable parity attentions as दीर्घ as following dump may
+	 * cause false alarms by पढ़ोing never written रेजिस्टरs. We
 	 * will re-enable parity attentions right after the dump.
 	 */
 
 	bnx2x_disable_blocks_parity(bp);
 
-	dump_hdr.header_size = (sizeof(struct dump_header) / 4) - 1;
+	dump_hdr.header_size = (माप(काष्ठा dump_header) / 4) - 1;
 	dump_hdr.preset = DUMP_ALL_PRESETS;
 	dump_hdr.version = BNX2X_DUMP_VERSION;
 
 	/* dump_meta_data presents OR of CHIP and PATH. */
-	if (CHIP_IS_E1(bp)) {
+	अगर (CHIP_IS_E1(bp)) अणु
 		dump_hdr.dump_meta_data = DUMP_CHIP_E1;
-	} else if (CHIP_IS_E1H(bp)) {
+	पूर्ण अन्यथा अगर (CHIP_IS_E1H(bp)) अणु
 		dump_hdr.dump_meta_data = DUMP_CHIP_E1H;
-	} else if (CHIP_IS_E2(bp)) {
+	पूर्ण अन्यथा अगर (CHIP_IS_E2(bp)) अणु
 		dump_hdr.dump_meta_data = DUMP_CHIP_E2 |
 		(BP_PATH(bp) ? DUMP_PATH_1 : DUMP_PATH_0);
-	} else if (CHIP_IS_E3A0(bp)) {
+	पूर्ण अन्यथा अगर (CHIP_IS_E3A0(bp)) अणु
 		dump_hdr.dump_meta_data = DUMP_CHIP_E3A0 |
 		(BP_PATH(bp) ? DUMP_PATH_1 : DUMP_PATH_0);
-	} else if (CHIP_IS_E3B0(bp)) {
+	पूर्ण अन्यथा अगर (CHIP_IS_E3B0(bp)) अणु
 		dump_hdr.dump_meta_data = DUMP_CHIP_E3B0 |
 		(BP_PATH(bp) ? DUMP_PATH_1 : DUMP_PATH_0);
-	}
+	पूर्ण
 
-	memcpy(p, &dump_hdr, sizeof(struct dump_header));
+	स_नकल(p, &dump_hdr, माप(काष्ठा dump_header));
 	p += dump_hdr.header_size + 1;
 
 	/* This isn't really an error, but since attention handling is going
-	 * to print the GRC timeouts using this macro, we use the same.
+	 * to prपूर्णांक the GRC समयouts using this macro, we use the same.
 	 */
 	BNX2X_ERR("Generating register dump. Might trigger harmless GRC timeouts\n");
 
-	/* Actually read the registers */
+	/* Actually पढ़ो the रेजिस्टरs */
 	__bnx2x_get_regs(bp, p);
 
 	/* Re-enable parity attentions */
 	bnx2x_clear_blocks_parity(bp);
 	bnx2x_enable_blocks_parity(bp);
-}
+पूर्ण
 
-static int bnx2x_get_preset_regs_len(struct net_device *dev, u32 preset)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	int regdump_len = 0;
+अटल पूर्णांक bnx2x_get_preset_regs_len(काष्ठा net_device *dev, u32 preset)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	पूर्णांक regdump_len = 0;
 
 	regdump_len = __bnx2x_get_preset_regs_len(bp, preset);
 	regdump_len *= 4;
-	regdump_len += sizeof(struct dump_header);
+	regdump_len += माप(काष्ठा dump_header);
 
-	return regdump_len;
-}
+	वापस regdump_len;
+पूर्ण
 
-static int bnx2x_set_dump(struct net_device *dev, struct ethtool_dump *val)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_set_dump(काष्ठा net_device *dev, काष्ठा ethtool_dump *val)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
 	/* Use the ethtool_dump "flag" field as the dump preset index */
-	if (val->flag < 1 || val->flag > DUMP_MAX_PRESETS)
-		return -EINVAL;
+	अगर (val->flag < 1 || val->flag > DUMP_MAX_PRESETS)
+		वापस -EINVAL;
 
 	bp->dump_preset_idx = val->flag;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_get_dump_flag(struct net_device *dev,
-			       struct ethtool_dump *dump)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_get_dump_flag(काष्ठा net_device *dev,
+			       काष्ठा ethtool_dump *dump)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
 	dump->version = BNX2X_DUMP_VERSION;
 	dump->flag = bp->dump_preset_idx;
@@ -1051,301 +1052,301 @@ static int bnx2x_get_dump_flag(struct net_device *dev,
 	dump->len = bnx2x_get_preset_regs_len(dev, bp->dump_preset_idx);
 	DP(BNX2X_MSG_ETHTOOL, "Get dump preset %d length=%d\n",
 	   bp->dump_preset_idx, dump->len);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_get_dump_data(struct net_device *dev,
-			       struct ethtool_dump *dump,
-			       void *buffer)
-{
+अटल पूर्णांक bnx2x_get_dump_data(काष्ठा net_device *dev,
+			       काष्ठा ethtool_dump *dump,
+			       व्योम *buffer)
+अणु
 	u32 *p = buffer;
-	struct bnx2x *bp = netdev_priv(dev);
-	struct dump_header dump_hdr = {0};
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	काष्ठा dump_header dump_hdr = अणु0पूर्ण;
 
-	/* Disable parity attentions as long as following dump may
-	 * cause false alarms by reading never written registers. We
+	/* Disable parity attentions as दीर्घ as following dump may
+	 * cause false alarms by पढ़ोing never written रेजिस्टरs. We
 	 * will re-enable parity attentions right after the dump.
 	 */
 
 	bnx2x_disable_blocks_parity(bp);
 
-	dump_hdr.header_size = (sizeof(struct dump_header) / 4) - 1;
+	dump_hdr.header_size = (माप(काष्ठा dump_header) / 4) - 1;
 	dump_hdr.preset = bp->dump_preset_idx;
 	dump_hdr.version = BNX2X_DUMP_VERSION;
 
 	DP(BNX2X_MSG_ETHTOOL, "Get dump data of preset %d\n", dump_hdr.preset);
 
 	/* dump_meta_data presents OR of CHIP and PATH. */
-	if (CHIP_IS_E1(bp)) {
+	अगर (CHIP_IS_E1(bp)) अणु
 		dump_hdr.dump_meta_data = DUMP_CHIP_E1;
-	} else if (CHIP_IS_E1H(bp)) {
+	पूर्ण अन्यथा अगर (CHIP_IS_E1H(bp)) अणु
 		dump_hdr.dump_meta_data = DUMP_CHIP_E1H;
-	} else if (CHIP_IS_E2(bp)) {
+	पूर्ण अन्यथा अगर (CHIP_IS_E2(bp)) अणु
 		dump_hdr.dump_meta_data = DUMP_CHIP_E2 |
 		(BP_PATH(bp) ? DUMP_PATH_1 : DUMP_PATH_0);
-	} else if (CHIP_IS_E3A0(bp)) {
+	पूर्ण अन्यथा अगर (CHIP_IS_E3A0(bp)) अणु
 		dump_hdr.dump_meta_data = DUMP_CHIP_E3A0 |
 		(BP_PATH(bp) ? DUMP_PATH_1 : DUMP_PATH_0);
-	} else if (CHIP_IS_E3B0(bp)) {
+	पूर्ण अन्यथा अगर (CHIP_IS_E3B0(bp)) अणु
 		dump_hdr.dump_meta_data = DUMP_CHIP_E3B0 |
 		(BP_PATH(bp) ? DUMP_PATH_1 : DUMP_PATH_0);
-	}
+	पूर्ण
 
-	memcpy(p, &dump_hdr, sizeof(struct dump_header));
+	स_नकल(p, &dump_hdr, माप(काष्ठा dump_header));
 	p += dump_hdr.header_size + 1;
 
-	/* Actually read the registers */
+	/* Actually पढ़ो the रेजिस्टरs */
 	__bnx2x_get_preset_regs(bp, p, dump_hdr.preset);
 
 	/* Re-enable parity attentions */
 	bnx2x_clear_blocks_parity(bp);
 	bnx2x_enable_blocks_parity(bp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnx2x_get_drvinfo(struct net_device *dev,
-			      struct ethtool_drvinfo *info)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	char version[ETHTOOL_FWVERS_LEN];
-	int ext_dev_info_offset;
+अटल व्योम bnx2x_get_drvinfo(काष्ठा net_device *dev,
+			      काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	अक्षर version[ETHTOOL_FWVERS_LEN];
+	पूर्णांक ext_dev_info_offset;
 	u32 mbi;
 
-	strlcpy(info->driver, DRV_MODULE_NAME, sizeof(info->driver));
+	strlcpy(info->driver, DRV_MODULE_NAME, माप(info->driver));
 
-	if (SHMEM2_HAS(bp, extended_dev_info_shared_addr)) {
+	अगर (SHMEM2_HAS(bp, extended_dev_info_shared_addr)) अणु
 		ext_dev_info_offset = SHMEM2_RD(bp,
 						extended_dev_info_shared_addr);
 		mbi = REG_RD(bp, ext_dev_info_offset +
-			     offsetof(struct extended_dev_info_shared_cfg,
+			     दुरत्व(काष्ठा extended_dev_info_shared_cfg,
 				      mbi_version));
-		if (mbi) {
-			memset(version, 0, sizeof(version));
-			snprintf(version, ETHTOOL_FWVERS_LEN, "mbi %d.%d.%d ",
+		अगर (mbi) अणु
+			स_रखो(version, 0, माप(version));
+			snम_लिखो(version, ETHTOOL_FWVERS_LEN, "mbi %d.%d.%d ",
 				 (mbi & 0xff000000) >> 24,
 				 (mbi & 0x00ff0000) >> 16,
 				 (mbi & 0x0000ff00) >> 8);
 			strlcpy(info->fw_version, version,
-				sizeof(info->fw_version));
-		}
-	}
+				माप(info->fw_version));
+		पूर्ण
+	पूर्ण
 
-	memset(version, 0, sizeof(version));
+	स_रखो(version, 0, माप(version));
 	bnx2x_fill_fw_str(bp, version, ETHTOOL_FWVERS_LEN);
-	strlcat(info->fw_version, version, sizeof(info->fw_version));
+	strlcat(info->fw_version, version, माप(info->fw_version));
 
-	strlcpy(info->bus_info, pci_name(bp->pdev), sizeof(info->bus_info));
-}
+	strlcpy(info->bus_info, pci_name(bp->pdev), माप(info->bus_info));
+पूर्ण
 
-static void bnx2x_get_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल व्योम bnx2x_get_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	if (bp->flags & NO_WOL_FLAG) {
+	अगर (bp->flags & NO_WOL_FLAG) अणु
 		wol->supported = 0;
 		wol->wolopts = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		wol->supported = WAKE_MAGIC;
-		if (bp->wol)
+		अगर (bp->wol)
 			wol->wolopts = WAKE_MAGIC;
-		else
+		अन्यथा
 			wol->wolopts = 0;
-	}
-	memset(&wol->sopass, 0, sizeof(wol->sopass));
-}
+	पूर्ण
+	स_रखो(&wol->sopass, 0, माप(wol->sopass));
+पूर्ण
 
-static int bnx2x_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_set_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	if (wol->wolopts & ~WAKE_MAGIC) {
+	अगर (wol->wolopts & ~WAKE_MAGIC) अणु
 		DP(BNX2X_MSG_ETHTOOL, "WOL not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (wol->wolopts & WAKE_MAGIC) {
-		if (bp->flags & NO_WOL_FLAG) {
+	अगर (wol->wolopts & WAKE_MAGIC) अणु
+		अगर (bp->flags & NO_WOL_FLAG) अणु
 			DP(BNX2X_MSG_ETHTOOL, "WOL not supported\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		bp->wol = 1;
-	} else
+	पूर्ण अन्यथा
 		bp->wol = 0;
 
-	if (SHMEM2_HAS(bp, curr_cfg))
+	अगर (SHMEM2_HAS(bp, curr_cfg))
 		SHMEM2_WR(bp, curr_cfg, CURR_CFG_MET_OS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 bnx2x_get_msglevel(struct net_device *dev)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल u32 bnx2x_get_msglevel(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	return bp->msg_enable;
-}
+	वापस bp->msg_enable;
+पूर्ण
 
-static void bnx2x_set_msglevel(struct net_device *dev, u32 level)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल व्योम bnx2x_set_msglevel(काष्ठा net_device *dev, u32 level)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	if (capable(CAP_NET_ADMIN)) {
+	अगर (capable(CAP_NET_ADMIN)) अणु
 		/* dump MCP trace */
-		if (IS_PF(bp) && (level & BNX2X_MSG_MCP))
+		अगर (IS_PF(bp) && (level & BNX2X_MSG_MCP))
 			bnx2x_fw_dump_lvl(bp, KERN_INFO);
 		bp->msg_enable = level;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnx2x_nway_reset(struct net_device *dev)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_nway_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	if (!bp->port.pmf)
-		return 0;
+	अगर (!bp->port.pmf)
+		वापस 0;
 
-	if (netif_running(dev)) {
+	अगर (netअगर_running(dev)) अणु
 		bnx2x_stats_handle(bp, STATS_EVENT_STOP);
-		bnx2x_force_link_reset(bp);
+		bnx2x_क्रमce_link_reset(bp);
 		bnx2x_link_set(bp);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 bnx2x_get_link(struct net_device *dev)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल u32 bnx2x_get_link(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	if (bp->flags & MF_FUNC_DIS || (bp->state != BNX2X_STATE_OPEN))
-		return 0;
+	अगर (bp->flags & MF_FUNC_DIS || (bp->state != BNX2X_STATE_OPEN))
+		वापस 0;
 
-	if (IS_VF(bp))
-		return !test_bit(BNX2X_LINK_REPORT_LINK_DOWN,
+	अगर (IS_VF(bp))
+		वापस !test_bit(BNX2X_LINK_REPORT_LINK_DOWN,
 				 &bp->vf_link_vars.link_report_flags);
 
-	return bp->link_vars.link_up;
-}
+	वापस bp->link_vars.link_up;
+पूर्ण
 
-static int bnx2x_get_eeprom_len(struct net_device *dev)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_get_eeprom_len(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	return bp->common.flash_size;
-}
+	वापस bp->common.flash_size;
+पूर्ण
 
-/* Per pf misc lock must be acquired before the per port mcp lock. Otherwise,
- * had we done things the other way around, if two pfs from the same port would
- * attempt to access nvram at the same time, we could run into a scenario such
+/* Per pf misc lock must be acquired beक्रमe the per port mcp lock. Otherwise,
+ * had we करोne things the other way around, अगर two pfs from the same port would
+ * attempt to access nvram at the same समय, we could run पूर्णांकo a scenario such
  * as:
  * pf A takes the port lock.
  * pf B succeeds in taking the same lock since they are from the same port.
- * pf A takes the per pf misc lock. Performs eeprom access.
+ * pf A takes the per pf misc lock. Perक्रमms eeprom access.
  * pf A finishes. Unlocks the per pf misc lock.
- * Pf B takes the lock and proceeds to perform it's own access.
- * pf A unlocks the per port lock, while pf B is still working (!).
+ * Pf B takes the lock and proceeds to perक्रमm it's own access.
+ * pf A unlocks the per port lock, जबतक pf B is still working (!).
  * mcp takes the per port lock and corrupts pf B's access (and/or has it's own
  * access corrupted by pf B)
  */
-static int bnx2x_acquire_nvram_lock(struct bnx2x *bp)
-{
-	int port = BP_PORT(bp);
-	int count, i;
+अटल पूर्णांक bnx2x_acquire_nvram_lock(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक port = BP_PORT(bp);
+	पूर्णांक count, i;
 	u32 val;
 
 	/* acquire HW lock: protect against other PFs in PF Direct Assignment */
 	bnx2x_acquire_hw_lock(bp, HW_LOCK_RESOURCE_NVRAM);
 
-	/* adjust timeout for emulation/FPGA */
+	/* adjust समयout क्रम emulation/FPGA */
 	count = BNX2X_NVRAM_TIMEOUT_COUNT;
-	if (CHIP_REV_IS_SLOW(bp))
+	अगर (CHIP_REV_IS_SLOW(bp))
 		count *= 100;
 
-	/* request access to nvram interface */
+	/* request access to nvram पूर्णांकerface */
 	REG_WR(bp, MCP_REG_MCPR_NVM_SW_ARB,
 	       (MCPR_NVM_SW_ARB_ARB_REQ_SET1 << port));
 
-	for (i = 0; i < count*10; i++) {
+	क्रम (i = 0; i < count*10; i++) अणु
 		val = REG_RD(bp, MCP_REG_MCPR_NVM_SW_ARB);
-		if (val & (MCPR_NVM_SW_ARB_ARB_ARB1 << port))
-			break;
+		अगर (val & (MCPR_NVM_SW_ARB_ARB_ARB1 << port))
+			अवरोध;
 
 		udelay(5);
-	}
+	पूर्ण
 
-	if (!(val & (MCPR_NVM_SW_ARB_ARB_ARB1 << port))) {
+	अगर (!(val & (MCPR_NVM_SW_ARB_ARB_ARB1 << port))) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "cannot get access to nvram interface\n");
 		bnx2x_release_hw_lock(bp, HW_LOCK_RESOURCE_NVRAM);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_release_nvram_lock(struct bnx2x *bp)
-{
-	int port = BP_PORT(bp);
-	int count, i;
+अटल पूर्णांक bnx2x_release_nvram_lock(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक port = BP_PORT(bp);
+	पूर्णांक count, i;
 	u32 val;
 
-	/* adjust timeout for emulation/FPGA */
+	/* adjust समयout क्रम emulation/FPGA */
 	count = BNX2X_NVRAM_TIMEOUT_COUNT;
-	if (CHIP_REV_IS_SLOW(bp))
+	अगर (CHIP_REV_IS_SLOW(bp))
 		count *= 100;
 
-	/* relinquish nvram interface */
+	/* relinquish nvram पूर्णांकerface */
 	REG_WR(bp, MCP_REG_MCPR_NVM_SW_ARB,
 	       (MCPR_NVM_SW_ARB_ARB_REQ_CLR1 << port));
 
-	for (i = 0; i < count*10; i++) {
+	क्रम (i = 0; i < count*10; i++) अणु
 		val = REG_RD(bp, MCP_REG_MCPR_NVM_SW_ARB);
-		if (!(val & (MCPR_NVM_SW_ARB_ARB_ARB1 << port)))
-			break;
+		अगर (!(val & (MCPR_NVM_SW_ARB_ARB_ARB1 << port)))
+			अवरोध;
 
 		udelay(5);
-	}
+	पूर्ण
 
-	if (val & (MCPR_NVM_SW_ARB_ARB_ARB1 << port)) {
+	अगर (val & (MCPR_NVM_SW_ARB_ARB_ARB1 << port)) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "cannot free access to nvram interface\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/* release HW lock: protect against other PFs in PF Direct Assignment */
 	bnx2x_release_hw_lock(bp, HW_LOCK_RESOURCE_NVRAM);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnx2x_enable_nvram_access(struct bnx2x *bp)
-{
+अटल व्योम bnx2x_enable_nvram_access(काष्ठा bnx2x *bp)
+अणु
 	u32 val;
 
 	val = REG_RD(bp, MCP_REG_MCPR_NVM_ACCESS_ENABLE);
 
-	/* enable both bits, even on read */
+	/* enable both bits, even on पढ़ो */
 	REG_WR(bp, MCP_REG_MCPR_NVM_ACCESS_ENABLE,
 	       (val | MCPR_NVM_ACCESS_ENABLE_EN |
 		      MCPR_NVM_ACCESS_ENABLE_WR_EN));
-}
+पूर्ण
 
-static void bnx2x_disable_nvram_access(struct bnx2x *bp)
-{
+अटल व्योम bnx2x_disable_nvram_access(काष्ठा bnx2x *bp)
+अणु
 	u32 val;
 
 	val = REG_RD(bp, MCP_REG_MCPR_NVM_ACCESS_ENABLE);
 
-	/* disable both bits, even after read */
+	/* disable both bits, even after पढ़ो */
 	REG_WR(bp, MCP_REG_MCPR_NVM_ACCESS_ENABLE,
 	       (val & ~(MCPR_NVM_ACCESS_ENABLE_EN |
 			MCPR_NVM_ACCESS_ENABLE_WR_EN)));
-}
+पूर्ण
 
-static int bnx2x_nvram_read_dword(struct bnx2x *bp, u32 offset, __be32 *ret_val,
+अटल पूर्णांक bnx2x_nvram_पढ़ो_dword(काष्ठा bnx2x *bp, u32 offset, __be32 *ret_val,
 				  u32 cmd_flags)
-{
-	int count, i, rc;
+अणु
+	पूर्णांक count, i, rc;
 	u32 val;
 
 	/* build the command word */
@@ -1354,272 +1355,272 @@ static int bnx2x_nvram_read_dword(struct bnx2x *bp, u32 offset, __be32 *ret_val,
 	/* need to clear DONE bit separately */
 	REG_WR(bp, MCP_REG_MCPR_NVM_COMMAND, MCPR_NVM_COMMAND_DONE);
 
-	/* address of the NVRAM to read from */
+	/* address of the NVRAM to पढ़ो from */
 	REG_WR(bp, MCP_REG_MCPR_NVM_ADDR,
 	       (offset & MCPR_NVM_ADDR_NVM_ADDR_VALUE));
 
-	/* issue a read command */
+	/* issue a पढ़ो command */
 	REG_WR(bp, MCP_REG_MCPR_NVM_COMMAND, cmd_flags);
 
-	/* adjust timeout for emulation/FPGA */
+	/* adjust समयout क्रम emulation/FPGA */
 	count = BNX2X_NVRAM_TIMEOUT_COUNT;
-	if (CHIP_REV_IS_SLOW(bp))
+	अगर (CHIP_REV_IS_SLOW(bp))
 		count *= 100;
 
-	/* wait for completion */
+	/* रुको क्रम completion */
 	*ret_val = 0;
 	rc = -EBUSY;
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		udelay(5);
 		val = REG_RD(bp, MCP_REG_MCPR_NVM_COMMAND);
 
-		if (val & MCPR_NVM_COMMAND_DONE) {
+		अगर (val & MCPR_NVM_COMMAND_DONE) अणु
 			val = REG_RD(bp, MCP_REG_MCPR_NVM_READ);
-			/* we read nvram data in cpu order
+			/* we पढ़ो nvram data in cpu order
 			 * but ethtool sees it as an array of bytes
-			 * converting to big-endian will do the work
+			 * converting to big-endian will करो the work
 			 */
 			*ret_val = cpu_to_be32(val);
 			rc = 0;
-			break;
-		}
-	}
-	if (rc == -EBUSY)
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (rc == -EBUSY)
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "nvram read timeout expired\n");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int bnx2x_nvram_read(struct bnx2x *bp, u32 offset, u8 *ret_buf,
-		     int buf_size)
-{
-	int rc;
+पूर्णांक bnx2x_nvram_पढ़ो(काष्ठा bnx2x *bp, u32 offset, u8 *ret_buf,
+		     पूर्णांक buf_size)
+अणु
+	पूर्णांक rc;
 	u32 cmd_flags;
 	__be32 val;
 
-	if ((offset & 0x03) || (buf_size & 0x03) || (buf_size == 0)) {
+	अगर ((offset & 0x03) || (buf_size & 0x03) || (buf_size == 0)) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "Invalid parameter: offset 0x%x  buf_size 0x%x\n",
 		   offset, buf_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (offset + buf_size > bp->common.flash_size) {
+	अगर (offset + buf_size > bp->common.flash_size) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "Invalid parameter: offset (0x%x) + buf_size (0x%x) > flash_size (0x%x)\n",
 		   offset, buf_size, bp->common.flash_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* request access to nvram interface */
+	/* request access to nvram पूर्णांकerface */
 	rc = bnx2x_acquire_nvram_lock(bp);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* enable access to nvram interface */
+	/* enable access to nvram पूर्णांकerface */
 	bnx2x_enable_nvram_access(bp);
 
-	/* read the first word(s) */
+	/* पढ़ो the first word(s) */
 	cmd_flags = MCPR_NVM_COMMAND_FIRST;
-	while ((buf_size > sizeof(u32)) && (rc == 0)) {
-		rc = bnx2x_nvram_read_dword(bp, offset, &val, cmd_flags);
-		memcpy(ret_buf, &val, 4);
+	जबतक ((buf_size > माप(u32)) && (rc == 0)) अणु
+		rc = bnx2x_nvram_पढ़ो_dword(bp, offset, &val, cmd_flags);
+		स_नकल(ret_buf, &val, 4);
 
 		/* advance to the next dword */
-		offset += sizeof(u32);
-		ret_buf += sizeof(u32);
-		buf_size -= sizeof(u32);
+		offset += माप(u32);
+		ret_buf += माप(u32);
+		buf_size -= माप(u32);
 		cmd_flags = 0;
-	}
+	पूर्ण
 
-	if (rc == 0) {
+	अगर (rc == 0) अणु
 		cmd_flags |= MCPR_NVM_COMMAND_LAST;
-		rc = bnx2x_nvram_read_dword(bp, offset, &val, cmd_flags);
-		memcpy(ret_buf, &val, 4);
-	}
+		rc = bnx2x_nvram_पढ़ो_dword(bp, offset, &val, cmd_flags);
+		स_नकल(ret_buf, &val, 4);
+	पूर्ण
 
-	/* disable access to nvram interface */
+	/* disable access to nvram पूर्णांकerface */
 	bnx2x_disable_nvram_access(bp);
 	bnx2x_release_nvram_lock(bp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnx2x_nvram_read32(struct bnx2x *bp, u32 offset, u32 *buf,
-			      int buf_size)
-{
-	int rc;
+अटल पूर्णांक bnx2x_nvram_पढ़ो32(काष्ठा bnx2x *bp, u32 offset, u32 *buf,
+			      पूर्णांक buf_size)
+अणु
+	पूर्णांक rc;
 
-	rc = bnx2x_nvram_read(bp, offset, (u8 *)buf, buf_size);
+	rc = bnx2x_nvram_पढ़ो(bp, offset, (u8 *)buf, buf_size);
 
-	if (!rc) {
+	अगर (!rc) अणु
 		__be32 *be = (__be32 *)buf;
 
-		while ((buf_size -= 4) >= 0)
+		जबतक ((buf_size -= 4) >= 0)
 			*buf++ = be32_to_cpu(*be++);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool bnx2x_is_nvm_accessible(struct bnx2x *bp)
-{
-	int rc = 1;
+अटल bool bnx2x_is_nvm_accessible(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक rc = 1;
 	u16 pm = 0;
-	struct net_device *dev = pci_get_drvdata(bp->pdev);
+	काष्ठा net_device *dev = pci_get_drvdata(bp->pdev);
 
-	if (bp->pdev->pm_cap)
-		rc = pci_read_config_word(bp->pdev,
+	अगर (bp->pdev->pm_cap)
+		rc = pci_पढ़ो_config_word(bp->pdev,
 					  bp->pdev->pm_cap + PCI_PM_CTRL, &pm);
 
-	if ((rc && !netif_running(dev)) ||
-	    (!rc && ((pm & PCI_PM_CTRL_STATE_MASK) != (__force u16)PCI_D0)))
-		return false;
+	अगर ((rc && !netअगर_running(dev)) ||
+	    (!rc && ((pm & PCI_PM_CTRL_STATE_MASK) != (__क्रमce u16)PCI_D0)))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int bnx2x_get_eeprom(struct net_device *dev,
-			    struct ethtool_eeprom *eeprom, u8 *eebuf)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_get_eeprom(काष्ठा net_device *dev,
+			    काष्ठा ethtool_eeprom *eeprom, u8 *eebuf)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	if (!bnx2x_is_nvm_accessible(bp)) {
+	अगर (!bnx2x_is_nvm_accessible(bp)) अणु
 		DP(BNX2X_MSG_ETHTOOL  | BNX2X_MSG_NVM,
 		   "cannot access eeprom when the interface is down\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM, "ethtool_eeprom: cmd %d\n"
 	   "  magic 0x%x  offset 0x%x (%d)  len 0x%x (%d)\n",
 	   eeprom->cmd, eeprom->magic, eeprom->offset, eeprom->offset,
 	   eeprom->len, eeprom->len);
 
-	/* parameters already validated in ethtool_get_eeprom */
+	/* parameters alपढ़ोy validated in ethtool_get_eeprom */
 
-	return bnx2x_nvram_read(bp, eeprom->offset, eebuf, eeprom->len);
-}
+	वापस bnx2x_nvram_पढ़ो(bp, eeprom->offset, eebuf, eeprom->len);
+पूर्ण
 
-static int bnx2x_get_module_eeprom(struct net_device *dev,
-				   struct ethtool_eeprom *ee,
+अटल पूर्णांक bnx2x_get_module_eeprom(काष्ठा net_device *dev,
+				   काष्ठा ethtool_eeprom *ee,
 				   u8 *data)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	int rc = -EINVAL, phy_idx;
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	पूर्णांक rc = -EINVAL, phy_idx;
 	u8 *user_data = data;
-	unsigned int start_addr = ee->offset, xfer_size = 0;
+	अचिन्हित पूर्णांक start_addr = ee->offset, xfer_size = 0;
 
-	if (!bnx2x_is_nvm_accessible(bp)) {
+	अगर (!bnx2x_is_nvm_accessible(bp)) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "cannot access eeprom when the interface is down\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	phy_idx = bnx2x_get_cur_phy_idx(bp);
 
 	/* Read A0 section */
-	if (start_addr < ETH_MODULE_SFF_8079_LEN) {
+	अगर (start_addr < ETH_MODULE_SFF_8079_LEN) अणु
 		/* Limit transfer size to the A0 section boundary */
-		if (start_addr + ee->len > ETH_MODULE_SFF_8079_LEN)
+		अगर (start_addr + ee->len > ETH_MODULE_SFF_8079_LEN)
 			xfer_size = ETH_MODULE_SFF_8079_LEN - start_addr;
-		else
+		अन्यथा
 			xfer_size = ee->len;
 		bnx2x_acquire_phy_lock(bp);
-		rc = bnx2x_read_sfp_module_eeprom(&bp->link_params.phy[phy_idx],
+		rc = bnx2x_पढ़ो_sfp_module_eeprom(&bp->link_params.phy[phy_idx],
 						  &bp->link_params,
 						  I2C_DEV_ADDR_A0,
 						  start_addr,
 						  xfer_size,
 						  user_data);
 		bnx2x_release_phy_lock(bp);
-		if (rc) {
+		अगर (rc) अणु
 			DP(BNX2X_MSG_ETHTOOL, "Failed reading A0 section\n");
 
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		user_data += xfer_size;
 		start_addr += xfer_size;
-	}
+	पूर्ण
 
 	/* Read A2 section */
-	if ((start_addr >= ETH_MODULE_SFF_8079_LEN) &&
-	    (start_addr < ETH_MODULE_SFF_8472_LEN)) {
+	अगर ((start_addr >= ETH_MODULE_SFF_8079_LEN) &&
+	    (start_addr < ETH_MODULE_SFF_8472_LEN)) अणु
 		xfer_size = ee->len - xfer_size;
 		/* Limit transfer size to the A2 section boundary */
-		if (start_addr + xfer_size > ETH_MODULE_SFF_8472_LEN)
+		अगर (start_addr + xfer_size > ETH_MODULE_SFF_8472_LEN)
 			xfer_size = ETH_MODULE_SFF_8472_LEN - start_addr;
 		start_addr -= ETH_MODULE_SFF_8079_LEN;
 		bnx2x_acquire_phy_lock(bp);
-		rc = bnx2x_read_sfp_module_eeprom(&bp->link_params.phy[phy_idx],
+		rc = bnx2x_पढ़ो_sfp_module_eeprom(&bp->link_params.phy[phy_idx],
 						  &bp->link_params,
 						  I2C_DEV_ADDR_A2,
 						  start_addr,
 						  xfer_size,
 						  user_data);
 		bnx2x_release_phy_lock(bp);
-		if (rc) {
+		अगर (rc) अणु
 			DP(BNX2X_MSG_ETHTOOL, "Failed reading A2 section\n");
-			return -EINVAL;
-		}
-	}
-	return rc;
-}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int bnx2x_get_module_info(struct net_device *dev,
-				 struct ethtool_modinfo *modinfo)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	int phy_idx, rc;
+अटल पूर्णांक bnx2x_get_module_info(काष्ठा net_device *dev,
+				 काष्ठा ethtool_modinfo *modinfo)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	पूर्णांक phy_idx, rc;
 	u8 sff8472_comp, diag_type;
 
-	if (!bnx2x_is_nvm_accessible(bp)) {
+	अगर (!bnx2x_is_nvm_accessible(bp)) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "cannot access eeprom when the interface is down\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 	phy_idx = bnx2x_get_cur_phy_idx(bp);
 	bnx2x_acquire_phy_lock(bp);
-	rc = bnx2x_read_sfp_module_eeprom(&bp->link_params.phy[phy_idx],
+	rc = bnx2x_पढ़ो_sfp_module_eeprom(&bp->link_params.phy[phy_idx],
 					  &bp->link_params,
 					  I2C_DEV_ADDR_A0,
 					  SFP_EEPROM_SFF_8472_COMP_ADDR,
 					  SFP_EEPROM_SFF_8472_COMP_SIZE,
 					  &sff8472_comp);
 	bnx2x_release_phy_lock(bp);
-	if (rc) {
+	अगर (rc) अणु
 		DP(BNX2X_MSG_ETHTOOL, "Failed reading SFF-8472 comp field\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bnx2x_acquire_phy_lock(bp);
-	rc = bnx2x_read_sfp_module_eeprom(&bp->link_params.phy[phy_idx],
+	rc = bnx2x_पढ़ो_sfp_module_eeprom(&bp->link_params.phy[phy_idx],
 					  &bp->link_params,
 					  I2C_DEV_ADDR_A0,
 					  SFP_EEPROM_DIAG_TYPE_ADDR,
 					  SFP_EEPROM_DIAG_TYPE_SIZE,
 					  &diag_type);
 	bnx2x_release_phy_lock(bp);
-	if (rc) {
+	अगर (rc) अणु
 		DP(BNX2X_MSG_ETHTOOL, "Failed reading Diag Type field\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!sff8472_comp ||
+	अगर (!sff8472_comp ||
 	    (diag_type & SFP_EEPROM_DIAG_ADDR_CHANGE_REQ) ||
-	    !(diag_type & SFP_EEPROM_DDM_IMPLEMENTED)) {
+	    !(diag_type & SFP_EEPROM_DDM_IMPLEMENTED)) अणु
 		modinfo->type = ETH_MODULE_SFF_8079;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8079_LEN;
-	} else {
+	पूर्ण अन्यथा अणु
 		modinfo->type = ETH_MODULE_SFF_8472;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8472_LEN;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bnx2x_nvram_write_dword(struct bnx2x *bp, u32 offset, u32 val,
+अटल पूर्णांक bnx2x_nvram_ग_लिखो_dword(काष्ठा bnx2x *bp, u32 offset, u32 val,
 				   u32 cmd_flags)
-{
-	int count, i, rc;
+अणु
+	पूर्णांक count, i, rc;
 
 	/* build the command word */
 	cmd_flags |= MCPR_NVM_COMMAND_DOIT | MCPR_NVM_COMMAND_WR;
@@ -1627,221 +1628,221 @@ static int bnx2x_nvram_write_dword(struct bnx2x *bp, u32 offset, u32 val,
 	/* need to clear DONE bit separately */
 	REG_WR(bp, MCP_REG_MCPR_NVM_COMMAND, MCPR_NVM_COMMAND_DONE);
 
-	/* write the data */
+	/* ग_लिखो the data */
 	REG_WR(bp, MCP_REG_MCPR_NVM_WRITE, val);
 
-	/* address of the NVRAM to write to */
+	/* address of the NVRAM to ग_लिखो to */
 	REG_WR(bp, MCP_REG_MCPR_NVM_ADDR,
 	       (offset & MCPR_NVM_ADDR_NVM_ADDR_VALUE));
 
-	/* issue the write command */
+	/* issue the ग_लिखो command */
 	REG_WR(bp, MCP_REG_MCPR_NVM_COMMAND, cmd_flags);
 
-	/* adjust timeout for emulation/FPGA */
+	/* adjust समयout क्रम emulation/FPGA */
 	count = BNX2X_NVRAM_TIMEOUT_COUNT;
-	if (CHIP_REV_IS_SLOW(bp))
+	अगर (CHIP_REV_IS_SLOW(bp))
 		count *= 100;
 
-	/* wait for completion */
+	/* रुको क्रम completion */
 	rc = -EBUSY;
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		udelay(5);
 		val = REG_RD(bp, MCP_REG_MCPR_NVM_COMMAND);
-		if (val & MCPR_NVM_COMMAND_DONE) {
+		अगर (val & MCPR_NVM_COMMAND_DONE) अणु
 			rc = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (rc == -EBUSY)
+	अगर (rc == -EBUSY)
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "nvram write timeout expired\n");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#define BYTE_OFFSET(offset)		(8 * (offset & 0x03))
+#घोषणा BYTE_OFFSET(offset)		(8 * (offset & 0x03))
 
-static int bnx2x_nvram_write1(struct bnx2x *bp, u32 offset, u8 *data_buf,
-			      int buf_size)
-{
-	int rc;
+अटल पूर्णांक bnx2x_nvram_ग_लिखो1(काष्ठा bnx2x *bp, u32 offset, u8 *data_buf,
+			      पूर्णांक buf_size)
+अणु
+	पूर्णांक rc;
 	u32 cmd_flags, align_offset, val;
 	__be32 val_be;
 
-	if (offset + buf_size > bp->common.flash_size) {
+	अगर (offset + buf_size > bp->common.flash_size) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "Invalid parameter: offset (0x%x) + buf_size (0x%x) > flash_size (0x%x)\n",
 		   offset, buf_size, bp->common.flash_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* request access to nvram interface */
+	/* request access to nvram पूर्णांकerface */
 	rc = bnx2x_acquire_nvram_lock(bp);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* enable access to nvram interface */
+	/* enable access to nvram पूर्णांकerface */
 	bnx2x_enable_nvram_access(bp);
 
 	cmd_flags = (MCPR_NVM_COMMAND_FIRST | MCPR_NVM_COMMAND_LAST);
 	align_offset = (offset & ~0x03);
-	rc = bnx2x_nvram_read_dword(bp, align_offset, &val_be, cmd_flags);
+	rc = bnx2x_nvram_पढ़ो_dword(bp, align_offset, &val_be, cmd_flags);
 
-	if (rc == 0) {
-		/* nvram data is returned as an array of bytes
+	अगर (rc == 0) अणु
+		/* nvram data is वापसed as an array of bytes
 		 * convert it back to cpu order
 		 */
 		val = be32_to_cpu(val_be);
 
-		val &= ~le32_to_cpu((__force __le32)
+		val &= ~le32_to_cpu((__क्रमce __le32)
 				    (0xff << BYTE_OFFSET(offset)));
-		val |= le32_to_cpu((__force __le32)
+		val |= le32_to_cpu((__क्रमce __le32)
 				   (*data_buf << BYTE_OFFSET(offset)));
 
-		rc = bnx2x_nvram_write_dword(bp, align_offset, val,
+		rc = bnx2x_nvram_ग_लिखो_dword(bp, align_offset, val,
 					     cmd_flags);
-	}
+	पूर्ण
 
-	/* disable access to nvram interface */
+	/* disable access to nvram पूर्णांकerface */
 	bnx2x_disable_nvram_access(bp);
 	bnx2x_release_nvram_lock(bp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnx2x_nvram_write(struct bnx2x *bp, u32 offset, u8 *data_buf,
-			     int buf_size)
-{
-	int rc;
+अटल पूर्णांक bnx2x_nvram_ग_लिखो(काष्ठा bnx2x *bp, u32 offset, u8 *data_buf,
+			     पूर्णांक buf_size)
+अणु
+	पूर्णांक rc;
 	u32 cmd_flags;
 	u32 val;
 	u32 written_so_far;
 
-	if (buf_size == 1)	/* ethtool */
-		return bnx2x_nvram_write1(bp, offset, data_buf, buf_size);
+	अगर (buf_size == 1)	/* ethtool */
+		वापस bnx2x_nvram_ग_लिखो1(bp, offset, data_buf, buf_size);
 
-	if ((offset & 0x03) || (buf_size & 0x03) || (buf_size == 0)) {
+	अगर ((offset & 0x03) || (buf_size & 0x03) || (buf_size == 0)) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "Invalid parameter: offset 0x%x  buf_size 0x%x\n",
 		   offset, buf_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (offset + buf_size > bp->common.flash_size) {
+	अगर (offset + buf_size > bp->common.flash_size) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "Invalid parameter: offset (0x%x) + buf_size (0x%x) > flash_size (0x%x)\n",
 		   offset, buf_size, bp->common.flash_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* request access to nvram interface */
+	/* request access to nvram पूर्णांकerface */
 	rc = bnx2x_acquire_nvram_lock(bp);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* enable access to nvram interface */
+	/* enable access to nvram पूर्णांकerface */
 	bnx2x_enable_nvram_access(bp);
 
 	written_so_far = 0;
 	cmd_flags = MCPR_NVM_COMMAND_FIRST;
-	while ((written_so_far < buf_size) && (rc == 0)) {
-		if (written_so_far == (buf_size - sizeof(u32)))
+	जबतक ((written_so_far < buf_size) && (rc == 0)) अणु
+		अगर (written_so_far == (buf_size - माप(u32)))
 			cmd_flags |= MCPR_NVM_COMMAND_LAST;
-		else if (((offset + 4) % BNX2X_NVRAM_PAGE_SIZE) == 0)
+		अन्यथा अगर (((offset + 4) % BNX2X_NVRAM_PAGE_SIZE) == 0)
 			cmd_flags |= MCPR_NVM_COMMAND_LAST;
-		else if ((offset % BNX2X_NVRAM_PAGE_SIZE) == 0)
+		अन्यथा अगर ((offset % BNX2X_NVRAM_PAGE_SIZE) == 0)
 			cmd_flags |= MCPR_NVM_COMMAND_FIRST;
 
-		memcpy(&val, data_buf, 4);
+		स_नकल(&val, data_buf, 4);
 
-		/* Notice unlike bnx2x_nvram_read_dword() this will not
+		/* Notice unlike bnx2x_nvram_पढ़ो_dword() this will not
 		 * change val using be32_to_cpu(), which causes data to flip
-		 * if the eeprom is read and then written back. This is due
-		 * to tools utilizing this functionality that would break
-		 * if this would be resolved.
+		 * अगर the eeprom is पढ़ो and then written back. This is due
+		 * to tools utilizing this functionality that would अवरोध
+		 * अगर this would be resolved.
 		 */
-		rc = bnx2x_nvram_write_dword(bp, offset, val, cmd_flags);
+		rc = bnx2x_nvram_ग_लिखो_dword(bp, offset, val, cmd_flags);
 
 		/* advance to the next dword */
-		offset += sizeof(u32);
-		data_buf += sizeof(u32);
-		written_so_far += sizeof(u32);
+		offset += माप(u32);
+		data_buf += माप(u32);
+		written_so_far += माप(u32);
 
 		/* At end of each 4Kb page, release nvram lock to allow MFW
-		 * chance to take it for its own use.
+		 * chance to take it क्रम its own use.
 		 */
-		if ((cmd_flags & MCPR_NVM_COMMAND_LAST) &&
-		    (written_so_far < buf_size)) {
+		अगर ((cmd_flags & MCPR_NVM_COMMAND_LAST) &&
+		    (written_so_far < buf_size)) अणु
 			DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 			   "Releasing NVM lock after offset 0x%x\n",
-			   (u32)(offset - sizeof(u32)));
+			   (u32)(offset - माप(u32)));
 			bnx2x_release_nvram_lock(bp);
 			usleep_range(1000, 2000);
 			rc = bnx2x_acquire_nvram_lock(bp);
-			if (rc)
-				return rc;
-		}
+			अगर (rc)
+				वापस rc;
+		पूर्ण
 
 		cmd_flags = 0;
-	}
+	पूर्ण
 
-	/* disable access to nvram interface */
+	/* disable access to nvram पूर्णांकerface */
 	bnx2x_disable_nvram_access(bp);
 	bnx2x_release_nvram_lock(bp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnx2x_set_eeprom(struct net_device *dev,
-			    struct ethtool_eeprom *eeprom, u8 *eebuf)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	int port = BP_PORT(bp);
-	int rc = 0;
+अटल पूर्णांक bnx2x_set_eeprom(काष्ठा net_device *dev,
+			    काष्ठा ethtool_eeprom *eeprom, u8 *eebuf)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	पूर्णांक port = BP_PORT(bp);
+	पूर्णांक rc = 0;
 	u32 ext_phy_config;
 
-	if (!bnx2x_is_nvm_accessible(bp)) {
+	अगर (!bnx2x_is_nvm_accessible(bp)) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "cannot access eeprom when the interface is down\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM, "ethtool_eeprom: cmd %d\n"
 	   "  magic 0x%x  offset 0x%x (%d)  len 0x%x (%d)\n",
 	   eeprom->cmd, eeprom->magic, eeprom->offset, eeprom->offset,
 	   eeprom->len, eeprom->len);
 
-	/* parameters already validated in ethtool_set_eeprom */
+	/* parameters alपढ़ोy validated in ethtool_set_eeprom */
 
 	/* PHY eeprom can be accessed only by the PMF */
-	if ((eeprom->magic >= 0x50485900) && (eeprom->magic <= 0x504859FF) &&
-	    !bp->port.pmf) {
+	अगर ((eeprom->magic >= 0x50485900) && (eeprom->magic <= 0x504859FF) &&
+	    !bp->port.pmf) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "wrong magic or interface is not pmf\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ext_phy_config =
 		SHMEM_RD(bp,
-			 dev_info.port_hw_config[port].external_phy_config);
+			 dev_info.port_hw_config[port].बाह्यal_phy_config);
 
-	if (eeprom->magic == 0x50485950) {
-		/* 'PHYP' (0x50485950): prepare phy for FW upgrade */
+	अगर (eeprom->magic == 0x50485950) अणु
+		/* 'PHYP' (0x50485950): prepare phy क्रम FW upgrade */
 		bnx2x_stats_handle(bp, STATS_EVENT_STOP);
 
 		bnx2x_acquire_phy_lock(bp);
 		rc |= bnx2x_link_reset(&bp->link_params,
 				       &bp->link_vars, 0);
-		if (XGXS_EXT_PHY_TYPE(ext_phy_config) ==
+		अगर (XGXS_EXT_PHY_TYPE(ext_phy_config) ==
 					PORT_HW_CFG_XGXS_EXT_PHY_TYPE_SFX7101)
 			bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_0,
 				       MISC_REGISTERS_GPIO_HIGH, port);
 		bnx2x_release_phy_lock(bp);
 		bnx2x_link_report(bp);
 
-	} else if (eeprom->magic == 0x50485952) {
+	पूर्ण अन्यथा अगर (eeprom->magic == 0x50485952) अणु
 		/* 'PHYR' (0x50485952): re-init link after FW upgrade */
-		if (bp->state == BNX2X_STATE_OPEN) {
+		अगर (bp->state == BNX2X_STATE_OPEN) अणु
 			bnx2x_acquire_phy_lock(bp);
 			rc |= bnx2x_link_reset(&bp->link_params,
 					       &bp->link_vars, 1);
@@ -1850,11 +1851,11 @@ static int bnx2x_set_eeprom(struct net_device *dev,
 					     &bp->link_vars);
 			bnx2x_release_phy_lock(bp);
 			bnx2x_calc_fc_adv(bp);
-		}
-	} else if (eeprom->magic == 0x53985943) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (eeprom->magic == 0x53985943) अणु
 		/* 'PHYC' (0x53985943): PHY FW upgrade completed */
-		if (XGXS_EXT_PHY_TYPE(ext_phy_config) ==
-				       PORT_HW_CFG_XGXS_EXT_PHY_TYPE_SFX7101) {
+		अगर (XGXS_EXT_PHY_TYPE(ext_phy_config) ==
+				       PORT_HW_CFG_XGXS_EXT_PHY_TYPE_SFX7101) अणु
 
 			/* DSP Remove Download Mode */
 			bnx2x_set_gpio(bp, MISC_REGISTERS_GPIO_0,
@@ -1865,192 +1866,192 @@ static int bnx2x_set_eeprom(struct net_device *dev,
 			bnx2x_sfx7101_sp_sw_reset(bp,
 						&bp->link_params.phy[EXT_PHY1]);
 
-			/* wait 0.5 sec to allow it to run */
+			/* रुको 0.5 sec to allow it to run */
 			msleep(500);
 			bnx2x_ext_phy_hw_reset(bp, port);
 			msleep(500);
 			bnx2x_release_phy_lock(bp);
-		}
-	} else
-		rc = bnx2x_nvram_write(bp, eeprom->offset, eebuf, eeprom->len);
+		पूर्ण
+	पूर्ण अन्यथा
+		rc = bnx2x_nvram_ग_लिखो(bp, eeprom->offset, eebuf, eeprom->len);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnx2x_get_coalesce(struct net_device *dev,
-			      struct ethtool_coalesce *coal)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_get_coalesce(काष्ठा net_device *dev,
+			      काष्ठा ethtool_coalesce *coal)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	memset(coal, 0, sizeof(struct ethtool_coalesce));
+	स_रखो(coal, 0, माप(काष्ठा ethtool_coalesce));
 
 	coal->rx_coalesce_usecs = bp->rx_ticks;
 	coal->tx_coalesce_usecs = bp->tx_ticks;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_set_coalesce(struct net_device *dev,
-			      struct ethtool_coalesce *coal)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_set_coalesce(काष्ठा net_device *dev,
+			      काष्ठा ethtool_coalesce *coal)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
 	bp->rx_ticks = (u16)coal->rx_coalesce_usecs;
-	if (bp->rx_ticks > BNX2X_MAX_COALESCE_TOUT)
+	अगर (bp->rx_ticks > BNX2X_MAX_COALESCE_TOUT)
 		bp->rx_ticks = BNX2X_MAX_COALESCE_TOUT;
 
 	bp->tx_ticks = (u16)coal->tx_coalesce_usecs;
-	if (bp->tx_ticks > BNX2X_MAX_COALESCE_TOUT)
+	अगर (bp->tx_ticks > BNX2X_MAX_COALESCE_TOUT)
 		bp->tx_ticks = BNX2X_MAX_COALESCE_TOUT;
 
-	if (netif_running(dev))
+	अगर (netअगर_running(dev))
 		bnx2x_update_coalesce(bp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnx2x_get_ringparam(struct net_device *dev,
-				struct ethtool_ringparam *ering)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल व्योम bnx2x_get_ringparam(काष्ठा net_device *dev,
+				काष्ठा ethtool_ringparam *ering)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
 	ering->rx_max_pending = MAX_RX_AVAIL;
 
-	/* If size isn't already set, we give an estimation of the number
+	/* If size isn't alपढ़ोy set, we give an estimation of the number
 	 * of buffers we'll have. We're neglecting some possible conditions
-	 * [we couldn't know for certain at this point if number of queues
-	 * might shrink] but the number would be correct for the likely
+	 * [we couldn't know क्रम certain at this poपूर्णांक अगर number of queues
+	 * might shrink] but the number would be correct क्रम the likely
 	 * scenario.
 	 */
-	if (bp->rx_ring_size)
+	अगर (bp->rx_ring_size)
 		ering->rx_pending = bp->rx_ring_size;
-	else if (BNX2X_NUM_RX_QUEUES(bp))
+	अन्यथा अगर (BNX2X_NUM_RX_QUEUES(bp))
 		ering->rx_pending = MAX_RX_AVAIL / BNX2X_NUM_RX_QUEUES(bp);
-	else
+	अन्यथा
 		ering->rx_pending = MAX_RX_AVAIL;
 
 	ering->tx_max_pending = IS_MF_FCOE_AFEX(bp) ? 0 : MAX_TX_AVAIL;
 	ering->tx_pending = bp->tx_ring_size;
-}
+पूर्ण
 
-static int bnx2x_set_ringparam(struct net_device *dev,
-			       struct ethtool_ringparam *ering)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_set_ringparam(काष्ठा net_device *dev,
+			       काष्ठा ethtool_ringparam *ering)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
 	DP(BNX2X_MSG_ETHTOOL,
 	   "set ring params command parameters: rx_pending = %d, tx_pending = %d\n",
 	   ering->rx_pending, ering->tx_pending);
 
-	if (pci_num_vf(bp->pdev)) {
+	अगर (pci_num_vf(bp->pdev)) अणु
 		DP(BNX2X_MSG_IOV,
 		   "VFs are enabled, can not change ring parameters\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	if (bp->recovery_state != BNX2X_RECOVERY_DONE) {
+	अगर (bp->recovery_state != BNX2X_RECOVERY_DONE) अणु
 		DP(BNX2X_MSG_ETHTOOL,
 		   "Handling parity error recovery. Try again later\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if ((ering->rx_pending > MAX_RX_AVAIL) ||
+	अगर ((ering->rx_pending > MAX_RX_AVAIL) ||
 	    (ering->rx_pending < (bp->disable_tpa ? MIN_RX_SIZE_NONTPA :
 						    MIN_RX_SIZE_TPA)) ||
 	    (ering->tx_pending > (IS_MF_STORAGE_ONLY(bp) ? 0 : MAX_TX_AVAIL)) ||
-	    (ering->tx_pending <= MAX_SKB_FRAGS + 4)) {
+	    (ering->tx_pending <= MAX_SKB_FRAGS + 4)) अणु
 		DP(BNX2X_MSG_ETHTOOL, "Command parameters not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bp->rx_ring_size = ering->rx_pending;
 	bp->tx_ring_size = ering->tx_pending;
 
-	return bnx2x_reload_if_running(dev);
-}
+	वापस bnx2x_reload_अगर_running(dev);
+पूर्ण
 
-static void bnx2x_get_pauseparam(struct net_device *dev,
-				 struct ethtool_pauseparam *epause)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	int cfg_idx = bnx2x_get_link_cfg_idx(bp);
-	int cfg_reg;
+अटल व्योम bnx2x_get_छोड़ोparam(काष्ठा net_device *dev,
+				 काष्ठा ethtool_छोड़ोparam *eछोड़ो)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	पूर्णांक cfg_idx = bnx2x_get_link_cfg_idx(bp);
+	पूर्णांक cfg_reg;
 
-	epause->autoneg = (bp->link_params.req_flow_ctrl[cfg_idx] ==
+	eछोड़ो->स्वतःneg = (bp->link_params.req_flow_ctrl[cfg_idx] ==
 			   BNX2X_FLOW_CTRL_AUTO);
 
-	if (!epause->autoneg)
+	अगर (!eछोड़ो->स्वतःneg)
 		cfg_reg = bp->link_params.req_flow_ctrl[cfg_idx];
-	else
-		cfg_reg = bp->link_params.req_fc_auto_adv;
+	अन्यथा
+		cfg_reg = bp->link_params.req_fc_स्वतः_adv;
 
-	epause->rx_pause = ((cfg_reg & BNX2X_FLOW_CTRL_RX) ==
+	eछोड़ो->rx_छोड़ो = ((cfg_reg & BNX2X_FLOW_CTRL_RX) ==
 			    BNX2X_FLOW_CTRL_RX);
-	epause->tx_pause = ((cfg_reg & BNX2X_FLOW_CTRL_TX) ==
+	eछोड़ो->tx_छोड़ो = ((cfg_reg & BNX2X_FLOW_CTRL_TX) ==
 			    BNX2X_FLOW_CTRL_TX);
 
 	DP(BNX2X_MSG_ETHTOOL, "ethtool_pauseparam: cmd %d\n"
 	   "  autoneg %d  rx_pause %d  tx_pause %d\n",
-	   epause->cmd, epause->autoneg, epause->rx_pause, epause->tx_pause);
-}
+	   eछोड़ो->cmd, eछोड़ो->स्वतःneg, eछोड़ो->rx_छोड़ो, eछोड़ो->tx_छोड़ो);
+पूर्ण
 
-static int bnx2x_set_pauseparam(struct net_device *dev,
-				struct ethtool_pauseparam *epause)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_set_छोड़ोparam(काष्ठा net_device *dev,
+				काष्ठा ethtool_छोड़ोparam *eछोड़ो)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 	u32 cfg_idx = bnx2x_get_link_cfg_idx(bp);
-	if (IS_MF(bp))
-		return 0;
+	अगर (IS_MF(bp))
+		वापस 0;
 
 	DP(BNX2X_MSG_ETHTOOL, "ethtool_pauseparam: cmd %d\n"
 	   "  autoneg %d  rx_pause %d  tx_pause %d\n",
-	   epause->cmd, epause->autoneg, epause->rx_pause, epause->tx_pause);
+	   eछोड़ो->cmd, eछोड़ो->स्वतःneg, eछोड़ो->rx_छोड़ो, eछोड़ो->tx_छोड़ो);
 
 	bp->link_params.req_flow_ctrl[cfg_idx] = BNX2X_FLOW_CTRL_AUTO;
 
-	if (epause->rx_pause)
+	अगर (eछोड़ो->rx_छोड़ो)
 		bp->link_params.req_flow_ctrl[cfg_idx] |= BNX2X_FLOW_CTRL_RX;
 
-	if (epause->tx_pause)
+	अगर (eछोड़ो->tx_छोड़ो)
 		bp->link_params.req_flow_ctrl[cfg_idx] |= BNX2X_FLOW_CTRL_TX;
 
-	if (bp->link_params.req_flow_ctrl[cfg_idx] == BNX2X_FLOW_CTRL_AUTO)
+	अगर (bp->link_params.req_flow_ctrl[cfg_idx] == BNX2X_FLOW_CTRL_AUTO)
 		bp->link_params.req_flow_ctrl[cfg_idx] = BNX2X_FLOW_CTRL_NONE;
 
-	if (epause->autoneg) {
-		if (!(bp->port.supported[cfg_idx] & SUPPORTED_Autoneg)) {
+	अगर (eछोड़ो->स्वतःneg) अणु
+		अगर (!(bp->port.supported[cfg_idx] & SUPPORTED_Autoneg)) अणु
 			DP(BNX2X_MSG_ETHTOOL, "autoneg not supported\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (bp->link_params.req_line_speed[cfg_idx] == SPEED_AUTO_NEG) {
+		अगर (bp->link_params.req_line_speed[cfg_idx] == SPEED_AUTO_NEG) अणु
 			bp->link_params.req_flow_ctrl[cfg_idx] =
 				BNX2X_FLOW_CTRL_AUTO;
-		}
-		bp->link_params.req_fc_auto_adv = 0;
-		if (epause->rx_pause)
-			bp->link_params.req_fc_auto_adv |= BNX2X_FLOW_CTRL_RX;
+		पूर्ण
+		bp->link_params.req_fc_स्वतः_adv = 0;
+		अगर (eछोड़ो->rx_छोड़ो)
+			bp->link_params.req_fc_स्वतः_adv |= BNX2X_FLOW_CTRL_RX;
 
-		if (epause->tx_pause)
-			bp->link_params.req_fc_auto_adv |= BNX2X_FLOW_CTRL_TX;
+		अगर (eछोड़ो->tx_छोड़ो)
+			bp->link_params.req_fc_स्वतः_adv |= BNX2X_FLOW_CTRL_TX;
 
-		if (!bp->link_params.req_fc_auto_adv)
-			bp->link_params.req_fc_auto_adv |= BNX2X_FLOW_CTRL_NONE;
-	}
+		अगर (!bp->link_params.req_fc_स्वतः_adv)
+			bp->link_params.req_fc_स्वतः_adv |= BNX2X_FLOW_CTRL_NONE;
+	पूर्ण
 
 	DP(BNX2X_MSG_ETHTOOL,
 	   "req_flow_ctrl 0x%x\n", bp->link_params.req_flow_ctrl[cfg_idx]);
 
-	if (netif_running(dev)) {
+	अगर (netअगर_running(dev)) अणु
 		bnx2x_stats_handle(bp, STATS_EVENT_STOP);
-		bnx2x_force_link_reset(bp);
+		bnx2x_क्रमce_link_reset(bp);
 		bnx2x_link_set(bp);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char bnx2x_tests_str_arr[BNX2X_NUM_TESTS_SF][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर bnx2x_tests_str_arr[BNX2X_NUM_TESTS_SF][ETH_GSTRING_LEN] = अणु
 	"register_test (offline)    ",
 	"memory_test (offline)      ",
 	"int_loopback_test (offline)",
@@ -2058,57 +2059,57 @@ static const char bnx2x_tests_str_arr[BNX2X_NUM_TESTS_SF][ETH_GSTRING_LEN] = {
 	"nvram_test (online)        ",
 	"interrupt_test (online)    ",
 	"link_test (online)         "
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	BNX2X_PRI_FLAG_ISCSI,
 	BNX2X_PRI_FLAG_FCOE,
 	BNX2X_PRI_FLAG_STORAGE,
 	BNX2X_PRI_FLAG_LEN,
-};
+पूर्ण;
 
-static const char bnx2x_private_arr[BNX2X_PRI_FLAG_LEN][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर bnx2x_निजी_arr[BNX2X_PRI_FLAG_LEN][ETH_GSTRING_LEN] = अणु
 	"iSCSI offload support",
 	"FCoE offload support",
 	"Storage only interface"
-};
+पूर्ण;
 
-static u32 bnx2x_eee_to_adv(u32 eee_adv)
-{
+अटल u32 bnx2x_eee_to_adv(u32 eee_adv)
+अणु
 	u32 modes = 0;
 
-	if (eee_adv & SHMEM_EEE_100M_ADV)
+	अगर (eee_adv & SHMEM_EEE_100M_ADV)
 		modes |= ADVERTISED_100baseT_Full;
-	if (eee_adv & SHMEM_EEE_1G_ADV)
+	अगर (eee_adv & SHMEM_EEE_1G_ADV)
 		modes |= ADVERTISED_1000baseT_Full;
-	if (eee_adv & SHMEM_EEE_10G_ADV)
+	अगर (eee_adv & SHMEM_EEE_10G_ADV)
 		modes |= ADVERTISED_10000baseT_Full;
 
-	return modes;
-}
+	वापस modes;
+पूर्ण
 
-static u32 bnx2x_adv_to_eee(u32 modes, u32 shift)
-{
+अटल u32 bnx2x_adv_to_eee(u32 modes, u32 shअगरt)
+अणु
 	u32 eee_adv = 0;
-	if (modes & ADVERTISED_100baseT_Full)
+	अगर (modes & ADVERTISED_100baseT_Full)
 		eee_adv |= SHMEM_EEE_100M_ADV;
-	if (modes & ADVERTISED_1000baseT_Full)
+	अगर (modes & ADVERTISED_1000baseT_Full)
 		eee_adv |= SHMEM_EEE_1G_ADV;
-	if (modes & ADVERTISED_10000baseT_Full)
+	अगर (modes & ADVERTISED_10000baseT_Full)
 		eee_adv |= SHMEM_EEE_10G_ADV;
 
-	return eee_adv << shift;
-}
+	वापस eee_adv << shअगरt;
+पूर्ण
 
-static int bnx2x_get_eee(struct net_device *dev, struct ethtool_eee *edata)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_get_eee(काष्ठा net_device *dev, काष्ठा ethtool_eee *edata)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 	u32 eee_cfg;
 
-	if (!SHMEM2_HAS(bp, eee_status[BP_PORT(bp)])) {
+	अगर (!SHMEM2_HAS(bp, eee_status[BP_PORT(bp)])) अणु
 		DP(BNX2X_MSG_ETHTOOL, "BC Version does not support EEE\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	eee_cfg = bp->link_vars.eee_status;
 
@@ -2124,229 +2125,229 @@ static int bnx2x_get_eee(struct net_device *dev, struct ethtool_eee *edata)
 				 SHMEM_EEE_LP_ADV_STATUS_SHIFT);
 
 	/* SHMEM value is in 16u units --> Convert to 1u units. */
-	edata->tx_lpi_timer = (eee_cfg & SHMEM_EEE_TIMER_MASK) << 4;
+	edata->tx_lpi_समयr = (eee_cfg & SHMEM_EEE_TIMER_MASK) << 4;
 
 	edata->eee_enabled    = (eee_cfg & SHMEM_EEE_REQUESTED_BIT)	? 1 : 0;
 	edata->eee_active     = (eee_cfg & SHMEM_EEE_ACTIVE_BIT)	? 1 : 0;
 	edata->tx_lpi_enabled = (eee_cfg & SHMEM_EEE_LPI_REQUESTED_BIT) ? 1 : 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_set_eee(struct net_device *dev, struct ethtool_eee *edata)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_set_eee(काष्ठा net_device *dev, काष्ठा ethtool_eee *edata)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 	u32 eee_cfg;
 	u32 advertised;
 
-	if (IS_MF(bp))
-		return 0;
+	अगर (IS_MF(bp))
+		वापस 0;
 
-	if (!SHMEM2_HAS(bp, eee_status[BP_PORT(bp)])) {
+	अगर (!SHMEM2_HAS(bp, eee_status[BP_PORT(bp)])) अणु
 		DP(BNX2X_MSG_ETHTOOL, "BC Version does not support EEE\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	eee_cfg = bp->link_vars.eee_status;
 
-	if (!(eee_cfg & SHMEM_EEE_SUPPORTED_MASK)) {
+	अगर (!(eee_cfg & SHMEM_EEE_SUPPORTED_MASK)) अणु
 		DP(BNX2X_MSG_ETHTOOL, "Board does not support EEE!\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	advertised = bnx2x_adv_to_eee(edata->advertised,
 				      SHMEM_EEE_ADV_STATUS_SHIFT);
-	if ((advertised != (eee_cfg & SHMEM_EEE_ADV_STATUS_MASK))) {
+	अगर ((advertised != (eee_cfg & SHMEM_EEE_ADV_STATUS_MASK))) अणु
 		DP(BNX2X_MSG_ETHTOOL,
 		   "Direct manipulation of EEE advertisement is not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (edata->tx_lpi_timer > EEE_MODE_TIMER_MASK) {
+	अगर (edata->tx_lpi_समयr > EEE_MODE_TIMER_MASK) अणु
 		DP(BNX2X_MSG_ETHTOOL,
 		   "Maximal Tx Lpi timer supported is %x(u)\n",
 		   EEE_MODE_TIMER_MASK);
-		return -EINVAL;
-	}
-	if (edata->tx_lpi_enabled &&
-	    (edata->tx_lpi_timer < EEE_MODE_NVRAM_AGGRESSIVE_TIME)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (edata->tx_lpi_enabled &&
+	    (edata->tx_lpi_समयr < EEE_MODE_NVRAM_AGGRESSIVE_TIME)) अणु
 		DP(BNX2X_MSG_ETHTOOL,
 		   "Minimal Tx Lpi timer supported is %d(u)\n",
 		   EEE_MODE_NVRAM_AGGRESSIVE_TIME);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* All is well; Apply changes*/
-	if (edata->eee_enabled)
+	अगर (edata->eee_enabled)
 		bp->link_params.eee_mode |= EEE_MODE_ADV_LPI;
-	else
+	अन्यथा
 		bp->link_params.eee_mode &= ~EEE_MODE_ADV_LPI;
 
-	if (edata->tx_lpi_enabled)
+	अगर (edata->tx_lpi_enabled)
 		bp->link_params.eee_mode |= EEE_MODE_ENABLE_LPI;
-	else
+	अन्यथा
 		bp->link_params.eee_mode &= ~EEE_MODE_ENABLE_LPI;
 
 	bp->link_params.eee_mode &= ~EEE_MODE_TIMER_MASK;
-	bp->link_params.eee_mode |= (edata->tx_lpi_timer &
+	bp->link_params.eee_mode |= (edata->tx_lpi_समयr &
 				    EEE_MODE_TIMER_MASK) |
 				    EEE_MODE_OVERRIDE_NVRAM |
 				    EEE_MODE_OUTPUT_TIME;
 
 	/* Restart link to propagate changes */
-	if (netif_running(dev)) {
+	अगर (netअगर_running(dev)) अणु
 		bnx2x_stats_handle(bp, STATS_EVENT_STOP);
-		bnx2x_force_link_reset(bp);
+		bnx2x_क्रमce_link_reset(bp);
 		bnx2x_link_set(bp);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	BNX2X_CHIP_E1_OFST = 0,
 	BNX2X_CHIP_E1H_OFST,
 	BNX2X_CHIP_E2_OFST,
 	BNX2X_CHIP_E3_OFST,
 	BNX2X_CHIP_E3B0_OFST,
 	BNX2X_CHIP_MAX_OFST
-};
+पूर्ण;
 
-#define BNX2X_CHIP_MASK_E1	(1 << BNX2X_CHIP_E1_OFST)
-#define BNX2X_CHIP_MASK_E1H	(1 << BNX2X_CHIP_E1H_OFST)
-#define BNX2X_CHIP_MASK_E2	(1 << BNX2X_CHIP_E2_OFST)
-#define BNX2X_CHIP_MASK_E3	(1 << BNX2X_CHIP_E3_OFST)
-#define BNX2X_CHIP_MASK_E3B0	(1 << BNX2X_CHIP_E3B0_OFST)
+#घोषणा BNX2X_CHIP_MASK_E1	(1 << BNX2X_CHIP_E1_OFST)
+#घोषणा BNX2X_CHIP_MASK_E1H	(1 << BNX2X_CHIP_E1H_OFST)
+#घोषणा BNX2X_CHIP_MASK_E2	(1 << BNX2X_CHIP_E2_OFST)
+#घोषणा BNX2X_CHIP_MASK_E3	(1 << BNX2X_CHIP_E3_OFST)
+#घोषणा BNX2X_CHIP_MASK_E3B0	(1 << BNX2X_CHIP_E3B0_OFST)
 
-#define BNX2X_CHIP_MASK_ALL	((1 << BNX2X_CHIP_MAX_OFST) - 1)
-#define BNX2X_CHIP_MASK_E1X	(BNX2X_CHIP_MASK_E1 | BNX2X_CHIP_MASK_E1H)
+#घोषणा BNX2X_CHIP_MASK_ALL	((1 << BNX2X_CHIP_MAX_OFST) - 1)
+#घोषणा BNX2X_CHIP_MASK_E1X	(BNX2X_CHIP_MASK_E1 | BNX2X_CHIP_MASK_E1H)
 
-static int bnx2x_test_registers(struct bnx2x *bp)
-{
-	int idx, i, rc = -ENODEV;
+अटल पूर्णांक bnx2x_test_रेजिस्टरs(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक idx, i, rc = -ENODEV;
 	u32 wr_val = 0, hw;
-	int port = BP_PORT(bp);
-	static const struct {
+	पूर्णांक port = BP_PORT(bp);
+	अटल स्थिर काष्ठा अणु
 		u32 hw;
 		u32 offset0;
 		u32 offset1;
 		u32 mask;
-	} reg_tbl[] = {
-/* 0 */		{ BNX2X_CHIP_MASK_ALL,
-			BRB1_REG_PAUSE_LOW_THRESHOLD_0,	4, 0x000003ff },
-		{ BNX2X_CHIP_MASK_ALL,
-			DORQ_REG_DB_ADDR0,		4, 0xffffffff },
-		{ BNX2X_CHIP_MASK_E1X,
-			HC_REG_AGG_INT_0,		4, 0x000003ff },
-		{ BNX2X_CHIP_MASK_ALL,
-			PBF_REG_MAC_IF0_ENABLE,		4, 0x00000001 },
-		{ BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2 | BNX2X_CHIP_MASK_E3,
-			PBF_REG_P0_INIT_CRD,		4, 0x000007ff },
-		{ BNX2X_CHIP_MASK_E3B0,
-			PBF_REG_INIT_CRD_Q0,		4, 0x000007ff },
-		{ BNX2X_CHIP_MASK_ALL,
-			PRS_REG_CID_PORT_0,		4, 0x00ffffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			PXP2_REG_PSWRQ_CDU0_L2P,	4, 0x000fffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			PXP2_REG_RQ_CDU0_EFIRST_MEM_ADDR, 8, 0x0003ffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			PXP2_REG_PSWRQ_TM0_L2P,		4, 0x000fffff },
-/* 10 */	{ BNX2X_CHIP_MASK_ALL,
-			PXP2_REG_RQ_USDM0_EFIRST_MEM_ADDR, 8, 0x0003ffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			PXP2_REG_PSWRQ_TSDM0_L2P,	4, 0x000fffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			QM_REG_CONNNUM_0,		4, 0x000fffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			TM_REG_LIN0_MAX_ACTIVE_CID,	4, 0x0003ffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			SRC_REG_KEYRSS0_0,		40, 0xffffffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			SRC_REG_KEYRSS0_7,		40, 0xffffffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			XCM_REG_WU_DA_SET_TMR_CNT_FLG_CMD00, 4, 0x00000001 },
-		{ BNX2X_CHIP_MASK_ALL,
-			XCM_REG_WU_DA_CNT_CMD00,	4, 0x00000003 },
-		{ BNX2X_CHIP_MASK_ALL,
-			XCM_REG_GLB_DEL_ACK_MAX_CNT_0,	4, 0x000000ff },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LLH0_T_BIT,		4, 0x00000001 },
-/* 20 */	{ BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2,
-			NIG_REG_EMAC0_IN_EN,		4, 0x00000001 },
-		{ BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2,
-			NIG_REG_BMAC0_IN_EN,		4, 0x00000001 },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_XCM0_OUT_EN,		4, 0x00000001 },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_BRB0_OUT_EN,		4, 0x00000001 },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LLH0_XCM_MASK,		4, 0x00000007 },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LLH0_ACPI_PAT_6_LEN,	68, 0x000000ff },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LLH0_ACPI_PAT_0_CRC,	68, 0xffffffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LLH0_DEST_MAC_0_0,	160, 0xffffffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LLH0_DEST_IP_0_1,	160, 0xffffffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LLH0_IPV4_IPV6_0,	160, 0x00000001 },
-/* 30 */	{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LLH0_DEST_UDP_0,	160, 0x0000ffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LLH0_DEST_TCP_0,	160, 0x0000ffff },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LLH0_VLAN_ID_0,	160, 0x00000fff },
-		{ BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2,
-			NIG_REG_XGXS_SERDES0_MODE_SEL,	4, 0x00000001 },
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_LED_CONTROL_OVERRIDE_TRAFFIC_P0, 4, 0x00000001},
-		{ BNX2X_CHIP_MASK_ALL,
-			NIG_REG_STATUS_INTERRUPT_PORT0,	4, 0x07ffffff },
-		{ BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2,
-			NIG_REG_XGXS0_CTRL_EXTREMOTEMDIOST, 24, 0x00000001 },
-		{ BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2,
-			NIG_REG_SERDES0_CTRL_PHY_ADDR,	16, 0x0000001f },
+	पूर्ण reg_tbl[] = अणु
+/* 0 */		अणु BNX2X_CHIP_MASK_ALL,
+			BRB1_REG_PAUSE_LOW_THRESHOLD_0,	4, 0x000003ff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			DORQ_REG_DB_ADDR0,		4, 0xffffffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_E1X,
+			HC_REG_AGG_INT_0,		4, 0x000003ff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			PBF_REG_MAC_IF0_ENABLE,		4, 0x00000001 पूर्ण,
+		अणु BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2 | BNX2X_CHIP_MASK_E3,
+			PBF_REG_P0_INIT_CRD,		4, 0x000007ff पूर्ण,
+		अणु BNX2X_CHIP_MASK_E3B0,
+			PBF_REG_INIT_CRD_Q0,		4, 0x000007ff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			PRS_REG_CID_PORT_0,		4, 0x00ffffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			PXP2_REG_PSWRQ_CDU0_L2P,	4, 0x000fffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			PXP2_REG_RQ_CDU0_EFIRST_MEM_ADDR, 8, 0x0003ffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			PXP2_REG_PSWRQ_TM0_L2P,		4, 0x000fffff पूर्ण,
+/* 10 */	अणु BNX2X_CHIP_MASK_ALL,
+			PXP2_REG_RQ_USDM0_EFIRST_MEM_ADDR, 8, 0x0003ffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			PXP2_REG_PSWRQ_TSDM0_L2P,	4, 0x000fffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			QM_REG_CONNNUM_0,		4, 0x000fffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			TM_REG_LIN0_MAX_ACTIVE_CID,	4, 0x0003ffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			SRC_REG_KEYRSS0_0,		40, 0xffffffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			SRC_REG_KEYRSS0_7,		40, 0xffffffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			XCM_REG_WU_DA_SET_TMR_CNT_FLG_CMD00, 4, 0x00000001 पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			XCM_REG_WU_DA_CNT_CMD00,	4, 0x00000003 पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			XCM_REG_GLB_DEL_ACK_MAX_CNT_0,	4, 0x000000ff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LLH0_T_BIT,		4, 0x00000001 पूर्ण,
+/* 20 */	अणु BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2,
+			NIG_REG_EMAC0_IN_EN,		4, 0x00000001 पूर्ण,
+		अणु BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2,
+			NIG_REG_BMAC0_IN_EN,		4, 0x00000001 पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_XCM0_OUT_EN,		4, 0x00000001 पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_BRB0_OUT_EN,		4, 0x00000001 पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LLH0_XCM_MASK,		4, 0x00000007 पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LLH0_ACPI_PAT_6_LEN,	68, 0x000000ff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LLH0_ACPI_PAT_0_CRC,	68, 0xffffffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LLH0_DEST_MAC_0_0,	160, 0xffffffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LLH0_DEST_IP_0_1,	160, 0xffffffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LLH0_IPV4_IPV6_0,	160, 0x00000001 पूर्ण,
+/* 30 */	अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LLH0_DEST_UDP_0,	160, 0x0000ffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LLH0_DEST_TCP_0,	160, 0x0000ffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LLH0_VLAN_ID_0,	160, 0x00000fff पूर्ण,
+		अणु BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2,
+			NIG_REG_XGXS_SERDES0_MODE_SEL,	4, 0x00000001 पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_LED_CONTROL_OVERRIDE_TRAFFIC_P0, 4, 0x00000001पूर्ण,
+		अणु BNX2X_CHIP_MASK_ALL,
+			NIG_REG_STATUS_INTERRUPT_PORT0,	4, 0x07ffffff पूर्ण,
+		अणु BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2,
+			NIG_REG_XGXS0_CTRL_EXTREMOTEMDIOST, 24, 0x00000001 पूर्ण,
+		अणु BNX2X_CHIP_MASK_E1X | BNX2X_CHIP_MASK_E2,
+			NIG_REG_SERDES0_CTRL_PHY_ADDR,	16, 0x0000001f पूर्ण,
 
-		{ BNX2X_CHIP_MASK_ALL, 0xffffffff, 0, 0x00000000 }
-	};
+		अणु BNX2X_CHIP_MASK_ALL, 0xffffffff, 0, 0x00000000 पूर्ण
+	पूर्ण;
 
-	if (!bnx2x_is_nvm_accessible(bp)) {
+	अगर (!bnx2x_is_nvm_accessible(bp)) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "cannot access eeprom when the interface is down\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (CHIP_IS_E1(bp))
+	अगर (CHIP_IS_E1(bp))
 		hw = BNX2X_CHIP_MASK_E1;
-	else if (CHIP_IS_E1H(bp))
+	अन्यथा अगर (CHIP_IS_E1H(bp))
 		hw = BNX2X_CHIP_MASK_E1H;
-	else if (CHIP_IS_E2(bp))
+	अन्यथा अगर (CHIP_IS_E2(bp))
 		hw = BNX2X_CHIP_MASK_E2;
-	else if (CHIP_IS_E3B0(bp))
+	अन्यथा अगर (CHIP_IS_E3B0(bp))
 		hw = BNX2X_CHIP_MASK_E3B0;
-	else /* e3 A0 */
+	अन्यथा /* e3 A0 */
 		hw = BNX2X_CHIP_MASK_E3;
 
 	/* Repeat the test twice:
 	 * First by writing 0x00000000, second by writing 0xffffffff
 	 */
-	for (idx = 0; idx < 2; idx++) {
+	क्रम (idx = 0; idx < 2; idx++) अणु
 
-		switch (idx) {
-		case 0:
+		चयन (idx) अणु
+		हाल 0:
 			wr_val = 0;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			wr_val = 0xffffffff;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		for (i = 0; reg_tbl[i].offset0 != 0xffffffff; i++) {
+		क्रम (i = 0; reg_tbl[i].offset0 != 0xffffffff; i++) अणु
 			u32 offset, mask, save_val, val;
-			if (!(hw & reg_tbl[i].hw))
-				continue;
+			अगर (!(hw & reg_tbl[i].hw))
+				जारी;
 
 			offset = reg_tbl[i].offset0 + port*reg_tbl[i].offset1;
 			mask = reg_tbl[i].mask;
@@ -2357,213 +2358,213 @@ static int bnx2x_test_registers(struct bnx2x *bp)
 
 			val = REG_RD(bp, offset);
 
-			/* Restore the original register's value */
+			/* Restore the original रेजिस्टर's value */
 			REG_WR(bp, offset, save_val);
 
-			/* verify value is as expected */
-			if ((val & mask) != (wr_val & mask)) {
+			/* verअगरy value is as expected */
+			अगर ((val & mask) != (wr_val & mask)) अणु
 				DP(BNX2X_MSG_ETHTOOL,
 				   "offset 0x%x: val 0x%x != 0x%x mask 0x%x\n",
 				   offset, val, wr_val, mask);
-				goto test_reg_exit;
-			}
-		}
-	}
+				जाओ test_reg_निकास;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	rc = 0;
 
-test_reg_exit:
-	return rc;
-}
+test_reg_निकास:
+	वापस rc;
+पूर्ण
 
-static int bnx2x_test_memory(struct bnx2x *bp)
-{
-	int i, j, rc = -ENODEV;
+अटल पूर्णांक bnx2x_test_memory(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक i, j, rc = -ENODEV;
 	u32 val, index;
-	static const struct {
+	अटल स्थिर काष्ठा अणु
 		u32 offset;
-		int size;
-	} mem_tbl[] = {
-		{ CCM_REG_XX_DESCR_TABLE,   CCM_REG_XX_DESCR_TABLE_SIZE },
-		{ CFC_REG_ACTIVITY_COUNTER, CFC_REG_ACTIVITY_COUNTER_SIZE },
-		{ CFC_REG_LINK_LIST,        CFC_REG_LINK_LIST_SIZE },
-		{ DMAE_REG_CMD_MEM,         DMAE_REG_CMD_MEM_SIZE },
-		{ TCM_REG_XX_DESCR_TABLE,   TCM_REG_XX_DESCR_TABLE_SIZE },
-		{ UCM_REG_XX_DESCR_TABLE,   UCM_REG_XX_DESCR_TABLE_SIZE },
-		{ XCM_REG_XX_DESCR_TABLE,   XCM_REG_XX_DESCR_TABLE_SIZE },
+		पूर्णांक size;
+	पूर्ण mem_tbl[] = अणु
+		अणु CCM_REG_XX_DESCR_TABLE,   CCM_REG_XX_DESCR_TABLE_SIZE पूर्ण,
+		अणु CFC_REG_ACTIVITY_COUNTER, CFC_REG_ACTIVITY_COUNTER_SIZE पूर्ण,
+		अणु CFC_REG_LINK_LIST,        CFC_REG_LINK_LIST_SIZE पूर्ण,
+		अणु DMAE_REG_CMD_MEM,         DMAE_REG_CMD_MEM_SIZE पूर्ण,
+		अणु TCM_REG_XX_DESCR_TABLE,   TCM_REG_XX_DESCR_TABLE_SIZE पूर्ण,
+		अणु UCM_REG_XX_DESCR_TABLE,   UCM_REG_XX_DESCR_TABLE_SIZE पूर्ण,
+		अणु XCM_REG_XX_DESCR_TABLE,   XCM_REG_XX_DESCR_TABLE_SIZE पूर्ण,
 
-		{ 0xffffffff, 0 }
-	};
+		अणु 0xffffffff, 0 पूर्ण
+	पूर्ण;
 
-	static const struct {
-		char *name;
+	अटल स्थिर काष्ठा अणु
+		अक्षर *name;
 		u32 offset;
 		u32 hw_mask[BNX2X_CHIP_MAX_OFST];
-	} prty_tbl[] = {
-		{ "CCM_PRTY_STS",  CCM_REG_CCM_PRTY_STS,
-			{0x3ffc0, 0,   0, 0} },
-		{ "CFC_PRTY_STS",  CFC_REG_CFC_PRTY_STS,
-			{0x2,     0x2, 0, 0} },
-		{ "DMAE_PRTY_STS", DMAE_REG_DMAE_PRTY_STS,
-			{0,       0,   0, 0} },
-		{ "TCM_PRTY_STS",  TCM_REG_TCM_PRTY_STS,
-			{0x3ffc0, 0,   0, 0} },
-		{ "UCM_PRTY_STS",  UCM_REG_UCM_PRTY_STS,
-			{0x3ffc0, 0,   0, 0} },
-		{ "XCM_PRTY_STS",  XCM_REG_XCM_PRTY_STS,
-			{0x3ffc1, 0,   0, 0} },
+	पूर्ण prty_tbl[] = अणु
+		अणु "CCM_PRTY_STS",  CCM_REG_CCM_PRTY_STS,
+			अणु0x3ffc0, 0,   0, 0पूर्ण पूर्ण,
+		अणु "CFC_PRTY_STS",  CFC_REG_CFC_PRTY_STS,
+			अणु0x2,     0x2, 0, 0पूर्ण पूर्ण,
+		अणु "DMAE_PRTY_STS", DMAE_REG_DMAE_PRTY_STS,
+			अणु0,       0,   0, 0पूर्ण पूर्ण,
+		अणु "TCM_PRTY_STS",  TCM_REG_TCM_PRTY_STS,
+			अणु0x3ffc0, 0,   0, 0पूर्ण पूर्ण,
+		अणु "UCM_PRTY_STS",  UCM_REG_UCM_PRTY_STS,
+			अणु0x3ffc0, 0,   0, 0पूर्ण पूर्ण,
+		अणु "XCM_PRTY_STS",  XCM_REG_XCM_PRTY_STS,
+			अणु0x3ffc1, 0,   0, 0पूर्ण पूर्ण,
 
-		{ NULL, 0xffffffff, {0, 0, 0, 0} }
-	};
+		अणु शून्य, 0xffffffff, अणु0, 0, 0, 0पूर्ण पूर्ण
+	पूर्ण;
 
-	if (!bnx2x_is_nvm_accessible(bp)) {
+	अगर (!bnx2x_is_nvm_accessible(bp)) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "cannot access eeprom when the interface is down\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (CHIP_IS_E1(bp))
+	अगर (CHIP_IS_E1(bp))
 		index = BNX2X_CHIP_E1_OFST;
-	else if (CHIP_IS_E1H(bp))
+	अन्यथा अगर (CHIP_IS_E1H(bp))
 		index = BNX2X_CHIP_E1H_OFST;
-	else if (CHIP_IS_E2(bp))
+	अन्यथा अगर (CHIP_IS_E2(bp))
 		index = BNX2X_CHIP_E2_OFST;
-	else /* e3 */
+	अन्यथा /* e3 */
 		index = BNX2X_CHIP_E3_OFST;
 
 	/* pre-Check the parity status */
-	for (i = 0; prty_tbl[i].offset != 0xffffffff; i++) {
+	क्रम (i = 0; prty_tbl[i].offset != 0xffffffff; i++) अणु
 		val = REG_RD(bp, prty_tbl[i].offset);
-		if (val & ~(prty_tbl[i].hw_mask[index])) {
+		अगर (val & ~(prty_tbl[i].hw_mask[index])) अणु
 			DP(BNX2X_MSG_ETHTOOL,
 			   "%s is 0x%x\n", prty_tbl[i].name, val);
-			goto test_mem_exit;
-		}
-	}
+			जाओ test_mem_निकास;
+		पूर्ण
+	पूर्ण
 
 	/* Go through all the memories */
-	for (i = 0; mem_tbl[i].offset != 0xffffffff; i++)
-		for (j = 0; j < mem_tbl[i].size; j++)
+	क्रम (i = 0; mem_tbl[i].offset != 0xffffffff; i++)
+		क्रम (j = 0; j < mem_tbl[i].size; j++)
 			REG_RD(bp, mem_tbl[i].offset + j*4);
 
 	/* Check the parity status */
-	for (i = 0; prty_tbl[i].offset != 0xffffffff; i++) {
+	क्रम (i = 0; prty_tbl[i].offset != 0xffffffff; i++) अणु
 		val = REG_RD(bp, prty_tbl[i].offset);
-		if (val & ~(prty_tbl[i].hw_mask[index])) {
+		अगर (val & ~(prty_tbl[i].hw_mask[index])) अणु
 			DP(BNX2X_MSG_ETHTOOL,
 			   "%s is 0x%x\n", prty_tbl[i].name, val);
-			goto test_mem_exit;
-		}
-	}
+			जाओ test_mem_निकास;
+		पूर्ण
+	पूर्ण
 
 	rc = 0;
 
-test_mem_exit:
-	return rc;
-}
+test_mem_निकास:
+	वापस rc;
+पूर्ण
 
-static void bnx2x_wait_for_link(struct bnx2x *bp, u8 link_up, u8 is_serdes)
-{
-	int cnt = 1400;
+अटल व्योम bnx2x_रुको_क्रम_link(काष्ठा bnx2x *bp, u8 link_up, u8 is_serdes)
+अणु
+	पूर्णांक cnt = 1400;
 
-	if (link_up) {
-		while (bnx2x_link_test(bp, is_serdes) && cnt--)
+	अगर (link_up) अणु
+		जबतक (bnx2x_link_test(bp, is_serdes) && cnt--)
 			msleep(20);
 
-		if (cnt <= 0 && bnx2x_link_test(bp, is_serdes))
+		अगर (cnt <= 0 && bnx2x_link_test(bp, is_serdes))
 			DP(BNX2X_MSG_ETHTOOL, "Timeout waiting for link up\n");
 
 		cnt = 1400;
-		while (!bp->link_vars.link_up && cnt--)
+		जबतक (!bp->link_vars.link_up && cnt--)
 			msleep(20);
 
-		if (cnt <= 0 && !bp->link_vars.link_up)
+		अगर (cnt <= 0 && !bp->link_vars.link_up)
 			DP(BNX2X_MSG_ETHTOOL,
 			   "Timeout waiting for link init\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnx2x_run_loopback(struct bnx2x *bp, int loopback_mode)
-{
-	unsigned int pkt_size, num_pkts, i;
-	struct sk_buff *skb;
-	unsigned char *packet;
-	struct bnx2x_fastpath *fp_rx = &bp->fp[0];
-	struct bnx2x_fastpath *fp_tx = &bp->fp[0];
-	struct bnx2x_fp_txdata *txdata = fp_tx->txdata_ptr[0];
+अटल पूर्णांक bnx2x_run_loopback(काष्ठा bnx2x *bp, पूर्णांक loopback_mode)
+अणु
+	अचिन्हित पूर्णांक pkt_size, num_pkts, i;
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *packet;
+	काष्ठा bnx2x_fastpath *fp_rx = &bp->fp[0];
+	काष्ठा bnx2x_fastpath *fp_tx = &bp->fp[0];
+	काष्ठा bnx2x_fp_txdata *txdata = fp_tx->txdata_ptr[0];
 	u16 tx_start_idx, tx_idx;
 	u16 rx_start_idx, rx_idx;
 	u16 pkt_prod, bd_prod;
-	struct sw_tx_bd *tx_buf;
-	struct eth_tx_start_bd *tx_start_bd;
+	काष्ठा sw_tx_bd *tx_buf;
+	काष्ठा eth_tx_start_bd *tx_start_bd;
 	dma_addr_t mapping;
-	union eth_rx_cqe *cqe;
+	जोड़ eth_rx_cqe *cqe;
 	u8 cqe_fp_flags, cqe_fp_type;
-	struct sw_rx_bd *rx_buf;
+	काष्ठा sw_rx_bd *rx_buf;
 	u16 len;
-	int rc = -ENODEV;
+	पूर्णांक rc = -ENODEV;
 	u8 *data;
-	struct netdev_queue *txq = netdev_get_tx_queue(bp->dev,
+	काष्ठा netdev_queue *txq = netdev_get_tx_queue(bp->dev,
 						       txdata->txq_index);
 
 	/* check the loopback mode */
-	switch (loopback_mode) {
-	case BNX2X_PHY_LOOPBACK:
-		if (bp->link_params.loopback_mode != LOOPBACK_XGXS) {
+	चयन (loopback_mode) अणु
+	हाल BNX2X_PHY_LOOPBACK:
+		अगर (bp->link_params.loopback_mode != LOOPBACK_XGXS) अणु
 			DP(BNX2X_MSG_ETHTOOL, "PHY loopback not supported\n");
-			return -EINVAL;
-		}
-		break;
-	case BNX2X_MAC_LOOPBACK:
-		if (CHIP_IS_E3(bp)) {
-			int cfg_idx = bnx2x_get_link_cfg_idx(bp);
-			if (bp->port.supported[cfg_idx] &
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल BNX2X_MAC_LOOPBACK:
+		अगर (CHIP_IS_E3(bp)) अणु
+			पूर्णांक cfg_idx = bnx2x_get_link_cfg_idx(bp);
+			अगर (bp->port.supported[cfg_idx] &
 			    (SUPPORTED_10000baseT_Full |
 			     SUPPORTED_20000baseMLD2_Full |
 			     SUPPORTED_20000baseKR2_Full))
 				bp->link_params.loopback_mode = LOOPBACK_XMAC;
-			else
+			अन्यथा
 				bp->link_params.loopback_mode = LOOPBACK_UMAC;
-		} else
+		पूर्ण अन्यथा
 			bp->link_params.loopback_mode = LOOPBACK_BMAC;
 
 		bnx2x_phy_init(&bp->link_params, &bp->link_vars);
-		break;
-	case BNX2X_EXT_LOOPBACK:
-		if (bp->link_params.loopback_mode != LOOPBACK_EXT) {
+		अवरोध;
+	हाल BNX2X_EXT_LOOPBACK:
+		अगर (bp->link_params.loopback_mode != LOOPBACK_EXT) अणु
 			DP(BNX2X_MSG_ETHTOOL,
 			   "Can't configure external loopback\n");
-			return -EINVAL;
-		}
-		break;
-	default:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
 		DP(BNX2X_MSG_ETHTOOL, "Command parameters not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* prepare the loopback packet */
 	pkt_size = (((bp->dev->mtu < ETH_MAX_PACKET_SIZE) ?
 		     bp->dev->mtu : ETH_MAX_PACKET_SIZE) + ETH_HLEN);
 	skb = netdev_alloc_skb(bp->dev, fp_rx->rx_buf_size);
-	if (!skb) {
+	अगर (!skb) अणु
 		DP(BNX2X_MSG_ETHTOOL, "Can't allocate skb\n");
 		rc = -ENOMEM;
-		goto test_loopback_exit;
-	}
+		जाओ test_loopback_निकास;
+	पूर्ण
 	packet = skb_put(skb, pkt_size);
-	memcpy(packet, bp->dev->dev_addr, ETH_ALEN);
+	स_नकल(packet, bp->dev->dev_addr, ETH_ALEN);
 	eth_zero_addr(packet + ETH_ALEN);
-	memset(packet + 2*ETH_ALEN, 0x77, (ETH_HLEN - 2*ETH_ALEN));
-	for (i = ETH_HLEN; i < pkt_size; i++)
-		packet[i] = (unsigned char) (i & 0xff);
+	स_रखो(packet + 2*ETH_ALEN, 0x77, (ETH_HLEN - 2*ETH_ALEN));
+	क्रम (i = ETH_HLEN; i < pkt_size; i++)
+		packet[i] = (अचिन्हित अक्षर) (i & 0xff);
 	mapping = dma_map_single(&bp->pdev->dev, skb->data,
 				 skb_headlen(skb), DMA_TO_DEVICE);
-	if (unlikely(dma_mapping_error(&bp->pdev->dev, mapping))) {
+	अगर (unlikely(dma_mapping_error(&bp->pdev->dev, mapping))) अणु
 		rc = -ENOMEM;
-		dev_kfree_skb(skb);
+		dev_kमुक्त_skb(skb);
 		DP(BNX2X_MSG_ETHTOOL, "Unable to map SKB\n");
-		goto test_loopback_exit;
-	}
+		जाओ test_loopback_निकास;
+	पूर्ण
 
 	/* send the loopback packet */
 	num_pkts = 0;
@@ -2596,23 +2597,23 @@ static int bnx2x_run_loopback(struct bnx2x *bp, int loopback_mode)
 	/* turn on parsing and get a BD */
 	bd_prod = TX_BD(NEXT_TX_IDX(bd_prod));
 
-	if (CHIP_IS_E1x(bp)) {
+	अगर (CHIP_IS_E1x(bp)) अणु
 		u16 global_data = 0;
-		struct eth_tx_parse_bd_e1x  *pbd_e1x =
+		काष्ठा eth_tx_parse_bd_e1x  *pbd_e1x =
 			&txdata->tx_desc_ring[bd_prod].parse_bd_e1x;
-		memset(pbd_e1x, 0, sizeof(struct eth_tx_parse_bd_e1x));
+		स_रखो(pbd_e1x, 0, माप(काष्ठा eth_tx_parse_bd_e1x));
 		SET_FLAG(global_data,
 			 ETH_TX_PARSE_BD_E1X_ETH_ADDR_TYPE, UNICAST_ADDRESS);
 		pbd_e1x->global_data = cpu_to_le16(global_data);
-	} else {
+	पूर्ण अन्यथा अणु
 		u32 parsing_data = 0;
-		struct eth_tx_parse_bd_e2  *pbd_e2 =
+		काष्ठा eth_tx_parse_bd_e2  *pbd_e2 =
 			&txdata->tx_desc_ring[bd_prod].parse_bd_e2;
-		memset(pbd_e2, 0, sizeof(struct eth_tx_parse_bd_e2));
+		स_रखो(pbd_e2, 0, माप(काष्ठा eth_tx_parse_bd_e2));
 		SET_FLAG(parsing_data,
 			 ETH_TX_PARSE_BD_E2_ETH_ADDR_TYPE, UNICAST_ADDRESS);
 		pbd_e2->parsing_data = cpu_to_le32(parsing_data);
-	}
+	पूर्ण
 	wmb();
 
 	txdata->tx_db.data.prod += 2;
@@ -2628,49 +2629,49 @@ static int bnx2x_run_loopback(struct bnx2x *bp, int loopback_mode)
 	udelay(100);
 
 	tx_idx = le16_to_cpu(*txdata->tx_cons_sb);
-	if (tx_idx != tx_start_idx + num_pkts)
-		goto test_loopback_exit;
+	अगर (tx_idx != tx_start_idx + num_pkts)
+		जाओ test_loopback_निकास;
 
-	/* Unlike HC IGU won't generate an interrupt for status block
-	 * updates that have been performed while interrupts were
+	/* Unlike HC IGU won't generate an पूर्णांकerrupt क्रम status block
+	 * updates that have been perक्रमmed जबतक पूर्णांकerrupts were
 	 * disabled.
 	 */
-	if (bp->common.int_block == INT_BLOCK_IGU) {
+	अगर (bp->common.पूर्णांक_block == INT_BLOCK_IGU) अणु
 		/* Disable local BHes to prevent a dead-lock situation between
 		 * sch_direct_xmit() and bnx2x_run_loopback() (calling
-		 * bnx2x_tx_int()), as both are taking netif_tx_lock().
+		 * bnx2x_tx_पूर्णांक()), as both are taking netअगर_tx_lock().
 		 */
 		local_bh_disable();
-		bnx2x_tx_int(bp, txdata);
+		bnx2x_tx_पूर्णांक(bp, txdata);
 		local_bh_enable();
-	}
+	पूर्ण
 
 	rx_idx = le16_to_cpu(*fp_rx->rx_cons_sb);
-	if (rx_idx != rx_start_idx + num_pkts)
-		goto test_loopback_exit;
+	अगर (rx_idx != rx_start_idx + num_pkts)
+		जाओ test_loopback_निकास;
 
 	cqe = &fp_rx->rx_comp_ring[RCQ_BD(fp_rx->rx_comp_cons)];
 	cqe_fp_flags = cqe->fast_path_cqe.type_error_flags;
 	cqe_fp_type = cqe_fp_flags & ETH_FAST_PATH_RX_CQE_TYPE;
-	if (!CQE_TYPE_FAST(cqe_fp_type) || (cqe_fp_flags & ETH_RX_ERROR_FALGS))
-		goto test_loopback_rx_exit;
+	अगर (!CQE_TYPE_FAST(cqe_fp_type) || (cqe_fp_flags & ETH_RX_ERROR_FALGS))
+		जाओ test_loopback_rx_निकास;
 
 	len = le16_to_cpu(cqe->fast_path_cqe.pkt_len_or_gro_seg_len);
-	if (len != pkt_size)
-		goto test_loopback_rx_exit;
+	अगर (len != pkt_size)
+		जाओ test_loopback_rx_निकास;
 
 	rx_buf = &fp_rx->rx_buf_ring[RX_BD(fp_rx->rx_bd_cons)];
-	dma_sync_single_for_cpu(&bp->pdev->dev,
+	dma_sync_single_क्रम_cpu(&bp->pdev->dev,
 				   dma_unmap_addr(rx_buf, mapping),
 				   fp_rx->rx_buf_size, DMA_FROM_DEVICE);
 	data = rx_buf->data + NET_SKB_PAD + cqe->fast_path_cqe.placement_offset;
-	for (i = ETH_HLEN; i < pkt_size; i++)
-		if (*(data + i) != (unsigned char) (i & 0xff))
-			goto test_loopback_rx_exit;
+	क्रम (i = ETH_HLEN; i < pkt_size; i++)
+		अगर (*(data + i) != (अचिन्हित अक्षर) (i & 0xff))
+			जाओ test_loopback_rx_निकास;
 
 	rc = 0;
 
-test_loopback_rx_exit:
+test_loopback_rx_निकास:
 
 	fp_rx->rx_bd_cons = NEXT_RX_IDX(fp_rx->rx_bd_cons);
 	fp_rx->rx_bd_prod = NEXT_RX_IDX(fp_rx->rx_bd_prod);
@@ -2681,900 +2682,900 @@ test_loopback_rx_exit:
 	bnx2x_update_rx_prod(bp, fp_rx, fp_rx->rx_bd_prod, fp_rx->rx_comp_prod,
 			     fp_rx->rx_sge_prod);
 
-test_loopback_exit:
+test_loopback_निकास:
 	bp->link_params.loopback_mode = LOOPBACK_NONE;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnx2x_test_loopback(struct bnx2x *bp)
-{
-	int rc = 0, res;
+अटल पूर्णांक bnx2x_test_loopback(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक rc = 0, res;
 
-	if (BP_NOMCP(bp))
-		return rc;
+	अगर (BP_NOMCP(bp))
+		वापस rc;
 
-	if (!netif_running(bp->dev))
-		return BNX2X_LOOPBACK_FAILED;
+	अगर (!netअगर_running(bp->dev))
+		वापस BNX2X_LOOPBACK_FAILED;
 
-	bnx2x_netif_stop(bp, 1);
+	bnx2x_netअगर_stop(bp, 1);
 	bnx2x_acquire_phy_lock(bp);
 
 	res = bnx2x_run_loopback(bp, BNX2X_PHY_LOOPBACK);
-	if (res) {
+	अगर (res) अणु
 		DP(BNX2X_MSG_ETHTOOL, "  PHY loopback failed  (res %d)\n", res);
 		rc |= BNX2X_PHY_LOOPBACK_FAILED;
-	}
+	पूर्ण
 
 	res = bnx2x_run_loopback(bp, BNX2X_MAC_LOOPBACK);
-	if (res) {
+	अगर (res) अणु
 		DP(BNX2X_MSG_ETHTOOL, "  MAC loopback failed  (res %d)\n", res);
 		rc |= BNX2X_MAC_LOOPBACK_FAILED;
-	}
+	पूर्ण
 
 	bnx2x_release_phy_lock(bp);
-	bnx2x_netif_start(bp);
+	bnx2x_netअगर_start(bp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnx2x_test_ext_loopback(struct bnx2x *bp)
-{
-	int rc;
+अटल पूर्णांक bnx2x_test_ext_loopback(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक rc;
 	u8 is_serdes =
 		(bp->link_vars.link_status & LINK_STATUS_SERDES_LINK) > 0;
 
-	if (BP_NOMCP(bp))
-		return -ENODEV;
+	अगर (BP_NOMCP(bp))
+		वापस -ENODEV;
 
-	if (!netif_running(bp->dev))
-		return BNX2X_EXT_LOOPBACK_FAILED;
+	अगर (!netअगर_running(bp->dev))
+		वापस BNX2X_EXT_LOOPBACK_FAILED;
 
 	bnx2x_nic_unload(bp, UNLOAD_NORMAL, false);
 	rc = bnx2x_nic_load(bp, LOAD_LOOPBACK_EXT);
-	if (rc) {
+	अगर (rc) अणु
 		DP(BNX2X_MSG_ETHTOOL,
 		   "Can't perform self-test, nic_load (for external lb) failed\n");
-		return -ENODEV;
-	}
-	bnx2x_wait_for_link(bp, 1, is_serdes);
+		वापस -ENODEV;
+	पूर्ण
+	bnx2x_रुको_क्रम_link(bp, 1, is_serdes);
 
-	bnx2x_netif_stop(bp, 1);
+	bnx2x_netअगर_stop(bp, 1);
 
 	rc = bnx2x_run_loopback(bp, BNX2X_EXT_LOOPBACK);
-	if (rc)
+	अगर (rc)
 		DP(BNX2X_MSG_ETHTOOL, "EXT loopback failed  (res %d)\n", rc);
 
-	bnx2x_netif_start(bp);
+	bnx2x_netअगर_start(bp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-struct code_entry {
+काष्ठा code_entry अणु
 	u32 sram_start_addr;
 	u32 code_attribute;
-#define CODE_IMAGE_TYPE_MASK			0xf0800003
-#define CODE_IMAGE_VNTAG_PROFILES_DATA		0xd0000003
-#define CODE_IMAGE_LENGTH_MASK			0x007ffffc
-#define CODE_IMAGE_TYPE_EXTENDED_DIR		0xe0000000
+#घोषणा CODE_IMAGE_TYPE_MASK			0xf0800003
+#घोषणा CODE_IMAGE_VNTAG_PROखाताS_DATA		0xd0000003
+#घोषणा CODE_IMAGE_LENGTH_MASK			0x007ffffc
+#घोषणा CODE_IMAGE_TYPE_EXTENDED_सूची		0xe0000000
 	u32 nvm_start_addr;
-};
+पूर्ण;
 
-#define CODE_ENTRY_MAX			16
-#define CODE_ENTRY_EXTENDED_DIR_IDX	15
-#define MAX_IMAGES_IN_EXTENDED_DIR	64
-#define NVRAM_DIR_OFFSET		0x14
+#घोषणा CODE_ENTRY_MAX			16
+#घोषणा CODE_ENTRY_EXTENDED_सूची_IDX	15
+#घोषणा MAX_IMAGES_IN_EXTENDED_सूची	64
+#घोषणा NVRAM_सूची_OFFSET		0x14
 
-#define EXTENDED_DIR_EXISTS(code)					  \
-	((code & CODE_IMAGE_TYPE_MASK) == CODE_IMAGE_TYPE_EXTENDED_DIR && \
+#घोषणा EXTENDED_सूची_EXISTS(code)					  \
+	((code & CODE_IMAGE_TYPE_MASK) == CODE_IMAGE_TYPE_EXTENDED_सूची && \
 	 (code & CODE_IMAGE_LENGTH_MASK) != 0)
 
-#define CRC32_RESIDUAL			0xdebb20e3
-#define CRC_BUFF_SIZE			256
+#घोषणा CRC32_RESIDUAL			0xdebb20e3
+#घोषणा CRC_BUFF_SIZE			256
 
-static int bnx2x_nvram_crc(struct bnx2x *bp,
-			   int offset,
-			   int size,
+अटल पूर्णांक bnx2x_nvram_crc(काष्ठा bnx2x *bp,
+			   पूर्णांक offset,
+			   पूर्णांक size,
 			   u8 *buff)
-{
+अणु
 	u32 crc = ~0;
-	int rc = 0, done = 0;
+	पूर्णांक rc = 0, करोne = 0;
 
 	DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 	   "NVRAM CRC from 0x%08x to 0x%08x\n", offset, offset + size);
 
-	while (done < size) {
-		int count = min_t(int, size - done, CRC_BUFF_SIZE);
+	जबतक (करोne < size) अणु
+		पूर्णांक count = min_t(पूर्णांक, size - करोne, CRC_BUFF_SIZE);
 
-		rc = bnx2x_nvram_read(bp, offset + done, buff, count);
+		rc = bnx2x_nvram_पढ़ो(bp, offset + करोne, buff, count);
 
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		crc = crc32_le(crc, buff, count);
-		done += count;
-	}
+		करोne += count;
+	पूर्ण
 
-	if (crc != CRC32_RESIDUAL)
+	अगर (crc != CRC32_RESIDUAL)
 		rc = -EINVAL;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnx2x_test_nvram_dir(struct bnx2x *bp,
-				struct code_entry *entry,
+अटल पूर्णांक bnx2x_test_nvram_dir(काष्ठा bnx2x *bp,
+				काष्ठा code_entry *entry,
 				u8 *buff)
-{
-	size_t size = entry->code_attribute & CODE_IMAGE_LENGTH_MASK;
+अणु
+	माप_प्रकार size = entry->code_attribute & CODE_IMAGE_LENGTH_MASK;
 	u32 type = entry->code_attribute & CODE_IMAGE_TYPE_MASK;
-	int rc;
+	पूर्णांक rc;
 
-	/* Zero-length images and AFEX profiles do not have CRC */
-	if (size == 0 || type == CODE_IMAGE_VNTAG_PROFILES_DATA)
-		return 0;
+	/* Zero-length images and AFEX profiles करो not have CRC */
+	अगर (size == 0 || type == CODE_IMAGE_VNTAG_PROखाताS_DATA)
+		वापस 0;
 
 	rc = bnx2x_nvram_crc(bp, entry->nvm_start_addr, size, buff);
-	if (rc)
+	अगर (rc)
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "image %x has failed crc test (rc %d)\n", type, rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnx2x_test_dir_entry(struct bnx2x *bp, u32 addr, u8 *buff)
-{
-	int rc;
-	struct code_entry entry;
+अटल पूर्णांक bnx2x_test_dir_entry(काष्ठा bnx2x *bp, u32 addr, u8 *buff)
+अणु
+	पूर्णांक rc;
+	काष्ठा code_entry entry;
 
-	rc = bnx2x_nvram_read32(bp, addr, (u32 *)&entry, sizeof(entry));
-	if (rc)
-		return rc;
+	rc = bnx2x_nvram_पढ़ो32(bp, addr, (u32 *)&entry, माप(entry));
+	अगर (rc)
+		वापस rc;
 
-	return bnx2x_test_nvram_dir(bp, &entry, buff);
-}
+	वापस bnx2x_test_nvram_dir(bp, &entry, buff);
+पूर्ण
 
-static int bnx2x_test_nvram_ext_dirs(struct bnx2x *bp, u8 *buff)
-{
-	u32 rc, cnt, dir_offset = NVRAM_DIR_OFFSET;
-	struct code_entry entry;
-	int i;
+अटल पूर्णांक bnx2x_test_nvram_ext_dirs(काष्ठा bnx2x *bp, u8 *buff)
+अणु
+	u32 rc, cnt, dir_offset = NVRAM_सूची_OFFSET;
+	काष्ठा code_entry entry;
+	पूर्णांक i;
 
-	rc = bnx2x_nvram_read32(bp,
+	rc = bnx2x_nvram_पढ़ो32(bp,
 				dir_offset +
-				sizeof(entry) * CODE_ENTRY_EXTENDED_DIR_IDX,
-				(u32 *)&entry, sizeof(entry));
-	if (rc)
-		return rc;
+				माप(entry) * CODE_ENTRY_EXTENDED_सूची_IDX,
+				(u32 *)&entry, माप(entry));
+	अगर (rc)
+		वापस rc;
 
-	if (!EXTENDED_DIR_EXISTS(entry.code_attribute))
-		return 0;
+	अगर (!EXTENDED_सूची_EXISTS(entry.code_attribute))
+		वापस 0;
 
-	rc = bnx2x_nvram_read32(bp, entry.nvm_start_addr,
-				&cnt, sizeof(u32));
-	if (rc)
-		return rc;
+	rc = bnx2x_nvram_पढ़ो32(bp, entry.nvm_start_addr,
+				&cnt, माप(u32));
+	अगर (rc)
+		वापस rc;
 
 	dir_offset = entry.nvm_start_addr + 8;
 
-	for (i = 0; i < cnt && i < MAX_IMAGES_IN_EXTENDED_DIR; i++) {
+	क्रम (i = 0; i < cnt && i < MAX_IMAGES_IN_EXTENDED_सूची; i++) अणु
 		rc = bnx2x_test_dir_entry(bp, dir_offset +
-					      sizeof(struct code_entry) * i,
+					      माप(काष्ठा code_entry) * i,
 					  buff);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_test_nvram_dirs(struct bnx2x *bp, u8 *buff)
-{
-	u32 rc, dir_offset = NVRAM_DIR_OFFSET;
-	int i;
+अटल पूर्णांक bnx2x_test_nvram_dirs(काष्ठा bnx2x *bp, u8 *buff)
+अणु
+	u32 rc, dir_offset = NVRAM_सूची_OFFSET;
+	पूर्णांक i;
 
 	DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM, "NVRAM DIRS CRC test-set\n");
 
-	for (i = 0; i < CODE_ENTRY_EXTENDED_DIR_IDX; i++) {
+	क्रम (i = 0; i < CODE_ENTRY_EXTENDED_सूची_IDX; i++) अणु
 		rc = bnx2x_test_dir_entry(bp, dir_offset +
-					      sizeof(struct code_entry) * i,
+					      माप(काष्ठा code_entry) * i,
 					  buff);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return bnx2x_test_nvram_ext_dirs(bp, buff);
-}
+	वापस bnx2x_test_nvram_ext_dirs(bp, buff);
+पूर्ण
 
-struct crc_pair {
-	int offset;
-	int size;
-};
+काष्ठा crc_pair अणु
+	पूर्णांक offset;
+	पूर्णांक size;
+पूर्ण;
 
-static int bnx2x_test_nvram_tbl(struct bnx2x *bp,
-				const struct crc_pair *nvram_tbl, u8 *buf)
-{
-	int i;
+अटल पूर्णांक bnx2x_test_nvram_tbl(काष्ठा bnx2x *bp,
+				स्थिर काष्ठा crc_pair *nvram_tbl, u8 *buf)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; nvram_tbl[i].size; i++) {
-		int rc = bnx2x_nvram_crc(bp, nvram_tbl[i].offset,
+	क्रम (i = 0; nvram_tbl[i].size; i++) अणु
+		पूर्णांक rc = bnx2x_nvram_crc(bp, nvram_tbl[i].offset,
 					 nvram_tbl[i].size, buf);
-		if (rc) {
+		अगर (rc) अणु
 			DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 			   "nvram_tbl[%d] has failed crc test (rc %d)\n",
 			   i, rc);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_test_nvram(struct bnx2x *bp)
-{
-	static const struct crc_pair nvram_tbl[] = {
-		{     0,  0x14 }, /* bootstrap */
-		{  0x14,  0xec }, /* dir */
-		{ 0x100, 0x350 }, /* manuf_info */
-		{ 0x450,  0xf0 }, /* feature_info */
-		{ 0x640,  0x64 }, /* upgrade_key_info */
-		{ 0x708,  0x70 }, /* manuf_key_info */
-		{     0,     0 }
-	};
-	static const struct crc_pair nvram_tbl2[] = {
-		{ 0x7e8, 0x350 }, /* manuf_info2 */
-		{ 0xb38,  0xf0 }, /* feature_info */
-		{     0,     0 }
-	};
+अटल पूर्णांक bnx2x_test_nvram(काष्ठा bnx2x *bp)
+अणु
+	अटल स्थिर काष्ठा crc_pair nvram_tbl[] = अणु
+		अणु     0,  0x14 पूर्ण, /* bootstrap */
+		अणु  0x14,  0xec पूर्ण, /* dir */
+		अणु 0x100, 0x350 पूर्ण, /* manuf_info */
+		अणु 0x450,  0xf0 पूर्ण, /* feature_info */
+		अणु 0x640,  0x64 पूर्ण, /* upgrade_key_info */
+		अणु 0x708,  0x70 पूर्ण, /* manuf_key_info */
+		अणु     0,     0 पूर्ण
+	पूर्ण;
+	अटल स्थिर काष्ठा crc_pair nvram_tbl2[] = अणु
+		अणु 0x7e8, 0x350 पूर्ण, /* manuf_info2 */
+		अणु 0xb38,  0xf0 पूर्ण, /* feature_info */
+		अणु     0,     0 पूर्ण
+	पूर्ण;
 
 	u8 *buf;
-	int rc;
+	पूर्णांक rc;
 	u32 magic;
 
-	if (BP_NOMCP(bp))
-		return 0;
+	अगर (BP_NOMCP(bp))
+		वापस 0;
 
-	buf = kmalloc(CRC_BUFF_SIZE, GFP_KERNEL);
-	if (!buf) {
+	buf = kदो_स्मृति(CRC_BUFF_SIZE, GFP_KERNEL);
+	अगर (!buf) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM, "kmalloc failed\n");
 		rc = -ENOMEM;
-		goto test_nvram_exit;
-	}
+		जाओ test_nvram_निकास;
+	पूर्ण
 
-	rc = bnx2x_nvram_read32(bp, 0, &magic, sizeof(magic));
-	if (rc) {
+	rc = bnx2x_nvram_पढ़ो32(bp, 0, &magic, माप(magic));
+	अगर (rc) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "magic value read (rc %d)\n", rc);
-		goto test_nvram_exit;
-	}
+		जाओ test_nvram_निकास;
+	पूर्ण
 
-	if (magic != 0x669955aa) {
+	अगर (magic != 0x669955aa) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "wrong magic value (0x%08x)\n", magic);
 		rc = -ENODEV;
-		goto test_nvram_exit;
-	}
+		जाओ test_nvram_निकास;
+	पूर्ण
 
 	DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM, "Port 0 CRC test-set\n");
 	rc = bnx2x_test_nvram_tbl(bp, nvram_tbl, buf);
-	if (rc)
-		goto test_nvram_exit;
+	अगर (rc)
+		जाओ test_nvram_निकास;
 
-	if (!CHIP_IS_E1x(bp) && !CHIP_IS_57811xx(bp)) {
+	अगर (!CHIP_IS_E1x(bp) && !CHIP_IS_57811xx(bp)) अणु
 		u32 hide = SHMEM_RD(bp, dev_info.shared_hw_config.config2) &
 			   SHARED_HW_CFG_HIDE_PORT1;
 
-		if (!hide) {
+		अगर (!hide) अणु
 			DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 			   "Port 1 CRC test-set\n");
 			rc = bnx2x_test_nvram_tbl(bp, nvram_tbl2, buf);
-			if (rc)
-				goto test_nvram_exit;
-		}
-	}
+			अगर (rc)
+				जाओ test_nvram_निकास;
+		पूर्ण
+	पूर्ण
 
 	rc = bnx2x_test_nvram_dirs(bp, buf);
 
-test_nvram_exit:
-	kfree(buf);
-	return rc;
-}
+test_nvram_निकास:
+	kमुक्त(buf);
+	वापस rc;
+पूर्ण
 
 /* Send an EMPTY ramrod on the first queue */
-static int bnx2x_test_intr(struct bnx2x *bp)
-{
-	struct bnx2x_queue_state_params params = {NULL};
+अटल पूर्णांक bnx2x_test_पूर्णांकr(काष्ठा bnx2x *bp)
+अणु
+	काष्ठा bnx2x_queue_state_params params = अणुशून्यपूर्ण;
 
-	if (!netif_running(bp->dev)) {
+	अगर (!netअगर_running(bp->dev)) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "cannot access eeprom when the interface is down\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	params.q_obj = &bp->sp_objs->q_obj;
 	params.cmd = BNX2X_Q_CMD_EMPTY;
 
 	__set_bit(RAMROD_COMP_WAIT, &params.ramrod_flags);
 
-	return bnx2x_queue_state_change(bp, &params);
-}
+	वापस bnx2x_queue_state_change(bp, &params);
+पूर्ण
 
-static void bnx2x_self_test(struct net_device *dev,
-			    struct ethtool_test *etest, u64 *buf)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल व्योम bnx2x_self_test(काष्ठा net_device *dev,
+			    काष्ठा ethtool_test *etest, u64 *buf)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 	u8 is_serdes, link_up;
-	int rc, cnt = 0;
+	पूर्णांक rc, cnt = 0;
 
-	if (pci_num_vf(bp->pdev)) {
+	अगर (pci_num_vf(bp->pdev)) अणु
 		DP(BNX2X_MSG_IOV,
 		   "VFs are enabled, can not perform self test\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (bp->recovery_state != BNX2X_RECOVERY_DONE) {
+	अगर (bp->recovery_state != BNX2X_RECOVERY_DONE) अणु
 		netdev_err(bp->dev,
 			   "Handling parity error recovery. Try again later\n");
 		etest->flags |= ETH_TEST_FL_FAILED;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	DP(BNX2X_MSG_ETHTOOL,
 	   "Self-test command parameters: offline = %d, external_lb = %d\n",
 	   (etest->flags & ETH_TEST_FL_OFFLINE),
 	   (etest->flags & ETH_TEST_FL_EXTERNAL_LB)>>2);
 
-	memset(buf, 0, sizeof(u64) * BNX2X_NUM_TESTS(bp));
+	स_रखो(buf, 0, माप(u64) * BNX2X_NUM_TESTS(bp));
 
-	if (bnx2x_test_nvram(bp) != 0) {
-		if (!IS_MF(bp))
+	अगर (bnx2x_test_nvram(bp) != 0) अणु
+		अगर (!IS_MF(bp))
 			buf[4] = 1;
-		else
+		अन्यथा
 			buf[0] = 1;
 		etest->flags |= ETH_TEST_FL_FAILED;
-	}
+	पूर्ण
 
-	if (!netif_running(dev)) {
+	अगर (!netअगर_running(dev)) अणु
 		DP(BNX2X_MSG_ETHTOOL, "Interface is down\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	is_serdes = (bp->link_vars.link_status & LINK_STATUS_SERDES_LINK) > 0;
 	link_up = bp->link_vars.link_up;
 	/* offline tests are not supported in MF mode */
-	if ((etest->flags & ETH_TEST_FL_OFFLINE) && !IS_MF(bp)) {
-		int port = BP_PORT(bp);
+	अगर ((etest->flags & ETH_TEST_FL_OFFLINE) && !IS_MF(bp)) अणु
+		पूर्णांक port = BP_PORT(bp);
 		u32 val;
 
-		/* save current value of input enable for TX port IF */
+		/* save current value of input enable क्रम TX port IF */
 		val = REG_RD(bp, NIG_REG_EGRESS_UMP0_IN_EN + port*4);
-		/* disable input for TX port IF */
+		/* disable input क्रम TX port IF */
 		REG_WR(bp, NIG_REG_EGRESS_UMP0_IN_EN + port*4, 0);
 
 		bnx2x_nic_unload(bp, UNLOAD_NORMAL, false);
 		rc = bnx2x_nic_load(bp, LOAD_DIAG);
-		if (rc) {
+		अगर (rc) अणु
 			etest->flags |= ETH_TEST_FL_FAILED;
 			DP(BNX2X_MSG_ETHTOOL,
 			   "Can't perform self-test, nic_load (for offline) failed\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		/* wait until link state is restored */
-		bnx2x_wait_for_link(bp, 1, is_serdes);
+		/* रुको until link state is restored */
+		bnx2x_रुको_क्रम_link(bp, 1, is_serdes);
 
-		if (bnx2x_test_registers(bp) != 0) {
+		अगर (bnx2x_test_रेजिस्टरs(bp) != 0) अणु
 			buf[0] = 1;
 			etest->flags |= ETH_TEST_FL_FAILED;
-		}
-		if (bnx2x_test_memory(bp) != 0) {
+		पूर्ण
+		अगर (bnx2x_test_memory(bp) != 0) अणु
 			buf[1] = 1;
 			etest->flags |= ETH_TEST_FL_FAILED;
-		}
+		पूर्ण
 
-		buf[2] = bnx2x_test_loopback(bp); /* internal LB */
-		if (buf[2] != 0)
+		buf[2] = bnx2x_test_loopback(bp); /* पूर्णांकernal LB */
+		अगर (buf[2] != 0)
 			etest->flags |= ETH_TEST_FL_FAILED;
 
-		if (etest->flags & ETH_TEST_FL_EXTERNAL_LB) {
-			buf[3] = bnx2x_test_ext_loopback(bp); /* external LB */
-			if (buf[3] != 0)
+		अगर (etest->flags & ETH_TEST_FL_EXTERNAL_LB) अणु
+			buf[3] = bnx2x_test_ext_loopback(bp); /* बाह्यal LB */
+			अगर (buf[3] != 0)
 				etest->flags |= ETH_TEST_FL_FAILED;
 			etest->flags |= ETH_TEST_FL_EXTERNAL_LB_DONE;
-		}
+		पूर्ण
 
 		bnx2x_nic_unload(bp, UNLOAD_NORMAL, false);
 
-		/* restore input for TX port IF */
+		/* restore input क्रम TX port IF */
 		REG_WR(bp, NIG_REG_EGRESS_UMP0_IN_EN + port*4, val);
 		rc = bnx2x_nic_load(bp, LOAD_NORMAL);
-		if (rc) {
+		अगर (rc) अणु
 			etest->flags |= ETH_TEST_FL_FAILED;
 			DP(BNX2X_MSG_ETHTOOL,
 			   "Can't perform self-test, nic_load (for online) failed\n");
-			return;
-		}
-		/* wait until link state is restored */
-		bnx2x_wait_for_link(bp, link_up, is_serdes);
-	}
+			वापस;
+		पूर्ण
+		/* रुको until link state is restored */
+		bnx2x_रुको_क्रम_link(bp, link_up, is_serdes);
+	पूर्ण
 
-	if (bnx2x_test_intr(bp) != 0) {
-		if (!IS_MF(bp))
+	अगर (bnx2x_test_पूर्णांकr(bp) != 0) अणु
+		अगर (!IS_MF(bp))
 			buf[5] = 1;
-		else
+		अन्यथा
 			buf[1] = 1;
 		etest->flags |= ETH_TEST_FL_FAILED;
-	}
+	पूर्ण
 
-	if (link_up) {
+	अगर (link_up) अणु
 		cnt = 100;
-		while (bnx2x_link_test(bp, is_serdes) && --cnt)
+		जबतक (bnx2x_link_test(bp, is_serdes) && --cnt)
 			msleep(20);
-	}
+	पूर्ण
 
-	if (!cnt) {
-		if (!IS_MF(bp))
+	अगर (!cnt) अणु
+		अगर (!IS_MF(bp))
 			buf[6] = 1;
-		else
+		अन्यथा
 			buf[2] = 1;
 		etest->flags |= ETH_TEST_FL_FAILED;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define IS_PORT_STAT(i)		(bnx2x_stats_arr[i].is_port_stat)
-#define HIDE_PORT_STAT(bp)	IS_VF(bp)
+#घोषणा IS_PORT_STAT(i)		(bnx2x_stats_arr[i].is_port_stat)
+#घोषणा HIDE_PORT_STAT(bp)	IS_VF(bp)
 
-/* ethtool statistics are displayed for all regular ethernet queues and the
- * fcoe L2 queue if not disabled
+/* ethtool statistics are displayed क्रम all regular ethernet queues and the
+ * fcoe L2 queue अगर not disabled
  */
-static int bnx2x_num_stat_queues(struct bnx2x *bp)
-{
-	return BNX2X_NUM_ETH_QUEUES(bp);
-}
+अटल पूर्णांक bnx2x_num_stat_queues(काष्ठा bnx2x *bp)
+अणु
+	वापस BNX2X_NUM_ETH_QUEUES(bp);
+पूर्ण
 
-static int bnx2x_get_sset_count(struct net_device *dev, int stringset)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	int i, num_strings = 0;
+अटल पूर्णांक bnx2x_get_sset_count(काष्ठा net_device *dev, पूर्णांक stringset)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	पूर्णांक i, num_strings = 0;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		if (is_multi(bp)) {
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		अगर (is_multi(bp)) अणु
 			num_strings = bnx2x_num_stat_queues(bp) *
 				      BNX2X_NUM_Q_STATS;
-		} else
+		पूर्ण अन्यथा
 			num_strings = 0;
-		if (HIDE_PORT_STAT(bp)) {
-			for (i = 0; i < BNX2X_NUM_STATS; i++)
-				if (!IS_PORT_STAT(i))
+		अगर (HIDE_PORT_STAT(bp)) अणु
+			क्रम (i = 0; i < BNX2X_NUM_STATS; i++)
+				अगर (!IS_PORT_STAT(i))
 					num_strings++;
-		} else
+		पूर्ण अन्यथा
 			num_strings += BNX2X_NUM_STATS;
 
-		return num_strings;
+		वापस num_strings;
 
-	case ETH_SS_TEST:
-		return BNX2X_NUM_TESTS(bp);
+	हाल ETH_SS_TEST:
+		वापस BNX2X_NUM_TESTS(bp);
 
-	case ETH_SS_PRIV_FLAGS:
-		return BNX2X_PRI_FLAG_LEN;
+	हाल ETH_SS_PRIV_FLAGS:
+		वापस BNX2X_PRI_FLAG_LEN;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static u32 bnx2x_get_private_flags(struct net_device *dev)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल u32 bnx2x_get_निजी_flags(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 	u32 flags = 0;
 
 	flags |= (!(bp->flags & NO_ISCSI_FLAG) ? 1 : 0) << BNX2X_PRI_FLAG_ISCSI;
 	flags |= (!(bp->flags & NO_FCOE_FLAG)  ? 1 : 0) << BNX2X_PRI_FLAG_FCOE;
 	flags |= (!!IS_MF_STORAGE_ONLY(bp)) << BNX2X_PRI_FLAG_STORAGE;
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static void bnx2x_get_strings(struct net_device *dev, u32 stringset, u8 *buf)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	int i, j, k, start;
-	char queue_name[MAX_QUEUE_NAME_LEN+1];
+अटल व्योम bnx2x_get_strings(काष्ठा net_device *dev, u32 stringset, u8 *buf)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	पूर्णांक i, j, k, start;
+	अक्षर queue_name[MAX_QUEUE_NAME_LEN+1];
 
-	switch (stringset) {
-	case ETH_SS_STATS:
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
 		k = 0;
-		if (is_multi(bp)) {
-			for_each_eth_queue(bp, i) {
-				memset(queue_name, 0, sizeof(queue_name));
-				snprintf(queue_name, sizeof(queue_name),
+		अगर (is_multi(bp)) अणु
+			क्रम_each_eth_queue(bp, i) अणु
+				स_रखो(queue_name, 0, माप(queue_name));
+				snम_लिखो(queue_name, माप(queue_name),
 					 "%d", i);
-				for (j = 0; j < BNX2X_NUM_Q_STATS; j++)
-					snprintf(buf + (k + j)*ETH_GSTRING_LEN,
+				क्रम (j = 0; j < BNX2X_NUM_Q_STATS; j++)
+					snम_लिखो(buf + (k + j)*ETH_GSTRING_LEN,
 						ETH_GSTRING_LEN,
 						bnx2x_q_stats_arr[j].string,
 						queue_name);
 				k += BNX2X_NUM_Q_STATS;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		for (i = 0, j = 0; i < BNX2X_NUM_STATS; i++) {
-			if (HIDE_PORT_STAT(bp) && IS_PORT_STAT(i))
-				continue;
-			strcpy(buf + (k + j)*ETH_GSTRING_LEN,
+		क्रम (i = 0, j = 0; i < BNX2X_NUM_STATS; i++) अणु
+			अगर (HIDE_PORT_STAT(bp) && IS_PORT_STAT(i))
+				जारी;
+			म_नकल(buf + (k + j)*ETH_GSTRING_LEN,
 				   bnx2x_stats_arr[i].string);
 			j++;
-		}
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case ETH_SS_TEST:
-		/* First 4 tests cannot be done in MF mode */
-		if (!IS_MF(bp))
+	हाल ETH_SS_TEST:
+		/* First 4 tests cannot be करोne in MF mode */
+		अगर (!IS_MF(bp))
 			start = 0;
-		else
+		अन्यथा
 			start = 4;
-		memcpy(buf, bnx2x_tests_str_arr + start,
+		स_नकल(buf, bnx2x_tests_str_arr + start,
 		       ETH_GSTRING_LEN * BNX2X_NUM_TESTS(bp));
-		break;
+		अवरोध;
 
-	case ETH_SS_PRIV_FLAGS:
-		memcpy(buf, bnx2x_private_arr,
+	हाल ETH_SS_PRIV_FLAGS:
+		स_नकल(buf, bnx2x_निजी_arr,
 		       ETH_GSTRING_LEN * BNX2X_PRI_FLAG_LEN);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void bnx2x_get_ethtool_stats(struct net_device *dev,
-				    struct ethtool_stats *stats, u64 *buf)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल व्योम bnx2x_get_ethtool_stats(काष्ठा net_device *dev,
+				    काष्ठा ethtool_stats *stats, u64 *buf)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 	u32 *hw_stats, *offset;
-	int i, j, k = 0;
+	पूर्णांक i, j, k = 0;
 
-	if (is_multi(bp)) {
-		for_each_eth_queue(bp, i) {
+	अगर (is_multi(bp)) अणु
+		क्रम_each_eth_queue(bp, i) अणु
 			hw_stats = (u32 *)&bp->fp_stats[i].eth_q_stats;
-			for (j = 0; j < BNX2X_NUM_Q_STATS; j++) {
-				if (bnx2x_q_stats_arr[j].size == 0) {
+			क्रम (j = 0; j < BNX2X_NUM_Q_STATS; j++) अणु
+				अगर (bnx2x_q_stats_arr[j].size == 0) अणु
 					/* skip this counter */
 					buf[k + j] = 0;
-					continue;
-				}
+					जारी;
+				पूर्ण
 				offset = (hw_stats +
 					  bnx2x_q_stats_arr[j].offset);
-				if (bnx2x_q_stats_arr[j].size == 4) {
+				अगर (bnx2x_q_stats_arr[j].size == 4) अणु
 					/* 4-byte counter */
 					buf[k + j] = (u64) *offset;
-					continue;
-				}
+					जारी;
+				पूर्ण
 				/* 8-byte counter */
 				buf[k + j] = HILO_U64(*offset, *(offset + 1));
-			}
+			पूर्ण
 			k += BNX2X_NUM_Q_STATS;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	hw_stats = (u32 *)&bp->eth_stats;
-	for (i = 0, j = 0; i < BNX2X_NUM_STATS; i++) {
-		if (HIDE_PORT_STAT(bp) && IS_PORT_STAT(i))
-			continue;
-		if (bnx2x_stats_arr[i].size == 0) {
+	क्रम (i = 0, j = 0; i < BNX2X_NUM_STATS; i++) अणु
+		अगर (HIDE_PORT_STAT(bp) && IS_PORT_STAT(i))
+			जारी;
+		अगर (bnx2x_stats_arr[i].size == 0) अणु
 			/* skip this counter */
 			buf[k + j] = 0;
 			j++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		offset = (hw_stats + bnx2x_stats_arr[i].offset);
-		if (bnx2x_stats_arr[i].size == 4) {
+		अगर (bnx2x_stats_arr[i].size == 4) अणु
 			/* 4-byte counter */
 			buf[k + j] = (u64) *offset;
 			j++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		/* 8-byte counter */
 		buf[k + j] = HILO_U64(*offset, *(offset + 1));
 		j++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnx2x_set_phys_id(struct net_device *dev,
-			     enum ethtool_phys_id_state state)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_set_phys_id(काष्ठा net_device *dev,
+			     क्रमागत ethtool_phys_id_state state)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	if (!bnx2x_is_nvm_accessible(bp)) {
+	अगर (!bnx2x_is_nvm_accessible(bp)) अणु
 		DP(BNX2X_MSG_ETHTOOL | BNX2X_MSG_NVM,
 		   "cannot access eeprom when the interface is down\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	switch (state) {
-	case ETHTOOL_ID_ACTIVE:
-		return 1;	/* cycle on/off once per second */
+	चयन (state) अणु
+	हाल ETHTOOL_ID_ACTIVE:
+		वापस 1;	/* cycle on/off once per second */
 
-	case ETHTOOL_ID_ON:
+	हाल ETHTOOL_ID_ON:
 		bnx2x_acquire_phy_lock(bp);
 		bnx2x_set_led(&bp->link_params, &bp->link_vars,
 			      LED_MODE_ON, SPEED_1000);
 		bnx2x_release_phy_lock(bp);
-		break;
+		अवरोध;
 
-	case ETHTOOL_ID_OFF:
+	हाल ETHTOOL_ID_OFF:
 		bnx2x_acquire_phy_lock(bp);
 		bnx2x_set_led(&bp->link_params, &bp->link_vars,
 			      LED_MODE_FRONT_PANEL_OFF, 0);
 		bnx2x_release_phy_lock(bp);
-		break;
+		अवरोध;
 
-	case ETHTOOL_ID_INACTIVE:
+	हाल ETHTOOL_ID_INACTIVE:
 		bnx2x_acquire_phy_lock(bp);
 		bnx2x_set_led(&bp->link_params, &bp->link_vars,
 			      LED_MODE_OPER,
 			      bp->link_vars.line_speed);
 		bnx2x_release_phy_lock(bp);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_get_rss_flags(struct bnx2x *bp, struct ethtool_rxnfc *info)
-{
-	switch (info->flow_type) {
-	case TCP_V4_FLOW:
-	case TCP_V6_FLOW:
+अटल पूर्णांक bnx2x_get_rss_flags(काष्ठा bnx2x *bp, काष्ठा ethtool_rxnfc *info)
+अणु
+	चयन (info->flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल TCP_V6_FLOW:
 		info->data = RXH_IP_SRC | RXH_IP_DST |
 			     RXH_L4_B_0_1 | RXH_L4_B_2_3;
-		break;
-	case UDP_V4_FLOW:
-		if (bp->rss_conf_obj.udp_rss_v4)
+		अवरोध;
+	हाल UDP_V4_FLOW:
+		अगर (bp->rss_conf_obj.udp_rss_v4)
 			info->data = RXH_IP_SRC | RXH_IP_DST |
 				     RXH_L4_B_0_1 | RXH_L4_B_2_3;
-		else
+		अन्यथा
 			info->data = RXH_IP_SRC | RXH_IP_DST;
-		break;
-	case UDP_V6_FLOW:
-		if (bp->rss_conf_obj.udp_rss_v6)
+		अवरोध;
+	हाल UDP_V6_FLOW:
+		अगर (bp->rss_conf_obj.udp_rss_v6)
 			info->data = RXH_IP_SRC | RXH_IP_DST |
 				     RXH_L4_B_0_1 | RXH_L4_B_2_3;
-		else
+		अन्यथा
 			info->data = RXH_IP_SRC | RXH_IP_DST;
-		break;
-	case IPV4_FLOW:
-	case IPV6_FLOW:
+		अवरोध;
+	हाल IPV4_FLOW:
+	हाल IPV6_FLOW:
 		info->data = RXH_IP_SRC | RXH_IP_DST;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		info->data = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *info,
+अटल पूर्णांक bnx2x_get_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *info,
 			   u32 *rules __always_unused)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	switch (info->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (info->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		info->data = BNX2X_NUM_ETH_QUEUES(bp);
-		return 0;
-	case ETHTOOL_GRXFH:
-		return bnx2x_get_rss_flags(bp, info);
-	default:
+		वापस 0;
+	हाल ETHTOOL_GRXFH:
+		वापस bnx2x_get_rss_flags(bp, info);
+	शेष:
 		DP(BNX2X_MSG_ETHTOOL, "Command parameters not supported\n");
-		return -EOPNOTSUPP;
-	}
-}
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int bnx2x_set_rss_flags(struct bnx2x *bp, struct ethtool_rxnfc *info)
-{
-	int udp_rss_requested;
+अटल पूर्णांक bnx2x_set_rss_flags(काष्ठा bnx2x *bp, काष्ठा ethtool_rxnfc *info)
+अणु
+	पूर्णांक udp_rss_requested;
 
 	DP(BNX2X_MSG_ETHTOOL,
 	   "Set rss flags command parameters: flow type = %d, data = %llu\n",
 	   info->flow_type, info->data);
 
-	switch (info->flow_type) {
-	case TCP_V4_FLOW:
-	case TCP_V6_FLOW:
+	चयन (info->flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल TCP_V6_FLOW:
 		/* For TCP only 4-tupple hash is supported */
-		if (info->data ^ (RXH_IP_SRC | RXH_IP_DST |
-				  RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
+		अगर (info->data ^ (RXH_IP_SRC | RXH_IP_DST |
+				  RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
 			DP(BNX2X_MSG_ETHTOOL,
 			   "Command parameters not supported\n");
-			return -EINVAL;
-		}
-		return 0;
+			वापस -EINVAL;
+		पूर्ण
+		वापस 0;
 
-	case UDP_V4_FLOW:
-	case UDP_V6_FLOW:
+	हाल UDP_V4_FLOW:
+	हाल UDP_V6_FLOW:
 		/* For UDP either 2-tupple hash or 4-tupple hash is supported */
-		if (info->data == (RXH_IP_SRC | RXH_IP_DST |
+		अगर (info->data == (RXH_IP_SRC | RXH_IP_DST |
 				   RXH_L4_B_0_1 | RXH_L4_B_2_3))
 			udp_rss_requested = 1;
-		else if (info->data == (RXH_IP_SRC | RXH_IP_DST))
+		अन्यथा अगर (info->data == (RXH_IP_SRC | RXH_IP_DST))
 			udp_rss_requested = 0;
-		else
-			return -EINVAL;
+		अन्यथा
+			वापस -EINVAL;
 
-		if (CHIP_IS_E1x(bp) && udp_rss_requested) {
+		अगर (CHIP_IS_E1x(bp) && udp_rss_requested) अणु
 			DP(BNX2X_MSG_ETHTOOL,
 			   "57710, 57711 boards don't support RSS according to UDP 4-tuple\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if ((info->flow_type == UDP_V4_FLOW) &&
-		    (bp->rss_conf_obj.udp_rss_v4 != udp_rss_requested)) {
+		अगर ((info->flow_type == UDP_V4_FLOW) &&
+		    (bp->rss_conf_obj.udp_rss_v4 != udp_rss_requested)) अणु
 			bp->rss_conf_obj.udp_rss_v4 = udp_rss_requested;
 			DP(BNX2X_MSG_ETHTOOL,
 			   "rss re-configured, UDP 4-tupple %s\n",
 			   udp_rss_requested ? "enabled" : "disabled");
-			if (bp->state == BNX2X_STATE_OPEN)
-				return bnx2x_rss(bp, &bp->rss_conf_obj, false,
+			अगर (bp->state == BNX2X_STATE_OPEN)
+				वापस bnx2x_rss(bp, &bp->rss_conf_obj, false,
 						 true);
-		} else if ((info->flow_type == UDP_V6_FLOW) &&
-			   (bp->rss_conf_obj.udp_rss_v6 != udp_rss_requested)) {
+		पूर्ण अन्यथा अगर ((info->flow_type == UDP_V6_FLOW) &&
+			   (bp->rss_conf_obj.udp_rss_v6 != udp_rss_requested)) अणु
 			bp->rss_conf_obj.udp_rss_v6 = udp_rss_requested;
 			DP(BNX2X_MSG_ETHTOOL,
 			   "rss re-configured, UDP 4-tupple %s\n",
 			   udp_rss_requested ? "enabled" : "disabled");
-			if (bp->state == BNX2X_STATE_OPEN)
-				return bnx2x_rss(bp, &bp->rss_conf_obj, false,
+			अगर (bp->state == BNX2X_STATE_OPEN)
+				वापस bnx2x_rss(bp, &bp->rss_conf_obj, false,
 						 true);
-		}
-		return 0;
+		पूर्ण
+		वापस 0;
 
-	case IPV4_FLOW:
-	case IPV6_FLOW:
+	हाल IPV4_FLOW:
+	हाल IPV6_FLOW:
 		/* For IP only 2-tupple hash is supported */
-		if (info->data ^ (RXH_IP_SRC | RXH_IP_DST)) {
+		अगर (info->data ^ (RXH_IP_SRC | RXH_IP_DST)) अणु
 			DP(BNX2X_MSG_ETHTOOL,
 			   "Command parameters not supported\n");
-			return -EINVAL;
-		}
-		return 0;
+			वापस -EINVAL;
+		पूर्ण
+		वापस 0;
 
-	case SCTP_V4_FLOW:
-	case AH_ESP_V4_FLOW:
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
-	case SCTP_V6_FLOW:
-	case AH_ESP_V6_FLOW:
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-	case IP_USER_FLOW:
-	case ETHER_FLOW:
-		/* RSS is not supported for these protocols */
-		if (info->data) {
+	हाल SCTP_V4_FLOW:
+	हाल AH_ESP_V4_FLOW:
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
+	हाल SCTP_V6_FLOW:
+	हाल AH_ESP_V6_FLOW:
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+	हाल IP_USER_FLOW:
+	हाल ETHER_FLOW:
+		/* RSS is not supported क्रम these protocols */
+		अगर (info->data) अणु
 			DP(BNX2X_MSG_ETHTOOL,
 			   "Command parameters not supported\n");
-			return -EINVAL;
-		}
-		return 0;
+			वापस -EINVAL;
+		पूर्ण
+		वापस 0;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int bnx2x_set_rxnfc(struct net_device *dev, struct ethtool_rxnfc *info)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_set_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *info)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	switch (info->cmd) {
-	case ETHTOOL_SRXFH:
-		return bnx2x_set_rss_flags(bp, info);
-	default:
+	चयन (info->cmd) अणु
+	हाल ETHTOOL_SRXFH:
+		वापस bnx2x_set_rss_flags(bp, info);
+	शेष:
 		DP(BNX2X_MSG_ETHTOOL, "Command parameters not supported\n");
-		return -EOPNOTSUPP;
-	}
-}
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static u32 bnx2x_get_rxfh_indir_size(struct net_device *dev)
-{
-	return T_ETH_INDIRECTION_TABLE_SIZE;
-}
+अटल u32 bnx2x_get_rxfh_indir_size(काष्ठा net_device *dev)
+अणु
+	वापस T_ETH_INसूचीECTION_TABLE_SIZE;
+पूर्ण
 
-static int bnx2x_get_rxfh(struct net_device *dev, u32 *indir, u8 *key,
+अटल पूर्णांक bnx2x_get_rxfh(काष्ठा net_device *dev, u32 *indir, u8 *key,
 			  u8 *hfunc)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	u8 ind_table[T_ETH_INDIRECTION_TABLE_SIZE] = {0};
-	size_t i;
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	u8 ind_table[T_ETH_INसूचीECTION_TABLE_SIZE] = अणु0पूर्ण;
+	माप_प्रकार i;
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
-	if (!indir)
-		return 0;
+	अगर (!indir)
+		वापस 0;
 
 	/* Get the current configuration of the RSS indirection table */
 	bnx2x_get_rss_ind_table(&bp->rss_conf_obj, ind_table);
 
 	/*
-	 * We can't use a memcpy() as an internal storage of an
-	 * indirection table is a u8 array while indir->ring_index
-	 * points to an array of u32.
+	 * We can't use a स_नकल() as an पूर्णांकernal storage of an
+	 * indirection table is a u8 array जबतक indir->ring_index
+	 * poपूर्णांकs to an array of u32.
 	 *
 	 * Indirection table contains the FW Client IDs, so we need to
-	 * align the returned table to the Client ID of the leading RSS
+	 * align the वापसed table to the Client ID of the leading RSS
 	 * queue.
 	 */
-	for (i = 0; i < T_ETH_INDIRECTION_TABLE_SIZE; i++)
+	क्रम (i = 0; i < T_ETH_INसूचीECTION_TABLE_SIZE; i++)
 		indir[i] = ind_table[i] - bp->fp->cl_id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnx2x_set_rxfh(struct net_device *dev, const u32 *indir,
-			  const u8 *key, const u8 hfunc)
-{
-	struct bnx2x *bp = netdev_priv(dev);
-	size_t i;
+अटल पूर्णांक bnx2x_set_rxfh(काष्ठा net_device *dev, स्थिर u32 *indir,
+			  स्थिर u8 *key, स्थिर u8 hfunc)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
+	माप_प्रकार i;
 
 	/* We require at least one supported parameter to be changed and no
 	 * change in any of the unsupported parameters
 	 */
-	if (key ||
+	अगर (key ||
 	    (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (!indir)
-		return 0;
+	अगर (!indir)
+		वापस 0;
 
-	for (i = 0; i < T_ETH_INDIRECTION_TABLE_SIZE; i++) {
+	क्रम (i = 0; i < T_ETH_INसूचीECTION_TABLE_SIZE; i++) अणु
 		/*
-		 * The same as in bnx2x_get_rxfh: we can't use a memcpy()
-		 * as an internal storage of an indirection table is a u8 array
-		 * while indir->ring_index points to an array of u32.
+		 * The same as in bnx2x_get_rxfh: we can't use a स_नकल()
+		 * as an पूर्णांकernal storage of an indirection table is a u8 array
+		 * जबतक indir->ring_index poपूर्णांकs to an array of u32.
 		 *
 		 * Indirection table contains the FW Client IDs, so we need to
 		 * align the received table to the Client ID of the leading RSS
 		 * queue
 		 */
 		bp->rss_conf_obj.ind_table[i] = indir[i] + bp->fp->cl_id;
-	}
+	पूर्ण
 
-	if (bp->state == BNX2X_STATE_OPEN)
-		return bnx2x_config_rss_eth(bp, false);
+	अगर (bp->state == BNX2X_STATE_OPEN)
+		वापस bnx2x_config_rss_eth(bp, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * bnx2x_get_channels - gets the number of RSS queues.
+ * bnx2x_get_channels - माला_लो the number of RSS queues.
  *
  * @dev:		net device
- * @channels:		returns the number of max / current queues
+ * @channels:		वापसs the number of max / current queues
  */
-static void bnx2x_get_channels(struct net_device *dev,
-			       struct ethtool_channels *channels)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल व्योम bnx2x_get_channels(काष्ठा net_device *dev,
+			       काष्ठा ethtool_channels *channels)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
 	channels->max_combined = BNX2X_MAX_RSS_COUNT(bp);
 	channels->combined_count = BNX2X_NUM_ETH_QUEUES(bp);
-}
+पूर्ण
 
 /**
  * bnx2x_change_num_queues - change the number of RSS queues.
  *
- * @bp:			bnx2x private structure
+ * @bp:			bnx2x निजी काष्ठाure
  * @num_rss:		rss count
  *
- * Re-configure interrupt mode to get the new number of MSI-X
+ * Re-configure पूर्णांकerrupt mode to get the new number of MSI-X
  * vectors and re-add NAPI objects.
  */
-static void bnx2x_change_num_queues(struct bnx2x *bp, int num_rss)
-{
+अटल व्योम bnx2x_change_num_queues(काष्ठा bnx2x *bp, पूर्णांक num_rss)
+अणु
 	bnx2x_disable_msi(bp);
 	bp->num_ethernet_queues = num_rss;
 	bp->num_queues = bp->num_ethernet_queues + bp->num_cnic_queues;
 	BNX2X_DEV_INFO("set number of queues to %d\n", bp->num_queues);
-	bnx2x_set_int_mode(bp);
-}
+	bnx2x_set_पूर्णांक_mode(bp);
+पूर्ण
 
 /**
  * bnx2x_set_channels - sets the number of RSS queues.
@@ -3582,66 +3583,66 @@ static void bnx2x_change_num_queues(struct bnx2x *bp, int num_rss)
  * @dev:		net device
  * @channels:		includes the number of queues requested
  */
-static int bnx2x_set_channels(struct net_device *dev,
-			      struct ethtool_channels *channels)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_set_channels(काष्ठा net_device *dev,
+			      काष्ठा ethtool_channels *channels)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
 	DP(BNX2X_MSG_ETHTOOL,
 	   "set-channels command parameters: rx = %d, tx = %d, other = %d, combined = %d\n",
 	   channels->rx_count, channels->tx_count, channels->other_count,
 	   channels->combined_count);
 
-	if (pci_num_vf(bp->pdev)) {
+	अगर (pci_num_vf(bp->pdev)) अणु
 		DP(BNX2X_MSG_IOV, "VFs are enabled, can not set channels\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	/* We don't support separate rx / tx channels.
-	 * We don't allow setting 'other' channels.
+	/* We करोn't support separate rx / tx channels.
+	 * We करोn't allow setting 'other' channels.
 	 */
-	if (channels->rx_count || channels->tx_count || channels->other_count
+	अगर (channels->rx_count || channels->tx_count || channels->other_count
 	    || (channels->combined_count == 0) ||
-	    (channels->combined_count > BNX2X_MAX_RSS_COUNT(bp))) {
+	    (channels->combined_count > BNX2X_MAX_RSS_COUNT(bp))) अणु
 		DP(BNX2X_MSG_ETHTOOL, "command parameters not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check if there was a change in the active parameters */
-	if (channels->combined_count == BNX2X_NUM_ETH_QUEUES(bp)) {
+	/* Check अगर there was a change in the active parameters */
+	अगर (channels->combined_count == BNX2X_NUM_ETH_QUEUES(bp)) अणु
 		DP(BNX2X_MSG_ETHTOOL, "No change in active parameters\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Set the requested number of queues in bp context.
 	 * Note that the actual number of queues created during load may be
-	 * less than requested if memory is low.
+	 * less than requested अगर memory is low.
 	 */
-	if (unlikely(!netif_running(dev))) {
+	अगर (unlikely(!netअगर_running(dev))) अणु
 		bnx2x_change_num_queues(bp, channels->combined_count);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	bnx2x_nic_unload(bp, UNLOAD_NORMAL, true);
 	bnx2x_change_num_queues(bp, channels->combined_count);
-	return bnx2x_nic_load(bp, LOAD_NORMAL);
-}
+	वापस bnx2x_nic_load(bp, LOAD_NORMAL);
+पूर्ण
 
-static int bnx2x_get_ts_info(struct net_device *dev,
-			     struct ethtool_ts_info *info)
-{
-	struct bnx2x *bp = netdev_priv(dev);
+अटल पूर्णांक bnx2x_get_ts_info(काष्ठा net_device *dev,
+			     काष्ठा ethtool_ts_info *info)
+अणु
+	काष्ठा bnx2x *bp = netdev_priv(dev);
 
-	if (bp->flags & PTP_SUPPORTED) {
-		info->so_timestamping = SOF_TIMESTAMPING_TX_SOFTWARE |
+	अगर (bp->flags & PTP_SUPPORTED) अणु
+		info->so_बारtamping = SOF_TIMESTAMPING_TX_SOFTWARE |
 					SOF_TIMESTAMPING_RX_SOFTWARE |
 					SOF_TIMESTAMPING_SOFTWARE |
 					SOF_TIMESTAMPING_TX_HARDWARE |
 					SOF_TIMESTAMPING_RX_HARDWARE |
 					SOF_TIMESTAMPING_RAW_HARDWARE;
 
-		if (bp->ptp_clock)
-			info->phc_index = ptp_clock_index(bp->ptp_clock);
-		else
+		अगर (bp->ptp_घड़ी)
+			info->phc_index = ptp_घड़ी_index(bp->ptp_घड़ी);
+		अन्यथा
 			info->phc_index = -1;
 
 		info->rx_filters = (1 << HWTSTAMP_FILTER_NONE) |
@@ -3651,13 +3652,13 @@ static int bnx2x_get_ts_info(struct net_device *dev,
 
 		info->tx_types = (1 << HWTSTAMP_TX_OFF)|(1 << HWTSTAMP_TX_ON);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return ethtool_op_get_ts_info(dev, info);
-}
+	वापस ethtool_op_get_ts_info(dev, info);
+पूर्ण
 
-static const struct ethtool_ops bnx2x_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops bnx2x_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS,
 	.get_drvinfo		= bnx2x_get_drvinfo,
 	.get_regs_len		= bnx2x_get_regs_len,
@@ -3678,11 +3679,11 @@ static const struct ethtool_ops bnx2x_ethtool_ops = {
 	.set_coalesce		= bnx2x_set_coalesce,
 	.get_ringparam		= bnx2x_get_ringparam,
 	.set_ringparam		= bnx2x_set_ringparam,
-	.get_pauseparam		= bnx2x_get_pauseparam,
-	.set_pauseparam		= bnx2x_set_pauseparam,
+	.get_छोड़ोparam		= bnx2x_get_छोड़ोparam,
+	.set_छोड़ोparam		= bnx2x_set_छोड़ोparam,
 	.self_test		= bnx2x_self_test,
 	.get_sset_count		= bnx2x_get_sset_count,
-	.get_priv_flags		= bnx2x_get_private_flags,
+	.get_priv_flags		= bnx2x_get_निजी_flags,
 	.get_strings		= bnx2x_get_strings,
 	.set_phys_id		= bnx2x_set_phys_id,
 	.get_ethtool_stats	= bnx2x_get_ethtool_stats,
@@ -3700,9 +3701,9 @@ static const struct ethtool_ops bnx2x_ethtool_ops = {
 	.get_ts_info		= bnx2x_get_ts_info,
 	.get_link_ksettings	= bnx2x_get_link_ksettings,
 	.set_link_ksettings	= bnx2x_set_link_ksettings,
-};
+पूर्ण;
 
-static const struct ethtool_ops bnx2x_vf_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops bnx2x_vf_ethtool_ops = अणु
 	.get_drvinfo		= bnx2x_get_drvinfo,
 	.get_msglevel		= bnx2x_get_msglevel,
 	.set_msglevel		= bnx2x_set_msglevel,
@@ -3721,10 +3722,10 @@ static const struct ethtool_ops bnx2x_vf_ethtool_ops = {
 	.get_channels		= bnx2x_get_channels,
 	.set_channels		= bnx2x_set_channels,
 	.get_link_ksettings	= bnx2x_get_vf_link_ksettings,
-};
+पूर्ण;
 
-void bnx2x_set_ethtool_ops(struct bnx2x *bp, struct net_device *netdev)
-{
+व्योम bnx2x_set_ethtool_ops(काष्ठा bnx2x *bp, काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = (IS_PF(bp)) ?
 		&bnx2x_ethtool_ops : &bnx2x_vf_ethtool_ops;
-}
+पूर्ण

@@ -1,204 +1,205 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * xfrm_input.c
  *
  * Changes:
  * 	YOSHIFUJI Hideaki @USAGI
- * 		Split up af-specific portion
+ * 		Split up af-specअगरic portion
  *
  */
 
-#include <linux/bottom_half.h>
-#include <linux/cache.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/percpu.h>
-#include <net/dst.h>
-#include <net/ip.h>
-#include <net/xfrm.h>
-#include <net/ip_tunnels.h>
-#include <net/ip6_tunnel.h>
+#समावेश <linux/bottom_half.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/percpu.h>
+#समावेश <net/dst.h>
+#समावेश <net/ip.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <net/ip6_tunnel.h>
 
-#include "xfrm_inout.h"
+#समावेश "xfrm_inout.h"
 
-struct xfrm_trans_tasklet {
-	struct tasklet_struct tasklet;
-	struct sk_buff_head queue;
-};
+काष्ठा xfrm_trans_tasklet अणु
+	काष्ठा tasklet_काष्ठा tasklet;
+	काष्ठा sk_buff_head queue;
+पूर्ण;
 
-struct xfrm_trans_cb {
-	union {
-		struct inet_skb_parm	h4;
-#if IS_ENABLED(CONFIG_IPV6)
-		struct inet6_skb_parm	h6;
-#endif
-	} header;
-	int (*finish)(struct net *net, struct sock *sk, struct sk_buff *skb);
-	struct net *net;
-};
+काष्ठा xfrm_trans_cb अणु
+	जोड़ अणु
+		काष्ठा inet_skb_parm	h4;
+#अगर IS_ENABLED(CONFIG_IPV6)
+		काष्ठा inet6_skb_parm	h6;
+#पूर्ण_अगर
+	पूर्ण header;
+	पूर्णांक (*finish)(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb);
+	काष्ठा net *net;
+पूर्ण;
 
-#define XFRM_TRANS_SKB_CB(__skb) ((struct xfrm_trans_cb *)&((__skb)->cb[0]))
+#घोषणा XFRM_TRANS_SKB_CB(__skb) ((काष्ठा xfrm_trans_cb *)&((__skb)->cb[0]))
 
-static DEFINE_SPINLOCK(xfrm_input_afinfo_lock);
-static struct xfrm_input_afinfo const __rcu *xfrm_input_afinfo[2][AF_INET6 + 1];
+अटल DEFINE_SPINLOCK(xfrm_input_afinfo_lock);
+अटल काष्ठा xfrm_input_afinfo स्थिर __rcu *xfrm_input_afinfo[2][AF_INET6 + 1];
 
-static struct gro_cells gro_cells;
-static struct net_device xfrm_napi_dev;
+अटल काष्ठा gro_cells gro_cells;
+अटल काष्ठा net_device xfrm_napi_dev;
 
-static DEFINE_PER_CPU(struct xfrm_trans_tasklet, xfrm_trans_tasklet);
+अटल DEFINE_PER_CPU(काष्ठा xfrm_trans_tasklet, xfrm_trans_tasklet);
 
-int xfrm_input_register_afinfo(const struct xfrm_input_afinfo *afinfo)
-{
-	int err = 0;
+पूर्णांक xfrm_input_रेजिस्टर_afinfo(स्थिर काष्ठा xfrm_input_afinfo *afinfo)
+अणु
+	पूर्णांक err = 0;
 
-	if (WARN_ON(afinfo->family > AF_INET6))
-		return -EAFNOSUPPORT;
+	अगर (WARN_ON(afinfo->family > AF_INET6))
+		वापस -EAFNOSUPPORT;
 
 	spin_lock_bh(&xfrm_input_afinfo_lock);
-	if (unlikely(xfrm_input_afinfo[afinfo->is_ipip][afinfo->family]))
+	अगर (unlikely(xfrm_input_afinfo[afinfo->is_ipip][afinfo->family]))
 		err = -EEXIST;
-	else
-		rcu_assign_pointer(xfrm_input_afinfo[afinfo->is_ipip][afinfo->family], afinfo);
+	अन्यथा
+		rcu_assign_poपूर्णांकer(xfrm_input_afinfo[afinfo->is_ipip][afinfo->family], afinfo);
 	spin_unlock_bh(&xfrm_input_afinfo_lock);
-	return err;
-}
-EXPORT_SYMBOL(xfrm_input_register_afinfo);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(xfrm_input_रेजिस्टर_afinfo);
 
-int xfrm_input_unregister_afinfo(const struct xfrm_input_afinfo *afinfo)
-{
-	int err = 0;
+पूर्णांक xfrm_input_unरेजिस्टर_afinfo(स्थिर काष्ठा xfrm_input_afinfo *afinfo)
+अणु
+	पूर्णांक err = 0;
 
 	spin_lock_bh(&xfrm_input_afinfo_lock);
-	if (likely(xfrm_input_afinfo[afinfo->is_ipip][afinfo->family])) {
-		if (unlikely(xfrm_input_afinfo[afinfo->is_ipip][afinfo->family] != afinfo))
+	अगर (likely(xfrm_input_afinfo[afinfo->is_ipip][afinfo->family])) अणु
+		अगर (unlikely(xfrm_input_afinfo[afinfo->is_ipip][afinfo->family] != afinfo))
 			err = -EINVAL;
-		else
-			RCU_INIT_POINTER(xfrm_input_afinfo[afinfo->is_ipip][afinfo->family], NULL);
-	}
+		अन्यथा
+			RCU_INIT_POINTER(xfrm_input_afinfo[afinfo->is_ipip][afinfo->family], शून्य);
+	पूर्ण
 	spin_unlock_bh(&xfrm_input_afinfo_lock);
 	synchronize_rcu();
-	return err;
-}
-EXPORT_SYMBOL(xfrm_input_unregister_afinfo);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(xfrm_input_unरेजिस्टर_afinfo);
 
-static const struct xfrm_input_afinfo *xfrm_input_get_afinfo(u8 family, bool is_ipip)
-{
-	const struct xfrm_input_afinfo *afinfo;
+अटल स्थिर काष्ठा xfrm_input_afinfo *xfrm_input_get_afinfo(u8 family, bool is_ipip)
+अणु
+	स्थिर काष्ठा xfrm_input_afinfo *afinfo;
 
-	if (WARN_ON_ONCE(family > AF_INET6))
-		return NULL;
+	अगर (WARN_ON_ONCE(family > AF_INET6))
+		वापस शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	afinfo = rcu_dereference(xfrm_input_afinfo[is_ipip][family]);
-	if (unlikely(!afinfo))
-		rcu_read_unlock();
-	return afinfo;
-}
+	अगर (unlikely(!afinfo))
+		rcu_पढ़ो_unlock();
+	वापस afinfo;
+पूर्ण
 
-static int xfrm_rcv_cb(struct sk_buff *skb, unsigned int family, u8 protocol,
-		       int err)
-{
+अटल पूर्णांक xfrm_rcv_cb(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक family, u8 protocol,
+		       पूर्णांक err)
+अणु
 	bool is_ipip = (protocol == IPPROTO_IPIP || protocol == IPPROTO_IPV6);
-	const struct xfrm_input_afinfo *afinfo;
-	int ret;
+	स्थिर काष्ठा xfrm_input_afinfo *afinfo;
+	पूर्णांक ret;
 
 	afinfo = xfrm_input_get_afinfo(family, is_ipip);
-	if (!afinfo)
-		return -EAFNOSUPPORT;
+	अगर (!afinfo)
+		वापस -EAFNOSUPPORT;
 
 	ret = afinfo->callback(skb, protocol, err);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct sec_path *secpath_set(struct sk_buff *skb)
-{
-	struct sec_path *sp, *tmp = skb_ext_find(skb, SKB_EXT_SEC_PATH);
+काष्ठा sec_path *secpath_set(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sec_path *sp, *पंचांगp = skb_ext_find(skb, SKB_EXT_SEC_PATH);
 
 	sp = skb_ext_add(skb, SKB_EXT_SEC_PATH);
-	if (!sp)
-		return NULL;
+	अगर (!sp)
+		वापस शून्य;
 
-	if (tmp) /* reused existing one (was COW'd if needed) */
-		return sp;
+	अगर (पंचांगp) /* reused existing one (was COW'd अगर needed) */
+		वापस sp;
 
 	/* allocated new secpath */
-	memset(sp->ovec, 0, sizeof(sp->ovec));
+	स_रखो(sp->ovec, 0, माप(sp->ovec));
 	sp->olen = 0;
 	sp->len = 0;
 
-	return sp;
-}
+	वापस sp;
+पूर्ण
 EXPORT_SYMBOL(secpath_set);
 
 /* Fetch spi and seq from ipsec header */
 
-int xfrm_parse_spi(struct sk_buff *skb, u8 nexthdr, __be32 *spi, __be32 *seq)
-{
-	int offset, offset_seq;
-	int hlen;
+पूर्णांक xfrm_parse_spi(काष्ठा sk_buff *skb, u8 nexthdr, __be32 *spi, __be32 *seq)
+अणु
+	पूर्णांक offset, offset_seq;
+	पूर्णांक hlen;
 
-	switch (nexthdr) {
-	case IPPROTO_AH:
-		hlen = sizeof(struct ip_auth_hdr);
-		offset = offsetof(struct ip_auth_hdr, spi);
-		offset_seq = offsetof(struct ip_auth_hdr, seq_no);
-		break;
-	case IPPROTO_ESP:
-		hlen = sizeof(struct ip_esp_hdr);
-		offset = offsetof(struct ip_esp_hdr, spi);
-		offset_seq = offsetof(struct ip_esp_hdr, seq_no);
-		break;
-	case IPPROTO_COMP:
-		if (!pskb_may_pull(skb, sizeof(struct ip_comp_hdr)))
-			return -EINVAL;
+	चयन (nexthdr) अणु
+	हाल IPPROTO_AH:
+		hlen = माप(काष्ठा ip_auth_hdr);
+		offset = दुरत्व(काष्ठा ip_auth_hdr, spi);
+		offset_seq = दुरत्व(काष्ठा ip_auth_hdr, seq_no);
+		अवरोध;
+	हाल IPPROTO_ESP:
+		hlen = माप(काष्ठा ip_esp_hdr);
+		offset = दुरत्व(काष्ठा ip_esp_hdr, spi);
+		offset_seq = दुरत्व(काष्ठा ip_esp_hdr, seq_no);
+		अवरोध;
+	हाल IPPROTO_COMP:
+		अगर (!pskb_may_pull(skb, माप(काष्ठा ip_comp_hdr)))
+			वापस -EINVAL;
 		*spi = htonl(ntohs(*(__be16 *)(skb_transport_header(skb) + 2)));
 		*seq = 0;
-		return 0;
-	default:
-		return 1;
-	}
+		वापस 0;
+	शेष:
+		वापस 1;
+	पूर्ण
 
-	if (!pskb_may_pull(skb, hlen))
-		return -EINVAL;
+	अगर (!pskb_may_pull(skb, hlen))
+		वापस -EINVAL;
 
 	*spi = *(__be32 *)(skb_transport_header(skb) + offset);
 	*seq = *(__be32 *)(skb_transport_header(skb) + offset_seq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(xfrm_parse_spi);
 
-static int xfrm4_remove_beet_encap(struct xfrm_state *x, struct sk_buff *skb)
-{
-	struct iphdr *iph;
-	int optlen = 0;
-	int err = -EINVAL;
+अटल पूर्णांक xfrm4_हटाओ_beet_encap(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा iphdr *iph;
+	पूर्णांक optlen = 0;
+	पूर्णांक err = -EINVAL;
 
-	if (unlikely(XFRM_MODE_SKB_CB(skb)->protocol == IPPROTO_BEETPH)) {
-		struct ip_beet_phdr *ph;
-		int phlen;
+	अगर (unlikely(XFRM_MODE_SKB_CB(skb)->protocol == IPPROTO_BEETPH)) अणु
+		काष्ठा ip_beet_phdr *ph;
+		पूर्णांक phlen;
 
-		if (!pskb_may_pull(skb, sizeof(*ph)))
-			goto out;
+		अगर (!pskb_may_pull(skb, माप(*ph)))
+			जाओ out;
 
-		ph = (struct ip_beet_phdr *)skb->data;
+		ph = (काष्ठा ip_beet_phdr *)skb->data;
 
-		phlen = sizeof(*ph) + ph->padlen;
+		phlen = माप(*ph) + ph->padlen;
 		optlen = ph->hdrlen * 8 + (IPV4_BEET_PHMAXLEN - phlen);
-		if (optlen < 0 || optlen & 3 || optlen > 250)
-			goto out;
+		अगर (optlen < 0 || optlen & 3 || optlen > 250)
+			जाओ out;
 
 		XFRM_MODE_SKB_CB(skb)->protocol = ph->nexthdr;
 
-		if (!pskb_may_pull(skb, phlen))
-			goto out;
+		अगर (!pskb_may_pull(skb, phlen))
+			जाओ out;
 		__skb_pull(skb, phlen);
-	}
+	पूर्ण
 
-	skb_push(skb, sizeof(*iph));
+	skb_push(skb, माप(*iph));
 	skb_reset_network_header(skb);
 	skb_mac_header_rebuild(skb);
 
@@ -214,94 +215,94 @@ static int xfrm4_remove_beet_encap(struct xfrm_state *x, struct sk_buff *skb)
 	iph->check = ip_fast_csum(skb_network_header(skb), iph->ihl);
 	err = 0;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ipip_ecn_decapsulate(struct sk_buff *skb)
-{
-	struct iphdr *inner_iph = ipip_hdr(skb);
+अटल व्योम ipip_ecn_decapsulate(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा iphdr *inner_iph = ipip_hdr(skb);
 
-	if (INET_ECN_is_ce(XFRM_MODE_SKB_CB(skb)->tos))
+	अगर (INET_ECN_is_ce(XFRM_MODE_SKB_CB(skb)->tos))
 		IP_ECN_set_ce(inner_iph);
-}
+पूर्ण
 
-static int xfrm4_remove_tunnel_encap(struct xfrm_state *x, struct sk_buff *skb)
-{
-	int err = -EINVAL;
+अटल पूर्णांक xfrm4_हटाओ_tunnel_encap(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = -EINVAL;
 
-	if (XFRM_MODE_SKB_CB(skb)->protocol != IPPROTO_IPIP)
-		goto out;
+	अगर (XFRM_MODE_SKB_CB(skb)->protocol != IPPROTO_IPIP)
+		जाओ out;
 
-	if (!pskb_may_pull(skb, sizeof(struct iphdr)))
-		goto out;
+	अगर (!pskb_may_pull(skb, माप(काष्ठा iphdr)))
+		जाओ out;
 
 	err = skb_unclone(skb, GFP_ATOMIC);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (x->props.flags & XFRM_STATE_DECAP_DSCP)
+	अगर (x->props.flags & XFRM_STATE_DECAP_DSCP)
 		ipv4_copy_dscp(XFRM_MODE_SKB_CB(skb)->tos, ipip_hdr(skb));
-	if (!(x->props.flags & XFRM_STATE_NOECN))
+	अगर (!(x->props.flags & XFRM_STATE_NOECN))
 		ipip_ecn_decapsulate(skb);
 
 	skb_reset_network_header(skb);
 	skb_mac_header_rebuild(skb);
-	if (skb->mac_len)
+	अगर (skb->mac_len)
 		eth_hdr(skb)->h_proto = skb->protocol;
 
 	err = 0;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ipip6_ecn_decapsulate(struct sk_buff *skb)
-{
-	struct ipv6hdr *inner_iph = ipipv6_hdr(skb);
+अटल व्योम ipip6_ecn_decapsulate(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ipv6hdr *inner_iph = ipipv6_hdr(skb);
 
-	if (INET_ECN_is_ce(XFRM_MODE_SKB_CB(skb)->tos))
+	अगर (INET_ECN_is_ce(XFRM_MODE_SKB_CB(skb)->tos))
 		IP6_ECN_set_ce(skb, inner_iph);
-}
+पूर्ण
 
-static int xfrm6_remove_tunnel_encap(struct xfrm_state *x, struct sk_buff *skb)
-{
-	int err = -EINVAL;
+अटल पूर्णांक xfrm6_हटाओ_tunnel_encap(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = -EINVAL;
 
-	if (XFRM_MODE_SKB_CB(skb)->protocol != IPPROTO_IPV6)
-		goto out;
-	if (!pskb_may_pull(skb, sizeof(struct ipv6hdr)))
-		goto out;
+	अगर (XFRM_MODE_SKB_CB(skb)->protocol != IPPROTO_IPV6)
+		जाओ out;
+	अगर (!pskb_may_pull(skb, माप(काष्ठा ipv6hdr)))
+		जाओ out;
 
 	err = skb_unclone(skb, GFP_ATOMIC);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (x->props.flags & XFRM_STATE_DECAP_DSCP)
+	अगर (x->props.flags & XFRM_STATE_DECAP_DSCP)
 		ipv6_copy_dscp(ipv6_get_dsfield(ipv6_hdr(skb)),
 			       ipipv6_hdr(skb));
-	if (!(x->props.flags & XFRM_STATE_NOECN))
+	अगर (!(x->props.flags & XFRM_STATE_NOECN))
 		ipip6_ecn_decapsulate(skb);
 
 	skb_reset_network_header(skb);
 	skb_mac_header_rebuild(skb);
-	if (skb->mac_len)
+	अगर (skb->mac_len)
 		eth_hdr(skb)->h_proto = skb->protocol;
 
 	err = 0;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xfrm6_remove_beet_encap(struct xfrm_state *x, struct sk_buff *skb)
-{
-	struct ipv6hdr *ip6h;
-	int size = sizeof(struct ipv6hdr);
-	int err;
+अटल पूर्णांक xfrm6_हटाओ_beet_encap(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ipv6hdr *ip6h;
+	पूर्णांक size = माप(काष्ठा ipv6hdr);
+	पूर्णांक err;
 
 	err = skb_cow_head(skb, size + skb->mac_len);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	__skb_push(skb, size);
 	skb_reset_network_header(skb);
@@ -315,319 +316,319 @@ static int xfrm6_remove_beet_encap(struct xfrm_state *x, struct sk_buff *skb)
 	ip6h->saddr = x->sel.saddr.in6;
 	err = 0;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Remove encapsulation header.
  *
  * The IP header will be moved over the top of the encapsulation
  * header.
  *
- * On entry, the transport header shall point to where the IP header
+ * On entry, the transport header shall poपूर्णांक to where the IP header
  * should be and the network header shall be set to where the IP
- * header currently is.  skb->data shall point to the start of the
+ * header currently is.  skb->data shall poपूर्णांक to the start of the
  * payload.
  */
-static int
-xfrm_inner_mode_encap_remove(struct xfrm_state *x,
-			     const struct xfrm_mode *inner_mode,
-			     struct sk_buff *skb)
-{
-	switch (inner_mode->encap) {
-	case XFRM_MODE_BEET:
-		if (inner_mode->family == AF_INET)
-			return xfrm4_remove_beet_encap(x, skb);
-		if (inner_mode->family == AF_INET6)
-			return xfrm6_remove_beet_encap(x, skb);
-		break;
-	case XFRM_MODE_TUNNEL:
-		if (inner_mode->family == AF_INET)
-			return xfrm4_remove_tunnel_encap(x, skb);
-		if (inner_mode->family == AF_INET6)
-			return xfrm6_remove_tunnel_encap(x, skb);
-		break;
-	}
+अटल पूर्णांक
+xfrm_inner_mode_encap_हटाओ(काष्ठा xfrm_state *x,
+			     स्थिर काष्ठा xfrm_mode *inner_mode,
+			     काष्ठा sk_buff *skb)
+अणु
+	चयन (inner_mode->encap) अणु
+	हाल XFRM_MODE_BEET:
+		अगर (inner_mode->family == AF_INET)
+			वापस xfrm4_हटाओ_beet_encap(x, skb);
+		अगर (inner_mode->family == AF_INET6)
+			वापस xfrm6_हटाओ_beet_encap(x, skb);
+		अवरोध;
+	हाल XFRM_MODE_TUNNEL:
+		अगर (inner_mode->family == AF_INET)
+			वापस xfrm4_हटाओ_tunnel_encap(x, skb);
+		अगर (inner_mode->family == AF_INET6)
+			वापस xfrm6_हटाओ_tunnel_encap(x, skb);
+		अवरोध;
+	पूर्ण
 
 	WARN_ON_ONCE(1);
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int xfrm_prepare_input(struct xfrm_state *x, struct sk_buff *skb)
-{
-	const struct xfrm_mode *inner_mode = &x->inner_mode;
+अटल पूर्णांक xfrm_prepare_input(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा xfrm_mode *inner_mode = &x->inner_mode;
 
-	switch (x->outer_mode.family) {
-	case AF_INET:
+	चयन (x->outer_mode.family) अणु
+	हाल AF_INET:
 		xfrm4_extract_header(skb);
-		break;
-	case AF_INET6:
+		अवरोध;
+	हाल AF_INET6:
 		xfrm6_extract_header(skb);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		return -EAFNOSUPPORT;
-	}
+		वापस -EAFNOSUPPORT;
+	पूर्ण
 
-	if (x->sel.family == AF_UNSPEC) {
+	अगर (x->sel.family == AF_UNSPEC) अणु
 		inner_mode = xfrm_ip2inner_mode(x, XFRM_MODE_SKB_CB(skb)->protocol);
-		if (!inner_mode)
-			return -EAFNOSUPPORT;
-	}
+		अगर (!inner_mode)
+			वापस -EAFNOSUPPORT;
+	पूर्ण
 
-	switch (inner_mode->family) {
-	case AF_INET:
+	चयन (inner_mode->family) अणु
+	हाल AF_INET:
 		skb->protocol = htons(ETH_P_IP);
-		break;
-	case AF_INET6:
+		अवरोध;
+	हाल AF_INET6:
 		skb->protocol = htons(ETH_P_IPV6);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return xfrm_inner_mode_encap_remove(x, inner_mode, skb);
-}
+	वापस xfrm_inner_mode_encap_हटाओ(x, inner_mode, skb);
+पूर्ण
 
 /* Remove encapsulation header.
  *
  * The IP header will be moved over the top of the encapsulation header.
  *
- * On entry, skb_transport_header() shall point to where the IP header
+ * On entry, skb_transport_header() shall poपूर्णांक to where the IP header
  * should be and skb_network_header() shall be set to where the IP header
- * currently is.  skb->data shall point to the start of the payload.
+ * currently is.  skb->data shall poपूर्णांक to the start of the payload.
  */
-static int xfrm4_transport_input(struct xfrm_state *x, struct sk_buff *skb)
-{
-	int ihl = skb->data - skb_transport_header(skb);
+अटल पूर्णांक xfrm4_transport_input(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ihl = skb->data - skb_transport_header(skb);
 
-	if (skb->transport_header != skb->network_header) {
-		memmove(skb_transport_header(skb),
+	अगर (skb->transport_header != skb->network_header) अणु
+		स_हटाओ(skb_transport_header(skb),
 			skb_network_header(skb), ihl);
 		skb->network_header = skb->transport_header;
-	}
+	पूर्ण
 	ip_hdr(skb)->tot_len = htons(skb->len + ihl);
 	skb_reset_transport_header(skb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xfrm6_transport_input(struct xfrm_state *x, struct sk_buff *skb)
-{
-#if IS_ENABLED(CONFIG_IPV6)
-	int ihl = skb->data - skb_transport_header(skb);
+अटल पूर्णांक xfrm6_transport_input(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्णांक ihl = skb->data - skb_transport_header(skb);
 
-	if (skb->transport_header != skb->network_header) {
-		memmove(skb_transport_header(skb),
+	अगर (skb->transport_header != skb->network_header) अणु
+		स_हटाओ(skb_transport_header(skb),
 			skb_network_header(skb), ihl);
 		skb->network_header = skb->transport_header;
-	}
+	पूर्ण
 	ipv6_hdr(skb)->payload_len = htons(skb->len + ihl -
-					   sizeof(struct ipv6hdr));
+					   माप(काष्ठा ipv6hdr));
 	skb_reset_transport_header(skb);
-	return 0;
-#else
+	वापस 0;
+#अन्यथा
 	WARN_ON_ONCE(1);
-	return -EAFNOSUPPORT;
-#endif
-}
+	वापस -EAFNOSUPPORT;
+#पूर्ण_अगर
+पूर्ण
 
-static int xfrm_inner_mode_input(struct xfrm_state *x,
-				 const struct xfrm_mode *inner_mode,
-				 struct sk_buff *skb)
-{
-	switch (inner_mode->encap) {
-	case XFRM_MODE_BEET:
-	case XFRM_MODE_TUNNEL:
-		return xfrm_prepare_input(x, skb);
-	case XFRM_MODE_TRANSPORT:
-		if (inner_mode->family == AF_INET)
-			return xfrm4_transport_input(x, skb);
-		if (inner_mode->family == AF_INET6)
-			return xfrm6_transport_input(x, skb);
-		break;
-	case XFRM_MODE_ROUTEOPTIMIZATION:
+अटल पूर्णांक xfrm_inner_mode_input(काष्ठा xfrm_state *x,
+				 स्थिर काष्ठा xfrm_mode *inner_mode,
+				 काष्ठा sk_buff *skb)
+अणु
+	चयन (inner_mode->encap) अणु
+	हाल XFRM_MODE_BEET:
+	हाल XFRM_MODE_TUNNEL:
+		वापस xfrm_prepare_input(x, skb);
+	हाल XFRM_MODE_TRANSPORT:
+		अगर (inner_mode->family == AF_INET)
+			वापस xfrm4_transport_input(x, skb);
+		अगर (inner_mode->family == AF_INET6)
+			वापस xfrm6_transport_input(x, skb);
+		अवरोध;
+	हाल XFRM_MODE_ROUTEOPTIMIZATION:
 		WARN_ON_ONCE(1);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-int xfrm_input(struct sk_buff *skb, int nexthdr, __be32 spi, int encap_type)
-{
-	const struct xfrm_state_afinfo *afinfo;
-	struct net *net = dev_net(skb->dev);
-	const struct xfrm_mode *inner_mode;
-	int err;
+पूर्णांक xfrm_input(काष्ठा sk_buff *skb, पूर्णांक nexthdr, __be32 spi, पूर्णांक encap_type)
+अणु
+	स्थिर काष्ठा xfrm_state_afinfo *afinfo;
+	काष्ठा net *net = dev_net(skb->dev);
+	स्थिर काष्ठा xfrm_mode *inner_mode;
+	पूर्णांक err;
 	__be32 seq;
 	__be32 seq_hi;
-	struct xfrm_state *x = NULL;
+	काष्ठा xfrm_state *x = शून्य;
 	xfrm_address_t *daddr;
 	u32 mark = skb->mark;
-	unsigned int family = AF_UNSPEC;
-	int decaps = 0;
-	int async = 0;
+	अचिन्हित पूर्णांक family = AF_UNSPEC;
+	पूर्णांक decaps = 0;
+	पूर्णांक async = 0;
 	bool xfrm_gro = false;
-	bool crypto_done = false;
-	struct xfrm_offload *xo = xfrm_offload(skb);
-	struct sec_path *sp;
+	bool crypto_करोne = false;
+	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
+	काष्ठा sec_path *sp;
 
-	if (encap_type < 0) {
+	अगर (encap_type < 0) अणु
 		x = xfrm_input_state(skb);
 
-		if (unlikely(x->km.state != XFRM_STATE_VALID)) {
-			if (x->km.state == XFRM_STATE_ACQ)
+		अगर (unlikely(x->km.state != XFRM_STATE_VALID)) अणु
+			अगर (x->km.state == XFRM_STATE_ACQ)
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMACQUIREERROR);
-			else
+			अन्यथा
 				XFRM_INC_STATS(net,
 					       LINUX_MIB_XFRMINSTATEINVALID);
 
-			if (encap_type == -1)
+			अगर (encap_type == -1)
 				dev_put(skb->dev);
-			goto drop;
-		}
+			जाओ drop;
+		पूर्ण
 
 		family = x->outer_mode.family;
 
 		/* An encap_type of -1 indicates async resumption. */
-		if (encap_type == -1) {
+		अगर (encap_type == -1) अणु
 			async = 1;
 			seq = XFRM_SKB_CB(skb)->seq.input.low;
-			goto resume;
-		}
+			जाओ resume;
+		पूर्ण
 
 		/* encap_type < -1 indicates a GRO call. */
 		encap_type = 0;
 		seq = XFRM_SPI_SKB_CB(skb)->seq;
 
-		if (xo && (xo->flags & CRYPTO_DONE)) {
-			crypto_done = true;
+		अगर (xo && (xo->flags & CRYPTO_DONE)) अणु
+			crypto_करोne = true;
 			family = XFRM_SPI_SKB_CB(skb)->family;
 
-			if (!(xo->status & CRYPTO_SUCCESS)) {
-				if (xo->status &
+			अगर (!(xo->status & CRYPTO_SUCCESS)) अणु
+				अगर (xo->status &
 				    (CRYPTO_TRANSPORT_AH_AUTH_FAILED |
 				     CRYPTO_TRANSPORT_ESP_AUTH_FAILED |
 				     CRYPTO_TUNNEL_AH_AUTH_FAILED |
-				     CRYPTO_TUNNEL_ESP_AUTH_FAILED)) {
+				     CRYPTO_TUNNEL_ESP_AUTH_FAILED)) अणु
 
 					xfrm_audit_state_icvfail(x, skb,
 								 x->type->proto);
-					x->stats.integrity_failed++;
+					x->stats.पूर्णांकegrity_failed++;
 					XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATEPROTOERROR);
-					goto drop;
-				}
+					जाओ drop;
+				पूर्ण
 
-				if (xo->status & CRYPTO_INVALID_PROTOCOL) {
+				अगर (xo->status & CRYPTO_INVALID_PROTOCOL) अणु
 					XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATEPROTOERROR);
-					goto drop;
-				}
+					जाओ drop;
+				पूर्ण
 
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMINBUFFERERROR);
-				goto drop;
-			}
+				जाओ drop;
+			पूर्ण
 
-			if ((err = xfrm_parse_spi(skb, nexthdr, &spi, &seq)) != 0) {
+			अगर ((err = xfrm_parse_spi(skb, nexthdr, &spi, &seq)) != 0) अणु
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMINHDRERROR);
-				goto drop;
-			}
-		}
+				जाओ drop;
+			पूर्ण
+		पूर्ण
 
-		goto lock;
-	}
+		जाओ lock;
+	पूर्ण
 
 	family = XFRM_SPI_SKB_CB(skb)->family;
 
-	/* if tunnel is present override skb->mark value with tunnel i_key */
-	switch (family) {
-	case AF_INET:
-		if (XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4)
+	/* अगर tunnel is present override skb->mark value with tunnel i_key */
+	चयन (family) अणु
+	हाल AF_INET:
+		अगर (XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4)
 			mark = be32_to_cpu(XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4->parms.i_key);
-		break;
-	case AF_INET6:
-		if (XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6)
+		अवरोध;
+	हाल AF_INET6:
+		अगर (XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6)
 			mark = be32_to_cpu(XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6->parms.i_key);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	sp = secpath_set(skb);
-	if (!sp) {
+	अगर (!sp) अणु
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMINERROR);
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 
 	seq = 0;
-	if (!spi && (err = xfrm_parse_spi(skb, nexthdr, &spi, &seq)) != 0) {
+	अगर (!spi && (err = xfrm_parse_spi(skb, nexthdr, &spi, &seq)) != 0) अणु
 		secpath_reset(skb);
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMINHDRERROR);
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 
 	daddr = (xfrm_address_t *)(skb_network_header(skb) +
 				   XFRM_SPI_SKB_CB(skb)->daddroff);
-	do {
+	करो अणु
 		sp = skb_sec_path(skb);
 
-		if (sp->len == XFRM_MAX_DEPTH) {
+		अगर (sp->len == XFRM_MAX_DEPTH) अणु
 			secpath_reset(skb);
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINBUFFERERROR);
-			goto drop;
-		}
+			जाओ drop;
+		पूर्ण
 
 		x = xfrm_state_lookup(net, mark, daddr, spi, nexthdr, family);
-		if (x == NULL) {
+		अगर (x == शून्य) अणु
 			secpath_reset(skb);
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINNOSTATES);
 			xfrm_audit_state_notfound(skb, family, spi, seq);
-			goto drop;
-		}
+			जाओ drop;
+		पूर्ण
 
 		skb->mark = xfrm_smark_get(skb->mark, x);
 
 		sp->xvec[sp->len++] = x;
 
-		skb_dst_force(skb);
-		if (!skb_dst(skb)) {
+		skb_dst_क्रमce(skb);
+		अगर (!skb_dst(skb)) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINERROR);
-			goto drop;
-		}
+			जाओ drop;
+		पूर्ण
 
 lock:
 		spin_lock(&x->lock);
 
-		if (unlikely(x->km.state != XFRM_STATE_VALID)) {
-			if (x->km.state == XFRM_STATE_ACQ)
+		अगर (unlikely(x->km.state != XFRM_STATE_VALID)) अणु
+			अगर (x->km.state == XFRM_STATE_ACQ)
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMACQUIREERROR);
-			else
+			अन्यथा
 				XFRM_INC_STATS(net,
 					       LINUX_MIB_XFRMINSTATEINVALID);
-			goto drop_unlock;
-		}
+			जाओ drop_unlock;
+		पूर्ण
 
-		if ((x->encap ? x->encap->encap_type : 0) != encap_type) {
+		अगर ((x->encap ? x->encap->encap_type : 0) != encap_type) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATEMISMATCH);
-			goto drop_unlock;
-		}
+			जाओ drop_unlock;
+		पूर्ण
 
-		if (x->repl->check(x, skb, seq)) {
+		अगर (x->repl->check(x, skb, seq)) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATESEQERROR);
-			goto drop_unlock;
-		}
+			जाओ drop_unlock;
+		पूर्ण
 
-		if (xfrm_state_check_expire(x)) {
+		अगर (xfrm_state_check_expire(x)) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATEEXPIRED);
-			goto drop_unlock;
-		}
+			जाओ drop_unlock;
+		पूर्ण
 
 		spin_unlock(&x->lock);
 
-		if (xfrm_tunnel_check(skb, x, family)) {
+		अगर (xfrm_tunnel_check(skb, x, family)) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATEMODEERROR);
-			goto drop;
-		}
+			जाओ drop;
+		पूर्ण
 
 		seq_hi = htonl(xfrm_replay_seqhi(x, seq));
 
@@ -636,34 +637,34 @@ lock:
 
 		dev_hold(skb->dev);
 
-		if (crypto_done)
+		अगर (crypto_करोne)
 			nexthdr = x->type_offload->input_tail(x, skb);
-		else
+		अन्यथा
 			nexthdr = x->type->input(x, skb);
 
-		if (nexthdr == -EINPROGRESS)
-			return 0;
+		अगर (nexthdr == -EINPROGRESS)
+			वापस 0;
 resume:
 		dev_put(skb->dev);
 
 		spin_lock(&x->lock);
-		if (nexthdr < 0) {
-			if (nexthdr == -EBADMSG) {
+		अगर (nexthdr < 0) अणु
+			अगर (nexthdr == -EBADMSG) अणु
 				xfrm_audit_state_icvfail(x, skb,
 							 x->type->proto);
-				x->stats.integrity_failed++;
-			}
+				x->stats.पूर्णांकegrity_failed++;
+			पूर्ण
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATEPROTOERROR);
-			goto drop_unlock;
-		}
+			जाओ drop_unlock;
+		पूर्ण
 
-		/* only the first xfrm gets the encap type */
+		/* only the first xfrm माला_लो the encap type */
 		encap_type = 0;
 
-		if (x->repl->recheck(x, skb, seq)) {
+		अगर (x->repl->recheck(x, skb, seq)) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATESEQERROR);
-			goto drop_unlock;
-		}
+			जाओ drop_unlock;
+		पूर्ण
 
 		x->repl->advance(x, seq);
 
@@ -676,148 +677,148 @@ resume:
 
 		inner_mode = &x->inner_mode;
 
-		if (x->sel.family == AF_UNSPEC) {
+		अगर (x->sel.family == AF_UNSPEC) अणु
 			inner_mode = xfrm_ip2inner_mode(x, XFRM_MODE_SKB_CB(skb)->protocol);
-			if (inner_mode == NULL) {
+			अगर (inner_mode == शून्य) अणु
 				XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATEMODEERROR);
-				goto drop;
-			}
-		}
+				जाओ drop;
+			पूर्ण
+		पूर्ण
 
-		if (xfrm_inner_mode_input(x, inner_mode, skb)) {
+		अगर (xfrm_inner_mode_input(x, inner_mode, skb)) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINSTATEMODEERROR);
-			goto drop;
-		}
+			जाओ drop;
+		पूर्ण
 
-		if (x->outer_mode.flags & XFRM_MODE_FLAG_TUNNEL) {
+		अगर (x->outer_mode.flags & XFRM_MODE_FLAG_TUNNEL) अणु
 			decaps = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * We need the inner address.  However, we only get here for
+		 * We need the inner address.  However, we only get here क्रम
 		 * transport mode so the outer address is identical.
 		 */
 		daddr = &x->id.daddr;
 		family = x->outer_mode.family;
 
 		err = xfrm_parse_spi(skb, nexthdr, &spi, &seq);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMINHDRERROR);
-			goto drop;
-		}
-		crypto_done = false;
-	} while (!err);
+			जाओ drop;
+		पूर्ण
+		crypto_करोne = false;
+	पूर्ण जबतक (!err);
 
 	err = xfrm_rcv_cb(skb, family, x->type->proto, 0);
-	if (err)
-		goto drop;
+	अगर (err)
+		जाओ drop;
 
 	nf_reset_ct(skb);
 
-	if (decaps) {
+	अगर (decaps) अणु
 		sp = skb_sec_path(skb);
-		if (sp)
+		अगर (sp)
 			sp->olen = 0;
 		skb_dst_drop(skb);
 		gro_cells_receive(&gro_cells, skb);
-		return 0;
-	} else {
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		xo = xfrm_offload(skb);
-		if (xo)
+		अगर (xo)
 			xfrm_gro = xo->flags & XFRM_GRO;
 
 		err = -EAFNOSUPPORT;
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		afinfo = xfrm_state_afinfo_get_rcu(x->inner_mode.family);
-		if (likely(afinfo))
+		अगर (likely(afinfo))
 			err = afinfo->transport_finish(skb, xfrm_gro || async);
-		rcu_read_unlock();
-		if (xfrm_gro) {
+		rcu_पढ़ो_unlock();
+		अगर (xfrm_gro) अणु
 			sp = skb_sec_path(skb);
-			if (sp)
+			अगर (sp)
 				sp->olen = 0;
 			skb_dst_drop(skb);
 			gro_cells_receive(&gro_cells, skb);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 drop_unlock:
 	spin_unlock(&x->lock);
 drop:
 	xfrm_rcv_cb(skb, family, x && x->type ? x->type->proto : nexthdr, -1);
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(xfrm_input);
 
-int xfrm_input_resume(struct sk_buff *skb, int nexthdr)
-{
-	return xfrm_input(skb, nexthdr, 0, -1);
-}
+पूर्णांक xfrm_input_resume(काष्ठा sk_buff *skb, पूर्णांक nexthdr)
+अणु
+	वापस xfrm_input(skb, nexthdr, 0, -1);
+पूर्ण
 EXPORT_SYMBOL(xfrm_input_resume);
 
-static void xfrm_trans_reinject(struct tasklet_struct *t)
-{
-	struct xfrm_trans_tasklet *trans = from_tasklet(trans, t, tasklet);
-	struct sk_buff_head queue;
-	struct sk_buff *skb;
+अटल व्योम xfrm_trans_reinject(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा xfrm_trans_tasklet *trans = from_tasklet(trans, t, tasklet);
+	काष्ठा sk_buff_head queue;
+	काष्ठा sk_buff *skb;
 
 	__skb_queue_head_init(&queue);
 	skb_queue_splice_init(&trans->queue, &queue);
 
-	while ((skb = __skb_dequeue(&queue)))
+	जबतक ((skb = __skb_dequeue(&queue)))
 		XFRM_TRANS_SKB_CB(skb)->finish(XFRM_TRANS_SKB_CB(skb)->net,
-					       NULL, skb);
-}
+					       शून्य, skb);
+पूर्ण
 
-int xfrm_trans_queue_net(struct net *net, struct sk_buff *skb,
-			 int (*finish)(struct net *, struct sock *,
-				       struct sk_buff *))
-{
-	struct xfrm_trans_tasklet *trans;
+पूर्णांक xfrm_trans_queue_net(काष्ठा net *net, काष्ठा sk_buff *skb,
+			 पूर्णांक (*finish)(काष्ठा net *, काष्ठा sock *,
+				       काष्ठा sk_buff *))
+अणु
+	काष्ठा xfrm_trans_tasklet *trans;
 
 	trans = this_cpu_ptr(&xfrm_trans_tasklet);
 
-	if (skb_queue_len(&trans->queue) >= netdev_max_backlog)
-		return -ENOBUFS;
+	अगर (skb_queue_len(&trans->queue) >= netdev_max_backlog)
+		वापस -ENOBUFS;
 
-	BUILD_BUG_ON(sizeof(struct xfrm_trans_cb) > sizeof(skb->cb));
+	BUILD_BUG_ON(माप(काष्ठा xfrm_trans_cb) > माप(skb->cb));
 
 	XFRM_TRANS_SKB_CB(skb)->finish = finish;
 	XFRM_TRANS_SKB_CB(skb)->net = net;
 	__skb_queue_tail(&trans->queue, skb);
 	tasklet_schedule(&trans->tasklet);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(xfrm_trans_queue_net);
 
-int xfrm_trans_queue(struct sk_buff *skb,
-		     int (*finish)(struct net *, struct sock *,
-				   struct sk_buff *))
-{
-	return xfrm_trans_queue_net(dev_net(skb->dev), skb, finish);
-}
+पूर्णांक xfrm_trans_queue(काष्ठा sk_buff *skb,
+		     पूर्णांक (*finish)(काष्ठा net *, काष्ठा sock *,
+				   काष्ठा sk_buff *))
+अणु
+	वापस xfrm_trans_queue_net(dev_net(skb->dev), skb, finish);
+पूर्ण
 EXPORT_SYMBOL(xfrm_trans_queue);
 
-void __init xfrm_input_init(void)
-{
-	int err;
-	int i;
+व्योम __init xfrm_input_init(व्योम)
+अणु
+	पूर्णांक err;
+	पूर्णांक i;
 
 	init_dummy_netdev(&xfrm_napi_dev);
 	err = gro_cells_init(&gro_cells, &xfrm_napi_dev);
-	if (err)
-		gro_cells.cells = NULL;
+	अगर (err)
+		gro_cells.cells = शून्य;
 
-	for_each_possible_cpu(i) {
-		struct xfrm_trans_tasklet *trans;
+	क्रम_each_possible_cpu(i) अणु
+		काष्ठा xfrm_trans_tasklet *trans;
 
 		trans = &per_cpu(xfrm_trans_tasklet, i);
 		__skb_queue_head_init(&trans->queue);
 		tasklet_setup(&trans->tasklet, xfrm_trans_reinject);
-	}
-}
+	पूर्ण
+पूर्ण

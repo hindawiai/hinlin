@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SH7734 processor support - PFC hardware block
  *
  * Copyright (C) 2012  Renesas Solutions Corp.
  * Copyright (C) 2012  Nobuhiro Iwamatsu <nobuhiro.iwamatsu.yj@renesas.com>
  */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <cpu/sh7734.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <cpu/sh7734.h>
 
-#include "sh_pfc.h"
+#समावेश "sh_pfc.h"
 
-#define CPU_ALL_GP(fn, sfx)						\
+#घोषणा CPU_ALL_GP(fn, sfx)						\
 	PORT_GP_32(0, fn, sfx),						\
 	PORT_GP_32(1, fn, sfx),						\
 	PORT_GP_32(2, fn, sfx),						\
@@ -19,16 +20,16 @@
 	PORT_GP_32(4, fn, sfx),						\
 	PORT_GP_12(5, fn, sfx)
 
-#undef _GP_DATA
-#define _GP_DATA(bank, pin, name, sfx, cfg)				\
+#अघोषित _GP_DATA
+#घोषणा _GP_DATA(bank, pin, name, sfx, cfg)				\
 	PINMUX_DATA(name##_DATA, name##_FN, name##_IN, name##_OUT)
 
-#define _GP_INOUTSEL(bank, pin, name, sfx, cfg)	name##_IN, name##_OUT
-#define _GP_INDT(bank, pin, name, sfx, cfg)	name##_DATA
-#define GP_INOUTSEL(bank)	PORT_GP_32_REV(bank, _GP_INOUTSEL, unused)
-#define GP_INDT(bank)		PORT_GP_32_REV(bank, _GP_INDT, unused)
+#घोषणा _GP_INOUTSEL(bank, pin, name, sfx, cfg)	name##_IN, name##_OUT
+#घोषणा _GP_INDT(bank, pin, name, sfx, cfg)	name##_DATA
+#घोषणा GP_INOUTSEL(bank)	PORT_GP_32_REV(bank, _GP_INOUTSEL, unused)
+#घोषणा GP_INDT(bank)		PORT_GP_32_REV(bank, _GP_INDT, unused)
 
-enum {
+क्रमागत अणु
 	PINMUX_RESERVED = 0,
 
 	PINMUX_DATA_BEGIN,
@@ -161,7 +162,7 @@ enum {
 		FN_ET0_LINK_C, FN_ET0_ETXD5_A,
 	FN_EX_WAIT0, FN_TCLK1_B,
 	FN_RD_WR, FN_TCLK0, FN_CAN_CLK_B, FN_ET0_ETXD4,
-	FN_EX_CS5, FN_SD1_CMD_A, FN_ATADIR, FN_QSSL_B, FN_ET0_ETXD3_A,
+	FN_EX_CS5, FN_SD1_CMD_A, FN_ATAसूची, FN_QSSL_B, FN_ET0_ETXD3_A,
 	FN_EX_CS4, FN_SD1_WP_A, FN_ATAWR, FN_QMI_QIO1_B, FN_ET0_ETXD2_A,
 	FN_EX_CS3, FN_SD1_CD_A, FN_ATARD, FN_QMO_QIO0_B, FN_ET0_ETXD1_A,
 	FN_EX_CS2, FN_TX3_B, FN_ATACS1, FN_QSPCLK_B, FN_ET0_GTX_CLK_A,
@@ -406,7 +407,7 @@ enum {
 		ET0_LINK_C_MARK, ET0_ETXD5_A_MARK,
 	EX_WAIT0_MARK, TCLK1_B_MARK,
 	RD_WR_MARK, TCLK0_MARK, CAN_CLK_B_MARK, ET0_ETXD4_MARK,
-	EX_CS5_MARK, SD1_CMD_A_MARK, ATADIR_MARK, QSSL_B_MARK,
+	EX_CS5_MARK, SD1_CMD_A_MARK, ATAसूची_MARK, QSSL_B_MARK,
 		ET0_ETXD3_A_MARK,
 	EX_CS4_MARK, SD1_WP_A_MARK, ATAWR_MARK, QMI_QIO1_B_MARK,
 		ET0_ETXD2_A_MARK,
@@ -569,9 +570,9 @@ enum {
 	PRESETOUT_MARK, ST_CLKOUT_MARK,
 
 	PINMUX_MARK_END,
-};
+पूर्ण;
 
-static const u16 pinmux_data[] = {
+अटल स्थिर u16 pinmux_data[] = अणु
 	PINMUX_DATA_GP_ALL(), /* PINMUX_DATA(GP_M_N_DATA, GP_M_N_FN...), */
 
 	PINMUX_SINGLE(CLKOUT),
@@ -831,7 +832,7 @@ static const u16 pinmux_data[] = {
 
 	PINMUX_IPSR_GPSR(IP3_17_15, EX_CS5),
 	PINMUX_IPSR_MSEL(IP3_17_15, SD1_CMD_A, SEL_SDHI1_0),
-	PINMUX_IPSR_GPSR(IP3_17_15, ATADIR),
+	PINMUX_IPSR_GPSR(IP3_17_15, ATAसूची),
 	PINMUX_IPSR_MSEL(IP3_17_15, QSSL_B, SEL_RQSPI_1),
 	PINMUX_IPSR_MSEL(IP3_17_15, ET0_ETXD3_A, SEL_ET0_0),
 
@@ -1347,15 +1348,15 @@ static const u16 pinmux_data[] = {
 
 	PINMUX_IPSR_GPSR(IP11_28, PRESETOUT),
 	PINMUX_IPSR_GPSR(IP11_28, ST_CLKOUT),
-};
+पूर्ण;
 
-static const struct sh_pfc_pin pinmux_pins[] = {
+अटल स्थिर काष्ठा sh_pfc_pin pinmux_pins[] = अणु
 	PINMUX_GPIO_GP_ALL(),
-};
+पूर्ण;
 
-#define PINMUX_FN_BASE	ARRAY_SIZE(pinmux_pins)
+#घोषणा PINMUX_FN_BASE	ARRAY_SIZE(pinmux_pins)
 
-static const struct pinmux_func pinmux_func_gpios[] = {
+अटल स्थिर काष्ठा pinmux_func pinmux_func_gpios[] = अणु
 	GPIO_FN(CLKOUT), GPIO_FN(BS), GPIO_FN(CS0), GPIO_FN(EX_CS0),
 	GPIO_FN(RD), GPIO_FN(WE0), GPIO_FN(WE1),
 	GPIO_FN(SCL0), GPIO_FN(PENC0), GPIO_FN(USB_OVC0),
@@ -1448,7 +1449,7 @@ static const struct pinmux_func pinmux_func_gpios[] = {
 	GPIO_FN(ET0_ETXD1_A),
 	GPIO_FN(EX_CS4), GPIO_FN(SD1_WP_A), GPIO_FN(ATAWR), GPIO_FN(QMI_QIO1_B),
 	GPIO_FN(ET0_ETXD2_A),
-	GPIO_FN(EX_CS5), GPIO_FN(SD1_CMD_A), GPIO_FN(ATADIR), GPIO_FN(QSSL_B),
+	GPIO_FN(EX_CS5), GPIO_FN(SD1_CMD_A), GPIO_FN(ATAसूची), GPIO_FN(QSSL_B),
 	GPIO_FN(ET0_ETXD3_A),
 	GPIO_FN(RD_WR), GPIO_FN(TCLK0), GPIO_FN(CAN_CLK_B), GPIO_FN(ET0_ETXD4),
 	GPIO_FN(EX_WAIT0), GPIO_FN(TCLK1_B),
@@ -1632,10 +1633,10 @@ static const struct pinmux_func pinmux_func_gpios[] = {
 	GPIO_FN(SDA0), GPIO_FN(HIFEBL_A),
 	GPIO_FN(SDA1), GPIO_FN(RX1_E),
 	GPIO_FN(SCL1), GPIO_FN(SCIF_CLK_C),
-};
+पूर्ण;
 
-static const struct pinmux_cfg_reg pinmux_config_regs[] = {
-	{ PINMUX_CFG_REG("GPSR0", 0xFFFC0004, 32, 1, GROUP(
+अटल स्थिर काष्ठा pinmux_cfg_reg pinmux_config_regs[] = अणु
+	अणु PINMUX_CFG_REG("GPSR0", 0xFFFC0004, 32, 1, GROUP(
 		GP_0_31_FN, FN_IP2_2_0,
 		GP_0_30_FN, FN_IP1_31_29,
 		GP_0_29_FN, FN_IP1_28_26,
@@ -1668,8 +1669,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_0_2_FN, FN_IP1_13_12,
 		GP_0_1_FN, FN_IP1_11_10,
 		GP_0_0_FN, FN_IP1_9_8 ))
-	},
-	{ PINMUX_CFG_REG("GPSR1", 0xFFFC0008, 32, 1, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("GPSR1", 0xFFFC0008, 32, 1, GROUP(
 		GP_1_31_FN, FN_IP11_25_23,
 		GP_1_30_FN, FN_IP2_13_11,
 		GP_1_29_FN, FN_IP2_10_8,
@@ -1702,8 +1703,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_1_2_FN, FN_IP11_20_19,
 		GP_1_1_FN, FN_IP3_29_27,
 		GP_1_0_FN, FN_IP3_20 ))
-	},
-	{ PINMUX_CFG_REG("GPSR2", 0xFFFC000C, 32, 1, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("GPSR2", 0xFFFC000C, 32, 1, GROUP(
 		GP_2_31_FN, FN_IP4_31_30,
 		GP_2_30_FN, FN_IP5_2_0,
 		GP_2_29_FN, FN_IP5_5_3,
@@ -1736,8 +1737,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_2_2_FN, FN_IP11_11_10,
 		GP_2_1_FN, FN_IP11_9_7,
 		GP_2_0_FN, FN_IP11_6_4 ))
-	},
-	{ PINMUX_CFG_REG("GPSR3", 0xFFFC0010, 32, 1, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("GPSR3", 0xFFFC0010, 32, 1, GROUP(
 		GP_3_31_FN, FN_IP9_1_0,
 		GP_3_30_FN, FN_IP8_19_18,
 		GP_3_29_FN, FN_IP8_17_16,
@@ -1770,9 +1771,9 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_3_2_FN, FN_IP6_7_6,
 		GP_3_1_FN, FN_IP6_5_3,
 		GP_3_0_FN, FN_IP6_2_0 ))
-	},
+	पूर्ण,
 
-	{ PINMUX_CFG_REG("GPSR4", 0xFFFC0014, 32, 1, GROUP(
+	अणु PINMUX_CFG_REG("GPSR4", 0xFFFC0014, 32, 1, GROUP(
 		GP_4_31_FN, FN_IP10_24_23,
 		GP_4_30_FN, FN_IP10_22,
 		GP_4_29_FN, FN_IP11_18_16,
@@ -1805,8 +1806,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_4_2_FN, FN_IP9_23_22,
 		GP_4_1_FN, FN_IP9_21_20,
 		GP_4_0_FN, FN_IP9_19_18 ))
-	},
-	{ PINMUX_CFG_REG("GPSR5", 0xFFFC0018, 32, 1, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("GPSR5", 0xFFFC0018, 32, 1, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0, /* 31 - 28 */
 		0, 0, 0, 0, 0, 0, 0, 0, /* 27 - 24 */
 		0, 0, 0, 0, 0, 0, 0, 0, /* 23 - 20 */
@@ -1820,9 +1821,9 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_5_2_FN, FN_IRQ2_B,
 		GP_5_1_FN, FN_IP11_3,
 		GP_5_0_FN, FN_IP10_25 ))
-	},
+	पूर्ण,
 
-	{ PINMUX_CFG_REG_VAR("IPSR0", 0xFFFC001C, 32,
+	अणु PINMUX_CFG_REG_VAR("IPSR0", 0xFFFC001C, 32,
 			GROUP(2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
 			GROUP(
 		/* IP0_31_30 [2] */
@@ -1858,8 +1859,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		FN_A1, FN_ST0_REQ, FN_LCD_DATA1_A, FN_TCLKB_C,
 		/* IP0_1_0 [2] */
 		FN_A0, FN_ST0_CLKIN, FN_LCD_DATA0_A, FN_TCLKA_C ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR1", 0xFFFC0020, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR1", 0xFFFC0020, 32,
 			GROUP(3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
 			GROUP(
 		/* IP1_31_29 [3] */
@@ -1894,8 +1895,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		FN_A17, FN_ST1_VCO_CLKIN, FN_LCD_CL1_A,	FN_TIOC4B_C,
 		/* IP1_1_0 [2] */
 		FN_A16, FN_ST0_PWM, FN_LCD_DON_A, FN_TIOC4A_C ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR2", 0xFFFC0024, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR2", 0xFFFC0024, 32,
 			     GROUP(1, 3, 3, 2, 3, 3, 3, 3, 3, 3, 2, 3),
 			     GROUP(
 		/* IP2_31 [1] */
@@ -1931,8 +1932,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		/* IP2_2_0 [3] */
 		FN_D4, FN_SD0_CD_A, FN_MMC_D4_A, FN_ST1_D7,
 			FN_FD4_A, 0, 0, 0 ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR3", 0xFFFC0028, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR3", 0xFFFC0028, 32,
 			     GROUP(2, 3, 3, 3, 1, 2, 3, 3, 3, 3, 3, 1, 2),
 			     GROUP(
 	    /* IP3_31_30 [2] */
@@ -1951,7 +1952,7 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 	    /* IP3_19_18 [2] */
 		FN_RD_WR, FN_TCLK0, FN_CAN_CLK_B, FN_ET0_ETXD4,
 	    /* IP3_17_15 [3] */
-		FN_EX_CS5, FN_SD1_CMD_A, FN_ATADIR, FN_QSSL_B,
+		FN_EX_CS5, FN_SD1_CMD_A, FN_ATAसूची, FN_QSSL_B,
 		FN_ET0_ETXD3_A, 0, 0, 0,
 	    /* IP3_14_12 [3] */
 		FN_EX_CS4, FN_SD1_WP_A, FN_ATAWR, FN_QMI_QIO1_B,
@@ -1969,8 +1970,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		FN_CS1_A26, FN_QIO3_B,
 	    /* IP3_1_0 [2] */
 		FN_D15, FN_SCK2_B, 0, 0 ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR4", 0xFFFC002C, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR4", 0xFFFC002C, 32,
 			     GROUP(2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3),
 			     GROUP(
 	    /* IP4_31_30 [2] */
@@ -2005,8 +2006,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 	    /* IP4_2_0 [3] */
 		FN_HCTS0_A, FN_CTS1_A, FN_VI0_FIELD, FN_RMII0_RXD1_A,
 			FN_ET0_ERXD7, 0, 0, 0 ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR5", 0xFFFC0030, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR5", 0xFFFC0030, 32,
 			     GROUP(1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3,
 				   3, 3, 3),
 			     GROUP(
@@ -2047,8 +2048,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 	    /* IP5_2_0 [3] */
 		FN_SD2_CLK_A, FN_RX2_A, FN_VI0_G4, 0,
 		FN_ET0_RX_CLK_B, 0, 0, 0 ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR6", 0xFFFC0034, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR6", 0xFFFC0034, 32,
 			     GROUP(1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 2,
 				   2, 2, 2, 2, 3, 3),
 			     GROUP(
@@ -2092,8 +2093,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 	    /* IP6_2_0 [3] */
 		FN_DU0_DR0, FN_SCIF_CLK_B, FN_HRX0_D, FN_IETX_A,
 		FN_TCLKA_A, FN_HIFD00, 0, 0 ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR7", 0xFFFC0038, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR7", 0xFFFC0038, 32,
 			     GROUP(1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3),
 			     GROUP(
 	    /* IP7_31 [1] */
@@ -2129,8 +2130,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 	    /* IP7_2_0 [3] */
 		FN_DU0_DG2, FN_RTS1_C, FN_RMII0_MDC_B, FN_TIOC2A_A,
 		FN_HIFD10, 0, 0, 0 ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR8", 0xFFFC003C, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR8", 0xFFFC003C, 32,
 			     GROUP(2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2,
 				   2, 2, 2),
 			     GROUP(
@@ -2167,8 +2168,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		FN_DU0_DB6, 0, FN_HIFRDY, 0,
 	    /* IP8_1_0 [2] */
 		FN_DU0_DB5, 0, FN_HIFDREQ, 0 ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR9", 0xFFFC0040, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR9", 0xFFFC0040, 32,
 			     GROUP(2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
 				   2, 2, 2, 2),
 			     GROUP(
@@ -2204,8 +2205,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		FN_VI1_0_A, 0, FN_FD1_B, FN_LCD_DATA1_B,
 	    /* IP9_1_0 [2] */
 		FN_VI1_CLK_A, 0, FN_FD0_B, FN_LCD_DATA0_B ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR10", 0xFFFC0044, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR10", 0xFFFC0044, 32,
 			     GROUP(2, 2, 2, 1, 2, 1, 3, 3, 1, 3, 3, 3, 3, 3),
 			     GROUP(
 	    /* IP9_31_30 [2] */
@@ -2243,8 +2244,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 	    /* IP10_2_0 [3] */
 		FN_SSI_SCK23, FN_VI1_4_B, FN_RX1_D, FN_FCLE_B,
 		FN_LCD_DATA15_B, 0, 0, 0 ))
-	},
-	{ PINMUX_CFG_REG_VAR("IPSR11", 0xFFFC0048, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("IPSR11", 0xFFFC0048, 32,
 			     GROUP(3, 1, 2, 3, 2, 2, 3, 3, 1, 2, 3, 3,
 				   1, 1, 1, 1),
 			     GROUP(
@@ -2285,8 +2286,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		FN_SDA1, FN_RX1_E,
 	    /* IP11_0 [1] */
 		FN_SCL1, FN_SCIF_CLK_C ))
-	},
-	{ PINMUX_CFG_REG_VAR("MOD_SEL1", 0xFFFC004C, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("MOD_SEL1", 0xFFFC004C, 32,
 			     GROUP(3, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2,
 				   2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
 			     GROUP(
@@ -2342,8 +2343,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		FN_SEL_MMC_0, FN_SEL_MMC_1,
 		/* SEL1_0 [1] */
 		FN_SEL_INTC_0, FN_SEL_INTC_1 ))
-	},
-	{ PINMUX_CFG_REG_VAR("MOD_SEL2", 0xFFFC0050, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("MOD_SEL2", 0xFFFC0050, 32,
 			     GROUP(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
 				   2, 1, 2, 2, 3, 2, 3, 2, 2),
 			     GROUP(
@@ -2391,19 +2392,19 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		FN_SEL_SCIF0_0, FN_SEL_SCIF0_1, FN_SEL_SCIF0_2, 0,
 		/* SEL2_1_0 [2] */
 		FN_SEL_SCIF_CLK_0, FN_SEL_SCIF_CLK_1, FN_SEL_SCIF_CLK_2, 0  ))
-	},
+	पूर्ण,
 	/* GPIO 0 - 5*/
-	{ PINMUX_CFG_REG("INOUTSEL0", 0xFFC40004, 32, 1, GROUP(GP_INOUTSEL(0)))
-	},
-	{ PINMUX_CFG_REG("INOUTSEL1", 0xFFC41004, 32, 1, GROUP(GP_INOUTSEL(1)))
-	},
-	{ PINMUX_CFG_REG("INOUTSEL2", 0xFFC42004, 32, 1, GROUP(GP_INOUTSEL(2)))
-	},
-	{ PINMUX_CFG_REG("INOUTSEL3", 0xFFC43004, 32, 1, GROUP(GP_INOUTSEL(3)))
-	},
-	{ PINMUX_CFG_REG("INOUTSEL4", 0xFFC44004, 32, 1, GROUP(GP_INOUTSEL(4)))
-	},
-	{ PINMUX_CFG_REG("INOUTSEL5", 0xffc45004, 32, 1, GROUP(
+	अणु PINMUX_CFG_REG("INOUTSEL0", 0xFFC40004, 32, 1, GROUP(GP_INOUTSEL(0)))
+	पूर्ण,
+	अणु PINMUX_CFG_REG("INOUTSEL1", 0xFFC41004, 32, 1, GROUP(GP_INOUTSEL(1)))
+	पूर्ण,
+	अणु PINMUX_CFG_REG("INOUTSEL2", 0xFFC42004, 32, 1, GROUP(GP_INOUTSEL(2)))
+	पूर्ण,
+	अणु PINMUX_CFG_REG("INOUTSEL3", 0xFFC43004, 32, 1, GROUP(GP_INOUTSEL(3)))
+	पूर्ण,
+	अणु PINMUX_CFG_REG("INOUTSEL4", 0xFFC44004, 32, 1, GROUP(GP_INOUTSEL(4)))
+	पूर्ण,
+	अणु PINMUX_CFG_REG("INOUTSEL5", 0xffc45004, 32, 1, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 31 - 24 */
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 23 - 16 */
 		0, 0, 0, 0, 0, 0, 0, 0, /* 15 - 12 */
@@ -2419,35 +2420,35 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_5_2_IN, GP_5_2_OUT,
 		GP_5_1_IN, GP_5_1_OUT,
 		GP_5_0_IN, GP_5_0_OUT ))
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct pinmux_data_reg pinmux_data_regs[] = {
+अटल स्थिर काष्ठा pinmux_data_reg pinmux_data_regs[] = अणु
 	/* GPIO 0 - 5*/
-	{ PINMUX_DATA_REG("INDT0", 0xFFC4000C, 32, GROUP(GP_INDT(0))) },
-	{ PINMUX_DATA_REG("INDT1", 0xFFC4100C, 32, GROUP(GP_INDT(1))) },
-	{ PINMUX_DATA_REG("INDT2", 0xFFC4200C, 32, GROUP(GP_INDT(2))) },
-	{ PINMUX_DATA_REG("INDT3", 0xFFC4300C, 32, GROUP(GP_INDT(3))) },
-	{ PINMUX_DATA_REG("INDT4", 0xFFC4400C, 32, GROUP(GP_INDT(4))) },
-	{ PINMUX_DATA_REG("INDT5", 0xFFC4500C, 32, GROUP(
+	अणु PINMUX_DATA_REG("INDT0", 0xFFC4000C, 32, GROUP(GP_INDT(0))) पूर्ण,
+	अणु PINMUX_DATA_REG("INDT1", 0xFFC4100C, 32, GROUP(GP_INDT(1))) पूर्ण,
+	अणु PINMUX_DATA_REG("INDT2", 0xFFC4200C, 32, GROUP(GP_INDT(2))) पूर्ण,
+	अणु PINMUX_DATA_REG("INDT3", 0xFFC4300C, 32, GROUP(GP_INDT(3))) पूर्ण,
+	अणु PINMUX_DATA_REG("INDT4", 0xFFC4400C, 32, GROUP(GP_INDT(4))) पूर्ण,
+	अणु PINMUX_DATA_REG("INDT5", 0xFFC4500C, 32, GROUP(
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0,
 		GP_5_11_DATA, GP_5_10_DATA, GP_5_9_DATA, GP_5_8_DATA,
 		GP_5_7_DATA, GP_5_6_DATA, GP_5_5_DATA, GP_5_4_DATA,
 		GP_5_3_DATA, GP_5_2_DATA, GP_5_1_DATA, GP_5_0_DATA ))
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-const struct sh_pfc_soc_info sh7734_pinmux_info = {
+स्थिर काष्ठा sh_pfc_soc_info sh7734_pinmux_info = अणु
 	.name = "sh7734_pfc",
 
 	.unlock_reg = 0xFFFC0000,
 
-	.input = { PINMUX_INPUT_BEGIN, PINMUX_INPUT_END },
-	.output = { PINMUX_OUTPUT_BEGIN, PINMUX_OUTPUT_END },
-	.function = { PINMUX_FUNCTION_BEGIN, PINMUX_FUNCTION_END },
+	.input = अणु PINMUX_INPUT_BEGIN, PINMUX_INPUT_END पूर्ण,
+	.output = अणु PINMUX_OUTPUT_BEGIN, PINMUX_OUTPUT_END पूर्ण,
+	.function = अणु PINMUX_FUNCTION_BEGIN, PINMUX_FUNCTION_END पूर्ण,
 
 	.pins = pinmux_pins,
 	.nr_pins = ARRAY_SIZE(pinmux_pins),
@@ -2459,4 +2460,4 @@ const struct sh_pfc_soc_info sh7734_pinmux_info = {
 
 	.pinmux_data = pinmux_data,
 	.pinmux_data_size = ARRAY_SIZE(pinmux_data),
-};
+पूर्ण;

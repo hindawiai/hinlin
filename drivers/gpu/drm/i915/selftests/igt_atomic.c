@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
 
-#include <linux/preempt.h>
-#include <linux/bottom_half.h>
-#include <linux/irqflags.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/bottom_half.h>
+#समावेश <linux/irqflags.h>
 
-#include "igt_atomic.h"
+#समावेश "igt_atomic.h"
 
-static void __preempt_begin(void)
-{
+अटल व्योम __preempt_begin(व्योम)
+अणु
 	preempt_disable();
-}
+पूर्ण
 
-static void __preempt_end(void)
-{
+अटल व्योम __preempt_end(व्योम)
+अणु
 	preempt_enable();
-}
+पूर्ण
 
-static void __softirq_begin(void)
-{
+अटल व्योम __softirq_begin(व्योम)
+अणु
 	local_bh_disable();
-}
+पूर्ण
 
-static void __softirq_end(void)
-{
+अटल व्योम __softirq_end(व्योम)
+अणु
 	local_bh_enable();
-}
+पूर्ण
 
-static void __hardirq_begin(void)
-{
+अटल व्योम __hardirq_begin(व्योम)
+अणु
 	local_irq_disable();
-}
+पूर्ण
 
-static void __hardirq_end(void)
-{
+अटल व्योम __hardirq_end(व्योम)
+अणु
 	local_irq_enable();
-}
+पूर्ण
 
-const struct igt_atomic_section igt_atomic_phases[] = {
-	{ "preempt", __preempt_begin, __preempt_end },
-	{ "softirq", __softirq_begin, __softirq_end },
-	{ "hardirq", __hardirq_begin, __hardirq_end },
-	{ }
-};
+स्थिर काष्ठा igt_atomic_section igt_atomic_phases[] = अणु
+	अणु "preempt", __preempt_begin, __preempt_end पूर्ण,
+	अणु "softirq", __softirq_begin, __softirq_end पूर्ण,
+	अणु "hardirq", __hardirq_begin, __hardirq_end पूर्ण,
+	अणु पूर्ण
+पूर्ण;

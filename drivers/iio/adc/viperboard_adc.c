@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Nano River Technologies viperboard IIO ADC driver
  *
@@ -7,58 +8,58 @@
  *  All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/mutex.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/usb.h>
-#include <linux/iio/iio.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/iio/iपन.स>
 
-#include <linux/mfd/viperboard.h>
+#समावेश <linux/mfd/viperboard.h>
 
-#define VPRBRD_ADC_CMD_GET		0x00
+#घोषणा VPRBRD_ADC_CMD_GET		0x00
 
-struct vprbrd_adc_msg {
+काष्ठा vprbrd_adc_msg अणु
 	u8 cmd;
 	u8 chan;
 	u8 val;
-} __packed;
+पूर्ण __packed;
 
-struct vprbrd_adc {
-	struct vprbrd *vb;
-};
+काष्ठा vprbrd_adc अणु
+	काष्ठा vprbrd *vb;
+पूर्ण;
 
-#define VPRBRD_ADC_CHANNEL(_index) {			\
+#घोषणा VPRBRD_ADC_CHANNEL(_index) अणु			\
 	.type = IIO_VOLTAGE,				\
 	.indexed = 1,					\
 	.channel = _index,				\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),	\
-}
+पूर्ण
 
-static struct iio_chan_spec const vprbrd_adc_iio_channels[] = {
+अटल काष्ठा iio_chan_spec स्थिर vprbrd_adc_iio_channels[] = अणु
 	VPRBRD_ADC_CHANNEL(0),
 	VPRBRD_ADC_CHANNEL(1),
 	VPRBRD_ADC_CHANNEL(2),
 	VPRBRD_ADC_CHANNEL(3),
-};
+पूर्ण;
 
-static int vprbrd_iio_read_raw(struct iio_dev *iio_dev,
-				struct iio_chan_spec const *chan,
-				int *val,
-				int *val2,
-				long info)
-{
-	int ret, error = 0;
-	struct vprbrd_adc *adc = iio_priv(iio_dev);
-	struct vprbrd *vb = adc->vb;
-	struct vprbrd_adc_msg *admsg = (struct vprbrd_adc_msg *)vb->buf;
+अटल पूर्णांक vprbrd_iio_पढ़ो_raw(काष्ठा iio_dev *iio_dev,
+				काष्ठा iio_chan_spec स्थिर *chan,
+				पूर्णांक *val,
+				पूर्णांक *val2,
+				दीर्घ info)
+अणु
+	पूर्णांक ret, error = 0;
+	काष्ठा vprbrd_adc *adc = iio_priv(iio_dev);
+	काष्ठा vprbrd *vb = adc->vb;
+	काष्ठा vprbrd_adc_msg *admsg = (काष्ठा vprbrd_adc_msg *)vb->buf;
 
-	switch (info) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (info) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		mutex_lock(&vb->lock);
 
 		admsg->cmd = VPRBRD_ADC_CMD_GET;
@@ -68,81 +69,81 @@ static int vprbrd_iio_read_raw(struct iio_dev *iio_dev,
 		ret = usb_control_msg(vb->usb_dev,
 			usb_sndctrlpipe(vb->usb_dev, 0), VPRBRD_USB_REQUEST_ADC,
 			VPRBRD_USB_TYPE_OUT, 0x0000, 0x0000, admsg,
-			sizeof(struct vprbrd_adc_msg), VPRBRD_USB_TIMEOUT_MS);
-		if (ret != sizeof(struct vprbrd_adc_msg)) {
+			माप(काष्ठा vprbrd_adc_msg), VPRBRD_USB_TIMEOUT_MS);
+		अगर (ret != माप(काष्ठा vprbrd_adc_msg)) अणु
 			dev_err(&iio_dev->dev, "usb send error on adc read\n");
 			error = -EREMOTEIO;
-		}
+		पूर्ण
 
 		ret = usb_control_msg(vb->usb_dev,
 			usb_rcvctrlpipe(vb->usb_dev, 0), VPRBRD_USB_REQUEST_ADC,
 			VPRBRD_USB_TYPE_IN, 0x0000, 0x0000, admsg,
-			sizeof(struct vprbrd_adc_msg), VPRBRD_USB_TIMEOUT_MS);
+			माप(काष्ठा vprbrd_adc_msg), VPRBRD_USB_TIMEOUT_MS);
 
 		*val = admsg->val;
 
 		mutex_unlock(&vb->lock);
 
-		if (ret != sizeof(struct vprbrd_adc_msg)) {
+		अगर (ret != माप(काष्ठा vprbrd_adc_msg)) अणु
 			dev_err(&iio_dev->dev, "usb recv error on adc read\n");
 			error = -EREMOTEIO;
-		}
+		पूर्ण
 
-		if (error)
-			goto error;
+		अगर (error)
+			जाओ error;
 
-		return IIO_VAL_INT;
-	default:
+		वापस IIO_VAL_INT;
+	शेष:
 		error = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 error:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct iio_info vprbrd_adc_iio_info = {
-	.read_raw = &vprbrd_iio_read_raw,
-};
+अटल स्थिर काष्ठा iio_info vprbrd_adc_iio_info = अणु
+	.पढ़ो_raw = &vprbrd_iio_पढ़ो_raw,
+पूर्ण;
 
-static int vprbrd_adc_probe(struct platform_device *pdev)
-{
-	struct vprbrd *vb = dev_get_drvdata(pdev->dev.parent);
-	struct vprbrd_adc *adc;
-	struct iio_dev *indio_dev;
-	int ret;
+अटल पूर्णांक vprbrd_adc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vprbrd *vb = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा vprbrd_adc *adc;
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक ret;
 
-	/* registering iio */
-	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*adc));
-	if (!indio_dev) {
+	/* रेजिस्टरing iio */
+	indio_dev = devm_iio_device_alloc(&pdev->dev, माप(*adc));
+	अगर (!indio_dev) अणु
 		dev_err(&pdev->dev, "failed allocating iio device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	adc = iio_priv(indio_dev);
 	adc->vb = vb;
 	indio_dev->name = "viperboard adc";
 	indio_dev->info = &vprbrd_adc_iio_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = vprbrd_adc_iio_channels;
 	indio_dev->num_channels = ARRAY_SIZE(vprbrd_adc_iio_channels);
 
-	ret = devm_iio_device_register(&pdev->dev, indio_dev);
-	if (ret) {
+	ret = devm_iio_device_रेजिस्टर(&pdev->dev, indio_dev);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "could not register iio (adc)");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver vprbrd_adc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver vprbrd_adc_driver = अणु
+	.driver = अणु
 		.name	= "viperboard-adc",
-	},
+	पूर्ण,
 	.probe		= vprbrd_adc_probe,
-};
+पूर्ण;
 
-module_platform_driver(vprbrd_adc_driver);
+module_platक्रमm_driver(vprbrd_adc_driver);
 
 MODULE_AUTHOR("Lars Poeschel <poeschel@lemonage.de>");
 MODULE_DESCRIPTION("IIO ADC driver for Nano River Techs Viperboard");

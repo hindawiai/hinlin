@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_CRC4_H
-#define _LINUX_CRC4_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_CRC4_H
+#घोषणा _LINUX_CRC4_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-extern uint8_t crc4(uint8_t c, uint64_t x, int bits);
+बाह्य uपूर्णांक8_t crc4(uपूर्णांक8_t c, uपूर्णांक64_t x, पूर्णांक bits);
 
-#endif /* _LINUX_CRC4_H */
+#पूर्ण_अगर /* _LINUX_CRC4_H */

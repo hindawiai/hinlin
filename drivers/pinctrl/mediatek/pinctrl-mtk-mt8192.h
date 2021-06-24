@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019 MediaTek Inc.
  * Author: Andy Teng <andy.teng@mediatek.com>
  *
  */
 
-#ifndef __PINCTRL_MTK_MT8192_H
-#define __PINCTRL_MTK_MT8192_H
+#अगर_अघोषित __PINCTRL_MTK_MT8192_H
+#घोषणा __PINCTRL_MTK_MT8192_H
 
-#include "pinctrl-paris.h"
+#समावेश "pinctrl-paris.h"
 
-static const struct mtk_pin_desc mtk_pins_mt8192[] = {
+अटल स्थिर काष्ठा mtk_pin_desc mtk_pins_mt8192[] = अणु
 	MTK_PIN(
 		0, "GPIO0",
 		MTK_EINT_FUNCTION(0, 0),
@@ -2270,6 +2271,6 @@ static const struct mtk_pin_desc mtk_pins_mt8192[] = {
 		DRV_GRP4,
 		MTK_FUNCTION(0, "GPIO227")
 	),
-};
+पूर्ण;
 
-#endif /* __PINCTRL_MTK_MT8192_H */
+#पूर्ण_अगर /* __PINCTRL_MTK_MT8192_H */

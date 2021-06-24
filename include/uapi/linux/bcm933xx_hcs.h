@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Broadcom Cable Modem firmware format
+ * Broadcom Cable Modem firmware क्रमmat
  */
 
-#ifndef __BCM933XX_HCS_H
-#define __BCM933XX_HCS_H
+#अगर_अघोषित __BCM933XX_HCS_H
+#घोषणा __BCM933XX_HCS_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct bcm_hcs {
+काष्ठा bcm_hcs अणु
 	__u16 magic;
 	__u16 control;
 	__u16 rev_maj;
@@ -16,10 +17,10 @@ struct bcm_hcs {
 	__u32 build_date;
 	__u32 filelen;
 	__u32 ldaddress;
-	char filename[64];
+	अक्षर filename[64];
 	__u16 hcs;
 	__u16 her_znaet_chto;
 	__u32 crc;
-};
+पूर्ण;
 
-#endif /* __BCM933XX_HCS */
+#पूर्ण_अगर /* __BCM933XX_HCS */

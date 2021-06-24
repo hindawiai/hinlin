@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Allwinner H5 SoC pinctrl driver.
  *
@@ -8,22 +9,22 @@
  *
  * Based on pinctrl-sun8i-a23.c, which is:
  * Copyright (C) 2014 Chen-Yu Tsai <wens@csie.org>
- * Copyright (C) 2014 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright (C) 2014 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-sunxi.h"
+#समावेश "pinctrl-sunxi.h"
 
-static const struct sunxi_desc_pin sun50i_h5_pins[] = {
+अटल स्थिर काष्ठा sunxi_desc_pin sun50i_h5_pins[] = अणु
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(A, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -528,62 +529,62 @@ static const struct sunxi_desc_pin sun50i_h5_pins[] = {
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "i2s1"),		/* DIN */
 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 13)),	/* PG_EINT13 */
-};
+पूर्ण;
 
-static const struct sunxi_pinctrl_desc sun50i_h5_pinctrl_data_broken = {
+अटल स्थिर काष्ठा sunxi_pinctrl_desc sun50i_h5_pinctrl_data_broken = अणु
 	.pins = sun50i_h5_pins,
 	.npins = ARRAY_SIZE(sun50i_h5_pins),
 	.irq_banks = 2,
-	.irq_read_needs_mux = true,
+	.irq_पढ़ो_needs_mux = true,
 	.disable_strict_mode = true,
-};
+पूर्ण;
 
-static const struct sunxi_pinctrl_desc sun50i_h5_pinctrl_data = {
+अटल स्थिर काष्ठा sunxi_pinctrl_desc sun50i_h5_pinctrl_data = अणु
 	.pins = sun50i_h5_pins,
 	.npins = ARRAY_SIZE(sun50i_h5_pins),
 	.irq_banks = 3,
-	.irq_read_needs_mux = true,
+	.irq_पढ़ो_needs_mux = true,
 	.disable_strict_mode = true,
-};
+पूर्ण;
 
-static int sun50i_h5_pinctrl_probe(struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक sun50i_h5_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_irq_count(pdev);
-	if (ret < 0) {
-		if (ret != -EPROBE_DEFER)
+	ret = platक्रमm_irq_count(pdev);
+	अगर (ret < 0) अणु
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Couldn't determine irq count: %pe\n",
 				ERR_PTR(ret));
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (ret) {
-	case 2:
+	चयन (ret) अणु
+	हाल 2:
 		dev_warn(&pdev->dev,
 			 "Your device tree's pinctrl node is broken, which has no IRQ of PG bank routed.\n");
 		dev_warn(&pdev->dev,
 			 "Please update the device tree, otherwise PG bank IRQ won't work.\n");
-		return sunxi_pinctrl_init(pdev,
+		वापस sunxi_pinctrl_init(pdev,
 					  &sun50i_h5_pinctrl_data_broken);
-	case 3:
-		return sunxi_pinctrl_init(pdev,
+	हाल 3:
+		वापस sunxi_pinctrl_init(pdev,
 					  &sun50i_h5_pinctrl_data);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct of_device_id sun50i_h5_pinctrl_match[] = {
-	{ .compatible = "allwinner,sun50i-h5-pinctrl", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id sun50i_h5_pinctrl_match[] = अणु
+	अणु .compatible = "allwinner,sun50i-h5-pinctrl", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver sun50i_h5_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver sun50i_h5_pinctrl_driver = अणु
 	.probe	= sun50i_h5_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "sun50i-h5-pinctrl",
 		.of_match_table	= sun50i_h5_pinctrl_match,
-	},
-};
-builtin_platform_driver(sun50i_h5_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(sun50i_h5_pinctrl_driver);

@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *    Copyright 2017 NXP
  *
- *    CORTINA is a registered trademark of Cortina Systems, Inc.
+ *    CORTINA is a रेजिस्टरed trademark of Cortina Systems, Inc.
  *
  */
-#include <linux/module.h>
-#include <linux/phy.h>
+#समावेश <linux/module.h>
+#समावेश <linux/phy.h>
 
-#define PHY_ID_CS4340	0x13e51002
+#घोषणा PHY_ID_CS4340	0x13e51002
 
-#define VILLA_GLOBAL_CHIP_ID_LSB			0x0
-#define VILLA_GLOBAL_CHIP_ID_MSB			0x1
+#घोषणा VILLA_GLOBAL_CHIP_ID_LSB			0x0
+#घोषणा VILLA_GLOBAL_CHIP_ID_MSB			0x1
 
-#define VILLA_GLOBAL_GPIO_1_INTS			0x017
+#घोषणा VILLA_GLOBAL_GPIO_1_INTS			0x017
 
-static int cortina_read_reg(struct phy_device *phydev, u16 regnum)
-{
-	return mdiobus_c45_read(phydev->mdio.bus, phydev->mdio.addr, 0, regnum);
-}
+अटल पूर्णांक cortina_पढ़ो_reg(काष्ठा phy_device *phydev, u16 regnum)
+अणु
+	वापस mdiobus_c45_पढ़ो(phydev->mdio.bus, phydev->mdio.addr, 0, regnum);
+पूर्ण
 
-static int cortina_read_status(struct phy_device *phydev)
-{
-	int gpio_int_status, ret = 0;
+अटल पूर्णांक cortina_पढ़ो_status(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक gpio_पूर्णांक_status, ret = 0;
 
-	gpio_int_status = cortina_read_reg(phydev, VILLA_GLOBAL_GPIO_1_INTS);
-	if (gpio_int_status < 0) {
-		ret = gpio_int_status;
-		goto err;
-	}
+	gpio_पूर्णांक_status = cortina_पढ़ो_reg(phydev, VILLA_GLOBAL_GPIO_1_INTS);
+	अगर (gpio_पूर्णांक_status < 0) अणु
+		ret = gpio_पूर्णांक_status;
+		जाओ err;
+	पूर्ण
 
-	if (gpio_int_status & 0x8) {
+	अगर (gpio_पूर्णांक_status & 0x8) अणु
 		/* up when edc_convergedS set */
 		phydev->speed = SPEED_10000;
 		phydev->duplex = DUPLEX_FULL;
 		phydev->link = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		phydev->link = 0;
-	}
+	पूर्ण
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cortina_probe(struct phy_device *phydev)
-{
+अटल पूर्णांक cortina_probe(काष्ठा phy_device *phydev)
+अणु
 	u32 phy_id = 0;
-	int id_lsb = 0, id_msb = 0;
+	पूर्णांक id_lsb = 0, id_msb = 0;
 
-	/* Read device id from phy registers. */
-	id_lsb = cortina_read_reg(phydev, VILLA_GLOBAL_CHIP_ID_LSB);
-	if (id_lsb < 0)
-		return -ENXIO;
+	/* Read device id from phy रेजिस्टरs. */
+	id_lsb = cortina_पढ़ो_reg(phydev, VILLA_GLOBAL_CHIP_ID_LSB);
+	अगर (id_lsb < 0)
+		वापस -ENXIO;
 
 	phy_id = id_lsb << 16;
 
-	id_msb = cortina_read_reg(phydev, VILLA_GLOBAL_CHIP_ID_MSB);
-	if (id_msb < 0)
-		return -ENXIO;
+	id_msb = cortina_पढ़ो_reg(phydev, VILLA_GLOBAL_CHIP_ID_MSB);
+	अगर (id_msb < 0)
+		वापस -ENXIO;
 
 	phy_id |= id_msb;
 
 	/* Make sure the device tree binding matched the driver with the
 	 * right device.
 	 */
-	if (phy_id != phydev->drv->phy_id) {
+	अगर (phy_id != phydev->drv->phy_id) अणु
 		phydev_err(phydev, "Error matching phy with %s driver\n",
 			   phydev->drv->name);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct phy_driver cortina_driver[] = {
-{
+अटल काष्ठा phy_driver cortina_driver[] = अणु
+अणु
 	.phy_id		= PHY_ID_CS4340,
 	.phy_id_mask	= 0xffffffff,
 	.name		= "Cortina CS4340",
 	.features       = PHY_10GBIT_FEATURES,
 	.config_aneg	= gen10g_config_aneg,
-	.read_status	= cortina_read_status,
+	.पढ़ो_status	= cortina_पढ़ो_status,
 	.probe		= cortina_probe,
-},
-};
+पूर्ण,
+पूर्ण;
 
 module_phy_driver(cortina_driver);
 
-static struct mdio_device_id __maybe_unused cortina_tbl[] = {
-	{ PHY_ID_CS4340, 0xffffffff},
-	{},
-};
+अटल काष्ठा mdio_device_id __maybe_unused cortina_tbl[] = अणु
+	अणु PHY_ID_CS4340, 0xffffffffपूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(mdio, cortina_tbl);
 

@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /* Copyright(c) 2019 Intel Corporation. All rights rsvd. */
-#ifndef _USR_IDXD_H_
-#define _USR_IDXD_H_
+#अगर_अघोषित _USR_IDXD_H_
+#घोषणा _USR_IDXD_H_
 
-#ifdef __KERNEL__
-#include <linux/types.h>
-#else
-#include <stdint.h>
-#endif
+#अगर_घोषित __KERNEL__
+#समावेश <linux/types.h>
+#अन्यथा
+#समावेश <मानक_निवेशt.h>
+#पूर्ण_अगर
 
 /* Descriptor flags */
-#define IDXD_OP_FLAG_FENCE	0x0001
-#define IDXD_OP_FLAG_BOF	0x0002
-#define IDXD_OP_FLAG_CRAV	0x0004
-#define IDXD_OP_FLAG_RCR	0x0008
-#define IDXD_OP_FLAG_RCI	0x0010
-#define IDXD_OP_FLAG_CRSTS	0x0020
-#define IDXD_OP_FLAG_CR		0x0080
-#define IDXD_OP_FLAG_CC		0x0100
-#define IDXD_OP_FLAG_ADDR1_TCS	0x0200
-#define IDXD_OP_FLAG_ADDR2_TCS	0x0400
-#define IDXD_OP_FLAG_ADDR3_TCS	0x0800
-#define IDXD_OP_FLAG_CR_TCS	0x1000
-#define IDXD_OP_FLAG_STORD	0x2000
-#define IDXD_OP_FLAG_DRDBK	0x4000
-#define IDXD_OP_FLAG_DSTS	0x8000
+#घोषणा IDXD_OP_FLAG_FENCE	0x0001
+#घोषणा IDXD_OP_FLAG_BOF	0x0002
+#घोषणा IDXD_OP_FLAG_CRAV	0x0004
+#घोषणा IDXD_OP_FLAG_RCR	0x0008
+#घोषणा IDXD_OP_FLAG_RCI	0x0010
+#घोषणा IDXD_OP_FLAG_CRSTS	0x0020
+#घोषणा IDXD_OP_FLAG_CR		0x0080
+#घोषणा IDXD_OP_FLAG_CC		0x0100
+#घोषणा IDXD_OP_FLAG_ADDR1_TCS	0x0200
+#घोषणा IDXD_OP_FLAG_ADDR2_TCS	0x0400
+#घोषणा IDXD_OP_FLAG_ADDR3_TCS	0x0800
+#घोषणा IDXD_OP_FLAG_CR_TCS	0x1000
+#घोषणा IDXD_OP_FLAG_STORD	0x2000
+#घोषणा IDXD_OP_FLAG_DRDBK	0x4000
+#घोषणा IDXD_OP_FLAG_DSTS	0x8000
 
 /* IAX */
-#define IDXD_OP_FLAG_RD_SRC2_AECS	0x010000
+#घोषणा IDXD_OP_FLAG_RD_SRC2_AECS	0x010000
 
 /* Opcode */
-enum dsa_opcode {
+क्रमागत dsa_opcode अणु
 	DSA_OPCODE_NOOP = 0,
 	DSA_OPCODE_BATCH,
 	DSA_OPCODE_DRAIN,
@@ -48,18 +49,18 @@ enum dsa_opcode {
 	DSA_OPCODE_DIF_STRP,
 	DSA_OPCODE_DIF_UPDT,
 	DSA_OPCODE_CFLUSH = 0x20,
-};
+पूर्ण;
 
-enum iax_opcode {
+क्रमागत iax_opcode अणु
 	IAX_OPCODE_NOOP = 0,
 	IAX_OPCODE_DRAIN = 2,
 	IAX_OPCODE_MEMMOVE,
 	IAX_OPCODE_DECOMPRESS = 0x42,
 	IAX_OPCODE_COMPRESS,
-};
+पूर्ण;
 
 /* Completion record status */
-enum dsa_completion_status {
+क्रमागत dsa_completion_status अणु
 	DSA_COMP_NONE = 0,
 	DSA_COMP_SUCCESS,
 	DSA_COMP_SUCCESS_PRED,
@@ -68,14 +69,14 @@ enum dsa_completion_status {
 	DSA_COMP_BATCH_FAIL,
 	DSA_COMP_BATCH_PAGE_FAULT,
 	DSA_COMP_DR_OFFSET_NOINC,
-	DSA_COMP_DR_OFFSET_ERANGE,
+	DSA_COMP_DR_OFFSET_दुस्फल,
 	DSA_COMP_DIF_ERR,
 	DSA_COMP_BAD_OPCODE = 0x10,
 	DSA_COMP_INVALID_FLAGS,
 	DSA_COMP_NOZERO_RESERVE,
-	DSA_COMP_XFER_ERANGE,
-	DSA_COMP_DESC_CNT_ERANGE,
-	DSA_COMP_DR_ERANGE,
+	DSA_COMP_XFER_दुस्फल,
+	DSA_COMP_DESC_CNT_दुस्फल,
+	DSA_COMP_DR_दुस्फल,
 	DSA_COMP_OVERLAP_BUFFERS,
 	DSA_COMP_DCAST_ERR,
 	DSA_COMP_DESCLIST_ALIGN,
@@ -89,9 +90,9 @@ enum dsa_completion_status {
 	DSA_COMP_HW_ERR1,
 	DSA_COMP_HW_ERR_DRB,
 	DSA_COMP_TRANSLATION_FAIL,
-};
+पूर्ण;
 
-enum iax_completion_status {
+क्रमागत iax_completion_status अणु
 	IAX_COMP_NONE = 0,
 	IAX_COMP_SUCCESS,
 	IAX_COMP_PAGE_FAULT_IR = 0x04,
@@ -116,190 +117,190 @@ enum iax_completion_status {
 	IAX_COMP_INVALID_COMP_FLAG = 0x30,
 	IAX_COMP_INVALID_FILTER_FLAG,
 	IAX_COMP_INVALID_NUM_ELEMS = 0x33,
-};
+पूर्ण;
 
-#define DSA_COMP_STATUS_MASK		0x7f
-#define DSA_COMP_STATUS_WRITE		0x80
+#घोषणा DSA_COMP_STATUS_MASK		0x7f
+#घोषणा DSA_COMP_STATUS_WRITE		0x80
 
-struct dsa_hw_desc {
-	uint32_t	pasid:20;
-	uint32_t	rsvd:11;
-	uint32_t	priv:1;
-	uint32_t	flags:24;
-	uint32_t	opcode:8;
-	uint64_t	completion_addr;
-	union {
-		uint64_t	src_addr;
-		uint64_t	rdback_addr;
-		uint64_t	pattern;
-		uint64_t	desc_list_addr;
-	};
-	union {
-		uint64_t	dst_addr;
-		uint64_t	rdback_addr2;
-		uint64_t	src2_addr;
-		uint64_t	comp_pattern;
-	};
-	union {
-		uint32_t	xfer_size;
-		uint32_t	desc_count;
-	};
-	uint16_t	int_handle;
-	uint16_t	rsvd1;
-	union {
-		uint8_t		expected_res;
+काष्ठा dsa_hw_desc अणु
+	uपूर्णांक32_t	pasid:20;
+	uपूर्णांक32_t	rsvd:11;
+	uपूर्णांक32_t	priv:1;
+	uपूर्णांक32_t	flags:24;
+	uपूर्णांक32_t	opcode:8;
+	uपूर्णांक64_t	completion_addr;
+	जोड़ अणु
+		uपूर्णांक64_t	src_addr;
+		uपूर्णांक64_t	rdback_addr;
+		uपूर्णांक64_t	pattern;
+		uपूर्णांक64_t	desc_list_addr;
+	पूर्ण;
+	जोड़ अणु
+		uपूर्णांक64_t	dst_addr;
+		uपूर्णांक64_t	rdback_addr2;
+		uपूर्णांक64_t	src2_addr;
+		uपूर्णांक64_t	comp_pattern;
+	पूर्ण;
+	जोड़ अणु
+		uपूर्णांक32_t	xfer_size;
+		uपूर्णांक32_t	desc_count;
+	पूर्ण;
+	uपूर्णांक16_t	पूर्णांक_handle;
+	uपूर्णांक16_t	rsvd1;
+	जोड़ अणु
+		uपूर्णांक8_t		expected_res;
 		/* create delta record */
-		struct {
-			uint64_t	delta_addr;
-			uint32_t	max_delta_size;
-			uint32_t 	delt_rsvd;
-			uint8_t 	expected_res_mask;
-		};
-		uint32_t	delta_rec_size;
-		uint64_t	dest2;
+		काष्ठा अणु
+			uपूर्णांक64_t	delta_addr;
+			uपूर्णांक32_t	max_delta_size;
+			uपूर्णांक32_t 	delt_rsvd;
+			uपूर्णांक8_t 	expected_res_mask;
+		पूर्ण;
+		uपूर्णांक32_t	delta_rec_size;
+		uपूर्णांक64_t	dest2;
 		/* CRC */
-		struct {
-			uint32_t	crc_seed;
-			uint32_t	crc_rsvd;
-			uint64_t	seed_addr;
-		};
+		काष्ठा अणु
+			uपूर्णांक32_t	crc_seed;
+			uपूर्णांक32_t	crc_rsvd;
+			uपूर्णांक64_t	seed_addr;
+		पूर्ण;
 		/* DIF check or strip */
-		struct {
-			uint8_t		src_dif_flags;
-			uint8_t		dif_chk_res;
-			uint8_t		dif_chk_flags;
-			uint8_t		dif_chk_res2[5];
-			uint32_t	chk_ref_tag_seed;
-			uint16_t	chk_app_tag_mask;
-			uint16_t	chk_app_tag_seed;
-		};
+		काष्ठा अणु
+			uपूर्णांक8_t		src_dअगर_flags;
+			uपूर्णांक8_t		dअगर_chk_res;
+			uपूर्णांक8_t		dअगर_chk_flags;
+			uपूर्णांक8_t		dअगर_chk_res2[5];
+			uपूर्णांक32_t	chk_ref_tag_seed;
+			uपूर्णांक16_t	chk_app_tag_mask;
+			uपूर्णांक16_t	chk_app_tag_seed;
+		पूर्ण;
 		/* DIF insert */
-		struct {
-			uint8_t		dif_ins_res;
-			uint8_t		dest_dif_flag;
-			uint8_t		dif_ins_flags;
-			uint8_t		dif_ins_res2[13];
-			uint32_t	ins_ref_tag_seed;
-			uint16_t	ins_app_tag_mask;
-			uint16_t	ins_app_tag_seed;
-		};
+		काष्ठा अणु
+			uपूर्णांक8_t		dअगर_ins_res;
+			uपूर्णांक8_t		dest_dअगर_flag;
+			uपूर्णांक8_t		dअगर_ins_flags;
+			uपूर्णांक8_t		dअगर_ins_res2[13];
+			uपूर्णांक32_t	ins_ref_tag_seed;
+			uपूर्णांक16_t	ins_app_tag_mask;
+			uपूर्णांक16_t	ins_app_tag_seed;
+		पूर्ण;
 		/* DIF update */
-		struct {
-			uint8_t		src_upd_flags;
-			uint8_t		upd_dest_flags;
-			uint8_t		dif_upd_flags;
-			uint8_t		dif_upd_res[5];
-			uint32_t	src_ref_tag_seed;
-			uint16_t	src_app_tag_mask;
-			uint16_t	src_app_tag_seed;
-			uint32_t	dest_ref_tag_seed;
-			uint16_t	dest_app_tag_mask;
-			uint16_t	dest_app_tag_seed;
-		};
+		काष्ठा अणु
+			uपूर्णांक8_t		src_upd_flags;
+			uपूर्णांक8_t		upd_dest_flags;
+			uपूर्णांक8_t		dअगर_upd_flags;
+			uपूर्णांक8_t		dअगर_upd_res[5];
+			uपूर्णांक32_t	src_ref_tag_seed;
+			uपूर्णांक16_t	src_app_tag_mask;
+			uपूर्णांक16_t	src_app_tag_seed;
+			uपूर्णांक32_t	dest_ref_tag_seed;
+			uपूर्णांक16_t	dest_app_tag_mask;
+			uपूर्णांक16_t	dest_app_tag_seed;
+		पूर्ण;
 
-		uint8_t		op_specific[24];
-	};
-} __attribute__((packed));
+		uपूर्णांक8_t		op_specअगरic[24];
+	पूर्ण;
+पूर्ण __attribute__((packed));
 
-struct iax_hw_desc {
-	uint32_t        pasid:20;
-	uint32_t        rsvd:11;
-	uint32_t        priv:1;
-	uint32_t        flags:24;
-	uint32_t        opcode:8;
-	uint64_t        completion_addr;
-	uint64_t        src1_addr;
-	uint64_t        dst_addr;
-	uint32_t        src1_size;
-	uint16_t        int_handle;
-	union {
-		uint16_t        compr_flags;
-		uint16_t        decompr_flags;
-	};
-	uint64_t        src2_addr;
-	uint32_t        max_dst_size;
-	uint32_t        src2_size;
-	uint32_t	filter_flags;
-	uint32_t	num_inputs;
-} __attribute__((packed));
+काष्ठा iax_hw_desc अणु
+	uपूर्णांक32_t        pasid:20;
+	uपूर्णांक32_t        rsvd:11;
+	uपूर्णांक32_t        priv:1;
+	uपूर्णांक32_t        flags:24;
+	uपूर्णांक32_t        opcode:8;
+	uपूर्णांक64_t        completion_addr;
+	uपूर्णांक64_t        src1_addr;
+	uपूर्णांक64_t        dst_addr;
+	uपूर्णांक32_t        src1_size;
+	uपूर्णांक16_t        पूर्णांक_handle;
+	जोड़ अणु
+		uपूर्णांक16_t        compr_flags;
+		uपूर्णांक16_t        decompr_flags;
+	पूर्ण;
+	uपूर्णांक64_t        src2_addr;
+	uपूर्णांक32_t        max_dst_size;
+	uपूर्णांक32_t        src2_size;
+	uपूर्णांक32_t	filter_flags;
+	uपूर्णांक32_t	num_inमाला_दो;
+पूर्ण __attribute__((packed));
 
-struct dsa_raw_desc {
-	uint64_t	field[8];
-} __attribute__((packed));
+काष्ठा dsa_raw_desc अणु
+	uपूर्णांक64_t	field[8];
+पूर्ण __attribute__((packed));
 
 /*
- * The status field will be modified by hardware, therefore it should be
- * volatile and prevent the compiler from optimize the read.
+ * The status field will be modअगरied by hardware, thereक्रमe it should be
+ * अस्थिर and prevent the compiler from optimize the पढ़ो.
  */
-struct dsa_completion_record {
-	volatile uint8_t	status;
-	union {
-		uint8_t		result;
-		uint8_t		dif_status;
-	};
-	uint16_t		rsvd;
-	uint32_t		bytes_completed;
-	uint64_t		fault_addr;
-	union {
+काष्ठा dsa_completion_record अणु
+	अस्थिर uपूर्णांक8_t	status;
+	जोड़ अणु
+		uपूर्णांक8_t		result;
+		uपूर्णांक8_t		dअगर_status;
+	पूर्ण;
+	uपूर्णांक16_t		rsvd;
+	uपूर्णांक32_t		bytes_completed;
+	uपूर्णांक64_t		fault_addr;
+	जोड़ अणु
 		/* common record */
-		struct {
-			uint32_t	invalid_flags:24;
-			uint32_t	rsvd2:8;
-		};
+		काष्ठा अणु
+			uपूर्णांक32_t	invalid_flags:24;
+			uपूर्णांक32_t	rsvd2:8;
+		पूर्ण;
 
-		uint32_t	delta_rec_size;
-		uint32_t	crc_val;
+		uपूर्णांक32_t	delta_rec_size;
+		uपूर्णांक32_t	crc_val;
 
 		/* DIF check & strip */
-		struct {
-			uint32_t	dif_chk_ref_tag;
-			uint16_t	dif_chk_app_tag_mask;
-			uint16_t	dif_chk_app_tag;
-		};
+		काष्ठा अणु
+			uपूर्णांक32_t	dअगर_chk_ref_tag;
+			uपूर्णांक16_t	dअगर_chk_app_tag_mask;
+			uपूर्णांक16_t	dअगर_chk_app_tag;
+		पूर्ण;
 
 		/* DIF insert */
-		struct {
-			uint64_t	dif_ins_res;
-			uint32_t	dif_ins_ref_tag;
-			uint16_t	dif_ins_app_tag_mask;
-			uint16_t	dif_ins_app_tag;
-		};
+		काष्ठा अणु
+			uपूर्णांक64_t	dअगर_ins_res;
+			uपूर्णांक32_t	dअगर_ins_ref_tag;
+			uपूर्णांक16_t	dअगर_ins_app_tag_mask;
+			uपूर्णांक16_t	dअगर_ins_app_tag;
+		पूर्ण;
 
 		/* DIF update */
-		struct {
-			uint32_t	dif_upd_src_ref_tag;
-			uint16_t	dif_upd_src_app_tag_mask;
-			uint16_t	dif_upd_src_app_tag;
-			uint32_t	dif_upd_dest_ref_tag;
-			uint16_t	dif_upd_dest_app_tag_mask;
-			uint16_t	dif_upd_dest_app_tag;
-		};
+		काष्ठा अणु
+			uपूर्णांक32_t	dअगर_upd_src_ref_tag;
+			uपूर्णांक16_t	dअगर_upd_src_app_tag_mask;
+			uपूर्णांक16_t	dअगर_upd_src_app_tag;
+			uपूर्णांक32_t	dअगर_upd_dest_ref_tag;
+			uपूर्णांक16_t	dअगर_upd_dest_app_tag_mask;
+			uपूर्णांक16_t	dअगर_upd_dest_app_tag;
+		पूर्ण;
 
-		uint8_t		op_specific[16];
-	};
-} __attribute__((packed));
+		uपूर्णांक8_t		op_specअगरic[16];
+	पूर्ण;
+पूर्ण __attribute__((packed));
 
-struct dsa_raw_completion_record {
-	uint64_t	field[4];
-} __attribute__((packed));
+काष्ठा dsa_raw_completion_record अणु
+	uपूर्णांक64_t	field[4];
+पूर्ण __attribute__((packed));
 
-struct iax_completion_record {
-	volatile uint8_t        status;
-	uint8_t                 error_code;
-	uint16_t                rsvd;
-	uint32_t                bytes_completed;
-	uint64_t                fault_addr;
-	uint32_t                invalid_flags;
-	uint32_t                rsvd2;
-	uint32_t                output_size;
-	uint8_t                 output_bits;
-	uint8_t                 rsvd3;
-	uint16_t                rsvd4;
-	uint64_t                rsvd5[4];
-} __attribute__((packed));
+काष्ठा iax_completion_record अणु
+	अस्थिर uपूर्णांक8_t        status;
+	uपूर्णांक8_t                 error_code;
+	uपूर्णांक16_t                rsvd;
+	uपूर्णांक32_t                bytes_completed;
+	uपूर्णांक64_t                fault_addr;
+	uपूर्णांक32_t                invalid_flags;
+	uपूर्णांक32_t                rsvd2;
+	uपूर्णांक32_t                output_size;
+	uपूर्णांक8_t                 output_bits;
+	uपूर्णांक8_t                 rsvd3;
+	uपूर्णांक16_t                rsvd4;
+	uपूर्णांक64_t                rsvd5[4];
+पूर्ण __attribute__((packed));
 
-struct iax_raw_completion_record {
-	uint64_t	field[8];
-} __attribute__((packed));
+काष्ठा iax_raw_completion_record अणु
+	uपूर्णांक64_t	field[8];
+पूर्ण __attribute__((packed));
 
-#endif
+#पूर्ण_अगर

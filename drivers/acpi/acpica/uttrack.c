@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: uttrack - Memory allocation tracking routines (debug only)
@@ -8,70 +9,70 @@
  *****************************************************************************/
 
 /*
- * These procedures are used for tracking memory leaks in the subsystem, and
+ * These procedures are used क्रम tracking memory leaks in the subप्रणाली, and
  * they get compiled out when the ACPI_DBG_TRACK_ALLOCATIONS is not set.
  *
- * Each memory allocation is tracked via a doubly linked list. Each
+ * Each memory allocation is tracked via a करोubly linked list. Each
  * element contains the caller's component, module name, function name, and
  * line number. acpi_ut_allocate and acpi_ut_allocate_zeroed call
  * acpi_ut_track_allocation to add an element to the list; deletion
- * occurs in the body of acpi_ut_free.
+ * occurs in the body of acpi_ut_मुक्त.
  */
 
-#include <acpi/acpi.h>
-#include "accommon.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
 
-#ifdef ACPI_DBG_TRACK_ALLOCATIONS
+#अगर_घोषित ACPI_DBG_TRACK_ALLOCATIONS
 
-#define _COMPONENT          ACPI_UTILITIES
+#घोषणा _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("uttrack")
 
 /* Local prototypes */
-static struct acpi_debug_mem_block *acpi_ut_find_allocation(struct
+अटल काष्ठा acpi_debug_mem_block *acpi_ut_find_allocation(काष्ठा
 							    acpi_debug_mem_block
 							    *allocation);
 
-static acpi_status
-acpi_ut_track_allocation(struct acpi_debug_mem_block *address,
+अटल acpi_status
+acpi_ut_track_allocation(काष्ठा acpi_debug_mem_block *address,
 			 acpi_size size,
 			 u8 alloc_type,
-			 u32 component, const char *module, u32 line);
+			 u32 component, स्थिर अक्षर *module, u32 line);
 
-static acpi_status
-acpi_ut_remove_allocation(struct acpi_debug_mem_block *address,
-			  u32 component, const char *module, u32 line);
+अटल acpi_status
+acpi_ut_हटाओ_allocation(काष्ठा acpi_debug_mem_block *address,
+			  u32 component, स्थिर अक्षर *module, u32 line);
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_create_list
  *
- * PARAMETERS:  cache_name      - Ascii name for the cache
+ * PARAMETERS:  cache_name      - Ascii name क्रम the cache
  *              object_size     - Size of each cached object
- *              return_cache    - Where the new cache object is returned
+ *              वापस_cache    - Where the new cache object is वापसed
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Create a local memory list for tracking purposed
+ * DESCRIPTION: Create a local memory list क्रम tracking purposed
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ut_create_list(const char *list_name,
-		    u16 object_size, struct acpi_memory_list **return_cache)
-{
-	struct acpi_memory_list *cache;
+acpi_ut_create_list(स्थिर अक्षर *list_name,
+		    u16 object_size, काष्ठा acpi_memory_list **वापस_cache)
+अणु
+	काष्ठा acpi_memory_list *cache;
 
-	cache = acpi_os_allocate_zeroed(sizeof(struct acpi_memory_list));
-	if (!cache) {
-		return (AE_NO_MEMORY);
-	}
+	cache = acpi_os_allocate_zeroed(माप(काष्ठा acpi_memory_list));
+	अगर (!cache) अणु
+		वापस (AE_NO_MEMORY);
+	पूर्ण
 
 	cache->list_name = list_name;
 	cache->object_size = object_size;
 
-	*return_cache = cache;
-	return (AE_OK);
-}
+	*वापस_cache = cache;
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -82,58 +83,58 @@ acpi_ut_create_list(const char *list_name,
  *              module              - Source file name of caller
  *              line                - Line number of caller
  *
- * RETURN:      Address of the allocated memory on success, NULL on failure.
+ * RETURN:      Address of the allocated memory on success, शून्य on failure.
  *
- * DESCRIPTION: The subsystem's equivalent of malloc.
+ * DESCRIPTION: The subप्रणाली's equivalent of दो_स्मृति.
  *
  ******************************************************************************/
 
-void *acpi_ut_allocate_and_track(acpi_size size,
-				 u32 component, const char *module, u32 line)
-{
-	struct acpi_debug_mem_block *allocation;
+व्योम *acpi_ut_allocate_and_track(acpi_size size,
+				 u32 component, स्थिर अक्षर *module, u32 line)
+अणु
+	काष्ठा acpi_debug_mem_block *allocation;
 	acpi_status status;
 
-	/* Check for an inadvertent size of zero bytes */
+	/* Check क्रम an inadvertent size of zero bytes */
 
-	if (!size) {
+	अगर (!size) अणु
 		ACPI_WARNING((module, line,
 			      "Attempt to allocate zero bytes, allocating 1 byte"));
 		size = 1;
-	}
+	पूर्ण
 
 	allocation =
-	    acpi_os_allocate(size + sizeof(struct acpi_debug_mem_header));
-	if (!allocation) {
+	    acpi_os_allocate(size + माप(काष्ठा acpi_debug_mem_header));
+	अगर (!allocation) अणु
 
 		/* Report allocation error */
 
 		ACPI_WARNING((module, line,
 			      "Could not allocate size %u", (u32)size));
 
-		return (NULL);
-	}
+		वापस (शून्य);
+	पूर्ण
 
 	status =
 	    acpi_ut_track_allocation(allocation, size, ACPI_MEM_MALLOC,
 				     component, module, line);
-	if (ACPI_FAILURE(status)) {
-		acpi_os_free(allocation);
-		return (NULL);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		acpi_os_मुक्त(allocation);
+		वापस (शून्य);
+	पूर्ण
 
 	acpi_gbl_global_list->total_allocated++;
 	acpi_gbl_global_list->total_size += (u32)size;
 	acpi_gbl_global_list->current_total_size += (u32)size;
 
-	if (acpi_gbl_global_list->current_total_size >
-	    acpi_gbl_global_list->max_occupied) {
+	अगर (acpi_gbl_global_list->current_total_size >
+	    acpi_gbl_global_list->max_occupied) अणु
 		acpi_gbl_global_list->max_occupied =
 		    acpi_gbl_global_list->current_total_size;
-	}
+	पूर्ण
 
-	return ((void *)&allocation->user_space);
-}
+	वापस ((व्योम *)&allocation->user_space);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -144,63 +145,63 @@ void *acpi_ut_allocate_and_track(acpi_size size,
  *              module              - Source file name of caller
  *              line                - Line number of caller
  *
- * RETURN:      Address of the allocated memory on success, NULL on failure.
+ * RETURN:      Address of the allocated memory on success, शून्य on failure.
  *
- * DESCRIPTION: Subsystem equivalent of calloc.
+ * DESCRIPTION: Subप्रणाली equivalent of सुस्मृति.
  *
  ******************************************************************************/
 
-void *acpi_ut_allocate_zeroed_and_track(acpi_size size,
+व्योम *acpi_ut_allocate_zeroed_and_track(acpi_size size,
 					u32 component,
-					const char *module, u32 line)
-{
-	struct acpi_debug_mem_block *allocation;
+					स्थिर अक्षर *module, u32 line)
+अणु
+	काष्ठा acpi_debug_mem_block *allocation;
 	acpi_status status;
 
-	/* Check for an inadvertent size of zero bytes */
+	/* Check क्रम an inadvertent size of zero bytes */
 
-	if (!size) {
+	अगर (!size) अणु
 		ACPI_WARNING((module, line,
 			      "Attempt to allocate zero bytes, allocating 1 byte"));
 		size = 1;
-	}
+	पूर्ण
 
 	allocation =
 	    acpi_os_allocate_zeroed(size +
-				    sizeof(struct acpi_debug_mem_header));
-	if (!allocation) {
+				    माप(काष्ठा acpi_debug_mem_header));
+	अगर (!allocation) अणु
 
 		/* Report allocation error */
 
 		ACPI_ERROR((module, line,
 			    "Could not allocate size %u", (u32)size));
-		return (NULL);
-	}
+		वापस (शून्य);
+	पूर्ण
 
 	status = acpi_ut_track_allocation(allocation, size,
 					  ACPI_MEM_CALLOC, component, module,
 					  line);
-	if (ACPI_FAILURE(status)) {
-		acpi_os_free(allocation);
-		return (NULL);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		acpi_os_मुक्त(allocation);
+		वापस (शून्य);
+	पूर्ण
 
 	acpi_gbl_global_list->total_allocated++;
 	acpi_gbl_global_list->total_size += (u32)size;
 	acpi_gbl_global_list->current_total_size += (u32)size;
 
-	if (acpi_gbl_global_list->current_total_size >
-	    acpi_gbl_global_list->max_occupied) {
+	अगर (acpi_gbl_global_list->current_total_size >
+	    acpi_gbl_global_list->max_occupied) अणु
 		acpi_gbl_global_list->max_occupied =
 		    acpi_gbl_global_list->current_total_size;
-	}
+	पूर्ण
 
-	return ((void *)&allocation->user_space);
-}
+	वापस ((व्योम *)&allocation->user_space);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_free_and_track
+ * FUNCTION:    acpi_ut_मुक्त_and_track
  *
  * PARAMETERS:  allocation          - Address of the memory to deallocate
  *              component           - Component type of caller
@@ -213,39 +214,39 @@ void *acpi_ut_allocate_zeroed_and_track(acpi_size size,
  *
  ******************************************************************************/
 
-void
-acpi_ut_free_and_track(void *allocation,
-		       u32 component, const char *module, u32 line)
-{
-	struct acpi_debug_mem_block *debug_block;
+व्योम
+acpi_ut_मुक्त_and_track(व्योम *allocation,
+		       u32 component, स्थिर अक्षर *module, u32 line)
+अणु
+	काष्ठा acpi_debug_mem_block *debug_block;
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE_PTR(ut_free, allocation);
+	ACPI_FUNCTION_TRACE_PTR(ut_मुक्त, allocation);
 
-	if (NULL == allocation) {
+	अगर (शून्य == allocation) अणु
 		ACPI_ERROR((module, line, "Attempt to delete a NULL address"));
 
-		return_VOID;
-	}
+		वापस_VOID;
+	पूर्ण
 
-	debug_block = ACPI_CAST_PTR(struct acpi_debug_mem_block,
-				    (((char *)allocation) -
-				     sizeof(struct acpi_debug_mem_header)));
+	debug_block = ACPI_CAST_PTR(काष्ठा acpi_debug_mem_block,
+				    (((अक्षर *)allocation) -
+				     माप(काष्ठा acpi_debug_mem_header)));
 
-	acpi_gbl_global_list->total_freed++;
+	acpi_gbl_global_list->total_मुक्तd++;
 	acpi_gbl_global_list->current_total_size -= debug_block->size;
 
 	status =
-	    acpi_ut_remove_allocation(debug_block, component, module, line);
-	if (ACPI_FAILURE(status)) {
+	    acpi_ut_हटाओ_allocation(debug_block, component, module, line);
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_EXCEPTION((AE_INFO, status, "Could not free memory"));
-	}
+	पूर्ण
 
-	acpi_os_free(debug_block);
+	acpi_os_मुक्त(debug_block);
 	ACPI_DEBUG_PRINT((ACPI_DB_ALLOCATIONS, "%p freed (block %p)\n",
 			  allocation, debug_block));
-	return_VOID;
-}
+	वापस_VOID;
+पूर्ण
 
 /*******************************************************************************
  *
@@ -253,62 +254,62 @@ acpi_ut_free_and_track(void *allocation,
  *
  * PARAMETERS:  allocation              - Address of allocated memory
  *
- * RETURN:      Three cases:
- *              1) List is empty, NULL is returned.
+ * RETURN:      Three हालs:
+ *              1) List is empty, शून्य is वापसed.
  *              2) Element was found. Returns Allocation parameter.
  *              3) Element was not found. Returns position where it should be
- *                  inserted into the list.
+ *                  inserted पूर्णांकo the list.
  *
- * DESCRIPTION: Searches for an element in the global allocation tracking list.
- *              If the element is not found, returns the location within the
+ * DESCRIPTION: Searches क्रम an element in the global allocation tracking list.
+ *              If the element is not found, वापसs the location within the
  *              list where the element should be inserted.
  *
  *              Note: The list is ordered by larger-to-smaller addresses.
  *
  *              This global list is used to detect memory leaks in ACPICA as
  *              well as other issues such as an attempt to release the same
- *              internal object more than once. Although expensive as far
- *              as cpu time, this list is much more helpful for finding these
+ *              पूर्णांकernal object more than once. Although expensive as far
+ *              as cpu समय, this list is much more helpful क्रम finding these
  *              types of issues than using memory leak detectors outside of
  *              the ACPICA code.
  *
  ******************************************************************************/
 
-static struct acpi_debug_mem_block *acpi_ut_find_allocation(struct
+अटल काष्ठा acpi_debug_mem_block *acpi_ut_find_allocation(काष्ठा
 							    acpi_debug_mem_block
 							    *allocation)
-{
-	struct acpi_debug_mem_block *element;
+अणु
+	काष्ठा acpi_debug_mem_block *element;
 
 	element = acpi_gbl_global_list->list_head;
-	if (!element) {
-		return (NULL);
-	}
+	अगर (!element) अणु
+		वापस (शून्य);
+	पूर्ण
 
 	/*
-	 * Search for the address.
+	 * Search क्रम the address.
 	 *
 	 * Note: List is ordered by larger-to-smaller addresses, on the
 	 * assumption that a new allocation usually has a larger address
 	 * than previous allocations.
 	 */
-	while (element > allocation) {
+	जबतक (element > allocation) अणु
 
-		/* Check for end-of-list */
+		/* Check क्रम end-of-list */
 
-		if (!element->next) {
-			return (element);
-		}
+		अगर (!element->next) अणु
+			वापस (element);
+		पूर्ण
 
 		element = element->next;
-	}
+	पूर्ण
 
-	if (element == allocation) {
-		return (element);
-	}
+	अगर (element == allocation) अणु
+		वापस (element);
+	पूर्ण
 
-	return (element->previous);
-}
+	वापस (element->previous);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -323,43 +324,43 @@ static struct acpi_debug_mem_block *acpi_ut_find_allocation(struct
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Inserts an element into the global allocation tracking list.
+ * DESCRIPTION: Inserts an element पूर्णांकo the global allocation tracking list.
  *
  ******************************************************************************/
 
-static acpi_status
-acpi_ut_track_allocation(struct acpi_debug_mem_block *allocation,
+अटल acpi_status
+acpi_ut_track_allocation(काष्ठा acpi_debug_mem_block *allocation,
 			 acpi_size size,
 			 u8 alloc_type,
-			 u32 component, const char *module, u32 line)
-{
-	struct acpi_memory_list *mem_list;
-	struct acpi_debug_mem_block *element;
+			 u32 component, स्थिर अक्षर *module, u32 line)
+अणु
+	काष्ठा acpi_memory_list *mem_list;
+	काष्ठा acpi_debug_mem_block *element;
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE_PTR(ut_track_allocation, allocation);
 
-	if (acpi_gbl_disable_mem_tracking) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (acpi_gbl_disable_mem_tracking) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	mem_list = acpi_gbl_global_list;
 	status = acpi_ut_acquire_mutex(ACPI_MTX_MEMORY);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/*
-	 * Search the global list for this address to make sure it is not
-	 * already present. This will catch several kinds of problems.
+	 * Search the global list क्रम this address to make sure it is not
+	 * alपढ़ोy present. This will catch several kinds of problems.
 	 */
 	element = acpi_ut_find_allocation(allocation);
-	if (element == allocation) {
+	अगर (element == allocation) अणु
 		ACPI_ERROR((AE_INFO,
 			    "UtTrackAllocation: Allocation (%p) already present in global list!",
 			    allocation));
-		goto unlock_and_exit;
-	}
+		जाओ unlock_and_निकास;
+	पूर्ण
 
 	/* Fill in the instance data */
 
@@ -368,43 +369,43 @@ acpi_ut_track_allocation(struct acpi_debug_mem_block *allocation,
 	allocation->component = component;
 	allocation->line = line;
 
-	acpi_ut_safe_strncpy(allocation->module, (char *)module,
+	acpi_ut_safe_म_नकलन(allocation->module, (अक्षर *)module,
 			     ACPI_MAX_MODULE_NAME);
 
-	if (!element) {
+	अगर (!element) अणु
 
 		/* Insert at list head */
 
-		if (mem_list->list_head) {
-			((struct acpi_debug_mem_block *)(mem_list->list_head))->
+		अगर (mem_list->list_head) अणु
+			((काष्ठा acpi_debug_mem_block *)(mem_list->list_head))->
 			    previous = allocation;
-		}
+		पूर्ण
 
 		allocation->next = mem_list->list_head;
-		allocation->previous = NULL;
+		allocation->previous = शून्य;
 
 		mem_list->list_head = allocation;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Insert after element */
 
 		allocation->next = element->next;
 		allocation->previous = element;
 
-		if (element->next) {
+		अगर (element->next) अणु
 			(element->next)->previous = allocation;
-		}
+		पूर्ण
 
 		element->next = allocation;
-	}
+	पूर्ण
 
-unlock_and_exit:
+unlock_and_निकास:
 	status = acpi_ut_release_mutex(ACPI_MTX_MEMORY);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_remove_allocation
+ * FUNCTION:    acpi_ut_हटाओ_allocation
  *
  * PARAMETERS:  allocation          - Address of allocated memory
  *              component           - Component type of caller
@@ -417,57 +418,57 @@ unlock_and_exit:
  *
  ******************************************************************************/
 
-static acpi_status
-acpi_ut_remove_allocation(struct acpi_debug_mem_block *allocation,
-			  u32 component, const char *module, u32 line)
-{
-	struct acpi_memory_list *mem_list;
+अटल acpi_status
+acpi_ut_हटाओ_allocation(काष्ठा acpi_debug_mem_block *allocation,
+			  u32 component, स्थिर अक्षर *module, u32 line)
+अणु
+	काष्ठा acpi_memory_list *mem_list;
 	acpi_status status;
 
-	ACPI_FUNCTION_NAME(ut_remove_allocation);
+	ACPI_FUNCTION_NAME(ut_हटाओ_allocation);
 
-	if (acpi_gbl_disable_mem_tracking) {
-		return (AE_OK);
-	}
+	अगर (acpi_gbl_disable_mem_tracking) अणु
+		वापस (AE_OK);
+	पूर्ण
 
 	mem_list = acpi_gbl_global_list;
-	if (NULL == mem_list->list_head) {
+	अगर (शून्य == mem_list->list_head) अणु
 
 		/* No allocations! */
 
 		ACPI_ERROR((module, line,
 			    "Empty allocation list, nothing to free!"));
 
-		return (AE_OK);
-	}
+		वापस (AE_OK);
+	पूर्ण
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_MEMORY);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
 	/* Unlink */
 
-	if (allocation->previous) {
+	अगर (allocation->previous) अणु
 		(allocation->previous)->next = allocation->next;
-	} else {
+	पूर्ण अन्यथा अणु
 		mem_list->list_head = allocation->next;
-	}
+	पूर्ण
 
-	if (allocation->next) {
+	अगर (allocation->next) अणु
 		(allocation->next)->previous = allocation->previous;
-	}
+	पूर्ण
 
 	ACPI_DEBUG_PRINT((ACPI_DB_ALLOCATIONS, "Freeing %p, size 0%X\n",
 			  &allocation->user_space, allocation->size));
 
 	/* Mark the segment as deleted */
 
-	memset(&allocation->user_space, 0xEA, allocation->size);
+	स_रखो(&allocation->user_space, 0xEA, allocation->size);
 
 	status = acpi_ut_release_mutex(ACPI_MTX_MEMORY);
-	return (status);
-}
+	वापस (status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -477,14 +478,14 @@ acpi_ut_remove_allocation(struct acpi_debug_mem_block *allocation,
  *
  * RETURN:      None
  *
- * DESCRIPTION: Print some info about the outstanding allocations.
+ * DESCRIPTION: Prपूर्णांक some info about the outstanding allocations.
  *
  ******************************************************************************/
 
-void acpi_ut_dump_allocation_info(void)
-{
+व्योम acpi_ut_dump_allocation_info(व्योम)
+अणु
 /*
-	struct acpi_memory_list         *mem_list;
+	काष्ठा acpi_memory_list         *mem_list;
 */
 
 	ACPI_FUNCTION_TRACE(ut_dump_allocation_info);
@@ -519,69 +520,69 @@ void acpi_ut_dump_allocation_info(void)
 		("%30s: %4d (%3d Kb)\n", "Max Nodes",
 		acpi_gbl_max_concurrent_node_count,
 		ROUND_UP_TO_1K ((acpi_gbl_max_concurrent_node_count *
-			sizeof (struct acpi_namespace_node)))));
+			माप (काष्ठा acpi_namespace_node)))));
 */
-	return_VOID;
-}
+	वापस_VOID;
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_dump_allocations
  *
- * PARAMETERS:  component           - Component(s) to dump info for.
- *              module              - Module to dump info for. NULL means all.
+ * PARAMETERS:  component           - Component(s) to dump info क्रम.
+ *              module              - Module to dump info क्रम. शून्य means all.
  *
  * RETURN:      None
  *
- * DESCRIPTION: Print a list of all outstanding allocations.
+ * DESCRIPTION: Prपूर्णांक a list of all outstanding allocations.
  *
  ******************************************************************************/
 
-void acpi_ut_dump_allocations(u32 component, const char *module)
-{
-	struct acpi_debug_mem_block *element;
-	union acpi_descriptor *descriptor;
+व्योम acpi_ut_dump_allocations(u32 component, स्थिर अक्षर *module)
+अणु
+	काष्ठा acpi_debug_mem_block *element;
+	जोड़ acpi_descriptor *descriptor;
 	u32 num_outstanding = 0;
 	u8 descriptor_type;
 
 	ACPI_FUNCTION_TRACE(ut_dump_allocations);
 
-	if (acpi_gbl_disable_mem_tracking) {
-		return_VOID;
-	}
+	अगर (acpi_gbl_disable_mem_tracking) अणु
+		वापस_VOID;
+	पूर्ण
 
 	/*
 	 * Walk the allocation list.
 	 */
-	if (ACPI_FAILURE(acpi_ut_acquire_mutex(ACPI_MTX_MEMORY))) {
-		return_VOID;
-	}
+	अगर (ACPI_FAILURE(acpi_ut_acquire_mutex(ACPI_MTX_MEMORY))) अणु
+		वापस_VOID;
+	पूर्ण
 
-	if (!acpi_gbl_global_list) {
-		goto exit;
-	}
+	अगर (!acpi_gbl_global_list) अणु
+		जाओ निकास;
+	पूर्ण
 
 	element = acpi_gbl_global_list->list_head;
-	while (element) {
-		if ((element->component & component) &&
-		    ((module == NULL)
-		     || (0 == strcmp(module, element->module)))) {
+	जबतक (element) अणु
+		अगर ((element->component & component) &&
+		    ((module == शून्य)
+		     || (0 == म_भेद(module, element->module)))) अणु
 			descriptor =
-			    ACPI_CAST_PTR(union acpi_descriptor,
+			    ACPI_CAST_PTR(जोड़ acpi_descriptor,
 					  &element->user_space);
 
-			if (element->size <
-			    sizeof(struct acpi_common_descriptor)) {
-				acpi_os_printf("%p Length 0x%04X %9.9s-%4.4u "
+			अगर (element->size <
+			    माप(काष्ठा acpi_common_descriptor)) अणु
+				acpi_os_म_लिखो("%p Length 0x%04X %9.9s-%4.4u "
 					       "[Not a Descriptor - too small]\n",
 					       descriptor, element->size,
 					       element->module, element->line);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* Ignore allocated objects that are in a cache */
 
-				if (ACPI_GET_DESCRIPTOR_TYPE(descriptor) !=
-				    ACPI_DESC_TYPE_CACHED) {
-					acpi_os_printf
+				अगर (ACPI_GET_DESCRIPTOR_TYPE(descriptor) !=
+				    ACPI_DESC_TYPE_CACHED) अणु
+					acpi_os_म_लिखो
 					    ("%p Length 0x%04X %9.9s-%4.4u [%s] ",
 					     descriptor, element->size,
 					     element->module, element->line,
@@ -590,116 +591,116 @@ void acpi_ut_dump_allocations(u32 component, const char *module)
 
 					/* Optional object hex dump */
 
-					if (acpi_gbl_verbose_leak_dump) {
-						acpi_os_printf("\n");
+					अगर (acpi_gbl_verbose_leak_dump) अणु
+						acpi_os_म_लिखो("\n");
 						acpi_ut_dump_buffer((u8 *)
 								    descriptor,
 								    element->
 								    size,
 								    DB_BYTE_DISPLAY,
 								    0);
-					}
+					पूर्ण
 
 					/* Validate the descriptor type using Type field and length */
 
 					descriptor_type = 0;	/* Not a valid descriptor type */
 
-					switch (ACPI_GET_DESCRIPTOR_TYPE
-						(descriptor)) {
-					case ACPI_DESC_TYPE_OPERAND:
+					चयन (ACPI_GET_DESCRIPTOR_TYPE
+						(descriptor)) अणु
+					हाल ACPI_DESC_TYPE_OPERAND:
 
-						if (element->size ==
-						    sizeof(union
-							   acpi_operand_object))
-						{
+						अगर (element->size ==
+						    माप(जोड़
+							   acpi_opeअक्रम_object))
+						अणु
 							descriptor_type =
 							    ACPI_DESC_TYPE_OPERAND;
-						}
-						break;
+						पूर्ण
+						अवरोध;
 
-					case ACPI_DESC_TYPE_PARSER:
+					हाल ACPI_DESC_TYPE_PARSER:
 
-						if (element->size ==
-						    sizeof(union
-							   acpi_parse_object)) {
+						अगर (element->size ==
+						    माप(जोड़
+							   acpi_parse_object)) अणु
 							descriptor_type =
 							    ACPI_DESC_TYPE_PARSER;
-						}
-						break;
+						पूर्ण
+						अवरोध;
 
-					case ACPI_DESC_TYPE_NAMED:
+					हाल ACPI_DESC_TYPE_NAMED:
 
-						if (element->size ==
-						    sizeof(struct
+						अगर (element->size ==
+						    माप(काष्ठा
 							   acpi_namespace_node))
-						{
+						अणु
 							descriptor_type =
 							    ACPI_DESC_TYPE_NAMED;
-						}
-						break;
+						पूर्ण
+						अवरोध;
 
-					default:
+					शेष:
 
-						break;
-					}
+						अवरोध;
+					पूर्ण
 
-					/* Display additional info for the major descriptor types */
+					/* Display additional info क्रम the major descriptor types */
 
-					switch (descriptor_type) {
-					case ACPI_DESC_TYPE_OPERAND:
+					चयन (descriptor_type) अणु
+					हाल ACPI_DESC_TYPE_OPERAND:
 
-						acpi_os_printf
+						acpi_os_म_लिखो
 						    ("%12.12s RefCount 0x%04X\n",
 						     acpi_ut_get_type_name
 						     (descriptor->object.common.
 						      type),
 						     descriptor->object.common.
 						     reference_count);
-						break;
+						अवरोध;
 
-					case ACPI_DESC_TYPE_PARSER:
+					हाल ACPI_DESC_TYPE_PARSER:
 
-						acpi_os_printf
+						acpi_os_म_लिखो
 						    ("AmlOpcode 0x%04X\n",
 						     descriptor->op.asl.
 						     aml_opcode);
-						break;
+						अवरोध;
 
-					case ACPI_DESC_TYPE_NAMED:
+					हाल ACPI_DESC_TYPE_NAMED:
 
-						acpi_os_printf("%4.4s\n",
+						acpi_os_म_लिखो("%4.4s\n",
 							       acpi_ut_get_node_name
 							       (&descriptor->
 								node));
-						break;
+						अवरोध;
 
-					default:
+					शेष:
 
-						acpi_os_printf("\n");
-						break;
-					}
-				}
-			}
+						acpi_os_म_लिखो("\n");
+						अवरोध;
+					पूर्ण
+				पूर्ण
+			पूर्ण
 
 			num_outstanding++;
-		}
+		पूर्ण
 
 		element = element->next;
-	}
+	पूर्ण
 
-exit:
-	(void)acpi_ut_release_mutex(ACPI_MTX_MEMORY);
+निकास:
+	(व्योम)acpi_ut_release_mutex(ACPI_MTX_MEMORY);
 
-	/* Print summary */
+	/* Prपूर्णांक summary */
 
-	if (!num_outstanding) {
+	अगर (!num_outstanding) अणु
 		ACPI_INFO(("No outstanding allocations"));
-	} else {
+	पूर्ण अन्यथा अणु
 		ACPI_ERROR((AE_INFO, "%u (0x%X) Outstanding cache allocations",
 			    num_outstanding, num_outstanding));
-	}
+	पूर्ण
 
-	return_VOID;
-}
+	वापस_VOID;
+पूर्ण
 
-#endif				/* ACPI_DBG_TRACK_ALLOCATIONS */
+#पूर्ण_अगर				/* ACPI_DBG_TRACK_ALLOCATIONS */

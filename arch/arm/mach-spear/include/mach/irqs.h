@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * IRQ helper macros for spear machine family
+ * IRQ helper macros क्रम spear machine family
  *
  * Copyright (C) 2009-2012 ST Microelectronics
  * Rajeev Kumar <rajeev-dlh.kumar@st.com>
@@ -10,26 +11,26 @@
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef __MACH_IRQS_H
-#define __MACH_IRQS_H
+#अगर_अघोषित __MACH_IRQS_H
+#घोषणा __MACH_IRQS_H
 
-#ifdef CONFIG_ARCH_SPEAR3XX
-#define NR_IRQS			256
-#endif
+#अगर_घोषित CONFIG_ARCH_SPEAR3XX
+#घोषणा NR_IRQS			256
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_SPEAR6XX
+#अगर_घोषित CONFIG_ARCH_SPEAR6XX
 /* IRQ definitions */
 /* VIC 1 */
-#define IRQ_VIC_END				64
+#घोषणा IRQ_VIC_END				64
 
-/* GPIO pins virtual irqs */
-#define VIRTUAL_IRQS				24
-#define NR_IRQS					(IRQ_VIC_END + VIRTUAL_IRQS)
-#endif
+/* GPIO pins भव irqs */
+#घोषणा VIRTUAL_IRQS				24
+#घोषणा NR_IRQS					(IRQ_VIC_END + VIRTUAL_IRQS)
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_SPEAR13XX
-#define IRQ_GIC_END			160
-#define NR_IRQS				IRQ_GIC_END
-#endif
+#अगर_घोषित CONFIG_ARCH_SPEAR13XX
+#घोषणा IRQ_GIC_END			160
+#घोषणा NR_IRQS				IRQ_GIC_END
+#पूर्ण_अगर
 
-#endif /* __MACH_IRQS_H */
+#पूर्ण_अगर /* __MACH_IRQS_H */

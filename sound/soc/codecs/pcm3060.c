@@ -1,214 +1,215 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // PCM3060 codec driver
 //
 // Copyright (C) 2018 Kirill Marinushkin <kmarinushkin@birdec.com>
 
-#include <linux/module.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/tlv.h>
+#समावेश <linux/module.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/tlv.h>
 
-#include "pcm3060.h"
+#समावेश "pcm3060.h"
 
 /* dai */
 
-static int pcm3060_set_sysclk(struct snd_soc_dai *dai, int clk_id,
-			      unsigned int freq, int dir)
-{
-	struct snd_soc_component *comp = dai->component;
-	struct pcm3060_priv *priv = snd_soc_component_get_drvdata(comp);
-	unsigned int reg;
-	unsigned int val;
+अटल पूर्णांक pcm3060_set_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
+			      अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *comp = dai->component;
+	काष्ठा pcm3060_priv *priv = snd_soc_component_get_drvdata(comp);
+	अचिन्हित पूर्णांक reg;
+	अचिन्हित पूर्णांक val;
 
-	if (dir != SND_SOC_CLOCK_IN) {
+	अगर (dir != SND_SOC_CLOCK_IN) अणु
 		dev_err(comp->dev, "unsupported sysclock dir: %d\n", dir);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (clk_id) {
-	case PCM3060_CLK_DEF:
+	चयन (clk_id) अणु
+	हाल PCM3060_CLK_DEF:
 		val = 0;
-		break;
+		अवरोध;
 
-	case PCM3060_CLK1:
+	हाल PCM3060_CLK1:
 		val = (dai->id == PCM3060_DAI_ID_DAC ? PCM3060_REG_CSEL : 0);
-		break;
+		अवरोध;
 
-	case PCM3060_CLK2:
+	हाल PCM3060_CLK2:
 		val = (dai->id == PCM3060_DAI_ID_DAC ? 0 : PCM3060_REG_CSEL);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(comp->dev, "unsupported sysclock id: %d\n", clk_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (dai->id == PCM3060_DAI_ID_DAC)
+	अगर (dai->id == PCM3060_DAI_ID_DAC)
 		reg = PCM3060_REG67;
-	else
+	अन्यथा
 		reg = PCM3060_REG72;
 
 	regmap_update_bits(priv->regmap, reg, PCM3060_REG_CSEL, val);
 
 	priv->dai[dai->id].sclk_freq = freq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcm3060_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct snd_soc_component *comp = dai->component;
-	struct pcm3060_priv *priv = snd_soc_component_get_drvdata(comp);
-	unsigned int reg;
-	unsigned int val;
+अटल पूर्णांक pcm3060_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *comp = dai->component;
+	काष्ठा pcm3060_priv *priv = snd_soc_component_get_drvdata(comp);
+	अचिन्हित पूर्णांक reg;
+	अचिन्हित पूर्णांक val;
 
-	if ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF) {
+	अगर ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF) अणु
 		dev_err(comp->dev, "unsupported DAI polarity: 0x%x\n", fmt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
 		priv->dai[dai->id].is_master = true;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
 		priv->dai[dai->id].is_master = false;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(comp->dev, "unsupported DAI master mode: 0x%x\n", fmt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		val = PCM3060_REG_FMT_I2S;
-		break;
-	case SND_SOC_DAIFMT_RIGHT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_RIGHT_J:
 		val = PCM3060_REG_FMT_RJ;
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		val = PCM3060_REG_FMT_LJ;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(comp->dev, "unsupported DAI format: 0x%x\n", fmt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (dai->id == PCM3060_DAI_ID_DAC)
+	अगर (dai->id == PCM3060_DAI_ID_DAC)
 		reg = PCM3060_REG67;
-	else
+	अन्यथा
 		reg = PCM3060_REG72;
 
 	regmap_update_bits(priv->regmap, reg, PCM3060_REG_MASK_FMT, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcm3060_hw_params(struct snd_pcm_substream *substream,
-			     struct snd_pcm_hw_params *params,
-			     struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *comp = dai->component;
-	struct pcm3060_priv *priv = snd_soc_component_get_drvdata(comp);
-	unsigned int rate;
-	unsigned int ratio;
-	unsigned int reg;
-	unsigned int val;
+अटल पूर्णांक pcm3060_hw_params(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_pcm_hw_params *params,
+			     काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *comp = dai->component;
+	काष्ठा pcm3060_priv *priv = snd_soc_component_get_drvdata(comp);
+	अचिन्हित पूर्णांक rate;
+	अचिन्हित पूर्णांक ratio;
+	अचिन्हित पूर्णांक reg;
+	अचिन्हित पूर्णांक val;
 
-	if (!priv->dai[dai->id].is_master) {
+	अगर (!priv->dai[dai->id].is_master) अणु
 		val = PCM3060_REG_MS_S;
-		goto val_ready;
-	}
+		जाओ val_पढ़ोy;
+	पूर्ण
 
 	rate = params_rate(params);
-	if (!rate) {
+	अगर (!rate) अणु
 		dev_err(comp->dev, "rate is not configured\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ratio = priv->dai[dai->id].sclk_freq / rate;
 
-	switch (ratio) {
-	case 768:
+	चयन (ratio) अणु
+	हाल 768:
 		val = PCM3060_REG_MS_M768;
-		break;
-	case 512:
+		अवरोध;
+	हाल 512:
 		val = PCM3060_REG_MS_M512;
-		break;
-	case 384:
+		अवरोध;
+	हाल 384:
 		val = PCM3060_REG_MS_M384;
-		break;
-	case 256:
+		अवरोध;
+	हाल 256:
 		val = PCM3060_REG_MS_M256;
-		break;
-	case 192:
+		अवरोध;
+	हाल 192:
 		val = PCM3060_REG_MS_M192;
-		break;
-	case 128:
+		अवरोध;
+	हाल 128:
 		val = PCM3060_REG_MS_M128;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(comp->dev, "unsupported ratio: %d\n", ratio);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-val_ready:
-	if (dai->id == PCM3060_DAI_ID_DAC)
+val_पढ़ोy:
+	अगर (dai->id == PCM3060_DAI_ID_DAC)
 		reg = PCM3060_REG67;
-	else
+	अन्यथा
 		reg = PCM3060_REG72;
 
 	regmap_update_bits(priv->regmap, reg, PCM3060_REG_MASK_MS, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops pcm3060_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops pcm3060_dai_ops = अणु
 	.set_sysclk = pcm3060_set_sysclk,
 	.set_fmt = pcm3060_set_fmt,
 	.hw_params = pcm3060_hw_params,
-};
+पूर्ण;
 
-#define PCM3060_DAI_RATES_ADC	(SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_32000 | \
+#घोषणा PCM3060_DAI_RATES_ADC	(SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_32000 | \
 				 SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000 | \
 				 SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000)
 
-#define PCM3060_DAI_RATES_DAC	(PCM3060_DAI_RATES_ADC | \
+#घोषणा PCM3060_DAI_RATES_DAC	(PCM3060_DAI_RATES_ADC | \
 				 SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_192000)
 
-static struct snd_soc_dai_driver pcm3060_dai[] = {
-	{
+अटल काष्ठा snd_soc_dai_driver pcm3060_dai[] = अणु
+	अणु
 		.name = "pcm3060-dac",
 		.id = PCM3060_DAI_ID_DAC,
-		.playback = {
+		.playback = अणु
 			.stream_name = "Playback",
 			.channels_min = 2,
 			.channels_max = 2,
 			.rates = PCM3060_DAI_RATES_DAC,
-			.formats = SNDRV_PCM_FMTBIT_S24_LE,
-		},
+			.क्रमmats = SNDRV_PCM_FMTBIT_S24_LE,
+		पूर्ण,
 		.ops = &pcm3060_dai_ops,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "pcm3060-adc",
 		.id = PCM3060_DAI_ID_ADC,
-		.capture = {
+		.capture = अणु
 			.stream_name = "Capture",
 			.channels_min = 2,
 			.channels_max = 2,
 			.rates = PCM3060_DAI_RATES_ADC,
-			.formats = SNDRV_PCM_FMTBIT_S24_LE,
-		},
+			.क्रमmats = SNDRV_PCM_FMTBIT_S24_LE,
+		पूर्ण,
 		.ops = &pcm3060_dai_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* dapm */
 
-static DECLARE_TLV_DB_SCALE(pcm3060_dapm_tlv, -10050, 50, 1);
+अटल DECLARE_TLV_DB_SCALE(pcm3060_dapm_tlv, -10050, 50, 1);
 
-static const struct snd_kcontrol_new pcm3060_dapm_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new pcm3060_dapm_controls[] = अणु
 	SOC_DOUBLE_R_RANGE_TLV("Master Playback Volume",
 			       PCM3060_REG65, PCM3060_REG66, 0,
 			       PCM3060_REG_AT2_MIN, PCM3060_REG_AT2_MAX,
@@ -222,9 +223,9 @@ static const struct snd_kcontrol_new pcm3060_dapm_controls[] = {
 			       0, pcm3060_dapm_tlv),
 	SOC_DOUBLE("Master Capture Switch", PCM3060_REG73,
 		   PCM3060_REG_SHIFT_MUT11, PCM3060_REG_SHIFT_MUT12, 1, 1),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget pcm3060_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget pcm3060_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_DAC("DAC", "Playback", PCM3060_REG64,
 			 PCM3060_REG_SHIFT_DAPSV, 1),
 
@@ -236,109 +237,109 @@ static const struct snd_soc_dapm_widget pcm3060_dapm_widgets[] = {
 
 	SND_SOC_DAPM_ADC("ADC", "Capture", PCM3060_REG64,
 			 PCM3060_REG_SHIFT_ADPSV, 1),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route pcm3060_dapm_map[] = {
-	{ "OUTL", NULL, "DAC" },
-	{ "OUTR", NULL, "DAC" },
+अटल स्थिर काष्ठा snd_soc_dapm_route pcm3060_dapm_map[] = अणु
+	अणु "OUTL", शून्य, "DAC" पूर्ण,
+	अणु "OUTR", शून्य, "DAC" पूर्ण,
 
-	{ "ADC", NULL, "INL" },
-	{ "ADC", NULL, "INR" },
-};
+	अणु "ADC", शून्य, "INL" पूर्ण,
+	अणु "ADC", शून्य, "INR" पूर्ण,
+पूर्ण;
 
 /* soc component */
 
-static const struct snd_soc_component_driver pcm3060_soc_comp_driver = {
+अटल स्थिर काष्ठा snd_soc_component_driver pcm3060_soc_comp_driver = अणु
 	.controls = pcm3060_dapm_controls,
 	.num_controls = ARRAY_SIZE(pcm3060_dapm_controls),
-	.dapm_widgets = pcm3060_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(pcm3060_dapm_widgets),
+	.dapm_widमाला_लो = pcm3060_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो = ARRAY_SIZE(pcm3060_dapm_widमाला_लो),
 	.dapm_routes = pcm3060_dapm_map,
 	.num_dapm_routes = ARRAY_SIZE(pcm3060_dapm_map),
-};
+पूर्ण;
 
 /* regmap */
 
-static bool pcm3060_reg_writeable(struct device *dev, unsigned int reg)
-{
-	return (reg >= PCM3060_REG64);
-}
+अटल bool pcm3060_reg_ग_लिखोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस (reg >= PCM3060_REG64);
+पूर्ण
 
-static bool pcm3060_reg_readable(struct device *dev, unsigned int reg)
-{
-	return (reg >= PCM3060_REG64);
-}
+अटल bool pcm3060_reg_पढ़ोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस (reg >= PCM3060_REG64);
+पूर्ण
 
-static bool pcm3060_reg_volatile(struct device *dev, unsigned int reg)
-{
-	/* PCM3060_REG64 is volatile */
-	return (reg == PCM3060_REG64);
-}
+अटल bool pcm3060_reg_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	/* PCM3060_REG64 is अस्थिर */
+	वापस (reg == PCM3060_REG64);
+पूर्ण
 
-static const struct reg_default pcm3060_reg_defaults[] = {
-	{ PCM3060_REG64,  0xF0 },
-	{ PCM3060_REG65,  0xFF },
-	{ PCM3060_REG66,  0xFF },
-	{ PCM3060_REG67,  0x00 },
-	{ PCM3060_REG68,  0x00 },
-	{ PCM3060_REG69,  0x00 },
-	{ PCM3060_REG70,  0xD7 },
-	{ PCM3060_REG71,  0xD7 },
-	{ PCM3060_REG72,  0x00 },
-	{ PCM3060_REG73,  0x00 },
-};
+अटल स्थिर काष्ठा reg_शेष pcm3060_reg_शेषs[] = अणु
+	अणु PCM3060_REG64,  0xF0 पूर्ण,
+	अणु PCM3060_REG65,  0xFF पूर्ण,
+	अणु PCM3060_REG66,  0xFF पूर्ण,
+	अणु PCM3060_REG67,  0x00 पूर्ण,
+	अणु PCM3060_REG68,  0x00 पूर्ण,
+	अणु PCM3060_REG69,  0x00 पूर्ण,
+	अणु PCM3060_REG70,  0xD7 पूर्ण,
+	अणु PCM3060_REG71,  0xD7 पूर्ण,
+	अणु PCM3060_REG72,  0x00 पूर्ण,
+	अणु PCM3060_REG73,  0x00 पूर्ण,
+पूर्ण;
 
-const struct regmap_config pcm3060_regmap = {
+स्थिर काष्ठा regmap_config pcm3060_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.writeable_reg = pcm3060_reg_writeable,
-	.readable_reg = pcm3060_reg_readable,
-	.volatile_reg = pcm3060_reg_volatile,
-	.max_register = PCM3060_REG73,
-	.reg_defaults = pcm3060_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(pcm3060_reg_defaults),
+	.ग_लिखोable_reg = pcm3060_reg_ग_लिखोable,
+	.पढ़ोable_reg = pcm3060_reg_पढ़ोable,
+	.अस्थिर_reg = pcm3060_reg_अस्थिर,
+	.max_रेजिस्टर = PCM3060_REG73,
+	.reg_शेषs = pcm3060_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(pcm3060_reg_शेषs),
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 EXPORT_SYMBOL(pcm3060_regmap);
 
 /* device */
 
-static void pcm3060_parse_dt(const struct device_node *np,
-			     struct pcm3060_priv *priv)
-{
-	priv->out_se = of_property_read_bool(np, "ti,out-single-ended");
-}
+अटल व्योम pcm3060_parse_dt(स्थिर काष्ठा device_node *np,
+			     काष्ठा pcm3060_priv *priv)
+अणु
+	priv->out_se = of_property_पढ़ो_bool(np, "ti,out-single-ended");
+पूर्ण
 
-int pcm3060_probe(struct device *dev)
-{
-	int rc;
-	struct pcm3060_priv *priv = dev_get_drvdata(dev);
+पूर्णांक pcm3060_probe(काष्ठा device *dev)
+अणु
+	पूर्णांक rc;
+	काष्ठा pcm3060_priv *priv = dev_get_drvdata(dev);
 
 	/* soft reset */
 	rc = regmap_update_bits(priv->regmap, PCM3060_REG64,
 				PCM3060_REG_MRST, 0);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(dev, "failed to reset component, rc=%d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (dev->of_node)
+	अगर (dev->of_node)
 		pcm3060_parse_dt(dev->of_node, priv);
 
-	if (priv->out_se)
+	अगर (priv->out_se)
 		regmap_update_bits(priv->regmap, PCM3060_REG64,
 				   PCM3060_REG_SE, PCM3060_REG_SE);
 
-	rc = devm_snd_soc_register_component(dev, &pcm3060_soc_comp_driver,
+	rc = devm_snd_soc_रेजिस्टर_component(dev, &pcm3060_soc_comp_driver,
 					     pcm3060_dai,
 					     ARRAY_SIZE(pcm3060_dai));
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(dev, "failed to register component, rc=%d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(pcm3060_probe);
 
 MODULE_DESCRIPTION("PCM3060 codec driver");

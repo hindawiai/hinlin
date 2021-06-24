@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_ARM_COMPILER_H
-#define __ASM_ARM_COMPILER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_ARM_COMPILER_H
+#घोषणा __ASM_ARM_COMPILER_H
 
 /*
- * This is used to ensure the compiler did actually allocate the register we
- * asked it for some inline assembly sequences.  Apparently we can't trust
+ * This is used to ensure the compiler did actually allocate the रेजिस्टर we
+ * asked it क्रम some अंतरभूत assembly sequences.  Apparently we can't trust
  * the compiler from one version to another so a bit of paranoia won't hurt.
- * This string is meant to be concatenated with the inline asm string and
+ * This string is meant to be concatenated with the अंतरभूत यंत्र string and
  * will cause compilation to stop on mismatch.
- * (for details, see gcc PR 15089)
- * For compatibility with clang, we have to specifically take the equivalence
- * of 'r11' <-> 'fp' and 'r12' <-> 'ip' into account as well.
+ * (क्रम details, see gcc PR 15089)
+ * For compatibility with clang, we have to specअगरically take the equivalence
+ * of 'r11' <-> 'fp' and 'r12' <-> 'ip' पूर्णांकo account as well.
  */
-#define __asmeq(x, y)				\
+#घोषणा __यंत्रeq(x, y)				\
 	".ifnc " x "," y "; "			\
 	  ".ifnc " x y ",fpr11; " 		\
 	    ".ifnc " x y ",r11fp; "		\
@@ -26,4 +27,4 @@
 	".endif\n\t"
 
 
-#endif /* __ASM_ARM_COMPILER_H */
+#पूर्ण_अगर /* __ASM_ARM_COMPILER_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cirrus Logic CLPS711X FB driver
  *
@@ -6,84 +7,84 @@
  * Based on driver by Russell King <rmk@arm.linux.org.uk>
  */
 
-#include <linux/clk.h>
-#include <linux/fb.h>
-#include <linux/io.h>
-#include <linux/lcd.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/mfd/syscon.h>
-#include <linux/mfd/syscon/clps711x.h>
-#include <linux/regulator/consumer.h>
-#include <video/of_display_timing.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/lcd.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/mfd/syscon/clps711x.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <video/of_display_timing.h>
 
-#define CLPS711X_FB_NAME	"clps711x-fb"
-#define CLPS711X_FB_BPP_MAX	(4)
+#घोषणा CLPS711X_FB_NAME	"clps711x-fb"
+#घोषणा CLPS711X_FB_BPP_MAX	(4)
 
 /* Registers relative to LCDCON */
-#define CLPS711X_LCDCON		(0x0000)
+#घोषणा CLPS711X_LCDCON		(0x0000)
 # define LCDCON_GSEN		BIT(30)
 # define LCDCON_GSMD		BIT(31)
-#define CLPS711X_PALLSW		(0x0280)
-#define CLPS711X_PALMSW		(0x02c0)
-#define CLPS711X_FBADDR		(0x0d40)
+#घोषणा CLPS711X_PALLSW		(0x0280)
+#घोषणा CLPS711X_PALMSW		(0x02c0)
+#घोषणा CLPS711X_FBADDR		(0x0d40)
 
-struct clps711x_fb_info {
-	struct clk		*clk;
-	void __iomem		*base;
-	struct regmap		*syscon;
-	resource_size_t		buffsize;
-	struct fb_videomode	mode;
-	struct regulator	*lcd_pwr;
+काष्ठा clps711x_fb_info अणु
+	काष्ठा clk		*clk;
+	व्योम __iomem		*base;
+	काष्ठा regmap		*syscon;
+	resource_माप_प्रकार		buffsize;
+	काष्ठा fb_videomode	mode;
+	काष्ठा regulator	*lcd_pwr;
 	u32			ac_prescale;
 	bool			cmap_invert;
-};
+पूर्ण;
 
-static int clps711x_fb_setcolreg(u_int regno, u_int red, u_int green,
-				 u_int blue, u_int transp, struct fb_info *info)
-{
-	struct clps711x_fb_info *cfb = info->par;
-	u32 level, mask, shift;
+अटल पूर्णांक clps711x_fb_setcolreg(u_पूर्णांक regno, u_पूर्णांक red, u_पूर्णांक green,
+				 u_पूर्णांक blue, u_पूर्णांक transp, काष्ठा fb_info *info)
+अणु
+	काष्ठा clps711x_fb_info *cfb = info->par;
+	u32 level, mask, shअगरt;
 
-	if (regno >= BIT(info->var.bits_per_pixel))
-		return -EINVAL;
+	अगर (regno >= BIT(info->var.bits_per_pixel))
+		वापस -EINVAL;
 
-	shift = 4 * (regno & 7);
-	mask  = 0xf << shift;
+	shअगरt = 4 * (regno & 7);
+	mask  = 0xf << shअगरt;
 	/* gray = 0.30*R + 0.58*G + 0.11*B */
-	level = (((red * 77 + green * 151 + blue * 28) >> 20) << shift) & mask;
-	if (cfb->cmap_invert)
+	level = (((red * 77 + green * 151 + blue * 28) >> 20) << shअगरt) & mask;
+	अगर (cfb->cmap_invert)
 		level = 0xf - level;
 
 	regno = (regno < 8) ? CLPS711X_PALLSW : CLPS711X_PALMSW;
 
-	writel((readl(cfb->base + regno) & ~mask) | level, cfb->base + regno);
+	ग_लिखोl((पढ़ोl(cfb->base + regno) & ~mask) | level, cfb->base + regno);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clps711x_fb_check_var(struct fb_var_screeninfo *var,
-				 struct fb_info *info)
-{
+अटल पूर्णांक clps711x_fb_check_var(काष्ठा fb_var_screeninfo *var,
+				 काष्ठा fb_info *info)
+अणु
 	u32 val;
 
-	if (var->bits_per_pixel < 1 ||
+	अगर (var->bits_per_pixel < 1 ||
 	    var->bits_per_pixel > CLPS711X_FB_BPP_MAX)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!var->pixclock)
-		return -EINVAL;
+	अगर (!var->pixघड़ी)
+		वापस -EINVAL;
 
 	val = DIV_ROUND_UP(var->xres, 16) - 1;
-	if (val < 0x01 || val > 0x3f)
-		return -EINVAL;
+	अगर (val < 0x01 || val > 0x3f)
+		वापस -EINVAL;
 
 	val = DIV_ROUND_UP(var->yres * var->xres * var->bits_per_pixel, 128);
 	val--;
-	if (val < 0x001 || val > 0x1fff)
-		return -EINVAL;
+	अगर (val < 0x001 || val > 0x1fff)
+		वापस -EINVAL;
 
 	var->transp.msb_right	= 0;
 	var->transp.offset	= 0;
@@ -95,30 +96,30 @@ static int clps711x_fb_check_var(struct fb_var_screeninfo *var,
 	var->blue		= var->red;
 	var->grayscale		= var->bits_per_pixel > 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clps711x_fb_set_par(struct fb_info *info)
-{
-	struct clps711x_fb_info *cfb = info->par;
-	resource_size_t size;
+अटल पूर्णांक clps711x_fb_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा clps711x_fb_info *cfb = info->par;
+	resource_माप_प्रकार size;
 	u32 lcdcon, pps;
 
 	size = (info->var.xres * info->var.yres * info->var.bits_per_pixel) / 8;
-	if (size > cfb->buffsize)
-		return -EINVAL;
+	अगर (size > cfb->buffsize)
+		वापस -EINVAL;
 
-	switch (info->var.bits_per_pixel) {
-	case 1:
+	चयन (info->var.bits_per_pixel) अणु
+	हाल 1:
 		info->fix.visual = FB_VISUAL_MONO01;
-		break;
-	case 2:
-	case 4:
+		अवरोध;
+	हाल 2:
+	हाल 4:
 		info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	info->fix.line_length = info->var.xres * info->var.bits_per_pixel / 8;
 	info->fix.smem_len = size;
@@ -128,32 +129,32 @@ static int clps711x_fb_set_par(struct fb_info *info)
 	lcdcon |= ((info->var.xres / 16) - 1) << 13;
 	lcdcon |= (cfb->ac_prescale & 0x1f) << 25;
 
-	pps = clk_get_rate(cfb->clk) / (PICOS2KHZ(info->var.pixclock) * 1000);
-	if (pps)
+	pps = clk_get_rate(cfb->clk) / (PICOS2KHZ(info->var.pixघड़ी) * 1000);
+	अगर (pps)
 		pps--;
 	lcdcon |= (pps & 0x3f) << 19;
 
-	if (info->var.bits_per_pixel == 4)
+	अगर (info->var.bits_per_pixel == 4)
 		lcdcon |= LCDCON_GSMD;
-	if (info->var.bits_per_pixel >= 2)
+	अगर (info->var.bits_per_pixel >= 2)
 		lcdcon |= LCDCON_GSEN;
 
-	/* LCDCON must only be changed while the LCD is disabled */
+	/* LCDCON must only be changed जबतक the LCD is disabled */
 	regmap_update_bits(cfb->syscon, SYSCON_OFFSET, SYSCON1_LCDEN, 0);
-	writel(lcdcon, cfb->base + CLPS711X_LCDCON);
+	ग_लिखोl(lcdcon, cfb->base + CLPS711X_LCDCON);
 	regmap_update_bits(cfb->syscon, SYSCON_OFFSET,
 			   SYSCON1_LCDEN, SYSCON1_LCDEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clps711x_fb_blank(int blank, struct fb_info *info)
-{
+अटल पूर्णांक clps711x_fb_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
 	/* Return happy */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct fb_ops clps711x_fb_ops = {
+अटल स्थिर काष्ठा fb_ops clps711x_fb_ops = अणु
 	.owner		= THIS_MODULE,
 	.fb_setcolreg	= clps711x_fb_setcolreg,
 	.fb_check_var	= clps711x_fb_check_var,
@@ -162,162 +163,162 @@ static const struct fb_ops clps711x_fb_ops = {
 	.fb_fillrect	= sys_fillrect,
 	.fb_copyarea	= sys_copyarea,
 	.fb_imageblit	= sys_imageblit,
-};
+पूर्ण;
 
-static int clps711x_lcd_check_fb(struct lcd_device *lcddev, struct fb_info *fi)
-{
-	struct clps711x_fb_info *cfb = dev_get_drvdata(&lcddev->dev);
+अटल पूर्णांक clps711x_lcd_check_fb(काष्ठा lcd_device *lcddev, काष्ठा fb_info *fi)
+अणु
+	काष्ठा clps711x_fb_info *cfb = dev_get_drvdata(&lcddev->dev);
 
-	return (!fi || fi->par == cfb) ? 1 : 0;
-}
+	वापस (!fi || fi->par == cfb) ? 1 : 0;
+पूर्ण
 
-static int clps711x_lcd_get_power(struct lcd_device *lcddev)
-{
-	struct clps711x_fb_info *cfb = dev_get_drvdata(&lcddev->dev);
+अटल पूर्णांक clps711x_lcd_get_घातer(काष्ठा lcd_device *lcddev)
+अणु
+	काष्ठा clps711x_fb_info *cfb = dev_get_drvdata(&lcddev->dev);
 
-	if (!IS_ERR_OR_NULL(cfb->lcd_pwr))
-		if (!regulator_is_enabled(cfb->lcd_pwr))
-			return FB_BLANK_NORMAL;
+	अगर (!IS_ERR_OR_शून्य(cfb->lcd_pwr))
+		अगर (!regulator_is_enabled(cfb->lcd_pwr))
+			वापस FB_BLANK_NORMAL;
 
-	return FB_BLANK_UNBLANK;
-}
+	वापस FB_BLANK_UNBLANK;
+पूर्ण
 
-static int clps711x_lcd_set_power(struct lcd_device *lcddev, int blank)
-{
-	struct clps711x_fb_info *cfb = dev_get_drvdata(&lcddev->dev);
+अटल पूर्णांक clps711x_lcd_set_घातer(काष्ठा lcd_device *lcddev, पूर्णांक blank)
+अणु
+	काष्ठा clps711x_fb_info *cfb = dev_get_drvdata(&lcddev->dev);
 
-	if (!IS_ERR_OR_NULL(cfb->lcd_pwr)) {
-		if (blank == FB_BLANK_UNBLANK) {
-			if (!regulator_is_enabled(cfb->lcd_pwr))
-				return regulator_enable(cfb->lcd_pwr);
-		} else {
-			if (regulator_is_enabled(cfb->lcd_pwr))
-				return regulator_disable(cfb->lcd_pwr);
-		}
-	}
+	अगर (!IS_ERR_OR_शून्य(cfb->lcd_pwr)) अणु
+		अगर (blank == FB_BLANK_UNBLANK) अणु
+			अगर (!regulator_is_enabled(cfb->lcd_pwr))
+				वापस regulator_enable(cfb->lcd_pwr);
+		पूर्ण अन्यथा अणु
+			अगर (regulator_is_enabled(cfb->lcd_pwr))
+				वापस regulator_disable(cfb->lcd_pwr);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct lcd_ops clps711x_lcd_ops = {
+अटल काष्ठा lcd_ops clps711x_lcd_ops = अणु
 	.check_fb	= clps711x_lcd_check_fb,
-	.get_power	= clps711x_lcd_get_power,
-	.set_power	= clps711x_lcd_set_power,
-};
+	.get_घातer	= clps711x_lcd_get_घातer,
+	.set_घातer	= clps711x_lcd_set_घातer,
+पूर्ण;
 
-static int clps711x_fb_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *disp, *np = dev->of_node;
-	struct clps711x_fb_info *cfb;
-	struct lcd_device *lcd;
-	struct fb_info *info;
-	struct resource *res;
-	int ret = -ENOENT;
+अटल पूर्णांक clps711x_fb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *disp, *np = dev->of_node;
+	काष्ठा clps711x_fb_info *cfb;
+	काष्ठा lcd_device *lcd;
+	काष्ठा fb_info *info;
+	काष्ठा resource *res;
+	पूर्णांक ret = -ENOENT;
 	u32 val;
 
-	if (fb_get_options(CLPS711X_FB_NAME, NULL))
-		return -ENODEV;
+	अगर (fb_get_options(CLPS711X_FB_NAME, शून्य))
+		वापस -ENODEV;
 
-	info = framebuffer_alloc(sizeof(*cfb), dev);
-	if (!info)
-		return -ENOMEM;
+	info = framebuffer_alloc(माप(*cfb), dev);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	cfb = info->par;
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		goto out_fb_release;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		जाओ out_fb_release;
 	cfb->base = devm_ioremap(dev, res->start, resource_size(res));
-	if (!cfb->base) {
+	अगर (!cfb->base) अणु
 		ret = -ENOMEM;
-		goto out_fb_release;
-	}
+		जाओ out_fb_release;
+	पूर्ण
 
 	info->fix.mmio_start = res->start;
 	info->fix.mmio_len = resource_size(res);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 	info->screen_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(info->screen_base)) {
+	अगर (IS_ERR(info->screen_base)) अणु
 		ret = PTR_ERR(info->screen_base);
-		goto out_fb_release;
-	}
+		जाओ out_fb_release;
+	पूर्ण
 
 	/* Physical address should be aligned to 256 MiB */
-	if (res->start & 0x0fffffff) {
+	अगर (res->start & 0x0fffffff) अणु
 		ret = -EINVAL;
-		goto out_fb_release;
-	}
+		जाओ out_fb_release;
+	पूर्ण
 
 	info->apertures = alloc_apertures(1);
-	if (!info->apertures) {
+	अगर (!info->apertures) अणु
 		ret = -ENOMEM;
-		goto out_fb_release;
-	}
+		जाओ out_fb_release;
+	पूर्ण
 
 	cfb->buffsize = resource_size(res);
 	info->fix.smem_start = res->start;
 	info->apertures->ranges[0].base = info->fix.smem_start;
 	info->apertures->ranges[0].size = cfb->buffsize;
 
-	cfb->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(cfb->clk)) {
+	cfb->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(cfb->clk)) अणु
 		ret = PTR_ERR(cfb->clk);
-		goto out_fb_release;
-	}
+		जाओ out_fb_release;
+	पूर्ण
 
 	cfb->syscon =
 		syscon_regmap_lookup_by_compatible("cirrus,ep7209-syscon1");
-	if (IS_ERR(cfb->syscon)) {
+	अगर (IS_ERR(cfb->syscon)) अणु
 		ret = PTR_ERR(cfb->syscon);
-		goto out_fb_release;
-	}
+		जाओ out_fb_release;
+	पूर्ण
 
 	disp = of_parse_phandle(np, "display", 0);
-	if (!disp) {
+	अगर (!disp) अणु
 		dev_err(&pdev->dev, "No display defined\n");
 		ret = -ENODATA;
-		goto out_fb_release;
-	}
+		जाओ out_fb_release;
+	पूर्ण
 
 	ret = of_get_fb_videomode(disp, &cfb->mode, OF_USE_NATIVE_MODE);
-	if (ret) {
+	अगर (ret) अणु
 		of_node_put(disp);
-		goto out_fb_release;
-	}
+		जाओ out_fb_release;
+	पूर्ण
 
-	of_property_read_u32(disp, "ac-prescale", &cfb->ac_prescale);
-	cfb->cmap_invert = of_property_read_bool(disp, "cmap-invert");
+	of_property_पढ़ो_u32(disp, "ac-prescale", &cfb->ac_prescale);
+	cfb->cmap_invert = of_property_पढ़ो_bool(disp, "cmap-invert");
 
-	ret = of_property_read_u32(disp, "bits-per-pixel",
+	ret = of_property_पढ़ो_u32(disp, "bits-per-pixel",
 				   &info->var.bits_per_pixel);
 	of_node_put(disp);
-	if (ret)
-		goto out_fb_release;
+	अगर (ret)
+		जाओ out_fb_release;
 
 	/* Force disable LCD on any mismatch */
-	if (info->fix.smem_start != (readb(cfb->base + CLPS711X_FBADDR) << 28))
+	अगर (info->fix.smem_start != (पढ़ोb(cfb->base + CLPS711X_FBADDR) << 28))
 		regmap_update_bits(cfb->syscon, SYSCON_OFFSET,
 				   SYSCON1_LCDEN, 0);
 
-	ret = regmap_read(cfb->syscon, SYSCON_OFFSET, &val);
-	if (ret)
-		goto out_fb_release;
+	ret = regmap_पढ़ो(cfb->syscon, SYSCON_OFFSET, &val);
+	अगर (ret)
+		जाओ out_fb_release;
 
-	if (!(val & SYSCON1_LCDEN)) {
+	अगर (!(val & SYSCON1_LCDEN)) अणु
 		/* Setup start FB address */
-		writeb(info->fix.smem_start >> 28, cfb->base + CLPS711X_FBADDR);
+		ग_लिखोb(info->fix.smem_start >> 28, cfb->base + CLPS711X_FBADDR);
 		/* Clean FB memory */
-		memset_io(info->screen_base, 0, cfb->buffsize);
-	}
+		स_रखो_io(info->screen_base, 0, cfb->buffsize);
+	पूर्ण
 
 	cfb->lcd_pwr = devm_regulator_get(dev, "lcd");
-	if (PTR_ERR(cfb->lcd_pwr) == -EPROBE_DEFER) {
+	अगर (PTR_ERR(cfb->lcd_pwr) == -EPROBE_DEFER) अणु
 		ret = -EPROBE_DEFER;
-		goto out_fb_release;
-	}
+		जाओ out_fb_release;
+	पूर्ण
 
 	info->fbops = &clps711x_fb_ops;
 	info->flags = FBINFO_DEFAULT;
@@ -327,28 +328,28 @@ static int clps711x_fb_probe(struct platform_device *pdev)
 	info->var.vmode = FB_VMODE_NONINTERLACED;
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
 	info->fix.accel = FB_ACCEL_NONE;
-	strlcpy(info->fix.id, CLPS711X_FB_NAME, sizeof(info->fix.id));
+	strlcpy(info->fix.id, CLPS711X_FB_NAME, माप(info->fix.id));
 	fb_videomode_to_var(&info->var, &cfb->mode);
 
 	ret = fb_alloc_cmap(&info->cmap, BIT(CLPS711X_FB_BPP_MAX), 0);
-	if (ret)
-		goto out_fb_release;
+	अगर (ret)
+		जाओ out_fb_release;
 
 	ret = fb_set_var(info, &info->var);
-	if (ret)
-		goto out_fb_dealloc_cmap;
+	अगर (ret)
+		जाओ out_fb_dealloc_cmap;
 
-	ret = register_framebuffer(info);
-	if (ret)
-		goto out_fb_dealloc_cmap;
+	ret = रेजिस्टर_framebuffer(info);
+	अगर (ret)
+		जाओ out_fb_dealloc_cmap;
 
-	lcd = devm_lcd_device_register(dev, "clps711x-lcd", dev, cfb,
+	lcd = devm_lcd_device_रेजिस्टर(dev, "clps711x-lcd", dev, cfb,
 				       &clps711x_lcd_ops);
-	if (!IS_ERR(lcd))
-		return 0;
+	अगर (!IS_ERR(lcd))
+		वापस 0;
 	
 	ret = PTR_ERR(lcd);
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 
 out_fb_dealloc_cmap:
 	regmap_update_bits(cfb->syscon, SYSCON_OFFSET, SYSCON1_LCDEN, 0);
@@ -357,38 +358,38 @@ out_fb_dealloc_cmap:
 out_fb_release:
 	framebuffer_release(info);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int clps711x_fb_remove(struct platform_device *pdev)
-{
-	struct fb_info *info = platform_get_drvdata(pdev);
-	struct clps711x_fb_info *cfb = info->par;
+अटल पूर्णांक clps711x_fb_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(pdev);
+	काष्ठा clps711x_fb_info *cfb = info->par;
 
 	regmap_update_bits(cfb->syscon, SYSCON_OFFSET, SYSCON1_LCDEN, 0);
 
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 	fb_dealloc_cmap(&info->cmap);
 	framebuffer_release(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id clps711x_fb_dt_ids[] = {
-	{ .compatible = "cirrus,ep7209-fb", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id clps711x_fb_dt_ids[] = अणु
+	अणु .compatible = "cirrus,ep7209-fb", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, clps711x_fb_dt_ids);
 
-static struct platform_driver clps711x_fb_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver clps711x_fb_driver = अणु
+	.driver	= अणु
 		.name		= CLPS711X_FB_NAME,
 		.of_match_table	= clps711x_fb_dt_ids,
-	},
+	पूर्ण,
 	.probe	= clps711x_fb_probe,
-	.remove	= clps711x_fb_remove,
-};
-module_platform_driver(clps711x_fb_driver);
+	.हटाओ	= clps711x_fb_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(clps711x_fb_driver);
 
 MODULE_AUTHOR("Alexander Shiyan <shc_work@mail.ru>");
 MODULE_DESCRIPTION("Cirrus Logic CLPS711X FB driver");

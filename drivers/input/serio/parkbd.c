@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Parallel port to Keyboard port adapter driver for Linux
+ *  Parallel port to Keyboard port adapter driver क्रम Linux
  *
  *  Copyright (c) 1999-2004 Vojtech Pavlik
  */
@@ -35,56 +36,56 @@
  * too.
  *
  * The +5V source can be taken either from USB, from mouse or keyboard ports,
- * or from a joystick port. Unfortunately, the parallel port of a PC doesn't
- * have a +5V pin, and feeding the keyboard from signal pins is out of question
- * with 300 mA power reqirement of a typical AT keyboard.
+ * or from a joystick port. Unक्रमtunately, the parallel port of a PC करोesn't
+ * have a +5V pin, and feeding the keyboard from संकेत pins is out of question
+ * with 300 mA घातer reqirement of a typical AT keyboard.
  */
 
-#include <linux/module.h>
-#include <linux/parport.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/serio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/parport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serपन.स>
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("Parallel port to Keyboard port adapter driver");
 MODULE_LICENSE("GPL");
 
-static unsigned int parkbd_pp_no;
-module_param_named(port, parkbd_pp_no, int, 0);
+अटल अचिन्हित पूर्णांक parkbd_pp_no;
+module_param_named(port, parkbd_pp_no, पूर्णांक, 0);
 MODULE_PARM_DESC(port, "Parallel port the adapter is connected to (default is 0)");
 
-static unsigned int parkbd_mode = SERIO_8042;
-module_param_named(mode, parkbd_mode, uint, 0);
+अटल अचिन्हित पूर्णांक parkbd_mode = SERIO_8042;
+module_param_named(mode, parkbd_mode, uपूर्णांक, 0);
 MODULE_PARM_DESC(mode, "Mode of operation: XT = 0/AT = 1 (default)");
 
-#define PARKBD_CLOCK	0x01	/* Strobe & Ack */
-#define PARKBD_DATA	0x02	/* AutoFd & Busy */
+#घोषणा PARKBD_CLOCK	0x01	/* Strobe & Ack */
+#घोषणा PARKBD_DATA	0x02	/* AutoFd & Busy */
 
-static int parkbd_buffer;
-static int parkbd_counter;
-static unsigned long parkbd_last;
-static int parkbd_writing;
-static unsigned long parkbd_start;
+अटल पूर्णांक parkbd_buffer;
+अटल पूर्णांक parkbd_counter;
+अटल अचिन्हित दीर्घ parkbd_last;
+अटल पूर्णांक parkbd_writing;
+अटल अचिन्हित दीर्घ parkbd_start;
 
-static struct pardevice *parkbd_dev;
-static struct serio *parkbd_port;
+अटल काष्ठा pardevice *parkbd_dev;
+अटल काष्ठा serio *parkbd_port;
 
-static int parkbd_readlines(void)
-{
-	return (parport_read_status(parkbd_dev->port) >> 6) ^ 2;
-}
+अटल पूर्णांक parkbd_पढ़ोlines(व्योम)
+अणु
+	वापस (parport_पढ़ो_status(parkbd_dev->port) >> 6) ^ 2;
+पूर्ण
 
-static void parkbd_writelines(int data)
-{
-	parport_write_control(parkbd_dev->port, (~data & 3) | 0x10);
-}
+अटल व्योम parkbd_ग_लिखोlines(पूर्णांक data)
+अणु
+	parport_ग_लिखो_control(parkbd_dev->port, (~data & 3) | 0x10);
+पूर्ण
 
-static int parkbd_write(struct serio *port, unsigned char c)
-{
-	unsigned char p;
+अटल पूर्णांक parkbd_ग_लिखो(काष्ठा serio *port, अचिन्हित अक्षर c)
+अणु
+	अचिन्हित अक्षर p;
 
-	if (!parkbd_mode) return -1;
+	अगर (!parkbd_mode) वापस -1;
 
         p = c ^ (c >> 4);
 	p = p ^ (p >> 2);
@@ -92,144 +93,144 @@ static int parkbd_write(struct serio *port, unsigned char c)
 
 	parkbd_counter = 0;
 	parkbd_writing = 1;
-	parkbd_buffer = c | (((int) (~p & 1)) << 8) | 0x600;
+	parkbd_buffer = c | (((पूर्णांक) (~p & 1)) << 8) | 0x600;
 
-	parkbd_writelines(2);
+	parkbd_ग_लिखोlines(2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void parkbd_interrupt(void *dev_id)
-{
+अटल व्योम parkbd_पूर्णांकerrupt(व्योम *dev_id)
+अणु
 
-	if (parkbd_writing) {
+	अगर (parkbd_writing) अणु
 
-		if (parkbd_counter && ((parkbd_counter == 11) || time_after(jiffies, parkbd_last + HZ/100))) {
+		अगर (parkbd_counter && ((parkbd_counter == 11) || समय_after(jअगरfies, parkbd_last + HZ/100))) अणु
 			parkbd_counter = 0;
 			parkbd_buffer = 0;
 			parkbd_writing = 0;
-			parkbd_writelines(3);
-			return;
-		}
+			parkbd_ग_लिखोlines(3);
+			वापस;
+		पूर्ण
 
-		parkbd_writelines(((parkbd_buffer >> parkbd_counter++) & 1) | 2);
+		parkbd_ग_लिखोlines(((parkbd_buffer >> parkbd_counter++) & 1) | 2);
 
-		if (parkbd_counter == 11) {
+		अगर (parkbd_counter == 11) अणु
 			parkbd_counter = 0;
 			parkbd_buffer = 0;
 			parkbd_writing = 0;
-			parkbd_writelines(3);
-		}
+			parkbd_ग_लिखोlines(3);
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 
-		if ((parkbd_counter == parkbd_mode + 10) || time_after(jiffies, parkbd_last + HZ/100)) {
+		अगर ((parkbd_counter == parkbd_mode + 10) || समय_after(jअगरfies, parkbd_last + HZ/100)) अणु
 			parkbd_counter = 0;
 			parkbd_buffer = 0;
-		}
+		पूर्ण
 
-		parkbd_buffer |= (parkbd_readlines() >> 1) << parkbd_counter++;
+		parkbd_buffer |= (parkbd_पढ़ोlines() >> 1) << parkbd_counter++;
 
-		if (parkbd_counter == parkbd_mode + 10)
-			serio_interrupt(parkbd_port, (parkbd_buffer >> (2 - parkbd_mode)) & 0xff, 0);
-	}
+		अगर (parkbd_counter == parkbd_mode + 10)
+			serio_पूर्णांकerrupt(parkbd_port, (parkbd_buffer >> (2 - parkbd_mode)) & 0xff, 0);
+	पूर्ण
 
-	parkbd_last = jiffies;
-}
+	parkbd_last = jअगरfies;
+पूर्ण
 
-static int parkbd_getport(struct parport *pp)
-{
-	struct pardev_cb parkbd_parport_cb;
+अटल पूर्णांक parkbd_getport(काष्ठा parport *pp)
+अणु
+	काष्ठा pardev_cb parkbd_parport_cb;
 
-	memset(&parkbd_parport_cb, 0, sizeof(parkbd_parport_cb));
-	parkbd_parport_cb.irq_func = parkbd_interrupt;
+	स_रखो(&parkbd_parport_cb, 0, माप(parkbd_parport_cb));
+	parkbd_parport_cb.irq_func = parkbd_पूर्णांकerrupt;
 	parkbd_parport_cb.flags = PARPORT_FLAG_EXCL;
 
-	parkbd_dev = parport_register_dev_model(pp, "parkbd",
+	parkbd_dev = parport_रेजिस्टर_dev_model(pp, "parkbd",
 						&parkbd_parport_cb, 0);
 
-	if (!parkbd_dev)
-		return -ENODEV;
+	अगर (!parkbd_dev)
+		वापस -ENODEV;
 
-	if (parport_claim(parkbd_dev)) {
-		parport_unregister_device(parkbd_dev);
-		return -EBUSY;
-	}
+	अगर (parport_claim(parkbd_dev)) अणु
+		parport_unरेजिस्टर_device(parkbd_dev);
+		वापस -EBUSY;
+	पूर्ण
 
-	parkbd_start = jiffies;
+	parkbd_start = jअगरfies;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct serio *parkbd_allocate_serio(void)
-{
-	struct serio *serio;
+अटल काष्ठा serio *parkbd_allocate_serio(व्योम)
+अणु
+	काष्ठा serio *serio;
 
-	serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
-	if (serio) {
+	serio = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
+	अगर (serio) अणु
 		serio->id.type = parkbd_mode;
-		serio->write = parkbd_write;
-		strlcpy(serio->name, "PARKBD AT/XT keyboard adapter", sizeof(serio->name));
-		snprintf(serio->phys, sizeof(serio->phys), "%s/serio0", parkbd_dev->port->name);
-	}
+		serio->ग_लिखो = parkbd_ग_लिखो;
+		strlcpy(serio->name, "PARKBD AT/XT keyboard adapter", माप(serio->name));
+		snम_लिखो(serio->phys, माप(serio->phys), "%s/serio0", parkbd_dev->port->name);
+	पूर्ण
 
-	return serio;
-}
+	वापस serio;
+पूर्ण
 
-static void parkbd_attach(struct parport *pp)
-{
-	if (pp->number != parkbd_pp_no) {
+अटल व्योम parkbd_attach(काष्ठा parport *pp)
+अणु
+	अगर (pp->number != parkbd_pp_no) अणु
 		pr_debug("Not using parport%d.\n", pp->number);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (parkbd_getport(pp))
-		return;
+	अगर (parkbd_getport(pp))
+		वापस;
 
 	parkbd_port = parkbd_allocate_serio();
-	if (!parkbd_port) {
+	अगर (!parkbd_port) अणु
 		parport_release(parkbd_dev);
-		parport_unregister_device(parkbd_dev);
-		return;
-	}
+		parport_unरेजिस्टर_device(parkbd_dev);
+		वापस;
+	पूर्ण
 
-	parkbd_writelines(3);
+	parkbd_ग_लिखोlines(3);
 
-	serio_register_port(parkbd_port);
+	serio_रेजिस्टर_port(parkbd_port);
 
-	printk(KERN_INFO "serio: PARKBD %s adapter on %s\n",
+	prपूर्णांकk(KERN_INFO "serio: PARKBD %s adapter on %s\n",
                         parkbd_mode ? "AT" : "XT", parkbd_dev->port->name);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static void parkbd_detach(struct parport *port)
-{
-	if (!parkbd_port || port->number != parkbd_pp_no)
-		return;
+अटल व्योम parkbd_detach(काष्ठा parport *port)
+अणु
+	अगर (!parkbd_port || port->number != parkbd_pp_no)
+		वापस;
 
 	parport_release(parkbd_dev);
-	serio_unregister_port(parkbd_port);
-	parport_unregister_device(parkbd_dev);
-	parkbd_port = NULL;
-}
+	serio_unरेजिस्टर_port(parkbd_port);
+	parport_unरेजिस्टर_device(parkbd_dev);
+	parkbd_port = शून्य;
+पूर्ण
 
-static struct parport_driver parkbd_parport_driver = {
+अटल काष्ठा parport_driver parkbd_parport_driver = अणु
 	.name = "parkbd",
 	.match_port = parkbd_attach,
 	.detach = parkbd_detach,
 	.devmodel = true,
-};
+पूर्ण;
 
-static int __init parkbd_init(void)
-{
-	return parport_register_driver(&parkbd_parport_driver);
-}
+अटल पूर्णांक __init parkbd_init(व्योम)
+अणु
+	वापस parport_रेजिस्टर_driver(&parkbd_parport_driver);
+पूर्ण
 
-static void __exit parkbd_exit(void)
-{
-	parport_unregister_driver(&parkbd_parport_driver);
-}
+अटल व्योम __निकास parkbd_निकास(व्योम)
+अणु
+	parport_unरेजिस्टर_driver(&parkbd_parport_driver);
+पूर्ण
 
 module_init(parkbd_init);
-module_exit(parkbd_exit);
+module_निकास(parkbd_निकास);

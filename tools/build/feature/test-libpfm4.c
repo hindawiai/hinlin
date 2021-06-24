@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <sys/types.h>
-#include <perfmon/pfmlib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <sys/types.h>
+#समावेश <perfmon/pfmlib.h>
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	pfm_initialize();
-	return 0;
-}
+	वापस 0;
+पूर्ण

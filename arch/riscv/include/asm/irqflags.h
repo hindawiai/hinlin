@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of California
+ * Copyright (C) 2012 Regents of the University of Calअगरornia
  */
 
 
-#ifndef _ASM_RISCV_IRQFLAGS_H
-#define _ASM_RISCV_IRQFLAGS_H
+#अगर_अघोषित _ASM_RISCV_IRQFLAGS_H
+#घोषणा _ASM_RISCV_IRQFLAGS_H
 
-#include <asm/processor.h>
-#include <asm/csr.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/csr.h>
 
-/* read interrupt enabled status */
-static inline unsigned long arch_local_save_flags(void)
-{
-	return csr_read(CSR_STATUS);
-}
+/* पढ़ो पूर्णांकerrupt enabled status */
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_save_flags(व्योम)
+अणु
+	वापस csr_पढ़ो(CSR_STATUS);
+पूर्ण
 
-/* unconditionally enable interrupts */
-static inline void arch_local_irq_enable(void)
-{
+/* unconditionally enable पूर्णांकerrupts */
+अटल अंतरभूत व्योम arch_local_irq_enable(व्योम)
+अणु
 	csr_set(CSR_STATUS, SR_IE);
-}
+पूर्ण
 
-/* unconditionally disable interrupts */
-static inline void arch_local_irq_disable(void)
-{
+/* unconditionally disable पूर्णांकerrupts */
+अटल अंतरभूत व्योम arch_local_irq_disable(व्योम)
+अणु
 	csr_clear(CSR_STATUS, SR_IE);
-}
+पूर्ण
 
-/* get status and disable interrupts */
-static inline unsigned long arch_local_irq_save(void)
-{
-	return csr_read_clear(CSR_STATUS, SR_IE);
-}
+/* get status and disable पूर्णांकerrupts */
+अटल अंतरभूत अचिन्हित दीर्घ arch_local_irq_save(व्योम)
+अणु
+	वापस csr_पढ़ो_clear(CSR_STATUS, SR_IE);
+पूर्ण
 
 /* test flags */
-static inline int arch_irqs_disabled_flags(unsigned long flags)
-{
-	return !(flags & SR_IE);
-}
+अटल अंतरभूत पूर्णांक arch_irqs_disabled_flags(अचिन्हित दीर्घ flags)
+अणु
+	वापस !(flags & SR_IE);
+पूर्ण
 
-/* test hardware interrupt enable bit */
-static inline int arch_irqs_disabled(void)
-{
-	return arch_irqs_disabled_flags(arch_local_save_flags());
-}
+/* test hardware पूर्णांकerrupt enable bit */
+अटल अंतरभूत पूर्णांक arch_irqs_disabled(व्योम)
+अणु
+	वापस arch_irqs_disabled_flags(arch_local_save_flags());
+पूर्ण
 
-/* set interrupt enabled status */
-static inline void arch_local_irq_restore(unsigned long flags)
-{
+/* set पूर्णांकerrupt enabled status */
+अटल अंतरभूत व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
+अणु
 	csr_set(CSR_STATUS, flags & SR_IE);
-}
+पूर्ण
 
-#endif /* _ASM_RISCV_IRQFLAGS_H */
+#पूर्ण_अगर /* _ASM_RISCV_IRQFLAGS_H */

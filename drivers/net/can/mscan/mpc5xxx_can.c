@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * CAN bus driver for the Freescale MPC5xxx embedded CPU.
+ * CAN bus driver क्रम the Freescale MPC5xxx embedded CPU.
  *
  * Copyright (C) 2004-2005 Andrey Volkov <avolkov@varma-el.com>,
  *                         Varma Electronics Oy
- * Copyright (C) 2008-2009 Wolfgang Grandegger <wg@grandegger.com>
+ * Copyright (C) 2008-2009 Wolfgang Gअक्रमegger <wg@gअक्रमegger.com>
  * Copyright (C) 2009 Wolfram Sang, Pengutronix <kernel@pengutronix.de>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/netdevice.h>
-#include <linux/can/dev.h>
-#include <linux/of_platform.h>
-#include <sysdev/fsl_soc.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <asm/mpc52xx.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/can/dev.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <sysdev/fsl_soc.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/mpc52xx.h>
 
-#include "mscan.h"
+#समावेश "mscan.h"
 
-#define DRV_NAME "mpc5xxx_can"
+#घोषणा DRV_NAME "mpc5xxx_can"
 
-struct mpc5xxx_can_data {
-	unsigned int type;
-	u32 (*get_clock)(struct platform_device *ofdev, const char *clock_name,
-			 int *mscan_clksrc);
-	void (*put_clock)(struct platform_device *ofdev);
-};
+काष्ठा mpc5xxx_can_data अणु
+	अचिन्हित पूर्णांक type;
+	u32 (*get_घड़ी)(काष्ठा platक्रमm_device *ofdev, स्थिर अक्षर *घड़ी_name,
+			 पूर्णांक *mscan_clksrc);
+	व्योम (*put_घड़ी)(काष्ठा platक्रमm_device *ofdev);
+पूर्ण;
 
-#ifdef CONFIG_PPC_MPC52xx
-static const struct of_device_id mpc52xx_cdm_ids[] = {
-	{ .compatible = "fsl,mpc5200-cdm", },
-	{}
-};
+#अगर_घोषित CONFIG_PPC_MPC52xx
+अटल स्थिर काष्ठा of_device_id mpc52xx_cdm_ids[] = अणु
+	अणु .compatible = "fsl,mpc5200-cdm", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static u32 mpc52xx_can_get_clock(struct platform_device *ofdev,
-				 const char *clock_name, int *mscan_clksrc)
-{
-	unsigned int pvr;
-	struct mpc52xx_cdm  __iomem *cdm;
-	struct device_node *np_cdm;
-	unsigned int freq;
+अटल u32 mpc52xx_can_get_घड़ी(काष्ठा platक्रमm_device *ofdev,
+				 स्थिर अक्षर *घड़ी_name, पूर्णांक *mscan_clksrc)
+अणु
+	अचिन्हित पूर्णांक pvr;
+	काष्ठा mpc52xx_cdm  __iomem *cdm;
+	काष्ठा device_node *np_cdm;
+	अचिन्हित पूर्णांक freq;
 	u32 val;
 
 	pvr = mfspr(SPRN_PVR);
 
 	/*
-	 * Either the oscillator clock (SYS_XTAL_IN) or the IP bus clock
-	 * (IP_CLK) can be selected as MSCAN clock source. According to
-	 * the MPC5200 user's manual, the oscillator clock is the better
+	 * Either the oscillator घड़ी (SYS_XTAL_IN) or the IP bus घड़ी
+	 * (IP_CLK) can be selected as MSCAN घड़ी source. According to
+	 * the MPC5200 user's manual, the oscillator घड़ी is the better
 	 * choice as it has less jitter. For this reason, it is selected
-	 * by default. Unfortunately, it can not be selected for the old
+	 * by शेष. Unक्रमtunately, it can not be selected क्रम the old
 	 * MPC5200 Rev. A chips due to a hardware bug (check errata).
 	 */
-	if (clock_name && strcmp(clock_name, "ip") == 0)
+	अगर (घड़ी_name && म_भेद(घड़ी_name, "ip") == 0)
 		*mscan_clksrc = MSCAN_CLKSRC_BUS;
-	else
+	अन्यथा
 		*mscan_clksrc = MSCAN_CLKSRC_XTAL;
 
 	freq = mpc5xxx_get_bus_frequency(ofdev->dev.of_node);
-	if (!freq)
-		return 0;
+	अगर (!freq)
+		वापस 0;
 
-	if (*mscan_clksrc == MSCAN_CLKSRC_BUS || pvr == 0x80822011)
-		return freq;
+	अगर (*mscan_clksrc == MSCAN_CLKSRC_BUS || pvr == 0x80822011)
+		वापस freq;
 
-	/* Determine SYS_XTAL_IN frequency from the clock domain settings */
-	np_cdm = of_find_matching_node(NULL, mpc52xx_cdm_ids);
-	if (!np_cdm) {
+	/* Determine SYS_XTAL_IN frequency from the घड़ी करोमुख्य settings */
+	np_cdm = of_find_matching_node(शून्य, mpc52xx_cdm_ids);
+	अगर (!np_cdm) अणु
 		dev_err(&ofdev->dev, "can't get clock node!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	cdm = of_iomap(np_cdm, 0);
-	if (!cdm) {
+	अगर (!cdm) अणु
 		of_node_put(np_cdm);
 		dev_err(&ofdev->dev, "can't map clock node!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (in_8(&cdm->ipb_clk_sel) & 0x1)
+	अगर (in_8(&cdm->ipb_clk_sel) & 0x1)
 		freq *= 2;
 	val = in_be32(&cdm->rstcfg);
 
@@ -91,306 +92,306 @@ static u32 mpc52xx_can_get_clock(struct platform_device *ofdev,
 	of_node_put(np_cdm);
 	iounmap(cdm);
 
-	return freq;
-}
-#else /* !CONFIG_PPC_MPC52xx */
-static u32 mpc52xx_can_get_clock(struct platform_device *ofdev,
-				 const char *clock_name, int *mscan_clksrc)
-{
-	return 0;
-}
-#endif /* CONFIG_PPC_MPC52xx */
+	वापस freq;
+पूर्ण
+#अन्यथा /* !CONFIG_PPC_MPC52xx */
+अटल u32 mpc52xx_can_get_घड़ी(काष्ठा platक्रमm_device *ofdev,
+				 स्थिर अक्षर *घड़ी_name, पूर्णांक *mscan_clksrc)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_MPC52xx */
 
-#ifdef CONFIG_PPC_MPC512x
-static u32 mpc512x_can_get_clock(struct platform_device *ofdev,
-				 const char *clock_source, int *mscan_clksrc)
-{
-	struct device_node *np;
-	u32 clockdiv;
-	enum {
+#अगर_घोषित CONFIG_PPC_MPC512x
+अटल u32 mpc512x_can_get_घड़ी(काष्ठा platक्रमm_device *ofdev,
+				 स्थिर अक्षर *घड़ी_source, पूर्णांक *mscan_clksrc)
+अणु
+	काष्ठा device_node *np;
+	u32 घड़ीभाग;
+	क्रमागत अणु
 		CLK_FROM_AUTO,
 		CLK_FROM_IPS,
 		CLK_FROM_SYS,
 		CLK_FROM_REF,
-	} clk_from;
-	struct clk *clk_in, *clk_can;
-	unsigned long freq_calc;
-	struct mscan_priv *priv;
-	struct clk *clk_ipg;
+	पूर्ण clk_from;
+	काष्ठा clk *clk_in, *clk_can;
+	अचिन्हित दीर्घ freq_calc;
+	काष्ठा mscan_priv *priv;
+	काष्ठा clk *clk_ipg;
 
-	/* the caller passed in the clock source spec that was read from
-	 * the device tree, get the optional clock divider as well
+	/* the caller passed in the घड़ी source spec that was पढ़ो from
+	 * the device tree, get the optional घड़ी भागider as well
 	 */
 	np = ofdev->dev.of_node;
-	clockdiv = 1;
-	of_property_read_u32(np, "fsl,mscan-clock-divider", &clockdiv);
+	घड़ीभाग = 1;
+	of_property_पढ़ो_u32(np, "fsl,mscan-clock-divider", &घड़ीभाग);
 	dev_dbg(&ofdev->dev, "device tree specs: clk src[%s] div[%d]\n",
-		clock_source ? clock_source : "<NULL>", clockdiv);
+		घड़ी_source ? घड़ी_source : "<NULL>", घड़ीभाग);
 
-	/* when clock-source is 'ip', the CANCTL1[CLKSRC] bit needs to
-	 * get set, and the 'ips' clock is the input to the MSCAN
+	/* when घड़ी-source is 'ip', the CANCTL1[CLKSRC] bit needs to
+	 * get set, and the 'ips' घड़ी is the input to the MSCAN
 	 * component
 	 *
-	 * for clock-source values of 'ref' or 'sys' the CANCTL1[CLKSRC]
-	 * bit needs to get cleared, an optional clock-divider may have
-	 * been specified (the default value is 1), the appropriate
+	 * क्रम घड़ी-source values of 'ref' or 'sys' the CANCTL1[CLKSRC]
+	 * bit needs to get cleared, an optional घड़ी-भागider may have
+	 * been specअगरied (the शेष value is 1), the appropriate
 	 * MSCAN related MCLK is the input to the MSCAN component
 	 *
-	 * in the absence of a clock-source spec, first an optimal clock
-	 * gets determined based on the 'sys' clock, if that fails the
-	 * 'ref' clock is used
+	 * in the असलence of a घड़ी-source spec, first an optimal घड़ी
+	 * माला_लो determined based on the 'sys' घड़ी, अगर that fails the
+	 * 'ref' घड़ी is used
 	 */
 	clk_from = CLK_FROM_AUTO;
-	if (clock_source) {
-		/* interpret the device tree's spec for the clock source */
-		if (!strcmp(clock_source, "ip"))
+	अगर (घड़ी_source) अणु
+		/* पूर्णांकerpret the device tree's spec क्रम the घड़ी source */
+		अगर (!म_भेद(घड़ी_source, "ip"))
 			clk_from = CLK_FROM_IPS;
-		else if (!strcmp(clock_source, "sys"))
+		अन्यथा अगर (!म_भेद(घड़ी_source, "sys"))
 			clk_from = CLK_FROM_SYS;
-		else if (!strcmp(clock_source, "ref"))
+		अन्यथा अगर (!म_भेद(घड़ी_source, "ref"))
 			clk_from = CLK_FROM_REF;
-		else
-			goto err_invalid;
+		अन्यथा
+			जाओ err_invalid;
 		dev_dbg(&ofdev->dev, "got a clk source spec[%d]\n", clk_from);
-	}
-	if (clk_from == CLK_FROM_AUTO) {
-		/* no spec so far, try the 'sys' clock; round to the
-		 * next MHz and see if we can get a multiple of 16MHz
+	पूर्ण
+	अगर (clk_from == CLK_FROM_AUTO) अणु
+		/* no spec so far, try the 'sys' घड़ी; round to the
+		 * next MHz and see अगर we can get a multiple of 16MHz
 		 */
 		dev_dbg(&ofdev->dev, "no clk source spec, trying SYS\n");
 		clk_in = devm_clk_get(&ofdev->dev, "sys");
-		if (IS_ERR(clk_in))
-			goto err_notavail;
+		अगर (IS_ERR(clk_in))
+			जाओ err_notavail;
 		freq_calc = clk_get_rate(clk_in);
 		freq_calc +=  499999;
 		freq_calc /= 1000000;
 		freq_calc *= 1000000;
-		if ((freq_calc % 16000000) == 0) {
+		अगर ((freq_calc % 16000000) == 0) अणु
 			clk_from = CLK_FROM_SYS;
-			clockdiv = freq_calc / 16000000;
+			घड़ीभाग = freq_calc / 16000000;
 			dev_dbg(&ofdev->dev,
 				"clk fit, sys[%lu] div[%d] freq[%lu]\n",
-				freq_calc, clockdiv, freq_calc / clockdiv);
-		}
-	}
-	if (clk_from == CLK_FROM_AUTO) {
-		/* no spec so far, use the 'ref' clock */
+				freq_calc, घड़ीभाग, freq_calc / घड़ीभाग);
+		पूर्ण
+	पूर्ण
+	अगर (clk_from == CLK_FROM_AUTO) अणु
+		/* no spec so far, use the 'ref' घड़ी */
 		dev_dbg(&ofdev->dev, "no clk source spec, trying REF\n");
 		clk_in = devm_clk_get(&ofdev->dev, "ref");
-		if (IS_ERR(clk_in))
-			goto err_notavail;
+		अगर (IS_ERR(clk_in))
+			जाओ err_notavail;
 		clk_from = CLK_FROM_REF;
 		freq_calc = clk_get_rate(clk_in);
 		dev_dbg(&ofdev->dev,
 			"clk fit, ref[%lu] (no div) freq[%lu]\n",
 			freq_calc, freq_calc);
-	}
+	पूर्ण
 
-	/* select IPS or MCLK as the MSCAN input (returned to the caller),
-	 * setup the MCLK mux source and rate if applicable, apply the
-	 * optionally specified or derived above divider, and determine
-	 * the actual resulting clock rate to return to the caller
+	/* select IPS or MCLK as the MSCAN input (वापसed to the caller),
+	 * setup the MCLK mux source and rate अगर applicable, apply the
+	 * optionally specअगरied or derived above भागider, and determine
+	 * the actual resulting घड़ी rate to वापस to the caller
 	 */
-	switch (clk_from) {
-	case CLK_FROM_IPS:
+	चयन (clk_from) अणु
+	हाल CLK_FROM_IPS:
 		clk_can = devm_clk_get(&ofdev->dev, "ips");
-		if (IS_ERR(clk_can))
-			goto err_notavail;
+		अगर (IS_ERR(clk_can))
+			जाओ err_notavail;
 		priv = netdev_priv(dev_get_drvdata(&ofdev->dev));
 		priv->clk_can = clk_can;
 		freq_calc = clk_get_rate(clk_can);
 		*mscan_clksrc = MSCAN_CLKSRC_IPS;
 		dev_dbg(&ofdev->dev, "clk from IPS, clksrc[%d] freq[%lu]\n",
 			*mscan_clksrc, freq_calc);
-		break;
-	case CLK_FROM_SYS:
-	case CLK_FROM_REF:
+		अवरोध;
+	हाल CLK_FROM_SYS:
+	हाल CLK_FROM_REF:
 		clk_can = devm_clk_get(&ofdev->dev, "mclk");
-		if (IS_ERR(clk_can))
-			goto err_notavail;
+		अगर (IS_ERR(clk_can))
+			जाओ err_notavail;
 		priv = netdev_priv(dev_get_drvdata(&ofdev->dev));
 		priv->clk_can = clk_can;
-		if (clk_from == CLK_FROM_SYS)
+		अगर (clk_from == CLK_FROM_SYS)
 			clk_in = devm_clk_get(&ofdev->dev, "sys");
-		if (clk_from == CLK_FROM_REF)
+		अगर (clk_from == CLK_FROM_REF)
 			clk_in = devm_clk_get(&ofdev->dev, "ref");
-		if (IS_ERR(clk_in))
-			goto err_notavail;
+		अगर (IS_ERR(clk_in))
+			जाओ err_notavail;
 		clk_set_parent(clk_can, clk_in);
 		freq_calc = clk_get_rate(clk_in);
-		freq_calc /= clockdiv;
+		freq_calc /= घड़ीभाग;
 		clk_set_rate(clk_can, freq_calc);
 		freq_calc = clk_get_rate(clk_can);
 		*mscan_clksrc = MSCAN_CLKSRC_BUS;
 		dev_dbg(&ofdev->dev, "clk from MCLK, clksrc[%d] freq[%lu]\n",
 			*mscan_clksrc, freq_calc);
-		break;
-	default:
-		goto err_invalid;
-	}
+		अवरोध;
+	शेष:
+		जाओ err_invalid;
+	पूर्ण
 
-	/* the above clk_can item is used for the bitrate, access to
-	 * the peripheral's register set needs the clk_ipg item
+	/* the above clk_can item is used क्रम the bitrate, access to
+	 * the peripheral's रेजिस्टर set needs the clk_ipg item
 	 */
 	clk_ipg = devm_clk_get(&ofdev->dev, "ipg");
-	if (IS_ERR(clk_ipg))
-		goto err_notavail_ipg;
-	if (clk_prepare_enable(clk_ipg))
-		goto err_notavail_ipg;
+	अगर (IS_ERR(clk_ipg))
+		जाओ err_notavail_ipg;
+	अगर (clk_prepare_enable(clk_ipg))
+		जाओ err_notavail_ipg;
 	priv = netdev_priv(dev_get_drvdata(&ofdev->dev));
 	priv->clk_ipg = clk_ipg;
 
-	/* return the determined clock source rate */
-	return freq_calc;
+	/* वापस the determined घड़ी source rate */
+	वापस freq_calc;
 
 err_invalid:
 	dev_err(&ofdev->dev, "invalid clock source specification\n");
-	/* clock source rate could not get determined */
-	return 0;
+	/* घड़ी source rate could not get determined */
+	वापस 0;
 
 err_notavail:
 	dev_err(&ofdev->dev, "cannot acquire or setup bitrate clock source\n");
-	/* clock source rate could not get determined */
-	return 0;
+	/* घड़ी source rate could not get determined */
+	वापस 0;
 
 err_notavail_ipg:
 	dev_err(&ofdev->dev, "cannot acquire or setup register clock\n");
-	/* clock source rate could not get determined */
-	return 0;
-}
+	/* घड़ी source rate could not get determined */
+	वापस 0;
+पूर्ण
 
-static void mpc512x_can_put_clock(struct platform_device *ofdev)
-{
-	struct mscan_priv *priv;
+अटल व्योम mpc512x_can_put_घड़ी(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा mscan_priv *priv;
 
 	priv = netdev_priv(dev_get_drvdata(&ofdev->dev));
-	if (priv->clk_ipg)
+	अगर (priv->clk_ipg)
 		clk_disable_unprepare(priv->clk_ipg);
-}
-#else /* !CONFIG_PPC_MPC512x */
-static u32 mpc512x_can_get_clock(struct platform_device *ofdev,
-				 const char *clock_name, int *mscan_clksrc)
-{
-	return 0;
-}
-#define mpc512x_can_put_clock NULL
-#endif /* CONFIG_PPC_MPC512x */
+पूर्ण
+#अन्यथा /* !CONFIG_PPC_MPC512x */
+अटल u32 mpc512x_can_get_घड़ी(काष्ठा platक्रमm_device *ofdev,
+				 स्थिर अक्षर *घड़ी_name, पूर्णांक *mscan_clksrc)
+अणु
+	वापस 0;
+पूर्ण
+#घोषणा mpc512x_can_put_घड़ी शून्य
+#पूर्ण_अगर /* CONFIG_PPC_MPC512x */
 
-static const struct of_device_id mpc5xxx_can_table[];
-static int mpc5xxx_can_probe(struct platform_device *ofdev)
-{
-	const struct of_device_id *match;
-	const struct mpc5xxx_can_data *data;
-	struct device_node *np = ofdev->dev.of_node;
-	struct net_device *dev;
-	struct mscan_priv *priv;
-	void __iomem *base;
-	const char *clock_name = NULL;
-	int irq, mscan_clksrc = 0;
-	int err = -ENOMEM;
+अटल स्थिर काष्ठा of_device_id mpc5xxx_can_table[];
+अटल पूर्णांक mpc5xxx_can_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	स्थिर काष्ठा mpc5xxx_can_data *data;
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	काष्ठा net_device *dev;
+	काष्ठा mscan_priv *priv;
+	व्योम __iomem *base;
+	स्थिर अक्षर *घड़ी_name = शून्य;
+	पूर्णांक irq, mscan_clksrc = 0;
+	पूर्णांक err = -ENOMEM;
 
 	match = of_match_device(mpc5xxx_can_table, &ofdev->dev);
-	if (!match)
-		return -EINVAL;
+	अगर (!match)
+		वापस -EINVAL;
 	data = match->data;
 
 	base = of_iomap(np, 0);
-	if (!base) {
+	अगर (!base) अणु
 		dev_err(&ofdev->dev, "couldn't ioremap\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	irq = irq_of_parse_and_map(np, 0);
-	if (!irq) {
+	अगर (!irq) अणु
 		dev_err(&ofdev->dev, "no irq found\n");
 		err = -ENODEV;
-		goto exit_unmap_mem;
-	}
+		जाओ निकास_unmap_mem;
+	पूर्ण
 
 	dev = alloc_mscandev();
-	if (!dev)
-		goto exit_dispose_irq;
-	platform_set_drvdata(ofdev, dev);
+	अगर (!dev)
+		जाओ निकास_dispose_irq;
+	platक्रमm_set_drvdata(ofdev, dev);
 	SET_NETDEV_DEV(dev, &ofdev->dev);
 
 	priv = netdev_priv(dev);
 	priv->reg_base = base;
 	dev->irq = irq;
 
-	clock_name = of_get_property(np, "fsl,mscan-clock-source", NULL);
+	घड़ी_name = of_get_property(np, "fsl,mscan-clock-source", शून्य);
 
 	BUG_ON(!data);
 	priv->type = data->type;
-	priv->can.clock.freq = data->get_clock(ofdev, clock_name,
+	priv->can.घड़ी.freq = data->get_घड़ी(ofdev, घड़ी_name,
 					       &mscan_clksrc);
-	if (!priv->can.clock.freq) {
+	अगर (!priv->can.घड़ी.freq) अणु
 		dev_err(&ofdev->dev, "couldn't get MSCAN clock properties\n");
-		goto exit_free_mscan;
-	}
+		जाओ निकास_मुक्त_mscan;
+	पूर्ण
 
-	err = register_mscandev(dev, mscan_clksrc);
-	if (err) {
+	err = रेजिस्टर_mscandev(dev, mscan_clksrc);
+	अगर (err) अणु
 		dev_err(&ofdev->dev, "registering %s failed (err=%d)\n",
 			DRV_NAME, err);
-		goto exit_free_mscan;
-	}
+		जाओ निकास_मुक्त_mscan;
+	पूर्ण
 
 	dev_info(&ofdev->dev, "MSCAN at 0x%p, irq %d, clock %d Hz\n",
-		 priv->reg_base, dev->irq, priv->can.clock.freq);
+		 priv->reg_base, dev->irq, priv->can.घड़ी.freq);
 
-	return 0;
+	वापस 0;
 
-exit_free_mscan:
-	free_candev(dev);
-exit_dispose_irq:
+निकास_मुक्त_mscan:
+	मुक्त_candev(dev);
+निकास_dispose_irq:
 	irq_dispose_mapping(irq);
-exit_unmap_mem:
+निकास_unmap_mem:
 	iounmap(base);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mpc5xxx_can_remove(struct platform_device *ofdev)
-{
-	const struct of_device_id *match;
-	const struct mpc5xxx_can_data *data;
-	struct net_device *dev = platform_get_drvdata(ofdev);
-	struct mscan_priv *priv = netdev_priv(dev);
+अटल पूर्णांक mpc5xxx_can_हटाओ(काष्ठा platक्रमm_device *ofdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	स्थिर काष्ठा mpc5xxx_can_data *data;
+	काष्ठा net_device *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
 
 	match = of_match_device(mpc5xxx_can_table, &ofdev->dev);
-	data = match ? match->data : NULL;
+	data = match ? match->data : शून्य;
 
-	unregister_mscandev(dev);
-	if (data && data->put_clock)
-		data->put_clock(ofdev);
+	unरेजिस्टर_mscandev(dev);
+	अगर (data && data->put_घड़ी)
+		data->put_घड़ी(ofdev);
 	iounmap(priv->reg_base);
 	irq_dispose_mapping(dev->irq);
-	free_candev(dev);
+	मुक्त_candev(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static struct mscan_regs saved_regs;
-static int mpc5xxx_can_suspend(struct platform_device *ofdev, pm_message_t state)
-{
-	struct net_device *dev = platform_get_drvdata(ofdev);
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs *regs = (struct mscan_regs *)priv->reg_base;
+#अगर_घोषित CONFIG_PM
+अटल काष्ठा mscan_regs saved_regs;
+अटल पूर्णांक mpc5xxx_can_suspend(काष्ठा platक्रमm_device *ofdev, pm_message_t state)
+अणु
+	काष्ठा net_device *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs *regs = (काष्ठा mscan_regs *)priv->reg_base;
 
-	_memcpy_fromio(&saved_regs, regs, sizeof(*regs));
+	_स_नकल_fromio(&saved_regs, regs, माप(*regs));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mpc5xxx_can_resume(struct platform_device *ofdev)
-{
-	struct net_device *dev = platform_get_drvdata(ofdev);
-	struct mscan_priv *priv = netdev_priv(dev);
-	struct mscan_regs *regs = (struct mscan_regs *)priv->reg_base;
+अटल पूर्णांक mpc5xxx_can_resume(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा net_device *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा mscan_priv *priv = netdev_priv(dev);
+	काष्ठा mscan_regs *regs = (काष्ठा mscan_regs *)priv->reg_base;
 
 	regs->canctl0 |= MSCAN_INITRQ;
-	while (!(regs->canctl1 & MSCAN_INITAK))
+	जबतक (!(regs->canctl1 & MSCAN_INITAK))
 		udelay(10);
 
 	regs->canctl1 = saved_regs.canctl1;
@@ -399,8 +400,8 @@ static int mpc5xxx_can_resume(struct platform_device *ofdev)
 	regs->canidac = saved_regs.canidac;
 
 	/* restore masks, buffers etc. */
-	_memcpy_toio(&regs->canidar1_0, (void *)&saved_regs.canidar1_0,
-		     sizeof(*regs) - offsetof(struct mscan_regs, canidar1_0));
+	_स_नकल_toio(&regs->canidar1_0, (व्योम *)&saved_regs.canidar1_0,
+		     माप(*regs) - दुरत्व(काष्ठा mscan_regs, canidar1_0));
 
 	regs->canctl0 &= ~MSCAN_INITRQ;
 	regs->cantbsel = saved_regs.cantbsel;
@@ -408,44 +409,44 @@ static int mpc5xxx_can_resume(struct platform_device *ofdev)
 	regs->cantier = saved_regs.cantier;
 	regs->canctl0 = saved_regs.canctl0;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct mpc5xxx_can_data mpc5200_can_data = {
+अटल स्थिर काष्ठा mpc5xxx_can_data mpc5200_can_data = अणु
 	.type = MSCAN_TYPE_MPC5200,
-	.get_clock = mpc52xx_can_get_clock,
-	/* .put_clock not applicable */
-};
+	.get_घड़ी = mpc52xx_can_get_घड़ी,
+	/* .put_घड़ी not applicable */
+पूर्ण;
 
-static const struct mpc5xxx_can_data mpc5121_can_data = {
+अटल स्थिर काष्ठा mpc5xxx_can_data mpc5121_can_data = अणु
 	.type = MSCAN_TYPE_MPC5121,
-	.get_clock = mpc512x_can_get_clock,
-	.put_clock = mpc512x_can_put_clock,
-};
+	.get_घड़ी = mpc512x_can_get_घड़ी,
+	.put_घड़ी = mpc512x_can_put_घड़ी,
+पूर्ण;
 
-static const struct of_device_id mpc5xxx_can_table[] = {
-	{ .compatible = "fsl,mpc5200-mscan", .data = &mpc5200_can_data, },
+अटल स्थिर काष्ठा of_device_id mpc5xxx_can_table[] = अणु
+	अणु .compatible = "fsl,mpc5200-mscan", .data = &mpc5200_can_data, पूर्ण,
 	/* Note that only MPC5121 Rev. 2 (and later) is supported */
-	{ .compatible = "fsl,mpc5121-mscan", .data = &mpc5121_can_data, },
-	{},
-};
+	अणु .compatible = "fsl,mpc5121-mscan", .data = &mpc5121_can_data, पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mpc5xxx_can_table);
 
-static struct platform_driver mpc5xxx_can_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mpc5xxx_can_driver = अणु
+	.driver = अणु
 		.name = "mpc5xxx_can",
 		.of_match_table = mpc5xxx_can_table,
-	},
+	पूर्ण,
 	.probe = mpc5xxx_can_probe,
-	.remove = mpc5xxx_can_remove,
-#ifdef CONFIG_PM
+	.हटाओ = mpc5xxx_can_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.suspend = mpc5xxx_can_suspend,
 	.resume = mpc5xxx_can_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-module_platform_driver(mpc5xxx_can_driver);
+module_platक्रमm_driver(mpc5xxx_can_driver);
 
 MODULE_AUTHOR("Wolfgang Grandegger <wg@grandegger.com>");
 MODULE_DESCRIPTION("Freescale MPC5xxx CAN driver");

@@ -1,258 +1,259 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 /*
- * BPF static linker
+ * BPF अटल linker
  *
  * Copyright (c) 2021 Facebook
  */
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <linux/err.h>
-#include <linux/btf.h>
-#include <elf.h>
-#include <libelf.h>
-#include <gelf.h>
-#include <fcntl.h>
-#include "libbpf.h"
-#include "btf.h"
-#include "libbpf_internal.h"
-#include "strset.h"
+#समावेश <stdbool.h>
+#समावेश <मानकघोष.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/btf.h>
+#समावेश <elf.h>
+#समावेश <libelf.h>
+#समावेश <gelf.h>
+#समावेश <fcntl.h>
+#समावेश "libbpf.h"
+#समावेश "btf.h"
+#समावेश "libbpf_internal.h"
+#समावेश "strset.h"
 
-#define BTF_EXTERN_SEC ".extern"
+#घोषणा BTF_EXTERN_SEC ".extern"
 
-struct src_sec {
-	const char *sec_name;
+काष्ठा src_sec अणु
+	स्थिर अक्षर *sec_name;
 	/* positional (not necessarily ELF) index in an array of sections */
-	int id;
+	पूर्णांक id;
 	/* positional (not necessarily ELF) index of a matching section in a final object file */
-	int dst_id;
+	पूर्णांक dst_id;
 	/* section data offset in a matching output section */
-	int dst_off;
+	पूर्णांक dst_off;
 	/* whether section is omitted from the final ELF file */
 	bool skipped;
 	/* whether section is an ephemeral section, not mapped to an ELF section */
 	bool ephemeral;
 
 	/* ELF info */
-	size_t sec_idx;
+	माप_प्रकार sec_idx;
 	Elf_Scn *scn;
 	Elf64_Shdr *shdr;
 	Elf_Data *data;
 
 	/* corresponding BTF DATASEC type ID */
-	int sec_type_id;
-};
+	पूर्णांक sec_type_id;
+पूर्ण;
 
-struct src_obj {
-	const char *filename;
-	int fd;
+काष्ठा src_obj अणु
+	स्थिर अक्षर *filename;
+	पूर्णांक fd;
 	Elf *elf;
 	/* Section header strings section index */
-	size_t shstrs_sec_idx;
+	माप_प्रकार shstrs_sec_idx;
 	/* SYMTAB section index */
-	size_t symtab_sec_idx;
+	माप_प्रकार symtab_sec_idx;
 
-	struct btf *btf;
-	struct btf_ext *btf_ext;
+	काष्ठा btf *btf;
+	काष्ठा btf_ext *btf_ext;
 
 	/* List of sections (including ephemeral). Slot zero is unused. */
-	struct src_sec *secs;
-	int sec_cnt;
+	काष्ठा src_sec *secs;
+	पूर्णांक sec_cnt;
 
 	/* mapping of symbol indices from src to dst ELF */
-	int *sym_map;
+	पूर्णांक *sym_map;
 	/* mapping from the src BTF type IDs to dst ones */
-	int *btf_type_map;
-};
+	पूर्णांक *btf_type_map;
+पूर्ण;
 
 /* single .BTF.ext data section */
-struct btf_ext_sec_data {
-	size_t rec_cnt;
+काष्ठा btf_ext_sec_data अणु
+	माप_प्रकार rec_cnt;
 	__u32 rec_sz;
-	void *recs;
-};
+	व्योम *recs;
+पूर्ण;
 
-struct glob_sym {
+काष्ठा glob_sym अणु
 	/* ELF symbol index */
-	int sym_idx;
-	/* associated section id for .ksyms, .kconfig, etc, but not .extern */
-	int sec_id;
-	/* extern name offset in STRTAB */
-	int name_off;
+	पूर्णांक sym_idx;
+	/* associated section id क्रम .ksyms, .kconfig, etc, but not .बाह्य */
+	पूर्णांक sec_id;
+	/* बाह्य name offset in STRTAB */
+	पूर्णांक name_off;
 	/* optional associated BTF type ID */
-	int btf_id;
-	/* BTF type ID to which VAR/FUNC type is pointing to; used for
-	 * rewriting types when extern VAR/FUNC is resolved to a concrete
+	पूर्णांक btf_id;
+	/* BTF type ID to which VAR/FUNC type is poपूर्णांकing to; used क्रम
+	 * rewriting types when बाह्य VAR/FUNC is resolved to a concrete
 	 * definition
 	 */
-	int underlying_btf_id;
-	/* sec_var index in the corresponding dst_sec, if exists */
-	int var_idx;
+	पूर्णांक underlying_btf_id;
+	/* sec_var index in the corresponding dst_sec, अगर exists */
+	पूर्णांक var_idx;
 
-	/* extern or resolved/global symbol */
-	bool is_extern;
+	/* बाह्य or resolved/global symbol */
+	bool is_बाह्य;
 	/* weak or strong symbol, never goes back from strong to weak */
 	bool is_weak;
-};
+पूर्ण;
 
-struct dst_sec {
-	char *sec_name;
+काष्ठा dst_sec अणु
+	अक्षर *sec_name;
 	/* positional (not necessarily ELF) index in an array of sections */
-	int id;
+	पूर्णांक id;
 
 	bool ephemeral;
 
 	/* ELF info */
-	size_t sec_idx;
+	माप_प्रकार sec_idx;
 	Elf_Scn *scn;
 	Elf64_Shdr *shdr;
 	Elf_Data *data;
 
 	/* final output section size */
-	int sec_sz;
+	पूर्णांक sec_sz;
 	/* final output contents of the section */
-	void *raw_data;
+	व्योम *raw_data;
 
 	/* corresponding STT_SECTION symbol index in SYMTAB */
-	int sec_sym_idx;
+	पूर्णांक sec_sym_idx;
 
 	/* section's DATASEC variable info, emitted on BTF finalization */
 	bool has_btf;
-	int sec_var_cnt;
-	struct btf_var_secinfo *sec_vars;
+	पूर्णांक sec_var_cnt;
+	काष्ठा btf_var_secinfo *sec_vars;
 
 	/* section's .BTF.ext data */
-	struct btf_ext_sec_data func_info;
-	struct btf_ext_sec_data line_info;
-	struct btf_ext_sec_data core_relo_info;
-};
+	काष्ठा btf_ext_sec_data func_info;
+	काष्ठा btf_ext_sec_data line_info;
+	काष्ठा btf_ext_sec_data core_relo_info;
+पूर्ण;
 
-struct bpf_linker {
-	char *filename;
-	int fd;
+काष्ठा bpf_linker अणु
+	अक्षर *filename;
+	पूर्णांक fd;
 	Elf *elf;
 	Elf64_Ehdr *elf_hdr;
 
 	/* Output sections metadata */
-	struct dst_sec *secs;
-	int sec_cnt;
+	काष्ठा dst_sec *secs;
+	पूर्णांक sec_cnt;
 
-	struct strset *strtab_strs; /* STRTAB unique strings */
-	size_t strtab_sec_idx; /* STRTAB section index */
-	size_t symtab_sec_idx; /* SYMTAB section index */
+	काष्ठा strset *strtab_strs; /* STRTAB unique strings */
+	माप_प्रकार strtab_sec_idx; /* STRTAB section index */
+	माप_प्रकार symtab_sec_idx; /* SYMTAB section index */
 
-	struct btf *btf;
-	struct btf_ext *btf_ext;
+	काष्ठा btf *btf;
+	काष्ठा btf_ext *btf_ext;
 
-	/* global (including extern) ELF symbols */
-	int glob_sym_cnt;
-	struct glob_sym *glob_syms;
-};
+	/* global (including बाह्य) ELF symbols */
+	पूर्णांक glob_sym_cnt;
+	काष्ठा glob_sym *glob_syms;
+पूर्ण;
 
-#define pr_warn_elf(fmt, ...)									\
-	libbpf_print(LIBBPF_WARN, "libbpf: " fmt ": %s\n", ##__VA_ARGS__, elf_errmsg(-1))
+#घोषणा pr_warn_elf(fmt, ...)									\
+	libbpf_prपूर्णांक(LIBBPF_WARN, "libbpf: " fmt ": %s\n", ##__VA_ARGS__, elf_errmsg(-1))
 
-static int init_output_elf(struct bpf_linker *linker, const char *file);
+अटल पूर्णांक init_output_elf(काष्ठा bpf_linker *linker, स्थिर अक्षर *file);
 
-static int linker_load_obj_file(struct bpf_linker *linker, const char *filename, struct src_obj *obj);
-static int linker_sanity_check_elf(struct src_obj *obj);
-static int linker_sanity_check_elf_symtab(struct src_obj *obj, struct src_sec *sec);
-static int linker_sanity_check_elf_relos(struct src_obj *obj, struct src_sec *sec);
-static int linker_sanity_check_btf(struct src_obj *obj);
-static int linker_sanity_check_btf_ext(struct src_obj *obj);
-static int linker_fixup_btf(struct src_obj *obj);
-static int linker_append_sec_data(struct bpf_linker *linker, struct src_obj *obj);
-static int linker_append_elf_syms(struct bpf_linker *linker, struct src_obj *obj);
-static int linker_append_elf_sym(struct bpf_linker *linker, struct src_obj *obj,
-				 Elf64_Sym *sym, const char *sym_name, int src_sym_idx);
-static int linker_append_elf_relos(struct bpf_linker *linker, struct src_obj *obj);
-static int linker_append_btf(struct bpf_linker *linker, struct src_obj *obj);
-static int linker_append_btf_ext(struct bpf_linker *linker, struct src_obj *obj);
+अटल पूर्णांक linker_load_obj_file(काष्ठा bpf_linker *linker, स्थिर अक्षर *filename, काष्ठा src_obj *obj);
+अटल पूर्णांक linker_sanity_check_elf(काष्ठा src_obj *obj);
+अटल पूर्णांक linker_sanity_check_elf_symtab(काष्ठा src_obj *obj, काष्ठा src_sec *sec);
+अटल पूर्णांक linker_sanity_check_elf_relos(काष्ठा src_obj *obj, काष्ठा src_sec *sec);
+अटल पूर्णांक linker_sanity_check_btf(काष्ठा src_obj *obj);
+अटल पूर्णांक linker_sanity_check_btf_ext(काष्ठा src_obj *obj);
+अटल पूर्णांक linker_fixup_btf(काष्ठा src_obj *obj);
+अटल पूर्णांक linker_append_sec_data(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj);
+अटल पूर्णांक linker_append_elf_syms(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj);
+अटल पूर्णांक linker_append_elf_sym(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj,
+				 Elf64_Sym *sym, स्थिर अक्षर *sym_name, पूर्णांक src_sym_idx);
+अटल पूर्णांक linker_append_elf_relos(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj);
+अटल पूर्णांक linker_append_btf(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj);
+अटल पूर्णांक linker_append_btf_ext(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj);
 
-static int finalize_btf(struct bpf_linker *linker);
-static int finalize_btf_ext(struct bpf_linker *linker);
+अटल पूर्णांक finalize_btf(काष्ठा bpf_linker *linker);
+अटल पूर्णांक finalize_btf_ext(काष्ठा bpf_linker *linker);
 
-void bpf_linker__free(struct bpf_linker *linker)
-{
-	int i;
+व्योम bpf_linker__मुक्त(काष्ठा bpf_linker *linker)
+अणु
+	पूर्णांक i;
 
-	if (!linker)
-		return;
+	अगर (!linker)
+		वापस;
 
-	free(linker->filename);
+	मुक्त(linker->filename);
 
-	if (linker->elf)
+	अगर (linker->elf)
 		elf_end(linker->elf);
 
-	if (linker->fd >= 0)
-		close(linker->fd);
+	अगर (linker->fd >= 0)
+		बंद(linker->fd);
 
-	strset__free(linker->strtab_strs);
+	strset__मुक्त(linker->strtab_strs);
 
-	btf__free(linker->btf);
-	btf_ext__free(linker->btf_ext);
+	btf__मुक्त(linker->btf);
+	btf_ext__मुक्त(linker->btf_ext);
 
-	for (i = 1; i < linker->sec_cnt; i++) {
-		struct dst_sec *sec = &linker->secs[i];
+	क्रम (i = 1; i < linker->sec_cnt; i++) अणु
+		काष्ठा dst_sec *sec = &linker->secs[i];
 
-		free(sec->sec_name);
-		free(sec->raw_data);
-		free(sec->sec_vars);
+		मुक्त(sec->sec_name);
+		मुक्त(sec->raw_data);
+		मुक्त(sec->sec_vars);
 
-		free(sec->func_info.recs);
-		free(sec->line_info.recs);
-		free(sec->core_relo_info.recs);
-	}
-	free(linker->secs);
+		मुक्त(sec->func_info.recs);
+		मुक्त(sec->line_info.recs);
+		मुक्त(sec->core_relo_info.recs);
+	पूर्ण
+	मुक्त(linker->secs);
 
-	free(linker);
-}
+	मुक्त(linker);
+पूर्ण
 
-struct bpf_linker *bpf_linker__new(const char *filename, struct bpf_linker_opts *opts)
-{
-	struct bpf_linker *linker;
-	int err;
+काष्ठा bpf_linker *bpf_linker__new(स्थिर अक्षर *filename, काष्ठा bpf_linker_opts *opts)
+अणु
+	काष्ठा bpf_linker *linker;
+	पूर्णांक err;
 
-	if (!OPTS_VALID(opts, bpf_linker_opts))
-		return NULL;
+	अगर (!OPTS_VALID(opts, bpf_linker_opts))
+		वापस शून्य;
 
-	if (elf_version(EV_CURRENT) == EV_NONE) {
+	अगर (elf_version(EV_CURRENT) == EV_NONE) अणु
 		pr_warn_elf("libelf initialization failed");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	linker = calloc(1, sizeof(*linker));
-	if (!linker)
-		return NULL;
+	linker = सुस्मृति(1, माप(*linker));
+	अगर (!linker)
+		वापस शून्य;
 
 	linker->fd = -1;
 
 	err = init_output_elf(linker, filename);
-	if (err)
-		goto err_out;
+	अगर (err)
+		जाओ err_out;
 
-	return linker;
+	वापस linker;
 
 err_out:
-	bpf_linker__free(linker);
-	return NULL;
-}
+	bpf_linker__मुक्त(linker);
+	वापस शून्य;
+पूर्ण
 
-static struct dst_sec *add_dst_sec(struct bpf_linker *linker, const char *sec_name)
-{
-	struct dst_sec *secs = linker->secs, *sec;
-	size_t new_cnt = linker->sec_cnt ? linker->sec_cnt + 1 : 2;
+अटल काष्ठा dst_sec *add_dst_sec(काष्ठा bpf_linker *linker, स्थिर अक्षर *sec_name)
+अणु
+	काष्ठा dst_sec *secs = linker->secs, *sec;
+	माप_प्रकार new_cnt = linker->sec_cnt ? linker->sec_cnt + 1 : 2;
 
-	secs = libbpf_reallocarray(secs, new_cnt, sizeof(*secs));
-	if (!secs)
-		return NULL;
+	secs = libbpf_पुनः_स्मृतिarray(secs, new_cnt, माप(*secs));
+	अगर (!secs)
+		वापस शून्य;
 
 	/* zero out newly allocated memory */
-	memset(secs + linker->sec_cnt, 0, (new_cnt - linker->sec_cnt) * sizeof(*secs));
+	स_रखो(secs + linker->sec_cnt, 0, (new_cnt - linker->sec_cnt) * माप(*secs));
 
 	linker->secs = secs;
 	linker->sec_cnt = new_cnt;
@@ -260,105 +261,105 @@ static struct dst_sec *add_dst_sec(struct bpf_linker *linker, const char *sec_na
 	sec = &linker->secs[new_cnt - 1];
 	sec->id = new_cnt - 1;
 	sec->sec_name = strdup(sec_name);
-	if (!sec->sec_name)
-		return NULL;
+	अगर (!sec->sec_name)
+		वापस शून्य;
 
-	return sec;
-}
+	वापस sec;
+पूर्ण
 
-static Elf64_Sym *add_new_sym(struct bpf_linker *linker, size_t *sym_idx)
-{
-	struct dst_sec *symtab = &linker->secs[linker->symtab_sec_idx];
+अटल Elf64_Sym *add_new_sym(काष्ठा bpf_linker *linker, माप_प्रकार *sym_idx)
+अणु
+	काष्ठा dst_sec *symtab = &linker->secs[linker->symtab_sec_idx];
 	Elf64_Sym *syms, *sym;
-	size_t sym_cnt = symtab->sec_sz / sizeof(*sym);
+	माप_प्रकार sym_cnt = symtab->sec_sz / माप(*sym);
 
-	syms = libbpf_reallocarray(symtab->raw_data, sym_cnt + 1, sizeof(*sym));
-	if (!syms)
-		return NULL;
+	syms = libbpf_पुनः_स्मृतिarray(symtab->raw_data, sym_cnt + 1, माप(*sym));
+	अगर (!syms)
+		वापस शून्य;
 
 	sym = &syms[sym_cnt];
-	memset(sym, 0, sizeof(*sym));
+	स_रखो(sym, 0, माप(*sym));
 
 	symtab->raw_data = syms;
-	symtab->sec_sz += sizeof(*sym);
-	symtab->shdr->sh_size += sizeof(*sym);
-	symtab->data->d_size += sizeof(*sym);
+	symtab->sec_sz += माप(*sym);
+	symtab->shdr->sh_size += माप(*sym);
+	symtab->data->d_size += माप(*sym);
 
-	if (sym_idx)
+	अगर (sym_idx)
 		*sym_idx = sym_cnt;
 
-	return sym;
-}
+	वापस sym;
+पूर्ण
 
-static int init_output_elf(struct bpf_linker *linker, const char *file)
-{
-	int err, str_off;
+अटल पूर्णांक init_output_elf(काष्ठा bpf_linker *linker, स्थिर अक्षर *file)
+अणु
+	पूर्णांक err, str_off;
 	Elf64_Sym *init_sym;
-	struct dst_sec *sec;
+	काष्ठा dst_sec *sec;
 
 	linker->filename = strdup(file);
-	if (!linker->filename)
-		return -ENOMEM;
+	अगर (!linker->filename)
+		वापस -ENOMEM;
 
-	linker->fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (linker->fd < 0) {
-		err = -errno;
+	linker->fd = खोलो(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	अगर (linker->fd < 0) अणु
+		err = -त्रुटि_सं;
 		pr_warn("failed to create '%s': %d\n", file, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	linker->elf = elf_begin(linker->fd, ELF_C_WRITE, NULL);
-	if (!linker->elf) {
+	linker->elf = elf_begin(linker->fd, ELF_C_WRITE, शून्य);
+	अगर (!linker->elf) अणु
 		pr_warn_elf("failed to create ELF object");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* ELF header */
 	linker->elf_hdr = elf64_newehdr(linker->elf);
-	if (!linker->elf_hdr) {
+	अगर (!linker->elf_hdr) अणु
 		pr_warn_elf("failed to create ELF header");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	linker->elf_hdr->e_machine = EM_BPF;
 	linker->elf_hdr->e_type = ET_REL;
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	linker->elf_hdr->e_ident[EI_DATA] = ELFDATA2LSB;
-#elif __BYTE_ORDER == __BIG_ENDIAN
+#या_अगर __BYTE_ORDER == __BIG_ENDIAN
 	linker->elf_hdr->e_ident[EI_DATA] = ELFDATA2MSB;
-#else
-#error "Unknown __BYTE_ORDER"
-#endif
+#अन्यथा
+#त्रुटि "Unknown __BYTE_ORDER"
+#पूर्ण_अगर
 
 	/* STRTAB */
-	/* initialize strset with an empty string to conform to ELF */
-	linker->strtab_strs = strset__new(INT_MAX, "", sizeof(""));
-	if (libbpf_get_error(linker->strtab_strs))
-		return libbpf_get_error(linker->strtab_strs);
+	/* initialize strset with an empty string to conक्रमm to ELF */
+	linker->strtab_strs = strset__new(पूर्णांक_उच्च, "", माप(""));
+	अगर (libbpf_get_error(linker->strtab_strs))
+		वापस libbpf_get_error(linker->strtab_strs);
 
 	sec = add_dst_sec(linker, ".strtab");
-	if (!sec)
-		return -ENOMEM;
+	अगर (!sec)
+		वापस -ENOMEM;
 
 	sec->scn = elf_newscn(linker->elf);
-	if (!sec->scn) {
+	अगर (!sec->scn) अणु
 		pr_warn_elf("failed to create STRTAB section");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	sec->shdr = elf64_getshdr(sec->scn);
-	if (!sec->shdr)
-		return -EINVAL;
+	sec->shdr = elf64_माला_लोhdr(sec->scn);
+	अगर (!sec->shdr)
+		वापस -EINVAL;
 
 	sec->data = elf_newdata(sec->scn);
-	if (!sec->data) {
+	अगर (!sec->data) अणु
 		pr_warn_elf("failed to create STRTAB data");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	str_off = strset__add_str(linker->strtab_strs, sec->sec_name);
-	if (str_off < 0)
-		return str_off;
+	अगर (str_off < 0)
+		वापस str_off;
 
 	sec->sec_idx = elf_ndxscn(sec->scn);
 	linker->elf_hdr->e_shstrndx = sec->sec_idx;
@@ -376,28 +377,28 @@ static int init_output_elf(struct bpf_linker *linker, const char *file)
 
 	/* SYMTAB */
 	sec = add_dst_sec(linker, ".symtab");
-	if (!sec)
-		return -ENOMEM;
+	अगर (!sec)
+		वापस -ENOMEM;
 
 	sec->scn = elf_newscn(linker->elf);
-	if (!sec->scn) {
+	अगर (!sec->scn) अणु
 		pr_warn_elf("failed to create SYMTAB section");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	sec->shdr = elf64_getshdr(sec->scn);
-	if (!sec->shdr)
-		return -EINVAL;
+	sec->shdr = elf64_माला_लोhdr(sec->scn);
+	अगर (!sec->shdr)
+		वापस -EINVAL;
 
 	sec->data = elf_newdata(sec->scn);
-	if (!sec->data) {
+	अगर (!sec->data) अणु
 		pr_warn_elf("failed to create SYMTAB data");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	str_off = strset__add_str(linker->strtab_strs, sec->sec_name);
-	if (str_off < 0)
-		return str_off;
+	अगर (str_off < 0)
+		वापस str_off;
 
 	sec->sec_idx = elf_ndxscn(sec->scn);
 	linker->symtab_sec_idx = sec->sec_idx;
@@ -412,18 +413,18 @@ static int init_output_elf(struct bpf_linker *linker, const char *file)
 	 */
 	sec->shdr->sh_info = 0;
 	sec->shdr->sh_addralign = 8;
-	sec->shdr->sh_entsize = sizeof(Elf64_Sym);
+	sec->shdr->sh_entsize = माप(Elf64_Sym);
 
 	/* .BTF */
 	linker->btf = btf__new_empty();
 	err = libbpf_get_error(linker->btf);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* add the special all-zero symbol */
-	init_sym = add_new_sym(linker, NULL);
-	if (!init_sym)
-		return -EINVAL;
+	init_sym = add_new_sym(linker, शून्य);
+	अगर (!init_sym)
+		वापस -EINVAL;
 
 	init_sym->st_name = 0;
 	init_sym->st_info = 0;
@@ -432,16 +433,16 @@ static int init_output_elf(struct bpf_linker *linker, const char *file)
 	init_sym->st_value = 0;
 	init_sym->st_size = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bpf_linker__add_file(struct bpf_linker *linker, const char *filename)
-{
-	struct src_obj obj = {};
-	int err = 0;
+पूर्णांक bpf_linker__add_file(काष्ठा bpf_linker *linker, स्थिर अक्षर *filename)
+अणु
+	काष्ठा src_obj obj = अणुपूर्ण;
+	पूर्णांक err = 0;
 
-	if (!linker->elf)
-		return -EINVAL;
+	अगर (!linker->elf)
+		वापस -EINVAL;
 
 	err = err ?: linker_load_obj_file(linker, filename, &obj);
 	err = err ?: linker_append_sec_data(linker, &obj);
@@ -450,74 +451,74 @@ int bpf_linker__add_file(struct bpf_linker *linker, const char *filename)
 	err = err ?: linker_append_btf(linker, &obj);
 	err = err ?: linker_append_btf_ext(linker, &obj);
 
-	/* free up src_obj resources */
-	free(obj.btf_type_map);
-	btf__free(obj.btf);
-	btf_ext__free(obj.btf_ext);
-	free(obj.secs);
-	free(obj.sym_map);
-	if (obj.elf)
+	/* मुक्त up src_obj resources */
+	मुक्त(obj.btf_type_map);
+	btf__मुक्त(obj.btf);
+	btf_ext__मुक्त(obj.btf_ext);
+	मुक्त(obj.secs);
+	मुक्त(obj.sym_map);
+	अगर (obj.elf)
 		elf_end(obj.elf);
-	if (obj.fd >= 0)
-		close(obj.fd);
+	अगर (obj.fd >= 0)
+		बंद(obj.fd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool is_dwarf_sec_name(const char *name)
-{
-	/* approximation, but the actual list is too long */
-	return strncmp(name, ".debug_", sizeof(".debug_") - 1) == 0;
-}
+अटल bool is_dwarf_sec_name(स्थिर अक्षर *name)
+अणु
+	/* approximation, but the actual list is too दीर्घ */
+	वापस म_भेदन(name, ".debug_", माप(".debug_") - 1) == 0;
+पूर्ण
 
-static bool is_ignored_sec(struct src_sec *sec)
-{
+अटल bool is_ignored_sec(काष्ठा src_sec *sec)
+अणु
 	Elf64_Shdr *shdr = sec->shdr;
-	const char *name = sec->sec_name;
+	स्थिर अक्षर *name = sec->sec_name;
 
 	/* no special handling of .strtab */
-	if (shdr->sh_type == SHT_STRTAB)
-		return true;
+	अगर (shdr->sh_type == SHT_STRTAB)
+		वापस true;
 
 	/* ignore .llvm_addrsig section as well */
-	if (shdr->sh_type == SHT_LLVM_ADDRSIG)
-		return true;
+	अगर (shdr->sh_type == SHT_LLVM_ADDRSIG)
+		वापस true;
 
 	/* no subprograms will lead to an empty .text section, ignore it */
-	if (shdr->sh_type == SHT_PROGBITS && shdr->sh_size == 0 &&
-	    strcmp(sec->sec_name, ".text") == 0)
-		return true;
+	अगर (shdr->sh_type == SHT_PROGBITS && shdr->sh_size == 0 &&
+	    म_भेद(sec->sec_name, ".text") == 0)
+		वापस true;
 
 	/* DWARF sections */
-	if (is_dwarf_sec_name(sec->sec_name))
-		return true;
+	अगर (is_dwarf_sec_name(sec->sec_name))
+		वापस true;
 
-	if (strncmp(name, ".rel", sizeof(".rel") - 1) == 0) {
-		name += sizeof(".rel") - 1;
+	अगर (म_भेदन(name, ".rel", माप(".rel") - 1) == 0) अणु
+		name += माप(".rel") - 1;
 		/* DWARF section relocations */
-		if (is_dwarf_sec_name(name))
-			return true;
+		अगर (is_dwarf_sec_name(name))
+			वापस true;
 
-		/* .BTF and .BTF.ext don't need relocations */
-		if (strcmp(name, BTF_ELF_SEC) == 0 ||
-		    strcmp(name, BTF_EXT_ELF_SEC) == 0)
-			return true;
-	}
+		/* .BTF and .BTF.ext करोn't need relocations */
+		अगर (म_भेद(name, BTF_ELF_SEC) == 0 ||
+		    म_भेद(name, BTF_EXT_ELF_SEC) == 0)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static struct src_sec *add_src_sec(struct src_obj *obj, const char *sec_name)
-{
-	struct src_sec *secs = obj->secs, *sec;
-	size_t new_cnt = obj->sec_cnt ? obj->sec_cnt + 1 : 2;
+अटल काष्ठा src_sec *add_src_sec(काष्ठा src_obj *obj, स्थिर अक्षर *sec_name)
+अणु
+	काष्ठा src_sec *secs = obj->secs, *sec;
+	माप_प्रकार new_cnt = obj->sec_cnt ? obj->sec_cnt + 1 : 2;
 
-	secs = libbpf_reallocarray(secs, new_cnt, sizeof(*secs));
-	if (!secs)
-		return NULL;
+	secs = libbpf_पुनः_स्मृतिarray(secs, new_cnt, माप(*secs));
+	अगर (!secs)
+		वापस शून्य;
 
 	/* zero out newly allocated memory */
-	memset(secs + obj->sec_cnt, 0, (new_cnt - obj->sec_cnt) * sizeof(*secs));
+	स_रखो(secs + obj->sec_cnt, 0, (new_cnt - obj->sec_cnt) * माप(*secs));
 
 	obj->secs = secs;
 	obj->sec_cnt = new_cnt;
@@ -526,475 +527,475 @@ static struct src_sec *add_src_sec(struct src_obj *obj, const char *sec_name)
 	sec->id = new_cnt - 1;
 	sec->sec_name = sec_name;
 
-	return sec;
-}
+	वापस sec;
+पूर्ण
 
-static int linker_load_obj_file(struct bpf_linker *linker, const char *filename, struct src_obj *obj)
-{
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-	const int host_endianness = ELFDATA2LSB;
-#elif __BYTE_ORDER == __BIG_ENDIAN
-	const int host_endianness = ELFDATA2MSB;
-#else
-#error "Unknown __BYTE_ORDER"
-#endif
-	int err = 0;
+अटल पूर्णांक linker_load_obj_file(काष्ठा bpf_linker *linker, स्थिर अक्षर *filename, काष्ठा src_obj *obj)
+अणु
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
+	स्थिर पूर्णांक host_endianness = ELFDATA2LSB;
+#या_अगर __BYTE_ORDER == __BIG_ENDIAN
+	स्थिर पूर्णांक host_endianness = ELFDATA2MSB;
+#अन्यथा
+#त्रुटि "Unknown __BYTE_ORDER"
+#पूर्ण_अगर
+	पूर्णांक err = 0;
 	Elf_Scn *scn;
 	Elf_Data *data;
 	Elf64_Ehdr *ehdr;
 	Elf64_Shdr *shdr;
-	struct src_sec *sec;
+	काष्ठा src_sec *sec;
 
 	pr_debug("linker: adding object file '%s'...\n", filename);
 
 	obj->filename = filename;
 
-	obj->fd = open(filename, O_RDONLY);
-	if (obj->fd < 0) {
-		err = -errno;
+	obj->fd = खोलो(filename, O_RDONLY);
+	अगर (obj->fd < 0) अणु
+		err = -त्रुटि_सं;
 		pr_warn("failed to open file '%s': %d\n", filename, err);
-		return err;
-	}
-	obj->elf = elf_begin(obj->fd, ELF_C_READ_MMAP, NULL);
-	if (!obj->elf) {
-		err = -errno;
+		वापस err;
+	पूर्ण
+	obj->elf = elf_begin(obj->fd, ELF_C_READ_MMAP, शून्य);
+	अगर (!obj->elf) अणु
+		err = -त्रुटि_सं;
 		pr_warn_elf("failed to parse ELF file '%s'", filename);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Sanity check ELF file high-level properties */
 	ehdr = elf64_getehdr(obj->elf);
-	if (!ehdr) {
-		err = -errno;
+	अगर (!ehdr) अणु
+		err = -त्रुटि_सं;
 		pr_warn_elf("failed to get ELF header for %s", filename);
-		return err;
-	}
-	if (ehdr->e_ident[EI_DATA] != host_endianness) {
+		वापस err;
+	पूर्ण
+	अगर (ehdr->e_ident[EI_DATA] != host_endianness) अणु
 		err = -EOPNOTSUPP;
 		pr_warn_elf("unsupported byte order of ELF file %s", filename);
-		return err;
-	}
-	if (ehdr->e_type != ET_REL
+		वापस err;
+	पूर्ण
+	अगर (ehdr->e_type != ET_REL
 	    || ehdr->e_machine != EM_BPF
-	    || ehdr->e_ident[EI_CLASS] != ELFCLASS64) {
+	    || ehdr->e_ident[EI_CLASS] != ELFCLASS64) अणु
 		err = -EOPNOTSUPP;
 		pr_warn_elf("unsupported kind of ELF file %s", filename);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (elf_getshdrstrndx(obj->elf, &obj->shstrs_sec_idx)) {
-		err = -errno;
+	अगर (elf_माला_लोhdrstrndx(obj->elf, &obj->shstrs_sec_idx)) अणु
+		err = -त्रुटि_सं;
 		pr_warn_elf("failed to get SHSTRTAB section index for %s", filename);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	scn = NULL;
-	while ((scn = elf_nextscn(obj->elf, scn)) != NULL) {
-		size_t sec_idx = elf_ndxscn(scn);
-		const char *sec_name;
+	scn = शून्य;
+	जबतक ((scn = elf_nextscn(obj->elf, scn)) != शून्य) अणु
+		माप_प्रकार sec_idx = elf_ndxscn(scn);
+		स्थिर अक्षर *sec_name;
 
-		shdr = elf64_getshdr(scn);
-		if (!shdr) {
-			err = -errno;
+		shdr = elf64_माला_लोhdr(scn);
+		अगर (!shdr) अणु
+			err = -त्रुटि_सं;
 			pr_warn_elf("failed to get section #%zu header for %s",
 				    sec_idx, filename);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		sec_name = elf_strptr(obj->elf, obj->shstrs_sec_idx, shdr->sh_name);
-		if (!sec_name) {
-			err = -errno;
+		अगर (!sec_name) अणु
+			err = -त्रुटि_सं;
 			pr_warn_elf("failed to get section #%zu name for %s",
 				    sec_idx, filename);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		data = elf_getdata(scn, 0);
-		if (!data) {
-			err = -errno;
+		अगर (!data) अणु
+			err = -त्रुटि_सं;
 			pr_warn_elf("failed to get section #%zu (%s) data from %s",
 				    sec_idx, sec_name, filename);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		sec = add_src_sec(obj, sec_name);
-		if (!sec)
-			return -ENOMEM;
+		अगर (!sec)
+			वापस -ENOMEM;
 
 		sec->scn = scn;
 		sec->shdr = shdr;
 		sec->data = data;
 		sec->sec_idx = elf_ndxscn(scn);
 
-		if (is_ignored_sec(sec)) {
+		अगर (is_ignored_sec(sec)) अणु
 			sec->skipped = true;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		switch (shdr->sh_type) {
-		case SHT_SYMTAB:
-			if (obj->symtab_sec_idx) {
+		चयन (shdr->sh_type) अणु
+		हाल SHT_SYMTAB:
+			अगर (obj->symtab_sec_idx) अणु
 				err = -EOPNOTSUPP;
 				pr_warn("multiple SYMTAB sections found, not supported\n");
-				return err;
-			}
+				वापस err;
+			पूर्ण
 			obj->symtab_sec_idx = sec_idx;
-			break;
-		case SHT_STRTAB:
-			/* we'll construct our own string table */
-			break;
-		case SHT_PROGBITS:
-			if (strcmp(sec_name, BTF_ELF_SEC) == 0) {
+			अवरोध;
+		हाल SHT_STRTAB:
+			/* we'll स्थिरruct our own string table */
+			अवरोध;
+		हाल SHT_PROGBITS:
+			अगर (म_भेद(sec_name, BTF_ELF_SEC) == 0) अणु
 				obj->btf = btf__new(data->d_buf, shdr->sh_size);
 				err = libbpf_get_error(obj->btf);
-				if (err) {
+				अगर (err) अणु
 					pr_warn("failed to parse .BTF from %s: %d\n", filename, err);
-					return err;
-				}
+					वापस err;
+				पूर्ण
 				sec->skipped = true;
-				continue;
-			}
-			if (strcmp(sec_name, BTF_EXT_ELF_SEC) == 0) {
+				जारी;
+			पूर्ण
+			अगर (म_भेद(sec_name, BTF_EXT_ELF_SEC) == 0) अणु
 				obj->btf_ext = btf_ext__new(data->d_buf, shdr->sh_size);
 				err = libbpf_get_error(obj->btf_ext);
-				if (err) {
+				अगर (err) अणु
 					pr_warn("failed to parse .BTF.ext from '%s': %d\n", filename, err);
-					return err;
-				}
+					वापस err;
+				पूर्ण
 				sec->skipped = true;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			/* data & code */
-			break;
-		case SHT_NOBITS:
+			अवरोध;
+		हाल SHT_NOBITS:
 			/* BSS */
-			break;
-		case SHT_REL:
+			अवरोध;
+		हाल SHT_REL:
 			/* relocations */
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_warn("unrecognized section #%zu (%s) in %s\n",
 				sec_idx, sec_name, filename);
 			err = -EINVAL;
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	err = err ?: linker_sanity_check_elf(obj);
 	err = err ?: linker_sanity_check_btf(obj);
 	err = err ?: linker_sanity_check_btf_ext(obj);
 	err = err ?: linker_fixup_btf(obj);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool is_pow_of_2(size_t x)
-{
-	return x && (x & (x - 1)) == 0;
-}
+अटल bool is_घात_of_2(माप_प्रकार x)
+अणु
+	वापस x && (x & (x - 1)) == 0;
+पूर्ण
 
-static int linker_sanity_check_elf(struct src_obj *obj)
-{
-	struct src_sec *sec;
-	int i, err;
+अटल पूर्णांक linker_sanity_check_elf(काष्ठा src_obj *obj)
+अणु
+	काष्ठा src_sec *sec;
+	पूर्णांक i, err;
 
-	if (!obj->symtab_sec_idx) {
+	अगर (!obj->symtab_sec_idx) अणु
 		pr_warn("ELF is missing SYMTAB section in %s\n", obj->filename);
-		return -EINVAL;
-	}
-	if (!obj->shstrs_sec_idx) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!obj->shstrs_sec_idx) अणु
 		pr_warn("ELF is missing section headers STRTAB section in %s\n", obj->filename);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 1; i < obj->sec_cnt; i++) {
+	क्रम (i = 1; i < obj->sec_cnt; i++) अणु
 		sec = &obj->secs[i];
 
-		if (sec->sec_name[0] == '\0') {
+		अगर (sec->sec_name[0] == '\0') अणु
 			pr_warn("ELF section #%zu has empty name in %s\n", sec->sec_idx, obj->filename);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (sec->shdr->sh_addralign && !is_pow_of_2(sec->shdr->sh_addralign))
-			return -EINVAL;
-		if (sec->shdr->sh_addralign != sec->data->d_align)
-			return -EINVAL;
+		अगर (sec->shdr->sh_addralign && !is_घात_of_2(sec->shdr->sh_addralign))
+			वापस -EINVAL;
+		अगर (sec->shdr->sh_addralign != sec->data->d_align)
+			वापस -EINVAL;
 
-		if (sec->shdr->sh_size != sec->data->d_size)
-			return -EINVAL;
+		अगर (sec->shdr->sh_size != sec->data->d_size)
+			वापस -EINVAL;
 
-		switch (sec->shdr->sh_type) {
-		case SHT_SYMTAB:
+		चयन (sec->shdr->sh_type) अणु
+		हाल SHT_SYMTAB:
 			err = linker_sanity_check_elf_symtab(obj, sec);
-			if (err)
-				return err;
-			break;
-		case SHT_STRTAB:
-			break;
-		case SHT_PROGBITS:
-			if (sec->shdr->sh_flags & SHF_EXECINSTR) {
-				if (sec->shdr->sh_size % sizeof(struct bpf_insn) != 0)
-					return -EINVAL;
-			}
-			break;
-		case SHT_NOBITS:
-			break;
-		case SHT_REL:
+			अगर (err)
+				वापस err;
+			अवरोध;
+		हाल SHT_STRTAB:
+			अवरोध;
+		हाल SHT_PROGBITS:
+			अगर (sec->shdr->sh_flags & SHF_EXECINSTR) अणु
+				अगर (sec->shdr->sh_size % माप(काष्ठा bpf_insn) != 0)
+					वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		हाल SHT_NOBITS:
+			अवरोध;
+		हाल SHT_REL:
 			err = linker_sanity_check_elf_relos(obj, sec);
-			if (err)
-				return err;
-			break;
-		case SHT_LLVM_ADDRSIG:
-			break;
-		default:
+			अगर (err)
+				वापस err;
+			अवरोध;
+		हाल SHT_LLVM_ADDRSIG:
+			अवरोध;
+		शेष:
 			pr_warn("ELF section #%zu (%s) has unrecognized type %zu in %s\n",
-				sec->sec_idx, sec->sec_name, (size_t)sec->shdr->sh_type, obj->filename);
-			return -EINVAL;
-		}
-	}
+				sec->sec_idx, sec->sec_name, (माप_प्रकार)sec->shdr->sh_type, obj->filename);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int linker_sanity_check_elf_symtab(struct src_obj *obj, struct src_sec *sec)
-{
-	struct src_sec *link_sec;
+अटल पूर्णांक linker_sanity_check_elf_symtab(काष्ठा src_obj *obj, काष्ठा src_sec *sec)
+अणु
+	काष्ठा src_sec *link_sec;
 	Elf64_Sym *sym;
-	int i, n;
+	पूर्णांक i, n;
 
-	if (sec->shdr->sh_entsize != sizeof(Elf64_Sym))
-		return -EINVAL;
-	if (sec->shdr->sh_size % sec->shdr->sh_entsize != 0)
-		return -EINVAL;
+	अगर (sec->shdr->sh_entsize != माप(Elf64_Sym))
+		वापस -EINVAL;
+	अगर (sec->shdr->sh_size % sec->shdr->sh_entsize != 0)
+		वापस -EINVAL;
 
-	if (!sec->shdr->sh_link || sec->shdr->sh_link >= obj->sec_cnt) {
+	अगर (!sec->shdr->sh_link || sec->shdr->sh_link >= obj->sec_cnt) अणु
 		pr_warn("ELF SYMTAB section #%zu points to missing STRTAB section #%zu in %s\n",
-			sec->sec_idx, (size_t)sec->shdr->sh_link, obj->filename);
-		return -EINVAL;
-	}
+			sec->sec_idx, (माप_प्रकार)sec->shdr->sh_link, obj->filename);
+		वापस -EINVAL;
+	पूर्ण
 	link_sec = &obj->secs[sec->shdr->sh_link];
-	if (link_sec->shdr->sh_type != SHT_STRTAB) {
+	अगर (link_sec->shdr->sh_type != SHT_STRTAB) अणु
 		pr_warn("ELF SYMTAB section #%zu points to invalid STRTAB section #%zu in %s\n",
-			sec->sec_idx, (size_t)sec->shdr->sh_link, obj->filename);
-		return -EINVAL;
-	}
+			sec->sec_idx, (माप_प्रकार)sec->shdr->sh_link, obj->filename);
+		वापस -EINVAL;
+	पूर्ण
 
 	n = sec->shdr->sh_size / sec->shdr->sh_entsize;
 	sym = sec->data->d_buf;
-	for (i = 0; i < n; i++, sym++) {
-		int sym_type = ELF64_ST_TYPE(sym->st_info);
-		int sym_bind = ELF64_ST_BIND(sym->st_info);
-		int sym_vis = ELF64_ST_VISIBILITY(sym->st_other);
+	क्रम (i = 0; i < n; i++, sym++) अणु
+		पूर्णांक sym_type = ELF64_ST_TYPE(sym->st_info);
+		पूर्णांक sym_bind = ELF64_ST_BIND(sym->st_info);
+		पूर्णांक sym_vis = ELF64_ST_VISIBILITY(sym->st_other);
 
-		if (i == 0) {
-			if (sym->st_name != 0 || sym->st_info != 0
+		अगर (i == 0) अणु
+			अगर (sym->st_name != 0 || sym->st_info != 0
 			    || sym->st_other != 0 || sym->st_shndx != 0
-			    || sym->st_value != 0 || sym->st_size != 0) {
+			    || sym->st_value != 0 || sym->st_size != 0) अणु
 				pr_warn("ELF sym #0 is invalid in %s\n", obj->filename);
-				return -EINVAL;
-			}
-			continue;
-		}
-		if (sym_bind != STB_LOCAL && sym_bind != STB_GLOBAL && sym_bind != STB_WEAK) {
+				वापस -EINVAL;
+			पूर्ण
+			जारी;
+		पूर्ण
+		अगर (sym_bind != STB_LOCAL && sym_bind != STB_GLOBAL && sym_bind != STB_WEAK) अणु
 			pr_warn("ELF sym #%d in section #%zu has unsupported symbol binding %d\n",
 				i, sec->sec_idx, sym_bind);
-			return -EINVAL;
-		}
-		if (sym_vis != STV_DEFAULT && sym_vis != STV_HIDDEN) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (sym_vis != STV_DEFAULT && sym_vis != STV_HIDDEN) अणु
 			pr_warn("ELF sym #%d in section #%zu has unsupported symbol visibility %d\n",
 				i, sec->sec_idx, sym_vis);
-			return -EINVAL;
-		}
-		if (sym->st_shndx == 0) {
-			if (sym_type != STT_NOTYPE || sym_bind == STB_LOCAL
-			    || sym->st_value != 0 || sym->st_size != 0) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (sym->st_shndx == 0) अणु
+			अगर (sym_type != STT_NOTYPE || sym_bind == STB_LOCAL
+			    || sym->st_value != 0 || sym->st_size != 0) अणु
 				pr_warn("ELF sym #%d is invalid extern symbol in %s\n",
 					i, obj->filename);
 
-				return -EINVAL;
-			}
-			continue;
-		}
-		if (sym->st_shndx < SHN_LORESERVE && sym->st_shndx >= obj->sec_cnt) {
+				वापस -EINVAL;
+			पूर्ण
+			जारी;
+		पूर्ण
+		अगर (sym->st_shndx < SHN_LORESERVE && sym->st_shndx >= obj->sec_cnt) अणु
 			pr_warn("ELF sym #%d in section #%zu points to missing section #%zu in %s\n",
-				i, sec->sec_idx, (size_t)sym->st_shndx, obj->filename);
-			return -EINVAL;
-		}
-		if (sym_type == STT_SECTION) {
-			if (sym->st_value != 0)
-				return -EINVAL;
-			continue;
-		}
-	}
+				i, sec->sec_idx, (माप_प्रकार)sym->st_shndx, obj->filename);
+			वापस -EINVAL;
+		पूर्ण
+		अगर (sym_type == STT_SECTION) अणु
+			अगर (sym->st_value != 0)
+				वापस -EINVAL;
+			जारी;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int linker_sanity_check_elf_relos(struct src_obj *obj, struct src_sec *sec)
-{
-	struct src_sec *link_sec, *sym_sec;
+अटल पूर्णांक linker_sanity_check_elf_relos(काष्ठा src_obj *obj, काष्ठा src_sec *sec)
+अणु
+	काष्ठा src_sec *link_sec, *sym_sec;
 	Elf64_Rel *relo;
-	int i, n;
+	पूर्णांक i, n;
 
-	if (sec->shdr->sh_entsize != sizeof(Elf64_Rel))
-		return -EINVAL;
-	if (sec->shdr->sh_size % sec->shdr->sh_entsize != 0)
-		return -EINVAL;
+	अगर (sec->shdr->sh_entsize != माप(Elf64_Rel))
+		वापस -EINVAL;
+	अगर (sec->shdr->sh_size % sec->shdr->sh_entsize != 0)
+		वापस -EINVAL;
 
-	/* SHT_REL's sh_link should point to SYMTAB */
-	if (sec->shdr->sh_link != obj->symtab_sec_idx) {
+	/* SHT_REL's sh_link should poपूर्णांक to SYMTAB */
+	अगर (sec->shdr->sh_link != obj->symtab_sec_idx) अणु
 		pr_warn("ELF relo section #%zu points to invalid SYMTAB section #%zu in %s\n",
-			sec->sec_idx, (size_t)sec->shdr->sh_link, obj->filename);
-		return -EINVAL;
-	}
+			sec->sec_idx, (माप_प्रकार)sec->shdr->sh_link, obj->filename);
+		वापस -EINVAL;
+	पूर्ण
 
-	/* SHT_REL's sh_info points to relocated section */
-	if (!sec->shdr->sh_info || sec->shdr->sh_info >= obj->sec_cnt) {
+	/* SHT_REL's sh_info poपूर्णांकs to relocated section */
+	अगर (!sec->shdr->sh_info || sec->shdr->sh_info >= obj->sec_cnt) अणु
 		pr_warn("ELF relo section #%zu points to missing section #%zu in %s\n",
-			sec->sec_idx, (size_t)sec->shdr->sh_info, obj->filename);
-		return -EINVAL;
-	}
+			sec->sec_idx, (माप_प्रकार)sec->shdr->sh_info, obj->filename);
+		वापस -EINVAL;
+	पूर्ण
 	link_sec = &obj->secs[sec->shdr->sh_info];
 
 	/* .rel<secname> -> <secname> pattern is followed */
-	if (strncmp(sec->sec_name, ".rel", sizeof(".rel") - 1) != 0
-	    || strcmp(sec->sec_name + sizeof(".rel") - 1, link_sec->sec_name) != 0) {
+	अगर (म_भेदन(sec->sec_name, ".rel", माप(".rel") - 1) != 0
+	    || म_भेद(sec->sec_name + माप(".rel") - 1, link_sec->sec_name) != 0) अणु
 		pr_warn("ELF relo section #%zu name has invalid name in %s\n",
 			sec->sec_idx, obj->filename);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* don't further validate relocations for ignored sections */
-	if (link_sec->skipped)
-		return 0;
+	/* करोn't further validate relocations क्रम ignored sections */
+	अगर (link_sec->skipped)
+		वापस 0;
 
-	/* relocatable section is data or instructions */
-	if (link_sec->shdr->sh_type != SHT_PROGBITS && link_sec->shdr->sh_type != SHT_NOBITS) {
+	/* relocatable section is data or inकाष्ठाions */
+	अगर (link_sec->shdr->sh_type != SHT_PROGBITS && link_sec->shdr->sh_type != SHT_NOBITS) अणु
 		pr_warn("ELF relo section #%zu points to invalid section #%zu in %s\n",
-			sec->sec_idx, (size_t)sec->shdr->sh_info, obj->filename);
-		return -EINVAL;
-	}
+			sec->sec_idx, (माप_प्रकार)sec->shdr->sh_info, obj->filename);
+		वापस -EINVAL;
+	पूर्ण
 
 	/* check sanity of each relocation */
 	n = sec->shdr->sh_size / sec->shdr->sh_entsize;
 	relo = sec->data->d_buf;
 	sym_sec = &obj->secs[obj->symtab_sec_idx];
-	for (i = 0; i < n; i++, relo++) {
-		size_t sym_idx = ELF64_R_SYM(relo->r_info);
-		size_t sym_type = ELF64_R_TYPE(relo->r_info);
+	क्रम (i = 0; i < n; i++, relo++) अणु
+		माप_प्रकार sym_idx = ELF64_R_SYM(relo->r_info);
+		माप_प्रकार sym_type = ELF64_R_TYPE(relo->r_info);
 
-		if (sym_type != R_BPF_64_64 && sym_type != R_BPF_64_32) {
+		अगर (sym_type != R_BPF_64_64 && sym_type != R_BPF_64_32) अणु
 			pr_warn("ELF relo #%d in section #%zu has unexpected type %zu in %s\n",
 				i, sec->sec_idx, sym_type, obj->filename);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!sym_idx || sym_idx * sizeof(Elf64_Sym) >= sym_sec->shdr->sh_size) {
+		अगर (!sym_idx || sym_idx * माप(Elf64_Sym) >= sym_sec->shdr->sh_size) अणु
 			pr_warn("ELF relo #%d in section #%zu points to invalid symbol #%zu in %s\n",
 				i, sec->sec_idx, sym_idx, obj->filename);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (link_sec->shdr->sh_flags & SHF_EXECINSTR) {
-			if (relo->r_offset % sizeof(struct bpf_insn) != 0) {
+		अगर (link_sec->shdr->sh_flags & SHF_EXECINSTR) अणु
+			अगर (relo->r_offset % माप(काष्ठा bpf_insn) != 0) अणु
 				pr_warn("ELF relo #%d in section #%zu points to missing symbol #%zu in %s\n",
 					i, sec->sec_idx, sym_idx, obj->filename);
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_btf_type_id(__u32 *type_id, void *ctx)
-{
-	struct btf *btf = ctx;
+अटल पूर्णांक check_btf_type_id(__u32 *type_id, व्योम *ctx)
+अणु
+	काष्ठा btf *btf = ctx;
 
-	if (*type_id > btf__get_nr_types(btf))
-		return -EINVAL;
+	अगर (*type_id > btf__get_nr_types(btf))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_btf_str_off(__u32 *str_off, void *ctx)
-{
-	struct btf *btf = ctx;
-	const char *s;
+अटल पूर्णांक check_btf_str_off(__u32 *str_off, व्योम *ctx)
+अणु
+	काष्ठा btf *btf = ctx;
+	स्थिर अक्षर *s;
 
 	s = btf__str_by_offset(btf, *str_off);
 
-	if (!s)
-		return -EINVAL;
+	अगर (!s)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int linker_sanity_check_btf(struct src_obj *obj)
-{
-	struct btf_type *t;
-	int i, n, err = 0;
+अटल पूर्णांक linker_sanity_check_btf(काष्ठा src_obj *obj)
+अणु
+	काष्ठा btf_type *t;
+	पूर्णांक i, n, err = 0;
 
-	if (!obj->btf)
-		return 0;
+	अगर (!obj->btf)
+		वापस 0;
 
 	n = btf__get_nr_types(obj->btf);
-	for (i = 1; i <= n; i++) {
+	क्रम (i = 1; i <= n; i++) अणु
 		t = btf_type_by_id(obj->btf, i);
 
 		err = err ?: btf_type_visit_type_ids(t, check_btf_type_id, obj->btf);
 		err = err ?: btf_type_visit_str_offs(t, check_btf_str_off, obj->btf);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int linker_sanity_check_btf_ext(struct src_obj *obj)
-{
-	int err = 0;
+अटल पूर्णांक linker_sanity_check_btf_ext(काष्ठा src_obj *obj)
+अणु
+	पूर्णांक err = 0;
 
-	if (!obj->btf_ext)
-		return 0;
+	अगर (!obj->btf_ext)
+		वापस 0;
 
 	/* can't use .BTF.ext without .BTF */
-	if (!obj->btf)
-		return -EINVAL;
+	अगर (!obj->btf)
+		वापस -EINVAL;
 
 	err = err ?: btf_ext_visit_type_ids(obj->btf_ext, check_btf_type_id, obj->btf);
 	err = err ?: btf_ext_visit_str_offs(obj->btf_ext, check_btf_str_off, obj->btf);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int init_sec(struct bpf_linker *linker, struct dst_sec *dst_sec, struct src_sec *src_sec)
-{
+अटल पूर्णांक init_sec(काष्ठा bpf_linker *linker, काष्ठा dst_sec *dst_sec, काष्ठा src_sec *src_sec)
+अणु
 	Elf_Scn *scn;
 	Elf_Data *data;
 	Elf64_Shdr *shdr;
-	int name_off;
+	पूर्णांक name_off;
 
 	dst_sec->sec_sz = 0;
 	dst_sec->sec_idx = 0;
 	dst_sec->ephemeral = src_sec->ephemeral;
 
 	/* ephemeral sections are just thin section shells lacking most parts */
-	if (src_sec->ephemeral)
-		return 0;
+	अगर (src_sec->ephemeral)
+		वापस 0;
 
 	scn = elf_newscn(linker->elf);
-	if (!scn)
-		return -ENOMEM;
+	अगर (!scn)
+		वापस -ENOMEM;
 	data = elf_newdata(scn);
-	if (!data)
-		return -ENOMEM;
-	shdr = elf64_getshdr(scn);
-	if (!shdr)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
+	shdr = elf64_माला_लोhdr(scn);
+	अगर (!shdr)
+		वापस -ENOMEM;
 
 	dst_sec->scn = scn;
 	dst_sec->shdr = shdr;
@@ -1002,15 +1003,15 @@ static int init_sec(struct bpf_linker *linker, struct dst_sec *dst_sec, struct s
 	dst_sec->sec_idx = elf_ndxscn(scn);
 
 	name_off = strset__add_str(linker->strtab_strs, src_sec->sec_name);
-	if (name_off < 0)
-		return name_off;
+	अगर (name_off < 0)
+		वापस name_off;
 
 	shdr->sh_name = name_off;
 	shdr->sh_type = src_sec->shdr->sh_type;
 	shdr->sh_flags = src_sec->shdr->sh_flags;
 	shdr->sh_size = 0;
-	/* sh_link and sh_info have different meaning for different types of
-	 * sections, so we leave it up to the caller code to fill them in, if
+	/* sh_link and sh_info have dअगरferent meaning क्रम dअगरferent types of
+	 * sections, so we leave it up to the caller code to fill them in, अगर
 	 * necessary
 	 */
 	shdr->sh_link = 0;
@@ -1020,88 +1021,88 @@ static int init_sec(struct bpf_linker *linker, struct dst_sec *dst_sec, struct s
 
 	data->d_type = src_sec->data->d_type;
 	data->d_size = 0;
-	data->d_buf = NULL;
+	data->d_buf = शून्य;
 	data->d_align = src_sec->data->d_align;
 	data->d_off = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dst_sec *find_dst_sec_by_name(struct bpf_linker *linker, const char *sec_name)
-{
-	struct dst_sec *sec;
-	int i;
+अटल काष्ठा dst_sec *find_dst_sec_by_name(काष्ठा bpf_linker *linker, स्थिर अक्षर *sec_name)
+अणु
+	काष्ठा dst_sec *sec;
+	पूर्णांक i;
 
-	for (i = 1; i < linker->sec_cnt; i++) {
+	क्रम (i = 1; i < linker->sec_cnt; i++) अणु
 		sec = &linker->secs[i];
 
-		if (strcmp(sec->sec_name, sec_name) == 0)
-			return sec;
-	}
+		अगर (म_भेद(sec->sec_name, sec_name) == 0)
+			वापस sec;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool secs_match(struct dst_sec *dst, struct src_sec *src)
-{
-	if (dst->ephemeral || src->ephemeral)
-		return true;
+अटल bool secs_match(काष्ठा dst_sec *dst, काष्ठा src_sec *src)
+अणु
+	अगर (dst->ephemeral || src->ephemeral)
+		वापस true;
 
-	if (dst->shdr->sh_type != src->shdr->sh_type) {
+	अगर (dst->shdr->sh_type != src->shdr->sh_type) अणु
 		pr_warn("sec %s types mismatch\n", dst->sec_name);
-		return false;
-	}
-	if (dst->shdr->sh_flags != src->shdr->sh_flags) {
+		वापस false;
+	पूर्ण
+	अगर (dst->shdr->sh_flags != src->shdr->sh_flags) अणु
 		pr_warn("sec %s flags mismatch\n", dst->sec_name);
-		return false;
-	}
-	if (dst->shdr->sh_entsize != src->shdr->sh_entsize) {
+		वापस false;
+	पूर्ण
+	अगर (dst->shdr->sh_entsize != src->shdr->sh_entsize) अणु
 		pr_warn("sec %s entsize mismatch\n", dst->sec_name);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool sec_content_is_same(struct dst_sec *dst_sec, struct src_sec *src_sec)
-{
-	if (dst_sec->sec_sz != src_sec->shdr->sh_size)
-		return false;
-	if (memcmp(dst_sec->raw_data, src_sec->data->d_buf, dst_sec->sec_sz) != 0)
-		return false;
-	return true;
-}
+अटल bool sec_content_is_same(काष्ठा dst_sec *dst_sec, काष्ठा src_sec *src_sec)
+अणु
+	अगर (dst_sec->sec_sz != src_sec->shdr->sh_size)
+		वापस false;
+	अगर (स_भेद(dst_sec->raw_data, src_sec->data->d_buf, dst_sec->sec_sz) != 0)
+		वापस false;
+	वापस true;
+पूर्ण
 
-static int extend_sec(struct bpf_linker *linker, struct dst_sec *dst, struct src_sec *src)
-{
-	void *tmp;
-	size_t dst_align, src_align;
-	size_t dst_align_sz, dst_final_sz;
-	int err;
+अटल पूर्णांक extend_sec(काष्ठा bpf_linker *linker, काष्ठा dst_sec *dst, काष्ठा src_sec *src)
+अणु
+	व्योम *पंचांगp;
+	माप_प्रकार dst_align, src_align;
+	माप_प्रकार dst_align_sz, dst_final_sz;
+	पूर्णांक err;
 
-	/* Ephemeral source section doesn't contribute anything to ELF
+	/* Ephemeral source section करोesn't contribute anything to ELF
 	 * section data.
 	 */
-	if (src->ephemeral)
-		return 0;
+	अगर (src->ephemeral)
+		वापस 0;
 
-	/* Some sections (like .maps) can contain both externs (and thus be
-	 * ephemeral) and non-externs (map definitions). So it's possible that
+	/* Some sections (like .maps) can contain both बाह्यs (and thus be
+	 * ephemeral) and non-बाह्यs (map definitions). So it's possible that
 	 * it has to be "upgraded" from ephemeral to non-ephemeral when the
-	 * first non-ephemeral entity appears. In such case, we add ELF
+	 * first non-ephemeral entity appears. In such हाल, we add ELF
 	 * section, data, etc.
 	 */
-	if (dst->ephemeral) {
+	अगर (dst->ephemeral) अणु
 		err = init_sec(linker, dst, src);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	dst_align = dst->shdr->sh_addralign;
 	src_align = src->shdr->sh_addralign;
-	if (dst_align == 0)
+	अगर (dst_align == 0)
 		dst_align = 1;
-	if (dst_align < src_align)
+	अगर (dst_align < src_align)
 		dst_align = src_align;
 
 	dst_align_sz = (dst->sec_sz + dst_align - 1) / dst_align * dst_align;
@@ -1109,17 +1110,17 @@ static int extend_sec(struct bpf_linker *linker, struct dst_sec *dst, struct src
 	/* no need to re-align final size */
 	dst_final_sz = dst_align_sz + src->shdr->sh_size;
 
-	if (src->shdr->sh_type != SHT_NOBITS) {
-		tmp = realloc(dst->raw_data, dst_final_sz);
-		if (!tmp)
-			return -ENOMEM;
-		dst->raw_data = tmp;
+	अगर (src->shdr->sh_type != SHT_NOBITS) अणु
+		पंचांगp = पुनः_स्मृति(dst->raw_data, dst_final_sz);
+		अगर (!पंचांगp)
+			वापस -ENOMEM;
+		dst->raw_data = पंचांगp;
 
-		/* pad dst section, if it's alignment forced size increase */
-		memset(dst->raw_data + dst->sec_sz, 0, dst_align_sz - dst->sec_sz);
+		/* pad dst section, अगर it's alignment क्रमced size increase */
+		स_रखो(dst->raw_data + dst->sec_sz, 0, dst_align_sz - dst->sec_sz);
 		/* now copy src data at a properly aligned offset */
-		memcpy(dst->raw_data + dst_align_sz, src->data->d_buf, src->shdr->sh_size);
-	}
+		स_नकल(dst->raw_data + dst_align_sz, src->data->d_buf, src->shdr->sh_size);
+	पूर्ण
 
 	dst->sec_sz = dst_final_sz;
 	dst->shdr->sh_size = dst_final_sz;
@@ -1130,607 +1131,607 @@ static int extend_sec(struct bpf_linker *linker, struct dst_sec *dst, struct src
 
 	src->dst_off = dst_align_sz;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool is_data_sec(struct src_sec *sec)
-{
-	if (!sec || sec->skipped)
-		return false;
+अटल bool is_data_sec(काष्ठा src_sec *sec)
+अणु
+	अगर (!sec || sec->skipped)
+		वापस false;
 	/* ephemeral sections are data sections, e.g., .kconfig, .ksyms */
-	if (sec->ephemeral)
-		return true;
-	return sec->shdr->sh_type == SHT_PROGBITS || sec->shdr->sh_type == SHT_NOBITS;
-}
+	अगर (sec->ephemeral)
+		वापस true;
+	वापस sec->shdr->sh_type == SHT_PROGBITS || sec->shdr->sh_type == SHT_NOBITS;
+पूर्ण
 
-static bool is_relo_sec(struct src_sec *sec)
-{
-	if (!sec || sec->skipped || sec->ephemeral)
-		return false;
-	return sec->shdr->sh_type == SHT_REL;
-}
+अटल bool is_relo_sec(काष्ठा src_sec *sec)
+अणु
+	अगर (!sec || sec->skipped || sec->ephemeral)
+		वापस false;
+	वापस sec->shdr->sh_type == SHT_REL;
+पूर्ण
 
-static int linker_append_sec_data(struct bpf_linker *linker, struct src_obj *obj)
-{
-	int i, err;
+अटल पूर्णांक linker_append_sec_data(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj)
+अणु
+	पूर्णांक i, err;
 
-	for (i = 1; i < obj->sec_cnt; i++) {
-		struct src_sec *src_sec;
-		struct dst_sec *dst_sec;
+	क्रम (i = 1; i < obj->sec_cnt; i++) अणु
+		काष्ठा src_sec *src_sec;
+		काष्ठा dst_sec *dst_sec;
 
 		src_sec = &obj->secs[i];
-		if (!is_data_sec(src_sec))
-			continue;
+		अगर (!is_data_sec(src_sec))
+			जारी;
 
 		dst_sec = find_dst_sec_by_name(linker, src_sec->sec_name);
-		if (!dst_sec) {
+		अगर (!dst_sec) अणु
 			dst_sec = add_dst_sec(linker, src_sec->sec_name);
-			if (!dst_sec)
-				return -ENOMEM;
+			अगर (!dst_sec)
+				वापस -ENOMEM;
 			err = init_sec(linker, dst_sec, src_sec);
-			if (err) {
+			अगर (err) अणु
 				pr_warn("failed to init section '%s'\n", src_sec->sec_name);
-				return err;
-			}
-		} else {
-			if (!secs_match(dst_sec, src_sec)) {
+				वापस err;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (!secs_match(dst_sec, src_sec)) अणु
 				pr_warn("ELF sections %s are incompatible\n", src_sec->sec_name);
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 
 			/* "license" and "version" sections are deduped */
-			if (strcmp(src_sec->sec_name, "license") == 0
-			    || strcmp(src_sec->sec_name, "version") == 0) {
-				if (!sec_content_is_same(dst_sec, src_sec)) {
+			अगर (म_भेद(src_sec->sec_name, "license") == 0
+			    || म_भेद(src_sec->sec_name, "version") == 0) अणु
+				अगर (!sec_content_is_same(dst_sec, src_sec)) अणु
 					pr_warn("non-identical contents of section '%s' are not supported\n", src_sec->sec_name);
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 				src_sec->skipped = true;
 				src_sec->dst_id = dst_sec->id;
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		/* record mapped section index */
 		src_sec->dst_id = dst_sec->id;
 
 		err = extend_sec(linker, dst_sec, src_sec);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int linker_append_elf_syms(struct bpf_linker *linker, struct src_obj *obj)
-{
-	struct src_sec *symtab = &obj->secs[obj->symtab_sec_idx];
+अटल पूर्णांक linker_append_elf_syms(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj)
+अणु
+	काष्ठा src_sec *symtab = &obj->secs[obj->symtab_sec_idx];
 	Elf64_Sym *sym = symtab->data->d_buf;
-	int i, n = symtab->shdr->sh_size / symtab->shdr->sh_entsize, err;
-	int str_sec_idx = symtab->shdr->sh_link;
-	const char *sym_name;
+	पूर्णांक i, n = symtab->shdr->sh_size / symtab->shdr->sh_entsize, err;
+	पूर्णांक str_sec_idx = symtab->shdr->sh_link;
+	स्थिर अक्षर *sym_name;
 
-	obj->sym_map = calloc(n + 1, sizeof(*obj->sym_map));
-	if (!obj->sym_map)
-		return -ENOMEM;
+	obj->sym_map = सुस्मृति(n + 1, माप(*obj->sym_map));
+	अगर (!obj->sym_map)
+		वापस -ENOMEM;
 
-	for (i = 0; i < n; i++, sym++) {
-		/* We already validated all-zero symbol #0 and we already
+	क्रम (i = 0; i < n; i++, sym++) अणु
+		/* We alपढ़ोy validated all-zero symbol #0 and we alपढ़ोy
 		 * appended it preventively to the final SYMTAB, so skip it.
 		 */
-		if (i == 0)
-			continue;
+		अगर (i == 0)
+			जारी;
 
 		sym_name = elf_strptr(obj->elf, str_sec_idx, sym->st_name);
-		if (!sym_name) {
+		अगर (!sym_name) अणु
 			pr_warn("can't fetch symbol name for symbol #%d in '%s'\n", i, obj->filename);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		err = linker_append_elf_sym(linker, obj, sym, sym_name, i);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static Elf64_Sym *get_sym_by_idx(struct bpf_linker *linker, size_t sym_idx)
-{
-	struct dst_sec *symtab = &linker->secs[linker->symtab_sec_idx];
+अटल Elf64_Sym *get_sym_by_idx(काष्ठा bpf_linker *linker, माप_प्रकार sym_idx)
+अणु
+	काष्ठा dst_sec *symtab = &linker->secs[linker->symtab_sec_idx];
 	Elf64_Sym *syms = symtab->raw_data;
 
-	return &syms[sym_idx];
-}
+	वापस &syms[sym_idx];
+पूर्ण
 
-static struct glob_sym *find_glob_sym(struct bpf_linker *linker, const char *sym_name)
-{
-	struct glob_sym *glob_sym;
-	const char *name;
-	int i;
+अटल काष्ठा glob_sym *find_glob_sym(काष्ठा bpf_linker *linker, स्थिर अक्षर *sym_name)
+अणु
+	काष्ठा glob_sym *glob_sym;
+	स्थिर अक्षर *name;
+	पूर्णांक i;
 
-	for (i = 0; i < linker->glob_sym_cnt; i++) {
+	क्रम (i = 0; i < linker->glob_sym_cnt; i++) अणु
 		glob_sym = &linker->glob_syms[i];
 		name = strset__data(linker->strtab_strs) + glob_sym->name_off;
 
-		if (strcmp(name, sym_name) == 0)
-			return glob_sym;
-	}
+		अगर (म_भेद(name, sym_name) == 0)
+			वापस glob_sym;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct glob_sym *add_glob_sym(struct bpf_linker *linker)
-{
-	struct glob_sym *syms, *sym;
+अटल काष्ठा glob_sym *add_glob_sym(काष्ठा bpf_linker *linker)
+अणु
+	काष्ठा glob_sym *syms, *sym;
 
-	syms = libbpf_reallocarray(linker->glob_syms, linker->glob_sym_cnt + 1,
-				   sizeof(*linker->glob_syms));
-	if (!syms)
-		return NULL;
+	syms = libbpf_पुनः_स्मृतिarray(linker->glob_syms, linker->glob_sym_cnt + 1,
+				   माप(*linker->glob_syms));
+	अगर (!syms)
+		वापस शून्य;
 
 	sym = &syms[linker->glob_sym_cnt];
-	memset(sym, 0, sizeof(*sym));
+	स_रखो(sym, 0, माप(*sym));
 	sym->var_idx = -1;
 
 	linker->glob_syms = syms;
 	linker->glob_sym_cnt++;
 
-	return sym;
-}
+	वापस sym;
+पूर्ण
 
-static bool glob_sym_btf_matches(const char *sym_name, bool exact,
-				 const struct btf *btf1, __u32 id1,
-				 const struct btf *btf2, __u32 id2)
-{
-	const struct btf_type *t1, *t2;
-	bool is_static1, is_static2;
-	const char *n1, *n2;
-	int i, n;
+अटल bool glob_sym_btf_matches(स्थिर अक्षर *sym_name, bool exact,
+				 स्थिर काष्ठा btf *btf1, __u32 id1,
+				 स्थिर काष्ठा btf *btf2, __u32 id2)
+अणु
+	स्थिर काष्ठा btf_type *t1, *t2;
+	bool is_अटल1, is_अटल2;
+	स्थिर अक्षर *n1, *n2;
+	पूर्णांक i, n;
 
 recur:
-	n1 = n2 = NULL;
-	t1 = skip_mods_and_typedefs(btf1, id1, &id1);
-	t2 = skip_mods_and_typedefs(btf2, id2, &id2);
+	n1 = n2 = शून्य;
+	t1 = skip_mods_and_प्रकारs(btf1, id1, &id1);
+	t2 = skip_mods_and_प्रकारs(btf2, id2, &id2);
 
-	/* check if only one side is FWD, otherwise handle with common logic */
-	if (!exact && btf_is_fwd(t1) != btf_is_fwd(t2)) {
+	/* check अगर only one side is FWD, otherwise handle with common logic */
+	अगर (!exact && btf_is_fwd(t1) != btf_is_fwd(t2)) अणु
 		n1 = btf__str_by_offset(btf1, t1->name_off);
 		n2 = btf__str_by_offset(btf2, t2->name_off);
-		if (strcmp(n1, n2) != 0) {
+		अगर (म_भेद(n1, n2) != 0) अणु
 			pr_warn("global '%s': incompatible forward declaration names '%s' and '%s'\n",
 				sym_name, n1, n2);
-			return false;
-		}
-		/* validate if FWD kind matches concrete kind */
-		if (btf_is_fwd(t1)) {
-			if (btf_kflag(t1) && btf_is_union(t2))
-				return true;
-			if (!btf_kflag(t1) && btf_is_struct(t2))
-				return true;
+			वापस false;
+		पूर्ण
+		/* validate अगर FWD kind matches concrete kind */
+		अगर (btf_is_fwd(t1)) अणु
+			अगर (btf_kflag(t1) && btf_is_जोड़(t2))
+				वापस true;
+			अगर (!btf_kflag(t1) && btf_is_काष्ठा(t2))
+				वापस true;
 			pr_warn("global '%s': incompatible %s forward declaration and concrete kind %s\n",
 				sym_name, btf_kflag(t1) ? "union" : "struct", btf_kind_str(t2));
-		} else {
-			if (btf_kflag(t2) && btf_is_union(t1))
-				return true;
-			if (!btf_kflag(t2) && btf_is_struct(t1))
-				return true;
+		पूर्ण अन्यथा अणु
+			अगर (btf_kflag(t2) && btf_is_जोड़(t1))
+				वापस true;
+			अगर (!btf_kflag(t2) && btf_is_काष्ठा(t1))
+				वापस true;
 			pr_warn("global '%s': incompatible %s forward declaration and concrete kind %s\n",
 				sym_name, btf_kflag(t2) ? "union" : "struct", btf_kind_str(t1));
-		}
-		return false;
-	}
+		पूर्ण
+		वापस false;
+	पूर्ण
 
-	if (btf_kind(t1) != btf_kind(t2)) {
+	अगर (btf_kind(t1) != btf_kind(t2)) अणु
 		pr_warn("global '%s': incompatible BTF kinds %s and %s\n",
 			sym_name, btf_kind_str(t1), btf_kind_str(t2));
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	switch (btf_kind(t1)) {
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION:
-	case BTF_KIND_ENUM:
-	case BTF_KIND_FWD:
-	case BTF_KIND_FUNC:
-	case BTF_KIND_VAR:
+	चयन (btf_kind(t1)) अणु
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION:
+	हाल BTF_KIND_ENUM:
+	हाल BTF_KIND_FWD:
+	हाल BTF_KIND_FUNC:
+	हाल BTF_KIND_VAR:
 		n1 = btf__str_by_offset(btf1, t1->name_off);
 		n2 = btf__str_by_offset(btf2, t2->name_off);
-		if (strcmp(n1, n2) != 0) {
+		अगर (म_भेद(n1, n2) != 0) अणु
 			pr_warn("global '%s': incompatible %s names '%s' and '%s'\n",
 				sym_name, btf_kind_str(t1), n1, n2);
-			return false;
-		}
-		break;
-	default:
-		break;
-	}
+			वापस false;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	switch (btf_kind(t1)) {
-	case BTF_KIND_UNKN: /* void */
-	case BTF_KIND_FWD:
-		return true;
-	case BTF_KIND_INT:
-	case BTF_KIND_FLOAT:
-	case BTF_KIND_ENUM:
-		/* ignore encoding for int and enum values for enum */
-		if (t1->size != t2->size) {
+	चयन (btf_kind(t1)) अणु
+	हाल BTF_KIND_UNKN: /* व्योम */
+	हाल BTF_KIND_FWD:
+		वापस true;
+	हाल BTF_KIND_INT:
+	हाल BTF_KIND_FLOAT:
+	हाल BTF_KIND_ENUM:
+		/* ignore encoding क्रम पूर्णांक and क्रमागत values क्रम क्रमागत */
+		अगर (t1->size != t2->size) अणु
 			pr_warn("global '%s': incompatible %s '%s' size %u and %u\n",
 				sym_name, btf_kind_str(t1), n1, t1->size, t2->size);
-			return false;
-		}
-		return true;
-	case BTF_KIND_PTR:
+			वापस false;
+		पूर्ण
+		वापस true;
+	हाल BTF_KIND_PTR:
 		/* just validate overall shape of the referenced type, so no
-		 * contents comparison for struct/union, and allowd fwd vs
-		 * struct/union
+		 * contents comparison क्रम काष्ठा/जोड़, and allowd fwd vs
+		 * काष्ठा/जोड़
 		 */
 		exact = false;
 		id1 = t1->type;
 		id2 = t2->type;
-		goto recur;
-	case BTF_KIND_ARRAY:
+		जाओ recur;
+	हाल BTF_KIND_ARRAY:
 		/* ignore index type and array size */
 		id1 = btf_array(t1)->type;
 		id2 = btf_array(t2)->type;
-		goto recur;
-	case BTF_KIND_FUNC:
-		/* extern and global linkages are compatible */
-		is_static1 = btf_func_linkage(t1) == BTF_FUNC_STATIC;
-		is_static2 = btf_func_linkage(t2) == BTF_FUNC_STATIC;
-		if (is_static1 != is_static2) {
+		जाओ recur;
+	हाल BTF_KIND_FUNC:
+		/* बाह्य and global linkages are compatible */
+		is_अटल1 = btf_func_linkage(t1) == BTF_FUNC_STATIC;
+		is_अटल2 = btf_func_linkage(t2) == BTF_FUNC_STATIC;
+		अगर (is_अटल1 != is_अटल2) अणु
 			pr_warn("global '%s': incompatible func '%s' linkage\n", sym_name, n1);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		id1 = t1->type;
 		id2 = t2->type;
-		goto recur;
-	case BTF_KIND_VAR:
-		/* extern and global linkages are compatible */
-		is_static1 = btf_var(t1)->linkage == BTF_VAR_STATIC;
-		is_static2 = btf_var(t2)->linkage == BTF_VAR_STATIC;
-		if (is_static1 != is_static2) {
+		जाओ recur;
+	हाल BTF_KIND_VAR:
+		/* बाह्य and global linkages are compatible */
+		is_अटल1 = btf_var(t1)->linkage == BTF_VAR_STATIC;
+		is_अटल2 = btf_var(t2)->linkage == BTF_VAR_STATIC;
+		अगर (is_अटल1 != is_अटल2) अणु
 			pr_warn("global '%s': incompatible var '%s' linkage\n", sym_name, n1);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		id1 = t1->type;
 		id2 = t2->type;
-		goto recur;
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION: {
-		const struct btf_member *m1, *m2;
+		जाओ recur;
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION: अणु
+		स्थिर काष्ठा btf_member *m1, *m2;
 
-		if (!exact)
-			return true;
+		अगर (!exact)
+			वापस true;
 
-		if (btf_vlen(t1) != btf_vlen(t2)) {
+		अगर (btf_vlen(t1) != btf_vlen(t2)) अणु
 			pr_warn("global '%s': incompatible number of %s fields %u and %u\n",
 				sym_name, btf_kind_str(t1), btf_vlen(t1), btf_vlen(t2));
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		n = btf_vlen(t1);
 		m1 = btf_members(t1);
 		m2 = btf_members(t2);
-		for (i = 0; i < n; i++, m1++, m2++) {
+		क्रम (i = 0; i < n; i++, m1++, m2++) अणु
 			n1 = btf__str_by_offset(btf1, m1->name_off);
 			n2 = btf__str_by_offset(btf2, m2->name_off);
-			if (strcmp(n1, n2) != 0) {
+			अगर (म_भेद(n1, n2) != 0) अणु
 				pr_warn("global '%s': incompatible field #%d names '%s' and '%s'\n",
 					sym_name, i, n1, n2);
-				return false;
-			}
-			if (m1->offset != m2->offset) {
+				वापस false;
+			पूर्ण
+			अगर (m1->offset != m2->offset) अणु
 				pr_warn("global '%s': incompatible field #%d ('%s') offsets\n",
 					sym_name, i, n1);
-				return false;
-			}
-			if (!glob_sym_btf_matches(sym_name, exact, btf1, m1->type, btf2, m2->type))
-				return false;
-		}
+				वापस false;
+			पूर्ण
+			अगर (!glob_sym_btf_matches(sym_name, exact, btf1, m1->type, btf2, m2->type))
+				वापस false;
+		पूर्ण
 
-		return true;
-	}
-	case BTF_KIND_FUNC_PROTO: {
-		const struct btf_param *m1, *m2;
+		वापस true;
+	पूर्ण
+	हाल BTF_KIND_FUNC_PROTO: अणु
+		स्थिर काष्ठा btf_param *m1, *m2;
 
-		if (btf_vlen(t1) != btf_vlen(t2)) {
+		अगर (btf_vlen(t1) != btf_vlen(t2)) अणु
 			pr_warn("global '%s': incompatible number of %s params %u and %u\n",
 				sym_name, btf_kind_str(t1), btf_vlen(t1), btf_vlen(t2));
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		n = btf_vlen(t1);
 		m1 = btf_params(t1);
 		m2 = btf_params(t2);
-		for (i = 0; i < n; i++, m1++, m2++) {
+		क्रम (i = 0; i < n; i++, m1++, m2++) अणु
 			/* ignore func arg names */
-			if (!glob_sym_btf_matches(sym_name, exact, btf1, m1->type, btf2, m2->type))
-				return false;
-		}
+			अगर (!glob_sym_btf_matches(sym_name, exact, btf1, m1->type, btf2, m2->type))
+				वापस false;
+		पूर्ण
 
-		/* now check return type as well */
+		/* now check वापस type as well */
 		id1 = t1->type;
 		id2 = t2->type;
-		goto recur;
-	}
+		जाओ recur;
+	पूर्ण
 
-	/* skip_mods_and_typedefs() make this impossible */
-	case BTF_KIND_TYPEDEF:
-	case BTF_KIND_VOLATILE:
-	case BTF_KIND_CONST:
-	case BTF_KIND_RESTRICT:
+	/* skip_mods_and_प्रकारs() make this impossible */
+	हाल BTF_KIND_TYPEDEF:
+	हाल BTF_KIND_VOLATILE:
+	हाल BTF_KIND_CONST:
+	हाल BTF_KIND_RESTRICT:
 	/* DATASECs are never compared with each other */
-	case BTF_KIND_DATASEC:
-	default:
+	हाल BTF_KIND_DATASEC:
+	शेष:
 		pr_warn("global '%s': unsupported BTF kind %s\n",
 			sym_name, btf_kind_str(t1));
-		return false;
-	}
-}
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool map_defs_match(const char *sym_name,
-			   const struct btf *main_btf,
-			   const struct btf_map_def *main_def,
-			   const struct btf_map_def *main_inner_def,
-			   const struct btf *extra_btf,
-			   const struct btf_map_def *extra_def,
-			   const struct btf_map_def *extra_inner_def)
-{
-	const char *reason;
+अटल bool map_defs_match(स्थिर अक्षर *sym_name,
+			   स्थिर काष्ठा btf *मुख्य_btf,
+			   स्थिर काष्ठा btf_map_def *मुख्य_def,
+			   स्थिर काष्ठा btf_map_def *मुख्य_inner_def,
+			   स्थिर काष्ठा btf *extra_btf,
+			   स्थिर काष्ठा btf_map_def *extra_def,
+			   स्थिर काष्ठा btf_map_def *extra_inner_def)
+अणु
+	स्थिर अक्षर *reason;
 
-	if (main_def->map_type != extra_def->map_type) {
+	अगर (मुख्य_def->map_type != extra_def->map_type) अणु
 		reason = "type";
-		goto mismatch;
-	}
+		जाओ mismatch;
+	पूर्ण
 
 	/* check key type/size match */
-	if (main_def->key_size != extra_def->key_size) {
+	अगर (मुख्य_def->key_size != extra_def->key_size) अणु
 		reason = "key_size";
-		goto mismatch;
-	}
-	if (!!main_def->key_type_id != !!extra_def->key_type_id) {
+		जाओ mismatch;
+	पूर्ण
+	अगर (!!मुख्य_def->key_type_id != !!extra_def->key_type_id) अणु
 		reason = "key type";
-		goto mismatch;
-	}
-	if ((main_def->parts & MAP_DEF_KEY_TYPE)
+		जाओ mismatch;
+	पूर्ण
+	अगर ((मुख्य_def->parts & MAP_DEF_KEY_TYPE)
 	     && !glob_sym_btf_matches(sym_name, true /*exact*/,
-				      main_btf, main_def->key_type_id,
-				      extra_btf, extra_def->key_type_id)) {
+				      मुख्य_btf, मुख्य_def->key_type_id,
+				      extra_btf, extra_def->key_type_id)) अणु
 		reason = "key type";
-		goto mismatch;
-	}
+		जाओ mismatch;
+	पूर्ण
 
 	/* validate value type/size match */
-	if (main_def->value_size != extra_def->value_size) {
+	अगर (मुख्य_def->value_size != extra_def->value_size) अणु
 		reason = "value_size";
-		goto mismatch;
-	}
-	if (!!main_def->value_type_id != !!extra_def->value_type_id) {
+		जाओ mismatch;
+	पूर्ण
+	अगर (!!मुख्य_def->value_type_id != !!extra_def->value_type_id) अणु
 		reason = "value type";
-		goto mismatch;
-	}
-	if ((main_def->parts & MAP_DEF_VALUE_TYPE)
+		जाओ mismatch;
+	पूर्ण
+	अगर ((मुख्य_def->parts & MAP_DEF_VALUE_TYPE)
 	     && !glob_sym_btf_matches(sym_name, true /*exact*/,
-				      main_btf, main_def->value_type_id,
-				      extra_btf, extra_def->value_type_id)) {
+				      मुख्य_btf, मुख्य_def->value_type_id,
+				      extra_btf, extra_def->value_type_id)) अणु
 		reason = "key type";
-		goto mismatch;
-	}
+		जाओ mismatch;
+	पूर्ण
 
-	if (main_def->max_entries != extra_def->max_entries) {
+	अगर (मुख्य_def->max_entries != extra_def->max_entries) अणु
 		reason = "max_entries";
-		goto mismatch;
-	}
-	if (main_def->map_flags != extra_def->map_flags) {
+		जाओ mismatch;
+	पूर्ण
+	अगर (मुख्य_def->map_flags != extra_def->map_flags) अणु
 		reason = "map_flags";
-		goto mismatch;
-	}
-	if (main_def->numa_node != extra_def->numa_node) {
+		जाओ mismatch;
+	पूर्ण
+	अगर (मुख्य_def->numa_node != extra_def->numa_node) अणु
 		reason = "numa_node";
-		goto mismatch;
-	}
-	if (main_def->pinning != extra_def->pinning) {
+		जाओ mismatch;
+	पूर्ण
+	अगर (मुख्य_def->pinning != extra_def->pinning) अणु
 		reason = "pinning";
-		goto mismatch;
-	}
+		जाओ mismatch;
+	पूर्ण
 
-	if ((main_def->parts & MAP_DEF_INNER_MAP) != (extra_def->parts & MAP_DEF_INNER_MAP)) {
+	अगर ((मुख्य_def->parts & MAP_DEF_INNER_MAP) != (extra_def->parts & MAP_DEF_INNER_MAP)) अणु
 		reason = "inner map";
-		goto mismatch;
-	}
+		जाओ mismatch;
+	पूर्ण
 
-	if (main_def->parts & MAP_DEF_INNER_MAP) {
-		char inner_map_name[128];
+	अगर (मुख्य_def->parts & MAP_DEF_INNER_MAP) अणु
+		अक्षर inner_map_name[128];
 
-		snprintf(inner_map_name, sizeof(inner_map_name), "%s.inner", sym_name);
+		snम_लिखो(inner_map_name, माप(inner_map_name), "%s.inner", sym_name);
 
-		return map_defs_match(inner_map_name,
-				      main_btf, main_inner_def, NULL,
-				      extra_btf, extra_inner_def, NULL);
-	}
+		वापस map_defs_match(inner_map_name,
+				      मुख्य_btf, मुख्य_inner_def, शून्य,
+				      extra_btf, extra_inner_def, शून्य);
+	पूर्ण
 
-	return true;
+	वापस true;
 
 mismatch:
 	pr_warn("global '%s': map %s mismatch\n", sym_name, reason);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool glob_map_defs_match(const char *sym_name,
-				struct bpf_linker *linker, struct glob_sym *glob_sym,
-				struct src_obj *obj, Elf64_Sym *sym, int btf_id)
-{
-	struct btf_map_def dst_def = {}, dst_inner_def = {};
-	struct btf_map_def src_def = {}, src_inner_def = {};
-	const struct btf_type *t;
-	int err;
+अटल bool glob_map_defs_match(स्थिर अक्षर *sym_name,
+				काष्ठा bpf_linker *linker, काष्ठा glob_sym *glob_sym,
+				काष्ठा src_obj *obj, Elf64_Sym *sym, पूर्णांक btf_id)
+अणु
+	काष्ठा btf_map_def dst_def = अणुपूर्ण, dst_inner_def = अणुपूर्ण;
+	काष्ठा btf_map_def src_def = अणुपूर्ण, src_inner_def = अणुपूर्ण;
+	स्थिर काष्ठा btf_type *t;
+	पूर्णांक err;
 
 	t = btf__type_by_id(obj->btf, btf_id);
-	if (!btf_is_var(t)) {
+	अगर (!btf_is_var(t)) अणु
 		pr_warn("global '%s': invalid map definition type [%d]\n", sym_name, btf_id);
-		return false;
-	}
-	t = skip_mods_and_typedefs(obj->btf, t->type, NULL);
+		वापस false;
+	पूर्ण
+	t = skip_mods_and_प्रकारs(obj->btf, t->type, शून्य);
 
 	err = parse_btf_map_def(sym_name, obj->btf, t, true /*strict*/, &src_def, &src_inner_def);
-	if (err) {
+	अगर (err) अणु
 		pr_warn("global '%s': invalid map definition\n", sym_name);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* re-parse existing map definition */
 	t = btf__type_by_id(linker->btf, glob_sym->btf_id);
-	t = skip_mods_and_typedefs(linker->btf, t->type, NULL);
+	t = skip_mods_and_प्रकारs(linker->btf, t->type, शून्य);
 	err = parse_btf_map_def(sym_name, linker->btf, t, true /*strict*/, &dst_def, &dst_inner_def);
-	if (err) {
-		/* this should not happen, because we already validated it */
+	अगर (err) अणु
+		/* this should not happen, because we alपढ़ोy validated it */
 		pr_warn("global '%s': invalid dst map definition\n", sym_name);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* Currently extern map definition has to be complete and match
-	 * concrete map definition exactly. This restriction might be lifted
+	/* Currently बाह्य map definition has to be complete and match
+	 * concrete map definition exactly. This restriction might be lअगरted
 	 * in the future.
 	 */
-	return map_defs_match(sym_name, linker->btf, &dst_def, &dst_inner_def,
+	वापस map_defs_match(sym_name, linker->btf, &dst_def, &dst_inner_def,
 			      obj->btf, &src_def, &src_inner_def);
-}
+पूर्ण
 
-static bool glob_syms_match(const char *sym_name,
-			    struct bpf_linker *linker, struct glob_sym *glob_sym,
-			    struct src_obj *obj, Elf64_Sym *sym, size_t sym_idx, int btf_id)
-{
-	const struct btf_type *src_t;
+अटल bool glob_syms_match(स्थिर अक्षर *sym_name,
+			    काष्ठा bpf_linker *linker, काष्ठा glob_sym *glob_sym,
+			    काष्ठा src_obj *obj, Elf64_Sym *sym, माप_प्रकार sym_idx, पूर्णांक btf_id)
+अणु
+	स्थिर काष्ठा btf_type *src_t;
 
-	/* if we are dealing with externs, BTF types describing both global
-	 * and extern VARs/FUNCs should be completely present in all files
+	/* अगर we are dealing with बाह्यs, BTF types describing both global
+	 * and बाह्य VARs/FUNCs should be completely present in all files
 	 */
-	if (!glob_sym->btf_id || !btf_id) {
+	अगर (!glob_sym->btf_id || !btf_id) अणु
 		pr_warn("BTF info is missing for global symbol '%s'\n", sym_name);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	src_t = btf__type_by_id(obj->btf, btf_id);
-	if (!btf_is_var(src_t) && !btf_is_func(src_t)) {
+	अगर (!btf_is_var(src_t) && !btf_is_func(src_t)) अणु
 		pr_warn("only extern variables and functions are supported, but got '%s' for '%s'\n",
 			btf_kind_str(src_t), sym_name);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* deal with .maps definitions specially */
-	if (glob_sym->sec_id && strcmp(linker->secs[glob_sym->sec_id].sec_name, MAPS_ELF_SEC) == 0)
-		return glob_map_defs_match(sym_name, linker, glob_sym, obj, sym, btf_id);
+	अगर (glob_sym->sec_id && म_भेद(linker->secs[glob_sym->sec_id].sec_name, MAPS_ELF_SEC) == 0)
+		वापस glob_map_defs_match(sym_name, linker, glob_sym, obj, sym, btf_id);
 
-	if (!glob_sym_btf_matches(sym_name, true /*exact*/,
+	अगर (!glob_sym_btf_matches(sym_name, true /*exact*/,
 				  linker->btf, glob_sym->btf_id, obj->btf, btf_id))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool btf_is_non_static(const struct btf_type *t)
-{
-	return (btf_is_var(t) && btf_var(t)->linkage != BTF_VAR_STATIC)
+अटल bool btf_is_non_अटल(स्थिर काष्ठा btf_type *t)
+अणु
+	वापस (btf_is_var(t) && btf_var(t)->linkage != BTF_VAR_STATIC)
 	       || (btf_is_func(t) && btf_func_linkage(t) != BTF_FUNC_STATIC);
-}
+पूर्ण
 
-static int find_glob_sym_btf(struct src_obj *obj, Elf64_Sym *sym, const char *sym_name,
-			     int *out_btf_sec_id, int *out_btf_id)
-{
-	int i, j, n = btf__get_nr_types(obj->btf), m, btf_id = 0;
-	const struct btf_type *t;
-	const struct btf_var_secinfo *vi;
-	const char *name;
+अटल पूर्णांक find_glob_sym_btf(काष्ठा src_obj *obj, Elf64_Sym *sym, स्थिर अक्षर *sym_name,
+			     पूर्णांक *out_btf_sec_id, पूर्णांक *out_btf_id)
+अणु
+	पूर्णांक i, j, n = btf__get_nr_types(obj->btf), m, btf_id = 0;
+	स्थिर काष्ठा btf_type *t;
+	स्थिर काष्ठा btf_var_secinfo *vi;
+	स्थिर अक्षर *name;
 
-	for (i = 1; i <= n; i++) {
+	क्रम (i = 1; i <= n; i++) अणु
 		t = btf__type_by_id(obj->btf, i);
 
-		/* some global and extern FUNCs and VARs might not be associated with any
+		/* some global and बाह्य FUNCs and VARs might not be associated with any
 		 * DATASEC, so try to detect them in the same pass
 		 */
-		if (btf_is_non_static(t)) {
+		अगर (btf_is_non_अटल(t)) अणु
 			name = btf__str_by_offset(obj->btf, t->name_off);
-			if (strcmp(name, sym_name) != 0)
-				continue;
+			अगर (म_भेद(name, sym_name) != 0)
+				जारी;
 
 			/* remember and still try to find DATASEC */
 			btf_id = i;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!btf_is_datasec(t))
-			continue;
+		अगर (!btf_is_datasec(t))
+			जारी;
 
 		vi = btf_var_secinfos(t);
-		for (j = 0, m = btf_vlen(t); j < m; j++, vi++) {
+		क्रम (j = 0, m = btf_vlen(t); j < m; j++, vi++) अणु
 			t = btf__type_by_id(obj->btf, vi->type);
 			name = btf__str_by_offset(obj->btf, t->name_off);
 
-			if (strcmp(name, sym_name) != 0)
-				continue;
-			if (btf_is_var(t) && btf_var(t)->linkage == BTF_VAR_STATIC)
-				continue;
-			if (btf_is_func(t) && btf_func_linkage(t) == BTF_FUNC_STATIC)
-				continue;
+			अगर (म_भेद(name, sym_name) != 0)
+				जारी;
+			अगर (btf_is_var(t) && btf_var(t)->linkage == BTF_VAR_STATIC)
+				जारी;
+			अगर (btf_is_func(t) && btf_func_linkage(t) == BTF_FUNC_STATIC)
+				जारी;
 
-			if (btf_id && btf_id != vi->type) {
+			अगर (btf_id && btf_id != vi->type) अणु
 				pr_warn("global/extern '%s' BTF is ambiguous: both types #%d and #%u match\n",
 					sym_name, btf_id, vi->type);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			*out_btf_sec_id = i;
 			*out_btf_id = vi->type;
 
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	/* free-floating extern or global FUNC */
-	if (btf_id) {
+	/* मुक्त-भग्नing बाह्य or global FUNC */
+	अगर (btf_id) अणु
 		*out_btf_sec_id = 0;
 		*out_btf_id = btf_id;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	pr_warn("failed to find BTF info for global/extern symbol '%s'\n", sym_name);
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static struct src_sec *find_src_sec_by_name(struct src_obj *obj, const char *sec_name)
-{
-	struct src_sec *sec;
-	int i;
+अटल काष्ठा src_sec *find_src_sec_by_name(काष्ठा src_obj *obj, स्थिर अक्षर *sec_name)
+अणु
+	काष्ठा src_sec *sec;
+	पूर्णांक i;
 
-	for (i = 1; i < obj->sec_cnt; i++) {
+	क्रम (i = 1; i < obj->sec_cnt; i++) अणु
 		sec = &obj->secs[i];
 
-		if (strcmp(sec->sec_name, sec_name) == 0)
-			return sec;
-	}
+		अगर (म_भेद(sec->sec_name, sec_name) == 0)
+			वापस sec;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int complete_extern_btf_info(struct btf *dst_btf, int dst_id,
-				    struct btf *src_btf, int src_id)
-{
-	struct btf_type *dst_t = btf_type_by_id(dst_btf, dst_id);
-	struct btf_type *src_t = btf_type_by_id(src_btf, src_id);
-	struct btf_param *src_p, *dst_p;
-	const char *s;
-	int i, n, off;
+अटल पूर्णांक complete_बाह्य_btf_info(काष्ठा btf *dst_btf, पूर्णांक dst_id,
+				    काष्ठा btf *src_btf, पूर्णांक src_id)
+अणु
+	काष्ठा btf_type *dst_t = btf_type_by_id(dst_btf, dst_id);
+	काष्ठा btf_type *src_t = btf_type_by_id(src_btf, src_id);
+	काष्ठा btf_param *src_p, *dst_p;
+	स्थिर अक्षर *s;
+	पूर्णांक i, n, off;
 
-	/* We already made sure that source and destination types (FUNC or
+	/* We alपढ़ोy made sure that source and destination types (FUNC or
 	 * VAR) match in terms of types and argument names.
 	 */
-	if (btf_is_var(dst_t)) {
+	अगर (btf_is_var(dst_t)) अणु
 		btf_var(dst_t)->linkage = BTF_VAR_GLOBAL_ALLOCATED;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dst_t->info = btf_type_info(BTF_KIND_FUNC, BTF_FUNC_GLOBAL, 0);
 
@@ -1738,182 +1739,182 @@ static int complete_extern_btf_info(struct btf *dst_btf, int dst_id,
 	src_t = btf_type_by_id(src_btf, src_t->type);
 	dst_t = btf_type_by_id(dst_btf, dst_t->type);
 
-	/* Fill in all the argument names, which for extern FUNCs are missing.
-	 * We'll end up with two copies of FUNCs/VARs for externs, but that
+	/* Fill in all the argument names, which क्रम बाह्य FUNCs are missing.
+	 * We'll end up with two copies of FUNCs/VARs क्रम बाह्यs, but that
 	 * will be taken care of by BTF dedup at the very end.
-	 * It might be that BTF types for extern in one file has less/more BTF
-	 * information (e.g., FWD instead of full STRUCT/UNION information),
-	 * but that should be (in most cases, subject to BTF dedup rules)
+	 * It might be that BTF types क्रम बाह्य in one file has less/more BTF
+	 * inक्रमmation (e.g., FWD instead of full STRUCT/UNION inक्रमmation),
+	 * but that should be (in most हालs, subject to BTF dedup rules)
 	 * handled and resolved by BTF dedup algorithm as well, so we won't
 	 * worry about it. Our only job is to make sure that argument names
 	 * are populated on both sides, otherwise BTF dedup will pedantically
-	 * consider them different.
+	 * consider them dअगरferent.
 	 */
 	src_p = btf_params(src_t);
 	dst_p = btf_params(dst_t);
-	for (i = 0, n = btf_vlen(dst_t); i < n; i++, src_p++, dst_p++) {
-		if (!src_p->name_off)
-			continue;
+	क्रम (i = 0, n = btf_vlen(dst_t); i < n; i++, src_p++, dst_p++) अणु
+		अगर (!src_p->name_off)
+			जारी;
 
 		/* src_btf has more complete info, so add name to dst_btf */
 		s = btf__str_by_offset(src_btf, src_p->name_off);
 		off = btf__add_str(dst_btf, s);
-		if (off < 0)
-			return off;
+		अगर (off < 0)
+			वापस off;
 		dst_p->name_off = off;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void sym_update_bind(Elf64_Sym *sym, int sym_bind)
-{
+अटल व्योम sym_update_bind(Elf64_Sym *sym, पूर्णांक sym_bind)
+अणु
 	sym->st_info = ELF64_ST_INFO(sym_bind, ELF64_ST_TYPE(sym->st_info));
-}
+पूर्ण
 
-static void sym_update_type(Elf64_Sym *sym, int sym_type)
-{
+अटल व्योम sym_update_type(Elf64_Sym *sym, पूर्णांक sym_type)
+अणु
 	sym->st_info = ELF64_ST_INFO(ELF64_ST_BIND(sym->st_info), sym_type);
-}
+पूर्ण
 
-static void sym_update_visibility(Elf64_Sym *sym, int sym_vis)
-{
-	/* libelf doesn't provide setters for ST_VISIBILITY,
+अटल व्योम sym_update_visibility(Elf64_Sym *sym, पूर्णांक sym_vis)
+अणु
+	/* libelf करोesn't provide setters क्रम ST_VISIBILITY,
 	 * but it is stored in the lower 2 bits of st_other
 	 */
 	sym->st_other &= 0x03;
 	sym->st_other |= sym_vis;
-}
+पूर्ण
 
-static int linker_append_elf_sym(struct bpf_linker *linker, struct src_obj *obj,
-				 Elf64_Sym *sym, const char *sym_name, int src_sym_idx)
-{
-	struct src_sec *src_sec = NULL;
-	struct dst_sec *dst_sec = NULL;
-	struct glob_sym *glob_sym = NULL;
-	int name_off, sym_type, sym_bind, sym_vis, err;
-	int btf_sec_id = 0, btf_id = 0;
-	size_t dst_sym_idx;
+अटल पूर्णांक linker_append_elf_sym(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj,
+				 Elf64_Sym *sym, स्थिर अक्षर *sym_name, पूर्णांक src_sym_idx)
+अणु
+	काष्ठा src_sec *src_sec = शून्य;
+	काष्ठा dst_sec *dst_sec = शून्य;
+	काष्ठा glob_sym *glob_sym = शून्य;
+	पूर्णांक name_off, sym_type, sym_bind, sym_vis, err;
+	पूर्णांक btf_sec_id = 0, btf_id = 0;
+	माप_प्रकार dst_sym_idx;
 	Elf64_Sym *dst_sym;
-	bool sym_is_extern;
+	bool sym_is_बाह्य;
 
 	sym_type = ELF64_ST_TYPE(sym->st_info);
 	sym_bind = ELF64_ST_BIND(sym->st_info);
 	sym_vis = ELF64_ST_VISIBILITY(sym->st_other);
-	sym_is_extern = sym->st_shndx == SHN_UNDEF;
+	sym_is_बाह्य = sym->st_shndx == SHN_UNDEF;
 
-	if (sym_is_extern) {
-		if (!obj->btf) {
+	अगर (sym_is_बाह्य) अणु
+		अगर (!obj->btf) अणु
 			pr_warn("externs without BTF info are not supported\n");
-			return -ENOTSUP;
-		}
-	} else if (sym->st_shndx < SHN_LORESERVE) {
+			वापस -ENOTSUP;
+		पूर्ण
+	पूर्ण अन्यथा अगर (sym->st_shndx < SHN_LORESERVE) अणु
 		src_sec = &obj->secs[sym->st_shndx];
-		if (src_sec->skipped)
-			return 0;
+		अगर (src_sec->skipped)
+			वापस 0;
 		dst_sec = &linker->secs[src_sec->dst_id];
 
 		/* allow only one STT_SECTION symbol per section */
-		if (sym_type == STT_SECTION && dst_sec->sec_sym_idx) {
+		अगर (sym_type == STT_SECTION && dst_sec->sec_sym_idx) अणु
 			obj->sym_map[src_sym_idx] = dst_sec->sec_sym_idx;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (sym_bind == STB_LOCAL)
-		goto add_sym;
+	अगर (sym_bind == STB_LOCAL)
+		जाओ add_sym;
 
 	/* find matching BTF info */
 	err = find_glob_sym_btf(obj, sym, sym_name, &btf_sec_id, &btf_id);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (sym_is_extern && btf_sec_id) {
-		const char *sec_name = NULL;
-		const struct btf_type *t;
+	अगर (sym_is_बाह्य && btf_sec_id) अणु
+		स्थिर अक्षर *sec_name = शून्य;
+		स्थिर काष्ठा btf_type *t;
 
 		t = btf__type_by_id(obj->btf, btf_sec_id);
 		sec_name = btf__str_by_offset(obj->btf, t->name_off);
 
-		/* Clang puts unannotated extern vars into
+		/* Clang माला_दो unannotated बाह्य vars पूर्णांकo
 		 * '.extern' BTF DATASEC. Treat them the same
-		 * as unannotated extern funcs (which are
-		 * currently not put into any DATASECs).
-		 * Those don't have associated src_sec/dst_sec.
+		 * as unannotated बाह्य funcs (which are
+		 * currently not put पूर्णांकo any DATASECs).
+		 * Those करोn't have associated src_sec/dst_sec.
 		 */
-		if (strcmp(sec_name, BTF_EXTERN_SEC) != 0) {
+		अगर (म_भेद(sec_name, BTF_EXTERN_SEC) != 0) अणु
 			src_sec = find_src_sec_by_name(obj, sec_name);
-			if (!src_sec) {
+			अगर (!src_sec) अणु
 				pr_warn("failed to find matching ELF sec '%s'\n", sec_name);
-				return -ENOENT;
-			}
+				वापस -ENOENT;
+			पूर्ण
 			dst_sec = &linker->secs[src_sec->dst_id];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	glob_sym = find_glob_sym(linker, sym_name);
-	if (glob_sym) {
+	अगर (glob_sym) अणु
 		/* Preventively resolve to existing symbol. This is
-		 * needed for further relocation symbol remapping in
+		 * needed क्रम further relocation symbol remapping in
 		 * the next step of linking.
 		 */
 		obj->sym_map[src_sym_idx] = glob_sym->sym_idx;
 
-		/* If both symbols are non-externs, at least one of
+		/* If both symbols are non-बाह्यs, at least one of
 		 * them has to be STB_WEAK, otherwise they are in
 		 * a conflict with each other.
 		 */
-		if (!sym_is_extern && !glob_sym->is_extern
-		    && !glob_sym->is_weak && sym_bind != STB_WEAK) {
+		अगर (!sym_is_बाह्य && !glob_sym->is_बाह्य
+		    && !glob_sym->is_weak && sym_bind != STB_WEAK) अणु
 			pr_warn("conflicting non-weak symbol #%d (%s) definition in '%s'\n",
 				src_sym_idx, sym_name, obj->filename);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!glob_syms_match(sym_name, linker, glob_sym, obj, sym, src_sym_idx, btf_id))
-			return -EINVAL;
+		अगर (!glob_syms_match(sym_name, linker, glob_sym, obj, sym, src_sym_idx, btf_id))
+			वापस -EINVAL;
 
 		dst_sym = get_sym_by_idx(linker, glob_sym->sym_idx);
 
-		/* If new symbol is strong, then force dst_sym to be strong as
-		 * well; this way a mix of weak and non-weak extern
+		/* If new symbol is strong, then क्रमce dst_sym to be strong as
+		 * well; this way a mix of weak and non-weak बाह्य
 		 * definitions will end up being strong.
 		 */
-		if (sym_bind == STB_GLOBAL) {
+		अगर (sym_bind == STB_GLOBAL) अणु
 			/* We still need to preserve type (NOTYPE or
 			 * OBJECT/FUNC, depending on whether the symbol is
-			 * extern or not)
+			 * बाह्य or not)
 			 */
 			sym_update_bind(dst_sym, STB_GLOBAL);
 			glob_sym->is_weak = false;
-		}
+		पूर्ण
 
-		/* Non-default visibility is "contaminating", with stricter
-		 * visibility overwriting more permissive ones, even if more
-		 * permissive visibility comes from just an extern definition.
+		/* Non-शेष visibility is "contaminating", with stricter
+		 * visibility overwriting more permissive ones, even अगर more
+		 * permissive visibility comes from just an बाह्य definition.
 		 * Currently only STV_DEFAULT and STV_HIDDEN are allowed and
 		 * ensured by ELF symbol sanity checks above.
 		 */
-		if (sym_vis > ELF64_ST_VISIBILITY(dst_sym->st_other))
+		अगर (sym_vis > ELF64_ST_VISIBILITY(dst_sym->st_other))
 			sym_update_visibility(dst_sym, sym_vis);
 
-		/* If the new symbol is extern, then regardless if
-		 * existing symbol is extern or resolved global, just
+		/* If the new symbol is बाह्य, then regardless अगर
+		 * existing symbol is बाह्य or resolved global, just
 		 * keep the existing one untouched.
 		 */
-		if (sym_is_extern)
-			return 0;
+		अगर (sym_is_बाह्य)
+			वापस 0;
 
 		/* If existing symbol is a strong resolved symbol, bail out,
 		 * because we lost resolution battle have nothing to
-		 * contribute. We already checked abover that there is no
-		 * strong-strong conflict. We also already tightened binding
-		 * and visibility, so nothing else to contribute at that point.
+		 * contribute. We alपढ़ोy checked abover that there is no
+		 * strong-strong conflict. We also alपढ़ोy tightened binding
+		 * and visibility, so nothing अन्यथा to contribute at that poपूर्णांक.
 		 */
-		if (!glob_sym->is_extern && sym_bind == STB_WEAK)
-			return 0;
+		अगर (!glob_sym->is_बाह्य && sym_bind == STB_WEAK)
+			वापस 0;
 
-		/* At this point, new symbol is strong non-extern,
-		 * so overwrite glob_sym with new symbol information.
+		/* At this poपूर्णांक, new symbol is strong non-बाह्य,
+		 * so overग_लिखो glob_sym with new symbol inक्रमmation.
 		 * Preserve binding and visibility.
 		 */
 		sym_update_type(dst_sym, sym_type);
@@ -1923,27 +1924,27 @@ static int linker_append_elf_sym(struct bpf_linker *linker, struct src_obj *obj,
 
 		/* see comment below about dst_sec->id vs dst_sec->sec_idx */
 		glob_sym->sec_id = dst_sec->id;
-		glob_sym->is_extern = false;
+		glob_sym->is_बाह्य = false;
 
-		if (complete_extern_btf_info(linker->btf, glob_sym->btf_id,
+		अगर (complete_बाह्य_btf_info(linker->btf, glob_sym->btf_id,
 					     obj->btf, btf_id))
-			return -EINVAL;
+			वापस -EINVAL;
 
 		/* request updating VAR's/FUNC's underlying BTF type when appending BTF type */
 		glob_sym->underlying_btf_id = 0;
 
 		obj->sym_map[src_sym_idx] = glob_sym->sym_idx;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 add_sym:
 	name_off = strset__add_str(linker->strtab_strs, sym_name);
-	if (name_off < 0)
-		return name_off;
+	अगर (name_off < 0)
+		वापस name_off;
 
 	dst_sym = add_new_sym(linker, &dst_sym_idx);
-	if (!dst_sym)
-		return -ENOMEM;
+	अगर (!dst_sym)
+		वापस -ENOMEM;
 
 	dst_sym->st_name = name_off;
 	dst_sym->st_info = sym->st_info;
@@ -1954,375 +1955,375 @@ add_sym:
 
 	obj->sym_map[src_sym_idx] = dst_sym_idx;
 
-	if (sym_type == STT_SECTION && dst_sym) {
+	अगर (sym_type == STT_SECTION && dst_sym) अणु
 		dst_sec->sec_sym_idx = dst_sym_idx;
 		dst_sym->st_value = 0;
-	}
+	पूर्ण
 
-	if (sym_bind != STB_LOCAL) {
+	अगर (sym_bind != STB_LOCAL) अणु
 		glob_sym = add_glob_sym(linker);
-		if (!glob_sym)
-			return -ENOMEM;
+		अगर (!glob_sym)
+			वापस -ENOMEM;
 
 		glob_sym->sym_idx = dst_sym_idx;
 		/* we use dst_sec->id (and not dst_sec->sec_idx), because
-		 * ephemeral sections (.kconfig, .ksyms, etc) don't have
-		 * sec_idx (as they don't have corresponding ELF section), but
-		 * still have id. .extern doesn't have even ephemeral section
+		 * ephemeral sections (.kconfig, .ksyms, etc) करोn't have
+		 * sec_idx (as they करोn't have corresponding ELF section), but
+		 * still have id. .बाह्य करोesn't have even ephemeral section
 		 * associated with it, so dst_sec->id == dst_sec->sec_idx == 0.
 		 */
 		glob_sym->sec_id = dst_sec ? dst_sec->id : 0;
 		glob_sym->name_off = name_off;
 		/* we will fill btf_id in during BTF merging step */
 		glob_sym->btf_id = 0;
-		glob_sym->is_extern = sym_is_extern;
+		glob_sym->is_बाह्य = sym_is_बाह्य;
 		glob_sym->is_weak = sym_bind == STB_WEAK;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int linker_append_elf_relos(struct bpf_linker *linker, struct src_obj *obj)
-{
-	struct src_sec *src_symtab = &obj->secs[obj->symtab_sec_idx];
-	struct dst_sec *dst_symtab = &linker->secs[linker->symtab_sec_idx];
-	int i, err;
+अटल पूर्णांक linker_append_elf_relos(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj)
+अणु
+	काष्ठा src_sec *src_symtab = &obj->secs[obj->symtab_sec_idx];
+	काष्ठा dst_sec *dst_symtab = &linker->secs[linker->symtab_sec_idx];
+	पूर्णांक i, err;
 
-	for (i = 1; i < obj->sec_cnt; i++) {
-		struct src_sec *src_sec, *src_linked_sec;
-		struct dst_sec *dst_sec, *dst_linked_sec;
+	क्रम (i = 1; i < obj->sec_cnt; i++) अणु
+		काष्ठा src_sec *src_sec, *src_linked_sec;
+		काष्ठा dst_sec *dst_sec, *dst_linked_sec;
 		Elf64_Rel *src_rel, *dst_rel;
-		int j, n;
+		पूर्णांक j, n;
 
 		src_sec = &obj->secs[i];
-		if (!is_relo_sec(src_sec))
-			continue;
+		अगर (!is_relo_sec(src_sec))
+			जारी;
 
-		/* shdr->sh_info points to relocatable section */
+		/* shdr->sh_info poपूर्णांकs to relocatable section */
 		src_linked_sec = &obj->secs[src_sec->shdr->sh_info];
-		if (src_linked_sec->skipped)
-			continue;
+		अगर (src_linked_sec->skipped)
+			जारी;
 
 		dst_sec = find_dst_sec_by_name(linker, src_sec->sec_name);
-		if (!dst_sec) {
+		अगर (!dst_sec) अणु
 			dst_sec = add_dst_sec(linker, src_sec->sec_name);
-			if (!dst_sec)
-				return -ENOMEM;
+			अगर (!dst_sec)
+				वापस -ENOMEM;
 			err = init_sec(linker, dst_sec, src_sec);
-			if (err) {
+			अगर (err) अणु
 				pr_warn("failed to init section '%s'\n", src_sec->sec_name);
-				return err;
-			}
-		} else if (!secs_match(dst_sec, src_sec)) {
+				वापस err;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!secs_match(dst_sec, src_sec)) अणु
 			pr_warn("sections %s are not compatible\n", src_sec->sec_name);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		/* shdr->sh_link points to SYMTAB */
+		/* shdr->sh_link poपूर्णांकs to SYMTAB */
 		dst_sec->shdr->sh_link = linker->symtab_sec_idx;
 
-		/* shdr->sh_info points to relocated section */
+		/* shdr->sh_info poपूर्णांकs to relocated section */
 		dst_linked_sec = &linker->secs[src_linked_sec->dst_id];
 		dst_sec->shdr->sh_info = dst_linked_sec->sec_idx;
 
 		src_sec->dst_id = dst_sec->id;
 		err = extend_sec(linker, dst_sec, src_sec);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		src_rel = src_sec->data->d_buf;
 		dst_rel = dst_sec->raw_data + src_sec->dst_off;
 		n = src_sec->shdr->sh_size / src_sec->shdr->sh_entsize;
-		for (j = 0; j < n; j++, src_rel++, dst_rel++) {
-			size_t src_sym_idx = ELF64_R_SYM(src_rel->r_info);
-			size_t sym_type = ELF64_R_TYPE(src_rel->r_info);
+		क्रम (j = 0; j < n; j++, src_rel++, dst_rel++) अणु
+			माप_प्रकार src_sym_idx = ELF64_R_SYM(src_rel->r_info);
+			माप_प्रकार sym_type = ELF64_R_TYPE(src_rel->r_info);
 			Elf64_Sym *src_sym, *dst_sym;
-			size_t dst_sym_idx;
+			माप_प्रकार dst_sym_idx;
 
 			src_sym_idx = ELF64_R_SYM(src_rel->r_info);
-			src_sym = src_symtab->data->d_buf + sizeof(*src_sym) * src_sym_idx;
+			src_sym = src_symtab->data->d_buf + माप(*src_sym) * src_sym_idx;
 
 			dst_sym_idx = obj->sym_map[src_sym_idx];
-			dst_sym = dst_symtab->raw_data + sizeof(*dst_sym) * dst_sym_idx;
+			dst_sym = dst_symtab->raw_data + माप(*dst_sym) * dst_sym_idx;
 			dst_rel->r_offset += src_linked_sec->dst_off;
 			sym_type = ELF64_R_TYPE(src_rel->r_info);
 			dst_rel->r_info = ELF64_R_INFO(dst_sym_idx, sym_type);
 
-			if (ELF64_ST_TYPE(src_sym->st_info) == STT_SECTION) {
-				struct src_sec *sec = &obj->secs[src_sym->st_shndx];
-				struct bpf_insn *insn;
+			अगर (ELF64_ST_TYPE(src_sym->st_info) == STT_SECTION) अणु
+				काष्ठा src_sec *sec = &obj->secs[src_sym->st_shndx];
+				काष्ठा bpf_insn *insn;
 
-				if (src_linked_sec->shdr->sh_flags & SHF_EXECINSTR) {
-					/* calls to the very first static function inside
+				अगर (src_linked_sec->shdr->sh_flags & SHF_EXECINSTR) अणु
+					/* calls to the very first अटल function inside
 					 * .text section at offset 0 will
 					 * reference section symbol, not the
 					 * function symbol. Fix that up,
 					 * otherwise it won't be possible to
-					 * relocate calls to two different
-					 * static functions with the same name
-					 * (rom two different object files)
+					 * relocate calls to two dअगरferent
+					 * अटल functions with the same name
+					 * (rom two dअगरferent object files)
 					 */
 					insn = dst_linked_sec->raw_data + dst_rel->r_offset;
-					if (insn->code == (BPF_JMP | BPF_CALL))
-						insn->imm += sec->dst_off / sizeof(struct bpf_insn);
-					else
+					अगर (insn->code == (BPF_JMP | BPF_CALL))
+						insn->imm += sec->dst_off / माप(काष्ठा bpf_insn);
+					अन्यथा
 						insn->imm += sec->dst_off;
-				} else {
+				पूर्ण अन्यथा अणु
 					pr_warn("relocation against STT_SECTION in non-exec section is not supported!\n");
-					return -EINVAL;
-				}
-			}
+					वापस -EINVAL;
+				पूर्ण
+			पूर्ण
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static Elf64_Sym *find_sym_by_name(struct src_obj *obj, size_t sec_idx,
-				   int sym_type, const char *sym_name)
-{
-	struct src_sec *symtab = &obj->secs[obj->symtab_sec_idx];
+अटल Elf64_Sym *find_sym_by_name(काष्ठा src_obj *obj, माप_प्रकार sec_idx,
+				   पूर्णांक sym_type, स्थिर अक्षर *sym_name)
+अणु
+	काष्ठा src_sec *symtab = &obj->secs[obj->symtab_sec_idx];
 	Elf64_Sym *sym = symtab->data->d_buf;
-	int i, n = symtab->shdr->sh_size / symtab->shdr->sh_entsize;
-	int str_sec_idx = symtab->shdr->sh_link;
-	const char *name;
+	पूर्णांक i, n = symtab->shdr->sh_size / symtab->shdr->sh_entsize;
+	पूर्णांक str_sec_idx = symtab->shdr->sh_link;
+	स्थिर अक्षर *name;
 
-	for (i = 0; i < n; i++, sym++) {
-		if (sym->st_shndx != sec_idx)
-			continue;
-		if (ELF64_ST_TYPE(sym->st_info) != sym_type)
-			continue;
+	क्रम (i = 0; i < n; i++, sym++) अणु
+		अगर (sym->st_shndx != sec_idx)
+			जारी;
+		अगर (ELF64_ST_TYPE(sym->st_info) != sym_type)
+			जारी;
 
 		name = elf_strptr(obj->elf, str_sec_idx, sym->st_name);
-		if (!name)
-			return NULL;
+		अगर (!name)
+			वापस शून्य;
 
-		if (strcmp(sym_name, name) != 0)
-			continue;
+		अगर (म_भेद(sym_name, name) != 0)
+			जारी;
 
-		return sym;
-	}
+		वापस sym;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int linker_fixup_btf(struct src_obj *obj)
-{
-	const char *sec_name;
-	struct src_sec *sec;
-	int i, j, n, m;
+अटल पूर्णांक linker_fixup_btf(काष्ठा src_obj *obj)
+अणु
+	स्थिर अक्षर *sec_name;
+	काष्ठा src_sec *sec;
+	पूर्णांक i, j, n, m;
 
-	if (!obj->btf)
-		return 0;
+	अगर (!obj->btf)
+		वापस 0;
 
 	n = btf__get_nr_types(obj->btf);
-	for (i = 1; i <= n; i++) {
-		struct btf_var_secinfo *vi;
-		struct btf_type *t;
+	क्रम (i = 1; i <= n; i++) अणु
+		काष्ठा btf_var_secinfo *vi;
+		काष्ठा btf_type *t;
 
 		t = btf_type_by_id(obj->btf, i);
-		if (btf_kind(t) != BTF_KIND_DATASEC)
-			continue;
+		अगर (btf_kind(t) != BTF_KIND_DATASEC)
+			जारी;
 
 		sec_name = btf__str_by_offset(obj->btf, t->name_off);
 		sec = find_src_sec_by_name(obj, sec_name);
-		if (sec) {
+		अगर (sec) अणु
 			/* record actual section size, unless ephemeral */
-			if (sec->shdr)
+			अगर (sec->shdr)
 				t->size = sec->shdr->sh_size;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* BTF can have some sections that are not represented
-			 * in ELF, e.g., .kconfig, .ksyms, .extern, which are used
-			 * for special extern variables.
+			 * in ELF, e.g., .kconfig, .ksyms, .बाह्य, which are used
+			 * क्रम special बाह्य variables.
 			 *
 			 * For all but one such special (ephemeral)
 			 * sections, we pre-create "section shells" to be able
 			 * to keep track of extra per-section metadata later
-			 * (e.g., those BTF extern variables).
+			 * (e.g., those BTF बाह्य variables).
 			 *
-			 * .extern is even more special, though, because it
-			 * contains extern variables that need to be resolved
-			 * by static linker, not libbpf and kernel. When such
-			 * externs are resolved, we are going to remove them
-			 * from .extern BTF section and might end up not
-			 * needing it at all. Each resolved extern should have
-			 * matching non-extern VAR/FUNC in other sections.
+			 * .बाह्य is even more special, though, because it
+			 * contains बाह्य variables that need to be resolved
+			 * by अटल linker, not libbpf and kernel. When such
+			 * बाह्यs are resolved, we are going to हटाओ them
+			 * from .बाह्य BTF section and might end up not
+			 * needing it at all. Each resolved बाह्य should have
+			 * matching non-बाह्य VAR/FUNC in other sections.
 			 *
-			 * We do support leaving some of the externs
-			 * unresolved, though, to support cases of building
+			 * We करो support leaving some of the बाह्यs
+			 * unresolved, though, to support हालs of building
 			 * libraries, which will later be linked against final
-			 * BPF applications. So if at finalization we still
-			 * see unresolved externs, we'll create .extern
+			 * BPF applications. So अगर at finalization we still
+			 * see unresolved बाह्यs, we'll create .बाह्य
 			 * section on our own.
 			 */
-			if (strcmp(sec_name, BTF_EXTERN_SEC) == 0)
-				continue;
+			अगर (म_भेद(sec_name, BTF_EXTERN_SEC) == 0)
+				जारी;
 
 			sec = add_src_sec(obj, sec_name);
-			if (!sec)
-				return -ENOMEM;
+			अगर (!sec)
+				वापस -ENOMEM;
 
 			sec->ephemeral = true;
 			sec->sec_idx = 0; /* will match UNDEF shndx in ELF */
-		}
+		पूर्ण
 
 		/* remember ELF section and its BTF type ID match */
 		sec->sec_type_id = i;
 
 		/* fix up variable offsets */
 		vi = btf_var_secinfos(t);
-		for (j = 0, m = btf_vlen(t); j < m; j++, vi++) {
-			const struct btf_type *vt = btf__type_by_id(obj->btf, vi->type);
-			const char *var_name = btf__str_by_offset(obj->btf, vt->name_off);
-			int var_linkage = btf_var(vt)->linkage;
+		क्रम (j = 0, m = btf_vlen(t); j < m; j++, vi++) अणु
+			स्थिर काष्ठा btf_type *vt = btf__type_by_id(obj->btf, vi->type);
+			स्थिर अक्षर *var_name = btf__str_by_offset(obj->btf, vt->name_off);
+			पूर्णांक var_linkage = btf_var(vt)->linkage;
 			Elf64_Sym *sym;
 
-			/* no need to patch up static or extern vars */
-			if (var_linkage != BTF_VAR_GLOBAL_ALLOCATED)
-				continue;
+			/* no need to patch up अटल or बाह्य vars */
+			अगर (var_linkage != BTF_VAR_GLOBAL_ALLOCATED)
+				जारी;
 
 			sym = find_sym_by_name(obj, sec->sec_idx, STT_OBJECT, var_name);
-			if (!sym) {
+			अगर (!sym) अणु
 				pr_warn("failed to find symbol for variable '%s' in section '%s'\n", var_name, sec_name);
-				return -ENOENT;
-			}
+				वापस -ENOENT;
+			पूर्ण
 
 			vi->offset = sym->st_value;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int remap_type_id(__u32 *type_id, void *ctx)
-{
-	int *id_map = ctx;
-	int new_id = id_map[*type_id];
+अटल पूर्णांक remap_type_id(__u32 *type_id, व्योम *ctx)
+अणु
+	पूर्णांक *id_map = ctx;
+	पूर्णांक new_id = id_map[*type_id];
 
-	/* Error out if the type wasn't remapped. Ignore VOID which stays VOID. */
-	if (new_id == 0 && *type_id != 0) {
+	/* Error out अगर the type wasn't remapped. Ignore VOID which stays VOID. */
+	अगर (new_id == 0 && *type_id != 0) अणु
 		pr_warn("failed to find new ID mapping for original BTF type ID %u\n", *type_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*type_id = id_map[*type_id];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int linker_append_btf(struct bpf_linker *linker, struct src_obj *obj)
-{
-	const struct btf_type *t;
-	int i, j, n, start_id, id;
-	const char *name;
+अटल पूर्णांक linker_append_btf(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj)
+अणु
+	स्थिर काष्ठा btf_type *t;
+	पूर्णांक i, j, n, start_id, id;
+	स्थिर अक्षर *name;
 
-	if (!obj->btf)
-		return 0;
+	अगर (!obj->btf)
+		वापस 0;
 
 	start_id = btf__get_nr_types(linker->btf) + 1;
 	n = btf__get_nr_types(obj->btf);
 
-	obj->btf_type_map = calloc(n + 1, sizeof(int));
-	if (!obj->btf_type_map)
-		return -ENOMEM;
+	obj->btf_type_map = सुस्मृति(n + 1, माप(पूर्णांक));
+	अगर (!obj->btf_type_map)
+		वापस -ENOMEM;
 
-	for (i = 1; i <= n; i++) {
-		struct glob_sym *glob_sym = NULL;
+	क्रम (i = 1; i <= n; i++) अणु
+		काष्ठा glob_sym *glob_sym = शून्य;
 
 		t = btf__type_by_id(obj->btf, i);
 
 		/* DATASECs are handled specially below */
-		if (btf_kind(t) == BTF_KIND_DATASEC)
-			continue;
+		अगर (btf_kind(t) == BTF_KIND_DATASEC)
+			जारी;
 
-		if (btf_is_non_static(t)) {
-			/* there should be glob_sym already */
+		अगर (btf_is_non_अटल(t)) अणु
+			/* there should be glob_sym alपढ़ोy */
 			name = btf__str_by_offset(obj->btf, t->name_off);
 			glob_sym = find_glob_sym(linker, name);
 
 			/* VARs without corresponding glob_sym are those that
-			 * belong to skipped/deduplicated sections (i.e.,
+			 * beदीर्घ to skipped/deduplicated sections (i.e.,
 			 * license and version), so just skip them
 			 */
-			if (!glob_sym)
-				continue;
+			अगर (!glob_sym)
+				जारी;
 
 			/* linker_append_elf_sym() might have requested
-			 * updating underlying type ID, if extern was resolved
+			 * updating underlying type ID, अगर बाह्य was resolved
 			 * to strong symbol or weak got upgraded to non-weak
 			 */
-			if (glob_sym->underlying_btf_id == 0)
+			अगर (glob_sym->underlying_btf_id == 0)
 				glob_sym->underlying_btf_id = -t->type;
 
 			/* globals from previous object files that match our
-			 * VAR/FUNC already have a corresponding associated
+			 * VAR/FUNC alपढ़ोy have a corresponding associated
 			 * BTF type, so just make sure to use it
 			 */
-			if (glob_sym->btf_id) {
-				/* reuse existing BTF type for global var/func */
+			अगर (glob_sym->btf_id) अणु
+				/* reuse existing BTF type क्रम global var/func */
 				obj->btf_type_map[i] = glob_sym->btf_id;
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		id = btf__add_type(linker->btf, obj->btf, t);
-		if (id < 0) {
+		अगर (id < 0) अणु
 			pr_warn("failed to append BTF type #%d from file '%s'\n", i, obj->filename);
-			return id;
-		}
+			वापस id;
+		पूर्ण
 
 		obj->btf_type_map[i] = id;
 
-		/* record just appended BTF type for var/func */
-		if (glob_sym) {
+		/* record just appended BTF type क्रम var/func */
+		अगर (glob_sym) अणु
 			glob_sym->btf_id = id;
 			glob_sym->underlying_btf_id = -t->type;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* remap all the types except DATASECs */
 	n = btf__get_nr_types(linker->btf);
-	for (i = start_id; i <= n; i++) {
-		struct btf_type *dst_t = btf_type_by_id(linker->btf, i);
+	क्रम (i = start_id; i <= n; i++) अणु
+		काष्ठा btf_type *dst_t = btf_type_by_id(linker->btf, i);
 
-		if (btf_type_visit_type_ids(dst_t, remap_type_id, obj->btf_type_map))
-			return -EINVAL;
-	}
+		अगर (btf_type_visit_type_ids(dst_t, remap_type_id, obj->btf_type_map))
+			वापस -EINVAL;
+	पूर्ण
 
-	/* Rewrite VAR/FUNC underlying types (i.e., FUNC's FUNC_PROTO and VAR's
-	 * actual type), if necessary
+	/* Reग_लिखो VAR/FUNC underlying types (i.e., FUNC's FUNC_PROTO and VAR's
+	 * actual type), अगर necessary
 	 */
-	for (i = 0; i < linker->glob_sym_cnt; i++) {
-		struct glob_sym *glob_sym = &linker->glob_syms[i];
-		struct btf_type *glob_t;
+	क्रम (i = 0; i < linker->glob_sym_cnt; i++) अणु
+		काष्ठा glob_sym *glob_sym = &linker->glob_syms[i];
+		काष्ठा btf_type *glob_t;
 
-		if (glob_sym->underlying_btf_id >= 0)
-			continue;
+		अगर (glob_sym->underlying_btf_id >= 0)
+			जारी;
 
 		glob_sym->underlying_btf_id = obj->btf_type_map[-glob_sym->underlying_btf_id];
 
 		glob_t = btf_type_by_id(linker->btf, glob_sym->btf_id);
 		glob_t->type = glob_sym->underlying_btf_id;
-	}
+	पूर्ण
 
 	/* append DATASEC info */
-	for (i = 1; i < obj->sec_cnt; i++) {
-		struct src_sec *src_sec;
-		struct dst_sec *dst_sec;
-		const struct btf_var_secinfo *src_var;
-		struct btf_var_secinfo *dst_var;
+	क्रम (i = 1; i < obj->sec_cnt; i++) अणु
+		काष्ठा src_sec *src_sec;
+		काष्ठा dst_sec *dst_sec;
+		स्थिर काष्ठा btf_var_secinfo *src_var;
+		काष्ठा btf_var_secinfo *dst_var;
 
 		src_sec = &obj->secs[i];
-		if (!src_sec->sec_type_id || src_sec->skipped)
-			continue;
+		अगर (!src_sec->sec_type_id || src_sec->skipped)
+			जारी;
 		dst_sec = &linker->secs[src_sec->dst_id];
 
 		/* Mark section as having BTF regardless of the presence of
-		 * variables. In some cases compiler might generate empty BTF
-		 * with no variables information. E.g., when promoting local
-		 * array/structure variable initial values and BPF object
-		 * file otherwise has no read-only static variables in
+		 * variables. In some हालs compiler might generate empty BTF
+		 * with no variables inक्रमmation. E.g., when promoting local
+		 * array/काष्ठाure variable initial values and BPF object
+		 * file otherwise has no पढ़ो-only अटल variables in
 		 * .rodata. We need to preserve such empty BTF and just set
 		 * correct section size.
 		 */
@@ -2331,28 +2332,28 @@ static int linker_append_btf(struct bpf_linker *linker, struct src_obj *obj)
 		t = btf__type_by_id(obj->btf, src_sec->sec_type_id);
 		src_var = btf_var_secinfos(t);
 		n = btf_vlen(t);
-		for (j = 0; j < n; j++, src_var++) {
-			void *sec_vars = dst_sec->sec_vars;
-			int new_id = obj->btf_type_map[src_var->type];
-			struct glob_sym *glob_sym = NULL;
+		क्रम (j = 0; j < n; j++, src_var++) अणु
+			व्योम *sec_vars = dst_sec->sec_vars;
+			पूर्णांक new_id = obj->btf_type_map[src_var->type];
+			काष्ठा glob_sym *glob_sym = शून्य;
 
 			t = btf_type_by_id(linker->btf, new_id);
-			if (btf_is_non_static(t)) {
+			अगर (btf_is_non_अटल(t)) अणु
 				name = btf__str_by_offset(linker->btf, t->name_off);
 				glob_sym = find_glob_sym(linker, name);
-				if (glob_sym->sec_id != dst_sec->id) {
+				अगर (glob_sym->sec_id != dst_sec->id) अणु
 					pr_warn("global '%s': section mismatch %d vs %d\n",
 						name, glob_sym->sec_id, dst_sec->id);
-					return -EINVAL;
-				}
-			}
+					वापस -EINVAL;
+				पूर्ण
+			पूर्ण
 
-			/* If there is already a member (VAR or FUNC) mapped
-			 * to the same type, don't add a duplicate entry.
+			/* If there is alपढ़ोy a member (VAR or FUNC) mapped
+			 * to the same type, करोn't add a duplicate entry.
 			 * This will happen when multiple object files define
-			 * the same extern VARs/FUNCs.
+			 * the same बाह्य VARs/FUNCs.
 			 */
-			if (glob_sym && glob_sym->var_idx >= 0) {
+			अगर (glob_sym && glob_sym->var_idx >= 0) अणु
 				__s64 sz;
 
 				dst_var = &dst_sec->sec_vars[glob_sym->var_idx];
@@ -2361,20 +2362,20 @@ static int linker_append_btf(struct bpf_linker *linker, struct src_obj *obj)
 				 * re-calculate and update it in sec_var.
 				 */
 				sz = btf__resolve_size(linker->btf, glob_sym->underlying_btf_id);
-				if (sz < 0) {
+				अगर (sz < 0) अणु
 					pr_warn("global '%s': failed to resolve size of underlying type: %d\n",
-						name, (int)sz);
-					return -EINVAL;
-				}
+						name, (पूर्णांक)sz);
+					वापस -EINVAL;
+				पूर्ण
 				dst_var->size = sz;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			sec_vars = libbpf_reallocarray(sec_vars,
+			sec_vars = libbpf_पुनः_स्मृतिarray(sec_vars,
 						       dst_sec->sec_var_cnt + 1,
-						       sizeof(*dst_sec->sec_vars));
-			if (!sec_vars)
-				return -ENOMEM;
+						       माप(*dst_sec->sec_vars));
+			अगर (!sec_vars)
+				वापस -ENOMEM;
 
 			dst_sec->sec_vars = sec_vars;
 			dst_sec->sec_var_cnt++;
@@ -2384,166 +2385,166 @@ static int linker_append_btf(struct bpf_linker *linker, struct src_obj *obj)
 			dst_var->size = src_var->size;
 			dst_var->offset = src_sec->dst_off + src_var->offset;
 
-			if (glob_sym)
+			अगर (glob_sym)
 				glob_sym->var_idx = dst_sec->sec_var_cnt - 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *add_btf_ext_rec(struct btf_ext_sec_data *ext_data, const void *src_rec)
-{
-	void *tmp;
+अटल व्योम *add_btf_ext_rec(काष्ठा btf_ext_sec_data *ext_data, स्थिर व्योम *src_rec)
+अणु
+	व्योम *पंचांगp;
 
-	tmp = libbpf_reallocarray(ext_data->recs, ext_data->rec_cnt + 1, ext_data->rec_sz);
-	if (!tmp)
-		return NULL;
-	ext_data->recs = tmp;
+	पंचांगp = libbpf_पुनः_स्मृतिarray(ext_data->recs, ext_data->rec_cnt + 1, ext_data->rec_sz);
+	अगर (!पंचांगp)
+		वापस शून्य;
+	ext_data->recs = पंचांगp;
 
-	tmp += ext_data->rec_cnt * ext_data->rec_sz;
-	memcpy(tmp, src_rec, ext_data->rec_sz);
+	पंचांगp += ext_data->rec_cnt * ext_data->rec_sz;
+	स_नकल(पंचांगp, src_rec, ext_data->rec_sz);
 
 	ext_data->rec_cnt++;
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static int linker_append_btf_ext(struct bpf_linker *linker, struct src_obj *obj)
-{
-	const struct btf_ext_info_sec *ext_sec;
-	const char *sec_name, *s;
-	struct src_sec *src_sec;
-	struct dst_sec *dst_sec;
-	int rec_sz, str_off, i;
+अटल पूर्णांक linker_append_btf_ext(काष्ठा bpf_linker *linker, काष्ठा src_obj *obj)
+अणु
+	स्थिर काष्ठा btf_ext_info_sec *ext_sec;
+	स्थिर अक्षर *sec_name, *s;
+	काष्ठा src_sec *src_sec;
+	काष्ठा dst_sec *dst_sec;
+	पूर्णांक rec_sz, str_off, i;
 
-	if (!obj->btf_ext)
-		return 0;
+	अगर (!obj->btf_ext)
+		वापस 0;
 
 	rec_sz = obj->btf_ext->func_info.rec_size;
-	for_each_btf_ext_sec(&obj->btf_ext->func_info, ext_sec) {
-		struct bpf_func_info_min *src_rec, *dst_rec;
+	क्रम_each_btf_ext_sec(&obj->btf_ext->func_info, ext_sec) अणु
+		काष्ठा bpf_func_info_min *src_rec, *dst_rec;
 
 		sec_name = btf__name_by_offset(obj->btf, ext_sec->sec_name_off);
 		src_sec = find_src_sec_by_name(obj, sec_name);
-		if (!src_sec) {
+		अगर (!src_sec) अणु
 			pr_warn("can't find section '%s' referenced from .BTF.ext\n", sec_name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		dst_sec = &linker->secs[src_sec->dst_id];
 
-		if (dst_sec->func_info.rec_sz == 0)
+		अगर (dst_sec->func_info.rec_sz == 0)
 			dst_sec->func_info.rec_sz = rec_sz;
-		if (dst_sec->func_info.rec_sz != rec_sz) {
+		अगर (dst_sec->func_info.rec_sz != rec_sz) अणु
 			pr_warn("incompatible .BTF.ext record sizes for section '%s'\n", sec_name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		for_each_btf_ext_rec(&obj->btf_ext->func_info, ext_sec, i, src_rec) {
+		क्रम_each_btf_ext_rec(&obj->btf_ext->func_info, ext_sec, i, src_rec) अणु
 			dst_rec = add_btf_ext_rec(&dst_sec->func_info, src_rec);
-			if (!dst_rec)
-				return -ENOMEM;
+			अगर (!dst_rec)
+				वापस -ENOMEM;
 
 			dst_rec->insn_off += src_sec->dst_off;
 			dst_rec->type_id = obj->btf_type_map[dst_rec->type_id];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rec_sz = obj->btf_ext->line_info.rec_size;
-	for_each_btf_ext_sec(&obj->btf_ext->line_info, ext_sec) {
-		struct bpf_line_info_min *src_rec, *dst_rec;
+	क्रम_each_btf_ext_sec(&obj->btf_ext->line_info, ext_sec) अणु
+		काष्ठा bpf_line_info_min *src_rec, *dst_rec;
 
 		sec_name = btf__name_by_offset(obj->btf, ext_sec->sec_name_off);
 		src_sec = find_src_sec_by_name(obj, sec_name);
-		if (!src_sec) {
+		अगर (!src_sec) अणु
 			pr_warn("can't find section '%s' referenced from .BTF.ext\n", sec_name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		dst_sec = &linker->secs[src_sec->dst_id];
 
-		if (dst_sec->line_info.rec_sz == 0)
+		अगर (dst_sec->line_info.rec_sz == 0)
 			dst_sec->line_info.rec_sz = rec_sz;
-		if (dst_sec->line_info.rec_sz != rec_sz) {
+		अगर (dst_sec->line_info.rec_sz != rec_sz) अणु
 			pr_warn("incompatible .BTF.ext record sizes for section '%s'\n", sec_name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		for_each_btf_ext_rec(&obj->btf_ext->line_info, ext_sec, i, src_rec) {
+		क्रम_each_btf_ext_rec(&obj->btf_ext->line_info, ext_sec, i, src_rec) अणु
 			dst_rec = add_btf_ext_rec(&dst_sec->line_info, src_rec);
-			if (!dst_rec)
-				return -ENOMEM;
+			अगर (!dst_rec)
+				वापस -ENOMEM;
 
 			dst_rec->insn_off += src_sec->dst_off;
 
 			s = btf__str_by_offset(obj->btf, src_rec->file_name_off);
 			str_off = btf__add_str(linker->btf, s);
-			if (str_off < 0)
-				return -ENOMEM;
+			अगर (str_off < 0)
+				वापस -ENOMEM;
 			dst_rec->file_name_off = str_off;
 
 			s = btf__str_by_offset(obj->btf, src_rec->line_off);
 			str_off = btf__add_str(linker->btf, s);
-			if (str_off < 0)
-				return -ENOMEM;
+			अगर (str_off < 0)
+				वापस -ENOMEM;
 			dst_rec->line_off = str_off;
 
 			/* dst_rec->line_col is fine */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rec_sz = obj->btf_ext->core_relo_info.rec_size;
-	for_each_btf_ext_sec(&obj->btf_ext->core_relo_info, ext_sec) {
-		struct bpf_core_relo *src_rec, *dst_rec;
+	क्रम_each_btf_ext_sec(&obj->btf_ext->core_relo_info, ext_sec) अणु
+		काष्ठा bpf_core_relo *src_rec, *dst_rec;
 
 		sec_name = btf__name_by_offset(obj->btf, ext_sec->sec_name_off);
 		src_sec = find_src_sec_by_name(obj, sec_name);
-		if (!src_sec) {
+		अगर (!src_sec) अणु
 			pr_warn("can't find section '%s' referenced from .BTF.ext\n", sec_name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		dst_sec = &linker->secs[src_sec->dst_id];
 
-		if (dst_sec->core_relo_info.rec_sz == 0)
+		अगर (dst_sec->core_relo_info.rec_sz == 0)
 			dst_sec->core_relo_info.rec_sz = rec_sz;
-		if (dst_sec->core_relo_info.rec_sz != rec_sz) {
+		अगर (dst_sec->core_relo_info.rec_sz != rec_sz) अणु
 			pr_warn("incompatible .BTF.ext record sizes for section '%s'\n", sec_name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		for_each_btf_ext_rec(&obj->btf_ext->core_relo_info, ext_sec, i, src_rec) {
+		क्रम_each_btf_ext_rec(&obj->btf_ext->core_relo_info, ext_sec, i, src_rec) अणु
 			dst_rec = add_btf_ext_rec(&dst_sec->core_relo_info, src_rec);
-			if (!dst_rec)
-				return -ENOMEM;
+			अगर (!dst_rec)
+				वापस -ENOMEM;
 
 			dst_rec->insn_off += src_sec->dst_off;
 			dst_rec->type_id = obj->btf_type_map[dst_rec->type_id];
 
 			s = btf__str_by_offset(obj->btf, src_rec->access_str_off);
 			str_off = btf__add_str(linker->btf, s);
-			if (str_off < 0)
-				return -ENOMEM;
+			अगर (str_off < 0)
+				वापस -ENOMEM;
 			dst_rec->access_str_off = str_off;
 
 			/* dst_rec->kind is fine */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bpf_linker__finalize(struct bpf_linker *linker)
-{
-	struct dst_sec *sec;
-	size_t strs_sz;
-	const void *strs;
-	int err, i;
+पूर्णांक bpf_linker__finalize(काष्ठा bpf_linker *linker)
+अणु
+	काष्ठा dst_sec *sec;
+	माप_प्रकार strs_sz;
+	स्थिर व्योम *strs;
+	पूर्णांक err, i;
 
-	if (!linker->elf)
-		return -EINVAL;
+	अगर (!linker->elf)
+		वापस -EINVAL;
 
 	err = finalize_btf(linker);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Finalize strings */
 	strs_sz = strset__data_size(linker->strtab_strs);
@@ -2552,69 +2553,69 @@ int bpf_linker__finalize(struct bpf_linker *linker)
 	sec = &linker->secs[linker->strtab_sec_idx];
 	sec->data->d_align = 1;
 	sec->data->d_off = 0LL;
-	sec->data->d_buf = (void *)strs;
+	sec->data->d_buf = (व्योम *)strs;
 	sec->data->d_type = ELF_T_BYTE;
 	sec->data->d_size = strs_sz;
 	sec->shdr->sh_size = strs_sz;
 
-	for (i = 1; i < linker->sec_cnt; i++) {
+	क्रम (i = 1; i < linker->sec_cnt; i++) अणु
 		sec = &linker->secs[i];
 
 		/* STRTAB is handled specially above */
-		if (sec->sec_idx == linker->strtab_sec_idx)
-			continue;
+		अगर (sec->sec_idx == linker->strtab_sec_idx)
+			जारी;
 
 		/* special ephemeral sections (.ksyms, .kconfig, etc) */
-		if (!sec->scn)
-			continue;
+		अगर (!sec->scn)
+			जारी;
 
 		sec->data->d_buf = sec->raw_data;
-	}
+	पूर्ण
 
 	/* Finalize ELF layout */
-	if (elf_update(linker->elf, ELF_C_NULL) < 0) {
-		err = -errno;
+	अगर (elf_update(linker->elf, ELF_C_शून्य) < 0) अणु
+		err = -त्रुटि_सं;
 		pr_warn_elf("failed to finalize ELF layout");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Write out final ELF contents */
-	if (elf_update(linker->elf, ELF_C_WRITE) < 0) {
-		err = -errno;
+	अगर (elf_update(linker->elf, ELF_C_WRITE) < 0) अणु
+		err = -त्रुटि_सं;
 		pr_warn_elf("failed to write ELF contents");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	elf_end(linker->elf);
-	close(linker->fd);
+	बंद(linker->fd);
 
-	linker->elf = NULL;
+	linker->elf = शून्य;
 	linker->fd = -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int emit_elf_data_sec(struct bpf_linker *linker, const char *sec_name,
-			     size_t align, const void *raw_data, size_t raw_sz)
-{
+अटल पूर्णांक emit_elf_data_sec(काष्ठा bpf_linker *linker, स्थिर अक्षर *sec_name,
+			     माप_प्रकार align, स्थिर व्योम *raw_data, माप_प्रकार raw_sz)
+अणु
 	Elf_Scn *scn;
 	Elf_Data *data;
 	Elf64_Shdr *shdr;
-	int name_off;
+	पूर्णांक name_off;
 
 	name_off = strset__add_str(linker->strtab_strs, sec_name);
-	if (name_off < 0)
-		return name_off;
+	अगर (name_off < 0)
+		वापस name_off;
 
 	scn = elf_newscn(linker->elf);
-	if (!scn)
-		return -ENOMEM;
+	अगर (!scn)
+		वापस -ENOMEM;
 	data = elf_newdata(scn);
-	if (!data)
-		return -ENOMEM;
-	shdr = elf64_getshdr(scn);
-	if (!shdr)
-		return -EINVAL;
+	अगर (!data)
+		वापस -ENOMEM;
+	shdr = elf64_माला_लोhdr(scn);
+	अगर (!shdr)
+		वापस -EINVAL;
 
 	shdr->sh_name = name_off;
 	shdr->sh_type = SHT_PROGBITS;
@@ -2627,188 +2628,188 @@ static int emit_elf_data_sec(struct bpf_linker *linker, const char *sec_name,
 
 	data->d_type = ELF_T_BYTE;
 	data->d_size = raw_sz;
-	data->d_buf = (void *)raw_data;
+	data->d_buf = (व्योम *)raw_data;
 	data->d_align = align;
 	data->d_off = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int finalize_btf(struct bpf_linker *linker)
-{
-	struct btf *btf = linker->btf;
-	const void *raw_data;
-	int i, j, id, err;
+अटल पूर्णांक finalize_btf(काष्ठा bpf_linker *linker)
+अणु
+	काष्ठा btf *btf = linker->btf;
+	स्थिर व्योम *raw_data;
+	पूर्णांक i, j, id, err;
 	__u32 raw_sz;
 
-	/* bail out if no BTF data was produced */
-	if (btf__get_nr_types(linker->btf) == 0)
-		return 0;
+	/* bail out अगर no BTF data was produced */
+	अगर (btf__get_nr_types(linker->btf) == 0)
+		वापस 0;
 
-	for (i = 1; i < linker->sec_cnt; i++) {
-		struct dst_sec *sec = &linker->secs[i];
+	क्रम (i = 1; i < linker->sec_cnt; i++) अणु
+		काष्ठा dst_sec *sec = &linker->secs[i];
 
-		if (!sec->has_btf)
-			continue;
+		अगर (!sec->has_btf)
+			जारी;
 
 		id = btf__add_datasec(btf, sec->sec_name, sec->sec_sz);
-		if (id < 0) {
+		अगर (id < 0) अणु
 			pr_warn("failed to add consolidated BTF type for datasec '%s': %d\n",
 				sec->sec_name, id);
-			return id;
-		}
+			वापस id;
+		पूर्ण
 
-		for (j = 0; j < sec->sec_var_cnt; j++) {
-			struct btf_var_secinfo *vi = &sec->sec_vars[j];
+		क्रम (j = 0; j < sec->sec_var_cnt; j++) अणु
+			काष्ठा btf_var_secinfo *vi = &sec->sec_vars[j];
 
-			if (btf__add_datasec_var_info(btf, vi->type, vi->offset, vi->size))
-				return -EINVAL;
-		}
-	}
+			अगर (btf__add_datasec_var_info(btf, vi->type, vi->offset, vi->size))
+				वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	err = finalize_btf_ext(linker);
-	if (err) {
+	अगर (err) अणु
 		pr_warn(".BTF.ext generation failed: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = btf__dedup(linker->btf, linker->btf_ext, NULL);
-	if (err) {
+	err = btf__dedup(linker->btf, linker->btf_ext, शून्य);
+	अगर (err) अणु
 		pr_warn("BTF dedup failed: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Emit .BTF section */
 	raw_data = btf__get_raw_data(linker->btf, &raw_sz);
-	if (!raw_data)
-		return -ENOMEM;
+	अगर (!raw_data)
+		वापस -ENOMEM;
 
 	err = emit_elf_data_sec(linker, BTF_ELF_SEC, 8, raw_data, raw_sz);
-	if (err) {
+	अगर (err) अणु
 		pr_warn("failed to write out .BTF ELF section: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Emit .BTF.ext section */
-	if (linker->btf_ext) {
+	अगर (linker->btf_ext) अणु
 		raw_data = btf_ext__get_raw_data(linker->btf_ext, &raw_sz);
-		if (!raw_data)
-			return -ENOMEM;
+		अगर (!raw_data)
+			वापस -ENOMEM;
 
 		err = emit_elf_data_sec(linker, BTF_EXT_ELF_SEC, 8, raw_data, raw_sz);
-		if (err) {
+		अगर (err) अणु
 			pr_warn("failed to write out .BTF.ext ELF section: %d\n", err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int emit_btf_ext_data(struct bpf_linker *linker, void *output,
-			     const char *sec_name, struct btf_ext_sec_data *sec_data)
-{
-	struct btf_ext_info_sec *sec_info;
-	void *cur = output;
-	int str_off;
-	size_t sz;
+अटल पूर्णांक emit_btf_ext_data(काष्ठा bpf_linker *linker, व्योम *output,
+			     स्थिर अक्षर *sec_name, काष्ठा btf_ext_sec_data *sec_data)
+अणु
+	काष्ठा btf_ext_info_sec *sec_info;
+	व्योम *cur = output;
+	पूर्णांक str_off;
+	माप_प्रकार sz;
 
-	if (!sec_data->rec_cnt)
-		return 0;
+	अगर (!sec_data->rec_cnt)
+		वापस 0;
 
 	str_off = btf__add_str(linker->btf, sec_name);
-	if (str_off < 0)
-		return -ENOMEM;
+	अगर (str_off < 0)
+		वापस -ENOMEM;
 
 	sec_info = cur;
 	sec_info->sec_name_off = str_off;
 	sec_info->num_info = sec_data->rec_cnt;
-	cur += sizeof(struct btf_ext_info_sec);
+	cur += माप(काष्ठा btf_ext_info_sec);
 
 	sz = sec_data->rec_cnt * sec_data->rec_sz;
-	memcpy(cur, sec_data->recs, sz);
+	स_नकल(cur, sec_data->recs, sz);
 	cur += sz;
 
-	return cur - output;
-}
+	वापस cur - output;
+पूर्ण
 
-static int finalize_btf_ext(struct bpf_linker *linker)
-{
-	size_t funcs_sz = 0, lines_sz = 0, core_relos_sz = 0, total_sz = 0;
-	size_t func_rec_sz = 0, line_rec_sz = 0, core_relo_rec_sz = 0;
-	struct btf_ext_header *hdr;
-	void *data, *cur;
-	int i, err, sz;
+अटल पूर्णांक finalize_btf_ext(काष्ठा bpf_linker *linker)
+अणु
+	माप_प्रकार funcs_sz = 0, lines_sz = 0, core_relos_sz = 0, total_sz = 0;
+	माप_प्रकार func_rec_sz = 0, line_rec_sz = 0, core_relo_rec_sz = 0;
+	काष्ठा btf_ext_header *hdr;
+	व्योम *data, *cur;
+	पूर्णांक i, err, sz;
 
 	/* validate that all sections have the same .BTF.ext record sizes
-	 * and calculate total data size for each type of data (func info,
+	 * and calculate total data size क्रम each type of data (func info,
 	 * line info, core relos)
 	 */
-	for (i = 1; i < linker->sec_cnt; i++) {
-		struct dst_sec *sec = &linker->secs[i];
+	क्रम (i = 1; i < linker->sec_cnt; i++) अणु
+		काष्ठा dst_sec *sec = &linker->secs[i];
 
-		if (sec->func_info.rec_cnt) {
-			if (func_rec_sz == 0)
+		अगर (sec->func_info.rec_cnt) अणु
+			अगर (func_rec_sz == 0)
 				func_rec_sz = sec->func_info.rec_sz;
-			if (func_rec_sz != sec->func_info.rec_sz) {
+			अगर (func_rec_sz != sec->func_info.rec_sz) अणु
 				pr_warn("mismatch in func_info record size %zu != %u\n",
 					func_rec_sz, sec->func_info.rec_sz);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			funcs_sz += sizeof(struct btf_ext_info_sec) + func_rec_sz * sec->func_info.rec_cnt;
-		}
-		if (sec->line_info.rec_cnt) {
-			if (line_rec_sz == 0)
+			funcs_sz += माप(काष्ठा btf_ext_info_sec) + func_rec_sz * sec->func_info.rec_cnt;
+		पूर्ण
+		अगर (sec->line_info.rec_cnt) अणु
+			अगर (line_rec_sz == 0)
 				line_rec_sz = sec->line_info.rec_sz;
-			if (line_rec_sz != sec->line_info.rec_sz) {
+			अगर (line_rec_sz != sec->line_info.rec_sz) अणु
 				pr_warn("mismatch in line_info record size %zu != %u\n",
 					line_rec_sz, sec->line_info.rec_sz);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			lines_sz += sizeof(struct btf_ext_info_sec) + line_rec_sz * sec->line_info.rec_cnt;
-		}
-		if (sec->core_relo_info.rec_cnt) {
-			if (core_relo_rec_sz == 0)
+			lines_sz += माप(काष्ठा btf_ext_info_sec) + line_rec_sz * sec->line_info.rec_cnt;
+		पूर्ण
+		अगर (sec->core_relo_info.rec_cnt) अणु
+			अगर (core_relo_rec_sz == 0)
 				core_relo_rec_sz = sec->core_relo_info.rec_sz;
-			if (core_relo_rec_sz != sec->core_relo_info.rec_sz) {
+			अगर (core_relo_rec_sz != sec->core_relo_info.rec_sz) अणु
 				pr_warn("mismatch in core_relo_info record size %zu != %u\n",
 					core_relo_rec_sz, sec->core_relo_info.rec_sz);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			core_relos_sz += sizeof(struct btf_ext_info_sec) + core_relo_rec_sz * sec->core_relo_info.rec_cnt;
-		}
-	}
+			core_relos_sz += माप(काष्ठा btf_ext_info_sec) + core_relo_rec_sz * sec->core_relo_info.rec_cnt;
+		पूर्ण
+	पूर्ण
 
-	if (!funcs_sz && !lines_sz && !core_relos_sz)
-		return 0;
+	अगर (!funcs_sz && !lines_sz && !core_relos_sz)
+		वापस 0;
 
-	total_sz += sizeof(struct btf_ext_header);
-	if (funcs_sz) {
-		funcs_sz += sizeof(__u32); /* record size prefix */
+	total_sz += माप(काष्ठा btf_ext_header);
+	अगर (funcs_sz) अणु
+		funcs_sz += माप(__u32); /* record size prefix */
 		total_sz += funcs_sz;
-	}
-	if (lines_sz) {
-		lines_sz += sizeof(__u32); /* record size prefix */
+	पूर्ण
+	अगर (lines_sz) अणु
+		lines_sz += माप(__u32); /* record size prefix */
 		total_sz += lines_sz;
-	}
-	if (core_relos_sz) {
-		core_relos_sz += sizeof(__u32); /* record size prefix */
+	पूर्ण
+	अगर (core_relos_sz) अणु
+		core_relos_sz += माप(__u32); /* record size prefix */
 		total_sz += core_relos_sz;
-	}
+	पूर्ण
 
-	cur = data = calloc(1, total_sz);
-	if (!data)
-		return -ENOMEM;
+	cur = data = सुस्मृति(1, total_sz);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	hdr = cur;
 	hdr->magic = BTF_MAGIC;
 	hdr->version = BTF_VERSION;
 	hdr->flags = 0;
-	hdr->hdr_len = sizeof(struct btf_ext_header);
-	cur += sizeof(struct btf_ext_header);
+	hdr->hdr_len = माप(काष्ठा btf_ext_header);
+	cur += माप(काष्ठा btf_ext_header);
 
 	/* All offsets are in bytes relative to the end of this header */
 	hdr->func_info_off = 0;
@@ -2818,66 +2819,66 @@ static int finalize_btf_ext(struct bpf_linker *linker)
 	hdr->core_relo_off = funcs_sz + lines_sz;
 	hdr->core_relo_len = core_relos_sz;
 
-	if (funcs_sz) {
+	अगर (funcs_sz) अणु
 		*(__u32 *)cur = func_rec_sz;
-		cur += sizeof(__u32);
+		cur += माप(__u32);
 
-		for (i = 1; i < linker->sec_cnt; i++) {
-			struct dst_sec *sec = &linker->secs[i];
+		क्रम (i = 1; i < linker->sec_cnt; i++) अणु
+			काष्ठा dst_sec *sec = &linker->secs[i];
 
 			sz = emit_btf_ext_data(linker, cur, sec->sec_name, &sec->func_info);
-			if (sz < 0) {
+			अगर (sz < 0) अणु
 				err = sz;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			cur += sz;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (lines_sz) {
+	अगर (lines_sz) अणु
 		*(__u32 *)cur = line_rec_sz;
-		cur += sizeof(__u32);
+		cur += माप(__u32);
 
-		for (i = 1; i < linker->sec_cnt; i++) {
-			struct dst_sec *sec = &linker->secs[i];
+		क्रम (i = 1; i < linker->sec_cnt; i++) अणु
+			काष्ठा dst_sec *sec = &linker->secs[i];
 
 			sz = emit_btf_ext_data(linker, cur, sec->sec_name, &sec->line_info);
-			if (sz < 0) {
+			अगर (sz < 0) अणु
 				err = sz;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			cur += sz;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (core_relos_sz) {
+	अगर (core_relos_sz) अणु
 		*(__u32 *)cur = core_relo_rec_sz;
-		cur += sizeof(__u32);
+		cur += माप(__u32);
 
-		for (i = 1; i < linker->sec_cnt; i++) {
-			struct dst_sec *sec = &linker->secs[i];
+		क्रम (i = 1; i < linker->sec_cnt; i++) अणु
+			काष्ठा dst_sec *sec = &linker->secs[i];
 
 			sz = emit_btf_ext_data(linker, cur, sec->sec_name, &sec->core_relo_info);
-			if (sz < 0) {
+			अगर (sz < 0) अणु
 				err = sz;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			cur += sz;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	linker->btf_ext = btf_ext__new(data, total_sz);
 	err = libbpf_get_error(linker->btf_ext);
-	if (err) {
-		linker->btf_ext = NULL;
+	अगर (err) अणु
+		linker->btf_ext = शून्य;
 		pr_warn("failed to parse final .BTF.ext data: %d\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	free(data);
-	return err;
-}
+	मुक्त(data);
+	वापस err;
+पूर्ण

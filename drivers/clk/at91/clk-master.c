@@ -1,371 +1,372 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2013 Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/clk/at91_pmc.h>
-#include <linux/of.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk/at91_pmc.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
 
-#include "pmc.h"
+#समावेश "pmc.h"
 
-#define MASTER_PRES_MASK	0x7
-#define MASTER_PRES_MAX		MASTER_PRES_MASK
-#define MASTER_DIV_SHIFT	8
-#define MASTER_DIV_MASK		0x7
+#घोषणा MASTER_PRES_MASK	0x7
+#घोषणा MASTER_PRES_MAX		MASTER_PRES_MASK
+#घोषणा MASTER_DIV_SHIFT	8
+#घोषणा MASTER_DIV_MASK		0x7
 
-#define PMC_MCR			0x30
-#define PMC_MCR_ID_MSK		GENMASK(3, 0)
-#define PMC_MCR_CMD		BIT(7)
-#define PMC_MCR_DIV		GENMASK(10, 8)
-#define PMC_MCR_CSS		GENMASK(20, 16)
-#define PMC_MCR_CSS_SHIFT	(16)
-#define PMC_MCR_EN		BIT(28)
+#घोषणा PMC_MCR			0x30
+#घोषणा PMC_MCR_ID_MSK		GENMASK(3, 0)
+#घोषणा PMC_MCR_CMD		BIT(7)
+#घोषणा PMC_MCR_DIV		GENMASK(10, 8)
+#घोषणा PMC_MCR_CSS		GENMASK(20, 16)
+#घोषणा PMC_MCR_CSS_SHIFT	(16)
+#घोषणा PMC_MCR_EN		BIT(28)
 
-#define PMC_MCR_ID(x)		((x) & PMC_MCR_ID_MSK)
+#घोषणा PMC_MCR_ID(x)		((x) & PMC_MCR_ID_MSK)
 
-#define MASTER_MAX_ID		4
+#घोषणा MASTER_MAX_ID		4
 
-#define to_clk_master(hw) container_of(hw, struct clk_master, hw)
+#घोषणा to_clk_master(hw) container_of(hw, काष्ठा clk_master, hw)
 
-struct clk_master {
-	struct clk_hw hw;
-	struct regmap *regmap;
+काष्ठा clk_master अणु
+	काष्ठा clk_hw hw;
+	काष्ठा regmap *regmap;
 	spinlock_t *lock;
-	const struct clk_master_layout *layout;
-	const struct clk_master_characteristics *characteristics;
+	स्थिर काष्ठा clk_master_layout *layout;
+	स्थिर काष्ठा clk_master_अक्षरacteristics *अक्षरacteristics;
 	u32 *mux_table;
 	u32 mckr;
-	int chg_pid;
+	पूर्णांक chg_pid;
 	u8 id;
 	u8 parent;
-	u8 div;
-};
+	u8 भाग;
+पूर्ण;
 
-static inline bool clk_master_ready(struct clk_master *master)
-{
-	unsigned int bit = master->id ? AT91_PMC_MCKXRDY : AT91_PMC_MCKRDY;
-	unsigned int status;
+अटल अंतरभूत bool clk_master_पढ़ोy(काष्ठा clk_master *master)
+अणु
+	अचिन्हित पूर्णांक bit = master->id ? AT91_PMC_MCKXRDY : AT91_PMC_MCKRDY;
+	अचिन्हित पूर्णांक status;
 
-	regmap_read(master->regmap, AT91_PMC_SR, &status);
+	regmap_पढ़ो(master->regmap, AT91_PMC_SR, &status);
 
-	return !!(status & bit);
-}
+	वापस !!(status & bit);
+पूर्ण
 
-static int clk_master_prepare(struct clk_hw *hw)
-{
-	struct clk_master *master = to_clk_master(hw);
-	unsigned long flags;
+अटल पूर्णांक clk_master_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(master->lock, flags);
 
-	while (!clk_master_ready(master))
+	जबतक (!clk_master_पढ़ोy(master))
 		cpu_relax();
 
 	spin_unlock_irqrestore(master->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_master_is_prepared(struct clk_hw *hw)
-{
-	struct clk_master *master = to_clk_master(hw);
-	unsigned long flags;
+अटल पूर्णांक clk_master_is_prepared(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	अचिन्हित दीर्घ flags;
 	bool status;
 
 	spin_lock_irqsave(master->lock, flags);
-	status = clk_master_ready(master);
+	status = clk_master_पढ़ोy(master);
 	spin_unlock_irqrestore(master->lock, flags);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static unsigned long clk_master_div_recalc_rate(struct clk_hw *hw,
-						unsigned long parent_rate)
-{
-	u8 div;
-	unsigned long flags, rate = parent_rate;
-	struct clk_master *master = to_clk_master(hw);
-	const struct clk_master_layout *layout = master->layout;
-	const struct clk_master_characteristics *characteristics =
-						master->characteristics;
-	unsigned int mckr;
+अटल अचिन्हित दीर्घ clk_master_भाग_recalc_rate(काष्ठा clk_hw *hw,
+						अचिन्हित दीर्घ parent_rate)
+अणु
+	u8 भाग;
+	अचिन्हित दीर्घ flags, rate = parent_rate;
+	काष्ठा clk_master *master = to_clk_master(hw);
+	स्थिर काष्ठा clk_master_layout *layout = master->layout;
+	स्थिर काष्ठा clk_master_अक्षरacteristics *अक्षरacteristics =
+						master->अक्षरacteristics;
+	अचिन्हित पूर्णांक mckr;
 
 	spin_lock_irqsave(master->lock, flags);
-	regmap_read(master->regmap, master->layout->offset, &mckr);
+	regmap_पढ़ो(master->regmap, master->layout->offset, &mckr);
 	spin_unlock_irqrestore(master->lock, flags);
 
 	mckr &= layout->mask;
 
-	div = (mckr >> MASTER_DIV_SHIFT) & MASTER_DIV_MASK;
+	भाग = (mckr >> MASTER_DIV_SHIFT) & MASTER_DIV_MASK;
 
-	rate /= characteristics->divisors[div];
+	rate /= अक्षरacteristics->भागisors[भाग];
 
-	if (rate < characteristics->output.min)
+	अगर (rate < अक्षरacteristics->output.min)
 		pr_warn("master clk div is underclocked");
-	else if (rate > characteristics->output.max)
+	अन्यथा अगर (rate > अक्षरacteristics->output.max)
 		pr_warn("master clk div is overclocked");
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static const struct clk_ops master_div_ops = {
+अटल स्थिर काष्ठा clk_ops master_भाग_ops = अणु
 	.prepare = clk_master_prepare,
 	.is_prepared = clk_master_is_prepared,
-	.recalc_rate = clk_master_div_recalc_rate,
-};
+	.recalc_rate = clk_master_भाग_recalc_rate,
+पूर्ण;
 
-static int clk_master_div_set_rate(struct clk_hw *hw, unsigned long rate,
-				   unsigned long parent_rate)
-{
-	struct clk_master *master = to_clk_master(hw);
-	const struct clk_master_characteristics *characteristics =
-						master->characteristics;
-	unsigned long flags;
-	int div, i;
+अटल पूर्णांक clk_master_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				   अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	स्थिर काष्ठा clk_master_अक्षरacteristics *अक्षरacteristics =
+						master->अक्षरacteristics;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक भाग, i;
 
-	div = DIV_ROUND_CLOSEST(parent_rate, rate);
-	if (div > ARRAY_SIZE(characteristics->divisors))
-		return -EINVAL;
+	भाग = DIV_ROUND_CLOSEST(parent_rate, rate);
+	अगर (भाग > ARRAY_SIZE(अक्षरacteristics->भागisors))
+		वापस -EINVAL;
 
-	for (i = 0; i < ARRAY_SIZE(characteristics->divisors); i++) {
-		if (!characteristics->divisors[i])
-			break;
+	क्रम (i = 0; i < ARRAY_SIZE(अक्षरacteristics->भागisors); i++) अणु
+		अगर (!अक्षरacteristics->भागisors[i])
+			अवरोध;
 
-		if (div == characteristics->divisors[i]) {
-			div = i;
-			break;
-		}
-	}
+		अगर (भाग == अक्षरacteristics->भागisors[i]) अणु
+			भाग = i;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == ARRAY_SIZE(characteristics->divisors))
-		return -EINVAL;
+	अगर (i == ARRAY_SIZE(अक्षरacteristics->भागisors))
+		वापस -EINVAL;
 
 	spin_lock_irqsave(master->lock, flags);
 	regmap_update_bits(master->regmap, master->layout->offset,
 			   (MASTER_DIV_MASK << MASTER_DIV_SHIFT),
-			   (div << MASTER_DIV_SHIFT));
-	while (!clk_master_ready(master))
+			   (भाग << MASTER_DIV_SHIFT));
+	जबतक (!clk_master_पढ़ोy(master))
 		cpu_relax();
 	spin_unlock_irqrestore(master->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_master_div_determine_rate(struct clk_hw *hw,
-					 struct clk_rate_request *req)
-{
-	struct clk_master *master = to_clk_master(hw);
-	const struct clk_master_characteristics *characteristics =
-						master->characteristics;
-	struct clk_hw *parent;
-	unsigned long parent_rate, tmp_rate, best_rate = 0;
-	int i, best_diff = INT_MIN, tmp_diff;
+अटल पूर्णांक clk_master_भाग_determine_rate(काष्ठा clk_hw *hw,
+					 काष्ठा clk_rate_request *req)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	स्थिर काष्ठा clk_master_अक्षरacteristics *अक्षरacteristics =
+						master->अक्षरacteristics;
+	काष्ठा clk_hw *parent;
+	अचिन्हित दीर्घ parent_rate, पंचांगp_rate, best_rate = 0;
+	पूर्णांक i, best_dअगरf = पूर्णांक_न्यून, पंचांगp_dअगरf;
 
 	parent = clk_hw_get_parent(hw);
-	if (!parent)
-		return -EINVAL;
+	अगर (!parent)
+		वापस -EINVAL;
 
 	parent_rate = clk_hw_get_rate(parent);
-	if (!parent_rate)
-		return -EINVAL;
+	अगर (!parent_rate)
+		वापस -EINVAL;
 
-	for (i = 0; i < ARRAY_SIZE(characteristics->divisors); i++) {
-		if (!characteristics->divisors[i])
-			break;
+	क्रम (i = 0; i < ARRAY_SIZE(अक्षरacteristics->भागisors); i++) अणु
+		अगर (!अक्षरacteristics->भागisors[i])
+			अवरोध;
 
-		tmp_rate = DIV_ROUND_CLOSEST_ULL(parent_rate,
-						 characteristics->divisors[i]);
-		tmp_diff = abs(tmp_rate - req->rate);
+		पंचांगp_rate = DIV_ROUND_CLOSEST_ULL(parent_rate,
+						 अक्षरacteristics->भागisors[i]);
+		पंचांगp_dअगरf = असल(पंचांगp_rate - req->rate);
 
-		if (!best_rate || best_diff > tmp_diff) {
-			best_diff = tmp_diff;
-			best_rate = tmp_rate;
-		}
+		अगर (!best_rate || best_dअगरf > पंचांगp_dअगरf) अणु
+			best_dअगरf = पंचांगp_dअगरf;
+			best_rate = पंचांगp_rate;
+		पूर्ण
 
-		if (!best_diff)
-			break;
-	}
+		अगर (!best_dअगरf)
+			अवरोध;
+	पूर्ण
 
 	req->best_parent_rate = best_rate;
 	req->best_parent_hw = parent;
 	req->rate = best_rate;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops master_div_ops_chg = {
+अटल स्थिर काष्ठा clk_ops master_भाग_ops_chg = अणु
 	.prepare = clk_master_prepare,
 	.is_prepared = clk_master_is_prepared,
-	.recalc_rate = clk_master_div_recalc_rate,
-	.determine_rate = clk_master_div_determine_rate,
-	.set_rate = clk_master_div_set_rate,
-};
+	.recalc_rate = clk_master_भाग_recalc_rate,
+	.determine_rate = clk_master_भाग_determine_rate,
+	.set_rate = clk_master_भाग_set_rate,
+पूर्ण;
 
-static void clk_sama7g5_master_best_diff(struct clk_rate_request *req,
-					 struct clk_hw *parent,
-					 unsigned long parent_rate,
-					 long *best_rate,
-					 long *best_diff,
-					 u32 div)
-{
-	unsigned long tmp_rate, tmp_diff;
+अटल व्योम clk_sama7g5_master_best_dअगरf(काष्ठा clk_rate_request *req,
+					 काष्ठा clk_hw *parent,
+					 अचिन्हित दीर्घ parent_rate,
+					 दीर्घ *best_rate,
+					 दीर्घ *best_dअगरf,
+					 u32 भाग)
+अणु
+	अचिन्हित दीर्घ पंचांगp_rate, पंचांगp_dअगरf;
 
-	if (div == MASTER_PRES_MAX)
-		tmp_rate = parent_rate / 3;
-	else
-		tmp_rate = parent_rate >> div;
+	अगर (भाग == MASTER_PRES_MAX)
+		पंचांगp_rate = parent_rate / 3;
+	अन्यथा
+		पंचांगp_rate = parent_rate >> भाग;
 
-	tmp_diff = abs(req->rate - tmp_rate);
+	पंचांगp_dअगरf = असल(req->rate - पंचांगp_rate);
 
-	if (*best_diff < 0 || *best_diff >= tmp_diff) {
-		*best_rate = tmp_rate;
-		*best_diff = tmp_diff;
+	अगर (*best_dअगरf < 0 || *best_dअगरf >= पंचांगp_dअगरf) अणु
+		*best_rate = पंचांगp_rate;
+		*best_dअगरf = पंचांगp_dअगरf;
 		req->best_parent_rate = parent_rate;
 		req->best_parent_hw = parent;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int clk_master_pres_determine_rate(struct clk_hw *hw,
-					  struct clk_rate_request *req)
-{
-	struct clk_master *master = to_clk_master(hw);
-	struct clk_rate_request req_parent = *req;
-	const struct clk_master_characteristics *characteristics =
-							master->characteristics;
-	struct clk_hw *parent;
-	long best_rate = LONG_MIN, best_diff = LONG_MIN;
+अटल पूर्णांक clk_master_pres_determine_rate(काष्ठा clk_hw *hw,
+					  काष्ठा clk_rate_request *req)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	काष्ठा clk_rate_request req_parent = *req;
+	स्थिर काष्ठा clk_master_अक्षरacteristics *अक्षरacteristics =
+							master->अक्षरacteristics;
+	काष्ठा clk_hw *parent;
+	दीर्घ best_rate = दीर्घ_न्यून, best_dअगरf = दीर्घ_न्यून;
 	u32 pres;
-	int i;
+	पूर्णांक i;
 
-	if (master->chg_pid < 0)
-		return -EOPNOTSUPP;
+	अगर (master->chg_pid < 0)
+		वापस -EOPNOTSUPP;
 
 	parent = clk_hw_get_parent_by_index(hw, master->chg_pid);
-	if (!parent)
-		return -EOPNOTSUPP;
+	अगर (!parent)
+		वापस -EOPNOTSUPP;
 
-	for (i = 0; i <= MASTER_PRES_MAX; i++) {
-		if (characteristics->have_div3_pres && i == MASTER_PRES_MAX)
+	क्रम (i = 0; i <= MASTER_PRES_MAX; i++) अणु
+		अगर (अक्षरacteristics->have_भाग3_pres && i == MASTER_PRES_MAX)
 			pres = 3;
-		else
+		अन्यथा
 			pres = 1 << i;
 
 		req_parent.rate = req->rate * pres;
-		if (__clk_determine_rate(parent, &req_parent))
-			continue;
+		अगर (__clk_determine_rate(parent, &req_parent))
+			जारी;
 
-		clk_sama7g5_master_best_diff(req, parent, req_parent.rate,
-					     &best_diff, &best_rate, pres);
-		if (!best_diff)
-			break;
-	}
+		clk_sama7g5_master_best_dअगरf(req, parent, req_parent.rate,
+					     &best_dअगरf, &best_rate, pres);
+		अगर (!best_dअगरf)
+			अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_master_pres_set_rate(struct clk_hw *hw, unsigned long rate,
-				    unsigned long parent_rate)
-{
-	struct clk_master *master = to_clk_master(hw);
-	unsigned long flags;
-	unsigned int pres;
+अटल पूर्णांक clk_master_pres_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक pres;
 
 	pres = DIV_ROUND_CLOSEST(parent_rate, rate);
-	if (pres > MASTER_PRES_MAX)
-		return -EINVAL;
+	अगर (pres > MASTER_PRES_MAX)
+		वापस -EINVAL;
 
-	else if (pres == 3)
+	अन्यथा अगर (pres == 3)
 		pres = MASTER_PRES_MAX;
-	else
+	अन्यथा
 		pres = ffs(pres) - 1;
 
 	spin_lock_irqsave(master->lock, flags);
 	regmap_update_bits(master->regmap, master->layout->offset,
-			   (MASTER_PRES_MASK << master->layout->pres_shift),
-			   (pres << master->layout->pres_shift));
+			   (MASTER_PRES_MASK << master->layout->pres_shअगरt),
+			   (pres << master->layout->pres_shअगरt));
 
-	while (!clk_master_ready(master))
+	जबतक (!clk_master_पढ़ोy(master))
 		cpu_relax();
 	spin_unlock_irqrestore(master->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long clk_master_pres_recalc_rate(struct clk_hw *hw,
-						 unsigned long parent_rate)
-{
-	struct clk_master *master = to_clk_master(hw);
-	const struct clk_master_characteristics *characteristics =
-						master->characteristics;
-	unsigned long flags;
-	unsigned int val, pres;
+अटल अचिन्हित दीर्घ clk_master_pres_recalc_rate(काष्ठा clk_hw *hw,
+						 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	स्थिर काष्ठा clk_master_अक्षरacteristics *अक्षरacteristics =
+						master->अक्षरacteristics;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक val, pres;
 
 	spin_lock_irqsave(master->lock, flags);
-	regmap_read(master->regmap, master->layout->offset, &val);
+	regmap_पढ़ो(master->regmap, master->layout->offset, &val);
 	spin_unlock_irqrestore(master->lock, flags);
 
-	pres = (val >> master->layout->pres_shift) & MASTER_PRES_MASK;
-	if (pres == 3 && characteristics->have_div3_pres)
+	pres = (val >> master->layout->pres_shअगरt) & MASTER_PRES_MASK;
+	अगर (pres == 3 && अक्षरacteristics->have_भाग3_pres)
 		pres = 3;
-	else
+	अन्यथा
 		pres = (1 << pres);
 
-	return DIV_ROUND_CLOSEST_ULL(parent_rate, pres);
-}
+	वापस DIV_ROUND_CLOSEST_ULL(parent_rate, pres);
+पूर्ण
 
-static u8 clk_master_pres_get_parent(struct clk_hw *hw)
-{
-	struct clk_master *master = to_clk_master(hw);
-	unsigned long flags;
-	unsigned int mckr;
+अटल u8 clk_master_pres_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक mckr;
 
 	spin_lock_irqsave(master->lock, flags);
-	regmap_read(master->regmap, master->layout->offset, &mckr);
+	regmap_पढ़ो(master->regmap, master->layout->offset, &mckr);
 	spin_unlock_irqrestore(master->lock, flags);
 
-	return mckr & AT91_PMC_CSS;
-}
+	वापस mckr & AT91_PMC_CSS;
+पूर्ण
 
-static const struct clk_ops master_pres_ops = {
+अटल स्थिर काष्ठा clk_ops master_pres_ops = अणु
 	.prepare = clk_master_prepare,
 	.is_prepared = clk_master_is_prepared,
 	.recalc_rate = clk_master_pres_recalc_rate,
 	.get_parent = clk_master_pres_get_parent,
-};
+पूर्ण;
 
-static const struct clk_ops master_pres_ops_chg = {
+अटल स्थिर काष्ठा clk_ops master_pres_ops_chg = अणु
 	.prepare = clk_master_prepare,
 	.is_prepared = clk_master_is_prepared,
 	.determine_rate = clk_master_pres_determine_rate,
 	.recalc_rate = clk_master_pres_recalc_rate,
 	.get_parent = clk_master_pres_get_parent,
 	.set_rate = clk_master_pres_set_rate,
-};
+पूर्ण;
 
-static struct clk_hw * __init
-at91_clk_register_master_internal(struct regmap *regmap,
-		const char *name, int num_parents,
-		const char **parent_names,
-		const struct clk_master_layout *layout,
-		const struct clk_master_characteristics *characteristics,
-		const struct clk_ops *ops, spinlock_t *lock, u32 flags,
-		int chg_pid)
-{
-	struct clk_master *master;
-	struct clk_init_data init;
-	struct clk_hw *hw;
-	int ret;
+अटल काष्ठा clk_hw * __init
+at91_clk_रेजिस्टर_master_पूर्णांकernal(काष्ठा regmap *regmap,
+		स्थिर अक्षर *name, पूर्णांक num_parents,
+		स्थिर अक्षर **parent_names,
+		स्थिर काष्ठा clk_master_layout *layout,
+		स्थिर काष्ठा clk_master_अक्षरacteristics *अक्षरacteristics,
+		स्थिर काष्ठा clk_ops *ops, spinlock_t *lock, u32 flags,
+		पूर्णांक chg_pid)
+अणु
+	काष्ठा clk_master *master;
+	काष्ठा clk_init_data init;
+	काष्ठा clk_hw *hw;
+	पूर्णांक ret;
 
-	if (!name || !num_parents || !parent_names || !lock)
-		return ERR_PTR(-EINVAL);
+	अगर (!name || !num_parents || !parent_names || !lock)
+		वापस ERR_PTR(-EINVAL);
 
-	master = kzalloc(sizeof(*master), GFP_KERNEL);
-	if (!master)
-		return ERR_PTR(-ENOMEM);
+	master = kzalloc(माप(*master), GFP_KERNEL);
+	अगर (!master)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = ops;
@@ -375,126 +376,126 @@ at91_clk_register_master_internal(struct regmap *regmap,
 
 	master->hw.init = &init;
 	master->layout = layout;
-	master->characteristics = characteristics;
+	master->अक्षरacteristics = अक्षरacteristics;
 	master->regmap = regmap;
 	master->chg_pid = chg_pid;
 	master->lock = lock;
 
 	hw = &master->hw;
-	ret = clk_hw_register(NULL, &master->hw);
-	if (ret) {
-		kfree(master);
+	ret = clk_hw_रेजिस्टर(शून्य, &master->hw);
+	अगर (ret) अणु
+		kमुक्त(master);
 		hw = ERR_PTR(ret);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-struct clk_hw * __init
-at91_clk_register_master_pres(struct regmap *regmap,
-		const char *name, int num_parents,
-		const char **parent_names,
-		const struct clk_master_layout *layout,
-		const struct clk_master_characteristics *characteristics,
-		spinlock_t *lock, u32 flags, int chg_pid)
-{
-	const struct clk_ops *ops;
+काष्ठा clk_hw * __init
+at91_clk_रेजिस्टर_master_pres(काष्ठा regmap *regmap,
+		स्थिर अक्षर *name, पूर्णांक num_parents,
+		स्थिर अक्षर **parent_names,
+		स्थिर काष्ठा clk_master_layout *layout,
+		स्थिर काष्ठा clk_master_अक्षरacteristics *अक्षरacteristics,
+		spinlock_t *lock, u32 flags, पूर्णांक chg_pid)
+अणु
+	स्थिर काष्ठा clk_ops *ops;
 
-	if (flags & CLK_SET_RATE_GATE)
+	अगर (flags & CLK_SET_RATE_GATE)
 		ops = &master_pres_ops;
-	else
+	अन्यथा
 		ops = &master_pres_ops_chg;
 
-	return at91_clk_register_master_internal(regmap, name, num_parents,
+	वापस at91_clk_रेजिस्टर_master_पूर्णांकernal(regmap, name, num_parents,
 						 parent_names, layout,
-						 characteristics, ops,
+						 अक्षरacteristics, ops,
 						 lock, flags, chg_pid);
-}
+पूर्ण
 
-struct clk_hw * __init
-at91_clk_register_master_div(struct regmap *regmap,
-		const char *name, const char *parent_name,
-		const struct clk_master_layout *layout,
-		const struct clk_master_characteristics *characteristics,
+काष्ठा clk_hw * __init
+at91_clk_रेजिस्टर_master_भाग(काष्ठा regmap *regmap,
+		स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+		स्थिर काष्ठा clk_master_layout *layout,
+		स्थिर काष्ठा clk_master_अक्षरacteristics *अक्षरacteristics,
 		spinlock_t *lock, u32 flags)
-{
-	const struct clk_ops *ops;
+अणु
+	स्थिर काष्ठा clk_ops *ops;
 
-	if (flags & CLK_SET_RATE_GATE)
-		ops = &master_div_ops;
-	else
-		ops = &master_div_ops_chg;
+	अगर (flags & CLK_SET_RATE_GATE)
+		ops = &master_भाग_ops;
+	अन्यथा
+		ops = &master_भाग_ops_chg;
 
-	return at91_clk_register_master_internal(regmap, name, 1,
+	वापस at91_clk_रेजिस्टर_master_पूर्णांकernal(regmap, name, 1,
 						 &parent_name, layout,
-						 characteristics, ops,
+						 अक्षरacteristics, ops,
 						 lock, flags, -EINVAL);
-}
+पूर्ण
 
-static unsigned long
-clk_sama7g5_master_recalc_rate(struct clk_hw *hw,
-			       unsigned long parent_rate)
-{
-	struct clk_master *master = to_clk_master(hw);
+अटल अचिन्हित दीर्घ
+clk_sama7g5_master_recalc_rate(काष्ठा clk_hw *hw,
+			       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
 
-	return DIV_ROUND_CLOSEST_ULL(parent_rate, (1 << master->div));
-}
+	वापस DIV_ROUND_CLOSEST_ULL(parent_rate, (1 << master->भाग));
+पूर्ण
 
-static int clk_sama7g5_master_determine_rate(struct clk_hw *hw,
-					     struct clk_rate_request *req)
-{
-	struct clk_master *master = to_clk_master(hw);
-	struct clk_rate_request req_parent = *req;
-	struct clk_hw *parent;
-	long best_rate = LONG_MIN, best_diff = LONG_MIN;
-	unsigned long parent_rate;
-	unsigned int div, i;
+अटल पूर्णांक clk_sama7g5_master_determine_rate(काष्ठा clk_hw *hw,
+					     काष्ठा clk_rate_request *req)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	काष्ठा clk_rate_request req_parent = *req;
+	काष्ठा clk_hw *parent;
+	दीर्घ best_rate = दीर्घ_न्यून, best_dअगरf = दीर्घ_न्यून;
+	अचिन्हित दीर्घ parent_rate;
+	अचिन्हित पूर्णांक भाग, i;
 
-	/* First: check the dividers of MCR. */
-	for (i = 0; i < clk_hw_get_num_parents(hw); i++) {
+	/* First: check the भागiders of MCR. */
+	क्रम (i = 0; i < clk_hw_get_num_parents(hw); i++) अणु
 		parent = clk_hw_get_parent_by_index(hw, i);
-		if (!parent)
-			continue;
+		अगर (!parent)
+			जारी;
 
 		parent_rate = clk_hw_get_rate(parent);
-		if (!parent_rate)
-			continue;
+		अगर (!parent_rate)
+			जारी;
 
-		for (div = 0; div < MASTER_PRES_MAX + 1; div++) {
-			clk_sama7g5_master_best_diff(req, parent, parent_rate,
-						     &best_rate, &best_diff,
-						     div);
-			if (!best_diff)
-				break;
-		}
+		क्रम (भाग = 0; भाग < MASTER_PRES_MAX + 1; भाग++) अणु
+			clk_sama7g5_master_best_dअगरf(req, parent, parent_rate,
+						     &best_rate, &best_dअगरf,
+						     भाग);
+			अगर (!best_dअगरf)
+				अवरोध;
+		पूर्ण
 
-		if (!best_diff)
-			break;
-	}
+		अगर (!best_dअगरf)
+			अवरोध;
+	पूर्ण
 
-	/* Second: try to request rate form changeable parent. */
-	if (master->chg_pid < 0)
-		goto end;
+	/* Second: try to request rate क्रमm changeable parent. */
+	अगर (master->chg_pid < 0)
+		जाओ end;
 
 	parent = clk_hw_get_parent_by_index(hw, master->chg_pid);
-	if (!parent)
-		goto end;
+	अगर (!parent)
+		जाओ end;
 
-	for (div = 0; div < MASTER_PRES_MAX + 1; div++) {
-		if (div == MASTER_PRES_MAX)
+	क्रम (भाग = 0; भाग < MASTER_PRES_MAX + 1; भाग++) अणु
+		अगर (भाग == MASTER_PRES_MAX)
 			req_parent.rate = req->rate * 3;
-		else
-			req_parent.rate = req->rate << div;
+		अन्यथा
+			req_parent.rate = req->rate << भाग;
 
-		if (__clk_determine_rate(parent, &req_parent))
-			continue;
+		अगर (__clk_determine_rate(parent, &req_parent))
+			जारी;
 
-		clk_sama7g5_master_best_diff(req, parent, req_parent.rate,
-					     &best_rate, &best_diff, div);
+		clk_sama7g5_master_best_dअगरf(req, parent, req_parent.rate,
+					     &best_rate, &best_dअगरf, भाग);
 
-		if (!best_diff)
-			break;
-	}
+		अगर (!best_dअगरf)
+			अवरोध;
+	पूर्ण
 
 end:
 	pr_debug("MCK: %s, best_rate = %ld, parent clk: %s @ %ld\n",
@@ -502,18 +503,18 @@ end:
 		 __clk_get_name((req->best_parent_hw)->clk),
 		req->best_parent_rate);
 
-	if (best_rate < 0)
-		return -EINVAL;
+	अगर (best_rate < 0)
+		वापस -EINVAL;
 
 	req->rate = best_rate;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 clk_sama7g5_master_get_parent(struct clk_hw *hw)
-{
-	struct clk_master *master = to_clk_master(hw);
-	unsigned long flags;
+अटल u8 clk_sama7g5_master_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	अचिन्हित दीर्घ flags;
 	u8 index;
 
 	spin_lock_irqsave(master->lock, flags);
@@ -521,106 +522,106 @@ static u8 clk_sama7g5_master_get_parent(struct clk_hw *hw)
 				     master->parent);
 	spin_unlock_irqrestore(master->lock, flags);
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static int clk_sama7g5_master_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_master *master = to_clk_master(hw);
-	unsigned long flags;
+अटल पूर्णांक clk_sama7g5_master_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	अचिन्हित दीर्घ flags;
 
-	if (index >= clk_hw_get_num_parents(hw))
-		return -EINVAL;
+	अगर (index >= clk_hw_get_num_parents(hw))
+		वापस -EINVAL;
 
 	spin_lock_irqsave(master->lock, flags);
 	master->parent = clk_mux_index_to_val(master->mux_table, 0, index);
 	spin_unlock_irqrestore(master->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_sama7g5_master_enable(struct clk_hw *hw)
-{
-	struct clk_master *master = to_clk_master(hw);
-	unsigned long flags;
-	unsigned int val, cparent;
+अटल पूर्णांक clk_sama7g5_master_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक val, cparent;
 
 	spin_lock_irqsave(master->lock, flags);
 
-	regmap_write(master->regmap, PMC_MCR, PMC_MCR_ID(master->id));
-	regmap_read(master->regmap, PMC_MCR, &val);
+	regmap_ग_लिखो(master->regmap, PMC_MCR, PMC_MCR_ID(master->id));
+	regmap_पढ़ो(master->regmap, PMC_MCR, &val);
 	regmap_update_bits(master->regmap, PMC_MCR,
 			   PMC_MCR_EN | PMC_MCR_CSS | PMC_MCR_DIV |
 			   PMC_MCR_CMD | PMC_MCR_ID_MSK,
 			   PMC_MCR_EN | (master->parent << PMC_MCR_CSS_SHIFT) |
-			   (master->div << MASTER_DIV_SHIFT) |
+			   (master->भाग << MASTER_DIV_SHIFT) |
 			   PMC_MCR_CMD | PMC_MCR_ID(master->id));
 
 	cparent = (val & PMC_MCR_CSS) >> PMC_MCR_CSS_SHIFT;
 
-	/* Wait here only if parent is being changed. */
-	while ((cparent != master->parent) && !clk_master_ready(master))
+	/* Wait here only अगर parent is being changed. */
+	जबतक ((cparent != master->parent) && !clk_master_पढ़ोy(master))
 		cpu_relax();
 
 	spin_unlock_irqrestore(master->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_sama7g5_master_disable(struct clk_hw *hw)
-{
-	struct clk_master *master = to_clk_master(hw);
-	unsigned long flags;
+अटल व्योम clk_sama7g5_master_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(master->lock, flags);
 
-	regmap_write(master->regmap, PMC_MCR, master->id);
+	regmap_ग_लिखो(master->regmap, PMC_MCR, master->id);
 	regmap_update_bits(master->regmap, PMC_MCR,
 			   PMC_MCR_EN | PMC_MCR_CMD | PMC_MCR_ID_MSK,
 			   PMC_MCR_CMD | PMC_MCR_ID(master->id));
 
 	spin_unlock_irqrestore(master->lock, flags);
-}
+पूर्ण
 
-static int clk_sama7g5_master_is_enabled(struct clk_hw *hw)
-{
-	struct clk_master *master = to_clk_master(hw);
-	unsigned long flags;
-	unsigned int val;
+अटल पूर्णांक clk_sama7g5_master_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक val;
 
 	spin_lock_irqsave(master->lock, flags);
 
-	regmap_write(master->regmap, PMC_MCR, master->id);
-	regmap_read(master->regmap, PMC_MCR, &val);
+	regmap_ग_लिखो(master->regmap, PMC_MCR, master->id);
+	regmap_पढ़ो(master->regmap, PMC_MCR, &val);
 
 	spin_unlock_irqrestore(master->lock, flags);
 
-	return !!(val & PMC_MCR_EN);
-}
+	वापस !!(val & PMC_MCR_EN);
+पूर्ण
 
-static int clk_sama7g5_master_set_rate(struct clk_hw *hw, unsigned long rate,
-				       unsigned long parent_rate)
-{
-	struct clk_master *master = to_clk_master(hw);
-	unsigned long div, flags;
+अटल पूर्णांक clk_sama7g5_master_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_master *master = to_clk_master(hw);
+	अचिन्हित दीर्घ भाग, flags;
 
-	div = DIV_ROUND_CLOSEST(parent_rate, rate);
-	if ((div > (1 << (MASTER_PRES_MAX - 1))) || (div & (div - 1)))
-		return -EINVAL;
+	भाग = DIV_ROUND_CLOSEST(parent_rate, rate);
+	अगर ((भाग > (1 << (MASTER_PRES_MAX - 1))) || (भाग & (भाग - 1)))
+		वापस -EINVAL;
 
-	if (div == 3)
-		div = MASTER_PRES_MAX;
-	else
-		div = ffs(div) - 1;
+	अगर (भाग == 3)
+		भाग = MASTER_PRES_MAX;
+	अन्यथा
+		भाग = ffs(भाग) - 1;
 
 	spin_lock_irqsave(master->lock, flags);
-	master->div = div;
+	master->भाग = भाग;
 	spin_unlock_irqrestore(master->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops sama7g5_master_ops = {
+अटल स्थिर काष्ठा clk_ops sama7g5_master_ops = अणु
 	.enable = clk_sama7g5_master_enable,
 	.disable = clk_sama7g5_master_disable,
 	.is_enabled = clk_sama7g5_master_is_enabled,
@@ -629,39 +630,39 @@ static const struct clk_ops sama7g5_master_ops = {
 	.set_rate = clk_sama7g5_master_set_rate,
 	.get_parent = clk_sama7g5_master_get_parent,
 	.set_parent = clk_sama7g5_master_set_parent,
-};
+पूर्ण;
 
-struct clk_hw * __init
-at91_clk_sama7g5_register_master(struct regmap *regmap,
-				 const char *name, int num_parents,
-				 const char **parent_names,
+काष्ठा clk_hw * __init
+at91_clk_sama7g5_रेजिस्टर_master(काष्ठा regmap *regmap,
+				 स्थिर अक्षर *name, पूर्णांक num_parents,
+				 स्थिर अक्षर **parent_names,
 				 u32 *mux_table,
 				 spinlock_t *lock, u8 id,
-				 bool critical, int chg_pid)
-{
-	struct clk_master *master;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	unsigned long flags;
-	unsigned int val;
-	int ret;
+				 bool critical, पूर्णांक chg_pid)
+अणु
+	काष्ठा clk_master *master;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	if (!name || !num_parents || !parent_names || !mux_table ||
+	अगर (!name || !num_parents || !parent_names || !mux_table ||
 	    !lock || id > MASTER_MAX_ID)
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	master = kzalloc(sizeof(*master), GFP_KERNEL);
-	if (!master)
-		return ERR_PTR(-ENOMEM);
+	master = kzalloc(माप(*master), GFP_KERNEL);
+	अगर (!master)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &sama7g5_master_ops;
 	init.parent_names = parent_names;
 	init.num_parents = num_parents;
 	init.flags = CLK_SET_RATE_GATE | CLK_SET_PARENT_GATE;
-	if (chg_pid >= 0)
+	अगर (chg_pid >= 0)
 		init.flags |= CLK_SET_RATE_PARENT;
-	if (critical)
+	अगर (critical)
 		init.flags |= CLK_IS_CRITICAL;
 
 	master->hw.init = &init;
@@ -672,30 +673,30 @@ at91_clk_sama7g5_register_master(struct regmap *regmap,
 	master->mux_table = mux_table;
 
 	spin_lock_irqsave(master->lock, flags);
-	regmap_write(master->regmap, PMC_MCR, master->id);
-	regmap_read(master->regmap, PMC_MCR, &val);
+	regmap_ग_लिखो(master->regmap, PMC_MCR, master->id);
+	regmap_पढ़ो(master->regmap, PMC_MCR, &val);
 	master->parent = (val & PMC_MCR_CSS) >> PMC_MCR_CSS_SHIFT;
-	master->div = (val & PMC_MCR_DIV) >> MASTER_DIV_SHIFT;
+	master->भाग = (val & PMC_MCR_DIV) >> MASTER_DIV_SHIFT;
 	spin_unlock_irqrestore(master->lock, flags);
 
 	hw = &master->hw;
-	ret = clk_hw_register(NULL, &master->hw);
-	if (ret) {
-		kfree(master);
+	ret = clk_hw_रेजिस्टर(शून्य, &master->hw);
+	अगर (ret) अणु
+		kमुक्त(master);
 		hw = ERR_PTR(ret);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-const struct clk_master_layout at91rm9200_master_layout = {
+स्थिर काष्ठा clk_master_layout at91rm9200_master_layout = अणु
 	.mask = 0x31F,
-	.pres_shift = 2,
+	.pres_shअगरt = 2,
 	.offset = AT91_PMC_MCKR,
-};
+पूर्ण;
 
-const struct clk_master_layout at91sam9x5_master_layout = {
+स्थिर काष्ठा clk_master_layout at91sam9x5_master_layout = अणु
 	.mask = 0x373,
-	.pres_shift = 4,
+	.pres_shअगरt = 4,
 	.offset = AT91_PMC_MCKR,
-};
+पूर्ण;

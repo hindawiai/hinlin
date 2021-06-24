@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * linux/sound/cs35l34.h -- Platform data for CS35l34
+ * linux/sound/cs35l34.h -- Platक्रमm data क्रम CS35l34
  *
  * Copyright (c) 2016 Cirrus Logic Inc.
  */
 
-#ifndef __CS35L34_H
-#define __CS35L34_H
+#अगर_अघोषित __CS35L34_H
+#घोषणा __CS35L34_H
 
-struct cs35l34_platform_data {
+काष्ठा cs35l34_platक्रमm_data अणु
 	/* Set AIF to half drive strength */
-	bool aif_half_drv;
+	bool aअगर_half_drv;
 	/* Digital Soft Ramp Disable */
 	bool digsft_disable;
-	/* Amplifier Invert */
+	/* Amplअगरier Invert */
 	bool amp_inv;
 	/* Peak current (mA) */
-	unsigned int boost_peak;
+	अचिन्हित पूर्णांक boost_peak;
 	/* Boost inductor value (nH) */
-	unsigned int boost_ind;
+	अचिन्हित पूर्णांक boost_ind;
 	/* Boost Controller Voltage Setting (mV) */
-	unsigned int boost_vtge;
+	अचिन्हित पूर्णांक boost_vtge;
 	/* Gain Change Zero Cross */
 	bool gain_zc_disable;
 	/* SDIN Left/Right Selection */
-	unsigned int i2s_sdinloc;
+	अचिन्हित पूर्णांक i2s_sdinloc;
 	/* TDM Rising Edge */
 	bool tdm_rising_edge;
-};
+पूर्ण;
 
-#endif /* __CS35L34_H */
+#पूर्ण_अगर /* __CS35L34_H */

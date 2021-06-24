@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-footbridge/common.c
  *
  *  Copyright (C) 1998-2000 Russell King, Dave Gilbert.
  */
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/ioport.h>
-#include <linux/list.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/spinlock.h>
-#include <video/vga.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/list.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/spinlock.h>
+#समावेश <video/vga.h>
 
-#include <asm/page.h>
-#include <asm/irq.h>
-#include <asm/mach-types.h>
-#include <asm/setup.h>
-#include <asm/system_misc.h>
-#include <asm/hardware/dec21285.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
+#समावेश <यंत्र/hardware/dec21285.h>
 
-#include <asm/mach/irq.h>
-#include <asm/mach/map.h>
-#include <asm/mach/pci.h>
+#समावेश <यंत्र/mach/irq.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/mach/pci.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-unsigned int mem_fclk_21285 = 50000000;
+अचिन्हित पूर्णांक mem_fclk_21285 = 50000000;
 
 EXPORT_SYMBOL(mem_fclk_21285);
 
-static int __init early_fclk(char *arg)
-{
-	mem_fclk_21285 = simple_strtoul(arg, NULL, 0);
-	return 0;
-}
+अटल पूर्णांक __init early_fclk(अक्षर *arg)
+अणु
+	mem_fclk_21285 = simple_म_से_अदीर्घ(arg, शून्य, 0);
+	वापस 0;
+पूर्ण
 
 early_param("mem_fclk_21285", early_fclk);
 
-static int __init parse_tag_memclk(const struct tag *tag)
-{
+अटल पूर्णांक __init parse_tag_memclk(स्थिर काष्ठा tag *tag)
+अणु
 	mem_fclk_21285 = tag->u.memclk.fmemclk;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __tagtable(ATAG_MEMCLK, parse_tag_memclk);
 
 /*
  * Footbridge IRQ translation table
- *  Converts from our IRQ numbers into FootBridge masks
+ *  Converts from our IRQ numbers पूर्णांकo FootBridge masks
  */
-static const int fb_irq_mask[] = {
+अटल स्थिर पूर्णांक fb_irq_mask[] = अणु
 	IRQ_MASK_UART_RX,	/*  0 */
 	IRQ_MASK_UART_TX,	/*  1 */
 	IRQ_MASK_TIMER1,	/*  2 */
@@ -72,27 +73,27 @@ static const int fb_irq_mask[] = {
 	IRQ_MASK_DISCARD_TIMER,	/* 17 */
 	IRQ_MASK_PCI_DPERR,	/* 18 */
 	IRQ_MASK_PCI_PERR,	/* 19 */
-};
+पूर्ण;
 
-static void fb_mask_irq(struct irq_data *d)
-{
+अटल व्योम fb_mask_irq(काष्ठा irq_data *d)
+अणु
 	*CSR_IRQ_DISABLE = fb_irq_mask[_DC21285_INR(d->irq)];
-}
+पूर्ण
 
-static void fb_unmask_irq(struct irq_data *d)
-{
+अटल व्योम fb_unmask_irq(काष्ठा irq_data *d)
+अणु
 	*CSR_IRQ_ENABLE = fb_irq_mask[_DC21285_INR(d->irq)];
-}
+पूर्ण
 
-static struct irq_chip fb_chip = {
+अटल काष्ठा irq_chip fb_chip = अणु
 	.irq_ack	= fb_mask_irq,
 	.irq_mask	= fb_mask_irq,
 	.irq_unmask	= fb_unmask_irq,
-};
+पूर्ण;
 
-static void __init __fb_init_irq(void)
-{
-	unsigned int irq;
+अटल व्योम __init __fb_init_irq(व्योम)
+अणु
+	अचिन्हित पूर्णांक irq;
 
 	/*
 	 * setup DC21285 IRQs
@@ -100,80 +101,80 @@ static void __init __fb_init_irq(void)
 	*CSR_IRQ_DISABLE = -1;
 	*CSR_FIQ_DISABLE = -1;
 
-	for (irq = _DC21285_IRQ(0); irq < _DC21285_IRQ(20); irq++) {
+	क्रम (irq = _DC21285_IRQ(0); irq < _DC21285_IRQ(20); irq++) अणु
 		irq_set_chip_and_handler(irq, &fb_chip, handle_level_irq);
 		irq_clear_status_flags(irq, IRQ_NOREQUEST | IRQ_NOPROBE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init footbridge_init_irq(void)
-{
+व्योम __init footbridge_init_irq(व्योम)
+अणु
 	__fb_init_irq();
 
-	if (!footbridge_cfn_mode())
-		return;
+	अगर (!footbridge_cfn_mode())
+		वापस;
 
-	if (machine_is_ebsa285())
+	अगर (machine_is_ebsa285())
 		/* The following is dependent on which slot
-		 * you plug the Southbridge card into.  We
-		 * currently assume that you plug it into
+		 * you plug the Southbridge card पूर्णांकo.  We
+		 * currently assume that you plug it पूर्णांकo
 		 * the right-hand most slot.
 		 */
 		isa_init_irq(IRQ_PCI);
 
-	if (machine_is_cats())
+	अगर (machine_is_cats())
 		isa_init_irq(IRQ_IN2);
 
-	if (machine_is_netwinder())
+	अगर (machine_is_netwinder())
 		isa_init_irq(IRQ_IN3);
-}
+पूर्ण
 
 /*
- * Common mapping for all systems.  Note that the outbound write flush is
+ * Common mapping क्रम all प्रणालीs.  Note that the outbound ग_लिखो flush is
  * commented out since there is a "No Fix" problem with it.  Not mapping
  * it means that we have extra bullet protection on our feet.
  */
-static struct map_desc fb_common_io_desc[] __initdata = {
-	{
-		.virtual	= ARMCSR_BASE,
+अटल काष्ठा map_desc fb_common_io_desc[] __initdata = अणु
+	अणु
+		.भव	= ARMCSR_BASE,
 		.pfn		= __phys_to_pfn(DC21285_ARMCSR_BASE),
 		.length		= ARMCSR_SIZE,
 		.type		= MT_DEVICE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /*
- * The mapping when the footbridge is in host mode.  We don't map any of
+ * The mapping when the footbridge is in host mode.  We करोn't map any of
  * this when we are in add-in mode.
  */
-static struct map_desc ebsa285_host_io_desc[] __initdata = {
-#if defined(CONFIG_ARCH_FOOTBRIDGE) && defined(CONFIG_FOOTBRIDGE_HOST)
-	{
-		.virtual	= PCIMEM_BASE,
+अटल काष्ठा map_desc ebsa285_host_io_desc[] __initdata = अणु
+#अगर defined(CONFIG_ARCH_FOOTBRIDGE) && defined(CONFIG_FOOTBRIDGE_HOST)
+	अणु
+		.भव	= PCIMEM_BASE,
 		.pfn		= __phys_to_pfn(DC21285_PCI_MEM),
 		.length		= PCIMEM_SIZE,
 		.type		= MT_DEVICE,
-	}, {
-		.virtual	= PCICFG0_BASE,
+	पूर्ण, अणु
+		.भव	= PCICFG0_BASE,
 		.pfn		= __phys_to_pfn(DC21285_PCI_TYPE_0_CONFIG),
 		.length		= PCICFG0_SIZE,
 		.type		= MT_DEVICE,
-	}, {
-		.virtual	= PCICFG1_BASE,
+	पूर्ण, अणु
+		.भव	= PCICFG1_BASE,
 		.pfn		= __phys_to_pfn(DC21285_PCI_TYPE_1_CONFIG),
 		.length		= PCICFG1_SIZE,
 		.type		= MT_DEVICE,
-	}, {
-		.virtual	= PCIIACK_BASE,
+	पूर्ण, अणु
+		.भव	= PCIIACK_BASE,
 		.pfn		= __phys_to_pfn(DC21285_PCI_IACK),
 		.length		= PCIIACK_SIZE,
 		.type		= MT_DEVICE,
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-void __init footbridge_map_io(void)
-{
+व्योम __init footbridge_map_io(व्योम)
+अणु
 	/*
 	 * Set up the common mapping first; we need this to
 	 * determine whether we're in host mode or not.
@@ -182,32 +183,32 @@ void __init footbridge_map_io(void)
 
 	/*
 	 * Now, work out what we've got to map in addition on this
-	 * platform.
+	 * platक्रमm.
 	 */
-	if (footbridge_cfn_mode()) {
+	अगर (footbridge_cfn_mode()) अणु
 		iotable_init(ebsa285_host_io_desc, ARRAY_SIZE(ebsa285_host_io_desc));
 		pci_map_io_early(__phys_to_pfn(DC21285_PCI_IO));
-	}
+	पूर्ण
 
 	vga_base = PCIMEM_BASE;
-}
+पूर्ण
 
-void footbridge_restart(enum reboot_mode mode, const char *cmd)
-{
-	if (mode == REBOOT_SOFT) {
-		/* Jump into the ROM */
+व्योम footbridge_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
+अणु
+	अगर (mode == REBOOT_SOFT) अणु
+		/* Jump पूर्णांकo the ROM */
 		soft_restart(0x41000000);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Force the watchdog to do a CPU reset.
+		 * Force the watchकरोg to करो a CPU reset.
 		 *
-		 * After making sure that the watchdog is disabled
-		 * (so we can change the timer registers) we first
-		 * enable the timer to autoreload itself.  Next, the
-		 * timer interval is set really short and any
-		 * current interrupt request is cleared (so we can
+		 * After making sure that the watchकरोg is disabled
+		 * (so we can change the समयr रेजिस्टरs) we first
+		 * enable the समयr to स्वतःreload itself.  Next, the
+		 * समयr पूर्णांकerval is set really लघु and any
+		 * current पूर्णांकerrupt request is cleared (so we can
 		 * see an edge transition).  Finally, TIMER4 is
-		 * enabled as the watchdog.
+		 * enabled as the watchकरोg.
 		 */
 		*CSR_SA110_CNTL &= ~(1 << 13);
 		*CSR_TIMER4_CNTL = TIMER_CNTL_ENABLE |
@@ -216,49 +217,49 @@ void footbridge_restart(enum reboot_mode mode, const char *cmd)
 		*CSR_TIMER4_LOAD = 0x2;
 		*CSR_TIMER4_CLR  = 0;
 		*CSR_SA110_CNTL |= (1 << 13);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_FOOTBRIDGE_ADDIN
+#अगर_घोषित CONFIG_FOOTBRIDGE_ADDIN
 
-static inline unsigned long fb_bus_sdram_offset(void)
-{
-	return *CSR_PCISDRAMBASE & 0xfffffff0;
-}
+अटल अंतरभूत अचिन्हित दीर्घ fb_bus_sdram_offset(व्योम)
+अणु
+	वापस *CSR_PCISDRAMBASE & 0xfffffff0;
+पूर्ण
 
 /*
- * These two functions convert virtual addresses to PCI addresses and PCI
- * addresses to virtual addresses.  Note that it is only legal to use these
- * on memory obtained via get_zeroed_page or kmalloc.
+ * These two functions convert भव addresses to PCI addresses and PCI
+ * addresses to भव addresses.  Note that it is only legal to use these
+ * on memory obtained via get_zeroed_page or kदो_स्मृति.
  */
-unsigned long __virt_to_bus(unsigned long res)
-{
-	WARN_ON(res < PAGE_OFFSET || res >= (unsigned long)high_memory);
+अचिन्हित दीर्घ __virt_to_bus(अचिन्हित दीर्घ res)
+अणु
+	WARN_ON(res < PAGE_OFFSET || res >= (अचिन्हित दीर्घ)high_memory);
 
-	return res + (fb_bus_sdram_offset() - PAGE_OFFSET);
-}
+	वापस res + (fb_bus_sdram_offset() - PAGE_OFFSET);
+पूर्ण
 EXPORT_SYMBOL(__virt_to_bus);
 
-unsigned long __bus_to_virt(unsigned long res)
-{
+अचिन्हित दीर्घ __bus_to_virt(अचिन्हित दीर्घ res)
+अणु
 	res = res - (fb_bus_sdram_offset() - PAGE_OFFSET);
 
-	WARN_ON(res < PAGE_OFFSET || res >= (unsigned long)high_memory);
+	WARN_ON(res < PAGE_OFFSET || res >= (अचिन्हित दीर्घ)high_memory);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(__bus_to_virt);
 
-unsigned long __pfn_to_bus(unsigned long pfn)
-{
-	return __pfn_to_phys(pfn) + (fb_bus_sdram_offset() - PHYS_OFFSET);
-}
+अचिन्हित दीर्घ __pfn_to_bus(अचिन्हित दीर्घ pfn)
+अणु
+	वापस __pfn_to_phys(pfn) + (fb_bus_sdram_offset() - PHYS_OFFSET);
+पूर्ण
 EXPORT_SYMBOL(__pfn_to_bus);
 
-unsigned long __bus_to_pfn(unsigned long bus)
-{
-	return __phys_to_pfn(bus - (fb_bus_sdram_offset() - PHYS_OFFSET));
-}
+अचिन्हित दीर्घ __bus_to_pfn(अचिन्हित दीर्घ bus)
+अणु
+	वापस __phys_to_pfn(bus - (fb_bus_sdram_offset() - PHYS_OFFSET));
+पूर्ण
 EXPORT_SYMBOL(__bus_to_pfn);
 
-#endif
+#पूर्ण_अगर

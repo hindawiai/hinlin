@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * ALSA timer back-end using hrtimer
+ * ALSA समयr back-end using hrसमयr
  * Copyright (C) 2008 Takashi Iwai
  */
 
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/hrtimer.h>
-#include <sound/core.h>
-#include <sound/timer.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <sound/core.h>
+#समावेश <sound/समयr.h>
 
 MODULE_AUTHOR("Takashi Iwai <tiwai@suse.de>");
 MODULE_DESCRIPTION("ALSA hrtimer backend");
 MODULE_LICENSE("GPL");
 
-MODULE_ALIAS("snd-timer-" __stringify(SNDRV_TIMER_GLOBAL_HRTIMER));
+MODULE_ALIAS("snd-timer-" __stringअगरy(SNDRV_TIMER_GLOBAL_HRTIMER));
 
-#define NANO_SEC	1000000000UL	/* 10^9 in sec */
-static unsigned int resolution;
+#घोषणा न_अंकO_SEC	1000000000UL	/* 10^9 in sec */
+अटल अचिन्हित पूर्णांक resolution;
 
-struct snd_hrtimer {
-	struct snd_timer *timer;
-	struct hrtimer hrt;
+काष्ठा snd_hrसमयr अणु
+	काष्ठा snd_समयr *समयr;
+	काष्ठा hrसमयr hrt;
 	bool in_callback;
-};
+पूर्ण;
 
-static enum hrtimer_restart snd_hrtimer_callback(struct hrtimer *hrt)
-{
-	struct snd_hrtimer *stime = container_of(hrt, struct snd_hrtimer, hrt);
-	struct snd_timer *t = stime->timer;
-	ktime_t delta;
-	unsigned long ticks;
-	enum hrtimer_restart ret = HRTIMER_NORESTART;
+अटल क्रमागत hrसमयr_restart snd_hrसमयr_callback(काष्ठा hrसमयr *hrt)
+अणु
+	काष्ठा snd_hrसमयr *sसमय = container_of(hrt, काष्ठा snd_hrसमयr, hrt);
+	काष्ठा snd_समयr *t = sसमय->समयr;
+	kसमय_प्रकार delta;
+	अचिन्हित दीर्घ ticks;
+	क्रमागत hrसमयr_restart ret = HRTIMER_NORESTART;
 
 	spin_lock(&t->lock);
-	if (!t->running)
-		goto out; /* fast path */
-	stime->in_callback = true;
+	अगर (!t->running)
+		जाओ out; /* fast path */
+	sसमय->in_callback = true;
 	ticks = t->sticks;
 	spin_unlock(&t->lock);
 
-	/* calculate the drift */
-	delta = ktime_sub(hrt->base->get_time(), hrtimer_get_expires(hrt));
-	if (delta > 0)
-		ticks += ktime_divns(delta, ticks * resolution);
+	/* calculate the drअगरt */
+	delta = kसमय_sub(hrt->base->get_समय(), hrसमयr_get_expires(hrt));
+	अगर (delta > 0)
+		ticks += kसमय_भागns(delta, ticks * resolution);
 
-	snd_timer_interrupt(stime->timer, ticks);
+	snd_समयr_पूर्णांकerrupt(sसमय->समयr, ticks);
 
 	spin_lock(&t->lock);
-	if (t->running) {
-		hrtimer_add_expires_ns(hrt, t->sticks * resolution);
+	अगर (t->running) अणु
+		hrसमयr_add_expires_ns(hrt, t->sticks * resolution);
 		ret = HRTIMER_RESTART;
-	}
+	पूर्ण
 
-	stime->in_callback = false;
+	sसमय->in_callback = false;
  out:
 	spin_unlock(&t->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int snd_hrtimer_open(struct snd_timer *t)
-{
-	struct snd_hrtimer *stime;
+अटल पूर्णांक snd_hrसमयr_खोलो(काष्ठा snd_समयr *t)
+अणु
+	काष्ठा snd_hrसमयr *sसमय;
 
-	stime = kzalloc(sizeof(*stime), GFP_KERNEL);
-	if (!stime)
-		return -ENOMEM;
-	hrtimer_init(&stime->hrt, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	stime->timer = t;
-	stime->hrt.function = snd_hrtimer_callback;
-	t->private_data = stime;
-	return 0;
-}
+	sसमय = kzalloc(माप(*sसमय), GFP_KERNEL);
+	अगर (!sसमय)
+		वापस -ENOMEM;
+	hrसमयr_init(&sसमय->hrt, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	sसमय->समयr = t;
+	sसमय->hrt.function = snd_hrसमयr_callback;
+	t->निजी_data = sसमय;
+	वापस 0;
+पूर्ण
 
-static int snd_hrtimer_close(struct snd_timer *t)
-{
-	struct snd_hrtimer *stime = t->private_data;
+अटल पूर्णांक snd_hrसमयr_बंद(काष्ठा snd_समयr *t)
+अणु
+	काष्ठा snd_hrसमयr *sसमय = t->निजी_data;
 
-	if (stime) {
+	अगर (sसमय) अणु
 		spin_lock_irq(&t->lock);
 		t->running = 0; /* just to be sure */
-		stime->in_callback = 1; /* skip start/stop */
+		sसमय->in_callback = 1; /* skip start/stop */
 		spin_unlock_irq(&t->lock);
 
-		hrtimer_cancel(&stime->hrt);
-		kfree(stime);
-		t->private_data = NULL;
-	}
-	return 0;
-}
+		hrसमयr_cancel(&sसमय->hrt);
+		kमुक्त(sसमय);
+		t->निजी_data = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_hrtimer_start(struct snd_timer *t)
-{
-	struct snd_hrtimer *stime = t->private_data;
+अटल पूर्णांक snd_hrसमयr_start(काष्ठा snd_समयr *t)
+अणु
+	काष्ठा snd_hrसमयr *sसमय = t->निजी_data;
 
-	if (stime->in_callback)
-		return 0;
-	hrtimer_start(&stime->hrt, ns_to_ktime(t->sticks * resolution),
+	अगर (sसमय->in_callback)
+		वापस 0;
+	hrसमयr_start(&sसमय->hrt, ns_to_kसमय(t->sticks * resolution),
 		      HRTIMER_MODE_REL);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_hrtimer_stop(struct snd_timer *t)
-{
-	struct snd_hrtimer *stime = t->private_data;
+अटल पूर्णांक snd_hrसमयr_stop(काष्ठा snd_समयr *t)
+अणु
+	काष्ठा snd_hrसमयr *sसमय = t->निजी_data;
 
-	if (stime->in_callback)
-		return 0;
-	hrtimer_try_to_cancel(&stime->hrt);
-	return 0;
-}
+	अगर (sसमय->in_callback)
+		वापस 0;
+	hrसमयr_try_to_cancel(&sसमय->hrt);
+	वापस 0;
+पूर्ण
 
-static const struct snd_timer_hardware hrtimer_hw __initconst = {
+अटल स्थिर काष्ठा snd_समयr_hardware hrसमयr_hw __initस्थिर = अणु
 	.flags =	SNDRV_TIMER_HW_AUTO | SNDRV_TIMER_HW_WORK,
-	.open =		snd_hrtimer_open,
-	.close =	snd_hrtimer_close,
-	.start =	snd_hrtimer_start,
-	.stop =		snd_hrtimer_stop,
-};
+	.खोलो =		snd_hrसमयr_खोलो,
+	.बंद =	snd_hrसमयr_बंद,
+	.start =	snd_hrसमयr_start,
+	.stop =		snd_hrसमयr_stop,
+पूर्ण;
 
 /*
  * entry functions
  */
 
-static struct snd_timer *mytimer;
+अटल काष्ठा snd_समयr *myसमयr;
 
-static int __init snd_hrtimer_init(void)
-{
-	struct snd_timer *timer;
-	int err;
+अटल पूर्णांक __init snd_hrसमयr_init(व्योम)
+अणु
+	काष्ठा snd_समयr *समयr;
+	पूर्णांक err;
 
-	resolution = hrtimer_resolution;
+	resolution = hrसमयr_resolution;
 
-	/* Create a new timer and set up the fields */
-	err = snd_timer_global_new("hrtimer", SNDRV_TIMER_GLOBAL_HRTIMER,
-				   &timer);
-	if (err < 0)
-		return err;
+	/* Create a new समयr and set up the fields */
+	err = snd_समयr_global_new("hrtimer", SNDRV_TIMER_GLOBAL_HRTIMER,
+				   &समयr);
+	अगर (err < 0)
+		वापस err;
 
-	timer->module = THIS_MODULE;
-	strcpy(timer->name, "HR timer");
-	timer->hw = hrtimer_hw;
-	timer->hw.resolution = resolution;
-	timer->hw.ticks = NANO_SEC / resolution;
-	timer->max_instances = 100; /* lower the limit */
+	समयr->module = THIS_MODULE;
+	म_नकल(समयr->name, "HR timer");
+	समयr->hw = hrसमयr_hw;
+	समयr->hw.resolution = resolution;
+	समयr->hw.ticks = न_अंकO_SEC / resolution;
+	समयr->max_instances = 100; /* lower the limit */
 
-	err = snd_timer_global_register(timer);
-	if (err < 0) {
-		snd_timer_global_free(timer);
-		return err;
-	}
-	mytimer = timer; /* remember this */
+	err = snd_समयr_global_रेजिस्टर(समयr);
+	अगर (err < 0) अणु
+		snd_समयr_global_मुक्त(समयr);
+		वापस err;
+	पूर्ण
+	myसमयr = समयr; /* remember this */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit snd_hrtimer_exit(void)
-{
-	if (mytimer) {
-		snd_timer_global_free(mytimer);
-		mytimer = NULL;
-	}
-}
+अटल व्योम __निकास snd_hrसमयr_निकास(व्योम)
+अणु
+	अगर (myसमयr) अणु
+		snd_समयr_global_मुक्त(myसमयr);
+		myसमयr = शून्य;
+	पूर्ण
+पूर्ण
 
-module_init(snd_hrtimer_init);
-module_exit(snd_hrtimer_exit);
+module_init(snd_hrसमयr_init);
+module_निकास(snd_hrसमयr_निकास);

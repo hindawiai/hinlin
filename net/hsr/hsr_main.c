@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright 2011-2014 Autronica Fire and Security AS
  *
  * Author(s):
  *	2011-2014 Arvid Brodin, arvid.brodin@alten.se
  *
- * Event handling for HSR and PRP devices.
+ * Event handling क्रम HSR and PRP devices.
  */
 
-#include <linux/netdevice.h>
-#include <net/rtnetlink.h>
-#include <linux/rculist.h>
-#include <linux/timer.h>
-#include <linux/etherdevice.h>
-#include "hsr_main.h"
-#include "hsr_device.h"
-#include "hsr_netlink.h"
-#include "hsr_framereg.h"
-#include "hsr_slave.h"
+#समावेश <linux/netdevice.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/etherdevice.h>
+#समावेश "hsr_main.h"
+#समावेश "hsr_device.h"
+#समावेश "hsr_netlink.h"
+#समावेश "hsr_framereg.h"
+#समावेश "hsr_slave.h"
 
-static bool hsr_slave_empty(struct hsr_priv *hsr)
-{
-	struct hsr_port *port;
+अटल bool hsr_slave_empty(काष्ठा hsr_priv *hsr)
+अणु
+	काष्ठा hsr_port *port;
 
-	hsr_for_each_port(hsr, port)
-		if (port->type != HSR_PT_MASTER)
-			return false;
-	return true;
-}
+	hsr_क्रम_each_port(hsr, port)
+		अगर (port->type != HSR_PT_MASTER)
+			वापस false;
+	वापस true;
+पूर्ण
 
-static int hsr_netdev_notify(struct notifier_block *nb, unsigned long event,
-			     void *ptr)
-{
-	struct hsr_port *port, *master;
-	struct net_device *dev;
-	struct hsr_priv *hsr;
-	LIST_HEAD(list_kill);
-	int mtu_max;
-	int res;
+अटल पूर्णांक hsr_netdev_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
+			     व्योम *ptr)
+अणु
+	काष्ठा hsr_port *port, *master;
+	काष्ठा net_device *dev;
+	काष्ठा hsr_priv *hsr;
+	LIST_HEAD(list_समाप्त);
+	पूर्णांक mtu_max;
+	पूर्णांक res;
 
-	dev = netdev_notifier_info_to_dev(ptr);
+	dev = netdev_notअगरier_info_to_dev(ptr);
 	port = hsr_port_get_rtnl(dev);
-	if (!port) {
-		if (!is_hsr_master(dev))
-			return NOTIFY_DONE;	/* Not an HSR device */
+	अगर (!port) अणु
+		अगर (!is_hsr_master(dev))
+			वापस NOTIFY_DONE;	/* Not an HSR device */
 		hsr = netdev_priv(dev);
 		port = hsr_port_get_hsr(hsr, HSR_PT_MASTER);
-		if (!port) {
-			/* Resend of notification concerning removed device? */
-			return NOTIFY_DONE;
-		}
-	} else {
+		अगर (!port) अणु
+			/* Resend of notअगरication concerning हटाओd device? */
+			वापस NOTIFY_DONE;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		hsr = port->hsr;
-	}
+	पूर्ण
 
-	switch (event) {
-	case NETDEV_UP:		/* Administrative state DOWN */
-	case NETDEV_DOWN:	/* Administrative state UP */
-	case NETDEV_CHANGE:	/* Link (carrier) state changes */
+	चयन (event) अणु
+	हाल NETDEV_UP:		/* Administrative state DOWN */
+	हाल NETDEV_DOWN:	/* Administrative state UP */
+	हाल NETDEV_CHANGE:	/* Link (carrier) state changes */
 		hsr_check_carrier_and_operstate(hsr);
-		break;
-	case NETDEV_CHANGENAME:
-		if (is_hsr_master(dev))
-			hsr_debugfs_rename(dev);
-		break;
-	case NETDEV_CHANGEADDR:
-		if (port->type == HSR_PT_MASTER) {
+		अवरोध;
+	हाल NETDEV_CHANGENAME:
+		अगर (is_hsr_master(dev))
+			hsr_debugfs_नाम(dev);
+		अवरोध;
+	हाल NETDEV_CHANGEADDR:
+		अगर (port->type == HSR_PT_MASTER) अणु
 			/* This should not happen since there's no
-			 * ndo_set_mac_address() for HSR devices - i.e. not
+			 * nकरो_set_mac_address() क्रम HSR devices - i.e. not
 			 * supported.
 			 */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		master = hsr_port_get_hsr(hsr, HSR_PT_MASTER);
 
-		if (port->type == HSR_PT_SLAVE_A) {
+		अगर (port->type == HSR_PT_SLAVE_A) अणु
 			ether_addr_copy(master->dev->dev_addr, dev->dev_addr);
-			call_netdevice_notifiers(NETDEV_CHANGEADDR,
+			call_netdevice_notअगरiers(NETDEV_CHANGEADDR,
 						 master->dev);
-		}
+		पूर्ण
 
 		/* Make sure we recognize frames from ourselves in hsr_rcv() */
 		port = hsr_port_get_hsr(hsr, HSR_PT_SLAVE_B);
@@ -87,84 +88,84 @@ static int hsr_netdev_notify(struct notifier_block *nb, unsigned long event,
 					   port ?
 						port->dev->dev_addr :
 						master->dev->dev_addr);
-		if (res)
+		अगर (res)
 			netdev_warn(master->dev,
 				    "Could not update HSR node address.\n");
-		break;
-	case NETDEV_CHANGEMTU:
-		if (port->type == HSR_PT_MASTER)
-			break; /* Handled in ndo_change_mtu() */
+		अवरोध;
+	हाल NETDEV_CHANGEMTU:
+		अगर (port->type == HSR_PT_MASTER)
+			अवरोध; /* Handled in nकरो_change_mtu() */
 		mtu_max = hsr_get_max_mtu(port->hsr);
 		master = hsr_port_get_hsr(port->hsr, HSR_PT_MASTER);
 		master->dev->mtu = mtu_max;
-		break;
-	case NETDEV_UNREGISTER:
-		if (!is_hsr_master(dev)) {
+		अवरोध;
+	हाल NETDEV_UNREGISTER:
+		अगर (!is_hsr_master(dev)) अणु
 			master = hsr_port_get_hsr(port->hsr, HSR_PT_MASTER);
 			hsr_del_port(port);
-			if (hsr_slave_empty(master->hsr)) {
-				const struct rtnl_link_ops *ops;
+			अगर (hsr_slave_empty(master->hsr)) अणु
+				स्थिर काष्ठा rtnl_link_ops *ops;
 
 				ops = master->dev->rtnl_link_ops;
-				ops->dellink(master->dev, &list_kill);
-				unregister_netdevice_many(&list_kill);
-			}
-		}
-		break;
-	case NETDEV_PRE_TYPE_CHANGE:
+				ops->dellink(master->dev, &list_समाप्त);
+				unरेजिस्टर_netdevice_many(&list_समाप्त);
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल NETDEV_PRE_TYPE_CHANGE:
 		/* HSR works only on Ethernet devices. Refuse slave to change
 		 * its type.
 		 */
-		return NOTIFY_BAD;
-	}
+		वापस NOTIFY_BAD;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-struct hsr_port *hsr_port_get_hsr(struct hsr_priv *hsr, enum hsr_port_type pt)
-{
-	struct hsr_port *port;
+काष्ठा hsr_port *hsr_port_get_hsr(काष्ठा hsr_priv *hsr, क्रमागत hsr_port_type pt)
+अणु
+	काष्ठा hsr_port *port;
 
-	hsr_for_each_port(hsr, port)
-		if (port->type == pt)
-			return port;
-	return NULL;
-}
+	hsr_क्रम_each_port(hsr, port)
+		अगर (port->type == pt)
+			वापस port;
+	वापस शून्य;
+पूर्ण
 
-int hsr_get_version(struct net_device *dev, enum hsr_version *ver)
-{
-	struct hsr_priv *hsr;
+पूर्णांक hsr_get_version(काष्ठा net_device *dev, क्रमागत hsr_version *ver)
+अणु
+	काष्ठा hsr_priv *hsr;
 
 	hsr = netdev_priv(dev);
 	*ver = hsr->prot_version;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(hsr_get_version);
 
-static struct notifier_block hsr_nb = {
-	.notifier_call = hsr_netdev_notify,	/* Slave event notifications */
-};
+अटल काष्ठा notअगरier_block hsr_nb = अणु
+	.notअगरier_call = hsr_netdev_notअगरy,	/* Slave event notअगरications */
+पूर्ण;
 
-static int __init hsr_init(void)
-{
-	int res;
+अटल पूर्णांक __init hsr_init(व्योम)
+अणु
+	पूर्णांक res;
 
-	BUILD_BUG_ON(sizeof(struct hsr_tag) != HSR_HLEN);
+	BUILD_BUG_ON(माप(काष्ठा hsr_tag) != HSR_HLEN);
 
-	register_netdevice_notifier(&hsr_nb);
+	रेजिस्टर_netdevice_notअगरier(&hsr_nb);
 	res = hsr_netlink_init();
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void __exit hsr_exit(void)
-{
-	hsr_netlink_exit();
-	hsr_debugfs_remove_root();
-	unregister_netdevice_notifier(&hsr_nb);
-}
+अटल व्योम __निकास hsr_निकास(व्योम)
+अणु
+	hsr_netlink_निकास();
+	hsr_debugfs_हटाओ_root();
+	unरेजिस्टर_netdevice_notअगरier(&hsr_nb);
+पूर्ण
 
 module_init(hsr_init);
-module_exit(hsr_exit);
+module_निकास(hsr_निकास);
 MODULE_LICENSE("GPL");

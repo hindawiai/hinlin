@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * arch/arm/mach-pxa/include/mach/uncompress.h
  *
@@ -6,66 +7,66 @@
  * Copyright:	(C) 2001 MontaVista Software Inc.
  */
 
-#include <linux/serial_reg.h>
-#include <asm/mach-types.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <यंत्र/mach-types.h>
 
-#define FFUART_BASE	(0x40100000)
-#define BTUART_BASE	(0x40200000)
-#define STUART_BASE	(0x40700000)
+#घोषणा FFUART_BASE	(0x40100000)
+#घोषणा BTUART_BASE	(0x40200000)
+#घोषणा STUART_BASE	(0x40700000)
 
-unsigned long uart_base;
-unsigned int uart_shift;
-unsigned int uart_is_pxa;
+अचिन्हित दीर्घ uart_base;
+अचिन्हित पूर्णांक uart_shअगरt;
+अचिन्हित पूर्णांक uart_is_pxa;
 
-static inline unsigned char uart_read(int offset)
-{
-	return *(volatile unsigned char *)(uart_base + (offset << uart_shift));
-}
+अटल अंतरभूत अचिन्हित अक्षर uart_पढ़ो(पूर्णांक offset)
+अणु
+	वापस *(अस्थिर अचिन्हित अक्षर *)(uart_base + (offset << uart_shअगरt));
+पूर्ण
 
-static inline void uart_write(unsigned char val, int offset)
-{
-	*(volatile unsigned char *)(uart_base + (offset << uart_shift)) = val;
-}
+अटल अंतरभूत व्योम uart_ग_लिखो(अचिन्हित अक्षर val, पूर्णांक offset)
+अणु
+	*(अस्थिर अचिन्हित अक्षर *)(uart_base + (offset << uart_shअगरt)) = val;
+पूर्ण
 
-static inline int uart_is_enabled(void)
-{
-	/* assume enabled by default for non-PXA uarts */
-	return uart_is_pxa ? uart_read(UART_IER) & UART_IER_UUE : 1;
-}
+अटल अंतरभूत पूर्णांक uart_is_enabled(व्योम)
+अणु
+	/* assume enabled by शेष क्रम non-PXA uarts */
+	वापस uart_is_pxa ? uart_पढ़ो(UART_IER) & UART_IER_UUE : 1;
+पूर्ण
 
-static inline void putc(char c)
-{
-	if (!uart_is_enabled())
-		return;
+अटल अंतरभूत व्योम अ_दो(अक्षर c)
+अणु
+	अगर (!uart_is_enabled())
+		वापस;
 
-	while (!(uart_read(UART_LSR) & UART_LSR_THRE))
+	जबतक (!(uart_पढ़ो(UART_LSR) & UART_LSR_THRE))
 		barrier();
 
-	uart_write(c, UART_TX);
-}
+	uart_ग_लिखो(c, UART_TX);
+पूर्ण
 
 /*
- * This does not append a newline
+ * This करोes not append a newline
  */
-static inline void flush(void)
-{
-}
+अटल अंतरभूत व्योम flush(व्योम)
+अणु
+पूर्ण
 
-static inline void arch_decomp_setup(void)
-{
-	/* initialize to default */
+अटल अंतरभूत व्योम arch_decomp_setup(व्योम)
+अणु
+	/* initialize to शेष */
 	uart_base = FFUART_BASE;
-	uart_shift = 2;
+	uart_shअगरt = 2;
 	uart_is_pxa = 1;
 
-	if (machine_is_littleton() || machine_is_intelmote2()
+	अगर (machine_is_littleton() || machine_is_पूर्णांकelmote2()
 	    || machine_is_csb726() || machine_is_stargate2()
 	    || machine_is_cm_x300() || machine_is_balloon3())
 		uart_base = STUART_BASE;
 
-	if (machine_is_arcom_zeus()) {
+	अगर (machine_is_arcom_zeus()) अणु
 		uart_base = 0x10000000;	/* nCS4 */
-		uart_shift = 1;
+		uart_shअगरt = 1;
 		uart_is_pxa = 0;
-	}
-}
+	पूर्ण
+पूर्ण

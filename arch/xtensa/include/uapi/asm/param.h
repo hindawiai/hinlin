@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * include/asm-xtensa/param.h
+ * include/यंत्र-xtensa/param.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#ifndef _UAPI_XTENSA_PARAM_H
-#define _UAPI_XTENSA_PARAM_H
+#अगर_अघोषित _UAPI_XTENSA_PARAM_H
+#घोषणा _UAPI_XTENSA_PARAM_H
 
-#ifndef __KERNEL__
+#अगर_अघोषित __KERNEL__
 # define HZ		100
-#endif
+#पूर्ण_अगर
 
-#define EXEC_PAGESIZE	4096
+#घोषणा EXEC_PAGESIZE	4096
 
-#ifndef NGROUPS
-#define NGROUPS		32
-#endif
+#अगर_अघोषित NGROUPS
+#घोषणा NGROUPS		32
+#पूर्ण_अगर
 
-#ifndef NOGROUP
-#define NOGROUP		(-1)
-#endif
+#अगर_अघोषित NOGROUP
+#घोषणा NOGROUP		(-1)
+#पूर्ण_अगर
 
-#define MAXHOSTNAMELEN	64	/* max length of hostname */
+#घोषणा MAXHOSTNAMELEN	64	/* max length of hostname */
 
-#endif /* _UAPI_XTENSA_PARAM_H */
+#पूर्ण_अगर /* _UAPI_XTENSA_PARAM_H */

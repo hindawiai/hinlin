@@ -1,1094 +1,1095 @@
+<शैली गुरु>
 /*
  * Open file cache.
  *
  * (c) 2015 - Jeff Layton <jeff.layton@primarydata.com>
  */
 
-#include <linux/hash.h>
-#include <linux/slab.h>
-#include <linux/file.h>
-#include <linux/sched.h>
-#include <linux/list_lru.h>
-#include <linux/fsnotify_backend.h>
-#include <linux/fsnotify.h>
-#include <linux/seq_file.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/file.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/list_lru.h>
+#समावेश <linux/fsnotअगरy_backend.h>
+#समावेश <linux/fsnotअगरy.h>
+#समावेश <linux/seq_file.h>
 
-#include "vfs.h"
-#include "nfsd.h"
-#include "nfsfh.h"
-#include "netns.h"
-#include "filecache.h"
-#include "trace.h"
+#समावेश "vfs.h"
+#समावेश "nfsd.h"
+#समावेश "nfsfh.h"
+#समावेश "netns.h"
+#समावेश "filecache.h"
+#समावेश "trace.h"
 
-#define NFSDDBG_FACILITY	NFSDDBG_FH
+#घोषणा NFSDDBG_FACILITY	NFSDDBG_FH
 
-/* FIXME: dynamically size this for the machine somehow? */
-#define NFSD_FILE_HASH_BITS                   12
-#define NFSD_FILE_HASH_SIZE                  (1 << NFSD_FILE_HASH_BITS)
-#define NFSD_LAUNDRETTE_DELAY		     (2 * HZ)
+/* FIXME: dynamically size this क्रम the machine somehow? */
+#घोषणा NFSD_खाता_HASH_BITS                   12
+#घोषणा NFSD_खाता_HASH_SIZE                  (1 << NFSD_खाता_HASH_BITS)
+#घोषणा NFSD_LAUNDRETTE_DELAY		     (2 * HZ)
 
-#define NFSD_FILE_SHUTDOWN		     (1)
-#define NFSD_FILE_LRU_THRESHOLD		     (4096UL)
-#define NFSD_FILE_LRU_LIMIT		     (NFSD_FILE_LRU_THRESHOLD << 2)
+#घोषणा NFSD_खाता_SHUTDOWN		     (1)
+#घोषणा NFSD_खाता_LRU_THRESHOLD		     (4096UL)
+#घोषणा NFSD_खाता_LRU_LIMIT		     (NFSD_खाता_LRU_THRESHOLD << 2)
 
-/* We only care about NFSD_MAY_READ/WRITE for this cache */
-#define NFSD_FILE_MAY_MASK	(NFSD_MAY_READ|NFSD_MAY_WRITE)
+/* We only care about NFSD_MAY_READ/WRITE क्रम this cache */
+#घोषणा NFSD_खाता_MAY_MASK	(NFSD_MAY_READ|NFSD_MAY_WRITE)
 
-struct nfsd_fcache_bucket {
-	struct hlist_head	nfb_head;
+काष्ठा nfsd_fcache_bucket अणु
+	काष्ठा hlist_head	nfb_head;
 	spinlock_t		nfb_lock;
-	unsigned int		nfb_count;
-	unsigned int		nfb_maxcount;
-};
+	अचिन्हित पूर्णांक		nfb_count;
+	अचिन्हित पूर्णांक		nfb_maxcount;
+पूर्ण;
 
-static DEFINE_PER_CPU(unsigned long, nfsd_file_cache_hits);
+अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, nfsd_file_cache_hits);
 
-struct nfsd_fcache_disposal {
-	struct list_head list;
-	struct work_struct work;
-	struct net *net;
+काष्ठा nfsd_fcache_disposal अणु
+	काष्ठा list_head list;
+	काष्ठा work_काष्ठा work;
+	काष्ठा net *net;
 	spinlock_t lock;
-	struct list_head freeme;
-	struct rcu_head rcu;
-};
+	काष्ठा list_head मुक्तme;
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-static struct workqueue_struct *nfsd_filecache_wq __read_mostly;
+अटल काष्ठा workqueue_काष्ठा *nfsd_filecache_wq __पढ़ो_mostly;
 
-static struct kmem_cache		*nfsd_file_slab;
-static struct kmem_cache		*nfsd_file_mark_slab;
-static struct nfsd_fcache_bucket	*nfsd_file_hashtbl;
-static struct list_lru			nfsd_file_lru;
-static long				nfsd_file_lru_flags;
-static struct fsnotify_group		*nfsd_file_fsnotify_group;
-static atomic_long_t			nfsd_filecache_count;
-static struct delayed_work		nfsd_filecache_laundrette;
-static DEFINE_SPINLOCK(laundrette_lock);
-static LIST_HEAD(laundrettes);
+अटल काष्ठा kmem_cache		*nfsd_file_slab;
+अटल काष्ठा kmem_cache		*nfsd_file_mark_slab;
+अटल काष्ठा nfsd_fcache_bucket	*nfsd_file_hashtbl;
+अटल काष्ठा list_lru			nfsd_file_lru;
+अटल दीर्घ				nfsd_file_lru_flags;
+अटल काष्ठा fsnotअगरy_group		*nfsd_file_fsnotअगरy_group;
+अटल atomic_दीर्घ_t			nfsd_filecache_count;
+अटल काष्ठा delayed_work		nfsd_filecache_laundrette;
+अटल DEFINE_SPINLOCK(laundrette_lock);
+अटल LIST_HEAD(laundrettes);
 
-static void nfsd_file_gc(void);
+अटल व्योम nfsd_file_gc(व्योम);
 
-static void
-nfsd_file_schedule_laundrette(void)
-{
-	long count = atomic_long_read(&nfsd_filecache_count);
+अटल व्योम
+nfsd_file_schedule_laundrette(व्योम)
+अणु
+	दीर्घ count = atomic_दीर्घ_पढ़ो(&nfsd_filecache_count);
 
-	if (count == 0 || test_bit(NFSD_FILE_SHUTDOWN, &nfsd_file_lru_flags))
-		return;
+	अगर (count == 0 || test_bit(NFSD_खाता_SHUTDOWN, &nfsd_file_lru_flags))
+		वापस;
 
-	queue_delayed_work(system_wq, &nfsd_filecache_laundrette,
+	queue_delayed_work(प्रणाली_wq, &nfsd_filecache_laundrette,
 			NFSD_LAUNDRETTE_DELAY);
-}
+पूर्ण
 
-static void
-nfsd_file_slab_free(struct rcu_head *rcu)
-{
-	struct nfsd_file *nf = container_of(rcu, struct nfsd_file, nf_rcu);
+अटल व्योम
+nfsd_file_slab_मुक्त(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा nfsd_file *nf = container_of(rcu, काष्ठा nfsd_file, nf_rcu);
 
 	put_cred(nf->nf_cred);
-	kmem_cache_free(nfsd_file_slab, nf);
-}
+	kmem_cache_मुक्त(nfsd_file_slab, nf);
+पूर्ण
 
-static void
-nfsd_file_mark_free(struct fsnotify_mark *mark)
-{
-	struct nfsd_file_mark *nfm = container_of(mark, struct nfsd_file_mark,
+अटल व्योम
+nfsd_file_mark_मुक्त(काष्ठा fsnotअगरy_mark *mark)
+अणु
+	काष्ठा nfsd_file_mark *nfm = container_of(mark, काष्ठा nfsd_file_mark,
 						  nfm_mark);
 
-	kmem_cache_free(nfsd_file_mark_slab, nfm);
-}
+	kmem_cache_मुक्त(nfsd_file_mark_slab, nfm);
+पूर्ण
 
-static struct nfsd_file_mark *
-nfsd_file_mark_get(struct nfsd_file_mark *nfm)
-{
-	if (!refcount_inc_not_zero(&nfm->nfm_ref))
-		return NULL;
-	return nfm;
-}
+अटल काष्ठा nfsd_file_mark *
+nfsd_file_mark_get(काष्ठा nfsd_file_mark *nfm)
+अणु
+	अगर (!refcount_inc_not_zero(&nfm->nfm_ref))
+		वापस शून्य;
+	वापस nfm;
+पूर्ण
 
-static void
-nfsd_file_mark_put(struct nfsd_file_mark *nfm)
-{
-	if (refcount_dec_and_test(&nfm->nfm_ref)) {
-		fsnotify_destroy_mark(&nfm->nfm_mark, nfsd_file_fsnotify_group);
-		fsnotify_put_mark(&nfm->nfm_mark);
-	}
-}
+अटल व्योम
+nfsd_file_mark_put(काष्ठा nfsd_file_mark *nfm)
+अणु
+	अगर (refcount_dec_and_test(&nfm->nfm_ref)) अणु
+		fsnotअगरy_destroy_mark(&nfm->nfm_mark, nfsd_file_fsnotअगरy_group);
+		fsnotअगरy_put_mark(&nfm->nfm_mark);
+	पूर्ण
+पूर्ण
 
-static struct nfsd_file_mark *
-nfsd_file_mark_find_or_create(struct nfsd_file *nf)
-{
-	int			err;
-	struct fsnotify_mark	*mark;
-	struct nfsd_file_mark	*nfm = NULL, *new;
-	struct inode *inode = nf->nf_inode;
+अटल काष्ठा nfsd_file_mark *
+nfsd_file_mark_find_or_create(काष्ठा nfsd_file *nf)
+अणु
+	पूर्णांक			err;
+	काष्ठा fsnotअगरy_mark	*mark;
+	काष्ठा nfsd_file_mark	*nfm = शून्य, *new;
+	काष्ठा inode *inode = nf->nf_inode;
 
-	do {
-		mutex_lock(&nfsd_file_fsnotify_group->mark_mutex);
-		mark = fsnotify_find_mark(&inode->i_fsnotify_marks,
-				nfsd_file_fsnotify_group);
-		if (mark) {
+	करो अणु
+		mutex_lock(&nfsd_file_fsnotअगरy_group->mark_mutex);
+		mark = fsnotअगरy_find_mark(&inode->i_fsnotअगरy_marks,
+				nfsd_file_fsnotअगरy_group);
+		अगर (mark) अणु
 			nfm = nfsd_file_mark_get(container_of(mark,
-						 struct nfsd_file_mark,
+						 काष्ठा nfsd_file_mark,
 						 nfm_mark));
-			mutex_unlock(&nfsd_file_fsnotify_group->mark_mutex);
-			if (nfm) {
-				fsnotify_put_mark(mark);
-				break;
-			}
-			/* Avoid soft lockup race with nfsd_file_mark_put() */
-			fsnotify_destroy_mark(mark, nfsd_file_fsnotify_group);
-			fsnotify_put_mark(mark);
-		} else
-			mutex_unlock(&nfsd_file_fsnotify_group->mark_mutex);
+			mutex_unlock(&nfsd_file_fsnotअगरy_group->mark_mutex);
+			अगर (nfm) अणु
+				fsnotअगरy_put_mark(mark);
+				अवरोध;
+			पूर्ण
+			/* Aव्योम soft lockup race with nfsd_file_mark_put() */
+			fsnotअगरy_destroy_mark(mark, nfsd_file_fsnotअगरy_group);
+			fsnotअगरy_put_mark(mark);
+		पूर्ण अन्यथा
+			mutex_unlock(&nfsd_file_fsnotअगरy_group->mark_mutex);
 
 		/* allocate a new nfm */
 		new = kmem_cache_alloc(nfsd_file_mark_slab, GFP_KERNEL);
-		if (!new)
-			return NULL;
-		fsnotify_init_mark(&new->nfm_mark, nfsd_file_fsnotify_group);
+		अगर (!new)
+			वापस शून्य;
+		fsnotअगरy_init_mark(&new->nfm_mark, nfsd_file_fsnotअगरy_group);
 		new->nfm_mark.mask = FS_ATTRIB|FS_DELETE_SELF;
 		refcount_set(&new->nfm_ref, 1);
 
-		err = fsnotify_add_inode_mark(&new->nfm_mark, inode, 0);
+		err = fsnotअगरy_add_inode_mark(&new->nfm_mark, inode, 0);
 
 		/*
-		 * If the add was successful, then return the object.
+		 * If the add was successful, then वापस the object.
 		 * Otherwise, we need to put the reference we hold on the
-		 * nfm_mark. The fsnotify code will take a reference and put
+		 * nfm_mark. The fsnotअगरy code will take a reference and put
 		 * it on failure, so we can't just free it directly. It's also
-		 * not safe to call fsnotify_destroy_mark on it as the
-		 * mark->group will be NULL. Thus, we can't let the nfm_ref
-		 * counter drive the destruction at this point.
+		 * not safe to call fsnotअगरy_destroy_mark on it as the
+		 * mark->group will be शून्य. Thus, we can't let the nfm_ref
+		 * counter drive the deकाष्ठाion at this poपूर्णांक.
 		 */
-		if (likely(!err))
+		अगर (likely(!err))
 			nfm = new;
-		else
-			fsnotify_put_mark(&new->nfm_mark);
-	} while (unlikely(err == -EEXIST));
+		अन्यथा
+			fsnotअगरy_put_mark(&new->nfm_mark);
+	पूर्ण जबतक (unlikely(err == -EEXIST));
 
-	return nfm;
-}
+	वापस nfm;
+पूर्ण
 
-static struct nfsd_file *
-nfsd_file_alloc(struct inode *inode, unsigned int may, unsigned int hashval,
-		struct net *net)
-{
-	struct nfsd_file *nf;
+अटल काष्ठा nfsd_file *
+nfsd_file_alloc(काष्ठा inode *inode, अचिन्हित पूर्णांक may, अचिन्हित पूर्णांक hashval,
+		काष्ठा net *net)
+अणु
+	काष्ठा nfsd_file *nf;
 
 	nf = kmem_cache_alloc(nfsd_file_slab, GFP_KERNEL);
-	if (nf) {
+	अगर (nf) अणु
 		INIT_HLIST_NODE(&nf->nf_node);
 		INIT_LIST_HEAD(&nf->nf_lru);
-		nf->nf_file = NULL;
+		nf->nf_file = शून्य;
 		nf->nf_cred = get_current_cred();
 		nf->nf_net = net;
 		nf->nf_flags = 0;
 		nf->nf_inode = inode;
 		nf->nf_hashval = hashval;
 		refcount_set(&nf->nf_ref, 1);
-		nf->nf_may = may & NFSD_FILE_MAY_MASK;
-		if (may & NFSD_MAY_NOT_BREAK_LEASE) {
-			if (may & NFSD_MAY_WRITE)
-				__set_bit(NFSD_FILE_BREAK_WRITE, &nf->nf_flags);
-			if (may & NFSD_MAY_READ)
-				__set_bit(NFSD_FILE_BREAK_READ, &nf->nf_flags);
-		}
-		nf->nf_mark = NULL;
+		nf->nf_may = may & NFSD_खाता_MAY_MASK;
+		अगर (may & NFSD_MAY_NOT_BREAK_LEASE) अणु
+			अगर (may & NFSD_MAY_WRITE)
+				__set_bit(NFSD_खाता_BREAK_WRITE, &nf->nf_flags);
+			अगर (may & NFSD_MAY_READ)
+				__set_bit(NFSD_खाता_BREAK_READ, &nf->nf_flags);
+		पूर्ण
+		nf->nf_mark = शून्य;
 		init_rwsem(&nf->nf_rwsem);
 		trace_nfsd_file_alloc(nf);
-	}
-	return nf;
-}
+	पूर्ण
+	वापस nf;
+पूर्ण
 
-static bool
-nfsd_file_free(struct nfsd_file *nf)
-{
+अटल bool
+nfsd_file_मुक्त(काष्ठा nfsd_file *nf)
+अणु
 	bool flush = false;
 
 	trace_nfsd_file_put_final(nf);
-	if (nf->nf_mark)
+	अगर (nf->nf_mark)
 		nfsd_file_mark_put(nf->nf_mark);
-	if (nf->nf_file) {
+	अगर (nf->nf_file) अणु
 		get_file(nf->nf_file);
-		filp_close(nf->nf_file, NULL);
+		filp_बंद(nf->nf_file, शून्य);
 		fput(nf->nf_file);
 		flush = true;
-	}
-	call_rcu(&nf->nf_rcu, nfsd_file_slab_free);
-	return flush;
-}
+	पूर्ण
+	call_rcu(&nf->nf_rcu, nfsd_file_slab_मुक्त);
+	वापस flush;
+पूर्ण
 
-static bool
-nfsd_file_check_writeback(struct nfsd_file *nf)
-{
-	struct file *file = nf->nf_file;
-	struct address_space *mapping;
+अटल bool
+nfsd_file_check_ग_लिखोback(काष्ठा nfsd_file *nf)
+अणु
+	काष्ठा file *file = nf->nf_file;
+	काष्ठा address_space *mapping;
 
-	if (!file || !(file->f_mode & FMODE_WRITE))
-		return false;
+	अगर (!file || !(file->f_mode & FMODE_WRITE))
+		वापस false;
 	mapping = file->f_mapping;
-	return mapping_tagged(mapping, PAGECACHE_TAG_DIRTY) ||
+	वापस mapping_tagged(mapping, PAGECACHE_TAG_सूचीTY) ||
 		mapping_tagged(mapping, PAGECACHE_TAG_WRITEBACK);
-}
+पूर्ण
 
-static int
-nfsd_file_check_write_error(struct nfsd_file *nf)
-{
-	struct file *file = nf->nf_file;
+अटल पूर्णांक
+nfsd_file_check_ग_लिखो_error(काष्ठा nfsd_file *nf)
+अणु
+	काष्ठा file *file = nf->nf_file;
 
-	if (!file || !(file->f_mode & FMODE_WRITE))
-		return 0;
-	return filemap_check_wb_err(file->f_mapping, READ_ONCE(file->f_wb_err));
-}
+	अगर (!file || !(file->f_mode & FMODE_WRITE))
+		वापस 0;
+	वापस filemap_check_wb_err(file->f_mapping, READ_ONCE(file->f_wb_err));
+पूर्ण
 
-static void
-nfsd_file_do_unhash(struct nfsd_file *nf)
-{
-	lockdep_assert_held(&nfsd_file_hashtbl[nf->nf_hashval].nfb_lock);
+अटल व्योम
+nfsd_file_करो_unhash(काष्ठा nfsd_file *nf)
+अणु
+	lockdep_निश्चित_held(&nfsd_file_hashtbl[nf->nf_hashval].nfb_lock);
 
 	trace_nfsd_file_unhash(nf);
 
-	if (nfsd_file_check_write_error(nf))
-		nfsd_reset_boot_verifier(net_generic(nf->nf_net, nfsd_net_id));
+	अगर (nfsd_file_check_ग_लिखो_error(nf))
+		nfsd_reset_boot_verअगरier(net_generic(nf->nf_net, nfsd_net_id));
 	--nfsd_file_hashtbl[nf->nf_hashval].nfb_count;
 	hlist_del_rcu(&nf->nf_node);
-	atomic_long_dec(&nfsd_filecache_count);
-}
+	atomic_दीर्घ_dec(&nfsd_filecache_count);
+पूर्ण
 
-static bool
-nfsd_file_unhash(struct nfsd_file *nf)
-{
-	if (test_and_clear_bit(NFSD_FILE_HASHED, &nf->nf_flags)) {
-		nfsd_file_do_unhash(nf);
-		if (!list_empty(&nf->nf_lru))
+अटल bool
+nfsd_file_unhash(काष्ठा nfsd_file *nf)
+अणु
+	अगर (test_and_clear_bit(NFSD_खाता_HASHED, &nf->nf_flags)) अणु
+		nfsd_file_करो_unhash(nf);
+		अगर (!list_empty(&nf->nf_lru))
 			list_lru_del(&nfsd_file_lru, &nf->nf_lru);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
- * Return true if the file was unhashed.
+ * Return true अगर the file was unhashed.
  */
-static bool
-nfsd_file_unhash_and_release_locked(struct nfsd_file *nf, struct list_head *dispose)
-{
-	lockdep_assert_held(&nfsd_file_hashtbl[nf->nf_hashval].nfb_lock);
+अटल bool
+nfsd_file_unhash_and_release_locked(काष्ठा nfsd_file *nf, काष्ठा list_head *dispose)
+अणु
+	lockdep_निश्चित_held(&nfsd_file_hashtbl[nf->nf_hashval].nfb_lock);
 
 	trace_nfsd_file_unhash_and_release_locked(nf);
-	if (!nfsd_file_unhash(nf))
-		return false;
-	/* keep final reference for nfsd_file_lru_dispose */
-	if (refcount_dec_not_one(&nf->nf_ref))
-		return true;
+	अगर (!nfsd_file_unhash(nf))
+		वापस false;
+	/* keep final reference क्रम nfsd_file_lru_dispose */
+	अगर (refcount_dec_not_one(&nf->nf_ref))
+		वापस true;
 
 	list_add(&nf->nf_lru, dispose);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-nfsd_file_put_noref(struct nfsd_file *nf)
-{
+अटल व्योम
+nfsd_file_put_noref(काष्ठा nfsd_file *nf)
+अणु
 	trace_nfsd_file_put(nf);
 
-	if (refcount_dec_and_test(&nf->nf_ref)) {
-		WARN_ON(test_bit(NFSD_FILE_HASHED, &nf->nf_flags));
-		nfsd_file_free(nf);
-	}
-}
+	अगर (refcount_dec_and_test(&nf->nf_ref)) अणु
+		WARN_ON(test_bit(NFSD_खाता_HASHED, &nf->nf_flags));
+		nfsd_file_मुक्त(nf);
+	पूर्ण
+पूर्ण
 
-void
-nfsd_file_put(struct nfsd_file *nf)
-{
+व्योम
+nfsd_file_put(काष्ठा nfsd_file *nf)
+अणु
 	bool is_hashed;
 
-	set_bit(NFSD_FILE_REFERENCED, &nf->nf_flags);
-	if (refcount_read(&nf->nf_ref) > 2 || !nf->nf_file) {
+	set_bit(NFSD_खाता_REFERENCED, &nf->nf_flags);
+	अगर (refcount_पढ़ो(&nf->nf_ref) > 2 || !nf->nf_file) अणु
 		nfsd_file_put_noref(nf);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	filemap_flush(nf->nf_file->f_mapping);
-	is_hashed = test_bit(NFSD_FILE_HASHED, &nf->nf_flags) != 0;
+	is_hashed = test_bit(NFSD_खाता_HASHED, &nf->nf_flags) != 0;
 	nfsd_file_put_noref(nf);
-	if (is_hashed)
+	अगर (is_hashed)
 		nfsd_file_schedule_laundrette();
-	if (atomic_long_read(&nfsd_filecache_count) >= NFSD_FILE_LRU_LIMIT)
+	अगर (atomic_दीर्घ_पढ़ो(&nfsd_filecache_count) >= NFSD_खाता_LRU_LIMIT)
 		nfsd_file_gc();
-}
+पूर्ण
 
-struct nfsd_file *
-nfsd_file_get(struct nfsd_file *nf)
-{
-	if (likely(refcount_inc_not_zero(&nf->nf_ref)))
-		return nf;
-	return NULL;
-}
+काष्ठा nfsd_file *
+nfsd_file_get(काष्ठा nfsd_file *nf)
+अणु
+	अगर (likely(refcount_inc_not_zero(&nf->nf_ref)))
+		वापस nf;
+	वापस शून्य;
+पूर्ण
 
-static void
-nfsd_file_dispose_list(struct list_head *dispose)
-{
-	struct nfsd_file *nf;
+अटल व्योम
+nfsd_file_dispose_list(काष्ठा list_head *dispose)
+अणु
+	काष्ठा nfsd_file *nf;
 
-	while(!list_empty(dispose)) {
-		nf = list_first_entry(dispose, struct nfsd_file, nf_lru);
+	जबतक(!list_empty(dispose)) अणु
+		nf = list_first_entry(dispose, काष्ठा nfsd_file, nf_lru);
 		list_del(&nf->nf_lru);
 		nfsd_file_put_noref(nf);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-nfsd_file_dispose_list_sync(struct list_head *dispose)
-{
+अटल व्योम
+nfsd_file_dispose_list_sync(काष्ठा list_head *dispose)
+अणु
 	bool flush = false;
-	struct nfsd_file *nf;
+	काष्ठा nfsd_file *nf;
 
-	while(!list_empty(dispose)) {
-		nf = list_first_entry(dispose, struct nfsd_file, nf_lru);
+	जबतक(!list_empty(dispose)) अणु
+		nf = list_first_entry(dispose, काष्ठा nfsd_file, nf_lru);
 		list_del(&nf->nf_lru);
-		if (!refcount_dec_and_test(&nf->nf_ref))
-			continue;
-		if (nfsd_file_free(nf))
+		अगर (!refcount_dec_and_test(&nf->nf_ref))
+			जारी;
+		अगर (nfsd_file_मुक्त(nf))
 			flush = true;
-	}
-	if (flush)
+	पूर्ण
+	अगर (flush)
 		flush_delayed_fput();
-}
+पूर्ण
 
-static void
-nfsd_file_list_remove_disposal(struct list_head *dst,
-		struct nfsd_fcache_disposal *l)
-{
+अटल व्योम
+nfsd_file_list_हटाओ_disposal(काष्ठा list_head *dst,
+		काष्ठा nfsd_fcache_disposal *l)
+अणु
 	spin_lock(&l->lock);
-	list_splice_init(&l->freeme, dst);
+	list_splice_init(&l->मुक्तme, dst);
 	spin_unlock(&l->lock);
-}
+पूर्ण
 
-static void
-nfsd_file_list_add_disposal(struct list_head *files, struct net *net)
-{
-	struct nfsd_fcache_disposal *l;
+अटल व्योम
+nfsd_file_list_add_disposal(काष्ठा list_head *files, काष्ठा net *net)
+अणु
+	काष्ठा nfsd_fcache_disposal *l;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(l, &laundrettes, list) {
-		if (l->net == net) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(l, &laundrettes, list) अणु
+		अगर (l->net == net) अणु
 			spin_lock(&l->lock);
-			list_splice_tail_init(files, &l->freeme);
+			list_splice_tail_init(files, &l->मुक्तme);
 			spin_unlock(&l->lock);
 			queue_work(nfsd_filecache_wq, &l->work);
-			break;
-		}
-	}
-	rcu_read_unlock();
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void
-nfsd_file_list_add_pernet(struct list_head *dst, struct list_head *src,
-		struct net *net)
-{
-	struct nfsd_file *nf, *tmp;
+अटल व्योम
+nfsd_file_list_add_pernet(काष्ठा list_head *dst, काष्ठा list_head *src,
+		काष्ठा net *net)
+अणु
+	काष्ठा nfsd_file *nf, *पंचांगp;
 
-	list_for_each_entry_safe(nf, tmp, src, nf_lru) {
-		if (nf->nf_net == net)
+	list_क्रम_each_entry_safe(nf, पंचांगp, src, nf_lru) अणु
+		अगर (nf->nf_net == net)
 			list_move_tail(&nf->nf_lru, dst);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-nfsd_file_dispose_list_delayed(struct list_head *dispose)
-{
+अटल व्योम
+nfsd_file_dispose_list_delayed(काष्ठा list_head *dispose)
+अणु
 	LIST_HEAD(list);
-	struct nfsd_file *nf;
+	काष्ठा nfsd_file *nf;
 
-	while(!list_empty(dispose)) {
-		nf = list_first_entry(dispose, struct nfsd_file, nf_lru);
+	जबतक(!list_empty(dispose)) अणु
+		nf = list_first_entry(dispose, काष्ठा nfsd_file, nf_lru);
 		nfsd_file_list_add_pernet(&list, dispose, nf->nf_net);
 		nfsd_file_list_add_disposal(&list, nf->nf_net);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Note this can deadlock with nfsd_file_cache_purge.
  */
-static enum lru_status
-nfsd_file_lru_cb(struct list_head *item, struct list_lru_one *lru,
-		 spinlock_t *lock, void *arg)
+अटल क्रमागत lru_status
+nfsd_file_lru_cb(काष्ठा list_head *item, काष्ठा list_lru_one *lru,
+		 spinlock_t *lock, व्योम *arg)
 	__releases(lock)
 	__acquires(lock)
-{
-	struct list_head *head = arg;
-	struct nfsd_file *nf = list_entry(item, struct nfsd_file, nf_lru);
+अणु
+	काष्ठा list_head *head = arg;
+	काष्ठा nfsd_file *nf = list_entry(item, काष्ठा nfsd_file, nf_lru);
 
 	/*
 	 * Do a lockless refcount check. The hashtable holds one reference, so
-	 * we look to see if anything else has a reference, or if any have
-	 * been put since the shrinker last ran. Those don't get unhashed and
+	 * we look to see अगर anything अन्यथा has a reference, or अगर any have
+	 * been put since the shrinker last ran. Those करोn't get unhashed and
 	 * released.
 	 *
 	 * Note that in the put path, we set the flag and then decrement the
 	 * counter. Here we check the counter and then test and clear the flag.
-	 * That order is deliberate to ensure that we can do this locklessly.
+	 * That order is deliberate to ensure that we can करो this locklessly.
 	 */
-	if (refcount_read(&nf->nf_ref) > 1)
-		goto out_skip;
+	अगर (refcount_पढ़ो(&nf->nf_ref) > 1)
+		जाओ out_skip;
 
 	/*
 	 * Don't throw out files that are still undergoing I/O or
 	 * that have uncleared errors pending.
 	 */
-	if (nfsd_file_check_writeback(nf))
-		goto out_skip;
+	अगर (nfsd_file_check_ग_लिखोback(nf))
+		जाओ out_skip;
 
-	if (test_and_clear_bit(NFSD_FILE_REFERENCED, &nf->nf_flags))
-		goto out_skip;
+	अगर (test_and_clear_bit(NFSD_खाता_REFERENCED, &nf->nf_flags))
+		जाओ out_skip;
 
-	if (!test_and_clear_bit(NFSD_FILE_HASHED, &nf->nf_flags))
-		goto out_skip;
+	अगर (!test_and_clear_bit(NFSD_खाता_HASHED, &nf->nf_flags))
+		जाओ out_skip;
 
 	list_lru_isolate_move(lru, &nf->nf_lru, head);
-	return LRU_REMOVED;
+	वापस LRU_REMOVED;
 out_skip:
-	return LRU_SKIP;
-}
+	वापस LRU_SKIP;
+पूर्ण
 
-static unsigned long
-nfsd_file_lru_walk_list(struct shrink_control *sc)
-{
+अटल अचिन्हित दीर्घ
+nfsd_file_lru_walk_list(काष्ठा shrink_control *sc)
+अणु
 	LIST_HEAD(head);
-	struct nfsd_file *nf;
-	unsigned long ret;
+	काष्ठा nfsd_file *nf;
+	अचिन्हित दीर्घ ret;
 
-	if (sc)
+	अगर (sc)
 		ret = list_lru_shrink_walk(&nfsd_file_lru, sc,
 				nfsd_file_lru_cb, &head);
-	else
+	अन्यथा
 		ret = list_lru_walk(&nfsd_file_lru,
 				nfsd_file_lru_cb,
-				&head, LONG_MAX);
-	list_for_each_entry(nf, &head, nf_lru) {
+				&head, दीर्घ_उच्च);
+	list_क्रम_each_entry(nf, &head, nf_lru) अणु
 		spin_lock(&nfsd_file_hashtbl[nf->nf_hashval].nfb_lock);
-		nfsd_file_do_unhash(nf);
+		nfsd_file_करो_unhash(nf);
 		spin_unlock(&nfsd_file_hashtbl[nf->nf_hashval].nfb_lock);
-	}
+	पूर्ण
 	nfsd_file_dispose_list_delayed(&head);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-nfsd_file_gc(void)
-{
-	nfsd_file_lru_walk_list(NULL);
-}
+अटल व्योम
+nfsd_file_gc(व्योम)
+अणु
+	nfsd_file_lru_walk_list(शून्य);
+पूर्ण
 
-static void
-nfsd_file_gc_worker(struct work_struct *work)
-{
+अटल व्योम
+nfsd_file_gc_worker(काष्ठा work_काष्ठा *work)
+अणु
 	nfsd_file_gc();
 	nfsd_file_schedule_laundrette();
-}
+पूर्ण
 
-static unsigned long
-nfsd_file_lru_count(struct shrinker *s, struct shrink_control *sc)
-{
-	return list_lru_count(&nfsd_file_lru);
-}
+अटल अचिन्हित दीर्घ
+nfsd_file_lru_count(काष्ठा shrinker *s, काष्ठा shrink_control *sc)
+अणु
+	वापस list_lru_count(&nfsd_file_lru);
+पूर्ण
 
-static unsigned long
-nfsd_file_lru_scan(struct shrinker *s, struct shrink_control *sc)
-{
-	return nfsd_file_lru_walk_list(sc);
-}
+अटल अचिन्हित दीर्घ
+nfsd_file_lru_scan(काष्ठा shrinker *s, काष्ठा shrink_control *sc)
+अणु
+	वापस nfsd_file_lru_walk_list(sc);
+पूर्ण
 
-static struct shrinker	nfsd_file_shrinker = {
+अटल काष्ठा shrinker	nfsd_file_shrinker = अणु
 	.scan_objects = nfsd_file_lru_scan,
 	.count_objects = nfsd_file_lru_count,
 	.seeks = 1,
-};
+पूर्ण;
 
-static void
-__nfsd_file_close_inode(struct inode *inode, unsigned int hashval,
-			struct list_head *dispose)
-{
-	struct nfsd_file	*nf;
-	struct hlist_node	*tmp;
+अटल व्योम
+__nfsd_file_बंद_inode(काष्ठा inode *inode, अचिन्हित पूर्णांक hashval,
+			काष्ठा list_head *dispose)
+अणु
+	काष्ठा nfsd_file	*nf;
+	काष्ठा hlist_node	*पंचांगp;
 
 	spin_lock(&nfsd_file_hashtbl[hashval].nfb_lock);
-	hlist_for_each_entry_safe(nf, tmp, &nfsd_file_hashtbl[hashval].nfb_head, nf_node) {
-		if (inode == nf->nf_inode)
+	hlist_क्रम_each_entry_safe(nf, पंचांगp, &nfsd_file_hashtbl[hashval].nfb_head, nf_node) अणु
+		अगर (inode == nf->nf_inode)
 			nfsd_file_unhash_and_release_locked(nf, dispose);
-	}
+	पूर्ण
 	spin_unlock(&nfsd_file_hashtbl[hashval].nfb_lock);
-}
+पूर्ण
 
 /**
- * nfsd_file_close_inode_sync - attempt to forcibly close a nfsd_file
- * @inode: inode of the file to attempt to remove
+ * nfsd_file_बंद_inode_sync - attempt to क्रमcibly बंद a nfsd_file
+ * @inode: inode of the file to attempt to हटाओ
  *
- * Walk the whole hash bucket, looking for any files that correspond to "inode".
- * If any do, then unhash them and put the hashtable reference to them and
+ * Walk the whole hash bucket, looking क्रम any files that correspond to "inode".
+ * If any करो, then unhash them and put the hashtable reference to them and
  * destroy any that had their last reference put. Also ensure that any of the
- * fputs also have their final __fput done as well.
+ * ख_माला_दो also have their final __fput करोne as well.
  */
-void
-nfsd_file_close_inode_sync(struct inode *inode)
-{
-	unsigned int		hashval = (unsigned int)hash_long(inode->i_ino,
-						NFSD_FILE_HASH_BITS);
+व्योम
+nfsd_file_बंद_inode_sync(काष्ठा inode *inode)
+अणु
+	अचिन्हित पूर्णांक		hashval = (अचिन्हित पूर्णांक)hash_दीर्घ(inode->i_ino,
+						NFSD_खाता_HASH_BITS);
 	LIST_HEAD(dispose);
 
-	__nfsd_file_close_inode(inode, hashval, &dispose);
-	trace_nfsd_file_close_inode_sync(inode, hashval, !list_empty(&dispose));
+	__nfsd_file_बंद_inode(inode, hashval, &dispose);
+	trace_nfsd_file_बंद_inode_sync(inode, hashval, !list_empty(&dispose));
 	nfsd_file_dispose_list_sync(&dispose);
-}
+पूर्ण
 
 /**
- * nfsd_file_close_inode_sync - attempt to forcibly close a nfsd_file
- * @inode: inode of the file to attempt to remove
+ * nfsd_file_बंद_inode_sync - attempt to क्रमcibly बंद a nfsd_file
+ * @inode: inode of the file to attempt to हटाओ
  *
- * Walk the whole hash bucket, looking for any files that correspond to "inode".
- * If any do, then unhash them and put the hashtable reference to them and
+ * Walk the whole hash bucket, looking क्रम any files that correspond to "inode".
+ * If any करो, then unhash them and put the hashtable reference to them and
  * destroy any that had their last reference put.
  */
-static void
-nfsd_file_close_inode(struct inode *inode)
-{
-	unsigned int		hashval = (unsigned int)hash_long(inode->i_ino,
-						NFSD_FILE_HASH_BITS);
+अटल व्योम
+nfsd_file_बंद_inode(काष्ठा inode *inode)
+अणु
+	अचिन्हित पूर्णांक		hashval = (अचिन्हित पूर्णांक)hash_दीर्घ(inode->i_ino,
+						NFSD_खाता_HASH_BITS);
 	LIST_HEAD(dispose);
 
-	__nfsd_file_close_inode(inode, hashval, &dispose);
-	trace_nfsd_file_close_inode(inode, hashval, !list_empty(&dispose));
+	__nfsd_file_बंद_inode(inode, hashval, &dispose);
+	trace_nfsd_file_बंद_inode(inode, hashval, !list_empty(&dispose));
 	nfsd_file_dispose_list_delayed(&dispose);
-}
+पूर्ण
 
 /**
- * nfsd_file_delayed_close - close unused nfsd_files
+ * nfsd_file_delayed_बंद - बंद unused nfsd_files
  * @work: dummy
  *
- * Walk the LRU list and close any entries that have not been used since
+ * Walk the LRU list and बंद any entries that have not been used since
  * the last scan.
  *
  * Note this can deadlock with nfsd_file_cache_purge.
  */
-static void
-nfsd_file_delayed_close(struct work_struct *work)
-{
+अटल व्योम
+nfsd_file_delayed_बंद(काष्ठा work_काष्ठा *work)
+अणु
 	LIST_HEAD(head);
-	struct nfsd_fcache_disposal *l = container_of(work,
-			struct nfsd_fcache_disposal, work);
+	काष्ठा nfsd_fcache_disposal *l = container_of(work,
+			काष्ठा nfsd_fcache_disposal, work);
 
-	nfsd_file_list_remove_disposal(&head, l);
+	nfsd_file_list_हटाओ_disposal(&head, l);
 	nfsd_file_dispose_list(&head);
-}
+पूर्ण
 
-static int
-nfsd_file_lease_notifier_call(struct notifier_block *nb, unsigned long arg,
-			    void *data)
-{
-	struct file_lock *fl = data;
+अटल पूर्णांक
+nfsd_file_lease_notअगरier_call(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ arg,
+			    व्योम *data)
+अणु
+	काष्ठा file_lock *fl = data;
 
-	/* Only close files for F_SETLEASE leases */
-	if (fl->fl_flags & FL_LEASE)
-		nfsd_file_close_inode_sync(file_inode(fl->fl_file));
-	return 0;
-}
+	/* Only बंद files क्रम F_SETLEASE leases */
+	अगर (fl->fl_flags & FL_LEASE)
+		nfsd_file_बंद_inode_sync(file_inode(fl->fl_file));
+	वापस 0;
+पूर्ण
 
-static struct notifier_block nfsd_file_lease_notifier = {
-	.notifier_call = nfsd_file_lease_notifier_call,
-};
+अटल काष्ठा notअगरier_block nfsd_file_lease_notअगरier = अणु
+	.notअगरier_call = nfsd_file_lease_notअगरier_call,
+पूर्ण;
 
-static int
-nfsd_file_fsnotify_handle_event(struct fsnotify_mark *mark, u32 mask,
-				struct inode *inode, struct inode *dir,
-				const struct qstr *name, u32 cookie)
-{
-	trace_nfsd_file_fsnotify_handle_event(inode, mask);
+अटल पूर्णांक
+nfsd_file_fsnotअगरy_handle_event(काष्ठा fsnotअगरy_mark *mark, u32 mask,
+				काष्ठा inode *inode, काष्ठा inode *dir,
+				स्थिर काष्ठा qstr *name, u32 cookie)
+अणु
+	trace_nfsd_file_fsnotअगरy_handle_event(inode, mask);
 
 	/* Should be no marks on non-regular files */
-	if (!S_ISREG(inode->i_mode)) {
+	अगर (!S_ISREG(inode->i_mode)) अणु
 		WARN_ON_ONCE(1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* don't close files if this was not the last link */
-	if (mask & FS_ATTRIB) {
-		if (inode->i_nlink)
-			return 0;
-	}
+	/* करोn't बंद files अगर this was not the last link */
+	अगर (mask & FS_ATTRIB) अणु
+		अगर (inode->i_nlink)
+			वापस 0;
+	पूर्ण
 
-	nfsd_file_close_inode(inode);
-	return 0;
-}
+	nfsd_file_बंद_inode(inode);
+	वापस 0;
+पूर्ण
 
 
-static const struct fsnotify_ops nfsd_file_fsnotify_ops = {
-	.handle_inode_event = nfsd_file_fsnotify_handle_event,
-	.free_mark = nfsd_file_mark_free,
-};
+अटल स्थिर काष्ठा fsnotअगरy_ops nfsd_file_fsnotअगरy_ops = अणु
+	.handle_inode_event = nfsd_file_fsnotअगरy_handle_event,
+	.मुक्त_mark = nfsd_file_mark_मुक्त,
+पूर्ण;
 
-int
-nfsd_file_cache_init(void)
-{
-	int		ret = -ENOMEM;
-	unsigned int	i;
+पूर्णांक
+nfsd_file_cache_init(व्योम)
+अणु
+	पूर्णांक		ret = -ENOMEM;
+	अचिन्हित पूर्णांक	i;
 
-	clear_bit(NFSD_FILE_SHUTDOWN, &nfsd_file_lru_flags);
+	clear_bit(NFSD_खाता_SHUTDOWN, &nfsd_file_lru_flags);
 
-	if (nfsd_file_hashtbl)
-		return 0;
+	अगर (nfsd_file_hashtbl)
+		वापस 0;
 
 	nfsd_filecache_wq = alloc_workqueue("nfsd_filecache", 0, 0);
-	if (!nfsd_filecache_wq)
-		goto out;
+	अगर (!nfsd_filecache_wq)
+		जाओ out;
 
-	nfsd_file_hashtbl = kcalloc(NFSD_FILE_HASH_SIZE,
-				sizeof(*nfsd_file_hashtbl), GFP_KERNEL);
-	if (!nfsd_file_hashtbl) {
+	nfsd_file_hashtbl = kसुस्मृति(NFSD_खाता_HASH_SIZE,
+				माप(*nfsd_file_hashtbl), GFP_KERNEL);
+	अगर (!nfsd_file_hashtbl) अणु
 		pr_err("nfsd: unable to allocate nfsd_file_hashtbl\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	nfsd_file_slab = kmem_cache_create("nfsd_file",
-				sizeof(struct nfsd_file), 0, 0, NULL);
-	if (!nfsd_file_slab) {
+				माप(काष्ठा nfsd_file), 0, 0, शून्य);
+	अगर (!nfsd_file_slab) अणु
 		pr_err("nfsd: unable to create nfsd_file_slab\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	nfsd_file_mark_slab = kmem_cache_create("nfsd_file_mark",
-					sizeof(struct nfsd_file_mark), 0, 0, NULL);
-	if (!nfsd_file_mark_slab) {
+					माप(काष्ठा nfsd_file_mark), 0, 0, शून्य);
+	अगर (!nfsd_file_mark_slab) अणु
 		pr_err("nfsd: unable to create nfsd_file_mark_slab\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 
 	ret = list_lru_init(&nfsd_file_lru);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("nfsd: failed to init nfsd_file_lru: %d\n", ret);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	ret = register_shrinker(&nfsd_file_shrinker);
-	if (ret) {
+	ret = रेजिस्टर_shrinker(&nfsd_file_shrinker);
+	अगर (ret) अणु
 		pr_err("nfsd: failed to register nfsd_file_shrinker: %d\n", ret);
-		goto out_lru;
-	}
+		जाओ out_lru;
+	पूर्ण
 
-	ret = lease_register_notifier(&nfsd_file_lease_notifier);
-	if (ret) {
+	ret = lease_रेजिस्टर_notअगरier(&nfsd_file_lease_notअगरier);
+	अगर (ret) अणु
 		pr_err("nfsd: unable to register lease notifier: %d\n", ret);
-		goto out_shrinker;
-	}
+		जाओ out_shrinker;
+	पूर्ण
 
-	nfsd_file_fsnotify_group = fsnotify_alloc_group(&nfsd_file_fsnotify_ops);
-	if (IS_ERR(nfsd_file_fsnotify_group)) {
+	nfsd_file_fsnotअगरy_group = fsnotअगरy_alloc_group(&nfsd_file_fsnotअगरy_ops);
+	अगर (IS_ERR(nfsd_file_fsnotअगरy_group)) अणु
 		pr_err("nfsd: unable to create fsnotify group: %ld\n",
-			PTR_ERR(nfsd_file_fsnotify_group));
-		ret = PTR_ERR(nfsd_file_fsnotify_group);
-		nfsd_file_fsnotify_group = NULL;
-		goto out_notifier;
-	}
+			PTR_ERR(nfsd_file_fsnotअगरy_group));
+		ret = PTR_ERR(nfsd_file_fsnotअगरy_group);
+		nfsd_file_fsnotअगरy_group = शून्य;
+		जाओ out_notअगरier;
+	पूर्ण
 
-	for (i = 0; i < NFSD_FILE_HASH_SIZE; i++) {
+	क्रम (i = 0; i < NFSD_खाता_HASH_SIZE; i++) अणु
 		INIT_HLIST_HEAD(&nfsd_file_hashtbl[i].nfb_head);
 		spin_lock_init(&nfsd_file_hashtbl[i].nfb_lock);
-	}
+	पूर्ण
 
 	INIT_DELAYED_WORK(&nfsd_filecache_laundrette, nfsd_file_gc_worker);
 out:
-	return ret;
-out_notifier:
-	lease_unregister_notifier(&nfsd_file_lease_notifier);
+	वापस ret;
+out_notअगरier:
+	lease_unरेजिस्टर_notअगरier(&nfsd_file_lease_notअगरier);
 out_shrinker:
-	unregister_shrinker(&nfsd_file_shrinker);
+	unरेजिस्टर_shrinker(&nfsd_file_shrinker);
 out_lru:
 	list_lru_destroy(&nfsd_file_lru);
 out_err:
 	kmem_cache_destroy(nfsd_file_slab);
-	nfsd_file_slab = NULL;
+	nfsd_file_slab = शून्य;
 	kmem_cache_destroy(nfsd_file_mark_slab);
-	nfsd_file_mark_slab = NULL;
-	kfree(nfsd_file_hashtbl);
-	nfsd_file_hashtbl = NULL;
+	nfsd_file_mark_slab = शून्य;
+	kमुक्त(nfsd_file_hashtbl);
+	nfsd_file_hashtbl = शून्य;
 	destroy_workqueue(nfsd_filecache_wq);
-	nfsd_filecache_wq = NULL;
-	goto out;
-}
+	nfsd_filecache_wq = शून्य;
+	जाओ out;
+पूर्ण
 
 /*
  * Note this can deadlock with nfsd_file_lru_cb.
  */
-void
-nfsd_file_cache_purge(struct net *net)
-{
-	unsigned int		i;
-	struct nfsd_file	*nf;
-	struct hlist_node	*next;
+व्योम
+nfsd_file_cache_purge(काष्ठा net *net)
+अणु
+	अचिन्हित पूर्णांक		i;
+	काष्ठा nfsd_file	*nf;
+	काष्ठा hlist_node	*next;
 	LIST_HEAD(dispose);
 	bool del;
 
-	if (!nfsd_file_hashtbl)
-		return;
+	अगर (!nfsd_file_hashtbl)
+		वापस;
 
-	for (i = 0; i < NFSD_FILE_HASH_SIZE; i++) {
-		struct nfsd_fcache_bucket *nfb = &nfsd_file_hashtbl[i];
+	क्रम (i = 0; i < NFSD_खाता_HASH_SIZE; i++) अणु
+		काष्ठा nfsd_fcache_bucket *nfb = &nfsd_file_hashtbl[i];
 
 		spin_lock(&nfb->nfb_lock);
-		hlist_for_each_entry_safe(nf, next, &nfb->nfb_head, nf_node) {
-			if (net && nf->nf_net != net)
-				continue;
+		hlist_क्रम_each_entry_safe(nf, next, &nfb->nfb_head, nf_node) अणु
+			अगर (net && nf->nf_net != net)
+				जारी;
 			del = nfsd_file_unhash_and_release_locked(nf, &dispose);
 
 			/*
 			 * Deadlock detected! Something marked this entry as
-			 * unhased, but hasn't removed it from the hash list.
+			 * unhased, but hasn't हटाओd it from the hash list.
 			 */
 			WARN_ON_ONCE(!del);
-		}
+		पूर्ण
 		spin_unlock(&nfb->nfb_lock);
 		nfsd_file_dispose_list(&dispose);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct nfsd_fcache_disposal *
-nfsd_alloc_fcache_disposal(struct net *net)
-{
-	struct nfsd_fcache_disposal *l;
+अटल काष्ठा nfsd_fcache_disposal *
+nfsd_alloc_fcache_disposal(काष्ठा net *net)
+अणु
+	काष्ठा nfsd_fcache_disposal *l;
 
-	l = kmalloc(sizeof(*l), GFP_KERNEL);
-	if (!l)
-		return NULL;
-	INIT_WORK(&l->work, nfsd_file_delayed_close);
+	l = kदो_स्मृति(माप(*l), GFP_KERNEL);
+	अगर (!l)
+		वापस शून्य;
+	INIT_WORK(&l->work, nfsd_file_delayed_बंद);
 	l->net = net;
 	spin_lock_init(&l->lock);
-	INIT_LIST_HEAD(&l->freeme);
-	return l;
-}
+	INIT_LIST_HEAD(&l->मुक्तme);
+	वापस l;
+पूर्ण
 
-static void
-nfsd_free_fcache_disposal(struct nfsd_fcache_disposal *l)
-{
-	rcu_assign_pointer(l->net, NULL);
+अटल व्योम
+nfsd_मुक्त_fcache_disposal(काष्ठा nfsd_fcache_disposal *l)
+अणु
+	rcu_assign_poपूर्णांकer(l->net, शून्य);
 	cancel_work_sync(&l->work);
-	nfsd_file_dispose_list(&l->freeme);
-	kfree_rcu(l, rcu);
-}
+	nfsd_file_dispose_list(&l->मुक्तme);
+	kमुक्त_rcu(l, rcu);
+पूर्ण
 
-static void
-nfsd_add_fcache_disposal(struct nfsd_fcache_disposal *l)
-{
+अटल व्योम
+nfsd_add_fcache_disposal(काष्ठा nfsd_fcache_disposal *l)
+अणु
 	spin_lock(&laundrette_lock);
 	list_add_tail_rcu(&l->list, &laundrettes);
 	spin_unlock(&laundrette_lock);
-}
+पूर्ण
 
-static void
-nfsd_del_fcache_disposal(struct nfsd_fcache_disposal *l)
-{
+अटल व्योम
+nfsd_del_fcache_disposal(काष्ठा nfsd_fcache_disposal *l)
+अणु
 	spin_lock(&laundrette_lock);
 	list_del_rcu(&l->list);
 	spin_unlock(&laundrette_lock);
-}
+पूर्ण
 
-static int
-nfsd_alloc_fcache_disposal_net(struct net *net)
-{
-	struct nfsd_fcache_disposal *l;
+अटल पूर्णांक
+nfsd_alloc_fcache_disposal_net(काष्ठा net *net)
+अणु
+	काष्ठा nfsd_fcache_disposal *l;
 
 	l = nfsd_alloc_fcache_disposal(net);
-	if (!l)
-		return -ENOMEM;
+	अगर (!l)
+		वापस -ENOMEM;
 	nfsd_add_fcache_disposal(l);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-nfsd_free_fcache_disposal_net(struct net *net)
-{
-	struct nfsd_fcache_disposal *l;
+अटल व्योम
+nfsd_मुक्त_fcache_disposal_net(काष्ठा net *net)
+अणु
+	काष्ठा nfsd_fcache_disposal *l;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(l, &laundrettes, list) {
-		if (l->net != net)
-			continue;
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(l, &laundrettes, list) अणु
+		अगर (l->net != net)
+			जारी;
 		nfsd_del_fcache_disposal(l);
-		rcu_read_unlock();
-		nfsd_free_fcache_disposal(l);
-		return;
-	}
-	rcu_read_unlock();
-}
+		rcu_पढ़ो_unlock();
+		nfsd_मुक्त_fcache_disposal(l);
+		वापस;
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-int
-nfsd_file_cache_start_net(struct net *net)
-{
-	return nfsd_alloc_fcache_disposal_net(net);
-}
+पूर्णांक
+nfsd_file_cache_start_net(काष्ठा net *net)
+अणु
+	वापस nfsd_alloc_fcache_disposal_net(net);
+पूर्ण
 
-void
-nfsd_file_cache_shutdown_net(struct net *net)
-{
+व्योम
+nfsd_file_cache_shutकरोwn_net(काष्ठा net *net)
+अणु
 	nfsd_file_cache_purge(net);
-	nfsd_free_fcache_disposal_net(net);
-}
+	nfsd_मुक्त_fcache_disposal_net(net);
+पूर्ण
 
-void
-nfsd_file_cache_shutdown(void)
-{
-	set_bit(NFSD_FILE_SHUTDOWN, &nfsd_file_lru_flags);
+व्योम
+nfsd_file_cache_shutकरोwn(व्योम)
+अणु
+	set_bit(NFSD_खाता_SHUTDOWN, &nfsd_file_lru_flags);
 
-	lease_unregister_notifier(&nfsd_file_lease_notifier);
-	unregister_shrinker(&nfsd_file_shrinker);
+	lease_unरेजिस्टर_notअगरier(&nfsd_file_lease_notअगरier);
+	unरेजिस्टर_shrinker(&nfsd_file_shrinker);
 	/*
-	 * make sure all callers of nfsd_file_lru_cb are done before
+	 * make sure all callers of nfsd_file_lru_cb are करोne beक्रमe
 	 * calling nfsd_file_cache_purge
 	 */
 	cancel_delayed_work_sync(&nfsd_filecache_laundrette);
-	nfsd_file_cache_purge(NULL);
+	nfsd_file_cache_purge(शून्य);
 	list_lru_destroy(&nfsd_file_lru);
 	rcu_barrier();
-	fsnotify_put_group(nfsd_file_fsnotify_group);
-	nfsd_file_fsnotify_group = NULL;
+	fsnotअगरy_put_group(nfsd_file_fsnotअगरy_group);
+	nfsd_file_fsnotअगरy_group = शून्य;
 	kmem_cache_destroy(nfsd_file_slab);
-	nfsd_file_slab = NULL;
-	fsnotify_wait_marks_destroyed();
+	nfsd_file_slab = शून्य;
+	fsnotअगरy_रुको_marks_destroyed();
 	kmem_cache_destroy(nfsd_file_mark_slab);
-	nfsd_file_mark_slab = NULL;
-	kfree(nfsd_file_hashtbl);
-	nfsd_file_hashtbl = NULL;
+	nfsd_file_mark_slab = शून्य;
+	kमुक्त(nfsd_file_hashtbl);
+	nfsd_file_hashtbl = शून्य;
 	destroy_workqueue(nfsd_filecache_wq);
-	nfsd_filecache_wq = NULL;
-}
+	nfsd_filecache_wq = शून्य;
+पूर्ण
 
-static bool
-nfsd_match_cred(const struct cred *c1, const struct cred *c2)
-{
-	int i;
+अटल bool
+nfsd_match_cred(स्थिर काष्ठा cred *c1, स्थिर काष्ठा cred *c2)
+अणु
+	पूर्णांक i;
 
-	if (!uid_eq(c1->fsuid, c2->fsuid))
-		return false;
-	if (!gid_eq(c1->fsgid, c2->fsgid))
-		return false;
-	if (c1->group_info == NULL || c2->group_info == NULL)
-		return c1->group_info == c2->group_info;
-	if (c1->group_info->ngroups != c2->group_info->ngroups)
-		return false;
-	for (i = 0; i < c1->group_info->ngroups; i++) {
-		if (!gid_eq(c1->group_info->gid[i], c2->group_info->gid[i]))
-			return false;
-	}
-	return true;
-}
+	अगर (!uid_eq(c1->fsuid, c2->fsuid))
+		वापस false;
+	अगर (!gid_eq(c1->fsgid, c2->fsgid))
+		वापस false;
+	अगर (c1->group_info == शून्य || c2->group_info == शून्य)
+		वापस c1->group_info == c2->group_info;
+	अगर (c1->group_info->ngroups != c2->group_info->ngroups)
+		वापस false;
+	क्रम (i = 0; i < c1->group_info->ngroups; i++) अणु
+		अगर (!gid_eq(c1->group_info->gid[i], c2->group_info->gid[i]))
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static struct nfsd_file *
-nfsd_file_find_locked(struct inode *inode, unsigned int may_flags,
-			unsigned int hashval, struct net *net)
-{
-	struct nfsd_file *nf;
-	unsigned char need = may_flags & NFSD_FILE_MAY_MASK;
+अटल काष्ठा nfsd_file *
+nfsd_file_find_locked(काष्ठा inode *inode, अचिन्हित पूर्णांक may_flags,
+			अचिन्हित पूर्णांक hashval, काष्ठा net *net)
+अणु
+	काष्ठा nfsd_file *nf;
+	अचिन्हित अक्षर need = may_flags & NFSD_खाता_MAY_MASK;
 
-	hlist_for_each_entry_rcu(nf, &nfsd_file_hashtbl[hashval].nfb_head,
-				 nf_node, lockdep_is_held(&nfsd_file_hashtbl[hashval].nfb_lock)) {
-		if (nf->nf_may != need)
-			continue;
-		if (nf->nf_inode != inode)
-			continue;
-		if (nf->nf_net != net)
-			continue;
-		if (!nfsd_match_cred(nf->nf_cred, current_cred()))
-			continue;
-		if (!test_bit(NFSD_FILE_HASHED, &nf->nf_flags))
-			continue;
-		if (nfsd_file_get(nf) != NULL)
-			return nf;
-	}
-	return NULL;
-}
+	hlist_क्रम_each_entry_rcu(nf, &nfsd_file_hashtbl[hashval].nfb_head,
+				 nf_node, lockdep_is_held(&nfsd_file_hashtbl[hashval].nfb_lock)) अणु
+		अगर (nf->nf_may != need)
+			जारी;
+		अगर (nf->nf_inode != inode)
+			जारी;
+		अगर (nf->nf_net != net)
+			जारी;
+		अगर (!nfsd_match_cred(nf->nf_cred, current_cred()))
+			जारी;
+		अगर (!test_bit(NFSD_खाता_HASHED, &nf->nf_flags))
+			जारी;
+		अगर (nfsd_file_get(nf) != शून्य)
+			वापस nf;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * nfsd_file_is_cached - are there any cached open files for this fh?
+ * nfsd_file_is_cached - are there any cached खोलो files क्रम this fh?
  * @inode: inode of the file to check
  *
- * Scan the hashtable for open files that match this fh. Returns true if there
- * are any, and false if not.
+ * Scan the hashtable क्रम खोलो files that match this fh. Returns true अगर there
+ * are any, and false अगर not.
  */
 bool
-nfsd_file_is_cached(struct inode *inode)
-{
+nfsd_file_is_cached(काष्ठा inode *inode)
+अणु
 	bool			ret = false;
-	struct nfsd_file	*nf;
-	unsigned int		hashval;
+	काष्ठा nfsd_file	*nf;
+	अचिन्हित पूर्णांक		hashval;
 
-        hashval = (unsigned int)hash_long(inode->i_ino, NFSD_FILE_HASH_BITS);
+        hashval = (अचिन्हित पूर्णांक)hash_दीर्घ(inode->i_ino, NFSD_खाता_HASH_BITS);
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(nf, &nfsd_file_hashtbl[hashval].nfb_head,
-				 nf_node) {
-		if (inode == nf->nf_inode) {
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(nf, &nfsd_file_hashtbl[hashval].nfb_head,
+				 nf_node) अणु
+		अगर (inode == nf->nf_inode) अणु
 			ret = true;
-			break;
-		}
-	}
-	rcu_read_unlock();
-	trace_nfsd_file_is_cached(inode, hashval, (int)ret);
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	trace_nfsd_file_is_cached(inode, hashval, (पूर्णांक)ret);
+	वापस ret;
+पूर्ण
 
 __be32
-nfsd_file_acquire(struct svc_rqst *rqstp, struct svc_fh *fhp,
-		  unsigned int may_flags, struct nfsd_file **pnf)
-{
+nfsd_file_acquire(काष्ठा svc_rqst *rqstp, काष्ठा svc_fh *fhp,
+		  अचिन्हित पूर्णांक may_flags, काष्ठा nfsd_file **pnf)
+अणु
 	__be32	status;
-	struct net *net = SVC_NET(rqstp);
-	struct nfsd_file *nf, *new;
-	struct inode *inode;
-	unsigned int hashval;
+	काष्ठा net *net = SVC_NET(rqstp);
+	काष्ठा nfsd_file *nf, *new;
+	काष्ठा inode *inode;
+	अचिन्हित पूर्णांक hashval;
 	bool retry = true;
 
-	/* FIXME: skip this if fh_dentry is already set? */
-	status = fh_verify(rqstp, fhp, S_IFREG,
+	/* FIXME: skip this अगर fh_dentry is alपढ़ोy set? */
+	status = fh_verअगरy(rqstp, fhp, S_IFREG,
 				may_flags|NFSD_MAY_OWNER_OVERRIDE);
-	if (status != nfs_ok)
-		return status;
+	अगर (status != nfs_ok)
+		वापस status;
 
 	inode = d_inode(fhp->fh_dentry);
-	hashval = (unsigned int)hash_long(inode->i_ino, NFSD_FILE_HASH_BITS);
+	hashval = (अचिन्हित पूर्णांक)hash_दीर्घ(inode->i_ino, NFSD_खाता_HASH_BITS);
 retry:
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	nf = nfsd_file_find_locked(inode, may_flags, hashval, net);
-	rcu_read_unlock();
-	if (nf)
-		goto wait_for_construction;
+	rcu_पढ़ो_unlock();
+	अगर (nf)
+		जाओ रुको_क्रम_स्थिरruction;
 
 	new = nfsd_file_alloc(inode, may_flags, hashval, net);
-	if (!new) {
+	अगर (!new) अणु
 		trace_nfsd_file_acquire(rqstp, hashval, inode, may_flags,
-					NULL, nfserr_jukebox);
-		return nfserr_jukebox;
-	}
+					शून्य, nfserr_jukebox);
+		वापस nfserr_jukebox;
+	पूर्ण
 
 	spin_lock(&nfsd_file_hashtbl[hashval].nfb_lock);
 	nf = nfsd_file_find_locked(inode, may_flags, hashval, net);
-	if (nf == NULL)
-		goto open_file;
+	अगर (nf == शून्य)
+		जाओ खोलो_file;
 	spin_unlock(&nfsd_file_hashtbl[hashval].nfb_lock);
-	nfsd_file_slab_free(&new->nf_rcu);
+	nfsd_file_slab_मुक्त(&new->nf_rcu);
 
-wait_for_construction:
-	wait_on_bit(&nf->nf_flags, NFSD_FILE_PENDING, TASK_UNINTERRUPTIBLE);
+रुको_क्रम_स्थिरruction:
+	रुको_on_bit(&nf->nf_flags, NFSD_खाता_PENDING, TASK_UNINTERRUPTIBLE);
 
-	/* Did construction of this file fail? */
-	if (!test_bit(NFSD_FILE_HASHED, &nf->nf_flags)) {
-		if (!retry) {
+	/* Did स्थिरruction of this file fail? */
+	अगर (!test_bit(NFSD_खाता_HASHED, &nf->nf_flags)) अणु
+		अगर (!retry) अणु
 			status = nfserr_jukebox;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		retry = false;
 		nfsd_file_put_noref(nf);
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	this_cpu_inc(nfsd_file_cache_hits);
 
-	if (!(may_flags & NFSD_MAY_NOT_BREAK_LEASE)) {
-		bool write = (may_flags & NFSD_MAY_WRITE);
+	अगर (!(may_flags & NFSD_MAY_NOT_BREAK_LEASE)) अणु
+		bool ग_लिखो = (may_flags & NFSD_MAY_WRITE);
 
-		if (test_bit(NFSD_FILE_BREAK_READ, &nf->nf_flags) ||
-		    (test_bit(NFSD_FILE_BREAK_WRITE, &nf->nf_flags) && write)) {
-			status = nfserrno(nfsd_open_break_lease(
+		अगर (test_bit(NFSD_खाता_BREAK_READ, &nf->nf_flags) ||
+		    (test_bit(NFSD_खाता_BREAK_WRITE, &nf->nf_flags) && ग_लिखो)) अणु
+			status = nfsत्रुटि_सं(nfsd_खोलो_अवरोध_lease(
 					file_inode(nf->nf_file), may_flags));
-			if (status == nfs_ok) {
-				clear_bit(NFSD_FILE_BREAK_READ, &nf->nf_flags);
-				if (write)
-					clear_bit(NFSD_FILE_BREAK_WRITE,
+			अगर (status == nfs_ok) अणु
+				clear_bit(NFSD_खाता_BREAK_READ, &nf->nf_flags);
+				अगर (ग_लिखो)
+					clear_bit(NFSD_खाता_BREAK_WRITE,
 						  &nf->nf_flags);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out:
-	if (status == nfs_ok) {
+	अगर (status == nfs_ok) अणु
 		*pnf = nf;
-	} else {
+	पूर्ण अन्यथा अणु
 		nfsd_file_put(nf);
-		nf = NULL;
-	}
+		nf = शून्य;
+	पूर्ण
 
 	trace_nfsd_file_acquire(rqstp, hashval, inode, may_flags, nf, status);
-	return status;
-open_file:
+	वापस status;
+खोलो_file:
 	nf = new;
-	/* Take reference for the hashtable */
+	/* Take reference क्रम the hashtable */
 	refcount_inc(&nf->nf_ref);
-	__set_bit(NFSD_FILE_HASHED, &nf->nf_flags);
-	__set_bit(NFSD_FILE_PENDING, &nf->nf_flags);
+	__set_bit(NFSD_खाता_HASHED, &nf->nf_flags);
+	__set_bit(NFSD_खाता_PENDING, &nf->nf_flags);
 	list_lru_add(&nfsd_file_lru, &nf->nf_lru);
 	hlist_add_head_rcu(&nf->nf_node, &nfsd_file_hashtbl[hashval].nfb_head);
 	++nfsd_file_hashtbl[hashval].nfb_count;
 	nfsd_file_hashtbl[hashval].nfb_maxcount = max(nfsd_file_hashtbl[hashval].nfb_maxcount,
 			nfsd_file_hashtbl[hashval].nfb_count);
 	spin_unlock(&nfsd_file_hashtbl[hashval].nfb_lock);
-	if (atomic_long_inc_return(&nfsd_filecache_count) >= NFSD_FILE_LRU_THRESHOLD)
+	अगर (atomic_दीर्घ_inc_वापस(&nfsd_filecache_count) >= NFSD_खाता_LRU_THRESHOLD)
 		nfsd_file_gc();
 
 	nf->nf_mark = nfsd_file_mark_find_or_create(nf);
-	if (nf->nf_mark)
-		status = nfsd_open_verified(rqstp, fhp, S_IFREG,
+	अगर (nf->nf_mark)
+		status = nfsd_खोलो_verअगरied(rqstp, fhp, S_IFREG,
 				may_flags, &nf->nf_file);
-	else
+	अन्यथा
 		status = nfserr_jukebox;
 	/*
-	 * If construction failed, or we raced with a call to unlink()
+	 * If स्थिरruction failed, or we raced with a call to unlink()
 	 * then unhash.
 	 */
-	if (status != nfs_ok || inode->i_nlink == 0) {
-		bool do_free;
+	अगर (status != nfs_ok || inode->i_nlink == 0) अणु
+		bool करो_मुक्त;
 		spin_lock(&nfsd_file_hashtbl[hashval].nfb_lock);
-		do_free = nfsd_file_unhash(nf);
+		करो_मुक्त = nfsd_file_unhash(nf);
 		spin_unlock(&nfsd_file_hashtbl[hashval].nfb_lock);
-		if (do_free)
+		अगर (करो_मुक्त)
 			nfsd_file_put_noref(nf);
-	}
-	clear_bit_unlock(NFSD_FILE_PENDING, &nf->nf_flags);
+	पूर्ण
+	clear_bit_unlock(NFSD_खाता_PENDING, &nf->nf_flags);
 	smp_mb__after_atomic();
-	wake_up_bit(&nf->nf_flags, NFSD_FILE_PENDING);
-	goto out;
-}
+	wake_up_bit(&nf->nf_flags, NFSD_खाता_PENDING);
+	जाओ out;
+पूर्ण
 
 /*
- * Note that fields may be added, removed or reordered in the future. Programs
- * scraping this file for info should test the labels to ensure they're
+ * Note that fields may be added, हटाओd or reordered in the future. Programs
+ * scraping this file क्रम info should test the labels to ensure they're
  * getting the correct field.
  */
-static int nfsd_file_cache_stats_show(struct seq_file *m, void *v)
-{
-	unsigned int i, count = 0, longest = 0;
-	unsigned long hits = 0;
+अटल पूर्णांक nfsd_file_cache_stats_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	अचिन्हित पूर्णांक i, count = 0, दीर्घest = 0;
+	अचिन्हित दीर्घ hits = 0;
 
 	/*
-	 * No need for spinlocks here since we're not terribly interested in
-	 * accuracy. We do take the nfsd_mutex simply to ensure that we
-	 * don't end up racing with server shutdown
+	 * No need क्रम spinlocks here since we're not terribly पूर्णांकerested in
+	 * accuracy. We करो take the nfsd_mutex simply to ensure that we
+	 * करोn't end up racing with server shutकरोwn
 	 */
 	mutex_lock(&nfsd_mutex);
-	if (nfsd_file_hashtbl) {
-		for (i = 0; i < NFSD_FILE_HASH_SIZE; i++) {
+	अगर (nfsd_file_hashtbl) अणु
+		क्रम (i = 0; i < NFSD_खाता_HASH_SIZE; i++) अणु
 			count += nfsd_file_hashtbl[i].nfb_count;
-			longest = max(longest, nfsd_file_hashtbl[i].nfb_count);
-		}
-	}
+			दीर्घest = max(दीर्घest, nfsd_file_hashtbl[i].nfb_count);
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&nfsd_mutex);
 
-	for_each_possible_cpu(i)
+	क्रम_each_possible_cpu(i)
 		hits += per_cpu(nfsd_file_cache_hits, i);
 
-	seq_printf(m, "total entries: %u\n", count);
-	seq_printf(m, "longest chain: %u\n", longest);
-	seq_printf(m, "cache hits:    %lu\n", hits);
-	return 0;
-}
+	seq_म_लिखो(m, "total entries: %u\n", count);
+	seq_म_लिखो(m, "longest chain: %u\n", दीर्घest);
+	seq_म_लिखो(m, "cache hits:    %lu\n", hits);
+	वापस 0;
+पूर्ण
 
-int nfsd_file_cache_stats_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, nfsd_file_cache_stats_show, NULL);
-}
+पूर्णांक nfsd_file_cache_stats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, nfsd_file_cache_stats_show, शून्य);
+पूर्ण

@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Chained IRQ handlers support.
  *
  * Copyright (C) 2011 ARM Ltd.
  */
-#ifndef __IRQCHIP_CHAINED_IRQ_H
-#define __IRQCHIP_CHAINED_IRQ_H
+#अगर_अघोषित __IRQCHIP_CHAINED_IRQ_H
+#घोषणा __IRQCHIP_CHAINED_IRQ_H
 
-#include <linux/irq.h>
+#समावेश <linux/irq.h>
 
 /*
- * Entry/exit functions for chained handlers where the primary IRQ chip
+ * Entry/निकास functions क्रम chained handlers where the primary IRQ chip
  * may implement either fasteoi or level-trigger flow control.
  */
-static inline void chained_irq_enter(struct irq_chip *chip,
-				     struct irq_desc *desc)
-{
+अटल अंतरभूत व्योम chained_irq_enter(काष्ठा irq_chip *chip,
+				     काष्ठा irq_desc *desc)
+अणु
 	/* FastEOI controllers require no action on entry. */
-	if (chip->irq_eoi)
-		return;
+	अगर (chip->irq_eoi)
+		वापस;
 
-	if (chip->irq_mask_ack) {
+	अगर (chip->irq_mask_ack) अणु
 		chip->irq_mask_ack(&desc->irq_data);
-	} else {
+	पूर्ण अन्यथा अणु
 		chip->irq_mask(&desc->irq_data);
-		if (chip->irq_ack)
+		अगर (chip->irq_ack)
 			chip->irq_ack(&desc->irq_data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void chained_irq_exit(struct irq_chip *chip,
-				    struct irq_desc *desc)
-{
-	if (chip->irq_eoi)
+अटल अंतरभूत व्योम chained_irq_निकास(काष्ठा irq_chip *chip,
+				    काष्ठा irq_desc *desc)
+अणु
+	अगर (chip->irq_eoi)
 		chip->irq_eoi(&desc->irq_data);
-	else
+	अन्यथा
 		chip->irq_unmask(&desc->irq_data);
-}
+पूर्ण
 
-#endif /* __IRQCHIP_CHAINED_IRQ_H */
+#पूर्ण_अगर /* __IRQCHIP_CHAINED_IRQ_H */

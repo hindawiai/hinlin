@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
- * SMP support for Allwinner SoCs
+ * SMP support क्रम Allwinner SoCs
  *
  * Copyright (C) 2013 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * Based on code
  *  Copyright (C) 2012-2013 Allwinner Ltd.
@@ -13,184 +14,184 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/memory.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/smp.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/memory.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/smp.h>
 
-#define CPUCFG_CPU_PWR_CLAMP_STATUS_REG(cpu)	((cpu) * 0x40 + 0x64)
-#define CPUCFG_CPU_RST_CTRL_REG(cpu)		(((cpu) + 1) * 0x40)
-#define CPUCFG_CPU_CTRL_REG(cpu)		(((cpu) + 1) * 0x40 + 0x04)
-#define CPUCFG_CPU_STATUS_REG(cpu)		(((cpu) + 1) * 0x40 + 0x08)
-#define CPUCFG_GEN_CTRL_REG			0x184
-#define CPUCFG_PRIVATE0_REG			0x1a4
-#define CPUCFG_PRIVATE1_REG			0x1a8
-#define CPUCFG_DBG_CTL0_REG			0x1e0
-#define CPUCFG_DBG_CTL1_REG			0x1e4
+#घोषणा CPUCFG_CPU_PWR_CLAMP_STATUS_REG(cpu)	((cpu) * 0x40 + 0x64)
+#घोषणा CPUCFG_CPU_RST_CTRL_REG(cpu)		(((cpu) + 1) * 0x40)
+#घोषणा CPUCFG_CPU_CTRL_REG(cpu)		(((cpu) + 1) * 0x40 + 0x04)
+#घोषणा CPUCFG_CPU_STATUS_REG(cpu)		(((cpu) + 1) * 0x40 + 0x08)
+#घोषणा CPUCFG_GEN_CTRL_REG			0x184
+#घोषणा CPUCFG_PRIVATE0_REG			0x1a4
+#घोषणा CPUCFG_PRIVATE1_REG			0x1a8
+#घोषणा CPUCFG_DBG_CTL0_REG			0x1e0
+#घोषणा CPUCFG_DBG_CTL1_REG			0x1e4
 
-#define PRCM_CPU_PWROFF_REG			0x100
-#define PRCM_CPU_PWR_CLAMP_REG(cpu)		(((cpu) * 4) + 0x140)
+#घोषणा PRCM_CPU_PWROFF_REG			0x100
+#घोषणा PRCM_CPU_PWR_CLAMP_REG(cpu)		(((cpu) * 4) + 0x140)
 
-static void __iomem *cpucfg_membase;
-static void __iomem *prcm_membase;
+अटल व्योम __iomem *cpucfg_membase;
+अटल व्योम __iomem *prcm_membase;
 
-static DEFINE_SPINLOCK(cpu_lock);
+अटल DEFINE_SPINLOCK(cpu_lock);
 
-static void __init sun6i_smp_prepare_cpus(unsigned int max_cpus)
-{
-	struct device_node *node;
+अटल व्योम __init sun6i_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	काष्ठा device_node *node;
 
-	node = of_find_compatible_node(NULL, NULL, "allwinner,sun6i-a31-prcm");
-	if (!node) {
+	node = of_find_compatible_node(शून्य, शून्य, "allwinner,sun6i-a31-prcm");
+	अगर (!node) अणु
 		pr_err("Missing A31 PRCM node in the device tree\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	prcm_membase = of_iomap(node, 0);
 	of_node_put(node);
-	if (!prcm_membase) {
+	अगर (!prcm_membase) अणु
 		pr_err("Couldn't map A31 PRCM registers\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	node = of_find_compatible_node(NULL, NULL,
+	node = of_find_compatible_node(शून्य, शून्य,
 				       "allwinner,sun6i-a31-cpuconfig");
-	if (!node) {
+	अगर (!node) अणु
 		pr_err("Missing A31 CPU config node in the device tree\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cpucfg_membase = of_iomap(node, 0);
 	of_node_put(node);
-	if (!cpucfg_membase)
+	अगर (!cpucfg_membase)
 		pr_err("Couldn't map A31 CPU config registers\n");
 
-}
+पूर्ण
 
-static int sun6i_smp_boot_secondary(unsigned int cpu,
-				    struct task_struct *idle)
-{
+अटल पूर्णांक sun6i_smp_boot_secondary(अचिन्हित पूर्णांक cpu,
+				    काष्ठा task_काष्ठा *idle)
+अणु
 	u32 reg;
-	int i;
+	पूर्णांक i;
 
-	if (!(prcm_membase && cpucfg_membase))
-		return -EFAULT;
+	अगर (!(prcm_membase && cpucfg_membase))
+		वापस -EFAULT;
 
 	spin_lock(&cpu_lock);
 
 	/* Set CPU boot address */
-	writel(__pa_symbol(secondary_startup),
+	ग_लिखोl(__pa_symbol(secondary_startup),
 	       cpucfg_membase + CPUCFG_PRIVATE0_REG);
 
 	/* Assert the CPU core in reset */
-	writel(0, cpucfg_membase + CPUCFG_CPU_RST_CTRL_REG(cpu));
+	ग_लिखोl(0, cpucfg_membase + CPUCFG_CPU_RST_CTRL_REG(cpu));
 
 	/* Assert the L1 cache in reset */
-	reg = readl(cpucfg_membase + CPUCFG_GEN_CTRL_REG);
-	writel(reg & ~BIT(cpu), cpucfg_membase + CPUCFG_GEN_CTRL_REG);
+	reg = पढ़ोl(cpucfg_membase + CPUCFG_GEN_CTRL_REG);
+	ग_लिखोl(reg & ~BIT(cpu), cpucfg_membase + CPUCFG_GEN_CTRL_REG);
 
-	/* Disable external debug access */
-	reg = readl(cpucfg_membase + CPUCFG_DBG_CTL1_REG);
-	writel(reg & ~BIT(cpu), cpucfg_membase + CPUCFG_DBG_CTL1_REG);
+	/* Disable बाह्यal debug access */
+	reg = पढ़ोl(cpucfg_membase + CPUCFG_DBG_CTL1_REG);
+	ग_लिखोl(reg & ~BIT(cpu), cpucfg_membase + CPUCFG_DBG_CTL1_REG);
 
 	/* Power up the CPU */
-	for (i = 0; i <= 8; i++)
-		writel(0xff >> i, prcm_membase + PRCM_CPU_PWR_CLAMP_REG(cpu));
+	क्रम (i = 0; i <= 8; i++)
+		ग_लिखोl(0xff >> i, prcm_membase + PRCM_CPU_PWR_CLAMP_REG(cpu));
 	mdelay(10);
 
-	/* Clear CPU power-off gating */
-	reg = readl(prcm_membase + PRCM_CPU_PWROFF_REG);
-	writel(reg & ~BIT(cpu), prcm_membase + PRCM_CPU_PWROFF_REG);
+	/* Clear CPU घातer-off gating */
+	reg = पढ़ोl(prcm_membase + PRCM_CPU_PWROFF_REG);
+	ग_लिखोl(reg & ~BIT(cpu), prcm_membase + PRCM_CPU_PWROFF_REG);
 	mdelay(1);
 
-	/* Deassert the CPU core reset */
-	writel(3, cpucfg_membase + CPUCFG_CPU_RST_CTRL_REG(cpu));
+	/* Deनिश्चित the CPU core reset */
+	ग_लिखोl(3, cpucfg_membase + CPUCFG_CPU_RST_CTRL_REG(cpu));
 
-	/* Enable back the external debug accesses */
-	reg = readl(cpucfg_membase + CPUCFG_DBG_CTL1_REG);
-	writel(reg | BIT(cpu), cpucfg_membase + CPUCFG_DBG_CTL1_REG);
+	/* Enable back the बाह्यal debug accesses */
+	reg = पढ़ोl(cpucfg_membase + CPUCFG_DBG_CTL1_REG);
+	ग_लिखोl(reg | BIT(cpu), cpucfg_membase + CPUCFG_DBG_CTL1_REG);
 
 	spin_unlock(&cpu_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct smp_operations sun6i_smp_ops __initconst = {
+अटल स्थिर काष्ठा smp_operations sun6i_smp_ops __initस्थिर = अणु
 	.smp_prepare_cpus	= sun6i_smp_prepare_cpus,
 	.smp_boot_secondary	= sun6i_smp_boot_secondary,
-};
+पूर्ण;
 CPU_METHOD_OF_DECLARE(sun6i_a31_smp, "allwinner,sun6i-a31", &sun6i_smp_ops);
 
-static void __init sun8i_smp_prepare_cpus(unsigned int max_cpus)
-{
-	struct device_node *node;
+अटल व्योम __init sun8i_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	काष्ठा device_node *node;
 
-	node = of_find_compatible_node(NULL, NULL, "allwinner,sun8i-a23-prcm");
-	if (!node) {
+	node = of_find_compatible_node(शून्य, शून्य, "allwinner,sun8i-a23-prcm");
+	अगर (!node) अणु
 		pr_err("Missing A23 PRCM node in the device tree\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	prcm_membase = of_iomap(node, 0);
 	of_node_put(node);
-	if (!prcm_membase) {
+	अगर (!prcm_membase) अणु
 		pr_err("Couldn't map A23 PRCM registers\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	node = of_find_compatible_node(NULL, NULL,
+	node = of_find_compatible_node(शून्य, शून्य,
 				       "allwinner,sun8i-a23-cpuconfig");
-	if (!node) {
+	अगर (!node) अणु
 		pr_err("Missing A23 CPU config node in the device tree\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cpucfg_membase = of_iomap(node, 0);
 	of_node_put(node);
-	if (!cpucfg_membase)
+	अगर (!cpucfg_membase)
 		pr_err("Couldn't map A23 CPU config registers\n");
 
-}
+पूर्ण
 
-static int sun8i_smp_boot_secondary(unsigned int cpu,
-				    struct task_struct *idle)
-{
+अटल पूर्णांक sun8i_smp_boot_secondary(अचिन्हित पूर्णांक cpu,
+				    काष्ठा task_काष्ठा *idle)
+अणु
 	u32 reg;
 
-	if (!(prcm_membase && cpucfg_membase))
-		return -EFAULT;
+	अगर (!(prcm_membase && cpucfg_membase))
+		वापस -EFAULT;
 
 	spin_lock(&cpu_lock);
 
 	/* Set CPU boot address */
-	writel(__pa_symbol(secondary_startup),
+	ग_लिखोl(__pa_symbol(secondary_startup),
 	       cpucfg_membase + CPUCFG_PRIVATE0_REG);
 
 	/* Assert the CPU core in reset */
-	writel(0, cpucfg_membase + CPUCFG_CPU_RST_CTRL_REG(cpu));
+	ग_लिखोl(0, cpucfg_membase + CPUCFG_CPU_RST_CTRL_REG(cpu));
 
 	/* Assert the L1 cache in reset */
-	reg = readl(cpucfg_membase + CPUCFG_GEN_CTRL_REG);
-	writel(reg & ~BIT(cpu), cpucfg_membase + CPUCFG_GEN_CTRL_REG);
+	reg = पढ़ोl(cpucfg_membase + CPUCFG_GEN_CTRL_REG);
+	ग_लिखोl(reg & ~BIT(cpu), cpucfg_membase + CPUCFG_GEN_CTRL_REG);
 
-	/* Clear CPU power-off gating */
-	reg = readl(prcm_membase + PRCM_CPU_PWROFF_REG);
-	writel(reg & ~BIT(cpu), prcm_membase + PRCM_CPU_PWROFF_REG);
+	/* Clear CPU घातer-off gating */
+	reg = पढ़ोl(prcm_membase + PRCM_CPU_PWROFF_REG);
+	ग_लिखोl(reg & ~BIT(cpu), prcm_membase + PRCM_CPU_PWROFF_REG);
 	mdelay(1);
 
-	/* Deassert the CPU core reset */
-	writel(3, cpucfg_membase + CPUCFG_CPU_RST_CTRL_REG(cpu));
+	/* Deनिश्चित the CPU core reset */
+	ग_लिखोl(3, cpucfg_membase + CPUCFG_CPU_RST_CTRL_REG(cpu));
 
 	spin_unlock(&cpu_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct smp_operations sun8i_smp_ops __initconst = {
+अटल स्थिर काष्ठा smp_operations sun8i_smp_ops __initस्थिर = अणु
 	.smp_prepare_cpus	= sun8i_smp_prepare_cpus,
 	.smp_boot_secondary	= sun8i_smp_boot_secondary,
-};
+पूर्ण;
 CPU_METHOD_OF_DECLARE(sun8i_a23_smp, "allwinner,sun8i-a23", &sun8i_smp_ops);

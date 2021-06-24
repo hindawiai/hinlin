@@ -1,365 +1,366 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * FPGA Manager Driver for Altera SOCFPGA
+ * FPGA Manager Driver क्रम Altera SOCFPGA
  *
  *  Copyright (C) 2013-2015 Altera Corporation
  */
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/fpga/fpga-mgr.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/pm.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fpga/fpga-mgr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pm.h>
 
 /* Register offsets */
-#define SOCFPGA_FPGMGR_STAT_OFST				0x0
-#define SOCFPGA_FPGMGR_CTL_OFST					0x4
-#define SOCFPGA_FPGMGR_DCLKCNT_OFST				0x8
-#define SOCFPGA_FPGMGR_DCLKSTAT_OFST				0xc
-#define SOCFPGA_FPGMGR_GPIO_INTEN_OFST				0x830
-#define SOCFPGA_FPGMGR_GPIO_INTMSK_OFST				0x834
-#define SOCFPGA_FPGMGR_GPIO_INTTYPE_LEVEL_OFST			0x838
-#define SOCFPGA_FPGMGR_GPIO_INT_POL_OFST			0x83c
-#define SOCFPGA_FPGMGR_GPIO_INTSTAT_OFST			0x840
-#define SOCFPGA_FPGMGR_GPIO_RAW_INTSTAT_OFST			0x844
-#define SOCFPGA_FPGMGR_GPIO_PORTA_EOI_OFST			0x84c
-#define SOCFPGA_FPGMGR_GPIO_EXT_PORTA_OFST			0x850
+#घोषणा SOCFPGA_FPGMGR_STAT_OFST				0x0
+#घोषणा SOCFPGA_FPGMGR_CTL_OFST					0x4
+#घोषणा SOCFPGA_FPGMGR_DCLKCNT_OFST				0x8
+#घोषणा SOCFPGA_FPGMGR_DCLKSTAT_OFST				0xc
+#घोषणा SOCFPGA_FPGMGR_GPIO_INTEN_OFST				0x830
+#घोषणा SOCFPGA_FPGMGR_GPIO_INTMSK_OFST				0x834
+#घोषणा SOCFPGA_FPGMGR_GPIO_INTTYPE_LEVEL_OFST			0x838
+#घोषणा SOCFPGA_FPGMGR_GPIO_INT_POL_OFST			0x83c
+#घोषणा SOCFPGA_FPGMGR_GPIO_INTSTAT_OFST			0x840
+#घोषणा SOCFPGA_FPGMGR_GPIO_RAW_INTSTAT_OFST			0x844
+#घोषणा SOCFPGA_FPGMGR_GPIO_PORTA_EOI_OFST			0x84c
+#घोषणा SOCFPGA_FPGMGR_GPIO_EXT_PORTA_OFST			0x850
 
 /* Register bit defines */
-/* SOCFPGA_FPGMGR_STAT register mode field values */
-#define SOCFPGA_FPGMGR_STAT_POWER_UP				0x0 /*ramping*/
-#define SOCFPGA_FPGMGR_STAT_RESET				0x1
-#define SOCFPGA_FPGMGR_STAT_CFG					0x2
-#define SOCFPGA_FPGMGR_STAT_INIT				0x3
-#define SOCFPGA_FPGMGR_STAT_USER_MODE				0x4
-#define SOCFPGA_FPGMGR_STAT_UNKNOWN				0x5
-#define SOCFPGA_FPGMGR_STAT_STATE_MASK				0x7
-/* This is a flag value that doesn't really happen in this register field */
-#define SOCFPGA_FPGMGR_STAT_POWER_OFF				0x0
+/* SOCFPGA_FPGMGR_STAT रेजिस्टर mode field values */
+#घोषणा SOCFPGA_FPGMGR_STAT_POWER_UP				0x0 /*ramping*/
+#घोषणा SOCFPGA_FPGMGR_STAT_RESET				0x1
+#घोषणा SOCFPGA_FPGMGR_STAT_CFG					0x2
+#घोषणा SOCFPGA_FPGMGR_STAT_INIT				0x3
+#घोषणा SOCFPGA_FPGMGR_STAT_USER_MODE				0x4
+#घोषणा SOCFPGA_FPGMGR_STAT_UNKNOWN				0x5
+#घोषणा SOCFPGA_FPGMGR_STAT_STATE_MASK				0x7
+/* This is a flag value that करोesn't really happen in this रेजिस्टर field */
+#घोषणा SOCFPGA_FPGMGR_STAT_POWER_OFF				0x0
 
-#define MSEL_PP16_FAST_NOAES_NODC				0x0
-#define MSEL_PP16_FAST_AES_NODC					0x1
-#define MSEL_PP16_FAST_AESOPT_DC				0x2
-#define MSEL_PP16_SLOW_NOAES_NODC				0x4
-#define MSEL_PP16_SLOW_AES_NODC					0x5
-#define MSEL_PP16_SLOW_AESOPT_DC				0x6
-#define MSEL_PP32_FAST_NOAES_NODC				0x8
-#define MSEL_PP32_FAST_AES_NODC					0x9
-#define MSEL_PP32_FAST_AESOPT_DC				0xa
-#define MSEL_PP32_SLOW_NOAES_NODC				0xc
-#define MSEL_PP32_SLOW_AES_NODC					0xd
-#define MSEL_PP32_SLOW_AESOPT_DC				0xe
-#define SOCFPGA_FPGMGR_STAT_MSEL_MASK				0x000000f8
-#define SOCFPGA_FPGMGR_STAT_MSEL_SHIFT				3
+#घोषणा MSEL_PP16_FAST_NOAES_NODC				0x0
+#घोषणा MSEL_PP16_FAST_AES_NODC					0x1
+#घोषणा MSEL_PP16_FAST_AESOPT_DC				0x2
+#घोषणा MSEL_PP16_SLOW_NOAES_NODC				0x4
+#घोषणा MSEL_PP16_SLOW_AES_NODC					0x5
+#घोषणा MSEL_PP16_SLOW_AESOPT_DC				0x6
+#घोषणा MSEL_PP32_FAST_NOAES_NODC				0x8
+#घोषणा MSEL_PP32_FAST_AES_NODC					0x9
+#घोषणा MSEL_PP32_FAST_AESOPT_DC				0xa
+#घोषणा MSEL_PP32_SLOW_NOAES_NODC				0xc
+#घोषणा MSEL_PP32_SLOW_AES_NODC					0xd
+#घोषणा MSEL_PP32_SLOW_AESOPT_DC				0xe
+#घोषणा SOCFPGA_FPGMGR_STAT_MSEL_MASK				0x000000f8
+#घोषणा SOCFPGA_FPGMGR_STAT_MSEL_SHIFT				3
 
-/* SOCFPGA_FPGMGR_CTL register */
-#define SOCFPGA_FPGMGR_CTL_EN					0x00000001
-#define SOCFPGA_FPGMGR_CTL_NCE					0x00000002
-#define SOCFPGA_FPGMGR_CTL_NCFGPULL				0x00000004
+/* SOCFPGA_FPGMGR_CTL रेजिस्टर */
+#घोषणा SOCFPGA_FPGMGR_CTL_EN					0x00000001
+#घोषणा SOCFPGA_FPGMGR_CTL_NCE					0x00000002
+#घोषणा SOCFPGA_FPGMGR_CTL_NCFGPULL				0x00000004
 
-#define CDRATIO_X1						0x00000000
-#define CDRATIO_X2						0x00000040
-#define CDRATIO_X4						0x00000080
-#define CDRATIO_X8						0x000000c0
-#define SOCFPGA_FPGMGR_CTL_CDRATIO_MASK				0x000000c0
+#घोषणा CDRATIO_X1						0x00000000
+#घोषणा CDRATIO_X2						0x00000040
+#घोषणा CDRATIO_X4						0x00000080
+#घोषणा CDRATIO_X8						0x000000c0
+#घोषणा SOCFPGA_FPGMGR_CTL_CDRATIO_MASK				0x000000c0
 
-#define SOCFPGA_FPGMGR_CTL_AXICFGEN				0x00000100
+#घोषणा SOCFPGA_FPGMGR_CTL_AXICFGEN				0x00000100
 
-#define CFGWDTH_16						0x00000000
-#define CFGWDTH_32						0x00000200
-#define SOCFPGA_FPGMGR_CTL_CFGWDTH_MASK				0x00000200
+#घोषणा CFGWDTH_16						0x00000000
+#घोषणा CFGWDTH_32						0x00000200
+#घोषणा SOCFPGA_FPGMGR_CTL_CFGWDTH_MASK				0x00000200
 
-/* SOCFPGA_FPGMGR_DCLKSTAT register */
-#define SOCFPGA_FPGMGR_DCLKSTAT_DCNTDONE_E_DONE			0x1
+/* SOCFPGA_FPGMGR_DCLKSTAT रेजिस्टर */
+#घोषणा SOCFPGA_FPGMGR_DCLKSTAT_DCNTDONE_E_DONE			0x1
 
-/* SOCFPGA_FPGMGR_GPIO_* registers share the same bit positions */
-#define SOCFPGA_FPGMGR_MON_NSTATUS				0x0001
-#define SOCFPGA_FPGMGR_MON_CONF_DONE				0x0002
-#define SOCFPGA_FPGMGR_MON_INIT_DONE				0x0004
-#define SOCFPGA_FPGMGR_MON_CRC_ERROR				0x0008
-#define SOCFPGA_FPGMGR_MON_CVP_CONF_DONE			0x0010
-#define SOCFPGA_FPGMGR_MON_PR_READY				0x0020
-#define SOCFPGA_FPGMGR_MON_PR_ERROR				0x0040
-#define SOCFPGA_FPGMGR_MON_PR_DONE				0x0080
-#define SOCFPGA_FPGMGR_MON_NCONFIG_PIN				0x0100
-#define SOCFPGA_FPGMGR_MON_NSTATUS_PIN				0x0200
-#define SOCFPGA_FPGMGR_MON_CONF_DONE_PIN			0x0400
-#define SOCFPGA_FPGMGR_MON_FPGA_POWER_ON			0x0800
-#define SOCFPGA_FPGMGR_MON_STATUS_MASK				0x0fff
+/* SOCFPGA_FPGMGR_GPIO_* रेजिस्टरs share the same bit positions */
+#घोषणा SOCFPGA_FPGMGR_MON_NSTATUS				0x0001
+#घोषणा SOCFPGA_FPGMGR_MON_CONF_DONE				0x0002
+#घोषणा SOCFPGA_FPGMGR_MON_INIT_DONE				0x0004
+#घोषणा SOCFPGA_FPGMGR_MON_CRC_ERROR				0x0008
+#घोषणा SOCFPGA_FPGMGR_MON_CVP_CONF_DONE			0x0010
+#घोषणा SOCFPGA_FPGMGR_MON_PR_READY				0x0020
+#घोषणा SOCFPGA_FPGMGR_MON_PR_ERROR				0x0040
+#घोषणा SOCFPGA_FPGMGR_MON_PR_DONE				0x0080
+#घोषणा SOCFPGA_FPGMGR_MON_NCONFIG_PIN				0x0100
+#घोषणा SOCFPGA_FPGMGR_MON_NSTATUS_PIN				0x0200
+#घोषणा SOCFPGA_FPGMGR_MON_CONF_DONE_PIN			0x0400
+#घोषणा SOCFPGA_FPGMGR_MON_FPGA_POWER_ON			0x0800
+#घोषणा SOCFPGA_FPGMGR_MON_STATUS_MASK				0x0fff
 
-#define SOCFPGA_FPGMGR_NUM_SUPPLIES 3
-#define SOCFPGA_RESUME_TIMEOUT 3
+#घोषणा SOCFPGA_FPGMGR_NUM_SUPPLIES 3
+#घोषणा SOCFPGA_RESUME_TIMEOUT 3
 
-/* In power-up order. Reverse for power-down. */
-static const char *supply_names[SOCFPGA_FPGMGR_NUM_SUPPLIES] __maybe_unused = {
+/* In घातer-up order. Reverse क्रम घातer-करोwn. */
+अटल स्थिर अक्षर *supply_names[SOCFPGA_FPGMGR_NUM_SUPPLIES] __maybe_unused = अणु
 	"FPGA-1.5V",
 	"FPGA-1.1V",
 	"FPGA-2.5V",
-};
+पूर्ण;
 
-struct socfpga_fpga_priv {
-	void __iomem *fpga_base_addr;
-	void __iomem *fpga_data_addr;
-	struct completion status_complete;
-	int irq;
-};
+काष्ठा socfpga_fpga_priv अणु
+	व्योम __iomem *fpga_base_addr;
+	व्योम __iomem *fpga_data_addr;
+	काष्ठा completion status_complete;
+	पूर्णांक irq;
+पूर्ण;
 
-struct cfgmgr_mode {
-	/* Values to set in the CTRL register */
+काष्ठा cfgmgr_mode अणु
+	/* Values to set in the CTRL रेजिस्टर */
 	u32 ctrl;
 
 	/* flag that this table entry is a valid mode */
 	bool valid;
-};
+पूर्ण;
 
 /* For SOCFPGA_FPGMGR_STAT_MSEL field */
-static struct cfgmgr_mode cfgmgr_modes[] = {
-	[MSEL_PP16_FAST_NOAES_NODC] = { CFGWDTH_16 | CDRATIO_X1, 1 },
-	[MSEL_PP16_FAST_AES_NODC] =   { CFGWDTH_16 | CDRATIO_X2, 1 },
-	[MSEL_PP16_FAST_AESOPT_DC] =  { CFGWDTH_16 | CDRATIO_X4, 1 },
-	[MSEL_PP16_SLOW_NOAES_NODC] = { CFGWDTH_16 | CDRATIO_X1, 1 },
-	[MSEL_PP16_SLOW_AES_NODC] =   { CFGWDTH_16 | CDRATIO_X2, 1 },
-	[MSEL_PP16_SLOW_AESOPT_DC] =  { CFGWDTH_16 | CDRATIO_X4, 1 },
-	[MSEL_PP32_FAST_NOAES_NODC] = { CFGWDTH_32 | CDRATIO_X1, 1 },
-	[MSEL_PP32_FAST_AES_NODC] =   { CFGWDTH_32 | CDRATIO_X4, 1 },
-	[MSEL_PP32_FAST_AESOPT_DC] =  { CFGWDTH_32 | CDRATIO_X8, 1 },
-	[MSEL_PP32_SLOW_NOAES_NODC] = { CFGWDTH_32 | CDRATIO_X1, 1 },
-	[MSEL_PP32_SLOW_AES_NODC] =   { CFGWDTH_32 | CDRATIO_X4, 1 },
-	[MSEL_PP32_SLOW_AESOPT_DC] =  { CFGWDTH_32 | CDRATIO_X8, 1 },
-};
+अटल काष्ठा cfgmgr_mode cfgmgr_modes[] = अणु
+	[MSEL_PP16_FAST_NOAES_NODC] = अणु CFGWDTH_16 | CDRATIO_X1, 1 पूर्ण,
+	[MSEL_PP16_FAST_AES_NODC] =   अणु CFGWDTH_16 | CDRATIO_X2, 1 पूर्ण,
+	[MSEL_PP16_FAST_AESOPT_DC] =  अणु CFGWDTH_16 | CDRATIO_X4, 1 पूर्ण,
+	[MSEL_PP16_SLOW_NOAES_NODC] = अणु CFGWDTH_16 | CDRATIO_X1, 1 पूर्ण,
+	[MSEL_PP16_SLOW_AES_NODC] =   अणु CFGWDTH_16 | CDRATIO_X2, 1 पूर्ण,
+	[MSEL_PP16_SLOW_AESOPT_DC] =  अणु CFGWDTH_16 | CDRATIO_X4, 1 पूर्ण,
+	[MSEL_PP32_FAST_NOAES_NODC] = अणु CFGWDTH_32 | CDRATIO_X1, 1 पूर्ण,
+	[MSEL_PP32_FAST_AES_NODC] =   अणु CFGWDTH_32 | CDRATIO_X4, 1 पूर्ण,
+	[MSEL_PP32_FAST_AESOPT_DC] =  अणु CFGWDTH_32 | CDRATIO_X8, 1 पूर्ण,
+	[MSEL_PP32_SLOW_NOAES_NODC] = अणु CFGWDTH_32 | CDRATIO_X1, 1 पूर्ण,
+	[MSEL_PP32_SLOW_AES_NODC] =   अणु CFGWDTH_32 | CDRATIO_X4, 1 पूर्ण,
+	[MSEL_PP32_SLOW_AESOPT_DC] =  अणु CFGWDTH_32 | CDRATIO_X8, 1 पूर्ण,
+पूर्ण;
 
-static u32 socfpga_fpga_readl(struct socfpga_fpga_priv *priv, u32 reg_offset)
-{
-	return readl(priv->fpga_base_addr + reg_offset);
-}
+अटल u32 socfpga_fpga_पढ़ोl(काष्ठा socfpga_fpga_priv *priv, u32 reg_offset)
+अणु
+	वापस पढ़ोl(priv->fpga_base_addr + reg_offset);
+पूर्ण
 
-static void socfpga_fpga_writel(struct socfpga_fpga_priv *priv, u32 reg_offset,
+अटल व्योम socfpga_fpga_ग_लिखोl(काष्ठा socfpga_fpga_priv *priv, u32 reg_offset,
 				u32 value)
-{
-	writel(value, priv->fpga_base_addr + reg_offset);
-}
+अणु
+	ग_लिखोl(value, priv->fpga_base_addr + reg_offset);
+पूर्ण
 
-static u32 socfpga_fpga_raw_readl(struct socfpga_fpga_priv *priv,
+अटल u32 socfpga_fpga_raw_पढ़ोl(काष्ठा socfpga_fpga_priv *priv,
 				  u32 reg_offset)
-{
-	return __raw_readl(priv->fpga_base_addr + reg_offset);
-}
+अणु
+	वापस __raw_पढ़ोl(priv->fpga_base_addr + reg_offset);
+पूर्ण
 
-static void socfpga_fpga_raw_writel(struct socfpga_fpga_priv *priv,
+अटल व्योम socfpga_fpga_raw_ग_लिखोl(काष्ठा socfpga_fpga_priv *priv,
 				    u32 reg_offset, u32 value)
-{
-	__raw_writel(value, priv->fpga_base_addr + reg_offset);
-}
+अणु
+	__raw_ग_लिखोl(value, priv->fpga_base_addr + reg_offset);
+पूर्ण
 
-static void socfpga_fpga_data_writel(struct socfpga_fpga_priv *priv, u32 value)
-{
-	writel(value, priv->fpga_data_addr);
-}
+अटल व्योम socfpga_fpga_data_ग_लिखोl(काष्ठा socfpga_fpga_priv *priv, u32 value)
+अणु
+	ग_लिखोl(value, priv->fpga_data_addr);
+पूर्ण
 
-static inline void socfpga_fpga_set_bitsl(struct socfpga_fpga_priv *priv,
+अटल अंतरभूत व्योम socfpga_fpga_set_bitsl(काष्ठा socfpga_fpga_priv *priv,
 					  u32 offset, u32 bits)
-{
+अणु
 	u32 val;
 
-	val = socfpga_fpga_readl(priv, offset);
+	val = socfpga_fpga_पढ़ोl(priv, offset);
 	val |= bits;
-	socfpga_fpga_writel(priv, offset, val);
-}
+	socfpga_fpga_ग_लिखोl(priv, offset, val);
+पूर्ण
 
-static inline void socfpga_fpga_clr_bitsl(struct socfpga_fpga_priv *priv,
+अटल अंतरभूत व्योम socfpga_fpga_clr_bitsl(काष्ठा socfpga_fpga_priv *priv,
 					  u32 offset, u32 bits)
-{
+अणु
 	u32 val;
 
-	val = socfpga_fpga_readl(priv, offset);
+	val = socfpga_fpga_पढ़ोl(priv, offset);
 	val &= ~bits;
-	socfpga_fpga_writel(priv, offset, val);
-}
+	socfpga_fpga_ग_लिखोl(priv, offset, val);
+पूर्ण
 
-static u32 socfpga_fpga_mon_status_get(struct socfpga_fpga_priv *priv)
-{
-	return socfpga_fpga_readl(priv, SOCFPGA_FPGMGR_GPIO_EXT_PORTA_OFST) &
+अटल u32 socfpga_fpga_mon_status_get(काष्ठा socfpga_fpga_priv *priv)
+अणु
+	वापस socfpga_fpga_पढ़ोl(priv, SOCFPGA_FPGMGR_GPIO_EXT_PORTA_OFST) &
 		SOCFPGA_FPGMGR_MON_STATUS_MASK;
-}
+पूर्ण
 
-static u32 socfpga_fpga_state_get(struct socfpga_fpga_priv *priv)
-{
+अटल u32 socfpga_fpga_state_get(काष्ठा socfpga_fpga_priv *priv)
+अणु
 	u32 status = socfpga_fpga_mon_status_get(priv);
 
-	if ((status & SOCFPGA_FPGMGR_MON_FPGA_POWER_ON) == 0)
-		return SOCFPGA_FPGMGR_STAT_POWER_OFF;
+	अगर ((status & SOCFPGA_FPGMGR_MON_FPGA_POWER_ON) == 0)
+		वापस SOCFPGA_FPGMGR_STAT_POWER_OFF;
 
-	return socfpga_fpga_readl(priv, SOCFPGA_FPGMGR_STAT_OFST) &
+	वापस socfpga_fpga_पढ़ोl(priv, SOCFPGA_FPGMGR_STAT_OFST) &
 		SOCFPGA_FPGMGR_STAT_STATE_MASK;
-}
+पूर्ण
 
-static void socfpga_fpga_clear_done_status(struct socfpga_fpga_priv *priv)
-{
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_DCLKSTAT_OFST,
+अटल व्योम socfpga_fpga_clear_करोne_status(काष्ठा socfpga_fpga_priv *priv)
+अणु
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_DCLKSTAT_OFST,
 			    SOCFPGA_FPGMGR_DCLKSTAT_DCNTDONE_E_DONE);
-}
+पूर्ण
 
 /*
- * Set the DCLKCNT, wait for DCLKSTAT to report the count completed, and clear
+ * Set the DCLKCNT, रुको क्रम DCLKSTAT to report the count completed, and clear
  * the complete status.
  */
-static int socfpga_fpga_dclk_set_and_wait_clear(struct socfpga_fpga_priv *priv,
+अटल पूर्णांक socfpga_fpga_dclk_set_and_रुको_clear(काष्ठा socfpga_fpga_priv *priv,
 						u32 count)
-{
-	int timeout = 2;
-	u32 done;
+अणु
+	पूर्णांक समयout = 2;
+	u32 करोne;
 
 	/* Clear any existing DONE status. */
-	if (socfpga_fpga_readl(priv, SOCFPGA_FPGMGR_DCLKSTAT_OFST))
-		socfpga_fpga_clear_done_status(priv);
+	अगर (socfpga_fpga_पढ़ोl(priv, SOCFPGA_FPGMGR_DCLKSTAT_OFST))
+		socfpga_fpga_clear_करोne_status(priv);
 
 	/* Issue the DCLK count. */
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_DCLKCNT_OFST, count);
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_DCLKCNT_OFST, count);
 
-	/* Poll DCLKSTAT to see if it completed in the timeout period. */
-	do {
-		done = socfpga_fpga_readl(priv, SOCFPGA_FPGMGR_DCLKSTAT_OFST);
-		if (done == SOCFPGA_FPGMGR_DCLKSTAT_DCNTDONE_E_DONE) {
-			socfpga_fpga_clear_done_status(priv);
-			return 0;
-		}
+	/* Poll DCLKSTAT to see अगर it completed in the समयout period. */
+	करो अणु
+		करोne = socfpga_fpga_पढ़ोl(priv, SOCFPGA_FPGMGR_DCLKSTAT_OFST);
+		अगर (करोne == SOCFPGA_FPGMGR_DCLKSTAT_DCNTDONE_E_DONE) अणु
+			socfpga_fpga_clear_करोne_status(priv);
+			वापस 0;
+		पूर्ण
 		udelay(1);
-	} while (timeout--);
+	पूर्ण जबतक (समयout--);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int socfpga_fpga_wait_for_state(struct socfpga_fpga_priv *priv,
+अटल पूर्णांक socfpga_fpga_रुको_क्रम_state(काष्ठा socfpga_fpga_priv *priv,
 				       u32 state)
-{
-	int timeout = 2;
+अणु
+	पूर्णांक समयout = 2;
 
 	/*
-	 * HW doesn't support an interrupt for changes in state, so poll to see
-	 * if it matches the requested state within the timeout period.
+	 * HW करोesn't support an पूर्णांकerrupt क्रम changes in state, so poll to see
+	 * अगर it matches the requested state within the समयout period.
 	 */
-	do {
-		if ((socfpga_fpga_state_get(priv) & state) != 0)
-			return 0;
+	करो अणु
+		अगर ((socfpga_fpga_state_get(priv) & state) != 0)
+			वापस 0;
 		msleep(20);
-	} while (timeout--);
+	पूर्ण जबतक (समयout--);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static void socfpga_fpga_enable_irqs(struct socfpga_fpga_priv *priv, u32 irqs)
-{
+अटल व्योम socfpga_fpga_enable_irqs(काष्ठा socfpga_fpga_priv *priv, u32 irqs)
+अणु
 	/* set irqs to level sensitive */
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_GPIO_INTTYPE_LEVEL_OFST, 0);
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_GPIO_INTTYPE_LEVEL_OFST, 0);
 
-	/* set interrupt polarity */
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_GPIO_INT_POL_OFST, irqs);
+	/* set पूर्णांकerrupt polarity */
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_GPIO_INT_POL_OFST, irqs);
 
 	/* clear irqs */
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_GPIO_PORTA_EOI_OFST, irqs);
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_GPIO_PORTA_EOI_OFST, irqs);
 
-	/* unmask interrupts */
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_GPIO_INTMSK_OFST, 0);
+	/* unmask पूर्णांकerrupts */
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_GPIO_INTMSK_OFST, 0);
 
-	/* enable interrupts */
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_GPIO_INTEN_OFST, irqs);
-}
+	/* enable पूर्णांकerrupts */
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_GPIO_INTEN_OFST, irqs);
+पूर्ण
 
-static void socfpga_fpga_disable_irqs(struct socfpga_fpga_priv *priv)
-{
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_GPIO_INTEN_OFST, 0);
-}
+अटल व्योम socfpga_fpga_disable_irqs(काष्ठा socfpga_fpga_priv *priv)
+अणु
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_GPIO_INTEN_OFST, 0);
+पूर्ण
 
-static irqreturn_t socfpga_fpga_isr(int irq, void *dev_id)
-{
-	struct socfpga_fpga_priv *priv = dev_id;
+अटल irqवापस_t socfpga_fpga_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा socfpga_fpga_priv *priv = dev_id;
 	u32 irqs, st;
-	bool conf_done, nstatus;
+	bool conf_करोne, nstatus;
 
 	/* clear irqs */
-	irqs = socfpga_fpga_raw_readl(priv, SOCFPGA_FPGMGR_GPIO_INTSTAT_OFST);
+	irqs = socfpga_fpga_raw_पढ़ोl(priv, SOCFPGA_FPGMGR_GPIO_INTSTAT_OFST);
 
-	socfpga_fpga_raw_writel(priv, SOCFPGA_FPGMGR_GPIO_PORTA_EOI_OFST, irqs);
+	socfpga_fpga_raw_ग_लिखोl(priv, SOCFPGA_FPGMGR_GPIO_PORTA_EOI_OFST, irqs);
 
-	st = socfpga_fpga_raw_readl(priv, SOCFPGA_FPGMGR_GPIO_EXT_PORTA_OFST);
-	conf_done = (st & SOCFPGA_FPGMGR_MON_CONF_DONE) != 0;
+	st = socfpga_fpga_raw_पढ़ोl(priv, SOCFPGA_FPGMGR_GPIO_EXT_PORTA_OFST);
+	conf_करोne = (st & SOCFPGA_FPGMGR_MON_CONF_DONE) != 0;
 	nstatus = (st & SOCFPGA_FPGMGR_MON_NSTATUS) != 0;
 
 	/* success */
-	if (conf_done && nstatus) {
+	अगर (conf_करोne && nstatus) अणु
 		/* disable irqs */
-		socfpga_fpga_raw_writel(priv,
+		socfpga_fpga_raw_ग_लिखोl(priv,
 					SOCFPGA_FPGMGR_GPIO_INTEN_OFST, 0);
 		complete(&priv->status_complete);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int socfpga_fpga_wait_for_config_done(struct socfpga_fpga_priv *priv)
-{
-	int timeout, ret = 0;
+अटल पूर्णांक socfpga_fpga_रुको_क्रम_config_करोne(काष्ठा socfpga_fpga_priv *priv)
+अणु
+	पूर्णांक समयout, ret = 0;
 
 	socfpga_fpga_disable_irqs(priv);
 	init_completion(&priv->status_complete);
 	socfpga_fpga_enable_irqs(priv, SOCFPGA_FPGMGR_MON_CONF_DONE);
 
-	timeout = wait_for_completion_interruptible_timeout(
+	समयout = रुको_क्रम_completion_पूर्णांकerruptible_समयout(
 						&priv->status_complete,
-						msecs_to_jiffies(10));
-	if (timeout == 0)
+						msecs_to_jअगरfies(10));
+	अगर (समयout == 0)
 		ret = -ETIMEDOUT;
 
 	socfpga_fpga_disable_irqs(priv);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int socfpga_fpga_cfg_mode_get(struct socfpga_fpga_priv *priv)
-{
+अटल पूर्णांक socfpga_fpga_cfg_mode_get(काष्ठा socfpga_fpga_priv *priv)
+अणु
 	u32 msel;
 
-	msel = socfpga_fpga_readl(priv, SOCFPGA_FPGMGR_STAT_OFST);
+	msel = socfpga_fpga_पढ़ोl(priv, SOCFPGA_FPGMGR_STAT_OFST);
 	msel &= SOCFPGA_FPGMGR_STAT_MSEL_MASK;
 	msel >>= SOCFPGA_FPGMGR_STAT_MSEL_SHIFT;
 
 	/* Check that this MSEL setting is supported */
-	if ((msel >= ARRAY_SIZE(cfgmgr_modes)) || !cfgmgr_modes[msel].valid)
-		return -EINVAL;
+	अगर ((msel >= ARRAY_SIZE(cfgmgr_modes)) || !cfgmgr_modes[msel].valid)
+		वापस -EINVAL;
 
-	return msel;
-}
+	वापस msel;
+पूर्ण
 
-static int socfpga_fpga_cfg_mode_set(struct socfpga_fpga_priv *priv)
-{
+अटल पूर्णांक socfpga_fpga_cfg_mode_set(काष्ठा socfpga_fpga_priv *priv)
+अणु
 	u32 ctrl_reg;
-	int mode;
+	पूर्णांक mode;
 
 	/* get value from MSEL pins */
 	mode = socfpga_fpga_cfg_mode_get(priv);
-	if (mode < 0)
-		return mode;
+	अगर (mode < 0)
+		वापस mode;
 
-	/* Adjust CTRL for the CDRATIO */
-	ctrl_reg = socfpga_fpga_readl(priv, SOCFPGA_FPGMGR_CTL_OFST);
+	/* Adjust CTRL क्रम the CDRATIO */
+	ctrl_reg = socfpga_fpga_पढ़ोl(priv, SOCFPGA_FPGMGR_CTL_OFST);
 	ctrl_reg &= ~SOCFPGA_FPGMGR_CTL_CDRATIO_MASK;
 	ctrl_reg &= ~SOCFPGA_FPGMGR_CTL_CFGWDTH_MASK;
 	ctrl_reg |= cfgmgr_modes[mode].ctrl;
 
 	/* Set NCE to 0. */
 	ctrl_reg &= ~SOCFPGA_FPGMGR_CTL_NCE;
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_CTL_OFST, ctrl_reg);
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_CTL_OFST, ctrl_reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int socfpga_fpga_reset(struct fpga_manager *mgr)
-{
-	struct socfpga_fpga_priv *priv = mgr->priv;
+अटल पूर्णांक socfpga_fpga_reset(काष्ठा fpga_manager *mgr)
+अणु
+	काष्ठा socfpga_fpga_priv *priv = mgr->priv;
 	u32 ctrl_reg, status;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * Step 1:
@@ -367,121 +368,121 @@ static int socfpga_fpga_reset(struct fpga_manager *mgr)
 	 *  - Set CTRL.NCE to 0
 	 */
 	ret = socfpga_fpga_cfg_mode_set(priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Step 2: Set CTRL.EN to 1 */
 	socfpga_fpga_set_bitsl(priv, SOCFPGA_FPGMGR_CTL_OFST,
 			       SOCFPGA_FPGMGR_CTL_EN);
 
 	/* Step 3: Set CTRL.NCONFIGPULL to 1 to put FPGA in reset */
-	ctrl_reg = socfpga_fpga_readl(priv, SOCFPGA_FPGMGR_CTL_OFST);
+	ctrl_reg = socfpga_fpga_पढ़ोl(priv, SOCFPGA_FPGMGR_CTL_OFST);
 	ctrl_reg |= SOCFPGA_FPGMGR_CTL_NCFGPULL;
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_CTL_OFST, ctrl_reg);
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_CTL_OFST, ctrl_reg);
 
-	/* Step 4: Wait for STATUS.MODE to report FPGA is in reset phase */
-	status = socfpga_fpga_wait_for_state(priv, SOCFPGA_FPGMGR_STAT_RESET);
+	/* Step 4: Wait क्रम STATUS.MODE to report FPGA is in reset phase */
+	status = socfpga_fpga_रुको_क्रम_state(priv, SOCFPGA_FPGMGR_STAT_RESET);
 
 	/* Step 5: Set CONTROL.NCONFIGPULL to 0 to release FPGA from reset */
 	ctrl_reg &= ~SOCFPGA_FPGMGR_CTL_NCFGPULL;
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_CTL_OFST, ctrl_reg);
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_CTL_OFST, ctrl_reg);
 
-	/* Timeout waiting for reset */
-	if (status)
-		return -ETIMEDOUT;
+	/* Timeout रुकोing क्रम reset */
+	अगर (status)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Prepare the FPGA to receive the configuration data.
  */
-static int socfpga_fpga_ops_configure_init(struct fpga_manager *mgr,
-					   struct fpga_image_info *info,
-					   const char *buf, size_t count)
-{
-	struct socfpga_fpga_priv *priv = mgr->priv;
-	int ret;
+अटल पूर्णांक socfpga_fpga_ops_configure_init(काष्ठा fpga_manager *mgr,
+					   काष्ठा fpga_image_info *info,
+					   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा socfpga_fpga_priv *priv = mgr->priv;
+	पूर्णांक ret;
 
-	if (info->flags & FPGA_MGR_PARTIAL_RECONFIG) {
+	अगर (info->flags & FPGA_MGR_PARTIAL_RECONFIG) अणु
 		dev_err(&mgr->dev, "Partial reconfiguration not supported.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	/* Steps 1 - 5: Reset the FPGA */
 	ret = socfpga_fpga_reset(mgr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Step 6: Wait for FPGA to enter configuration phase */
-	if (socfpga_fpga_wait_for_state(priv, SOCFPGA_FPGMGR_STAT_CFG))
-		return -ETIMEDOUT;
+	/* Step 6: Wait क्रम FPGA to enter configuration phase */
+	अगर (socfpga_fpga_रुको_क्रम_state(priv, SOCFPGA_FPGMGR_STAT_CFG))
+		वापस -ETIMEDOUT;
 
-	/* Step 7: Clear nSTATUS interrupt */
-	socfpga_fpga_writel(priv, SOCFPGA_FPGMGR_GPIO_PORTA_EOI_OFST,
+	/* Step 7: Clear nSTATUS पूर्णांकerrupt */
+	socfpga_fpga_ग_लिखोl(priv, SOCFPGA_FPGMGR_GPIO_PORTA_EOI_OFST,
 			    SOCFPGA_FPGMGR_MON_NSTATUS);
 
 	/* Step 8: Set CTRL.AXICFGEN to 1 to enable transfer of config data */
 	socfpga_fpga_set_bitsl(priv, SOCFPGA_FPGMGR_CTL_OFST,
 			       SOCFPGA_FPGMGR_CTL_AXICFGEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Step 9: write data to the FPGA data register
+ * Step 9: ग_लिखो data to the FPGA data रेजिस्टर
  */
-static int socfpga_fpga_ops_configure_write(struct fpga_manager *mgr,
-					    const char *buf, size_t count)
-{
-	struct socfpga_fpga_priv *priv = mgr->priv;
+अटल पूर्णांक socfpga_fpga_ops_configure_ग_लिखो(काष्ठा fpga_manager *mgr,
+					    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा socfpga_fpga_priv *priv = mgr->priv;
 	u32 *buffer_32 = (u32 *)buf;
-	size_t i = 0;
+	माप_प्रकार i = 0;
 
-	if (count <= 0)
-		return -EINVAL;
+	अगर (count <= 0)
+		वापस -EINVAL;
 
 	/* Write out the complete 32-bit chunks. */
-	while (count >= sizeof(u32)) {
-		socfpga_fpga_data_writel(priv, buffer_32[i++]);
-		count -= sizeof(u32);
-	}
+	जबतक (count >= माप(u32)) अणु
+		socfpga_fpga_data_ग_लिखोl(priv, buffer_32[i++]);
+		count -= माप(u32);
+	पूर्ण
 
-	/* Write out remaining non 32-bit chunks. */
-	switch (count) {
-	case 3:
-		socfpga_fpga_data_writel(priv, buffer_32[i++] & 0x00ffffff);
-		break;
-	case 2:
-		socfpga_fpga_data_writel(priv, buffer_32[i++] & 0x0000ffff);
-		break;
-	case 1:
-		socfpga_fpga_data_writel(priv, buffer_32[i++] & 0x000000ff);
-		break;
-	case 0:
-		break;
-	default:
+	/* Write out reमुख्यing non 32-bit chunks. */
+	चयन (count) अणु
+	हाल 3:
+		socfpga_fpga_data_ग_लिखोl(priv, buffer_32[i++] & 0x00ffffff);
+		अवरोध;
+	हाल 2:
+		socfpga_fpga_data_ग_लिखोl(priv, buffer_32[i++] & 0x0000ffff);
+		अवरोध;
+	हाल 1:
+		socfpga_fpga_data_ग_लिखोl(priv, buffer_32[i++] & 0x000000ff);
+		अवरोध;
+	हाल 0:
+		अवरोध;
+	शेष:
 		/* This will never happen. */
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int socfpga_fpga_ops_configure_complete(struct fpga_manager *mgr,
-					       struct fpga_image_info *info)
-{
-	struct socfpga_fpga_priv *priv = mgr->priv;
+अटल पूर्णांक socfpga_fpga_ops_configure_complete(काष्ठा fpga_manager *mgr,
+					       काष्ठा fpga_image_info *info)
+अणु
+	काष्ठा socfpga_fpga_priv *priv = mgr->priv;
 	u32 status;
 
 	/*
 	 * Step 10:
 	 *  - Observe CONF_DONE and nSTATUS (active low)
-	 *  - if CONF_DONE = 1 and nSTATUS = 1, configuration was successful
-	 *  - if CONF_DONE = 0 and nSTATUS = 0, configuration failed
+	 *  - अगर CONF_DONE = 1 and nSTATUS = 1, configuration was successful
+	 *  - अगर CONF_DONE = 0 and nSTATUS = 0, configuration failed
 	 */
-	status = socfpga_fpga_wait_for_config_done(priv);
-	if (status)
-		return status;
+	status = socfpga_fpga_रुको_क्रम_config_करोne(priv);
+	अगर (status)
+		वापस status;
 
 	/* Step 11: Clear CTRL.AXICFGEN to disable transfer of config data */
 	socfpga_fpga_clr_bitsl(priv, SOCFPGA_FPGMGR_CTL_OFST,
@@ -490,113 +491,113 @@ static int socfpga_fpga_ops_configure_complete(struct fpga_manager *mgr,
 	/*
 	 * Step 12:
 	 *  - Write 4 to DCLKCNT
-	 *  - Wait for STATUS.DCNTDONE = 1
+	 *  - Wait क्रम STATUS.DCNTDONE = 1
 	 *  - Clear W1C bit in STATUS.DCNTDONE
 	 */
-	if (socfpga_fpga_dclk_set_and_wait_clear(priv, 4))
-		return -ETIMEDOUT;
+	अगर (socfpga_fpga_dclk_set_and_रुको_clear(priv, 4))
+		वापस -ETIMEDOUT;
 
-	/* Step 13: Wait for STATUS.MODE to report USER MODE */
-	if (socfpga_fpga_wait_for_state(priv, SOCFPGA_FPGMGR_STAT_USER_MODE))
-		return -ETIMEDOUT;
+	/* Step 13: Wait क्रम STATUS.MODE to report USER MODE */
+	अगर (socfpga_fpga_रुको_क्रम_state(priv, SOCFPGA_FPGMGR_STAT_USER_MODE))
+		वापस -ETIMEDOUT;
 
 	/* Step 14: Set CTRL.EN to 0 */
 	socfpga_fpga_clr_bitsl(priv, SOCFPGA_FPGMGR_CTL_OFST,
 			       SOCFPGA_FPGMGR_CTL_EN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Translate state register values to FPGA framework state */
-static const enum fpga_mgr_states socfpga_state_to_framework_state[] = {
+/* Translate state रेजिस्टर values to FPGA framework state */
+अटल स्थिर क्रमागत fpga_mgr_states socfpga_state_to_framework_state[] = अणु
 	[SOCFPGA_FPGMGR_STAT_POWER_OFF] = FPGA_MGR_STATE_POWER_OFF,
 	[SOCFPGA_FPGMGR_STAT_RESET] = FPGA_MGR_STATE_RESET,
 	[SOCFPGA_FPGMGR_STAT_CFG] = FPGA_MGR_STATE_WRITE_INIT,
 	[SOCFPGA_FPGMGR_STAT_INIT] = FPGA_MGR_STATE_WRITE_INIT,
 	[SOCFPGA_FPGMGR_STAT_USER_MODE] = FPGA_MGR_STATE_OPERATING,
 	[SOCFPGA_FPGMGR_STAT_UNKNOWN] = FPGA_MGR_STATE_UNKNOWN,
-};
+पूर्ण;
 
-static enum fpga_mgr_states socfpga_fpga_ops_state(struct fpga_manager *mgr)
-{
-	struct socfpga_fpga_priv *priv = mgr->priv;
-	enum fpga_mgr_states ret;
+अटल क्रमागत fpga_mgr_states socfpga_fpga_ops_state(काष्ठा fpga_manager *mgr)
+अणु
+	काष्ठा socfpga_fpga_priv *priv = mgr->priv;
+	क्रमागत fpga_mgr_states ret;
 	u32 state;
 
 	state = socfpga_fpga_state_get(priv);
 
-	if (state < ARRAY_SIZE(socfpga_state_to_framework_state))
+	अगर (state < ARRAY_SIZE(socfpga_state_to_framework_state))
 		ret = socfpga_state_to_framework_state[state];
-	else
+	अन्यथा
 		ret = FPGA_MGR_STATE_UNKNOWN;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct fpga_manager_ops socfpga_fpga_ops = {
+अटल स्थिर काष्ठा fpga_manager_ops socfpga_fpga_ops = अणु
 	.state = socfpga_fpga_ops_state,
-	.write_init = socfpga_fpga_ops_configure_init,
-	.write = socfpga_fpga_ops_configure_write,
-	.write_complete = socfpga_fpga_ops_configure_complete,
-};
+	.ग_लिखो_init = socfpga_fpga_ops_configure_init,
+	.ग_लिखो = socfpga_fpga_ops_configure_ग_लिखो,
+	.ग_लिखो_complete = socfpga_fpga_ops_configure_complete,
+पूर्ण;
 
-static int socfpga_fpga_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct socfpga_fpga_priv *priv;
-	struct fpga_manager *mgr;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक socfpga_fpga_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा socfpga_fpga_priv *priv;
+	काष्ठा fpga_manager *mgr;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->fpga_base_addr = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->fpga_base_addr))
-		return PTR_ERR(priv->fpga_base_addr);
+	अगर (IS_ERR(priv->fpga_base_addr))
+		वापस PTR_ERR(priv->fpga_base_addr);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 	priv->fpga_data_addr = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->fpga_data_addr))
-		return PTR_ERR(priv->fpga_data_addr);
+	अगर (IS_ERR(priv->fpga_data_addr))
+		वापस PTR_ERR(priv->fpga_data_addr);
 
-	priv->irq = platform_get_irq(pdev, 0);
-	if (priv->irq < 0)
-		return priv->irq;
+	priv->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (priv->irq < 0)
+		वापस priv->irq;
 
 	ret = devm_request_irq(dev, priv->irq, socfpga_fpga_isr, 0,
 			       dev_name(dev), priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mgr = devm_fpga_mgr_create(dev, "Altera SOCFPGA FPGA Manager",
 				   &socfpga_fpga_ops, priv);
-	if (!mgr)
-		return -ENOMEM;
+	अगर (!mgr)
+		वापस -ENOMEM;
 
-	return devm_fpga_mgr_register(dev, mgr);
-}
+	वापस devm_fpga_mgr_रेजिस्टर(dev, mgr);
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id socfpga_fpga_of_match[] = {
-	{ .compatible = "altr,socfpga-fpga-mgr", },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id socfpga_fpga_of_match[] = अणु
+	अणु .compatible = "altr,socfpga-fpga-mgr", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, socfpga_fpga_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver socfpga_fpga_driver = {
+अटल काष्ठा platक्रमm_driver socfpga_fpga_driver = अणु
 	.probe = socfpga_fpga_probe,
-	.driver = {
+	.driver = अणु
 		.name	= "socfpga_fpga_manager",
 		.of_match_table = of_match_ptr(socfpga_fpga_of_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(socfpga_fpga_driver);
+module_platक्रमm_driver(socfpga_fpga_driver);
 
 MODULE_AUTHOR("Alan Tull <atull@opensource.altera.com>");
 MODULE_DESCRIPTION("Altera SOCFPGA FPGA Manager");

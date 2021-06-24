@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
 /*
  * IBM ASM Service Processor Device Driver
  *
  * Copyright (C) IBM Corporation, 2004
  *
- * Author: Max Asböck <amax@us.ibm.com>
+ * Author: Max Asbथघck <amax@us.ibm.com>
  */
 
-#include <linux/termios.h>
-#include <linux/tty.h>
-#include <linux/serial_core.h>
-#include <linux/serial_reg.h>
-#include <linux/serial_8250.h>
-#include "ibmasm.h"
-#include "lowlevel.h"
+#समावेश <linux/termios.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <linux/serial_8250.h>
+#समावेश "ibmasm.h"
+#समावेश "lowlevel.h"
 
 
-void ibmasm_register_uart(struct service_processor *sp)
-{
-	struct uart_8250_port uart;
-	void __iomem *iomem_base;
+व्योम ibmयंत्र_रेजिस्टर_uart(काष्ठा service_processor *sp)
+अणु
+	काष्ठा uart_8250_port uart;
+	व्योम __iomem *iomem_base;
 
 	iomem_base = sp->base_address + SCOUT_COM_B_BASE;
 
-	/* read the uart scratch register to determine if the UART
-	 * is dedicated to the service processor or if the OS can use it
+	/* पढ़ो the uart scratch रेजिस्टर to determine अगर the UART
+	 * is dedicated to the service processor or अगर the OS can use it
 	 */
-	if (0 == readl(iomem_base + UART_SCR)) {
+	अगर (0 == पढ़ोl(iomem_base + UART_SCR)) अणु
 		dev_info(sp->dev, "IBM SP UART not registered, owned by service processor\n");
 		sp->serial_line = -1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memset(&uart, 0, sizeof(uart));
+	स_रखो(&uart, 0, माप(uart));
 	uart.port.irq		= sp->irq;
 	uart.port.uartclk	= 3686400;
 	uart.port.flags		= UPF_SHARE_IRQ;
 	uart.port.iotype	= UPIO_MEM;
 	uart.port.membase	= iomem_base;
 
-	sp->serial_line = serial8250_register_8250_port(&uart);
-	if (sp->serial_line < 0) {
+	sp->serial_line = serial8250_रेजिस्टर_8250_port(&uart);
+	अगर (sp->serial_line < 0) अणु
 		dev_err(sp->dev, "Failed to register serial port\n");
-		return;
-	}
-	enable_uart_interrupts(sp->base_address);
-}
+		वापस;
+	पूर्ण
+	enable_uart_पूर्णांकerrupts(sp->base_address);
+पूर्ण
 
-void ibmasm_unregister_uart(struct service_processor *sp)
-{
-	if (sp->serial_line < 0)
-		return;
+व्योम ibmयंत्र_unरेजिस्टर_uart(काष्ठा service_processor *sp)
+अणु
+	अगर (sp->serial_line < 0)
+		वापस;
 
-	disable_uart_interrupts(sp->base_address);
-	serial8250_unregister_port(sp->serial_line);
-}
+	disable_uart_पूर्णांकerrupts(sp->base_address);
+	serial8250_unरेजिस्टर_port(sp->serial_line);
+पूर्ण

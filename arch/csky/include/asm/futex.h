@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_FUTEX_H
-#define __ASM_CSKY_FUTEX_H
+#अगर_अघोषित __ASM_CSKY_FUTEX_H
+#घोषणा __ASM_CSKY_FUTEX_H
 
-#ifndef CONFIG_SMP
-#include <asm-generic/futex.h>
-#else
-#include <linux/atomic.h>
-#include <linux/futex.h>
-#include <linux/uaccess.h>
-#include <linux/errno.h>
+#अगर_अघोषित CONFIG_SMP
+#समावेश <यंत्र-generic/futex.h>
+#अन्यथा
+#समावेश <linux/atomic.h>
+#समावेश <linux/futex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#define __futex_atomic_op(insn, ret, oldval, uaddr, oparg)		\
-{									\
-	u32 tmp;							\
+#घोषणा __futex_atomic_op(insn, ret, oldval, uaddr, oparg)		\
+अणु									\
+	u32 पंचांगp;							\
 									\
 	__atomic_pre_full_fence();					\
 									\
-	__asm__ __volatile__ (						\
+	__यंत्र__ __अस्थिर__ (						\
 	"1:	ldex.w	%[ov], %[u]			\n"		\
 	"	"insn"					\n"		\
 	"2:	stex.w	%[t], %[u]			\n"		\
@@ -31,67 +32,67 @@
 	"	.long	2b, 3b				\n"		\
 	"	.previous				\n"		\
 	: [r] "+r" (ret), [ov] "=&r" (oldval),				\
-	  [u] "+m" (*uaddr), [t] "=&r" (tmp)				\
+	  [u] "+m" (*uaddr), [t] "=&r" (पंचांगp)				\
 	: [op] "Jr" (oparg), [e] "jr" (-EFAULT)				\
 	: "memory");							\
 									\
 	__atomic_post_full_fence();					\
-}
+पूर्ण
 
-static inline int
-arch_futex_atomic_op_inuser(int op, int oparg, int *oval, u32 __user *uaddr)
-{
-	int oldval = 0, ret = 0;
+अटल अंतरभूत पूर्णांक
+arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval, u32 __user *uaddr)
+अणु
+	पूर्णांक oldval = 0, ret = 0;
 
-	if (!access_ok(uaddr, sizeof(u32)))
-		return -EFAULT;
+	अगर (!access_ok(uaddr, माप(u32)))
+		वापस -EFAULT;
 
-	switch (op) {
-	case FUTEX_OP_SET:
+	चयन (op) अणु
+	हाल FUTEX_OP_SET:
 		__futex_atomic_op("mov %[t], %[ov]",
 				  ret, oldval, uaddr, oparg);
-		break;
-	case FUTEX_OP_ADD:
+		अवरोध;
+	हाल FUTEX_OP_ADD:
 		__futex_atomic_op("add %[t], %[ov], %[op]",
 				  ret, oldval, uaddr, oparg);
-		break;
-	case FUTEX_OP_OR:
+		अवरोध;
+	हाल FUTEX_OP_OR:
 		__futex_atomic_op("or %[t], %[ov], %[op]",
 				  ret, oldval, uaddr, oparg);
-		break;
-	case FUTEX_OP_ANDN:
+		अवरोध;
+	हाल FUTEX_OP_ANDN:
 		__futex_atomic_op("and %[t], %[ov], %[op]",
 				  ret, oldval, uaddr, ~oparg);
-		break;
-	case FUTEX_OP_XOR:
+		अवरोध;
+	हाल FUTEX_OP_XOR:
 		__futex_atomic_op("xor %[t], %[ov], %[op]",
 				  ret, oldval, uaddr, oparg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENOSYS;
-	}
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		*oval = oldval;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 
-static inline int
+अटल अंतरभूत पूर्णांक
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-{
-	int ret = 0;
-	u32 val, tmp;
+अणु
+	पूर्णांक ret = 0;
+	u32 val, पंचांगp;
 
-	if (!access_ok(uaddr, sizeof(u32)))
-		return -EFAULT;
+	अगर (!access_ok(uaddr, माप(u32)))
+		वापस -EFAULT;
 
 	__atomic_pre_full_fence();
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 	"1:	ldex.w	%[v], %[u]			\n"
 	"	cmpne	%[v], %[ov]			\n"
 	"	bt	4f				\n"
@@ -107,15 +108,15 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 	"	.long	2b, 3b				\n"
 	"	.previous				\n"
 	: [r] "+r" (ret), [v] "=&r" (val), [u] "+m" (*uaddr),
-	  [t] "=&r" (tmp)
+	  [t] "=&r" (पंचांगp)
 	: [ov] "Jr" (oldval), [nv] "Jr" (newval), [e] "Jr" (-EFAULT)
 	: "memory");
 
 	__atomic_post_full_fence();
 
 	*uval = val;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif /* CONFIG_SMP */
-#endif /* __ASM_CSKY_FUTEX_H */
+#पूर्ण_अगर /* CONFIG_SMP */
+#पूर्ण_अगर /* __ASM_CSKY_FUTEX_H */

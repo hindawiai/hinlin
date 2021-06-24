@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,15 +23,15 @@
  * Author: Stanislaw Skowronek
  */
 
-#ifndef ATOM_NAMES_H
-#define ATOM_NAMES_H
+#अगर_अघोषित ATOM_NAMES_H
+#घोषणा ATOM_NAMES_H
 
-#include "atom.h"
+#समावेश "atom.h"
 
-#ifdef ATOM_DEBUG
+#अगर_घोषित ATOM_DEBUG
 
-#define ATOM_OP_NAMES_CNT 123
-static char *atom_op_names[ATOM_OP_NAMES_CNT] = {
+#घोषणा ATOM_OP_NAMES_CNT 123
+अटल अक्षर *atom_op_names[ATOM_OP_NAMES_CNT] = अणु
 "RESERVED", "MOVE_REG", "MOVE_PS", "MOVE_WS", "MOVE_FB", "MOVE_PLL",
 "MOVE_MC", "AND_REG", "AND_PS", "AND_WS", "AND_FB", "AND_PLL", "AND_MC",
 "OR_REG", "OR_PS", "OR_WS", "OR_FB", "OR_PLL", "OR_MC", "SHIFT_LEFT_REG",
@@ -53,10 +54,10 @@ static char *atom_op_names[ATOM_OP_NAMES_CNT] = {
 "XOR_PLL", "XOR_MC", "SHL_REG", "SHL_PS", "SHL_WS", "SHL_FB", "SHL_PLL",
 "SHL_MC", "SHR_REG", "SHR_PS", "SHR_WS", "SHR_FB", "SHR_PLL", "SHR_MC",
 "DEBUG", "CTB_DS",
-};
+पूर्ण;
 
-#define ATOM_TABLE_NAMES_CNT 74
-static char *atom_table_names[ATOM_TABLE_NAMES_CNT] = {
+#घोषणा ATOM_TABLE_NAMES_CNT 74
+अटल अक्षर *atom_table_names[ATOM_TABLE_NAMES_CNT] = अणु
 "ASIC_Init", "GetDisplaySurfaceSize", "ASIC_RegistersInit",
 "VRAM_BlockVenderDetection", "SetClocksRatio", "MemoryControllerInit",
 "GPIO_PinInit", "MemoryParamAdjust", "DVOEncoderControl",
@@ -82,19 +83,19 @@ static char *atom_table_names[ATOM_TABLE_NAMES_CNT] = {
 "EnableLVDS_SS", "DFP1OutputControl", "SetVoltage", "CRT1OutputControl",
 "CRT2OutputControl", "SetupHWAssistedI2CStatus", "ClockSource",
 "MemoryDeviceInit", "EnableYUV",
-};
+पूर्ण;
 
-#define ATOM_IO_NAMES_CNT 5
-static char *atom_io_names[ATOM_IO_NAMES_CNT] = {
+#घोषणा ATOM_IO_NAMES_CNT 5
+अटल अक्षर *atom_io_names[ATOM_IO_NAMES_CNT] = अणु
 "MM", "PLL", "MC", "PCIE", "PCIE PORT",
-};
+पूर्ण;
 
-#else
+#अन्यथा
 
-#define ATOM_OP_NAMES_CNT 0
-#define ATOM_TABLE_NAMES_CNT 0
-#define ATOM_IO_NAMES_CNT 0
+#घोषणा ATOM_OP_NAMES_CNT 0
+#घोषणा ATOM_TABLE_NAMES_CNT 0
+#घोषणा ATOM_IO_NAMES_CNT 0
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Function prototypes for misc. drm utility functions.
- * Specifically this file is for function prototypes for functions which
+ * Function prototypes क्रम misc. drm utility functions.
+ * Specअगरically this file is क्रम function prototypes क्रम functions which
  * may also be used outside of drm code (e.g. in fbdev drivers).
  *
  * Copyright (C) 2017 Hans de Goede <hdegoede@redhat.com>
  */
 
-#ifndef __DRM_UTILS_H__
-#define __DRM_UTILS_H__
+#अगर_अघोषित __DRM_UTILS_H__
+#घोषणा __DRM_UTILS_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-int drm_get_panel_orientation_quirk(int width, int height);
+पूर्णांक drm_get_panel_orientation_quirk(पूर्णांक width, पूर्णांक height);
 
-signed long drm_timeout_abs_to_jiffies(int64_t timeout_nsec);
+चिन्हित दीर्घ drm_समयout_असल_to_jअगरfies(पूर्णांक64_t समयout_nsec);
 
-#endif
+#पूर्ण_अगर

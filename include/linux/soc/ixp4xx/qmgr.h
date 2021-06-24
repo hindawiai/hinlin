@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2007 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
-#ifndef IXP4XX_QMGR_H
-#define IXP4XX_QMGR_H
+#अगर_अघोषित IXP4XX_QMGR_H
+#घोषणा IXP4XX_QMGR_H
 
-#include <linux/io.h>
-#include <linux/kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
 
-#define DEBUG_QMGR	0
+#घोषणा DEBUG_QMGR	0
 
-#define HALF_QUEUES	32
-#define QUEUES		64
-#define MAX_QUEUE_LENGTH 4	/* in dwords */
+#घोषणा HALF_QUEUES	32
+#घोषणा QUEUES		64
+#घोषणा MAX_QUEUE_LENGTH 4	/* in dwords */
 
-#define QUEUE_STAT1_EMPTY		1 /* queue status bits */
-#define QUEUE_STAT1_NEARLY_EMPTY	2
-#define QUEUE_STAT1_NEARLY_FULL		4
-#define QUEUE_STAT1_FULL		8
-#define QUEUE_STAT2_UNDERFLOW		1
-#define QUEUE_STAT2_OVERFLOW		2
+#घोषणा QUEUE_STAT1_EMPTY		1 /* queue status bits */
+#घोषणा QUEUE_STAT1_NEARLY_EMPTY	2
+#घोषणा QUEUE_STAT1_NEARLY_FULL		4
+#घोषणा QUEUE_STAT1_FULL		8
+#घोषणा QUEUE_STAT2_UNDERFLOW		1
+#घोषणा QUEUE_STAT2_OVERFLOW		2
 
-#define QUEUE_WATERMARK_0_ENTRIES	0
-#define QUEUE_WATERMARK_1_ENTRY		1
-#define QUEUE_WATERMARK_2_ENTRIES	2
-#define QUEUE_WATERMARK_4_ENTRIES	3
-#define QUEUE_WATERMARK_8_ENTRIES	4
-#define QUEUE_WATERMARK_16_ENTRIES	5
-#define QUEUE_WATERMARK_32_ENTRIES	6
-#define QUEUE_WATERMARK_64_ENTRIES	7
+#घोषणा QUEUE_WATERMARK_0_ENTRIES	0
+#घोषणा QUEUE_WATERMARK_1_ENTRY		1
+#घोषणा QUEUE_WATERMARK_2_ENTRIES	2
+#घोषणा QUEUE_WATERMARK_4_ENTRIES	3
+#घोषणा QUEUE_WATERMARK_8_ENTRIES	4
+#घोषणा QUEUE_WATERMARK_16_ENTRIES	5
+#घोषणा QUEUE_WATERMARK_32_ENTRIES	6
+#घोषणा QUEUE_WATERMARK_64_ENTRIES	7
 
-/* queue interrupt request conditions */
-#define QUEUE_IRQ_SRC_EMPTY		0
-#define QUEUE_IRQ_SRC_NEARLY_EMPTY	1
-#define QUEUE_IRQ_SRC_NEARLY_FULL	2
-#define QUEUE_IRQ_SRC_FULL		3
-#define QUEUE_IRQ_SRC_NOT_EMPTY		4
-#define QUEUE_IRQ_SRC_NOT_NEARLY_EMPTY	5
-#define QUEUE_IRQ_SRC_NOT_NEARLY_FULL	6
-#define QUEUE_IRQ_SRC_NOT_FULL		7
+/* queue पूर्णांकerrupt request conditions */
+#घोषणा QUEUE_IRQ_SRC_EMPTY		0
+#घोषणा QUEUE_IRQ_SRC_NEARLY_EMPTY	1
+#घोषणा QUEUE_IRQ_SRC_NEARLY_FULL	2
+#घोषणा QUEUE_IRQ_SRC_FULL		3
+#घोषणा QUEUE_IRQ_SRC_NOT_EMPTY		4
+#घोषणा QUEUE_IRQ_SRC_NOT_NEARLY_EMPTY	5
+#घोषणा QUEUE_IRQ_SRC_NOT_NEARLY_FULL	6
+#घोषणा QUEUE_IRQ_SRC_NOT_FULL		7
 
-struct qmgr_regs {
+काष्ठा qmgr_regs अणु
 	u32 acc[QUEUES][MAX_QUEUE_LENGTH]; /* 0x000 - 0x3FF */
 	u32 stat1[4];		/* 0x400 - 0x40F */
 	u32 stat2[2];		/* 0x410 - 0x417 */
@@ -52,37 +53,37 @@ struct qmgr_regs {
 	u32 irqstat[2];		/* 0x438 - 0x43F - IRQ access only */
 	u32 reserved[1776];
 	u32 sram[2048];		/* 0x2000 - 0x3FFF - config and buffer */
-};
+पूर्ण;
 
-void qmgr_put_entry(unsigned int queue, u32 val);
-u32 qmgr_get_entry(unsigned int queue);
-int qmgr_stat_empty(unsigned int queue);
-int qmgr_stat_below_low_watermark(unsigned int queue);
-int qmgr_stat_full(unsigned int queue);
-int qmgr_stat_overflow(unsigned int queue);
-void qmgr_release_queue(unsigned int queue);
-void qmgr_set_irq(unsigned int queue, int src,
-		  void (*handler)(void *pdev), void *pdev);
-void qmgr_enable_irq(unsigned int queue);
-void qmgr_disable_irq(unsigned int queue);
+व्योम qmgr_put_entry(अचिन्हित पूर्णांक queue, u32 val);
+u32 qmgr_get_entry(अचिन्हित पूर्णांक queue);
+पूर्णांक qmgr_stat_empty(अचिन्हित पूर्णांक queue);
+पूर्णांक qmgr_stat_below_low_watermark(अचिन्हित पूर्णांक queue);
+पूर्णांक qmgr_stat_full(अचिन्हित पूर्णांक queue);
+पूर्णांक qmgr_stat_overflow(अचिन्हित पूर्णांक queue);
+व्योम qmgr_release_queue(अचिन्हित पूर्णांक queue);
+व्योम qmgr_set_irq(अचिन्हित पूर्णांक queue, पूर्णांक src,
+		  व्योम (*handler)(व्योम *pdev), व्योम *pdev);
+व्योम qmgr_enable_irq(अचिन्हित पूर्णांक queue);
+व्योम qmgr_disable_irq(अचिन्हित पूर्णांक queue);
 
 /* request_ and release_queue() must be called from non-IRQ context */
 
-#if DEBUG_QMGR
-extern char qmgr_queue_descs[QUEUES][32];
+#अगर DEBUG_QMGR
+बाह्य अक्षर qmgr_queue_descs[QUEUES][32];
 
-int qmgr_request_queue(unsigned int queue, unsigned int len /* dwords */,
-		       unsigned int nearly_empty_watermark,
-		       unsigned int nearly_full_watermark,
-		       const char *desc_format, const char* name);
-#else
-int __qmgr_request_queue(unsigned int queue, unsigned int len /* dwords */,
-			 unsigned int nearly_empty_watermark,
-			 unsigned int nearly_full_watermark);
-#define qmgr_request_queue(queue, len, nearly_empty_watermark,		\
-			   nearly_full_watermark, desc_format, name)	\
+पूर्णांक qmgr_request_queue(अचिन्हित पूर्णांक queue, अचिन्हित पूर्णांक len /* dwords */,
+		       अचिन्हित पूर्णांक nearly_empty_watermark,
+		       अचिन्हित पूर्णांक nearly_full_watermark,
+		       स्थिर अक्षर *desc_क्रमmat, स्थिर अक्षर* name);
+#अन्यथा
+पूर्णांक __qmgr_request_queue(अचिन्हित पूर्णांक queue, अचिन्हित पूर्णांक len /* dwords */,
+			 अचिन्हित पूर्णांक nearly_empty_watermark,
+			 अचिन्हित पूर्णांक nearly_full_watermark);
+#घोषणा qmgr_request_queue(queue, len, nearly_empty_watermark,		\
+			   nearly_full_watermark, desc_क्रमmat, name)	\
 	__qmgr_request_queue(queue, len, nearly_empty_watermark,	\
 			     nearly_full_watermark)
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

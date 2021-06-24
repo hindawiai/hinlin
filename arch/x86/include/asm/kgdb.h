@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_KGDB_H
-#define _ASM_X86_KGDB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_KGDB_H
+#घोषणा _ASM_X86_KGDB_H
 
 /*
  * Copyright (C) 2001-2004 Amit S. Kale
  * Copyright (C) 2008 Wind River Systems, Inc.
  */
 
-#include <asm/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
 /*
- * BUFMAX defines the maximum number of characters in inbound/outbound
- * buffers at least NUMREGBYTES*2 are needed for register packets
- * Longer buffer is needed to list all threads
+ * BUFMAX defines the maximum number of अक्षरacters in inbound/outbound
+ * buffers at least NUMREGBYTES*2 are needed क्रम रेजिस्टर packets
+ * Longer buffer is needed to list all thपढ़ोs
  */
-#define BUFMAX			1024
+#घोषणा BUFMAX			1024
 
 /*
- *  Note that this register image is in a different order than
- *  the register image that Linux produces at interrupt time.
+ *  Note that this रेजिस्टर image is in a dअगरferent order than
+ *  the रेजिस्टर image that Linux produces at पूर्णांकerrupt समय.
  *
- *  Linux's register image is defined by struct pt_regs in ptrace.h.
- *  Just why GDB uses a different order is a historical mystery.
+ *  Linux's रेजिस्टर image is defined by काष्ठा pt_regs in ptrace.h.
+ *  Just why GDB uses a dअगरferent order is a historical mystery.
  */
-#ifdef CONFIG_X86_32
-enum regnames {
+#अगर_घोषित CONFIG_X86_32
+क्रमागत regnames अणु
 	GDB_AX,			/* 0 */
 	GDB_CX,			/* 1 */
 	GDB_DX,			/* 2 */
@@ -41,12 +42,12 @@ enum regnames {
 	GDB_ES,			/* 13 */
 	GDB_FS,			/* 14 */
 	GDB_GS,			/* 15 */
-};
-#define GDB_ORIG_AX		41
-#define DBG_MAX_REG_NUM		16
-#define NUMREGBYTES		((GDB_GS+1)*4)
-#else /* ! CONFIG_X86_32 */
-enum regnames {
+पूर्ण;
+#घोषणा GDB_ORIG_AX		41
+#घोषणा DBG_MAX_REG_NUM		16
+#घोषणा NUMREGBYTES		((GDB_GS+1)*4)
+#अन्यथा /* ! CONFIG_X86_32 */
+क्रमागत regnames अणु
 	GDB_AX,			/* 0 */
 	GDB_BX,			/* 1 */
 	GDB_CX,			/* 2 */
@@ -71,22 +72,22 @@ enum regnames {
 	GDB_ES,			/* 21 */
 	GDB_FS,			/* 22 */
 	GDB_GS,			/* 23 */
-};
-#define GDB_ORIG_AX		57
-#define DBG_MAX_REG_NUM		24
+पूर्ण;
+#घोषणा GDB_ORIG_AX		57
+#घोषणा DBG_MAX_REG_NUM		24
 /* 17 64 bit regs and 5 32 bit regs */
-#define NUMREGBYTES		((17 * 8) + (5 * 4))
-#endif /* ! CONFIG_X86_32 */
+#घोषणा NUMREGBYTES		((17 * 8) + (5 * 4))
+#पूर्ण_अगर /* ! CONFIG_X86_32 */
 
-static inline void arch_kgdb_breakpoint(void)
-{
-	asm("   int $3");
-}
-#define BREAK_INSTR_SIZE	1
-#define CACHE_FLUSH_IS_SAFE	1
-#define GDB_ADJUSTS_BREAK_OFFSET
+अटल अंतरभूत व्योम arch_kgdb_अवरोधpoपूर्णांक(व्योम)
+अणु
+	यंत्र("   int $3");
+पूर्ण
+#घोषणा BREAK_INSTR_SIZE	1
+#घोषणा CACHE_FLUSH_IS_SAFE	1
+#घोषणा GDB_ADJUSTS_BREAK_OFFSET
 
-extern int kgdb_ll_trap(int cmd, const char *str,
-			struct pt_regs *regs, long err, int trap, int sig);
+बाह्य पूर्णांक kgdb_ll_trap(पूर्णांक cmd, स्थिर अक्षर *str,
+			काष्ठा pt_regs *regs, दीर्घ err, पूर्णांक trap, पूर्णांक sig);
 
-#endif /* _ASM_X86_KGDB_H */
+#पूर्ण_अगर /* _ASM_X86_KGDB_H */

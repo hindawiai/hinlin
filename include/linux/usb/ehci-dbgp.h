@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Standalone EHCI usb debug driver
  *
@@ -6,79 +7,79 @@
  *  Eric W. Biederman" <ebiederm@xmission.com> and
  *  Yinghai Lu <yhlu.kernel@gmail.com>
  *
- * Changes for early/late printk and HW errata:
+ * Changes क्रम early/late prपूर्णांकk and HW errata:
  *  Jason Wessel <jason.wessel@windriver.com>
  *  Copyright (C) 2009 Wind River Systems, Inc.
  *
  */
 
-#ifndef __LINUX_USB_EHCI_DBGP_H
-#define __LINUX_USB_EHCI_DBGP_H
+#अगर_अघोषित __LINUX_USB_EHCI_DBGP_H
+#घोषणा __LINUX_USB_EHCI_DBGP_H
 
-#include <linux/console.h>
-#include <linux/types.h>
+#समावेश <linux/console.h>
+#समावेश <linux/types.h>
 
-/* Appendix C, Debug port ... intended for use with special "debug devices"
- * that can help if there's no serial console.  (nonstandard enumeration.)
+/* Appendix C, Debug port ... पूर्णांकended क्रम use with special "debug devices"
+ * that can help अगर there's no serial console.  (nonstandard क्रमागतeration.)
  */
-struct ehci_dbg_port {
+काष्ठा ehci_dbg_port अणु
 	u32	control;
-#define DBGP_OWNER	(1<<30)
-#define DBGP_ENABLED	(1<<28)
-#define DBGP_DONE	(1<<16)
-#define DBGP_INUSE	(1<<10)
-#define DBGP_ERRCODE(x)	(((x)>>7)&0x07)
+#घोषणा DBGP_OWNER	(1<<30)
+#घोषणा DBGP_ENABLED	(1<<28)
+#घोषणा DBGP_DONE	(1<<16)
+#घोषणा DBGP_INUSE	(1<<10)
+#घोषणा DBGP_ERRCODE(x)	(((x)>>7)&0x07)
 #	define DBGP_ERR_BAD	1
 #	define DBGP_ERR_SIGNAL	2
-#define DBGP_ERROR	(1<<6)
-#define DBGP_GO		(1<<5)
-#define DBGP_OUT	(1<<4)
-#define DBGP_LEN(x)	(((x)>>0)&0x0f)
+#घोषणा DBGP_ERROR	(1<<6)
+#घोषणा DBGP_GO		(1<<5)
+#घोषणा DBGP_OUT	(1<<4)
+#घोषणा DBGP_LEN(x)	(((x)>>0)&0x0f)
 	u32	pids;
-#define DBGP_PID_GET(x)		(((x)>>16)&0xff)
-#define DBGP_PID_SET(data, tok)	(((data)<<8)|(tok))
+#घोषणा DBGP_PID_GET(x)		(((x)>>16)&0xff)
+#घोषणा DBGP_PID_SET(data, tok)	(((data)<<8)|(tok))
 	u32	data03;
 	u32	data47;
 	u32	address;
-#define DBGP_EPADDR(dev, ep)	(((dev)<<8)|(ep))
-};
+#घोषणा DBGP_EPADDR(dev, ep)	(((dev)<<8)|(ep))
+पूर्ण;
 
-#ifdef CONFIG_EARLY_PRINTK_DBGP
-extern int early_dbgp_init(char *s);
-extern struct console early_dbgp_console;
-#endif /* CONFIG_EARLY_PRINTK_DBGP */
+#अगर_घोषित CONFIG_EARLY_PRINTK_DBGP
+बाह्य पूर्णांक early_dbgp_init(अक्षर *s);
+बाह्य काष्ठा console early_dbgp_console;
+#पूर्ण_अगर /* CONFIG_EARLY_PRINTK_DBGP */
 
-struct usb_hcd;
+काष्ठा usb_hcd;
 
-#ifdef CONFIG_XEN_DOM0
-extern int xen_dbgp_reset_prep(struct usb_hcd *);
-extern int xen_dbgp_external_startup(struct usb_hcd *);
-#else
-static inline int xen_dbgp_reset_prep(struct usb_hcd *hcd)
-{
-	return 1; /* Shouldn't this be 0? */
-}
+#अगर_घोषित CONFIG_XEN_DOM0
+बाह्य पूर्णांक xen_dbgp_reset_prep(काष्ठा usb_hcd *);
+बाह्य पूर्णांक xen_dbgp_बाह्यal_startup(काष्ठा usb_hcd *);
+#अन्यथा
+अटल अंतरभूत पूर्णांक xen_dbgp_reset_prep(काष्ठा usb_hcd *hcd)
+अणु
+	वापस 1; /* Shouldn't this be 0? */
+पूर्ण
 
-static inline int xen_dbgp_external_startup(struct usb_hcd *hcd)
-{
-	return -1;
-}
-#endif
+अटल अंतरभूत पूर्णांक xen_dbgp_बाह्यal_startup(काष्ठा usb_hcd *hcd)
+अणु
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_EARLY_PRINTK_DBGP
+#अगर_घोषित CONFIG_EARLY_PRINTK_DBGP
 /* Call backs from ehci host driver to ehci debug driver */
-extern int dbgp_external_startup(struct usb_hcd *);
-extern int dbgp_reset_prep(struct usb_hcd *);
-#else
-static inline int dbgp_reset_prep(struct usb_hcd *hcd)
-{
-	return xen_dbgp_reset_prep(hcd);
-}
+बाह्य पूर्णांक dbgp_बाह्यal_startup(काष्ठा usb_hcd *);
+बाह्य पूर्णांक dbgp_reset_prep(काष्ठा usb_hcd *);
+#अन्यथा
+अटल अंतरभूत पूर्णांक dbgp_reset_prep(काष्ठा usb_hcd *hcd)
+अणु
+	वापस xen_dbgp_reset_prep(hcd);
+पूर्ण
 
-static inline int dbgp_external_startup(struct usb_hcd *hcd)
-{
-	return xen_dbgp_external_startup(hcd);
-}
-#endif
+अटल अंतरभूत पूर्णांक dbgp_बाह्यal_startup(काष्ठा usb_hcd *hcd)
+अणु
+	वापस xen_dbgp_बाह्यal_startup(hcd);
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __LINUX_USB_EHCI_DBGP_H */
+#पूर्ण_अगर /* __LINUX_USB_EHCI_DBGP_H */

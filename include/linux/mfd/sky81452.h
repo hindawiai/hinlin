@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * sky81452.h	SKY81452 MFD driver
  *
@@ -6,13 +7,13 @@
  * Author : Gyungoh Yoo <jack.yoo@skyworksinc.com>
  */
 
-#ifndef _SKY81452_H
-#define _SKY81452_H
+#अगर_अघोषित _SKY81452_H
+#घोषणा _SKY81452_H
 
-#include <linux/regulator/machine.h>
+#समावेश <linux/regulator/machine.h>
 
-struct sky81452_platform_data {
-	struct regulator_init_data *regulator_init_data;
-};
+काष्ठा sky81452_platक्रमm_data अणु
+	काष्ठा regulator_init_data *regulator_init_data;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

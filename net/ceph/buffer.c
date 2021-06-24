@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/ceph/ceph_debug.h>
+#समावेश <linux/ceph/ceph_debug.h>
 
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <linux/ceph/buffer.h>
-#include <linux/ceph/decode.h>
-#include <linux/ceph/libceph.h> /* for ceph_kvmalloc */
+#समावेश <linux/ceph/buffer.h>
+#समावेश <linux/ceph/decode.h>
+#समावेश <linux/ceph/libceph.h> /* क्रम ceph_kvदो_स्मृति */
 
-struct ceph_buffer *ceph_buffer_new(size_t len, gfp_t gfp)
-{
-	struct ceph_buffer *b;
+काष्ठा ceph_buffer *ceph_buffer_new(माप_प्रकार len, gfp_t gfp)
+अणु
+	काष्ठा ceph_buffer *b;
 
-	b = kmalloc(sizeof(*b), gfp);
-	if (!b)
-		return NULL;
+	b = kदो_स्मृति(माप(*b), gfp);
+	अगर (!b)
+		वापस शून्य;
 
-	b->vec.iov_base = ceph_kvmalloc(len, gfp);
-	if (!b->vec.iov_base) {
-		kfree(b);
-		return NULL;
-	}
+	b->vec.iov_base = ceph_kvदो_स्मृति(len, gfp);
+	अगर (!b->vec.iov_base) अणु
+		kमुक्त(b);
+		वापस शून्य;
+	पूर्ण
 
 	kref_init(&b->kref);
 	b->alloc_len = len;
 	b->vec.iov_len = len;
-	dout("buffer_new %p\n", b);
-	return b;
-}
+	करोut("buffer_new %p\n", b);
+	वापस b;
+पूर्ण
 EXPORT_SYMBOL(ceph_buffer_new);
 
-void ceph_buffer_release(struct kref *kref)
-{
-	struct ceph_buffer *b = container_of(kref, struct ceph_buffer, kref);
+व्योम ceph_buffer_release(काष्ठा kref *kref)
+अणु
+	काष्ठा ceph_buffer *b = container_of(kref, काष्ठा ceph_buffer, kref);
 
-	dout("buffer_release %p\n", b);
-	kvfree(b->vec.iov_base);
-	kfree(b);
-}
+	करोut("buffer_release %p\n", b);
+	kvमुक्त(b->vec.iov_base);
+	kमुक्त(b);
+पूर्ण
 EXPORT_SYMBOL(ceph_buffer_release);
 
-int ceph_decode_buffer(struct ceph_buffer **b, void **p, void *end)
-{
-	size_t len;
+पूर्णांक ceph_decode_buffer(काष्ठा ceph_buffer **b, व्योम **p, व्योम *end)
+अणु
+	माप_प्रकार len;
 
-	ceph_decode_need(p, end, sizeof(u32), bad);
+	ceph_decode_need(p, end, माप(u32), bad);
 	len = ceph_decode_32(p);
-	dout("decode_buffer len %d\n", (int)len);
+	करोut("decode_buffer len %d\n", (पूर्णांक)len);
 	ceph_decode_need(p, end, len, bad);
 	*b = ceph_buffer_new(len, GFP_NOFS);
-	if (!*b)
-		return -ENOMEM;
+	अगर (!*b)
+		वापस -ENOMEM;
 	ceph_decode_copy(p, (*b)->vec.iov_base, len);
-	return 0;
+	वापस 0;
 bad:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण

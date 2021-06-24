@@ -1,98 +1,99 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * f_acm.c -- USB CDC serial (ACM) function driver
  *
- * Copyright (C) 2003 Al Borchers (alborchers@steinerpoint.com)
+ * Copyright (C) 2003 Al Borchers (alborchers@steinerpoपूर्णांक.com)
  * Copyright (C) 2008 by David Brownell
  * Copyright (C) 2008 by Nokia Corporation
  * Copyright (C) 2009 by Samsung Electronics
  * Author: Michal Nazarewicz (mina86@mina86.com)
  */
 
-/* #define VERBOSE_DEBUG */
+/* #घोषणा VERBOSE_DEBUG */
 
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
 
-#include "u_serial.h"
+#समावेश "u_serial.h"
 
 
 /*
  * This CDC ACM function support just wraps control functions and
- * notifications around the generic serial-over-usb code.
+ * notअगरications around the generic serial-over-usb code.
  *
  * Because CDC ACM is standardized by the USB-IF, many host operating
- * systems have drivers for it.  Accordingly, ACM is the preferred
- * interop solution for serial-port type connections.  The control
- * models are often not necessary, and in any case don't do much in
+ * प्रणालीs have drivers क्रम it.  Accordingly, ACM is the preferred
+ * पूर्णांकerop solution क्रम serial-port type connections.  The control
+ * models are often not necessary, and in any हाल करोn't करो much in
  * this bare-bones implementation.
  *
- * Note that even MS-Windows has some support for ACM.  However, that
+ * Note that even MS-Winकरोws has some support क्रम ACM.  However, that
  * support is somewhat broken because when you use ACM in a composite
- * device, having multiple interfaces confuses the poor OS.  It doesn't
+ * device, having multiple पूर्णांकerfaces confuses the poor OS.  It करोesn't
  * seem to understand CDC Union descriptors.  The new "association"
- * descriptors (roughly equivalent to CDC Unions) may sometimes help.
+ * descriptors (roughly equivalent to CDC Unions) may someबार help.
  */
 
-struct f_acm {
-	struct gserial			port;
+काष्ठा f_acm अणु
+	काष्ठा gserial			port;
 	u8				ctrl_id, data_id;
 	u8				port_num;
 
 	u8				pending;
 
-	/* lock is mostly for pending and notify_req ... they get accessed
-	 * by callbacks both from tty (open/close/break) under its spinlock,
-	 * and notify_req.complete() which can't use that lock.
+	/* lock is mostly क्रम pending and notअगरy_req ... they get accessed
+	 * by callbacks both from tty (खोलो/बंद/अवरोध) under its spinlock,
+	 * and notअगरy_req.complete() which can't use that lock.
 	 */
 	spinlock_t			lock;
 
-	struct usb_ep			*notify;
-	struct usb_request		*notify_req;
+	काष्ठा usb_ep			*notअगरy;
+	काष्ठा usb_request		*notअगरy_req;
 
-	struct usb_cdc_line_coding	port_line_coding;	/* 8-N-1 etc */
+	काष्ठा usb_cdc_line_coding	port_line_coding;	/* 8-N-1 etc */
 
 	/* SetControlLineState request -- CDC 1.1 section 6.2.14 (INPUT) */
 	u16				port_handshake_bits;
-#define ACM_CTRL_RTS	(1 << 1)	/* unused with full duplex */
-#define ACM_CTRL_DTR	(1 << 0)	/* host is ready for data r/w */
+#घोषणा ACM_CTRL_RTS	(1 << 1)	/* unused with full duplex */
+#घोषणा ACM_CTRL_DTR	(1 << 0)	/* host is पढ़ोy क्रम data r/w */
 
-	/* SerialState notification -- CDC 1.1 section 6.3.5 (OUTPUT) */
+	/* SerialState notअगरication -- CDC 1.1 section 6.3.5 (OUTPUT) */
 	u16				serial_state;
-#define ACM_CTRL_OVERRUN	(1 << 6)
-#define ACM_CTRL_PARITY		(1 << 5)
-#define ACM_CTRL_FRAMING	(1 << 4)
-#define ACM_CTRL_RI		(1 << 3)
-#define ACM_CTRL_BRK		(1 << 2)
-#define ACM_CTRL_DSR		(1 << 1)
-#define ACM_CTRL_DCD		(1 << 0)
-};
+#घोषणा ACM_CTRL_OVERRUN	(1 << 6)
+#घोषणा ACM_CTRL_PARITY		(1 << 5)
+#घोषणा ACM_CTRL_FRAMING	(1 << 4)
+#घोषणा ACM_CTRL_RI		(1 << 3)
+#घोषणा ACM_CTRL_BRK		(1 << 2)
+#घोषणा ACM_CTRL_DSR		(1 << 1)
+#घोषणा ACM_CTRL_DCD		(1 << 0)
+पूर्ण;
 
-static inline struct f_acm *func_to_acm(struct usb_function *f)
-{
-	return container_of(f, struct f_acm, port.func);
-}
+अटल अंतरभूत काष्ठा f_acm *func_to_acm(काष्ठा usb_function *f)
+अणु
+	वापस container_of(f, काष्ठा f_acm, port.func);
+पूर्ण
 
-static inline struct f_acm *port_to_acm(struct gserial *p)
-{
-	return container_of(p, struct f_acm, port);
-}
+अटल अंतरभूत काष्ठा f_acm *port_to_acm(काष्ठा gserial *p)
+अणु
+	वापस container_of(p, काष्ठा f_acm, port);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-/* notification endpoint uses smallish and infrequent fixed-size messages */
+/* notअगरication endpoपूर्णांक uses smallish and infrequent fixed-size messages */
 
-#define GS_NOTIFY_INTERVAL_MS		32
-#define GS_NOTIFY_MAXPACKET		10	/* notification + 2 bytes */
+#घोषणा GS_NOTIFY_INTERVAL_MS		32
+#घोषणा GS_NOTIFY_MAXPACKET		10	/* notअगरication + 2 bytes */
 
-/* interface and class descriptors: */
+/* पूर्णांकerface and class descriptors: */
 
-static struct usb_interface_assoc_descriptor
-acm_iad_descriptor = {
-	.bLength =		sizeof acm_iad_descriptor,
+अटल काष्ठा usb_पूर्णांकerface_assoc_descriptor
+acm_iad_descriptor = अणु
+	.bLength =		माप acm_iad_descriptor,
 	.bDescriptorType =	USB_DT_INTERFACE_ASSOCIATION,
 
 	/* .bFirstInterface =	DYNAMIC, */
@@ -101,306 +102,306 @@ acm_iad_descriptor = {
 	.bFunctionSubClass =	USB_CDC_SUBCLASS_ACM,
 	.bFunctionProtocol =	USB_CDC_ACM_PROTO_AT_V25TER,
 	/* .iFunction =		DYNAMIC */
-};
+पूर्ण;
 
 
-static struct usb_interface_descriptor acm_control_interface_desc = {
+अटल काष्ठा usb_पूर्णांकerface_descriptor acm_control_पूर्णांकerface_desc = अणु
 	.bLength =		USB_DT_INTERFACE_SIZE,
 	.bDescriptorType =	USB_DT_INTERFACE,
 	/* .bInterfaceNumber = DYNAMIC */
-	.bNumEndpoints =	1,
+	.bNumEndpoपूर्णांकs =	1,
 	.bInterfaceClass =	USB_CLASS_COMM,
 	.bInterfaceSubClass =	USB_CDC_SUBCLASS_ACM,
 	.bInterfaceProtocol =	USB_CDC_ACM_PROTO_AT_V25TER,
 	/* .iInterface = DYNAMIC */
-};
+पूर्ण;
 
-static struct usb_interface_descriptor acm_data_interface_desc = {
+अटल काष्ठा usb_पूर्णांकerface_descriptor acm_data_पूर्णांकerface_desc = अणु
 	.bLength =		USB_DT_INTERFACE_SIZE,
 	.bDescriptorType =	USB_DT_INTERFACE,
 	/* .bInterfaceNumber = DYNAMIC */
-	.bNumEndpoints =	2,
+	.bNumEndpoपूर्णांकs =	2,
 	.bInterfaceClass =	USB_CLASS_CDC_DATA,
 	.bInterfaceSubClass =	0,
 	.bInterfaceProtocol =	0,
 	/* .iInterface = DYNAMIC */
-};
+पूर्ण;
 
-static struct usb_cdc_header_desc acm_header_desc = {
-	.bLength =		sizeof(acm_header_desc),
+अटल काष्ठा usb_cdc_header_desc acm_header_desc = अणु
+	.bLength =		माप(acm_header_desc),
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_HEADER_TYPE,
 	.bcdCDC =		cpu_to_le16(0x0110),
-};
+पूर्ण;
 
-static struct usb_cdc_call_mgmt_descriptor
-acm_call_mgmt_descriptor = {
-	.bLength =		sizeof(acm_call_mgmt_descriptor),
+अटल काष्ठा usb_cdc_call_mgmt_descriptor
+acm_call_mgmt_descriptor = अणु
+	.bLength =		माप(acm_call_mgmt_descriptor),
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_CALL_MANAGEMENT_TYPE,
 	.bmCapabilities =	0,
 	/* .bDataInterface = DYNAMIC */
-};
+पूर्ण;
 
-static struct usb_cdc_acm_descriptor acm_descriptor = {
-	.bLength =		sizeof(acm_descriptor),
+अटल काष्ठा usb_cdc_acm_descriptor acm_descriptor = अणु
+	.bLength =		माप(acm_descriptor),
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_ACM_TYPE,
 	.bmCapabilities =	USB_CDC_CAP_LINE,
-};
+पूर्ण;
 
-static struct usb_cdc_union_desc acm_union_desc = {
-	.bLength =		sizeof(acm_union_desc),
+अटल काष्ठा usb_cdc_जोड़_desc acm_जोड़_desc = अणु
+	.bLength =		माप(acm_जोड़_desc),
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_UNION_TYPE,
 	/* .bMasterInterface0 =	DYNAMIC */
 	/* .bSlaveInterface0 =	DYNAMIC */
-};
+पूर्ण;
 
 /* full speed support: */
 
-static struct usb_endpoint_descriptor acm_fs_notify_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor acm_fs_notअगरy_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_INT,
 	.wMaxPacketSize =	cpu_to_le16(GS_NOTIFY_MAXPACKET),
 	.bInterval =		GS_NOTIFY_INTERVAL_MS,
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor acm_fs_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor acm_fs_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor acm_fs_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor acm_fs_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
-	.bEndpointAddress =	USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-};
+पूर्ण;
 
-static struct usb_descriptor_header *acm_fs_function[] = {
-	(struct usb_descriptor_header *) &acm_iad_descriptor,
-	(struct usb_descriptor_header *) &acm_control_interface_desc,
-	(struct usb_descriptor_header *) &acm_header_desc,
-	(struct usb_descriptor_header *) &acm_call_mgmt_descriptor,
-	(struct usb_descriptor_header *) &acm_descriptor,
-	(struct usb_descriptor_header *) &acm_union_desc,
-	(struct usb_descriptor_header *) &acm_fs_notify_desc,
-	(struct usb_descriptor_header *) &acm_data_interface_desc,
-	(struct usb_descriptor_header *) &acm_fs_in_desc,
-	(struct usb_descriptor_header *) &acm_fs_out_desc,
-	NULL,
-};
+अटल काष्ठा usb_descriptor_header *acm_fs_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &acm_iad_descriptor,
+	(काष्ठा usb_descriptor_header *) &acm_control_पूर्णांकerface_desc,
+	(काष्ठा usb_descriptor_header *) &acm_header_desc,
+	(काष्ठा usb_descriptor_header *) &acm_call_mgmt_descriptor,
+	(काष्ठा usb_descriptor_header *) &acm_descriptor,
+	(काष्ठा usb_descriptor_header *) &acm_जोड़_desc,
+	(काष्ठा usb_descriptor_header *) &acm_fs_notअगरy_desc,
+	(काष्ठा usb_descriptor_header *) &acm_data_पूर्णांकerface_desc,
+	(काष्ठा usb_descriptor_header *) &acm_fs_in_desc,
+	(काष्ठा usb_descriptor_header *) &acm_fs_out_desc,
+	शून्य,
+पूर्ण;
 
 /* high speed support: */
-static struct usb_endpoint_descriptor acm_hs_notify_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor acm_hs_notअगरy_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_INT,
 	.wMaxPacketSize =	cpu_to_le16(GS_NOTIFY_MAXPACKET),
 	.bInterval =		USB_MS_TO_HS_INTERVAL(GS_NOTIFY_INTERVAL_MS),
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor acm_hs_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor acm_hs_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor acm_hs_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor acm_hs_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
-};
+पूर्ण;
 
-static struct usb_descriptor_header *acm_hs_function[] = {
-	(struct usb_descriptor_header *) &acm_iad_descriptor,
-	(struct usb_descriptor_header *) &acm_control_interface_desc,
-	(struct usb_descriptor_header *) &acm_header_desc,
-	(struct usb_descriptor_header *) &acm_call_mgmt_descriptor,
-	(struct usb_descriptor_header *) &acm_descriptor,
-	(struct usb_descriptor_header *) &acm_union_desc,
-	(struct usb_descriptor_header *) &acm_hs_notify_desc,
-	(struct usb_descriptor_header *) &acm_data_interface_desc,
-	(struct usb_descriptor_header *) &acm_hs_in_desc,
-	(struct usb_descriptor_header *) &acm_hs_out_desc,
-	NULL,
-};
+अटल काष्ठा usb_descriptor_header *acm_hs_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &acm_iad_descriptor,
+	(काष्ठा usb_descriptor_header *) &acm_control_पूर्णांकerface_desc,
+	(काष्ठा usb_descriptor_header *) &acm_header_desc,
+	(काष्ठा usb_descriptor_header *) &acm_call_mgmt_descriptor,
+	(काष्ठा usb_descriptor_header *) &acm_descriptor,
+	(काष्ठा usb_descriptor_header *) &acm_जोड़_desc,
+	(काष्ठा usb_descriptor_header *) &acm_hs_notअगरy_desc,
+	(काष्ठा usb_descriptor_header *) &acm_data_पूर्णांकerface_desc,
+	(काष्ठा usb_descriptor_header *) &acm_hs_in_desc,
+	(काष्ठा usb_descriptor_header *) &acm_hs_out_desc,
+	शून्य,
+पूर्ण;
 
-static struct usb_endpoint_descriptor acm_ss_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor acm_ss_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(1024),
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor acm_ss_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor acm_ss_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(1024),
-};
+पूर्ण;
 
-static struct usb_ss_ep_comp_descriptor acm_ss_bulk_comp_desc = {
-	.bLength =              sizeof acm_ss_bulk_comp_desc,
+अटल काष्ठा usb_ss_ep_comp_descriptor acm_ss_bulk_comp_desc = अणु
+	.bLength =              माप acm_ss_bulk_comp_desc,
 	.bDescriptorType =      USB_DT_SS_ENDPOINT_COMP,
-};
+पूर्ण;
 
-static struct usb_descriptor_header *acm_ss_function[] = {
-	(struct usb_descriptor_header *) &acm_iad_descriptor,
-	(struct usb_descriptor_header *) &acm_control_interface_desc,
-	(struct usb_descriptor_header *) &acm_header_desc,
-	(struct usb_descriptor_header *) &acm_call_mgmt_descriptor,
-	(struct usb_descriptor_header *) &acm_descriptor,
-	(struct usb_descriptor_header *) &acm_union_desc,
-	(struct usb_descriptor_header *) &acm_hs_notify_desc,
-	(struct usb_descriptor_header *) &acm_ss_bulk_comp_desc,
-	(struct usb_descriptor_header *) &acm_data_interface_desc,
-	(struct usb_descriptor_header *) &acm_ss_in_desc,
-	(struct usb_descriptor_header *) &acm_ss_bulk_comp_desc,
-	(struct usb_descriptor_header *) &acm_ss_out_desc,
-	(struct usb_descriptor_header *) &acm_ss_bulk_comp_desc,
-	NULL,
-};
+अटल काष्ठा usb_descriptor_header *acm_ss_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &acm_iad_descriptor,
+	(काष्ठा usb_descriptor_header *) &acm_control_पूर्णांकerface_desc,
+	(काष्ठा usb_descriptor_header *) &acm_header_desc,
+	(काष्ठा usb_descriptor_header *) &acm_call_mgmt_descriptor,
+	(काष्ठा usb_descriptor_header *) &acm_descriptor,
+	(काष्ठा usb_descriptor_header *) &acm_जोड़_desc,
+	(काष्ठा usb_descriptor_header *) &acm_hs_notअगरy_desc,
+	(काष्ठा usb_descriptor_header *) &acm_ss_bulk_comp_desc,
+	(काष्ठा usb_descriptor_header *) &acm_data_पूर्णांकerface_desc,
+	(काष्ठा usb_descriptor_header *) &acm_ss_in_desc,
+	(काष्ठा usb_descriptor_header *) &acm_ss_bulk_comp_desc,
+	(काष्ठा usb_descriptor_header *) &acm_ss_out_desc,
+	(काष्ठा usb_descriptor_header *) &acm_ss_bulk_comp_desc,
+	शून्य,
+पूर्ण;
 
 /* string descriptors: */
 
-#define ACM_CTRL_IDX	0
-#define ACM_DATA_IDX	1
-#define ACM_IAD_IDX	2
+#घोषणा ACM_CTRL_IDX	0
+#घोषणा ACM_DATA_IDX	1
+#घोषणा ACM_IAD_IDX	2
 
-/* static strings, in UTF-8 */
-static struct usb_string acm_string_defs[] = {
+/* अटल strings, in UTF-8 */
+अटल काष्ठा usb_string acm_string_defs[] = अणु
 	[ACM_CTRL_IDX].s = "CDC Abstract Control Model (ACM)",
 	[ACM_DATA_IDX].s = "CDC ACM Data",
 	[ACM_IAD_IDX ].s = "CDC Serial",
-	{  } /* end of list */
-};
+	अणु  पूर्ण /* end of list */
+पूर्ण;
 
-static struct usb_gadget_strings acm_string_table = {
+अटल काष्ठा usb_gadget_strings acm_string_table = अणु
 	.language =		0x0409,	/* en-us */
 	.strings =		acm_string_defs,
-};
+पूर्ण;
 
-static struct usb_gadget_strings *acm_strings[] = {
+अटल काष्ठा usb_gadget_strings *acm_strings[] = अणु
 	&acm_string_table,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
 /* ACM control ... data handling is delegated to tty library code.
- * The main task of this function is to activate and deactivate
+ * The मुख्य task of this function is to activate and deactivate
  * that code based on device state; track parameters like line
- * speed, handshake state, and so on; and issue notifications.
+ * speed, handshake state, and so on; and issue notअगरications.
  */
 
-static void acm_complete_set_line_coding(struct usb_ep *ep,
-		struct usb_request *req)
-{
-	struct f_acm	*acm = ep->driver_data;
-	struct usb_composite_dev *cdev = acm->port.func.config->cdev;
+अटल व्योम acm_complete_set_line_coding(काष्ठा usb_ep *ep,
+		काष्ठा usb_request *req)
+अणु
+	काष्ठा f_acm	*acm = ep->driver_data;
+	काष्ठा usb_composite_dev *cdev = acm->port.func.config->cdev;
 
-	if (req->status != 0) {
+	अगर (req->status != 0) अणु
 		dev_dbg(&cdev->gadget->dev, "acm ttyGS%d completion, err %d\n",
 			acm->port_num, req->status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* normal completion */
-	if (req->actual != sizeof(acm->port_line_coding)) {
+	अगर (req->actual != माप(acm->port_line_coding)) अणु
 		dev_dbg(&cdev->gadget->dev, "acm ttyGS%d short resp, len %d\n",
 			acm->port_num, req->actual);
 		usb_ep_set_halt(ep);
-	} else {
-		struct usb_cdc_line_coding	*value = req->buf;
+	पूर्ण अन्यथा अणु
+		काष्ठा usb_cdc_line_coding	*value = req->buf;
 
 		/* REVISIT:  we currently just remember this data.
 		 * If we change that, (a) validate it first, then
 		 * (b) update whatever hardware needs updating,
-		 * (c) worry about locking.  This is information on
+		 * (c) worry about locking.  This is inक्रमmation on
 		 * the order of 9600-8-N-1 ... most of which means
 		 * nothing unless we control a real RS232 line.
 		 */
 		acm->port_line_coding = *value;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int acm_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
-{
-	struct f_acm		*acm = func_to_acm(f);
-	struct usb_composite_dev *cdev = f->config->cdev;
-	struct usb_request	*req = cdev->req;
-	int			value = -EOPNOTSUPP;
+अटल पूर्णांक acm_setup(काष्ठा usb_function *f, स्थिर काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा f_acm		*acm = func_to_acm(f);
+	काष्ठा usb_composite_dev *cdev = f->config->cdev;
+	काष्ठा usb_request	*req = cdev->req;
+	पूर्णांक			value = -EOPNOTSUPP;
 	u16			w_index = le16_to_cpu(ctrl->wIndex);
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u16			w_length = le16_to_cpu(ctrl->wLength);
 
-	/* composite driver infrastructure handles everything except
-	 * CDC class messages; interface activation uses set_alt().
+	/* composite driver infraकाष्ठाure handles everything except
+	 * CDC class messages; पूर्णांकerface activation uses set_alt().
 	 *
 	 * Note CDC spec table 4 lists the ACM request profile.  It requires
-	 * encapsulated command support ... we don't handle any, and respond
+	 * encapsulated command support ... we करोn't handle any, and respond
 	 * to them by stalling.  Options include get/set/clear comm features
 	 * (not that useful) and SEND_BREAK.
 	 */
-	switch ((ctrl->bRequestType << 8) | ctrl->bRequest) {
+	चयन ((ctrl->bRequestType << 8) | ctrl->bRequest) अणु
 
-	/* SET_LINE_CODING ... just read and save what the host sends */
-	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8)
+	/* SET_LINE_CODING ... just पढ़ो and save what the host sends */
+	हाल ((USB_सूची_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8)
 			| USB_CDC_REQ_SET_LINE_CODING:
-		if (w_length != sizeof(struct usb_cdc_line_coding)
+		अगर (w_length != माप(काष्ठा usb_cdc_line_coding)
 				|| w_index != acm->ctrl_id)
-			goto invalid;
+			जाओ invalid;
 
 		value = w_length;
 		cdev->gadget->ep0->driver_data = acm;
 		req->complete = acm_complete_set_line_coding;
-		break;
+		अवरोध;
 
-	/* GET_LINE_CODING ... return what host sent, or initial value */
-	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8)
+	/* GET_LINE_CODING ... वापस what host sent, or initial value */
+	हाल ((USB_सूची_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8)
 			| USB_CDC_REQ_GET_LINE_CODING:
-		if (w_index != acm->ctrl_id)
-			goto invalid;
+		अगर (w_index != acm->ctrl_id)
+			जाओ invalid;
 
-		value = min_t(unsigned, w_length,
-				sizeof(struct usb_cdc_line_coding));
-		memcpy(req->buf, &acm->port_line_coding, value);
-		break;
+		value = min_t(अचिन्हित, w_length,
+				माप(काष्ठा usb_cdc_line_coding));
+		स_नकल(req->buf, &acm->port_line_coding, value);
+		अवरोध;
 
 	/* SET_CONTROL_LINE_STATE ... save what the host sent */
-	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8)
+	हाल ((USB_सूची_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8)
 			| USB_CDC_REQ_SET_CONTROL_LINE_STATE:
-		if (w_index != acm->ctrl_id)
-			goto invalid;
+		अगर (w_index != acm->ctrl_id)
+			जाओ invalid;
 
 		value = 0;
 
 		/* FIXME we should not allow data to flow until the
 		 * host sets the ACM_CTRL_DTR bit; and when it clears
-		 * that bit, we should return to that no-flow state.
+		 * that bit, we should वापस to that no-flow state.
 		 */
 		acm->port_handshake_bits = w_value;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 invalid:
 		dev_vdbg(&cdev->gadget->dev,
 			 "invalid control req%02x.%02x v%04x i%04x l%d\n",
 			 ctrl->bRequestType, ctrl->bRequest,
 			 w_value, w_index, w_length);
-	}
+	पूर्ण
 
 	/* respond with data transfer or status phase? */
-	if (value >= 0) {
+	अगर (value >= 0) अणु
 		dev_dbg(&cdev->gadget->dev,
 			"acm ttyGS%d req%02x.%02x v%04x i%04x l%d\n",
 			acm->port_num, ctrl->bRequestType, ctrl->bRequest,
@@ -408,287 +409,287 @@ invalid:
 		req->zero = 0;
 		req->length = value;
 		value = usb_ep_queue(cdev->gadget->ep0, req, GFP_ATOMIC);
-		if (value < 0)
+		अगर (value < 0)
 			ERROR(cdev, "acm response on ttyGS%d, err %d\n",
 					acm->port_num, value);
-	}
+	पूर्ण
 
 	/* device either stalls (value < 0) or reports success */
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static int acm_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
-{
-	struct f_acm		*acm = func_to_acm(f);
-	struct usb_composite_dev *cdev = f->config->cdev;
+अटल पूर्णांक acm_set_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf, अचिन्हित alt)
+अणु
+	काष्ठा f_acm		*acm = func_to_acm(f);
+	काष्ठा usb_composite_dev *cdev = f->config->cdev;
 
 	/* we know alt == 0, so this is an activation or a reset */
 
-	if (intf == acm->ctrl_id) {
-		if (acm->notify->enabled) {
+	अगर (पूर्णांकf == acm->ctrl_id) अणु
+		अगर (acm->notअगरy->enabled) अणु
 			dev_vdbg(&cdev->gadget->dev,
-					"reset acm control interface %d\n", intf);
-			usb_ep_disable(acm->notify);
-		}
+					"reset acm control interface %d\n", पूर्णांकf);
+			usb_ep_disable(acm->notअगरy);
+		पूर्ण
 
-		if (!acm->notify->desc)
-			if (config_ep_by_speed(cdev->gadget, f, acm->notify))
-				return -EINVAL;
+		अगर (!acm->notअगरy->desc)
+			अगर (config_ep_by_speed(cdev->gadget, f, acm->notअगरy))
+				वापस -EINVAL;
 
-		usb_ep_enable(acm->notify);
+		usb_ep_enable(acm->notअगरy);
 
-	} else if (intf == acm->data_id) {
-		if (acm->notify->enabled) {
+	पूर्ण अन्यथा अगर (पूर्णांकf == acm->data_id) अणु
+		अगर (acm->notअगरy->enabled) अणु
 			dev_dbg(&cdev->gadget->dev,
 				"reset acm ttyGS%d\n", acm->port_num);
 			gserial_disconnect(&acm->port);
-		}
-		if (!acm->port.in->desc || !acm->port.out->desc) {
+		पूर्ण
+		अगर (!acm->port.in->desc || !acm->port.out->desc) अणु
 			dev_dbg(&cdev->gadget->dev,
 				"activate acm ttyGS%d\n", acm->port_num);
-			if (config_ep_by_speed(cdev->gadget, f,
+			अगर (config_ep_by_speed(cdev->gadget, f,
 					       acm->port.in) ||
 			    config_ep_by_speed(cdev->gadget, f,
-					       acm->port.out)) {
-				acm->port.in->desc = NULL;
-				acm->port.out->desc = NULL;
-				return -EINVAL;
-			}
-		}
+					       acm->port.out)) अणु
+				acm->port.in->desc = शून्य;
+				acm->port.out->desc = शून्य;
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 		gserial_connect(&acm->port, acm->port_num);
 
-	} else
-		return -EINVAL;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void acm_disable(struct usb_function *f)
-{
-	struct f_acm	*acm = func_to_acm(f);
-	struct usb_composite_dev *cdev = f->config->cdev;
+अटल व्योम acm_disable(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_acm	*acm = func_to_acm(f);
+	काष्ठा usb_composite_dev *cdev = f->config->cdev;
 
 	dev_dbg(&cdev->gadget->dev, "acm ttyGS%d deactivated\n", acm->port_num);
 	gserial_disconnect(&acm->port);
-	usb_ep_disable(acm->notify);
-}
+	usb_ep_disable(acm->notअगरy);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /**
- * acm_cdc_notify - issue CDC notification to host
- * @acm: wraps host to be notified
- * @type: notification type
+ * acm_cdc_notअगरy - issue CDC notअगरication to host
+ * @acm: wraps host to be notअगरied
+ * @type: notअगरication type
  * @value: Refer to cdc specs, wValue field.
  * @data: data to be sent
  * @length: size of data
- * Context: irqs blocked, acm->lock held, acm_notify_req non-null
+ * Context: irqs blocked, acm->lock held, acm_notअगरy_req non-null
  *
- * Returns zero on success or a negative errno.
+ * Returns zero on success or a negative त्रुटि_सं.
  *
- * See section 6.3.5 of the CDC 1.1 specification for information
- * about the only notification we issue:  SerialState change.
+ * See section 6.3.5 of the CDC 1.1 specअगरication क्रम inक्रमmation
+ * about the only notअगरication we issue:  SerialState change.
  */
-static int acm_cdc_notify(struct f_acm *acm, u8 type, u16 value,
-		void *data, unsigned length)
-{
-	struct usb_ep			*ep = acm->notify;
-	struct usb_request		*req;
-	struct usb_cdc_notification	*notify;
-	const unsigned			len = sizeof(*notify) + length;
-	void				*buf;
-	int				status;
+अटल पूर्णांक acm_cdc_notअगरy(काष्ठा f_acm *acm, u8 type, u16 value,
+		व्योम *data, अचिन्हित length)
+अणु
+	काष्ठा usb_ep			*ep = acm->notअगरy;
+	काष्ठा usb_request		*req;
+	काष्ठा usb_cdc_notअगरication	*notअगरy;
+	स्थिर अचिन्हित			len = माप(*notअगरy) + length;
+	व्योम				*buf;
+	पूर्णांक				status;
 
-	req = acm->notify_req;
-	acm->notify_req = NULL;
+	req = acm->notअगरy_req;
+	acm->notअगरy_req = शून्य;
 	acm->pending = false;
 
 	req->length = len;
-	notify = req->buf;
-	buf = notify + 1;
+	notअगरy = req->buf;
+	buf = notअगरy + 1;
 
-	notify->bmRequestType = USB_DIR_IN | USB_TYPE_CLASS
+	notअगरy->bmRequestType = USB_सूची_IN | USB_TYPE_CLASS
 			| USB_RECIP_INTERFACE;
-	notify->bNotificationType = type;
-	notify->wValue = cpu_to_le16(value);
-	notify->wIndex = cpu_to_le16(acm->ctrl_id);
-	notify->wLength = cpu_to_le16(length);
-	memcpy(buf, data, length);
+	notअगरy->bNotअगरicationType = type;
+	notअगरy->wValue = cpu_to_le16(value);
+	notअगरy->wIndex = cpu_to_le16(acm->ctrl_id);
+	notअगरy->wLength = cpu_to_le16(length);
+	स_नकल(buf, data, length);
 
-	/* ep_queue() can complete immediately if it fills the fifo... */
+	/* ep_queue() can complete immediately अगर it fills the fअगरo... */
 	spin_unlock(&acm->lock);
 	status = usb_ep_queue(ep, req, GFP_ATOMIC);
 	spin_lock(&acm->lock);
 
-	if (status < 0) {
+	अगर (status < 0) अणु
 		ERROR(acm->port.func.config->cdev,
 				"acm ttyGS%d can't notify serial state, %d\n",
 				acm->port_num, status);
-		acm->notify_req = req;
-	}
+		acm->notअगरy_req = req;
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int acm_notify_serial_state(struct f_acm *acm)
-{
-	struct usb_composite_dev *cdev = acm->port.func.config->cdev;
-	int			status;
+अटल पूर्णांक acm_notअगरy_serial_state(काष्ठा f_acm *acm)
+अणु
+	काष्ठा usb_composite_dev *cdev = acm->port.func.config->cdev;
+	पूर्णांक			status;
 	__le16			serial_state;
 
 	spin_lock(&acm->lock);
-	if (acm->notify_req) {
+	अगर (acm->notअगरy_req) अणु
 		dev_dbg(&cdev->gadget->dev, "acm ttyGS%d serial state %04x\n",
 			acm->port_num, acm->serial_state);
 		serial_state = cpu_to_le16(acm->serial_state);
-		status = acm_cdc_notify(acm, USB_CDC_NOTIFY_SERIAL_STATE,
-				0, &serial_state, sizeof(acm->serial_state));
-	} else {
+		status = acm_cdc_notअगरy(acm, USB_CDC_NOTIFY_SERIAL_STATE,
+				0, &serial_state, माप(acm->serial_state));
+	पूर्ण अन्यथा अणु
 		acm->pending = true;
 		status = 0;
-	}
+	पूर्ण
 	spin_unlock(&acm->lock);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void acm_cdc_notify_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct f_acm		*acm = req->context;
-	u8			doit = false;
+अटल व्योम acm_cdc_notअगरy_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा f_acm		*acm = req->context;
+	u8			करोit = false;
 
-	/* on this call path we do NOT hold the port spinlock,
+	/* on this call path we करो NOT hold the port spinlock,
 	 * which is why ACM needs its own spinlock
 	 */
 	spin_lock(&acm->lock);
-	if (req->status != -ESHUTDOWN)
-		doit = acm->pending;
-	acm->notify_req = req;
+	अगर (req->status != -ESHUTDOWN)
+		करोit = acm->pending;
+	acm->notअगरy_req = req;
 	spin_unlock(&acm->lock);
 
-	if (doit)
-		acm_notify_serial_state(acm);
-}
+	अगर (करोit)
+		acm_notअगरy_serial_state(acm);
+पूर्ण
 
-/* connect == the TTY link is open */
+/* connect == the TTY link is खोलो */
 
-static void acm_connect(struct gserial *port)
-{
-	struct f_acm		*acm = port_to_acm(port);
+अटल व्योम acm_connect(काष्ठा gserial *port)
+अणु
+	काष्ठा f_acm		*acm = port_to_acm(port);
 
 	acm->serial_state |= ACM_CTRL_DSR | ACM_CTRL_DCD;
-	acm_notify_serial_state(acm);
-}
+	acm_notअगरy_serial_state(acm);
+पूर्ण
 
-static void acm_disconnect(struct gserial *port)
-{
-	struct f_acm		*acm = port_to_acm(port);
+अटल व्योम acm_disconnect(काष्ठा gserial *port)
+अणु
+	काष्ठा f_acm		*acm = port_to_acm(port);
 
 	acm->serial_state &= ~(ACM_CTRL_DSR | ACM_CTRL_DCD);
-	acm_notify_serial_state(acm);
-}
+	acm_notअगरy_serial_state(acm);
+पूर्ण
 
-static int acm_send_break(struct gserial *port, int duration)
-{
-	struct f_acm		*acm = port_to_acm(port);
+अटल पूर्णांक acm_send_अवरोध(काष्ठा gserial *port, पूर्णांक duration)
+अणु
+	काष्ठा f_acm		*acm = port_to_acm(port);
 	u16			state;
 
 	state = acm->serial_state;
 	state &= ~ACM_CTRL_BRK;
-	if (duration)
+	अगर (duration)
 		state |= ACM_CTRL_BRK;
 
 	acm->serial_state = state;
-	return acm_notify_serial_state(acm);
-}
+	वापस acm_notअगरy_serial_state(acm);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /* ACM function driver setup/binding */
-static int
-acm_bind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct usb_composite_dev *cdev = c->cdev;
-	struct f_acm		*acm = func_to_acm(f);
-	struct usb_string	*us;
-	int			status;
-	struct usb_ep		*ep;
+अटल पूर्णांक
+acm_bind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा usb_composite_dev *cdev = c->cdev;
+	काष्ठा f_acm		*acm = func_to_acm(f);
+	काष्ठा usb_string	*us;
+	पूर्णांक			status;
+	काष्ठा usb_ep		*ep;
 
-	/* REVISIT might want instance-specific strings to help
+	/* REVISIT might want instance-specअगरic strings to help
 	 * distinguish instances ...
 	 */
 
 	/* maybe allocate device-global string IDs, and patch descriptors */
 	us = usb_gstrings_attach(cdev, acm_strings,
 			ARRAY_SIZE(acm_string_defs));
-	if (IS_ERR(us))
-		return PTR_ERR(us);
-	acm_control_interface_desc.iInterface = us[ACM_CTRL_IDX].id;
-	acm_data_interface_desc.iInterface = us[ACM_DATA_IDX].id;
+	अगर (IS_ERR(us))
+		वापस PTR_ERR(us);
+	acm_control_पूर्णांकerface_desc.iInterface = us[ACM_CTRL_IDX].id;
+	acm_data_पूर्णांकerface_desc.iInterface = us[ACM_DATA_IDX].id;
 	acm_iad_descriptor.iFunction = us[ACM_IAD_IDX].id;
 
-	/* allocate instance-specific interface IDs, and patch descriptors */
-	status = usb_interface_id(c, f);
-	if (status < 0)
-		goto fail;
+	/* allocate instance-specअगरic पूर्णांकerface IDs, and patch descriptors */
+	status = usb_पूर्णांकerface_id(c, f);
+	अगर (status < 0)
+		जाओ fail;
 	acm->ctrl_id = status;
 	acm_iad_descriptor.bFirstInterface = status;
 
-	acm_control_interface_desc.bInterfaceNumber = status;
-	acm_union_desc .bMasterInterface0 = status;
+	acm_control_पूर्णांकerface_desc.bInterfaceNumber = status;
+	acm_जोड़_desc .bMasterInterface0 = status;
 
-	status = usb_interface_id(c, f);
-	if (status < 0)
-		goto fail;
+	status = usb_पूर्णांकerface_id(c, f);
+	अगर (status < 0)
+		जाओ fail;
 	acm->data_id = status;
 
-	acm_data_interface_desc.bInterfaceNumber = status;
-	acm_union_desc.bSlaveInterface0 = status;
+	acm_data_पूर्णांकerface_desc.bInterfaceNumber = status;
+	acm_जोड़_desc.bSlaveInterface0 = status;
 	acm_call_mgmt_descriptor.bDataInterface = status;
 
 	status = -ENODEV;
 
-	/* allocate instance-specific endpoints */
-	ep = usb_ep_autoconfig(cdev->gadget, &acm_fs_in_desc);
-	if (!ep)
-		goto fail;
+	/* allocate instance-specअगरic endpoपूर्णांकs */
+	ep = usb_ep_स्वतःconfig(cdev->gadget, &acm_fs_in_desc);
+	अगर (!ep)
+		जाओ fail;
 	acm->port.in = ep;
 
-	ep = usb_ep_autoconfig(cdev->gadget, &acm_fs_out_desc);
-	if (!ep)
-		goto fail;
+	ep = usb_ep_स्वतःconfig(cdev->gadget, &acm_fs_out_desc);
+	अगर (!ep)
+		जाओ fail;
 	acm->port.out = ep;
 
-	ep = usb_ep_autoconfig(cdev->gadget, &acm_fs_notify_desc);
-	if (!ep)
-		goto fail;
-	acm->notify = ep;
+	ep = usb_ep_स्वतःconfig(cdev->gadget, &acm_fs_notअगरy_desc);
+	अगर (!ep)
+		जाओ fail;
+	acm->notअगरy = ep;
 
-	/* allocate notification */
-	acm->notify_req = gs_alloc_req(ep,
-			sizeof(struct usb_cdc_notification) + 2,
+	/* allocate notअगरication */
+	acm->notअगरy_req = gs_alloc_req(ep,
+			माप(काष्ठा usb_cdc_notअगरication) + 2,
 			GFP_KERNEL);
-	if (!acm->notify_req)
-		goto fail;
+	अगर (!acm->notअगरy_req)
+		जाओ fail;
 
-	acm->notify_req->complete = acm_cdc_notify_complete;
-	acm->notify_req->context = acm;
+	acm->notअगरy_req->complete = acm_cdc_notअगरy_complete;
+	acm->notअगरy_req->context = acm;
 
 	/* support all relevant hardware speeds... we expect that when
-	 * hardware is dual speed, all bulk-capable endpoints work at
+	 * hardware is dual speed, all bulk-capable endpoपूर्णांकs work at
 	 * both speeds
 	 */
-	acm_hs_in_desc.bEndpointAddress = acm_fs_in_desc.bEndpointAddress;
-	acm_hs_out_desc.bEndpointAddress = acm_fs_out_desc.bEndpointAddress;
-	acm_hs_notify_desc.bEndpointAddress =
-		acm_fs_notify_desc.bEndpointAddress;
+	acm_hs_in_desc.bEndpoपूर्णांकAddress = acm_fs_in_desc.bEndpoपूर्णांकAddress;
+	acm_hs_out_desc.bEndpoपूर्णांकAddress = acm_fs_out_desc.bEndpoपूर्णांकAddress;
+	acm_hs_notअगरy_desc.bEndpoपूर्णांकAddress =
+		acm_fs_notअगरy_desc.bEndpoपूर्णांकAddress;
 
-	acm_ss_in_desc.bEndpointAddress = acm_fs_in_desc.bEndpointAddress;
-	acm_ss_out_desc.bEndpointAddress = acm_fs_out_desc.bEndpointAddress;
+	acm_ss_in_desc.bEndpoपूर्णांकAddress = acm_fs_in_desc.bEndpoपूर्णांकAddress;
+	acm_ss_out_desc.bEndpoपूर्णांकAddress = acm_fs_out_desc.bEndpoपूर्णांकAddress;
 
 	status = usb_assign_descriptors(f, acm_fs_function, acm_hs_function,
 			acm_ss_function, acm_ss_function);
-	if (status)
-		goto fail;
+	अगर (status)
+		जाओ fail;
 
 	dev_dbg(&cdev->gadget->dev,
 		"acm ttyGS%d: %s speed IN/%s OUT/%s NOTIFY/%s\n",
@@ -696,63 +697,63 @@ acm_bind(struct usb_configuration *c, struct usb_function *f)
 		gadget_is_superspeed(c->cdev->gadget) ? "super" :
 		gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full",
 		acm->port.in->name, acm->port.out->name,
-		acm->notify->name);
-	return 0;
+		acm->notअगरy->name);
+	वापस 0;
 
 fail:
-	if (acm->notify_req)
-		gs_free_req(acm->notify, acm->notify_req);
+	अगर (acm->notअगरy_req)
+		gs_मुक्त_req(acm->notअगरy, acm->notअगरy_req);
 
 	ERROR(cdev, "%s/%p: can't bind, err %d\n", f->name, f, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void acm_unbind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct f_acm		*acm = func_to_acm(f);
+अटल व्योम acm_unbind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा f_acm		*acm = func_to_acm(f);
 
 	acm_string_defs[0].id = 0;
-	usb_free_all_descriptors(f);
-	if (acm->notify_req)
-		gs_free_req(acm->notify, acm->notify_req);
-}
+	usb_मुक्त_all_descriptors(f);
+	अगर (acm->notअगरy_req)
+		gs_मुक्त_req(acm->notअगरy, acm->notअगरy_req);
+पूर्ण
 
-static void acm_free_func(struct usb_function *f)
-{
-	struct f_acm		*acm = func_to_acm(f);
+अटल व्योम acm_मुक्त_func(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_acm		*acm = func_to_acm(f);
 
-	kfree(acm);
-}
+	kमुक्त(acm);
+पूर्ण
 
-static void acm_resume(struct usb_function *f)
-{
-	struct f_acm *acm = func_to_acm(f);
+अटल व्योम acm_resume(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_acm *acm = func_to_acm(f);
 
 	gserial_resume(&acm->port);
-}
+पूर्ण
 
-static void acm_suspend(struct usb_function *f)
-{
-	struct f_acm *acm = func_to_acm(f);
+अटल व्योम acm_suspend(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_acm *acm = func_to_acm(f);
 
 	gserial_suspend(&acm->port);
-}
+पूर्ण
 
-static struct usb_function *acm_alloc_func(struct usb_function_instance *fi)
-{
-	struct f_serial_opts *opts;
-	struct f_acm *acm;
+अटल काष्ठा usb_function *acm_alloc_func(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा f_serial_opts *opts;
+	काष्ठा f_acm *acm;
 
-	acm = kzalloc(sizeof(*acm), GFP_KERNEL);
-	if (!acm)
-		return ERR_PTR(-ENOMEM);
+	acm = kzalloc(माप(*acm), GFP_KERNEL);
+	अगर (!acm)
+		वापस ERR_PTR(-ENOMEM);
 
 	spin_lock_init(&acm->lock);
 
 	acm->port.connect = acm_connect;
 	acm->port.disconnect = acm_disconnect;
-	acm->port.send_break = acm_send_break;
+	acm->port.send_अवरोध = acm_send_अवरोध;
 
 	acm->port.func.name = "acm";
 	acm->port.func.strings = acm_strings;
@@ -762,98 +763,98 @@ static struct usb_function *acm_alloc_func(struct usb_function_instance *fi)
 	acm->port.func.setup = acm_setup;
 	acm->port.func.disable = acm_disable;
 
-	opts = container_of(fi, struct f_serial_opts, func_inst);
+	opts = container_of(fi, काष्ठा f_serial_opts, func_inst);
 	acm->port_num = opts->port_num;
 	acm->port.func.unbind = acm_unbind;
-	acm->port.func.free_func = acm_free_func;
+	acm->port.func.मुक्त_func = acm_मुक्त_func;
 	acm->port.func.resume = acm_resume;
 	acm->port.func.suspend = acm_suspend;
 
-	return &acm->port.func;
-}
+	वापस &acm->port.func;
+पूर्ण
 
-static inline struct f_serial_opts *to_f_serial_opts(struct config_item *item)
-{
-	return container_of(to_config_group(item), struct f_serial_opts,
+अटल अंतरभूत काष्ठा f_serial_opts *to_f_serial_opts(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_config_group(item), काष्ठा f_serial_opts,
 			func_inst.group);
-}
+पूर्ण
 
-static void acm_attr_release(struct config_item *item)
-{
-	struct f_serial_opts *opts = to_f_serial_opts(item);
+अटल व्योम acm_attr_release(काष्ठा config_item *item)
+अणु
+	काष्ठा f_serial_opts *opts = to_f_serial_opts(item);
 
 	usb_put_function_instance(&opts->func_inst);
-}
+पूर्ण
 
-static struct configfs_item_operations acm_item_ops = {
+अटल काष्ठा configfs_item_operations acm_item_ops = अणु
 	.release                = acm_attr_release,
-};
+पूर्ण;
 
-#ifdef CONFIG_U_SERIAL_CONSOLE
+#अगर_घोषित CONFIG_U_SERIAL_CONSOLE
 
-static ssize_t f_acm_console_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	return gserial_set_console(to_f_serial_opts(item)->port_num,
+अटल sमाप_प्रकार f_acm_console_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	वापस gserial_set_console(to_f_serial_opts(item)->port_num,
 				   page, count);
-}
+पूर्ण
 
-static ssize_t f_acm_console_show(struct config_item *item, char *page)
-{
-	return gserial_get_console(to_f_serial_opts(item)->port_num, page);
-}
+अटल sमाप_प्रकार f_acm_console_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस gserial_get_console(to_f_serial_opts(item)->port_num, page);
+पूर्ण
 
 CONFIGFS_ATTR(f_acm_, console);
 
-#endif /* CONFIG_U_SERIAL_CONSOLE */
+#पूर्ण_अगर /* CONFIG_U_SERIAL_CONSOLE */
 
-static ssize_t f_acm_port_num_show(struct config_item *item, char *page)
-{
-	return sprintf(page, "%u\n", to_f_serial_opts(item)->port_num);
-}
+अटल sमाप_प्रकार f_acm_port_num_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%u\n", to_f_serial_opts(item)->port_num);
+पूर्ण
 
 CONFIGFS_ATTR_RO(f_acm_, port_num);
 
-static struct configfs_attribute *acm_attrs[] = {
-#ifdef CONFIG_U_SERIAL_CONSOLE
+अटल काष्ठा configfs_attribute *acm_attrs[] = अणु
+#अगर_घोषित CONFIG_U_SERIAL_CONSOLE
 	&f_acm_attr_console,
-#endif
+#पूर्ण_अगर
 	&f_acm_attr_port_num,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct config_item_type acm_func_type = {
+अटल स्थिर काष्ठा config_item_type acm_func_type = अणु
 	.ct_item_ops    = &acm_item_ops,
 	.ct_attrs	= acm_attrs,
 	.ct_owner       = THIS_MODULE,
-};
+पूर्ण;
 
-static void acm_free_instance(struct usb_function_instance *fi)
-{
-	struct f_serial_opts *opts;
+अटल व्योम acm_मुक्त_instance(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा f_serial_opts *opts;
 
-	opts = container_of(fi, struct f_serial_opts, func_inst);
-	gserial_free_line(opts->port_num);
-	kfree(opts);
-}
+	opts = container_of(fi, काष्ठा f_serial_opts, func_inst);
+	gserial_मुक्त_line(opts->port_num);
+	kमुक्त(opts);
+पूर्ण
 
-static struct usb_function_instance *acm_alloc_instance(void)
-{
-	struct f_serial_opts *opts;
-	int ret;
+अटल काष्ठा usb_function_instance *acm_alloc_instance(व्योम)
+अणु
+	काष्ठा f_serial_opts *opts;
+	पूर्णांक ret;
 
-	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
-	if (!opts)
-		return ERR_PTR(-ENOMEM);
-	opts->func_inst.free_func_inst = acm_free_instance;
+	opts = kzalloc(माप(*opts), GFP_KERNEL);
+	अगर (!opts)
+		वापस ERR_PTR(-ENOMEM);
+	opts->func_inst.मुक्त_func_inst = acm_मुक्त_instance;
 	ret = gserial_alloc_line(&opts->port_num);
-	if (ret) {
-		kfree(opts);
-		return ERR_PTR(ret);
-	}
+	अगर (ret) अणु
+		kमुक्त(opts);
+		वापस ERR_PTR(ret);
+	पूर्ण
 	config_group_init_type_name(&opts->func_inst.group, "",
 			&acm_func_type);
-	return &opts->func_inst;
-}
+	वापस &opts->func_inst;
+पूर्ण
 DECLARE_USB_FUNCTION_INIT(acm, acm_alloc_instance, acm_alloc_func);
 MODULE_LICENSE("GPL");

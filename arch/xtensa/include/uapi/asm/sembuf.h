@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * include/asm-xtensa/sembuf.h
+ * include/यंत्र-xtensa/sembuf.h
  *
- * The semid64_ds structure for Xtensa architecture.
+ * The semid64_ds काष्ठाure क्रम Xtensa architecture.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  *
- * Note extra padding because this structure is passed back and forth
+ * Note extra padding because this काष्ठाure is passed back and क्रमth
  * between kernel and user space.
  *
- * Pad space is left for:
+ * Pad space is left क्रम:
  * - 2 miscellaneous 32-bit values
  *
  */
 
-#ifndef _XTENSA_SEMBUF_H
-#define _XTENSA_SEMBUF_H
+#अगर_अघोषित _XTENSA_SEMBUF_H
+#घोषणा _XTENSA_SEMBUF_H
 
-#include <asm/byteorder.h>
-#include <asm/ipcbuf.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/ipcbuf.h>
 
-struct semid64_ds {
-	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
-#ifdef __XTENSA_EL__
-	unsigned long	sem_otime;		/* last semop time */
-	unsigned long	sem_otime_high;
-	unsigned long	sem_ctime;		/* last change time */
-	unsigned long	sem_ctime_high;
-#else
-	unsigned long	sem_otime_high;
-	unsigned long	sem_otime;		/* last semop time */
-	unsigned long	sem_ctime_high;
-	unsigned long	sem_ctime;		/* last change time */
-#endif
-	unsigned long	sem_nsems;		/* no. of semaphores in array */
-	unsigned long	__unused3;
-	unsigned long	__unused4;
-};
+काष्ठा semid64_ds अणु
+	काष्ठा ipc64_perm sem_perm;		/* permissions .. see ipc.h */
+#अगर_घोषित __XTENSA_EL__
+	अचिन्हित दीर्घ	sem_oसमय;		/* last semop समय */
+	अचिन्हित दीर्घ	sem_oसमय_high;
+	अचिन्हित दीर्घ	sem_स_समय;		/* last change समय */
+	अचिन्हित दीर्घ	sem_स_समय_high;
+#अन्यथा
+	अचिन्हित दीर्घ	sem_oसमय_high;
+	अचिन्हित दीर्घ	sem_oसमय;		/* last semop समय */
+	अचिन्हित दीर्घ	sem_स_समय_high;
+	अचिन्हित दीर्घ	sem_स_समय;		/* last change समय */
+#पूर्ण_अगर
+	अचिन्हित दीर्घ	sem_nsems;		/* no. of semaphores in array */
+	अचिन्हित दीर्घ	__unused3;
+	अचिन्हित दीर्घ	__unused4;
+पूर्ण;
 
-#endif /* __ASM_XTENSA_SEMBUF_H */
+#पूर्ण_अगर /* __ASM_XTENSA_SEMBUF_H */

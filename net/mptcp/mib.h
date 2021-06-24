@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 
-enum linux_mptcp_mib_field {
+क्रमागत linux_mptcp_mib_field अणु
 	MPTCP_MIB_NUM = 0,
 	MPTCP_MIB_MPCAPABLEPASSIVE,	/* Received SYN with MP_CAPABLE */
 	MPTCP_MIB_MPCAPABLEACTIVE,	/* Sent SYN with MP_CAPABLE */
@@ -18,17 +19,17 @@ enum linux_mptcp_mib_field {
 	MPTCP_MIB_JOINACKMAC,		/* HMAC was wrong on ACK + MP_JOIN */
 	MPTCP_MIB_DSSNOMATCH,		/* Received a new mapping that did not match the previous one */
 	MPTCP_MIB_INFINITEMAPRX,	/* Received an infinite mapping */
-	MPTCP_MIB_OFOQUEUETAIL,	/* Segments inserted into OoO queue tail */
-	MPTCP_MIB_OFOQUEUE,		/* Segments inserted into OoO queue */
+	MPTCP_MIB_OFOQUEUETAIL,	/* Segments inserted पूर्णांकo OoO queue tail */
+	MPTCP_MIB_OFOQUEUE,		/* Segments inserted पूर्णांकo OoO queue */
 	MPTCP_MIB_OFOMERGE,		/* Segments merged in OoO queue */
-	MPTCP_MIB_NODSSWINDOW,		/* Segments not in MPTCP windows */
+	MPTCP_MIB_NODSSWINDOW,		/* Segments not in MPTCP winकरोws */
 	MPTCP_MIB_DUPDATA,		/* Segments discarded due to duplicate DSS */
 	MPTCP_MIB_ADDADDR,		/* Received ADD_ADDR with echo-flag=0 */
 	MPTCP_MIB_ECHOADD,		/* Received ADD_ADDR with echo-flag=1 */
 	MPTCP_MIB_PORTADD,		/* Received ADD_ADDR with a port-number */
-	MPTCP_MIB_JOINPORTSYNRX,	/* Received a SYN MP_JOIN with a different port-number */
-	MPTCP_MIB_JOINPORTSYNACKRX,	/* Received a SYNACK MP_JOIN with a different port-number */
-	MPTCP_MIB_JOINPORTACKRX,	/* Received an ACK MP_JOIN with a different port-number */
+	MPTCP_MIB_JOINPORTSYNRX,	/* Received a SYN MP_JOIN with a dअगरferent port-number */
+	MPTCP_MIB_JOINPORTSYNACKRX,	/* Received a SYNACK MP_JOIN with a dअगरferent port-number */
+	MPTCP_MIB_JOINPORTACKRX,	/* Received an ACK MP_JOIN with a dअगरferent port-number */
 	MPTCP_MIB_MISMATCHPORTSYNRX,	/* Received a SYN MP_JOIN with a mismatched port-number */
 	MPTCP_MIB_MISMATCHPORTACKRX,	/* Received an ACK MP_JOIN with a mismatched port-number */
 	MPTCP_MIB_RMADDR,		/* Received RM_ADDR */
@@ -36,25 +37,25 @@ enum linux_mptcp_mib_field {
 	MPTCP_MIB_MPPRIOTX,		/* Transmit a MP_PRIO */
 	MPTCP_MIB_MPPRIORX,		/* Received a MP_PRIO */
 	__MPTCP_MIB_MAX
-};
+पूर्ण;
 
-#define LINUX_MIB_MPTCP_MAX	__MPTCP_MIB_MAX
-struct mptcp_mib {
-	unsigned long mibs[LINUX_MIB_MPTCP_MAX];
-};
+#घोषणा LINUX_MIB_MPTCP_MAX	__MPTCP_MIB_MAX
+काष्ठा mptcp_mib अणु
+	अचिन्हित दीर्घ mibs[LINUX_MIB_MPTCP_MAX];
+पूर्ण;
 
-static inline void MPTCP_INC_STATS(struct net *net,
-				   enum linux_mptcp_mib_field field)
-{
-	if (likely(net->mib.mptcp_statistics))
+अटल अंतरभूत व्योम MPTCP_INC_STATS(काष्ठा net *net,
+				   क्रमागत linux_mptcp_mib_field field)
+अणु
+	अगर (likely(net->mib.mptcp_statistics))
 		SNMP_INC_STATS(net->mib.mptcp_statistics, field);
-}
+पूर्ण
 
-static inline void __MPTCP_INC_STATS(struct net *net,
-				     enum linux_mptcp_mib_field field)
-{
-	if (likely(net->mib.mptcp_statistics))
+अटल अंतरभूत व्योम __MPTCP_INC_STATS(काष्ठा net *net,
+				     क्रमागत linux_mptcp_mib_field field)
+अणु
+	अगर (likely(net->mib.mptcp_statistics))
 		__SNMP_INC_STATS(net->mib.mptcp_statistics, field);
-}
+पूर्ण
 
-bool mptcp_mib_alloc(struct net *net);
+bool mptcp_mib_alloc(काष्ठा net *net);

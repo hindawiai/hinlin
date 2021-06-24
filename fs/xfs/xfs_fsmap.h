@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef __XFS_FSMAP_H__
-#define __XFS_FSMAP_H__
+#अगर_अघोषित __XFS_FSMAP_H__
+#घोषणा __XFS_FSMAP_H__
 
-struct fsmap;
+काष्ठा fsmap;
 
-/* internal fsmap representation */
-struct xfs_fsmap {
+/* पूर्णांकernal fsmap representation */
+काष्ठा xfs_fsmap अणु
 	dev_t		fmr_device;	/* device id */
-	uint32_t	fmr_flags;	/* mapping flags */
-	uint64_t	fmr_physical;	/* device offset of segment */
-	uint64_t	fmr_owner;	/* owner id */
+	uपूर्णांक32_t	fmr_flags;	/* mapping flags */
+	uपूर्णांक64_t	fmr_physical;	/* device offset of segment */
+	uपूर्णांक64_t	fmr_owner;	/* owner id */
 	xfs_fileoff_t	fmr_offset;	/* file offset of segment */
 	xfs_filblks_t	fmr_length;	/* length of segment, blocks */
-};
+पूर्ण;
 
-struct xfs_fsmap_head {
-	uint32_t	fmh_iflags;	/* control flags */
-	uint32_t	fmh_oflags;	/* output flags */
-	unsigned int	fmh_count;	/* # of entries in array incl. input */
-	unsigned int	fmh_entries;	/* # of entries filled in (output). */
+काष्ठा xfs_fsmap_head अणु
+	uपूर्णांक32_t	fmh_अगरlags;	/* control flags */
+	uपूर्णांक32_t	fmh_oflags;	/* output flags */
+	अचिन्हित पूर्णांक	fmh_count;	/* # of entries in array incl. input */
+	अचिन्हित पूर्णांक	fmh_entries;	/* # of entries filled in (output). */
 
-	struct xfs_fsmap fmh_keys[2];	/* low and high keys */
-};
+	काष्ठा xfs_fsmap fmh_keys[2];	/* low and high keys */
+पूर्ण;
 
-void xfs_fsmap_to_internal(struct xfs_fsmap *dest, struct fsmap *src);
+व्योम xfs_fsmap_to_पूर्णांकernal(काष्ठा xfs_fsmap *dest, काष्ठा fsmap *src);
 
-int xfs_getfsmap(struct xfs_mount *mp, struct xfs_fsmap_head *head,
-		struct fsmap *out_recs);
+पूर्णांक xfs_getfsmap(काष्ठा xfs_mount *mp, काष्ठा xfs_fsmap_head *head,
+		काष्ठा fsmap *out_recs);
 
-#endif /* __XFS_FSMAP_H__ */
+#पूर्ण_अगर /* __XFS_FSMAP_H__ */

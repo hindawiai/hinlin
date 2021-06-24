@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Zynq power management
+ * Zynq घातer management
  *
  *  Copyright (C) 2012 - 2014 Xilinx
  *
- *  Sören Brinkmann <soren.brinkmann@xilinx.com>
+ *  Sथघren Brinkmann <soren.brinkmann@xilinx.com>
  */
 
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include "common.h"
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश "common.h"
 
-/* register offsets */
-#define DDRC_CTRL_REG1_OFFS		0x60
-#define DDRC_DRAM_PARAM_REG3_OFFS	0x20
+/* रेजिस्टर offsets */
+#घोषणा DDRC_CTRL_REG1_OFFS		0x60
+#घोषणा DDRC_DRAM_PARAM_REG3_OFFS	0x20
 
 /* bitfields */
-#define DDRC_CLOCKSTOP_MASK	BIT(23)
-#define DDRC_SELFREFRESH_MASK	BIT(12)
+#घोषणा DDRC_CLOCKSTOP_MASK	BIT(23)
+#घोषणा DDRC_SELFREFRESH_MASK	BIT(12)
 
-static void __iomem *ddrc_base;
+अटल व्योम __iomem *ddrc_base;
 
 /**
  * zynq_pm_ioremap() - Create IO mappings
  * @comp:	DT compatible string
- * Return: Pointer to the mapped memory or NULL.
+ * Return: Poपूर्णांकer to the mapped memory or शून्य.
  *
- * Remap the memory region for a compatible DT node.
+ * Remap the memory region क्रम a compatible DT node.
  */
-static void __iomem *zynq_pm_ioremap(const char *comp)
-{
-	struct device_node *np;
-	void __iomem *base = NULL;
+अटल व्योम __iomem *zynq_pm_ioremap(स्थिर अक्षर *comp)
+अणु
+	काष्ठा device_node *np;
+	व्योम __iomem *base = शून्य;
 
-	np = of_find_compatible_node(NULL, NULL, comp);
-	if (np) {
+	np = of_find_compatible_node(शून्य, शून्य, comp);
+	अगर (np) अणु
 		base = of_iomap(np, 0);
 		of_node_put(np);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_warn("%s: no compatible node found for '%s'\n", __func__,
 				comp);
-	}
+	पूर्ण
 
-	return base;
-}
+	वापस base;
+पूर्ण
 
 /**
  * zynq_pm_late_init() - Power management init
  *
- * Initialization of power management related features and infrastructure.
+ * Initialization of घातer management related features and infraकाष्ठाure.
  */
-void __init zynq_pm_late_init(void)
-{
+व्योम __init zynq_pm_late_init(व्योम)
+अणु
 	u32 reg;
 
 	ddrc_base = zynq_pm_ioremap("xlnx,zynq-ddrc-a05");
-	if (!ddrc_base) {
+	अगर (!ddrc_base) अणु
 		pr_warn("%s: Unable to map DDRC IO memory.\n", __func__);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Enable DDRC clock stop feature. The HW takes care of
-		 * entering/exiting the correct mode depending
+		 * Enable DDRC घड़ी stop feature. The HW takes care of
+		 * entering/निकासing the correct mode depending
 		 * on activity state.
 		 */
-		reg = readl(ddrc_base + DDRC_DRAM_PARAM_REG3_OFFS);
+		reg = पढ़ोl(ddrc_base + DDRC_DRAM_PARAM_REG3_OFFS);
 		reg |= DDRC_CLOCKSTOP_MASK;
-		writel(reg, ddrc_base + DDRC_DRAM_PARAM_REG3_OFFS);
-	}
-}
+		ग_लिखोl(reg, ddrc_base + DDRC_DRAM_PARAM_REG3_OFFS);
+	पूर्ण
+पूर्ण

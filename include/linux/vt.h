@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_VT_H
-#define _LINUX_VT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_VT_H
+#घोषणा _LINUX_VT_H
 
-#include <uapi/linux/vt.h>
+#समावेश <uapi/linux/vt.h>
 
 
 /* Virtual Terminal events. */
-#define VT_ALLOCATE		0x0001 /* Console got allocated */
-#define VT_DEALLOCATE		0x0002 /* Console will be deallocated */
-#define VT_WRITE		0x0003 /* A char got output */
-#define VT_UPDATE		0x0004 /* A bigger update occurred */
-#define VT_PREWRITE		0x0005 /* A char is about to be written to the console */
+#घोषणा VT_ALLOCATE		0x0001 /* Console got allocated */
+#घोषणा VT_DEALLOCATE		0x0002 /* Console will be deallocated */
+#घोषणा VT_WRITE		0x0003 /* A अक्षर got output */
+#घोषणा VT_UPDATE		0x0004 /* A bigger update occurred */
+#घोषणा VT_PREWRITE		0x0005 /* A अक्षर is about to be written to the console */
 
-#ifdef CONFIG_VT_CONSOLE
+#अगर_घोषित CONFIG_VT_CONSOLE
 
-extern int vt_kmsg_redirect(int new);
+बाह्य पूर्णांक vt_kmsg_redirect(पूर्णांक new);
 
-#else
+#अन्यथा
 
-static inline int vt_kmsg_redirect(int new)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक vt_kmsg_redirect(पूर्णांक new)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _LINUX_VT_H */
+#पूर्ण_अगर /* _LINUX_VT_H */

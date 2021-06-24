@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * This file implement the Wireless Extensions priv API.
  *
@@ -7,243 +8,243 @@
  *
  * (As all part of the Linux kernel, this file is GPL)
  */
-#include <linux/slab.h>
-#include <linux/wireless.h>
-#include <linux/netdevice.h>
-#include <net/iw_handler.h>
-#include <net/wext.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/wireless.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/iw_handler.h>
+#समावेश <net/wext.h>
 
-int iw_handler_get_private(struct net_device *		dev,
-			   struct iw_request_info *	info,
-			   union iwreq_data *		wrqu,
-			   char *			extra)
-{
-	/* Check if the driver has something to export */
-	if ((dev->wireless_handlers->num_private_args == 0) ||
-	   (dev->wireless_handlers->private_args == NULL))
-		return -EOPNOTSUPP;
+पूर्णांक iw_handler_get_निजी(काष्ठा net_device *		dev,
+			   काष्ठा iw_request_info *	info,
+			   जोड़ iwreq_data *		wrqu,
+			   अक्षर *			extra)
+अणु
+	/* Check अगर the driver has something to export */
+	अगर ((dev->wireless_handlers->num_निजी_args == 0) ||
+	   (dev->wireless_handlers->निजी_args == शून्य))
+		वापस -EOPNOTSUPP;
 
-	/* Check if there is enough buffer up there */
-	if (wrqu->data.length < dev->wireless_handlers->num_private_args) {
+	/* Check अगर there is enough buffer up there */
+	अगर (wrqu->data.length < dev->wireless_handlers->num_निजी_args) अणु
 		/* User space can't know in advance how large the buffer
-		 * needs to be. Give it a hint, so that we can support
+		 * needs to be. Give it a hपूर्णांक, so that we can support
 		 * any size buffer we want somewhat efficiently... */
-		wrqu->data.length = dev->wireless_handlers->num_private_args;
-		return -E2BIG;
-	}
+		wrqu->data.length = dev->wireless_handlers->num_निजी_args;
+		वापस -E2BIG;
+	पूर्ण
 
 	/* Set the number of available ioctls. */
-	wrqu->data.length = dev->wireless_handlers->num_private_args;
+	wrqu->data.length = dev->wireless_handlers->num_निजी_args;
 
-	/* Copy structure to the user buffer. */
-	memcpy(extra, dev->wireless_handlers->private_args,
-	       sizeof(struct iw_priv_args) * wrqu->data.length);
+	/* Copy काष्ठाure to the user buffer. */
+	स_नकल(extra, dev->wireless_handlers->निजी_args,
+	       माप(काष्ठा iw_priv_args) * wrqu->data.length);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Size (in bytes) of the various private data types */
-static const char iw_priv_type_size[] = {
+/* Size (in bytes) of the various निजी data types */
+अटल स्थिर अक्षर iw_priv_type_size[] = अणु
 	0,				/* IW_PRIV_TYPE_NONE */
 	1,				/* IW_PRIV_TYPE_BYTE */
 	1,				/* IW_PRIV_TYPE_CHAR */
 	0,				/* Not defined */
-	sizeof(__u32),			/* IW_PRIV_TYPE_INT */
-	sizeof(struct iw_freq),		/* IW_PRIV_TYPE_FLOAT */
-	sizeof(struct sockaddr),	/* IW_PRIV_TYPE_ADDR */
+	माप(__u32),			/* IW_PRIV_TYPE_INT */
+	माप(काष्ठा iw_freq),		/* IW_PRIV_TYPE_FLOAT */
+	माप(काष्ठा sockaddr),	/* IW_PRIV_TYPE_ADDR */
 	0,				/* Not defined */
-};
+पूर्ण;
 
-static int get_priv_size(__u16 args)
-{
-	int	num = args & IW_PRIV_SIZE_MASK;
-	int	type = (args & IW_PRIV_TYPE_MASK) >> 12;
+अटल पूर्णांक get_priv_size(__u16 args)
+अणु
+	पूर्णांक	num = args & IW_PRIV_SIZE_MASK;
+	पूर्णांक	type = (args & IW_PRIV_TYPE_MASK) >> 12;
 
-	return num * iw_priv_type_size[type];
-}
+	वापस num * iw_priv_type_size[type];
+पूर्ण
 
-static int adjust_priv_size(__u16 args, struct iw_point *iwp)
-{
-	int	num = iwp->length;
-	int	max = args & IW_PRIV_SIZE_MASK;
-	int	type = (args & IW_PRIV_TYPE_MASK) >> 12;
+अटल पूर्णांक adjust_priv_size(__u16 args, काष्ठा iw_poपूर्णांक *iwp)
+अणु
+	पूर्णांक	num = iwp->length;
+	पूर्णांक	max = args & IW_PRIV_SIZE_MASK;
+	पूर्णांक	type = (args & IW_PRIV_TYPE_MASK) >> 12;
 
-	/* Make sure the driver doesn't goof up */
-	if (max < num)
+	/* Make sure the driver करोesn't goof up */
+	अगर (max < num)
 		num = max;
 
-	return num * iw_priv_type_size[type];
-}
+	वापस num * iw_priv_type_size[type];
+पूर्ण
 
 /*
- * Wrapper to call a private Wireless Extension handler.
- * We do various checks and also take care of moving data between
+ * Wrapper to call a निजी Wireless Extension handler.
+ * We करो various checks and also take care of moving data between
  * user space and kernel space.
  * It's not as nice and slimline as the standard wrapper. The cause
- * is struct iw_priv_args, which was not really designed for the
+ * is काष्ठा iw_priv_args, which was not really deचिन्हित क्रम the
  * job we are going here.
  *
  * IMPORTANT : This function prevent to set and get data on the same
- * IOCTL and enforce the SET/GET convention. Not doing it would be
+ * IOCTL and enक्रमce the SET/GET convention. Not करोing it would be
  * far too hairy...
- * If you need to set and get data at the same time, please don't use
+ * If you need to set and get data at the same समय, please करोn't use
  * a iw_handler but process it in your ioctl handler (i.e. use the
  * old driver API).
  */
-static int get_priv_descr_and_size(struct net_device *dev, unsigned int cmd,
-				   const struct iw_priv_args **descrp)
-{
-	const struct iw_priv_args *descr;
-	int i, extra_size;
+अटल पूर्णांक get_priv_descr_and_size(काष्ठा net_device *dev, अचिन्हित पूर्णांक cmd,
+				   स्थिर काष्ठा iw_priv_args **descrp)
+अणु
+	स्थिर काष्ठा iw_priv_args *descr;
+	पूर्णांक i, extra_size;
 
-	descr = NULL;
-	for (i = 0; i < dev->wireless_handlers->num_private_args; i++) {
-		if (cmd == dev->wireless_handlers->private_args[i].cmd) {
-			descr = &dev->wireless_handlers->private_args[i];
-			break;
-		}
-	}
+	descr = शून्य;
+	क्रम (i = 0; i < dev->wireless_handlers->num_निजी_args; i++) अणु
+		अगर (cmd == dev->wireless_handlers->निजी_args[i].cmd) अणु
+			descr = &dev->wireless_handlers->निजी_args[i];
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	extra_size = 0;
-	if (descr) {
-		if (IW_IS_SET(cmd)) {
-			int	offset = 0;	/* For sub-ioctls */
-			/* Check for sub-ioctl handler */
-			if (descr->name[0] == '\0')
-				/* Reserve one int for sub-ioctl index */
-				offset = sizeof(__u32);
+	अगर (descr) अणु
+		अगर (IW_IS_SET(cmd)) अणु
+			पूर्णांक	offset = 0;	/* For sub-ioctls */
+			/* Check क्रम sub-ioctl handler */
+			अगर (descr->name[0] == '\0')
+				/* Reserve one पूर्णांक क्रम sub-ioctl index */
+				offset = माप(__u32);
 
 			/* Size of set arguments */
 			extra_size = get_priv_size(descr->set_args);
 
 			/* Does it fits in iwr ? */
-			if ((descr->set_args & IW_PRIV_SIZE_FIXED) &&
+			अगर ((descr->set_args & IW_PRIV_SIZE_FIXED) &&
 			   ((extra_size + offset) <= IFNAMSIZ))
 				extra_size = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Size of get arguments */
 			extra_size = get_priv_size(descr->get_args);
 
 			/* Does it fits in iwr ? */
-			if ((descr->get_args & IW_PRIV_SIZE_FIXED) &&
+			अगर ((descr->get_args & IW_PRIV_SIZE_FIXED) &&
 			   (extra_size <= IFNAMSIZ))
 				extra_size = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	*descrp = descr;
-	return extra_size;
-}
+	वापस extra_size;
+पूर्ण
 
-static int ioctl_private_iw_point(struct iw_point *iwp, unsigned int cmd,
-				  const struct iw_priv_args *descr,
-				  iw_handler handler, struct net_device *dev,
-				  struct iw_request_info *info, int extra_size)
-{
-	char *extra;
-	int err;
+अटल पूर्णांक ioctl_निजी_iw_poपूर्णांक(काष्ठा iw_poपूर्णांक *iwp, अचिन्हित पूर्णांक cmd,
+				  स्थिर काष्ठा iw_priv_args *descr,
+				  iw_handler handler, काष्ठा net_device *dev,
+				  काष्ठा iw_request_info *info, पूर्णांक extra_size)
+अणु
+	अक्षर *extra;
+	पूर्णांक err;
 
 	/* Check what user space is giving us */
-	if (IW_IS_SET(cmd)) {
-		if (!iwp->pointer && iwp->length != 0)
-			return -EFAULT;
+	अगर (IW_IS_SET(cmd)) अणु
+		अगर (!iwp->poपूर्णांकer && iwp->length != 0)
+			वापस -EFAULT;
 
-		if (iwp->length > (descr->set_args & IW_PRIV_SIZE_MASK))
-			return -E2BIG;
-	} else if (!iwp->pointer)
-		return -EFAULT;
+		अगर (iwp->length > (descr->set_args & IW_PRIV_SIZE_MASK))
+			वापस -E2BIG;
+	पूर्ण अन्यथा अगर (!iwp->poपूर्णांकer)
+		वापस -EFAULT;
 
 	extra = kzalloc(extra_size, GFP_KERNEL);
-	if (!extra)
-		return -ENOMEM;
+	अगर (!extra)
+		वापस -ENOMEM;
 
 	/* If it is a SET, get all the extra data in here */
-	if (IW_IS_SET(cmd) && (iwp->length != 0)) {
-		if (copy_from_user(extra, iwp->pointer, extra_size)) {
+	अगर (IW_IS_SET(cmd) && (iwp->length != 0)) अणु
+		अगर (copy_from_user(extra, iwp->poपूर्णांकer, extra_size)) अणु
 			err = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Call the handler */
-	err = handler(dev, info, (union iwreq_data *) iwp, extra);
+	err = handler(dev, info, (जोड़ iwreq_data *) iwp, extra);
 
-	/* If we have something to return to the user */
-	if (!err && IW_IS_GET(cmd)) {
-		/* Adjust for the actual length if it's variable,
-		 * avoid leaking kernel bits outside.
+	/* If we have something to वापस to the user */
+	अगर (!err && IW_IS_GET(cmd)) अणु
+		/* Adjust क्रम the actual length अगर it's variable,
+		 * aव्योम leaking kernel bits outside.
 		 */
-		if (!(descr->get_args & IW_PRIV_SIZE_FIXED))
+		अगर (!(descr->get_args & IW_PRIV_SIZE_FIXED))
 			extra_size = adjust_priv_size(descr->get_args, iwp);
 
-		if (copy_to_user(iwp->pointer, extra, extra_size))
+		अगर (copy_to_user(iwp->poपूर्णांकer, extra, extra_size))
 			err =  -EFAULT;
-	}
+	पूर्ण
 
 out:
-	kfree(extra);
-	return err;
-}
+	kमुक्त(extra);
+	वापस err;
+पूर्ण
 
-int ioctl_private_call(struct net_device *dev, struct iwreq *iwr,
-		       unsigned int cmd, struct iw_request_info *info,
+पूर्णांक ioctl_निजी_call(काष्ठा net_device *dev, काष्ठा iwreq *iwr,
+		       अचिन्हित पूर्णांक cmd, काष्ठा iw_request_info *info,
 		       iw_handler handler)
-{
-	int extra_size = 0, ret = -EINVAL;
-	const struct iw_priv_args *descr;
+अणु
+	पूर्णांक extra_size = 0, ret = -EINVAL;
+	स्थिर काष्ठा iw_priv_args *descr;
 
 	extra_size = get_priv_descr_and_size(dev, cmd, &descr);
 
-	/* Check if we have a pointer to user space data or not. */
-	if (extra_size == 0) {
+	/* Check अगर we have a poपूर्णांकer to user space data or not. */
+	अगर (extra_size == 0) अणु
 		/* No extra arguments. Trivial to handle */
-		ret = handler(dev, info, &(iwr->u), (char *) &(iwr->u));
-	} else {
-		ret = ioctl_private_iw_point(&iwr->u.data, cmd, descr,
+		ret = handler(dev, info, &(iwr->u), (अक्षर *) &(iwr->u));
+	पूर्ण अन्यथा अणु
+		ret = ioctl_निजी_iw_poपूर्णांक(&iwr->u.data, cmd, descr,
 					     handler, dev, info, extra_size);
-	}
+	पूर्ण
 
-	/* Call commit handler if needed and defined */
-	if (ret == -EIWCOMMIT)
+	/* Call commit handler अगर needed and defined */
+	अगर (ret == -EIWCOMMIT)
 		ret = call_commit_handler(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-int compat_private_call(struct net_device *dev, struct iwreq *iwr,
-			unsigned int cmd, struct iw_request_info *info,
+#अगर_घोषित CONFIG_COMPAT
+पूर्णांक compat_निजी_call(काष्ठा net_device *dev, काष्ठा iwreq *iwr,
+			अचिन्हित पूर्णांक cmd, काष्ठा iw_request_info *info,
 			iw_handler handler)
-{
-	const struct iw_priv_args *descr;
-	int ret, extra_size;
+अणु
+	स्थिर काष्ठा iw_priv_args *descr;
+	पूर्णांक ret, extra_size;
 
 	extra_size = get_priv_descr_and_size(dev, cmd, &descr);
 
-	/* Check if we have a pointer to user space data or not. */
-	if (extra_size == 0) {
+	/* Check अगर we have a poपूर्णांकer to user space data or not. */
+	अगर (extra_size == 0) अणु
 		/* No extra arguments. Trivial to handle */
-		ret = handler(dev, info, &(iwr->u), (char *) &(iwr->u));
-	} else {
-		struct compat_iw_point *iwp_compat;
-		struct iw_point iwp;
+		ret = handler(dev, info, &(iwr->u), (अक्षर *) &(iwr->u));
+	पूर्ण अन्यथा अणु
+		काष्ठा compat_iw_poपूर्णांक *iwp_compat;
+		काष्ठा iw_poपूर्णांक iwp;
 
-		iwp_compat = (struct compat_iw_point *) &iwr->u.data;
-		iwp.pointer = compat_ptr(iwp_compat->pointer);
+		iwp_compat = (काष्ठा compat_iw_poपूर्णांक *) &iwr->u.data;
+		iwp.poपूर्णांकer = compat_ptr(iwp_compat->poपूर्णांकer);
 		iwp.length = iwp_compat->length;
 		iwp.flags = iwp_compat->flags;
 
-		ret = ioctl_private_iw_point(&iwp, cmd, descr,
+		ret = ioctl_निजी_iw_poपूर्णांक(&iwp, cmd, descr,
 					     handler, dev, info, extra_size);
 
-		iwp_compat->pointer = ptr_to_compat(iwp.pointer);
+		iwp_compat->poपूर्णांकer = ptr_to_compat(iwp.poपूर्णांकer);
 		iwp_compat->length = iwp.length;
 		iwp_compat->flags = iwp.flags;
-	}
+	पूर्ण
 
-	/* Call commit handler if needed and defined */
-	if (ret == -EIWCOMMIT)
+	/* Call commit handler अगर needed and defined */
+	अगर (ret == -EIWCOMMIT)
 		ret = call_commit_handler(dev);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर

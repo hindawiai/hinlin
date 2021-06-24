@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/module.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/module.h>
 
-#include <linux/sched.h> /* for wake_up_process() */
-#include <linux/ftrace.h>
+#समावेश <linux/sched.h> /* क्रम wake_up_process() */
+#समावेश <linux/ftrace.h>
 
-void my_direct_func(struct task_struct *p)
-{
-	trace_printk("waking up %s-%d\n", p->comm, p->pid);
-}
+व्योम my_direct_func(काष्ठा task_काष्ठा *p)
+अणु
+	trace_prपूर्णांकk("waking up %s-%d\n", p->comm, p->pid);
+पूर्ण
 
-extern void my_tramp(void *);
+बाह्य व्योम my_tramp(व्योम *);
 
-asm (
+यंत्र (
 "	.pushsection    .text, \"ax\", @progbits\n"
 "	.type		my_tramp, @function\n"
 "	.globl		my_tramp\n"
@@ -28,20 +29,20 @@ asm (
 );
 
 
-static int __init ftrace_direct_init(void)
-{
-	return register_ftrace_direct((unsigned long)wake_up_process,
-				     (unsigned long)my_tramp);
-}
+अटल पूर्णांक __init ftrace_direct_init(व्योम)
+अणु
+	वापस रेजिस्टर_ftrace_direct((अचिन्हित दीर्घ)wake_up_process,
+				     (अचिन्हित दीर्घ)my_tramp);
+पूर्ण
 
-static void __exit ftrace_direct_exit(void)
-{
-	unregister_ftrace_direct((unsigned long)wake_up_process,
-				 (unsigned long)my_tramp);
-}
+अटल व्योम __निकास ftrace_direct_निकास(व्योम)
+अणु
+	unरेजिस्टर_ftrace_direct((अचिन्हित दीर्घ)wake_up_process,
+				 (अचिन्हित दीर्घ)my_tramp);
+पूर्ण
 
 module_init(ftrace_direct_init);
-module_exit(ftrace_direct_exit);
+module_निकास(ftrace_direct_निकास);
 
 MODULE_AUTHOR("Steven Rostedt");
 MODULE_DESCRIPTION("Example use case of using register_ftrace_direct()");

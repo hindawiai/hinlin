@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2014
- * Author: Vincent Abriou <vincent.abriou@st.com> for STMicroelectronics.
+ * Author: Vincent Abriou <vincent.abriou@st.com> क्रम STMicroelectronics.
  */
 
-#include <drm/drm_print.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "sti_awg_utils.h"
+#समावेश "sti_awg_utils.h"
 
-#define AWG_DELAY (-5)
+#घोषणा AWG_DELAY (-5)
 
-#define AWG_OPCODE_OFFSET 10
-#define AWG_MAX_ARG       0x3ff
+#घोषणा AWG_OPCODE_OFFSET 10
+#घोषणा AWG_MAX_ARG       0x3ff
 
-enum opcode {
+क्रमागत opcode अणु
 	SET,
 	RPTSET,
 	RPLSET,
@@ -23,170 +24,170 @@ enum opcode {
 	REPLAY,
 	JUMP,
 	HOLD,
-};
+पूर्ण;
 
-static int awg_generate_instr(enum opcode opcode,
-			      long int arg,
-			      long int mux_sel,
-			      long int data_en,
-			      struct awg_code_generation_params *fwparams)
-{
-	u32 instruction = 0;
+अटल पूर्णांक awg_generate_instr(क्रमागत opcode opcode,
+			      दीर्घ पूर्णांक arg,
+			      दीर्घ पूर्णांक mux_sel,
+			      दीर्घ पूर्णांक data_en,
+			      काष्ठा awg_code_generation_params *fwparams)
+अणु
+	u32 inकाष्ठाion = 0;
 	u32 mux = (mux_sel << 8) & 0x1ff;
 	u32 data_enable = (data_en << 9) & 0x2ff;
-	long int arg_tmp = arg;
+	दीर्घ पूर्णांक arg_पंचांगp = arg;
 
 	/* skip, repeat and replay arg should not exceed 1023.
-	 * If user wants to exceed this value, the instruction should be
-	 * duplicate and arg should be adjust for each duplicated instruction.
+	 * If user wants to exceed this value, the inकाष्ठाion should be
+	 * duplicate and arg should be adjust क्रम each duplicated inकाष्ठाion.
 	 *
-	 * mux_sel is used in case of SAV/EAV synchronization.
+	 * mux_sel is used in हाल of SAV/EAV synchronization.
 	 */
 
-	while (arg_tmp > 0) {
-		arg = arg_tmp;
-		if (fwparams->instruction_offset >= AWG_MAX_INST) {
+	जबतक (arg_पंचांगp > 0) अणु
+		arg = arg_पंचांगp;
+		अगर (fwparams->inकाष्ठाion_offset >= AWG_MAX_INST) अणु
 			DRM_ERROR("too many number of instructions\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (opcode) {
-		case SKIP:
+		चयन (opcode) अणु
+		हाल SKIP:
 			/* leave 'arg' + 1 pixel elapsing without changing
 			 * output bus */
-			arg--; /* pixel adjustment */
-			arg_tmp--;
+			arg--; /* pixel adjusपंचांगent */
+			arg_पंचांगp--;
 
-			if (arg < 0) {
-				/* SKIP instruction not needed */
-				return 0;
-			}
+			अगर (arg < 0) अणु
+				/* SKIP inकाष्ठाion not needed */
+				वापस 0;
+			पूर्ण
 
-			if (arg == 0) {
+			अगर (arg == 0) अणु
 				/* SKIP 0 not permitted but we want to skip 1
-				 * pixel. So we transform SKIP into SET
-				 * instruction */
+				 * pixel. So we transक्रमm SKIP पूर्णांकo SET
+				 * inकाष्ठाion */
 				opcode = SET;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			mux = 0;
 			data_enable = 0;
 			arg &= AWG_MAX_ARG;
-			break;
-		case REPEAT:
-		case REPLAY:
-			if (arg == 0) {
-				/* REPEAT or REPLAY instruction not needed */
-				return 0;
-			}
+			अवरोध;
+		हाल REPEAT:
+		हाल REPLAY:
+			अगर (arg == 0) अणु
+				/* REPEAT or REPLAY inकाष्ठाion not needed */
+				वापस 0;
+			पूर्ण
 
 			mux = 0;
 			data_enable = 0;
 			arg &= AWG_MAX_ARG;
-			break;
-		case JUMP:
+			अवरोध;
+		हाल JUMP:
 			mux = 0;
 			data_enable = 0;
-			arg |= 0x40; /* for jump instruction 7th bit is 1 */
+			arg |= 0x40; /* क्रम jump inकाष्ठाion 7th bit is 1 */
 			arg &= AWG_MAX_ARG;
-			break;
-		case STOP:
+			अवरोध;
+		हाल STOP:
 			arg = 0;
-			break;
-		case SET:
-		case RPTSET:
-		case RPLSET:
-		case HOLD:
+			अवरोध;
+		हाल SET:
+		हाल RPTSET:
+		हाल RPLSET:
+		हाल HOLD:
 			arg &= (0x0ff);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DRM_ERROR("instruction %d does not exist\n", opcode);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		arg_tmp = arg_tmp - arg;
+		arg_पंचांगp = arg_पंचांगp - arg;
 
 		arg = ((arg + mux) + data_enable);
 
-		instruction = ((opcode) << AWG_OPCODE_OFFSET) | arg;
-		fwparams->ram_code[fwparams->instruction_offset] =
-			instruction & (0x3fff);
-		fwparams->instruction_offset++;
-	}
-	return 0;
-}
+		inकाष्ठाion = ((opcode) << AWG_OPCODE_OFFSET) | arg;
+		fwparams->ram_code[fwparams->inकाष्ठाion_offset] =
+			inकाष्ठाion & (0x3fff);
+		fwparams->inकाष्ठाion_offset++;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int awg_generate_line_signal(
-		struct awg_code_generation_params *fwparams,
-		struct awg_timing *timing)
-{
-	long int val;
-	int ret = 0;
+अटल पूर्णांक awg_generate_line_संकेत(
+		काष्ठा awg_code_generation_params *fwparams,
+		काष्ठा awg_timing *timing)
+अणु
+	दीर्घ पूर्णांक val;
+	पूर्णांक ret = 0;
 
-	if (timing->trailing_pixels > 0) {
+	अगर (timing->trailing_pixels > 0) अणु
 		/* skip trailing pixel */
 		val = timing->blanking_level;
 		ret |= awg_generate_instr(RPLSET, val, 0, 0, fwparams);
 
 		val = timing->trailing_pixels - 1 + AWG_DELAY;
 		ret |= awg_generate_instr(SKIP, val, 0, 0, fwparams);
-	}
+	पूर्ण
 
-	/* set DE signal high */
+	/* set DE संकेत high */
 	val = timing->blanking_level;
 	ret |= awg_generate_instr((timing->trailing_pixels > 0) ? SET : RPLSET,
 			val, 0, 1, fwparams);
 
-	if (timing->blanking_pixels > 0) {
+	अगर (timing->blanking_pixels > 0) अणु
 		/* skip the number of active pixel */
 		val = timing->active_pixels - 1;
 		ret |= awg_generate_instr(SKIP, val, 0, 1, fwparams);
 
-		/* set DE signal low */
+		/* set DE संकेत low */
 		val = timing->blanking_level;
 		ret |= awg_generate_instr(SET, val, 0, 0, fwparams);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int sti_awg_generate_code_data_enable_mode(
-		struct awg_code_generation_params *fwparams,
-		struct awg_timing *timing)
-{
-	long int val, tmp_val;
-	int ret = 0;
+पूर्णांक sti_awg_generate_code_data_enable_mode(
+		काष्ठा awg_code_generation_params *fwparams,
+		काष्ठा awg_timing *timing)
+अणु
+	दीर्घ पूर्णांक val, पंचांगp_val;
+	पूर्णांक ret = 0;
 
-	if (timing->trailing_lines > 0) {
+	अगर (timing->trailing_lines > 0) अणु
 		/* skip trailing lines */
 		val = timing->blanking_level;
 		ret |= awg_generate_instr(RPLSET, val, 0, 0, fwparams);
 
 		val = timing->trailing_lines - 1;
 		ret |= awg_generate_instr(REPLAY, val, 0, 0, fwparams);
-	}
+	पूर्ण
 
-	tmp_val = timing->active_lines - 1;
+	पंचांगp_val = timing->active_lines - 1;
 
-	while (tmp_val > 0) {
-		/* generate DE signal for each line */
-		ret |= awg_generate_line_signal(fwparams, timing);
+	जबतक (पंचांगp_val > 0) अणु
+		/* generate DE संकेत क्रम each line */
+		ret |= awg_generate_line_संकेत(fwparams, timing);
 		/* replay the sequence as many active lines defined */
 		ret |= awg_generate_instr(REPLAY,
-					  min_t(int, AWG_MAX_ARG, tmp_val),
+					  min_t(पूर्णांक, AWG_MAX_ARG, पंचांगp_val),
 					  0, 0, fwparams);
-		tmp_val -= AWG_MAX_ARG;
-	}
+		पंचांगp_val -= AWG_MAX_ARG;
+	पूर्ण
 
-	if (timing->blanking_lines > 0) {
+	अगर (timing->blanking_lines > 0) अणु
 		/* skip blanking lines */
 		val = timing->blanking_level;
 		ret |= awg_generate_instr(RPLSET, val, 0, 0, fwparams);
 
 		val = timing->blanking_lines - 1;
 		ret |= awg_generate_instr(REPLAY, val, 0, 0, fwparams);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

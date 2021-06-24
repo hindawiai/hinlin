@@ -1,93 +1,94 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * rcar_du_vsp.h  --  R-Car Display Unit VSP-Based Compositor
  *
  * Copyright (C) 2015 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
 
-#ifndef __RCAR_DU_VSP_H__
-#define __RCAR_DU_VSP_H__
+#अगर_अघोषित __RCAR_DU_VSP_H__
+#घोषणा __RCAR_DU_VSP_H__
 
-#include <drm/drm_plane.h>
+#समावेश <drm/drm_plane.h>
 
-struct drm_framebuffer;
-struct rcar_du_format_info;
-struct rcar_du_vsp;
-struct sg_table;
+काष्ठा drm_framebuffer;
+काष्ठा rcar_du_क्रमmat_info;
+काष्ठा rcar_du_vsp;
+काष्ठा sg_table;
 
-struct rcar_du_vsp_plane {
-	struct drm_plane plane;
-	struct rcar_du_vsp *vsp;
-	unsigned int index;
-};
+काष्ठा rcar_du_vsp_plane अणु
+	काष्ठा drm_plane plane;
+	काष्ठा rcar_du_vsp *vsp;
+	अचिन्हित पूर्णांक index;
+पूर्ण;
 
-struct rcar_du_vsp {
-	unsigned int index;
-	struct device *vsp;
-	struct rcar_du_device *dev;
-	struct rcar_du_vsp_plane *planes;
-	unsigned int num_planes;
-};
+काष्ठा rcar_du_vsp अणु
+	अचिन्हित पूर्णांक index;
+	काष्ठा device *vsp;
+	काष्ठा rcar_du_device *dev;
+	काष्ठा rcar_du_vsp_plane *planes;
+	अचिन्हित पूर्णांक num_planes;
+पूर्ण;
 
-static inline struct rcar_du_vsp_plane *to_rcar_vsp_plane(struct drm_plane *p)
-{
-	return container_of(p, struct rcar_du_vsp_plane, plane);
-}
+अटल अंतरभूत काष्ठा rcar_du_vsp_plane *to_rcar_vsp_plane(काष्ठा drm_plane *p)
+अणु
+	वापस container_of(p, काष्ठा rcar_du_vsp_plane, plane);
+पूर्ण
 
 /**
- * struct rcar_du_vsp_plane_state - Driver-specific plane state
+ * काष्ठा rcar_du_vsp_plane_state - Driver-specअगरic plane state
  * @state: base DRM plane state
- * @format: information about the pixel format used by the plane
- * @sg_tables: scatter-gather tables for the frame buffer memory
+ * @क्रमmat: inक्रमmation about the pixel क्रमmat used by the plane
+ * @sg_tables: scatter-gather tables क्रम the frame buffer memory
  */
-struct rcar_du_vsp_plane_state {
-	struct drm_plane_state state;
+काष्ठा rcar_du_vsp_plane_state अणु
+	काष्ठा drm_plane_state state;
 
-	const struct rcar_du_format_info *format;
-	struct sg_table sg_tables[3];
-};
+	स्थिर काष्ठा rcar_du_क्रमmat_info *क्रमmat;
+	काष्ठा sg_table sg_tables[3];
+पूर्ण;
 
-static inline struct rcar_du_vsp_plane_state *
-to_rcar_vsp_plane_state(struct drm_plane_state *state)
-{
-	return container_of(state, struct rcar_du_vsp_plane_state, state);
-}
+अटल अंतरभूत काष्ठा rcar_du_vsp_plane_state *
+to_rcar_vsp_plane_state(काष्ठा drm_plane_state *state)
+अणु
+	वापस container_of(state, काष्ठा rcar_du_vsp_plane_state, state);
+पूर्ण
 
-#ifdef CONFIG_DRM_RCAR_VSP
-int rcar_du_vsp_init(struct rcar_du_vsp *vsp, struct device_node *np,
-		     unsigned int crtcs);
-void rcar_du_vsp_enable(struct rcar_du_crtc *crtc);
-void rcar_du_vsp_disable(struct rcar_du_crtc *crtc);
-void rcar_du_vsp_atomic_begin(struct rcar_du_crtc *crtc);
-void rcar_du_vsp_atomic_flush(struct rcar_du_crtc *crtc);
-int rcar_du_vsp_map_fb(struct rcar_du_vsp *vsp, struct drm_framebuffer *fb,
-		       struct sg_table sg_tables[3]);
-void rcar_du_vsp_unmap_fb(struct rcar_du_vsp *vsp, struct drm_framebuffer *fb,
-			  struct sg_table sg_tables[3]);
-#else
-static inline int rcar_du_vsp_init(struct rcar_du_vsp *vsp,
-				   struct device_node *np,
-				   unsigned int crtcs)
-{
-	return -ENXIO;
-}
-static inline void rcar_du_vsp_enable(struct rcar_du_crtc *crtc) { };
-static inline void rcar_du_vsp_disable(struct rcar_du_crtc *crtc) { };
-static inline void rcar_du_vsp_atomic_begin(struct rcar_du_crtc *crtc) { };
-static inline void rcar_du_vsp_atomic_flush(struct rcar_du_crtc *crtc) { };
-static inline int rcar_du_vsp_map_fb(struct rcar_du_vsp *vsp,
-				     struct drm_framebuffer *fb,
-				     struct sg_table sg_tables[3])
-{
-	return -ENXIO;
-}
-static inline void rcar_du_vsp_unmap_fb(struct rcar_du_vsp *vsp,
-					struct drm_framebuffer *fb,
-					struct sg_table sg_tables[3])
-{
-}
-#endif
+#अगर_घोषित CONFIG_DRM_RCAR_VSP
+पूर्णांक rcar_du_vsp_init(काष्ठा rcar_du_vsp *vsp, काष्ठा device_node *np,
+		     अचिन्हित पूर्णांक crtcs);
+व्योम rcar_du_vsp_enable(काष्ठा rcar_du_crtc *crtc);
+व्योम rcar_du_vsp_disable(काष्ठा rcar_du_crtc *crtc);
+व्योम rcar_du_vsp_atomic_begin(काष्ठा rcar_du_crtc *crtc);
+व्योम rcar_du_vsp_atomic_flush(काष्ठा rcar_du_crtc *crtc);
+पूर्णांक rcar_du_vsp_map_fb(काष्ठा rcar_du_vsp *vsp, काष्ठा drm_framebuffer *fb,
+		       काष्ठा sg_table sg_tables[3]);
+व्योम rcar_du_vsp_unmap_fb(काष्ठा rcar_du_vsp *vsp, काष्ठा drm_framebuffer *fb,
+			  काष्ठा sg_table sg_tables[3]);
+#अन्यथा
+अटल अंतरभूत पूर्णांक rcar_du_vsp_init(काष्ठा rcar_du_vsp *vsp,
+				   काष्ठा device_node *np,
+				   अचिन्हित पूर्णांक crtcs)
+अणु
+	वापस -ENXIO;
+पूर्ण
+अटल अंतरभूत व्योम rcar_du_vsp_enable(काष्ठा rcar_du_crtc *crtc) अणु पूर्ण;
+अटल अंतरभूत व्योम rcar_du_vsp_disable(काष्ठा rcar_du_crtc *crtc) अणु पूर्ण;
+अटल अंतरभूत व्योम rcar_du_vsp_atomic_begin(काष्ठा rcar_du_crtc *crtc) अणु पूर्ण;
+अटल अंतरभूत व्योम rcar_du_vsp_atomic_flush(काष्ठा rcar_du_crtc *crtc) अणु पूर्ण;
+अटल अंतरभूत पूर्णांक rcar_du_vsp_map_fb(काष्ठा rcar_du_vsp *vsp,
+				     काष्ठा drm_framebuffer *fb,
+				     काष्ठा sg_table sg_tables[3])
+अणु
+	वापस -ENXIO;
+पूर्ण
+अटल अंतरभूत व्योम rcar_du_vsp_unmap_fb(काष्ठा rcar_du_vsp *vsp,
+					काष्ठा drm_framebuffer *fb,
+					काष्ठा sg_table sg_tables[3])
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __RCAR_DU_VSP_H__ */
+#पूर्ण_अगर /* __RCAR_DU_VSP_H__ */

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2003 Sistina Software (UK) Limited.
  * Copyright (C) 2004, 2010-2011 Red Hat, Inc. All rights reserved.
@@ -5,484 +6,484 @@
  * This file is released under the GPL.
  */
 
-#include <linux/device-mapper.h>
+#समावेश <linux/device-mapper.h>
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/blkdev.h>
-#include <linux/bio.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/slab.h>
 
-#define DM_MSG_PREFIX "flakey"
+#घोषणा DM_MSG_PREFIX "flakey"
 
-#define all_corrupt_bio_flags_match(bio, fc)	\
+#घोषणा all_corrupt_bio_flags_match(bio, fc)	\
 	(((bio)->bi_opf & (fc)->corrupt_bio_flags) == (fc)->corrupt_bio_flags)
 
 /*
- * Flakey: Used for testing only, simulates intermittent,
+ * Flakey: Used क्रम testing only, simulates पूर्णांकermittent,
  * catastrophic device failure.
  */
-struct flakey_c {
-	struct dm_dev *dev;
-	unsigned long start_time;
+काष्ठा flakey_c अणु
+	काष्ठा dm_dev *dev;
+	अचिन्हित दीर्घ start_समय;
 	sector_t start;
-	unsigned up_interval;
-	unsigned down_interval;
-	unsigned long flags;
-	unsigned corrupt_bio_byte;
-	unsigned corrupt_bio_rw;
-	unsigned corrupt_bio_value;
-	unsigned corrupt_bio_flags;
-};
+	अचिन्हित up_पूर्णांकerval;
+	अचिन्हित करोwn_पूर्णांकerval;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित corrupt_bio_byte;
+	अचिन्हित corrupt_bio_rw;
+	अचिन्हित corrupt_bio_value;
+	अचिन्हित corrupt_bio_flags;
+पूर्ण;
 
-enum feature_flag_bits {
+क्रमागत feature_flag_bits अणु
 	DROP_WRITES,
 	ERROR_WRITES
-};
+पूर्ण;
 
-struct per_bio_data {
+काष्ठा per_bio_data अणु
 	bool bio_submitted;
-};
+पूर्ण;
 
-static int parse_features(struct dm_arg_set *as, struct flakey_c *fc,
-			  struct dm_target *ti)
-{
-	int r;
-	unsigned argc;
-	const char *arg_name;
+अटल पूर्णांक parse_features(काष्ठा dm_arg_set *as, काष्ठा flakey_c *fc,
+			  काष्ठा dm_target *ti)
+अणु
+	पूर्णांक r;
+	अचिन्हित argc;
+	स्थिर अक्षर *arg_name;
 
-	static const struct dm_arg _args[] = {
-		{0, 6, "Invalid number of feature args"},
-		{1, UINT_MAX, "Invalid corrupt bio byte"},
-		{0, 255, "Invalid corrupt value to write into bio byte (0-255)"},
-		{0, UINT_MAX, "Invalid corrupt bio flags mask"},
-	};
+	अटल स्थिर काष्ठा dm_arg _args[] = अणु
+		अणु0, 6, "Invalid number of feature args"पूर्ण,
+		अणु1, अच_पूर्णांक_उच्च, "Invalid corrupt bio byte"पूर्ण,
+		अणु0, 255, "Invalid corrupt value to write into bio byte (0-255)"पूर्ण,
+		अणु0, अच_पूर्णांक_उच्च, "Invalid corrupt bio flags mask"पूर्ण,
+	पूर्ण;
 
 	/* No feature arguments supplied. */
-	if (!as->argc)
-		return 0;
+	अगर (!as->argc)
+		वापस 0;
 
-	r = dm_read_arg_group(_args, as, &argc, &ti->error);
-	if (r)
-		return r;
+	r = dm_पढ़ो_arg_group(_args, as, &argc, &ti->error);
+	अगर (r)
+		वापस r;
 
-	while (argc) {
-		arg_name = dm_shift_arg(as);
+	जबतक (argc) अणु
+		arg_name = dm_shअगरt_arg(as);
 		argc--;
 
-		if (!arg_name) {
+		अगर (!arg_name) अणु
 			ti->error = "Insufficient feature arguments";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
-		 * drop_writes
+		 * drop_ग_लिखोs
 		 */
-		if (!strcasecmp(arg_name, "drop_writes")) {
-			if (test_and_set_bit(DROP_WRITES, &fc->flags)) {
+		अगर (!strहालcmp(arg_name, "drop_writes")) अणु
+			अगर (test_and_set_bit(DROP_WRITES, &fc->flags)) अणु
 				ti->error = "Feature drop_writes duplicated";
-				return -EINVAL;
-			} else if (test_bit(ERROR_WRITES, &fc->flags)) {
+				वापस -EINVAL;
+			पूर्ण अन्यथा अगर (test_bit(ERROR_WRITES, &fc->flags)) अणु
 				ti->error = "Feature drop_writes conflicts with feature error_writes";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * error_writes
+		 * error_ग_लिखोs
 		 */
-		if (!strcasecmp(arg_name, "error_writes")) {
-			if (test_and_set_bit(ERROR_WRITES, &fc->flags)) {
+		अगर (!strहालcmp(arg_name, "error_writes")) अणु
+			अगर (test_and_set_bit(ERROR_WRITES, &fc->flags)) अणु
 				ti->error = "Feature error_writes duplicated";
-				return -EINVAL;
+				वापस -EINVAL;
 
-			} else if (test_bit(DROP_WRITES, &fc->flags)) {
+			पूर्ण अन्यथा अगर (test_bit(DROP_WRITES, &fc->flags)) अणु
 				ti->error = "Feature error_writes conflicts with feature drop_writes";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
 		 * corrupt_bio_byte <Nth_byte> <direction> <value> <bio_flags>
 		 */
-		if (!strcasecmp(arg_name, "corrupt_bio_byte")) {
-			if (!argc) {
+		अगर (!strहालcmp(arg_name, "corrupt_bio_byte")) अणु
+			अगर (!argc) अणु
 				ti->error = "Feature corrupt_bio_byte requires parameters";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			r = dm_read_arg(_args + 1, as, &fc->corrupt_bio_byte, &ti->error);
-			if (r)
-				return r;
+			r = dm_पढ़ो_arg(_args + 1, as, &fc->corrupt_bio_byte, &ti->error);
+			अगर (r)
+				वापस r;
 			argc--;
 
 			/*
 			 * Direction r or w?
 			 */
-			arg_name = dm_shift_arg(as);
-			if (!strcasecmp(arg_name, "w"))
+			arg_name = dm_shअगरt_arg(as);
+			अगर (!strहालcmp(arg_name, "w"))
 				fc->corrupt_bio_rw = WRITE;
-			else if (!strcasecmp(arg_name, "r"))
+			अन्यथा अगर (!strहालcmp(arg_name, "r"))
 				fc->corrupt_bio_rw = READ;
-			else {
+			अन्यथा अणु
 				ti->error = "Invalid corrupt bio direction (r or w)";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			argc--;
 
 			/*
-			 * Value of byte (0-255) to write in place of correct one.
+			 * Value of byte (0-255) to ग_लिखो in place of correct one.
 			 */
-			r = dm_read_arg(_args + 2, as, &fc->corrupt_bio_value, &ti->error);
-			if (r)
-				return r;
+			r = dm_पढ़ो_arg(_args + 2, as, &fc->corrupt_bio_value, &ti->error);
+			अगर (r)
+				वापस r;
 			argc--;
 
 			/*
 			 * Only corrupt bios with these flags set.
 			 */
-			r = dm_read_arg(_args + 3, as, &fc->corrupt_bio_flags, &ti->error);
-			if (r)
-				return r;
+			r = dm_पढ़ो_arg(_args + 3, as, &fc->corrupt_bio_flags, &ti->error);
+			अगर (r)
+				वापस r;
 			argc--;
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ti->error = "Unrecognised flakey feature requested";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (test_bit(DROP_WRITES, &fc->flags) && (fc->corrupt_bio_rw == WRITE)) {
+	अगर (test_bit(DROP_WRITES, &fc->flags) && (fc->corrupt_bio_rw == WRITE)) अणु
 		ti->error = "drop_writes is incompatible with corrupt_bio_byte with the WRITE flag set";
-		return -EINVAL;
+		वापस -EINVAL;
 
-	} else if (test_bit(ERROR_WRITES, &fc->flags) && (fc->corrupt_bio_rw == WRITE)) {
+	पूर्ण अन्यथा अगर (test_bit(ERROR_WRITES, &fc->flags) && (fc->corrupt_bio_rw == WRITE)) अणु
 		ti->error = "error_writes is incompatible with corrupt_bio_byte with the WRITE flag set";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Construct a flakey mapping:
- * <dev_path> <offset> <up interval> <down interval> [<#feature args> [<arg>]*]
+ * Conकाष्ठा a flakey mapping:
+ * <dev_path> <offset> <up पूर्णांकerval> <करोwn पूर्णांकerval> [<#feature args> [<arg>]*]
  *
  *   Feature args:
- *     [drop_writes]
+ *     [drop_ग_लिखोs]
  *     [corrupt_bio_byte <Nth_byte> <direction> <value> <bio_flags>]
  *
- *   Nth_byte starts from 1 for the first byte.
- *   Direction is r for READ or w for WRITE.
- *   bio_flags is ignored if 0.
+ *   Nth_byte starts from 1 क्रम the first byte.
+ *   Direction is r क्रम READ or w क्रम WRITE.
+ *   bio_flags is ignored अगर 0.
  */
-static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-{
-	static const struct dm_arg _args[] = {
-		{0, UINT_MAX, "Invalid up interval"},
-		{0, UINT_MAX, "Invalid down interval"},
-	};
+अटल पूर्णांक flakey_ctr(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
+अणु
+	अटल स्थिर काष्ठा dm_arg _args[] = अणु
+		अणु0, अच_पूर्णांक_उच्च, "Invalid up interval"पूर्ण,
+		अणु0, अच_पूर्णांक_उच्च, "Invalid down interval"पूर्ण,
+	पूर्ण;
 
-	int r;
-	struct flakey_c *fc;
-	unsigned long long tmpll;
-	struct dm_arg_set as;
-	const char *devname;
-	char dummy;
+	पूर्णांक r;
+	काष्ठा flakey_c *fc;
+	अचिन्हित दीर्घ दीर्घ पंचांगpll;
+	काष्ठा dm_arg_set as;
+	स्थिर अक्षर *devname;
+	अक्षर dummy;
 
 	as.argc = argc;
 	as.argv = argv;
 
-	if (argc < 4) {
+	अगर (argc < 4) अणु
 		ti->error = "Invalid argument count";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	fc = kzalloc(sizeof(*fc), GFP_KERNEL);
-	if (!fc) {
+	fc = kzalloc(माप(*fc), GFP_KERNEL);
+	अगर (!fc) अणु
 		ti->error = "Cannot allocate context";
-		return -ENOMEM;
-	}
-	fc->start_time = jiffies;
+		वापस -ENOMEM;
+	पूर्ण
+	fc->start_समय = jअगरfies;
 
-	devname = dm_shift_arg(&as);
+	devname = dm_shअगरt_arg(&as);
 
 	r = -EINVAL;
-	if (sscanf(dm_shift_arg(&as), "%llu%c", &tmpll, &dummy) != 1 || tmpll != (sector_t)tmpll) {
+	अगर (माला_पूछो(dm_shअगरt_arg(&as), "%llu%c", &पंचांगpll, &dummy) != 1 || पंचांगpll != (sector_t)पंचांगpll) अणु
 		ti->error = "Invalid device sector";
-		goto bad;
-	}
-	fc->start = tmpll;
+		जाओ bad;
+	पूर्ण
+	fc->start = पंचांगpll;
 
-	r = dm_read_arg(_args, &as, &fc->up_interval, &ti->error);
-	if (r)
-		goto bad;
+	r = dm_पढ़ो_arg(_args, &as, &fc->up_पूर्णांकerval, &ti->error);
+	अगर (r)
+		जाओ bad;
 
-	r = dm_read_arg(_args, &as, &fc->down_interval, &ti->error);
-	if (r)
-		goto bad;
+	r = dm_पढ़ो_arg(_args, &as, &fc->करोwn_पूर्णांकerval, &ti->error);
+	अगर (r)
+		जाओ bad;
 
-	if (!(fc->up_interval + fc->down_interval)) {
+	अगर (!(fc->up_पूर्णांकerval + fc->करोwn_पूर्णांकerval)) अणु
 		ti->error = "Total (up + down) interval is zero";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	if (fc->up_interval + fc->down_interval < fc->up_interval) {
+	अगर (fc->up_पूर्णांकerval + fc->करोwn_पूर्णांकerval < fc->up_पूर्णांकerval) अणु
 		ti->error = "Interval overflow";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	r = parse_features(&as, fc, ti);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	r = dm_get_device(ti, devname, dm_table_get_mode(ti->table), &fc->dev);
-	if (r) {
+	अगर (r) अणु
 		ti->error = "Device lookup failed";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	ti->num_flush_bios = 1;
 	ti->num_discard_bios = 1;
-	ti->per_io_data_size = sizeof(struct per_bio_data);
-	ti->private = fc;
-	return 0;
+	ti->per_io_data_size = माप(काष्ठा per_bio_data);
+	ti->निजी = fc;
+	वापस 0;
 
 bad:
-	kfree(fc);
-	return r;
-}
+	kमुक्त(fc);
+	वापस r;
+पूर्ण
 
-static void flakey_dtr(struct dm_target *ti)
-{
-	struct flakey_c *fc = ti->private;
+अटल व्योम flakey_dtr(काष्ठा dm_target *ti)
+अणु
+	काष्ठा flakey_c *fc = ti->निजी;
 
 	dm_put_device(ti, fc->dev);
-	kfree(fc);
-}
+	kमुक्त(fc);
+पूर्ण
 
-static sector_t flakey_map_sector(struct dm_target *ti, sector_t bi_sector)
-{
-	struct flakey_c *fc = ti->private;
+अटल sector_t flakey_map_sector(काष्ठा dm_target *ti, sector_t bi_sector)
+अणु
+	काष्ठा flakey_c *fc = ti->निजी;
 
-	return fc->start + dm_target_offset(ti, bi_sector);
-}
+	वापस fc->start + dm_target_offset(ti, bi_sector);
+पूर्ण
 
-static void flakey_map_bio(struct dm_target *ti, struct bio *bio)
-{
-	struct flakey_c *fc = ti->private;
+अटल व्योम flakey_map_bio(काष्ठा dm_target *ti, काष्ठा bio *bio)
+अणु
+	काष्ठा flakey_c *fc = ti->निजी;
 
 	bio_set_dev(bio, fc->dev->bdev);
-	if (bio_sectors(bio) || op_is_zone_mgmt(bio_op(bio)))
+	अगर (bio_sectors(bio) || op_is_zone_mgmt(bio_op(bio)))
 		bio->bi_iter.bi_sector =
 			flakey_map_sector(ti, bio->bi_iter.bi_sector);
-}
+पूर्ण
 
-static void corrupt_bio_data(struct bio *bio, struct flakey_c *fc)
-{
-	unsigned int corrupt_bio_byte = fc->corrupt_bio_byte - 1;
+अटल व्योम corrupt_bio_data(काष्ठा bio *bio, काष्ठा flakey_c *fc)
+अणु
+	अचिन्हित पूर्णांक corrupt_bio_byte = fc->corrupt_bio_byte - 1;
 
-	struct bvec_iter iter;
-	struct bio_vec bvec;
+	काष्ठा bvec_iter iter;
+	काष्ठा bio_vec bvec;
 
-	if (!bio_has_data(bio))
-		return;
+	अगर (!bio_has_data(bio))
+		वापस;
 
 	/*
-	 * Overwrite the Nth byte of the bio's data, on whichever page
+	 * Overग_लिखो the Nth byte of the bio's data, on whichever page
 	 * it falls.
 	 */
-	bio_for_each_segment(bvec, bio, iter) {
-		if (bio_iter_len(bio, iter) > corrupt_bio_byte) {
-			char *segment = (page_address(bio_iter_page(bio, iter))
+	bio_क्रम_each_segment(bvec, bio, iter) अणु
+		अगर (bio_iter_len(bio, iter) > corrupt_bio_byte) अणु
+			अक्षर *segment = (page_address(bio_iter_page(bio, iter))
 					 + bio_iter_offset(bio, iter));
 			segment[corrupt_bio_byte] = fc->corrupt_bio_value;
 			DMDEBUG("Corrupting data bio=%p by writing %u to byte %u "
 				"(rw=%c bi_opf=%u bi_sector=%llu size=%u)\n",
 				bio, fc->corrupt_bio_value, fc->corrupt_bio_byte,
 				(bio_data_dir(bio) == WRITE) ? 'w' : 'r', bio->bi_opf,
-				(unsigned long long)bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
-			break;
-		}
+				(अचिन्हित दीर्घ दीर्घ)bio->bi_iter.bi_sector, bio->bi_iter.bi_size);
+			अवरोध;
+		पूर्ण
 		corrupt_bio_byte -= bio_iter_len(bio, iter);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int flakey_map(struct dm_target *ti, struct bio *bio)
-{
-	struct flakey_c *fc = ti->private;
-	unsigned elapsed;
-	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
+अटल पूर्णांक flakey_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
+अणु
+	काष्ठा flakey_c *fc = ti->निजी;
+	अचिन्हित elapsed;
+	काष्ठा per_bio_data *pb = dm_per_bio_data(bio, माप(काष्ठा per_bio_data));
 	pb->bio_submitted = false;
 
-	if (op_is_zone_mgmt(bio_op(bio)))
-		goto map_bio;
+	अगर (op_is_zone_mgmt(bio_op(bio)))
+		जाओ map_bio;
 
 	/* Are we alive ? */
-	elapsed = (jiffies - fc->start_time) / HZ;
-	if (elapsed % (fc->up_interval + fc->down_interval) >= fc->up_interval) {
+	elapsed = (jअगरfies - fc->start_समय) / HZ;
+	अगर (elapsed % (fc->up_पूर्णांकerval + fc->करोwn_पूर्णांकerval) >= fc->up_पूर्णांकerval) अणु
 		/*
-		 * Flag this bio as submitted while down.
+		 * Flag this bio as submitted जबतक करोwn.
 		 */
 		pb->bio_submitted = true;
 
 		/*
-		 * Error reads if neither corrupt_bio_byte or drop_writes or error_writes are set.
-		 * Otherwise, flakey_end_io() will decide if the reads should be modified.
+		 * Error पढ़ोs अगर neither corrupt_bio_byte or drop_ग_लिखोs or error_ग_लिखोs are set.
+		 * Otherwise, flakey_end_io() will decide अगर the पढ़ोs should be modअगरied.
 		 */
-		if (bio_data_dir(bio) == READ) {
-			if (!fc->corrupt_bio_byte && !test_bit(DROP_WRITES, &fc->flags) &&
+		अगर (bio_data_dir(bio) == READ) अणु
+			अगर (!fc->corrupt_bio_byte && !test_bit(DROP_WRITES, &fc->flags) &&
 			    !test_bit(ERROR_WRITES, &fc->flags))
-				return DM_MAPIO_KILL;
-			goto map_bio;
-		}
+				वापस DM_MAPIO_KILL;
+			जाओ map_bio;
+		पूर्ण
 
 		/*
-		 * Drop or error writes?
+		 * Drop or error ग_लिखोs?
 		 */
-		if (test_bit(DROP_WRITES, &fc->flags)) {
+		अगर (test_bit(DROP_WRITES, &fc->flags)) अणु
 			bio_endio(bio);
-			return DM_MAPIO_SUBMITTED;
-		}
-		else if (test_bit(ERROR_WRITES, &fc->flags)) {
+			वापस DM_MAPIO_SUBMITTED;
+		पूर्ण
+		अन्यथा अगर (test_bit(ERROR_WRITES, &fc->flags)) अणु
 			bio_io_error(bio);
-			return DM_MAPIO_SUBMITTED;
-		}
+			वापस DM_MAPIO_SUBMITTED;
+		पूर्ण
 
 		/*
-		 * Corrupt matching writes.
+		 * Corrupt matching ग_लिखोs.
 		 */
-		if (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == WRITE)) {
-			if (all_corrupt_bio_flags_match(bio, fc))
+		अगर (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == WRITE)) अणु
+			अगर (all_corrupt_bio_flags_match(bio, fc))
 				corrupt_bio_data(bio, fc);
-			goto map_bio;
-		}
+			जाओ map_bio;
+		पूर्ण
 
 		/*
-		 * By default, error all I/O.
+		 * By शेष, error all I/O.
 		 */
-		return DM_MAPIO_KILL;
-	}
+		वापस DM_MAPIO_KILL;
+	पूर्ण
 
 map_bio:
 	flakey_map_bio(ti, bio);
 
-	return DM_MAPIO_REMAPPED;
-}
+	वापस DM_MAPIO_REMAPPED;
+पूर्ण
 
-static int flakey_end_io(struct dm_target *ti, struct bio *bio,
+अटल पूर्णांक flakey_end_io(काष्ठा dm_target *ti, काष्ठा bio *bio,
 			 blk_status_t *error)
-{
-	struct flakey_c *fc = ti->private;
-	struct per_bio_data *pb = dm_per_bio_data(bio, sizeof(struct per_bio_data));
+अणु
+	काष्ठा flakey_c *fc = ti->निजी;
+	काष्ठा per_bio_data *pb = dm_per_bio_data(bio, माप(काष्ठा per_bio_data));
 
-	if (op_is_zone_mgmt(bio_op(bio)))
-		return DM_ENDIO_DONE;
+	अगर (op_is_zone_mgmt(bio_op(bio)))
+		वापस DM_ENDIO_DONE;
 
-	if (!*error && pb->bio_submitted && (bio_data_dir(bio) == READ)) {
-		if (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == READ) &&
-		    all_corrupt_bio_flags_match(bio, fc)) {
+	अगर (!*error && pb->bio_submitted && (bio_data_dir(bio) == READ)) अणु
+		अगर (fc->corrupt_bio_byte && (fc->corrupt_bio_rw == READ) &&
+		    all_corrupt_bio_flags_match(bio, fc)) अणु
 			/*
-			 * Corrupt successful matching READs while in down state.
+			 * Corrupt successful matching READs जबतक in करोwn state.
 			 */
 			corrupt_bio_data(bio, fc);
 
-		} else if (!test_bit(DROP_WRITES, &fc->flags) &&
-			   !test_bit(ERROR_WRITES, &fc->flags)) {
+		पूर्ण अन्यथा अगर (!test_bit(DROP_WRITES, &fc->flags) &&
+			   !test_bit(ERROR_WRITES, &fc->flags)) अणु
 			/*
-			 * Error read during the down_interval if drop_writes
-			 * and error_writes were not configured.
+			 * Error पढ़ो during the करोwn_पूर्णांकerval अगर drop_ग_लिखोs
+			 * and error_ग_लिखोs were not configured.
 			 */
 			*error = BLK_STS_IOERR;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return DM_ENDIO_DONE;
-}
+	वापस DM_ENDIO_DONE;
+पूर्ण
 
-static void flakey_status(struct dm_target *ti, status_type_t type,
-			  unsigned status_flags, char *result, unsigned maxlen)
-{
-	unsigned sz = 0;
-	struct flakey_c *fc = ti->private;
-	unsigned drop_writes, error_writes;
+अटल व्योम flakey_status(काष्ठा dm_target *ti, status_type_t type,
+			  अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
+अणु
+	अचिन्हित sz = 0;
+	काष्ठा flakey_c *fc = ti->निजी;
+	अचिन्हित drop_ग_लिखोs, error_ग_लिखोs;
 
-	switch (type) {
-	case STATUSTYPE_INFO:
+	चयन (type) अणु
+	हाल STATUSTYPE_INFO:
 		result[0] = '\0';
-		break;
+		अवरोध;
 
-	case STATUSTYPE_TABLE:
+	हाल STATUSTYPE_TABLE:
 		DMEMIT("%s %llu %u %u ", fc->dev->name,
-		       (unsigned long long)fc->start, fc->up_interval,
-		       fc->down_interval);
+		       (अचिन्हित दीर्घ दीर्घ)fc->start, fc->up_पूर्णांकerval,
+		       fc->करोwn_पूर्णांकerval);
 
-		drop_writes = test_bit(DROP_WRITES, &fc->flags);
-		error_writes = test_bit(ERROR_WRITES, &fc->flags);
-		DMEMIT("%u ", drop_writes + error_writes + (fc->corrupt_bio_byte > 0) * 5);
+		drop_ग_लिखोs = test_bit(DROP_WRITES, &fc->flags);
+		error_ग_लिखोs = test_bit(ERROR_WRITES, &fc->flags);
+		DMEMIT("%u ", drop_ग_लिखोs + error_ग_लिखोs + (fc->corrupt_bio_byte > 0) * 5);
 
-		if (drop_writes)
+		अगर (drop_ग_लिखोs)
 			DMEMIT("drop_writes ");
-		else if (error_writes)
+		अन्यथा अगर (error_ग_लिखोs)
 			DMEMIT("error_writes ");
 
-		if (fc->corrupt_bio_byte)
+		अगर (fc->corrupt_bio_byte)
 			DMEMIT("corrupt_bio_byte %u %c %u %u ",
 			       fc->corrupt_bio_byte,
 			       (fc->corrupt_bio_rw == WRITE) ? 'w' : 'r',
 			       fc->corrupt_bio_value, fc->corrupt_bio_flags);
 
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int flakey_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
-{
-	struct flakey_c *fc = ti->private;
+अटल पूर्णांक flakey_prepare_ioctl(काष्ठा dm_target *ti, काष्ठा block_device **bdev)
+अणु
+	काष्ठा flakey_c *fc = ti->निजी;
 
 	*bdev = fc->dev->bdev;
 
 	/*
-	 * Only pass ioctls through if the device sizes match exactly.
+	 * Only pass ioctls through अगर the device sizes match exactly.
 	 */
-	if (fc->start ||
-	    ti->len != i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
-		return 1;
-	return 0;
-}
+	अगर (fc->start ||
+	    ti->len != i_size_पढ़ो((*bdev)->bd_inode) >> SECTOR_SHIFT)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_BLK_DEV_ZONED
-static int flakey_report_zones(struct dm_target *ti,
-		struct dm_report_zones_args *args, unsigned int nr_zones)
-{
-	struct flakey_c *fc = ti->private;
+#अगर_घोषित CONFIG_BLK_DEV_ZONED
+अटल पूर्णांक flakey_report_zones(काष्ठा dm_target *ti,
+		काष्ठा dm_report_zones_args *args, अचिन्हित पूर्णांक nr_zones)
+अणु
+	काष्ठा flakey_c *fc = ti->निजी;
 	sector_t sector = flakey_map_sector(ti, args->next_sector);
 
 	args->start = fc->start;
-	return blkdev_report_zones(fc->dev->bdev, sector, nr_zones,
+	वापस blkdev_report_zones(fc->dev->bdev, sector, nr_zones,
 				   dm_report_zones_cb, args);
-}
-#else
-#define flakey_report_zones NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा flakey_report_zones शून्य
+#पूर्ण_अगर
 
-static int flakey_iterate_devices(struct dm_target *ti, iterate_devices_callout_fn fn, void *data)
-{
-	struct flakey_c *fc = ti->private;
+अटल पूर्णांक flakey_iterate_devices(काष्ठा dm_target *ti, iterate_devices_callout_fn fn, व्योम *data)
+अणु
+	काष्ठा flakey_c *fc = ti->निजी;
 
-	return fn(ti, fc->dev, fc->start, ti->len, data);
-}
+	वापस fn(ti, fc->dev, fc->start, ti->len, data);
+पूर्ण
 
-static struct target_type flakey_target = {
+अटल काष्ठा target_type flakey_target = अणु
 	.name   = "flakey",
-	.version = {1, 5, 0},
+	.version = अणु1, 5, 0पूर्ण,
 	.features = DM_TARGET_ZONED_HM | DM_TARGET_PASSES_CRYPTO,
 	.report_zones = flakey_report_zones,
 	.module = THIS_MODULE,
@@ -493,26 +494,26 @@ static struct target_type flakey_target = {
 	.status = flakey_status,
 	.prepare_ioctl = flakey_prepare_ioctl,
 	.iterate_devices = flakey_iterate_devices,
-};
+पूर्ण;
 
-static int __init dm_flakey_init(void)
-{
-	int r = dm_register_target(&flakey_target);
+अटल पूर्णांक __init dm_flakey_init(व्योम)
+अणु
+	पूर्णांक r = dm_रेजिस्टर_target(&flakey_target);
 
-	if (r < 0)
+	अगर (r < 0)
 		DMERR("register failed %d", r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void __exit dm_flakey_exit(void)
-{
-	dm_unregister_target(&flakey_target);
-}
+अटल व्योम __निकास dm_flakey_निकास(व्योम)
+अणु
+	dm_unरेजिस्टर_target(&flakey_target);
+पूर्ण
 
 /* Module hooks */
 module_init(dm_flakey_init);
-module_exit(dm_flakey_exit);
+module_निकास(dm_flakey_निकास);
 
 MODULE_DESCRIPTION(DM_NAME " flakey target");
 MODULE_AUTHOR("Joe Thornber <dm-devel@redhat.com>");

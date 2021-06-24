@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPIASM_SCHID_H
-#define _UAPIASM_SCHID_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPIASM_SCHID_H
+#घोषणा _UAPIASM_SCHID_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct subchannel_id {
+काष्ठा subchannel_id अणु
 	__u32 cssid : 8;
 	__u32 : 4;
 	__u32 m : 1;
 	__u32 ssid : 2;
 	__u32 one : 1;
 	__u32 sch_no : 16;
-} __attribute__ ((packed, aligned(4)));
+पूर्ण __attribute__ ((packed, aligned(4)));
 
 
-#endif /* _UAPIASM_SCHID_H */
+#पूर्ण_अगर /* _UAPIASM_SCHID_H */

@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * net/core/fib_rules.c		Generic Routing Rules
  *
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <net/net_namespace.h>
-#include <net/sock.h>
-#include <net/fib_rules.h>
-#include <net/ip_tunnels.h>
-#include <linux/indirect_call_wrapper.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/sock.h>
+#समावेश <net/fib_rules.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <linux/indirect_call_wrapper.h>
 
-#if defined(CONFIG_IPV6) && defined(CONFIG_IPV6_MULTIPLE_TABLES)
-#ifdef CONFIG_IP_MULTIPLE_TABLES
-#define INDIRECT_CALL_MT(f, f2, f1, ...) \
-	INDIRECT_CALL_INET(f, f2, f1, __VA_ARGS__)
-#else
-#define INDIRECT_CALL_MT(f, f2, f1, ...) INDIRECT_CALL_1(f, f2, __VA_ARGS__)
-#endif
-#elif defined(CONFIG_IP_MULTIPLE_TABLES)
-#define INDIRECT_CALL_MT(f, f2, f1, ...) INDIRECT_CALL_1(f, f1, __VA_ARGS__)
-#else
-#define INDIRECT_CALL_MT(f, f2, f1, ...) f(__VA_ARGS__)
-#endif
+#अगर defined(CONFIG_IPV6) && defined(CONFIG_IPV6_MULTIPLE_TABLES)
+#अगर_घोषित CONFIG_IP_MULTIPLE_TABLES
+#घोषणा INसूचीECT_CALL_MT(f, f2, f1, ...) \
+	INसूचीECT_CALL_INET(f, f2, f1, __VA_ARGS__)
+#अन्यथा
+#घोषणा INसूचीECT_CALL_MT(f, f2, f1, ...) INसूचीECT_CALL_1(f, f2, __VA_ARGS__)
+#पूर्ण_अगर
+#या_अगर defined(CONFIG_IP_MULTIPLE_TABLES)
+#घोषणा INसूचीECT_CALL_MT(f, f2, f1, ...) INसूचीECT_CALL_1(f, f1, __VA_ARGS__)
+#अन्यथा
+#घोषणा INसूचीECT_CALL_MT(f, f2, f1, ...) f(__VA_ARGS__)
+#पूर्ण_अगर
 
-static const struct fib_kuid_range fib_kuid_range_unset = {
+अटल स्थिर काष्ठा fib_kuid_range fib_kuid_range_unset = अणु
 	KUIDT_INIT(0),
 	KUIDT_INIT(~0),
-};
+पूर्ण;
 
-bool fib_rule_matchall(const struct fib_rule *rule)
-{
-	if (rule->iifindex || rule->oifindex || rule->mark || rule->tun_id ||
+bool fib_rule_matchall(स्थिर काष्ठा fib_rule *rule)
+अणु
+	अगर (rule->iअगरindex || rule->oअगरindex || rule->mark || rule->tun_id ||
 	    rule->flags)
-		return false;
-	if (rule->suppress_ifgroup != -1 || rule->suppress_prefixlen != -1)
-		return false;
-	if (!uid_eq(rule->uid_range.start, fib_kuid_range_unset.start) ||
+		वापस false;
+	अगर (rule->suppress_अगरgroup != -1 || rule->suppress_prefixlen != -1)
+		वापस false;
+	अगर (!uid_eq(rule->uid_range.start, fib_kuid_range_unset.start) ||
 	    !uid_eq(rule->uid_range.end, fib_kuid_range_unset.end))
-		return false;
-	if (fib_rule_port_range_set(&rule->sport_range))
-		return false;
-	if (fib_rule_port_range_set(&rule->dport_range))
-		return false;
-	return true;
-}
+		वापस false;
+	अगर (fib_rule_port_range_set(&rule->sport_range))
+		वापस false;
+	अगर (fib_rule_port_range_set(&rule->dport_range))
+		वापस false;
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(fib_rule_matchall);
 
-int fib_default_rule_add(struct fib_rules_ops *ops,
+पूर्णांक fib_शेष_rule_add(काष्ठा fib_rules_ops *ops,
 			 u32 pref, u32 table, u32 flags)
-{
-	struct fib_rule *r;
+अणु
+	काष्ठा fib_rule *r;
 
 	r = kzalloc(ops->rule_size, GFP_KERNEL);
-	if (r == NULL)
-		return -ENOMEM;
+	अगर (r == शून्य)
+		वापस -ENOMEM;
 
 	refcount_set(&r->refcnt, 1);
 	r->action = FR_ACT_TO_TBL;
@@ -71,898 +72,898 @@ int fib_default_rule_add(struct fib_rules_ops *ops,
 	r->uid_range = fib_kuid_range_unset;
 
 	r->suppress_prefixlen = -1;
-	r->suppress_ifgroup = -1;
+	r->suppress_अगरgroup = -1;
 
 	/* The lock is not required here, the list in unreacheable
 	 * at the moment this function is called */
 	list_add_tail(&r->list, &ops->rules_list);
-	return 0;
-}
-EXPORT_SYMBOL(fib_default_rule_add);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(fib_शेष_rule_add);
 
-static u32 fib_default_rule_pref(struct fib_rules_ops *ops)
-{
-	struct list_head *pos;
-	struct fib_rule *rule;
+अटल u32 fib_शेष_rule_pref(काष्ठा fib_rules_ops *ops)
+अणु
+	काष्ठा list_head *pos;
+	काष्ठा fib_rule *rule;
 
-	if (!list_empty(&ops->rules_list)) {
+	अगर (!list_empty(&ops->rules_list)) अणु
 		pos = ops->rules_list.next;
-		if (pos->next != &ops->rules_list) {
-			rule = list_entry(pos->next, struct fib_rule, list);
-			if (rule->pref)
-				return rule->pref - 1;
-		}
-	}
+		अगर (pos->next != &ops->rules_list) अणु
+			rule = list_entry(pos->next, काष्ठा fib_rule, list);
+			अगर (rule->pref)
+				वापस rule->pref - 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void notify_rule_change(int event, struct fib_rule *rule,
-			       struct fib_rules_ops *ops, struct nlmsghdr *nlh,
+अटल व्योम notअगरy_rule_change(पूर्णांक event, काष्ठा fib_rule *rule,
+			       काष्ठा fib_rules_ops *ops, काष्ठा nlmsghdr *nlh,
 			       u32 pid);
 
-static struct fib_rules_ops *lookup_rules_ops(struct net *net, int family)
-{
-	struct fib_rules_ops *ops;
+अटल काष्ठा fib_rules_ops *lookup_rules_ops(काष्ठा net *net, पूर्णांक family)
+अणु
+	काष्ठा fib_rules_ops *ops;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(ops, &net->rules_ops, list) {
-		if (ops->family == family) {
-			if (!try_module_get(ops->owner))
-				ops = NULL;
-			rcu_read_unlock();
-			return ops;
-		}
-	}
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(ops, &net->rules_ops, list) अणु
+		अगर (ops->family == family) अणु
+			अगर (!try_module_get(ops->owner))
+				ops = शून्य;
+			rcu_पढ़ो_unlock();
+			वापस ops;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void rules_ops_put(struct fib_rules_ops *ops)
-{
-	if (ops)
+अटल व्योम rules_ops_put(काष्ठा fib_rules_ops *ops)
+अणु
+	अगर (ops)
 		module_put(ops->owner);
-}
+पूर्ण
 
-static void flush_route_cache(struct fib_rules_ops *ops)
-{
-	if (ops->flush_cache)
+अटल व्योम flush_route_cache(काष्ठा fib_rules_ops *ops)
+अणु
+	अगर (ops->flush_cache)
 		ops->flush_cache(ops);
-}
+पूर्ण
 
-static int __fib_rules_register(struct fib_rules_ops *ops)
-{
-	int err = -EEXIST;
-	struct fib_rules_ops *o;
-	struct net *net;
+अटल पूर्णांक __fib_rules_रेजिस्टर(काष्ठा fib_rules_ops *ops)
+अणु
+	पूर्णांक err = -EEXIST;
+	काष्ठा fib_rules_ops *o;
+	काष्ठा net *net;
 
 	net = ops->fro_net;
 
-	if (ops->rule_size < sizeof(struct fib_rule))
-		return -EINVAL;
+	अगर (ops->rule_size < माप(काष्ठा fib_rule))
+		वापस -EINVAL;
 
-	if (ops->match == NULL || ops->configure == NULL ||
-	    ops->compare == NULL || ops->fill == NULL ||
-	    ops->action == NULL)
-		return -EINVAL;
+	अगर (ops->match == शून्य || ops->configure == शून्य ||
+	    ops->compare == शून्य || ops->fill == शून्य ||
+	    ops->action == शून्य)
+		वापस -EINVAL;
 
 	spin_lock(&net->rules_mod_lock);
-	list_for_each_entry(o, &net->rules_ops, list)
-		if (ops->family == o->family)
-			goto errout;
+	list_क्रम_each_entry(o, &net->rules_ops, list)
+		अगर (ops->family == o->family)
+			जाओ errout;
 
 	list_add_tail_rcu(&ops->list, &net->rules_ops);
 	err = 0;
 errout:
 	spin_unlock(&net->rules_mod_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct fib_rules_ops *
-fib_rules_register(const struct fib_rules_ops *tmpl, struct net *net)
-{
-	struct fib_rules_ops *ops;
-	int err;
+काष्ठा fib_rules_ops *
+fib_rules_रेजिस्टर(स्थिर काष्ठा fib_rules_ops *पंचांगpl, काष्ठा net *net)
+अणु
+	काष्ठा fib_rules_ops *ops;
+	पूर्णांक err;
 
-	ops = kmemdup(tmpl, sizeof(*ops), GFP_KERNEL);
-	if (ops == NULL)
-		return ERR_PTR(-ENOMEM);
+	ops = kmemdup(पंचांगpl, माप(*ops), GFP_KERNEL);
+	अगर (ops == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&ops->rules_list);
 	ops->fro_net = net;
 
-	err = __fib_rules_register(ops);
-	if (err) {
-		kfree(ops);
+	err = __fib_rules_रेजिस्टर(ops);
+	अगर (err) अणु
+		kमुक्त(ops);
 		ops = ERR_PTR(err);
-	}
+	पूर्ण
 
-	return ops;
-}
-EXPORT_SYMBOL_GPL(fib_rules_register);
+	वापस ops;
+पूर्ण
+EXPORT_SYMBOL_GPL(fib_rules_रेजिस्टर);
 
-static void fib_rules_cleanup_ops(struct fib_rules_ops *ops)
-{
-	struct fib_rule *rule, *tmp;
+अटल व्योम fib_rules_cleanup_ops(काष्ठा fib_rules_ops *ops)
+अणु
+	काष्ठा fib_rule *rule, *पंचांगp;
 
-	list_for_each_entry_safe(rule, tmp, &ops->rules_list, list) {
+	list_क्रम_each_entry_safe(rule, पंचांगp, &ops->rules_list, list) अणु
 		list_del_rcu(&rule->list);
-		if (ops->delete)
+		अगर (ops->delete)
 			ops->delete(rule);
 		fib_rule_put(rule);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void fib_rules_unregister(struct fib_rules_ops *ops)
-{
-	struct net *net = ops->fro_net;
+व्योम fib_rules_unरेजिस्टर(काष्ठा fib_rules_ops *ops)
+अणु
+	काष्ठा net *net = ops->fro_net;
 
 	spin_lock(&net->rules_mod_lock);
 	list_del_rcu(&ops->list);
 	spin_unlock(&net->rules_mod_lock);
 
 	fib_rules_cleanup_ops(ops);
-	kfree_rcu(ops, rcu);
-}
-EXPORT_SYMBOL_GPL(fib_rules_unregister);
+	kमुक्त_rcu(ops, rcu);
+पूर्ण
+EXPORT_SYMBOL_GPL(fib_rules_unरेजिस्टर);
 
-static int uid_range_set(struct fib_kuid_range *range)
-{
-	return uid_valid(range->start) && uid_valid(range->end);
-}
+अटल पूर्णांक uid_range_set(काष्ठा fib_kuid_range *range)
+अणु
+	वापस uid_valid(range->start) && uid_valid(range->end);
+पूर्ण
 
-static struct fib_kuid_range nla_get_kuid_range(struct nlattr **tb)
-{
-	struct fib_rule_uid_range *in;
-	struct fib_kuid_range out;
+अटल काष्ठा fib_kuid_range nla_get_kuid_range(काष्ठा nlattr **tb)
+अणु
+	काष्ठा fib_rule_uid_range *in;
+	काष्ठा fib_kuid_range out;
 
-	in = (struct fib_rule_uid_range *)nla_data(tb[FRA_UID_RANGE]);
+	in = (काष्ठा fib_rule_uid_range *)nla_data(tb[FRA_UID_RANGE]);
 
 	out.start = make_kuid(current_user_ns(), in->start);
 	out.end = make_kuid(current_user_ns(), in->end);
 
-	return out;
-}
+	वापस out;
+पूर्ण
 
-static int nla_put_uid_range(struct sk_buff *skb, struct fib_kuid_range *range)
-{
-	struct fib_rule_uid_range out = {
+अटल पूर्णांक nla_put_uid_range(काष्ठा sk_buff *skb, काष्ठा fib_kuid_range *range)
+अणु
+	काष्ठा fib_rule_uid_range out = अणु
 		from_kuid_munged(current_user_ns(), range->start),
 		from_kuid_munged(current_user_ns(), range->end)
-	};
+	पूर्ण;
 
-	return nla_put(skb, FRA_UID_RANGE, sizeof(out), &out);
-}
+	वापस nla_put(skb, FRA_UID_RANGE, माप(out), &out);
+पूर्ण
 
-static int nla_get_port_range(struct nlattr *pattr,
-			      struct fib_rule_port_range *port_range)
-{
-	const struct fib_rule_port_range *pr = nla_data(pattr);
+अटल पूर्णांक nla_get_port_range(काष्ठा nlattr *pattr,
+			      काष्ठा fib_rule_port_range *port_range)
+अणु
+	स्थिर काष्ठा fib_rule_port_range *pr = nla_data(pattr);
 
-	if (!fib_rule_port_range_valid(pr))
-		return -EINVAL;
+	अगर (!fib_rule_port_range_valid(pr))
+		वापस -EINVAL;
 
 	port_range->start = pr->start;
 	port_range->end = pr->end;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nla_put_port_range(struct sk_buff *skb, int attrtype,
-			      struct fib_rule_port_range *range)
-{
-	return nla_put(skb, attrtype, sizeof(*range), range);
-}
+अटल पूर्णांक nla_put_port_range(काष्ठा sk_buff *skb, पूर्णांक attrtype,
+			      काष्ठा fib_rule_port_range *range)
+अणु
+	वापस nla_put(skb, attrtype, माप(*range), range);
+पूर्ण
 
-static int fib_rule_match(struct fib_rule *rule, struct fib_rules_ops *ops,
-			  struct flowi *fl, int flags,
-			  struct fib_lookup_arg *arg)
-{
-	int ret = 0;
+अटल पूर्णांक fib_rule_match(काष्ठा fib_rule *rule, काष्ठा fib_rules_ops *ops,
+			  काष्ठा flowi *fl, पूर्णांक flags,
+			  काष्ठा fib_lookup_arg *arg)
+अणु
+	पूर्णांक ret = 0;
 
-	if (rule->iifindex && (rule->iifindex != fl->flowi_iif))
-		goto out;
+	अगर (rule->iअगरindex && (rule->iअगरindex != fl->flowi_iअगर))
+		जाओ out;
 
-	if (rule->oifindex && (rule->oifindex != fl->flowi_oif))
-		goto out;
+	अगर (rule->oअगरindex && (rule->oअगरindex != fl->flowi_oअगर))
+		जाओ out;
 
-	if ((rule->mark ^ fl->flowi_mark) & rule->mark_mask)
-		goto out;
+	अगर ((rule->mark ^ fl->flowi_mark) & rule->mark_mask)
+		जाओ out;
 
-	if (rule->tun_id && (rule->tun_id != fl->flowi_tun_key.tun_id))
-		goto out;
+	अगर (rule->tun_id && (rule->tun_id != fl->flowi_tun_key.tun_id))
+		जाओ out;
 
-	if (rule->l3mdev && !l3mdev_fib_rule_match(rule->fr_net, fl, arg))
-		goto out;
+	अगर (rule->l3mdev && !l3mdev_fib_rule_match(rule->fr_net, fl, arg))
+		जाओ out;
 
-	if (uid_lt(fl->flowi_uid, rule->uid_range.start) ||
+	अगर (uid_lt(fl->flowi_uid, rule->uid_range.start) ||
 	    uid_gt(fl->flowi_uid, rule->uid_range.end))
-		goto out;
+		जाओ out;
 
-	ret = INDIRECT_CALL_MT(ops->match,
+	ret = INसूचीECT_CALL_MT(ops->match,
 			       fib6_rule_match,
 			       fib4_rule_match,
 			       rule, fl, flags);
 out:
-	return (rule->flags & FIB_RULE_INVERT) ? !ret : ret;
-}
+	वापस (rule->flags & FIB_RULE_INVERT) ? !ret : ret;
+पूर्ण
 
-int fib_rules_lookup(struct fib_rules_ops *ops, struct flowi *fl,
-		     int flags, struct fib_lookup_arg *arg)
-{
-	struct fib_rule *rule;
-	int err;
+पूर्णांक fib_rules_lookup(काष्ठा fib_rules_ops *ops, काष्ठा flowi *fl,
+		     पूर्णांक flags, काष्ठा fib_lookup_arg *arg)
+अणु
+	काष्ठा fib_rule *rule;
+	पूर्णांक err;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(rule, &ops->rules_list, list) {
+	list_क्रम_each_entry_rcu(rule, &ops->rules_list, list) अणु
 jumped:
-		if (!fib_rule_match(rule, ops, fl, flags, arg))
-			continue;
+		अगर (!fib_rule_match(rule, ops, fl, flags, arg))
+			जारी;
 
-		if (rule->action == FR_ACT_GOTO) {
-			struct fib_rule *target;
+		अगर (rule->action == FR_ACT_GOTO) अणु
+			काष्ठा fib_rule *target;
 
 			target = rcu_dereference(rule->ctarget);
-			if (target == NULL) {
-				continue;
-			} else {
+			अगर (target == शून्य) अणु
+				जारी;
+			पूर्ण अन्यथा अणु
 				rule = target;
-				goto jumped;
-			}
-		} else if (rule->action == FR_ACT_NOP)
-			continue;
-		else
-			err = INDIRECT_CALL_MT(ops->action,
+				जाओ jumped;
+			पूर्ण
+		पूर्ण अन्यथा अगर (rule->action == FR_ACT_NOP)
+			जारी;
+		अन्यथा
+			err = INसूचीECT_CALL_MT(ops->action,
 					       fib6_rule_action,
 					       fib4_rule_action,
 					       rule, fl, flags, arg);
 
-		if (!err && ops->suppress && INDIRECT_CALL_MT(ops->suppress,
+		अगर (!err && ops->suppress && INसूचीECT_CALL_MT(ops->suppress,
 							      fib6_rule_suppress,
 							      fib4_rule_suppress,
 							      rule, arg))
-			continue;
+			जारी;
 
-		if (err != -EAGAIN) {
-			if ((arg->flags & FIB_LOOKUP_NOREF) ||
-			    likely(refcount_inc_not_zero(&rule->refcnt))) {
+		अगर (err != -EAGAIN) अणु
+			अगर ((arg->flags & FIB_LOOKUP_NOREF) ||
+			    likely(refcount_inc_not_zero(&rule->refcnt))) अणु
 				arg->rule = rule;
-				goto out;
-			}
-			break;
-		}
-	}
+				जाओ out;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	err = -ESRCH;
 out:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(fib_rules_lookup);
 
-static int call_fib_rule_notifier(struct notifier_block *nb,
-				  enum fib_event_type event_type,
-				  struct fib_rule *rule, int family,
-				  struct netlink_ext_ack *extack)
-{
-	struct fib_rule_notifier_info info = {
+अटल पूर्णांक call_fib_rule_notअगरier(काष्ठा notअगरier_block *nb,
+				  क्रमागत fib_event_type event_type,
+				  काष्ठा fib_rule *rule, पूर्णांक family,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा fib_rule_notअगरier_info info = अणु
 		.info.family = family,
 		.info.extack = extack,
 		.rule = rule,
-	};
+	पूर्ण;
 
-	return call_fib_notifier(nb, event_type, &info.info);
-}
+	वापस call_fib_notअगरier(nb, event_type, &info.info);
+पूर्ण
 
-static int call_fib_rule_notifiers(struct net *net,
-				   enum fib_event_type event_type,
-				   struct fib_rule *rule,
-				   struct fib_rules_ops *ops,
-				   struct netlink_ext_ack *extack)
-{
-	struct fib_rule_notifier_info info = {
+अटल पूर्णांक call_fib_rule_notअगरiers(काष्ठा net *net,
+				   क्रमागत fib_event_type event_type,
+				   काष्ठा fib_rule *rule,
+				   काष्ठा fib_rules_ops *ops,
+				   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा fib_rule_notअगरier_info info = अणु
 		.info.family = ops->family,
 		.info.extack = extack,
 		.rule = rule,
-	};
+	पूर्ण;
 
 	ops->fib_rules_seq++;
-	return call_fib_notifiers(net, event_type, &info.info);
-}
+	वापस call_fib_notअगरiers(net, event_type, &info.info);
+पूर्ण
 
-/* Called with rcu_read_lock() */
-int fib_rules_dump(struct net *net, struct notifier_block *nb, int family,
-		   struct netlink_ext_ack *extack)
-{
-	struct fib_rules_ops *ops;
-	struct fib_rule *rule;
-	int err = 0;
+/* Called with rcu_पढ़ो_lock() */
+पूर्णांक fib_rules_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb, पूर्णांक family,
+		   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा fib_rules_ops *ops;
+	काष्ठा fib_rule *rule;
+	पूर्णांक err = 0;
 
 	ops = lookup_rules_ops(net, family);
-	if (!ops)
-		return -EAFNOSUPPORT;
-	list_for_each_entry_rcu(rule, &ops->rules_list, list) {
-		err = call_fib_rule_notifier(nb, FIB_EVENT_RULE_ADD,
+	अगर (!ops)
+		वापस -EAFNOSUPPORT;
+	list_क्रम_each_entry_rcu(rule, &ops->rules_list, list) अणु
+		err = call_fib_rule_notअगरier(nb, FIB_EVENT_RULE_ADD,
 					     rule, family, extack);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 	rules_ops_put(ops);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(fib_rules_dump);
 
-unsigned int fib_rules_seq_read(struct net *net, int family)
-{
-	unsigned int fib_rules_seq;
-	struct fib_rules_ops *ops;
+अचिन्हित पूर्णांक fib_rules_seq_पढ़ो(काष्ठा net *net, पूर्णांक family)
+अणु
+	अचिन्हित पूर्णांक fib_rules_seq;
+	काष्ठा fib_rules_ops *ops;
 
 	ASSERT_RTNL();
 
 	ops = lookup_rules_ops(net, family);
-	if (!ops)
-		return 0;
+	अगर (!ops)
+		वापस 0;
 	fib_rules_seq = ops->fib_rules_seq;
 	rules_ops_put(ops);
 
-	return fib_rules_seq;
-}
-EXPORT_SYMBOL_GPL(fib_rules_seq_read);
+	वापस fib_rules_seq;
+पूर्ण
+EXPORT_SYMBOL_GPL(fib_rules_seq_पढ़ो);
 
-static struct fib_rule *rule_find(struct fib_rules_ops *ops,
-				  struct fib_rule_hdr *frh,
-				  struct nlattr **tb,
-				  struct fib_rule *rule,
+अटल काष्ठा fib_rule *rule_find(काष्ठा fib_rules_ops *ops,
+				  काष्ठा fib_rule_hdr *frh,
+				  काष्ठा nlattr **tb,
+				  काष्ठा fib_rule *rule,
 				  bool user_priority)
-{
-	struct fib_rule *r;
+अणु
+	काष्ठा fib_rule *r;
 
-	list_for_each_entry(r, &ops->rules_list, list) {
-		if (rule->action && r->action != rule->action)
-			continue;
+	list_क्रम_each_entry(r, &ops->rules_list, list) अणु
+		अगर (rule->action && r->action != rule->action)
+			जारी;
 
-		if (rule->table && r->table != rule->table)
-			continue;
+		अगर (rule->table && r->table != rule->table)
+			जारी;
 
-		if (user_priority && r->pref != rule->pref)
-			continue;
+		अगर (user_priority && r->pref != rule->pref)
+			जारी;
 
-		if (rule->iifname[0] &&
-		    memcmp(r->iifname, rule->iifname, IFNAMSIZ))
-			continue;
+		अगर (rule->iअगरname[0] &&
+		    स_भेद(r->iअगरname, rule->iअगरname, IFNAMSIZ))
+			जारी;
 
-		if (rule->oifname[0] &&
-		    memcmp(r->oifname, rule->oifname, IFNAMSIZ))
-			continue;
+		अगर (rule->oअगरname[0] &&
+		    स_भेद(r->oअगरname, rule->oअगरname, IFNAMSIZ))
+			जारी;
 
-		if (rule->mark && r->mark != rule->mark)
-			continue;
+		अगर (rule->mark && r->mark != rule->mark)
+			जारी;
 
-		if (rule->suppress_ifgroup != -1 &&
-		    r->suppress_ifgroup != rule->suppress_ifgroup)
-			continue;
+		अगर (rule->suppress_अगरgroup != -1 &&
+		    r->suppress_अगरgroup != rule->suppress_अगरgroup)
+			जारी;
 
-		if (rule->suppress_prefixlen != -1 &&
+		अगर (rule->suppress_prefixlen != -1 &&
 		    r->suppress_prefixlen != rule->suppress_prefixlen)
-			continue;
+			जारी;
 
-		if (rule->mark_mask && r->mark_mask != rule->mark_mask)
-			continue;
+		अगर (rule->mark_mask && r->mark_mask != rule->mark_mask)
+			जारी;
 
-		if (rule->tun_id && r->tun_id != rule->tun_id)
-			continue;
+		अगर (rule->tun_id && r->tun_id != rule->tun_id)
+			जारी;
 
-		if (r->fr_net != rule->fr_net)
-			continue;
+		अगर (r->fr_net != rule->fr_net)
+			जारी;
 
-		if (rule->l3mdev && r->l3mdev != rule->l3mdev)
-			continue;
+		अगर (rule->l3mdev && r->l3mdev != rule->l3mdev)
+			जारी;
 
-		if (uid_range_set(&rule->uid_range) &&
+		अगर (uid_range_set(&rule->uid_range) &&
 		    (!uid_eq(r->uid_range.start, rule->uid_range.start) ||
 		    !uid_eq(r->uid_range.end, rule->uid_range.end)))
-			continue;
+			जारी;
 
-		if (rule->ip_proto && r->ip_proto != rule->ip_proto)
-			continue;
+		अगर (rule->ip_proto && r->ip_proto != rule->ip_proto)
+			जारी;
 
-		if (rule->proto && r->proto != rule->proto)
-			continue;
+		अगर (rule->proto && r->proto != rule->proto)
+			जारी;
 
-		if (fib_rule_port_range_set(&rule->sport_range) &&
+		अगर (fib_rule_port_range_set(&rule->sport_range) &&
 		    !fib_rule_port_range_compare(&r->sport_range,
 						 &rule->sport_range))
-			continue;
+			जारी;
 
-		if (fib_rule_port_range_set(&rule->dport_range) &&
+		अगर (fib_rule_port_range_set(&rule->dport_range) &&
 		    !fib_rule_port_range_compare(&r->dport_range,
 						 &rule->dport_range))
-			continue;
+			जारी;
 
-		if (!ops->compare(r, frh, tb))
-			continue;
-		return r;
-	}
+		अगर (!ops->compare(r, frh, tb))
+			जारी;
+		वापस r;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#ifdef CONFIG_NET_L3_MASTER_DEV
-static int fib_nl2rule_l3mdev(struct nlattr *nla, struct fib_rule *nlrule,
-			      struct netlink_ext_ack *extack)
-{
+#अगर_घोषित CONFIG_NET_L3_MASTER_DEV
+अटल पूर्णांक fib_nl2rule_l3mdev(काष्ठा nlattr *nla, काष्ठा fib_rule *nlrule,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
 	nlrule->l3mdev = nla_get_u8(nla);
-	if (nlrule->l3mdev != 1) {
+	अगर (nlrule->l3mdev != 1) अणु
 		NL_SET_ERR_MSG(extack, "Invalid l3mdev attribute");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
-#else
-static int fib_nl2rule_l3mdev(struct nlattr *nla, struct fib_rule *nlrule,
-			      struct netlink_ext_ack *extack)
-{
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक fib_nl2rule_l3mdev(काष्ठा nlattr *nla, काष्ठा fib_rule *nlrule,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
 	NL_SET_ERR_MSG(extack, "l3mdev support is not enabled in kernel");
-	return -1;
-}
-#endif
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
 
-static int fib_nl2rule(struct sk_buff *skb, struct nlmsghdr *nlh,
-		       struct netlink_ext_ack *extack,
-		       struct fib_rules_ops *ops,
-		       struct nlattr *tb[],
-		       struct fib_rule **rule,
+अटल पूर्णांक fib_nl2rule(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+		       काष्ठा netlink_ext_ack *extack,
+		       काष्ठा fib_rules_ops *ops,
+		       काष्ठा nlattr *tb[],
+		       काष्ठा fib_rule **rule,
 		       bool *user_priority)
-{
-	struct net *net = sock_net(skb->sk);
-	struct fib_rule_hdr *frh = nlmsg_data(nlh);
-	struct fib_rule *nlrule = NULL;
-	int err = -EINVAL;
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा fib_rule_hdr *frh = nlmsg_data(nlh);
+	काष्ठा fib_rule *nlrule = शून्य;
+	पूर्णांक err = -EINVAL;
 
-	if (frh->src_len)
-		if (!tb[FRA_SRC] ||
+	अगर (frh->src_len)
+		अगर (!tb[FRA_SRC] ||
 		    frh->src_len > (ops->addr_size * 8) ||
-		    nla_len(tb[FRA_SRC]) != ops->addr_size) {
+		    nla_len(tb[FRA_SRC]) != ops->addr_size) अणु
 			NL_SET_ERR_MSG(extack, "Invalid source address");
-			goto errout;
-	}
+			जाओ errout;
+	पूर्ण
 
-	if (frh->dst_len)
-		if (!tb[FRA_DST] ||
+	अगर (frh->dst_len)
+		अगर (!tb[FRA_DST] ||
 		    frh->dst_len > (ops->addr_size * 8) ||
-		    nla_len(tb[FRA_DST]) != ops->addr_size) {
+		    nla_len(tb[FRA_DST]) != ops->addr_size) अणु
 			NL_SET_ERR_MSG(extack, "Invalid dst address");
-			goto errout;
-	}
+			जाओ errout;
+	पूर्ण
 
 	nlrule = kzalloc(ops->rule_size, GFP_KERNEL);
-	if (!nlrule) {
+	अगर (!nlrule) अणु
 		err = -ENOMEM;
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 	refcount_set(&nlrule->refcnt, 1);
 	nlrule->fr_net = net;
 
-	if (tb[FRA_PRIORITY]) {
+	अगर (tb[FRA_PRIORITY]) अणु
 		nlrule->pref = nla_get_u32(tb[FRA_PRIORITY]);
 		*user_priority = true;
-	} else {
-		nlrule->pref = fib_default_rule_pref(ops);
-	}
+	पूर्ण अन्यथा अणु
+		nlrule->pref = fib_शेष_rule_pref(ops);
+	पूर्ण
 
 	nlrule->proto = tb[FRA_PROTOCOL] ?
 		nla_get_u8(tb[FRA_PROTOCOL]) : RTPROT_UNSPEC;
 
-	if (tb[FRA_IIFNAME]) {
-		struct net_device *dev;
+	अगर (tb[FRA_IIFNAME]) अणु
+		काष्ठा net_device *dev;
 
-		nlrule->iifindex = -1;
-		nla_strscpy(nlrule->iifname, tb[FRA_IIFNAME], IFNAMSIZ);
-		dev = __dev_get_by_name(net, nlrule->iifname);
-		if (dev)
-			nlrule->iifindex = dev->ifindex;
-	}
+		nlrule->iअगरindex = -1;
+		nla_strscpy(nlrule->iअगरname, tb[FRA_IIFNAME], IFNAMSIZ);
+		dev = __dev_get_by_name(net, nlrule->iअगरname);
+		अगर (dev)
+			nlrule->iअगरindex = dev->अगरindex;
+	पूर्ण
 
-	if (tb[FRA_OIFNAME]) {
-		struct net_device *dev;
+	अगर (tb[FRA_OIFNAME]) अणु
+		काष्ठा net_device *dev;
 
-		nlrule->oifindex = -1;
-		nla_strscpy(nlrule->oifname, tb[FRA_OIFNAME], IFNAMSIZ);
-		dev = __dev_get_by_name(net, nlrule->oifname);
-		if (dev)
-			nlrule->oifindex = dev->ifindex;
-	}
+		nlrule->oअगरindex = -1;
+		nla_strscpy(nlrule->oअगरname, tb[FRA_OIFNAME], IFNAMSIZ);
+		dev = __dev_get_by_name(net, nlrule->oअगरname);
+		अगर (dev)
+			nlrule->oअगरindex = dev->अगरindex;
+	पूर्ण
 
-	if (tb[FRA_FWMARK]) {
+	अगर (tb[FRA_FWMARK]) अणु
 		nlrule->mark = nla_get_u32(tb[FRA_FWMARK]);
-		if (nlrule->mark)
-			/* compatibility: if the mark value is non-zero all bits
-			 * are compared unless a mask is explicitly specified.
+		अगर (nlrule->mark)
+			/* compatibility: अगर the mark value is non-zero all bits
+			 * are compared unless a mask is explicitly specअगरied.
 			 */
 			nlrule->mark_mask = 0xFFFFFFFF;
-	}
+	पूर्ण
 
-	if (tb[FRA_FWMASK])
+	अगर (tb[FRA_FWMASK])
 		nlrule->mark_mask = nla_get_u32(tb[FRA_FWMASK]);
 
-	if (tb[FRA_TUN_ID])
+	अगर (tb[FRA_TUN_ID])
 		nlrule->tun_id = nla_get_be64(tb[FRA_TUN_ID]);
 
 	err = -EINVAL;
-	if (tb[FRA_L3MDEV] &&
+	अगर (tb[FRA_L3MDEV] &&
 	    fib_nl2rule_l3mdev(tb[FRA_L3MDEV], nlrule, extack) < 0)
-		goto errout_free;
+		जाओ errout_मुक्त;
 
 	nlrule->action = frh->action;
 	nlrule->flags = frh->flags;
 	nlrule->table = frh_get_table(frh, tb);
-	if (tb[FRA_SUPPRESS_PREFIXLEN])
+	अगर (tb[FRA_SUPPRESS_PREFIXLEN])
 		nlrule->suppress_prefixlen = nla_get_u32(tb[FRA_SUPPRESS_PREFIXLEN]);
-	else
+	अन्यथा
 		nlrule->suppress_prefixlen = -1;
 
-	if (tb[FRA_SUPPRESS_IFGROUP])
-		nlrule->suppress_ifgroup = nla_get_u32(tb[FRA_SUPPRESS_IFGROUP]);
-	else
-		nlrule->suppress_ifgroup = -1;
+	अगर (tb[FRA_SUPPRESS_IFGROUP])
+		nlrule->suppress_अगरgroup = nla_get_u32(tb[FRA_SUPPRESS_IFGROUP]);
+	अन्यथा
+		nlrule->suppress_अगरgroup = -1;
 
-	if (tb[FRA_GOTO]) {
-		if (nlrule->action != FR_ACT_GOTO) {
+	अगर (tb[FRA_GOTO]) अणु
+		अगर (nlrule->action != FR_ACT_GOTO) अणु
 			NL_SET_ERR_MSG(extack, "Unexpected goto");
-			goto errout_free;
-		}
+			जाओ errout_मुक्त;
+		पूर्ण
 
 		nlrule->target = nla_get_u32(tb[FRA_GOTO]);
-		/* Backward jumps are prohibited to avoid endless loops */
-		if (nlrule->target <= nlrule->pref) {
+		/* Backward jumps are prohibited to aव्योम endless loops */
+		अगर (nlrule->target <= nlrule->pref) अणु
 			NL_SET_ERR_MSG(extack, "Backward goto not supported");
-			goto errout_free;
-		}
-	} else if (nlrule->action == FR_ACT_GOTO) {
+			जाओ errout_मुक्त;
+		पूर्ण
+	पूर्ण अन्यथा अगर (nlrule->action == FR_ACT_GOTO) अणु
 		NL_SET_ERR_MSG(extack, "Missing goto target for action goto");
-		goto errout_free;
-	}
+		जाओ errout_मुक्त;
+	पूर्ण
 
-	if (nlrule->l3mdev && nlrule->table) {
+	अगर (nlrule->l3mdev && nlrule->table) अणु
 		NL_SET_ERR_MSG(extack, "l3mdev and table are mutually exclusive");
-		goto errout_free;
-	}
+		जाओ errout_मुक्त;
+	पूर्ण
 
-	if (tb[FRA_UID_RANGE]) {
-		if (current_user_ns() != net->user_ns) {
+	अगर (tb[FRA_UID_RANGE]) अणु
+		अगर (current_user_ns() != net->user_ns) अणु
 			err = -EPERM;
 			NL_SET_ERR_MSG(extack, "No permission to set uid");
-			goto errout_free;
-		}
+			जाओ errout_मुक्त;
+		पूर्ण
 
 		nlrule->uid_range = nla_get_kuid_range(tb);
 
-		if (!uid_range_set(&nlrule->uid_range) ||
-		    !uid_lte(nlrule->uid_range.start, nlrule->uid_range.end)) {
+		अगर (!uid_range_set(&nlrule->uid_range) ||
+		    !uid_lte(nlrule->uid_range.start, nlrule->uid_range.end)) अणु
 			NL_SET_ERR_MSG(extack, "Invalid uid range");
-			goto errout_free;
-		}
-	} else {
+			जाओ errout_मुक्त;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		nlrule->uid_range = fib_kuid_range_unset;
-	}
+	पूर्ण
 
-	if (tb[FRA_IP_PROTO])
+	अगर (tb[FRA_IP_PROTO])
 		nlrule->ip_proto = nla_get_u8(tb[FRA_IP_PROTO]);
 
-	if (tb[FRA_SPORT_RANGE]) {
+	अगर (tb[FRA_SPORT_RANGE]) अणु
 		err = nla_get_port_range(tb[FRA_SPORT_RANGE],
 					 &nlrule->sport_range);
-		if (err) {
+		अगर (err) अणु
 			NL_SET_ERR_MSG(extack, "Invalid sport range");
-			goto errout_free;
-		}
-	}
+			जाओ errout_मुक्त;
+		पूर्ण
+	पूर्ण
 
-	if (tb[FRA_DPORT_RANGE]) {
+	अगर (tb[FRA_DPORT_RANGE]) अणु
 		err = nla_get_port_range(tb[FRA_DPORT_RANGE],
 					 &nlrule->dport_range);
-		if (err) {
+		अगर (err) अणु
 			NL_SET_ERR_MSG(extack, "Invalid dport range");
-			goto errout_free;
-		}
-	}
+			जाओ errout_मुक्त;
+		पूर्ण
+	पूर्ण
 
 	*rule = nlrule;
 
-	return 0;
+	वापस 0;
 
-errout_free:
-	kfree(nlrule);
+errout_मुक्त:
+	kमुक्त(nlrule);
 errout:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rule_exists(struct fib_rules_ops *ops, struct fib_rule_hdr *frh,
-		       struct nlattr **tb, struct fib_rule *rule)
-{
-	struct fib_rule *r;
+अटल पूर्णांक rule_exists(काष्ठा fib_rules_ops *ops, काष्ठा fib_rule_hdr *frh,
+		       काष्ठा nlattr **tb, काष्ठा fib_rule *rule)
+अणु
+	काष्ठा fib_rule *r;
 
-	list_for_each_entry(r, &ops->rules_list, list) {
-		if (r->action != rule->action)
-			continue;
+	list_क्रम_each_entry(r, &ops->rules_list, list) अणु
+		अगर (r->action != rule->action)
+			जारी;
 
-		if (r->table != rule->table)
-			continue;
+		अगर (r->table != rule->table)
+			जारी;
 
-		if (r->pref != rule->pref)
-			continue;
+		अगर (r->pref != rule->pref)
+			जारी;
 
-		if (memcmp(r->iifname, rule->iifname, IFNAMSIZ))
-			continue;
+		अगर (स_भेद(r->iअगरname, rule->iअगरname, IFNAMSIZ))
+			जारी;
 
-		if (memcmp(r->oifname, rule->oifname, IFNAMSIZ))
-			continue;
+		अगर (स_भेद(r->oअगरname, rule->oअगरname, IFNAMSIZ))
+			जारी;
 
-		if (r->mark != rule->mark)
-			continue;
+		अगर (r->mark != rule->mark)
+			जारी;
 
-		if (r->suppress_ifgroup != rule->suppress_ifgroup)
-			continue;
+		अगर (r->suppress_अगरgroup != rule->suppress_अगरgroup)
+			जारी;
 
-		if (r->suppress_prefixlen != rule->suppress_prefixlen)
-			continue;
+		अगर (r->suppress_prefixlen != rule->suppress_prefixlen)
+			जारी;
 
-		if (r->mark_mask != rule->mark_mask)
-			continue;
+		अगर (r->mark_mask != rule->mark_mask)
+			जारी;
 
-		if (r->tun_id != rule->tun_id)
-			continue;
+		अगर (r->tun_id != rule->tun_id)
+			जारी;
 
-		if (r->fr_net != rule->fr_net)
-			continue;
+		अगर (r->fr_net != rule->fr_net)
+			जारी;
 
-		if (r->l3mdev != rule->l3mdev)
-			continue;
+		अगर (r->l3mdev != rule->l3mdev)
+			जारी;
 
-		if (!uid_eq(r->uid_range.start, rule->uid_range.start) ||
+		अगर (!uid_eq(r->uid_range.start, rule->uid_range.start) ||
 		    !uid_eq(r->uid_range.end, rule->uid_range.end))
-			continue;
+			जारी;
 
-		if (r->ip_proto != rule->ip_proto)
-			continue;
+		अगर (r->ip_proto != rule->ip_proto)
+			जारी;
 
-		if (r->proto != rule->proto)
-			continue;
+		अगर (r->proto != rule->proto)
+			जारी;
 
-		if (!fib_rule_port_range_compare(&r->sport_range,
+		अगर (!fib_rule_port_range_compare(&r->sport_range,
 						 &rule->sport_range))
-			continue;
+			जारी;
 
-		if (!fib_rule_port_range_compare(&r->dport_range,
+		अगर (!fib_rule_port_range_compare(&r->dport_range,
 						 &rule->dport_range))
-			continue;
+			जारी;
 
-		if (!ops->compare(r, frh, tb))
-			continue;
-		return 1;
-	}
-	return 0;
-}
+		अगर (!ops->compare(r, frh, tb))
+			जारी;
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int fib_nl_newrule(struct sk_buff *skb, struct nlmsghdr *nlh,
-		   struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct fib_rule_hdr *frh = nlmsg_data(nlh);
-	struct fib_rules_ops *ops = NULL;
-	struct fib_rule *rule = NULL, *r, *last = NULL;
-	struct nlattr *tb[FRA_MAX + 1];
-	int err = -EINVAL, unresolved = 0;
+पूर्णांक fib_nl_newrule(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+		   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा fib_rule_hdr *frh = nlmsg_data(nlh);
+	काष्ठा fib_rules_ops *ops = शून्य;
+	काष्ठा fib_rule *rule = शून्य, *r, *last = शून्य;
+	काष्ठा nlattr *tb[FRA_MAX + 1];
+	पूर्णांक err = -EINVAL, unresolved = 0;
 	bool user_priority = false;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*frh))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*frh))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid msg length");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	ops = lookup_rules_ops(net, frh->family);
-	if (!ops) {
+	अगर (!ops) अणु
 		err = -EAFNOSUPPORT;
 		NL_SET_ERR_MSG(extack, "Rule family not supported");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*frh), tb, FRA_MAX,
+	err = nlmsg_parse_deprecated(nlh, माप(*frh), tb, FRA_MAX,
 				     ops->policy, extack);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		NL_SET_ERR_MSG(extack, "Error parsing msg");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	err = fib_nl2rule(skb, nlh, extack, ops, tb, &rule, &user_priority);
-	if (err)
-		goto errout;
+	अगर (err)
+		जाओ errout;
 
-	if ((nlh->nlmsg_flags & NLM_F_EXCL) &&
-	    rule_exists(ops, frh, tb, rule)) {
+	अगर ((nlh->nlmsg_flags & NLM_F_EXCL) &&
+	    rule_exists(ops, frh, tb, rule)) अणु
 		err = -EEXIST;
-		goto errout_free;
-	}
+		जाओ errout_मुक्त;
+	पूर्ण
 
 	err = ops->configure(rule, skb, frh, tb, extack);
-	if (err < 0)
-		goto errout_free;
+	अगर (err < 0)
+		जाओ errout_मुक्त;
 
-	err = call_fib_rule_notifiers(net, FIB_EVENT_RULE_ADD, rule, ops,
+	err = call_fib_rule_notअगरiers(net, FIB_EVENT_RULE_ADD, rule, ops,
 				      extack);
-	if (err < 0)
-		goto errout_free;
+	अगर (err < 0)
+		जाओ errout_मुक्त;
 
-	list_for_each_entry(r, &ops->rules_list, list) {
-		if (r->pref == rule->target) {
+	list_क्रम_each_entry(r, &ops->rules_list, list) अणु
+		अगर (r->pref == rule->target) अणु
 			RCU_INIT_POINTER(rule->ctarget, r);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (rcu_dereference_protected(rule->ctarget, 1) == NULL)
+	अगर (rcu_dereference_रक्षित(rule->ctarget, 1) == शून्य)
 		unresolved = 1;
 
-	list_for_each_entry(r, &ops->rules_list, list) {
-		if (r->pref > rule->pref)
-			break;
+	list_क्रम_each_entry(r, &ops->rules_list, list) अणु
+		अगर (r->pref > rule->pref)
+			अवरोध;
 		last = r;
-	}
+	पूर्ण
 
-	if (last)
+	अगर (last)
 		list_add_rcu(&rule->list, &last->list);
-	else
+	अन्यथा
 		list_add_rcu(&rule->list, &ops->rules_list);
 
-	if (ops->unresolved_rules) {
+	अगर (ops->unresolved_rules) अणु
 		/*
-		 * There are unresolved goto rules in the list, check if
-		 * any of them are pointing to this new rule.
+		 * There are unresolved जाओ rules in the list, check अगर
+		 * any of them are poपूर्णांकing to this new rule.
 		 */
-		list_for_each_entry(r, &ops->rules_list, list) {
-			if (r->action == FR_ACT_GOTO &&
+		list_क्रम_each_entry(r, &ops->rules_list, list) अणु
+			अगर (r->action == FR_ACT_GOTO &&
 			    r->target == rule->pref &&
-			    rtnl_dereference(r->ctarget) == NULL) {
-				rcu_assign_pointer(r->ctarget, rule);
-				if (--ops->unresolved_rules == 0)
-					break;
-			}
-		}
-	}
+			    rtnl_dereference(r->ctarget) == शून्य) अणु
+				rcu_assign_poपूर्णांकer(r->ctarget, rule);
+				अगर (--ops->unresolved_rules == 0)
+					अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (rule->action == FR_ACT_GOTO)
-		ops->nr_goto_rules++;
+	अगर (rule->action == FR_ACT_GOTO)
+		ops->nr_जाओ_rules++;
 
-	if (unresolved)
+	अगर (unresolved)
 		ops->unresolved_rules++;
 
-	if (rule->tun_id)
+	अगर (rule->tun_id)
 		ip_tunnel_need_metadata();
 
-	notify_rule_change(RTM_NEWRULE, rule, ops, nlh, NETLINK_CB(skb).portid);
+	notअगरy_rule_change(RTM_NEWRULE, rule, ops, nlh, NETLINK_CB(skb).portid);
 	flush_route_cache(ops);
 	rules_ops_put(ops);
-	return 0;
+	वापस 0;
 
-errout_free:
-	kfree(rule);
+errout_मुक्त:
+	kमुक्त(rule);
 errout:
 	rules_ops_put(ops);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(fib_nl_newrule);
 
-int fib_nl_delrule(struct sk_buff *skb, struct nlmsghdr *nlh,
-		   struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct fib_rule_hdr *frh = nlmsg_data(nlh);
-	struct fib_rules_ops *ops = NULL;
-	struct fib_rule *rule = NULL, *r, *nlrule = NULL;
-	struct nlattr *tb[FRA_MAX+1];
-	int err = -EINVAL;
+पूर्णांक fib_nl_delrule(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+		   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा fib_rule_hdr *frh = nlmsg_data(nlh);
+	काष्ठा fib_rules_ops *ops = शून्य;
+	काष्ठा fib_rule *rule = शून्य, *r, *nlrule = शून्य;
+	काष्ठा nlattr *tb[FRA_MAX+1];
+	पूर्णांक err = -EINVAL;
 	bool user_priority = false;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*frh))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*frh))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid msg length");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	ops = lookup_rules_ops(net, frh->family);
-	if (ops == NULL) {
+	अगर (ops == शून्य) अणु
 		err = -EAFNOSUPPORT;
 		NL_SET_ERR_MSG(extack, "Rule family not supported");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*frh), tb, FRA_MAX,
+	err = nlmsg_parse_deprecated(nlh, माप(*frh), tb, FRA_MAX,
 				     ops->policy, extack);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		NL_SET_ERR_MSG(extack, "Error parsing msg");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	err = fib_nl2rule(skb, nlh, extack, ops, tb, &nlrule, &user_priority);
-	if (err)
-		goto errout;
+	अगर (err)
+		जाओ errout;
 
 	rule = rule_find(ops, frh, tb, nlrule, user_priority);
-	if (!rule) {
+	अगर (!rule) अणु
 		err = -ENOENT;
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	if (rule->flags & FIB_RULE_PERMANENT) {
+	अगर (rule->flags & FIB_RULE_PERMANENT) अणु
 		err = -EPERM;
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	if (ops->delete) {
+	अगर (ops->delete) अणु
 		err = ops->delete(rule);
-		if (err)
-			goto errout;
-	}
+		अगर (err)
+			जाओ errout;
+	पूर्ण
 
-	if (rule->tun_id)
+	अगर (rule->tun_id)
 		ip_tunnel_unneed_metadata();
 
 	list_del_rcu(&rule->list);
 
-	if (rule->action == FR_ACT_GOTO) {
-		ops->nr_goto_rules--;
-		if (rtnl_dereference(rule->ctarget) == NULL)
+	अगर (rule->action == FR_ACT_GOTO) अणु
+		ops->nr_जाओ_rules--;
+		अगर (rtnl_dereference(rule->ctarget) == शून्य)
 			ops->unresolved_rules--;
-	}
+	पूर्ण
 
 	/*
-	 * Check if this rule is a target to any of them. If so,
+	 * Check अगर this rule is a target to any of them. If so,
 	 * adjust to the next one with the same preference or
 	 * disable them. As this operation is eventually very
-	 * expensive, it is only performed if goto rules, except
-	 * current if it is goto rule, have actually been added.
+	 * expensive, it is only perक्रमmed अगर जाओ rules, except
+	 * current अगर it is जाओ rule, have actually been added.
 	 */
-	if (ops->nr_goto_rules > 0) {
-		struct fib_rule *n;
+	अगर (ops->nr_जाओ_rules > 0) अणु
+		काष्ठा fib_rule *n;
 
 		n = list_next_entry(rule, list);
-		if (&n->list == &ops->rules_list || n->pref != rule->pref)
-			n = NULL;
-		list_for_each_entry(r, &ops->rules_list, list) {
-			if (rtnl_dereference(r->ctarget) != rule)
-				continue;
-			rcu_assign_pointer(r->ctarget, n);
-			if (!n)
+		अगर (&n->list == &ops->rules_list || n->pref != rule->pref)
+			n = शून्य;
+		list_क्रम_each_entry(r, &ops->rules_list, list) अणु
+			अगर (rtnl_dereference(r->ctarget) != rule)
+				जारी;
+			rcu_assign_poपूर्णांकer(r->ctarget, n);
+			अगर (!n)
 				ops->unresolved_rules++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	call_fib_rule_notifiers(net, FIB_EVENT_RULE_DEL, rule, ops,
-				NULL);
-	notify_rule_change(RTM_DELRULE, rule, ops, nlh,
+	call_fib_rule_notअगरiers(net, FIB_EVENT_RULE_DEL, rule, ops,
+				शून्य);
+	notअगरy_rule_change(RTM_DELRULE, rule, ops, nlh,
 			   NETLINK_CB(skb).portid);
 	fib_rule_put(rule);
 	flush_route_cache(ops);
 	rules_ops_put(ops);
-	kfree(nlrule);
-	return 0;
+	kमुक्त(nlrule);
+	वापस 0;
 
 errout:
-	kfree(nlrule);
+	kमुक्त(nlrule);
 	rules_ops_put(ops);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(fib_nl_delrule);
 
-static inline size_t fib_rule_nlmsg_size(struct fib_rules_ops *ops,
-					 struct fib_rule *rule)
-{
-	size_t payload = NLMSG_ALIGN(sizeof(struct fib_rule_hdr))
+अटल अंतरभूत माप_प्रकार fib_rule_nlmsg_size(काष्ठा fib_rules_ops *ops,
+					 काष्ठा fib_rule *rule)
+अणु
+	माप_प्रकार payload = NLMSG_ALIGN(माप(काष्ठा fib_rule_hdr))
 			 + nla_total_size(IFNAMSIZ) /* FRA_IIFNAME */
 			 + nla_total_size(IFNAMSIZ) /* FRA_OIFNAME */
 			 + nla_total_size(4) /* FRA_PRIORITY */
@@ -972,63 +973,63 @@ static inline size_t fib_rule_nlmsg_size(struct fib_rules_ops *ops,
 			 + nla_total_size(4) /* FRA_FWMARK */
 			 + nla_total_size(4) /* FRA_FWMASK */
 			 + nla_total_size_64bit(8) /* FRA_TUN_ID */
-			 + nla_total_size(sizeof(struct fib_kuid_range))
+			 + nla_total_size(माप(काष्ठा fib_kuid_range))
 			 + nla_total_size(1) /* FRA_PROTOCOL */
 			 + nla_total_size(1) /* FRA_IP_PROTO */
-			 + nla_total_size(sizeof(struct fib_rule_port_range)) /* FRA_SPORT_RANGE */
-			 + nla_total_size(sizeof(struct fib_rule_port_range)); /* FRA_DPORT_RANGE */
+			 + nla_total_size(माप(काष्ठा fib_rule_port_range)) /* FRA_SPORT_RANGE */
+			 + nla_total_size(माप(काष्ठा fib_rule_port_range)); /* FRA_DPORT_RANGE */
 
-	if (ops->nlmsg_payload)
+	अगर (ops->nlmsg_payload)
 		payload += ops->nlmsg_payload(rule);
 
-	return payload;
-}
+	वापस payload;
+पूर्ण
 
-static int fib_nl_fill_rule(struct sk_buff *skb, struct fib_rule *rule,
-			    u32 pid, u32 seq, int type, int flags,
-			    struct fib_rules_ops *ops)
-{
-	struct nlmsghdr *nlh;
-	struct fib_rule_hdr *frh;
+अटल पूर्णांक fib_nl_fill_rule(काष्ठा sk_buff *skb, काष्ठा fib_rule *rule,
+			    u32 pid, u32 seq, पूर्णांक type, पूर्णांक flags,
+			    काष्ठा fib_rules_ops *ops)
+अणु
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा fib_rule_hdr *frh;
 
-	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*frh), flags);
-	if (nlh == NULL)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, type, माप(*frh), flags);
+	अगर (nlh == शून्य)
+		वापस -EMSGSIZE;
 
 	frh = nlmsg_data(nlh);
 	frh->family = ops->family;
 	frh->table = rule->table < 256 ? rule->table : RT_TABLE_COMPAT;
-	if (nla_put_u32(skb, FRA_TABLE, rule->table))
-		goto nla_put_failure;
-	if (nla_put_u32(skb, FRA_SUPPRESS_PREFIXLEN, rule->suppress_prefixlen))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, FRA_TABLE, rule->table))
+		जाओ nla_put_failure;
+	अगर (nla_put_u32(skb, FRA_SUPPRESS_PREFIXLEN, rule->suppress_prefixlen))
+		जाओ nla_put_failure;
 	frh->res1 = 0;
 	frh->res2 = 0;
 	frh->action = rule->action;
 	frh->flags = rule->flags;
 
-	if (nla_put_u8(skb, FRA_PROTOCOL, rule->proto))
-		goto nla_put_failure;
+	अगर (nla_put_u8(skb, FRA_PROTOCOL, rule->proto))
+		जाओ nla_put_failure;
 
-	if (rule->action == FR_ACT_GOTO &&
-	    rcu_access_pointer(rule->ctarget) == NULL)
+	अगर (rule->action == FR_ACT_GOTO &&
+	    rcu_access_poपूर्णांकer(rule->ctarget) == शून्य)
 		frh->flags |= FIB_RULE_UNRESOLVED;
 
-	if (rule->iifname[0]) {
-		if (nla_put_string(skb, FRA_IIFNAME, rule->iifname))
-			goto nla_put_failure;
-		if (rule->iifindex == -1)
+	अगर (rule->iअगरname[0]) अणु
+		अगर (nla_put_string(skb, FRA_IIFNAME, rule->iअगरname))
+			जाओ nla_put_failure;
+		अगर (rule->iअगरindex == -1)
 			frh->flags |= FIB_RULE_IIF_DETACHED;
-	}
+	पूर्ण
 
-	if (rule->oifname[0]) {
-		if (nla_put_string(skb, FRA_OIFNAME, rule->oifname))
-			goto nla_put_failure;
-		if (rule->oifindex == -1)
+	अगर (rule->oअगरname[0]) अणु
+		अगर (nla_put_string(skb, FRA_OIFNAME, rule->oअगरname))
+			जाओ nla_put_failure;
+		अगर (rule->oअगरindex == -1)
 			frh->flags |= FIB_RULE_OIF_DETACHED;
-	}
+	पूर्ण
 
-	if ((rule->pref &&
+	अगर ((rule->pref &&
 	     nla_put_u32(skb, FRA_PRIORITY, rule->pref)) ||
 	    (rule->mark &&
 	     nla_put_u32(skb, FRA_FWMARK, rule->mark)) ||
@@ -1047,252 +1048,252 @@ static int fib_nl_fill_rule(struct sk_buff *skb, struct fib_rule *rule,
 	    (fib_rule_port_range_set(&rule->dport_range) &&
 	     nla_put_port_range(skb, FRA_DPORT_RANGE, &rule->dport_range)) ||
 	    (rule->ip_proto && nla_put_u8(skb, FRA_IP_PROTO, rule->ip_proto)))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (rule->suppress_ifgroup != -1) {
-		if (nla_put_u32(skb, FRA_SUPPRESS_IFGROUP, rule->suppress_ifgroup))
-			goto nla_put_failure;
-	}
+	अगर (rule->suppress_अगरgroup != -1) अणु
+		अगर (nla_put_u32(skb, FRA_SUPPRESS_IFGROUP, rule->suppress_अगरgroup))
+			जाओ nla_put_failure;
+	पूर्ण
 
-	if (ops->fill(rule, skb, frh) < 0)
-		goto nla_put_failure;
+	अगर (ops->fill(rule, skb, frh) < 0)
+		जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int dump_rules(struct sk_buff *skb, struct netlink_callback *cb,
-		      struct fib_rules_ops *ops)
-{
-	int idx = 0;
-	struct fib_rule *rule;
-	int err = 0;
+अटल पूर्णांक dump_rules(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb,
+		      काष्ठा fib_rules_ops *ops)
+अणु
+	पूर्णांक idx = 0;
+	काष्ठा fib_rule *rule;
+	पूर्णांक err = 0;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(rule, &ops->rules_list, list) {
-		if (idx < cb->args[1])
-			goto skip;
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(rule, &ops->rules_list, list) अणु
+		अगर (idx < cb->args[1])
+			जाओ skip;
 
 		err = fib_nl_fill_rule(skb, rule, NETLINK_CB(cb->skb).portid,
 				       cb->nlh->nlmsg_seq, RTM_NEWRULE,
 				       NLM_F_MULTI, ops);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 skip:
 		idx++;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 	cb->args[1] = idx;
 	rules_ops_put(ops);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int fib_valid_dumprule_req(const struct nlmsghdr *nlh,
-				   struct netlink_ext_ack *extack)
-{
-	struct fib_rule_hdr *frh;
+अटल पूर्णांक fib_valid_dumprule_req(स्थिर काष्ठा nlmsghdr *nlh,
+				   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा fib_rule_hdr *frh;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*frh))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*frh))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid header for fib rule dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	frh = nlmsg_data(nlh);
-	if (frh->dst_len || frh->src_len || frh->tos || frh->table ||
-	    frh->res1 || frh->res2 || frh->action || frh->flags) {
+	अगर (frh->dst_len || frh->src_len || frh->tos || frh->table ||
+	    frh->res1 || frh->res2 || frh->action || frh->flags) अणु
 		NL_SET_ERR_MSG(extack,
 			       "Invalid values in header for fib rule dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (nlmsg_attrlen(nlh, sizeof(*frh))) {
+	अगर (nlmsg_attrlen(nlh, माप(*frh))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid data after header in fib rule dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fib_nl_dumprule(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	const struct nlmsghdr *nlh = cb->nlh;
-	struct net *net = sock_net(skb->sk);
-	struct fib_rules_ops *ops;
-	int idx = 0, family;
+अटल पूर्णांक fib_nl_dumprule(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा fib_rules_ops *ops;
+	पूर्णांक idx = 0, family;
 
-	if (cb->strict_check) {
-		int err = fib_valid_dumprule_req(nlh, cb->extack);
+	अगर (cb->strict_check) अणु
+		पूर्णांक err = fib_valid_dumprule_req(nlh, cb->extack);
 
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	family = rtnl_msg_family(nlh);
-	if (family != AF_UNSPEC) {
-		/* Protocol specific dump request */
+	अगर (family != AF_UNSPEC) अणु
+		/* Protocol specअगरic dump request */
 		ops = lookup_rules_ops(net, family);
-		if (ops == NULL)
-			return -EAFNOSUPPORT;
+		अगर (ops == शून्य)
+			वापस -EAFNOSUPPORT;
 
 		dump_rules(skb, cb, ops);
 
-		return skb->len;
-	}
+		वापस skb->len;
+	पूर्ण
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(ops, &net->rules_ops, list) {
-		if (idx < cb->args[0] || !try_module_get(ops->owner))
-			goto skip;
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(ops, &net->rules_ops, list) अणु
+		अगर (idx < cb->args[0] || !try_module_get(ops->owner))
+			जाओ skip;
 
-		if (dump_rules(skb, cb, ops) < 0)
-			break;
+		अगर (dump_rules(skb, cb, ops) < 0)
+			अवरोध;
 
 		cb->args[1] = 0;
 skip:
 		idx++;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 	cb->args[0] = idx;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static void notify_rule_change(int event, struct fib_rule *rule,
-			       struct fib_rules_ops *ops, struct nlmsghdr *nlh,
+अटल व्योम notअगरy_rule_change(पूर्णांक event, काष्ठा fib_rule *rule,
+			       काष्ठा fib_rules_ops *ops, काष्ठा nlmsghdr *nlh,
 			       u32 pid)
-{
-	struct net *net;
-	struct sk_buff *skb;
-	int err = -ENOMEM;
+अणु
+	काष्ठा net *net;
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = -ENOMEM;
 
 	net = ops->fro_net;
 	skb = nlmsg_new(fib_rule_nlmsg_size(ops, rule), GFP_KERNEL);
-	if (skb == NULL)
-		goto errout;
+	अगर (skb == शून्य)
+		जाओ errout;
 
 	err = fib_nl_fill_rule(skb, rule, pid, nlh->nlmsg_seq, event, 0, ops);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		/* -EMSGSIZE implies BUG in fib_rule_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kfree_skb(skb);
-		goto errout;
-	}
+		kमुक्त_skb(skb);
+		जाओ errout;
+	पूर्ण
 
-	rtnl_notify(skb, net, pid, ops->nlgroup, nlh, GFP_KERNEL);
-	return;
+	rtnl_notअगरy(skb, net, pid, ops->nlgroup, nlh, GFP_KERNEL);
+	वापस;
 errout:
-	if (err < 0)
+	अगर (err < 0)
 		rtnl_set_sk_err(net, ops->nlgroup, err);
-}
+पूर्ण
 
-static void attach_rules(struct list_head *rules, struct net_device *dev)
-{
-	struct fib_rule *rule;
+अटल व्योम attach_rules(काष्ठा list_head *rules, काष्ठा net_device *dev)
+अणु
+	काष्ठा fib_rule *rule;
 
-	list_for_each_entry(rule, rules, list) {
-		if (rule->iifindex == -1 &&
-		    strcmp(dev->name, rule->iifname) == 0)
-			rule->iifindex = dev->ifindex;
-		if (rule->oifindex == -1 &&
-		    strcmp(dev->name, rule->oifname) == 0)
-			rule->oifindex = dev->ifindex;
-	}
-}
+	list_क्रम_each_entry(rule, rules, list) अणु
+		अगर (rule->iअगरindex == -1 &&
+		    म_भेद(dev->name, rule->iअगरname) == 0)
+			rule->iअगरindex = dev->अगरindex;
+		अगर (rule->oअगरindex == -1 &&
+		    म_भेद(dev->name, rule->oअगरname) == 0)
+			rule->oअगरindex = dev->अगरindex;
+	पूर्ण
+पूर्ण
 
-static void detach_rules(struct list_head *rules, struct net_device *dev)
-{
-	struct fib_rule *rule;
+अटल व्योम detach_rules(काष्ठा list_head *rules, काष्ठा net_device *dev)
+अणु
+	काष्ठा fib_rule *rule;
 
-	list_for_each_entry(rule, rules, list) {
-		if (rule->iifindex == dev->ifindex)
-			rule->iifindex = -1;
-		if (rule->oifindex == dev->ifindex)
-			rule->oifindex = -1;
-	}
-}
+	list_क्रम_each_entry(rule, rules, list) अणु
+		अगर (rule->iअगरindex == dev->अगरindex)
+			rule->iअगरindex = -1;
+		अगर (rule->oअगरindex == dev->अगरindex)
+			rule->oअगरindex = -1;
+	पूर्ण
+पूर्ण
 
 
-static int fib_rules_event(struct notifier_block *this, unsigned long event,
-			   void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct net *net = dev_net(dev);
-	struct fib_rules_ops *ops;
+अटल पूर्णांक fib_rules_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
+			   व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा fib_rules_ops *ops;
 
 	ASSERT_RTNL();
 
-	switch (event) {
-	case NETDEV_REGISTER:
-		list_for_each_entry(ops, &net->rules_ops, list)
+	चयन (event) अणु
+	हाल NETDEV_REGISTER:
+		list_क्रम_each_entry(ops, &net->rules_ops, list)
 			attach_rules(&ops->rules_list, dev);
-		break;
+		अवरोध;
 
-	case NETDEV_CHANGENAME:
-		list_for_each_entry(ops, &net->rules_ops, list) {
+	हाल NETDEV_CHANGENAME:
+		list_क्रम_each_entry(ops, &net->rules_ops, list) अणु
 			detach_rules(&ops->rules_list, dev);
 			attach_rules(&ops->rules_list, dev);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case NETDEV_UNREGISTER:
-		list_for_each_entry(ops, &net->rules_ops, list)
+	हाल NETDEV_UNREGISTER:
+		list_क्रम_each_entry(ops, &net->rules_ops, list)
 			detach_rules(&ops->rules_list, dev);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block fib_rules_notifier = {
-	.notifier_call = fib_rules_event,
-};
+अटल काष्ठा notअगरier_block fib_rules_notअगरier = अणु
+	.notअगरier_call = fib_rules_event,
+पूर्ण;
 
-static int __net_init fib_rules_net_init(struct net *net)
-{
+अटल पूर्णांक __net_init fib_rules_net_init(काष्ठा net *net)
+अणु
 	INIT_LIST_HEAD(&net->rules_ops);
 	spin_lock_init(&net->rules_mod_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit fib_rules_net_exit(struct net *net)
-{
+अटल व्योम __net_निकास fib_rules_net_निकास(काष्ठा net *net)
+अणु
 	WARN_ON_ONCE(!list_empty(&net->rules_ops));
-}
+पूर्ण
 
-static struct pernet_operations fib_rules_net_ops = {
+अटल काष्ठा pernet_operations fib_rules_net_ops = अणु
 	.init = fib_rules_net_init,
-	.exit = fib_rules_net_exit,
-};
+	.निकास = fib_rules_net_निकास,
+पूर्ण;
 
-static int __init fib_rules_init(void)
-{
-	int err;
-	rtnl_register(PF_UNSPEC, RTM_NEWRULE, fib_nl_newrule, NULL, 0);
-	rtnl_register(PF_UNSPEC, RTM_DELRULE, fib_nl_delrule, NULL, 0);
-	rtnl_register(PF_UNSPEC, RTM_GETRULE, NULL, fib_nl_dumprule, 0);
+अटल पूर्णांक __init fib_rules_init(व्योम)
+अणु
+	पूर्णांक err;
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_NEWRULE, fib_nl_newrule, शून्य, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_DELRULE, fib_nl_delrule, शून्य, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETRULE, शून्य, fib_nl_dumprule, 0);
 
-	err = register_pernet_subsys(&fib_rules_net_ops);
-	if (err < 0)
-		goto fail;
+	err = रेजिस्टर_pernet_subsys(&fib_rules_net_ops);
+	अगर (err < 0)
+		जाओ fail;
 
-	err = register_netdevice_notifier(&fib_rules_notifier);
-	if (err < 0)
-		goto fail_unregister;
+	err = रेजिस्टर_netdevice_notअगरier(&fib_rules_notअगरier);
+	अगर (err < 0)
+		जाओ fail_unरेजिस्टर;
 
-	return 0;
+	वापस 0;
 
-fail_unregister:
-	unregister_pernet_subsys(&fib_rules_net_ops);
+fail_unरेजिस्टर:
+	unरेजिस्टर_pernet_subsys(&fib_rules_net_ops);
 fail:
-	rtnl_unregister(PF_UNSPEC, RTM_NEWRULE);
-	rtnl_unregister(PF_UNSPEC, RTM_DELRULE);
-	rtnl_unregister(PF_UNSPEC, RTM_GETRULE);
-	return err;
-}
+	rtnl_unरेजिस्टर(PF_UNSPEC, RTM_NEWRULE);
+	rtnl_unरेजिस्टर(PF_UNSPEC, RTM_DELRULE);
+	rtnl_unरेजिस्टर(PF_UNSPEC, RTM_GETRULE);
+	वापस err;
+पूर्ण
 
 subsys_initcall(fib_rules_init);

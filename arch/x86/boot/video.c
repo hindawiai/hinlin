@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright (C) 1991, 1992 Linus Torvalds
@@ -11,283 +12,283 @@
  * Select video mode
  */
 
-#include <uapi/asm/boot.h>
+#समावेश <uapi/यंत्र/boot.h>
 
-#include "boot.h"
-#include "video.h"
-#include "vesa.h"
+#समावेश "boot.h"
+#समावेश "video.h"
+#समावेश "vesa.h"
 
-static u16 video_segment;
+अटल u16 video_segment;
 
-static void store_cursor_position(void)
-{
-	struct biosregs ireg, oreg;
+अटल व्योम store_cursor_position(व्योम)
+अणु
+	काष्ठा biosregs ireg, oreg;
 
 	initregs(&ireg);
 	ireg.ah = 0x03;
-	intcall(0x10, &ireg, &oreg);
+	पूर्णांकcall(0x10, &ireg, &oreg);
 
 	boot_params.screen_info.orig_x = oreg.dl;
 	boot_params.screen_info.orig_y = oreg.dh;
 
-	if (oreg.ch & 0x20)
+	अगर (oreg.ch & 0x20)
 		boot_params.screen_info.flags |= VIDEO_FLAGS_NOCURSOR;
 
-	if ((oreg.ch & 0x1f) > (oreg.cl & 0x1f))
+	अगर ((oreg.ch & 0x1f) > (oreg.cl & 0x1f))
 		boot_params.screen_info.flags |= VIDEO_FLAGS_NOCURSOR;
-}
+पूर्ण
 
-static void store_video_mode(void)
-{
-	struct biosregs ireg, oreg;
+अटल व्योम store_video_mode(व्योम)
+अणु
+	काष्ठा biosregs ireg, oreg;
 
 	/* N.B.: the saving of the video page here is a bit silly,
 	   since we pretty much assume page 0 everywhere. */
 	initregs(&ireg);
 	ireg.ah = 0x0f;
-	intcall(0x10, &ireg, &oreg);
+	पूर्णांकcall(0x10, &ireg, &oreg);
 
 	/* Not all BIOSes are clean with respect to the top bit */
 	boot_params.screen_info.orig_video_mode = oreg.al & 0x7f;
 	boot_params.screen_info.orig_video_page = oreg.bh;
-}
+पूर्ण
 
 /*
- * Store the video mode parameters for later usage by the kernel.
- * This is done by asking the BIOS except for the rows/columns
- * parameters in the default 80x25 mode -- these are set directly,
+ * Store the video mode parameters क्रम later usage by the kernel.
+ * This is करोne by asking the BIOS except क्रम the rows/columns
+ * parameters in the शेष 80x25 mode -- these are set directly,
  * because some very obscure BIOSes supply insane values.
  */
-static void store_mode_params(void)
-{
+अटल व्योम store_mode_params(व्योम)
+अणु
 	u16 font_size;
-	int x, y;
+	पूर्णांक x, y;
 
 	/* For graphics mode, it is up to the mode-setting driver
 	   (currently only video-vesa.c) to store the parameters */
-	if (graphic_mode)
-		return;
+	अगर (graphic_mode)
+		वापस;
 
 	store_cursor_position();
 	store_video_mode();
 
-	if (boot_params.screen_info.orig_video_mode == 0x07) {
+	अगर (boot_params.screen_info.orig_video_mode == 0x07) अणु
 		/* MDA, HGC, or VGA in monochrome mode */
 		video_segment = 0xb000;
-	} else {
-		/* CGA, EGA, VGA and so forth */
+	पूर्ण अन्यथा अणु
+		/* CGA, EGA, VGA and so क्रमth */
 		video_segment = 0xb800;
-	}
+	पूर्ण
 
 	set_fs(0);
 	font_size = rdfs16(0x485); /* Font size, BIOS area */
-	boot_params.screen_info.orig_video_points = font_size;
+	boot_params.screen_info.orig_video_poपूर्णांकs = font_size;
 
 	x = rdfs16(0x44a);
 	y = (adapter == ADAPTER_CGA) ? 25 : rdfs8(0x484)+1;
 
-	if (force_x)
-		x = force_x;
-	if (force_y)
-		y = force_y;
+	अगर (क्रमce_x)
+		x = क्रमce_x;
+	अगर (क्रमce_y)
+		y = क्रमce_y;
 
 	boot_params.screen_info.orig_video_cols  = x;
 	boot_params.screen_info.orig_video_lines = y;
-}
+पूर्ण
 
-static unsigned int get_entry(void)
-{
-	char entry_buf[4];
-	int i, len = 0;
-	int key;
-	unsigned int v;
+अटल अचिन्हित पूर्णांक get_entry(व्योम)
+अणु
+	अक्षर entry_buf[4];
+	पूर्णांक i, len = 0;
+	पूर्णांक key;
+	अचिन्हित पूर्णांक v;
 
-	do {
-		key = getchar();
+	करो अणु
+		key = अक्षर_लो();
 
-		if (key == '\b') {
-			if (len > 0) {
-				puts("\b \b");
+		अगर (key == '\b') अणु
+			अगर (len > 0) अणु
+				माला_दो("\b \b");
 				len--;
-			}
-		} else if ((key >= '0' && key <= '9') ||
+			पूर्ण
+		पूर्ण अन्यथा अगर ((key >= '0' && key <= '9') ||
 			   (key >= 'A' && key <= 'Z') ||
-			   (key >= 'a' && key <= 'z')) {
-			if (len < sizeof(entry_buf)) {
+			   (key >= 'a' && key <= 'z')) अणु
+			अगर (len < माप(entry_buf)) अणु
 				entry_buf[len++] = key;
-				putchar(key);
-			}
-		}
-	} while (key != '\r');
-	putchar('\n');
+				अक्षर_दो(key);
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (key != '\r');
+	अक्षर_दो('\n');
 
-	if (len == 0)
-		return VIDEO_CURRENT_MODE; /* Default */
+	अगर (len == 0)
+		वापस VIDEO_CURRENT_MODE; /* Default */
 
 	v = 0;
-	for (i = 0; i < len; i++) {
+	क्रम (i = 0; i < len; i++) अणु
 		v <<= 4;
 		key = entry_buf[i] | 0x20;
 		v += (key > '9') ? key-'a'+10 : key-'0';
-	}
+	पूर्ण
 
-	return v;
-}
+	वापस v;
+पूर्ण
 
-static void display_menu(void)
-{
-	struct card_info *card;
-	struct mode_info *mi;
-	char ch;
-	int i;
-	int nmodes;
-	int modes_per_line;
-	int col;
+अटल व्योम display_menu(व्योम)
+अणु
+	काष्ठा card_info *card;
+	काष्ठा mode_info *mi;
+	अक्षर ch;
+	पूर्णांक i;
+	पूर्णांक nmodes;
+	पूर्णांक modes_per_line;
+	पूर्णांक col;
 
 	nmodes = 0;
-	for (card = video_cards; card < video_cards_end; card++)
+	क्रम (card = video_cards; card < video_cards_end; card++)
 		nmodes += card->nmodes;
 
 	modes_per_line = 1;
-	if (nmodes >= 20)
+	अगर (nmodes >= 20)
 		modes_per_line = 3;
 
-	for (col = 0; col < modes_per_line; col++)
-		puts("Mode: Resolution:  Type: ");
-	putchar('\n');
+	क्रम (col = 0; col < modes_per_line; col++)
+		माला_दो("Mode: Resolution:  Type: ");
+	अक्षर_दो('\n');
 
 	col = 0;
 	ch = '0';
-	for (card = video_cards; card < video_cards_end; card++) {
+	क्रम (card = video_cards; card < video_cards_end; card++) अणु
 		mi = card->modes;
-		for (i = 0; i < card->nmodes; i++, mi++) {
-			char resbuf[32];
-			int visible = mi->x && mi->y;
+		क्रम (i = 0; i < card->nmodes; i++, mi++) अणु
+			अक्षर resbuf[32];
+			पूर्णांक visible = mi->x && mi->y;
 			u16 mode_id = mi->mode ? mi->mode :
 				(mi->y << 8)+mi->x;
 
-			if (!visible)
-				continue; /* Hidden mode */
+			अगर (!visible)
+				जारी; /* Hidden mode */
 
-			if (mi->depth)
-				sprintf(resbuf, "%dx%d", mi->y, mi->depth);
-			else
-				sprintf(resbuf, "%d", mi->y);
+			अगर (mi->depth)
+				प्र_लिखो(resbuf, "%dx%d", mi->y, mi->depth);
+			अन्यथा
+				प्र_लिखो(resbuf, "%d", mi->y);
 
-			printf("%c %03X %4dx%-7s %-6s",
+			म_लिखो("%c %03X %4dx%-7s %-6s",
 			       ch, mode_id, mi->x, resbuf, card->card_name);
 			col++;
-			if (col >= modes_per_line) {
-				putchar('\n');
+			अगर (col >= modes_per_line) अणु
+				अक्षर_दो('\n');
 				col = 0;
-			}
+			पूर्ण
 
-			if (ch == '9')
+			अगर (ch == '9')
 				ch = 'a';
-			else if (ch == 'z' || ch == ' ')
+			अन्यथा अगर (ch == 'z' || ch == ' ')
 				ch = ' '; /* Out of keys... */
-			else
+			अन्यथा
 				ch++;
-		}
-	}
-	if (col)
-		putchar('\n');
-}
+		पूर्ण
+	पूर्ण
+	अगर (col)
+		अक्षर_दो('\n');
+पूर्ण
 
-#define H(x)	((x)-'a'+10)
-#define SCAN	((H('s')<<12)+(H('c')<<8)+(H('a')<<4)+H('n'))
+#घोषणा H(x)	((x)-'a'+10)
+#घोषणा SCAN	((H('s')<<12)+(H('c')<<8)+(H('a')<<4)+H('n'))
 
-static unsigned int mode_menu(void)
-{
-	int key;
-	unsigned int sel;
+अटल अचिन्हित पूर्णांक mode_menu(व्योम)
+अणु
+	पूर्णांक key;
+	अचिन्हित पूर्णांक sel;
 
-	puts("Press <ENTER> to see video modes available, "
+	माला_दो("Press <ENTER> to see video modes available, "
 	     "<SPACE> to continue, or wait 30 sec\n");
 
 	kbd_flush();
-	while (1) {
-		key = getchar_timeout();
-		if (key == ' ' || key == 0)
-			return VIDEO_CURRENT_MODE; /* Default */
-		if (key == '\r')
-			break;
-		putchar('\a');	/* Beep! */
-	}
+	जबतक (1) अणु
+		key = अक्षर_लो_समयout();
+		अगर (key == ' ' || key == 0)
+			वापस VIDEO_CURRENT_MODE; /* Default */
+		अगर (key == '\r')
+			अवरोध;
+		अक्षर_दो('\a');	/* Beep! */
+	पूर्ण
 
 
-	for (;;) {
+	क्रम (;;) अणु
 		display_menu();
 
-		puts("Enter a video mode or \"scan\" to scan for "
+		माला_दो("Enter a video mode or \"scan\" to scan for "
 		     "additional modes: ");
 		sel = get_entry();
-		if (sel != SCAN)
-			return sel;
+		अगर (sel != SCAN)
+			वापस sel;
 
 		probe_cards(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Save screen content to the heap */
-static struct saved_screen {
-	int x, y;
-	int curx, cury;
+अटल काष्ठा saved_screen अणु
+	पूर्णांक x, y;
+	पूर्णांक curx, cury;
 	u16 *data;
-} saved;
+पूर्ण saved;
 
-static void save_screen(void)
-{
+अटल व्योम save_screen(व्योम)
+अणु
 	/* Should be called after store_mode_params() */
 	saved.x = boot_params.screen_info.orig_video_cols;
 	saved.y = boot_params.screen_info.orig_video_lines;
 	saved.curx = boot_params.screen_info.orig_x;
 	saved.cury = boot_params.screen_info.orig_y;
 
-	if (!heap_free(saved.x*saved.y*sizeof(u16)+512))
-		return;		/* Not enough heap to save the screen */
+	अगर (!heap_मुक्त(saved.x*saved.y*माप(u16)+512))
+		वापस;		/* Not enough heap to save the screen */
 
 	saved.data = GET_HEAP(u16, saved.x*saved.y);
 
 	set_fs(video_segment);
-	copy_from_fs(saved.data, 0, saved.x*saved.y*sizeof(u16));
-}
+	copy_from_fs(saved.data, 0, saved.x*saved.y*माप(u16));
+पूर्ण
 
-static void restore_screen(void)
-{
+अटल व्योम restore_screen(व्योम)
+अणु
 	/* Should be called after store_mode_params() */
-	int xs = boot_params.screen_info.orig_video_cols;
-	int ys = boot_params.screen_info.orig_video_lines;
-	int y;
+	पूर्णांक xs = boot_params.screen_info.orig_video_cols;
+	पूर्णांक ys = boot_params.screen_info.orig_video_lines;
+	पूर्णांक y;
 	addr_t dst = 0;
 	u16 *src = saved.data;
-	struct biosregs ireg;
+	काष्ठा biosregs ireg;
 
-	if (graphic_mode)
-		return;		/* Can't restore onto a graphic mode */
+	अगर (graphic_mode)
+		वापस;		/* Can't restore onto a graphic mode */
 
-	if (!src)
-		return;		/* No saved screen contents */
+	अगर (!src)
+		वापस;		/* No saved screen contents */
 
 	/* Restore screen contents */
 
 	set_fs(video_segment);
-	for (y = 0; y < ys; y++) {
-		int npad;
+	क्रम (y = 0; y < ys; y++) अणु
+		पूर्णांक npad;
 
-		if (y < saved.y) {
-			int copy = (xs < saved.x) ? xs : saved.x;
-			copy_to_fs(dst, src, copy*sizeof(u16));
-			dst += copy*sizeof(u16);
+		अगर (y < saved.y) अणु
+			पूर्णांक copy = (xs < saved.x) ? xs : saved.x;
+			copy_to_fs(dst, src, copy*माप(u16));
+			dst += copy*माप(u16);
 			src += saved.x;
 			npad = (xs < saved.x) ? 0 : xs-saved.x;
-		} else {
+		पूर्ण अन्यथा अणु
 			npad = xs;
-		}
+		पूर्ण
 
-		/* Writes "npad" blank characters to
+		/* Writes "npad" blank अक्षरacters to
 		   video_segment:dst and advances dst */
-		asm volatile("pushw %%es ; "
+		यंत्र अस्थिर("pushw %%es ; "
 			     "movw %2,%%es ; "
 			     "shrw %%cx ; "
 			     "jnc 1f ; "
@@ -297,25 +298,25 @@ static void restore_screen(void)
 			     : "+D" (dst), "+c" (npad)
 			     : "bdS" (video_segment),
 			       "a" (0x07200720));
-	}
+	पूर्ण
 
 	/* Restore cursor position */
-	if (saved.curx >= xs)
+	अगर (saved.curx >= xs)
 		saved.curx = xs-1;
-	if (saved.cury >= ys)
+	अगर (saved.cury >= ys)
 		saved.cury = ys-1;
 
 	initregs(&ireg);
 	ireg.ah = 0x02;		/* Set cursor position */
 	ireg.dh = saved.cury;
 	ireg.dl = saved.curx;
-	intcall(0x10, &ireg, NULL);
+	पूर्णांकcall(0x10, &ireg, शून्य);
 
 	store_cursor_position();
-}
+पूर्ण
 
-void set_video(void)
-{
+व्योम set_video(व्योम)
+अणु
 	u16 mode = boot_params.hdr.vid_mode;
 
 	RESET_HEAP();
@@ -324,20 +325,20 @@ void set_video(void)
 	save_screen();
 	probe_cards(0);
 
-	for (;;) {
-		if (mode == ASK_VGA)
+	क्रम (;;) अणु
+		अगर (mode == ASK_VGA)
 			mode = mode_menu();
 
-		if (!set_mode(mode))
-			break;
+		अगर (!set_mode(mode))
+			अवरोध;
 
-		printf("Undefined video mode number: %x\n", mode);
+		म_लिखो("Undefined video mode number: %x\n", mode);
 		mode = ASK_VGA;
-	}
+	पूर्ण
 	boot_params.hdr.vid_mode = mode;
 	vesa_store_edid();
 	store_mode_params();
 
-	if (do_restore)
+	अगर (करो_restore)
 		restore_screen();
-}
+पूर्ण

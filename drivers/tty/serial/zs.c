@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * zs.c: Serial port driver for IOASIC DECstations.
+ * zs.c: Serial port driver क्रम IOASIC DECstations.
  *
- * Derived from drivers/sbus/char/sunserial.c by Paul Mackerras.
- * Derived from drivers/macintosh/macserial.c by Harald Koerfgen.
+ * Derived from drivers/sbus/अक्षर/sunserial.c by Paul Mackerras.
+ * Derived from drivers/macपूर्णांकosh/macserial.c by Harald Koerfgen.
  *
  * DECstation changes
  * Copyright (C) 1998-2000 Harald Koerfgen
@@ -14,15 +15,15 @@
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  *
  *
- * Note: for IOASIC systems the wiring is as follows:
+ * Note: क्रम IOASIC प्रणालीs the wiring is as follows:
  *
  * mouse/keyboard:
- * DIN-7 MJ-4  signal        SCC
+ * DIN-7 MJ-4  संकेत        SCC
  * 2     1     TxD       <-  A.TxD
  * 3     4     RxD       ->  A.RxD
  *
  * EIA-232/EIA-423:
- * DB-25 MMJ-6 signal        SCC
+ * DB-25 MMJ-6 संकेत        SCC
  * 2     2     TxD       <-  B.TxD
  * 3     5     RxD       ->  B.RxD
  * 4           RTS       <- ~A.RTS
@@ -36,41 +37,41 @@
  * 22          RI        -> ~A.DCD
  * 23          DSRS(DTE) <- ~B.RTS
  *
- * (*) EIA-232 defines the signal at this pin to be SCD, while DSRS(DCE)
+ * (*) EIA-232 defines the संकेत at this pin to be SCD, जबतक DSRS(DCE)
  *     is shared with DSRS(DTE) at pin 23.
  *
- * As you can immediately notice the wiring of the RTS, DTR and DSR signals
+ * As you can immediately notice the wiring of the RTS, DTR and DSR संकेतs
  * is a bit odd.  This makes the handling of port B unnecessarily
- * complicated and prevents the use of some automatic modes of operation.
+ * complicated and prevents the use of some स्वतःmatic modes of operation.
  */
 
-#include <linux/bug.h>
-#include <linux/console.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/irqflags.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/major.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <linux/spinlock.h>
-#include <linux/sysrq.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/types.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/console.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/major.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/types.h>
 
-#include <linux/atomic.h>
+#समावेश <linux/atomic.h>
 
-#include <asm/dec/interrupts.h>
-#include <asm/dec/ioasic_addrs.h>
-#include <asm/dec/system.h>
+#समावेश <यंत्र/dec/पूर्णांकerrupts.h>
+#समावेश <यंत्र/dec/ioasic_addrs.h>
+#समावेश <यंत्र/dec/प्रणाली.h>
 
-#include "zs.h"
+#समावेश "zs.h"
 
 
 MODULE_AUTHOR("Maciej W. Rozycki <macro@linux-mips.org>");
@@ -78,213 +79,213 @@ MODULE_DESCRIPTION("DECstation Z85C30 serial driver");
 MODULE_LICENSE("GPL");
 
 
-static char zs_name[] __initdata = "DECstation Z85C30 serial driver version ";
-static char zs_version[] __initdata = "0.10";
+अटल अक्षर zs_name[] __initdata = "DECstation Z85C30 serial driver version ";
+अटल अक्षर zs_version[] __initdata = "0.10";
 
 /*
  * It would be nice to dynamically allocate everything that
  * depends on ZS_NUM_SCCS, so we could support any number of
- * Z85C30s, but for now...
+ * Z85C30s, but क्रम now...
  */
-#define ZS_NUM_SCCS	2		/* Max # of ZS chips supported.  */
-#define ZS_NUM_CHAN	2		/* 2 channels per chip.  */
-#define ZS_CHAN_A	0		/* Index of the channel A.  */
-#define ZS_CHAN_B	1		/* Index of the channel B.  */
-#define ZS_CHAN_IO_SIZE 8		/* IOMEM space size.  */
-#define ZS_CHAN_IO_STRIDE 4		/* Register alignment.  */
-#define ZS_CHAN_IO_OFFSET 1		/* The SCC resides on the high byte
+#घोषणा ZS_NUM_SCCS	2		/* Max # of ZS chips supported.  */
+#घोषणा ZS_NUM_CHAN	2		/* 2 channels per chip.  */
+#घोषणा ZS_CHAN_A	0		/* Index of the channel A.  */
+#घोषणा ZS_CHAN_B	1		/* Index of the channel B.  */
+#घोषणा ZS_CHAN_IO_SIZE 8		/* IOMEM space size.  */
+#घोषणा ZS_CHAN_IO_STRIDE 4		/* Register alignment.  */
+#घोषणा ZS_CHAN_IO_OFFSET 1		/* The SCC resides on the high byte
 					   of the 16-bit IOBUS.  */
-#define ZS_CLOCK        7372800 	/* Z85C30 PCLK input clock rate.  */
+#घोषणा ZS_CLOCK        7372800 	/* Z85C30 PCLK input घड़ी rate.  */
 
-#define to_zport(uport) container_of(uport, struct zs_port, port)
+#घोषणा to_zport(uport) container_of(uport, काष्ठा zs_port, port)
 
-struct zs_parms {
-	resource_size_t scc[ZS_NUM_SCCS];
-	int irq[ZS_NUM_SCCS];
-};
+काष्ठा zs_parms अणु
+	resource_माप_प्रकार scc[ZS_NUM_SCCS];
+	पूर्णांक irq[ZS_NUM_SCCS];
+पूर्ण;
 
-static struct zs_scc zs_sccs[ZS_NUM_SCCS];
+अटल काष्ठा zs_scc zs_sccs[ZS_NUM_SCCS];
 
-static u8 zs_init_regs[ZS_NUM_REGS] __initdata = {
-	0,				/* write 0 */
-	PAR_SPEC,			/* write 1 */
-	0,				/* write 2 */
-	0,				/* write 3 */
-	X16CLK | SB1,			/* write 4 */
-	0,				/* write 5 */
-	0, 0, 0,			/* write 6, 7, 8 */
-	MIE | DLC | NV,			/* write 9 */
-	NRZ,				/* write 10 */
-	TCBR | RCBR,			/* write 11 */
-	0, 0,				/* BRG time constant, write 12 + 13 */
-	BRSRC | BRENABL,		/* write 14 */
-	0,				/* write 15 */
-};
+अटल u8 zs_init_regs[ZS_NUM_REGS] __initdata = अणु
+	0,				/* ग_लिखो 0 */
+	PAR_SPEC,			/* ग_लिखो 1 */
+	0,				/* ग_लिखो 2 */
+	0,				/* ग_लिखो 3 */
+	X16CLK | SB1,			/* ग_लिखो 4 */
+	0,				/* ग_लिखो 5 */
+	0, 0, 0,			/* ग_लिखो 6, 7, 8 */
+	MIE | DLC | NV,			/* ग_लिखो 9 */
+	NRZ,				/* ग_लिखो 10 */
+	TCBR | RCBR,			/* ग_लिखो 11 */
+	0, 0,				/* BRG समय स्थिरant, ग_लिखो 12 + 13 */
+	BRSRC | BRENABL,		/* ग_लिखो 14 */
+	0,				/* ग_लिखो 15 */
+पूर्ण;
 
 /*
  * Debugging.
  */
-#undef ZS_DEBUG_REGS
+#अघोषित ZS_DEBUG_REGS
 
 
 /*
- * Reading and writing Z85C30 registers.
+ * Reading and writing Z85C30 रेजिस्टरs.
  */
-static void recovery_delay(void)
-{
+अटल व्योम recovery_delay(व्योम)
+अणु
 	udelay(2);
-}
+पूर्ण
 
-static u8 read_zsreg(struct zs_port *zport, int reg)
-{
-	void __iomem *control = zport->port.membase + ZS_CHAN_IO_OFFSET;
+अटल u8 पढ़ो_zsreg(काष्ठा zs_port *zport, पूर्णांक reg)
+अणु
+	व्योम __iomem *control = zport->port.membase + ZS_CHAN_IO_OFFSET;
 	u8 retval;
 
-	if (reg != 0) {
-		writeb(reg & 0xf, control);
+	अगर (reg != 0) अणु
+		ग_लिखोb(reg & 0xf, control);
 		fast_iob();
 		recovery_delay();
-	}
-	retval = readb(control);
+	पूर्ण
+	retval = पढ़ोb(control);
 	recovery_delay();
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void write_zsreg(struct zs_port *zport, int reg, u8 value)
-{
-	void __iomem *control = zport->port.membase + ZS_CHAN_IO_OFFSET;
+अटल व्योम ग_लिखो_zsreg(काष्ठा zs_port *zport, पूर्णांक reg, u8 value)
+अणु
+	व्योम __iomem *control = zport->port.membase + ZS_CHAN_IO_OFFSET;
 
-	if (reg != 0) {
-		writeb(reg & 0xf, control);
+	अगर (reg != 0) अणु
+		ग_लिखोb(reg & 0xf, control);
 		fast_iob(); recovery_delay();
-	}
-	writeb(value, control);
+	पूर्ण
+	ग_लिखोb(value, control);
 	fast_iob();
 	recovery_delay();
-	return;
-}
+	वापस;
+पूर्ण
 
-static u8 read_zsdata(struct zs_port *zport)
-{
-	void __iomem *data = zport->port.membase +
+अटल u8 पढ़ो_zsdata(काष्ठा zs_port *zport)
+अणु
+	व्योम __iomem *data = zport->port.membase +
 			     ZS_CHAN_IO_STRIDE + ZS_CHAN_IO_OFFSET;
 	u8 retval;
 
-	retval = readb(data);
+	retval = पढ़ोb(data);
 	recovery_delay();
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void write_zsdata(struct zs_port *zport, u8 value)
-{
-	void __iomem *data = zport->port.membase +
+अटल व्योम ग_लिखो_zsdata(काष्ठा zs_port *zport, u8 value)
+अणु
+	व्योम __iomem *data = zport->port.membase +
 			     ZS_CHAN_IO_STRIDE + ZS_CHAN_IO_OFFSET;
 
-	writeb(value, data);
+	ग_लिखोb(value, data);
 	fast_iob();
 	recovery_delay();
-	return;
-}
+	वापस;
+पूर्ण
 
-#ifdef ZS_DEBUG_REGS
-void zs_dump(void)
-{
-	struct zs_port *zport;
-	int i, j;
+#अगर_घोषित ZS_DEBUG_REGS
+व्योम zs_dump(व्योम)
+अणु
+	काष्ठा zs_port *zport;
+	पूर्णांक i, j;
 
-	for (i = 0; i < ZS_NUM_SCCS * ZS_NUM_CHAN; i++) {
+	क्रम (i = 0; i < ZS_NUM_SCCS * ZS_NUM_CHAN; i++) अणु
 		zport = &zs_sccs[i / ZS_NUM_CHAN].zport[i % ZS_NUM_CHAN];
 
-		if (!zport->scc)
-			continue;
+		अगर (!zport->scc)
+			जारी;
 
-		for (j = 0; j < 16; j++)
-			printk("W%-2d = 0x%02x\t", j, zport->regs[j]);
-		printk("\n");
-		for (j = 0; j < 16; j++)
-			printk("R%-2d = 0x%02x\t", j, read_zsreg(zport, j));
-		printk("\n\n");
-	}
-}
-#endif
+		क्रम (j = 0; j < 16; j++)
+			prपूर्णांकk("W%-2d = 0x%02x\t", j, zport->regs[j]);
+		prपूर्णांकk("\n");
+		क्रम (j = 0; j < 16; j++)
+			prपूर्णांकk("R%-2d = 0x%02x\t", j, पढ़ो_zsreg(zport, j));
+		prपूर्णांकk("\n\n");
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 
-static void zs_spin_lock_cond_irq(spinlock_t *lock, int irq)
-{
-	if (irq)
+अटल व्योम zs_spin_lock_cond_irq(spinlock_t *lock, पूर्णांक irq)
+अणु
+	अगर (irq)
 		spin_lock_irq(lock);
-	else
+	अन्यथा
 		spin_lock(lock);
-}
+पूर्ण
 
-static void zs_spin_unlock_cond_irq(spinlock_t *lock, int irq)
-{
-	if (irq)
+अटल व्योम zs_spin_unlock_cond_irq(spinlock_t *lock, पूर्णांक irq)
+अणु
+	अगर (irq)
 		spin_unlock_irq(lock);
-	else
+	अन्यथा
 		spin_unlock(lock);
-}
+पूर्ण
 
-static int zs_receive_drain(struct zs_port *zport)
-{
-	int loops = 10000;
+अटल पूर्णांक zs_receive_drain(काष्ठा zs_port *zport)
+अणु
+	पूर्णांक loops = 10000;
 
-	while ((read_zsreg(zport, R0) & Rx_CH_AV) && --loops)
-		read_zsdata(zport);
-	return loops;
-}
+	जबतक ((पढ़ो_zsreg(zport, R0) & Rx_CH_AV) && --loops)
+		पढ़ो_zsdata(zport);
+	वापस loops;
+पूर्ण
 
-static int zs_transmit_drain(struct zs_port *zport, int irq)
-{
-	struct zs_scc *scc = zport->scc;
-	int loops = 10000;
+अटल पूर्णांक zs_transmit_drain(काष्ठा zs_port *zport, पूर्णांक irq)
+अणु
+	काष्ठा zs_scc *scc = zport->scc;
+	पूर्णांक loops = 10000;
 
-	while (!(read_zsreg(zport, R0) & Tx_BUF_EMP) && --loops) {
+	जबतक (!(पढ़ो_zsreg(zport, R0) & Tx_BUF_EMP) && --loops) अणु
 		zs_spin_unlock_cond_irq(&scc->zlock, irq);
 		udelay(2);
 		zs_spin_lock_cond_irq(&scc->zlock, irq);
-	}
-	return loops;
-}
+	पूर्ण
+	वापस loops;
+पूर्ण
 
-static int zs_line_drain(struct zs_port *zport, int irq)
-{
-	struct zs_scc *scc = zport->scc;
-	int loops = 10000;
+अटल पूर्णांक zs_line_drain(काष्ठा zs_port *zport, पूर्णांक irq)
+अणु
+	काष्ठा zs_scc *scc = zport->scc;
+	पूर्णांक loops = 10000;
 
-	while (!(read_zsreg(zport, R1) & ALL_SNT) && --loops) {
+	जबतक (!(पढ़ो_zsreg(zport, R1) & ALL_SNT) && --loops) अणु
 		zs_spin_unlock_cond_irq(&scc->zlock, irq);
 		udelay(2);
 		zs_spin_lock_cond_irq(&scc->zlock, irq);
-	}
-	return loops;
-}
+	पूर्ण
+	वापस loops;
+पूर्ण
 
 
-static void load_zsregs(struct zs_port *zport, u8 *regs, int irq)
-{
+अटल व्योम load_zsregs(काष्ठा zs_port *zport, u8 *regs, पूर्णांक irq)
+अणु
 	/* Let the current transmission finish.  */
 	zs_line_drain(zport, irq);
 	/* Load 'em up.  */
-	write_zsreg(zport, R3, regs[3] & ~RxENABLE);
-	write_zsreg(zport, R5, regs[5] & ~TxENAB);
-	write_zsreg(zport, R4, regs[4]);
-	write_zsreg(zport, R9, regs[9]);
-	write_zsreg(zport, R1, regs[1]);
-	write_zsreg(zport, R2, regs[2]);
-	write_zsreg(zport, R10, regs[10]);
-	write_zsreg(zport, R14, regs[14] & ~BRENABL);
-	write_zsreg(zport, R11, regs[11]);
-	write_zsreg(zport, R12, regs[12]);
-	write_zsreg(zport, R13, regs[13]);
-	write_zsreg(zport, R14, regs[14]);
-	write_zsreg(zport, R15, regs[15]);
-	if (regs[3] & RxENABLE)
-		write_zsreg(zport, R3, regs[3]);
-	if (regs[5] & TxENAB)
-		write_zsreg(zport, R5, regs[5]);
-	return;
-}
+	ग_लिखो_zsreg(zport, R3, regs[3] & ~RxENABLE);
+	ग_लिखो_zsreg(zport, R5, regs[5] & ~TxENAB);
+	ग_लिखो_zsreg(zport, R4, regs[4]);
+	ग_लिखो_zsreg(zport, R9, regs[9]);
+	ग_लिखो_zsreg(zport, R1, regs[1]);
+	ग_लिखो_zsreg(zport, R2, regs[2]);
+	ग_लिखो_zsreg(zport, R10, regs[10]);
+	ग_लिखो_zsreg(zport, R14, regs[14] & ~BRENABL);
+	ग_लिखो_zsreg(zport, R11, regs[11]);
+	ग_लिखो_zsreg(zport, R12, regs[12]);
+	ग_लिखो_zsreg(zport, R13, regs[13]);
+	ग_लिखो_zsreg(zport, R14, regs[14]);
+	ग_लिखो_zsreg(zport, R15, regs[15]);
+	अगर (regs[3] & RxENABLE)
+		ग_लिखो_zsreg(zport, R3, regs[3]);
+	अगर (regs[5] & TxENAB)
+		ग_लिखो_zsreg(zport, R5, regs[5]);
+	वापस;
+पूर्ण
 
 
 /*
@@ -296,57 +297,57 @@ static void load_zsregs(struct zs_port *zport, u8 *regs, int irq)
  *
  * Purpose: Let user call ioctl() to get info when the UART physically
  * 	    is emptied.  On bus types like RS485, the transmitter must
- * 	    release the bus after transmitting.  This must be done when
- * 	    the transmit shift register is empty, not be done when the
- * 	    transmit holding register is empty.  This functionality
+ * 	    release the bus after transmitting.  This must be करोne when
+ * 	    the transmit shअगरt रेजिस्टर is empty, not be करोne when the
+ * 	    transmit holding रेजिस्टर is empty.  This functionality
  * 	    allows an RS485 driver to be written in user space.
  */
-static unsigned int zs_tx_empty(struct uart_port *uport)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
-	unsigned long flags;
+अटल अचिन्हित पूर्णांक zs_tx_empty(काष्ठा uart_port *uport)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
+	अचिन्हित दीर्घ flags;
 	u8 status;
 
 	spin_lock_irqsave(&scc->zlock, flags);
-	status = read_zsreg(zport, R1);
+	status = पढ़ो_zsreg(zport, R1);
 	spin_unlock_irqrestore(&scc->zlock, flags);
 
-	return status & ALL_SNT ? TIOCSER_TEMT : 0;
-}
+	वापस status & ALL_SNT ? TIOCSER_TEMT : 0;
+पूर्ण
 
-static unsigned int zs_raw_get_ab_mctrl(struct zs_port *zport_a,
-					struct zs_port *zport_b)
-{
+अटल अचिन्हित पूर्णांक zs_raw_get_ab_mctrl(काष्ठा zs_port *zport_a,
+					काष्ठा zs_port *zport_b)
+अणु
 	u8 status_a, status_b;
-	unsigned int mctrl;
+	अचिन्हित पूर्णांक mctrl;
 
-	status_a = read_zsreg(zport_a, R0);
-	status_b = read_zsreg(zport_b, R0);
+	status_a = पढ़ो_zsreg(zport_a, R0);
+	status_b = पढ़ो_zsreg(zport_b, R0);
 
 	mctrl = ((status_b & CTS) ? TIOCM_CTS : 0) |
 		((status_b & DCD) ? TIOCM_CAR : 0) |
 		((status_a & DCD) ? TIOCM_RNG : 0) |
 		((status_a & SYNC_HUNT) ? TIOCM_DSR : 0);
 
-	return mctrl;
-}
+	वापस mctrl;
+पूर्ण
 
-static unsigned int zs_raw_get_mctrl(struct zs_port *zport)
-{
-	struct zs_port *zport_a = &zport->scc->zport[ZS_CHAN_A];
+अटल अचिन्हित पूर्णांक zs_raw_get_mctrl(काष्ठा zs_port *zport)
+अणु
+	काष्ठा zs_port *zport_a = &zport->scc->zport[ZS_CHAN_A];
 
-	return zport != zport_a ? zs_raw_get_ab_mctrl(zport_a, zport) : 0;
-}
+	वापस zport != zport_a ? zs_raw_get_ab_mctrl(zport_a, zport) : 0;
+पूर्ण
 
-static unsigned int zs_raw_xor_mctrl(struct zs_port *zport)
-{
-	struct zs_port *zport_a = &zport->scc->zport[ZS_CHAN_A];
-	unsigned int mmask, mctrl, delta;
+अटल अचिन्हित पूर्णांक zs_raw_xor_mctrl(काष्ठा zs_port *zport)
+अणु
+	काष्ठा zs_port *zport_a = &zport->scc->zport[ZS_CHAN_A];
+	अचिन्हित पूर्णांक mmask, mctrl, delta;
 	u8 mask_a, mask_b;
 
-	if (zport == zport_a)
-		return 0;
+	अगर (zport == zport_a)
+		वापस 0;
 
 	mask_a = zport_a->regs[15];
 	mask_b = zport->regs[15];
@@ -357,145 +358,145 @@ static unsigned int zs_raw_xor_mctrl(struct zs_port *zport)
 		((mask_a & SYNCIE) ? TIOCM_DSR : 0);
 
 	mctrl = zport->mctrl;
-	if (mmask) {
+	अगर (mmask) अणु
 		mctrl &= ~mmask;
 		mctrl |= zs_raw_get_ab_mctrl(zport_a, zport) & mmask;
-	}
+	पूर्ण
 
 	delta = mctrl ^ zport->mctrl;
-	if (delta)
+	अगर (delta)
 		zport->mctrl = mctrl;
 
-	return delta;
-}
+	वापस delta;
+पूर्ण
 
-static unsigned int zs_get_mctrl(struct uart_port *uport)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
-	unsigned int mctrl;
+अटल अचिन्हित पूर्णांक zs_get_mctrl(काष्ठा uart_port *uport)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
+	अचिन्हित पूर्णांक mctrl;
 
 	spin_lock(&scc->zlock);
 	mctrl = zs_raw_get_mctrl(zport);
 	spin_unlock(&scc->zlock);
 
-	return mctrl;
-}
+	वापस mctrl;
+पूर्ण
 
-static void zs_set_mctrl(struct uart_port *uport, unsigned int mctrl)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
-	struct zs_port *zport_a = &scc->zport[ZS_CHAN_A];
+अटल व्योम zs_set_mctrl(काष्ठा uart_port *uport, अचिन्हित पूर्णांक mctrl)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
+	काष्ठा zs_port *zport_a = &scc->zport[ZS_CHAN_A];
 	u8 oldloop, newloop;
 
 	spin_lock(&scc->zlock);
-	if (zport != zport_a) {
-		if (mctrl & TIOCM_DTR)
+	अगर (zport != zport_a) अणु
+		अगर (mctrl & TIOCM_DTR)
 			zport_a->regs[5] |= DTR;
-		else
+		अन्यथा
 			zport_a->regs[5] &= ~DTR;
-		if (mctrl & TIOCM_RTS)
+		अगर (mctrl & TIOCM_RTS)
 			zport_a->regs[5] |= RTS;
-		else
+		अन्यथा
 			zport_a->regs[5] &= ~RTS;
-		write_zsreg(zport_a, R5, zport_a->regs[5]);
-	}
+		ग_लिखो_zsreg(zport_a, R5, zport_a->regs[5]);
+	पूर्ण
 
-	/* Rarely modified, so don't poke at hardware unless necessary. */
+	/* Rarely modअगरied, so करोn't poke at hardware unless necessary. */
 	oldloop = zport->regs[14];
 	newloop = oldloop;
-	if (mctrl & TIOCM_LOOP)
+	अगर (mctrl & TIOCM_LOOP)
 		newloop |= LOOPBAK;
-	else
+	अन्यथा
 		newloop &= ~LOOPBAK;
-	if (newloop != oldloop) {
+	अगर (newloop != oldloop) अणु
 		zport->regs[14] = newloop;
-		write_zsreg(zport, R14, zport->regs[14]);
-	}
+		ग_लिखो_zsreg(zport, R14, zport->regs[14]);
+	पूर्ण
 	spin_unlock(&scc->zlock);
-}
+पूर्ण
 
-static void zs_raw_stop_tx(struct zs_port *zport)
-{
-	write_zsreg(zport, R0, RES_Tx_P);
+अटल व्योम zs_raw_stop_tx(काष्ठा zs_port *zport)
+अणु
+	ग_लिखो_zsreg(zport, R0, RES_Tx_P);
 	zport->tx_stopped = 1;
-}
+पूर्ण
 
-static void zs_stop_tx(struct uart_port *uport)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
+अटल व्योम zs_stop_tx(काष्ठा uart_port *uport)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
 
 	spin_lock(&scc->zlock);
 	zs_raw_stop_tx(zport);
 	spin_unlock(&scc->zlock);
-}
+पूर्ण
 
-static void zs_raw_transmit_chars(struct zs_port *);
+अटल व्योम zs_raw_transmit_अक्षरs(काष्ठा zs_port *);
 
-static void zs_start_tx(struct uart_port *uport)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
+अटल व्योम zs_start_tx(काष्ठा uart_port *uport)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
 
 	spin_lock(&scc->zlock);
-	if (zport->tx_stopped) {
+	अगर (zport->tx_stopped) अणु
 		zs_transmit_drain(zport, 0);
 		zport->tx_stopped = 0;
-		zs_raw_transmit_chars(zport);
-	}
+		zs_raw_transmit_अक्षरs(zport);
+	पूर्ण
 	spin_unlock(&scc->zlock);
-}
+पूर्ण
 
-static void zs_stop_rx(struct uart_port *uport)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
-	struct zs_port *zport_a = &scc->zport[ZS_CHAN_A];
+अटल व्योम zs_stop_rx(काष्ठा uart_port *uport)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
+	काष्ठा zs_port *zport_a = &scc->zport[ZS_CHAN_A];
 
 	spin_lock(&scc->zlock);
 	zport->regs[15] &= ~BRKIE;
 	zport->regs[1] &= ~(RxINT_MASK | TxINT_ENAB);
 	zport->regs[1] |= RxINT_DISAB;
 
-	if (zport != zport_a) {
+	अगर (zport != zport_a) अणु
 		/* A-side DCD tracks RI and SYNC tracks DSR.  */
 		zport_a->regs[15] &= ~(DCDIE | SYNCIE);
-		write_zsreg(zport_a, R15, zport_a->regs[15]);
-		if (!(zport_a->regs[15] & BRKIE)) {
+		ग_लिखो_zsreg(zport_a, R15, zport_a->regs[15]);
+		अगर (!(zport_a->regs[15] & BRKIE)) अणु
 			zport_a->regs[1] &= ~EXT_INT_ENAB;
-			write_zsreg(zport_a, R1, zport_a->regs[1]);
-		}
+			ग_लिखो_zsreg(zport_a, R1, zport_a->regs[1]);
+		पूर्ण
 
 		/* This-side DCD tracks DCD and CTS tracks CTS.  */
 		zport->regs[15] &= ~(DCDIE | CTSIE);
 		zport->regs[1] &= ~EXT_INT_ENAB;
-	} else {
-		/* DCD tracks RI and SYNC tracks DSR for the B side.  */
-		if (!(zport->regs[15] & (DCDIE | SYNCIE)))
+	पूर्ण अन्यथा अणु
+		/* DCD tracks RI and SYNC tracks DSR क्रम the B side.  */
+		अगर (!(zport->regs[15] & (DCDIE | SYNCIE)))
 			zport->regs[1] &= ~EXT_INT_ENAB;
-	}
+	पूर्ण
 
-	write_zsreg(zport, R15, zport->regs[15]);
-	write_zsreg(zport, R1, zport->regs[1]);
+	ग_लिखो_zsreg(zport, R15, zport->regs[15]);
+	ग_लिखो_zsreg(zport, R1, zport->regs[1]);
 	spin_unlock(&scc->zlock);
-}
+पूर्ण
 
-static void zs_enable_ms(struct uart_port *uport)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
-	struct zs_port *zport_a = &scc->zport[ZS_CHAN_A];
+अटल व्योम zs_enable_ms(काष्ठा uart_port *uport)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
+	काष्ठा zs_port *zport_a = &scc->zport[ZS_CHAN_A];
 
-	if (zport == zport_a)
-		return;
+	अगर (zport == zport_a)
+		वापस;
 
 	spin_lock(&scc->zlock);
 
-	/* Clear Ext interrupts if not being handled already.  */
-	if (!(zport_a->regs[1] & EXT_INT_ENAB))
-		write_zsreg(zport_a, R0, RES_EXT_INT);
+	/* Clear Ext पूर्णांकerrupts अगर not being handled alपढ़ोy.  */
+	अगर (!(zport_a->regs[1] & EXT_INT_ENAB))
+		ग_लिखो_zsreg(zport_a, R0, RES_EXT_INT);
 
 	/* A-side DCD tracks RI and SYNC tracks DSR.  */
 	zport_a->regs[1] |= EXT_INT_ENAB;
@@ -506,52 +507,52 @@ static void zs_enable_ms(struct uart_port *uport)
 
 	zs_raw_xor_mctrl(zport);
 
-	write_zsreg(zport_a, R1, zport_a->regs[1]);
-	write_zsreg(zport_a, R15, zport_a->regs[15]);
-	write_zsreg(zport, R15, zport->regs[15]);
+	ग_लिखो_zsreg(zport_a, R1, zport_a->regs[1]);
+	ग_लिखो_zsreg(zport_a, R15, zport_a->regs[15]);
+	ग_लिखो_zsreg(zport, R15, zport->regs[15]);
 	spin_unlock(&scc->zlock);
-}
+पूर्ण
 
-static void zs_break_ctl(struct uart_port *uport, int break_state)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
-	unsigned long flags;
+अटल व्योम zs_अवरोध_ctl(काष्ठा uart_port *uport, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&scc->zlock, flags);
-	if (break_state == -1)
+	अगर (अवरोध_state == -1)
 		zport->regs[5] |= SND_BRK;
-	else
+	अन्यथा
 		zport->regs[5] &= ~SND_BRK;
-	write_zsreg(zport, R5, zport->regs[5]);
+	ग_लिखो_zsreg(zport, R5, zport->regs[5]);
 	spin_unlock_irqrestore(&scc->zlock, flags);
-}
+पूर्ण
 
 
 /*
  * Interrupt handling routines.
  */
-#define Rx_BRK 0x0100			/* BREAK event software flag.  */
-#define Rx_SYS 0x0200			/* SysRq event software flag.  */
+#घोषणा Rx_BRK 0x0100			/* BREAK event software flag.  */
+#घोषणा Rx_SYS 0x0200			/* SysRq event software flag.  */
 
-static void zs_receive_chars(struct zs_port *zport)
-{
-	struct uart_port *uport = &zport->port;
-	struct zs_scc *scc = zport->scc;
-	struct uart_icount *icount;
-	unsigned int avail, status, ch, flag;
-	int count;
+अटल व्योम zs_receive_अक्षरs(काष्ठा zs_port *zport)
+अणु
+	काष्ठा uart_port *uport = &zport->port;
+	काष्ठा zs_scc *scc = zport->scc;
+	काष्ठा uart_icount *icount;
+	अचिन्हित पूर्णांक avail, status, ch, flag;
+	पूर्णांक count;
 
-	for (count = 16; count; count--) {
+	क्रम (count = 16; count; count--) अणु
 		spin_lock(&scc->zlock);
-		avail = read_zsreg(zport, R0) & Rx_CH_AV;
+		avail = पढ़ो_zsreg(zport, R0) & Rx_CH_AV;
 		spin_unlock(&scc->zlock);
-		if (!avail)
-			break;
+		अगर (!avail)
+			अवरोध;
 
 		spin_lock(&scc->zlock);
-		status = read_zsreg(zport, R1) & (Rx_OVR | FRM_ERR | PAR_ERR);
-		ch = read_zsdata(zport);
+		status = पढ़ो_zsreg(zport, R1) & (Rx_OVR | FRM_ERR | PAR_ERR);
+		ch = पढ़ो_zsdata(zport);
 		spin_unlock(&scc->zlock);
 
 		flag = TTY_NORMAL;
@@ -559,301 +560,301 @@ static void zs_receive_chars(struct zs_port *zport)
 		icount = &uport->icount;
 		icount->rx++;
 
-		/* Handle the null char got when BREAK is removed.  */
-		if (!ch)
-			status |= zport->tty_break;
-		if (unlikely(status &
-			     (Rx_OVR | FRM_ERR | PAR_ERR | Rx_SYS | Rx_BRK))) {
-			zport->tty_break = 0;
+		/* Handle the null अक्षर got when BREAK is हटाओd.  */
+		अगर (!ch)
+			status |= zport->tty_अवरोध;
+		अगर (unlikely(status &
+			     (Rx_OVR | FRM_ERR | PAR_ERR | Rx_SYS | Rx_BRK))) अणु
+			zport->tty_अवरोध = 0;
 
 			/* Reset the error indication.  */
-			if (status & (Rx_OVR | FRM_ERR | PAR_ERR)) {
+			अगर (status & (Rx_OVR | FRM_ERR | PAR_ERR)) अणु
 				spin_lock(&scc->zlock);
-				write_zsreg(zport, R0, ERR_RES);
+				ग_लिखो_zsreg(zport, R0, ERR_RES);
 				spin_unlock(&scc->zlock);
-			}
+			पूर्ण
 
-			if (status & (Rx_SYS | Rx_BRK)) {
+			अगर (status & (Rx_SYS | Rx_BRK)) अणु
 				icount->brk++;
-				/* SysRq discards the null char.  */
-				if (status & Rx_SYS)
-					continue;
-			} else if (status & FRM_ERR)
+				/* SysRq discards the null अक्षर.  */
+				अगर (status & Rx_SYS)
+					जारी;
+			पूर्ण अन्यथा अगर (status & FRM_ERR)
 				icount->frame++;
-			else if (status & PAR_ERR)
+			अन्यथा अगर (status & PAR_ERR)
 				icount->parity++;
-			if (status & Rx_OVR)
+			अगर (status & Rx_OVR)
 				icount->overrun++;
 
-			status &= uport->read_status_mask;
-			if (status & Rx_BRK)
+			status &= uport->पढ़ो_status_mask;
+			अगर (status & Rx_BRK)
 				flag = TTY_BREAK;
-			else if (status & FRM_ERR)
+			अन्यथा अगर (status & FRM_ERR)
 				flag = TTY_FRAME;
-			else if (status & PAR_ERR)
+			अन्यथा अगर (status & PAR_ERR)
 				flag = TTY_PARITY;
-		}
+		पूर्ण
 
-		if (uart_handle_sysrq_char(uport, ch))
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(uport, ch))
+			जारी;
 
-		uart_insert_char(uport, status, Rx_OVR, ch, flag);
-	}
+		uart_insert_अक्षर(uport, status, Rx_OVR, ch, flag);
+	पूर्ण
 
 	tty_flip_buffer_push(&uport->state->port);
-}
+पूर्ण
 
-static void zs_raw_transmit_chars(struct zs_port *zport)
-{
-	struct circ_buf *xmit = &zport->port.state->xmit;
+अटल व्योम zs_raw_transmit_अक्षरs(काष्ठा zs_port *zport)
+अणु
+	काष्ठा circ_buf *xmit = &zport->port.state->xmit;
 
-	/* XON/XOFF chars.  */
-	if (zport->port.x_char) {
-		write_zsdata(zport, zport->port.x_char);
+	/* XON/XOFF अक्षरs.  */
+	अगर (zport->port.x_अक्षर) अणु
+		ग_लिखो_zsdata(zport, zport->port.x_अक्षर);
 		zport->port.icount.tx++;
-		zport->port.x_char = 0;
-		return;
-	}
+		zport->port.x_अक्षर = 0;
+		वापस;
+	पूर्ण
 
-	/* If nothing to do or stopped or hardware stopped.  */
-	if (uart_circ_empty(xmit) || uart_tx_stopped(&zport->port)) {
+	/* If nothing to करो or stopped or hardware stopped.  */
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(&zport->port)) अणु
 		zs_raw_stop_tx(zport);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Send char.  */
-	write_zsdata(zport, xmit->buf[xmit->tail]);
+	/* Send अक्षर.  */
+	ग_लिखो_zsdata(zport, xmit->buf[xmit->tail]);
 	xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 	zport->port.icount.tx++;
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(&zport->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&zport->port);
 
-	/* Are we are done?  */
-	if (uart_circ_empty(xmit))
+	/* Are we are करोne?  */
+	अगर (uart_circ_empty(xmit))
 		zs_raw_stop_tx(zport);
-}
+पूर्ण
 
-static void zs_transmit_chars(struct zs_port *zport)
-{
-	struct zs_scc *scc = zport->scc;
+अटल व्योम zs_transmit_अक्षरs(काष्ठा zs_port *zport)
+अणु
+	काष्ठा zs_scc *scc = zport->scc;
 
 	spin_lock(&scc->zlock);
-	zs_raw_transmit_chars(zport);
+	zs_raw_transmit_अक्षरs(zport);
 	spin_unlock(&scc->zlock);
-}
+पूर्ण
 
-static void zs_status_handle(struct zs_port *zport, struct zs_port *zport_a)
-{
-	struct uart_port *uport = &zport->port;
-	struct zs_scc *scc = zport->scc;
-	unsigned int delta;
+अटल व्योम zs_status_handle(काष्ठा zs_port *zport, काष्ठा zs_port *zport_a)
+अणु
+	काष्ठा uart_port *uport = &zport->port;
+	काष्ठा zs_scc *scc = zport->scc;
+	अचिन्हित पूर्णांक delta;
 	u8 status, brk;
 
 	spin_lock(&scc->zlock);
 
 	/* Get status from Read Register 0.  */
-	status = read_zsreg(zport, R0);
+	status = पढ़ो_zsreg(zport, R0);
 
-	if (zport->regs[15] & BRKIE) {
+	अगर (zport->regs[15] & BRKIE) अणु
 		brk = status & BRK_ABRT;
-		if (brk && !zport->brk) {
+		अगर (brk && !zport->brk) अणु
 			spin_unlock(&scc->zlock);
-			if (uart_handle_break(uport))
-				zport->tty_break = Rx_SYS;
-			else
-				zport->tty_break = Rx_BRK;
+			अगर (uart_handle_अवरोध(uport))
+				zport->tty_अवरोध = Rx_SYS;
+			अन्यथा
+				zport->tty_अवरोध = Rx_BRK;
 			spin_lock(&scc->zlock);
-		}
+		पूर्ण
 		zport->brk = brk;
-	}
+	पूर्ण
 
-	if (zport != zport_a) {
+	अगर (zport != zport_a) अणु
 		delta = zs_raw_xor_mctrl(zport);
 		spin_unlock(&scc->zlock);
 
-		if (delta & TIOCM_CTS)
+		अगर (delta & TIOCM_CTS)
 			uart_handle_cts_change(uport,
 					       zport->mctrl & TIOCM_CTS);
-		if (delta & TIOCM_CAR)
+		अगर (delta & TIOCM_CAR)
 			uart_handle_dcd_change(uport,
 					       zport->mctrl & TIOCM_CAR);
-		if (delta & TIOCM_RNG)
+		अगर (delta & TIOCM_RNG)
 			uport->icount.dsr++;
-		if (delta & TIOCM_DSR)
+		अगर (delta & TIOCM_DSR)
 			uport->icount.rng++;
 
-		if (delta)
-			wake_up_interruptible(&uport->state->port.delta_msr_wait);
+		अगर (delta)
+			wake_up_पूर्णांकerruptible(&uport->state->port.delta_msr_रुको);
 
 		spin_lock(&scc->zlock);
-	}
+	पूर्ण
 
 	/* Clear the status condition...  */
-	write_zsreg(zport, R0, RES_EXT_INT);
+	ग_लिखो_zsreg(zport, R0, RES_EXT_INT);
 
 	spin_unlock(&scc->zlock);
-}
+पूर्ण
 
 /*
- * This is the Z85C30 driver's generic interrupt routine.
+ * This is the Z85C30 driver's generic पूर्णांकerrupt routine.
  */
-static irqreturn_t zs_interrupt(int irq, void *dev_id)
-{
-	struct zs_scc *scc = dev_id;
-	struct zs_port *zport_a = &scc->zport[ZS_CHAN_A];
-	struct zs_port *zport_b = &scc->zport[ZS_CHAN_B];
-	irqreturn_t status = IRQ_NONE;
-	u8 zs_intreg;
-	int count;
+अटल irqवापस_t zs_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा zs_scc *scc = dev_id;
+	काष्ठा zs_port *zport_a = &scc->zport[ZS_CHAN_A];
+	काष्ठा zs_port *zport_b = &scc->zport[ZS_CHAN_B];
+	irqवापस_t status = IRQ_NONE;
+	u8 zs_पूर्णांकreg;
+	पूर्णांक count;
 
 	/*
-	 * NOTE: The read register 3, which holds the irq status,
-	 *       does so for both channels on each chip.  Although
-	 *       the status value itself must be read from the A
-	 *       channel and is only valid when read from channel A.
+	 * NOTE: The पढ़ो रेजिस्टर 3, which holds the irq status,
+	 *       करोes so क्रम both channels on each chip.  Although
+	 *       the status value itself must be पढ़ो from the A
+	 *       channel and is only valid when पढ़ो from channel A.
 	 *       Yes... broken hardware...
 	 */
-	for (count = 16; count; count--) {
+	क्रम (count = 16; count; count--) अणु
 		spin_lock(&scc->zlock);
-		zs_intreg = read_zsreg(zport_a, R3);
+		zs_पूर्णांकreg = पढ़ो_zsreg(zport_a, R3);
 		spin_unlock(&scc->zlock);
-		if (!zs_intreg)
-			break;
+		अगर (!zs_पूर्णांकreg)
+			अवरोध;
 
 		/*
-		 * We do not like losing characters, so we prioritise
-		 * interrupt sources a little bit differently than
+		 * We करो not like losing अक्षरacters, so we prioritise
+		 * पूर्णांकerrupt sources a little bit dअगरferently than
 		 * the SCC would, was it allowed to.
 		 */
-		if (zs_intreg & CHBRxIP)
-			zs_receive_chars(zport_b);
-		if (zs_intreg & CHARxIP)
-			zs_receive_chars(zport_a);
-		if (zs_intreg & CHBEXT)
+		अगर (zs_पूर्णांकreg & CHBRxIP)
+			zs_receive_अक्षरs(zport_b);
+		अगर (zs_पूर्णांकreg & CHARxIP)
+			zs_receive_अक्षरs(zport_a);
+		अगर (zs_पूर्णांकreg & CHBEXT)
 			zs_status_handle(zport_b, zport_a);
-		if (zs_intreg & CHAEXT)
+		अगर (zs_पूर्णांकreg & CHAEXT)
 			zs_status_handle(zport_a, zport_a);
-		if (zs_intreg & CHBTxIP)
-			zs_transmit_chars(zport_b);
-		if (zs_intreg & CHATxIP)
-			zs_transmit_chars(zport_a);
+		अगर (zs_पूर्णांकreg & CHBTxIP)
+			zs_transmit_अक्षरs(zport_b);
+		अगर (zs_पूर्णांकreg & CHATxIP)
+			zs_transmit_अक्षरs(zport_a);
 
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 
 /*
  * Finally, routines used to initialize the serial port.
  */
-static int zs_startup(struct uart_port *uport)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
-	unsigned long flags;
-	int irq_guard;
-	int ret;
+अटल पूर्णांक zs_startup(काष्ठा uart_port *uport)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक irq_guard;
+	पूर्णांक ret;
 
-	irq_guard = atomic_add_return(1, &scc->irq_guard);
-	if (irq_guard == 1) {
-		ret = request_irq(zport->port.irq, zs_interrupt,
+	irq_guard = atomic_add_वापस(1, &scc->irq_guard);
+	अगर (irq_guard == 1) अणु
+		ret = request_irq(zport->port.irq, zs_पूर्णांकerrupt,
 				  IRQF_SHARED, "scc", scc);
-		if (ret) {
+		अगर (ret) अणु
 			atomic_add(-1, &scc->irq_guard);
-			printk(KERN_ERR "zs: can't get irq %d\n",
+			prपूर्णांकk(KERN_ERR "zs: can't get irq %d\n",
 			       zport->port.irq);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&scc->zlock, flags);
 
 	/* Clear the receive FIFO.  */
 	zs_receive_drain(zport);
 
-	/* Clear the interrupt registers.  */
-	write_zsreg(zport, R0, ERR_RES);
-	write_zsreg(zport, R0, RES_Tx_P);
-	/* But Ext only if not being handled already.  */
-	if (!(zport->regs[1] & EXT_INT_ENAB))
-		write_zsreg(zport, R0, RES_EXT_INT);
+	/* Clear the पूर्णांकerrupt रेजिस्टरs.  */
+	ग_लिखो_zsreg(zport, R0, ERR_RES);
+	ग_लिखो_zsreg(zport, R0, RES_Tx_P);
+	/* But Ext only अगर not being handled alपढ़ोy.  */
+	अगर (!(zport->regs[1] & EXT_INT_ENAB))
+		ग_लिखो_zsreg(zport, R0, RES_EXT_INT);
 
-	/* Finally, enable sequencing and interrupts.  */
+	/* Finally, enable sequencing and पूर्णांकerrupts.  */
 	zport->regs[1] &= ~RxINT_MASK;
 	zport->regs[1] |= RxINT_ALL | TxINT_ENAB | EXT_INT_ENAB;
 	zport->regs[3] |= RxENABLE;
 	zport->regs[15] |= BRKIE;
-	write_zsreg(zport, R1, zport->regs[1]);
-	write_zsreg(zport, R3, zport->regs[3]);
-	write_zsreg(zport, R5, zport->regs[5]);
-	write_zsreg(zport, R15, zport->regs[15]);
+	ग_लिखो_zsreg(zport, R1, zport->regs[1]);
+	ग_लिखो_zsreg(zport, R3, zport->regs[3]);
+	ग_लिखो_zsreg(zport, R5, zport->regs[5]);
+	ग_लिखो_zsreg(zport, R15, zport->regs[15]);
 
 	/* Record the current state of RR0.  */
 	zport->mctrl = zs_raw_get_mctrl(zport);
-	zport->brk = read_zsreg(zport, R0) & BRK_ABRT;
+	zport->brk = पढ़ो_zsreg(zport, R0) & BRK_ABRT;
 
 	zport->tx_stopped = 1;
 
 	spin_unlock_irqrestore(&scc->zlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void zs_shutdown(struct uart_port *uport)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
-	unsigned long flags;
-	int irq_guard;
+अटल व्योम zs_shutकरोwn(काष्ठा uart_port *uport)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक irq_guard;
 
 	spin_lock_irqsave(&scc->zlock, flags);
 
 	zport->regs[3] &= ~RxENABLE;
-	write_zsreg(zport, R5, zport->regs[5]);
-	write_zsreg(zport, R3, zport->regs[3]);
+	ग_लिखो_zsreg(zport, R5, zport->regs[5]);
+	ग_लिखो_zsreg(zport, R3, zport->regs[3]);
 
 	spin_unlock_irqrestore(&scc->zlock, flags);
 
-	irq_guard = atomic_add_return(-1, &scc->irq_guard);
-	if (!irq_guard)
-		free_irq(zport->port.irq, scc);
-}
+	irq_guard = atomic_add_वापस(-1, &scc->irq_guard);
+	अगर (!irq_guard)
+		मुक्त_irq(zport->port.irq, scc);
+पूर्ण
 
 
-static void zs_reset(struct zs_port *zport)
-{
-	struct zs_scc *scc = zport->scc;
-	int irq;
-	unsigned long flags;
+अटल व्योम zs_reset(काष्ठा zs_port *zport)
+अणु
+	काष्ठा zs_scc *scc = zport->scc;
+	पूर्णांक irq;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&scc->zlock, flags);
 	irq = !irqs_disabled_flags(flags);
-	if (!scc->initialised) {
-		/* Reset the pointer first, just in case...  */
-		read_zsreg(zport, R0);
+	अगर (!scc->initialised) अणु
+		/* Reset the poपूर्णांकer first, just in हाल...  */
+		पढ़ो_zsreg(zport, R0);
 		/* And let the current transmission finish.  */
 		zs_line_drain(zport, irq);
-		write_zsreg(zport, R9, FHWRES);
+		ग_लिखो_zsreg(zport, R9, FHWRES);
 		udelay(10);
-		write_zsreg(zport, R9, 0);
+		ग_लिखो_zsreg(zport, R9, 0);
 		scc->initialised = 1;
-	}
+	पूर्ण
 	load_zsregs(zport, zport->regs, irq);
 	spin_unlock_irqrestore(&scc->zlock, flags);
-}
+पूर्ण
 
-static void zs_set_termios(struct uart_port *uport, struct ktermios *termios,
-			   struct ktermios *old_termios)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
-	struct zs_port *zport_a = &scc->zport[ZS_CHAN_A];
-	int irq;
-	unsigned int baud, brg;
-	unsigned long flags;
+अटल व्योम zs_set_termios(काष्ठा uart_port *uport, काष्ठा ktermios *termios,
+			   काष्ठा ktermios *old_termios)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
+	काष्ठा zs_port *zport_a = &scc->zport[ZS_CHAN_A];
+	पूर्णांक irq;
+	अचिन्हित पूर्णांक baud, brg;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&scc->zlock, flags);
 	irq = !irqs_disabled_flags(flags);
@@ -861,52 +862,52 @@ static void zs_set_termios(struct uart_port *uport, struct ktermios *termios,
 	/* Byte size.  */
 	zport->regs[3] &= ~RxNBITS_MASK;
 	zport->regs[5] &= ~TxNBITS_MASK;
-	switch (termios->c_cflag & CSIZE) {
-	case CS5:
+	चयन (termios->c_cflag & CSIZE) अणु
+	हाल CS5:
 		zport->regs[3] |= Rx5;
 		zport->regs[5] |= Tx5;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		zport->regs[3] |= Rx6;
 		zport->regs[5] |= Tx6;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		zport->regs[3] |= Rx7;
 		zport->regs[5] |= Tx7;
-		break;
-	case CS8:
-	default:
+		अवरोध;
+	हाल CS8:
+	शेष:
 		zport->regs[3] |= Rx8;
 		zport->regs[5] |= Tx8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Parity and stop bits.  */
 	zport->regs[4] &= ~(XCLK_MASK | SB_MASK | PAR_ENA | PAR_EVEN);
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		zport->regs[4] |= SB2;
-	else
+	अन्यथा
 		zport->regs[4] |= SB1;
-	if (termios->c_cflag & PARENB)
+	अगर (termios->c_cflag & PARENB)
 		zport->regs[4] |= PAR_ENA;
-	if (!(termios->c_cflag & PARODD))
+	अगर (!(termios->c_cflag & PARODD))
 		zport->regs[4] |= PAR_EVEN;
-	switch (zport->clk_mode) {
-	case 64:
+	चयन (zport->clk_mode) अणु
+	हाल 64:
 		zport->regs[4] |= X64CLK;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		zport->regs[4] |= X32CLK;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		zport->regs[4] |= X16CLK;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		zport->regs[4] |= X1CLK;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	baud = uart_get_baud_rate(uport, termios, old_termios, 0,
 				  uport->uartclk / zport->clk_mode / 4);
@@ -915,134 +916,134 @@ static void zs_set_termios(struct uart_port *uport, struct ktermios *termios,
 	zport->regs[12] = brg & 0xff;
 	zport->regs[13] = (brg >> 8) & 0xff;
 
-	uart_update_timeout(uport, termios->c_cflag, baud);
+	uart_update_समयout(uport, termios->c_cflag, baud);
 
-	uport->read_status_mask = Rx_OVR;
-	if (termios->c_iflag & INPCK)
-		uport->read_status_mask |= FRM_ERR | PAR_ERR;
-	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
-		uport->read_status_mask |= Rx_BRK;
+	uport->पढ़ो_status_mask = Rx_OVR;
+	अगर (termios->c_अगरlag & INPCK)
+		uport->पढ़ो_status_mask |= FRM_ERR | PAR_ERR;
+	अगर (termios->c_अगरlag & (IGNBRK | BRKINT | PARMRK))
+		uport->पढ़ो_status_mask |= Rx_BRK;
 
 	uport->ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		uport->ignore_status_mask |= FRM_ERR | PAR_ERR;
-	if (termios->c_iflag & IGNBRK) {
+	अगर (termios->c_अगरlag & IGNBRK) अणु
 		uport->ignore_status_mask |= Rx_BRK;
-		if (termios->c_iflag & IGNPAR)
+		अगर (termios->c_अगरlag & IGNPAR)
 			uport->ignore_status_mask |= Rx_OVR;
-	}
+	पूर्ण
 
-	if (termios->c_cflag & CREAD)
+	अगर (termios->c_cflag & CREAD)
 		zport->regs[3] |= RxENABLE;
-	else
+	अन्यथा
 		zport->regs[3] &= ~RxENABLE;
 
-	if (zport != zport_a) {
-		if (!(termios->c_cflag & CLOCAL)) {
+	अगर (zport != zport_a) अणु
+		अगर (!(termios->c_cflag & CLOCAL)) अणु
 			zport->regs[15] |= DCDIE;
-		} else
+		पूर्ण अन्यथा
 			zport->regs[15] &= ~DCDIE;
-		if (termios->c_cflag & CRTSCTS) {
+		अगर (termios->c_cflag & CRTSCTS) अणु
 			zport->regs[15] |= CTSIE;
-		} else
+		पूर्ण अन्यथा
 			zport->regs[15] &= ~CTSIE;
 		zs_raw_xor_mctrl(zport);
-	}
+	पूर्ण
 
 	/* Load up the new values.  */
 	load_zsregs(zport, zport->regs, irq);
 
 	spin_unlock_irqrestore(&scc->zlock, flags);
-}
+पूर्ण
 
 /*
  * Hack alert!
  * Required solely so that the initial PROM-based console
  * works undisturbed in parallel with this one.
  */
-static void zs_pm(struct uart_port *uport, unsigned int state,
-		  unsigned int oldstate)
-{
-	struct zs_port *zport = to_zport(uport);
+अटल व्योम zs_pm(काष्ठा uart_port *uport, अचिन्हित पूर्णांक state,
+		  अचिन्हित पूर्णांक oldstate)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
 
-	if (state < 3)
+	अगर (state < 3)
 		zport->regs[5] |= TxENAB;
-	else
+	अन्यथा
 		zport->regs[5] &= ~TxENAB;
-	write_zsreg(zport, R5, zport->regs[5]);
-}
+	ग_लिखो_zsreg(zport, R5, zport->regs[5]);
+पूर्ण
 
 
-static const char *zs_type(struct uart_port *uport)
-{
-	return "Z85C30 SCC";
-}
+अटल स्थिर अक्षर *zs_type(काष्ठा uart_port *uport)
+अणु
+	वापस "Z85C30 SCC";
+पूर्ण
 
-static void zs_release_port(struct uart_port *uport)
-{
+अटल व्योम zs_release_port(काष्ठा uart_port *uport)
+अणु
 	iounmap(uport->membase);
 	uport->membase = 0;
 	release_mem_region(uport->mapbase, ZS_CHAN_IO_SIZE);
-}
+पूर्ण
 
-static int zs_map_port(struct uart_port *uport)
-{
-	if (!uport->membase)
+अटल पूर्णांक zs_map_port(काष्ठा uart_port *uport)
+अणु
+	अगर (!uport->membase)
 		uport->membase = ioremap(uport->mapbase,
 						 ZS_CHAN_IO_SIZE);
-	if (!uport->membase) {
-		printk(KERN_ERR "zs: Cannot map MMIO\n");
-		return -ENOMEM;
-	}
-	return 0;
-}
+	अगर (!uport->membase) अणु
+		prपूर्णांकk(KERN_ERR "zs: Cannot map MMIO\n");
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int zs_request_port(struct uart_port *uport)
-{
-	int ret;
+अटल पूर्णांक zs_request_port(काष्ठा uart_port *uport)
+अणु
+	पूर्णांक ret;
 
-	if (!request_mem_region(uport->mapbase, ZS_CHAN_IO_SIZE, "scc")) {
-		printk(KERN_ERR "zs: Unable to reserve MMIO resource\n");
-		return -EBUSY;
-	}
+	अगर (!request_mem_region(uport->mapbase, ZS_CHAN_IO_SIZE, "scc")) अणु
+		prपूर्णांकk(KERN_ERR "zs: Unable to reserve MMIO resource\n");
+		वापस -EBUSY;
+	पूर्ण
 	ret = zs_map_port(uport);
-	if (ret) {
+	अगर (ret) अणु
 		release_mem_region(uport->mapbase, ZS_CHAN_IO_SIZE);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void zs_config_port(struct uart_port *uport, int flags)
-{
-	struct zs_port *zport = to_zport(uport);
+अटल व्योम zs_config_port(काष्ठा uart_port *uport, पूर्णांक flags)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
 
-	if (flags & UART_CONFIG_TYPE) {
-		if (zs_request_port(uport))
-			return;
+	अगर (flags & UART_CONFIG_TYPE) अणु
+		अगर (zs_request_port(uport))
+			वापस;
 
 		uport->type = PORT_ZS;
 
 		zs_reset(zport);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int zs_verify_port(struct uart_port *uport, struct serial_struct *ser)
-{
-	struct zs_port *zport = to_zport(uport);
-	int ret = 0;
+अटल पूर्णांक zs_verअगरy_port(काष्ठा uart_port *uport, काष्ठा serial_काष्ठा *ser)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	पूर्णांक ret = 0;
 
-	if (ser->type != PORT_UNKNOWN && ser->type != PORT_ZS)
+	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_ZS)
 		ret = -EINVAL;
-	if (ser->irq != uport->irq)
+	अगर (ser->irq != uport->irq)
 		ret = -EINVAL;
-	if (ser->baud_base != uport->uartclk / zport->clk_mode / 4)
+	अगर (ser->baud_base != uport->uartclk / zport->clk_mode / 4)
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static const struct uart_ops zs_ops = {
+अटल स्थिर काष्ठा uart_ops zs_ops = अणु
 	.tx_empty	= zs_tx_empty,
 	.set_mctrl	= zs_set_mctrl,
 	.get_mctrl	= zs_get_mctrl,
@@ -1050,54 +1051,54 @@ static const struct uart_ops zs_ops = {
 	.start_tx	= zs_start_tx,
 	.stop_rx	= zs_stop_rx,
 	.enable_ms	= zs_enable_ms,
-	.break_ctl	= zs_break_ctl,
+	.अवरोध_ctl	= zs_अवरोध_ctl,
 	.startup	= zs_startup,
-	.shutdown	= zs_shutdown,
+	.shutकरोwn	= zs_shutकरोwn,
 	.set_termios	= zs_set_termios,
 	.pm		= zs_pm,
 	.type		= zs_type,
 	.release_port	= zs_release_port,
 	.request_port	= zs_request_port,
 	.config_port	= zs_config_port,
-	.verify_port	= zs_verify_port,
-};
+	.verअगरy_port	= zs_verअगरy_port,
+पूर्ण;
 
 /*
- * Initialize Z85C30 port structures.
+ * Initialize Z85C30 port काष्ठाures.
  */
-static int __init zs_probe_sccs(void)
-{
-	static int probed;
-	struct zs_parms zs_parms;
-	int chip, side, irq;
-	int n_chips = 0;
-	int i;
+अटल पूर्णांक __init zs_probe_sccs(व्योम)
+अणु
+	अटल पूर्णांक probed;
+	काष्ठा zs_parms zs_parms;
+	पूर्णांक chip, side, irq;
+	पूर्णांक n_chips = 0;
+	पूर्णांक i;
 
-	if (probed)
-		return 0;
+	अगर (probed)
+		वापस 0;
 
-	irq = dec_interrupt[DEC_IRQ_SCC0];
-	if (irq >= 0) {
+	irq = dec_पूर्णांकerrupt[DEC_IRQ_SCC0];
+	अगर (irq >= 0) अणु
 		zs_parms.scc[n_chips] = IOASIC_SCC0;
-		zs_parms.irq[n_chips] = dec_interrupt[DEC_IRQ_SCC0];
+		zs_parms.irq[n_chips] = dec_पूर्णांकerrupt[DEC_IRQ_SCC0];
 		n_chips++;
-	}
-	irq = dec_interrupt[DEC_IRQ_SCC1];
-	if (irq >= 0) {
+	पूर्ण
+	irq = dec_पूर्णांकerrupt[DEC_IRQ_SCC1];
+	अगर (irq >= 0) अणु
 		zs_parms.scc[n_chips] = IOASIC_SCC1;
-		zs_parms.irq[n_chips] = dec_interrupt[DEC_IRQ_SCC1];
+		zs_parms.irq[n_chips] = dec_पूर्णांकerrupt[DEC_IRQ_SCC1];
 		n_chips++;
-	}
-	if (!n_chips)
-		return -ENXIO;
+	पूर्ण
+	अगर (!n_chips)
+		वापस -ENXIO;
 
 	probed = 1;
 
-	for (chip = 0; chip < n_chips; chip++) {
+	क्रम (chip = 0; chip < n_chips; chip++) अणु
 		spin_lock_init(&zs_sccs[chip].zlock);
-		for (side = 0; side < ZS_NUM_CHAN; side++) {
-			struct zs_port *zport = &zs_sccs[chip].zport[side];
-			struct uart_port *uport = &zport->port;
+		क्रम (side = 0; side < ZS_NUM_CHAN; side++) अणु
+			काष्ठा zs_port *zport = &zs_sccs[chip].zport[side];
+			काष्ठा uart_port *uport = &zport->port;
 
 			zport->scc	= &zs_sccs[chip];
 			zport->clk_mode	= 16;
@@ -1105,7 +1106,7 @@ static int __init zs_probe_sccs(void)
 			uport->has_sysrq = IS_ENABLED(CONFIG_SERIAL_ZS_CONSOLE);
 			uport->irq	= zs_parms.irq[chip];
 			uport->uartclk	= ZS_CLOCK;
-			uport->fifosize	= 1;
+			uport->fअगरosize	= 1;
 			uport->iotype	= UPIO_MEM;
 			uport->flags	= UPF_BOOT_AUTOCONF;
 			uport->ops	= &zs_ops;
@@ -1114,142 +1115,142 @@ static int __init zs_probe_sccs(void)
 					  zs_parms.scc[chip] +
 					  (side ^ ZS_CHAN_B) * ZS_CHAN_IO_SIZE;
 
-			for (i = 0; i < ZS_NUM_REGS; i++)
+			क्रम (i = 0; i < ZS_NUM_REGS; i++)
 				zport->regs[i] = zs_init_regs[i];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-#ifdef CONFIG_SERIAL_ZS_CONSOLE
-static void zs_console_putchar(struct uart_port *uport, int ch)
-{
-	struct zs_port *zport = to_zport(uport);
-	struct zs_scc *scc = zport->scc;
-	int irq;
-	unsigned long flags;
+#अगर_घोषित CONFIG_SERIAL_ZS_CONSOLE
+अटल व्योम zs_console_अक्षर_दो(काष्ठा uart_port *uport, पूर्णांक ch)
+अणु
+	काष्ठा zs_port *zport = to_zport(uport);
+	काष्ठा zs_scc *scc = zport->scc;
+	पूर्णांक irq;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&scc->zlock, flags);
 	irq = !irqs_disabled_flags(flags);
-	if (zs_transmit_drain(zport, irq))
-		write_zsdata(zport, ch);
+	अगर (zs_transmit_drain(zport, irq))
+		ग_लिखो_zsdata(zport, ch);
 	spin_unlock_irqrestore(&scc->zlock, flags);
-}
+पूर्ण
 
 /*
- * Print a string to the serial port trying not to disturb
+ * Prपूर्णांक a string to the serial port trying not to disturb
  * any possible real use of the port...
  */
-static void zs_console_write(struct console *co, const char *s,
-			     unsigned int count)
-{
-	int chip = co->index / ZS_NUM_CHAN, side = co->index % ZS_NUM_CHAN;
-	struct zs_port *zport = &zs_sccs[chip].zport[side];
-	struct zs_scc *scc = zport->scc;
-	unsigned long flags;
-	u8 txint, txenb;
-	int irq;
+अटल व्योम zs_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+			     अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक chip = co->index / ZS_NUM_CHAN, side = co->index % ZS_NUM_CHAN;
+	काष्ठा zs_port *zport = &zs_sccs[chip].zport[side];
+	काष्ठा zs_scc *scc = zport->scc;
+	अचिन्हित दीर्घ flags;
+	u8 txपूर्णांक, txenb;
+	पूर्णांक irq;
 
-	/* Disable transmit interrupts and enable the transmitter. */
+	/* Disable transmit पूर्णांकerrupts and enable the transmitter. */
 	spin_lock_irqsave(&scc->zlock, flags);
-	txint = zport->regs[1];
+	txपूर्णांक = zport->regs[1];
 	txenb = zport->regs[5];
-	if (txint & TxINT_ENAB) {
-		zport->regs[1] = txint & ~TxINT_ENAB;
-		write_zsreg(zport, R1, zport->regs[1]);
-	}
-	if (!(txenb & TxENAB)) {
+	अगर (txपूर्णांक & TxINT_ENAB) अणु
+		zport->regs[1] = txपूर्णांक & ~TxINT_ENAB;
+		ग_लिखो_zsreg(zport, R1, zport->regs[1]);
+	पूर्ण
+	अगर (!(txenb & TxENAB)) अणु
 		zport->regs[5] = txenb | TxENAB;
-		write_zsreg(zport, R5, zport->regs[5]);
-	}
+		ग_लिखो_zsreg(zport, R5, zport->regs[5]);
+	पूर्ण
 	spin_unlock_irqrestore(&scc->zlock, flags);
 
-	uart_console_write(&zport->port, s, count, zs_console_putchar);
+	uart_console_ग_लिखो(&zport->port, s, count, zs_console_अक्षर_दो);
 
-	/* Restore transmit interrupts and the transmitter enable. */
+	/* Restore transmit पूर्णांकerrupts and the transmitter enable. */
 	spin_lock_irqsave(&scc->zlock, flags);
 	irq = !irqs_disabled_flags(flags);
 	zs_line_drain(zport, irq);
-	if (!(txenb & TxENAB)) {
+	अगर (!(txenb & TxENAB)) अणु
 		zport->regs[5] &= ~TxENAB;
-		write_zsreg(zport, R5, zport->regs[5]);
-	}
-	if (txint & TxINT_ENAB) {
+		ग_लिखो_zsreg(zport, R5, zport->regs[5]);
+	पूर्ण
+	अगर (txपूर्णांक & TxINT_ENAB) अणु
 		zport->regs[1] |= TxINT_ENAB;
-		write_zsreg(zport, R1, zport->regs[1]);
+		ग_लिखो_zsreg(zport, R1, zport->regs[1]);
 
 		/* Resume any transmission as the TxIP bit won't be set.  */
-		if (!zport->tx_stopped)
-			zs_raw_transmit_chars(zport);
-	}
+		अगर (!zport->tx_stopped)
+			zs_raw_transmit_अक्षरs(zport);
+	पूर्ण
 	spin_unlock_irqrestore(&scc->zlock, flags);
-}
+पूर्ण
 
 /*
- * Setup serial console baud/bits/parity.  We do two things here:
- * - construct a cflag setting for the first uart_open()
+ * Setup serial console baud/bits/parity.  We करो two things here:
+ * - स्थिरruct a cflag setting क्रम the first uart_खोलो()
  * - initialise the serial port
- * Return non-zero if we didn't find a serial port.
+ * Return non-zero अगर we didn't find a serial port.
  */
-static int __init zs_console_setup(struct console *co, char *options)
-{
-	int chip = co->index / ZS_NUM_CHAN, side = co->index % ZS_NUM_CHAN;
-	struct zs_port *zport = &zs_sccs[chip].zport[side];
-	struct uart_port *uport = &zport->port;
-	int baud = 9600;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
-	int ret;
+अटल पूर्णांक __init zs_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	पूर्णांक chip = co->index / ZS_NUM_CHAN, side = co->index % ZS_NUM_CHAN;
+	काष्ठा zs_port *zport = &zs_sccs[chip].zport[side];
+	काष्ठा uart_port *uport = &zport->port;
+	पूर्णांक baud = 9600;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
+	पूर्णांक ret;
 
 	ret = zs_map_port(uport);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	zs_reset(zport);
 	zs_pm(uport, 0, -1);
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	return uart_set_options(uport, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(uport, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver zs_reg;
-static struct console zs_console = {
+अटल काष्ठा uart_driver zs_reg;
+अटल काष्ठा console zs_console = अणु
 	.name	= "ttyS",
-	.write	= zs_console_write,
+	.ग_लिखो	= zs_console_ग_लिखो,
 	.device	= uart_console_device,
 	.setup	= zs_console_setup,
 	.flags	= CON_PRINTBUFFER,
 	.index	= -1,
 	.data	= &zs_reg,
-};
+पूर्ण;
 
 /*
  *	Register console.
  */
-static int __init zs_serial_console_init(void)
-{
-	int ret;
+अटल पूर्णांक __init zs_serial_console_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = zs_probe_sccs();
-	if (ret)
-		return ret;
-	register_console(&zs_console);
+	अगर (ret)
+		वापस ret;
+	रेजिस्टर_console(&zs_console);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 console_initcall(zs_serial_console_init);
 
-#define SERIAL_ZS_CONSOLE	&zs_console
-#else
-#define SERIAL_ZS_CONSOLE	NULL
-#endif /* CONFIG_SERIAL_ZS_CONSOLE */
+#घोषणा SERIAL_ZS_CONSOLE	&zs_console
+#अन्यथा
+#घोषणा SERIAL_ZS_CONSOLE	शून्य
+#पूर्ण_अगर /* CONFIG_SERIAL_ZS_CONSOLE */
 
-static struct uart_driver zs_reg = {
+अटल काष्ठा uart_driver zs_reg = अणु
 	.owner			= THIS_MODULE,
 	.driver_name		= "serial",
 	.dev_name		= "ttyS",
@@ -1257,51 +1258,51 @@ static struct uart_driver zs_reg = {
 	.minor			= 64,
 	.nr			= ZS_NUM_SCCS * ZS_NUM_CHAN,
 	.cons			= SERIAL_ZS_CONSOLE,
-};
+पूर्ण;
 
 /* zs_init inits the driver. */
-static int __init zs_init(void)
-{
-	int i, ret;
+अटल पूर्णांक __init zs_init(व्योम)
+अणु
+	पूर्णांक i, ret;
 
 	pr_info("%s%s\n", zs_name, zs_version);
 
 	/* Find out how many Z85C30 SCCs we have.  */
 	ret = zs_probe_sccs();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = uart_register_driver(&zs_reg);
-	if (ret)
-		return ret;
+	ret = uart_रेजिस्टर_driver(&zs_reg);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < ZS_NUM_SCCS * ZS_NUM_CHAN; i++) {
-		struct zs_scc *scc = &zs_sccs[i / ZS_NUM_CHAN];
-		struct zs_port *zport = &scc->zport[i % ZS_NUM_CHAN];
-		struct uart_port *uport = &zport->port;
+	क्रम (i = 0; i < ZS_NUM_SCCS * ZS_NUM_CHAN; i++) अणु
+		काष्ठा zs_scc *scc = &zs_sccs[i / ZS_NUM_CHAN];
+		काष्ठा zs_port *zport = &scc->zport[i % ZS_NUM_CHAN];
+		काष्ठा uart_port *uport = &zport->port;
 
-		if (zport->scc)
+		अगर (zport->scc)
 			uart_add_one_port(&zs_reg, uport);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit zs_exit(void)
-{
-	int i;
+अटल व्योम __निकास zs_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = ZS_NUM_SCCS * ZS_NUM_CHAN - 1; i >= 0; i--) {
-		struct zs_scc *scc = &zs_sccs[i / ZS_NUM_CHAN];
-		struct zs_port *zport = &scc->zport[i % ZS_NUM_CHAN];
-		struct uart_port *uport = &zport->port;
+	क्रम (i = ZS_NUM_SCCS * ZS_NUM_CHAN - 1; i >= 0; i--) अणु
+		काष्ठा zs_scc *scc = &zs_sccs[i / ZS_NUM_CHAN];
+		काष्ठा zs_port *zport = &scc->zport[i % ZS_NUM_CHAN];
+		काष्ठा uart_port *uport = &zport->port;
 
-		if (zport->scc)
-			uart_remove_one_port(&zs_reg, uport);
-	}
+		अगर (zport->scc)
+			uart_हटाओ_one_port(&zs_reg, uport);
+	पूर्ण
 
-	uart_unregister_driver(&zs_reg);
-}
+	uart_unरेजिस्टर_driver(&zs_reg);
+पूर्ण
 
 module_init(zs_init);
-module_exit(zs_exit);
+module_निकास(zs_निकास);

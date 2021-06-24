@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
  * Atari Falcon PATA controller driver
@@ -11,137 +12,137 @@
  *     Created 12 Jul 1997 by Geert Uytterhoeven
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_cmnd.h>
-#include <linux/ata.h>
-#include <linux/libata.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <linux/ata.h>
+#समावेश <linux/libata.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/setup.h>
-#include <asm/atarihw.h>
-#include <asm/atariints.h>
-#include <asm/atari_stdma.h>
-#include <asm/ide.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/atarihw.h>
+#समावेश <यंत्र/atariपूर्णांकs.h>
+#समावेश <यंत्र/atari_stdma.h>
+#समावेश <यंत्र/ide.h>
 
-#define DRV_NAME "pata_falcon"
-#define DRV_VERSION "0.1.0"
+#घोषणा DRV_NAME "pata_falcon"
+#घोषणा DRV_VERSION "0.1.0"
 
-#define ATA_HD_CONTROL	0x39
+#घोषणा ATA_HD_CONTROL	0x39
 
-static struct scsi_host_template pata_falcon_sht = {
+अटल काष्ठा scsi_host_ढाँचा pata_falcon_sht = अणु
 	ATA_PIO_SHT(DRV_NAME),
-};
+पूर्ण;
 
-static unsigned int pata_falcon_data_xfer(struct ata_queued_cmd *qc,
-					  unsigned char *buf,
-					  unsigned int buflen, int rw)
-{
-	struct ata_device *dev = qc->dev;
-	struct ata_port *ap = dev->link->ap;
-	void __iomem *data_addr = ap->ioaddr.data_addr;
-	unsigned int words = buflen >> 1;
-	struct scsi_cmnd *cmd = qc->scsicmd;
+अटल अचिन्हित पूर्णांक pata_falcon_data_xfer(काष्ठा ata_queued_cmd *qc,
+					  अचिन्हित अक्षर *buf,
+					  अचिन्हित पूर्णांक buflen, पूर्णांक rw)
+अणु
+	काष्ठा ata_device *dev = qc->dev;
+	काष्ठा ata_port *ap = dev->link->ap;
+	व्योम __iomem *data_addr = ap->ioaddr.data_addr;
+	अचिन्हित पूर्णांक words = buflen >> 1;
+	काष्ठा scsi_cmnd *cmd = qc->scsicmd;
 	bool swap = 1;
 
-	if (dev->class == ATA_DEV_ATA && cmd && cmd->request &&
+	अगर (dev->class == ATA_DEV_ATA && cmd && cmd->request &&
 	    !blk_rq_is_passthrough(cmd->request))
 		swap = 0;
 
 	/* Transfer multiple of 2 bytes */
-	if (rw == READ) {
-		if (swap)
+	अगर (rw == READ) अणु
+		अगर (swap)
 			raw_insw_swapw((u16 *)data_addr, (u16 *)buf, words);
-		else
+		अन्यथा
 			raw_insw((u16 *)data_addr, (u16 *)buf, words);
-	} else {
-		if (swap)
+	पूर्ण अन्यथा अणु
+		अगर (swap)
 			raw_outsw_swapw((u16 *)data_addr, (u16 *)buf, words);
-		else
+		अन्यथा
 			raw_outsw((u16 *)data_addr, (u16 *)buf, words);
-	}
+	पूर्ण
 
-	/* Transfer trailing byte, if any. */
-	if (unlikely(buflen & 0x01)) {
-		unsigned char pad[2] = { };
+	/* Transfer trailing byte, अगर any. */
+	अगर (unlikely(buflen & 0x01)) अणु
+		अचिन्हित अक्षर pad[2] = अणु पूर्ण;
 
-		/* Point buf to the tail of buffer */
+		/* Poपूर्णांक buf to the tail of buffer */
 		buf += buflen - 1;
 
-		if (rw == READ) {
-			if (swap)
+		अगर (rw == READ) अणु
+			अगर (swap)
 				raw_insw_swapw((u16 *)data_addr, (u16 *)pad, 1);
-			else
+			अन्यथा
 				raw_insw((u16 *)data_addr, (u16 *)pad, 1);
 			*buf = pad[0];
-		} else {
+		पूर्ण अन्यथा अणु
 			pad[0] = *buf;
-			if (swap)
+			अगर (swap)
 				raw_outsw_swapw((u16 *)data_addr, (u16 *)pad, 1);
-			else
+			अन्यथा
 				raw_outsw((u16 *)data_addr, (u16 *)pad, 1);
-		}
+		पूर्ण
 		words++;
-	}
+	पूर्ण
 
-	return words << 1;
-}
+	वापस words << 1;
+पूर्ण
 
 /*
- * Provide our own set_mode() as we don't want to change anything that has
- * already been configured..
+ * Provide our own set_mode() as we करोn't want to change anything that has
+ * alपढ़ोy been configured..
  */
-static int pata_falcon_set_mode(struct ata_link *link,
-				struct ata_device **unused)
-{
-	struct ata_device *dev;
+अटल पूर्णांक pata_falcon_set_mode(काष्ठा ata_link *link,
+				काष्ठा ata_device **unused)
+अणु
+	काष्ठा ata_device *dev;
 
-	ata_for_each_dev(dev, link, ENABLED) {
-		/* We don't really care */
+	ata_क्रम_each_dev(dev, link, ENABLED) अणु
+		/* We करोn't really care */
 		dev->pio_mode = dev->xfer_mode = XFER_PIO_0;
-		dev->xfer_shift = ATA_SHIFT_PIO;
+		dev->xfer_shअगरt = ATA_SHIFT_PIO;
 		dev->flags |= ATA_DFLAG_PIO;
 		ata_dev_info(dev, "configured for PIO\n");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct ata_port_operations pata_falcon_ops = {
+अटल काष्ठा ata_port_operations pata_falcon_ops = अणु
 	.inherits	= &ata_sff_port_ops,
 	.sff_data_xfer	= pata_falcon_data_xfer,
 	.cable_detect	= ata_cable_unknown,
 	.set_mode	= pata_falcon_set_mode,
-};
+पूर्ण;
 
-static int __init pata_falcon_init_one(struct platform_device *pdev)
-{
-	struct resource *res;
-	struct ata_host *host;
-	struct ata_port *ap;
-	void __iomem *base;
+अटल पूर्णांक __init pata_falcon_init_one(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा ata_host *host;
+	काष्ठा ata_port *ap;
+	व्योम __iomem *base;
 
 	dev_info(&pdev->dev, "Atari Falcon PATA controller\n");
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
-	if (!devm_request_mem_region(&pdev->dev, res->start,
-				     resource_size(res), DRV_NAME)) {
+	अगर (!devm_request_mem_region(&pdev->dev, res->start,
+				     resource_size(res), DRV_NAME)) अणु
 		dev_err(&pdev->dev, "resources busy\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/* allocate host */
 	host = ata_host_alloc(&pdev->dev, 1);
-	if (!host)
-		return -ENOMEM;
+	अगर (!host)
+		वापस -ENOMEM;
 	ap = host->ports[0];
 
 	ap->ops = &pata_falcon_ops;
@@ -149,7 +150,7 @@ static int __init pata_falcon_init_one(struct platform_device *pdev)
 	ap->flags |= ATA_FLAG_SLAVE_POSS | ATA_FLAG_NO_IORDY;
 	ap->flags |= ATA_FLAG_PIO_POLLING;
 
-	base = (void __iomem *)res->start;
+	base = (व्योम __iomem *)res->start;
 	ap->ioaddr.data_addr		= base;
 	ap->ioaddr.error_addr		= base + 1 + 1 * 4;
 	ap->ioaddr.feature_addr		= base + 1 + 1 * 4;
@@ -164,30 +165,30 @@ static int __init pata_falcon_init_one(struct platform_device *pdev)
 	ap->ioaddr.altstatus_addr	= base + ATA_HD_CONTROL;
 	ap->ioaddr.ctl_addr		= base + ATA_HD_CONTROL;
 
-	ata_port_desc(ap, "cmd 0x%lx ctl 0x%lx", (unsigned long)base,
-		      (unsigned long)base + ATA_HD_CONTROL);
+	ata_port_desc(ap, "cmd 0x%lx ctl 0x%lx", (अचिन्हित दीर्घ)base,
+		      (अचिन्हित दीर्घ)base + ATA_HD_CONTROL);
 
 	/* activate */
-	return ata_host_activate(host, 0, NULL, 0, &pata_falcon_sht);
-}
+	वापस ata_host_activate(host, 0, शून्य, 0, &pata_falcon_sht);
+पूर्ण
 
-static int __exit pata_falcon_remove_one(struct platform_device *pdev)
-{
-	struct ata_host *host = platform_get_drvdata(pdev);
+अटल पूर्णांक __निकास pata_falcon_हटाओ_one(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ata_host *host = platक्रमm_get_drvdata(pdev);
 
 	ata_host_detach(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver pata_falcon_driver = {
-	.remove = __exit_p(pata_falcon_remove_one),
-	.driver   = {
+अटल काष्ठा platक्रमm_driver pata_falcon_driver = अणु
+	.हटाओ = __निकास_p(pata_falcon_हटाओ_one),
+	.driver   = अणु
 		.name	= "atari-falcon-ide",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver_probe(pata_falcon_driver, pata_falcon_init_one);
+module_platक्रमm_driver_probe(pata_falcon_driver, pata_falcon_init_one);
 
 MODULE_AUTHOR("Bartlomiej Zolnierkiewicz");
 MODULE_DESCRIPTION("low-level driver for Atari Falcon PATA");

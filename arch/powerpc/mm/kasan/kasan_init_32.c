@@ -1,192 +1,193 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#define DISABLE_BRANCH_PROFILING
+#घोषणा DISABLE_BRANCH_PROFILING
 
-#include <linux/kasan.h>
-#include <linux/printk.h>
-#include <linux/memblock.h>
-#include <linux/sched/task.h>
-#include <asm/pgalloc.h>
-#include <asm/code-patching.h>
-#include <mm/mmu_decl.h>
+#समावेश <linux/kasan.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/sched/task.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/code-patching.h>
+#समावेश <mm/mmu_decl.h>
 
-static pgprot_t __init kasan_prot_ro(void)
-{
-	if (early_mmu_has_feature(MMU_FTR_HPTE_TABLE))
-		return PAGE_READONLY;
+अटल pgprot_t __init kasan_prot_ro(व्योम)
+अणु
+	अगर (early_mmu_has_feature(MMU_FTR_HPTE_TABLE))
+		वापस PAGE_READONLY;
 
-	return PAGE_KERNEL_RO;
-}
+	वापस PAGE_KERNEL_RO;
+पूर्ण
 
-static void __init kasan_populate_pte(pte_t *ptep, pgprot_t prot)
-{
-	unsigned long va = (unsigned long)kasan_early_shadow_page;
-	phys_addr_t pa = __pa(kasan_early_shadow_page);
-	int i;
+अटल व्योम __init kasan_populate_pte(pte_t *ptep, pgprot_t prot)
+अणु
+	अचिन्हित दीर्घ va = (अचिन्हित दीर्घ)kasan_early_shaकरोw_page;
+	phys_addr_t pa = __pa(kasan_early_shaकरोw_page);
+	पूर्णांक i;
 
-	for (i = 0; i < PTRS_PER_PTE; i++, ptep++)
+	क्रम (i = 0; i < PTRS_PER_PTE; i++, ptep++)
 		__set_pte_at(&init_mm, va, ptep, pfn_pte(PHYS_PFN(pa), prot), 0);
-}
+पूर्ण
 
-int __init kasan_init_shadow_page_tables(unsigned long k_start, unsigned long k_end)
-{
+पूर्णांक __init kasan_init_shaकरोw_page_tables(अचिन्हित दीर्घ k_start, अचिन्हित दीर्घ k_end)
+अणु
 	pmd_t *pmd;
-	unsigned long k_cur, k_next;
+	अचिन्हित दीर्घ k_cur, k_next;
 
 	pmd = pmd_off_k(k_start);
 
-	for (k_cur = k_start; k_cur != k_end; k_cur = k_next, pmd++) {
+	क्रम (k_cur = k_start; k_cur != k_end; k_cur = k_next, pmd++) अणु
 		pte_t *new;
 
 		k_next = pgd_addr_end(k_cur, k_end);
-		if ((void *)pmd_page_vaddr(*pmd) != kasan_early_shadow_pte)
-			continue;
+		अगर ((व्योम *)pmd_page_vaddr(*pmd) != kasan_early_shaकरोw_pte)
+			जारी;
 
 		new = memblock_alloc(PTE_FRAG_SIZE, PTE_FRAG_SIZE);
 
-		if (!new)
-			return -ENOMEM;
+		अगर (!new)
+			वापस -ENOMEM;
 		kasan_populate_pte(new, PAGE_KERNEL);
 		pmd_populate_kernel(&init_mm, pmd, new);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int __init __weak kasan_init_region(void *start, size_t size)
-{
-	unsigned long k_start = (unsigned long)kasan_mem_to_shadow(start);
-	unsigned long k_end = (unsigned long)kasan_mem_to_shadow(start + size);
-	unsigned long k_cur;
-	int ret;
-	void *block;
+पूर्णांक __init __weak kasan_init_region(व्योम *start, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ k_start = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw(start);
+	अचिन्हित दीर्घ k_end = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw(start + size);
+	अचिन्हित दीर्घ k_cur;
+	पूर्णांक ret;
+	व्योम *block;
 
-	ret = kasan_init_shadow_page_tables(k_start, k_end);
-	if (ret)
-		return ret;
+	ret = kasan_init_shaकरोw_page_tables(k_start, k_end);
+	अगर (ret)
+		वापस ret;
 
 	block = memblock_alloc(k_end - k_start, PAGE_SIZE);
-	if (!block)
-		return -ENOMEM;
+	अगर (!block)
+		वापस -ENOMEM;
 
-	for (k_cur = k_start & PAGE_MASK; k_cur < k_end; k_cur += PAGE_SIZE) {
+	क्रम (k_cur = k_start & PAGE_MASK; k_cur < k_end; k_cur += PAGE_SIZE) अणु
 		pmd_t *pmd = pmd_off_k(k_cur);
-		void *va = block + k_cur - k_start;
+		व्योम *va = block + k_cur - k_start;
 		pte_t pte = pfn_pte(PHYS_PFN(__pa(va)), PAGE_KERNEL);
 
 		__set_pte_at(&init_mm, k_cur, pte_offset_kernel(pmd, k_cur), pte, 0);
-	}
+	पूर्ण
 	flush_tlb_kernel_range(k_start, k_end);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init
-kasan_update_early_region(unsigned long k_start, unsigned long k_end, pte_t pte)
-{
-	unsigned long k_cur;
-	phys_addr_t pa = __pa(kasan_early_shadow_page);
+व्योम __init
+kasan_update_early_region(अचिन्हित दीर्घ k_start, अचिन्हित दीर्घ k_end, pte_t pte)
+अणु
+	अचिन्हित दीर्घ k_cur;
+	phys_addr_t pa = __pa(kasan_early_shaकरोw_page);
 
-	for (k_cur = k_start; k_cur != k_end; k_cur += PAGE_SIZE) {
+	क्रम (k_cur = k_start; k_cur != k_end; k_cur += PAGE_SIZE) अणु
 		pmd_t *pmd = pmd_off_k(k_cur);
 		pte_t *ptep = pte_offset_kernel(pmd, k_cur);
 
-		if ((pte_val(*ptep) & PTE_RPN_MASK) != pa)
-			continue;
+		अगर ((pte_val(*ptep) & PTE_RPN_MASK) != pa)
+			जारी;
 
 		__set_pte_at(&init_mm, k_cur, ptep, pte, 0);
-	}
+	पूर्ण
 
 	flush_tlb_kernel_range(k_start, k_end);
-}
+पूर्ण
 
-static void __init kasan_remap_early_shadow_ro(void)
-{
+अटल व्योम __init kasan_remap_early_shaकरोw_ro(व्योम)
+अणु
 	pgprot_t prot = kasan_prot_ro();
-	phys_addr_t pa = __pa(kasan_early_shadow_page);
+	phys_addr_t pa = __pa(kasan_early_shaकरोw_page);
 
-	kasan_populate_pte(kasan_early_shadow_pte, prot);
+	kasan_populate_pte(kasan_early_shaकरोw_pte, prot);
 
 	kasan_update_early_region(KASAN_SHADOW_START, KASAN_SHADOW_END,
 				  pfn_pte(PHYS_PFN(pa), prot));
-}
+पूर्ण
 
-static void __init kasan_unmap_early_shadow_vmalloc(void)
-{
-	unsigned long k_start = (unsigned long)kasan_mem_to_shadow((void *)VMALLOC_START);
-	unsigned long k_end = (unsigned long)kasan_mem_to_shadow((void *)VMALLOC_END);
+अटल व्योम __init kasan_unmap_early_shaकरोw_vदो_स्मृति(व्योम)
+अणु
+	अचिन्हित दीर्घ k_start = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw((व्योम *)VMALLOC_START);
+	अचिन्हित दीर्घ k_end = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw((व्योम *)VMALLOC_END);
 
 	kasan_update_early_region(k_start, k_end, __pte(0));
 
-#ifdef MODULES_VADDR
-	k_start = (unsigned long)kasan_mem_to_shadow((void *)MODULES_VADDR);
-	k_end = (unsigned long)kasan_mem_to_shadow((void *)MODULES_END);
+#अगर_घोषित MODULES_VADDR
+	k_start = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw((व्योम *)MODULES_VADDR);
+	k_end = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw((व्योम *)MODULES_END);
 	kasan_update_early_region(k_start, k_end, __pte(0));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void __init kasan_mmu_init(void)
-{
-	int ret;
+व्योम __init kasan_mmu_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (early_mmu_has_feature(MMU_FTR_HPTE_TABLE)) {
-		ret = kasan_init_shadow_page_tables(KASAN_SHADOW_START, KASAN_SHADOW_END);
+	अगर (early_mmu_has_feature(MMU_FTR_HPTE_TABLE)) अणु
+		ret = kasan_init_shaकरोw_page_tables(KASAN_SHADOW_START, KASAN_SHADOW_END);
 
-		if (ret)
+		अगर (ret)
 			panic("kasan: kasan_init_shadow_page_tables() failed");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init kasan_init(void)
-{
+व्योम __init kasan_init(व्योम)
+अणु
 	phys_addr_t base, end;
 	u64 i;
-	int ret;
+	पूर्णांक ret;
 
-	for_each_mem_range(i, &base, &end) {
+	क्रम_each_mem_range(i, &base, &end) अणु
 		phys_addr_t top = min(end, total_lowmem);
 
-		if (base >= top)
-			continue;
+		अगर (base >= top)
+			जारी;
 
 		ret = kasan_init_region(__va(base), top - base);
-		if (ret)
+		अगर (ret)
 			panic("kasan: kasan_init_region() failed");
-	}
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_KASAN_VMALLOC)) {
-		ret = kasan_init_shadow_page_tables(KASAN_SHADOW_START, KASAN_SHADOW_END);
+	अगर (IS_ENABLED(CONFIG_KASAN_VMALLOC)) अणु
+		ret = kasan_init_shaकरोw_page_tables(KASAN_SHADOW_START, KASAN_SHADOW_END);
 
-		if (ret)
+		अगर (ret)
 			panic("kasan: kasan_init_shadow_page_tables() failed");
-	}
+	पूर्ण
 
-	kasan_remap_early_shadow_ro();
+	kasan_remap_early_shaकरोw_ro();
 
-	clear_page(kasan_early_shadow_page);
+	clear_page(kasan_early_shaकरोw_page);
 
-	/* At this point kasan is fully initialized. Enable error messages */
+	/* At this poपूर्णांक kasan is fully initialized. Enable error messages */
 	init_task.kasan_depth = 0;
 	pr_info("KASAN init done\n");
-}
+पूर्ण
 
-void __init kasan_late_init(void)
-{
-	if (IS_ENABLED(CONFIG_KASAN_VMALLOC))
-		kasan_unmap_early_shadow_vmalloc();
-}
+व्योम __init kasan_late_init(व्योम)
+अणु
+	अगर (IS_ENABLED(CONFIG_KASAN_VMALLOC))
+		kasan_unmap_early_shaकरोw_vदो_स्मृति();
+पूर्ण
 
-void __init kasan_early_init(void)
-{
-	unsigned long addr = KASAN_SHADOW_START;
-	unsigned long end = KASAN_SHADOW_END;
-	unsigned long next;
+व्योम __init kasan_early_init(व्योम)
+अणु
+	अचिन्हित दीर्घ addr = KASAN_SHADOW_START;
+	अचिन्हित दीर्घ end = KASAN_SHADOW_END;
+	अचिन्हित दीर्घ next;
 	pmd_t *pmd = pmd_off_k(addr);
 
-	BUILD_BUG_ON(KASAN_SHADOW_START & ~PGDIR_MASK);
+	BUILD_BUG_ON(KASAN_SHADOW_START & ~PGसूची_MASK);
 
-	kasan_populate_pte(kasan_early_shadow_pte, PAGE_KERNEL);
+	kasan_populate_pte(kasan_early_shaकरोw_pte, PAGE_KERNEL);
 
-	do {
+	करो अणु
 		next = pgd_addr_end(addr, end);
-		pmd_populate_kernel(&init_mm, pmd, kasan_early_shadow_pte);
-	} while (pmd++, addr = next, addr != end);
-}
+		pmd_populate_kernel(&init_mm, pmd, kasan_early_shaकरोw_pte);
+	पूर्ण जबतक (pmd++, addr = next, addr != end);
+पूर्ण

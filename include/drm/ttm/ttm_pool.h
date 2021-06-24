@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,72 +21,72 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Christian König
+ * Authors: Christian Kथघnig
  */
 
-#ifndef _TTM_PAGE_POOL_H_
-#define _TTM_PAGE_POOL_H_
+#अगर_अघोषित _TTM_PAGE_POOL_H_
+#घोषणा _TTM_PAGE_POOL_H_
 
-#include <linux/mmzone.h>
-#include <linux/llist.h>
-#include <linux/spinlock.h>
-#include <drm/ttm/ttm_caching.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/llist.h>
+#समावेश <linux/spinlock.h>
+#समावेश <drm/tपंचांग/tपंचांग_caching.h>
 
-struct device;
-struct ttm_tt;
-struct ttm_pool;
-struct ttm_operation_ctx;
+काष्ठा device;
+काष्ठा tपंचांग_tt;
+काष्ठा tपंचांग_pool;
+काष्ठा tपंचांग_operation_ctx;
 
 /**
- * ttm_pool_type - Pool for a certain memory type
+ * tपंचांग_pool_type - Pool क्रम a certain memory type
  *
- * @pool: the pool we belong to, might be NULL for the global ones
+ * @pool: the pool we beदीर्घ to, might be शून्य क्रम the global ones
  * @order: the allocation order our pages have
  * @caching: the caching type our pages have
  * @shrinker_list: our place on the global shrinker list
  * @lock: protection of the page list
  * @pages: the list of pages in the pool
  */
-struct ttm_pool_type {
-	struct ttm_pool *pool;
-	unsigned int order;
-	enum ttm_caching caching;
+काष्ठा tपंचांग_pool_type अणु
+	काष्ठा tपंचांग_pool *pool;
+	अचिन्हित पूर्णांक order;
+	क्रमागत tपंचांग_caching caching;
 
-	struct list_head shrinker_list;
+	काष्ठा list_head shrinker_list;
 
 	spinlock_t lock;
-	struct list_head pages;
-};
+	काष्ठा list_head pages;
+पूर्ण;
 
 /**
- * ttm_pool - Pool for all caching and orders
+ * tपंचांग_pool - Pool क्रम all caching and orders
  *
- * @use_dma_alloc: if coherent DMA allocations should be used
- * @use_dma32: if GFP_DMA32 should be used
- * @caching: pools for each caching/order
+ * @use_dma_alloc: अगर coherent DMA allocations should be used
+ * @use_dma32: अगर GFP_DMA32 should be used
+ * @caching: pools क्रम each caching/order
  */
-struct ttm_pool {
-	struct device *dev;
+काष्ठा tपंचांग_pool अणु
+	काष्ठा device *dev;
 
 	bool use_dma_alloc;
 	bool use_dma32;
 
-	struct {
-		struct ttm_pool_type orders[MAX_ORDER];
-	} caching[TTM_NUM_CACHING_TYPES];
-};
+	काष्ठा अणु
+		काष्ठा tपंचांग_pool_type orders[MAX_ORDER];
+	पूर्ण caching[TTM_NUM_CACHING_TYPES];
+पूर्ण;
 
-int ttm_pool_alloc(struct ttm_pool *pool, struct ttm_tt *tt,
-		   struct ttm_operation_ctx *ctx);
-void ttm_pool_free(struct ttm_pool *pool, struct ttm_tt *tt);
+पूर्णांक tपंचांग_pool_alloc(काष्ठा tपंचांग_pool *pool, काष्ठा tपंचांग_tt *tt,
+		   काष्ठा tपंचांग_operation_ctx *ctx);
+व्योम tपंचांग_pool_मुक्त(काष्ठा tपंचांग_pool *pool, काष्ठा tपंचांग_tt *tt);
 
-void ttm_pool_init(struct ttm_pool *pool, struct device *dev,
+व्योम tपंचांग_pool_init(काष्ठा tपंचांग_pool *pool, काष्ठा device *dev,
 		   bool use_dma_alloc, bool use_dma32);
-void ttm_pool_fini(struct ttm_pool *pool);
+व्योम tपंचांग_pool_fini(काष्ठा tपंचांग_pool *pool);
 
-int ttm_pool_debugfs(struct ttm_pool *pool, struct seq_file *m);
+पूर्णांक tपंचांग_pool_debugfs(काष्ठा tपंचांग_pool *pool, काष्ठा seq_file *m);
 
-int ttm_pool_mgr_init(unsigned long num_pages);
-void ttm_pool_mgr_fini(void);
+पूर्णांक tपंचांग_pool_mgr_init(अचिन्हित दीर्घ num_pages);
+व्योम tपंचांग_pool_mgr_fini(व्योम);
 
-#endif
+#पूर्ण_अगर

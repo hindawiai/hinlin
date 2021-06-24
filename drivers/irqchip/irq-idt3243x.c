@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for IDT/Renesas 79RC3243x Interrupt Controller.
+ * Driver क्रम IDT/Renesas 79RC3243x Interrupt Controller.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/irqdomain.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
 
-#define IDT_PIC_NR_IRQS		32
+#घोषणा IDT_PIC_NR_IRQS		32
 
-#define IDT_PIC_IRQ_PEND		0x00
-#define IDT_PIC_IRQ_MASK		0x08
+#घोषणा IDT_PIC_IRQ_PEND		0x00
+#घोषणा IDT_PIC_IRQ_MASK		0x08
 
-struct idt_pic_data {
-	void __iomem *base;
-	struct irq_domain *irq_domain;
-	struct irq_chip_generic *gc;
-};
+काष्ठा idt_pic_data अणु
+	व्योम __iomem *base;
+	काष्ठा irq_करोमुख्य *irq_करोमुख्य;
+	काष्ठा irq_chip_generic *gc;
+पूर्ण;
 
-static void idt_irq_dispatch(struct irq_desc *desc)
-{
-	struct idt_pic_data *idtpic = irq_desc_get_handler_data(desc);
-	struct irq_chip *host_chip = irq_desc_get_chip(desc);
+अटल व्योम idt_irq_dispatch(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा idt_pic_data *idtpic = irq_desc_get_handler_data(desc);
+	काष्ठा irq_chip *host_chip = irq_desc_get_chip(desc);
 	u32 pending, hwirq, virq;
 
 	chained_irq_enter(host_chip, desc);
 
-	pending = irq_reg_readl(idtpic->gc, IDT_PIC_IRQ_PEND);
+	pending = irq_reg_पढ़ोl(idtpic->gc, IDT_PIC_IRQ_PEND);
 	pending &= ~idtpic->gc->mask_cache;
-	while (pending) {
+	जबतक (pending) अणु
 		hwirq = __fls(pending);
-		virq = irq_linear_revmap(idtpic->irq_domain, hwirq);
-		if (virq)
+		virq = irq_linear_revmap(idtpic->irq_करोमुख्य, hwirq);
+		अगर (virq)
 			generic_handle_irq(virq);
 		pending &= ~(1 << hwirq);
-	}
+	पूर्ण
 
-	chained_irq_exit(host_chip, desc);
-}
+	chained_irq_निकास(host_chip, desc);
+पूर्ण
 
-static int idt_pic_init(struct device_node *of_node, struct device_node *parent)
-{
-	struct irq_domain *domain;
-	struct idt_pic_data *idtpic;
-	struct irq_chip_generic *gc;
-	struct irq_chip_type *ct;
-	unsigned int parent_irq;
-	int ret = 0;
+अटल पूर्णांक idt_pic_init(काष्ठा device_node *of_node, काष्ठा device_node *parent)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+	काष्ठा idt_pic_data *idtpic;
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा irq_chip_type *ct;
+	अचिन्हित पूर्णांक parent_irq;
+	पूर्णांक ret = 0;
 
-	idtpic = kzalloc(sizeof(*idtpic), GFP_KERNEL);
-	if (!idtpic) {
+	idtpic = kzalloc(माप(*idtpic), GFP_KERNEL);
+	अगर (!idtpic) अणु
 		ret = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	parent_irq = irq_of_parse_and_map(of_node, 0);
-	if (!parent_irq) {
+	अगर (!parent_irq) अणु
 		pr_err("Failed to map parent IRQ!\n");
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	idtpic->base = of_iomap(of_node, 0);
-	if (!idtpic->base) {
+	अगर (!idtpic->base) अणु
 		pr_err("Failed to map base address!\n");
 		ret = -ENOMEM;
-		goto out_unmap_irq;
-	}
+		जाओ out_unmap_irq;
+	पूर्ण
 
-	domain = irq_domain_add_linear(of_node, IDT_PIC_NR_IRQS,
-				       &irq_generic_chip_ops, NULL);
-	if (!domain) {
+	करोमुख्य = irq_करोमुख्य_add_linear(of_node, IDT_PIC_NR_IRQS,
+				       &irq_generic_chip_ops, शून्य);
+	अगर (!करोमुख्य) अणु
 		pr_err("Failed to add irqdomain!\n");
 		ret = -ENOMEM;
-		goto out_iounmap;
-	}
-	idtpic->irq_domain = domain;
+		जाओ out_iounmap;
+	पूर्ण
+	idtpic->irq_करोमुख्य = करोमुख्य;
 
-	ret = irq_alloc_domain_generic_chips(domain, 32, 1, "IDTPIC",
+	ret = irq_alloc_करोमुख्य_generic_chips(करोमुख्य, 32, 1, "IDTPIC",
 					     handle_level_irq, 0,
 					     IRQ_NOPROBE | IRQ_LEVEL, 0);
-	if (ret)
-		goto out_domain_remove;
+	अगर (ret)
+		जाओ out_करोमुख्य_हटाओ;
 
-	gc = irq_get_domain_generic_chip(domain, 0);
+	gc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
 	gc->reg_base = idtpic->base;
-	gc->private = idtpic;
+	gc->निजी = idtpic;
 
 	ct = gc->chip_types;
 	ct->regs.mask = IDT_PIC_IRQ_MASK;
@@ -99,26 +100,26 @@ static int idt_pic_init(struct device_node *of_node, struct device_node *parent)
 	ct->chip.irq_unmask = irq_gc_mask_clr_bit;
 	idtpic->gc = gc;
 
-	/* Mask interrupts. */
-	writel(0xffffffff, idtpic->base + IDT_PIC_IRQ_MASK);
+	/* Mask पूर्णांकerrupts. */
+	ग_लिखोl(0xffffffff, idtpic->base + IDT_PIC_IRQ_MASK);
 	gc->mask_cache = 0xffffffff;
 
 	irq_set_chained_handler_and_data(parent_irq,
 					 idt_irq_dispatch, idtpic);
 
-	return 0;
+	वापस 0;
 
-out_domain_remove:
-	irq_domain_remove(domain);
+out_करोमुख्य_हटाओ:
+	irq_करोमुख्य_हटाओ(करोमुख्य);
 out_iounmap:
 	iounmap(idtpic->base);
 out_unmap_irq:
 	irq_dispose_mapping(parent_irq);
-out_free:
-	kfree(idtpic);
+out_मुक्त:
+	kमुक्त(idtpic);
 out_err:
 	pr_err("Failed to initialize! (errno = %d)\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 IRQCHIP_DECLARE(idt_pic, "idt,32434-pic", idt_pic_init);

@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#include <linux/hardirq.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/types.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/tty.h>
-#include <linux/file.h>
-#include <linux/if_arp.h>
-#include <net/caif/caif_device.h>
-#include <net/caif/cfcnfg.h>
-#include <linux/err.h>
-#include <linux/debugfs.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/types.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/file.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <net/caअगर/caअगर_device.h>
+#समावेश <net/caअगर/cfcnfg.h>
+#समावेश <linux/err.h>
+#समावेश <linux/debugfs.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Sjur Brendeland");
@@ -26,73 +27,73 @@ MODULE_DESCRIPTION("CAIF serial device TTY line discipline");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_LDISC(N_CAIF);
 
-#define SEND_QUEUE_LOW 10
-#define SEND_QUEUE_HIGH 100
-#define CAIF_SENDING	        1 /* Bit 1 = 0x02*/
-#define CAIF_FLOW_OFF_SENT	4 /* Bit 4 = 0x10 */
-#define MAX_WRITE_CHUNK	     4096
-#define ON 1
-#define OFF 0
-#define CAIF_MAX_MTU 4096
+#घोषणा SEND_QUEUE_LOW 10
+#घोषणा SEND_QUEUE_HIGH 100
+#घोषणा CAIF_SENDING	        1 /* Bit 1 = 0x02*/
+#घोषणा CAIF_FLOW_OFF_SENT	4 /* Bit 4 = 0x10 */
+#घोषणा MAX_WRITE_CHUNK	     4096
+#घोषणा ON 1
+#घोषणा OFF 0
+#घोषणा CAIF_MAX_MTU 4096
 
-static DEFINE_SPINLOCK(ser_lock);
-static LIST_HEAD(ser_list);
-static LIST_HEAD(ser_release_list);
+अटल DEFINE_SPINLOCK(ser_lock);
+अटल LIST_HEAD(ser_list);
+अटल LIST_HEAD(ser_release_list);
 
-static bool ser_loop;
+अटल bool ser_loop;
 module_param(ser_loop, bool, 0444);
 MODULE_PARM_DESC(ser_loop, "Run in simulated loopback mode.");
 
-static bool ser_use_stx = true;
+अटल bool ser_use_stx = true;
 module_param(ser_use_stx, bool, 0444);
 MODULE_PARM_DESC(ser_use_stx, "STX enabled or not.");
 
-static bool ser_use_fcs = true;
+अटल bool ser_use_fcs = true;
 
 module_param(ser_use_fcs, bool, 0444);
 MODULE_PARM_DESC(ser_use_fcs, "FCS enabled or not.");
 
-static int ser_write_chunk = MAX_WRITE_CHUNK;
-module_param(ser_write_chunk, int, 0444);
+अटल पूर्णांक ser_ग_लिखो_chunk = MAX_WRITE_CHUNK;
+module_param(ser_ग_लिखो_chunk, पूर्णांक, 0444);
 
-MODULE_PARM_DESC(ser_write_chunk, "Maximum size of data written to UART.");
+MODULE_PARM_DESC(ser_ग_लिखो_chunk, "Maximum size of data written to UART.");
 
-static struct dentry *debugfsdir;
+अटल काष्ठा dentry *debugfsdir;
 
-static int caif_net_open(struct net_device *dev);
-static int caif_net_close(struct net_device *dev);
+अटल पूर्णांक caअगर_net_खोलो(काष्ठा net_device *dev);
+अटल पूर्णांक caअगर_net_बंद(काष्ठा net_device *dev);
 
-struct ser_device {
-	struct caif_dev_common common;
-	struct list_head node;
-	struct net_device *dev;
-	struct sk_buff_head head;
-	struct tty_struct *tty;
+काष्ठा ser_device अणु
+	काष्ठा caअगर_dev_common common;
+	काष्ठा list_head node;
+	काष्ठा net_device *dev;
+	काष्ठा sk_buff_head head;
+	काष्ठा tty_काष्ठा *tty;
 	bool tx_started;
-	unsigned long state;
-#ifdef CONFIG_DEBUG_FS
-	struct dentry *debugfs_tty_dir;
-	struct debugfs_blob_wrapper tx_blob;
-	struct debugfs_blob_wrapper rx_blob;
+	अचिन्हित दीर्घ state;
+#अगर_घोषित CONFIG_DEBUG_FS
+	काष्ठा dentry *debugfs_tty_dir;
+	काष्ठा debugfs_blob_wrapper tx_blob;
+	काष्ठा debugfs_blob_wrapper rx_blob;
 	u8 rx_data[128];
 	u8 tx_data[128];
 	u8 tty_status;
 
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static void caifdev_setup(struct net_device *dev);
-static void ldisc_tx_wakeup(struct tty_struct *tty);
-#ifdef CONFIG_DEBUG_FS
-static inline void update_tty_status(struct ser_device *ser)
-{
+अटल व्योम caअगरdev_setup(काष्ठा net_device *dev);
+अटल व्योम ldisc_tx_wakeup(काष्ठा tty_काष्ठा *tty);
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल अंतरभूत व्योम update_tty_status(काष्ठा ser_device *ser)
+अणु
 	ser->tty_status =
 		ser->tty->stopped << 5 |
 		ser->tty->flow_stopped << 3 |
 		ser->tty->packet << 2;
-}
-static inline void debugfs_init(struct ser_device *ser, struct tty_struct *tty)
-{
+पूर्ण
+अटल अंतरभूत व्योम debugfs_init(काष्ठा ser_device *ser, काष्ठा tty_काष्ठा *tty)
+अणु
 	ser->debugfs_tty_dir = debugfs_create_dir(tty->name, debugfsdir);
 
 	debugfs_create_blob("last_tx_msg", 0400, ser->debugfs_tty_dir,
@@ -111,234 +112,234 @@ static inline void debugfs_init(struct ser_device *ser, struct tty_struct *tty)
 	ser->tx_blob.size = 0;
 	ser->rx_blob.data = ser->rx_data;
 	ser->rx_blob.size = 0;
-}
+पूर्ण
 
-static inline void debugfs_deinit(struct ser_device *ser)
-{
-	debugfs_remove_recursive(ser->debugfs_tty_dir);
-}
+अटल अंतरभूत व्योम debugfs_deinit(काष्ठा ser_device *ser)
+अणु
+	debugfs_हटाओ_recursive(ser->debugfs_tty_dir);
+पूर्ण
 
-static inline void debugfs_rx(struct ser_device *ser, const u8 *data, int size)
-{
-	if (size > sizeof(ser->rx_data))
-		size = sizeof(ser->rx_data);
-	memcpy(ser->rx_data, data, size);
+अटल अंतरभूत व्योम debugfs_rx(काष्ठा ser_device *ser, स्थिर u8 *data, पूर्णांक size)
+अणु
+	अगर (size > माप(ser->rx_data))
+		size = माप(ser->rx_data);
+	स_नकल(ser->rx_data, data, size);
 	ser->rx_blob.data = ser->rx_data;
 	ser->rx_blob.size = size;
-}
+पूर्ण
 
-static inline void debugfs_tx(struct ser_device *ser, const u8 *data, int size)
-{
-	if (size > sizeof(ser->tx_data))
-		size = sizeof(ser->tx_data);
-	memcpy(ser->tx_data, data, size);
+अटल अंतरभूत व्योम debugfs_tx(काष्ठा ser_device *ser, स्थिर u8 *data, पूर्णांक size)
+अणु
+	अगर (size > माप(ser->tx_data))
+		size = माप(ser->tx_data);
+	स_नकल(ser->tx_data, data, size);
 	ser->tx_blob.data = ser->tx_data;
 	ser->tx_blob.size = size;
-}
-#else
-static inline void debugfs_init(struct ser_device *ser, struct tty_struct *tty)
-{
-}
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम debugfs_init(काष्ठा ser_device *ser, काष्ठा tty_काष्ठा *tty)
+अणु
+पूर्ण
 
-static inline void debugfs_deinit(struct ser_device *ser)
-{
-}
+अटल अंतरभूत व्योम debugfs_deinit(काष्ठा ser_device *ser)
+अणु
+पूर्ण
 
-static inline void update_tty_status(struct ser_device *ser)
-{
-}
+अटल अंतरभूत व्योम update_tty_status(काष्ठा ser_device *ser)
+अणु
+पूर्ण
 
-static inline void debugfs_rx(struct ser_device *ser, const u8 *data, int size)
-{
-}
+अटल अंतरभूत व्योम debugfs_rx(काष्ठा ser_device *ser, स्थिर u8 *data, पूर्णांक size)
+अणु
+पूर्ण
 
-static inline void debugfs_tx(struct ser_device *ser, const u8 *data, int size)
-{
-}
+अटल अंतरभूत व्योम debugfs_tx(काष्ठा ser_device *ser, स्थिर u8 *data, पूर्णांक size)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static void ldisc_receive(struct tty_struct *tty, const u8 *data,
-			char *flags, int count)
-{
-	struct sk_buff *skb = NULL;
-	struct ser_device *ser;
-	int ret;
+अटल व्योम ldisc_receive(काष्ठा tty_काष्ठा *tty, स्थिर u8 *data,
+			अक्षर *flags, पूर्णांक count)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा ser_device *ser;
+	पूर्णांक ret;
 
 	ser = tty->disc_data;
 
 	/*
-	 * NOTE: flags may contain information about break or overrun.
+	 * NOTE: flags may contain inक्रमmation about अवरोध or overrun.
 	 * This is not yet handled.
 	 */
 
 
 	/*
-	 * Workaround for garbage at start of transmission,
-	 * only enable if STX handling is not enabled.
+	 * Workaround क्रम garbage at start of transmission,
+	 * only enable अगर STX handling is not enabled.
 	 */
-	if (!ser->common.use_stx && !ser->tx_started) {
+	अगर (!ser->common.use_stx && !ser->tx_started) अणु
 		dev_info(&ser->dev->dev,
 			"Bytes received before initial transmission -"
 			"bytes discarded.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	BUG_ON(ser->dev == NULL);
+	BUG_ON(ser->dev == शून्य);
 
-	/* Get a suitable caif packet and copy in data. */
+	/* Get a suitable caअगर packet and copy in data. */
 	skb = netdev_alloc_skb(ser->dev, count+1);
-	if (skb == NULL)
-		return;
+	अगर (skb == शून्य)
+		वापस;
 	skb_put_data(skb, data, count);
 
 	skb->protocol = htons(ETH_P_CAIF);
 	skb_reset_mac_header(skb);
 	debugfs_rx(ser, data, count);
 	/* Push received packet up the stack. */
-	ret = netif_rx_ni(skb);
-	if (!ret) {
+	ret = netअगर_rx_ni(skb);
+	अगर (!ret) अणु
 		ser->dev->stats.rx_packets++;
 		ser->dev->stats.rx_bytes += count;
-	} else
+	पूर्ण अन्यथा
 		++ser->dev->stats.rx_dropped;
 	update_tty_status(ser);
-}
+पूर्ण
 
-static int handle_tx(struct ser_device *ser)
-{
-	struct tty_struct *tty;
-	struct sk_buff *skb;
-	int tty_wr, len, room;
+अटल पूर्णांक handle_tx(काष्ठा ser_device *ser)
+अणु
+	काष्ठा tty_काष्ठा *tty;
+	काष्ठा sk_buff *skb;
+	पूर्णांक tty_wr, len, room;
 
 	tty = ser->tty;
 	ser->tx_started = true;
 
 	/* Enter critical section */
-	if (test_and_set_bit(CAIF_SENDING, &ser->state))
-		return 0;
+	अगर (test_and_set_bit(CAIF_SENDING, &ser->state))
+		वापस 0;
 
 	/* skb_peek is safe because handle_tx is called after skb_queue_tail */
-	while ((skb = skb_peek(&ser->head)) != NULL) {
+	जबतक ((skb = skb_peek(&ser->head)) != शून्य) अणु
 
-		/* Make sure you don't write too much */
+		/* Make sure you करोn't ग_लिखो too much */
 		len = skb->len;
-		room = tty_write_room(tty);
-		if (!room)
-			break;
-		if (room > ser_write_chunk)
-			room = ser_write_chunk;
-		if (len > room)
+		room = tty_ग_लिखो_room(tty);
+		अगर (!room)
+			अवरोध;
+		अगर (room > ser_ग_लिखो_chunk)
+			room = ser_ग_लिखो_chunk;
+		अगर (len > room)
 			len = room;
 
 		/* Write to tty or loopback */
-		if (!ser_loop) {
-			tty_wr = tty->ops->write(tty, skb->data, len);
+		अगर (!ser_loop) अणु
+			tty_wr = tty->ops->ग_लिखो(tty, skb->data, len);
 			update_tty_status(ser);
-		} else {
+		पूर्ण अन्यथा अणु
 			tty_wr = len;
-			ldisc_receive(tty, skb->data, NULL, len);
-		}
+			ldisc_receive(tty, skb->data, शून्य, len);
+		पूर्ण
 		ser->dev->stats.tx_packets++;
 		ser->dev->stats.tx_bytes += tty_wr;
 
 		/* Error on TTY ?! */
-		if (tty_wr < 0)
-			goto error;
-		/* Reduce buffer written, and discard if empty */
+		अगर (tty_wr < 0)
+			जाओ error;
+		/* Reduce buffer written, and discard अगर empty */
 		skb_pull(skb, tty_wr);
-		if (skb->len == 0) {
-			struct sk_buff *tmp = skb_dequeue(&ser->head);
-			WARN_ON(tmp != skb);
+		अगर (skb->len == 0) अणु
+			काष्ठा sk_buff *पंचांगp = skb_dequeue(&ser->head);
+			WARN_ON(पंचांगp != skb);
 			dev_consume_skb_any(skb);
-		}
-	}
-	/* Send flow off if queue is empty */
-	if (ser->head.qlen <= SEND_QUEUE_LOW &&
+		पूर्ण
+	पूर्ण
+	/* Send flow off अगर queue is empty */
+	अगर (ser->head.qlen <= SEND_QUEUE_LOW &&
 		test_and_clear_bit(CAIF_FLOW_OFF_SENT, &ser->state) &&
-		ser->common.flowctrl != NULL)
+		ser->common.flowctrl != शून्य)
 				ser->common.flowctrl(ser->dev, ON);
 	clear_bit(CAIF_SENDING, &ser->state);
-	return 0;
+	वापस 0;
 error:
 	clear_bit(CAIF_SENDING, &ser->state);
-	return tty_wr;
-}
+	वापस tty_wr;
+पूर्ण
 
-static netdev_tx_t caif_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct ser_device *ser;
+अटल netdev_tx_t caअगर_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा ser_device *ser;
 
 	ser = netdev_priv(dev);
 
 	/* Send flow off once, on high water mark */
-	if (ser->head.qlen > SEND_QUEUE_HIGH &&
+	अगर (ser->head.qlen > SEND_QUEUE_HIGH &&
 		!test_and_set_bit(CAIF_FLOW_OFF_SENT, &ser->state) &&
-		ser->common.flowctrl != NULL)
+		ser->common.flowctrl != शून्य)
 
 		ser->common.flowctrl(ser->dev, OFF);
 
 	skb_queue_tail(&ser->head, skb);
-	return handle_tx(ser);
-}
+	वापस handle_tx(ser);
+पूर्ण
 
 
-static void ldisc_tx_wakeup(struct tty_struct *tty)
-{
-	struct ser_device *ser;
+अटल व्योम ldisc_tx_wakeup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा ser_device *ser;
 
 	ser = tty->disc_data;
-	BUG_ON(ser == NULL);
+	BUG_ON(ser == शून्य);
 	WARN_ON(ser->tty != tty);
 	handle_tx(ser);
-}
+पूर्ण
 
 
-static void ser_release(struct work_struct *work)
-{
-	struct list_head list;
-	struct ser_device *ser, *tmp;
+अटल व्योम ser_release(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा list_head list;
+	काष्ठा ser_device *ser, *पंचांगp;
 
 	spin_lock(&ser_lock);
 	list_replace_init(&ser_release_list, &list);
 	spin_unlock(&ser_lock);
 
-	if (!list_empty(&list)) {
+	अगर (!list_empty(&list)) अणु
 		rtnl_lock();
-		list_for_each_entry_safe(ser, tmp, &list, node) {
-			dev_close(ser->dev);
-			unregister_netdevice(ser->dev);
+		list_क्रम_each_entry_safe(ser, पंचांगp, &list, node) अणु
+			dev_बंद(ser->dev);
+			unरेजिस्टर_netdevice(ser->dev);
 			debugfs_deinit(ser);
-		}
+		पूर्ण
 		rtnl_unlock();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static DECLARE_WORK(ser_release_work, ser_release);
+अटल DECLARE_WORK(ser_release_work, ser_release);
 
-static int ldisc_open(struct tty_struct *tty)
-{
-	struct ser_device *ser;
-	struct net_device *dev;
-	char name[64];
-	int result;
+अटल पूर्णांक ldisc_खोलो(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा ser_device *ser;
+	काष्ठा net_device *dev;
+	अक्षर name[64];
+	पूर्णांक result;
 
-	/* No write no play */
-	if (tty->ops->write == NULL)
-		return -EOPNOTSUPP;
-	if (!capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_TTY_CONFIG))
-		return -EPERM;
+	/* No ग_लिखो no play */
+	अगर (tty->ops->ग_लिखो == शून्य)
+		वापस -EOPNOTSUPP;
+	अगर (!capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_TTY_CONFIG))
+		वापस -EPERM;
 
-	/* release devices to avoid name collision */
-	ser_release(NULL);
+	/* release devices to aव्योम name collision */
+	ser_release(शून्य);
 
-	result = snprintf(name, sizeof(name), "cf%s", tty->name);
-	if (result >= IFNAMSIZ)
-		return -EINVAL;
-	dev = alloc_netdev(sizeof(*ser), name, NET_NAME_UNKNOWN,
-			   caifdev_setup);
-	if (!dev)
-		return -ENOMEM;
+	result = snम_लिखो(name, माप(name), "cf%s", tty->name);
+	अगर (result >= IFNAMSIZ)
+		वापस -EINVAL;
+	dev = alloc_netdev(माप(*ser), name, NET_NAME_UNKNOWN,
+			   caअगरdev_setup);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	ser = netdev_priv(dev);
 	ser->tty = tty_kref_get(tty);
@@ -348,26 +349,26 @@ static int ldisc_open(struct tty_struct *tty)
 	tty->disc_data = ser;
 	set_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
 	rtnl_lock();
-	result = register_netdevice(dev);
-	if (result) {
+	result = रेजिस्टर_netdevice(dev);
+	अगर (result) अणु
 		tty_kref_put(tty);
 		rtnl_unlock();
-		free_netdev(dev);
-		return -ENODEV;
-	}
+		मुक्त_netdev(dev);
+		वापस -ENODEV;
+	पूर्ण
 
 	spin_lock(&ser_lock);
 	list_add(&ser->node, &ser_list);
 	spin_unlock(&ser_lock);
 	rtnl_unlock();
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	update_tty_status(ser);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ldisc_close(struct tty_struct *tty)
-{
-	struct ser_device *ser = tty->disc_data;
+अटल व्योम ldisc_बंद(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा ser_device *ser = tty->disc_data;
 
 	tty_kref_put(ser->tty);
 
@@ -375,27 +376,27 @@ static void ldisc_close(struct tty_struct *tty)
 	list_move(&ser->node, &ser_release_list);
 	spin_unlock(&ser_lock);
 	schedule_work(&ser_release_work);
-}
+पूर्ण
 
-/* The line discipline structure. */
-static struct tty_ldisc_ops caif_ldisc = {
+/* The line discipline काष्ठाure. */
+अटल काष्ठा tty_ldisc_ops caअगर_ldisc = अणु
 	.owner =	THIS_MODULE,
 	.name =		"n_caif",
-	.open =		ldisc_open,
-	.close =	ldisc_close,
+	.खोलो =		ldisc_खोलो,
+	.बंद =	ldisc_बंद,
 	.receive_buf =	ldisc_receive,
-	.write_wakeup =	ldisc_tx_wakeup
-};
+	.ग_लिखो_wakeup =	ldisc_tx_wakeup
+पूर्ण;
 
-static const struct net_device_ops netdev_ops = {
-	.ndo_open = caif_net_open,
-	.ndo_stop = caif_net_close,
-	.ndo_start_xmit = caif_xmit
-};
+अटल स्थिर काष्ठा net_device_ops netdev_ops = अणु
+	.nकरो_खोलो = caअगर_net_खोलो,
+	.nकरो_stop = caअगर_net_बंद,
+	.nकरो_start_xmit = caअगर_xmit
+पूर्ण;
 
-static void caifdev_setup(struct net_device *dev)
-{
-	struct ser_device *serdev = netdev_priv(dev);
+अटल व्योम caअगरdev_setup(काष्ठा net_device *dev)
+अणु
+	काष्ठा ser_device *serdev = netdev_priv(dev);
 
 	dev->features = 0;
 	dev->netdev_ops = &netdev_ops;
@@ -403,50 +404,50 @@ static void caifdev_setup(struct net_device *dev)
 	dev->flags = IFF_POINTOPOINT | IFF_NOARP;
 	dev->mtu = CAIF_MAX_MTU;
 	dev->priv_flags |= IFF_NO_QUEUE;
-	dev->needs_free_netdev = true;
+	dev->needs_मुक्त_netdev = true;
 	skb_queue_head_init(&serdev->head);
 	serdev->common.link_select = CAIF_LINK_LOW_LATENCY;
 	serdev->common.use_frag = true;
 	serdev->common.use_stx = ser_use_stx;
 	serdev->common.use_fcs = ser_use_fcs;
 	serdev->dev = dev;
-}
+पूर्ण
 
 
-static int caif_net_open(struct net_device *dev)
-{
-	netif_wake_queue(dev);
-	return 0;
-}
+अटल पूर्णांक caअगर_net_खोलो(काष्ठा net_device *dev)
+अणु
+	netअगर_wake_queue(dev);
+	वापस 0;
+पूर्ण
 
-static int caif_net_close(struct net_device *dev)
-{
-	netif_stop_queue(dev);
-	return 0;
-}
+अटल पूर्णांक caअगर_net_बंद(काष्ठा net_device *dev)
+अणु
+	netअगर_stop_queue(dev);
+	वापस 0;
+पूर्ण
 
-static int __init caif_ser_init(void)
-{
-	int ret;
+अटल पूर्णांक __init caअगर_ser_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = tty_register_ldisc(N_CAIF, &caif_ldisc);
-	if (ret < 0)
+	ret = tty_रेजिस्टर_ldisc(N_CAIF, &caअगर_ldisc);
+	अगर (ret < 0)
 		pr_err("cannot register CAIF ldisc=%d err=%d\n", N_CAIF, ret);
 
-	debugfsdir = debugfs_create_dir("caif_serial", NULL);
-	return ret;
-}
+	debugfsdir = debugfs_create_dir("caif_serial", शून्य);
+	वापस ret;
+पूर्ण
 
-static void __exit caif_ser_exit(void)
-{
+अटल व्योम __निकास caअगर_ser_निकास(व्योम)
+अणु
 	spin_lock(&ser_lock);
 	list_splice(&ser_list, &ser_release_list);
 	spin_unlock(&ser_lock);
-	ser_release(NULL);
+	ser_release(शून्य);
 	cancel_work_sync(&ser_release_work);
-	tty_unregister_ldisc(N_CAIF);
-	debugfs_remove_recursive(debugfsdir);
-}
+	tty_unरेजिस्टर_ldisc(N_CAIF);
+	debugfs_हटाओ_recursive(debugfsdir);
+पूर्ण
 
-module_init(caif_ser_init);
-module_exit(caif_ser_exit);
+module_init(caअगर_ser_init);
+module_निकास(caअगर_ser_निकास);

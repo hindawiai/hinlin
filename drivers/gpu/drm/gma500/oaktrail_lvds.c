@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright © 2006-2009 Intel Corporation
+ * Copyright तऊ 2006-2009 Intel Corporation
  *
  * Authors:
  *	Eric Anholt <eric@anholt.net>
  *	Dave Airlie <airlied@linux.ie>
- *	Jesse Barnes <jesse.barnes@intel.com>
+ *	Jesse Barnes <jesse.barnes@पूर्णांकel.com>
  */
 
-#include <linux/i2c.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <asm/intel-mid.h>
+#समावेश <यंत्र/पूर्णांकel-mid.h>
 
-#include <drm/drm_simple_kms_helper.h>
+#समावेश <drm/drm_simple_kms_helper.h>
 
-#include "intel_bios.h"
-#include "power.h"
-#include "psb_drv.h"
-#include "psb_intel_drv.h"
-#include "psb_intel_reg.h"
+#समावेश "intel_bios.h"
+#समावेश "power.h"
+#समावेश "psb_drv.h"
+#समावेश "psb_intel_drv.h"
+#समावेश "psb_intel_reg.h"
 
 /* The max/min PWM frequency in BPCR[31:17] - */
 /* The smallest number is 1 (not 0) that can fit in the
  * 15-bit field of the and then*/
-/* shifts to the left by one bit to get the actual 16-bit
+/* shअगरts to the left by one bit to get the actual 16-bit
  * value that the 15-bits correspond to.*/
-#define MRST_BLC_MAX_PWM_REG_FREQ	    0xFFFF
-#define BRIGHTNESS_MAX_LEVEL 100
+#घोषणा MRST_BLC_MAX_PWM_REG_FREQ	    0xFFFF
+#घोषणा BRIGHTNESS_MAX_LEVEL 100
 
 /*
- * Sets the power state for the panel.
+ * Sets the घातer state क्रम the panel.
  */
-static void oaktrail_lvds_set_power(struct drm_device *dev,
-				struct gma_encoder *gma_encoder,
+अटल व्योम oaktrail_lvds_set_घातer(काष्ठा drm_device *dev,
+				काष्ठा gma_encoder *gma_encoder,
 				bool on)
-{
+अणु
 	u32 pp_status;
-	struct drm_psb_private *dev_priv = dev->dev_private;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
 
-	if (!gma_power_begin(dev, true))
-		return;
+	अगर (!gma_घातer_begin(dev, true))
+		वापस;
 
-	if (on) {
+	अगर (on) अणु
 		REG_WRITE(PP_CONTROL, REG_READ(PP_CONTROL) |
 			  POWER_TARGET_ON);
-		do {
+		करो अणु
 			pp_status = REG_READ(PP_STATUS);
-		} while ((pp_status & (PP_ON | PP_READY)) == PP_READY);
+		पूर्ण जबतक ((pp_status & (PP_ON | PP_READY)) == PP_READY);
 		dev_priv->is_lvds_on = true;
-		if (dev_priv->ops->lvds_bl_power)
-			dev_priv->ops->lvds_bl_power(dev, true);
-	} else {
-		if (dev_priv->ops->lvds_bl_power)
-			dev_priv->ops->lvds_bl_power(dev, false);
+		अगर (dev_priv->ops->lvds_bl_घातer)
+			dev_priv->ops->lvds_bl_घातer(dev, true);
+	पूर्ण अन्यथा अणु
+		अगर (dev_priv->ops->lvds_bl_घातer)
+			dev_priv->ops->lvds_bl_घातer(dev, false);
 		REG_WRITE(PP_CONTROL, REG_READ(PP_CONTROL) &
 			  ~POWER_TARGET_ON);
-		do {
+		करो अणु
 			pp_status = REG_READ(PP_STATUS);
-		} while (pp_status & PP_ON);
+		पूर्ण जबतक (pp_status & PP_ON);
 		dev_priv->is_lvds_on = false;
 		pm_request_idle(dev->dev);
-	}
-	gma_power_end(dev);
-}
+	पूर्ण
+	gma_घातer_end(dev);
+पूर्ण
 
-static void oaktrail_lvds_dpms(struct drm_encoder *encoder, int mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct gma_encoder *gma_encoder = to_gma_encoder(encoder);
+अटल व्योम oaktrail_lvds_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा gma_encoder *gma_encoder = to_gma_encoder(encoder);
 
-	if (mode == DRM_MODE_DPMS_ON)
-		oaktrail_lvds_set_power(dev, gma_encoder, true);
-	else
-		oaktrail_lvds_set_power(dev, gma_encoder, false);
+	अगर (mode == DRM_MODE_DPMS_ON)
+		oaktrail_lvds_set_घातer(dev, gma_encoder, true);
+	अन्यथा
+		oaktrail_lvds_set_घातer(dev, gma_encoder, false);
 
-	/* XXX: We never power down the LVDS pairs. */
-}
+	/* XXX: We never घातer करोwn the LVDS pairs. */
+पूर्ण
 
-static void oaktrail_lvds_mode_set(struct drm_encoder *encoder,
-			       struct drm_display_mode *mode,
-			       struct drm_display_mode *adjusted_mode)
-{
-	struct drm_device *dev = encoder->dev;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	struct psb_intel_mode_device *mode_dev = &dev_priv->mode_dev;
-	struct drm_mode_config *mode_config = &dev->mode_config;
-	struct drm_connector *connector = NULL;
-	struct drm_crtc *crtc = encoder->crtc;
+अटल व्योम oaktrail_lvds_mode_set(काष्ठा drm_encoder *encoder,
+			       काष्ठा drm_display_mode *mode,
+			       काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	काष्ठा psb_पूर्णांकel_mode_device *mode_dev = &dev_priv->mode_dev;
+	काष्ठा drm_mode_config *mode_config = &dev->mode_config;
+	काष्ठा drm_connector *connector = शून्य;
+	काष्ठा drm_crtc *crtc = encoder->crtc;
 	u32 lvds_port;
-	uint64_t v = DRM_MODE_SCALE_FULLSCREEN;
+	uपूर्णांक64_t v = DRM_MODE_SCALE_FULLSCREEN;
 
-	if (!gma_power_begin(dev, true))
-		return;
+	अगर (!gma_घातer_begin(dev, true))
+		वापस;
 
 	/*
-	 * The LVDS pin pair will already have been turned on in the
-	 * psb_intel_crtc_mode_set since it has a large impact on the DPLL
+	 * The LVDS pin pair will alपढ़ोy have been turned on in the
+	 * psb_पूर्णांकel_crtc_mode_set since it has a large impact on the DPLL
 	 * settings.
 	 */
 	lvds_port = (REG_READ(LVDS) &
@@ -104,127 +105,127 @@ static void oaktrail_lvds_mode_set(struct drm_encoder *encoder,
 		    LVDS_PORT_EN |
 		    LVDS_BORDER_EN;
 
-	/* If the firmware says dither on Moorestown, or the BIOS does
+	/* If the firmware says dither on Moorestown, or the BIOS करोes
 	   on Oaktrail then enable dithering */
-	if (mode_dev->panel_wants_dither || dev_priv->lvds_dither)
+	अगर (mode_dev->panel_wants_dither || dev_priv->lvds_dither)
 		lvds_port |= MRST_PANEL_8TO6_DITHER_ENABLE;
 
 	REG_WRITE(LVDS, lvds_port);
 
 	/* Find the connector we're trying to set up */
-	list_for_each_entry(connector, &mode_config->connector_list, head) {
-		if (!connector->encoder || connector->encoder->crtc != crtc)
-			continue;
-	}
+	list_क्रम_each_entry(connector, &mode_config->connector_list, head) अणु
+		अगर (!connector->encoder || connector->encoder->crtc != crtc)
+			जारी;
+	पूर्ण
 
-	if (!connector) {
+	अगर (!connector) अणु
 		DRM_ERROR("Couldn't find connector when setting mode");
-		gma_power_end(dev);
-		return;
-	}
+		gma_घातer_end(dev);
+		वापस;
+	पूर्ण
 
 	drm_object_property_get_value(
 		&connector->base,
 		dev->mode_config.scaling_mode_property,
 		&v);
 
-	if (v == DRM_MODE_SCALE_NO_SCALE)
+	अगर (v == DRM_MODE_SCALE_NO_SCALE)
 		REG_WRITE(PFIT_CONTROL, 0);
-	else if (v == DRM_MODE_SCALE_ASPECT) {
-		if ((mode->vdisplay != adjusted_mode->crtc_vdisplay) ||
-		    (mode->hdisplay != adjusted_mode->crtc_hdisplay)) {
-			if ((adjusted_mode->crtc_hdisplay * mode->vdisplay) ==
+	अन्यथा अगर (v == DRM_MODE_SCALE_ASPECT) अणु
+		अगर ((mode->vdisplay != adjusted_mode->crtc_vdisplay) ||
+		    (mode->hdisplay != adjusted_mode->crtc_hdisplay)) अणु
+			अगर ((adjusted_mode->crtc_hdisplay * mode->vdisplay) ==
 			    (mode->hdisplay * adjusted_mode->crtc_vdisplay))
 				REG_WRITE(PFIT_CONTROL, PFIT_ENABLE);
-			else if ((adjusted_mode->crtc_hdisplay *
+			अन्यथा अगर ((adjusted_mode->crtc_hdisplay *
 				mode->vdisplay) > (mode->hdisplay *
 				adjusted_mode->crtc_vdisplay))
 				REG_WRITE(PFIT_CONTROL, PFIT_ENABLE |
 					  PFIT_SCALING_MODE_PILLARBOX);
-			else
+			अन्यथा
 				REG_WRITE(PFIT_CONTROL, PFIT_ENABLE |
 					  PFIT_SCALING_MODE_LETTERBOX);
-		} else
+		पूर्ण अन्यथा
 			REG_WRITE(PFIT_CONTROL, PFIT_ENABLE);
-	} else /*(v == DRM_MODE_SCALE_FULLSCREEN)*/
+	पूर्ण अन्यथा /*(v == DRM_MODE_SCALE_FULLSCREEN)*/
 		REG_WRITE(PFIT_CONTROL, PFIT_ENABLE);
 
-	gma_power_end(dev);
-}
+	gma_घातer_end(dev);
+पूर्ण
 
-static void oaktrail_lvds_prepare(struct drm_encoder *encoder)
-{
-	struct drm_device *dev = encoder->dev;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	struct gma_encoder *gma_encoder = to_gma_encoder(encoder);
-	struct psb_intel_mode_device *mode_dev = &dev_priv->mode_dev;
+अटल व्योम oaktrail_lvds_prepare(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	काष्ठा gma_encoder *gma_encoder = to_gma_encoder(encoder);
+	काष्ठा psb_पूर्णांकel_mode_device *mode_dev = &dev_priv->mode_dev;
 
-	if (!gma_power_begin(dev, true))
-		return;
+	अगर (!gma_घातer_begin(dev, true))
+		वापस;
 
 	mode_dev->saveBLC_PWM_CTL = REG_READ(BLC_PWM_CTL);
 	mode_dev->backlight_duty_cycle = (mode_dev->saveBLC_PWM_CTL &
 					  BACKLIGHT_DUTY_CYCLE_MASK);
-	oaktrail_lvds_set_power(dev, gma_encoder, false);
-	gma_power_end(dev);
-}
+	oaktrail_lvds_set_घातer(dev, gma_encoder, false);
+	gma_घातer_end(dev);
+पूर्ण
 
-static u32 oaktrail_lvds_get_max_backlight(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
+अटल u32 oaktrail_lvds_get_max_backlight(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
 	u32 ret;
 
-	if (gma_power_begin(dev, false)) {
+	अगर (gma_घातer_begin(dev, false)) अणु
 		ret = ((REG_READ(BLC_PWM_CTL) &
 			  BACKLIGHT_MODULATION_FREQ_MASK) >>
 			  BACKLIGHT_MODULATION_FREQ_SHIFT) * 2;
 
-		gma_power_end(dev);
-	} else
+		gma_घातer_end(dev);
+	पूर्ण अन्यथा
 		ret = ((dev_priv->regs.saveBLC_PWM_CTL &
 			  BACKLIGHT_MODULATION_FREQ_MASK) >>
 			  BACKLIGHT_MODULATION_FREQ_SHIFT) * 2;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void oaktrail_lvds_commit(struct drm_encoder *encoder)
-{
-	struct drm_device *dev = encoder->dev;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	struct gma_encoder *gma_encoder = to_gma_encoder(encoder);
-	struct psb_intel_mode_device *mode_dev = &dev_priv->mode_dev;
+अटल व्योम oaktrail_lvds_commit(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	काष्ठा gma_encoder *gma_encoder = to_gma_encoder(encoder);
+	काष्ठा psb_पूर्णांकel_mode_device *mode_dev = &dev_priv->mode_dev;
 
-	if (mode_dev->backlight_duty_cycle == 0)
+	अगर (mode_dev->backlight_duty_cycle == 0)
 		mode_dev->backlight_duty_cycle =
 					oaktrail_lvds_get_max_backlight(dev);
-	oaktrail_lvds_set_power(dev, gma_encoder, true);
-}
+	oaktrail_lvds_set_घातer(dev, gma_encoder, true);
+पूर्ण
 
-static const struct drm_encoder_helper_funcs oaktrail_lvds_helper_funcs = {
+अटल स्थिर काष्ठा drm_encoder_helper_funcs oaktrail_lvds_helper_funcs = अणु
 	.dpms = oaktrail_lvds_dpms,
-	.mode_fixup = psb_intel_lvds_mode_fixup,
+	.mode_fixup = psb_पूर्णांकel_lvds_mode_fixup,
 	.prepare = oaktrail_lvds_prepare,
 	.mode_set = oaktrail_lvds_mode_set,
 	.commit = oaktrail_lvds_commit,
-};
+पूर्ण;
 
 /* Returns the panel fixed mode from configuration. */
 
-static void oaktrail_lvds_get_configuration_mode(struct drm_device *dev,
-					struct psb_intel_mode_device *mode_dev)
-{
-	struct drm_display_mode *mode = NULL;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	struct oaktrail_timing_info *ti = &dev_priv->gct_data.DTD;
+अटल व्योम oaktrail_lvds_get_configuration_mode(काष्ठा drm_device *dev,
+					काष्ठा psb_पूर्णांकel_mode_device *mode_dev)
+अणु
+	काष्ठा drm_display_mode *mode = शून्य;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	काष्ठा oaktrail_timing_info *ti = &dev_priv->gct_data.DTD;
 
-	mode_dev->panel_fixed_mode = NULL;
+	mode_dev->panel_fixed_mode = शून्य;
 
 	/* Use the firmware provided data on Moorestown */
-	if (dev_priv->has_gct) {
-		mode = kzalloc(sizeof(*mode), GFP_KERNEL);
-		if (!mode)
-			return;
+	अगर (dev_priv->has_gct) अणु
+		mode = kzalloc(माप(*mode), GFP_KERNEL);
+		अगर (!mode)
+			वापस;
 
 		mode->hdisplay = (ti->hactive_hi << 8) | ti->hactive_lo;
 		mode->vdisplay = (ti->vactive_hi << 8) | ti->vactive_lo;
@@ -244,8 +245,8 @@ static void oaktrail_lvds_get_configuration_mode(struct drm_device *dev,
 						ti->vsync_pulse_width_lo);
 		mode->vtotal = mode->vdisplay + \
 				((ti->vblank_hi << 8) | ti->vblank_lo);
-		mode->clock = ti->pixel_clock * 10;
-#if 0
+		mode->घड़ी = ti->pixel_घड़ी * 10;
+#अगर 0
 		pr_info("hdisplay is %d\n", mode->hdisplay);
 		pr_info("vdisplay is %d\n", mode->vdisplay);
 		pr_info("HSS is %d\n", mode->hsync_start);
@@ -254,64 +255,64 @@ static void oaktrail_lvds_get_configuration_mode(struct drm_device *dev,
 		pr_info("VSS is %d\n", mode->vsync_start);
 		pr_info("VSE is %d\n", mode->vsync_end);
 		pr_info("vtotal is %d\n", mode->vtotal);
-		pr_info("clock is %d\n", mode->clock);
-#endif
+		pr_info("clock is %d\n", mode->घड़ी);
+#पूर्ण_अगर
 		mode_dev->panel_fixed_mode = mode;
-	}
+	पूर्ण
 
-	/* Use the BIOS VBT mode if available */
-	if (mode_dev->panel_fixed_mode == NULL && mode_dev->vbt_mode)
+	/* Use the BIOS VBT mode अगर available */
+	अगर (mode_dev->panel_fixed_mode == शून्य && mode_dev->vbt_mode)
 		mode_dev->panel_fixed_mode = drm_mode_duplicate(dev,
 						mode_dev->vbt_mode);
 
 	/* Then try the LVDS VBT mode */
-	if (mode_dev->panel_fixed_mode == NULL)
-		if (dev_priv->lfp_lvds_vbt_mode)
+	अगर (mode_dev->panel_fixed_mode == शून्य)
+		अगर (dev_priv->lfp_lvds_vbt_mode)
 			mode_dev->panel_fixed_mode =
 				drm_mode_duplicate(dev,
 					dev_priv->lfp_lvds_vbt_mode);
 
 	/* If we still got no mode then bail */
-	if (mode_dev->panel_fixed_mode == NULL)
-		return;
+	अगर (mode_dev->panel_fixed_mode == शून्य)
+		वापस;
 
 	drm_mode_set_name(mode_dev->panel_fixed_mode);
 	drm_mode_set_crtcinfo(mode_dev->panel_fixed_mode, 0);
-}
+पूर्ण
 
 /**
  * oaktrail_lvds_init - setup LVDS connectors on this device
  * @dev: drm device
  * @mode_dev: PSB mode device
  *
- * Create the connector, register the LVDS DDC bus, and try to figure out what
- * modes we can display on the LVDS panel (if present).
+ * Create the connector, रेजिस्टर the LVDS DDC bus, and try to figure out what
+ * modes we can display on the LVDS panel (अगर present).
  */
-void oaktrail_lvds_init(struct drm_device *dev,
-		    struct psb_intel_mode_device *mode_dev)
-{
-	struct gma_encoder *gma_encoder;
-	struct gma_connector *gma_connector;
-	struct drm_connector *connector;
-	struct drm_encoder *encoder;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	struct edid *edid;
-	struct i2c_adapter *i2c_adap;
-	struct drm_display_mode *scan;	/* *modes, *bios_mode; */
+व्योम oaktrail_lvds_init(काष्ठा drm_device *dev,
+		    काष्ठा psb_पूर्णांकel_mode_device *mode_dev)
+अणु
+	काष्ठा gma_encoder *gma_encoder;
+	काष्ठा gma_connector *gma_connector;
+	काष्ठा drm_connector *connector;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	काष्ठा edid *edid;
+	काष्ठा i2c_adapter *i2c_adap;
+	काष्ठा drm_display_mode *scan;	/* *modes, *bios_mode; */
 
-	gma_encoder = kzalloc(sizeof(struct gma_encoder), GFP_KERNEL);
-	if (!gma_encoder)
-		return;
+	gma_encoder = kzalloc(माप(काष्ठा gma_encoder), GFP_KERNEL);
+	अगर (!gma_encoder)
+		वापस;
 
-	gma_connector = kzalloc(sizeof(struct gma_connector), GFP_KERNEL);
-	if (!gma_connector)
-		goto failed_connector;
+	gma_connector = kzalloc(माप(काष्ठा gma_connector), GFP_KERNEL);
+	अगर (!gma_connector)
+		जाओ failed_connector;
 
 	connector = &gma_connector->base;
 	encoder = &gma_encoder->base;
 	dev_priv->is_lvds_on = true;
 	drm_connector_init(dev, connector,
-			   &psb_intel_lvds_connector_funcs,
+			   &psb_पूर्णांकel_lvds_connector_funcs,
 			   DRM_MODE_CONNECTOR_LVDS);
 
 	drm_simple_encoder_init(dev, encoder, DRM_MODE_ENCODER_LVDS);
@@ -321,10 +322,10 @@ void oaktrail_lvds_init(struct drm_device *dev,
 
 	drm_encoder_helper_add(encoder, &oaktrail_lvds_helper_funcs);
 	drm_connector_helper_add(connector,
-				 &psb_intel_lvds_connector_helper_funcs);
+				 &psb_पूर्णांकel_lvds_connector_helper_funcs);
 	connector->display_info.subpixel_order = SubPixelHorizontalRGB;
-	connector->interlace_allowed = false;
-	connector->doublescan_allowed = false;
+	connector->पूर्णांकerlace_allowed = false;
+	connector->द्विगुनscan_allowed = false;
 
 	drm_object_attach_property(&connector->base,
 					dev->mode_config.scaling_mode_property,
@@ -334,51 +335,51 @@ void oaktrail_lvds_init(struct drm_device *dev,
 					BRIGHTNESS_MAX_LEVEL);
 
 	mode_dev->panel_wants_dither = false;
-	if (dev_priv->has_gct)
+	अगर (dev_priv->has_gct)
 		mode_dev->panel_wants_dither = (dev_priv->gct_data.
 			Panel_Port_Control & MRST_PANEL_8TO6_DITHER_ENABLE);
-        if (dev_priv->lvds_dither)
+        अगर (dev_priv->lvds_dither)
                 mode_dev->panel_wants_dither = 1;
 
 	/*
 	 * LVDS discovery:
-	 * 1) check for EDID on DDC
-	 * 2) check for VBT data
-	 * 3) check to see if LVDS is already on
-	 *    if none of the above, no panel
-	 * 4) make sure lid is open
-	 *    if closed, act like it's not there for now
+	 * 1) check क्रम EDID on DDC
+	 * 2) check क्रम VBT data
+	 * 3) check to see अगर LVDS is alपढ़ोy on
+	 *    अगर none of the above, no panel
+	 * 4) make sure lid is खोलो
+	 *    अगर बंदd, act like it's not there क्रम now
 	 */
 
-	edid = NULL;
+	edid = शून्य;
 	mutex_lock(&dev->mode_config.mutex);
 	i2c_adap = i2c_get_adapter(dev_priv->ops->i2c_bus);
-	if (i2c_adap)
+	अगर (i2c_adap)
 		edid = drm_get_edid(connector, i2c_adap);
-	if (edid == NULL && dev_priv->lpc_gpio_base) {
+	अगर (edid == शून्य && dev_priv->lpc_gpio_base) अणु
 		oaktrail_lvds_i2c_init(encoder);
-		if (gma_encoder->ddc_bus != NULL) {
+		अगर (gma_encoder->ddc_bus != शून्य) अणु
 			i2c_adap = &gma_encoder->ddc_bus->adapter;
 			edid = drm_get_edid(connector, i2c_adap);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * Attempt to get the fixed panel mode from DDC.  Assume that the
 	 * preferred mode is the right one.
 	 */
-	if (edid) {
+	अगर (edid) अणु
 		drm_connector_update_edid_property(connector, edid);
 		drm_add_edid_modes(connector, edid);
-		kfree(edid);
+		kमुक्त(edid);
 
-		list_for_each_entry(scan, &connector->probed_modes, head) {
-			if (scan->type & DRM_MODE_TYPE_PREFERRED) {
+		list_क्रम_each_entry(scan, &connector->probed_modes, head) अणु
+			अगर (scan->type & DRM_MODE_TYPE_PREFERRED) अणु
 				mode_dev->panel_fixed_mode =
 				    drm_mode_duplicate(dev, scan);
-				goto out;	/* FIXME: check for quirks */
-			}
-		}
-	} else
+				जाओ out;	/* FIXME: check क्रम quirks */
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा
 		dev_err(dev->dev, "No ddc adapter available!\n");
 	/*
 	 * If we didn't get EDID, try geting panel timing
@@ -386,38 +387,38 @@ void oaktrail_lvds_init(struct drm_device *dev,
 	 */
 	oaktrail_lvds_get_configuration_mode(dev, mode_dev);
 
-	if (mode_dev->panel_fixed_mode) {
+	अगर (mode_dev->panel_fixed_mode) अणु
 		mode_dev->panel_fixed_mode->type |= DRM_MODE_TYPE_PREFERRED;
-		goto out;	/* FIXME: check for quirks */
-	}
+		जाओ out;	/* FIXME: check क्रम quirks */
+	पूर्ण
 
-	/* If we still don't have a mode after all that, give up. */
-	if (!mode_dev->panel_fixed_mode) {
+	/* If we still करोn't have a mode after all that, give up. */
+	अगर (!mode_dev->panel_fixed_mode) अणु
 		dev_err(dev->dev, "Found no modes on the lvds, ignoring the LVDS\n");
-		goto failed_find;
-	}
+		जाओ failed_find;
+	पूर्ण
 
 out:
 	mutex_unlock(&dev->mode_config.mutex);
 
-	drm_connector_register(connector);
-	return;
+	drm_connector_रेजिस्टर(connector);
+	वापस;
 
 failed_find:
 	mutex_unlock(&dev->mode_config.mutex);
 
 	dev_dbg(dev->dev, "No LVDS modes found, disabling.\n");
-	if (gma_encoder->ddc_bus) {
-		psb_intel_i2c_destroy(gma_encoder->ddc_bus);
-		gma_encoder->ddc_bus = NULL;
-	}
+	अगर (gma_encoder->ddc_bus) अणु
+		psb_पूर्णांकel_i2c_destroy(gma_encoder->ddc_bus);
+		gma_encoder->ddc_bus = शून्य;
+	पूर्ण
 
 /* failed_ddc: */
 
 	drm_encoder_cleanup(encoder);
 	drm_connector_cleanup(connector);
-	kfree(gma_connector);
+	kमुक्त(gma_connector);
 failed_connector:
-	kfree(gma_encoder);
-}
+	kमुक्त(gma_encoder);
+पूर्ण
 

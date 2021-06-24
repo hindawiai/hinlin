@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * This file provides ECC correction for more than 1 bit per block of data,
+ * This file provides ECC correction क्रम more than 1 bit per block of data,
  * using binary BCH codes. It relies on the generic BCH library lib/bch.c.
  *
- * Copyright © 2011 Ivan Djelic <ivan.djelic@parrot.com>
+ * Copyright तऊ 2011 Ivan Djelic <ivan.djelic@parrot.com>
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
-#include <linux/mtd/nand.h>
-#include <linux/mtd/nand-ecc-sw-bch.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/mtd/nand.h>
+#समावेश <linux/mtd/nand-ecc-sw-bch.h>
 
 /**
  * nand_ecc_sw_bch_calculate - Calculate the ECC corresponding to a data block
- * @nand: NAND device
+ * @nand: न_अंकD device
  * @buf: Input buffer with raw data
  * @code: Output buffer with ECC
  */
-int nand_ecc_sw_bch_calculate(struct nand_device *nand,
-			      const unsigned char *buf, unsigned char *code)
-{
-	struct nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
-	unsigned int i;
+पूर्णांक nand_ecc_sw_bch_calculate(काष्ठा nand_device *nand,
+			      स्थिर अचिन्हित अक्षर *buf, अचिन्हित अक्षर *code)
+अणु
+	काष्ठा nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
+	अचिन्हित पूर्णांक i;
 
-	memset(code, 0, engine_conf->code_size);
+	स_रखो(code, 0, engine_conf->code_size);
 	bch_encode(engine_conf->bch, buf, nand->ecc.ctx.conf.step_size, code);
 
 	/* apply mask so that an erased page is a valid codeword */
-	for (i = 0; i < engine_conf->code_size; i++)
+	क्रम (i = 0; i < engine_conf->code_size; i++)
 		code[i] ^= engine_conf->eccmask[i];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(nand_ecc_sw_bch_calculate);
 
 /**
  * nand_ecc_sw_bch_correct - Detect, correct and report bit error(s)
- * @nand: NAND device
- * @buf: Raw data read from the chip
- * @read_ecc: ECC bytes from the chip
+ * @nand: न_अंकD device
+ * @buf: Raw data पढ़ो from the chip
+ * @पढ़ो_ecc: ECC bytes from the chip
  * @calc_ecc: ECC calculated from the raw data
  *
- * Detect and correct bit errors for a data block.
+ * Detect and correct bit errors क्रम a data block.
  */
-int nand_ecc_sw_bch_correct(struct nand_device *nand, unsigned char *buf,
-			    unsigned char *read_ecc, unsigned char *calc_ecc)
-{
-	struct nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
-	unsigned int step_size = nand->ecc.ctx.conf.step_size;
-	unsigned int *errloc = engine_conf->errloc;
-	int i, count;
+पूर्णांक nand_ecc_sw_bch_correct(काष्ठा nand_device *nand, अचिन्हित अक्षर *buf,
+			    अचिन्हित अक्षर *पढ़ो_ecc, अचिन्हित अक्षर *calc_ecc)
+अणु
+	काष्ठा nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
+	अचिन्हित पूर्णांक step_size = nand->ecc.ctx.conf.step_size;
+	अचिन्हित पूर्णांक *errloc = engine_conf->errloc;
+	पूर्णांक i, count;
 
-	count = bch_decode(engine_conf->bch, NULL, step_size, read_ecc,
-			   calc_ecc, NULL, errloc);
-	if (count > 0) {
-		for (i = 0; i < count; i++) {
-			if (errloc[i] < (step_size * 8))
+	count = bch_decode(engine_conf->bch, शून्य, step_size, पढ़ो_ecc,
+			   calc_ecc, शून्य, errloc);
+	अगर (count > 0) अणु
+		क्रम (i = 0; i < count; i++) अणु
+			अगर (errloc[i] < (step_size * 8))
 				/* The error is in the data area: correct it */
 				buf[errloc[i] >> 3] ^= (1 << (errloc[i] & 7));
 
-			/* Otherwise the error is in the ECC area: nothing to do */
+			/* Otherwise the error is in the ECC area: nothing to करो */
 			pr_debug("%s: corrected bitflip %u\n", __func__,
 				 errloc[i]);
-		}
-	} else if (count < 0) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (count < 0) अणु
 		pr_err("ECC unrecoverable error\n");
 		count = -EBADMSG;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL(nand_ecc_sw_bch_correct);
 
 /**
  * nand_ecc_sw_bch_cleanup - Cleanup software BCH ECC resources
- * @nand: NAND device
+ * @nand: न_अंकD device
  */
-static void nand_ecc_sw_bch_cleanup(struct nand_device *nand)
-{
-	struct nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
+अटल व्योम nand_ecc_sw_bch_cleanup(काष्ठा nand_device *nand)
+अणु
+	काष्ठा nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
 
-	bch_free(engine_conf->bch);
-	kfree(engine_conf->errloc);
-	kfree(engine_conf->eccmask);
-}
+	bch_मुक्त(engine_conf->bch);
+	kमुक्त(engine_conf->errloc);
+	kमुक्त(engine_conf->eccmask);
+पूर्ण
 
 /**
  * nand_ecc_sw_bch_init - Initialize software BCH ECC engine
- * @nand: NAND device
+ * @nand: न_अंकD device
  *
- * Returns: a pointer to a new NAND BCH control structure, or NULL upon failure
+ * Returns: a poपूर्णांकer to a new न_अंकD BCH control काष्ठाure, or शून्य upon failure
  *
- * Initialize NAND BCH error correction. @nand.ecc parameters 'step_size' and
+ * Initialize न_अंकD BCH error correction. @nand.ecc parameters 'step_size' and
  * 'bytes' are used to compute the following BCH parameters:
  *     m, the Galois field order
  *     t, the error correction capability
@@ -102,303 +103,303 @@ static void nand_ecc_sw_bch_cleanup(struct nand_device *nand)
  * bits, where m is such that 2^m - 1 > step_size * 8.
  *
  * Example: to configure 4 bit correction per 512 bytes, you should pass
- * step_size = 512 (thus, m = 13 is the smallest integer such that 2^m - 1 > 512 * 8)
+ * step_size = 512 (thus, m = 13 is the smallest पूर्णांकeger such that 2^m - 1 > 512 * 8)
  * bytes = 7 (7 bytes are required to store m * t = 13 * 4 = 52 bits)
  */
-static int nand_ecc_sw_bch_init(struct nand_device *nand)
-{
-	struct nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
-	unsigned int eccsize = nand->ecc.ctx.conf.step_size;
-	unsigned int eccbytes = engine_conf->code_size;
-	unsigned int m, t, i;
-	unsigned char *erased_page;
-	int ret;
+अटल पूर्णांक nand_ecc_sw_bch_init(काष्ठा nand_device *nand)
+अणु
+	काष्ठा nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
+	अचिन्हित पूर्णांक eccsize = nand->ecc.ctx.conf.step_size;
+	अचिन्हित पूर्णांक eccbytes = engine_conf->code_size;
+	अचिन्हित पूर्णांक m, t, i;
+	अचिन्हित अक्षर *erased_page;
+	पूर्णांक ret;
 
 	m = fls(1 + (8 * eccsize));
 	t = (eccbytes * 8) / m;
 
 	engine_conf->bch = bch_init(m, t, 0, false);
-	if (!engine_conf->bch)
-		return -EINVAL;
+	अगर (!engine_conf->bch)
+		वापस -EINVAL;
 
 	engine_conf->eccmask = kzalloc(eccbytes, GFP_KERNEL);
-	engine_conf->errloc = kmalloc_array(t, sizeof(*engine_conf->errloc),
+	engine_conf->errloc = kदो_स्मृति_array(t, माप(*engine_conf->errloc),
 					    GFP_KERNEL);
-	if (!engine_conf->eccmask || !engine_conf->errloc) {
+	अगर (!engine_conf->eccmask || !engine_conf->errloc) अणु
 		ret = -ENOMEM;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	/* Compute and store the inverted ECC of an erased step */
-	erased_page = kmalloc(eccsize, GFP_KERNEL);
-	if (!erased_page) {
+	erased_page = kदो_स्मृति(eccsize, GFP_KERNEL);
+	अगर (!erased_page) अणु
 		ret = -ENOMEM;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	memset(erased_page, 0xff, eccsize);
+	स_रखो(erased_page, 0xff, eccsize);
 	bch_encode(engine_conf->bch, erased_page, eccsize,
 		   engine_conf->eccmask);
-	kfree(erased_page);
+	kमुक्त(erased_page);
 
-	for (i = 0; i < eccbytes; i++)
+	क्रम (i = 0; i < eccbytes; i++)
 		engine_conf->eccmask[i] ^= 0xff;
 
-	/* Verify that the number of code bytes has the expected value */
-	if (engine_conf->bch->ecc_bytes != eccbytes) {
+	/* Verअगरy that the number of code bytes has the expected value */
+	अगर (engine_conf->bch->ecc_bytes != eccbytes) अणु
 		pr_err("Invalid number of ECC bytes: %u, expected: %u\n",
 		       eccbytes, engine_conf->bch->ecc_bytes);
 		ret = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	/* Sanity checks */
-	if (8 * (eccsize + eccbytes) >= (1 << m)) {
+	अगर (8 * (eccsize + eccbytes) >= (1 << m)) अणु
 		pr_err("ECC step size is too large (%u)\n", eccsize);
 		ret = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup:
 	nand_ecc_sw_bch_cleanup(nand);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int nand_ecc_sw_bch_init_ctx(struct nand_device *nand)
-{
-	struct nand_ecc_props *conf = &nand->ecc.ctx.conf;
-	struct mtd_info *mtd = nanddev_to_mtd(nand);
-	struct nand_ecc_sw_bch_conf *engine_conf;
-	unsigned int code_size = 0, nsteps;
-	int ret;
+पूर्णांक nand_ecc_sw_bch_init_ctx(काष्ठा nand_device *nand)
+अणु
+	काष्ठा nand_ecc_props *conf = &nand->ecc.ctx.conf;
+	काष्ठा mtd_info *mtd = nanddev_to_mtd(nand);
+	काष्ठा nand_ecc_sw_bch_conf *engine_conf;
+	अचिन्हित पूर्णांक code_size = 0, nsteps;
+	पूर्णांक ret;
 
-	/* Only large page NAND chips may use BCH */
-	if (mtd->oobsize < 64) {
+	/* Only large page न_अंकD chips may use BCH */
+	अगर (mtd->oobsize < 64) अणु
 		pr_err("BCH cannot be used with small page NAND chips\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!mtd->ooblayout)
+	अगर (!mtd->ooblayout)
 		mtd_set_ooblayout(mtd, nand_get_large_page_ooblayout());
 
-	conf->engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
-	conf->algo = NAND_ECC_ALGO_BCH;
+	conf->engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
+	conf->algo = न_अंकD_ECC_ALGO_BCH;
 	conf->step_size = nand->ecc.user_conf.step_size;
 	conf->strength = nand->ecc.user_conf.strength;
 
 	/*
 	 * Board driver should supply ECC size and ECC strength
 	 * values to select how many bits are correctable.
-	 * Otherwise, default to 512 bytes for large page devices and 256 for
+	 * Otherwise, शेष to 512 bytes क्रम large page devices and 256 क्रम
 	 * small page devices.
 	 */
-	if (!conf->step_size) {
-		if (mtd->oobsize >= 64)
+	अगर (!conf->step_size) अणु
+		अगर (mtd->oobsize >= 64)
 			conf->step_size = 512;
-		else
+		अन्यथा
 			conf->step_size = 256;
 
 		conf->strength = 4;
-	}
+	पूर्ण
 
-	nsteps = mtd->writesize / conf->step_size;
+	nsteps = mtd->ग_लिखोsize / conf->step_size;
 
 	/* Maximize */
-	if (nand->ecc.user_conf.flags & NAND_ECC_MAXIMIZE_STRENGTH) {
+	अगर (nand->ecc.user_conf.flags & न_अंकD_ECC_MAXIMIZE_STRENGTH) अणु
 		conf->step_size = 1024;
-		nsteps = mtd->writesize / conf->step_size;
-		/* Reserve 2 bytes for the BBM */
+		nsteps = mtd->ग_लिखोsize / conf->step_size;
+		/* Reserve 2 bytes क्रम the BBM */
 		code_size = (mtd->oobsize - 2) / nsteps;
 		conf->strength = code_size * 8 / fls(8 * conf->step_size);
-	}
+	पूर्ण
 
-	if (!code_size)
+	अगर (!code_size)
 		code_size = DIV_ROUND_UP(conf->strength *
 					 fls(8 * conf->step_size), 8);
 
-	if (!conf->strength)
+	अगर (!conf->strength)
 		conf->strength = (code_size * 8) / fls(8 * conf->step_size);
 
-	if (!code_size && !conf->strength) {
+	अगर (!code_size && !conf->strength) अणु
 		pr_err("Missing ECC parameters\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	engine_conf = kzalloc(sizeof(*engine_conf), GFP_KERNEL);
-	if (!engine_conf)
-		return -ENOMEM;
+	engine_conf = kzalloc(माप(*engine_conf), GFP_KERNEL);
+	अगर (!engine_conf)
+		वापस -ENOMEM;
 
 	ret = nand_ecc_init_req_tweaking(&engine_conf->req_ctx, nand);
-	if (ret)
-		goto free_engine_conf;
+	अगर (ret)
+		जाओ मुक्त_engine_conf;
 
 	engine_conf->code_size = code_size;
 	engine_conf->calc_buf = kzalloc(mtd->oobsize, GFP_KERNEL);
 	engine_conf->code_buf = kzalloc(mtd->oobsize, GFP_KERNEL);
-	if (!engine_conf->calc_buf || !engine_conf->code_buf) {
+	अगर (!engine_conf->calc_buf || !engine_conf->code_buf) अणु
 		ret = -ENOMEM;
-		goto free_bufs;
-	}
+		जाओ मुक्त_bufs;
+	पूर्ण
 
 	nand->ecc.ctx.priv = engine_conf;
 	nand->ecc.ctx.nsteps = nsteps;
 	nand->ecc.ctx.total = nsteps * code_size;
 
 	ret = nand_ecc_sw_bch_init(nand);
-	if (ret)
-		goto free_bufs;
+	अगर (ret)
+		जाओ मुक्त_bufs;
 
-	/* Verify the layout validity */
-	if (mtd_ooblayout_count_eccbytes(mtd) !=
-	    nand->ecc.ctx.nsteps * engine_conf->code_size) {
+	/* Verअगरy the layout validity */
+	अगर (mtd_ooblayout_count_eccbytes(mtd) !=
+	    nand->ecc.ctx.nsteps * engine_conf->code_size) अणु
 		pr_err("Invalid ECC layout\n");
 		ret = -EINVAL;
-		goto cleanup_bch_ctx;
-	}
+		जाओ cleanup_bch_ctx;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup_bch_ctx:
 	nand_ecc_sw_bch_cleanup(nand);
-free_bufs:
+मुक्त_bufs:
 	nand_ecc_cleanup_req_tweaking(&engine_conf->req_ctx);
-	kfree(engine_conf->calc_buf);
-	kfree(engine_conf->code_buf);
-free_engine_conf:
-	kfree(engine_conf);
+	kमुक्त(engine_conf->calc_buf);
+	kमुक्त(engine_conf->code_buf);
+मुक्त_engine_conf:
+	kमुक्त(engine_conf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(nand_ecc_sw_bch_init_ctx);
 
-void nand_ecc_sw_bch_cleanup_ctx(struct nand_device *nand)
-{
-	struct nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
+व्योम nand_ecc_sw_bch_cleanup_ctx(काष्ठा nand_device *nand)
+अणु
+	काष्ठा nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
 
-	if (engine_conf) {
+	अगर (engine_conf) अणु
 		nand_ecc_sw_bch_cleanup(nand);
 		nand_ecc_cleanup_req_tweaking(&engine_conf->req_ctx);
-		kfree(engine_conf->calc_buf);
-		kfree(engine_conf->code_buf);
-		kfree(engine_conf);
-	}
-}
+		kमुक्त(engine_conf->calc_buf);
+		kमुक्त(engine_conf->code_buf);
+		kमुक्त(engine_conf);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(nand_ecc_sw_bch_cleanup_ctx);
 
-static int nand_ecc_sw_bch_prepare_io_req(struct nand_device *nand,
-					  struct nand_page_io_req *req)
-{
-	struct nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
-	struct mtd_info *mtd = nanddev_to_mtd(nand);
-	int eccsize = nand->ecc.ctx.conf.step_size;
-	int eccbytes = engine_conf->code_size;
-	int eccsteps = nand->ecc.ctx.nsteps;
-	int total = nand->ecc.ctx.total;
+अटल पूर्णांक nand_ecc_sw_bch_prepare_io_req(काष्ठा nand_device *nand,
+					  काष्ठा nand_page_io_req *req)
+अणु
+	काष्ठा nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
+	काष्ठा mtd_info *mtd = nanddev_to_mtd(nand);
+	पूर्णांक eccsize = nand->ecc.ctx.conf.step_size;
+	पूर्णांक eccbytes = engine_conf->code_size;
+	पूर्णांक eccsteps = nand->ecc.ctx.nsteps;
+	पूर्णांक total = nand->ecc.ctx.total;
 	u8 *ecccalc = engine_conf->calc_buf;
-	const u8 *data;
-	int i;
+	स्थिर u8 *data;
+	पूर्णांक i;
 
-	/* Nothing to do for a raw operation */
-	if (req->mode == MTD_OPS_RAW)
-		return 0;
+	/* Nothing to करो क्रम a raw operation */
+	अगर (req->mode == MTD_OPS_RAW)
+		वापस 0;
 
-	/* This engine does not provide BBM/free OOB bytes protection */
-	if (!req->datalen)
-		return 0;
+	/* This engine करोes not provide BBM/मुक्त OOB bytes protection */
+	अगर (!req->datalen)
+		वापस 0;
 
 	nand_ecc_tweak_req(&engine_conf->req_ctx, req);
 
-	/* No more preparation for page read */
-	if (req->type == NAND_PAGE_READ)
-		return 0;
+	/* No more preparation क्रम page पढ़ो */
+	अगर (req->type == न_अंकD_PAGE_READ)
+		वापस 0;
 
-	/* Preparation for page write: derive the ECC bytes and place them */
-	for (i = 0, data = req->databuf.out;
+	/* Preparation क्रम page ग_लिखो: derive the ECC bytes and place them */
+	क्रम (i = 0, data = req->databuf.out;
 	     eccsteps;
 	     eccsteps--, i += eccbytes, data += eccsize)
 		nand_ecc_sw_bch_calculate(nand, data, &ecccalc[i]);
 
-	return mtd_ooblayout_set_eccbytes(mtd, ecccalc, (void *)req->oobbuf.out,
+	वापस mtd_ooblayout_set_eccbytes(mtd, ecccalc, (व्योम *)req->oobbuf.out,
 					  0, total);
-}
+पूर्ण
 
-static int nand_ecc_sw_bch_finish_io_req(struct nand_device *nand,
-					 struct nand_page_io_req *req)
-{
-	struct nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
-	struct mtd_info *mtd = nanddev_to_mtd(nand);
-	int eccsize = nand->ecc.ctx.conf.step_size;
-	int total = nand->ecc.ctx.total;
-	int eccbytes = engine_conf->code_size;
-	int eccsteps = nand->ecc.ctx.nsteps;
+अटल पूर्णांक nand_ecc_sw_bch_finish_io_req(काष्ठा nand_device *nand,
+					 काष्ठा nand_page_io_req *req)
+अणु
+	काष्ठा nand_ecc_sw_bch_conf *engine_conf = nand->ecc.ctx.priv;
+	काष्ठा mtd_info *mtd = nanddev_to_mtd(nand);
+	पूर्णांक eccsize = nand->ecc.ctx.conf.step_size;
+	पूर्णांक total = nand->ecc.ctx.total;
+	पूर्णांक eccbytes = engine_conf->code_size;
+	पूर्णांक eccsteps = nand->ecc.ctx.nsteps;
 	u8 *ecccalc = engine_conf->calc_buf;
 	u8 *ecccode = engine_conf->code_buf;
-	unsigned int max_bitflips = 0;
+	अचिन्हित पूर्णांक max_bitflips = 0;
 	u8 *data = req->databuf.in;
-	int i, ret;
+	पूर्णांक i, ret;
 
-	/* Nothing to do for a raw operation */
-	if (req->mode == MTD_OPS_RAW)
-		return 0;
+	/* Nothing to करो क्रम a raw operation */
+	अगर (req->mode == MTD_OPS_RAW)
+		वापस 0;
 
-	/* This engine does not provide BBM/free OOB bytes protection */
-	if (!req->datalen)
-		return 0;
+	/* This engine करोes not provide BBM/मुक्त OOB bytes protection */
+	अगर (!req->datalen)
+		वापस 0;
 
-	/* No more preparation for page write */
-	if (req->type == NAND_PAGE_WRITE) {
+	/* No more preparation क्रम page ग_लिखो */
+	अगर (req->type == न_अंकD_PAGE_WRITE) अणु
 		nand_ecc_restore_req(&engine_conf->req_ctx, req);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Finish a page read: retrieve the (raw) ECC bytes*/
+	/* Finish a page पढ़ो: retrieve the (raw) ECC bytes*/
 	ret = mtd_ooblayout_get_eccbytes(mtd, ecccode, req->oobbuf.in, 0,
 					 total);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Calculate the ECC bytes */
-	for (i = 0; eccsteps; eccsteps--, i += eccbytes, data += eccsize)
+	क्रम (i = 0; eccsteps; eccsteps--, i += eccbytes, data += eccsize)
 		nand_ecc_sw_bch_calculate(nand, data, &ecccalc[i]);
 
-	/* Finish a page read: compare and correct */
-	for (eccsteps = nand->ecc.ctx.nsteps, i = 0, data = req->databuf.in;
+	/* Finish a page पढ़ो: compare and correct */
+	क्रम (eccsteps = nand->ecc.ctx.nsteps, i = 0, data = req->databuf.in;
 	     eccsteps;
-	     eccsteps--, i += eccbytes, data += eccsize) {
-		int stat =  nand_ecc_sw_bch_correct(nand, data,
+	     eccsteps--, i += eccbytes, data += eccsize) अणु
+		पूर्णांक stat =  nand_ecc_sw_bch_correct(nand, data,
 						    &ecccode[i],
 						    &ecccalc[i]);
-		if (stat < 0) {
+		अगर (stat < 0) अणु
 			mtd->ecc_stats.failed++;
-		} else {
+		पूर्ण अन्यथा अणु
 			mtd->ecc_stats.corrected += stat;
-			max_bitflips = max_t(unsigned int, max_bitflips, stat);
-		}
-	}
+			max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips, stat);
+		पूर्ण
+	पूर्ण
 
 	nand_ecc_restore_req(&engine_conf->req_ctx, req);
 
-	return max_bitflips;
-}
+	वापस max_bitflips;
+पूर्ण
 
-static struct nand_ecc_engine_ops nand_ecc_sw_bch_engine_ops = {
+अटल काष्ठा nand_ecc_engine_ops nand_ecc_sw_bch_engine_ops = अणु
 	.init_ctx = nand_ecc_sw_bch_init_ctx,
 	.cleanup_ctx = nand_ecc_sw_bch_cleanup_ctx,
 	.prepare_io_req = nand_ecc_sw_bch_prepare_io_req,
 	.finish_io_req = nand_ecc_sw_bch_finish_io_req,
-};
+पूर्ण;
 
-static struct nand_ecc_engine nand_ecc_sw_bch_engine = {
+अटल काष्ठा nand_ecc_engine nand_ecc_sw_bch_engine = अणु
 	.ops = &nand_ecc_sw_bch_engine_ops,
-};
+पूर्ण;
 
-struct nand_ecc_engine *nand_ecc_sw_bch_get_engine(void)
-{
-	return &nand_ecc_sw_bch_engine;
-}
+काष्ठा nand_ecc_engine *nand_ecc_sw_bch_get_engine(व्योम)
+अणु
+	वापस &nand_ecc_sw_bch_engine;
+पूर्ण
 EXPORT_SYMBOL(nand_ecc_sw_bch_get_engine);
 
 MODULE_LICENSE("GPL");

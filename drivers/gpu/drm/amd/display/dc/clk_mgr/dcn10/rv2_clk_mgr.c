@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,21 +24,21 @@
  *
  */
 
-#include "core_types.h"
-#include "clk_mgr_internal.h"
-#include "rv1_clk_mgr.h"
-#include "rv2_clk_mgr.h"
-#include "dce112/dce112_clk_mgr.h"
+#समावेश "core_types.h"
+#समावेश "clk_mgr_internal.h"
+#समावेश "rv1_clk_mgr.h"
+#समावेश "rv2_clk_mgr.h"
+#समावेश "dce112/dce112_clk_mgr.h"
 
-static struct clk_mgr_internal_funcs rv2_clk_internal_funcs = {
+अटल काष्ठा clk_mgr_पूर्णांकernal_funcs rv2_clk_पूर्णांकernal_funcs = अणु
 	.set_dispclk = dce112_set_dispclk,
 	.set_dprefclk = dce112_set_dprefclk
-};
+पूर्ण;
 
-void rv2_clk_mgr_construct(struct dc_context *ctx, struct clk_mgr_internal *clk_mgr, struct pp_smu_funcs *pp_smu)
+व्योम rv2_clk_mgr_स्थिरruct(काष्ठा dc_context *ctx, काष्ठा clk_mgr_पूर्णांकernal *clk_mgr, काष्ठा pp_smu_funcs *pp_smu)
 
-{
-	rv1_clk_mgr_construct(ctx, clk_mgr, pp_smu);
+अणु
+	rv1_clk_mgr_स्थिरruct(ctx, clk_mgr, pp_smu);
 
-	clk_mgr->funcs = &rv2_clk_internal_funcs;
-}
+	clk_mgr->funcs = &rv2_clk_पूर्णांकernal_funcs;
+पूर्ण

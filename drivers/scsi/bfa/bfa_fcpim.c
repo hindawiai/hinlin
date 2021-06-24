@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2005-2014 Brocade Communications Systems, Inc.
  * Copyright (c) 2014- QLogic Corporation.
  * All rights reserved
  * www.qlogic.com
  *
- * Linux driver for QLogic BR-series Fibre Channel Host Bus Adapter.
+ * Linux driver क्रम QLogic BR-series Fibre Channel Host Bus Adapter.
  */
 
-#include "bfad_drv.h"
-#include "bfa_modules.h"
+#समावेश "bfad_drv.h"
+#समावेश "bfa_modules.h"
 
-BFA_TRC_FILE(HAL, FCPIM);
+BFA_TRC_खाता(HAL, FCPIM);
 
 /*
  *  BFA ITNIM Related definitions
  */
-static void bfa_itnim_update_del_itn_stats(struct bfa_itnim_s *itnim);
+अटल व्योम bfa_itnim_update_del_itn_stats(काष्ठा bfa_itnim_s *itnim);
 
-#define BFA_ITNIM_FROM_TAG(_fcpim, _tag)                                \
+#घोषणा BFA_ITNIM_FROM_TAG(_fcpim, _tag)                                \
 	(((_fcpim)->itnim_arr + ((_tag) & ((_fcpim)->num_itnims - 1))))
 
-#define bfa_fcpim_additn(__itnim)					\
+#घोषणा bfa_fcpim_additn(__itnim)					\
 	list_add_tail(&(__itnim)->qe, &(__itnim)->fcpim->itnim_q)
-#define bfa_fcpim_delitn(__itnim)	do {				\
+#घोषणा bfa_fcpim_delitn(__itnim)	करो अणु				\
 	WARN_ON(!bfa_q_is_on_q(&(__itnim)->fcpim->itnim_q, __itnim));   \
 	bfa_itnim_update_del_itn_stats(__itnim);      \
 	list_del(&(__itnim)->qe);      \
 	WARN_ON(!list_empty(&(__itnim)->io_q));				\
 	WARN_ON(!list_empty(&(__itnim)->io_cleanup_q));			\
 	WARN_ON(!list_empty(&(__itnim)->pending_q));			\
-} while (0)
+पूर्ण जबतक (0)
 
-#define bfa_itnim_online_cb(__itnim) do {				\
-	if ((__itnim)->bfa->fcs)					\
+#घोषणा bfa_itnim_online_cb(__itnim) करो अणु				\
+	अगर ((__itnim)->bfa->fcs)					\
 		bfa_cb_itnim_online((__itnim)->ditn);      \
-	else {								\
+	अन्यथा अणु								\
 		bfa_cb_queue((__itnim)->bfa, &(__itnim)->hcb_qe,	\
 		__bfa_cb_itnim_online, (__itnim));      \
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define bfa_itnim_offline_cb(__itnim) do {				\
-	if ((__itnim)->bfa->fcs)					\
+#घोषणा bfa_itnim_offline_cb(__itnim) करो अणु				\
+	अगर ((__itnim)->bfa->fcs)					\
 		bfa_cb_itnim_offline((__itnim)->ditn);      \
-	else {								\
+	अन्यथा अणु								\
 		bfa_cb_queue((__itnim)->bfa, &(__itnim)->hcb_qe,	\
 		__bfa_cb_itnim_offline, (__itnim));      \
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define bfa_itnim_sler_cb(__itnim) do {					\
-	if ((__itnim)->bfa->fcs)					\
+#घोषणा bfa_itnim_sler_cb(__itnim) करो अणु					\
+	अगर ((__itnim)->bfa->fcs)					\
 		bfa_cb_itnim_sler((__itnim)->ditn);      \
-	else {								\
+	अन्यथा अणु								\
 		bfa_cb_queue((__itnim)->bfa, &(__itnim)->hcb_qe,	\
 		__bfa_cb_itnim_sler, (__itnim));      \
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-enum bfa_ioim_lm_ua_status {
+क्रमागत bfa_ioim_lm_ua_status अणु
 	BFA_IOIM_LM_UA_RESET = 0,
 	BFA_IOIM_LM_UA_SET = 1,
-};
+पूर्ण;
 
 /*
  *  itnim state machine event
  */
-enum bfa_itnim_event {
+क्रमागत bfa_itnim_event अणु
 	BFA_ITNIM_SM_CREATE = 1,	/*  itnim is created */
 	BFA_ITNIM_SM_ONLINE = 2,	/*  itnim is online */
 	BFA_ITNIM_SM_OFFLINE = 3,	/*  itnim is offline */
@@ -77,40 +78,40 @@ enum bfa_itnim_event {
 	BFA_ITNIM_SM_SLER = 7,		/*  second level error recovery */
 	BFA_ITNIM_SM_HWFAIL = 8,	/*  IOC h/w failure event */
 	BFA_ITNIM_SM_QRESUME = 9,	/*  queue space available */
-};
+पूर्ण;
 
 /*
  *  BFA IOIM related definitions
  */
-#define bfa_ioim_move_to_comp_q(__ioim) do {				\
+#घोषणा bfa_ioim_move_to_comp_q(__ioim) करो अणु				\
 	list_del(&(__ioim)->qe);					\
 	list_add_tail(&(__ioim)->qe, &(__ioim)->fcpim->ioim_comp_q);	\
-} while (0)
+पूर्ण जबतक (0)
 
 
-#define bfa_ioim_cb_profile_comp(__fcpim, __ioim) do {			\
-	if ((__fcpim)->profile_comp)					\
+#घोषणा bfa_ioim_cb_profile_comp(__fcpim, __ioim) करो अणु			\
+	अगर ((__fcpim)->profile_comp)					\
 		(__fcpim)->profile_comp(__ioim);			\
-} while (0)
+पूर्ण जबतक (0)
 
-#define bfa_ioim_cb_profile_start(__fcpim, __ioim) do {			\
-	if ((__fcpim)->profile_start)					\
+#घोषणा bfa_ioim_cb_profile_start(__fcpim, __ioim) करो अणु			\
+	अगर ((__fcpim)->profile_start)					\
 		(__fcpim)->profile_start(__ioim);			\
-} while (0)
+पूर्ण जबतक (0)
 
 /*
  * IO state machine events
  */
-enum bfa_ioim_event {
+क्रमागत bfa_ioim_event अणु
 	BFA_IOIM_SM_START	= 1,	/*  io start request from host */
-	BFA_IOIM_SM_COMP_GOOD	= 2,	/*  io good comp, resource free */
-	BFA_IOIM_SM_COMP	= 3,	/*  io comp, resource is free */
-	BFA_IOIM_SM_COMP_UTAG	= 4,	/*  io comp, resource is free */
-	BFA_IOIM_SM_DONE	= 5,	/*  io comp, resource not free */
-	BFA_IOIM_SM_FREE	= 6,	/*  io resource is freed */
-	BFA_IOIM_SM_ABORT	= 7,	/*  abort request from scsi stack */
-	BFA_IOIM_SM_ABORT_COMP	= 8,	/*  abort from f/w */
-	BFA_IOIM_SM_ABORT_DONE	= 9,	/*  abort completion from f/w */
+	BFA_IOIM_SM_COMP_GOOD	= 2,	/*  io good comp, resource मुक्त */
+	BFA_IOIM_SM_COMP	= 3,	/*  io comp, resource is मुक्त */
+	BFA_IOIM_SM_COMP_UTAG	= 4,	/*  io comp, resource is मुक्त */
+	BFA_IOIM_SM_DONE	= 5,	/*  io comp, resource not मुक्त */
+	BFA_IOIM_SM_FREE	= 6,	/*  io resource is मुक्तd */
+	BFA_IOIM_SM_ABORT	= 7,	/*  पात request from scsi stack */
+	BFA_IOIM_SM_ABORT_COMP	= 8,	/*  पात from f/w */
+	BFA_IOIM_SM_ABORT_DONE	= 9,	/*  पात completion from f/w */
 	BFA_IOIM_SM_QRESUME	= 10,	/*  CQ space available to queue IO */
 	BFA_IOIM_SM_SGALLOCED	= 11,	/*  SG page allocation successful */
 	BFA_IOIM_SM_SQRETRY	= 12,	/*  sequence recovery retry */
@@ -120,7 +121,7 @@ enum bfa_ioim_event {
 	BFA_IOIM_SM_TMDONE	= 16,	/*  IO cleanup from tskim */
 	BFA_IOIM_SM_HWFAIL	= 17,	/*  IOC h/w failure event */
 	BFA_IOIM_SM_IOTOV	= 18,	/*  ITN offline TOV */
-};
+पूर्ण;
 
 
 /*
@@ -130,18 +131,18 @@ enum bfa_ioim_event {
 /*
  * task management completion handling
  */
-#define bfa_tskim_qcomp(__tskim, __cbfn) do {				\
+#घोषणा bfa_tskim_qcomp(__tskim, __cbfn) करो अणु				\
 	bfa_cb_queue((__tskim)->bfa, &(__tskim)->hcb_qe, __cbfn, (__tskim));\
-	bfa_tskim_notify_comp(__tskim);      \
-} while (0)
+	bfa_tskim_notअगरy_comp(__tskim);      \
+पूर्ण जबतक (0)
 
-#define bfa_tskim_notify_comp(__tskim) do {				\
-	if ((__tskim)->notify)						\
-		bfa_itnim_tskdone((__tskim)->itnim);      \
-} while (0)
+#घोषणा bfa_tskim_notअगरy_comp(__tskim) करो अणु				\
+	अगर ((__tskim)->notअगरy)						\
+		bfa_itnim_tskकरोne((__tskim)->itnim);      \
+पूर्ण जबतक (0)
 
 
-enum bfa_tskim_event {
+क्रमागत bfa_tskim_event अणु
 	BFA_TSKIM_SM_START	= 1,	/*  TM command start		*/
 	BFA_TSKIM_SM_DONE	= 2,	/*  TM completion		*/
 	BFA_TSKIM_SM_QRESUME	= 3,	/*  resume after qfull		*/
@@ -149,167 +150,167 @@ enum bfa_tskim_event {
 	BFA_TSKIM_SM_HCB	= 6,	/*  BFA callback completion	*/
 	BFA_TSKIM_SM_IOS_DONE	= 7,	/*  IO and sub TM completions	*/
 	BFA_TSKIM_SM_CLEANUP	= 8,	/*  TM cleanup on ITN offline	*/
-	BFA_TSKIM_SM_CLEANUP_DONE = 9,	/*  TM abort completion	*/
+	BFA_TSKIM_SM_CLEANUP_DONE = 9,	/*  TM पात completion	*/
 	BFA_TSKIM_SM_UTAG	= 10,	/*  TM completion unknown tag  */
-};
+पूर्ण;
 
 /*
- * forward declaration for BFA ITNIM functions
+ * क्रमward declaration क्रम BFA ITNIM functions
  */
-static void     bfa_itnim_iocdisable_cleanup(struct bfa_itnim_s *itnim);
-static bfa_boolean_t bfa_itnim_send_fwcreate(struct bfa_itnim_s *itnim);
-static bfa_boolean_t bfa_itnim_send_fwdelete(struct bfa_itnim_s *itnim);
-static void     bfa_itnim_cleanp_comp(void *itnim_cbarg);
-static void     bfa_itnim_cleanup(struct bfa_itnim_s *itnim);
-static void     __bfa_cb_itnim_online(void *cbarg, bfa_boolean_t complete);
-static void     __bfa_cb_itnim_offline(void *cbarg, bfa_boolean_t complete);
-static void     __bfa_cb_itnim_sler(void *cbarg, bfa_boolean_t complete);
-static void     bfa_itnim_iotov_online(struct bfa_itnim_s *itnim);
-static void     bfa_itnim_iotov_cleanup(struct bfa_itnim_s *itnim);
-static void     bfa_itnim_iotov(void *itnim_arg);
-static void     bfa_itnim_iotov_start(struct bfa_itnim_s *itnim);
-static void     bfa_itnim_iotov_stop(struct bfa_itnim_s *itnim);
-static void     bfa_itnim_iotov_delete(struct bfa_itnim_s *itnim);
+अटल व्योम     bfa_itnim_iocdisable_cleanup(काष्ठा bfa_itnim_s *itnim);
+अटल bfa_boolean_t bfa_itnim_send_fwcreate(काष्ठा bfa_itnim_s *itnim);
+अटल bfa_boolean_t bfa_itnim_send_fwdelete(काष्ठा bfa_itnim_s *itnim);
+अटल व्योम     bfa_itnim_cleanp_comp(व्योम *itnim_cbarg);
+अटल व्योम     bfa_itnim_cleanup(काष्ठा bfa_itnim_s *itnim);
+अटल व्योम     __bfa_cb_itnim_online(व्योम *cbarg, bfa_boolean_t complete);
+अटल व्योम     __bfa_cb_itnim_offline(व्योम *cbarg, bfa_boolean_t complete);
+अटल व्योम     __bfa_cb_itnim_sler(व्योम *cbarg, bfa_boolean_t complete);
+अटल व्योम     bfa_itnim_iotov_online(काष्ठा bfa_itnim_s *itnim);
+अटल व्योम     bfa_itnim_iotov_cleanup(काष्ठा bfa_itnim_s *itnim);
+अटल व्योम     bfa_itnim_iotov(व्योम *itnim_arg);
+अटल व्योम     bfa_itnim_iotov_start(काष्ठा bfa_itnim_s *itnim);
+अटल व्योम     bfa_itnim_iotov_stop(काष्ठा bfa_itnim_s *itnim);
+अटल व्योम     bfa_itnim_iotov_delete(काष्ठा bfa_itnim_s *itnim);
 
 /*
- * forward declaration of ITNIM state machine
+ * क्रमward declaration of ITNIM state machine
  */
-static void     bfa_itnim_sm_uninit(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_created(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_fwcreate(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_delete_pending(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_online(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_sler(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_cleanup_offline(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_cleanup_delete(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_fwdelete(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_offline(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_iocdisable(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_deleting(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_fwcreate_qfull(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_fwdelete_qfull(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
-static void     bfa_itnim_sm_deleting_qfull(struct bfa_itnim_s *itnim,
-					enum bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_uninit(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_created(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_fwcreate(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_delete_pending(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_online(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_sler(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_cleanup_offline(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_cleanup_delete(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_fwdelete(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_offline(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_iocdisable(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_deleting(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_fwcreate_qfull(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_fwdelete_qfull(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
+अटल व्योम     bfa_itnim_sm_deleting_qfull(काष्ठा bfa_itnim_s *itnim,
+					क्रमागत bfa_itnim_event event);
 
 /*
- * forward declaration for BFA IOIM functions
+ * क्रमward declaration क्रम BFA IOIM functions
  */
-static bfa_boolean_t	bfa_ioim_send_ioreq(struct bfa_ioim_s *ioim);
-static bfa_boolean_t	bfa_ioim_sgpg_alloc(struct bfa_ioim_s *ioim);
-static bfa_boolean_t	bfa_ioim_send_abort(struct bfa_ioim_s *ioim);
-static void		bfa_ioim_notify_cleanup(struct bfa_ioim_s *ioim);
-static void __bfa_cb_ioim_good_comp(void *cbarg, bfa_boolean_t complete);
-static void __bfa_cb_ioim_comp(void *cbarg, bfa_boolean_t complete);
-static void __bfa_cb_ioim_abort(void *cbarg, bfa_boolean_t complete);
-static void __bfa_cb_ioim_failed(void *cbarg, bfa_boolean_t complete);
-static void __bfa_cb_ioim_pathtov(void *cbarg, bfa_boolean_t complete);
-static bfa_boolean_t    bfa_ioim_is_abortable(struct bfa_ioim_s *ioim);
+अटल bfa_boolean_t	bfa_ioim_send_ioreq(काष्ठा bfa_ioim_s *ioim);
+अटल bfa_boolean_t	bfa_ioim_sgpg_alloc(काष्ठा bfa_ioim_s *ioim);
+अटल bfa_boolean_t	bfa_ioim_send_पात(काष्ठा bfa_ioim_s *ioim);
+अटल व्योम		bfa_ioim_notअगरy_cleanup(काष्ठा bfa_ioim_s *ioim);
+अटल व्योम __bfa_cb_ioim_good_comp(व्योम *cbarg, bfa_boolean_t complete);
+अटल व्योम __bfa_cb_ioim_comp(व्योम *cbarg, bfa_boolean_t complete);
+अटल व्योम __bfa_cb_ioim_पात(व्योम *cbarg, bfa_boolean_t complete);
+अटल व्योम __bfa_cb_ioim_failed(व्योम *cbarg, bfa_boolean_t complete);
+अटल व्योम __bfa_cb_ioim_pathtov(व्योम *cbarg, bfa_boolean_t complete);
+अटल bfa_boolean_t    bfa_ioim_is_पातable(काष्ठा bfa_ioim_s *ioim);
 
 /*
- * forward declaration of BFA IO state machine
+ * क्रमward declaration of BFA IO state machine
  */
-static void     bfa_ioim_sm_uninit(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void     bfa_ioim_sm_sgalloc(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void     bfa_ioim_sm_active(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void     bfa_ioim_sm_abort(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void     bfa_ioim_sm_cleanup(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void     bfa_ioim_sm_qfull(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void     bfa_ioim_sm_abort_qfull(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void     bfa_ioim_sm_cleanup_qfull(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void     bfa_ioim_sm_hcb(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void     bfa_ioim_sm_hcb_free(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void     bfa_ioim_sm_resfree(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
-static void	bfa_ioim_sm_cmnd_retry(struct bfa_ioim_s *ioim,
-					enum bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_uninit(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_sgalloc(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_active(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_पात(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_cleanup(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_qfull(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_पात_qfull(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_cleanup_qfull(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_hcb(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_hcb_मुक्त(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम     bfa_ioim_sm_resमुक्त(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
+अटल व्योम	bfa_ioim_sm_cmnd_retry(काष्ठा bfa_ioim_s *ioim,
+					क्रमागत bfa_ioim_event event);
 /*
- * forward declaration for BFA TSKIM functions
+ * क्रमward declaration क्रम BFA TSKIM functions
  */
-static void     __bfa_cb_tskim_done(void *cbarg, bfa_boolean_t complete);
-static void     __bfa_cb_tskim_failed(void *cbarg, bfa_boolean_t complete);
-static bfa_boolean_t bfa_tskim_match_scope(struct bfa_tskim_s *tskim,
-					struct scsi_lun lun);
-static void     bfa_tskim_gather_ios(struct bfa_tskim_s *tskim);
-static void     bfa_tskim_cleanp_comp(void *tskim_cbarg);
-static void     bfa_tskim_cleanup_ios(struct bfa_tskim_s *tskim);
-static bfa_boolean_t bfa_tskim_send(struct bfa_tskim_s *tskim);
-static bfa_boolean_t bfa_tskim_send_abort(struct bfa_tskim_s *tskim);
-static void     bfa_tskim_iocdisable_ios(struct bfa_tskim_s *tskim);
+अटल व्योम     __bfa_cb_tskim_करोne(व्योम *cbarg, bfa_boolean_t complete);
+अटल व्योम     __bfa_cb_tskim_failed(व्योम *cbarg, bfa_boolean_t complete);
+अटल bfa_boolean_t bfa_tskim_match_scope(काष्ठा bfa_tskim_s *tskim,
+					काष्ठा scsi_lun lun);
+अटल व्योम     bfa_tskim_gather_ios(काष्ठा bfa_tskim_s *tskim);
+अटल व्योम     bfa_tskim_cleanp_comp(व्योम *tskim_cbarg);
+अटल व्योम     bfa_tskim_cleanup_ios(काष्ठा bfa_tskim_s *tskim);
+अटल bfa_boolean_t bfa_tskim_send(काष्ठा bfa_tskim_s *tskim);
+अटल bfa_boolean_t bfa_tskim_send_पात(काष्ठा bfa_tskim_s *tskim);
+अटल व्योम     bfa_tskim_iocdisable_ios(काष्ठा bfa_tskim_s *tskim);
 
 /*
- * forward declaration of BFA TSKIM state machine
+ * क्रमward declaration of BFA TSKIM state machine
  */
-static void     bfa_tskim_sm_uninit(struct bfa_tskim_s *tskim,
-					enum bfa_tskim_event event);
-static void     bfa_tskim_sm_active(struct bfa_tskim_s *tskim,
-					enum bfa_tskim_event event);
-static void     bfa_tskim_sm_cleanup(struct bfa_tskim_s *tskim,
-					enum bfa_tskim_event event);
-static void     bfa_tskim_sm_iocleanup(struct bfa_tskim_s *tskim,
-					enum bfa_tskim_event event);
-static void     bfa_tskim_sm_qfull(struct bfa_tskim_s *tskim,
-					enum bfa_tskim_event event);
-static void     bfa_tskim_sm_cleanup_qfull(struct bfa_tskim_s *tskim,
-					enum bfa_tskim_event event);
-static void     bfa_tskim_sm_hcb(struct bfa_tskim_s *tskim,
-					enum bfa_tskim_event event);
+अटल व्योम     bfa_tskim_sm_uninit(काष्ठा bfa_tskim_s *tskim,
+					क्रमागत bfa_tskim_event event);
+अटल व्योम     bfa_tskim_sm_active(काष्ठा bfa_tskim_s *tskim,
+					क्रमागत bfa_tskim_event event);
+अटल व्योम     bfa_tskim_sm_cleanup(काष्ठा bfa_tskim_s *tskim,
+					क्रमागत bfa_tskim_event event);
+अटल व्योम     bfa_tskim_sm_iocleanup(काष्ठा bfa_tskim_s *tskim,
+					क्रमागत bfa_tskim_event event);
+अटल व्योम     bfa_tskim_sm_qfull(काष्ठा bfa_tskim_s *tskim,
+					क्रमागत bfa_tskim_event event);
+अटल व्योम     bfa_tskim_sm_cleanup_qfull(काष्ठा bfa_tskim_s *tskim,
+					क्रमागत bfa_tskim_event event);
+अटल व्योम     bfa_tskim_sm_hcb(काष्ठा bfa_tskim_s *tskim,
+					क्रमागत bfa_tskim_event event);
 /*
  *  BFA FCP Initiator Mode module
  */
 
 /*
- * Compute and return memory needed by FCP(im) module.
+ * Compute and वापस memory needed by FCP(im) module.
  */
-static void
-bfa_fcpim_meminfo(struct bfa_iocfc_cfg_s *cfg, u32 *km_len)
-{
+अटल व्योम
+bfa_fcpim_meminfo(काष्ठा bfa_iocfc_cfg_s *cfg, u32 *km_len)
+अणु
 	bfa_itnim_meminfo(cfg, km_len);
 
 	/*
 	 * IO memory
 	 */
 	*km_len += cfg->fwcfg.num_ioim_reqs *
-	  (sizeof(struct bfa_ioim_s) + sizeof(struct bfa_ioim_sp_s));
+	  (माप(काष्ठा bfa_ioim_s) + माप(काष्ठा bfa_ioim_sp_s));
 
 	/*
 	 * task management command memory
 	 */
-	if (cfg->fwcfg.num_tskim_reqs < BFA_TSKIM_MIN)
+	अगर (cfg->fwcfg.num_tskim_reqs < BFA_TSKIM_MIN)
 		cfg->fwcfg.num_tskim_reqs = BFA_TSKIM_MIN;
-	*km_len += cfg->fwcfg.num_tskim_reqs * sizeof(struct bfa_tskim_s);
-}
+	*km_len += cfg->fwcfg.num_tskim_reqs * माप(काष्ठा bfa_tskim_s);
+पूर्ण
 
 
-static void
-bfa_fcpim_attach(struct bfa_fcp_mod_s *fcp, void *bfad,
-		struct bfa_iocfc_cfg_s *cfg, struct bfa_pcidev_s *pcidev)
-{
-	struct bfa_fcpim_s *fcpim = &fcp->fcpim;
-	struct bfa_s *bfa = fcp->bfa;
+अटल व्योम
+bfa_fcpim_attach(काष्ठा bfa_fcp_mod_s *fcp, व्योम *bfad,
+		काष्ठा bfa_iocfc_cfg_s *cfg, काष्ठा bfa_pcidev_s *pcidev)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = &fcp->fcpim;
+	काष्ठा bfa_s *bfa = fcp->bfa;
 
 	bfa_trc(bfa, cfg->drvcfg.path_tov);
 	bfa_trc(bfa, cfg->fwcfg.num_rports);
@@ -322,74 +323,74 @@ bfa_fcpim_attach(struct bfa_fcp_mod_s *fcp, void *bfad,
 	fcpim->num_tskim_reqs = cfg->fwcfg.num_tskim_reqs;
 	fcpim->path_tov		= cfg->drvcfg.path_tov;
 	fcpim->delay_comp	= cfg->drvcfg.delay_comp;
-	fcpim->profile_comp = NULL;
-	fcpim->profile_start = NULL;
+	fcpim->profile_comp = शून्य;
+	fcpim->profile_start = शून्य;
 
 	bfa_itnim_attach(fcpim);
 	bfa_tskim_attach(fcpim);
 	bfa_ioim_attach(fcpim);
-}
+पूर्ण
 
-void
-bfa_fcpim_iocdisable(struct bfa_fcp_mod_s *fcp)
-{
-	struct bfa_fcpim_s *fcpim = &fcp->fcpim;
-	struct bfa_itnim_s *itnim;
-	struct list_head *qe, *qen;
+व्योम
+bfa_fcpim_iocdisable(काष्ठा bfa_fcp_mod_s *fcp)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = &fcp->fcpim;
+	काष्ठा bfa_itnim_s *itnim;
+	काष्ठा list_head *qe, *qen;
 
-	/* Enqueue unused ioim resources to free_q */
-	list_splice_tail_init(&fcpim->tskim_unused_q, &fcpim->tskim_free_q);
+	/* Enqueue unused ioim resources to मुक्त_q */
+	list_splice_tail_init(&fcpim->tskim_unused_q, &fcpim->tskim_मुक्त_q);
 
-	list_for_each_safe(qe, qen, &fcpim->itnim_q) {
-		itnim = (struct bfa_itnim_s *) qe;
+	list_क्रम_each_safe(qe, qen, &fcpim->itnim_q) अणु
+		itnim = (काष्ठा bfa_itnim_s *) qe;
 		bfa_itnim_iocdisable(itnim);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bfa_fcpim_path_tov_set(struct bfa_s *bfa, u16 path_tov)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+व्योम
+bfa_fcpim_path_tov_set(काष्ठा bfa_s *bfa, u16 path_tov)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
 
 	fcpim->path_tov = path_tov * 1000;
-	if (fcpim->path_tov > BFA_FCPIM_PATHTOV_MAX)
+	अगर (fcpim->path_tov > BFA_FCPIM_PATHTOV_MAX)
 		fcpim->path_tov = BFA_FCPIM_PATHTOV_MAX;
-}
+पूर्ण
 
 u16
-bfa_fcpim_path_tov_get(struct bfa_s *bfa)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+bfa_fcpim_path_tov_get(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
 
-	return fcpim->path_tov / 1000;
-}
+	वापस fcpim->path_tov / 1000;
+पूर्ण
 
-#define bfa_fcpim_add_iostats(__l, __r, __stats)	\
+#घोषणा bfa_fcpim_add_iostats(__l, __r, __stats)	\
 	(__l->__stats += __r->__stats)
 
-void
-bfa_fcpim_add_stats(struct bfa_itnim_iostats_s *lstats,
-		struct bfa_itnim_iostats_s *rstats)
-{
+व्योम
+bfa_fcpim_add_stats(काष्ठा bfa_itnim_iostats_s *lstats,
+		काष्ठा bfa_itnim_iostats_s *rstats)
+अणु
 	bfa_fcpim_add_iostats(lstats, rstats, total_ios);
 	bfa_fcpim_add_iostats(lstats, rstats, qresumes);
 	bfa_fcpim_add_iostats(lstats, rstats, no_iotags);
-	bfa_fcpim_add_iostats(lstats, rstats, io_aborts);
+	bfa_fcpim_add_iostats(lstats, rstats, io_पातs);
 	bfa_fcpim_add_iostats(lstats, rstats, no_tskims);
 	bfa_fcpim_add_iostats(lstats, rstats, iocomp_ok);
 	bfa_fcpim_add_iostats(lstats, rstats, iocomp_underrun);
 	bfa_fcpim_add_iostats(lstats, rstats, iocomp_overrun);
-	bfa_fcpim_add_iostats(lstats, rstats, iocomp_aborted);
-	bfa_fcpim_add_iostats(lstats, rstats, iocomp_timedout);
-	bfa_fcpim_add_iostats(lstats, rstats, iocom_nexus_abort);
+	bfa_fcpim_add_iostats(lstats, rstats, iocomp_पातed);
+	bfa_fcpim_add_iostats(lstats, rstats, iocomp_समयकरोut);
+	bfa_fcpim_add_iostats(lstats, rstats, iocom_nexus_पात);
 	bfa_fcpim_add_iostats(lstats, rstats, iocom_proto_err);
-	bfa_fcpim_add_iostats(lstats, rstats, iocom_dif_err);
+	bfa_fcpim_add_iostats(lstats, rstats, iocom_dअगर_err);
 	bfa_fcpim_add_iostats(lstats, rstats, iocom_sqer_needed);
-	bfa_fcpim_add_iostats(lstats, rstats, iocom_res_free);
+	bfa_fcpim_add_iostats(lstats, rstats, iocom_res_मुक्त);
 	bfa_fcpim_add_iostats(lstats, rstats, iocom_hostabrts);
 	bfa_fcpim_add_iostats(lstats, rstats, iocom_utags);
 	bfa_fcpim_add_iostats(lstats, rstats, io_cleanups);
-	bfa_fcpim_add_iostats(lstats, rstats, io_tmaborts);
+	bfa_fcpim_add_iostats(lstats, rstats, io_पंचांगपातs);
 	bfa_fcpim_add_iostats(lstats, rstats, onlines);
 	bfa_fcpim_add_iostats(lstats, rstats, offlines);
 	bfa_fcpim_add_iostats(lstats, rstats, creates);
@@ -401,101 +402,101 @@ bfa_fcpim_add_stats(struct bfa_itnim_iostats_s *lstats,
 	bfa_fcpim_add_iostats(lstats, rstats, fw_delete);
 	bfa_fcpim_add_iostats(lstats, rstats, ioc_disabled);
 	bfa_fcpim_add_iostats(lstats, rstats, cleanup_comps);
-	bfa_fcpim_add_iostats(lstats, rstats, tm_cmnds);
-	bfa_fcpim_add_iostats(lstats, rstats, tm_fw_rsps);
-	bfa_fcpim_add_iostats(lstats, rstats, tm_success);
-	bfa_fcpim_add_iostats(lstats, rstats, tm_failures);
-	bfa_fcpim_add_iostats(lstats, rstats, tm_io_comps);
-	bfa_fcpim_add_iostats(lstats, rstats, tm_qresumes);
-	bfa_fcpim_add_iostats(lstats, rstats, tm_iocdowns);
-	bfa_fcpim_add_iostats(lstats, rstats, tm_cleanups);
-	bfa_fcpim_add_iostats(lstats, rstats, tm_cleanup_comps);
+	bfa_fcpim_add_iostats(lstats, rstats, पंचांग_cmnds);
+	bfa_fcpim_add_iostats(lstats, rstats, पंचांग_fw_rsps);
+	bfa_fcpim_add_iostats(lstats, rstats, पंचांग_success);
+	bfa_fcpim_add_iostats(lstats, rstats, पंचांग_failures);
+	bfa_fcpim_add_iostats(lstats, rstats, पंचांग_io_comps);
+	bfa_fcpim_add_iostats(lstats, rstats, पंचांग_qresumes);
+	bfa_fcpim_add_iostats(lstats, rstats, पंचांग_iocकरोwns);
+	bfa_fcpim_add_iostats(lstats, rstats, पंचांग_cleanups);
+	bfa_fcpim_add_iostats(lstats, rstats, पंचांग_cleanup_comps);
 	bfa_fcpim_add_iostats(lstats, rstats, io_comps);
 	bfa_fcpim_add_iostats(lstats, rstats, input_reqs);
 	bfa_fcpim_add_iostats(lstats, rstats, output_reqs);
 	bfa_fcpim_add_iostats(lstats, rstats, rd_throughput);
 	bfa_fcpim_add_iostats(lstats, rstats, wr_throughput);
-}
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_port_iostats(struct bfa_s *bfa,
-		struct bfa_itnim_iostats_s *stats, u8 lp_tag)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
-	struct list_head *qe, *qen;
-	struct bfa_itnim_s *itnim;
+bfa_fcpim_port_iostats(काष्ठा bfa_s *bfa,
+		काष्ठा bfa_itnim_iostats_s *stats, u8 lp_tag)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+	काष्ठा list_head *qe, *qen;
+	काष्ठा bfa_itnim_s *itnim;
 
 	/* accumulate IO stats from itnim */
-	memset(stats, 0, sizeof(struct bfa_itnim_iostats_s));
-	list_for_each_safe(qe, qen, &fcpim->itnim_q) {
-		itnim = (struct bfa_itnim_s *) qe;
-		if (itnim->rport->rport_info.lp_tag != lp_tag)
-			continue;
+	स_रखो(stats, 0, माप(काष्ठा bfa_itnim_iostats_s));
+	list_क्रम_each_safe(qe, qen, &fcpim->itnim_q) अणु
+		itnim = (काष्ठा bfa_itnim_s *) qe;
+		अगर (itnim->rport->rport_info.lp_tag != lp_tag)
+			जारी;
 		bfa_fcpim_add_stats(stats, &(itnim->stats));
-	}
-	return BFA_STATUS_OK;
-}
+	पूर्ण
+	वापस BFA_STATUS_OK;
+पूर्ण
 
-static void
-bfa_ioim_profile_comp(struct bfa_ioim_s *ioim)
-{
-	struct bfa_itnim_latency_s *io_lat =
+अटल व्योम
+bfa_ioim_profile_comp(काष्ठा bfa_ioim_s *ioim)
+अणु
+	काष्ठा bfa_itnim_latency_s *io_lat =
 			&(ioim->itnim->ioprofile.io_latency);
 	u32 val, idx;
 
-	val = (u32)(jiffies - ioim->start_time);
-	idx = bfa_ioim_get_index(scsi_bufflen((struct scsi_cmnd *)ioim->dio));
+	val = (u32)(jअगरfies - ioim->start_समय);
+	idx = bfa_ioim_get_index(scsi_bufflen((काष्ठा scsi_cmnd *)ioim->dio));
 	bfa_itnim_ioprofile_update(ioim->itnim, idx);
 
 	io_lat->count[idx]++;
 	io_lat->min[idx] = (io_lat->min[idx] < val) ? io_lat->min[idx] : val;
 	io_lat->max[idx] = (io_lat->max[idx] > val) ? io_lat->max[idx] : val;
 	io_lat->avg[idx] += val;
-}
+पूर्ण
 
-static void
-bfa_ioim_profile_start(struct bfa_ioim_s *ioim)
-{
-	ioim->start_time = jiffies;
-}
+अटल व्योम
+bfa_ioim_profile_start(काष्ठा bfa_ioim_s *ioim)
+अणु
+	ioim->start_समय = jअगरfies;
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_profile_on(struct bfa_s *bfa, time64_t time)
-{
-	struct bfa_itnim_s *itnim;
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
-	struct list_head *qe, *qen;
+bfa_fcpim_profile_on(काष्ठा bfa_s *bfa, समय64_t समय)
+अणु
+	काष्ठा bfa_itnim_s *itnim;
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+	काष्ठा list_head *qe, *qen;
 
 	/* accumulate IO stats from itnim */
-	list_for_each_safe(qe, qen, &fcpim->itnim_q) {
-		itnim = (struct bfa_itnim_s *) qe;
+	list_क्रम_each_safe(qe, qen, &fcpim->itnim_q) अणु
+		itnim = (काष्ठा bfa_itnim_s *) qe;
 		bfa_itnim_clear_stats(itnim);
-	}
+	पूर्ण
 	fcpim->io_profile = BFA_TRUE;
-	fcpim->io_profile_start_time = time;
+	fcpim->io_profile_start_समय = समय;
 	fcpim->profile_comp = bfa_ioim_profile_comp;
 	fcpim->profile_start = bfa_ioim_profile_start;
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_profile_off(struct bfa_s *bfa)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+bfa_fcpim_profile_off(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
 	fcpim->io_profile = BFA_FALSE;
-	fcpim->io_profile_start_time = 0;
-	fcpim->profile_comp = NULL;
-	fcpim->profile_start = NULL;
-	return BFA_STATUS_OK;
-}
+	fcpim->io_profile_start_समय = 0;
+	fcpim->profile_comp = शून्य;
+	fcpim->profile_start = शून्य;
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 u16
-bfa_fcpim_qdepth_get(struct bfa_s *bfa)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+bfa_fcpim_qdepth_get(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
 
-	return fcpim->q_depth;
-}
+	वापस fcpim->q_depth;
+पूर्ण
 
 /*
  *  BFA ITNIM module state machine functions
@@ -504,520 +505,520 @@ bfa_fcpim_qdepth_get(struct bfa_s *bfa)
 /*
  * Beginning/unallocated state - no events expected.
  */
-static void
-bfa_itnim_sm_uninit(struct bfa_itnim_s *itnim, enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_uninit(काष्ठा bfa_itnim_s *itnim, क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_CREATE:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_CREATE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_created);
 		itnim->is_online = BFA_FALSE;
 		bfa_fcpim_additn(itnim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Beginning state, only online event expected.
  */
-static void
-bfa_itnim_sm_created(struct bfa_itnim_s *itnim, enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_created(काष्ठा bfa_itnim_s *itnim, क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_ONLINE:
-		if (bfa_itnim_send_fwcreate(itnim))
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_ONLINE:
+		अगर (bfa_itnim_send_fwcreate(itnim))
 			bfa_sm_set_state(itnim, bfa_itnim_sm_fwcreate);
-		else
+		अन्यथा
 			bfa_sm_set_state(itnim, bfa_itnim_sm_fwcreate_qfull);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_DELETE:
+	हाल BFA_ITNIM_SM_DELETE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_uninit);
 		bfa_fcpim_delitn(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_iocdisable);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *	Waiting for itnim create response from firmware.
+ *	Waiting क्रम itnim create response from firmware.
  */
-static void
-bfa_itnim_sm_fwcreate(struct bfa_itnim_s *itnim, enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_fwcreate(काष्ठा bfa_itnim_s *itnim, क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_FWRSP:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_FWRSP:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_online);
 		itnim->is_online = BFA_TRUE;
 		bfa_itnim_iotov_online(itnim);
 		bfa_itnim_online_cb(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_DELETE:
+	हाल BFA_ITNIM_SM_DELETE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_delete_pending);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_OFFLINE:
-		if (bfa_itnim_send_fwdelete(itnim))
+	हाल BFA_ITNIM_SM_OFFLINE:
+		अगर (bfa_itnim_send_fwdelete(itnim))
 			bfa_sm_set_state(itnim, bfa_itnim_sm_fwdelete);
-		else
+		अन्यथा
 			bfa_sm_set_state(itnim, bfa_itnim_sm_fwdelete_qfull);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_iocdisable);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_itnim_sm_fwcreate_qfull(struct bfa_itnim_s *itnim,
-			enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_fwcreate_qfull(काष्ठा bfa_itnim_s *itnim,
+			क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_QRESUME:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_QRESUME:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_fwcreate);
 		bfa_itnim_send_fwcreate(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_DELETE:
+	हाल BFA_ITNIM_SM_DELETE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_uninit);
-		bfa_reqq_wcancel(&itnim->reqq_wait);
+		bfa_reqq_wcancel(&itnim->reqq_रुको);
 		bfa_fcpim_delitn(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_OFFLINE:
+	हाल BFA_ITNIM_SM_OFFLINE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_offline);
-		bfa_reqq_wcancel(&itnim->reqq_wait);
+		bfa_reqq_wcancel(&itnim->reqq_रुको);
 		bfa_itnim_offline_cb(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_iocdisable);
-		bfa_reqq_wcancel(&itnim->reqq_wait);
-		break;
+		bfa_reqq_wcancel(&itnim->reqq_रुको);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Waiting for itnim create response from firmware, a delete is pending.
+ * Waiting क्रम itnim create response from firmware, a delete is pending.
  */
-static void
-bfa_itnim_sm_delete_pending(struct bfa_itnim_s *itnim,
-				enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_delete_pending(काष्ठा bfa_itnim_s *itnim,
+				क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_FWRSP:
-		if (bfa_itnim_send_fwdelete(itnim))
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_FWRSP:
+		अगर (bfa_itnim_send_fwdelete(itnim))
 			bfa_sm_set_state(itnim, bfa_itnim_sm_deleting);
-		else
+		अन्यथा
 			bfa_sm_set_state(itnim, bfa_itnim_sm_deleting_qfull);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_uninit);
 		bfa_fcpim_delitn(itnim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Online state - normal parking state.
  */
-static void
-bfa_itnim_sm_online(struct bfa_itnim_s *itnim, enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_online(काष्ठा bfa_itnim_s *itnim, क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_OFFLINE:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_OFFLINE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_cleanup_offline);
 		itnim->is_online = BFA_FALSE;
 		bfa_itnim_iotov_start(itnim);
 		bfa_itnim_cleanup(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_DELETE:
+	हाल BFA_ITNIM_SM_DELETE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_cleanup_delete);
 		itnim->is_online = BFA_FALSE;
 		bfa_itnim_cleanup(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_SLER:
+	हाल BFA_ITNIM_SM_SLER:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_sler);
 		itnim->is_online = BFA_FALSE;
 		bfa_itnim_iotov_start(itnim);
 		bfa_itnim_sler_cb(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_iocdisable);
 		itnim->is_online = BFA_FALSE;
 		bfa_itnim_iotov_start(itnim);
 		bfa_itnim_iocdisable_cleanup(itnim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Second level error recovery need.
  */
-static void
-bfa_itnim_sm_sler(struct bfa_itnim_s *itnim, enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_sler(काष्ठा bfa_itnim_s *itnim, क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_OFFLINE:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_OFFLINE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_cleanup_offline);
 		bfa_itnim_cleanup(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_DELETE:
+	हाल BFA_ITNIM_SM_DELETE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_cleanup_delete);
 		bfa_itnim_cleanup(itnim);
 		bfa_itnim_iotov_delete(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_iocdisable);
 		bfa_itnim_iocdisable_cleanup(itnim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Going offline. Waiting for active IO cleanup.
+ * Going offline. Waiting क्रम active IO cleanup.
  */
-static void
-bfa_itnim_sm_cleanup_offline(struct bfa_itnim_s *itnim,
-				 enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_cleanup_offline(काष्ठा bfa_itnim_s *itnim,
+				 क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_CLEANUP:
-		if (bfa_itnim_send_fwdelete(itnim))
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_CLEANUP:
+		अगर (bfa_itnim_send_fwdelete(itnim))
 			bfa_sm_set_state(itnim, bfa_itnim_sm_fwdelete);
-		else
+		अन्यथा
 			bfa_sm_set_state(itnim, bfa_itnim_sm_fwdelete_qfull);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_DELETE:
+	हाल BFA_ITNIM_SM_DELETE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_cleanup_delete);
 		bfa_itnim_iotov_delete(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_iocdisable);
 		bfa_itnim_iocdisable_cleanup(itnim);
 		bfa_itnim_offline_cb(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_SLER:
-		break;
+	हाल BFA_ITNIM_SM_SLER:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Deleting itnim. Waiting for active IO cleanup.
+ * Deleting itnim. Waiting क्रम active IO cleanup.
  */
-static void
-bfa_itnim_sm_cleanup_delete(struct bfa_itnim_s *itnim,
-				enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_cleanup_delete(काष्ठा bfa_itnim_s *itnim,
+				क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_CLEANUP:
-		if (bfa_itnim_send_fwdelete(itnim))
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_CLEANUP:
+		अगर (bfa_itnim_send_fwdelete(itnim))
 			bfa_sm_set_state(itnim, bfa_itnim_sm_deleting);
-		else
+		अन्यथा
 			bfa_sm_set_state(itnim, bfa_itnim_sm_deleting_qfull);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_iocdisable);
 		bfa_itnim_iocdisable_cleanup(itnim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Rport offline. Fimrware itnim is being deleted - awaiting f/w response.
+ * Rport offline. Fimrware itnim is being deleted - aरुकोing f/w response.
  */
-static void
-bfa_itnim_sm_fwdelete(struct bfa_itnim_s *itnim, enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_fwdelete(काष्ठा bfa_itnim_s *itnim, क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_FWRSP:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_FWRSP:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_offline);
 		bfa_itnim_offline_cb(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_DELETE:
+	हाल BFA_ITNIM_SM_DELETE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_deleting);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_iocdisable);
 		bfa_itnim_offline_cb(itnim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_itnim_sm_fwdelete_qfull(struct bfa_itnim_s *itnim,
-			enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_fwdelete_qfull(काष्ठा bfa_itnim_s *itnim,
+			क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_QRESUME:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_QRESUME:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_fwdelete);
 		bfa_itnim_send_fwdelete(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_DELETE:
+	हाल BFA_ITNIM_SM_DELETE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_deleting_qfull);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_iocdisable);
-		bfa_reqq_wcancel(&itnim->reqq_wait);
+		bfa_reqq_wcancel(&itnim->reqq_रुको);
 		bfa_itnim_offline_cb(itnim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Offline state.
  */
-static void
-bfa_itnim_sm_offline(struct bfa_itnim_s *itnim, enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_offline(काष्ठा bfa_itnim_s *itnim, क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_DELETE:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_DELETE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_uninit);
 		bfa_itnim_iotov_delete(itnim);
 		bfa_fcpim_delitn(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_ONLINE:
-		if (bfa_itnim_send_fwcreate(itnim))
+	हाल BFA_ITNIM_SM_ONLINE:
+		अगर (bfa_itnim_send_fwcreate(itnim))
 			bfa_sm_set_state(itnim, bfa_itnim_sm_fwcreate);
-		else
+		अन्यथा
 			bfa_sm_set_state(itnim, bfa_itnim_sm_fwcreate_qfull);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_iocdisable);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_itnim_sm_iocdisable(struct bfa_itnim_s *itnim,
-				enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_iocdisable(काष्ठा bfa_itnim_s *itnim,
+				क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_DELETE:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_DELETE:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_uninit);
 		bfa_itnim_iotov_delete(itnim);
 		bfa_fcpim_delitn(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_OFFLINE:
+	हाल BFA_ITNIM_SM_OFFLINE:
 		bfa_itnim_offline_cb(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_ONLINE:
-		if (bfa_itnim_send_fwcreate(itnim))
+	हाल BFA_ITNIM_SM_ONLINE:
+		अगर (bfa_itnim_send_fwcreate(itnim))
 			bfa_sm_set_state(itnim, bfa_itnim_sm_fwcreate);
-		else
+		अन्यथा
 			bfa_sm_set_state(itnim, bfa_itnim_sm_fwcreate_qfull);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
-		break;
+	हाल BFA_ITNIM_SM_HWFAIL:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Itnim is deleted, waiting for firmware response to delete.
+ * Itnim is deleted, रुकोing क्रम firmware response to delete.
  */
-static void
-bfa_itnim_sm_deleting(struct bfa_itnim_s *itnim, enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_deleting(काष्ठा bfa_itnim_s *itnim, क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_FWRSP:
-	case BFA_ITNIM_SM_HWFAIL:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_FWRSP:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_uninit);
 		bfa_fcpim_delitn(itnim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_itnim_sm_deleting_qfull(struct bfa_itnim_s *itnim,
-		enum bfa_itnim_event event)
-{
+अटल व्योम
+bfa_itnim_sm_deleting_qfull(काष्ठा bfa_itnim_s *itnim,
+		क्रमागत bfa_itnim_event event)
+अणु
 	bfa_trc(itnim->bfa, itnim->rport->rport_tag);
 	bfa_trc(itnim->bfa, event);
 
-	switch (event) {
-	case BFA_ITNIM_SM_QRESUME:
+	चयन (event) अणु
+	हाल BFA_ITNIM_SM_QRESUME:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_deleting);
 		bfa_itnim_send_fwdelete(itnim);
-		break;
+		अवरोध;
 
-	case BFA_ITNIM_SM_HWFAIL:
+	हाल BFA_ITNIM_SM_HWFAIL:
 		bfa_sm_set_state(itnim, bfa_itnim_sm_uninit);
-		bfa_reqq_wcancel(&itnim->reqq_wait);
+		bfa_reqq_wcancel(&itnim->reqq_रुको);
 		bfa_fcpim_delitn(itnim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(itnim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Initiate cleanup of all IOs on an IOC failure.
  */
-static void
-bfa_itnim_iocdisable_cleanup(struct bfa_itnim_s *itnim)
-{
-	struct bfa_tskim_s *tskim;
-	struct bfa_ioim_s *ioim;
-	struct list_head	*qe, *qen;
+अटल व्योम
+bfa_itnim_iocdisable_cleanup(काष्ठा bfa_itnim_s *itnim)
+अणु
+	काष्ठा bfa_tskim_s *tskim;
+	काष्ठा bfa_ioim_s *ioim;
+	काष्ठा list_head	*qe, *qen;
 
-	list_for_each_safe(qe, qen, &itnim->tsk_q) {
-		tskim = (struct bfa_tskim_s *) qe;
+	list_क्रम_each_safe(qe, qen, &itnim->tsk_q) अणु
+		tskim = (काष्ठा bfa_tskim_s *) qe;
 		bfa_tskim_iocdisable(tskim);
-	}
+	पूर्ण
 
-	list_for_each_safe(qe, qen, &itnim->io_q) {
-		ioim = (struct bfa_ioim_s *) qe;
+	list_क्रम_each_safe(qe, qen, &itnim->io_q) अणु
+		ioim = (काष्ठा bfa_ioim_s *) qe;
 		bfa_ioim_iocdisable(ioim);
-	}
+	पूर्ण
 
 	/*
-	 * For IO request in pending queue, we pretend an early timeout.
+	 * For IO request in pending queue, we pretend an early समयout.
 	 */
-	list_for_each_safe(qe, qen, &itnim->pending_q) {
-		ioim = (struct bfa_ioim_s *) qe;
+	list_क्रम_each_safe(qe, qen, &itnim->pending_q) अणु
+		ioim = (काष्ठा bfa_ioim_s *) qe;
 		bfa_ioim_tov(ioim);
-	}
+	पूर्ण
 
-	list_for_each_safe(qe, qen, &itnim->io_cleanup_q) {
-		ioim = (struct bfa_ioim_s *) qe;
+	list_क्रम_each_safe(qe, qen, &itnim->io_cleanup_q) अणु
+		ioim = (काष्ठा bfa_ioim_s *) qe;
 		bfa_ioim_iocdisable(ioim);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * IO cleanup completion
  */
-static void
-bfa_itnim_cleanp_comp(void *itnim_cbarg)
-{
-	struct bfa_itnim_s *itnim = itnim_cbarg;
+अटल व्योम
+bfa_itnim_cleanp_comp(व्योम *itnim_cbarg)
+अणु
+	काष्ठा bfa_itnim_s *itnim = itnim_cbarg;
 
 	bfa_stats(itnim, cleanup_comps);
 	bfa_sm_send_event(itnim, BFA_ITNIM_SM_CLEANUP);
-}
+पूर्ण
 
 /*
  * Initiate cleanup of all IOs.
  */
-static void
-bfa_itnim_cleanup(struct bfa_itnim_s *itnim)
-{
-	struct bfa_ioim_s  *ioim;
-	struct bfa_tskim_s *tskim;
-	struct list_head	*qe, *qen;
+अटल व्योम
+bfa_itnim_cleanup(काष्ठा bfa_itnim_s *itnim)
+अणु
+	काष्ठा bfa_ioim_s  *ioim;
+	काष्ठा bfa_tskim_s *tskim;
+	काष्ठा list_head	*qe, *qen;
 
 	bfa_wc_init(&itnim->wc, bfa_itnim_cleanp_comp, itnim);
 
-	list_for_each_safe(qe, qen, &itnim->io_q) {
-		ioim = (struct bfa_ioim_s *) qe;
+	list_क्रम_each_safe(qe, qen, &itnim->io_q) अणु
+		ioim = (काष्ठा bfa_ioim_s *) qe;
 
 		/*
 		 * Move IO to a cleanup queue from active queue so that a later
@@ -1028,137 +1029,137 @@ bfa_itnim_cleanup(struct bfa_itnim_s *itnim)
 
 		bfa_wc_up(&itnim->wc);
 		bfa_ioim_cleanup(ioim);
-	}
+	पूर्ण
 
-	list_for_each_safe(qe, qen, &itnim->tsk_q) {
-		tskim = (struct bfa_tskim_s *) qe;
+	list_क्रम_each_safe(qe, qen, &itnim->tsk_q) अणु
+		tskim = (काष्ठा bfa_tskim_s *) qe;
 		bfa_wc_up(&itnim->wc);
 		bfa_tskim_cleanup(tskim);
-	}
+	पूर्ण
 
-	bfa_wc_wait(&itnim->wc);
-}
+	bfa_wc_रुको(&itnim->wc);
+पूर्ण
 
-static void
-__bfa_cb_itnim_online(void *cbarg, bfa_boolean_t complete)
-{
-	struct bfa_itnim_s *itnim = cbarg;
+अटल व्योम
+__bfa_cb_itnim_online(व्योम *cbarg, bfa_boolean_t complete)
+अणु
+	काष्ठा bfa_itnim_s *itnim = cbarg;
 
-	if (complete)
+	अगर (complete)
 		bfa_cb_itnim_online(itnim->ditn);
-}
+पूर्ण
 
-static void
-__bfa_cb_itnim_offline(void *cbarg, bfa_boolean_t complete)
-{
-	struct bfa_itnim_s *itnim = cbarg;
+अटल व्योम
+__bfa_cb_itnim_offline(व्योम *cbarg, bfa_boolean_t complete)
+अणु
+	काष्ठा bfa_itnim_s *itnim = cbarg;
 
-	if (complete)
+	अगर (complete)
 		bfa_cb_itnim_offline(itnim->ditn);
-}
+पूर्ण
 
-static void
-__bfa_cb_itnim_sler(void *cbarg, bfa_boolean_t complete)
-{
-	struct bfa_itnim_s *itnim = cbarg;
+अटल व्योम
+__bfa_cb_itnim_sler(व्योम *cbarg, bfa_boolean_t complete)
+अणु
+	काष्ठा bfa_itnim_s *itnim = cbarg;
 
-	if (complete)
+	अगर (complete)
 		bfa_cb_itnim_sler(itnim->ditn);
-}
+पूर्ण
 
 /*
- * Call to resume any I/O requests waiting for room in request queue.
+ * Call to resume any I/O requests रुकोing क्रम room in request queue.
  */
-static void
-bfa_itnim_qresume(void *cbarg)
-{
-	struct bfa_itnim_s *itnim = cbarg;
+अटल व्योम
+bfa_itnim_qresume(व्योम *cbarg)
+अणु
+	काष्ठा bfa_itnim_s *itnim = cbarg;
 
 	bfa_sm_send_event(itnim, BFA_ITNIM_SM_QRESUME);
-}
+पूर्ण
 
 /*
- *  bfa_itnim_public
+ *  bfa_itnim_खुला
  */
 
-void
-bfa_itnim_iodone(struct bfa_itnim_s *itnim)
-{
-	bfa_wc_down(&itnim->wc);
-}
+व्योम
+bfa_itnim_ioकरोne(काष्ठा bfa_itnim_s *itnim)
+अणु
+	bfa_wc_करोwn(&itnim->wc);
+पूर्ण
 
-void
-bfa_itnim_tskdone(struct bfa_itnim_s *itnim)
-{
-	bfa_wc_down(&itnim->wc);
-}
+व्योम
+bfa_itnim_tskकरोne(काष्ठा bfa_itnim_s *itnim)
+अणु
+	bfa_wc_करोwn(&itnim->wc);
+पूर्ण
 
-void
-bfa_itnim_meminfo(struct bfa_iocfc_cfg_s *cfg, u32 *km_len)
-{
+व्योम
+bfa_itnim_meminfo(काष्ठा bfa_iocfc_cfg_s *cfg, u32 *km_len)
+अणु
 	/*
 	 * ITN memory
 	 */
-	*km_len += cfg->fwcfg.num_rports * sizeof(struct bfa_itnim_s);
-}
+	*km_len += cfg->fwcfg.num_rports * माप(काष्ठा bfa_itnim_s);
+पूर्ण
 
-void
-bfa_itnim_attach(struct bfa_fcpim_s *fcpim)
-{
-	struct bfa_s	*bfa = fcpim->bfa;
-	struct bfa_fcp_mod_s	*fcp = fcpim->fcp;
-	struct bfa_itnim_s *itnim;
-	int	i, j;
+व्योम
+bfa_itnim_attach(काष्ठा bfa_fcpim_s *fcpim)
+अणु
+	काष्ठा bfa_s	*bfa = fcpim->bfa;
+	काष्ठा bfa_fcp_mod_s	*fcp = fcpim->fcp;
+	काष्ठा bfa_itnim_s *itnim;
+	पूर्णांक	i, j;
 
 	INIT_LIST_HEAD(&fcpim->itnim_q);
 
-	itnim = (struct bfa_itnim_s *) bfa_mem_kva_curp(fcp);
+	itnim = (काष्ठा bfa_itnim_s *) bfa_mem_kva_curp(fcp);
 	fcpim->itnim_arr = itnim;
 
-	for (i = 0; i < fcpim->num_itnims; i++, itnim++) {
-		memset(itnim, 0, sizeof(struct bfa_itnim_s));
+	क्रम (i = 0; i < fcpim->num_itnims; i++, itnim++) अणु
+		स_रखो(itnim, 0, माप(काष्ठा bfa_itnim_s));
 		itnim->bfa = bfa;
 		itnim->fcpim = fcpim;
 		itnim->reqq = BFA_REQQ_QOS_LO;
 		itnim->rport = BFA_RPORT_FROM_TAG(bfa, i);
 		itnim->iotov_active = BFA_FALSE;
-		bfa_reqq_winit(&itnim->reqq_wait, bfa_itnim_qresume, itnim);
+		bfa_reqq_winit(&itnim->reqq_रुको, bfa_itnim_qresume, itnim);
 
 		INIT_LIST_HEAD(&itnim->io_q);
 		INIT_LIST_HEAD(&itnim->io_cleanup_q);
 		INIT_LIST_HEAD(&itnim->pending_q);
 		INIT_LIST_HEAD(&itnim->tsk_q);
 		INIT_LIST_HEAD(&itnim->delay_comp_q);
-		for (j = 0; j < BFA_IOBUCKET_MAX; j++)
+		क्रम (j = 0; j < BFA_IOBUCKET_MAX; j++)
 			itnim->ioprofile.io_latency.min[j] = ~0;
 		bfa_sm_set_state(itnim, bfa_itnim_sm_uninit);
-	}
+	पूर्ण
 
 	bfa_mem_kva_curp(fcp) = (u8 *) itnim;
-}
+पूर्ण
 
-void
-bfa_itnim_iocdisable(struct bfa_itnim_s *itnim)
-{
+व्योम
+bfa_itnim_iocdisable(काष्ठा bfa_itnim_s *itnim)
+अणु
 	bfa_stats(itnim, ioc_disabled);
 	bfa_sm_send_event(itnim, BFA_ITNIM_SM_HWFAIL);
-}
+पूर्ण
 
-static bfa_boolean_t
-bfa_itnim_send_fwcreate(struct bfa_itnim_s *itnim)
-{
-	struct bfi_itn_create_req_s *m;
+अटल bfa_boolean_t
+bfa_itnim_send_fwcreate(काष्ठा bfa_itnim_s *itnim)
+अणु
+	काष्ठा bfi_itn_create_req_s *m;
 
 	itnim->msg_no++;
 
 	/*
-	 * check for room in queue to send request now
+	 * check क्रम room in queue to send request now
 	 */
 	m = bfa_reqq_next(itnim->bfa, itnim->reqq);
-	if (!m) {
-		bfa_reqq_wait(itnim->bfa, itnim->reqq, &itnim->reqq_wait);
-		return BFA_FALSE;
-	}
+	अगर (!m) अणु
+		bfa_reqq_रुको(itnim->bfa, itnim->reqq, &itnim->reqq_रुको);
+		वापस BFA_FALSE;
+	पूर्ण
 
 	bfi_h2i_set(m->mh, BFI_MC_ITN, BFI_ITN_H2I_CREATE_REQ,
 			bfa_fn_lpu(itnim->bfa));
@@ -1172,22 +1173,22 @@ bfa_itnim_send_fwcreate(struct bfa_itnim_s *itnim)
 	 * queue I/O message to firmware
 	 */
 	bfa_reqq_produce(itnim->bfa, itnim->reqq, m->mh);
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
-static bfa_boolean_t
-bfa_itnim_send_fwdelete(struct bfa_itnim_s *itnim)
-{
-	struct bfi_itn_delete_req_s *m;
+अटल bfa_boolean_t
+bfa_itnim_send_fwdelete(काष्ठा bfa_itnim_s *itnim)
+अणु
+	काष्ठा bfi_itn_delete_req_s *m;
 
 	/*
-	 * check for room in queue to send request now
+	 * check क्रम room in queue to send request now
 	 */
 	m = bfa_reqq_next(itnim->bfa, itnim->reqq);
-	if (!m) {
-		bfa_reqq_wait(itnim->bfa, itnim->reqq, &itnim->reqq_wait);
-		return BFA_FALSE;
-	}
+	अगर (!m) अणु
+		bfa_reqq_रुको(itnim->bfa, itnim->reqq, &itnim->reqq_रुको);
+		वापस BFA_FALSE;
+	पूर्ण
 
 	bfi_h2i_set(m->mh, BFI_MC_ITN, BFI_ITN_H2I_DELETE_REQ,
 			bfa_fn_lpu(itnim->bfa));
@@ -1198,31 +1199,31 @@ bfa_itnim_send_fwdelete(struct bfa_itnim_s *itnim)
 	 * queue I/O message to firmware
 	 */
 	bfa_reqq_produce(itnim->bfa, itnim->reqq, m->mh);
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
 /*
  * Cleanup all pending failed inflight requests.
  */
-static void
-bfa_itnim_delayed_comp(struct bfa_itnim_s *itnim, bfa_boolean_t iotov)
-{
-	struct bfa_ioim_s *ioim;
-	struct list_head *qe, *qen;
+अटल व्योम
+bfa_itnim_delayed_comp(काष्ठा bfa_itnim_s *itnim, bfa_boolean_t iotov)
+अणु
+	काष्ठा bfa_ioim_s *ioim;
+	काष्ठा list_head *qe, *qen;
 
-	list_for_each_safe(qe, qen, &itnim->delay_comp_q) {
-		ioim = (struct bfa_ioim_s *)qe;
+	list_क्रम_each_safe(qe, qen, &itnim->delay_comp_q) अणु
+		ioim = (काष्ठा bfa_ioim_s *)qe;
 		bfa_ioim_delayed_comp(ioim, iotov);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Start all pending IO requests.
  */
-static void
-bfa_itnim_iotov_online(struct bfa_itnim_s *itnim)
-{
-	struct bfa_ioim_s *ioim;
+अटल व्योम
+bfa_itnim_iotov_online(काष्ठा bfa_itnim_s *itnim)
+अणु
+	काष्ठा bfa_ioim_s *ioim;
 
 	bfa_itnim_iotov_stop(itnim);
 
@@ -1234,20 +1235,20 @@ bfa_itnim_iotov_online(struct bfa_itnim_s *itnim)
 	/*
 	 * Start all pending IO requests.
 	 */
-	while (!list_empty(&itnim->pending_q)) {
+	जबतक (!list_empty(&itnim->pending_q)) अणु
 		bfa_q_deq(&itnim->pending_q, &ioim);
 		list_add_tail(&ioim->qe, &itnim->io_q);
 		bfa_ioim_start(ioim);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Fail all pending IO requests
  */
-static void
-bfa_itnim_iotov_cleanup(struct bfa_itnim_s *itnim)
-{
-	struct bfa_ioim_s *ioim;
+अटल व्योम
+bfa_itnim_iotov_cleanup(काष्ठा bfa_itnim_s *itnim)
+अणु
+	काष्ठा bfa_ioim_s *ioim;
 
 	/*
 	 * Fail all inflight IO requests in the queue
@@ -1257,150 +1258,150 @@ bfa_itnim_iotov_cleanup(struct bfa_itnim_s *itnim)
 	/*
 	 * Fail any pending IO requests.
 	 */
-	while (!list_empty(&itnim->pending_q)) {
+	जबतक (!list_empty(&itnim->pending_q)) अणु
 		bfa_q_deq(&itnim->pending_q, &ioim);
 		list_add_tail(&ioim->qe, &ioim->fcpim->ioim_comp_q);
 		bfa_ioim_tov(ioim);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * IO TOV timer callback. Fail any pending IO requests.
+ * IO TOV समयr callback. Fail any pending IO requests.
  */
-static void
-bfa_itnim_iotov(void *itnim_arg)
-{
-	struct bfa_itnim_s *itnim = itnim_arg;
+अटल व्योम
+bfa_itnim_iotov(व्योम *itnim_arg)
+अणु
+	काष्ठा bfa_itnim_s *itnim = itnim_arg;
 
 	itnim->iotov_active = BFA_FALSE;
 
 	bfa_cb_itnim_tov_begin(itnim->ditn);
 	bfa_itnim_iotov_cleanup(itnim);
 	bfa_cb_itnim_tov(itnim->ditn);
-}
+पूर्ण
 
 /*
- * Start IO TOV timer for failing back pending IO requests in offline state.
+ * Start IO TOV समयr क्रम failing back pending IO requests in offline state.
  */
-static void
-bfa_itnim_iotov_start(struct bfa_itnim_s *itnim)
-{
-	if (itnim->fcpim->path_tov > 0) {
+अटल व्योम
+bfa_itnim_iotov_start(काष्ठा bfa_itnim_s *itnim)
+अणु
+	अगर (itnim->fcpim->path_tov > 0) अणु
 
 		itnim->iotov_active = BFA_TRUE;
 		WARN_ON(!bfa_itnim_hold_io(itnim));
-		bfa_timer_start(itnim->bfa, &itnim->timer,
+		bfa_समयr_start(itnim->bfa, &itnim->समयr,
 			bfa_itnim_iotov, itnim, itnim->fcpim->path_tov);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Stop IO TOV timer.
+ * Stop IO TOV समयr.
  */
-static void
-bfa_itnim_iotov_stop(struct bfa_itnim_s *itnim)
-{
-	if (itnim->iotov_active) {
+अटल व्योम
+bfa_itnim_iotov_stop(काष्ठा bfa_itnim_s *itnim)
+अणु
+	अगर (itnim->iotov_active) अणु
 		itnim->iotov_active = BFA_FALSE;
-		bfa_timer_stop(&itnim->timer);
-	}
-}
+		bfa_समयr_stop(&itnim->समयr);
+	पूर्ण
+पूर्ण
 
 /*
- * Stop IO TOV timer.
+ * Stop IO TOV समयr.
  */
-static void
-bfa_itnim_iotov_delete(struct bfa_itnim_s *itnim)
-{
+अटल व्योम
+bfa_itnim_iotov_delete(काष्ठा bfa_itnim_s *itnim)
+अणु
 	bfa_boolean_t pathtov_active = BFA_FALSE;
 
-	if (itnim->iotov_active)
+	अगर (itnim->iotov_active)
 		pathtov_active = BFA_TRUE;
 
 	bfa_itnim_iotov_stop(itnim);
-	if (pathtov_active)
+	अगर (pathtov_active)
 		bfa_cb_itnim_tov_begin(itnim->ditn);
 	bfa_itnim_iotov_cleanup(itnim);
-	if (pathtov_active)
+	अगर (pathtov_active)
 		bfa_cb_itnim_tov(itnim->ditn);
-}
+पूर्ण
 
-static void
-bfa_itnim_update_del_itn_stats(struct bfa_itnim_s *itnim)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(itnim->bfa);
-	fcpim->del_itn_stats.del_itn_iocomp_aborted +=
-		itnim->stats.iocomp_aborted;
-	fcpim->del_itn_stats.del_itn_iocomp_timedout +=
-		itnim->stats.iocomp_timedout;
+अटल व्योम
+bfa_itnim_update_del_itn_stats(काष्ठा bfa_itnim_s *itnim)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(itnim->bfa);
+	fcpim->del_itn_stats.del_itn_iocomp_पातed +=
+		itnim->stats.iocomp_पातed;
+	fcpim->del_itn_stats.del_itn_iocomp_समयकरोut +=
+		itnim->stats.iocomp_समयकरोut;
 	fcpim->del_itn_stats.del_itn_iocom_sqer_needed +=
 		itnim->stats.iocom_sqer_needed;
-	fcpim->del_itn_stats.del_itn_iocom_res_free +=
-		itnim->stats.iocom_res_free;
+	fcpim->del_itn_stats.del_itn_iocom_res_मुक्त +=
+		itnim->stats.iocom_res_मुक्त;
 	fcpim->del_itn_stats.del_itn_iocom_hostabrts +=
 		itnim->stats.iocom_hostabrts;
 	fcpim->del_itn_stats.del_itn_total_ios += itnim->stats.total_ios;
-	fcpim->del_itn_stats.del_io_iocdowns += itnim->stats.io_iocdowns;
-	fcpim->del_itn_stats.del_tm_iocdowns += itnim->stats.tm_iocdowns;
-}
+	fcpim->del_itn_stats.del_io_iocकरोwns += itnim->stats.io_iocकरोwns;
+	fcpim->del_itn_stats.del_पंचांग_iocकरोwns += itnim->stats.पंचांग_iocकरोwns;
+पूर्ण
 
 /*
- * bfa_itnim_public
+ * bfa_itnim_खुला
  */
 
 /*
- * Itnim interrupt processing.
+ * Itnim पूर्णांकerrupt processing.
  */
-void
-bfa_itnim_isr(struct bfa_s *bfa, struct bfi_msg_s *m)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
-	union bfi_itn_i2h_msg_u msg;
-	struct bfa_itnim_s *itnim;
+व्योम
+bfa_itnim_isr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *m)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+	जोड़ bfi_itn_i2h_msg_u msg;
+	काष्ठा bfa_itnim_s *itnim;
 
 	bfa_trc(bfa, m->mhdr.msg_id);
 
 	msg.msg = m;
 
-	switch (m->mhdr.msg_id) {
-	case BFI_ITN_I2H_CREATE_RSP:
+	चयन (m->mhdr.msg_id) अणु
+	हाल BFI_ITN_I2H_CREATE_RSP:
 		itnim = BFA_ITNIM_FROM_TAG(fcpim,
 						msg.create_rsp->bfa_handle);
 		WARN_ON(msg.create_rsp->status != BFA_STATUS_OK);
 		bfa_stats(itnim, create_comps);
 		bfa_sm_send_event(itnim, BFA_ITNIM_SM_FWRSP);
-		break;
+		अवरोध;
 
-	case BFI_ITN_I2H_DELETE_RSP:
+	हाल BFI_ITN_I2H_DELETE_RSP:
 		itnim = BFA_ITNIM_FROM_TAG(fcpim,
 						msg.delete_rsp->bfa_handle);
 		WARN_ON(msg.delete_rsp->status != BFA_STATUS_OK);
 		bfa_stats(itnim, delete_comps);
 		bfa_sm_send_event(itnim, BFA_ITNIM_SM_FWRSP);
-		break;
+		अवरोध;
 
-	case BFI_ITN_I2H_SLER_EVENT:
+	हाल BFI_ITN_I2H_SLER_EVENT:
 		itnim = BFA_ITNIM_FROM_TAG(fcpim,
 						msg.sler_event->bfa_handle);
 		bfa_stats(itnim, sler_events);
 		bfa_sm_send_event(itnim, BFA_ITNIM_SM_SLER);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_trc(bfa, m->mhdr.msg_id);
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * bfa_itnim_api
  */
 
-struct bfa_itnim_s *
-bfa_itnim_create(struct bfa_s *bfa, struct bfa_rport_s *rport, void *ditn)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
-	struct bfa_itnim_s *itnim;
+काष्ठा bfa_itnim_s *
+bfa_itnim_create(काष्ठा bfa_s *bfa, काष्ठा bfa_rport_s *rport, व्योम *ditn)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+	काष्ठा bfa_itnim_s *itnim;
 
 	bfa_itn_create(bfa, rport, bfa_itnim_isr);
 
@@ -1412,87 +1413,87 @@ bfa_itnim_create(struct bfa_s *bfa, struct bfa_rport_s *rport, void *ditn)
 	bfa_stats(itnim, creates);
 	bfa_sm_send_event(itnim, BFA_ITNIM_SM_CREATE);
 
-	return itnim;
-}
+	वापस itnim;
+पूर्ण
 
-void
-bfa_itnim_delete(struct bfa_itnim_s *itnim)
-{
+व्योम
+bfa_itnim_delete(काष्ठा bfa_itnim_s *itnim)
+अणु
 	bfa_stats(itnim, deletes);
 	bfa_sm_send_event(itnim, BFA_ITNIM_SM_DELETE);
-}
+पूर्ण
 
-void
-bfa_itnim_online(struct bfa_itnim_s *itnim, bfa_boolean_t seq_rec)
-{
+व्योम
+bfa_itnim_online(काष्ठा bfa_itnim_s *itnim, bfa_boolean_t seq_rec)
+अणु
 	itnim->seq_rec = seq_rec;
 	bfa_stats(itnim, onlines);
 	bfa_sm_send_event(itnim, BFA_ITNIM_SM_ONLINE);
-}
+पूर्ण
 
-void
-bfa_itnim_offline(struct bfa_itnim_s *itnim)
-{
+व्योम
+bfa_itnim_offline(काष्ठा bfa_itnim_s *itnim)
+अणु
 	bfa_stats(itnim, offlines);
 	bfa_sm_send_event(itnim, BFA_ITNIM_SM_OFFLINE);
-}
+पूर्ण
 
 /*
- * Return true if itnim is considered offline for holding off IO request.
- * IO is not held if itnim is being deleted.
+ * Return true अगर itnim is considered offline क्रम holding off IO request.
+ * IO is not held अगर itnim is being deleted.
  */
 bfa_boolean_t
-bfa_itnim_hold_io(struct bfa_itnim_s *itnim)
-{
-	return itnim->fcpim->path_tov && itnim->iotov_active &&
+bfa_itnim_hold_io(काष्ठा bfa_itnim_s *itnim)
+अणु
+	वापस itnim->fcpim->path_tov && itnim->iotov_active &&
 		(bfa_sm_cmp_state(itnim, bfa_itnim_sm_fwcreate) ||
 		 bfa_sm_cmp_state(itnim, bfa_itnim_sm_sler) ||
 		 bfa_sm_cmp_state(itnim, bfa_itnim_sm_cleanup_offline) ||
 		 bfa_sm_cmp_state(itnim, bfa_itnim_sm_fwdelete) ||
 		 bfa_sm_cmp_state(itnim, bfa_itnim_sm_offline) ||
 		 bfa_sm_cmp_state(itnim, bfa_itnim_sm_iocdisable));
-}
+पूर्ण
 
-#define bfa_io_lat_clock_res_div	HZ
-#define bfa_io_lat_clock_res_mul	1000
+#घोषणा bfa_io_lat_घड़ी_res_भाग	HZ
+#घोषणा bfa_io_lat_घड़ी_res_mul	1000
 bfa_status_t
-bfa_itnim_get_ioprofile(struct bfa_itnim_s *itnim,
-			struct bfa_itnim_ioprofile_s *ioprofile)
-{
-	struct bfa_fcpim_s *fcpim;
+bfa_itnim_get_ioprofile(काष्ठा bfa_itnim_s *itnim,
+			काष्ठा bfa_itnim_ioprofile_s *ioprofile)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim;
 
-	if (!itnim)
-		return BFA_STATUS_NO_FCPIM_NEXUS;
+	अगर (!itnim)
+		वापस BFA_STATUS_NO_FCPIM_NEXUS;
 
 	fcpim = BFA_FCPIM(itnim->bfa);
 
-	if (!fcpim->io_profile)
-		return BFA_STATUS_IOPROFILE_OFF;
+	अगर (!fcpim->io_profile)
+		वापस BFA_STATUS_IOPROखाता_OFF;
 
 	itnim->ioprofile.index = BFA_IOBUCKET_MAX;
-	/* unsigned 32-bit time_t overflow here in y2106 */
-	itnim->ioprofile.io_profile_start_time =
-				bfa_io_profile_start_time(itnim->bfa);
-	itnim->ioprofile.clock_res_mul = bfa_io_lat_clock_res_mul;
-	itnim->ioprofile.clock_res_div = bfa_io_lat_clock_res_div;
+	/* अचिन्हित 32-bit समय_प्रकार overflow here in y2106 */
+	itnim->ioprofile.io_profile_start_समय =
+				bfa_io_profile_start_समय(itnim->bfa);
+	itnim->ioprofile.घड़ी_res_mul = bfa_io_lat_घड़ी_res_mul;
+	itnim->ioprofile.घड़ी_res_भाग = bfa_io_lat_घड़ी_res_भाग;
 	*ioprofile = itnim->ioprofile;
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
-void
-bfa_itnim_clear_stats(struct bfa_itnim_s *itnim)
-{
-	int j;
+व्योम
+bfa_itnim_clear_stats(काष्ठा bfa_itnim_s *itnim)
+अणु
+	पूर्णांक j;
 
-	if (!itnim)
-		return;
+	अगर (!itnim)
+		वापस;
 
-	memset(&itnim->stats, 0, sizeof(itnim->stats));
-	memset(&itnim->ioprofile, 0, sizeof(itnim->ioprofile));
-	for (j = 0; j < BFA_IOBUCKET_MAX; j++)
+	स_रखो(&itnim->stats, 0, माप(itnim->stats));
+	स_रखो(&itnim->ioprofile, 0, माप(itnim->ioprofile));
+	क्रम (j = 0; j < BFA_IOBUCKET_MAX; j++)
 		itnim->ioprofile.io_latency.min[j] = ~0;
-}
+पूर्ण
 
 /*
  *  BFA IO module state machine functions
@@ -1501,1039 +1502,1039 @@ bfa_itnim_clear_stats(struct bfa_itnim_s *itnim)
 /*
  * IO is not started (unallocated).
  */
-static void
-bfa_ioim_sm_uninit(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
-	switch (event) {
-	case BFA_IOIM_SM_START:
-		if (!bfa_itnim_is_online(ioim->itnim)) {
-			if (!bfa_itnim_hold_io(ioim->itnim)) {
+अटल व्योम
+bfa_ioim_sm_uninit(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_START:
+		अगर (!bfa_itnim_is_online(ioim->itnim)) अणु
+			अगर (!bfa_itnim_hold_io(ioim->itnim)) अणु
 				bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 				list_del(&ioim->qe);
 				list_add_tail(&ioim->qe,
 					&ioim->fcpim->ioim_comp_q);
 				bfa_cb_queue(ioim->bfa, &ioim->hcb_qe,
 						__bfa_cb_ioim_pathtov, ioim);
-			} else {
+			पूर्ण अन्यथा अणु
 				list_del(&ioim->qe);
 				list_add_tail(&ioim->qe,
 					&ioim->itnim->pending_q);
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		if (ioim->nsges > BFI_SGE_INLINE) {
-			if (!bfa_ioim_sgpg_alloc(ioim)) {
+		अगर (ioim->nsges > BFI_SGE_INLINE) अणु
+			अगर (!bfa_ioim_sgpg_alloc(ioim)) अणु
 				bfa_sm_set_state(ioim, bfa_ioim_sm_sgalloc);
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 
-		if (!bfa_ioim_send_ioreq(ioim)) {
+		अगर (!bfa_ioim_send_ioreq(ioim)) अणु
 			bfa_sm_set_state(ioim, bfa_ioim_sm_qfull);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		bfa_sm_set_state(ioim, bfa_ioim_sm_active);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_IOTOV:
+	हाल BFA_IOIM_SM_IOTOV:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe,
 				__bfa_cb_ioim_pathtov, ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT:
+	हाल BFA_IOIM_SM_ABORT:
 		/*
-		 * IO in pending queue can get abort requests. Complete abort
+		 * IO in pending queue can get पात requests. Complete पात
 		 * requests immediately.
 		 */
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		WARN_ON(!bfa_q_is_on_q(&ioim->itnim->pending_q, ioim));
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe,
-			__bfa_cb_ioim_abort, ioim);
-		break;
+			__bfa_cb_ioim_पात, ioim);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * IO is waiting for SG pages.
+ * IO is रुकोing क्रम SG pages.
  */
-static void
-bfa_ioim_sm_sgalloc(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
+अटल व्योम
+bfa_ioim_sm_sgalloc(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
 	bfa_trc(ioim->bfa, event);
 
-	switch (event) {
-	case BFA_IOIM_SM_SGALLOCED:
-		if (!bfa_ioim_send_ioreq(ioim)) {
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_SGALLOCED:
+		अगर (!bfa_ioim_send_ioreq(ioim)) अणु
 			bfa_sm_set_state(ioim, bfa_ioim_sm_qfull);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		bfa_sm_set_state(ioim, bfa_ioim_sm_active);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_CLEANUP:
+	हाल BFA_IOIM_SM_CLEANUP:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_sgpg_wcancel(ioim->bfa, &ioim->iosp->sgpg_wqe);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_failed,
 			      ioim);
-		bfa_ioim_notify_cleanup(ioim);
-		break;
+		bfa_ioim_notअगरy_cleanup(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT:
+	हाल BFA_IOIM_SM_ABORT:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_sgpg_wcancel(ioim->bfa, &ioim->iosp->sgpg_wqe);
 		bfa_ioim_move_to_comp_q(ioim);
-		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_abort,
+		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_पात,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
+	हाल BFA_IOIM_SM_HWFAIL:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_sgpg_wcancel(ioim->bfa, &ioim->iosp->sgpg_wqe);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_failed,
 			      ioim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * IO is active.
  */
-static void
-bfa_ioim_sm_active(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
-	switch (event) {
-	case BFA_IOIM_SM_COMP_GOOD:
+अटल व्योम
+bfa_ioim_sm_active(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_COMP_GOOD:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe,
 			      __bfa_cb_ioim_good_comp, ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_COMP:
+	हाल BFA_IOIM_SM_COMP:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_comp,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_DONE:
-		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_free);
+	हाल BFA_IOIM_SM_DONE:
+		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_मुक्त);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_comp,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT:
-		ioim->iosp->abort_explicit = BFA_TRUE;
-		ioim->io_cbfn = __bfa_cb_ioim_abort;
+	हाल BFA_IOIM_SM_ABORT:
+		ioim->iosp->पात_explicit = BFA_TRUE;
+		ioim->io_cbfn = __bfa_cb_ioim_पात;
 
-		if (bfa_ioim_send_abort(ioim))
-			bfa_sm_set_state(ioim, bfa_ioim_sm_abort);
-		else {
-			bfa_sm_set_state(ioim, bfa_ioim_sm_abort_qfull);
-			bfa_stats(ioim->itnim, qwait);
-			bfa_reqq_wait(ioim->bfa, ioim->reqq,
-					  &ioim->iosp->reqq_wait);
-		}
-		break;
+		अगर (bfa_ioim_send_पात(ioim))
+			bfa_sm_set_state(ioim, bfa_ioim_sm_पात);
+		अन्यथा अणु
+			bfa_sm_set_state(ioim, bfa_ioim_sm_पात_qfull);
+			bfa_stats(ioim->itnim, qरुको);
+			bfa_reqq_रुको(ioim->bfa, ioim->reqq,
+					  &ioim->iosp->reqq_रुको);
+		पूर्ण
+		अवरोध;
 
-	case BFA_IOIM_SM_CLEANUP:
-		ioim->iosp->abort_explicit = BFA_FALSE;
+	हाल BFA_IOIM_SM_CLEANUP:
+		ioim->iosp->पात_explicit = BFA_FALSE;
 		ioim->io_cbfn = __bfa_cb_ioim_failed;
 
-		if (bfa_ioim_send_abort(ioim))
+		अगर (bfa_ioim_send_पात(ioim))
 			bfa_sm_set_state(ioim, bfa_ioim_sm_cleanup);
-		else {
+		अन्यथा अणु
 			bfa_sm_set_state(ioim, bfa_ioim_sm_cleanup_qfull);
-			bfa_stats(ioim->itnim, qwait);
-			bfa_reqq_wait(ioim->bfa, ioim->reqq,
-					  &ioim->iosp->reqq_wait);
-		}
-		break;
+			bfa_stats(ioim->itnim, qरुको);
+			bfa_reqq_रुको(ioim->bfa, ioim->reqq,
+					  &ioim->iosp->reqq_रुको);
+		पूर्ण
+		अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
+	हाल BFA_IOIM_SM_HWFAIL:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_failed,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_SQRETRY:
-		if (bfa_ioim_maxretry_reached(ioim)) {
-			/* max retry reached, free IO */
-			bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_free);
+	हाल BFA_IOIM_SM_SQRETRY:
+		अगर (bfa_ioim_maxretry_reached(ioim)) अणु
+			/* max retry reached, मुक्त IO */
+			bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_मुक्त);
 			bfa_ioim_move_to_comp_q(ioim);
 			bfa_cb_queue(ioim->bfa, &ioim->hcb_qe,
 					__bfa_cb_ioim_failed, ioim);
-			break;
-		}
-		/* waiting for IO tag resource free */
+			अवरोध;
+		पूर्ण
+		/* रुकोing क्रम IO tag resource मुक्त */
 		bfa_sm_set_state(ioim, bfa_ioim_sm_cmnd_retry);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * IO is retried with new tag.
  */
-static void
-bfa_ioim_sm_cmnd_retry(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
-	switch (event) {
-	case BFA_IOIM_SM_FREE:
-		/* abts and rrq done. Now retry the IO with new tag */
+अटल व्योम
+bfa_ioim_sm_cmnd_retry(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_FREE:
+		/* abts and rrq करोne. Now retry the IO with new tag */
 		bfa_ioim_update_iotag(ioim);
-		if (!bfa_ioim_send_ioreq(ioim)) {
+		अगर (!bfa_ioim_send_ioreq(ioim)) अणु
 			bfa_sm_set_state(ioim, bfa_ioim_sm_qfull);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		bfa_sm_set_state(ioim, bfa_ioim_sm_active);
-	break;
+	अवरोध;
 
-	case BFA_IOIM_SM_CLEANUP:
-		ioim->iosp->abort_explicit = BFA_FALSE;
+	हाल BFA_IOIM_SM_CLEANUP:
+		ioim->iosp->पात_explicit = BFA_FALSE;
 		ioim->io_cbfn = __bfa_cb_ioim_failed;
 
-		if (bfa_ioim_send_abort(ioim))
+		अगर (bfa_ioim_send_पात(ioim))
 			bfa_sm_set_state(ioim, bfa_ioim_sm_cleanup);
-		else {
+		अन्यथा अणु
 			bfa_sm_set_state(ioim, bfa_ioim_sm_cleanup_qfull);
-			bfa_stats(ioim->itnim, qwait);
-			bfa_reqq_wait(ioim->bfa, ioim->reqq,
-					  &ioim->iosp->reqq_wait);
-		}
-	break;
+			bfa_stats(ioim->itnim, qरुको);
+			bfa_reqq_रुको(ioim->bfa, ioim->reqq,
+					  &ioim->iosp->reqq_रुको);
+		पूर्ण
+	अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
+	हाल BFA_IOIM_SM_HWFAIL:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe,
 			 __bfa_cb_ioim_failed, ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT:
-		/* in this state IO abort is done.
-		 * Waiting for IO tag resource free.
+	हाल BFA_IOIM_SM_ABORT:
+		/* in this state IO पात is करोne.
+		 * Waiting क्रम IO tag resource मुक्त.
 		 */
-		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_free);
-		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_abort,
+		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_मुक्त);
+		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_पात,
 			      ioim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * IO is being aborted, waiting for completion from firmware.
+ * IO is being पातed, रुकोing क्रम completion from firmware.
  */
-static void
-bfa_ioim_sm_abort(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
+अटल व्योम
+bfa_ioim_sm_पात(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
 	bfa_trc(ioim->bfa, event);
 
-	switch (event) {
-	case BFA_IOIM_SM_COMP_GOOD:
-	case BFA_IOIM_SM_COMP:
-	case BFA_IOIM_SM_DONE:
-	case BFA_IOIM_SM_FREE:
-		break;
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_COMP_GOOD:
+	हाल BFA_IOIM_SM_COMP:
+	हाल BFA_IOIM_SM_DONE:
+	हाल BFA_IOIM_SM_FREE:
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT_DONE:
-		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_free);
-		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_abort,
+	हाल BFA_IOIM_SM_ABORT_DONE:
+		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_मुक्त);
+		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_पात,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT_COMP:
+	हाल BFA_IOIM_SM_ABORT_COMP:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_ioim_move_to_comp_q(ioim);
-		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_abort,
+		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_पात,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_COMP_UTAG:
+	हाल BFA_IOIM_SM_COMP_UTAG:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_ioim_move_to_comp_q(ioim);
-		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_abort,
+		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_पात,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_CLEANUP:
-		WARN_ON(ioim->iosp->abort_explicit != BFA_TRUE);
-		ioim->iosp->abort_explicit = BFA_FALSE;
+	हाल BFA_IOIM_SM_CLEANUP:
+		WARN_ON(ioim->iosp->पात_explicit != BFA_TRUE);
+		ioim->iosp->पात_explicit = BFA_FALSE;
 
-		if (bfa_ioim_send_abort(ioim))
+		अगर (bfa_ioim_send_पात(ioim))
 			bfa_sm_set_state(ioim, bfa_ioim_sm_cleanup);
-		else {
+		अन्यथा अणु
 			bfa_sm_set_state(ioim, bfa_ioim_sm_cleanup_qfull);
-			bfa_stats(ioim->itnim, qwait);
-			bfa_reqq_wait(ioim->bfa, ioim->reqq,
-					  &ioim->iosp->reqq_wait);
-		}
-		break;
+			bfa_stats(ioim->itnim, qरुको);
+			bfa_reqq_रुको(ioim->bfa, ioim->reqq,
+					  &ioim->iosp->reqq_रुको);
+		पूर्ण
+		अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
+	हाल BFA_IOIM_SM_HWFAIL:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_failed,
 			      ioim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * IO is being cleaned up (implicit abort), waiting for completion from
+ * IO is being cleaned up (implicit पात), रुकोing क्रम completion from
  * firmware.
  */
-static void
-bfa_ioim_sm_cleanup(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
+अटल व्योम
+bfa_ioim_sm_cleanup(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
 	bfa_trc(ioim->bfa, event);
 
-	switch (event) {
-	case BFA_IOIM_SM_COMP_GOOD:
-	case BFA_IOIM_SM_COMP:
-	case BFA_IOIM_SM_DONE:
-	case BFA_IOIM_SM_FREE:
-		break;
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_COMP_GOOD:
+	हाल BFA_IOIM_SM_COMP:
+	हाल BFA_IOIM_SM_DONE:
+	हाल BFA_IOIM_SM_FREE:
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT:
+	हाल BFA_IOIM_SM_ABORT:
 		/*
-		 * IO is already being aborted implicitly
+		 * IO is alपढ़ोy being पातed implicitly
 		 */
-		ioim->io_cbfn = __bfa_cb_ioim_abort;
-		break;
+		ioim->io_cbfn = __bfa_cb_ioim_पात;
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT_DONE:
-		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_free);
+	हाल BFA_IOIM_SM_ABORT_DONE:
+		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_मुक्त);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, ioim->io_cbfn, ioim);
-		bfa_ioim_notify_cleanup(ioim);
-		break;
+		bfa_ioim_notअगरy_cleanup(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT_COMP:
+	हाल BFA_IOIM_SM_ABORT_COMP:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, ioim->io_cbfn, ioim);
-		bfa_ioim_notify_cleanup(ioim);
-		break;
+		bfa_ioim_notअगरy_cleanup(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_COMP_UTAG:
+	हाल BFA_IOIM_SM_COMP_UTAG:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, ioim->io_cbfn, ioim);
-		bfa_ioim_notify_cleanup(ioim);
-		break;
+		bfa_ioim_notअगरy_cleanup(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
+	हाल BFA_IOIM_SM_HWFAIL:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_failed,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_CLEANUP:
+	हाल BFA_IOIM_SM_CLEANUP:
 		/*
-		 * IO can be in cleanup state already due to TM command.
+		 * IO can be in cleanup state alपढ़ोy due to TM command.
 		 * 2nd cleanup request comes from ITN offline event.
 		 */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * IO is waiting for room in request CQ
+ * IO is रुकोing क्रम room in request CQ
  */
-static void
-bfa_ioim_sm_qfull(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
+अटल व्योम
+bfa_ioim_sm_qfull(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
 	bfa_trc(ioim->bfa, event);
 
-	switch (event) {
-	case BFA_IOIM_SM_QRESUME:
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_QRESUME:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_active);
 		bfa_ioim_send_ioreq(ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT:
+	हाल BFA_IOIM_SM_ABORT:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
-		bfa_reqq_wcancel(&ioim->iosp->reqq_wait);
+		bfa_reqq_wcancel(&ioim->iosp->reqq_रुको);
 		bfa_ioim_move_to_comp_q(ioim);
-		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_abort,
+		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_पात,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_CLEANUP:
+	हाल BFA_IOIM_SM_CLEANUP:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
-		bfa_reqq_wcancel(&ioim->iosp->reqq_wait);
+		bfa_reqq_wcancel(&ioim->iosp->reqq_रुको);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_failed,
 			      ioim);
-		bfa_ioim_notify_cleanup(ioim);
-		break;
+		bfa_ioim_notअगरy_cleanup(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
+	हाल BFA_IOIM_SM_HWFAIL:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
-		bfa_reqq_wcancel(&ioim->iosp->reqq_wait);
+		bfa_reqq_wcancel(&ioim->iosp->reqq_रुको);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_failed,
 			      ioim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Active IO is being aborted, waiting for room in request CQ.
+ * Active IO is being पातed, रुकोing क्रम room in request CQ.
  */
-static void
-bfa_ioim_sm_abort_qfull(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
+अटल व्योम
+bfa_ioim_sm_पात_qfull(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
 	bfa_trc(ioim->bfa, event);
 
-	switch (event) {
-	case BFA_IOIM_SM_QRESUME:
-		bfa_sm_set_state(ioim, bfa_ioim_sm_abort);
-		bfa_ioim_send_abort(ioim);
-		break;
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_QRESUME:
+		bfa_sm_set_state(ioim, bfa_ioim_sm_पात);
+		bfa_ioim_send_पात(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_CLEANUP:
-		WARN_ON(ioim->iosp->abort_explicit != BFA_TRUE);
-		ioim->iosp->abort_explicit = BFA_FALSE;
+	हाल BFA_IOIM_SM_CLEANUP:
+		WARN_ON(ioim->iosp->पात_explicit != BFA_TRUE);
+		ioim->iosp->पात_explicit = BFA_FALSE;
 		bfa_sm_set_state(ioim, bfa_ioim_sm_cleanup_qfull);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_COMP_GOOD:
-	case BFA_IOIM_SM_COMP:
+	हाल BFA_IOIM_SM_COMP_GOOD:
+	हाल BFA_IOIM_SM_COMP:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
-		bfa_reqq_wcancel(&ioim->iosp->reqq_wait);
+		bfa_reqq_wcancel(&ioim->iosp->reqq_रुको);
 		bfa_ioim_move_to_comp_q(ioim);
-		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_abort,
+		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_पात,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_DONE:
-		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_free);
-		bfa_reqq_wcancel(&ioim->iosp->reqq_wait);
+	हाल BFA_IOIM_SM_DONE:
+		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_मुक्त);
+		bfa_reqq_wcancel(&ioim->iosp->reqq_रुको);
 		bfa_ioim_move_to_comp_q(ioim);
-		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_abort,
+		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_पात,
 			      ioim);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
+	हाल BFA_IOIM_SM_HWFAIL:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
-		bfa_reqq_wcancel(&ioim->iosp->reqq_wait);
+		bfa_reqq_wcancel(&ioim->iosp->reqq_रुको);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_failed,
 			      ioim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Active IO is being cleaned up, waiting for room in request CQ.
+ * Active IO is being cleaned up, रुकोing क्रम room in request CQ.
  */
-static void
-bfa_ioim_sm_cleanup_qfull(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
+अटल व्योम
+bfa_ioim_sm_cleanup_qfull(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
 	bfa_trc(ioim->bfa, event);
 
-	switch (event) {
-	case BFA_IOIM_SM_QRESUME:
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_QRESUME:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_cleanup);
-		bfa_ioim_send_abort(ioim);
-		break;
+		bfa_ioim_send_पात(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_ABORT:
+	हाल BFA_IOIM_SM_ABORT:
 		/*
-		 * IO is already being cleaned up implicitly
+		 * IO is alपढ़ोy being cleaned up implicitly
 		 */
-		ioim->io_cbfn = __bfa_cb_ioim_abort;
-		break;
+		ioim->io_cbfn = __bfa_cb_ioim_पात;
+		अवरोध;
 
-	case BFA_IOIM_SM_COMP_GOOD:
-	case BFA_IOIM_SM_COMP:
+	हाल BFA_IOIM_SM_COMP_GOOD:
+	हाल BFA_IOIM_SM_COMP:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
-		bfa_reqq_wcancel(&ioim->iosp->reqq_wait);
+		bfa_reqq_wcancel(&ioim->iosp->reqq_रुको);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, ioim->io_cbfn, ioim);
-		bfa_ioim_notify_cleanup(ioim);
-		break;
+		bfa_ioim_notअगरy_cleanup(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_DONE:
-		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_free);
-		bfa_reqq_wcancel(&ioim->iosp->reqq_wait);
+	हाल BFA_IOIM_SM_DONE:
+		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb_मुक्त);
+		bfa_reqq_wcancel(&ioim->iosp->reqq_रुको);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, ioim->io_cbfn, ioim);
-		bfa_ioim_notify_cleanup(ioim);
-		break;
+		bfa_ioim_notअगरy_cleanup(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
+	हाल BFA_IOIM_SM_HWFAIL:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
-		bfa_reqq_wcancel(&ioim->iosp->reqq_wait);
+		bfa_reqq_wcancel(&ioim->iosp->reqq_रुको);
 		bfa_ioim_move_to_comp_q(ioim);
 		bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, __bfa_cb_ioim_failed,
 			      ioim);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * IO bfa callback is pending.
  */
-static void
-bfa_ioim_sm_hcb(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
-	switch (event) {
-	case BFA_IOIM_SM_HCB:
+अटल व्योम
+bfa_ioim_sm_hcb(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_HCB:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_uninit);
-		bfa_ioim_free(ioim);
-		break;
+		bfa_ioim_मुक्त(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_CLEANUP:
-		bfa_ioim_notify_cleanup(ioim);
-		break;
+	हाल BFA_IOIM_SM_CLEANUP:
+		bfa_ioim_notअगरy_cleanup(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
-		break;
+	हाल BFA_IOIM_SM_HWFAIL:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * IO bfa callback is pending. IO resource cannot be freed.
+ * IO bfa callback is pending. IO resource cannot be मुक्तd.
  */
-static void
-bfa_ioim_sm_hcb_free(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
+अटल व्योम
+bfa_ioim_sm_hcb_मुक्त(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
 	bfa_trc(ioim->bfa, event);
 
-	switch (event) {
-	case BFA_IOIM_SM_HCB:
-		bfa_sm_set_state(ioim, bfa_ioim_sm_resfree);
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_HCB:
+		bfa_sm_set_state(ioim, bfa_ioim_sm_resमुक्त);
 		list_del(&ioim->qe);
-		list_add_tail(&ioim->qe, &ioim->fcpim->ioim_resfree_q);
-		break;
+		list_add_tail(&ioim->qe, &ioim->fcpim->ioim_resमुक्त_q);
+		अवरोध;
 
-	case BFA_IOIM_SM_FREE:
+	हाल BFA_IOIM_SM_FREE:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
-		break;
+		अवरोध;
 
-	case BFA_IOIM_SM_CLEANUP:
-		bfa_ioim_notify_cleanup(ioim);
-		break;
+	हाल BFA_IOIM_SM_CLEANUP:
+		bfa_ioim_notअगरy_cleanup(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
+	हाल BFA_IOIM_SM_HWFAIL:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_hcb);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * IO is completed, waiting resource free from firmware.
+ * IO is completed, रुकोing resource मुक्त from firmware.
  */
-static void
-bfa_ioim_sm_resfree(struct bfa_ioim_s *ioim, enum bfa_ioim_event event)
-{
+अटल व्योम
+bfa_ioim_sm_resमुक्त(काष्ठा bfa_ioim_s *ioim, क्रमागत bfa_ioim_event event)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
 	bfa_trc(ioim->bfa, event);
 
-	switch (event) {
-	case BFA_IOIM_SM_FREE:
+	चयन (event) अणु
+	हाल BFA_IOIM_SM_FREE:
 		bfa_sm_set_state(ioim, bfa_ioim_sm_uninit);
-		bfa_ioim_free(ioim);
-		break;
+		bfa_ioim_मुक्त(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_CLEANUP:
-		bfa_ioim_notify_cleanup(ioim);
-		break;
+	हाल BFA_IOIM_SM_CLEANUP:
+		bfa_ioim_notअगरy_cleanup(ioim);
+		अवरोध;
 
-	case BFA_IOIM_SM_HWFAIL:
-		break;
+	हाल BFA_IOIM_SM_HWFAIL:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * This is called from bfa_fcpim_start after the bfa_init() with flash read
+ * This is called from bfa_fcpim_start after the bfa_init() with flash पढ़ो
  * is complete by driver. now invalidate the stale content of lun mask
  * like unit attention, rp tag and lp tag.
  */
-void
-bfa_ioim_lm_init(struct bfa_s *bfa)
-{
-	struct bfa_lun_mask_s *lunm_list;
-	int	i;
+व्योम
+bfa_ioim_lm_init(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_lun_mask_s *lunm_list;
+	पूर्णांक	i;
 
-	if (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
-		return;
+	अगर (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
+		वापस;
 
 	lunm_list = bfa_get_lun_mask_list(bfa);
-	for (i = 0; i < MAX_LUN_MASK_CFG; i++) {
+	क्रम (i = 0; i < MAX_LUN_MASK_CFG; i++) अणु
 		lunm_list[i].ua = BFA_IOIM_LM_UA_RESET;
 		lunm_list[i].lp_tag = BFA_LP_TAG_INVALID;
 		lunm_list[i].rp_tag = BFA_RPORT_TAG_INVALID;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-__bfa_cb_ioim_good_comp(void *cbarg, bfa_boolean_t complete)
-{
-	struct bfa_ioim_s *ioim = cbarg;
+अटल व्योम
+__bfa_cb_ioim_good_comp(व्योम *cbarg, bfa_boolean_t complete)
+अणु
+	काष्ठा bfa_ioim_s *ioim = cbarg;
 
-	if (!complete) {
+	अगर (!complete) अणु
 		bfa_sm_send_event(ioim, BFA_IOIM_SM_HCB);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bfa_cb_ioim_good_comp(ioim->bfa->bfad, ioim->dio);
-}
+पूर्ण
 
-static void
-__bfa_cb_ioim_comp(void *cbarg, bfa_boolean_t complete)
-{
-	struct bfa_ioim_s	*ioim = cbarg;
-	struct bfi_ioim_rsp_s *m;
-	u8	*snsinfo = NULL;
+अटल व्योम
+__bfa_cb_ioim_comp(व्योम *cbarg, bfa_boolean_t complete)
+अणु
+	काष्ठा bfa_ioim_s	*ioim = cbarg;
+	काष्ठा bfi_ioim_rsp_s *m;
+	u8	*snsinfo = शून्य;
 	u8	sns_len = 0;
 	s32	residue = 0;
 
-	if (!complete) {
+	अगर (!complete) अणु
 		bfa_sm_send_event(ioim, BFA_IOIM_SM_HCB);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	m = (struct bfi_ioim_rsp_s *) &ioim->iosp->comp_rspmsg;
-	if (m->io_status == BFI_IOIM_STS_OK) {
+	m = (काष्ठा bfi_ioim_rsp_s *) &ioim->iosp->comp_rspmsg;
+	अगर (m->io_status == BFI_IOIM_STS_OK) अणु
 		/*
-		 * setup sense information, if present
+		 * setup sense inक्रमmation, अगर present
 		 */
-		if ((m->scsi_status == SAM_STAT_CHECK_CONDITION) &&
-					m->sns_len) {
+		अगर ((m->scsi_status == SAM_STAT_CHECK_CONDITION) &&
+					m->sns_len) अणु
 			sns_len = m->sns_len;
 			snsinfo = BFA_SNSINFO_FROM_TAG(ioim->fcpim->fcp,
 						ioim->iotag);
-		}
+		पूर्ण
 
 		/*
-		 * setup residue value correctly for normal completions
+		 * setup residue value correctly क्रम normal completions
 		 */
-		if (m->resid_flags == FCP_RESID_UNDER) {
+		अगर (m->resid_flags == FCP_RESID_UNDER) अणु
 			residue = be32_to_cpu(m->residue);
 			bfa_stats(ioim->itnim, iocomp_underrun);
-		}
-		if (m->resid_flags == FCP_RESID_OVER) {
+		पूर्ण
+		अगर (m->resid_flags == FCP_RESID_OVER) अणु
 			residue = be32_to_cpu(m->residue);
 			residue = -residue;
 			bfa_stats(ioim->itnim, iocomp_overrun);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	bfa_cb_ioim_done(ioim->bfa->bfad, ioim->dio, m->io_status,
+	bfa_cb_ioim_करोne(ioim->bfa->bfad, ioim->dio, m->io_status,
 			  m->scsi_status, sns_len, snsinfo, residue);
-}
+पूर्ण
 
-void
-bfa_fcpim_lunmask_rp_update(struct bfa_s *bfa, wwn_t lp_wwn, wwn_t rp_wwn,
+व्योम
+bfa_fcpim_lunmask_rp_update(काष्ठा bfa_s *bfa, wwn_t lp_wwn, wwn_t rp_wwn,
 			u16 rp_tag, u8 lp_tag)
-{
-	struct bfa_lun_mask_s *lun_list;
+अणु
+	काष्ठा bfa_lun_mask_s *lun_list;
 	u8	i;
 
-	if (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
-		return;
+	अगर (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
+		वापस;
 
 	lun_list = bfa_get_lun_mask_list(bfa);
-	for (i = 0; i < MAX_LUN_MASK_CFG; i++) {
-		if (lun_list[i].state == BFA_IOIM_LUN_MASK_ACTIVE) {
-			if ((lun_list[i].lp_wwn == lp_wwn) &&
-			    (lun_list[i].rp_wwn == rp_wwn)) {
+	क्रम (i = 0; i < MAX_LUN_MASK_CFG; i++) अणु
+		अगर (lun_list[i].state == BFA_IOIM_LUN_MASK_ACTIVE) अणु
+			अगर ((lun_list[i].lp_wwn == lp_wwn) &&
+			    (lun_list[i].rp_wwn == rp_wwn)) अणु
 				lun_list[i].rp_tag = rp_tag;
 				lun_list[i].lp_tag = lp_tag;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * set UA for all active luns in LM DB
+ * set UA क्रम all active luns in LM DB
  */
-static void
-bfa_ioim_lm_set_ua(struct bfa_s *bfa)
-{
-	struct bfa_lun_mask_s	*lunm_list;
-	int	i;
+अटल व्योम
+bfa_ioim_lm_set_ua(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_lun_mask_s	*lunm_list;
+	पूर्णांक	i;
 
 	lunm_list = bfa_get_lun_mask_list(bfa);
-	for (i = 0; i < MAX_LUN_MASK_CFG; i++) {
-		if (lunm_list[i].state != BFA_IOIM_LUN_MASK_ACTIVE)
-			continue;
+	क्रम (i = 0; i < MAX_LUN_MASK_CFG; i++) अणु
+		अगर (lunm_list[i].state != BFA_IOIM_LUN_MASK_ACTIVE)
+			जारी;
 		lunm_list[i].ua = BFA_IOIM_LM_UA_SET;
-	}
-}
+	पूर्ण
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_lunmask_update(struct bfa_s *bfa, u32 update)
-{
-	struct bfa_lunmask_cfg_s	*lun_mask;
+bfa_fcpim_lunmask_update(काष्ठा bfa_s *bfa, u32 update)
+अणु
+	काष्ठा bfa_lunmask_cfg_s	*lun_mask;
 
 	bfa_trc(bfa, bfa_get_lun_mask_status(bfa));
-	if (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
-		return BFA_STATUS_FAILED;
+	अगर (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
+		वापस BFA_STATUS_FAILED;
 
-	if (bfa_get_lun_mask_status(bfa) == update)
-		return BFA_STATUS_NO_CHANGE;
+	अगर (bfa_get_lun_mask_status(bfa) == update)
+		वापस BFA_STATUS_NO_CHANGE;
 
 	lun_mask = bfa_get_lun_mask(bfa);
 	lun_mask->status = update;
 
-	if (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_ENABLED)
+	अगर (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_ENABLED)
 		bfa_ioim_lm_set_ua(bfa);
 
-	return  bfa_dconf_update(bfa);
-}
+	वापस  bfa_dconf_update(bfa);
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_lunmask_clear(struct bfa_s *bfa)
-{
-	int i;
-	struct bfa_lun_mask_s	*lunm_list;
+bfa_fcpim_lunmask_clear(काष्ठा bfa_s *bfa)
+अणु
+	पूर्णांक i;
+	काष्ठा bfa_lun_mask_s	*lunm_list;
 
 	bfa_trc(bfa, bfa_get_lun_mask_status(bfa));
-	if (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
-		return BFA_STATUS_FAILED;
+	अगर (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
+		वापस BFA_STATUS_FAILED;
 
 	lunm_list = bfa_get_lun_mask_list(bfa);
-	for (i = 0; i < MAX_LUN_MASK_CFG; i++) {
-		if (lunm_list[i].state == BFA_IOIM_LUN_MASK_ACTIVE) {
-			if (lunm_list[i].rp_tag != BFA_RPORT_TAG_INVALID)
+	क्रम (i = 0; i < MAX_LUN_MASK_CFG; i++) अणु
+		अगर (lunm_list[i].state == BFA_IOIM_LUN_MASK_ACTIVE) अणु
+			अगर (lunm_list[i].rp_tag != BFA_RPORT_TAG_INVALID)
 				bfa_rport_unset_lunmask(bfa,
 				  BFA_RPORT_FROM_TAG(bfa, lunm_list[i].rp_tag));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	memset(lunm_list, 0, sizeof(struct bfa_lun_mask_s) * MAX_LUN_MASK_CFG);
-	return bfa_dconf_update(bfa);
-}
+	स_रखो(lunm_list, 0, माप(काष्ठा bfa_lun_mask_s) * MAX_LUN_MASK_CFG);
+	वापस bfa_dconf_update(bfa);
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_lunmask_query(struct bfa_s *bfa, void *buf)
-{
-	struct bfa_lunmask_cfg_s *lun_mask;
+bfa_fcpim_lunmask_query(काष्ठा bfa_s *bfa, व्योम *buf)
+अणु
+	काष्ठा bfa_lunmask_cfg_s *lun_mask;
 
 	bfa_trc(bfa, bfa_get_lun_mask_status(bfa));
-	if (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
-		return BFA_STATUS_FAILED;
+	अगर (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
+		वापस BFA_STATUS_FAILED;
 
 	lun_mask = bfa_get_lun_mask(bfa);
-	memcpy(buf, lun_mask, sizeof(struct bfa_lunmask_cfg_s));
-	return BFA_STATUS_OK;
-}
+	स_नकल(buf, lun_mask, माप(काष्ठा bfa_lunmask_cfg_s));
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_lunmask_add(struct bfa_s *bfa, u16 vf_id, wwn_t *pwwn,
-		      wwn_t rpwwn, struct scsi_lun lun)
-{
-	struct bfa_lun_mask_s *lunm_list;
-	struct bfa_rport_s *rp = NULL;
-	int i, free_index = MAX_LUN_MASK_CFG + 1;
-	struct bfa_fcs_lport_s *port = NULL;
-	struct bfa_fcs_rport_s *rp_fcs;
+bfa_fcpim_lunmask_add(काष्ठा bfa_s *bfa, u16 vf_id, wwn_t *pwwn,
+		      wwn_t rpwwn, काष्ठा scsi_lun lun)
+अणु
+	काष्ठा bfa_lun_mask_s *lunm_list;
+	काष्ठा bfa_rport_s *rp = शून्य;
+	पूर्णांक i, मुक्त_index = MAX_LUN_MASK_CFG + 1;
+	काष्ठा bfa_fcs_lport_s *port = शून्य;
+	काष्ठा bfa_fcs_rport_s *rp_fcs;
 
 	bfa_trc(bfa, bfa_get_lun_mask_status(bfa));
-	if (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
-		return BFA_STATUS_FAILED;
+	अगर (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
+		वापस BFA_STATUS_FAILED;
 
-	port = bfa_fcs_lookup_port(&((struct bfad_s *)bfa->bfad)->bfa_fcs,
+	port = bfa_fcs_lookup_port(&((काष्ठा bfad_s *)bfa->bfad)->bfa_fcs,
 				   vf_id, *pwwn);
-	if (port) {
+	अगर (port) अणु
 		*pwwn = port->port_cfg.pwwn;
 		rp_fcs = bfa_fcs_lport_get_rport_by_pwwn(port, rpwwn);
-		if (rp_fcs)
+		अगर (rp_fcs)
 			rp = rp_fcs->bfa_rport;
-	}
+	पूर्ण
 
 	lunm_list = bfa_get_lun_mask_list(bfa);
-	/* if entry exists */
-	for (i = 0; i < MAX_LUN_MASK_CFG; i++) {
-		if (lunm_list[i].state != BFA_IOIM_LUN_MASK_ACTIVE)
-			free_index = i;
-		if ((lunm_list[i].lp_wwn == *pwwn) &&
+	/* अगर entry exists */
+	क्रम (i = 0; i < MAX_LUN_MASK_CFG; i++) अणु
+		अगर (lunm_list[i].state != BFA_IOIM_LUN_MASK_ACTIVE)
+			मुक्त_index = i;
+		अगर ((lunm_list[i].lp_wwn == *pwwn) &&
 		    (lunm_list[i].rp_wwn == rpwwn) &&
-		    (scsilun_to_int((struct scsi_lun *)&lunm_list[i].lun) ==
-		     scsilun_to_int((struct scsi_lun *)&lun)))
-			return  BFA_STATUS_ENTRY_EXISTS;
-	}
+		    (scsilun_to_पूर्णांक((काष्ठा scsi_lun *)&lunm_list[i].lun) ==
+		     scsilun_to_पूर्णांक((काष्ठा scsi_lun *)&lun)))
+			वापस  BFA_STATUS_ENTRY_EXISTS;
+	पूर्ण
 
-	if (free_index > MAX_LUN_MASK_CFG)
-		return BFA_STATUS_MAX_ENTRY_REACHED;
+	अगर (मुक्त_index > MAX_LUN_MASK_CFG)
+		वापस BFA_STATUS_MAX_ENTRY_REACHED;
 
-	if (rp) {
-		lunm_list[free_index].lp_tag = bfa_lps_get_tag_from_pid(bfa,
+	अगर (rp) अणु
+		lunm_list[मुक्त_index].lp_tag = bfa_lps_get_tag_from_pid(bfa,
 						   rp->rport_info.local_pid);
-		lunm_list[free_index].rp_tag = rp->rport_tag;
-	} else {
-		lunm_list[free_index].lp_tag = BFA_LP_TAG_INVALID;
-		lunm_list[free_index].rp_tag = BFA_RPORT_TAG_INVALID;
-	}
+		lunm_list[मुक्त_index].rp_tag = rp->rport_tag;
+	पूर्ण अन्यथा अणु
+		lunm_list[मुक्त_index].lp_tag = BFA_LP_TAG_INVALID;
+		lunm_list[मुक्त_index].rp_tag = BFA_RPORT_TAG_INVALID;
+	पूर्ण
 
-	lunm_list[free_index].lp_wwn = *pwwn;
-	lunm_list[free_index].rp_wwn = rpwwn;
-	lunm_list[free_index].lun = lun;
-	lunm_list[free_index].state = BFA_IOIM_LUN_MASK_ACTIVE;
+	lunm_list[मुक्त_index].lp_wwn = *pwwn;
+	lunm_list[मुक्त_index].rp_wwn = rpwwn;
+	lunm_list[मुक्त_index].lun = lun;
+	lunm_list[मुक्त_index].state = BFA_IOIM_LUN_MASK_ACTIVE;
 
-	/* set for all luns in this rp */
-	for (i = 0; i < MAX_LUN_MASK_CFG; i++) {
-		if ((lunm_list[i].lp_wwn == *pwwn) &&
+	/* set क्रम all luns in this rp */
+	क्रम (i = 0; i < MAX_LUN_MASK_CFG; i++) अणु
+		अगर ((lunm_list[i].lp_wwn == *pwwn) &&
 		    (lunm_list[i].rp_wwn == rpwwn))
 			lunm_list[i].ua = BFA_IOIM_LM_UA_SET;
-	}
+	पूर्ण
 
-	return bfa_dconf_update(bfa);
-}
+	वापस bfa_dconf_update(bfa);
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_lunmask_delete(struct bfa_s *bfa, u16 vf_id, wwn_t *pwwn,
-			 wwn_t rpwwn, struct scsi_lun lun)
-{
-	struct bfa_lun_mask_s	*lunm_list;
-	struct bfa_fcs_lport_s *port = NULL;
-	int	i;
+bfa_fcpim_lunmask_delete(काष्ठा bfa_s *bfa, u16 vf_id, wwn_t *pwwn,
+			 wwn_t rpwwn, काष्ठा scsi_lun lun)
+अणु
+	काष्ठा bfa_lun_mask_s	*lunm_list;
+	काष्ठा bfa_fcs_lport_s *port = शून्य;
+	पूर्णांक	i;
 
-	/* in min cfg lunm_list could be NULL but  no commands should run. */
-	if (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
-		return BFA_STATUS_FAILED;
+	/* in min cfg lunm_list could be शून्य but  no commands should run. */
+	अगर (bfa_get_lun_mask_status(bfa) == BFA_LUNMASK_MINCFG)
+		वापस BFA_STATUS_FAILED;
 
 	bfa_trc(bfa, bfa_get_lun_mask_status(bfa));
 	bfa_trc(bfa, *pwwn);
 	bfa_trc(bfa, rpwwn);
-	bfa_trc(bfa, scsilun_to_int((struct scsi_lun *)&lun));
+	bfa_trc(bfa, scsilun_to_पूर्णांक((काष्ठा scsi_lun *)&lun));
 
-	if (*pwwn == 0) {
+	अगर (*pwwn == 0) अणु
 		port = bfa_fcs_lookup_port(
-				&((struct bfad_s *)bfa->bfad)->bfa_fcs,
+				&((काष्ठा bfad_s *)bfa->bfad)->bfa_fcs,
 				vf_id, *pwwn);
-		if (port)
+		अगर (port)
 			*pwwn = port->port_cfg.pwwn;
-	}
+	पूर्ण
 
 	lunm_list = bfa_get_lun_mask_list(bfa);
-	for (i = 0; i < MAX_LUN_MASK_CFG; i++) {
-		if ((lunm_list[i].lp_wwn == *pwwn) &&
+	क्रम (i = 0; i < MAX_LUN_MASK_CFG; i++) अणु
+		अगर ((lunm_list[i].lp_wwn == *pwwn) &&
 		    (lunm_list[i].rp_wwn == rpwwn) &&
-		    (scsilun_to_int((struct scsi_lun *)&lunm_list[i].lun) ==
-		     scsilun_to_int((struct scsi_lun *)&lun))) {
+		    (scsilun_to_पूर्णांक((काष्ठा scsi_lun *)&lunm_list[i].lun) ==
+		     scsilun_to_पूर्णांक((काष्ठा scsi_lun *)&lun))) अणु
 			lunm_list[i].lp_wwn = 0;
 			lunm_list[i].rp_wwn = 0;
-			int_to_scsilun(0, &lunm_list[i].lun);
+			पूर्णांक_to_scsilun(0, &lunm_list[i].lun);
 			lunm_list[i].state = BFA_IOIM_LUN_MASK_INACTIVE;
-			if (lunm_list[i].rp_tag != BFA_RPORT_TAG_INVALID) {
+			अगर (lunm_list[i].rp_tag != BFA_RPORT_TAG_INVALID) अणु
 				lunm_list[i].rp_tag = BFA_RPORT_TAG_INVALID;
 				lunm_list[i].lp_tag = BFA_LP_TAG_INVALID;
-			}
-			return bfa_dconf_update(bfa);
-		}
-	}
+			पूर्ण
+			वापस bfa_dconf_update(bfa);
+		पूर्ण
+	पूर्ण
 
-	/* set for all luns in this rp */
-	for (i = 0; i < MAX_LUN_MASK_CFG; i++) {
-		if ((lunm_list[i].lp_wwn == *pwwn) &&
+	/* set क्रम all luns in this rp */
+	क्रम (i = 0; i < MAX_LUN_MASK_CFG; i++) अणु
+		अगर ((lunm_list[i].lp_wwn == *pwwn) &&
 		    (lunm_list[i].rp_wwn == rpwwn))
 			lunm_list[i].ua = BFA_IOIM_LM_UA_SET;
-	}
+	पूर्ण
 
-	return BFA_STATUS_ENTRY_NOT_EXISTS;
-}
+	वापस BFA_STATUS_ENTRY_NOT_EXISTS;
+पूर्ण
 
-static void
-__bfa_cb_ioim_failed(void *cbarg, bfa_boolean_t complete)
-{
-	struct bfa_ioim_s *ioim = cbarg;
+अटल व्योम
+__bfa_cb_ioim_failed(व्योम *cbarg, bfa_boolean_t complete)
+अणु
+	काष्ठा bfa_ioim_s *ioim = cbarg;
 
-	if (!complete) {
+	अगर (!complete) अणु
 		bfa_sm_send_event(ioim, BFA_IOIM_SM_HCB);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bfa_cb_ioim_done(ioim->bfa->bfad, ioim->dio, BFI_IOIM_STS_ABORTED,
-			  0, 0, NULL, 0);
-}
+	bfa_cb_ioim_करोne(ioim->bfa->bfad, ioim->dio, BFI_IOIM_STS_ABORTED,
+			  0, 0, शून्य, 0);
+पूर्ण
 
-static void
-__bfa_cb_ioim_pathtov(void *cbarg, bfa_boolean_t complete)
-{
-	struct bfa_ioim_s *ioim = cbarg;
+अटल व्योम
+__bfa_cb_ioim_pathtov(व्योम *cbarg, bfa_boolean_t complete)
+अणु
+	काष्ठा bfa_ioim_s *ioim = cbarg;
 
 	bfa_stats(ioim->itnim, path_tov_expired);
-	if (!complete) {
+	अगर (!complete) अणु
 		bfa_sm_send_event(ioim, BFA_IOIM_SM_HCB);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bfa_cb_ioim_done(ioim->bfa->bfad, ioim->dio, BFI_IOIM_STS_PATHTOV,
-			  0, 0, NULL, 0);
-}
+	bfa_cb_ioim_करोne(ioim->bfa->bfad, ioim->dio, BFI_IOIM_STS_PATHTOV,
+			  0, 0, शून्य, 0);
+पूर्ण
 
-static void
-__bfa_cb_ioim_abort(void *cbarg, bfa_boolean_t complete)
-{
-	struct bfa_ioim_s *ioim = cbarg;
+अटल व्योम
+__bfa_cb_ioim_पात(व्योम *cbarg, bfa_boolean_t complete)
+अणु
+	काष्ठा bfa_ioim_s *ioim = cbarg;
 
-	if (!complete) {
+	अगर (!complete) अणु
 		bfa_sm_send_event(ioim, BFA_IOIM_SM_HCB);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bfa_cb_ioim_abort(ioim->bfa->bfad, ioim->dio);
-}
+	bfa_cb_ioim_पात(ioim->bfa->bfad, ioim->dio);
+पूर्ण
 
-static void
-bfa_ioim_sgpg_alloced(void *cbarg)
-{
-	struct bfa_ioim_s *ioim = cbarg;
+अटल व्योम
+bfa_ioim_sgpg_alloced(व्योम *cbarg)
+अणु
+	काष्ठा bfa_ioim_s *ioim = cbarg;
 
 	ioim->nsgpgs = BFA_SGPG_NPAGE(ioim->nsges);
 	list_splice_tail_init(&ioim->iosp->sgpg_wqe.sgpg_q, &ioim->sgpg_q);
 	ioim->sgpg = bfa_q_first(&ioim->sgpg_q);
 	bfa_sm_send_event(ioim, BFA_IOIM_SM_SGALLOCED);
-}
+पूर्ण
 
 /*
  * Send I/O request to firmware.
  */
-static	bfa_boolean_t
-bfa_ioim_send_ioreq(struct bfa_ioim_s *ioim)
-{
-	struct bfa_itnim_s *itnim = ioim->itnim;
-	struct bfi_ioim_req_s *m;
-	static struct fcp_cmnd_s cmnd_z0 = { { { 0 } } };
-	struct bfi_sge_s *sge, *sgpge;
+अटल	bfa_boolean_t
+bfa_ioim_send_ioreq(काष्ठा bfa_ioim_s *ioim)
+अणु
+	काष्ठा bfa_itnim_s *itnim = ioim->itnim;
+	काष्ठा bfi_ioim_req_s *m;
+	अटल काष्ठा fcp_cmnd_s cmnd_z0 = अणु अणु अणु 0 पूर्ण पूर्ण पूर्ण;
+	काष्ठा bfi_sge_s *sge, *sgpge;
 	u32	pgdlen = 0;
 	u32	fcp_dl;
 	u64 addr;
-	struct scatterlist *sg;
-	struct bfa_sgpg_s *sgpg;
-	struct scsi_cmnd *cmnd = (struct scsi_cmnd *) ioim->dio;
+	काष्ठा scatterlist *sg;
+	काष्ठा bfa_sgpg_s *sgpg;
+	काष्ठा scsi_cmnd *cmnd = (काष्ठा scsi_cmnd *) ioim->dio;
 	u32 i, sge_id, pgcumsz;
-	enum dma_data_direction dmadir;
+	क्रमागत dma_data_direction dmadir;
 
 	/*
-	 * check for room in queue to send request now
+	 * check क्रम room in queue to send request now
 	 */
 	m = bfa_reqq_next(ioim->bfa, ioim->reqq);
-	if (!m) {
-		bfa_stats(ioim->itnim, qwait);
-		bfa_reqq_wait(ioim->bfa, ioim->reqq,
-				  &ioim->iosp->reqq_wait);
-		return BFA_FALSE;
-	}
+	अगर (!m) अणु
+		bfa_stats(ioim->itnim, qरुको);
+		bfa_reqq_रुको(ioim->bfa, ioim->reqq,
+				  &ioim->iosp->reqq_रुको);
+		वापस BFA_FALSE;
+	पूर्ण
 
 	/*
 	 * build i/o request message next
 	 */
 	m->io_tag = cpu_to_be16(ioim->iotag);
 	m->rport_hdl = ioim->itnim->rport->fw_handle;
-	m->io_timeout = 0;
+	m->io_समयout = 0;
 
 	sge = &m->sges[0];
 	sgpg = ioim->sgpg;
 	sge_id = 0;
-	sgpge = NULL;
+	sgpge = शून्य;
 	pgcumsz = 0;
-	scsi_for_each_sg(cmnd, sg, ioim->nsges, i) {
-		if (i == 0) {
-			/* build inline IO SG element */
+	scsi_क्रम_each_sg(cmnd, sg, ioim->nsges, i) अणु
+		अगर (i == 0) अणु
+			/* build अंतरभूत IO SG element */
 			addr = bfa_sgaddr_le(sg_dma_address(sg));
-			sge->sga = *(union bfi_addr_u *) &addr;
+			sge->sga = *(जोड़ bfi_addr_u *) &addr;
 			pgdlen = sg_dma_len(sg);
 			sge->sg_len = pgdlen;
 			sge->flags = (ioim->nsges > BFI_SGE_INLINE) ?
 					BFI_SGE_DATA_CPL : BFI_SGE_DATA_LAST;
 			bfa_sge_to_be(sge);
 			sge++;
-		} else {
-			if (sge_id == 0)
+		पूर्ण अन्यथा अणु
+			अगर (sge_id == 0)
 				sgpge = sgpg->sgpg->sges;
 
 			addr = bfa_sgaddr_le(sg_dma_address(sg));
-			sgpge->sga = *(union bfi_addr_u *) &addr;
+			sgpge->sga = *(जोड़ bfi_addr_u *) &addr;
 			sgpge->sg_len = sg_dma_len(sg);
 			pgcumsz += sgpge->sg_len;
 
 			/* set flags */
-			if (i < (ioim->nsges - 1) &&
+			अगर (i < (ioim->nsges - 1) &&
 					sge_id < (BFI_SGPG_DATA_SGES - 1))
 				sgpge->flags = BFI_SGE_DATA;
-			else if (i < (ioim->nsges - 1))
+			अन्यथा अगर (i < (ioim->nsges - 1))
 				sgpge->flags = BFI_SGE_DATA_CPL;
-			else
+			अन्यथा
 				sgpge->flags = BFI_SGE_DATA_LAST;
 
 			bfa_sge_to_le(sgpge);
 
 			sgpge++;
-			if (i == (ioim->nsges - 1)) {
+			अगर (i == (ioim->nsges - 1)) अणु
 				sgpge->flags = BFI_SGE_PGDLEN;
 				sgpge->sga.a32.addr_lo = 0;
 				sgpge->sga.a32.addr_hi = 0;
 				sgpge->sg_len = pgcumsz;
 				bfa_sge_to_le(sgpge);
-			} else if (++sge_id == BFI_SGPG_DATA_SGES) {
-				sgpg = (struct bfa_sgpg_s *) bfa_q_next(sgpg);
+			पूर्ण अन्यथा अगर (++sge_id == BFI_SGPG_DATA_SGES) अणु
+				sgpg = (काष्ठा bfa_sgpg_s *) bfa_q_next(sgpg);
 				sgpge->flags = BFI_SGE_LINK;
 				sgpge->sga = sgpg->sgpg_pa;
 				sgpge->sg_len = pgcumsz;
 				bfa_sge_to_le(sgpge);
 				sge_id = 0;
 				pgcumsz = 0;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (ioim->nsges > BFI_SGE_INLINE) {
+	अगर (ioim->nsges > BFI_SGE_INLINE) अणु
 		sge->sga = ioim->sgpg->sgpg_pa;
-	} else {
+	पूर्ण अन्यथा अणु
 		sge->sga.a32.addr_lo = 0;
 		sge->sga.a32.addr_hi = 0;
-	}
+	पूर्ण
 	sge->sg_len = pgdlen;
 	sge->flags = BFI_SGE_PGDLEN;
 	bfa_sge_to_be(sge);
@@ -2542,58 +2543,58 @@ bfa_ioim_send_ioreq(struct bfa_ioim_s *ioim)
 	 * set up I/O command parameters
 	 */
 	m->cmnd = cmnd_z0;
-	int_to_scsilun(cmnd->device->lun, &m->cmnd.lun);
+	पूर्णांक_to_scsilun(cmnd->device->lun, &m->cmnd.lun);
 	dmadir = cmnd->sc_data_direction;
-	if (dmadir == DMA_TO_DEVICE)
-		m->cmnd.iodir = FCP_IODIR_WRITE;
-	else if (dmadir == DMA_FROM_DEVICE)
-		m->cmnd.iodir = FCP_IODIR_READ;
-	else
-		m->cmnd.iodir = FCP_IODIR_NONE;
+	अगर (dmadir == DMA_TO_DEVICE)
+		m->cmnd.iodir = FCP_IOसूची_WRITE;
+	अन्यथा अगर (dmadir == DMA_FROM_DEVICE)
+		m->cmnd.iodir = FCP_IOसूची_READ;
+	अन्यथा
+		m->cmnd.iodir = FCP_IOसूची_NONE;
 
-	m->cmnd.cdb = *(struct scsi_cdb_s *) cmnd->cmnd;
+	m->cmnd.cdb = *(काष्ठा scsi_cdb_s *) cmnd->cmnd;
 	fcp_dl = scsi_bufflen(cmnd);
 	m->cmnd.fcp_dl = cpu_to_be32(fcp_dl);
 
 	/*
 	 * set up I/O message header
 	 */
-	switch (m->cmnd.iodir) {
-	case FCP_IODIR_READ:
+	चयन (m->cmnd.iodir) अणु
+	हाल FCP_IOसूची_READ:
 		bfi_h2i_set(m->mh, BFI_MC_IOIM_READ, 0, bfa_fn_lpu(ioim->bfa));
 		bfa_stats(itnim, input_reqs);
 		ioim->itnim->stats.rd_throughput += fcp_dl;
-		break;
-	case FCP_IODIR_WRITE:
+		अवरोध;
+	हाल FCP_IOसूची_WRITE:
 		bfi_h2i_set(m->mh, BFI_MC_IOIM_WRITE, 0, bfa_fn_lpu(ioim->bfa));
 		bfa_stats(itnim, output_reqs);
 		ioim->itnim->stats.wr_throughput += fcp_dl;
-		break;
-	case FCP_IODIR_RW:
+		अवरोध;
+	हाल FCP_IOसूची_RW:
 		bfa_stats(itnim, input_reqs);
 		bfa_stats(itnim, output_reqs);
 		fallthrough;
-	default:
+	शेष:
 		bfi_h2i_set(m->mh, BFI_MC_IOIM_IO, 0, bfa_fn_lpu(ioim->bfa));
-	}
-	if (itnim->seq_rec ||
-	    (scsi_bufflen(cmnd) & (sizeof(u32) - 1)))
+	पूर्ण
+	अगर (itnim->seq_rec ||
+	    (scsi_bufflen(cmnd) & (माप(u32) - 1)))
 		bfi_h2i_set(m->mh, BFI_MC_IOIM_IO, 0, bfa_fn_lpu(ioim->bfa));
 
 	/*
 	 * queue I/O message to firmware
 	 */
 	bfa_reqq_produce(ioim->bfa, ioim->reqq, m->mh);
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
 /*
  * Setup any additional SG pages needed.Inline SG element is setup
- * at queuing time.
+ * at queuing समय.
  */
-static bfa_boolean_t
-bfa_ioim_sgpg_alloc(struct bfa_ioim_s *ioim)
-{
+अटल bfa_boolean_t
+bfa_ioim_sgpg_alloc(काष्ठा bfa_ioim_s *ioim)
+अणु
 	u16	nsgpgs;
 
 	WARN_ON(ioim->nsges <= BFI_SGE_INLINE);
@@ -2602,187 +2603,187 @@ bfa_ioim_sgpg_alloc(struct bfa_ioim_s *ioim)
 	 * allocate SG pages needed
 	 */
 	nsgpgs = BFA_SGPG_NPAGE(ioim->nsges);
-	if (!nsgpgs)
-		return BFA_TRUE;
+	अगर (!nsgpgs)
+		वापस BFA_TRUE;
 
-	if (bfa_sgpg_malloc(ioim->bfa, &ioim->sgpg_q, nsgpgs)
-	    != BFA_STATUS_OK) {
-		bfa_sgpg_wait(ioim->bfa, &ioim->iosp->sgpg_wqe, nsgpgs);
-		return BFA_FALSE;
-	}
+	अगर (bfa_sgpg_दो_स्मृति(ioim->bfa, &ioim->sgpg_q, nsgpgs)
+	    != BFA_STATUS_OK) अणु
+		bfa_sgpg_रुको(ioim->bfa, &ioim->iosp->sgpg_wqe, nsgpgs);
+		वापस BFA_FALSE;
+	पूर्ण
 
 	ioim->nsgpgs = nsgpgs;
 	ioim->sgpg = bfa_q_first(&ioim->sgpg_q);
 
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
 /*
- * Send I/O abort request to firmware.
+ * Send I/O पात request to firmware.
  */
-static	bfa_boolean_t
-bfa_ioim_send_abort(struct bfa_ioim_s *ioim)
-{
-	struct bfi_ioim_abort_req_s *m;
-	enum bfi_ioim_h2i	msgop;
+अटल	bfa_boolean_t
+bfa_ioim_send_पात(काष्ठा bfa_ioim_s *ioim)
+अणु
+	काष्ठा bfi_ioim_पात_req_s *m;
+	क्रमागत bfi_ioim_h2i	msgop;
 
 	/*
-	 * check for room in queue to send request now
+	 * check क्रम room in queue to send request now
 	 */
 	m = bfa_reqq_next(ioim->bfa, ioim->reqq);
-	if (!m)
-		return BFA_FALSE;
+	अगर (!m)
+		वापस BFA_FALSE;
 
 	/*
 	 * build i/o request message next
 	 */
-	if (ioim->iosp->abort_explicit)
+	अगर (ioim->iosp->पात_explicit)
 		msgop = BFI_IOIM_H2I_IOABORT_REQ;
-	else
+	अन्यथा
 		msgop = BFI_IOIM_H2I_IOCLEANUP_REQ;
 
 	bfi_h2i_set(m->mh, BFI_MC_IOIM, msgop, bfa_fn_lpu(ioim->bfa));
 	m->io_tag    = cpu_to_be16(ioim->iotag);
-	m->abort_tag = ++ioim->abort_tag;
+	m->पात_tag = ++ioim->पात_tag;
 
 	/*
 	 * queue I/O message to firmware
 	 */
 	bfa_reqq_produce(ioim->bfa, ioim->reqq, m->mh);
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
 /*
- * Call to resume any I/O requests waiting for room in request queue.
+ * Call to resume any I/O requests रुकोing क्रम room in request queue.
  */
-static void
-bfa_ioim_qresume(void *cbarg)
-{
-	struct bfa_ioim_s *ioim = cbarg;
+अटल व्योम
+bfa_ioim_qresume(व्योम *cbarg)
+अणु
+	काष्ठा bfa_ioim_s *ioim = cbarg;
 
 	bfa_stats(ioim->itnim, qresumes);
 	bfa_sm_send_event(ioim, BFA_IOIM_SM_QRESUME);
-}
+पूर्ण
 
 
-static void
-bfa_ioim_notify_cleanup(struct bfa_ioim_s *ioim)
-{
+अटल व्योम
+bfa_ioim_notअगरy_cleanup(काष्ठा bfa_ioim_s *ioim)
+अणु
 	/*
 	 * Move IO from itnim queue to fcpim global queue since itnim will be
-	 * freed.
+	 * मुक्तd.
 	 */
 	list_del(&ioim->qe);
 	list_add_tail(&ioim->qe, &ioim->fcpim->ioim_comp_q);
 
-	if (!ioim->iosp->tskim) {
-		if (ioim->fcpim->delay_comp && ioim->itnim->iotov_active) {
+	अगर (!ioim->iosp->tskim) अणु
+		अगर (ioim->fcpim->delay_comp && ioim->itnim->iotov_active) अणु
 			bfa_cb_dequeue(&ioim->hcb_qe);
 			list_del(&ioim->qe);
 			list_add_tail(&ioim->qe, &ioim->itnim->delay_comp_q);
-		}
-		bfa_itnim_iodone(ioim->itnim);
-	} else
-		bfa_wc_down(&ioim->iosp->tskim->wc);
-}
+		पूर्ण
+		bfa_itnim_ioकरोne(ioim->itnim);
+	पूर्ण अन्यथा
+		bfa_wc_करोwn(&ioim->iosp->tskim->wc);
+पूर्ण
 
-static bfa_boolean_t
-bfa_ioim_is_abortable(struct bfa_ioim_s *ioim)
-{
-	if ((bfa_sm_cmp_state(ioim, bfa_ioim_sm_uninit) &&
+अटल bfa_boolean_t
+bfa_ioim_is_पातable(काष्ठा bfa_ioim_s *ioim)
+अणु
+	अगर ((bfa_sm_cmp_state(ioim, bfa_ioim_sm_uninit) &&
 	    (!bfa_q_is_on_q(&ioim->itnim->pending_q, ioim)))	||
-	    (bfa_sm_cmp_state(ioim, bfa_ioim_sm_abort))		||
-	    (bfa_sm_cmp_state(ioim, bfa_ioim_sm_abort_qfull))	||
+	    (bfa_sm_cmp_state(ioim, bfa_ioim_sm_पात))		||
+	    (bfa_sm_cmp_state(ioim, bfa_ioim_sm_पात_qfull))	||
 	    (bfa_sm_cmp_state(ioim, bfa_ioim_sm_hcb))		||
-	    (bfa_sm_cmp_state(ioim, bfa_ioim_sm_hcb_free))	||
-	    (bfa_sm_cmp_state(ioim, bfa_ioim_sm_resfree)))
-		return BFA_FALSE;
+	    (bfa_sm_cmp_state(ioim, bfa_ioim_sm_hcb_मुक्त))	||
+	    (bfa_sm_cmp_state(ioim, bfa_ioim_sm_resमुक्त)))
+		वापस BFA_FALSE;
 
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
-void
-bfa_ioim_delayed_comp(struct bfa_ioim_s *ioim, bfa_boolean_t iotov)
-{
+व्योम
+bfa_ioim_delayed_comp(काष्ठा bfa_ioim_s *ioim, bfa_boolean_t iotov)
+अणु
 	/*
-	 * If path tov timer expired, failback with PATHTOV status - these
+	 * If path tov समयr expired, failback with PATHTOV status - these
 	 * IO requests are not normally retried by IO stack.
 	 *
 	 * Otherwise device cameback online and fail it with normal failed
 	 * status so that IO stack retries these failed IO requests.
 	 */
-	if (iotov)
+	अगर (iotov)
 		ioim->io_cbfn = __bfa_cb_ioim_pathtov;
-	else {
+	अन्यथा अणु
 		ioim->io_cbfn = __bfa_cb_ioim_failed;
-		bfa_stats(ioim->itnim, iocom_nexus_abort);
-	}
+		bfa_stats(ioim->itnim, iocom_nexus_पात);
+	पूर्ण
 	bfa_cb_queue(ioim->bfa, &ioim->hcb_qe, ioim->io_cbfn, ioim);
 
 	/*
 	 * Move IO to fcpim global queue since itnim will be
-	 * freed.
+	 * मुक्तd.
 	 */
 	list_del(&ioim->qe);
 	list_add_tail(&ioim->qe, &ioim->fcpim->ioim_comp_q);
-}
+पूर्ण
 
 
 /*
  * Memory allocation and initialization.
  */
-void
-bfa_ioim_attach(struct bfa_fcpim_s *fcpim)
-{
-	struct bfa_ioim_s		*ioim;
-	struct bfa_fcp_mod_s	*fcp = fcpim->fcp;
-	struct bfa_ioim_sp_s	*iosp;
+व्योम
+bfa_ioim_attach(काष्ठा bfa_fcpim_s *fcpim)
+अणु
+	काष्ठा bfa_ioim_s		*ioim;
+	काष्ठा bfa_fcp_mod_s	*fcp = fcpim->fcp;
+	काष्ठा bfa_ioim_sp_s	*iosp;
 	u16		i;
 
 	/*
 	 * claim memory first
 	 */
-	ioim = (struct bfa_ioim_s *) bfa_mem_kva_curp(fcp);
+	ioim = (काष्ठा bfa_ioim_s *) bfa_mem_kva_curp(fcp);
 	fcpim->ioim_arr = ioim;
 	bfa_mem_kva_curp(fcp) = (u8 *) (ioim + fcpim->fcp->num_ioim_reqs);
 
-	iosp = (struct bfa_ioim_sp_s *) bfa_mem_kva_curp(fcp);
+	iosp = (काष्ठा bfa_ioim_sp_s *) bfa_mem_kva_curp(fcp);
 	fcpim->ioim_sp_arr = iosp;
 	bfa_mem_kva_curp(fcp) = (u8 *) (iosp + fcpim->fcp->num_ioim_reqs);
 
 	/*
-	 * Initialize ioim free queues
+	 * Initialize ioim मुक्त queues
 	 */
-	INIT_LIST_HEAD(&fcpim->ioim_resfree_q);
+	INIT_LIST_HEAD(&fcpim->ioim_resमुक्त_q);
 	INIT_LIST_HEAD(&fcpim->ioim_comp_q);
 
-	for (i = 0; i < fcpim->fcp->num_ioim_reqs;
-	     i++, ioim++, iosp++) {
+	क्रम (i = 0; i < fcpim->fcp->num_ioim_reqs;
+	     i++, ioim++, iosp++) अणु
 		/*
 		 * initialize IOIM
 		 */
-		memset(ioim, 0, sizeof(struct bfa_ioim_s));
+		स_रखो(ioim, 0, माप(काष्ठा bfa_ioim_s));
 		ioim->iotag   = i;
 		ioim->bfa     = fcpim->bfa;
 		ioim->fcpim   = fcpim;
 		ioim->iosp    = iosp;
 		INIT_LIST_HEAD(&ioim->sgpg_q);
-		bfa_reqq_winit(&ioim->iosp->reqq_wait,
+		bfa_reqq_winit(&ioim->iosp->reqq_रुको,
 				   bfa_ioim_qresume, ioim);
 		bfa_sgpg_winit(&ioim->iosp->sgpg_wqe,
 				   bfa_ioim_sgpg_alloced, ioim);
 		bfa_sm_set_state(ioim, bfa_ioim_sm_uninit);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bfa_ioim_isr(struct bfa_s *bfa, struct bfi_msg_s *m)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
-	struct bfi_ioim_rsp_s *rsp = (struct bfi_ioim_rsp_s *) m;
-	struct bfa_ioim_s *ioim;
+व्योम
+bfa_ioim_isr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *m)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+	काष्ठा bfi_ioim_rsp_s *rsp = (काष्ठा bfi_ioim_rsp_s *) m;
+	काष्ठा bfa_ioim_s *ioim;
 	u16	iotag;
-	enum bfa_ioim_event evt = BFA_IOIM_SM_COMP;
+	क्रमागत bfa_ioim_event evt = BFA_IOIM_SM_COMP;
 
 	iotag = be16_to_cpu(rsp->io_tag);
 
@@ -2793,79 +2794,79 @@ bfa_ioim_isr(struct bfa_s *bfa, struct bfi_msg_s *m)
 	bfa_trc(ioim->bfa, rsp->io_status);
 	bfa_trc(ioim->bfa, rsp->reuse_io_tag);
 
-	if (bfa_sm_cmp_state(ioim, bfa_ioim_sm_active))
+	अगर (bfa_sm_cmp_state(ioim, bfa_ioim_sm_active))
 		ioim->iosp->comp_rspmsg = *m;
 
-	switch (rsp->io_status) {
-	case BFI_IOIM_STS_OK:
+	चयन (rsp->io_status) अणु
+	हाल BFI_IOIM_STS_OK:
 		bfa_stats(ioim->itnim, iocomp_ok);
-		if (rsp->reuse_io_tag == 0)
+		अगर (rsp->reuse_io_tag == 0)
 			evt = BFA_IOIM_SM_DONE;
-		else
+		अन्यथा
 			evt = BFA_IOIM_SM_COMP;
-		break;
+		अवरोध;
 
-	case BFI_IOIM_STS_TIMEDOUT:
-		bfa_stats(ioim->itnim, iocomp_timedout);
+	हाल BFI_IOIM_STS_TIMEDOUT:
+		bfa_stats(ioim->itnim, iocomp_समयकरोut);
 		fallthrough;
-	case BFI_IOIM_STS_ABORTED:
+	हाल BFI_IOIM_STS_ABORTED:
 		rsp->io_status = BFI_IOIM_STS_ABORTED;
-		bfa_stats(ioim->itnim, iocomp_aborted);
-		if (rsp->reuse_io_tag == 0)
+		bfa_stats(ioim->itnim, iocomp_पातed);
+		अगर (rsp->reuse_io_tag == 0)
 			evt = BFA_IOIM_SM_DONE;
-		else
+		अन्यथा
 			evt = BFA_IOIM_SM_COMP;
-		break;
+		अवरोध;
 
-	case BFI_IOIM_STS_PROTO_ERR:
+	हाल BFI_IOIM_STS_PROTO_ERR:
 		bfa_stats(ioim->itnim, iocom_proto_err);
 		WARN_ON(!rsp->reuse_io_tag);
 		evt = BFA_IOIM_SM_COMP;
-		break;
+		अवरोध;
 
-	case BFI_IOIM_STS_SQER_NEEDED:
+	हाल BFI_IOIM_STS_SQER_NEEDED:
 		bfa_stats(ioim->itnim, iocom_sqer_needed);
 		WARN_ON(rsp->reuse_io_tag != 0);
 		evt = BFA_IOIM_SM_SQRETRY;
-		break;
+		अवरोध;
 
-	case BFI_IOIM_STS_RES_FREE:
-		bfa_stats(ioim->itnim, iocom_res_free);
+	हाल BFI_IOIM_STS_RES_FREE:
+		bfa_stats(ioim->itnim, iocom_res_मुक्त);
 		evt = BFA_IOIM_SM_FREE;
-		break;
+		अवरोध;
 
-	case BFI_IOIM_STS_HOST_ABORTED:
+	हाल BFI_IOIM_STS_HOST_ABORTED:
 		bfa_stats(ioim->itnim, iocom_hostabrts);
-		if (rsp->abort_tag != ioim->abort_tag) {
-			bfa_trc(ioim->bfa, rsp->abort_tag);
-			bfa_trc(ioim->bfa, ioim->abort_tag);
-			return;
-		}
+		अगर (rsp->पात_tag != ioim->पात_tag) अणु
+			bfa_trc(ioim->bfa, rsp->पात_tag);
+			bfa_trc(ioim->bfa, ioim->पात_tag);
+			वापस;
+		पूर्ण
 
-		if (rsp->reuse_io_tag)
+		अगर (rsp->reuse_io_tag)
 			evt = BFA_IOIM_SM_ABORT_COMP;
-		else
+		अन्यथा
 			evt = BFA_IOIM_SM_ABORT_DONE;
-		break;
+		अवरोध;
 
-	case BFI_IOIM_STS_UTAG:
+	हाल BFI_IOIM_STS_UTAG:
 		bfa_stats(ioim->itnim, iocom_utags);
 		evt = BFA_IOIM_SM_COMP_UTAG;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 
 	bfa_sm_send_event(ioim, evt);
-}
+पूर्ण
 
-void
-bfa_ioim_good_comp_isr(struct bfa_s *bfa, struct bfi_msg_s *m)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
-	struct bfi_ioim_rsp_s *rsp = (struct bfi_ioim_rsp_s *) m;
-	struct bfa_ioim_s *ioim;
+व्योम
+bfa_ioim_good_comp_isr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *m)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+	काष्ठा bfi_ioim_rsp_s *rsp = (काष्ठा bfi_ioim_rsp_s *) m;
+	काष्ठा bfa_ioim_s *ioim;
 	u16	iotag;
 
 	iotag = be16_to_cpu(rsp->io_tag);
@@ -2876,72 +2877,72 @@ bfa_ioim_good_comp_isr(struct bfa_s *bfa, struct bfi_msg_s *m)
 	bfa_ioim_cb_profile_comp(fcpim, ioim);
 
 	bfa_sm_send_event(ioim, BFA_IOIM_SM_COMP_GOOD);
-}
+पूर्ण
 
 /*
- * Called by itnim to clean up IO while going offline.
+ * Called by itnim to clean up IO जबतक going offline.
  */
-void
-bfa_ioim_cleanup(struct bfa_ioim_s *ioim)
-{
+व्योम
+bfa_ioim_cleanup(काष्ठा bfa_ioim_s *ioim)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
 	bfa_stats(ioim->itnim, io_cleanups);
 
-	ioim->iosp->tskim = NULL;
+	ioim->iosp->tskim = शून्य;
 	bfa_sm_send_event(ioim, BFA_IOIM_SM_CLEANUP);
-}
+पूर्ण
 
-void
-bfa_ioim_cleanup_tm(struct bfa_ioim_s *ioim, struct bfa_tskim_s *tskim)
-{
+व्योम
+bfa_ioim_cleanup_पंचांग(काष्ठा bfa_ioim_s *ioim, काष्ठा bfa_tskim_s *tskim)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
-	bfa_stats(ioim->itnim, io_tmaborts);
+	bfa_stats(ioim->itnim, io_पंचांगपातs);
 
 	ioim->iosp->tskim = tskim;
 	bfa_sm_send_event(ioim, BFA_IOIM_SM_CLEANUP);
-}
+पूर्ण
 
 /*
  * IOC failure handling.
  */
-void
-bfa_ioim_iocdisable(struct bfa_ioim_s *ioim)
-{
+व्योम
+bfa_ioim_iocdisable(काष्ठा bfa_ioim_s *ioim)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
-	bfa_stats(ioim->itnim, io_iocdowns);
+	bfa_stats(ioim->itnim, io_iocकरोwns);
 	bfa_sm_send_event(ioim, BFA_IOIM_SM_HWFAIL);
-}
+पूर्ण
 
 /*
  * IO offline TOV popped. Fail the pending IO.
  */
-void
-bfa_ioim_tov(struct bfa_ioim_s *ioim)
-{
+व्योम
+bfa_ioim_tov(काष्ठा bfa_ioim_s *ioim)
+अणु
 	bfa_trc(ioim->bfa, ioim->iotag);
 	bfa_sm_send_event(ioim, BFA_IOIM_SM_IOTOV);
-}
+पूर्ण
 
 
 /*
- * Allocate IOIM resource for initiator mode I/O request.
+ * Allocate IOIM resource क्रम initiator mode I/O request.
  */
-struct bfa_ioim_s *
-bfa_ioim_alloc(struct bfa_s *bfa, struct bfad_ioim_s *dio,
-		struct bfa_itnim_s *itnim, u16 nsges)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
-	struct bfa_ioim_s *ioim;
-	struct bfa_iotag_s *iotag = NULL;
+काष्ठा bfa_ioim_s *
+bfa_ioim_alloc(काष्ठा bfa_s *bfa, काष्ठा bfad_ioim_s *dio,
+		काष्ठा bfa_itnim_s *itnim, u16 nsges)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+	काष्ठा bfa_ioim_s *ioim;
+	काष्ठा bfa_iotag_s *iotag = शून्य;
 
 	/*
 	 * alocate IOIM resource
 	 */
-	bfa_q_deq(&fcpim->fcp->iotag_ioim_free_q, &iotag);
-	if (!iotag) {
+	bfa_q_deq(&fcpim->fcp->iotag_ioim_मुक्त_q, &iotag);
+	अगर (!iotag) अणु
 		bfa_stats(itnim, no_iotags);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	ioim = BFA_IOIM_FROM_TAG(fcpim, iotag->tag);
 
@@ -2955,17 +2956,17 @@ bfa_ioim_alloc(struct bfa_s *bfa, struct bfad_ioim_s *dio,
 
 	list_add_tail(&ioim->qe, &itnim->io_q);
 
-	return ioim;
-}
+	वापस ioim;
+पूर्ण
 
-void
-bfa_ioim_free(struct bfa_ioim_s *ioim)
-{
-	struct bfa_fcpim_s *fcpim = ioim->fcpim;
-	struct bfa_iotag_s *iotag;
+व्योम
+bfa_ioim_मुक्त(काष्ठा bfa_ioim_s *ioim)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = ioim->fcpim;
+	काष्ठा bfa_iotag_s *iotag;
 
-	if (ioim->nsgpgs > 0)
-		bfa_sgpg_mfree(ioim->bfa, &ioim->sgpg_q, ioim->nsgpgs);
+	अगर (ioim->nsgpgs > 0)
+		bfa_sgpg_mमुक्त(ioim->bfa, &ioim->sgpg_q, ioim->nsgpgs);
 
 	bfa_stats(ioim->itnim, io_comps);
 	fcpim->ios_active--;
@@ -2976,17 +2977,17 @@ bfa_ioim_free(struct bfa_ioim_s *ioim)
 		(fcpim->fcp->num_ioim_reqs + fcpim->fcp->num_fwtio_reqs)));
 	iotag = BFA_IOTAG_FROM_TAG(fcpim->fcp, ioim->iotag);
 
-	if (ioim->iotag < fcpim->fcp->num_ioim_reqs)
-		list_add_tail(&iotag->qe, &fcpim->fcp->iotag_ioim_free_q);
-	else
-		list_add_tail(&iotag->qe, &fcpim->fcp->iotag_tio_free_q);
+	अगर (ioim->iotag < fcpim->fcp->num_ioim_reqs)
+		list_add_tail(&iotag->qe, &fcpim->fcp->iotag_ioim_मुक्त_q);
+	अन्यथा
+		list_add_tail(&iotag->qe, &fcpim->fcp->iotag_tio_मुक्त_q);
 
 	list_del(&ioim->qe);
-}
+पूर्ण
 
-void
-bfa_ioim_start(struct bfa_ioim_s *ioim)
-{
+व्योम
+bfa_ioim_start(काष्ठा bfa_ioim_s *ioim)
+अणु
 	bfa_ioim_cb_profile_start(ioim->fcpim, ioim);
 
 	/*
@@ -2996,25 +2997,25 @@ bfa_ioim_start(struct bfa_ioim_s *ioim)
 			BFA_FALSE : bfa_itnim_get_reqq(ioim);
 
 	bfa_sm_send_event(ioim, BFA_IOIM_SM_START);
-}
+पूर्ण
 
 /*
- * Driver I/O abort request.
+ * Driver I/O पात request.
  */
 bfa_status_t
-bfa_ioim_abort(struct bfa_ioim_s *ioim)
-{
+bfa_ioim_पात(काष्ठा bfa_ioim_s *ioim)
+अणु
 
 	bfa_trc(ioim->bfa, ioim->iotag);
 
-	if (!bfa_ioim_is_abortable(ioim))
-		return BFA_STATUS_FAILED;
+	अगर (!bfa_ioim_is_पातable(ioim))
+		वापस BFA_STATUS_FAILED;
 
-	bfa_stats(ioim->itnim, io_aborts);
+	bfa_stats(ioim->itnim, io_पातs);
 	bfa_sm_send_event(ioim, BFA_IOIM_SM_ABORT);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  *  BFA TSKIM state machine functions
@@ -3023,368 +3024,368 @@ bfa_ioim_abort(struct bfa_ioim_s *ioim)
 /*
  * Task management command beginning state.
  */
-static void
-bfa_tskim_sm_uninit(struct bfa_tskim_s *tskim, enum bfa_tskim_event event)
-{
+अटल व्योम
+bfa_tskim_sm_uninit(काष्ठा bfa_tskim_s *tskim, क्रमागत bfa_tskim_event event)
+अणु
 	bfa_trc(tskim->bfa, tskim->tsk_tag << 16 | event);
 
-	switch (event) {
-	case BFA_TSKIM_SM_START:
+	चयन (event) अणु
+	हाल BFA_TSKIM_SM_START:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_active);
 		bfa_tskim_gather_ios(tskim);
 
 		/*
-		 * If device is offline, do not send TM on wire. Just cleanup
+		 * If device is offline, करो not send TM on wire. Just cleanup
 		 * any pending IO requests and complete TM request.
 		 */
-		if (!bfa_itnim_is_online(tskim->itnim)) {
+		अगर (!bfa_itnim_is_online(tskim->itnim)) अणु
 			bfa_sm_set_state(tskim, bfa_tskim_sm_iocleanup);
 			tskim->tsk_status = BFI_TSKIM_STS_OK;
 			bfa_tskim_cleanup_ios(tskim);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (!bfa_tskim_send(tskim)) {
+		अगर (!bfa_tskim_send(tskim)) अणु
 			bfa_sm_set_state(tskim, bfa_tskim_sm_qfull);
-			bfa_stats(tskim->itnim, tm_qwait);
-			bfa_reqq_wait(tskim->bfa, tskim->itnim->reqq,
-					  &tskim->reqq_wait);
-		}
-		break;
+			bfa_stats(tskim->itnim, पंचांग_qरुको);
+			bfa_reqq_रुको(tskim->bfa, tskim->itnim->reqq,
+					  &tskim->reqq_रुको);
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(tskim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * TM command is active, awaiting completion from firmware to
+ * TM command is active, aरुकोing completion from firmware to
  * cleanup IO requests in TM scope.
  */
-static void
-bfa_tskim_sm_active(struct bfa_tskim_s *tskim, enum bfa_tskim_event event)
-{
+अटल व्योम
+bfa_tskim_sm_active(काष्ठा bfa_tskim_s *tskim, क्रमागत bfa_tskim_event event)
+अणु
 	bfa_trc(tskim->bfa, tskim->tsk_tag << 16 | event);
 
-	switch (event) {
-	case BFA_TSKIM_SM_DONE:
+	चयन (event) अणु
+	हाल BFA_TSKIM_SM_DONE:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_iocleanup);
 		bfa_tskim_cleanup_ios(tskim);
-		break;
+		अवरोध;
 
-	case BFA_TSKIM_SM_CLEANUP:
+	हाल BFA_TSKIM_SM_CLEANUP:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_cleanup);
-		if (!bfa_tskim_send_abort(tskim)) {
+		अगर (!bfa_tskim_send_पात(tskim)) अणु
 			bfa_sm_set_state(tskim, bfa_tskim_sm_cleanup_qfull);
-			bfa_stats(tskim->itnim, tm_qwait);
-			bfa_reqq_wait(tskim->bfa, tskim->itnim->reqq,
-				&tskim->reqq_wait);
-		}
-		break;
+			bfa_stats(tskim->itnim, पंचांग_qरुको);
+			bfa_reqq_रुको(tskim->bfa, tskim->itnim->reqq,
+				&tskim->reqq_रुको);
+		पूर्ण
+		अवरोध;
 
-	case BFA_TSKIM_SM_HWFAIL:
+	हाल BFA_TSKIM_SM_HWFAIL:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_hcb);
 		bfa_tskim_iocdisable_ios(tskim);
 		bfa_tskim_qcomp(tskim, __bfa_cb_tskim_failed);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(tskim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * An active TM is being cleaned up since ITN is offline. Awaiting cleanup
+ * An active TM is being cleaned up since ITN is offline. Aरुकोing cleanup
  * completion event from firmware.
  */
-static void
-bfa_tskim_sm_cleanup(struct bfa_tskim_s *tskim, enum bfa_tskim_event event)
-{
+अटल व्योम
+bfa_tskim_sm_cleanup(काष्ठा bfa_tskim_s *tskim, क्रमागत bfa_tskim_event event)
+अणु
 	bfa_trc(tskim->bfa, tskim->tsk_tag << 16 | event);
 
-	switch (event) {
-	case BFA_TSKIM_SM_DONE:
+	चयन (event) अणु
+	हाल BFA_TSKIM_SM_DONE:
 		/*
-		 * Ignore and wait for ABORT completion from firmware.
+		 * Ignore and रुको क्रम ABORT completion from firmware.
 		 */
-		break;
+		अवरोध;
 
-	case BFA_TSKIM_SM_UTAG:
-	case BFA_TSKIM_SM_CLEANUP_DONE:
+	हाल BFA_TSKIM_SM_UTAG:
+	हाल BFA_TSKIM_SM_CLEANUP_DONE:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_iocleanup);
 		bfa_tskim_cleanup_ios(tskim);
-		break;
+		अवरोध;
 
-	case BFA_TSKIM_SM_HWFAIL:
+	हाल BFA_TSKIM_SM_HWFAIL:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_hcb);
 		bfa_tskim_iocdisable_ios(tskim);
 		bfa_tskim_qcomp(tskim, __bfa_cb_tskim_failed);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(tskim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_tskim_sm_iocleanup(struct bfa_tskim_s *tskim, enum bfa_tskim_event event)
-{
+अटल व्योम
+bfa_tskim_sm_iocleanup(काष्ठा bfa_tskim_s *tskim, क्रमागत bfa_tskim_event event)
+अणु
 	bfa_trc(tskim->bfa, tskim->tsk_tag << 16 | event);
 
-	switch (event) {
-	case BFA_TSKIM_SM_IOS_DONE:
+	चयन (event) अणु
+	हाल BFA_TSKIM_SM_IOS_DONE:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_hcb);
-		bfa_tskim_qcomp(tskim, __bfa_cb_tskim_done);
-		break;
+		bfa_tskim_qcomp(tskim, __bfa_cb_tskim_करोne);
+		अवरोध;
 
-	case BFA_TSKIM_SM_CLEANUP:
+	हाल BFA_TSKIM_SM_CLEANUP:
 		/*
 		 * Ignore, TM command completed on wire.
-		 * Notify TM conmpletion on IO cleanup completion.
+		 * Notअगरy TM conmpletion on IO cleanup completion.
 		 */
-		break;
+		अवरोध;
 
-	case BFA_TSKIM_SM_HWFAIL:
+	हाल BFA_TSKIM_SM_HWFAIL:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_hcb);
 		bfa_tskim_iocdisable_ios(tskim);
 		bfa_tskim_qcomp(tskim, __bfa_cb_tskim_failed);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(tskim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Task management command is waiting for room in request CQ
+ * Task management command is रुकोing क्रम room in request CQ
  */
-static void
-bfa_tskim_sm_qfull(struct bfa_tskim_s *tskim, enum bfa_tskim_event event)
-{
+अटल व्योम
+bfa_tskim_sm_qfull(काष्ठा bfa_tskim_s *tskim, क्रमागत bfa_tskim_event event)
+अणु
 	bfa_trc(tskim->bfa, tskim->tsk_tag << 16 | event);
 
-	switch (event) {
-	case BFA_TSKIM_SM_QRESUME:
+	चयन (event) अणु
+	हाल BFA_TSKIM_SM_QRESUME:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_active);
 		bfa_tskim_send(tskim);
-		break;
+		अवरोध;
 
-	case BFA_TSKIM_SM_CLEANUP:
+	हाल BFA_TSKIM_SM_CLEANUP:
 		/*
 		 * No need to send TM on wire since ITN is offline.
 		 */
 		bfa_sm_set_state(tskim, bfa_tskim_sm_iocleanup);
-		bfa_reqq_wcancel(&tskim->reqq_wait);
+		bfa_reqq_wcancel(&tskim->reqq_रुको);
 		bfa_tskim_cleanup_ios(tskim);
-		break;
+		अवरोध;
 
-	case BFA_TSKIM_SM_HWFAIL:
+	हाल BFA_TSKIM_SM_HWFAIL:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_hcb);
-		bfa_reqq_wcancel(&tskim->reqq_wait);
+		bfa_reqq_wcancel(&tskim->reqq_रुको);
 		bfa_tskim_iocdisable_ios(tskim);
 		bfa_tskim_qcomp(tskim, __bfa_cb_tskim_failed);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(tskim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Task management command is active, awaiting for room in request CQ
+ * Task management command is active, aरुकोing क्रम room in request CQ
  * to send clean up request.
  */
-static void
-bfa_tskim_sm_cleanup_qfull(struct bfa_tskim_s *tskim,
-		enum bfa_tskim_event event)
-{
+अटल व्योम
+bfa_tskim_sm_cleanup_qfull(काष्ठा bfa_tskim_s *tskim,
+		क्रमागत bfa_tskim_event event)
+अणु
 	bfa_trc(tskim->bfa, tskim->tsk_tag << 16 | event);
 
-	switch (event) {
-	case BFA_TSKIM_SM_DONE:
-		bfa_reqq_wcancel(&tskim->reqq_wait);
+	चयन (event) अणु
+	हाल BFA_TSKIM_SM_DONE:
+		bfa_reqq_wcancel(&tskim->reqq_रुको);
 		fallthrough;
-	case BFA_TSKIM_SM_QRESUME:
+	हाल BFA_TSKIM_SM_QRESUME:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_cleanup);
-		bfa_tskim_send_abort(tskim);
-		break;
+		bfa_tskim_send_पात(tskim);
+		अवरोध;
 
-	case BFA_TSKIM_SM_HWFAIL:
+	हाल BFA_TSKIM_SM_HWFAIL:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_hcb);
-		bfa_reqq_wcancel(&tskim->reqq_wait);
+		bfa_reqq_wcancel(&tskim->reqq_रुको);
 		bfa_tskim_iocdisable_ios(tskim);
 		bfa_tskim_qcomp(tskim, __bfa_cb_tskim_failed);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(tskim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * BFA callback is pending
  */
-static void
-bfa_tskim_sm_hcb(struct bfa_tskim_s *tskim, enum bfa_tskim_event event)
-{
+अटल व्योम
+bfa_tskim_sm_hcb(काष्ठा bfa_tskim_s *tskim, क्रमागत bfa_tskim_event event)
+अणु
 	bfa_trc(tskim->bfa, tskim->tsk_tag << 16 | event);
 
-	switch (event) {
-	case BFA_TSKIM_SM_HCB:
+	चयन (event) अणु
+	हाल BFA_TSKIM_SM_HCB:
 		bfa_sm_set_state(tskim, bfa_tskim_sm_uninit);
-		bfa_tskim_free(tskim);
-		break;
+		bfa_tskim_मुक्त(tskim);
+		अवरोध;
 
-	case BFA_TSKIM_SM_CLEANUP:
-		bfa_tskim_notify_comp(tskim);
-		break;
+	हाल BFA_TSKIM_SM_CLEANUP:
+		bfa_tskim_notअगरy_comp(tskim);
+		अवरोध;
 
-	case BFA_TSKIM_SM_HWFAIL:
-		break;
+	हाल BFA_TSKIM_SM_HWFAIL:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(tskim->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-__bfa_cb_tskim_done(void *cbarg, bfa_boolean_t complete)
-{
-	struct bfa_tskim_s *tskim = cbarg;
+अटल व्योम
+__bfa_cb_tskim_करोne(व्योम *cbarg, bfa_boolean_t complete)
+अणु
+	काष्ठा bfa_tskim_s *tskim = cbarg;
 
-	if (!complete) {
+	अगर (!complete) अणु
 		bfa_sm_send_event(tskim, BFA_TSKIM_SM_HCB);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bfa_stats(tskim->itnim, tm_success);
-	bfa_cb_tskim_done(tskim->bfa->bfad, tskim->dtsk, tskim->tsk_status);
-}
+	bfa_stats(tskim->itnim, पंचांग_success);
+	bfa_cb_tskim_करोne(tskim->bfa->bfad, tskim->dtsk, tskim->tsk_status);
+पूर्ण
 
-static void
-__bfa_cb_tskim_failed(void *cbarg, bfa_boolean_t complete)
-{
-	struct bfa_tskim_s *tskim = cbarg;
+अटल व्योम
+__bfa_cb_tskim_failed(व्योम *cbarg, bfa_boolean_t complete)
+अणु
+	काष्ठा bfa_tskim_s *tskim = cbarg;
 
-	if (!complete) {
+	अगर (!complete) अणु
 		bfa_sm_send_event(tskim, BFA_TSKIM_SM_HCB);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bfa_stats(tskim->itnim, tm_failures);
-	bfa_cb_tskim_done(tskim->bfa->bfad, tskim->dtsk,
+	bfa_stats(tskim->itnim, पंचांग_failures);
+	bfa_cb_tskim_करोne(tskim->bfa->bfad, tskim->dtsk,
 				BFI_TSKIM_STS_FAILED);
-}
+पूर्ण
 
-static bfa_boolean_t
-bfa_tskim_match_scope(struct bfa_tskim_s *tskim, struct scsi_lun lun)
-{
-	switch (tskim->tm_cmnd) {
-	case FCP_TM_TARGET_RESET:
-		return BFA_TRUE;
+अटल bfa_boolean_t
+bfa_tskim_match_scope(काष्ठा bfa_tskim_s *tskim, काष्ठा scsi_lun lun)
+अणु
+	चयन (tskim->पंचांग_cmnd) अणु
+	हाल FCP_TM_TARGET_RESET:
+		वापस BFA_TRUE;
 
-	case FCP_TM_ABORT_TASK_SET:
-	case FCP_TM_CLEAR_TASK_SET:
-	case FCP_TM_LUN_RESET:
-	case FCP_TM_CLEAR_ACA:
-		return !memcmp(&tskim->lun, &lun, sizeof(lun));
+	हाल FCP_TM_ABORT_TASK_SET:
+	हाल FCP_TM_CLEAR_TASK_SET:
+	हाल FCP_TM_LUN_RESET:
+	हाल FCP_TM_CLEAR_ACA:
+		वापस !स_भेद(&tskim->lun, &lun, माप(lun));
 
-	default:
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 
-	return BFA_FALSE;
-}
+	वापस BFA_FALSE;
+पूर्ण
 
 /*
  * Gather affected IO requests and task management commands.
  */
-static void
-bfa_tskim_gather_ios(struct bfa_tskim_s *tskim)
-{
-	struct bfa_itnim_s *itnim = tskim->itnim;
-	struct bfa_ioim_s *ioim;
-	struct list_head *qe, *qen;
-	struct scsi_cmnd *cmnd;
-	struct scsi_lun scsilun;
+अटल व्योम
+bfa_tskim_gather_ios(काष्ठा bfa_tskim_s *tskim)
+अणु
+	काष्ठा bfa_itnim_s *itnim = tskim->itnim;
+	काष्ठा bfa_ioim_s *ioim;
+	काष्ठा list_head *qe, *qen;
+	काष्ठा scsi_cmnd *cmnd;
+	काष्ठा scsi_lun scsilun;
 
 	INIT_LIST_HEAD(&tskim->io_q);
 
 	/*
 	 * Gather any active IO requests first.
 	 */
-	list_for_each_safe(qe, qen, &itnim->io_q) {
-		ioim = (struct bfa_ioim_s *) qe;
-		cmnd = (struct scsi_cmnd *) ioim->dio;
-		int_to_scsilun(cmnd->device->lun, &scsilun);
-		if (bfa_tskim_match_scope(tskim, scsilun)) {
+	list_क्रम_each_safe(qe, qen, &itnim->io_q) अणु
+		ioim = (काष्ठा bfa_ioim_s *) qe;
+		cmnd = (काष्ठा scsi_cmnd *) ioim->dio;
+		पूर्णांक_to_scsilun(cmnd->device->lun, &scsilun);
+		अगर (bfa_tskim_match_scope(tskim, scsilun)) अणु
 			list_del(&ioim->qe);
 			list_add_tail(&ioim->qe, &tskim->io_q);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Failback any pending IO requests immediately.
 	 */
-	list_for_each_safe(qe, qen, &itnim->pending_q) {
-		ioim = (struct bfa_ioim_s *) qe;
-		cmnd = (struct scsi_cmnd *) ioim->dio;
-		int_to_scsilun(cmnd->device->lun, &scsilun);
-		if (bfa_tskim_match_scope(tskim, scsilun)) {
+	list_क्रम_each_safe(qe, qen, &itnim->pending_q) अणु
+		ioim = (काष्ठा bfa_ioim_s *) qe;
+		cmnd = (काष्ठा scsi_cmnd *) ioim->dio;
+		पूर्णांक_to_scsilun(cmnd->device->lun, &scsilun);
+		अगर (bfa_tskim_match_scope(tskim, scsilun)) अणु
 			list_del(&ioim->qe);
 			list_add_tail(&ioim->qe, &ioim->fcpim->ioim_comp_q);
 			bfa_ioim_tov(ioim);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * IO cleanup completion
  */
-static void
-bfa_tskim_cleanp_comp(void *tskim_cbarg)
-{
-	struct bfa_tskim_s *tskim = tskim_cbarg;
+अटल व्योम
+bfa_tskim_cleanp_comp(व्योम *tskim_cbarg)
+अणु
+	काष्ठा bfa_tskim_s *tskim = tskim_cbarg;
 
-	bfa_stats(tskim->itnim, tm_io_comps);
+	bfa_stats(tskim->itnim, पंचांग_io_comps);
 	bfa_sm_send_event(tskim, BFA_TSKIM_SM_IOS_DONE);
-}
+पूर्ण
 
 /*
  * Gather affected IO requests and task management commands.
  */
-static void
-bfa_tskim_cleanup_ios(struct bfa_tskim_s *tskim)
-{
-	struct bfa_ioim_s *ioim;
-	struct list_head	*qe, *qen;
+अटल व्योम
+bfa_tskim_cleanup_ios(काष्ठा bfa_tskim_s *tskim)
+अणु
+	काष्ठा bfa_ioim_s *ioim;
+	काष्ठा list_head	*qe, *qen;
 
 	bfa_wc_init(&tskim->wc, bfa_tskim_cleanp_comp, tskim);
 
-	list_for_each_safe(qe, qen, &tskim->io_q) {
-		ioim = (struct bfa_ioim_s *) qe;
+	list_क्रम_each_safe(qe, qen, &tskim->io_q) अणु
+		ioim = (काष्ठा bfa_ioim_s *) qe;
 		bfa_wc_up(&tskim->wc);
-		bfa_ioim_cleanup_tm(ioim, tskim);
-	}
+		bfa_ioim_cleanup_पंचांग(ioim, tskim);
+	पूर्ण
 
-	bfa_wc_wait(&tskim->wc);
-}
+	bfa_wc_रुको(&tskim->wc);
+पूर्ण
 
 /*
  * Send task management request to firmware.
  */
-static bfa_boolean_t
-bfa_tskim_send(struct bfa_tskim_s *tskim)
-{
-	struct bfa_itnim_s *itnim = tskim->itnim;
-	struct bfi_tskim_req_s *m;
+अटल bfa_boolean_t
+bfa_tskim_send(काष्ठा bfa_tskim_s *tskim)
+अणु
+	काष्ठा bfa_itnim_s *itnim = tskim->itnim;
+	काष्ठा bfi_tskim_req_s *m;
 
 	/*
-	 * check for room in queue to send request now
+	 * check क्रम room in queue to send request now
 	 */
 	m = bfa_reqq_next(tskim->bfa, itnim->reqq);
-	if (!m)
-		return BFA_FALSE;
+	अगर (!m)
+		वापस BFA_FALSE;
 
 	/*
 	 * build i/o request message next
@@ -3396,30 +3397,30 @@ bfa_tskim_send(struct bfa_tskim_s *tskim)
 	m->itn_fhdl = tskim->itnim->rport->fw_handle;
 	m->t_secs = tskim->tsecs;
 	m->lun = tskim->lun;
-	m->tm_flags = tskim->tm_cmnd;
+	m->पंचांग_flags = tskim->पंचांग_cmnd;
 
 	/*
 	 * queue I/O message to firmware
 	 */
 	bfa_reqq_produce(tskim->bfa, itnim->reqq, m->mh);
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
 /*
- * Send abort request to cleanup an active TM to firmware.
+ * Send पात request to cleanup an active TM to firmware.
  */
-static bfa_boolean_t
-bfa_tskim_send_abort(struct bfa_tskim_s *tskim)
-{
-	struct bfa_itnim_s	*itnim = tskim->itnim;
-	struct bfi_tskim_abortreq_s	*m;
+अटल bfa_boolean_t
+bfa_tskim_send_पात(काष्ठा bfa_tskim_s *tskim)
+अणु
+	काष्ठा bfa_itnim_s	*itnim = tskim->itnim;
+	काष्ठा bfi_tskim_पातreq_s	*m;
 
 	/*
-	 * check for room in queue to send request now
+	 * check क्रम room in queue to send request now
 	 */
 	m = bfa_reqq_next(tskim->bfa, itnim->reqq);
-	if (!m)
-		return BFA_FALSE;
+	अगर (!m)
+		वापस BFA_FALSE;
 
 	/*
 	 * build i/o request message next
@@ -3433,108 +3434,108 @@ bfa_tskim_send_abort(struct bfa_tskim_s *tskim)
 	 * queue I/O message to firmware
 	 */
 	bfa_reqq_produce(tskim->bfa, itnim->reqq, m->mh);
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
 /*
- * Call to resume task management cmnd waiting for room in request queue.
+ * Call to resume task management cmnd रुकोing क्रम room in request queue.
  */
-static void
-bfa_tskim_qresume(void *cbarg)
-{
-	struct bfa_tskim_s *tskim = cbarg;
+अटल व्योम
+bfa_tskim_qresume(व्योम *cbarg)
+अणु
+	काष्ठा bfa_tskim_s *tskim = cbarg;
 
-	bfa_stats(tskim->itnim, tm_qresumes);
+	bfa_stats(tskim->itnim, पंचांग_qresumes);
 	bfa_sm_send_event(tskim, BFA_TSKIM_SM_QRESUME);
-}
+पूर्ण
 
 /*
  * Cleanup IOs associated with a task mangement command on IOC failures.
  */
-static void
-bfa_tskim_iocdisable_ios(struct bfa_tskim_s *tskim)
-{
-	struct bfa_ioim_s *ioim;
-	struct list_head	*qe, *qen;
+अटल व्योम
+bfa_tskim_iocdisable_ios(काष्ठा bfa_tskim_s *tskim)
+अणु
+	काष्ठा bfa_ioim_s *ioim;
+	काष्ठा list_head	*qe, *qen;
 
-	list_for_each_safe(qe, qen, &tskim->io_q) {
-		ioim = (struct bfa_ioim_s *) qe;
+	list_क्रम_each_safe(qe, qen, &tskim->io_q) अणु
+		ioim = (काष्ठा bfa_ioim_s *) qe;
 		bfa_ioim_iocdisable(ioim);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Notification on completions from related ioim.
+ * Notअगरication on completions from related ioim.
  */
-void
-bfa_tskim_iodone(struct bfa_tskim_s *tskim)
-{
-	bfa_wc_down(&tskim->wc);
-}
+व्योम
+bfa_tskim_ioकरोne(काष्ठा bfa_tskim_s *tskim)
+अणु
+	bfa_wc_करोwn(&tskim->wc);
+पूर्ण
 
 /*
- * Handle IOC h/w failure notification from itnim.
+ * Handle IOC h/w failure notअगरication from itnim.
  */
-void
-bfa_tskim_iocdisable(struct bfa_tskim_s *tskim)
-{
-	tskim->notify = BFA_FALSE;
-	bfa_stats(tskim->itnim, tm_iocdowns);
+व्योम
+bfa_tskim_iocdisable(काष्ठा bfa_tskim_s *tskim)
+अणु
+	tskim->notअगरy = BFA_FALSE;
+	bfa_stats(tskim->itnim, पंचांग_iocकरोwns);
 	bfa_sm_send_event(tskim, BFA_TSKIM_SM_HWFAIL);
-}
+पूर्ण
 
 /*
  * Cleanup TM command and associated IOs as part of ITNIM offline.
  */
-void
-bfa_tskim_cleanup(struct bfa_tskim_s *tskim)
-{
-	tskim->notify = BFA_TRUE;
-	bfa_stats(tskim->itnim, tm_cleanups);
+व्योम
+bfa_tskim_cleanup(काष्ठा bfa_tskim_s *tskim)
+अणु
+	tskim->notअगरy = BFA_TRUE;
+	bfa_stats(tskim->itnim, पंचांग_cleanups);
 	bfa_sm_send_event(tskim, BFA_TSKIM_SM_CLEANUP);
-}
+पूर्ण
 
 /*
  * Memory allocation and initialization.
  */
-void
-bfa_tskim_attach(struct bfa_fcpim_s *fcpim)
-{
-	struct bfa_tskim_s *tskim;
-	struct bfa_fcp_mod_s	*fcp = fcpim->fcp;
+व्योम
+bfa_tskim_attach(काष्ठा bfa_fcpim_s *fcpim)
+अणु
+	काष्ठा bfa_tskim_s *tskim;
+	काष्ठा bfa_fcp_mod_s	*fcp = fcpim->fcp;
 	u16	i;
 
-	INIT_LIST_HEAD(&fcpim->tskim_free_q);
+	INIT_LIST_HEAD(&fcpim->tskim_मुक्त_q);
 	INIT_LIST_HEAD(&fcpim->tskim_unused_q);
 
-	tskim = (struct bfa_tskim_s *) bfa_mem_kva_curp(fcp);
+	tskim = (काष्ठा bfa_tskim_s *) bfa_mem_kva_curp(fcp);
 	fcpim->tskim_arr = tskim;
 
-	for (i = 0; i < fcpim->num_tskim_reqs; i++, tskim++) {
+	क्रम (i = 0; i < fcpim->num_tskim_reqs; i++, tskim++) अणु
 		/*
 		 * initialize TSKIM
 		 */
-		memset(tskim, 0, sizeof(struct bfa_tskim_s));
+		स_रखो(tskim, 0, माप(काष्ठा bfa_tskim_s));
 		tskim->tsk_tag = i;
 		tskim->bfa	= fcpim->bfa;
 		tskim->fcpim	= fcpim;
-		tskim->notify  = BFA_FALSE;
-		bfa_reqq_winit(&tskim->reqq_wait, bfa_tskim_qresume,
+		tskim->notअगरy  = BFA_FALSE;
+		bfa_reqq_winit(&tskim->reqq_रुको, bfa_tskim_qresume,
 					tskim);
 		bfa_sm_set_state(tskim, bfa_tskim_sm_uninit);
 
-		list_add_tail(&tskim->qe, &fcpim->tskim_free_q);
-	}
+		list_add_tail(&tskim->qe, &fcpim->tskim_मुक्त_q);
+	पूर्ण
 
 	bfa_mem_kva_curp(fcp) = (u8 *) tskim;
-}
+पूर्ण
 
-void
-bfa_tskim_isr(struct bfa_s *bfa, struct bfi_msg_s *m)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
-	struct bfi_tskim_rsp_s *rsp = (struct bfi_tskim_rsp_s *) m;
-	struct bfa_tskim_s *tskim;
+व्योम
+bfa_tskim_isr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *m)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+	काष्ठा bfi_tskim_rsp_s *rsp = (काष्ठा bfi_tskim_rsp_s *) m;
+	काष्ठा bfa_tskim_s *tskim;
 	u16	tsk_tag = be16_to_cpu(rsp->tsk_tag);
 
 	tskim = BFA_TSKIM_FROM_TAG(fcpim, tsk_tag);
@@ -3543,147 +3544,147 @@ bfa_tskim_isr(struct bfa_s *bfa, struct bfi_msg_s *m)
 	tskim->tsk_status = rsp->tsk_status;
 
 	/*
-	 * Firmware sends BFI_TSKIM_STS_ABORTED status for abort
-	 * requests. All other statuses are for normal completions.
+	 * Firmware sends BFI_TSKIM_STS_ABORTED status क्रम पात
+	 * requests. All other statuses are क्रम normal completions.
 	 */
-	if (rsp->tsk_status == BFI_TSKIM_STS_ABORTED) {
-		bfa_stats(tskim->itnim, tm_cleanup_comps);
+	अगर (rsp->tsk_status == BFI_TSKIM_STS_ABORTED) अणु
+		bfa_stats(tskim->itnim, पंचांग_cleanup_comps);
 		bfa_sm_send_event(tskim, BFA_TSKIM_SM_CLEANUP_DONE);
-	} else if (rsp->tsk_status == BFI_TSKIM_STS_UTAG) {
+	पूर्ण अन्यथा अगर (rsp->tsk_status == BFI_TSKIM_STS_UTAG) अणु
 		bfa_sm_send_event(tskim, BFA_TSKIM_SM_UTAG);
-	} else {
-		bfa_stats(tskim->itnim, tm_fw_rsps);
+	पूर्ण अन्यथा अणु
+		bfa_stats(tskim->itnim, पंचांग_fw_rsps);
 		bfa_sm_send_event(tskim, BFA_TSKIM_SM_DONE);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-struct bfa_tskim_s *
-bfa_tskim_alloc(struct bfa_s *bfa, struct bfad_tskim_s *dtsk)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
-	struct bfa_tskim_s *tskim;
+काष्ठा bfa_tskim_s *
+bfa_tskim_alloc(काष्ठा bfa_s *bfa, काष्ठा bfad_tskim_s *dtsk)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+	काष्ठा bfa_tskim_s *tskim;
 
-	bfa_q_deq(&fcpim->tskim_free_q, &tskim);
+	bfa_q_deq(&fcpim->tskim_मुक्त_q, &tskim);
 
-	if (tskim)
+	अगर (tskim)
 		tskim->dtsk = dtsk;
 
-	return tskim;
-}
+	वापस tskim;
+पूर्ण
 
-void
-bfa_tskim_free(struct bfa_tskim_s *tskim)
-{
+व्योम
+bfa_tskim_मुक्त(काष्ठा bfa_tskim_s *tskim)
+अणु
 	WARN_ON(!bfa_q_is_on_q_func(&tskim->itnim->tsk_q, &tskim->qe));
 	list_del(&tskim->qe);
-	list_add_tail(&tskim->qe, &tskim->fcpim->tskim_free_q);
-}
+	list_add_tail(&tskim->qe, &tskim->fcpim->tskim_मुक्त_q);
+पूर्ण
 
 /*
  * Start a task management command.
  *
  * @param[in]	tskim	BFA task management command instance
- * @param[in]	itnim	i-t nexus for the task management command
- * @param[in]	lun	lun, if applicable
- * @param[in]	tm_cmnd	Task management command code.
+ * @param[in]	itnim	i-t nexus क्रम the task management command
+ * @param[in]	lun	lun, अगर applicable
+ * @param[in]	पंचांग_cmnd	Task management command code.
  * @param[in]	t_secs	Timeout in seconds
  *
- * @return None.
+ * @वापस None.
  */
-void
-bfa_tskim_start(struct bfa_tskim_s *tskim, struct bfa_itnim_s *itnim,
-			struct scsi_lun lun,
-			enum fcp_tm_cmnd tm_cmnd, u8 tsecs)
-{
+व्योम
+bfa_tskim_start(काष्ठा bfa_tskim_s *tskim, काष्ठा bfa_itnim_s *itnim,
+			काष्ठा scsi_lun lun,
+			क्रमागत fcp_पंचांग_cmnd पंचांग_cmnd, u8 tsecs)
+अणु
 	tskim->itnim	= itnim;
 	tskim->lun	= lun;
-	tskim->tm_cmnd = tm_cmnd;
+	tskim->पंचांग_cmnd = पंचांग_cmnd;
 	tskim->tsecs	= tsecs;
-	tskim->notify  = BFA_FALSE;
-	bfa_stats(itnim, tm_cmnds);
+	tskim->notअगरy  = BFA_FALSE;
+	bfa_stats(itnim, पंचांग_cmnds);
 
 	list_add_tail(&tskim->qe, &itnim->tsk_q);
 	bfa_sm_send_event(tskim, BFA_TSKIM_SM_START);
-}
+पूर्ण
 
-void
-bfa_tskim_res_recfg(struct bfa_s *bfa, u16 num_tskim_fw)
-{
-	struct bfa_fcpim_s	*fcpim = BFA_FCPIM(bfa);
-	struct list_head	*qe;
-	int	i;
+व्योम
+bfa_tskim_res_recfg(काष्ठा bfa_s *bfa, u16 num_tskim_fw)
+अणु
+	काष्ठा bfa_fcpim_s	*fcpim = BFA_FCPIM(bfa);
+	काष्ठा list_head	*qe;
+	पूर्णांक	i;
 
-	for (i = 0; i < (fcpim->num_tskim_reqs - num_tskim_fw); i++) {
-		bfa_q_deq_tail(&fcpim->tskim_free_q, &qe);
+	क्रम (i = 0; i < (fcpim->num_tskim_reqs - num_tskim_fw); i++) अणु
+		bfa_q_deq_tail(&fcpim->tskim_मुक्त_q, &qe);
 		list_add_tail(qe, &fcpim->tskim_unused_q);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bfa_fcp_meminfo(struct bfa_iocfc_cfg_s *cfg, struct bfa_meminfo_s *minfo,
-		struct bfa_s *bfa)
-{
-	struct bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
-	struct bfa_mem_kva_s *fcp_kva = BFA_MEM_FCP_KVA(bfa);
-	struct bfa_mem_dma_s *seg_ptr;
+व्योम
+bfa_fcp_meminfo(काष्ठा bfa_iocfc_cfg_s *cfg, काष्ठा bfa_meminfo_s *minfo,
+		काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
+	काष्ठा bfa_mem_kva_s *fcp_kva = BFA_MEM_FCP_KVA(bfa);
+	काष्ठा bfa_mem_dma_s *seg_ptr;
 	u16	nsegs, idx, per_seg_ios, num_io_req;
 	u32	km_len = 0;
 
 	/*
-	 * ZERO for num_ioim_reqs and num_fwtio_reqs is allowed config value.
-	 * So if the values are non zero, adjust them appropriately.
+	 * ZERO क्रम num_ioim_reqs and num_fwtio_reqs is allowed config value.
+	 * So अगर the values are non zero, adjust them appropriately.
 	 */
-	if (cfg->fwcfg.num_ioim_reqs &&
+	अगर (cfg->fwcfg.num_ioim_reqs &&
 	    cfg->fwcfg.num_ioim_reqs < BFA_IOIM_MIN)
 		cfg->fwcfg.num_ioim_reqs = BFA_IOIM_MIN;
-	else if (cfg->fwcfg.num_ioim_reqs > BFA_IOIM_MAX)
+	अन्यथा अगर (cfg->fwcfg.num_ioim_reqs > BFA_IOIM_MAX)
 		cfg->fwcfg.num_ioim_reqs = BFA_IOIM_MAX;
 
-	if (cfg->fwcfg.num_fwtio_reqs > BFA_FWTIO_MAX)
+	अगर (cfg->fwcfg.num_fwtio_reqs > BFA_FWTIO_MAX)
 		cfg->fwcfg.num_fwtio_reqs = BFA_FWTIO_MAX;
 
 	num_io_req = (cfg->fwcfg.num_ioim_reqs + cfg->fwcfg.num_fwtio_reqs);
-	if (num_io_req > BFA_IO_MAX) {
-		if (cfg->fwcfg.num_ioim_reqs && cfg->fwcfg.num_fwtio_reqs) {
+	अगर (num_io_req > BFA_IO_MAX) अणु
+		अगर (cfg->fwcfg.num_ioim_reqs && cfg->fwcfg.num_fwtio_reqs) अणु
 			cfg->fwcfg.num_ioim_reqs = BFA_IO_MAX/2;
 			cfg->fwcfg.num_fwtio_reqs = BFA_IO_MAX/2;
-		} else if (cfg->fwcfg.num_fwtio_reqs)
+		पूर्ण अन्यथा अगर (cfg->fwcfg.num_fwtio_reqs)
 			cfg->fwcfg.num_fwtio_reqs = BFA_FWTIO_MAX;
-		else
+		अन्यथा
 			cfg->fwcfg.num_ioim_reqs = BFA_IOIM_MAX;
-	}
+	पूर्ण
 
 	bfa_fcpim_meminfo(cfg, &km_len);
 
 	num_io_req = (cfg->fwcfg.num_ioim_reqs + cfg->fwcfg.num_fwtio_reqs);
-	km_len += num_io_req * sizeof(struct bfa_iotag_s);
-	km_len += cfg->fwcfg.num_rports * sizeof(struct bfa_itn_s);
+	km_len += num_io_req * माप(काष्ठा bfa_iotag_s);
+	km_len += cfg->fwcfg.num_rports * माप(काष्ठा bfa_itn_s);
 
 	/* dma memory */
 	nsegs = BFI_MEM_DMA_NSEGS(num_io_req, BFI_IOIM_SNSLEN);
 	per_seg_ios = BFI_MEM_NREQS_SEG(BFI_IOIM_SNSLEN);
 
-	bfa_mem_dma_seg_iter(fcp, seg_ptr, nsegs, idx) {
-		if (num_io_req >= per_seg_ios) {
+	bfa_mem_dma_seg_iter(fcp, seg_ptr, nsegs, idx) अणु
+		अगर (num_io_req >= per_seg_ios) अणु
 			num_io_req -= per_seg_ios;
 			bfa_mem_dma_setup(minfo, seg_ptr,
 				per_seg_ios * BFI_IOIM_SNSLEN);
-		} else
+		पूर्ण अन्यथा
 			bfa_mem_dma_setup(minfo, seg_ptr,
 				num_io_req * BFI_IOIM_SNSLEN);
-	}
+	पूर्ण
 
 	/* kva memory */
 	bfa_mem_kva_setup(minfo, fcp_kva, km_len);
-}
+पूर्ण
 
-void
-bfa_fcp_attach(struct bfa_s *bfa, void *bfad, struct bfa_iocfc_cfg_s *cfg,
-		struct bfa_pcidev_s *pcidev)
-{
-	struct bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
-	struct bfa_mem_dma_s *seg_ptr;
+व्योम
+bfa_fcp_attach(काष्ठा bfa_s *bfa, व्योम *bfad, काष्ठा bfa_iocfc_cfg_s *cfg,
+		काष्ठा bfa_pcidev_s *pcidev)
+अणु
+	काष्ठा bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
+	काष्ठा bfa_mem_dma_s *seg_ptr;
 	u16	idx, nsegs, num_io_req;
 
 	fcp->max_ioim_reqs = cfg->fwcfg.num_ioim_reqs;
@@ -3699,199 +3700,199 @@ bfa_fcp_attach(struct bfa_s *bfa, void *bfad, struct bfa_iocfc_cfg_s *cfg,
 	num_io_req = (cfg->fwcfg.num_ioim_reqs + cfg->fwcfg.num_fwtio_reqs);
 	nsegs = BFI_MEM_DMA_NSEGS(num_io_req, BFI_IOIM_SNSLEN);
 
-	bfa_mem_dma_seg_iter(fcp, seg_ptr, nsegs, idx) {
+	bfa_mem_dma_seg_iter(fcp, seg_ptr, nsegs, idx) अणु
 
-		if (!bfa_mem_dma_virt(seg_ptr))
-			break;
+		अगर (!bfa_mem_dma_virt(seg_ptr))
+			अवरोध;
 
 		fcp->snsbase[idx].pa = bfa_mem_dma_phys(seg_ptr);
 		fcp->snsbase[idx].kva = bfa_mem_dma_virt(seg_ptr);
 		bfa_iocfc_set_snsbase(bfa, idx, fcp->snsbase[idx].pa);
-	}
+	पूर्ण
 
 	fcp->throttle_update_required = 1;
 	bfa_fcpim_attach(fcp, bfad, cfg, pcidev);
 
 	bfa_iotag_attach(fcp);
 
-	fcp->itn_arr = (struct bfa_itn_s *) bfa_mem_kva_curp(fcp);
+	fcp->itn_arr = (काष्ठा bfa_itn_s *) bfa_mem_kva_curp(fcp);
 	bfa_mem_kva_curp(fcp) = (u8 *)fcp->itn_arr +
-			(fcp->num_itns * sizeof(struct bfa_itn_s));
-	memset(fcp->itn_arr, 0,
-			(fcp->num_itns * sizeof(struct bfa_itn_s)));
-}
+			(fcp->num_itns * माप(काष्ठा bfa_itn_s));
+	स_रखो(fcp->itn_arr, 0,
+			(fcp->num_itns * माप(काष्ठा bfa_itn_s)));
+पूर्ण
 
-void
-bfa_fcp_iocdisable(struct bfa_s *bfa)
-{
-	struct bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
+व्योम
+bfa_fcp_iocdisable(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
 
 	bfa_fcpim_iocdisable(fcp);
-}
+पूर्ण
 
-void
-bfa_fcp_res_recfg(struct bfa_s *bfa, u16 num_ioim_fw, u16 max_ioim_fw)
-{
-	struct bfa_fcp_mod_s	*mod = BFA_FCP_MOD(bfa);
-	struct list_head	*qe;
-	int	i;
+व्योम
+bfa_fcp_res_recfg(काष्ठा bfa_s *bfa, u16 num_ioim_fw, u16 max_ioim_fw)
+अणु
+	काष्ठा bfa_fcp_mod_s	*mod = BFA_FCP_MOD(bfa);
+	काष्ठा list_head	*qe;
+	पूर्णांक	i;
 
-	/* Update io throttle value only once during driver load time */
-	if (!mod->throttle_update_required)
-		return;
+	/* Update io throttle value only once during driver load समय */
+	अगर (!mod->throttle_update_required)
+		वापस;
 
-	for (i = 0; i < (mod->num_ioim_reqs - num_ioim_fw); i++) {
-		bfa_q_deq_tail(&mod->iotag_ioim_free_q, &qe);
+	क्रम (i = 0; i < (mod->num_ioim_reqs - num_ioim_fw); i++) अणु
+		bfa_q_deq_tail(&mod->iotag_ioim_मुक्त_q, &qe);
 		list_add_tail(qe, &mod->iotag_unused_q);
-	}
+	पूर्ण
 
-	if (mod->num_ioim_reqs != num_ioim_fw) {
+	अगर (mod->num_ioim_reqs != num_ioim_fw) अणु
 		bfa_trc(bfa, mod->num_ioim_reqs);
 		bfa_trc(bfa, num_ioim_fw);
-	}
+	पूर्ण
 
 	mod->max_ioim_reqs = max_ioim_fw;
 	mod->num_ioim_reqs = num_ioim_fw;
 	mod->throttle_update_required = 0;
-}
+पूर्ण
 
-void
-bfa_itn_create(struct bfa_s *bfa, struct bfa_rport_s *rport,
-		void (*isr)(struct bfa_s *bfa, struct bfi_msg_s *m))
-{
-	struct bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
-	struct bfa_itn_s *itn;
+व्योम
+bfa_itn_create(काष्ठा bfa_s *bfa, काष्ठा bfa_rport_s *rport,
+		व्योम (*isr)(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *m))
+अणु
+	काष्ठा bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
+	काष्ठा bfa_itn_s *itn;
 
 	itn =  BFA_ITN_FROM_TAG(fcp, rport->rport_tag);
 	itn->isr = isr;
-}
+पूर्ण
 
 /*
- * Itn interrupt processing.
+ * Itn पूर्णांकerrupt processing.
  */
-void
-bfa_itn_isr(struct bfa_s *bfa, struct bfi_msg_s *m)
-{
-	struct bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
-	union bfi_itn_i2h_msg_u msg;
-	struct bfa_itn_s *itn;
+व्योम
+bfa_itn_isr(काष्ठा bfa_s *bfa, काष्ठा bfi_msg_s *m)
+अणु
+	काष्ठा bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
+	जोड़ bfi_itn_i2h_msg_u msg;
+	काष्ठा bfa_itn_s *itn;
 
 	msg.msg = m;
 	itn =  BFA_ITN_FROM_TAG(fcp, msg.create_rsp->bfa_handle);
 
-	if (itn->isr)
+	अगर (itn->isr)
 		itn->isr(bfa, m);
-	else
+	अन्यथा
 		WARN_ON(1);
-}
+पूर्ण
 
-void
-bfa_iotag_attach(struct bfa_fcp_mod_s *fcp)
-{
-	struct bfa_iotag_s *iotag;
+व्योम
+bfa_iotag_attach(काष्ठा bfa_fcp_mod_s *fcp)
+अणु
+	काष्ठा bfa_iotag_s *iotag;
 	u16	num_io_req, i;
 
-	iotag = (struct bfa_iotag_s *) bfa_mem_kva_curp(fcp);
+	iotag = (काष्ठा bfa_iotag_s *) bfa_mem_kva_curp(fcp);
 	fcp->iotag_arr = iotag;
 
-	INIT_LIST_HEAD(&fcp->iotag_ioim_free_q);
-	INIT_LIST_HEAD(&fcp->iotag_tio_free_q);
+	INIT_LIST_HEAD(&fcp->iotag_ioim_मुक्त_q);
+	INIT_LIST_HEAD(&fcp->iotag_tio_मुक्त_q);
 	INIT_LIST_HEAD(&fcp->iotag_unused_q);
 
 	num_io_req = fcp->num_ioim_reqs + fcp->num_fwtio_reqs;
-	for (i = 0; i < num_io_req; i++, iotag++) {
-		memset(iotag, 0, sizeof(struct bfa_iotag_s));
+	क्रम (i = 0; i < num_io_req; i++, iotag++) अणु
+		स_रखो(iotag, 0, माप(काष्ठा bfa_iotag_s));
 		iotag->tag = i;
-		if (i < fcp->num_ioim_reqs)
-			list_add_tail(&iotag->qe, &fcp->iotag_ioim_free_q);
-		else
-			list_add_tail(&iotag->qe, &fcp->iotag_tio_free_q);
-	}
+		अगर (i < fcp->num_ioim_reqs)
+			list_add_tail(&iotag->qe, &fcp->iotag_ioim_मुक्त_q);
+		अन्यथा
+			list_add_tail(&iotag->qe, &fcp->iotag_tio_मुक्त_q);
+	पूर्ण
 
 	bfa_mem_kva_curp(fcp) = (u8 *) iotag;
-}
+पूर्ण
 
 
 /*
  * To send config req, first try to use throttle value from flash
  * If 0, then use driver parameter
  * We need to use min(flash_val, drv_val) because
- * memory allocation was done based on this cfg'd value
+ * memory allocation was करोne based on this cfg'd value
  */
 u16
-bfa_fcpim_get_throttle_cfg(struct bfa_s *bfa, u16 drv_cfg_param)
-{
-	u16 tmp;
-	struct bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
+bfa_fcpim_get_throttle_cfg(काष्ठा bfa_s *bfa, u16 drv_cfg_param)
+अणु
+	u16 पंचांगp;
+	काष्ठा bfa_fcp_mod_s *fcp = BFA_FCP_MOD(bfa);
 
 	/*
-	 * If throttle value from flash is already in effect after driver is
-	 * loaded then until next load, always return current value instead
+	 * If throttle value from flash is alपढ़ोy in effect after driver is
+	 * loaded then until next load, always वापस current value instead
 	 * of actual flash value
 	 */
-	if (!fcp->throttle_update_required)
-		return (u16)fcp->num_ioim_reqs;
+	अगर (!fcp->throttle_update_required)
+		वापस (u16)fcp->num_ioim_reqs;
 
-	tmp = bfa_dconf_read_data_valid(bfa) ? bfa_fcpim_read_throttle(bfa) : 0;
-	if (!tmp || (tmp > drv_cfg_param))
-		tmp = drv_cfg_param;
+	पंचांगp = bfa_dconf_पढ़ो_data_valid(bfa) ? bfa_fcpim_पढ़ो_throttle(bfa) : 0;
+	अगर (!पंचांगp || (पंचांगp > drv_cfg_param))
+		पंचांगp = drv_cfg_param;
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_write_throttle(struct bfa_s *bfa, u16 value)
-{
-	if (!bfa_dconf_get_min_cfg(bfa)) {
+bfa_fcpim_ग_लिखो_throttle(काष्ठा bfa_s *bfa, u16 value)
+अणु
+	अगर (!bfa_dconf_get_min_cfg(bfa)) अणु
 		BFA_DCONF_MOD(bfa)->dconf->throttle_cfg.value = value;
 		BFA_DCONF_MOD(bfa)->dconf->throttle_cfg.is_valid = 1;
-		return BFA_STATUS_OK;
-	}
+		वापस BFA_STATUS_OK;
+	पूर्ण
 
-	return BFA_STATUS_FAILED;
-}
+	वापस BFA_STATUS_FAILED;
+पूर्ण
 
 u16
-bfa_fcpim_read_throttle(struct bfa_s *bfa)
-{
-	struct bfa_throttle_cfg_s *throttle_cfg =
+bfa_fcpim_पढ़ो_throttle(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_throttle_cfg_s *throttle_cfg =
 			&(BFA_DCONF_MOD(bfa)->dconf->throttle_cfg);
 
-	return ((!bfa_dconf_get_min_cfg(bfa)) ?
+	वापस ((!bfa_dconf_get_min_cfg(bfa)) ?
 	       ((throttle_cfg->is_valid == 1) ? (throttle_cfg->value) : 0) : 0);
-}
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_throttle_set(struct bfa_s *bfa, u16 value)
-{
+bfa_fcpim_throttle_set(काष्ठा bfa_s *bfa, u16 value)
+अणु
 	/* in min cfg no commands should run. */
-	if ((bfa_dconf_get_min_cfg(bfa) == BFA_TRUE) ||
-	    (!bfa_dconf_read_data_valid(bfa)))
-		return BFA_STATUS_FAILED;
+	अगर ((bfa_dconf_get_min_cfg(bfa) == BFA_TRUE) ||
+	    (!bfa_dconf_पढ़ो_data_valid(bfa)))
+		वापस BFA_STATUS_FAILED;
 
-	bfa_fcpim_write_throttle(bfa, value);
+	bfa_fcpim_ग_लिखो_throttle(bfa, value);
 
-	return bfa_dconf_update(bfa);
-}
+	वापस bfa_dconf_update(bfa);
+पूर्ण
 
 bfa_status_t
-bfa_fcpim_throttle_get(struct bfa_s *bfa, void *buf)
-{
-	struct bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
-	struct bfa_defs_fcpim_throttle_s throttle;
+bfa_fcpim_throttle_get(काष्ठा bfa_s *bfa, व्योम *buf)
+अणु
+	काष्ठा bfa_fcpim_s *fcpim = BFA_FCPIM(bfa);
+	काष्ठा bfa_defs_fcpim_throttle_s throttle;
 
-	if ((bfa_dconf_get_min_cfg(bfa) == BFA_TRUE) ||
-	    (!bfa_dconf_read_data_valid(bfa)))
-		return BFA_STATUS_FAILED;
+	अगर ((bfa_dconf_get_min_cfg(bfa) == BFA_TRUE) ||
+	    (!bfa_dconf_पढ़ो_data_valid(bfa)))
+		वापस BFA_STATUS_FAILED;
 
-	memset(&throttle, 0, sizeof(struct bfa_defs_fcpim_throttle_s));
+	स_रखो(&throttle, 0, माप(काष्ठा bfa_defs_fcpim_throttle_s));
 
 	throttle.cur_value = (u16)(fcpim->fcp->num_ioim_reqs);
-	throttle.cfg_value = bfa_fcpim_read_throttle(bfa);
-	if (!throttle.cfg_value)
+	throttle.cfg_value = bfa_fcpim_पढ़ो_throttle(bfa);
+	अगर (!throttle.cfg_value)
 		throttle.cfg_value = throttle.cur_value;
 	throttle.max_value = (u16)(fcpim->fcp->max_ioim_reqs);
-	memcpy(buf, &throttle, sizeof(struct bfa_defs_fcpim_throttle_s));
+	स_नकल(buf, &throttle, माप(काष्ठा bfa_defs_fcpim_throttle_s));
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण

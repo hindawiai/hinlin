@@ -1,15 +1,16 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2000-2001 Christoph Hellwig.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    without modअगरication.
+ * 2. The name of the author may not be used to enकरोrse or promote products
+ *    derived from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL").
@@ -18,7 +19,7 @@
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -27,67 +28,67 @@
  * SUCH DAMAGE.
  *
  */
-#ifndef _VXFS_DIR_H_
-#define _VXFS_DIR_H_
+#अगर_अघोषित _VXFS_सूची_H_
+#घोषणा _VXFS_सूची_H_
 
 /*
- * Veritas filesystem driver - directory structure.
+ * Veritas fileप्रणाली driver - directory काष्ठाure.
  *
- * This file contains the definition of the vxfs directory format.
+ * This file contains the definition of the vxfs directory क्रमmat.
  */
 
 
 /*
  * VxFS directory block header.
  *
- * This entry is the head of every filesystem block in a directory.
- * It is used for free space management and additionally includes
- * a hash for speeding up directory search (lookup).
+ * This entry is the head of every fileप्रणाली block in a directory.
+ * It is used क्रम मुक्त space management and additionally includes
+ * a hash क्रम speeding up directory search (lookup).
  *
- * The hash may be empty and in fact we do not use it all in the
- * Linux driver for now.
+ * The hash may be empty and in fact we करो not use it all in the
+ * Linux driver क्रम now.
  */
-struct vxfs_dirblk {
-	__fs16		d_free;		/* free space in dirblock */
+काष्ठा vxfs_dirblk अणु
+	__fs16		d_मुक्त;		/* मुक्त space in dirblock */
 	__fs16		d_nhash;	/* no of hash chains */
 	__fs16		d_hash[1];	/* hash chain */
-};
+पूर्ण;
 
 /*
  * VXFS_NAMELEN is the maximum length of the d_name field
  *	of an VxFS directory entry.
  */
-#define VXFS_NAMELEN	256
+#घोषणा VXFS_NAMELEN	256
 
 /*
  * VxFS directory entry.
  */
-struct vxfs_direct {
+काष्ठा vxfs_direct अणु
 	__fs32		d_ino;			/* inode number */
 	__fs16		d_reclen;		/* record length */
 	__fs16		d_namelen;		/* d_name length */
 	__fs16		d_hashnext;		/* next hash entry */
-	char		d_name[VXFS_NAMELEN];	/* name */
-};
+	अक्षर		d_name[VXFS_NAMELEN];	/* name */
+पूर्ण;
 
 /*
- * VXFS_DIRPAD defines the directory entry boundaries, is _must_ be
+ * VXFS_सूचीPAD defines the directory entry boundaries, is _must_ be
  *	a multiple of four.
- * VXFS_NAMEMIN is the length of a directory entry with a NULL d_name.
- * VXFS_DIRROUND is an internal macros that rounds a length to a value
- *	usable for directory sizes.
- * VXFS_DIRLEN calculates the directory entry size for an entry with
+ * VXFS_NAMEMIN is the length of a directory entry with a शून्य d_name.
+ * VXFS_सूचीROUND is an पूर्णांकernal macros that rounds a length to a value
+ *	usable क्रम directory sizes.
+ * VXFS_सूचीLEN calculates the directory entry size क्रम an entry with
  *	a d_name with size len.
  */
-#define VXFS_DIRPAD		4
-#define VXFS_NAMEMIN		offsetof(struct vxfs_direct, d_name)
-#define VXFS_DIRROUND(len)	((VXFS_DIRPAD + (len) - 1) & ~(VXFS_DIRPAD -1))
-#define VXFS_DIRLEN(len)	(VXFS_DIRROUND(VXFS_NAMEMIN + (len)))
+#घोषणा VXFS_सूचीPAD		4
+#घोषणा VXFS_NAMEMIN		दुरत्व(काष्ठा vxfs_direct, d_name)
+#घोषणा VXFS_सूचीROUND(len)	((VXFS_सूचीPAD + (len) - 1) & ~(VXFS_सूचीPAD -1))
+#घोषणा VXFS_सूचीLEN(len)	(VXFS_सूचीROUND(VXFS_NAMEMIN + (len)))
 
 /*
- * VXFS_DIRBLKOV is the overhead of a specific dirblock.
+ * VXFS_सूचीBLKOV is the overhead of a specअगरic dirblock.
  */
-#define VXFS_DIRBLKOV(sbi, dbp)	\
-	((sizeof(short) * fs16_to_cpu(sbi, dbp->d_nhash)) + 4)
+#घोषणा VXFS_सूचीBLKOV(sbi, dbp)	\
+	((माप(लघु) * fs16_to_cpu(sbi, dbp->d_nhash)) + 4)
 
-#endif /* _VXFS_DIR_H_ */
+#पूर्ण_अगर /* _VXFS_सूची_H_ */

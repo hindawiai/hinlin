@@ -1,112 +1,113 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_MMIOTRACE_H
-#define _LINUX_MMIOTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_MMIOTRACE_H
+#घोषणा _LINUX_MMIOTRACE_H
 
-#include <linux/types.h>
-#include <linux/list.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
 
-struct kmmio_probe;
-struct pt_regs;
+काष्ठा kmmio_probe;
+काष्ठा pt_regs;
 
-typedef void (*kmmio_pre_handler_t)(struct kmmio_probe *,
-				struct pt_regs *, unsigned long addr);
-typedef void (*kmmio_post_handler_t)(struct kmmio_probe *,
-				unsigned long condition, struct pt_regs *);
+प्रकार व्योम (*kmmio_pre_handler_t)(काष्ठा kmmio_probe *,
+				काष्ठा pt_regs *, अचिन्हित दीर्घ addr);
+प्रकार व्योम (*kmmio_post_handler_t)(काष्ठा kmmio_probe *,
+				अचिन्हित दीर्घ condition, काष्ठा pt_regs *);
 
-struct kmmio_probe {
-	/* kmmio internal list: */
-	struct list_head	list;
-	/* start location of the probe point: */
-	unsigned long		addr;
+काष्ठा kmmio_probe अणु
+	/* kmmio पूर्णांकernal list: */
+	काष्ठा list_head	list;
+	/* start location of the probe poपूर्णांक: */
+	अचिन्हित दीर्घ		addr;
 	/* length of the probe region: */
-	unsigned long		len;
-	/* Called before addr is executed: */
+	अचिन्हित दीर्घ		len;
+	/* Called beक्रमe addr is executed: */
 	kmmio_pre_handler_t	pre_handler;
 	/* Called after addr is executed: */
 	kmmio_post_handler_t	post_handler;
-	void			*private;
-};
+	व्योम			*निजी;
+पूर्ण;
 
-extern unsigned int kmmio_count;
+बाह्य अचिन्हित पूर्णांक kmmio_count;
 
-extern int register_kmmio_probe(struct kmmio_probe *p);
-extern void unregister_kmmio_probe(struct kmmio_probe *p);
-extern int kmmio_init(void);
-extern void kmmio_cleanup(void);
+बाह्य पूर्णांक रेजिस्टर_kmmio_probe(काष्ठा kmmio_probe *p);
+बाह्य व्योम unरेजिस्टर_kmmio_probe(काष्ठा kmmio_probe *p);
+बाह्य पूर्णांक kmmio_init(व्योम);
+बाह्य व्योम kmmio_cleanup(व्योम);
 
-#ifdef CONFIG_MMIOTRACE
+#अगर_घोषित CONFIG_MMIOTRACE
 /* kmmio is active by some kmmio_probes? */
-static inline int is_kmmio_active(void)
-{
-	return kmmio_count;
-}
+अटल अंतरभूत पूर्णांक is_kmmio_active(व्योम)
+अणु
+	वापस kmmio_count;
+पूर्ण
 
 /* Called from page fault handler. */
-extern int kmmio_handler(struct pt_regs *regs, unsigned long addr);
+बाह्य पूर्णांक kmmio_handler(काष्ठा pt_regs *regs, अचिन्हित दीर्घ addr);
 
 /* Called from ioremap.c */
-extern void mmiotrace_ioremap(resource_size_t offset, unsigned long size,
-							void __iomem *addr);
-extern void mmiotrace_iounmap(volatile void __iomem *addr);
+बाह्य व्योम mmiotrace_ioremap(resource_माप_प्रकार offset, अचिन्हित दीर्घ size,
+							व्योम __iomem *addr);
+बाह्य व्योम mmiotrace_iounmap(अस्थिर व्योम __iomem *addr);
 
 /* For anyone to insert markers. Remember trailing newline. */
-extern __printf(1, 2) int mmiotrace_printk(const char *fmt, ...);
-#else /* !CONFIG_MMIOTRACE: */
-static inline int is_kmmio_active(void)
-{
-	return 0;
-}
+बाह्य __म_लिखो(1, 2) पूर्णांक mmiotrace_prपूर्णांकk(स्थिर अक्षर *fmt, ...);
+#अन्यथा /* !CONFIG_MMIOTRACE: */
+अटल अंतरभूत पूर्णांक is_kmmio_active(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int kmmio_handler(struct pt_regs *regs, unsigned long addr)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक kmmio_handler(काष्ठा pt_regs *regs, अचिन्हित दीर्घ addr)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mmiotrace_ioremap(resource_size_t offset,
-					unsigned long size, void __iomem *addr)
-{
-}
+अटल अंतरभूत व्योम mmiotrace_ioremap(resource_माप_प्रकार offset,
+					अचिन्हित दीर्घ size, व्योम __iomem *addr)
+अणु
+पूर्ण
 
-static inline void mmiotrace_iounmap(volatile void __iomem *addr)
-{
-}
+अटल अंतरभूत व्योम mmiotrace_iounmap(अस्थिर व्योम __iomem *addr)
+अणु
+पूर्ण
 
-static inline __printf(1, 2) int mmiotrace_printk(const char *fmt, ...)
-{
-	return 0;
-}
-#endif /* CONFIG_MMIOTRACE */
+अटल अंतरभूत __म_लिखो(1, 2) पूर्णांक mmiotrace_prपूर्णांकk(स्थिर अक्षर *fmt, ...)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MMIOTRACE */
 
-enum mm_io_opcode {
-	MMIO_READ	= 0x1,	/* struct mmiotrace_rw */
-	MMIO_WRITE	= 0x2,	/* struct mmiotrace_rw */
-	MMIO_PROBE	= 0x3,	/* struct mmiotrace_map */
-	MMIO_UNPROBE	= 0x4,	/* struct mmiotrace_map */
-	MMIO_UNKNOWN_OP = 0x5,	/* struct mmiotrace_rw */
-};
+क्रमागत mm_io_opcode अणु
+	MMIO_READ	= 0x1,	/* काष्ठा mmiotrace_rw */
+	MMIO_WRITE	= 0x2,	/* काष्ठा mmiotrace_rw */
+	MMIO_PROBE	= 0x3,	/* काष्ठा mmiotrace_map */
+	MMIO_UNPROBE	= 0x4,	/* काष्ठा mmiotrace_map */
+	MMIO_UNKNOWN_OP = 0x5,	/* काष्ठा mmiotrace_rw */
+पूर्ण;
 
-struct mmiotrace_rw {
-	resource_size_t	phys;	/* PCI address of register */
-	unsigned long	value;
-	unsigned long	pc;	/* optional program counter */
-	int		map_id;
-	unsigned char	opcode;	/* one of MMIO_{READ,WRITE,UNKNOWN_OP} */
-	unsigned char	width;	/* size of register access in bytes */
-};
+काष्ठा mmiotrace_rw अणु
+	resource_माप_प्रकार	phys;	/* PCI address of रेजिस्टर */
+	अचिन्हित दीर्घ	value;
+	अचिन्हित दीर्घ	pc;	/* optional program counter */
+	पूर्णांक		map_id;
+	अचिन्हित अक्षर	opcode;	/* one of MMIO_अणुREAD,WRITE,UNKNOWN_OPपूर्ण */
+	अचिन्हित अक्षर	width;	/* size of रेजिस्टर access in bytes */
+पूर्ण;
 
-struct mmiotrace_map {
-	resource_size_t	phys;	/* base address in PCI space */
-	unsigned long	virt;	/* base virtual address */
-	unsigned long	len;	/* mapping size */
-	int		map_id;
-	unsigned char	opcode;	/* MMIO_PROBE or MMIO_UNPROBE */
-};
+काष्ठा mmiotrace_map अणु
+	resource_माप_प्रकार	phys;	/* base address in PCI space */
+	अचिन्हित दीर्घ	virt;	/* base भव address */
+	अचिन्हित दीर्घ	len;	/* mapping size */
+	पूर्णांक		map_id;
+	अचिन्हित अक्षर	opcode;	/* MMIO_PROBE or MMIO_UNPROBE */
+पूर्ण;
 
 /* in kernel/trace/trace_mmiotrace.c */
-extern void enable_mmiotrace(void);
-extern void disable_mmiotrace(void);
-extern void mmio_trace_rw(struct mmiotrace_rw *rw);
-extern void mmio_trace_mapping(struct mmiotrace_map *map);
-extern __printf(1, 0) int mmio_trace_printk(const char *fmt, va_list args);
+बाह्य व्योम enable_mmiotrace(व्योम);
+बाह्य व्योम disable_mmiotrace(व्योम);
+बाह्य व्योम mmio_trace_rw(काष्ठा mmiotrace_rw *rw);
+बाह्य व्योम mmio_trace_mapping(काष्ठा mmiotrace_map *map);
+बाह्य __म_लिखो(1, 0) पूर्णांक mmio_trace_prपूर्णांकk(स्थिर अक्षर *fmt, बहु_सूची args);
 
-#endif /* _LINUX_MMIOTRACE_H */
+#पूर्ण_अगर /* _LINUX_MMIOTRACE_H */

@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include "vmlinux.h"
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश "vmlinux.h"
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-#define MAX_PATH_LEN		128
-#define MAX_FILES		7
+#घोषणा MAX_PATH_LEN		128
+#घोषणा MAX_खाताS		7
 
 pid_t my_pid = 0;
 __u32 cnt_stat = 0;
-__u32 cnt_close = 0;
-char paths_stat[MAX_FILES][MAX_PATH_LEN] = {};
-char paths_close[MAX_FILES][MAX_PATH_LEN] = {};
-int rets_stat[MAX_FILES] = {};
-int rets_close[MAX_FILES] = {};
+__u32 cnt_बंद = 0;
+अक्षर paths_stat[MAX_खाताS][MAX_PATH_LEN] = अणुपूर्ण;
+अक्षर paths_बंद[MAX_खाताS][MAX_PATH_LEN] = अणुपूर्ण;
+पूर्णांक rets_stat[MAX_खाताS] = अणुपूर्ण;
+पूर्णांक rets_बंद[MAX_खाताS] = अणुपूर्ण;
 
-int called_stat = 0;
-int called_close = 0;
+पूर्णांक called_stat = 0;
+पूर्णांक called_बंद = 0;
 
 SEC("fentry/security_inode_getattr")
-int BPF_PROG(prog_stat, struct path *path, struct kstat *stat,
-	     __u32 request_mask, unsigned int query_flags)
-{
+पूर्णांक BPF_PROG(prog_stat, काष्ठा path *path, काष्ठा kstat *stat,
+	     __u32 request_mask, अचिन्हित पूर्णांक query_flags)
+अणु
 	pid_t pid = bpf_get_current_pid_tgid() >> 32;
 	__u32 cnt = cnt_stat;
-	int ret;
+	पूर्णांक ret;
 
 	called_stat = 1;
 
-	if (pid != my_pid)
-		return 0;
+	अगर (pid != my_pid)
+		वापस 0;
 
-	if (cnt >= MAX_FILES)
-		return 0;
+	अगर (cnt >= MAX_खाताS)
+		वापस 0;
 	ret = bpf_d_path(path, paths_stat[cnt], MAX_PATH_LEN);
 
 	rets_stat[cnt] = ret;
 	cnt_stat++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("fentry/filp_close")
-int BPF_PROG(prog_close, struct file *file, void *id)
-{
+पूर्णांक BPF_PROG(prog_बंद, काष्ठा file *file, व्योम *id)
+अणु
 	pid_t pid = bpf_get_current_pid_tgid() >> 32;
-	__u32 cnt = cnt_close;
-	int ret;
+	__u32 cnt = cnt_बंद;
+	पूर्णांक ret;
 
-	called_close = 1;
+	called_बंद = 1;
 
-	if (pid != my_pid)
-		return 0;
+	अगर (pid != my_pid)
+		वापस 0;
 
-	if (cnt >= MAX_FILES)
-		return 0;
+	अगर (cnt >= MAX_खाताS)
+		वापस 0;
 	ret = bpf_d_path(&file->f_path,
-			 paths_close[cnt], MAX_PATH_LEN);
+			 paths_बंद[cnt], MAX_PATH_LEN);
 
-	rets_close[cnt] = ret;
-	cnt_close++;
-	return 0;
-}
+	rets_बंद[cnt] = ret;
+	cnt_बंद++;
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

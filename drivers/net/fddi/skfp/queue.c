@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
+ *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
  *
- *	See the file "skfddi.c" for further information.
+ *	See the file "skfddi.c" क्रम further inक्रमmation.
  *
- *	The information in this file is provided "AS IS" without warranty.
+ *	The inक्रमmation in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
@@ -14,100 +15,100 @@
 	SMT Event Queue Management
 */
 
-#include "h/types.h"
-#include "h/fddi.h"
-#include "h/smc.h"
+#समावेश "h/types.h"
+#समावेश "h/fddi.h"
+#समावेश "h/smc.h"
 
-#define PRINTF(a,b,c)
+#घोषणा PRINTF(a,b,c)
 
 /*
  * init event queue management
  */
-void ev_init(struct s_smc *smc)
-{
+व्योम ev_init(काष्ठा s_smc *smc)
+अणु
 	smc->q.ev_put = smc->q.ev_get = smc->q.ev_queue ;
-}
+पूर्ण
 
 /*
  * add event to queue
  */
-void queue_event(struct s_smc *smc, int class, int event)
-{
+व्योम queue_event(काष्ठा s_smc *smc, पूर्णांक class, पूर्णांक event)
+अणु
 	PRINTF("queue class %d event %d\n",class,event) ;
 	smc->q.ev_put->class = class ;
 	smc->q.ev_put->event = event ;
-	if (++smc->q.ev_put == &smc->q.ev_queue[MAX_EVENT])
+	अगर (++smc->q.ev_put == &smc->q.ev_queue[MAX_EVENT])
 		smc->q.ev_put = smc->q.ev_queue ;
 
-	if (smc->q.ev_put == smc->q.ev_get) {
+	अगर (smc->q.ev_put == smc->q.ev_get) अणु
 		SMT_ERR_LOG(smc,SMT_E0137, SMT_E0137_MSG) ;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * timer_event is called from HW timer package.
+ * समयr_event is called from HW समयr package.
  */
-void timer_event(struct s_smc *smc, u_long token)
-{
+व्योम समयr_event(काष्ठा s_smc *smc, u_दीर्घ token)
+अणु
 	PRINTF("timer event class %d token %d\n",
 		EV_T_CLASS(token),
 		EV_T_EVENT(token)) ;
 	queue_event(smc,EV_T_CLASS(token),EV_T_EVENT(token));
-}
+पूर्ण
 
 /*
  * event dispatcher
- *	while event queue is not empty
+ *	जबतक event queue is not empty
  *		get event from queue
  *		send command to state machine
  *	end
  */
-void ev_dispatcher(struct s_smc *smc)
-{
-	struct event_queue *ev ;	/* pointer into queue */
-	int		class ;
+व्योम ev_dispatcher(काष्ठा s_smc *smc)
+अणु
+	काष्ठा event_queue *ev ;	/* poपूर्णांकer पूर्णांकo queue */
+	पूर्णांक		class ;
 
 	ev = smc->q.ev_get ;
 	PRINTF("dispatch get %x put %x\n",ev,smc->q.ev_put) ;
-	while (ev != smc->q.ev_put) {
+	जबतक (ev != smc->q.ev_put) अणु
 		PRINTF("dispatch class %d event %d\n",ev->class,ev->event) ;
-		switch(class = ev->class) {
-		case EVENT_ECM :		/* Entity Corordination  Man. */
-			ecm(smc,(int)ev->event) ;
-			break ;
-		case EVENT_CFM :		/* Configuration Man. */
-			cfm(smc,(int)ev->event) ;
-			break ;
-		case EVENT_RMT :		/* Ring Man. */
-			rmt(smc,(int)ev->event) ;
-			break ;
-		case EVENT_SMT :
-			smt_event(smc,(int)ev->event) ;
-			break ;
-#ifdef	CONCENTRATOR
-		case 99 :
-			timer_test_event(smc,(int)ev->event) ;
-			break ;
-#endif
-		case EVENT_PCMA :		/* PHY A */
-		case EVENT_PCMB :		/* PHY B */
-		default :
-			if (class >= EVENT_PCMA &&
-			    class < EVENT_PCMA + NUMPHYS) {
-				pcm(smc,class - EVENT_PCMA,(int)ev->event) ;
-				break ;
-			}
+		चयन(class = ev->class) अणु
+		हाल EVENT_ECM :		/* Entity Corordination  Man. */
+			ecm(smc,(पूर्णांक)ev->event) ;
+			अवरोध ;
+		हाल EVENT_CFM :		/* Configuration Man. */
+			cfm(smc,(पूर्णांक)ev->event) ;
+			अवरोध ;
+		हाल EVENT_RMT :		/* Ring Man. */
+			rmt(smc,(पूर्णांक)ev->event) ;
+			अवरोध ;
+		हाल EVENT_SMT :
+			smt_event(smc,(पूर्णांक)ev->event) ;
+			अवरोध ;
+#अगर_घोषित	CONCENTRATOR
+		हाल 99 :
+			समयr_test_event(smc,(पूर्णांक)ev->event) ;
+			अवरोध ;
+#पूर्ण_अगर
+		हाल EVENT_PCMA :		/* PHY A */
+		हाल EVENT_PCMB :		/* PHY B */
+		शेष :
+			अगर (class >= EVENT_PCMA &&
+			    class < EVENT_PCMA + NUMPHYS) अणु
+				pcm(smc,class - EVENT_PCMA,(पूर्णांक)ev->event) ;
+				अवरोध ;
+			पूर्ण
 			SMT_PANIC(smc,SMT_E0121, SMT_E0121_MSG) ;
-			return ;
-		}
+			वापस ;
+		पूर्ण
 
-		if (++ev == &smc->q.ev_queue[MAX_EVENT])
+		अगर (++ev == &smc->q.ev_queue[MAX_EVENT])
 			ev = smc->q.ev_queue ;
 
 		/* Renew get: it is used in queue_events to detect overruns */
 		smc->q.ev_get = ev;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * smt_online connects to or disconnects from the ring
@@ -116,12 +117,12 @@ void ev_dispatcher(struct s_smc *smc)
  *	on	0	disconnect
  *	on	1	connect
  */
-u_short smt_online(struct s_smc *smc, int on)
-{
+u_लघु smt_online(काष्ठा s_smc *smc, पूर्णांक on)
+अणु
 	queue_event(smc,EVENT_ECM,on ? EC_CONNECT : EC_DISCONNECT) ;
 	ev_dispatcher(smc) ;
-	return smc->mib.fddiSMTCF_State;
-}
+	वापस smc->mib.fddiSMTCF_State;
+पूर्ण
 
 /*
  * set SMT flag to value
@@ -129,37 +130,37 @@ u_short smt_online(struct s_smc *smc, int on)
  *	value		flag value
  * dump current flag setting
  */
-#ifdef	CONCENTRATOR
-void do_smt_flag(struct s_smc *smc, char *flag, int value)
-{
-#ifdef	DEBUG
-	struct smt_debug	*deb;
+#अगर_घोषित	CONCENTRATOR
+व्योम करो_smt_flag(काष्ठा s_smc *smc, अक्षर *flag, पूर्णांक value)
+अणु
+#अगर_घोषित	DEBUG
+	काष्ठा smt_debug	*deb;
 
 	SK_UNUSED(smc) ;
 
-#ifdef	DEBUG_BRD
+#अगर_घोषित	DEBUG_BRD
 	deb = &smc->debug;
-#else
+#अन्यथा
 	deb = &debug;
-#endif
-	if (!strcmp(flag,"smt"))
+#पूर्ण_अगर
+	अगर (!म_भेद(flag,"smt"))
 		deb->d_smt = value ;
-	else if (!strcmp(flag,"smtf"))
+	अन्यथा अगर (!म_भेद(flag,"smtf"))
 		deb->d_smtf = value ;
-	else if (!strcmp(flag,"pcm"))
+	अन्यथा अगर (!म_भेद(flag,"pcm"))
 		deb->d_pcm = value ;
-	else if (!strcmp(flag,"rmt"))
+	अन्यथा अगर (!म_भेद(flag,"rmt"))
 		deb->d_rmt = value ;
-	else if (!strcmp(flag,"cfm"))
+	अन्यथा अगर (!म_भेद(flag,"cfm"))
 		deb->d_cfm = value ;
-	else if (!strcmp(flag,"ecm"))
+	अन्यथा अगर (!म_भेद(flag,"ecm"))
 		deb->d_ecm = value ;
-	printf("smt	%d\n",deb->d_smt) ;
-	printf("smtf	%d\n",deb->d_smtf) ;
-	printf("pcm	%d\n",deb->d_pcm) ;
-	printf("rmt	%d\n",deb->d_rmt) ;
-	printf("cfm	%d\n",deb->d_cfm) ;
-	printf("ecm	%d\n",deb->d_ecm) ;
-#endif	/* DEBUG */
-}
-#endif
+	म_लिखो("smt	%d\n",deb->d_smt) ;
+	म_लिखो("smtf	%d\n",deb->d_smtf) ;
+	म_लिखो("pcm	%d\n",deb->d_pcm) ;
+	म_लिखो("rmt	%d\n",deb->d_rmt) ;
+	म_लिखो("cfm	%d\n",deb->d_cfm) ;
+	म_लिखो("ecm	%d\n",deb->d_ecm) ;
+#पूर्ण_अगर	/* DEBUG */
+पूर्ण
+#पूर्ण_अगर

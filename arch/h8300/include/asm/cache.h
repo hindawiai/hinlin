@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ARCH_H8300_CACHE_H
-#define __ARCH_H8300_CACHE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ARCH_H8300_CACHE_H
+#घोषणा __ARCH_H8300_CACHE_H
 
 /* bytes per L1 cache line */
-#define        L1_CACHE_SHIFT  2
-#define        L1_CACHE_BYTES  (1 << L1_CACHE_SHIFT)
+#घोषणा        L1_CACHE_SHIFT  2
+#घोषणा        L1_CACHE_BYTES  (1 << L1_CACHE_SHIFT)
 
-#define __cacheline_aligned
-#define ____cacheline_aligned
+#घोषणा __cacheline_aligned
+#घोषणा ____cacheline_aligned
 
-#endif
+#पूर्ण_अगर

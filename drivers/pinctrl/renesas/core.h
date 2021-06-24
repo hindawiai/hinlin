@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
  * SuperH Pin Function Controller support.
  *
  * Copyright (C) 2012  Renesas Solutions Corp.
  */
-#ifndef __SH_PFC_CORE_H__
-#define __SH_PFC_CORE_H__
+#अगर_अघोषित __SH_PFC_CORE_H__
+#घोषणा __SH_PFC_CORE_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include "sh_pfc.h"
+#समावेश "sh_pfc.h"
 
-struct sh_pfc_pin_range {
+काष्ठा sh_pfc_pin_range अणु
 	u16 start;
 	u16 end;
-};
+पूर्ण;
 
-int sh_pfc_register_gpiochip(struct sh_pfc *pfc);
+पूर्णांक sh_pfc_रेजिस्टर_gpiochip(काष्ठा sh_pfc *pfc);
 
-int sh_pfc_register_pinctrl(struct sh_pfc *pfc);
+पूर्णांक sh_pfc_रेजिस्टर_pinctrl(काष्ठा sh_pfc *pfc);
 
-u32 sh_pfc_read_raw_reg(void __iomem *mapped_reg, unsigned int reg_width);
-void sh_pfc_write_raw_reg(void __iomem *mapped_reg, unsigned int reg_width,
+u32 sh_pfc_पढ़ो_raw_reg(व्योम __iomem *mapped_reg, अचिन्हित पूर्णांक reg_width);
+व्योम sh_pfc_ग_लिखो_raw_reg(व्योम __iomem *mapped_reg, अचिन्हित पूर्णांक reg_width,
 			  u32 data);
-u32 sh_pfc_read(struct sh_pfc *pfc, u32 reg);
-void sh_pfc_write(struct sh_pfc *pfc, u32 reg, u32 data);
+u32 sh_pfc_पढ़ो(काष्ठा sh_pfc *pfc, u32 reg);
+व्योम sh_pfc_ग_लिखो(काष्ठा sh_pfc *pfc, u32 reg, u32 data);
 
-int sh_pfc_get_pin_index(struct sh_pfc *pfc, unsigned int pin);
-int sh_pfc_config_mux(struct sh_pfc *pfc, unsigned mark, int pinmux_type);
+पूर्णांक sh_pfc_get_pin_index(काष्ठा sh_pfc *pfc, अचिन्हित पूर्णांक pin);
+पूर्णांक sh_pfc_config_mux(काष्ठा sh_pfc *pfc, अचिन्हित mark, पूर्णांक pinmux_type);
 
-#endif /* __SH_PFC_CORE_H__ */
+#पूर्ण_अगर /* __SH_PFC_CORE_H__ */

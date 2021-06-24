@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/netlink.h>
-#include <linux/rtnetlink.h>
-#include <linux/types.h>
-#include <net/ip.h>
-#include <net/net_namespace.h>
-#include <net/tcp.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/netlink.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/types.h>
+#समावेश <net/ip.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/tcp.h>
 
-static int ip_metrics_convert(struct net *net, struct nlattr *fc_mx,
-			      int fc_mx_len, u32 *metrics,
-			      struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक ip_metrics_convert(काष्ठा net *net, काष्ठा nlattr *fc_mx,
+			      पूर्णांक fc_mx_len, u32 *metrics,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
 	bool ecn_ca = false;
-	struct nlattr *nla;
-	int remaining;
+	काष्ठा nlattr *nla;
+	पूर्णांक reमुख्यing;
 
-	if (!fc_mx)
-		return 0;
+	अगर (!fc_mx)
+		वापस 0;
 
-	nla_for_each_attr(nla, fc_mx, fc_mx_len, remaining) {
-		int type = nla_type(nla);
+	nla_क्रम_each_attr(nla, fc_mx, fc_mx_len, reमुख्यing) अणु
+		पूर्णांक type = nla_type(nla);
 		u32 val;
 
-		if (!type)
-			continue;
-		if (type > RTAX_MAX) {
+		अगर (!type)
+			जारी;
+		अगर (type > RTAX_MAX) अणु
 			NL_SET_ERR_MSG(extack, "Invalid metric type");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (type == RTAX_CC_ALGO) {
-			char tmp[TCP_CA_NAME_MAX];
+		अगर (type == RTAX_CC_ALGO) अणु
+			अक्षर पंचांगp[TCP_CA_NAME_MAX];
 
-			nla_strscpy(tmp, nla, sizeof(tmp));
-			val = tcp_ca_get_key_by_name(net, tmp, &ecn_ca);
-			if (val == TCP_CA_UNSPEC) {
+			nla_strscpy(पंचांगp, nla, माप(पंचांगp));
+			val = tcp_ca_get_key_by_name(net, पंचांगp, &ecn_ca);
+			अगर (val == TCP_CA_UNSPEC) अणु
 				NL_SET_ERR_MSG(extack, "Unknown tcp congestion algorithm");
-				return -EINVAL;
-			}
-		} else {
-			if (nla_len(nla) != sizeof(u32)) {
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (nla_len(nla) != माप(u32)) अणु
 				NL_SET_ERR_MSG_ATTR(extack, nla,
 						    "Invalid attribute in metrics");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			val = nla_get_u32(nla);
-		}
-		if (type == RTAX_ADVMSS && val > 65535 - 40)
+		पूर्ण
+		अगर (type == RTAX_ADVMSS && val > 65535 - 40)
 			val = 65535 - 40;
-		if (type == RTAX_MTU && val > 65535 - 15)
+		अगर (type == RTAX_MTU && val > 65535 - 15)
 			val = 65535 - 15;
-		if (type == RTAX_HOPLIMIT && val > 255)
+		अगर (type == RTAX_HOPLIMIT && val > 255)
 			val = 255;
-		if (type == RTAX_FEATURES && (val & ~RTAX_FEATURE_MASK)) {
+		अगर (type == RTAX_FEATURES && (val & ~RTAX_FEATURE_MASK)) अणु
 			NL_SET_ERR_MSG(extack, "Unknown flag set in feature mask in metrics attribute");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		metrics[type - 1] = val;
-	}
+	पूर्ण
 
-	if (ecn_ca)
+	अगर (ecn_ca)
 		metrics[RTAX_FEATURES - 1] |= DST_FEATURE_ECN_CA;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct dst_metrics *ip_fib_metrics_init(struct net *net, struct nlattr *fc_mx,
-					int fc_mx_len,
-					struct netlink_ext_ack *extack)
-{
-	struct dst_metrics *fib_metrics;
-	int err;
+काष्ठा dst_metrics *ip_fib_metrics_init(काष्ठा net *net, काष्ठा nlattr *fc_mx,
+					पूर्णांक fc_mx_len,
+					काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा dst_metrics *fib_metrics;
+	पूर्णांक err;
 
-	if (!fc_mx)
-		return (struct dst_metrics *)&dst_default_metrics;
+	अगर (!fc_mx)
+		वापस (काष्ठा dst_metrics *)&dst_शेष_metrics;
 
-	fib_metrics = kzalloc(sizeof(*fib_metrics), GFP_KERNEL);
-	if (unlikely(!fib_metrics))
-		return ERR_PTR(-ENOMEM);
+	fib_metrics = kzalloc(माप(*fib_metrics), GFP_KERNEL);
+	अगर (unlikely(!fib_metrics))
+		वापस ERR_PTR(-ENOMEM);
 
 	err = ip_metrics_convert(net, fc_mx, fc_mx_len, fib_metrics->metrics,
 				 extack);
-	if (!err) {
+	अगर (!err) अणु
 		refcount_set(&fib_metrics->refcnt, 1);
-	} else {
-		kfree(fib_metrics);
+	पूर्ण अन्यथा अणु
+		kमुक्त(fib_metrics);
 		fib_metrics = ERR_PTR(err);
-	}
+	पूर्ण
 
-	return fib_metrics;
-}
+	वापस fib_metrics;
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_fib_metrics_init);

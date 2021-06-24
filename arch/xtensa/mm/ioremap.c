@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ioremap implementation.
  *
  * Copyright (C) 2015 Cadence Design Systems Inc.
  */
 
-#include <linux/io.h>
-#include <linux/vmalloc.h>
-#include <linux/pgtable.h>
-#include <asm/cacheflush.h>
-#include <asm/io.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/पन.स>
 
-static void __iomem *xtensa_ioremap(unsigned long paddr, unsigned long size,
+अटल व्योम __iomem *xtensa_ioremap(अचिन्हित दीर्घ paddr, अचिन्हित दीर्घ size,
 				    pgprot_t prot)
-{
-	unsigned long offset = paddr & ~PAGE_MASK;
-	unsigned long pfn = __phys_to_pfn(paddr);
-	struct vm_struct *area;
-	unsigned long vaddr;
-	int err;
+अणु
+	अचिन्हित दीर्घ offset = paddr & ~PAGE_MASK;
+	अचिन्हित दीर्घ pfn = __phys_to_pfn(paddr);
+	काष्ठा vm_काष्ठा *area;
+	अचिन्हित दीर्घ vaddr;
+	पूर्णांक err;
 
 	paddr &= PAGE_MASK;
 
@@ -27,39 +28,39 @@ static void __iomem *xtensa_ioremap(unsigned long paddr, unsigned long size,
 	size = PAGE_ALIGN(offset + size);
 
 	area = get_vm_area(size, VM_IOREMAP);
-	if (!area)
-		return NULL;
+	अगर (!area)
+		वापस शून्य;
 
-	vaddr = (unsigned long)area->addr;
+	vaddr = (अचिन्हित दीर्घ)area->addr;
 	area->phys_addr = paddr;
 
 	err = ioremap_page_range(vaddr, vaddr + size, paddr, prot);
 
-	if (err) {
-		vunmap((void *)vaddr);
-		return NULL;
-	}
+	अगर (err) अणु
+		vunmap((व्योम *)vaddr);
+		वापस शून्य;
+	पूर्ण
 
 	flush_cache_vmap(vaddr, vaddr + size);
-	return (void __iomem *)(offset + vaddr);
-}
+	वापस (व्योम __iomem *)(offset + vaddr);
+पूर्ण
 
-void __iomem *xtensa_ioremap_nocache(unsigned long addr, unsigned long size)
-{
-	return xtensa_ioremap(addr, size, pgprot_noncached(PAGE_KERNEL));
-}
+व्योम __iomem *xtensa_ioremap_nocache(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
+अणु
+	वापस xtensa_ioremap(addr, size, pgprot_noncached(PAGE_KERNEL));
+पूर्ण
 EXPORT_SYMBOL(xtensa_ioremap_nocache);
 
-void __iomem *xtensa_ioremap_cache(unsigned long addr, unsigned long size)
-{
-	return xtensa_ioremap(addr, size, PAGE_KERNEL);
-}
+व्योम __iomem *xtensa_ioremap_cache(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
+अणु
+	वापस xtensa_ioremap(addr, size, PAGE_KERNEL);
+पूर्ण
 EXPORT_SYMBOL(xtensa_ioremap_cache);
 
-void xtensa_iounmap(volatile void __iomem *io_addr)
-{
-	void *addr = (void *)(PAGE_MASK & (unsigned long)io_addr);
+व्योम xtensa_iounmap(अस्थिर व्योम __iomem *io_addr)
+अणु
+	व्योम *addr = (व्योम *)(PAGE_MASK & (अचिन्हित दीर्घ)io_addr);
 
 	vunmap(addr);
-}
+पूर्ण
 EXPORT_SYMBOL(xtensa_iounmap);

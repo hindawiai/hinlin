@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * TSC2005 touchscreen driver
  *
@@ -9,83 +10,83 @@
  * Based on original tsc2005.c by Lauri Leukkunen <lauri.leukkunen@nokia.com>
  */
 
-#include <linux/input.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/spi/spi.h>
-#include <linux/regmap.h>
-#include "tsc200x-core.h"
+#समावेश <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/regmap.h>
+#समावेश "tsc200x-core.h"
 
-static const struct input_id tsc2005_input_id = {
+अटल स्थिर काष्ठा input_id tsc2005_input_id = अणु
 	.bustype = BUS_SPI,
 	.product = 2005,
-};
+पूर्ण;
 
-static int tsc2005_cmd(struct device *dev, u8 cmd)
-{
+अटल पूर्णांक tsc2005_cmd(काष्ठा device *dev, u8 cmd)
+अणु
 	u8 tx = TSC200X_CMD | TSC200X_CMD_12BIT | cmd;
-	struct spi_transfer xfer = {
+	काष्ठा spi_transfer xfer = अणु
 		.tx_buf         = &tx,
 		.len            = 1,
 		.bits_per_word  = 8,
-	};
-	struct spi_message msg;
-	struct spi_device *spi = to_spi_device(dev);
-	int error;
+	पूर्ण;
+	काष्ठा spi_message msg;
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	पूर्णांक error;
 
 	spi_message_init(&msg);
 	spi_message_add_tail(&xfer, &msg);
 
 	error = spi_sync(spi, &msg);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "%s: failed, command: %x, spi error: %d\n",
 			__func__, cmd, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tsc2005_probe(struct spi_device *spi)
-{
-	int error;
+अटल पूर्णांक tsc2005_probe(काष्ठा spi_device *spi)
+अणु
+	पूर्णांक error;
 
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 8;
-	if (!spi->max_speed_hz)
+	अगर (!spi->max_speed_hz)
 		spi->max_speed_hz = TSC2005_SPI_MAX_SPEED_HZ;
 
 	error = spi_setup(spi);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return tsc200x_probe(&spi->dev, spi->irq, &tsc2005_input_id,
+	वापस tsc200x_probe(&spi->dev, spi->irq, &tsc2005_input_id,
 			     devm_regmap_init_spi(spi, &tsc200x_regmap_config),
 			     tsc2005_cmd);
-}
+पूर्ण
 
-static int tsc2005_remove(struct spi_device *spi)
-{
-	return tsc200x_remove(&spi->dev);
-}
+अटल पूर्णांक tsc2005_हटाओ(काष्ठा spi_device *spi)
+अणु
+	वापस tsc200x_हटाओ(&spi->dev);
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id tsc2005_of_match[] = {
-	{ .compatible = "ti,tsc2005" },
-	{ /* sentinel */ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id tsc2005_of_match[] = अणु
+	अणु .compatible = "ti,tsc2005" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tsc2005_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct spi_driver tsc2005_driver = {
-	.driver	= {
+अटल काष्ठा spi_driver tsc2005_driver = अणु
+	.driver	= अणु
 		.name	= "tsc2005",
 		.of_match_table = of_match_ptr(tsc2005_of_match),
 		.pm	= &tsc200x_pm_ops,
-	},
+	पूर्ण,
 	.probe	= tsc2005_probe,
-	.remove	= tsc2005_remove,
-};
+	.हटाओ	= tsc2005_हटाओ,
+पूर्ण;
 module_spi_driver(tsc2005_driver);
 
 MODULE_AUTHOR("Michael Welling <mwelling@ieee.org>");

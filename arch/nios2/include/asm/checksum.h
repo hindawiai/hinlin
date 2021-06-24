@@ -1,26 +1,27 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2010 Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2004 Microtronix Datacom Ltd.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License. See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#ifndef _ASM_NIOS_CHECKSUM_H
-#define _ASM_NIOS_CHECKSUM_H
+#अगर_अघोषित _ASM_NIOS_CHECKSUM_H
+#घोषणा _ASM_NIOS_CHECKSUM_H
 
 /* Take these from lib/checksum.c */
-extern __wsum csum_partial(const void *buff, int len, __wsum sum);
-extern __sum16 ip_fast_csum(const void *iph, unsigned int ihl);
-extern __sum16 ip_compute_csum(const void *buff, int len);
+बाह्य __wsum csum_partial(स्थिर व्योम *buff, पूर्णांक len, __wsum sum);
+बाह्य __sum16 ip_fast_csum(स्थिर व्योम *iph, अचिन्हित पूर्णांक ihl);
+बाह्य __sum16 ip_compute_csum(स्थिर व्योम *buff, पूर्णांक len);
 
 /*
  * Fold a partial checksum
  */
-static inline __sum16 csum_fold(__wsum sum)
-{
-	__asm__ __volatile__(
+अटल अंतरभूत __sum16 csum_fold(__wsum sum)
+अणु
+	__यंत्र__ __अस्थिर__(
 		"add	%0, %1, %0\n"
 		"cmpltu	r8, %0, %1\n"
 		"srli	%0, %0, 16\n"
@@ -29,19 +30,19 @@ static inline __sum16 csum_fold(__wsum sum)
 		: "=r" (sum)
 		: "r" (sum << 16), "0" (sum)
 		: "r8");
-	return (__force __sum16) sum;
-}
+	वापस (__क्रमce __sum16) sum;
+पूर्ण
 
 /*
- * computes the checksum of the TCP/UDP pseudo-header
- * returns a 16-bit checksum, already complemented
+ * computes the checksum of the TCP/UDP pseuकरो-header
+ * वापसs a 16-bit checksum, alपढ़ोy complemented
  */
-#define csum_tcpudp_nofold csum_tcpudp_nofold
-static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
+#घोषणा csum_tcpudp_nofold csum_tcpudp_nofold
+अटल अंतरभूत __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 					__u32 len, __u8 proto,
 					__wsum sum)
-{
-	__asm__ __volatile__(
+अणु
+	__यंत्र__ __अस्थिर__(
 		"add	%0, %1, %0\n"
 		"cmpltu	r8, %0, %1\n"
 		"add	%0, %0, r8\n"	/* add carry */
@@ -57,14 +58,14 @@ static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 		  "1" (saddr)
 		: "r8");
 
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
-static inline __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
+अटल अंतरभूत __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
 					__u32 len, __u8 proto,
 					__wsum sum)
-{
-	return csum_fold(csum_tcpudp_nofold(saddr, daddr, len, proto, sum));
-}
+अणु
+	वापस csum_fold(csum_tcpudp_nofold(saddr, daddr, len, proto, sum));
+पूर्ण
 
-#endif /* _ASM_NIOS_CHECKSUM_H */
+#पूर्ण_अगर /* _ASM_NIOS_CHECKSUM_H */

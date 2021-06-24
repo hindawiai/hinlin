@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Based on MPC8560 ADS and arch/ppc stx_gp3 ports
  *
- * Maintained by Kumar Gala (see MAINTAINERS for contact information)
+ * Maपूर्णांकained by Kumar Gala (see MAINTAINERS क्रम contact inक्रमmation)
  *
  * Copyright 2008 Freescale Semiconductor Inc.
  *
@@ -16,83 +17,83 @@
  * Copyright 2004-2005 MontaVista Software, Inc.
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/kdev_t.h>
-#include <linux/delay.h>
-#include <linux/seq_file.h>
-#include <linux/of_platform.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/time.h>
-#include <asm/machdep.h>
-#include <asm/pci-bridge.h>
-#include <asm/mpic.h>
-#include <asm/prom.h>
-#include <mm/mmu_decl.h>
-#include <asm/udbg.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/mpic.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <mm/mmu_decl.h>
+#समावेश <यंत्र/udbg.h>
 
-#include <sysdev/fsl_soc.h>
-#include <sysdev/fsl_pci.h>
+#समावेश <sysdev/fsl_soc.h>
+#समावेश <sysdev/fsl_pci.h>
 
-#include "mpc85xx.h"
+#समावेश "mpc85xx.h"
 
-#ifdef CONFIG_CPM2
-#include <asm/cpm2.h>
-#endif /* CONFIG_CPM2 */
+#अगर_घोषित CONFIG_CPM2
+#समावेश <यंत्र/cpm2.h>
+#पूर्ण_अगर /* CONFIG_CPM2 */
 
-static void __init stx_gp3_pic_init(void)
-{
-	struct mpic *mpic = mpic_alloc(NULL, 0, MPIC_BIG_ENDIAN,
+अटल व्योम __init stx_gp3_pic_init(व्योम)
+अणु
+	काष्ठा mpic *mpic = mpic_alloc(शून्य, 0, MPIC_BIG_ENDIAN,
 			0, 256, " OpenPIC  ");
-	BUG_ON(mpic == NULL);
+	BUG_ON(mpic == शून्य);
 	mpic_init(mpic);
 
 	mpc85xx_cpm2_pic_init();
-}
+पूर्ण
 
 /*
  * Setup the architecture
  */
-static void __init stx_gp3_setup_arch(void)
-{
-	if (ppc_md.progress)
+अटल व्योम __init stx_gp3_setup_arch(व्योम)
+अणु
+	अगर (ppc_md.progress)
 		ppc_md.progress("stx_gp3_setup_arch()", 0);
 
 	fsl_pci_assign_primary();
 
-#ifdef CONFIG_CPM2
+#अगर_घोषित CONFIG_CPM2
 	cpm2_reset();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void stx_gp3_show_cpuinfo(struct seq_file *m)
-{
-	uint pvid, svid, phid1;
+अटल व्योम stx_gp3_show_cpuinfo(काष्ठा seq_file *m)
+अणु
+	uपूर्णांक pvid, svid, phid1;
 
 	pvid = mfspr(SPRN_PVR);
 	svid = mfspr(SPRN_SVR);
 
-	seq_printf(m, "Vendor\t\t: RPC Electronics STx\n");
-	seq_printf(m, "PVR\t\t: 0x%x\n", pvid);
-	seq_printf(m, "SVR\t\t: 0x%x\n", svid);
+	seq_म_लिखो(m, "Vendor\t\t: RPC Electronics STx\n");
+	seq_म_लिखो(m, "PVR\t\t: 0x%x\n", pvid);
+	seq_म_लिखो(m, "SVR\t\t: 0x%x\n", svid);
 
 	/* Display cpu Pll setting */
 	phid1 = mfspr(SPRN_HID1);
-	seq_printf(m, "PLL setting\t: 0x%x\n", ((phid1 >> 24) & 0x3f));
-}
+	seq_म_लिखो(m, "PLL setting\t: 0x%x\n", ((phid1 >> 24) & 0x3f));
+पूर्ण
 
 machine_arch_initcall(stx_gp3, mpc85xx_common_publish_devices);
 
 /*
  * Called very early, device-tree isn't unflattened
  */
-static int __init stx_gp3_probe(void)
-{
-	return of_machine_is_compatible("stx,gp3-8560");
-}
+अटल पूर्णांक __init stx_gp3_probe(व्योम)
+अणु
+	वापस of_machine_is_compatible("stx,gp3-8560");
+पूर्ण
 
-define_machine(stx_gp3) {
+define_machine(stx_gp3) अणु
 	.name			= "STX GP3",
 	.probe			= stx_gp3_probe,
 	.setup_arch		= stx_gp3_setup_arch,
@@ -101,4 +102,4 @@ define_machine(stx_gp3) {
 	.get_irq		= mpic_get_irq,
 	.calibrate_decr		= generic_calibrate_decr,
 	.progress		= udbg_progress,
-};
+पूर्ण;

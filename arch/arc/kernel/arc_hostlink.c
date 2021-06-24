@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * arc_hostlink.c: Pseudo-driver for Metaware provided "hostlink" facility
+ * arc_hostlink.c: Pseuकरो-driver क्रम Metaware provided "hostlink" facility
  *
- * Allows Linux userland access to host in absence of any peripherals.
+ * Allows Linux userland access to host in असलence of any peripherals.
  *
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#include <linux/fs.h>		/* file_operations */
-#include <linux/miscdevice.h>
-#include <linux/mm.h>		/* VM_IO */
-#include <linux/module.h>
-#include <linux/uaccess.h>
+#समावेश <linux/fs.h>		/* file_operations */
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/mm.h>		/* VM_IO */
+#समावेश <linux/module.h>
+#समावेश <linux/uaccess.h>
 
-static unsigned char __HOSTLINK__[4 * PAGE_SIZE] __aligned(PAGE_SIZE);
+अटल अचिन्हित अक्षर __HOSTLINK__[4 * PAGE_SIZE] __aligned(PAGE_SIZE);
 
-static int arc_hl_mmap(struct file *fp, struct vm_area_struct *vma)
-{
+अटल पूर्णांक arc_hl_mmap(काष्ठा file *fp, काष्ठा vm_area_काष्ठा *vma)
+अणु
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
-	if (io_remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
+	अगर (io_remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
 			       vma->vm_end - vma->vm_start,
-			       vma->vm_page_prot)) {
+			       vma->vm_page_prot)) अणु
 		pr_warn("Hostlink buffer mmap ERROR\n");
-		return -EAGAIN;
-	}
-	return 0;
-}
+		वापस -EAGAIN;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static long arc_hl_ioctl(struct file *file, unsigned int cmd,
-			unsigned long arg)
-{
-	/* we only support, returning the physical addr to mmap in user space */
-	put_user((unsigned int)__HOSTLINK__, (int __user *)arg);
-	return 0;
-}
+अटल दीर्घ arc_hl_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			अचिन्हित दीर्घ arg)
+अणु
+	/* we only support, वापसing the physical addr to mmap in user space */
+	put_user((अचिन्हित पूर्णांक)__HOSTLINK__, (पूर्णांक __user *)arg);
+	वापस 0;
+पूर्ण
 
-static const struct file_operations arc_hl_fops = {
+अटल स्थिर काष्ठा file_operations arc_hl_fops = अणु
 	.unlocked_ioctl	= arc_hl_ioctl,
 	.mmap		= arc_hl_mmap,
-};
+पूर्ण;
 
-static struct miscdevice arc_hl_dev = {
+अटल काष्ठा miscdevice arc_hl_dev = अणु
 	.minor	= MISC_DYNAMIC_MINOR,
 	.name	= "hostlink",
 	.fops	= &arc_hl_fops
-};
+पूर्ण;
 
-static int __init arc_hl_init(void)
-{
+अटल पूर्णांक __init arc_hl_init(व्योम)
+अणु
 	pr_info("ARC Hostlink driver mmap at 0x%p\n", __HOSTLINK__);
-	return misc_register(&arc_hl_dev);
-}
+	वापस misc_रेजिस्टर(&arc_hl_dev);
+पूर्ण
 module_init(arc_hl_init);

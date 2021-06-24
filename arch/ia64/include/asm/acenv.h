@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * IA64 specific ACPICA environments and implementation
+ * IA64 specअगरic ACPICA environments and implementation
  *
  * Copyright (C) 2014, Intel Corporation
- *   Author: Lv Zheng <lv.zheng@intel.com>
+ *   Author: Lv Zheng <lv.zheng@पूर्णांकel.com>
  */
 
-#ifndef _ASM_IA64_ACENV_H
-#define _ASM_IA64_ACENV_H
+#अगर_अघोषित _ASM_IA64_ACENV_H
+#घोषणा _ASM_IA64_ACENV_H
 
-#include <asm/intrinsics.h>
+#समावेश <यंत्र/पूर्णांकrinsics.h>
 
-#define COMPILER_DEPENDENT_INT64	long
-#define COMPILER_DEPENDENT_UINT64	unsigned long
+#घोषणा COMPILER_DEPENDENT_INT64	दीर्घ
+#घोषणा COMPILER_DEPENDENT_UINT64	अचिन्हित दीर्घ
 
 /* Asm macros */
 
-static inline int
-ia64_acpi_acquire_global_lock(unsigned int *lock)
-{
-	unsigned int old, new, val;
-	do {
+अटल अंतरभूत पूर्णांक
+ia64_acpi_acquire_global_lock(अचिन्हित पूर्णांक *lock)
+अणु
+	अचिन्हित पूर्णांक old, new, val;
+	करो अणु
 		old = *lock;
 		new = (((old & ~0x3) + 2) + ((old >> 1) & 0x1));
 		val = ia64_cmpxchg4_acq(lock, new, old);
-	} while (unlikely (val != old));
-	return (new < 3) ? -1 : 0;
-}
+	पूर्ण जबतक (unlikely (val != old));
+	वापस (new < 3) ? -1 : 0;
+पूर्ण
 
-static inline int
-ia64_acpi_release_global_lock(unsigned int *lock)
-{
-	unsigned int old, new, val;
-	do {
+अटल अंतरभूत पूर्णांक
+ia64_acpi_release_global_lock(अचिन्हित पूर्णांक *lock)
+अणु
+	अचिन्हित पूर्णांक old, new, val;
+	करो अणु
 		old = *lock;
 		new = old & ~0x3;
 		val = ia64_cmpxchg4_acq(lock, new, old);
-	} while (unlikely (val != old));
-	return old & 0x1;
-}
+	पूर्ण जबतक (unlikely (val != old));
+	वापस old & 0x1;
+पूर्ण
 
-#define ACPI_ACQUIRE_GLOBAL_LOCK(facs, Acq)				\
+#घोषणा ACPI_ACQUIRE_GLOBAL_LOCK(facs, Acq)				\
 	((Acq) = ia64_acpi_acquire_global_lock(&facs->global_lock))
 
-#define ACPI_RELEASE_GLOBAL_LOCK(facs, Acq)				\
+#घोषणा ACPI_RELEASE_GLOBAL_LOCK(facs, Acq)				\
 	((Acq) = ia64_acpi_release_global_lock(&facs->global_lock))
 
-#endif /* _ASM_IA64_ACENV_H */
+#पूर्ण_अगर /* _ASM_IA64_ACENV_H */

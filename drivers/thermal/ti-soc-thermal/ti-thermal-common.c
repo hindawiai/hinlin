@@ -1,157 +1,158 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * OMAP thermal driver interface
+ * OMAP thermal driver पूर्णांकerface
  *
  * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
  * Contact:
- *   Eduardo Valentin <eduardo.valentin@ti.com>
+ *   Eduarकरो Valentin <eduarकरो.valentin@ti.com>
  */
 
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
-#include <linux/gfp.h>
-#include <linux/kernel.h>
-#include <linux/workqueue.h>
-#include <linux/thermal.h>
-#include <linux/cpufreq.h>
-#include <linux/cpumask.h>
-#include <linux/cpu_cooling.h>
-#include <linux/of.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/thermal.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/cpu_cooling.h>
+#समावेश <linux/of.h>
 
-#include "ti-thermal.h"
-#include "ti-bandgap.h"
+#समावेश "ti-thermal.h"
+#समावेश "ti-bandgap.h"
 
-/* common data structures */
-struct ti_thermal_data {
-	struct cpufreq_policy *policy;
-	struct thermal_zone_device *ti_thermal;
-	struct thermal_zone_device *pcb_tz;
-	struct thermal_cooling_device *cool_dev;
-	struct ti_bandgap *bgp;
-	enum thermal_device_mode mode;
-	struct work_struct thermal_wq;
-	int sensor_id;
+/* common data काष्ठाures */
+काष्ठा ti_thermal_data अणु
+	काष्ठा cpufreq_policy *policy;
+	काष्ठा thermal_zone_device *ti_thermal;
+	काष्ठा thermal_zone_device *pcb_tz;
+	काष्ठा thermal_cooling_device *cool_dev;
+	काष्ठा ti_bandgap *bgp;
+	क्रमागत thermal_device_mode mode;
+	काष्ठा work_काष्ठा thermal_wq;
+	पूर्णांक sensor_id;
 	bool our_zone;
-};
+पूर्ण;
 
-static void ti_thermal_work(struct work_struct *work)
-{
-	struct ti_thermal_data *data = container_of(work,
-					struct ti_thermal_data, thermal_wq);
+अटल व्योम ti_thermal_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ti_thermal_data *data = container_of(work,
+					काष्ठा ti_thermal_data, thermal_wq);
 
 	thermal_zone_device_update(data->ti_thermal, THERMAL_EVENT_UNSPECIFIED);
 
 	dev_dbg(&data->ti_thermal->device, "updated thermal zone %s\n",
 		data->ti_thermal->type);
-}
+पूर्ण
 
 /**
- * ti_thermal_hotspot_temperature - returns sensor extrapolated temperature
+ * ti_thermal_hotspot_temperature - वापसs sensor extrapolated temperature
  * @t:	omap sensor temperature
  * @s:	omap sensor slope value
- * @c:	omap sensor const value
+ * @c:	omap sensor स्थिर value
  */
-static inline int ti_thermal_hotspot_temperature(int t, int s, int c)
-{
-	int delta = t * s / 1000 + c;
+अटल अंतरभूत पूर्णांक ti_thermal_hotspot_temperature(पूर्णांक t, पूर्णांक s, पूर्णांक c)
+अणु
+	पूर्णांक delta = t * s / 1000 + c;
 
-	if (delta < 0)
+	अगर (delta < 0)
 		delta = 0;
 
-	return t + delta;
-}
+	वापस t + delta;
+पूर्ण
 
 /* thermal zone ops */
-/* Get temperature callback function for thermal zone */
-static inline int __ti_thermal_get_temp(void *devdata, int *temp)
-{
-	struct thermal_zone_device *pcb_tz = NULL;
-	struct ti_thermal_data *data = devdata;
-	struct ti_bandgap *bgp;
-	const struct ti_temp_sensor *s;
-	int ret, tmp, slope, constant;
-	int pcb_temp;
+/* Get temperature callback function क्रम thermal zone */
+अटल अंतरभूत पूर्णांक __ti_thermal_get_temp(व्योम *devdata, पूर्णांक *temp)
+अणु
+	काष्ठा thermal_zone_device *pcb_tz = शून्य;
+	काष्ठा ti_thermal_data *data = devdata;
+	काष्ठा ti_bandgap *bgp;
+	स्थिर काष्ठा ti_temp_sensor *s;
+	पूर्णांक ret, पंचांगp, slope, स्थिरant;
+	पूर्णांक pcb_temp;
 
-	if (!data)
-		return 0;
+	अगर (!data)
+		वापस 0;
 
 	bgp = data->bgp;
 	s = &bgp->conf->sensors[data->sensor_id];
 
-	ret = ti_bandgap_read_temperature(bgp, data->sensor_id, &tmp);
-	if (ret)
-		return ret;
+	ret = ti_bandgap_पढ़ो_temperature(bgp, data->sensor_id, &पंचांगp);
+	अगर (ret)
+		वापस ret;
 
-	/* Default constants */
+	/* Default स्थिरants */
 	slope = thermal_zone_get_slope(data->ti_thermal);
-	constant = thermal_zone_get_offset(data->ti_thermal);
+	स्थिरant = thermal_zone_get_offset(data->ti_thermal);
 
 	pcb_tz = data->pcb_tz;
-	/* In case pcb zone is available, use the extrapolation rule with it */
-	if (!IS_ERR(pcb_tz)) {
+	/* In हाल pcb zone is available, use the extrapolation rule with it */
+	अगर (!IS_ERR(pcb_tz)) अणु
 		ret = thermal_zone_get_temp(pcb_tz, &pcb_temp);
-		if (!ret) {
-			tmp -= pcb_temp; /* got a valid PCB temp */
+		अगर (!ret) अणु
+			पंचांगp -= pcb_temp; /* got a valid PCB temp */
 			slope = s->slope_pcb;
-			constant = s->constant_pcb;
-		} else {
+			स्थिरant = s->स्थिरant_pcb;
+		पूर्ण अन्यथा अणु
 			dev_err(bgp->dev,
 				"Failed to read PCB state. Using defaults\n");
 			ret = 0;
-		}
-	}
-	*temp = ti_thermal_hotspot_temperature(tmp, slope, constant);
+		पूर्ण
+	पूर्ण
+	*temp = ti_thermal_hotspot_temperature(पंचांगp, slope, स्थिरant);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int ti_thermal_get_temp(struct thermal_zone_device *thermal,
-				      int *temp)
-{
-	struct ti_thermal_data *data = thermal->devdata;
+अटल अंतरभूत पूर्णांक ti_thermal_get_temp(काष्ठा thermal_zone_device *thermal,
+				      पूर्णांक *temp)
+अणु
+	काष्ठा ti_thermal_data *data = thermal->devdata;
 
-	return __ti_thermal_get_temp(data, temp);
-}
+	वापस __ti_thermal_get_temp(data, temp);
+पूर्ण
 
-static int __ti_thermal_get_trend(void *p, int trip, enum thermal_trend *trend)
-{
-	struct ti_thermal_data *data = p;
-	struct ti_bandgap *bgp;
-	int id, tr, ret = 0;
+अटल पूर्णांक __ti_thermal_get_trend(व्योम *p, पूर्णांक trip, क्रमागत thermal_trend *trend)
+अणु
+	काष्ठा ti_thermal_data *data = p;
+	काष्ठा ti_bandgap *bgp;
+	पूर्णांक id, tr, ret = 0;
 
 	bgp = data->bgp;
 	id = data->sensor_id;
 
 	ret = ti_bandgap_get_trend(bgp, id, &tr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (tr > 0)
+	अगर (tr > 0)
 		*trend = THERMAL_TREND_RAISING;
-	else if (tr < 0)
+	अन्यथा अगर (tr < 0)
 		*trend = THERMAL_TREND_DROPPING;
-	else
+	अन्यथा
 		*trend = THERMAL_TREND_STABLE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct thermal_zone_of_device_ops ti_of_thermal_ops = {
+अटल स्थिर काष्ठा thermal_zone_of_device_ops ti_of_thermal_ops = अणु
 	.get_temp = __ti_thermal_get_temp,
 	.get_trend = __ti_thermal_get_trend,
-};
+पूर्ण;
 
-static struct ti_thermal_data
-*ti_thermal_build_data(struct ti_bandgap *bgp, int id)
-{
-	struct ti_thermal_data *data;
+अटल काष्ठा ti_thermal_data
+*ti_thermal_build_data(काष्ठा ti_bandgap *bgp, पूर्णांक id)
+अणु
+	काष्ठा ti_thermal_data *data;
 
-	data = devm_kzalloc(bgp->dev, sizeof(*data), GFP_KERNEL);
-	if (!data) {
+	data = devm_kzalloc(bgp->dev, माप(*data), GFP_KERNEL);
+	अगर (!data) अणु
 		dev_err(bgp->dev, "kzalloc fail\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	data->sensor_id = id;
 	data->bgp = bgp;
 	data->mode = THERMAL_DEVICE_ENABLED;
@@ -159,116 +160,116 @@ static struct ti_thermal_data
 	data->pcb_tz = thermal_zone_get_zone_by_name("pcb");
 	INIT_WORK(&data->thermal_wq, ti_thermal_work);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-int ti_thermal_expose_sensor(struct ti_bandgap *bgp, int id,
-			     char *domain)
-{
-	struct ti_thermal_data *data;
-	int interval;
+पूर्णांक ti_thermal_expose_sensor(काष्ठा ti_bandgap *bgp, पूर्णांक id,
+			     अक्षर *करोमुख्य)
+अणु
+	काष्ठा ti_thermal_data *data;
+	पूर्णांक पूर्णांकerval;
 
 	data = ti_bandgap_get_sensor_data(bgp, id);
 
-	if (IS_ERR_OR_NULL(data))
+	अगर (IS_ERR_OR_शून्य(data))
 		data = ti_thermal_build_data(bgp, id);
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
-	/* in case this is specified by DT */
-	data->ti_thermal = devm_thermal_zone_of_sensor_register(bgp->dev, id,
+	/* in हाल this is specअगरied by DT */
+	data->ti_thermal = devm_thermal_zone_of_sensor_रेजिस्टर(bgp->dev, id,
 					data, &ti_of_thermal_ops);
-	if (IS_ERR(data->ti_thermal)) {
+	अगर (IS_ERR(data->ti_thermal)) अणु
 		dev_err(bgp->dev, "thermal zone device is NULL\n");
-		return PTR_ERR(data->ti_thermal);
-	}
+		वापस PTR_ERR(data->ti_thermal);
+	पूर्ण
 
-	interval = jiffies_to_msecs(data->ti_thermal->polling_delay_jiffies);
+	पूर्णांकerval = jअगरfies_to_msecs(data->ti_thermal->polling_delay_jअगरfies);
 
 	ti_bandgap_set_sensor_data(bgp, id, data);
-	ti_bandgap_write_update_interval(bgp, data->sensor_id, interval);
+	ti_bandgap_ग_लिखो_update_पूर्णांकerval(bgp, data->sensor_id, पूर्णांकerval);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ti_thermal_remove_sensor(struct ti_bandgap *bgp, int id)
-{
-	struct ti_thermal_data *data;
+पूर्णांक ti_thermal_हटाओ_sensor(काष्ठा ti_bandgap *bgp, पूर्णांक id)
+अणु
+	काष्ठा ti_thermal_data *data;
 
 	data = ti_bandgap_get_sensor_data(bgp, id);
 
-	if (!IS_ERR_OR_NULL(data) && data->ti_thermal) {
-		if (data->our_zone)
-			thermal_zone_device_unregister(data->ti_thermal);
-	}
+	अगर (!IS_ERR_OR_शून्य(data) && data->ti_thermal) अणु
+		अगर (data->our_zone)
+			thermal_zone_device_unरेजिस्टर(data->ti_thermal);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ti_thermal_report_sensor_temperature(struct ti_bandgap *bgp, int id)
-{
-	struct ti_thermal_data *data;
+पूर्णांक ti_thermal_report_sensor_temperature(काष्ठा ti_bandgap *bgp, पूर्णांक id)
+अणु
+	काष्ठा ti_thermal_data *data;
 
 	data = ti_bandgap_get_sensor_data(bgp, id);
 
 	schedule_work(&data->thermal_wq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ti_thermal_register_cpu_cooling(struct ti_bandgap *bgp, int id)
-{
-	struct ti_thermal_data *data;
-	struct device_node *np = bgp->dev->of_node;
+पूर्णांक ti_thermal_रेजिस्टर_cpu_cooling(काष्ठा ti_bandgap *bgp, पूर्णांक id)
+अणु
+	काष्ठा ti_thermal_data *data;
+	काष्ठा device_node *np = bgp->dev->of_node;
 
 	/*
-	 * We are assuming here that if one deploys the zone
+	 * We are assuming here that अगर one deploys the zone
 	 * using DT, then it must be aware that the cooling device
 	 * loading has to happen via cpufreq driver.
 	 */
-	if (of_find_property(np, "#thermal-sensor-cells", NULL))
-		return 0;
+	अगर (of_find_property(np, "#thermal-sensor-cells", शून्य))
+		वापस 0;
 
 	data = ti_bandgap_get_sensor_data(bgp, id);
-	if (!data || IS_ERR(data))
+	अगर (!data || IS_ERR(data))
 		data = ti_thermal_build_data(bgp, id);
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
 	data->policy = cpufreq_cpu_get(0);
-	if (!data->policy) {
+	अगर (!data->policy) अणु
 		pr_debug("%s: CPUFreq policy not found\n", __func__);
-		return -EPROBE_DEFER;
-	}
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
 	/* Register cooling device */
-	data->cool_dev = cpufreq_cooling_register(data->policy);
-	if (IS_ERR(data->cool_dev)) {
-		int ret = PTR_ERR(data->cool_dev);
+	data->cool_dev = cpufreq_cooling_रेजिस्टर(data->policy);
+	अगर (IS_ERR(data->cool_dev)) अणु
+		पूर्णांक ret = PTR_ERR(data->cool_dev);
 		dev_err(bgp->dev, "Failed to register cpu cooling device %d\n",
 			ret);
 		cpufreq_cpu_put(data->policy);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ti_bandgap_set_sensor_data(bgp, id, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ti_thermal_unregister_cpu_cooling(struct ti_bandgap *bgp, int id)
-{
-	struct ti_thermal_data *data;
+पूर्णांक ti_thermal_unरेजिस्टर_cpu_cooling(काष्ठा ti_bandgap *bgp, पूर्णांक id)
+अणु
+	काष्ठा ti_thermal_data *data;
 
 	data = ti_bandgap_get_sensor_data(bgp, id);
 
-	if (!IS_ERR_OR_NULL(data)) {
-		cpufreq_cooling_unregister(data->cool_dev);
-		if (data->policy)
+	अगर (!IS_ERR_OR_शून्य(data)) अणु
+		cpufreq_cooling_unरेजिस्टर(data->cool_dev);
+		अगर (data->policy)
 			cpufreq_cpu_put(data->policy);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

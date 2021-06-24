@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2009-2011 Red Hat, Inc.
  *
@@ -6,63 +7,63 @@
  * This file is released under the GPL.
  */
 
-#include <linux/dm-bufio.h>
+#समावेश <linux/dm-bufपन.स>
 
-#include <linux/device-mapper.h>
-#include <linux/dm-io.h>
-#include <linux/slab.h>
-#include <linux/sched/mm.h>
-#include <linux/jiffies.h>
-#include <linux/vmalloc.h>
-#include <linux/shrinker.h>
-#include <linux/module.h>
-#include <linux/rbtree.h>
-#include <linux/stacktrace.h>
+#समावेश <linux/device-mapper.h>
+#समावेश <linux/dm-पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/shrinker.h>
+#समावेश <linux/module.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/stacktrace.h>
 
-#define DM_MSG_PREFIX "bufio"
+#घोषणा DM_MSG_PREFIX "bufio"
 
 /*
  * Memory management policy:
- *	Limit the number of buffers to DM_BUFIO_MEMORY_PERCENT of main memory
- *	or DM_BUFIO_VMALLOC_PERCENT of vmalloc memory (whichever is lower).
+ *	Limit the number of buffers to DM_BUFIO_MEMORY_PERCENT of मुख्य memory
+ *	or DM_BUFIO_VMALLOC_PERCENT of vदो_स्मृति memory (whichever is lower).
  *	Always allocate at least DM_BUFIO_MIN_BUFFERS buffers.
- *	Start background writeback when there are DM_BUFIO_WRITEBACK_PERCENT
+ *	Start background ग_लिखोback when there are DM_BUFIO_WRITEBACK_PERCENT
  *	dirty buffers.
  */
-#define DM_BUFIO_MIN_BUFFERS		8
+#घोषणा DM_BUFIO_MIN_BUFFERS		8
 
-#define DM_BUFIO_MEMORY_PERCENT		2
-#define DM_BUFIO_VMALLOC_PERCENT	25
-#define DM_BUFIO_WRITEBACK_RATIO	3
-#define DM_BUFIO_LOW_WATERMARK_RATIO	16
+#घोषणा DM_BUFIO_MEMORY_PERCENT		2
+#घोषणा DM_BUFIO_VMALLOC_PERCENT	25
+#घोषणा DM_BUFIO_WRITEBACK_RATIO	3
+#घोषणा DM_BUFIO_LOW_WATERMARK_RATIO	16
 
 /*
- * Check buffer ages in this interval (seconds)
+ * Check buffer ages in this पूर्णांकerval (seconds)
  */
-#define DM_BUFIO_WORK_TIMER_SECS	30
+#घोषणा DM_BUFIO_WORK_TIMER_SECS	30
 
 /*
  * Free buffers when they are older than this (seconds)
  */
-#define DM_BUFIO_DEFAULT_AGE_SECS	300
+#घोषणा DM_BUFIO_DEFAULT_AGE_SECS	300
 
 /*
  * The nr of bytes of cached data to keep around.
  */
-#define DM_BUFIO_DEFAULT_RETAIN_BYTES   (256 * 1024)
+#घोषणा DM_BUFIO_DEFAULT_RETAIN_BYTES   (256 * 1024)
 
 /*
- * Align buffer writes to this boundary.
- * Tests show that SSDs have the highest IOPS when using 4k writes.
+ * Align buffer ग_लिखोs to this boundary.
+ * Tests show that SSDs have the highest IOPS when using 4k ग_लिखोs.
  */
-#define DM_BUFIO_WRITE_ALIGN		4096
+#घोषणा DM_BUFIO_WRITE_ALIGN		4096
 
 /*
  * dm_buffer->list_mode
  */
-#define LIST_CLEAN	0
-#define LIST_DIRTY	1
-#define LIST_SIZE	2
+#घोषणा LIST_CLEAN	0
+#घोषणा LIST_सूचीTY	1
+#घोषणा LIST_SIZE	2
 
 /*
  * Linking of buffers:
@@ -72,470 +73,470 @@
  *	are linked to lru[LIST_CLEAN] with their lru_list field.
  *
  *	Dirty and clean buffers that are being written are linked to
- *	lru[LIST_DIRTY] with their lru_list field. When the write
+ *	lru[LIST_सूचीTY] with their lru_list field. When the ग_लिखो
  *	finishes, the buffer cannot be relinked immediately (because we
- *	are in an interrupt context and relinking requires process
+ *	are in an पूर्णांकerrupt context and relinking requires process
  *	context), so some clean-not-writing buffers can be held on
  *	dirty_lru too.  They are later added to lru in the process
  *	context.
  */
-struct dm_bufio_client {
-	struct mutex lock;
+काष्ठा dm_bufio_client अणु
+	काष्ठा mutex lock;
 
-	struct list_head lru[LIST_SIZE];
-	unsigned long n_buffers[LIST_SIZE];
+	काष्ठा list_head lru[LIST_SIZE];
+	अचिन्हित दीर्घ n_buffers[LIST_SIZE];
 
-	struct block_device *bdev;
-	unsigned block_size;
+	काष्ठा block_device *bdev;
+	अचिन्हित block_size;
 	s8 sectors_per_block_bits;
-	void (*alloc_callback)(struct dm_buffer *);
-	void (*write_callback)(struct dm_buffer *);
+	व्योम (*alloc_callback)(काष्ठा dm_buffer *);
+	व्योम (*ग_लिखो_callback)(काष्ठा dm_buffer *);
 
-	struct kmem_cache *slab_buffer;
-	struct kmem_cache *slab_cache;
-	struct dm_io_client *dm_io;
+	काष्ठा kmem_cache *slab_buffer;
+	काष्ठा kmem_cache *slab_cache;
+	काष्ठा dm_io_client *dm_io;
 
-	struct list_head reserved_buffers;
-	unsigned need_reserved_buffers;
+	काष्ठा list_head reserved_buffers;
+	अचिन्हित need_reserved_buffers;
 
-	unsigned minimum_buffers;
+	अचिन्हित minimum_buffers;
 
-	struct rb_root buffer_tree;
-	wait_queue_head_t free_buffer_wait;
+	काष्ठा rb_root buffer_tree;
+	रुको_queue_head_t मुक्त_buffer_रुको;
 
 	sector_t start;
 
-	int async_write_error;
+	पूर्णांक async_ग_लिखो_error;
 
-	struct list_head client_list;
+	काष्ठा list_head client_list;
 
-	struct shrinker shrinker;
-	struct work_struct shrink_work;
-	atomic_long_t need_shrink;
-};
+	काष्ठा shrinker shrinker;
+	काष्ठा work_काष्ठा shrink_work;
+	atomic_दीर्घ_t need_shrink;
+पूर्ण;
 
 /*
  * Buffer state bits.
  */
-#define B_READING	0
-#define B_WRITING	1
-#define B_DIRTY		2
+#घोषणा B_READING	0
+#घोषणा B_WRITING	1
+#घोषणा B_सूचीTY		2
 
 /*
  * Describes how the block was allocated:
- * kmem_cache_alloc(), __get_free_pages() or vmalloc().
+ * kmem_cache_alloc(), __get_मुक्त_pages() or vदो_स्मृति().
  * See the comment at alloc_buffer_data.
  */
-enum data_mode {
+क्रमागत data_mode अणु
 	DATA_MODE_SLAB = 0,
 	DATA_MODE_GET_FREE_PAGES = 1,
 	DATA_MODE_VMALLOC = 2,
 	DATA_MODE_LIMIT = 3
-};
+पूर्ण;
 
-struct dm_buffer {
-	struct rb_node node;
-	struct list_head lru_list;
-	struct list_head global_list;
+काष्ठा dm_buffer अणु
+	काष्ठा rb_node node;
+	काष्ठा list_head lru_list;
+	काष्ठा list_head global_list;
 	sector_t block;
-	void *data;
-	unsigned char data_mode;		/* DATA_MODE_* */
-	unsigned char list_mode;		/* LIST_* */
-	blk_status_t read_error;
-	blk_status_t write_error;
-	unsigned accessed;
-	unsigned hold_count;
-	unsigned long state;
-	unsigned long last_accessed;
-	unsigned dirty_start;
-	unsigned dirty_end;
-	unsigned write_start;
-	unsigned write_end;
-	struct dm_bufio_client *c;
-	struct list_head write_list;
-	void (*end_io)(struct dm_buffer *, blk_status_t);
-#ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
-#define MAX_STACK 10
-	unsigned int stack_len;
-	unsigned long stack_entries[MAX_STACK];
-#endif
-};
+	व्योम *data;
+	अचिन्हित अक्षर data_mode;		/* DATA_MODE_* */
+	अचिन्हित अक्षर list_mode;		/* LIST_* */
+	blk_status_t पढ़ो_error;
+	blk_status_t ग_लिखो_error;
+	अचिन्हित accessed;
+	अचिन्हित hold_count;
+	अचिन्हित दीर्घ state;
+	अचिन्हित दीर्घ last_accessed;
+	अचिन्हित dirty_start;
+	अचिन्हित dirty_end;
+	अचिन्हित ग_लिखो_start;
+	अचिन्हित ग_लिखो_end;
+	काष्ठा dm_bufio_client *c;
+	काष्ठा list_head ग_लिखो_list;
+	व्योम (*end_io)(काष्ठा dm_buffer *, blk_status_t);
+#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+#घोषणा MAX_STACK 10
+	अचिन्हित पूर्णांक stack_len;
+	अचिन्हित दीर्घ stack_entries[MAX_STACK];
+#पूर्ण_अगर
+पूर्ण;
 
 /*----------------------------------------------------------------*/
 
-#define dm_bufio_in_request()	(!!current->bio_list)
+#घोषणा dm_bufio_in_request()	(!!current->bio_list)
 
-static void dm_bufio_lock(struct dm_bufio_client *c)
-{
+अटल व्योम dm_bufio_lock(काष्ठा dm_bufio_client *c)
+अणु
 	mutex_lock_nested(&c->lock, dm_bufio_in_request());
-}
+पूर्ण
 
-static int dm_bufio_trylock(struct dm_bufio_client *c)
-{
-	return mutex_trylock(&c->lock);
-}
+अटल पूर्णांक dm_bufio_trylock(काष्ठा dm_bufio_client *c)
+अणु
+	वापस mutex_trylock(&c->lock);
+पूर्ण
 
-static void dm_bufio_unlock(struct dm_bufio_client *c)
-{
+अटल व्योम dm_bufio_unlock(काष्ठा dm_bufio_client *c)
+अणु
 	mutex_unlock(&c->lock);
-}
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
 /*
- * Default cache size: available memory divided by the ratio.
+ * Default cache size: available memory भागided by the ratio.
  */
-static unsigned long dm_bufio_default_cache_size;
+अटल अचिन्हित दीर्घ dm_bufio_शेष_cache_size;
 
 /*
  * Total cache size set by the user.
  */
-static unsigned long dm_bufio_cache_size;
+अटल अचिन्हित दीर्घ dm_bufio_cache_size;
 
 /*
  * A copy of dm_bufio_cache_size because dm_bufio_cache_size can change
- * at any time.  If it disagrees, the user has changed cache size.
+ * at any समय.  If it disagrees, the user has changed cache size.
  */
-static unsigned long dm_bufio_cache_size_latch;
+अटल अचिन्हित दीर्घ dm_bufio_cache_size_latch;
 
-static DEFINE_SPINLOCK(global_spinlock);
+अटल DEFINE_SPINLOCK(global_spinlock);
 
-static LIST_HEAD(global_queue);
+अटल LIST_HEAD(global_queue);
 
-static unsigned long global_num = 0;
+अटल अचिन्हित दीर्घ global_num = 0;
 
 /*
- * Buffers are freed after this timeout
+ * Buffers are मुक्तd after this समयout
  */
-static unsigned dm_bufio_max_age = DM_BUFIO_DEFAULT_AGE_SECS;
-static unsigned long dm_bufio_retain_bytes = DM_BUFIO_DEFAULT_RETAIN_BYTES;
+अटल अचिन्हित dm_bufio_max_age = DM_BUFIO_DEFAULT_AGE_SECS;
+अटल अचिन्हित दीर्घ dm_bufio_retain_bytes = DM_BUFIO_DEFAULT_RETAIN_BYTES;
 
-static unsigned long dm_bufio_peak_allocated;
-static unsigned long dm_bufio_allocated_kmem_cache;
-static unsigned long dm_bufio_allocated_get_free_pages;
-static unsigned long dm_bufio_allocated_vmalloc;
-static unsigned long dm_bufio_current_allocated;
+अटल अचिन्हित दीर्घ dm_bufio_peak_allocated;
+अटल अचिन्हित दीर्घ dm_bufio_allocated_kmem_cache;
+अटल अचिन्हित दीर्घ dm_bufio_allocated_get_मुक्त_pages;
+अटल अचिन्हित दीर्घ dm_bufio_allocated_vदो_स्मृति;
+अटल अचिन्हित दीर्घ dm_bufio_current_allocated;
 
 /*----------------------------------------------------------------*/
 
 /*
  * The current number of clients.
  */
-static int dm_bufio_client_count;
+अटल पूर्णांक dm_bufio_client_count;
 
 /*
  * The list of all clients.
  */
-static LIST_HEAD(dm_bufio_all_clients);
+अटल LIST_HEAD(dm_bufio_all_clients);
 
 /*
  * This mutex protects dm_bufio_cache_size_latch and dm_bufio_client_count
  */
-static DEFINE_MUTEX(dm_bufio_clients_lock);
+अटल DEFINE_MUTEX(dm_bufio_clients_lock);
 
-static struct workqueue_struct *dm_bufio_wq;
-static struct delayed_work dm_bufio_cleanup_old_work;
-static struct work_struct dm_bufio_replacement_work;
+अटल काष्ठा workqueue_काष्ठा *dm_bufio_wq;
+अटल काष्ठा delayed_work dm_bufio_cleanup_old_work;
+अटल काष्ठा work_काष्ठा dm_bufio_replacement_work;
 
 
-#ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
-static void buffer_record_stack(struct dm_buffer *b)
-{
+#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+अटल व्योम buffer_record_stack(काष्ठा dm_buffer *b)
+अणु
 	b->stack_len = stack_trace_save(b->stack_entries, MAX_STACK, 2);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*----------------------------------------------------------------
- * A red/black tree acts as an index for all the buffers.
+ * A red/black tree acts as an index क्रम all the buffers.
  *--------------------------------------------------------------*/
-static struct dm_buffer *__find(struct dm_bufio_client *c, sector_t block)
-{
-	struct rb_node *n = c->buffer_tree.rb_node;
-	struct dm_buffer *b;
+अटल काष्ठा dm_buffer *__find(काष्ठा dm_bufio_client *c, sector_t block)
+अणु
+	काष्ठा rb_node *n = c->buffer_tree.rb_node;
+	काष्ठा dm_buffer *b;
 
-	while (n) {
-		b = container_of(n, struct dm_buffer, node);
+	जबतक (n) अणु
+		b = container_of(n, काष्ठा dm_buffer, node);
 
-		if (b->block == block)
-			return b;
+		अगर (b->block == block)
+			वापस b;
 
 		n = block < b->block ? n->rb_left : n->rb_right;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct dm_buffer *__find_next(struct dm_bufio_client *c, sector_t block)
-{
-	struct rb_node *n = c->buffer_tree.rb_node;
-	struct dm_buffer *b;
-	struct dm_buffer *best = NULL;
+अटल काष्ठा dm_buffer *__find_next(काष्ठा dm_bufio_client *c, sector_t block)
+अणु
+	काष्ठा rb_node *n = c->buffer_tree.rb_node;
+	काष्ठा dm_buffer *b;
+	काष्ठा dm_buffer *best = शून्य;
 
-	while (n) {
-		b = container_of(n, struct dm_buffer, node);
+	जबतक (n) अणु
+		b = container_of(n, काष्ठा dm_buffer, node);
 
-		if (b->block == block)
-			return b;
+		अगर (b->block == block)
+			वापस b;
 
-		if (block <= b->block) {
+		अगर (block <= b->block) अणु
 			n = n->rb_left;
 			best = b;
-		} else {
+		पूर्ण अन्यथा अणु
 			n = n->rb_right;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return best;
-}
+	वापस best;
+पूर्ण
 
-static void __insert(struct dm_bufio_client *c, struct dm_buffer *b)
-{
-	struct rb_node **new = &c->buffer_tree.rb_node, *parent = NULL;
-	struct dm_buffer *found;
+अटल व्योम __insert(काष्ठा dm_bufio_client *c, काष्ठा dm_buffer *b)
+अणु
+	काष्ठा rb_node **new = &c->buffer_tree.rb_node, *parent = शून्य;
+	काष्ठा dm_buffer *found;
 
-	while (*new) {
-		found = container_of(*new, struct dm_buffer, node);
+	जबतक (*new) अणु
+		found = container_of(*new, काष्ठा dm_buffer, node);
 
-		if (found->block == b->block) {
+		अगर (found->block == b->block) अणु
 			BUG_ON(found != b);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		parent = *new;
 		new = b->block < found->block ?
 			&found->node.rb_left : &found->node.rb_right;
-	}
+	पूर्ण
 
 	rb_link_node(&b->node, parent, new);
 	rb_insert_color(&b->node, &c->buffer_tree);
-}
+पूर्ण
 
-static void __remove(struct dm_bufio_client *c, struct dm_buffer *b)
-{
+अटल व्योम __हटाओ(काष्ठा dm_bufio_client *c, काष्ठा dm_buffer *b)
+अणु
 	rb_erase(&b->node, &c->buffer_tree);
-}
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-static void adjust_total_allocated(struct dm_buffer *b, bool unlink)
-{
-	unsigned char data_mode;
-	long diff;
+अटल व्योम adjust_total_allocated(काष्ठा dm_buffer *b, bool unlink)
+अणु
+	अचिन्हित अक्षर data_mode;
+	दीर्घ dअगरf;
 
-	static unsigned long * const class_ptr[DATA_MODE_LIMIT] = {
+	अटल अचिन्हित दीर्घ * स्थिर class_ptr[DATA_MODE_LIMIT] = अणु
 		&dm_bufio_allocated_kmem_cache,
-		&dm_bufio_allocated_get_free_pages,
-		&dm_bufio_allocated_vmalloc,
-	};
+		&dm_bufio_allocated_get_मुक्त_pages,
+		&dm_bufio_allocated_vदो_स्मृति,
+	पूर्ण;
 
 	data_mode = b->data_mode;
-	diff = (long)b->c->block_size;
-	if (unlink)
-		diff = -diff;
+	dअगरf = (दीर्घ)b->c->block_size;
+	अगर (unlink)
+		dअगरf = -dअगरf;
 
 	spin_lock(&global_spinlock);
 
-	*class_ptr[data_mode] += diff;
+	*class_ptr[data_mode] += dअगरf;
 
-	dm_bufio_current_allocated += diff;
+	dm_bufio_current_allocated += dअगरf;
 
-	if (dm_bufio_current_allocated > dm_bufio_peak_allocated)
+	अगर (dm_bufio_current_allocated > dm_bufio_peak_allocated)
 		dm_bufio_peak_allocated = dm_bufio_current_allocated;
 
 	b->accessed = 1;
 
-	if (!unlink) {
+	अगर (!unlink) अणु
 		list_add(&b->global_list, &global_queue);
 		global_num++;
-		if (dm_bufio_current_allocated > dm_bufio_cache_size)
+		अगर (dm_bufio_current_allocated > dm_bufio_cache_size)
 			queue_work(dm_bufio_wq, &dm_bufio_replacement_work);
-	} else {
+	पूर्ण अन्यथा अणु
 		list_del(&b->global_list);
 		global_num--;
-	}
+	पूर्ण
 
 	spin_unlock(&global_spinlock);
-}
+पूर्ण
 
 /*
  * Change the number of clients and recalculate per-client limit.
  */
-static void __cache_size_refresh(void)
-{
+अटल व्योम __cache_size_refresh(व्योम)
+अणु
 	BUG_ON(!mutex_is_locked(&dm_bufio_clients_lock));
 	BUG_ON(dm_bufio_client_count < 0);
 
 	dm_bufio_cache_size_latch = READ_ONCE(dm_bufio_cache_size);
 
 	/*
-	 * Use default if set to 0 and report the actual cache size used.
+	 * Use शेष अगर set to 0 and report the actual cache size used.
 	 */
-	if (!dm_bufio_cache_size_latch) {
-		(void)cmpxchg(&dm_bufio_cache_size, 0,
-			      dm_bufio_default_cache_size);
-		dm_bufio_cache_size_latch = dm_bufio_default_cache_size;
-	}
-}
+	अगर (!dm_bufio_cache_size_latch) अणु
+		(व्योम)cmpxchg(&dm_bufio_cache_size, 0,
+			      dm_bufio_शेष_cache_size);
+		dm_bufio_cache_size_latch = dm_bufio_शेष_cache_size;
+	पूर्ण
+पूर्ण
 
 /*
  * Allocating buffer data.
  *
  * Small buffers are allocated with kmem_cache, to use space optimally.
  *
- * For large buffers, we choose between get_free_pages and vmalloc.
+ * For large buffers, we choose between get_मुक्त_pages and vदो_स्मृति.
  * Each has advantages and disadvantages.
  *
- * __get_free_pages can randomly fail if the memory is fragmented.
- * __vmalloc won't randomly fail, but vmalloc space is limited (it may be
- * as low as 128M) so using it for caching is not appropriate.
+ * __get_मुक्त_pages can अक्रमomly fail अगर the memory is fragmented.
+ * __vदो_स्मृति won't अक्रमomly fail, but vदो_स्मृति space is limited (it may be
+ * as low as 128M) so using it क्रम caching is not appropriate.
  *
- * If the allocation may fail we use __get_free_pages. Memory fragmentation
+ * If the allocation may fail we use __get_मुक्त_pages. Memory fragmentation
  * won't have a fatal effect here, but it just causes flushes of some other
- * buffers and more I/O will be performed. Don't use __get_free_pages if it
+ * buffers and more I/O will be perक्रमmed. Don't use __get_मुक्त_pages अगर it
  * always fails (i.e. order >= MAX_ORDER).
  *
- * If the allocation shouldn't fail we use __vmalloc. This is only for the
- * initial reserve allocation, so there's no risk of wasting all vmalloc
+ * If the allocation shouldn't fail we use __vदो_स्मृति. This is only क्रम the
+ * initial reserve allocation, so there's no risk of wasting all vदो_स्मृति
  * space.
  */
-static void *alloc_buffer_data(struct dm_bufio_client *c, gfp_t gfp_mask,
-			       unsigned char *data_mode)
-{
-	if (unlikely(c->slab_cache != NULL)) {
+अटल व्योम *alloc_buffer_data(काष्ठा dm_bufio_client *c, gfp_t gfp_mask,
+			       अचिन्हित अक्षर *data_mode)
+अणु
+	अगर (unlikely(c->slab_cache != शून्य)) अणु
 		*data_mode = DATA_MODE_SLAB;
-		return kmem_cache_alloc(c->slab_cache, gfp_mask);
-	}
+		वापस kmem_cache_alloc(c->slab_cache, gfp_mask);
+	पूर्ण
 
-	if (c->block_size <= KMALLOC_MAX_SIZE &&
-	    gfp_mask & __GFP_NORETRY) {
+	अगर (c->block_size <= KMALLOC_MAX_SIZE &&
+	    gfp_mask & __GFP_NORETRY) अणु
 		*data_mode = DATA_MODE_GET_FREE_PAGES;
-		return (void *)__get_free_pages(gfp_mask,
+		वापस (व्योम *)__get_मुक्त_pages(gfp_mask,
 						c->sectors_per_block_bits - (PAGE_SHIFT - SECTOR_SHIFT));
-	}
+	पूर्ण
 
 	*data_mode = DATA_MODE_VMALLOC;
 
 	/*
-	 * __vmalloc allocates the data pages and auxiliary structures with
-	 * gfp_flags that were specified, but pagetables are always allocated
-	 * with GFP_KERNEL, no matter what was specified as gfp_mask.
+	 * __vदो_स्मृति allocates the data pages and auxiliary काष्ठाures with
+	 * gfp_flags that were specअगरied, but pagetables are always allocated
+	 * with GFP_KERNEL, no matter what was specअगरied as gfp_mask.
 	 *
 	 * Consequently, we must set per-process flag PF_MEMALLOC_NOIO so that
-	 * all allocations done by this process (including pagetables) are done
-	 * as if GFP_NOIO was specified.
+	 * all allocations करोne by this process (including pagetables) are करोne
+	 * as अगर GFP_NOIO was specअगरied.
 	 */
-	if (gfp_mask & __GFP_NORETRY) {
-		unsigned noio_flag = memalloc_noio_save();
-		void *ptr = __vmalloc(c->block_size, gfp_mask);
+	अगर (gfp_mask & __GFP_NORETRY) अणु
+		अचिन्हित noio_flag = meदो_स्मृति_noio_save();
+		व्योम *ptr = __vदो_स्मृति(c->block_size, gfp_mask);
 
-		memalloc_noio_restore(noio_flag);
-		return ptr;
-	}
+		meदो_स्मृति_noio_restore(noio_flag);
+		वापस ptr;
+	पूर्ण
 
-	return __vmalloc(c->block_size, gfp_mask);
-}
+	वापस __vदो_स्मृति(c->block_size, gfp_mask);
+पूर्ण
 
 /*
  * Free buffer's data.
  */
-static void free_buffer_data(struct dm_bufio_client *c,
-			     void *data, unsigned char data_mode)
-{
-	switch (data_mode) {
-	case DATA_MODE_SLAB:
-		kmem_cache_free(c->slab_cache, data);
-		break;
+अटल व्योम मुक्त_buffer_data(काष्ठा dm_bufio_client *c,
+			     व्योम *data, अचिन्हित अक्षर data_mode)
+अणु
+	चयन (data_mode) अणु
+	हाल DATA_MODE_SLAB:
+		kmem_cache_मुक्त(c->slab_cache, data);
+		अवरोध;
 
-	case DATA_MODE_GET_FREE_PAGES:
-		free_pages((unsigned long)data,
+	हाल DATA_MODE_GET_FREE_PAGES:
+		मुक्त_pages((अचिन्हित दीर्घ)data,
 			   c->sectors_per_block_bits - (PAGE_SHIFT - SECTOR_SHIFT));
-		break;
+		अवरोध;
 
-	case DATA_MODE_VMALLOC:
-		vfree(data);
-		break;
+	हाल DATA_MODE_VMALLOC:
+		vमुक्त(data);
+		अवरोध;
 
-	default:
+	शेष:
 		DMCRIT("dm_bufio_free_buffer_data: bad data mode: %d",
 		       data_mode);
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Allocate buffer and its data.
  */
-static struct dm_buffer *alloc_buffer(struct dm_bufio_client *c, gfp_t gfp_mask)
-{
-	struct dm_buffer *b = kmem_cache_alloc(c->slab_buffer, gfp_mask);
+अटल काष्ठा dm_buffer *alloc_buffer(काष्ठा dm_bufio_client *c, gfp_t gfp_mask)
+अणु
+	काष्ठा dm_buffer *b = kmem_cache_alloc(c->slab_buffer, gfp_mask);
 
-	if (!b)
-		return NULL;
+	अगर (!b)
+		वापस शून्य;
 
 	b->c = c;
 
 	b->data = alloc_buffer_data(c, gfp_mask, &b->data_mode);
-	if (!b->data) {
-		kmem_cache_free(c->slab_buffer, b);
-		return NULL;
-	}
+	अगर (!b->data) अणु
+		kmem_cache_मुक्त(c->slab_buffer, b);
+		वापस शून्य;
+	पूर्ण
 
-#ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
 	b->stack_len = 0;
-#endif
-	return b;
-}
+#पूर्ण_अगर
+	वापस b;
+पूर्ण
 
 /*
  * Free buffer and its data.
  */
-static void free_buffer(struct dm_buffer *b)
-{
-	struct dm_bufio_client *c = b->c;
+अटल व्योम मुक्त_buffer(काष्ठा dm_buffer *b)
+अणु
+	काष्ठा dm_bufio_client *c = b->c;
 
-	free_buffer_data(c, b->data, b->data_mode);
-	kmem_cache_free(c->slab_buffer, b);
-}
+	मुक्त_buffer_data(c, b->data, b->data_mode);
+	kmem_cache_मुक्त(c->slab_buffer, b);
+पूर्ण
 
 /*
  * Link buffer to the buffer tree and clean or dirty queue.
  */
-static void __link_buffer(struct dm_buffer *b, sector_t block, int dirty)
-{
-	struct dm_bufio_client *c = b->c;
+अटल व्योम __link_buffer(काष्ठा dm_buffer *b, sector_t block, पूर्णांक dirty)
+अणु
+	काष्ठा dm_bufio_client *c = b->c;
 
 	c->n_buffers[dirty]++;
 	b->block = block;
 	b->list_mode = dirty;
 	list_add(&b->lru_list, &c->lru[dirty]);
 	__insert(b->c, b);
-	b->last_accessed = jiffies;
+	b->last_accessed = jअगरfies;
 
 	adjust_total_allocated(b, false);
-}
+पूर्ण
 
 /*
  * Unlink buffer from the buffer tree and dirty or clean queue.
  */
-static void __unlink_buffer(struct dm_buffer *b)
-{
-	struct dm_bufio_client *c = b->c;
+अटल व्योम __unlink_buffer(काष्ठा dm_buffer *b)
+अणु
+	काष्ठा dm_bufio_client *c = b->c;
 
 	BUG_ON(!c->n_buffers[b->list_mode]);
 
 	c->n_buffers[b->list_mode]--;
-	__remove(b->c, b);
+	__हटाओ(b->c, b);
 	list_del(&b->lru_list);
 
 	adjust_total_allocated(b, true);
-}
+पूर्ण
 
 /*
  * Place the buffer to the head of dirty or clean LRU queue.
  */
-static void __relink_lru(struct dm_buffer *b, int dirty)
-{
-	struct dm_bufio_client *c = b->c;
+अटल व्योम __relink_lru(काष्ठा dm_buffer *b, पूर्णांक dirty)
+अणु
+	काष्ठा dm_bufio_client *c = b->c;
 
 	b->accessed = 1;
 
@@ -545,676 +546,676 @@ static void __relink_lru(struct dm_buffer *b, int dirty)
 	c->n_buffers[dirty]++;
 	b->list_mode = dirty;
 	list_move(&b->lru_list, &c->lru[dirty]);
-	b->last_accessed = jiffies;
-}
+	b->last_accessed = jअगरfies;
+पूर्ण
 
 /*----------------------------------------------------------------
  * Submit I/O on the buffer.
  *
- * Bio interface is faster but it has some problems:
+ * Bio पूर्णांकerface is faster but it has some problems:
  *	the vector list is limited (increasing this limit increases
  *	memory-consumption per buffer, so it is not viable);
  *
- *	the memory must be direct-mapped, not vmalloced;
+ *	the memory must be direct-mapped, not vदो_स्मृतिed;
  *
  * If the buffer is small enough (up to DM_BUFIO_INLINE_VECS pages) and
- * it is not vmalloced, try using the bio interface.
+ * it is not vदो_स्मृतिed, try using the bio पूर्णांकerface.
  *
- * If the buffer is big, if it is vmalloced or if the underlying device
- * rejects the bio because it is too large, use dm-io layer to do the I/O.
- * The dm-io layer splits the I/O into multiple requests, avoiding the above
- * shortcomings.
+ * If the buffer is big, अगर it is vदो_स्मृतिed or अगर the underlying device
+ * rejects the bio because it is too large, use dm-io layer to करो the I/O.
+ * The dm-io layer splits the I/O पूर्णांकo multiple requests, aव्योमing the above
+ * लघुcomings.
  *--------------------------------------------------------------*/
 
 /*
  * dm-io completion routine. It just calls b->bio.bi_end_io, pretending
- * that the request was handled directly with bio interface.
+ * that the request was handled directly with bio पूर्णांकerface.
  */
-static void dmio_complete(unsigned long error, void *context)
-{
-	struct dm_buffer *b = context;
+अटल व्योम dmio_complete(अचिन्हित दीर्घ error, व्योम *context)
+अणु
+	काष्ठा dm_buffer *b = context;
 
 	b->end_io(b, unlikely(error != 0) ? BLK_STS_IOERR : 0);
-}
+पूर्ण
 
-static void use_dmio(struct dm_buffer *b, int rw, sector_t sector,
-		     unsigned n_sectors, unsigned offset)
-{
-	int r;
-	struct dm_io_request io_req = {
+अटल व्योम use_dmio(काष्ठा dm_buffer *b, पूर्णांक rw, sector_t sector,
+		     अचिन्हित n_sectors, अचिन्हित offset)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_io_request io_req = अणु
 		.bi_op = rw,
 		.bi_op_flags = 0,
-		.notify.fn = dmio_complete,
-		.notify.context = b,
+		.notअगरy.fn = dmio_complete,
+		.notअगरy.context = b,
 		.client = b->c->dm_io,
-	};
-	struct dm_io_region region = {
+	पूर्ण;
+	काष्ठा dm_io_region region = अणु
 		.bdev = b->c->bdev,
 		.sector = sector,
 		.count = n_sectors,
-	};
+	पूर्ण;
 
-	if (b->data_mode != DATA_MODE_VMALLOC) {
+	अगर (b->data_mode != DATA_MODE_VMALLOC) अणु
 		io_req.mem.type = DM_IO_KMEM;
-		io_req.mem.ptr.addr = (char *)b->data + offset;
-	} else {
+		io_req.mem.ptr.addr = (अक्षर *)b->data + offset;
+	पूर्ण अन्यथा अणु
 		io_req.mem.type = DM_IO_VMA;
-		io_req.mem.ptr.vma = (char *)b->data + offset;
-	}
+		io_req.mem.ptr.vma = (अक्षर *)b->data + offset;
+	पूर्ण
 
-	r = dm_io(&io_req, 1, &region, NULL);
-	if (unlikely(r))
-		b->end_io(b, errno_to_blk_status(r));
-}
+	r = dm_io(&io_req, 1, &region, शून्य);
+	अगर (unlikely(r))
+		b->end_io(b, त्रुटि_सं_to_blk_status(r));
+पूर्ण
 
-static void bio_complete(struct bio *bio)
-{
-	struct dm_buffer *b = bio->bi_private;
+अटल व्योम bio_complete(काष्ठा bio *bio)
+अणु
+	काष्ठा dm_buffer *b = bio->bi_निजी;
 	blk_status_t status = bio->bi_status;
 	bio_put(bio);
 	b->end_io(b, status);
-}
+पूर्ण
 
-static void use_bio(struct dm_buffer *b, int rw, sector_t sector,
-		    unsigned n_sectors, unsigned offset)
-{
-	struct bio *bio;
-	char *ptr;
-	unsigned vec_size, len;
+अटल व्योम use_bio(काष्ठा dm_buffer *b, पूर्णांक rw, sector_t sector,
+		    अचिन्हित n_sectors, अचिन्हित offset)
+अणु
+	काष्ठा bio *bio;
+	अक्षर *ptr;
+	अचिन्हित vec_size, len;
 
 	vec_size = b->c->block_size >> PAGE_SHIFT;
-	if (unlikely(b->c->sectors_per_block_bits < PAGE_SHIFT - SECTOR_SHIFT))
+	अगर (unlikely(b->c->sectors_per_block_bits < PAGE_SHIFT - SECTOR_SHIFT))
 		vec_size += 2;
 
-	bio = bio_kmalloc(GFP_NOWAIT | __GFP_NORETRY | __GFP_NOWARN, vec_size);
-	if (!bio) {
+	bio = bio_kदो_स्मृति(GFP_NOWAIT | __GFP_NORETRY | __GFP_NOWARN, vec_size);
+	अगर (!bio) अणु
 dmio:
 		use_dmio(b, rw, sector, n_sectors, offset);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bio->bi_iter.bi_sector = sector;
 	bio_set_dev(bio, b->c->bdev);
 	bio_set_op_attrs(bio, rw, 0);
 	bio->bi_end_io = bio_complete;
-	bio->bi_private = b;
+	bio->bi_निजी = b;
 
-	ptr = (char *)b->data + offset;
+	ptr = (अक्षर *)b->data + offset;
 	len = n_sectors << SECTOR_SHIFT;
 
-	do {
-		unsigned this_step = min((unsigned)(PAGE_SIZE - offset_in_page(ptr)), len);
-		if (!bio_add_page(bio, virt_to_page(ptr), this_step,
-				  offset_in_page(ptr))) {
+	करो अणु
+		अचिन्हित this_step = min((अचिन्हित)(PAGE_SIZE - offset_in_page(ptr)), len);
+		अगर (!bio_add_page(bio, virt_to_page(ptr), this_step,
+				  offset_in_page(ptr))) अणु
 			bio_put(bio);
-			goto dmio;
-		}
+			जाओ dmio;
+		पूर्ण
 
 		len -= this_step;
 		ptr += this_step;
-	} while (len > 0);
+	पूर्ण जबतक (len > 0);
 
 	submit_bio(bio);
-}
+पूर्ण
 
-static inline sector_t block_to_sector(struct dm_bufio_client *c, sector_t block)
-{
+अटल अंतरभूत sector_t block_to_sector(काष्ठा dm_bufio_client *c, sector_t block)
+अणु
 	sector_t sector;
 
-	if (likely(c->sectors_per_block_bits >= 0))
+	अगर (likely(c->sectors_per_block_bits >= 0))
 		sector = block << c->sectors_per_block_bits;
-	else
+	अन्यथा
 		sector = block * (c->block_size >> SECTOR_SHIFT);
 	sector += c->start;
 
-	return sector;
-}
+	वापस sector;
+पूर्ण
 
-static void submit_io(struct dm_buffer *b, int rw, void (*end_io)(struct dm_buffer *, blk_status_t))
-{
-	unsigned n_sectors;
+अटल व्योम submit_io(काष्ठा dm_buffer *b, पूर्णांक rw, व्योम (*end_io)(काष्ठा dm_buffer *, blk_status_t))
+अणु
+	अचिन्हित n_sectors;
 	sector_t sector;
-	unsigned offset, end;
+	अचिन्हित offset, end;
 
 	b->end_io = end_io;
 
 	sector = block_to_sector(b->c, b->block);
 
-	if (rw != REQ_OP_WRITE) {
+	अगर (rw != REQ_OP_WRITE) अणु
 		n_sectors = b->c->block_size >> SECTOR_SHIFT;
 		offset = 0;
-	} else {
-		if (b->c->write_callback)
-			b->c->write_callback(b);
-		offset = b->write_start;
-		end = b->write_end;
+	पूर्ण अन्यथा अणु
+		अगर (b->c->ग_लिखो_callback)
+			b->c->ग_लिखो_callback(b);
+		offset = b->ग_लिखो_start;
+		end = b->ग_लिखो_end;
 		offset &= -DM_BUFIO_WRITE_ALIGN;
 		end += DM_BUFIO_WRITE_ALIGN - 1;
 		end &= -DM_BUFIO_WRITE_ALIGN;
-		if (unlikely(end > b->c->block_size))
+		अगर (unlikely(end > b->c->block_size))
 			end = b->c->block_size;
 
 		sector += offset >> SECTOR_SHIFT;
 		n_sectors = (end - offset) >> SECTOR_SHIFT;
-	}
+	पूर्ण
 
-	if (b->data_mode != DATA_MODE_VMALLOC)
+	अगर (b->data_mode != DATA_MODE_VMALLOC)
 		use_bio(b, rw, sector, n_sectors, offset);
-	else
+	अन्यथा
 		use_dmio(b, rw, sector, n_sectors, offset);
-}
+पूर्ण
 
 /*----------------------------------------------------------------
  * Writing dirty buffers
  *--------------------------------------------------------------*/
 
 /*
- * The endio routine for write.
+ * The endio routine क्रम ग_लिखो.
  *
- * Set the error, clear B_WRITING bit and wake anyone who was waiting on
+ * Set the error, clear B_WRITING bit and wake anyone who was रुकोing on
  * it.
  */
-static void write_endio(struct dm_buffer *b, blk_status_t status)
-{
-	b->write_error = status;
-	if (unlikely(status)) {
-		struct dm_bufio_client *c = b->c;
+अटल व्योम ग_लिखो_endio(काष्ठा dm_buffer *b, blk_status_t status)
+अणु
+	b->ग_लिखो_error = status;
+	अगर (unlikely(status)) अणु
+		काष्ठा dm_bufio_client *c = b->c;
 
-		(void)cmpxchg(&c->async_write_error, 0,
-				blk_status_to_errno(status));
-	}
+		(व्योम)cmpxchg(&c->async_ग_लिखो_error, 0,
+				blk_status_to_त्रुटि_सं(status));
+	पूर्ण
 
 	BUG_ON(!test_bit(B_WRITING, &b->state));
 
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	clear_bit(B_WRITING, &b->state);
 	smp_mb__after_atomic();
 
 	wake_up_bit(&b->state, B_WRITING);
-}
+पूर्ण
 
 /*
- * Initiate a write on a dirty buffer, but don't wait for it.
+ * Initiate a ग_लिखो on a dirty buffer, but करोn't रुको क्रम it.
  *
- * - If the buffer is not dirty, exit.
- * - If there some previous write going on, wait for it to finish (we can't
- *   have two writes on the same buffer simultaneously).
- * - Submit our write and don't wait on it. We set B_WRITING indicating
- *   that there is a write in progress.
+ * - If the buffer is not dirty, निकास.
+ * - If there some previous ग_लिखो going on, रुको क्रम it to finish (we can't
+ *   have two ग_लिखोs on the same buffer simultaneously).
+ * - Submit our ग_लिखो and करोn't रुको on it. We set B_WRITING indicating
+ *   that there is a ग_लिखो in progress.
  */
-static void __write_dirty_buffer(struct dm_buffer *b,
-				 struct list_head *write_list)
-{
-	if (!test_bit(B_DIRTY, &b->state))
-		return;
+अटल व्योम __ग_लिखो_dirty_buffer(काष्ठा dm_buffer *b,
+				 काष्ठा list_head *ग_लिखो_list)
+अणु
+	अगर (!test_bit(B_सूचीTY, &b->state))
+		वापस;
 
-	clear_bit(B_DIRTY, &b->state);
-	wait_on_bit_lock_io(&b->state, B_WRITING, TASK_UNINTERRUPTIBLE);
+	clear_bit(B_सूचीTY, &b->state);
+	रुको_on_bit_lock_io(&b->state, B_WRITING, TASK_UNINTERRUPTIBLE);
 
-	b->write_start = b->dirty_start;
-	b->write_end = b->dirty_end;
+	b->ग_लिखो_start = b->dirty_start;
+	b->ग_लिखो_end = b->dirty_end;
 
-	if (!write_list)
-		submit_io(b, REQ_OP_WRITE, write_endio);
-	else
-		list_add_tail(&b->write_list, write_list);
-}
+	अगर (!ग_लिखो_list)
+		submit_io(b, REQ_OP_WRITE, ग_लिखो_endio);
+	अन्यथा
+		list_add_tail(&b->ग_लिखो_list, ग_लिखो_list);
+पूर्ण
 
-static void __flush_write_list(struct list_head *write_list)
-{
-	struct blk_plug plug;
+अटल व्योम __flush_ग_लिखो_list(काष्ठा list_head *ग_लिखो_list)
+अणु
+	काष्ठा blk_plug plug;
 	blk_start_plug(&plug);
-	while (!list_empty(write_list)) {
-		struct dm_buffer *b =
-			list_entry(write_list->next, struct dm_buffer, write_list);
-		list_del(&b->write_list);
-		submit_io(b, REQ_OP_WRITE, write_endio);
+	जबतक (!list_empty(ग_लिखो_list)) अणु
+		काष्ठा dm_buffer *b =
+			list_entry(ग_लिखो_list->next, काष्ठा dm_buffer, ग_लिखो_list);
+		list_del(&b->ग_लिखो_list);
+		submit_io(b, REQ_OP_WRITE, ग_लिखो_endio);
 		cond_resched();
-	}
+	पूर्ण
 	blk_finish_plug(&plug);
-}
+पूर्ण
 
 /*
- * Wait until any activity on the buffer finishes.  Possibly write the
- * buffer if it is dirty.  When this function finishes, there is no I/O
+ * Wait until any activity on the buffer finishes.  Possibly ग_लिखो the
+ * buffer अगर it is dirty.  When this function finishes, there is no I/O
  * running on the buffer and the buffer is not dirty.
  */
-static void __make_buffer_clean(struct dm_buffer *b)
-{
+अटल व्योम __make_buffer_clean(काष्ठा dm_buffer *b)
+अणु
 	BUG_ON(b->hold_count);
 
-	if (!b->state)	/* fast case */
-		return;
+	अगर (!b->state)	/* fast हाल */
+		वापस;
 
-	wait_on_bit_io(&b->state, B_READING, TASK_UNINTERRUPTIBLE);
-	__write_dirty_buffer(b, NULL);
-	wait_on_bit_io(&b->state, B_WRITING, TASK_UNINTERRUPTIBLE);
-}
+	रुको_on_bit_io(&b->state, B_READING, TASK_UNINTERRUPTIBLE);
+	__ग_लिखो_dirty_buffer(b, शून्य);
+	रुको_on_bit_io(&b->state, B_WRITING, TASK_UNINTERRUPTIBLE);
+पूर्ण
 
 /*
  * Find some buffer that is not held by anybody, clean it, unlink it and
- * return it.
+ * वापस it.
  */
-static struct dm_buffer *__get_unclaimed_buffer(struct dm_bufio_client *c)
-{
-	struct dm_buffer *b;
+अटल काष्ठा dm_buffer *__get_unclaimed_buffer(काष्ठा dm_bufio_client *c)
+अणु
+	काष्ठा dm_buffer *b;
 
-	list_for_each_entry_reverse(b, &c->lru[LIST_CLEAN], lru_list) {
+	list_क्रम_each_entry_reverse(b, &c->lru[LIST_CLEAN], lru_list) अणु
 		BUG_ON(test_bit(B_WRITING, &b->state));
-		BUG_ON(test_bit(B_DIRTY, &b->state));
+		BUG_ON(test_bit(B_सूचीTY, &b->state));
 
-		if (!b->hold_count) {
+		अगर (!b->hold_count) अणु
 			__make_buffer_clean(b);
 			__unlink_buffer(b);
-			return b;
-		}
+			वापस b;
+		पूर्ण
 		cond_resched();
-	}
+	पूर्ण
 
-	list_for_each_entry_reverse(b, &c->lru[LIST_DIRTY], lru_list) {
+	list_क्रम_each_entry_reverse(b, &c->lru[LIST_सूचीTY], lru_list) अणु
 		BUG_ON(test_bit(B_READING, &b->state));
 
-		if (!b->hold_count) {
+		अगर (!b->hold_count) अणु
 			__make_buffer_clean(b);
 			__unlink_buffer(b);
-			return b;
-		}
+			वापस b;
+		पूर्ण
 		cond_resched();
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Wait until some other threads free some buffer or release hold count on
+ * Wait until some other thपढ़ोs मुक्त some buffer or release hold count on
  * some buffer.
  *
  * This function is entered with c->lock held, drops it and regains it
- * before exiting.
+ * beक्रमe निकासing.
  */
-static void __wait_for_free_buffer(struct dm_bufio_client *c)
-{
-	DECLARE_WAITQUEUE(wait, current);
+अटल व्योम __रुको_क्रम_मुक्त_buffer(काष्ठा dm_bufio_client *c)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
 
-	add_wait_queue(&c->free_buffer_wait, &wait);
+	add_रुको_queue(&c->मुक्त_buffer_रुको, &रुको);
 	set_current_state(TASK_UNINTERRUPTIBLE);
 	dm_bufio_unlock(c);
 
 	io_schedule();
 
-	remove_wait_queue(&c->free_buffer_wait, &wait);
+	हटाओ_रुको_queue(&c->मुक्त_buffer_रुको, &रुको);
 
 	dm_bufio_lock(c);
-}
+पूर्ण
 
-enum new_flag {
+क्रमागत new_flag अणु
 	NF_FRESH = 0,
 	NF_READ = 1,
 	NF_GET = 2,
 	NF_PREFETCH = 3
-};
+पूर्ण;
 
 /*
- * Allocate a new buffer. If the allocation is not possible, wait until
- * some other thread frees a buffer.
+ * Allocate a new buffer. If the allocation is not possible, रुको until
+ * some other thपढ़ो मुक्तs a buffer.
  *
  * May drop the lock and regain it.
  */
-static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client *c, enum new_flag nf)
-{
-	struct dm_buffer *b;
+अटल काष्ठा dm_buffer *__alloc_buffer_रुको_no_callback(काष्ठा dm_bufio_client *c, क्रमागत new_flag nf)
+अणु
+	काष्ठा dm_buffer *b;
 	bool tried_noio_alloc = false;
 
 	/*
 	 * dm-bufio is resistant to allocation failures (it just keeps
-	 * one buffer reserved in cases all the allocations fail).
+	 * one buffer reserved in हालs all the allocations fail).
 	 * So set flags to not try too hard:
-	 *	GFP_NOWAIT: don't wait; if we need to sleep we'll release our
-	 *		    mutex and wait ourselves.
-	 *	__GFP_NORETRY: don't retry and rather return failure
-	 *	__GFP_NOMEMALLOC: don't use emergency reserves
-	 *	__GFP_NOWARN: don't print a warning in case of failure
+	 *	GFP_NOWAIT: करोn't wait; if we need to sleep we'll release our
+	 *		    mutex and रुको ourselves.
+	 *	__GFP_NORETRY: करोn't retry and rather वापस failure
+	 *	__GFP_NOMEMALLOC: करोn't use emergency reserves
+	 *	__GFP_NOWARN: करोn't prपूर्णांक a warning in हाल of failure
 	 *
-	 * For debugging, if we set the cache size to 1, no new buffers will
+	 * For debugging, अगर we set the cache size to 1, no new buffers will
 	 * be allocated.
 	 */
-	while (1) {
-		if (dm_bufio_cache_size_latch != 1) {
+	जबतक (1) अणु
+		अगर (dm_bufio_cache_size_latch != 1) अणु
 			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-			if (b)
-				return b;
-		}
+			अगर (b)
+				वापस b;
+		पूर्ण
 
-		if (nf == NF_PREFETCH)
-			return NULL;
+		अगर (nf == NF_PREFETCH)
+			वापस शून्य;
 
-		if (dm_bufio_cache_size_latch != 1 && !tried_noio_alloc) {
+		अगर (dm_bufio_cache_size_latch != 1 && !tried_noio_alloc) अणु
 			dm_bufio_unlock(c);
 			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
 			dm_bufio_lock(c);
-			if (b)
-				return b;
+			अगर (b)
+				वापस b;
 			tried_noio_alloc = true;
-		}
+		पूर्ण
 
-		if (!list_empty(&c->reserved_buffers)) {
+		अगर (!list_empty(&c->reserved_buffers)) अणु
 			b = list_entry(c->reserved_buffers.next,
-				       struct dm_buffer, lru_list);
+				       काष्ठा dm_buffer, lru_list);
 			list_del(&b->lru_list);
 			c->need_reserved_buffers++;
 
-			return b;
-		}
+			वापस b;
+		पूर्ण
 
 		b = __get_unclaimed_buffer(c);
-		if (b)
-			return b;
+		अगर (b)
+			वापस b;
 
-		__wait_for_free_buffer(c);
-	}
-}
+		__रुको_क्रम_मुक्त_buffer(c);
+	पूर्ण
+पूर्ण
 
-static struct dm_buffer *__alloc_buffer_wait(struct dm_bufio_client *c, enum new_flag nf)
-{
-	struct dm_buffer *b = __alloc_buffer_wait_no_callback(c, nf);
+अटल काष्ठा dm_buffer *__alloc_buffer_रुको(काष्ठा dm_bufio_client *c, क्रमागत new_flag nf)
+अणु
+	काष्ठा dm_buffer *b = __alloc_buffer_रुको_no_callback(c, nf);
 
-	if (!b)
-		return NULL;
+	अगर (!b)
+		वापस शून्य;
 
-	if (c->alloc_callback)
+	अगर (c->alloc_callback)
 		c->alloc_callback(b);
 
-	return b;
-}
+	वापस b;
+पूर्ण
 
 /*
- * Free a buffer and wake other threads waiting for free buffers.
+ * Free a buffer and wake other thपढ़ोs रुकोing क्रम मुक्त buffers.
  */
-static void __free_buffer_wake(struct dm_buffer *b)
-{
-	struct dm_bufio_client *c = b->c;
+अटल व्योम __मुक्त_buffer_wake(काष्ठा dm_buffer *b)
+अणु
+	काष्ठा dm_bufio_client *c = b->c;
 
-	if (!c->need_reserved_buffers)
-		free_buffer(b);
-	else {
+	अगर (!c->need_reserved_buffers)
+		मुक्त_buffer(b);
+	अन्यथा अणु
 		list_add(&b->lru_list, &c->reserved_buffers);
 		c->need_reserved_buffers--;
-	}
+	पूर्ण
 
-	wake_up(&c->free_buffer_wait);
-}
+	wake_up(&c->मुक्त_buffer_रुको);
+पूर्ण
 
-static void __write_dirty_buffers_async(struct dm_bufio_client *c, int no_wait,
-					struct list_head *write_list)
-{
-	struct dm_buffer *b, *tmp;
+अटल व्योम __ग_लिखो_dirty_buffers_async(काष्ठा dm_bufio_client *c, पूर्णांक no_रुको,
+					काष्ठा list_head *ग_लिखो_list)
+अणु
+	काष्ठा dm_buffer *b, *पंचांगp;
 
-	list_for_each_entry_safe_reverse(b, tmp, &c->lru[LIST_DIRTY], lru_list) {
+	list_क्रम_each_entry_safe_reverse(b, पंचांगp, &c->lru[LIST_सूचीTY], lru_list) अणु
 		BUG_ON(test_bit(B_READING, &b->state));
 
-		if (!test_bit(B_DIRTY, &b->state) &&
-		    !test_bit(B_WRITING, &b->state)) {
+		अगर (!test_bit(B_सूचीTY, &b->state) &&
+		    !test_bit(B_WRITING, &b->state)) अणु
 			__relink_lru(b, LIST_CLEAN);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (no_wait && test_bit(B_WRITING, &b->state))
-			return;
+		अगर (no_रुको && test_bit(B_WRITING, &b->state))
+			वापस;
 
-		__write_dirty_buffer(b, write_list);
+		__ग_लिखो_dirty_buffer(b, ग_लिखो_list);
 		cond_resched();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Check if we're over watermark.
- * If we are over threshold_buffers, start freeing buffers.
+ * Check अगर we're over watermark.
+ * If we are over threshold_buffers, start मुक्तing buffers.
  * If we're over "limit_buffers", block until we get under the limit.
  */
-static void __check_watermark(struct dm_bufio_client *c,
-			      struct list_head *write_list)
-{
-	if (c->n_buffers[LIST_DIRTY] > c->n_buffers[LIST_CLEAN] * DM_BUFIO_WRITEBACK_RATIO)
-		__write_dirty_buffers_async(c, 1, write_list);
-}
+अटल व्योम __check_watermark(काष्ठा dm_bufio_client *c,
+			      काष्ठा list_head *ग_लिखो_list)
+अणु
+	अगर (c->n_buffers[LIST_सूचीTY] > c->n_buffers[LIST_CLEAN] * DM_BUFIO_WRITEBACK_RATIO)
+		__ग_लिखो_dirty_buffers_async(c, 1, ग_लिखो_list);
+पूर्ण
 
 /*----------------------------------------------------------------
  * Getting a buffer
  *--------------------------------------------------------------*/
 
-static struct dm_buffer *__bufio_new(struct dm_bufio_client *c, sector_t block,
-				     enum new_flag nf, int *need_submit,
-				     struct list_head *write_list)
-{
-	struct dm_buffer *b, *new_b = NULL;
+अटल काष्ठा dm_buffer *__bufio_new(काष्ठा dm_bufio_client *c, sector_t block,
+				     क्रमागत new_flag nf, पूर्णांक *need_submit,
+				     काष्ठा list_head *ग_लिखो_list)
+अणु
+	काष्ठा dm_buffer *b, *new_b = शून्य;
 
 	*need_submit = 0;
 
 	b = __find(c, block);
-	if (b)
-		goto found_buffer;
+	अगर (b)
+		जाओ found_buffer;
 
-	if (nf == NF_GET)
-		return NULL;
+	अगर (nf == NF_GET)
+		वापस शून्य;
 
-	new_b = __alloc_buffer_wait(c, nf);
-	if (!new_b)
-		return NULL;
+	new_b = __alloc_buffer_रुको(c, nf);
+	अगर (!new_b)
+		वापस शून्य;
 
 	/*
 	 * We've had a period where the mutex was unlocked, so need to
 	 * recheck the buffer tree.
 	 */
 	b = __find(c, block);
-	if (b) {
-		__free_buffer_wake(new_b);
-		goto found_buffer;
-	}
+	अगर (b) अणु
+		__मुक्त_buffer_wake(new_b);
+		जाओ found_buffer;
+	पूर्ण
 
-	__check_watermark(c, write_list);
+	__check_watermark(c, ग_लिखो_list);
 
 	b = new_b;
 	b->hold_count = 1;
-	b->read_error = 0;
-	b->write_error = 0;
+	b->पढ़ो_error = 0;
+	b->ग_लिखो_error = 0;
 	__link_buffer(b, block, LIST_CLEAN);
 
-	if (nf == NF_FRESH) {
+	अगर (nf == NF_FRESH) अणु
 		b->state = 0;
-		return b;
-	}
+		वापस b;
+	पूर्ण
 
 	b->state = 1 << B_READING;
 	*need_submit = 1;
 
-	return b;
+	वापस b;
 
 found_buffer:
-	if (nf == NF_PREFETCH)
-		return NULL;
+	अगर (nf == NF_PREFETCH)
+		वापस शून्य;
 	/*
-	 * Note: it is essential that we don't wait for the buffer to be
-	 * read if dm_bufio_get function is used. Both dm_bufio_get and
+	 * Note: it is essential that we करोn't रुको क्रम the buffer to be
+	 * पढ़ो अगर dm_bufio_get function is used. Both dm_bufio_get and
 	 * dm_bufio_prefetch can be used in the driver request routine.
 	 * If the user called both dm_bufio_prefetch and dm_bufio_get on
-	 * the same buffer, it would deadlock if we waited.
+	 * the same buffer, it would deadlock अगर we रुकोed.
 	 */
-	if (nf == NF_GET && unlikely(test_bit(B_READING, &b->state)))
-		return NULL;
+	अगर (nf == NF_GET && unlikely(test_bit(B_READING, &b->state)))
+		वापस शून्य;
 
 	b->hold_count++;
-	__relink_lru(b, test_bit(B_DIRTY, &b->state) ||
+	__relink_lru(b, test_bit(B_सूचीTY, &b->state) ||
 		     test_bit(B_WRITING, &b->state));
-	return b;
-}
+	वापस b;
+पूर्ण
 
 /*
- * The endio routine for reading: set the error, clear the bit and wake up
- * anyone waiting on the buffer.
+ * The endio routine क्रम पढ़ोing: set the error, clear the bit and wake up
+ * anyone रुकोing on the buffer.
  */
-static void read_endio(struct dm_buffer *b, blk_status_t status)
-{
-	b->read_error = status;
+अटल व्योम पढ़ो_endio(काष्ठा dm_buffer *b, blk_status_t status)
+अणु
+	b->पढ़ो_error = status;
 
 	BUG_ON(!test_bit(B_READING, &b->state));
 
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	clear_bit(B_READING, &b->state);
 	smp_mb__after_atomic();
 
 	wake_up_bit(&b->state, B_READING);
-}
+पूर्ण
 
 /*
- * A common routine for dm_bufio_new and dm_bufio_read.  Operation of these
- * functions is similar except that dm_bufio_new doesn't read the
- * buffer from the disk (assuming that the caller overwrites all the data
- * and uses dm_bufio_mark_buffer_dirty to write new data back).
+ * A common routine क्रम dm_bufio_new and dm_bufio_पढ़ो.  Operation of these
+ * functions is similar except that dm_bufio_new करोesn't पढ़ो the
+ * buffer from the disk (assuming that the caller overग_लिखोs all the data
+ * and uses dm_bufio_mark_buffer_dirty to ग_लिखो new data back).
  */
-static void *new_read(struct dm_bufio_client *c, sector_t block,
-		      enum new_flag nf, struct dm_buffer **bp)
-{
-	int need_submit;
-	struct dm_buffer *b;
+अटल व्योम *new_पढ़ो(काष्ठा dm_bufio_client *c, sector_t block,
+		      क्रमागत new_flag nf, काष्ठा dm_buffer **bp)
+अणु
+	पूर्णांक need_submit;
+	काष्ठा dm_buffer *b;
 
-	LIST_HEAD(write_list);
+	LIST_HEAD(ग_लिखो_list);
 
 	dm_bufio_lock(c);
-	b = __bufio_new(c, block, nf, &need_submit, &write_list);
-#ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
-	if (b && b->hold_count == 1)
+	b = __bufio_new(c, block, nf, &need_submit, &ग_लिखो_list);
+#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+	अगर (b && b->hold_count == 1)
 		buffer_record_stack(b);
-#endif
+#पूर्ण_अगर
 	dm_bufio_unlock(c);
 
-	__flush_write_list(&write_list);
+	__flush_ग_लिखो_list(&ग_लिखो_list);
 
-	if (!b)
-		return NULL;
+	अगर (!b)
+		वापस शून्य;
 
-	if (need_submit)
-		submit_io(b, REQ_OP_READ, read_endio);
+	अगर (need_submit)
+		submit_io(b, REQ_OP_READ, पढ़ो_endio);
 
-	wait_on_bit_io(&b->state, B_READING, TASK_UNINTERRUPTIBLE);
+	रुको_on_bit_io(&b->state, B_READING, TASK_UNINTERRUPTIBLE);
 
-	if (b->read_error) {
-		int error = blk_status_to_errno(b->read_error);
+	अगर (b->पढ़ो_error) अणु
+		पूर्णांक error = blk_status_to_त्रुटि_सं(b->पढ़ो_error);
 
 		dm_bufio_release(b);
 
-		return ERR_PTR(error);
-	}
+		वापस ERR_PTR(error);
+	पूर्ण
 
 	*bp = b;
 
-	return b->data;
-}
+	वापस b->data;
+पूर्ण
 
-void *dm_bufio_get(struct dm_bufio_client *c, sector_t block,
-		   struct dm_buffer **bp)
-{
-	return new_read(c, block, NF_GET, bp);
-}
+व्योम *dm_bufio_get(काष्ठा dm_bufio_client *c, sector_t block,
+		   काष्ठा dm_buffer **bp)
+अणु
+	वापस new_पढ़ो(c, block, NF_GET, bp);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_get);
 
-void *dm_bufio_read(struct dm_bufio_client *c, sector_t block,
-		    struct dm_buffer **bp)
-{
+व्योम *dm_bufio_पढ़ो(काष्ठा dm_bufio_client *c, sector_t block,
+		    काष्ठा dm_buffer **bp)
+अणु
 	BUG_ON(dm_bufio_in_request());
 
-	return new_read(c, block, NF_READ, bp);
-}
-EXPORT_SYMBOL_GPL(dm_bufio_read);
+	वापस new_पढ़ो(c, block, NF_READ, bp);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_bufio_पढ़ो);
 
-void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
-		   struct dm_buffer **bp)
-{
+व्योम *dm_bufio_new(काष्ठा dm_bufio_client *c, sector_t block,
+		   काष्ठा dm_buffer **bp)
+अणु
 	BUG_ON(dm_bufio_in_request());
 
-	return new_read(c, block, NF_FRESH, bp);
-}
+	वापस new_पढ़ो(c, block, NF_FRESH, bp);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_new);
 
-void dm_bufio_prefetch(struct dm_bufio_client *c,
-		       sector_t block, unsigned n_blocks)
-{
-	struct blk_plug plug;
+व्योम dm_bufio_prefetch(काष्ठा dm_bufio_client *c,
+		       sector_t block, अचिन्हित n_blocks)
+अणु
+	काष्ठा blk_plug plug;
 
-	LIST_HEAD(write_list);
+	LIST_HEAD(ग_लिखो_list);
 
 	BUG_ON(dm_bufio_in_request());
 
 	blk_start_plug(&plug);
 	dm_bufio_lock(c);
 
-	for (; n_blocks--; block++) {
-		int need_submit;
-		struct dm_buffer *b;
+	क्रम (; n_blocks--; block++) अणु
+		पूर्णांक need_submit;
+		काष्ठा dm_buffer *b;
 		b = __bufio_new(c, block, NF_PREFETCH, &need_submit,
-				&write_list);
-		if (unlikely(!list_empty(&write_list))) {
+				&ग_लिखो_list);
+		अगर (unlikely(!list_empty(&ग_लिखो_list))) अणु
 			dm_bufio_unlock(c);
 			blk_finish_plug(&plug);
-			__flush_write_list(&write_list);
+			__flush_ग_लिखो_list(&ग_लिखो_list);
 			blk_start_plug(&plug);
 			dm_bufio_lock(c);
-		}
-		if (unlikely(b != NULL)) {
+		पूर्ण
+		अगर (unlikely(b != शून्य)) अणु
 			dm_bufio_unlock(c);
 
-			if (need_submit)
-				submit_io(b, REQ_OP_READ, read_endio);
+			अगर (need_submit)
+				submit_io(b, REQ_OP_READ, पढ़ो_endio);
 			dm_bufio_release(b);
 
 			cond_resched();
 
-			if (!n_blocks)
-				goto flush_plug;
+			अगर (!n_blocks)
+				जाओ flush_plug;
 			dm_bufio_lock(c);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dm_bufio_unlock(c);
 
 flush_plug:
 	blk_finish_plug(&plug);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_prefetch);
 
-void dm_bufio_release(struct dm_buffer *b)
-{
-	struct dm_bufio_client *c = b->c;
+व्योम dm_bufio_release(काष्ठा dm_buffer *b)
+अणु
+	काष्ठा dm_bufio_client *c = b->c;
 
 	dm_bufio_lock(c);
 
 	BUG_ON(!b->hold_count);
 
 	b->hold_count--;
-	if (!b->hold_count) {
-		wake_up(&c->free_buffer_wait);
+	अगर (!b->hold_count) अणु
+		wake_up(&c->मुक्त_buffer_रुको);
 
 		/*
 		 * If there were errors on the buffer, and the buffer is not
-		 * to be written, free the buffer. There is no point in caching
+		 * to be written, मुक्त the buffer. There is no poपूर्णांक in caching
 		 * invalid buffer.
 		 */
-		if ((b->read_error || b->write_error) &&
+		अगर ((b->पढ़ो_error || b->ग_लिखो_error) &&
 		    !test_bit(B_READING, &b->state) &&
 		    !test_bit(B_WRITING, &b->state) &&
-		    !test_bit(B_DIRTY, &b->state)) {
+		    !test_bit(B_सूचीTY, &b->state)) अणु
 			__unlink_buffer(b);
-			__free_buffer_wake(b);
-		}
-	}
+			__मुक्त_buffer_wake(b);
+		पूर्ण
+	पूर्ण
 
 	dm_bufio_unlock(c);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_release);
 
-void dm_bufio_mark_partial_buffer_dirty(struct dm_buffer *b,
-					unsigned start, unsigned end)
-{
-	struct dm_bufio_client *c = b->c;
+व्योम dm_bufio_mark_partial_buffer_dirty(काष्ठा dm_buffer *b,
+					अचिन्हित start, अचिन्हित end)
+अणु
+	काष्ठा dm_bufio_client *c = b->c;
 
 	BUG_ON(start >= end);
 	BUG_ON(end > b->c->block_size);
@@ -1223,183 +1224,183 @@ void dm_bufio_mark_partial_buffer_dirty(struct dm_buffer *b,
 
 	BUG_ON(test_bit(B_READING, &b->state));
 
-	if (!test_and_set_bit(B_DIRTY, &b->state)) {
+	अगर (!test_and_set_bit(B_सूचीTY, &b->state)) अणु
 		b->dirty_start = start;
 		b->dirty_end = end;
-		__relink_lru(b, LIST_DIRTY);
-	} else {
-		if (start < b->dirty_start)
+		__relink_lru(b, LIST_सूचीTY);
+	पूर्ण अन्यथा अणु
+		अगर (start < b->dirty_start)
 			b->dirty_start = start;
-		if (end > b->dirty_end)
+		अगर (end > b->dirty_end)
 			b->dirty_end = end;
-	}
+	पूर्ण
 
 	dm_bufio_unlock(c);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_mark_partial_buffer_dirty);
 
-void dm_bufio_mark_buffer_dirty(struct dm_buffer *b)
-{
+व्योम dm_bufio_mark_buffer_dirty(काष्ठा dm_buffer *b)
+अणु
 	dm_bufio_mark_partial_buffer_dirty(b, 0, b->c->block_size);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_mark_buffer_dirty);
 
-void dm_bufio_write_dirty_buffers_async(struct dm_bufio_client *c)
-{
-	LIST_HEAD(write_list);
+व्योम dm_bufio_ग_लिखो_dirty_buffers_async(काष्ठा dm_bufio_client *c)
+अणु
+	LIST_HEAD(ग_लिखो_list);
 
 	BUG_ON(dm_bufio_in_request());
 
 	dm_bufio_lock(c);
-	__write_dirty_buffers_async(c, 0, &write_list);
+	__ग_लिखो_dirty_buffers_async(c, 0, &ग_लिखो_list);
 	dm_bufio_unlock(c);
-	__flush_write_list(&write_list);
-}
-EXPORT_SYMBOL_GPL(dm_bufio_write_dirty_buffers_async);
+	__flush_ग_लिखो_list(&ग_लिखो_list);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_bufio_ग_लिखो_dirty_buffers_async);
 
 /*
- * For performance, it is essential that the buffers are written asynchronously
- * and simultaneously (so that the block layer can merge the writes) and then
- * waited upon.
+ * For perक्रमmance, it is essential that the buffers are written asynchronously
+ * and simultaneously (so that the block layer can merge the ग_लिखोs) and then
+ * रुकोed upon.
  *
  * Finally, we flush hardware disk cache.
  */
-int dm_bufio_write_dirty_buffers(struct dm_bufio_client *c)
-{
-	int a, f;
-	unsigned long buffers_processed = 0;
-	struct dm_buffer *b, *tmp;
+पूर्णांक dm_bufio_ग_लिखो_dirty_buffers(काष्ठा dm_bufio_client *c)
+अणु
+	पूर्णांक a, f;
+	अचिन्हित दीर्घ buffers_processed = 0;
+	काष्ठा dm_buffer *b, *पंचांगp;
 
-	LIST_HEAD(write_list);
+	LIST_HEAD(ग_लिखो_list);
 
 	dm_bufio_lock(c);
-	__write_dirty_buffers_async(c, 0, &write_list);
+	__ग_लिखो_dirty_buffers_async(c, 0, &ग_लिखो_list);
 	dm_bufio_unlock(c);
-	__flush_write_list(&write_list);
+	__flush_ग_लिखो_list(&ग_लिखो_list);
 	dm_bufio_lock(c);
 
 again:
-	list_for_each_entry_safe_reverse(b, tmp, &c->lru[LIST_DIRTY], lru_list) {
-		int dropped_lock = 0;
+	list_क्रम_each_entry_safe_reverse(b, पंचांगp, &c->lru[LIST_सूचीTY], lru_list) अणु
+		पूर्णांक dropped_lock = 0;
 
-		if (buffers_processed < c->n_buffers[LIST_DIRTY])
+		अगर (buffers_processed < c->n_buffers[LIST_सूचीTY])
 			buffers_processed++;
 
 		BUG_ON(test_bit(B_READING, &b->state));
 
-		if (test_bit(B_WRITING, &b->state)) {
-			if (buffers_processed < c->n_buffers[LIST_DIRTY]) {
+		अगर (test_bit(B_WRITING, &b->state)) अणु
+			अगर (buffers_processed < c->n_buffers[LIST_सूचीTY]) अणु
 				dropped_lock = 1;
 				b->hold_count++;
 				dm_bufio_unlock(c);
-				wait_on_bit_io(&b->state, B_WRITING,
+				रुको_on_bit_io(&b->state, B_WRITING,
 					       TASK_UNINTERRUPTIBLE);
 				dm_bufio_lock(c);
 				b->hold_count--;
-			} else
-				wait_on_bit_io(&b->state, B_WRITING,
+			पूर्ण अन्यथा
+				रुको_on_bit_io(&b->state, B_WRITING,
 					       TASK_UNINTERRUPTIBLE);
-		}
+		पूर्ण
 
-		if (!test_bit(B_DIRTY, &b->state) &&
+		अगर (!test_bit(B_सूचीTY, &b->state) &&
 		    !test_bit(B_WRITING, &b->state))
 			__relink_lru(b, LIST_CLEAN);
 
 		cond_resched();
 
 		/*
-		 * If we dropped the lock, the list is no longer consistent,
+		 * If we dropped the lock, the list is no दीर्घer consistent,
 		 * so we must restart the search.
 		 *
-		 * In the most common case, the buffer just processed is
+		 * In the most common हाल, the buffer just processed is
 		 * relinked to the clean list, so we won't loop scanning the
 		 * same buffer again and again.
 		 *
-		 * This may livelock if there is another thread simultaneously
+		 * This may livelock अगर there is another thपढ़ो simultaneously
 		 * dirtying buffers, so we count the number of buffers walked
-		 * and if it exceeds the total number of buffers, it means that
-		 * someone is doing some writes simultaneously with us.  In
-		 * this case, stop, dropping the lock.
+		 * and अगर it exceeds the total number of buffers, it means that
+		 * someone is करोing some ग_लिखोs simultaneously with us.  In
+		 * this हाल, stop, dropping the lock.
 		 */
-		if (dropped_lock)
-			goto again;
-	}
-	wake_up(&c->free_buffer_wait);
+		अगर (dropped_lock)
+			जाओ again;
+	पूर्ण
+	wake_up(&c->मुक्त_buffer_रुको);
 	dm_bufio_unlock(c);
 
-	a = xchg(&c->async_write_error, 0);
+	a = xchg(&c->async_ग_लिखो_error, 0);
 	f = dm_bufio_issue_flush(c);
-	if (a)
-		return a;
+	अगर (a)
+		वापस a;
 
-	return f;
-}
-EXPORT_SYMBOL_GPL(dm_bufio_write_dirty_buffers);
+	वापस f;
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_bufio_ग_लिखो_dirty_buffers);
 
 /*
  * Use dm-io to send an empty barrier to flush the device.
  */
-int dm_bufio_issue_flush(struct dm_bufio_client *c)
-{
-	struct dm_io_request io_req = {
+पूर्णांक dm_bufio_issue_flush(काष्ठा dm_bufio_client *c)
+अणु
+	काष्ठा dm_io_request io_req = अणु
 		.bi_op = REQ_OP_WRITE,
 		.bi_op_flags = REQ_PREFLUSH | REQ_SYNC,
 		.mem.type = DM_IO_KMEM,
-		.mem.ptr.addr = NULL,
+		.mem.ptr.addr = शून्य,
 		.client = c->dm_io,
-	};
-	struct dm_io_region io_reg = {
+	पूर्ण;
+	काष्ठा dm_io_region io_reg = अणु
 		.bdev = c->bdev,
 		.sector = 0,
 		.count = 0,
-	};
+	पूर्ण;
 
 	BUG_ON(dm_bufio_in_request());
 
-	return dm_io(&io_req, 1, &io_reg, NULL);
-}
+	वापस dm_io(&io_req, 1, &io_reg, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_issue_flush);
 
 /*
  * Use dm-io to send a discard request to flush the device.
  */
-int dm_bufio_issue_discard(struct dm_bufio_client *c, sector_t block, sector_t count)
-{
-	struct dm_io_request io_req = {
+पूर्णांक dm_bufio_issue_discard(काष्ठा dm_bufio_client *c, sector_t block, sector_t count)
+अणु
+	काष्ठा dm_io_request io_req = अणु
 		.bi_op = REQ_OP_DISCARD,
 		.bi_op_flags = REQ_SYNC,
 		.mem.type = DM_IO_KMEM,
-		.mem.ptr.addr = NULL,
+		.mem.ptr.addr = शून्य,
 		.client = c->dm_io,
-	};
-	struct dm_io_region io_reg = {
+	पूर्ण;
+	काष्ठा dm_io_region io_reg = अणु
 		.bdev = c->bdev,
 		.sector = block_to_sector(c, block),
 		.count = block_to_sector(c, count),
-	};
+	पूर्ण;
 
 	BUG_ON(dm_bufio_in_request());
 
-	return dm_io(&io_req, 1, &io_reg, NULL);
-}
+	वापस dm_io(&io_req, 1, &io_reg, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_issue_discard);
 
 /*
  * We first delete any other buffer that may be at that new location.
  *
- * Then, we write the buffer to the original location if it was dirty.
+ * Then, we ग_लिखो the buffer to the original location अगर it was dirty.
  *
- * Then, if we are the only one who is holding the buffer, relink the buffer
- * in the buffer tree for the new location.
+ * Then, अगर we are the only one who is holding the buffer, relink the buffer
+ * in the buffer tree क्रम the new location.
  *
- * If there was someone else holding the buffer, we write it to the new
+ * If there was someone अन्यथा holding the buffer, we ग_लिखो it to the new
  * location but not relink it, because that other user needs to have the buffer
  * at the same place.
  */
-void dm_bufio_release_move(struct dm_buffer *b, sector_t new_block)
-{
-	struct dm_bufio_client *c = b->c;
-	struct dm_buffer *new;
+व्योम dm_bufio_release_move(काष्ठा dm_buffer *b, sector_t new_block)
+अणु
+	काष्ठा dm_bufio_client *c = b->c;
+	काष्ठा dm_buffer *new;
 
 	BUG_ON(dm_bufio_in_request());
 
@@ -1407,171 +1408,171 @@ void dm_bufio_release_move(struct dm_buffer *b, sector_t new_block)
 
 retry:
 	new = __find(c, new_block);
-	if (new) {
-		if (new->hold_count) {
-			__wait_for_free_buffer(c);
-			goto retry;
-		}
+	अगर (new) अणु
+		अगर (new->hold_count) अणु
+			__रुको_क्रम_मुक्त_buffer(c);
+			जाओ retry;
+		पूर्ण
 
 		/*
-		 * FIXME: Is there any point waiting for a write that's going
+		 * FIXME: Is there any poपूर्णांक रुकोing क्रम a ग_लिखो that's going
 		 * to be overwritten in a bit?
 		 */
 		__make_buffer_clean(new);
 		__unlink_buffer(new);
-		__free_buffer_wake(new);
-	}
+		__मुक्त_buffer_wake(new);
+	पूर्ण
 
 	BUG_ON(!b->hold_count);
 	BUG_ON(test_bit(B_READING, &b->state));
 
-	__write_dirty_buffer(b, NULL);
-	if (b->hold_count == 1) {
-		wait_on_bit_io(&b->state, B_WRITING,
+	__ग_लिखो_dirty_buffer(b, शून्य);
+	अगर (b->hold_count == 1) अणु
+		रुको_on_bit_io(&b->state, B_WRITING,
 			       TASK_UNINTERRUPTIBLE);
-		set_bit(B_DIRTY, &b->state);
+		set_bit(B_सूचीTY, &b->state);
 		b->dirty_start = 0;
 		b->dirty_end = c->block_size;
 		__unlink_buffer(b);
-		__link_buffer(b, new_block, LIST_DIRTY);
-	} else {
+		__link_buffer(b, new_block, LIST_सूचीTY);
+	पूर्ण अन्यथा अणु
 		sector_t old_block;
-		wait_on_bit_lock_io(&b->state, B_WRITING,
+		रुको_on_bit_lock_io(&b->state, B_WRITING,
 				    TASK_UNINTERRUPTIBLE);
 		/*
-		 * Relink buffer to "new_block" so that write_callback
+		 * Relink buffer to "new_block" so that ग_लिखो_callback
 		 * sees "new_block" as a block number.
-		 * After the write, link the buffer back to old_block.
-		 * All this must be done in bufio lock, so that block number
-		 * change isn't visible to other threads.
+		 * After the ग_लिखो, link the buffer back to old_block.
+		 * All this must be करोne in bufio lock, so that block number
+		 * change isn't visible to other thपढ़ोs.
 		 */
 		old_block = b->block;
 		__unlink_buffer(b);
 		__link_buffer(b, new_block, b->list_mode);
-		submit_io(b, REQ_OP_WRITE, write_endio);
-		wait_on_bit_io(&b->state, B_WRITING,
+		submit_io(b, REQ_OP_WRITE, ग_लिखो_endio);
+		रुको_on_bit_io(&b->state, B_WRITING,
 			       TASK_UNINTERRUPTIBLE);
 		__unlink_buffer(b);
 		__link_buffer(b, old_block, b->list_mode);
-	}
+	पूर्ण
 
 	dm_bufio_unlock(c);
 	dm_bufio_release(b);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_release_move);
 
-static void forget_buffer_locked(struct dm_buffer *b)
-{
-	if (likely(!b->hold_count) && likely(!b->state)) {
+अटल व्योम क्रमget_buffer_locked(काष्ठा dm_buffer *b)
+अणु
+	अगर (likely(!b->hold_count) && likely(!b->state)) अणु
 		__unlink_buffer(b);
-		__free_buffer_wake(b);
-	}
-}
+		__मुक्त_buffer_wake(b);
+	पूर्ण
+पूर्ण
 
 /*
  * Free the given buffer.
  *
- * This is just a hint, if the buffer is in use or dirty, this function
- * does nothing.
+ * This is just a hपूर्णांक, अगर the buffer is in use or dirty, this function
+ * करोes nothing.
  */
-void dm_bufio_forget(struct dm_bufio_client *c, sector_t block)
-{
-	struct dm_buffer *b;
+व्योम dm_bufio_क्रमget(काष्ठा dm_bufio_client *c, sector_t block)
+अणु
+	काष्ठा dm_buffer *b;
 
 	dm_bufio_lock(c);
 
 	b = __find(c, block);
-	if (b)
-		forget_buffer_locked(b);
+	अगर (b)
+		क्रमget_buffer_locked(b);
 
 	dm_bufio_unlock(c);
-}
-EXPORT_SYMBOL_GPL(dm_bufio_forget);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_bufio_क्रमget);
 
-void dm_bufio_forget_buffers(struct dm_bufio_client *c, sector_t block, sector_t n_blocks)
-{
-	struct dm_buffer *b;
+व्योम dm_bufio_क्रमget_buffers(काष्ठा dm_bufio_client *c, sector_t block, sector_t n_blocks)
+अणु
+	काष्ठा dm_buffer *b;
 	sector_t end_block = block + n_blocks;
 
-	while (block < end_block) {
+	जबतक (block < end_block) अणु
 		dm_bufio_lock(c);
 
 		b = __find_next(c, block);
-		if (b) {
+		अगर (b) अणु
 			block = b->block + 1;
-			forget_buffer_locked(b);
-		}
+			क्रमget_buffer_locked(b);
+		पूर्ण
 
 		dm_bufio_unlock(c);
 
-		if (!b)
-			break;
-	}
+		अगर (!b)
+			अवरोध;
+	पूर्ण
 
-}
-EXPORT_SYMBOL_GPL(dm_bufio_forget_buffers);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_bufio_क्रमget_buffers);
 
-void dm_bufio_set_minimum_buffers(struct dm_bufio_client *c, unsigned n)
-{
+व्योम dm_bufio_set_minimum_buffers(काष्ठा dm_bufio_client *c, अचिन्हित n)
+अणु
 	c->minimum_buffers = n;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_set_minimum_buffers);
 
-unsigned dm_bufio_get_block_size(struct dm_bufio_client *c)
-{
-	return c->block_size;
-}
+अचिन्हित dm_bufio_get_block_size(काष्ठा dm_bufio_client *c)
+अणु
+	वापस c->block_size;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_get_block_size);
 
-sector_t dm_bufio_get_device_size(struct dm_bufio_client *c)
-{
-	sector_t s = i_size_read(c->bdev->bd_inode) >> SECTOR_SHIFT;
-	if (s >= c->start)
+sector_t dm_bufio_get_device_size(काष्ठा dm_bufio_client *c)
+अणु
+	sector_t s = i_size_पढ़ो(c->bdev->bd_inode) >> SECTOR_SHIFT;
+	अगर (s >= c->start)
 		s -= c->start;
-	else
+	अन्यथा
 		s = 0;
-	if (likely(c->sectors_per_block_bits >= 0))
+	अगर (likely(c->sectors_per_block_bits >= 0))
 		s >>= c->sectors_per_block_bits;
-	else
-		sector_div(s, c->block_size >> SECTOR_SHIFT);
-	return s;
-}
+	अन्यथा
+		sector_भाग(s, c->block_size >> SECTOR_SHIFT);
+	वापस s;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_get_device_size);
 
-struct dm_io_client *dm_bufio_get_dm_io_client(struct dm_bufio_client *c)
-{
-	return c->dm_io;
-}
+काष्ठा dm_io_client *dm_bufio_get_dm_io_client(काष्ठा dm_bufio_client *c)
+अणु
+	वापस c->dm_io;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_get_dm_io_client);
 
-sector_t dm_bufio_get_block_number(struct dm_buffer *b)
-{
-	return b->block;
-}
+sector_t dm_bufio_get_block_number(काष्ठा dm_buffer *b)
+अणु
+	वापस b->block;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_get_block_number);
 
-void *dm_bufio_get_block_data(struct dm_buffer *b)
-{
-	return b->data;
-}
+व्योम *dm_bufio_get_block_data(काष्ठा dm_buffer *b)
+अणु
+	वापस b->data;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_get_block_data);
 
-void *dm_bufio_get_aux_data(struct dm_buffer *b)
-{
-	return b + 1;
-}
+व्योम *dm_bufio_get_aux_data(काष्ठा dm_buffer *b)
+अणु
+	वापस b + 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_get_aux_data);
 
-struct dm_bufio_client *dm_bufio_get_client(struct dm_buffer *b)
-{
-	return b->c;
-}
+काष्ठा dm_bufio_client *dm_bufio_get_client(काष्ठा dm_buffer *b)
+अणु
+	वापस b->c;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_get_client);
 
-static void drop_buffers(struct dm_bufio_client *c)
-{
-	struct dm_buffer *b;
-	int i;
+अटल व्योम drop_buffers(काष्ठा dm_bufio_client *c)
+अणु
+	काष्ठा dm_buffer *b;
+	पूर्णांक i;
 	bool warned = false;
 
 	BUG_ON(dm_bufio_in_request());
@@ -1579,179 +1580,179 @@ static void drop_buffers(struct dm_bufio_client *c)
 	/*
 	 * An optimization so that the buffers are not written one-by-one.
 	 */
-	dm_bufio_write_dirty_buffers_async(c);
+	dm_bufio_ग_लिखो_dirty_buffers_async(c);
 
 	dm_bufio_lock(c);
 
-	while ((b = __get_unclaimed_buffer(c)))
-		__free_buffer_wake(b);
+	जबतक ((b = __get_unclaimed_buffer(c)))
+		__मुक्त_buffer_wake(b);
 
-	for (i = 0; i < LIST_SIZE; i++)
-		list_for_each_entry(b, &c->lru[i], lru_list) {
+	क्रम (i = 0; i < LIST_SIZE; i++)
+		list_क्रम_each_entry(b, &c->lru[i], lru_list) अणु
 			WARN_ON(!warned);
 			warned = true;
 			DMERR("leaked buffer %llx, hold count %u, list %d",
-			      (unsigned long long)b->block, b->hold_count, i);
-#ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
-			stack_trace_print(b->stack_entries, b->stack_len, 1);
-			/* mark unclaimed to avoid BUG_ON below */
+			      (अचिन्हित दीर्घ दीर्घ)b->block, b->hold_count, i);
+#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+			stack_trace_prपूर्णांक(b->stack_entries, b->stack_len, 1);
+			/* mark unclaimed to aव्योम BUG_ON below */
 			b->hold_count = 0;
-#endif
-		}
+#पूर्ण_अगर
+		पूर्ण
 
-#ifdef CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
-	while ((b = __get_unclaimed_buffer(c)))
-		__free_buffer_wake(b);
-#endif
+#अगर_घोषित CONFIG_DM_DEBUG_BLOCK_STACK_TRACING
+	जबतक ((b = __get_unclaimed_buffer(c)))
+		__मुक्त_buffer_wake(b);
+#पूर्ण_अगर
 
-	for (i = 0; i < LIST_SIZE; i++)
+	क्रम (i = 0; i < LIST_SIZE; i++)
 		BUG_ON(!list_empty(&c->lru[i]));
 
 	dm_bufio_unlock(c);
-}
+पूर्ण
 
 /*
- * We may not be able to evict this buffer if IO pending or the client
+ * We may not be able to evict this buffer अगर IO pending or the client
  * is still using it.  Caller is expected to know buffer is too old.
  *
- * And if GFP_NOFS is used, we must not do any I/O because we hold
- * dm_bufio_clients_lock and we would risk deadlock if the I/O gets
- * rerouted to different bufio client.
+ * And अगर GFP_NOFS is used, we must not करो any I/O because we hold
+ * dm_bufio_clients_lock and we would risk deadlock अगर the I/O माला_लो
+ * rerouted to dअगरferent bufio client.
  */
-static bool __try_evict_buffer(struct dm_buffer *b, gfp_t gfp)
-{
-	if (!(gfp & __GFP_FS)) {
-		if (test_bit(B_READING, &b->state) ||
+अटल bool __try_evict_buffer(काष्ठा dm_buffer *b, gfp_t gfp)
+अणु
+	अगर (!(gfp & __GFP_FS)) अणु
+		अगर (test_bit(B_READING, &b->state) ||
 		    test_bit(B_WRITING, &b->state) ||
-		    test_bit(B_DIRTY, &b->state))
-			return false;
-	}
+		    test_bit(B_सूचीTY, &b->state))
+			वापस false;
+	पूर्ण
 
-	if (b->hold_count)
-		return false;
+	अगर (b->hold_count)
+		वापस false;
 
 	__make_buffer_clean(b);
 	__unlink_buffer(b);
-	__free_buffer_wake(b);
+	__मुक्त_buffer_wake(b);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static unsigned long get_retain_buffers(struct dm_bufio_client *c)
-{
-	unsigned long retain_bytes = READ_ONCE(dm_bufio_retain_bytes);
-	if (likely(c->sectors_per_block_bits >= 0))
+अटल अचिन्हित दीर्घ get_retain_buffers(काष्ठा dm_bufio_client *c)
+अणु
+	अचिन्हित दीर्घ retain_bytes = READ_ONCE(dm_bufio_retain_bytes);
+	अगर (likely(c->sectors_per_block_bits >= 0))
 		retain_bytes >>= c->sectors_per_block_bits + SECTOR_SHIFT;
-	else
+	अन्यथा
 		retain_bytes /= c->block_size;
-	return retain_bytes;
-}
+	वापस retain_bytes;
+पूर्ण
 
-static void __scan(struct dm_bufio_client *c)
-{
-	int l;
-	struct dm_buffer *b, *tmp;
-	unsigned long freed = 0;
-	unsigned long count = c->n_buffers[LIST_CLEAN] +
-			      c->n_buffers[LIST_DIRTY];
-	unsigned long retain_target = get_retain_buffers(c);
+अटल व्योम __scan(काष्ठा dm_bufio_client *c)
+अणु
+	पूर्णांक l;
+	काष्ठा dm_buffer *b, *पंचांगp;
+	अचिन्हित दीर्घ मुक्तd = 0;
+	अचिन्हित दीर्घ count = c->n_buffers[LIST_CLEAN] +
+			      c->n_buffers[LIST_सूचीTY];
+	अचिन्हित दीर्घ retain_target = get_retain_buffers(c);
 
-	for (l = 0; l < LIST_SIZE; l++) {
-		list_for_each_entry_safe_reverse(b, tmp, &c->lru[l], lru_list) {
-			if (count - freed <= retain_target)
-				atomic_long_set(&c->need_shrink, 0);
-			if (!atomic_long_read(&c->need_shrink))
-				return;
-			if (__try_evict_buffer(b, GFP_KERNEL)) {
-				atomic_long_dec(&c->need_shrink);
-				freed++;
-			}
+	क्रम (l = 0; l < LIST_SIZE; l++) अणु
+		list_क्रम_each_entry_safe_reverse(b, पंचांगp, &c->lru[l], lru_list) अणु
+			अगर (count - मुक्तd <= retain_target)
+				atomic_दीर्घ_set(&c->need_shrink, 0);
+			अगर (!atomic_दीर्घ_पढ़ो(&c->need_shrink))
+				वापस;
+			अगर (__try_evict_buffer(b, GFP_KERNEL)) अणु
+				atomic_दीर्घ_dec(&c->need_shrink);
+				मुक्तd++;
+			पूर्ण
 			cond_resched();
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void shrink_work(struct work_struct *w)
-{
-	struct dm_bufio_client *c = container_of(w, struct dm_bufio_client, shrink_work);
+अटल व्योम shrink_work(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा dm_bufio_client *c = container_of(w, काष्ठा dm_bufio_client, shrink_work);
 
 	dm_bufio_lock(c);
 	__scan(c);
 	dm_bufio_unlock(c);
-}
+पूर्ण
 
-static unsigned long dm_bufio_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
-{
-	struct dm_bufio_client *c;
+अटल अचिन्हित दीर्घ dm_bufio_shrink_scan(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
+अणु
+	काष्ठा dm_bufio_client *c;
 
-	c = container_of(shrink, struct dm_bufio_client, shrinker);
-	atomic_long_add(sc->nr_to_scan, &c->need_shrink);
+	c = container_of(shrink, काष्ठा dm_bufio_client, shrinker);
+	atomic_दीर्घ_add(sc->nr_to_scan, &c->need_shrink);
 	queue_work(dm_bufio_wq, &c->shrink_work);
 
-	return sc->nr_to_scan;
-}
+	वापस sc->nr_to_scan;
+पूर्ण
 
-static unsigned long dm_bufio_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
-{
-	struct dm_bufio_client *c = container_of(shrink, struct dm_bufio_client, shrinker);
-	unsigned long count = READ_ONCE(c->n_buffers[LIST_CLEAN]) +
-			      READ_ONCE(c->n_buffers[LIST_DIRTY]);
-	unsigned long retain_target = get_retain_buffers(c);
-	unsigned long queued_for_cleanup = atomic_long_read(&c->need_shrink);
+अटल अचिन्हित दीर्घ dm_bufio_shrink_count(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
+अणु
+	काष्ठा dm_bufio_client *c = container_of(shrink, काष्ठा dm_bufio_client, shrinker);
+	अचिन्हित दीर्घ count = READ_ONCE(c->n_buffers[LIST_CLEAN]) +
+			      READ_ONCE(c->n_buffers[LIST_सूचीTY]);
+	अचिन्हित दीर्घ retain_target = get_retain_buffers(c);
+	अचिन्हित दीर्घ queued_क्रम_cleanup = atomic_दीर्घ_पढ़ो(&c->need_shrink);
 
-	if (unlikely(count < retain_target))
+	अगर (unlikely(count < retain_target))
 		count = 0;
-	else
+	अन्यथा
 		count -= retain_target;
 
-	if (unlikely(count < queued_for_cleanup))
+	अगर (unlikely(count < queued_क्रम_cleanup))
 		count = 0;
-	else
-		count -= queued_for_cleanup;
+	अन्यथा
+		count -= queued_क्रम_cleanup;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * Create the buffering interface
+ * Create the buffering पूर्णांकerface
  */
-struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsigned block_size,
-					       unsigned reserved_buffers, unsigned aux_size,
-					       void (*alloc_callback)(struct dm_buffer *),
-					       void (*write_callback)(struct dm_buffer *))
-{
-	int r;
-	struct dm_bufio_client *c;
-	unsigned i;
-	char slab_name[27];
+काष्ठा dm_bufio_client *dm_bufio_client_create(काष्ठा block_device *bdev, अचिन्हित block_size,
+					       अचिन्हित reserved_buffers, अचिन्हित aux_size,
+					       व्योम (*alloc_callback)(काष्ठा dm_buffer *),
+					       व्योम (*ग_लिखो_callback)(काष्ठा dm_buffer *))
+अणु
+	पूर्णांक r;
+	काष्ठा dm_bufio_client *c;
+	अचिन्हित i;
+	अक्षर slab_name[27];
 
-	if (!block_size || block_size & ((1 << SECTOR_SHIFT) - 1)) {
+	अगर (!block_size || block_size & ((1 << SECTOR_SHIFT) - 1)) अणु
 		DMERR("%s: block size not specified or is not multiple of 512b", __func__);
 		r = -EINVAL;
-		goto bad_client;
-	}
+		जाओ bad_client;
+	पूर्ण
 
-	c = kzalloc(sizeof(*c), GFP_KERNEL);
-	if (!c) {
+	c = kzalloc(माप(*c), GFP_KERNEL);
+	अगर (!c) अणु
 		r = -ENOMEM;
-		goto bad_client;
-	}
+		जाओ bad_client;
+	पूर्ण
 	c->buffer_tree = RB_ROOT;
 
 	c->bdev = bdev;
 	c->block_size = block_size;
-	if (is_power_of_2(block_size))
+	अगर (is_घातer_of_2(block_size))
 		c->sectors_per_block_bits = __ffs(block_size) - SECTOR_SHIFT;
-	else
+	अन्यथा
 		c->sectors_per_block_bits = -1;
 
 	c->alloc_callback = alloc_callback;
-	c->write_callback = write_callback;
+	c->ग_लिखो_callback = ग_लिखो_callback;
 
-	for (i = 0; i < LIST_SIZE; i++) {
+	क्रम (i = 0; i < LIST_SIZE; i++) अणु
 		INIT_LIST_HEAD(&c->lru[i]);
 		c->n_buffers[i] = 0;
-	}
+	पूर्ण
 
 	mutex_init(&c->lock);
 	INIT_LIST_HEAD(&c->reserved_buffers);
@@ -1759,57 +1760,57 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
 
 	dm_bufio_set_minimum_buffers(c, DM_BUFIO_MIN_BUFFERS);
 
-	init_waitqueue_head(&c->free_buffer_wait);
-	c->async_write_error = 0;
+	init_रुकोqueue_head(&c->मुक्त_buffer_रुको);
+	c->async_ग_लिखो_error = 0;
 
 	c->dm_io = dm_io_client_create();
-	if (IS_ERR(c->dm_io)) {
+	अगर (IS_ERR(c->dm_io)) अणु
 		r = PTR_ERR(c->dm_io);
-		goto bad_dm_io;
-	}
+		जाओ bad_dm_io;
+	पूर्ण
 
-	if (block_size <= KMALLOC_MAX_SIZE &&
-	    (block_size < PAGE_SIZE || !is_power_of_2(block_size))) {
-		unsigned align = min(1U << __ffs(block_size), (unsigned)PAGE_SIZE);
-		snprintf(slab_name, sizeof slab_name, "dm_bufio_cache-%u", block_size);
+	अगर (block_size <= KMALLOC_MAX_SIZE &&
+	    (block_size < PAGE_SIZE || !is_घातer_of_2(block_size))) अणु
+		अचिन्हित align = min(1U << __ffs(block_size), (अचिन्हित)PAGE_SIZE);
+		snम_लिखो(slab_name, माप slab_name, "dm_bufio_cache-%u", block_size);
 		c->slab_cache = kmem_cache_create(slab_name, block_size, align,
-						  SLAB_RECLAIM_ACCOUNT, NULL);
-		if (!c->slab_cache) {
+						  SLAB_RECLAIM_ACCOUNT, शून्य);
+		अगर (!c->slab_cache) अणु
 			r = -ENOMEM;
-			goto bad;
-		}
-	}
-	if (aux_size)
-		snprintf(slab_name, sizeof slab_name, "dm_bufio_buffer-%u", aux_size);
-	else
-		snprintf(slab_name, sizeof slab_name, "dm_bufio_buffer");
-	c->slab_buffer = kmem_cache_create(slab_name, sizeof(struct dm_buffer) + aux_size,
-					   0, SLAB_RECLAIM_ACCOUNT, NULL);
-	if (!c->slab_buffer) {
+			जाओ bad;
+		पूर्ण
+	पूर्ण
+	अगर (aux_size)
+		snम_लिखो(slab_name, माप slab_name, "dm_bufio_buffer-%u", aux_size);
+	अन्यथा
+		snम_लिखो(slab_name, माप slab_name, "dm_bufio_buffer");
+	c->slab_buffer = kmem_cache_create(slab_name, माप(काष्ठा dm_buffer) + aux_size,
+					   0, SLAB_RECLAIM_ACCOUNT, शून्य);
+	अगर (!c->slab_buffer) अणु
 		r = -ENOMEM;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	while (c->need_reserved_buffers) {
-		struct dm_buffer *b = alloc_buffer(c, GFP_KERNEL);
+	जबतक (c->need_reserved_buffers) अणु
+		काष्ठा dm_buffer *b = alloc_buffer(c, GFP_KERNEL);
 
-		if (!b) {
+		अगर (!b) अणु
 			r = -ENOMEM;
-			goto bad;
-		}
-		__free_buffer_wake(b);
-	}
+			जाओ bad;
+		पूर्ण
+		__मुक्त_buffer_wake(b);
+	पूर्ण
 
 	INIT_WORK(&c->shrink_work, shrink_work);
-	atomic_long_set(&c->need_shrink, 0);
+	atomic_दीर्घ_set(&c->need_shrink, 0);
 
 	c->shrinker.count_objects = dm_bufio_shrink_count;
 	c->shrinker.scan_objects = dm_bufio_shrink_scan;
 	c->shrinker.seeks = 1;
 	c->shrinker.batch = 0;
-	r = register_shrinker(&c->shrinker);
-	if (r)
-		goto bad;
+	r = रेजिस्टर_shrinker(&c->shrinker);
+	अगर (r)
+		जाओ bad;
 
 	mutex_lock(&dm_bufio_clients_lock);
 	dm_bufio_client_count++;
@@ -1817,37 +1818,37 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
 	__cache_size_refresh();
 	mutex_unlock(&dm_bufio_clients_lock);
 
-	return c;
+	वापस c;
 
 bad:
-	while (!list_empty(&c->reserved_buffers)) {
-		struct dm_buffer *b = list_entry(c->reserved_buffers.next,
-						 struct dm_buffer, lru_list);
+	जबतक (!list_empty(&c->reserved_buffers)) अणु
+		काष्ठा dm_buffer *b = list_entry(c->reserved_buffers.next,
+						 काष्ठा dm_buffer, lru_list);
 		list_del(&b->lru_list);
-		free_buffer(b);
-	}
+		मुक्त_buffer(b);
+	पूर्ण
 	kmem_cache_destroy(c->slab_cache);
 	kmem_cache_destroy(c->slab_buffer);
 	dm_io_client_destroy(c->dm_io);
 bad_dm_io:
 	mutex_destroy(&c->lock);
-	kfree(c);
+	kमुक्त(c);
 bad_client:
-	return ERR_PTR(r);
-}
+	वापस ERR_PTR(r);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_client_create);
 
 /*
- * Free the buffering interface.
+ * Free the buffering पूर्णांकerface.
  * It is required that there are no references on any buffers.
  */
-void dm_bufio_client_destroy(struct dm_bufio_client *c)
-{
-	unsigned i;
+व्योम dm_bufio_client_destroy(काष्ठा dm_bufio_client *c)
+अणु
+	अचिन्हित i;
 
 	drop_buffers(c);
 
-	unregister_shrinker(&c->shrinker);
+	unरेजिस्टर_shrinker(&c->shrinker);
 	flush_work(&c->shrink_work);
 
 	mutex_lock(&dm_bufio_clients_lock);
@@ -1861,282 +1862,282 @@ void dm_bufio_client_destroy(struct dm_bufio_client *c)
 	BUG_ON(!RB_EMPTY_ROOT(&c->buffer_tree));
 	BUG_ON(c->need_reserved_buffers);
 
-	while (!list_empty(&c->reserved_buffers)) {
-		struct dm_buffer *b = list_entry(c->reserved_buffers.next,
-						 struct dm_buffer, lru_list);
+	जबतक (!list_empty(&c->reserved_buffers)) अणु
+		काष्ठा dm_buffer *b = list_entry(c->reserved_buffers.next,
+						 काष्ठा dm_buffer, lru_list);
 		list_del(&b->lru_list);
-		free_buffer(b);
-	}
+		मुक्त_buffer(b);
+	पूर्ण
 
-	for (i = 0; i < LIST_SIZE; i++)
-		if (c->n_buffers[i])
+	क्रम (i = 0; i < LIST_SIZE; i++)
+		अगर (c->n_buffers[i])
 			DMERR("leaked buffer count %d: %ld", i, c->n_buffers[i]);
 
-	for (i = 0; i < LIST_SIZE; i++)
+	क्रम (i = 0; i < LIST_SIZE; i++)
 		BUG_ON(c->n_buffers[i]);
 
 	kmem_cache_destroy(c->slab_cache);
 	kmem_cache_destroy(c->slab_buffer);
 	dm_io_client_destroy(c->dm_io);
 	mutex_destroy(&c->lock);
-	kfree(c);
-}
+	kमुक्त(c);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_client_destroy);
 
-void dm_bufio_set_sector_offset(struct dm_bufio_client *c, sector_t start)
-{
+व्योम dm_bufio_set_sector_offset(काष्ठा dm_bufio_client *c, sector_t start)
+अणु
 	c->start = start;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bufio_set_sector_offset);
 
-static unsigned get_max_age_hz(void)
-{
-	unsigned max_age = READ_ONCE(dm_bufio_max_age);
+अटल अचिन्हित get_max_age_hz(व्योम)
+अणु
+	अचिन्हित max_age = READ_ONCE(dm_bufio_max_age);
 
-	if (max_age > UINT_MAX / HZ)
-		max_age = UINT_MAX / HZ;
+	अगर (max_age > अच_पूर्णांक_उच्च / HZ)
+		max_age = अच_पूर्णांक_उच्च / HZ;
 
-	return max_age * HZ;
-}
+	वापस max_age * HZ;
+पूर्ण
 
-static bool older_than(struct dm_buffer *b, unsigned long age_hz)
-{
-	return time_after_eq(jiffies, b->last_accessed + age_hz);
-}
+अटल bool older_than(काष्ठा dm_buffer *b, अचिन्हित दीर्घ age_hz)
+अणु
+	वापस समय_after_eq(jअगरfies, b->last_accessed + age_hz);
+पूर्ण
 
-static void __evict_old_buffers(struct dm_bufio_client *c, unsigned long age_hz)
-{
-	struct dm_buffer *b, *tmp;
-	unsigned long retain_target = get_retain_buffers(c);
-	unsigned long count;
-	LIST_HEAD(write_list);
+अटल व्योम __evict_old_buffers(काष्ठा dm_bufio_client *c, अचिन्हित दीर्घ age_hz)
+अणु
+	काष्ठा dm_buffer *b, *पंचांगp;
+	अचिन्हित दीर्घ retain_target = get_retain_buffers(c);
+	अचिन्हित दीर्घ count;
+	LIST_HEAD(ग_लिखो_list);
 
 	dm_bufio_lock(c);
 
-	__check_watermark(c, &write_list);
-	if (unlikely(!list_empty(&write_list))) {
+	__check_watermark(c, &ग_लिखो_list);
+	अगर (unlikely(!list_empty(&ग_लिखो_list))) अणु
 		dm_bufio_unlock(c);
-		__flush_write_list(&write_list);
+		__flush_ग_लिखो_list(&ग_लिखो_list);
 		dm_bufio_lock(c);
-	}
+	पूर्ण
 
-	count = c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_DIRTY];
-	list_for_each_entry_safe_reverse(b, tmp, &c->lru[LIST_CLEAN], lru_list) {
-		if (count <= retain_target)
-			break;
+	count = c->n_buffers[LIST_CLEAN] + c->n_buffers[LIST_सूचीTY];
+	list_क्रम_each_entry_safe_reverse(b, पंचांगp, &c->lru[LIST_CLEAN], lru_list) अणु
+		अगर (count <= retain_target)
+			अवरोध;
 
-		if (!older_than(b, age_hz))
-			break;
+		अगर (!older_than(b, age_hz))
+			अवरोध;
 
-		if (__try_evict_buffer(b, 0))
+		अगर (__try_evict_buffer(b, 0))
 			count--;
 
 		cond_resched();
-	}
+	पूर्ण
 
 	dm_bufio_unlock(c);
-}
+पूर्ण
 
-static void do_global_cleanup(struct work_struct *w)
-{
-	struct dm_bufio_client *locked_client = NULL;
-	struct dm_bufio_client *current_client;
-	struct dm_buffer *b;
-	unsigned spinlock_hold_count;
-	unsigned long threshold = dm_bufio_cache_size -
+अटल व्योम करो_global_cleanup(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा dm_bufio_client *locked_client = शून्य;
+	काष्ठा dm_bufio_client *current_client;
+	काष्ठा dm_buffer *b;
+	अचिन्हित spinlock_hold_count;
+	अचिन्हित दीर्घ threshold = dm_bufio_cache_size -
 		dm_bufio_cache_size / DM_BUFIO_LOW_WATERMARK_RATIO;
-	unsigned long loops = global_num * 2;
+	अचिन्हित दीर्घ loops = global_num * 2;
 
 	mutex_lock(&dm_bufio_clients_lock);
 
-	while (1) {
+	जबतक (1) अणु
 		cond_resched();
 
 		spin_lock(&global_spinlock);
-		if (unlikely(dm_bufio_current_allocated <= threshold))
-			break;
+		अगर (unlikely(dm_bufio_current_allocated <= threshold))
+			अवरोध;
 
 		spinlock_hold_count = 0;
 get_next:
-		if (!loops--)
-			break;
-		if (unlikely(list_empty(&global_queue)))
-			break;
-		b = list_entry(global_queue.prev, struct dm_buffer, global_list);
+		अगर (!loops--)
+			अवरोध;
+		अगर (unlikely(list_empty(&global_queue)))
+			अवरोध;
+		b = list_entry(global_queue.prev, काष्ठा dm_buffer, global_list);
 
-		if (b->accessed) {
+		अगर (b->accessed) अणु
 			b->accessed = 0;
 			list_move(&b->global_list, &global_queue);
-			if (likely(++spinlock_hold_count < 16))
-				goto get_next;
+			अगर (likely(++spinlock_hold_count < 16))
+				जाओ get_next;
 			spin_unlock(&global_spinlock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		current_client = b->c;
-		if (unlikely(current_client != locked_client)) {
-			if (locked_client)
+		अगर (unlikely(current_client != locked_client)) अणु
+			अगर (locked_client)
 				dm_bufio_unlock(locked_client);
 
-			if (!dm_bufio_trylock(current_client)) {
+			अगर (!dm_bufio_trylock(current_client)) अणु
 				spin_unlock(&global_spinlock);
 				dm_bufio_lock(current_client);
 				locked_client = current_client;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			locked_client = current_client;
-		}
+		पूर्ण
 
 		spin_unlock(&global_spinlock);
 
-		if (unlikely(!__try_evict_buffer(b, GFP_KERNEL))) {
+		अगर (unlikely(!__try_evict_buffer(b, GFP_KERNEL))) अणु
 			spin_lock(&global_spinlock);
 			list_move(&b->global_list, &global_queue);
 			spin_unlock(&global_spinlock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&global_spinlock);
 
-	if (locked_client)
+	अगर (locked_client)
 		dm_bufio_unlock(locked_client);
 
 	mutex_unlock(&dm_bufio_clients_lock);
-}
+पूर्ण
 
-static void cleanup_old_buffers(void)
-{
-	unsigned long max_age_hz = get_max_age_hz();
-	struct dm_bufio_client *c;
+अटल व्योम cleanup_old_buffers(व्योम)
+अणु
+	अचिन्हित दीर्घ max_age_hz = get_max_age_hz();
+	काष्ठा dm_bufio_client *c;
 
 	mutex_lock(&dm_bufio_clients_lock);
 
 	__cache_size_refresh();
 
-	list_for_each_entry(c, &dm_bufio_all_clients, client_list)
+	list_क्रम_each_entry(c, &dm_bufio_all_clients, client_list)
 		__evict_old_buffers(c, max_age_hz);
 
 	mutex_unlock(&dm_bufio_clients_lock);
-}
+पूर्ण
 
-static void work_fn(struct work_struct *w)
-{
+अटल व्योम work_fn(काष्ठा work_काष्ठा *w)
+अणु
 	cleanup_old_buffers();
 
 	queue_delayed_work(dm_bufio_wq, &dm_bufio_cleanup_old_work,
 			   DM_BUFIO_WORK_TIMER_SECS * HZ);
-}
+पूर्ण
 
 /*----------------------------------------------------------------
  * Module setup
  *--------------------------------------------------------------*/
 
 /*
- * This is called only once for the whole dm_bufio module.
+ * This is called only once क्रम the whole dm_bufio module.
  * It initializes memory limit.
  */
-static int __init dm_bufio_init(void)
-{
+अटल पूर्णांक __init dm_bufio_init(व्योम)
+अणु
 	__u64 mem;
 
 	dm_bufio_allocated_kmem_cache = 0;
-	dm_bufio_allocated_get_free_pages = 0;
-	dm_bufio_allocated_vmalloc = 0;
+	dm_bufio_allocated_get_मुक्त_pages = 0;
+	dm_bufio_allocated_vदो_स्मृति = 0;
 	dm_bufio_current_allocated = 0;
 
 	mem = (__u64)mult_frac(totalram_pages() - totalhigh_pages(),
 			       DM_BUFIO_MEMORY_PERCENT, 100) << PAGE_SHIFT;
 
-	if (mem > ULONG_MAX)
-		mem = ULONG_MAX;
+	अगर (mem > अच_दीर्घ_उच्च)
+		mem = अच_दीर्घ_उच्च;
 
-#ifdef CONFIG_MMU
-	if (mem > mult_frac(VMALLOC_TOTAL, DM_BUFIO_VMALLOC_PERCENT, 100))
+#अगर_घोषित CONFIG_MMU
+	अगर (mem > mult_frac(VMALLOC_TOTAL, DM_BUFIO_VMALLOC_PERCENT, 100))
 		mem = mult_frac(VMALLOC_TOTAL, DM_BUFIO_VMALLOC_PERCENT, 100);
-#endif
+#पूर्ण_अगर
 
-	dm_bufio_default_cache_size = mem;
+	dm_bufio_शेष_cache_size = mem;
 
 	mutex_lock(&dm_bufio_clients_lock);
 	__cache_size_refresh();
 	mutex_unlock(&dm_bufio_clients_lock);
 
 	dm_bufio_wq = alloc_workqueue("dm_bufio_cache", WQ_MEM_RECLAIM, 0);
-	if (!dm_bufio_wq)
-		return -ENOMEM;
+	अगर (!dm_bufio_wq)
+		वापस -ENOMEM;
 
 	INIT_DELAYED_WORK(&dm_bufio_cleanup_old_work, work_fn);
-	INIT_WORK(&dm_bufio_replacement_work, do_global_cleanup);
+	INIT_WORK(&dm_bufio_replacement_work, करो_global_cleanup);
 	queue_delayed_work(dm_bufio_wq, &dm_bufio_cleanup_old_work,
 			   DM_BUFIO_WORK_TIMER_SECS * HZ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This is called once when unloading the dm_bufio module.
  */
-static void __exit dm_bufio_exit(void)
-{
-	int bug = 0;
+अटल व्योम __निकास dm_bufio_निकास(व्योम)
+अणु
+	पूर्णांक bug = 0;
 
 	cancel_delayed_work_sync(&dm_bufio_cleanup_old_work);
 	flush_workqueue(dm_bufio_wq);
 	destroy_workqueue(dm_bufio_wq);
 
-	if (dm_bufio_client_count) {
+	अगर (dm_bufio_client_count) अणु
 		DMCRIT("%s: dm_bufio_client_count leaked: %d",
 			__func__, dm_bufio_client_count);
 		bug = 1;
-	}
+	पूर्ण
 
-	if (dm_bufio_current_allocated) {
+	अगर (dm_bufio_current_allocated) अणु
 		DMCRIT("%s: dm_bufio_current_allocated leaked: %lu",
 			__func__, dm_bufio_current_allocated);
 		bug = 1;
-	}
+	पूर्ण
 
-	if (dm_bufio_allocated_get_free_pages) {
+	अगर (dm_bufio_allocated_get_मुक्त_pages) अणु
 		DMCRIT("%s: dm_bufio_allocated_get_free_pages leaked: %lu",
-		       __func__, dm_bufio_allocated_get_free_pages);
+		       __func__, dm_bufio_allocated_get_मुक्त_pages);
 		bug = 1;
-	}
+	पूर्ण
 
-	if (dm_bufio_allocated_vmalloc) {
+	अगर (dm_bufio_allocated_vदो_स्मृति) अणु
 		DMCRIT("%s: dm_bufio_vmalloc leaked: %lu",
-		       __func__, dm_bufio_allocated_vmalloc);
+		       __func__, dm_bufio_allocated_vदो_स्मृति);
 		bug = 1;
-	}
+	पूर्ण
 
 	BUG_ON(bug);
-}
+पूर्ण
 
 module_init(dm_bufio_init)
-module_exit(dm_bufio_exit)
+module_निकास(dm_bufio_निकास)
 
-module_param_named(max_cache_size_bytes, dm_bufio_cache_size, ulong, S_IRUGO | S_IWUSR);
+module_param_named(max_cache_size_bytes, dm_bufio_cache_size, uदीर्घ, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(max_cache_size_bytes, "Size of metadata cache");
 
-module_param_named(max_age_seconds, dm_bufio_max_age, uint, S_IRUGO | S_IWUSR);
+module_param_named(max_age_seconds, dm_bufio_max_age, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(max_age_seconds, "Max age of a buffer in seconds");
 
-module_param_named(retain_bytes, dm_bufio_retain_bytes, ulong, S_IRUGO | S_IWUSR);
+module_param_named(retain_bytes, dm_bufio_retain_bytes, uदीर्घ, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(retain_bytes, "Try to keep at least this many bytes cached in memory");
 
-module_param_named(peak_allocated_bytes, dm_bufio_peak_allocated, ulong, S_IRUGO | S_IWUSR);
+module_param_named(peak_allocated_bytes, dm_bufio_peak_allocated, uदीर्घ, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(peak_allocated_bytes, "Tracks the maximum allocated memory");
 
-module_param_named(allocated_kmem_cache_bytes, dm_bufio_allocated_kmem_cache, ulong, S_IRUGO);
+module_param_named(allocated_kmem_cache_bytes, dm_bufio_allocated_kmem_cache, uदीर्घ, S_IRUGO);
 MODULE_PARM_DESC(allocated_kmem_cache_bytes, "Memory allocated with kmem_cache_alloc");
 
-module_param_named(allocated_get_free_pages_bytes, dm_bufio_allocated_get_free_pages, ulong, S_IRUGO);
-MODULE_PARM_DESC(allocated_get_free_pages_bytes, "Memory allocated with get_free_pages");
+module_param_named(allocated_get_मुक्त_pages_bytes, dm_bufio_allocated_get_मुक्त_pages, uदीर्घ, S_IRUGO);
+MODULE_PARM_DESC(allocated_get_मुक्त_pages_bytes, "Memory allocated with get_free_pages");
 
-module_param_named(allocated_vmalloc_bytes, dm_bufio_allocated_vmalloc, ulong, S_IRUGO);
-MODULE_PARM_DESC(allocated_vmalloc_bytes, "Memory allocated with vmalloc");
+module_param_named(allocated_vदो_स्मृति_bytes, dm_bufio_allocated_vदो_स्मृति, uदीर्घ, S_IRUGO);
+MODULE_PARM_DESC(allocated_vदो_स्मृति_bytes, "Memory allocated with vmalloc");
 
-module_param_named(current_allocated_bytes, dm_bufio_current_allocated, ulong, S_IRUGO);
+module_param_named(current_allocated_bytes, dm_bufio_current_allocated, uदीर्घ, S_IRUGO);
 MODULE_PARM_DESC(current_allocated_bytes, "Memory currently used by the cache");
 
 MODULE_AUTHOR("Mikulas Patocka <dm-devel@redhat.com>");

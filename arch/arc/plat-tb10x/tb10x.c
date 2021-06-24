@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Abilis Systems TB10x platform initialisation
+ * Abilis Systems TB10x platक्रमm initialisation
  *
  * Copyright (C) Abilis Systems 2012
  *
  * Author: Christian Ruppert <christian.ruppert@abilis.com>
  */
 
-#include <linux/init.h>
-#include <asm/mach_desc.h>
+#समावेश <linux/init.h>
+#समावेश <यंत्र/mach_desc.h>
 
-static const char *tb10x_compat[] __initdata = {
+अटल स्थिर अक्षर *tb10x_compat[] __initdata = अणु
 	"abilis,arc-tb10x",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 MACHINE_START(TB10x, "tb10x")
 	.dt_compat	= tb10x_compat,

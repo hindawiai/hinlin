@@ -1,199 +1,200 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Renesas R-Car V3U System Controller
  *
  * Copyright (C) 2020 Renesas Electronics Corp.
  */
 
-#include <linux/bits.h>
-#include <linux/clk/renesas.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/of_address.h>
-#include <linux/pm_domain.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/clk/renesas.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
 
-#include <dt-bindings/power/r8a779a0-sysc.h>
+#समावेश <dt-bindings/घातer/r8a779a0-sysc.h>
 
 /*
- * Power Domain flags
+ * Power Doमुख्य flags
  */
-#define PD_CPU		BIT(0)	/* Area contains main CPU core */
-#define PD_SCU		BIT(1)	/* Area contains SCU and L2 cache */
-#define PD_NO_CR	BIT(2)	/* Area lacks PWR{ON,OFF}CR registers */
+#घोषणा PD_CPU		BIT(0)	/* Area contains मुख्य CPU core */
+#घोषणा PD_SCU		BIT(1)	/* Area contains SCU and L2 cache */
+#घोषणा PD_NO_CR	BIT(2)	/* Area lacks PWRअणुON,OFFपूर्णCR रेजिस्टरs */
 
-#define PD_CPU_NOCR	PD_CPU | PD_NO_CR /* CPU area lacks CR */
-#define PD_ALWAYS_ON	PD_NO_CR	  /* Always-on area */
+#घोषणा PD_CPU_NOCR	PD_CPU | PD_NO_CR /* CPU area lacks CR */
+#घोषणा PD_ALWAYS_ON	PD_NO_CR	  /* Always-on area */
 
 /*
  * Description of a Power Area
  */
-struct r8a779a0_sysc_area {
-	const char *name;
+काष्ठा r8a779a0_sysc_area अणु
+	स्थिर अक्षर *name;
 	u8 pdr;			/* PDRn */
-	int parent;		/* -1 if none */
-	unsigned int flags;	/* See PD_* */
-};
+	पूर्णांक parent;		/* -1 अगर none */
+	अचिन्हित पूर्णांक flags;	/* See PD_* */
+पूर्ण;
 
 /*
- * SoC-specific Power Area Description
+ * SoC-specअगरic Power Area Description
  */
-struct r8a779a0_sysc_info {
-	const struct r8a779a0_sysc_area *areas;
-	unsigned int num_areas;
-};
+काष्ठा r8a779a0_sysc_info अणु
+	स्थिर काष्ठा r8a779a0_sysc_area *areas;
+	अचिन्हित पूर्णांक num_areas;
+पूर्ण;
 
-static struct r8a779a0_sysc_area r8a779a0_areas[] __initdata = {
-	{ "always-on",	R8A779A0_PD_ALWAYS_ON, -1, PD_ALWAYS_ON },
-	{ "a3e0",	R8A779A0_PD_A3E0, R8A779A0_PD_ALWAYS_ON, PD_SCU },
-	{ "a3e1",	R8A779A0_PD_A3E1, R8A779A0_PD_ALWAYS_ON, PD_SCU },
-	{ "a2e0d0",	R8A779A0_PD_A2E0D0, R8A779A0_PD_A3E0, PD_SCU },
-	{ "a2e0d1",	R8A779A0_PD_A2E0D1, R8A779A0_PD_A3E0, PD_SCU },
-	{ "a2e1d0",	R8A779A0_PD_A2E1D0, R8A779A0_PD_A3E1, PD_SCU },
-	{ "a2e1d1",	R8A779A0_PD_A2E1D1, R8A779A0_PD_A3E1, PD_SCU },
-	{ "a1e0d0c0",	R8A779A0_PD_A1E0D0C0, R8A779A0_PD_A2E0D0, PD_CPU_NOCR },
-	{ "a1e0d0c1",	R8A779A0_PD_A1E0D0C1, R8A779A0_PD_A2E0D0, PD_CPU_NOCR },
-	{ "a1e0d1c0",	R8A779A0_PD_A1E0D1C0, R8A779A0_PD_A2E0D1, PD_CPU_NOCR },
-	{ "a1e0d1c1",	R8A779A0_PD_A1E0D1C1, R8A779A0_PD_A2E0D1, PD_CPU_NOCR },
-	{ "a1e1d0c0",	R8A779A0_PD_A1E1D0C0, R8A779A0_PD_A2E1D0, PD_CPU_NOCR },
-	{ "a1e1d0c1",	R8A779A0_PD_A1E1D0C1, R8A779A0_PD_A2E1D0, PD_CPU_NOCR },
-	{ "a1e1d1c0",	R8A779A0_PD_A1E1D1C0, R8A779A0_PD_A2E1D1, PD_CPU_NOCR },
-	{ "a1e1d1c1",	R8A779A0_PD_A1E1D1C1, R8A779A0_PD_A2E1D1, PD_CPU_NOCR },
-	{ "3dg-a",	R8A779A0_PD_3DG_A, R8A779A0_PD_ALWAYS_ON },
-	{ "3dg-b",	R8A779A0_PD_3DG_B, R8A779A0_PD_3DG_A },
-	{ "a3vip0",	R8A779A0_PD_A3VIP0, R8A779A0_PD_ALWAYS_ON },
-	{ "a3vip1",	R8A779A0_PD_A3VIP1, R8A779A0_PD_ALWAYS_ON },
-	{ "a3vip3",	R8A779A0_PD_A3VIP3, R8A779A0_PD_ALWAYS_ON },
-	{ "a3vip2",	R8A779A0_PD_A3VIP2, R8A779A0_PD_ALWAYS_ON },
-	{ "a3isp01",	R8A779A0_PD_A3ISP01, R8A779A0_PD_ALWAYS_ON },
-	{ "a3isp23",	R8A779A0_PD_A3ISP23, R8A779A0_PD_ALWAYS_ON },
-	{ "a3ir",	R8A779A0_PD_A3IR, R8A779A0_PD_ALWAYS_ON },
-	{ "a2cn0",	R8A779A0_PD_A2CN0, R8A779A0_PD_A3IR },
-	{ "a2imp01",	R8A779A0_PD_A2IMP01, R8A779A0_PD_A3IR },
-	{ "a2dp0",	R8A779A0_PD_A2DP0, R8A779A0_PD_A3IR },
-	{ "a2cv0",	R8A779A0_PD_A2CV0, R8A779A0_PD_A3IR },
-	{ "a2cv1",	R8A779A0_PD_A2CV1, R8A779A0_PD_A3IR },
-	{ "a2cv4",	R8A779A0_PD_A2CV4, R8A779A0_PD_A3IR },
-	{ "a2cv6",	R8A779A0_PD_A2CV6, R8A779A0_PD_A3IR },
-	{ "a2cn2",	R8A779A0_PD_A2CN2, R8A779A0_PD_A3IR },
-	{ "a2imp23",	R8A779A0_PD_A2IMP23, R8A779A0_PD_A3IR },
-	{ "a2dp1",	R8A779A0_PD_A2DP0, R8A779A0_PD_A3IR },
-	{ "a2cv2",	R8A779A0_PD_A2CV0, R8A779A0_PD_A3IR },
-	{ "a2cv3",	R8A779A0_PD_A2CV1, R8A779A0_PD_A3IR },
-	{ "a2cv5",	R8A779A0_PD_A2CV4, R8A779A0_PD_A3IR },
-	{ "a2cv7",	R8A779A0_PD_A2CV6, R8A779A0_PD_A3IR },
-	{ "a2cn1",	R8A779A0_PD_A2CN1, R8A779A0_PD_A3IR },
-	{ "a1cnn0",	R8A779A0_PD_A1CNN0, R8A779A0_PD_A2CN0 },
-	{ "a1cnn2",	R8A779A0_PD_A1CNN2, R8A779A0_PD_A2CN2 },
-	{ "a1dsp0",	R8A779A0_PD_A1DSP0, R8A779A0_PD_A2CN2 },
-	{ "a1cnn1",	R8A779A0_PD_A1CNN1, R8A779A0_PD_A2CN1 },
-	{ "a1dsp1",	R8A779A0_PD_A1DSP1, R8A779A0_PD_A2CN1 },
-};
+अटल काष्ठा r8a779a0_sysc_area r8a779a0_areas[] __initdata = अणु
+	अणु "always-on",	R8A779A0_PD_ALWAYS_ON, -1, PD_ALWAYS_ON पूर्ण,
+	अणु "a3e0",	R8A779A0_PD_A3E0, R8A779A0_PD_ALWAYS_ON, PD_SCU पूर्ण,
+	अणु "a3e1",	R8A779A0_PD_A3E1, R8A779A0_PD_ALWAYS_ON, PD_SCU पूर्ण,
+	अणु "a2e0d0",	R8A779A0_PD_A2E0D0, R8A779A0_PD_A3E0, PD_SCU पूर्ण,
+	अणु "a2e0d1",	R8A779A0_PD_A2E0D1, R8A779A0_PD_A3E0, PD_SCU पूर्ण,
+	अणु "a2e1d0",	R8A779A0_PD_A2E1D0, R8A779A0_PD_A3E1, PD_SCU पूर्ण,
+	अणु "a2e1d1",	R8A779A0_PD_A2E1D1, R8A779A0_PD_A3E1, PD_SCU पूर्ण,
+	अणु "a1e0d0c0",	R8A779A0_PD_A1E0D0C0, R8A779A0_PD_A2E0D0, PD_CPU_NOCR पूर्ण,
+	अणु "a1e0d0c1",	R8A779A0_PD_A1E0D0C1, R8A779A0_PD_A2E0D0, PD_CPU_NOCR पूर्ण,
+	अणु "a1e0d1c0",	R8A779A0_PD_A1E0D1C0, R8A779A0_PD_A2E0D1, PD_CPU_NOCR पूर्ण,
+	अणु "a1e0d1c1",	R8A779A0_PD_A1E0D1C1, R8A779A0_PD_A2E0D1, PD_CPU_NOCR पूर्ण,
+	अणु "a1e1d0c0",	R8A779A0_PD_A1E1D0C0, R8A779A0_PD_A2E1D0, PD_CPU_NOCR पूर्ण,
+	अणु "a1e1d0c1",	R8A779A0_PD_A1E1D0C1, R8A779A0_PD_A2E1D0, PD_CPU_NOCR पूर्ण,
+	अणु "a1e1d1c0",	R8A779A0_PD_A1E1D1C0, R8A779A0_PD_A2E1D1, PD_CPU_NOCR पूर्ण,
+	अणु "a1e1d1c1",	R8A779A0_PD_A1E1D1C1, R8A779A0_PD_A2E1D1, PD_CPU_NOCR पूर्ण,
+	अणु "3dg-a",	R8A779A0_PD_3DG_A, R8A779A0_PD_ALWAYS_ON पूर्ण,
+	अणु "3dg-b",	R8A779A0_PD_3DG_B, R8A779A0_PD_3DG_A पूर्ण,
+	अणु "a3vip0",	R8A779A0_PD_A3VIP0, R8A779A0_PD_ALWAYS_ON पूर्ण,
+	अणु "a3vip1",	R8A779A0_PD_A3VIP1, R8A779A0_PD_ALWAYS_ON पूर्ण,
+	अणु "a3vip3",	R8A779A0_PD_A3VIP3, R8A779A0_PD_ALWAYS_ON पूर्ण,
+	अणु "a3vip2",	R8A779A0_PD_A3VIP2, R8A779A0_PD_ALWAYS_ON पूर्ण,
+	अणु "a3isp01",	R8A779A0_PD_A3ISP01, R8A779A0_PD_ALWAYS_ON पूर्ण,
+	अणु "a3isp23",	R8A779A0_PD_A3ISP23, R8A779A0_PD_ALWAYS_ON पूर्ण,
+	अणु "a3ir",	R8A779A0_PD_A3IR, R8A779A0_PD_ALWAYS_ON पूर्ण,
+	अणु "a2cn0",	R8A779A0_PD_A2CN0, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2imp01",	R8A779A0_PD_A2IMP01, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2dp0",	R8A779A0_PD_A2DP0, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2cv0",	R8A779A0_PD_A2CV0, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2cv1",	R8A779A0_PD_A2CV1, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2cv4",	R8A779A0_PD_A2CV4, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2cv6",	R8A779A0_PD_A2CV6, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2cn2",	R8A779A0_PD_A2CN2, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2imp23",	R8A779A0_PD_A2IMP23, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2dp1",	R8A779A0_PD_A2DP0, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2cv2",	R8A779A0_PD_A2CV0, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2cv3",	R8A779A0_PD_A2CV1, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2cv5",	R8A779A0_PD_A2CV4, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2cv7",	R8A779A0_PD_A2CV6, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a2cn1",	R8A779A0_PD_A2CN1, R8A779A0_PD_A3IR पूर्ण,
+	अणु "a1cnn0",	R8A779A0_PD_A1CNN0, R8A779A0_PD_A2CN0 पूर्ण,
+	अणु "a1cnn2",	R8A779A0_PD_A1CNN2, R8A779A0_PD_A2CN2 पूर्ण,
+	अणु "a1dsp0",	R8A779A0_PD_A1DSP0, R8A779A0_PD_A2CN2 पूर्ण,
+	अणु "a1cnn1",	R8A779A0_PD_A1CNN1, R8A779A0_PD_A2CN1 पूर्ण,
+	अणु "a1dsp1",	R8A779A0_PD_A1DSP1, R8A779A0_PD_A2CN1 पूर्ण,
+पूर्ण;
 
-static const struct r8a779a0_sysc_info r8a779a0_sysc_info __initconst = {
+अटल स्थिर काष्ठा r8a779a0_sysc_info r8a779a0_sysc_info __initस्थिर = अणु
 	.areas = r8a779a0_areas,
 	.num_areas = ARRAY_SIZE(r8a779a0_areas),
-};
+पूर्ण;
 
 /* SYSC Common */
-#define SYSCSR		0x000	/* SYSC Status Register */
-#define SYSCPONSR(x)	(0x800 + ((x) * 0x4)) /* Power-ON Status Register 0 */
-#define SYSCPOFFSR(x)	(0x808 + ((x) * 0x4)) /* Power-OFF Status Register */
-#define SYSCISCR(x)	(0x810 + ((x) * 0x4)) /* Interrupt Status/Clear Register */
-#define SYSCIER(x)	(0x820 + ((x) * 0x4)) /* Interrupt Enable Register */
-#define SYSCIMR(x)	(0x830 + ((x) * 0x4)) /* Interrupt Mask Register */
+#घोषणा SYSCSR		0x000	/* SYSC Status Register */
+#घोषणा SYSCPONSR(x)	(0x800 + ((x) * 0x4)) /* Power-ON Status Register 0 */
+#घोषणा SYSCPOFFSR(x)	(0x808 + ((x) * 0x4)) /* Power-OFF Status Register */
+#घोषणा SYSCISCR(x)	(0x810 + ((x) * 0x4)) /* Interrupt Status/Clear Register */
+#घोषणा SYSCIER(x)	(0x820 + ((x) * 0x4)) /* Interrupt Enable Register */
+#घोषणा SYSCIMR(x)	(0x830 + ((x) * 0x4)) /* Interrupt Mask Register */
 
-/* Power Domain Registers */
-#define PDRSR(n)	(0x1000 + ((n) * 0x40))
-#define PDRONCR(n)	(0x1004 + ((n) * 0x40))
-#define PDROFFCR(n)	(0x1008 + ((n) * 0x40))
-#define PDRESR(n)	(0x100C + ((n) * 0x40))
+/* Power Doमुख्य Registers */
+#घोषणा PDRSR(n)	(0x1000 + ((n) * 0x40))
+#घोषणा PDRONCR(n)	(0x1004 + ((n) * 0x40))
+#घोषणा PDROFFCR(n)	(0x1008 + ((n) * 0x40))
+#घोषणा PDRESR(n)	(0x100C + ((n) * 0x40))
 
 /* PWRON/PWROFF */
-#define PWRON_PWROFF		BIT(0)	/* Power-ON/OFF request */
+#घोषणा PWRON_PWROFF		BIT(0)	/* Power-ON/OFF request */
 
 /* PDRESR */
-#define PDRESR_ERR		BIT(0)
+#घोषणा PDRESR_ERR		BIT(0)
 
 /* PDRSR */
-#define PDRSR_OFF		BIT(0)	/* Power-OFF state */
-#define PDRSR_ON		BIT(4)	/* Power-ON state */
-#define PDRSR_OFF_STATE		BIT(8)  /* Processing Power-OFF sequence */
-#define PDRSR_ON_STATE		BIT(12) /* Processing Power-ON sequence */
+#घोषणा PDRSR_OFF		BIT(0)	/* Power-OFF state */
+#घोषणा PDRSR_ON		BIT(4)	/* Power-ON state */
+#घोषणा PDRSR_OFF_STATE		BIT(8)  /* Processing Power-OFF sequence */
+#घोषणा PDRSR_ON_STATE		BIT(12) /* Processing Power-ON sequence */
 
-#define SYSCSR_BUSY		GENMASK(1, 0)	/* All bit sets is not busy */
+#घोषणा SYSCSR_BUSY		GENMASK(1, 0)	/* All bit sets is not busy */
 
-#define SYSCSR_TIMEOUT		10000
-#define SYSCSR_DELAY_US		10
+#घोषणा SYSCSR_TIMEOUT		10000
+#घोषणा SYSCSR_DELAY_US		10
 
-#define PDRESR_RETRIES		1000
-#define PDRESR_DELAY_US		10
+#घोषणा PDRESR_RETRIES		1000
+#घोषणा PDRESR_DELAY_US		10
 
-#define SYSCISR_TIMEOUT		10000
-#define SYSCISR_DELAY_US	10
+#घोषणा SYSCISR_TIMEOUT		10000
+#घोषणा SYSCISR_DELAY_US	10
 
-#define NUM_DOMAINS_EACH_REG	BITS_PER_TYPE(u32)
+#घोषणा NUM_DOMAINS_EACH_REG	BITS_PER_TYPE(u32)
 
-static void __iomem *r8a779a0_sysc_base;
-static DEFINE_SPINLOCK(r8a779a0_sysc_lock); /* SMP CPUs + I/O devices */
+अटल व्योम __iomem *r8a779a0_sysc_base;
+अटल DEFINE_SPINLOCK(r8a779a0_sysc_lock); /* SMP CPUs + I/O devices */
 
-static int r8a779a0_sysc_pwr_on_off(u8 pdr, bool on)
-{
-	unsigned int reg_offs;
+अटल पूर्णांक r8a779a0_sysc_pwr_on_off(u8 pdr, bool on)
+अणु
+	अचिन्हित पूर्णांक reg_offs;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (on)
+	अगर (on)
 		reg_offs = PDRONCR(pdr);
-	else
+	अन्यथा
 		reg_offs = PDROFFCR(pdr);
 
-	/* Wait until SYSC is ready to accept a power request */
-	ret = readl_poll_timeout_atomic(r8a779a0_sysc_base + SYSCSR, val,
+	/* Wait until SYSC is पढ़ोy to accept a घातer request */
+	ret = पढ़ोl_poll_समयout_atomic(r8a779a0_sysc_base + SYSCSR, val,
 					(val & SYSCSR_BUSY) == SYSCSR_BUSY,
 					SYSCSR_DELAY_US, SYSCSR_TIMEOUT);
-	if (ret < 0)
-		return -EAGAIN;
+	अगर (ret < 0)
+		वापस -EAGAIN;
 
-	/* Submit power shutoff or power resume request */
-	iowrite32(PWRON_PWROFF, r8a779a0_sysc_base + reg_offs);
+	/* Submit घातer shutoff or घातer resume request */
+	ioग_लिखो32(PWRON_PWROFF, r8a779a0_sysc_base + reg_offs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clear_irq_flags(unsigned int reg_idx, unsigned int isr_mask)
-{
+अटल पूर्णांक clear_irq_flags(अचिन्हित पूर्णांक reg_idx, अचिन्हित पूर्णांक isr_mask)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	iowrite32(isr_mask, r8a779a0_sysc_base + SYSCISCR(reg_idx));
+	ioग_लिखो32(isr_mask, r8a779a0_sysc_base + SYSCISCR(reg_idx));
 
-	ret = readl_poll_timeout_atomic(r8a779a0_sysc_base + SYSCISCR(reg_idx),
+	ret = पढ़ोl_poll_समयout_atomic(r8a779a0_sysc_base + SYSCISCR(reg_idx),
 					val, !(val & isr_mask),
 					SYSCISR_DELAY_US, SYSCISR_TIMEOUT);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("\n %s : Can not clear IRQ flags in SYSCISCR", __func__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int r8a779a0_sysc_power(u8 pdr, bool on)
-{
-	unsigned int isr_mask;
-	unsigned int reg_idx, bit_idx;
-	unsigned int status;
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक r8a779a0_sysc_घातer(u8 pdr, bool on)
+अणु
+	अचिन्हित पूर्णांक isr_mask;
+	अचिन्हित पूर्णांक reg_idx, bit_idx;
+	अचिन्हित पूर्णांक status;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 	u32 val;
-	int k;
+	पूर्णांक k;
 
 	spin_lock_irqsave(&r8a779a0_sysc_lock, flags);
 
@@ -203,246 +204,246 @@ static int r8a779a0_sysc_power(u8 pdr, bool on)
 	isr_mask = BIT(bit_idx);
 
 	/*
-	 * The interrupt source needs to be enabled, but masked, to prevent the
+	 * The पूर्णांकerrupt source needs to be enabled, but masked, to prevent the
 	 * CPU from receiving it.
 	 */
-	iowrite32(ioread32(r8a779a0_sysc_base + SYSCIER(reg_idx)) | isr_mask,
+	ioग_लिखो32(ioपढ़ो32(r8a779a0_sysc_base + SYSCIER(reg_idx)) | isr_mask,
 		  r8a779a0_sysc_base + SYSCIER(reg_idx));
-	iowrite32(ioread32(r8a779a0_sysc_base + SYSCIMR(reg_idx)) | isr_mask,
+	ioग_लिखो32(ioपढ़ो32(r8a779a0_sysc_base + SYSCIMR(reg_idx)) | isr_mask,
 		  r8a779a0_sysc_base + SYSCIMR(reg_idx));
 
 	ret = clear_irq_flags(reg_idx, isr_mask);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	/* Submit power shutoff or resume request until it was accepted */
-	for (k = 0; k < PDRESR_RETRIES; k++) {
+	/* Submit घातer shutoff or resume request until it was accepted */
+	क्रम (k = 0; k < PDRESR_RETRIES; k++) अणु
 		ret = r8a779a0_sysc_pwr_on_off(pdr, on);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
-		status = ioread32(r8a779a0_sysc_base + PDRESR(pdr));
-		if (!(status & PDRESR_ERR))
-			break;
+		status = ioपढ़ो32(r8a779a0_sysc_base + PDRESR(pdr));
+		अगर (!(status & PDRESR_ERR))
+			अवरोध;
 
 		udelay(PDRESR_DELAY_US);
-	}
+	पूर्ण
 
-	if (k == PDRESR_RETRIES) {
+	अगर (k == PDRESR_RETRIES) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Wait until the power shutoff or resume request has completed * */
-	ret = readl_poll_timeout_atomic(r8a779a0_sysc_base + SYSCISCR(reg_idx),
+	/* Wait until the घातer shutoff or resume request has completed * */
+	ret = पढ़ोl_poll_समयout_atomic(r8a779a0_sysc_base + SYSCISCR(reg_idx),
 					val, (val & isr_mask),
 					SYSCISR_DELAY_US, SYSCISR_TIMEOUT);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Clear interrupt flags */
+	/* Clear पूर्णांकerrupt flags */
 	ret = clear_irq_flags(reg_idx, isr_mask);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
  out:
 	spin_unlock_irqrestore(&r8a779a0_sysc_lock, flags);
 
 	pr_debug("sysc power %s domain %d: %08x -> %d\n", on ? "on" : "off",
-		 pdr, ioread32(r8a779a0_sysc_base + SYSCISCR(reg_idx)), ret);
-	return ret;
-}
+		 pdr, ioपढ़ो32(r8a779a0_sysc_base + SYSCISCR(reg_idx)), ret);
+	वापस ret;
+पूर्ण
 
-static bool r8a779a0_sysc_power_is_off(u8 pdr)
-{
-	unsigned int st;
+अटल bool r8a779a0_sysc_घातer_is_off(u8 pdr)
+अणु
+	अचिन्हित पूर्णांक st;
 
-	st = ioread32(r8a779a0_sysc_base + PDRSR(pdr));
+	st = ioपढ़ो32(r8a779a0_sysc_base + PDRSR(pdr));
 
-	if (st & PDRSR_OFF)
-		return true;
+	अगर (st & PDRSR_OFF)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-struct r8a779a0_sysc_pd {
-	struct generic_pm_domain genpd;
+काष्ठा r8a779a0_sysc_pd अणु
+	काष्ठा generic_pm_करोमुख्य genpd;
 	u8 pdr;
-	unsigned int flags;
-	char name[];
-};
+	अचिन्हित पूर्णांक flags;
+	अक्षर name[];
+पूर्ण;
 
-static inline struct r8a779a0_sysc_pd *to_r8a779a0_pd(struct generic_pm_domain *d)
-{
-	return container_of(d, struct r8a779a0_sysc_pd, genpd);
-}
+अटल अंतरभूत काष्ठा r8a779a0_sysc_pd *to_r8a779a0_pd(काष्ठा generic_pm_करोमुख्य *d)
+अणु
+	वापस container_of(d, काष्ठा r8a779a0_sysc_pd, genpd);
+पूर्ण
 
-static int r8a779a0_sysc_pd_power_off(struct generic_pm_domain *genpd)
-{
-	struct r8a779a0_sysc_pd *pd = to_r8a779a0_pd(genpd);
-
-	pr_debug("%s: %s\n", __func__, genpd->name);
-	return r8a779a0_sysc_power(pd->pdr, false);
-}
-
-static int r8a779a0_sysc_pd_power_on(struct generic_pm_domain *genpd)
-{
-	struct r8a779a0_sysc_pd *pd = to_r8a779a0_pd(genpd);
+अटल पूर्णांक r8a779a0_sysc_pd_घातer_off(काष्ठा generic_pm_करोमुख्य *genpd)
+अणु
+	काष्ठा r8a779a0_sysc_pd *pd = to_r8a779a0_pd(genpd);
 
 	pr_debug("%s: %s\n", __func__, genpd->name);
-	return r8a779a0_sysc_power(pd->pdr, true);
-}
+	वापस r8a779a0_sysc_घातer(pd->pdr, false);
+पूर्ण
 
-static int __init r8a779a0_sysc_pd_setup(struct r8a779a0_sysc_pd *pd)
-{
-	struct generic_pm_domain *genpd = &pd->genpd;
-	const char *name = pd->genpd.name;
-	int error;
+अटल पूर्णांक r8a779a0_sysc_pd_घातer_on(काष्ठा generic_pm_करोमुख्य *genpd)
+अणु
+	काष्ठा r8a779a0_sysc_pd *pd = to_r8a779a0_pd(genpd);
 
-	if (pd->flags & PD_CPU) {
+	pr_debug("%s: %s\n", __func__, genpd->name);
+	वापस r8a779a0_sysc_घातer(pd->pdr, true);
+पूर्ण
+
+अटल पूर्णांक __init r8a779a0_sysc_pd_setup(काष्ठा r8a779a0_sysc_pd *pd)
+अणु
+	काष्ठा generic_pm_करोमुख्य *genpd = &pd->genpd;
+	स्थिर अक्षर *name = pd->genpd.name;
+	पूर्णांक error;
+
+	अगर (pd->flags & PD_CPU) अणु
 		/*
-		 * This domain contains a CPU core and therefore it should
-		 * only be turned off if the CPU is not in use.
+		 * This करोमुख्य contains a CPU core and thereक्रमe it should
+		 * only be turned off अगर the CPU is not in use.
 		 */
 		pr_debug("PM domain %s contains %s\n", name, "CPU");
 		genpd->flags |= GENPD_FLAG_ALWAYS_ON;
-	} else if (pd->flags & PD_SCU) {
+	पूर्ण अन्यथा अगर (pd->flags & PD_SCU) अणु
 		/*
-		 * This domain contains an SCU and cache-controller, and
-		 * therefore it should only be turned off if the CPU cores are
+		 * This करोमुख्य contains an SCU and cache-controller, and
+		 * thereक्रमe it should only be turned off अगर the CPU cores are
 		 * not in use.
 		 */
 		pr_debug("PM domain %s contains %s\n", name, "SCU");
 		genpd->flags |= GENPD_FLAG_ALWAYS_ON;
-	} else if (pd->flags & PD_NO_CR) {
+	पूर्ण अन्यथा अगर (pd->flags & PD_NO_CR) अणु
 		/*
-		 * This domain cannot be turned off.
+		 * This करोमुख्य cannot be turned off.
 		 */
 		genpd->flags |= GENPD_FLAG_ALWAYS_ON;
-	}
+	पूर्ण
 
-	if (!(pd->flags & (PD_CPU | PD_SCU))) {
-		/* Enable Clock Domain for I/O devices */
+	अगर (!(pd->flags & (PD_CPU | PD_SCU))) अणु
+		/* Enable Clock Doमुख्य क्रम I/O devices */
 		genpd->flags |= GENPD_FLAG_PM_CLK | GENPD_FLAG_ACTIVE_WAKEUP;
 		genpd->attach_dev = cpg_mssr_attach_dev;
 		genpd->detach_dev = cpg_mssr_detach_dev;
-	}
+	पूर्ण
 
-	genpd->power_off = r8a779a0_sysc_pd_power_off;
-	genpd->power_on = r8a779a0_sysc_pd_power_on;
+	genpd->घातer_off = r8a779a0_sysc_pd_घातer_off;
+	genpd->घातer_on = r8a779a0_sysc_pd_घातer_on;
 
-	if (pd->flags & (PD_CPU | PD_NO_CR)) {
+	अगर (pd->flags & (PD_CPU | PD_NO_CR)) अणु
 		/* Skip CPUs (handled by SMP code) and areas without control */
 		pr_debug("%s: Not touching %s\n", __func__, genpd->name);
-		goto finalize;
-	}
+		जाओ finalize;
+	पूर्ण
 
-	if (!r8a779a0_sysc_power_is_off(pd->pdr)) {
+	अगर (!r8a779a0_sysc_घातer_is_off(pd->pdr)) अणु
 		pr_debug("%s: %s is already powered\n", __func__, genpd->name);
-		goto finalize;
-	}
+		जाओ finalize;
+	पूर्ण
 
-	r8a779a0_sysc_power(pd->pdr, true);
+	r8a779a0_sysc_घातer(pd->pdr, true);
 
 finalize:
 	error = pm_genpd_init(genpd, &simple_qos_governor, false);
-	if (error)
+	अगर (error)
 		pr_err("Failed to init PM domain %s: %d\n", name, error);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct of_device_id r8a779a0_sysc_matches[] __initconst = {
-	{ .compatible = "renesas,r8a779a0-sysc", .data = &r8a779a0_sysc_info },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id r8a779a0_sysc_matches[] __initस्थिर = अणु
+	अणु .compatible = "renesas,r8a779a0-sysc", .data = &r8a779a0_sysc_info पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-struct r8a779a0_pm_domains {
-	struct genpd_onecell_data onecell_data;
-	struct generic_pm_domain *domains[R8A779A0_PD_ALWAYS_ON + 1];
-};
+काष्ठा r8a779a0_pm_करोमुख्यs अणु
+	काष्ठा genpd_onecell_data onecell_data;
+	काष्ठा generic_pm_करोमुख्य *करोमुख्यs[R8A779A0_PD_ALWAYS_ON + 1];
+पूर्ण;
 
-static struct genpd_onecell_data *r8a779a0_sysc_onecell_data;
+अटल काष्ठा genpd_onecell_data *r8a779a0_sysc_onecell_data;
 
-static int __init r8a779a0_sysc_pd_init(void)
-{
-	const struct r8a779a0_sysc_info *info;
-	const struct of_device_id *match;
-	struct r8a779a0_pm_domains *domains;
-	struct device_node *np;
-	void __iomem *base;
-	unsigned int i;
-	int error;
+अटल पूर्णांक __init r8a779a0_sysc_pd_init(व्योम)
+अणु
+	स्थिर काष्ठा r8a779a0_sysc_info *info;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा r8a779a0_pm_करोमुख्यs *करोमुख्यs;
+	काष्ठा device_node *np;
+	व्योम __iomem *base;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक error;
 
-	np = of_find_matching_node_and_match(NULL, r8a779a0_sysc_matches, &match);
-	if (!np)
-		return -ENODEV;
+	np = of_find_matching_node_and_match(शून्य, r8a779a0_sysc_matches, &match);
+	अगर (!np)
+		वापस -ENODEV;
 
 	info = match->data;
 
 	base = of_iomap(np, 0);
-	if (!base) {
+	अगर (!base) अणु
 		pr_warn("%pOF: Cannot map regs\n", np);
 		error = -ENOMEM;
-		goto out_put;
-	}
+		जाओ out_put;
+	पूर्ण
 
 	r8a779a0_sysc_base = base;
 
-	domains = kzalloc(sizeof(*domains), GFP_KERNEL);
-	if (!domains) {
+	करोमुख्यs = kzalloc(माप(*करोमुख्यs), GFP_KERNEL);
+	अगर (!करोमुख्यs) अणु
 		error = -ENOMEM;
-		goto out_put;
-	}
+		जाओ out_put;
+	पूर्ण
 
-	domains->onecell_data.domains = domains->domains;
-	domains->onecell_data.num_domains = ARRAY_SIZE(domains->domains);
-	r8a779a0_sysc_onecell_data = &domains->onecell_data;
+	करोमुख्यs->onecell_data.करोमुख्यs = करोमुख्यs->करोमुख्यs;
+	करोमुख्यs->onecell_data.num_करोमुख्यs = ARRAY_SIZE(करोमुख्यs->करोमुख्यs);
+	r8a779a0_sysc_onecell_data = &करोमुख्यs->onecell_data;
 
-	for (i = 0; i < info->num_areas; i++) {
-		const struct r8a779a0_sysc_area *area = &info->areas[i];
-		struct r8a779a0_sysc_pd *pd;
+	क्रम (i = 0; i < info->num_areas; i++) अणु
+		स्थिर काष्ठा r8a779a0_sysc_area *area = &info->areas[i];
+		काष्ठा r8a779a0_sysc_pd *pd;
 
-		if (!area->name) {
-			/* Skip NULLified area */
-			continue;
-		}
+		अगर (!area->name) अणु
+			/* Skip शून्यअगरied area */
+			जारी;
+		पूर्ण
 
-		pd = kzalloc(sizeof(*pd) + strlen(area->name) + 1, GFP_KERNEL);
-		if (!pd) {
+		pd = kzalloc(माप(*pd) + म_माप(area->name) + 1, GFP_KERNEL);
+		अगर (!pd) अणु
 			error = -ENOMEM;
-			goto out_put;
-		}
+			जाओ out_put;
+		पूर्ण
 
-		strcpy(pd->name, area->name);
+		म_नकल(pd->name, area->name);
 		pd->genpd.name = pd->name;
 		pd->pdr = area->pdr;
 		pd->flags = area->flags;
 
 		error = r8a779a0_sysc_pd_setup(pd);
-		if (error)
-			goto out_put;
+		अगर (error)
+			जाओ out_put;
 
-		domains->domains[area->pdr] = &pd->genpd;
+		करोमुख्यs->करोमुख्यs[area->pdr] = &pd->genpd;
 
-		if (area->parent < 0)
-			continue;
+		अगर (area->parent < 0)
+			जारी;
 
-		error = pm_genpd_add_subdomain(domains->domains[area->parent],
+		error = pm_genpd_add_subकरोमुख्य(करोमुख्यs->करोमुख्यs[area->parent],
 					       &pd->genpd);
-		if (error) {
+		अगर (error) अणु
 			pr_warn("Failed to add PM subdomain %s to parent %u\n",
 				area->name, area->parent);
-			goto out_put;
-		}
-	}
+			जाओ out_put;
+		पूर्ण
+	पूर्ण
 
-	error = of_genpd_add_provider_onecell(np, &domains->onecell_data);
+	error = of_genpd_add_provider_onecell(np, &करोमुख्यs->onecell_data);
 
 out_put:
 	of_node_put(np);
-	return error;
-}
+	वापस error;
+पूर्ण
 early_initcall(r8a779a0_sysc_pd_init);

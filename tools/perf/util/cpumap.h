@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_CPUMAP_H
-#define __PERF_CPUMAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_CPUMAP_H
+#घोषणा __PERF_CPUMAP_H
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <internal/cpumap.h>
-#include <perf/cpumap.h>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <पूर्णांकernal/cpumap.h>
+#समावेश <perf/cpumap.h>
 
-struct aggr_cpu_id {
-	int thread;
-	int node;
-	int socket;
-	int die;
-	int core;
-};
+काष्ठा aggr_cpu_id अणु
+	पूर्णांक thपढ़ो;
+	पूर्णांक node;
+	पूर्णांक socket;
+	पूर्णांक die;
+	पूर्णांक core;
+पूर्ण;
 
-struct cpu_aggr_map {
+काष्ठा cpu_aggr_map अणु
 	refcount_t refcnt;
-	int nr;
-	struct aggr_cpu_id map[];
-};
+	पूर्णांक nr;
+	काष्ठा aggr_cpu_id map[];
+पूर्ण;
 
-struct perf_record_cpu_map_data;
+काष्ठा perf_record_cpu_map_data;
 
-struct perf_cpu_map *perf_cpu_map__empty_new(int nr);
-struct cpu_aggr_map *cpu_aggr_map__empty_new(int nr);
+काष्ठा perf_cpu_map *perf_cpu_map__empty_new(पूर्णांक nr);
+काष्ठा cpu_aggr_map *cpu_aggr_map__empty_new(पूर्णांक nr);
 
-struct perf_cpu_map *cpu_map__new_data(struct perf_record_cpu_map_data *data);
-size_t cpu_map__snprint(struct perf_cpu_map *map, char *buf, size_t size);
-size_t cpu_map__snprint_mask(struct perf_cpu_map *map, char *buf, size_t size);
-size_t cpu_map__fprintf(struct perf_cpu_map *map, FILE *fp);
-int cpu_map__get_socket_id(int cpu);
-struct aggr_cpu_id cpu_map__get_socket(struct perf_cpu_map *map, int idx, void *data);
-int cpu_map__get_die_id(int cpu);
-struct aggr_cpu_id cpu_map__get_die(struct perf_cpu_map *map, int idx, void *data);
-int cpu_map__get_core_id(int cpu);
-struct aggr_cpu_id cpu_map__get_core(struct perf_cpu_map *map, int idx, void *data);
-int cpu_map__get_node_id(int cpu);
-struct aggr_cpu_id  cpu_map__get_node(struct perf_cpu_map *map, int idx, void *data);
-int cpu_map__build_socket_map(struct perf_cpu_map *cpus, struct cpu_aggr_map **sockp);
-int cpu_map__build_die_map(struct perf_cpu_map *cpus, struct cpu_aggr_map **diep);
-int cpu_map__build_core_map(struct perf_cpu_map *cpus, struct cpu_aggr_map **corep);
-int cpu_map__build_node_map(struct perf_cpu_map *cpus, struct cpu_aggr_map **nodep);
-const struct perf_cpu_map *cpu_map__online(void); /* thread unsafe */
+काष्ठा perf_cpu_map *cpu_map__new_data(काष्ठा perf_record_cpu_map_data *data);
+माप_प्रकार cpu_map__snprपूर्णांक(काष्ठा perf_cpu_map *map, अक्षर *buf, माप_प्रकार size);
+माप_प्रकार cpu_map__snprपूर्णांक_mask(काष्ठा perf_cpu_map *map, अक्षर *buf, माप_प्रकार size);
+माप_प्रकार cpu_map__ख_लिखो(काष्ठा perf_cpu_map *map, खाता *fp);
+पूर्णांक cpu_map__get_socket_id(पूर्णांक cpu);
+काष्ठा aggr_cpu_id cpu_map__get_socket(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data);
+पूर्णांक cpu_map__get_die_id(पूर्णांक cpu);
+काष्ठा aggr_cpu_id cpu_map__get_die(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data);
+पूर्णांक cpu_map__get_core_id(पूर्णांक cpu);
+काष्ठा aggr_cpu_id cpu_map__get_core(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data);
+पूर्णांक cpu_map__get_node_id(पूर्णांक cpu);
+काष्ठा aggr_cpu_id  cpu_map__get_node(काष्ठा perf_cpu_map *map, पूर्णांक idx, व्योम *data);
+पूर्णांक cpu_map__build_socket_map(काष्ठा perf_cpu_map *cpus, काष्ठा cpu_aggr_map **sockp);
+पूर्णांक cpu_map__build_die_map(काष्ठा perf_cpu_map *cpus, काष्ठा cpu_aggr_map **diep);
+पूर्णांक cpu_map__build_core_map(काष्ठा perf_cpu_map *cpus, काष्ठा cpu_aggr_map **corep);
+पूर्णांक cpu_map__build_node_map(काष्ठा perf_cpu_map *cpus, काष्ठा cpu_aggr_map **nodep);
+स्थिर काष्ठा perf_cpu_map *cpu_map__online(व्योम); /* thपढ़ो unsafe */
 
-static inline int cpu_map__socket(struct perf_cpu_map *sock, int s)
-{
-	if (!sock || s > sock->nr || s < 0)
-		return 0;
-	return sock->map[s];
-}
+अटल अंतरभूत पूर्णांक cpu_map__socket(काष्ठा perf_cpu_map *sock, पूर्णांक s)
+अणु
+	अगर (!sock || s > sock->nr || s < 0)
+		वापस 0;
+	वापस sock->map[s];
+पूर्ण
 
-int cpu__setup_cpunode_map(void);
+पूर्णांक cpu__setup_cpunode_map(व्योम);
 
-int cpu__max_node(void);
-int cpu__max_cpu(void);
-int cpu__max_present_cpu(void);
-int cpu__get_node(int cpu);
+पूर्णांक cpu__max_node(व्योम);
+पूर्णांक cpu__max_cpu(व्योम);
+पूर्णांक cpu__max_present_cpu(व्योम);
+पूर्णांक cpu__get_node(पूर्णांक cpu);
 
-int cpu_map__build_map(struct perf_cpu_map *cpus, struct cpu_aggr_map **res,
-		       struct aggr_cpu_id (*f)(struct perf_cpu_map *map, int cpu, void *data),
-		       void *data);
+पूर्णांक cpu_map__build_map(काष्ठा perf_cpu_map *cpus, काष्ठा cpu_aggr_map **res,
+		       काष्ठा aggr_cpu_id (*f)(काष्ठा perf_cpu_map *map, पूर्णांक cpu, व्योम *data),
+		       व्योम *data);
 
-int cpu_map__cpu(struct perf_cpu_map *cpus, int idx);
-bool cpu_map__has(struct perf_cpu_map *cpus, int cpu);
+पूर्णांक cpu_map__cpu(काष्ठा perf_cpu_map *cpus, पूर्णांक idx);
+bool cpu_map__has(काष्ठा perf_cpu_map *cpus, पूर्णांक cpu);
 
-bool cpu_map__compare_aggr_cpu_id(struct aggr_cpu_id a, struct aggr_cpu_id b);
-bool cpu_map__aggr_cpu_id_is_empty(struct aggr_cpu_id a);
-struct aggr_cpu_id cpu_map__empty_aggr_cpu_id(void);
+bool cpu_map__compare_aggr_cpu_id(काष्ठा aggr_cpu_id a, काष्ठा aggr_cpu_id b);
+bool cpu_map__aggr_cpu_id_is_empty(काष्ठा aggr_cpu_id a);
+काष्ठा aggr_cpu_id cpu_map__empty_aggr_cpu_id(व्योम);
 
-#endif /* __PERF_CPUMAP_H */
+#पूर्ण_अगर /* __PERF_CPUMAP_H */

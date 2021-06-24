@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_DSI_DCS_BACKLIGHT_H__
-#define __INTEL_DSI_DCS_BACKLIGHT_H__
+#अगर_अघोषित __INTEL_DSI_DCS_BACKLIGHT_H__
+#घोषणा __INTEL_DSI_DCS_BACKLIGHT_H__
 
-struct intel_connector;
+काष्ठा पूर्णांकel_connector;
 
-int intel_dsi_dcs_init_backlight_funcs(struct intel_connector *intel_connector);
+पूर्णांक पूर्णांकel_dsi_dcs_init_backlight_funcs(काष्ठा पूर्णांकel_connector *पूर्णांकel_connector);
 
-#endif /* __INTEL_DSI_DCS_BACKLIGHT_H__ */
+#पूर्ण_अगर /* __INTEL_DSI_DCS_BACKLIGHT_H__ */

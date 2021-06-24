@@ -1,256 +1,257 @@
-// SPDX-License-Identifier: GPL-2.0 or BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 or BSD-3-Clause
 
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/netdevice.h>
-#include <linux/inetdevice.h>
-#include <net/net_namespace.h>
-#include <linux/rtnetlink.h>
-#include <linux/if_arp.h>
-#include <linux/list.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/module.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <net/net_namespace.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/module.h>
+#समावेश <linux/dma-mapping.h>
 
-#include <net/addrconf.h>
-#include <rdma/ib_verbs.h>
-#include <rdma/ib_user_verbs.h>
-#include <rdma/rdma_netlink.h>
-#include <linux/kthread.h>
+#समावेश <net/addrconf.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/ib_user_verbs.h>
+#समावेश <rdma/rdma_netlink.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include "siw.h"
-#include "siw_verbs.h"
+#समावेश "siw.h"
+#समावेश "siw_verbs.h"
 
 MODULE_AUTHOR("Bernard Metzler");
 MODULE_DESCRIPTION("Software iWARP Driver");
 MODULE_LICENSE("Dual BSD/GPL");
 
-/* transmit from user buffer, if possible */
-const bool zcopy_tx = true;
+/* transmit from user buffer, अगर possible */
+स्थिर bool zcopy_tx = true;
 
-/* Restrict usage of GSO, if hardware peer iwarp is unable to process
+/* Restrict usage of GSO, अगर hardware peer iwarp is unable to process
  * large packets. try_gso = true lets siw try to use local GSO,
- * if peer agrees.  Not using GSO severly limits siw maximum tx bandwidth.
+ * अगर peer agrees.  Not using GSO severly limits siw maximum tx bandwidth.
  */
-const bool try_gso;
+स्थिर bool try_gso;
 
 /* Attach siw also with loopback devices */
-const bool loopback_enabled = true;
+स्थिर bool loopback_enabled = true;
 
-/* We try to negotiate CRC on, if true */
-const bool mpa_crc_required;
+/* We try to negotiate CRC on, अगर true */
+स्थिर bool mpa_crc_required;
 
-/* MPA CRC on/off enforced */
-const bool mpa_crc_strict;
+/* MPA CRC on/off enक्रमced */
+स्थिर bool mpa_crc_strict;
 
 /* Control TCP_NODELAY socket option */
-const bool siw_tcp_nagle;
+स्थिर bool siw_tcp_nagle;
 
 /* Select MPA version to be used during connection setup */
-u_char mpa_version = MPA_REVISION_2;
+u_अक्षर mpa_version = MPA_REVISION_2;
 
 /* Selects MPA P2P mode (additional handshake during connection
- * setup, if true.
+ * setup, अगर true.
  */
-const bool peer_to_peer;
+स्थिर bool peer_to_peer;
 
-struct task_struct *siw_tx_thread[NR_CPUS];
-struct crypto_shash *siw_crypto_shash;
+काष्ठा task_काष्ठा *siw_tx_thपढ़ो[NR_CPUS];
+काष्ठा crypto_shash *siw_crypto_shash;
 
-static int siw_device_register(struct siw_device *sdev, const char *name)
-{
-	struct ib_device *base_dev = &sdev->base_dev;
-	static int dev_id = 1;
-	int rv;
+अटल पूर्णांक siw_device_रेजिस्टर(काष्ठा siw_device *sdev, स्थिर अक्षर *name)
+अणु
+	काष्ठा ib_device *base_dev = &sdev->base_dev;
+	अटल पूर्णांक dev_id = 1;
+	पूर्णांक rv;
 
-	sdev->vendor_part_id = dev_id++;
+	sdev->venकरोr_part_id = dev_id++;
 
-	rv = ib_register_device(base_dev, name, NULL);
-	if (rv) {
+	rv = ib_रेजिस्टर_device(base_dev, name, शून्य);
+	अगर (rv) अणु
 		pr_warn("siw: device registration error %d\n", rv);
-		return rv;
-	}
+		वापस rv;
+	पूर्ण
 
 	siw_dbg(base_dev, "HWaddr=%pM\n", sdev->netdev->dev_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void siw_device_cleanup(struct ib_device *base_dev)
-{
-	struct siw_device *sdev = to_siw_dev(base_dev);
+अटल व्योम siw_device_cleanup(काष्ठा ib_device *base_dev)
+अणु
+	काष्ठा siw_device *sdev = to_siw_dev(base_dev);
 
 	xa_destroy(&sdev->qp_xa);
 	xa_destroy(&sdev->mem_xa);
-}
+पूर्ण
 
-static int siw_create_tx_threads(void)
-{
-	int cpu, assigned = 0;
+अटल पूर्णांक siw_create_tx_thपढ़ोs(व्योम)
+अणु
+	पूर्णांक cpu, asचिन्हित = 0;
 
-	for_each_online_cpu(cpu) {
+	क्रम_each_online_cpu(cpu) अणु
 		/* Skip HT cores */
-		if (cpu % cpumask_weight(topology_sibling_cpumask(cpu)))
-			continue;
+		अगर (cpu % cpumask_weight(topology_sibling_cpumask(cpu)))
+			जारी;
 
-		siw_tx_thread[cpu] =
-			kthread_create(siw_run_sq, (unsigned long *)(long)cpu,
+		siw_tx_thपढ़ो[cpu] =
+			kthपढ़ो_create(siw_run_sq, (अचिन्हित दीर्घ *)(दीर्घ)cpu,
 				       "siw_tx/%d", cpu);
-		if (IS_ERR(siw_tx_thread[cpu])) {
-			siw_tx_thread[cpu] = NULL;
-			continue;
-		}
-		kthread_bind(siw_tx_thread[cpu], cpu);
+		अगर (IS_ERR(siw_tx_thपढ़ो[cpu])) अणु
+			siw_tx_thपढ़ो[cpu] = शून्य;
+			जारी;
+		पूर्ण
+		kthपढ़ो_bind(siw_tx_thपढ़ो[cpu], cpu);
 
-		wake_up_process(siw_tx_thread[cpu]);
-		assigned++;
-	}
-	return assigned;
-}
+		wake_up_process(siw_tx_thपढ़ो[cpu]);
+		asचिन्हित++;
+	पूर्ण
+	वापस asचिन्हित;
+पूर्ण
 
-static int siw_dev_qualified(struct net_device *netdev)
-{
+अटल पूर्णांक siw_dev_qualअगरied(काष्ठा net_device *netdev)
+अणु
 	/*
 	 * Additional hardware support can be added here
 	 * (e.g. ARPHRD_FDDI, ARPHRD_ATM, ...) - see
-	 * <linux/if_arp.h> for type identifiers.
+	 * <linux/अगर_arp.h> क्रम type identअगरiers.
 	 */
-	if (netdev->type == ARPHRD_ETHER || netdev->type == ARPHRD_IEEE802 ||
+	अगर (netdev->type == ARPHRD_ETHER || netdev->type == ARPHRD_IEEE802 ||
 	    (netdev->type == ARPHRD_LOOPBACK && loopback_enabled))
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static DEFINE_PER_CPU(atomic_t, siw_use_cnt);
+अटल DEFINE_PER_CPU(atomic_t, siw_use_cnt);
 
-static struct {
-	struct cpumask **tx_valid_cpus;
-	int num_nodes;
-} siw_cpu_info;
+अटल काष्ठा अणु
+	काष्ठा cpumask **tx_valid_cpus;
+	पूर्णांक num_nodes;
+पूर्ण siw_cpu_info;
 
-static int siw_init_cpulist(void)
-{
-	int i, num_nodes = nr_node_ids;
+अटल पूर्णांक siw_init_cpulist(व्योम)
+अणु
+	पूर्णांक i, num_nodes = nr_node_ids;
 
-	memset(siw_tx_thread, 0, sizeof(siw_tx_thread));
+	स_रखो(siw_tx_thपढ़ो, 0, माप(siw_tx_thपढ़ो));
 
 	siw_cpu_info.num_nodes = num_nodes;
 
 	siw_cpu_info.tx_valid_cpus =
-		kcalloc(num_nodes, sizeof(struct cpumask *), GFP_KERNEL);
-	if (!siw_cpu_info.tx_valid_cpus) {
+		kसुस्मृति(num_nodes, माप(काष्ठा cpumask *), GFP_KERNEL);
+	अगर (!siw_cpu_info.tx_valid_cpus) अणु
 		siw_cpu_info.num_nodes = 0;
-		return -ENOMEM;
-	}
-	for (i = 0; i < siw_cpu_info.num_nodes; i++) {
+		वापस -ENOMEM;
+	पूर्ण
+	क्रम (i = 0; i < siw_cpu_info.num_nodes; i++) अणु
 		siw_cpu_info.tx_valid_cpus[i] =
-			kzalloc(sizeof(struct cpumask), GFP_KERNEL);
-		if (!siw_cpu_info.tx_valid_cpus[i])
-			goto out_err;
+			kzalloc(माप(काष्ठा cpumask), GFP_KERNEL);
+		अगर (!siw_cpu_info.tx_valid_cpus[i])
+			जाओ out_err;
 
 		cpumask_clear(siw_cpu_info.tx_valid_cpus[i]);
-	}
-	for_each_possible_cpu(i)
+	पूर्ण
+	क्रम_each_possible_cpu(i)
 		cpumask_set_cpu(i, siw_cpu_info.tx_valid_cpus[cpu_to_node(i)]);
 
-	return 0;
+	वापस 0;
 
 out_err:
 	siw_cpu_info.num_nodes = 0;
-	while (--i >= 0)
-		kfree(siw_cpu_info.tx_valid_cpus[i]);
-	kfree(siw_cpu_info.tx_valid_cpus);
-	siw_cpu_info.tx_valid_cpus = NULL;
+	जबतक (--i >= 0)
+		kमुक्त(siw_cpu_info.tx_valid_cpus[i]);
+	kमुक्त(siw_cpu_info.tx_valid_cpus);
+	siw_cpu_info.tx_valid_cpus = शून्य;
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void siw_destroy_cpulist(void)
-{
-	int i = 0;
+अटल व्योम siw_destroy_cpulist(व्योम)
+अणु
+	पूर्णांक i = 0;
 
-	while (i < siw_cpu_info.num_nodes)
-		kfree(siw_cpu_info.tx_valid_cpus[i++]);
+	जबतक (i < siw_cpu_info.num_nodes)
+		kमुक्त(siw_cpu_info.tx_valid_cpus[i++]);
 
-	kfree(siw_cpu_info.tx_valid_cpus);
-}
+	kमुक्त(siw_cpu_info.tx_valid_cpus);
+पूर्ण
 
 /*
  * Choose CPU with least number of active QP's from NUMA node of
- * TX interface.
+ * TX पूर्णांकerface.
  */
-int siw_get_tx_cpu(struct siw_device *sdev)
-{
-	const struct cpumask *tx_cpumask;
-	int i, num_cpus, cpu, min_use, node = sdev->numa_node, tx_cpu = -1;
+पूर्णांक siw_get_tx_cpu(काष्ठा siw_device *sdev)
+अणु
+	स्थिर काष्ठा cpumask *tx_cpumask;
+	पूर्णांक i, num_cpus, cpu, min_use, node = sdev->numa_node, tx_cpu = -1;
 
-	if (node < 0)
+	अगर (node < 0)
 		tx_cpumask = cpu_online_mask;
-	else
+	अन्यथा
 		tx_cpumask = siw_cpu_info.tx_valid_cpus[node];
 
 	num_cpus = cpumask_weight(tx_cpumask);
-	if (!num_cpus) {
+	अगर (!num_cpus) अणु
 		/* no CPU on this NUMA node */
 		tx_cpumask = cpu_online_mask;
 		num_cpus = cpumask_weight(tx_cpumask);
-	}
-	if (!num_cpus)
-		goto out;
+	पूर्ण
+	अगर (!num_cpus)
+		जाओ out;
 
 	cpu = cpumask_first(tx_cpumask);
 
-	for (i = 0, min_use = SIW_MAX_QP; i < num_cpus;
-	     i++, cpu = cpumask_next(cpu, tx_cpumask)) {
-		int usage;
+	क्रम (i = 0, min_use = SIW_MAX_QP; i < num_cpus;
+	     i++, cpu = cpumask_next(cpu, tx_cpumask)) अणु
+		पूर्णांक usage;
 
-		/* Skip any cores which have no TX thread */
-		if (!siw_tx_thread[cpu])
-			continue;
+		/* Skip any cores which have no TX thपढ़ो */
+		अगर (!siw_tx_thपढ़ो[cpu])
+			जारी;
 
-		usage = atomic_read(&per_cpu(siw_use_cnt, cpu));
-		if (usage <= min_use) {
+		usage = atomic_पढ़ो(&per_cpu(siw_use_cnt, cpu));
+		अगर (usage <= min_use) अणु
 			tx_cpu = cpu;
 			min_use = usage;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	siw_dbg(&sdev->base_dev,
 		"tx cpu %d, node %d, %d qp's\n", tx_cpu, node, min_use);
 
 out:
-	if (tx_cpu >= 0)
+	अगर (tx_cpu >= 0)
 		atomic_inc(&per_cpu(siw_use_cnt, tx_cpu));
-	else
+	अन्यथा
 		pr_warn("siw: no tx cpu found\n");
 
-	return tx_cpu;
-}
+	वापस tx_cpu;
+पूर्ण
 
-void siw_put_tx_cpu(int cpu)
-{
+व्योम siw_put_tx_cpu(पूर्णांक cpu)
+अणु
 	atomic_dec(&per_cpu(siw_use_cnt, cpu));
-}
+पूर्ण
 
-static struct ib_qp *siw_get_base_qp(struct ib_device *base_dev, int id)
-{
-	struct siw_qp *qp = siw_qp_id2obj(to_siw_dev(base_dev), id);
+अटल काष्ठा ib_qp *siw_get_base_qp(काष्ठा ib_device *base_dev, पूर्णांक id)
+अणु
+	काष्ठा siw_qp *qp = siw_qp_id2obj(to_siw_dev(base_dev), id);
 
-	if (qp) {
+	अगर (qp) अणु
 		/*
 		 * siw_qp_id2obj() increments object reference count
 		 */
 		siw_qp_put(qp);
-		return &qp->base_qp;
-	}
-	return NULL;
-}
+		वापस &qp->base_qp;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static const struct ib_device_ops siw_device_ops = {
+अटल स्थिर काष्ठा ib_device_ops siw_device_ops = अणु
 	.owner = THIS_MODULE,
 	.uverbs_abi_ver = SIW_ABI_VERSION,
 	.driver_id = RDMA_DRIVER_SIW,
@@ -280,9 +281,9 @@ static const struct ib_device_ops siw_device_ops = {
 	.iw_rem_ref = siw_qp_put_ref,
 	.map_mr_sg = siw_map_mr_sg,
 	.mmap = siw_mmap,
-	.mmap_free = siw_mmap_free,
-	.modify_qp = siw_verbs_modify_qp,
-	.modify_srq = siw_modify_srq,
+	.mmap_मुक्त = siw_mmap_मुक्त,
+	.modअगरy_qp = siw_verbs_modअगरy_qp,
+	.modअगरy_srq = siw_modअगरy_srq,
 	.poll_cq = siw_poll_cq,
 	.post_recv = siw_post_receive,
 	.post_send = siw_post_send,
@@ -292,50 +293,50 @@ static const struct ib_device_ops siw_device_ops = {
 	.query_port = siw_query_port,
 	.query_qp = siw_query_qp,
 	.query_srq = siw_query_srq,
-	.req_notify_cq = siw_req_notify_cq,
+	.req_notअगरy_cq = siw_req_notअगरy_cq,
 	.reg_user_mr = siw_reg_user_mr,
 
 	INIT_RDMA_OBJ_SIZE(ib_cq, siw_cq, base_cq),
 	INIT_RDMA_OBJ_SIZE(ib_pd, siw_pd, base_pd),
 	INIT_RDMA_OBJ_SIZE(ib_srq, siw_srq, base_srq),
 	INIT_RDMA_OBJ_SIZE(ib_ucontext, siw_ucontext, base_ucontext),
-};
+पूर्ण;
 
-static struct siw_device *siw_device_create(struct net_device *netdev)
-{
-	struct siw_device *sdev = NULL;
-	struct ib_device *base_dev;
-	int rv;
+अटल काष्ठा siw_device *siw_device_create(काष्ठा net_device *netdev)
+अणु
+	काष्ठा siw_device *sdev = शून्य;
+	काष्ठा ib_device *base_dev;
+	पूर्णांक rv;
 
 	sdev = ib_alloc_device(siw_device, base_dev);
-	if (!sdev)
-		return NULL;
+	अगर (!sdev)
+		वापस शून्य;
 
 	base_dev = &sdev->base_dev;
 
 	sdev->netdev = netdev;
 
-	if (netdev->type != ARPHRD_LOOPBACK) {
-		addrconf_addr_eui48((unsigned char *)&base_dev->node_guid,
+	अगर (netdev->type != ARPHRD_LOOPBACK) अणु
+		addrconf_addr_eui48((अचिन्हित अक्षर *)&base_dev->node_guid,
 				    netdev->dev_addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * The loopback device does not have a HW address,
+		 * The loopback device करोes not have a HW address,
 		 * but connection mangagement lib expects gid != 0
 		 */
-		size_t len = min_t(size_t, strlen(base_dev->name), 6);
-		char addr[6] = { };
+		माप_प्रकार len = min_t(माप_प्रकार, म_माप(base_dev->name), 6);
+		अक्षर addr[6] = अणु पूर्ण;
 
-		memcpy(addr, base_dev->name, len);
-		addrconf_addr_eui48((unsigned char *)&base_dev->node_guid,
+		स_नकल(addr, base_dev->name, len);
+		addrconf_addr_eui48((अचिन्हित अक्षर *)&base_dev->node_guid,
 				    addr);
-	}
+	पूर्ण
 
 	base_dev->uverbs_cmd_mask |= BIT_ULL(IB_USER_VERBS_CMD_POST_SEND);
 
 	base_dev->node_type = RDMA_NODE_RNIC;
-	memcpy(base_dev->node_desc, SIW_NODE_DESC_COMMON,
-	       sizeof(SIW_NODE_DESC_COMMON));
+	स_नकल(base_dev->node_desc, SIW_NODE_DESC_COMMON,
+	       माप(SIW_NODE_DESC_COMMON));
 
 	/*
 	 * Current model (one-to-one device association):
@@ -350,11 +351,11 @@ static struct siw_device *siw_device_create(struct net_device *netdev)
 
 	ib_set_device_ops(base_dev, &siw_device_ops);
 	rv = ib_device_set_netdev(base_dev, netdev, 1);
-	if (rv)
-		goto error;
+	अगर (rv)
+		जाओ error;
 
-	memcpy(base_dev->iw_ifname, netdev->name,
-	       sizeof(base_dev->iw_ifname));
+	स_नकल(base_dev->iw_अगरname, netdev->name,
+	       माप(base_dev->iw_अगरname));
 
 	/* Disable TCP port mapping */
 	base_dev->iw_driver_flags = IW_F_NO_PORT_MAP;
@@ -387,243 +388,243 @@ static struct siw_device *siw_device_create(struct net_device *netdev)
 	sdev->numa_node = dev_to_node(&netdev->dev);
 	spin_lock_init(&sdev->lock);
 
-	return sdev;
+	वापस sdev;
 error:
 	ib_dealloc_device(base_dev);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Network link becomes unavailable. Mark all
  * affected QP's accordingly.
  */
-static void siw_netdev_down(struct work_struct *work)
-{
-	struct siw_device *sdev =
-		container_of(work, struct siw_device, netdev_down);
+अटल व्योम siw_netdev_करोwn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा siw_device *sdev =
+		container_of(work, काष्ठा siw_device, netdev_करोwn);
 
-	struct siw_qp_attrs qp_attrs;
-	struct list_head *pos, *tmp;
+	काष्ठा siw_qp_attrs qp_attrs;
+	काष्ठा list_head *pos, *पंचांगp;
 
-	memset(&qp_attrs, 0, sizeof(qp_attrs));
+	स_रखो(&qp_attrs, 0, माप(qp_attrs));
 	qp_attrs.state = SIW_QP_STATE_ERROR;
 
-	list_for_each_safe(pos, tmp, &sdev->qp_list) {
-		struct siw_qp *qp = list_entry(pos, struct siw_qp, devq);
+	list_क्रम_each_safe(pos, पंचांगp, &sdev->qp_list) अणु
+		काष्ठा siw_qp *qp = list_entry(pos, काष्ठा siw_qp, devq);
 
-		down_write(&qp->state_lock);
-		WARN_ON(siw_qp_modify(qp, &qp_attrs, SIW_QP_ATTR_STATE));
-		up_write(&qp->state_lock);
-	}
+		करोwn_ग_लिखो(&qp->state_lock);
+		WARN_ON(siw_qp_modअगरy(qp, &qp_attrs, SIW_QP_ATTR_STATE));
+		up_ग_लिखो(&qp->state_lock);
+	पूर्ण
 	ib_device_put(&sdev->base_dev);
-}
+पूर्ण
 
-static void siw_device_goes_down(struct siw_device *sdev)
-{
-	if (ib_device_try_get(&sdev->base_dev)) {
-		INIT_WORK(&sdev->netdev_down, siw_netdev_down);
-		schedule_work(&sdev->netdev_down);
-	}
-}
+अटल व्योम siw_device_goes_करोwn(काष्ठा siw_device *sdev)
+अणु
+	अगर (ib_device_try_get(&sdev->base_dev)) अणु
+		INIT_WORK(&sdev->netdev_करोwn, siw_netdev_करोwn);
+		schedule_work(&sdev->netdev_करोwn);
+	पूर्ण
+पूर्ण
 
-static int siw_netdev_event(struct notifier_block *nb, unsigned long event,
-			    void *arg)
-{
-	struct net_device *netdev = netdev_notifier_info_to_dev(arg);
-	struct ib_device *base_dev;
-	struct siw_device *sdev;
+अटल पूर्णांक siw_netdev_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
+			    व्योम *arg)
+अणु
+	काष्ठा net_device *netdev = netdev_notअगरier_info_to_dev(arg);
+	काष्ठा ib_device *base_dev;
+	काष्ठा siw_device *sdev;
 
 	dev_dbg(&netdev->dev, "siw: event %lu\n", event);
 
-	if (dev_net(netdev) != &init_net)
-		return NOTIFY_OK;
+	अगर (dev_net(netdev) != &init_net)
+		वापस NOTIFY_OK;
 
 	base_dev = ib_device_get_by_netdev(netdev, RDMA_DRIVER_SIW);
-	if (!base_dev)
-		return NOTIFY_OK;
+	अगर (!base_dev)
+		वापस NOTIFY_OK;
 
 	sdev = to_siw_dev(base_dev);
 
-	switch (event) {
-	case NETDEV_UP:
+	चयन (event) अणु
+	हाल NETDEV_UP:
 		sdev->state = IB_PORT_ACTIVE;
 		siw_port_event(sdev, 1, IB_EVENT_PORT_ACTIVE);
-		break;
+		अवरोध;
 
-	case NETDEV_GOING_DOWN:
-		siw_device_goes_down(sdev);
-		break;
+	हाल NETDEV_GOING_DOWN:
+		siw_device_goes_करोwn(sdev);
+		अवरोध;
 
-	case NETDEV_DOWN:
+	हाल NETDEV_DOWN:
 		sdev->state = IB_PORT_DOWN;
 		siw_port_event(sdev, 1, IB_EVENT_PORT_ERR);
-		break;
+		अवरोध;
 
-	case NETDEV_REGISTER:
+	हाल NETDEV_REGISTER:
 		/*
 		 * Device registration now handled only by
 		 * rdma netlink commands. So it shall be impossible
 		 * to end up here with a valid siw device.
 		 */
 		siw_dbg(base_dev, "unexpected NETDEV_REGISTER event\n");
-		break;
+		अवरोध;
 
-	case NETDEV_UNREGISTER:
-		ib_unregister_device_queued(&sdev->base_dev);
-		break;
+	हाल NETDEV_UNREGISTER:
+		ib_unरेजिस्टर_device_queued(&sdev->base_dev);
+		अवरोध;
 
-	case NETDEV_CHANGEADDR:
+	हाल NETDEV_CHANGEADDR:
 		siw_port_event(sdev, 1, IB_EVENT_LID_CHANGE);
-		break;
+		अवरोध;
 	/*
-	 * Todo: Below netdev events are currently not handled.
+	 * Toकरो: Below netdev events are currently not handled.
 	 */
-	case NETDEV_CHANGEMTU:
-	case NETDEV_CHANGE:
-		break;
+	हाल NETDEV_CHANGEMTU:
+	हाल NETDEV_CHANGE:
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 	ib_device_put(&sdev->base_dev);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block siw_netdev_nb = {
-	.notifier_call = siw_netdev_event,
-};
+अटल काष्ठा notअगरier_block siw_netdev_nb = अणु
+	.notअगरier_call = siw_netdev_event,
+पूर्ण;
 
-static int siw_newlink(const char *basedev_name, struct net_device *netdev)
-{
-	struct ib_device *base_dev;
-	struct siw_device *sdev = NULL;
-	int rv = -ENOMEM;
+अटल पूर्णांक siw_newlink(स्थिर अक्षर *basedev_name, काष्ठा net_device *netdev)
+अणु
+	काष्ठा ib_device *base_dev;
+	काष्ठा siw_device *sdev = शून्य;
+	पूर्णांक rv = -ENOMEM;
 
-	if (!siw_dev_qualified(netdev))
-		return -EINVAL;
+	अगर (!siw_dev_qualअगरied(netdev))
+		वापस -EINVAL;
 
 	base_dev = ib_device_get_by_netdev(netdev, RDMA_DRIVER_SIW);
-	if (base_dev) {
+	अगर (base_dev) अणु
 		ib_device_put(base_dev);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 	sdev = siw_device_create(netdev);
-	if (sdev) {
+	अगर (sdev) अणु
 		dev_dbg(&netdev->dev, "siw: new device\n");
 
-		if (netif_running(netdev) && netif_carrier_ok(netdev))
+		अगर (netअगर_running(netdev) && netअगर_carrier_ok(netdev))
 			sdev->state = IB_PORT_ACTIVE;
-		else
+		अन्यथा
 			sdev->state = IB_PORT_DOWN;
 
-		rv = siw_device_register(sdev, basedev_name);
-		if (rv)
+		rv = siw_device_रेजिस्टर(sdev, basedev_name);
+		अगर (rv)
 			ib_dealloc_device(&sdev->base_dev);
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-static struct rdma_link_ops siw_link_ops = {
+अटल काष्ठा rdma_link_ops siw_link_ops = अणु
 	.type = "siw",
 	.newlink = siw_newlink,
-};
+पूर्ण;
 
 /*
- * siw_init_module - Initialize Softiwarp module and register with netdev
- *                   subsystem.
+ * siw_init_module - Initialize Softiwarp module and रेजिस्टर with netdev
+ *                   subप्रणाली.
  */
-static __init int siw_init_module(void)
-{
-	int rv;
-	int nr_cpu;
+अटल __init पूर्णांक siw_init_module(व्योम)
+अणु
+	पूर्णांक rv;
+	पूर्णांक nr_cpu;
 
-	if (SENDPAGE_THRESH < SIW_MAX_INLINE) {
+	अगर (SENDPAGE_THRESH < SIW_MAX_INLINE) अणु
 		pr_info("siw: sendpage threshold too small: %u\n",
-			(int)SENDPAGE_THRESH);
+			(पूर्णांक)SENDPAGE_THRESH);
 		rv = -EINVAL;
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 	rv = siw_init_cpulist();
-	if (rv)
-		goto out_error;
+	अगर (rv)
+		जाओ out_error;
 
 	rv = siw_cm_init();
-	if (rv)
-		goto out_error;
+	अगर (rv)
+		जाओ out_error;
 
-	if (!siw_create_tx_threads()) {
+	अगर (!siw_create_tx_thपढ़ोs()) अणु
 		pr_info("siw: Could not start any TX thread\n");
 		rv = -ENOMEM;
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 	/*
 	 * Locate CRC32 algorithm. If unsuccessful, fail
-	 * loading siw only, if CRC is required.
+	 * loading siw only, अगर CRC is required.
 	 */
 	siw_crypto_shash = crypto_alloc_shash("crc32c", 0, 0);
-	if (IS_ERR(siw_crypto_shash)) {
+	अगर (IS_ERR(siw_crypto_shash)) अणु
 		pr_info("siw: Loading CRC32c failed: %ld\n",
 			PTR_ERR(siw_crypto_shash));
-		siw_crypto_shash = NULL;
-		if (mpa_crc_required) {
+		siw_crypto_shash = शून्य;
+		अगर (mpa_crc_required) अणु
 			rv = -EOPNOTSUPP;
-			goto out_error;
-		}
-	}
-	rv = register_netdevice_notifier(&siw_netdev_nb);
-	if (rv)
-		goto out_error;
+			जाओ out_error;
+		पूर्ण
+	पूर्ण
+	rv = रेजिस्टर_netdevice_notअगरier(&siw_netdev_nb);
+	अगर (rv)
+		जाओ out_error;
 
-	rdma_link_register(&siw_link_ops);
+	rdma_link_रेजिस्टर(&siw_link_ops);
 
 	pr_info("SoftiWARP attached\n");
-	return 0;
+	वापस 0;
 
 out_error:
-	for (nr_cpu = 0; nr_cpu < nr_cpu_ids; nr_cpu++) {
-		if (siw_tx_thread[nr_cpu]) {
-			siw_stop_tx_thread(nr_cpu);
-			siw_tx_thread[nr_cpu] = NULL;
-		}
-	}
-	if (siw_crypto_shash)
-		crypto_free_shash(siw_crypto_shash);
+	क्रम (nr_cpu = 0; nr_cpu < nr_cpu_ids; nr_cpu++) अणु
+		अगर (siw_tx_thपढ़ो[nr_cpu]) अणु
+			siw_stop_tx_thपढ़ो(nr_cpu);
+			siw_tx_thपढ़ो[nr_cpu] = शून्य;
+		पूर्ण
+	पूर्ण
+	अगर (siw_crypto_shash)
+		crypto_मुक्त_shash(siw_crypto_shash);
 
 	pr_info("SoftIWARP attach failed. Error: %d\n", rv);
 
-	siw_cm_exit();
+	siw_cm_निकास();
 	siw_destroy_cpulist();
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static void __exit siw_exit_module(void)
-{
-	int cpu;
+अटल व्योम __निकास siw_निकास_module(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
-		if (siw_tx_thread[cpu]) {
-			siw_stop_tx_thread(cpu);
-			siw_tx_thread[cpu] = NULL;
-		}
-	}
-	unregister_netdevice_notifier(&siw_netdev_nb);
-	rdma_link_unregister(&siw_link_ops);
-	ib_unregister_driver(RDMA_DRIVER_SIW);
+	क्रम_each_possible_cpu(cpu) अणु
+		अगर (siw_tx_thपढ़ो[cpu]) अणु
+			siw_stop_tx_thपढ़ो(cpu);
+			siw_tx_thपढ़ो[cpu] = शून्य;
+		पूर्ण
+	पूर्ण
+	unरेजिस्टर_netdevice_notअगरier(&siw_netdev_nb);
+	rdma_link_unरेजिस्टर(&siw_link_ops);
+	ib_unरेजिस्टर_driver(RDMA_DRIVER_SIW);
 
-	siw_cm_exit();
+	siw_cm_निकास();
 
 	siw_destroy_cpulist();
 
-	if (siw_crypto_shash)
-		crypto_free_shash(siw_crypto_shash);
+	अगर (siw_crypto_shash)
+		crypto_मुक्त_shash(siw_crypto_shash);
 
 	pr_info("SoftiWARP detached\n");
-}
+पूर्ण
 
 module_init(siw_init_module);
-module_exit(siw_exit_module);
+module_निकास(siw_निकास_module);
 
 MODULE_ALIAS_RDMA_LINK("siw");

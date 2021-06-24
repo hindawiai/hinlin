@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * SPI NOR driver for NXP SPI Flash Interface (SPIFI)
+ * SPI NOR driver क्रम NXP SPI Flash Interface (SPIFI)
  *
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  *
@@ -8,478 +9,478 @@
  * Copyright (C) 2013 Freescale Semiconductor, Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/mtd/spi-nor.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/mtd/spi-nor.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/spi/spi.h>
 
-/* NXP SPIFI registers, bits and macros */
-#define SPIFI_CTRL				0x000
-#define  SPIFI_CTRL_TIMEOUT(timeout)		(timeout)
-#define  SPIFI_CTRL_CSHIGH(cshigh)		((cshigh) << 16)
-#define  SPIFI_CTRL_MODE3			BIT(23)
-#define  SPIFI_CTRL_DUAL			BIT(28)
-#define  SPIFI_CTRL_FBCLK			BIT(30)
-#define SPIFI_CMD				0x004
-#define  SPIFI_CMD_DATALEN(dlen)		((dlen) & 0x3fff)
-#define  SPIFI_CMD_DOUT				BIT(15)
-#define  SPIFI_CMD_INTLEN(ilen)			((ilen) << 16)
-#define  SPIFI_CMD_FIELDFORM(field)		((field) << 19)
-#define  SPIFI_CMD_FIELDFORM_ALL_SERIAL		SPIFI_CMD_FIELDFORM(0x0)
-#define  SPIFI_CMD_FIELDFORM_QUAD_DUAL_DATA	SPIFI_CMD_FIELDFORM(0x1)
-#define  SPIFI_CMD_FRAMEFORM(frame)		((frame) << 21)
-#define  SPIFI_CMD_FRAMEFORM_OPCODE_ONLY	SPIFI_CMD_FRAMEFORM(0x1)
-#define  SPIFI_CMD_OPCODE(op)			((op) << 24)
-#define SPIFI_ADDR				0x008
-#define SPIFI_IDATA				0x00c
-#define SPIFI_CLIMIT				0x010
-#define SPIFI_DATA				0x014
-#define SPIFI_MCMD				0x018
-#define SPIFI_STAT				0x01c
-#define  SPIFI_STAT_MCINIT			BIT(0)
-#define  SPIFI_STAT_CMD				BIT(1)
-#define  SPIFI_STAT_RESET			BIT(4)
+/* NXP SPIFI रेजिस्टरs, bits and macros */
+#घोषणा SPIFI_CTRL				0x000
+#घोषणा  SPIFI_CTRL_TIMEOUT(समयout)		(समयout)
+#घोषणा  SPIFI_CTRL_CSHIGH(cshigh)		((cshigh) << 16)
+#घोषणा  SPIFI_CTRL_MODE3			BIT(23)
+#घोषणा  SPIFI_CTRL_DUAL			BIT(28)
+#घोषणा  SPIFI_CTRL_FBCLK			BIT(30)
+#घोषणा SPIFI_CMD				0x004
+#घोषणा  SPIFI_CMD_DATALEN(dlen)		((dlen) & 0x3fff)
+#घोषणा  SPIFI_CMD_DOUT				BIT(15)
+#घोषणा  SPIFI_CMD_INTLEN(ilen)			((ilen) << 16)
+#घोषणा  SPIFI_CMD_FIELDFORM(field)		((field) << 19)
+#घोषणा  SPIFI_CMD_FIELDFORM_ALL_SERIAL		SPIFI_CMD_FIELDFORM(0x0)
+#घोषणा  SPIFI_CMD_FIELDFORM_QUAD_DUAL_DATA	SPIFI_CMD_FIELDFORM(0x1)
+#घोषणा  SPIFI_CMD_FRAMEFORM(frame)		((frame) << 21)
+#घोषणा  SPIFI_CMD_FRAMEFORM_OPCODE_ONLY	SPIFI_CMD_FRAMEFORM(0x1)
+#घोषणा  SPIFI_CMD_OPCODE(op)			((op) << 24)
+#घोषणा SPIFI_ADDR				0x008
+#घोषणा SPIFI_IDATA				0x00c
+#घोषणा SPIFI_CLIMIT				0x010
+#घोषणा SPIFI_DATA				0x014
+#घोषणा SPIFI_MCMD				0x018
+#घोषणा SPIFI_STAT				0x01c
+#घोषणा  SPIFI_STAT_MCINIT			BIT(0)
+#घोषणा  SPIFI_STAT_CMD				BIT(1)
+#घोषणा  SPIFI_STAT_RESET			BIT(4)
 
-#define SPI_NOR_MAX_ID_LEN	6
+#घोषणा SPI_NOR_MAX_ID_LEN	6
 
-struct nxp_spifi {
-	struct device *dev;
-	struct clk *clk_spifi;
-	struct clk *clk_reg;
-	void __iomem *io_base;
-	void __iomem *flash_base;
-	struct spi_nor nor;
+काष्ठा nxp_spअगरi अणु
+	काष्ठा device *dev;
+	काष्ठा clk *clk_spअगरi;
+	काष्ठा clk *clk_reg;
+	व्योम __iomem *io_base;
+	व्योम __iomem *flash_base;
+	काष्ठा spi_nor nor;
 	bool memory_mode;
 	u32 mcmd;
-};
+पूर्ण;
 
-static int nxp_spifi_wait_for_cmd(struct nxp_spifi *spifi)
-{
+अटल पूर्णांक nxp_spअगरi_रुको_क्रम_cmd(काष्ठा nxp_spअगरi *spअगरi)
+अणु
 	u8 stat;
-	int ret;
+	पूर्णांक ret;
 
-	ret = readb_poll_timeout(spifi->io_base + SPIFI_STAT, stat,
+	ret = पढ़ोb_poll_समयout(spअगरi->io_base + SPIFI_STAT, stat,
 				 !(stat & SPIFI_STAT_CMD), 10, 30);
-	if (ret)
-		dev_warn(spifi->dev, "command timed out\n");
+	अगर (ret)
+		dev_warn(spअगरi->dev, "command timed out\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nxp_spifi_reset(struct nxp_spifi *spifi)
-{
+अटल पूर्णांक nxp_spअगरi_reset(काष्ठा nxp_spअगरi *spअगरi)
+अणु
 	u8 stat;
-	int ret;
+	पूर्णांक ret;
 
-	writel(SPIFI_STAT_RESET, spifi->io_base + SPIFI_STAT);
-	ret = readb_poll_timeout(spifi->io_base + SPIFI_STAT, stat,
+	ग_लिखोl(SPIFI_STAT_RESET, spअगरi->io_base + SPIFI_STAT);
+	ret = पढ़ोb_poll_समयout(spअगरi->io_base + SPIFI_STAT, stat,
 				 !(stat & SPIFI_STAT_RESET), 10, 30);
-	if (ret)
-		dev_warn(spifi->dev, "state reset timed out\n");
+	अगर (ret)
+		dev_warn(spअगरi->dev, "state reset timed out\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nxp_spifi_set_memory_mode_off(struct nxp_spifi *spifi)
-{
-	int ret;
+अटल पूर्णांक nxp_spअगरi_set_memory_mode_off(काष्ठा nxp_spअगरi *spअगरi)
+अणु
+	पूर्णांक ret;
 
-	if (!spifi->memory_mode)
-		return 0;
+	अगर (!spअगरi->memory_mode)
+		वापस 0;
 
-	ret = nxp_spifi_reset(spifi);
-	if (ret)
-		dev_err(spifi->dev, "unable to enter command mode\n");
-	else
-		spifi->memory_mode = false;
+	ret = nxp_spअगरi_reset(spअगरi);
+	अगर (ret)
+		dev_err(spअगरi->dev, "unable to enter command mode\n");
+	अन्यथा
+		spअगरi->memory_mode = false;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nxp_spifi_set_memory_mode_on(struct nxp_spifi *spifi)
-{
+अटल पूर्णांक nxp_spअगरi_set_memory_mode_on(काष्ठा nxp_spअगरi *spअगरi)
+अणु
 	u8 stat;
-	int ret;
+	पूर्णांक ret;
 
-	if (spifi->memory_mode)
-		return 0;
+	अगर (spअगरi->memory_mode)
+		वापस 0;
 
-	writel(spifi->mcmd, spifi->io_base + SPIFI_MCMD);
-	ret = readb_poll_timeout(spifi->io_base + SPIFI_STAT, stat,
+	ग_लिखोl(spअगरi->mcmd, spअगरi->io_base + SPIFI_MCMD);
+	ret = पढ़ोb_poll_समयout(spअगरi->io_base + SPIFI_STAT, stat,
 				 stat & SPIFI_STAT_MCINIT, 10, 30);
-	if (ret)
-		dev_err(spifi->dev, "unable to enter memory mode\n");
-	else
-		spifi->memory_mode = true;
+	अगर (ret)
+		dev_err(spअगरi->dev, "unable to enter memory mode\n");
+	अन्यथा
+		spअगरi->memory_mode = true;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nxp_spifi_read_reg(struct spi_nor *nor, u8 opcode, u8 *buf,
-			      size_t len)
-{
-	struct nxp_spifi *spifi = nor->priv;
+अटल पूर्णांक nxp_spअगरi_पढ़ो_reg(काष्ठा spi_nor *nor, u8 opcode, u8 *buf,
+			      माप_प्रकार len)
+अणु
+	काष्ठा nxp_spअगरi *spअगरi = nor->priv;
 	u32 cmd;
-	int ret;
+	पूर्णांक ret;
 
-	ret = nxp_spifi_set_memory_mode_off(spifi);
-	if (ret)
-		return ret;
+	ret = nxp_spअगरi_set_memory_mode_off(spअगरi);
+	अगर (ret)
+		वापस ret;
 
 	cmd = SPIFI_CMD_DATALEN(len) |
 	      SPIFI_CMD_OPCODE(opcode) |
 	      SPIFI_CMD_FIELDFORM_ALL_SERIAL |
 	      SPIFI_CMD_FRAMEFORM_OPCODE_ONLY;
-	writel(cmd, spifi->io_base + SPIFI_CMD);
+	ग_लिखोl(cmd, spअगरi->io_base + SPIFI_CMD);
 
-	while (len--)
-		*buf++ = readb(spifi->io_base + SPIFI_DATA);
+	जबतक (len--)
+		*buf++ = पढ़ोb(spअगरi->io_base + SPIFI_DATA);
 
-	return nxp_spifi_wait_for_cmd(spifi);
-}
+	वापस nxp_spअगरi_रुको_क्रम_cmd(spअगरi);
+पूर्ण
 
-static int nxp_spifi_write_reg(struct spi_nor *nor, u8 opcode, const u8 *buf,
-			       size_t len)
-{
-	struct nxp_spifi *spifi = nor->priv;
+अटल पूर्णांक nxp_spअगरi_ग_लिखो_reg(काष्ठा spi_nor *nor, u8 opcode, स्थिर u8 *buf,
+			       माप_प्रकार len)
+अणु
+	काष्ठा nxp_spअगरi *spअगरi = nor->priv;
 	u32 cmd;
-	int ret;
+	पूर्णांक ret;
 
-	ret = nxp_spifi_set_memory_mode_off(spifi);
-	if (ret)
-		return ret;
+	ret = nxp_spअगरi_set_memory_mode_off(spअगरi);
+	अगर (ret)
+		वापस ret;
 
 	cmd = SPIFI_CMD_DOUT |
 	      SPIFI_CMD_DATALEN(len) |
 	      SPIFI_CMD_OPCODE(opcode) |
 	      SPIFI_CMD_FIELDFORM_ALL_SERIAL |
 	      SPIFI_CMD_FRAMEFORM_OPCODE_ONLY;
-	writel(cmd, spifi->io_base + SPIFI_CMD);
+	ग_लिखोl(cmd, spअगरi->io_base + SPIFI_CMD);
 
-	while (len--)
-		writeb(*buf++, spifi->io_base + SPIFI_DATA);
+	जबतक (len--)
+		ग_लिखोb(*buf++, spअगरi->io_base + SPIFI_DATA);
 
-	return nxp_spifi_wait_for_cmd(spifi);
-}
+	वापस nxp_spअगरi_रुको_क्रम_cmd(spअगरi);
+पूर्ण
 
-static ssize_t nxp_spifi_read(struct spi_nor *nor, loff_t from, size_t len,
-			      u_char *buf)
-{
-	struct nxp_spifi *spifi = nor->priv;
-	int ret;
+अटल sमाप_प्रकार nxp_spअगरi_पढ़ो(काष्ठा spi_nor *nor, loff_t from, माप_प्रकार len,
+			      u_अक्षर *buf)
+अणु
+	काष्ठा nxp_spअगरi *spअगरi = nor->priv;
+	पूर्णांक ret;
 
-	ret = nxp_spifi_set_memory_mode_on(spifi);
-	if (ret)
-		return ret;
+	ret = nxp_spअगरi_set_memory_mode_on(spअगरi);
+	अगर (ret)
+		वापस ret;
 
-	memcpy_fromio(buf, spifi->flash_base + from, len);
+	स_नकल_fromio(buf, spअगरi->flash_base + from, len);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t nxp_spifi_write(struct spi_nor *nor, loff_t to, size_t len,
-			       const u_char *buf)
-{
-	struct nxp_spifi *spifi = nor->priv;
+अटल sमाप_प्रकार nxp_spअगरi_ग_लिखो(काष्ठा spi_nor *nor, loff_t to, माप_प्रकार len,
+			       स्थिर u_अक्षर *buf)
+अणु
+	काष्ठा nxp_spअगरi *spअगरi = nor->priv;
 	u32 cmd;
-	int ret;
-	size_t i;
+	पूर्णांक ret;
+	माप_प्रकार i;
 
-	ret = nxp_spifi_set_memory_mode_off(spifi);
-	if (ret)
-		return ret;
+	ret = nxp_spअगरi_set_memory_mode_off(spअगरi);
+	अगर (ret)
+		वापस ret;
 
-	writel(to, spifi->io_base + SPIFI_ADDR);
+	ग_लिखोl(to, spअगरi->io_base + SPIFI_ADDR);
 
 	cmd = SPIFI_CMD_DOUT |
 	      SPIFI_CMD_DATALEN(len) |
 	      SPIFI_CMD_FIELDFORM_ALL_SERIAL |
 	      SPIFI_CMD_OPCODE(nor->program_opcode) |
-	      SPIFI_CMD_FRAMEFORM(spifi->nor.addr_width + 1);
-	writel(cmd, spifi->io_base + SPIFI_CMD);
+	      SPIFI_CMD_FRAMEFORM(spअगरi->nor.addr_width + 1);
+	ग_लिखोl(cmd, spअगरi->io_base + SPIFI_CMD);
 
-	for (i = 0; i < len; i++)
-		writeb(buf[i], spifi->io_base + SPIFI_DATA);
+	क्रम (i = 0; i < len; i++)
+		ग_लिखोb(buf[i], spअगरi->io_base + SPIFI_DATA);
 
-	ret = nxp_spifi_wait_for_cmd(spifi);
-	if (ret)
-		return ret;
+	ret = nxp_spअगरi_रुको_क्रम_cmd(spअगरi);
+	अगर (ret)
+		वापस ret;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int nxp_spifi_erase(struct spi_nor *nor, loff_t offs)
-{
-	struct nxp_spifi *spifi = nor->priv;
+अटल पूर्णांक nxp_spअगरi_erase(काष्ठा spi_nor *nor, loff_t offs)
+अणु
+	काष्ठा nxp_spअगरi *spअगरi = nor->priv;
 	u32 cmd;
-	int ret;
+	पूर्णांक ret;
 
-	ret = nxp_spifi_set_memory_mode_off(spifi);
-	if (ret)
-		return ret;
+	ret = nxp_spअगरi_set_memory_mode_off(spअगरi);
+	अगर (ret)
+		वापस ret;
 
-	writel(offs, spifi->io_base + SPIFI_ADDR);
+	ग_लिखोl(offs, spअगरi->io_base + SPIFI_ADDR);
 
 	cmd = SPIFI_CMD_FIELDFORM_ALL_SERIAL |
 	      SPIFI_CMD_OPCODE(nor->erase_opcode) |
-	      SPIFI_CMD_FRAMEFORM(spifi->nor.addr_width + 1);
-	writel(cmd, spifi->io_base + SPIFI_CMD);
+	      SPIFI_CMD_FRAMEFORM(spअगरi->nor.addr_width + 1);
+	ग_लिखोl(cmd, spअगरi->io_base + SPIFI_CMD);
 
-	return nxp_spifi_wait_for_cmd(spifi);
-}
+	वापस nxp_spअगरi_रुको_क्रम_cmd(spअगरi);
+पूर्ण
 
-static int nxp_spifi_setup_memory_cmd(struct nxp_spifi *spifi)
-{
-	switch (spifi->nor.read_proto) {
-	case SNOR_PROTO_1_1_1:
-		spifi->mcmd = SPIFI_CMD_FIELDFORM_ALL_SERIAL;
-		break;
-	case SNOR_PROTO_1_1_2:
-	case SNOR_PROTO_1_1_4:
-		spifi->mcmd = SPIFI_CMD_FIELDFORM_QUAD_DUAL_DATA;
-		break;
-	default:
-		dev_err(spifi->dev, "unsupported SPI read mode\n");
-		return -EINVAL;
-	}
+अटल पूर्णांक nxp_spअगरi_setup_memory_cmd(काष्ठा nxp_spअगरi *spअगरi)
+अणु
+	चयन (spअगरi->nor.पढ़ो_proto) अणु
+	हाल SNOR_PROTO_1_1_1:
+		spअगरi->mcmd = SPIFI_CMD_FIELDFORM_ALL_SERIAL;
+		अवरोध;
+	हाल SNOR_PROTO_1_1_2:
+	हाल SNOR_PROTO_1_1_4:
+		spअगरi->mcmd = SPIFI_CMD_FIELDFORM_QUAD_DUAL_DATA;
+		अवरोध;
+	शेष:
+		dev_err(spअगरi->dev, "unsupported SPI read mode\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Memory mode supports address length between 1 and 4 */
-	if (spifi->nor.addr_width < 1 || spifi->nor.addr_width > 4)
-		return -EINVAL;
+	अगर (spअगरi->nor.addr_width < 1 || spअगरi->nor.addr_width > 4)
+		वापस -EINVAL;
 
-	spifi->mcmd |= SPIFI_CMD_OPCODE(spifi->nor.read_opcode) |
-		       SPIFI_CMD_INTLEN(spifi->nor.read_dummy / 8) |
-		       SPIFI_CMD_FRAMEFORM(spifi->nor.addr_width + 1);
+	spअगरi->mcmd |= SPIFI_CMD_OPCODE(spअगरi->nor.पढ़ो_opcode) |
+		       SPIFI_CMD_INTLEN(spअगरi->nor.पढ़ो_dummy / 8) |
+		       SPIFI_CMD_FRAMEFORM(spअगरi->nor.addr_width + 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nxp_spifi_dummy_id_read(struct spi_nor *nor)
-{
+अटल व्योम nxp_spअगरi_dummy_id_पढ़ो(काष्ठा spi_nor *nor)
+अणु
 	u8 id[SPI_NOR_MAX_ID_LEN];
-	nor->controller_ops->read_reg(nor, SPINOR_OP_RDID, id,
+	nor->controller_ops->पढ़ो_reg(nor, SPINOR_OP_RDID, id,
 				      SPI_NOR_MAX_ID_LEN);
-}
+पूर्ण
 
-static const struct spi_nor_controller_ops nxp_spifi_controller_ops = {
-	.read_reg  = nxp_spifi_read_reg,
-	.write_reg = nxp_spifi_write_reg,
-	.read  = nxp_spifi_read,
-	.write = nxp_spifi_write,
-	.erase = nxp_spifi_erase,
-};
+अटल स्थिर काष्ठा spi_nor_controller_ops nxp_spअगरi_controller_ops = अणु
+	.पढ़ो_reg  = nxp_spअगरi_पढ़ो_reg,
+	.ग_लिखो_reg = nxp_spअगरi_ग_लिखो_reg,
+	.पढ़ो  = nxp_spअगरi_पढ़ो,
+	.ग_लिखो = nxp_spअगरi_ग_लिखो,
+	.erase = nxp_spअगरi_erase,
+पूर्ण;
 
-static int nxp_spifi_setup_flash(struct nxp_spifi *spifi,
-				 struct device_node *np)
-{
-	struct spi_nor_hwcaps hwcaps = {
+अटल पूर्णांक nxp_spअगरi_setup_flash(काष्ठा nxp_spअगरi *spअगरi,
+				 काष्ठा device_node *np)
+अणु
+	काष्ठा spi_nor_hwcaps hwcaps = अणु
 		.mask = SNOR_HWCAPS_READ |
 			SNOR_HWCAPS_READ_FAST |
 			SNOR_HWCAPS_PP,
-	};
+	पूर्ण;
 	u32 ctrl, property;
 	u16 mode = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!of_property_read_u32(np, "spi-rx-bus-width", &property)) {
-		switch (property) {
-		case 1:
-			break;
-		case 2:
+	अगर (!of_property_पढ़ो_u32(np, "spi-rx-bus-width", &property)) अणु
+		चयन (property) अणु
+		हाल 1:
+			अवरोध;
+		हाल 2:
 			mode |= SPI_RX_DUAL;
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			mode |= SPI_RX_QUAD;
-			break;
-		default:
-			dev_err(spifi->dev, "unsupported rx-bus-width\n");
-			return -EINVAL;
-		}
-	}
+			अवरोध;
+		शेष:
+			dev_err(spअगरi->dev, "unsupported rx-bus-width\n");
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (of_find_property(np, "spi-cpha", NULL))
+	अगर (of_find_property(np, "spi-cpha", शून्य))
 		mode |= SPI_CPHA;
 
-	if (of_find_property(np, "spi-cpol", NULL))
+	अगर (of_find_property(np, "spi-cpol", शून्य))
 		mode |= SPI_CPOL;
 
-	/* Setup control register defaults */
+	/* Setup control रेजिस्टर शेषs */
 	ctrl = SPIFI_CTRL_TIMEOUT(1000) |
 	       SPIFI_CTRL_CSHIGH(15) |
 	       SPIFI_CTRL_FBCLK;
 
-	if (mode & SPI_RX_DUAL) {
+	अगर (mode & SPI_RX_DUAL) अणु
 		ctrl |= SPIFI_CTRL_DUAL;
 		hwcaps.mask |= SNOR_HWCAPS_READ_1_1_2;
-	} else if (mode & SPI_RX_QUAD) {
+	पूर्ण अन्यथा अगर (mode & SPI_RX_QUAD) अणु
 		ctrl &= ~SPIFI_CTRL_DUAL;
 		hwcaps.mask |= SNOR_HWCAPS_READ_1_1_4;
-	} else {
+	पूर्ण अन्यथा अणु
 		ctrl |= SPIFI_CTRL_DUAL;
-	}
+	पूर्ण
 
-	switch (mode & (SPI_CPHA | SPI_CPOL)) {
-	case SPI_MODE_0:
+	चयन (mode & (SPI_CPHA | SPI_CPOL)) अणु
+	हाल SPI_MODE_0:
 		ctrl &= ~SPIFI_CTRL_MODE3;
-		break;
-	case SPI_MODE_3:
+		अवरोध;
+	हाल SPI_MODE_3:
 		ctrl |= SPIFI_CTRL_MODE3;
-		break;
-	default:
-		dev_err(spifi->dev, "only mode 0 and 3 supported\n");
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		dev_err(spअगरi->dev, "only mode 0 and 3 supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	writel(ctrl, spifi->io_base + SPIFI_CTRL);
+	ग_लिखोl(ctrl, spअगरi->io_base + SPIFI_CTRL);
 
-	spifi->nor.dev   = spifi->dev;
-	spi_nor_set_flash_node(&spifi->nor, np);
-	spifi->nor.priv  = spifi;
-	spifi->nor.controller_ops = &nxp_spifi_controller_ops;
+	spअगरi->nor.dev   = spअगरi->dev;
+	spi_nor_set_flash_node(&spअगरi->nor, np);
+	spअगरi->nor.priv  = spअगरi;
+	spअगरi->nor.controller_ops = &nxp_spअगरi_controller_ops;
 
 	/*
-	 * The first read on a hard reset isn't reliable so do a
-	 * dummy read of the id before calling spi_nor_scan().
-	 * The reason for this problem is unknown.
+	 * The first पढ़ो on a hard reset isn't reliable so करो a
+	 * dummy पढ़ो of the id beक्रमe calling spi_nor_scan().
+	 * The reason क्रम this problem is unknown.
 	 *
-	 * The official NXP spifilib uses more or less the same
-	 * workaround that is applied here by reading the device
-	 * id multiple times.
+	 * The official NXP spअगरilib uses more or less the same
+	 * workaround that is applied here by पढ़ोing the device
+	 * id multiple बार.
 	 */
-	nxp_spifi_dummy_id_read(&spifi->nor);
+	nxp_spअगरi_dummy_id_पढ़ो(&spअगरi->nor);
 
-	ret = spi_nor_scan(&spifi->nor, NULL, &hwcaps);
-	if (ret) {
-		dev_err(spifi->dev, "device scan failed\n");
-		return ret;
-	}
+	ret = spi_nor_scan(&spअगरi->nor, शून्य, &hwcaps);
+	अगर (ret) अणु
+		dev_err(spअगरi->dev, "device scan failed\n");
+		वापस ret;
+	पूर्ण
 
-	ret = nxp_spifi_setup_memory_cmd(spifi);
-	if (ret) {
-		dev_err(spifi->dev, "memory command setup failed\n");
-		return ret;
-	}
+	ret = nxp_spअगरi_setup_memory_cmd(spअगरi);
+	अगर (ret) अणु
+		dev_err(spअगरi->dev, "memory command setup failed\n");
+		वापस ret;
+	पूर्ण
 
-	ret = mtd_device_register(&spifi->nor.mtd, NULL, 0);
-	if (ret) {
-		dev_err(spifi->dev, "mtd device parse failed\n");
-		return ret;
-	}
+	ret = mtd_device_रेजिस्टर(&spअगरi->nor.mtd, शून्य, 0);
+	अगर (ret) अणु
+		dev_err(spअगरi->dev, "mtd device parse failed\n");
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nxp_spifi_probe(struct platform_device *pdev)
-{
-	struct device_node *flash_np;
-	struct nxp_spifi *spifi;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक nxp_spअगरi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *flash_np;
+	काष्ठा nxp_spअगरi *spअगरi;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	spifi = devm_kzalloc(&pdev->dev, sizeof(*spifi), GFP_KERNEL);
-	if (!spifi)
-		return -ENOMEM;
+	spअगरi = devm_kzalloc(&pdev->dev, माप(*spअगरi), GFP_KERNEL);
+	अगर (!spअगरi)
+		वापस -ENOMEM;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "spifi");
-	spifi->io_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(spifi->io_base))
-		return PTR_ERR(spifi->io_base);
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "spifi");
+	spअगरi->io_base = devm_ioremap_resource(&pdev->dev, res);
+	अगर (IS_ERR(spअगरi->io_base))
+		वापस PTR_ERR(spअगरi->io_base);
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "flash");
-	spifi->flash_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(spifi->flash_base))
-		return PTR_ERR(spifi->flash_base);
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "flash");
+	spअगरi->flash_base = devm_ioremap_resource(&pdev->dev, res);
+	अगर (IS_ERR(spअगरi->flash_base))
+		वापस PTR_ERR(spअगरi->flash_base);
 
-	spifi->clk_spifi = devm_clk_get(&pdev->dev, "spifi");
-	if (IS_ERR(spifi->clk_spifi)) {
+	spअगरi->clk_spअगरi = devm_clk_get(&pdev->dev, "spifi");
+	अगर (IS_ERR(spअगरi->clk_spअगरi)) अणु
 		dev_err(&pdev->dev, "spifi clock not found\n");
-		return PTR_ERR(spifi->clk_spifi);
-	}
+		वापस PTR_ERR(spअगरi->clk_spअगरi);
+	पूर्ण
 
-	spifi->clk_reg = devm_clk_get(&pdev->dev, "reg");
-	if (IS_ERR(spifi->clk_reg)) {
+	spअगरi->clk_reg = devm_clk_get(&pdev->dev, "reg");
+	अगर (IS_ERR(spअगरi->clk_reg)) अणु
 		dev_err(&pdev->dev, "reg clock not found\n");
-		return PTR_ERR(spifi->clk_reg);
-	}
+		वापस PTR_ERR(spअगरi->clk_reg);
+	पूर्ण
 
-	ret = clk_prepare_enable(spifi->clk_reg);
-	if (ret) {
+	ret = clk_prepare_enable(spअगरi->clk_reg);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to enable reg clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = clk_prepare_enable(spifi->clk_spifi);
-	if (ret) {
+	ret = clk_prepare_enable(spअगरi->clk_spअगरi);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to enable spifi clock\n");
-		goto dis_clk_reg;
-	}
+		जाओ dis_clk_reg;
+	पूर्ण
 
-	spifi->dev = &pdev->dev;
-	platform_set_drvdata(pdev, spifi);
+	spअगरi->dev = &pdev->dev;
+	platक्रमm_set_drvdata(pdev, spअगरi);
 
 	/* Initialize and reset device */
-	nxp_spifi_reset(spifi);
-	writel(0, spifi->io_base + SPIFI_IDATA);
-	writel(0, spifi->io_base + SPIFI_MCMD);
-	nxp_spifi_reset(spifi);
+	nxp_spअगरi_reset(spअगरi);
+	ग_लिखोl(0, spअगरi->io_base + SPIFI_IDATA);
+	ग_लिखोl(0, spअगरi->io_base + SPIFI_MCMD);
+	nxp_spअगरi_reset(spअगरi);
 
-	flash_np = of_get_next_available_child(pdev->dev.of_node, NULL);
-	if (!flash_np) {
+	flash_np = of_get_next_available_child(pdev->dev.of_node, शून्य);
+	अगर (!flash_np) अणु
 		dev_err(&pdev->dev, "no SPI flash device to configure\n");
 		ret = -ENODEV;
-		goto dis_clks;
-	}
+		जाओ dis_clks;
+	पूर्ण
 
-	ret = nxp_spifi_setup_flash(spifi, flash_np);
+	ret = nxp_spअगरi_setup_flash(spअगरi, flash_np);
 	of_node_put(flash_np);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to setup flash chip\n");
-		goto dis_clks;
-	}
+		जाओ dis_clks;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 dis_clks:
-	clk_disable_unprepare(spifi->clk_spifi);
+	clk_disable_unprepare(spअगरi->clk_spअगरi);
 dis_clk_reg:
-	clk_disable_unprepare(spifi->clk_reg);
-	return ret;
-}
+	clk_disable_unprepare(spअगरi->clk_reg);
+	वापस ret;
+पूर्ण
 
-static int nxp_spifi_remove(struct platform_device *pdev)
-{
-	struct nxp_spifi *spifi = platform_get_drvdata(pdev);
+अटल पूर्णांक nxp_spअगरi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा nxp_spअगरi *spअगरi = platक्रमm_get_drvdata(pdev);
 
-	mtd_device_unregister(&spifi->nor.mtd);
-	clk_disable_unprepare(spifi->clk_spifi);
-	clk_disable_unprepare(spifi->clk_reg);
+	mtd_device_unरेजिस्टर(&spअगरi->nor.mtd);
+	clk_disable_unprepare(spअगरi->clk_spअगरi);
+	clk_disable_unprepare(spअगरi->clk_reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id nxp_spifi_match[] = {
-	{.compatible = "nxp,lpc1773-spifi"},
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(of, nxp_spifi_match);
+अटल स्थिर काष्ठा of_device_id nxp_spअगरi_match[] = अणु
+	अणु.compatible = "nxp,lpc1773-spifi"पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, nxp_spअगरi_match);
 
-static struct platform_driver nxp_spifi_driver = {
-	.probe	= nxp_spifi_probe,
-	.remove	= nxp_spifi_remove,
-	.driver	= {
+अटल काष्ठा platक्रमm_driver nxp_spअगरi_driver = अणु
+	.probe	= nxp_spअगरi_probe,
+	.हटाओ	= nxp_spअगरi_हटाओ,
+	.driver	= अणु
 		.name = "nxp-spifi",
-		.of_match_table = nxp_spifi_match,
-	},
-};
-module_platform_driver(nxp_spifi_driver);
+		.of_match_table = nxp_spअगरi_match,
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(nxp_spअगरi_driver);
 
 MODULE_DESCRIPTION("NXP SPI Flash Interface driver");
 MODULE_AUTHOR("Joachim Eastwood <manabian@gmail.com>");

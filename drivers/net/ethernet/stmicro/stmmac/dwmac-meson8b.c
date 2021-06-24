@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Amlogic Meson8b, Meson8m2 and GXBB DWMAC glue layer
  *
  * Copyright (C) 2016 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  */
 
-#include <linux/bitfield.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/device.h>
-#include <linux/ethtool.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of_net.h>
-#include <linux/mfd/syscon.h>
-#include <linux/platform_device.h>
-#include <linux/stmmac.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/device.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sपंचांगmac.h>
 
-#include "stmmac_platform.h"
+#समावेश "stmmac_platform.h"
 
-#define PRG_ETH0			0x0
+#घोषणा PRG_ETH0			0x0
 
-#define PRG_ETH0_RGMII_MODE		BIT(0)
+#घोषणा PRG_ETH0_RGMII_MODE		BIT(0)
 
-#define PRG_ETH0_EXT_PHY_MODE_MASK	GENMASK(2, 0)
-#define PRG_ETH0_EXT_RGMII_MODE		1
-#define PRG_ETH0_EXT_RMII_MODE		4
+#घोषणा PRG_ETH0_EXT_PHY_MODE_MASK	GENMASK(2, 0)
+#घोषणा PRG_ETH0_EXT_RGMII_MODE		1
+#घोषणा PRG_ETH0_EXT_RMII_MODE		4
 
-/* mux to choose between fclk_div2 (bit unset) and mpll2 (bit set) */
-#define PRG_ETH0_CLK_M250_SEL_MASK	GENMASK(4, 4)
+/* mux to choose between fclk_भाग2 (bit unset) and mpll2 (bit set) */
+#घोषणा PRG_ETH0_CLK_M250_SEL_MASK	GENMASK(4, 4)
 
-/* TX clock delay in ns = "8ns / 4 * tx_dly_val" (where 8ns are exactly one
- * cycle of the 125MHz RGMII TX clock):
+/* TX घड़ी delay in ns = "8ns / 4 * tx_dly_val" (where 8ns are exactly one
+ * cycle of the 125MHz RGMII TX घड़ी):
  * 0ns = 0x0, 2ns = 0x1, 4ns = 0x2, 6ns = 0x3
  */
-#define PRG_ETH0_TXDLY_MASK		GENMASK(6, 5)
+#घोषणा PRG_ETH0_TXDLY_MASK		GENMASK(6, 5)
 
-/* divider for the result of m250_sel */
-#define PRG_ETH0_CLK_M250_DIV_SHIFT	7
-#define PRG_ETH0_CLK_M250_DIV_WIDTH	3
+/* भागider क्रम the result of m250_sel */
+#घोषणा PRG_ETH0_CLK_M250_DIV_SHIFT	7
+#घोषणा PRG_ETH0_CLK_M250_DIV_WIDTH	3
 
-#define PRG_ETH0_RGMII_TX_CLK_EN	10
+#घोषणा PRG_ETH0_RGMII_TX_CLK_EN	10
 
-#define PRG_ETH0_INVERTED_RMII_CLK	BIT(11)
-#define PRG_ETH0_TX_AND_PHY_REF_CLK	BIT(12)
+#घोषणा PRG_ETH0_INVERTED_RMII_CLK	BIT(11)
+#घोषणा PRG_ETH0_TX_AND_PHY_REF_CLK	BIT(12)
 
-/* Bypass (= 0, the signal from the GPIO input directly connects to the
- * internal sampling) or enable (= 1) the internal logic for RXEN and RXD[3:0]
+/* Bypass (= 0, the संकेत from the GPIO input directly connects to the
+ * पूर्णांकernal sampling) or enable (= 1) the पूर्णांकernal logic क्रम RXEN and RXD[3:0]
  * timing tuning.
  */
-#define PRG_ETH0_ADJ_ENABLE		BIT(13)
-/* Controls whether the RXEN and RXD[3:0] signals should be aligned with the
- * input RX rising/falling edge and sent to the Ethernet internals. This sets
- * the automatically delay and skew automatically (internally).
+#घोषणा PRG_ETH0_ADJ_ENABLE		BIT(13)
+/* Controls whether the RXEN and RXD[3:0] संकेतs should be aligned with the
+ * input RX rising/falling edge and sent to the Ethernet पूर्णांकernals. This sets
+ * the स्वतःmatically delay and skew स्वतःmatically (पूर्णांकernally).
  */
-#define PRG_ETH0_ADJ_SETUP		BIT(14)
-/* An internal counter based on the "timing-adjustment" clock. The counter is
+#घोषणा PRG_ETH0_ADJ_SETUP		BIT(14)
+/* An पूर्णांकernal counter based on the "timing-adjustment" घड़ी. The counter is
  * cleared on both, the falling and rising edge of the RX_CLK. This selects the
  * delay (= the counter value) when to start sampling RXEN and RXD[3:0].
  */
-#define PRG_ETH0_ADJ_DELAY		GENMASK(19, 15)
-/* Adjusts the skew between each bit of RXEN and RXD[3:0]. If a signal has a
- * large input delay, the bit for that signal (RXEN = bit 0, RXD[3] = bit 1,
- * ...) can be configured to be 1 to compensate for a delay of about 1ns.
+#घोषणा PRG_ETH0_ADJ_DELAY		GENMASK(19, 15)
+/* Adjusts the skew between each bit of RXEN and RXD[3:0]. If a संकेत has a
+ * large input delay, the bit क्रम that संकेत (RXEN = bit 0, RXD[3] = bit 1,
+ * ...) can be configured to be 1 to compensate क्रम a delay of about 1ns.
  */
-#define PRG_ETH0_ADJ_SKEW		GENMASK(24, 20)
+#घोषणा PRG_ETH0_ADJ_SKEW		GENMASK(24, 20)
 
-#define PRG_ETH1			0x4
+#घोषणा PRG_ETH1			0x4
 
-/* Defined for adding a delay to the input RX_CLK for better timing.
- * Each step is 200ps. These bits are used with external RGMII PHYs
- * because RGMII RX only has the small window. cfg_rxclk_dly can
- * adjust the window between RX_CLK and RX_DATA and improve the stability
+/* Defined क्रम adding a delay to the input RX_CLK क्रम better timing.
+ * Each step is 200ps. These bits are used with बाह्यal RGMII PHYs
+ * because RGMII RX only has the small winकरोw. cfg_rxclk_dly can
+ * adjust the winकरोw between RX_CLK and RX_DATA and improve the stability
  * of "rx data valid".
  */
-#define PRG_ETH1_CFG_RXCLK_DLY		GENMASK(19, 16)
+#घोषणा PRG_ETH1_CFG_RXCLK_DLY		GENMASK(19, 16)
 
-struct meson8b_dwmac;
+काष्ठा meson8b_dwmac;
 
-struct meson8b_dwmac_data {
-	int (*set_phy_mode)(struct meson8b_dwmac *dwmac);
+काष्ठा meson8b_dwmac_data अणु
+	पूर्णांक (*set_phy_mode)(काष्ठा meson8b_dwmac *dwmac);
 	bool has_prg_eth1_rgmii_rx_delay;
-};
+पूर्ण;
 
-struct meson8b_dwmac {
-	struct device			*dev;
-	void __iomem			*regs;
+काष्ठा meson8b_dwmac अणु
+	काष्ठा device			*dev;
+	व्योम __iomem			*regs;
 
-	const struct meson8b_dwmac_data	*data;
-	phy_interface_t			phy_mode;
-	struct clk			*rgmii_tx_clk;
+	स्थिर काष्ठा meson8b_dwmac_data	*data;
+	phy_पूर्णांकerface_t			phy_mode;
+	काष्ठा clk			*rgmii_tx_clk;
 	u32				tx_delay_ns;
 	u32				rx_delay_ps;
-	struct clk			*timing_adj_clk;
-};
+	काष्ठा clk			*timing_adj_clk;
+पूर्ण;
 
-struct meson8b_dwmac_clk_configs {
-	struct clk_mux		m250_mux;
-	struct clk_divider	m250_div;
-	struct clk_fixed_factor	fixed_div2;
-	struct clk_gate		rgmii_tx_en;
-};
+काष्ठा meson8b_dwmac_clk_configs अणु
+	काष्ठा clk_mux		m250_mux;
+	काष्ठा clk_भागider	m250_भाग;
+	काष्ठा clk_fixed_factor	fixed_भाग2;
+	काष्ठा clk_gate		rgmii_tx_en;
+पूर्ण;
 
-static void meson8b_dwmac_mask_bits(struct meson8b_dwmac *dwmac, u32 reg,
+अटल व्योम meson8b_dwmac_mask_bits(काष्ठा meson8b_dwmac *dwmac, u32 reg,
 				    u32 mask, u32 value)
-{
+अणु
 	u32 data;
 
-	data = readl(dwmac->regs + reg);
+	data = पढ़ोl(dwmac->regs + reg);
 	data &= ~mask;
 	data |= (value & mask);
 
-	writel(data, dwmac->regs + reg);
-}
+	ग_लिखोl(data, dwmac->regs + reg);
+पूर्ण
 
-static struct clk *meson8b_dwmac_register_clk(struct meson8b_dwmac *dwmac,
-					      const char *name_suffix,
-					      const struct clk_parent_data *parents,
-					      int num_parents,
-					      const struct clk_ops *ops,
-					      struct clk_hw *hw)
-{
-	struct clk_init_data init = { };
-	char clk_name[32];
+अटल काष्ठा clk *meson8b_dwmac_रेजिस्टर_clk(काष्ठा meson8b_dwmac *dwmac,
+					      स्थिर अक्षर *name_suffix,
+					      स्थिर काष्ठा clk_parent_data *parents,
+					      पूर्णांक num_parents,
+					      स्थिर काष्ठा clk_ops *ops,
+					      काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_init_data init = अणु पूर्ण;
+	अक्षर clk_name[32];
 
-	snprintf(clk_name, sizeof(clk_name), "%s#%s", dev_name(dwmac->dev),
+	snम_लिखो(clk_name, माप(clk_name), "%s#%s", dev_name(dwmac->dev),
 		 name_suffix);
 
 	init.name = clk_name;
@@ -137,202 +138,202 @@ static struct clk *meson8b_dwmac_register_clk(struct meson8b_dwmac *dwmac,
 
 	hw->init = &init;
 
-	return devm_clk_register(dwmac->dev, hw);
-}
+	वापस devm_clk_रेजिस्टर(dwmac->dev, hw);
+पूर्ण
 
-static int meson8b_init_rgmii_tx_clk(struct meson8b_dwmac *dwmac)
-{
-	struct clk *clk;
-	struct device *dev = dwmac->dev;
-	static const struct clk_parent_data mux_parents[] = {
-		{ .fw_name = "clkin0", },
-		{ .index = -1, },
-	};
-	static const struct clk_div_table div_table[] = {
-		{ .div = 2, .val = 2, },
-		{ .div = 3, .val = 3, },
-		{ .div = 4, .val = 4, },
-		{ .div = 5, .val = 5, },
-		{ .div = 6, .val = 6, },
-		{ .div = 7, .val = 7, },
-		{ /* end of array */ }
-	};
-	struct meson8b_dwmac_clk_configs *clk_configs;
-	struct clk_parent_data parent_data = { };
+अटल पूर्णांक meson8b_init_rgmii_tx_clk(काष्ठा meson8b_dwmac *dwmac)
+अणु
+	काष्ठा clk *clk;
+	काष्ठा device *dev = dwmac->dev;
+	अटल स्थिर काष्ठा clk_parent_data mux_parents[] = अणु
+		अणु .fw_name = "clkin0", पूर्ण,
+		अणु .index = -1, पूर्ण,
+	पूर्ण;
+	अटल स्थिर काष्ठा clk_भाग_प्रकारable भाग_प्रकारable[] = अणु
+		अणु .भाग = 2, .val = 2, पूर्ण,
+		अणु .भाग = 3, .val = 3, पूर्ण,
+		अणु .भाग = 4, .val = 4, पूर्ण,
+		अणु .भाग = 5, .val = 5, पूर्ण,
+		अणु .भाग = 6, .val = 6, पूर्ण,
+		अणु .भाग = 7, .val = 7, पूर्ण,
+		अणु /* end of array */ पूर्ण
+	पूर्ण;
+	काष्ठा meson8b_dwmac_clk_configs *clk_configs;
+	काष्ठा clk_parent_data parent_data = अणु पूर्ण;
 
-	clk_configs = devm_kzalloc(dev, sizeof(*clk_configs), GFP_KERNEL);
-	if (!clk_configs)
-		return -ENOMEM;
+	clk_configs = devm_kzalloc(dev, माप(*clk_configs), GFP_KERNEL);
+	अगर (!clk_configs)
+		वापस -ENOMEM;
 
 	clk_configs->m250_mux.reg = dwmac->regs + PRG_ETH0;
-	clk_configs->m250_mux.shift = __ffs(PRG_ETH0_CLK_M250_SEL_MASK);
+	clk_configs->m250_mux.shअगरt = __ffs(PRG_ETH0_CLK_M250_SEL_MASK);
 	clk_configs->m250_mux.mask = PRG_ETH0_CLK_M250_SEL_MASK >>
-				     clk_configs->m250_mux.shift;
-	clk = meson8b_dwmac_register_clk(dwmac, "m250_sel", mux_parents,
+				     clk_configs->m250_mux.shअगरt;
+	clk = meson8b_dwmac_रेजिस्टर_clk(dwmac, "m250_sel", mux_parents,
 					 ARRAY_SIZE(mux_parents), &clk_mux_ops,
 					 &clk_configs->m250_mux.hw);
-	if (WARN_ON(IS_ERR(clk)))
-		return PTR_ERR(clk);
+	अगर (WARN_ON(IS_ERR(clk)))
+		वापस PTR_ERR(clk);
 
 	parent_data.hw = &clk_configs->m250_mux.hw;
-	clk_configs->m250_div.reg = dwmac->regs + PRG_ETH0;
-	clk_configs->m250_div.shift = PRG_ETH0_CLK_M250_DIV_SHIFT;
-	clk_configs->m250_div.width = PRG_ETH0_CLK_M250_DIV_WIDTH;
-	clk_configs->m250_div.table = div_table;
-	clk_configs->m250_div.flags = CLK_DIVIDER_ALLOW_ZERO |
+	clk_configs->m250_भाग.reg = dwmac->regs + PRG_ETH0;
+	clk_configs->m250_भाग.shअगरt = PRG_ETH0_CLK_M250_DIV_SHIFT;
+	clk_configs->m250_भाग.width = PRG_ETH0_CLK_M250_DIV_WIDTH;
+	clk_configs->m250_भाग.table = भाग_प्रकारable;
+	clk_configs->m250_भाग.flags = CLK_DIVIDER_ALLOW_ZERO |
 				      CLK_DIVIDER_ROUND_CLOSEST;
-	clk = meson8b_dwmac_register_clk(dwmac, "m250_div", &parent_data, 1,
-					 &clk_divider_ops,
-					 &clk_configs->m250_div.hw);
-	if (WARN_ON(IS_ERR(clk)))
-		return PTR_ERR(clk);
+	clk = meson8b_dwmac_रेजिस्टर_clk(dwmac, "m250_div", &parent_data, 1,
+					 &clk_भागider_ops,
+					 &clk_configs->m250_भाग.hw);
+	अगर (WARN_ON(IS_ERR(clk)))
+		वापस PTR_ERR(clk);
 
-	parent_data.hw = &clk_configs->m250_div.hw;
-	clk_configs->fixed_div2.mult = 1;
-	clk_configs->fixed_div2.div = 2;
-	clk = meson8b_dwmac_register_clk(dwmac, "fixed_div2", &parent_data, 1,
+	parent_data.hw = &clk_configs->m250_भाग.hw;
+	clk_configs->fixed_भाग2.mult = 1;
+	clk_configs->fixed_भाग2.भाग = 2;
+	clk = meson8b_dwmac_रेजिस्टर_clk(dwmac, "fixed_div2", &parent_data, 1,
 					 &clk_fixed_factor_ops,
-					 &clk_configs->fixed_div2.hw);
-	if (WARN_ON(IS_ERR(clk)))
-		return PTR_ERR(clk);
+					 &clk_configs->fixed_भाग2.hw);
+	अगर (WARN_ON(IS_ERR(clk)))
+		वापस PTR_ERR(clk);
 
-	parent_data.hw = &clk_configs->fixed_div2.hw;
+	parent_data.hw = &clk_configs->fixed_भाग2.hw;
 	clk_configs->rgmii_tx_en.reg = dwmac->regs + PRG_ETH0;
 	clk_configs->rgmii_tx_en.bit_idx = PRG_ETH0_RGMII_TX_CLK_EN;
-	clk = meson8b_dwmac_register_clk(dwmac, "rgmii_tx_en", &parent_data, 1,
+	clk = meson8b_dwmac_रेजिस्टर_clk(dwmac, "rgmii_tx_en", &parent_data, 1,
 					 &clk_gate_ops,
 					 &clk_configs->rgmii_tx_en.hw);
-	if (WARN_ON(IS_ERR(clk)))
-		return PTR_ERR(clk);
+	अगर (WARN_ON(IS_ERR(clk)))
+		वापस PTR_ERR(clk);
 
 	dwmac->rgmii_tx_clk = clk;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson8b_set_phy_mode(struct meson8b_dwmac *dwmac)
-{
-	switch (dwmac->phy_mode) {
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
+अटल पूर्णांक meson8b_set_phy_mode(काष्ठा meson8b_dwmac *dwmac)
+अणु
+	चयन (dwmac->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
 		/* enable RGMII mode */
 		meson8b_dwmac_mask_bits(dwmac, PRG_ETH0,
 					PRG_ETH0_RGMII_MODE,
 					PRG_ETH0_RGMII_MODE);
-		break;
-	case PHY_INTERFACE_MODE_RMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RMII:
 		/* disable RGMII mode -> enables RMII mode */
 		meson8b_dwmac_mask_bits(dwmac, PRG_ETH0,
 					PRG_ETH0_RGMII_MODE, 0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dwmac->dev, "fail to set phy-mode %s\n",
 			phy_modes(dwmac->phy_mode));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson_axg_set_phy_mode(struct meson8b_dwmac *dwmac)
-{
-	switch (dwmac->phy_mode) {
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
+अटल पूर्णांक meson_axg_set_phy_mode(काष्ठा meson8b_dwmac *dwmac)
+अणु
+	चयन (dwmac->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
 		/* enable RGMII mode */
 		meson8b_dwmac_mask_bits(dwmac, PRG_ETH0,
 					PRG_ETH0_EXT_PHY_MODE_MASK,
 					PRG_ETH0_EXT_RGMII_MODE);
-		break;
-	case PHY_INTERFACE_MODE_RMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RMII:
 		/* disable RGMII mode -> enables RMII mode */
 		meson8b_dwmac_mask_bits(dwmac, PRG_ETH0,
 					PRG_ETH0_EXT_PHY_MODE_MASK,
 					PRG_ETH0_EXT_RMII_MODE);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dwmac->dev, "fail to set phy-mode %s\n",
 			phy_modes(dwmac->phy_mode));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson8b_devm_clk_prepare_enable(struct meson8b_dwmac *dwmac,
-					   struct clk *clk)
-{
-	int ret;
+अटल पूर्णांक meson8b_devm_clk_prepare_enable(काष्ठा meson8b_dwmac *dwmac,
+					   काष्ठा clk *clk)
+अणु
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	devm_add_action_or_reset(dwmac->dev,
-				 (void(*)(void *))clk_disable_unprepare,
+				 (व्योम(*)(व्योम *))clk_disable_unprepare,
 				 dwmac->rgmii_tx_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson8b_init_rgmii_delays(struct meson8b_dwmac *dwmac)
-{
+अटल पूर्णांक meson8b_init_rgmii_delays(काष्ठा meson8b_dwmac *dwmac)
+अणु
 	u32 tx_dly_config, rx_adj_config, cfg_rxclk_dly, delay_config;
-	int ret;
+	पूर्णांक ret;
 
 	rx_adj_config = 0;
 	cfg_rxclk_dly = 0;
 	tx_dly_config = FIELD_PREP(PRG_ETH0_TXDLY_MASK,
 				   dwmac->tx_delay_ns >> 1);
 
-	if (dwmac->data->has_prg_eth1_rgmii_rx_delay)
+	अगर (dwmac->data->has_prg_eth1_rgmii_rx_delay)
 		cfg_rxclk_dly = FIELD_PREP(PRG_ETH1_CFG_RXCLK_DLY,
 					   dwmac->rx_delay_ps / 200);
-	else if (dwmac->rx_delay_ps == 2000)
+	अन्यथा अगर (dwmac->rx_delay_ps == 2000)
 		rx_adj_config = PRG_ETH0_ADJ_ENABLE | PRG_ETH0_ADJ_SETUP;
 
-	switch (dwmac->phy_mode) {
-	case PHY_INTERFACE_MODE_RGMII:
+	चयन (dwmac->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_RGMII:
 		delay_config = tx_dly_config | rx_adj_config;
-		break;
-	case PHY_INTERFACE_MODE_RGMII_RXID:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
 		delay_config = tx_dly_config;
 		cfg_rxclk_dly = 0;
-		break;
-	case PHY_INTERFACE_MODE_RGMII_TXID:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
 		delay_config = rx_adj_config;
-		break;
-	case PHY_INTERFACE_MODE_RGMII_ID:
-	case PHY_INTERFACE_MODE_RMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	हाल PHY_INTERFACE_MODE_RMII:
 		delay_config = 0;
 		cfg_rxclk_dly = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dwmac->dev, "unsupported phy-mode %s\n",
 			phy_modes(dwmac->phy_mode));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (delay_config & PRG_ETH0_ADJ_ENABLE) {
-		if (!dwmac->timing_adj_clk) {
+	अगर (delay_config & PRG_ETH0_ADJ_ENABLE) अणु
+		अगर (!dwmac->timing_adj_clk) अणु
 			dev_err(dwmac->dev,
 				"The timing-adjustment clock is mandatory for the RX delay re-timing\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* The timing adjustment logic is driven by a separate clock */
+		/* The timing adjusपंचांगent logic is driven by a separate घड़ी */
 		ret = meson8b_devm_clk_prepare_enable(dwmac,
 						      dwmac->timing_adj_clk);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dwmac->dev,
 				"Failed to enable the timing-adjustment clock\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	meson8b_dwmac_mask_bits(dwmac, PRG_ETH0, PRG_ETH0_TXDLY_MASK |
 				PRG_ETH0_ADJ_ENABLE | PRG_ETH0_ADJ_SETUP |
@@ -342,209 +343,209 @@ static int meson8b_init_rgmii_delays(struct meson8b_dwmac *dwmac)
 	meson8b_dwmac_mask_bits(dwmac, PRG_ETH1, PRG_ETH1_CFG_RXCLK_DLY,
 				cfg_rxclk_dly);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson8b_init_prg_eth(struct meson8b_dwmac *dwmac)
-{
-	int ret;
+अटल पूर्णांक meson8b_init_prg_eth(काष्ठा meson8b_dwmac *dwmac)
+अणु
+	पूर्णांक ret;
 
-	if (phy_interface_mode_is_rgmii(dwmac->phy_mode)) {
-		/* only relevant for RMII mode -> disable in RGMII mode */
+	अगर (phy_पूर्णांकerface_mode_is_rgmii(dwmac->phy_mode)) अणु
+		/* only relevant क्रम RMII mode -> disable in RGMII mode */
 		meson8b_dwmac_mask_bits(dwmac, PRG_ETH0,
 					PRG_ETH0_INVERTED_RMII_CLK, 0);
 
-		/* Configure the 125MHz RGMII TX clock, the IP block changes
-		 * the output automatically (= without us having to configure
-		 * a register) based on the line-speed (125MHz for Gbit speeds,
-		 * 25MHz for 100Mbit/s and 2.5MHz for 10Mbit/s).
+		/* Configure the 125MHz RGMII TX घड़ी, the IP block changes
+		 * the output स्वतःmatically (= without us having to configure
+		 * a रेजिस्टर) based on the line-speed (125MHz क्रम Gbit speeds,
+		 * 25MHz क्रम 100Mbit/s and 2.5MHz क्रम 10Mbit/s).
 		 */
 		ret = clk_set_rate(dwmac->rgmii_tx_clk, 125 * 1000 * 1000);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dwmac->dev,
 				"failed to set RGMII TX clock\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = meson8b_devm_clk_prepare_enable(dwmac,
 						      dwmac->rgmii_tx_clk);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dwmac->dev,
 				"failed to enable the RGMII TX clock\n");
-			return ret;
-		}
-	} else {
-		/* invert internal clk_rmii_i to generate 25/2.5 tx_rx_clk */
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* invert पूर्णांकernal clk_rmii_i to generate 25/2.5 tx_rx_clk */
 		meson8b_dwmac_mask_bits(dwmac, PRG_ETH0,
 					PRG_ETH0_INVERTED_RMII_CLK,
 					PRG_ETH0_INVERTED_RMII_CLK);
-	}
+	पूर्ण
 
 	/* enable TX_CLK and PHY_REF_CLK generator */
 	meson8b_dwmac_mask_bits(dwmac, PRG_ETH0, PRG_ETH0_TX_AND_PHY_REF_CLK,
 				PRG_ETH0_TX_AND_PHY_REF_CLK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson8b_dwmac_probe(struct platform_device *pdev)
-{
-	struct plat_stmmacenet_data *plat_dat;
-	struct stmmac_resources stmmac_res;
-	struct meson8b_dwmac *dwmac;
-	int ret;
+अटल पूर्णांक meson8b_dwmac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा plat_sपंचांगmacenet_data *plat_dat;
+	काष्ठा sपंचांगmac_resources sपंचांगmac_res;
+	काष्ठा meson8b_dwmac *dwmac;
+	पूर्णांक ret;
 
-	ret = stmmac_get_platform_resources(pdev, &stmmac_res);
-	if (ret)
-		return ret;
+	ret = sपंचांगmac_get_platक्रमm_resources(pdev, &sपंचांगmac_res);
+	अगर (ret)
+		वापस ret;
 
-	plat_dat = stmmac_probe_config_dt(pdev, stmmac_res.mac);
-	if (IS_ERR(plat_dat))
-		return PTR_ERR(plat_dat);
+	plat_dat = sपंचांगmac_probe_config_dt(pdev, sपंचांगmac_res.mac);
+	अगर (IS_ERR(plat_dat))
+		वापस PTR_ERR(plat_dat);
 
-	dwmac = devm_kzalloc(&pdev->dev, sizeof(*dwmac), GFP_KERNEL);
-	if (!dwmac) {
+	dwmac = devm_kzalloc(&pdev->dev, माप(*dwmac), GFP_KERNEL);
+	अगर (!dwmac) अणु
 		ret = -ENOMEM;
-		goto err_remove_config_dt;
-	}
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
 
-	dwmac->data = (const struct meson8b_dwmac_data *)
+	dwmac->data = (स्थिर काष्ठा meson8b_dwmac_data *)
 		of_device_get_match_data(&pdev->dev);
-	if (!dwmac->data) {
+	अगर (!dwmac->data) अणु
 		ret = -EINVAL;
-		goto err_remove_config_dt;
-	}
-	dwmac->regs = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(dwmac->regs)) {
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
+	dwmac->regs = devm_platक्रमm_ioremap_resource(pdev, 1);
+	अगर (IS_ERR(dwmac->regs)) अणु
 		ret = PTR_ERR(dwmac->regs);
-		goto err_remove_config_dt;
-	}
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
 
 	dwmac->dev = &pdev->dev;
 	ret = of_get_phy_mode(pdev->dev.of_node, &dwmac->phy_mode);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "missing phy-mode property\n");
-		goto err_remove_config_dt;
-	}
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
 
 	/* use 2ns as fallback since this value was previously hardcoded */
-	if (of_property_read_u32(pdev->dev.of_node, "amlogic,tx-delay-ns",
+	अगर (of_property_पढ़ो_u32(pdev->dev.of_node, "amlogic,tx-delay-ns",
 				 &dwmac->tx_delay_ns))
 		dwmac->tx_delay_ns = 2;
 
-	/* RX delay defaults to 0ps since this is what many boards use */
-	if (of_property_read_u32(pdev->dev.of_node, "rx-internal-delay-ps",
-				 &dwmac->rx_delay_ps)) {
-		if (!of_property_read_u32(pdev->dev.of_node,
+	/* RX delay शेषs to 0ps since this is what many boards use */
+	अगर (of_property_पढ़ो_u32(pdev->dev.of_node, "rx-internal-delay-ps",
+				 &dwmac->rx_delay_ps)) अणु
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node,
 					  "amlogic,rx-delay-ns",
 					  &dwmac->rx_delay_ps))
 			/* convert ns to ps */
 			dwmac->rx_delay_ps *= 1000;
-	}
+	पूर्ण
 
-	if (dwmac->data->has_prg_eth1_rgmii_rx_delay) {
-		if (dwmac->rx_delay_ps > 3000 || dwmac->rx_delay_ps % 200) {
+	अगर (dwmac->data->has_prg_eth1_rgmii_rx_delay) अणु
+		अगर (dwmac->rx_delay_ps > 3000 || dwmac->rx_delay_ps % 200) अणु
 			dev_err(dwmac->dev,
 				"The RGMII RX delay range is 0..3000ps in 200ps steps");
 			ret = -EINVAL;
-			goto err_remove_config_dt;
-		}
-	} else {
-		if (dwmac->rx_delay_ps != 0 && dwmac->rx_delay_ps != 2000) {
+			जाओ err_हटाओ_config_dt;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (dwmac->rx_delay_ps != 0 && dwmac->rx_delay_ps != 2000) अणु
 			dev_err(dwmac->dev,
 				"The only allowed RGMII RX delays values are: 0ps, 2000ps");
 			ret = -EINVAL;
-			goto err_remove_config_dt;
-		}
-	}
+			जाओ err_हटाओ_config_dt;
+		पूर्ण
+	पूर्ण
 
 	dwmac->timing_adj_clk = devm_clk_get_optional(dwmac->dev,
 						      "timing-adjustment");
-	if (IS_ERR(dwmac->timing_adj_clk)) {
+	अगर (IS_ERR(dwmac->timing_adj_clk)) अणु
 		ret = PTR_ERR(dwmac->timing_adj_clk);
-		goto err_remove_config_dt;
-	}
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
 
 	ret = meson8b_init_rgmii_delays(dwmac);
-	if (ret)
-		goto err_remove_config_dt;
+	अगर (ret)
+		जाओ err_हटाओ_config_dt;
 
 	ret = meson8b_init_rgmii_tx_clk(dwmac);
-	if (ret)
-		goto err_remove_config_dt;
+	अगर (ret)
+		जाओ err_हटाओ_config_dt;
 
 	ret = dwmac->data->set_phy_mode(dwmac);
-	if (ret)
-		goto err_remove_config_dt;
+	अगर (ret)
+		जाओ err_हटाओ_config_dt;
 
 	ret = meson8b_init_prg_eth(dwmac);
-	if (ret)
-		goto err_remove_config_dt;
+	अगर (ret)
+		जाओ err_हटाओ_config_dt;
 
 	plat_dat->bsp_priv = dwmac;
 
-	ret = stmmac_dvr_probe(&pdev->dev, plat_dat, &stmmac_res);
-	if (ret)
-		goto err_remove_config_dt;
+	ret = sपंचांगmac_dvr_probe(&pdev->dev, plat_dat, &sपंचांगmac_res);
+	अगर (ret)
+		जाओ err_हटाओ_config_dt;
 
-	return 0;
+	वापस 0;
 
-err_remove_config_dt:
-	stmmac_remove_config_dt(pdev, plat_dat);
+err_हटाओ_config_dt:
+	sपंचांगmac_हटाओ_config_dt(pdev, plat_dat);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct meson8b_dwmac_data meson8b_dwmac_data = {
+अटल स्थिर काष्ठा meson8b_dwmac_data meson8b_dwmac_data = अणु
 	.set_phy_mode = meson8b_set_phy_mode,
 	.has_prg_eth1_rgmii_rx_delay = false,
-};
+पूर्ण;
 
-static const struct meson8b_dwmac_data meson_axg_dwmac_data = {
+अटल स्थिर काष्ठा meson8b_dwmac_data meson_axg_dwmac_data = अणु
 	.set_phy_mode = meson_axg_set_phy_mode,
 	.has_prg_eth1_rgmii_rx_delay = false,
-};
+पूर्ण;
 
-static const struct meson8b_dwmac_data meson_g12a_dwmac_data = {
+अटल स्थिर काष्ठा meson8b_dwmac_data meson_g12a_dwmac_data = अणु
 	.set_phy_mode = meson_axg_set_phy_mode,
 	.has_prg_eth1_rgmii_rx_delay = true,
-};
+पूर्ण;
 
-static const struct of_device_id meson8b_dwmac_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id meson8b_dwmac_match[] = अणु
+	अणु
 		.compatible = "amlogic,meson8b-dwmac",
 		.data = &meson8b_dwmac_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "amlogic,meson8m2-dwmac",
 		.data = &meson8b_dwmac_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "amlogic,meson-gxbb-dwmac",
 		.data = &meson8b_dwmac_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "amlogic,meson-axg-dwmac",
 		.data = &meson_axg_dwmac_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "amlogic,meson-g12a-dwmac",
 		.data = &meson_g12a_dwmac_data,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, meson8b_dwmac_match);
 
-static struct platform_driver meson8b_dwmac_driver = {
+अटल काष्ठा platक्रमm_driver meson8b_dwmac_driver = अणु
 	.probe  = meson8b_dwmac_probe,
-	.remove = stmmac_pltfr_remove,
-	.driver = {
+	.हटाओ = sपंचांगmac_pltfr_हटाओ,
+	.driver = अणु
 		.name           = "meson8b-dwmac",
-		.pm		= &stmmac_pltfr_pm_ops,
+		.pm		= &sपंचांगmac_pltfr_pm_ops,
 		.of_match_table = meson8b_dwmac_match,
-	},
-};
-module_platform_driver(meson8b_dwmac_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(meson8b_dwmac_driver);
 
 MODULE_AUTHOR("Martin Blumenstingl <martin.blumenstingl@googlemail.com>");
 MODULE_DESCRIPTION("Amlogic Meson8b, Meson8m2 and GXBB DWMAC glue layer");

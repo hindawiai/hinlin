@@ -1,36 +1,37 @@
+<शैली गुरु>
 /*
- * Broadcom STB CPU SMP and hotplug support for ARM
+ * Broadcom STB CPU SMP and hotplug support क्रम ARM
  *
  * Copyright (C) 2013-2014 Broadcom Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/jiffies.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/printk.h>
-#include <linux/regmap.h>
-#include <linux/smp.h>
-#include <linux/mfd/syscon.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/mfd/syscon.h>
 
-#include <asm/cacheflush.h>
-#include <asm/cp15.h>
-#include <asm/mach-types.h>
-#include <asm/smp_plat.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/smp_plat.h>
 
-enum {
+क्रमागत अणु
 	ZONE_MAN_CLKEN_MASK		= BIT(0),
 	ZONE_MAN_RESET_CNTL_MASK	= BIT(1),
 	ZONE_MAN_MEM_PWR_MASK		= BIT(4),
@@ -47,121 +48,121 @@ enum {
 	ZONE_RESET_STATE_MASK		= BIT(31),
 	CPU0_PWR_ZONE_CTRL_REG		= 1,
 	CPU_RESET_CONFIG_REG		= 2,
-};
+पूर्ण;
 
-static void __iomem *cpubiuctrl_block;
-static void __iomem *hif_cont_block;
-static u32 cpu0_pwr_zone_ctrl_reg;
-static u32 cpu_rst_cfg_reg;
-static u32 hif_cont_reg;
+अटल व्योम __iomem *cpubiuctrl_block;
+अटल व्योम __iomem *hअगर_cont_block;
+अटल u32 cpu0_pwr_zone_ctrl_reg;
+अटल u32 cpu_rst_cfg_reg;
+अटल u32 hअगर_cont_reg;
 
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 /*
- * We must quiesce a dying CPU before it can be killed by the boot CPU. Because
+ * We must quiesce a dying CPU beक्रमe it can be समाप्तed by the boot CPU. Because
  * one or more cache may be disabled, we must flush to ensure coherency. We
- * cannot use traditionl completion structures or spinlocks as they rely on
+ * cannot use traditionl completion काष्ठाures or spinlocks as they rely on
  * coherency.
  */
-static DEFINE_PER_CPU_ALIGNED(int, per_cpu_sw_state);
+अटल DEFINE_PER_CPU_ALIGNED(पूर्णांक, per_cpu_sw_state);
 
-static int per_cpu_sw_state_rd(u32 cpu)
-{
+अटल पूर्णांक per_cpu_sw_state_rd(u32 cpu)
+अणु
 	sync_cache_r(SHIFT_PERCPU_PTR(&per_cpu_sw_state, per_cpu_offset(cpu)));
-	return per_cpu(per_cpu_sw_state, cpu);
-}
+	वापस per_cpu(per_cpu_sw_state, cpu);
+पूर्ण
 
-static void per_cpu_sw_state_wr(u32 cpu, int val)
-{
+अटल व्योम per_cpu_sw_state_wr(u32 cpu, पूर्णांक val)
+अणु
 	dmb();
 	per_cpu(per_cpu_sw_state, cpu) = val;
 	sync_cache_w(SHIFT_PERCPU_PTR(&per_cpu_sw_state, per_cpu_offset(cpu)));
-}
-#else
-static inline void per_cpu_sw_state_wr(u32 cpu, int val) { }
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम per_cpu_sw_state_wr(u32 cpu, पूर्णांक val) अणु पूर्ण
+#पूर्ण_अगर
 
-static void __iomem *pwr_ctrl_get_base(u32 cpu)
-{
-	void __iomem *base = cpubiuctrl_block + cpu0_pwr_zone_ctrl_reg;
+अटल व्योम __iomem *pwr_ctrl_get_base(u32 cpu)
+अणु
+	व्योम __iomem *base = cpubiuctrl_block + cpu0_pwr_zone_ctrl_reg;
 	base += (cpu_logical_map(cpu) * 4);
-	return base;
-}
+	वापस base;
+पूर्ण
 
-static u32 pwr_ctrl_rd(u32 cpu)
-{
-	void __iomem *base = pwr_ctrl_get_base(cpu);
-	return readl_relaxed(base);
-}
+अटल u32 pwr_ctrl_rd(u32 cpu)
+अणु
+	व्योम __iomem *base = pwr_ctrl_get_base(cpu);
+	वापस पढ़ोl_relaxed(base);
+पूर्ण
 
-static void pwr_ctrl_set(unsigned int cpu, u32 val, u32 mask)
-{
-	void __iomem *base = pwr_ctrl_get_base(cpu);
-	writel((readl(base) & mask) | val, base);
-}
+अटल व्योम pwr_ctrl_set(अचिन्हित पूर्णांक cpu, u32 val, u32 mask)
+अणु
+	व्योम __iomem *base = pwr_ctrl_get_base(cpu);
+	ग_लिखोl((पढ़ोl(base) & mask) | val, base);
+पूर्ण
 
-static void pwr_ctrl_clr(unsigned int cpu, u32 val, u32 mask)
-{
-	void __iomem *base = pwr_ctrl_get_base(cpu);
-	writel((readl(base) & mask) & ~val, base);
-}
+अटल व्योम pwr_ctrl_clr(अचिन्हित पूर्णांक cpu, u32 val, u32 mask)
+अणु
+	व्योम __iomem *base = pwr_ctrl_get_base(cpu);
+	ग_लिखोl((पढ़ोl(base) & mask) & ~val, base);
+पूर्ण
 
-#define POLL_TMOUT_MS 500
-static int pwr_ctrl_wait_tmout(unsigned int cpu, u32 set, u32 mask)
-{
-	const unsigned long timeo = jiffies + msecs_to_jiffies(POLL_TMOUT_MS);
-	u32 tmp;
+#घोषणा POLL_TMOUT_MS 500
+अटल पूर्णांक pwr_ctrl_रुको_पंचांगout(अचिन्हित पूर्णांक cpu, u32 set, u32 mask)
+अणु
+	स्थिर अचिन्हित दीर्घ समयo = jअगरfies + msecs_to_jअगरfies(POLL_TMOUT_MS);
+	u32 पंचांगp;
 
-	do {
-		tmp = pwr_ctrl_rd(cpu) & mask;
-		if (!set == !tmp)
-			return 0;
-	} while (time_before(jiffies, timeo));
+	करो अणु
+		पंचांगp = pwr_ctrl_rd(cpu) & mask;
+		अगर (!set == !पंचांगp)
+			वापस 0;
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयo));
 
-	tmp = pwr_ctrl_rd(cpu) & mask;
-	if (!set == !tmp)
-		return 0;
+	पंचांगp = pwr_ctrl_rd(cpu) & mask;
+	अगर (!set == !पंचांगp)
+		वापस 0;
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static void cpu_rst_cfg_set(u32 cpu, int set)
-{
+अटल व्योम cpu_rst_cfg_set(u32 cpu, पूर्णांक set)
+अणु
 	u32 val;
-	val = readl_relaxed(cpubiuctrl_block + cpu_rst_cfg_reg);
-	if (set)
+	val = पढ़ोl_relaxed(cpubiuctrl_block + cpu_rst_cfg_reg);
+	अगर (set)
 		val |= BIT(cpu_logical_map(cpu));
-	else
+	अन्यथा
 		val &= ~BIT(cpu_logical_map(cpu));
-	writel_relaxed(val, cpubiuctrl_block + cpu_rst_cfg_reg);
-}
+	ग_लिखोl_relaxed(val, cpubiuctrl_block + cpu_rst_cfg_reg);
+पूर्ण
 
-static void cpu_set_boot_addr(u32 cpu, unsigned long boot_addr)
-{
-	const int reg_ofs = cpu_logical_map(cpu) * 8;
-	writel_relaxed(0, hif_cont_block + hif_cont_reg + reg_ofs);
-	writel_relaxed(boot_addr, hif_cont_block + hif_cont_reg + 4 + reg_ofs);
-}
+अटल व्योम cpu_set_boot_addr(u32 cpu, अचिन्हित दीर्घ boot_addr)
+अणु
+	स्थिर पूर्णांक reg_ofs = cpu_logical_map(cpu) * 8;
+	ग_लिखोl_relaxed(0, hअगर_cont_block + hअगर_cont_reg + reg_ofs);
+	ग_लिखोl_relaxed(boot_addr, hअगर_cont_block + hअगर_cont_reg + 4 + reg_ofs);
+पूर्ण
 
-static void brcmstb_cpu_boot(u32 cpu)
-{
+अटल व्योम brcmstb_cpu_boot(u32 cpu)
+अणु
 	/* Mark this CPU as "up" */
 	per_cpu_sw_state_wr(cpu, 1);
 
 	/*
-	 * Set the reset vector to point to the secondary_startup
+	 * Set the reset vector to poपूर्णांक to the secondary_startup
 	 * routine
 	 */
 	cpu_set_boot_addr(cpu, __pa_symbol(secondary_startup));
 
 	/* Unhalt the cpu */
 	cpu_rst_cfg_set(cpu, 0);
-}
+पूर्ण
 
-static void brcmstb_cpu_power_on(u32 cpu)
-{
+अटल व्योम brcmstb_cpu_घातer_on(u32 cpu)
+अणु
 	/*
-	 * The secondary cores power was cut, so we must go through
-	 * power-on initialization.
+	 * The secondary cores घातer was cut, so we must go through
+	 * घातer-on initialization.
 	 */
 	pwr_ctrl_set(cpu, ZONE_MAN_ISO_CNTL_MASK, 0xffffff00);
 	pwr_ctrl_set(cpu, ZONE_MANUAL_CONTROL_MASK, -1);
@@ -169,54 +170,54 @@ static void brcmstb_cpu_power_on(u32 cpu)
 
 	pwr_ctrl_set(cpu, ZONE_MAN_MEM_PWR_MASK, -1);
 
-	if (pwr_ctrl_wait_tmout(cpu, 1, ZONE_MEM_PWR_STATE_MASK))
+	अगर (pwr_ctrl_रुको_पंचांगout(cpu, 1, ZONE_MEM_PWR_STATE_MASK))
 		panic("ZONE_MEM_PWR_STATE_MASK set timeout");
 
 	pwr_ctrl_set(cpu, ZONE_MAN_CLKEN_MASK, -1);
 
-	if (pwr_ctrl_wait_tmout(cpu, 1, ZONE_DPG_PWR_STATE_MASK))
+	अगर (pwr_ctrl_रुको_पंचांगout(cpu, 1, ZONE_DPG_PWR_STATE_MASK))
 		panic("ZONE_DPG_PWR_STATE_MASK set timeout");
 
 	pwr_ctrl_clr(cpu, ZONE_MAN_ISO_CNTL_MASK, -1);
 	pwr_ctrl_set(cpu, ZONE_MAN_RESET_CNTL_MASK, -1);
-}
+पूर्ण
 
-static int brcmstb_cpu_get_power_state(u32 cpu)
-{
-	int tmp = pwr_ctrl_rd(cpu);
-	return (tmp & ZONE_RESET_STATE_MASK) ? 0 : 1;
-}
+अटल पूर्णांक brcmstb_cpu_get_घातer_state(u32 cpu)
+अणु
+	पूर्णांक पंचांगp = pwr_ctrl_rd(cpu);
+	वापस (पंचांगp & ZONE_RESET_STATE_MASK) ? 0 : 1;
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 
-static void brcmstb_cpu_die(u32 cpu)
-{
-	v7_exit_coherency_flush(all);
+अटल व्योम brcmstb_cpu_die(u32 cpu)
+अणु
+	v7_निकास_coherency_flush(all);
 
 	per_cpu_sw_state_wr(cpu, 0);
 
-	/* Sit and wait to die */
+	/* Sit and रुको to die */
 	wfi();
 
 	/* We should never get here... */
-	while (1)
+	जबतक (1)
 		;
-}
+पूर्ण
 
-static int brcmstb_cpu_kill(u32 cpu)
-{
+अटल पूर्णांक brcmstb_cpu_समाप्त(u32 cpu)
+अणु
 	/*
-	 * Ordinarily, the hardware forbids power-down of CPU0 (which is good
+	 * Ordinarily, the hardware क्रमbids घातer-करोwn of CPU0 (which is good
 	 * because it is the boot CPU), but this is not true when using BPCM
-	 * manual mode.  Consequently, we must avoid turning off CPU0 here to
+	 * manual mode.  Consequently, we must aव्योम turning off CPU0 here to
 	 * ensure that TI2C master reset will work.
 	 */
-	if (cpu == 0) {
+	अगर (cpu == 0) अणु
 		pr_warn("SMP: refusing to power off CPU0\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	while (per_cpu_sw_state_rd(cpu))
+	जबतक (per_cpu_sw_state_rd(cpu))
 		;
 
 	pwr_ctrl_set(cpu, ZONE_MANUAL_CONTROL_MASK, -1);
@@ -225,147 +226,147 @@ static int brcmstb_cpu_kill(u32 cpu)
 	pwr_ctrl_set(cpu, ZONE_MAN_ISO_CNTL_MASK, -1);
 	pwr_ctrl_clr(cpu, ZONE_MAN_MEM_PWR_MASK, -1);
 
-	if (pwr_ctrl_wait_tmout(cpu, 0, ZONE_MEM_PWR_STATE_MASK))
+	अगर (pwr_ctrl_रुको_पंचांगout(cpu, 0, ZONE_MEM_PWR_STATE_MASK))
 		panic("ZONE_MEM_PWR_STATE_MASK clear timeout");
 
 	pwr_ctrl_clr(cpu, ZONE_RESERVED_1_MASK, -1);
 
-	if (pwr_ctrl_wait_tmout(cpu, 0, ZONE_DPG_PWR_STATE_MASK))
+	अगर (pwr_ctrl_रुको_पंचांगout(cpu, 0, ZONE_DPG_PWR_STATE_MASK))
 		panic("ZONE_DPG_PWR_STATE_MASK clear timeout");
 
-	/* Flush pipeline before resetting CPU */
+	/* Flush pipeline beक्रमe resetting CPU */
 	mb();
 
 	/* Assert reset on the CPU */
 	cpu_rst_cfg_set(cpu, 1);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-#endif /* CONFIG_HOTPLUG_CPU */
+#पूर्ण_अगर /* CONFIG_HOTPLUG_CPU */
 
-static int __init setup_hifcpubiuctrl_regs(struct device_node *np)
-{
-	int rc = 0;
-	char *name;
-	struct device_node *syscon_np = NULL;
+अटल पूर्णांक __init setup_hअगरcpubiuctrl_regs(काष्ठा device_node *np)
+अणु
+	पूर्णांक rc = 0;
+	अक्षर *name;
+	काष्ठा device_node *syscon_np = शून्य;
 
 	name = "syscon-cpu";
 
 	syscon_np = of_parse_phandle(np, name, 0);
-	if (!syscon_np) {
+	अगर (!syscon_np) अणु
 		pr_err("can't find phandle %s\n", name);
 		rc = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	cpubiuctrl_block = of_iomap(syscon_np, 0);
-	if (!cpubiuctrl_block) {
+	अगर (!cpubiuctrl_block) अणु
 		pr_err("iomap failed for cpubiuctrl_block\n");
 		rc = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	rc = of_property_read_u32_index(np, name, CPU0_PWR_ZONE_CTRL_REG,
+	rc = of_property_पढ़ो_u32_index(np, name, CPU0_PWR_ZONE_CTRL_REG,
 					&cpu0_pwr_zone_ctrl_reg);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("failed to read 1st entry from %s property (%d)\n", name,
 			rc);
 		rc = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	rc = of_property_read_u32_index(np, name, CPU_RESET_CONFIG_REG,
+	rc = of_property_पढ़ो_u32_index(np, name, CPU_RESET_CONFIG_REG,
 					&cpu_rst_cfg_reg);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("failed to read 2nd entry from %s property (%d)\n", name,
 			rc);
 		rc = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 cleanup:
 	of_node_put(syscon_np);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int __init setup_hifcont_regs(struct device_node *np)
-{
-	int rc = 0;
-	char *name;
-	struct device_node *syscon_np = NULL;
+अटल पूर्णांक __init setup_hअगरcont_regs(काष्ठा device_node *np)
+अणु
+	पूर्णांक rc = 0;
+	अक्षर *name;
+	काष्ठा device_node *syscon_np = शून्य;
 
 	name = "syscon-cont";
 
 	syscon_np = of_parse_phandle(np, name, 0);
-	if (!syscon_np) {
+	अगर (!syscon_np) अणु
 		pr_err("can't find phandle %s\n", name);
 		rc = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	hif_cont_block = of_iomap(syscon_np, 0);
-	if (!hif_cont_block) {
+	hअगर_cont_block = of_iomap(syscon_np, 0);
+	अगर (!hअगर_cont_block) अणु
 		pr_err("iomap failed for hif_cont_block\n");
 		rc = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	/* Offset is at top of hif_cont_block */
-	hif_cont_reg = 0;
+	/* Offset is at top of hअगर_cont_block */
+	hअगर_cont_reg = 0;
 
 cleanup:
 	of_node_put(syscon_np);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __init brcmstb_cpu_ctrl_setup(unsigned int max_cpus)
-{
-	int rc;
-	struct device_node *np;
-	char *name;
+अटल व्योम __init brcmstb_cpu_ctrl_setup(अचिन्हित पूर्णांक max_cpus)
+अणु
+	पूर्णांक rc;
+	काष्ठा device_node *np;
+	अक्षर *name;
 
 	name = "brcm,brcmstb-smpboot";
-	np = of_find_compatible_node(NULL, NULL, name);
-	if (!np) {
+	np = of_find_compatible_node(शून्य, शून्य, name);
+	अगर (!np) अणु
 		pr_err("can't find compatible node %s\n", name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	rc = setup_hifcpubiuctrl_regs(np);
-	if (rc)
-		goto out_put_node;
+	rc = setup_hअगरcpubiuctrl_regs(np);
+	अगर (rc)
+		जाओ out_put_node;
 
-	rc = setup_hifcont_regs(np);
-	if (rc)
-		goto out_put_node;
+	rc = setup_hअगरcont_regs(np);
+	अगर (rc)
+		जाओ out_put_node;
 
 out_put_node:
 	of_node_put(np);
-}
+पूर्ण
 
-static int brcmstb_boot_secondary(unsigned int cpu, struct task_struct *idle)
-{
+अटल पूर्णांक brcmstb_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
 	/* Missing the brcm,brcmstb-smpboot DT node? */
-	if (!cpubiuctrl_block || !hif_cont_block)
-		return -ENODEV;
+	अगर (!cpubiuctrl_block || !hअगर_cont_block)
+		वापस -ENODEV;
 
-	/* Bring up power to the core if necessary */
-	if (brcmstb_cpu_get_power_state(cpu) == 0)
-		brcmstb_cpu_power_on(cpu);
+	/* Bring up घातer to the core अगर necessary */
+	अगर (brcmstb_cpu_get_घातer_state(cpu) == 0)
+		brcmstb_cpu_घातer_on(cpu);
 
 	brcmstb_cpu_boot(cpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct smp_operations brcmstb_smp_ops __initconst = {
+अटल स्थिर काष्ठा smp_operations brcmstb_smp_ops __initस्थिर = अणु
 	.smp_prepare_cpus	= brcmstb_cpu_ctrl_setup,
 	.smp_boot_secondary	= brcmstb_boot_secondary,
-#ifdef CONFIG_HOTPLUG_CPU
-	.cpu_kill		= brcmstb_cpu_kill,
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+	.cpu_समाप्त		= brcmstb_cpu_समाप्त,
 	.cpu_die		= brcmstb_cpu_die,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 CPU_METHOD_OF_DECLARE(brcmstb_smp, "brcm,brahma-b15", &brcmstb_smp_ops);

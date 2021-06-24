@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * OMAP powerdomain control
+ * OMAP घातerकरोमुख्य control
  *
  * Copyright (C) 2007-2008, 2011 Texas Instruments, Inc.
  * Copyright (C) 2007-2011 Nokia Corporation
  *
  * Written by Paul Walmsley
- * Added OMAP4 specific support by Abhijit Pagare <abhijitpagare@ti.com>
+ * Added OMAP4 specअगरic support by Abhijit Pagare <abhijitpagare@ti.com>
  * State counting code by Tero Kristo <tero.kristo@nokia.com>
  */
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/cpu_pm.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/spinlock.h>
-#include <trace/events/power.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/spinlock.h>
+#समावेश <trace/events/घातer.h>
 
-#include "cm2xxx_3xxx.h"
-#include "prcm44xx.h"
-#include "cm44xx.h"
-#include "prm2xxx_3xxx.h"
-#include "prm44xx.h"
+#समावेश "cm2xxx_3xxx.h"
+#समावेश "prcm44xx.h"
+#समावेश "cm44xx.h"
+#समावेश "prm2xxx_3xxx.h"
+#समावेश "prm44xx.h"
 
-#include <asm/cpu.h>
+#समावेश <यंत्र/cpu.h>
 
-#include "powerdomain.h"
-#include "clockdomain.h"
-#include "voltage.h"
+#समावेश "powerdomain.h"
+#समावेश "clockdomain.h"
+#समावेश "voltage.h"
 
-#include "soc.h"
-#include "pm.h"
+#समावेश "soc.h"
+#समावेश "pm.h"
 
-#define PWRDM_TRACE_STATES_FLAG	(1<<31)
+#घोषणा PWRDM_TRACE_STATES_FLAG	(1<<31)
 
-void pwrdms_save_context(void);
-void pwrdms_restore_context(void);
+व्योम pwrdms_save_context(व्योम);
+व्योम pwrdms_restore_context(व्योम);
 
-enum {
+क्रमागत अणु
 	PWRDM_STATE_NOW = 0,
 	PWRDM_STATE_PREV,
-};
+पूर्ण;
 
 /*
- * Types of sleep_switch used internally in omap_set_pwrdm_state()
- * and its associated static functions
+ * Types of sleep_चयन used पूर्णांकernally in omap_set_pwrdm_state()
+ * and its associated अटल functions
  *
- * XXX Better documentation is needed here
+ * XXX Better करोcumentation is needed here
  */
-#define ALREADYACTIVE_SWITCH		0
-#define FORCEWAKEUP_SWITCH		1
-#define LOWPOWERSTATE_SWITCH		2
+#घोषणा ALREADYACTIVE_SWITCH		0
+#घोषणा FORCEWAKEUP_SWITCH		1
+#घोषणा LOWPOWERSTATE_SWITCH		2
 
-/* pwrdm_list contains all registered struct powerdomains */
-static LIST_HEAD(pwrdm_list);
+/* pwrdm_list contains all रेजिस्टरed काष्ठा घातerकरोमुख्यs */
+अटल LIST_HEAD(pwrdm_list);
 
-static struct pwrdm_ops *arch_pwrdm;
+अटल काष्ठा pwrdm_ops *arch_pwrdm;
 
 /* Private functions */
 
-static struct powerdomain *_pwrdm_lookup(const char *name)
-{
-	struct powerdomain *pwrdm, *temp_pwrdm;
+अटल काष्ठा घातerकरोमुख्य *_pwrdm_lookup(स्थिर अक्षर *name)
+अणु
+	काष्ठा घातerकरोमुख्य *pwrdm, *temp_pwrdm;
 
-	pwrdm = NULL;
+	pwrdm = शून्य;
 
-	list_for_each_entry(temp_pwrdm, &pwrdm_list, node) {
-		if (!strcmp(name, temp_pwrdm->name)) {
+	list_क्रम_each_entry(temp_pwrdm, &pwrdm_list, node) अणु
+		अगर (!म_भेद(name, temp_pwrdm->name)) अणु
 			pwrdm = temp_pwrdm;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return pwrdm;
-}
+	वापस pwrdm;
+पूर्ण
 
 /**
- * _pwrdm_register - register a powerdomain
- * @pwrdm: struct powerdomain * to register
+ * _pwrdm_रेजिस्टर - रेजिस्टर a घातerकरोमुख्य
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to रेजिस्टर
  *
- * Adds a powerdomain to the internal powerdomain list.  Returns
- * -EINVAL if given a null pointer, -EEXIST if a powerdomain is
- * already registered by the provided name, or 0 upon success.
+ * Adds a घातerकरोमुख्य to the पूर्णांकernal घातerकरोमुख्य list.  Returns
+ * -EINVAL अगर given a null poपूर्णांकer, -EEXIST अगर a घातerकरोमुख्य is
+ * alपढ़ोy रेजिस्टरed by the provided name, or 0 upon success.
  */
-static int _pwrdm_register(struct powerdomain *pwrdm)
-{
-	int i;
-	struct voltagedomain *voltdm;
+अटल पूर्णांक _pwrdm_रेजिस्टर(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक i;
+	काष्ठा voltageकरोमुख्य *voltdm;
 
-	if (!pwrdm || !pwrdm->name)
-		return -EINVAL;
+	अगर (!pwrdm || !pwrdm->name)
+		वापस -EINVAL;
 
-	if (cpu_is_omap44xx() &&
-	    pwrdm->prcm_partition == OMAP4430_INVALID_PRCM_PARTITION) {
+	अगर (cpu_is_omap44xx() &&
+	    pwrdm->prcm_partition == OMAP4430_INVALID_PRCM_PARTITION) अणु
 		pr_err("powerdomain: %s: missing OMAP4 PRCM partition ID\n",
 		       pwrdm->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (_pwrdm_lookup(pwrdm->name))
-		return -EEXIST;
+	अगर (_pwrdm_lookup(pwrdm->name))
+		वापस -EEXIST;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_has_voltdm)
-		if (!arch_pwrdm->pwrdm_has_voltdm())
-			goto skip_voltdm;
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_has_voltdm)
+		अगर (!arch_pwrdm->pwrdm_has_voltdm())
+			जाओ skip_voltdm;
 
 	voltdm = voltdm_lookup(pwrdm->voltdm.name);
-	if (!voltdm) {
+	अगर (!voltdm) अणु
 		pr_err("powerdomain: %s: voltagedomain %s does not exist\n",
 		       pwrdm->name, pwrdm->voltdm.name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	pwrdm->voltdm.ptr = voltdm;
 	INIT_LIST_HEAD(&pwrdm->voltdm_node);
 skip_voltdm:
@@ -121,1165 +122,1165 @@ skip_voltdm:
 
 	list_add(&pwrdm->node, &pwrdm_list);
 
-	/* Initialize the powerdomain's state counter */
-	for (i = 0; i < PWRDM_MAX_PWRSTS; i++)
+	/* Initialize the घातerकरोमुख्य's state counter */
+	क्रम (i = 0; i < PWRDM_MAX_PWRSTS; i++)
 		pwrdm->state_counter[i] = 0;
 
 	pwrdm->ret_logic_off_counter = 0;
-	for (i = 0; i < pwrdm->banks; i++)
+	क्रम (i = 0; i < pwrdm->banks; i++)
 		pwrdm->ret_mem_off_counter[i] = 0;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_wait_transition)
-		arch_pwrdm->pwrdm_wait_transition(pwrdm);
-	pwrdm->state = pwrdm_read_pwrst(pwrdm);
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_रुको_transition)
+		arch_pwrdm->pwrdm_रुको_transition(pwrdm);
+	pwrdm->state = pwrdm_पढ़ो_pwrst(pwrdm);
 	pwrdm->state_counter[pwrdm->state] = 1;
 
 	pr_debug("powerdomain: registered %s\n", pwrdm->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void _update_logic_membank_counters(struct powerdomain *pwrdm)
-{
-	int i;
+अटल व्योम _update_logic_membank_counters(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक i;
 	u8 prev_logic_pwrst, prev_mem_pwrst;
 
-	prev_logic_pwrst = pwrdm_read_prev_logic_pwrst(pwrdm);
-	if ((pwrdm->pwrsts_logic_ret == PWRSTS_OFF_RET) &&
+	prev_logic_pwrst = pwrdm_पढ़ो_prev_logic_pwrst(pwrdm);
+	अगर ((pwrdm->pwrsts_logic_ret == PWRSTS_OFF_RET) &&
 	    (prev_logic_pwrst == PWRDM_POWER_OFF))
 		pwrdm->ret_logic_off_counter++;
 
-	for (i = 0; i < pwrdm->banks; i++) {
-		prev_mem_pwrst = pwrdm_read_prev_mem_pwrst(pwrdm, i);
+	क्रम (i = 0; i < pwrdm->banks; i++) अणु
+		prev_mem_pwrst = pwrdm_पढ़ो_prev_mem_pwrst(pwrdm, i);
 
-		if ((pwrdm->pwrsts_mem_ret[i] == PWRSTS_OFF_RET) &&
+		अगर ((pwrdm->pwrsts_mem_ret[i] == PWRSTS_OFF_RET) &&
 		    (prev_mem_pwrst == PWRDM_POWER_OFF))
 			pwrdm->ret_mem_off_counter[i]++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int _pwrdm_state_switch(struct powerdomain *pwrdm, int flag)
-{
+अटल पूर्णांक _pwrdm_state_चयन(काष्ठा घातerकरोमुख्य *pwrdm, पूर्णांक flag)
+अणु
 
-	int prev, next, state, trace_state = 0;
+	पूर्णांक prev, next, state, trace_state = 0;
 
-	if (pwrdm == NULL)
-		return -EINVAL;
+	अगर (pwrdm == शून्य)
+		वापस -EINVAL;
 
-	state = pwrdm_read_pwrst(pwrdm);
+	state = pwrdm_पढ़ो_pwrst(pwrdm);
 
-	switch (flag) {
-	case PWRDM_STATE_NOW:
+	चयन (flag) अणु
+	हाल PWRDM_STATE_NOW:
 		prev = pwrdm->state;
-		break;
-	case PWRDM_STATE_PREV:
-		prev = pwrdm_read_prev_pwrst(pwrdm);
-		if (pwrdm->state != prev)
+		अवरोध;
+	हाल PWRDM_STATE_PREV:
+		prev = pwrdm_पढ़ो_prev_pwrst(pwrdm);
+		अगर (pwrdm->state != prev)
 			pwrdm->state_counter[prev]++;
-		if (prev == PWRDM_POWER_RET)
+		अगर (prev == PWRDM_POWER_RET)
 			_update_logic_membank_counters(pwrdm);
 		/*
-		 * If the power domain did not hit the desired state,
+		 * If the घातer करोमुख्य did not hit the desired state,
 		 * generate a trace event with both the desired and hit states
 		 */
-		next = pwrdm_read_next_pwrst(pwrdm);
-		if (next != prev) {
+		next = pwrdm_पढ़ो_next_pwrst(pwrdm);
+		अगर (next != prev) अणु
 			trace_state = (PWRDM_TRACE_STATES_FLAG |
 				       ((next & OMAP_POWERSTATE_MASK) << 8) |
 				       ((prev & OMAP_POWERSTATE_MASK) << 0));
-			trace_power_domain_target_rcuidle(pwrdm->name,
+			trace_घातer_करोमुख्य_target_rcuidle(pwrdm->name,
 							  trace_state,
 							  raw_smp_processor_id());
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (state != prev)
+	अगर (state != prev)
 		pwrdm->state_counter[state]++;
 
-	pm_dbg_update_time(pwrdm, prev);
+	pm_dbg_update_समय(pwrdm, prev);
 
 	pwrdm->state = state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _pwrdm_pre_transition_cb(struct powerdomain *pwrdm, void *unused)
-{
+अटल पूर्णांक _pwrdm_pre_transition_cb(काष्ठा घातerकरोमुख्य *pwrdm, व्योम *unused)
+अणु
 	pwrdm_clear_all_prev_pwrst(pwrdm);
-	_pwrdm_state_switch(pwrdm, PWRDM_STATE_NOW);
-	return 0;
-}
+	_pwrdm_state_चयन(pwrdm, PWRDM_STATE_NOW);
+	वापस 0;
+पूर्ण
 
-static int _pwrdm_post_transition_cb(struct powerdomain *pwrdm, void *unused)
-{
-	_pwrdm_state_switch(pwrdm, PWRDM_STATE_PREV);
-	return 0;
-}
+अटल पूर्णांक _pwrdm_post_transition_cb(काष्ठा घातerकरोमुख्य *pwrdm, व्योम *unused)
+अणु
+	_pwrdm_state_चयन(pwrdm, PWRDM_STATE_PREV);
+	वापस 0;
+पूर्ण
 
 /**
- * _pwrdm_save_clkdm_state_and_activate - prepare for power state change
- * @pwrdm: struct powerdomain * to operate on
- * @curr_pwrst: current power state of @pwrdm
- * @pwrst: power state to switch to
+ * _pwrdm_save_clkdm_state_and_activate - prepare क्रम घातer state change
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to operate on
+ * @curr_pwrst: current घातer state of @pwrdm
+ * @pwrst: घातer state to चयन to
  *
- * Determine whether the powerdomain needs to be turned on before
- * attempting to switch power states.  Called by
- * omap_set_pwrdm_state().  NOTE that if the powerdomain contains
- * multiple clockdomains, this code assumes that the first clockdomain
+ * Determine whether the घातerकरोमुख्य needs to be turned on beक्रमe
+ * attempting to चयन घातer states.  Called by
+ * omap_set_pwrdm_state().  NOTE that अगर the घातerकरोमुख्य contains
+ * multiple घड़ीकरोमुख्यs, this code assumes that the first घड़ीकरोमुख्य
  * supports software-supervised wakeup mode - potentially a problem.
- * Returns the power state switch mode currently in use (see the
+ * Returns the घातer state चयन mode currently in use (see the
  * "Types of sleep_switch" comment above).
  */
-static u8 _pwrdm_save_clkdm_state_and_activate(struct powerdomain *pwrdm,
+अटल u8 _pwrdm_save_clkdm_state_and_activate(काष्ठा घातerकरोमुख्य *pwrdm,
 					       u8 curr_pwrst, u8 pwrst)
-{
-	u8 sleep_switch;
+अणु
+	u8 sleep_चयन;
 
-	if (curr_pwrst < PWRDM_POWER_ON) {
-		if (curr_pwrst > pwrst &&
+	अगर (curr_pwrst < PWRDM_POWER_ON) अणु
+		अगर (curr_pwrst > pwrst &&
 		    pwrdm->flags & PWRDM_HAS_LOWPOWERSTATECHANGE &&
-		    arch_pwrdm->pwrdm_set_lowpwrstchange) {
-			sleep_switch = LOWPOWERSTATE_SWITCH;
-		} else {
+		    arch_pwrdm->pwrdm_set_lowpwrstchange) अणु
+			sleep_चयन = LOWPOWERSTATE_SWITCH;
+		पूर्ण अन्यथा अणु
 			clkdm_deny_idle_nolock(pwrdm->pwrdm_clkdms[0]);
-			sleep_switch = FORCEWAKEUP_SWITCH;
-		}
-	} else {
-		sleep_switch = ALREADYACTIVE_SWITCH;
-	}
+			sleep_चयन = FORCEWAKEUP_SWITCH;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		sleep_चयन = ALREADYACTIVE_SWITCH;
+	पूर्ण
 
-	return sleep_switch;
-}
+	वापस sleep_चयन;
+पूर्ण
 
 /**
  * _pwrdm_restore_clkdm_state - restore the clkdm hwsup state after pwrst change
- * @pwrdm: struct powerdomain * to operate on
- * @sleep_switch: return value from _pwrdm_save_clkdm_state_and_activate()
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to operate on
+ * @sleep_चयन: वापस value from _pwrdm_save_clkdm_state_and_activate()
  *
- * Restore the clockdomain state perturbed by
- * _pwrdm_save_clkdm_state_and_activate(), and call the power state
- * bookkeeping code.  Called by omap_set_pwrdm_state().  NOTE that if
- * the powerdomain contains multiple clockdomains, this assumes that
- * the first associated clockdomain supports either
- * hardware-supervised idle control in the register, or
- * software-supervised sleep.  No return value.
+ * Restore the घड़ीकरोमुख्य state perturbed by
+ * _pwrdm_save_clkdm_state_and_activate(), and call the घातer state
+ * bookkeeping code.  Called by omap_set_pwrdm_state().  NOTE that अगर
+ * the घातerकरोमुख्य contains multiple घड़ीकरोमुख्यs, this assumes that
+ * the first associated घड़ीकरोमुख्य supports either
+ * hardware-supervised idle control in the रेजिस्टर, or
+ * software-supervised sleep.  No वापस value.
  */
-static void _pwrdm_restore_clkdm_state(struct powerdomain *pwrdm,
-				       u8 sleep_switch)
-{
-	switch (sleep_switch) {
-	case FORCEWAKEUP_SWITCH:
+अटल व्योम _pwrdm_restore_clkdm_state(काष्ठा घातerकरोमुख्य *pwrdm,
+				       u8 sleep_चयन)
+अणु
+	चयन (sleep_चयन) अणु
+	हाल FORCEWAKEUP_SWITCH:
 		clkdm_allow_idle_nolock(pwrdm->pwrdm_clkdms[0]);
-		break;
-	case LOWPOWERSTATE_SWITCH:
-		if (pwrdm->flags & PWRDM_HAS_LOWPOWERSTATECHANGE &&
+		अवरोध;
+	हाल LOWPOWERSTATE_SWITCH:
+		अगर (pwrdm->flags & PWRDM_HAS_LOWPOWERSTATECHANGE &&
 		    arch_pwrdm->pwrdm_set_lowpwrstchange)
 			arch_pwrdm->pwrdm_set_lowpwrstchange(pwrdm);
-		pwrdm_state_switch_nolock(pwrdm);
-		break;
-	}
-}
+		pwrdm_state_चयन_nolock(pwrdm);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* Public functions */
 
 /**
- * pwrdm_register_platform_funcs - register powerdomain implementation fns
- * @po: func pointers for arch specific implementations
+ * pwrdm_रेजिस्टर_platक्रमm_funcs - रेजिस्टर घातerकरोमुख्य implementation fns
+ * @po: func poपूर्णांकers क्रम arch specअगरic implementations
  *
- * Register the list of function pointers used to implement the
- * powerdomain functions on different OMAP SoCs.  Should be called
- * before any other pwrdm_register*() function.  Returns -EINVAL if
- * @po is null, -EEXIST if platform functions have already been
- * registered, or 0 upon success.
+ * Register the list of function poपूर्णांकers used to implement the
+ * घातerकरोमुख्य functions on dअगरferent OMAP SoCs.  Should be called
+ * beक्रमe any other pwrdm_रेजिस्टर*() function.  Returns -EINVAL अगर
+ * @po is null, -EEXIST अगर platक्रमm functions have alपढ़ोy been
+ * रेजिस्टरed, or 0 upon success.
  */
-int pwrdm_register_platform_funcs(struct pwrdm_ops *po)
-{
-	if (!po)
-		return -EINVAL;
+पूर्णांक pwrdm_रेजिस्टर_platक्रमm_funcs(काष्ठा pwrdm_ops *po)
+अणु
+	अगर (!po)
+		वापस -EINVAL;
 
-	if (arch_pwrdm)
-		return -EEXIST;
+	अगर (arch_pwrdm)
+		वापस -EEXIST;
 
 	arch_pwrdm = po;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pwrdm_register_pwrdms - register SoC powerdomains
- * @ps: pointer to an array of struct powerdomain to register
+ * pwrdm_रेजिस्टर_pwrdms - रेजिस्टर SoC घातerकरोमुख्यs
+ * @ps: poपूर्णांकer to an array of काष्ठा घातerकरोमुख्य to रेजिस्टर
  *
- * Register the powerdomains available on a particular OMAP SoC.  Must
- * be called after pwrdm_register_platform_funcs().  May be called
- * multiple times.  Returns -EACCES if called before
- * pwrdm_register_platform_funcs(); -EINVAL if the argument @ps is
+ * Register the घातerकरोमुख्यs available on a particular OMAP SoC.  Must
+ * be called after pwrdm_रेजिस्टर_platक्रमm_funcs().  May be called
+ * multiple बार.  Returns -EACCES अगर called beक्रमe
+ * pwrdm_रेजिस्टर_platक्रमm_funcs(); -EINVAL अगर the argument @ps is
  * null; or 0 upon success.
  */
-int pwrdm_register_pwrdms(struct powerdomain **ps)
-{
-	struct powerdomain **p = NULL;
+पूर्णांक pwrdm_रेजिस्टर_pwrdms(काष्ठा घातerकरोमुख्य **ps)
+अणु
+	काष्ठा घातerकरोमुख्य **p = शून्य;
 
-	if (!arch_pwrdm)
-		return -EEXIST;
+	अगर (!arch_pwrdm)
+		वापस -EEXIST;
 
-	if (!ps)
-		return -EINVAL;
+	अगर (!ps)
+		वापस -EINVAL;
 
-	for (p = ps; *p; p++)
-		_pwrdm_register(*p);
+	क्रम (p = ps; *p; p++)
+		_pwrdm_रेजिस्टर(*p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cpu_notifier(struct notifier_block *nb, unsigned long cmd, void *v)
-{
-	switch (cmd) {
-	case CPU_CLUSTER_PM_ENTER:
-		if (enable_off_mode)
+अटल पूर्णांक cpu_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ cmd, व्योम *v)
+अणु
+	चयन (cmd) अणु
+	हाल CPU_CLUSTER_PM_ENTER:
+		अगर (enable_off_mode)
 			pwrdms_save_context();
-		break;
-	case CPU_CLUSTER_PM_EXIT:
-		if (enable_off_mode)
+		अवरोध;
+	हाल CPU_CLUSTER_PM_EXIT:
+		अगर (enable_off_mode)
 			pwrdms_restore_context();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
 /**
- * pwrdm_complete_init - set up the powerdomain layer
+ * pwrdm_complete_init - set up the घातerकरोमुख्य layer
  *
- * Do whatever is necessary to initialize registered powerdomains and
- * powerdomain code.  Currently, this programs the next power state
- * for each powerdomain to ON.  This prevents powerdomains from
+ * Do whatever is necessary to initialize रेजिस्टरed घातerकरोमुख्यs and
+ * घातerकरोमुख्य code.  Currently, this programs the next घातer state
+ * क्रम each घातerकरोमुख्य to ON.  This prevents घातerकरोमुख्यs from
  * unexpectedly losing context or entering high wakeup latency modes
- * with non-power-management-enabled kernels.  Must be called after
- * pwrdm_register_pwrdms().  Returns -EACCES if called before
- * pwrdm_register_pwrdms(), or 0 upon success.
+ * with non-घातer-management-enabled kernels.  Must be called after
+ * pwrdm_रेजिस्टर_pwrdms().  Returns -EACCES अगर called beक्रमe
+ * pwrdm_रेजिस्टर_pwrdms(), or 0 upon success.
  */
-int pwrdm_complete_init(void)
-{
-	struct powerdomain *temp_p;
-	static struct notifier_block nb;
+पूर्णांक pwrdm_complete_init(व्योम)
+अणु
+	काष्ठा घातerकरोमुख्य *temp_p;
+	अटल काष्ठा notअगरier_block nb;
 
-	if (list_empty(&pwrdm_list))
-		return -EACCES;
+	अगर (list_empty(&pwrdm_list))
+		वापस -EACCES;
 
-	list_for_each_entry(temp_p, &pwrdm_list, node)
+	list_क्रम_each_entry(temp_p, &pwrdm_list, node)
 		pwrdm_set_next_pwrst(temp_p, PWRDM_POWER_ON);
 
 	/* Only AM43XX can lose pwrdm context during rtc-ddr suspend */
-	if (soc_is_am43xx()) {
-		nb.notifier_call = cpu_notifier;
-		cpu_pm_register_notifier(&nb);
-	}
+	अगर (soc_is_am43xx()) अणु
+		nb.notअगरier_call = cpu_notअगरier;
+		cpu_pm_रेजिस्टर_notअगरier(&nb);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pwrdm_lock - acquire a Linux spinlock on a powerdomain
- * @pwrdm: struct powerdomain * to lock
+ * pwrdm_lock - acquire a Linux spinlock on a घातerकरोमुख्य
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to lock
  *
- * Acquire the powerdomain spinlock on @pwrdm.  No return value.
+ * Acquire the घातerकरोमुख्य spinlock on @pwrdm.  No वापस value.
  */
-void pwrdm_lock(struct powerdomain *pwrdm)
+व्योम pwrdm_lock(काष्ठा घातerकरोमुख्य *pwrdm)
 	__acquires(&pwrdm->_lock)
-{
+अणु
 	spin_lock_irqsave(&pwrdm->_lock, pwrdm->_lock_flags);
-}
+पूर्ण
 
 /**
- * pwrdm_unlock - release a Linux spinlock on a powerdomain
- * @pwrdm: struct powerdomain * to unlock
+ * pwrdm_unlock - release a Linux spinlock on a घातerकरोमुख्य
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to unlock
  *
- * Release the powerdomain spinlock on @pwrdm.  No return value.
+ * Release the घातerकरोमुख्य spinlock on @pwrdm.  No वापस value.
  */
-void pwrdm_unlock(struct powerdomain *pwrdm)
+व्योम pwrdm_unlock(काष्ठा घातerकरोमुख्य *pwrdm)
 	__releases(&pwrdm->_lock)
-{
+अणु
 	spin_unlock_irqrestore(&pwrdm->_lock, pwrdm->_lock_flags);
-}
+पूर्ण
 
 /**
- * pwrdm_lookup - look up a powerdomain by name, return a pointer
- * @name: name of powerdomain
+ * pwrdm_lookup - look up a घातerकरोमुख्य by name, वापस a poपूर्णांकer
+ * @name: name of घातerकरोमुख्य
  *
- * Find a registered powerdomain by its name @name.  Returns a pointer
- * to the struct powerdomain if found, or NULL otherwise.
+ * Find a रेजिस्टरed घातerकरोमुख्य by its name @name.  Returns a poपूर्णांकer
+ * to the काष्ठा घातerकरोमुख्य अगर found, or शून्य otherwise.
  */
-struct powerdomain *pwrdm_lookup(const char *name)
-{
-	struct powerdomain *pwrdm;
+काष्ठा घातerकरोमुख्य *pwrdm_lookup(स्थिर अक्षर *name)
+अणु
+	काष्ठा घातerकरोमुख्य *pwrdm;
 
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
 	pwrdm = _pwrdm_lookup(name);
 
-	return pwrdm;
-}
+	वापस pwrdm;
+पूर्ण
 
 /**
- * pwrdm_for_each - call function on each registered clockdomain
+ * pwrdm_क्रम_each - call function on each रेजिस्टरed घड़ीकरोमुख्य
  * @fn: callback function *
  *
- * Call the supplied function @fn for each registered powerdomain.
- * The callback function @fn can return anything but 0 to bail out
- * early from the iterator.  Returns the last return value of the
- * callback function, which should be 0 for success or anything else
- * to indicate failure; or -EINVAL if the function pointer is null.
+ * Call the supplied function @fn क्रम each रेजिस्टरed घातerकरोमुख्य.
+ * The callback function @fn can वापस anything but 0 to bail out
+ * early from the iterator.  Returns the last वापस value of the
+ * callback function, which should be 0 क्रम success or anything अन्यथा
+ * to indicate failure; or -EINVAL अगर the function poपूर्णांकer is null.
  */
-int pwrdm_for_each(int (*fn)(struct powerdomain *pwrdm, void *user),
-		   void *user)
-{
-	struct powerdomain *temp_pwrdm;
-	int ret = 0;
+पूर्णांक pwrdm_क्रम_each(पूर्णांक (*fn)(काष्ठा घातerकरोमुख्य *pwrdm, व्योम *user),
+		   व्योम *user)
+अणु
+	काष्ठा घातerकरोमुख्य *temp_pwrdm;
+	पूर्णांक ret = 0;
 
-	if (!fn)
-		return -EINVAL;
+	अगर (!fn)
+		वापस -EINVAL;
 
-	list_for_each_entry(temp_pwrdm, &pwrdm_list, node) {
+	list_क्रम_each_entry(temp_pwrdm, &pwrdm_list, node) अणु
 		ret = (*fn)(temp_pwrdm, user);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_add_clkdm - add a clockdomain to a powerdomain
- * @pwrdm: struct powerdomain * to add the clockdomain to
- * @clkdm: struct clockdomain * to associate with a powerdomain
+ * pwrdm_add_clkdm - add a घड़ीकरोमुख्य to a घातerकरोमुख्य
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to add the घड़ीकरोमुख्य to
+ * @clkdm: काष्ठा घड़ीकरोमुख्य * to associate with a घातerकरोमुख्य
  *
- * Associate the clockdomain @clkdm with a powerdomain @pwrdm.  This
- * enables the use of pwrdm_for_each_clkdm().  Returns -EINVAL if
- * presented with invalid pointers; -ENOMEM if memory could not be allocated;
+ * Associate the घड़ीकरोमुख्य @clkdm with a घातerकरोमुख्य @pwrdm.  This
+ * enables the use of pwrdm_क्रम_each_clkdm().  Returns -EINVAL अगर
+ * presented with invalid poपूर्णांकers; -ENOMEM अगर memory could not be allocated;
  * or 0 upon success.
  */
-int pwrdm_add_clkdm(struct powerdomain *pwrdm, struct clockdomain *clkdm)
-{
-	int i;
-	int ret = -EINVAL;
+पूर्णांक pwrdm_add_clkdm(काष्ठा घातerकरोमुख्य *pwrdm, काष्ठा घड़ीकरोमुख्य *clkdm)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm || !clkdm)
-		return -EINVAL;
+	अगर (!pwrdm || !clkdm)
+		वापस -EINVAL;
 
 	pr_debug("powerdomain: %s: associating clockdomain %s\n",
 		 pwrdm->name, clkdm->name);
 
-	for (i = 0; i < PWRDM_MAX_CLKDMS; i++) {
-		if (!pwrdm->pwrdm_clkdms[i])
-			break;
-#ifdef DEBUG
-		if (pwrdm->pwrdm_clkdms[i] == clkdm) {
+	क्रम (i = 0; i < PWRDM_MAX_CLKDMS; i++) अणु
+		अगर (!pwrdm->pwrdm_clkdms[i])
+			अवरोध;
+#अगर_घोषित DEBUG
+		अगर (pwrdm->pwrdm_clkdms[i] == clkdm) अणु
 			ret = -EINVAL;
-			goto pac_exit;
-		}
-#endif
-	}
+			जाओ pac_निकास;
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	if (i == PWRDM_MAX_CLKDMS) {
+	अगर (i == PWRDM_MAX_CLKDMS) अणु
 		pr_debug("powerdomain: %s: increase PWRDM_MAX_CLKDMS for clkdm %s\n",
 			 pwrdm->name, clkdm->name);
 		WARN_ON(1);
 		ret = -ENOMEM;
-		goto pac_exit;
-	}
+		जाओ pac_निकास;
+	पूर्ण
 
 	pwrdm->pwrdm_clkdms[i] = clkdm;
 
 	ret = 0;
 
-pac_exit:
-	return ret;
-}
+pac_निकास:
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_get_mem_bank_count - get number of memory banks in this powerdomain
- * @pwrdm: struct powerdomain *
+ * pwrdm_get_mem_bank_count - get number of memory banks in this घातerकरोमुख्य
+ * @pwrdm: काष्ठा घातerकरोमुख्य *
  *
- * Return the number of controllable memory banks in powerdomain @pwrdm,
- * starting with 1.  Returns -EINVAL if the powerdomain pointer is null.
+ * Return the number of controllable memory banks in घातerकरोमुख्य @pwrdm,
+ * starting with 1.  Returns -EINVAL अगर the घातerकरोमुख्य poपूर्णांकer is null.
  */
-int pwrdm_get_mem_bank_count(struct powerdomain *pwrdm)
-{
-	if (!pwrdm)
-		return -EINVAL;
+पूर्णांक pwrdm_get_mem_bank_count(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	return pwrdm->banks;
-}
+	वापस pwrdm->banks;
+पूर्ण
 
 /**
- * pwrdm_set_next_pwrst - set next powerdomain power state
- * @pwrdm: struct powerdomain * to set
+ * pwrdm_set_next_pwrst - set next घातerकरोमुख्य घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to set
  * @pwrst: one of the PWRDM_POWER_* macros
  *
- * Set the powerdomain @pwrdm's next power state to @pwrst.  The powerdomain
- * may not enter this state immediately if the preconditions for this state
- * have not been satisfied.  Returns -EINVAL if the powerdomain pointer is
- * null or if the power state is invalid for the powerdomin, or returns 0
+ * Set the घातerकरोमुख्य @pwrdm's next घातer state to @pwrst.  The घातerकरोमुख्य
+ * may not enter this state immediately अगर the preconditions क्रम this state
+ * have not been satisfied.  Returns -EINVAL अगर the घातerकरोमुख्य poपूर्णांकer is
+ * null or अगर the घातer state is invalid क्रम the घातerकरोmin, or वापसs 0
  * upon success.
  */
-int pwrdm_set_next_pwrst(struct powerdomain *pwrdm, u8 pwrst)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_set_next_pwrst(काष्ठा घातerकरोमुख्य *pwrdm, u8 pwrst)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	if (!(pwrdm->pwrsts & (1 << pwrst)))
-		return -EINVAL;
+	अगर (!(pwrdm->pwrsts & (1 << pwrst)))
+		वापस -EINVAL;
 
 	pr_debug("powerdomain: %s: setting next powerstate to %0x\n",
 		 pwrdm->name, pwrst);
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_set_next_pwrst) {
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_set_next_pwrst) अणु
 		/* Trace the pwrdm desired target state */
-		trace_power_domain_target_rcuidle(pwrdm->name, pwrst,
+		trace_घातer_करोमुख्य_target_rcuidle(pwrdm->name, pwrst,
 						  raw_smp_processor_id());
 		/* Program the pwrdm desired target state */
 		ret = arch_pwrdm->pwrdm_set_next_pwrst(pwrdm, pwrst);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_read_next_pwrst - get next powerdomain power state
- * @pwrdm: struct powerdomain * to get power state
+ * pwrdm_पढ़ो_next_pwrst - get next घातerकरोमुख्य घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to get घातer state
  *
- * Return the powerdomain @pwrdm's next power state.  Returns -EINVAL
- * if the powerdomain pointer is null or returns the next power state
+ * Return the घातerकरोमुख्य @pwrdm's next घातer state.  Returns -EINVAL
+ * अगर the घातerकरोमुख्य poपूर्णांकer is null or वापसs the next घातer state
  * upon success.
  */
-int pwrdm_read_next_pwrst(struct powerdomain *pwrdm)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_पढ़ो_next_pwrst(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_read_next_pwrst)
-		ret = arch_pwrdm->pwrdm_read_next_pwrst(pwrdm);
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_पढ़ो_next_pwrst)
+		ret = arch_pwrdm->pwrdm_पढ़ो_next_pwrst(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_read_pwrst - get current powerdomain power state
- * @pwrdm: struct powerdomain * to get power state
+ * pwrdm_पढ़ो_pwrst - get current घातerकरोमुख्य घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to get घातer state
  *
- * Return the powerdomain @pwrdm's current power state.	Returns -EINVAL
- * if the powerdomain pointer is null or returns the current power state
- * upon success. Note that if the power domain only supports the ON state
- * then just return ON as the current state.
+ * Return the घातerकरोमुख्य @pwrdm's current घातer state.	Returns -EINVAL
+ * अगर the घातerकरोमुख्य poपूर्णांकer is null or वापसs the current घातer state
+ * upon success. Note that अगर the घातer करोमुख्य only supports the ON state
+ * then just वापस ON as the current state.
  */
-int pwrdm_read_pwrst(struct powerdomain *pwrdm)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_पढ़ो_pwrst(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	if (pwrdm->pwrsts == PWRSTS_ON)
-		return PWRDM_POWER_ON;
+	अगर (pwrdm->pwrsts == PWRSTS_ON)
+		वापस PWRDM_POWER_ON;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_read_pwrst)
-		ret = arch_pwrdm->pwrdm_read_pwrst(pwrdm);
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_पढ़ो_pwrst)
+		ret = arch_pwrdm->pwrdm_पढ़ो_pwrst(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_read_prev_pwrst - get previous powerdomain power state
- * @pwrdm: struct powerdomain * to get previous power state
+ * pwrdm_पढ़ो_prev_pwrst - get previous घातerकरोमुख्य घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to get previous घातer state
  *
- * Return the powerdomain @pwrdm's previous power state.  Returns -EINVAL
- * if the powerdomain pointer is null or returns the previous power state
+ * Return the घातerकरोमुख्य @pwrdm's previous घातer state.  Returns -EINVAL
+ * अगर the घातerकरोमुख्य poपूर्णांकer is null or वापसs the previous घातer state
  * upon success.
  */
-int pwrdm_read_prev_pwrst(struct powerdomain *pwrdm)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_पढ़ो_prev_pwrst(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_read_prev_pwrst)
-		ret = arch_pwrdm->pwrdm_read_prev_pwrst(pwrdm);
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_पढ़ो_prev_pwrst)
+		ret = arch_pwrdm->pwrdm_पढ़ो_prev_pwrst(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_set_logic_retst - set powerdomain logic power state upon retention
- * @pwrdm: struct powerdomain * to set
+ * pwrdm_set_logic_retst - set घातerकरोमुख्य logic घातer state upon retention
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to set
  * @pwrst: one of the PWRDM_POWER_* macros
  *
- * Set the next power state @pwrst that the logic portion of the
- * powerdomain @pwrdm will enter when the powerdomain enters retention.
- * This will be either RETENTION or OFF, if supported.  Returns
- * -EINVAL if the powerdomain pointer is null or the target power
- * state is not not supported, or returns 0 upon success.
+ * Set the next घातer state @pwrst that the logic portion of the
+ * घातerकरोमुख्य @pwrdm will enter when the घातerकरोमुख्य enters retention.
+ * This will be either RETENTION or OFF, अगर supported.  Returns
+ * -EINVAL अगर the घातerकरोमुख्य poपूर्णांकer is null or the target घातer
+ * state is not not supported, or वापसs 0 upon success.
  */
-int pwrdm_set_logic_retst(struct powerdomain *pwrdm, u8 pwrst)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_set_logic_retst(काष्ठा घातerकरोमुख्य *pwrdm, u8 pwrst)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	if (!(pwrdm->pwrsts_logic_ret & (1 << pwrst)))
-		return -EINVAL;
+	अगर (!(pwrdm->pwrsts_logic_ret & (1 << pwrst)))
+		वापस -EINVAL;
 
 	pr_debug("powerdomain: %s: setting next logic powerstate to %0x\n",
 		 pwrdm->name, pwrst);
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_set_logic_retst)
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_set_logic_retst)
 		ret = arch_pwrdm->pwrdm_set_logic_retst(pwrdm, pwrst);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_set_mem_onst - set memory power state while powerdomain ON
- * @pwrdm: struct powerdomain * to set
+ * pwrdm_set_mem_onst - set memory घातer state जबतक घातerकरोमुख्य ON
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to set
  * @bank: memory bank number to set (0-3)
  * @pwrst: one of the PWRDM_POWER_* macros
  *
- * Set the next power state @pwrst that memory bank @bank of the
- * powerdomain @pwrdm will enter when the powerdomain enters the ON
- * state.  @bank will be a number from 0 to 3, and represents different
- * types of memory, depending on the powerdomain.  Returns -EINVAL if
- * the powerdomain pointer is null or the target power state is not
- * not supported for this memory bank, -EEXIST if the target memory
- * bank does not exist or is not controllable, or returns 0 upon
+ * Set the next घातer state @pwrst that memory bank @bank of the
+ * घातerकरोमुख्य @pwrdm will enter when the घातerकरोमुख्य enters the ON
+ * state.  @bank will be a number from 0 to 3, and represents dअगरferent
+ * types of memory, depending on the घातerकरोमुख्य.  Returns -EINVAL अगर
+ * the घातerकरोमुख्य poपूर्णांकer is null or the target घातer state is not
+ * not supported क्रम this memory bank, -EEXIST अगर the target memory
+ * bank करोes not exist or is not controllable, or वापसs 0 upon
  * success.
  */
-int pwrdm_set_mem_onst(struct powerdomain *pwrdm, u8 bank, u8 pwrst)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_set_mem_onst(काष्ठा घातerकरोमुख्य *pwrdm, u8 bank, u8 pwrst)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	if (pwrdm->banks < (bank + 1))
-		return -EEXIST;
+	अगर (pwrdm->banks < (bank + 1))
+		वापस -EEXIST;
 
-	if (!(pwrdm->pwrsts_mem_on[bank] & (1 << pwrst)))
-		return -EINVAL;
+	अगर (!(pwrdm->pwrsts_mem_on[bank] & (1 << pwrst)))
+		वापस -EINVAL;
 
 	pr_debug("powerdomain: %s: setting next memory powerstate for bank %0x while pwrdm-ON to %0x\n",
 		 pwrdm->name, bank, pwrst);
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_set_mem_onst)
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_set_mem_onst)
 		ret = arch_pwrdm->pwrdm_set_mem_onst(pwrdm, bank, pwrst);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_set_mem_retst - set memory power state while powerdomain in RET
- * @pwrdm: struct powerdomain * to set
+ * pwrdm_set_mem_retst - set memory घातer state जबतक घातerकरोमुख्य in RET
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to set
  * @bank: memory bank number to set (0-3)
  * @pwrst: one of the PWRDM_POWER_* macros
  *
- * Set the next power state @pwrst that memory bank @bank of the
- * powerdomain @pwrdm will enter when the powerdomain enters the
+ * Set the next घातer state @pwrst that memory bank @bank of the
+ * घातerकरोमुख्य @pwrdm will enter when the घातerकरोमुख्य enters the
  * RETENTION state.  Bank will be a number from 0 to 3, and represents
- * different types of memory, depending on the powerdomain.  @pwrst
- * will be either RETENTION or OFF, if supported.  Returns -EINVAL if
- * the powerdomain pointer is null or the target power state is not
- * not supported for this memory bank, -EEXIST if the target memory
- * bank does not exist or is not controllable, or returns 0 upon
+ * dअगरferent types of memory, depending on the घातerकरोमुख्य.  @pwrst
+ * will be either RETENTION or OFF, अगर supported.  Returns -EINVAL अगर
+ * the घातerकरोमुख्य poपूर्णांकer is null or the target घातer state is not
+ * not supported क्रम this memory bank, -EEXIST अगर the target memory
+ * bank करोes not exist or is not controllable, or वापसs 0 upon
  * success.
  */
-int pwrdm_set_mem_retst(struct powerdomain *pwrdm, u8 bank, u8 pwrst)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_set_mem_retst(काष्ठा घातerकरोमुख्य *pwrdm, u8 bank, u8 pwrst)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	if (pwrdm->banks < (bank + 1))
-		return -EEXIST;
+	अगर (pwrdm->banks < (bank + 1))
+		वापस -EEXIST;
 
-	if (!(pwrdm->pwrsts_mem_ret[bank] & (1 << pwrst)))
-		return -EINVAL;
+	अगर (!(pwrdm->pwrsts_mem_ret[bank] & (1 << pwrst)))
+		वापस -EINVAL;
 
 	pr_debug("powerdomain: %s: setting next memory powerstate for bank %0x while pwrdm-RET to %0x\n",
 		 pwrdm->name, bank, pwrst);
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_set_mem_retst)
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_set_mem_retst)
 		ret = arch_pwrdm->pwrdm_set_mem_retst(pwrdm, bank, pwrst);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_read_logic_pwrst - get current powerdomain logic retention power state
- * @pwrdm: struct powerdomain * to get current logic retention power state
+ * pwrdm_पढ़ो_logic_pwrst - get current घातerकरोमुख्य logic retention घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to get current logic retention घातer state
  *
- * Return the power state that the logic portion of powerdomain @pwrdm
- * will enter when the powerdomain enters retention.  Returns -EINVAL
- * if the powerdomain pointer is null or returns the logic retention
- * power state upon success.
+ * Return the घातer state that the logic portion of घातerकरोमुख्य @pwrdm
+ * will enter when the घातerकरोमुख्य enters retention.  Returns -EINVAL
+ * अगर the घातerकरोमुख्य poपूर्णांकer is null or वापसs the logic retention
+ * घातer state upon success.
  */
-int pwrdm_read_logic_pwrst(struct powerdomain *pwrdm)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_पढ़ो_logic_pwrst(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_read_logic_pwrst)
-		ret = arch_pwrdm->pwrdm_read_logic_pwrst(pwrdm);
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_पढ़ो_logic_pwrst)
+		ret = arch_pwrdm->pwrdm_पढ़ो_logic_pwrst(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_read_prev_logic_pwrst - get previous powerdomain logic power state
- * @pwrdm: struct powerdomain * to get previous logic power state
+ * pwrdm_पढ़ो_prev_logic_pwrst - get previous घातerकरोमुख्य logic घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to get previous logic घातer state
  *
- * Return the powerdomain @pwrdm's previous logic power state.  Returns
- * -EINVAL if the powerdomain pointer is null or returns the previous
- * logic power state upon success.
+ * Return the घातerकरोमुख्य @pwrdm's previous logic घातer state.  Returns
+ * -EINVAL अगर the घातerकरोमुख्य poपूर्णांकer is null or वापसs the previous
+ * logic घातer state upon success.
  */
-int pwrdm_read_prev_logic_pwrst(struct powerdomain *pwrdm)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_पढ़ो_prev_logic_pwrst(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_read_prev_logic_pwrst)
-		ret = arch_pwrdm->pwrdm_read_prev_logic_pwrst(pwrdm);
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_पढ़ो_prev_logic_pwrst)
+		ret = arch_pwrdm->pwrdm_पढ़ो_prev_logic_pwrst(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_read_logic_retst - get next powerdomain logic power state
- * @pwrdm: struct powerdomain * to get next logic power state
+ * pwrdm_पढ़ो_logic_retst - get next घातerकरोमुख्य logic घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to get next logic घातer state
  *
- * Return the powerdomain pwrdm's logic power state.  Returns -EINVAL
- * if the powerdomain pointer is null or returns the next logic
- * power state upon success.
+ * Return the घातerकरोमुख्य pwrdm's logic घातer state.  Returns -EINVAL
+ * अगर the घातerकरोमुख्य poपूर्णांकer is null or वापसs the next logic
+ * घातer state upon success.
  */
-int pwrdm_read_logic_retst(struct powerdomain *pwrdm)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_पढ़ो_logic_retst(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm)
+		वापस -EINVAL;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_read_logic_retst)
-		ret = arch_pwrdm->pwrdm_read_logic_retst(pwrdm);
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_पढ़ो_logic_retst)
+		ret = arch_pwrdm->pwrdm_पढ़ो_logic_retst(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_read_mem_pwrst - get current memory bank power state
- * @pwrdm: struct powerdomain * to get current memory bank power state
+ * pwrdm_पढ़ो_mem_pwrst - get current memory bank घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to get current memory bank घातer state
  * @bank: memory bank number (0-3)
  *
- * Return the powerdomain @pwrdm's current memory power state for bank
- * @bank.  Returns -EINVAL if the powerdomain pointer is null, -EEXIST if
- * the target memory bank does not exist or is not controllable, or
- * returns the current memory power state upon success.
+ * Return the घातerकरोमुख्य @pwrdm's current memory घातer state क्रम bank
+ * @bank.  Returns -EINVAL अगर the घातerकरोमुख्य poपूर्णांकer is null, -EEXIST अगर
+ * the target memory bank करोes not exist or is not controllable, or
+ * वापसs the current memory घातer state upon success.
  */
-int pwrdm_read_mem_pwrst(struct powerdomain *pwrdm, u8 bank)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_पढ़ो_mem_pwrst(काष्ठा घातerकरोमुख्य *pwrdm, u8 bank)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return ret;
+	अगर (!pwrdm)
+		वापस ret;
 
-	if (pwrdm->banks < (bank + 1))
-		return ret;
+	अगर (pwrdm->banks < (bank + 1))
+		वापस ret;
 
-	if (pwrdm->flags & PWRDM_HAS_MPU_QUIRK)
+	अगर (pwrdm->flags & PWRDM_HAS_MPU_QUIRK)
 		bank = 1;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_read_mem_pwrst)
-		ret = arch_pwrdm->pwrdm_read_mem_pwrst(pwrdm, bank);
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_पढ़ो_mem_pwrst)
+		ret = arch_pwrdm->pwrdm_पढ़ो_mem_pwrst(pwrdm, bank);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_read_prev_mem_pwrst - get previous memory bank power state
- * @pwrdm: struct powerdomain * to get previous memory bank power state
+ * pwrdm_पढ़ो_prev_mem_pwrst - get previous memory bank घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to get previous memory bank घातer state
  * @bank: memory bank number (0-3)
  *
- * Return the powerdomain @pwrdm's previous memory power state for
- * bank @bank.  Returns -EINVAL if the powerdomain pointer is null,
- * -EEXIST if the target memory bank does not exist or is not
- * controllable, or returns the previous memory power state upon
+ * Return the घातerकरोमुख्य @pwrdm's previous memory घातer state क्रम
+ * bank @bank.  Returns -EINVAL अगर the घातerकरोमुख्य poपूर्णांकer is null,
+ * -EEXIST अगर the target memory bank करोes not exist or is not
+ * controllable, or वापसs the previous memory घातer state upon
  * success.
  */
-int pwrdm_read_prev_mem_pwrst(struct powerdomain *pwrdm, u8 bank)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_पढ़ो_prev_mem_pwrst(काष्ठा घातerकरोमुख्य *pwrdm, u8 bank)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return ret;
+	अगर (!pwrdm)
+		वापस ret;
 
-	if (pwrdm->banks < (bank + 1))
-		return ret;
+	अगर (pwrdm->banks < (bank + 1))
+		वापस ret;
 
-	if (pwrdm->flags & PWRDM_HAS_MPU_QUIRK)
+	अगर (pwrdm->flags & PWRDM_HAS_MPU_QUIRK)
 		bank = 1;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_read_prev_mem_pwrst)
-		ret = arch_pwrdm->pwrdm_read_prev_mem_pwrst(pwrdm, bank);
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_पढ़ो_prev_mem_pwrst)
+		ret = arch_pwrdm->pwrdm_पढ़ो_prev_mem_pwrst(pwrdm, bank);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_read_mem_retst - get next memory bank power state
- * @pwrdm: struct powerdomain * to get mext memory bank power state
+ * pwrdm_पढ़ो_mem_retst - get next memory bank घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to get mext memory bank घातer state
  * @bank: memory bank number (0-3)
  *
- * Return the powerdomain pwrdm's next memory power state for bank
- * x.  Returns -EINVAL if the powerdomain pointer is null, -EEXIST if
- * the target memory bank does not exist or is not controllable, or
- * returns the next memory power state upon success.
+ * Return the घातerकरोमुख्य pwrdm's next memory घातer state क्रम bank
+ * x.  Returns -EINVAL अगर the घातerकरोमुख्य poपूर्णांकer is null, -EEXIST अगर
+ * the target memory bank करोes not exist or is not controllable, or
+ * वापसs the next memory घातer state upon success.
  */
-int pwrdm_read_mem_retst(struct powerdomain *pwrdm, u8 bank)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_पढ़ो_mem_retst(काष्ठा घातerकरोमुख्य *pwrdm, u8 bank)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return ret;
+	अगर (!pwrdm)
+		वापस ret;
 
-	if (pwrdm->banks < (bank + 1))
-		return ret;
+	अगर (pwrdm->banks < (bank + 1))
+		वापस ret;
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_read_mem_retst)
-		ret = arch_pwrdm->pwrdm_read_mem_retst(pwrdm, bank);
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_पढ़ो_mem_retst)
+		ret = arch_pwrdm->pwrdm_पढ़ो_mem_retst(pwrdm, bank);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_clear_all_prev_pwrst - clear previous powerstate register for a pwrdm
- * @pwrdm: struct powerdomain * to clear
+ * pwrdm_clear_all_prev_pwrst - clear previous घातerstate रेजिस्टर क्रम a pwrdm
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to clear
  *
- * Clear the powerdomain's previous power state register @pwrdm.
- * Clears the entire register, including logic and memory bank
- * previous power states.  Returns -EINVAL if the powerdomain pointer
- * is null, or returns 0 upon success.
+ * Clear the घातerकरोमुख्य's previous घातer state रेजिस्टर @pwrdm.
+ * Clears the entire रेजिस्टर, including logic and memory bank
+ * previous घातer states.  Returns -EINVAL अगर the घातerकरोमुख्य poपूर्णांकer
+ * is null, or वापसs 0 upon success.
  */
-int pwrdm_clear_all_prev_pwrst(struct powerdomain *pwrdm)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_clear_all_prev_pwrst(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return ret;
+	अगर (!pwrdm)
+		वापस ret;
 
 	/*
-	 * XXX should get the powerdomain's current state here;
-	 * warn & fail if it is not ON.
+	 * XXX should get the घातerकरोमुख्य's current state here;
+	 * warn & fail अगर it is not ON.
 	 */
 
 	pr_debug("powerdomain: %s: clearing previous power state reg\n",
 		 pwrdm->name);
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_clear_all_prev_pwrst)
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_clear_all_prev_pwrst)
 		ret = arch_pwrdm->pwrdm_clear_all_prev_pwrst(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_enable_hdwr_sar - enable automatic hardware SAR for a pwrdm
- * @pwrdm: struct powerdomain *
+ * pwrdm_enable_hdwr_sar - enable स्वतःmatic hardware SAR क्रम a pwrdm
+ * @pwrdm: काष्ठा घातerकरोमुख्य *
  *
- * Enable automatic context save-and-restore upon power state change
- * for some devices in the powerdomain @pwrdm.  Warning: this only
- * affects a subset of devices in a powerdomain; check the TRM
- * closely.  Returns -EINVAL if the powerdomain pointer is null or if
- * the powerdomain does not support automatic save-and-restore, or
- * returns 0 upon success.
+ * Enable स्वतःmatic context save-and-restore upon घातer state change
+ * क्रम some devices in the घातerकरोमुख्य @pwrdm.  Warning: this only
+ * affects a subset of devices in a घातerकरोमुख्य; check the TRM
+ * बंदly.  Returns -EINVAL अगर the घातerकरोमुख्य poपूर्णांकer is null or अगर
+ * the घातerकरोमुख्य करोes not support स्वतःmatic save-and-restore, or
+ * वापसs 0 upon success.
  */
-int pwrdm_enable_hdwr_sar(struct powerdomain *pwrdm)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_enable_hdwr_sar(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return ret;
+	अगर (!pwrdm)
+		वापस ret;
 
-	if (!(pwrdm->flags & PWRDM_HAS_HDWR_SAR))
-		return ret;
+	अगर (!(pwrdm->flags & PWRDM_HAS_HDWR_SAR))
+		वापस ret;
 
 	pr_debug("powerdomain: %s: setting SAVEANDRESTORE bit\n", pwrdm->name);
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_enable_hdwr_sar)
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_enable_hdwr_sar)
 		ret = arch_pwrdm->pwrdm_enable_hdwr_sar(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_disable_hdwr_sar - disable automatic hardware SAR for a pwrdm
- * @pwrdm: struct powerdomain *
+ * pwrdm_disable_hdwr_sar - disable स्वतःmatic hardware SAR क्रम a pwrdm
+ * @pwrdm: काष्ठा घातerकरोमुख्य *
  *
- * Disable automatic context save-and-restore upon power state change
- * for some devices in the powerdomain @pwrdm.  Warning: this only
- * affects a subset of devices in a powerdomain; check the TRM
- * closely.  Returns -EINVAL if the powerdomain pointer is null or if
- * the powerdomain does not support automatic save-and-restore, or
- * returns 0 upon success.
+ * Disable स्वतःmatic context save-and-restore upon घातer state change
+ * क्रम some devices in the घातerकरोमुख्य @pwrdm.  Warning: this only
+ * affects a subset of devices in a घातerकरोमुख्य; check the TRM
+ * बंदly.  Returns -EINVAL अगर the घातerकरोमुख्य poपूर्णांकer is null or अगर
+ * the घातerकरोमुख्य करोes not support स्वतःmatic save-and-restore, or
+ * वापसs 0 upon success.
  */
-int pwrdm_disable_hdwr_sar(struct powerdomain *pwrdm)
-{
-	int ret = -EINVAL;
+पूर्णांक pwrdm_disable_hdwr_sar(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	if (!pwrdm)
-		return ret;
+	अगर (!pwrdm)
+		वापस ret;
 
-	if (!(pwrdm->flags & PWRDM_HAS_HDWR_SAR))
-		return ret;
+	अगर (!(pwrdm->flags & PWRDM_HAS_HDWR_SAR))
+		वापस ret;
 
 	pr_debug("powerdomain: %s: clearing SAVEANDRESTORE bit\n", pwrdm->name);
 
-	if (arch_pwrdm && arch_pwrdm->pwrdm_disable_hdwr_sar)
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_disable_hdwr_sar)
 		ret = arch_pwrdm->pwrdm_disable_hdwr_sar(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_has_hdwr_sar - test whether powerdomain supports hardware SAR
- * @pwrdm: struct powerdomain *
+ * pwrdm_has_hdwr_sar - test whether घातerकरोमुख्य supports hardware SAR
+ * @pwrdm: काष्ठा घातerकरोमुख्य *
  *
- * Returns 1 if powerdomain @pwrdm supports hardware save-and-restore
- * for some devices, or 0 if it does not.
+ * Returns 1 अगर घातerकरोमुख्य @pwrdm supports hardware save-and-restore
+ * क्रम some devices, or 0 अगर it करोes not.
  */
-bool pwrdm_has_hdwr_sar(struct powerdomain *pwrdm)
-{
-	return (pwrdm && pwrdm->flags & PWRDM_HAS_HDWR_SAR) ? 1 : 0;
-}
+bool pwrdm_has_hdwr_sar(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	वापस (pwrdm && pwrdm->flags & PWRDM_HAS_HDWR_SAR) ? 1 : 0;
+पूर्ण
 
-int pwrdm_state_switch_nolock(struct powerdomain *pwrdm)
-{
-	int ret;
+पूर्णांक pwrdm_state_चयन_nolock(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret;
 
-	if (!pwrdm || !arch_pwrdm)
-		return -EINVAL;
+	अगर (!pwrdm || !arch_pwrdm)
+		वापस -EINVAL;
 
-	ret = arch_pwrdm->pwrdm_wait_transition(pwrdm);
-	if (!ret)
-		ret = _pwrdm_state_switch(pwrdm, PWRDM_STATE_NOW);
+	ret = arch_pwrdm->pwrdm_रुको_transition(pwrdm);
+	अगर (!ret)
+		ret = _pwrdm_state_चयन(pwrdm, PWRDM_STATE_NOW);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int __deprecated pwrdm_state_switch(struct powerdomain *pwrdm)
-{
-	int ret;
+पूर्णांक __deprecated pwrdm_state_चयन(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक ret;
 
 	pwrdm_lock(pwrdm);
-	ret = pwrdm_state_switch_nolock(pwrdm);
+	ret = pwrdm_state_चयन_nolock(pwrdm);
 	pwrdm_unlock(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int pwrdm_pre_transition(struct powerdomain *pwrdm)
-{
-	if (pwrdm)
-		_pwrdm_pre_transition_cb(pwrdm, NULL);
-	else
-		pwrdm_for_each(_pwrdm_pre_transition_cb, NULL);
+पूर्णांक pwrdm_pre_transition(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	अगर (pwrdm)
+		_pwrdm_pre_transition_cb(pwrdm, शून्य);
+	अन्यथा
+		pwrdm_क्रम_each(_pwrdm_pre_transition_cb, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int pwrdm_post_transition(struct powerdomain *pwrdm)
-{
-	if (pwrdm)
-		_pwrdm_post_transition_cb(pwrdm, NULL);
-	else
-		pwrdm_for_each(_pwrdm_post_transition_cb, NULL);
+पूर्णांक pwrdm_post_transition(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	अगर (pwrdm)
+		_pwrdm_post_transition_cb(pwrdm, शून्य);
+	अन्यथा
+		pwrdm_क्रम_each(_pwrdm_post_transition_cb, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pwrdm_get_valid_lp_state() - Find best match deep power state
- * @pwrdm:	power domain for which we want to find best match
- * @is_logic_state: Are we looking for logic state match here? Should
+ * pwrdm_get_valid_lp_state() - Find best match deep घातer state
+ * @pwrdm:	घातer करोमुख्य क्रम which we want to find best match
+ * @is_logic_state: Are we looking क्रम logic state match here? Should
  *		    be one of PWRDM_xxx macro values
- * @req_state:	requested power state
+ * @req_state:	requested घातer state
  *
- * Returns: closest match for requested power state. default fallback
- * is RET for logic state and ON for power state.
+ * Returns: बंदst match क्रम requested घातer state. शेष fallback
+ * is RET क्रम logic state and ON क्रम घातer state.
  *
- * This does a search from the power domain data looking for the
- * closest valid power domain state that the hardware can achieve.
- * PRCM definitions for PWRSTCTRL allows us to program whatever
+ * This करोes a search from the घातer करोमुख्य data looking क्रम the
+ * बंदst valid घातer करोमुख्य state that the hardware can achieve.
+ * PRCM definitions क्रम PWRSTCTRL allows us to program whatever
  * configuration we'd like, and PRCM will actually attempt such
- * a transition, however if the powerdomain does not actually support it,
- * we endup with a hung system. The valid power domain states are already
- * available in our powerdomain data files. So this function tries to do
+ * a transition, however अगर the घातerकरोमुख्य करोes not actually support it,
+ * we endup with a hung प्रणाली. The valid घातer करोमुख्य states are alपढ़ोy
+ * available in our घातerकरोमुख्य data files. So this function tries to करो
  * the following:
- * a) find if we have an exact match to the request - no issues.
- * b) else find if a deeper power state is possible.
- * c) failing which, it tries to find closest higher power state for the
+ * a) find अगर we have an exact match to the request - no issues.
+ * b) अन्यथा find अगर a deeper घातer state is possible.
+ * c) failing which, it tries to find बंदst higher घातer state क्रम the
  * request.
  */
-u8 pwrdm_get_valid_lp_state(struct powerdomain *pwrdm,
+u8 pwrdm_get_valid_lp_state(काष्ठा घातerकरोमुख्य *pwrdm,
 			    bool is_logic_state, u8 req_state)
-{
+अणु
 	u8 pwrdm_states = is_logic_state ? pwrdm->pwrsts_logic_ret :
 			pwrdm->pwrsts;
 	/* For logic, ret is highest and others, ON is highest */
-	u8 default_pwrst = is_logic_state ? PWRDM_POWER_RET : PWRDM_POWER_ON;
+	u8 शेष_pwrst = is_logic_state ? PWRDM_POWER_RET : PWRDM_POWER_ON;
 	u8 new_pwrst;
 	bool found;
 
-	/* If it is already supported, nothing to search */
-	if (pwrdm_states & BIT(req_state))
-		return req_state;
+	/* If it is alपढ़ोy supported, nothing to search */
+	अगर (pwrdm_states & BIT(req_state))
+		वापस req_state;
 
-	if (!req_state)
-		goto up_search;
+	अगर (!req_state)
+		जाओ up_search;
 
 	/*
-	 * So, we dont have a exact match
-	 * Can we get a deeper power state match?
+	 * So, we करोnt have a exact match
+	 * Can we get a deeper घातer state match?
 	 */
 	new_pwrst = req_state - 1;
 	found = true;
-	while (!(pwrdm_states & BIT(new_pwrst))) {
+	जबतक (!(pwrdm_states & BIT(new_pwrst))) अणु
 		/* No match even at OFF? Not available */
-		if (new_pwrst == PWRDM_POWER_OFF) {
+		अगर (new_pwrst == PWRDM_POWER_OFF) अणु
 			found = false;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		new_pwrst--;
-	}
+	पूर्ण
 
-	if (found)
-		goto done;
+	अगर (found)
+		जाओ करोne;
 
 up_search:
 	/* OK, no deeper ones, can we get a higher match? */
 	new_pwrst = req_state + 1;
-	while (!(pwrdm_states & BIT(new_pwrst))) {
-		if (new_pwrst > PWRDM_POWER_ON) {
+	जबतक (!(pwrdm_states & BIT(new_pwrst))) अणु
+		अगर (new_pwrst > PWRDM_POWER_ON) अणु
 			WARN(1, "powerdomain: %s: Fix max powerstate to ON\n",
 			     pwrdm->name);
-			return PWRDM_POWER_ON;
-		}
+			वापस PWRDM_POWER_ON;
+		पूर्ण
 
-		if (new_pwrst == default_pwrst)
-			break;
+		अगर (new_pwrst == शेष_pwrst)
+			अवरोध;
 		new_pwrst++;
-	}
-done:
-	return new_pwrst;
-}
+	पूर्ण
+करोne:
+	वापस new_pwrst;
+पूर्ण
 
 /**
- * omap_set_pwrdm_state - change a powerdomain's current power state
- * @pwrdm: struct powerdomain * to change the power state of
- * @pwrst: power state to change to
+ * omap_set_pwrdm_state - change a घातerकरोमुख्य's current घातer state
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to change the घातer state of
+ * @pwrst: घातer state to change to
  *
- * Change the current hardware power state of the powerdomain
- * represented by @pwrdm to the power state represented by @pwrst.
- * Returns -EINVAL if @pwrdm is null or invalid or if the
- * powerdomain's current power state could not be read, or returns 0
- * upon success or if @pwrdm does not support @pwrst or any
- * lower-power state.  XXX Should not return 0 if the @pwrdm does not
- * support @pwrst or any lower-power state: this should be an error.
+ * Change the current hardware घातer state of the घातerकरोमुख्य
+ * represented by @pwrdm to the घातer state represented by @pwrst.
+ * Returns -EINVAL अगर @pwrdm is null or invalid or अगर the
+ * घातerकरोमुख्य's current घातer state could not be पढ़ो, or वापसs 0
+ * upon success or अगर @pwrdm करोes not support @pwrst or any
+ * lower-घातer state.  XXX Should not वापस 0 अगर the @pwrdm करोes not
+ * support @pwrst or any lower-घातer state: this should be an error.
  */
-int omap_set_pwrdm_state(struct powerdomain *pwrdm, u8 pwrst)
-{
-	u8 next_pwrst, sleep_switch;
-	int curr_pwrst;
-	int ret = 0;
+पूर्णांक omap_set_pwrdm_state(काष्ठा घातerकरोमुख्य *pwrdm, u8 pwrst)
+अणु
+	u8 next_pwrst, sleep_चयन;
+	पूर्णांक curr_pwrst;
+	पूर्णांक ret = 0;
 
-	if (!pwrdm || IS_ERR(pwrdm))
-		return -EINVAL;
+	अगर (!pwrdm || IS_ERR(pwrdm))
+		वापस -EINVAL;
 
-	while (!(pwrdm->pwrsts & (1 << pwrst))) {
-		if (pwrst == PWRDM_POWER_OFF)
-			return ret;
+	जबतक (!(pwrdm->pwrsts & (1 << pwrst))) अणु
+		अगर (pwrst == PWRDM_POWER_OFF)
+			वापस ret;
 		pwrst--;
-	}
+	पूर्ण
 
 	pwrdm_lock(pwrdm);
 
-	curr_pwrst = pwrdm_read_pwrst(pwrdm);
-	if (curr_pwrst < 0) {
+	curr_pwrst = pwrdm_पढ़ो_pwrst(pwrdm);
+	अगर (curr_pwrst < 0) अणु
 		ret = -EINVAL;
-		goto osps_out;
-	}
+		जाओ osps_out;
+	पूर्ण
 
-	next_pwrst = pwrdm_read_next_pwrst(pwrdm);
-	if (curr_pwrst == pwrst && next_pwrst == pwrst)
-		goto osps_out;
+	next_pwrst = pwrdm_पढ़ो_next_pwrst(pwrdm);
+	अगर (curr_pwrst == pwrst && next_pwrst == pwrst)
+		जाओ osps_out;
 
-	sleep_switch = _pwrdm_save_clkdm_state_and_activate(pwrdm, curr_pwrst,
+	sleep_चयन = _pwrdm_save_clkdm_state_and_activate(pwrdm, curr_pwrst,
 							    pwrst);
 
 	ret = pwrdm_set_next_pwrst(pwrdm, pwrst);
-	if (ret)
+	अगर (ret)
 		pr_err("%s: unable to set power state of powerdomain: %s\n",
 		       __func__, pwrdm->name);
 
-	_pwrdm_restore_clkdm_state(pwrdm, sleep_switch);
+	_pwrdm_restore_clkdm_state(pwrdm, sleep_चयन);
 
 osps_out:
 	pwrdm_unlock(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pwrdm_get_context_loss_count - get powerdomain's context loss count
- * @pwrdm: struct powerdomain * to wait for
+ * pwrdm_get_context_loss_count - get घातerकरोमुख्य's context loss count
+ * @pwrdm: काष्ठा घातerकरोमुख्य * to रुको क्रम
  *
- * Context loss count is the sum of powerdomain off-mode counter, the
+ * Context loss count is the sum of घातerकरोमुख्य off-mode counter, the
  * logic off counter and the per-bank memory off counter.  Returns negative
- * (and WARNs) upon error, otherwise, returns the context loss count.
+ * (and WARNs) upon error, otherwise, वापसs the context loss count.
  */
-int pwrdm_get_context_loss_count(struct powerdomain *pwrdm)
-{
-	int i, count;
+पूर्णांक pwrdm_get_context_loss_count(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक i, count;
 
-	if (!pwrdm) {
+	अगर (!pwrdm) अणु
 		WARN(1, "powerdomain: %s: pwrdm is null\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	count = pwrdm->state_counter[PWRDM_POWER_OFF];
 	count += pwrdm->ret_logic_off_counter;
 
-	for (i = 0; i < pwrdm->banks; i++)
+	क्रम (i = 0; i < pwrdm->banks; i++)
 		count += pwrdm->ret_mem_off_counter[i];
 
 	/*
 	 * Context loss count has to be a non-negative value. Clear the sign
-	 * bit to get a value range from 0 to INT_MAX.
+	 * bit to get a value range from 0 to पूर्णांक_उच्च.
 	 */
-	count &= INT_MAX;
+	count &= पूर्णांक_उच्च;
 
 	pr_debug("powerdomain: %s: context loss count = %d\n",
 		 pwrdm->name, count);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- * pwrdm_can_ever_lose_context - can this powerdomain ever lose context?
- * @pwrdm: struct powerdomain *
+ * pwrdm_can_ever_lose_context - can this घातerकरोमुख्य ever lose context?
+ * @pwrdm: काष्ठा घातerकरोमुख्य *
  *
- * Given a struct powerdomain * @pwrdm, returns 1 if the powerdomain
- * can lose either memory or logic context or if @pwrdm is invalid, or
- * returns 0 otherwise.  This function is not concerned with how the
- * powerdomain registers are programmed (i.e., to go off or not); it's
- * concerned with whether it's ever possible for this powerdomain to
- * go off while some other part of the chip is active.  This function
- * assumes that every powerdomain can go to either ON or INACTIVE.
+ * Given a काष्ठा घातerकरोमुख्य * @pwrdm, वापसs 1 अगर the घातerकरोमुख्य
+ * can lose either memory or logic context or अगर @pwrdm is invalid, or
+ * वापसs 0 otherwise.  This function is not concerned with how the
+ * घातerकरोमुख्य रेजिस्टरs are programmed (i.e., to go off or not); it's
+ * concerned with whether it's ever possible क्रम this घातerकरोमुख्य to
+ * go off जबतक some other part of the chip is active.  This function
+ * assumes that every घातerकरोमुख्य can go to either ON or INACTIVE.
  */
-bool pwrdm_can_ever_lose_context(struct powerdomain *pwrdm)
-{
-	int i;
+bool pwrdm_can_ever_lose_context(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	पूर्णांक i;
 
-	if (!pwrdm) {
+	अगर (!pwrdm) अणु
 		pr_debug("powerdomain: %s: invalid powerdomain pointer\n",
 			 __func__);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (pwrdm->pwrsts & PWRSTS_OFF)
-		return true;
+	अगर (pwrdm->pwrsts & PWRSTS_OFF)
+		वापस true;
 
-	if (pwrdm->pwrsts & PWRSTS_RET) {
-		if (pwrdm->pwrsts_logic_ret & PWRSTS_OFF)
-			return true;
+	अगर (pwrdm->pwrsts & PWRSTS_RET) अणु
+		अगर (pwrdm->pwrsts_logic_ret & PWRSTS_OFF)
+			वापस true;
 
-		for (i = 0; i < pwrdm->banks; i++)
-			if (pwrdm->pwrsts_mem_ret[i] & PWRSTS_OFF)
-				return true;
-	}
+		क्रम (i = 0; i < pwrdm->banks; i++)
+			अगर (pwrdm->pwrsts_mem_ret[i] & PWRSTS_OFF)
+				वापस true;
+	पूर्ण
 
-	for (i = 0; i < pwrdm->banks; i++)
-		if (pwrdm->pwrsts_mem_on[i] & PWRSTS_OFF)
-			return true;
+	क्रम (i = 0; i < pwrdm->banks; i++)
+		अगर (pwrdm->pwrsts_mem_on[i] & PWRSTS_OFF)
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * pwrdm_save_context - save powerdomain registers
+ * pwrdm_save_context - save घातerकरोमुख्य रेजिस्टरs
  *
  * Register state is going to be lost due to a suspend or hibernate
- * event. Save the powerdomain registers.
+ * event. Save the घातerकरोमुख्य रेजिस्टरs.
  */
-static int pwrdm_save_context(struct powerdomain *pwrdm, void *unused)
-{
-	if (arch_pwrdm && arch_pwrdm->pwrdm_save_context)
+अटल पूर्णांक pwrdm_save_context(काष्ठा घातerकरोमुख्य *pwrdm, व्योम *unused)
+अणु
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_save_context)
 		arch_pwrdm->pwrdm_save_context(pwrdm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pwrdm_save_context - restore powerdomain registers
+ * pwrdm_save_context - restore घातerकरोमुख्य रेजिस्टरs
  *
- * Restore powerdomain control registers after a suspend or resume
+ * Restore घातerकरोमुख्य control रेजिस्टरs after a suspend or resume
  * event.
  */
-static int pwrdm_restore_context(struct powerdomain *pwrdm, void *unused)
-{
-	if (arch_pwrdm && arch_pwrdm->pwrdm_restore_context)
+अटल पूर्णांक pwrdm_restore_context(काष्ठा घातerकरोमुख्य *pwrdm, व्योम *unused)
+अणु
+	अगर (arch_pwrdm && arch_pwrdm->pwrdm_restore_context)
 		arch_pwrdm->pwrdm_restore_context(pwrdm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrdm_lost_power(struct powerdomain *pwrdm, void *unused)
-{
-	int state;
+अटल पूर्णांक pwrdm_lost_घातer(काष्ठा घातerकरोमुख्य *pwrdm, व्योम *unused)
+अणु
+	पूर्णांक state;
 
 	/*
-	 * Power has been lost across all powerdomains, increment the
+	 * Power has been lost across all घातerकरोमुख्यs, increment the
 	 * counter.
 	 */
 
-	state = pwrdm_read_pwrst(pwrdm);
-	if (state != PWRDM_POWER_OFF) {
+	state = pwrdm_पढ़ो_pwrst(pwrdm);
+	अगर (state != PWRDM_POWER_OFF) अणु
 		pwrdm->state_counter[state]++;
 		pwrdm->state_counter[PWRDM_POWER_OFF]++;
-	}
+	पूर्ण
 	pwrdm->state = state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pwrdms_save_context(void)
-{
-	pwrdm_for_each(pwrdm_save_context, NULL);
-}
+व्योम pwrdms_save_context(व्योम)
+अणु
+	pwrdm_क्रम_each(pwrdm_save_context, शून्य);
+पूर्ण
 
-void pwrdms_restore_context(void)
-{
-	pwrdm_for_each(pwrdm_restore_context, NULL);
-}
+व्योम pwrdms_restore_context(व्योम)
+अणु
+	pwrdm_क्रम_each(pwrdm_restore_context, शून्य);
+पूर्ण
 
-void pwrdms_lost_power(void)
-{
-	pwrdm_for_each(pwrdm_lost_power, NULL);
-}
+व्योम pwrdms_lost_घातer(व्योम)
+अणु
+	pwrdm_क्रम_each(pwrdm_lost_घातer, शून्य);
+पूर्ण

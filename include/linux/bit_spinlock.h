@@ -1,101 +1,102 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_BIT_SPINLOCK_H
-#define __LINUX_BIT_SPINLOCK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_BIT_SPINLOCK_H
+#घोषणा __LINUX_BIT_SPINLOCK_H
 
-#include <linux/kernel.h>
-#include <linux/preempt.h>
-#include <linux/atomic.h>
-#include <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/bug.h>
 
 /*
  *  bit-based spin_lock()
  *
  * Don't use this unless you really need to: spin_lock() and spin_unlock()
- * are significantly faster.
+ * are signअगरicantly faster.
  */
-static inline void bit_spin_lock(int bitnum, unsigned long *addr)
-{
+अटल अंतरभूत व्योम bit_spin_lock(पूर्णांक bitnum, अचिन्हित दीर्घ *addr)
+अणु
 	/*
 	 * Assuming the lock is uncontended, this never enters
 	 * the body of the outer loop. If it is contended, then
 	 * within the inner loop a non-atomic test is used to
-	 * busywait with less bus contention for a good time to
+	 * busyरुको with less bus contention क्रम a good समय to
 	 * attempt to acquire the lock bit.
 	 */
 	preempt_disable();
-#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
-	while (unlikely(test_and_set_bit_lock(bitnum, addr))) {
+#अगर defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+	जबतक (unlikely(test_and_set_bit_lock(bitnum, addr))) अणु
 		preempt_enable();
-		do {
+		करो अणु
 			cpu_relax();
-		} while (test_bit(bitnum, addr));
+		पूर्ण जबतक (test_bit(bitnum, addr));
 		preempt_disable();
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	__acquire(bitlock);
-}
+पूर्ण
 
 /*
- * Return true if it was acquired
+ * Return true अगर it was acquired
  */
-static inline int bit_spin_trylock(int bitnum, unsigned long *addr)
-{
+अटल अंतरभूत पूर्णांक bit_spin_trylock(पूर्णांक bitnum, अचिन्हित दीर्घ *addr)
+अणु
 	preempt_disable();
-#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
-	if (unlikely(test_and_set_bit_lock(bitnum, addr))) {
+#अगर defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+	अगर (unlikely(test_and_set_bit_lock(bitnum, addr))) अणु
 		preempt_enable();
-		return 0;
-	}
-#endif
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
 	__acquire(bitlock);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  *  bit-based spin_unlock()
  */
-static inline void bit_spin_unlock(int bitnum, unsigned long *addr)
-{
-#ifdef CONFIG_DEBUG_SPINLOCK
+अटल अंतरभूत व्योम bit_spin_unlock(पूर्णांक bitnum, अचिन्हित दीर्घ *addr)
+अणु
+#अगर_घोषित CONFIG_DEBUG_SPINLOCK
 	BUG_ON(!test_bit(bitnum, addr));
-#endif
-#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+#पूर्ण_अगर
+#अगर defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
 	clear_bit_unlock(bitnum, addr);
-#endif
+#पूर्ण_अगर
 	preempt_enable();
 	__release(bitlock);
-}
+पूर्ण
 
 /*
  *  bit-based spin_unlock()
- *  non-atomic version, which can be used eg. if the bit lock itself is
+ *  non-atomic version, which can be used eg. अगर the bit lock itself is
  *  protecting the rest of the flags in the word.
  */
-static inline void __bit_spin_unlock(int bitnum, unsigned long *addr)
-{
-#ifdef CONFIG_DEBUG_SPINLOCK
+अटल अंतरभूत व्योम __bit_spin_unlock(पूर्णांक bitnum, अचिन्हित दीर्घ *addr)
+अणु
+#अगर_घोषित CONFIG_DEBUG_SPINLOCK
 	BUG_ON(!test_bit(bitnum, addr));
-#endif
-#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+#पूर्ण_अगर
+#अगर defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
 	__clear_bit_unlock(bitnum, addr);
-#endif
+#पूर्ण_अगर
 	preempt_enable();
 	__release(bitlock);
-}
+पूर्ण
 
 /*
- * Return true if the lock is held.
+ * Return true अगर the lock is held.
  */
-static inline int bit_spin_is_locked(int bitnum, unsigned long *addr)
-{
-#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
-	return test_bit(bitnum, addr);
-#elif defined CONFIG_PREEMPT_COUNT
-	return preempt_count();
-#else
-	return 1;
-#endif
-}
+अटल अंतरभूत पूर्णांक bit_spin_is_locked(पूर्णांक bitnum, अचिन्हित दीर्घ *addr)
+अणु
+#अगर defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+	वापस test_bit(bitnum, addr);
+#या_अगर defined CONFIG_PREEMPT_COUNT
+	वापस preempt_count();
+#अन्यथा
+	वापस 1;
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* __LINUX_BIT_SPINLOCK_H */
+#पूर्ण_अगर /* __LINUX_BIT_SPINLOCK_H */
 

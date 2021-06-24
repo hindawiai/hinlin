@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_TC_EM_NBYTE_H
-#define __LINUX_TC_EM_NBYTE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_TC_EM_NBYTE_H
+#घोषणा __LINUX_TC_EM_NBYTE_H
 
-#include <linux/types.h>
-#include <linux/pkt_cls.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pkt_cls.h>
 
-struct tcf_em_nbyte {
+काष्ठा tcf_em_nbyte अणु
 	__u16		off;
 	__u16		len:12;
 	__u8		layer:4;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

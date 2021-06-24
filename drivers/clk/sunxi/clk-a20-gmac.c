@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright 2013 Emilio López
- * Emilio López <emilio@elopez.com.ar>
+ * Copyright 2013 Emilio Lथकpez
+ * Emilio Lथकpez <emilio@elopez.com.ar>
  *
  * Copyright 2013 Chen-Yu Tsai
  * Chen-Yu Tsai <wens@csie.org>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/slab.h>
 
-static DEFINE_SPINLOCK(gmac_lock);
+अटल DEFINE_SPINLOCK(gmac_lock);
 
 /**
- * sun7i_a20_gmac_clk_setup - Setup function for A20/A31 GMAC clock module
+ * sun7i_a20_gmac_clk_setup - Setup function क्रम A20/A31 GMAC घड़ी module
  *
- * This clock looks something like this
+ * This घड़ी looks something like this
  *                               ________________________
- *  MII TX clock from PHY >-----|___________    _________|----> to GMAC core
+ *  MII TX घड़ी from PHY >-----|___________    _________|----> to GMAC core
  *  GMAC Int. RGMII TX clk >----|___________\__/__gate---|----> to PHY
- *  Ext. 125MHz RGMII TX clk >--|__divider__/            |
+ *  Ext. 125MHz RGMII TX clk >--|__भागider__/            |
  *                              |________________________|
  *
- * The external 125 MHz reference is optional, i.e. GMAC can use its
- * internal TX clock just fine. The A31 GMAC clock module does not have
- * the divider controls for the external reference.
+ * The बाह्यal 125 MHz reference is optional, i.e. GMAC can use its
+ * पूर्णांकernal TX घड़ी just fine. The A31 GMAC घड़ी module करोes not have
+ * the भागider controls क्रम the बाह्यal reference.
  *
- * To keep it simple, let the GMAC use either the MII TX clock for MII mode,
- * and its internal TX clock for GMII and RGMII modes. The GMAC driver should
+ * To keep it simple, let the GMAC use either the MII TX घड़ी क्रम MII mode,
+ * and its पूर्णांकernal TX घड़ी क्रम GMII and RGMII modes. The GMAC driver should
  * select the appropriate source and gate/ungate the output to the PHY.
  *
- * Only the GMAC should use this clock. Altering the clock so that it doesn't
+ * Only the GMAC should use this घड़ी. Altering the घड़ी so that it करोesn't
  * match the GMAC's operation parameters will result in the GMAC not being
- * able to send traffic out. The GMAC driver should set the clock rate and
- * enable/disable this clock to configure the required state. The clock
- * driver then responds by auto-reparenting the clock.
+ * able to send traffic out. The GMAC driver should set the घड़ी rate and
+ * enable/disable this घड़ी to configure the required state. The घड़ी
+ * driver then responds by स्वतः-reparenting the घड़ी.
  */
 
-#define SUN7I_A20_GMAC_GPIT	2
-#define SUN7I_A20_GMAC_MASK	0x3
-#define SUN7I_A20_GMAC_PARENTS	2
+#घोषणा SUN7I_A20_GMAC_GPIT	2
+#घोषणा SUN7I_A20_GMAC_MASK	0x3
+#घोषणा SUN7I_A20_GMAC_PARENTS	2
 
-static u32 sun7i_a20_gmac_mux_table[SUN7I_A20_GMAC_PARENTS] = {
+अटल u32 sun7i_a20_gmac_mux_table[SUN7I_A20_GMAC_PARENTS] = अणु
 	0x00, /* Select mii_phy_tx_clk */
-	0x02, /* Select gmac_int_tx_clk */
-};
+	0x02, /* Select gmac_पूर्णांक_tx_clk */
+पूर्ण;
 
-static void __init sun7i_a20_gmac_clk_setup(struct device_node *node)
-{
-	struct clk *clk;
-	struct clk_mux *mux;
-	struct clk_gate *gate;
-	const char *clk_name = node->name;
-	const char *parents[SUN7I_A20_GMAC_PARENTS];
-	void __iomem *reg;
+अटल व्योम __init sun7i_a20_gmac_clk_setup(काष्ठा device_node *node)
+अणु
+	काष्ठा clk *clk;
+	काष्ठा clk_mux *mux;
+	काष्ठा clk_gate *gate;
+	स्थिर अक्षर *clk_name = node->name;
+	स्थिर अक्षर *parents[SUN7I_A20_GMAC_PARENTS];
+	व्योम __iomem *reg;
 
-	if (of_property_read_string(node, "clock-output-names", &clk_name))
-		return;
+	अगर (of_property_पढ़ो_string(node, "clock-output-names", &clk_name))
+		वापस;
 
-	/* allocate mux and gate clock structs */
-	mux = kzalloc(sizeof(struct clk_mux), GFP_KERNEL);
-	if (!mux)
-		return;
+	/* allocate mux and gate घड़ी काष्ठाs */
+	mux = kzalloc(माप(काष्ठा clk_mux), GFP_KERNEL);
+	अगर (!mux)
+		वापस;
 
-	gate = kzalloc(sizeof(struct clk_gate), GFP_KERNEL);
-	if (!gate)
-		goto free_mux;
+	gate = kzalloc(माप(काष्ठा clk_gate), GFP_KERNEL);
+	अगर (!gate)
+		जाओ मुक्त_mux;
 
-	/* gmac clock requires exactly 2 parents */
-	if (of_clk_parent_fill(node, parents, 2) != 2)
-		goto free_gate;
+	/* gmac घड़ी requires exactly 2 parents */
+	अगर (of_clk_parent_fill(node, parents, 2) != 2)
+		जाओ मुक्त_gate;
 
 	reg = of_iomap(node, 0);
-	if (!reg)
-		goto free_gate;
+	अगर (!reg)
+		जाओ मुक्त_gate;
 
 	/* set up gate and fixed rate properties */
 	gate->reg = reg;
@@ -87,26 +88,26 @@ static void __init sun7i_a20_gmac_clk_setup(struct device_node *node)
 	mux->table = sun7i_a20_gmac_mux_table;
 	mux->lock = &gmac_lock;
 
-	clk = clk_register_composite(NULL, clk_name,
+	clk = clk_रेजिस्टर_composite(शून्य, clk_name,
 			parents, SUN7I_A20_GMAC_PARENTS,
 			&mux->hw, &clk_mux_ops,
-			NULL, NULL,
+			शून्य, शून्य,
 			&gate->hw, &clk_gate_ops,
 			0);
 
-	if (IS_ERR(clk))
-		goto iounmap_reg;
+	अगर (IS_ERR(clk))
+		जाओ iounmap_reg;
 
 	of_clk_add_provider(node, of_clk_src_simple_get, clk);
 
-	return;
+	वापस;
 
 iounmap_reg:
 	iounmap(reg);
-free_gate:
-	kfree(gate);
-free_mux:
-	kfree(mux);
-}
+मुक्त_gate:
+	kमुक्त(gate);
+मुक्त_mux:
+	kमुक्त(mux);
+पूर्ण
 CLK_OF_DECLARE(sun7i_a20_gmac, "allwinner,sun7i-a20-gmac-clk",
 		sun7i_a20_gmac_clk_setup);

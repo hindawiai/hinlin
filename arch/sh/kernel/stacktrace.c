@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/kernel/stacktrace.c
  *
@@ -6,74 +7,74 @@
  *
  *  Copyright (C) 2006 - 2008  Paul Mundt
  */
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/stacktrace.h>
-#include <linux/thread_info.h>
-#include <linux/module.h>
-#include <asm/unwinder.h>
-#include <asm/ptrace.h>
-#include <asm/stacktrace.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/thपढ़ो_info.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/unwinder.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/stacktrace.h>
 
 /*
- * Save stack-backtrace addresses into a stack_trace buffer.
+ * Save stack-backtrace addresses पूर्णांकo a stack_trace buffer.
  */
-static void save_stack_address(void *data, unsigned long addr, int reliable)
-{
-	struct stack_trace *trace = data;
+अटल व्योम save_stack_address(व्योम *data, अचिन्हित दीर्घ addr, पूर्णांक reliable)
+अणु
+	काष्ठा stack_trace *trace = data;
 
-	if (!reliable)
-		return;
+	अगर (!reliable)
+		वापस;
 
-	if (trace->skip > 0) {
+	अगर (trace->skip > 0) अणु
 		trace->skip--;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (trace->nr_entries < trace->max_entries)
+	अगर (trace->nr_entries < trace->max_entries)
 		trace->entries[trace->nr_entries++] = addr;
-}
+पूर्ण
 
-static const struct stacktrace_ops save_stack_ops = {
+अटल स्थिर काष्ठा stacktrace_ops save_stack_ops = अणु
 	.address = save_stack_address,
-};
+पूर्ण;
 
-void save_stack_trace(struct stack_trace *trace)
-{
-	unsigned long *sp = (unsigned long *)current_stack_pointer;
+व्योम save_stack_trace(काष्ठा stack_trace *trace)
+अणु
+	अचिन्हित दीर्घ *sp = (अचिन्हित दीर्घ *)current_stack_poपूर्णांकer;
 
-	unwind_stack(current, NULL, sp,  &save_stack_ops, trace);
-}
+	unwind_stack(current, शून्य, sp,  &save_stack_ops, trace);
+पूर्ण
 EXPORT_SYMBOL_GPL(save_stack_trace);
 
-static void
-save_stack_address_nosched(void *data, unsigned long addr, int reliable)
-{
-	struct stack_trace *trace = (struct stack_trace *)data;
+अटल व्योम
+save_stack_address_nosched(व्योम *data, अचिन्हित दीर्घ addr, पूर्णांक reliable)
+अणु
+	काष्ठा stack_trace *trace = (काष्ठा stack_trace *)data;
 
-	if (!reliable)
-		return;
+	अगर (!reliable)
+		वापस;
 
-	if (in_sched_functions(addr))
-		return;
+	अगर (in_sched_functions(addr))
+		वापस;
 
-	if (trace->skip > 0) {
+	अगर (trace->skip > 0) अणु
 		trace->skip--;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (trace->nr_entries < trace->max_entries)
+	अगर (trace->nr_entries < trace->max_entries)
 		trace->entries[trace->nr_entries++] = addr;
-}
+पूर्ण
 
-static const struct stacktrace_ops save_stack_ops_nosched = {
+अटल स्थिर काष्ठा stacktrace_ops save_stack_ops_nosched = अणु
 	.address = save_stack_address_nosched,
-};
+पूर्ण;
 
-void save_stack_trace_tsk(struct task_struct *tsk, struct stack_trace *trace)
-{
-	unsigned long *sp = (unsigned long *)tsk->thread.sp;
+व्योम save_stack_trace_tsk(काष्ठा task_काष्ठा *tsk, काष्ठा stack_trace *trace)
+अणु
+	अचिन्हित दीर्घ *sp = (अचिन्हित दीर्घ *)tsk->thपढ़ो.sp;
 
-	unwind_stack(current, NULL, sp,  &save_stack_ops_nosched, trace);
-}
+	unwind_stack(current, शून्य, sp,  &save_stack_ops_nosched, trace);
+पूर्ण
 EXPORT_SYMBOL_GPL(save_stack_trace_tsk);

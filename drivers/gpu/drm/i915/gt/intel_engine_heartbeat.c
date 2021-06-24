@@ -1,329 +1,330 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#include "i915_drv.h"
-#include "i915_request.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_request.h"
 
-#include "intel_context.h"
-#include "intel_engine_heartbeat.h"
-#include "intel_engine_pm.h"
-#include "intel_engine.h"
-#include "intel_gt.h"
-#include "intel_reset.h"
+#समावेश "intel_context.h"
+#समावेश "intel_engine_heartbeat.h"
+#समावेश "intel_engine_pm.h"
+#समावेश "intel_engine.h"
+#समावेश "intel_gt.h"
+#समावेश "intel_reset.h"
 
 /*
- * While the engine is active, we send a periodic pulse along the engine
+ * While the engine is active, we send a periodic pulse aदीर्घ the engine
  * to check on its health and to flush any idle-barriers. If that request
  * is stuck, and we fail to preempt it, we declare the engine hung and
  * issue a reset -- in the hope that restores progress.
  */
 
-static bool next_heartbeat(struct intel_engine_cs *engine)
-{
-	long delay;
+अटल bool next_heartbeat(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	दीर्घ delay;
 
-	delay = READ_ONCE(engine->props.heartbeat_interval_ms);
-	if (!delay)
-		return false;
+	delay = READ_ONCE(engine->props.heartbeat_पूर्णांकerval_ms);
+	अगर (!delay)
+		वापस false;
 
-	delay = msecs_to_jiffies_timeout(delay);
-	if (delay >= HZ)
-		delay = round_jiffies_up_relative(delay);
-	mod_delayed_work(system_highpri_wq, &engine->heartbeat.work, delay + 1);
+	delay = msecs_to_jअगरfies_समयout(delay);
+	अगर (delay >= HZ)
+		delay = round_jअगरfies_up_relative(delay);
+	mod_delayed_work(प्रणाली_highpri_wq, &engine->heartbeat.work, delay + 1);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct i915_request *
-heartbeat_create(struct intel_context *ce, gfp_t gfp)
-{
-	struct i915_request *rq;
+अटल काष्ठा i915_request *
+heartbeat_create(काष्ठा पूर्णांकel_context *ce, gfp_t gfp)
+अणु
+	काष्ठा i915_request *rq;
 
-	intel_context_enter(ce);
+	पूर्णांकel_context_enter(ce);
 	rq = __i915_request_create(ce, gfp);
-	intel_context_exit(ce);
+	पूर्णांकel_context_निकास(ce);
 
-	return rq;
-}
+	वापस rq;
+पूर्ण
 
-static void idle_pulse(struct intel_engine_cs *engine, struct i915_request *rq)
-{
+अटल व्योम idle_pulse(काष्ठा पूर्णांकel_engine_cs *engine, काष्ठा i915_request *rq)
+अणु
 	engine->wakeref_serial = READ_ONCE(engine->serial) + 1;
 	i915_request_add_active_barriers(rq);
-	if (!engine->heartbeat.systole && intel_engine_has_heartbeat(engine))
+	अगर (!engine->heartbeat.systole && पूर्णांकel_engine_has_heartbeat(engine))
 		engine->heartbeat.systole = i915_request_get(rq);
-}
+पूर्ण
 
-static void heartbeat_commit(struct i915_request *rq,
-			     const struct i915_sched_attr *attr)
-{
+अटल व्योम heartbeat_commit(काष्ठा i915_request *rq,
+			     स्थिर काष्ठा i915_sched_attr *attr)
+अणु
 	idle_pulse(rq->engine, rq);
 
 	__i915_request_commit(rq);
 	__i915_request_queue(rq, attr);
-}
+पूर्ण
 
-static void show_heartbeat(const struct i915_request *rq,
-			   struct intel_engine_cs *engine)
-{
-	struct drm_printer p = drm_debug_printer("heartbeat");
+अटल व्योम show_heartbeat(स्थिर काष्ठा i915_request *rq,
+			   काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा drm_prपूर्णांकer p = drm_debug_prपूर्णांकer("heartbeat");
 
-	intel_engine_dump(engine, &p,
+	पूर्णांकel_engine_dump(engine, &p,
 			  "%s heartbeat {seqno:%llx:%lld, prio:%d} not ticking\n",
 			  engine->name,
 			  rq->fence.context,
 			  rq->fence.seqno,
 			  rq->sched.attr.priority);
-}
+पूर्ण
 
-static void heartbeat(struct work_struct *wrk)
-{
-	struct i915_sched_attr attr = { .priority = I915_PRIORITY_MIN };
-	struct intel_engine_cs *engine =
+अटल व्योम heartbeat(काष्ठा work_काष्ठा *wrk)
+अणु
+	काष्ठा i915_sched_attr attr = अणु .priority = I915_PRIORITY_MIN पूर्ण;
+	काष्ठा पूर्णांकel_engine_cs *engine =
 		container_of(wrk, typeof(*engine), heartbeat.work.work);
-	struct intel_context *ce = engine->kernel_context;
-	struct i915_request *rq;
-	unsigned long serial;
+	काष्ठा पूर्णांकel_context *ce = engine->kernel_context;
+	काष्ठा i915_request *rq;
+	अचिन्हित दीर्घ serial;
 
-	/* Just in case everything has gone horribly wrong, give it a kick */
-	intel_engine_flush_submission(engine);
+	/* Just in हाल everything has gone horribly wrong, give it a kick */
+	पूर्णांकel_engine_flush_submission(engine);
 
 	rq = engine->heartbeat.systole;
-	if (rq && i915_request_completed(rq)) {
+	अगर (rq && i915_request_completed(rq)) अणु
 		i915_request_put(rq);
-		engine->heartbeat.systole = NULL;
-	}
+		engine->heartbeat.systole = शून्य;
+	पूर्ण
 
-	if (!intel_engine_pm_get_if_awake(engine))
-		return;
+	अगर (!पूर्णांकel_engine_pm_get_अगर_awake(engine))
+		वापस;
 
-	if (intel_gt_is_wedged(engine->gt))
-		goto out;
+	अगर (पूर्णांकel_gt_is_wedged(engine->gt))
+		जाओ out;
 
-	if (engine->heartbeat.systole) {
-		long delay = READ_ONCE(engine->props.heartbeat_interval_ms);
+	अगर (engine->heartbeat.systole) अणु
+		दीर्घ delay = READ_ONCE(engine->props.heartbeat_पूर्णांकerval_ms);
 
 		/* Safeguard against too-fast worker invocations */
-		if (!time_after(jiffies,
-				rq->emitted_jiffies + msecs_to_jiffies(delay)))
-			goto out;
+		अगर (!समय_after(jअगरfies,
+				rq->emitted_jअगरfies + msecs_to_jअगरfies(delay)))
+			जाओ out;
 
-		if (!i915_sw_fence_signaled(&rq->submit)) {
+		अगर (!i915_sw_fence_संकेतed(&rq->submit)) अणु
 			/*
-			 * Not yet submitted, system is stalled.
+			 * Not yet submitted, प्रणाली is stalled.
 			 *
-			 * This more often happens for ring submission,
-			 * where all contexts are funnelled into a common
+			 * This more often happens क्रम ring submission,
+			 * where all contexts are funnelled पूर्णांकo a common
 			 * ringbuffer. If one context is blocked on an
-			 * external fence, not only is it not submitted,
+			 * बाह्यal fence, not only is it not submitted,
 			 * but all other contexts, including the kernel
-			 * context are stuck waiting for the signal.
+			 * context are stuck रुकोing क्रम the संकेत.
 			 */
-		} else if (engine->schedule &&
-			   rq->sched.attr.priority < I915_PRIORITY_BARRIER) {
+		पूर्ण अन्यथा अगर (engine->schedule &&
+			   rq->sched.attr.priority < I915_PRIORITY_BARRIER) अणु
 			/*
-			 * Gradually raise the priority of the heartbeat to
+			 * Gradually उठाओ the priority of the heartbeat to
 			 * give high priority work [which presumably desires
 			 * low latency and no jitter] the chance to naturally
-			 * complete before being preempted.
+			 * complete beक्रमe being preempted.
 			 */
 			attr.priority = 0;
-			if (rq->sched.attr.priority >= attr.priority)
+			अगर (rq->sched.attr.priority >= attr.priority)
 				attr.priority = I915_PRIORITY_HEARTBEAT;
-			if (rq->sched.attr.priority >= attr.priority)
+			अगर (rq->sched.attr.priority >= attr.priority)
 				attr.priority = I915_PRIORITY_BARRIER;
 
 			local_bh_disable();
 			engine->schedule(rq, &attr);
 			local_bh_enable();
-		} else {
-			if (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
+		पूर्ण अन्यथा अणु
+			अगर (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
 				show_heartbeat(rq, engine);
 
-			intel_gt_handle_error(engine->gt, engine->mask,
+			पूर्णांकel_gt_handle_error(engine->gt, engine->mask,
 					      I915_ERROR_CAPTURE,
 					      "stopped heartbeat on %s",
 					      engine->name);
-		}
+		पूर्ण
 
-		rq->emitted_jiffies = jiffies;
-		goto out;
-	}
+		rq->emitted_jअगरfies = jअगरfies;
+		जाओ out;
+	पूर्ण
 
 	serial = READ_ONCE(engine->serial);
-	if (engine->wakeref_serial == serial)
-		goto out;
+	अगर (engine->wakeref_serial == serial)
+		जाओ out;
 
-	if (!mutex_trylock(&ce->timeline->mutex)) {
-		/* Unable to lock the kernel timeline, is the engine stuck? */
-		if (xchg(&engine->heartbeat.blocked, serial) == serial)
-			intel_gt_handle_error(engine->gt, engine->mask,
+	अगर (!mutex_trylock(&ce->समयline->mutex)) अणु
+		/* Unable to lock the kernel समयline, is the engine stuck? */
+		अगर (xchg(&engine->heartbeat.blocked, serial) == serial)
+			पूर्णांकel_gt_handle_error(engine->gt, engine->mask,
 					      I915_ERROR_CAPTURE,
 					      "no heartbeat on %s",
 					      engine->name);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rq = heartbeat_create(ce, GFP_NOWAIT | __GFP_NOWARN);
-	if (IS_ERR(rq))
-		goto unlock;
+	अगर (IS_ERR(rq))
+		जाओ unlock;
 
 	heartbeat_commit(rq, &attr);
 
 unlock:
-	mutex_unlock(&ce->timeline->mutex);
+	mutex_unlock(&ce->समयline->mutex);
 out:
-	if (!engine->i915->params.enable_hangcheck || !next_heartbeat(engine))
+	अगर (!engine->i915->params.enable_hangcheck || !next_heartbeat(engine))
 		i915_request_put(fetch_and_zero(&engine->heartbeat.systole));
-	intel_engine_pm_put(engine);
-}
+	पूर्णांकel_engine_pm_put(engine);
+पूर्ण
 
-void intel_engine_unpark_heartbeat(struct intel_engine_cs *engine)
-{
-	if (!IS_ACTIVE(CONFIG_DRM_I915_HEARTBEAT_INTERVAL))
-		return;
+व्योम पूर्णांकel_engine_unpark_heartbeat(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (!IS_ACTIVE(CONFIG_DRM_I915_HEARTBEAT_INTERVAL))
+		वापस;
 
 	next_heartbeat(engine);
-}
+पूर्ण
 
-void intel_engine_park_heartbeat(struct intel_engine_cs *engine)
-{
-	if (cancel_delayed_work(&engine->heartbeat.work))
+व्योम पूर्णांकel_engine_park_heartbeat(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (cancel_delayed_work(&engine->heartbeat.work))
 		i915_request_put(fetch_and_zero(&engine->heartbeat.systole));
-}
+पूर्ण
 
-void intel_engine_init_heartbeat(struct intel_engine_cs *engine)
-{
+व्योम पूर्णांकel_engine_init_heartbeat(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	INIT_DELAYED_WORK(&engine->heartbeat.work, heartbeat);
-}
+पूर्ण
 
-static int __intel_engine_pulse(struct intel_engine_cs *engine)
-{
-	struct i915_sched_attr attr = { .priority = I915_PRIORITY_BARRIER };
-	struct intel_context *ce = engine->kernel_context;
-	struct i915_request *rq;
+अटल पूर्णांक __पूर्णांकel_engine_pulse(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_sched_attr attr = अणु .priority = I915_PRIORITY_BARRIER पूर्ण;
+	काष्ठा पूर्णांकel_context *ce = engine->kernel_context;
+	काष्ठा i915_request *rq;
 
-	lockdep_assert_held(&ce->timeline->mutex);
-	GEM_BUG_ON(!intel_engine_has_preemption(engine));
-	GEM_BUG_ON(!intel_engine_pm_is_awake(engine));
+	lockdep_निश्चित_held(&ce->समयline->mutex);
+	GEM_BUG_ON(!पूर्णांकel_engine_has_preemption(engine));
+	GEM_BUG_ON(!पूर्णांकel_engine_pm_is_awake(engine));
 
 	rq = heartbeat_create(ce, GFP_NOWAIT | __GFP_NOWARN);
-	if (IS_ERR(rq))
-		return PTR_ERR(rq);
+	अगर (IS_ERR(rq))
+		वापस PTR_ERR(rq);
 
 	__set_bit(I915_FENCE_FLAG_SENTINEL, &rq->fence.flags);
 
 	heartbeat_commit(rq, &attr);
 	GEM_BUG_ON(rq->sched.attr.priority < I915_PRIORITY_BARRIER);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long set_heartbeat(struct intel_engine_cs *engine,
-				   unsigned long delay)
-{
-	unsigned long old;
+अटल अचिन्हित दीर्घ set_heartbeat(काष्ठा पूर्णांकel_engine_cs *engine,
+				   अचिन्हित दीर्घ delay)
+अणु
+	अचिन्हित दीर्घ old;
 
-	old = xchg(&engine->props.heartbeat_interval_ms, delay);
-	if (delay)
-		intel_engine_unpark_heartbeat(engine);
-	else
-		intel_engine_park_heartbeat(engine);
+	old = xchg(&engine->props.heartbeat_पूर्णांकerval_ms, delay);
+	अगर (delay)
+		पूर्णांकel_engine_unpark_heartbeat(engine);
+	अन्यथा
+		पूर्णांकel_engine_park_heartbeat(engine);
 
-	return old;
-}
+	वापस old;
+पूर्ण
 
-int intel_engine_set_heartbeat(struct intel_engine_cs *engine,
-			       unsigned long delay)
-{
-	struct intel_context *ce = engine->kernel_context;
-	int err = 0;
+पूर्णांक पूर्णांकel_engine_set_heartbeat(काष्ठा पूर्णांकel_engine_cs *engine,
+			       अचिन्हित दीर्घ delay)
+अणु
+	काष्ठा पूर्णांकel_context *ce = engine->kernel_context;
+	पूर्णांक err = 0;
 
-	if (!delay && !intel_engine_has_preempt_reset(engine))
-		return -ENODEV;
+	अगर (!delay && !पूर्णांकel_engine_has_preempt_reset(engine))
+		वापस -ENODEV;
 
-	intel_engine_pm_get(engine);
+	पूर्णांकel_engine_pm_get(engine);
 
-	err = mutex_lock_interruptible(&ce->timeline->mutex);
-	if (err)
-		goto out_rpm;
+	err = mutex_lock_पूर्णांकerruptible(&ce->समयline->mutex);
+	अगर (err)
+		जाओ out_rpm;
 
-	if (delay != engine->props.heartbeat_interval_ms) {
-		unsigned long saved = set_heartbeat(engine, delay);
+	अगर (delay != engine->props.heartbeat_पूर्णांकerval_ms) अणु
+		अचिन्हित दीर्घ saved = set_heartbeat(engine, delay);
 
 		/* recheck current execution */
-		if (intel_engine_has_preemption(engine)) {
-			err = __intel_engine_pulse(engine);
-			if (err)
+		अगर (पूर्णांकel_engine_has_preemption(engine)) अणु
+			err = __पूर्णांकel_engine_pulse(engine);
+			अगर (err)
 				set_heartbeat(engine, saved);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	mutex_unlock(&ce->timeline->mutex);
+	mutex_unlock(&ce->समयline->mutex);
 
 out_rpm:
-	intel_engine_pm_put(engine);
-	return err;
-}
+	पूर्णांकel_engine_pm_put(engine);
+	वापस err;
+पूर्ण
 
-int intel_engine_pulse(struct intel_engine_cs *engine)
-{
-	struct intel_context *ce = engine->kernel_context;
-	int err;
+पूर्णांक पूर्णांकel_engine_pulse(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_context *ce = engine->kernel_context;
+	पूर्णांक err;
 
-	if (!intel_engine_has_preemption(engine))
-		return -ENODEV;
+	अगर (!पूर्णांकel_engine_has_preemption(engine))
+		वापस -ENODEV;
 
-	if (!intel_engine_pm_get_if_awake(engine))
-		return 0;
+	अगर (!पूर्णांकel_engine_pm_get_अगर_awake(engine))
+		वापस 0;
 
 	err = -EINTR;
-	if (!mutex_lock_interruptible(&ce->timeline->mutex)) {
-		err = __intel_engine_pulse(engine);
-		mutex_unlock(&ce->timeline->mutex);
-	}
+	अगर (!mutex_lock_पूर्णांकerruptible(&ce->समयline->mutex)) अणु
+		err = __पूर्णांकel_engine_pulse(engine);
+		mutex_unlock(&ce->समयline->mutex);
+	पूर्ण
 
-	intel_engine_flush_submission(engine);
-	intel_engine_pm_put(engine);
-	return err;
-}
+	पूर्णांकel_engine_flush_submission(engine);
+	पूर्णांकel_engine_pm_put(engine);
+	वापस err;
+पूर्ण
 
-int intel_engine_flush_barriers(struct intel_engine_cs *engine)
-{
-	struct i915_sched_attr attr = { .priority = I915_PRIORITY_MIN };
-	struct intel_context *ce = engine->kernel_context;
-	struct i915_request *rq;
-	int err;
+पूर्णांक पूर्णांकel_engine_flush_barriers(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_sched_attr attr = अणु .priority = I915_PRIORITY_MIN पूर्ण;
+	काष्ठा पूर्णांकel_context *ce = engine->kernel_context;
+	काष्ठा i915_request *rq;
+	पूर्णांक err;
 
-	if (llist_empty(&engine->barrier_tasks))
-		return 0;
+	अगर (llist_empty(&engine->barrier_tasks))
+		वापस 0;
 
-	if (!intel_engine_pm_get_if_awake(engine))
-		return 0;
+	अगर (!पूर्णांकel_engine_pm_get_अगर_awake(engine))
+		वापस 0;
 
-	if (mutex_lock_interruptible(&ce->timeline->mutex)) {
+	अगर (mutex_lock_पूर्णांकerruptible(&ce->समयline->mutex)) अणु
 		err = -EINTR;
-		goto out_rpm;
-	}
+		जाओ out_rpm;
+	पूर्ण
 
 	rq = heartbeat_create(ce, GFP_KERNEL);
-	if (IS_ERR(rq)) {
+	अगर (IS_ERR(rq)) अणु
 		err = PTR_ERR(rq);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	heartbeat_commit(rq, &attr);
 
 	err = 0;
 out_unlock:
-	mutex_unlock(&ce->timeline->mutex);
+	mutex_unlock(&ce->समयline->mutex);
 out_rpm:
-	intel_engine_pm_put(engine);
-	return err;
-}
+	पूर्णांकel_engine_pm_put(engine);
+	वापस err;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftest_engine_heartbeat.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftest_engine_heartbeat.c"
+#पूर्ण_अगर

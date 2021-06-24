@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Count the digits of @val including a possible sign.
  *
  * (Typed on and submitted from hpa's mobile phone.)
  */
-int num_digits(int val)
-{
-	int m = 10;
-	int d = 1;
+पूर्णांक num_digits(पूर्णांक val)
+अणु
+	पूर्णांक m = 10;
+	पूर्णांक d = 1;
 
-	if (val < 0) {
+	अगर (val < 0) अणु
 		d++;
 		val = -val;
-	}
+	पूर्ण
 
-	while (val >= m) {
+	जबतक (val >= m) अणु
 		m *= 10;
 		d++;
-	}
-	return d;
-}
+	पूर्ण
+	वापस d;
+पूर्ण

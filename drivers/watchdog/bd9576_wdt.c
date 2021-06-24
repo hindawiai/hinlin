@@ -1,193 +1,194 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2020 ROHM Semiconductors
  *
- * ROHM BD9576MUF and BD9573MUF Watchdog driver
+ * ROHM BD9576MUF and BD9573MUF Watchकरोg driver
  */
 
-#include <linux/err.h>
-#include <linux/gpio/consumer.h>
-#include <linux/mfd/rohm-bd957x.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/watchdog.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/mfd/rohm-bd957x.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/watchकरोg.h>
 
-static bool nowayout;
+अटल bool nowayout;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default=\"false\")");
 
-#define HW_MARGIN_MIN 2
-#define HW_MARGIN_MAX 4416
-#define BD957X_WDT_DEFAULT_MARGIN 4416
-#define WATCHDOG_TIMEOUT 30
+#घोषणा HW_MARGIN_MIN 2
+#घोषणा HW_MARGIN_MAX 4416
+#घोषणा BD957X_WDT_DEFAULT_MARGIN 4416
+#घोषणा WATCHDOG_TIMEOUT 30
 
-struct bd9576_wdt_priv {
-	struct gpio_desc	*gpiod_ping;
-	struct gpio_desc	*gpiod_en;
-	struct device		*dev;
-	struct regmap		*regmap;
+काष्ठा bd9576_wdt_priv अणु
+	काष्ठा gpio_desc	*gpiod_ping;
+	काष्ठा gpio_desc	*gpiod_en;
+	काष्ठा device		*dev;
+	काष्ठा regmap		*regmap;
 	bool			always_running;
-	struct watchdog_device	wdd;
-};
+	काष्ठा watchकरोg_device	wdd;
+पूर्ण;
 
-static void bd9576_wdt_disable(struct bd9576_wdt_priv *priv)
-{
+अटल व्योम bd9576_wdt_disable(काष्ठा bd9576_wdt_priv *priv)
+अणु
 	gpiod_set_value_cansleep(priv->gpiod_en, 0);
-}
+पूर्ण
 
-static int bd9576_wdt_ping(struct watchdog_device *wdd)
-{
-	struct bd9576_wdt_priv *priv = watchdog_get_drvdata(wdd);
+अटल पूर्णांक bd9576_wdt_ping(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा bd9576_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
 
 	/* Pulse */
 	gpiod_set_value_cansleep(priv->gpiod_ping, 1);
 	gpiod_set_value_cansleep(priv->gpiod_ping, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bd9576_wdt_start(struct watchdog_device *wdd)
-{
-	struct bd9576_wdt_priv *priv = watchdog_get_drvdata(wdd);
+अटल पूर्णांक bd9576_wdt_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा bd9576_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
 
 	gpiod_set_value_cansleep(priv->gpiod_en, 1);
 
-	return bd9576_wdt_ping(wdd);
-}
+	वापस bd9576_wdt_ping(wdd);
+पूर्ण
 
-static int bd9576_wdt_stop(struct watchdog_device *wdd)
-{
-	struct bd9576_wdt_priv *priv = watchdog_get_drvdata(wdd);
+अटल पूर्णांक bd9576_wdt_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा bd9576_wdt_priv *priv = watchकरोg_get_drvdata(wdd);
 
-	if (!priv->always_running)
+	अगर (!priv->always_running)
 		bd9576_wdt_disable(priv);
-	else
+	अन्यथा
 		set_bit(WDOG_HW_RUNNING, &wdd->status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info bd957x_wdt_ident = {
+अटल स्थिर काष्ठा watchकरोg_info bd957x_wdt_ident = अणु
 	.options	= WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING |
 			  WDIOF_SETTIMEOUT,
 	.identity	= "BD957x Watchdog",
-};
+पूर्ण;
 
-static const struct watchdog_ops bd957x_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops bd957x_wdt_ops = अणु
 	.owner		= THIS_MODULE,
 	.start		= bd9576_wdt_start,
 	.stop		= bd9576_wdt_stop,
 	.ping		= bd9576_wdt_ping,
-};
+पूर्ण;
 
 /* Unit is hundreds of uS */
-#define FASTNG_MIN 23
+#घोषणा FASTNG_MIN 23
 
-static int find_closest_fast(int target, int *sel, int *val)
-{
-	int i;
-	int window = FASTNG_MIN;
+अटल पूर्णांक find_बंदst_fast(पूर्णांक target, पूर्णांक *sel, पूर्णांक *val)
+अणु
+	पूर्णांक i;
+	पूर्णांक winकरोw = FASTNG_MIN;
 
-	for (i = 0; i < 8 && window < target; i++)
-		window <<= 1;
+	क्रम (i = 0; i < 8 && winकरोw < target; i++)
+		winकरोw <<= 1;
 
-	*val = window;
+	*val = winकरोw;
 	*sel = i;
 
-	if (i == 8)
-		return -EINVAL;
+	अगर (i == 8)
+		वापस -EINVAL;
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int find_closest_slow_by_fast(int fast_val, int target, int *slowsel)
-{
-	int sel;
-	static const int multipliers[] = {2, 3, 7, 15};
+अटल पूर्णांक find_बंदst_slow_by_fast(पूर्णांक fast_val, पूर्णांक target, पूर्णांक *slowsel)
+अणु
+	पूर्णांक sel;
+	अटल स्थिर पूर्णांक multipliers[] = अणु2, 3, 7, 15पूर्ण;
 
-	for (sel = 0; sel < ARRAY_SIZE(multipliers) &&
+	क्रम (sel = 0; sel < ARRAY_SIZE(multipliers) &&
 	     multipliers[sel] * fast_val < target; sel++)
 		;
 
-	if (sel == ARRAY_SIZE(multipliers))
-		return -EINVAL;
+	अगर (sel == ARRAY_SIZE(multipliers))
+		वापस -EINVAL;
 
 	*slowsel = sel;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int find_closest_slow(int target, int *slow_sel, int *fast_sel)
-{
-	static const int multipliers[] = {2, 3, 7, 15};
-	int i, j;
-	int val = 0;
-	int window = FASTNG_MIN;
+अटल पूर्णांक find_बंदst_slow(पूर्णांक target, पूर्णांक *slow_sel, पूर्णांक *fast_sel)
+अणु
+	अटल स्थिर पूर्णांक multipliers[] = अणु2, 3, 7, 15पूर्ण;
+	पूर्णांक i, j;
+	पूर्णांक val = 0;
+	पूर्णांक winकरोw = FASTNG_MIN;
 
-	for (i = 0; i < 8; i++) {
-		for (j = 0; j < ARRAY_SIZE(multipliers); j++) {
-			int slow;
+	क्रम (i = 0; i < 8; i++) अणु
+		क्रम (j = 0; j < ARRAY_SIZE(multipliers); j++) अणु
+			पूर्णांक slow;
 
-			slow = window * multipliers[j];
-			if (slow >= target && (!val || slow < val)) {
+			slow = winकरोw * multipliers[j];
+			अगर (slow >= target && (!val || slow < val)) अणु
 				val = slow;
 				*fast_sel = i;
 				*slow_sel = j;
-			}
-		}
-		window <<= 1;
-	}
-	if (!val)
-		return -EINVAL;
+			पूर्ण
+		पूर्ण
+		winकरोw <<= 1;
+	पूर्ण
+	अगर (!val)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define BD957X_WDG_TYPE_WINDOW BIT(5)
-#define BD957X_WDG_TYPE_SLOW 0
-#define BD957X_WDG_TYPE_MASK BIT(5)
-#define BD957X_WDG_NG_RATIO_MASK 0x18
-#define BD957X_WDG_FASTNG_MASK 0x7
+#घोषणा BD957X_WDG_TYPE_WINDOW BIT(5)
+#घोषणा BD957X_WDG_TYPE_SLOW 0
+#घोषणा BD957X_WDG_TYPE_MASK BIT(5)
+#घोषणा BD957X_WDG_NG_RATIO_MASK 0x18
+#घोषणा BD957X_WDG_FASTNG_MASK 0x7
 
-static int bd957x_set_wdt_mode(struct bd9576_wdt_priv *priv, int hw_margin,
-			       int hw_margin_min)
-{
-	int ret, fastng, slowng, type, reg, mask;
-	struct device *dev = priv->dev;
+अटल पूर्णांक bd957x_set_wdt_mode(काष्ठा bd9576_wdt_priv *priv, पूर्णांक hw_margin,
+			       पूर्णांक hw_margin_min)
+अणु
+	पूर्णांक ret, fastng, slowng, type, reg, mask;
+	काष्ठा device *dev = priv->dev;
 
 	/* convert to 100uS */
 	hw_margin *= 10;
 	hw_margin_min *= 10;
-	if (hw_margin_min) {
-		int min;
+	अगर (hw_margin_min) अणु
+		पूर्णांक min;
 
 		type = BD957X_WDG_TYPE_WINDOW;
 		dev_dbg(dev, "Setting type WINDOW 0x%x\n", type);
-		ret = find_closest_fast(hw_margin_min, &fastng, &min);
-		if (ret) {
+		ret = find_बंदst_fast(hw_margin_min, &fastng, &min);
+		अगर (ret) अणु
 			dev_err(dev, "bad WDT window for fast timeout\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = find_closest_slow_by_fast(min, hw_margin, &slowng);
-		if (ret) {
+		ret = find_बंदst_slow_by_fast(min, hw_margin, &slowng);
+		अगर (ret) अणु
 			dev_err(dev, "bad WDT window\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		type = BD957X_WDG_TYPE_SLOW;
 		dev_dbg(dev, "Setting type SLOW 0x%x\n", type);
-		ret = find_closest_slow(hw_margin, &slowng, &fastng);
-		if (ret) {
+		ret = find_बंदst_slow(hw_margin, &slowng, &fastng);
+		अगर (ret) अणु
 			dev_err(dev, "bad WDT window\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	slowng <<= ffs(BD957X_WDG_NG_RATIO_MASK) - 1;
 	reg = type | slowng | fastng;
@@ -196,94 +197,94 @@ static int bd957x_set_wdt_mode(struct bd9576_wdt_priv *priv, int hw_margin,
 	ret = regmap_update_bits(priv->regmap, BD957X_REG_WDT_CONF,
 				 mask, reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bd9576_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->parent->of_node;
-	struct bd9576_wdt_priv *priv;
+अटल पूर्णांक bd9576_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->parent->of_node;
+	काष्ठा bd9576_wdt_priv *priv;
 	u32 hw_margin[2];
 	u32 hw_margin_max = BD957X_WDT_DEFAULT_MARGIN, hw_margin_min = 0;
-	int ret;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	priv->dev = dev;
-	priv->regmap = dev_get_regmap(dev->parent, NULL);
-	if (!priv->regmap) {
+	priv->regmap = dev_get_regmap(dev->parent, शून्य);
+	अगर (!priv->regmap) अणु
 		dev_err(dev, "No regmap found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	priv->gpiod_en = devm_gpiod_get_from_of_node(dev, dev->parent->of_node,
 						     "rohm,watchdog-enable-gpios",
 						     0, GPIOD_OUT_LOW,
 						     "watchdog-enable");
-	if (IS_ERR(priv->gpiod_en))
-		return dev_err_probe(dev, PTR_ERR(priv->gpiod_en),
+	अगर (IS_ERR(priv->gpiod_en))
+		वापस dev_err_probe(dev, PTR_ERR(priv->gpiod_en),
 			      "getting watchdog-enable GPIO failed\n");
 
 	priv->gpiod_ping = devm_gpiod_get_from_of_node(dev, dev->parent->of_node,
 						     "rohm,watchdog-ping-gpios",
 						     0, GPIOD_OUT_LOW,
 						     "watchdog-ping");
-	if (IS_ERR(priv->gpiod_ping))
-		return dev_err_probe(dev, PTR_ERR(priv->gpiod_ping),
+	अगर (IS_ERR(priv->gpiod_ping))
+		वापस dev_err_probe(dev, PTR_ERR(priv->gpiod_ping),
 				     "getting watchdog-ping GPIO failed\n");
 
-	ret = of_property_read_variable_u32_array(np, "rohm,hw-timeout-ms",
+	ret = of_property_पढ़ो_variable_u32_array(np, "rohm,hw-timeout-ms",
 						  &hw_margin[0], 1, 2);
-	if (ret < 0 && ret != -EINVAL)
-		return ret;
+	अगर (ret < 0 && ret != -EINVAL)
+		वापस ret;
 
-	if (ret == 1)
+	अगर (ret == 1)
 		hw_margin_max = hw_margin[0];
 
-	if (ret == 2) {
+	अगर (ret == 2) अणु
 		hw_margin_max = hw_margin[1];
 		hw_margin_min = hw_margin[0];
-	}
+	पूर्ण
 
 	ret = bd957x_set_wdt_mode(priv, hw_margin_max, hw_margin_min);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	priv->always_running = of_property_read_bool(np, "always-running");
+	priv->always_running = of_property_पढ़ो_bool(np, "always-running");
 
-	watchdog_set_drvdata(&priv->wdd, priv);
+	watchकरोg_set_drvdata(&priv->wdd, priv);
 
 	priv->wdd.info			= &bd957x_wdt_ident;
 	priv->wdd.ops			= &bd957x_wdt_ops;
 	priv->wdd.min_hw_heartbeat_ms	= hw_margin_min;
 	priv->wdd.max_hw_heartbeat_ms	= hw_margin_max;
 	priv->wdd.parent		= dev;
-	priv->wdd.timeout		= WATCHDOG_TIMEOUT;
+	priv->wdd.समयout		= WATCHDOG_TIMEOUT;
 
-	watchdog_init_timeout(&priv->wdd, 0, dev);
-	watchdog_set_nowayout(&priv->wdd, nowayout);
+	watchकरोg_init_समयout(&priv->wdd, 0, dev);
+	watchकरोg_set_nowayout(&priv->wdd, nowayout);
 
-	watchdog_stop_on_reboot(&priv->wdd);
+	watchकरोg_stop_on_reboot(&priv->wdd);
 
-	if (priv->always_running)
+	अगर (priv->always_running)
 		bd9576_wdt_start(&priv->wdd);
 
-	return devm_watchdog_register_device(dev, &priv->wdd);
-}
+	वापस devm_watchकरोg_रेजिस्टर_device(dev, &priv->wdd);
+पूर्ण
 
-static struct platform_driver bd9576_wdt_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver bd9576_wdt_driver = अणु
+	.driver	= अणु
 		.name = "bd9576-wdt",
-	},
+	पूर्ण,
 	.probe	= bd9576_wdt_probe,
-};
+पूर्ण;
 
-module_platform_driver(bd9576_wdt_driver);
+module_platक्रमm_driver(bd9576_wdt_driver);
 
 MODULE_AUTHOR("Matti Vaittinen <matti.vaittinen@fi.rohmeurope.com>");
 MODULE_DESCRIPTION("ROHM BD9576/BD9573 Watchdog driver");

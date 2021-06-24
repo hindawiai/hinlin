@@ -1,147 +1,148 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_IPV6_H
-#define _UAPI_IPV6_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_IPV6_H
+#घोषणा _UAPI_IPV6_H
 
-#include <linux/libc-compat.h>
-#include <linux/types.h>
-#include <linux/in6.h>
-#include <asm/byteorder.h>
+#समावेश <linux/libc-compat.h>
+#समावेश <linux/types.h>
+#समावेश <linux/in6.h>
+#समावेश <यंत्र/byteorder.h>
 
 /* The latest drafts declared increase in minimal mtu up to 1280. */
 
-#define IPV6_MIN_MTU	1280
+#घोषणा IPV6_MIN_MTU	1280
 
 /*
  *	Advanced API
- *	source interface/address selection, source routing, etc...
- *	*under construction*
+ *	source पूर्णांकerface/address selection, source routing, etc...
+ *	*under स्थिरruction*
  */
 
-#if __UAPI_DEF_IN6_PKTINFO
-struct in6_pktinfo {
-	struct in6_addr	ipi6_addr;
-	int		ipi6_ifindex;
-};
-#endif
+#अगर __UAPI_DEF_IN6_PKTINFO
+काष्ठा in6_pktinfo अणु
+	काष्ठा in6_addr	ipi6_addr;
+	पूर्णांक		ipi6_अगरindex;
+पूर्ण;
+#पूर्ण_अगर
 
-#if __UAPI_DEF_IP6_MTUINFO
-struct ip6_mtuinfo {
-	struct sockaddr_in6	ip6m_addr;
+#अगर __UAPI_DEF_IP6_MTUINFO
+काष्ठा ip6_mtuinfo अणु
+	काष्ठा sockaddr_in6	ip6m_addr;
 	__u32			ip6m_mtu;
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-struct in6_ifreq {
-	struct in6_addr	ifr6_addr;
-	__u32		ifr6_prefixlen;
-	int		ifr6_ifindex; 
-};
+काष्ठा in6_अगरreq अणु
+	काष्ठा in6_addr	अगरr6_addr;
+	__u32		अगरr6_prefixlen;
+	पूर्णांक		अगरr6_अगरindex; 
+पूर्ण;
 
-#define IPV6_SRCRT_STRICT	0x01	/* Deprecated; will be removed */
-#define IPV6_SRCRT_TYPE_0	0	/* Deprecated; will be removed */
-#define IPV6_SRCRT_TYPE_2	2	/* IPv6 type 2 Routing Header	*/
-#define IPV6_SRCRT_TYPE_3	3	/* RPL Segment Routing with IPv6 */
-#define IPV6_SRCRT_TYPE_4	4	/* Segment Routing with IPv6 */
+#घोषणा IPV6_SRCRT_STRICT	0x01	/* Deprecated; will be हटाओd */
+#घोषणा IPV6_SRCRT_TYPE_0	0	/* Deprecated; will be हटाओd */
+#घोषणा IPV6_SRCRT_TYPE_2	2	/* IPv6 type 2 Routing Header	*/
+#घोषणा IPV6_SRCRT_TYPE_3	3	/* RPL Segment Routing with IPv6 */
+#घोषणा IPV6_SRCRT_TYPE_4	4	/* Segment Routing with IPv6 */
 
 /*
  *	routing header
  */
-struct ipv6_rt_hdr {
+काष्ठा ipv6_rt_hdr अणु
 	__u8		nexthdr;
 	__u8		hdrlen;
 	__u8		type;
 	__u8		segments_left;
 
 	/*
-	 *	type specific data
+	 *	type specअगरic data
 	 *	variable length field
 	 */
-};
+पूर्ण;
 
 
-struct ipv6_opt_hdr {
+काष्ठा ipv6_opt_hdr अणु
 	__u8 		nexthdr;
 	__u8 		hdrlen;
 	/* 
 	 * TLV encoded option data follows.
 	 */
-} __attribute__((packed));	/* required for some archs */
+पूर्ण __attribute__((packed));	/* required क्रम some archs */
 
-#define ipv6_destopt_hdr ipv6_opt_hdr
-#define ipv6_hopopt_hdr  ipv6_opt_hdr
+#घोषणा ipv6_destopt_hdr ipv6_opt_hdr
+#घोषणा ipv6_hopopt_hdr  ipv6_opt_hdr
 
 /* Router Alert option values (RFC2711) */
-#define IPV6_OPT_ROUTERALERT_MLD	0x0000	/* MLD(RFC2710) */
+#घोषणा IPV6_OPT_ROUTERALERT_MLD	0x0000	/* MLD(RFC2710) */
 
 /*
- *	routing header type 0 (used in cmsghdr struct)
+ *	routing header type 0 (used in cmsghdr काष्ठा)
  */
 
-struct rt0_hdr {
-	struct ipv6_rt_hdr	rt_hdr;
+काष्ठा rt0_hdr अणु
+	काष्ठा ipv6_rt_hdr	rt_hdr;
 	__u32			reserved;
-	struct in6_addr		addr[0];
+	काष्ठा in6_addr		addr[0];
 
-#define rt0_type		rt_hdr.type
-};
+#घोषणा rt0_type		rt_hdr.type
+पूर्ण;
 
 /*
  *	routing header type 2
  */
 
-struct rt2_hdr {
-	struct ipv6_rt_hdr	rt_hdr;
+काष्ठा rt2_hdr अणु
+	काष्ठा ipv6_rt_hdr	rt_hdr;
 	__u32			reserved;
-	struct in6_addr		addr;
+	काष्ठा in6_addr		addr;
 
-#define rt2_type		rt_hdr.type
-};
+#घोषणा rt2_type		rt_hdr.type
+पूर्ण;
 
 /*
  *	home address option in destination options header
  */
 
-struct ipv6_destopt_hao {
+काष्ठा ipv6_destopt_hao अणु
 	__u8			type;
 	__u8			length;
-	struct in6_addr		addr;
-} __attribute__((packed));
+	काष्ठा in6_addr		addr;
+पूर्ण __attribute__((packed));
 
 /*
  *	IPv6 fixed header
  *
  *	BEWARE, it is incorrect. The first 4 bits of flow_lbl
- *	are glued to priority now, forming "class".
+ *	are glued to priority now, क्रमming "class".
  */
 
-struct ipv6hdr {
-#if defined(__LITTLE_ENDIAN_BITFIELD)
+काष्ठा ipv6hdr अणु
+#अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	__u8			priority:4,
 				version:4;
-#elif defined(__BIG_ENDIAN_BITFIELD)
+#या_अगर defined(__BIG_ENDIAN_BITFIELD)
 	__u8			version:4,
 				priority:4;
-#else
-#error	"Please fix <asm/byteorder.h>"
-#endif
+#अन्यथा
+#त्रुटि	"Please fix <asm/byteorder.h>"
+#पूर्ण_अगर
 	__u8			flow_lbl[3];
 
 	__be16			payload_len;
 	__u8			nexthdr;
 	__u8			hop_limit;
 
-	struct	in6_addr	saddr;
-	struct	in6_addr	daddr;
-};
+	काष्ठा	in6_addr	saddr;
+	काष्ठा	in6_addr	daddr;
+पूर्ण;
 
 
-/* index values for the variables in ipv6_devconf */
-enum {
+/* index values क्रम the variables in ipv6_devconf */
+क्रमागत अणु
 	DEVCONF_FORWARDING = 0,
 	DEVCONF_HOPLIMIT,
 	DEVCONF_MTU6,
 	DEVCONF_ACCEPT_RA,
-	DEVCONF_ACCEPT_REDIRECTS,
+	DEVCONF_ACCEPT_REसूचीECTS,
 	DEVCONF_AUTOCONF,
 	DEVCONF_DAD_TRANSMITS,
 	DEVCONF_RTR_SOLICITS,
@@ -191,7 +192,7 @@ enum {
 	DEVCONF_RPL_SEG_ENABLED,
 	DEVCONF_RA_DEFRTR_METRIC,
 	DEVCONF_MAX
-};
+पूर्ण;
 
 
-#endif /* _UAPI_IPV6_H */
+#पूर्ण_अगर /* _UAPI_IPV6_H */

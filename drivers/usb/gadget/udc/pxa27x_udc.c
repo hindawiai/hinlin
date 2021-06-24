@@ -1,211 +1,212 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Handles the Intel 27x USB Device Controller (UDC)
  *
  * Inspired by original driver by Frank Becker, David Brownell, and others.
  * Copyright (C) 2008 Robert Jarzmik
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/list.h>
-#include <linux/interrupt.h>
-#include <linux/proc_fs.h>
-#include <linux/clk.h>
-#include <linux/irq.h>
-#include <linux/gpio.h>
-#include <linux/gpio/consumer.h>
-#include <linux/slab.h>
-#include <linux/prefetch.h>
-#include <linux/byteorder/generic.h>
-#include <linux/platform_data/pxa2xx_udc.h>
-#include <linux/of_device.h>
-#include <linux/of_gpio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/byteorder/generic.h>
+#समावेश <linux/platक्रमm_data/pxa2xx_udc.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_gpपन.स>
 
-#include <linux/usb.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
-#include <linux/usb/phy.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb/phy.h>
 
-#include "pxa27x_udc.h"
+#समावेश "pxa27x_udc.h"
 
 /*
  * This driver handles the USB Device Controller (UDC) in Intel's PXA 27x
  * series processors.
  *
  * Such controller drivers work with a gadget driver.  The gadget driver
- * returns descriptors, implements configuration and data protocols used
- * by the host to interact with this device, and allocates endpoints to
- * the different protocol interfaces.  The controller driver virtualizes
+ * वापसs descriptors, implements configuration and data protocols used
+ * by the host to पूर्णांकeract with this device, and allocates endpoपूर्णांकs to
+ * the dअगरferent protocol पूर्णांकerfaces.  The controller driver भवizes
  * usb hardware so that the gadget drivers will be more portable.
  *
  * This UDC hardware wants to implement a bit too much USB protocol. The
- * biggest issues are:  that the endpoints have to be set up before the
- * controller can be enabled (minor, and not uncommon); and each endpoint
- * can only have one configuration, interface and alternative interface
+ * biggest issues are:  that the endpoपूर्णांकs have to be set up beक्रमe the
+ * controller can be enabled (minor, and not uncommon); and each endpoपूर्णांक
+ * can only have one configuration, पूर्णांकerface and alternative पूर्णांकerface
  * number (major, and very unusual). Once set up, these cannot be changed
  * without a controller reset.
  *
- * The workaround is to setup all combinations necessary for the gadgets which
- * will work with this driver. This is done in pxa_udc structure, statically.
+ * The workaround is to setup all combinations necessary क्रम the gadमाला_लो which
+ * will work with this driver. This is करोne in pxa_udc काष्ठाure, अटलally.
  * See pxa_udc, udc_usb_ep versus pxa_ep, and matching function find_pxa_ep.
- * (You could modify this if needed.  Some drivers have a "fifo_mode" module
+ * (You could modअगरy this अगर needed.  Some drivers have a "fifo_mode" module
  * parameter to facilitate such changes.)
  *
- * The combinations have been tested with these gadgets :
+ * The combinations have been tested with these gadमाला_लो :
  *  - zero gadget
  *  - file storage gadget
  *  - ether gadget
  *
- * The driver doesn't use DMA, only IO access and IRQ callbacks. No use is
- * made of UDC's double buffering either. USB "On-The-Go" is not implemented.
+ * The driver करोesn't use DMA, only IO access and IRQ callbacks. No use is
+ * made of UDC's द्विगुन buffering either. USB "On-The-Go" is not implemented.
  *
  * All the requests are handled the same way :
  *  - the drivers tries to handle the request directly to the IO
- *  - if the IO fifo is not big enough, the remaining is send/received in
- *    interrupt handling.
+ *  - अगर the IO fअगरo is not big enough, the reमुख्यing is send/received in
+ *    पूर्णांकerrupt handling.
  */
 
-#define	DRIVER_VERSION	"2008-04-18"
-#define	DRIVER_DESC	"PXA 27x USB Device Controller driver"
+#घोषणा	DRIVER_VERSION	"2008-04-18"
+#घोषणा	DRIVER_DESC	"PXA 27x USB Device Controller driver"
 
-static const char driver_name[] = "pxa27x_udc";
-static struct pxa_udc *the_controller;
+अटल स्थिर अक्षर driver_name[] = "pxa27x_udc";
+अटल काष्ठा pxa_udc *the_controller;
 
-static void handle_ep(struct pxa_ep *ep);
+अटल व्योम handle_ep(काष्ठा pxa_ep *ep);
 
 /*
- * Debug filesystem
+ * Debug fileप्रणाली
  */
-#ifdef CONFIG_USB_GADGET_DEBUG_FS
+#अगर_घोषित CONFIG_USB_GADGET_DEBUG_FS
 
-#include <linux/debugfs.h>
-#include <linux/uaccess.h>
-#include <linux/seq_file.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/seq_file.h>
 
-static int state_dbg_show(struct seq_file *s, void *p)
-{
-	struct pxa_udc *udc = s->private;
-	u32 tmp;
+अटल पूर्णांक state_dbg_show(काष्ठा seq_file *s, व्योम *p)
+अणु
+	काष्ठा pxa_udc *udc = s->निजी;
+	u32 पंचांगp;
 
-	if (!udc->driver)
-		return -ENODEV;
+	अगर (!udc->driver)
+		वापस -ENODEV;
 
 	/* basic device status */
-	seq_printf(s, DRIVER_DESC "\n"
+	seq_म_लिखो(s, DRIVER_DESC "\n"
 		   "%s version: %s\n"
 		   "Gadget driver: %s\n",
 		   driver_name, DRIVER_VERSION,
 		   udc->driver ? udc->driver->driver.name : "(none)");
 
-	tmp = udc_readl(udc, UDCCR);
-	seq_printf(s,
+	पंचांगp = udc_पढ़ोl(udc, UDCCR);
+	seq_म_लिखो(s,
 		   "udccr=0x%0x(%s%s%s%s%s%s%s%s%s%s), con=%d,inter=%d,altinter=%d\n",
-		   tmp,
-		   (tmp & UDCCR_OEN) ? " oen":"",
-		   (tmp & UDCCR_AALTHNP) ? " aalthnp":"",
-		   (tmp & UDCCR_AHNP) ? " rem" : "",
-		   (tmp & UDCCR_BHNP) ? " rstir" : "",
-		   (tmp & UDCCR_DWRE) ? " dwre" : "",
-		   (tmp & UDCCR_SMAC) ? " smac" : "",
-		   (tmp & UDCCR_EMCE) ? " emce" : "",
-		   (tmp & UDCCR_UDR) ? " udr" : "",
-		   (tmp & UDCCR_UDA) ? " uda" : "",
-		   (tmp & UDCCR_UDE) ? " ude" : "",
-		   (tmp & UDCCR_ACN) >> UDCCR_ACN_S,
-		   (tmp & UDCCR_AIN) >> UDCCR_AIN_S,
-		   (tmp & UDCCR_AAISN) >> UDCCR_AAISN_S);
-	/* registers for device and ep0 */
-	seq_printf(s, "udcicr0=0x%08x udcicr1=0x%08x\n",
-		   udc_readl(udc, UDCICR0), udc_readl(udc, UDCICR1));
-	seq_printf(s, "udcisr0=0x%08x udcisr1=0x%08x\n",
-		   udc_readl(udc, UDCISR0), udc_readl(udc, UDCISR1));
-	seq_printf(s, "udcfnr=%d\n", udc_readl(udc, UDCFNR));
-	seq_printf(s, "irqs: reset=%lu, suspend=%lu, resume=%lu, reconfig=%lu\n",
+		   पंचांगp,
+		   (पंचांगp & UDCCR_OEN) ? " oen":"",
+		   (पंचांगp & UDCCR_AALTHNP) ? " aalthnp":"",
+		   (पंचांगp & UDCCR_AHNP) ? " rem" : "",
+		   (पंचांगp & UDCCR_BHNP) ? " rstir" : "",
+		   (पंचांगp & UDCCR_DWRE) ? " dwre" : "",
+		   (पंचांगp & UDCCR_SMAC) ? " smac" : "",
+		   (पंचांगp & UDCCR_EMCE) ? " emce" : "",
+		   (पंचांगp & UDCCR_UDR) ? " udr" : "",
+		   (पंचांगp & UDCCR_UDA) ? " uda" : "",
+		   (पंचांगp & UDCCR_UDE) ? " ude" : "",
+		   (पंचांगp & UDCCR_ACN) >> UDCCR_ACN_S,
+		   (पंचांगp & UDCCR_AIN) >> UDCCR_AIN_S,
+		   (पंचांगp & UDCCR_AAISN) >> UDCCR_AAISN_S);
+	/* रेजिस्टरs क्रम device and ep0 */
+	seq_म_लिखो(s, "udcicr0=0x%08x udcicr1=0x%08x\n",
+		   udc_पढ़ोl(udc, UDCICR0), udc_पढ़ोl(udc, UDCICR1));
+	seq_म_लिखो(s, "udcisr0=0x%08x udcisr1=0x%08x\n",
+		   udc_पढ़ोl(udc, UDCISR0), udc_पढ़ोl(udc, UDCISR1));
+	seq_म_लिखो(s, "udcfnr=%d\n", udc_पढ़ोl(udc, UDCFNR));
+	seq_म_लिखो(s, "irqs: reset=%lu, suspend=%lu, resume=%lu, reconfig=%lu\n",
 		   udc->stats.irqs_reset, udc->stats.irqs_suspend,
 		   udc->stats.irqs_resume, udc->stats.irqs_reconfig);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(state_dbg);
 
-static int queues_dbg_show(struct seq_file *s, void *p)
-{
-	struct pxa_udc *udc = s->private;
-	struct pxa_ep *ep;
-	struct pxa27x_request *req;
-	int i, maxpkt;
+अटल पूर्णांक queues_dbg_show(काष्ठा seq_file *s, व्योम *p)
+अणु
+	काष्ठा pxa_udc *udc = s->निजी;
+	काष्ठा pxa_ep *ep;
+	काष्ठा pxa27x_request *req;
+	पूर्णांक i, maxpkt;
 
-	if (!udc->driver)
-		return -ENODEV;
+	अगर (!udc->driver)
+		वापस -ENODEV;
 
-	/* dump endpoint queues */
-	for (i = 0; i < NR_PXA_ENDPOINTS; i++) {
+	/* dump endpoपूर्णांक queues */
+	क्रम (i = 0; i < NR_PXA_ENDPOINTS; i++) अणु
 		ep = &udc->pxa_ep[i];
-		maxpkt = ep->fifo_size;
-		seq_printf(s,  "%-12s max_pkt=%d %s\n",
+		maxpkt = ep->fअगरo_size;
+		seq_म_लिखो(s,  "%-12s max_pkt=%d %s\n",
 			   EPNAME(ep), maxpkt, "pio");
 
-		if (list_empty(&ep->queue)) {
-			seq_puts(s, "\t(nothing queued)\n");
-			continue;
-		}
+		अगर (list_empty(&ep->queue)) अणु
+			seq_माला_दो(s, "\t(nothing queued)\n");
+			जारी;
+		पूर्ण
 
-		list_for_each_entry(req, &ep->queue, queue) {
-			seq_printf(s,  "\treq %p len %d/%d buf %p\n",
+		list_क्रम_each_entry(req, &ep->queue, queue) अणु
+			seq_म_लिखो(s,  "\treq %p len %d/%d buf %p\n",
 				   &req->req, req->req.actual,
 				   req->req.length, req->req.buf);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(queues_dbg);
 
-static int eps_dbg_show(struct seq_file *s, void *p)
-{
-	struct pxa_udc *udc = s->private;
-	struct pxa_ep *ep;
-	int i;
-	u32 tmp;
+अटल पूर्णांक eps_dbg_show(काष्ठा seq_file *s, व्योम *p)
+अणु
+	काष्ठा pxa_udc *udc = s->निजी;
+	काष्ठा pxa_ep *ep;
+	पूर्णांक i;
+	u32 पंचांगp;
 
-	if (!udc->driver)
-		return -ENODEV;
+	अगर (!udc->driver)
+		वापस -ENODEV;
 
 	ep = &udc->pxa_ep[0];
-	tmp = udc_ep_readl(ep, UDCCSR);
-	seq_printf(s, "udccsr0=0x%03x(%s%s%s%s%s%s%s)\n",
-		   tmp,
-		   (tmp & UDCCSR0_SA) ? " sa" : "",
-		   (tmp & UDCCSR0_RNE) ? " rne" : "",
-		   (tmp & UDCCSR0_FST) ? " fst" : "",
-		   (tmp & UDCCSR0_SST) ? " sst" : "",
-		   (tmp & UDCCSR0_DME) ? " dme" : "",
-		   (tmp & UDCCSR0_IPR) ? " ipr" : "",
-		   (tmp & UDCCSR0_OPC) ? " opc" : "");
-	for (i = 0; i < NR_PXA_ENDPOINTS; i++) {
+	पंचांगp = udc_ep_पढ़ोl(ep, UDCCSR);
+	seq_म_लिखो(s, "udccsr0=0x%03x(%s%s%s%s%s%s%s)\n",
+		   पंचांगp,
+		   (पंचांगp & UDCCSR0_SA) ? " sa" : "",
+		   (पंचांगp & UDCCSR0_RNE) ? " rne" : "",
+		   (पंचांगp & UDCCSR0_FST) ? " fst" : "",
+		   (पंचांगp & UDCCSR0_SST) ? " sst" : "",
+		   (पंचांगp & UDCCSR0_DME) ? " dme" : "",
+		   (पंचांगp & UDCCSR0_IPR) ? " ipr" : "",
+		   (पंचांगp & UDCCSR0_OPC) ? " opc" : "");
+	क्रम (i = 0; i < NR_PXA_ENDPOINTS; i++) अणु
 		ep = &udc->pxa_ep[i];
-		tmp = i? udc_ep_readl(ep, UDCCR) : udc_readl(udc, UDCCR);
-		seq_printf(s, "%-12s: IN %lu(%lu reqs), OUT %lu(%lu reqs), irqs=%lu, udccr=0x%08x, udccsr=0x%03x, udcbcr=%d\n",
+		पंचांगp = i? udc_ep_पढ़ोl(ep, UDCCR) : udc_पढ़ोl(udc, UDCCR);
+		seq_म_लिखो(s, "%-12s: IN %lu(%lu reqs), OUT %lu(%lu reqs), irqs=%lu, udccr=0x%08x, udccsr=0x%03x, udcbcr=%d\n",
 			   EPNAME(ep),
 			   ep->stats.in_bytes, ep->stats.in_ops,
 			   ep->stats.out_bytes, ep->stats.out_ops,
 			   ep->stats.irqs,
-			   tmp, udc_ep_readl(ep, UDCCSR),
-			   udc_ep_readl(ep, UDCBCR));
-	}
+			   पंचांगp, udc_ep_पढ़ोl(ep, UDCCSR),
+			   udc_ep_पढ़ोl(ep, UDCBCR));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(eps_dbg);
 
-static void pxa_init_debugfs(struct pxa_udc *udc)
-{
-	struct dentry *root;
+अटल व्योम pxa_init_debugfs(काष्ठा pxa_udc *udc)
+अणु
+	काष्ठा dentry *root;
 
 	root = debugfs_create_dir(udc->gadget.name, usb_debug_root);
 	udc->debugfs_root = root;
@@ -213,148 +214,148 @@ static void pxa_init_debugfs(struct pxa_udc *udc)
 	debugfs_create_file("udcstate", 0400, root, udc, &state_dbg_fops);
 	debugfs_create_file("queues", 0400, root, udc, &queues_dbg_fops);
 	debugfs_create_file("epstate", 0400, root, udc, &eps_dbg_fops);
-}
+पूर्ण
 
-static void pxa_cleanup_debugfs(struct pxa_udc *udc)
-{
-	debugfs_remove_recursive(udc->debugfs_root);
-}
+अटल व्योम pxa_cleanup_debugfs(काष्ठा pxa_udc *udc)
+अणु
+	debugfs_हटाओ_recursive(udc->debugfs_root);
+पूर्ण
 
-#else
-static inline void pxa_init_debugfs(struct pxa_udc *udc)
-{
-}
+#अन्यथा
+अटल अंतरभूत व्योम pxa_init_debugfs(काष्ठा pxa_udc *udc)
+अणु
+पूर्ण
 
-static inline void pxa_cleanup_debugfs(struct pxa_udc *udc)
-{
-}
-#endif
+अटल अंतरभूत व्योम pxa_cleanup_debugfs(काष्ठा pxa_udc *udc)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * is_match_usb_pxa - check if usb_ep and pxa_ep match
- * @udc_usb_ep: usb endpoint
- * @ep: pxa endpoint
+ * is_match_usb_pxa - check अगर usb_ep and pxa_ep match
+ * @udc_usb_ep: usb endpoपूर्णांक
+ * @ep: pxa endpoपूर्णांक
  * @config: configuration required in pxa_ep
- * @interface: interface required in pxa_ep
+ * @पूर्णांकerface: पूर्णांकerface required in pxa_ep
  * @altsetting: altsetting required in pxa_ep
  *
- * Returns 1 if all criteria match between pxa and usb endpoint, 0 otherwise
+ * Returns 1 अगर all criteria match between pxa and usb endpoपूर्णांक, 0 otherwise
  */
-static int is_match_usb_pxa(struct udc_usb_ep *udc_usb_ep, struct pxa_ep *ep,
-		int config, int interface, int altsetting)
-{
-	if (usb_endpoint_num(&udc_usb_ep->desc) != ep->addr)
-		return 0;
-	if (usb_endpoint_dir_in(&udc_usb_ep->desc) != ep->dir_in)
-		return 0;
-	if (usb_endpoint_type(&udc_usb_ep->desc) != ep->type)
-		return 0;
-	if ((ep->config != config) || (ep->interface != interface)
+अटल पूर्णांक is_match_usb_pxa(काष्ठा udc_usb_ep *udc_usb_ep, काष्ठा pxa_ep *ep,
+		पूर्णांक config, पूर्णांक पूर्णांकerface, पूर्णांक altsetting)
+अणु
+	अगर (usb_endpoपूर्णांक_num(&udc_usb_ep->desc) != ep->addr)
+		वापस 0;
+	अगर (usb_endpoपूर्णांक_dir_in(&udc_usb_ep->desc) != ep->dir_in)
+		वापस 0;
+	अगर (usb_endpoपूर्णांक_type(&udc_usb_ep->desc) != ep->type)
+		वापस 0;
+	अगर ((ep->config != config) || (ep->पूर्णांकerface != पूर्णांकerface)
 			|| (ep->alternate != altsetting))
-		return 0;
-	return 1;
-}
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 /**
- * find_pxa_ep - find pxa_ep structure matching udc_usb_ep
+ * find_pxa_ep - find pxa_ep काष्ठाure matching udc_usb_ep
  * @udc: pxa udc
- * @udc_usb_ep: udc_usb_ep structure
+ * @udc_usb_ep: udc_usb_ep काष्ठाure
  *
- * Match udc_usb_ep and all pxa_ep available, to see if one matches.
+ * Match udc_usb_ep and all pxa_ep available, to see अगर one matches.
  * This is necessary because of the strong pxa hardware restriction requiring
- * that once pxa endpoints are initialized, their configuration is freezed, and
+ * that once pxa endpoपूर्णांकs are initialized, their configuration is मुक्तzed, and
  * no change can be made to their address, direction, or in which configuration,
- * interface or altsetting they are active ... which differs from more usual
- * models which have endpoints be roughly just addressable fifos, and leave
+ * पूर्णांकerface or altsetting they are active ... which dअगरfers from more usual
+ * models which have endpoपूर्णांकs be roughly just addressable fअगरos, and leave
  * configuration events up to gadget drivers (like all control messages).
  *
- * Note that there is still a blurred point here :
- *   - we rely on UDCCR register "active interface" and "active altsetting".
- *     This is a nonsense in regard of USB spec, where multiple interfaces are
- *     active at the same time.
- *   - if we knew for sure that the pxa can handle multiple interface at the
- *     same time, assuming Intel's Developer Guide is wrong, this function
- *     should be reviewed, and a cache of couples (iface, altsetting) should
- *     be kept in the pxa_udc structure. In this case this function would match
+ * Note that there is still a blurred poपूर्णांक here :
+ *   - we rely on UDCCR रेजिस्टर "active interface" and "active altsetting".
+ *     This is a nonsense in regard of USB spec, where multiple पूर्णांकerfaces are
+ *     active at the same समय.
+ *   - अगर we knew क्रम sure that the pxa can handle multiple पूर्णांकerface at the
+ *     same समय, assuming Intel's Developer Guide is wrong, this function
+ *     should be reviewed, and a cache of couples (अगरace, altsetting) should
+ *     be kept in the pxa_udc काष्ठाure. In this हाल this function would match
  *     against the cache of couples instead of the "last altsetting" set up.
  *
- * Returns the matched pxa_ep structure or NULL if none found
+ * Returns the matched pxa_ep काष्ठाure or शून्य अगर none found
  */
-static struct pxa_ep *find_pxa_ep(struct pxa_udc *udc,
-		struct udc_usb_ep *udc_usb_ep)
-{
-	int i;
-	struct pxa_ep *ep;
-	int cfg = udc->config;
-	int iface = udc->last_interface;
-	int alt = udc->last_alternate;
+अटल काष्ठा pxa_ep *find_pxa_ep(काष्ठा pxa_udc *udc,
+		काष्ठा udc_usb_ep *udc_usb_ep)
+अणु
+	पूर्णांक i;
+	काष्ठा pxa_ep *ep;
+	पूर्णांक cfg = udc->config;
+	पूर्णांक अगरace = udc->last_पूर्णांकerface;
+	पूर्णांक alt = udc->last_alternate;
 
-	if (udc_usb_ep == &udc->udc_usb_ep[0])
-		return &udc->pxa_ep[0];
+	अगर (udc_usb_ep == &udc->udc_usb_ep[0])
+		वापस &udc->pxa_ep[0];
 
-	for (i = 1; i < NR_PXA_ENDPOINTS; i++) {
+	क्रम (i = 1; i < NR_PXA_ENDPOINTS; i++) अणु
 		ep = &udc->pxa_ep[i];
-		if (is_match_usb_pxa(udc_usb_ep, ep, cfg, iface, alt))
-			return ep;
-	}
-	return NULL;
-}
+		अगर (is_match_usb_pxa(udc_usb_ep, ep, cfg, अगरace, alt))
+			वापस ep;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  * update_pxa_ep_matches - update pxa_ep cached values in all udc_usb_ep
  * @udc: pxa udc
  *
- * Context: interrupt handler
+ * Context: पूर्णांकerrupt handler
  *
- * Updates all pxa_ep fields in udc_usb_ep structures, if this field was
- * previously set up (and is not NULL). The update is necessary is a
+ * Updates all pxa_ep fields in udc_usb_ep काष्ठाures, अगर this field was
+ * previously set up (and is not शून्य). The update is necessary is a
  * configuration change or altsetting change was issued by the USB host.
  */
-static void update_pxa_ep_matches(struct pxa_udc *udc)
-{
-	int i;
-	struct udc_usb_ep *udc_usb_ep;
+अटल व्योम update_pxa_ep_matches(काष्ठा pxa_udc *udc)
+अणु
+	पूर्णांक i;
+	काष्ठा udc_usb_ep *udc_usb_ep;
 
-	for (i = 1; i < NR_USB_ENDPOINTS; i++) {
+	क्रम (i = 1; i < NR_USB_ENDPOINTS; i++) अणु
 		udc_usb_ep = &udc->udc_usb_ep[i];
-		if (udc_usb_ep->pxa_ep)
+		अगर (udc_usb_ep->pxa_ep)
 			udc_usb_ep->pxa_ep = find_pxa_ep(udc, udc_usb_ep);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * pio_irq_enable - Enables irq generation for one endpoint
- * @ep: udc endpoint
+ * pio_irq_enable - Enables irq generation क्रम one endpoपूर्णांक
+ * @ep: udc endpoपूर्णांक
  */
-static void pio_irq_enable(struct pxa_ep *ep)
-{
-	struct pxa_udc *udc = ep->dev;
-	int index = EPIDX(ep);
-	u32 udcicr0 = udc_readl(udc, UDCICR0);
-	u32 udcicr1 = udc_readl(udc, UDCICR1);
+अटल व्योम pio_irq_enable(काष्ठा pxa_ep *ep)
+अणु
+	काष्ठा pxa_udc *udc = ep->dev;
+	पूर्णांक index = EPIDX(ep);
+	u32 udcicr0 = udc_पढ़ोl(udc, UDCICR0);
+	u32 udcicr1 = udc_पढ़ोl(udc, UDCICR1);
 
-	if (index < 16)
-		udc_writel(udc, UDCICR0, udcicr0 | (3 << (index * 2)));
-	else
-		udc_writel(udc, UDCICR1, udcicr1 | (3 << ((index - 16) * 2)));
-}
+	अगर (index < 16)
+		udc_ग_लिखोl(udc, UDCICR0, udcicr0 | (3 << (index * 2)));
+	अन्यथा
+		udc_ग_लिखोl(udc, UDCICR1, udcicr1 | (3 << ((index - 16) * 2)));
+पूर्ण
 
 /**
- * pio_irq_disable - Disables irq generation for one endpoint
- * @ep: udc endpoint
+ * pio_irq_disable - Disables irq generation क्रम one endpoपूर्णांक
+ * @ep: udc endpoपूर्णांक
  */
-static void pio_irq_disable(struct pxa_ep *ep)
-{
-	struct pxa_udc *udc = ep->dev;
-	int index = EPIDX(ep);
-	u32 udcicr0 = udc_readl(udc, UDCICR0);
-	u32 udcicr1 = udc_readl(udc, UDCICR1);
+अटल व्योम pio_irq_disable(काष्ठा pxa_ep *ep)
+अणु
+	काष्ठा pxa_udc *udc = ep->dev;
+	पूर्णांक index = EPIDX(ep);
+	u32 udcicr0 = udc_पढ़ोl(udc, UDCICR0);
+	u32 udcicr1 = udc_पढ़ोl(udc, UDCICR1);
 
-	if (index < 16)
-		udc_writel(udc, UDCICR0, udcicr0 & ~(3 << (index * 2)));
-	else
-		udc_writel(udc, UDCICR1, udcicr1 & ~(3 << ((index - 16) * 2)));
-}
+	अगर (index < 16)
+		udc_ग_लिखोl(udc, UDCICR0, udcicr0 & ~(3 << (index * 2)));
+	अन्यथा
+		udc_ग_लिखोl(udc, UDCICR1, udcicr1 & ~(3 << ((index - 16) * 2)));
+पूर्ण
 
 /**
  * udc_set_mask_UDCCR - set bits in UDCCR
@@ -363,12 +364,12 @@ static void pio_irq_disable(struct pxa_ep *ep)
  *
  * Sets bits in UDCCR, leaving DME and FST bits as they were.
  */
-static inline void udc_set_mask_UDCCR(struct pxa_udc *udc, int mask)
-{
-	u32 udccr = udc_readl(udc, UDCCR);
-	udc_writel(udc, UDCCR,
+अटल अंतरभूत व्योम udc_set_mask_UDCCR(काष्ठा pxa_udc *udc, पूर्णांक mask)
+अणु
+	u32 udccr = udc_पढ़ोl(udc, UDCCR);
+	udc_ग_लिखोl(udc, UDCCR,
 			(udccr & UDCCR_MASK_BITS) | (mask & UDCCR_MASK_BITS));
-}
+पूर्ण
 
 /**
  * udc_clear_mask_UDCCR - clears bits in UDCCR
@@ -377,459 +378,459 @@ static inline void udc_set_mask_UDCCR(struct pxa_udc *udc, int mask)
  *
  * Clears bits in UDCCR, leaving DME and FST bits as they were.
  */
-static inline void udc_clear_mask_UDCCR(struct pxa_udc *udc, int mask)
-{
-	u32 udccr = udc_readl(udc, UDCCR);
-	udc_writel(udc, UDCCR,
+अटल अंतरभूत व्योम udc_clear_mask_UDCCR(काष्ठा pxa_udc *udc, पूर्णांक mask)
+अणु
+	u32 udccr = udc_पढ़ोl(udc, UDCCR);
+	udc_ग_लिखोl(udc, UDCCR,
 			(udccr & UDCCR_MASK_BITS) & ~(mask & UDCCR_MASK_BITS));
-}
+पूर्ण
 
 /**
- * ep_write_UDCCSR - set bits in UDCCSR
- * @ep: udc endpoint
+ * ep_ग_लिखो_UDCCSR - set bits in UDCCSR
+ * @ep: udc endpoपूर्णांक
  * @mask: bits to set in UDCCR
  *
  * Sets bits in UDCCSR (UDCCSR0 and UDCCSR*).
  *
- * A specific case is applied to ep0 : the ACM bit is always set to 1, for
+ * A specअगरic हाल is applied to ep0 : the ACM bit is always set to 1, क्रम
  * SET_INTERFACE and SET_CONFIGURATION.
  */
-static inline void ep_write_UDCCSR(struct pxa_ep *ep, int mask)
-{
-	if (is_ep0(ep))
+अटल अंतरभूत व्योम ep_ग_लिखो_UDCCSR(काष्ठा pxa_ep *ep, पूर्णांक mask)
+अणु
+	अगर (is_ep0(ep))
 		mask |= UDCCSR0_ACM;
-	udc_ep_writel(ep, UDCCSR, mask);
-}
+	udc_ep_ग_लिखोl(ep, UDCCSR, mask);
+पूर्ण
 
 /**
- * ep_count_bytes_remain - get how many bytes in udc endpoint
- * @ep: udc endpoint
+ * ep_count_bytes_reमुख्य - get how many bytes in udc endpoपूर्णांक
+ * @ep: udc endpoपूर्णांक
  *
- * Returns number of bytes in OUT fifos. Broken for IN fifos (-EOPNOTSUPP)
+ * Returns number of bytes in OUT fअगरos. Broken क्रम IN fअगरos (-EOPNOTSUPP)
  */
-static int ep_count_bytes_remain(struct pxa_ep *ep)
-{
-	if (ep->dir_in)
-		return -EOPNOTSUPP;
-	return udc_ep_readl(ep, UDCBCR) & 0x3ff;
-}
+अटल पूर्णांक ep_count_bytes_reमुख्य(काष्ठा pxa_ep *ep)
+अणु
+	अगर (ep->dir_in)
+		वापस -EOPNOTSUPP;
+	वापस udc_ep_पढ़ोl(ep, UDCBCR) & 0x3ff;
+पूर्ण
 
 /**
- * ep_is_empty - checks if ep has byte ready for reading
- * @ep: udc endpoint
+ * ep_is_empty - checks अगर ep has byte पढ़ोy क्रम पढ़ोing
+ * @ep: udc endpoपूर्णांक
  *
- * If endpoint is the control endpoint, checks if there are bytes in the
- * control endpoint fifo. If endpoint is a data endpoint, checks if bytes
- * are ready for reading on OUT endpoint.
+ * If endpoपूर्णांक is the control endpoपूर्णांक, checks अगर there are bytes in the
+ * control endpoपूर्णांक fअगरo. If endpoपूर्णांक is a data endpoपूर्णांक, checks अगर bytes
+ * are पढ़ोy क्रम पढ़ोing on OUT endpoपूर्णांक.
  *
- * Returns 0 if ep not empty, 1 if ep empty, -EOPNOTSUPP if IN endpoint
+ * Returns 0 अगर ep not empty, 1 अगर ep empty, -EOPNOTSUPP अगर IN endpoपूर्णांक
  */
-static int ep_is_empty(struct pxa_ep *ep)
-{
-	int ret;
+अटल पूर्णांक ep_is_empty(काष्ठा pxa_ep *ep)
+अणु
+	पूर्णांक ret;
 
-	if (!is_ep0(ep) && ep->dir_in)
-		return -EOPNOTSUPP;
-	if (is_ep0(ep))
-		ret = !(udc_ep_readl(ep, UDCCSR) & UDCCSR0_RNE);
-	else
-		ret = !(udc_ep_readl(ep, UDCCSR) & UDCCSR_BNE);
-	return ret;
-}
+	अगर (!is_ep0(ep) && ep->dir_in)
+		वापस -EOPNOTSUPP;
+	अगर (is_ep0(ep))
+		ret = !(udc_ep_पढ़ोl(ep, UDCCSR) & UDCCSR0_RNE);
+	अन्यथा
+		ret = !(udc_ep_पढ़ोl(ep, UDCCSR) & UDCCSR_BNE);
+	वापस ret;
+पूर्ण
 
 /**
- * ep_is_full - checks if ep has place to write bytes
- * @ep: udc endpoint
+ * ep_is_full - checks अगर ep has place to ग_लिखो bytes
+ * @ep: udc endpoपूर्णांक
  *
- * If endpoint is not the control endpoint and is an IN endpoint, checks if
- * there is place to write bytes into the endpoint.
+ * If endpoपूर्णांक is not the control endpoपूर्णांक and is an IN endpoपूर्णांक, checks अगर
+ * there is place to ग_लिखो bytes पूर्णांकo the endpoपूर्णांक.
  *
- * Returns 0 if ep not full, 1 if ep full, -EOPNOTSUPP if OUT endpoint
+ * Returns 0 अगर ep not full, 1 अगर ep full, -EOPNOTSUPP अगर OUT endpoपूर्णांक
  */
-static int ep_is_full(struct pxa_ep *ep)
-{
-	if (is_ep0(ep))
-		return (udc_ep_readl(ep, UDCCSR) & UDCCSR0_IPR);
-	if (!ep->dir_in)
-		return -EOPNOTSUPP;
-	return (!(udc_ep_readl(ep, UDCCSR) & UDCCSR_BNF));
-}
+अटल पूर्णांक ep_is_full(काष्ठा pxa_ep *ep)
+अणु
+	अगर (is_ep0(ep))
+		वापस (udc_ep_पढ़ोl(ep, UDCCSR) & UDCCSR0_IPR);
+	अगर (!ep->dir_in)
+		वापस -EOPNOTSUPP;
+	वापस (!(udc_ep_पढ़ोl(ep, UDCCSR) & UDCCSR_BNF));
+पूर्ण
 
 /**
- * epout_has_pkt - checks if OUT endpoint fifo has a packet available
- * @ep: pxa endpoint
+ * epout_has_pkt - checks अगर OUT endpoपूर्णांक fअगरo has a packet available
+ * @ep: pxa endpoपूर्णांक
  *
- * Returns 1 if a complete packet is available, 0 if not, -EOPNOTSUPP for IN ep.
+ * Returns 1 अगर a complete packet is available, 0 अगर not, -EOPNOTSUPP क्रम IN ep.
  */
-static int epout_has_pkt(struct pxa_ep *ep)
-{
-	if (!is_ep0(ep) && ep->dir_in)
-		return -EOPNOTSUPP;
-	if (is_ep0(ep))
-		return (udc_ep_readl(ep, UDCCSR) & UDCCSR0_OPC);
-	return (udc_ep_readl(ep, UDCCSR) & UDCCSR_PC);
-}
+अटल पूर्णांक epout_has_pkt(काष्ठा pxa_ep *ep)
+अणु
+	अगर (!is_ep0(ep) && ep->dir_in)
+		वापस -EOPNOTSUPP;
+	अगर (is_ep0(ep))
+		वापस (udc_ep_पढ़ोl(ep, UDCCSR) & UDCCSR0_OPC);
+	वापस (udc_ep_पढ़ोl(ep, UDCCSR) & UDCCSR_PC);
+पूर्ण
 
 /**
- * set_ep0state - Set ep0 automata state
+ * set_ep0state - Set ep0 स्वतःmata state
  * @udc: udc device
  * @state: state
  */
-static void set_ep0state(struct pxa_udc *udc, int state)
-{
-	struct pxa_ep *ep = &udc->pxa_ep[0];
-	char *old_stname = EP0_STNAME(udc);
+अटल व्योम set_ep0state(काष्ठा pxa_udc *udc, पूर्णांक state)
+अणु
+	काष्ठा pxa_ep *ep = &udc->pxa_ep[0];
+	अक्षर *old_stname = EP0_STNAME(udc);
 
 	udc->ep0state = state;
 	ep_dbg(ep, "state=%s->%s, udccsr0=0x%03x, udcbcr=%d\n", old_stname,
-		EP0_STNAME(udc), udc_ep_readl(ep, UDCCSR),
-		udc_ep_readl(ep, UDCBCR));
-}
+		EP0_STNAME(udc), udc_ep_पढ़ोl(ep, UDCCSR),
+		udc_ep_पढ़ोl(ep, UDCBCR));
+पूर्ण
 
 /**
- * ep0_idle - Put control endpoint into idle state
+ * ep0_idle - Put control endpoपूर्णांक पूर्णांकo idle state
  * @dev: udc device
  */
-static void ep0_idle(struct pxa_udc *dev)
-{
+अटल व्योम ep0_idle(काष्ठा pxa_udc *dev)
+अणु
 	set_ep0state(dev, WAIT_FOR_SETUP);
-}
+पूर्ण
 
 /**
  * inc_ep_stats_reqs - Update ep stats counts
- * @ep: physical endpoint
- * @is_in: ep direction (USB_DIR_IN or 0)
+ * @ep: physical endpoपूर्णांक
+ * @is_in: ep direction (USB_सूची_IN or 0)
  *
  */
-static void inc_ep_stats_reqs(struct pxa_ep *ep, int is_in)
-{
-	if (is_in)
+अटल व्योम inc_ep_stats_reqs(काष्ठा pxa_ep *ep, पूर्णांक is_in)
+अणु
+	अगर (is_in)
 		ep->stats.in_ops++;
-	else
+	अन्यथा
 		ep->stats.out_ops++;
-}
+पूर्ण
 
 /**
  * inc_ep_stats_bytes - Update ep stats counts
- * @ep: physical endpoint
- * @count: bytes transferred on endpoint
- * @is_in: ep direction (USB_DIR_IN or 0)
+ * @ep: physical endpoपूर्णांक
+ * @count: bytes transferred on endpoपूर्णांक
+ * @is_in: ep direction (USB_सूची_IN or 0)
  */
-static void inc_ep_stats_bytes(struct pxa_ep *ep, int count, int is_in)
-{
-	if (is_in)
+अटल व्योम inc_ep_stats_bytes(काष्ठा pxa_ep *ep, पूर्णांक count, पूर्णांक is_in)
+अणु
+	अगर (is_in)
 		ep->stats.in_bytes += count;
-	else
+	अन्यथा
 		ep->stats.out_bytes += count;
-}
+पूर्ण
 
 /**
- * pxa_ep_setup - Sets up an usb physical endpoint
- * @ep: pxa27x physical endpoint
+ * pxa_ep_setup - Sets up an usb physical endpoपूर्णांक
+ * @ep: pxa27x physical endpoपूर्णांक
  *
  * Find the physical pxa27x ep, and setup its UDCCR
  */
-static void pxa_ep_setup(struct pxa_ep *ep)
-{
+अटल व्योम pxa_ep_setup(काष्ठा pxa_ep *ep)
+अणु
 	u32 new_udccr;
 
 	new_udccr = ((ep->config << UDCCONR_CN_S) & UDCCONR_CN)
-		| ((ep->interface << UDCCONR_IN_S) & UDCCONR_IN)
+		| ((ep->पूर्णांकerface << UDCCONR_IN_S) & UDCCONR_IN)
 		| ((ep->alternate << UDCCONR_AISN_S) & UDCCONR_AISN)
 		| ((EPADDR(ep) << UDCCONR_EN_S) & UDCCONR_EN)
 		| ((EPXFERTYPE(ep) << UDCCONR_ET_S) & UDCCONR_ET)
 		| ((ep->dir_in) ? UDCCONR_ED : 0)
-		| ((ep->fifo_size << UDCCONR_MPS_S) & UDCCONR_MPS)
+		| ((ep->fअगरo_size << UDCCONR_MPS_S) & UDCCONR_MPS)
 		| UDCCONR_EE;
 
-	udc_ep_writel(ep, UDCCR, new_udccr);
-}
+	udc_ep_ग_लिखोl(ep, UDCCR, new_udccr);
+पूर्ण
 
 /**
- * pxa_eps_setup - Sets up all usb physical endpoints
+ * pxa_eps_setup - Sets up all usb physical endpoपूर्णांकs
  * @dev: udc device
  *
- * Setup all pxa physical endpoints, except ep0
+ * Setup all pxa physical endpoपूर्णांकs, except ep0
  */
-static void pxa_eps_setup(struct pxa_udc *dev)
-{
-	unsigned int i;
+अटल व्योम pxa_eps_setup(काष्ठा pxa_udc *dev)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	dev_dbg(dev->dev, "%s: dev=%p\n", __func__, dev);
 
-	for (i = 1; i < NR_PXA_ENDPOINTS; i++)
+	क्रम (i = 1; i < NR_PXA_ENDPOINTS; i++)
 		pxa_ep_setup(&dev->pxa_ep[i]);
-}
+पूर्ण
 
 /**
  * pxa_ep_alloc_request - Allocate usb request
- * @_ep: usb endpoint
+ * @_ep: usb endpoपूर्णांक
  * @gfp_flags:
  *
- * For the pxa27x, these can just wrap kmalloc/kfree.  gadget drivers
- * must still pass correctly initialized endpoints, since other controller
+ * For the pxa27x, these can just wrap kदो_स्मृति/kमुक्त.  gadget drivers
+ * must still pass correctly initialized endpoपूर्णांकs, since other controller
  * drivers may care about how it's currently set up (dma issues etc).
   */
-static struct usb_request *
-pxa_ep_alloc_request(struct usb_ep *_ep, gfp_t gfp_flags)
-{
-	struct pxa27x_request *req;
+अटल काष्ठा usb_request *
+pxa_ep_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
+अणु
+	काष्ठा pxa27x_request *req;
 
-	req = kzalloc(sizeof *req, gfp_flags);
-	if (!req)
-		return NULL;
+	req = kzalloc(माप *req, gfp_flags);
+	अगर (!req)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&req->queue);
 	req->in_use = 0;
-	req->udc_usb_ep = container_of(_ep, struct udc_usb_ep, usb_ep);
+	req->udc_usb_ep = container_of(_ep, काष्ठा udc_usb_ep, usb_ep);
 
-	return &req->req;
-}
+	वापस &req->req;
+पूर्ण
 
 /**
- * pxa_ep_free_request - Free usb request
- * @_ep: usb endpoint
+ * pxa_ep_मुक्त_request - Free usb request
+ * @_ep: usb endpoपूर्णांक
  * @_req: usb request
  *
- * Wrapper around kfree to free _req
+ * Wrapper around kमुक्त to मुक्त _req
  */
-static void pxa_ep_free_request(struct usb_ep *_ep, struct usb_request *_req)
-{
-	struct pxa27x_request *req;
+अटल व्योम pxa_ep_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
+अणु
+	काष्ठा pxa27x_request *req;
 
-	req = container_of(_req, struct pxa27x_request, req);
+	req = container_of(_req, काष्ठा pxa27x_request, req);
 	WARN_ON(!list_empty(&req->queue));
-	kfree(req);
-}
+	kमुक्त(req);
+पूर्ण
 
 /**
- * ep_add_request - add a request to the endpoint's queue
- * @ep: usb endpoint
+ * ep_add_request - add a request to the endpoपूर्णांक's queue
+ * @ep: usb endpoपूर्णांक
  * @req: usb request
  *
  * Context: ep->lock held
  *
- * Queues the request in the endpoint's queue, and enables the interrupts
- * on the endpoint.
+ * Queues the request in the endpoपूर्णांक's queue, and enables the पूर्णांकerrupts
+ * on the endpoपूर्णांक.
  */
-static void ep_add_request(struct pxa_ep *ep, struct pxa27x_request *req)
-{
-	if (unlikely(!req))
-		return;
+अटल व्योम ep_add_request(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req)
+अणु
+	अगर (unlikely(!req))
+		वापस;
 	ep_vdbg(ep, "req:%p, lg=%d, udccsr=0x%03x\n", req,
-		req->req.length, udc_ep_readl(ep, UDCCSR));
+		req->req.length, udc_ep_पढ़ोl(ep, UDCCSR));
 
 	req->in_use = 1;
 	list_add_tail(&req->queue, &ep->queue);
 	pio_irq_enable(ep);
-}
+पूर्ण
 
 /**
- * ep_del_request - removes a request from the endpoint's queue
- * @ep: usb endpoint
+ * ep_del_request - हटाओs a request from the endpoपूर्णांक's queue
+ * @ep: usb endpoपूर्णांक
  * @req: usb request
  *
  * Context: ep->lock held
  *
- * Unqueue the request from the endpoint's queue. If there are no more requests
- * on the endpoint, and if it's not the control endpoint, interrupts are
- * disabled on the endpoint.
+ * Unqueue the request from the endpoपूर्णांक's queue. If there are no more requests
+ * on the endpoपूर्णांक, and अगर it's not the control endpoपूर्णांक, पूर्णांकerrupts are
+ * disabled on the endpoपूर्णांक.
  */
-static void ep_del_request(struct pxa_ep *ep, struct pxa27x_request *req)
-{
-	if (unlikely(!req))
-		return;
+अटल व्योम ep_del_request(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req)
+अणु
+	अगर (unlikely(!req))
+		वापस;
 	ep_vdbg(ep, "req:%p, lg=%d, udccsr=0x%03x\n", req,
-		req->req.length, udc_ep_readl(ep, UDCCSR));
+		req->req.length, udc_ep_पढ़ोl(ep, UDCCSR));
 
 	list_del_init(&req->queue);
 	req->in_use = 0;
-	if (!is_ep0(ep) && list_empty(&ep->queue))
+	अगर (!is_ep0(ep) && list_empty(&ep->queue))
 		pio_irq_disable(ep);
-}
+पूर्ण
 
 /**
- * req_done - Complete an usb request
- * @ep: pxa physical endpoint
+ * req_करोne - Complete an usb request
+ * @ep: pxa physical endpoपूर्णांक
  * @req: pxa request
  * @status: usb request status sent to gadget API
- * @pflags: flags of previous spinlock_irq_save() or NULL if no lock held
+ * @pflags: flags of previous spinlock_irq_save() or शून्य अगर no lock held
  *
- * Context: ep->lock held if flags not NULL, else ep->lock released
+ * Context: ep->lock held अगर flags not शून्य, अन्यथा ep->lock released
  *
- * Retire a pxa27x usb request. Endpoint must be locked.
+ * Retire a pxa27x usb request. Endpoपूर्णांक must be locked.
  */
-static void req_done(struct pxa_ep *ep, struct pxa27x_request *req, int status,
-	unsigned long *pflags)
-{
-	unsigned long	flags;
+अटल व्योम req_करोne(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req, पूर्णांक status,
+	अचिन्हित दीर्घ *pflags)
+अणु
+	अचिन्हित दीर्घ	flags;
 
 	ep_del_request(ep, req);
-	if (likely(req->req.status == -EINPROGRESS))
+	अगर (likely(req->req.status == -EINPROGRESS))
 		req->req.status = status;
-	else
+	अन्यथा
 		status = req->req.status;
 
-	if (status && status != -ESHUTDOWN)
+	अगर (status && status != -ESHUTDOWN)
 		ep_dbg(ep, "complete req %p stat %d len %u/%u\n",
 			&req->req, status,
 			req->req.actual, req->req.length);
 
-	if (pflags)
+	अगर (pflags)
 		spin_unlock_irqrestore(&ep->lock, *pflags);
 	local_irq_save(flags);
 	usb_gadget_giveback_request(&req->udc_usb_ep->usb_ep, &req->req);
 	local_irq_restore(flags);
-	if (pflags)
+	अगर (pflags)
 		spin_lock_irqsave(&ep->lock, *pflags);
-}
+पूर्ण
 
 /**
- * ep_end_out_req - Ends endpoint OUT request
- * @ep: physical endpoint
+ * ep_end_out_req - Ends endpoपूर्णांक OUT request
+ * @ep: physical endpoपूर्णांक
  * @req: pxa request
- * @pflags: flags of previous spinlock_irq_save() or NULL if no lock held
+ * @pflags: flags of previous spinlock_irq_save() or शून्य अगर no lock held
  *
- * Context: ep->lock held or released (see req_done())
+ * Context: ep->lock held or released (see req_करोne())
  *
- * Ends endpoint OUT request (completes usb request).
+ * Ends endpoपूर्णांक OUT request (completes usb request).
  */
-static void ep_end_out_req(struct pxa_ep *ep, struct pxa27x_request *req,
-	unsigned long *pflags)
-{
-	inc_ep_stats_reqs(ep, !USB_DIR_IN);
-	req_done(ep, req, 0, pflags);
-}
+अटल व्योम ep_end_out_req(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req,
+	अचिन्हित दीर्घ *pflags)
+अणु
+	inc_ep_stats_reqs(ep, !USB_सूची_IN);
+	req_करोne(ep, req, 0, pflags);
+पूर्ण
 
 /**
- * ep0_end_out_req - Ends control endpoint OUT request (ends data stage)
- * @ep: physical endpoint
+ * ep0_end_out_req - Ends control endpoपूर्णांक OUT request (ends data stage)
+ * @ep: physical endpoपूर्णांक
  * @req: pxa request
- * @pflags: flags of previous spinlock_irq_save() or NULL if no lock held
+ * @pflags: flags of previous spinlock_irq_save() or शून्य अगर no lock held
  *
- * Context: ep->lock held or released (see req_done())
+ * Context: ep->lock held or released (see req_करोne())
  *
- * Ends control endpoint OUT request (completes usb request), and puts
- * control endpoint into idle state
+ * Ends control endpoपूर्णांक OUT request (completes usb request), and माला_दो
+ * control endpoपूर्णांक पूर्णांकo idle state
  */
-static void ep0_end_out_req(struct pxa_ep *ep, struct pxa27x_request *req,
-	unsigned long *pflags)
-{
+अटल व्योम ep0_end_out_req(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req,
+	अचिन्हित दीर्घ *pflags)
+अणु
 	set_ep0state(ep->dev, OUT_STATUS_STAGE);
 	ep_end_out_req(ep, req, pflags);
 	ep0_idle(ep->dev);
-}
+पूर्ण
 
 /**
- * ep_end_in_req - Ends endpoint IN request
- * @ep: physical endpoint
+ * ep_end_in_req - Ends endpoपूर्णांक IN request
+ * @ep: physical endpoपूर्णांक
  * @req: pxa request
- * @pflags: flags of previous spinlock_irq_save() or NULL if no lock held
+ * @pflags: flags of previous spinlock_irq_save() or शून्य अगर no lock held
  *
- * Context: ep->lock held or released (see req_done())
+ * Context: ep->lock held or released (see req_करोne())
  *
- * Ends endpoint IN request (completes usb request).
+ * Ends endpoपूर्णांक IN request (completes usb request).
  */
-static void ep_end_in_req(struct pxa_ep *ep, struct pxa27x_request *req,
-	unsigned long *pflags)
-{
-	inc_ep_stats_reqs(ep, USB_DIR_IN);
-	req_done(ep, req, 0, pflags);
-}
+अटल व्योम ep_end_in_req(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req,
+	अचिन्हित दीर्घ *pflags)
+अणु
+	inc_ep_stats_reqs(ep, USB_सूची_IN);
+	req_करोne(ep, req, 0, pflags);
+पूर्ण
 
 /**
- * ep0_end_in_req - Ends control endpoint IN request (ends data stage)
- * @ep: physical endpoint
+ * ep0_end_in_req - Ends control endpoपूर्णांक IN request (ends data stage)
+ * @ep: physical endpoपूर्णांक
  * @req: pxa request
- * @pflags: flags of previous spinlock_irq_save() or NULL if no lock held
+ * @pflags: flags of previous spinlock_irq_save() or शून्य अगर no lock held
  *
- * Context: ep->lock held or released (see req_done())
+ * Context: ep->lock held or released (see req_करोne())
  *
- * Ends control endpoint IN request (completes usb request), and puts
- * control endpoint into status state
+ * Ends control endpoपूर्णांक IN request (completes usb request), and माला_दो
+ * control endpoपूर्णांक पूर्णांकo status state
  */
-static void ep0_end_in_req(struct pxa_ep *ep, struct pxa27x_request *req,
-	unsigned long *pflags)
-{
+अटल व्योम ep0_end_in_req(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req,
+	अचिन्हित दीर्घ *pflags)
+अणु
 	set_ep0state(ep->dev, IN_STATUS_STAGE);
 	ep_end_in_req(ep, req, pflags);
-}
+पूर्ण
 
 /**
  * nuke - Dequeue all requests
- * @ep: pxa endpoint
+ * @ep: pxa endpoपूर्णांक
  * @status: usb request status
  *
  * Context: ep->lock released
  *
- * Dequeues all requests on an endpoint. As a side effect, interrupts will be
- * disabled on that endpoint (because no more requests).
+ * Dequeues all requests on an endpoपूर्णांक. As a side effect, पूर्णांकerrupts will be
+ * disabled on that endpoपूर्णांक (because no more requests).
  */
-static void nuke(struct pxa_ep *ep, int status)
-{
-	struct pxa27x_request	*req;
-	unsigned long		flags;
+अटल व्योम nuke(काष्ठा pxa_ep *ep, पूर्णांक status)
+अणु
+	काष्ठा pxa27x_request	*req;
+	अचिन्हित दीर्घ		flags;
 
 	spin_lock_irqsave(&ep->lock, flags);
-	while (!list_empty(&ep->queue)) {
-		req = list_entry(ep->queue.next, struct pxa27x_request, queue);
-		req_done(ep, req, status, &flags);
-	}
+	जबतक (!list_empty(&ep->queue)) अणु
+		req = list_entry(ep->queue.next, काष्ठा pxa27x_request, queue);
+		req_करोne(ep, req, status, &flags);
+	पूर्ण
 	spin_unlock_irqrestore(&ep->lock, flags);
-}
+पूर्ण
 
 /**
- * read_packet - transfer 1 packet from an OUT endpoint into request
- * @ep: pxa physical endpoint
+ * पढ़ो_packet - transfer 1 packet from an OUT endpoपूर्णांक पूर्णांकo request
+ * @ep: pxa physical endpoपूर्णांक
  * @req: usb request
  *
- * Takes bytes from OUT endpoint and transfers them info the usb request.
- * If there is less space in request than bytes received in OUT endpoint,
- * bytes are left in the OUT endpoint.
+ * Takes bytes from OUT endpoपूर्णांक and transfers them info the usb request.
+ * If there is less space in request than bytes received in OUT endpoपूर्णांक,
+ * bytes are left in the OUT endpoपूर्णांक.
  *
  * Returns how many bytes were actually transferred
  */
-static int read_packet(struct pxa_ep *ep, struct pxa27x_request *req)
-{
+अटल पूर्णांक पढ़ो_packet(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req)
+अणु
 	u32 *buf;
-	int bytes_ep, bufferspace, count, i;
+	पूर्णांक bytes_ep, bufferspace, count, i;
 
-	bytes_ep = ep_count_bytes_remain(ep);
+	bytes_ep = ep_count_bytes_reमुख्य(ep);
 	bufferspace = req->req.length - req->req.actual;
 
 	buf = (u32 *)(req->req.buf + req->req.actual);
 	prefetchw(buf);
 
-	if (likely(!ep_is_empty(ep)))
+	अगर (likely(!ep_is_empty(ep)))
 		count = min(bytes_ep, bufferspace);
-	else /* zlp */
+	अन्यथा /* zlp */
 		count = 0;
 
-	for (i = count; i > 0; i -= 4)
-		*buf++ = udc_ep_readl(ep, UDCDR);
+	क्रम (i = count; i > 0; i -= 4)
+		*buf++ = udc_ep_पढ़ोl(ep, UDCDR);
 	req->req.actual += count;
 
-	ep_write_UDCCSR(ep, UDCCSR_PC);
+	ep_ग_लिखो_UDCCSR(ep, UDCCSR_PC);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- * write_packet - transfer 1 packet from request into an IN endpoint
- * @ep: pxa physical endpoint
+ * ग_लिखो_packet - transfer 1 packet from request पूर्णांकo an IN endpoपूर्णांक
+ * @ep: pxa physical endpoपूर्णांक
  * @req: usb request
- * @max: max bytes that fit into endpoint
+ * @max: max bytes that fit पूर्णांकo endpoपूर्णांक
  *
- * Takes bytes from usb request, and transfers them into the physical
- * endpoint. If there are no bytes to transfer, doesn't write anything
- * to physical endpoint.
+ * Takes bytes from usb request, and transfers them पूर्णांकo the physical
+ * endpoपूर्णांक. If there are no bytes to transfer, करोesn't ग_लिखो anything
+ * to physical endpoपूर्णांक.
  *
  * Returns how many bytes were actually transferred.
  */
-static int write_packet(struct pxa_ep *ep, struct pxa27x_request *req,
-			unsigned int max)
-{
-	int length, count, remain, i;
+अटल पूर्णांक ग_लिखो_packet(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req,
+			अचिन्हित पूर्णांक max)
+अणु
+	पूर्णांक length, count, reमुख्य, i;
 	u32 *buf;
 	u8 *buf_8;
 
@@ -839,247 +840,247 @@ static int write_packet(struct pxa_ep *ep, struct pxa27x_request *req,
 	length = min(req->req.length - req->req.actual, max);
 	req->req.actual += length;
 
-	remain = length & 0x3;
+	reमुख्य = length & 0x3;
 	count = length & ~(0x3);
-	for (i = count; i > 0 ; i -= 4)
-		udc_ep_writel(ep, UDCDR, *buf++);
+	क्रम (i = count; i > 0 ; i -= 4)
+		udc_ep_ग_लिखोl(ep, UDCDR, *buf++);
 
 	buf_8 = (u8 *)buf;
-	for (i = remain; i > 0; i--)
-		udc_ep_writeb(ep, UDCDR, *buf_8++);
+	क्रम (i = reमुख्य; i > 0; i--)
+		udc_ep_ग_लिखोb(ep, UDCDR, *buf_8++);
 
-	ep_vdbg(ep, "length=%d+%d, udccsr=0x%03x\n", count, remain,
-		udc_ep_readl(ep, UDCCSR));
+	ep_vdbg(ep, "length=%d+%d, udccsr=0x%03x\n", count, reमुख्य,
+		udc_ep_पढ़ोl(ep, UDCCSR));
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
 /**
- * read_fifo - Transfer packets from OUT endpoint into usb request
- * @ep: pxa physical endpoint
+ * पढ़ो_fअगरo - Transfer packets from OUT endpoपूर्णांक पूर्णांकo usb request
+ * @ep: pxa physical endpoपूर्णांक
  * @req: usb request
  *
- * Context: interrupt handler
+ * Context: पूर्णांकerrupt handler
  *
- * Unload as many packets as possible from the fifo we use for usb OUT
- * transfers and put them into the request. Caller should have made sure
- * there's at least one packet ready.
+ * Unload as many packets as possible from the fअगरo we use क्रम usb OUT
+ * transfers and put them पूर्णांकo the request. Caller should have made sure
+ * there's at least one packet पढ़ोy.
  * Doesn't complete the request, that's the caller's job
  *
- * Returns 1 if the request completed, 0 otherwise
+ * Returns 1 अगर the request completed, 0 otherwise
  */
-static int read_fifo(struct pxa_ep *ep, struct pxa27x_request *req)
-{
-	int count, is_short, completed = 0;
+अटल पूर्णांक पढ़ो_fअगरo(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req)
+अणु
+	पूर्णांक count, is_लघु, completed = 0;
 
-	while (epout_has_pkt(ep)) {
-		count = read_packet(ep, req);
-		inc_ep_stats_bytes(ep, count, !USB_DIR_IN);
+	जबतक (epout_has_pkt(ep)) अणु
+		count = पढ़ो_packet(ep, req);
+		inc_ep_stats_bytes(ep, count, !USB_सूची_IN);
 
-		is_short = (count < ep->fifo_size);
+		is_लघु = (count < ep->fअगरo_size);
 		ep_dbg(ep, "read udccsr:%03x, count:%d bytes%s req %p %d/%d\n",
-			udc_ep_readl(ep, UDCCSR), count, is_short ? "/S" : "",
+			udc_ep_पढ़ोl(ep, UDCCSR), count, is_लघु ? "/S" : "",
 			&req->req, req->req.actual, req->req.length);
 
 		/* completion */
-		if (is_short || req->req.actual == req->req.length) {
+		अगर (is_लघु || req->req.actual == req->req.length) अणु
 			completed = 1;
-			break;
-		}
-		/* finished that packet.  the next one may be waiting... */
-	}
-	return completed;
-}
+			अवरोध;
+		पूर्ण
+		/* finished that packet.  the next one may be रुकोing... */
+	पूर्ण
+	वापस completed;
+पूर्ण
 
 /**
- * write_fifo - transfer packets from usb request into an IN endpoint
- * @ep: pxa physical endpoint
+ * ग_लिखो_fअगरo - transfer packets from usb request पूर्णांकo an IN endpoपूर्णांक
+ * @ep: pxa physical endpoपूर्णांक
  * @req: pxa usb request
  *
- * Write to an IN endpoint fifo, as many packets as possible.
- * irqs will use this to write the rest later.
- * caller guarantees at least one packet buffer is ready (or a zlp).
+ * Write to an IN endpoपूर्णांक fअगरo, as many packets as possible.
+ * irqs will use this to ग_लिखो the rest later.
+ * caller guarantees at least one packet buffer is पढ़ोy (or a zlp).
  * Doesn't complete the request, that's the caller's job
  *
- * Returns 1 if request fully transferred, 0 if partial transfer
+ * Returns 1 अगर request fully transferred, 0 अगर partial transfer
  */
-static int write_fifo(struct pxa_ep *ep, struct pxa27x_request *req)
-{
-	unsigned max;
-	int count, is_short, is_last = 0, completed = 0, totcount = 0;
+अटल पूर्णांक ग_लिखो_fअगरo(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req)
+अणु
+	अचिन्हित max;
+	पूर्णांक count, is_लघु, is_last = 0, completed = 0, totcount = 0;
 	u32 udccsr;
 
-	max = ep->fifo_size;
-	do {
-		udccsr = udc_ep_readl(ep, UDCCSR);
-		if (udccsr & UDCCSR_PC) {
+	max = ep->fअगरo_size;
+	करो अणु
+		udccsr = udc_ep_पढ़ोl(ep, UDCCSR);
+		अगर (udccsr & UDCCSR_PC) अणु
 			ep_vdbg(ep, "Clearing Transmit Complete, udccsr=%x\n",
 				udccsr);
-			ep_write_UDCCSR(ep, UDCCSR_PC);
-		}
-		if (udccsr & UDCCSR_TRN) {
+			ep_ग_लिखो_UDCCSR(ep, UDCCSR_PC);
+		पूर्ण
+		अगर (udccsr & UDCCSR_TRN) अणु
 			ep_vdbg(ep, "Clearing Underrun on, udccsr=%x\n",
 				udccsr);
-			ep_write_UDCCSR(ep, UDCCSR_TRN);
-		}
+			ep_ग_लिखो_UDCCSR(ep, UDCCSR_TRN);
+		पूर्ण
 
-		count = write_packet(ep, req, max);
-		inc_ep_stats_bytes(ep, count, USB_DIR_IN);
+		count = ग_लिखो_packet(ep, req, max);
+		inc_ep_stats_bytes(ep, count, USB_सूची_IN);
 		totcount += count;
 
-		/* last packet is usually short (or a zlp) */
-		if (unlikely(count < max)) {
+		/* last packet is usually लघु (or a zlp) */
+		अगर (unlikely(count < max)) अणु
 			is_last = 1;
-			is_short = 1;
-		} else {
-			if (likely(req->req.length > req->req.actual)
+			is_लघु = 1;
+		पूर्ण अन्यथा अणु
+			अगर (likely(req->req.length > req->req.actual)
 					|| req->req.zero)
 				is_last = 0;
-			else
+			अन्यथा
 				is_last = 1;
-			/* interrupt/iso maxpacket may not fill the fifo */
-			is_short = unlikely(max < ep->fifo_size);
-		}
+			/* पूर्णांकerrupt/iso maxpacket may not fill the fअगरo */
+			is_लघु = unlikely(max < ep->fअगरo_size);
+		पूर्ण
 
-		if (is_short)
-			ep_write_UDCCSR(ep, UDCCSR_SP);
+		अगर (is_लघु)
+			ep_ग_लिखो_UDCCSR(ep, UDCCSR_SP);
 
 		/* requests complete when all IN data is in the FIFO */
-		if (is_last) {
+		अगर (is_last) अणु
 			completed = 1;
-			break;
-		}
-	} while (!ep_is_full(ep));
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (!ep_is_full(ep));
 
 	ep_dbg(ep, "wrote count:%d bytes%s%s, left:%d req=%p\n",
-			totcount, is_last ? "/L" : "", is_short ? "/S" : "",
+			totcount, is_last ? "/L" : "", is_लघु ? "/S" : "",
 			req->req.length - req->req.actual, &req->req);
 
-	return completed;
-}
+	वापस completed;
+पूर्ण
 
 /**
- * read_ep0_fifo - Transfer packets from control endpoint into usb request
- * @ep: control endpoint
+ * पढ़ो_ep0_fअगरo - Transfer packets from control endpoपूर्णांक पूर्णांकo usb request
+ * @ep: control endpoपूर्णांक
  * @req: pxa usb request
  *
- * Special ep0 version of the above read_fifo. Reads as many bytes from control
- * endpoint as can be read, and stores them into usb request (limited by request
+ * Special ep0 version of the above पढ़ो_fअगरo. Reads as many bytes from control
+ * endpoपूर्णांक as can be पढ़ो, and stores them पूर्णांकo usb request (limited by request
  * maximum length).
  *
- * Returns 0 if usb request only partially filled, 1 if fully filled
+ * Returns 0 अगर usb request only partially filled, 1 अगर fully filled
  */
-static int read_ep0_fifo(struct pxa_ep *ep, struct pxa27x_request *req)
-{
-	int count, is_short, completed = 0;
+अटल पूर्णांक पढ़ो_ep0_fअगरo(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req)
+अणु
+	पूर्णांक count, is_लघु, completed = 0;
 
-	while (epout_has_pkt(ep)) {
-		count = read_packet(ep, req);
-		ep_write_UDCCSR(ep, UDCCSR0_OPC);
-		inc_ep_stats_bytes(ep, count, !USB_DIR_IN);
+	जबतक (epout_has_pkt(ep)) अणु
+		count = पढ़ो_packet(ep, req);
+		ep_ग_लिखो_UDCCSR(ep, UDCCSR0_OPC);
+		inc_ep_stats_bytes(ep, count, !USB_सूची_IN);
 
-		is_short = (count < ep->fifo_size);
+		is_लघु = (count < ep->fअगरo_size);
 		ep_dbg(ep, "read udccsr:%03x, count:%d bytes%s req %p %d/%d\n",
-			udc_ep_readl(ep, UDCCSR), count, is_short ? "/S" : "",
+			udc_ep_पढ़ोl(ep, UDCCSR), count, is_लघु ? "/S" : "",
 			&req->req, req->req.actual, req->req.length);
 
-		if (is_short || req->req.actual >= req->req.length) {
+		अगर (is_लघु || req->req.actual >= req->req.length) अणु
 			completed = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return completed;
-}
+	वापस completed;
+पूर्ण
 
 /**
- * write_ep0_fifo - Send a request to control endpoint (ep0 in)
- * @ep: control endpoint
+ * ग_लिखो_ep0_fअगरo - Send a request to control endpoपूर्णांक (ep0 in)
+ * @ep: control endpoपूर्णांक
  * @req: request
  *
- * Context: interrupt handler
+ * Context: पूर्णांकerrupt handler
  *
- * Sends a request (or a part of the request) to the control endpoint (ep0 in).
- * If the request doesn't fit, the remaining part will be sent from irq.
- * The request is considered fully written only if either :
- *   - last write transferred all remaining bytes, but fifo was not fully filled
- *   - last write was a 0 length write
+ * Sends a request (or a part of the request) to the control endpoपूर्णांक (ep0 in).
+ * If the request करोesn't fit, the reमुख्यing part will be sent from irq.
+ * The request is considered fully written only अगर either :
+ *   - last ग_लिखो transferred all reमुख्यing bytes, but fअगरo was not fully filled
+ *   - last ग_लिखो was a 0 length ग_लिखो
  *
- * Returns 1 if request fully written, 0 if request only partially sent
+ * Returns 1 अगर request fully written, 0 अगर request only partially sent
  */
-static int write_ep0_fifo(struct pxa_ep *ep, struct pxa27x_request *req)
-{
-	unsigned	count;
-	int		is_last, is_short;
+अटल पूर्णांक ग_लिखो_ep0_fअगरo(काष्ठा pxa_ep *ep, काष्ठा pxa27x_request *req)
+अणु
+	अचिन्हित	count;
+	पूर्णांक		is_last, is_लघु;
 
-	count = write_packet(ep, req, EP0_FIFO_SIZE);
-	inc_ep_stats_bytes(ep, count, USB_DIR_IN);
+	count = ग_लिखो_packet(ep, req, EP0_FIFO_SIZE);
+	inc_ep_stats_bytes(ep, count, USB_सूची_IN);
 
-	is_short = (count < EP0_FIFO_SIZE);
+	is_लघु = (count < EP0_FIFO_SIZE);
 	is_last = ((count == 0) || (count < EP0_FIFO_SIZE));
 
-	/* Sends either a short packet or a 0 length packet */
-	if (unlikely(is_short))
-		ep_write_UDCCSR(ep, UDCCSR0_IPR);
+	/* Sends either a लघु packet or a 0 length packet */
+	अगर (unlikely(is_लघु))
+		ep_ग_लिखो_UDCCSR(ep, UDCCSR0_IPR);
 
 	ep_dbg(ep, "in %d bytes%s%s, %d left, req=%p, udccsr0=0x%03x\n",
-		count, is_short ? "/S" : "", is_last ? "/L" : "",
+		count, is_लघु ? "/S" : "", is_last ? "/L" : "",
 		req->req.length - req->req.actual,
-		&req->req, udc_ep_readl(ep, UDCCSR));
+		&req->req, udc_ep_पढ़ोl(ep, UDCCSR));
 
-	return is_last;
-}
+	वापस is_last;
+पूर्ण
 
 /**
- * pxa_ep_queue - Queue a request into an IN endpoint
- * @_ep: usb endpoint
+ * pxa_ep_queue - Queue a request पूर्णांकo an IN endpoपूर्णांक
+ * @_ep: usb endpoपूर्णांक
  * @_req: usb request
  * @gfp_flags: flags
  *
- * Context: thread context or from the interrupt handler in the
- * special case of ep0 setup :
+ * Context: thपढ़ो context or from the पूर्णांकerrupt handler in the
+ * special हाल of ep0 setup :
  *   (irq->handle_ep0_ctrl_req->gadget_setup->pxa_ep_queue)
  *
- * Returns 0 if succedeed, error otherwise
+ * Returns 0 अगर succedeed, error otherwise
  */
-static int pxa_ep_queue(struct usb_ep *_ep, struct usb_request *_req,
+अटल पूर्णांक pxa_ep_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
 			gfp_t gfp_flags)
-{
-	struct udc_usb_ep	*udc_usb_ep;
-	struct pxa_ep		*ep;
-	struct pxa27x_request	*req;
-	struct pxa_udc		*dev;
-	unsigned long		flags;
-	int			rc = 0;
-	int			is_first_req;
-	unsigned		length;
-	int			recursion_detected;
+अणु
+	काष्ठा udc_usb_ep	*udc_usb_ep;
+	काष्ठा pxa_ep		*ep;
+	काष्ठा pxa27x_request	*req;
+	काष्ठा pxa_udc		*dev;
+	अचिन्हित दीर्घ		flags;
+	पूर्णांक			rc = 0;
+	पूर्णांक			is_first_req;
+	अचिन्हित		length;
+	पूर्णांक			recursion_detected;
 
-	req = container_of(_req, struct pxa27x_request, req);
-	udc_usb_ep = container_of(_ep, struct udc_usb_ep, usb_ep);
+	req = container_of(_req, काष्ठा pxa27x_request, req);
+	udc_usb_ep = container_of(_ep, काष्ठा udc_usb_ep, usb_ep);
 
-	if (unlikely(!_req || !_req->complete || !_req->buf))
-		return -EINVAL;
+	अगर (unlikely(!_req || !_req->complete || !_req->buf))
+		वापस -EINVAL;
 
-	if (unlikely(!_ep))
-		return -EINVAL;
+	अगर (unlikely(!_ep))
+		वापस -EINVAL;
 
 	ep = udc_usb_ep->pxa_ep;
-	if (unlikely(!ep))
-		return -EINVAL;
+	अगर (unlikely(!ep))
+		वापस -EINVAL;
 
 	dev = ep->dev;
-	if (unlikely(!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)) {
+	अगर (unlikely(!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)) अणु
 		ep_dbg(ep, "bogus device state\n");
-		return -ESHUTDOWN;
-	}
+		वापस -ESHUTDOWN;
+	पूर्ण
 
 	/* iso is always one packet per request, that's the only way
 	 * we can report per-packet status.  that also helps with dma.
 	 */
-	if (unlikely(EPXFERTYPE_is_ISO(ep)
-			&& req->req.length > ep->fifo_size))
-		return -EMSGSIZE;
+	अगर (unlikely(EPXFERTYPE_is_ISO(ep)
+			&& req->req.length > ep->fअगरo_size))
+		वापस -EMSGSIZE;
 
 	spin_lock_irqsave(&ep->lock, flags);
 	recursion_detected = ep->in_handle_ep;
@@ -1089,16 +1090,16 @@ static int pxa_ep_queue(struct usb_ep *_ep, struct usb_request *_req,
 			_req, is_first_req ? "yes" : "no",
 			_req->length, _req->buf);
 
-	if (!ep->enabled) {
+	अगर (!ep->enabled) अणु
 		_req->status = -ESHUTDOWN;
 		rc = -ESHUTDOWN;
-		goto out_locked;
-	}
+		जाओ out_locked;
+	पूर्ण
 
-	if (req->in_use) {
+	अगर (req->in_use) अणु
 		ep_err(ep, "refusing to queue req %p (already queued)\n", req);
-		goto out_locked;
-	}
+		जाओ out_locked;
+	पूर्ण
 
 	length = _req->length;
 	_req->status = -EINPROGRESS;
@@ -1107,454 +1108,454 @@ static int pxa_ep_queue(struct usb_ep *_ep, struct usb_request *_req,
 	ep_add_request(ep, req);
 	spin_unlock_irqrestore(&ep->lock, flags);
 
-	if (is_ep0(ep)) {
-		switch (dev->ep0state) {
-		case WAIT_ACK_SET_CONF_INTERF:
-			if (length == 0) {
-				ep_end_in_req(ep, req, NULL);
-			} else {
+	अगर (is_ep0(ep)) अणु
+		चयन (dev->ep0state) अणु
+		हाल WAIT_ACK_SET_CONF_INTERF:
+			अगर (length == 0) अणु
+				ep_end_in_req(ep, req, शून्य);
+			पूर्ण अन्यथा अणु
 				ep_err(ep, "got a request of %d bytes while"
 					"in state WAIT_ACK_SET_CONF_INTERF\n",
 					length);
 				ep_del_request(ep, req);
 				rc = -EL2HLT;
-			}
+			पूर्ण
 			ep0_idle(ep->dev);
-			break;
-		case IN_DATA_STAGE:
-			if (!ep_is_full(ep))
-				if (write_ep0_fifo(ep, req))
-					ep0_end_in_req(ep, req, NULL);
-			break;
-		case OUT_DATA_STAGE:
-			if ((length == 0) || !epout_has_pkt(ep))
-				if (read_ep0_fifo(ep, req))
-					ep0_end_out_req(ep, req, NULL);
-			break;
-		default:
+			अवरोध;
+		हाल IN_DATA_STAGE:
+			अगर (!ep_is_full(ep))
+				अगर (ग_लिखो_ep0_fअगरo(ep, req))
+					ep0_end_in_req(ep, req, शून्य);
+			अवरोध;
+		हाल OUT_DATA_STAGE:
+			अगर ((length == 0) || !epout_has_pkt(ep))
+				अगर (पढ़ो_ep0_fअगरo(ep, req))
+					ep0_end_out_req(ep, req, शून्य);
+			अवरोध;
+		शेष:
 			ep_err(ep, "odd state %s to send me a request\n",
 				EP0_STNAME(ep->dev));
 			ep_del_request(ep, req);
 			rc = -EL2HLT;
-			break;
-		}
-	} else {
-		if (!recursion_detected)
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!recursion_detected)
 			handle_ep(ep);
-	}
+	पूर्ण
 
 out:
-	return rc;
+	वापस rc;
 out_locked:
 	spin_unlock_irqrestore(&ep->lock, flags);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
 /**
  * pxa_ep_dequeue - Dequeue one request
- * @_ep: usb endpoint
+ * @_ep: usb endpoपूर्णांक
  * @_req: usb request
  *
- * Return 0 if no error, -EINVAL or -ECONNRESET otherwise
+ * Return 0 अगर no error, -EINVAL or -ECONNRESET otherwise
  */
-static int pxa_ep_dequeue(struct usb_ep *_ep, struct usb_request *_req)
-{
-	struct pxa_ep		*ep;
-	struct udc_usb_ep	*udc_usb_ep;
-	struct pxa27x_request	*req;
-	unsigned long		flags;
-	int			rc = -EINVAL;
+अटल पूर्णांक pxa_ep_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
+अणु
+	काष्ठा pxa_ep		*ep;
+	काष्ठा udc_usb_ep	*udc_usb_ep;
+	काष्ठा pxa27x_request	*req;
+	अचिन्हित दीर्घ		flags;
+	पूर्णांक			rc = -EINVAL;
 
-	if (!_ep)
-		return rc;
-	udc_usb_ep = container_of(_ep, struct udc_usb_ep, usb_ep);
+	अगर (!_ep)
+		वापस rc;
+	udc_usb_ep = container_of(_ep, काष्ठा udc_usb_ep, usb_ep);
 	ep = udc_usb_ep->pxa_ep;
-	if (!ep || is_ep0(ep))
-		return rc;
+	अगर (!ep || is_ep0(ep))
+		वापस rc;
 
 	spin_lock_irqsave(&ep->lock, flags);
 
-	/* make sure it's actually queued on this endpoint */
-	list_for_each_entry(req, &ep->queue, queue) {
-		if (&req->req == _req) {
+	/* make sure it's actually queued on this endpoपूर्णांक */
+	list_क्रम_each_entry(req, &ep->queue, queue) अणु
+		अगर (&req->req == _req) अणु
 			rc = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&ep->lock, flags);
-	if (!rc)
-		req_done(ep, req, -ECONNRESET, NULL);
-	return rc;
-}
+	अगर (!rc)
+		req_करोne(ep, req, -ECONNRESET, शून्य);
+	वापस rc;
+पूर्ण
 
 /**
- * pxa_ep_set_halt - Halts operations on one endpoint
- * @_ep: usb endpoint
+ * pxa_ep_set_halt - Halts operations on one endpoपूर्णांक
+ * @_ep: usb endpoपूर्णांक
  * @value:
  *
- * Returns 0 if no error, -EINVAL, -EROFS, -EAGAIN otherwise
+ * Returns 0 अगर no error, -EINVAL, -EROFS, -EAGAIN otherwise
  */
-static int pxa_ep_set_halt(struct usb_ep *_ep, int value)
-{
-	struct pxa_ep		*ep;
-	struct udc_usb_ep	*udc_usb_ep;
-	unsigned long flags;
-	int rc;
+अटल पूर्णांक pxa_ep_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
+अणु
+	काष्ठा pxa_ep		*ep;
+	काष्ठा udc_usb_ep	*udc_usb_ep;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
 
-	if (!_ep)
-		return -EINVAL;
-	udc_usb_ep = container_of(_ep, struct udc_usb_ep, usb_ep);
+	अगर (!_ep)
+		वापस -EINVAL;
+	udc_usb_ep = container_of(_ep, काष्ठा udc_usb_ep, usb_ep);
 	ep = udc_usb_ep->pxa_ep;
-	if (!ep || is_ep0(ep))
-		return -EINVAL;
+	अगर (!ep || is_ep0(ep))
+		वापस -EINVAL;
 
-	if (value == 0) {
+	अगर (value == 0) अणु
 		/*
 		 * This path (reset toggle+halt) is needed to implement
 		 * SET_INTERFACE on normal hardware.  but it can't be
-		 * done from software on the PXA UDC, and the hardware
-		 * forgets to do it as part of SET_INTERFACE automagic.
+		 * करोne from software on the PXA UDC, and the hardware
+		 * क्रममाला_लो to करो it as part of SET_INTERFACE स्वतःmagic.
 		 */
 		ep_dbg(ep, "only host can clear halt\n");
-		return -EROFS;
-	}
+		वापस -EROFS;
+	पूर्ण
 
 	spin_lock_irqsave(&ep->lock, flags);
 
 	rc = -EAGAIN;
-	if (ep->dir_in	&& (ep_is_full(ep) || !list_empty(&ep->queue)))
-		goto out;
+	अगर (ep->dir_in	&& (ep_is_full(ep) || !list_empty(&ep->queue)))
+		जाओ out;
 
-	/* FST, FEF bits are the same for control and non control endpoints */
+	/* FST, FEF bits are the same क्रम control and non control endpoपूर्णांकs */
 	rc = 0;
-	ep_write_UDCCSR(ep, UDCCSR_FST | UDCCSR_FEF);
-	if (is_ep0(ep))
+	ep_ग_लिखो_UDCCSR(ep, UDCCSR_FST | UDCCSR_FEF);
+	अगर (is_ep0(ep))
 		set_ep0state(ep->dev, STALL);
 
 out:
 	spin_unlock_irqrestore(&ep->lock, flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * pxa_ep_fifo_status - Get how many bytes in physical endpoint
- * @_ep: usb endpoint
+ * pxa_ep_fअगरo_status - Get how many bytes in physical endpoपूर्णांक
+ * @_ep: usb endpoपूर्णांक
  *
- * Returns number of bytes in OUT fifos. Broken for IN fifos.
+ * Returns number of bytes in OUT fअगरos. Broken क्रम IN fअगरos.
  */
-static int pxa_ep_fifo_status(struct usb_ep *_ep)
-{
-	struct pxa_ep		*ep;
-	struct udc_usb_ep	*udc_usb_ep;
+अटल पूर्णांक pxa_ep_fअगरo_status(काष्ठा usb_ep *_ep)
+अणु
+	काष्ठा pxa_ep		*ep;
+	काष्ठा udc_usb_ep	*udc_usb_ep;
 
-	if (!_ep)
-		return -ENODEV;
-	udc_usb_ep = container_of(_ep, struct udc_usb_ep, usb_ep);
+	अगर (!_ep)
+		वापस -ENODEV;
+	udc_usb_ep = container_of(_ep, काष्ठा udc_usb_ep, usb_ep);
 	ep = udc_usb_ep->pxa_ep;
-	if (!ep || is_ep0(ep))
-		return -ENODEV;
+	अगर (!ep || is_ep0(ep))
+		वापस -ENODEV;
 
-	if (ep->dir_in)
-		return -EOPNOTSUPP;
-	if (ep->dev->gadget.speed == USB_SPEED_UNKNOWN || ep_is_empty(ep))
-		return 0;
-	else
-		return ep_count_bytes_remain(ep) + 1;
-}
+	अगर (ep->dir_in)
+		वापस -EOPNOTSUPP;
+	अगर (ep->dev->gadget.speed == USB_SPEED_UNKNOWN || ep_is_empty(ep))
+		वापस 0;
+	अन्यथा
+		वापस ep_count_bytes_reमुख्य(ep) + 1;
+पूर्ण
 
 /**
- * pxa_ep_fifo_flush - Flushes one endpoint
- * @_ep: usb endpoint
+ * pxa_ep_fअगरo_flush - Flushes one endpoपूर्णांक
+ * @_ep: usb endpoपूर्णांक
  *
- * Discards all data in one endpoint(IN or OUT), except control endpoint.
+ * Discards all data in one endpoपूर्णांक(IN or OUT), except control endpoपूर्णांक.
  */
-static void pxa_ep_fifo_flush(struct usb_ep *_ep)
-{
-	struct pxa_ep		*ep;
-	struct udc_usb_ep	*udc_usb_ep;
-	unsigned long		flags;
+अटल व्योम pxa_ep_fअगरo_flush(काष्ठा usb_ep *_ep)
+अणु
+	काष्ठा pxa_ep		*ep;
+	काष्ठा udc_usb_ep	*udc_usb_ep;
+	अचिन्हित दीर्घ		flags;
 
-	if (!_ep)
-		return;
-	udc_usb_ep = container_of(_ep, struct udc_usb_ep, usb_ep);
+	अगर (!_ep)
+		वापस;
+	udc_usb_ep = container_of(_ep, काष्ठा udc_usb_ep, usb_ep);
 	ep = udc_usb_ep->pxa_ep;
-	if (!ep || is_ep0(ep))
-		return;
+	अगर (!ep || is_ep0(ep))
+		वापस;
 
 	spin_lock_irqsave(&ep->lock, flags);
 
-	if (unlikely(!list_empty(&ep->queue)))
+	अगर (unlikely(!list_empty(&ep->queue)))
 		ep_dbg(ep, "called while queue list not empty\n");
 	ep_dbg(ep, "called\n");
 
-	/* for OUT, just read and discard the FIFO contents. */
-	if (!ep->dir_in) {
-		while (!ep_is_empty(ep))
-			udc_ep_readl(ep, UDCDR);
-	} else {
+	/* क्रम OUT, just पढ़ो and discard the FIFO contents. */
+	अगर (!ep->dir_in) अणु
+		जबतक (!ep_is_empty(ep))
+			udc_ep_पढ़ोl(ep, UDCDR);
+	पूर्ण अन्यथा अणु
 		/* most IN status is the same, but ISO can't stall */
-		ep_write_UDCCSR(ep,
+		ep_ग_लिखो_UDCCSR(ep,
 				UDCCSR_PC | UDCCSR_FEF | UDCCSR_TRN
 				| (EPXFERTYPE_is_ISO(ep) ? 0 : UDCCSR_SST));
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&ep->lock, flags);
-}
+पूर्ण
 
 /**
- * pxa_ep_enable - Enables usb endpoint
- * @_ep: usb endpoint
- * @desc: usb endpoint descriptor
+ * pxa_ep_enable - Enables usb endpoपूर्णांक
+ * @_ep: usb endpoपूर्णांक
+ * @desc: usb endpoपूर्णांक descriptor
  *
- * Nothing much to do here, as ep configuration is done once and for all
- * before udc is enabled. After udc enable, no physical endpoint configuration
+ * Nothing much to करो here, as ep configuration is करोne once and क्रम all
+ * beक्रमe udc is enabled. After udc enable, no physical endpoपूर्णांक configuration
  * can be changed.
- * Function makes sanity checks and flushes the endpoint.
+ * Function makes sanity checks and flushes the endpoपूर्णांक.
  */
-static int pxa_ep_enable(struct usb_ep *_ep,
-	const struct usb_endpoint_descriptor *desc)
-{
-	struct pxa_ep		*ep;
-	struct udc_usb_ep	*udc_usb_ep;
-	struct pxa_udc		*udc;
+अटल पूर्णांक pxa_ep_enable(काष्ठा usb_ep *_ep,
+	स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
+अणु
+	काष्ठा pxa_ep		*ep;
+	काष्ठा udc_usb_ep	*udc_usb_ep;
+	काष्ठा pxa_udc		*udc;
 
-	if (!_ep || !desc)
-		return -EINVAL;
+	अगर (!_ep || !desc)
+		वापस -EINVAL;
 
-	udc_usb_ep = container_of(_ep, struct udc_usb_ep, usb_ep);
-	if (udc_usb_ep->pxa_ep) {
+	udc_usb_ep = container_of(_ep, काष्ठा udc_usb_ep, usb_ep);
+	अगर (udc_usb_ep->pxa_ep) अणु
 		ep = udc_usb_ep->pxa_ep;
 		ep_warn(ep, "usb_ep %s already enabled, doing nothing\n",
 			_ep->name);
-	} else {
+	पूर्ण अन्यथा अणु
 		ep = find_pxa_ep(udc_usb_ep->dev, udc_usb_ep);
-	}
+	पूर्ण
 
-	if (!ep || is_ep0(ep)) {
+	अगर (!ep || is_ep0(ep)) अणु
 		dev_err(udc_usb_ep->dev->dev,
 			"unable to match pxa_ep for ep %s\n",
 			_ep->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((desc->bDescriptorType != USB_DT_ENDPOINT)
-			|| (ep->type != usb_endpoint_type(desc))) {
+	अगर ((desc->bDescriptorType != USB_DT_ENDPOINT)
+			|| (ep->type != usb_endpoपूर्णांक_type(desc))) अणु
 		ep_err(ep, "type mismatch\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ep->fifo_size < usb_endpoint_maxp(desc)) {
+	अगर (ep->fअगरo_size < usb_endpoपूर्णांक_maxp(desc)) अणु
 		ep_err(ep, "bad maxpacket\n");
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
 	udc_usb_ep->pxa_ep = ep;
 	udc = ep->dev;
 
-	if (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN) {
+	अगर (!udc->driver || udc->gadget.speed == USB_SPEED_UNKNOWN) अणु
 		ep_err(ep, "bogus device state\n");
-		return -ESHUTDOWN;
-	}
+		वापस -ESHUTDOWN;
+	पूर्ण
 
 	ep->enabled = 1;
 
-	/* flush fifo (mostly for OUT buffers) */
-	pxa_ep_fifo_flush(_ep);
+	/* flush fअगरo (mostly क्रम OUT buffers) */
+	pxa_ep_fअगरo_flush(_ep);
 
 	ep_dbg(ep, "enabled\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pxa_ep_disable - Disable usb endpoint
- * @_ep: usb endpoint
+ * pxa_ep_disable - Disable usb endpoपूर्णांक
+ * @_ep: usb endpoपूर्णांक
  *
- * Same as for pxa_ep_enable, no physical endpoint configuration can be
+ * Same as क्रम pxa_ep_enable, no physical endpoपूर्णांक configuration can be
  * changed.
- * Function flushes the endpoint and related requests.
+ * Function flushes the endpoपूर्णांक and related requests.
  */
-static int pxa_ep_disable(struct usb_ep *_ep)
-{
-	struct pxa_ep		*ep;
-	struct udc_usb_ep	*udc_usb_ep;
+अटल पूर्णांक pxa_ep_disable(काष्ठा usb_ep *_ep)
+अणु
+	काष्ठा pxa_ep		*ep;
+	काष्ठा udc_usb_ep	*udc_usb_ep;
 
-	if (!_ep)
-		return -EINVAL;
+	अगर (!_ep)
+		वापस -EINVAL;
 
-	udc_usb_ep = container_of(_ep, struct udc_usb_ep, usb_ep);
+	udc_usb_ep = container_of(_ep, काष्ठा udc_usb_ep, usb_ep);
 	ep = udc_usb_ep->pxa_ep;
-	if (!ep || is_ep0(ep) || !list_empty(&ep->queue))
-		return -EINVAL;
+	अगर (!ep || is_ep0(ep) || !list_empty(&ep->queue))
+		वापस -EINVAL;
 
 	ep->enabled = 0;
 	nuke(ep, -ESHUTDOWN);
 
-	pxa_ep_fifo_flush(_ep);
-	udc_usb_ep->pxa_ep = NULL;
+	pxa_ep_fअगरo_flush(_ep);
+	udc_usb_ep->pxa_ep = शून्य;
 
 	ep_dbg(ep, "disabled\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct usb_ep_ops pxa_ep_ops = {
+अटल स्थिर काष्ठा usb_ep_ops pxa_ep_ops = अणु
 	.enable		= pxa_ep_enable,
 	.disable	= pxa_ep_disable,
 
 	.alloc_request	= pxa_ep_alloc_request,
-	.free_request	= pxa_ep_free_request,
+	.मुक्त_request	= pxa_ep_मुक्त_request,
 
 	.queue		= pxa_ep_queue,
 	.dequeue	= pxa_ep_dequeue,
 
 	.set_halt	= pxa_ep_set_halt,
-	.fifo_status	= pxa_ep_fifo_status,
-	.fifo_flush	= pxa_ep_fifo_flush,
-};
+	.fअगरo_status	= pxa_ep_fअगरo_status,
+	.fअगरo_flush	= pxa_ep_fअगरo_flush,
+पूर्ण;
 
 /**
  * dplus_pullup - Connect or disconnect pullup resistor to D+ pin
  * @udc: udc device
- * @on: 0 if disconnect pullup resistor, 1 otherwise
+ * @on: 0 अगर disconnect pullup resistor, 1 otherwise
  * Context: any
  *
  * Handle D+ pullup resistor, make the device visible to the usb bus, and
  * declare it as a full speed usb device
  */
-static void dplus_pullup(struct pxa_udc *udc, int on)
-{
-	if (udc->gpiod) {
+अटल व्योम dplus_pullup(काष्ठा pxa_udc *udc, पूर्णांक on)
+अणु
+	अगर (udc->gpiod) अणु
 		gpiod_set_value(udc->gpiod, on);
-	} else if (udc->udc_command) {
-		if (on)
+	पूर्ण अन्यथा अगर (udc->udc_command) अणु
+		अगर (on)
 			udc->udc_command(PXA2XX_UDC_CMD_CONNECT);
-		else
+		अन्यथा
 			udc->udc_command(PXA2XX_UDC_CMD_DISCONNECT);
-	}
+	पूर्ण
 	udc->pullup_on = on;
-}
+पूर्ण
 
 /**
  * pxa_udc_get_frame - Returns usb frame number
  * @_gadget: usb gadget
  */
-static int pxa_udc_get_frame(struct usb_gadget *_gadget)
-{
-	struct pxa_udc *udc = to_gadget_udc(_gadget);
+अटल पूर्णांक pxa_udc_get_frame(काष्ठा usb_gadget *_gadget)
+अणु
+	काष्ठा pxa_udc *udc = to_gadget_udc(_gadget);
 
-	return (udc_readl(udc, UDCFNR) & 0x7ff);
-}
+	वापस (udc_पढ़ोl(udc, UDCFNR) & 0x7ff);
+पूर्ण
 
 /**
  * pxa_udc_wakeup - Force udc device out of suspend
  * @_gadget: usb gadget
  *
- * Returns 0 if successful, error code otherwise
+ * Returns 0 अगर successful, error code otherwise
  */
-static int pxa_udc_wakeup(struct usb_gadget *_gadget)
-{
-	struct pxa_udc *udc = to_gadget_udc(_gadget);
+अटल पूर्णांक pxa_udc_wakeup(काष्ठा usb_gadget *_gadget)
+अणु
+	काष्ठा pxa_udc *udc = to_gadget_udc(_gadget);
 
 	/* host may not have enabled remote wakeup */
-	if ((udc_readl(udc, UDCCR) & UDCCR_DWRE) == 0)
-		return -EHOSTUNREACH;
+	अगर ((udc_पढ़ोl(udc, UDCCR) & UDCCR_DWRE) == 0)
+		वापस -EHOSTUNREACH;
 	udc_set_mask_UDCCR(udc, UDCCR_UDR);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void udc_enable(struct pxa_udc *udc);
-static void udc_disable(struct pxa_udc *udc);
+अटल व्योम udc_enable(काष्ठा pxa_udc *udc);
+अटल व्योम udc_disable(काष्ठा pxa_udc *udc);
 
 /**
- * should_enable_udc - Tells if UDC should be enabled
+ * should_enable_udc - Tells अगर UDC should be enabled
  * @udc: udc device
  * Context: any
  *
- * The UDC should be enabled if :
+ * The UDC should be enabled अगर :
  *  - the pullup resistor is connected
  *  - and a gadget driver is bound
  *  - and vbus is sensed (or no vbus sense is available)
  *
- * Returns 1 if UDC should be enabled, 0 otherwise
+ * Returns 1 अगर UDC should be enabled, 0 otherwise
  */
-static int should_enable_udc(struct pxa_udc *udc)
-{
-	int put_on;
+अटल पूर्णांक should_enable_udc(काष्ठा pxa_udc *udc)
+अणु
+	पूर्णांक put_on;
 
 	put_on = ((udc->pullup_on) && (udc->driver));
-	put_on &= ((udc->vbus_sensed) || (IS_ERR_OR_NULL(udc->transceiver)));
-	return put_on;
-}
+	put_on &= ((udc->vbus_sensed) || (IS_ERR_OR_शून्य(udc->transceiver)));
+	वापस put_on;
+पूर्ण
 
 /**
- * should_disable_udc - Tells if UDC should be disabled
+ * should_disable_udc - Tells अगर UDC should be disabled
  * @udc: udc device
  * Context: any
  *
- * The UDC should be disabled if :
+ * The UDC should be disabled अगर :
  *  - the pullup resistor is not connected
  *  - or no gadget driver is bound
  *  - or no vbus is sensed (when vbus sesing is available)
  *
- * Returns 1 if UDC should be disabled
+ * Returns 1 अगर UDC should be disabled
  */
-static int should_disable_udc(struct pxa_udc *udc)
-{
-	int put_off;
+अटल पूर्णांक should_disable_udc(काष्ठा pxa_udc *udc)
+अणु
+	पूर्णांक put_off;
 
 	put_off = ((!udc->pullup_on) || (!udc->driver));
-	put_off |= ((!udc->vbus_sensed) && (!IS_ERR_OR_NULL(udc->transceiver)));
-	return put_off;
-}
+	put_off |= ((!udc->vbus_sensed) && (!IS_ERR_OR_शून्य(udc->transceiver)));
+	वापस put_off;
+पूर्ण
 
 /**
  * pxa_udc_pullup - Offer manual D+ pullup control
  * @_gadget: usb gadget using the control
- * @is_active: 0 if disconnect, else connect D+ pullup resistor
+ * @is_active: 0 अगर disconnect, अन्यथा connect D+ pullup resistor
  *
  * Context: task context, might sleep
  *
- * Returns 0 if OK, -EOPNOTSUPP if udc driver doesn't handle D+ pullup
+ * Returns 0 अगर OK, -EOPNOTSUPP अगर udc driver करोesn't handle D+ pullup
  */
-static int pxa_udc_pullup(struct usb_gadget *_gadget, int is_active)
-{
-	struct pxa_udc *udc = to_gadget_udc(_gadget);
+अटल पूर्णांक pxa_udc_pullup(काष्ठा usb_gadget *_gadget, पूर्णांक is_active)
+अणु
+	काष्ठा pxa_udc *udc = to_gadget_udc(_gadget);
 
-	if (!udc->gpiod && !udc->udc_command)
-		return -EOPNOTSUPP;
+	अगर (!udc->gpiod && !udc->udc_command)
+		वापस -EOPNOTSUPP;
 
 	dplus_pullup(udc, is_active);
 
-	if (should_enable_udc(udc))
+	अगर (should_enable_udc(udc))
 		udc_enable(udc);
-	if (should_disable_udc(udc))
+	अगर (should_disable_udc(udc))
 		udc_disable(udc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pxa_udc_vbus_session - Called by external transceiver to enable/disable udc
+ * pxa_udc_vbus_session - Called by बाह्यal transceiver to enable/disable udc
  * @_gadget: usb gadget
- * @is_active: 0 if should disable the udc, 1 if should enable
+ * @is_active: 0 अगर should disable the udc, 1 अगर should enable
  *
  * Enables the udc, and optionnaly activates D+ pullup resistor. Or disables the
  * udc, and deactivates D+ pullup resistor.
  *
  * Returns 0
  */
-static int pxa_udc_vbus_session(struct usb_gadget *_gadget, int is_active)
-{
-	struct pxa_udc *udc = to_gadget_udc(_gadget);
+अटल पूर्णांक pxa_udc_vbus_session(काष्ठा usb_gadget *_gadget, पूर्णांक is_active)
+अणु
+	काष्ठा pxa_udc *udc = to_gadget_udc(_gadget);
 
 	udc->vbus_sensed = is_active;
-	if (should_enable_udc(udc))
+	अगर (should_enable_udc(udc))
 		udc_enable(udc);
-	if (should_disable_udc(udc))
+	अगर (should_disable_udc(udc))
 		udc_disable(udc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pxa_udc_vbus_draw - Called by gadget driver after SET_CONFIGURATION completed
@@ -1563,57 +1564,57 @@ static int pxa_udc_vbus_session(struct usb_gadget *_gadget, int is_active)
  *
  * Context: task context, might sleep
  *
- * Called after a configuration was chosen by a USB host, to inform how much
+ * Called after a configuration was chosen by a USB host, to inक्रमm how much
  * current can be drawn by the device from VBus line.
  *
- * Returns 0 or -EOPNOTSUPP if no transceiver is handling the udc
+ * Returns 0 or -EOPNOTSUPP अगर no transceiver is handling the udc
  */
-static int pxa_udc_vbus_draw(struct usb_gadget *_gadget, unsigned mA)
-{
-	struct pxa_udc *udc;
+अटल पूर्णांक pxa_udc_vbus_draw(काष्ठा usb_gadget *_gadget, अचिन्हित mA)
+अणु
+	काष्ठा pxa_udc *udc;
 
 	udc = to_gadget_udc(_gadget);
-	if (!IS_ERR_OR_NULL(udc->transceiver))
-		return usb_phy_set_power(udc->transceiver, mA);
-	return -EOPNOTSUPP;
-}
+	अगर (!IS_ERR_OR_शून्य(udc->transceiver))
+		वापस usb_phy_set_घातer(udc->transceiver, mA);
+	वापस -EOPNOTSUPP;
+पूर्ण
 
 /**
  * pxa_udc_phy_event - Called by phy upon VBus event
- * @nb: notifier block
+ * @nb: notअगरier block
  * @action: phy action, is vbus connect or disconnect
- * @data: the usb_gadget structure in pxa_udc
+ * @data: the usb_gadget काष्ठाure in pxa_udc
  *
  * Called by the USB Phy when a cable connect or disconnect is sensed.
  *
  * Returns 0
  */
-static int pxa_udc_phy_event(struct notifier_block *nb, unsigned long action,
-			     void *data)
-{
-	struct usb_gadget *gadget = data;
+अटल पूर्णांक pxa_udc_phy_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
+			     व्योम *data)
+अणु
+	काष्ठा usb_gadget *gadget = data;
 
-	switch (action) {
-	case USB_EVENT_VBUS:
+	चयन (action) अणु
+	हाल USB_EVENT_VBUS:
 		usb_gadget_vbus_connect(gadget);
-		return NOTIFY_OK;
-	case USB_EVENT_NONE:
+		वापस NOTIFY_OK;
+	हाल USB_EVENT_NONE:
 		usb_gadget_vbus_disconnect(gadget);
-		return NOTIFY_OK;
-	default:
-		return NOTIFY_DONE;
-	}
-}
+		वापस NOTIFY_OK;
+	शेष:
+		वापस NOTIFY_DONE;
+	पूर्ण
+पूर्ण
 
-static struct notifier_block pxa27x_udc_phy = {
-	.notifier_call = pxa_udc_phy_event,
-};
+अटल काष्ठा notअगरier_block pxa27x_udc_phy = अणु
+	.notअगरier_call = pxa_udc_phy_event,
+पूर्ण;
 
-static int pxa27x_udc_start(struct usb_gadget *g,
-		struct usb_gadget_driver *driver);
-static int pxa27x_udc_stop(struct usb_gadget *g);
+अटल पूर्णांक pxa27x_udc_start(काष्ठा usb_gadget *g,
+		काष्ठा usb_gadget_driver *driver);
+अटल पूर्णांक pxa27x_udc_stop(काष्ठा usb_gadget *g);
 
-static const struct usb_gadget_ops pxa_udc_ops = {
+अटल स्थिर काष्ठा usb_gadget_ops pxa_udc_ops = अणु
 	.get_frame	= pxa_udc_get_frame,
 	.wakeup		= pxa_udc_wakeup,
 	.pullup		= pxa_udc_pullup,
@@ -1621,23 +1622,23 @@ static const struct usb_gadget_ops pxa_udc_ops = {
 	.vbus_draw	= pxa_udc_vbus_draw,
 	.udc_start	= pxa27x_udc_start,
 	.udc_stop	= pxa27x_udc_stop,
-};
+पूर्ण;
 
 /**
  * udc_disable - disable udc device controller
  * @udc: udc device
  * Context: any
  *
- * Disables the udc device : disables clocks, udc interrupts, control endpoint
- * interrupts.
+ * Disables the udc device : disables घड़ीs, udc पूर्णांकerrupts, control endpoपूर्णांक
+ * पूर्णांकerrupts.
  */
-static void udc_disable(struct pxa_udc *udc)
-{
-	if (!udc->enabled)
-		return;
+अटल व्योम udc_disable(काष्ठा pxa_udc *udc)
+अणु
+	अगर (!udc->enabled)
+		वापस;
 
-	udc_writel(udc, UDCICR0, 0);
-	udc_writel(udc, UDCICR1, 0);
+	udc_ग_लिखोl(udc, UDCICR0, 0);
+	udc_ग_लिखोl(udc, UDCICR1, 0);
 
 	udc_clear_mask_UDCCR(udc, UDCCR_UDE);
 
@@ -1646,19 +1647,19 @@ static void udc_disable(struct pxa_udc *udc)
 	clk_disable(udc->clk);
 
 	udc->enabled = 0;
-}
+पूर्ण
 
 /**
- * udc_init_data - Initialize udc device data structures
+ * udc_init_data - Initialize udc device data काष्ठाures
  * @dev: udc device
  *
- * Initializes gadget endpoint list, endpoints locks. No action is taken
+ * Initializes gadget endpoपूर्णांक list, endpoपूर्णांकs locks. No action is taken
  * on the hardware.
  */
-static void udc_init_data(struct pxa_udc *dev)
-{
-	int i;
-	struct pxa_ep *ep;
+अटल व्योम udc_init_data(काष्ठा pxa_udc *dev)
+अणु
+	पूर्णांक i;
+	काष्ठा pxa_ep *ep;
 
 	/* device/ep0 records init */
 	INIT_LIST_HEAD(&dev->gadget.ep_list);
@@ -1667,50 +1668,50 @@ static void udc_init_data(struct pxa_udc *dev)
 	dev->gadget.quirk_altset_not_supp = 1;
 	ep0_idle(dev);
 
-	/* PXA endpoints init */
-	for (i = 0; i < NR_PXA_ENDPOINTS; i++) {
+	/* PXA endpoपूर्णांकs init */
+	क्रम (i = 0; i < NR_PXA_ENDPOINTS; i++) अणु
 		ep = &dev->pxa_ep[i];
 
 		ep->enabled = is_ep0(ep);
 		INIT_LIST_HEAD(&ep->queue);
 		spin_lock_init(&ep->lock);
-	}
+	पूर्ण
 
-	/* USB endpoints init */
-	for (i = 1; i < NR_USB_ENDPOINTS; i++) {
+	/* USB endpoपूर्णांकs init */
+	क्रम (i = 1; i < NR_USB_ENDPOINTS; i++) अणु
 		list_add_tail(&dev->udc_usb_ep[i].usb_ep.ep_list,
 				&dev->gadget.ep_list);
 		usb_ep_set_maxpacket_limit(&dev->udc_usb_ep[i].usb_ep,
 					   dev->udc_usb_ep[i].usb_ep.maxpacket);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * udc_enable - Enables the udc device
  * @udc: udc device
  *
- * Enables the udc device : enables clocks, udc interrupts, control endpoint
- * interrupts, sets usb as UDC client and setups endpoints.
+ * Enables the udc device : enables घड़ीs, udc पूर्णांकerrupts, control endpoपूर्णांक
+ * पूर्णांकerrupts, sets usb as UDC client and setups endpoपूर्णांकs.
  */
-static void udc_enable(struct pxa_udc *udc)
-{
-	if (udc->enabled)
-		return;
+अटल व्योम udc_enable(काष्ठा pxa_udc *udc)
+अणु
+	अगर (udc->enabled)
+		वापस;
 
 	clk_enable(udc->clk);
-	udc_writel(udc, UDCICR0, 0);
-	udc_writel(udc, UDCICR1, 0);
+	udc_ग_लिखोl(udc, UDCICR0, 0);
+	udc_ग_लिखोl(udc, UDCICR1, 0);
 	udc_clear_mask_UDCCR(udc, UDCCR_UDE);
 
 	ep0_idle(udc);
 	udc->gadget.speed = USB_SPEED_FULL;
-	memset(&udc->stats, 0, sizeof(udc->stats));
+	स_रखो(&udc->stats, 0, माप(udc->stats));
 
 	pxa_eps_setup(udc);
 	udc_set_mask_UDCCR(udc, UDCCR_UDE);
-	ep_write_UDCCSR(&udc->pxa_ep[0], UDCCSR0_ACM);
+	ep_ग_लिखो_UDCCSR(&udc->pxa_ep[0], UDCCSR0_ACM);
 	udelay(2);
-	if (udc_readl(udc, UDCCR) & UDCCR_EMCE)
+	अगर (udc_पढ़ोl(udc, UDCCR) & UDCCR_EMCE)
 		dev_err(udc->dev, "Configuration errors, udc disabled\n");
 
 	/*
@@ -1719,7 +1720,7 @@ static void udc_enable(struct pxa_udc *udc)
 	msleep(100);
 
 	/* enable suspend/resume and reset irqs */
-	udc_writel(udc, UDCICR1,
+	udc_ग_लिखोl(udc, UDCICR1,
 			UDCICR1_IECC | UDCICR1_IERU
 			| UDCICR1_IESU | UDCICR1_IERS);
 
@@ -1727,103 +1728,103 @@ static void udc_enable(struct pxa_udc *udc)
 	pio_irq_enable(&udc->pxa_ep[0]);
 
 	udc->enabled = 1;
-}
+पूर्ण
 
 /**
  * pxa27x_start - Register gadget driver
  * @g: gadget
  * @driver: gadget driver
  *
- * When a driver is successfully registered, it will receive control requests
+ * When a driver is successfully रेजिस्टरed, it will receive control requests
  * including set_configuration(), which enables non-control requests.  Then
  * usb traffic follows until a disconnect is reported.  Then a host may connect
  * again, or the driver might get unbound.
  *
- * Note that the udc is not automatically enabled. Check function
+ * Note that the udc is not स्वतःmatically enabled. Check function
  * should_enable_udc().
  *
- * Returns 0 if no error, -EINVAL, -ENODEV, -EBUSY otherwise
+ * Returns 0 अगर no error, -EINVAL, -ENODEV, -EBUSY otherwise
  */
-static int pxa27x_udc_start(struct usb_gadget *g,
-		struct usb_gadget_driver *driver)
-{
-	struct pxa_udc *udc = to_pxa(g);
-	int retval;
+अटल पूर्णांक pxa27x_udc_start(काष्ठा usb_gadget *g,
+		काष्ठा usb_gadget_driver *driver)
+अणु
+	काष्ठा pxa_udc *udc = to_pxa(g);
+	पूर्णांक retval;
 
 	/* first hook up the driver ... */
 	udc->driver = driver;
 
-	if (!IS_ERR_OR_NULL(udc->transceiver)) {
+	अगर (!IS_ERR_OR_शून्य(udc->transceiver)) अणु
 		retval = otg_set_peripheral(udc->transceiver->otg,
 						&udc->gadget);
-		if (retval) {
+		अगर (retval) अणु
 			dev_err(udc->dev, "can't bind to transceiver\n");
-			goto fail;
-		}
-	}
+			जाओ fail;
+		पूर्ण
+	पूर्ण
 
-	if (should_enable_udc(udc))
+	अगर (should_enable_udc(udc))
 		udc_enable(udc);
-	return 0;
+	वापस 0;
 
 fail:
-	udc->driver = NULL;
-	return retval;
-}
+	udc->driver = शून्य;
+	वापस retval;
+पूर्ण
 
 /**
- * stop_activity - Stops udc endpoints
+ * stop_activity - Stops udc endpoपूर्णांकs
  * @udc: udc device
  *
- * Disables all udc endpoints (even control endpoint), report disconnect to
+ * Disables all udc endpoपूर्णांकs (even control endpoपूर्णांक), report disconnect to
  * the gadget user.
  */
-static void stop_activity(struct pxa_udc *udc)
-{
-	int i;
+अटल व्योम stop_activity(काष्ठा pxa_udc *udc)
+अणु
+	पूर्णांक i;
 
 	udc->gadget.speed = USB_SPEED_UNKNOWN;
 
-	for (i = 0; i < NR_USB_ENDPOINTS; i++)
+	क्रम (i = 0; i < NR_USB_ENDPOINTS; i++)
 		pxa_ep_disable(&udc->udc_usb_ep[i].usb_ep);
-}
+पूर्ण
 
 /**
- * pxa27x_udc_stop - Unregister the gadget driver
+ * pxa27x_udc_stop - Unरेजिस्टर the gadget driver
  * @g: gadget
  *
- * Returns 0 if no error, -ENODEV, -EINVAL otherwise
+ * Returns 0 अगर no error, -ENODEV, -EINVAL otherwise
  */
-static int pxa27x_udc_stop(struct usb_gadget *g)
-{
-	struct pxa_udc *udc = to_pxa(g);
+अटल पूर्णांक pxa27x_udc_stop(काष्ठा usb_gadget *g)
+अणु
+	काष्ठा pxa_udc *udc = to_pxa(g);
 
 	stop_activity(udc);
 	udc_disable(udc);
 
-	udc->driver = NULL;
+	udc->driver = शून्य;
 
-	if (!IS_ERR_OR_NULL(udc->transceiver))
-		return otg_set_peripheral(udc->transceiver->otg, NULL);
-	return 0;
-}
+	अगर (!IS_ERR_OR_शून्य(udc->transceiver))
+		वापस otg_set_peripheral(udc->transceiver->otg, शून्य);
+	वापस 0;
+पूर्ण
 
 /**
- * handle_ep0_ctrl_req - handle control endpoint control request
+ * handle_ep0_ctrl_req - handle control endpoपूर्णांक control request
  * @udc: udc device
  * @req: control request
  */
-static void handle_ep0_ctrl_req(struct pxa_udc *udc,
-				struct pxa27x_request *req)
-{
-	struct pxa_ep *ep = &udc->pxa_ep[0];
-	union {
-		struct usb_ctrlrequest	r;
+अटल व्योम handle_ep0_ctrl_req(काष्ठा pxa_udc *udc,
+				काष्ठा pxa27x_request *req)
+अणु
+	काष्ठा pxa_ep *ep = &udc->pxa_ep[0];
+	जोड़ अणु
+		काष्ठा usb_ctrlrequest	r;
 		u32			word[2];
-	} u;
-	int i;
-	int have_extrabytes = 0;
-	unsigned long flags;
+	पूर्ण u;
+	पूर्णांक i;
+	पूर्णांक have_extrabytes = 0;
+	अचिन्हित दीर्घ flags;
 
 	nuke(ep, -EPROTO);
 	spin_lock_irqsave(&ep->lock, flags);
@@ -1831,259 +1832,259 @@ static void handle_ep0_ctrl_req(struct pxa_udc *udc,
 	/*
 	 * In the PXA320 manual, in the section about Back-to-Back setup
 	 * packets, it describes this situation.  The solution is to set OPC to
-	 * get rid of the status packet, and then continue with the setup
+	 * get rid of the status packet, and then जारी with the setup
 	 * packet. Generalize to pxa27x CPUs.
 	 */
-	if (epout_has_pkt(ep) && (ep_count_bytes_remain(ep) == 0))
-		ep_write_UDCCSR(ep, UDCCSR0_OPC);
+	अगर (epout_has_pkt(ep) && (ep_count_bytes_reमुख्य(ep) == 0))
+		ep_ग_लिखो_UDCCSR(ep, UDCCSR0_OPC);
 
-	/* read SETUP packet */
-	for (i = 0; i < 2; i++) {
-		if (unlikely(ep_is_empty(ep)))
-			goto stall;
-		u.word[i] = udc_ep_readl(ep, UDCDR);
-	}
+	/* पढ़ो SETUP packet */
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (unlikely(ep_is_empty(ep)))
+			जाओ stall;
+		u.word[i] = udc_ep_पढ़ोl(ep, UDCDR);
+	पूर्ण
 
 	have_extrabytes = !ep_is_empty(ep);
-	while (!ep_is_empty(ep)) {
-		i = udc_ep_readl(ep, UDCDR);
+	जबतक (!ep_is_empty(ep)) अणु
+		i = udc_ep_पढ़ोl(ep, UDCDR);
 		ep_err(ep, "wrong to have extra bytes for setup : 0x%08x\n", i);
-	}
+	पूर्ण
 
 	ep_dbg(ep, "SETUP %02x.%02x v%04x i%04x l%04x\n",
 		u.r.bRequestType, u.r.bRequest,
 		le16_to_cpu(u.r.wValue), le16_to_cpu(u.r.wIndex),
 		le16_to_cpu(u.r.wLength));
-	if (unlikely(have_extrabytes))
-		goto stall;
+	अगर (unlikely(have_extrabytes))
+		जाओ stall;
 
-	if (u.r.bRequestType & USB_DIR_IN)
+	अगर (u.r.bRequestType & USB_सूची_IN)
 		set_ep0state(udc, IN_DATA_STAGE);
-	else
+	अन्यथा
 		set_ep0state(udc, OUT_DATA_STAGE);
 
 	/* Tell UDC to enter Data Stage */
-	ep_write_UDCCSR(ep, UDCCSR0_SA | UDCCSR0_OPC);
+	ep_ग_लिखो_UDCCSR(ep, UDCCSR0_SA | UDCCSR0_OPC);
 
 	spin_unlock_irqrestore(&ep->lock, flags);
 	i = udc->driver->setup(&udc->gadget, &u.r);
 	spin_lock_irqsave(&ep->lock, flags);
-	if (i < 0)
-		goto stall;
+	अगर (i < 0)
+		जाओ stall;
 out:
 	spin_unlock_irqrestore(&ep->lock, flags);
-	return;
+	वापस;
 stall:
 	ep_dbg(ep, "protocol STALL, udccsr0=%03x err %d\n",
-		udc_ep_readl(ep, UDCCSR), i);
-	ep_write_UDCCSR(ep, UDCCSR0_FST | UDCCSR0_FTF);
+		udc_ep_पढ़ोl(ep, UDCCSR), i);
+	ep_ग_लिखो_UDCCSR(ep, UDCCSR0_FST | UDCCSR0_FTF);
 	set_ep0state(udc, STALL);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
 /**
- * handle_ep0 - Handle control endpoint data transfers
+ * handle_ep0 - Handle control endpoपूर्णांक data transfers
  * @udc: udc device
- * @fifo_irq: 1 if triggered by fifo service type irq
- * @opc_irq: 1 if triggered by output packet complete type irq
+ * @fअगरo_irq: 1 अगर triggered by fअगरo service type irq
+ * @opc_irq: 1 अगर triggered by output packet complete type irq
  *
- * Context : interrupt handler
+ * Context : पूर्णांकerrupt handler
  *
- * Tries to transfer all pending request data into the endpoint and/or
- * transfer all pending data in the endpoint into usb requests.
- * Handles states of ep0 automata.
+ * Tries to transfer all pending request data पूर्णांकo the endpoपूर्णांक and/or
+ * transfer all pending data in the endpoपूर्णांक पूर्णांकo usb requests.
+ * Handles states of ep0 स्वतःmata.
  *
  * PXA27x hardware handles several standard usb control requests without
- * driver notification.  The requests fully handled by hardware are :
+ * driver notअगरication.  The requests fully handled by hardware are :
  *  SET_ADDRESS, SET_FEATURE, CLEAR_FEATURE, GET_CONFIGURATION, GET_INTERFACE,
  *  GET_STATUS
- * The requests handled by hardware, but with irq notification are :
+ * The requests handled by hardware, but with irq notअगरication are :
  *  SYNCH_FRAME, SET_CONFIGURATION, SET_INTERFACE
- * The remaining standard requests really handled by handle_ep0 are :
- *  GET_DESCRIPTOR, SET_DESCRIPTOR, specific requests.
+ * The reमुख्यing standard requests really handled by handle_ep0 are :
+ *  GET_DESCRIPTOR, SET_DESCRIPTOR, specअगरic requests.
  * Requests standardized outside of USB 2.0 chapter 9 are handled more
- * uniformly, by gadget drivers.
+ * unअगरormly, by gadget drivers.
  *
- * The control endpoint state machine is _not_ USB spec compliant, it's even
+ * The control endpoपूर्णांक state machine is _not_ USB spec compliant, it's even
  * hardly compliant with Intel PXA270 developers guide.
- * The key points which inferred this state machine are :
- *   - on every setup token, bit UDCCSR0_SA is raised and held until cleared by
+ * The key poपूर्णांकs which inferred this state machine are :
+ *   - on every setup token, bit UDCCSR0_SA is उठाओd and held until cleared by
  *     software.
- *   - on every OUT packet received, UDCCSR0_OPC is raised and held until
+ *   - on every OUT packet received, UDCCSR0_OPC is उठाओd and held until
  *     cleared by software.
- *   - clearing UDCCSR0_OPC always flushes ep0. If in setup stage, never do it
- *     before reading ep0.
- *     This is true only for PXA27x. This is not true anymore for PXA3xx family
+ *   - clearing UDCCSR0_OPC always flushes ep0. If in setup stage, never करो it
+ *     beक्रमe पढ़ोing ep0.
+ *     This is true only क्रम PXA27x. This is not true anymore क्रम PXA3xx family
  *     (check Back-to-Back setup packet in developers guide).
- *   - irq can be called on a "packet complete" event (opc_irq=1), while
- *     UDCCSR0_OPC is not yet raised (delta can be as big as 100ms
+ *   - irq can be called on a "packet complete" event (opc_irq=1), जबतक
+ *     UDCCSR0_OPC is not yet उठाओd (delta can be as big as 100ms
  *     from experimentation).
- *   - as UDCCSR0_SA can be activated while in irq handling, and clearing
+ *   - as UDCCSR0_SA can be activated जबतक in irq handling, and clearing
  *     UDCCSR0_OPC would flush the setup data, we almost never clear UDCCSR0_OPC
- *     => we never actually read the "status stage" packet of an IN data stage
- *     => this is not documented in Intel documentation
+ *     => we never actually पढ़ो the "status stage" packet of an IN data stage
+ *     => this is not करोcumented in Intel करोcumentation
  *   - hardware as no idea of STATUS STAGE, it only handle SETUP STAGE and DATA
  *     STAGE. The driver add STATUS STAGE to send last zero length packet in
  *     OUT_STATUS_STAGE.
- *   - special attention was needed for IN_STATUS_STAGE. If a packet complete
+ *   - special attention was needed क्रम IN_STATUS_STAGE. If a packet complete
  *     event is detected, we terminate the status stage without ackowledging the
  *     packet (not to risk to loose a potential SETUP packet)
  */
-static void handle_ep0(struct pxa_udc *udc, int fifo_irq, int opc_irq)
-{
+अटल व्योम handle_ep0(काष्ठा pxa_udc *udc, पूर्णांक fअगरo_irq, पूर्णांक opc_irq)
+अणु
 	u32			udccsr0;
-	struct pxa_ep		*ep = &udc->pxa_ep[0];
-	struct pxa27x_request	*req = NULL;
-	int			completed = 0;
+	काष्ठा pxa_ep		*ep = &udc->pxa_ep[0];
+	काष्ठा pxa27x_request	*req = शून्य;
+	पूर्णांक			completed = 0;
 
-	if (!list_empty(&ep->queue))
-		req = list_entry(ep->queue.next, struct pxa27x_request, queue);
+	अगर (!list_empty(&ep->queue))
+		req = list_entry(ep->queue.next, काष्ठा pxa27x_request, queue);
 
-	udccsr0 = udc_ep_readl(ep, UDCCSR);
+	udccsr0 = udc_ep_पढ़ोl(ep, UDCCSR);
 	ep_dbg(ep, "state=%s, req=%p, udccsr0=0x%03x, udcbcr=%d, irq_msk=%x\n",
-		EP0_STNAME(udc), req, udccsr0, udc_ep_readl(ep, UDCBCR),
-		(fifo_irq << 1 | opc_irq));
+		EP0_STNAME(udc), req, udccsr0, udc_ep_पढ़ोl(ep, UDCBCR),
+		(fअगरo_irq << 1 | opc_irq));
 
-	if (udccsr0 & UDCCSR0_SST) {
+	अगर (udccsr0 & UDCCSR0_SST) अणु
 		ep_dbg(ep, "clearing stall status\n");
 		nuke(ep, -EPIPE);
-		ep_write_UDCCSR(ep, UDCCSR0_SST);
+		ep_ग_लिखो_UDCCSR(ep, UDCCSR0_SST);
 		ep0_idle(udc);
-	}
+	पूर्ण
 
-	if (udccsr0 & UDCCSR0_SA) {
+	अगर (udccsr0 & UDCCSR0_SA) अणु
 		nuke(ep, 0);
 		set_ep0state(udc, SETUP_STAGE);
-	}
+	पूर्ण
 
-	switch (udc->ep0state) {
-	case WAIT_FOR_SETUP:
+	चयन (udc->ep0state) अणु
+	हाल WAIT_FOR_SETUP:
 		/*
 		 * Hardware bug : beware, we cannot clear OPC, since we would
-		 * miss a potential OPC irq for a setup packet.
-		 * So, we only do ... nothing, and hope for a next irq with
+		 * miss a potential OPC irq क्रम a setup packet.
+		 * So, we only करो ... nothing, and hope क्रम a next irq with
 		 * UDCCSR0_SA set.
 		 */
-		break;
-	case SETUP_STAGE:
+		अवरोध;
+	हाल SETUP_STAGE:
 		udccsr0 &= UDCCSR0_CTRL_REQ_MASK;
-		if (likely(udccsr0 == UDCCSR0_CTRL_REQ_MASK))
+		अगर (likely(udccsr0 == UDCCSR0_CTRL_REQ_MASK))
 			handle_ep0_ctrl_req(udc, req);
-		break;
-	case IN_DATA_STAGE:			/* GET_DESCRIPTOR */
-		if (epout_has_pkt(ep))
-			ep_write_UDCCSR(ep, UDCCSR0_OPC);
-		if (req && !ep_is_full(ep))
-			completed = write_ep0_fifo(ep, req);
-		if (completed)
-			ep0_end_in_req(ep, req, NULL);
-		break;
-	case OUT_DATA_STAGE:			/* SET_DESCRIPTOR */
-		if (epout_has_pkt(ep) && req)
-			completed = read_ep0_fifo(ep, req);
-		if (completed)
-			ep0_end_out_req(ep, req, NULL);
-		break;
-	case STALL:
-		ep_write_UDCCSR(ep, UDCCSR0_FST);
-		break;
-	case IN_STATUS_STAGE:
+		अवरोध;
+	हाल IN_DATA_STAGE:			/* GET_DESCRIPTOR */
+		अगर (epout_has_pkt(ep))
+			ep_ग_लिखो_UDCCSR(ep, UDCCSR0_OPC);
+		अगर (req && !ep_is_full(ep))
+			completed = ग_लिखो_ep0_fअगरo(ep, req);
+		अगर (completed)
+			ep0_end_in_req(ep, req, शून्य);
+		अवरोध;
+	हाल OUT_DATA_STAGE:			/* SET_DESCRIPTOR */
+		अगर (epout_has_pkt(ep) && req)
+			completed = पढ़ो_ep0_fअगरo(ep, req);
+		अगर (completed)
+			ep0_end_out_req(ep, req, शून्य);
+		अवरोध;
+	हाल STALL:
+		ep_ग_लिखो_UDCCSR(ep, UDCCSR0_FST);
+		अवरोध;
+	हाल IN_STATUS_STAGE:
 		/*
 		 * Hardware bug : beware, we cannot clear OPC, since we would
-		 * miss a potential PC irq for a setup packet.
-		 * So, we only put the ep0 into WAIT_FOR_SETUP state.
+		 * miss a potential PC irq क्रम a setup packet.
+		 * So, we only put the ep0 पूर्णांकo WAIT_FOR_SETUP state.
 		 */
-		if (opc_irq)
+		अगर (opc_irq)
 			ep0_idle(udc);
-		break;
-	case OUT_STATUS_STAGE:
-	case WAIT_ACK_SET_CONF_INTERF:
+		अवरोध;
+	हाल OUT_STATUS_STAGE:
+	हाल WAIT_ACK_SET_CONF_INTERF:
 		ep_warn(ep, "should never get in %s state here!!!\n",
 				EP0_STNAME(ep->dev));
 		ep0_idle(udc);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * handle_ep - Handle endpoint data tranfers
- * @ep: pxa physical endpoint
+ * handle_ep - Handle endpoपूर्णांक data tranfers
+ * @ep: pxa physical endpoपूर्णांक
  *
- * Tries to transfer all pending request data into the endpoint and/or
- * transfer all pending data in the endpoint into usb requests.
+ * Tries to transfer all pending request data पूर्णांकo the endpoपूर्णांक and/or
+ * transfer all pending data in the endpoपूर्णांक पूर्णांकo usb requests.
  *
- * Is always called from the interrupt handler. ep->lock must not be held.
+ * Is always called from the पूर्णांकerrupt handler. ep->lock must not be held.
  */
-static void handle_ep(struct pxa_ep *ep)
-{
-	struct pxa27x_request	*req;
-	int completed;
+अटल व्योम handle_ep(काष्ठा pxa_ep *ep)
+अणु
+	काष्ठा pxa27x_request	*req;
+	पूर्णांक completed;
 	u32 udccsr;
-	int is_in = ep->dir_in;
-	int loop = 0;
-	unsigned long		flags;
+	पूर्णांक is_in = ep->dir_in;
+	पूर्णांक loop = 0;
+	अचिन्हित दीर्घ		flags;
 
 	spin_lock_irqsave(&ep->lock, flags);
-	if (ep->in_handle_ep)
-		goto recursion_detected;
+	अगर (ep->in_handle_ep)
+		जाओ recursion_detected;
 	ep->in_handle_ep = 1;
 
-	do {
+	करो अणु
 		completed = 0;
-		udccsr = udc_ep_readl(ep, UDCCSR);
+		udccsr = udc_ep_पढ़ोl(ep, UDCCSR);
 
-		if (likely(!list_empty(&ep->queue)))
+		अगर (likely(!list_empty(&ep->queue)))
 			req = list_entry(ep->queue.next,
-					struct pxa27x_request, queue);
-		else
-			req = NULL;
+					काष्ठा pxa27x_request, queue);
+		अन्यथा
+			req = शून्य;
 
 		ep_dbg(ep, "req:%p, udccsr 0x%03x loop=%d\n",
 				req, udccsr, loop++);
 
-		if (unlikely(udccsr & (UDCCSR_SST | UDCCSR_TRN)))
-			udc_ep_writel(ep, UDCCSR,
+		अगर (unlikely(udccsr & (UDCCSR_SST | UDCCSR_TRN)))
+			udc_ep_ग_लिखोl(ep, UDCCSR,
 					udccsr & (UDCCSR_SST | UDCCSR_TRN));
-		if (!req)
-			break;
+		अगर (!req)
+			अवरोध;
 
-		if (unlikely(is_in)) {
-			if (likely(!ep_is_full(ep)))
-				completed = write_fifo(ep, req);
-		} else {
-			if (likely(epout_has_pkt(ep)))
-				completed = read_fifo(ep, req);
-		}
+		अगर (unlikely(is_in)) अणु
+			अगर (likely(!ep_is_full(ep)))
+				completed = ग_लिखो_fअगरo(ep, req);
+		पूर्ण अन्यथा अणु
+			अगर (likely(epout_has_pkt(ep)))
+				completed = पढ़ो_fअगरo(ep, req);
+		पूर्ण
 
-		if (completed) {
-			if (is_in)
+		अगर (completed) अणु
+			अगर (is_in)
 				ep_end_in_req(ep, req, &flags);
-			else
+			अन्यथा
 				ep_end_out_req(ep, req, &flags);
-		}
-	} while (completed);
+		पूर्ण
+	पूर्ण जबतक (completed);
 
 	ep->in_handle_ep = 0;
 recursion_detected:
 	spin_unlock_irqrestore(&ep->lock, flags);
-}
+पूर्ण
 
 /**
- * pxa27x_change_configuration - Handle SET_CONF usb request notification
+ * pxa27x_change_configuration - Handle SET_CONF usb request notअगरication
  * @udc: udc device
  * @config: usb configuration
  *
  * Post the request to upper level.
- * Don't use any pxa specific harware configuration capabilities
+ * Don't use any pxa specअगरic harware configuration capabilities
  */
-static void pxa27x_change_configuration(struct pxa_udc *udc, int config)
-{
-	struct usb_ctrlrequest req ;
+अटल व्योम pxa27x_change_configuration(काष्ठा pxa_udc *udc, पूर्णांक config)
+अणु
+	काष्ठा usb_ctrlrequest req ;
 
 	dev_dbg(udc->dev, "config=%d\n", config);
 
 	udc->config = config;
-	udc->last_interface = 0;
+	udc->last_पूर्णांकerface = 0;
 	udc->last_alternate = 0;
 
 	req.bRequestType = 0;
@@ -2094,469 +2095,469 @@ static void pxa27x_change_configuration(struct pxa_udc *udc, int config)
 
 	set_ep0state(udc, WAIT_ACK_SET_CONF_INTERF);
 	udc->driver->setup(&udc->gadget, &req);
-	ep_write_UDCCSR(&udc->pxa_ep[0], UDCCSR0_AREN);
-}
+	ep_ग_लिखो_UDCCSR(&udc->pxa_ep[0], UDCCSR0_AREN);
+पूर्ण
 
 /**
- * pxa27x_change_interface - Handle SET_INTERF usb request notification
+ * pxa27x_change_पूर्णांकerface - Handle SET_INTERF usb request notअगरication
  * @udc: udc device
- * @iface: interface number
+ * @अगरace: पूर्णांकerface number
  * @alt: alternate setting number
  *
  * Post the request to upper level.
- * Don't use any pxa specific harware configuration capabilities
+ * Don't use any pxa specअगरic harware configuration capabilities
  */
-static void pxa27x_change_interface(struct pxa_udc *udc, int iface, int alt)
-{
-	struct usb_ctrlrequest  req;
+अटल व्योम pxa27x_change_पूर्णांकerface(काष्ठा pxa_udc *udc, पूर्णांक अगरace, पूर्णांक alt)
+अणु
+	काष्ठा usb_ctrlrequest  req;
 
-	dev_dbg(udc->dev, "interface=%d, alternate setting=%d\n", iface, alt);
+	dev_dbg(udc->dev, "interface=%d, alternate setting=%d\n", अगरace, alt);
 
-	udc->last_interface = iface;
+	udc->last_पूर्णांकerface = अगरace;
 	udc->last_alternate = alt;
 
 	req.bRequestType = USB_RECIP_INTERFACE;
 	req.bRequest = USB_REQ_SET_INTERFACE;
 	req.wValue = alt;
-	req.wIndex = iface;
+	req.wIndex = अगरace;
 	req.wLength = 0;
 
 	set_ep0state(udc, WAIT_ACK_SET_CONF_INTERF);
 	udc->driver->setup(&udc->gadget, &req);
-	ep_write_UDCCSR(&udc->pxa_ep[0], UDCCSR0_AREN);
-}
+	ep_ग_लिखो_UDCCSR(&udc->pxa_ep[0], UDCCSR0_AREN);
+पूर्ण
 
 /*
  * irq_handle_data - Handle data transfer
  * @irq: irq IRQ number
- * @udc: dev pxa_udc device structure
+ * @udc: dev pxa_udc device काष्ठाure
  *
- * Called from irq handler, transferts data to or from endpoint to queue
+ * Called from irq handler, transferts data to or from endpoपूर्णांक to queue
  */
-static void irq_handle_data(int irq, struct pxa_udc *udc)
-{
-	int i;
-	struct pxa_ep *ep;
-	u32 udcisr0 = udc_readl(udc, UDCISR0) & UDCCISR0_EP_MASK;
-	u32 udcisr1 = udc_readl(udc, UDCISR1) & UDCCISR1_EP_MASK;
+अटल व्योम irq_handle_data(पूर्णांक irq, काष्ठा pxa_udc *udc)
+अणु
+	पूर्णांक i;
+	काष्ठा pxa_ep *ep;
+	u32 udcisr0 = udc_पढ़ोl(udc, UDCISR0) & UDCCISR0_EP_MASK;
+	u32 udcisr1 = udc_पढ़ोl(udc, UDCISR1) & UDCCISR1_EP_MASK;
 
-	if (udcisr0 & UDCISR_INT_MASK) {
+	अगर (udcisr0 & UDCISR_INT_MASK) अणु
 		udc->pxa_ep[0].stats.irqs++;
-		udc_writel(udc, UDCISR0, UDCISR_INT(0, UDCISR_INT_MASK));
+		udc_ग_लिखोl(udc, UDCISR0, UDCISR_INT(0, UDCISR_INT_MASK));
 		handle_ep0(udc, !!(udcisr0 & UDCICR_FIFOERR),
 				!!(udcisr0 & UDCICR_PKTCOMPL));
-	}
+	पूर्ण
 
 	udcisr0 >>= 2;
-	for (i = 1; udcisr0 != 0 && i < 16; udcisr0 >>= 2, i++) {
-		if (!(udcisr0 & UDCISR_INT_MASK))
-			continue;
+	क्रम (i = 1; udcisr0 != 0 && i < 16; udcisr0 >>= 2, i++) अणु
+		अगर (!(udcisr0 & UDCISR_INT_MASK))
+			जारी;
 
-		udc_writel(udc, UDCISR0, UDCISR_INT(i, UDCISR_INT_MASK));
+		udc_ग_लिखोl(udc, UDCISR0, UDCISR_INT(i, UDCISR_INT_MASK));
 
 		WARN_ON(i >= ARRAY_SIZE(udc->pxa_ep));
-		if (i < ARRAY_SIZE(udc->pxa_ep)) {
+		अगर (i < ARRAY_SIZE(udc->pxa_ep)) अणु
 			ep = &udc->pxa_ep[i];
 			ep->stats.irqs++;
 			handle_ep(ep);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 16; udcisr1 != 0 && i < 24; udcisr1 >>= 2, i++) {
-		udc_writel(udc, UDCISR1, UDCISR_INT(i - 16, UDCISR_INT_MASK));
-		if (!(udcisr1 & UDCISR_INT_MASK))
-			continue;
+	क्रम (i = 16; udcisr1 != 0 && i < 24; udcisr1 >>= 2, i++) अणु
+		udc_ग_लिखोl(udc, UDCISR1, UDCISR_INT(i - 16, UDCISR_INT_MASK));
+		अगर (!(udcisr1 & UDCISR_INT_MASK))
+			जारी;
 
 		WARN_ON(i >= ARRAY_SIZE(udc->pxa_ep));
-		if (i < ARRAY_SIZE(udc->pxa_ep)) {
+		अगर (i < ARRAY_SIZE(udc->pxa_ep)) अणु
 			ep = &udc->pxa_ep[i];
 			ep->stats.irqs++;
 			handle_ep(ep);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-}
+पूर्ण
 
 /**
  * irq_udc_suspend - Handle IRQ "UDC Suspend"
  * @udc: udc device
  */
-static void irq_udc_suspend(struct pxa_udc *udc)
-{
-	udc_writel(udc, UDCISR1, UDCISR1_IRSU);
+अटल व्योम irq_udc_suspend(काष्ठा pxa_udc *udc)
+अणु
+	udc_ग_लिखोl(udc, UDCISR1, UDCISR1_IRSU);
 	udc->stats.irqs_suspend++;
 
-	if (udc->gadget.speed != USB_SPEED_UNKNOWN
+	अगर (udc->gadget.speed != USB_SPEED_UNKNOWN
 			&& udc->driver && udc->driver->suspend)
 		udc->driver->suspend(&udc->gadget);
 	ep0_idle(udc);
-}
+पूर्ण
 
 /**
   * irq_udc_resume - Handle IRQ "UDC Resume"
   * @udc: udc device
   */
-static void irq_udc_resume(struct pxa_udc *udc)
-{
-	udc_writel(udc, UDCISR1, UDCISR1_IRRU);
+अटल व्योम irq_udc_resume(काष्ठा pxa_udc *udc)
+अणु
+	udc_ग_लिखोl(udc, UDCISR1, UDCISR1_IRRU);
 	udc->stats.irqs_resume++;
 
-	if (udc->gadget.speed != USB_SPEED_UNKNOWN
+	अगर (udc->gadget.speed != USB_SPEED_UNKNOWN
 			&& udc->driver && udc->driver->resume)
 		udc->driver->resume(&udc->gadget);
-}
+पूर्ण
 
 /**
  * irq_udc_reconfig - Handle IRQ "UDC Change Configuration"
  * @udc: udc device
  */
-static void irq_udc_reconfig(struct pxa_udc *udc)
-{
-	unsigned config, interface, alternate, config_change;
-	u32 udccr = udc_readl(udc, UDCCR);
+अटल व्योम irq_udc_reconfig(काष्ठा pxa_udc *udc)
+अणु
+	अचिन्हित config, पूर्णांकerface, alternate, config_change;
+	u32 udccr = udc_पढ़ोl(udc, UDCCR);
 
-	udc_writel(udc, UDCISR1, UDCISR1_IRCC);
+	udc_ग_लिखोl(udc, UDCISR1, UDCISR1_IRCC);
 	udc->stats.irqs_reconfig++;
 
 	config = (udccr & UDCCR_ACN) >> UDCCR_ACN_S;
 	config_change = (config != udc->config);
 	pxa27x_change_configuration(udc, config);
 
-	interface = (udccr & UDCCR_AIN) >> UDCCR_AIN_S;
+	पूर्णांकerface = (udccr & UDCCR_AIN) >> UDCCR_AIN_S;
 	alternate = (udccr & UDCCR_AAISN) >> UDCCR_AAISN_S;
-	pxa27x_change_interface(udc, interface, alternate);
+	pxa27x_change_पूर्णांकerface(udc, पूर्णांकerface, alternate);
 
-	if (config_change)
+	अगर (config_change)
 		update_pxa_ep_matches(udc);
 	udc_set_mask_UDCCR(udc, UDCCR_SMAC);
-}
+पूर्ण
 
 /**
  * irq_udc_reset - Handle IRQ "UDC Reset"
  * @udc: udc device
  */
-static void irq_udc_reset(struct pxa_udc *udc)
-{
-	u32 udccr = udc_readl(udc, UDCCR);
-	struct pxa_ep *ep = &udc->pxa_ep[0];
+अटल व्योम irq_udc_reset(काष्ठा pxa_udc *udc)
+अणु
+	u32 udccr = udc_पढ़ोl(udc, UDCCR);
+	काष्ठा pxa_ep *ep = &udc->pxa_ep[0];
 
 	dev_info(udc->dev, "USB reset\n");
-	udc_writel(udc, UDCISR1, UDCISR1_IRRS);
+	udc_ग_लिखोl(udc, UDCISR1, UDCISR1_IRRS);
 	udc->stats.irqs_reset++;
 
-	if ((udccr & UDCCR_UDA) == 0) {
+	अगर ((udccr & UDCCR_UDA) == 0) अणु
 		dev_dbg(udc->dev, "USB reset start\n");
 		stop_activity(udc);
-	}
+	पूर्ण
 	udc->gadget.speed = USB_SPEED_FULL;
-	memset(&udc->stats, 0, sizeof udc->stats);
+	स_रखो(&udc->stats, 0, माप udc->stats);
 
 	nuke(ep, -EPROTO);
-	ep_write_UDCCSR(ep, UDCCSR0_FTF | UDCCSR0_OPC);
+	ep_ग_लिखो_UDCCSR(ep, UDCCSR0_FTF | UDCCSR0_OPC);
 	ep0_idle(udc);
-}
+पूर्ण
 
 /**
  * pxa_udc_irq - Main irq handler
  * @irq: irq number
  * @_dev: udc device
  *
- * Handles all udc interrupts
+ * Handles all udc पूर्णांकerrupts
  */
-static irqreturn_t pxa_udc_irq(int irq, void *_dev)
-{
-	struct pxa_udc *udc = _dev;
-	u32 udcisr0 = udc_readl(udc, UDCISR0);
-	u32 udcisr1 = udc_readl(udc, UDCISR1);
-	u32 udccr = udc_readl(udc, UDCCR);
+अटल irqवापस_t pxa_udc_irq(पूर्णांक irq, व्योम *_dev)
+अणु
+	काष्ठा pxa_udc *udc = _dev;
+	u32 udcisr0 = udc_पढ़ोl(udc, UDCISR0);
+	u32 udcisr1 = udc_पढ़ोl(udc, UDCISR1);
+	u32 udccr = udc_पढ़ोl(udc, UDCCR);
 	u32 udcisr1_spec;
 
 	dev_vdbg(udc->dev, "Interrupt, UDCISR0:0x%08x, UDCISR1:0x%08x, "
 		 "UDCCR:0x%08x\n", udcisr0, udcisr1, udccr);
 
 	udcisr1_spec = udcisr1 & 0xf8000000;
-	if (unlikely(udcisr1_spec & UDCISR1_IRSU))
+	अगर (unlikely(udcisr1_spec & UDCISR1_IRSU))
 		irq_udc_suspend(udc);
-	if (unlikely(udcisr1_spec & UDCISR1_IRRU))
+	अगर (unlikely(udcisr1_spec & UDCISR1_IRRU))
 		irq_udc_resume(udc);
-	if (unlikely(udcisr1_spec & UDCISR1_IRCC))
+	अगर (unlikely(udcisr1_spec & UDCISR1_IRCC))
 		irq_udc_reconfig(udc);
-	if (unlikely(udcisr1_spec & UDCISR1_IRRS))
+	अगर (unlikely(udcisr1_spec & UDCISR1_IRRS))
 		irq_udc_reset(udc);
 
-	if ((udcisr0 & UDCCISR0_EP_MASK) | (udcisr1 & UDCCISR1_EP_MASK))
+	अगर ((udcisr0 & UDCCISR0_EP_MASK) | (udcisr1 & UDCCISR1_EP_MASK))
 		irq_handle_data(irq, udc);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct pxa_udc memory = {
-	.gadget = {
+अटल काष्ठा pxa_udc memory = अणु
+	.gadget = अणु
 		.ops		= &pxa_udc_ops,
 		.ep0		= &memory.udc_usb_ep[0].usb_ep,
 		.name		= driver_name,
-		.dev = {
+		.dev = अणु
 			.init_name	= "gadget",
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 
-	.udc_usb_ep = {
+	.udc_usb_ep = अणु
 		USB_EP_CTRL,
 		USB_EP_OUT_BULK(1),
 		USB_EP_IN_BULK(2),
 		USB_EP_IN_ISO(3),
 		USB_EP_OUT_ISO(4),
 		USB_EP_IN_INT(5),
-	},
+	पूर्ण,
 
-	.pxa_ep = {
+	.pxa_ep = अणु
 		PXA_EP_CTRL,
-		/* Endpoints for gadget zero */
+		/* Endpoपूर्णांकs क्रम gadget zero */
 		PXA_EP_OUT_BULK(1, 1, 3, 0, 0),
 		PXA_EP_IN_BULK(2,  2, 3, 0, 0),
-		/* Endpoints for ether gadget, file storage gadget */
+		/* Endpoपूर्णांकs क्रम ether gadget, file storage gadget */
 		PXA_EP_OUT_BULK(3, 1, 1, 0, 0),
 		PXA_EP_IN_BULK(4,  2, 1, 0, 0),
 		PXA_EP_IN_ISO(5,   3, 1, 0, 0),
 		PXA_EP_OUT_ISO(6,  4, 1, 0, 0),
 		PXA_EP_IN_INT(7,   5, 1, 0, 0),
-		/* Endpoints for RNDIS, serial */
+		/* Endpoपूर्णांकs क्रम RNDIS, serial */
 		PXA_EP_OUT_BULK(8, 1, 2, 0, 0),
 		PXA_EP_IN_BULK(9,  2, 2, 0, 0),
 		PXA_EP_IN_INT(10,  5, 2, 0, 0),
 		/*
-		 * All the following endpoints are only for completion.  They
-		 * won't never work, as multiple interfaces are really broken on
+		 * All the following endpoपूर्णांकs are only क्रम completion.  They
+		 * won't never work, as multiple पूर्णांकerfaces are really broken on
 		 * the pxa.
 		*/
 		PXA_EP_OUT_BULK(11, 1, 2, 1, 0),
 		PXA_EP_IN_BULK(12,  2, 2, 1, 0),
-		/* Endpoint for CDC Ether */
+		/* Endpoपूर्णांक क्रम CDC Ether */
 		PXA_EP_OUT_BULK(13, 1, 1, 1, 1),
 		PXA_EP_IN_BULK(14,  2, 1, 1, 1),
-	}
-};
+	पूर्ण
+पूर्ण;
 
-#if defined(CONFIG_OF)
-static const struct of_device_id udc_pxa_dt_ids[] = {
-	{ .compatible = "marvell,pxa270-udc" },
-	{}
-};
+#अगर defined(CONFIG_OF)
+अटल स्थिर काष्ठा of_device_id udc_pxa_dt_ids[] = अणु
+	अणु .compatible = "marvell,pxa270-udc" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, udc_pxa_dt_ids);
-#endif
+#पूर्ण_अगर
 
 /**
  * pxa_udc_probe - probes the udc device
- * @pdev: platform device
+ * @pdev: platक्रमm device
  *
- * Perform basic init : allocates udc clock, creates sysfs files, requests
+ * Perक्रमm basic init : allocates udc घड़ी, creates sysfs files, requests
  * irq.
  */
-static int pxa_udc_probe(struct platform_device *pdev)
-{
-	struct pxa_udc *udc = &memory;
-	int retval = 0, gpio;
-	struct pxa2xx_udc_mach_info *mach = dev_get_platdata(&pdev->dev);
-	unsigned long gpio_flags;
+अटल पूर्णांक pxa_udc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pxa_udc *udc = &memory;
+	पूर्णांक retval = 0, gpio;
+	काष्ठा pxa2xx_udc_mach_info *mach = dev_get_platdata(&pdev->dev);
+	अचिन्हित दीर्घ gpio_flags;
 
-	if (mach) {
+	अगर (mach) अणु
 		gpio_flags = mach->gpio_pullup_inverted ? GPIOF_ACTIVE_LOW : 0;
 		gpio = mach->gpio_pullup;
-		if (gpio_is_valid(gpio)) {
+		अगर (gpio_is_valid(gpio)) अणु
 			retval = devm_gpio_request_one(&pdev->dev, gpio,
 						       gpio_flags,
 						       "USB D+ pullup");
-			if (retval)
-				return retval;
+			अगर (retval)
+				वापस retval;
 			udc->gpiod = gpio_to_desc(mach->gpio_pullup);
-		}
+		पूर्ण
 		udc->udc_command = mach->udc_command;
-	} else {
-		udc->gpiod = devm_gpiod_get(&pdev->dev, NULL, GPIOD_ASIS);
-	}
+	पूर्ण अन्यथा अणु
+		udc->gpiod = devm_gpiod_get(&pdev->dev, शून्य, GPIOD_ASIS);
+	पूर्ण
 
-	udc->regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(udc->regs))
-		return PTR_ERR(udc->regs);
-	udc->irq = platform_get_irq(pdev, 0);
-	if (udc->irq < 0)
-		return udc->irq;
+	udc->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(udc->regs))
+		वापस PTR_ERR(udc->regs);
+	udc->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (udc->irq < 0)
+		वापस udc->irq;
 
 	udc->dev = &pdev->dev;
-	if (of_have_populated_dt()) {
+	अगर (of_have_populated_dt()) अणु
 		udc->transceiver =
 			devm_usb_get_phy_by_phandle(udc->dev, "phys", 0);
-		if (IS_ERR(udc->transceiver))
-			return PTR_ERR(udc->transceiver);
-	} else {
+		अगर (IS_ERR(udc->transceiver))
+			वापस PTR_ERR(udc->transceiver);
+	पूर्ण अन्यथा अणु
 		udc->transceiver = usb_get_phy(USB_PHY_TYPE_USB2);
-	}
+	पूर्ण
 
-	if (IS_ERR(udc->gpiod)) {
+	अगर (IS_ERR(udc->gpiod)) अणु
 		dev_err(&pdev->dev, "Couldn't find or request D+ gpio : %ld\n",
 			PTR_ERR(udc->gpiod));
-		return PTR_ERR(udc->gpiod);
-	}
-	if (udc->gpiod)
+		वापस PTR_ERR(udc->gpiod);
+	पूर्ण
+	अगर (udc->gpiod)
 		gpiod_direction_output(udc->gpiod, 0);
 
-	udc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(udc->clk))
-		return PTR_ERR(udc->clk);
+	udc->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(udc->clk))
+		वापस PTR_ERR(udc->clk);
 
 	retval = clk_prepare(udc->clk);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	udc->vbus_sensed = 0;
 
 	the_controller = udc;
-	platform_set_drvdata(pdev, udc);
+	platक्रमm_set_drvdata(pdev, udc);
 	udc_init_data(udc);
 
 	/* irq setup after old hardware state is cleaned up */
 	retval = devm_request_irq(&pdev->dev, udc->irq, pxa_udc_irq,
 				  IRQF_SHARED, driver_name, udc);
-	if (retval != 0) {
+	अगर (retval != 0) अणु
 		dev_err(udc->dev, "%s: can't get irq %i, err %d\n",
 			driver_name, udc->irq, retval);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (!IS_ERR_OR_NULL(udc->transceiver))
-		usb_register_notifier(udc->transceiver, &pxa27x_udc_phy);
+	अगर (!IS_ERR_OR_शून्य(udc->transceiver))
+		usb_रेजिस्टर_notअगरier(udc->transceiver, &pxa27x_udc_phy);
 	retval = usb_add_gadget_udc(&pdev->dev, &udc->gadget);
-	if (retval)
-		goto err_add_gadget;
+	अगर (retval)
+		जाओ err_add_gadget;
 
 	pxa_init_debugfs(udc);
-	if (should_enable_udc(udc))
+	अगर (should_enable_udc(udc))
 		udc_enable(udc);
-	return 0;
+	वापस 0;
 
 err_add_gadget:
-	if (!IS_ERR_OR_NULL(udc->transceiver))
-		usb_unregister_notifier(udc->transceiver, &pxa27x_udc_phy);
+	अगर (!IS_ERR_OR_शून्य(udc->transceiver))
+		usb_unरेजिस्टर_notअगरier(udc->transceiver, &pxa27x_udc_phy);
 err:
 	clk_unprepare(udc->clk);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /**
- * pxa_udc_remove - removes the udc device driver
- * @_dev: platform device
+ * pxa_udc_हटाओ - हटाओs the udc device driver
+ * @_dev: platक्रमm device
  */
-static int pxa_udc_remove(struct platform_device *_dev)
-{
-	struct pxa_udc *udc = platform_get_drvdata(_dev);
+अटल पूर्णांक pxa_udc_हटाओ(काष्ठा platक्रमm_device *_dev)
+अणु
+	काष्ठा pxa_udc *udc = platक्रमm_get_drvdata(_dev);
 
 	usb_del_gadget_udc(&udc->gadget);
 	pxa_cleanup_debugfs(udc);
 
-	if (!IS_ERR_OR_NULL(udc->transceiver)) {
-		usb_unregister_notifier(udc->transceiver, &pxa27x_udc_phy);
+	अगर (!IS_ERR_OR_शून्य(udc->transceiver)) अणु
+		usb_unरेजिस्टर_notअगरier(udc->transceiver, &pxa27x_udc_phy);
 		usb_put_phy(udc->transceiver);
-	}
+	पूर्ण
 
-	udc->transceiver = NULL;
-	the_controller = NULL;
+	udc->transceiver = शून्य;
+	the_controller = शून्य;
 	clk_unprepare(udc->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pxa_udc_shutdown(struct platform_device *_dev)
-{
-	struct pxa_udc *udc = platform_get_drvdata(_dev);
+अटल व्योम pxa_udc_shutकरोwn(काष्ठा platक्रमm_device *_dev)
+अणु
+	काष्ठा pxa_udc *udc = platक्रमm_get_drvdata(_dev);
 
-	if (udc_readl(udc, UDCCR) & UDCCR_UDE)
+	अगर (udc_पढ़ोl(udc, UDCCR) & UDCCR_UDE)
 		udc_disable(udc);
-}
+पूर्ण
 
-#ifdef CONFIG_PXA27x
-extern void pxa27x_clear_otgph(void);
-#else
-#define pxa27x_clear_otgph()   do {} while (0)
-#endif
+#अगर_घोषित CONFIG_PXA27x
+बाह्य व्योम pxa27x_clear_otgph(व्योम);
+#अन्यथा
+#घोषणा pxa27x_clear_otgph()   करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /**
  * pxa_udc_suspend - Suspend udc device
- * @_dev: platform device
+ * @_dev: platक्रमm device
  * @state: suspend state
  *
- * Suspends udc : saves configuration registers (UDCCR*), then disables the udc
+ * Suspends udc : saves configuration रेजिस्टरs (UDCCR*), then disables the udc
  * device.
  */
-static int pxa_udc_suspend(struct platform_device *_dev, pm_message_t state)
-{
-	struct pxa_udc *udc = platform_get_drvdata(_dev);
-	struct pxa_ep *ep;
+अटल पूर्णांक pxa_udc_suspend(काष्ठा platक्रमm_device *_dev, pm_message_t state)
+अणु
+	काष्ठा pxa_udc *udc = platक्रमm_get_drvdata(_dev);
+	काष्ठा pxa_ep *ep;
 
 	ep = &udc->pxa_ep[0];
-	udc->udccsr0 = udc_ep_readl(ep, UDCCSR);
+	udc->udccsr0 = udc_ep_पढ़ोl(ep, UDCCSR);
 
 	udc_disable(udc);
 	udc->pullup_resume = udc->pullup_on;
 	dplus_pullup(udc, 0);
 
-	if (udc->driver)
+	अगर (udc->driver)
 		udc->driver->disconnect(&udc->gadget);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pxa_udc_resume - Resume udc device
- * @_dev: platform device
+ * @_dev: platक्रमm device
  *
- * Resumes udc : restores configuration registers (UDCCR*), then enables the udc
+ * Resumes udc : restores configuration रेजिस्टरs (UDCCR*), then enables the udc
  * device.
  */
-static int pxa_udc_resume(struct platform_device *_dev)
-{
-	struct pxa_udc *udc = platform_get_drvdata(_dev);
-	struct pxa_ep *ep;
+अटल पूर्णांक pxa_udc_resume(काष्ठा platक्रमm_device *_dev)
+अणु
+	काष्ठा pxa_udc *udc = platक्रमm_get_drvdata(_dev);
+	काष्ठा pxa_ep *ep;
 
 	ep = &udc->pxa_ep[0];
-	udc_ep_writel(ep, UDCCSR, udc->udccsr0 & (UDCCSR0_FST | UDCCSR0_DME));
+	udc_ep_ग_लिखोl(ep, UDCCSR, udc->udccsr0 & (UDCCSR0_FST | UDCCSR0_DME));
 
 	dplus_pullup(udc, udc->pullup_resume);
-	if (should_enable_udc(udc))
+	अगर (should_enable_udc(udc))
 		udc_enable(udc);
 	/*
-	 * We do not handle OTG yet.
+	 * We करो not handle OTG yet.
 	 *
 	 * OTGPH bit is set when sleep mode is entered.
 	 * it indicates that OTG pad is retaining its state.
-	 * Upon exit from sleep mode and before clearing OTGPH,
+	 * Upon निकास from sleep mode and beक्रमe clearing OTGPH,
 	 * Software must configure the USB OTG pad, UDC, and UHC
-	 * to the state they were in before entering sleep mode.
+	 * to the state they were in beक्रमe entering sleep mode.
 	 */
 	pxa27x_clear_otgph();
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:pxa27x-udc");
 
-static struct platform_driver udc_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver udc_driver = अणु
+	.driver		= अणु
 		.name	= "pxa27x-udc",
 		.of_match_table = of_match_ptr(udc_pxa_dt_ids),
-	},
+	पूर्ण,
 	.probe		= pxa_udc_probe,
-	.remove		= pxa_udc_remove,
-	.shutdown	= pxa_udc_shutdown,
-#ifdef CONFIG_PM
+	.हटाओ		= pxa_udc_हटाओ,
+	.shutकरोwn	= pxa_udc_shutकरोwn,
+#अगर_घोषित CONFIG_PM
 	.suspend	= pxa_udc_suspend,
 	.resume		= pxa_udc_resume
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-module_platform_driver(udc_driver);
+module_platक्रमm_driver(udc_driver);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("Robert Jarzmik");

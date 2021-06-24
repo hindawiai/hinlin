@@ -1,63 +1,64 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (C) 2018 BayLibre, SAS
  * Author: Maxime Jourdan <mjourdan@baylibre.com>
  */
 
-#ifndef __MESON_VDEC_HELPERS_H_
-#define __MESON_VDEC_HELPERS_H_
+#अगर_अघोषित __MESON_VDEC_HELPERS_H_
+#घोषणा __MESON_VDEC_HELPERS_H_
 
-#include "vdec.h"
+#समावेश "vdec.h"
 
 /**
  * amvdec_set_canvases() - Map VB2 buffers to canvases
  *
  * @sess: current session
- * @reg_base: Registry bases of where to write the canvas indexes
- * @reg_num: number of contiguous registers after each reg_base (including it)
+ * @reg_base: Registry bases of where to ग_लिखो the canvas indexes
+ * @reg_num: number of contiguous रेजिस्टरs after each reg_base (including it)
  */
-int amvdec_set_canvases(struct amvdec_session *sess,
+पूर्णांक amvdec_set_canvases(काष्ठा amvdec_session *sess,
 			u32 reg_base[], u32 reg_num[]);
 
-/* Helpers to read/write to the various IPs (DOS, PARSER) */
-u32 amvdec_read_dos(struct amvdec_core *core, u32 reg);
-void amvdec_write_dos(struct amvdec_core *core, u32 reg, u32 val);
-void amvdec_write_dos_bits(struct amvdec_core *core, u32 reg, u32 val);
-void amvdec_clear_dos_bits(struct amvdec_core *core, u32 reg, u32 val);
-u32 amvdec_read_parser(struct amvdec_core *core, u32 reg);
-void amvdec_write_parser(struct amvdec_core *core, u32 reg, u32 val);
+/* Helpers to पढ़ो/ग_लिखो to the various IPs (DOS, PARSER) */
+u32 amvdec_पढ़ो_करोs(काष्ठा amvdec_core *core, u32 reg);
+व्योम amvdec_ग_लिखो_करोs(काष्ठा amvdec_core *core, u32 reg, u32 val);
+व्योम amvdec_ग_लिखो_करोs_bits(काष्ठा amvdec_core *core, u32 reg, u32 val);
+व्योम amvdec_clear_करोs_bits(काष्ठा amvdec_core *core, u32 reg, u32 val);
+u32 amvdec_पढ़ो_parser(काष्ठा amvdec_core *core, u32 reg);
+व्योम amvdec_ग_लिखो_parser(काष्ठा amvdec_core *core, u32 reg, u32 val);
 
 u32 amvdec_am21c_body_size(u32 width, u32 height);
 u32 amvdec_am21c_head_size(u32 width, u32 height);
 u32 amvdec_am21c_size(u32 width, u32 height);
 
 /**
- * amvdec_dst_buf_done_idx() - Signal that a buffer is done decoding
+ * amvdec_dst_buf_करोne_idx() - Signal that a buffer is करोne decoding
  *
  * @sess: current session
  * @buf_idx: hardware buffer index
  * @offset: VIFIFO bitstream offset corresponding to the buffer
- * @field: V4L2 interlaced field
+ * @field: V4L2 पूर्णांकerlaced field
  */
-void amvdec_dst_buf_done_idx(struct amvdec_session *sess, u32 buf_idx,
+व्योम amvdec_dst_buf_करोne_idx(काष्ठा amvdec_session *sess, u32 buf_idx,
 			     u32 offset, u32 field);
-void amvdec_dst_buf_done(struct amvdec_session *sess,
-			 struct vb2_v4l2_buffer *vbuf, u32 field);
-void amvdec_dst_buf_done_offset(struct amvdec_session *sess,
-				struct vb2_v4l2_buffer *vbuf,
+व्योम amvdec_dst_buf_करोne(काष्ठा amvdec_session *sess,
+			 काष्ठा vb2_v4l2_buffer *vbuf, u32 field);
+व्योम amvdec_dst_buf_करोne_offset(काष्ठा amvdec_session *sess,
+				काष्ठा vb2_v4l2_buffer *vbuf,
 				u32 offset, u32 field, bool allow_drop);
 
 /**
- * amvdec_add_ts() - Add a timestamp to the list
+ * amvdec_add_ts() - Add a बारtamp to the list
  *
  * @sess: current session
- * @ts: timestamp to add
+ * @ts: बारtamp to add
  * @offset: offset in the VIFIFO where the associated packet was written
  * @flags the vb2_v4l2_buffer flags
  */
-void amvdec_add_ts(struct amvdec_session *sess, u64 ts,
-		   struct v4l2_timecode tc, u32 offset, u32 flags);
-void amvdec_remove_ts(struct amvdec_session *sess, u64 ts);
+व्योम amvdec_add_ts(काष्ठा amvdec_session *sess, u64 ts,
+		   काष्ठा v4l2_समयcode tc, u32 offset, u32 flags);
+व्योम amvdec_हटाओ_ts(काष्ठा amvdec_session *sess, u64 ts);
 
 /**
  * amvdec_set_par_from_dar() - Set Pixel Aspect Ratio from Display Aspect Ratio
@@ -66,24 +67,24 @@ void amvdec_remove_ts(struct amvdec_session *sess, u64 ts);
  * @dar_num: numerator of the DAR
  * @dar_den: denominator of the DAR
  */
-void amvdec_set_par_from_dar(struct amvdec_session *sess,
+व्योम amvdec_set_par_from_dar(काष्ठा amvdec_session *sess,
 			     u32 dar_num, u32 dar_den);
 
 /**
- * amvdec_src_change() - Notify new resolution/DPB size to the core
+ * amvdec_src_change() - Notअगरy new resolution/DPB size to the core
  *
  * @sess: current session
  * @width: picture width detected by the hardware
  * @height: picture height detected by the hardware
- * @dpb_size: Decoded Picture Buffer size (= amount of buffers for decoding)
+ * @dpb_size: Decoded Picture Buffer size (= amount of buffers क्रम decoding)
  */
-void amvdec_src_change(struct amvdec_session *sess, u32 width,
+व्योम amvdec_src_change(काष्ठा amvdec_session *sess, u32 width,
 		       u32 height, u32 dpb_size);
 
 /**
- * amvdec_abort() - Abort the current decoding session
+ * amvdec_पात() - Abort the current decoding session
  *
  * @sess: current session
  */
-void amvdec_abort(struct amvdec_session *sess);
-#endif
+व्योम amvdec_पात(काष्ठा amvdec_session *sess);
+#पूर्ण_अगर

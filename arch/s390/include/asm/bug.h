@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_S390_BUG_H
-#define _ASM_S390_BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_S390_BUG_H
+#घोषणा _ASM_S390_BUG_H
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-#ifdef CONFIG_BUG
+#अगर_घोषित CONFIG_BUG
 
-#ifdef CONFIG_DEBUG_BUGVERBOSE
+#अगर_घोषित CONFIG_DEBUG_BUGVERBOSE
 
-#define __EMIT_BUG(x) do {					\
-	asm_inline volatile(					\
+#घोषणा __EMIT_BUG(x) करो अणु					\
+	यंत्र_अंतरभूत अस्थिर(					\
 		"0:	mc	0,0\n"				\
 		".section .rodata.str,\"aMS\",@progbits,1\n"	\
-		"1:	.asciz	\""__FILE__"\"\n"		\
+		"1:	.asciz	\""__खाता__"\"\n"		\
 		".previous\n"					\
 		".section __bug_table,\"awM\",@progbits,%2\n"	\
 		"2:	.long	0b-2b,1b-2b\n"			\
@@ -21,13 +22,13 @@
 		".previous\n"					\
 		: : "i" (__LINE__),				\
 		    "i" (x),					\
-		    "i" (sizeof(struct bug_entry)));		\
-} while (0)
+		    "i" (माप(काष्ठा bug_entry)));		\
+पूर्ण जबतक (0)
 
-#else /* CONFIG_DEBUG_BUGVERBOSE */
+#अन्यथा /* CONFIG_DEBUG_BUGVERBOSE */
 
-#define __EMIT_BUG(x) do {					\
-	asm_inline volatile(					\
+#घोषणा __EMIT_BUG(x) करो अणु					\
+	यंत्र_अंतरभूत अस्थिर(					\
 		"0:	mc	0,0\n"				\
 		".section __bug_table,\"awM\",@progbits,%1\n"	\
 		"1:	.long	0b-1b\n"			\
@@ -35,36 +36,36 @@
 		"	.org	1b+%1\n"			\
 		".previous\n"					\
 		: : "i" (x),					\
-		    "i" (sizeof(struct bug_entry)));		\
-} while (0)
+		    "i" (माप(काष्ठा bug_entry)));		\
+पूर्ण जबतक (0)
 
-#endif /* CONFIG_DEBUG_BUGVERBOSE */
+#पूर्ण_अगर /* CONFIG_DEBUG_BUGVERBOSE */
 
-#define BUG() do {					\
+#घोषणा BUG() करो अणु					\
 	__EMIT_BUG(0);					\
 	unreachable();					\
-} while (0)
+पूर्ण जबतक (0)
 
-#define __WARN_FLAGS(flags) do {			\
+#घोषणा __WARN_FLAGS(flags) करो अणु			\
 	__EMIT_BUG(BUGFLAG_WARNING|(flags));		\
-} while (0)
+पूर्ण जबतक (0)
 
-#define WARN_ON(x) ({					\
-	int __ret_warn_on = !!(x);			\
-	if (__builtin_constant_p(__ret_warn_on)) {	\
-		if (__ret_warn_on)			\
+#घोषणा WARN_ON(x) (अणु					\
+	पूर्णांक __ret_warn_on = !!(x);			\
+	अगर (__builtin_स्थिरant_p(__ret_warn_on)) अणु	\
+		अगर (__ret_warn_on)			\
 			__WARN();			\
-	} else {					\
-		if (unlikely(__ret_warn_on))		\
+	पूर्ण अन्यथा अणु					\
+		अगर (unlikely(__ret_warn_on))		\
 			__WARN();			\
-	}						\
+	पूर्ण						\
 	unlikely(__ret_warn_on);			\
-})
+पूर्ण)
 
-#define HAVE_ARCH_BUG
-#define HAVE_ARCH_WARN_ON
-#endif /* CONFIG_BUG */
+#घोषणा HAVE_ARCH_BUG
+#घोषणा HAVE_ARCH_WARN_ON
+#पूर्ण_अगर /* CONFIG_BUG */
 
-#include <asm-generic/bug.h>
+#समावेश <यंत्र-generic/bug.h>
 
-#endif /* _ASM_S390_BUG_H */
+#पूर्ण_अगर /* _ASM_S390_BUG_H */

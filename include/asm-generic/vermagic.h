@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef _ASM_GENERIC_VERMAGIC_H
-#define _ASM_GENERIC_VERMAGIC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित _ASM_GENERIC_VERMAGIC_H
+#घोषणा _ASM_GENERIC_VERMAGIC_H
 
-#define MODULE_ARCH_VERMAGIC ""
+#घोषणा MODULE_ARCH_VERMAGIC ""
 
-#endif /* _ASM_GENERIC_VERMAGIC_H */
+#पूर्ण_अगर /* _ASM_GENERIC_VERMAGIC_H */

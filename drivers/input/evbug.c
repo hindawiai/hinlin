@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  */
 
 /*
- *  Input driver event debug module - dumps all events into syslog
+ *  Input driver event debug module - dumps all events पूर्णांकo syslog
  */
 
 /*
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/input.h>
-#include <linux/init.h>
-#include <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/input.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("Input driver event debug module");
 MODULE_LICENSE("GPL");
 
-static void evbug_event(struct input_handle *handle, unsigned int type, unsigned int code, int value)
-{
-	printk(KERN_DEBUG pr_fmt("Event. Dev: %s, Type: %d, Code: %d, Value: %d\n"),
+अटल व्योम evbug_event(काष्ठा input_handle *handle, अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक code, पूर्णांक value)
+अणु
+	prपूर्णांकk(KERN_DEBUG pr_fmt("Event. Dev: %s, Type: %d, Code: %d, Value: %d\n"),
 	       dev_name(&handle->dev->dev), type, code, value);
-}
+पूर्ण
 
-static int evbug_connect(struct input_handler *handler, struct input_dev *dev,
-			 const struct input_device_id *id)
-{
-	struct input_handle *handle;
-	int error;
+अटल पूर्णांक evbug_connect(काष्ठा input_handler *handler, काष्ठा input_dev *dev,
+			 स्थिर काष्ठा input_device_id *id)
+अणु
+	काष्ठा input_handle *handle;
+	पूर्णांक error;
 
-	handle = kzalloc(sizeof(struct input_handle), GFP_KERNEL);
-	if (!handle)
-		return -ENOMEM;
+	handle = kzalloc(माप(काष्ठा input_handle), GFP_KERNEL);
+	अगर (!handle)
+		वापस -ENOMEM;
 
 	handle->dev = dev;
 	handle->handler = handler;
 	handle->name = "evbug";
 
-	error = input_register_handle(handle);
-	if (error)
-		goto err_free_handle;
+	error = input_रेजिस्टर_handle(handle);
+	अगर (error)
+		जाओ err_मुक्त_handle;
 
-	error = input_open_device(handle);
-	if (error)
-		goto err_unregister_handle;
+	error = input_खोलो_device(handle);
+	अगर (error)
+		जाओ err_unरेजिस्टर_handle;
 
-	printk(KERN_DEBUG pr_fmt("Connected device: %s (%s at %s)\n"),
+	prपूर्णांकk(KERN_DEBUG pr_fmt("Connected device: %s (%s at %s)\n"),
 	       dev_name(&dev->dev),
 	       dev->name ?: "unknown",
 	       dev->phys ?: "unknown");
 
-	return 0;
+	वापस 0;
 
- err_unregister_handle:
-	input_unregister_handle(handle);
- err_free_handle:
-	kfree(handle);
-	return error;
-}
+ err_unरेजिस्टर_handle:
+	input_unरेजिस्टर_handle(handle);
+ err_मुक्त_handle:
+	kमुक्त(handle);
+	वापस error;
+पूर्ण
 
-static void evbug_disconnect(struct input_handle *handle)
-{
-	printk(KERN_DEBUG pr_fmt("Disconnected device: %s\n"),
+अटल व्योम evbug_disconnect(काष्ठा input_handle *handle)
+अणु
+	prपूर्णांकk(KERN_DEBUG pr_fmt("Disconnected device: %s\n"),
 	       dev_name(&handle->dev->dev));
 
-	input_close_device(handle);
-	input_unregister_handle(handle);
-	kfree(handle);
-}
+	input_बंद_device(handle);
+	input_unरेजिस्टर_handle(handle);
+	kमुक्त(handle);
+पूर्ण
 
-static const struct input_device_id evbug_ids[] = {
-	{ .driver_info = 1 },	/* Matches all devices */
-	{ },			/* Terminating zero entry */
-};
+अटल स्थिर काष्ठा input_device_id evbug_ids[] = अणु
+	अणु .driver_info = 1 पूर्ण,	/* Matches all devices */
+	अणु पूर्ण,			/* Terminating zero entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(input, evbug_ids);
 
-static struct input_handler evbug_handler = {
+अटल काष्ठा input_handler evbug_handler = अणु
 	.event =	evbug_event,
 	.connect =	evbug_connect,
 	.disconnect =	evbug_disconnect,
 	.name =		"evbug",
 	.id_table =	evbug_ids,
-};
+पूर्ण;
 
-static int __init evbug_init(void)
-{
-	return input_register_handler(&evbug_handler);
-}
+अटल पूर्णांक __init evbug_init(व्योम)
+अणु
+	वापस input_रेजिस्टर_handler(&evbug_handler);
+पूर्ण
 
-static void __exit evbug_exit(void)
-{
-	input_unregister_handler(&evbug_handler);
-}
+अटल व्योम __निकास evbug_निकास(व्योम)
+अणु
+	input_unरेजिस्टर_handler(&evbug_handler);
+पूर्ण
 
 module_init(evbug_init);
-module_exit(evbug_exit);
+module_निकास(evbug_निकास);

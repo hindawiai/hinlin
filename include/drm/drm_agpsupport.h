@@ -1,117 +1,118 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _DRM_AGPSUPPORT_H_
-#define _DRM_AGPSUPPORT_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _DRM_AGPSUPPORT_H_
+#घोषणा _DRM_AGPSUPPORT_H_
 
-#include <linux/agp_backend.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/mm.h>
-#include <linux/mutex.h>
-#include <linux/types.h>
-#include <uapi/drm/drm.h>
+#समावेश <linux/agp_backend.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/types.h>
+#समावेश <uapi/drm/drm.h>
 
-struct drm_device;
-struct drm_file;
+काष्ठा drm_device;
+काष्ठा drm_file;
 
-struct drm_agp_head {
-	struct agp_kern_info agp_info;
-	struct list_head memory;
-	unsigned long mode;
-	struct agp_bridge_data *bridge;
-	int enabled;
-	int acquired;
-	unsigned long base;
-	int agp_mtrr;
-	int cant_use_aperture;
-	unsigned long page_mask;
-};
+काष्ठा drm_agp_head अणु
+	काष्ठा agp_kern_info agp_info;
+	काष्ठा list_head memory;
+	अचिन्हित दीर्घ mode;
+	काष्ठा agp_bridge_data *bridge;
+	पूर्णांक enabled;
+	पूर्णांक acquired;
+	अचिन्हित दीर्घ base;
+	पूर्णांक agp_mtrr;
+	पूर्णांक cant_use_aperture;
+	अचिन्हित दीर्घ page_mask;
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_AGP)
+#अगर IS_ENABLED(CONFIG_AGP)
 
-struct drm_agp_head *drm_agp_init(struct drm_device *dev);
-void drm_legacy_agp_clear(struct drm_device *dev);
-int drm_agp_acquire(struct drm_device *dev);
-int drm_agp_acquire_ioctl(struct drm_device *dev, void *data,
-			  struct drm_file *file_priv);
-int drm_agp_release(struct drm_device *dev);
-int drm_agp_release_ioctl(struct drm_device *dev, void *data,
-			  struct drm_file *file_priv);
-int drm_agp_enable(struct drm_device *dev, struct drm_agp_mode mode);
-int drm_agp_enable_ioctl(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv);
-int drm_agp_info(struct drm_device *dev, struct drm_agp_info *info);
-int drm_agp_info_ioctl(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv);
-int drm_agp_alloc(struct drm_device *dev, struct drm_agp_buffer *request);
-int drm_agp_alloc_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *file_priv);
-int drm_agp_free(struct drm_device *dev, struct drm_agp_buffer *request);
-int drm_agp_free_ioctl(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv);
-int drm_agp_unbind(struct drm_device *dev, struct drm_agp_binding *request);
-int drm_agp_unbind_ioctl(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv);
-int drm_agp_bind(struct drm_device *dev, struct drm_agp_binding *request);
-int drm_agp_bind_ioctl(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv);
+काष्ठा drm_agp_head *drm_agp_init(काष्ठा drm_device *dev);
+व्योम drm_legacy_agp_clear(काष्ठा drm_device *dev);
+पूर्णांक drm_agp_acquire(काष्ठा drm_device *dev);
+पूर्णांक drm_agp_acquire_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *file_priv);
+पूर्णांक drm_agp_release(काष्ठा drm_device *dev);
+पूर्णांक drm_agp_release_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *file_priv);
+पूर्णांक drm_agp_enable(काष्ठा drm_device *dev, काष्ठा drm_agp_mode mode);
+पूर्णांक drm_agp_enable_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			 काष्ठा drm_file *file_priv);
+पूर्णांक drm_agp_info(काष्ठा drm_device *dev, काष्ठा drm_agp_info *info);
+पूर्णांक drm_agp_info_ioctl(काष्ठा drm_device *dev, व्योम *data,
+		       काष्ठा drm_file *file_priv);
+पूर्णांक drm_agp_alloc(काष्ठा drm_device *dev, काष्ठा drm_agp_buffer *request);
+पूर्णांक drm_agp_alloc_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv);
+पूर्णांक drm_agp_मुक्त(काष्ठा drm_device *dev, काष्ठा drm_agp_buffer *request);
+पूर्णांक drm_agp_मुक्त_ioctl(काष्ठा drm_device *dev, व्योम *data,
+		       काष्ठा drm_file *file_priv);
+पूर्णांक drm_agp_unbind(काष्ठा drm_device *dev, काष्ठा drm_agp_binding *request);
+पूर्णांक drm_agp_unbind_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			 काष्ठा drm_file *file_priv);
+पूर्णांक drm_agp_bind(काष्ठा drm_device *dev, काष्ठा drm_agp_binding *request);
+पूर्णांक drm_agp_bind_ioctl(काष्ठा drm_device *dev, व्योम *data,
+		       काष्ठा drm_file *file_priv);
 
-#else /* CONFIG_AGP */
+#अन्यथा /* CONFIG_AGP */
 
-static inline struct drm_agp_head *drm_agp_init(struct drm_device *dev)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा drm_agp_head *drm_agp_init(काष्ठा drm_device *dev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void drm_legacy_agp_clear(struct drm_device *dev)
-{
-}
+अटल अंतरभूत व्योम drm_legacy_agp_clear(काष्ठा drm_device *dev)
+अणु
+पूर्ण
 
-static inline int drm_agp_acquire(struct drm_device *dev)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक drm_agp_acquire(काष्ठा drm_device *dev)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int drm_agp_release(struct drm_device *dev)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक drm_agp_release(काष्ठा drm_device *dev)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int drm_agp_enable(struct drm_device *dev,
-				 struct drm_agp_mode mode)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक drm_agp_enable(काष्ठा drm_device *dev,
+				 काष्ठा drm_agp_mode mode)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int drm_agp_info(struct drm_device *dev,
-			       struct drm_agp_info *info)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक drm_agp_info(काष्ठा drm_device *dev,
+			       काष्ठा drm_agp_info *info)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int drm_agp_alloc(struct drm_device *dev,
-				struct drm_agp_buffer *request)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक drm_agp_alloc(काष्ठा drm_device *dev,
+				काष्ठा drm_agp_buffer *request)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int drm_agp_free(struct drm_device *dev,
-			       struct drm_agp_buffer *request)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक drm_agp_मुक्त(काष्ठा drm_device *dev,
+			       काष्ठा drm_agp_buffer *request)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int drm_agp_unbind(struct drm_device *dev,
-				 struct drm_agp_binding *request)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक drm_agp_unbind(काष्ठा drm_device *dev,
+				 काष्ठा drm_agp_binding *request)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int drm_agp_bind(struct drm_device *dev,
-			       struct drm_agp_binding *request)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक drm_agp_bind(काष्ठा drm_device *dev,
+			       काष्ठा drm_agp_binding *request)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-#endif /* CONFIG_AGP */
+#पूर्ण_अगर /* CONFIG_AGP */
 
-#endif /* _DRM_AGPSUPPORT_H_ */
+#पूर्ण_अगर /* _DRM_AGPSUPPORT_H_ */

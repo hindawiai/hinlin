@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _LINUX_RPMSG_QCOM_SMD_H
-#define _LINUX_RPMSG_QCOM_SMD_H
+#अगर_अघोषित _LINUX_RPMSG_QCOM_SMD_H
+#घोषणा _LINUX_RPMSG_QCOM_SMD_H
 
-#include <linux/device.h>
+#समावेश <linux/device.h>
 
-struct qcom_smd_edge;
+काष्ठा qcom_smd_edge;
 
-#if IS_ENABLED(CONFIG_RPMSG_QCOM_SMD)
+#अगर IS_ENABLED(CONFIG_RPMSG_QCOM_SMD)
 
-struct qcom_smd_edge *qcom_smd_register_edge(struct device *parent,
-					     struct device_node *node);
-int qcom_smd_unregister_edge(struct qcom_smd_edge *edge);
+काष्ठा qcom_smd_edge *qcom_smd_रेजिस्टर_edge(काष्ठा device *parent,
+					     काष्ठा device_node *node);
+पूर्णांक qcom_smd_unरेजिस्टर_edge(काष्ठा qcom_smd_edge *edge);
 
-#else
+#अन्यथा
 
-static inline struct qcom_smd_edge *
-qcom_smd_register_edge(struct device *parent,
-		       struct device_node *node)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा qcom_smd_edge *
+qcom_smd_रेजिस्टर_edge(काष्ठा device *parent,
+		       काष्ठा device_node *node)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int qcom_smd_unregister_edge(struct qcom_smd_edge *edge)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक qcom_smd_unरेजिस्टर_edge(काष्ठा qcom_smd_edge *edge)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

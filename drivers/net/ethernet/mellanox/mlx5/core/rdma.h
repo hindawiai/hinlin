@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#ifndef __MLX5_RDMA_H__
-#define __MLX5_RDMA_H__
+#अगर_अघोषित __MLX5_RDMA_H__
+#घोषणा __MLX5_RDMA_H__
 
-#include "mlx5_core.h"
+#समावेश "mlx5_core.h"
 
-#ifdef CONFIG_MLX5_ESWITCH
+#अगर_घोषित CONFIG_MLX5_ESWITCH
 
-void mlx5_rdma_enable_roce(struct mlx5_core_dev *dev);
-void mlx5_rdma_disable_roce(struct mlx5_core_dev *dev);
+व्योम mlx5_rdma_enable_roce(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_rdma_disable_roce(काष्ठा mlx5_core_dev *dev);
 
-#else /* CONFIG_MLX5_ESWITCH */
+#अन्यथा /* CONFIG_MLX5_ESWITCH */
 
-static inline void mlx5_rdma_enable_roce(struct mlx5_core_dev *dev) {}
-static inline void mlx5_rdma_disable_roce(struct mlx5_core_dev *dev) {}
+अटल अंतरभूत व्योम mlx5_rdma_enable_roce(काष्ठा mlx5_core_dev *dev) अणुपूर्ण
+अटल अंतरभूत व्योम mlx5_rdma_disable_roce(काष्ठा mlx5_core_dev *dev) अणुपूर्ण
 
-#endif /* CONFIG_MLX5_ESWITCH */
-#endif /* __MLX5_RDMA_H__ */
+#पूर्ण_अगर /* CONFIG_MLX5_ESWITCH */
+#पूर्ण_अगर /* __MLX5_RDMA_H__ */

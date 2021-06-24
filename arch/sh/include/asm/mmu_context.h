@@ -1,68 +1,69 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 1999 Niibe Yutaka
  * Copyright (C) 2003 - 2007 Paul Mundt
  *
  * ASID handling idea taken from MIPS implementation.
  */
-#ifndef __ASM_SH_MMU_CONTEXT_H
-#define __ASM_SH_MMU_CONTEXT_H
+#अगर_अघोषित __ASM_SH_MMU_CONTEXT_H
+#घोषणा __ASM_SH_MMU_CONTEXT_H
 
-#include <cpu/mmu_context.h>
-#include <asm/tlbflush.h>
-#include <linux/uaccess.h>
-#include <linux/mm_types.h>
+#समावेश <cpu/mmu_context.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/mm_types.h>
 
-#include <asm/io.h>
-#include <asm-generic/mm_hooks.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र-generic/mm_hooks.h>
 
 /*
  * The MMU "context" consists of two things:
  *    (a) TLB cache version (or round, cycle whatever expression you like)
- *    (b) ASID (Address Space IDentifier)
+ *    (b) ASID (Address Space IDentअगरier)
  */
-#ifdef CONFIG_CPU_HAS_PTEAEX
-#define MMU_CONTEXT_ASID_MASK		0x0000ffff
-#else
-#define MMU_CONTEXT_ASID_MASK		0x000000ff
-#endif
+#अगर_घोषित CONFIG_CPU_HAS_PTEAEX
+#घोषणा MMU_CONTEXT_ASID_MASK		0x0000ffff
+#अन्यथा
+#घोषणा MMU_CONTEXT_ASID_MASK		0x000000ff
+#पूर्ण_अगर
 
-#define MMU_CONTEXT_VERSION_MASK	(~0UL & ~MMU_CONTEXT_ASID_MASK)
-#define MMU_CONTEXT_FIRST_VERSION	(MMU_CONTEXT_ASID_MASK + 1)
+#घोषणा MMU_CONTEXT_VERSION_MASK	(~0UL & ~MMU_CONTEXT_ASID_MASK)
+#घोषणा MMU_CONTEXT_FIRST_VERSION	(MMU_CONTEXT_ASID_MASK + 1)
 
-/* Impossible ASID value, to differentiate from NO_CONTEXT. */
-#define MMU_NO_ASID			MMU_CONTEXT_FIRST_VERSION
-#define NO_CONTEXT			0UL
+/* Impossible ASID value, to dअगरferentiate from NO_CONTEXT. */
+#घोषणा MMU_NO_ASID			MMU_CONTEXT_FIRST_VERSION
+#घोषणा NO_CONTEXT			0UL
 
-#define asid_cache(cpu)		(cpu_data[cpu].asid_cache)
+#घोषणा asid_cache(cpu)		(cpu_data[cpu].asid_cache)
 
-#ifdef CONFIG_MMU
-#define cpu_context(cpu, mm)	((mm)->context.id[cpu])
+#अगर_घोषित CONFIG_MMU
+#घोषणा cpu_context(cpu, mm)	((mm)->context.id[cpu])
 
-#define cpu_asid(cpu, mm)	\
+#घोषणा cpu_asid(cpu, mm)	\
 	(cpu_context((cpu), (mm)) & MMU_CONTEXT_ASID_MASK)
 
 /*
  * Virtual Page Number mask
  */
-#define MMU_VPN_MASK	0xfffff000
+#घोषणा MMU_VPN_MASK	0xfffff000
 
-#include <asm/mmu_context_32.h>
+#समावेश <यंत्र/mmu_context_32.h>
 
 /*
- * Get MMU context if needed.
+ * Get MMU context अगर needed.
  */
-static inline void get_mmu_context(struct mm_struct *mm, unsigned int cpu)
-{
-	unsigned long asid = asid_cache(cpu);
+अटल अंतरभूत व्योम get_mmu_context(काष्ठा mm_काष्ठा *mm, अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ asid = asid_cache(cpu);
 
-	/* Check if we have old version of context. */
-	if (((cpu_context(cpu, mm) ^ asid) & MMU_CONTEXT_VERSION_MASK) == 0)
-		/* It's up to date, do nothing */
-		return;
+	/* Check अगर we have old version of context. */
+	अगर (((cpu_context(cpu, mm) ^ asid) & MMU_CONTEXT_VERSION_MASK) == 0)
+		/* It's up to date, करो nothing */
+		वापस;
 
 	/* It's old, we need to get new context with new version. */
-	if (!(++asid & MMU_CONTEXT_ASID_MASK)) {
+	अगर (!(++asid & MMU_CONTEXT_ASID_MASK)) अणु
 		/*
 		 * We exhaust ASID of this version.
 		 * Flush all TLB and start new cycle.
@@ -70,109 +71,109 @@ static inline void get_mmu_context(struct mm_struct *mm, unsigned int cpu)
 		local_flush_tlb_all();
 
 		/*
-		 * Fix version; Note that we avoid version #0
+		 * Fix version; Note that we aव्योम version #0
 		 * to distinguish NO_CONTEXT.
 		 */
-		if (!asid)
+		अगर (!asid)
 			asid = MMU_CONTEXT_FIRST_VERSION;
-	}
+	पूर्ण
 
 	cpu_context(cpu, mm) = asid_cache(cpu) = asid;
-}
+पूर्ण
 
 /*
- * Initialize the context related info for a new mm_struct
+ * Initialize the context related info क्रम a new mm_काष्ठा
  * instance.
  */
-#define init_new_context init_new_context
-static inline int init_new_context(struct task_struct *tsk,
-				   struct mm_struct *mm)
-{
-	int i;
+#घोषणा init_new_context init_new_context
+अटल अंतरभूत पूर्णांक init_new_context(काष्ठा task_काष्ठा *tsk,
+				   काष्ठा mm_काष्ठा *mm)
+अणु
+	पूर्णांक i;
 
-	for_each_online_cpu(i)
+	क्रम_each_online_cpu(i)
 		cpu_context(i, mm) = NO_CONTEXT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * After we have set current->mm to a new value, this activates
- * the context for the new mm so we see the new mappings.
+ * the context क्रम the new mm so we see the new mappings.
  */
-static inline void activate_context(struct mm_struct *mm, unsigned int cpu)
-{
+अटल अंतरभूत व्योम activate_context(काष्ठा mm_काष्ठा *mm, अचिन्हित पूर्णांक cpu)
+अणु
 	get_mmu_context(mm, cpu);
 	set_asid(cpu_asid(cpu, mm));
-}
+पूर्ण
 
-static inline void switch_mm(struct mm_struct *prev,
-			     struct mm_struct *next,
-			     struct task_struct *tsk)
-{
-	unsigned int cpu = smp_processor_id();
+अटल अंतरभूत व्योम चयन_mm(काष्ठा mm_काष्ठा *prev,
+			     काष्ठा mm_काष्ठा *next,
+			     काष्ठा task_काष्ठा *tsk)
+अणु
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
-	if (likely(prev != next)) {
+	अगर (likely(prev != next)) अणु
 		cpumask_set_cpu(cpu, mm_cpumask(next));
 		set_TTB(next->pgd);
 		activate_context(next, cpu);
-	} else
-		if (!cpumask_test_and_set_cpu(cpu, mm_cpumask(next)))
+	पूर्ण अन्यथा
+		अगर (!cpumask_test_and_set_cpu(cpu, mm_cpumask(next)))
 			activate_context(next, cpu);
-}
+पूर्ण
 
-#include <asm-generic/mmu_context.h>
+#समावेश <यंत्र-generic/mmu_context.h>
 
-#else
+#अन्यथा
 
-#define set_asid(asid)			do { } while (0)
-#define get_asid()			(0)
-#define cpu_asid(cpu, mm)		({ (void)cpu; NO_CONTEXT; })
-#define switch_and_save_asid(asid)	(0)
-#define set_TTB(pgd)			do { } while (0)
-#define get_TTB()			(0)
+#घोषणा set_asid(asid)			करो अणु पूर्ण जबतक (0)
+#घोषणा get_asid()			(0)
+#घोषणा cpu_asid(cpu, mm)		(अणु (व्योम)cpu; NO_CONTEXT; पूर्ण)
+#घोषणा चयन_and_save_asid(asid)	(0)
+#घोषणा set_TTB(pgd)			करो अणु पूर्ण जबतक (0)
+#घोषणा get_TTB()			(0)
 
-#include <asm-generic/nommu_context.h>
+#समावेश <यंत्र-generic/nommu_context.h>
 
-#endif /* CONFIG_MMU */
+#पूर्ण_अगर /* CONFIG_MMU */
 
-#if defined(CONFIG_CPU_SH3) || defined(CONFIG_CPU_SH4)
+#अगर defined(CONFIG_CPU_SH3) || defined(CONFIG_CPU_SH4)
 /*
  * If this processor has an MMU, we need methods to turn it off/on ..
- * paging_init() will also have to be updated for the processor in
+ * paging_init() will also have to be updated क्रम the processor in
  * question.
  */
-static inline void enable_mmu(void)
-{
-	unsigned int cpu = smp_processor_id();
+अटल अंतरभूत व्योम enable_mmu(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
 	/* Enable MMU */
-	__raw_writel(MMU_CONTROL_INIT, MMUCR);
+	__raw_ग_लिखोl(MMU_CONTROL_INIT, MMUCR);
 	ctrl_barrier();
 
-	if (asid_cache(cpu) == NO_CONTEXT)
+	अगर (asid_cache(cpu) == NO_CONTEXT)
 		asid_cache(cpu) = MMU_CONTEXT_FIRST_VERSION;
 
 	set_asid(asid_cache(cpu) & MMU_CONTEXT_ASID_MASK);
-}
+पूर्ण
 
-static inline void disable_mmu(void)
-{
-	unsigned long cr;
+अटल अंतरभूत व्योम disable_mmu(व्योम)
+अणु
+	अचिन्हित दीर्घ cr;
 
-	cr = __raw_readl(MMUCR);
+	cr = __raw_पढ़ोl(MMUCR);
 	cr &= ~MMU_CONTROL_INIT;
-	__raw_writel(cr, MMUCR);
+	__raw_ग_लिखोl(cr, MMUCR);
 
 	ctrl_barrier();
-}
-#else
+पूर्ण
+#अन्यथा
 /*
- * MMU control handlers for processors lacking memory
+ * MMU control handlers क्रम processors lacking memory
  * management hardware.
  */
-#define enable_mmu()	do { } while (0)
-#define disable_mmu()	do { } while (0)
-#endif
+#घोषणा enable_mmu()	करो अणु पूर्ण जबतक (0)
+#घोषणा disable_mmu()	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#endif /* __ASM_SH_MMU_CONTEXT_H */
+#पूर्ण_अगर /* __ASM_SH_MMU_CONTEXT_H */

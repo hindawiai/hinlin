@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/kernel/cpu/sh4/sq.c
  *
- * General management API for SH-4 integrated Store Queues
+ * General management API क्रम SH-4 पूर्णांकegrated Store Queues
  *
  * Copyright (C) 2001 - 2006  Paul Mundt
  * Copyright (C) 2001, 2002  M. R. Brown
  */
-#include <linux/init.h>
-#include <linux/cpu.h>
-#include <linux/bitmap.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/mm.h>
-#include <linux/io.h>
-#include <linux/prefetch.h>
-#include <asm/page.h>
-#include <asm/cacheflush.h>
-#include <cpu/sq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/prefetch.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <cpu/sq.h>
 
-struct sq_mapping;
+काष्ठा sq_mapping;
 
-struct sq_mapping {
-	const char *name;
+काष्ठा sq_mapping अणु
+	स्थिर अक्षर *name;
 
-	unsigned long sq_addr;
-	unsigned long addr;
-	unsigned int size;
+	अचिन्हित दीर्घ sq_addr;
+	अचिन्हित दीर्घ addr;
+	अचिन्हित पूर्णांक size;
 
-	struct sq_mapping *next;
-};
+	काष्ठा sq_mapping *next;
+पूर्ण;
 
-static struct sq_mapping *sq_mapping_list;
-static DEFINE_SPINLOCK(sq_mapping_lock);
-static struct kmem_cache *sq_cache;
-static unsigned long *sq_bitmap;
+अटल काष्ठा sq_mapping *sq_mapping_list;
+अटल DEFINE_SPINLOCK(sq_mapping_lock);
+अटल काष्ठा kmem_cache *sq_cache;
+अटल अचिन्हित दीर्घ *sq_biपंचांगap;
 
-#define store_queue_barrier()			\
-do {						\
-	(void)__raw_readl(P4SEG_STORE_QUE);	\
-	__raw_writel(0, P4SEG_STORE_QUE + 0);	\
-	__raw_writel(0, P4SEG_STORE_QUE + 8);	\
-} while (0);
+#घोषणा store_queue_barrier()			\
+करो अणु						\
+	(व्योम)__raw_पढ़ोl(P4SEG_STORE_QUE);	\
+	__raw_ग_लिखोl(0, P4SEG_STORE_QUE + 0);	\
+	__raw_ग_लिखोl(0, P4SEG_STORE_QUE + 8);	\
+पूर्ण जबतक (0);
 
 /**
- * sq_flush_range - Flush (prefetch) a specific SQ range
+ * sq_flush_range - Flush (prefetch) a specअगरic SQ range
  * @start: the store queue address to start flushing from
  * @len: the length to flush
  *
  * Flushes the store queue cache from @start to @start + @len in a
  * linear fashion.
  */
-void sq_flush_range(unsigned long start, unsigned int len)
-{
-	unsigned long *sq = (unsigned long *)start;
+व्योम sq_flush_range(अचिन्हित दीर्घ start, अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित दीर्घ *sq = (अचिन्हित दीर्घ *)start;
 
 	/* Flush the queues */
-	for (len >>= 5; len--; sq += 8)
+	क्रम (len >>= 5; len--; sq += 8)
 		prefetchw(sq);
 
-	/* Wait for completion */
+	/* Wait क्रम completion */
 	store_queue_barrier();
-}
+पूर्ण
 EXPORT_SYMBOL(sq_flush_range);
 
-static inline void sq_mapping_list_add(struct sq_mapping *map)
-{
-	struct sq_mapping **p, *tmp;
+अटल अंतरभूत व्योम sq_mapping_list_add(काष्ठा sq_mapping *map)
+अणु
+	काष्ठा sq_mapping **p, *पंचांगp;
 
 	spin_lock_irq(&sq_mapping_lock);
 
 	p = &sq_mapping_list;
-	while ((tmp = *p) != NULL)
-		p = &tmp->next;
+	जबतक ((पंचांगp = *p) != शून्य)
+		p = &पंचांगp->next;
 
-	map->next = tmp;
+	map->next = पंचांगp;
 	*p = map;
 
 	spin_unlock_irq(&sq_mapping_lock);
-}
+पूर्ण
 
-static inline void sq_mapping_list_del(struct sq_mapping *map)
-{
-	struct sq_mapping **p, *tmp;
+अटल अंतरभूत व्योम sq_mapping_list_del(काष्ठा sq_mapping *map)
+अणु
+	काष्ठा sq_mapping **p, *पंचांगp;
 
 	spin_lock_irq(&sq_mapping_lock);
 
-	for (p = &sq_mapping_list; (tmp = *p); p = &tmp->next)
-		if (tmp == map) {
-			*p = tmp->next;
-			break;
-		}
+	क्रम (p = &sq_mapping_list; (पंचांगp = *p); p = &पंचांगp->next)
+		अगर (पंचांगp == map) अणु
+			*p = पंचांगp->next;
+			अवरोध;
+		पूर्ण
 
 	spin_unlock_irq(&sq_mapping_lock);
-}
+पूर्ण
 
-static int __sq_remap(struct sq_mapping *map, pgprot_t prot)
-{
-#if defined(CONFIG_MMU)
-	struct vm_struct *vma;
+अटल पूर्णांक __sq_remap(काष्ठा sq_mapping *map, pgprot_t prot)
+अणु
+#अगर defined(CONFIG_MMU)
+	काष्ठा vm_काष्ठा *vma;
 
 	vma = __get_vm_area_caller(map->size, VM_ALLOC, map->sq_addr,
-			SQ_ADDRMAX, __builtin_return_address(0));
-	if (!vma)
-		return -ENOMEM;
+			SQ_ADDRMAX, __builtin_वापस_address(0));
+	अगर (!vma)
+		वापस -ENOMEM;
 
 	vma->phys_addr = map->addr;
 
-	if (ioremap_page_range((unsigned long)vma->addr,
-			       (unsigned long)vma->addr + map->size,
-			       vma->phys_addr, prot)) {
+	अगर (ioremap_page_range((अचिन्हित दीर्घ)vma->addr,
+			       (अचिन्हित दीर्घ)vma->addr + map->size,
+			       vma->phys_addr, prot)) अणु
 		vunmap(vma->addr);
-		return -EAGAIN;
-	}
-#else
+		वापस -EAGAIN;
+	पूर्ण
+#अन्यथा
 	/*
 	 * Without an MMU (or with it turned off), this is much more
-	 * straightforward, as we can just load up each queue's QACR with
+	 * straightक्रमward, as we can just load up each queue's QACR with
 	 * the physical address appropriately masked.
 	 */
-	__raw_writel(((map->addr >> 26) << 2) & 0x1c, SQ_QACR0);
-	__raw_writel(((map->addr >> 26) << 2) & 0x1c, SQ_QACR1);
-#endif
+	__raw_ग_लिखोl(((map->addr >> 26) << 2) & 0x1c, SQ_QACR0);
+	__raw_ग_लिखोl(((map->addr >> 26) << 2) & 0x1c, SQ_QACR1);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sq_remap - Map a physical address through the Store Queues
@@ -137,48 +138,48 @@ static int __sq_remap(struct sq_mapping *map, pgprot_t prot)
  * @prot: Protection bits.
  *
  * Remaps the physical address @phys through the next available store queue
- * address of @size length. @name is logged at boot time as well as through
- * the sysfs interface.
+ * address of @size length. @name is logged at boot समय as well as through
+ * the sysfs पूर्णांकerface.
  */
-unsigned long sq_remap(unsigned long phys, unsigned int size,
-		       const char *name, pgprot_t prot)
-{
-	struct sq_mapping *map;
-	unsigned long end;
-	unsigned int psz;
-	int ret, page;
+अचिन्हित दीर्घ sq_remap(अचिन्हित दीर्घ phys, अचिन्हित पूर्णांक size,
+		       स्थिर अक्षर *name, pgprot_t prot)
+अणु
+	काष्ठा sq_mapping *map;
+	अचिन्हित दीर्घ end;
+	अचिन्हित पूर्णांक psz;
+	पूर्णांक ret, page;
 
 	/* Don't allow wraparound or zero size */
 	end = phys + size - 1;
-	if (unlikely(!size || end < phys))
-		return -EINVAL;
+	अगर (unlikely(!size || end < phys))
+		वापस -EINVAL;
 	/* Don't allow anyone to remap normal memory.. */
-	if (unlikely(phys < virt_to_phys(high_memory)))
-		return -EINVAL;
+	अगर (unlikely(phys < virt_to_phys(high_memory)))
+		वापस -EINVAL;
 
 	phys &= PAGE_MASK;
 	size = PAGE_ALIGN(end + 1) - phys;
 
 	map = kmem_cache_alloc(sq_cache, GFP_KERNEL);
-	if (unlikely(!map))
-		return -ENOMEM;
+	अगर (unlikely(!map))
+		वापस -ENOMEM;
 
 	map->addr = phys;
 	map->size = size;
 	map->name = name;
 
-	page = bitmap_find_free_region(sq_bitmap, 0x04000000 >> PAGE_SHIFT,
+	page = biपंचांगap_find_मुक्त_region(sq_biपंचांगap, 0x04000000 >> PAGE_SHIFT,
 				       get_order(map->size));
-	if (unlikely(page < 0)) {
+	अगर (unlikely(page < 0)) अणु
 		ret = -ENOSPC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	map->sq_addr = P4SEG_STORE_QUE + (page << PAGE_SHIFT);
 
 	ret = __sq_remap(map, prot);
-	if (unlikely(ret != 0))
-		goto out;
+	अगर (unlikely(ret != 0))
+		जाओ out;
 
 	psz = (size + (PAGE_SIZE - 1)) >> PAGE_SHIFT;
 	pr_info("sqremap: %15s  [%4d page%s]  va 0x%08lx   pa 0x%08lx\n",
@@ -188,12 +189,12 @@ unsigned long sq_remap(unsigned long phys, unsigned int size,
 
 	sq_mapping_list_add(map);
 
-	return map->sq_addr;
+	वापस map->sq_addr;
 
 out:
-	kmem_cache_free(sq_cache, map);
-	return ret;
-}
+	kmem_cache_मुक्त(sq_cache, map);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sq_remap);
 
 /**
@@ -201,212 +202,212 @@ EXPORT_SYMBOL(sq_remap);
  * @vaddr: Pre-allocated Store Queue mapping.
  *
  * Unmaps the store queue allocation @map that was previously created by
- * sq_remap(). Also frees up the pte that was previously inserted into
+ * sq_remap(). Also मुक्तs up the pte that was previously inserted पूर्णांकo
  * the kernel page table and discards the UTLB translation.
  */
-void sq_unmap(unsigned long vaddr)
-{
-	struct sq_mapping **p, *map;
-	int page;
+व्योम sq_unmap(अचिन्हित दीर्घ vaddr)
+अणु
+	काष्ठा sq_mapping **p, *map;
+	पूर्णांक page;
 
-	for (p = &sq_mapping_list; (map = *p); p = &map->next)
-		if (map->sq_addr == vaddr)
-			break;
+	क्रम (p = &sq_mapping_list; (map = *p); p = &map->next)
+		अगर (map->sq_addr == vaddr)
+			अवरोध;
 
-	if (unlikely(!map)) {
-		printk("%s: bad store queue address 0x%08lx\n",
+	अगर (unlikely(!map)) अणु
+		prपूर्णांकk("%s: bad store queue address 0x%08lx\n",
 		       __func__, vaddr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	page = (map->sq_addr - P4SEG_STORE_QUE) >> PAGE_SHIFT;
-	bitmap_release_region(sq_bitmap, page, get_order(map->size));
+	biपंचांगap_release_region(sq_biपंचांगap, page, get_order(map->size));
 
-#ifdef CONFIG_MMU
-	{
+#अगर_घोषित CONFIG_MMU
+	अणु
 		/*
-		 * Tear down the VMA in the MMU case.
+		 * Tear करोwn the VMA in the MMU हाल.
 		 */
-		struct vm_struct *vma;
+		काष्ठा vm_काष्ठा *vma;
 
-		vma = remove_vm_area((void *)(map->sq_addr & PAGE_MASK));
-		if (!vma) {
-			printk(KERN_ERR "%s: bad address 0x%08lx\n",
+		vma = हटाओ_vm_area((व्योम *)(map->sq_addr & PAGE_MASK));
+		अगर (!vma) अणु
+			prपूर्णांकk(KERN_ERR "%s: bad address 0x%08lx\n",
 			       __func__, map->sq_addr);
-			return;
-		}
-	}
-#endif
+			वापस;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	sq_mapping_list_del(map);
 
-	kmem_cache_free(sq_cache, map);
-}
+	kmem_cache_मुक्त(sq_cache, map);
+पूर्ण
 EXPORT_SYMBOL(sq_unmap);
 
 /*
- * Needlessly complex sysfs interface. Unfortunately it doesn't seem like
+ * Needlessly complex sysfs पूर्णांकerface. Unक्रमtunately it करोesn't seem like
  * there is any other easy way to add things on a per-cpu basis without
  * putting the directory entries somewhere stupid and having to create
  * links in sysfs by hand back in to the per-cpu directories.
  *
- * Some day we may want to have an additional abstraction per store
- * queue, but considering the kobject hell we already have to deal with,
+ * Some day we may want to have an additional असलtraction per store
+ * queue, but considering the kobject hell we alपढ़ोy have to deal with,
  * it's simply not worth the trouble.
  */
-static struct kobject *sq_kobject[NR_CPUS];
+अटल काष्ठा kobject *sq_kobject[NR_CPUS];
 
-struct sq_sysfs_attr {
-	struct attribute attr;
-	ssize_t (*show)(char *buf);
-	ssize_t (*store)(const char *buf, size_t count);
-};
+काष्ठा sq_sysfs_attr अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(अक्षर *buf);
+	sमाप_प्रकार (*store)(स्थिर अक्षर *buf, माप_प्रकार count);
+पूर्ण;
 
-#define to_sq_sysfs_attr(a)	container_of(a, struct sq_sysfs_attr, attr)
+#घोषणा to_sq_sysfs_attr(a)	container_of(a, काष्ठा sq_sysfs_attr, attr)
 
-static ssize_t sq_sysfs_show(struct kobject *kobj, struct attribute *attr,
-			     char *buf)
-{
-	struct sq_sysfs_attr *sattr = to_sq_sysfs_attr(attr);
+अटल sमाप_प्रकार sq_sysfs_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा sq_sysfs_attr *sattr = to_sq_sysfs_attr(attr);
 
-	if (likely(sattr->show))
-		return sattr->show(buf);
+	अगर (likely(sattr->show))
+		वापस sattr->show(buf);
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static ssize_t sq_sysfs_store(struct kobject *kobj, struct attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct sq_sysfs_attr *sattr = to_sq_sysfs_attr(attr);
+अटल sमाप_प्रकार sq_sysfs_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा sq_sysfs_attr *sattr = to_sq_sysfs_attr(attr);
 
-	if (likely(sattr->store))
-		return sattr->store(buf, count);
+	अगर (likely(sattr->store))
+		वापस sattr->store(buf, count);
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static ssize_t mapping_show(char *buf)
-{
-	struct sq_mapping **list, *entry;
-	char *p = buf;
+अटल sमाप_प्रकार mapping_show(अक्षर *buf)
+अणु
+	काष्ठा sq_mapping **list, *entry;
+	अक्षर *p = buf;
 
-	for (list = &sq_mapping_list; (entry = *list); list = &entry->next)
-		p += sprintf(p, "%08lx-%08lx [%08lx]: %s\n",
+	क्रम (list = &sq_mapping_list; (entry = *list); list = &entry->next)
+		p += प्र_लिखो(p, "%08lx-%08lx [%08lx]: %s\n",
 			     entry->sq_addr, entry->sq_addr + entry->size,
 			     entry->addr, entry->name);
 
-	return p - buf;
-}
+	वापस p - buf;
+पूर्ण
 
-static ssize_t mapping_store(const char *buf, size_t count)
-{
-	unsigned long base = 0, len = 0;
+अटल sमाप_प्रकार mapping_store(स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ base = 0, len = 0;
 
-	sscanf(buf, "%lx %lx", &base, &len);
-	if (!base)
-		return -EIO;
+	माला_पूछो(buf, "%lx %lx", &base, &len);
+	अगर (!base)
+		वापस -EIO;
 
-	if (likely(len)) {
-		int ret = sq_remap(base, len, "Userspace", PAGE_SHARED);
-		if (ret < 0)
-			return ret;
-	} else
+	अगर (likely(len)) अणु
+		पूर्णांक ret = sq_remap(base, len, "Userspace", PAGE_SHARED);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा
 		sq_unmap(base);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct sq_sysfs_attr mapping_attr =
+अटल काष्ठा sq_sysfs_attr mapping_attr =
 	__ATTR(mapping, 0644, mapping_show, mapping_store);
 
-static struct attribute *sq_sysfs_attrs[] = {
+अटल काष्ठा attribute *sq_sysfs_attrs[] = अणु
 	&mapping_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct sysfs_ops sq_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops sq_sysfs_ops = अणु
 	.show	= sq_sysfs_show,
 	.store	= sq_sysfs_store,
-};
+पूर्ण;
 
-static struct kobj_type ktype_percpu_entry = {
+अटल काष्ठा kobj_type ktype_percpu_entry = अणु
 	.sysfs_ops	= &sq_sysfs_ops,
-	.default_attrs	= sq_sysfs_attrs,
-};
+	.शेष_attrs	= sq_sysfs_attrs,
+पूर्ण;
 
-static int sq_dev_add(struct device *dev, struct subsys_interface *sif)
-{
-	unsigned int cpu = dev->id;
-	struct kobject *kobj;
-	int error;
+अटल पूर्णांक sq_dev_add(काष्ठा device *dev, काष्ठा subsys_पूर्णांकerface *sअगर)
+अणु
+	अचिन्हित पूर्णांक cpu = dev->id;
+	काष्ठा kobject *kobj;
+	पूर्णांक error;
 
-	sq_kobject[cpu] = kzalloc(sizeof(struct kobject), GFP_KERNEL);
-	if (unlikely(!sq_kobject[cpu]))
-		return -ENOMEM;
+	sq_kobject[cpu] = kzalloc(माप(काष्ठा kobject), GFP_KERNEL);
+	अगर (unlikely(!sq_kobject[cpu]))
+		वापस -ENOMEM;
 
 	kobj = sq_kobject[cpu];
 	error = kobject_init_and_add(kobj, &ktype_percpu_entry, &dev->kobj,
 				     "%s", "sq");
-	if (!error)
+	अगर (!error)
 		kobject_uevent(kobj, KOBJ_ADD);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void sq_dev_remove(struct device *dev, struct subsys_interface *sif)
-{
-	unsigned int cpu = dev->id;
-	struct kobject *kobj = sq_kobject[cpu];
+अटल व्योम sq_dev_हटाओ(काष्ठा device *dev, काष्ठा subsys_पूर्णांकerface *sअगर)
+अणु
+	अचिन्हित पूर्णांक cpu = dev->id;
+	काष्ठा kobject *kobj = sq_kobject[cpu];
 
 	kobject_put(kobj);
-}
+पूर्ण
 
-static struct subsys_interface sq_interface = {
+अटल काष्ठा subsys_पूर्णांकerface sq_पूर्णांकerface = अणु
 	.name		= "sq",
 	.subsys		= &cpu_subsys,
 	.add_dev	= sq_dev_add,
-	.remove_dev	= sq_dev_remove,
-};
+	.हटाओ_dev	= sq_dev_हटाओ,
+पूर्ण;
 
-static int __init sq_api_init(void)
-{
-	unsigned int nr_pages = 0x04000000 >> PAGE_SHIFT;
-	unsigned int size = (nr_pages + (BITS_PER_LONG - 1)) / BITS_PER_LONG;
-	int ret = -ENOMEM;
+अटल पूर्णांक __init sq_api_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक nr_pages = 0x04000000 >> PAGE_SHIFT;
+	अचिन्हित पूर्णांक size = (nr_pages + (BITS_PER_LONG - 1)) / BITS_PER_LONG;
+	पूर्णांक ret = -ENOMEM;
 
-	printk(KERN_NOTICE "sq: Registering store queue API.\n");
+	prपूर्णांकk(KERN_NOTICE "sq: Registering store queue API.\n");
 
 	sq_cache = kmem_cache_create("store_queue_cache",
-				sizeof(struct sq_mapping), 0, 0, NULL);
-	if (unlikely(!sq_cache))
-		return ret;
+				माप(काष्ठा sq_mapping), 0, 0, शून्य);
+	अगर (unlikely(!sq_cache))
+		वापस ret;
 
-	sq_bitmap = kzalloc(size, GFP_KERNEL);
-	if (unlikely(!sq_bitmap))
-		goto out;
+	sq_biपंचांगap = kzalloc(size, GFP_KERNEL);
+	अगर (unlikely(!sq_biपंचांगap))
+		जाओ out;
 
-	ret = subsys_interface_register(&sq_interface);
-	if (unlikely(ret != 0))
-		goto out;
+	ret = subsys_पूर्णांकerface_रेजिस्टर(&sq_पूर्णांकerface);
+	अगर (unlikely(ret != 0))
+		जाओ out;
 
-	return 0;
+	वापस 0;
 
 out:
-	kfree(sq_bitmap);
+	kमुक्त(sq_biपंचांगap);
 	kmem_cache_destroy(sq_cache);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit sq_api_exit(void)
-{
-	subsys_interface_unregister(&sq_interface);
-	kfree(sq_bitmap);
+अटल व्योम __निकास sq_api_निकास(व्योम)
+अणु
+	subsys_पूर्णांकerface_unरेजिस्टर(&sq_पूर्णांकerface);
+	kमुक्त(sq_biपंचांगap);
 	kmem_cache_destroy(sq_cache);
-}
+पूर्ण
 
 module_init(sq_api_init);
-module_exit(sq_api_exit);
+module_निकास(sq_api_निकास);
 
 MODULE_AUTHOR("Paul Mundt <lethal@linux-sh.org>, M. R. Brown <mrbrown@0xd6.org>");
 MODULE_DESCRIPTION("Simple API for SH-4 integrated Store Queues");

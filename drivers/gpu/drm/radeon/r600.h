@@ -1,15 +1,16 @@
-/* r600.h -- Private header for radeon driver -*- linux-c -*-
+<शैली गुरु>
+/* r600.h -- Private header क्रम radeon driver -*- linux-c -*-
  *
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -25,34 +26,34 @@
  *
  */
 
-#ifndef __R600_H__
-#define __R600_H__
+#अगर_अघोषित __R600_H__
+#घोषणा __R600_H__
 
-struct radeon_bo_list;
-struct radeon_cs_parser;
-struct r600_audio_pin;
-struct radeon_crtc;
-struct radeon_device;
-struct radeon_hdmi_acr;
+काष्ठा radeon_bo_list;
+काष्ठा radeon_cs_parser;
+काष्ठा r600_audio_pin;
+काष्ठा radeon_crtc;
+काष्ठा radeon_device;
+काष्ठा radeon_hdmi_acr;
 
-u32 r600_gpu_check_soft_reset(struct radeon_device *rdev);
-int r600_ih_ring_alloc(struct radeon_device *rdev);
-void r600_ih_ring_fini(struct radeon_device *rdev);
+u32 r600_gpu_check_soft_reset(काष्ठा radeon_device *rdev);
+पूर्णांक r600_ih_ring_alloc(काष्ठा radeon_device *rdev);
+व्योम r600_ih_ring_fini(काष्ठा radeon_device *rdev);
 
-void r600_audio_enable(struct radeon_device *rdev, struct r600_audio_pin *pin,
+व्योम r600_audio_enable(काष्ठा radeon_device *rdev, काष्ठा r600_audio_pin *pin,
 		       u8 enable_mask);
-void r600_set_audio_packet(struct drm_encoder *encoder, u32 offset);
-void r600_set_mute(struct drm_encoder *encoder, u32 offset, bool mute);
-void r600_hdmi_audio_set_dto(struct radeon_device *rdev,
-			     struct radeon_crtc *crtc, unsigned int clock);
-void r600_set_avi_packet(struct radeon_device *rdev, u32 offset,
-			 unsigned char *buffer, size_t size);
-void r600_hdmi_update_acr(struct drm_encoder *encoder, long offset,
-			  const struct radeon_hdmi_acr *acr);
-void r600_set_vbi_packet(struct drm_encoder *encoder, u32 offset);
-void r600_hdmi_enable(struct drm_encoder *encoder, bool enable);
+व्योम r600_set_audio_packet(काष्ठा drm_encoder *encoder, u32 offset);
+व्योम r600_set_mute(काष्ठा drm_encoder *encoder, u32 offset, bool mute);
+व्योम r600_hdmi_audio_set_dto(काष्ठा radeon_device *rdev,
+			     काष्ठा radeon_crtc *crtc, अचिन्हित पूर्णांक घड़ी);
+व्योम r600_set_avi_packet(काष्ठा radeon_device *rdev, u32 offset,
+			 अचिन्हित अक्षर *buffer, माप_प्रकार size);
+व्योम r600_hdmi_update_acr(काष्ठा drm_encoder *encoder, दीर्घ offset,
+			  स्थिर काष्ठा radeon_hdmi_acr *acr);
+व्योम r600_set_vbi_packet(काष्ठा drm_encoder *encoder, u32 offset);
+व्योम r600_hdmi_enable(काष्ठा drm_encoder *encoder, bool enable);
 
-int r600_dma_cs_next_reloc(struct radeon_cs_parser *p,
-			   struct radeon_bo_list **cs_reloc);
+पूर्णांक r600_dma_cs_next_reloc(काष्ठा radeon_cs_parser *p,
+			   काष्ठा radeon_bo_list **cs_reloc);
 
-#endif				/* __R600_H__ */
+#पूर्ण_अगर				/* __R600_H__ */

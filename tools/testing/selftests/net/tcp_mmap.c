@@ -1,517 +1,518 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2018 Google Inc.
  * Author: Eric Dumazet (edumazet@google.com)
  *
  * Reference program demonstrating tcp mmap() usage,
- * and SO_RCVLOWAT hints for receiver.
+ * and SO_RCVLOWAT hपूर्णांकs क्रम receiver.
  *
  * Note : NIC with header split is needed to use mmap() on TCP :
  * Each incoming frame must be a multiple of PAGE_SIZE bytes of TCP payload.
  *
- * How to use on loopback interface :
+ * How to use on loopback पूर्णांकerface :
  *
- *  ifconfig lo mtu 61512  # 15*4096 + 40 (ipv6 header) + 32 (TCP with TS option header)
+ *  अगरconfig lo mtu 61512  # 15*4096 + 40 (ipv6 header) + 32 (TCP with TS option header)
  *  tcp_mmap -s -z &
  *  tcp_mmap -H ::1 -z
  *
- *  Or leave default lo mtu, but use -M option to set TCP_MAXSEG option to (4096 + 12)
+ *  Or leave शेष lo mtu, but use -M option to set TCP_MAXSEG option to (4096 + 12)
  *      (4096 : page size on x86, 12: TCP TS option length)
  *  tcp_mmap -s -z -M $((4096+12)) &
  *  tcp_mmap -H ::1 -z -M $((4096+12))
  *
- * Note: -z option on sender uses MSG_ZEROCOPY, which forces a copy when packets go through loopback interface.
- *       We might use sendfile() instead, but really this test program is about mmap(), for receivers ;)
+ * Note: -z option on sender uses MSG_ZEROCOPY, which क्रमces a copy when packets go through loopback पूर्णांकerface.
+ *       We might use sendfile() instead, but really this test program is about mmap(), क्रम receivers ;)
  *
  * $ ./tcp_mmap -s &                                 # Without mmap()
- * $ for i in {1..4}; do ./tcp_mmap -H ::1 -z ; done
+ * $ क्रम i in अणु1..4पूर्ण; करो ./tcp_mmap -H ::1 -z ; करोne
  * received 32768 MB (0 % mmap'ed) in 14.1157 s, 19.4732 Gbit
- *   cpu usage user:0.057 sys:7.815, 240.234 usec per MB, 65531 c-switches
+ *   cpu usage user:0.057 sys:7.815, 240.234 usec per MB, 65531 c-चयनes
  * received 32768 MB (0 % mmap'ed) in 14.6833 s, 18.7204 Gbit
- *  cpu usage user:0.043 sys:8.103, 248.596 usec per MB, 65524 c-switches
+ *  cpu usage user:0.043 sys:8.103, 248.596 usec per MB, 65524 c-चयनes
  * received 32768 MB (0 % mmap'ed) in 11.143 s, 24.6682 Gbit
- *   cpu usage user:0.044 sys:6.576, 202.026 usec per MB, 65519 c-switches
+ *   cpu usage user:0.044 sys:6.576, 202.026 usec per MB, 65519 c-चयनes
  * received 32768 MB (0 % mmap'ed) in 14.9056 s, 18.4413 Gbit
- *   cpu usage user:0.036 sys:8.193, 251.129 usec per MB, 65530 c-switches
- * $ kill %1   # kill tcp_mmap server
+ *   cpu usage user:0.036 sys:8.193, 251.129 usec per MB, 65530 c-चयनes
+ * $ समाप्त %1   # समाप्त tcp_mmap server
  *
  * $ ./tcp_mmap -s -z &                              # With mmap()
- * $ for i in {1..4}; do ./tcp_mmap -H ::1 -z ; done
+ * $ क्रम i in अणु1..4पूर्ण; करो ./tcp_mmap -H ::1 -z ; करोne
  * received 32768 MB (99.9939 % mmap'ed) in 6.73792 s, 40.7956 Gbit
- *   cpu usage user:0.045 sys:2.827, 87.6465 usec per MB, 65532 c-switches
+ *   cpu usage user:0.045 sys:2.827, 87.6465 usec per MB, 65532 c-चयनes
  * received 32768 MB (99.9939 % mmap'ed) in 7.26732 s, 37.8238 Gbit
- *   cpu usage user:0.037 sys:3.087, 95.3369 usec per MB, 65532 c-switches
+ *   cpu usage user:0.037 sys:3.087, 95.3369 usec per MB, 65532 c-चयनes
  * received 32768 MB (99.9939 % mmap'ed) in 7.61661 s, 36.0893 Gbit
- *   cpu usage user:0.046 sys:3.559, 110.016 usec per MB, 65529 c-switches
+ *   cpu usage user:0.046 sys:3.559, 110.016 usec per MB, 65529 c-चयनes
  * received 32768 MB (99.9939 % mmap'ed) in 7.43764 s, 36.9577 Gbit
- *   cpu usage user:0.035 sys:3.467, 106.873 usec per MB, 65530 c-switches
+ *   cpu usage user:0.035 sys:3.467, 106.873 usec per MB, 65530 c-चयनes
  */
-#define _GNU_SOURCE
-#include <pthread.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <error.h>
-#include <sys/socket.h>
-#include <sys/mman.h>
-#include <sys/resource.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <time.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <poll.h>
-#include <linux/tcp.h>
-#include <assert.h>
+#घोषणा _GNU_SOURCE
+#समावेश <pthपढ़ो.h>
+#समावेश <sys/types.h>
+#समावेश <fcntl.h>
+#समावेश <error.h>
+#समावेश <sys/socket.h>
+#समावेश <sys/mman.h>
+#समावेश <sys/resource.h>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <समय.स>
+#समावेश <sys/समय.स>
+#समावेश <netinet/in.h>
+#समावेश <arpa/inet.h>
+#समावेश <poll.h>
+#समावेश <linux/tcp.h>
+#समावेश <निश्चित.स>
 
-#ifndef MSG_ZEROCOPY
-#define MSG_ZEROCOPY    0x4000000
-#endif
+#अगर_अघोषित MSG_ZEROCOPY
+#घोषणा MSG_ZEROCOPY    0x4000000
+#पूर्ण_अगर
 
-#define FILE_SZ (1ULL << 35)
-static int cfg_family = AF_INET6;
-static socklen_t cfg_alen = sizeof(struct sockaddr_in6);
-static int cfg_port = 8787;
+#घोषणा खाता_SZ (1ULL << 35)
+अटल पूर्णांक cfg_family = AF_INET6;
+अटल socklen_t cfg_alen = माप(काष्ठा sockaddr_in6);
+अटल पूर्णांक cfg_port = 8787;
 
-static int rcvbuf; /* Default: autotuning.  Can be set with -r <integer> option */
-static int sndbuf; /* Default: autotuning.  Can be set with -w <integer> option */
-static int zflg; /* zero copy option. (MSG_ZEROCOPY for sender, mmap() for receiver */
-static int xflg; /* hash received data (simple xor) (-h option) */
-static int keepflag; /* -k option: receiver shall keep all received file in memory (no munmap() calls) */
+अटल पूर्णांक rcvbuf; /* Default: स्वतःtuning.  Can be set with -r <पूर्णांकeger> option */
+अटल पूर्णांक sndbuf; /* Default: स्वतःtuning.  Can be set with -w <पूर्णांकeger> option */
+अटल पूर्णांक zflg; /* zero copy option. (MSG_ZEROCOPY क्रम sender, mmap() क्रम receiver */
+अटल पूर्णांक xflg; /* hash received data (simple xor) (-h option) */
+अटल पूर्णांक keepflag; /* -k option: receiver shall keep all received file in memory (no munmap() calls) */
 
-static size_t chunk_size  = 512*1024;
+अटल माप_प्रकार chunk_size  = 512*1024;
 
-static size_t map_align;
+अटल माप_प्रकार map_align;
 
-unsigned long htotal;
+अचिन्हित दीर्घ htotal;
 
-static inline void prefetch(const void *x)
-{
-#if defined(__x86_64__)
-	asm volatile("prefetcht0 %P0" : : "m" (*(const char *)x));
-#endif
-}
+अटल अंतरभूत व्योम prefetch(स्थिर व्योम *x)
+अणु
+#अगर defined(__x86_64__)
+	यंत्र अस्थिर("prefetcht0 %P0" : : "m" (*(स्थिर अक्षर *)x));
+#पूर्ण_अगर
+पूर्ण
 
-void hash_zone(void *zone, unsigned int length)
-{
-	unsigned long temp = htotal;
+व्योम hash_zone(व्योम *zone, अचिन्हित पूर्णांक length)
+अणु
+	अचिन्हित दीर्घ temp = htotal;
 
-	while (length >= 8*sizeof(long)) {
+	जबतक (length >= 8*माप(दीर्घ)) अणु
 		prefetch(zone + 384);
-		temp ^= *(unsigned long *)zone;
-		temp ^= *(unsigned long *)(zone + sizeof(long));
-		temp ^= *(unsigned long *)(zone + 2*sizeof(long));
-		temp ^= *(unsigned long *)(zone + 3*sizeof(long));
-		temp ^= *(unsigned long *)(zone + 4*sizeof(long));
-		temp ^= *(unsigned long *)(zone + 5*sizeof(long));
-		temp ^= *(unsigned long *)(zone + 6*sizeof(long));
-		temp ^= *(unsigned long *)(zone + 7*sizeof(long));
-		zone += 8*sizeof(long);
-		length -= 8*sizeof(long);
-	}
-	while (length >= 1) {
-		temp ^= *(unsigned char *)zone;
+		temp ^= *(अचिन्हित दीर्घ *)zone;
+		temp ^= *(अचिन्हित दीर्घ *)(zone + माप(दीर्घ));
+		temp ^= *(अचिन्हित दीर्घ *)(zone + 2*माप(दीर्घ));
+		temp ^= *(अचिन्हित दीर्घ *)(zone + 3*माप(दीर्घ));
+		temp ^= *(अचिन्हित दीर्घ *)(zone + 4*माप(दीर्घ));
+		temp ^= *(अचिन्हित दीर्घ *)(zone + 5*माप(दीर्घ));
+		temp ^= *(अचिन्हित दीर्घ *)(zone + 6*माप(दीर्घ));
+		temp ^= *(अचिन्हित दीर्घ *)(zone + 7*माप(दीर्घ));
+		zone += 8*माप(दीर्घ);
+		length -= 8*माप(दीर्घ);
+	पूर्ण
+	जबतक (length >= 1) अणु
+		temp ^= *(अचिन्हित अक्षर *)zone;
 		zone += 1;
 		length--;
-	}
+	पूर्ण
 	htotal = temp;
-}
+पूर्ण
 
-#define ALIGN_UP(x, align_to)	(((x) + ((align_to)-1)) & ~((align_to)-1))
-#define ALIGN_PTR_UP(p, ptr_align_to)	((typeof(p))ALIGN_UP((unsigned long)(p), ptr_align_to))
+#घोषणा ALIGN_UP(x, align_to)	(((x) + ((align_to)-1)) & ~((align_to)-1))
+#घोषणा ALIGN_PTR_UP(p, ptr_align_to)	((typeof(p))ALIGN_UP((अचिन्हित दीर्घ)(p), ptr_align_to))
 
 
-static void *mmap_large_buffer(size_t need, size_t *allocated)
-{
-	void *buffer;
-	size_t sz;
+अटल व्योम *mmap_large_buffer(माप_प्रकार need, माप_प्रकार *allocated)
+अणु
+	व्योम *buffer;
+	माप_प्रकार sz;
 
-	/* Attempt to use huge pages if possible. */
+	/* Attempt to use huge pages अगर possible. */
 	sz = ALIGN_UP(need, map_align);
-	buffer = mmap(NULL, sz, PROT_READ | PROT_WRITE,
+	buffer = mmap(शून्य, sz, PROT_READ | PROT_WRITE,
 		      MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB, -1, 0);
 
-	if (buffer == (void *)-1) {
+	अगर (buffer == (व्योम *)-1) अणु
 		sz = need;
-		buffer = mmap(NULL, sz, PROT_READ | PROT_WRITE,
+		buffer = mmap(शून्य, sz, PROT_READ | PROT_WRITE,
 			      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-		if (buffer != (void *)-1)
-			fprintf(stderr, "MAP_HUGETLB attempt failed, look at /sys/kernel/mm/hugepages for optimal performance\n");
-	}
+		अगर (buffer != (व्योम *)-1)
+			ख_लिखो(मानक_त्रुटि, "MAP_HUGETLB attempt failed, look at /sys/kernel/mm/hugepages for optimal performance\n");
+	पूर्ण
 	*allocated = sz;
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-void *child_thread(void *arg)
-{
-	unsigned long total_mmap = 0, total = 0;
-	struct tcp_zerocopy_receive zc;
-	unsigned long delta_usec;
-	int flags = MAP_SHARED;
-	struct timeval t0, t1;
-	char *buffer = NULL;
-	void *raddr = NULL;
-	void *addr = NULL;
-	double throughput;
-	struct rusage ru;
-	size_t buffer_sz;
-	int lu, fd;
+व्योम *child_thपढ़ो(व्योम *arg)
+अणु
+	अचिन्हित दीर्घ total_mmap = 0, total = 0;
+	काष्ठा tcp_zerocopy_receive zc;
+	अचिन्हित दीर्घ delta_usec;
+	पूर्णांक flags = MAP_SHARED;
+	काष्ठा समयval t0, t1;
+	अक्षर *buffer = शून्य;
+	व्योम *raddr = शून्य;
+	व्योम *addr = शून्य;
+	द्विगुन throughput;
+	काष्ठा rusage ru;
+	माप_प्रकार buffer_sz;
+	पूर्णांक lu, fd;
 
-	fd = (int)(unsigned long)arg;
+	fd = (पूर्णांक)(अचिन्हित दीर्घ)arg;
 
-	gettimeofday(&t0, NULL);
+	समय_लोofday(&t0, शून्य);
 
 	fcntl(fd, F_SETFL, O_NDELAY);
 	buffer = mmap_large_buffer(chunk_size, &buffer_sz);
-	if (buffer == (void *)-1) {
-		perror("mmap");
-		goto error;
-	}
-	if (zflg) {
-		raddr = mmap(NULL, chunk_size + map_align, PROT_READ, flags, fd, 0);
-		if (raddr == (void *)-1) {
-			perror("mmap");
+	अगर (buffer == (व्योम *)-1) अणु
+		लिखो_त्रुटि("mmap");
+		जाओ error;
+	पूर्ण
+	अगर (zflg) अणु
+		raddr = mmap(शून्य, chunk_size + map_align, PROT_READ, flags, fd, 0);
+		अगर (raddr == (व्योम *)-1) अणु
+			लिखो_त्रुटि("mmap");
 			zflg = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			addr = ALIGN_PTR_UP(raddr, map_align);
-		}
-	}
-	while (1) {
-		struct pollfd pfd = { .fd = fd, .events = POLLIN, };
-		int sub;
+		पूर्ण
+	पूर्ण
+	जबतक (1) अणु
+		काष्ठा pollfd pfd = अणु .fd = fd, .events = POLLIN, पूर्ण;
+		पूर्णांक sub;
 
 		poll(&pfd, 1, 10000);
-		if (zflg) {
-			socklen_t zc_len = sizeof(zc);
-			int res;
+		अगर (zflg) अणु
+			socklen_t zc_len = माप(zc);
+			पूर्णांक res;
 
-			memset(&zc, 0, sizeof(zc));
-			zc.address = (__u64)((unsigned long)addr);
+			स_रखो(&zc, 0, माप(zc));
+			zc.address = (__u64)((अचिन्हित दीर्घ)addr);
 			zc.length = chunk_size;
 
-			res = getsockopt(fd, IPPROTO_TCP, TCP_ZEROCOPY_RECEIVE,
+			res = माला_लोockopt(fd, IPPROTO_TCP, TCP_ZEROCOPY_RECEIVE,
 					 &zc, &zc_len);
-			if (res == -1)
-				break;
+			अगर (res == -1)
+				अवरोध;
 
-			if (zc.length) {
-				assert(zc.length <= chunk_size);
+			अगर (zc.length) अणु
+				निश्चित(zc.length <= chunk_size);
 				total_mmap += zc.length;
-				if (xflg)
+				अगर (xflg)
 					hash_zone(addr, zc.length);
 				/* It is more efficient to unmap the pages right now,
-				 * instead of doing this in next TCP_ZEROCOPY_RECEIVE.
+				 * instead of करोing this in next TCP_ZEROCOPY_RECEIVE.
 				 */
 				madvise(addr, zc.length, MADV_DONTNEED);
 				total += zc.length;
-			}
-			if (zc.recv_skip_hint) {
-				assert(zc.recv_skip_hint <= chunk_size);
-				lu = read(fd, buffer, zc.recv_skip_hint);
-				if (lu > 0) {
-					if (xflg)
+			पूर्ण
+			अगर (zc.recv_skip_hपूर्णांक) अणु
+				निश्चित(zc.recv_skip_hपूर्णांक <= chunk_size);
+				lu = पढ़ो(fd, buffer, zc.recv_skip_hपूर्णांक);
+				अगर (lu > 0) अणु
+					अगर (xflg)
 						hash_zone(buffer, lu);
 					total += lu;
-				}
-			}
-			continue;
-		}
+				पूर्ण
+			पूर्ण
+			जारी;
+		पूर्ण
 		sub = 0;
-		while (sub < chunk_size) {
-			lu = read(fd, buffer + sub, chunk_size - sub);
-			if (lu == 0)
-				goto end;
-			if (lu < 0)
-				break;
-			if (xflg)
+		जबतक (sub < chunk_size) अणु
+			lu = पढ़ो(fd, buffer + sub, chunk_size - sub);
+			अगर (lu == 0)
+				जाओ end;
+			अगर (lu < 0)
+				अवरोध;
+			अगर (xflg)
 				hash_zone(buffer + sub, lu);
 			total += lu;
 			sub += lu;
-		}
-	}
+		पूर्ण
+	पूर्ण
 end:
-	gettimeofday(&t1, NULL);
+	समय_लोofday(&t1, शून्य);
 	delta_usec = (t1.tv_sec - t0.tv_sec) * 1000000 + t1.tv_usec - t0.tv_usec;
 
 	throughput = 0;
-	if (delta_usec)
-		throughput = total * 8.0 / (double)delta_usec / 1000.0;
+	अगर (delta_usec)
+		throughput = total * 8.0 / (द्विगुन)delta_usec / 1000.0;
 	getrusage(RUSAGE_THREAD, &ru);
-	if (total > 1024*1024) {
-		unsigned long total_usec;
-		unsigned long mb = total >> 20;
-		total_usec = 1000000*ru.ru_utime.tv_sec + ru.ru_utime.tv_usec +
-			     1000000*ru.ru_stime.tv_sec + ru.ru_stime.tv_usec;
-		printf("received %lg MB (%lg %% mmap'ed) in %lg s, %lg Gbit\n"
+	अगर (total > 1024*1024) अणु
+		अचिन्हित दीर्घ total_usec;
+		अचिन्हित दीर्घ mb = total >> 20;
+		total_usec = 1000000*ru.ru_uसमय.tv_sec + ru.ru_uसमय.tv_usec +
+			     1000000*ru.ru_sसमय.tv_sec + ru.ru_sसमय.tv_usec;
+		म_लिखो("received %lg MB (%lg %% mmap'ed) in %lg s, %lg Gbit\n"
 		       "  cpu usage user:%lg sys:%lg, %lg usec per MB, %lu c-switches\n",
 				total / (1024.0 * 1024.0),
 				100.0*total_mmap/total,
-				(double)delta_usec / 1000000.0,
+				(द्विगुन)delta_usec / 1000000.0,
 				throughput,
-				(double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000.0,
-				(double)ru.ru_stime.tv_sec + (double)ru.ru_stime.tv_usec / 1000000.0,
-				(double)total_usec/mb,
+				(द्विगुन)ru.ru_uसमय.tv_sec + (द्विगुन)ru.ru_uसमय.tv_usec / 1000000.0,
+				(द्विगुन)ru.ru_sसमय.tv_sec + (द्विगुन)ru.ru_sसमय.tv_usec / 1000000.0,
+				(द्विगुन)total_usec/mb,
 				ru.ru_nvcsw);
-	}
+	पूर्ण
 error:
 	munmap(buffer, buffer_sz);
-	close(fd);
-	if (zflg)
+	बंद(fd);
+	अगर (zflg)
 		munmap(raddr, chunk_size + map_align);
-	pthread_exit(0);
-}
+	pthपढ़ो_निकास(0);
+पूर्ण
 
-static void apply_rcvsnd_buf(int fd)
-{
-	if (rcvbuf && setsockopt(fd, SOL_SOCKET,
-				 SO_RCVBUF, &rcvbuf, sizeof(rcvbuf)) == -1) {
-		perror("setsockopt SO_RCVBUF");
-	}
+अटल व्योम apply_rcvsnd_buf(पूर्णांक fd)
+अणु
+	अगर (rcvbuf && setsockopt(fd, SOL_SOCKET,
+				 SO_RCVBUF, &rcvbuf, माप(rcvbuf)) == -1) अणु
+		लिखो_त्रुटि("setsockopt SO_RCVBUF");
+	पूर्ण
 
-	if (sndbuf && setsockopt(fd, SOL_SOCKET,
-				 SO_SNDBUF, &sndbuf, sizeof(sndbuf)) == -1) {
-		perror("setsockopt SO_SNDBUF");
-	}
-}
+	अगर (sndbuf && setsockopt(fd, SOL_SOCKET,
+				 SO_SNDBUF, &sndbuf, माप(sndbuf)) == -1) अणु
+		लिखो_त्रुटि("setsockopt SO_SNDBUF");
+	पूर्ण
+पूर्ण
 
 
-static void setup_sockaddr(int domain, const char *str_addr,
-			   struct sockaddr_storage *sockaddr)
-{
-	struct sockaddr_in6 *addr6 = (void *) sockaddr;
-	struct sockaddr_in *addr4 = (void *) sockaddr;
+अटल व्योम setup_sockaddr(पूर्णांक करोमुख्य, स्थिर अक्षर *str_addr,
+			   काष्ठा sockaddr_storage *sockaddr)
+अणु
+	काष्ठा sockaddr_in6 *addr6 = (व्योम *) sockaddr;
+	काष्ठा sockaddr_in *addr4 = (व्योम *) sockaddr;
 
-	switch (domain) {
-	case PF_INET:
-		memset(addr4, 0, sizeof(*addr4));
+	चयन (करोमुख्य) अणु
+	हाल PF_INET:
+		स_रखो(addr4, 0, माप(*addr4));
 		addr4->sin_family = AF_INET;
 		addr4->sin_port = htons(cfg_port);
-		if (str_addr &&
+		अगर (str_addr &&
 		    inet_pton(AF_INET, str_addr, &(addr4->sin_addr)) != 1)
 			error(1, 0, "ipv4 parse error: %s", str_addr);
-		break;
-	case PF_INET6:
-		memset(addr6, 0, sizeof(*addr6));
+		अवरोध;
+	हाल PF_INET6:
+		स_रखो(addr6, 0, माप(*addr6));
 		addr6->sin6_family = AF_INET6;
 		addr6->sin6_port = htons(cfg_port);
-		if (str_addr &&
+		अगर (str_addr &&
 		    inet_pton(AF_INET6, str_addr, &(addr6->sin6_addr)) != 1)
 			error(1, 0, "ipv6 parse error: %s", str_addr);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		error(1, 0, "illegal domain");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void do_accept(int fdlisten)
-{
-	pthread_attr_t attr;
-	int rcvlowat;
+अटल व्योम करो_accept(पूर्णांक fdlisten)
+अणु
+	pthपढ़ो_attr_t attr;
+	पूर्णांक rcvlowat;
 
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	pthपढ़ो_attr_init(&attr);
+	pthपढ़ो_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
 	rcvlowat = chunk_size;
-	if (setsockopt(fdlisten, SOL_SOCKET, SO_RCVLOWAT,
-		       &rcvlowat, sizeof(rcvlowat)) == -1) {
-		perror("setsockopt SO_RCVLOWAT");
-	}
+	अगर (setsockopt(fdlisten, SOL_SOCKET, SO_RCVLOWAT,
+		       &rcvlowat, माप(rcvlowat)) == -1) अणु
+		लिखो_त्रुटि("setsockopt SO_RCVLOWAT");
+	पूर्ण
 
 	apply_rcvsnd_buf(fdlisten);
 
-	while (1) {
-		struct sockaddr_in addr;
-		socklen_t addrlen = sizeof(addr);
-		pthread_t th;
-		int fd, res;
+	जबतक (1) अणु
+		काष्ठा sockaddr_in addr;
+		socklen_t addrlen = माप(addr);
+		pthपढ़ो_t th;
+		पूर्णांक fd, res;
 
-		fd = accept(fdlisten, (struct sockaddr *)&addr, &addrlen);
-		if (fd == -1) {
-			perror("accept");
-			continue;
-		}
-		res = pthread_create(&th, &attr, child_thread,
-				     (void *)(unsigned long)fd);
-		if (res) {
-			errno = res;
-			perror("pthread_create");
-			close(fd);
-		}
-	}
-}
+		fd = accept(fdlisten, (काष्ठा sockaddr *)&addr, &addrlen);
+		अगर (fd == -1) अणु
+			लिखो_त्रुटि("accept");
+			जारी;
+		पूर्ण
+		res = pthपढ़ो_create(&th, &attr, child_thपढ़ो,
+				     (व्योम *)(अचिन्हित दीर्घ)fd);
+		अगर (res) अणु
+			त्रुटि_सं = res;
+			लिखो_त्रुटि("pthread_create");
+			बंद(fd);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* Each thread should reserve a big enough vma to avoid
+/* Each thपढ़ो should reserve a big enough vma to aव्योम
  * spinlock collisions in ptl locks.
  * This size is 2MB on x86_64, and is exported in /proc/meminfo.
  */
-static unsigned long default_huge_page_size(void)
-{
-	FILE *f = fopen("/proc/meminfo", "r");
-	unsigned long hps = 0;
-	size_t linelen = 0;
-	char *line = NULL;
+अटल अचिन्हित दीर्घ शेष_huge_page_size(व्योम)
+अणु
+	खाता *f = ख_खोलो("/proc/meminfo", "r");
+	अचिन्हित दीर्घ hps = 0;
+	माप_प्रकार linelen = 0;
+	अक्षर *line = शून्य;
 
-	if (!f)
-		return 0;
-	while (getline(&line, &linelen, f) > 0) {
-		if (sscanf(line, "Hugepagesize:       %lu kB", &hps) == 1) {
+	अगर (!f)
+		वापस 0;
+	जबतक (getline(&line, &linelen, f) > 0) अणु
+		अगर (माला_पूछो(line, "Hugepagesize:       %lu kB", &hps) == 1) अणु
 			hps <<= 10;
-			break;
-		}
-	}
-	free(line);
-	fclose(f);
-	return hps;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	मुक्त(line);
+	ख_बंद(f);
+	वापस hps;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	struct sockaddr_storage listenaddr, addr;
-	unsigned int max_pacing_rate = 0;
-	uint64_t total = 0;
-	char *host = NULL;
-	int fd, c, on = 1;
-	size_t buffer_sz;
-	char *buffer;
-	int sflg = 0;
-	int mss = 0;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	काष्ठा sockaddr_storage listenaddr, addr;
+	अचिन्हित पूर्णांक max_pacing_rate = 0;
+	uपूर्णांक64_t total = 0;
+	अक्षर *host = शून्य;
+	पूर्णांक fd, c, on = 1;
+	माप_प्रकार buffer_sz;
+	अक्षर *buffer;
+	पूर्णांक sflg = 0;
+	पूर्णांक mss = 0;
 
-	while ((c = getopt(argc, argv, "46p:svr:w:H:zxkP:M:C:a:")) != -1) {
-		switch (c) {
-		case '4':
+	जबतक ((c = getopt(argc, argv, "46p:svr:w:H:zxkP:M:C:a:")) != -1) अणु
+		चयन (c) अणु
+		हाल '4':
 			cfg_family = PF_INET;
-			cfg_alen = sizeof(struct sockaddr_in);
-			break;
-		case '6':
+			cfg_alen = माप(काष्ठा sockaddr_in);
+			अवरोध;
+		हाल '6':
 			cfg_family = PF_INET6;
-			cfg_alen = sizeof(struct sockaddr_in6);
-			break;
-		case 'p':
-			cfg_port = atoi(optarg);
-			break;
-		case 'H':
+			cfg_alen = माप(काष्ठा sockaddr_in6);
+			अवरोध;
+		हाल 'p':
+			cfg_port = म_से_प(optarg);
+			अवरोध;
+		हाल 'H':
 			host = optarg;
-			break;
-		case 's': /* server : listen for incoming connections */
+			अवरोध;
+		हाल 's': /* server : listen क्रम incoming connections */
 			sflg++;
-			break;
-		case 'r':
-			rcvbuf = atoi(optarg);
-			break;
-		case 'w':
-			sndbuf = atoi(optarg);
-			break;
-		case 'z':
+			अवरोध;
+		हाल 'r':
+			rcvbuf = म_से_प(optarg);
+			अवरोध;
+		हाल 'w':
+			sndbuf = म_से_प(optarg);
+			अवरोध;
+		हाल 'z':
 			zflg = 1;
-			break;
-		case 'M':
-			mss = atoi(optarg);
-			break;
-		case 'x':
+			अवरोध;
+		हाल 'M':
+			mss = म_से_प(optarg);
+			अवरोध;
+		हाल 'x':
 			xflg = 1;
-			break;
-		case 'k':
+			अवरोध;
+		हाल 'k':
 			keepflag = 1;
-			break;
-		case 'P':
-			max_pacing_rate = atoi(optarg) ;
-			break;
-		case 'C':
-			chunk_size = atol(optarg);
-			break;
-		case 'a':
-			map_align = atol(optarg);
-			break;
-		default:
-			exit(1);
-		}
-	}
-	if (!map_align) {
-		map_align = default_huge_page_size();
-		/* if really /proc/meminfo is not helping,
-		 * we use the default x86_64 hugepagesize.
+			अवरोध;
+		हाल 'P':
+			max_pacing_rate = म_से_प(optarg) ;
+			अवरोध;
+		हाल 'C':
+			chunk_size = म_से_द(optarg);
+			अवरोध;
+		हाल 'a':
+			map_align = म_से_द(optarg);
+			अवरोध;
+		शेष:
+			निकास(1);
+		पूर्ण
+	पूर्ण
+	अगर (!map_align) अणु
+		map_align = शेष_huge_page_size();
+		/* अगर really /proc/meminfo is not helping,
+		 * we use the शेष x86_64 hugepagesize.
 		 */
-		if (!map_align)
+		अगर (!map_align)
 			map_align = 2*1024*1024;
-	}
-	if (sflg) {
-		int fdlisten = socket(cfg_family, SOCK_STREAM, 0);
+	पूर्ण
+	अगर (sflg) अणु
+		पूर्णांक fdlisten = socket(cfg_family, SOCK_STREAM, 0);
 
-		if (fdlisten == -1) {
-			perror("socket");
-			exit(1);
-		}
+		अगर (fdlisten == -1) अणु
+			लिखो_त्रुटि("socket");
+			निकास(1);
+		पूर्ण
 		apply_rcvsnd_buf(fdlisten);
-		setsockopt(fdlisten, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+		setsockopt(fdlisten, SOL_SOCKET, SO_REUSEADDR, &on, माप(on));
 
 		setup_sockaddr(cfg_family, host, &listenaddr);
 
-		if (mss &&
+		अगर (mss &&
 		    setsockopt(fdlisten, IPPROTO_TCP, TCP_MAXSEG,
-			       &mss, sizeof(mss)) == -1) {
-			perror("setsockopt TCP_MAXSEG");
-			exit(1);
-		}
-		if (bind(fdlisten, (const struct sockaddr *)&listenaddr, cfg_alen) == -1) {
-			perror("bind");
-			exit(1);
-		}
-		if (listen(fdlisten, 128) == -1) {
-			perror("listen");
-			exit(1);
-		}
-		do_accept(fdlisten);
-	}
+			       &mss, माप(mss)) == -1) अणु
+			लिखो_त्रुटि("setsockopt TCP_MAXSEG");
+			निकास(1);
+		पूर्ण
+		अगर (bind(fdlisten, (स्थिर काष्ठा sockaddr *)&listenaddr, cfg_alen) == -1) अणु
+			लिखो_त्रुटि("bind");
+			निकास(1);
+		पूर्ण
+		अगर (listen(fdlisten, 128) == -1) अणु
+			लिखो_त्रुटि("listen");
+			निकास(1);
+		पूर्ण
+		करो_accept(fdlisten);
+	पूर्ण
 
 	buffer = mmap_large_buffer(chunk_size, &buffer_sz);
-	if (buffer == (char *)-1) {
-		perror("mmap");
-		exit(1);
-	}
+	अगर (buffer == (अक्षर *)-1) अणु
+		लिखो_त्रुटि("mmap");
+		निकास(1);
+	पूर्ण
 
 	fd = socket(cfg_family, SOCK_STREAM, 0);
-	if (fd == -1) {
-		perror("socket");
-		exit(1);
-	}
+	अगर (fd == -1) अणु
+		लिखो_त्रुटि("socket");
+		निकास(1);
+	पूर्ण
 	apply_rcvsnd_buf(fd);
 
 	setup_sockaddr(cfg_family, host, &addr);
 
-	if (mss &&
-	    setsockopt(fd, IPPROTO_TCP, TCP_MAXSEG, &mss, sizeof(mss)) == -1) {
-		perror("setsockopt TCP_MAXSEG");
-		exit(1);
-	}
-	if (connect(fd, (const struct sockaddr *)&addr, cfg_alen) == -1) {
-		perror("connect");
-		exit(1);
-	}
-	if (max_pacing_rate &&
+	अगर (mss &&
+	    setsockopt(fd, IPPROTO_TCP, TCP_MAXSEG, &mss, माप(mss)) == -1) अणु
+		लिखो_त्रुटि("setsockopt TCP_MAXSEG");
+		निकास(1);
+	पूर्ण
+	अगर (connect(fd, (स्थिर काष्ठा sockaddr *)&addr, cfg_alen) == -1) अणु
+		लिखो_त्रुटि("connect");
+		निकास(1);
+	पूर्ण
+	अगर (max_pacing_rate &&
 	    setsockopt(fd, SOL_SOCKET, SO_MAX_PACING_RATE,
-		       &max_pacing_rate, sizeof(max_pacing_rate)) == -1)
-		perror("setsockopt SO_MAX_PACING_RATE");
+		       &max_pacing_rate, माप(max_pacing_rate)) == -1)
+		लिखो_त्रुटि("setsockopt SO_MAX_PACING_RATE");
 
-	if (zflg && setsockopt(fd, SOL_SOCKET, SO_ZEROCOPY,
-			       &on, sizeof(on)) == -1) {
-		perror("setsockopt SO_ZEROCOPY, (-z option disabled)");
+	अगर (zflg && setsockopt(fd, SOL_SOCKET, SO_ZEROCOPY,
+			       &on, माप(on)) == -1) अणु
+		लिखो_त्रुटि("setsockopt SO_ZEROCOPY, (-z option disabled)");
 		zflg = 0;
-	}
-	while (total < FILE_SZ) {
-		int64_t wr = FILE_SZ - total;
+	पूर्ण
+	जबतक (total < खाता_SZ) अणु
+		पूर्णांक64_t wr = खाता_SZ - total;
 
-		if (wr > chunk_size)
+		अगर (wr > chunk_size)
 			wr = chunk_size;
 		/* Note : we just want to fill the pipe with 0 bytes */
-		wr = send(fd, buffer, (size_t)wr, zflg ? MSG_ZEROCOPY : 0);
-		if (wr <= 0)
-			break;
+		wr = send(fd, buffer, (माप_प्रकार)wr, zflg ? MSG_ZEROCOPY : 0);
+		अगर (wr <= 0)
+			अवरोध;
 		total += wr;
-	}
-	close(fd);
+	पूर्ण
+	बंद(fd);
 	munmap(buffer, buffer_sz);
-	return 0;
-}
+	वापस 0;
+पूर्ण

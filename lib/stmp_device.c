@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 1999 ARM Limited
  * Copyright (C) 2000 Deep Blue Solutions Ltd
@@ -8,70 +9,70 @@
  * Copyright (C) 2011 Wolfram Sang, Pengutronix e.K.
  */
 
-#include <linux/io.h>
-#include <linux/errno.h>
-#include <linux/delay.h>
-#include <linux/compiler.h>
-#include <linux/export.h>
-#include <linux/stmp_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sपंचांगp_device.h>
 
-#define STMP_MODULE_CLKGATE	(1 << 30)
-#define STMP_MODULE_SFTRST	(1 << 31)
+#घोषणा STMP_MODULE_CLKGATE	(1 << 30)
+#घोषणा STMP_MODULE_SFTRST	(1 << 31)
 
 /*
  * Clear the bit and poll it cleared.  This is usually called with
  * a reset address and mask being either SFTRST(bit 31) or CLKGATE
  * (bit 30).
  */
-static int stmp_clear_poll_bit(void __iomem *addr, u32 mask)
-{
-	int timeout = 0x400;
+अटल पूर्णांक sपंचांगp_clear_poll_bit(व्योम __iomem *addr, u32 mask)
+अणु
+	पूर्णांक समयout = 0x400;
 
-	writel(mask, addr + STMP_OFFSET_REG_CLR);
+	ग_लिखोl(mask, addr + STMP_OFFSET_REG_CLR);
 	udelay(1);
-	while ((readl(addr) & mask) && --timeout)
+	जबतक ((पढ़ोl(addr) & mask) && --समयout)
 		/* nothing */;
 
-	return !timeout;
-}
+	वापस !समयout;
+पूर्ण
 
-int stmp_reset_block(void __iomem *reset_addr)
-{
-	int ret;
-	int timeout = 0x400;
+पूर्णांक sपंचांगp_reset_block(व्योम __iomem *reset_addr)
+अणु
+	पूर्णांक ret;
+	पूर्णांक समयout = 0x400;
 
 	/* clear and poll SFTRST */
-	ret = stmp_clear_poll_bit(reset_addr, STMP_MODULE_SFTRST);
-	if (unlikely(ret))
-		goto error;
+	ret = sपंचांगp_clear_poll_bit(reset_addr, STMP_MODULE_SFTRST);
+	अगर (unlikely(ret))
+		जाओ error;
 
 	/* clear CLKGATE */
-	writel(STMP_MODULE_CLKGATE, reset_addr + STMP_OFFSET_REG_CLR);
+	ग_लिखोl(STMP_MODULE_CLKGATE, reset_addr + STMP_OFFSET_REG_CLR);
 
 	/* set SFTRST to reset the block */
-	writel(STMP_MODULE_SFTRST, reset_addr + STMP_OFFSET_REG_SET);
+	ग_लिखोl(STMP_MODULE_SFTRST, reset_addr + STMP_OFFSET_REG_SET);
 	udelay(1);
 
 	/* poll CLKGATE becoming set */
-	while ((!(readl(reset_addr) & STMP_MODULE_CLKGATE)) && --timeout)
+	जबतक ((!(पढ़ोl(reset_addr) & STMP_MODULE_CLKGATE)) && --समयout)
 		/* nothing */;
-	if (unlikely(!timeout))
-		goto error;
+	अगर (unlikely(!समयout))
+		जाओ error;
 
 	/* clear and poll SFTRST */
-	ret = stmp_clear_poll_bit(reset_addr, STMP_MODULE_SFTRST);
-	if (unlikely(ret))
-		goto error;
+	ret = sपंचांगp_clear_poll_bit(reset_addr, STMP_MODULE_SFTRST);
+	अगर (unlikely(ret))
+		जाओ error;
 
 	/* clear and poll CLKGATE */
-	ret = stmp_clear_poll_bit(reset_addr, STMP_MODULE_CLKGATE);
-	if (unlikely(ret))
-		goto error;
+	ret = sपंचांगp_clear_poll_bit(reset_addr, STMP_MODULE_CLKGATE);
+	अगर (unlikely(ret))
+		जाओ error;
 
-	return 0;
+	वापस 0;
 
 error:
 	pr_err("%s(%p): module reset timeout\n", __func__, reset_addr);
-	return -ETIMEDOUT;
-}
-EXPORT_SYMBOL(stmp_reset_block);
+	वापस -ETIMEDOUT;
+पूर्ण
+EXPORT_SYMBOL(sपंचांगp_reset_block);

@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  arch/arm/include/asm/cacheflush.h
+ *  arch/arm/include/यंत्र/cacheflush.h
  *
  *  Copyright (C) 1999-2002 Russell King
  */
-#ifndef _ASMARM_CACHEFLUSH_H
-#define _ASMARM_CACHEFLUSH_H
+#अगर_अघोषित _ASMARM_CACHEFLUSH_H
+#घोषणा _ASMARM_CACHEFLUSH_H
 
-#include <linux/mm.h>
+#समावेश <linux/mm.h>
 
-#include <asm/glue-cache.h>
-#include <asm/shmparam.h>
-#include <asm/cachetype.h>
-#include <asm/outercache.h>
+#समावेश <यंत्र/glue-cache.h>
+#समावेश <यंत्र/shmparam.h>
+#समावेश <यंत्र/cachetype.h>
+#समावेश <यंत्र/outercache.h>
 
-#define CACHE_COLOUR(vaddr)	((vaddr & (SHMLBA - 1)) >> PAGE_SHIFT)
+#घोषणा CACHE_COLOUR(vaddr)	((vaddr & (SHMLBA - 1)) >> PAGE_SHIFT)
 
 /*
- * This flag is used to indicate that the page pointed to by a pte is clean
- * and does not require cleaning before returning it to the user.
+ * This flag is used to indicate that the page poपूर्णांकed to by a pte is clean
+ * and करोes not require cleaning beक्रमe वापसing it to the user.
  */
-#define PG_dcache_clean PG_arch_1
+#घोषणा PG_dcache_clean PG_arch_1
 
 /*
  *	MM Cache Management
@@ -30,17 +31,17 @@
  *	implement these methods.
  *
  *	Start addresses are inclusive and end addresses are exclusive;
- *	start addresses should be rounded down, end addresses up.
+ *	start addresses should be rounded करोwn, end addresses up.
  *
- *	See Documentation/core-api/cachetlb.rst for more information.
+ *	See Documentation/core-api/cachetlb.rst क्रम more inक्रमmation.
  *	Please note that the implementation of these, and the required
- *	effects are cache-type (VIVT/VIPT/PIPT) specific.
+ *	effects are cache-type (VIVT/VIPT/PIPT) specअगरic.
  *
  *	flush_icache_all()
  *
  *		Unconditionally clean and invalidate the entire icache.
- *		Currently only needed for cache-v6.S and cache-v7.S, see
- *		__flush_icache_all for the generic implementation.
+ *		Currently only needed क्रम cache-v6.S and cache-v7.S, see
+ *		__flush_icache_all क्रम the generic implementation.
  *
  *	flush_kern_all()
  *
@@ -48,20 +49,20 @@
  *
  *     flush_kern_louis()
  *
- *             Flush data cache levels up to the level of unification
+ *             Flush data cache levels up to the level of unअगरication
  *             inner shareable and invalidate the I-cache.
  *             Only needed from v7 onwards, falls back to flush_cache_all()
- *             for all other processor versions.
+ *             क्रम all other processor versions.
  *
  *	flush_user_all()
  *
  *		Clean and invalidate all user space cache entries
- *		before a change of page tables.
+ *		beक्रमe a change of page tables.
  *
  *	flush_user_range(start, end, flags)
  *
  *		Clean and invalidate a range of cache entries in the
- *		specified address space before a change of page tables.
+ *		specअगरied address space beक्रमe a change of page tables.
  *		- start - user start address (inclusive, page aligned)
  *		- end   - user end address   (exclusive, page aligned)
  *		- flags - vma->vm_flags field
@@ -71,16 +72,16 @@
  *		Ensure coherency between the Icache and the Dcache in the
  *		region described by start, end.  If you have non-snooping
  *		Harvard caches, you need to implement this function.
- *		- start  - virtual start address
- *		- end    - virtual end address
+ *		- start  - भव start address
+ *		- end    - भव end address
  *
  *	coherent_user_range(start, end)
  *
  *		Ensure coherency between the Icache and the Dcache in the
  *		region described by start, end.  If you have non-snooping
  *		Harvard caches, you need to implement this function.
- *		- start  - virtual start address
- *		- end    - virtual end address
+ *		- start  - भव start address
+ *		- end    - भव end address
  *
  *	flush_kern_dcache_area(kaddr, size)
  *
@@ -93,353 +94,353 @@
  *
  *	dma_flush_range(start, end)
  *
- *		Clean and invalidate the specified virtual address range.
- *		- start  - virtual start address
- *		- end    - virtual end address
+ *		Clean and invalidate the specअगरied भव address range.
+ *		- start  - भव start address
+ *		- end    - भव end address
  */
 
-struct cpu_cache_fns {
-	void (*flush_icache_all)(void);
-	void (*flush_kern_all)(void);
-	void (*flush_kern_louis)(void);
-	void (*flush_user_all)(void);
-	void (*flush_user_range)(unsigned long, unsigned long, unsigned int);
+काष्ठा cpu_cache_fns अणु
+	व्योम (*flush_icache_all)(व्योम);
+	व्योम (*flush_kern_all)(व्योम);
+	व्योम (*flush_kern_louis)(व्योम);
+	व्योम (*flush_user_all)(व्योम);
+	व्योम (*flush_user_range)(अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित पूर्णांक);
 
-	void (*coherent_kern_range)(unsigned long, unsigned long);
-	int  (*coherent_user_range)(unsigned long, unsigned long);
-	void (*flush_kern_dcache_area)(void *, size_t);
+	व्योम (*coherent_kern_range)(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+	पूर्णांक  (*coherent_user_range)(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+	व्योम (*flush_kern_dcache_area)(व्योम *, माप_प्रकार);
 
-	void (*dma_map_area)(const void *, size_t, int);
-	void (*dma_unmap_area)(const void *, size_t, int);
+	व्योम (*dma_map_area)(स्थिर व्योम *, माप_प्रकार, पूर्णांक);
+	व्योम (*dma_unmap_area)(स्थिर व्योम *, माप_प्रकार, पूर्णांक);
 
-	void (*dma_flush_range)(const void *, const void *);
-} __no_randomize_layout;
+	व्योम (*dma_flush_range)(स्थिर व्योम *, स्थिर व्योम *);
+पूर्ण __no_अक्रमomize_layout;
 
 /*
  * Select the calling method
  */
-#ifdef MULTI_CACHE
+#अगर_घोषित MULTI_CACHE
 
-extern struct cpu_cache_fns cpu_cache;
+बाह्य काष्ठा cpu_cache_fns cpu_cache;
 
-#define __cpuc_flush_icache_all		cpu_cache.flush_icache_all
-#define __cpuc_flush_kern_all		cpu_cache.flush_kern_all
-#define __cpuc_flush_kern_louis		cpu_cache.flush_kern_louis
-#define __cpuc_flush_user_all		cpu_cache.flush_user_all
-#define __cpuc_flush_user_range		cpu_cache.flush_user_range
-#define __cpuc_coherent_kern_range	cpu_cache.coherent_kern_range
-#define __cpuc_coherent_user_range	cpu_cache.coherent_user_range
-#define __cpuc_flush_dcache_area	cpu_cache.flush_kern_dcache_area
+#घोषणा __cpuc_flush_icache_all		cpu_cache.flush_icache_all
+#घोषणा __cpuc_flush_kern_all		cpu_cache.flush_kern_all
+#घोषणा __cpuc_flush_kern_louis		cpu_cache.flush_kern_louis
+#घोषणा __cpuc_flush_user_all		cpu_cache.flush_user_all
+#घोषणा __cpuc_flush_user_range		cpu_cache.flush_user_range
+#घोषणा __cpuc_coherent_kern_range	cpu_cache.coherent_kern_range
+#घोषणा __cpuc_coherent_user_range	cpu_cache.coherent_user_range
+#घोषणा __cpuc_flush_dcache_area	cpu_cache.flush_kern_dcache_area
 
 /*
- * These are private to the dma-mapping API.  Do not use directly.
+ * These are निजी to the dma-mapping API.  Do not use directly.
  * Their sole purpose is to ensure that data held in the cache
- * is visible to DMA, or data written by DMA to system memory is
+ * is visible to DMA, or data written by DMA to प्रणाली memory is
  * visible to the CPU.
  */
-#define dmac_flush_range		cpu_cache.dma_flush_range
+#घोषणा dmac_flush_range		cpu_cache.dma_flush_range
 
-#else
+#अन्यथा
 
-extern void __cpuc_flush_icache_all(void);
-extern void __cpuc_flush_kern_all(void);
-extern void __cpuc_flush_kern_louis(void);
-extern void __cpuc_flush_user_all(void);
-extern void __cpuc_flush_user_range(unsigned long, unsigned long, unsigned int);
-extern void __cpuc_coherent_kern_range(unsigned long, unsigned long);
-extern int  __cpuc_coherent_user_range(unsigned long, unsigned long);
-extern void __cpuc_flush_dcache_area(void *, size_t);
+बाह्य व्योम __cpuc_flush_icache_all(व्योम);
+बाह्य व्योम __cpuc_flush_kern_all(व्योम);
+बाह्य व्योम __cpuc_flush_kern_louis(व्योम);
+बाह्य व्योम __cpuc_flush_user_all(व्योम);
+बाह्य व्योम __cpuc_flush_user_range(अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित पूर्णांक);
+बाह्य व्योम __cpuc_coherent_kern_range(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+बाह्य पूर्णांक  __cpuc_coherent_user_range(अचिन्हित दीर्घ, अचिन्हित दीर्घ);
+बाह्य व्योम __cpuc_flush_dcache_area(व्योम *, माप_प्रकार);
 
 /*
- * These are private to the dma-mapping API.  Do not use directly.
+ * These are निजी to the dma-mapping API.  Do not use directly.
  * Their sole purpose is to ensure that data held in the cache
- * is visible to DMA, or data written by DMA to system memory is
+ * is visible to DMA, or data written by DMA to प्रणाली memory is
  * visible to the CPU.
  */
-extern void dmac_flush_range(const void *, const void *);
+बाह्य व्योम dmac_flush_range(स्थिर व्योम *, स्थिर व्योम *);
 
-#endif
+#पूर्ण_अगर
 
 /*
- * Copy user data from/to a page which is mapped into a different
+ * Copy user data from/to a page which is mapped पूर्णांकo a dअगरferent
  * processes address space.  Really, we want to allow our "user
  * space" model to handle this.
  */
-extern void copy_to_user_page(struct vm_area_struct *, struct page *,
-	unsigned long, void *, const void *, unsigned long);
-#define copy_from_user_page(vma, page, vaddr, dst, src, len) \
-	do {							\
-		memcpy(dst, src, len);				\
-	} while (0)
+बाह्य व्योम copy_to_user_page(काष्ठा vm_area_काष्ठा *, काष्ठा page *,
+	अचिन्हित दीर्घ, व्योम *, स्थिर व्योम *, अचिन्हित दीर्घ);
+#घोषणा copy_from_user_page(vma, page, vaddr, dst, src, len) \
+	करो अणु							\
+		स_नकल(dst, src, len);				\
+	पूर्ण जबतक (0)
 
 /*
  * Convert calls to our calling convention.
  */
 
 /* Invalidate I-cache */
-#define __flush_icache_all_generic()					\
-	asm("mcr	p15, 0, %0, c7, c5, 0"				\
+#घोषणा __flush_icache_all_generic()					\
+	यंत्र("mcr	p15, 0, %0, c7, c5, 0"				\
 	    : : "r" (0));
 
 /* Invalidate I-cache inner shareable */
-#define __flush_icache_all_v7_smp()					\
-	asm("mcr	p15, 0, %0, c7, c1, 0"				\
+#घोषणा __flush_icache_all_v7_smp()					\
+	यंत्र("mcr	p15, 0, %0, c7, c1, 0"				\
 	    : : "r" (0));
 
 /*
- * Optimized __flush_icache_all for the common cases. Note that UP ARMv7
+ * Optimized __flush_icache_all क्रम the common हालs. Note that UP ARMv7
  * will fall through to use __flush_icache_all_generic.
  */
-#if (defined(CONFIG_CPU_V7) && \
+#अगर (defined(CONFIG_CPU_V7) && \
      (defined(CONFIG_CPU_V6) || defined(CONFIG_CPU_V6K))) || \
 	defined(CONFIG_SMP_ON_UP)
-#define __flush_icache_preferred	__cpuc_flush_icache_all
-#elif __LINUX_ARM_ARCH__ >= 7 && defined(CONFIG_SMP)
-#define __flush_icache_preferred	__flush_icache_all_v7_smp
-#elif __LINUX_ARM_ARCH__ == 6 && defined(CONFIG_ARM_ERRATA_411920)
-#define __flush_icache_preferred	__cpuc_flush_icache_all
-#else
-#define __flush_icache_preferred	__flush_icache_all_generic
-#endif
+#घोषणा __flush_icache_preferred	__cpuc_flush_icache_all
+#या_अगर __LINUX_ARM_ARCH__ >= 7 && defined(CONFIG_SMP)
+#घोषणा __flush_icache_preferred	__flush_icache_all_v7_smp
+#या_अगर __LINUX_ARM_ARCH__ == 6 && defined(CONFIG_ARM_ERRATA_411920)
+#घोषणा __flush_icache_preferred	__cpuc_flush_icache_all
+#अन्यथा
+#घोषणा __flush_icache_preferred	__flush_icache_all_generic
+#पूर्ण_अगर
 
-static inline void __flush_icache_all(void)
-{
+अटल अंतरभूत व्योम __flush_icache_all(व्योम)
+अणु
 	__flush_icache_preferred();
 	dsb(ishst);
-}
+पूर्ण
 
 /*
- * Flush caches up to Level of Unification Inner Shareable
+ * Flush caches up to Level of Unअगरication Inner Shareable
  */
-#define flush_cache_louis()		__cpuc_flush_kern_louis()
+#घोषणा flush_cache_louis()		__cpuc_flush_kern_louis()
 
-#define flush_cache_all()		__cpuc_flush_kern_all()
+#घोषणा flush_cache_all()		__cpuc_flush_kern_all()
 
-static inline void vivt_flush_cache_mm(struct mm_struct *mm)
-{
-	if (cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm)))
+अटल अंतरभूत व्योम vivt_flush_cache_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm)))
 		__cpuc_flush_user_all();
-}
+पूर्ण
 
-static inline void
-vivt_flush_cache_range(struct vm_area_struct *vma, unsigned long start, unsigned long end)
-{
-	struct mm_struct *mm = vma->vm_mm;
+अटल अंतरभूत व्योम
+vivt_flush_cache_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
 
-	if (!mm || cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm)))
+	अगर (!mm || cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm)))
 		__cpuc_flush_user_range(start & PAGE_MASK, PAGE_ALIGN(end),
 					vma->vm_flags);
-}
+पूर्ण
 
-static inline void
-vivt_flush_cache_page(struct vm_area_struct *vma, unsigned long user_addr, unsigned long pfn)
-{
-	struct mm_struct *mm = vma->vm_mm;
+अटल अंतरभूत व्योम
+vivt_flush_cache_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ user_addr, अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
 
-	if (!mm || cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm))) {
-		unsigned long addr = user_addr & PAGE_MASK;
+	अगर (!mm || cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm))) अणु
+		अचिन्हित दीर्घ addr = user_addr & PAGE_MASK;
 		__cpuc_flush_user_range(addr, addr + PAGE_SIZE, vma->vm_flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifndef CONFIG_CPU_CACHE_VIPT
-#define flush_cache_mm(mm) \
+#अगर_अघोषित CONFIG_CPU_CACHE_VIPT
+#घोषणा flush_cache_mm(mm) \
 		vivt_flush_cache_mm(mm)
-#define flush_cache_range(vma,start,end) \
+#घोषणा flush_cache_range(vma,start,end) \
 		vivt_flush_cache_range(vma,start,end)
-#define flush_cache_page(vma,addr,pfn) \
+#घोषणा flush_cache_page(vma,addr,pfn) \
 		vivt_flush_cache_page(vma,addr,pfn)
-#else
-extern void flush_cache_mm(struct mm_struct *mm);
-extern void flush_cache_range(struct vm_area_struct *vma, unsigned long start, unsigned long end);
-extern void flush_cache_page(struct vm_area_struct *vma, unsigned long user_addr, unsigned long pfn);
-#endif
+#अन्यथा
+बाह्य व्योम flush_cache_mm(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम flush_cache_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+बाह्य व्योम flush_cache_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ user_addr, अचिन्हित दीर्घ pfn);
+#पूर्ण_अगर
 
-#define flush_cache_dup_mm(mm) flush_cache_mm(mm)
+#घोषणा flush_cache_dup_mm(mm) flush_cache_mm(mm)
 
 /*
  * flush_icache_user_range is used when we want to ensure that the
- * Harvard caches are synchronised for the user space address range.
- * This is used for the ARM private sys_cacheflush system call.
+ * Harvard caches are synchronised क्रम the user space address range.
+ * This is used क्रम the ARM निजी sys_cacheflush प्रणाली call.
  */
-#define flush_icache_user_range(s,e)	__cpuc_coherent_user_range(s,e)
+#घोषणा flush_icache_user_range(s,e)	__cpuc_coherent_user_range(s,e)
 
 /*
- * Perform necessary cache operations to ensure that data previously
+ * Perक्रमm necessary cache operations to ensure that data previously
  * stored within this range of addresses can be executed by the CPU.
  */
-#define flush_icache_range(s,e)		__cpuc_coherent_kern_range(s,e)
+#घोषणा flush_icache_range(s,e)		__cpuc_coherent_kern_range(s,e)
 
 /*
- * Perform necessary cache operations to ensure that the TLB will
- * see data written in the specified area.
+ * Perक्रमm necessary cache operations to ensure that the TLB will
+ * see data written in the specअगरied area.
  */
-#define clean_dcache_area(start,size)	cpu_dcache_clean_area(start, size)
+#घोषणा clean_dcache_area(start,size)	cpu_dcache_clean_area(start, size)
 
 /*
  * flush_dcache_page is used when the kernel has written to the page
- * cache page at virtual address page->virtual.
+ * cache page at भव address page->भव.
  *
- * If this page isn't mapped (ie, page_mapping == NULL), or it might
+ * If this page isn't mapped (ie, page_mapping == शून्य), or it might
  * have userspace mappings, then we _must_ always clean + invalidate
  * the dcache entries associated with the kernel mapping.
  *
  * Otherwise we can defer the operation, and clean the cache when we are
  * about to change to user space.  This is the same method as used on SPARC64.
- * See update_mmu_cache for the user space part.
+ * See update_mmu_cache क्रम the user space part.
  */
-#define ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
-extern void flush_dcache_page(struct page *);
+#घोषणा ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
+बाह्य व्योम flush_dcache_page(काष्ठा page *);
 
-static inline void flush_kernel_vmap_range(void *addr, int size)
-{
-	if ((cache_is_vivt() || cache_is_vipt_aliasing()))
-	  __cpuc_flush_dcache_area(addr, (size_t)size);
-}
-static inline void invalidate_kernel_vmap_range(void *addr, int size)
-{
-	if ((cache_is_vivt() || cache_is_vipt_aliasing()))
-	  __cpuc_flush_dcache_area(addr, (size_t)size);
-}
+अटल अंतरभूत व्योम flush_kernel_vmap_range(व्योम *addr, पूर्णांक size)
+अणु
+	अगर ((cache_is_vivt() || cache_is_vipt_aliasing()))
+	  __cpuc_flush_dcache_area(addr, (माप_प्रकार)size);
+पूर्ण
+अटल अंतरभूत व्योम invalidate_kernel_vmap_range(व्योम *addr, पूर्णांक size)
+अणु
+	अगर ((cache_is_vivt() || cache_is_vipt_aliasing()))
+	  __cpuc_flush_dcache_area(addr, (माप_प्रकार)size);
+पूर्ण
 
-#define ARCH_HAS_FLUSH_ANON_PAGE
-static inline void flush_anon_page(struct vm_area_struct *vma,
-			 struct page *page, unsigned long vmaddr)
-{
-	extern void __flush_anon_page(struct vm_area_struct *vma,
-				struct page *, unsigned long);
-	if (PageAnon(page))
+#घोषणा ARCH_HAS_FLUSH_ANON_PAGE
+अटल अंतरभूत व्योम flush_anon_page(काष्ठा vm_area_काष्ठा *vma,
+			 काष्ठा page *page, अचिन्हित दीर्घ vmaddr)
+अणु
+	बाह्य व्योम __flush_anon_page(काष्ठा vm_area_काष्ठा *vma,
+				काष्ठा page *, अचिन्हित दीर्घ);
+	अगर (PageAnon(page))
 		__flush_anon_page(vma, page, vmaddr);
-}
+पूर्ण
 
-#define ARCH_HAS_FLUSH_KERNEL_DCACHE_PAGE
-extern void flush_kernel_dcache_page(struct page *);
+#घोषणा ARCH_HAS_FLUSH_KERNEL_DCACHE_PAGE
+बाह्य व्योम flush_kernel_dcache_page(काष्ठा page *);
 
-#define flush_dcache_mmap_lock(mapping)		xa_lock_irq(&mapping->i_pages)
-#define flush_dcache_mmap_unlock(mapping)	xa_unlock_irq(&mapping->i_pages)
+#घोषणा flush_dcache_mmap_lock(mapping)		xa_lock_irq(&mapping->i_pages)
+#घोषणा flush_dcache_mmap_unlock(mapping)	xa_unlock_irq(&mapping->i_pages)
 
 /*
- * We don't appear to need to do anything here.  In fact, if we did, we'd
- * duplicate cache flushing elsewhere performed by flush_dcache_page().
+ * We करोn't appear to need to do anything here.  In fact, if we did, we'd
+ * duplicate cache flushing अन्यथाwhere perक्रमmed by flush_dcache_page().
  */
-#define flush_icache_page(vma,page)	do { } while (0)
+#घोषणा flush_icache_page(vma,page)	करो अणु पूर्ण जबतक (0)
 
 /*
  * flush_cache_vmap() is used when creating mappings (eg, via vmap,
- * vmalloc, ioremap etc) in kernel space for pages.  On non-VIPT
+ * vदो_स्मृति, ioremap etc) in kernel space क्रम pages.  On non-VIPT
  * caches, since the direct-mappings of these pages may contain cached
- * data, we need to do a full cache flush to ensure that writebacks
- * don't corrupt data placed into these pages via the new mappings.
+ * data, we need to करो a full cache flush to ensure that ग_लिखोbacks
+ * करोn't corrupt data placed पूर्णांकo these pages via the new mappings.
  */
-static inline void flush_cache_vmap(unsigned long start, unsigned long end)
-{
-	if (!cache_is_vipt_nonaliasing())
+अटल अंतरभूत व्योम flush_cache_vmap(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अगर (!cache_is_vipt_nonaliasing())
 		flush_cache_all();
-	else
+	अन्यथा
 		/*
-		 * set_pte_at() called from vmap_pte_range() does not
+		 * set_pte_at() called from vmap_pte_range() करोes not
 		 * have a DSB after cleaning the cache line.
 		 */
 		dsb(ishst);
-}
+पूर्ण
 
-static inline void flush_cache_vunmap(unsigned long start, unsigned long end)
-{
-	if (!cache_is_vipt_nonaliasing())
+अटल अंतरभूत व्योम flush_cache_vunmap(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अगर (!cache_is_vipt_nonaliasing())
 		flush_cache_all();
-}
+पूर्ण
 
 /*
- * Memory synchronization helpers for mixed cached vs non cached accesses.
+ * Memory synchronization helpers क्रम mixed cached vs non cached accesses.
  *
  * Some synchronization algorithms have to set states in memory with the
  * cache enabled or disabled depending on the code path.  It is crucial
- * to always ensure proper cache maintenance to update main memory right
- * away in that case.
+ * to always ensure proper cache मुख्यtenance to update मुख्य memory right
+ * away in that हाल.
  *
- * Any cached write must be followed by a cache clean operation.
- * Any cached read must be preceded by a cache invalidate operation.
- * Yet, in the read case, a cache flush i.e. atomic clean+invalidate
- * operation is needed to avoid discarding possible concurrent writes to the
+ * Any cached ग_लिखो must be followed by a cache clean operation.
+ * Any cached पढ़ो must be preceded by a cache invalidate operation.
+ * Yet, in the पढ़ो हाल, a cache flush i.e. atomic clean+invalidate
+ * operation is needed to aव्योम discarding possible concurrent ग_लिखोs to the
  * accessed memory.
  *
- * Also, in order to prevent a cached writer from interfering with an
- * adjacent non-cached writer, each state variable must be located to
+ * Also, in order to prevent a cached ग_लिखोr from पूर्णांकerfering with an
+ * adjacent non-cached ग_लिखोr, each state variable must be located to
  * a separate cache line.
  */
 
 /*
- * This needs to be >= the max cache writeback size of all
- * supported platforms included in the current kernel configuration.
+ * This needs to be >= the max cache ग_लिखोback size of all
+ * supported platक्रमms included in the current kernel configuration.
  * This is used to align state variables to their own cache lines.
  */
-#define __CACHE_WRITEBACK_ORDER 6  /* guessed from existing platforms */
-#define __CACHE_WRITEBACK_GRANULE (1 << __CACHE_WRITEBACK_ORDER)
+#घोषणा __CACHE_WRITEBACK_ORDER 6  /* guessed from existing platक्रमms */
+#घोषणा __CACHE_WRITEBACK_GRANULE (1 << __CACHE_WRITEBACK_ORDER)
 
 /*
- * There is no __cpuc_clean_dcache_area but we use it anyway for
- * code intent clarity, and alias it to __cpuc_flush_dcache_area.
+ * There is no __cpuc_clean_dcache_area but we use it anyway क्रम
+ * code पूर्णांकent clarity, and alias it to __cpuc_flush_dcache_area.
  */
-#define __cpuc_clean_dcache_area __cpuc_flush_dcache_area
+#घोषणा __cpuc_clean_dcache_area __cpuc_flush_dcache_area
 
 /*
- * Ensure preceding writes to *p by this CPU are visible to
- * subsequent reads by other CPUs:
+ * Ensure preceding ग_लिखोs to *p by this CPU are visible to
+ * subsequent पढ़ोs by other CPUs:
  */
-static inline void __sync_cache_range_w(volatile void *p, size_t size)
-{
-	char *_p = (char *)p;
+अटल अंतरभूत व्योम __sync_cache_range_w(अस्थिर व्योम *p, माप_प्रकार size)
+अणु
+	अक्षर *_p = (अक्षर *)p;
 
 	__cpuc_clean_dcache_area(_p, size);
 	outer_clean_range(__pa(_p), __pa(_p + size));
-}
+पूर्ण
 
 /*
- * Ensure preceding writes to *p by other CPUs are visible to
- * subsequent reads by this CPU.  We must be careful not to
+ * Ensure preceding ग_लिखोs to *p by other CPUs are visible to
+ * subsequent पढ़ोs by this CPU.  We must be careful not to
  * discard data simultaneously written by another CPU, hence the
  * usage of flush rather than invalidate operations.
  */
-static inline void __sync_cache_range_r(volatile void *p, size_t size)
-{
-	char *_p = (char *)p;
+अटल अंतरभूत व्योम __sync_cache_range_r(अस्थिर व्योम *p, माप_प्रकार size)
+अणु
+	अक्षर *_p = (अक्षर *)p;
 
-#ifdef CONFIG_OUTER_CACHE
-	if (outer_cache.flush_range) {
+#अगर_घोषित CONFIG_OUTER_CACHE
+	अगर (outer_cache.flush_range) अणु
 		/*
-		 * Ensure dirty data migrated from other CPUs into our cache
-		 * are cleaned out safely before the outer cache is cleaned:
+		 * Ensure dirty data migrated from other CPUs पूर्णांकo our cache
+		 * are cleaned out safely beक्रमe the outer cache is cleaned:
 		 */
 		__cpuc_clean_dcache_area(_p, size);
 
-		/* Clean and invalidate stale data for *p from outer ... */
+		/* Clean and invalidate stale data क्रम *p from outer ... */
 		outer_flush_range(__pa(_p), __pa(_p + size));
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	/* ... and inner cache: */
 	__cpuc_flush_dcache_area(_p, size);
-}
+पूर्ण
 
-#define sync_cache_w(ptr) __sync_cache_range_w(ptr, sizeof *(ptr))
-#define sync_cache_r(ptr) __sync_cache_range_r(ptr, sizeof *(ptr))
+#घोषणा sync_cache_w(ptr) __sync_cache_range_w(ptr, माप *(ptr))
+#घोषणा sync_cache_r(ptr) __sync_cache_range_r(ptr, माप *(ptr))
 
 /*
- * Disabling cache access for one CPU in an ARMv7 SMP system is tricky.
- * To do so we must:
+ * Disabling cache access क्रम one CPU in an ARMv7 SMP प्रणाली is tricky.
+ * To करो so we must:
  *
  * - Clear the SCTLR.C bit to prevent further cache allocations
  * - Flush the desired level of cache
  * - Clear the ACTLR "SMP" bit to disable local coherency
  *
- * ... and so without any intervening memory access in between those steps,
+ * ... and so without any पूर्णांकervening memory access in between those steps,
  * not even to the stack.
  *
  * WARNING -- After this has been called:
  *
- * - No ldrex/strex (and similar) instructions must be used.
- * - The CPU is obviously no longer coherent with the other CPUs.
- * - This is unlikely to work as expected if Linux is running non-secure.
+ * - No ldrex/strex (and similar) inकाष्ठाions must be used.
+ * - The CPU is obviously no दीर्घer coherent with the other CPUs.
+ * - This is unlikely to work as expected अगर Linux is running non-secure.
  *
  * Note:
  *
@@ -449,18 +450,18 @@ static inline void __sync_cache_range_r(volatile void *p, size_t size)
  * - The clobber list is dictated by the call to v7_flush_dcache_*.
  *   fp is preserved to the stack explicitly prior disabling the cache
  *   since adding it to the clobber list is incompatible with having
- *   CONFIG_FRAME_POINTER=y.  ip is saved as well if ever r12-clobbering
+ *   CONFIG_FRAME_POINTER=y.  ip is saved as well अगर ever r12-clobbering
  *   trampoline are inserted by the linker and to keep sp 64-bit aligned.
  */
-#define v7_exit_coherency_flush(level) \
-	asm volatile( \
+#घोषणा v7_निकास_coherency_flush(level) \
+	यंत्र अस्थिर( \
 	".arch	armv7-a \n\t" \
 	"stmfd	sp!, {fp, ip} \n\t" \
 	"mrc	p15, 0, r0, c1, c0, 0	@ get SCTLR \n\t" \
-	"bic	r0, r0, #"__stringify(CR_C)" \n\t" \
+	"bic	r0, r0, #"__stringअगरy(CR_C)" \n\t" \
 	"mcr	p15, 0, r0, c1, c0, 0	@ set SCTLR \n\t" \
 	"isb	\n\t" \
-	"bl	v7_flush_dcache_"__stringify(level)" \n\t" \
+	"bl	v7_flush_dcache_"__stringअगरy(level)" \n\t" \
 	"mrc	p15, 0, r0, c1, c0, 1	@ get ACTLR \n\t" \
 	"bic	r0, r0, #(1 << 6)	@ disable local coherency \n\t" \
 	"mcr	p15, 0, r0, c1, c0, 1	@ set ACTLR \n\t" \
@@ -470,14 +471,14 @@ static inline void __sync_cache_range_r(volatile void *p, size_t size)
 	: : : "r0","r1","r2","r3","r4","r5","r6","r7", \
 	      "r9","r10","lr","memory" )
 
-void flush_uprobe_xol_access(struct page *page, unsigned long uaddr,
-			     void *kaddr, unsigned long len);
+व्योम flush_uprobe_xol_access(काष्ठा page *page, अचिन्हित दीर्घ uaddr,
+			     व्योम *kaddr, अचिन्हित दीर्घ len);
 
 
-#ifdef CONFIG_CPU_ICACHE_MISMATCH_WORKAROUND
-void check_cpu_icache_size(int cpuid);
-#else
-static inline void check_cpu_icache_size(int cpuid) { }
-#endif
+#अगर_घोषित CONFIG_CPU_ICACHE_MISMATCH_WORKAROUND
+व्योम check_cpu_icache_size(पूर्णांक cpuid);
+#अन्यथा
+अटल अंतरभूत व्योम check_cpu_icache_size(पूर्णांक cpuid) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

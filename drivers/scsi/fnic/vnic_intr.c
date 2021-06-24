@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -16,45 +17,45 @@
  * SOFTWARE.
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include "vnic_dev.h"
-#include "vnic_intr.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश "vnic_dev.h"
+#समावेश "vnic_intr.h"
 
-void vnic_intr_free(struct vnic_intr *intr)
-{
-	intr->ctrl = NULL;
-}
+व्योम vnic_पूर्णांकr_मुक्त(काष्ठा vnic_पूर्णांकr *पूर्णांकr)
+अणु
+	पूर्णांकr->ctrl = शून्य;
+पूर्ण
 
-int vnic_intr_alloc(struct vnic_dev *vdev, struct vnic_intr *intr,
-	unsigned int index)
-{
-	intr->index = index;
-	intr->vdev = vdev;
+पूर्णांक vnic_पूर्णांकr_alloc(काष्ठा vnic_dev *vdev, काष्ठा vnic_पूर्णांकr *पूर्णांकr,
+	अचिन्हित पूर्णांक index)
+अणु
+	पूर्णांकr->index = index;
+	पूर्णांकr->vdev = vdev;
 
-	intr->ctrl = vnic_dev_get_res(vdev, RES_TYPE_INTR_CTRL, index);
-	if (!intr->ctrl) {
-		printk(KERN_ERR "Failed to hook INTR[%d].ctrl resource\n",
+	पूर्णांकr->ctrl = vnic_dev_get_res(vdev, RES_TYPE_INTR_CTRL, index);
+	अगर (!पूर्णांकr->ctrl) अणु
+		prपूर्णांकk(KERN_ERR "Failed to hook INTR[%d].ctrl resource\n",
 			index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vnic_intr_init(struct vnic_intr *intr, unsigned int coalescing_timer,
-	unsigned int coalescing_type, unsigned int mask_on_assertion)
-{
-	iowrite32(coalescing_timer, &intr->ctrl->coalescing_timer);
-	iowrite32(coalescing_type, &intr->ctrl->coalescing_type);
-	iowrite32(mask_on_assertion, &intr->ctrl->mask_on_assertion);
-	iowrite32(0, &intr->ctrl->int_credits);
-}
+व्योम vnic_पूर्णांकr_init(काष्ठा vnic_पूर्णांकr *पूर्णांकr, अचिन्हित पूर्णांक coalescing_समयr,
+	अचिन्हित पूर्णांक coalescing_type, अचिन्हित पूर्णांक mask_on_निश्चितion)
+अणु
+	ioग_लिखो32(coalescing_समयr, &पूर्णांकr->ctrl->coalescing_समयr);
+	ioग_लिखो32(coalescing_type, &पूर्णांकr->ctrl->coalescing_type);
+	ioग_लिखो32(mask_on_निश्चितion, &पूर्णांकr->ctrl->mask_on_निश्चितion);
+	ioग_लिखो32(0, &पूर्णांकr->ctrl->पूर्णांक_credits);
+पूर्ण
 
-void vnic_intr_clean(struct vnic_intr *intr)
-{
-	iowrite32(0, &intr->ctrl->int_credits);
-}
+व्योम vnic_पूर्णांकr_clean(काष्ठा vnic_पूर्णांकr *पूर्णांकr)
+अणु
+	ioग_लिखो32(0, &पूर्णांकr->ctrl->पूर्णांक_credits);
+पूर्ण

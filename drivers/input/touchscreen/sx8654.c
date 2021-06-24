@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for Semtech SX8654 I2C touchscreen controller.
+ * Driver क्रम Semtech SX8654 I2C touchscreen controller.
  *
  * Copyright (c) 2015 Armadeus Systems
- *	Sébastien Szymanski <sebastien.szymanski@armadeus.com>
+ *	Sथऊbastien Szymanski <sebastien.szymanski@armadeus.com>
  *
  * Using code from:
  *  - sx865x.c
@@ -17,210 +18,210 @@
  *      Copyright (c) 2005 David Brownell
  *      Copyright (c) 2006 Nokia Corporation
  *  - corgi_ts.c
- *      Copyright (C) 2004-2005 Richard Purdie
+ *      Copyright (C) 2004-2005 Riअक्षरd Purdie
  *  - omap_ts.[hc], ads7846.h, ts_osk.c
  *      Copyright (C) 2002 MontaVista Software
  *      Copyright (C) 2004 Texas Instruments
  *      Copyright (C) 2005 Dirk Behme
  */
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/input/touchscreen.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/module.h>
-#include <linux/of.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/touchscreen.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
 
-/* register addresses */
-#define I2C_REG_TOUCH0			0x00
-#define I2C_REG_TOUCH1			0x01
-#define I2C_REG_CHANMASK		0x04
-#define I2C_REG_IRQMASK			0x22
-#define I2C_REG_IRQSRC			0x23
-#define I2C_REG_SOFTRESET		0x3f
+/* रेजिस्टर addresses */
+#घोषणा I2C_REG_TOUCH0			0x00
+#घोषणा I2C_REG_TOUCH1			0x01
+#घोषणा I2C_REG_CHANMASK		0x04
+#घोषणा I2C_REG_IRQMASK			0x22
+#घोषणा I2C_REG_IRQSRC			0x23
+#घोषणा I2C_REG_SOFTRESET		0x3f
 
-#define I2C_REG_SX8650_STAT		0x05
-#define SX8650_STAT_CONVIRQ		BIT(7)
+#घोषणा I2C_REG_SX8650_STAT		0x05
+#घोषणा SX8650_STAT_CONVIRQ		BIT(7)
 
 /* commands */
-#define CMD_READ_REGISTER		0x40
-#define CMD_PENTRG			0xe0
+#घोषणा CMD_READ_REGISTER		0x40
+#घोषणा CMD_PENTRG			0xe0
 
-/* value for I2C_REG_SOFTRESET */
-#define SOFTRESET_VALUE			0xde
+/* value क्रम I2C_REG_SOFTRESET */
+#घोषणा SOFTRESET_VALUE			0xde
 
-/* bits for I2C_REG_IRQSRC */
-#define IRQ_PENTOUCH_TOUCHCONVDONE	BIT(3)
-#define IRQ_PENRELEASE			BIT(2)
+/* bits क्रम I2C_REG_IRQSRC */
+#घोषणा IRQ_PENTOUCH_TOUCHCONVDONE	BIT(3)
+#घोषणा IRQ_PENRELEASE			BIT(2)
 
-/* bits for RegTouch1 */
-#define CONDIRQ				0x20
-#define RPDNT_100K			0x00
-#define FILT_7SA			0x03
+/* bits क्रम RegTouch1 */
+#घोषणा CONसूचीQ				0x20
+#घोषणा RPDNT_100K			0x00
+#घोषणा FILT_7SA			0x03
 
-/* bits for I2C_REG_CHANMASK */
-#define CONV_X				BIT(7)
-#define CONV_Y				BIT(6)
+/* bits क्रम I2C_REG_CHANMASK */
+#घोषणा CONV_X				BIT(7)
+#घोषणा CONV_Y				BIT(6)
 
-/* coordinates rate: higher nibble of CTRL0 register */
-#define RATE_MANUAL			0x00
-#define RATE_5000CPS			0xf0
+/* coordinates rate: higher nibble of CTRL0 रेजिस्टर */
+#घोषणा RATE_MANUAL			0x00
+#घोषणा RATE_5000CPS			0xf0
 
-/* power delay: lower nibble of CTRL0 register */
-#define POWDLY_1_1MS			0x0b
+/* घातer delay: lower nibble of CTRL0 रेजिस्टर */
+#घोषणा POWDLY_1_1MS			0x0b
 
-/* for sx8650, as we have no pen release IRQ there: timeout in ns following the
- * last PENIRQ after which we assume the pen is lifted.
+/* क्रम sx8650, as we have no pen release IRQ there: समयout in ns following the
+ * last PENIRQ after which we assume the pen is lअगरted.
  */
-#define SX8650_PENIRQ_TIMEOUT		msecs_to_jiffies(10)
+#घोषणा SX8650_PENIRQ_TIMEOUT		msecs_to_jअगरfies(10)
 
-#define MAX_12BIT			((1 << 12) - 1)
-#define MAX_I2C_READ_LEN		10 /* see datasheet section 5.1.5 */
+#घोषणा MAX_12BIT			((1 << 12) - 1)
+#घोषणा MAX_I2C_READ_LEN		10 /* see datasheet section 5.1.5 */
 
 /* channel definition */
-#define CH_X				0x00
-#define CH_Y				0x01
+#घोषणा CH_X				0x00
+#घोषणा CH_Y				0x01
 
-struct sx865x_data {
+काष्ठा sx865x_data अणु
 	u8 cmd_manual;
 	u8 chan_mask;
 	bool has_irq_penrelease;
 	bool has_reg_irqmask;
 	irq_handler_t irqh;
-};
+पूर्ण;
 
-struct sx8654 {
-	struct input_dev *input;
-	struct i2c_client *client;
-	struct gpio_desc *gpio_reset;
+काष्ठा sx8654 अणु
+	काष्ठा input_dev *input;
+	काष्ठा i2c_client *client;
+	काष्ठा gpio_desc *gpio_reset;
 
-	spinlock_t lock;	/* for input reporting from irq/timer */
-	struct timer_list timer;
+	spinlock_t lock;	/* क्रम input reporting from irq/समयr */
+	काष्ठा समयr_list समयr;
 
-	struct touchscreen_properties props;
+	काष्ठा touchscreen_properties props;
 
-	const struct sx865x_data *data;
-};
+	स्थिर काष्ठा sx865x_data *data;
+पूर्ण;
 
-static inline void sx865x_penrelease(struct sx8654 *ts)
-{
-	struct input_dev *input_dev = ts->input;
+अटल अंतरभूत व्योम sx865x_penrelease(काष्ठा sx8654 *ts)
+अणु
+	काष्ठा input_dev *input_dev = ts->input;
 
 	input_report_key(input_dev, BTN_TOUCH, 0);
 	input_sync(input_dev);
-}
+पूर्ण
 
-static void sx865x_penrelease_timer_handler(struct timer_list *t)
-{
-	struct sx8654 *ts = from_timer(ts, t, timer);
-	unsigned long flags;
+अटल व्योम sx865x_penrelease_समयr_handler(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sx8654 *ts = from_समयr(ts, t, समयr);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ts->lock, flags);
 	sx865x_penrelease(ts);
 	spin_unlock_irqrestore(&ts->lock, flags);
 	dev_dbg(&ts->client->dev, "penrelease by timer\n");
-}
+पूर्ण
 
-static irqreturn_t sx8650_irq(int irq, void *handle)
-{
-	struct sx8654 *ts = handle;
-	struct device *dev = &ts->client->dev;
-	int len, i;
-	unsigned long flags;
+अटल irqवापस_t sx8650_irq(पूर्णांक irq, व्योम *handle)
+अणु
+	काष्ठा sx8654 *ts = handle;
+	काष्ठा device *dev = &ts->client->dev;
+	पूर्णांक len, i;
+	अचिन्हित दीर्घ flags;
 	u8 stat;
 	u16 x, y;
 	u16 ch;
 	u16 chdata;
-	__be16 data[MAX_I2C_READ_LEN / sizeof(__be16)];
+	__be16 data[MAX_I2C_READ_LEN / माप(__be16)];
 	u8 nchan = hweight32(ts->data->chan_mask);
-	u8 readlen = nchan * sizeof(*data);
+	u8 पढ़ोlen = nchan * माप(*data);
 
-	stat = i2c_smbus_read_byte_data(ts->client, CMD_READ_REGISTER
+	stat = i2c_smbus_पढ़ो_byte_data(ts->client, CMD_READ_REGISTER
 						    | I2C_REG_SX8650_STAT);
 
-	if (!(stat & SX8650_STAT_CONVIRQ)) {
+	अगर (!(stat & SX8650_STAT_CONVIRQ)) अणु
 		dev_dbg(dev, "%s ignore stat [0x%02x]", __func__, stat);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	len = i2c_master_recv(ts->client, (u8 *)data, readlen);
-	if (len != readlen) {
+	len = i2c_master_recv(ts->client, (u8 *)data, पढ़ोlen);
+	अगर (len != पढ़ोlen) अणु
 		dev_dbg(dev, "ignore short recv (%d)\n", len);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	spin_lock_irqsave(&ts->lock, flags);
 
 	x = 0;
 	y = 0;
-	for (i = 0; i < nchan; i++) {
+	क्रम (i = 0; i < nchan; i++) अणु
 		chdata = be16_to_cpu(data[i]);
 
-		if (unlikely(chdata == 0xFFFF)) {
+		अगर (unlikely(chdata == 0xFFFF)) अणु
 			dev_dbg(dev, "invalid qualified data @ %d\n", i);
-			continue;
-		} else if (unlikely(chdata & 0x8000)) {
+			जारी;
+		पूर्ण अन्यथा अगर (unlikely(chdata & 0x8000)) अणु
 			dev_warn(dev, "hibit @ %d [0x%04x]\n", i, chdata);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ch = chdata >> 12;
-		if (ch == CH_X)
+		अगर (ch == CH_X)
 			x = chdata & MAX_12BIT;
-		else if (ch == CH_Y)
+		अन्यथा अगर (ch == CH_Y)
 			y = chdata & MAX_12BIT;
-		else
+		अन्यथा
 			dev_warn(dev, "unknown channel %d [0x%04x]\n", ch,
 				 chdata);
-	}
+	पूर्ण
 
 	touchscreen_report_pos(ts->input, &ts->props, x, y, false);
 	input_report_key(ts->input, BTN_TOUCH, 1);
 	input_sync(ts->input);
 	dev_dbg(dev, "point(%4d,%4d)\n", x, y);
 
-	mod_timer(&ts->timer, jiffies + SX8650_PENIRQ_TIMEOUT);
+	mod_समयr(&ts->समयr, jअगरfies + SX8650_PENIRQ_TIMEOUT);
 	spin_unlock_irqrestore(&ts->lock, flags);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t sx8654_irq(int irq, void *handle)
-{
-	struct sx8654 *sx8654 = handle;
-	int irqsrc;
+अटल irqवापस_t sx8654_irq(पूर्णांक irq, व्योम *handle)
+अणु
+	काष्ठा sx8654 *sx8654 = handle;
+	पूर्णांक irqsrc;
 	u8 data[4];
-	unsigned int x, y;
-	int retval;
+	अचिन्हित पूर्णांक x, y;
+	पूर्णांक retval;
 
-	irqsrc = i2c_smbus_read_byte_data(sx8654->client,
+	irqsrc = i2c_smbus_पढ़ो_byte_data(sx8654->client,
 					  CMD_READ_REGISTER | I2C_REG_IRQSRC);
 	dev_dbg(&sx8654->client->dev, "irqsrc = 0x%x", irqsrc);
 
-	if (irqsrc < 0)
-		goto out;
+	अगर (irqsrc < 0)
+		जाओ out;
 
-	if (irqsrc & IRQ_PENRELEASE) {
+	अगर (irqsrc & IRQ_PENRELEASE) अणु
 		dev_dbg(&sx8654->client->dev, "pen release interrupt");
 
 		input_report_key(sx8654->input, BTN_TOUCH, 0);
 		input_sync(sx8654->input);
-	}
+	पूर्ण
 
-	if (irqsrc & IRQ_PENTOUCH_TOUCHCONVDONE) {
+	अगर (irqsrc & IRQ_PENTOUCH_TOUCHCONVDONE) अणु
 		dev_dbg(&sx8654->client->dev, "pen touch interrupt");
 
-		retval = i2c_master_recv(sx8654->client, data, sizeof(data));
-		if (retval != sizeof(data))
-			goto out;
+		retval = i2c_master_recv(sx8654->client, data, माप(data));
+		अगर (retval != माप(data))
+			जाओ out;
 
 		/* invalid data */
-		if (unlikely(data[0] & 0x80 || data[2] & 0x80))
-			goto out;
+		अगर (unlikely(data[0] & 0x80 || data[2] & 0x80))
+			जाओ out;
 
 		x = ((data[0] & 0xf) << 8) | (data[1]);
 		y = ((data[2] & 0xf) << 8) | (data[3]);
@@ -231,135 +232,135 @@ static irqreturn_t sx8654_irq(int irq, void *handle)
 		input_sync(sx8654->input);
 
 		dev_dbg(&sx8654->client->dev, "point(%4d,%4d)\n", x, y);
-	}
+	पूर्ण
 
 out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int sx8654_reset(struct sx8654 *ts)
-{
-	int err;
+अटल पूर्णांक sx8654_reset(काष्ठा sx8654 *ts)
+अणु
+	पूर्णांक err;
 
-	if (ts->gpio_reset) {
+	अगर (ts->gpio_reset) अणु
 		gpiod_set_value_cansleep(ts->gpio_reset, 1);
-		udelay(2); /* Tpulse > 1µs */
+		udelay(2); /* Tpulse > 1तगs */
 		gpiod_set_value_cansleep(ts->gpio_reset, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&ts->client->dev, "NRST unavailable, try softreset\n");
-		err = i2c_smbus_write_byte_data(ts->client, I2C_REG_SOFTRESET,
+		err = i2c_smbus_ग_लिखो_byte_data(ts->client, I2C_REG_SOFTRESET,
 						SOFTRESET_VALUE);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sx8654_open(struct input_dev *dev)
-{
-	struct sx8654 *sx8654 = input_get_drvdata(dev);
-	struct i2c_client *client = sx8654->client;
-	int error;
+अटल पूर्णांक sx8654_खोलो(काष्ठा input_dev *dev)
+अणु
+	काष्ठा sx8654 *sx8654 = input_get_drvdata(dev);
+	काष्ठा i2c_client *client = sx8654->client;
+	पूर्णांक error;
 
 	/* enable pen trigger mode */
-	error = i2c_smbus_write_byte_data(client, I2C_REG_TOUCH0,
+	error = i2c_smbus_ग_लिखो_byte_data(client, I2C_REG_TOUCH0,
 					  RATE_5000CPS | POWDLY_1_1MS);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "writing to I2C_REG_TOUCH0 failed");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = i2c_smbus_write_byte(client, CMD_PENTRG);
-	if (error) {
+	error = i2c_smbus_ग_लिखो_byte(client, CMD_PENTRG);
+	अगर (error) अणु
 		dev_err(&client->dev, "writing command CMD_PENTRG failed");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	enable_irq(client->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sx8654_close(struct input_dev *dev)
-{
-	struct sx8654 *sx8654 = input_get_drvdata(dev);
-	struct i2c_client *client = sx8654->client;
-	int error;
+अटल व्योम sx8654_बंद(काष्ठा input_dev *dev)
+अणु
+	काष्ठा sx8654 *sx8654 = input_get_drvdata(dev);
+	काष्ठा i2c_client *client = sx8654->client;
+	पूर्णांक error;
 
 	disable_irq(client->irq);
 
-	if (!sx8654->data->has_irq_penrelease)
-		del_timer_sync(&sx8654->timer);
+	अगर (!sx8654->data->has_irq_penrelease)
+		del_समयr_sync(&sx8654->समयr);
 
 	/* enable manual mode mode */
-	error = i2c_smbus_write_byte(client, sx8654->data->cmd_manual);
-	if (error) {
+	error = i2c_smbus_ग_लिखो_byte(client, sx8654->data->cmd_manual);
+	अगर (error) अणु
 		dev_err(&client->dev, "writing command CMD_MANUAL failed");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	error = i2c_smbus_write_byte_data(client, I2C_REG_TOUCH0, RATE_MANUAL);
-	if (error) {
+	error = i2c_smbus_ग_लिखो_byte_data(client, I2C_REG_TOUCH0, RATE_MANUAL);
+	अगर (error) अणु
 		dev_err(&client->dev, "writing to I2C_REG_TOUCH0 failed");
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static int sx8654_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	struct sx8654 *sx8654;
-	struct input_dev *input;
-	int error;
+अटल पूर्णांक sx8654_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा sx8654 *sx8654;
+	काष्ठा input_dev *input;
+	पूर्णांक error;
 
-	if (!i2c_check_functionality(client->adapter,
+	अगर (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_WORD_DATA))
-		return -ENXIO;
+		वापस -ENXIO;
 
-	sx8654 = devm_kzalloc(&client->dev, sizeof(*sx8654), GFP_KERNEL);
-	if (!sx8654)
-		return -ENOMEM;
+	sx8654 = devm_kzalloc(&client->dev, माप(*sx8654), GFP_KERNEL);
+	अगर (!sx8654)
+		वापस -ENOMEM;
 
 	sx8654->gpio_reset = devm_gpiod_get_optional(&client->dev, "reset",
 						     GPIOD_OUT_HIGH);
-	if (IS_ERR(sx8654->gpio_reset)) {
+	अगर (IS_ERR(sx8654->gpio_reset)) अणु
 		error = PTR_ERR(sx8654->gpio_reset);
-		if (error != -EPROBE_DEFER)
+		अगर (error != -EPROBE_DEFER)
 			dev_err(&client->dev, "unable to get reset-gpio: %d\n",
 				error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 	dev_dbg(&client->dev, "got GPIO reset pin\n");
 
 	sx8654->data = device_get_match_data(&client->dev);
-	if (!sx8654->data)
-		sx8654->data = (const struct sx865x_data *)id->driver_data;
-	if (!sx8654->data) {
+	अगर (!sx8654->data)
+		sx8654->data = (स्थिर काष्ठा sx865x_data *)id->driver_data;
+	अगर (!sx8654->data) अणु
 		dev_err(&client->dev, "invalid or missing device data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!sx8654->data->has_irq_penrelease) {
+	अगर (!sx8654->data->has_irq_penrelease) अणु
 		dev_dbg(&client->dev, "use timer for penrelease\n");
-		timer_setup(&sx8654->timer, sx865x_penrelease_timer_handler, 0);
+		समयr_setup(&sx8654->समयr, sx865x_penrelease_समयr_handler, 0);
 		spin_lock_init(&sx8654->lock);
-	}
+	पूर्ण
 
 	input = devm_input_allocate_device(&client->dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	input->name = "SX8654 I2C Touchscreen";
 	input->id.bustype = BUS_I2C;
 	input->dev.parent = &client->dev;
-	input->open = sx8654_open;
-	input->close = sx8654_close;
+	input->खोलो = sx8654_खोलो;
+	input->बंद = sx8654_बंद;
 
-	__set_bit(INPUT_PROP_DIRECT, input->propbit);
+	__set_bit(INPUT_PROP_सूचीECT, input->propbit);
 	input_set_capability(input, EV_KEY, BTN_TOUCH);
-	input_set_abs_params(input, ABS_X, 0, MAX_12BIT, 0, 0);
-	input_set_abs_params(input, ABS_Y, 0, MAX_12BIT, 0, 0);
+	input_set_असल_params(input, ABS_X, 0, MAX_12BIT, 0, 0);
+	input_set_असल_params(input, ABS_Y, 0, MAX_12BIT, 0, 0);
 
 	touchscreen_parse_properties(input, false, &sx8654->props);
 
@@ -369,111 +370,111 @@ static int sx8654_probe(struct i2c_client *client,
 	input_set_drvdata(sx8654->input, sx8654);
 
 	error = sx8654_reset(sx8654);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "reset failed");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = i2c_smbus_write_byte_data(client, I2C_REG_CHANMASK,
+	error = i2c_smbus_ग_लिखो_byte_data(client, I2C_REG_CHANMASK,
 					  sx8654->data->chan_mask);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "writing to I2C_REG_CHANMASK failed");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	if (sx8654->data->has_reg_irqmask) {
-		error = i2c_smbus_write_byte_data(client, I2C_REG_IRQMASK,
+	अगर (sx8654->data->has_reg_irqmask) अणु
+		error = i2c_smbus_ग_लिखो_byte_data(client, I2C_REG_IRQMASK,
 						  IRQ_PENTOUCH_TOUCHCONVDONE |
 							IRQ_PENRELEASE);
-		if (error) {
+		अगर (error) अणु
 			dev_err(&client->dev, "writing I2C_REG_IRQMASK failed");
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
-	error = i2c_smbus_write_byte_data(client, I2C_REG_TOUCH1,
-					  CONDIRQ | RPDNT_100K | FILT_7SA);
-	if (error) {
+	error = i2c_smbus_ग_लिखो_byte_data(client, I2C_REG_TOUCH1,
+					  CONसूचीQ | RPDNT_100K | FILT_7SA);
+	अगर (error) अणु
 		dev_err(&client->dev, "writing to I2C_REG_TOUCH1 failed");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = devm_request_threaded_irq(&client->dev, client->irq,
-					  NULL, sx8654->data->irqh,
+	error = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+					  शून्य, sx8654->data->irqh,
 					  IRQF_ONESHOT,
 					  client->name, sx8654);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev,
 			"Failed to enable IRQ %d, error: %d\n",
 			client->irq, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	/* Disable the IRQ, we'll enable it in sx8654_open() */
+	/* Disable the IRQ, we'll enable it in sx8654_खोलो() */
 	disable_irq(client->irq);
 
-	error = input_register_device(sx8654->input);
-	if (error)
-		return error;
+	error = input_रेजिस्टर_device(sx8654->input);
+	अगर (error)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct sx865x_data sx8650_data = {
+अटल स्थिर काष्ठा sx865x_data sx8650_data = अणु
 	.cmd_manual		= 0xb0,
 	.has_irq_penrelease	= false,
 	.has_reg_irqmask	= false,
 	.chan_mask		= (CONV_X | CONV_Y),
 	.irqh			= sx8650_irq,
-};
+पूर्ण;
 
-static const struct sx865x_data sx8654_data = {
+अटल स्थिर काष्ठा sx865x_data sx8654_data = अणु
 	.cmd_manual		= 0xc0,
 	.has_irq_penrelease	= true,
 	.has_reg_irqmask	= true,
 	.chan_mask		= (CONV_X | CONV_Y),
 	.irqh			= sx8654_irq,
-};
+पूर्ण;
 
-#ifdef CONFIG_OF
-static const struct of_device_id sx8654_of_match[] = {
-	{
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id sx8654_of_match[] = अणु
+	अणु
 		.compatible = "semtech,sx8650",
 		.data = &sx8650_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "semtech,sx8654",
 		.data = &sx8654_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "semtech,sx8655",
 		.data = &sx8654_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "semtech,sx8656",
 		.data = &sx8654_data,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sx8654_of_match);
-#endif
+#पूर्ण_अगर
 
-static const struct i2c_device_id sx8654_id_table[] = {
-	{ .name = "semtech_sx8650", .driver_data = (long)&sx8650_data },
-	{ .name = "semtech_sx8654", .driver_data = (long)&sx8654_data },
-	{ .name = "semtech_sx8655", .driver_data = (long)&sx8654_data },
-	{ .name = "semtech_sx8656", .driver_data = (long)&sx8654_data },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id sx8654_id_table[] = अणु
+	अणु .name = "semtech_sx8650", .driver_data = (दीर्घ)&sx8650_data पूर्ण,
+	अणु .name = "semtech_sx8654", .driver_data = (दीर्घ)&sx8654_data पूर्ण,
+	अणु .name = "semtech_sx8655", .driver_data = (दीर्घ)&sx8654_data पूर्ण,
+	अणु .name = "semtech_sx8656", .driver_data = (दीर्घ)&sx8654_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, sx8654_id_table);
 
-static struct i2c_driver sx8654_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver sx8654_driver = अणु
+	.driver = अणु
 		.name = "sx8654",
 		.of_match_table = of_match_ptr(sx8654_of_match),
-	},
+	पूर्ण,
 	.id_table = sx8654_id_table,
 	.probe = sx8654_probe,
-};
+पूर्ण;
 module_i2c_driver(sx8654_driver);
 
-MODULE_AUTHOR("Sébastien Szymanski <sebastien.szymanski@armadeus.com>");
+MODULE_AUTHOR("Sथऊbastien Szymanski <sebastien.szymanski@armadeus.com>");
 MODULE_DESCRIPTION("Semtech SX8654 I2C Touchscreen Driver");
 MODULE_LICENSE("GPL");

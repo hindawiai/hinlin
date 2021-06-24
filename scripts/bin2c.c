@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Unloved program to convert a binary on stdin to a C include on stdout
+ * Unloved program to convert a binary on मानक_निवेश to a C include on मानक_निकास
  *
  * Jan 1999 Matt Mackall <mpm@selenic.com>
  *
@@ -7,30 +8,30 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
-#include <stdio.h>
+#समावेश <मानकपन.स>
 
-int main(int argc, char *argv[])
-{
-	int ch, total = 0;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक ch, total = 0;
 
-	if (argc > 1)
-		printf("const char %s[] %s=\n",
+	अगर (argc > 1)
+		म_लिखो("const char %s[] %s=\n",
 			argv[1], argc > 2 ? argv[2] : "");
 
-	do {
-		printf("\t\"");
-		while ((ch = getchar()) != EOF) {
+	करो अणु
+		म_लिखो("\t\"");
+		जबतक ((ch = अक्षर_लो()) != खातापूर्ण) अणु
 			total++;
-			printf("\\x%02x", ch);
-			if (total % 16 == 0)
-				break;
-		}
-		printf("\"\n");
-	} while (ch != EOF);
+			म_लिखो("\\x%02x", ch);
+			अगर (total % 16 == 0)
+				अवरोध;
+		पूर्ण
+		म_लिखो("\"\n");
+	पूर्ण जबतक (ch != खातापूर्ण);
 
-	if (argc > 1)
-		printf("\t;\n\n#include <linux/types.h>\n\nconst size_t %s_size = %d;\n",
+	अगर (argc > 1)
+		म_लिखो("\t;\n\n#include <linux/types.h>\n\nconst size_t %s_size = %d;\n",
 		       argv[1], total);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

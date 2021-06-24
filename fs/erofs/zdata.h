@@ -1,190 +1,191 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2018 HUAWEI, Inc.
  *             https://www.huawei.com/
  * Created by Gao Xiang <gaoxiang25@huawei.com>
  */
-#ifndef __EROFS_FS_ZDATA_H
-#define __EROFS_FS_ZDATA_H
+#अगर_अघोषित __EROFS_FS_ZDATA_H
+#घोषणा __EROFS_FS_ZDATA_H
 
-#include "internal.h"
-#include "zpvec.h"
+#समावेश "internal.h"
+#समावेश "zpvec.h"
 
-#define Z_EROFS_PCLUSTER_MAX_PAGES	(Z_EROFS_PCLUSTER_MAX_SIZE / PAGE_SIZE)
-#define Z_EROFS_NR_INLINE_PAGEVECS      3
+#घोषणा Z_EROFS_PCLUSTER_MAX_PAGES	(Z_EROFS_PCLUSTER_MAX_SIZE / PAGE_SIZE)
+#घोषणा Z_EROFS_NR_INLINE_PAGEVECS      3
 
 /*
  * Structure fields follow one of the following exclusion rules.
  *
- * I: Modifiable by initialization/destruction paths and read-only
- *    for everyone else;
+ * I: Modअगरiable by initialization/deकाष्ठाion paths and पढ़ो-only
+ *    क्रम everyone अन्यथा;
  *
- * L: Field should be protected by pageset lock;
+ * L: Field should be रक्षित by pageset lock;
  *
- * A: Field should be accessed / updated in atomic for parallelized code.
+ * A: Field should be accessed / updated in atomic क्रम parallelized code.
  */
-struct z_erofs_collection {
-	struct mutex lock;
+काष्ठा z_erofs_collection अणु
+	काष्ठा mutex lock;
 
 	/* I: page offset of start position of decompression */
-	unsigned short pageofs;
+	अचिन्हित लघु pageofs;
 
 	/* L: maximum relative page index in pagevec[] */
-	unsigned short nr_pages;
+	अचिन्हित लघु nr_pages;
 
 	/* L: total number of pages in pagevec[] */
-	unsigned int vcnt;
+	अचिन्हित पूर्णांक vcnt;
 
-	union {
-		/* L: inline a certain number of pagevecs for bootstrap */
+	जोड़ अणु
+		/* L: अंतरभूत a certain number of pagevecs क्रम bootstrap */
 		erofs_vtptr_t pagevec[Z_EROFS_NR_INLINE_PAGEVECS];
 
-		/* I: can be used to free the pcluster by RCU. */
-		struct rcu_head rcu;
-	};
-};
+		/* I: can be used to मुक्त the pcluster by RCU. */
+		काष्ठा rcu_head rcu;
+	पूर्ण;
+पूर्ण;
 
-#define Z_EROFS_PCLUSTER_FULL_LENGTH    0x00000001
-#define Z_EROFS_PCLUSTER_LENGTH_BIT     1
+#घोषणा Z_EROFS_PCLUSTER_FULL_LENGTH    0x00000001
+#घोषणा Z_EROFS_PCLUSTER_LENGTH_BIT     1
 
 /*
- * let's leave a type here in case of introducing
- * another tagged pointer later.
+ * let's leave a type here in हाल of पूर्णांकroducing
+ * another tagged poपूर्णांकer later.
  */
-typedef void *z_erofs_next_pcluster_t;
+प्रकार व्योम *z_erofs_next_pcluster_t;
 
-struct z_erofs_pcluster {
-	struct erofs_workgroup obj;
-	struct z_erofs_collection primary_collection;
+काष्ठा z_erofs_pcluster अणु
+	काष्ठा erofs_workgroup obj;
+	काष्ठा z_erofs_collection primary_collection;
 
-	/* A: point to next chained pcluster or TAILs */
+	/* A: poपूर्णांक to next chained pcluster or TAILs */
 	z_erofs_next_pcluster_t next;
 
-	/* A: lower limit of decompressed length and if full length or not */
-	unsigned int length;
+	/* A: lower limit of decompressed length and अगर full length or not */
+	अचिन्हित पूर्णांक length;
 
 	/* I: physical cluster size in pages */
-	unsigned short pclusterpages;
+	अचिन्हित लघु pclusterpages;
 
-	/* I: compression algorithm format */
-	unsigned char algorithmformat;
+	/* I: compression algorithm क्रमmat */
+	अचिन्हित अक्षर algorithmक्रमmat;
 
 	/* A: compressed pages (can be cached or inplaced pages) */
-	struct page *compressed_pages[];
-};
+	काष्ठा page *compressed_pages[];
+पूर्ण;
 
-#define z_erofs_primarycollection(pcluster) (&(pcluster)->primary_collection)
+#घोषणा z_erofs_primarycollection(pcluster) (&(pcluster)->primary_collection)
 
-/* let's avoid the valid 32-bit kernel addresses */
+/* let's aव्योम the valid 32-bit kernel addresses */
 
-/* the chained workgroup has't submitted io (still open) */
-#define Z_EROFS_PCLUSTER_TAIL           ((void *)0x5F0ECAFE)
-/* the chained workgroup has already submitted io */
-#define Z_EROFS_PCLUSTER_TAIL_CLOSED    ((void *)0x5F0EDEAD)
+/* the chained workgroup has't submitted io (still खोलो) */
+#घोषणा Z_EROFS_PCLUSTER_TAIL           ((व्योम *)0x5F0ECAFE)
+/* the chained workgroup has alपढ़ोy submitted io */
+#घोषणा Z_EROFS_PCLUSTER_TAIL_CLOSED    ((व्योम *)0x5F0EDEAD)
 
-#define Z_EROFS_PCLUSTER_NIL            (NULL)
+#घोषणा Z_EROFS_PCLUSTER_NIL            (शून्य)
 
-struct z_erofs_decompressqueue {
-	struct super_block *sb;
+काष्ठा z_erofs_decompressqueue अणु
+	काष्ठा super_block *sb;
 	atomic_t pending_bios;
 	z_erofs_next_pcluster_t head;
 
-	union {
-		wait_queue_head_t wait;
-		struct work_struct work;
-	} u;
-};
+	जोड़ अणु
+		रुको_queue_head_t रुको;
+		काष्ठा work_काष्ठा work;
+	पूर्ण u;
+पूर्ण;
 
-#define MNGD_MAPPING(sbi)	((sbi)->managed_cache->i_mapping)
-static inline bool erofs_page_is_managed(const struct erofs_sb_info *sbi,
-					 struct page *page)
-{
-	return page->mapping == MNGD_MAPPING(sbi);
-}
+#घोषणा MNGD_MAPPING(sbi)	((sbi)->managed_cache->i_mapping)
+अटल अंतरभूत bool erofs_page_is_managed(स्थिर काष्ठा erofs_sb_info *sbi,
+					 काष्ठा page *page)
+अणु
+	वापस page->mapping == MNGD_MAPPING(sbi);
+पूर्ण
 
-#define Z_EROFS_ONLINEPAGE_COUNT_BITS   2
-#define Z_EROFS_ONLINEPAGE_COUNT_MASK   ((1 << Z_EROFS_ONLINEPAGE_COUNT_BITS) - 1)
-#define Z_EROFS_ONLINEPAGE_INDEX_SHIFT  (Z_EROFS_ONLINEPAGE_COUNT_BITS)
+#घोषणा Z_EROFS_ONLINEPAGE_COUNT_BITS   2
+#घोषणा Z_EROFS_ONLINEPAGE_COUNT_MASK   ((1 << Z_EROFS_ONLINEPAGE_COUNT_BITS) - 1)
+#घोषणा Z_EROFS_ONLINEPAGE_INDEX_SHIFT  (Z_EROFS_ONLINEPAGE_COUNT_BITS)
 
 /*
- * waiters (aka. ongoing_packs): # to unlock the page
- * sub-index: 0 - for partial page, >= 1 full page sub-index
+ * रुकोers (aka. ongoing_packs): # to unlock the page
+ * sub-index: 0 - क्रम partial page, >= 1 full page sub-index
  */
-typedef atomic_t z_erofs_onlinepage_t;
+प्रकार atomic_t z_erofs_onlinepage_t;
 
 /* type punning */
-union z_erofs_onlinepage_converter {
+जोड़ z_erofs_onlinepage_converter अणु
 	z_erofs_onlinepage_t *o;
-	unsigned long *v;
-};
+	अचिन्हित दीर्घ *v;
+पूर्ण;
 
-static inline unsigned int z_erofs_onlinepage_index(struct page *page)
-{
-	union z_erofs_onlinepage_converter u;
+अटल अंतरभूत अचिन्हित पूर्णांक z_erofs_onlinepage_index(काष्ठा page *page)
+अणु
+	जोड़ z_erofs_onlinepage_converter u;
 
 	DBG_BUGON(!PagePrivate(page));
-	u.v = &page_private(page);
+	u.v = &page_निजी(page);
 
-	return atomic_read(u.o) >> Z_EROFS_ONLINEPAGE_INDEX_SHIFT;
-}
+	वापस atomic_पढ़ो(u.o) >> Z_EROFS_ONLINEPAGE_INDEX_SHIFT;
+पूर्ण
 
-static inline void z_erofs_onlinepage_init(struct page *page)
-{
-	union {
+अटल अंतरभूत व्योम z_erofs_onlinepage_init(काष्ठा page *page)
+अणु
+	जोड़ अणु
 		z_erofs_onlinepage_t o;
-		unsigned long v;
+		अचिन्हित दीर्घ v;
 	/* keep from being unlocked in advance */
-	} u = { .o = ATOMIC_INIT(1) };
+	पूर्ण u = अणु .o = ATOMIC_INIT(1) पूर्ण;
 
-	set_page_private(page, u.v);
+	set_page_निजी(page, u.v);
 	smp_wmb();
 	SetPagePrivate(page);
-}
+पूर्ण
 
-static inline void z_erofs_onlinepage_fixup(struct page *page,
-	uintptr_t index, bool down)
-{
-	union z_erofs_onlinepage_converter u = { .v = &page_private(page) };
-	int orig, orig_index, val;
+अटल अंतरभूत व्योम z_erofs_onlinepage_fixup(काष्ठा page *page,
+	uपूर्णांकptr_t index, bool करोwn)
+अणु
+	जोड़ z_erofs_onlinepage_converter u = अणु .v = &page_निजी(page) पूर्ण;
+	पूर्णांक orig, orig_index, val;
 
 repeat:
-	orig = atomic_read(u.o);
+	orig = atomic_पढ़ो(u.o);
 	orig_index = orig >> Z_EROFS_ONLINEPAGE_INDEX_SHIFT;
-	if (orig_index) {
-		if (!index)
-			return;
+	अगर (orig_index) अणु
+		अगर (!index)
+			वापस;
 
 		DBG_BUGON(orig_index != index);
-	}
+	पूर्ण
 
 	val = (index << Z_EROFS_ONLINEPAGE_INDEX_SHIFT) |
-		((orig & Z_EROFS_ONLINEPAGE_COUNT_MASK) + (unsigned int)down);
-	if (atomic_cmpxchg(u.o, orig, val) != orig)
-		goto repeat;
-}
+		((orig & Z_EROFS_ONLINEPAGE_COUNT_MASK) + (अचिन्हित पूर्णांक)करोwn);
+	अगर (atomic_cmpxchg(u.o, orig, val) != orig)
+		जाओ repeat;
+पूर्ण
 
-static inline void z_erofs_onlinepage_endio(struct page *page)
-{
-	union z_erofs_onlinepage_converter u;
-	unsigned int v;
+अटल अंतरभूत व्योम z_erofs_onlinepage_endio(काष्ठा page *page)
+अणु
+	जोड़ z_erofs_onlinepage_converter u;
+	अचिन्हित पूर्णांक v;
 
 	DBG_BUGON(!PagePrivate(page));
-	u.v = &page_private(page);
+	u.v = &page_निजी(page);
 
-	v = atomic_dec_return(u.o);
-	if (!(v & Z_EROFS_ONLINEPAGE_COUNT_MASK)) {
-		set_page_private(page, 0);
+	v = atomic_dec_वापस(u.o);
+	अगर (!(v & Z_EROFS_ONLINEPAGE_COUNT_MASK)) अणु
+		set_page_निजी(page, 0);
 		ClearPagePrivate(page);
-		if (!PageError(page))
+		अगर (!PageError(page))
 			SetPageUptodate(page);
 		unlock_page(page);
-	}
-	erofs_dbg("%s, page %p value %x", __func__, page, atomic_read(u.o));
-}
+	पूर्ण
+	erofs_dbg("%s, page %p value %x", __func__, page, atomic_पढ़ो(u.o));
+पूर्ण
 
-#define Z_EROFS_VMAP_ONSTACK_PAGES	\
-	min_t(unsigned int, THREAD_SIZE / 8 / sizeof(struct page *), 96U)
-#define Z_EROFS_VMAP_GLOBAL_PAGES	2048
+#घोषणा Z_EROFS_VMAP_ONSTACK_PAGES	\
+	min_t(अचिन्हित पूर्णांक, THREAD_SIZE / 8 / माप(काष्ठा page *), 96U)
+#घोषणा Z_EROFS_VMAP_GLOBAL_PAGES	2048
 
-#endif
+#पूर्ण_अगर
 

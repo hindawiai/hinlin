@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Combined GPIO and pin controller support for Renesas RZ/A2 (R7S9210) SoC
+ * Combined GPIO and pin controller support क्रम Renesas RZ/A2 (R7S9210) SoC
  *
- * Copyright (C) 2018 Chris Brandt
+ * Copyright (C) 2018 Chris Bअक्रमt
  */
 
 /*
@@ -10,194 +11,194 @@
  * family.
  */
 
-#include <linux/bitops.h>
-#include <linux/gpio/driver.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinmux.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinmux.h>
 
-#include "../core.h"
-#include "../pinmux.h"
+#समावेश "../core.h"
+#समावेश "../pinmux.h"
 
-#define DRIVER_NAME		"pinctrl-rza2"
+#घोषणा DRIVER_NAME		"pinctrl-rza2"
 
-#define RZA2_PINS_PER_PORT	8
-#define RZA2_PIN_ID_TO_PORT(id)	((id) / RZA2_PINS_PER_PORT)
-#define RZA2_PIN_ID_TO_PIN(id)	((id) % RZA2_PINS_PER_PORT)
+#घोषणा RZA2_PINS_PER_PORT	8
+#घोषणा RZA2_PIN_ID_TO_PORT(id)	((id) / RZA2_PINS_PER_PORT)
+#घोषणा RZA2_PIN_ID_TO_PIN(id)	((id) % RZA2_PINS_PER_PORT)
 
 /*
- * Use 16 lower bits [15:0] for pin identifier
- * Use 16 higher bits [31:16] for pin mux function
+ * Use 16 lower bits [15:0] क्रम pin identअगरier
+ * Use 16 higher bits [31:16] क्रम pin mux function
  */
-#define MUX_PIN_ID_MASK		GENMASK(15, 0)
-#define MUX_FUNC_MASK		GENMASK(31, 16)
-#define MUX_FUNC_OFFS		16
-#define MUX_FUNC(pinconf)	((pinconf & MUX_FUNC_MASK) >> MUX_FUNC_OFFS)
+#घोषणा MUX_PIN_ID_MASK		GENMASK(15, 0)
+#घोषणा MUX_FUNC_MASK		GENMASK(31, 16)
+#घोषणा MUX_FUNC_OFFS		16
+#घोषणा MUX_FUNC(pinconf)	((pinconf & MUX_FUNC_MASK) >> MUX_FUNC_OFFS)
 
-static const char port_names[] = "0123456789ABCDEFGHJKLM";
+अटल स्थिर अक्षर port_names[] = "0123456789ABCDEFGHJKLM";
 
-struct rza2_pinctrl_priv {
-	struct device *dev;
-	void __iomem *base;
+काष्ठा rza2_pinctrl_priv अणु
+	काष्ठा device *dev;
+	व्योम __iomem *base;
 
-	struct pinctrl_pin_desc *pins;
-	struct pinctrl_desc desc;
-	struct pinctrl_dev *pctl;
-	struct pinctrl_gpio_range gpio_range;
-	int npins;
-};
+	काष्ठा pinctrl_pin_desc *pins;
+	काष्ठा pinctrl_desc desc;
+	काष्ठा pinctrl_dev *pctl;
+	काष्ठा pinctrl_gpio_range gpio_range;
+	पूर्णांक npins;
+पूर्ण;
 
-#define RZA2_PDR(port)		(0x0000 + (port) * 2)	/* Direction 16-bit */
-#define RZA2_PODR(port)		(0x0040 + (port))	/* Output Data 8-bit */
-#define RZA2_PIDR(port)		(0x0060 + (port))	/* Input Data 8-bit */
-#define RZA2_PMR(port)		(0x0080 + (port))	/* Mode 8-bit */
-#define RZA2_DSCR(port)		(0x0140 + (port) * 2)	/* Drive 16-bit */
-#define RZA2_PFS(port, pin)	(0x0200 + ((port) * 8) + (pin))	/* Fnct 8-bit */
+#घोषणा RZA2_PDR(port)		(0x0000 + (port) * 2)	/* Direction 16-bit */
+#घोषणा RZA2_PODR(port)		(0x0040 + (port))	/* Output Data 8-bit */
+#घोषणा RZA2_PIDR(port)		(0x0060 + (port))	/* Input Data 8-bit */
+#घोषणा RZA2_PMR(port)		(0x0080 + (port))	/* Mode 8-bit */
+#घोषणा RZA2_DSCR(port)		(0x0140 + (port) * 2)	/* Drive 16-bit */
+#घोषणा RZA2_PFS(port, pin)	(0x0200 + ((port) * 8) + (pin))	/* Fnct 8-bit */
 
-#define RZA2_PWPR		0x02ff	/* Write Protect 8-bit */
-#define RZA2_PFENET		0x0820	/* Ethernet Pins 8-bit */
-#define RZA2_PPOC		0x0900	/* Dedicated Pins 32-bit */
-#define RZA2_PHMOMO		0x0980	/* Peripheral Pins 32-bit */
-#define RZA2_PCKIO		0x09d0	/* CKIO Drive 8-bit */
+#घोषणा RZA2_PWPR		0x02ff	/* Write Protect 8-bit */
+#घोषणा RZA2_PFENET		0x0820	/* Ethernet Pins 8-bit */
+#घोषणा RZA2_PPOC		0x0900	/* Dedicated Pins 32-bit */
+#घोषणा RZA2_PHMOMO		0x0980	/* Peripheral Pins 32-bit */
+#घोषणा RZA2_PCKIO		0x09d0	/* CKIO Drive 8-bit */
 
-#define RZA2_PDR_INPUT		0x02
-#define RZA2_PDR_OUTPUT		0x03
-#define RZA2_PDR_MASK		0x03
+#घोषणा RZA2_PDR_INPUT		0x02
+#घोषणा RZA2_PDR_OUTPUT		0x03
+#घोषणा RZA2_PDR_MASK		0x03
 
-#define PWPR_B0WI		BIT(7)	/* Bit Write Disable */
-#define PWPR_PFSWE		BIT(6)	/* PFS Register Write Enable */
-#define PFS_ISEL		BIT(6)	/* Interrupt Select */
+#घोषणा PWPR_B0WI		BIT(7)	/* Bit Write Disable */
+#घोषणा PWPR_PFSWE		BIT(6)	/* PFS Register Write Enable */
+#घोषणा PFS_ISEL		BIT(6)	/* Interrupt Select */
 
-static void rza2_set_pin_function(void __iomem *pfc_base, u8 port, u8 pin,
+अटल व्योम rza2_set_pin_function(व्योम __iomem *pfc_base, u8 port, u8 pin,
 				  u8 func)
-{
+अणु
 	u16 mask16;
 	u16 reg16;
 	u8 reg8;
 
 	/* Set pin to 'Non-use (Hi-z input protection)'  */
-	reg16 = readw(pfc_base + RZA2_PDR(port));
+	reg16 = पढ़ोw(pfc_base + RZA2_PDR(port));
 	mask16 = RZA2_PDR_MASK << (pin * 2);
 	reg16 &= ~mask16;
-	writew(reg16, pfc_base + RZA2_PDR(port));
+	ग_लिखोw(reg16, pfc_base + RZA2_PDR(port));
 
-	/* Temporarily switch to GPIO */
-	reg8 = readb(pfc_base + RZA2_PMR(port));
+	/* Temporarily चयन to GPIO */
+	reg8 = पढ़ोb(pfc_base + RZA2_PMR(port));
 	reg8 &= ~BIT(pin);
-	writeb(reg8, pfc_base + RZA2_PMR(port));
+	ग_लिखोb(reg8, pfc_base + RZA2_PMR(port));
 
 	/* PFS Register Write Protect : OFF */
-	writeb(0x00, pfc_base + RZA2_PWPR);		/* B0WI=0, PFSWE=0 */
-	writeb(PWPR_PFSWE, pfc_base + RZA2_PWPR);	/* B0WI=0, PFSWE=1 */
+	ग_लिखोb(0x00, pfc_base + RZA2_PWPR);		/* B0WI=0, PFSWE=0 */
+	ग_लिखोb(PWPR_PFSWE, pfc_base + RZA2_PWPR);	/* B0WI=0, PFSWE=1 */
 
-	/* Set Pin function (interrupt disabled, ISEL=0) */
-	writeb(func, pfc_base + RZA2_PFS(port, pin));
+	/* Set Pin function (पूर्णांकerrupt disabled, ISEL=0) */
+	ग_लिखोb(func, pfc_base + RZA2_PFS(port, pin));
 
 	/* PFS Register Write Protect : ON */
-	writeb(0x00, pfc_base + RZA2_PWPR);	/* B0WI=0, PFSWE=0 */
-	writeb(0x80, pfc_base + RZA2_PWPR);	/* B0WI=1, PFSWE=0 */
+	ग_लिखोb(0x00, pfc_base + RZA2_PWPR);	/* B0WI=0, PFSWE=0 */
+	ग_लिखोb(0x80, pfc_base + RZA2_PWPR);	/* B0WI=1, PFSWE=0 */
 
 	/* Port Mode  : Peripheral module pin functions */
-	reg8 = readb(pfc_base + RZA2_PMR(port));
+	reg8 = पढ़ोb(pfc_base + RZA2_PMR(port));
 	reg8 |= BIT(pin);
-	writeb(reg8, pfc_base + RZA2_PMR(port));
-}
+	ग_लिखोb(reg8, pfc_base + RZA2_PMR(port));
+पूर्ण
 
-static void rza2_pin_to_gpio(void __iomem *pfc_base, unsigned int offset,
+अटल व्योम rza2_pin_to_gpio(व्योम __iomem *pfc_base, अचिन्हित पूर्णांक offset,
 			     u8 dir)
-{
+अणु
 	u8 port = RZA2_PIN_ID_TO_PORT(offset);
 	u8 pin = RZA2_PIN_ID_TO_PIN(offset);
 	u16 mask16;
 	u16 reg16;
 
-	reg16 = readw(pfc_base + RZA2_PDR(port));
+	reg16 = पढ़ोw(pfc_base + RZA2_PDR(port));
 	mask16 = RZA2_PDR_MASK << (pin * 2);
 	reg16 &= ~mask16;
 
-	if (dir)
+	अगर (dir)
 		reg16 |= RZA2_PDR_INPUT << (pin * 2);	/* pin as input */
-	else
+	अन्यथा
 		reg16 |= RZA2_PDR_OUTPUT << (pin * 2);	/* pin as output */
 
-	writew(reg16, pfc_base + RZA2_PDR(port));
-}
+	ग_लिखोw(reg16, pfc_base + RZA2_PDR(port));
+पूर्ण
 
-static int rza2_chip_get_direction(struct gpio_chip *chip, unsigned int offset)
-{
-	struct rza2_pinctrl_priv *priv = gpiochip_get_data(chip);
+अटल पूर्णांक rza2_chip_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा rza2_pinctrl_priv *priv = gpiochip_get_data(chip);
 	u8 port = RZA2_PIN_ID_TO_PORT(offset);
 	u8 pin = RZA2_PIN_ID_TO_PIN(offset);
 	u16 reg16;
 
-	reg16 = readw(priv->base + RZA2_PDR(port));
+	reg16 = पढ़ोw(priv->base + RZA2_PDR(port));
 	reg16 = (reg16 >> (pin * 2)) & RZA2_PDR_MASK;
 
-	if (reg16 == RZA2_PDR_OUTPUT)
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (reg16 == RZA2_PDR_OUTPUT)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	if (reg16 == RZA2_PDR_INPUT)
-		return GPIO_LINE_DIRECTION_IN;
+	अगर (reg16 == RZA2_PDR_INPUT)
+		वापस GPIO_LINE_सूचीECTION_IN;
 
 	/*
-	 * This GPIO controller has a default Hi-Z state that is not input or
-	 * output, so force the pin to input now.
+	 * This GPIO controller has a शेष Hi-Z state that is not input or
+	 * output, so क्रमce the pin to input now.
 	 */
 	rza2_pin_to_gpio(priv->base, offset, 1);
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int rza2_chip_direction_input(struct gpio_chip *chip,
-				     unsigned int offset)
-{
-	struct rza2_pinctrl_priv *priv = gpiochip_get_data(chip);
+अटल पूर्णांक rza2_chip_direction_input(काष्ठा gpio_chip *chip,
+				     अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा rza2_pinctrl_priv *priv = gpiochip_get_data(chip);
 
 	rza2_pin_to_gpio(priv->base, offset, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rza2_chip_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct rza2_pinctrl_priv *priv = gpiochip_get_data(chip);
+अटल पूर्णांक rza2_chip_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा rza2_pinctrl_priv *priv = gpiochip_get_data(chip);
 	u8 port = RZA2_PIN_ID_TO_PORT(offset);
 	u8 pin = RZA2_PIN_ID_TO_PIN(offset);
 
-	return !!(readb(priv->base + RZA2_PIDR(port)) & BIT(pin));
-}
+	वापस !!(पढ़ोb(priv->base + RZA2_PIDR(port)) & BIT(pin));
+पूर्ण
 
-static void rza2_chip_set(struct gpio_chip *chip, unsigned int offset,
-			  int value)
-{
-	struct rza2_pinctrl_priv *priv = gpiochip_get_data(chip);
+अटल व्योम rza2_chip_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+			  पूर्णांक value)
+अणु
+	काष्ठा rza2_pinctrl_priv *priv = gpiochip_get_data(chip);
 	u8 port = RZA2_PIN_ID_TO_PORT(offset);
 	u8 pin = RZA2_PIN_ID_TO_PIN(offset);
 	u8 new_value;
 
-	new_value = readb(priv->base + RZA2_PODR(port));
+	new_value = पढ़ोb(priv->base + RZA2_PODR(port));
 
-	if (value)
+	अगर (value)
 		new_value |= BIT(pin);
-	else
+	अन्यथा
 		new_value &= ~BIT(pin);
 
-	writeb(new_value, priv->base + RZA2_PODR(port));
-}
+	ग_लिखोb(new_value, priv->base + RZA2_PODR(port));
+पूर्ण
 
-static int rza2_chip_direction_output(struct gpio_chip *chip,
-				      unsigned int offset, int val)
-{
-	struct rza2_pinctrl_priv *priv = gpiochip_get_data(chip);
+अटल पूर्णांक rza2_chip_direction_output(काष्ठा gpio_chip *chip,
+				      अचिन्हित पूर्णांक offset, पूर्णांक val)
+अणु
+	काष्ठा rza2_pinctrl_priv *priv = gpiochip_get_data(chip);
 
 	rza2_chip_set(chip, offset, val);
 	rza2_pin_to_gpio(priv->base, offset, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char * const rza2_gpio_names[] = {
+अटल स्थिर अक्षर * स्थिर rza2_gpio_names[] = अणु
 	"P0_0", "P0_1", "P0_2", "P0_3", "P0_4", "P0_5", "P0_6", "P0_7",
 	"P1_0", "P1_1", "P1_2", "P1_3", "P1_4", "P1_5", "P1_6", "P1_7",
 	"P2_0", "P2_1", "P2_2", "P2_3", "P2_4", "P2_5", "P2_6", "P2_7",
@@ -216,14 +217,14 @@ static const char * const rza2_gpio_names[] = {
 	"PF_0", "PF_1", "PF_2", "PF_3", "PF_4", "PF_5", "PF_6", "PF_7",
 	"PG_0", "PG_1", "PG_2", "PG_3", "PG_4", "PG_5", "PG_6", "PG_7",
 	"PH_0", "PH_1", "PH_2", "PH_3", "PH_4", "PH_5", "PH_6", "PH_7",
-	/* port I does not exist */
+	/* port I करोes not exist */
 	"PJ_0", "PJ_1", "PJ_2", "PJ_3", "PJ_4", "PJ_5", "PJ_6", "PJ_7",
 	"PK_0", "PK_1", "PK_2", "PK_3", "PK_4", "PK_5", "PK_6", "PK_7",
 	"PL_0", "PL_1", "PL_2", "PL_3", "PL_4", "PL_5", "PL_6", "PL_7",
 	"PM_0", "PM_1", "PM_2", "PM_3", "PM_4", "PM_5", "PM_6", "PM_7",
-};
+पूर्ण;
 
-static struct gpio_chip chip = {
+अटल काष्ठा gpio_chip chip = अणु
 	.names = rza2_gpio_names,
 	.base = -1,
 	.get_direction = rza2_chip_get_direction,
@@ -231,32 +232,32 @@ static struct gpio_chip chip = {
 	.direction_output = rza2_chip_direction_output,
 	.get = rza2_chip_get,
 	.set = rza2_chip_set,
-};
+पूर्ण;
 
-static int rza2_gpio_register(struct rza2_pinctrl_priv *priv)
-{
-	struct device_node *np = priv->dev->of_node;
-	struct of_phandle_args of_args;
-	int ret;
+अटल पूर्णांक rza2_gpio_रेजिस्टर(काष्ठा rza2_pinctrl_priv *priv)
+अणु
+	काष्ठा device_node *np = priv->dev->of_node;
+	काष्ठा of_phandle_args of_args;
+	पूर्णांक ret;
 
-	chip.label = devm_kasprintf(priv->dev, GFP_KERNEL, "%pOFn", np);
+	chip.label = devm_kaप्र_लिखो(priv->dev, GFP_KERNEL, "%pOFn", np);
 	chip.of_node = np;
 	chip.parent = priv->dev;
 	chip.ngpio = priv->npins;
 
 	ret = of_parse_phandle_with_fixed_args(np, "gpio-ranges", 3, 0,
 					       &of_args);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->dev, "Unable to parse gpio-ranges\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if ((of_args.args[0] != 0) ||
+	अगर ((of_args.args[0] != 0) ||
 	    (of_args.args[1] != 0) ||
-	    (of_args.args[2] != priv->npins)) {
+	    (of_args.args[2] != priv->npins)) अणु
 		dev_err(priv->dev, "gpio-ranges does not match selected SOC\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	priv->gpio_range.id = 0;
 	priv->gpio_range.pin_base = priv->gpio_range.base = 0;
 	priv->gpio_range.npins = priv->npins;
@@ -265,178 +266,178 @@ static int rza2_gpio_register(struct rza2_pinctrl_priv *priv)
 
 	/* Register our gpio chip with gpiolib */
 	ret = devm_gpiochip_add_data(priv->dev, &chip, priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Register pin range with pinctrl core */
 	pinctrl_add_gpio_range(priv->pctl, &priv->gpio_range);
 
 	dev_dbg(priv->dev, "Registered gpio controller\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rza2_pinctrl_register(struct rza2_pinctrl_priv *priv)
-{
-	struct pinctrl_pin_desc *pins;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक rza2_pinctrl_रेजिस्टर(काष्ठा rza2_pinctrl_priv *priv)
+अणु
+	काष्ठा pinctrl_pin_desc *pins;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	pins = devm_kcalloc(priv->dev, priv->npins, sizeof(*pins), GFP_KERNEL);
-	if (!pins)
-		return -ENOMEM;
+	pins = devm_kसुस्मृति(priv->dev, priv->npins, माप(*pins), GFP_KERNEL);
+	अगर (!pins)
+		वापस -ENOMEM;
 
 	priv->pins = pins;
 	priv->desc.pins = pins;
 	priv->desc.npins = priv->npins;
 
-	for (i = 0; i < priv->npins; i++) {
+	क्रम (i = 0; i < priv->npins; i++) अणु
 		pins[i].number = i;
 		pins[i].name = rza2_gpio_names[i];
-	}
+	पूर्ण
 
-	ret = devm_pinctrl_register_and_init(priv->dev, &priv->desc, priv,
+	ret = devm_pinctrl_रेजिस्टर_and_init(priv->dev, &priv->desc, priv,
 					     &priv->pctl);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->dev, "pinctrl registration failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = pinctrl_enable(priv->pctl);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->dev, "pinctrl enable failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = rza2_gpio_register(priv);
-	if (ret) {
+	ret = rza2_gpio_रेजिस्टर(priv);
+	अगर (ret) अणु
 		dev_err(priv->dev, "GPIO registration failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * For each DT node, create a single pin mapping. That pin mapping will only
  * contain a single group of pins, and that group of pins will only have a
  * single function that can be selected.
  */
-static int rza2_dt_node_to_map(struct pinctrl_dev *pctldev,
-			       struct device_node *np,
-			       struct pinctrl_map **map,
-			       unsigned int *num_maps)
-{
-	struct rza2_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	unsigned int *pins, *psel_val;
-	int i, ret, npins, gsel, fsel;
-	struct property *of_pins;
-	const char **pin_fn;
+अटल पूर्णांक rza2_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
+			       काष्ठा device_node *np,
+			       काष्ठा pinctrl_map **map,
+			       अचिन्हित पूर्णांक *num_maps)
+अणु
+	काष्ठा rza2_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित पूर्णांक *pins, *psel_val;
+	पूर्णांक i, ret, npins, gsel, fsel;
+	काष्ठा property *of_pins;
+	स्थिर अक्षर **pin_fn;
 
 	/* Find out how many pins to map */
-	of_pins = of_find_property(np, "pinmux", NULL);
-	if (!of_pins) {
+	of_pins = of_find_property(np, "pinmux", शून्य);
+	अगर (!of_pins) अणु
 		dev_info(priv->dev, "Missing pinmux property\n");
-		return -ENOENT;
-	}
-	npins = of_pins->length / sizeof(u32);
+		वापस -ENOENT;
+	पूर्ण
+	npins = of_pins->length / माप(u32);
 
-	pins = devm_kcalloc(priv->dev, npins, sizeof(*pins), GFP_KERNEL);
-	psel_val = devm_kcalloc(priv->dev, npins, sizeof(*psel_val),
+	pins = devm_kसुस्मृति(priv->dev, npins, माप(*pins), GFP_KERNEL);
+	psel_val = devm_kसुस्मृति(priv->dev, npins, माप(*psel_val),
 				GFP_KERNEL);
-	pin_fn = devm_kzalloc(priv->dev, sizeof(*pin_fn), GFP_KERNEL);
-	if (!pins || !psel_val || !pin_fn)
-		return -ENOMEM;
+	pin_fn = devm_kzalloc(priv->dev, माप(*pin_fn), GFP_KERNEL);
+	अगर (!pins || !psel_val || !pin_fn)
+		वापस -ENOMEM;
 
 	/* Collect pin locations and mux settings from DT properties */
-	for (i = 0; i < npins; ++i) {
+	क्रम (i = 0; i < npins; ++i) अणु
 		u32 value;
 
-		ret = of_property_read_u32_index(np, "pinmux", i, &value);
-		if (ret)
-			return ret;
+		ret = of_property_पढ़ो_u32_index(np, "pinmux", i, &value);
+		अगर (ret)
+			वापस ret;
 		pins[i] = value & MUX_PIN_ID_MASK;
 		psel_val[i] = MUX_FUNC(value);
-	}
+	पूर्ण
 
-	/* Register a single pin group listing all the pins we read from DT */
-	gsel = pinctrl_generic_add_group(pctldev, np->name, pins, npins, NULL);
-	if (gsel < 0)
-		return gsel;
+	/* Register a single pin group listing all the pins we पढ़ो from DT */
+	gsel = pinctrl_generic_add_group(pctldev, np->name, pins, npins, शून्य);
+	अगर (gsel < 0)
+		वापस gsel;
 
 	/*
 	 * Register a single group function where the 'data' is an array PSEL
-	 * register values read from DT.
+	 * रेजिस्टर values पढ़ो from DT.
 	 */
 	pin_fn[0] = np->name;
 	fsel = pinmux_generic_add_function(pctldev, np->name, pin_fn, 1,
 					   psel_val);
-	if (fsel < 0) {
+	अगर (fsel < 0) अणु
 		ret = fsel;
-		goto remove_group;
-	}
+		जाओ हटाओ_group;
+	पूर्ण
 
 	dev_dbg(priv->dev, "Parsed %pOF with %d pins\n", np, npins);
 
 	/* Create map where to retrieve function and mux settings from */
 	*num_maps = 0;
-	*map = kzalloc(sizeof(**map), GFP_KERNEL);
-	if (!*map) {
+	*map = kzalloc(माप(**map), GFP_KERNEL);
+	अगर (!*map) अणु
 		ret = -ENOMEM;
-		goto remove_function;
-	}
+		जाओ हटाओ_function;
+	पूर्ण
 
 	(*map)->type = PIN_MAP_TYPE_MUX_GROUP;
 	(*map)->data.mux.group = np->name;
 	(*map)->data.mux.function = np->name;
 	*num_maps = 1;
 
-	return 0;
+	वापस 0;
 
-remove_function:
-	pinmux_generic_remove_function(pctldev, fsel);
+हटाओ_function:
+	pinmux_generic_हटाओ_function(pctldev, fsel);
 
-remove_group:
-	pinctrl_generic_remove_group(pctldev, gsel);
+हटाओ_group:
+	pinctrl_generic_हटाओ_group(pctldev, gsel);
 
 	dev_err(priv->dev, "Unable to parse DT node %s\n", np->name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void rza2_dt_free_map(struct pinctrl_dev *pctldev,
-			     struct pinctrl_map *map, unsigned int num_maps)
-{
-	kfree(map);
-}
+अटल व्योम rza2_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
+			     काष्ठा pinctrl_map *map, अचिन्हित पूर्णांक num_maps)
+अणु
+	kमुक्त(map);
+पूर्ण
 
-static const struct pinctrl_ops rza2_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops rza2_pinctrl_ops = अणु
 	.get_groups_count	= pinctrl_generic_get_group_count,
 	.get_group_name		= pinctrl_generic_get_group_name,
 	.get_group_pins		= pinctrl_generic_get_group_pins,
 	.dt_node_to_map		= rza2_dt_node_to_map,
-	.dt_free_map		= rza2_dt_free_map,
-};
+	.dt_मुक्त_map		= rza2_dt_मुक्त_map,
+पूर्ण;
 
-static int rza2_set_mux(struct pinctrl_dev *pctldev, unsigned int selector,
-			unsigned int group)
-{
-	struct rza2_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	struct function_desc *func;
-	unsigned int i, *psel_val;
-	struct group_desc *grp;
+अटल पूर्णांक rza2_set_mux(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक selector,
+			अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा rza2_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा function_desc *func;
+	अचिन्हित पूर्णांक i, *psel_val;
+	काष्ठा group_desc *grp;
 
 	grp = pinctrl_generic_get_group(pctldev, group);
-	if (!grp)
-		return -EINVAL;
+	अगर (!grp)
+		वापस -EINVAL;
 
 	func = pinmux_generic_get_function(pctldev, selector);
-	if (!func)
-		return -EINVAL;
+	अगर (!func)
+		वापस -EINVAL;
 
 	psel_val = func->data;
 
-	for (i = 0; i < grp->num_pins; ++i) {
+	क्रम (i = 0; i < grp->num_pins; ++i) अणु
 		dev_dbg(priv->dev, "Setting P%c_%d to PSEL=%d\n",
 			port_names[RZA2_PIN_ID_TO_PORT(grp->pins[i])],
 			RZA2_PIN_ID_TO_PIN(grp->pins[i]),
@@ -446,37 +447,37 @@ static int rza2_set_mux(struct pinctrl_dev *pctldev, unsigned int selector,
 			RZA2_PIN_ID_TO_PORT(grp->pins[i]),
 			RZA2_PIN_ID_TO_PIN(grp->pins[i]),
 			psel_val[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops rza2_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops rza2_pinmux_ops = अणु
 	.get_functions_count	= pinmux_generic_get_function_count,
 	.get_function_name	= pinmux_generic_get_function_name,
 	.get_function_groups	= pinmux_generic_get_function_groups,
 	.set_mux		= rza2_set_mux,
 	.strict			= true,
-};
+पूर्ण;
 
-static int rza2_pinctrl_probe(struct platform_device *pdev)
-{
-	struct rza2_pinctrl_priv *priv;
-	int ret;
+अटल पूर्णांक rza2_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rza2_pinctrl_priv *priv;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->dev = &pdev->dev;
 
-	priv->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(priv->base))
-		return PTR_ERR(priv->base);
+	priv->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(priv->base))
+		वापस PTR_ERR(priv->base);
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	priv->npins = (int)(uintptr_t)of_device_get_match_data(&pdev->dev) *
+	priv->npins = (पूर्णांक)(uपूर्णांकptr_t)of_device_get_match_data(&pdev->dev) *
 		      RZA2_PINS_PER_PORT;
 
 	priv->desc.name		= DRIVER_NAME;
@@ -484,33 +485,33 @@ static int rza2_pinctrl_probe(struct platform_device *pdev)
 	priv->desc.pmxops	= &rza2_pinmux_ops;
 	priv->desc.owner	= THIS_MODULE;
 
-	ret = rza2_pinctrl_register(priv);
-	if (ret)
-		return ret;
+	ret = rza2_pinctrl_रेजिस्टर(priv);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(&pdev->dev, "Registered ports P0 - P%c\n",
 		 port_names[priv->desc.npins / RZA2_PINS_PER_PORT - 1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id rza2_pinctrl_of_match[] = {
-	{ .compatible = "renesas,r7s9210-pinctrl", .data = (void *)22, },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id rza2_pinctrl_of_match[] = अणु
+	अणु .compatible = "renesas,r7s9210-pinctrl", .data = (व्योम *)22, पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static struct platform_driver rza2_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver rza2_pinctrl_driver = अणु
+	.driver = अणु
 		.name = DRIVER_NAME,
 		.of_match_table = rza2_pinctrl_of_match,
-	},
+	पूर्ण,
 	.probe = rza2_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init rza2_pinctrl_init(void)
-{
-	return platform_driver_register(&rza2_pinctrl_driver);
-}
+अटल पूर्णांक __init rza2_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&rza2_pinctrl_driver);
+पूर्ण
 core_initcall(rza2_pinctrl_init);
 
 MODULE_AUTHOR("Chris Brandt <chris.brandt@renesas.com>");

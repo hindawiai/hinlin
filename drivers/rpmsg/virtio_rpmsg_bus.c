@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Virtio-based remote processor messaging bus
  *
@@ -9,118 +10,118 @@
  * Brian Swetland <swetland@google.com>
  */
 
-#define pr_fmt(fmt) "%s: " fmt, __func__
+#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
 
-#include <linux/dma-mapping.h>
-#include <linux/idr.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of_device.h>
-#include <linux/rpmsg.h>
-#include <linux/rpmsg/byteorder.h>
-#include <linux/rpmsg/ns.h>
-#include <linux/scatterlist.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/virtio.h>
-#include <linux/virtio_ids.h>
-#include <linux/virtio_config.h>
-#include <linux/wait.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/rpmsg.h>
+#समावेश <linux/rpmsg/byteorder.h>
+#समावेश <linux/rpmsg/ns.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/virtपन.स>
+#समावेश <linux/virtio_ids.h>
+#समावेश <linux/virtio_config.h>
+#समावेश <linux/रुको.h>
 
-#include "rpmsg_internal.h"
+#समावेश "rpmsg_internal.h"
 
 /**
- * struct virtproc_info - virtual remote processor state
+ * काष्ठा virtproc_info - भव remote processor state
  * @vdev:	the virtio device
  * @rvq:	rx virtqueue
  * @svq:	tx virtqueue
  * @rbufs:	kernel address of rx buffers
  * @sbufs:	kernel address of tx buffers
- * @num_bufs:	total number of buffers for rx and tx
+ * @num_bufs:	total number of buffers क्रम rx and tx
  * @buf_size:   size of one rx or tx buffer
  * @last_sbuf:	index of last tx buffer used
  * @bufs_dma:	dma base addr of the buffers
  * @tx_lock:	protects svq, sbufs and sleepers, to allow concurrent senders.
- *		sending a message might require waking up a dozing remote
+ *		sending a message might require waking up a करोzing remote
  *		processor, which involves sleeping, hence the mutex.
- * @endpoints:	idr of local endpoints, allows fast retrieval
- * @endpoints_lock: lock of the endpoints set
- * @sendq:	wait queue of sending contexts waiting for a tx buffers
- * @sleepers:	number of senders that are waiting for a tx buffer
+ * @endpoपूर्णांकs:	idr of local endpoपूर्णांकs, allows fast retrieval
+ * @endpoपूर्णांकs_lock: lock of the endpoपूर्णांकs set
+ * @sendq:	रुको queue of sending contexts रुकोing क्रम a tx buffers
+ * @sleepers:	number of senders that are रुकोing क्रम a tx buffer
  *
- * This structure stores the rpmsg state of a given virtio remote processor
- * device (there might be several virtio proc devices for each physical
+ * This काष्ठाure stores the rpmsg state of a given virtio remote processor
+ * device (there might be several virtio proc devices क्रम each physical
  * remote processor).
  */
-struct virtproc_info {
-	struct virtio_device *vdev;
-	struct virtqueue *rvq, *svq;
-	void *rbufs, *sbufs;
-	unsigned int num_bufs;
-	unsigned int buf_size;
-	int last_sbuf;
+काष्ठा virtproc_info अणु
+	काष्ठा virtio_device *vdev;
+	काष्ठा virtqueue *rvq, *svq;
+	व्योम *rbufs, *sbufs;
+	अचिन्हित पूर्णांक num_bufs;
+	अचिन्हित पूर्णांक buf_size;
+	पूर्णांक last_sbuf;
 	dma_addr_t bufs_dma;
-	struct mutex tx_lock;
-	struct idr endpoints;
-	struct mutex endpoints_lock;
-	wait_queue_head_t sendq;
+	काष्ठा mutex tx_lock;
+	काष्ठा idr endpoपूर्णांकs;
+	काष्ठा mutex endpoपूर्णांकs_lock;
+	रुको_queue_head_t sendq;
 	atomic_t sleepers;
-};
+पूर्ण;
 
-/* The feature bitmap for virtio rpmsg */
-#define VIRTIO_RPMSG_F_NS	0 /* RP supports name service notifications */
+/* The feature biपंचांगap क्रम virtio rpmsg */
+#घोषणा VIRTIO_RPMSG_F_NS	0 /* RP supports name service notअगरications */
 
 /**
- * struct rpmsg_hdr - common header for all rpmsg messages
+ * काष्ठा rpmsg_hdr - common header क्रम all rpmsg messages
  * @src: source address
  * @dst: destination address
- * @reserved: reserved for future use
+ * @reserved: reserved क्रम future use
  * @len: length of payload (in bytes)
  * @flags: message flags
  * @data: @len bytes of message payload data
  *
  * Every message sent(/received) on the rpmsg bus begins with this header.
  */
-struct rpmsg_hdr {
+काष्ठा rpmsg_hdr अणु
 	__rpmsg32 src;
 	__rpmsg32 dst;
 	__rpmsg32 reserved;
 	__rpmsg16 len;
 	__rpmsg16 flags;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
 
 /**
- * struct virtio_rpmsg_channel - rpmsg channel descriptor
+ * काष्ठा virtio_rpmsg_channel - rpmsg channel descriptor
  * @rpdev: the rpmsg channel device
- * @vrp: the virtio remote processor device this channel belongs to
+ * @vrp: the virtio remote processor device this channel beदीर्घs to
  *
- * This structure stores the channel that links the rpmsg device to the virtio
+ * This काष्ठाure stores the channel that links the rpmsg device to the virtio
  * remote processor device.
  */
-struct virtio_rpmsg_channel {
-	struct rpmsg_device rpdev;
+काष्ठा virtio_rpmsg_channel अणु
+	काष्ठा rpmsg_device rpdev;
 
-	struct virtproc_info *vrp;
-};
+	काष्ठा virtproc_info *vrp;
+पूर्ण;
 
-#define to_virtio_rpmsg_channel(_rpdev) \
-	container_of(_rpdev, struct virtio_rpmsg_channel, rpdev)
+#घोषणा to_virtio_rpmsg_channel(_rpdev) \
+	container_of(_rpdev, काष्ठा virtio_rpmsg_channel, rpdev)
 
 /*
- * We're allocating buffers of 512 bytes each for communications. The
+ * We're allocating buffers of 512 bytes each क्रम communications. The
  * number of buffers will be computed from the number of buffers supported
  * by the vring, upto a maximum of 512 buffers (256 in each direction).
  *
- * Each buffer will have 16 bytes for the msg header and 496 bytes for
+ * Each buffer will have 16 bytes क्रम the msg header and 496 bytes क्रम
  * the payload.
  *
- * This will utilize a maximum total space of 256KB for the buffers.
+ * This will utilize a maximum total space of 256KB क्रम the buffers.
  *
- * We might also want to add support for user-provided buffers in time.
+ * We might also want to add support क्रम user-provided buffers in समय.
  * This will allow bigger buffer size flexibility, and can also be used
  * to achieve zero-copy messaging.
  *
@@ -128,31 +129,31 @@ struct virtio_rpmsg_channel {
  * can change this without changing anything in the firmware of the remote
  * processor.
  */
-#define MAX_RPMSG_NUM_BUFS	(512)
-#define MAX_RPMSG_BUF_SIZE	(512)
+#घोषणा MAX_RPMSG_NUM_BUFS	(512)
+#घोषणा MAX_RPMSG_BUF_SIZE	(512)
 
 /*
  * Local addresses are dynamically allocated on-demand.
- * We do not dynamically assign addresses from the low 1024 range,
- * in order to reserve that address range for predefined services.
+ * We करो not dynamically assign addresses from the low 1024 range,
+ * in order to reserve that address range क्रम predefined services.
  */
-#define RPMSG_RESERVED_ADDRESSES	(1024)
+#घोषणा RPMSG_RESERVED_ADDRESSES	(1024)
 
-static void virtio_rpmsg_destroy_ept(struct rpmsg_endpoint *ept);
-static int virtio_rpmsg_send(struct rpmsg_endpoint *ept, void *data, int len);
-static int virtio_rpmsg_sendto(struct rpmsg_endpoint *ept, void *data, int len,
+अटल व्योम virtio_rpmsg_destroy_ept(काष्ठा rpmsg_endpoपूर्णांक *ept);
+अटल पूर्णांक virtio_rpmsg_send(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len);
+अटल पूर्णांक virtio_rpmsg_sendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len,
 			       u32 dst);
-static int virtio_rpmsg_send_offchannel(struct rpmsg_endpoint *ept, u32 src,
-					u32 dst, void *data, int len);
-static int virtio_rpmsg_trysend(struct rpmsg_endpoint *ept, void *data, int len);
-static int virtio_rpmsg_trysendto(struct rpmsg_endpoint *ept, void *data,
-				  int len, u32 dst);
-static int virtio_rpmsg_trysend_offchannel(struct rpmsg_endpoint *ept, u32 src,
-					   u32 dst, void *data, int len);
-static struct rpmsg_device *__rpmsg_create_channel(struct virtproc_info *vrp,
-						   struct rpmsg_channel_info *chinfo);
+अटल पूर्णांक virtio_rpmsg_send_offchannel(काष्ठा rpmsg_endpoपूर्णांक *ept, u32 src,
+					u32 dst, व्योम *data, पूर्णांक len);
+अटल पूर्णांक virtio_rpmsg_trysend(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len);
+अटल पूर्णांक virtio_rpmsg_trysendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data,
+				  पूर्णांक len, u32 dst);
+अटल पूर्णांक virtio_rpmsg_trysend_offchannel(काष्ठा rpmsg_endpoपूर्णांक *ept, u32 src,
+					   u32 dst, व्योम *data, पूर्णांक len);
+अटल काष्ठा rpmsg_device *__rpmsg_create_channel(काष्ठा virtproc_info *vrp,
+						   काष्ठा rpmsg_channel_info *chinfo);
 
-static const struct rpmsg_endpoint_ops virtio_endpoint_ops = {
+अटल स्थिर काष्ठा rpmsg_endpoपूर्णांक_ops virtio_endpoपूर्णांक_ops = अणु
 	.destroy_ept = virtio_rpmsg_destroy_ept,
 	.send = virtio_rpmsg_send,
 	.sendto = virtio_rpmsg_sendto,
@@ -160,32 +161,32 @@ static const struct rpmsg_endpoint_ops virtio_endpoint_ops = {
 	.trysend = virtio_rpmsg_trysend,
 	.trysendto = virtio_rpmsg_trysendto,
 	.trysend_offchannel = virtio_rpmsg_trysend_offchannel,
-};
+पूर्ण;
 
 /**
  * rpmsg_sg_init - initialize scatterlist according to cpu address location
  * @sg: scatterlist to fill
- * @cpu_addr: virtual address of the buffer
+ * @cpu_addr: भव address of the buffer
  * @len: buffer length
  *
- * An internal function filling scatterlist according to virtual address
- * location (in vmalloc or in kernel).
+ * An पूर्णांकernal function filling scatterlist according to भव address
+ * location (in vदो_स्मृति or in kernel).
  */
-static void
-rpmsg_sg_init(struct scatterlist *sg, void *cpu_addr, unsigned int len)
-{
-	if (is_vmalloc_addr(cpu_addr)) {
+अटल व्योम
+rpmsg_sg_init(काष्ठा scatterlist *sg, व्योम *cpu_addr, अचिन्हित पूर्णांक len)
+अणु
+	अगर (is_vदो_स्मृति_addr(cpu_addr)) अणु
 		sg_init_table(sg, 1);
-		sg_set_page(sg, vmalloc_to_page(cpu_addr), len,
+		sg_set_page(sg, vदो_स्मृति_to_page(cpu_addr), len,
 			    offset_in_page(cpu_addr));
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(!virt_addr_valid(cpu_addr));
 		sg_init_one(sg, cpu_addr, len);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * __ept_release() - deallocate an rpmsg endpoint
+ * __ept_release() - deallocate an rpmsg endpoपूर्णांक
  * @kref: the ept's reference count
  *
  * This function deallocates an ept, and is invoked when its @kref refcount
@@ -193,30 +194,30 @@ rpmsg_sg_init(struct scatterlist *sg, void *cpu_addr, unsigned int len)
  *
  * Never invoke this function directly!
  */
-static void __ept_release(struct kref *kref)
-{
-	struct rpmsg_endpoint *ept = container_of(kref, struct rpmsg_endpoint,
+अटल व्योम __ept_release(काष्ठा kref *kref)
+अणु
+	काष्ठा rpmsg_endpoपूर्णांक *ept = container_of(kref, काष्ठा rpmsg_endpoपूर्णांक,
 						  refcount);
 	/*
-	 * At this point no one holds a reference to ept anymore,
-	 * so we can directly free it
+	 * At this poपूर्णांक no one holds a reference to ept anymore,
+	 * so we can directly मुक्त it
 	 */
-	kfree(ept);
-}
+	kमुक्त(ept);
+पूर्ण
 
-/* for more info, see below documentation of rpmsg_create_ept() */
-static struct rpmsg_endpoint *__rpmsg_create_ept(struct virtproc_info *vrp,
-						 struct rpmsg_device *rpdev,
+/* क्रम more info, see below करोcumentation of rpmsg_create_ept() */
+अटल काष्ठा rpmsg_endpoपूर्णांक *__rpmsg_create_ept(काष्ठा virtproc_info *vrp,
+						 काष्ठा rpmsg_device *rpdev,
 						 rpmsg_rx_cb_t cb,
-						 void *priv, u32 addr)
-{
-	int id_min, id_max, id;
-	struct rpmsg_endpoint *ept;
-	struct device *dev = rpdev ? &rpdev->dev : &vrp->vdev->dev;
+						 व्योम *priv, u32 addr)
+अणु
+	पूर्णांक id_min, id_max, id;
+	काष्ठा rpmsg_endpoपूर्णांक *ept;
+	काष्ठा device *dev = rpdev ? &rpdev->dev : &vrp->vdev->dev;
 
-	ept = kzalloc(sizeof(*ept), GFP_KERNEL);
-	if (!ept)
-		return NULL;
+	ept = kzalloc(माप(*ept), GFP_KERNEL);
+	अगर (!ept)
+		वापस शून्य;
 
 	kref_init(&ept->refcount);
 	mutex_init(&ept->cb_lock);
@@ -224,193 +225,193 @@ static struct rpmsg_endpoint *__rpmsg_create_ept(struct virtproc_info *vrp,
 	ept->rpdev = rpdev;
 	ept->cb = cb;
 	ept->priv = priv;
-	ept->ops = &virtio_endpoint_ops;
+	ept->ops = &virtio_endpoपूर्णांक_ops;
 
-	/* do we need to allocate a local address ? */
-	if (addr == RPMSG_ADDR_ANY) {
+	/* करो we need to allocate a local address ? */
+	अगर (addr == RPMSG_ADDR_ANY) अणु
 		id_min = RPMSG_RESERVED_ADDRESSES;
 		id_max = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		id_min = addr;
 		id_max = addr + 1;
-	}
+	पूर्ण
 
-	mutex_lock(&vrp->endpoints_lock);
+	mutex_lock(&vrp->endpoपूर्णांकs_lock);
 
-	/* bind the endpoint to an rpmsg address (and allocate one if needed) */
-	id = idr_alloc(&vrp->endpoints, ept, id_min, id_max, GFP_KERNEL);
-	if (id < 0) {
+	/* bind the endpoपूर्णांक to an rpmsg address (and allocate one अगर needed) */
+	id = idr_alloc(&vrp->endpoपूर्णांकs, ept, id_min, id_max, GFP_KERNEL);
+	अगर (id < 0) अणु
 		dev_err(dev, "idr_alloc failed: %d\n", id);
-		goto free_ept;
-	}
+		जाओ मुक्त_ept;
+	पूर्ण
 	ept->addr = id;
 
-	mutex_unlock(&vrp->endpoints_lock);
+	mutex_unlock(&vrp->endpoपूर्णांकs_lock);
 
-	return ept;
+	वापस ept;
 
-free_ept:
-	mutex_unlock(&vrp->endpoints_lock);
+मुक्त_ept:
+	mutex_unlock(&vrp->endpoपूर्णांकs_lock);
 	kref_put(&ept->refcount, __ept_release);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct rpmsg_device *virtio_rpmsg_create_channel(struct rpmsg_device *rpdev,
-							struct rpmsg_channel_info *chinfo)
-{
-	struct virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
-	struct virtproc_info *vrp = vch->vrp;
+अटल काष्ठा rpmsg_device *virtio_rpmsg_create_channel(काष्ठा rpmsg_device *rpdev,
+							काष्ठा rpmsg_channel_info *chinfo)
+अणु
+	काष्ठा virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
+	काष्ठा virtproc_info *vrp = vch->vrp;
 
-	return __rpmsg_create_channel(vrp, chinfo);
-}
+	वापस __rpmsg_create_channel(vrp, chinfo);
+पूर्ण
 
-static int virtio_rpmsg_release_channel(struct rpmsg_device *rpdev,
-					struct rpmsg_channel_info *chinfo)
-{
-	struct virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
-	struct virtproc_info *vrp = vch->vrp;
+अटल पूर्णांक virtio_rpmsg_release_channel(काष्ठा rpmsg_device *rpdev,
+					काष्ठा rpmsg_channel_info *chinfo)
+अणु
+	काष्ठा virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
+	काष्ठा virtproc_info *vrp = vch->vrp;
 
-	return rpmsg_unregister_device(&vrp->vdev->dev, chinfo);
-}
+	वापस rpmsg_unरेजिस्टर_device(&vrp->vdev->dev, chinfo);
+पूर्ण
 
-static struct rpmsg_endpoint *virtio_rpmsg_create_ept(struct rpmsg_device *rpdev,
+अटल काष्ठा rpmsg_endpoपूर्णांक *virtio_rpmsg_create_ept(काष्ठा rpmsg_device *rpdev,
 						      rpmsg_rx_cb_t cb,
-						      void *priv,
-						      struct rpmsg_channel_info chinfo)
-{
-	struct virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
+						      व्योम *priv,
+						      काष्ठा rpmsg_channel_info chinfo)
+अणु
+	काष्ठा virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
 
-	return __rpmsg_create_ept(vch->vrp, rpdev, cb, priv, chinfo.src);
-}
+	वापस __rpmsg_create_ept(vch->vrp, rpdev, cb, priv, chinfo.src);
+पूर्ण
 
 /**
- * __rpmsg_destroy_ept() - destroy an existing rpmsg endpoint
+ * __rpmsg_destroy_ept() - destroy an existing rpmsg endpoपूर्णांक
  * @vrp: virtproc which owns this ept
  * @ept: endpoing to destroy
  *
- * An internal function which destroy an ept without assuming it is
- * bound to an rpmsg channel. This is needed for handling the internal
- * name service endpoint, which isn't bound to an rpmsg channel.
+ * An पूर्णांकernal function which destroy an ept without assuming it is
+ * bound to an rpmsg channel. This is needed क्रम handling the पूर्णांकernal
+ * name service endpoपूर्णांक, which isn't bound to an rpmsg channel.
  * See also __rpmsg_create_ept().
  */
-static void
-__rpmsg_destroy_ept(struct virtproc_info *vrp, struct rpmsg_endpoint *ept)
-{
+अटल व्योम
+__rpmsg_destroy_ept(काष्ठा virtproc_info *vrp, काष्ठा rpmsg_endpoपूर्णांक *ept)
+अणु
 	/* make sure new inbound messages can't find this ept anymore */
-	mutex_lock(&vrp->endpoints_lock);
-	idr_remove(&vrp->endpoints, ept->addr);
-	mutex_unlock(&vrp->endpoints_lock);
+	mutex_lock(&vrp->endpoपूर्णांकs_lock);
+	idr_हटाओ(&vrp->endpoपूर्णांकs, ept->addr);
+	mutex_unlock(&vrp->endpoपूर्णांकs_lock);
 
 	/* make sure in-flight inbound messages won't invoke cb anymore */
 	mutex_lock(&ept->cb_lock);
-	ept->cb = NULL;
+	ept->cb = शून्य;
 	mutex_unlock(&ept->cb_lock);
 
 	kref_put(&ept->refcount, __ept_release);
-}
+पूर्ण
 
-static void virtio_rpmsg_destroy_ept(struct rpmsg_endpoint *ept)
-{
-	struct virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(ept->rpdev);
+अटल व्योम virtio_rpmsg_destroy_ept(काष्ठा rpmsg_endpoपूर्णांक *ept)
+अणु
+	काष्ठा virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(ept->rpdev);
 
 	__rpmsg_destroy_ept(vch->vrp, ept);
-}
+पूर्ण
 
-static int virtio_rpmsg_announce_create(struct rpmsg_device *rpdev)
-{
-	struct virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
-	struct virtproc_info *vrp = vch->vrp;
-	struct device *dev = &rpdev->dev;
-	int err = 0;
+अटल पूर्णांक virtio_rpmsg_announce_create(काष्ठा rpmsg_device *rpdev)
+अणु
+	काष्ठा virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
+	काष्ठा virtproc_info *vrp = vch->vrp;
+	काष्ठा device *dev = &rpdev->dev;
+	पूर्णांक err = 0;
 
 	/* need to tell remote processor's name service about this channel ? */
-	if (rpdev->announce && rpdev->ept &&
-	    virtio_has_feature(vrp->vdev, VIRTIO_RPMSG_F_NS)) {
-		struct rpmsg_ns_msg nsm;
+	अगर (rpdev->announce && rpdev->ept &&
+	    virtio_has_feature(vrp->vdev, VIRTIO_RPMSG_F_NS)) अणु
+		काष्ठा rpmsg_ns_msg nsm;
 
-		strncpy(nsm.name, rpdev->id.name, RPMSG_NAME_SIZE);
+		म_नकलन(nsm.name, rpdev->id.name, RPMSG_NAME_SIZE);
 		nsm.addr = cpu_to_rpmsg32(rpdev, rpdev->ept->addr);
 		nsm.flags = cpu_to_rpmsg32(rpdev, RPMSG_NS_CREATE);
 
-		err = rpmsg_sendto(rpdev->ept, &nsm, sizeof(nsm), RPMSG_NS_ADDR);
-		if (err)
+		err = rpmsg_sendto(rpdev->ept, &nsm, माप(nsm), RPMSG_NS_ADDR);
+		अगर (err)
 			dev_err(dev, "failed to announce service %d\n", err);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int virtio_rpmsg_announce_destroy(struct rpmsg_device *rpdev)
-{
-	struct virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
-	struct virtproc_info *vrp = vch->vrp;
-	struct device *dev = &rpdev->dev;
-	int err = 0;
+अटल पूर्णांक virtio_rpmsg_announce_destroy(काष्ठा rpmsg_device *rpdev)
+अणु
+	काष्ठा virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
+	काष्ठा virtproc_info *vrp = vch->vrp;
+	काष्ठा device *dev = &rpdev->dev;
+	पूर्णांक err = 0;
 
 	/* tell remote processor's name service we're removing this channel */
-	if (rpdev->announce && rpdev->ept &&
-	    virtio_has_feature(vrp->vdev, VIRTIO_RPMSG_F_NS)) {
-		struct rpmsg_ns_msg nsm;
+	अगर (rpdev->announce && rpdev->ept &&
+	    virtio_has_feature(vrp->vdev, VIRTIO_RPMSG_F_NS)) अणु
+		काष्ठा rpmsg_ns_msg nsm;
 
-		strncpy(nsm.name, rpdev->id.name, RPMSG_NAME_SIZE);
+		म_नकलन(nsm.name, rpdev->id.name, RPMSG_NAME_SIZE);
 		nsm.addr = cpu_to_rpmsg32(rpdev, rpdev->ept->addr);
 		nsm.flags = cpu_to_rpmsg32(rpdev, RPMSG_NS_DESTROY);
 
-		err = rpmsg_sendto(rpdev->ept, &nsm, sizeof(nsm), RPMSG_NS_ADDR);
-		if (err)
+		err = rpmsg_sendto(rpdev->ept, &nsm, माप(nsm), RPMSG_NS_ADDR);
+		अगर (err)
 			dev_err(dev, "failed to announce service %d\n", err);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct rpmsg_device_ops virtio_rpmsg_ops = {
+अटल स्थिर काष्ठा rpmsg_device_ops virtio_rpmsg_ops = अणु
 	.create_channel = virtio_rpmsg_create_channel,
 	.release_channel = virtio_rpmsg_release_channel,
 	.create_ept = virtio_rpmsg_create_ept,
 	.announce_create = virtio_rpmsg_announce_create,
 	.announce_destroy = virtio_rpmsg_announce_destroy,
-};
+पूर्ण;
 
-static void virtio_rpmsg_release_device(struct device *dev)
-{
-	struct rpmsg_device *rpdev = to_rpmsg_device(dev);
-	struct virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
+अटल व्योम virtio_rpmsg_release_device(काष्ठा device *dev)
+अणु
+	काष्ठा rpmsg_device *rpdev = to_rpmsg_device(dev);
+	काष्ठा virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
 
-	kfree(vch);
-}
+	kमुक्त(vch);
+पूर्ण
 
 /*
  * create an rpmsg channel using its name and address info.
- * this function will be used to create both static and dynamic
+ * this function will be used to create both अटल and dynamic
  * channels.
  */
-static struct rpmsg_device *__rpmsg_create_channel(struct virtproc_info *vrp,
-						   struct rpmsg_channel_info *chinfo)
-{
-	struct virtio_rpmsg_channel *vch;
-	struct rpmsg_device *rpdev;
-	struct device *tmp, *dev = &vrp->vdev->dev;
-	int ret;
+अटल काष्ठा rpmsg_device *__rpmsg_create_channel(काष्ठा virtproc_info *vrp,
+						   काष्ठा rpmsg_channel_info *chinfo)
+अणु
+	काष्ठा virtio_rpmsg_channel *vch;
+	काष्ठा rpmsg_device *rpdev;
+	काष्ठा device *पंचांगp, *dev = &vrp->vdev->dev;
+	पूर्णांक ret;
 
-	/* make sure a similar channel doesn't already exist */
-	tmp = rpmsg_find_device(dev, chinfo);
-	if (tmp) {
+	/* make sure a similar channel करोesn't alपढ़ोy exist */
+	पंचांगp = rpmsg_find_device(dev, chinfo);
+	अगर (पंचांगp) अणु
 		/* decrement the matched device's refcount back */
-		put_device(tmp);
+		put_device(पंचांगp);
 		dev_err(dev, "channel %s:%x:%x already exist\n",
 				chinfo->name, chinfo->src, chinfo->dst);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	vch = kzalloc(sizeof(*vch), GFP_KERNEL);
-	if (!vch)
-		return NULL;
+	vch = kzalloc(माप(*vch), GFP_KERNEL);
+	अगर (!vch)
+		वापस शून्य;
 
 	/* Link the channel to our vrp */
 	vch->vrp = vrp;
 
-	/* Assign public information to the rpmsg_device */
+	/* Assign खुला inक्रमmation to the rpmsg_device */
 	rpdev = &vch->rpdev;
 	rpdev->src = chinfo->src;
 	rpdev->dst = chinfo->dst;
@@ -418,101 +419,101 @@ static struct rpmsg_device *__rpmsg_create_channel(struct virtproc_info *vrp,
 	rpdev->little_endian = virtio_is_little_endian(vrp->vdev);
 
 	/*
-	 * rpmsg server channels has predefined local address (for now),
+	 * rpmsg server channels has predefined local address (क्रम now),
 	 * and their existence needs to be announced remotely
 	 */
 	rpdev->announce = rpdev->src != RPMSG_ADDR_ANY;
 
-	strncpy(rpdev->id.name, chinfo->name, RPMSG_NAME_SIZE);
+	म_नकलन(rpdev->id.name, chinfo->name, RPMSG_NAME_SIZE);
 
 	rpdev->dev.parent = &vrp->vdev->dev;
 	rpdev->dev.release = virtio_rpmsg_release_device;
-	ret = rpmsg_register_device(rpdev);
-	if (ret)
-		return NULL;
+	ret = rpmsg_रेजिस्टर_device(rpdev);
+	अगर (ret)
+		वापस शून्य;
 
-	return rpdev;
-}
+	वापस rpdev;
+पूर्ण
 
-/* super simple buffer "allocator" that is just enough for now */
-static void *get_a_tx_buf(struct virtproc_info *vrp)
-{
-	unsigned int len;
-	void *ret;
+/* super simple buffer "allocator" that is just enough क्रम now */
+अटल व्योम *get_a_tx_buf(काष्ठा virtproc_info *vrp)
+अणु
+	अचिन्हित पूर्णांक len;
+	व्योम *ret;
 
 	/* support multiple concurrent senders */
 	mutex_lock(&vrp->tx_lock);
 
 	/*
 	 * either pick the next unused tx buffer
-	 * (half of our buffers are used for sending messages)
+	 * (half of our buffers are used क्रम sending messages)
 	 */
-	if (vrp->last_sbuf < vrp->num_bufs / 2)
+	अगर (vrp->last_sbuf < vrp->num_bufs / 2)
 		ret = vrp->sbufs + vrp->buf_size * vrp->last_sbuf++;
 	/* or recycle a used one */
-	else
+	अन्यथा
 		ret = virtqueue_get_buf(vrp->svq, &len);
 
 	mutex_unlock(&vrp->tx_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * rpmsg_upref_sleepers() - enable "tx-complete" interrupts, if needed
- * @vrp: virtual remote processor state
+ * rpmsg_upref_sleepers() - enable "tx-complete" पूर्णांकerrupts, अगर needed
+ * @vrp: भव remote processor state
  *
- * This function is called before a sender is blocked, waiting for
+ * This function is called beक्रमe a sender is blocked, रुकोing क्रम
  * a tx buffer to become available.
  *
- * If we already have blocking senders, this function merely increases
- * the "sleepers" reference count, and exits.
+ * If we alपढ़ोy have blocking senders, this function merely increases
+ * the "sleepers" reference count, and निकासs.
  *
- * Otherwise, if this is the first sender to block, we also enable
- * virtio's tx callbacks, so we'd be immediately notified when a tx
+ * Otherwise, अगर this is the first sender to block, we also enable
+ * virtio's tx callbacks, so we'd be immediately notअगरied when a tx
  * buffer is consumed (we rely on virtio's tx callback in order
  * to wake up sleeping senders as soon as a tx buffer is used by the
  * remote processor).
  */
-static void rpmsg_upref_sleepers(struct virtproc_info *vrp)
-{
+अटल व्योम rpmsg_upref_sleepers(काष्ठा virtproc_info *vrp)
+अणु
 	/* support multiple concurrent senders */
 	mutex_lock(&vrp->tx_lock);
 
-	/* are we the first sleeping context waiting for tx buffers ? */
-	if (atomic_inc_return(&vrp->sleepers) == 1)
-		/* enable "tx-complete" interrupts before dozing off */
+	/* are we the first sleeping context रुकोing क्रम tx buffers ? */
+	अगर (atomic_inc_वापस(&vrp->sleepers) == 1)
+		/* enable "tx-complete" पूर्णांकerrupts beक्रमe करोzing off */
 		virtqueue_enable_cb(vrp->svq);
 
 	mutex_unlock(&vrp->tx_lock);
-}
+पूर्ण
 
 /**
- * rpmsg_downref_sleepers() - disable "tx-complete" interrupts, if needed
- * @vrp: virtual remote processor state
+ * rpmsg_करोwnref_sleepers() - disable "tx-complete" पूर्णांकerrupts, अगर needed
+ * @vrp: भव remote processor state
  *
- * This function is called after a sender, that waited for a tx buffer
+ * This function is called after a sender, that रुकोed क्रम a tx buffer
  * to become available, is unblocked.
  *
  * If we still have blocking senders, this function merely decreases
- * the "sleepers" reference count, and exits.
+ * the "sleepers" reference count, and निकासs.
  *
- * Otherwise, if there are no more blocking senders, we also disable
- * virtio's tx callbacks, to avoid the overhead incurred with handling
- * those (now redundant) interrupts.
+ * Otherwise, अगर there are no more blocking senders, we also disable
+ * virtio's tx callbacks, to aव्योम the overhead incurred with handling
+ * those (now redundant) पूर्णांकerrupts.
  */
-static void rpmsg_downref_sleepers(struct virtproc_info *vrp)
-{
+अटल व्योम rpmsg_करोwnref_sleepers(काष्ठा virtproc_info *vrp)
+अणु
 	/* support multiple concurrent senders */
 	mutex_lock(&vrp->tx_lock);
 
-	/* are we the last sleeping context waiting for tx buffers ? */
-	if (atomic_dec_and_test(&vrp->sleepers))
-		/* disable "tx-complete" interrupts */
+	/* are we the last sleeping context रुकोing क्रम tx buffers ? */
+	अगर (atomic_dec_and_test(&vrp->sleepers))
+		/* disable "tx-complete" पूर्णांकerrupts */
 		virtqueue_disable_cb(vrp->svq);
 
 	mutex_unlock(&vrp->tx_lock);
-}
+पूर्ण
 
 /**
  * rpmsg_send_offchannel_raw() - send a message across to the remote processor
@@ -521,52 +522,52 @@ static void rpmsg_downref_sleepers(struct virtproc_info *vrp)
  * @dst: destination address
  * @data: payload of message
  * @len: length of payload
- * @wait: indicates whether caller should block in case no TX buffers available
+ * @रुको: indicates whether caller should block in हाल no TX buffers available
  *
- * This function is the base implementation for all of the rpmsg sending API.
+ * This function is the base implementation क्रम all of the rpmsg sending API.
  *
  * It will send @data of length @len to @dst, and say it's from @src. The
  * message will be sent to the remote processor which the @rpdev channel
- * belongs to.
+ * beदीर्घs to.
  *
- * The message is sent using one of the TX buffers that are available for
+ * The message is sent using one of the TX buffers that are available क्रम
  * communication with this remote processor.
  *
- * If @wait is true, the caller will be blocked until either a TX buffer is
- * available, or 15 seconds elapses (we don't want callers to
+ * If @रुको is true, the caller will be blocked until either a TX buffer is
+ * available, or 15 seconds elapses (we करोn't want callers to
  * sleep indefinitely due to misbehaving remote processors), and in that
- * case -ERESTARTSYS is returned. The number '15' itself was picked
- * arbitrarily; there's little point in asking drivers to provide a timeout
+ * हाल -ERESTARTSYS is वापसed. The number '15' itself was picked
+ * arbitrarily; there's little poपूर्णांक in asking drivers to provide a समयout
  * value themselves.
  *
- * Otherwise, if @wait is false, and there are no TX buffers available,
- * the function will immediately fail, and -ENOMEM will be returned.
+ * Otherwise, अगर @रुको is false, and there are no TX buffers available,
+ * the function will immediately fail, and -ENOMEM will be वापसed.
  *
  * Normally drivers shouldn't use this function directly; instead, drivers
- * should use the appropriate rpmsg_{try}send{to, _offchannel} API
+ * should use the appropriate rpmsg_अणुtryपूर्णsendअणुto, _offchannelपूर्ण API
  * (see include/linux/rpmsg.h).
  *
  * Returns 0 on success and an appropriate error value on failure.
  */
-static int rpmsg_send_offchannel_raw(struct rpmsg_device *rpdev,
+अटल पूर्णांक rpmsg_send_offchannel_raw(काष्ठा rpmsg_device *rpdev,
 				     u32 src, u32 dst,
-				     void *data, int len, bool wait)
-{
-	struct virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
-	struct virtproc_info *vrp = vch->vrp;
-	struct device *dev = &rpdev->dev;
-	struct scatterlist sg;
-	struct rpmsg_hdr *msg;
-	int err;
+				     व्योम *data, पूर्णांक len, bool रुको)
+अणु
+	काष्ठा virtio_rpmsg_channel *vch = to_virtio_rpmsg_channel(rpdev);
+	काष्ठा virtproc_info *vrp = vch->vrp;
+	काष्ठा device *dev = &rpdev->dev;
+	काष्ठा scatterlist sg;
+	काष्ठा rpmsg_hdr *msg;
+	पूर्णांक err;
 
 	/* bcasting isn't allowed */
-	if (src == RPMSG_ADDR_ANY || dst == RPMSG_ADDR_ANY) {
+	अगर (src == RPMSG_ADDR_ANY || dst == RPMSG_ADDR_ANY) अणु
 		dev_err(dev, "invalid addr (src 0x%x, dst 0x%x)\n", src, dst);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * We currently use fixed-sized buffers, and therefore the payload
+	 * We currently use fixed-sized buffers, and thereक्रमe the payload
 	 * length is limited.
 	 *
 	 * One of the possible improvements here is either to support
@@ -574,181 +575,181 @@ static int rpmsg_send_offchannel_raw(struct rpmsg_device *rpdev,
 	 * messaging), or to improve the buffer allocator, to support
 	 * variable-length buffer sizes.
 	 */
-	if (len > vrp->buf_size - sizeof(struct rpmsg_hdr)) {
+	अगर (len > vrp->buf_size - माप(काष्ठा rpmsg_hdr)) अणु
 		dev_err(dev, "message is too big (%d)\n", len);
-		return -EMSGSIZE;
-	}
+		वापस -EMSGSIZE;
+	पूर्ण
 
 	/* grab a buffer */
 	msg = get_a_tx_buf(vrp);
-	if (!msg && !wait)
-		return -ENOMEM;
+	अगर (!msg && !रुको)
+		वापस -ENOMEM;
 
-	/* no free buffer ? wait for one (but bail after 15 seconds) */
-	while (!msg) {
-		/* enable "tx-complete" interrupts, if not already enabled */
+	/* no मुक्त buffer ? रुको क्रम one (but bail after 15 seconds) */
+	जबतक (!msg) अणु
+		/* enable "tx-complete" पूर्णांकerrupts, अगर not alपढ़ोy enabled */
 		rpmsg_upref_sleepers(vrp);
 
 		/*
-		 * sleep until a free buffer is available or 15 secs elapse.
-		 * the timeout period is not configurable because there's
-		 * little point in asking drivers to specify that.
-		 * if later this happens to be required, it'd be easy to add.
+		 * sleep until a मुक्त buffer is available or 15 secs elapse.
+		 * the समयout period is not configurable because there's
+		 * little poपूर्णांक in asking drivers to specअगरy that.
+		 * अगर later this happens to be required, it'd be easy to add.
 		 */
-		err = wait_event_interruptible_timeout(vrp->sendq,
+		err = रुको_event_पूर्णांकerruptible_समयout(vrp->sendq,
 					(msg = get_a_tx_buf(vrp)),
-					msecs_to_jiffies(15000));
+					msecs_to_jअगरfies(15000));
 
-		/* disable "tx-complete" interrupts if we're the last sleeper */
-		rpmsg_downref_sleepers(vrp);
+		/* disable "tx-complete" पूर्णांकerrupts अगर we're the last sleeper */
+		rpmsg_करोwnref_sleepers(vrp);
 
-		/* timeout ? */
-		if (!err) {
+		/* समयout ? */
+		अगर (!err) अणु
 			dev_err(dev, "timeout waiting for a tx buffer\n");
-			return -ERESTARTSYS;
-		}
-	}
+			वापस -ERESTARTSYS;
+		पूर्ण
+	पूर्ण
 
 	msg->len = cpu_to_rpmsg16(rpdev, len);
 	msg->flags = 0;
 	msg->src = cpu_to_rpmsg32(rpdev, src);
 	msg->dst = cpu_to_rpmsg32(rpdev, dst);
 	msg->reserved = 0;
-	memcpy(msg->data, data, len);
+	स_नकल(msg->data, data, len);
 
 	dev_dbg(dev, "TX From 0x%x, To 0x%x, Len %d, Flags %d, Reserved %d\n",
 		src, dst, len, msg->flags, msg->reserved);
-#if defined(CONFIG_DYNAMIC_DEBUG)
+#अगर defined(CONFIG_DYNAMIC_DEBUG)
 	dynamic_hex_dump("rpmsg_virtio TX: ", DUMP_PREFIX_NONE, 16, 1,
-			 msg, sizeof(*msg) + len, true);
-#endif
+			 msg, माप(*msg) + len, true);
+#पूर्ण_अगर
 
-	rpmsg_sg_init(&sg, msg, sizeof(*msg) + len);
+	rpmsg_sg_init(&sg, msg, माप(*msg) + len);
 
 	mutex_lock(&vrp->tx_lock);
 
 	/* add message to the remote processor's virtqueue */
 	err = virtqueue_add_outbuf(vrp->svq, &sg, 1, msg, GFP_KERNEL);
-	if (err) {
+	अगर (err) अणु
 		/*
 		 * need to reclaim the buffer here, otherwise it's lost
-		 * (memory won't leak, but rpmsg won't use it again for TX).
-		 * this will wait for a buffer management overhaul.
+		 * (memory won't leak, but rpmsg won't use it again क्रम TX).
+		 * this will रुको क्रम a buffer management overhaul.
 		 */
 		dev_err(dev, "virtqueue_add_outbuf failed: %d\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* tell the remote processor it has a pending message to read */
+	/* tell the remote processor it has a pending message to पढ़ो */
 	virtqueue_kick(vrp->svq);
 out:
 	mutex_unlock(&vrp->tx_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int virtio_rpmsg_send(struct rpmsg_endpoint *ept, void *data, int len)
-{
-	struct rpmsg_device *rpdev = ept->rpdev;
+अटल पूर्णांक virtio_rpmsg_send(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा rpmsg_device *rpdev = ept->rpdev;
 	u32 src = ept->addr, dst = rpdev->dst;
 
-	return rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, true);
-}
+	वापस rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, true);
+पूर्ण
 
-static int virtio_rpmsg_sendto(struct rpmsg_endpoint *ept, void *data, int len,
+अटल पूर्णांक virtio_rpmsg_sendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len,
 			       u32 dst)
-{
-	struct rpmsg_device *rpdev = ept->rpdev;
+अणु
+	काष्ठा rpmsg_device *rpdev = ept->rpdev;
 	u32 src = ept->addr;
 
-	return rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, true);
-}
+	वापस rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, true);
+पूर्ण
 
-static int virtio_rpmsg_send_offchannel(struct rpmsg_endpoint *ept, u32 src,
-					u32 dst, void *data, int len)
-{
-	struct rpmsg_device *rpdev = ept->rpdev;
+अटल पूर्णांक virtio_rpmsg_send_offchannel(काष्ठा rpmsg_endpoपूर्णांक *ept, u32 src,
+					u32 dst, व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा rpmsg_device *rpdev = ept->rpdev;
 
-	return rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, true);
-}
+	वापस rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, true);
+पूर्ण
 
-static int virtio_rpmsg_trysend(struct rpmsg_endpoint *ept, void *data, int len)
-{
-	struct rpmsg_device *rpdev = ept->rpdev;
+अटल पूर्णांक virtio_rpmsg_trysend(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा rpmsg_device *rpdev = ept->rpdev;
 	u32 src = ept->addr, dst = rpdev->dst;
 
-	return rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, false);
-}
+	वापस rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, false);
+पूर्ण
 
-static int virtio_rpmsg_trysendto(struct rpmsg_endpoint *ept, void *data,
-				  int len, u32 dst)
-{
-	struct rpmsg_device *rpdev = ept->rpdev;
+अटल पूर्णांक virtio_rpmsg_trysendto(काष्ठा rpmsg_endpoपूर्णांक *ept, व्योम *data,
+				  पूर्णांक len, u32 dst)
+अणु
+	काष्ठा rpmsg_device *rpdev = ept->rpdev;
 	u32 src = ept->addr;
 
-	return rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, false);
-}
+	वापस rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, false);
+पूर्ण
 
-static int virtio_rpmsg_trysend_offchannel(struct rpmsg_endpoint *ept, u32 src,
-					   u32 dst, void *data, int len)
-{
-	struct rpmsg_device *rpdev = ept->rpdev;
+अटल पूर्णांक virtio_rpmsg_trysend_offchannel(काष्ठा rpmsg_endpoपूर्णांक *ept, u32 src,
+					   u32 dst, व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा rpmsg_device *rpdev = ept->rpdev;
 
-	return rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, false);
-}
+	वापस rpmsg_send_offchannel_raw(rpdev, src, dst, data, len, false);
+पूर्ण
 
-static int rpmsg_recv_single(struct virtproc_info *vrp, struct device *dev,
-			     struct rpmsg_hdr *msg, unsigned int len)
-{
-	struct rpmsg_endpoint *ept;
-	struct scatterlist sg;
+अटल पूर्णांक rpmsg_recv_single(काष्ठा virtproc_info *vrp, काष्ठा device *dev,
+			     काष्ठा rpmsg_hdr *msg, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा rpmsg_endpoपूर्णांक *ept;
+	काष्ठा scatterlist sg;
 	bool little_endian = virtio_is_little_endian(vrp->vdev);
-	unsigned int msg_len = __rpmsg16_to_cpu(little_endian, msg->len);
-	int err;
+	अचिन्हित पूर्णांक msg_len = __rpmsg16_to_cpu(little_endian, msg->len);
+	पूर्णांक err;
 
 	dev_dbg(dev, "From: 0x%x, To: 0x%x, Len: %d, Flags: %d, Reserved: %d\n",
 		__rpmsg32_to_cpu(little_endian, msg->src),
 		__rpmsg32_to_cpu(little_endian, msg->dst), msg_len,
 		__rpmsg16_to_cpu(little_endian, msg->flags),
 		__rpmsg32_to_cpu(little_endian, msg->reserved));
-#if defined(CONFIG_DYNAMIC_DEBUG)
+#अगर defined(CONFIG_DYNAMIC_DEBUG)
 	dynamic_hex_dump("rpmsg_virtio RX: ", DUMP_PREFIX_NONE, 16, 1,
-			 msg, sizeof(*msg) + msg_len, true);
-#endif
+			 msg, माप(*msg) + msg_len, true);
+#पूर्ण_अगर
 
 	/*
 	 * We currently use fixed-sized buffers, so trivially sanitize
 	 * the reported payload length.
 	 */
-	if (len > vrp->buf_size ||
-	    msg_len > (len - sizeof(struct rpmsg_hdr))) {
+	अगर (len > vrp->buf_size ||
+	    msg_len > (len - माप(काष्ठा rpmsg_hdr))) अणु
 		dev_warn(dev, "inbound msg too big: (%d, %d)\n", len, msg_len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* use the dst addr to fetch the callback of the appropriate user */
-	mutex_lock(&vrp->endpoints_lock);
+	mutex_lock(&vrp->endpoपूर्णांकs_lock);
 
-	ept = idr_find(&vrp->endpoints, __rpmsg32_to_cpu(little_endian, msg->dst));
+	ept = idr_find(&vrp->endpoपूर्णांकs, __rpmsg32_to_cpu(little_endian, msg->dst));
 
-	/* let's make sure no one deallocates ept while we use it */
-	if (ept)
+	/* let's make sure no one deallocates ept जबतक we use it */
+	अगर (ept)
 		kref_get(&ept->refcount);
 
-	mutex_unlock(&vrp->endpoints_lock);
+	mutex_unlock(&vrp->endpoपूर्णांकs_lock);
 
-	if (ept) {
-		/* make sure ept->cb doesn't go away while we use it */
+	अगर (ept) अणु
+		/* make sure ept->cb करोesn't go away जबतक we use it */
 		mutex_lock(&ept->cb_lock);
 
-		if (ept->cb)
+		अगर (ept->cb)
 			ept->cb(ept->rpdev, msg->data, msg_len, ept->priv,
 				__rpmsg32_to_cpu(little_endian, msg->src));
 
 		mutex_unlock(&ept->cb_lock);
 
-		/* farewell, ept, we don't need you anymore */
+		/* farewell, ept, we करोn't need you anymore */
 		kref_put(&ept->refcount, __ept_release);
-	} else
+	पूर्ण अन्यथा
 		dev_warn(dev, "msg received with no recipient\n");
 
 	/* publish the real size of the buffer */
@@ -756,83 +757,83 @@ static int rpmsg_recv_single(struct virtproc_info *vrp, struct device *dev,
 
 	/* add the buffer back to the remote processor's virtqueue */
 	err = virtqueue_add_inbuf(vrp->rvq, &sg, 1, msg, GFP_KERNEL);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "failed to add a virtqueue buffer: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* called when an rx buffer is used, and it's time to digest a message */
-static void rpmsg_recv_done(struct virtqueue *rvq)
-{
-	struct virtproc_info *vrp = rvq->vdev->priv;
-	struct device *dev = &rvq->vdev->dev;
-	struct rpmsg_hdr *msg;
-	unsigned int len, msgs_received = 0;
-	int err;
+/* called when an rx buffer is used, and it's समय to digest a message */
+अटल व्योम rpmsg_recv_करोne(काष्ठा virtqueue *rvq)
+अणु
+	काष्ठा virtproc_info *vrp = rvq->vdev->priv;
+	काष्ठा device *dev = &rvq->vdev->dev;
+	काष्ठा rpmsg_hdr *msg;
+	अचिन्हित पूर्णांक len, msgs_received = 0;
+	पूर्णांक err;
 
 	msg = virtqueue_get_buf(rvq, &len);
-	if (!msg) {
+	अगर (!msg) अणु
 		dev_err(dev, "uhm, incoming signal, but no used buffer ?\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while (msg) {
+	जबतक (msg) अणु
 		err = rpmsg_recv_single(vrp, dev, msg, len);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		msgs_received++;
 
 		msg = virtqueue_get_buf(rvq, &len);
-	}
+	पूर्ण
 
 	dev_dbg(dev, "Received %u messages\n", msgs_received);
 
 	/* tell the remote processor we added another available rx buffer */
-	if (msgs_received)
+	अगर (msgs_received)
 		virtqueue_kick(vrp->rvq);
-}
+पूर्ण
 
 /*
  * This is invoked whenever the remote processor completed processing
  * a TX msg we just sent it, and the buffer is put back to the used ring.
  *
- * Normally, though, we suppress this "tx complete" interrupt in order to
- * avoid the incurred overhead.
+ * Normally, though, we suppress this "tx complete" पूर्णांकerrupt in order to
+ * aव्योम the incurred overhead.
  */
-static void rpmsg_xmit_done(struct virtqueue *svq)
-{
-	struct virtproc_info *vrp = svq->vdev->priv;
+अटल व्योम rpmsg_xmit_करोne(काष्ठा virtqueue *svq)
+अणु
+	काष्ठा virtproc_info *vrp = svq->vdev->priv;
 
 	dev_dbg(&svq->vdev->dev, "%s\n", __func__);
 
-	/* wake up potential senders that are waiting for a tx buffer */
-	wake_up_interruptible(&vrp->sendq);
-}
+	/* wake up potential senders that are रुकोing क्रम a tx buffer */
+	wake_up_पूर्णांकerruptible(&vrp->sendq);
+पूर्ण
 
 /*
- * Called to expose to user a /dev/rpmsg_ctrlX interface allowing to
- * create endpoint-to-endpoint communication without associated RPMsg channel.
- * The endpoints are rattached to the ctrldev RPMsg device.
+ * Called to expose to user a /dev/rpmsg_ctrlX पूर्णांकerface allowing to
+ * create endpoपूर्णांक-to-endpoपूर्णांक communication without associated RPMsg channel.
+ * The endpoपूर्णांकs are rattached to the ctrldev RPMsg device.
  */
-static struct rpmsg_device *rpmsg_virtio_add_ctrl_dev(struct virtio_device *vdev)
-{
-	struct virtproc_info *vrp = vdev->priv;
-	struct virtio_rpmsg_channel *vch;
-	struct rpmsg_device *rpdev_ctrl;
-	int err = 0;
+अटल काष्ठा rpmsg_device *rpmsg_virtio_add_ctrl_dev(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtproc_info *vrp = vdev->priv;
+	काष्ठा virtio_rpmsg_channel *vch;
+	काष्ठा rpmsg_device *rpdev_ctrl;
+	पूर्णांक err = 0;
 
-	vch = kzalloc(sizeof(*vch), GFP_KERNEL);
-	if (!vch)
-		return ERR_PTR(-ENOMEM);
+	vch = kzalloc(माप(*vch), GFP_KERNEL);
+	अगर (!vch)
+		वापस ERR_PTR(-ENOMEM);
 
 	/* Link the channel to the vrp */
 	vch->vrp = vrp;
 
-	/* Assign public information to the rpmsg_device */
+	/* Assign खुला inक्रमmation to the rpmsg_device */
 	rpdev_ctrl = &vch->rpdev;
 	rpdev_ctrl->ops = &virtio_rpmsg_ops;
 
@@ -840,50 +841,50 @@ static struct rpmsg_device *rpmsg_virtio_add_ctrl_dev(struct virtio_device *vdev
 	rpdev_ctrl->dev.release = virtio_rpmsg_release_device;
 	rpdev_ctrl->little_endian = virtio_is_little_endian(vrp->vdev);
 
-	err = rpmsg_chrdev_register_device(rpdev_ctrl);
-	if (err) {
-		kfree(vch);
-		return ERR_PTR(err);
-	}
+	err = rpmsg_chrdev_रेजिस्टर_device(rpdev_ctrl);
+	अगर (err) अणु
+		kमुक्त(vch);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return rpdev_ctrl;
-}
+	वापस rpdev_ctrl;
+पूर्ण
 
-static void rpmsg_virtio_del_ctrl_dev(struct rpmsg_device *rpdev_ctrl)
-{
-	if (!rpdev_ctrl)
-		return;
-	kfree(to_virtio_rpmsg_channel(rpdev_ctrl));
-}
+अटल व्योम rpmsg_virtio_del_ctrl_dev(काष्ठा rpmsg_device *rpdev_ctrl)
+अणु
+	अगर (!rpdev_ctrl)
+		वापस;
+	kमुक्त(to_virtio_rpmsg_channel(rpdev_ctrl));
+पूर्ण
 
-static int rpmsg_probe(struct virtio_device *vdev)
-{
-	vq_callback_t *vq_cbs[] = { rpmsg_recv_done, rpmsg_xmit_done };
-	static const char * const names[] = { "input", "output" };
-	struct virtqueue *vqs[2];
-	struct virtproc_info *vrp;
-	struct virtio_rpmsg_channel *vch = NULL;
-	struct rpmsg_device *rpdev_ns, *rpdev_ctrl;
-	void *bufs_va;
-	int err = 0, i;
-	size_t total_buf_space;
-	bool notify;
+अटल पूर्णांक rpmsg_probe(काष्ठा virtio_device *vdev)
+अणु
+	vq_callback_t *vq_cbs[] = अणु rpmsg_recv_करोne, rpmsg_xmit_करोne पूर्ण;
+	अटल स्थिर अक्षर * स्थिर names[] = अणु "input", "output" पूर्ण;
+	काष्ठा virtqueue *vqs[2];
+	काष्ठा virtproc_info *vrp;
+	काष्ठा virtio_rpmsg_channel *vch = शून्य;
+	काष्ठा rpmsg_device *rpdev_ns, *rpdev_ctrl;
+	व्योम *bufs_va;
+	पूर्णांक err = 0, i;
+	माप_प्रकार total_buf_space;
+	bool notअगरy;
 
-	vrp = kzalloc(sizeof(*vrp), GFP_KERNEL);
-	if (!vrp)
-		return -ENOMEM;
+	vrp = kzalloc(माप(*vrp), GFP_KERNEL);
+	अगर (!vrp)
+		वापस -ENOMEM;
 
 	vrp->vdev = vdev;
 
-	idr_init(&vrp->endpoints);
-	mutex_init(&vrp->endpoints_lock);
+	idr_init(&vrp->endpoपूर्णांकs);
+	mutex_init(&vrp->endpoपूर्णांकs_lock);
 	mutex_init(&vrp->tx_lock);
-	init_waitqueue_head(&vrp->sendq);
+	init_रुकोqueue_head(&vrp->sendq);
 
 	/* We expect two virtqueues, rx and tx (and in this order) */
-	err = virtio_find_vqs(vdev, 2, vqs, vq_cbs, names, NULL);
-	if (err)
-		goto free_vrp;
+	err = virtio_find_vqs(vdev, 2, vqs, vq_cbs, names, शून्य);
+	अगर (err)
+		जाओ मुक्त_vrp;
 
 	vrp->rvq = vqs[0];
 	vrp->svq = vqs[1];
@@ -892,69 +893,69 @@ static int rpmsg_probe(struct virtio_device *vdev)
 	WARN_ON(virtqueue_get_vring_size(vrp->rvq) !=
 		virtqueue_get_vring_size(vrp->svq));
 
-	/* we need less buffers if vrings are small */
-	if (virtqueue_get_vring_size(vrp->rvq) < MAX_RPMSG_NUM_BUFS / 2)
+	/* we need less buffers अगर vrings are small */
+	अगर (virtqueue_get_vring_size(vrp->rvq) < MAX_RPMSG_NUM_BUFS / 2)
 		vrp->num_bufs = virtqueue_get_vring_size(vrp->rvq) * 2;
-	else
+	अन्यथा
 		vrp->num_bufs = MAX_RPMSG_NUM_BUFS;
 
 	vrp->buf_size = MAX_RPMSG_BUF_SIZE;
 
 	total_buf_space = vrp->num_bufs * vrp->buf_size;
 
-	/* allocate coherent memory for the buffers */
+	/* allocate coherent memory क्रम the buffers */
 	bufs_va = dma_alloc_coherent(vdev->dev.parent,
 				     total_buf_space, &vrp->bufs_dma,
 				     GFP_KERNEL);
-	if (!bufs_va) {
+	अगर (!bufs_va) अणु
 		err = -ENOMEM;
-		goto vqs_del;
-	}
+		जाओ vqs_del;
+	पूर्ण
 
 	dev_dbg(&vdev->dev, "buffers: va %pK, dma %pad\n",
 		bufs_va, &vrp->bufs_dma);
 
-	/* half of the buffers is dedicated for RX */
+	/* half of the buffers is dedicated क्रम RX */
 	vrp->rbufs = bufs_va;
 
-	/* and half is dedicated for TX */
+	/* and half is dedicated क्रम TX */
 	vrp->sbufs = bufs_va + total_buf_space / 2;
 
 	/* set up the receive buffers */
-	for (i = 0; i < vrp->num_bufs / 2; i++) {
-		struct scatterlist sg;
-		void *cpu_addr = vrp->rbufs + i * vrp->buf_size;
+	क्रम (i = 0; i < vrp->num_bufs / 2; i++) अणु
+		काष्ठा scatterlist sg;
+		व्योम *cpu_addr = vrp->rbufs + i * vrp->buf_size;
 
 		rpmsg_sg_init(&sg, cpu_addr, vrp->buf_size);
 
 		err = virtqueue_add_inbuf(vrp->rvq, &sg, 1, cpu_addr,
 					  GFP_KERNEL);
 		WARN_ON(err); /* sanity check; this can't really happen */
-	}
+	पूर्ण
 
-	/* suppress "tx-complete" interrupts */
+	/* suppress "tx-complete" पूर्णांकerrupts */
 	virtqueue_disable_cb(vrp->svq);
 
 	vdev->priv = vrp;
 
 	rpdev_ctrl = rpmsg_virtio_add_ctrl_dev(vdev);
-	if (IS_ERR(rpdev_ctrl)) {
+	अगर (IS_ERR(rpdev_ctrl)) अणु
 		err = PTR_ERR(rpdev_ctrl);
-		goto free_coherent;
-	}
+		जाओ मुक्त_coherent;
+	पूर्ण
 
-	/* if supported by the remote processor, enable the name service */
-	if (virtio_has_feature(vdev, VIRTIO_RPMSG_F_NS)) {
-		vch = kzalloc(sizeof(*vch), GFP_KERNEL);
-		if (!vch) {
+	/* अगर supported by the remote processor, enable the name service */
+	अगर (virtio_has_feature(vdev, VIRTIO_RPMSG_F_NS)) अणु
+		vch = kzalloc(माप(*vch), GFP_KERNEL);
+		अगर (!vch) अणु
 			err = -ENOMEM;
-			goto free_ctrldev;
-		}
+			जाओ मुक्त_ctrldev;
+		पूर्ण
 
 		/* Link the channel to our vrp */
 		vch->vrp = vrp;
 
-		/* Assign public information to the rpmsg_device */
+		/* Assign खुला inक्रमmation to the rpmsg_device */
 		rpdev_ns = &vch->rpdev;
 		rpdev_ns->ops = &virtio_rpmsg_ops;
 		rpdev_ns->little_endian = virtio_is_little_endian(vrp->vdev);
@@ -962,111 +963,111 @@ static int rpmsg_probe(struct virtio_device *vdev)
 		rpdev_ns->dev.parent = &vrp->vdev->dev;
 		rpdev_ns->dev.release = virtio_rpmsg_release_device;
 
-		err = rpmsg_ns_register_device(rpdev_ns);
-		if (err)
-			goto free_vch;
-	}
+		err = rpmsg_ns_रेजिस्टर_device(rpdev_ns);
+		अगर (err)
+			जाओ मुक्त_vch;
+	पूर्ण
 
 	/*
-	 * Prepare to kick but don't notify yet - we can't do this before
-	 * device is ready.
+	 * Prepare to kick but करोn't notify yet - we can't करो this beक्रमe
+	 * device is पढ़ोy.
 	 */
-	notify = virtqueue_kick_prepare(vrp->rvq);
+	notअगरy = virtqueue_kick_prepare(vrp->rvq);
 
-	/* From this point on, we can notify and get callbacks. */
-	virtio_device_ready(vdev);
+	/* From this poपूर्णांक on, we can notअगरy and get callbacks. */
+	virtio_device_पढ़ोy(vdev);
 
 	/* tell the remote processor it can start sending messages */
 	/*
 	 * this might be concurrent with callbacks, but we are only
-	 * doing notify, not a full kick here, so that's ok.
+	 * करोing notअगरy, not a full kick here, so that's ok.
 	 */
-	if (notify)
-		virtqueue_notify(vrp->rvq);
+	अगर (notअगरy)
+		virtqueue_notअगरy(vrp->rvq);
 
 	dev_info(&vdev->dev, "rpmsg host is online\n");
 
-	return 0;
+	वापस 0;
 
-free_vch:
-	kfree(vch);
-free_ctrldev:
+मुक्त_vch:
+	kमुक्त(vch);
+मुक्त_ctrldev:
 	rpmsg_virtio_del_ctrl_dev(rpdev_ctrl);
-free_coherent:
-	dma_free_coherent(vdev->dev.parent, total_buf_space,
+मुक्त_coherent:
+	dma_मुक्त_coherent(vdev->dev.parent, total_buf_space,
 			  bufs_va, vrp->bufs_dma);
 vqs_del:
 	vdev->config->del_vqs(vrp->vdev);
-free_vrp:
-	kfree(vrp);
-	return err;
-}
+मुक्त_vrp:
+	kमुक्त(vrp);
+	वापस err;
+पूर्ण
 
-static int rpmsg_remove_device(struct device *dev, void *data)
-{
-	device_unregister(dev);
+अटल पूर्णांक rpmsg_हटाओ_device(काष्ठा device *dev, व्योम *data)
+अणु
+	device_unरेजिस्टर(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rpmsg_remove(struct virtio_device *vdev)
-{
-	struct virtproc_info *vrp = vdev->priv;
-	size_t total_buf_space = vrp->num_bufs * vrp->buf_size;
-	int ret;
+अटल व्योम rpmsg_हटाओ(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtproc_info *vrp = vdev->priv;
+	माप_प्रकार total_buf_space = vrp->num_bufs * vrp->buf_size;
+	पूर्णांक ret;
 
 	vdev->config->reset(vdev);
 
-	ret = device_for_each_child(&vdev->dev, NULL, rpmsg_remove_device);
-	if (ret)
+	ret = device_क्रम_each_child(&vdev->dev, शून्य, rpmsg_हटाओ_device);
+	अगर (ret)
 		dev_warn(&vdev->dev, "can't remove rpmsg device: %d\n", ret);
 
-	idr_destroy(&vrp->endpoints);
+	idr_destroy(&vrp->endpoपूर्णांकs);
 
 	vdev->config->del_vqs(vrp->vdev);
 
-	dma_free_coherent(vdev->dev.parent, total_buf_space,
+	dma_मुक्त_coherent(vdev->dev.parent, total_buf_space,
 			  vrp->rbufs, vrp->bufs_dma);
 
-	kfree(vrp);
-}
+	kमुक्त(vrp);
+पूर्ण
 
-static struct virtio_device_id id_table[] = {
-	{ VIRTIO_ID_RPMSG, VIRTIO_DEV_ANY_ID },
-	{ 0 },
-};
+अटल काष्ठा virtio_device_id id_table[] = अणु
+	अणु VIRTIO_ID_RPMSG, VIRTIO_DEV_ANY_ID पूर्ण,
+	अणु 0 पूर्ण,
+पूर्ण;
 
-static unsigned int features[] = {
+अटल अचिन्हित पूर्णांक features[] = अणु
 	VIRTIO_RPMSG_F_NS,
-};
+पूर्ण;
 
-static struct virtio_driver virtio_ipc_driver = {
+अटल काष्ठा virtio_driver virtio_ipc_driver = अणु
 	.feature_table	= features,
 	.feature_table_size = ARRAY_SIZE(features),
 	.driver.name	= KBUILD_MODNAME,
 	.driver.owner	= THIS_MODULE,
 	.id_table	= id_table,
 	.probe		= rpmsg_probe,
-	.remove		= rpmsg_remove,
-};
+	.हटाओ		= rpmsg_हटाओ,
+पूर्ण;
 
-static int __init rpmsg_init(void)
-{
-	int ret;
+अटल पूर्णांक __init rpmsg_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_virtio_driver(&virtio_ipc_driver);
-	if (ret)
+	ret = रेजिस्टर_virtio_driver(&virtio_ipc_driver);
+	अगर (ret)
 		pr_err("failed to register virtio driver: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 subsys_initcall(rpmsg_init);
 
-static void __exit rpmsg_fini(void)
-{
-	unregister_virtio_driver(&virtio_ipc_driver);
-}
-module_exit(rpmsg_fini);
+अटल व्योम __निकास rpmsg_fini(व्योम)
+अणु
+	unरेजिस्टर_virtio_driver(&virtio_ipc_driver);
+पूर्ण
+module_निकास(rpmsg_fini);
 
 MODULE_DEVICE_TABLE(virtio, id_table);
 MODULE_DESCRIPTION("Virtio-based remote processor messaging bus");

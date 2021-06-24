@@ -1,290 +1,291 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include "tree-mod-log.h"
-#include "disk-io.h"
+#समावेश "tree-mod-log.h"
+#समावेश "disk-io.h"
 
-struct tree_mod_root {
+काष्ठा tree_mod_root अणु
 	u64 logical;
 	u8 level;
-};
+पूर्ण;
 
-struct tree_mod_elem {
-	struct rb_node node;
+काष्ठा tree_mod_elem अणु
+	काष्ठा rb_node node;
 	u64 logical;
 	u64 seq;
-	enum btrfs_mod_log_op op;
+	क्रमागत btrfs_mod_log_op op;
 
 	/*
-	 * This is used for BTRFS_MOD_LOG_KEY_* and BTRFS_MOD_LOG_MOVE_KEYS
+	 * This is used क्रम BTRFS_MOD_LOG_KEY_* and BTRFS_MOD_LOG_MOVE_KEYS
 	 * operations.
 	 */
-	int slot;
+	पूर्णांक slot;
 
-	/* This is used for BTRFS_MOD_LOG_KEY* and BTRFS_MOD_LOG_ROOT_REPLACE. */
+	/* This is used क्रम BTRFS_MOD_LOG_KEY* and BTRFS_MOD_LOG_ROOT_REPLACE. */
 	u64 generation;
 
-	/* Those are used for op == BTRFS_MOD_LOG_KEY_{REPLACE,REMOVE}. */
-	struct btrfs_disk_key key;
+	/* Those are used क्रम op == BTRFS_MOD_LOG_KEY_अणुREPLACE,REMOVEपूर्ण. */
+	काष्ठा btrfs_disk_key key;
 	u64 blockptr;
 
-	/* This is used for op == BTRFS_MOD_LOG_MOVE_KEYS. */
-	struct {
-		int dst_slot;
-		int nr_items;
-	} move;
+	/* This is used क्रम op == BTRFS_MOD_LOG_MOVE_KEYS. */
+	काष्ठा अणु
+		पूर्णांक dst_slot;
+		पूर्णांक nr_items;
+	पूर्ण move;
 
-	/* This is used for op == BTRFS_MOD_LOG_ROOT_REPLACE. */
-	struct tree_mod_root old_root;
-};
+	/* This is used क्रम op == BTRFS_MOD_LOG_ROOT_REPLACE. */
+	काष्ठा tree_mod_root old_root;
+पूर्ण;
 
 /*
- * Pull a new tree mod seq number for our operation.
+ * Pull a new tree mod seq number क्रम our operation.
  */
-static inline u64 btrfs_inc_tree_mod_seq(struct btrfs_fs_info *fs_info)
-{
-	return atomic64_inc_return(&fs_info->tree_mod_seq);
-}
+अटल अंतरभूत u64 btrfs_inc_tree_mod_seq(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	वापस atomic64_inc_वापस(&fs_info->tree_mod_seq);
+पूर्ण
 
 /*
- * This adds a new blocker to the tree mod log's blocker list if the @elem
- * passed does not already have a sequence number set. So when a caller expects
- * to record tree modifications, it should ensure to set elem->seq to zero
- * before calling btrfs_get_tree_mod_seq.
- * Returns a fresh, unused tree log modification sequence number, even if no new
+ * This adds a new blocker to the tree mod log's blocker list अगर the @elem
+ * passed करोes not alपढ़ोy have a sequence number set. So when a caller expects
+ * to record tree modअगरications, it should ensure to set elem->seq to zero
+ * beक्रमe calling btrfs_get_tree_mod_seq.
+ * Returns a fresh, unused tree log modअगरication sequence number, even अगर no new
  * blocker was added.
  */
-u64 btrfs_get_tree_mod_seq(struct btrfs_fs_info *fs_info,
-			   struct btrfs_seq_list *elem)
-{
-	write_lock(&fs_info->tree_mod_log_lock);
-	if (!elem->seq) {
+u64 btrfs_get_tree_mod_seq(काष्ठा btrfs_fs_info *fs_info,
+			   काष्ठा btrfs_seq_list *elem)
+अणु
+	ग_लिखो_lock(&fs_info->tree_mod_log_lock);
+	अगर (!elem->seq) अणु
 		elem->seq = btrfs_inc_tree_mod_seq(fs_info);
 		list_add_tail(&elem->list, &fs_info->tree_mod_seq_list);
 		set_bit(BTRFS_FS_TREE_MOD_LOG_USERS, &fs_info->flags);
-	}
-	write_unlock(&fs_info->tree_mod_log_lock);
+	पूर्ण
+	ग_लिखो_unlock(&fs_info->tree_mod_log_lock);
 
-	return elem->seq;
-}
+	वापस elem->seq;
+पूर्ण
 
-void btrfs_put_tree_mod_seq(struct btrfs_fs_info *fs_info,
-			    struct btrfs_seq_list *elem)
-{
-	struct rb_root *tm_root;
-	struct rb_node *node;
-	struct rb_node *next;
-	struct tree_mod_elem *tm;
+व्योम btrfs_put_tree_mod_seq(काष्ठा btrfs_fs_info *fs_info,
+			    काष्ठा btrfs_seq_list *elem)
+अणु
+	काष्ठा rb_root *पंचांग_root;
+	काष्ठा rb_node *node;
+	काष्ठा rb_node *next;
+	काष्ठा tree_mod_elem *पंचांग;
 	u64 min_seq = BTRFS_SEQ_LAST;
 	u64 seq_putting = elem->seq;
 
-	if (!seq_putting)
-		return;
+	अगर (!seq_putting)
+		वापस;
 
-	write_lock(&fs_info->tree_mod_log_lock);
+	ग_लिखो_lock(&fs_info->tree_mod_log_lock);
 	list_del(&elem->list);
 	elem->seq = 0;
 
-	if (list_empty(&fs_info->tree_mod_seq_list)) {
+	अगर (list_empty(&fs_info->tree_mod_seq_list)) अणु
 		clear_bit(BTRFS_FS_TREE_MOD_LOG_USERS, &fs_info->flags);
-	} else {
-		struct btrfs_seq_list *first;
+	पूर्ण अन्यथा अणु
+		काष्ठा btrfs_seq_list *first;
 
 		first = list_first_entry(&fs_info->tree_mod_seq_list,
-					 struct btrfs_seq_list, list);
-		if (seq_putting > first->seq) {
+					 काष्ठा btrfs_seq_list, list);
+		अगर (seq_putting > first->seq) अणु
 			/*
 			 * Blocker with lower sequence number exists, we cannot
-			 * remove anything from the log.
+			 * हटाओ anything from the log.
 			 */
-			write_unlock(&fs_info->tree_mod_log_lock);
-			return;
-		}
+			ग_लिखो_unlock(&fs_info->tree_mod_log_lock);
+			वापस;
+		पूर्ण
 		min_seq = first->seq;
-	}
+	पूर्ण
 
 	/*
-	 * Anything that's lower than the lowest existing (read: blocked)
-	 * sequence number can be removed from the tree.
+	 * Anything that's lower than the lowest existing (पढ़ो: blocked)
+	 * sequence number can be हटाओd from the tree.
 	 */
-	tm_root = &fs_info->tree_mod_log;
-	for (node = rb_first(tm_root); node; node = next) {
+	पंचांग_root = &fs_info->tree_mod_log;
+	क्रम (node = rb_first(पंचांग_root); node; node = next) अणु
 		next = rb_next(node);
-		tm = rb_entry(node, struct tree_mod_elem, node);
-		if (tm->seq >= min_seq)
-			continue;
-		rb_erase(node, tm_root);
-		kfree(tm);
-	}
-	write_unlock(&fs_info->tree_mod_log_lock);
-}
+		पंचांग = rb_entry(node, काष्ठा tree_mod_elem, node);
+		अगर (पंचांग->seq >= min_seq)
+			जारी;
+		rb_erase(node, पंचांग_root);
+		kमुक्त(पंचांग);
+	पूर्ण
+	ग_लिखो_unlock(&fs_info->tree_mod_log_lock);
+पूर्ण
 
 /*
  * Key order of the log:
  *       node/leaf start address -> sequence
  *
- * The 'start address' is the logical address of the *new* root node for root
- * replace operations, or the logical address of the affected block for all
+ * The 'start address' is the logical address of the *new* root node क्रम root
+ * replace operations, or the logical address of the affected block क्रम all
  * other operations.
  */
-static noinline int tree_mod_log_insert(struct btrfs_fs_info *fs_info,
-					struct tree_mod_elem *tm)
-{
-	struct rb_root *tm_root;
-	struct rb_node **new;
-	struct rb_node *parent = NULL;
-	struct tree_mod_elem *cur;
+अटल noअंतरभूत पूर्णांक tree_mod_log_insert(काष्ठा btrfs_fs_info *fs_info,
+					काष्ठा tree_mod_elem *पंचांग)
+अणु
+	काष्ठा rb_root *पंचांग_root;
+	काष्ठा rb_node **new;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा tree_mod_elem *cur;
 
-	lockdep_assert_held_write(&fs_info->tree_mod_log_lock);
+	lockdep_निश्चित_held_ग_लिखो(&fs_info->tree_mod_log_lock);
 
-	tm->seq = btrfs_inc_tree_mod_seq(fs_info);
+	पंचांग->seq = btrfs_inc_tree_mod_seq(fs_info);
 
-	tm_root = &fs_info->tree_mod_log;
-	new = &tm_root->rb_node;
-	while (*new) {
-		cur = rb_entry(*new, struct tree_mod_elem, node);
+	पंचांग_root = &fs_info->tree_mod_log;
+	new = &पंचांग_root->rb_node;
+	जबतक (*new) अणु
+		cur = rb_entry(*new, काष्ठा tree_mod_elem, node);
 		parent = *new;
-		if (cur->logical < tm->logical)
+		अगर (cur->logical < पंचांग->logical)
 			new = &((*new)->rb_left);
-		else if (cur->logical > tm->logical)
+		अन्यथा अगर (cur->logical > पंचांग->logical)
 			new = &((*new)->rb_right);
-		else if (cur->seq < tm->seq)
+		अन्यथा अगर (cur->seq < पंचांग->seq)
 			new = &((*new)->rb_left);
-		else if (cur->seq > tm->seq)
+		अन्यथा अगर (cur->seq > पंचांग->seq)
 			new = &((*new)->rb_right);
-		else
-			return -EEXIST;
-	}
+		अन्यथा
+			वापस -EEXIST;
+	पूर्ण
 
-	rb_link_node(&tm->node, parent, new);
-	rb_insert_color(&tm->node, tm_root);
-	return 0;
-}
+	rb_link_node(&पंचांग->node, parent, new);
+	rb_insert_color(&पंचांग->node, पंचांग_root);
+	वापस 0;
+पूर्ण
 
 /*
- * Determines if logging can be omitted. Returns true if it can. Otherwise, it
- * returns false with the tree_mod_log_lock acquired. The caller must hold
+ * Determines अगर logging can be omitted. Returns true अगर it can. Otherwise, it
+ * वापसs false with the tree_mod_log_lock acquired. The caller must hold
  * this until all tree mod log insertions are recorded in the rb tree and then
- * write unlock fs_info::tree_mod_log_lock.
+ * ग_लिखो unlock fs_info::tree_mod_log_lock.
  */
-static inline bool tree_mod_dont_log(struct btrfs_fs_info *fs_info,
-				    struct extent_buffer *eb)
-{
-	if (!test_bit(BTRFS_FS_TREE_MOD_LOG_USERS, &fs_info->flags))
-		return true;
-	if (eb && btrfs_header_level(eb) == 0)
-		return true;
+अटल अंतरभूत bool tree_mod_करोnt_log(काष्ठा btrfs_fs_info *fs_info,
+				    काष्ठा extent_buffer *eb)
+अणु
+	अगर (!test_bit(BTRFS_FS_TREE_MOD_LOG_USERS, &fs_info->flags))
+		वापस true;
+	अगर (eb && btrfs_header_level(eb) == 0)
+		वापस true;
 
-	write_lock(&fs_info->tree_mod_log_lock);
-	if (list_empty(&(fs_info)->tree_mod_seq_list)) {
-		write_unlock(&fs_info->tree_mod_log_lock);
-		return true;
-	}
+	ग_लिखो_lock(&fs_info->tree_mod_log_lock);
+	अगर (list_empty(&(fs_info)->tree_mod_seq_list)) अणु
+		ग_लिखो_unlock(&fs_info->tree_mod_log_lock);
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Similar to tree_mod_dont_log, but doesn't acquire any locks. */
-static inline bool tree_mod_need_log(const struct btrfs_fs_info *fs_info,
-				    struct extent_buffer *eb)
-{
-	if (!test_bit(BTRFS_FS_TREE_MOD_LOG_USERS, &fs_info->flags))
-		return false;
-	if (eb && btrfs_header_level(eb) == 0)
-		return false;
+/* Similar to tree_mod_करोnt_log, but करोesn't acquire any locks. */
+अटल अंतरभूत bool tree_mod_need_log(स्थिर काष्ठा btrfs_fs_info *fs_info,
+				    काष्ठा extent_buffer *eb)
+अणु
+	अगर (!test_bit(BTRFS_FS_TREE_MOD_LOG_USERS, &fs_info->flags))
+		वापस false;
+	अगर (eb && btrfs_header_level(eb) == 0)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct tree_mod_elem *alloc_tree_mod_elem(struct extent_buffer *eb,
-						 int slot,
-						 enum btrfs_mod_log_op op,
+अटल काष्ठा tree_mod_elem *alloc_tree_mod_elem(काष्ठा extent_buffer *eb,
+						 पूर्णांक slot,
+						 क्रमागत btrfs_mod_log_op op,
 						 gfp_t flags)
-{
-	struct tree_mod_elem *tm;
+अणु
+	काष्ठा tree_mod_elem *पंचांग;
 
-	tm = kzalloc(sizeof(*tm), flags);
-	if (!tm)
-		return NULL;
+	पंचांग = kzalloc(माप(*पंचांग), flags);
+	अगर (!पंचांग)
+		वापस शून्य;
 
-	tm->logical = eb->start;
-	if (op != BTRFS_MOD_LOG_KEY_ADD) {
-		btrfs_node_key(eb, &tm->key, slot);
-		tm->blockptr = btrfs_node_blockptr(eb, slot);
-	}
-	tm->op = op;
-	tm->slot = slot;
-	tm->generation = btrfs_node_ptr_generation(eb, slot);
-	RB_CLEAR_NODE(&tm->node);
+	पंचांग->logical = eb->start;
+	अगर (op != BTRFS_MOD_LOG_KEY_ADD) अणु
+		btrfs_node_key(eb, &पंचांग->key, slot);
+		पंचांग->blockptr = btrfs_node_blockptr(eb, slot);
+	पूर्ण
+	पंचांग->op = op;
+	पंचांग->slot = slot;
+	पंचांग->generation = btrfs_node_ptr_generation(eb, slot);
+	RB_CLEAR_NODE(&पंचांग->node);
 
-	return tm;
-}
+	वापस पंचांग;
+पूर्ण
 
-int btrfs_tree_mod_log_insert_key(struct extent_buffer *eb, int slot,
-				  enum btrfs_mod_log_op op, gfp_t flags)
-{
-	struct tree_mod_elem *tm;
-	int ret;
+पूर्णांक btrfs_tree_mod_log_insert_key(काष्ठा extent_buffer *eb, पूर्णांक slot,
+				  क्रमागत btrfs_mod_log_op op, gfp_t flags)
+अणु
+	काष्ठा tree_mod_elem *पंचांग;
+	पूर्णांक ret;
 
-	if (!tree_mod_need_log(eb->fs_info, eb))
-		return 0;
+	अगर (!tree_mod_need_log(eb->fs_info, eb))
+		वापस 0;
 
-	tm = alloc_tree_mod_elem(eb, slot, op, flags);
-	if (!tm)
-		return -ENOMEM;
+	पंचांग = alloc_tree_mod_elem(eb, slot, op, flags);
+	अगर (!पंचांग)
+		वापस -ENOMEM;
 
-	if (tree_mod_dont_log(eb->fs_info, eb)) {
-		kfree(tm);
-		return 0;
-	}
+	अगर (tree_mod_करोnt_log(eb->fs_info, eb)) अणु
+		kमुक्त(पंचांग);
+		वापस 0;
+	पूर्ण
 
-	ret = tree_mod_log_insert(eb->fs_info, tm);
-	write_unlock(&eb->fs_info->tree_mod_log_lock);
-	if (ret)
-		kfree(tm);
+	ret = tree_mod_log_insert(eb->fs_info, पंचांग);
+	ग_लिखो_unlock(&eb->fs_info->tree_mod_log_lock);
+	अगर (ret)
+		kमुक्त(पंचांग);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int btrfs_tree_mod_log_insert_move(struct extent_buffer *eb,
-				   int dst_slot, int src_slot,
-				   int nr_items)
-{
-	struct tree_mod_elem *tm = NULL;
-	struct tree_mod_elem **tm_list = NULL;
-	int ret = 0;
-	int i;
+पूर्णांक btrfs_tree_mod_log_insert_move(काष्ठा extent_buffer *eb,
+				   पूर्णांक dst_slot, पूर्णांक src_slot,
+				   पूर्णांक nr_items)
+अणु
+	काष्ठा tree_mod_elem *पंचांग = शून्य;
+	काष्ठा tree_mod_elem **पंचांग_list = शून्य;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 	bool locked = false;
 
-	if (!tree_mod_need_log(eb->fs_info, eb))
-		return 0;
+	अगर (!tree_mod_need_log(eb->fs_info, eb))
+		वापस 0;
 
-	tm_list = kcalloc(nr_items, sizeof(struct tree_mod_elem *), GFP_NOFS);
-	if (!tm_list)
-		return -ENOMEM;
+	पंचांग_list = kसुस्मृति(nr_items, माप(काष्ठा tree_mod_elem *), GFP_NOFS);
+	अगर (!पंचांग_list)
+		वापस -ENOMEM;
 
-	tm = kzalloc(sizeof(*tm), GFP_NOFS);
-	if (!tm) {
+	पंचांग = kzalloc(माप(*पंचांग), GFP_NOFS);
+	अगर (!पंचांग) अणु
 		ret = -ENOMEM;
-		goto free_tms;
-	}
+		जाओ मुक्त_पंचांगs;
+	पूर्ण
 
-	tm->logical = eb->start;
-	tm->slot = src_slot;
-	tm->move.dst_slot = dst_slot;
-	tm->move.nr_items = nr_items;
-	tm->op = BTRFS_MOD_LOG_MOVE_KEYS;
+	पंचांग->logical = eb->start;
+	पंचांग->slot = src_slot;
+	पंचांग->move.dst_slot = dst_slot;
+	पंचांग->move.nr_items = nr_items;
+	पंचांग->op = BTRFS_MOD_LOG_MOVE_KEYS;
 
-	for (i = 0; i + dst_slot < src_slot && i < nr_items; i++) {
-		tm_list[i] = alloc_tree_mod_elem(eb, i + dst_slot,
+	क्रम (i = 0; i + dst_slot < src_slot && i < nr_items; i++) अणु
+		पंचांग_list[i] = alloc_tree_mod_elem(eb, i + dst_slot,
 				BTRFS_MOD_LOG_KEY_REMOVE_WHILE_MOVING, GFP_NOFS);
-		if (!tm_list[i]) {
+		अगर (!पंचांग_list[i]) अणु
 			ret = -ENOMEM;
-			goto free_tms;
-		}
-	}
+			जाओ मुक्त_पंचांगs;
+		पूर्ण
+	पूर्ण
 
-	if (tree_mod_dont_log(eb->fs_info, eb))
-		goto free_tms;
+	अगर (tree_mod_करोnt_log(eb->fs_info, eb))
+		जाओ मुक्त_पंचांगs;
 	locked = true;
 
 	/*
@@ -292,638 +293,638 @@ int btrfs_tree_mod_log_insert_move(struct extent_buffer *eb,
 	 * This can only happen when we move towards the beginning of the
 	 * buffer, i.e. dst_slot < src_slot.
 	 */
-	for (i = 0; i + dst_slot < src_slot && i < nr_items; i++) {
-		ret = tree_mod_log_insert(eb->fs_info, tm_list[i]);
-		if (ret)
-			goto free_tms;
-	}
+	क्रम (i = 0; i + dst_slot < src_slot && i < nr_items; i++) अणु
+		ret = tree_mod_log_insert(eb->fs_info, पंचांग_list[i]);
+		अगर (ret)
+			जाओ मुक्त_पंचांगs;
+	पूर्ण
 
-	ret = tree_mod_log_insert(eb->fs_info, tm);
-	if (ret)
-		goto free_tms;
-	write_unlock(&eb->fs_info->tree_mod_log_lock);
-	kfree(tm_list);
+	ret = tree_mod_log_insert(eb->fs_info, पंचांग);
+	अगर (ret)
+		जाओ मुक्त_पंचांगs;
+	ग_लिखो_unlock(&eb->fs_info->tree_mod_log_lock);
+	kमुक्त(पंचांग_list);
 
-	return 0;
+	वापस 0;
 
-free_tms:
-	for (i = 0; i < nr_items; i++) {
-		if (tm_list[i] && !RB_EMPTY_NODE(&tm_list[i]->node))
-			rb_erase(&tm_list[i]->node, &eb->fs_info->tree_mod_log);
-		kfree(tm_list[i]);
-	}
-	if (locked)
-		write_unlock(&eb->fs_info->tree_mod_log_lock);
-	kfree(tm_list);
-	kfree(tm);
+मुक्त_पंचांगs:
+	क्रम (i = 0; i < nr_items; i++) अणु
+		अगर (पंचांग_list[i] && !RB_EMPTY_NODE(&पंचांग_list[i]->node))
+			rb_erase(&पंचांग_list[i]->node, &eb->fs_info->tree_mod_log);
+		kमुक्त(पंचांग_list[i]);
+	पूर्ण
+	अगर (locked)
+		ग_लिखो_unlock(&eb->fs_info->tree_mod_log_lock);
+	kमुक्त(पंचांग_list);
+	kमुक्त(पंचांग);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int tree_mod_log_free_eb(struct btrfs_fs_info *fs_info,
-				       struct tree_mod_elem **tm_list,
-				       int nritems)
-{
-	int i, j;
-	int ret;
+अटल अंतरभूत पूर्णांक tree_mod_log_मुक्त_eb(काष्ठा btrfs_fs_info *fs_info,
+				       काष्ठा tree_mod_elem **पंचांग_list,
+				       पूर्णांक nritems)
+अणु
+	पूर्णांक i, j;
+	पूर्णांक ret;
 
-	for (i = nritems - 1; i >= 0; i--) {
-		ret = tree_mod_log_insert(fs_info, tm_list[i]);
-		if (ret) {
-			for (j = nritems - 1; j > i; j--)
-				rb_erase(&tm_list[j]->node,
+	क्रम (i = nritems - 1; i >= 0; i--) अणु
+		ret = tree_mod_log_insert(fs_info, पंचांग_list[i]);
+		अगर (ret) अणु
+			क्रम (j = nritems - 1; j > i; j--)
+				rb_erase(&पंचांग_list[j]->node,
 					 &fs_info->tree_mod_log);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int btrfs_tree_mod_log_insert_root(struct extent_buffer *old_root,
-				   struct extent_buffer *new_root,
+पूर्णांक btrfs_tree_mod_log_insert_root(काष्ठा extent_buffer *old_root,
+				   काष्ठा extent_buffer *new_root,
 				   bool log_removal)
-{
-	struct btrfs_fs_info *fs_info = old_root->fs_info;
-	struct tree_mod_elem *tm = NULL;
-	struct tree_mod_elem **tm_list = NULL;
-	int nritems = 0;
-	int ret = 0;
-	int i;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = old_root->fs_info;
+	काष्ठा tree_mod_elem *पंचांग = शून्य;
+	काष्ठा tree_mod_elem **पंचांग_list = शून्य;
+	पूर्णांक nritems = 0;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	if (!tree_mod_need_log(fs_info, NULL))
-		return 0;
+	अगर (!tree_mod_need_log(fs_info, शून्य))
+		वापस 0;
 
-	if (log_removal && btrfs_header_level(old_root) > 0) {
+	अगर (log_removal && btrfs_header_level(old_root) > 0) अणु
 		nritems = btrfs_header_nritems(old_root);
-		tm_list = kcalloc(nritems, sizeof(struct tree_mod_elem *),
+		पंचांग_list = kसुस्मृति(nritems, माप(काष्ठा tree_mod_elem *),
 				  GFP_NOFS);
-		if (!tm_list) {
+		अगर (!पंचांग_list) अणु
 			ret = -ENOMEM;
-			goto free_tms;
-		}
-		for (i = 0; i < nritems; i++) {
-			tm_list[i] = alloc_tree_mod_elem(old_root, i,
+			जाओ मुक्त_पंचांगs;
+		पूर्ण
+		क्रम (i = 0; i < nritems; i++) अणु
+			पंचांग_list[i] = alloc_tree_mod_elem(old_root, i,
 			    BTRFS_MOD_LOG_KEY_REMOVE_WHILE_FREEING, GFP_NOFS);
-			if (!tm_list[i]) {
+			अगर (!पंचांग_list[i]) अणु
 				ret = -ENOMEM;
-				goto free_tms;
-			}
-		}
-	}
+				जाओ मुक्त_पंचांगs;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	tm = kzalloc(sizeof(*tm), GFP_NOFS);
-	if (!tm) {
+	पंचांग = kzalloc(माप(*पंचांग), GFP_NOFS);
+	अगर (!पंचांग) अणु
 		ret = -ENOMEM;
-		goto free_tms;
-	}
+		जाओ मुक्त_पंचांगs;
+	पूर्ण
 
-	tm->logical = new_root->start;
-	tm->old_root.logical = old_root->start;
-	tm->old_root.level = btrfs_header_level(old_root);
-	tm->generation = btrfs_header_generation(old_root);
-	tm->op = BTRFS_MOD_LOG_ROOT_REPLACE;
+	पंचांग->logical = new_root->start;
+	पंचांग->old_root.logical = old_root->start;
+	पंचांग->old_root.level = btrfs_header_level(old_root);
+	पंचांग->generation = btrfs_header_generation(old_root);
+	पंचांग->op = BTRFS_MOD_LOG_ROOT_REPLACE;
 
-	if (tree_mod_dont_log(fs_info, NULL))
-		goto free_tms;
+	अगर (tree_mod_करोnt_log(fs_info, शून्य))
+		जाओ मुक्त_पंचांगs;
 
-	if (tm_list)
-		ret = tree_mod_log_free_eb(fs_info, tm_list, nritems);
-	if (!ret)
-		ret = tree_mod_log_insert(fs_info, tm);
+	अगर (पंचांग_list)
+		ret = tree_mod_log_मुक्त_eb(fs_info, पंचांग_list, nritems);
+	अगर (!ret)
+		ret = tree_mod_log_insert(fs_info, पंचांग);
 
-	write_unlock(&fs_info->tree_mod_log_lock);
-	if (ret)
-		goto free_tms;
-	kfree(tm_list);
+	ग_लिखो_unlock(&fs_info->tree_mod_log_lock);
+	अगर (ret)
+		जाओ मुक्त_पंचांगs;
+	kमुक्त(पंचांग_list);
 
-	return ret;
+	वापस ret;
 
-free_tms:
-	if (tm_list) {
-		for (i = 0; i < nritems; i++)
-			kfree(tm_list[i]);
-		kfree(tm_list);
-	}
-	kfree(tm);
+मुक्त_पंचांगs:
+	अगर (पंचांग_list) अणु
+		क्रम (i = 0; i < nritems; i++)
+			kमुक्त(पंचांग_list[i]);
+		kमुक्त(पंचांग_list);
+	पूर्ण
+	kमुक्त(पंचांग);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct tree_mod_elem *__tree_mod_log_search(struct btrfs_fs_info *fs_info,
+अटल काष्ठा tree_mod_elem *__tree_mod_log_search(काष्ठा btrfs_fs_info *fs_info,
 						   u64 start, u64 min_seq,
 						   bool smallest)
-{
-	struct rb_root *tm_root;
-	struct rb_node *node;
-	struct tree_mod_elem *cur = NULL;
-	struct tree_mod_elem *found = NULL;
+अणु
+	काष्ठा rb_root *पंचांग_root;
+	काष्ठा rb_node *node;
+	काष्ठा tree_mod_elem *cur = शून्य;
+	काष्ठा tree_mod_elem *found = शून्य;
 
-	read_lock(&fs_info->tree_mod_log_lock);
-	tm_root = &fs_info->tree_mod_log;
-	node = tm_root->rb_node;
-	while (node) {
-		cur = rb_entry(node, struct tree_mod_elem, node);
-		if (cur->logical < start) {
+	पढ़ो_lock(&fs_info->tree_mod_log_lock);
+	पंचांग_root = &fs_info->tree_mod_log;
+	node = पंचांग_root->rb_node;
+	जबतक (node) अणु
+		cur = rb_entry(node, काष्ठा tree_mod_elem, node);
+		अगर (cur->logical < start) अणु
 			node = node->rb_left;
-		} else if (cur->logical > start) {
+		पूर्ण अन्यथा अगर (cur->logical > start) अणु
 			node = node->rb_right;
-		} else if (cur->seq < min_seq) {
+		पूर्ण अन्यथा अगर (cur->seq < min_seq) अणु
 			node = node->rb_left;
-		} else if (!smallest) {
+		पूर्ण अन्यथा अगर (!smallest) अणु
 			/* We want the node with the highest seq */
-			if (found)
+			अगर (found)
 				BUG_ON(found->seq > cur->seq);
 			found = cur;
 			node = node->rb_left;
-		} else if (cur->seq > min_seq) {
+		पूर्ण अन्यथा अगर (cur->seq > min_seq) अणु
 			/* We want the node with the smallest seq */
-			if (found)
+			अगर (found)
 				BUG_ON(found->seq < cur->seq);
 			found = cur;
 			node = node->rb_right;
-		} else {
+		पूर्ण अन्यथा अणु
 			found = cur;
-			break;
-		}
-	}
-	read_unlock(&fs_info->tree_mod_log_lock);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&fs_info->tree_mod_log_lock);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
 /*
- * This returns the element from the log with the smallest time sequence
- * value that's in the log (the oldest log item). Any element with a time
+ * This वापसs the element from the log with the smallest समय sequence
+ * value that's in the log (the oldest log item). Any element with a समय
  * sequence lower than min_seq will be ignored.
  */
-static struct tree_mod_elem *tree_mod_log_search_oldest(struct btrfs_fs_info *fs_info,
+अटल काष्ठा tree_mod_elem *tree_mod_log_search_oldest(काष्ठा btrfs_fs_info *fs_info,
 							u64 start, u64 min_seq)
-{
-	return __tree_mod_log_search(fs_info, start, min_seq, true);
-}
+अणु
+	वापस __tree_mod_log_search(fs_info, start, min_seq, true);
+पूर्ण
 
 /*
- * This returns the element from the log with the largest time sequence
+ * This वापसs the element from the log with the largest समय sequence
  * value that's in the log (the most recent log item). Any element with
- * a time sequence lower than min_seq will be ignored.
+ * a समय sequence lower than min_seq will be ignored.
  */
-static struct tree_mod_elem *tree_mod_log_search(struct btrfs_fs_info *fs_info,
+अटल काष्ठा tree_mod_elem *tree_mod_log_search(काष्ठा btrfs_fs_info *fs_info,
 						 u64 start, u64 min_seq)
-{
-	return __tree_mod_log_search(fs_info, start, min_seq, false);
-}
+अणु
+	वापस __tree_mod_log_search(fs_info, start, min_seq, false);
+पूर्ण
 
-int btrfs_tree_mod_log_eb_copy(struct extent_buffer *dst,
-			       struct extent_buffer *src,
-			       unsigned long dst_offset,
-			       unsigned long src_offset,
-			       int nr_items)
-{
-	struct btrfs_fs_info *fs_info = dst->fs_info;
-	int ret = 0;
-	struct tree_mod_elem **tm_list = NULL;
-	struct tree_mod_elem **tm_list_add, **tm_list_rem;
-	int i;
+पूर्णांक btrfs_tree_mod_log_eb_copy(काष्ठा extent_buffer *dst,
+			       काष्ठा extent_buffer *src,
+			       अचिन्हित दीर्घ dst_offset,
+			       अचिन्हित दीर्घ src_offset,
+			       पूर्णांक nr_items)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = dst->fs_info;
+	पूर्णांक ret = 0;
+	काष्ठा tree_mod_elem **पंचांग_list = शून्य;
+	काष्ठा tree_mod_elem **पंचांग_list_add, **पंचांग_list_rem;
+	पूर्णांक i;
 	bool locked = false;
 
-	if (!tree_mod_need_log(fs_info, NULL))
-		return 0;
+	अगर (!tree_mod_need_log(fs_info, शून्य))
+		वापस 0;
 
-	if (btrfs_header_level(dst) == 0 && btrfs_header_level(src) == 0)
-		return 0;
+	अगर (btrfs_header_level(dst) == 0 && btrfs_header_level(src) == 0)
+		वापस 0;
 
-	tm_list = kcalloc(nr_items * 2, sizeof(struct tree_mod_elem *),
+	पंचांग_list = kसुस्मृति(nr_items * 2, माप(काष्ठा tree_mod_elem *),
 			  GFP_NOFS);
-	if (!tm_list)
-		return -ENOMEM;
+	अगर (!पंचांग_list)
+		वापस -ENOMEM;
 
-	tm_list_add = tm_list;
-	tm_list_rem = tm_list + nr_items;
-	for (i = 0; i < nr_items; i++) {
-		tm_list_rem[i] = alloc_tree_mod_elem(src, i + src_offset,
+	पंचांग_list_add = पंचांग_list;
+	पंचांग_list_rem = पंचांग_list + nr_items;
+	क्रम (i = 0; i < nr_items; i++) अणु
+		पंचांग_list_rem[i] = alloc_tree_mod_elem(src, i + src_offset,
 		    BTRFS_MOD_LOG_KEY_REMOVE, GFP_NOFS);
-		if (!tm_list_rem[i]) {
+		अगर (!पंचांग_list_rem[i]) अणु
 			ret = -ENOMEM;
-			goto free_tms;
-		}
+			जाओ मुक्त_पंचांगs;
+		पूर्ण
 
-		tm_list_add[i] = alloc_tree_mod_elem(dst, i + dst_offset,
+		पंचांग_list_add[i] = alloc_tree_mod_elem(dst, i + dst_offset,
 						BTRFS_MOD_LOG_KEY_ADD, GFP_NOFS);
-		if (!tm_list_add[i]) {
+		अगर (!पंचांग_list_add[i]) अणु
 			ret = -ENOMEM;
-			goto free_tms;
-		}
-	}
+			जाओ मुक्त_पंचांगs;
+		पूर्ण
+	पूर्ण
 
-	if (tree_mod_dont_log(fs_info, NULL))
-		goto free_tms;
+	अगर (tree_mod_करोnt_log(fs_info, शून्य))
+		जाओ मुक्त_पंचांगs;
 	locked = true;
 
-	for (i = 0; i < nr_items; i++) {
-		ret = tree_mod_log_insert(fs_info, tm_list_rem[i]);
-		if (ret)
-			goto free_tms;
-		ret = tree_mod_log_insert(fs_info, tm_list_add[i]);
-		if (ret)
-			goto free_tms;
-	}
+	क्रम (i = 0; i < nr_items; i++) अणु
+		ret = tree_mod_log_insert(fs_info, पंचांग_list_rem[i]);
+		अगर (ret)
+			जाओ मुक्त_पंचांगs;
+		ret = tree_mod_log_insert(fs_info, पंचांग_list_add[i]);
+		अगर (ret)
+			जाओ मुक्त_पंचांगs;
+	पूर्ण
 
-	write_unlock(&fs_info->tree_mod_log_lock);
-	kfree(tm_list);
+	ग_लिखो_unlock(&fs_info->tree_mod_log_lock);
+	kमुक्त(पंचांग_list);
 
-	return 0;
+	वापस 0;
 
-free_tms:
-	for (i = 0; i < nr_items * 2; i++) {
-		if (tm_list[i] && !RB_EMPTY_NODE(&tm_list[i]->node))
-			rb_erase(&tm_list[i]->node, &fs_info->tree_mod_log);
-		kfree(tm_list[i]);
-	}
-	if (locked)
-		write_unlock(&fs_info->tree_mod_log_lock);
-	kfree(tm_list);
+मुक्त_पंचांगs:
+	क्रम (i = 0; i < nr_items * 2; i++) अणु
+		अगर (पंचांग_list[i] && !RB_EMPTY_NODE(&पंचांग_list[i]->node))
+			rb_erase(&पंचांग_list[i]->node, &fs_info->tree_mod_log);
+		kमुक्त(पंचांग_list[i]);
+	पूर्ण
+	अगर (locked)
+		ग_लिखो_unlock(&fs_info->tree_mod_log_lock);
+	kमुक्त(पंचांग_list);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int btrfs_tree_mod_log_free_eb(struct extent_buffer *eb)
-{
-	struct tree_mod_elem **tm_list = NULL;
-	int nritems = 0;
-	int i;
-	int ret = 0;
+पूर्णांक btrfs_tree_mod_log_मुक्त_eb(काष्ठा extent_buffer *eb)
+अणु
+	काष्ठा tree_mod_elem **पंचांग_list = शून्य;
+	पूर्णांक nritems = 0;
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	if (!tree_mod_need_log(eb->fs_info, eb))
-		return 0;
+	अगर (!tree_mod_need_log(eb->fs_info, eb))
+		वापस 0;
 
 	nritems = btrfs_header_nritems(eb);
-	tm_list = kcalloc(nritems, sizeof(struct tree_mod_elem *), GFP_NOFS);
-	if (!tm_list)
-		return -ENOMEM;
+	पंचांग_list = kसुस्मृति(nritems, माप(काष्ठा tree_mod_elem *), GFP_NOFS);
+	अगर (!पंचांग_list)
+		वापस -ENOMEM;
 
-	for (i = 0; i < nritems; i++) {
-		tm_list[i] = alloc_tree_mod_elem(eb, i,
+	क्रम (i = 0; i < nritems; i++) अणु
+		पंचांग_list[i] = alloc_tree_mod_elem(eb, i,
 		    BTRFS_MOD_LOG_KEY_REMOVE_WHILE_FREEING, GFP_NOFS);
-		if (!tm_list[i]) {
+		अगर (!पंचांग_list[i]) अणु
 			ret = -ENOMEM;
-			goto free_tms;
-		}
-	}
+			जाओ मुक्त_पंचांगs;
+		पूर्ण
+	पूर्ण
 
-	if (tree_mod_dont_log(eb->fs_info, eb))
-		goto free_tms;
+	अगर (tree_mod_करोnt_log(eb->fs_info, eb))
+		जाओ मुक्त_पंचांगs;
 
-	ret = tree_mod_log_free_eb(eb->fs_info, tm_list, nritems);
-	write_unlock(&eb->fs_info->tree_mod_log_lock);
-	if (ret)
-		goto free_tms;
-	kfree(tm_list);
+	ret = tree_mod_log_मुक्त_eb(eb->fs_info, पंचांग_list, nritems);
+	ग_लिखो_unlock(&eb->fs_info->tree_mod_log_lock);
+	अगर (ret)
+		जाओ मुक्त_पंचांगs;
+	kमुक्त(पंचांग_list);
 
-	return 0;
+	वापस 0;
 
-free_tms:
-	for (i = 0; i < nritems; i++)
-		kfree(tm_list[i]);
-	kfree(tm_list);
+मुक्त_पंचांगs:
+	क्रम (i = 0; i < nritems; i++)
+		kमुक्त(पंचांग_list[i]);
+	kमुक्त(पंचांग_list);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Returns the logical address of the oldest predecessor of the given root.
- * Entries older than time_seq are ignored.
+ * Entries older than समय_seq are ignored.
  */
-static struct tree_mod_elem *tree_mod_log_oldest_root(struct extent_buffer *eb_root,
-						      u64 time_seq)
-{
-	struct tree_mod_elem *tm;
-	struct tree_mod_elem *found = NULL;
+अटल काष्ठा tree_mod_elem *tree_mod_log_oldest_root(काष्ठा extent_buffer *eb_root,
+						      u64 समय_seq)
+अणु
+	काष्ठा tree_mod_elem *पंचांग;
+	काष्ठा tree_mod_elem *found = शून्य;
 	u64 root_logical = eb_root->start;
 	bool looped = false;
 
-	if (!time_seq)
-		return NULL;
+	अगर (!समय_seq)
+		वापस शून्य;
 
 	/*
-	 * The very last operation that's logged for a root is the replacement
-	 * operation (if it is replaced at all). This has the logical address
+	 * The very last operation that's logged क्रम a root is the replacement
+	 * operation (अगर it is replaced at all). This has the logical address
 	 * of the *new* root, making it the very first operation that's logged
-	 * for this root.
+	 * क्रम this root.
 	 */
-	while (1) {
-		tm = tree_mod_log_search_oldest(eb_root->fs_info, root_logical,
-						time_seq);
-		if (!looped && !tm)
-			return NULL;
+	जबतक (1) अणु
+		पंचांग = tree_mod_log_search_oldest(eb_root->fs_info, root_logical,
+						समय_seq);
+		अगर (!looped && !पंचांग)
+			वापस शून्य;
 		/*
-		 * If there are no tree operation for the oldest root, we simply
-		 * return it. This should only happen if that (old) root is at
+		 * If there are no tree operation क्रम the oldest root, we simply
+		 * वापस it. This should only happen अगर that (old) root is at
 		 * level 0.
 		 */
-		if (!tm)
-			break;
+		अगर (!पंचांग)
+			अवरोध;
 
 		/*
 		 * If there's an operation that's not a root replacement, we
 		 * found the oldest version of our root. Normally, we'll find a
 		 * BTRFS_MOD_LOG_KEY_REMOVE_WHILE_FREEING operation here.
 		 */
-		if (tm->op != BTRFS_MOD_LOG_ROOT_REPLACE)
-			break;
+		अगर (पंचांग->op != BTRFS_MOD_LOG_ROOT_REPLACE)
+			अवरोध;
 
-		found = tm;
-		root_logical = tm->old_root.logical;
+		found = पंचांग;
+		root_logical = पंचांग->old_root.logical;
 		looped = true;
-	}
+	पूर्ण
 
-	/* If there's no old root to return, return what we found instead */
-	if (!found)
-		found = tm;
+	/* If there's no old root to वापस, वापस what we found instead */
+	अगर (!found)
+		found = पंचांग;
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
 
 /*
- * tm is a pointer to the first operation to rewind within eb. Then, all
+ * पंचांग is a poपूर्णांकer to the first operation to शुरुआत within eb. Then, all
  * previous operations will be rewound (until we reach something older than
- * time_seq).
+ * समय_seq).
  */
-static void tree_mod_log_rewind(struct btrfs_fs_info *fs_info,
-				struct extent_buffer *eb,
-				u64 time_seq,
-				struct tree_mod_elem *first_tm)
-{
+अटल व्योम tree_mod_log_शुरुआत(काष्ठा btrfs_fs_info *fs_info,
+				काष्ठा extent_buffer *eb,
+				u64 समय_seq,
+				काष्ठा tree_mod_elem *first_पंचांग)
+अणु
 	u32 n;
-	struct rb_node *next;
-	struct tree_mod_elem *tm = first_tm;
-	unsigned long o_dst;
-	unsigned long o_src;
-	unsigned long p_size = sizeof(struct btrfs_key_ptr);
+	काष्ठा rb_node *next;
+	काष्ठा tree_mod_elem *पंचांग = first_पंचांग;
+	अचिन्हित दीर्घ o_dst;
+	अचिन्हित दीर्घ o_src;
+	अचिन्हित दीर्घ p_size = माप(काष्ठा btrfs_key_ptr);
 
 	n = btrfs_header_nritems(eb);
-	read_lock(&fs_info->tree_mod_log_lock);
-	while (tm && tm->seq >= time_seq) {
+	पढ़ो_lock(&fs_info->tree_mod_log_lock);
+	जबतक (पंचांग && पंचांग->seq >= समय_seq) अणु
 		/*
-		 * All the operations are recorded with the operator used for
-		 * the modification. As we're going backwards, we do the
+		 * All the operations are recorded with the चालक used क्रम
+		 * the modअगरication. As we're going backwards, we करो the
 		 * opposite of each operation here.
 		 */
-		switch (tm->op) {
-		case BTRFS_MOD_LOG_KEY_REMOVE_WHILE_FREEING:
-			BUG_ON(tm->slot < n);
+		चयन (पंचांग->op) अणु
+		हाल BTRFS_MOD_LOG_KEY_REMOVE_WHILE_FREEING:
+			BUG_ON(पंचांग->slot < n);
 			fallthrough;
-		case BTRFS_MOD_LOG_KEY_REMOVE_WHILE_MOVING:
-		case BTRFS_MOD_LOG_KEY_REMOVE:
-			btrfs_set_node_key(eb, &tm->key, tm->slot);
-			btrfs_set_node_blockptr(eb, tm->slot, tm->blockptr);
-			btrfs_set_node_ptr_generation(eb, tm->slot,
-						      tm->generation);
+		हाल BTRFS_MOD_LOG_KEY_REMOVE_WHILE_MOVING:
+		हाल BTRFS_MOD_LOG_KEY_REMOVE:
+			btrfs_set_node_key(eb, &पंचांग->key, पंचांग->slot);
+			btrfs_set_node_blockptr(eb, पंचांग->slot, पंचांग->blockptr);
+			btrfs_set_node_ptr_generation(eb, पंचांग->slot,
+						      पंचांग->generation);
 			n++;
-			break;
-		case BTRFS_MOD_LOG_KEY_REPLACE:
-			BUG_ON(tm->slot >= n);
-			btrfs_set_node_key(eb, &tm->key, tm->slot);
-			btrfs_set_node_blockptr(eb, tm->slot, tm->blockptr);
-			btrfs_set_node_ptr_generation(eb, tm->slot,
-						      tm->generation);
-			break;
-		case BTRFS_MOD_LOG_KEY_ADD:
-			/* if a move operation is needed it's in the log */
+			अवरोध;
+		हाल BTRFS_MOD_LOG_KEY_REPLACE:
+			BUG_ON(पंचांग->slot >= n);
+			btrfs_set_node_key(eb, &पंचांग->key, पंचांग->slot);
+			btrfs_set_node_blockptr(eb, पंचांग->slot, पंचांग->blockptr);
+			btrfs_set_node_ptr_generation(eb, पंचांग->slot,
+						      पंचांग->generation);
+			अवरोध;
+		हाल BTRFS_MOD_LOG_KEY_ADD:
+			/* अगर a move operation is needed it's in the log */
 			n--;
-			break;
-		case BTRFS_MOD_LOG_MOVE_KEYS:
-			o_dst = btrfs_node_key_ptr_offset(tm->slot);
-			o_src = btrfs_node_key_ptr_offset(tm->move.dst_slot);
-			memmove_extent_buffer(eb, o_dst, o_src,
-					      tm->move.nr_items * p_size);
-			break;
-		case BTRFS_MOD_LOG_ROOT_REPLACE:
+			अवरोध;
+		हाल BTRFS_MOD_LOG_MOVE_KEYS:
+			o_dst = btrfs_node_key_ptr_offset(पंचांग->slot);
+			o_src = btrfs_node_key_ptr_offset(पंचांग->move.dst_slot);
+			स_हटाओ_extent_buffer(eb, o_dst, o_src,
+					      पंचांग->move.nr_items * p_size);
+			अवरोध;
+		हाल BTRFS_MOD_LOG_ROOT_REPLACE:
 			/*
 			 * This operation is special. For roots, this must be
-			 * handled explicitly before rewinding.
-			 * For non-roots, this operation may exist if the node
-			 * was a root: root A -> child B; then A gets empty and
+			 * handled explicitly beक्रमe शुरुआतing.
+			 * For non-roots, this operation may exist अगर the node
+			 * was a root: root A -> child B; then A माला_लो empty and
 			 * B is promoted to the new root. In the mod log, we'll
-			 * have a root-replace operation for B, a tree block
+			 * have a root-replace operation क्रम B, a tree block
 			 * that is no root. We simply ignore that operation.
 			 */
-			break;
-		}
-		next = rb_next(&tm->node);
-		if (!next)
-			break;
-		tm = rb_entry(next, struct tree_mod_elem, node);
-		if (tm->logical != first_tm->logical)
-			break;
-	}
-	read_unlock(&fs_info->tree_mod_log_lock);
+			अवरोध;
+		पूर्ण
+		next = rb_next(&पंचांग->node);
+		अगर (!next)
+			अवरोध;
+		पंचांग = rb_entry(next, काष्ठा tree_mod_elem, node);
+		अगर (पंचांग->logical != first_पंचांग->logical)
+			अवरोध;
+	पूर्ण
+	पढ़ो_unlock(&fs_info->tree_mod_log_lock);
 	btrfs_set_header_nritems(eb, n);
-}
+पूर्ण
 
 /*
- * Called with eb read locked. If the buffer cannot be rewound, the same buffer
- * is returned. If rewind operations happen, a fresh buffer is returned. The
- * returned buffer is always read-locked. If the returned buffer is not the
+ * Called with eb पढ़ो locked. If the buffer cannot be rewound, the same buffer
+ * is वापसed. If शुरुआत operations happen, a fresh buffer is वापसed. The
+ * वापसed buffer is always पढ़ो-locked. If the वापसed buffer is not the
  * input buffer, the lock on the input buffer is released and the input buffer
- * is freed (its refcount is decremented).
+ * is मुक्तd (its refcount is decremented).
  */
-struct extent_buffer *btrfs_tree_mod_log_rewind(struct btrfs_fs_info *fs_info,
-						struct btrfs_path *path,
-						struct extent_buffer *eb,
-						u64 time_seq)
-{
-	struct extent_buffer *eb_rewin;
-	struct tree_mod_elem *tm;
+काष्ठा extent_buffer *btrfs_tree_mod_log_शुरुआत(काष्ठा btrfs_fs_info *fs_info,
+						काष्ठा btrfs_path *path,
+						काष्ठा extent_buffer *eb,
+						u64 समय_seq)
+अणु
+	काष्ठा extent_buffer *eb_rewin;
+	काष्ठा tree_mod_elem *पंचांग;
 
-	if (!time_seq)
-		return eb;
+	अगर (!समय_seq)
+		वापस eb;
 
-	if (btrfs_header_level(eb) == 0)
-		return eb;
+	अगर (btrfs_header_level(eb) == 0)
+		वापस eb;
 
-	tm = tree_mod_log_search(fs_info, eb->start, time_seq);
-	if (!tm)
-		return eb;
+	पंचांग = tree_mod_log_search(fs_info, eb->start, समय_seq);
+	अगर (!पंचांग)
+		वापस eb;
 
-	if (tm->op == BTRFS_MOD_LOG_KEY_REMOVE_WHILE_FREEING) {
-		BUG_ON(tm->slot != 0);
+	अगर (पंचांग->op == BTRFS_MOD_LOG_KEY_REMOVE_WHILE_FREEING) अणु
+		BUG_ON(पंचांग->slot != 0);
 		eb_rewin = alloc_dummy_extent_buffer(fs_info, eb->start);
-		if (!eb_rewin) {
-			btrfs_tree_read_unlock(eb);
-			free_extent_buffer(eb);
-			return NULL;
-		}
+		अगर (!eb_rewin) अणु
+			btrfs_tree_पढ़ो_unlock(eb);
+			मुक्त_extent_buffer(eb);
+			वापस शून्य;
+		पूर्ण
 		btrfs_set_header_bytenr(eb_rewin, eb->start);
 		btrfs_set_header_backref_rev(eb_rewin,
 					     btrfs_header_backref_rev(eb));
 		btrfs_set_header_owner(eb_rewin, btrfs_header_owner(eb));
 		btrfs_set_header_level(eb_rewin, btrfs_header_level(eb));
-	} else {
+	पूर्ण अन्यथा अणु
 		eb_rewin = btrfs_clone_extent_buffer(eb);
-		if (!eb_rewin) {
-			btrfs_tree_read_unlock(eb);
-			free_extent_buffer(eb);
-			return NULL;
-		}
-	}
+		अगर (!eb_rewin) अणु
+			btrfs_tree_पढ़ो_unlock(eb);
+			मुक्त_extent_buffer(eb);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	btrfs_tree_read_unlock(eb);
-	free_extent_buffer(eb);
+	btrfs_tree_पढ़ो_unlock(eb);
+	मुक्त_extent_buffer(eb);
 
 	btrfs_set_buffer_lockdep_class(btrfs_header_owner(eb_rewin),
 				       eb_rewin, btrfs_header_level(eb_rewin));
-	btrfs_tree_read_lock(eb_rewin);
-	tree_mod_log_rewind(fs_info, eb_rewin, time_seq, tm);
+	btrfs_tree_पढ़ो_lock(eb_rewin);
+	tree_mod_log_शुरुआत(fs_info, eb_rewin, समय_seq, पंचांग);
 	WARN_ON(btrfs_header_nritems(eb_rewin) >
 		BTRFS_NODEPTRS_PER_BLOCK(fs_info));
 
-	return eb_rewin;
-}
+	वापस eb_rewin;
+पूर्ण
 
 /*
- * Rewind the state of @root's root node to the given @time_seq value.
- * If there are no changes, the current root->root_node is returned. If anything
- * changed in between, there's a fresh buffer allocated on which the rewind
- * operations are done. In any case, the returned buffer is read locked.
- * Returns NULL on error (with no locks held).
+ * Rewind the state of @root's root node to the given @समय_seq value.
+ * If there are no changes, the current root->root_node is वापसed. If anything
+ * changed in between, there's a fresh buffer allocated on which the शुरुआत
+ * operations are करोne. In any हाल, the वापसed buffer is पढ़ो locked.
+ * Returns शून्य on error (with no locks held).
  */
-struct extent_buffer *btrfs_get_old_root(struct btrfs_root *root, u64 time_seq)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct tree_mod_elem *tm;
-	struct extent_buffer *eb = NULL;
-	struct extent_buffer *eb_root;
+काष्ठा extent_buffer *btrfs_get_old_root(काष्ठा btrfs_root *root, u64 समय_seq)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा tree_mod_elem *पंचांग;
+	काष्ठा extent_buffer *eb = शून्य;
+	काष्ठा extent_buffer *eb_root;
 	u64 eb_root_owner = 0;
-	struct extent_buffer *old;
-	struct tree_mod_root *old_root = NULL;
+	काष्ठा extent_buffer *old;
+	काष्ठा tree_mod_root *old_root = शून्य;
 	u64 old_generation = 0;
 	u64 logical;
-	int level;
+	पूर्णांक level;
 
-	eb_root = btrfs_read_lock_root_node(root);
-	tm = tree_mod_log_oldest_root(eb_root, time_seq);
-	if (!tm)
-		return eb_root;
+	eb_root = btrfs_पढ़ो_lock_root_node(root);
+	पंचांग = tree_mod_log_oldest_root(eb_root, समय_seq);
+	अगर (!पंचांग)
+		वापस eb_root;
 
-	if (tm->op == BTRFS_MOD_LOG_ROOT_REPLACE) {
-		old_root = &tm->old_root;
-		old_generation = tm->generation;
+	अगर (पंचांग->op == BTRFS_MOD_LOG_ROOT_REPLACE) अणु
+		old_root = &पंचांग->old_root;
+		old_generation = पंचांग->generation;
 		logical = old_root->logical;
 		level = old_root->level;
-	} else {
+	पूर्ण अन्यथा अणु
 		logical = eb_root->start;
 		level = btrfs_header_level(eb_root);
-	}
+	पूर्ण
 
-	tm = tree_mod_log_search(fs_info, logical, time_seq);
-	if (old_root && tm && tm->op != BTRFS_MOD_LOG_KEY_REMOVE_WHILE_FREEING) {
-		btrfs_tree_read_unlock(eb_root);
-		free_extent_buffer(eb_root);
-		old = read_tree_block(fs_info, logical, root->root_key.objectid,
-				      0, level, NULL);
-		if (WARN_ON(IS_ERR(old) || !extent_buffer_uptodate(old))) {
-			if (!IS_ERR(old))
-				free_extent_buffer(old);
+	पंचांग = tree_mod_log_search(fs_info, logical, समय_seq);
+	अगर (old_root && पंचांग && पंचांग->op != BTRFS_MOD_LOG_KEY_REMOVE_WHILE_FREEING) अणु
+		btrfs_tree_पढ़ो_unlock(eb_root);
+		मुक्त_extent_buffer(eb_root);
+		old = पढ़ो_tree_block(fs_info, logical, root->root_key.objectid,
+				      0, level, शून्य);
+		अगर (WARN_ON(IS_ERR(old) || !extent_buffer_uptodate(old))) अणु
+			अगर (!IS_ERR(old))
+				मुक्त_extent_buffer(old);
 			btrfs_warn(fs_info,
 				   "failed to read tree block %llu from get_old_root",
 				   logical);
-		} else {
-			struct tree_mod_elem *tm2;
+		पूर्ण अन्यथा अणु
+			काष्ठा tree_mod_elem *पंचांग2;
 
-			btrfs_tree_read_lock(old);
+			btrfs_tree_पढ़ो_lock(old);
 			eb = btrfs_clone_extent_buffer(old);
 			/*
-			 * After the lookup for the most recent tree mod operation
-			 * above and before we locked and cloned the extent buffer
+			 * After the lookup क्रम the most recent tree mod operation
+			 * above and beक्रमe we locked and cloned the extent buffer
 			 * 'old', a new tree mod log operation may have been added.
-			 * So lookup for a more recent one to make sure the number
+			 * So lookup क्रम a more recent one to make sure the number
 			 * of mod log operations we replay is consistent with the
 			 * number of items we have in the cloned extent buffer,
-			 * otherwise we can hit a BUG_ON when rewinding the extent
+			 * otherwise we can hit a BUG_ON when शुरुआतing the extent
 			 * buffer.
 			 */
-			tm2 = tree_mod_log_search(fs_info, logical, time_seq);
-			btrfs_tree_read_unlock(old);
-			free_extent_buffer(old);
-			ASSERT(tm2);
-			ASSERT(tm2 == tm || tm2->seq > tm->seq);
-			if (!tm2 || tm2->seq < tm->seq) {
-				free_extent_buffer(eb);
-				return NULL;
-			}
-			tm = tm2;
-		}
-	} else if (old_root) {
+			पंचांग2 = tree_mod_log_search(fs_info, logical, समय_seq);
+			btrfs_tree_पढ़ो_unlock(old);
+			मुक्त_extent_buffer(old);
+			ASSERT(पंचांग2);
+			ASSERT(पंचांग2 == पंचांग || पंचांग2->seq > पंचांग->seq);
+			अगर (!पंचांग2 || पंचांग2->seq < पंचांग->seq) अणु
+				मुक्त_extent_buffer(eb);
+				वापस शून्य;
+			पूर्ण
+			पंचांग = पंचांग2;
+		पूर्ण
+	पूर्ण अन्यथा अगर (old_root) अणु
 		eb_root_owner = btrfs_header_owner(eb_root);
-		btrfs_tree_read_unlock(eb_root);
-		free_extent_buffer(eb_root);
+		btrfs_tree_पढ़ो_unlock(eb_root);
+		मुक्त_extent_buffer(eb_root);
 		eb = alloc_dummy_extent_buffer(fs_info, logical);
-	} else {
+	पूर्ण अन्यथा अणु
 		eb = btrfs_clone_extent_buffer(eb_root);
-		btrfs_tree_read_unlock(eb_root);
-		free_extent_buffer(eb_root);
-	}
+		btrfs_tree_पढ़ो_unlock(eb_root);
+		मुक्त_extent_buffer(eb_root);
+	पूर्ण
 
-	if (!eb)
-		return NULL;
-	if (old_root) {
+	अगर (!eb)
+		वापस शून्य;
+	अगर (old_root) अणु
 		btrfs_set_header_bytenr(eb, eb->start);
 		btrfs_set_header_backref_rev(eb, BTRFS_MIXED_BACKREF_REV);
 		btrfs_set_header_owner(eb, eb_root_owner);
 		btrfs_set_header_level(eb, old_root->level);
 		btrfs_set_header_generation(eb, old_generation);
-	}
+	पूर्ण
 	btrfs_set_buffer_lockdep_class(btrfs_header_owner(eb), eb,
 				       btrfs_header_level(eb));
-	btrfs_tree_read_lock(eb);
-	if (tm)
-		tree_mod_log_rewind(fs_info, eb, time_seq, tm);
-	else
+	btrfs_tree_पढ़ो_lock(eb);
+	अगर (पंचांग)
+		tree_mod_log_शुरुआत(fs_info, eb, समय_seq, पंचांग);
+	अन्यथा
 		WARN_ON(btrfs_header_level(eb) != 0);
 	WARN_ON(btrfs_header_nritems(eb) > BTRFS_NODEPTRS_PER_BLOCK(fs_info));
 
-	return eb;
-}
+	वापस eb;
+पूर्ण
 
-int btrfs_old_root_level(struct btrfs_root *root, u64 time_seq)
-{
-	struct tree_mod_elem *tm;
-	int level;
-	struct extent_buffer *eb_root = btrfs_root_node(root);
+पूर्णांक btrfs_old_root_level(काष्ठा btrfs_root *root, u64 समय_seq)
+अणु
+	काष्ठा tree_mod_elem *पंचांग;
+	पूर्णांक level;
+	काष्ठा extent_buffer *eb_root = btrfs_root_node(root);
 
-	tm = tree_mod_log_oldest_root(eb_root, time_seq);
-	if (tm && tm->op == BTRFS_MOD_LOG_ROOT_REPLACE)
-		level = tm->old_root.level;
-	else
+	पंचांग = tree_mod_log_oldest_root(eb_root, समय_seq);
+	अगर (पंचांग && पंचांग->op == BTRFS_MOD_LOG_ROOT_REPLACE)
+		level = पंचांग->old_root.level;
+	अन्यथा
 		level = btrfs_header_level(eb_root);
 
-	free_extent_buffer(eb_root);
+	मुक्त_extent_buffer(eb_root);
 
-	return level;
-}
+	वापस level;
+पूर्ण
 
 /*
- * Return the lowest sequence number in the tree modification log.
+ * Return the lowest sequence number in the tree modअगरication log.
  *
- * Return the sequence number of the oldest tree modification log user, which
+ * Return the sequence number of the oldest tree modअगरication log user, which
  * corresponds to the lowest sequence number of all existing users. If there are
- * no users it returns 0.
+ * no users it वापसs 0.
  */
-u64 btrfs_tree_mod_log_lowest_seq(struct btrfs_fs_info *fs_info)
-{
+u64 btrfs_tree_mod_log_lowest_seq(काष्ठा btrfs_fs_info *fs_info)
+अणु
 	u64 ret = 0;
 
-	read_lock(&fs_info->tree_mod_log_lock);
-	if (!list_empty(&fs_info->tree_mod_seq_list)) {
-		struct btrfs_seq_list *elem;
+	पढ़ो_lock(&fs_info->tree_mod_log_lock);
+	अगर (!list_empty(&fs_info->tree_mod_seq_list)) अणु
+		काष्ठा btrfs_seq_list *elem;
 
 		elem = list_first_entry(&fs_info->tree_mod_seq_list,
-					struct btrfs_seq_list, list);
+					काष्ठा btrfs_seq_list, list);
 		ret = elem->seq;
-	}
-	read_unlock(&fs_info->tree_mod_log_lock);
+	पूर्ण
+	पढ़ो_unlock(&fs_info->tree_mod_log_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

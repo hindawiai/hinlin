@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause */
 /*
  * Copyright (c) 2020, MIPI Alliance, Inc.
  *
@@ -7,13 +8,13 @@
  * Extended Capability Definitions
  */
 
-#ifndef EXTCAPS_H
-#define EXTCAPS_H
+#अगर_अघोषित EXTCAPS_H
+#घोषणा EXTCAPS_H
 
-/* MIPI vendor IDs */
-#define MIPI_VENDOR_NXP			0x11b
+/* MIPI venकरोr IDs */
+#घोषणा MIPI_VENDOR_NXP			0x11b
 
 
-int i3c_hci_parse_ext_caps(struct i3c_hci *hci);
+पूर्णांक i3c_hci_parse_ext_caps(काष्ठा i3c_hci *hci);
 
-#endif
+#पूर्ण_अगर

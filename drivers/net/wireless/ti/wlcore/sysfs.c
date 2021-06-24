@@ -1,180 +1,181 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * This file is part of wlcore
  *
  * Copyright (C) 2013 Texas Instruments Inc.
  */
 
-#include <linux/pm_runtime.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "acx.h"
-#include "wlcore.h"
-#include "debug.h"
-#include "sysfs.h"
+#समावेश "acx.h"
+#समावेश "wlcore.h"
+#समावेश "debug.h"
+#समावेश "sysfs.h"
 
-static ssize_t wl1271_sysfs_show_bt_coex_state(struct device *dev,
-					       struct device_attribute *attr,
-					       char *buf)
-{
-	struct wl1271 *wl = dev_get_drvdata(dev);
-	ssize_t len;
+अटल sमाप_प्रकार wl1271_sysfs_show_bt_coex_state(काष्ठा device *dev,
+					       काष्ठा device_attribute *attr,
+					       अक्षर *buf)
+अणु
+	काष्ठा wl1271 *wl = dev_get_drvdata(dev);
+	sमाप_प्रकार len;
 
 	len = PAGE_SIZE;
 
 	mutex_lock(&wl->mutex);
-	len = snprintf(buf, len, "%d\n\n0 - off\n1 - on\n",
+	len = snम_लिखो(buf, len, "%d\n\n0 - off\n1 - on\n",
 		       wl->sg_enabled);
 	mutex_unlock(&wl->mutex);
 
-	return len;
+	वापस len;
 
-}
+पूर्ण
 
-static ssize_t wl1271_sysfs_store_bt_coex_state(struct device *dev,
-						struct device_attribute *attr,
-						const char *buf, size_t count)
-{
-	struct wl1271 *wl = dev_get_drvdata(dev);
-	unsigned long res;
-	int ret;
+अटल sमाप_प्रकार wl1271_sysfs_store_bt_coex_state(काष्ठा device *dev,
+						काष्ठा device_attribute *attr,
+						स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा wl1271 *wl = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ res;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &res);
-	if (ret < 0) {
+	ret = kम_से_अदीर्घ(buf, 10, &res);
+	अगर (ret < 0) अणु
 		wl1271_warning("incorrect value written to bt_coex_mode");
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
 	mutex_lock(&wl->mutex);
 
 	res = !!res;
 
-	if (res == wl->sg_enabled)
-		goto out;
+	अगर (res == wl->sg_enabled)
+		जाओ out;
 
 	wl->sg_enabled = res;
 
-	if (unlikely(wl->state != WLCORE_STATE_ON))
-		goto out;
+	अगर (unlikely(wl->state != WLCORE_STATE_ON))
+		जाओ out;
 
-	ret = pm_runtime_get_sync(wl->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(wl->dev);
-		goto out;
-	}
+	ret = pm_runसमय_get_sync(wl->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(wl->dev);
+		जाओ out;
+	पूर्ण
 
 	wl1271_acx_sg_enable(wl, wl->sg_enabled);
-	pm_runtime_mark_last_busy(wl->dev);
-	pm_runtime_put_autosuspend(wl->dev);
+	pm_runसमय_mark_last_busy(wl->dev);
+	pm_runसमय_put_स्वतःsuspend(wl->dev);
 
  out:
 	mutex_unlock(&wl->mutex);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(bt_coex_state, 0644,
+अटल DEVICE_ATTR(bt_coex_state, 0644,
 		   wl1271_sysfs_show_bt_coex_state,
 		   wl1271_sysfs_store_bt_coex_state);
 
-static ssize_t wl1271_sysfs_show_hw_pg_ver(struct device *dev,
-					   struct device_attribute *attr,
-					   char *buf)
-{
-	struct wl1271 *wl = dev_get_drvdata(dev);
-	ssize_t len;
+अटल sमाप_प्रकार wl1271_sysfs_show_hw_pg_ver(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा wl1271 *wl = dev_get_drvdata(dev);
+	sमाप_प्रकार len;
 
 	len = PAGE_SIZE;
 
 	mutex_lock(&wl->mutex);
-	if (wl->hw_pg_ver >= 0)
-		len = snprintf(buf, len, "%d\n", wl->hw_pg_ver);
-	else
-		len = snprintf(buf, len, "n/a\n");
+	अगर (wl->hw_pg_ver >= 0)
+		len = snम_लिखो(buf, len, "%d\n", wl->hw_pg_ver);
+	अन्यथा
+		len = snम_लिखो(buf, len, "n/a\n");
 	mutex_unlock(&wl->mutex);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static DEVICE_ATTR(hw_pg_ver, 0444, wl1271_sysfs_show_hw_pg_ver, NULL);
+अटल DEVICE_ATTR(hw_pg_ver, 0444, wl1271_sysfs_show_hw_pg_ver, शून्य);
 
-static ssize_t wl1271_sysfs_read_fwlog(struct file *filp, struct kobject *kobj,
-				       struct bin_attribute *bin_attr,
-				       char *buffer, loff_t pos, size_t count)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct wl1271 *wl = dev_get_drvdata(dev);
-	ssize_t len;
-	int ret;
+अटल sमाप_प्रकार wl1271_sysfs_पढ़ो_fwlog(काष्ठा file *filp, काष्ठा kobject *kobj,
+				       काष्ठा bin_attribute *bin_attr,
+				       अक्षर *buffer, loff_t pos, माप_प्रकार count)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा wl1271 *wl = dev_get_drvdata(dev);
+	sमाप_प्रकार len;
+	पूर्णांक ret;
 
-	ret = mutex_lock_interruptible(&wl->mutex);
-	if (ret < 0)
-		return -ERESTARTSYS;
+	ret = mutex_lock_पूर्णांकerruptible(&wl->mutex);
+	अगर (ret < 0)
+		वापस -ERESTARTSYS;
 
-	/* Check if the fwlog is still valid */
-	if (wl->fwlog_size < 0) {
+	/* Check अगर the fwlog is still valid */
+	अगर (wl->fwlog_size < 0) अणु
 		mutex_unlock(&wl->mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Seeking is not supported - old logs are not kept. Disregard pos. */
-	len = min_t(size_t, count, wl->fwlog_size);
+	len = min_t(माप_प्रकार, count, wl->fwlog_size);
 	wl->fwlog_size -= len;
-	memcpy(buffer, wl->fwlog, len);
+	स_नकल(buffer, wl->fwlog, len);
 
-	/* Make room for new messages */
-	memmove(wl->fwlog, wl->fwlog + len, wl->fwlog_size);
+	/* Make room क्रम new messages */
+	स_हटाओ(wl->fwlog, wl->fwlog + len, wl->fwlog_size);
 
 	mutex_unlock(&wl->mutex);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static const struct bin_attribute fwlog_attr = {
-	.attr = { .name = "fwlog", .mode = 0400 },
-	.read = wl1271_sysfs_read_fwlog,
-};
+अटल स्थिर काष्ठा bin_attribute fwlog_attr = अणु
+	.attr = अणु .name = "fwlog", .mode = 0400 पूर्ण,
+	.पढ़ो = wl1271_sysfs_पढ़ो_fwlog,
+पूर्ण;
 
-int wlcore_sysfs_init(struct wl1271 *wl)
-{
-	int ret;
+पूर्णांक wlcore_sysfs_init(काष्ठा wl1271 *wl)
+अणु
+	पूर्णांक ret;
 
 	/* Create sysfs file to control bt coex state */
 	ret = device_create_file(wl->dev, &dev_attr_bt_coex_state);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		wl1271_error("failed to create sysfs file bt_coex_state");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Create sysfs file to get HW PG version */
 	ret = device_create_file(wl->dev, &dev_attr_hw_pg_ver);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		wl1271_error("failed to create sysfs file hw_pg_ver");
-		goto out_bt_coex_state;
-	}
+		जाओ out_bt_coex_state;
+	पूर्ण
 
-	/* Create sysfs file for the FW log */
+	/* Create sysfs file क्रम the FW log */
 	ret = device_create_bin_file(wl->dev, &fwlog_attr);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		wl1271_error("failed to create sysfs file fwlog");
-		goto out_hw_pg_ver;
-	}
+		जाओ out_hw_pg_ver;
+	पूर्ण
 
-	goto out;
+	जाओ out;
 
 out_hw_pg_ver:
-	device_remove_file(wl->dev, &dev_attr_hw_pg_ver);
+	device_हटाओ_file(wl->dev, &dev_attr_hw_pg_ver);
 
 out_bt_coex_state:
-	device_remove_file(wl->dev, &dev_attr_bt_coex_state);
+	device_हटाओ_file(wl->dev, &dev_attr_bt_coex_state);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void wlcore_sysfs_free(struct wl1271 *wl)
-{
-	device_remove_bin_file(wl->dev, &fwlog_attr);
+व्योम wlcore_sysfs_मुक्त(काष्ठा wl1271 *wl)
+अणु
+	device_हटाओ_bin_file(wl->dev, &fwlog_attr);
 
-	device_remove_file(wl->dev, &dev_attr_hw_pg_ver);
+	device_हटाओ_file(wl->dev, &dev_attr_hw_pg_ver);
 
-	device_remove_file(wl->dev, &dev_attr_bt_coex_state);
-}
+	device_हटाओ_file(wl->dev, &dev_attr_bt_coex_state);
+पूर्ण

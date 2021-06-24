@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __HIGHBANK_CORE_H
-#define __HIGHBANK_CORE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __HIGHBANK_CORE_H
+#घोषणा __HIGHBANK_CORE_H
 
-#include <linux/reboot.h>
+#समावेश <linux/reboot.h>
 
-extern void highbank_restart(enum reboot_mode, const char *);
-extern void __iomem *scu_base_addr;
+बाह्य व्योम highbank_restart(क्रमागत reboot_mode, स्थिर अक्षर *);
+बाह्य व्योम __iomem *scu_base_addr;
 
-#ifdef CONFIG_PM_SLEEP
-extern void highbank_pm_init(void);
-#else
-static inline void highbank_pm_init(void) {}
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP
+बाह्य व्योम highbank_pm_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम highbank_pm_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-extern void highbank_smc1(int fn, int arg);
+बाह्य व्योम highbank_smc1(पूर्णांक fn, पूर्णांक arg);
 
-#endif
+#पूर्ण_अगर

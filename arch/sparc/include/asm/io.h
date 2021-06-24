@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ___ASM_SPARC_IO_H
-#define ___ASM_SPARC_IO_H
-#if defined(__sparc__) && defined(__arch64__)
-#include <asm/io_64.h>
-#else
-#include <asm/io_32.h>
-#endif
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ___ASM_SPARC_IO_H
+#घोषणा ___ASM_SPARC_IO_H
+#अगर defined(__sparc__) && defined(__arch64__)
+#समावेश <यंत्र/io_64.h>
+#अन्यथा
+#समावेश <यंत्र/io_32.h>
+#पूर्ण_अगर
 
 /*
- * Defines used for both SPARC32 and SPARC64
+ * Defines used क्रम both SPARC32 and SPARC64
  */
 
-/* Big endian versions of memory read/write routines */
-#define readb_be(__addr)	__raw_readb(__addr)
-#define readw_be(__addr)	__raw_readw(__addr)
-#define readl_be(__addr)	__raw_readl(__addr)
-#define writeb_be(__b, __addr)	__raw_writeb(__b, __addr)
-#define writel_be(__w, __addr)	__raw_writel(__w, __addr)
-#define writew_be(__l, __addr)	__raw_writew(__l, __addr)
+/* Big endian versions of memory पढ़ो/ग_लिखो routines */
+#घोषणा पढ़ोb_be(__addr)	__raw_पढ़ोb(__addr)
+#घोषणा पढ़ोw_be(__addr)	__raw_पढ़ोw(__addr)
+#घोषणा पढ़ोl_be(__addr)	__raw_पढ़ोl(__addr)
+#घोषणा ग_लिखोb_be(__b, __addr)	__raw_ग_लिखोb(__b, __addr)
+#घोषणा ग_लिखोl_be(__w, __addr)	__raw_ग_लिखोl(__w, __addr)
+#घोषणा ग_लिखोw_be(__l, __addr)	__raw_ग_लिखोw(__l, __addr)
 
-#endif
+#पूर्ण_अगर

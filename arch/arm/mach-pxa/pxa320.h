@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MACH_PXA320_H
-#define __MACH_PXA320_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MACH_PXA320_H
+#घोषणा __MACH_PXA320_H
 
-#include "pxa3xx.h"
-#include "mfp-pxa320.h"
+#समावेश "pxa3xx.h"
+#समावेश "mfp-pxa320.h"
 
-#endif /* __MACH_PXA320_H */
+#पूर्ण_अगर /* __MACH_PXA320_H */
 

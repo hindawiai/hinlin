@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /* Copyright (C) 2016-2017 Dmitry Osipenko <digetx@gmail.com> */
-#ifndef _UAPI_TEGRA_VDE_H_
-#define _UAPI_TEGRA_VDE_H_
+#अगर_अघोषित _UAPI_TEGRA_VDE_H_
+#घोषणा _UAPI_TEGRA_VDE_H_
 
-#include <linux/types.h>
-#include <asm/ioctl.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/ioctl.h>
 
-#define FLAG_B_FRAME		0x1
-#define FLAG_REFERENCE		0x2
+#घोषणा FLAG_B_FRAME		0x1
+#घोषणा FLAG_REFERENCE		0x2
 
-struct tegra_vde_h264_frame {
+काष्ठा tegra_vde_h264_frame अणु
 	__s32 y_fd;
 	__s32 cb_fd;
 	__s32 cr_fd;
@@ -23,9 +24,9 @@ struct tegra_vde_h264_frame {
 
 	// Must be zero'ed
 	__u32 reserved[6];
-};
+पूर्ण;
 
-struct tegra_vde_h264_decoder_ctx {
+काष्ठा tegra_vde_h264_decoder_ctx अणु
 	__s32 bitstream_data_fd;
 	__u32 bitstream_data_offset;
 
@@ -46,7 +47,7 @@ struct tegra_vde_h264_decoder_ctx {
 	// PPS
 	__u32 pic_init_qp;
 	__u32 deblocking_filter_control_present_flag;
-	__u32 constrained_intra_pred_flag;
+	__u32 स्थिरrained_पूर्णांकra_pred_flag;
 	__u32 chroma_qp_index_offset;
 	__u32 pic_order_present_flag;
 
@@ -56,18 +57,18 @@ struct tegra_vde_h264_decoder_ctx {
 
 	// Must be zero'ed
 	__u32 reserved[11];
-};
+पूर्ण;
 
-#define VDE_IOCTL_BASE			('v' + 0x20)
+#घोषणा VDE_IOCTL_BASE			('v' + 0x20)
 
-#define VDE_IO(nr)			_IO(VDE_IOCTL_BASE, nr)
-#define VDE_IOR(nr, type)		_IOR(VDE_IOCTL_BASE, nr, type)
-#define VDE_IOW(nr, type)		_IOW(VDE_IOCTL_BASE, nr, type)
-#define VDE_IOWR(nr, type)		_IOWR(VDE_IOCTL_BASE, nr, type)
+#घोषणा VDE_IO(nr)			_IO(VDE_IOCTL_BASE, nr)
+#घोषणा VDE_IOR(nr, type)		_IOR(VDE_IOCTL_BASE, nr, type)
+#घोषणा VDE_IOW(nr, type)		_IOW(VDE_IOCTL_BASE, nr, type)
+#घोषणा VDE_IOWR(nr, type)		_IOWR(VDE_IOCTL_BASE, nr, type)
 
-#define TEGRA_VDE_DECODE_H264		0x00
+#घोषणा TEGRA_VDE_DECODE_H264		0x00
 
-#define TEGRA_VDE_IOCTL_DECODE_H264	\
-	VDE_IOW(TEGRA_VDE_DECODE_H264, struct tegra_vde_h264_decoder_ctx)
+#घोषणा TEGRA_VDE_IOCTL_DECODE_H264	\
+	VDE_IOW(TEGRA_VDE_DECODE_H264, काष्ठा tegra_vde_h264_decoder_ctx)
 
-#endif // _UAPI_TEGRA_VDE_H_
+#पूर्ण_अगर // _UAPI_TEGRA_VDE_H_

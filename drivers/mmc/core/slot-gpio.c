@@ -1,250 +1,251 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Generic GPIO card-detect helper
  *
  * Copyright (C) 2011, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
-#include <linux/err.h>
-#include <linux/gpio/consumer.h>
-#include <linux/interrupt.h>
-#include <linux/jiffies.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/slot-gpio.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/slot-gpपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include "slot-gpio.h"
+#समावेश "slot-gpio.h"
 
-struct mmc_gpio {
-	struct gpio_desc *ro_gpio;
-	struct gpio_desc *cd_gpio;
-	irqreturn_t (*cd_gpio_isr)(int irq, void *dev_id);
-	char *ro_label;
-	char *cd_label;
+काष्ठा mmc_gpio अणु
+	काष्ठा gpio_desc *ro_gpio;
+	काष्ठा gpio_desc *cd_gpio;
+	irqवापस_t (*cd_gpio_isr)(पूर्णांक irq, व्योम *dev_id);
+	अक्षर *ro_label;
+	अक्षर *cd_label;
 	u32 cd_debounce_delay_ms;
-};
+पूर्ण;
 
-static irqreturn_t mmc_gpio_cd_irqt(int irq, void *dev_id)
-{
-	/* Schedule a card detection after a debounce timeout */
-	struct mmc_host *host = dev_id;
-	struct mmc_gpio *ctx = host->slot.handler_priv;
+अटल irqवापस_t mmc_gpio_cd_irqt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	/* Schedule a card detection after a debounce समयout */
+	काष्ठा mmc_host *host = dev_id;
+	काष्ठा mmc_gpio *ctx = host->slot.handler_priv;
 
 	host->trigger_card_event = true;
-	mmc_detect_change(host, msecs_to_jiffies(ctx->cd_debounce_delay_ms));
+	mmc_detect_change(host, msecs_to_jअगरfies(ctx->cd_debounce_delay_ms));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int mmc_gpio_alloc(struct mmc_host *host)
-{
-	struct mmc_gpio *ctx = devm_kzalloc(host->parent,
-					    sizeof(*ctx), GFP_KERNEL);
+पूर्णांक mmc_gpio_alloc(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_gpio *ctx = devm_kzalloc(host->parent,
+					    माप(*ctx), GFP_KERNEL);
 
-	if (ctx) {
+	अगर (ctx) अणु
 		ctx->cd_debounce_delay_ms = 200;
-		ctx->cd_label = devm_kasprintf(host->parent, GFP_KERNEL,
+		ctx->cd_label = devm_kaप्र_लिखो(host->parent, GFP_KERNEL,
 				"%s cd", dev_name(host->parent));
-		if (!ctx->cd_label)
-			return -ENOMEM;
-		ctx->ro_label = devm_kasprintf(host->parent, GFP_KERNEL,
+		अगर (!ctx->cd_label)
+			वापस -ENOMEM;
+		ctx->ro_label = devm_kaप्र_लिखो(host->parent, GFP_KERNEL,
 				"%s ro", dev_name(host->parent));
-		if (!ctx->ro_label)
-			return -ENOMEM;
+		अगर (!ctx->ro_label)
+			वापस -ENOMEM;
 		host->slot.handler_priv = ctx;
 		host->slot.cd_irq = -EINVAL;
-	}
+	पूर्ण
 
-	return ctx ? 0 : -ENOMEM;
-}
+	वापस ctx ? 0 : -ENOMEM;
+पूर्ण
 
-int mmc_gpio_get_ro(struct mmc_host *host)
-{
-	struct mmc_gpio *ctx = host->slot.handler_priv;
+पूर्णांक mmc_gpio_get_ro(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_gpio *ctx = host->slot.handler_priv;
 
-	if (!ctx || !ctx->ro_gpio)
-		return -ENOSYS;
+	अगर (!ctx || !ctx->ro_gpio)
+		वापस -ENOSYS;
 
-	return gpiod_get_value_cansleep(ctx->ro_gpio);
-}
+	वापस gpiod_get_value_cansleep(ctx->ro_gpio);
+पूर्ण
 EXPORT_SYMBOL(mmc_gpio_get_ro);
 
-int mmc_gpio_get_cd(struct mmc_host *host)
-{
-	struct mmc_gpio *ctx = host->slot.handler_priv;
-	int cansleep;
+पूर्णांक mmc_gpio_get_cd(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_gpio *ctx = host->slot.handler_priv;
+	पूर्णांक cansleep;
 
-	if (!ctx || !ctx->cd_gpio)
-		return -ENOSYS;
+	अगर (!ctx || !ctx->cd_gpio)
+		वापस -ENOSYS;
 
 	cansleep = gpiod_cansleep(ctx->cd_gpio);
-	return cansleep ?
+	वापस cansleep ?
 		gpiod_get_value_cansleep(ctx->cd_gpio) :
 		gpiod_get_value(ctx->cd_gpio);
-}
+पूर्ण
 EXPORT_SYMBOL(mmc_gpio_get_cd);
 
-void mmc_gpiod_request_cd_irq(struct mmc_host *host)
-{
-	struct mmc_gpio *ctx = host->slot.handler_priv;
-	int irq = -EINVAL;
-	int ret;
+व्योम mmc_gpiod_request_cd_irq(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_gpio *ctx = host->slot.handler_priv;
+	पूर्णांक irq = -EINVAL;
+	पूर्णांक ret;
 
-	if (host->slot.cd_irq >= 0 || !ctx || !ctx->cd_gpio)
-		return;
+	अगर (host->slot.cd_irq >= 0 || !ctx || !ctx->cd_gpio)
+		वापस;
 
 	/*
-	 * Do not use IRQ if the platform prefers to poll, e.g., because that
-	 * IRQ number is already used by another unit and cannot be shared.
+	 * Do not use IRQ अगर the platक्रमm prefers to poll, e.g., because that
+	 * IRQ number is alपढ़ोy used by another unit and cannot be shared.
 	 */
-	if (!(host->caps & MMC_CAP_NEEDS_POLL))
+	अगर (!(host->caps & MMC_CAP_NEEDS_POLL))
 		irq = gpiod_to_irq(ctx->cd_gpio);
 
-	if (irq >= 0) {
-		if (!ctx->cd_gpio_isr)
+	अगर (irq >= 0) अणु
+		अगर (!ctx->cd_gpio_isr)
 			ctx->cd_gpio_isr = mmc_gpio_cd_irqt;
-		ret = devm_request_threaded_irq(host->parent, irq,
-			NULL, ctx->cd_gpio_isr,
+		ret = devm_request_thपढ़ोed_irq(host->parent, irq,
+			शून्य, ctx->cd_gpio_isr,
 			IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 			ctx->cd_label, host);
-		if (ret < 0)
+		अगर (ret < 0)
 			irq = ret;
-	}
+	पूर्ण
 
 	host->slot.cd_irq = irq;
 
-	if (irq < 0)
+	अगर (irq < 0)
 		host->caps |= MMC_CAP_NEEDS_POLL;
-}
+पूर्ण
 EXPORT_SYMBOL(mmc_gpiod_request_cd_irq);
 
-int mmc_gpio_set_cd_wake(struct mmc_host *host, bool on)
-{
-	int ret = 0;
+पूर्णांक mmc_gpio_set_cd_wake(काष्ठा mmc_host *host, bool on)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!(host->caps & MMC_CAP_CD_WAKE) ||
+	अगर (!(host->caps & MMC_CAP_CD_WAKE) ||
 	    host->slot.cd_irq < 0 ||
 	    on == host->slot.cd_wake_enabled)
-		return 0;
+		वापस 0;
 
-	if (on) {
+	अगर (on) अणु
 		ret = enable_irq_wake(host->slot.cd_irq);
 		host->slot.cd_wake_enabled = !ret;
-	} else {
+	पूर्ण अन्यथा अणु
 		disable_irq_wake(host->slot.cd_irq);
 		host->slot.cd_wake_enabled = false;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(mmc_gpio_set_cd_wake);
 
-/* Register an alternate interrupt service routine for
+/* Register an alternate पूर्णांकerrupt service routine क्रम
  * the card-detect GPIO.
  */
-void mmc_gpio_set_cd_isr(struct mmc_host *host,
-			 irqreturn_t (*isr)(int irq, void *dev_id))
-{
-	struct mmc_gpio *ctx = host->slot.handler_priv;
+व्योम mmc_gpio_set_cd_isr(काष्ठा mmc_host *host,
+			 irqवापस_t (*isr)(पूर्णांक irq, व्योम *dev_id))
+अणु
+	काष्ठा mmc_gpio *ctx = host->slot.handler_priv;
 
 	WARN_ON(ctx->cd_gpio_isr);
 	ctx->cd_gpio_isr = isr;
-}
+पूर्ण
 EXPORT_SYMBOL(mmc_gpio_set_cd_isr);
 
 /**
- * mmc_gpiod_request_cd - request a gpio descriptor for card-detection
+ * mmc_gpiod_request_cd - request a gpio descriptor क्रम card-detection
  * @host: mmc host
  * @con_id: function within the GPIO consumer
  * @idx: index of the GPIO to obtain in the consumer
  * @override_active_level: ignore %GPIO_ACTIVE_LOW flag
- * @debounce: debounce time in microseconds
+ * @debounce: debounce समय in microseconds
  *
  * Note that this must be called prior to mmc_add_host()
  * otherwise the caller must also call mmc_gpiod_request_cd_irq().
  *
- * Returns zero on success, else an error.
+ * Returns zero on success, अन्यथा an error.
  */
-int mmc_gpiod_request_cd(struct mmc_host *host, const char *con_id,
-			 unsigned int idx, bool override_active_level,
-			 unsigned int debounce)
-{
-	struct mmc_gpio *ctx = host->slot.handler_priv;
-	struct gpio_desc *desc;
-	int ret;
+पूर्णांक mmc_gpiod_request_cd(काष्ठा mmc_host *host, स्थिर अक्षर *con_id,
+			 अचिन्हित पूर्णांक idx, bool override_active_level,
+			 अचिन्हित पूर्णांक debounce)
+अणु
+	काष्ठा mmc_gpio *ctx = host->slot.handler_priv;
+	काष्ठा gpio_desc *desc;
+	पूर्णांक ret;
 
 	desc = devm_gpiod_get_index(host->parent, con_id, idx, GPIOD_IN);
-	if (IS_ERR(desc))
-		return PTR_ERR(desc);
+	अगर (IS_ERR(desc))
+		वापस PTR_ERR(desc);
 
-	if (debounce) {
+	अगर (debounce) अणु
 		ret = gpiod_set_debounce(desc, debounce);
-		if (ret < 0)
+		अगर (ret < 0)
 			ctx->cd_debounce_delay_ms = debounce / 1000;
-	}
+	पूर्ण
 
-	/* override forces default (active-low) polarity ... */
-	if (override_active_level && !gpiod_is_active_low(desc))
+	/* override क्रमces शेष (active-low) polarity ... */
+	अगर (override_active_level && !gpiod_is_active_low(desc))
 		gpiod_toggle_active_low(desc);
 
 	/* ... or active-high */
-	if (host->caps2 & MMC_CAP2_CD_ACTIVE_HIGH)
+	अगर (host->caps2 & MMC_CAP2_CD_ACTIVE_HIGH)
 		gpiod_toggle_active_low(desc);
 
 	ctx->cd_gpio = desc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mmc_gpiod_request_cd);
 
-bool mmc_can_gpio_cd(struct mmc_host *host)
-{
-	struct mmc_gpio *ctx = host->slot.handler_priv;
+bool mmc_can_gpio_cd(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_gpio *ctx = host->slot.handler_priv;
 
-	return ctx->cd_gpio ? true : false;
-}
+	वापस ctx->cd_gpio ? true : false;
+पूर्ण
 EXPORT_SYMBOL(mmc_can_gpio_cd);
 
 /**
- * mmc_gpiod_request_ro - request a gpio descriptor for write protection
+ * mmc_gpiod_request_ro - request a gpio descriptor क्रम ग_लिखो protection
  * @host: mmc host
  * @con_id: function within the GPIO consumer
  * @idx: index of the GPIO to obtain in the consumer
- * @debounce: debounce time in microseconds
+ * @debounce: debounce समय in microseconds
  *
- * Returns zero on success, else an error.
+ * Returns zero on success, अन्यथा an error.
  */
-int mmc_gpiod_request_ro(struct mmc_host *host, const char *con_id,
-			 unsigned int idx, unsigned int debounce)
-{
-	struct mmc_gpio *ctx = host->slot.handler_priv;
-	struct gpio_desc *desc;
-	int ret;
+पूर्णांक mmc_gpiod_request_ro(काष्ठा mmc_host *host, स्थिर अक्षर *con_id,
+			 अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक debounce)
+अणु
+	काष्ठा mmc_gpio *ctx = host->slot.handler_priv;
+	काष्ठा gpio_desc *desc;
+	पूर्णांक ret;
 
 	desc = devm_gpiod_get_index(host->parent, con_id, idx, GPIOD_IN);
-	if (IS_ERR(desc))
-		return PTR_ERR(desc);
+	अगर (IS_ERR(desc))
+		वापस PTR_ERR(desc);
 
-	if (debounce) {
+	अगर (debounce) अणु
 		ret = gpiod_set_debounce(desc, debounce);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (host->caps2 & MMC_CAP2_RO_ACTIVE_HIGH)
+	अगर (host->caps2 & MMC_CAP2_RO_ACTIVE_HIGH)
 		gpiod_toggle_active_low(desc);
 
 	ctx->ro_gpio = desc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mmc_gpiod_request_ro);
 
-bool mmc_can_gpio_ro(struct mmc_host *host)
-{
-	struct mmc_gpio *ctx = host->slot.handler_priv;
+bool mmc_can_gpio_ro(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_gpio *ctx = host->slot.handler_priv;
 
-	return ctx->ro_gpio ? true : false;
-}
+	वापस ctx->ro_gpio ? true : false;
+पूर्ण
 EXPORT_SYMBOL(mmc_can_gpio_ro);

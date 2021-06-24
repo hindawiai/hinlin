@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright (C) 2005-2014 Intel Corporation
  */
-#ifndef __iwl_calib_h__
-#define __iwl_calib_h__
+#अगर_अघोषित __iwl_calib_h__
+#घोषणा __iwl_calib_h__
 
-#include "dev.h"
-#include "commands.h"
+#समावेश "dev.h"
+#समावेश "commands.h"
 
-void iwl_chain_noise_calibration(struct iwl_priv *priv);
-void iwl_sensitivity_calibration(struct iwl_priv *priv);
+व्योम iwl_chain_noise_calibration(काष्ठा iwl_priv *priv);
+व्योम iwl_sensitivity_calibration(काष्ठा iwl_priv *priv);
 
-void iwl_init_sensitivity(struct iwl_priv *priv);
-void iwl_reset_run_time_calib(struct iwl_priv *priv);
+व्योम iwl_init_sensitivity(काष्ठा iwl_priv *priv);
+व्योम iwl_reset_run_समय_calib(काष्ठा iwl_priv *priv);
 
-#endif /* __iwl_calib_h__ */
+#पूर्ण_अगर /* __iwl_calib_h__ */

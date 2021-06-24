@@ -1,1005 +1,1006 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Samsung S3C64XX/S5PC1XX OneNAND driver
+ * Samsung S3C64XX/S5PC1XX Oneन_अंकD driver
  *
- *  Copyright © 2008-2010 Samsung Electronics
+ *  Copyright तऊ 2008-2010 Samsung Electronics
  *  Kyungmin Park <kyungmin.park@samsung.com>
  *  Marek Szyprowski <m.szyprowski@samsung.com>
  *
  * Implementation:
- *	S3C64XX: emulate the pseudo BufferRAM
+ *	S3C64XX: emulate the pseuकरो BufferRAM
  *	S5PC110: use DMA
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/onenand.h>
-#include <linux/mtd/partitions.h>
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/onenand.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
 
-#include "samsung.h"
+#समावेश "samsung.h"
 
-enum soc_type {
+क्रमागत soc_type अणु
 	TYPE_S3C6400,
 	TYPE_S3C6410,
 	TYPE_S5PC110,
-};
+पूर्ण;
 
-#define ONENAND_ERASE_STATUS		0x00
-#define ONENAND_MULTI_ERASE_SET		0x01
-#define ONENAND_ERASE_START		0x03
-#define ONENAND_UNLOCK_START		0x08
-#define ONENAND_UNLOCK_END		0x09
-#define ONENAND_LOCK_START		0x0A
-#define ONENAND_LOCK_END		0x0B
-#define ONENAND_LOCK_TIGHT_START	0x0C
-#define ONENAND_LOCK_TIGHT_END		0x0D
-#define ONENAND_UNLOCK_ALL		0x0E
-#define ONENAND_OTP_ACCESS		0x12
-#define ONENAND_SPARE_ACCESS_ONLY	0x13
-#define ONENAND_MAIN_ACCESS_ONLY	0x14
-#define ONENAND_ERASE_VERIFY		0x15
-#define ONENAND_MAIN_SPARE_ACCESS	0x16
-#define ONENAND_PIPELINE_READ		0x4000
+#घोषणा ONEन_अंकD_ERASE_STATUS		0x00
+#घोषणा ONEन_अंकD_MULTI_ERASE_SET		0x01
+#घोषणा ONEन_अंकD_ERASE_START		0x03
+#घोषणा ONEन_अंकD_UNLOCK_START		0x08
+#घोषणा ONEन_अंकD_UNLOCK_END		0x09
+#घोषणा ONEन_अंकD_LOCK_START		0x0A
+#घोषणा ONEन_अंकD_LOCK_END		0x0B
+#घोषणा ONEन_अंकD_LOCK_TIGHT_START	0x0C
+#घोषणा ONEन_अंकD_LOCK_TIGHT_END		0x0D
+#घोषणा ONEन_अंकD_UNLOCK_ALL		0x0E
+#घोषणा ONEन_अंकD_OTP_ACCESS		0x12
+#घोषणा ONEन_अंकD_SPARE_ACCESS_ONLY	0x13
+#घोषणा ONEन_अंकD_MAIN_ACCESS_ONLY	0x14
+#घोषणा ONEन_अंकD_ERASE_VERIFY		0x15
+#घोषणा ONEन_अंकD_MAIN_SPARE_ACCESS	0x16
+#घोषणा ONEन_अंकD_PIPELINE_READ		0x4000
 
-#define MAP_00				(0x0)
-#define MAP_01				(0x1)
-#define MAP_10				(0x2)
-#define MAP_11				(0x3)
+#घोषणा MAP_00				(0x0)
+#घोषणा MAP_01				(0x1)
+#घोषणा MAP_10				(0x2)
+#घोषणा MAP_11				(0x3)
 
-#define S3C64XX_CMD_MAP_SHIFT		24
+#घोषणा S3C64XX_CMD_MAP_SHIFT		24
 
-#define S3C6400_FBA_SHIFT		10
-#define S3C6400_FPA_SHIFT		4
-#define S3C6400_FSA_SHIFT		2
+#घोषणा S3C6400_FBA_SHIFT		10
+#घोषणा S3C6400_FPA_SHIFT		4
+#घोषणा S3C6400_FSA_SHIFT		2
 
-#define S3C6410_FBA_SHIFT		12
-#define S3C6410_FPA_SHIFT		6
-#define S3C6410_FSA_SHIFT		4
+#घोषणा S3C6410_FBA_SHIFT		12
+#घोषणा S3C6410_FPA_SHIFT		6
+#घोषणा S3C6410_FSA_SHIFT		4
 
-/* S5PC110 specific definitions */
-#define S5PC110_DMA_SRC_ADDR		0x400
-#define S5PC110_DMA_SRC_CFG		0x404
-#define S5PC110_DMA_DST_ADDR		0x408
-#define S5PC110_DMA_DST_CFG		0x40C
-#define S5PC110_DMA_TRANS_SIZE		0x414
-#define S5PC110_DMA_TRANS_CMD		0x418
-#define S5PC110_DMA_TRANS_STATUS	0x41C
-#define S5PC110_DMA_TRANS_DIR		0x420
-#define S5PC110_INTC_DMA_CLR		0x1004
-#define S5PC110_INTC_ONENAND_CLR	0x1008
-#define S5PC110_INTC_DMA_MASK		0x1024
-#define S5PC110_INTC_ONENAND_MASK	0x1028
-#define S5PC110_INTC_DMA_PEND		0x1044
-#define S5PC110_INTC_ONENAND_PEND	0x1048
-#define S5PC110_INTC_DMA_STATUS		0x1064
-#define S5PC110_INTC_ONENAND_STATUS	0x1068
+/* S5PC110 specअगरic definitions */
+#घोषणा S5PC110_DMA_SRC_ADDR		0x400
+#घोषणा S5PC110_DMA_SRC_CFG		0x404
+#घोषणा S5PC110_DMA_DST_ADDR		0x408
+#घोषणा S5PC110_DMA_DST_CFG		0x40C
+#घोषणा S5PC110_DMA_TRANS_SIZE		0x414
+#घोषणा S5PC110_DMA_TRANS_CMD		0x418
+#घोषणा S5PC110_DMA_TRANS_STATUS	0x41C
+#घोषणा S5PC110_DMA_TRANS_सूची		0x420
+#घोषणा S5PC110_INTC_DMA_CLR		0x1004
+#घोषणा S5PC110_INTC_ONEन_अंकD_CLR	0x1008
+#घोषणा S5PC110_INTC_DMA_MASK		0x1024
+#घोषणा S5PC110_INTC_ONEन_अंकD_MASK	0x1028
+#घोषणा S5PC110_INTC_DMA_PEND		0x1044
+#घोषणा S5PC110_INTC_ONEन_अंकD_PEND	0x1048
+#घोषणा S5PC110_INTC_DMA_STATUS		0x1064
+#घोषणा S5PC110_INTC_ONEन_अंकD_STATUS	0x1068
 
-#define S5PC110_INTC_DMA_TD		(1 << 24)
-#define S5PC110_INTC_DMA_TE		(1 << 16)
+#घोषणा S5PC110_INTC_DMA_TD		(1 << 24)
+#घोषणा S5PC110_INTC_DMA_TE		(1 << 16)
 
-#define S5PC110_DMA_CFG_SINGLE		(0x0 << 16)
-#define S5PC110_DMA_CFG_4BURST		(0x2 << 16)
-#define S5PC110_DMA_CFG_8BURST		(0x3 << 16)
-#define S5PC110_DMA_CFG_16BURST		(0x4 << 16)
+#घोषणा S5PC110_DMA_CFG_SINGLE		(0x0 << 16)
+#घोषणा S5PC110_DMA_CFG_4BURST		(0x2 << 16)
+#घोषणा S5PC110_DMA_CFG_8BURST		(0x3 << 16)
+#घोषणा S5PC110_DMA_CFG_16BURST		(0x4 << 16)
 
-#define S5PC110_DMA_CFG_INC		(0x0 << 8)
-#define S5PC110_DMA_CFG_CNT		(0x1 << 8)
+#घोषणा S5PC110_DMA_CFG_INC		(0x0 << 8)
+#घोषणा S5PC110_DMA_CFG_CNT		(0x1 << 8)
 
-#define S5PC110_DMA_CFG_8BIT		(0x0 << 0)
-#define S5PC110_DMA_CFG_16BIT		(0x1 << 0)
-#define S5PC110_DMA_CFG_32BIT		(0x2 << 0)
+#घोषणा S5PC110_DMA_CFG_8BIT		(0x0 << 0)
+#घोषणा S5PC110_DMA_CFG_16BIT		(0x1 << 0)
+#घोषणा S5PC110_DMA_CFG_32BIT		(0x2 << 0)
 
-#define S5PC110_DMA_SRC_CFG_READ	(S5PC110_DMA_CFG_16BURST | \
+#घोषणा S5PC110_DMA_SRC_CFG_READ	(S5PC110_DMA_CFG_16BURST | \
 					S5PC110_DMA_CFG_INC | \
 					S5PC110_DMA_CFG_16BIT)
-#define S5PC110_DMA_DST_CFG_READ	(S5PC110_DMA_CFG_16BURST | \
+#घोषणा S5PC110_DMA_DST_CFG_READ	(S5PC110_DMA_CFG_16BURST | \
 					S5PC110_DMA_CFG_INC | \
 					S5PC110_DMA_CFG_32BIT)
-#define S5PC110_DMA_SRC_CFG_WRITE	(S5PC110_DMA_CFG_16BURST | \
+#घोषणा S5PC110_DMA_SRC_CFG_WRITE	(S5PC110_DMA_CFG_16BURST | \
 					S5PC110_DMA_CFG_INC | \
 					S5PC110_DMA_CFG_32BIT)
-#define S5PC110_DMA_DST_CFG_WRITE	(S5PC110_DMA_CFG_16BURST | \
+#घोषणा S5PC110_DMA_DST_CFG_WRITE	(S5PC110_DMA_CFG_16BURST | \
 					S5PC110_DMA_CFG_INC | \
 					S5PC110_DMA_CFG_16BIT)
 
-#define S5PC110_DMA_TRANS_CMD_TDC	(0x1 << 18)
-#define S5PC110_DMA_TRANS_CMD_TEC	(0x1 << 16)
-#define S5PC110_DMA_TRANS_CMD_TR	(0x1 << 0)
+#घोषणा S5PC110_DMA_TRANS_CMD_TDC	(0x1 << 18)
+#घोषणा S5PC110_DMA_TRANS_CMD_TEC	(0x1 << 16)
+#घोषणा S5PC110_DMA_TRANS_CMD_TR	(0x1 << 0)
 
-#define S5PC110_DMA_TRANS_STATUS_TD	(0x1 << 18)
-#define S5PC110_DMA_TRANS_STATUS_TB	(0x1 << 17)
-#define S5PC110_DMA_TRANS_STATUS_TE	(0x1 << 16)
+#घोषणा S5PC110_DMA_TRANS_STATUS_TD	(0x1 << 18)
+#घोषणा S5PC110_DMA_TRANS_STATUS_TB	(0x1 << 17)
+#घोषणा S5PC110_DMA_TRANS_STATUS_TE	(0x1 << 16)
 
-#define S5PC110_DMA_DIR_READ		0x0
-#define S5PC110_DMA_DIR_WRITE		0x1
+#घोषणा S5PC110_DMA_सूची_READ		0x0
+#घोषणा S5PC110_DMA_सूची_WRITE		0x1
 
-struct s3c_onenand {
-	struct mtd_info	*mtd;
-	struct platform_device	*pdev;
-	enum soc_type	type;
-	void __iomem	*base;
-	void __iomem	*ahb_addr;
-	int		bootram_command;
-	void		*page_buf;
-	void		*oob_buf;
-	unsigned int	(*mem_addr)(int fba, int fpa, int fsa);
-	unsigned int	(*cmd_map)(unsigned int type, unsigned int val);
-	void __iomem	*dma_addr;
-	unsigned long	phys_base;
-	struct completion	complete;
-};
+काष्ठा s3c_onenand अणु
+	काष्ठा mtd_info	*mtd;
+	काष्ठा platक्रमm_device	*pdev;
+	क्रमागत soc_type	type;
+	व्योम __iomem	*base;
+	व्योम __iomem	*ahb_addr;
+	पूर्णांक		bootram_command;
+	व्योम		*page_buf;
+	व्योम		*oob_buf;
+	अचिन्हित पूर्णांक	(*mem_addr)(पूर्णांक fba, पूर्णांक fpa, पूर्णांक fsa);
+	अचिन्हित पूर्णांक	(*cmd_map)(अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक val);
+	व्योम __iomem	*dma_addr;
+	अचिन्हित दीर्घ	phys_base;
+	काष्ठा completion	complete;
+पूर्ण;
 
-#define CMD_MAP_00(dev, addr)		(dev->cmd_map(MAP_00, ((addr) << 1)))
-#define CMD_MAP_01(dev, mem_addr)	(dev->cmd_map(MAP_01, (mem_addr)))
-#define CMD_MAP_10(dev, mem_addr)	(dev->cmd_map(MAP_10, (mem_addr)))
-#define CMD_MAP_11(dev, addr)		(dev->cmd_map(MAP_11, ((addr) << 2)))
+#घोषणा CMD_MAP_00(dev, addr)		(dev->cmd_map(MAP_00, ((addr) << 1)))
+#घोषणा CMD_MAP_01(dev, mem_addr)	(dev->cmd_map(MAP_01, (mem_addr)))
+#घोषणा CMD_MAP_10(dev, mem_addr)	(dev->cmd_map(MAP_10, (mem_addr)))
+#घोषणा CMD_MAP_11(dev, addr)		(dev->cmd_map(MAP_11, ((addr) << 2)))
 
-static struct s3c_onenand *onenand;
+अटल काष्ठा s3c_onenand *onenand;
 
-static inline int s3c_read_reg(int offset)
-{
-	return readl(onenand->base + offset);
-}
+अटल अंतरभूत पूर्णांक s3c_पढ़ो_reg(पूर्णांक offset)
+अणु
+	वापस पढ़ोl(onenand->base + offset);
+पूर्ण
 
-static inline void s3c_write_reg(int value, int offset)
-{
-	writel(value, onenand->base + offset);
-}
+अटल अंतरभूत व्योम s3c_ग_लिखो_reg(पूर्णांक value, पूर्णांक offset)
+अणु
+	ग_लिखोl(value, onenand->base + offset);
+पूर्ण
 
-static inline int s3c_read_cmd(unsigned int cmd)
-{
-	return readl(onenand->ahb_addr + cmd);
-}
+अटल अंतरभूत पूर्णांक s3c_पढ़ो_cmd(अचिन्हित पूर्णांक cmd)
+अणु
+	वापस पढ़ोl(onenand->ahb_addr + cmd);
+पूर्ण
 
-static inline void s3c_write_cmd(int value, unsigned int cmd)
-{
-	writel(value, onenand->ahb_addr + cmd);
-}
+अटल अंतरभूत व्योम s3c_ग_लिखो_cmd(पूर्णांक value, अचिन्हित पूर्णांक cmd)
+अणु
+	ग_लिखोl(value, onenand->ahb_addr + cmd);
+पूर्ण
 
-#ifdef SAMSUNG_DEBUG
-static void s3c_dump_reg(void)
-{
-	int i;
+#अगर_घोषित SAMSUNG_DEBUG
+अटल व्योम s3c_dump_reg(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 0x400; i += 0x40) {
-		printk(KERN_INFO "0x%08X: 0x%08x 0x%08x 0x%08x 0x%08x\n",
-			(unsigned int) onenand->base + i,
-			s3c_read_reg(i), s3c_read_reg(i + 0x10),
-			s3c_read_reg(i + 0x20), s3c_read_reg(i + 0x30));
-	}
-}
-#endif
+	क्रम (i = 0; i < 0x400; i += 0x40) अणु
+		prपूर्णांकk(KERN_INFO "0x%08X: 0x%08x 0x%08x 0x%08x 0x%08x\n",
+			(अचिन्हित पूर्णांक) onenand->base + i,
+			s3c_पढ़ो_reg(i), s3c_पढ़ो_reg(i + 0x10),
+			s3c_पढ़ो_reg(i + 0x20), s3c_पढ़ो_reg(i + 0x30));
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static unsigned int s3c64xx_cmd_map(unsigned type, unsigned val)
-{
-	return (type << S3C64XX_CMD_MAP_SHIFT) | val;
-}
+अटल अचिन्हित पूर्णांक s3c64xx_cmd_map(अचिन्हित type, अचिन्हित val)
+अणु
+	वापस (type << S3C64XX_CMD_MAP_SHIFT) | val;
+पूर्ण
 
-static unsigned int s3c6400_mem_addr(int fba, int fpa, int fsa)
-{
-	return (fba << S3C6400_FBA_SHIFT) | (fpa << S3C6400_FPA_SHIFT) |
+अटल अचिन्हित पूर्णांक s3c6400_mem_addr(पूर्णांक fba, पूर्णांक fpa, पूर्णांक fsa)
+अणु
+	वापस (fba << S3C6400_FBA_SHIFT) | (fpa << S3C6400_FPA_SHIFT) |
 		(fsa << S3C6400_FSA_SHIFT);
-}
+पूर्ण
 
-static unsigned int s3c6410_mem_addr(int fba, int fpa, int fsa)
-{
-	return (fba << S3C6410_FBA_SHIFT) | (fpa << S3C6410_FPA_SHIFT) |
+अटल अचिन्हित पूर्णांक s3c6410_mem_addr(पूर्णांक fba, पूर्णांक fpa, पूर्णांक fsa)
+अणु
+	वापस (fba << S3C6410_FBA_SHIFT) | (fpa << S3C6410_FPA_SHIFT) |
 		(fsa << S3C6410_FSA_SHIFT);
-}
+पूर्ण
 
-static void s3c_onenand_reset(void)
-{
-	unsigned long timeout = 0x10000;
-	int stat;
+अटल व्योम s3c_onenand_reset(व्योम)
+अणु
+	अचिन्हित दीर्घ समयout = 0x10000;
+	पूर्णांक stat;
 
-	s3c_write_reg(ONENAND_MEM_RESET_COLD, MEM_RESET_OFFSET);
-	while (1 && timeout--) {
-		stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
-		if (stat & RST_CMP)
-			break;
-	}
-	stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
-	s3c_write_reg(stat, INT_ERR_ACK_OFFSET);
+	s3c_ग_लिखो_reg(ONEन_अंकD_MEM_RESET_COLD, MEM_RESET_OFFSET);
+	जबतक (1 && समयout--) अणु
+		stat = s3c_पढ़ो_reg(INT_ERR_STAT_OFFSET);
+		अगर (stat & RST_CMP)
+			अवरोध;
+	पूर्ण
+	stat = s3c_पढ़ो_reg(INT_ERR_STAT_OFFSET);
+	s3c_ग_लिखो_reg(stat, INT_ERR_ACK_OFFSET);
 
-	/* Clear interrupt */
-	s3c_write_reg(0x0, INT_ERR_ACK_OFFSET);
+	/* Clear पूर्णांकerrupt */
+	s3c_ग_लिखो_reg(0x0, INT_ERR_ACK_OFFSET);
 	/* Clear the ECC status */
-	s3c_write_reg(0x0, ECC_ERR_STAT_OFFSET);
-}
+	s3c_ग_लिखो_reg(0x0, ECC_ERR_STAT_OFFSET);
+पूर्ण
 
-static unsigned short s3c_onenand_readw(void __iomem *addr)
-{
-	struct onenand_chip *this = onenand->mtd->priv;
-	struct device *dev = &onenand->pdev->dev;
-	int reg = addr - this->base;
-	int word_addr = reg >> 1;
-	int value;
+अटल अचिन्हित लघु s3c_onenand_पढ़ोw(व्योम __iomem *addr)
+अणु
+	काष्ठा onenand_chip *this = onenand->mtd->priv;
+	काष्ठा device *dev = &onenand->pdev->dev;
+	पूर्णांक reg = addr - this->base;
+	पूर्णांक word_addr = reg >> 1;
+	पूर्णांक value;
 
-	/* It's used for probing time */
-	switch (reg) {
-	case ONENAND_REG_MANUFACTURER_ID:
-		return s3c_read_reg(MANUFACT_ID_OFFSET);
-	case ONENAND_REG_DEVICE_ID:
-		return s3c_read_reg(DEVICE_ID_OFFSET);
-	case ONENAND_REG_VERSION_ID:
-		return s3c_read_reg(FLASH_VER_ID_OFFSET);
-	case ONENAND_REG_DATA_BUFFER_SIZE:
-		return s3c_read_reg(DATA_BUF_SIZE_OFFSET);
-	case ONENAND_REG_TECHNOLOGY:
-		return s3c_read_reg(TECH_OFFSET);
-	case ONENAND_REG_SYS_CFG1:
-		return s3c_read_reg(MEM_CFG_OFFSET);
+	/* It's used क्रम probing समय */
+	चयन (reg) अणु
+	हाल ONEन_अंकD_REG_MANUFACTURER_ID:
+		वापस s3c_पढ़ो_reg(MANUFACT_ID_OFFSET);
+	हाल ONEन_अंकD_REG_DEVICE_ID:
+		वापस s3c_पढ़ो_reg(DEVICE_ID_OFFSET);
+	हाल ONEन_अंकD_REG_VERSION_ID:
+		वापस s3c_पढ़ो_reg(FLASH_VER_ID_OFFSET);
+	हाल ONEन_अंकD_REG_DATA_BUFFER_SIZE:
+		वापस s3c_पढ़ो_reg(DATA_BUF_SIZE_OFFSET);
+	हाल ONEन_अंकD_REG_TECHNOLOGY:
+		वापस s3c_पढ़ो_reg(TECH_OFFSET);
+	हाल ONEन_अंकD_REG_SYS_CFG1:
+		वापस s3c_पढ़ो_reg(MEM_CFG_OFFSET);
 
 	/* Used at unlock all status */
-	case ONENAND_REG_CTRL_STATUS:
-		return 0;
+	हाल ONEन_अंकD_REG_CTRL_STATUS:
+		वापस 0;
 
-	case ONENAND_REG_WP_STATUS:
-		return ONENAND_WP_US;
+	हाल ONEन_अंकD_REG_WP_STATUS:
+		वापस ONEन_अंकD_WP_US;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* BootRAM access control */
-	if ((unsigned long)addr < ONENAND_DATARAM && onenand->bootram_command) {
-		if (word_addr == 0)
-			return s3c_read_reg(MANUFACT_ID_OFFSET);
-		if (word_addr == 1)
-			return s3c_read_reg(DEVICE_ID_OFFSET);
-		if (word_addr == 2)
-			return s3c_read_reg(FLASH_VER_ID_OFFSET);
-	}
+	अगर ((अचिन्हित दीर्घ)addr < ONEन_अंकD_DATARAM && onenand->bootram_command) अणु
+		अगर (word_addr == 0)
+			वापस s3c_पढ़ो_reg(MANUFACT_ID_OFFSET);
+		अगर (word_addr == 1)
+			वापस s3c_पढ़ो_reg(DEVICE_ID_OFFSET);
+		अगर (word_addr == 2)
+			वापस s3c_पढ़ो_reg(FLASH_VER_ID_OFFSET);
+	पूर्ण
 
-	value = s3c_read_cmd(CMD_MAP_11(onenand, word_addr)) & 0xffff;
+	value = s3c_पढ़ो_cmd(CMD_MAP_11(onenand, word_addr)) & 0xffff;
 	dev_info(dev, "%s: Illegal access at reg 0x%x, value 0x%x\n", __func__,
 		 word_addr, value);
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static void s3c_onenand_writew(unsigned short value, void __iomem *addr)
-{
-	struct onenand_chip *this = onenand->mtd->priv;
-	struct device *dev = &onenand->pdev->dev;
-	unsigned int reg = addr - this->base;
-	unsigned int word_addr = reg >> 1;
+अटल व्योम s3c_onenand_ग_लिखोw(अचिन्हित लघु value, व्योम __iomem *addr)
+अणु
+	काष्ठा onenand_chip *this = onenand->mtd->priv;
+	काष्ठा device *dev = &onenand->pdev->dev;
+	अचिन्हित पूर्णांक reg = addr - this->base;
+	अचिन्हित पूर्णांक word_addr = reg >> 1;
 
-	/* It's used for probing time */
-	switch (reg) {
-	case ONENAND_REG_SYS_CFG1:
-		s3c_write_reg(value, MEM_CFG_OFFSET);
-		return;
+	/* It's used क्रम probing समय */
+	चयन (reg) अणु
+	हाल ONEन_अंकD_REG_SYS_CFG1:
+		s3c_ग_लिखो_reg(value, MEM_CFG_OFFSET);
+		वापस;
 
-	case ONENAND_REG_START_ADDRESS1:
-	case ONENAND_REG_START_ADDRESS2:
-		return;
+	हाल ONEन_अंकD_REG_START_ADDRESS1:
+	हाल ONEन_अंकD_REG_START_ADDRESS2:
+		वापस;
 
 	/* Lock/lock-tight/unlock/unlock_all */
-	case ONENAND_REG_START_BLOCK_ADDRESS:
-		return;
+	हाल ONEन_अंकD_REG_START_BLOCK_ADDRESS:
+		वापस;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* BootRAM access control */
-	if ((unsigned long)addr < ONENAND_DATARAM) {
-		if (value == ONENAND_CMD_READID) {
+	अगर ((अचिन्हित दीर्घ)addr < ONEन_अंकD_DATARAM) अणु
+		अगर (value == ONEन_अंकD_CMD_READID) अणु
 			onenand->bootram_command = 1;
-			return;
-		}
-		if (value == ONENAND_CMD_RESET) {
-			s3c_write_reg(ONENAND_MEM_RESET_COLD, MEM_RESET_OFFSET);
+			वापस;
+		पूर्ण
+		अगर (value == ONEन_अंकD_CMD_RESET) अणु
+			s3c_ग_लिखो_reg(ONEन_अंकD_MEM_RESET_COLD, MEM_RESET_OFFSET);
 			onenand->bootram_command = 0;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	dev_info(dev, "%s: Illegal access at reg 0x%x, value 0x%x\n", __func__,
 		 word_addr, value);
 
-	s3c_write_cmd(value, CMD_MAP_11(onenand, word_addr));
-}
+	s3c_ग_लिखो_cmd(value, CMD_MAP_11(onenand, word_addr));
+पूर्ण
 
-static int s3c_onenand_wait(struct mtd_info *mtd, int state)
-{
-	struct device *dev = &onenand->pdev->dev;
-	unsigned int flags = INT_ACT;
-	unsigned int stat, ecc;
-	unsigned long timeout;
+अटल पूर्णांक s3c_onenand_रुको(काष्ठा mtd_info *mtd, पूर्णांक state)
+अणु
+	काष्ठा device *dev = &onenand->pdev->dev;
+	अचिन्हित पूर्णांक flags = INT_ACT;
+	अचिन्हित पूर्णांक stat, ecc;
+	अचिन्हित दीर्घ समयout;
 
-	switch (state) {
-	case FL_READING:
+	चयन (state) अणु
+	हाल FL_READING:
 		flags |= BLK_RW_CMP | LOAD_CMP;
-		break;
-	case FL_WRITING:
+		अवरोध;
+	हाल FL_WRITING:
 		flags |= BLK_RW_CMP | PGM_CMP;
-		break;
-	case FL_ERASING:
+		अवरोध;
+	हाल FL_ERASING:
 		flags |= BLK_RW_CMP | ERS_CMP;
-		break;
-	case FL_LOCKING:
+		अवरोध;
+	हाल FL_LOCKING:
 		flags |= BLK_RW_CMP;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* The 20 msec is enough */
-	timeout = jiffies + msecs_to_jiffies(20);
-	while (time_before(jiffies, timeout)) {
-		stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
-		if (stat & flags)
-			break;
+	समयout = jअगरfies + msecs_to_jअगरfies(20);
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		stat = s3c_पढ़ो_reg(INT_ERR_STAT_OFFSET);
+		अगर (stat & flags)
+			अवरोध;
 
-		if (state != FL_READING)
+		अगर (state != FL_READING)
 			cond_resched();
-	}
-	/* To get correct interrupt status in timeout case */
-	stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
-	s3c_write_reg(stat, INT_ERR_ACK_OFFSET);
+	पूर्ण
+	/* To get correct पूर्णांकerrupt status in समयout हाल */
+	stat = s3c_पढ़ो_reg(INT_ERR_STAT_OFFSET);
+	s3c_ग_लिखो_reg(stat, INT_ERR_ACK_OFFSET);
 
 	/*
 	 * In the Spec. it checks the controller status first
-	 * However if you get the correct information in case of
-	 * power off recovery (POR) test, it should read ECC status first
+	 * However अगर you get the correct inक्रमmation in हाल of
+	 * घातer off recovery (POR) test, it should पढ़ो ECC status first
 	 */
-	if (stat & LOAD_CMP) {
-		ecc = s3c_read_reg(ECC_ERR_STAT_OFFSET);
-		if (ecc & ONENAND_ECC_4BIT_UNCORRECTABLE) {
+	अगर (stat & LOAD_CMP) अणु
+		ecc = s3c_पढ़ो_reg(ECC_ERR_STAT_OFFSET);
+		अगर (ecc & ONEन_अंकD_ECC_4BIT_UNCORRECTABLE) अणु
 			dev_info(dev, "%s: ECC error = 0x%04x\n", __func__,
 				 ecc);
 			mtd->ecc_stats.failed++;
-			return -EBADMSG;
-		}
-	}
+			वापस -EBADMSG;
+		पूर्ण
+	पूर्ण
 
-	if (stat & (LOCKED_BLK | ERS_FAIL | PGM_FAIL | LD_FAIL_ECC_ERR)) {
+	अगर (stat & (LOCKED_BLK | ERS_FAIL | PGM_FAIL | LD_FAIL_ECC_ERR)) अणु
 		dev_info(dev, "%s: controller error = 0x%04x\n", __func__,
 			 stat);
-		if (stat & LOCKED_BLK)
+		अगर (stat & LOCKED_BLK)
 			dev_info(dev, "%s: it's locked error = 0x%04x\n",
 				 __func__, stat);
 
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
-			       size_t len)
-{
-	struct onenand_chip *this = mtd->priv;
-	unsigned int *m, *s;
-	int fba, fpa, fsa = 0;
-	unsigned int mem_addr, cmd_map_01, cmd_map_10;
-	int i, mcount, scount;
-	int index;
+अटल पूर्णांक s3c_onenand_command(काष्ठा mtd_info *mtd, पूर्णांक cmd, loff_t addr,
+			       माप_प्रकार len)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	अचिन्हित पूर्णांक *m, *s;
+	पूर्णांक fba, fpa, fsa = 0;
+	अचिन्हित पूर्णांक mem_addr, cmd_map_01, cmd_map_10;
+	पूर्णांक i, mcount, scount;
+	पूर्णांक index;
 
-	fba = (int) (addr >> this->erase_shift);
-	fpa = (int) (addr >> this->page_shift);
+	fba = (पूर्णांक) (addr >> this->erase_shअगरt);
+	fpa = (पूर्णांक) (addr >> this->page_shअगरt);
 	fpa &= this->page_mask;
 
 	mem_addr = onenand->mem_addr(fba, fpa, fsa);
 	cmd_map_01 = CMD_MAP_01(onenand, mem_addr);
 	cmd_map_10 = CMD_MAP_10(onenand, mem_addr);
 
-	switch (cmd) {
-	case ONENAND_CMD_READ:
-	case ONENAND_CMD_READOOB:
-	case ONENAND_CMD_BUFFERRAM:
-		ONENAND_SET_NEXT_BUFFERRAM(this);
-		break;
-	default:
-		break;
-	}
+	चयन (cmd) अणु
+	हाल ONEन_अंकD_CMD_READ:
+	हाल ONEन_अंकD_CMD_READOOB:
+	हाल ONEन_अंकD_CMD_BUFFERRAM:
+		ONEन_अंकD_SET_NEXT_BUFFERRAM(this);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	index = ONENAND_CURRENT_BUFFERRAM(this);
+	index = ONEन_अंकD_CURRENT_BUFFERRAM(this);
 
 	/*
-	 * Emulate Two BufferRAMs and access with 4 bytes pointer
+	 * Emulate Two BufferRAMs and access with 4 bytes poपूर्णांकer
 	 */
 	m = onenand->page_buf;
 	s = onenand->oob_buf;
 
-	if (index) {
-		m += (this->writesize >> 2);
+	अगर (index) अणु
+		m += (this->ग_लिखोsize >> 2);
 		s += (mtd->oobsize >> 2);
-	}
+	पूर्ण
 
-	mcount = mtd->writesize >> 2;
+	mcount = mtd->ग_लिखोsize >> 2;
 	scount = mtd->oobsize >> 2;
 
-	switch (cmd) {
-	case ONENAND_CMD_READ:
+	चयन (cmd) अणु
+	हाल ONEन_अंकD_CMD_READ:
 		/* Main */
-		for (i = 0; i < mcount; i++)
-			*m++ = s3c_read_cmd(cmd_map_01);
-		return 0;
+		क्रम (i = 0; i < mcount; i++)
+			*m++ = s3c_पढ़ो_cmd(cmd_map_01);
+		वापस 0;
 
-	case ONENAND_CMD_READOOB:
-		s3c_write_reg(TSRF, TRANS_SPARE_OFFSET);
+	हाल ONEन_अंकD_CMD_READOOB:
+		s3c_ग_लिखो_reg(TSRF, TRANS_SPARE_OFFSET);
 		/* Main */
-		for (i = 0; i < mcount; i++)
-			*m++ = s3c_read_cmd(cmd_map_01);
+		क्रम (i = 0; i < mcount; i++)
+			*m++ = s3c_पढ़ो_cmd(cmd_map_01);
 
 		/* Spare */
-		for (i = 0; i < scount; i++)
-			*s++ = s3c_read_cmd(cmd_map_01);
+		क्रम (i = 0; i < scount; i++)
+			*s++ = s3c_पढ़ो_cmd(cmd_map_01);
 
-		s3c_write_reg(0, TRANS_SPARE_OFFSET);
-		return 0;
+		s3c_ग_लिखो_reg(0, TRANS_SPARE_OFFSET);
+		वापस 0;
 
-	case ONENAND_CMD_PROG:
+	हाल ONEन_अंकD_CMD_PROG:
 		/* Main */
-		for (i = 0; i < mcount; i++)
-			s3c_write_cmd(*m++, cmd_map_01);
-		return 0;
+		क्रम (i = 0; i < mcount; i++)
+			s3c_ग_लिखो_cmd(*m++, cmd_map_01);
+		वापस 0;
 
-	case ONENAND_CMD_PROGOOB:
-		s3c_write_reg(TSRF, TRANS_SPARE_OFFSET);
+	हाल ONEन_अंकD_CMD_PROGOOB:
+		s3c_ग_लिखो_reg(TSRF, TRANS_SPARE_OFFSET);
 
-		/* Main - dummy write */
-		for (i = 0; i < mcount; i++)
-			s3c_write_cmd(0xffffffff, cmd_map_01);
+		/* Main - dummy ग_लिखो */
+		क्रम (i = 0; i < mcount; i++)
+			s3c_ग_लिखो_cmd(0xffffffff, cmd_map_01);
 
 		/* Spare */
-		for (i = 0; i < scount; i++)
-			s3c_write_cmd(*s++, cmd_map_01);
+		क्रम (i = 0; i < scount; i++)
+			s3c_ग_लिखो_cmd(*s++, cmd_map_01);
 
-		s3c_write_reg(0, TRANS_SPARE_OFFSET);
-		return 0;
+		s3c_ग_लिखो_reg(0, TRANS_SPARE_OFFSET);
+		वापस 0;
 
-	case ONENAND_CMD_UNLOCK_ALL:
-		s3c_write_cmd(ONENAND_UNLOCK_ALL, cmd_map_10);
-		return 0;
+	हाल ONEन_अंकD_CMD_UNLOCK_ALL:
+		s3c_ग_लिखो_cmd(ONEन_अंकD_UNLOCK_ALL, cmd_map_10);
+		वापस 0;
 
-	case ONENAND_CMD_ERASE:
-		s3c_write_cmd(ONENAND_ERASE_START, cmd_map_10);
-		return 0;
+	हाल ONEन_अंकD_CMD_ERASE:
+		s3c_ग_लिखो_cmd(ONEन_अंकD_ERASE_START, cmd_map_10);
+		वापस 0;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned char *s3c_get_bufferram(struct mtd_info *mtd, int area)
-{
-	struct onenand_chip *this = mtd->priv;
-	int index = ONENAND_CURRENT_BUFFERRAM(this);
-	unsigned char *p;
+अटल अचिन्हित अक्षर *s3c_get_bufferram(काष्ठा mtd_info *mtd, पूर्णांक area)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक index = ONEन_अंकD_CURRENT_BUFFERRAM(this);
+	अचिन्हित अक्षर *p;
 
-	if (area == ONENAND_DATARAM) {
+	अगर (area == ONEन_अंकD_DATARAM) अणु
 		p = onenand->page_buf;
-		if (index == 1)
-			p += this->writesize;
-	} else {
+		अगर (index == 1)
+			p += this->ग_लिखोsize;
+	पूर्ण अन्यथा अणु
 		p = onenand->oob_buf;
-		if (index == 1)
+		अगर (index == 1)
 			p += mtd->oobsize;
-	}
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static int onenand_read_bufferram(struct mtd_info *mtd, int area,
-				  unsigned char *buffer, int offset,
-				  size_t count)
-{
-	unsigned char *p;
-
-	p = s3c_get_bufferram(mtd, area);
-	memcpy(buffer, p + offset, count);
-	return 0;
-}
-
-static int onenand_write_bufferram(struct mtd_info *mtd, int area,
-				   const unsigned char *buffer, int offset,
-				   size_t count)
-{
-	unsigned char *p;
+अटल पूर्णांक onenand_पढ़ो_bufferram(काष्ठा mtd_info *mtd, पूर्णांक area,
+				  अचिन्हित अक्षर *buffer, पूर्णांक offset,
+				  माप_प्रकार count)
+अणु
+	अचिन्हित अक्षर *p;
 
 	p = s3c_get_bufferram(mtd, area);
-	memcpy(p + offset, buffer, count);
-	return 0;
-}
+	स_नकल(buffer, p + offset, count);
+	वापस 0;
+पूर्ण
 
-static int (*s5pc110_dma_ops)(dma_addr_t dst, dma_addr_t src, size_t count, int direction);
+अटल पूर्णांक onenand_ग_लिखो_bufferram(काष्ठा mtd_info *mtd, पूर्णांक area,
+				   स्थिर अचिन्हित अक्षर *buffer, पूर्णांक offset,
+				   माप_प्रकार count)
+अणु
+	अचिन्हित अक्षर *p;
 
-static int s5pc110_dma_poll(dma_addr_t dst, dma_addr_t src, size_t count, int direction)
-{
-	void __iomem *base = onenand->dma_addr;
-	int status;
-	unsigned long timeout;
+	p = s3c_get_bufferram(mtd, area);
+	स_नकल(p + offset, buffer, count);
+	वापस 0;
+पूर्ण
 
-	writel(src, base + S5PC110_DMA_SRC_ADDR);
-	writel(dst, base + S5PC110_DMA_DST_ADDR);
+अटल पूर्णांक (*s5pc110_dma_ops)(dma_addr_t dst, dma_addr_t src, माप_प्रकार count, पूर्णांक direction);
 
-	if (direction == S5PC110_DMA_DIR_READ) {
-		writel(S5PC110_DMA_SRC_CFG_READ, base + S5PC110_DMA_SRC_CFG);
-		writel(S5PC110_DMA_DST_CFG_READ, base + S5PC110_DMA_DST_CFG);
-	} else {
-		writel(S5PC110_DMA_SRC_CFG_WRITE, base + S5PC110_DMA_SRC_CFG);
-		writel(S5PC110_DMA_DST_CFG_WRITE, base + S5PC110_DMA_DST_CFG);
-	}
+अटल पूर्णांक s5pc110_dma_poll(dma_addr_t dst, dma_addr_t src, माप_प्रकार count, पूर्णांक direction)
+अणु
+	व्योम __iomem *base = onenand->dma_addr;
+	पूर्णांक status;
+	अचिन्हित दीर्घ समयout;
 
-	writel(count, base + S5PC110_DMA_TRANS_SIZE);
-	writel(direction, base + S5PC110_DMA_TRANS_DIR);
+	ग_लिखोl(src, base + S5PC110_DMA_SRC_ADDR);
+	ग_लिखोl(dst, base + S5PC110_DMA_DST_ADDR);
 
-	writel(S5PC110_DMA_TRANS_CMD_TR, base + S5PC110_DMA_TRANS_CMD);
+	अगर (direction == S5PC110_DMA_सूची_READ) अणु
+		ग_लिखोl(S5PC110_DMA_SRC_CFG_READ, base + S5PC110_DMA_SRC_CFG);
+		ग_लिखोl(S5PC110_DMA_DST_CFG_READ, base + S5PC110_DMA_DST_CFG);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(S5PC110_DMA_SRC_CFG_WRITE, base + S5PC110_DMA_SRC_CFG);
+		ग_लिखोl(S5PC110_DMA_DST_CFG_WRITE, base + S5PC110_DMA_DST_CFG);
+	पूर्ण
+
+	ग_लिखोl(count, base + S5PC110_DMA_TRANS_SIZE);
+	ग_लिखोl(direction, base + S5PC110_DMA_TRANS_सूची);
+
+	ग_लिखोl(S5PC110_DMA_TRANS_CMD_TR, base + S5PC110_DMA_TRANS_CMD);
 
 	/*
-	 * There's no exact timeout values at Spec.
-	 * In real case it takes under 1 msec.
+	 * There's no exact समयout values at Spec.
+	 * In real हाल it takes under 1 msec.
 	 * So 20 msecs are enough.
 	 */
-	timeout = jiffies + msecs_to_jiffies(20);
+	समयout = jअगरfies + msecs_to_jअगरfies(20);
 
-	do {
-		status = readl(base + S5PC110_DMA_TRANS_STATUS);
-		if (status & S5PC110_DMA_TRANS_STATUS_TE) {
-			writel(S5PC110_DMA_TRANS_CMD_TEC,
+	करो अणु
+		status = पढ़ोl(base + S5PC110_DMA_TRANS_STATUS);
+		अगर (status & S5PC110_DMA_TRANS_STATUS_TE) अणु
+			ग_लिखोl(S5PC110_DMA_TRANS_CMD_TEC,
 					base + S5PC110_DMA_TRANS_CMD);
-			return -EIO;
-		}
-	} while (!(status & S5PC110_DMA_TRANS_STATUS_TD) &&
-		time_before(jiffies, timeout));
+			वापस -EIO;
+		पूर्ण
+	पूर्ण जबतक (!(status & S5PC110_DMA_TRANS_STATUS_TD) &&
+		समय_beक्रमe(jअगरfies, समयout));
 
-	writel(S5PC110_DMA_TRANS_CMD_TDC, base + S5PC110_DMA_TRANS_CMD);
+	ग_लिखोl(S5PC110_DMA_TRANS_CMD_TDC, base + S5PC110_DMA_TRANS_CMD);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t s5pc110_onenand_irq(int irq, void *data)
-{
-	void __iomem *base = onenand->dma_addr;
-	int status, cmd = 0;
+अटल irqवापस_t s5pc110_onenand_irq(पूर्णांक irq, व्योम *data)
+अणु
+	व्योम __iomem *base = onenand->dma_addr;
+	पूर्णांक status, cmd = 0;
 
-	status = readl(base + S5PC110_INTC_DMA_STATUS);
+	status = पढ़ोl(base + S5PC110_INTC_DMA_STATUS);
 
-	if (likely(status & S5PC110_INTC_DMA_TD))
+	अगर (likely(status & S5PC110_INTC_DMA_TD))
 		cmd = S5PC110_DMA_TRANS_CMD_TDC;
 
-	if (unlikely(status & S5PC110_INTC_DMA_TE))
+	अगर (unlikely(status & S5PC110_INTC_DMA_TE))
 		cmd = S5PC110_DMA_TRANS_CMD_TEC;
 
-	writel(cmd, base + S5PC110_DMA_TRANS_CMD);
-	writel(status, base + S5PC110_INTC_DMA_CLR);
+	ग_लिखोl(cmd, base + S5PC110_DMA_TRANS_CMD);
+	ग_लिखोl(status, base + S5PC110_INTC_DMA_CLR);
 
-	if (!onenand->complete.done)
+	अगर (!onenand->complete.करोne)
 		complete(&onenand->complete);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int s5pc110_dma_irq(dma_addr_t dst, dma_addr_t src, size_t count, int direction)
-{
-	void __iomem *base = onenand->dma_addr;
-	int status;
+अटल पूर्णांक s5pc110_dma_irq(dma_addr_t dst, dma_addr_t src, माप_प्रकार count, पूर्णांक direction)
+अणु
+	व्योम __iomem *base = onenand->dma_addr;
+	पूर्णांक status;
 
-	status = readl(base + S5PC110_INTC_DMA_MASK);
-	if (status) {
+	status = पढ़ोl(base + S5PC110_INTC_DMA_MASK);
+	अगर (status) अणु
 		status &= ~(S5PC110_INTC_DMA_TD | S5PC110_INTC_DMA_TE);
-		writel(status, base + S5PC110_INTC_DMA_MASK);
-	}
+		ग_लिखोl(status, base + S5PC110_INTC_DMA_MASK);
+	पूर्ण
 
-	writel(src, base + S5PC110_DMA_SRC_ADDR);
-	writel(dst, base + S5PC110_DMA_DST_ADDR);
+	ग_लिखोl(src, base + S5PC110_DMA_SRC_ADDR);
+	ग_लिखोl(dst, base + S5PC110_DMA_DST_ADDR);
 
-	if (direction == S5PC110_DMA_DIR_READ) {
-		writel(S5PC110_DMA_SRC_CFG_READ, base + S5PC110_DMA_SRC_CFG);
-		writel(S5PC110_DMA_DST_CFG_READ, base + S5PC110_DMA_DST_CFG);
-	} else {
-		writel(S5PC110_DMA_SRC_CFG_WRITE, base + S5PC110_DMA_SRC_CFG);
-		writel(S5PC110_DMA_DST_CFG_WRITE, base + S5PC110_DMA_DST_CFG);
-	}
+	अगर (direction == S5PC110_DMA_सूची_READ) अणु
+		ग_लिखोl(S5PC110_DMA_SRC_CFG_READ, base + S5PC110_DMA_SRC_CFG);
+		ग_लिखोl(S5PC110_DMA_DST_CFG_READ, base + S5PC110_DMA_DST_CFG);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(S5PC110_DMA_SRC_CFG_WRITE, base + S5PC110_DMA_SRC_CFG);
+		ग_लिखोl(S5PC110_DMA_DST_CFG_WRITE, base + S5PC110_DMA_DST_CFG);
+	पूर्ण
 
-	writel(count, base + S5PC110_DMA_TRANS_SIZE);
-	writel(direction, base + S5PC110_DMA_TRANS_DIR);
+	ग_लिखोl(count, base + S5PC110_DMA_TRANS_SIZE);
+	ग_लिखोl(direction, base + S5PC110_DMA_TRANS_सूची);
 
-	writel(S5PC110_DMA_TRANS_CMD_TR, base + S5PC110_DMA_TRANS_CMD);
+	ग_लिखोl(S5PC110_DMA_TRANS_CMD_TR, base + S5PC110_DMA_TRANS_CMD);
 
-	wait_for_completion_timeout(&onenand->complete, msecs_to_jiffies(20));
+	रुको_क्रम_completion_समयout(&onenand->complete, msecs_to_jअगरfies(20));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5pc110_read_bufferram(struct mtd_info *mtd, int area,
-		unsigned char *buffer, int offset, size_t count)
-{
-	struct onenand_chip *this = mtd->priv;
-	void __iomem *p;
-	void *buf = (void *) buffer;
+अटल पूर्णांक s5pc110_पढ़ो_bufferram(काष्ठा mtd_info *mtd, पूर्णांक area,
+		अचिन्हित अक्षर *buffer, पूर्णांक offset, माप_प्रकार count)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	व्योम __iomem *p;
+	व्योम *buf = (व्योम *) buffer;
 	dma_addr_t dma_src, dma_dst;
-	int err, ofs, page_dma = 0;
-	struct device *dev = &onenand->pdev->dev;
+	पूर्णांक err, ofs, page_dma = 0;
+	काष्ठा device *dev = &onenand->pdev->dev;
 
 	p = this->base + area;
-	if (ONENAND_CURRENT_BUFFERRAM(this)) {
-		if (area == ONENAND_DATARAM)
-			p += this->writesize;
-		else
+	अगर (ONEन_अंकD_CURRENT_BUFFERRAM(this)) अणु
+		अगर (area == ONEन_अंकD_DATARAM)
+			p += this->ग_लिखोsize;
+		अन्यथा
 			p += mtd->oobsize;
-	}
+	पूर्ण
 
-	if (offset & 3 || (size_t) buf & 3 ||
-		!onenand->dma_addr || count != mtd->writesize)
-		goto normal;
+	अगर (offset & 3 || (माप_प्रकार) buf & 3 ||
+		!onenand->dma_addr || count != mtd->ग_लिखोsize)
+		जाओ normal;
 
-	/* Handle vmalloc address */
-	if (buf >= high_memory) {
-		struct page *page;
+	/* Handle vदो_स्मृति address */
+	अगर (buf >= high_memory) अणु
+		काष्ठा page *page;
 
-		if (((size_t) buf & PAGE_MASK) !=
-		    ((size_t) (buf + count - 1) & PAGE_MASK))
-			goto normal;
-		page = vmalloc_to_page(buf);
-		if (!page)
-			goto normal;
+		अगर (((माप_प्रकार) buf & PAGE_MASK) !=
+		    ((माप_प्रकार) (buf + count - 1) & PAGE_MASK))
+			जाओ normal;
+		page = vदो_स्मृति_to_page(buf);
+		अगर (!page)
+			जाओ normal;
 
 		/* Page offset */
-		ofs = ((size_t) buf & ~PAGE_MASK);
+		ofs = ((माप_प्रकार) buf & ~PAGE_MASK);
 		page_dma = 1;
 
 		/* DMA routine */
 		dma_src = onenand->phys_base + (p - this->base);
 		dma_dst = dma_map_page(dev, page, ofs, count, DMA_FROM_DEVICE);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* DMA routine */
 		dma_src = onenand->phys_base + (p - this->base);
 		dma_dst = dma_map_single(dev, buf, count, DMA_FROM_DEVICE);
-	}
-	if (dma_mapping_error(dev, dma_dst)) {
+	पूर्ण
+	अगर (dma_mapping_error(dev, dma_dst)) अणु
 		dev_err(dev, "Couldn't map a %zu byte buffer for DMA\n", count);
-		goto normal;
-	}
+		जाओ normal;
+	पूर्ण
 	err = s5pc110_dma_ops(dma_dst, dma_src,
-			count, S5PC110_DMA_DIR_READ);
+			count, S5PC110_DMA_सूची_READ);
 
-	if (page_dma)
+	अगर (page_dma)
 		dma_unmap_page(dev, dma_dst, count, DMA_FROM_DEVICE);
-	else
+	अन्यथा
 		dma_unmap_single(dev, dma_dst, count, DMA_FROM_DEVICE);
 
-	if (!err)
-		return 0;
+	अगर (!err)
+		वापस 0;
 
 normal:
-	if (count != mtd->writesize) {
+	अगर (count != mtd->ग_लिखोsize) अणु
 		/* Copy the bufferram to memory to prevent unaligned access */
-		memcpy_fromio(this->page_buf, p, mtd->writesize);
-		memcpy(buffer, this->page_buf + offset, count);
-	} else {
-		memcpy_fromio(buffer, p, count);
-	}
+		स_नकल_fromio(this->page_buf, p, mtd->ग_लिखोsize);
+		स_नकल(buffer, this->page_buf + offset, count);
+	पूर्ण अन्यथा अणु
+		स_नकल_fromio(buffer, p, count);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5pc110_chip_probe(struct mtd_info *mtd)
-{
-	/* Now just return 0 */
-	return 0;
-}
+अटल पूर्णांक s5pc110_chip_probe(काष्ठा mtd_info *mtd)
+अणु
+	/* Now just वापस 0 */
+	वापस 0;
+पूर्ण
 
-static int s3c_onenand_bbt_wait(struct mtd_info *mtd, int state)
-{
-	unsigned int flags = INT_ACT | LOAD_CMP;
-	unsigned int stat;
-	unsigned long timeout;
+अटल पूर्णांक s3c_onenand_bbt_रुको(काष्ठा mtd_info *mtd, पूर्णांक state)
+अणु
+	अचिन्हित पूर्णांक flags = INT_ACT | LOAD_CMP;
+	अचिन्हित पूर्णांक stat;
+	अचिन्हित दीर्घ समयout;
 
 	/* The 20 msec is enough */
-	timeout = jiffies + msecs_to_jiffies(20);
-	while (time_before(jiffies, timeout)) {
-		stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
-		if (stat & flags)
-			break;
-	}
-	/* To get correct interrupt status in timeout case */
-	stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
-	s3c_write_reg(stat, INT_ERR_ACK_OFFSET);
+	समयout = jअगरfies + msecs_to_jअगरfies(20);
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		stat = s3c_पढ़ो_reg(INT_ERR_STAT_OFFSET);
+		अगर (stat & flags)
+			अवरोध;
+	पूर्ण
+	/* To get correct पूर्णांकerrupt status in समयout हाल */
+	stat = s3c_पढ़ो_reg(INT_ERR_STAT_OFFSET);
+	s3c_ग_लिखो_reg(stat, INT_ERR_ACK_OFFSET);
 
-	if (stat & LD_FAIL_ECC_ERR) {
+	अगर (stat & LD_FAIL_ECC_ERR) अणु
 		s3c_onenand_reset();
-		return ONENAND_BBT_READ_ERROR;
-	}
+		वापस ONEन_अंकD_BBT_READ_ERROR;
+	पूर्ण
 
-	if (stat & LOAD_CMP) {
-		int ecc = s3c_read_reg(ECC_ERR_STAT_OFFSET);
-		if (ecc & ONENAND_ECC_4BIT_UNCORRECTABLE) {
+	अगर (stat & LOAD_CMP) अणु
+		पूर्णांक ecc = s3c_पढ़ो_reg(ECC_ERR_STAT_OFFSET);
+		अगर (ecc & ONEन_अंकD_ECC_4BIT_UNCORRECTABLE) अणु
 			s3c_onenand_reset();
-			return ONENAND_BBT_READ_ERROR;
-		}
-	}
+			वापस ONEन_अंकD_BBT_READ_ERROR;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void s3c_onenand_check_lock_status(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
-	struct device *dev = &onenand->pdev->dev;
-	unsigned int block, end;
+अटल व्योम s3c_onenand_check_lock_status(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	काष्ठा device *dev = &onenand->pdev->dev;
+	अचिन्हित पूर्णांक block, end;
 
-	end = this->chipsize >> this->erase_shift;
+	end = this->chipsize >> this->erase_shअगरt;
 
-	for (block = 0; block < end; block++) {
-		unsigned int mem_addr = onenand->mem_addr(block, 0, 0);
-		s3c_read_cmd(CMD_MAP_01(onenand, mem_addr));
+	क्रम (block = 0; block < end; block++) अणु
+		अचिन्हित पूर्णांक mem_addr = onenand->mem_addr(block, 0, 0);
+		s3c_पढ़ो_cmd(CMD_MAP_01(onenand, mem_addr));
 
-		if (s3c_read_reg(INT_ERR_STAT_OFFSET) & LOCKED_BLK) {
+		अगर (s3c_पढ़ो_reg(INT_ERR_STAT_OFFSET) & LOCKED_BLK) अणु
 			dev_err(dev, "block %d is write-protected!\n", block);
-			s3c_write_reg(LOCKED_BLK, INT_ERR_ACK_OFFSET);
-		}
-	}
-}
+			s3c_ग_लिखो_reg(LOCKED_BLK, INT_ERR_ACK_OFFSET);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void s3c_onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs,
-				    size_t len, int cmd)
-{
-	struct onenand_chip *this = mtd->priv;
-	int start, end, start_mem_addr, end_mem_addr;
+अटल व्योम s3c_onenand_करो_lock_cmd(काष्ठा mtd_info *mtd, loff_t ofs,
+				    माप_प्रकार len, पूर्णांक cmd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
+	पूर्णांक start, end, start_mem_addr, end_mem_addr;
 
-	start = ofs >> this->erase_shift;
+	start = ofs >> this->erase_shअगरt;
 	start_mem_addr = onenand->mem_addr(start, 0, 0);
-	end = start + (len >> this->erase_shift) - 1;
+	end = start + (len >> this->erase_shअगरt) - 1;
 	end_mem_addr = onenand->mem_addr(end, 0, 0);
 
-	if (cmd == ONENAND_CMD_LOCK) {
-		s3c_write_cmd(ONENAND_LOCK_START, CMD_MAP_10(onenand,
+	अगर (cmd == ONEन_अंकD_CMD_LOCK) अणु
+		s3c_ग_लिखो_cmd(ONEन_अंकD_LOCK_START, CMD_MAP_10(onenand,
 							     start_mem_addr));
-		s3c_write_cmd(ONENAND_LOCK_END, CMD_MAP_10(onenand,
+		s3c_ग_लिखो_cmd(ONEन_अंकD_LOCK_END, CMD_MAP_10(onenand,
 							   end_mem_addr));
-	} else {
-		s3c_write_cmd(ONENAND_UNLOCK_START, CMD_MAP_10(onenand,
+	पूर्ण अन्यथा अणु
+		s3c_ग_लिखो_cmd(ONEन_अंकD_UNLOCK_START, CMD_MAP_10(onenand,
 							       start_mem_addr));
-		s3c_write_cmd(ONENAND_UNLOCK_END, CMD_MAP_10(onenand,
+		s3c_ग_लिखो_cmd(ONEन_अंकD_UNLOCK_END, CMD_MAP_10(onenand,
 							     end_mem_addr));
-	}
+	पूर्ण
 
-	this->wait(mtd, FL_LOCKING);
-}
+	this->रुको(mtd, FL_LOCKING);
+पूर्ण
 
-static void s3c_unlock_all(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल व्योम s3c_unlock_all(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 	loff_t ofs = 0;
-	size_t len = this->chipsize;
+	माप_प्रकार len = this->chipsize;
 
-	if (this->options & ONENAND_HAS_UNLOCK_ALL) {
+	अगर (this->options & ONEन_अंकD_HAS_UNLOCK_ALL) अणु
 		/* Write unlock command */
-		this->command(mtd, ONENAND_CMD_UNLOCK_ALL, 0, 0);
+		this->command(mtd, ONEन_अंकD_CMD_UNLOCK_ALL, 0, 0);
 
-		/* No need to check return value */
-		this->wait(mtd, FL_LOCKING);
+		/* No need to check वापस value */
+		this->रुको(mtd, FL_LOCKING);
 
-		/* Workaround for all block unlock in DDP */
-		if (!ONENAND_IS_DDP(this)) {
+		/* Workaround क्रम all block unlock in DDP */
+		अगर (!ONEन_अंकD_IS_DDP(this)) अणु
 			s3c_onenand_check_lock_status(mtd);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/* All blocks on another chip */
 		ofs = this->chipsize >> 1;
 		len = this->chipsize >> 1;
-	}
+	पूर्ण
 
-	s3c_onenand_do_lock_cmd(mtd, ofs, len, ONENAND_CMD_UNLOCK);
+	s3c_onenand_करो_lock_cmd(mtd, ofs, len, ONEन_अंकD_CMD_UNLOCK);
 
 	s3c_onenand_check_lock_status(mtd);
-}
+पूर्ण
 
-static void s3c_onenand_setup(struct mtd_info *mtd)
-{
-	struct onenand_chip *this = mtd->priv;
+अटल व्योम s3c_onenand_setup(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा onenand_chip *this = mtd->priv;
 
 	onenand->mtd = mtd;
 
-	if (onenand->type == TYPE_S3C6400) {
+	अगर (onenand->type == TYPE_S3C6400) अणु
 		onenand->mem_addr = s3c6400_mem_addr;
 		onenand->cmd_map = s3c64xx_cmd_map;
-	} else if (onenand->type == TYPE_S3C6410) {
+	पूर्ण अन्यथा अगर (onenand->type == TYPE_S3C6410) अणु
 		onenand->mem_addr = s3c6410_mem_addr;
 		onenand->cmd_map = s3c64xx_cmd_map;
-	} else if (onenand->type == TYPE_S5PC110) {
+	पूर्ण अन्यथा अगर (onenand->type == TYPE_S5PC110) अणु
 		/* Use generic onenand functions */
-		this->read_bufferram = s5pc110_read_bufferram;
+		this->पढ़ो_bufferram = s5pc110_पढ़ो_bufferram;
 		this->chip_probe = s5pc110_chip_probe;
-		return;
-	} else {
+		वापस;
+	पूर्ण अन्यथा अणु
 		BUG();
-	}
+	पूर्ण
 
-	this->read_word = s3c_onenand_readw;
-	this->write_word = s3c_onenand_writew;
+	this->पढ़ो_word = s3c_onenand_पढ़ोw;
+	this->ग_लिखो_word = s3c_onenand_ग_लिखोw;
 
-	this->wait = s3c_onenand_wait;
-	this->bbt_wait = s3c_onenand_bbt_wait;
+	this->रुको = s3c_onenand_रुको;
+	this->bbt_रुको = s3c_onenand_bbt_रुको;
 	this->unlock_all = s3c_unlock_all;
 	this->command = s3c_onenand_command;
 
-	this->read_bufferram = onenand_read_bufferram;
-	this->write_bufferram = onenand_write_bufferram;
-}
+	this->पढ़ो_bufferram = onenand_पढ़ो_bufferram;
+	this->ग_लिखो_bufferram = onenand_ग_लिखो_bufferram;
+पूर्ण
 
-static int s3c_onenand_probe(struct platform_device *pdev)
-{
-	struct onenand_platform_data *pdata;
-	struct onenand_chip *this;
-	struct mtd_info *mtd;
-	struct resource *r;
-	int size, err;
+अटल पूर्णांक s3c_onenand_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा onenand_platक्रमm_data *pdata;
+	काष्ठा onenand_chip *this;
+	काष्ठा mtd_info *mtd;
+	काष्ठा resource *r;
+	पूर्णांक size, err;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	/* No need to check pdata. the platform data is optional */
+	/* No need to check pdata. the platक्रमm data is optional */
 
-	size = sizeof(struct mtd_info) + sizeof(struct onenand_chip);
+	size = माप(काष्ठा mtd_info) + माप(काष्ठा onenand_chip);
 	mtd = devm_kzalloc(&pdev->dev, size, GFP_KERNEL);
-	if (!mtd)
-		return -ENOMEM;
+	अगर (!mtd)
+		वापस -ENOMEM;
 
-	onenand = devm_kzalloc(&pdev->dev, sizeof(struct s3c_onenand),
+	onenand = devm_kzalloc(&pdev->dev, माप(काष्ठा s3c_onenand),
 			       GFP_KERNEL);
-	if (!onenand)
-		return -ENOMEM;
+	अगर (!onenand)
+		वापस -ENOMEM;
 
-	this = (struct onenand_chip *) &mtd[1];
+	this = (काष्ठा onenand_chip *) &mtd[1];
 	mtd->priv = this;
 	mtd->dev.parent = &pdev->dev;
 	onenand->pdev = pdev;
-	onenand->type = platform_get_device_id(pdev)->driver_data;
+	onenand->type = platक्रमm_get_device_id(pdev)->driver_data;
 
 	s3c_onenand_setup(mtd);
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	onenand->base = devm_ioremap_resource(&pdev->dev, r);
-	if (IS_ERR(onenand->base))
-		return PTR_ERR(onenand->base);
+	अगर (IS_ERR(onenand->base))
+		वापस PTR_ERR(onenand->base);
 
 	onenand->phys_base = r->start;
 
 	/* Set onenand_chip also */
 	this->base = onenand->base;
 
-	/* Use runtime badblock check */
-	this->options |= ONENAND_SKIP_UNLOCK_CHECK;
+	/* Use runसमय badblock check */
+	this->options |= ONEन_अंकD_SKIP_UNLOCK_CHECK;
 
-	if (onenand->type != TYPE_S5PC110) {
-		r = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	अगर (onenand->type != TYPE_S5PC110) अणु
+		r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 		onenand->ahb_addr = devm_ioremap_resource(&pdev->dev, r);
-		if (IS_ERR(onenand->ahb_addr))
-			return PTR_ERR(onenand->ahb_addr);
+		अगर (IS_ERR(onenand->ahb_addr))
+			वापस PTR_ERR(onenand->ahb_addr);
 
 		/* Allocate 4KiB BufferRAM */
 		onenand->page_buf = devm_kzalloc(&pdev->dev, SZ_4K,
 						 GFP_KERNEL);
-		if (!onenand->page_buf)
-			return -ENOMEM;
+		अगर (!onenand->page_buf)
+			वापस -ENOMEM;
 
 		/* Allocate 128 SpareRAM */
 		onenand->oob_buf = devm_kzalloc(&pdev->dev, 128, GFP_KERNEL);
-		if (!onenand->oob_buf)
-			return -ENOMEM;
+		अगर (!onenand->oob_buf)
+			वापस -ENOMEM;
 
-		/* S3C doesn't handle subpage write */
+		/* S3C करोesn't handle subpage ग_लिखो */
 		mtd->subpage_sft = 0;
-		this->subpagesize = mtd->writesize;
+		this->subpagesize = mtd->ग_लिखोsize;
 
-	} else { /* S5PC110 */
-		r = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	पूर्ण अन्यथा अणु /* S5PC110 */
+		r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 		onenand->dma_addr = devm_ioremap_resource(&pdev->dev, r);
-		if (IS_ERR(onenand->dma_addr))
-			return PTR_ERR(onenand->dma_addr);
+		अगर (IS_ERR(onenand->dma_addr))
+			वापस PTR_ERR(onenand->dma_addr);
 
 		s5pc110_dma_ops = s5pc110_dma_poll;
 		/* Interrupt support */
-		r = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-		if (r) {
+		r = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+		अगर (r) अणु
 			init_completion(&onenand->complete);
 			s5pc110_dma_ops = s5pc110_dma_irq;
 			err = devm_request_irq(&pdev->dev, r->start,
 					       s5pc110_onenand_irq,
 					       IRQF_SHARED, "onenand",
 					       &onenand);
-			if (err) {
+			अगर (err) अणु
 				dev_err(&pdev->dev, "failed to get irq\n");
-				return err;
-			}
-		}
-	}
+				वापस err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	err = onenand_scan(mtd, 1);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (onenand->type != TYPE_S5PC110) {
-		/* S3C doesn't handle subpage write */
+	अगर (onenand->type != TYPE_S5PC110) अणु
+		/* S3C करोesn't handle subpage ग_लिखो */
 		mtd->subpage_sft = 0;
-		this->subpagesize = mtd->writesize;
-	}
+		this->subpagesize = mtd->ग_लिखोsize;
+	पूर्ण
 
-	if (s3c_read_reg(MEM_CFG_OFFSET) & ONENAND_SYS_CFG1_SYNC_READ)
+	अगर (s3c_पढ़ो_reg(MEM_CFG_OFFSET) & ONEन_अंकD_SYS_CFG1_SYNC_READ)
 		dev_info(&onenand->pdev->dev, "OneNAND Sync. Burst Read enabled\n");
 
-	err = mtd_device_register(mtd, pdata ? pdata->parts : NULL,
+	err = mtd_device_रेजिस्टर(mtd, pdata ? pdata->parts : शून्य,
 				  pdata ? pdata->nr_parts : 0);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "failed to parse partitions and register the MTD device\n");
 		onenand_release(mtd);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, mtd);
+	platक्रमm_set_drvdata(pdev, mtd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3c_onenand_remove(struct platform_device *pdev)
-{
-	struct mtd_info *mtd = platform_get_drvdata(pdev);
+अटल पूर्णांक s3c_onenand_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mtd_info *mtd = platक्रमm_get_drvdata(pdev);
 
 	onenand_release(mtd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3c_pm_ops_suspend(struct device *dev)
-{
-	struct mtd_info *mtd = dev_get_drvdata(dev);
-	struct onenand_chip *this = mtd->priv;
+अटल पूर्णांक s3c_pm_ops_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mtd_info *mtd = dev_get_drvdata(dev);
+	काष्ठा onenand_chip *this = mtd->priv;
 
-	this->wait(mtd, FL_PM_SUSPENDED);
-	return 0;
-}
+	this->रुको(mtd, FL_PM_SUSPENDED);
+	वापस 0;
+पूर्ण
 
-static  int s3c_pm_ops_resume(struct device *dev)
-{
-	struct mtd_info *mtd = dev_get_drvdata(dev);
-	struct onenand_chip *this = mtd->priv;
+अटल  पूर्णांक s3c_pm_ops_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mtd_info *mtd = dev_get_drvdata(dev);
+	काष्ठा onenand_chip *this = mtd->priv;
 
 	this->unlock_all(mtd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops s3c_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops s3c_pm_ops = अणु
 	.suspend	= s3c_pm_ops_suspend,
 	.resume		= s3c_pm_ops_resume,
-};
+पूर्ण;
 
-static const struct platform_device_id s3c_onenand_driver_ids[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id s3c_onenand_driver_ids[] = अणु
+	अणु
 		.name		= "s3c6400-onenand",
 		.driver_data	= TYPE_S3C6400,
-	}, {
+	पूर्ण, अणु
 		.name		= "s3c6410-onenand",
 		.driver_data	= TYPE_S3C6410,
-	}, {
+	पूर्ण, अणु
 		.name		= "s5pc110-onenand",
 		.driver_data	= TYPE_S5PC110,
-	}, { },
-};
-MODULE_DEVICE_TABLE(platform, s3c_onenand_driver_ids);
+	पूर्ण, अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, s3c_onenand_driver_ids);
 
-static struct platform_driver s3c_onenand_driver = {
-	.driver         = {
+अटल काष्ठा platक्रमm_driver s3c_onenand_driver = अणु
+	.driver         = अणु
 		.name	= "samsung-onenand",
 		.pm	= &s3c_pm_ops,
-	},
+	पूर्ण,
 	.id_table	= s3c_onenand_driver_ids,
 	.probe          = s3c_onenand_probe,
-	.remove         = s3c_onenand_remove,
-};
+	.हटाओ         = s3c_onenand_हटाओ,
+पूर्ण;
 
-module_platform_driver(s3c_onenand_driver);
+module_platक्रमm_driver(s3c_onenand_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Kyungmin Park <kyungmin.park@samsung.com>");

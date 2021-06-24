@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_UNALIGNED_BE_BYTESHIFT_H
-#define _LINUX_UNALIGNED_BE_BYTESHIFT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_UNALIGNED_BE_BYTESHIFT_H
+#घोषणा _LINUX_UNALIGNED_BE_BYTESHIFT_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-static inline u16 __get_unaligned_be16(const u8 *p)
-{
-	return p[0] << 8 | p[1];
-}
+अटल अंतरभूत u16 __get_unaligned_be16(स्थिर u8 *p)
+अणु
+	वापस p[0] << 8 | p[1];
+पूर्ण
 
-static inline u32 __get_unaligned_be32(const u8 *p)
-{
-	return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
-}
+अटल अंतरभूत u32 __get_unaligned_be32(स्थिर u8 *p)
+अणु
+	वापस p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
+पूर्ण
 
-static inline u64 __get_unaligned_be64(const u8 *p)
-{
-	return (u64)__get_unaligned_be32(p) << 32 |
+अटल अंतरभूत u64 __get_unaligned_be64(स्थिर u8 *p)
+अणु
+	वापस (u64)__get_unaligned_be32(p) << 32 |
 	       __get_unaligned_be32(p + 4);
-}
+पूर्ण
 
-static inline void __put_unaligned_be16(u16 val, u8 *p)
-{
+अटल अंतरभूत व्योम __put_unaligned_be16(u16 val, u8 *p)
+अणु
 	*p++ = val >> 8;
 	*p++ = val;
-}
+पूर्ण
 
-static inline void __put_unaligned_be32(u32 val, u8 *p)
-{
+अटल अंतरभूत व्योम __put_unaligned_be32(u32 val, u8 *p)
+अणु
 	__put_unaligned_be16(val >> 16, p);
 	__put_unaligned_be16(val, p + 2);
-}
+पूर्ण
 
-static inline void __put_unaligned_be64(u64 val, u8 *p)
-{
+अटल अंतरभूत व्योम __put_unaligned_be64(u64 val, u8 *p)
+अणु
 	__put_unaligned_be32(val >> 32, p);
 	__put_unaligned_be32(val, p + 4);
-}
+पूर्ण
 
-static inline u16 get_unaligned_be16(const void *p)
-{
-	return __get_unaligned_be16(p);
-}
+अटल अंतरभूत u16 get_unaligned_be16(स्थिर व्योम *p)
+अणु
+	वापस __get_unaligned_be16(p);
+पूर्ण
 
-static inline u32 get_unaligned_be32(const void *p)
-{
-	return __get_unaligned_be32(p);
-}
+अटल अंतरभूत u32 get_unaligned_be32(स्थिर व्योम *p)
+अणु
+	वापस __get_unaligned_be32(p);
+पूर्ण
 
-static inline u64 get_unaligned_be64(const void *p)
-{
-	return __get_unaligned_be64(p);
-}
+अटल अंतरभूत u64 get_unaligned_be64(स्थिर व्योम *p)
+अणु
+	वापस __get_unaligned_be64(p);
+पूर्ण
 
-static inline void put_unaligned_be16(u16 val, void *p)
-{
+अटल अंतरभूत व्योम put_unaligned_be16(u16 val, व्योम *p)
+अणु
 	__put_unaligned_be16(val, p);
-}
+पूर्ण
 
-static inline void put_unaligned_be32(u32 val, void *p)
-{
+अटल अंतरभूत व्योम put_unaligned_be32(u32 val, व्योम *p)
+अणु
 	__put_unaligned_be32(val, p);
-}
+पूर्ण
 
-static inline void put_unaligned_be64(u64 val, void *p)
-{
+अटल अंतरभूत व्योम put_unaligned_be64(u64 val, व्योम *p)
+अणु
 	__put_unaligned_be64(val, p);
-}
+पूर्ण
 
-#endif /* _LINUX_UNALIGNED_BE_BYTESHIFT_H */
+#पूर्ण_अगर /* _LINUX_UNALIGNED_BE_BYTESHIFT_H */

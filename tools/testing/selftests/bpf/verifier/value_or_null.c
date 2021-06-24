@@ -1,6 +1,7 @@
-{
+<शैली गुरु>
+अणु
 	"multiple registers share map_lookup_elem result",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_1, 10),
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_1, -8),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -11,14 +12,14 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 1),
 	BPF_ST_MEM(BPF_DW, BPF_REG_4, 0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 4 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 4 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS
-},
-{
+पूर्ण,
+अणु
 	"alu ops on ptr_to_map_value_or_null, 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_1, 10),
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_1, -8),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -31,15 +32,15 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 1),
 	BPF_ST_MEM(BPF_DW, BPF_REG_4, 0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 4 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 4 पूर्ण,
 	.errstr = "R4 pointer arithmetic on map_value_or_null",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS
-},
-{
+पूर्ण,
+अणु
 	"alu ops on ptr_to_map_value_or_null, 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_1, 10),
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_1, -8),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -51,15 +52,15 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 1),
 	BPF_ST_MEM(BPF_DW, BPF_REG_4, 0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 4 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 4 पूर्ण,
 	.errstr = "R4 pointer arithmetic on map_value_or_null",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS
-},
-{
+पूर्ण,
+अणु
 	"alu ops on ptr_to_map_value_or_null, 3",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_1, 10),
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_1, -8),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -71,15 +72,15 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 1),
 	BPF_ST_MEM(BPF_DW, BPF_REG_4, 0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 4 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 4 पूर्ण,
 	.errstr = "R4 pointer arithmetic on map_value_or_null",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS
-},
-{
+पूर्ण,
+अणु
 	"invalid memory access with multiple map_lookup_elem calls",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_1, 10),
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_1, -8),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -95,15 +96,15 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 1),
 	BPF_ST_MEM(BPF_DW, BPF_REG_4, 0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 4 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 4 पूर्ण,
 	.result = REJECT,
 	.errstr = "R4 !read_ok",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS
-},
-{
+पूर्ण,
+अणु
 	"valid indirect map_lookup_elem access with 2nd lookup in branch",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_1, 10),
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_1, -8),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -121,14 +122,14 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 1),
 	BPF_ST_MEM(BPF_DW, BPF_REG_4, 0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 4 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 4 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS
-},
-{
+पूर्ण,
+अणु
 	"invalid map access from else condition",
-	.insns = {
+	.insns = अणु
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -140,19 +141,19 @@
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 1),
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_1, 2),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
-	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, offsetof(struct test_val, foo)),
+	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, दुरत्व(काष्ठा test_val, foo)),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R0 unbounded memory access",
 	.result = REJECT,
 	.errstr_unpriv = "R0 leaks addr",
 	.result_unpriv = REJECT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-},
-{
+पूर्ण,
+अणु
 	"map lookup and null branch prediction",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_1, 10),
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_1, -8),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -164,8 +165,8 @@
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_6, 0, 1),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_10, 10),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 4 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 4 पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
-},
+पूर्ण,

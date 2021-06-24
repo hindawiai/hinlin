@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * vimc-core.c Virtual Media Controller Driver
  *
- * Copyright (C) 2015-2017 Helen Koike <helen.fornazier@gmail.com>
+ * Copyright (C) 2015-2017 Helen Koike <helen.क्रमnazier@gmail.com>
  */
 
-#include <linux/font.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <media/media-device.h>
-#include <media/tpg/v4l2-tpg.h>
-#include <media/v4l2-device.h>
+#समावेश <linux/font.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <media/media-device.h>
+#समावेश <media/tpg/v4l2-tpg.h>
+#समावेश <media/v4l2-device.h>
 
-#include "vimc-common.h"
+#समावेश "vimc-common.h"
 
-#define VIMC_MDEV_MODEL_NAME "VIMC MDEV"
+#घोषणा VIMC_MDEV_MODEL_NAME "VIMC MDEV"
 
-#define VIMC_ENT_LINK(src, srcpad, sink, sinkpad, link_flags) {	\
+#घोषणा VIMC_ENT_LINK(src, srcpad, sink, sinkpad, link_flags) अणु	\
 	.src_ent = src,						\
 	.src_pad = srcpad,					\
 	.sink_ent = sink,					\
 	.sink_pad = sinkpad,					\
 	.flags = link_flags,					\
-}
+पूर्ण
 
 /* Structure which describes links between entities */
-struct vimc_ent_link {
-	unsigned int src_ent;
+काष्ठा vimc_ent_link अणु
+	अचिन्हित पूर्णांक src_ent;
 	u16 src_pad;
-	unsigned int sink_ent;
+	अचिन्हित पूर्णांक sink_ent;
 	u16 sink_pad;
 	u32 flags;
-};
+पूर्ण;
 
 /* Structure which describes the whole topology */
-struct vimc_pipeline_config {
-	const struct vimc_ent_config *ents;
-	size_t num_ents;
-	const struct vimc_ent_link *links;
-	size_t num_links;
-};
+काष्ठा vimc_pipeline_config अणु
+	स्थिर काष्ठा vimc_ent_config *ents;
+	माप_प्रकार num_ents;
+	स्थिर काष्ठा vimc_ent_link *links;
+	माप_प्रकार num_links;
+पूर्ण;
 
 /* --------------------------------------------------------------------------
  * Topology Configuration
  */
 
-static struct vimc_ent_config ent_config[] = {
-	{
+अटल काष्ठा vimc_ent_config ent_config[] = अणु
+	अणु
 		.name = "Sensor A",
 		.type = &vimc_sen_type
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "Sensor B",
 		.type = &vimc_sen_type
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "Debayer A",
 		.type = &vimc_deb_type
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "Debayer B",
 		.type = &vimc_deb_type
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "Raw Capture 0",
 		.type = &vimc_cap_type
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "Raw Capture 1",
 		.type = &vimc_cap_type
-	},
-	{
+	पूर्ण,
+	अणु
 		/* TODO: change this to vimc-input when it is implemented */
 		.name = "RGB/YUV Input",
 		.type = &vimc_sen_type
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "Scaler",
 		.type = &vimc_sca_type
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "RGB/YUV Capture",
 		.type = &vimc_cap_type
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct vimc_ent_link ent_links[] = {
+अटल स्थिर काष्ठा vimc_ent_link ent_links[] = अणु
 	/* Link: Sensor A (Pad 0)->(Pad 0) Debayer A */
 	VIMC_ENT_LINK(0, 0, 2, 0, MEDIA_LNK_FL_ENABLED | MEDIA_LNK_FL_IMMUTABLE),
 	/* Link: Sensor A (Pad 0)->(Pad 0) Raw Capture 0 */
@@ -103,184 +104,184 @@ static const struct vimc_ent_link ent_links[] = {
 	VIMC_ENT_LINK(6, 0, 7, 0, 0),
 	/* Link: Scaler (Pad 1)->(Pad 0) RGB/YUV Capture */
 	VIMC_ENT_LINK(7, 1, 8, 0, MEDIA_LNK_FL_ENABLED | MEDIA_LNK_FL_IMMUTABLE),
-};
+पूर्ण;
 
-static struct vimc_pipeline_config pipe_cfg = {
+अटल काष्ठा vimc_pipeline_config pipe_cfg = अणु
 	.ents		= ent_config,
 	.num_ents	= ARRAY_SIZE(ent_config),
 	.links		= ent_links,
 	.num_links	= ARRAY_SIZE(ent_links)
-};
+पूर्ण;
 
 /* -------------------------------------------------------------------------- */
 
-static void vimc_rm_links(struct vimc_device *vimc)
-{
-	unsigned int i;
+अटल व्योम vimc_rm_links(काष्ठा vimc_device *vimc)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < vimc->pipe_cfg->num_ents; i++)
-		media_entity_remove_links(vimc->ent_devs[i]->ent);
-}
+	क्रम (i = 0; i < vimc->pipe_cfg->num_ents; i++)
+		media_entity_हटाओ_links(vimc->ent_devs[i]->ent);
+पूर्ण
 
-static int vimc_create_links(struct vimc_device *vimc)
-{
-	unsigned int i;
-	int ret;
+अटल पूर्णांक vimc_create_links(काष्ठा vimc_device *vimc)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	/* Initialize the links between entities */
-	for (i = 0; i < vimc->pipe_cfg->num_links; i++) {
-		const struct vimc_ent_link *link = &vimc->pipe_cfg->links[i];
+	क्रम (i = 0; i < vimc->pipe_cfg->num_links; i++) अणु
+		स्थिर काष्ठा vimc_ent_link *link = &vimc->pipe_cfg->links[i];
 
-		struct vimc_ent_device *ved_src =
+		काष्ठा vimc_ent_device *ved_src =
 			vimc->ent_devs[link->src_ent];
-		struct vimc_ent_device *ved_sink =
+		काष्ठा vimc_ent_device *ved_sink =
 			vimc->ent_devs[link->sink_ent];
 
 		ret = media_create_pad_link(ved_src->ent, link->src_pad,
 					    ved_sink->ent, link->sink_pad,
 					    link->flags);
-		if (ret)
-			goto err_rm_links;
-	}
+		अगर (ret)
+			जाओ err_rm_links;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_rm_links:
 	vimc_rm_links(vimc);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vimc_release_subdevs(struct vimc_device *vimc)
-{
-	unsigned int i;
+अटल व्योम vimc_release_subdevs(काष्ठा vimc_device *vimc)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < vimc->pipe_cfg->num_ents; i++)
-		if (vimc->ent_devs[i])
+	क्रम (i = 0; i < vimc->pipe_cfg->num_ents; i++)
+		अगर (vimc->ent_devs[i])
 			vimc->pipe_cfg->ents[i].type->release(vimc->ent_devs[i]);
-}
+पूर्ण
 
-static void vimc_unregister_subdevs(struct vimc_device *vimc)
-{
-	unsigned int i;
+अटल व्योम vimc_unरेजिस्टर_subdevs(काष्ठा vimc_device *vimc)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < vimc->pipe_cfg->num_ents; i++)
-		if (vimc->ent_devs[i] && vimc->pipe_cfg->ents[i].type->unregister)
-			vimc->pipe_cfg->ents[i].type->unregister(vimc->ent_devs[i]);
-}
+	क्रम (i = 0; i < vimc->pipe_cfg->num_ents; i++)
+		अगर (vimc->ent_devs[i] && vimc->pipe_cfg->ents[i].type->unरेजिस्टर)
+			vimc->pipe_cfg->ents[i].type->unरेजिस्टर(vimc->ent_devs[i]);
+पूर्ण
 
-static int vimc_add_subdevs(struct vimc_device *vimc)
-{
-	unsigned int i;
+अटल पूर्णांक vimc_add_subdevs(काष्ठा vimc_device *vimc)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < vimc->pipe_cfg->num_ents; i++) {
+	क्रम (i = 0; i < vimc->pipe_cfg->num_ents; i++) अणु
 		dev_dbg(vimc->mdev.dev, "new entity for %s\n",
 			vimc->pipe_cfg->ents[i].name);
 		vimc->ent_devs[i] = vimc->pipe_cfg->ents[i].type->add(vimc,
 					vimc->pipe_cfg->ents[i].name);
-		if (IS_ERR(vimc->ent_devs[i])) {
-			int err = PTR_ERR(vimc->ent_devs[i]);
+		अगर (IS_ERR(vimc->ent_devs[i])) अणु
+			पूर्णांक err = PTR_ERR(vimc->ent_devs[i]);
 
 			dev_err(vimc->mdev.dev, "adding entity %s failed (%d)\n",
 				vimc->pipe_cfg->ents[i].name, err);
-			vimc->ent_devs[i] = NULL;
-			vimc_unregister_subdevs(vimc);
+			vimc->ent_devs[i] = शून्य;
+			vimc_unरेजिस्टर_subdevs(vimc);
 			vimc_release_subdevs(vimc);
-			return err;
-		}
-	}
-	return 0;
-}
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void vimc_v4l2_dev_release(struct v4l2_device *v4l2_dev)
-{
-	struct vimc_device *vimc =
-		container_of(v4l2_dev, struct vimc_device, v4l2_dev);
+अटल व्योम vimc_v4l2_dev_release(काष्ठा v4l2_device *v4l2_dev)
+अणु
+	काष्ठा vimc_device *vimc =
+		container_of(v4l2_dev, काष्ठा vimc_device, v4l2_dev);
 
 	vimc_release_subdevs(vimc);
 	media_device_cleanup(&vimc->mdev);
-	kfree(vimc->ent_devs);
-	kfree(vimc);
-}
+	kमुक्त(vimc->ent_devs);
+	kमुक्त(vimc);
+पूर्ण
 
-static int vimc_register_devices(struct vimc_device *vimc)
-{
-	int ret;
+अटल पूर्णांक vimc_रेजिस्टर_devices(काष्ठा vimc_device *vimc)
+अणु
+	पूर्णांक ret;
 
-	/* Register the v4l2 struct */
-	ret = v4l2_device_register(vimc->mdev.dev, &vimc->v4l2_dev);
-	if (ret) {
+	/* Register the v4l2 काष्ठा */
+	ret = v4l2_device_रेजिस्टर(vimc->mdev.dev, &vimc->v4l2_dev);
+	अगर (ret) अणु
 		dev_err(vimc->mdev.dev,
 			"v4l2 device register failed (err=%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	/* allocate ent_devs */
-	vimc->ent_devs = kcalloc(vimc->pipe_cfg->num_ents,
-				 sizeof(*vimc->ent_devs), GFP_KERNEL);
-	if (!vimc->ent_devs) {
+	vimc->ent_devs = kसुस्मृति(vimc->pipe_cfg->num_ents,
+				 माप(*vimc->ent_devs), GFP_KERNEL);
+	अगर (!vimc->ent_devs) अणु
 		ret = -ENOMEM;
-		goto err_v4l2_unregister;
-	}
+		जाओ err_v4l2_unरेजिस्टर;
+	पूर्ण
 
-	/* Invoke entity config hooks to initialize and register subdevs */
+	/* Invoke entity config hooks to initialize and रेजिस्टर subdevs */
 	ret = vimc_add_subdevs(vimc);
-	if (ret)
-		goto err_free_ent_devs;
+	अगर (ret)
+		जाओ err_मुक्त_ent_devs;
 
 	/* Initialize links */
 	ret = vimc_create_links(vimc);
-	if (ret)
-		goto err_rm_subdevs;
+	अगर (ret)
+		जाओ err_rm_subdevs;
 
 	/* Register the media device */
-	ret = media_device_register(&vimc->mdev);
-	if (ret) {
+	ret = media_device_रेजिस्टर(&vimc->mdev);
+	अगर (ret) अणु
 		dev_err(vimc->mdev.dev,
 			"media device register failed (err=%d)\n", ret);
-		goto err_rm_subdevs;
-	}
+		जाओ err_rm_subdevs;
+	पूर्ण
 
 	/* Expose all subdev's nodes*/
-	ret = v4l2_device_register_subdev_nodes(&vimc->v4l2_dev);
-	if (ret) {
+	ret = v4l2_device_रेजिस्टर_subdev_nodes(&vimc->v4l2_dev);
+	अगर (ret) अणु
 		dev_err(vimc->mdev.dev,
 			"vimc subdev nodes registration failed (err=%d)\n",
 			ret);
-		goto err_mdev_unregister;
-	}
+		जाओ err_mdev_unरेजिस्टर;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_mdev_unregister:
-	media_device_unregister(&vimc->mdev);
+err_mdev_unरेजिस्टर:
+	media_device_unरेजिस्टर(&vimc->mdev);
 err_rm_subdevs:
-	vimc_unregister_subdevs(vimc);
+	vimc_unरेजिस्टर_subdevs(vimc);
 	vimc_release_subdevs(vimc);
-err_free_ent_devs:
-	kfree(vimc->ent_devs);
-err_v4l2_unregister:
-	v4l2_device_unregister(&vimc->v4l2_dev);
+err_मुक्त_ent_devs:
+	kमुक्त(vimc->ent_devs);
+err_v4l2_unरेजिस्टर:
+	v4l2_device_unरेजिस्टर(&vimc->v4l2_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vimc_probe(struct platform_device *pdev)
-{
-	const struct font_desc *font = find_font("VGA8x16");
-	struct vimc_device *vimc;
-	int ret;
+अटल पूर्णांक vimc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा font_desc *font = find_font("VGA8x16");
+	काष्ठा vimc_device *vimc;
+	पूर्णांक ret;
 
 	dev_dbg(&pdev->dev, "probe");
 
-	if (!font) {
+	अगर (!font) अणु
 		dev_err(&pdev->dev, "could not find font\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	tpg_set_font(font->data);
 
-	vimc = kzalloc(sizeof(*vimc), GFP_KERNEL);
-	if (!vimc)
-		return -ENOMEM;
+	vimc = kzalloc(माप(*vimc), GFP_KERNEL);
+	अगर (!vimc)
+		वापस -ENOMEM;
 
 	vimc->pipe_cfg = &pipe_cfg;
 
@@ -289,90 +290,90 @@ static int vimc_probe(struct platform_device *pdev)
 
 	/* Initialize media device */
 	strscpy(vimc->mdev.model, VIMC_MDEV_MODEL_NAME,
-		sizeof(vimc->mdev.model));
-	snprintf(vimc->mdev.bus_info, sizeof(vimc->mdev.bus_info),
+		माप(vimc->mdev.model));
+	snम_लिखो(vimc->mdev.bus_info, माप(vimc->mdev.bus_info),
 		 "platform:%s", VIMC_PDEV_NAME);
 	vimc->mdev.dev = &pdev->dev;
 	media_device_init(&vimc->mdev);
 
-	ret = vimc_register_devices(vimc);
-	if (ret) {
+	ret = vimc_रेजिस्टर_devices(vimc);
+	अगर (ret) अणु
 		media_device_cleanup(&vimc->mdev);
-		kfree(vimc);
-		return ret;
-	}
+		kमुक्त(vimc);
+		वापस ret;
+	पूर्ण
 	/*
 	 * the release cb is set only after successful registration.
-	 * if the registration fails, we release directly from probe
+	 * अगर the registration fails, we release directly from probe
 	 */
 
 	vimc->v4l2_dev.release = vimc_v4l2_dev_release;
-	platform_set_drvdata(pdev, vimc);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, vimc);
+	वापस 0;
+पूर्ण
 
-static int vimc_remove(struct platform_device *pdev)
-{
-	struct vimc_device *vimc = platform_get_drvdata(pdev);
+अटल पूर्णांक vimc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vimc_device *vimc = platक्रमm_get_drvdata(pdev);
 
 	dev_dbg(&pdev->dev, "remove");
 
-	vimc_unregister_subdevs(vimc);
-	media_device_unregister(&vimc->mdev);
-	v4l2_device_unregister(&vimc->v4l2_dev);
+	vimc_unरेजिस्टर_subdevs(vimc);
+	media_device_unरेजिस्टर(&vimc->mdev);
+	v4l2_device_unरेजिस्टर(&vimc->v4l2_dev);
 	v4l2_device_put(&vimc->v4l2_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vimc_dev_release(struct device *dev)
-{
-}
+अटल व्योम vimc_dev_release(काष्ठा device *dev)
+अणु
+पूर्ण
 
-static struct platform_device vimc_pdev = {
+अटल काष्ठा platक्रमm_device vimc_pdev = अणु
 	.name = VIMC_PDEV_NAME,
 	.dev.release = vimc_dev_release,
-};
+पूर्ण;
 
-static struct platform_driver vimc_pdrv = {
+अटल काष्ठा platक्रमm_driver vimc_pdrv = अणु
 	.probe		= vimc_probe,
-	.remove		= vimc_remove,
-	.driver		= {
+	.हटाओ		= vimc_हटाओ,
+	.driver		= अणु
 		.name	= VIMC_PDEV_NAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init vimc_init(void)
-{
-	int ret;
+अटल पूर्णांक __init vimc_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_device_register(&vimc_pdev);
-	if (ret) {
+	ret = platक्रमm_device_रेजिस्टर(&vimc_pdev);
+	अगर (ret) अणु
 		dev_err(&vimc_pdev.dev,
 			"platform device registration failed (err=%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = platform_driver_register(&vimc_pdrv);
-	if (ret) {
+	ret = platक्रमm_driver_रेजिस्टर(&vimc_pdrv);
+	अगर (ret) अणु
 		dev_err(&vimc_pdev.dev,
 			"platform driver registration failed (err=%d)\n", ret);
-		platform_driver_unregister(&vimc_pdrv);
-		return ret;
-	}
+		platक्रमm_driver_unरेजिस्टर(&vimc_pdrv);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit vimc_exit(void)
-{
-	platform_driver_unregister(&vimc_pdrv);
+अटल व्योम __निकास vimc_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&vimc_pdrv);
 
-	platform_device_unregister(&vimc_pdev);
-}
+	platक्रमm_device_unरेजिस्टर(&vimc_pdev);
+पूर्ण
 
 module_init(vimc_init);
-module_exit(vimc_exit);
+module_निकास(vimc_निकास);
 
 MODULE_DESCRIPTION("Virtual Media Controller Driver (VIMC)");
 MODULE_AUTHOR("Helen Fornazier <helen.fornazier@gmail.com>");

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *      sunxi Watchdog Driver
+ *      sunxi Watchकरोg Driver
  *
  *      Copyright (c) 2013 Carlo Caione
  *                    2012 Henrik Nordstrom
@@ -9,62 +10,62 @@
  *      (c) Copyright 2010 Novell, Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/types.h>
-#include <linux/watchdog.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/types.h>
+#समावेश <linux/watchकरोg.h>
 
-#define WDT_MAX_TIMEOUT         16
-#define WDT_MIN_TIMEOUT         1
-#define WDT_TIMEOUT_MASK        0x0F
+#घोषणा WDT_MAX_TIMEOUT         16
+#घोषणा WDT_MIN_TIMEOUT         1
+#घोषणा WDT_TIMEOUT_MASK        0x0F
 
-#define WDT_CTRL_RELOAD         ((1 << 0) | (0x0a57 << 1))
+#घोषणा WDT_CTRL_RELOAD         ((1 << 0) | (0x0a57 << 1))
 
-#define WDT_MODE_EN             (1 << 0)
+#घोषणा WDT_MODE_EN             (1 << 0)
 
-#define DRV_NAME		"sunxi-wdt"
-#define DRV_VERSION		"1.0"
+#घोषणा DRV_NAME		"sunxi-wdt"
+#घोषणा DRV_VERSION		"1.0"
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
-static unsigned int timeout;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
+अटल अचिन्हित पूर्णांक समयout;
 
 /*
- * This structure stores the register offsets for different variants
- * of Allwinner's watchdog hardware.
+ * This काष्ठाure stores the रेजिस्टर offsets क्रम dअगरferent variants
+ * of Allwinner's watchकरोg hardware.
  */
-struct sunxi_wdt_reg {
+काष्ठा sunxi_wdt_reg अणु
 	u8 wdt_ctrl;
 	u8 wdt_cfg;
 	u8 wdt_mode;
-	u8 wdt_timeout_shift;
+	u8 wdt_समयout_shअगरt;
 	u8 wdt_reset_mask;
 	u8 wdt_reset_val;
-};
+पूर्ण;
 
-struct sunxi_wdt_dev {
-	struct watchdog_device wdt_dev;
-	void __iomem *wdt_base;
-	const struct sunxi_wdt_reg *wdt_regs;
-};
+काष्ठा sunxi_wdt_dev अणु
+	काष्ठा watchकरोg_device wdt_dev;
+	व्योम __iomem *wdt_base;
+	स्थिर काष्ठा sunxi_wdt_reg *wdt_regs;
+पूर्ण;
 
 /*
- * wdt_timeout_map maps the watchdog timer interval value in seconds to
- * the value of the register WDT_MODE at bits .wdt_timeout_shift ~ +3
+ * wdt_समयout_map maps the watchकरोg समयr पूर्णांकerval value in seconds to
+ * the value of the रेजिस्टर WDT_MODE at bits .wdt_समयout_shअगरt ~ +3
  *
- * [timeout seconds] = register value
+ * [समयout seconds] = रेजिस्टर value
  *
  */
 
-static const int wdt_timeout_map[] = {
+अटल स्थिर पूर्णांक wdt_समयout_map[] = अणु
 	[1] = 0x1,  /* 1s  */
 	[2] = 0x2,  /* 2s  */
 	[3] = 0x3,  /* 3s  */
@@ -76,213 +77,213 @@ static const int wdt_timeout_map[] = {
 	[12] = 0x9, /* 12s */
 	[14] = 0xA, /* 14s */
 	[16] = 0xB, /* 16s */
-};
+पूर्ण;
 
 
-static int sunxi_wdt_restart(struct watchdog_device *wdt_dev,
-			     unsigned long action, void *data)
-{
-	struct sunxi_wdt_dev *sunxi_wdt = watchdog_get_drvdata(wdt_dev);
-	void __iomem *wdt_base = sunxi_wdt->wdt_base;
-	const struct sunxi_wdt_reg *regs = sunxi_wdt->wdt_regs;
+अटल पूर्णांक sunxi_wdt_restart(काष्ठा watchकरोg_device *wdt_dev,
+			     अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	काष्ठा sunxi_wdt_dev *sunxi_wdt = watchकरोg_get_drvdata(wdt_dev);
+	व्योम __iomem *wdt_base = sunxi_wdt->wdt_base;
+	स्थिर काष्ठा sunxi_wdt_reg *regs = sunxi_wdt->wdt_regs;
 	u32 val;
 
-	/* Set system reset function */
-	val = readl(wdt_base + regs->wdt_cfg);
+	/* Set प्रणाली reset function */
+	val = पढ़ोl(wdt_base + regs->wdt_cfg);
 	val &= ~(regs->wdt_reset_mask);
 	val |= regs->wdt_reset_val;
-	writel(val, wdt_base + regs->wdt_cfg);
+	ग_लिखोl(val, wdt_base + regs->wdt_cfg);
 
-	/* Set lowest timeout and enable watchdog */
-	val = readl(wdt_base + regs->wdt_mode);
-	val &= ~(WDT_TIMEOUT_MASK << regs->wdt_timeout_shift);
+	/* Set lowest समयout and enable watchकरोg */
+	val = पढ़ोl(wdt_base + regs->wdt_mode);
+	val &= ~(WDT_TIMEOUT_MASK << regs->wdt_समयout_shअगरt);
 	val |= WDT_MODE_EN;
-	writel(val, wdt_base + regs->wdt_mode);
+	ग_लिखोl(val, wdt_base + regs->wdt_mode);
 
 	/*
-	 * Restart the watchdog. The default (and lowest) interval
-	 * value for the watchdog is 0.5s.
+	 * Restart the watchकरोg. The शेष (and lowest) पूर्णांकerval
+	 * value क्रम the watchकरोg is 0.5s.
 	 */
-	writel(WDT_CTRL_RELOAD, wdt_base + regs->wdt_ctrl);
+	ग_लिखोl(WDT_CTRL_RELOAD, wdt_base + regs->wdt_ctrl);
 
-	while (1) {
+	जबतक (1) अणु
 		mdelay(5);
-		val = readl(wdt_base + regs->wdt_mode);
+		val = पढ़ोl(wdt_base + regs->wdt_mode);
 		val |= WDT_MODE_EN;
-		writel(val, wdt_base + regs->wdt_mode);
-	}
-	return 0;
-}
+		ग_लिखोl(val, wdt_base + regs->wdt_mode);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int sunxi_wdt_ping(struct watchdog_device *wdt_dev)
-{
-	struct sunxi_wdt_dev *sunxi_wdt = watchdog_get_drvdata(wdt_dev);
-	void __iomem *wdt_base = sunxi_wdt->wdt_base;
-	const struct sunxi_wdt_reg *regs = sunxi_wdt->wdt_regs;
+अटल पूर्णांक sunxi_wdt_ping(काष्ठा watchकरोg_device *wdt_dev)
+अणु
+	काष्ठा sunxi_wdt_dev *sunxi_wdt = watchकरोg_get_drvdata(wdt_dev);
+	व्योम __iomem *wdt_base = sunxi_wdt->wdt_base;
+	स्थिर काष्ठा sunxi_wdt_reg *regs = sunxi_wdt->wdt_regs;
 
-	writel(WDT_CTRL_RELOAD, wdt_base + regs->wdt_ctrl);
+	ग_लिखोl(WDT_CTRL_RELOAD, wdt_base + regs->wdt_ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_wdt_set_timeout(struct watchdog_device *wdt_dev,
-		unsigned int timeout)
-{
-	struct sunxi_wdt_dev *sunxi_wdt = watchdog_get_drvdata(wdt_dev);
-	void __iomem *wdt_base = sunxi_wdt->wdt_base;
-	const struct sunxi_wdt_reg *regs = sunxi_wdt->wdt_regs;
+अटल पूर्णांक sunxi_wdt_set_समयout(काष्ठा watchकरोg_device *wdt_dev,
+		अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा sunxi_wdt_dev *sunxi_wdt = watchकरोg_get_drvdata(wdt_dev);
+	व्योम __iomem *wdt_base = sunxi_wdt->wdt_base;
+	स्थिर काष्ठा sunxi_wdt_reg *regs = sunxi_wdt->wdt_regs;
 	u32 reg;
 
-	if (wdt_timeout_map[timeout] == 0)
-		timeout++;
+	अगर (wdt_समयout_map[समयout] == 0)
+		समयout++;
 
-	sunxi_wdt->wdt_dev.timeout = timeout;
+	sunxi_wdt->wdt_dev.समयout = समयout;
 
-	reg = readl(wdt_base + regs->wdt_mode);
-	reg &= ~(WDT_TIMEOUT_MASK << regs->wdt_timeout_shift);
-	reg |= wdt_timeout_map[timeout] << regs->wdt_timeout_shift;
-	writel(reg, wdt_base + regs->wdt_mode);
+	reg = पढ़ोl(wdt_base + regs->wdt_mode);
+	reg &= ~(WDT_TIMEOUT_MASK << regs->wdt_समयout_shअगरt);
+	reg |= wdt_समयout_map[समयout] << regs->wdt_समयout_shअगरt;
+	ग_लिखोl(reg, wdt_base + regs->wdt_mode);
 
 	sunxi_wdt_ping(wdt_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_wdt_stop(struct watchdog_device *wdt_dev)
-{
-	struct sunxi_wdt_dev *sunxi_wdt = watchdog_get_drvdata(wdt_dev);
-	void __iomem *wdt_base = sunxi_wdt->wdt_base;
-	const struct sunxi_wdt_reg *regs = sunxi_wdt->wdt_regs;
+अटल पूर्णांक sunxi_wdt_stop(काष्ठा watchकरोg_device *wdt_dev)
+अणु
+	काष्ठा sunxi_wdt_dev *sunxi_wdt = watchकरोg_get_drvdata(wdt_dev);
+	व्योम __iomem *wdt_base = sunxi_wdt->wdt_base;
+	स्थिर काष्ठा sunxi_wdt_reg *regs = sunxi_wdt->wdt_regs;
 
-	writel(0, wdt_base + regs->wdt_mode);
+	ग_लिखोl(0, wdt_base + regs->wdt_mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_wdt_start(struct watchdog_device *wdt_dev)
-{
+अटल पूर्णांक sunxi_wdt_start(काष्ठा watchकरोg_device *wdt_dev)
+अणु
 	u32 reg;
-	struct sunxi_wdt_dev *sunxi_wdt = watchdog_get_drvdata(wdt_dev);
-	void __iomem *wdt_base = sunxi_wdt->wdt_base;
-	const struct sunxi_wdt_reg *regs = sunxi_wdt->wdt_regs;
-	int ret;
+	काष्ठा sunxi_wdt_dev *sunxi_wdt = watchकरोg_get_drvdata(wdt_dev);
+	व्योम __iomem *wdt_base = sunxi_wdt->wdt_base;
+	स्थिर काष्ठा sunxi_wdt_reg *regs = sunxi_wdt->wdt_regs;
+	पूर्णांक ret;
 
-	ret = sunxi_wdt_set_timeout(&sunxi_wdt->wdt_dev,
-			sunxi_wdt->wdt_dev.timeout);
-	if (ret < 0)
-		return ret;
+	ret = sunxi_wdt_set_समयout(&sunxi_wdt->wdt_dev,
+			sunxi_wdt->wdt_dev.समयout);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Set system reset function */
-	reg = readl(wdt_base + regs->wdt_cfg);
+	/* Set प्रणाली reset function */
+	reg = पढ़ोl(wdt_base + regs->wdt_cfg);
 	reg &= ~(regs->wdt_reset_mask);
 	reg |= regs->wdt_reset_val;
-	writel(reg, wdt_base + regs->wdt_cfg);
+	ग_लिखोl(reg, wdt_base + regs->wdt_cfg);
 
-	/* Enable watchdog */
-	reg = readl(wdt_base + regs->wdt_mode);
+	/* Enable watchकरोg */
+	reg = पढ़ोl(wdt_base + regs->wdt_mode);
 	reg |= WDT_MODE_EN;
-	writel(reg, wdt_base + regs->wdt_mode);
+	ग_लिखोl(reg, wdt_base + regs->wdt_mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info sunxi_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info sunxi_wdt_info = अणु
 	.identity	= DRV_NAME,
 	.options	= WDIOF_SETTIMEOUT |
 			  WDIOF_KEEPALIVEPING |
 			  WDIOF_MAGICCLOSE,
-};
+पूर्ण;
 
-static const struct watchdog_ops sunxi_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops sunxi_wdt_ops = अणु
 	.owner		= THIS_MODULE,
 	.start		= sunxi_wdt_start,
 	.stop		= sunxi_wdt_stop,
 	.ping		= sunxi_wdt_ping,
-	.set_timeout	= sunxi_wdt_set_timeout,
+	.set_समयout	= sunxi_wdt_set_समयout,
 	.restart	= sunxi_wdt_restart,
-};
+पूर्ण;
 
-static const struct sunxi_wdt_reg sun4i_wdt_reg = {
+अटल स्थिर काष्ठा sunxi_wdt_reg sun4i_wdt_reg = अणु
 	.wdt_ctrl = 0x00,
 	.wdt_cfg = 0x04,
 	.wdt_mode = 0x04,
-	.wdt_timeout_shift = 3,
+	.wdt_समयout_shअगरt = 3,
 	.wdt_reset_mask = 0x02,
 	.wdt_reset_val = 0x02,
-};
+पूर्ण;
 
-static const struct sunxi_wdt_reg sun6i_wdt_reg = {
+अटल स्थिर काष्ठा sunxi_wdt_reg sun6i_wdt_reg = अणु
 	.wdt_ctrl = 0x10,
 	.wdt_cfg = 0x14,
 	.wdt_mode = 0x18,
-	.wdt_timeout_shift = 4,
+	.wdt_समयout_shअगरt = 4,
 	.wdt_reset_mask = 0x03,
 	.wdt_reset_val = 0x01,
-};
+पूर्ण;
 
-static const struct of_device_id sunxi_wdt_dt_ids[] = {
-	{ .compatible = "allwinner,sun4i-a10-wdt", .data = &sun4i_wdt_reg },
-	{ .compatible = "allwinner,sun6i-a31-wdt", .data = &sun6i_wdt_reg },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id sunxi_wdt_dt_ids[] = अणु
+	अणु .compatible = "allwinner,sun4i-a10-wdt", .data = &sun4i_wdt_reg पूर्ण,
+	अणु .compatible = "allwinner,sun6i-a31-wdt", .data = &sun6i_wdt_reg पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sunxi_wdt_dt_ids);
 
-static int sunxi_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct sunxi_wdt_dev *sunxi_wdt;
-	int err;
+अटल पूर्णांक sunxi_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा sunxi_wdt_dev *sunxi_wdt;
+	पूर्णांक err;
 
-	sunxi_wdt = devm_kzalloc(dev, sizeof(*sunxi_wdt), GFP_KERNEL);
-	if (!sunxi_wdt)
-		return -ENOMEM;
+	sunxi_wdt = devm_kzalloc(dev, माप(*sunxi_wdt), GFP_KERNEL);
+	अगर (!sunxi_wdt)
+		वापस -ENOMEM;
 
 	sunxi_wdt->wdt_regs = of_device_get_match_data(dev);
-	if (!sunxi_wdt->wdt_regs)
-		return -ENODEV;
+	अगर (!sunxi_wdt->wdt_regs)
+		वापस -ENODEV;
 
-	sunxi_wdt->wdt_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(sunxi_wdt->wdt_base))
-		return PTR_ERR(sunxi_wdt->wdt_base);
+	sunxi_wdt->wdt_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(sunxi_wdt->wdt_base))
+		वापस PTR_ERR(sunxi_wdt->wdt_base);
 
 	sunxi_wdt->wdt_dev.info = &sunxi_wdt_info;
 	sunxi_wdt->wdt_dev.ops = &sunxi_wdt_ops;
-	sunxi_wdt->wdt_dev.timeout = WDT_MAX_TIMEOUT;
-	sunxi_wdt->wdt_dev.max_timeout = WDT_MAX_TIMEOUT;
-	sunxi_wdt->wdt_dev.min_timeout = WDT_MIN_TIMEOUT;
+	sunxi_wdt->wdt_dev.समयout = WDT_MAX_TIMEOUT;
+	sunxi_wdt->wdt_dev.max_समयout = WDT_MAX_TIMEOUT;
+	sunxi_wdt->wdt_dev.min_समयout = WDT_MIN_TIMEOUT;
 	sunxi_wdt->wdt_dev.parent = dev;
 
-	watchdog_init_timeout(&sunxi_wdt->wdt_dev, timeout, dev);
-	watchdog_set_nowayout(&sunxi_wdt->wdt_dev, nowayout);
-	watchdog_set_restart_priority(&sunxi_wdt->wdt_dev, 128);
+	watchकरोg_init_समयout(&sunxi_wdt->wdt_dev, समयout, dev);
+	watchकरोg_set_nowayout(&sunxi_wdt->wdt_dev, nowayout);
+	watchकरोg_set_restart_priority(&sunxi_wdt->wdt_dev, 128);
 
-	watchdog_set_drvdata(&sunxi_wdt->wdt_dev, sunxi_wdt);
+	watchकरोg_set_drvdata(&sunxi_wdt->wdt_dev, sunxi_wdt);
 
 	sunxi_wdt_stop(&sunxi_wdt->wdt_dev);
 
-	watchdog_stop_on_reboot(&sunxi_wdt->wdt_dev);
-	err = devm_watchdog_register_device(dev, &sunxi_wdt->wdt_dev);
-	if (unlikely(err))
-		return err;
+	watchकरोg_stop_on_reboot(&sunxi_wdt->wdt_dev);
+	err = devm_watchकरोg_रेजिस्टर_device(dev, &sunxi_wdt->wdt_dev);
+	अगर (unlikely(err))
+		वापस err;
 
 	dev_info(dev, "Watchdog enabled (timeout=%d sec, nowayout=%d)",
-		 sunxi_wdt->wdt_dev.timeout, nowayout);
+		 sunxi_wdt->wdt_dev.समयout, nowayout);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver sunxi_wdt_driver = {
+अटल काष्ठा platक्रमm_driver sunxi_wdt_driver = अणु
 	.probe		= sunxi_wdt_probe,
-	.driver		= {
+	.driver		= अणु
 		.name		= DRV_NAME,
 		.of_match_table	= sunxi_wdt_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(sunxi_wdt_driver);
+module_platक्रमm_driver(sunxi_wdt_driver);
 
-module_param(timeout, uint, 0);
-MODULE_PARM_DESC(timeout, "Watchdog heartbeat in seconds");
+module_param(समयout, uपूर्णांक, 0);
+MODULE_PARM_DESC(समयout, "Watchdog heartbeat in seconds");
 
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started "

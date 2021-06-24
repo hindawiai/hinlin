@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <os.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <os.h>
 
-struct dog_data {
-	int stdin_fd;
-	int stdout_fd;
-	int close_me[2];
-};
+काष्ठा करोg_data अणु
+	पूर्णांक मानक_निवेश_fd;
+	पूर्णांक मानक_निकास_fd;
+	पूर्णांक बंद_me[2];
+पूर्ण;
 
-static void pre_exec(void *d)
-{
-	struct dog_data *data = d;
+अटल व्योम pre_exec(व्योम *d)
+अणु
+	काष्ठा करोg_data *data = d;
 
-	dup2(data->stdin_fd, 0);
-	dup2(data->stdout_fd, 1);
-	dup2(data->stdout_fd, 2);
-	close(data->stdin_fd);
-	close(data->stdout_fd);
-	close(data->close_me[0]);
-	close(data->close_me[1]);
-}
+	dup2(data->मानक_निवेश_fd, 0);
+	dup2(data->मानक_निकास_fd, 1);
+	dup2(data->मानक_निकास_fd, 2);
+	बंद(data->मानक_निवेश_fd);
+	बंद(data->मानक_निकास_fd);
+	बंद(data->बंद_me[0]);
+	बंद(data->बंद_me[1]);
+पूर्ण
 
-int start_watchdog(int *in_fd_ret, int *out_fd_ret, char *sock)
-{
-	struct dog_data data;
-	int in_fds[2], out_fds[2], pid, n, err;
-	char pid_buf[sizeof("nnnnnnn\0")], c;
-	char *pid_args[] = { "/usr/bin/uml_watchdog", "-pid", pid_buf, NULL };
-	char *mconsole_args[] = { "/usr/bin/uml_watchdog", "-mconsole", NULL,
-				  NULL };
-	char **args = NULL;
+पूर्णांक start_watchकरोg(पूर्णांक *in_fd_ret, पूर्णांक *out_fd_ret, अक्षर *sock)
+अणु
+	काष्ठा करोg_data data;
+	पूर्णांक in_fds[2], out_fds[2], pid, n, err;
+	अक्षर pid_buf[माप("nnnnnnn\0")], c;
+	अक्षर *pid_args[] = अणु "/usr/bin/uml_watchdog", "-pid", pid_buf, शून्य पूर्ण;
+	अक्षर *mconsole_args[] = अणु "/usr/bin/uml_watchdog", "-mconsole", शून्य,
+				  शून्य पूर्ण;
+	अक्षर **args = शून्य;
 
 	err = os_pipe(in_fds, 1, 0);
-	if (err < 0) {
-		printk("harddog_open - os_pipe failed, err = %d\n", -err);
-		goto out;
-	}
+	अगर (err < 0) अणु
+		prपूर्णांकk("harddog_open - os_pipe failed, err = %d\n", -err);
+		जाओ out;
+	पूर्ण
 
 	err = os_pipe(out_fds, 1, 0);
-	if (err < 0) {
-		printk("harddog_open - os_pipe failed, err = %d\n", -err);
-		goto out_close_in;
-	}
+	अगर (err < 0) अणु
+		prपूर्णांकk("harddog_open - os_pipe failed, err = %d\n", -err);
+		जाओ out_बंद_in;
+	पूर्ण
 
-	data.stdin_fd = out_fds[0];
-	data.stdout_fd = in_fds[1];
-	data.close_me[0] = out_fds[1];
-	data.close_me[1] = in_fds[0];
+	data.मानक_निवेश_fd = out_fds[0];
+	data.मानक_निकास_fd = in_fds[1];
+	data.बंद_me[0] = out_fds[1];
+	data.बंद_me[1] = in_fds[0];
 
-	if (sock != NULL) {
+	अगर (sock != शून्य) अणु
 		mconsole_args[2] = sock;
 		args = mconsole_args;
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 		/* XXX The os_getpid() is not SMP correct */
-		sprintf(pid_buf, "%d", os_getpid());
+		प्र_लिखो(pid_buf, "%d", os_getpid());
 		args = pid_args;
-	}
+	पूर्ण
 
 	pid = run_helper(pre_exec, &data, args);
 
-	close(out_fds[0]);
-	close(in_fds[1]);
+	बंद(out_fds[0]);
+	बंद(in_fds[1]);
 
-	if (pid < 0) {
+	अगर (pid < 0) अणु
 		err = -pid;
-		printk("harddog_open - run_helper failed, errno = %d\n", -err);
-		goto out_close_out;
-	}
+		prपूर्णांकk("harddog_open - run_helper failed, errno = %d\n", -err);
+		जाओ out_बंद_out;
+	पूर्ण
 
-	n = read(in_fds[0], &c, sizeof(c));
-	if (n == 0) {
-		printk("harddog_open - EOF on watchdog pipe\n");
-		helper_wait(pid);
+	n = पढ़ो(in_fds[0], &c, माप(c));
+	अगर (n == 0) अणु
+		prपूर्णांकk("harddog_open - EOF on watchdog pipe\n");
+		helper_रुको(pid);
 		err = -EIO;
-		goto out_close_out;
-	}
-	else if (n < 0) {
-		printk("harddog_open - read of watchdog pipe failed, "
-		       "err = %d\n", errno);
-		helper_wait(pid);
+		जाओ out_बंद_out;
+	पूर्ण
+	अन्यथा अगर (n < 0) अणु
+		prपूर्णांकk("harddog_open - read of watchdog pipe failed, "
+		       "err = %d\n", त्रुटि_सं);
+		helper_रुको(pid);
 		err = n;
-		goto out_close_out;
-	}
+		जाओ out_बंद_out;
+	पूर्ण
 	*in_fd_ret = in_fds[0];
 	*out_fd_ret = out_fds[1];
-	return 0;
+	वापस 0;
 
- out_close_in:
-	close(in_fds[0]);
-	close(in_fds[1]);
- out_close_out:
-	close(out_fds[0]);
-	close(out_fds[1]);
+ out_बंद_in:
+	बंद(in_fds[0]);
+	बंद(in_fds[1]);
+ out_बंद_out:
+	बंद(out_fds[0]);
+	बंद(out_fds[1]);
  out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void stop_watchdog(int in_fd, int out_fd)
-{
-	close(in_fd);
-	close(out_fd);
-}
+व्योम stop_watchकरोg(पूर्णांक in_fd, पूर्णांक out_fd)
+अणु
+	बंद(in_fd);
+	बंद(out_fd);
+पूर्ण
 
-int ping_watchdog(int fd)
-{
-	int n;
-	char c = '\n';
+पूर्णांक ping_watchकरोg(पूर्णांक fd)
+अणु
+	पूर्णांक n;
+	अक्षर c = '\n';
 
-	n = write(fd, &c, sizeof(c));
-	if (n != sizeof(c)) {
-		printk("ping_watchdog - write failed, ret = %d, err = %d\n",
-		       n, errno);
-		if (n < 0)
-			return n;
-		return -EIO;
-	}
-	return 1;
+	n = ग_लिखो(fd, &c, माप(c));
+	अगर (n != माप(c)) अणु
+		prपूर्णांकk("ping_watchdog - write failed, ret = %d, err = %d\n",
+		       n, त्रुटि_सं);
+		अगर (n < 0)
+			वापस n;
+		वापस -EIO;
+	पूर्ण
+	वापस 1;
 
-}
+पूर्ण

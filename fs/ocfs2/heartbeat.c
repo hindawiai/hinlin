@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * heartbeat.c
  *
@@ -8,111 +9,111 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/highmem.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/highस्मृति.स>
 
-#include <cluster/masklog.h>
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
+#समावेश "ocfs2.h"
 
-#include "alloc.h"
-#include "heartbeat.h"
-#include "inode.h"
-#include "journal.h"
-#include "ocfs2_trace.h"
+#समावेश "alloc.h"
+#समावेश "heartbeat.h"
+#समावेश "inode.h"
+#समावेश "journal.h"
+#समावेश "ocfs2_trace.h"
 
-#include "buffer_head_io.h"
+#समावेश "buffer_head_io.h"
 
-static inline void __ocfs2_node_map_set_bit(struct ocfs2_node_map *map,
-					    int bit);
-static inline void __ocfs2_node_map_clear_bit(struct ocfs2_node_map *map,
-					      int bit);
+अटल अंतरभूत व्योम __ocfs2_node_map_set_bit(काष्ठा ocfs2_node_map *map,
+					    पूर्णांक bit);
+अटल अंतरभूत व्योम __ocfs2_node_map_clear_bit(काष्ठा ocfs2_node_map *map,
+					      पूर्णांक bit);
 
-/* special case -1 for now
+/* special हाल -1 क्रम now
  * TODO: should *really* make sure the calling func never passes -1!!  */
-static void ocfs2_node_map_init(struct ocfs2_node_map *map)
-{
+अटल व्योम ocfs2_node_map_init(काष्ठा ocfs2_node_map *map)
+अणु
 	map->num_nodes = OCFS2_NODE_MAP_MAX_NODES;
-	memset(map->map, 0, BITS_TO_LONGS(OCFS2_NODE_MAP_MAX_NODES) *
-	       sizeof(unsigned long));
-}
+	स_रखो(map->map, 0, BITS_TO_LONGS(OCFS2_NODE_MAP_MAX_NODES) *
+	       माप(अचिन्हित दीर्घ));
+पूर्ण
 
-void ocfs2_init_node_maps(struct ocfs2_super *osb)
-{
+व्योम ocfs2_init_node_maps(काष्ठा ocfs2_super *osb)
+अणु
 	spin_lock_init(&osb->node_map_lock);
 	ocfs2_node_map_init(&osb->osb_recovering_orphan_dirs);
-}
+पूर्ण
 
-void ocfs2_do_node_down(int node_num, void *data)
-{
-	struct ocfs2_super *osb = data;
+व्योम ocfs2_करो_node_करोwn(पूर्णांक node_num, व्योम *data)
+अणु
+	काष्ठा ocfs2_super *osb = data;
 
 	BUG_ON(osb->node_num == node_num);
 
-	trace_ocfs2_do_node_down(node_num);
+	trace_ocfs2_करो_node_करोwn(node_num);
 
-	if (!osb->cconn) {
+	अगर (!osb->cconn) अणु
 		/*
-		 * No cluster connection means we're not even ready to
+		 * No cluster connection means we're not even पढ़ोy to
 		 * participate yet.  We check the slots after the cluster
 		 * comes up, so we will notice the node death then.  We
 		 * can safely ignore it here.
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ocfs2_recovery_thread(osb, node_num);
-}
+	ocfs2_recovery_thपढ़ो(osb, node_num);
+पूर्ण
 
-static inline void __ocfs2_node_map_set_bit(struct ocfs2_node_map *map,
-					    int bit)
-{
+अटल अंतरभूत व्योम __ocfs2_node_map_set_bit(काष्ठा ocfs2_node_map *map,
+					    पूर्णांक bit)
+अणु
 	set_bit(bit, map->map);
-}
+पूर्ण
 
-void ocfs2_node_map_set_bit(struct ocfs2_super *osb,
-			    struct ocfs2_node_map *map,
-			    int bit)
-{
-	if (bit==-1)
-		return;
+व्योम ocfs2_node_map_set_bit(काष्ठा ocfs2_super *osb,
+			    काष्ठा ocfs2_node_map *map,
+			    पूर्णांक bit)
+अणु
+	अगर (bit==-1)
+		वापस;
 	BUG_ON(bit >= map->num_nodes);
 	spin_lock(&osb->node_map_lock);
 	__ocfs2_node_map_set_bit(map, bit);
 	spin_unlock(&osb->node_map_lock);
-}
+पूर्ण
 
-static inline void __ocfs2_node_map_clear_bit(struct ocfs2_node_map *map,
-					      int bit)
-{
+अटल अंतरभूत व्योम __ocfs2_node_map_clear_bit(काष्ठा ocfs2_node_map *map,
+					      पूर्णांक bit)
+अणु
 	clear_bit(bit, map->map);
-}
+पूर्ण
 
-void ocfs2_node_map_clear_bit(struct ocfs2_super *osb,
-			      struct ocfs2_node_map *map,
-			      int bit)
-{
-	if (bit==-1)
-		return;
+व्योम ocfs2_node_map_clear_bit(काष्ठा ocfs2_super *osb,
+			      काष्ठा ocfs2_node_map *map,
+			      पूर्णांक bit)
+अणु
+	अगर (bit==-1)
+		वापस;
 	BUG_ON(bit >= map->num_nodes);
 	spin_lock(&osb->node_map_lock);
 	__ocfs2_node_map_clear_bit(map, bit);
 	spin_unlock(&osb->node_map_lock);
-}
+पूर्ण
 
-int ocfs2_node_map_test_bit(struct ocfs2_super *osb,
-			    struct ocfs2_node_map *map,
-			    int bit)
-{
-	int ret;
-	if (bit >= map->num_nodes) {
+पूर्णांक ocfs2_node_map_test_bit(काष्ठा ocfs2_super *osb,
+			    काष्ठा ocfs2_node_map *map,
+			    पूर्णांक bit)
+अणु
+	पूर्णांक ret;
+	अगर (bit >= map->num_nodes) अणु
 		mlog(ML_ERROR, "bit=%d map->num_nodes=%d\n", bit, map->num_nodes);
 		BUG();
-	}
+	पूर्ण
 	spin_lock(&osb->node_map_lock);
 	ret = test_bit(bit, map->map);
 	spin_unlock(&osb->node_map_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,388 +24,388 @@
  *
  */
 
-#include "hdcp.h"
+#समावेश "hdcp.h"
 
-static void push_error_status(struct mod_hdcp *hdcp,
-		enum mod_hdcp_status status)
-{
-	struct mod_hdcp_trace *trace = &hdcp->connection.trace;
+अटल व्योम push_error_status(काष्ठा mod_hdcp *hdcp,
+		क्रमागत mod_hdcp_status status)
+अणु
+	काष्ठा mod_hdcp_trace *trace = &hdcp->connection.trace;
 
-	if (trace->error_count < MAX_NUM_OF_ERROR_TRACE) {
+	अगर (trace->error_count < MAX_NUM_OF_ERROR_TRACE) अणु
 		trace->errors[trace->error_count].status = status;
 		trace->errors[trace->error_count].state_id = hdcp->state.id;
 		trace->error_count++;
 		HDCP_ERROR_TRACE(hdcp, status);
-	}
+	पूर्ण
 
-	if (is_hdcp1(hdcp)) {
+	अगर (is_hdcp1(hdcp)) अणु
 		hdcp->connection.hdcp1_retry_count++;
-	} else if (is_hdcp2(hdcp)) {
+	पूर्ण अन्यथा अगर (is_hdcp2(hdcp)) अणु
 		hdcp->connection.hdcp2_retry_count++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static uint8_t is_cp_desired_hdcp1(struct mod_hdcp *hdcp)
-{
-	int i, is_auth_needed = 0;
+अटल uपूर्णांक8_t is_cp_desired_hdcp1(काष्ठा mod_hdcp *hdcp)
+अणु
+	पूर्णांक i, is_auth_needed = 0;
 
-	/* if all displays on the link don't need authentication,
+	/* अगर all displays on the link करोn't need authentication,
 	 * hdcp is not desired
 	 */
-	for (i = 0; i < MAX_NUM_OF_DISPLAYS; i++) {
-		if (hdcp->displays[i].state != MOD_HDCP_DISPLAY_INACTIVE &&
-				hdcp->displays[i].adjust.disable != MOD_HDCP_DISPLAY_DISABLE_AUTHENTICATION) {
+	क्रम (i = 0; i < MAX_NUM_OF_DISPLAYS; i++) अणु
+		अगर (hdcp->displays[i].state != MOD_HDCP_DISPLAY_INACTIVE &&
+				hdcp->displays[i].adjust.disable != MOD_HDCP_DISPLAY_DISABLE_AUTHENTICATION) अणु
 			is_auth_needed = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return (hdcp->connection.hdcp1_retry_count < MAX_NUM_OF_ATTEMPTS) &&
+	वापस (hdcp->connection.hdcp1_retry_count < MAX_NUM_OF_ATTEMPTS) &&
 			is_auth_needed &&
 			!hdcp->connection.link.adjust.hdcp1.disable &&
 			!hdcp->connection.is_hdcp1_revoked;
-}
+पूर्ण
 
-static uint8_t is_cp_desired_hdcp2(struct mod_hdcp *hdcp)
-{
-	int i, is_auth_needed = 0;
+अटल uपूर्णांक8_t is_cp_desired_hdcp2(काष्ठा mod_hdcp *hdcp)
+अणु
+	पूर्णांक i, is_auth_needed = 0;
 
-	/* if all displays on the link don't need authentication,
+	/* अगर all displays on the link करोn't need authentication,
 	 * hdcp is not desired
 	 */
-	for (i = 0; i < MAX_NUM_OF_DISPLAYS; i++) {
-		if (hdcp->displays[i].state != MOD_HDCP_DISPLAY_INACTIVE &&
-				hdcp->displays[i].adjust.disable != MOD_HDCP_DISPLAY_DISABLE_AUTHENTICATION) {
+	क्रम (i = 0; i < MAX_NUM_OF_DISPLAYS; i++) अणु
+		अगर (hdcp->displays[i].state != MOD_HDCP_DISPLAY_INACTIVE &&
+				hdcp->displays[i].adjust.disable != MOD_HDCP_DISPLAY_DISABLE_AUTHENTICATION) अणु
 			is_auth_needed = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return (hdcp->connection.hdcp2_retry_count < MAX_NUM_OF_ATTEMPTS) &&
+	वापस (hdcp->connection.hdcp2_retry_count < MAX_NUM_OF_ATTEMPTS) &&
 			is_auth_needed &&
 			!hdcp->connection.link.adjust.hdcp2.disable &&
 			!hdcp->connection.is_hdcp2_revoked;
-}
+पूर्ण
 
-static enum mod_hdcp_status execution(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		union mod_hdcp_transition_input *input)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status execution(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		जोड़ mod_hdcp_transition_input *input)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (is_in_initialized_state(hdcp)) {
-		if (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) {
+	अगर (is_in_initialized_state(hdcp)) अणु
+		अगर (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) अणु
 			event_ctx->unexpected_event = 1;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		/* initialize transition input */
-		memset(input, 0, sizeof(union mod_hdcp_transition_input));
-	} else if (is_in_cp_not_desired_state(hdcp)) {
-		if (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) {
+		स_रखो(input, 0, माप(जोड़ mod_hdcp_transition_input));
+	पूर्ण अन्यथा अगर (is_in_cp_not_desired_state(hdcp)) अणु
+		अगर (event_ctx->event != MOD_HDCP_EVENT_CALLBACK) अणु
 			event_ctx->unexpected_event = 1;
-			goto out;
-		}
-	} else if (is_in_hdcp1_states(hdcp)) {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अगर (is_in_hdcp1_states(hdcp)) अणु
 		status = mod_hdcp_hdcp1_execution(hdcp, event_ctx, &input->hdcp1);
-	} else if (is_in_hdcp1_dp_states(hdcp)) {
+	पूर्ण अन्यथा अगर (is_in_hdcp1_dp_states(hdcp)) अणु
 		status = mod_hdcp_hdcp1_dp_execution(hdcp,
 				event_ctx, &input->hdcp1);
-	} else if (is_in_hdcp2_states(hdcp)) {
+	पूर्ण अन्यथा अगर (is_in_hdcp2_states(hdcp)) अणु
 		status = mod_hdcp_hdcp2_execution(hdcp, event_ctx, &input->hdcp2);
-	} else if (is_in_hdcp2_dp_states(hdcp)) {
+	पूर्ण अन्यथा अगर (is_in_hdcp2_dp_states(hdcp)) अणु
 		status = mod_hdcp_hdcp2_dp_execution(hdcp,
 				event_ctx, &input->hdcp2);
-	} else {
+	पूर्ण अन्यथा अणु
 		event_ctx->unexpected_event = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status transition(struct mod_hdcp *hdcp,
-		struct mod_hdcp_event_context *event_ctx,
-		union mod_hdcp_transition_input *input,
-		struct mod_hdcp_output *output)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status transition(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_event_context *event_ctx,
+		जोड़ mod_hdcp_transition_input *input,
+		काष्ठा mod_hdcp_output *output)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (event_ctx->unexpected_event)
-		goto out;
+	अगर (event_ctx->unexpected_event)
+		जाओ out;
 
-	if (is_in_initialized_state(hdcp)) {
-		if (is_dp_hdcp(hdcp))
-			if (is_cp_desired_hdcp2(hdcp)) {
+	अगर (is_in_initialized_state(hdcp)) अणु
+		अगर (is_dp_hdcp(hdcp))
+			अगर (is_cp_desired_hdcp2(hdcp)) अणु
 				callback_in_ms(0, output);
 				set_state_id(hdcp, output, D2_A0_DETERMINE_RX_HDCP_CAPABLE);
-			} else if (is_cp_desired_hdcp1(hdcp)) {
+			पूर्ण अन्यथा अगर (is_cp_desired_hdcp1(hdcp)) अणु
 				callback_in_ms(0, output);
 				set_state_id(hdcp, output, D1_A0_DETERMINE_RX_HDCP_CAPABLE);
-			} else {
+			पूर्ण अन्यथा अणु
 				callback_in_ms(0, output);
 				set_state_id(hdcp, output, HDCP_CP_NOT_DESIRED);
-			}
-		else if (is_hdmi_dvi_sl_hdcp(hdcp))
-			if (is_cp_desired_hdcp2(hdcp)) {
+			पूर्ण
+		अन्यथा अगर (is_hdmi_dvi_sl_hdcp(hdcp))
+			अगर (is_cp_desired_hdcp2(hdcp)) अणु
 				callback_in_ms(0, output);
 				set_state_id(hdcp, output, H2_A0_KNOWN_HDCP2_CAPABLE_RX);
-			} else if (is_cp_desired_hdcp1(hdcp)) {
+			पूर्ण अन्यथा अगर (is_cp_desired_hdcp1(hdcp)) अणु
 				callback_in_ms(0, output);
 				set_state_id(hdcp, output, H1_A0_WAIT_FOR_ACTIVE_RX);
-			} else {
+			पूर्ण अन्यथा अणु
 				callback_in_ms(0, output);
 				set_state_id(hdcp, output, HDCP_CP_NOT_DESIRED);
-			}
-		else {
+			पूर्ण
+		अन्यथा अणु
 			callback_in_ms(0, output);
 			set_state_id(hdcp, output, HDCP_CP_NOT_DESIRED);
-		}
-	} else if (is_in_cp_not_desired_state(hdcp)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (is_in_cp_not_desired_state(hdcp)) अणु
 		increment_stay_counter(hdcp);
-	} else if (is_in_hdcp1_states(hdcp)) {
+	पूर्ण अन्यथा अगर (is_in_hdcp1_states(hdcp)) अणु
 		status = mod_hdcp_hdcp1_transition(hdcp,
 				event_ctx, &input->hdcp1, output);
-	} else if (is_in_hdcp1_dp_states(hdcp)) {
+	पूर्ण अन्यथा अगर (is_in_hdcp1_dp_states(hdcp)) अणु
 		status = mod_hdcp_hdcp1_dp_transition(hdcp,
 				event_ctx, &input->hdcp1, output);
-	} else if (is_in_hdcp2_states(hdcp)) {
+	पूर्ण अन्यथा अगर (is_in_hdcp2_states(hdcp)) अणु
 		status = mod_hdcp_hdcp2_transition(hdcp,
 				event_ctx, &input->hdcp2, output);
-	} else if (is_in_hdcp2_dp_states(hdcp)) {
+	पूर्ण अन्यथा अगर (is_in_hdcp2_dp_states(hdcp)) अणु
 		status = mod_hdcp_hdcp2_dp_transition(hdcp,
 				event_ctx, &input->hdcp2, output);
-	} else {
+	पूर्ण अन्यथा अणु
 		status = MOD_HDCP_STATUS_INVALID_STATE;
-	}
+	पूर्ण
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status reset_authentication(struct mod_hdcp *hdcp,
-		struct mod_hdcp_output *output)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status reset_authentication(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_output *output)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	if (is_hdcp1(hdcp)) {
-		if (hdcp->auth.trans_input.hdcp1.create_session != UNKNOWN) {
-			/* TODO - update psp to unify create session failure
+	अगर (is_hdcp1(hdcp)) अणु
+		अगर (hdcp->auth.trans_input.hdcp1.create_session != UNKNOWN) अणु
+			/* TODO - update psp to unअगरy create session failure
 			 * recovery between hdcp1 and 2.
 			 */
 			mod_hdcp_hdcp1_destroy_session(hdcp);
 
-		}
+		पूर्ण
 
 		HDCP_TOP_RESET_AUTH_TRACE(hdcp);
-		memset(&hdcp->auth, 0, sizeof(struct mod_hdcp_authentication));
-		memset(&hdcp->state, 0, sizeof(struct mod_hdcp_state));
+		स_रखो(&hdcp->auth, 0, माप(काष्ठा mod_hdcp_authentication));
+		स_रखो(&hdcp->state, 0, माप(काष्ठा mod_hdcp_state));
 		set_state_id(hdcp, output, HDCP_INITIALIZED);
-	} else if (is_hdcp2(hdcp)) {
-		if (hdcp->auth.trans_input.hdcp2.create_session == PASS) {
+	पूर्ण अन्यथा अगर (is_hdcp2(hdcp)) अणु
+		अगर (hdcp->auth.trans_input.hdcp2.create_session == PASS) अणु
 			status = mod_hdcp_hdcp2_destroy_session(hdcp);
-			if (status != MOD_HDCP_STATUS_SUCCESS) {
+			अगर (status != MOD_HDCP_STATUS_SUCCESS) अणु
 				output->callback_needed = 0;
-				output->watchdog_timer_needed = 0;
-				goto out;
-			}
-		}
+				output->watchकरोg_समयr_needed = 0;
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		HDCP_TOP_RESET_AUTH_TRACE(hdcp);
-		memset(&hdcp->auth, 0, sizeof(struct mod_hdcp_authentication));
-		memset(&hdcp->state, 0, sizeof(struct mod_hdcp_state));
+		स_रखो(&hdcp->auth, 0, माप(काष्ठा mod_hdcp_authentication));
+		स_रखो(&hdcp->state, 0, माप(काष्ठा mod_hdcp_state));
 		set_state_id(hdcp, output, HDCP_INITIALIZED);
-	} else if (is_in_cp_not_desired_state(hdcp)) {
+	पूर्ण अन्यथा अगर (is_in_cp_not_desired_state(hdcp)) अणु
 		HDCP_TOP_RESET_AUTH_TRACE(hdcp);
-		memset(&hdcp->auth, 0, sizeof(struct mod_hdcp_authentication));
-		memset(&hdcp->state, 0, sizeof(struct mod_hdcp_state));
+		स_रखो(&hdcp->auth, 0, माप(काष्ठा mod_hdcp_authentication));
+		स_रखो(&hdcp->state, 0, माप(काष्ठा mod_hdcp_state));
 		set_state_id(hdcp, output, HDCP_INITIALIZED);
-	}
+	पूर्ण
 
 out:
-	/* stop callback and watchdog requests from previous authentication*/
-	output->watchdog_timer_stop = 1;
+	/* stop callback and watchकरोg requests from previous authentication*/
+	output->watchकरोg_समयr_stop = 1;
 	output->callback_stop = 1;
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum mod_hdcp_status reset_connection(struct mod_hdcp *hdcp,
-		struct mod_hdcp_output *output)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+अटल क्रमागत mod_hdcp_status reset_connection(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_output *output)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	memset(output, 0, sizeof(struct mod_hdcp_output));
+	स_रखो(output, 0, माप(काष्ठा mod_hdcp_output));
 
 	status = reset_authentication(hdcp, output);
-	if (status != MOD_HDCP_STATUS_SUCCESS)
-		goto out;
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
+		जाओ out;
 
-	if (current_state(hdcp) != HDCP_UNINITIALIZED) {
+	अगर (current_state(hdcp) != HDCP_UNINITIALIZED) अणु
 		HDCP_TOP_RESET_CONN_TRACE(hdcp);
 		set_state_id(hdcp, output, HDCP_UNINITIALIZED);
-	}
-	memset(&hdcp->connection, 0, sizeof(hdcp->connection));
+	पूर्ण
+	स_रखो(&hdcp->connection, 0, माप(hdcp->connection));
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  * Implementation of functions in mod_hdcp.h
  */
-size_t mod_hdcp_get_memory_size(void)
-{
-	return sizeof(struct mod_hdcp);
-}
+माप_प्रकार mod_hdcp_get_memory_size(व्योम)
+अणु
+	वापस माप(काष्ठा mod_hdcp);
+पूर्ण
 
-enum mod_hdcp_status mod_hdcp_setup(struct mod_hdcp *hdcp,
-		struct mod_hdcp_config *config)
-{
-	struct mod_hdcp_output output;
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+क्रमागत mod_hdcp_status mod_hdcp_setup(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_config *config)
+अणु
+	काष्ठा mod_hdcp_output output;
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
-	memset(hdcp, 0, sizeof(struct mod_hdcp));
-	memset(&output, 0, sizeof(output));
+	स_रखो(hdcp, 0, माप(काष्ठा mod_hdcp));
+	स_रखो(&output, 0, माप(output));
 	hdcp->config = *config;
 	HDCP_TOP_INTERFACE_TRACE(hdcp);
 	status = reset_connection(hdcp, &output);
-	if (status != MOD_HDCP_STATUS_SUCCESS)
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
 		push_error_status(hdcp, status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-enum mod_hdcp_status mod_hdcp_teardown(struct mod_hdcp *hdcp)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
-	struct mod_hdcp_output output;
+क्रमागत mod_hdcp_status mod_hdcp_tearकरोwn(काष्ठा mod_hdcp *hdcp)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+	काष्ठा mod_hdcp_output output;
 
 	HDCP_TOP_INTERFACE_TRACE(hdcp);
-	memset(&output, 0,  sizeof(output));
+	स_रखो(&output, 0,  माप(output));
 	status = reset_connection(hdcp, &output);
-	if (status == MOD_HDCP_STATUS_SUCCESS)
-		memset(hdcp, 0, sizeof(struct mod_hdcp));
-	else
+	अगर (status == MOD_HDCP_STATUS_SUCCESS)
+		स_रखो(hdcp, 0, माप(काष्ठा mod_hdcp));
+	अन्यथा
 		push_error_status(hdcp, status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-enum mod_hdcp_status mod_hdcp_add_display(struct mod_hdcp *hdcp,
-		struct mod_hdcp_link *link, struct mod_hdcp_display *display,
-		struct mod_hdcp_output *output)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
-	struct mod_hdcp_display *display_container = NULL;
+क्रमागत mod_hdcp_status mod_hdcp_add_display(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_link *link, काष्ठा mod_hdcp_display *display,
+		काष्ठा mod_hdcp_output *output)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+	काष्ठा mod_hdcp_display *display_container = शून्य;
 
 	HDCP_TOP_INTERFACE_TRACE_WITH_INDEX(hdcp, display->index);
-	memset(output, 0, sizeof(struct mod_hdcp_output));
+	स_रखो(output, 0, माप(काष्ठा mod_hdcp_output));
 
 	/* skip inactive display */
-	if (display->state != MOD_HDCP_DISPLAY_ACTIVE) {
+	अगर (display->state != MOD_HDCP_DISPLAY_ACTIVE) अणु
 		status = MOD_HDCP_STATUS_SUCCESS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* check existing display container */
-	if (get_active_display_at_index(hdcp, display->index)) {
+	अगर (get_active_display_at_index(hdcp, display->index)) अणु
 		status = MOD_HDCP_STATUS_SUCCESS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* find an empty display container */
 	display_container = get_empty_display_container(hdcp);
-	if (!display_container) {
+	अगर (!display_container) अणु
 		status = MOD_HDCP_STATUS_DISPLAY_OUT_OF_BOUND;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* save current encryption states to restore after next authentication */
 	mod_hdcp_save_current_encryption_states(hdcp);
 
 	/* reset existing authentication status */
 	status = reset_authentication(hdcp, output);
-	if (status != MOD_HDCP_STATUS_SUCCESS)
-		goto out;
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
+		जाओ out;
 
 	/* reset retry counters */
 	reset_retry_counts(hdcp);
 
 	/* reset error trace */
-	memset(&hdcp->connection.trace, 0, sizeof(hdcp->connection.trace));
+	स_रखो(&hdcp->connection.trace, 0, माप(hdcp->connection.trace));
 
 	/* add display to connection */
 	hdcp->connection.link = *link;
 	*display_container = *display;
 	status = mod_hdcp_add_display_to_topology(hdcp, display_container);
 
-	if (status != MOD_HDCP_STATUS_SUCCESS)
-		goto out;
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
+		जाओ out;
 
 	/* request authentication */
-	if (current_state(hdcp) != HDCP_INITIALIZED)
+	अगर (current_state(hdcp) != HDCP_INITIALIZED)
 		set_state_id(hdcp, output, HDCP_INITIALIZED);
 	callback_in_ms(hdcp->connection.link.adjust.auth_delay * 1000, output);
 out:
-	if (status != MOD_HDCP_STATUS_SUCCESS)
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
 		push_error_status(hdcp, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-enum mod_hdcp_status mod_hdcp_remove_display(struct mod_hdcp *hdcp,
-		uint8_t index, struct mod_hdcp_output *output)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
-	struct mod_hdcp_display *display = NULL;
+क्रमागत mod_hdcp_status mod_hdcp_हटाओ_display(काष्ठा mod_hdcp *hdcp,
+		uपूर्णांक8_t index, काष्ठा mod_hdcp_output *output)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+	काष्ठा mod_hdcp_display *display = शून्य;
 
 	HDCP_TOP_INTERFACE_TRACE_WITH_INDEX(hdcp, index);
-	memset(output, 0, sizeof(struct mod_hdcp_output));
+	स_रखो(output, 0, माप(काष्ठा mod_hdcp_output));
 
 	/* find display in connection */
 	display = get_active_display_at_index(hdcp, index);
-	if (!display) {
+	अगर (!display) अणु
 		status = MOD_HDCP_STATUS_SUCCESS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* save current encryption states to restore after next authentication */
 	mod_hdcp_save_current_encryption_states(hdcp);
 
 	/* stop current authentication */
 	status = reset_authentication(hdcp, output);
-	if (status != MOD_HDCP_STATUS_SUCCESS)
-		goto out;
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
+		जाओ out;
 
 	/* clear retry counters */
 	reset_retry_counts(hdcp);
 
 	/* reset error trace */
-	memset(&hdcp->connection.trace, 0, sizeof(hdcp->connection.trace));
+	स_रखो(&hdcp->connection.trace, 0, माप(hdcp->connection.trace));
 
-	/* remove display */
-	status = mod_hdcp_remove_display_from_topology(hdcp, index);
-	if (status != MOD_HDCP_STATUS_SUCCESS)
-		goto out;
-	memset(display, 0, sizeof(struct mod_hdcp_display));
+	/* हटाओ display */
+	status = mod_hdcp_हटाओ_display_from_topology(hdcp, index);
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
+		जाओ out;
+	स_रखो(display, 0, माप(काष्ठा mod_hdcp_display));
 
 	/* request authentication when connection is not reset */
-	if (current_state(hdcp) != HDCP_UNINITIALIZED)
+	अगर (current_state(hdcp) != HDCP_UNINITIALIZED)
 		callback_in_ms(hdcp->connection.link.adjust.auth_delay * 1000,
 				output);
 out:
-	if (status != MOD_HDCP_STATUS_SUCCESS)
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
 		push_error_status(hdcp, status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-enum mod_hdcp_status mod_hdcp_query_display(struct mod_hdcp *hdcp,
-		uint8_t index, struct mod_hdcp_display_query *query)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
-	struct mod_hdcp_display *display = NULL;
+क्रमागत mod_hdcp_status mod_hdcp_query_display(काष्ठा mod_hdcp *hdcp,
+		uपूर्णांक8_t index, काष्ठा mod_hdcp_display_query *query)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+	काष्ठा mod_hdcp_display *display = शून्य;
 
 	/* find display in connection */
 	display = get_active_display_at_index(hdcp, index);
-	if (!display) {
+	अगर (!display) अणु
 		status = MOD_HDCP_STATUS_DISPLAY_NOT_FOUND;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* populate query */
 	query->link = &hdcp->connection.link;
@@ -412,99 +413,99 @@ enum mod_hdcp_status mod_hdcp_query_display(struct mod_hdcp *hdcp,
 	query->trace = &hdcp->connection.trace;
 	query->encryption_status = MOD_HDCP_ENCRYPTION_STATUS_HDCP_OFF;
 
-	if (is_display_encryption_enabled(display)) {
-		if (is_hdcp1(hdcp)) {
+	अगर (is_display_encryption_enabled(display)) अणु
+		अगर (is_hdcp1(hdcp)) अणु
 			query->encryption_status = MOD_HDCP_ENCRYPTION_STATUS_HDCP1_ON;
-		} else if (is_hdcp2(hdcp)) {
-			if (query->link->adjust.hdcp2.force_type == MOD_HDCP_FORCE_TYPE_0)
+		पूर्ण अन्यथा अगर (is_hdcp2(hdcp)) अणु
+			अगर (query->link->adjust.hdcp2.क्रमce_type == MOD_HDCP_FORCE_TYPE_0)
 				query->encryption_status = MOD_HDCP_ENCRYPTION_STATUS_HDCP2_TYPE0_ON;
-			else if (query->link->adjust.hdcp2.force_type == MOD_HDCP_FORCE_TYPE_1)
+			अन्यथा अगर (query->link->adjust.hdcp2.क्रमce_type == MOD_HDCP_FORCE_TYPE_1)
 				query->encryption_status = MOD_HDCP_ENCRYPTION_STATUS_HDCP2_TYPE1_ON;
-			else
+			अन्यथा
 				query->encryption_status = MOD_HDCP_ENCRYPTION_STATUS_HDCP2_ON;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		query->encryption_status = MOD_HDCP_ENCRYPTION_STATUS_HDCP_OFF;
-	}
+	पूर्ण
 
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-enum mod_hdcp_status mod_hdcp_reset_connection(struct mod_hdcp *hdcp,
-		struct mod_hdcp_output *output)
-{
-	enum mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
+क्रमागत mod_hdcp_status mod_hdcp_reset_connection(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_output *output)
+अणु
+	क्रमागत mod_hdcp_status status = MOD_HDCP_STATUS_SUCCESS;
 
 	HDCP_TOP_INTERFACE_TRACE(hdcp);
 	status = reset_connection(hdcp, output);
-	if (status != MOD_HDCP_STATUS_SUCCESS)
+	अगर (status != MOD_HDCP_STATUS_SUCCESS)
 		push_error_status(hdcp, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-enum mod_hdcp_status mod_hdcp_process_event(struct mod_hdcp *hdcp,
-		enum mod_hdcp_event event, struct mod_hdcp_output *output)
-{
-	enum mod_hdcp_status exec_status, trans_status, reset_status, status;
-	struct mod_hdcp_event_context event_ctx;
+क्रमागत mod_hdcp_status mod_hdcp_process_event(काष्ठा mod_hdcp *hdcp,
+		क्रमागत mod_hdcp_event event, काष्ठा mod_hdcp_output *output)
+अणु
+	क्रमागत mod_hdcp_status exec_status, trans_status, reset_status, status;
+	काष्ठा mod_hdcp_event_context event_ctx;
 
 	HDCP_EVENT_TRACE(hdcp, event);
-	memset(output, 0, sizeof(struct mod_hdcp_output));
-	memset(&event_ctx, 0, sizeof(struct mod_hdcp_event_context));
+	स_रखो(output, 0, माप(काष्ठा mod_hdcp_output));
+	स_रखो(&event_ctx, 0, माप(काष्ठा mod_hdcp_event_context));
 	event_ctx.event = event;
 
 	/* execute and transition */
 	exec_status = execution(hdcp, &event_ctx, &hdcp->auth.trans_input);
 	trans_status = transition(
 			hdcp, &event_ctx, &hdcp->auth.trans_input, output);
-	if (trans_status == MOD_HDCP_STATUS_SUCCESS) {
+	अगर (trans_status == MOD_HDCP_STATUS_SUCCESS) अणु
 		status = MOD_HDCP_STATUS_SUCCESS;
-	} else if (exec_status == MOD_HDCP_STATUS_SUCCESS) {
+	पूर्ण अन्यथा अगर (exec_status == MOD_HDCP_STATUS_SUCCESS) अणु
 		status = MOD_HDCP_STATUS_INTERNAL_POLICY_FAILURE;
 		push_error_status(hdcp, status);
-	} else {
+	पूर्ण अन्यथा अणु
 		status = exec_status;
 		push_error_status(hdcp, status);
-	}
+	पूर्ण
 
-	/* reset authentication if needed */
-	if (trans_status == MOD_HDCP_STATUS_RESET_NEEDED) {
+	/* reset authentication अगर needed */
+	अगर (trans_status == MOD_HDCP_STATUS_RESET_NEEDED) अणु
 		HDCP_FULL_DDC_TRACE(hdcp);
 		reset_status = reset_authentication(hdcp, output);
-		if (reset_status != MOD_HDCP_STATUS_SUCCESS)
+		अगर (reset_status != MOD_HDCP_STATUS_SUCCESS)
 			push_error_status(hdcp, reset_status);
-	}
+	पूर्ण
 
-	/* Clear CP_IRQ status if needed */
-	if (event_ctx.event == MOD_HDCP_EVENT_CPIRQ) {
+	/* Clear CP_IRQ status अगर needed */
+	अगर (event_ctx.event == MOD_HDCP_EVENT_CPIRQ) अणु
 		status = mod_hdcp_clear_cp_irq_status(hdcp);
-		if (status != MOD_HDCP_STATUS_SUCCESS)
+		अगर (status != MOD_HDCP_STATUS_SUCCESS)
 			push_error_status(hdcp, status);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-enum mod_hdcp_operation_mode mod_hdcp_signal_type_to_operation_mode(
-		enum signal_type signal)
-{
-	enum mod_hdcp_operation_mode mode = MOD_HDCP_MODE_OFF;
+क्रमागत mod_hdcp_operation_mode mod_hdcp_संकेत_type_to_operation_mode(
+		क्रमागत संकेत_type संकेत)
+अणु
+	क्रमागत mod_hdcp_operation_mode mode = MOD_HDCP_MODE_OFF;
 
-	switch (signal) {
-	case SIGNAL_TYPE_DVI_SINGLE_LINK:
-	case SIGNAL_TYPE_HDMI_TYPE_A:
+	चयन (संकेत) अणु
+	हाल SIGNAL_TYPE_DVI_SINGLE_LINK:
+	हाल SIGNAL_TYPE_HDMI_TYPE_A:
 		mode = MOD_HDCP_MODE_DEFAULT;
-		break;
-	case SIGNAL_TYPE_EDP:
-	case SIGNAL_TYPE_DISPLAY_PORT:
-	case SIGNAL_TYPE_DISPLAY_PORT_MST:
+		अवरोध;
+	हाल SIGNAL_TYPE_EDP:
+	हाल SIGNAL_TYPE_DISPLAY_PORT:
+	हाल SIGNAL_TYPE_DISPLAY_PORT_MST:
 		mode = MOD_HDCP_MODE_DP;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return mode;
-}
+	वापस mode;
+पूर्ण

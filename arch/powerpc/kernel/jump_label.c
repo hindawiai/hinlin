@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2010 Michael Ellerman, IBM Corp.
  */
 
-#include <linux/kernel.h>
-#include <linux/jump_label.h>
-#include <asm/code-patching.h>
-#include <asm/inst.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jump_label.h>
+#समावेश <यंत्र/code-patching.h>
+#समावेश <यंत्र/inst.h>
 
-void arch_jump_label_transform(struct jump_entry *entry,
-			       enum jump_label_type type)
-{
-	struct ppc_inst *addr = (struct ppc_inst *)jump_entry_code(entry);
+व्योम arch_jump_label_transक्रमm(काष्ठा jump_entry *entry,
+			       क्रमागत jump_label_type type)
+अणु
+	काष्ठा ppc_inst *addr = (काष्ठा ppc_inst *)jump_entry_code(entry);
 
-	if (type == JUMP_LABEL_JMP)
+	अगर (type == JUMP_LABEL_JMP)
 		patch_branch(addr, jump_entry_target(entry), 0);
-	else
-		patch_instruction(addr, ppc_inst(PPC_INST_NOP));
-}
+	अन्यथा
+		patch_inकाष्ठाion(addr, ppc_inst(PPC_INST_NOP));
+पूर्ण

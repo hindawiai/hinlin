@@ -1,64 +1,65 @@
-#ifndef __NOUVEAU_SVM_H__
-#define __NOUVEAU_SVM_H__
-#include <nvif/os.h>
-#include <linux/mmu_notifier.h>
-struct drm_device;
-struct drm_file;
-struct nouveau_drm;
+<शैली गुरु>
+#अगर_अघोषित __NOUVEAU_SVM_H__
+#घोषणा __NOUVEAU_SVM_H__
+#समावेश <nvअगर/os.h>
+#समावेश <linux/mmu_notअगरier.h>
+काष्ठा drm_device;
+काष्ठा drm_file;
+काष्ठा nouveau_drm;
 
-struct nouveau_svmm {
-	struct mmu_notifier notifier;
-	struct nouveau_vmm *vmm;
-	struct {
-		unsigned long start;
-		unsigned long limit;
-	} unmanaged;
+काष्ठा nouveau_svmm अणु
+	काष्ठा mmu_notअगरier notअगरier;
+	काष्ठा nouveau_vmm *vmm;
+	काष्ठा अणु
+		अचिन्हित दीर्घ start;
+		अचिन्हित दीर्घ limit;
+	पूर्ण unmanaged;
 
-	struct mutex mutex;
-};
+	काष्ठा mutex mutex;
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM)
-void nouveau_svm_init(struct nouveau_drm *);
-void nouveau_svm_fini(struct nouveau_drm *);
-void nouveau_svm_suspend(struct nouveau_drm *);
-void nouveau_svm_resume(struct nouveau_drm *);
+#अगर IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM)
+व्योम nouveau_svm_init(काष्ठा nouveau_drm *);
+व्योम nouveau_svm_fini(काष्ठा nouveau_drm *);
+व्योम nouveau_svm_suspend(काष्ठा nouveau_drm *);
+व्योम nouveau_svm_resume(काष्ठा nouveau_drm *);
 
-int nouveau_svmm_init(struct drm_device *, void *, struct drm_file *);
-void nouveau_svmm_fini(struct nouveau_svmm **);
-int nouveau_svmm_join(struct nouveau_svmm *, u64 inst);
-void nouveau_svmm_part(struct nouveau_svmm *, u64 inst);
-int nouveau_svmm_bind(struct drm_device *, void *, struct drm_file *);
+पूर्णांक nouveau_svmm_init(काष्ठा drm_device *, व्योम *, काष्ठा drm_file *);
+व्योम nouveau_svmm_fini(काष्ठा nouveau_svmm **);
+पूर्णांक nouveau_svmm_join(काष्ठा nouveau_svmm *, u64 inst);
+व्योम nouveau_svmm_part(काष्ठा nouveau_svmm *, u64 inst);
+पूर्णांक nouveau_svmm_bind(काष्ठा drm_device *, व्योम *, काष्ठा drm_file *);
 
-void nouveau_svmm_invalidate(struct nouveau_svmm *svmm, u64 start, u64 limit);
-u64 *nouveau_pfns_alloc(unsigned long npages);
-void nouveau_pfns_free(u64 *pfns);
-void nouveau_pfns_map(struct nouveau_svmm *svmm, struct mm_struct *mm,
-		      unsigned long addr, u64 *pfns, unsigned long npages);
-#else /* IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM) */
-static inline void nouveau_svm_init(struct nouveau_drm *drm) {}
-static inline void nouveau_svm_fini(struct nouveau_drm *drm) {}
-static inline void nouveau_svm_suspend(struct nouveau_drm *drm) {}
-static inline void nouveau_svm_resume(struct nouveau_drm *drm) {}
+व्योम nouveau_svmm_invalidate(काष्ठा nouveau_svmm *svmm, u64 start, u64 limit);
+u64 *nouveau_pfns_alloc(अचिन्हित दीर्घ npages);
+व्योम nouveau_pfns_मुक्त(u64 *pfns);
+व्योम nouveau_pfns_map(काष्ठा nouveau_svmm *svmm, काष्ठा mm_काष्ठा *mm,
+		      अचिन्हित दीर्घ addr, u64 *pfns, अचिन्हित दीर्घ npages);
+#अन्यथा /* IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM) */
+अटल अंतरभूत व्योम nouveau_svm_init(काष्ठा nouveau_drm *drm) अणुपूर्ण
+अटल अंतरभूत व्योम nouveau_svm_fini(काष्ठा nouveau_drm *drm) अणुपूर्ण
+अटल अंतरभूत व्योम nouveau_svm_suspend(काष्ठा nouveau_drm *drm) अणुपूर्ण
+अटल अंतरभूत व्योम nouveau_svm_resume(काष्ठा nouveau_drm *drm) अणुपूर्ण
 
-static inline int nouveau_svmm_init(struct drm_device *device, void *p,
-				    struct drm_file *file)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक nouveau_svmm_init(काष्ठा drm_device *device, व्योम *p,
+				    काष्ठा drm_file *file)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline void nouveau_svmm_fini(struct nouveau_svmm **svmmp) {}
+अटल अंतरभूत व्योम nouveau_svmm_fini(काष्ठा nouveau_svmm **svmmp) अणुपूर्ण
 
-static inline int nouveau_svmm_join(struct nouveau_svmm *svmm, u64 inst)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक nouveau_svmm_join(काष्ठा nouveau_svmm *svmm, u64 inst)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void nouveau_svmm_part(struct nouveau_svmm *svmm, u64 inst) {}
+अटल अंतरभूत व्योम nouveau_svmm_part(काष्ठा nouveau_svmm *svmm, u64 inst) अणुपूर्ण
 
-static inline int nouveau_svmm_bind(struct drm_device *device, void *p,
-				    struct drm_file *file)
-{
-	return -ENOSYS;
-}
-#endif /* IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM) */
-#endif
+अटल अंतरभूत पूर्णांक nouveau_svmm_bind(काष्ठा drm_device *device, व्योम *p,
+				    काष्ठा drm_file *file)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_DRM_NOUVEAU_SVM) */
+#पूर्ण_अगर

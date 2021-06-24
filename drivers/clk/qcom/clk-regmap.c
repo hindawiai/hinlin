@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/device.h>
-#include <linux/clk-provider.h>
-#include <linux/regmap.h>
-#include <linux/export.h>
+#समावेश <linux/device.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/export.h>
 
-#include "clk-regmap.h"
+#समावेश "clk-regmap.h"
 
 /**
- * clk_is_enabled_regmap - standard is_enabled() for regmap users
+ * clk_is_enabled_regmap - standard is_enabled() क्रम regmap users
  *
  * @hw: clk to operate on
  *
- * Clocks that use regmap for their register I/O can set the
- * enable_reg and enable_mask fields in their struct clk_regmap and then use
+ * Clocks that use regmap क्रम their रेजिस्टर I/O can set the
+ * enable_reg and enable_mask fields in their काष्ठा clk_regmap and then use
  * this as their is_enabled operation, saving some code.
  */
-int clk_is_enabled_regmap(struct clk_hw *hw)
-{
-	struct clk_regmap *rclk = to_clk_regmap(hw);
-	unsigned int val;
-	int ret;
+पूर्णांक clk_is_enabled_regmap(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap *rclk = to_clk_regmap(hw);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(rclk->regmap, rclk->enable_reg, &val);
-	if (ret != 0)
-		return ret;
+	ret = regmap_पढ़ो(rclk->regmap, rclk->enable_reg, &val);
+	अगर (ret != 0)
+		वापस ret;
 
-	if (rclk->enable_is_inverted)
-		return (val & rclk->enable_mask) == 0;
-	else
-		return (val & rclk->enable_mask) != 0;
-}
+	अगर (rclk->enable_is_inverted)
+		वापस (val & rclk->enable_mask) == 0;
+	अन्यथा
+		वापस (val & rclk->enable_mask) != 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_is_enabled_regmap);
 
 /**
- * clk_enable_regmap - standard enable() for regmap users
+ * clk_enable_regmap - standard enable() क्रम regmap users
  *
  * @hw: clk to operate on
  *
- * Clocks that use regmap for their register I/O can set the
- * enable_reg and enable_mask fields in their struct clk_regmap and then use
+ * Clocks that use regmap क्रम their रेजिस्टर I/O can set the
+ * enable_reg and enable_mask fields in their काष्ठा clk_regmap and then use
  * this as their enable() operation, saving some code.
  */
-int clk_enable_regmap(struct clk_hw *hw)
-{
-	struct clk_regmap *rclk = to_clk_regmap(hw);
-	unsigned int val;
+पूर्णांक clk_enable_regmap(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap *rclk = to_clk_regmap(hw);
+	अचिन्हित पूर्णांक val;
 
-	if (rclk->enable_is_inverted)
+	अगर (rclk->enable_is_inverted)
 		val = 0;
-	else
+	अन्यथा
 		val = rclk->enable_mask;
 
-	return regmap_update_bits(rclk->regmap, rclk->enable_reg,
+	वापस regmap_update_bits(rclk->regmap, rclk->enable_reg,
 				  rclk->enable_mask, val);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_enable_regmap);
 
 /**
- * clk_disable_regmap - standard disable() for regmap users
+ * clk_disable_regmap - standard disable() क्रम regmap users
  *
  * @hw: clk to operate on
  *
- * Clocks that use regmap for their register I/O can set the
- * enable_reg and enable_mask fields in their struct clk_regmap and then use
+ * Clocks that use regmap क्रम their रेजिस्टर I/O can set the
+ * enable_reg and enable_mask fields in their काष्ठा clk_regmap and then use
  * this as their disable() operation, saving some code.
  */
-void clk_disable_regmap(struct clk_hw *hw)
-{
-	struct clk_regmap *rclk = to_clk_regmap(hw);
-	unsigned int val;
+व्योम clk_disable_regmap(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap *rclk = to_clk_regmap(hw);
+	अचिन्हित पूर्णांक val;
 
-	if (rclk->enable_is_inverted)
+	अगर (rclk->enable_is_inverted)
 		val = rclk->enable_mask;
-	else
+	अन्यथा
 		val = 0;
 
 	regmap_update_bits(rclk->regmap, rclk->enable_reg, rclk->enable_mask,
 			   val);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_disable_regmap);
 
 /**
- * devm_clk_register_regmap - register a clk_regmap clock
+ * devm_clk_रेजिस्टर_regmap - रेजिस्टर a clk_regmap घड़ी
  *
  * @dev: reference to the caller's device
  * @rclk: clk to operate on
  *
- * Clocks that use regmap for their register I/O should register their
- * clk_regmap struct via this function so that the regmap is initialized
- * and so that the clock is registered with the common clock framework.
+ * Clocks that use regmap क्रम their रेजिस्टर I/O should रेजिस्टर their
+ * clk_regmap काष्ठा via this function so that the regmap is initialized
+ * and so that the घड़ी is रेजिस्टरed with the common घड़ी framework.
  */
-int devm_clk_register_regmap(struct device *dev, struct clk_regmap *rclk)
-{
-	if (dev && dev_get_regmap(dev, NULL))
-		rclk->regmap = dev_get_regmap(dev, NULL);
-	else if (dev && dev->parent)
-		rclk->regmap = dev_get_regmap(dev->parent, NULL);
+पूर्णांक devm_clk_रेजिस्टर_regmap(काष्ठा device *dev, काष्ठा clk_regmap *rclk)
+अणु
+	अगर (dev && dev_get_regmap(dev, शून्य))
+		rclk->regmap = dev_get_regmap(dev, शून्य);
+	अन्यथा अगर (dev && dev->parent)
+		rclk->regmap = dev_get_regmap(dev->parent, शून्य);
 
-	return devm_clk_hw_register(dev, &rclk->hw);
-}
-EXPORT_SYMBOL_GPL(devm_clk_register_regmap);
+	वापस devm_clk_hw_रेजिस्टर(dev, &rclk->hw);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_clk_रेजिस्टर_regmap);

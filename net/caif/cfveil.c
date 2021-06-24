@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#include <linux/stddef.h>
-#include <linux/slab.h>
-#include <net/caif/caif_layer.h>
-#include <net/caif/cfsrvl.h>
-#include <net/caif/cfpkt.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/slab.h>
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/cfsrvl.h>
+#समावेश <net/caअगर/cfpkt.h>
 
-#define VEI_PAYLOAD  0x00
-#define VEI_CMD_BIT  0x80
-#define VEI_FLOW_OFF 0x81
-#define VEI_FLOW_ON  0x80
-#define VEI_SET_PIN  0x82
+#घोषणा VEI_PAYLOAD  0x00
+#घोषणा VEI_CMD_BIT  0x80
+#घोषणा VEI_FLOW_OFF 0x81
+#घोषणा VEI_FLOW_ON  0x80
+#घोषणा VEI_SET_PIN  0x82
 
-#define container_obj(layr) container_of(layr, struct cfsrvl, layer)
+#घोषणा container_obj(layr) container_of(layr, काष्ठा cfsrvl, layer)
 
-static int cfvei_receive(struct cflayer *layr, struct cfpkt *pkt);
-static int cfvei_transmit(struct cflayer *layr, struct cfpkt *pkt);
+अटल पूर्णांक cfvei_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
+अटल पूर्णांक cfvei_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
 
-struct cflayer *cfvei_create(u8 channel_id, struct dev_info *dev_info)
-{
-	struct cfsrvl *vei = kzalloc(sizeof(struct cfsrvl), GFP_ATOMIC);
-	if (!vei)
-		return NULL;
-	caif_assert(offsetof(struct cfsrvl, layer) == 0);
+काष्ठा cflayer *cfvei_create(u8 channel_id, काष्ठा dev_info *dev_info)
+अणु
+	काष्ठा cfsrvl *vei = kzalloc(माप(काष्ठा cfsrvl), GFP_ATOMIC);
+	अगर (!vei)
+		वापस शून्य;
+	caअगर_निश्चित(दुरत्व(काष्ठा cfsrvl, layer) == 0);
 	cfsrvl_init(vei, channel_id, dev_info, true);
 	vei->layer.receive = cfvei_receive;
 	vei->layer.transmit = cfvei_transmit;
-	snprintf(vei->layer.name, CAIF_LAYER_NAME_SZ, "vei%d", channel_id);
-	return &vei->layer;
-}
+	snम_लिखो(vei->layer.name, CAIF_LAYER_NAME_SZ, "vei%d", channel_id);
+	वापस &vei->layer;
+पूर्ण
 
-static int cfvei_receive(struct cflayer *layr, struct cfpkt *pkt)
-{
+अटल पूर्णांक cfvei_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
+अणु
 	u8 cmd;
-	int ret;
-	caif_assert(layr->up != NULL);
-	caif_assert(layr->receive != NULL);
-	caif_assert(layr->ctrlcmd != NULL);
+	पूर्णांक ret;
+	caअगर_निश्चित(layr->up != शून्य);
+	caअगर_निश्चित(layr->receive != शून्य);
+	caअगर_निश्चित(layr->ctrlcmd != शून्य);
 
 
-	if (cfpkt_extr_head(pkt, &cmd, 1) < 0) {
+	अगर (cfpkt_extr_head(pkt, &cmd, 1) < 0) अणु
 		pr_err("Packet is erroneous!\n");
 		cfpkt_destroy(pkt);
-		return -EPROTO;
-	}
-	switch (cmd) {
-	case VEI_PAYLOAD:
+		वापस -EPROTO;
+	पूर्ण
+	चयन (cmd) अणु
+	हाल VEI_PAYLOAD:
 		ret = layr->up->receive(layr->up, pkt);
-		return ret;
-	case VEI_FLOW_OFF:
+		वापस ret;
+	हाल VEI_FLOW_OFF:
 		layr->ctrlcmd(layr, CAIF_CTRLCMD_FLOW_OFF_IND, 0);
 		cfpkt_destroy(pkt);
-		return 0;
-	case VEI_FLOW_ON:
+		वापस 0;
+	हाल VEI_FLOW_ON:
 		layr->ctrlcmd(layr, CAIF_CTRLCMD_FLOW_ON_IND, 0);
 		cfpkt_destroy(pkt);
-		return 0;
-	case VEI_SET_PIN:	/* SET RS232 PIN */
+		वापस 0;
+	हाल VEI_SET_PIN:	/* SET RS232 PIN */
 		cfpkt_destroy(pkt);
-		return 0;
-	default:		/* SET RS232 PIN */
+		वापस 0;
+	शेष:		/* SET RS232 PIN */
 		pr_warn("Unknown VEI control packet %d (0x%x)!\n", cmd, cmd);
 		cfpkt_destroy(pkt);
-		return -EPROTO;
-	}
-}
+		वापस -EPROTO;
+	पूर्ण
+पूर्ण
 
-static int cfvei_transmit(struct cflayer *layr, struct cfpkt *pkt)
-{
-	u8 tmp = 0;
-	struct caif_payload_info *info;
-	int ret;
-	struct cfsrvl *service = container_obj(layr);
-	if (!cfsrvl_ready(service, &ret))
-		goto err;
-	caif_assert(layr->dn != NULL);
-	caif_assert(layr->dn->transmit != NULL);
+अटल पूर्णांक cfvei_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
+अणु
+	u8 पंचांगp = 0;
+	काष्ठा caअगर_payload_info *info;
+	पूर्णांक ret;
+	काष्ठा cfsrvl *service = container_obj(layr);
+	अगर (!cfsrvl_पढ़ोy(service, &ret))
+		जाओ err;
+	caअगर_निश्चित(layr->dn != शून्य);
+	caअगर_निश्चित(layr->dn->transmit != शून्य);
 
-	if (cfpkt_add_head(pkt, &tmp, 1) < 0) {
+	अगर (cfpkt_add_head(pkt, &पंचांगp, 1) < 0) अणु
 		pr_err("Packet is erroneous!\n");
 		ret = -EPROTO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* Add info-> for MUX-layer to route the packet out. */
+	/* Add info-> क्रम MUX-layer to route the packet out. */
 	info = cfpkt_info(pkt);
 	info->channel_id = service->layer.id;
 	info->hdr_len = 1;
 	info->dev_info = &service->dev_info;
-	return layr->dn->transmit(layr->dn, pkt);
+	वापस layr->dn->transmit(layr->dn, pkt);
 err:
 	cfpkt_destroy(pkt);
-	return ret;
-}
+	वापस ret;
+पूर्ण

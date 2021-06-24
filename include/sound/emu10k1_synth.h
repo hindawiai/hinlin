@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __EMU10K1_SYNTH_H
-#define __EMU10K1_SYNTH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __EMU10K1_SYNTH_H
+#घोषणा __EMU10K1_SYNTH_H
 /*
- *  Defines for the Emu10k1 WaveTable synth
+ *  Defines क्रम the Emu10k1 WaveTable synth
  *
  *  Copyright (C) 2000 Takashi Iwai <tiwai@suse.de>
  */
 
-#include <sound/emu10k1.h>
-#include <sound/emux_synth.h>
+#समावेश <sound/emu10k1.h>
+#समावेश <sound/emux_synth.h>
 
 /* sequencer device id */
-#define SNDRV_SEQ_DEV_ID_EMU10K1_SYNTH	"emu10k1-synth"
+#घोषणा SNDRV_SEQ_DEV_ID_EMU10K1_SYNTH	"emu10k1-synth"
 
-/* argument for snd_seq_device_new */
-struct snd_emu10k1_synth_arg {
-	struct snd_emu10k1 *hwptr;	/* chip */
-	int index;		/* sequencer client index */
-	int seq_ports;		/* number of sequencer ports to be created */
-	int max_voices;		/* maximum number of voices for wavetable */
-};
+/* argument क्रम snd_seq_device_new */
+काष्ठा snd_emu10k1_synth_arg अणु
+	काष्ठा snd_emu10k1 *hwptr;	/* chip */
+	पूर्णांक index;		/* sequencer client index */
+	पूर्णांक seq_ports;		/* number of sequencer ports to be created */
+	पूर्णांक max_voices;		/* maximum number of voices क्रम wavetable */
+पूर्ण;
 
-#define EMU10K1_MAX_MEMSIZE	(32 * 1024 * 1024) /* 32MB */
+#घोषणा EMU10K1_MAX_MEMSIZE	(32 * 1024 * 1024) /* 32MB */
 
-#endif
+#पूर्ण_अगर

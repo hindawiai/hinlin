@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  arch/arm/kernel/sys_oabi-compat.c
  *
- *  Compatibility wrappers for syscalls that are used from
+ *  Compatibility wrappers क्रम syscalls that are used from
  *  old ABI user space binaries with an EABI kernel.
  *
  *  Author:	Nicolas Pitre
@@ -11,51 +12,51 @@
  */
 
 /*
- * The legacy ABI and the new ARM EABI have different rules making some
- * syscalls incompatible especially with structure arguments.
+ * The legacy ABI and the new ARM EABI have dअगरferent rules making some
+ * syscalls incompatible especially with काष्ठाure arguments.
  * Most notably, Eabi says 64-bit members should be 64-bit aligned instead of
- * simply word aligned.  EABI also pads structures to the size of the largest
+ * simply word aligned.  EABI also pads काष्ठाures to the size of the largest
  * member it contains instead of the invariant 32-bit.
  *
  * The following syscalls are affected:
  *
  * sys_stat64:
  * sys_lstat64:
- * sys_fstat64:
- * sys_fstatat64:
+ * sys_ख_स्थिति64:
+ * sys_ख_स्थितिat64:
  *
- *   struct stat64 has different sizes and some members are shifted
- *   Compatibility wrappers are needed for them and provided below.
+ *   काष्ठा stat64 has dअगरferent sizes and some members are shअगरted
+ *   Compatibility wrappers are needed क्रम them and provided below.
  *
  * sys_fcntl64:
  *
- *   struct flock64 has different sizes and some members are shifted
+ *   काष्ठा flock64 has dअगरferent sizes and some members are shअगरted
  *   A compatibility wrapper is needed and provided below.
  *
  * sys_statfs64:
- * sys_fstatfs64:
+ * sys_ख_स्थितिfs64:
  *
- *   struct statfs64 has extra padding with EABI growing its size from
- *   84 to 88.  This struct is now __attribute__((packed,aligned(4)))
- *   with a small assembly wrapper to force the sz argument to 84 if it is 88
- *   to avoid copying the extra padding over user space unexpecting it.
+ *   काष्ठा statfs64 has extra padding with EABI growing its size from
+ *   84 to 88.  This काष्ठा is now __attribute__((packed,aligned(4)))
+ *   with a small assembly wrapper to क्रमce the sz argument to 84 अगर it is 88
+ *   to aव्योम copying the extra padding over user space unexpecting it.
  *
  * sys_newuname:
  *
- *   struct new_utsname has no padding with EABI.  No problem there.
+ *   काष्ठा new_utsname has no padding with EABI.  No problem there.
  *
  * sys_epoll_ctl:
- * sys_epoll_wait:
+ * sys_epoll_रुको:
  *
- *   struct epoll_event has its second member shifted also affecting the
- *   structure size. Compatibility wrappers are needed and provided below.
+ *   काष्ठा epoll_event has its second member shअगरted also affecting the
+ *   काष्ठाure size. Compatibility wrappers are needed and provided below.
  *
  * sys_ipc:
  * sys_semop:
- * sys_semtimedop:
+ * sys_semसमयकरोp:
  *
- *   struct sembuf loses its padding with EABI.  Since arrays of them are
- *   used they have to be copyed to remove the padding. Compatibility wrappers
+ *   काष्ठा sembuf loses its padding with EABI.  Since arrays of them are
+ *   used they have to be copyed to हटाओ the padding. Compatibility wrappers
  *   provided below.
  *
  * sys_bind:
@@ -64,144 +65,144 @@
  * sys_sendto:
  * sys_socketcall:
  *
- *   struct sockaddr_un loses its padding with EABI.  Since the size of the
- *   structure is used as a validation test in unix_mkname(), we need to
+ *   काष्ठा sockaddr_un loses its padding with EABI.  Since the size of the
+ *   काष्ठाure is used as a validation test in unix_mkname(), we need to
  *   change the length argument to 110 whenever it is 112.  Compatibility
  *   wrappers provided below.
  */
 
-#include <linux/syscalls.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/cred.h>
-#include <linux/fcntl.h>
-#include <linux/eventpoll.h>
-#include <linux/sem.h>
-#include <linux/socket.h>
-#include <linux/net.h>
-#include <linux/ipc.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/eventpoll.h>
+#समावेश <linux/sem.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/net.h>
+#समावेश <linux/ipc.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
 
-struct oldabi_stat64 {
-	unsigned long long st_dev;
-	unsigned int	__pad1;
-	unsigned long	__st_ino;
-	unsigned int	st_mode;
-	unsigned int	st_nlink;
+काष्ठा oldabi_stat64 अणु
+	अचिन्हित दीर्घ दीर्घ st_dev;
+	अचिन्हित पूर्णांक	__pad1;
+	अचिन्हित दीर्घ	__st_ino;
+	अचिन्हित पूर्णांक	st_mode;
+	अचिन्हित पूर्णांक	st_nlink;
 
-	unsigned long	st_uid;
-	unsigned long	st_gid;
+	अचिन्हित दीर्घ	st_uid;
+	अचिन्हित दीर्घ	st_gid;
 
-	unsigned long long st_rdev;
-	unsigned int	__pad2;
+	अचिन्हित दीर्घ दीर्घ st_rdev;
+	अचिन्हित पूर्णांक	__pad2;
 
-	long long	st_size;
-	unsigned long	st_blksize;
-	unsigned long long st_blocks;
+	दीर्घ दीर्घ	st_size;
+	अचिन्हित दीर्घ	st_blksize;
+	अचिन्हित दीर्घ दीर्घ st_blocks;
 
-	unsigned long	st_atime;
-	unsigned long	st_atime_nsec;
+	अचिन्हित दीर्घ	st_aसमय;
+	अचिन्हित दीर्घ	st_aसमय_nsec;
 
-	unsigned long	st_mtime;
-	unsigned long	st_mtime_nsec;
+	अचिन्हित दीर्घ	st_mसमय;
+	अचिन्हित दीर्घ	st_mसमय_nsec;
 
-	unsigned long	st_ctime;
-	unsigned long	st_ctime_nsec;
+	अचिन्हित दीर्घ	st_स_समय;
+	अचिन्हित दीर्घ	st_स_समय_nsec;
 
-	unsigned long long st_ino;
-} __attribute__ ((packed,aligned(4)));
+	अचिन्हित दीर्घ दीर्घ st_ino;
+पूर्ण __attribute__ ((packed,aligned(4)));
 
-static long cp_oldabi_stat64(struct kstat *stat,
-			     struct oldabi_stat64 __user *statbuf)
-{
-	struct oldabi_stat64 tmp;
+अटल दीर्घ cp_oldabi_stat64(काष्ठा kstat *stat,
+			     काष्ठा oldabi_stat64 __user *statbuf)
+अणु
+	काष्ठा oldabi_stat64 पंचांगp;
 
-	tmp.st_dev = huge_encode_dev(stat->dev);
-	tmp.__pad1 = 0;
-	tmp.__st_ino = stat->ino;
-	tmp.st_mode = stat->mode;
-	tmp.st_nlink = stat->nlink;
-	tmp.st_uid = from_kuid_munged(current_user_ns(), stat->uid);
-	tmp.st_gid = from_kgid_munged(current_user_ns(), stat->gid);
-	tmp.st_rdev = huge_encode_dev(stat->rdev);
-	tmp.st_size = stat->size;
-	tmp.st_blocks = stat->blocks;
-	tmp.__pad2 = 0;
-	tmp.st_blksize = stat->blksize;
-	tmp.st_atime = stat->atime.tv_sec;
-	tmp.st_atime_nsec = stat->atime.tv_nsec;
-	tmp.st_mtime = stat->mtime.tv_sec;
-	tmp.st_mtime_nsec = stat->mtime.tv_nsec;
-	tmp.st_ctime = stat->ctime.tv_sec;
-	tmp.st_ctime_nsec = stat->ctime.tv_nsec;
-	tmp.st_ino = stat->ino;
-	return copy_to_user(statbuf,&tmp,sizeof(tmp)) ? -EFAULT : 0;
-}
+	पंचांगp.st_dev = huge_encode_dev(stat->dev);
+	पंचांगp.__pad1 = 0;
+	पंचांगp.__st_ino = stat->ino;
+	पंचांगp.st_mode = stat->mode;
+	पंचांगp.st_nlink = stat->nlink;
+	पंचांगp.st_uid = from_kuid_munged(current_user_ns(), stat->uid);
+	पंचांगp.st_gid = from_kgid_munged(current_user_ns(), stat->gid);
+	पंचांगp.st_rdev = huge_encode_dev(stat->rdev);
+	पंचांगp.st_size = stat->size;
+	पंचांगp.st_blocks = stat->blocks;
+	पंचांगp.__pad2 = 0;
+	पंचांगp.st_blksize = stat->blksize;
+	पंचांगp.st_aसमय = stat->aसमय.tv_sec;
+	पंचांगp.st_aसमय_nsec = stat->aसमय.tv_nsec;
+	पंचांगp.st_mसमय = stat->mसमय.tv_sec;
+	पंचांगp.st_mसमय_nsec = stat->mसमय.tv_nsec;
+	पंचांगp.st_स_समय = stat->स_समय.tv_sec;
+	पंचांगp.st_स_समय_nsec = stat->स_समय.tv_nsec;
+	पंचांगp.st_ino = stat->ino;
+	वापस copy_to_user(statbuf,&पंचांगp,माप(पंचांगp)) ? -EFAULT : 0;
+पूर्ण
 
-asmlinkage long sys_oabi_stat64(const char __user * filename,
-				struct oldabi_stat64 __user * statbuf)
-{
-	struct kstat stat;
-	int error = vfs_stat(filename, &stat);
-	if (!error)
+यंत्रlinkage दीर्घ sys_oabi_stat64(स्थिर अक्षर __user * filename,
+				काष्ठा oldabi_stat64 __user * statbuf)
+अणु
+	काष्ठा kstat stat;
+	पूर्णांक error = vfs_stat(filename, &stat);
+	अगर (!error)
 		error = cp_oldabi_stat64(&stat, statbuf);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-asmlinkage long sys_oabi_lstat64(const char __user * filename,
-				 struct oldabi_stat64 __user * statbuf)
-{
-	struct kstat stat;
-	int error = vfs_lstat(filename, &stat);
-	if (!error)
+यंत्रlinkage दीर्घ sys_oabi_lstat64(स्थिर अक्षर __user * filename,
+				 काष्ठा oldabi_stat64 __user * statbuf)
+अणु
+	काष्ठा kstat stat;
+	पूर्णांक error = vfs_lstat(filename, &stat);
+	अगर (!error)
 		error = cp_oldabi_stat64(&stat, statbuf);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-asmlinkage long sys_oabi_fstat64(unsigned long fd,
-				 struct oldabi_stat64 __user * statbuf)
-{
-	struct kstat stat;
-	int error = vfs_fstat(fd, &stat);
-	if (!error)
+यंत्रlinkage दीर्घ sys_oabi_ख_स्थिति64(अचिन्हित दीर्घ fd,
+				 काष्ठा oldabi_stat64 __user * statbuf)
+अणु
+	काष्ठा kstat stat;
+	पूर्णांक error = vfs_ख_स्थिति(fd, &stat);
+	अगर (!error)
 		error = cp_oldabi_stat64(&stat, statbuf);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-asmlinkage long sys_oabi_fstatat64(int dfd,
-				   const char __user *filename,
-				   struct oldabi_stat64  __user *statbuf,
-				   int flag)
-{
-	struct kstat stat;
-	int error;
+यंत्रlinkage दीर्घ sys_oabi_ख_स्थितिat64(पूर्णांक dfd,
+				   स्थिर अक्षर __user *filename,
+				   काष्ठा oldabi_stat64  __user *statbuf,
+				   पूर्णांक flag)
+अणु
+	काष्ठा kstat stat;
+	पूर्णांक error;
 
-	error = vfs_fstatat(dfd, filename, &stat, flag);
-	if (error)
-		return error;
-	return cp_oldabi_stat64(&stat, statbuf);
-}
+	error = vfs_ख_स्थितिat(dfd, filename, &stat, flag);
+	अगर (error)
+		वापस error;
+	वापस cp_oldabi_stat64(&stat, statbuf);
+पूर्ण
 
-struct oabi_flock64 {
-	short	l_type;
-	short	l_whence;
+काष्ठा oabi_flock64 अणु
+	लघु	l_type;
+	लघु	l_whence;
 	loff_t	l_start;
 	loff_t	l_len;
 	pid_t	l_pid;
-} __attribute__ ((packed,aligned(4)));
+पूर्ण __attribute__ ((packed,aligned(4)));
 
-static long do_locks(unsigned int fd, unsigned int cmd,
-				 unsigned long arg)
-{
-	struct flock64 kernel;
-	struct oabi_flock64 user;
+अटल दीर्घ करो_locks(अचिन्हित पूर्णांक fd, अचिन्हित पूर्णांक cmd,
+				 अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा flock64 kernel;
+	काष्ठा oabi_flock64 user;
 	mm_segment_t fs;
-	long ret;
+	दीर्घ ret;
 
-	if (copy_from_user(&user, (struct oabi_flock64 __user *)arg,
-			   sizeof(user)))
-		return -EFAULT;
+	अगर (copy_from_user(&user, (काष्ठा oabi_flock64 __user *)arg,
+			   माप(user)))
+		वापस -EFAULT;
 	kernel.l_type	= user.l_type;
 	kernel.l_whence	= user.l_whence;
 	kernel.l_start	= user.l_start;
@@ -210,268 +211,268 @@ static long do_locks(unsigned int fd, unsigned int cmd,
 
 	fs = get_fs();
 	set_fs(KERNEL_DS);
-	ret = sys_fcntl64(fd, cmd, (unsigned long)&kernel);
+	ret = sys_fcntl64(fd, cmd, (अचिन्हित दीर्घ)&kernel);
 	set_fs(fs);
 
-	if (!ret && (cmd == F_GETLK64 || cmd == F_OFD_GETLK)) {
+	अगर (!ret && (cmd == F_GETLK64 || cmd == F_OFD_GETLK)) अणु
 		user.l_type	= kernel.l_type;
 		user.l_whence	= kernel.l_whence;
 		user.l_start	= kernel.l_start;
 		user.l_len	= kernel.l_len;
 		user.l_pid	= kernel.l_pid;
-		if (copy_to_user((struct oabi_flock64 __user *)arg,
-				 &user, sizeof(user)))
+		अगर (copy_to_user((काष्ठा oabi_flock64 __user *)arg,
+				 &user, माप(user)))
 			ret = -EFAULT;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-asmlinkage long sys_oabi_fcntl64(unsigned int fd, unsigned int cmd,
-				 unsigned long arg)
-{
-	switch (cmd) {
-	case F_OFD_GETLK:
-	case F_OFD_SETLK:
-	case F_OFD_SETLKW:
-	case F_GETLK64:
-	case F_SETLK64:
-	case F_SETLKW64:
-		return do_locks(fd, cmd, arg);
+यंत्रlinkage दीर्घ sys_oabi_fcntl64(अचिन्हित पूर्णांक fd, अचिन्हित पूर्णांक cmd,
+				 अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल F_OFD_GETLK:
+	हाल F_OFD_SETLK:
+	हाल F_OFD_SETLKW:
+	हाल F_GETLK64:
+	हाल F_SETLK64:
+	हाल F_SETLKW64:
+		वापस करो_locks(fd, cmd, arg);
 
-	default:
-		return sys_fcntl64(fd, cmd, arg);
-	}
-}
+	शेष:
+		वापस sys_fcntl64(fd, cmd, arg);
+	पूर्ण
+पूर्ण
 
-struct oabi_epoll_event {
+काष्ठा oabi_epoll_event अणु
 	__u32 events;
 	__u64 data;
-} __attribute__ ((packed,aligned(4)));
+पूर्ण __attribute__ ((packed,aligned(4)));
 
-#ifdef CONFIG_EPOLL
-asmlinkage long sys_oabi_epoll_ctl(int epfd, int op, int fd,
-				   struct oabi_epoll_event __user *event)
-{
-	struct oabi_epoll_event user;
-	struct epoll_event kernel;
+#अगर_घोषित CONFIG_EPOLL
+यंत्रlinkage दीर्घ sys_oabi_epoll_ctl(पूर्णांक epfd, पूर्णांक op, पूर्णांक fd,
+				   काष्ठा oabi_epoll_event __user *event)
+अणु
+	काष्ठा oabi_epoll_event user;
+	काष्ठा epoll_event kernel;
 
-	if (ep_op_has_event(op) &&
-	    copy_from_user(&user, event, sizeof(user)))
-		return -EFAULT;
+	अगर (ep_op_has_event(op) &&
+	    copy_from_user(&user, event, माप(user)))
+		वापस -EFAULT;
 
 	kernel.events = user.events;
 	kernel.data   = user.data;
 
-	return do_epoll_ctl(epfd, op, fd, &kernel, false);
-}
+	वापस करो_epoll_ctl(epfd, op, fd, &kernel, false);
+पूर्ण
 
-asmlinkage long sys_oabi_epoll_wait(int epfd,
-				    struct oabi_epoll_event __user *events,
-				    int maxevents, int timeout)
-{
-	struct epoll_event *kbuf;
-	struct oabi_epoll_event e;
+यंत्रlinkage दीर्घ sys_oabi_epoll_रुको(पूर्णांक epfd,
+				    काष्ठा oabi_epoll_event __user *events,
+				    पूर्णांक maxevents, पूर्णांक समयout)
+अणु
+	काष्ठा epoll_event *kbuf;
+	काष्ठा oabi_epoll_event e;
 	mm_segment_t fs;
-	long ret, err, i;
+	दीर्घ ret, err, i;
 
-	if (maxevents <= 0 ||
-			maxevents > (INT_MAX/sizeof(*kbuf)) ||
-			maxevents > (INT_MAX/sizeof(*events)))
-		return -EINVAL;
-	if (!access_ok(events, sizeof(*events) * maxevents))
-		return -EFAULT;
-	kbuf = kmalloc_array(maxevents, sizeof(*kbuf), GFP_KERNEL);
-	if (!kbuf)
-		return -ENOMEM;
+	अगर (maxevents <= 0 ||
+			maxevents > (पूर्णांक_उच्च/माप(*kbuf)) ||
+			maxevents > (पूर्णांक_उच्च/माप(*events)))
+		वापस -EINVAL;
+	अगर (!access_ok(events, माप(*events) * maxevents))
+		वापस -EFAULT;
+	kbuf = kदो_स्मृति_array(maxevents, माप(*kbuf), GFP_KERNEL);
+	अगर (!kbuf)
+		वापस -ENOMEM;
 	fs = get_fs();
 	set_fs(KERNEL_DS);
-	ret = sys_epoll_wait(epfd, kbuf, maxevents, timeout);
+	ret = sys_epoll_रुको(epfd, kbuf, maxevents, समयout);
 	set_fs(fs);
 	err = 0;
-	for (i = 0; i < ret; i++) {
+	क्रम (i = 0; i < ret; i++) अणु
 		e.events = kbuf[i].events;
 		e.data = kbuf[i].data;
-		err = __copy_to_user(events, &e, sizeof(e));
-		if (err)
-			break;
+		err = __copy_to_user(events, &e, माप(e));
+		अगर (err)
+			अवरोध;
 		events++;
-	}
-	kfree(kbuf);
-	return err ? -EFAULT : ret;
-}
-#else
-asmlinkage long sys_oabi_epoll_ctl(int epfd, int op, int fd,
-				   struct oabi_epoll_event __user *event)
-{
-	return -EINVAL;
-}
+	पूर्ण
+	kमुक्त(kbuf);
+	वापस err ? -EFAULT : ret;
+पूर्ण
+#अन्यथा
+यंत्रlinkage दीर्घ sys_oabi_epoll_ctl(पूर्णांक epfd, पूर्णांक op, पूर्णांक fd,
+				   काष्ठा oabi_epoll_event __user *event)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-asmlinkage long sys_oabi_epoll_wait(int epfd,
-				    struct oabi_epoll_event __user *events,
-				    int maxevents, int timeout)
-{
-	return -EINVAL;
-}
-#endif
+यंत्रlinkage दीर्घ sys_oabi_epoll_रुको(पूर्णांक epfd,
+				    काष्ठा oabi_epoll_event __user *events,
+				    पूर्णांक maxevents, पूर्णांक समयout)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-struct oabi_sembuf {
-	unsigned short	sem_num;
-	short		sem_op;
-	short		sem_flg;
-	unsigned short	__pad;
-};
+काष्ठा oabi_sembuf अणु
+	अचिन्हित लघु	sem_num;
+	लघु		sem_op;
+	लघु		sem_flg;
+	अचिन्हित लघु	__pad;
+पूर्ण;
 
-asmlinkage long sys_oabi_semtimedop(int semid,
-				    struct oabi_sembuf __user *tsops,
-				    unsigned nsops,
-				    const struct old_timespec32 __user *timeout)
-{
-	struct sembuf *sops;
-	struct old_timespec32 local_timeout;
-	long err;
-	int i;
+यंत्रlinkage दीर्घ sys_oabi_semसमयकरोp(पूर्णांक semid,
+				    काष्ठा oabi_sembuf __user *tsops,
+				    अचिन्हित nsops,
+				    स्थिर काष्ठा old_बारpec32 __user *समयout)
+अणु
+	काष्ठा sembuf *sops;
+	काष्ठा old_बारpec32 local_समयout;
+	दीर्घ err;
+	पूर्णांक i;
 
-	if (nsops < 1 || nsops > SEMOPM)
-		return -EINVAL;
-	if (!access_ok(tsops, sizeof(*tsops) * nsops))
-		return -EFAULT;
-	sops = kmalloc_array(nsops, sizeof(*sops), GFP_KERNEL);
-	if (!sops)
-		return -ENOMEM;
+	अगर (nsops < 1 || nsops > SEMOPM)
+		वापस -EINVAL;
+	अगर (!access_ok(tsops, माप(*tsops) * nsops))
+		वापस -EFAULT;
+	sops = kदो_स्मृति_array(nsops, माप(*sops), GFP_KERNEL);
+	अगर (!sops)
+		वापस -ENOMEM;
 	err = 0;
-	for (i = 0; i < nsops; i++) {
-		struct oabi_sembuf osb;
-		err |= __copy_from_user(&osb, tsops, sizeof(osb));
+	क्रम (i = 0; i < nsops; i++) अणु
+		काष्ठा oabi_sembuf osb;
+		err |= __copy_from_user(&osb, tsops, माप(osb));
 		sops[i].sem_num = osb.sem_num;
 		sops[i].sem_op = osb.sem_op;
 		sops[i].sem_flg = osb.sem_flg;
 		tsops++;
-	}
-	if (timeout) {
-		/* copy this as well before changing domain protection */
-		err |= copy_from_user(&local_timeout, timeout, sizeof(*timeout));
-		timeout = &local_timeout;
-	}
-	if (err) {
+	पूर्ण
+	अगर (समयout) अणु
+		/* copy this as well beक्रमe changing करोमुख्य protection */
+		err |= copy_from_user(&local_समयout, समयout, माप(*समयout));
+		समयout = &local_समयout;
+	पूर्ण
+	अगर (err) अणु
 		err = -EFAULT;
-	} else {
+	पूर्ण अन्यथा अणु
 		mm_segment_t fs = get_fs();
 		set_fs(KERNEL_DS);
-		err = sys_semtimedop_time32(semid, sops, nsops, timeout);
+		err = sys_semसमयकरोp_समय32(semid, sops, nsops, समयout);
 		set_fs(fs);
-	}
-	kfree(sops);
-	return err;
-}
+	पूर्ण
+	kमुक्त(sops);
+	वापस err;
+पूर्ण
 
-asmlinkage long sys_oabi_semop(int semid, struct oabi_sembuf __user *tsops,
-			       unsigned nsops)
-{
-	return sys_oabi_semtimedop(semid, tsops, nsops, NULL);
-}
+यंत्रlinkage दीर्घ sys_oabi_semop(पूर्णांक semid, काष्ठा oabi_sembuf __user *tsops,
+			       अचिन्हित nsops)
+अणु
+	वापस sys_oabi_semसमयकरोp(semid, tsops, nsops, शून्य);
+पूर्ण
 
-asmlinkage int sys_oabi_ipc(uint call, int first, int second, int third,
-			    void __user *ptr, long fifth)
-{
-	switch (call & 0xffff) {
-	case SEMOP:
-		return  sys_oabi_semtimedop(first,
-					    (struct oabi_sembuf __user *)ptr,
-					    second, NULL);
-	case SEMTIMEDOP:
-		return  sys_oabi_semtimedop(first,
-					    (struct oabi_sembuf __user *)ptr,
+यंत्रlinkage पूर्णांक sys_oabi_ipc(uपूर्णांक call, पूर्णांक first, पूर्णांक second, पूर्णांक third,
+			    व्योम __user *ptr, दीर्घ fअगरth)
+अणु
+	चयन (call & 0xffff) अणु
+	हाल SEMOP:
+		वापस  sys_oabi_semसमयकरोp(first,
+					    (काष्ठा oabi_sembuf __user *)ptr,
+					    second, शून्य);
+	हाल SEMTIMEDOP:
+		वापस  sys_oabi_semसमयकरोp(first,
+					    (काष्ठा oabi_sembuf __user *)ptr,
 					    second,
-					    (const struct old_timespec32 __user *)fifth);
-	default:
-		return sys_ipc(call, first, second, third, ptr, fifth);
-	}
-}
+					    (स्थिर काष्ठा old_बारpec32 __user *)fअगरth);
+	शेष:
+		वापस sys_ipc(call, first, second, third, ptr, fअगरth);
+	पूर्ण
+पूर्ण
 
-asmlinkage long sys_oabi_bind(int fd, struct sockaddr __user *addr, int addrlen)
-{
+यंत्रlinkage दीर्घ sys_oabi_bind(पूर्णांक fd, काष्ठा sockaddr __user *addr, पूर्णांक addrlen)
+अणु
 	sa_family_t sa_family;
-	if (addrlen == 112 &&
+	अगर (addrlen == 112 &&
 	    get_user(sa_family, &addr->sa_family) == 0 &&
 	    sa_family == AF_UNIX)
 			addrlen = 110;
-	return sys_bind(fd, addr, addrlen);
-}
+	वापस sys_bind(fd, addr, addrlen);
+पूर्ण
 
-asmlinkage long sys_oabi_connect(int fd, struct sockaddr __user *addr, int addrlen)
-{
+यंत्रlinkage दीर्घ sys_oabi_connect(पूर्णांक fd, काष्ठा sockaddr __user *addr, पूर्णांक addrlen)
+अणु
 	sa_family_t sa_family;
-	if (addrlen == 112 &&
+	अगर (addrlen == 112 &&
 	    get_user(sa_family, &addr->sa_family) == 0 &&
 	    sa_family == AF_UNIX)
 			addrlen = 110;
-	return sys_connect(fd, addr, addrlen);
-}
+	वापस sys_connect(fd, addr, addrlen);
+पूर्ण
 
-asmlinkage long sys_oabi_sendto(int fd, void __user *buff,
-				size_t len, unsigned flags,
-				struct sockaddr __user *addr,
-				int addrlen)
-{
+यंत्रlinkage दीर्घ sys_oabi_sendto(पूर्णांक fd, व्योम __user *buff,
+				माप_प्रकार len, अचिन्हित flags,
+				काष्ठा sockaddr __user *addr,
+				पूर्णांक addrlen)
+अणु
 	sa_family_t sa_family;
-	if (addrlen == 112 &&
+	अगर (addrlen == 112 &&
 	    get_user(sa_family, &addr->sa_family) == 0 &&
 	    sa_family == AF_UNIX)
 			addrlen = 110;
-	return sys_sendto(fd, buff, len, flags, addr, addrlen);
-}
+	वापस sys_sendto(fd, buff, len, flags, addr, addrlen);
+पूर्ण
 
-asmlinkage long sys_oabi_sendmsg(int fd, struct user_msghdr __user *msg, unsigned flags)
-{
-	struct sockaddr __user *addr;
-	int msg_namelen;
+यंत्रlinkage दीर्घ sys_oabi_sendmsg(पूर्णांक fd, काष्ठा user_msghdr __user *msg, अचिन्हित flags)
+अणु
+	काष्ठा sockaddr __user *addr;
+	पूर्णांक msg_namelen;
 	sa_family_t sa_family;
-	if (msg &&
+	अगर (msg &&
 	    get_user(msg_namelen, &msg->msg_namelen) == 0 &&
 	    msg_namelen == 112 &&
 	    get_user(addr, &msg->msg_name) == 0 &&
 	    get_user(sa_family, &addr->sa_family) == 0 &&
 	    sa_family == AF_UNIX)
-	{
+	अणु
 		/*
 		 * HACK ALERT: there is a limit to how much backward bending
-		 * we should do for what is actually a transitional
-		 * compatibility layer.  This already has known flaws with
-		 * a few ioctls that we don't intend to fix.  Therefore
+		 * we should करो क्रम what is actually a transitional
+		 * compatibility layer.  This alपढ़ोy has known flaws with
+		 * a few ioctls that we करोn't पूर्णांकend to fix.  Thereक्रमe
 		 * consider this blatent hack as another one... and take care
-		 * to run for cover.  In most cases it will "just work fine".
-		 * If it doesn't, well, tough.
+		 * to run क्रम cover.  In most हालs it will "just work fine".
+		 * If it करोesn't, well, tough.
 		 */
 		put_user(110, &msg->msg_namelen);
-	}
-	return sys_sendmsg(fd, msg, flags);
-}
+	पूर्ण
+	वापस sys_sendmsg(fd, msg, flags);
+पूर्ण
 
-asmlinkage long sys_oabi_socketcall(int call, unsigned long __user *args)
-{
-	unsigned long r = -EFAULT, a[6];
+यंत्रlinkage दीर्घ sys_oabi_socketcall(पूर्णांक call, अचिन्हित दीर्घ __user *args)
+अणु
+	अचिन्हित दीर्घ r = -EFAULT, a[6];
 
-	switch (call) {
-	case SYS_BIND:
-		if (copy_from_user(a, args, 3 * sizeof(long)) == 0)
-			r = sys_oabi_bind(a[0], (struct sockaddr __user *)a[1], a[2]);
-		break;
-	case SYS_CONNECT:
-		if (copy_from_user(a, args, 3 * sizeof(long)) == 0)
-			r = sys_oabi_connect(a[0], (struct sockaddr __user *)a[1], a[2]);
-		break;
-	case SYS_SENDTO:
-		if (copy_from_user(a, args, 6 * sizeof(long)) == 0)
-			r = sys_oabi_sendto(a[0], (void __user *)a[1], a[2], a[3],
-					    (struct sockaddr __user *)a[4], a[5]);
-		break;
-	case SYS_SENDMSG:
-		if (copy_from_user(a, args, 3 * sizeof(long)) == 0)
-			r = sys_oabi_sendmsg(a[0], (struct user_msghdr __user *)a[1], a[2]);
-		break;
-	default:
+	चयन (call) अणु
+	हाल SYS_BIND:
+		अगर (copy_from_user(a, args, 3 * माप(दीर्घ)) == 0)
+			r = sys_oabi_bind(a[0], (काष्ठा sockaddr __user *)a[1], a[2]);
+		अवरोध;
+	हाल SYS_CONNECT:
+		अगर (copy_from_user(a, args, 3 * माप(दीर्घ)) == 0)
+			r = sys_oabi_connect(a[0], (काष्ठा sockaddr __user *)a[1], a[2]);
+		अवरोध;
+	हाल SYS_SENDTO:
+		अगर (copy_from_user(a, args, 6 * माप(दीर्घ)) == 0)
+			r = sys_oabi_sendto(a[0], (व्योम __user *)a[1], a[2], a[3],
+					    (काष्ठा sockaddr __user *)a[4], a[5]);
+		अवरोध;
+	हाल SYS_SENDMSG:
+		अगर (copy_from_user(a, args, 3 * माप(दीर्घ)) == 0)
+			r = sys_oabi_sendmsg(a[0], (काष्ठा user_msghdr __user *)a[1], a[2]);
+		अवरोध;
+	शेष:
 		r = sys_socketcall(call, args);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण

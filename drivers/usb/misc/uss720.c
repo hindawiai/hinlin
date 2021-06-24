@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*****************************************************************************/
 
 /*
@@ -11,16 +12,16 @@
  *
  *  History:
  *   0.1  04.08.1999  Created
- *   0.2  07.08.1999  Some fixes mainly suggested by Tim Waugh
+ *   0.2  07.08.1999  Some fixes मुख्यly suggested by Tim Waugh
  *		      Interrupt handling currently disabled because
  *		      usb_request_irq crashes somewhere within ohci.c
- *		      for no apparent reason (that is for me, anyway)
+ *		      क्रम no apparent reason (that is क्रम me, anyway)
  *		      ECP currently untested
  *   0.3  10.08.1999  fixing merge errors
- *   0.4  13.08.1999  Added Vendor/Product ID of Brad Hard's cable
+ *   0.4  13.08.1999  Added Venकरोr/Product ID of Brad Hard's cable
  *   0.5  20.09.1999  usb_control_msg wrapper used
  *        Nov01.2000  usb_device_table support by Adam J. Richter
- *        08.04.2001  Identify version on module load.  gb
+ *        08.04.2001  Identअगरy version on module load.  gb
  *   0.6  02.09.2005  Fix "scheduling in interrupt" problem by making save/restore
  *                    context asynchronous
  *
@@ -28,767 +29,767 @@
 
 /*****************************************************************************/
 
-#include <linux/module.h>
-#include <linux/socket.h>
-#include <linux/parport.h>
-#include <linux/init.h>
-#include <linux/usb.h>
-#include <linux/delay.h>
-#include <linux/completion.h>
-#include <linux/kref.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/module.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/parport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
 
-#define DRIVER_AUTHOR "Thomas M. Sailer, t.sailer@alumni.ethz.ch"
-#define DRIVER_DESC "USB Parport Cable driver for Cables using the Lucent Technologies USS720 Chip"
+#घोषणा DRIVER_AUTHOR "Thomas M. Sailer, t.sailer@alumni.ethz.ch"
+#घोषणा DRIVER_DESC "USB Parport Cable driver for Cables using the Lucent Technologies USS720 Chip"
 
 /* --------------------------------------------------------------------- */
 
-struct parport_uss720_private {
-	struct usb_device *usbdev;
-	struct parport *pp;
-	struct kref ref_count;
-	__u8 reg[7];  /* USB registers */
-	struct list_head asynclist;
-	spinlock_t asynclock;
-};
+काष्ठा parport_uss720_निजी अणु
+	काष्ठा usb_device *usbdev;
+	काष्ठा parport *pp;
+	काष्ठा kref ref_count;
+	__u8 reg[7];  /* USB रेजिस्टरs */
+	काष्ठा list_head asynclist;
+	spinlock_t asynघड़ी;
+पूर्ण;
 
-struct uss720_async_request {
-	struct parport_uss720_private *priv;
-	struct kref ref_count;
-	struct list_head asynclist;
-	struct completion compl;
-	struct urb *urb;
-	struct usb_ctrlrequest *dr;
+काष्ठा uss720_async_request अणु
+	काष्ठा parport_uss720_निजी *priv;
+	काष्ठा kref ref_count;
+	काष्ठा list_head asynclist;
+	काष्ठा completion compl;
+	काष्ठा urb *urb;
+	काष्ठा usb_ctrlrequest *dr;
 	__u8 reg[7];
-};
+पूर्ण;
 
 /* --------------------------------------------------------------------- */
 
-static void destroy_priv(struct kref *kref)
-{
-	struct parport_uss720_private *priv = container_of(kref, struct parport_uss720_private, ref_count);
+अटल व्योम destroy_priv(काष्ठा kref *kref)
+अणु
+	काष्ठा parport_uss720_निजी *priv = container_of(kref, काष्ठा parport_uss720_निजी, ref_count);
 
 	dev_dbg(&priv->usbdev->dev, "destroying priv datastructure\n");
 	usb_put_dev(priv->usbdev);
-	kfree(priv);
-}
+	kमुक्त(priv);
+पूर्ण
 
-static void destroy_async(struct kref *kref)
-{
-	struct uss720_async_request *rq = container_of(kref, struct uss720_async_request, ref_count);
-	struct parport_uss720_private *priv = rq->priv;
-	unsigned long flags;
+अटल व्योम destroy_async(काष्ठा kref *kref)
+अणु
+	काष्ठा uss720_async_request *rq = container_of(kref, काष्ठा uss720_async_request, ref_count);
+	काष्ठा parport_uss720_निजी *priv = rq->priv;
+	अचिन्हित दीर्घ flags;
 
-	if (likely(rq->urb))
-		usb_free_urb(rq->urb);
-	kfree(rq->dr);
-	spin_lock_irqsave(&priv->asynclock, flags);
+	अगर (likely(rq->urb))
+		usb_मुक्त_urb(rq->urb);
+	kमुक्त(rq->dr);
+	spin_lock_irqsave(&priv->asynघड़ी, flags);
 	list_del_init(&rq->asynclist);
-	spin_unlock_irqrestore(&priv->asynclock, flags);
-	kfree(rq);
+	spin_unlock_irqrestore(&priv->asynघड़ी, flags);
+	kमुक्त(rq);
 	kref_put(&priv->ref_count, destroy_priv);
-}
+पूर्ण
 
 /* --------------------------------------------------------------------- */
 
-static void async_complete(struct urb *urb)
-{
-	struct uss720_async_request *rq;
-	struct parport *pp;
-	struct parport_uss720_private *priv;
-	int status = urb->status;
+अटल व्योम async_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा uss720_async_request *rq;
+	काष्ठा parport *pp;
+	काष्ठा parport_uss720_निजी *priv;
+	पूर्णांक status = urb->status;
 
 	rq = urb->context;
 	priv = rq->priv;
 	pp = priv->pp;
-	if (status) {
+	अगर (status) अणु
 		dev_err(&urb->dev->dev, "async_complete: urb error %d\n",
 			status);
-	} else if (rq->dr->bRequest == 3) {
-		memcpy(priv->reg, rq->reg, sizeof(priv->reg));
-#if 0
+	पूर्ण अन्यथा अगर (rq->dr->bRequest == 3) अणु
+		स_नकल(priv->reg, rq->reg, माप(priv->reg));
+#अगर 0
 		dev_dbg(&priv->usbdev->dev, "async_complete regs %7ph\n",
 			priv->reg);
-#endif
-		/* if nAck interrupts are enabled and we have an interrupt, call the interrupt procedure */
-		if (rq->reg[2] & rq->reg[1] & 0x10 && pp)
+#पूर्ण_अगर
+		/* अगर nAck पूर्णांकerrupts are enabled and we have an पूर्णांकerrupt, call the पूर्णांकerrupt procedure */
+		अगर (rq->reg[2] & rq->reg[1] & 0x10 && pp)
 			parport_generic_irq(pp);
-	}
+	पूर्ण
 	complete(&rq->compl);
 	kref_put(&rq->ref_count, destroy_async);
-}
+पूर्ण
 
-static struct uss720_async_request *submit_async_request(struct parport_uss720_private *priv,
+अटल काष्ठा uss720_async_request *submit_async_request(काष्ठा parport_uss720_निजी *priv,
 							 __u8 request, __u8 requesttype, __u16 value, __u16 index,
 							 gfp_t mem_flags)
-{
-	struct usb_device *usbdev;
-	struct uss720_async_request *rq;
-	unsigned long flags;
-	int ret;
+अणु
+	काष्ठा usb_device *usbdev;
+	काष्ठा uss720_async_request *rq;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (!priv)
-		return NULL;
+	अगर (!priv)
+		वापस शून्य;
 	usbdev = priv->usbdev;
-	if (!usbdev)
-		return NULL;
-	rq = kzalloc(sizeof(struct uss720_async_request), mem_flags);
-	if (!rq)
-		return NULL;
+	अगर (!usbdev)
+		वापस शून्य;
+	rq = kzalloc(माप(काष्ठा uss720_async_request), mem_flags);
+	अगर (!rq)
+		वापस शून्य;
 	kref_init(&rq->ref_count);
 	INIT_LIST_HEAD(&rq->asynclist);
 	init_completion(&rq->compl);
 	kref_get(&priv->ref_count);
 	rq->priv = priv;
 	rq->urb = usb_alloc_urb(0, mem_flags);
-	if (!rq->urb) {
+	अगर (!rq->urb) अणु
 		kref_put(&rq->ref_count, destroy_async);
-		return NULL;
-	}
-	rq->dr = kmalloc(sizeof(*rq->dr), mem_flags);
-	if (!rq->dr) {
+		वापस शून्य;
+	पूर्ण
+	rq->dr = kदो_स्मृति(माप(*rq->dr), mem_flags);
+	अगर (!rq->dr) अणु
 		kref_put(&rq->ref_count, destroy_async);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	rq->dr->bRequestType = requesttype;
 	rq->dr->bRequest = request;
 	rq->dr->wValue = cpu_to_le16(value);
 	rq->dr->wIndex = cpu_to_le16(index);
-	rq->dr->wLength = cpu_to_le16((request == 3) ? sizeof(rq->reg) : 0);
+	rq->dr->wLength = cpu_to_le16((request == 3) ? माप(rq->reg) : 0);
 	usb_fill_control_urb(rq->urb, usbdev, (requesttype & 0x80) ? usb_rcvctrlpipe(usbdev, 0) : usb_sndctrlpipe(usbdev, 0),
-			     (unsigned char *)rq->dr,
-			     (request == 3) ? rq->reg : NULL, (request == 3) ? sizeof(rq->reg) : 0, async_complete, rq);
+			     (अचिन्हित अक्षर *)rq->dr,
+			     (request == 3) ? rq->reg : शून्य, (request == 3) ? माप(rq->reg) : 0, async_complete, rq);
 	/* rq->urb->transfer_flags |= URB_ASYNC_UNLINK; */
-	spin_lock_irqsave(&priv->asynclock, flags);
+	spin_lock_irqsave(&priv->asynघड़ी, flags);
 	list_add_tail(&rq->asynclist, &priv->asynclist);
-	spin_unlock_irqrestore(&priv->asynclock, flags);
+	spin_unlock_irqrestore(&priv->asynघड़ी, flags);
 	kref_get(&rq->ref_count);
 	ret = usb_submit_urb(rq->urb, mem_flags);
-	if (!ret)
-		return rq;
+	अगर (!ret)
+		वापस rq;
 	destroy_async(&rq->ref_count);
 	dev_err(&usbdev->dev, "submit_async_request submit_urb failed with %d\n", ret);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static unsigned int kill_all_async_requests_priv(struct parport_uss720_private *priv)
-{
-	struct uss720_async_request *rq;
-	unsigned long flags;
-	unsigned int ret = 0;
+अटल अचिन्हित पूर्णांक समाप्त_all_async_requests_priv(काष्ठा parport_uss720_निजी *priv)
+अणु
+	काष्ठा uss720_async_request *rq;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ret = 0;
 
-	spin_lock_irqsave(&priv->asynclock, flags);
-	list_for_each_entry(rq, &priv->asynclist, asynclist) {
+	spin_lock_irqsave(&priv->asynघड़ी, flags);
+	list_क्रम_each_entry(rq, &priv->asynclist, asynclist) अणु
 		usb_unlink_urb(rq->urb);
 		ret++;
-	}
-	spin_unlock_irqrestore(&priv->asynclock, flags);
-	return ret;
-}
+	पूर्ण
+	spin_unlock_irqrestore(&priv->asynघड़ी, flags);
+	वापस ret;
+पूर्ण
 
 /* --------------------------------------------------------------------- */
 
-static int get_1284_register(struct parport *pp, unsigned char reg, unsigned char *val, gfp_t mem_flags)
-{
-	struct parport_uss720_private *priv;
-	struct uss720_async_request *rq;
-	static const unsigned char regindex[9] = {
+अटल पूर्णांक get_1284_रेजिस्टर(काष्ठा parport *pp, अचिन्हित अक्षर reg, अचिन्हित अक्षर *val, gfp_t mem_flags)
+अणु
+	काष्ठा parport_uss720_निजी *priv;
+	काष्ठा uss720_async_request *rq;
+	अटल स्थिर अचिन्हित अक्षर regindex[9] = अणु
 		4, 0, 1, 5, 5, 0, 2, 3, 6
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (!pp)
-		return -EIO;
-	priv = pp->private_data;
-	rq = submit_async_request(priv, 3, 0xc0, ((unsigned int)reg) << 8, 0, mem_flags);
-	if (!rq) {
+	अगर (!pp)
+		वापस -EIO;
+	priv = pp->निजी_data;
+	rq = submit_async_request(priv, 3, 0xc0, ((अचिन्हित पूर्णांक)reg) << 8, 0, mem_flags);
+	अगर (!rq) अणु
 		dev_err(&priv->usbdev->dev, "get_1284_register(%u) failed",
-			(unsigned int)reg);
-		return -EIO;
-	}
-	if (!val) {
+			(अचिन्हित पूर्णांक)reg);
+		वापस -EIO;
+	पूर्ण
+	अगर (!val) अणु
 		kref_put(&rq->ref_count, destroy_async);
-		return 0;
-	}
-	if (wait_for_completion_timeout(&rq->compl, HZ)) {
+		वापस 0;
+	पूर्ण
+	अगर (रुको_क्रम_completion_समयout(&rq->compl, HZ)) अणु
 		ret = rq->urb->status;
 		*val = priv->reg[(reg >= 9) ? 0 : regindex[reg]];
-		if (ret)
-			printk(KERN_WARNING "get_1284_register: "
+		अगर (ret)
+			prपूर्णांकk(KERN_WARNING "get_1284_register: "
 			       "usb error %d\n", ret);
 		kref_put(&rq->ref_count, destroy_async);
-		return ret;
-	}
-	printk(KERN_WARNING "get_1284_register timeout\n");
-	kill_all_async_requests_priv(priv);
-	return -EIO;
-}
+		वापस ret;
+	पूर्ण
+	prपूर्णांकk(KERN_WARNING "get_1284_register timeout\n");
+	समाप्त_all_async_requests_priv(priv);
+	वापस -EIO;
+पूर्ण
 
-static int set_1284_register(struct parport *pp, unsigned char reg, unsigned char val, gfp_t mem_flags)
-{
-	struct parport_uss720_private *priv;
-	struct uss720_async_request *rq;
+अटल पूर्णांक set_1284_रेजिस्टर(काष्ठा parport *pp, अचिन्हित अक्षर reg, अचिन्हित अक्षर val, gfp_t mem_flags)
+अणु
+	काष्ठा parport_uss720_निजी *priv;
+	काष्ठा uss720_async_request *rq;
 
-	if (!pp)
-		return -EIO;
-	priv = pp->private_data;
-	rq = submit_async_request(priv, 4, 0x40, (((unsigned int)reg) << 8) | val, 0, mem_flags);
-	if (!rq) {
+	अगर (!pp)
+		वापस -EIO;
+	priv = pp->निजी_data;
+	rq = submit_async_request(priv, 4, 0x40, (((अचिन्हित पूर्णांक)reg) << 8) | val, 0, mem_flags);
+	अगर (!rq) अणु
 		dev_err(&priv->usbdev->dev, "set_1284_register(%u,%u) failed",
-			(unsigned int)reg, (unsigned int)val);
-		return -EIO;
-	}
+			(अचिन्हित पूर्णांक)reg, (अचिन्हित पूर्णांक)val);
+		वापस -EIO;
+	पूर्ण
 	kref_put(&rq->ref_count, destroy_async);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* --------------------------------------------------------------------- */
 
 /* ECR modes */
-#define ECR_SPP 00
-#define ECR_PS2 01
-#define ECR_PPF 02
-#define ECR_ECP 03
-#define ECR_EPP 04
+#घोषणा ECR_SPP 00
+#घोषणा ECR_PS2 01
+#घोषणा ECR_PPF 02
+#घोषणा ECR_ECP 03
+#घोषणा ECR_EPP 04
 
 /* Safely change the mode bits in the ECR */
-static int change_mode(struct parport *pp, int m)
-{
-	struct parport_uss720_private *priv = pp->private_data;
-	int mode;
+अटल पूर्णांक change_mode(काष्ठा parport *pp, पूर्णांक m)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;
+	पूर्णांक mode;
 	__u8 reg;
 
-	if (get_1284_register(pp, 6, &reg, GFP_KERNEL))
-		return -EIO;
+	अगर (get_1284_रेजिस्टर(pp, 6, &reg, GFP_KERNEL))
+		वापस -EIO;
 	/* Bits <7:5> contain the mode. */
 	mode = (priv->reg[2] >> 5) & 0x7;
-	if (mode == m)
-		return 0;
+	अगर (mode == m)
+		वापस 0;
 	/* We have to go through mode 000 or 001 */
-	if (mode > ECR_PS2 && m > ECR_PS2)
-		if (change_mode(pp, ECR_PS2))
-			return -EIO;
+	अगर (mode > ECR_PS2 && m > ECR_PS2)
+		अगर (change_mode(pp, ECR_PS2))
+			वापस -EIO;
 
-	if (m <= ECR_PS2 && !(priv->reg[1] & 0x20)) {
+	अगर (m <= ECR_PS2 && !(priv->reg[1] & 0x20)) अणु
 		/* This mode resets the FIFO, so we may
-		 * have to wait for it to drain first. */
-		unsigned long expire = jiffies + pp->physport->cad->timeout;
-		switch (mode) {
-		case ECR_PPF: /* Parallel Port FIFO mode */
-		case ECR_ECP: /* ECP Parallel Port mode */
+		 * have to रुको क्रम it to drain first. */
+		अचिन्हित दीर्घ expire = jअगरfies + pp->physport->cad->समयout;
+		चयन (mode) अणु
+		हाल ECR_PPF: /* Parallel Port FIFO mode */
+		हाल ECR_ECP: /* ECP Parallel Port mode */
 			/* Poll slowly. */
-			for (;;) {
-				if (get_1284_register(pp, 6, &reg, GFP_KERNEL))
-					return -EIO;
-				if (priv->reg[2] & 0x01)
-					break;
-				if (time_after_eq (jiffies, expire))
+			क्रम (;;) अणु
+				अगर (get_1284_रेजिस्टर(pp, 6, &reg, GFP_KERNEL))
+					वापस -EIO;
+				अगर (priv->reg[2] & 0x01)
+					अवरोध;
+				अगर (समय_after_eq (jअगरfies, expire))
 					/* The FIFO is stuck. */
-					return -EBUSY;
-				msleep_interruptible(10);
-				if (signal_pending (current))
-					break;
-			}
-		}
-	}
+					वापस -EBUSY;
+				msleep_पूर्णांकerruptible(10);
+				अगर (संकेत_pending (current))
+					अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	/* Set the mode. */
-	if (set_1284_register(pp, 6, m << 5, GFP_KERNEL))
-		return -EIO;
-	if (get_1284_register(pp, 6, &reg, GFP_KERNEL))
-		return -EIO;
-	return 0;
-}
+	अगर (set_1284_रेजिस्टर(pp, 6, m << 5, GFP_KERNEL))
+		वापस -EIO;
+	अगर (get_1284_रेजिस्टर(pp, 6, &reg, GFP_KERNEL))
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
 /*
  * Clear TIMEOUT BIT in EPP MODE
  */
-static int clear_epp_timeout(struct parport *pp)
-{
-	unsigned char stat;
+अटल पूर्णांक clear_epp_समयout(काष्ठा parport *pp)
+अणु
+	अचिन्हित अक्षर stat;
 
-	if (get_1284_register(pp, 1, &stat, GFP_KERNEL))
-		return 1;
-	return stat & 1;
-}
+	अगर (get_1284_रेजिस्टर(pp, 1, &stat, GFP_KERNEL))
+		वापस 1;
+	वापस stat & 1;
+पूर्ण
 
 /*
  * Access functions.
  */
-#if 0
-static int uss720_irq(int usbstatus, void *buffer, int len, void *dev_id)
-{
-	struct parport *pp = (struct parport *)dev_id;
-	struct parport_uss720_private *priv = pp->private_data;	
+#अगर 0
+अटल पूर्णांक uss720_irq(पूर्णांक usbstatus, व्योम *buffer, पूर्णांक len, व्योम *dev_id)
+अणु
+	काष्ठा parport *pp = (काष्ठा parport *)dev_id;
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
 
-	if (usbstatus != 0 || len < 4 || !buffer)
-		return 1;
-	memcpy(priv->reg, buffer, 4);
-	/* if nAck interrupts are enabled and we have an interrupt, call the interrupt procedure */
-	if (priv->reg[2] & priv->reg[1] & 0x10)
+	अगर (usbstatus != 0 || len < 4 || !buffer)
+		वापस 1;
+	स_नकल(priv->reg, buffer, 4);
+	/* अगर nAck पूर्णांकerrupts are enabled and we have an पूर्णांकerrupt, call the पूर्णांकerrupt procedure */
+	अगर (priv->reg[2] & priv->reg[1] & 0x10)
 		parport_generic_irq(pp);
-	return 1;
-}
-#endif
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर
 
-static void parport_uss720_write_data(struct parport *pp, unsigned char d)
-{
-	set_1284_register(pp, 0, d, GFP_KERNEL);
-}
+अटल व्योम parport_uss720_ग_लिखो_data(काष्ठा parport *pp, अचिन्हित अक्षर d)
+अणु
+	set_1284_रेजिस्टर(pp, 0, d, GFP_KERNEL);
+पूर्ण
 
-static unsigned char parport_uss720_read_data(struct parport *pp)
-{
-	unsigned char ret;
+अटल अचिन्हित अक्षर parport_uss720_पढ़ो_data(काष्ठा parport *pp)
+अणु
+	अचिन्हित अक्षर ret;
 
-	if (get_1284_register(pp, 0, &ret, GFP_KERNEL))
-		return 0;
-	return ret;
-}
+	अगर (get_1284_रेजिस्टर(pp, 0, &ret, GFP_KERNEL))
+		वापस 0;
+	वापस ret;
+पूर्ण
 
-static void parport_uss720_write_control(struct parport *pp, unsigned char d)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
+अटल व्योम parport_uss720_ग_लिखो_control(काष्ठा parport *pp, अचिन्हित अक्षर d)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
 
 	d = (d & 0xf) | (priv->reg[1] & 0xf0);
-	if (set_1284_register(pp, 2, d, GFP_KERNEL))
-		return;
+	अगर (set_1284_रेजिस्टर(pp, 2, d, GFP_KERNEL))
+		वापस;
 	priv->reg[1] = d;
-}
+पूर्ण
 
-static unsigned char parport_uss720_read_control(struct parport *pp)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
-	return priv->reg[1] & 0xf; /* Use soft copy */
-}
+अटल अचिन्हित अक्षर parport_uss720_पढ़ो_control(काष्ठा parport *pp)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
+	वापस priv->reg[1] & 0xf; /* Use soft copy */
+पूर्ण
 
-static unsigned char parport_uss720_frob_control(struct parport *pp, unsigned char mask, unsigned char val)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
-	unsigned char d;
+अटल अचिन्हित अक्षर parport_uss720_frob_control(काष्ठा parport *pp, अचिन्हित अक्षर mask, अचिन्हित अक्षर val)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
+	अचिन्हित अक्षर d;
 
 	mask &= 0x0f;
 	val &= 0x0f;
 	d = (priv->reg[1] & (~mask)) ^ val;
-	if (set_1284_register(pp, 2, d, GFP_ATOMIC))
-		return 0;
+	अगर (set_1284_रेजिस्टर(pp, 2, d, GFP_ATOMIC))
+		वापस 0;
 	priv->reg[1] = d;
-	return d & 0xf;
-}
+	वापस d & 0xf;
+पूर्ण
 
-static unsigned char parport_uss720_read_status(struct parport *pp)
-{
-	unsigned char ret;
+अटल अचिन्हित अक्षर parport_uss720_पढ़ो_status(काष्ठा parport *pp)
+अणु
+	अचिन्हित अक्षर ret;
 
-	if (get_1284_register(pp, 1, &ret, GFP_ATOMIC))
-		return 0;
-	return ret & 0xf8;
-}
+	अगर (get_1284_रेजिस्टर(pp, 1, &ret, GFP_ATOMIC))
+		वापस 0;
+	वापस ret & 0xf8;
+पूर्ण
 
-static void parport_uss720_disable_irq(struct parport *pp)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
-	unsigned char d;
+अटल व्योम parport_uss720_disable_irq(काष्ठा parport *pp)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
+	अचिन्हित अक्षर d;
 
 	d = priv->reg[1] & ~0x10;
-	if (set_1284_register(pp, 2, d, GFP_KERNEL))
-		return;
+	अगर (set_1284_रेजिस्टर(pp, 2, d, GFP_KERNEL))
+		वापस;
 	priv->reg[1] = d;
-}
+पूर्ण
 
-static void parport_uss720_enable_irq(struct parport *pp)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
-	unsigned char d;
+अटल व्योम parport_uss720_enable_irq(काष्ठा parport *pp)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
+	अचिन्हित अक्षर d;
 
 	d = priv->reg[1] | 0x10;
-	if (set_1284_register(pp, 2, d, GFP_KERNEL))
-		return;
+	अगर (set_1284_रेजिस्टर(pp, 2, d, GFP_KERNEL))
+		वापस;
 	priv->reg[1] = d;
-}
+पूर्ण
 
-static void parport_uss720_data_forward (struct parport *pp)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
-	unsigned char d;
+अटल व्योम parport_uss720_data_क्रमward (काष्ठा parport *pp)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
+	अचिन्हित अक्षर d;
 
 	d = priv->reg[1] & ~0x20;
-	if (set_1284_register(pp, 2, d, GFP_KERNEL))
-		return;
+	अगर (set_1284_रेजिस्टर(pp, 2, d, GFP_KERNEL))
+		वापस;
 	priv->reg[1] = d;
-}
+पूर्ण
 
-static void parport_uss720_data_reverse (struct parport *pp)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
-	unsigned char d;
+अटल व्योम parport_uss720_data_reverse (काष्ठा parport *pp)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
+	अचिन्हित अक्षर d;
 
 	d = priv->reg[1] | 0x20;
-	if (set_1284_register(pp, 2, d, GFP_KERNEL))
-		return;
+	अगर (set_1284_रेजिस्टर(pp, 2, d, GFP_KERNEL))
+		वापस;
 	priv->reg[1] = d;
-}
+पूर्ण
 
-static void parport_uss720_init_state(struct pardevice *dev, struct parport_state *s)
-{
+अटल व्योम parport_uss720_init_state(काष्ठा pardevice *dev, काष्ठा parport_state *s)
+अणु
 	s->u.pc.ctr = 0xc | (dev->irq_func ? 0x10 : 0x0);
 	s->u.pc.ecr = 0x24;
-}
+पूर्ण
 
-static void parport_uss720_save_state(struct parport *pp, struct parport_state *s)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
+अटल व्योम parport_uss720_save_state(काष्ठा parport *pp, काष्ठा parport_state *s)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
 
-#if 0
-	if (get_1284_register(pp, 2, NULL, GFP_ATOMIC))
-		return;
-#endif
+#अगर 0
+	अगर (get_1284_रेजिस्टर(pp, 2, शून्य, GFP_ATOMIC))
+		वापस;
+#पूर्ण_अगर
 	s->u.pc.ctr = priv->reg[1];
 	s->u.pc.ecr = priv->reg[2];
-}
+पूर्ण
 
-static void parport_uss720_restore_state(struct parport *pp, struct parport_state *s)
-{
-	struct parport_uss720_private *priv = pp->private_data;
+अटल व्योम parport_uss720_restore_state(काष्ठा parport *pp, काष्ठा parport_state *s)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;
 
-	set_1284_register(pp, 2, s->u.pc.ctr, GFP_ATOMIC);
-	set_1284_register(pp, 6, s->u.pc.ecr, GFP_ATOMIC);
-	get_1284_register(pp, 2, NULL, GFP_ATOMIC);
+	set_1284_रेजिस्टर(pp, 2, s->u.pc.ctr, GFP_ATOMIC);
+	set_1284_रेजिस्टर(pp, 6, s->u.pc.ecr, GFP_ATOMIC);
+	get_1284_रेजिस्टर(pp, 2, शून्य, GFP_ATOMIC);
 	priv->reg[1] = s->u.pc.ctr;
 	priv->reg[2] = s->u.pc.ecr;
-}
+पूर्ण
 
-static size_t parport_uss720_epp_read_data(struct parport *pp, void *buf, size_t length, int flags)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
-	size_t got = 0;
+अटल माप_प्रकार parport_uss720_epp_पढ़ो_data(काष्ठा parport *pp, व्योम *buf, माप_प्रकार length, पूर्णांक flags)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
+	माप_प्रकार got = 0;
 
-	if (change_mode(pp, ECR_EPP))
-		return 0;
-	for (; got < length; got++) {
-		if (get_1284_register(pp, 4, (char *)buf, GFP_KERNEL))
-			break;
+	अगर (change_mode(pp, ECR_EPP))
+		वापस 0;
+	क्रम (; got < length; got++) अणु
+		अगर (get_1284_रेजिस्टर(pp, 4, (अक्षर *)buf, GFP_KERNEL))
+			अवरोध;
 		buf++;
-		if (priv->reg[0] & 0x01) {
-			clear_epp_timeout(pp);
-			break;
-		}
-	}
+		अगर (priv->reg[0] & 0x01) अणु
+			clear_epp_समयout(pp);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	change_mode(pp, ECR_PS2);
-	return got;
-}
+	वापस got;
+पूर्ण
 
-static size_t parport_uss720_epp_write_data(struct parport *pp, const void *buf, size_t length, int flags)
-{
-#if 0
-	struct parport_uss720_private *priv = pp->private_data;	
-	size_t written = 0;
+अटल माप_प्रकार parport_uss720_epp_ग_लिखो_data(काष्ठा parport *pp, स्थिर व्योम *buf, माप_प्रकार length, पूर्णांक flags)
+अणु
+#अगर 0
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
+	माप_प्रकार written = 0;
 
-	if (change_mode(pp, ECR_EPP))
-		return 0;
-	for (; written < length; written++) {
-		if (set_1284_register(pp, 4, (char *)buf, GFP_KERNEL))
-			break;
-		((char*)buf)++;
-		if (get_1284_register(pp, 1, NULL, GFP_KERNEL))
-			break;
-		if (priv->reg[0] & 0x01) {
-			clear_epp_timeout(pp);
-			break;
-		}
-	}
+	अगर (change_mode(pp, ECR_EPP))
+		वापस 0;
+	क्रम (; written < length; written++) अणु
+		अगर (set_1284_रेजिस्टर(pp, 4, (अक्षर *)buf, GFP_KERNEL))
+			अवरोध;
+		((अक्षर*)buf)++;
+		अगर (get_1284_रेजिस्टर(pp, 1, शून्य, GFP_KERNEL))
+			अवरोध;
+		अगर (priv->reg[0] & 0x01) अणु
+			clear_epp_समयout(pp);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	change_mode(pp, ECR_PS2);
-	return written;
-#else
-	struct parport_uss720_private *priv = pp->private_data;
-	struct usb_device *usbdev = priv->usbdev;
-	int rlen;
-	int i;
+	वापस written;
+#अन्यथा
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;
+	काष्ठा usb_device *usbdev = priv->usbdev;
+	पूर्णांक rlen;
+	पूर्णांक i;
 
-	if (!usbdev)
-		return 0;
-	if (change_mode(pp, ECR_EPP))
-		return 0;
-	i = usb_bulk_msg(usbdev, usb_sndbulkpipe(usbdev, 1), (void *)buf, length, &rlen, 20000);
-	if (i)
-		printk(KERN_ERR "uss720: sendbulk ep 1 buf %p len %zu rlen %u\n", buf, length, rlen);
+	अगर (!usbdev)
+		वापस 0;
+	अगर (change_mode(pp, ECR_EPP))
+		वापस 0;
+	i = usb_bulk_msg(usbdev, usb_sndbulkpipe(usbdev, 1), (व्योम *)buf, length, &rlen, 20000);
+	अगर (i)
+		prपूर्णांकk(KERN_ERR "uss720: sendbulk ep 1 buf %p len %zu rlen %u\n", buf, length, rlen);
 	change_mode(pp, ECR_PS2);
-	return rlen;
-#endif
-}
+	वापस rlen;
+#पूर्ण_अगर
+पूर्ण
 
-static size_t parport_uss720_epp_read_addr(struct parport *pp, void *buf, size_t length, int flags)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
-	size_t got = 0;
+अटल माप_प्रकार parport_uss720_epp_पढ़ो_addr(काष्ठा parport *pp, व्योम *buf, माप_प्रकार length, पूर्णांक flags)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
+	माप_प्रकार got = 0;
 
-	if (change_mode(pp, ECR_EPP))
-		return 0;
-	for (; got < length; got++) {
-		if (get_1284_register(pp, 3, (char *)buf, GFP_KERNEL))
-			break;
+	अगर (change_mode(pp, ECR_EPP))
+		वापस 0;
+	क्रम (; got < length; got++) अणु
+		अगर (get_1284_रेजिस्टर(pp, 3, (अक्षर *)buf, GFP_KERNEL))
+			अवरोध;
 		buf++;
-		if (priv->reg[0] & 0x01) {
-			clear_epp_timeout(pp);
-			break;
-		}
-	}
+		अगर (priv->reg[0] & 0x01) अणु
+			clear_epp_समयout(pp);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	change_mode(pp, ECR_PS2);
-	return got;
-}
+	वापस got;
+पूर्ण
 
-static size_t parport_uss720_epp_write_addr(struct parport *pp, const void *buf, size_t length, int flags)
-{
-	struct parport_uss720_private *priv = pp->private_data;	
-	size_t written = 0;
+अटल माप_प्रकार parport_uss720_epp_ग_लिखो_addr(काष्ठा parport *pp, स्थिर व्योम *buf, माप_प्रकार length, पूर्णांक flags)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;	
+	माप_प्रकार written = 0;
 
-	if (change_mode(pp, ECR_EPP))
-		return 0;
-	for (; written < length; written++) {
-		if (set_1284_register(pp, 3, *(char *)buf, GFP_KERNEL))
-			break;
+	अगर (change_mode(pp, ECR_EPP))
+		वापस 0;
+	क्रम (; written < length; written++) अणु
+		अगर (set_1284_रेजिस्टर(pp, 3, *(अक्षर *)buf, GFP_KERNEL))
+			अवरोध;
 		buf++;
-		if (get_1284_register(pp, 1, NULL, GFP_KERNEL))
-			break;
-		if (priv->reg[0] & 0x01) {
-			clear_epp_timeout(pp);
-			break;
-		}
-	}
+		अगर (get_1284_रेजिस्टर(pp, 1, शून्य, GFP_KERNEL))
+			अवरोध;
+		अगर (priv->reg[0] & 0x01) अणु
+			clear_epp_समयout(pp);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	change_mode(pp, ECR_PS2);
-	return written;
-}
+	वापस written;
+पूर्ण
 
-static size_t parport_uss720_ecp_write_data(struct parport *pp, const void *buffer, size_t len, int flags)
-{
-	struct parport_uss720_private *priv = pp->private_data;
-	struct usb_device *usbdev = priv->usbdev;
-	int rlen;
-	int i;
+अटल माप_प्रकार parport_uss720_ecp_ग_लिखो_data(काष्ठा parport *pp, स्थिर व्योम *buffer, माप_प्रकार len, पूर्णांक flags)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;
+	काष्ठा usb_device *usbdev = priv->usbdev;
+	पूर्णांक rlen;
+	पूर्णांक i;
 
-	if (!usbdev)
-		return 0;
-	if (change_mode(pp, ECR_ECP))
-		return 0;
-	i = usb_bulk_msg(usbdev, usb_sndbulkpipe(usbdev, 1), (void *)buffer, len, &rlen, 20000);
-	if (i)
-		printk(KERN_ERR "uss720: sendbulk ep 1 buf %p len %zu rlen %u\n", buffer, len, rlen);
+	अगर (!usbdev)
+		वापस 0;
+	अगर (change_mode(pp, ECR_ECP))
+		वापस 0;
+	i = usb_bulk_msg(usbdev, usb_sndbulkpipe(usbdev, 1), (व्योम *)buffer, len, &rlen, 20000);
+	अगर (i)
+		prपूर्णांकk(KERN_ERR "uss720: sendbulk ep 1 buf %p len %zu rlen %u\n", buffer, len, rlen);
 	change_mode(pp, ECR_PS2);
-	return rlen;
-}
+	वापस rlen;
+पूर्ण
 
-static size_t parport_uss720_ecp_read_data(struct parport *pp, void *buffer, size_t len, int flags)
-{
-	struct parport_uss720_private *priv = pp->private_data;
-	struct usb_device *usbdev = priv->usbdev;
-	int rlen;
-	int i;
+अटल माप_प्रकार parport_uss720_ecp_पढ़ो_data(काष्ठा parport *pp, व्योम *buffer, माप_प्रकार len, पूर्णांक flags)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;
+	काष्ठा usb_device *usbdev = priv->usbdev;
+	पूर्णांक rlen;
+	पूर्णांक i;
 
-	if (!usbdev)
-		return 0;
-	if (change_mode(pp, ECR_ECP))
-		return 0;
+	अगर (!usbdev)
+		वापस 0;
+	अगर (change_mode(pp, ECR_ECP))
+		वापस 0;
 	i = usb_bulk_msg(usbdev, usb_rcvbulkpipe(usbdev, 2), buffer, len, &rlen, 20000);
-	if (i)
-		printk(KERN_ERR "uss720: recvbulk ep 2 buf %p len %zu rlen %u\n", buffer, len, rlen);
+	अगर (i)
+		prपूर्णांकk(KERN_ERR "uss720: recvbulk ep 2 buf %p len %zu rlen %u\n", buffer, len, rlen);
 	change_mode(pp, ECR_PS2);
-	return rlen;
-}
+	वापस rlen;
+पूर्ण
 
-static size_t parport_uss720_ecp_write_addr(struct parport *pp, const void *buffer, size_t len, int flags)
-{
-	size_t written = 0;
+अटल माप_प्रकार parport_uss720_ecp_ग_लिखो_addr(काष्ठा parport *pp, स्थिर व्योम *buffer, माप_प्रकार len, पूर्णांक flags)
+अणु
+	माप_प्रकार written = 0;
 
-	if (change_mode(pp, ECR_ECP))
-		return 0;
-	for (; written < len; written++) {
-		if (set_1284_register(pp, 5, *(char *)buffer, GFP_KERNEL))
-			break;
+	अगर (change_mode(pp, ECR_ECP))
+		वापस 0;
+	क्रम (; written < len; written++) अणु
+		अगर (set_1284_रेजिस्टर(pp, 5, *(अक्षर *)buffer, GFP_KERNEL))
+			अवरोध;
 		buffer++;
-	}
+	पूर्ण
 	change_mode(pp, ECR_PS2);
-	return written;
-}
+	वापस written;
+पूर्ण
 
-static size_t parport_uss720_write_compat(struct parport *pp, const void *buffer, size_t len, int flags)
-{
-	struct parport_uss720_private *priv = pp->private_data;
-	struct usb_device *usbdev = priv->usbdev;
-	int rlen;
-	int i;
+अटल माप_प्रकार parport_uss720_ग_लिखो_compat(काष्ठा parport *pp, स्थिर व्योम *buffer, माप_प्रकार len, पूर्णांक flags)
+अणु
+	काष्ठा parport_uss720_निजी *priv = pp->निजी_data;
+	काष्ठा usb_device *usbdev = priv->usbdev;
+	पूर्णांक rlen;
+	पूर्णांक i;
 
-	if (!usbdev)
-		return 0;
-	if (change_mode(pp, ECR_PPF))
-		return 0;
-	i = usb_bulk_msg(usbdev, usb_sndbulkpipe(usbdev, 1), (void *)buffer, len, &rlen, 20000);
-	if (i)
-		printk(KERN_ERR "uss720: sendbulk ep 1 buf %p len %zu rlen %u\n", buffer, len, rlen);
+	अगर (!usbdev)
+		वापस 0;
+	अगर (change_mode(pp, ECR_PPF))
+		वापस 0;
+	i = usb_bulk_msg(usbdev, usb_sndbulkpipe(usbdev, 1), (व्योम *)buffer, len, &rlen, 20000);
+	अगर (i)
+		prपूर्णांकk(KERN_ERR "uss720: sendbulk ep 1 buf %p len %zu rlen %u\n", buffer, len, rlen);
 	change_mode(pp, ECR_PS2);
-	return rlen;
-}
+	वापस rlen;
+पूर्ण
 
 /* --------------------------------------------------------------------- */
 
-static struct parport_operations parport_uss720_ops = 
-{
+अटल काष्ठा parport_operations parport_uss720_ops = 
+अणु
 	.owner =		THIS_MODULE,
-	.write_data =		parport_uss720_write_data,
-	.read_data =		parport_uss720_read_data,
+	.ग_लिखो_data =		parport_uss720_ग_लिखो_data,
+	.पढ़ो_data =		parport_uss720_पढ़ो_data,
 
-	.write_control =	parport_uss720_write_control,
-	.read_control =		parport_uss720_read_control,
+	.ग_लिखो_control =	parport_uss720_ग_लिखो_control,
+	.पढ़ो_control =		parport_uss720_पढ़ो_control,
 	.frob_control =		parport_uss720_frob_control,
 
-	.read_status =		parport_uss720_read_status,
+	.पढ़ो_status =		parport_uss720_पढ़ो_status,
 
 	.enable_irq =		parport_uss720_enable_irq,
 	.disable_irq =		parport_uss720_disable_irq,
 
-	.data_forward =		parport_uss720_data_forward,
+	.data_क्रमward =		parport_uss720_data_क्रमward,
 	.data_reverse =		parport_uss720_data_reverse,
 
 	.init_state =		parport_uss720_init_state,
 	.save_state =		parport_uss720_save_state,
 	.restore_state =	parport_uss720_restore_state,
 
-	.epp_write_data =	parport_uss720_epp_write_data,
-	.epp_read_data =	parport_uss720_epp_read_data,
-	.epp_write_addr =	parport_uss720_epp_write_addr,
-	.epp_read_addr =	parport_uss720_epp_read_addr,
+	.epp_ग_लिखो_data =	parport_uss720_epp_ग_लिखो_data,
+	.epp_पढ़ो_data =	parport_uss720_epp_पढ़ो_data,
+	.epp_ग_लिखो_addr =	parport_uss720_epp_ग_लिखो_addr,
+	.epp_पढ़ो_addr =	parport_uss720_epp_पढ़ो_addr,
 
-	.ecp_write_data =	parport_uss720_ecp_write_data,
-	.ecp_read_data =	parport_uss720_ecp_read_data,
-	.ecp_write_addr =	parport_uss720_ecp_write_addr,
+	.ecp_ग_लिखो_data =	parport_uss720_ecp_ग_लिखो_data,
+	.ecp_पढ़ो_data =	parport_uss720_ecp_पढ़ो_data,
+	.ecp_ग_लिखो_addr =	parport_uss720_ecp_ग_लिखो_addr,
 
-	.compat_write_data =	parport_uss720_write_compat,
-	.nibble_read_data =	parport_ieee1284_read_nibble,
-	.byte_read_data =	parport_ieee1284_read_byte,
-};
+	.compat_ग_लिखो_data =	parport_uss720_ग_लिखो_compat,
+	.nibble_पढ़ो_data =	parport_ieee1284_पढ़ो_nibble,
+	.byte_पढ़ो_data =	parport_ieee1284_पढ़ो_byte,
+पूर्ण;
 
 /* --------------------------------------------------------------------- */
 
-static int uss720_probe(struct usb_interface *intf,
-			const struct usb_device_id *id)
-{
-	struct usb_device *usbdev = usb_get_dev(interface_to_usbdev(intf));
-	struct usb_host_interface *interface;
-	struct usb_endpoint_descriptor *epd;
-	struct parport_uss720_private *priv;
-	struct parport *pp;
-	unsigned char reg;
-	int i;
+अटल पूर्णांक uss720_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *usbdev = usb_get_dev(पूर्णांकerface_to_usbdev(पूर्णांकf));
+	काष्ठा usb_host_पूर्णांकerface *पूर्णांकerface;
+	काष्ठा usb_endpoपूर्णांक_descriptor *epd;
+	काष्ठा parport_uss720_निजी *priv;
+	काष्ठा parport *pp;
+	अचिन्हित अक्षर reg;
+	पूर्णांक i;
 
-	dev_dbg(&intf->dev, "probe: vendor id 0x%x, device id 0x%x\n",
-		le16_to_cpu(usbdev->descriptor.idVendor),
+	dev_dbg(&पूर्णांकf->dev, "probe: vendor id 0x%x, device id 0x%x\n",
+		le16_to_cpu(usbdev->descriptor.idVenकरोr),
 		le16_to_cpu(usbdev->descriptor.idProduct));
 
-	/* our known interfaces have 3 alternate settings */
-	if (intf->num_altsetting != 3) {
+	/* our known पूर्णांकerfaces have 3 alternate settings */
+	अगर (पूर्णांकf->num_altsetting != 3) अणु
 		usb_put_dev(usbdev);
-		return -ENODEV;
-	}
-	i = usb_set_interface(usbdev, intf->altsetting->desc.bInterfaceNumber, 2);
-	dev_dbg(&intf->dev, "set interface result %d\n", i);
+		वापस -ENODEV;
+	पूर्ण
+	i = usb_set_पूर्णांकerface(usbdev, पूर्णांकf->altsetting->desc.bInterfaceNumber, 2);
+	dev_dbg(&पूर्णांकf->dev, "set interface result %d\n", i);
 
-	interface = intf->cur_altsetting;
+	पूर्णांकerface = पूर्णांकf->cur_altsetting;
 
-	if (interface->desc.bNumEndpoints < 3) {
+	अगर (पूर्णांकerface->desc.bNumEndpoपूर्णांकs < 3) अणु
 		usb_put_dev(usbdev);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
-	 * Allocate parport interface 
+	 * Allocate parport पूर्णांकerface 
 	 */
-	priv = kzalloc(sizeof(struct parport_uss720_private), GFP_KERNEL);
-	if (!priv) {
+	priv = kzalloc(माप(काष्ठा parport_uss720_निजी), GFP_KERNEL);
+	अगर (!priv) अणु
 		usb_put_dev(usbdev);
-		return -ENOMEM;
-	}
-	priv->pp = NULL;
+		वापस -ENOMEM;
+	पूर्ण
+	priv->pp = शून्य;
 	priv->usbdev = usbdev;
 	kref_init(&priv->ref_count);
-	spin_lock_init(&priv->asynclock);
+	spin_lock_init(&priv->asynघड़ी);
 	INIT_LIST_HEAD(&priv->asynclist);
-	pp = parport_register_port(0, PARPORT_IRQ_NONE, PARPORT_DMA_NONE, &parport_uss720_ops);
-	if (!pp) {
-		printk(KERN_WARNING "uss720: could not register parport\n");
-		goto probe_abort;
-	}
+	pp = parport_रेजिस्टर_port(0, PARPORT_IRQ_NONE, PARPORT_DMA_NONE, &parport_uss720_ops);
+	अगर (!pp) अणु
+		prपूर्णांकk(KERN_WARNING "uss720: could not register parport\n");
+		जाओ probe_पात;
+	पूर्ण
 
 	priv->pp = pp;
-	pp->private_data = priv;
+	pp->निजी_data = priv;
 	pp->modes = PARPORT_MODE_PCSPP | PARPORT_MODE_TRISTATE | PARPORT_MODE_EPP | PARPORT_MODE_ECP | PARPORT_MODE_COMPAT;
 
-	/* set the USS720 control register to manual mode, no ECP compression, enable all ints */
-	set_1284_register(pp, 7, 0x00, GFP_KERNEL);
-	set_1284_register(pp, 6, 0x30, GFP_KERNEL);  /* PS/2 mode */
-	set_1284_register(pp, 2, 0x0c, GFP_KERNEL);
+	/* set the USS720 control रेजिस्टर to manual mode, no ECP compression, enable all पूर्णांकs */
+	set_1284_रेजिस्टर(pp, 7, 0x00, GFP_KERNEL);
+	set_1284_रेजिस्टर(pp, 6, 0x30, GFP_KERNEL);  /* PS/2 mode */
+	set_1284_रेजिस्टर(pp, 2, 0x0c, GFP_KERNEL);
 	/* debugging */
-	get_1284_register(pp, 0, &reg, GFP_KERNEL);
-	dev_dbg(&intf->dev, "reg: %7ph\n", priv->reg);
+	get_1284_रेजिस्टर(pp, 0, &reg, GFP_KERNEL);
+	dev_dbg(&पूर्णांकf->dev, "reg: %7ph\n", priv->reg);
 
-	i = usb_find_last_int_in_endpoint(interface, &epd);
-	if (!i) {
-		dev_dbg(&intf->dev, "epaddr %d interval %d\n",
-				epd->bEndpointAddress, epd->bInterval);
-	}
+	i = usb_find_last_पूर्णांक_in_endpoपूर्णांक(पूर्णांकerface, &epd);
+	अगर (!i) अणु
+		dev_dbg(&पूर्णांकf->dev, "epaddr %d interval %d\n",
+				epd->bEndpoपूर्णांकAddress, epd->bInterval);
+	पूर्ण
 	parport_announce_port(pp);
 
-	usb_set_intfdata(intf, pp);
+	usb_set_पूर्णांकfdata(पूर्णांकf, pp);
 	usb_put_dev(usbdev);
-	return 0;
+	वापस 0;
 
-probe_abort:
-	kill_all_async_requests_priv(priv);
+probe_पात:
+	समाप्त_all_async_requests_priv(priv);
 	kref_put(&priv->ref_count, destroy_priv);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void uss720_disconnect(struct usb_interface *intf)
-{
-	struct parport *pp = usb_get_intfdata(intf);
-	struct parport_uss720_private *priv;
+अटल व्योम uss720_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा parport *pp = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा parport_uss720_निजी *priv;
 
-	dev_dbg(&intf->dev, "disconnect\n");
-	usb_set_intfdata(intf, NULL);
-	if (pp) {
-		priv = pp->private_data;
-		priv->usbdev = NULL;
-		priv->pp = NULL;
-		dev_dbg(&intf->dev, "parport_remove_port\n");
-		parport_remove_port(pp);
+	dev_dbg(&पूर्णांकf->dev, "disconnect\n");
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	अगर (pp) अणु
+		priv = pp->निजी_data;
+		priv->usbdev = शून्य;
+		priv->pp = शून्य;
+		dev_dbg(&पूर्णांकf->dev, "parport_remove_port\n");
+		parport_हटाओ_port(pp);
 		parport_put_port(pp);
-		kill_all_async_requests_priv(priv);
+		समाप्त_all_async_requests_priv(priv);
 		kref_put(&priv->ref_count, destroy_priv);
-	}
-	dev_dbg(&intf->dev, "disconnect done\n");
-}
+	पूर्ण
+	dev_dbg(&पूर्णांकf->dev, "disconnect done\n");
+पूर्ण
 
 /* table of cables that work through this driver */
-static const struct usb_device_id uss720_table[] = {
-	{ USB_DEVICE(0x047e, 0x1001) },
-	{ USB_DEVICE(0x04b8, 0x0002) },
-	{ USB_DEVICE(0x04b8, 0x0003) },
-	{ USB_DEVICE(0x050d, 0x0002) },
-	{ USB_DEVICE(0x050d, 0x1202) },
-	{ USB_DEVICE(0x0557, 0x2001) },
-	{ USB_DEVICE(0x05ab, 0x0002) },
-	{ USB_DEVICE(0x06c6, 0x0100) },
-	{ USB_DEVICE(0x0729, 0x1284) },
-	{ USB_DEVICE(0x1293, 0x0002) },
-	{ }						/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id uss720_table[] = अणु
+	अणु USB_DEVICE(0x047e, 0x1001) पूर्ण,
+	अणु USB_DEVICE(0x04b8, 0x0002) पूर्ण,
+	अणु USB_DEVICE(0x04b8, 0x0003) पूर्ण,
+	अणु USB_DEVICE(0x050d, 0x0002) पूर्ण,
+	अणु USB_DEVICE(0x050d, 0x1202) पूर्ण,
+	अणु USB_DEVICE(0x0557, 0x2001) पूर्ण,
+	अणु USB_DEVICE(0x05ab, 0x0002) पूर्ण,
+	अणु USB_DEVICE(0x06c6, 0x0100) पूर्ण,
+	अणु USB_DEVICE(0x0729, 0x1284) पूर्ण,
+	अणु USB_DEVICE(0x1293, 0x0002) पूर्ण,
+	अणु पूर्ण						/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE (usb, uss720_table);
 
 
-static struct usb_driver uss720_driver = {
+अटल काष्ठा usb_driver uss720_driver = अणु
 	.name =		"uss720",
 	.probe =	uss720_probe,
 	.disconnect =	uss720_disconnect,
 	.id_table =	uss720_table,
-};
+पूर्ण;
 
 /* --------------------------------------------------------------------- */
 
@@ -796,30 +797,30 @@ MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-static int __init uss720_init(void)
-{
-	int retval;
-	retval = usb_register(&uss720_driver);
-	if (retval)
-		goto out;
+अटल पूर्णांक __init uss720_init(व्योम)
+अणु
+	पूर्णांक retval;
+	retval = usb_रेजिस्टर(&uss720_driver);
+	अगर (retval)
+		जाओ out;
 
-	printk(KERN_INFO KBUILD_MODNAME ": " DRIVER_DESC "\n");
-	printk(KERN_INFO KBUILD_MODNAME ": NOTE: this is a special purpose "
+	prपूर्णांकk(KERN_INFO KBUILD_MODNAME ": " DRIVER_DESC "\n");
+	prपूर्णांकk(KERN_INFO KBUILD_MODNAME ": NOTE: this is a special purpose "
 	       "driver to allow nonstandard\n");
-	printk(KERN_INFO KBUILD_MODNAME ": protocols (eg. bitbang) over "
+	prपूर्णांकk(KERN_INFO KBUILD_MODNAME ": protocols (eg. bitbang) over "
 	       "USS720 usb to parallel cables\n");
-	printk(KERN_INFO KBUILD_MODNAME ": If you just want to connect to a "
+	prपूर्णांकk(KERN_INFO KBUILD_MODNAME ": If you just want to connect to a "
 	       "printer, use usblp instead\n");
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void __exit uss720_cleanup(void)
-{
-	usb_deregister(&uss720_driver);
-}
+अटल व्योम __निकास uss720_cleanup(व्योम)
+अणु
+	usb_deरेजिस्टर(&uss720_driver);
+पूर्ण
 
 module_init(uss720_init);
-module_exit(uss720_cleanup);
+module_निकास(uss720_cleanup);
 
 /* --------------------------------------------------------------------- */

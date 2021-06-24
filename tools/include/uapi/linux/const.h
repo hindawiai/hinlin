@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-/* const.h: Macros for dealing with constants.  */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* स्थिर.h: Macros क्रम dealing with स्थिरants.  */
 
-#ifndef _UAPI_LINUX_CONST_H
-#define _UAPI_LINUX_CONST_H
+#अगर_अघोषित _UAPI_LINUX_CONST_H
+#घोषणा _UAPI_LINUX_CONST_H
 
-/* Some constant macros are used in both assembler and
- * C code.  Therefore we cannot annotate them always with
- * 'UL' and other type specifiers unilaterally.  We
+/* Some स्थिरant macros are used in both assembler and
+ * C code.  Thereक्रमe we cannot annotate them always with
+ * 'UL' and other type specअगरiers unilaterally.  We
  * use the following macros to deal with this.
  *
  * Similarly, _AT() will cast an expression with a type in C, but
- * leave it unchanged in asm.
+ * leave it unchanged in यंत्र.
  */
 
-#ifdef __ASSEMBLY__
-#define _AC(X,Y)	X
-#define _AT(T,X)	X
-#else
-#define __AC(X,Y)	(X##Y)
-#define _AC(X,Y)	__AC(X,Y)
-#define _AT(T,X)	((T)(X))
-#endif
+#अगर_घोषित __ASSEMBLY__
+#घोषणा _AC(X,Y)	X
+#घोषणा _AT(T,X)	X
+#अन्यथा
+#घोषणा __AC(X,Y)	(X##Y)
+#घोषणा _AC(X,Y)	__AC(X,Y)
+#घोषणा _AT(T,X)	((T)(X))
+#पूर्ण_अगर
 
-#define _UL(x)		(_AC(x, UL))
-#define _ULL(x)		(_AC(x, ULL))
+#घोषणा _UL(x)		(_AC(x, UL))
+#घोषणा _ULL(x)		(_AC(x, ULL))
 
-#define _BITUL(x)	(_UL(1) << (x))
-#define _BITULL(x)	(_ULL(1) << (x))
+#घोषणा _BITUL(x)	(_UL(1) << (x))
+#घोषणा _BITULL(x)	(_ULL(1) << (x))
 
-#define __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
-#define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
+#घोषणा __ALIGN_KERNEL(x, a)		__ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+#घोषणा __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
 
-#define __KERNEL_DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
+#घोषणा __KERNEL_DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 
-#endif /* _UAPI_LINUX_CONST_H */
+#पूर्ण_अगर /* _UAPI_LINUX_CONST_H */

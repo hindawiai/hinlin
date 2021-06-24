@@ -1,195 +1,196 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/bitfield.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irqdomain.h>
-#include <linux/mailbox_controller.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/mailbox_controller.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <dt-bindings/mailbox/qcom-ipcc.h>
+#समावेश <dt-bindings/mailbox/qcom-ipcc.h>
 
-#define IPCC_MBOX_MAX_CHAN		48
+#घोषणा IPCC_MBOX_MAX_CHAN		48
 
 /* IPCC Register offsets */
-#define IPCC_REG_SEND_ID		0x0c
-#define IPCC_REG_RECV_ID		0x10
-#define IPCC_REG_RECV_SIGNAL_ENABLE	0x14
-#define IPCC_REG_RECV_SIGNAL_DISABLE	0x18
-#define IPCC_REG_RECV_SIGNAL_CLEAR	0x1c
-#define IPCC_REG_CLIENT_CLEAR		0x38
+#घोषणा IPCC_REG_SEND_ID		0x0c
+#घोषणा IPCC_REG_RECV_ID		0x10
+#घोषणा IPCC_REG_RECV_SIGNAL_ENABLE	0x14
+#घोषणा IPCC_REG_RECV_SIGNAL_DISABLE	0x18
+#घोषणा IPCC_REG_RECV_SIGNAL_CLEAR	0x1c
+#घोषणा IPCC_REG_CLIENT_CLEAR		0x38
 
-#define IPCC_SIGNAL_ID_MASK		GENMASK(15, 0)
-#define IPCC_CLIENT_ID_MASK		GENMASK(31, 16)
+#घोषणा IPCC_SIGNAL_ID_MASK		GENMASK(15, 0)
+#घोषणा IPCC_CLIENT_ID_MASK		GENMASK(31, 16)
 
-#define IPCC_NO_PENDING_IRQ		GENMASK(31, 0)
+#घोषणा IPCC_NO_PENDING_IRQ		GENMASK(31, 0)
 
 /**
- * struct qcom_ipcc_chan_info - Per-mailbox-channel info
- * @client_id:	The client-id to which the interrupt has to be triggered
- * @signal_id:	The signal-id to which the interrupt has to be triggered
+ * काष्ठा qcom_ipcc_chan_info - Per-mailbox-channel info
+ * @client_id:	The client-id to which the पूर्णांकerrupt has to be triggered
+ * @संकेत_id:	The संकेत-id to which the पूर्णांकerrupt has to be triggered
  */
-struct qcom_ipcc_chan_info {
+काष्ठा qcom_ipcc_chan_info अणु
 	u16 client_id;
-	u16 signal_id;
-};
+	u16 संकेत_id;
+पूर्ण;
 
 /**
- * struct qcom_ipcc - Holder for the mailbox driver
+ * काष्ठा qcom_ipcc - Holder क्रम the mailbox driver
  * @dev:		Device associated with this instance
  * @base:		Base address of the IPCC frame associated to APSS
- * @irq_domain:		The irq_domain associated with this instance
+ * @irq_करोमुख्य:		The irq_करोमुख्य associated with this instance
  * @chan:		The mailbox channels array
  * @mchan:		The per-mailbox channel info array
  * @mbox:		The mailbox controller
  * @irq:		Summary irq
  */
-struct qcom_ipcc {
-	struct device *dev;
-	void __iomem *base;
-	struct irq_domain *irq_domain;
-	struct mbox_chan chan[IPCC_MBOX_MAX_CHAN];
-	struct qcom_ipcc_chan_info mchan[IPCC_MBOX_MAX_CHAN];
-	struct mbox_controller mbox;
-	int irq;
-};
+काष्ठा qcom_ipcc अणु
+	काष्ठा device *dev;
+	व्योम __iomem *base;
+	काष्ठा irq_करोमुख्य *irq_करोमुख्य;
+	काष्ठा mbox_chan chan[IPCC_MBOX_MAX_CHAN];
+	काष्ठा qcom_ipcc_chan_info mchan[IPCC_MBOX_MAX_CHAN];
+	काष्ठा mbox_controller mbox;
+	पूर्णांक irq;
+पूर्ण;
 
-static inline struct qcom_ipcc *to_qcom_ipcc(struct mbox_controller *mbox)
-{
-	return container_of(mbox, struct qcom_ipcc, mbox);
-}
+अटल अंतरभूत काष्ठा qcom_ipcc *to_qcom_ipcc(काष्ठा mbox_controller *mbox)
+अणु
+	वापस container_of(mbox, काष्ठा qcom_ipcc, mbox);
+पूर्ण
 
-static inline u32 qcom_ipcc_get_hwirq(u16 client_id, u16 signal_id)
-{
-	return FIELD_PREP(IPCC_CLIENT_ID_MASK, client_id) |
-	       FIELD_PREP(IPCC_SIGNAL_ID_MASK, signal_id);
-}
+अटल अंतरभूत u32 qcom_ipcc_get_hwirq(u16 client_id, u16 संकेत_id)
+अणु
+	वापस FIELD_PREP(IPCC_CLIENT_ID_MASK, client_id) |
+	       FIELD_PREP(IPCC_SIGNAL_ID_MASK, संकेत_id);
+पूर्ण
 
-static irqreturn_t qcom_ipcc_irq_fn(int irq, void *data)
-{
-	struct qcom_ipcc *ipcc = data;
+अटल irqवापस_t qcom_ipcc_irq_fn(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा qcom_ipcc *ipcc = data;
 	u32 hwirq;
-	int virq;
+	पूर्णांक virq;
 
-	for (;;) {
-		hwirq = readl(ipcc->base + IPCC_REG_RECV_ID);
-		if (hwirq == IPCC_NO_PENDING_IRQ)
-			break;
+	क्रम (;;) अणु
+		hwirq = पढ़ोl(ipcc->base + IPCC_REG_RECV_ID);
+		अगर (hwirq == IPCC_NO_PENDING_IRQ)
+			अवरोध;
 
-		virq = irq_find_mapping(ipcc->irq_domain, hwirq);
-		writel(hwirq, ipcc->base + IPCC_REG_RECV_SIGNAL_CLEAR);
+		virq = irq_find_mapping(ipcc->irq_करोमुख्य, hwirq);
+		ग_लिखोl(hwirq, ipcc->base + IPCC_REG_RECV_SIGNAL_CLEAR);
 		generic_handle_irq(virq);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void qcom_ipcc_mask_irq(struct irq_data *irqd)
-{
-	struct qcom_ipcc *ipcc = irq_data_get_irq_chip_data(irqd);
+अटल व्योम qcom_ipcc_mask_irq(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा qcom_ipcc *ipcc = irq_data_get_irq_chip_data(irqd);
 	irq_hw_number_t hwirq = irqd_to_hwirq(irqd);
 
-	writel(hwirq, ipcc->base + IPCC_REG_RECV_SIGNAL_DISABLE);
-}
+	ग_लिखोl(hwirq, ipcc->base + IPCC_REG_RECV_SIGNAL_DISABLE);
+पूर्ण
 
-static void qcom_ipcc_unmask_irq(struct irq_data *irqd)
-{
-	struct qcom_ipcc *ipcc = irq_data_get_irq_chip_data(irqd);
+अटल व्योम qcom_ipcc_unmask_irq(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा qcom_ipcc *ipcc = irq_data_get_irq_chip_data(irqd);
 	irq_hw_number_t hwirq = irqd_to_hwirq(irqd);
 
-	writel(hwirq, ipcc->base + IPCC_REG_RECV_SIGNAL_ENABLE);
-}
+	ग_लिखोl(hwirq, ipcc->base + IPCC_REG_RECV_SIGNAL_ENABLE);
+पूर्ण
 
-static struct irq_chip qcom_ipcc_irq_chip = {
+अटल काष्ठा irq_chip qcom_ipcc_irq_chip = अणु
 	.name = "ipcc",
 	.irq_mask = qcom_ipcc_mask_irq,
 	.irq_unmask = qcom_ipcc_unmask_irq,
 	.flags = IRQCHIP_SKIP_SET_WAKE,
-};
+पूर्ण;
 
-static int qcom_ipcc_domain_map(struct irq_domain *d, unsigned int irq,
+अटल पूर्णांक qcom_ipcc_करोमुख्य_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
 				irq_hw_number_t hw)
-{
-	struct qcom_ipcc *ipcc = d->host_data;
+अणु
+	काष्ठा qcom_ipcc *ipcc = d->host_data;
 
 	irq_set_chip_and_handler(irq, &qcom_ipcc_irq_chip, handle_level_irq);
 	irq_set_chip_data(irq, ipcc);
 	irq_set_noprobe(irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_ipcc_domain_xlate(struct irq_domain *d,
-				  struct device_node *node, const u32 *intspec,
-				  unsigned int intsize,
-				  unsigned long *out_hwirq,
-				  unsigned int *out_type)
-{
-	if (intsize != 3)
-		return -EINVAL;
+अटल पूर्णांक qcom_ipcc_करोमुख्य_xlate(काष्ठा irq_करोमुख्य *d,
+				  काष्ठा device_node *node, स्थिर u32 *पूर्णांकspec,
+				  अचिन्हित पूर्णांक पूर्णांकsize,
+				  अचिन्हित दीर्घ *out_hwirq,
+				  अचिन्हित पूर्णांक *out_type)
+अणु
+	अगर (पूर्णांकsize != 3)
+		वापस -EINVAL;
 
-	*out_hwirq = qcom_ipcc_get_hwirq(intspec[0], intspec[1]);
-	*out_type = intspec[2] & IRQ_TYPE_SENSE_MASK;
+	*out_hwirq = qcom_ipcc_get_hwirq(पूर्णांकspec[0], पूर्णांकspec[1]);
+	*out_type = पूर्णांकspec[2] & IRQ_TYPE_SENSE_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops qcom_ipcc_irq_ops = {
-	.map = qcom_ipcc_domain_map,
-	.xlate = qcom_ipcc_domain_xlate,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops qcom_ipcc_irq_ops = अणु
+	.map = qcom_ipcc_करोमुख्य_map,
+	.xlate = qcom_ipcc_करोमुख्य_xlate,
+पूर्ण;
 
-static int qcom_ipcc_mbox_send_data(struct mbox_chan *chan, void *data)
-{
-	struct qcom_ipcc *ipcc = to_qcom_ipcc(chan->mbox);
-	struct qcom_ipcc_chan_info *mchan = chan->con_priv;
+अटल पूर्णांक qcom_ipcc_mbox_send_data(काष्ठा mbox_chan *chan, व्योम *data)
+अणु
+	काष्ठा qcom_ipcc *ipcc = to_qcom_ipcc(chan->mbox);
+	काष्ठा qcom_ipcc_chan_info *mchan = chan->con_priv;
 	u32 hwirq;
 
-	hwirq = qcom_ipcc_get_hwirq(mchan->client_id, mchan->signal_id);
-	writel(hwirq, ipcc->base + IPCC_REG_SEND_ID);
+	hwirq = qcom_ipcc_get_hwirq(mchan->client_id, mchan->संकेत_id);
+	ग_लिखोl(hwirq, ipcc->base + IPCC_REG_SEND_ID);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct mbox_chan *qcom_ipcc_mbox_xlate(struct mbox_controller *mbox,
-					const struct of_phandle_args *ph)
-{
-	struct qcom_ipcc *ipcc = to_qcom_ipcc(mbox);
-	struct qcom_ipcc_chan_info *mchan;
-	struct mbox_chan *chan;
-	unsigned int i;
+अटल काष्ठा mbox_chan *qcom_ipcc_mbox_xlate(काष्ठा mbox_controller *mbox,
+					स्थिर काष्ठा of_phandle_args *ph)
+अणु
+	काष्ठा qcom_ipcc *ipcc = to_qcom_ipcc(mbox);
+	काष्ठा qcom_ipcc_chan_info *mchan;
+	काष्ठा mbox_chan *chan;
+	अचिन्हित पूर्णांक i;
 
-	if (ph->args_count != 2)
-		return ERR_PTR(-EINVAL);
+	अगर (ph->args_count != 2)
+		वापस ERR_PTR(-EINVAL);
 
-	for (i = 0; i < IPCC_MBOX_MAX_CHAN; i++) {
+	क्रम (i = 0; i < IPCC_MBOX_MAX_CHAN; i++) अणु
 		chan = &ipcc->chan[i];
-		if (!chan->con_priv) {
+		अगर (!chan->con_priv) अणु
 			mchan = &ipcc->mchan[i];
 			mchan->client_id = ph->args[0];
-			mchan->signal_id = ph->args[1];
+			mchan->संकेत_id = ph->args[1];
 			chan->con_priv = mchan;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		chan = NULL;
-	}
+		chan = शून्य;
+	पूर्ण
 
-	return chan ?: ERR_PTR(-EBUSY);
-}
+	वापस chan ?: ERR_PTR(-EBUSY);
+पूर्ण
 
-static const struct mbox_chan_ops ipcc_mbox_chan_ops = {
+अटल स्थिर काष्ठा mbox_chan_ops ipcc_mbox_chan_ops = अणु
 	.send_data = qcom_ipcc_mbox_send_data,
-};
+पूर्ण;
 
-static int qcom_ipcc_setup_mbox(struct qcom_ipcc *ipcc)
-{
-	struct mbox_controller *mbox;
-	struct device *dev = ipcc->dev;
+अटल पूर्णांक qcom_ipcc_setup_mbox(काष्ठा qcom_ipcc *ipcc)
+अणु
+	काष्ठा mbox_controller *mbox;
+	काष्ठा device *dev = ipcc->dev;
 
 	mbox = &ipcc->mbox;
 	mbox->dev = dev;
@@ -197,87 +198,87 @@ static int qcom_ipcc_setup_mbox(struct qcom_ipcc *ipcc)
 	mbox->chans = ipcc->chan;
 	mbox->ops = &ipcc_mbox_chan_ops;
 	mbox->of_xlate = qcom_ipcc_mbox_xlate;
-	mbox->txdone_irq = false;
-	mbox->txdone_poll = false;
+	mbox->txकरोne_irq = false;
+	mbox->txकरोne_poll = false;
 
-	return devm_mbox_controller_register(dev, mbox);
-}
+	वापस devm_mbox_controller_रेजिस्टर(dev, mbox);
+पूर्ण
 
-static int qcom_ipcc_probe(struct platform_device *pdev)
-{
-	struct qcom_ipcc *ipcc;
-	int ret;
+अटल पूर्णांक qcom_ipcc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_ipcc *ipcc;
+	पूर्णांक ret;
 
-	ipcc = devm_kzalloc(&pdev->dev, sizeof(*ipcc), GFP_KERNEL);
-	if (!ipcc)
-		return -ENOMEM;
+	ipcc = devm_kzalloc(&pdev->dev, माप(*ipcc), GFP_KERNEL);
+	अगर (!ipcc)
+		वापस -ENOMEM;
 
 	ipcc->dev = &pdev->dev;
 
-	ipcc->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(ipcc->base))
-		return PTR_ERR(ipcc->base);
+	ipcc->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(ipcc->base))
+		वापस PTR_ERR(ipcc->base);
 
-	ipcc->irq = platform_get_irq(pdev, 0);
-	if (ipcc->irq < 0)
-		return ipcc->irq;
+	ipcc->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (ipcc->irq < 0)
+		वापस ipcc->irq;
 
-	ipcc->irq_domain = irq_domain_add_tree(pdev->dev.of_node,
+	ipcc->irq_करोमुख्य = irq_करोमुख्य_add_tree(pdev->dev.of_node,
 					       &qcom_ipcc_irq_ops, ipcc);
-	if (!ipcc->irq_domain)
-		return -ENOMEM;
+	अगर (!ipcc->irq_करोमुख्य)
+		वापस -ENOMEM;
 
 	ret = qcom_ipcc_setup_mbox(ipcc);
-	if (ret)
-		goto err_mbox;
+	अगर (ret)
+		जाओ err_mbox;
 
 	ret = devm_request_irq(&pdev->dev, ipcc->irq, qcom_ipcc_irq_fn,
 			       IRQF_TRIGGER_HIGH, "ipcc", ipcc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Failed to register the irq: %d\n", ret);
-		goto err_mbox;
-	}
+		जाओ err_mbox;
+	पूर्ण
 
 	enable_irq_wake(ipcc->irq);
-	platform_set_drvdata(pdev, ipcc);
+	platक्रमm_set_drvdata(pdev, ipcc);
 
-	return 0;
+	वापस 0;
 
 err_mbox:
-	irq_domain_remove(ipcc->irq_domain);
+	irq_करोमुख्य_हटाओ(ipcc->irq_करोमुख्य);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qcom_ipcc_remove(struct platform_device *pdev)
-{
-	struct qcom_ipcc *ipcc = platform_get_drvdata(pdev);
+अटल पूर्णांक qcom_ipcc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_ipcc *ipcc = platक्रमm_get_drvdata(pdev);
 
 	disable_irq_wake(ipcc->irq);
-	irq_domain_remove(ipcc->irq_domain);
+	irq_करोमुख्य_हटाओ(ipcc->irq_करोमुख्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id qcom_ipcc_of_match[] = {
-	{ .compatible = "qcom,ipcc"},
-	{}
-};
+अटल स्थिर काष्ठा of_device_id qcom_ipcc_of_match[] = अणु
+	अणु .compatible = "qcom,ipcc"पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qcom_ipcc_of_match);
 
-static struct platform_driver qcom_ipcc_driver = {
+अटल काष्ठा platक्रमm_driver qcom_ipcc_driver = अणु
 	.probe = qcom_ipcc_probe,
-	.remove = qcom_ipcc_remove,
-	.driver = {
+	.हटाओ = qcom_ipcc_हटाओ,
+	.driver = अणु
 		.name = "qcom-ipcc",
 		.of_match_table = qcom_ipcc_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init qcom_ipcc_init(void)
-{
-	return platform_driver_register(&qcom_ipcc_driver);
-}
+अटल पूर्णांक __init qcom_ipcc_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&qcom_ipcc_driver);
+पूर्ण
 arch_initcall(qcom_ipcc_init);
 
 MODULE_AUTHOR("Venkata Narendra Kumar Gutta <vnkgutta@codeaurora.org>");

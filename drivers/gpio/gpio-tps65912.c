@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * GPIO driver for TI TPS65912x PMICs
+ * GPIO driver क्रम TI TPS65912x PMICs
  *
  * Copyright (C) 2015 Texas Instruments Incorporated - http://www.ti.com/
  *	Andrew F. Davis <afd@ti.com>
@@ -9,80 +10,80 @@
  * Margarita Olaya Cabrera <magi@slimlogic.co.uk>
  */
 
-#include <linux/gpio/driver.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/mfd/tps65912.h>
+#समावेश <linux/mfd/tps65912.h>
 
-struct tps65912_gpio {
-	struct gpio_chip gpio_chip;
-	struct tps65912 *tps;
-};
+काष्ठा tps65912_gpio अणु
+	काष्ठा gpio_chip gpio_chip;
+	काष्ठा tps65912 *tps;
+पूर्ण;
 
-static int tps65912_gpio_get_direction(struct gpio_chip *gc,
-				       unsigned offset)
-{
-	struct tps65912_gpio *gpio = gpiochip_get_data(gc);
+अटल पूर्णांक tps65912_gpio_get_direction(काष्ठा gpio_chip *gc,
+				       अचिन्हित offset)
+अणु
+	काष्ठा tps65912_gpio *gpio = gpiochip_get_data(gc);
 
-	int ret, val;
+	पूर्णांक ret, val;
 
-	ret = regmap_read(gpio->tps->regmap, TPS65912_GPIO1 + offset, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(gpio->tps->regmap, TPS65912_GPIO1 + offset, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val & GPIO_CFG_MASK)
-		return GPIO_LINE_DIRECTION_OUT;
-	else
-		return GPIO_LINE_DIRECTION_IN;
-}
+	अगर (val & GPIO_CFG_MASK)
+		वापस GPIO_LINE_सूचीECTION_OUT;
+	अन्यथा
+		वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int tps65912_gpio_direction_input(struct gpio_chip *gc, unsigned offset)
-{
-	struct tps65912_gpio *gpio = gpiochip_get_data(gc);
+अटल पूर्णांक tps65912_gpio_direction_input(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
+	काष्ठा tps65912_gpio *gpio = gpiochip_get_data(gc);
 
-	return regmap_update_bits(gpio->tps->regmap, TPS65912_GPIO1 + offset,
+	वापस regmap_update_bits(gpio->tps->regmap, TPS65912_GPIO1 + offset,
 				  GPIO_CFG_MASK, 0);
-}
+पूर्ण
 
-static int tps65912_gpio_direction_output(struct gpio_chip *gc,
-					  unsigned offset, int value)
-{
-	struct tps65912_gpio *gpio = gpiochip_get_data(gc);
+अटल पूर्णांक tps65912_gpio_direction_output(काष्ठा gpio_chip *gc,
+					  अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा tps65912_gpio *gpio = gpiochip_get_data(gc);
 
 	/* Set the initial value */
 	regmap_update_bits(gpio->tps->regmap, TPS65912_GPIO1 + offset,
 			   GPIO_SET_MASK, value ? GPIO_SET_MASK : 0);
 
-	return regmap_update_bits(gpio->tps->regmap, TPS65912_GPIO1 + offset,
+	वापस regmap_update_bits(gpio->tps->regmap, TPS65912_GPIO1 + offset,
 				  GPIO_CFG_MASK, GPIO_CFG_MASK);
-}
+पूर्ण
 
-static int tps65912_gpio_get(struct gpio_chip *gc, unsigned offset)
-{
-	struct tps65912_gpio *gpio = gpiochip_get_data(gc);
-	int ret, val;
+अटल पूर्णांक tps65912_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
+	काष्ठा tps65912_gpio *gpio = gpiochip_get_data(gc);
+	पूर्णांक ret, val;
 
-	ret = regmap_read(gpio->tps->regmap, TPS65912_GPIO1 + offset, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(gpio->tps->regmap, TPS65912_GPIO1 + offset, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val & GPIO_STS_MASK)
-		return 1;
+	अगर (val & GPIO_STS_MASK)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tps65912_gpio_set(struct gpio_chip *gc, unsigned offset,
-			      int value)
-{
-	struct tps65912_gpio *gpio = gpiochip_get_data(gc);
+अटल व्योम tps65912_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित offset,
+			      पूर्णांक value)
+अणु
+	काष्ठा tps65912_gpio *gpio = gpiochip_get_data(gc);
 
 	regmap_update_bits(gpio->tps->regmap, TPS65912_GPIO1 + offset,
 			   GPIO_SET_MASK, value ? GPIO_SET_MASK : 0);
-}
+पूर्ण
 
-static const struct gpio_chip template_chip = {
+अटल स्थिर काष्ठा gpio_chip ढाँचा_chip = अणु
 	.label			= "tps65912-gpio",
 	.owner			= THIS_MODULE,
 	.get_direction		= tps65912_gpio_get_direction,
@@ -93,48 +94,48 @@ static const struct gpio_chip template_chip = {
 	.base			= -1,
 	.ngpio			= 5,
 	.can_sleep		= true,
-};
+पूर्ण;
 
-static int tps65912_gpio_probe(struct platform_device *pdev)
-{
-	struct tps65912 *tps = dev_get_drvdata(pdev->dev.parent);
-	struct tps65912_gpio *gpio;
-	int ret;
+अटल पूर्णांक tps65912_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tps65912 *tps = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा tps65912_gpio *gpio;
+	पूर्णांक ret;
 
-	gpio = devm_kzalloc(&pdev->dev, sizeof(*gpio), GFP_KERNEL);
-	if (!gpio)
-		return -ENOMEM;
+	gpio = devm_kzalloc(&pdev->dev, माप(*gpio), GFP_KERNEL);
+	अगर (!gpio)
+		वापस -ENOMEM;
 
 	gpio->tps = dev_get_drvdata(pdev->dev.parent);
-	gpio->gpio_chip = template_chip;
+	gpio->gpio_chip = ढाँचा_chip;
 	gpio->gpio_chip.parent = tps->dev;
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &gpio->gpio_chip,
 				     gpio);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Could not register gpiochip, %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, gpio);
+	platक्रमm_set_drvdata(pdev, gpio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id tps65912_gpio_id_table[] = {
-	{ "tps65912-gpio", },
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(platform, tps65912_gpio_id_table);
+अटल स्थिर काष्ठा platक्रमm_device_id tps65912_gpio_id_table[] = अणु
+	अणु "tps65912-gpio", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, tps65912_gpio_id_table);
 
-static struct platform_driver tps65912_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tps65912_gpio_driver = अणु
+	.driver = अणु
 		.name = "tps65912-gpio",
-	},
+	पूर्ण,
 	.probe = tps65912_gpio_probe,
 	.id_table = tps65912_gpio_id_table,
-};
-module_platform_driver(tps65912_gpio_driver);
+पूर्ण;
+module_platक्रमm_driver(tps65912_gpio_driver);
 
 MODULE_AUTHOR("Andrew F. Davis <afd@ti.com>");
 MODULE_DESCRIPTION("TPS65912 GPIO driver");

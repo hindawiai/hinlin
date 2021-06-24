@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * AD714X CapTouch Programmable Controller driver (bus interfaces)
+ * AD714X CapTouch Programmable Controller driver (bus पूर्णांकerfaces)
  *
  * Copyright 2009-2011 Analog Devices Inc.
  */
 
-#ifndef _AD714X_H_
-#define _AD714X_H_
+#अगर_अघोषित _AD714X_H_
+#घोषणा _AD714X_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define STAGE_NUM              12
+#घोषणा STAGE_NUM              12
 
-struct device;
-struct ad714x_platform_data;
-struct ad714x_driver_data;
-struct ad714x_chip;
+काष्ठा device;
+काष्ठा ad714x_platक्रमm_data;
+काष्ठा ad714x_driver_data;
+काष्ठा ad714x_chip;
 
-typedef int (*ad714x_read_t)(struct ad714x_chip *, unsigned short, unsigned short *, size_t);
-typedef int (*ad714x_write_t)(struct ad714x_chip *, unsigned short, unsigned short);
+प्रकार पूर्णांक (*ad714x_पढ़ो_t)(काष्ठा ad714x_chip *, अचिन्हित लघु, अचिन्हित लघु *, माप_प्रकार);
+प्रकार पूर्णांक (*ad714x_ग_लिखो_t)(काष्ठा ad714x_chip *, अचिन्हित लघु, अचिन्हित लघु);
 
-struct ad714x_chip {
-	unsigned short l_state;
-	unsigned short h_state;
-	unsigned short c_state;
-	unsigned short adc_reg[STAGE_NUM];
-	unsigned short amb_reg[STAGE_NUM];
-	unsigned short sensor_val[STAGE_NUM];
+काष्ठा ad714x_chip अणु
+	अचिन्हित लघु l_state;
+	अचिन्हित लघु h_state;
+	अचिन्हित लघु c_state;
+	अचिन्हित लघु adc_reg[STAGE_NUM];
+	अचिन्हित लघु amb_reg[STAGE_NUM];
+	अचिन्हित लघु sensor_val[STAGE_NUM];
 
-	struct ad714x_platform_data *hw;
-	struct ad714x_driver_data *sw;
+	काष्ठा ad714x_platक्रमm_data *hw;
+	काष्ठा ad714x_driver_data *sw;
 
-	int irq;
-	struct device *dev;
-	ad714x_read_t read;
-	ad714x_write_t write;
+	पूर्णांक irq;
+	काष्ठा device *dev;
+	ad714x_पढ़ो_t पढ़ो;
+	ad714x_ग_लिखो_t ग_लिखो;
 
-	struct mutex mutex;
+	काष्ठा mutex mutex;
 
-	unsigned product;
-	unsigned version;
+	अचिन्हित product;
+	अचिन्हित version;
 
 	__be16 xfer_buf[16] ____cacheline_aligned;
 
-};
+पूर्ण;
 
-int ad714x_disable(struct ad714x_chip *ad714x);
-int ad714x_enable(struct ad714x_chip *ad714x);
-struct ad714x_chip *ad714x_probe(struct device *dev, u16 bus_type, int irq,
-				 ad714x_read_t read, ad714x_write_t write);
+पूर्णांक ad714x_disable(काष्ठा ad714x_chip *ad714x);
+पूर्णांक ad714x_enable(काष्ठा ad714x_chip *ad714x);
+काष्ठा ad714x_chip *ad714x_probe(काष्ठा device *dev, u16 bus_type, पूर्णांक irq,
+				 ad714x_पढ़ो_t पढ़ो, ad714x_ग_लिखो_t ग_लिखो);
 
-#endif
+#पूर्ण_अगर

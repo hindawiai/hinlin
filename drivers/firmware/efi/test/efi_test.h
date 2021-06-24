@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * EFI Test driver Header
  *
@@ -6,119 +7,119 @@
  *
  */
 
-#ifndef _DRIVERS_FIRMWARE_EFI_TEST_H_
-#define _DRIVERS_FIRMWARE_EFI_TEST_H_
+#अगर_अघोषित _DRIVERS_FIRMWARE_EFI_TEST_H_
+#घोषणा _DRIVERS_FIRMWARE_EFI_TEST_H_
 
-#include <linux/efi.h>
+#समावेश <linux/efi.h>
 
-struct efi_getvariable {
-	efi_char16_t	*variable_name;
-	efi_guid_t	*vendor_guid;
+काष्ठा efi_getvariable अणु
+	efi_अक्षर16_t	*variable_name;
+	efi_guid_t	*venकरोr_guid;
 	u32		*attributes;
-	unsigned long	*data_size;
-	void		*data;
+	अचिन्हित दीर्घ	*data_size;
+	व्योम		*data;
 	efi_status_t	*status;
-} __packed;
+पूर्ण __packed;
 
-struct efi_setvariable {
-	efi_char16_t	*variable_name;
-	efi_guid_t	*vendor_guid;
+काष्ठा efi_setvariable अणु
+	efi_अक्षर16_t	*variable_name;
+	efi_guid_t	*venकरोr_guid;
 	u32		attributes;
-	unsigned long	data_size;
-	void		*data;
+	अचिन्हित दीर्घ	data_size;
+	व्योम		*data;
 	efi_status_t	*status;
-} __packed;
+पूर्ण __packed;
 
-struct efi_getnextvariablename {
-	unsigned long	*variable_name_size;
-	efi_char16_t	*variable_name;
-	efi_guid_t	*vendor_guid;
+काष्ठा efi_getnextvariablename अणु
+	अचिन्हित दीर्घ	*variable_name_size;
+	efi_अक्षर16_t	*variable_name;
+	efi_guid_t	*venकरोr_guid;
 	efi_status_t	*status;
-} __packed;
+पूर्ण __packed;
 
-struct efi_queryvariableinfo {
+काष्ठा efi_queryvariableinfo अणु
 	u32		attributes;
 	u64		*maximum_variable_storage_size;
-	u64		*remaining_variable_storage_size;
+	u64		*reमुख्यing_variable_storage_size;
 	u64		*maximum_variable_size;
 	efi_status_t	*status;
-} __packed;
+पूर्ण __packed;
 
-struct efi_gettime {
-	efi_time_t	*time;
-	efi_time_cap_t	*capabilities;
+काष्ठा efi_समय_लो अणु
+	efi_समय_प्रकार	*समय;
+	efi_समय_cap_t	*capabilities;
 	efi_status_t	*status;
-} __packed;
+पूर्ण __packed;
 
-struct efi_settime {
-	efi_time_t	*time;
+काष्ठा efi_समय_रखो अणु
+	efi_समय_प्रकार	*समय;
 	efi_status_t	*status;
-} __packed;
+पूर्ण __packed;
 
-struct efi_getwakeuptime {
+काष्ठा efi_getwakeupसमय अणु
 	efi_bool_t	*enabled;
 	efi_bool_t	*pending;
-	efi_time_t	*time;
+	efi_समय_प्रकार	*समय;
 	efi_status_t	*status;
-} __packed;
+पूर्ण __packed;
 
-struct efi_setwakeuptime {
+काष्ठा efi_setwakeupसमय अणु
 	efi_bool_t	enabled;
-	efi_time_t	*time;
+	efi_समय_प्रकार	*समय;
 	efi_status_t	*status;
-} __packed;
+पूर्ण __packed;
 
-struct efi_getnexthighmonotoniccount {
+काष्ठा efi_getnexthighmonotoniccount अणु
 	u32		*high_count;
 	efi_status_t	*status;
-} __packed;
+पूर्ण __packed;
 
-struct efi_querycapsulecapabilities {
+काष्ठा efi_querycapsulecapabilities अणु
 	efi_capsule_header_t	**capsule_header_array;
-	unsigned long		capsule_count;
+	अचिन्हित दीर्घ		capsule_count;
 	u64			*maximum_capsule_size;
-	int			*reset_type;
+	पूर्णांक			*reset_type;
 	efi_status_t		*status;
-} __packed;
+पूर्ण __packed;
 
-struct efi_resetsystem {
-	int			reset_type;
+काष्ठा efi_resetप्रणाली अणु
+	पूर्णांक			reset_type;
 	efi_status_t		status;
-	unsigned long		data_size;
-	efi_char16_t		*data;
-} __packed;
+	अचिन्हित दीर्घ		data_size;
+	efi_अक्षर16_t		*data;
+पूर्ण __packed;
 
-#define EFI_RUNTIME_GET_VARIABLE \
-	_IOWR('p', 0x01, struct efi_getvariable)
-#define EFI_RUNTIME_SET_VARIABLE \
-	_IOW('p', 0x02, struct efi_setvariable)
+#घोषणा EFI_RUNTIME_GET_VARIABLE \
+	_IOWR('p', 0x01, काष्ठा efi_getvariable)
+#घोषणा EFI_RUNTIME_SET_VARIABLE \
+	_IOW('p', 0x02, काष्ठा efi_setvariable)
 
-#define EFI_RUNTIME_GET_TIME \
-	_IOR('p', 0x03, struct efi_gettime)
-#define EFI_RUNTIME_SET_TIME \
-	_IOW('p', 0x04, struct efi_settime)
+#घोषणा EFI_RUNTIME_GET_TIME \
+	_IOR('p', 0x03, काष्ठा efi_समय_लो)
+#घोषणा EFI_RUNTIME_SET_TIME \
+	_IOW('p', 0x04, काष्ठा efi_समय_रखो)
 
-#define EFI_RUNTIME_GET_WAKETIME \
-	_IOR('p', 0x05, struct efi_getwakeuptime)
-#define EFI_RUNTIME_SET_WAKETIME \
-	_IOW('p', 0x06, struct efi_setwakeuptime)
+#घोषणा EFI_RUNTIME_GET_WAKETIME \
+	_IOR('p', 0x05, काष्ठा efi_getwakeupसमय)
+#घोषणा EFI_RUNTIME_SET_WAKETIME \
+	_IOW('p', 0x06, काष्ठा efi_setwakeupसमय)
 
-#define EFI_RUNTIME_GET_NEXTVARIABLENAME \
-	_IOWR('p', 0x07, struct efi_getnextvariablename)
+#घोषणा EFI_RUNTIME_GET_NEXTVARIABLENAME \
+	_IOWR('p', 0x07, काष्ठा efi_getnextvariablename)
 
-#define EFI_RUNTIME_QUERY_VARIABLEINFO \
-	_IOR('p', 0x08, struct efi_queryvariableinfo)
+#घोषणा EFI_RUNTIME_QUERY_VARIABLEINFO \
+	_IOR('p', 0x08, काष्ठा efi_queryvariableinfo)
 
-#define EFI_RUNTIME_GET_NEXTHIGHMONOTONICCOUNT \
-	_IOR('p', 0x09, struct efi_getnexthighmonotoniccount)
+#घोषणा EFI_RUNTIME_GET_NEXTHIGHMONOTONICCOUNT \
+	_IOR('p', 0x09, काष्ठा efi_getnexthighmonotoniccount)
 
-#define EFI_RUNTIME_QUERY_CAPSULECAPABILITIES \
-	_IOR('p', 0x0A, struct efi_querycapsulecapabilities)
+#घोषणा EFI_RUNTIME_QUERY_CAPSULECAPABILITIES \
+	_IOR('p', 0x0A, काष्ठा efi_querycapsulecapabilities)
 
-#define EFI_RUNTIME_RESET_SYSTEM \
-	_IOW('p', 0x0B, struct efi_resetsystem)
+#घोषणा EFI_RUNTIME_RESET_SYSTEM \
+	_IOW('p', 0x0B, काष्ठा efi_resetप्रणाली)
 
-#define EFI_RUNTIME_GET_SUPPORTED_MASK \
-	_IOR('p', 0x0C, unsigned int)
+#घोषणा EFI_RUNTIME_GET_SUPPORTED_MASK \
+	_IOR('p', 0x0C, अचिन्हित पूर्णांक)
 
-#endif /* _DRIVERS_FIRMWARE_EFI_TEST_H_ */
+#पूर्ण_अगर /* _DRIVERS_FIRMWARE_EFI_TEST_H_ */

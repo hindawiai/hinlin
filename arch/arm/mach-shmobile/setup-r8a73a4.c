@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * r8a73a4 processor support
  *
@@ -6,16 +7,16 @@
  * Copyright (C) 2013  Magnus Damm
  */
 
-#include <linux/init.h>
+#समावेश <linux/init.h>
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-static const char *const r8a73a4_boards_compat_dt[] __initconst = {
+अटल स्थिर अक्षर *स्थिर r8a73a4_boards_compat_dt[] __initस्थिर = अणु
 	"renesas,r8a73a4",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(R8A73A4_DT, "Generic R8A73A4 (Flattened Device Tree)")
 	.init_late	= shmobile_init_late,

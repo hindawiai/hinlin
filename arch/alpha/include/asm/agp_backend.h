@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ALPHA_AGP_BACKEND_H
-#define _ALPHA_AGP_BACKEND_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ALPHA_AGP_BACKEND_H
+#घोषणा _ALPHA_AGP_BACKEND_H 1
 
-typedef	union _alpha_agp_mode {
-	struct {
+प्रकार	जोड़ _alpha_agp_mode अणु
+	काष्ठा अणु
 		u32 rate : 3;
 		u32 reserved0 : 1;
 		u32 fw : 1;
@@ -13,31 +14,31 @@ typedef	union _alpha_agp_mode {
 		u32 sba : 1;
 		u32 reserved2 : 14;
 		u32 rq : 8;
-	} bits;
+	पूर्ण bits;
 	u32 lw;
-} alpha_agp_mode;
+पूर्ण alpha_agp_mode;
 
-typedef struct _alpha_agp_info {
-	struct pci_controller *hose;
-	struct {
+प्रकार काष्ठा _alpha_agp_info अणु
+	काष्ठा pci_controller *hose;
+	काष्ठा अणु
 		dma_addr_t bus_base;
-		unsigned long size;
-		void *sysdata;
-	} aperture;
+		अचिन्हित दीर्घ size;
+		व्योम *sysdata;
+	पूर्ण aperture;
 	alpha_agp_mode capability;
 	alpha_agp_mode mode;
-	void *private;
-	struct alpha_agp_ops *ops;
-} alpha_agp_info;
+	व्योम *निजी;
+	काष्ठा alpha_agp_ops *ops;
+पूर्ण alpha_agp_info;
 
-struct alpha_agp_ops {
-	int (*setup)(alpha_agp_info *);
-	void (*cleanup)(alpha_agp_info *);
-	int (*configure)(alpha_agp_info *);
-	int (*bind)(alpha_agp_info *, off_t, struct agp_memory *);
-	int (*unbind)(alpha_agp_info *, off_t, struct agp_memory *);
-	unsigned long (*translate)(alpha_agp_info *, dma_addr_t);
-};
+काष्ठा alpha_agp_ops अणु
+	पूर्णांक (*setup)(alpha_agp_info *);
+	व्योम (*cleanup)(alpha_agp_info *);
+	पूर्णांक (*configure)(alpha_agp_info *);
+	पूर्णांक (*bind)(alpha_agp_info *, off_t, काष्ठा agp_memory *);
+	पूर्णांक (*unbind)(alpha_agp_info *, off_t, काष्ठा agp_memory *);
+	अचिन्हित दीर्घ (*translate)(alpha_agp_info *, dma_addr_t);
+पूर्ण;
 
 
-#endif /* _ALPHA_AGP_BACKEND_H */
+#पूर्ण_अगर /* _ALPHA_AGP_BACKEND_H */

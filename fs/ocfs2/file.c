@@ -1,175 +1,176 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * file.c
  *
- * File open, close, extend, truncate
+ * File खोलो, बंद, extend, truncate
  *
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#include <linux/capability.h>
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/highmem.h>
-#include <linux/pagemap.h>
-#include <linux/uio.h>
-#include <linux/sched.h>
-#include <linux/splice.h>
-#include <linux/mount.h>
-#include <linux/writeback.h>
-#include <linux/falloc.h>
-#include <linux/quotaops.h>
-#include <linux/blkdev.h>
-#include <linux/backing-dev.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/splice.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/fभाग.स>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/backing-dev.h>
 
-#include <cluster/masklog.h>
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
+#समावेश "ocfs2.h"
 
-#include "alloc.h"
-#include "aops.h"
-#include "dir.h"
-#include "dlmglue.h"
-#include "extent_map.h"
-#include "file.h"
-#include "sysfile.h"
-#include "inode.h"
-#include "ioctl.h"
-#include "journal.h"
-#include "locks.h"
-#include "mmap.h"
-#include "suballoc.h"
-#include "super.h"
-#include "xattr.h"
-#include "acl.h"
-#include "quota.h"
-#include "refcounttree.h"
-#include "ocfs2_trace.h"
+#समावेश "alloc.h"
+#समावेश "aops.h"
+#समावेश "dir.h"
+#समावेश "dlmglue.h"
+#समावेश "extent_map.h"
+#समावेश "file.h"
+#समावेश "sysfile.h"
+#समावेश "inode.h"
+#समावेश "ioctl.h"
+#समावेश "journal.h"
+#समावेश "locks.h"
+#समावेश "mmap.h"
+#समावेश "suballoc.h"
+#समावेश "super.h"
+#समावेश "xattr.h"
+#समावेश "acl.h"
+#समावेश "quota.h"
+#समावेश "refcounttree.h"
+#समावेश "ocfs2_trace.h"
 
-#include "buffer_head_io.h"
+#समावेश "buffer_head_io.h"
 
-static int ocfs2_init_file_private(struct inode *inode, struct file *file)
-{
-	struct ocfs2_file_private *fp;
+अटल पूर्णांक ocfs2_init_file_निजी(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा ocfs2_file_निजी *fp;
 
-	fp = kzalloc(sizeof(struct ocfs2_file_private), GFP_KERNEL);
-	if (!fp)
-		return -ENOMEM;
+	fp = kzalloc(माप(काष्ठा ocfs2_file_निजी), GFP_KERNEL);
+	अगर (!fp)
+		वापस -ENOMEM;
 
 	fp->fp_file = file;
 	mutex_init(&fp->fp_mutex);
 	ocfs2_file_lock_res_init(&fp->fp_flock, fp);
-	file->private_data = fp;
+	file->निजी_data = fp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ocfs2_free_file_private(struct inode *inode, struct file *file)
-{
-	struct ocfs2_file_private *fp = file->private_data;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अटल व्योम ocfs2_मुक्त_file_निजी(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा ocfs2_file_निजी *fp = file->निजी_data;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (fp) {
+	अगर (fp) अणु
 		ocfs2_simple_drop_lockres(osb, &fp->fp_flock);
-		ocfs2_lock_res_free(&fp->fp_flock);
-		kfree(fp);
-		file->private_data = NULL;
-	}
-}
+		ocfs2_lock_res_मुक्त(&fp->fp_flock);
+		kमुक्त(fp);
+		file->निजी_data = शून्य;
+	पूर्ण
+पूर्ण
 
-static int ocfs2_file_open(struct inode *inode, struct file *file)
-{
-	int status;
-	int mode = file->f_flags;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+अटल पूर्णांक ocfs2_file_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक status;
+	पूर्णांक mode = file->f_flags;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 
-	trace_ocfs2_file_open(inode, file, file->f_path.dentry,
-			      (unsigned long long)oi->ip_blkno,
+	trace_ocfs2_file_खोलो(inode, file, file->f_path.dentry,
+			      (अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
 			      file->f_path.dentry->d_name.len,
 			      file->f_path.dentry->d_name.name, mode);
 
-	if (file->f_mode & FMODE_WRITE) {
+	अगर (file->f_mode & FMODE_WRITE) अणु
 		status = dquot_initialize(inode);
-		if (status)
-			goto leave;
-	}
+		अगर (status)
+			जाओ leave;
+	पूर्ण
 
 	spin_lock(&oi->ip_lock);
 
 	/* Check that the inode hasn't been wiped from disk by another
-	 * node. If it hasn't then we're safe as long as we hold the
-	 * spin lock until our increment of open count. */
-	if (oi->ip_flags & OCFS2_INODE_DELETED) {
+	 * node. If it hasn't then we're safe as दीर्घ as we hold the
+	 * spin lock until our increment of खोलो count. */
+	अगर (oi->ip_flags & OCFS2_INODE_DELETED) अणु
 		spin_unlock(&oi->ip_lock);
 
 		status = -ENOENT;
-		goto leave;
-	}
+		जाओ leave;
+	पूर्ण
 
-	if (mode & O_DIRECT)
-		oi->ip_flags |= OCFS2_INODE_OPEN_DIRECT;
+	अगर (mode & O_सूचीECT)
+		oi->ip_flags |= OCFS2_INODE_OPEN_सूचीECT;
 
-	oi->ip_open_count++;
+	oi->ip_खोलो_count++;
 	spin_unlock(&oi->ip_lock);
 
-	status = ocfs2_init_file_private(inode, file);
-	if (status) {
+	status = ocfs2_init_file_निजी(inode, file);
+	अगर (status) अणु
 		/*
-		 * We want to set open count back if we're failing the
-		 * open.
+		 * We want to set खोलो count back अगर we're failing the
+		 * खोलो.
 		 */
 		spin_lock(&oi->ip_lock);
-		oi->ip_open_count--;
+		oi->ip_खोलो_count--;
 		spin_unlock(&oi->ip_lock);
-	}
+	पूर्ण
 
 	file->f_mode |= FMODE_NOWAIT;
 
 leave:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_file_release(struct inode *inode, struct file *file)
-{
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+अटल पूर्णांक ocfs2_file_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 
 	spin_lock(&oi->ip_lock);
-	if (!--oi->ip_open_count)
-		oi->ip_flags &= ~OCFS2_INODE_OPEN_DIRECT;
+	अगर (!--oi->ip_खोलो_count)
+		oi->ip_flags &= ~OCFS2_INODE_OPEN_सूचीECT;
 
 	trace_ocfs2_file_release(inode, file, file->f_path.dentry,
 				 oi->ip_blkno,
 				 file->f_path.dentry->d_name.len,
 				 file->f_path.dentry->d_name.name,
-				 oi->ip_open_count);
+				 oi->ip_खोलो_count);
 	spin_unlock(&oi->ip_lock);
 
-	ocfs2_free_file_private(inode, file);
+	ocfs2_मुक्त_file_निजी(inode, file);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_dir_open(struct inode *inode, struct file *file)
-{
-	return ocfs2_init_file_private(inode, file);
-}
+अटल पूर्णांक ocfs2_dir_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस ocfs2_init_file_निजी(inode, file);
+पूर्ण
 
-static int ocfs2_dir_release(struct inode *inode, struct file *file)
-{
-	ocfs2_free_file_private(inode, file);
-	return 0;
-}
+अटल पूर्णांक ocfs2_dir_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	ocfs2_मुक्त_file_निजी(inode, file);
+	वापस 0;
+पूर्ण
 
-static int ocfs2_sync_file(struct file *file, loff_t start, loff_t end,
-			   int datasync)
-{
-	int err = 0;
-	struct inode *inode = file->f_mapping->host;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+अटल पूर्णांक ocfs2_sync_file(काष्ठा file *file, loff_t start, loff_t end,
+			   पूर्णांक datasync)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा inode *inode = file->f_mapping->host;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 	journal_t *journal = osb->journal->j_journal;
-	int ret;
+	पूर्णांक ret;
 	tid_t commit_tid;
 	bool needs_barrier = false;
 
@@ -177,250 +178,250 @@ static int ocfs2_sync_file(struct file *file, loff_t start, loff_t end,
 			      oi->ip_blkno,
 			      file->f_path.dentry->d_name.len,
 			      file->f_path.dentry->d_name.name,
-			      (unsigned long long)datasync);
+			      (अचिन्हित दीर्घ दीर्घ)datasync);
 
-	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb))
-		return -EROFS;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb) || ocfs2_is_soft_पढ़ोonly(osb))
+		वापस -EROFS;
 
-	err = file_write_and_wait_range(file, start, end);
-	if (err)
-		return err;
+	err = file_ग_लिखो_and_रुको_range(file, start, end);
+	अगर (err)
+		वापस err;
 
 	commit_tid = datasync ? oi->i_datasync_tid : oi->i_sync_tid;
-	if (journal->j_flags & JBD2_BARRIER &&
+	अगर (journal->j_flags & JBD2_BARRIER &&
 	    !jbd2_trans_will_send_data_barrier(journal, commit_tid))
 		needs_barrier = true;
 	err = jbd2_complete_transaction(journal, commit_tid);
-	if (needs_barrier) {
+	अगर (needs_barrier) अणु
 		ret = blkdev_issue_flush(inode->i_sb->s_bdev);
-		if (!err)
+		अगर (!err)
 			err = ret;
-	}
+	पूर्ण
 
-	if (err)
-		mlog_errno(err);
+	अगर (err)
+		mlog_त्रुटि_सं(err);
 
-	return (err < 0) ? -EIO : 0;
-}
+	वापस (err < 0) ? -EIO : 0;
+पूर्ण
 
-int ocfs2_should_update_atime(struct inode *inode,
-			      struct vfsmount *vfsmnt)
-{
-	struct timespec64 now;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+पूर्णांक ocfs2_should_update_aसमय(काष्ठा inode *inode,
+			      काष्ठा vfsmount *vfsmnt)
+अणु
+	काष्ठा बारpec64 now;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb))
-		return 0;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb) || ocfs2_is_soft_पढ़ोonly(osb))
+		वापस 0;
 
-	if ((inode->i_flags & S_NOATIME) ||
-	    ((inode->i_sb->s_flags & SB_NODIRATIME) && S_ISDIR(inode->i_mode)))
-		return 0;
+	अगर ((inode->i_flags & S_NOATIME) ||
+	    ((inode->i_sb->s_flags & SB_NOसूचीATIME) && S_ISसूची(inode->i_mode)))
+		वापस 0;
 
 	/*
-	 * We can be called with no vfsmnt structure - NFSD will
-	 * sometimes do this.
+	 * We can be called with no vfsmnt काष्ठाure - NFSD will
+	 * someबार करो this.
 	 *
-	 * Note that our action here is different than touch_atime() -
-	 * if we can't tell whether this is a noatime mount, then we
-	 * don't know whether to trust the value of s_atime_quantum.
+	 * Note that our action here is dअगरferent than touch_aसमय() -
+	 * अगर we can't tell whether this is a noaसमय mount, then we
+	 * करोn't know whether to trust the value of s_aसमय_quantum.
 	 */
-	if (vfsmnt == NULL)
-		return 0;
+	अगर (vfsmnt == शून्य)
+		वापस 0;
 
-	if ((vfsmnt->mnt_flags & MNT_NOATIME) ||
-	    ((vfsmnt->mnt_flags & MNT_NODIRATIME) && S_ISDIR(inode->i_mode)))
-		return 0;
+	अगर ((vfsmnt->mnt_flags & MNT_NOATIME) ||
+	    ((vfsmnt->mnt_flags & MNT_NOसूचीATIME) && S_ISसूची(inode->i_mode)))
+		वापस 0;
 
-	if (vfsmnt->mnt_flags & MNT_RELATIME) {
-		if ((timespec64_compare(&inode->i_atime, &inode->i_mtime) <= 0) ||
-		    (timespec64_compare(&inode->i_atime, &inode->i_ctime) <= 0))
-			return 1;
+	अगर (vfsmnt->mnt_flags & MNT_RELATIME) अणु
+		अगर ((बारpec64_compare(&inode->i_aसमय, &inode->i_mसमय) <= 0) ||
+		    (बारpec64_compare(&inode->i_aसमय, &inode->i_स_समय) <= 0))
+			वापस 1;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	now = current_time(inode);
-	if ((now.tv_sec - inode->i_atime.tv_sec <= osb->s_atime_quantum))
-		return 0;
-	else
-		return 1;
-}
+	now = current_समय(inode);
+	अगर ((now.tv_sec - inode->i_aसमय.tv_sec <= osb->s_aसमय_quantum))
+		वापस 0;
+	अन्यथा
+		वापस 1;
+पूर्ण
 
-int ocfs2_update_inode_atime(struct inode *inode,
-			     struct buffer_head *bh)
-{
-	int ret;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+पूर्णांक ocfs2_update_inode_aसमय(काष्ठा inode *inode,
+			     काष्ठा buffer_head *bh)
+अणु
+	पूर्णांक ret;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 	handle_t *handle;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *) bh->b_data;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *) bh->b_data;
 
 	handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		ret = PTR_ERR(handle);
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	if (ret) {
-		mlog_errno(ret);
-		goto out_commit;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out_commit;
+	पूर्ण
 
 	/*
 	 * Don't use ocfs2_mark_inode_dirty() here as we don't always
 	 * have i_mutex to guard against concurrent changes to other
 	 * inode fields.
 	 */
-	inode->i_atime = current_time(inode);
-	di->i_atime = cpu_to_le64(inode->i_atime.tv_sec);
-	di->i_atime_nsec = cpu_to_le32(inode->i_atime.tv_nsec);
+	inode->i_aसमय = current_समय(inode);
+	di->i_aसमय = cpu_to_le64(inode->i_aसमय.tv_sec);
+	di->i_aसमय_nsec = cpu_to_le32(inode->i_aसमय.tv_nsec);
 	ocfs2_update_inode_fsync_trans(handle, inode, 0);
 	ocfs2_journal_dirty(handle, bh);
 
 out_commit:
 	ocfs2_commit_trans(osb, handle);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_set_inode_size(handle_t *handle,
-				struct inode *inode,
-				struct buffer_head *fe_bh,
+पूर्णांक ocfs2_set_inode_size(handle_t *handle,
+				काष्ठा inode *inode,
+				काष्ठा buffer_head *fe_bh,
 				u64 new_i_size)
-{
-	int status;
+अणु
+	पूर्णांक status;
 
-	i_size_write(inode, new_i_size);
+	i_size_ग_लिखो(inode, new_i_size);
 	inode->i_blocks = ocfs2_inode_sector_count(inode);
-	inode->i_ctime = inode->i_mtime = current_time(inode);
+	inode->i_स_समय = inode->i_mसमय = current_समय(inode);
 
 	status = ocfs2_mark_inode_dirty(handle, inode, fe_bh);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ocfs2_simple_size_update(struct inode *inode,
-			     struct buffer_head *di_bh,
+पूर्णांक ocfs2_simple_size_update(काष्ठा inode *inode,
+			     काष्ठा buffer_head *di_bh,
 			     u64 new_i_size)
-{
-	int ret;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	handle_t *handle = NULL;
+अणु
+	पूर्णांक ret;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	handle_t *handle = शून्य;
 
 	handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		ret = PTR_ERR(handle);
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	ret = ocfs2_set_inode_size(handle, inode, di_bh,
 				   new_i_size);
-	if (ret < 0)
-		mlog_errno(ret);
+	अगर (ret < 0)
+		mlog_त्रुटि_सं(ret);
 
 	ocfs2_update_inode_fsync_trans(handle, inode, 0);
 	ocfs2_commit_trans(osb, handle);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_cow_file_pos(struct inode *inode,
-			      struct buffer_head *fe_bh,
+अटल पूर्णांक ocfs2_cow_file_pos(काष्ठा inode *inode,
+			      काष्ठा buffer_head *fe_bh,
 			      u64 offset)
-{
-	int status;
+अणु
+	पूर्णांक status;
 	u32 phys, cpos = offset >> OCFS2_SB(inode->i_sb)->s_clustersize_bits;
-	unsigned int num_clusters = 0;
-	unsigned int ext_flags = 0;
+	अचिन्हित पूर्णांक num_clusters = 0;
+	अचिन्हित पूर्णांक ext_flags = 0;
 
 	/*
 	 * If the new offset is aligned to the range of the cluster, there is
-	 * no space for ocfs2_zero_range_for_truncate to fill, so no need to
+	 * no space क्रम ocfs2_zero_range_क्रम_truncate to fill, so no need to
 	 * CoW either.
 	 */
-	if ((offset & (OCFS2_SB(inode->i_sb)->s_clustersize - 1)) == 0)
-		return 0;
+	अगर ((offset & (OCFS2_SB(inode->i_sb)->s_clustersize - 1)) == 0)
+		वापस 0;
 
 	status = ocfs2_get_clusters(inode, cpos, &phys,
 				    &num_clusters, &ext_flags);
-	if (status) {
-		mlog_errno(status);
-		goto out;
-	}
+	अगर (status) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ out;
+	पूर्ण
 
-	if (!(ext_flags & OCFS2_EXT_REFCOUNTED))
-		goto out;
+	अगर (!(ext_flags & OCFS2_EXT_REFCOUNTED))
+		जाओ out;
 
-	return ocfs2_refcount_cow(inode, fe_bh, cpos, 1, cpos+1);
+	वापस ocfs2_refcount_cow(inode, fe_bh, cpos, 1, cpos+1);
 
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_orphan_for_truncate(struct ocfs2_super *osb,
-				     struct inode *inode,
-				     struct buffer_head *fe_bh,
+अटल पूर्णांक ocfs2_orphan_क्रम_truncate(काष्ठा ocfs2_super *osb,
+				     काष्ठा inode *inode,
+				     काष्ठा buffer_head *fe_bh,
 				     u64 new_i_size)
-{
-	int status;
+अणु
+	पूर्णांक status;
 	handle_t *handle;
-	struct ocfs2_dinode *di;
+	काष्ठा ocfs2_dinode *di;
 	u64 cluster_bytes;
 
 	/*
-	 * We need to CoW the cluster contains the offset if it is reflinked
-	 * since we will call ocfs2_zero_range_for_truncate later which will
-	 * write "0" from offset to the end of the cluster.
+	 * We need to CoW the cluster contains the offset अगर it is reflinked
+	 * since we will call ocfs2_zero_range_क्रम_truncate later which will
+	 * ग_लिखो "0" from offset to the end of the cluster.
 	 */
 	status = ocfs2_cow_file_pos(inode, fe_bh, new_i_size);
-	if (status) {
-		mlog_errno(status);
-		return status;
-	}
+	अगर (status) अणु
+		mlog_त्रुटि_सं(status);
+		वापस status;
+	पूर्ण
 
 	/* TODO: This needs to actually orphan the inode in this
 	 * transaction. */
 
 	handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		status = PTR_ERR(handle);
-		mlog_errno(status);
-		goto out;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ out;
+	पूर्ण
 
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(inode), fe_bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto out_commit;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ out_commit;
+	पूर्ण
 
 	/*
-	 * Do this before setting i_size.
+	 * Do this beक्रमe setting i_size.
 	 */
 	cluster_bytes = ocfs2_align_bytes_to_clusters(inode->i_sb, new_i_size);
-	status = ocfs2_zero_range_for_truncate(inode, handle, new_i_size,
+	status = ocfs2_zero_range_क्रम_truncate(inode, handle, new_i_size,
 					       cluster_bytes);
-	if (status) {
-		mlog_errno(status);
-		goto out_commit;
-	}
+	अगर (status) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ out_commit;
+	पूर्ण
 
-	i_size_write(inode, new_i_size);
-	inode->i_ctime = inode->i_mtime = current_time(inode);
+	i_size_ग_लिखो(inode, new_i_size);
+	inode->i_स_समय = inode->i_mसमय = current_समय(inode);
 
-	di = (struct ocfs2_dinode *) fe_bh->b_data;
+	di = (काष्ठा ocfs2_dinode *) fe_bh->b_data;
 	di->i_size = cpu_to_le64(new_i_size);
-	di->i_ctime = di->i_mtime = cpu_to_le64(inode->i_ctime.tv_sec);
-	di->i_ctime_nsec = di->i_mtime_nsec = cpu_to_le32(inode->i_ctime.tv_nsec);
+	di->i_स_समय = di->i_mसमय = cpu_to_le64(inode->i_स_समय.tv_sec);
+	di->i_स_समय_nsec = di->i_mसमय_nsec = cpu_to_le32(inode->i_स_समय.tv_nsec);
 	ocfs2_update_inode_fsync_trans(handle, inode, 0);
 
 	ocfs2_journal_dirty(handle, fe_bh);
@@ -428,50 +429,50 @@ static int ocfs2_orphan_for_truncate(struct ocfs2_super *osb,
 out_commit:
 	ocfs2_commit_trans(osb, handle);
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ocfs2_truncate_file(struct inode *inode,
-			       struct buffer_head *di_bh,
+पूर्णांक ocfs2_truncate_file(काष्ठा inode *inode,
+			       काष्ठा buffer_head *di_bh,
 			       u64 new_i_size)
-{
-	int status = 0;
-	struct ocfs2_dinode *fe = NULL;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अणु
+	पूर्णांक status = 0;
+	काष्ठा ocfs2_dinode *fe = शून्य;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	/* We trust di_bh because it comes from ocfs2_inode_lock(), which
-	 * already validated it */
-	fe = (struct ocfs2_dinode *) di_bh->b_data;
+	 * alपढ़ोy validated it */
+	fe = (काष्ठा ocfs2_dinode *) di_bh->b_data;
 
-	trace_ocfs2_truncate_file((unsigned long long)OCFS2_I(inode)->ip_blkno,
-				  (unsigned long long)le64_to_cpu(fe->i_size),
-				  (unsigned long long)new_i_size);
+	trace_ocfs2_truncate_file((अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+				  (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(fe->i_size),
+				  (अचिन्हित दीर्घ दीर्घ)new_i_size);
 
-	mlog_bug_on_msg(le64_to_cpu(fe->i_size) != i_size_read(inode),
+	mlog_bug_on_msg(le64_to_cpu(fe->i_size) != i_size_पढ़ो(inode),
 			"Inode %llu, inode i_size = %lld != di "
 			"i_size = %llu, i_flags = 0x%x\n",
-			(unsigned long long)OCFS2_I(inode)->ip_blkno,
-			i_size_read(inode),
-			(unsigned long long)le64_to_cpu(fe->i_size),
+			(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+			i_size_पढ़ो(inode),
+			(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(fe->i_size),
 			le32_to_cpu(fe->i_flags));
 
-	if (new_i_size > le64_to_cpu(fe->i_size)) {
+	अगर (new_i_size > le64_to_cpu(fe->i_size)) अणु
 		trace_ocfs2_truncate_file_error(
-			(unsigned long long)le64_to_cpu(fe->i_size),
-			(unsigned long long)new_i_size);
+			(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(fe->i_size),
+			(अचिन्हित दीर्घ दीर्घ)new_i_size);
 		status = -EINVAL;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	down_write(&OCFS2_I(inode)->ip_alloc_sem);
+	करोwn_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
 
 	ocfs2_resv_discard(&osb->osb_la_resmap,
 			   &OCFS2_I(inode)->ip_la_data_resv);
 
 	/*
-	 * The inode lock forced other nodes to sync and drop their
-	 * pages, which (correctly) happens even if we have a truncate
+	 * The inode lock क्रमced other nodes to sync and drop their
+	 * pages, which (correctly) happens even अगर we have a truncate
 	 * without allocation change - ocfs2 cluster sizes can be much
 	 * greater than page size, so we have to truncate them
 	 * anyway.
@@ -479,41 +480,41 @@ int ocfs2_truncate_file(struct inode *inode,
 	unmap_mapping_range(inode->i_mapping, new_i_size + PAGE_SIZE - 1, 0, 1);
 	truncate_inode_pages(inode->i_mapping, new_i_size);
 
-	if (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) {
-		status = ocfs2_truncate_inline(inode, di_bh, new_i_size,
-					       i_size_read(inode), 1);
-		if (status)
-			mlog_errno(status);
+	अगर (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) अणु
+		status = ocfs2_truncate_अंतरभूत(inode, di_bh, new_i_size,
+					       i_size_पढ़ो(inode), 1);
+		अगर (status)
+			mlog_त्रुटि_सं(status);
 
-		goto bail_unlock_sem;
-	}
+		जाओ bail_unlock_sem;
+	पूर्ण
 
-	/* alright, we're going to need to do a full blown alloc size
+	/* alright, we're going to need to करो a full blown alloc size
 	 * change. Orphan the inode so that recovery can complete the
-	 * truncate if necessary. This does the task of marking
+	 * truncate अगर necessary. This करोes the task of marking
 	 * i_size. */
-	status = ocfs2_orphan_for_truncate(osb, inode, di_bh, new_i_size);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail_unlock_sem;
-	}
+	status = ocfs2_orphan_क्रम_truncate(osb, inode, di_bh, new_i_size);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail_unlock_sem;
+	पूर्ण
 
 	status = ocfs2_commit_truncate(osb, inode, di_bh);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail_unlock_sem;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail_unlock_sem;
+	पूर्ण
 
 	/* TODO: orphan dir cleanup here. */
 bail_unlock_sem:
-	up_write(&OCFS2_I(inode)->ip_alloc_sem);
+	up_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
 
 bail:
-	if (!status && OCFS2_I(inode)->ip_clusters == 0)
-		status = ocfs2_try_remove_refcount_tree(inode, di_bh);
+	अगर (!status && OCFS2_I(inode)->ip_clusters == 0)
+		status = ocfs2_try_हटाओ_refcount_tree(inode, di_bh);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  * extend file allocation only here.
@@ -522,60 +523,60 @@ bail:
  * expect stuff to be locked, a transaction started and enough data /
  * metadata reservations in the contexts.
  *
- * Will return -EAGAIN, and a reason if a restart is needed.
+ * Will वापस -EAGAIN, and a reason अगर a restart is needed.
  * If passed in, *reason will always be set, even in error.
  */
-int ocfs2_add_inode_data(struct ocfs2_super *osb,
-			 struct inode *inode,
+पूर्णांक ocfs2_add_inode_data(काष्ठा ocfs2_super *osb,
+			 काष्ठा inode *inode,
 			 u32 *logical_offset,
 			 u32 clusters_to_add,
-			 int mark_unwritten,
-			 struct buffer_head *fe_bh,
+			 पूर्णांक mark_unwritten,
+			 काष्ठा buffer_head *fe_bh,
 			 handle_t *handle,
-			 struct ocfs2_alloc_context *data_ac,
-			 struct ocfs2_alloc_context *meta_ac,
-			 enum ocfs2_alloc_restarted *reason_ret)
-{
-	int ret;
-	struct ocfs2_extent_tree et;
+			 काष्ठा ocfs2_alloc_context *data_ac,
+			 काष्ठा ocfs2_alloc_context *meta_ac,
+			 क्रमागत ocfs2_alloc_restarted *reason_ret)
+अणु
+	पूर्णांक ret;
+	काष्ठा ocfs2_extent_tree et;
 
 	ocfs2_init_dinode_extent_tree(&et, INODE_CACHE(inode), fe_bh);
 	ret = ocfs2_add_clusters_in_btree(handle, &et, logical_offset,
 					  clusters_to_add, mark_unwritten,
 					  data_ac, meta_ac, reason_ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_extend_allocation(struct inode *inode, u32 logical_start,
-				   u32 clusters_to_add, int mark_unwritten)
-{
-	int status = 0;
-	int restart_func = 0;
-	int credits;
+अटल पूर्णांक ocfs2_extend_allocation(काष्ठा inode *inode, u32 logical_start,
+				   u32 clusters_to_add, पूर्णांक mark_unwritten)
+अणु
+	पूर्णांक status = 0;
+	पूर्णांक restart_func = 0;
+	पूर्णांक credits;
 	u32 prev_clusters;
-	struct buffer_head *bh = NULL;
-	struct ocfs2_dinode *fe = NULL;
-	handle_t *handle = NULL;
-	struct ocfs2_alloc_context *data_ac = NULL;
-	struct ocfs2_alloc_context *meta_ac = NULL;
-	enum ocfs2_alloc_restarted why = RESTART_NONE;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_extent_tree et;
-	int did_quota = 0;
+	काष्ठा buffer_head *bh = शून्य;
+	काष्ठा ocfs2_dinode *fe = शून्य;
+	handle_t *handle = शून्य;
+	काष्ठा ocfs2_alloc_context *data_ac = शून्य;
+	काष्ठा ocfs2_alloc_context *meta_ac = शून्य;
+	क्रमागत ocfs2_alloc_restarted why = RESTART_NONE;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_extent_tree et;
+	पूर्णांक did_quota = 0;
 
 	/*
-	 * Unwritten extent only exists for file systems which
+	 * Unwritten extent only exists क्रम file प्रणालीs which
 	 * support holes.
 	 */
 	BUG_ON(mark_unwritten && !ocfs2_sparse_alloc(osb));
 
-	status = ocfs2_read_inode_block(inode, &bh);
-	if (status < 0) {
-		mlog_errno(status);
-		goto leave;
-	}
-	fe = (struct ocfs2_dinode *) bh->b_data;
+	status = ocfs2_पढ़ो_inode_block(inode, &bh);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ leave;
+	पूर्ण
+	fe = (काष्ठा ocfs2_dinode *) bh->b_data;
 
 restart_all:
 	BUG_ON(le32_to_cpu(fe->i_clusters) != OCFS2_I(inode)->ip_clusters);
@@ -583,42 +584,42 @@ restart_all:
 	ocfs2_init_dinode_extent_tree(&et, INODE_CACHE(inode), bh);
 	status = ocfs2_lock_allocators(inode, &et, clusters_to_add, 0,
 				       &data_ac, &meta_ac);
-	if (status) {
-		mlog_errno(status);
-		goto leave;
-	}
+	अगर (status) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ leave;
+	पूर्ण
 
 	credits = ocfs2_calc_extend_credits(osb->sb, &fe->id2.i_list);
 	handle = ocfs2_start_trans(osb, credits);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		status = PTR_ERR(handle);
-		handle = NULL;
-		mlog_errno(status);
-		goto leave;
-	}
+		handle = शून्य;
+		mlog_त्रुटि_सं(status);
+		जाओ leave;
+	पूर्ण
 
 restarted_transaction:
 	trace_ocfs2_extend_allocation(
-		(unsigned long long)OCFS2_I(inode)->ip_blkno,
-		(unsigned long long)i_size_read(inode),
+		(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+		(अचिन्हित दीर्घ दीर्घ)i_size_पढ़ो(inode),
 		le32_to_cpu(fe->i_clusters), clusters_to_add,
 		why, restart_func);
 
 	status = dquot_alloc_space_nodirty(inode,
 			ocfs2_clusters_to_bytes(osb->sb, clusters_to_add));
-	if (status)
-		goto leave;
+	अगर (status)
+		जाओ leave;
 	did_quota = 1;
 
-	/* reserve a write to the file entry early on - that we if we
+	/* reserve a ग_लिखो to the file entry early on - that we अगर we
 	 * run out of credits in the allocation path, we can still
 	 * update i_size. */
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(inode), bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto leave;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ leave;
+	पूर्ण
 
 	prev_clusters = OCFS2_I(inode)->ip_clusters;
 
@@ -632,11 +633,11 @@ restarted_transaction:
 				      data_ac,
 				      meta_ac,
 				      &why);
-	if ((status < 0) && (status != -EAGAIN)) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto leave;
-	}
+	अगर ((status < 0) && (status != -EAGAIN)) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ leave;
+	पूर्ण
 	ocfs2_update_inode_fsync_trans(handle, inode, 1);
 	ocfs2_journal_dirty(handle, bh);
 
@@ -644,759 +645,759 @@ restarted_transaction:
 	clusters_to_add -= (OCFS2_I(inode)->ip_clusters - prev_clusters);
 	spin_unlock(&OCFS2_I(inode)->ip_lock);
 	/* Release unused quota reservation */
-	dquot_free_space(inode,
+	dquot_मुक्त_space(inode,
 			ocfs2_clusters_to_bytes(osb->sb, clusters_to_add));
 	did_quota = 0;
 
-	if (why != RESTART_NONE && clusters_to_add) {
-		if (why == RESTART_META) {
+	अगर (why != RESTART_NONE && clusters_to_add) अणु
+		अगर (why == RESTART_META) अणु
 			restart_func = 1;
 			status = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			BUG_ON(why != RESTART_TRANS);
 
 			status = ocfs2_allocate_extend_trans(handle, 1);
-			if (status < 0) {
+			अगर (status < 0) अणु
 				/* handle still has to be committed at
-				 * this point. */
+				 * this poपूर्णांक. */
 				status = -ENOMEM;
-				mlog_errno(status);
-				goto leave;
-			}
-			goto restarted_transaction;
-		}
-	}
+				mlog_त्रुटि_सं(status);
+				जाओ leave;
+			पूर्ण
+			जाओ restarted_transaction;
+		पूर्ण
+	पूर्ण
 
 	trace_ocfs2_extend_allocation_end(OCFS2_I(inode)->ip_blkno,
 	     le32_to_cpu(fe->i_clusters),
-	     (unsigned long long)le64_to_cpu(fe->i_size),
+	     (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(fe->i_size),
 	     OCFS2_I(inode)->ip_clusters,
-	     (unsigned long long)i_size_read(inode));
+	     (अचिन्हित दीर्घ दीर्घ)i_size_पढ़ो(inode));
 
 leave:
-	if (status < 0 && did_quota)
-		dquot_free_space(inode,
+	अगर (status < 0 && did_quota)
+		dquot_मुक्त_space(inode,
 			ocfs2_clusters_to_bytes(osb->sb, clusters_to_add));
-	if (handle) {
+	अगर (handle) अणु
 		ocfs2_commit_trans(osb, handle);
-		handle = NULL;
-	}
-	if (data_ac) {
-		ocfs2_free_alloc_context(data_ac);
-		data_ac = NULL;
-	}
-	if (meta_ac) {
-		ocfs2_free_alloc_context(meta_ac);
-		meta_ac = NULL;
-	}
-	if ((!status) && restart_func) {
+		handle = शून्य;
+	पूर्ण
+	अगर (data_ac) अणु
+		ocfs2_मुक्त_alloc_context(data_ac);
+		data_ac = शून्य;
+	पूर्ण
+	अगर (meta_ac) अणु
+		ocfs2_मुक्त_alloc_context(meta_ac);
+		meta_ac = शून्य;
+	पूर्ण
+	अगर ((!status) && restart_func) अणु
 		restart_func = 0;
-		goto restart_all;
-	}
-	brelse(bh);
-	bh = NULL;
+		जाओ restart_all;
+	पूर्ण
+	brअन्यथा(bh);
+	bh = शून्य;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- * While a write will already be ordering the data, a truncate will not.
+ * While a ग_लिखो will alपढ़ोy be ordering the data, a truncate will not.
  * Thus, we need to explicitly order the zeroed pages.
  */
-static handle_t *ocfs2_zero_start_ordered_transaction(struct inode *inode,
-						      struct buffer_head *di_bh,
+अटल handle_t *ocfs2_zero_start_ordered_transaction(काष्ठा inode *inode,
+						      काष्ठा buffer_head *di_bh,
 						      loff_t start_byte,
 						      loff_t length)
-{
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	handle_t *handle = NULL;
-	int ret = 0;
+अणु
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	handle_t *handle = शून्य;
+	पूर्णांक ret = 0;
 
-	if (!ocfs2_should_order_data(inode))
-		goto out;
+	अगर (!ocfs2_should_order_data(inode))
+		जाओ out;
 
 	handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		ret = -ENOMEM;
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	ret = ocfs2_jbd2_inode_add_write(handle, inode, start_byte, length);
-	if (ret < 0) {
-		mlog_errno(ret);
-		goto out;
-	}
+	ret = ocfs2_jbd2_inode_add_ग_लिखो(handle, inode, start_byte, length);
+	अगर (ret < 0) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), di_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	if (ret)
-		mlog_errno(ret);
+	अगर (ret)
+		mlog_त्रुटि_सं(ret);
 	ocfs2_update_inode_fsync_trans(handle, inode, 1);
 
 out:
-	if (ret) {
-		if (!IS_ERR(handle))
+	अगर (ret) अणु
+		अगर (!IS_ERR(handle))
 			ocfs2_commit_trans(osb, handle);
 		handle = ERR_PTR(ret);
-	}
-	return handle;
-}
+	पूर्ण
+	वापस handle;
+पूर्ण
 
 /* Some parts of this taken from generic_cont_expand, which turned out
- * to be too fragile to do exactly what we need without us having to
- * worry about recursive locking in ->write_begin() and ->write_end(). */
-static int ocfs2_write_zero_page(struct inode *inode, u64 abs_from,
-				 u64 abs_to, struct buffer_head *di_bh)
-{
-	struct address_space *mapping = inode->i_mapping;
-	struct page *page;
-	unsigned long index = abs_from >> PAGE_SHIFT;
+ * to be too fragile to करो exactly what we need without us having to
+ * worry about recursive locking in ->ग_लिखो_begin() and ->ग_लिखो_end(). */
+अटल पूर्णांक ocfs2_ग_लिखो_zero_page(काष्ठा inode *inode, u64 असल_from,
+				 u64 असल_to, काष्ठा buffer_head *di_bh)
+अणु
+	काष्ठा address_space *mapping = inode->i_mapping;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ index = असल_from >> PAGE_SHIFT;
 	handle_t *handle;
-	int ret = 0;
-	unsigned zero_from, zero_to, block_start, block_end;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
+	पूर्णांक ret = 0;
+	अचिन्हित zero_from, zero_to, block_start, block_end;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
 
-	BUG_ON(abs_from >= abs_to);
-	BUG_ON(abs_to > (((u64)index + 1) << PAGE_SHIFT));
-	BUG_ON(abs_from & (inode->i_blkbits - 1));
+	BUG_ON(असल_from >= असल_to);
+	BUG_ON(असल_to > (((u64)index + 1) << PAGE_SHIFT));
+	BUG_ON(असल_from & (inode->i_blkbits - 1));
 
 	handle = ocfs2_zero_start_ordered_transaction(inode, di_bh,
-						      abs_from,
-						      abs_to - abs_from);
-	if (IS_ERR(handle)) {
+						      असल_from,
+						      असल_to - असल_from);
+	अगर (IS_ERR(handle)) अणु
 		ret = PTR_ERR(handle);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	page = find_or_create_page(mapping, index, GFP_NOFS);
-	if (!page) {
+	अगर (!page) अणु
 		ret = -ENOMEM;
-		mlog_errno(ret);
-		goto out_commit_trans;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out_commit_trans;
+	पूर्ण
 
 	/* Get the offsets within the page that we want to zero */
-	zero_from = abs_from & (PAGE_SIZE - 1);
-	zero_to = abs_to & (PAGE_SIZE - 1);
-	if (!zero_to)
+	zero_from = असल_from & (PAGE_SIZE - 1);
+	zero_to = असल_to & (PAGE_SIZE - 1);
+	अगर (!zero_to)
 		zero_to = PAGE_SIZE;
 
-	trace_ocfs2_write_zero_page(
-			(unsigned long long)OCFS2_I(inode)->ip_blkno,
-			(unsigned long long)abs_from,
-			(unsigned long long)abs_to,
+	trace_ocfs2_ग_लिखो_zero_page(
+			(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+			(अचिन्हित दीर्घ दीर्घ)असल_from,
+			(अचिन्हित दीर्घ दीर्घ)असल_to,
 			index, zero_from, zero_to);
 
 	/* We know that zero_from is block aligned */
-	for (block_start = zero_from; block_start < zero_to;
-	     block_start = block_end) {
+	क्रम (block_start = zero_from; block_start < zero_to;
+	     block_start = block_end) अणु
 		block_end = block_start + i_blocksize(inode);
 
 		/*
-		 * block_start is block-aligned.  Bump it by one to force
-		 * __block_write_begin and block_commit_write to zero the
+		 * block_start is block-aligned.  Bump it by one to क्रमce
+		 * __block_ग_लिखो_begin and block_commit_ग_लिखो to zero the
 		 * whole block.
 		 */
-		ret = __block_write_begin(page, block_start + 1, 0,
+		ret = __block_ग_लिखो_begin(page, block_start + 1, 0,
 					  ocfs2_get_block);
-		if (ret < 0) {
-			mlog_errno(ret);
-			goto out_unlock;
-		}
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out_unlock;
+		पूर्ण
 
 
 		/* must not update i_size! */
-		ret = block_commit_write(page, block_start + 1,
+		ret = block_commit_ग_लिखो(page, block_start + 1,
 					 block_start + 1);
-		if (ret < 0)
-			mlog_errno(ret);
-		else
+		अगर (ret < 0)
+			mlog_त्रुटि_सं(ret);
+		अन्यथा
 			ret = 0;
-	}
+	पूर्ण
 
 	/*
-	 * fs-writeback will release the dirty pages without page lock
+	 * fs-ग_लिखोback will release the dirty pages without page lock
 	 * whose offset are over inode size, the release happens at
-	 * block_write_full_page().
+	 * block_ग_लिखो_full_page().
 	 */
-	i_size_write(inode, abs_to);
+	i_size_ग_लिखो(inode, असल_to);
 	inode->i_blocks = ocfs2_inode_sector_count(inode);
-	di->i_size = cpu_to_le64((u64)i_size_read(inode));
-	inode->i_mtime = inode->i_ctime = current_time(inode);
-	di->i_mtime = di->i_ctime = cpu_to_le64(inode->i_mtime.tv_sec);
-	di->i_ctime_nsec = cpu_to_le32(inode->i_mtime.tv_nsec);
-	di->i_mtime_nsec = di->i_ctime_nsec;
-	if (handle) {
+	di->i_size = cpu_to_le64((u64)i_size_पढ़ो(inode));
+	inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	di->i_mसमय = di->i_स_समय = cpu_to_le64(inode->i_mसमय.tv_sec);
+	di->i_स_समय_nsec = cpu_to_le32(inode->i_mसमय.tv_nsec);
+	di->i_mसमय_nsec = di->i_स_समय_nsec;
+	अगर (handle) अणु
 		ocfs2_journal_dirty(handle, di_bh);
 		ocfs2_update_inode_fsync_trans(handle, inode, 1);
-	}
+	पूर्ण
 
 out_unlock:
 	unlock_page(page);
 	put_page(page);
 out_commit_trans:
-	if (handle)
+	अगर (handle)
 		ocfs2_commit_trans(OCFS2_SB(inode->i_sb), handle);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Find the next range to zero.  We do this in terms of bytes because
+ * Find the next range to zero.  We करो this in terms of bytes because
  * that's what ocfs2_zero_extend() wants, and it is dealing with the
- * pagecache.  We may return multiple extents.
+ * pagecache.  We may वापस multiple extents.
  *
  * zero_start and zero_end are ocfs2_zero_extend()s current idea of what
- * needs to be zeroed.  range_start and range_end return the next zeroing
+ * needs to be zeroed.  range_start and range_end वापस the next zeroing
  * range.  A subsequent call should pass the previous range_end as its
- * zero_start.  If range_end is 0, there's nothing to do.
+ * zero_start.  If range_end is 0, there's nothing to करो.
  *
  * Unwritten extents are skipped over.  Refcounted extents are CoWd.
  */
-static int ocfs2_zero_extend_get_range(struct inode *inode,
-				       struct buffer_head *di_bh,
+अटल पूर्णांक ocfs2_zero_extend_get_range(काष्ठा inode *inode,
+				       काष्ठा buffer_head *di_bh,
 				       u64 zero_start, u64 zero_end,
 				       u64 *range_start, u64 *range_end)
-{
-	int rc = 0, needs_cow = 0;
+अणु
+	पूर्णांक rc = 0, needs_cow = 0;
 	u32 p_cpos, zero_clusters = 0;
 	u32 zero_cpos =
 		zero_start >> OCFS2_SB(inode->i_sb)->s_clustersize_bits;
-	u32 last_cpos = ocfs2_clusters_for_bytes(inode->i_sb, zero_end);
-	unsigned int num_clusters = 0;
-	unsigned int ext_flags = 0;
+	u32 last_cpos = ocfs2_clusters_क्रम_bytes(inode->i_sb, zero_end);
+	अचिन्हित पूर्णांक num_clusters = 0;
+	अचिन्हित पूर्णांक ext_flags = 0;
 
-	while (zero_cpos < last_cpos) {
+	जबतक (zero_cpos < last_cpos) अणु
 		rc = ocfs2_get_clusters(inode, zero_cpos, &p_cpos,
 					&num_clusters, &ext_flags);
-		if (rc) {
-			mlog_errno(rc);
-			goto out;
-		}
+		अगर (rc) अणु
+			mlog_त्रुटि_सं(rc);
+			जाओ out;
+		पूर्ण
 
-		if (p_cpos && !(ext_flags & OCFS2_EXT_UNWRITTEN)) {
+		अगर (p_cpos && !(ext_flags & OCFS2_EXT_UNWRITTEN)) अणु
 			zero_clusters = num_clusters;
-			if (ext_flags & OCFS2_EXT_REFCOUNTED)
+			अगर (ext_flags & OCFS2_EXT_REFCOUNTED)
 				needs_cow = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		zero_cpos += num_clusters;
-	}
-	if (!zero_clusters) {
+	पूर्ण
+	अगर (!zero_clusters) अणु
 		*range_end = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while ((zero_cpos + zero_clusters) < last_cpos) {
+	जबतक ((zero_cpos + zero_clusters) < last_cpos) अणु
 		rc = ocfs2_get_clusters(inode, zero_cpos + zero_clusters,
 					&p_cpos, &num_clusters,
 					&ext_flags);
-		if (rc) {
-			mlog_errno(rc);
-			goto out;
-		}
+		अगर (rc) अणु
+			mlog_त्रुटि_सं(rc);
+			जाओ out;
+		पूर्ण
 
-		if (!p_cpos || (ext_flags & OCFS2_EXT_UNWRITTEN))
-			break;
-		if (ext_flags & OCFS2_EXT_REFCOUNTED)
+		अगर (!p_cpos || (ext_flags & OCFS2_EXT_UNWRITTEN))
+			अवरोध;
+		अगर (ext_flags & OCFS2_EXT_REFCOUNTED)
 			needs_cow = 1;
 		zero_clusters += num_clusters;
-	}
-	if ((zero_cpos + zero_clusters) > last_cpos)
+	पूर्ण
+	अगर ((zero_cpos + zero_clusters) > last_cpos)
 		zero_clusters = last_cpos - zero_cpos;
 
-	if (needs_cow) {
+	अगर (needs_cow) अणु
 		rc = ocfs2_refcount_cow(inode, di_bh, zero_cpos,
-					zero_clusters, UINT_MAX);
-		if (rc) {
-			mlog_errno(rc);
-			goto out;
-		}
-	}
+					zero_clusters, अच_पूर्णांक_उच्च);
+		अगर (rc) अणु
+			mlog_त्रुटि_सं(rc);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	*range_start = ocfs2_clusters_to_bytes(inode->i_sb, zero_cpos);
 	*range_end = ocfs2_clusters_to_bytes(inode->i_sb,
 					     zero_cpos + zero_clusters);
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Zero one range returned from ocfs2_zero_extend_get_range().  The caller
+ * Zero one range वापसed from ocfs2_zero_extend_get_range().  The caller
  * has made sure that the entire range needs zeroing.
  */
-static int ocfs2_zero_extend_range(struct inode *inode, u64 range_start,
-				   u64 range_end, struct buffer_head *di_bh)
-{
-	int rc = 0;
+अटल पूर्णांक ocfs2_zero_extend_range(काष्ठा inode *inode, u64 range_start,
+				   u64 range_end, काष्ठा buffer_head *di_bh)
+अणु
+	पूर्णांक rc = 0;
 	u64 next_pos;
 	u64 zero_pos = range_start;
 
 	trace_ocfs2_zero_extend_range(
-			(unsigned long long)OCFS2_I(inode)->ip_blkno,
-			(unsigned long long)range_start,
-			(unsigned long long)range_end);
+			(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+			(अचिन्हित दीर्घ दीर्घ)range_start,
+			(अचिन्हित दीर्घ दीर्घ)range_end);
 	BUG_ON(range_start >= range_end);
 
-	while (zero_pos < range_end) {
+	जबतक (zero_pos < range_end) अणु
 		next_pos = (zero_pos & PAGE_MASK) + PAGE_SIZE;
-		if (next_pos > range_end)
+		अगर (next_pos > range_end)
 			next_pos = range_end;
-		rc = ocfs2_write_zero_page(inode, zero_pos, next_pos, di_bh);
-		if (rc < 0) {
-			mlog_errno(rc);
-			break;
-		}
+		rc = ocfs2_ग_लिखो_zero_page(inode, zero_pos, next_pos, di_bh);
+		अगर (rc < 0) अणु
+			mlog_त्रुटि_सं(rc);
+			अवरोध;
+		पूर्ण
 		zero_pos = next_pos;
 
 		/*
 		 * Very large extends have the potential to lock up
-		 * the cpu for extended periods of time.
+		 * the cpu क्रम extended periods of समय.
 		 */
 		cond_resched();
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int ocfs2_zero_extend(struct inode *inode, struct buffer_head *di_bh,
+पूर्णांक ocfs2_zero_extend(काष्ठा inode *inode, काष्ठा buffer_head *di_bh,
 		      loff_t zero_to_size)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 	u64 zero_start, range_start = 0, range_end = 0;
-	struct super_block *sb = inode->i_sb;
+	काष्ठा super_block *sb = inode->i_sb;
 
-	zero_start = ocfs2_align_bytes_to_blocks(sb, i_size_read(inode));
-	trace_ocfs2_zero_extend((unsigned long long)OCFS2_I(inode)->ip_blkno,
-				(unsigned long long)zero_start,
-				(unsigned long long)i_size_read(inode));
-	while (zero_start < zero_to_size) {
+	zero_start = ocfs2_align_bytes_to_blocks(sb, i_size_पढ़ो(inode));
+	trace_ocfs2_zero_extend((अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+				(अचिन्हित दीर्घ दीर्घ)zero_start,
+				(अचिन्हित दीर्घ दीर्घ)i_size_पढ़ो(inode));
+	जबतक (zero_start < zero_to_size) अणु
 		ret = ocfs2_zero_extend_get_range(inode, di_bh, zero_start,
 						  zero_to_size,
 						  &range_start,
 						  &range_end);
-		if (ret) {
-			mlog_errno(ret);
-			break;
-		}
-		if (!range_end)
-			break;
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			अवरोध;
+		पूर्ण
+		अगर (!range_end)
+			अवरोध;
 		/* Trim the ends */
-		if (range_start < zero_start)
+		अगर (range_start < zero_start)
 			range_start = zero_start;
-		if (range_end > zero_to_size)
+		अगर (range_end > zero_to_size)
 			range_end = zero_to_size;
 
 		ret = ocfs2_zero_extend_range(inode, range_start,
 					      range_end, di_bh);
-		if (ret) {
-			mlog_errno(ret);
-			break;
-		}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			अवरोध;
+		पूर्ण
 		zero_start = range_end;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_extend_no_holes(struct inode *inode, struct buffer_head *di_bh,
+पूर्णांक ocfs2_extend_no_holes(काष्ठा inode *inode, काष्ठा buffer_head *di_bh,
 			  u64 new_i_size, u64 zero_to)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u32 clusters_to_add;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 
 	/*
 	 * Only quota files call this without a bh, and they can't be
 	 * refcounted.
 	 */
 	BUG_ON(!di_bh && ocfs2_is_refcount_inode(inode));
-	BUG_ON(!di_bh && !(oi->ip_flags & OCFS2_INODE_SYSTEM_FILE));
+	BUG_ON(!di_bh && !(oi->ip_flags & OCFS2_INODE_SYSTEM_खाता));
 
-	clusters_to_add = ocfs2_clusters_for_bytes(inode->i_sb, new_i_size);
-	if (clusters_to_add < oi->ip_clusters)
+	clusters_to_add = ocfs2_clusters_क्रम_bytes(inode->i_sb, new_i_size);
+	अगर (clusters_to_add < oi->ip_clusters)
 		clusters_to_add = 0;
-	else
+	अन्यथा
 		clusters_to_add -= oi->ip_clusters;
 
-	if (clusters_to_add) {
+	अगर (clusters_to_add) अणु
 		ret = ocfs2_extend_allocation(inode, oi->ip_clusters,
 					      clusters_to_add, 0);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
-	}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Call this even if we don't add any clusters to the tree. We
+	 * Call this even अगर we करोn't add any clusters to the tree. We
 	 * still need to zero the area between the old i_size and the
 	 * new i_size.
 	 */
 	ret = ocfs2_zero_extend(inode, di_bh, zero_to);
-	if (ret < 0)
-		mlog_errno(ret);
+	अगर (ret < 0)
+		mlog_त्रुटि_सं(ret);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_extend_file(struct inode *inode,
-			     struct buffer_head *di_bh,
+अटल पूर्णांक ocfs2_extend_file(काष्ठा inode *inode,
+			     काष्ठा buffer_head *di_bh,
 			     u64 new_i_size)
-{
-	int ret = 0;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 
 	BUG_ON(!di_bh);
 
-	/* setattr sometimes calls us like this. */
-	if (new_i_size == 0)
-		goto out;
+	/* setattr someबार calls us like this. */
+	अगर (new_i_size == 0)
+		जाओ out;
 
-	if (i_size_read(inode) == new_i_size)
-		goto out;
-	BUG_ON(new_i_size < i_size_read(inode));
+	अगर (i_size_पढ़ो(inode) == new_i_size)
+		जाओ out;
+	BUG_ON(new_i_size < i_size_पढ़ो(inode));
 
 	/*
-	 * The alloc sem blocks people in read/write from reading our
-	 * allocation until we're done changing it. We depend on
-	 * i_mutex to block other extend/truncate calls while we're
-	 * here.  We even have to hold it for sparse files because there
+	 * The alloc sem blocks people in पढ़ो/ग_लिखो from पढ़ोing our
+	 * allocation until we're करोne changing it. We depend on
+	 * i_mutex to block other extend/truncate calls जबतक we're
+	 * here.  We even have to hold it क्रम sparse files because there
 	 * might be some tail zeroing.
 	 */
-	down_write(&oi->ip_alloc_sem);
+	करोwn_ग_लिखो(&oi->ip_alloc_sem);
 
-	if (oi->ip_dyn_features & OCFS2_INLINE_DATA_FL) {
+	अगर (oi->ip_dyn_features & OCFS2_INLINE_DATA_FL) अणु
 		/*
 		 * We can optimize small extends by keeping the inodes
-		 * inline data.
+		 * अंतरभूत data.
 		 */
-		if (ocfs2_size_fits_inline_data(di_bh, new_i_size)) {
-			up_write(&oi->ip_alloc_sem);
-			goto out_update_size;
-		}
+		अगर (ocfs2_size_fits_अंतरभूत_data(di_bh, new_i_size)) अणु
+			up_ग_लिखो(&oi->ip_alloc_sem);
+			जाओ out_update_size;
+		पूर्ण
 
-		ret = ocfs2_convert_inline_data_to_extents(inode, di_bh);
-		if (ret) {
-			up_write(&oi->ip_alloc_sem);
-			mlog_errno(ret);
-			goto out;
-		}
-	}
+		ret = ocfs2_convert_अंतरभूत_data_to_extents(inode, di_bh);
+		अगर (ret) अणु
+			up_ग_लिखो(&oi->ip_alloc_sem);
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (ocfs2_sparse_alloc(OCFS2_SB(inode->i_sb)))
+	अगर (ocfs2_sparse_alloc(OCFS2_SB(inode->i_sb)))
 		ret = ocfs2_zero_extend(inode, di_bh, new_i_size);
-	else
+	अन्यथा
 		ret = ocfs2_extend_no_holes(inode, di_bh, new_i_size,
 					    new_i_size);
 
-	up_write(&oi->ip_alloc_sem);
+	up_ग_लिखो(&oi->ip_alloc_sem);
 
-	if (ret < 0) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret < 0) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 out_update_size:
 	ret = ocfs2_simple_size_update(inode, di_bh, new_i_size);
-	if (ret < 0)
-		mlog_errno(ret);
+	अगर (ret < 0)
+		mlog_त्रुटि_सं(ret);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-		  struct iattr *attr)
-{
-	int status = 0, size_change;
-	int inode_locked = 0;
-	struct inode *inode = d_inode(dentry);
-	struct super_block *sb = inode->i_sb;
-	struct ocfs2_super *osb = OCFS2_SB(sb);
-	struct buffer_head *bh = NULL;
-	handle_t *handle = NULL;
-	struct dquot *transfer_to[MAXQUOTAS] = { };
-	int qtype;
-	int had_lock;
-	struct ocfs2_lock_holder oh;
+पूर्णांक ocfs2_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		  काष्ठा iattr *attr)
+अणु
+	पूर्णांक status = 0, size_change;
+	पूर्णांक inode_locked = 0;
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(sb);
+	काष्ठा buffer_head *bh = शून्य;
+	handle_t *handle = शून्य;
+	काष्ठा dquot *transfer_to[MAXQUOTAS] = अणु पूर्ण;
+	पूर्णांक qtype;
+	पूर्णांक had_lock;
+	काष्ठा ocfs2_lock_holder oh;
 
 	trace_ocfs2_setattr(inode, dentry,
-			    (unsigned long long)OCFS2_I(inode)->ip_blkno,
+			    (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
 			    dentry->d_name.len, dentry->d_name.name,
 			    attr->ia_valid, attr->ia_mode,
 			    from_kuid(&init_user_ns, attr->ia_uid),
 			    from_kgid(&init_user_ns, attr->ia_gid));
 
-	/* ensuring we don't even attempt to truncate a symlink */
-	if (S_ISLNK(inode->i_mode))
+	/* ensuring we करोn't even attempt to truncate a symlink */
+	अगर (S_ISLNK(inode->i_mode))
 		attr->ia_valid &= ~ATTR_SIZE;
 
-#define OCFS2_VALID_ATTRS (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME | ATTR_SIZE \
+#घोषणा OCFS2_VALID_ATTRS (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME | ATTR_SIZE \
 			   | ATTR_GID | ATTR_UID | ATTR_MODE)
-	if (!(attr->ia_valid & OCFS2_VALID_ATTRS))
-		return 0;
+	अगर (!(attr->ia_valid & OCFS2_VALID_ATTRS))
+		वापस 0;
 
 	status = setattr_prepare(&init_user_ns, dentry, attr);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (is_quota_modification(inode, attr)) {
+	अगर (is_quota_modअगरication(inode, attr)) अणु
 		status = dquot_initialize(inode);
-		if (status)
-			return status;
-	}
+		अगर (status)
+			वापस status;
+	पूर्ण
 	size_change = S_ISREG(inode->i_mode) && attr->ia_valid & ATTR_SIZE;
-	if (size_change) {
+	अगर (size_change) अणु
 		/*
-		 * Here we should wait dio to finish before inode lock
-		 * to avoid a deadlock between ocfs2_setattr() and
-		 * ocfs2_dio_end_io_write()
+		 * Here we should रुको dio to finish beक्रमe inode lock
+		 * to aव्योम a deadlock between ocfs2_setattr() and
+		 * ocfs2_dio_end_io_ग_लिखो()
 		 */
-		inode_dio_wait(inode);
+		inode_dio_रुको(inode);
 
 		status = ocfs2_rw_lock(inode, 1);
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail;
-		}
-	}
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
 	had_lock = ocfs2_inode_lock_tracker(inode, &bh, 1, &oh);
-	if (had_lock < 0) {
+	अगर (had_lock < 0) अणु
 		status = had_lock;
-		goto bail_unlock_rw;
-	} else if (had_lock) {
+		जाओ bail_unlock_rw;
+	पूर्ण अन्यथा अगर (had_lock) अणु
 		/*
 		 * As far as we know, ocfs2_setattr() could only be the first
-		 * VFS entry point in the call chain of recursive cluster
+		 * VFS entry poपूर्णांक in the call chain of recursive cluster
 		 * locking issue.
 		 *
 		 * For instance:
 		 * chmod_common()
-		 *  notify_change()
+		 *  notअगरy_change()
 		 *   ocfs2_setattr()
 		 *    posix_acl_chmod()
 		 *     ocfs2_iop_get_acl()
 		 *
 		 * But, we're not 100% sure if it's always true, because the
-		 * ordering of the VFS entry points in the call chain is out
+		 * ordering of the VFS entry poपूर्णांकs in the call chain is out
 		 * of our control. So, we'd better dump the stack here to
-		 * catch the other cases of recursive locking.
+		 * catch the other हालs of recursive locking.
 		 */
 		mlog(ML_ERROR, "Another case of recursive locking:\n");
 		dump_stack();
-	}
+	पूर्ण
 	inode_locked = 1;
 
-	if (size_change) {
+	अगर (size_change) अणु
 		status = inode_newsize_ok(inode, attr->ia_size);
-		if (status)
-			goto bail_unlock;
+		अगर (status)
+			जाओ bail_unlock;
 
-		if (i_size_read(inode) >= attr->ia_size) {
-			if (ocfs2_should_order_data(inode)) {
+		अगर (i_size_पढ़ो(inode) >= attr->ia_size) अणु
+			अगर (ocfs2_should_order_data(inode)) अणु
 				status = ocfs2_begin_ordered_truncate(inode,
 								      attr->ia_size);
-				if (status)
-					goto bail_unlock;
-			}
+				अगर (status)
+					जाओ bail_unlock;
+			पूर्ण
 			status = ocfs2_truncate_file(inode, bh, attr->ia_size);
-		} else
+		पूर्ण अन्यथा
 			status = ocfs2_extend_file(inode, bh, attr->ia_size);
-		if (status < 0) {
-			if (status != -ENOSPC)
-				mlog_errno(status);
+		अगर (status < 0) अणु
+			अगर (status != -ENOSPC)
+				mlog_त्रुटि_सं(status);
 			status = -ENOSPC;
-			goto bail_unlock;
-		}
-	}
+			जाओ bail_unlock;
+		पूर्ण
+	पूर्ण
 
-	if ((attr->ia_valid & ATTR_UID && !uid_eq(attr->ia_uid, inode->i_uid)) ||
-	    (attr->ia_valid & ATTR_GID && !gid_eq(attr->ia_gid, inode->i_gid))) {
+	अगर ((attr->ia_valid & ATTR_UID && !uid_eq(attr->ia_uid, inode->i_uid)) ||
+	    (attr->ia_valid & ATTR_GID && !gid_eq(attr->ia_gid, inode->i_gid))) अणु
 		/*
-		 * Gather pointers to quota structures so that allocation /
-		 * freeing of quota structures happens here and not inside
+		 * Gather poपूर्णांकers to quota काष्ठाures so that allocation /
+		 * मुक्तing of quota काष्ठाures happens here and not inside
 		 * dquot_transfer() where we have problems with lock ordering
 		 */
-		if (attr->ia_valid & ATTR_UID && !uid_eq(attr->ia_uid, inode->i_uid)
+		अगर (attr->ia_valid & ATTR_UID && !uid_eq(attr->ia_uid, inode->i_uid)
 		    && OCFS2_HAS_RO_COMPAT_FEATURE(sb,
-		    OCFS2_FEATURE_RO_COMPAT_USRQUOTA)) {
+		    OCFS2_FEATURE_RO_COMPAT_USRQUOTA)) अणु
 			transfer_to[USRQUOTA] = dqget(sb, make_kqid_uid(attr->ia_uid));
-			if (IS_ERR(transfer_to[USRQUOTA])) {
+			अगर (IS_ERR(transfer_to[USRQUOTA])) अणु
 				status = PTR_ERR(transfer_to[USRQUOTA]);
-				transfer_to[USRQUOTA] = NULL;
-				goto bail_unlock;
-			}
-		}
-		if (attr->ia_valid & ATTR_GID && !gid_eq(attr->ia_gid, inode->i_gid)
+				transfer_to[USRQUOTA] = शून्य;
+				जाओ bail_unlock;
+			पूर्ण
+		पूर्ण
+		अगर (attr->ia_valid & ATTR_GID && !gid_eq(attr->ia_gid, inode->i_gid)
 		    && OCFS2_HAS_RO_COMPAT_FEATURE(sb,
-		    OCFS2_FEATURE_RO_COMPAT_GRPQUOTA)) {
+		    OCFS2_FEATURE_RO_COMPAT_GRPQUOTA)) अणु
 			transfer_to[GRPQUOTA] = dqget(sb, make_kqid_gid(attr->ia_gid));
-			if (IS_ERR(transfer_to[GRPQUOTA])) {
+			अगर (IS_ERR(transfer_to[GRPQUOTA])) अणु
 				status = PTR_ERR(transfer_to[GRPQUOTA]);
-				transfer_to[GRPQUOTA] = NULL;
-				goto bail_unlock;
-			}
-		}
-		down_write(&OCFS2_I(inode)->ip_alloc_sem);
+				transfer_to[GRPQUOTA] = शून्य;
+				जाओ bail_unlock;
+			पूर्ण
+		पूर्ण
+		करोwn_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
 		handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS +
 					   2 * ocfs2_quota_trans_credits(sb));
-		if (IS_ERR(handle)) {
+		अगर (IS_ERR(handle)) अणु
 			status = PTR_ERR(handle);
-			mlog_errno(status);
-			goto bail_unlock_alloc;
-		}
+			mlog_त्रुटि_सं(status);
+			जाओ bail_unlock_alloc;
+		पूर्ण
 		status = __dquot_transfer(inode, transfer_to);
-		if (status < 0)
-			goto bail_commit;
-	} else {
-		down_write(&OCFS2_I(inode)->ip_alloc_sem);
+		अगर (status < 0)
+			जाओ bail_commit;
+	पूर्ण अन्यथा अणु
+		करोwn_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
 		handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-		if (IS_ERR(handle)) {
+		अगर (IS_ERR(handle)) अणु
 			status = PTR_ERR(handle);
-			mlog_errno(status);
-			goto bail_unlock_alloc;
-		}
-	}
+			mlog_त्रुटि_सं(status);
+			जाओ bail_unlock_alloc;
+		पूर्ण
+	पूर्ण
 
 	setattr_copy(&init_user_ns, inode, attr);
 	mark_inode_dirty(inode);
 
 	status = ocfs2_mark_inode_dirty(handle, inode, bh);
-	if (status < 0)
-		mlog_errno(status);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
 bail_commit:
 	ocfs2_commit_trans(osb, handle);
 bail_unlock_alloc:
-	up_write(&OCFS2_I(inode)->ip_alloc_sem);
+	up_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
 bail_unlock:
-	if (status && inode_locked) {
+	अगर (status && inode_locked) अणु
 		ocfs2_inode_unlock_tracker(inode, 1, &oh, had_lock);
 		inode_locked = 0;
-	}
+	पूर्ण
 bail_unlock_rw:
-	if (size_change)
+	अगर (size_change)
 		ocfs2_rw_unlock(inode, 1);
 bail:
 
-	/* Release quota pointers in case we acquired them */
-	for (qtype = 0; qtype < OCFS2_MAXQUOTAS; qtype++)
+	/* Release quota poपूर्णांकers in हाल we acquired them */
+	क्रम (qtype = 0; qtype < OCFS2_MAXQUOTAS; qtype++)
 		dqput(transfer_to[qtype]);
 
-	if (!status && attr->ia_valid & ATTR_MODE) {
+	अगर (!status && attr->ia_valid & ATTR_MODE) अणु
 		status = ocfs2_acl_chmod(inode, bh);
-		if (status < 0)
-			mlog_errno(status);
-	}
-	if (inode_locked)
+		अगर (status < 0)
+			mlog_त्रुटि_सं(status);
+	पूर्ण
+	अगर (inode_locked)
 		ocfs2_inode_unlock_tracker(inode, 1, &oh, had_lock);
 
-	brelse(bh);
-	return status;
-}
+	brअन्यथा(bh);
+	वापस status;
+पूर्ण
 
-int ocfs2_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		  struct kstat *stat, u32 request_mask, unsigned int flags)
-{
-	struct inode *inode = d_inode(path->dentry);
-	struct super_block *sb = path->dentry->d_sb;
-	struct ocfs2_super *osb = sb->s_fs_info;
-	int err;
+पूर्णांक ocfs2_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		  काष्ठा kstat *stat, u32 request_mask, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode *inode = d_inode(path->dentry);
+	काष्ठा super_block *sb = path->dentry->d_sb;
+	काष्ठा ocfs2_super *osb = sb->s_fs_info;
+	पूर्णांक err;
 
 	err = ocfs2_inode_revalidate(path->dentry);
-	if (err) {
-		if (err != -ENOENT)
-			mlog_errno(err);
-		goto bail;
-	}
+	अगर (err) अणु
+		अगर (err != -ENOENT)
+			mlog_त्रुटि_सं(err);
+		जाओ bail;
+	पूर्ण
 
 	generic_fillattr(&init_user_ns, inode, stat);
 	/*
-	 * If there is inline data in the inode, the inode will normally not
-	 * have data blocks allocated (it may have an external xattr block).
-	 * Report at least one sector for such files, so tools like tar, rsync,
-	 * others don't incorrectly think the file is completely sparse.
+	 * If there is अंतरभूत data in the inode, the inode will normally not
+	 * have data blocks allocated (it may have an बाह्यal xattr block).
+	 * Report at least one sector क्रम such files, so tools like tar, rsync,
+	 * others करोn't incorrectly think the file is completely sparse.
 	 */
-	if (unlikely(OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL))
+	अगर (unlikely(OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL))
 		stat->blocks += (stat->size + 511)>>9;
 
-	/* We set the blksize from the cluster size for performance */
+	/* We set the blksize from the cluster size क्रम perक्रमmance */
 	stat->blksize = osb->s_clustersize;
 
 bail:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ocfs2_permission(struct user_namespace *mnt_userns, struct inode *inode,
-		     int mask)
-{
-	int ret, had_lock;
-	struct ocfs2_lock_holder oh;
+पूर्णांक ocfs2_permission(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		     पूर्णांक mask)
+अणु
+	पूर्णांक ret, had_lock;
+	काष्ठा ocfs2_lock_holder oh;
 
-	if (mask & MAY_NOT_BLOCK)
-		return -ECHILD;
+	अगर (mask & MAY_NOT_BLOCK)
+		वापस -ECHILD;
 
-	had_lock = ocfs2_inode_lock_tracker(inode, NULL, 0, &oh);
-	if (had_lock < 0) {
+	had_lock = ocfs2_inode_lock_tracker(inode, शून्य, 0, &oh);
+	अगर (had_lock < 0) अणु
 		ret = had_lock;
-		goto out;
-	} else if (had_lock) {
-		/* See comments in ocfs2_setattr() for details.
-		 * The call chain of this case could be:
-		 * do_sys_open()
-		 *  may_open()
+		जाओ out;
+	पूर्ण अन्यथा अगर (had_lock) अणु
+		/* See comments in ocfs2_setattr() क्रम details.
+		 * The call chain of this हाल could be:
+		 * करो_sys_खोलो()
+		 *  may_खोलो()
 		 *   inode_permission()
 		 *    ocfs2_permission()
 		 *     ocfs2_iop_get_acl()
 		 */
 		mlog(ML_ERROR, "Another case of recursive locking:\n");
 		dump_stack();
-	}
+	पूर्ण
 
 	ret = generic_permission(&init_user_ns, inode, mask);
 
 	ocfs2_inode_unlock_tracker(inode, 0, &oh, had_lock);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __ocfs2_write_remove_suid(struct inode *inode,
-				     struct buffer_head *bh)
-{
-	int ret;
+अटल पूर्णांक __ocfs2_ग_लिखो_हटाओ_suid(काष्ठा inode *inode,
+				     काष्ठा buffer_head *bh)
+अणु
+	पूर्णांक ret;
 	handle_t *handle;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_dinode *di;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_dinode *di;
 
-	trace_ocfs2_write_remove_suid(
-			(unsigned long long)OCFS2_I(inode)->ip_blkno,
+	trace_ocfs2_ग_लिखो_हटाओ_suid(
+			(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
 			inode->i_mode);
 
 	handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		ret = PTR_ERR(handle);
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	if (ret < 0) {
-		mlog_errno(ret);
-		goto out_trans;
-	}
+	अगर (ret < 0) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out_trans;
+	पूर्ण
 
 	inode->i_mode &= ~S_ISUID;
-	if ((inode->i_mode & S_ISGID) && (inode->i_mode & S_IXGRP))
+	अगर ((inode->i_mode & S_ISGID) && (inode->i_mode & S_IXGRP))
 		inode->i_mode &= ~S_ISGID;
 
-	di = (struct ocfs2_dinode *) bh->b_data;
+	di = (काष्ठा ocfs2_dinode *) bh->b_data;
 	di->i_mode = cpu_to_le16(inode->i_mode);
 	ocfs2_update_inode_fsync_trans(handle, inode, 0);
 
@@ -1405,138 +1406,138 @@ static int __ocfs2_write_remove_suid(struct inode *inode,
 out_trans:
 	ocfs2_commit_trans(osb, handle);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_write_remove_suid(struct inode *inode)
-{
-	int ret;
-	struct buffer_head *bh = NULL;
+अटल पूर्णांक ocfs2_ग_लिखो_हटाओ_suid(काष्ठा inode *inode)
+अणु
+	पूर्णांक ret;
+	काष्ठा buffer_head *bh = शून्य;
 
-	ret = ocfs2_read_inode_block(inode, &bh);
-	if (ret < 0) {
-		mlog_errno(ret);
-		goto out;
-	}
+	ret = ocfs2_पढ़ो_inode_block(inode, &bh);
+	अगर (ret < 0) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	ret =  __ocfs2_write_remove_suid(inode, bh);
+	ret =  __ocfs2_ग_लिखो_हटाओ_suid(inode, bh);
 out:
-	brelse(bh);
-	return ret;
-}
+	brअन्यथा(bh);
+	वापस ret;
+पूर्ण
 
 /*
  * Allocate enough extents to cover the region starting at byte offset
- * start for len bytes. Existing extents are skipped, any extents
+ * start क्रम len bytes. Existing extents are skipped, any extents
  * added are marked as "unwritten".
  */
-static int ocfs2_allocate_unwritten_extents(struct inode *inode,
+अटल पूर्णांक ocfs2_allocate_unwritten_extents(काष्ठा inode *inode,
 					    u64 start, u64 len)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u32 cpos, phys_cpos, clusters, alloc_size;
 	u64 end = start + len;
-	struct buffer_head *di_bh = NULL;
+	काष्ठा buffer_head *di_bh = शून्य;
 
-	if (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) {
-		ret = ocfs2_read_inode_block(inode, &di_bh);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
+	अगर (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) अणु
+		ret = ocfs2_पढ़ो_inode_block(inode, &di_bh);
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 		/*
-		 * Nothing to do if the requested reservation range
+		 * Nothing to करो अगर the requested reservation range
 		 * fits within the inode.
 		 */
-		if (ocfs2_size_fits_inline_data(di_bh, end))
-			goto out;
+		अगर (ocfs2_size_fits_अंतरभूत_data(di_bh, end))
+			जाओ out;
 
-		ret = ocfs2_convert_inline_data_to_extents(inode, di_bh);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
-	}
+		ret = ocfs2_convert_अंतरभूत_data_to_extents(inode, di_bh);
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * We consider both start and len to be inclusive.
 	 */
 	cpos = start >> OCFS2_SB(inode->i_sb)->s_clustersize_bits;
-	clusters = ocfs2_clusters_for_bytes(inode->i_sb, start + len);
+	clusters = ocfs2_clusters_क्रम_bytes(inode->i_sb, start + len);
 	clusters -= cpos;
 
-	while (clusters) {
+	जबतक (clusters) अणु
 		ret = ocfs2_get_clusters(inode, cpos, &phys_cpos,
-					 &alloc_size, NULL);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
+					 &alloc_size, शून्य);
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 		/*
 		 * Hole or existing extent len can be arbitrary, so
 		 * cap it to our own allocation request.
 		 */
-		if (alloc_size > clusters)
+		अगर (alloc_size > clusters)
 			alloc_size = clusters;
 
-		if (phys_cpos) {
+		अगर (phys_cpos) अणु
 			/*
-			 * We already have an allocation at this
+			 * We alपढ़ोy have an allocation at this
 			 * region so we can safely skip it.
 			 */
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
 		ret = ocfs2_extend_allocation(inode, cpos, alloc_size, 1);
-		if (ret) {
-			if (ret != -ENOSPC)
-				mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret) अणु
+			अगर (ret != -ENOSPC)
+				mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 next:
 		cpos += alloc_size;
 		clusters -= alloc_size;
-	}
+	पूर्ण
 
 	ret = 0;
 out:
 
-	brelse(di_bh);
-	return ret;
-}
+	brअन्यथा(di_bh);
+	वापस ret;
+पूर्ण
 
 /*
- * Truncate a byte range, avoiding pages within partial clusters. This
- * preserves those pages for the zeroing code to write to.
+ * Truncate a byte range, aव्योमing pages within partial clusters. This
+ * preserves those pages क्रम the zeroing code to ग_लिखो to.
  */
-static void ocfs2_truncate_cluster_pages(struct inode *inode, u64 byte_start,
+अटल व्योम ocfs2_truncate_cluster_pages(काष्ठा inode *inode, u64 byte_start,
 					 u64 byte_len)
-{
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अणु
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 	loff_t start, end;
-	struct address_space *mapping = inode->i_mapping;
+	काष्ठा address_space *mapping = inode->i_mapping;
 
 	start = (loff_t)ocfs2_align_bytes_to_clusters(inode->i_sb, byte_start);
 	end = byte_start + byte_len;
 	end = end & ~(osb->s_clustersize - 1);
 
-	if (start < end) {
+	अगर (start < end) अणु
 		unmap_mapping_range(mapping, start, end - start, 0);
 		truncate_inode_pages_range(mapping, start, end - 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ocfs2_zero_partial_clusters(struct inode *inode,
+अटल पूर्णांक ocfs2_zero_partial_clusters(काष्ठा inode *inode,
 				       u64 start, u64 len)
-{
-	int ret = 0;
-	u64 tmpend = 0;
+अणु
+	पूर्णांक ret = 0;
+	u64 पंचांगpend = 0;
 	u64 end = start + len;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	unsigned int csize = osb->s_clustersize;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	अचिन्हित पूर्णांक csize = osb->s_clustersize;
 	handle_t *handle;
 
 	/*
@@ -1547,198 +1548,198 @@ static int ocfs2_zero_partial_clusters(struct inode *inode,
 	 * physical allocation - the zeroing code knows to skip holes.
 	 */
 	trace_ocfs2_zero_partial_clusters(
-		(unsigned long long)OCFS2_I(inode)->ip_blkno,
-		(unsigned long long)start, (unsigned long long)end);
+		(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+		(अचिन्हित दीर्घ दीर्घ)start, (अचिन्हित दीर्घ दीर्घ)end);
 
 	/*
 	 * If both edges are on a cluster boundary then there's no
 	 * zeroing required as the region is part of the allocation to
 	 * be truncated.
 	 */
-	if ((start & (csize - 1)) == 0 && (end & (csize - 1)) == 0)
-		goto out;
+	अगर ((start & (csize - 1)) == 0 && (end & (csize - 1)) == 0)
+		जाओ out;
 
 	handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		ret = PTR_ERR(handle);
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * If start is on a cluster boundary and end is somewhere in another
 	 * cluster, we have not COWed the cluster starting at start, unless
-	 * end is also within the same cluster. So, in this case, we skip this
-	 * first call to ocfs2_zero_range_for_truncate() truncate and move on
+	 * end is also within the same cluster. So, in this हाल, we skip this
+	 * first call to ocfs2_zero_range_क्रम_truncate() truncate and move on
 	 * to the next one.
 	 */
-	if ((start & (csize - 1)) != 0) {
+	अगर ((start & (csize - 1)) != 0) अणु
 		/*
 		 * We want to get the byte offset of the end of the 1st
 		 * cluster.
 		 */
-		tmpend = (u64)osb->s_clustersize +
+		पंचांगpend = (u64)osb->s_clustersize +
 			(start & ~(osb->s_clustersize - 1));
-		if (tmpend > end)
-			tmpend = end;
+		अगर (पंचांगpend > end)
+			पंचांगpend = end;
 
 		trace_ocfs2_zero_partial_clusters_range1(
-			(unsigned long long)start,
-			(unsigned long long)tmpend);
+			(अचिन्हित दीर्घ दीर्घ)start,
+			(अचिन्हित दीर्घ दीर्घ)पंचांगpend);
 
-		ret = ocfs2_zero_range_for_truncate(inode, handle, start,
-						    tmpend);
-		if (ret)
-			mlog_errno(ret);
-	}
+		ret = ocfs2_zero_range_क्रम_truncate(inode, handle, start,
+						    पंचांगpend);
+		अगर (ret)
+			mlog_त्रुटि_सं(ret);
+	पूर्ण
 
-	if (tmpend < end) {
+	अगर (पंचांगpend < end) अणु
 		/*
 		 * This may make start and end equal, but the zeroing
-		 * code will skip any work in that case so there's no
+		 * code will skip any work in that हाल so there's no
 		 * need to catch it up here.
 		 */
 		start = end & ~(osb->s_clustersize - 1);
 
 		trace_ocfs2_zero_partial_clusters_range2(
-			(unsigned long long)start, (unsigned long long)end);
+			(अचिन्हित दीर्घ दीर्घ)start, (अचिन्हित दीर्घ दीर्घ)end);
 
-		ret = ocfs2_zero_range_for_truncate(inode, handle, start, end);
-		if (ret)
-			mlog_errno(ret);
-	}
+		ret = ocfs2_zero_range_क्रम_truncate(inode, handle, start, end);
+		अगर (ret)
+			mlog_त्रुटि_सं(ret);
+	पूर्ण
 	ocfs2_update_inode_fsync_trans(handle, inode, 1);
 
 	ocfs2_commit_trans(osb, handle);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_find_rec(struct ocfs2_extent_list *el, u32 pos)
-{
-	int i;
-	struct ocfs2_extent_rec *rec = NULL;
+अटल पूर्णांक ocfs2_find_rec(काष्ठा ocfs2_extent_list *el, u32 pos)
+अणु
+	पूर्णांक i;
+	काष्ठा ocfs2_extent_rec *rec = शून्य;
 
-	for (i = le16_to_cpu(el->l_next_free_rec) - 1; i >= 0; i--) {
+	क्रम (i = le16_to_cpu(el->l_next_मुक्त_rec) - 1; i >= 0; i--) अणु
 
 		rec = &el->l_recs[i];
 
-		if (le32_to_cpu(rec->e_cpos) < pos)
-			break;
-	}
+		अगर (le32_to_cpu(rec->e_cpos) < pos)
+			अवरोध;
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /*
  * Helper to calculate the punching pos and length in one run, we handle the
- * following three cases in order:
+ * following three हालs in order:
  *
- * - remove the entire record
- * - remove a partial record
- * - no record needs to be removed (hole-punching completed)
+ * - हटाओ the entire record
+ * - हटाओ a partial record
+ * - no record needs to be हटाओd (hole-punching completed)
 */
-static void ocfs2_calc_trunc_pos(struct inode *inode,
-				 struct ocfs2_extent_list *el,
-				 struct ocfs2_extent_rec *rec,
+अटल व्योम ocfs2_calc_trunc_pos(काष्ठा inode *inode,
+				 काष्ठा ocfs2_extent_list *el,
+				 काष्ठा ocfs2_extent_rec *rec,
 				 u32 trunc_start, u32 *trunc_cpos,
 				 u32 *trunc_len, u32 *trunc_end,
-				 u64 *blkno, int *done)
-{
-	int ret = 0;
+				 u64 *blkno, पूर्णांक *करोne)
+अणु
+	पूर्णांक ret = 0;
 	u32 coff, range;
 
 	range = le32_to_cpu(rec->e_cpos) + ocfs2_rec_clusters(el, rec);
 
-	if (le32_to_cpu(rec->e_cpos) >= trunc_start) {
+	अगर (le32_to_cpu(rec->e_cpos) >= trunc_start) अणु
 		/*
-		 * remove an entire extent record.
+		 * हटाओ an entire extent record.
 		 */
 		*trunc_cpos = le32_to_cpu(rec->e_cpos);
 		/*
-		 * Skip holes if any.
+		 * Skip holes अगर any.
 		 */
-		if (range < *trunc_end)
+		अगर (range < *trunc_end)
 			*trunc_end = range;
 		*trunc_len = *trunc_end - le32_to_cpu(rec->e_cpos);
 		*blkno = le64_to_cpu(rec->e_blkno);
 		*trunc_end = le32_to_cpu(rec->e_cpos);
-	} else if (range > trunc_start) {
+	पूर्ण अन्यथा अगर (range > trunc_start) अणु
 		/*
-		 * remove a partial extent record, which means we're
+		 * हटाओ a partial extent record, which means we're
 		 * removing the last extent record.
 		 */
 		*trunc_cpos = trunc_start;
 		/*
-		 * skip hole if any.
+		 * skip hole अगर any.
 		 */
-		if (range < *trunc_end)
+		अगर (range < *trunc_end)
 			*trunc_end = range;
 		*trunc_len = *trunc_end - trunc_start;
 		coff = trunc_start - le32_to_cpu(rec->e_cpos);
 		*blkno = le64_to_cpu(rec->e_blkno) +
 				ocfs2_clusters_to_blocks(inode->i_sb, coff);
 		*trunc_end = trunc_start;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * It may have two following possibilities:
 		 *
-		 * - last record has been removed
+		 * - last record has been हटाओd
 		 * - trunc_start was within a hole
 		 *
-		 * both two cases mean the completion of hole punching.
+		 * both two हालs mean the completion of hole punching.
 		 */
 		ret = 1;
-	}
+	पूर्ण
 
-	*done = ret;
-}
+	*करोne = ret;
+पूर्ण
 
-int ocfs2_remove_inode_range(struct inode *inode,
-			     struct buffer_head *di_bh, u64 byte_start,
+पूर्णांक ocfs2_हटाओ_inode_range(काष्ठा inode *inode,
+			     काष्ठा buffer_head *di_bh, u64 byte_start,
 			     u64 byte_len)
-{
-	int ret = 0, flags = 0, done = 0, i;
+अणु
+	पूर्णांक ret = 0, flags = 0, करोne = 0, i;
 	u32 trunc_start, trunc_len, trunc_end, trunc_cpos, phys_cpos;
 	u32 cluster_in_el;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_cached_dealloc_ctxt dealloc;
-	struct address_space *mapping = inode->i_mapping;
-	struct ocfs2_extent_tree et;
-	struct ocfs2_path *path = NULL;
-	struct ocfs2_extent_list *el = NULL;
-	struct ocfs2_extent_rec *rec = NULL;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_cached_dealloc_ctxt dealloc;
+	काष्ठा address_space *mapping = inode->i_mapping;
+	काष्ठा ocfs2_extent_tree et;
+	काष्ठा ocfs2_path *path = शून्य;
+	काष्ठा ocfs2_extent_list *el = शून्य;
+	काष्ठा ocfs2_extent_rec *rec = शून्य;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
 	u64 blkno, refcount_loc = le64_to_cpu(di->i_refcount_loc);
 
 	ocfs2_init_dinode_extent_tree(&et, INODE_CACHE(inode), di_bh);
 	ocfs2_init_dealloc_ctxt(&dealloc);
 
-	trace_ocfs2_remove_inode_range(
-			(unsigned long long)OCFS2_I(inode)->ip_blkno,
-			(unsigned long long)byte_start,
-			(unsigned long long)byte_len);
+	trace_ocfs2_हटाओ_inode_range(
+			(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+			(अचिन्हित दीर्घ दीर्घ)byte_start,
+			(अचिन्हित दीर्घ दीर्घ)byte_len);
 
-	if (byte_len == 0)
-		return 0;
+	अगर (byte_len == 0)
+		वापस 0;
 
-	if (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) {
-		ret = ocfs2_truncate_inline(inode, di_bh, byte_start,
+	अगर (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) अणु
+		ret = ocfs2_truncate_अंतरभूत(inode, di_bh, byte_start,
 					    byte_start + byte_len, 0);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 		/*
 		 * There's no need to get fancy with the page cache
-		 * truncate of an inline-data inode. We're talking
+		 * truncate of an अंतरभूत-data inode. We're talking
 		 * about less than a page here, which will be cached
 		 * in the dinode buffer anyway.
 		 */
 		unmap_mapping_range(mapping, 0, 0, 0);
 		truncate_inode_pages(mapping, 0);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * For reflinks, we may need to CoW 2 clusters which might be
@@ -1746,45 +1747,45 @@ int ocfs2_remove_inode_range(struct inode *inode,
 	 * within one cluster(means is not exactly aligned to clustersize).
 	 */
 
-	if (ocfs2_is_refcount_inode(inode)) {
+	अगर (ocfs2_is_refcount_inode(inode)) अणु
 		ret = ocfs2_cow_file_pos(inode, di_bh, byte_start);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 		ret = ocfs2_cow_file_pos(inode, di_bh, byte_start + byte_len);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
-	}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	trunc_start = ocfs2_clusters_for_bytes(osb->sb, byte_start);
+	trunc_start = ocfs2_clusters_क्रम_bytes(osb->sb, byte_start);
 	trunc_end = (byte_start + byte_len) >> osb->s_clustersize_bits;
 	cluster_in_el = trunc_end;
 
 	ret = ocfs2_zero_partial_clusters(inode, byte_start, byte_len);
-	if (ret) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	path = ocfs2_new_path_from_et(&et);
-	if (!path) {
+	अगर (!path) अणु
 		ret = -ENOMEM;
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	while (trunc_end > trunc_start) {
+	जबतक (trunc_end > trunc_start) अणु
 
 		ret = ocfs2_find_path(INODE_CACHE(inode), path,
 				      cluster_in_el);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 		el = path_leaf_el(path);
 
@@ -1792,879 +1793,879 @@ int ocfs2_remove_inode_range(struct inode *inode,
 		/*
 		 * Need to go to previous extent block.
 		 */
-		if (i < 0) {
-			if (path->p_tree_depth == 0)
-				break;
+		अगर (i < 0) अणु
+			अगर (path->p_tree_depth == 0)
+				अवरोध;
 
-			ret = ocfs2_find_cpos_for_left_leaf(inode->i_sb,
+			ret = ocfs2_find_cpos_क्रम_left_leaf(inode->i_sb,
 							    path,
 							    &cluster_in_el);
-			if (ret) {
-				mlog_errno(ret);
-				goto out;
-			}
+			अगर (ret) अणु
+				mlog_त्रुटि_सं(ret);
+				जाओ out;
+			पूर्ण
 
 			/*
-			 * We've reached the leftmost extent block,
+			 * We've reached the lefपंचांगost extent block,
 			 * it's safe to leave.
 			 */
-			if (cluster_in_el == 0)
-				break;
+			अगर (cluster_in_el == 0)
+				अवरोध;
 
 			/*
-			 * The 'pos' searched for previous extent block is
+			 * The 'pos' searched क्रम previous extent block is
 			 * always one cluster less than actual trunc_end.
 			 */
 			trunc_end = cluster_in_el + 1;
 
 			ocfs2_reinit_path(path, 1);
 
-			continue;
+			जारी;
 
-		} else
+		पूर्ण अन्यथा
 			rec = &el->l_recs[i];
 
 		ocfs2_calc_trunc_pos(inode, el, rec, trunc_start, &trunc_cpos,
-				     &trunc_len, &trunc_end, &blkno, &done);
-		if (done)
-			break;
+				     &trunc_len, &trunc_end, &blkno, &करोne);
+		अगर (करोne)
+			अवरोध;
 
 		flags = rec->e_flags;
 		phys_cpos = ocfs2_blocks_to_clusters(inode->i_sb, blkno);
 
-		ret = ocfs2_remove_btree_range(inode, &et, trunc_cpos,
+		ret = ocfs2_हटाओ_btree_range(inode, &et, trunc_cpos,
 					       phys_cpos, trunc_len, flags,
 					       &dealloc, refcount_loc, false);
-		if (ret < 0) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 		cluster_in_el = trunc_end;
 
 		ocfs2_reinit_path(path, 1);
-	}
+	पूर्ण
 
 	ocfs2_truncate_cluster_pages(inode, byte_start, byte_len);
 
 out:
-	ocfs2_free_path(path);
+	ocfs2_मुक्त_path(path);
 	ocfs2_schedule_truncate_log_flush(osb, 1);
 	ocfs2_run_deallocs(osb, &dealloc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * zero out partial blocks of one cluster.
  *
  * start: file offset where zero starts, will be made upper block aligned.
- * len: it will be trimmed to the end of current cluster if "start + len"
+ * len: it will be trimmed to the end of current cluster अगर "start + len"
  *      is bigger than it.
  */
-static int ocfs2_zeroout_partial_cluster(struct inode *inode,
+अटल पूर्णांक ocfs2_zeroout_partial_cluster(काष्ठा inode *inode,
 					u64 start, u64 len)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u64 start_block, end_block, nr_blocks;
 	u64 p_block, offset;
 	u32 cluster, p_cluster, nr_clusters;
-	struct super_block *sb = inode->i_sb;
+	काष्ठा super_block *sb = inode->i_sb;
 	u64 end = ocfs2_align_bytes_to_clusters(sb, start);
 
-	if (start + len < end)
+	अगर (start + len < end)
 		end = start + len;
 
-	start_block = ocfs2_blocks_for_bytes(sb, start);
-	end_block = ocfs2_blocks_for_bytes(sb, end);
+	start_block = ocfs2_blocks_क्रम_bytes(sb, start);
+	end_block = ocfs2_blocks_क्रम_bytes(sb, end);
 	nr_blocks = end_block - start_block;
-	if (!nr_blocks)
-		return 0;
+	अगर (!nr_blocks)
+		वापस 0;
 
 	cluster = ocfs2_bytes_to_clusters(sb, start);
 	ret = ocfs2_get_clusters(inode, cluster, &p_cluster,
-				&nr_clusters, NULL);
-	if (ret)
-		return ret;
-	if (!p_cluster)
-		return 0;
+				&nr_clusters, शून्य);
+	अगर (ret)
+		वापस ret;
+	अगर (!p_cluster)
+		वापस 0;
 
 	offset = start_block - ocfs2_clusters_to_blocks(sb, cluster);
 	p_block = ocfs2_clusters_to_blocks(sb, p_cluster) + offset;
-	return sb_issue_zeroout(sb, p_block, nr_blocks, GFP_NOFS);
-}
+	वापस sb_issue_zeroout(sb, p_block, nr_blocks, GFP_NOFS);
+पूर्ण
 
 /*
  * Parts of this function taken from xfs_change_file_space()
  */
-static int __ocfs2_change_file_space(struct file *file, struct inode *inode,
-				     loff_t f_pos, unsigned int cmd,
-				     struct ocfs2_space_resv *sr,
-				     int change_size)
-{
-	int ret;
+अटल पूर्णांक __ocfs2_change_file_space(काष्ठा file *file, काष्ठा inode *inode,
+				     loff_t f_pos, अचिन्हित पूर्णांक cmd,
+				     काष्ठा ocfs2_space_resv *sr,
+				     पूर्णांक change_size)
+अणु
+	पूर्णांक ret;
 	s64 llen;
 	loff_t size, orig_isize;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct buffer_head *di_bh = NULL;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा buffer_head *di_bh = शून्य;
 	handle_t *handle;
-	unsigned long long max_off = inode->i_sb->s_maxbytes;
+	अचिन्हित दीर्घ दीर्घ max_off = inode->i_sb->s_maxbytes;
 
-	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb))
-		return -EROFS;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb) || ocfs2_is_soft_पढ़ोonly(osb))
+		वापस -EROFS;
 
 	inode_lock(inode);
 
 	/*
-	 * This prevents concurrent writes on other nodes
+	 * This prevents concurrent ग_लिखोs on other nodes
 	 */
 	ret = ocfs2_rw_lock(inode, 1);
-	if (ret) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	ret = ocfs2_inode_lock(inode, &di_bh, 1);
-	if (ret) {
-		mlog_errno(ret);
-		goto out_rw_unlock;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out_rw_unlock;
+	पूर्ण
 
-	if (inode->i_flags & (S_IMMUTABLE|S_APPEND)) {
+	अगर (inode->i_flags & (S_IMMUTABLE|S_APPEND)) अणु
 		ret = -EPERM;
-		goto out_inode_unlock;
-	}
+		जाओ out_inode_unlock;
+	पूर्ण
 
-	orig_isize = i_size_read(inode);
-	switch (sr->l_whence) {
-	case 0: /*SEEK_SET*/
-		break;
-	case 1: /*SEEK_CUR*/
+	orig_isize = i_size_पढ़ो(inode);
+	चयन (sr->l_whence) अणु
+	हाल 0: /*शुरू_से*/
+		अवरोध;
+	हाल 1: /*प्रस्तुत_से*/
 		sr->l_start += f_pos;
-		break;
-	case 2: /*SEEK_END*/
+		अवरोध;
+	हाल 2: /*अंत_से*/
 		sr->l_start += orig_isize;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto out_inode_unlock;
-	}
+		जाओ out_inode_unlock;
+	पूर्ण
 	sr->l_whence = 0;
 
 	llen = sr->l_len > 0 ? sr->l_len - 1 : sr->l_len;
 
-	if (sr->l_start < 0
+	अगर (sr->l_start < 0
 	    || sr->l_start > max_off
 	    || (sr->l_start + llen) < 0
-	    || (sr->l_start + llen) > max_off) {
+	    || (sr->l_start + llen) > max_off) अणु
 		ret = -EINVAL;
-		goto out_inode_unlock;
-	}
+		जाओ out_inode_unlock;
+	पूर्ण
 	size = sr->l_start + sr->l_len;
 
-	if (cmd == OCFS2_IOC_RESVSP || cmd == OCFS2_IOC_RESVSP64 ||
-	    cmd == OCFS2_IOC_UNRESVSP || cmd == OCFS2_IOC_UNRESVSP64) {
-		if (sr->l_len <= 0) {
+	अगर (cmd == OCFS2_IOC_RESVSP || cmd == OCFS2_IOC_RESVSP64 ||
+	    cmd == OCFS2_IOC_UNRESVSP || cmd == OCFS2_IOC_UNRESVSP64) अणु
+		अगर (sr->l_len <= 0) अणु
 			ret = -EINVAL;
-			goto out_inode_unlock;
-		}
-	}
+			जाओ out_inode_unlock;
+		पूर्ण
+	पूर्ण
 
-	if (file && should_remove_suid(file->f_path.dentry)) {
-		ret = __ocfs2_write_remove_suid(inode, di_bh);
-		if (ret) {
-			mlog_errno(ret);
-			goto out_inode_unlock;
-		}
-	}
+	अगर (file && should_हटाओ_suid(file->f_path.dentry)) अणु
+		ret = __ocfs2_ग_लिखो_हटाओ_suid(inode, di_bh);
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out_inode_unlock;
+		पूर्ण
+	पूर्ण
 
-	down_write(&OCFS2_I(inode)->ip_alloc_sem);
-	switch (cmd) {
-	case OCFS2_IOC_RESVSP:
-	case OCFS2_IOC_RESVSP64:
+	करोwn_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
+	चयन (cmd) अणु
+	हाल OCFS2_IOC_RESVSP:
+	हाल OCFS2_IOC_RESVSP64:
 		/*
-		 * This takes unsigned offsets, but the signed ones we
+		 * This takes अचिन्हित offsets, but the चिन्हित ones we
 		 * pass have been checked against overflow above.
 		 */
 		ret = ocfs2_allocate_unwritten_extents(inode, sr->l_start,
 						       sr->l_len);
-		break;
-	case OCFS2_IOC_UNRESVSP:
-	case OCFS2_IOC_UNRESVSP64:
-		ret = ocfs2_remove_inode_range(inode, di_bh, sr->l_start,
+		अवरोध;
+	हाल OCFS2_IOC_UNRESVSP:
+	हाल OCFS2_IOC_UNRESVSP64:
+		ret = ocfs2_हटाओ_inode_range(inode, di_bh, sr->l_start,
 					       sr->l_len);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	/* zeroout eof blocks in the cluster. */
-	if (!ret && change_size && orig_isize < size) {
+	अगर (!ret && change_size && orig_isize < size) अणु
 		ret = ocfs2_zeroout_partial_cluster(inode, orig_isize,
 					size - orig_isize);
-		if (!ret)
-			i_size_write(inode, size);
-	}
-	up_write(&OCFS2_I(inode)->ip_alloc_sem);
-	if (ret) {
-		mlog_errno(ret);
-		goto out_inode_unlock;
-	}
+		अगर (!ret)
+			i_size_ग_लिखो(inode, size);
+	पूर्ण
+	up_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out_inode_unlock;
+	पूर्ण
 
 	/*
-	 * We update c/mtime for these changes
+	 * We update c/mसमय क्रम these changes
 	 */
 	handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		ret = PTR_ERR(handle);
-		mlog_errno(ret);
-		goto out_inode_unlock;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out_inode_unlock;
+	पूर्ण
 
-	inode->i_ctime = inode->i_mtime = current_time(inode);
+	inode->i_स_समय = inode->i_mसमय = current_समय(inode);
 	ret = ocfs2_mark_inode_dirty(handle, inode, di_bh);
-	if (ret < 0)
-		mlog_errno(ret);
+	अगर (ret < 0)
+		mlog_त्रुटि_सं(ret);
 
-	if (file && (file->f_flags & O_SYNC))
+	अगर (file && (file->f_flags & O_SYNC))
 		handle->h_sync = 1;
 
 	ocfs2_commit_trans(osb, handle);
 
 out_inode_unlock:
-	brelse(di_bh);
+	brअन्यथा(di_bh);
 	ocfs2_inode_unlock(inode, 1);
 out_rw_unlock:
 	ocfs2_rw_unlock(inode, 1);
 
 out:
 	inode_unlock(inode);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_change_file_space(struct file *file, unsigned int cmd,
-			    struct ocfs2_space_resv *sr)
-{
-	struct inode *inode = file_inode(file);
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	int ret;
+पूर्णांक ocfs2_change_file_space(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			    काष्ठा ocfs2_space_resv *sr)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	पूर्णांक ret;
 
-	if ((cmd == OCFS2_IOC_RESVSP || cmd == OCFS2_IOC_RESVSP64) &&
-	    !ocfs2_writes_unwritten_extents(osb))
-		return -ENOTTY;
-	else if ((cmd == OCFS2_IOC_UNRESVSP || cmd == OCFS2_IOC_UNRESVSP64) &&
+	अगर ((cmd == OCFS2_IOC_RESVSP || cmd == OCFS2_IOC_RESVSP64) &&
+	    !ocfs2_ग_लिखोs_unwritten_extents(osb))
+		वापस -ENOTTY;
+	अन्यथा अगर ((cmd == OCFS2_IOC_UNRESVSP || cmd == OCFS2_IOC_UNRESVSP64) &&
 		 !ocfs2_sparse_alloc(osb))
-		return -ENOTTY;
+		वापस -ENOTTY;
 
-	if (!S_ISREG(inode->i_mode))
-		return -EINVAL;
+	अगर (!S_ISREG(inode->i_mode))
+		वापस -EINVAL;
 
-	if (!(file->f_mode & FMODE_WRITE))
-		return -EBADF;
+	अगर (!(file->f_mode & FMODE_WRITE))
+		वापस -EBADF;
 
-	ret = mnt_want_write_file(file);
-	if (ret)
-		return ret;
+	ret = mnt_want_ग_लिखो_file(file);
+	अगर (ret)
+		वापस ret;
 	ret = __ocfs2_change_file_space(file, inode, file->f_pos, cmd, sr, 0);
-	mnt_drop_write_file(file);
-	return ret;
-}
+	mnt_drop_ग_लिखो_file(file);
+	वापस ret;
+पूर्ण
 
-static long ocfs2_fallocate(struct file *file, int mode, loff_t offset,
+अटल दीर्घ ocfs2_fallocate(काष्ठा file *file, पूर्णांक mode, loff_t offset,
 			    loff_t len)
-{
-	struct inode *inode = file_inode(file);
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_space_resv sr;
-	int change_size = 1;
-	int cmd = OCFS2_IOC_RESVSP64;
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_space_resv sr;
+	पूर्णांक change_size = 1;
+	पूर्णांक cmd = OCFS2_IOC_RESVSP64;
 
-	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE))
-		return -EOPNOTSUPP;
-	if (!ocfs2_writes_unwritten_extents(osb))
-		return -EOPNOTSUPP;
+	अगर (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE))
+		वापस -EOPNOTSUPP;
+	अगर (!ocfs2_ग_लिखोs_unwritten_extents(osb))
+		वापस -EOPNOTSUPP;
 
-	if (mode & FALLOC_FL_KEEP_SIZE)
+	अगर (mode & FALLOC_FL_KEEP_SIZE)
 		change_size = 0;
 
-	if (mode & FALLOC_FL_PUNCH_HOLE)
+	अगर (mode & FALLOC_FL_PUNCH_HOLE)
 		cmd = OCFS2_IOC_UNRESVSP64;
 
 	sr.l_whence = 0;
 	sr.l_start = (s64)offset;
 	sr.l_len = (s64)len;
 
-	return __ocfs2_change_file_space(NULL, inode, offset, cmd, &sr,
+	वापस __ocfs2_change_file_space(शून्य, inode, offset, cmd, &sr,
 					 change_size);
-}
+पूर्ण
 
-int ocfs2_check_range_for_refcount(struct inode *inode, loff_t pos,
-				   size_t count)
-{
-	int ret = 0;
-	unsigned int extent_flags;
+पूर्णांक ocfs2_check_range_क्रम_refcount(काष्ठा inode *inode, loff_t pos,
+				   माप_प्रकार count)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक extent_flags;
 	u32 cpos, clusters, extent_len, phys_cpos;
-	struct super_block *sb = inode->i_sb;
+	काष्ठा super_block *sb = inode->i_sb;
 
-	if (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb)) ||
+	अगर (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb)) ||
 	    !ocfs2_is_refcount_inode(inode) ||
 	    OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL)
-		return 0;
+		वापस 0;
 
 	cpos = pos >> OCFS2_SB(sb)->s_clustersize_bits;
-	clusters = ocfs2_clusters_for_bytes(sb, pos + count) - cpos;
+	clusters = ocfs2_clusters_क्रम_bytes(sb, pos + count) - cpos;
 
-	while (clusters) {
+	जबतक (clusters) अणु
 		ret = ocfs2_get_clusters(inode, cpos, &phys_cpos, &extent_len,
 					 &extent_flags);
-		if (ret < 0) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
-		if (phys_cpos && (extent_flags & OCFS2_EXT_REFCOUNTED)) {
+		अगर (phys_cpos && (extent_flags & OCFS2_EXT_REFCOUNTED)) अणु
 			ret = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (extent_len > clusters)
+		अगर (extent_len > clusters)
 			extent_len = clusters;
 
 		clusters -= extent_len;
 		cpos += extent_len;
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_is_io_unaligned(struct inode *inode, size_t count, loff_t pos)
-{
-	int blockmask = inode->i_sb->s_blocksize - 1;
+अटल पूर्णांक ocfs2_is_io_unaligned(काष्ठा inode *inode, माप_प्रकार count, loff_t pos)
+अणु
+	पूर्णांक blockmask = inode->i_sb->s_blocksize - 1;
 	loff_t final_size = pos + count;
 
-	if ((pos & blockmask) || (final_size & blockmask))
-		return 1;
-	return 0;
-}
+	अगर ((pos & blockmask) || (final_size & blockmask))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int ocfs2_inode_lock_for_extent_tree(struct inode *inode,
-					    struct buffer_head **di_bh,
-					    int meta_level,
-					    int write_sem,
-					    int wait)
-{
-	int ret = 0;
+अटल पूर्णांक ocfs2_inode_lock_क्रम_extent_tree(काष्ठा inode *inode,
+					    काष्ठा buffer_head **di_bh,
+					    पूर्णांक meta_level,
+					    पूर्णांक ग_लिखो_sem,
+					    पूर्णांक रुको)
+अणु
+	पूर्णांक ret = 0;
 
-	if (wait)
+	अगर (रुको)
 		ret = ocfs2_inode_lock(inode, di_bh, meta_level);
-	else
+	अन्यथा
 		ret = ocfs2_try_inode_lock(inode, di_bh, meta_level);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (wait) {
-		if (write_sem)
-			down_write(&OCFS2_I(inode)->ip_alloc_sem);
-		else
-			down_read(&OCFS2_I(inode)->ip_alloc_sem);
-	} else {
-		if (write_sem)
-			ret = down_write_trylock(&OCFS2_I(inode)->ip_alloc_sem);
-		else
-			ret = down_read_trylock(&OCFS2_I(inode)->ip_alloc_sem);
+	अगर (रुको) अणु
+		अगर (ग_लिखो_sem)
+			करोwn_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
+		अन्यथा
+			करोwn_पढ़ो(&OCFS2_I(inode)->ip_alloc_sem);
+	पूर्ण अन्यथा अणु
+		अगर (ग_लिखो_sem)
+			ret = करोwn_ग_लिखो_trylock(&OCFS2_I(inode)->ip_alloc_sem);
+		अन्यथा
+			ret = करोwn_पढ़ो_trylock(&OCFS2_I(inode)->ip_alloc_sem);
 
-		if (!ret) {
+		अगर (!ret) अणु
 			ret = -EAGAIN;
-			goto out_unlock;
-		}
-	}
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 out_unlock:
-	brelse(*di_bh);
-	*di_bh = NULL;
+	brअन्यथा(*di_bh);
+	*di_bh = शून्य;
 	ocfs2_inode_unlock(inode, meta_level);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ocfs2_inode_unlock_for_extent_tree(struct inode *inode,
-					       struct buffer_head **di_bh,
-					       int meta_level,
-					       int write_sem)
-{
-	if (write_sem)
-		up_write(&OCFS2_I(inode)->ip_alloc_sem);
-	else
-		up_read(&OCFS2_I(inode)->ip_alloc_sem);
+अटल व्योम ocfs2_inode_unlock_क्रम_extent_tree(काष्ठा inode *inode,
+					       काष्ठा buffer_head **di_bh,
+					       पूर्णांक meta_level,
+					       पूर्णांक ग_लिखो_sem)
+अणु
+	अगर (ग_लिखो_sem)
+		up_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
+	अन्यथा
+		up_पढ़ो(&OCFS2_I(inode)->ip_alloc_sem);
 
-	brelse(*di_bh);
-	*di_bh = NULL;
+	brअन्यथा(*di_bh);
+	*di_bh = शून्य;
 
-	if (meta_level >= 0)
+	अगर (meta_level >= 0)
 		ocfs2_inode_unlock(inode, meta_level);
-}
+पूर्ण
 
-static int ocfs2_prepare_inode_for_write(struct file *file,
-					 loff_t pos, size_t count, int wait)
-{
-	int ret = 0, meta_level = 0, overwrite_io = 0;
-	int write_sem = 0;
-	struct dentry *dentry = file->f_path.dentry;
-	struct inode *inode = d_inode(dentry);
-	struct buffer_head *di_bh = NULL;
+अटल पूर्णांक ocfs2_prepare_inode_क्रम_ग_लिखो(काष्ठा file *file,
+					 loff_t pos, माप_प्रकार count, पूर्णांक रुको)
+अणु
+	पूर्णांक ret = 0, meta_level = 0, overग_लिखो_io = 0;
+	पूर्णांक ग_लिखो_sem = 0;
+	काष्ठा dentry *dentry = file->f_path.dentry;
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा buffer_head *di_bh = शून्य;
 	u32 cpos;
 	u32 clusters;
 
 	/*
-	 * We start with a read level meta lock and only jump to an ex
-	 * if we need to make modifications here.
+	 * We start with a पढ़ो level meta lock and only jump to an ex
+	 * अगर we need to make modअगरications here.
 	 */
-	for(;;) {
-		ret = ocfs2_inode_lock_for_extent_tree(inode,
+	क्रम(;;) अणु
+		ret = ocfs2_inode_lock_क्रम_extent_tree(inode,
 						       &di_bh,
 						       meta_level,
-						       write_sem,
-						       wait);
-		if (ret < 0) {
-			if (ret != -EAGAIN)
-				mlog_errno(ret);
-			goto out;
-		}
+						       ग_लिखो_sem,
+						       रुको);
+		अगर (ret < 0) अणु
+			अगर (ret != -EAGAIN)
+				mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 		/*
-		 * Check if IO will overwrite allocated blocks in case
+		 * Check अगर IO will overग_लिखो allocated blocks in हाल
 		 * IOCB_NOWAIT flag is set.
 		 */
-		if (!wait && !overwrite_io) {
-			overwrite_io = 1;
+		अगर (!रुको && !overग_लिखो_io) अणु
+			overग_लिखो_io = 1;
 
-			ret = ocfs2_overwrite_io(inode, di_bh, pos, count);
-			if (ret < 0) {
-				if (ret != -EAGAIN)
-					mlog_errno(ret);
-				goto out_unlock;
-			}
-		}
+			ret = ocfs2_overग_लिखो_io(inode, di_bh, pos, count);
+			अगर (ret < 0) अणु
+				अगर (ret != -EAGAIN)
+					mlog_त्रुटि_सं(ret);
+				जाओ out_unlock;
+			पूर्ण
+		पूर्ण
 
-		/* Clear suid / sgid if necessary. We do this here
-		 * instead of later in the write path because
-		 * remove_suid() calls ->setattr without any hint that
-		 * we may have already done our cluster locking. Since
+		/* Clear suid / sgid अगर necessary. We करो this here
+		 * instead of later in the ग_लिखो path because
+		 * हटाओ_suid() calls ->setattr without any hपूर्णांक that
+		 * we may have alपढ़ोy करोne our cluster locking. Since
 		 * ocfs2_setattr() *must* take cluster locks to
 		 * proceed, this will lead us to recursively lock the
 		 * inode. There's also the dinode i_size state which
-		 * can be lost via setattr during extending writes (we
-		 * set inode->i_size at the end of a write. */
-		if (should_remove_suid(dentry)) {
-			if (meta_level == 0) {
-				ocfs2_inode_unlock_for_extent_tree(inode,
+		 * can be lost via setattr during extending ग_लिखोs (we
+		 * set inode->i_size at the end of a ग_लिखो. */
+		अगर (should_हटाओ_suid(dentry)) अणु
+			अगर (meta_level == 0) अणु
+				ocfs2_inode_unlock_क्रम_extent_tree(inode,
 								   &di_bh,
 								   meta_level,
-								   write_sem);
+								   ग_लिखो_sem);
 				meta_level = 1;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			ret = ocfs2_write_remove_suid(inode);
-			if (ret < 0) {
-				mlog_errno(ret);
-				goto out_unlock;
-			}
-		}
+			ret = ocfs2_ग_लिखो_हटाओ_suid(inode);
+			अगर (ret < 0) अणु
+				mlog_त्रुटि_सं(ret);
+				जाओ out_unlock;
+			पूर्ण
+		पूर्ण
 
-		ret = ocfs2_check_range_for_refcount(inode, pos, count);
-		if (ret == 1) {
-			ocfs2_inode_unlock_for_extent_tree(inode,
+		ret = ocfs2_check_range_क्रम_refcount(inode, pos, count);
+		अगर (ret == 1) अणु
+			ocfs2_inode_unlock_क्रम_extent_tree(inode,
 							   &di_bh,
 							   meta_level,
-							   write_sem);
+							   ग_लिखो_sem);
 			meta_level = 1;
-			write_sem = 1;
-			ret = ocfs2_inode_lock_for_extent_tree(inode,
+			ग_लिखो_sem = 1;
+			ret = ocfs2_inode_lock_क्रम_extent_tree(inode,
 							       &di_bh,
 							       meta_level,
-							       write_sem,
-							       wait);
-			if (ret < 0) {
-				if (ret != -EAGAIN)
-					mlog_errno(ret);
-				goto out;
-			}
+							       ग_लिखो_sem,
+							       रुको);
+			अगर (ret < 0) अणु
+				अगर (ret != -EAGAIN)
+					mlog_त्रुटि_सं(ret);
+				जाओ out;
+			पूर्ण
 
 			cpos = pos >> OCFS2_SB(inode->i_sb)->s_clustersize_bits;
 			clusters =
-				ocfs2_clusters_for_bytes(inode->i_sb, pos + count) - cpos;
-			ret = ocfs2_refcount_cow(inode, di_bh, cpos, clusters, UINT_MAX);
-		}
+				ocfs2_clusters_क्रम_bytes(inode->i_sb, pos + count) - cpos;
+			ret = ocfs2_refcount_cow(inode, di_bh, cpos, clusters, अच_पूर्णांक_उच्च);
+		पूर्ण
 
-		if (ret < 0) {
-			if (ret != -EAGAIN)
-				mlog_errno(ret);
-			goto out_unlock;
-		}
+		अगर (ret < 0) अणु
+			अगर (ret != -EAGAIN)
+				mlog_त्रुटि_सं(ret);
+			जाओ out_unlock;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out_unlock:
-	trace_ocfs2_prepare_inode_for_write(OCFS2_I(inode)->ip_blkno,
-					    pos, count, wait);
+	trace_ocfs2_prepare_inode_क्रम_ग_लिखो(OCFS2_I(inode)->ip_blkno,
+					    pos, count, रुको);
 
-	ocfs2_inode_unlock_for_extent_tree(inode,
+	ocfs2_inode_unlock_क्रम_extent_tree(inode,
 					   &di_bh,
 					   meta_level,
-					   write_sem);
+					   ग_लिखो_sem);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ocfs2_file_write_iter(struct kiocb *iocb,
-				    struct iov_iter *from)
-{
-	int rw_level;
-	ssize_t written = 0;
-	ssize_t ret;
-	size_t count = iov_iter_count(from);
-	struct file *file = iocb->ki_filp;
-	struct inode *inode = file_inode(file);
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	int full_coherency = !(osb->s_mount_opt &
+अटल sमाप_प्रकार ocfs2_file_ग_लिखो_iter(काष्ठा kiocb *iocb,
+				    काष्ठा iov_iter *from)
+अणु
+	पूर्णांक rw_level;
+	sमाप_प्रकार written = 0;
+	sमाप_प्रकार ret;
+	माप_प्रकार count = iov_iter_count(from);
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	पूर्णांक full_coherency = !(osb->s_mount_opt &
 			       OCFS2_MOUNT_COHERENCY_BUFFERED);
-	void *saved_ki_complete = NULL;
-	int append_write = ((iocb->ki_pos + count) >=
-			i_size_read(inode) ? 1 : 0);
-	int direct_io = iocb->ki_flags & IOCB_DIRECT ? 1 : 0;
-	int nowait = iocb->ki_flags & IOCB_NOWAIT ? 1 : 0;
+	व्योम *saved_ki_complete = शून्य;
+	पूर्णांक append_ग_लिखो = ((iocb->ki_pos + count) >=
+			i_size_पढ़ो(inode) ? 1 : 0);
+	पूर्णांक direct_io = iocb->ki_flags & IOCB_सूचीECT ? 1 : 0;
+	पूर्णांक noरुको = iocb->ki_flags & IOCB_NOWAIT ? 1 : 0;
 
-	trace_ocfs2_file_write_iter(inode, file, file->f_path.dentry,
-		(unsigned long long)OCFS2_I(inode)->ip_blkno,
+	trace_ocfs2_file_ग_लिखो_iter(inode, file, file->f_path.dentry,
+		(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
 		file->f_path.dentry->d_name.len,
 		file->f_path.dentry->d_name.name,
-		(unsigned int)from->nr_segs);	/* GRRRRR */
+		(अचिन्हित पूर्णांक)from->nr_segs);	/* GRRRRR */
 
-	if (!direct_io && nowait)
-		return -EOPNOTSUPP;
+	अगर (!direct_io && noरुको)
+		वापस -EOPNOTSUPP;
 
-	if (count == 0)
-		return 0;
+	अगर (count == 0)
+		वापस 0;
 
-	if (nowait) {
-		if (!inode_trylock(inode))
-			return -EAGAIN;
-	} else
+	अगर (noरुको) अणु
+		अगर (!inode_trylock(inode))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा
 		inode_lock(inode);
 
 	/*
-	 * Concurrent O_DIRECT writes are allowed with
+	 * Concurrent O_सूचीECT ग_लिखोs are allowed with
 	 * mount_option "coherency=buffered".
-	 * For append write, we must take rw EX.
+	 * For append ग_लिखो, we must take rw EX.
 	 */
-	rw_level = (!direct_io || full_coherency || append_write);
+	rw_level = (!direct_io || full_coherency || append_ग_लिखो);
 
-	if (nowait)
+	अगर (noरुको)
 		ret = ocfs2_try_rw_lock(inode, rw_level);
-	else
+	अन्यथा
 		ret = ocfs2_rw_lock(inode, rw_level);
-	if (ret < 0) {
-		if (ret != -EAGAIN)
-			mlog_errno(ret);
-		goto out_mutex;
-	}
+	अगर (ret < 0) अणु
+		अगर (ret != -EAGAIN)
+			mlog_त्रुटि_सं(ret);
+		जाओ out_mutex;
+	पूर्ण
 
 	/*
-	 * O_DIRECT writes with "coherency=full" need to take EX cluster
+	 * O_सूचीECT ग_लिखोs with "coherency=full" need to take EX cluster
 	 * inode_lock to guarantee coherency.
 	 */
-	if (direct_io && full_coherency) {
+	अगर (direct_io && full_coherency) अणु
 		/*
-		 * We need to take and drop the inode lock to force
+		 * We need to take and drop the inode lock to क्रमce
 		 * other nodes to drop their caches.  Buffered I/O
-		 * already does this in write_begin().
+		 * alपढ़ोy करोes this in ग_लिखो_begin().
 		 */
-		if (nowait)
-			ret = ocfs2_try_inode_lock(inode, NULL, 1);
-		else
-			ret = ocfs2_inode_lock(inode, NULL, 1);
-		if (ret < 0) {
-			if (ret != -EAGAIN)
-				mlog_errno(ret);
-			goto out;
-		}
+		अगर (noरुको)
+			ret = ocfs2_try_inode_lock(inode, शून्य, 1);
+		अन्यथा
+			ret = ocfs2_inode_lock(inode, शून्य, 1);
+		अगर (ret < 0) अणु
+			अगर (ret != -EAGAIN)
+				mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 		ocfs2_inode_unlock(inode, 1);
-	}
+	पूर्ण
 
-	ret = generic_write_checks(iocb, from);
-	if (ret <= 0) {
-		if (ret)
-			mlog_errno(ret);
-		goto out;
-	}
+	ret = generic_ग_लिखो_checks(iocb, from);
+	अगर (ret <= 0) अणु
+		अगर (ret)
+			mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 	count = ret;
 
-	ret = ocfs2_prepare_inode_for_write(file, iocb->ki_pos, count, !nowait);
-	if (ret < 0) {
-		if (ret != -EAGAIN)
-			mlog_errno(ret);
-		goto out;
-	}
+	ret = ocfs2_prepare_inode_क्रम_ग_लिखो(file, iocb->ki_pos, count, !noरुको);
+	अगर (ret < 0) अणु
+		अगर (ret != -EAGAIN)
+			mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	if (direct_io && !is_sync_kiocb(iocb) &&
-	    ocfs2_is_io_unaligned(inode, count, iocb->ki_pos)) {
+	अगर (direct_io && !is_sync_kiocb(iocb) &&
+	    ocfs2_is_io_unaligned(inode, count, iocb->ki_pos)) अणु
 		/*
-		 * Make it a sync io if it's an unaligned aio.
+		 * Make it a sync io अगर it's an unaligned aio.
 		 */
-		saved_ki_complete = xchg(&iocb->ki_complete, NULL);
-	}
+		saved_ki_complete = xchg(&iocb->ki_complete, शून्य);
+	पूर्ण
 
 	/* communicate with ocfs2_dio_end_io */
 	ocfs2_iocb_set_rw_locked(iocb, rw_level);
 
-	written = __generic_file_write_iter(iocb, from);
+	written = __generic_file_ग_लिखो_iter(iocb, from);
 	/* buffered aio wouldn't have proper lock coverage today */
 	BUG_ON(written == -EIOCBQUEUED && !direct_io);
 
 	/*
 	 * deep in g_f_a_w_n()->ocfs2_direct_IO we pass in a ocfs2_dio_end_io
-	 * function pointer which is called when o_direct io completes so that
+	 * function poपूर्णांकer which is called when o_direct io completes so that
 	 * it can unlock our rw lock.
-	 * Unfortunately there are error cases which call end_io and others
-	 * that don't.  so we don't have to unlock the rw_lock if either an
-	 * async dio is going to do it in the future or an end_io after an
-	 * error has already done it.
+	 * Unक्रमtunately there are error हालs which call end_io and others
+	 * that करोn't.  so we don't have to unlock the rw_lock अगर either an
+	 * async dio is going to करो it in the future or an end_io after an
+	 * error has alपढ़ोy करोne it.
 	 */
-	if ((written == -EIOCBQUEUED) || (!ocfs2_iocb_is_rw_locked(iocb))) {
+	अगर ((written == -EIOCBQUEUED) || (!ocfs2_iocb_is_rw_locked(iocb))) अणु
 		rw_level = -1;
-	}
+	पूर्ण
 
-	if (unlikely(written <= 0))
-		goto out;
+	अगर (unlikely(written <= 0))
+		जाओ out;
 
-	if (((file->f_flags & O_DSYNC) && !direct_io) ||
-	    IS_SYNC(inode)) {
-		ret = filemap_fdatawrite_range(file->f_mapping,
+	अगर (((file->f_flags & O_DSYNC) && !direct_io) ||
+	    IS_SYNC(inode)) अणु
+		ret = filemap_fdataग_लिखो_range(file->f_mapping,
 					       iocb->ki_pos - written,
 					       iocb->ki_pos - 1);
-		if (ret < 0)
+		अगर (ret < 0)
 			written = ret;
 
-		if (!ret) {
-			ret = jbd2_journal_force_commit(osb->journal->j_journal);
-			if (ret < 0)
+		अगर (!ret) अणु
+			ret = jbd2_journal_क्रमce_commit(osb->journal->j_journal);
+			अगर (ret < 0)
 				written = ret;
-		}
+		पूर्ण
 
-		if (!ret)
-			ret = filemap_fdatawait_range(file->f_mapping,
+		अगर (!ret)
+			ret = filemap_fdataरुको_range(file->f_mapping,
 						      iocb->ki_pos - written,
 						      iocb->ki_pos - 1);
-	}
+	पूर्ण
 
 out:
-	if (saved_ki_complete)
+	अगर (saved_ki_complete)
 		xchg(&iocb->ki_complete, saved_ki_complete);
 
-	if (rw_level != -1)
+	अगर (rw_level != -1)
 		ocfs2_rw_unlock(inode, rw_level);
 
 out_mutex:
 	inode_unlock(inode);
 
-	if (written)
+	अगर (written)
 		ret = written;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ocfs2_file_read_iter(struct kiocb *iocb,
-				   struct iov_iter *to)
-{
-	int ret = 0, rw_level = -1, lock_level = 0;
-	struct file *filp = iocb->ki_filp;
-	struct inode *inode = file_inode(filp);
-	int direct_io = iocb->ki_flags & IOCB_DIRECT ? 1 : 0;
-	int nowait = iocb->ki_flags & IOCB_NOWAIT ? 1 : 0;
+अटल sमाप_प्रकार ocfs2_file_पढ़ो_iter(काष्ठा kiocb *iocb,
+				   काष्ठा iov_iter *to)
+अणु
+	पूर्णांक ret = 0, rw_level = -1, lock_level = 0;
+	काष्ठा file *filp = iocb->ki_filp;
+	काष्ठा inode *inode = file_inode(filp);
+	पूर्णांक direct_io = iocb->ki_flags & IOCB_सूचीECT ? 1 : 0;
+	पूर्णांक noरुको = iocb->ki_flags & IOCB_NOWAIT ? 1 : 0;
 
-	trace_ocfs2_file_read_iter(inode, filp, filp->f_path.dentry,
-			(unsigned long long)OCFS2_I(inode)->ip_blkno,
+	trace_ocfs2_file_पढ़ो_iter(inode, filp, filp->f_path.dentry,
+			(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
 			filp->f_path.dentry->d_name.len,
 			filp->f_path.dentry->d_name.name,
 			to->nr_segs);	/* GRRRRR */
 
 
-	if (!inode) {
+	अगर (!inode) अणु
 		ret = -EINVAL;
-		mlog_errno(ret);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ bail;
+	पूर्ण
 
-	if (!direct_io && nowait)
-		return -EOPNOTSUPP;
+	अगर (!direct_io && noरुको)
+		वापस -EOPNOTSUPP;
 
 	/*
-	 * buffered reads protect themselves in ->readpage().  O_DIRECT reads
-	 * need locks to protect pending reads from racing with truncate.
+	 * buffered पढ़ोs protect themselves in ->पढ़ोpage().  O_सूचीECT पढ़ोs
+	 * need locks to protect pending पढ़ोs from racing with truncate.
 	 */
-	if (direct_io) {
-		if (nowait)
+	अगर (direct_io) अणु
+		अगर (noरुको)
 			ret = ocfs2_try_rw_lock(inode, 0);
-		else
+		अन्यथा
 			ret = ocfs2_rw_lock(inode, 0);
 
-		if (ret < 0) {
-			if (ret != -EAGAIN)
-				mlog_errno(ret);
-			goto bail;
-		}
+		अगर (ret < 0) अणु
+			अगर (ret != -EAGAIN)
+				mlog_त्रुटि_सं(ret);
+			जाओ bail;
+		पूर्ण
 		rw_level = 0;
 		/* communicate with ocfs2_dio_end_io */
 		ocfs2_iocb_set_rw_locked(iocb, rw_level);
-	}
+	पूर्ण
 
 	/*
 	 * We're fine letting folks race truncates and extending
-	 * writes with read across the cluster, just like they can
-	 * locally. Hence no rw_lock during read.
+	 * ग_लिखोs with पढ़ो across the cluster, just like they can
+	 * locally. Hence no rw_lock during पढ़ो.
 	 *
 	 * Take and drop the meta data lock to update inode fields
-	 * like i_size. This allows the checks down below
-	 * generic_file_read_iter() a chance of actually working.
+	 * like i_size. This allows the checks करोwn below
+	 * generic_file_पढ़ो_iter() a chance of actually working.
 	 */
-	ret = ocfs2_inode_lock_atime(inode, filp->f_path.mnt, &lock_level,
-				     !nowait);
-	if (ret < 0) {
-		if (ret != -EAGAIN)
-			mlog_errno(ret);
-		goto bail;
-	}
+	ret = ocfs2_inode_lock_aसमय(inode, filp->f_path.mnt, &lock_level,
+				     !noरुको);
+	अगर (ret < 0) अणु
+		अगर (ret != -EAGAIN)
+			mlog_त्रुटि_सं(ret);
+		जाओ bail;
+	पूर्ण
 	ocfs2_inode_unlock(inode, lock_level);
 
-	ret = generic_file_read_iter(iocb, to);
-	trace_generic_file_read_iter_ret(ret);
+	ret = generic_file_पढ़ो_iter(iocb, to);
+	trace_generic_file_पढ़ो_iter_ret(ret);
 
 	/* buffered aio wouldn't have proper lock coverage today */
 	BUG_ON(ret == -EIOCBQUEUED && !direct_io);
 
-	/* see ocfs2_file_write_iter */
-	if (ret == -EIOCBQUEUED || !ocfs2_iocb_is_rw_locked(iocb)) {
+	/* see ocfs2_file_ग_लिखो_iter */
+	अगर (ret == -EIOCBQUEUED || !ocfs2_iocb_is_rw_locked(iocb)) अणु
 		rw_level = -1;
-	}
+	पूर्ण
 
 bail:
-	if (rw_level != -1)
+	अगर (rw_level != -1)
 		ocfs2_rw_unlock(inode, rw_level);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Refer generic_file_llseek_unlocked() */
-static loff_t ocfs2_file_llseek(struct file *file, loff_t offset, int whence)
-{
-	struct inode *inode = file->f_mapping->host;
-	int ret = 0;
+अटल loff_t ocfs2_file_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	काष्ठा inode *inode = file->f_mapping->host;
+	पूर्णांक ret = 0;
 
 	inode_lock(inode);
 
-	switch (whence) {
-	case SEEK_SET:
-		break;
-	case SEEK_END:
-		/* SEEK_END requires the OCFS2 inode lock for the file
+	चयन (whence) अणु
+	हाल शुरू_से:
+		अवरोध;
+	हाल अंत_से:
+		/* अंत_से requires the OCFS2 inode lock क्रम the file
 		 * because it references the file's size.
 		 */
-		ret = ocfs2_inode_lock(inode, NULL, 0);
-		if (ret < 0) {
-			mlog_errno(ret);
-			goto out;
-		}
-		offset += i_size_read(inode);
+		ret = ocfs2_inode_lock(inode, शून्य, 0);
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+		offset += i_size_पढ़ो(inode);
 		ocfs2_inode_unlock(inode, 0);
-		break;
-	case SEEK_CUR:
-		if (offset == 0) {
+		अवरोध;
+	हाल प्रस्तुत_से:
+		अगर (offset == 0) अणु
 			offset = file->f_pos;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		offset += file->f_pos;
-		break;
-	case SEEK_DATA:
-	case SEEK_HOLE:
+		अवरोध;
+	हाल SEEK_DATA:
+	हाल SEEK_HOLE:
 		ret = ocfs2_seek_data_hole_offset(file, &offset, whence);
-		if (ret)
-			goto out;
-		break;
-	default:
+		अगर (ret)
+			जाओ out;
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	offset = vfs_setpos(file, offset, inode->i_sb->s_maxbytes);
 
 out:
 	inode_unlock(inode);
-	if (ret)
-		return ret;
-	return offset;
-}
+	अगर (ret)
+		वापस ret;
+	वापस offset;
+पूर्ण
 
-static loff_t ocfs2_remap_file_range(struct file *file_in, loff_t pos_in,
-				     struct file *file_out, loff_t pos_out,
-				     loff_t len, unsigned int remap_flags)
-{
-	struct inode *inode_in = file_inode(file_in);
-	struct inode *inode_out = file_inode(file_out);
-	struct ocfs2_super *osb = OCFS2_SB(inode_in->i_sb);
-	struct buffer_head *in_bh = NULL, *out_bh = NULL;
+अटल loff_t ocfs2_remap_file_range(काष्ठा file *file_in, loff_t pos_in,
+				     काष्ठा file *file_out, loff_t pos_out,
+				     loff_t len, अचिन्हित पूर्णांक remap_flags)
+अणु
+	काष्ठा inode *inode_in = file_inode(file_in);
+	काष्ठा inode *inode_out = file_inode(file_out);
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode_in->i_sb);
+	काष्ठा buffer_head *in_bh = शून्य, *out_bh = शून्य;
 	bool same_inode = (inode_in == inode_out);
 	loff_t remapped = 0;
-	ssize_t ret;
+	sमाप_प्रकार ret;
 
-	if (remap_flags & ~(REMAP_FILE_DEDUP | REMAP_FILE_ADVISORY))
-		return -EINVAL;
-	if (!ocfs2_refcount_tree(osb))
-		return -EOPNOTSUPP;
-	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb))
-		return -EROFS;
+	अगर (remap_flags & ~(REMAP_खाता_DEDUP | REMAP_खाता_ADVISORY))
+		वापस -EINVAL;
+	अगर (!ocfs2_refcount_tree(osb))
+		वापस -EOPNOTSUPP;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb) || ocfs2_is_soft_पढ़ोonly(osb))
+		वापस -EROFS;
 
 	/* Lock both files against IO */
 	ret = ocfs2_reflink_inodes_lock(inode_in, &in_bh, inode_out, &out_bh);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Check file eligibility and prepare for block sharing. */
+	/* Check file eligibility and prepare क्रम block sharing. */
 	ret = -EINVAL;
-	if ((OCFS2_I(inode_in)->ip_flags & OCFS2_INODE_SYSTEM_FILE) ||
-	    (OCFS2_I(inode_out)->ip_flags & OCFS2_INODE_SYSTEM_FILE))
-		goto out_unlock;
+	अगर ((OCFS2_I(inode_in)->ip_flags & OCFS2_INODE_SYSTEM_खाता) ||
+	    (OCFS2_I(inode_out)->ip_flags & OCFS2_INODE_SYSTEM_खाता))
+		जाओ out_unlock;
 
 	ret = generic_remap_file_range_prep(file_in, pos_in, file_out, pos_out,
 			&len, remap_flags);
-	if (ret < 0 || len == 0)
-		goto out_unlock;
+	अगर (ret < 0 || len == 0)
+		जाओ out_unlock;
 
 	/* Lock out changes to the allocation maps and remap. */
-	down_write(&OCFS2_I(inode_in)->ip_alloc_sem);
-	if (!same_inode)
-		down_write_nested(&OCFS2_I(inode_out)->ip_alloc_sem,
+	करोwn_ग_लिखो(&OCFS2_I(inode_in)->ip_alloc_sem);
+	अगर (!same_inode)
+		करोwn_ग_लिखो_nested(&OCFS2_I(inode_out)->ip_alloc_sem,
 				  SINGLE_DEPTH_NESTING);
 
-	/* Zap any page cache for the destination file's range. */
+	/* Zap any page cache क्रम the destination file's range. */
 	truncate_inode_pages_range(&inode_out->i_data,
-				   round_down(pos_out, PAGE_SIZE),
+				   round_करोwn(pos_out, PAGE_SIZE),
 				   round_up(pos_out + len, PAGE_SIZE) - 1);
 
 	remapped = ocfs2_reflink_remap_blocks(inode_in, in_bh, pos_in,
 			inode_out, out_bh, pos_out, len);
-	up_write(&OCFS2_I(inode_in)->ip_alloc_sem);
-	if (!same_inode)
-		up_write(&OCFS2_I(inode_out)->ip_alloc_sem);
-	if (remapped < 0) {
+	up_ग_लिखो(&OCFS2_I(inode_in)->ip_alloc_sem);
+	अगर (!same_inode)
+		up_ग_लिखो(&OCFS2_I(inode_out)->ip_alloc_sem);
+	अगर (remapped < 0) अणु
 		ret = remapped;
-		mlog_errno(ret);
-		goto out_unlock;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out_unlock;
+	पूर्ण
 
 	/*
 	 * Empty the extent map so that we may get the right extent
@@ -2674,17 +2675,17 @@ static loff_t ocfs2_remap_file_range(struct file *file_in, loff_t pos_in,
 	ocfs2_extent_map_trunc(inode_out, 0);
 
 	ret = ocfs2_reflink_update_dest(inode_out, out_bh, pos_out + len);
-	if (ret) {
-		mlog_errno(ret);
-		goto out_unlock;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out_unlock;
+	पूर्ण
 
 out_unlock:
 	ocfs2_reflink_inodes_unlock(inode_in, in_bh, inode_out, out_bh);
-	return remapped > 0 ? remapped : ret;
-}
+	वापस remapped > 0 ? remapped : ret;
+पूर्ण
 
-const struct inode_operations ocfs2_file_iops = {
+स्थिर काष्ठा inode_operations ocfs2_file_iops = अणु
 	.setattr	= ocfs2_setattr,
 	.getattr	= ocfs2_getattr,
 	.permission	= ocfs2_permission,
@@ -2694,96 +2695,96 @@ const struct inode_operations ocfs2_file_iops = {
 	.set_acl	= ocfs2_iop_set_acl,
 	.fileattr_get	= ocfs2_fileattr_get,
 	.fileattr_set	= ocfs2_fileattr_set,
-};
+पूर्ण;
 
-const struct inode_operations ocfs2_special_file_iops = {
+स्थिर काष्ठा inode_operations ocfs2_special_file_iops = अणु
 	.setattr	= ocfs2_setattr,
 	.getattr	= ocfs2_getattr,
 	.permission	= ocfs2_permission,
 	.get_acl	= ocfs2_iop_get_acl,
 	.set_acl	= ocfs2_iop_set_acl,
-};
+पूर्ण;
 
 /*
- * Other than ->lock, keep ocfs2_fops and ocfs2_dops in sync with
- * ocfs2_fops_no_plocks and ocfs2_dops_no_plocks!
+ * Other than ->lock, keep ocfs2_fops and ocfs2_करोps in sync with
+ * ocfs2_fops_no_plocks and ocfs2_करोps_no_plocks!
  */
-const struct file_operations ocfs2_fops = {
+स्थिर काष्ठा file_operations ocfs2_fops = अणु
 	.llseek		= ocfs2_file_llseek,
 	.mmap		= ocfs2_mmap,
 	.fsync		= ocfs2_sync_file,
 	.release	= ocfs2_file_release,
-	.open		= ocfs2_file_open,
-	.read_iter	= ocfs2_file_read_iter,
-	.write_iter	= ocfs2_file_write_iter,
+	.खोलो		= ocfs2_file_खोलो,
+	.पढ़ो_iter	= ocfs2_file_पढ़ो_iter,
+	.ग_लिखो_iter	= ocfs2_file_ग_लिखो_iter,
 	.unlocked_ioctl	= ocfs2_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl   = ocfs2_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.lock		= ocfs2_lock,
 	.flock		= ocfs2_flock,
-	.splice_read	= generic_file_splice_read,
-	.splice_write	= iter_file_splice_write,
+	.splice_पढ़ो	= generic_file_splice_पढ़ो,
+	.splice_ग_लिखो	= iter_file_splice_ग_लिखो,
 	.fallocate	= ocfs2_fallocate,
 	.remap_file_range = ocfs2_remap_file_range,
-};
+पूर्ण;
 
-const struct file_operations ocfs2_dops = {
+स्थिर काष्ठा file_operations ocfs2_करोps = अणु
 	.llseek		= generic_file_llseek,
-	.read		= generic_read_dir,
-	.iterate	= ocfs2_readdir,
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate	= ocfs2_सूची_पढ़ो,
 	.fsync		= ocfs2_sync_file,
 	.release	= ocfs2_dir_release,
-	.open		= ocfs2_dir_open,
+	.खोलो		= ocfs2_dir_खोलो,
 	.unlocked_ioctl	= ocfs2_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl   = ocfs2_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.lock		= ocfs2_lock,
 	.flock		= ocfs2_flock,
-};
+पूर्ण;
 
 /*
  * POSIX-lockless variants of our file_operations.
  *
- * These will be used if the underlying cluster stack does not support
- * posix file locking, if the user passes the "localflocks" mount
- * option, or if we have a local-only fs.
+ * These will be used अगर the underlying cluster stack करोes not support
+ * posix file locking, अगर the user passes the "localflocks" mount
+ * option, or अगर we have a local-only fs.
  *
  * ocfs2_flock is in here because all stacks handle UNIX file locks,
- * so we still want it in the case of no stack support for
- * plocks. Internally, it will do the right thing when asked to ignore
+ * so we still want it in the हाल of no stack support क्रम
+ * plocks. Internally, it will करो the right thing when asked to ignore
  * the cluster.
  */
-const struct file_operations ocfs2_fops_no_plocks = {
+स्थिर काष्ठा file_operations ocfs2_fops_no_plocks = अणु
 	.llseek		= ocfs2_file_llseek,
 	.mmap		= ocfs2_mmap,
 	.fsync		= ocfs2_sync_file,
 	.release	= ocfs2_file_release,
-	.open		= ocfs2_file_open,
-	.read_iter	= ocfs2_file_read_iter,
-	.write_iter	= ocfs2_file_write_iter,
+	.खोलो		= ocfs2_file_खोलो,
+	.पढ़ो_iter	= ocfs2_file_पढ़ो_iter,
+	.ग_लिखो_iter	= ocfs2_file_ग_लिखो_iter,
 	.unlocked_ioctl	= ocfs2_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl   = ocfs2_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.flock		= ocfs2_flock,
-	.splice_read	= generic_file_splice_read,
-	.splice_write	= iter_file_splice_write,
+	.splice_पढ़ो	= generic_file_splice_पढ़ो,
+	.splice_ग_लिखो	= iter_file_splice_ग_लिखो,
 	.fallocate	= ocfs2_fallocate,
 	.remap_file_range = ocfs2_remap_file_range,
-};
+पूर्ण;
 
-const struct file_operations ocfs2_dops_no_plocks = {
+स्थिर काष्ठा file_operations ocfs2_करोps_no_plocks = अणु
 	.llseek		= generic_file_llseek,
-	.read		= generic_read_dir,
-	.iterate	= ocfs2_readdir,
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate	= ocfs2_सूची_पढ़ो,
 	.fsync		= ocfs2_sync_file,
 	.release	= ocfs2_dir_release,
-	.open		= ocfs2_dir_open,
+	.खोलो		= ocfs2_dir_खोलो,
 	.unlocked_ioctl	= ocfs2_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl   = ocfs2_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.flock		= ocfs2_flock,
-};
+पूर्ण;

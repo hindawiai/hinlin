@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
  * Antonio Quartulli
  */
 
-#ifndef _NET_BATMAN_ADV_BAT_V_OGM_H_
-#define _NET_BATMAN_ADV_BAT_V_OGM_H_
+#अगर_अघोषित _NET_BATMAN_ADV_BAT_V_OGM_H_
+#घोषणा _NET_BATMAN_ADV_BAT_V_OGM_H_
 
-#include "main.h"
+#समावेश "main.h"
 
-#include <linux/skbuff.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
 
-int batadv_v_ogm_init(struct batadv_priv *bat_priv);
-void batadv_v_ogm_free(struct batadv_priv *bat_priv);
-void batadv_v_ogm_aggr_work(struct work_struct *work);
-int batadv_v_ogm_iface_enable(struct batadv_hard_iface *hard_iface);
-void batadv_v_ogm_iface_disable(struct batadv_hard_iface *hard_iface);
-struct batadv_orig_node *batadv_v_ogm_orig_get(struct batadv_priv *bat_priv,
-					       const u8 *addr);
-void batadv_v_ogm_primary_iface_set(struct batadv_hard_iface *primary_iface);
-int batadv_v_ogm_packet_recv(struct sk_buff *skb,
-			     struct batadv_hard_iface *if_incoming);
+पूर्णांक batadv_v_ogm_init(काष्ठा batadv_priv *bat_priv);
+व्योम batadv_v_ogm_मुक्त(काष्ठा batadv_priv *bat_priv);
+व्योम batadv_v_ogm_aggr_work(काष्ठा work_काष्ठा *work);
+पूर्णांक batadv_v_ogm_अगरace_enable(काष्ठा batadv_hard_अगरace *hard_अगरace);
+व्योम batadv_v_ogm_अगरace_disable(काष्ठा batadv_hard_अगरace *hard_अगरace);
+काष्ठा batadv_orig_node *batadv_v_ogm_orig_get(काष्ठा batadv_priv *bat_priv,
+					       स्थिर u8 *addr);
+व्योम batadv_v_ogm_primary_अगरace_set(काष्ठा batadv_hard_अगरace *primary_अगरace);
+पूर्णांक batadv_v_ogm_packet_recv(काष्ठा sk_buff *skb,
+			     काष्ठा batadv_hard_अगरace *अगर_incoming);
 
-#endif /* _NET_BATMAN_ADV_BAT_V_OGM_H_ */
+#पूर्ण_अगर /* _NET_BATMAN_ADV_BAT_V_OGM_H_ */

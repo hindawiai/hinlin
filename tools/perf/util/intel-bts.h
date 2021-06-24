@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * intel-bts.h: Intel Processor Trace support
+ * पूर्णांकel-bts.h: Intel Processor Trace support
  * Copyright (c) 2013-2014, Intel Corporation.
  */
 
-#ifndef INCLUDE__PERF_INTEL_BTS_H__
-#define INCLUDE__PERF_INTEL_BTS_H__
+#अगर_अघोषित INCLUDE__PERF_INTEL_BTS_H__
+#घोषणा INCLUDE__PERF_INTEL_BTS_H__
 
-#define INTEL_BTS_PMU_NAME "intel_bts"
+#घोषणा INTEL_BTS_PMU_NAME "intel_bts"
 
-enum {
+क्रमागत अणु
 	INTEL_BTS_PMU_TYPE,
 	INTEL_BTS_TIME_SHIFT,
 	INTEL_BTS_TIME_MULT,
@@ -17,18 +18,18 @@ enum {
 	INTEL_BTS_CAP_USER_TIME_ZERO,
 	INTEL_BTS_SNAPSHOT_MODE,
 	INTEL_BTS_AUXTRACE_PRIV_MAX,
-};
+पूर्ण;
 
-#define INTEL_BTS_AUXTRACE_PRIV_SIZE (INTEL_BTS_AUXTRACE_PRIV_MAX * sizeof(u64))
+#घोषणा INTEL_BTS_AUXTRACE_PRIV_SIZE (INTEL_BTS_AUXTRACE_PRIV_MAX * माप(u64))
 
-struct auxtrace_record;
-struct perf_tool;
-union perf_event;
-struct perf_session;
+काष्ठा auxtrace_record;
+काष्ठा perf_tool;
+जोड़ perf_event;
+काष्ठा perf_session;
 
-struct auxtrace_record *intel_bts_recording_init(int *err);
+काष्ठा auxtrace_record *पूर्णांकel_bts_recording_init(पूर्णांक *err);
 
-int intel_bts_process_auxtrace_info(union perf_event *event,
-				    struct perf_session *session);
+पूर्णांक पूर्णांकel_bts_process_auxtrace_info(जोड़ perf_event *event,
+				    काष्ठा perf_session *session);
 
-#endif
+#पूर्ण_अगर

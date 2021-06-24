@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2017 Marvell
  *
- * Antoine Tenart <antoine.tenart@free-electrons.com>
+ * Antoine Tenart <antoine.tenart@मुक्त-electrons.com>
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/spinlock.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/spinlock.h>
 
-#include "safexcel.h"
+#समावेश "safexcel.h"
 
-int safexcel_init_ring_descriptors(struct safexcel_crypto_priv *priv,
-				   struct safexcel_desc_ring *cdr,
-				   struct safexcel_desc_ring *rdr)
-{
-	int i;
-	struct safexcel_command_desc *cdesc;
+पूर्णांक safexcel_init_ring_descriptors(काष्ठा safexcel_crypto_priv *priv,
+				   काष्ठा safexcel_desc_ring *cdr,
+				   काष्ठा safexcel_desc_ring *rdr)
+अणु
+	पूर्णांक i;
+	काष्ठा safexcel_command_desc *cdesc;
 	dma_addr_t atok;
 
 	/* Actual command descriptor ring */
@@ -23,173 +24,173 @@ int safexcel_init_ring_descriptors(struct safexcel_crypto_priv *priv,
 	cdr->base = dmam_alloc_coherent(priv->dev,
 					cdr->offset * EIP197_DEFAULT_RING_SIZE,
 					&cdr->base_dma, GFP_KERNEL);
-	if (!cdr->base)
-		return -ENOMEM;
-	cdr->write = cdr->base;
+	अगर (!cdr->base)
+		वापस -ENOMEM;
+	cdr->ग_लिखो = cdr->base;
 	cdr->base_end = cdr->base + cdr->offset * (EIP197_DEFAULT_RING_SIZE - 1);
-	cdr->read = cdr->base;
+	cdr->पढ़ो = cdr->base;
 
-	/* Command descriptor shadow ring for storing additional token data */
+	/* Command descriptor shaकरोw ring क्रम storing additional token data */
 	cdr->shoffset = priv->config.cdsh_offset;
 	cdr->shbase = dmam_alloc_coherent(priv->dev,
 					  cdr->shoffset *
 					  EIP197_DEFAULT_RING_SIZE,
 					  &cdr->shbase_dma, GFP_KERNEL);
-	if (!cdr->shbase)
-		return -ENOMEM;
-	cdr->shwrite = cdr->shbase;
+	अगर (!cdr->shbase)
+		वापस -ENOMEM;
+	cdr->shग_लिखो = cdr->shbase;
 	cdr->shbase_end = cdr->shbase + cdr->shoffset *
 					(EIP197_DEFAULT_RING_SIZE - 1);
 
 	/*
-	 * Populate command descriptors with physical pointers to shadow descs.
-	 * Note that we only need to do this once if we don't overwrite them.
+	 * Populate command descriptors with physical poपूर्णांकers to shaकरोw descs.
+	 * Note that we only need to करो this once अगर we करोn't overग_लिखो them.
 	 */
 	cdesc = cdr->base;
 	atok = cdr->shbase_dma;
-	for (i = 0; i < EIP197_DEFAULT_RING_SIZE; i++) {
+	क्रम (i = 0; i < EIP197_DEFAULT_RING_SIZE; i++) अणु
 		cdesc->atok_lo = lower_32_bits(atok);
 		cdesc->atok_hi = upper_32_bits(atok);
-		cdesc = (void *)cdesc + cdr->offset;
+		cdesc = (व्योम *)cdesc + cdr->offset;
 		atok += cdr->shoffset;
-	}
+	पूर्ण
 
 	rdr->offset = priv->config.rd_offset;
-	/* Use shoffset for result token offset here */
+	/* Use shoffset क्रम result token offset here */
 	rdr->shoffset = priv->config.res_offset;
 	rdr->base = dmam_alloc_coherent(priv->dev,
 					rdr->offset * EIP197_DEFAULT_RING_SIZE,
 					&rdr->base_dma, GFP_KERNEL);
-	if (!rdr->base)
-		return -ENOMEM;
-	rdr->write = rdr->base;
+	अगर (!rdr->base)
+		वापस -ENOMEM;
+	rdr->ग_लिखो = rdr->base;
 	rdr->base_end = rdr->base + rdr->offset  * (EIP197_DEFAULT_RING_SIZE - 1);
-	rdr->read = rdr->base;
+	rdr->पढ़ो = rdr->base;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-inline int safexcel_select_ring(struct safexcel_crypto_priv *priv)
-{
-	return (atomic_inc_return(&priv->ring_used) % priv->config.rings);
-}
+अंतरभूत पूर्णांक safexcel_select_ring(काष्ठा safexcel_crypto_priv *priv)
+अणु
+	वापस (atomic_inc_वापस(&priv->ring_used) % priv->config.rings);
+पूर्ण
 
-static void *safexcel_ring_next_cwptr(struct safexcel_crypto_priv *priv,
-				     struct safexcel_desc_ring *ring,
+अटल व्योम *safexcel_ring_next_cwptr(काष्ठा safexcel_crypto_priv *priv,
+				     काष्ठा safexcel_desc_ring *ring,
 				     bool first,
-				     struct safexcel_token **atoken)
-{
-	void *ptr = ring->write;
+				     काष्ठा safexcel_token **atoken)
+अणु
+	व्योम *ptr = ring->ग_लिखो;
 
-	if (first)
-		*atoken = ring->shwrite;
+	अगर (first)
+		*atoken = ring->shग_लिखो;
 
-	if ((ring->write == ring->read - ring->offset) ||
-	    (ring->read == ring->base && ring->write == ring->base_end))
-		return ERR_PTR(-ENOMEM);
+	अगर ((ring->ग_लिखो == ring->पढ़ो - ring->offset) ||
+	    (ring->पढ़ो == ring->base && ring->ग_लिखो == ring->base_end))
+		वापस ERR_PTR(-ENOMEM);
 
-	if (ring->write == ring->base_end) {
-		ring->write = ring->base;
-		ring->shwrite = ring->shbase;
-	} else {
-		ring->write += ring->offset;
-		ring->shwrite += ring->shoffset;
-	}
+	अगर (ring->ग_लिखो == ring->base_end) अणु
+		ring->ग_लिखो = ring->base;
+		ring->shग_लिखो = ring->shbase;
+	पूर्ण अन्यथा अणु
+		ring->ग_लिखो += ring->offset;
+		ring->shग_लिखो += ring->shoffset;
+	पूर्ण
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static void *safexcel_ring_next_rwptr(struct safexcel_crypto_priv *priv,
-				     struct safexcel_desc_ring *ring,
-				     struct result_data_desc **rtoken)
-{
-	void *ptr = ring->write;
+अटल व्योम *safexcel_ring_next_rwptr(काष्ठा safexcel_crypto_priv *priv,
+				     काष्ठा safexcel_desc_ring *ring,
+				     काष्ठा result_data_desc **rtoken)
+अणु
+	व्योम *ptr = ring->ग_लिखो;
 
 	/* Result token at relative offset shoffset */
-	*rtoken = ring->write + ring->shoffset;
+	*rtoken = ring->ग_लिखो + ring->shoffset;
 
-	if ((ring->write == ring->read - ring->offset) ||
-	    (ring->read == ring->base && ring->write == ring->base_end))
-		return ERR_PTR(-ENOMEM);
+	अगर ((ring->ग_लिखो == ring->पढ़ो - ring->offset) ||
+	    (ring->पढ़ो == ring->base && ring->ग_लिखो == ring->base_end))
+		वापस ERR_PTR(-ENOMEM);
 
-	if (ring->write == ring->base_end)
-		ring->write = ring->base;
-	else
-		ring->write += ring->offset;
+	अगर (ring->ग_लिखो == ring->base_end)
+		ring->ग_लिखो = ring->base;
+	अन्यथा
+		ring->ग_लिखो += ring->offset;
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-void *safexcel_ring_next_rptr(struct safexcel_crypto_priv *priv,
-			      struct safexcel_desc_ring *ring)
-{
-	void *ptr = ring->read;
+व्योम *safexcel_ring_next_rptr(काष्ठा safexcel_crypto_priv *priv,
+			      काष्ठा safexcel_desc_ring *ring)
+अणु
+	व्योम *ptr = ring->पढ़ो;
 
-	if (ring->write == ring->read)
-		return ERR_PTR(-ENOENT);
+	अगर (ring->ग_लिखो == ring->पढ़ो)
+		वापस ERR_PTR(-ENOENT);
 
-	if (ring->read == ring->base_end)
-		ring->read = ring->base;
-	else
-		ring->read += ring->offset;
+	अगर (ring->पढ़ो == ring->base_end)
+		ring->पढ़ो = ring->base;
+	अन्यथा
+		ring->पढ़ो += ring->offset;
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-inline void *safexcel_ring_curr_rptr(struct safexcel_crypto_priv *priv,
-				     int ring)
-{
-	struct safexcel_desc_ring *rdr = &priv->ring[ring].rdr;
+अंतरभूत व्योम *safexcel_ring_curr_rptr(काष्ठा safexcel_crypto_priv *priv,
+				     पूर्णांक ring)
+अणु
+	काष्ठा safexcel_desc_ring *rdr = &priv->ring[ring].rdr;
 
-	return rdr->read;
-}
+	वापस rdr->पढ़ो;
+पूर्ण
 
-inline int safexcel_ring_first_rdr_index(struct safexcel_crypto_priv *priv,
-					 int ring)
-{
-	struct safexcel_desc_ring *rdr = &priv->ring[ring].rdr;
+अंतरभूत पूर्णांक safexcel_ring_first_rdr_index(काष्ठा safexcel_crypto_priv *priv,
+					 पूर्णांक ring)
+अणु
+	काष्ठा safexcel_desc_ring *rdr = &priv->ring[ring].rdr;
 
-	return (rdr->read - rdr->base) / rdr->offset;
-}
+	वापस (rdr->पढ़ो - rdr->base) / rdr->offset;
+पूर्ण
 
-inline int safexcel_ring_rdr_rdesc_index(struct safexcel_crypto_priv *priv,
-					 int ring,
-					 struct safexcel_result_desc *rdesc)
-{
-	struct safexcel_desc_ring *rdr = &priv->ring[ring].rdr;
+अंतरभूत पूर्णांक safexcel_ring_rdr_rdesc_index(काष्ठा safexcel_crypto_priv *priv,
+					 पूर्णांक ring,
+					 काष्ठा safexcel_result_desc *rdesc)
+अणु
+	काष्ठा safexcel_desc_ring *rdr = &priv->ring[ring].rdr;
 
-	return ((void *)rdesc - rdr->base) / rdr->offset;
-}
+	वापस ((व्योम *)rdesc - rdr->base) / rdr->offset;
+पूर्ण
 
-void safexcel_ring_rollback_wptr(struct safexcel_crypto_priv *priv,
-				 struct safexcel_desc_ring *ring)
-{
-	if (ring->write == ring->read)
-		return;
+व्योम safexcel_ring_rollback_wptr(काष्ठा safexcel_crypto_priv *priv,
+				 काष्ठा safexcel_desc_ring *ring)
+अणु
+	अगर (ring->ग_लिखो == ring->पढ़ो)
+		वापस;
 
-	if (ring->write == ring->base) {
-		ring->write = ring->base_end;
-		ring->shwrite = ring->shbase_end;
-	} else {
-		ring->write -= ring->offset;
-		ring->shwrite -= ring->shoffset;
-	}
-}
+	अगर (ring->ग_लिखो == ring->base) अणु
+		ring->ग_लिखो = ring->base_end;
+		ring->shग_लिखो = ring->shbase_end;
+	पूर्ण अन्यथा अणु
+		ring->ग_लिखो -= ring->offset;
+		ring->shग_लिखो -= ring->shoffset;
+	पूर्ण
+पूर्ण
 
-struct safexcel_command_desc *safexcel_add_cdesc(struct safexcel_crypto_priv *priv,
-						 int ring_id,
+काष्ठा safexcel_command_desc *safexcel_add_cdesc(काष्ठा safexcel_crypto_priv *priv,
+						 पूर्णांक ring_id,
 						 bool first, bool last,
 						 dma_addr_t data, u32 data_len,
 						 u32 full_data_len,
 						 dma_addr_t context,
-						 struct safexcel_token **atoken)
-{
-	struct safexcel_command_desc *cdesc;
+						 काष्ठा safexcel_token **atoken)
+अणु
+	काष्ठा safexcel_command_desc *cdesc;
 
 	cdesc = safexcel_ring_next_cwptr(priv, &priv->ring[ring_id].cdr,
 					 first, atoken);
-	if (IS_ERR(cdesc))
-		return cdesc;
+	अगर (IS_ERR(cdesc))
+		वापस cdesc;
 
 	cdesc->particle_size = data_len;
 	cdesc->rsvd0 = 0;
@@ -200,11 +201,11 @@ struct safexcel_command_desc *safexcel_add_cdesc(struct safexcel_crypto_priv *pr
 	cdesc->data_lo = lower_32_bits(data);
 	cdesc->data_hi = upper_32_bits(data);
 
-	if (first) {
+	अगर (first) अणु
 		/*
-		 * Note that the length here MUST be >0 or else the EIP(1)97
+		 * Note that the length here MUST be >0 or अन्यथा the EIP(1)97
 		 * may hang. Newer EIP197 firmware actually incorporates this
-		 * fix already, but that doesn't help the EIP97 and we may
+		 * fix alपढ़ोy, but that करोesn't help the EIP97 and we may
 		 * also be running older firmware.
 		 */
 		cdesc->control_data.packet_length = full_data_len ?: 1;
@@ -216,23 +217,23 @@ struct safexcel_command_desc *safexcel_add_cdesc(struct safexcel_crypto_priv *pr
 		cdesc->control_data.context_lo = lower_32_bits(context) |
 						 EIP197_CONTEXT_SMALL;
 		cdesc->control_data.context_hi = upper_32_bits(context);
-	}
+	पूर्ण
 
-	return cdesc;
-}
+	वापस cdesc;
+पूर्ण
 
-struct safexcel_result_desc *safexcel_add_rdesc(struct safexcel_crypto_priv *priv,
-						int ring_id,
+काष्ठा safexcel_result_desc *safexcel_add_rdesc(काष्ठा safexcel_crypto_priv *priv,
+						पूर्णांक ring_id,
 						bool first, bool last,
 						dma_addr_t data, u32 len)
-{
-	struct safexcel_result_desc *rdesc;
-	struct result_data_desc *rtoken;
+अणु
+	काष्ठा safexcel_result_desc *rdesc;
+	काष्ठा result_data_desc *rtoken;
 
 	rdesc = safexcel_ring_next_rwptr(priv, &priv->ring[ring_id].rdr,
 					 &rtoken);
-	if (IS_ERR(rdesc))
-		return rdesc;
+	अगर (IS_ERR(rdesc))
+		वापस rdesc;
 
 	rdesc->particle_size = len;
 	rdesc->rsvd0 = 0;
@@ -247,8 +248,8 @@ struct safexcel_result_desc *safexcel_add_rdesc(struct safexcel_crypto_priv *pri
 
 	/* Clear length in result token */
 	rtoken->packet_length = 0;
-	/* Assume errors - HW will clear if not the case */
+	/* Assume errors - HW will clear अगर not the हाल */
 	rtoken->error_code = 0x7fff;
 
-	return rdesc;
-}
+	वापस rdesc;
+पूर्ण

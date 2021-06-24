@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Defines for the SRAM driver
+ * Defines क्रम the SRAM driver
  */
-#ifndef __SRAM_H
-#define __SRAM_H
+#अगर_अघोषित __SRAM_H
+#घोषणा __SRAM_H
 
-struct sram_partition {
-	void __iomem *base;
+काष्ठा sram_partition अणु
+	व्योम __iomem *base;
 
-	struct gen_pool *pool;
-	struct bin_attribute battr;
-	struct mutex lock;
-	struct list_head list;
-};
+	काष्ठा gen_pool *pool;
+	काष्ठा bin_attribute battr;
+	काष्ठा mutex lock;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct sram_dev {
-	struct device *dev;
-	void __iomem *virt_base;
+काष्ठा sram_dev अणु
+	काष्ठा device *dev;
+	व्योम __iomem *virt_base;
 
-	struct gen_pool *pool;
-	struct clk *clk;
+	काष्ठा gen_pool *pool;
+	काष्ठा clk *clk;
 
-	struct sram_partition *partition;
+	काष्ठा sram_partition *partition;
 	u32 partitions;
-};
+पूर्ण;
 
-struct sram_reserve {
-	struct list_head list;
+काष्ठा sram_reserve अणु
+	काष्ठा list_head list;
 	u32 start;
 	u32 size;
 	bool export;
 	bool pool;
 	bool protect_exec;
-	const char *label;
-};
+	स्थिर अक्षर *label;
+पूर्ण;
 
-#ifdef CONFIG_SRAM_EXEC
-int sram_check_protect_exec(struct sram_dev *sram, struct sram_reserve *block,
-			    struct sram_partition *part);
-int sram_add_protect_exec(struct sram_partition *part);
-#else
-static inline int sram_check_protect_exec(struct sram_dev *sram,
-					  struct sram_reserve *block,
-					  struct sram_partition *part)
-{
-	return -ENODEV;
-}
+#अगर_घोषित CONFIG_SRAM_EXEC
+पूर्णांक sram_check_protect_exec(काष्ठा sram_dev *sram, काष्ठा sram_reserve *block,
+			    काष्ठा sram_partition *part);
+पूर्णांक sram_add_protect_exec(काष्ठा sram_partition *part);
+#अन्यथा
+अटल अंतरभूत पूर्णांक sram_check_protect_exec(काष्ठा sram_dev *sram,
+					  काष्ठा sram_reserve *block,
+					  काष्ठा sram_partition *part)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int sram_add_protect_exec(struct sram_partition *part)
-{
-	return -ENODEV;
-}
-#endif /* CONFIG_SRAM_EXEC */
-#endif /* __SRAM_H */
+अटल अंतरभूत पूर्णांक sram_add_protect_exec(काष्ठा sram_partition *part)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SRAM_EXEC */
+#पूर्ण_अगर /* __SRAM_H */

@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-sa1100/gpio.c
  *
  * Generic SA-1100 GPIO handling
  */
-#include <linux/gpio/driver.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/syscore_ops.h>
-#include <soc/sa1100/pwer.h>
-#include <mach/hardware.h>
-#include <mach/irqs.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/syscore_ops.h>
+#समावेश <soc/sa1100/pwer.h>
+#समावेश <mach/hardware.h>
+#समावेश <mach/irqs.h>
 
-struct sa1100_gpio_chip {
-	struct gpio_chip chip;
-	void __iomem *membase;
-	int irqbase;
+काष्ठा sa1100_gpio_chip अणु
+	काष्ठा gpio_chip chip;
+	व्योम __iomem *membase;
+	पूर्णांक irqbase;
 	u32 irqmask;
 	u32 irqrising;
 	u32 irqfalling;
 	u32 irqwake;
-};
+पूर्ण;
 
-#define sa1100_gpio_chip(x) container_of(x, struct sa1100_gpio_chip, chip)
+#घोषणा sa1100_gpio_chip(x) container_of(x, काष्ठा sa1100_gpio_chip, chip)
 
-enum {
+क्रमागत अणु
 	R_GPLR = 0x00,
 	R_GPDR = 0x04,
 	R_GPSR = 0x08,
@@ -34,63 +35,63 @@ enum {
 	R_GFER = 0x14,
 	R_GEDR = 0x18,
 	R_GAFR = 0x1c,
-};
+पूर्ण;
 
-static int sa1100_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	return readl_relaxed(sa1100_gpio_chip(chip)->membase + R_GPLR) &
+अटल पूर्णांक sa1100_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	वापस पढ़ोl_relaxed(sa1100_gpio_chip(chip)->membase + R_GPLR) &
 		BIT(offset);
-}
+पूर्ण
 
-static void sa1100_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	int reg = value ? R_GPSR : R_GPCR;
+अटल व्योम sa1100_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	पूर्णांक reg = value ? R_GPSR : R_GPCR;
 
-	writel_relaxed(BIT(offset), sa1100_gpio_chip(chip)->membase + reg);
-}
+	ग_लिखोl_relaxed(BIT(offset), sa1100_gpio_chip(chip)->membase + reg);
+पूर्ण
 
-static int sa1100_get_direction(struct gpio_chip *chip, unsigned offset)
-{
-	void __iomem *gpdr = sa1100_gpio_chip(chip)->membase + R_GPDR;
+अटल पूर्णांक sa1100_get_direction(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	व्योम __iomem *gpdr = sa1100_gpio_chip(chip)->membase + R_GPDR;
 
-	if (readl_relaxed(gpdr) & BIT(offset))
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (पढ़ोl_relaxed(gpdr) & BIT(offset))
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int sa1100_direction_input(struct gpio_chip *chip, unsigned offset)
-{
-	void __iomem *gpdr = sa1100_gpio_chip(chip)->membase + R_GPDR;
-	unsigned long flags;
+अटल पूर्णांक sa1100_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	व्योम __iomem *gpdr = sa1100_gpio_chip(chip)->membase + R_GPDR;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	writel_relaxed(readl_relaxed(gpdr) & ~BIT(offset), gpdr);
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(gpdr) & ~BIT(offset), gpdr);
 	local_irq_restore(flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sa1100_direction_output(struct gpio_chip *chip, unsigned offset, int value)
-{
-	void __iomem *gpdr = sa1100_gpio_chip(chip)->membase + R_GPDR;
-	unsigned long flags;
+अटल पूर्णांक sa1100_direction_output(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	व्योम __iomem *gpdr = sa1100_gpio_chip(chip)->membase + R_GPDR;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	sa1100_gpio_set(chip, offset, value);
-	writel_relaxed(readl_relaxed(gpdr) | BIT(offset), gpdr);
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(gpdr) | BIT(offset), gpdr);
 	local_irq_restore(flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sa1100_to_irq(struct gpio_chip *chip, unsigned offset)
-{
-	return sa1100_gpio_chip(chip)->irqbase + offset;
-}
+अटल पूर्णांक sa1100_to_irq(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	वापस sa1100_gpio_chip(chip)->irqbase + offset;
+पूर्ण
 
-static struct sa1100_gpio_chip sa1100_gpio_chip = {
-	.chip = {
+अटल काष्ठा sa1100_gpio_chip sa1100_gpio_chip = अणु
+	.chip = अणु
 		.label			= "gpio",
 		.get_direction		= sa1100_get_direction,
 		.direction_input	= sa1100_direction_input,
@@ -100,197 +101,197 @@ static struct sa1100_gpio_chip sa1100_gpio_chip = {
 		.to_irq			= sa1100_to_irq,
 		.base			= 0,
 		.ngpio			= GPIO_MAX + 1,
-	},
-	.membase = (void *)&GPLR,
+	पूर्ण,
+	.membase = (व्योम *)&GPLR,
 	.irqbase = IRQ_GPIO0,
-};
+पूर्ण;
 
 /*
- * SA1100 GPIO edge detection for IRQs:
+ * SA1100 GPIO edge detection क्रम IRQs:
  * IRQs are generated on Falling-Edge, Rising-Edge, or both.
  * Use this instead of directly setting GRER/GFER.
  */
-static void sa1100_update_edge_regs(struct sa1100_gpio_chip *sgc)
-{
-	void *base = sgc->membase;
+अटल व्योम sa1100_update_edge_regs(काष्ठा sa1100_gpio_chip *sgc)
+अणु
+	व्योम *base = sgc->membase;
 	u32 grer, gfer;
 
 	grer = sgc->irqrising & sgc->irqmask;
 	gfer = sgc->irqfalling & sgc->irqmask;
 
-	writel_relaxed(grer, base + R_GRER);
-	writel_relaxed(gfer, base + R_GFER);
-}
+	ग_लिखोl_relaxed(grer, base + R_GRER);
+	ग_लिखोl_relaxed(gfer, base + R_GFER);
+पूर्ण
 
-static int sa1100_gpio_type(struct irq_data *d, unsigned int type)
-{
-	struct sa1100_gpio_chip *sgc = irq_data_get_irq_chip_data(d);
-	unsigned int mask = BIT(d->hwirq);
+अटल पूर्णांक sa1100_gpio_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा sa1100_gpio_chip *sgc = irq_data_get_irq_chip_data(d);
+	अचिन्हित पूर्णांक mask = BIT(d->hwirq);
 
-	if (type == IRQ_TYPE_PROBE) {
-		if ((sgc->irqrising | sgc->irqfalling) & mask)
-			return 0;
+	अगर (type == IRQ_TYPE_PROBE) अणु
+		अगर ((sgc->irqrising | sgc->irqfalling) & mask)
+			वापस 0;
 		type = IRQ_TYPE_EDGE_RISING | IRQ_TYPE_EDGE_FALLING;
-	}
+	पूर्ण
 
-	if (type & IRQ_TYPE_EDGE_RISING)
+	अगर (type & IRQ_TYPE_EDGE_RISING)
 		sgc->irqrising |= mask;
-	else
+	अन्यथा
 		sgc->irqrising &= ~mask;
-	if (type & IRQ_TYPE_EDGE_FALLING)
+	अगर (type & IRQ_TYPE_EDGE_FALLING)
 		sgc->irqfalling |= mask;
-	else
+	अन्यथा
 		sgc->irqfalling &= ~mask;
 
 	sa1100_update_edge_regs(sgc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * GPIO IRQs must be acknowledged.
  */
-static void sa1100_gpio_ack(struct irq_data *d)
-{
-	struct sa1100_gpio_chip *sgc = irq_data_get_irq_chip_data(d);
+अटल व्योम sa1100_gpio_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा sa1100_gpio_chip *sgc = irq_data_get_irq_chip_data(d);
 
-	writel_relaxed(BIT(d->hwirq), sgc->membase + R_GEDR);
-}
+	ग_लिखोl_relaxed(BIT(d->hwirq), sgc->membase + R_GEDR);
+पूर्ण
 
-static void sa1100_gpio_mask(struct irq_data *d)
-{
-	struct sa1100_gpio_chip *sgc = irq_data_get_irq_chip_data(d);
-	unsigned int mask = BIT(d->hwirq);
+अटल व्योम sa1100_gpio_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा sa1100_gpio_chip *sgc = irq_data_get_irq_chip_data(d);
+	अचिन्हित पूर्णांक mask = BIT(d->hwirq);
 
 	sgc->irqmask &= ~mask;
 
 	sa1100_update_edge_regs(sgc);
-}
+पूर्ण
 
-static void sa1100_gpio_unmask(struct irq_data *d)
-{
-	struct sa1100_gpio_chip *sgc = irq_data_get_irq_chip_data(d);
-	unsigned int mask = BIT(d->hwirq);
+अटल व्योम sa1100_gpio_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा sa1100_gpio_chip *sgc = irq_data_get_irq_chip_data(d);
+	अचिन्हित पूर्णांक mask = BIT(d->hwirq);
 
 	sgc->irqmask |= mask;
 
 	sa1100_update_edge_regs(sgc);
-}
+पूर्ण
 
-static int sa1100_gpio_wake(struct irq_data *d, unsigned int on)
-{
-	struct sa1100_gpio_chip *sgc = irq_data_get_irq_chip_data(d);
-	int ret = sa11x0_gpio_set_wake(d->hwirq, on);
-	if (!ret) {
-		if (on)
+अटल पूर्णांक sa1100_gpio_wake(काष्ठा irq_data *d, अचिन्हित पूर्णांक on)
+अणु
+	काष्ठा sa1100_gpio_chip *sgc = irq_data_get_irq_chip_data(d);
+	पूर्णांक ret = sa11x0_gpio_set_wake(d->hwirq, on);
+	अगर (!ret) अणु
+		अगर (on)
 			sgc->irqwake |= BIT(d->hwirq);
-		else
+		अन्यथा
 			sgc->irqwake &= ~BIT(d->hwirq);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
- * This is for GPIO IRQs
+ * This is क्रम GPIO IRQs
  */
-static struct irq_chip sa1100_gpio_irq_chip = {
+अटल काष्ठा irq_chip sa1100_gpio_irq_chip = अणु
 	.name		= "GPIO",
 	.irq_ack	= sa1100_gpio_ack,
 	.irq_mask	= sa1100_gpio_mask,
 	.irq_unmask	= sa1100_gpio_unmask,
 	.irq_set_type	= sa1100_gpio_type,
 	.irq_set_wake	= sa1100_gpio_wake,
-};
+पूर्ण;
 
-static int sa1100_gpio_irqdomain_map(struct irq_domain *d,
-		unsigned int irq, irq_hw_number_t hwirq)
-{
-	struct sa1100_gpio_chip *sgc = d->host_data;
+अटल पूर्णांक sa1100_gpio_irqकरोमुख्य_map(काष्ठा irq_करोमुख्य *d,
+		अचिन्हित पूर्णांक irq, irq_hw_number_t hwirq)
+अणु
+	काष्ठा sa1100_gpio_chip *sgc = d->host_data;
 
 	irq_set_chip_data(irq, sgc);
 	irq_set_chip_and_handler(irq, &sa1100_gpio_irq_chip, handle_edge_irq);
 	irq_set_probe(irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops sa1100_gpio_irqdomain_ops = {
-	.map = sa1100_gpio_irqdomain_map,
-	.xlate = irq_domain_xlate_onetwocell,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops sa1100_gpio_irqकरोमुख्य_ops = अणु
+	.map = sa1100_gpio_irqकरोमुख्य_map,
+	.xlate = irq_करोमुख्य_xlate_onetwocell,
+पूर्ण;
 
-static struct irq_domain *sa1100_gpio_irqdomain;
+अटल काष्ठा irq_करोमुख्य *sa1100_gpio_irqकरोमुख्य;
 
 /*
  * IRQ 0-11 (GPIO) handler.  We enter here with the
  * irq_controller_lock held, and IRQs disabled.  Decode the IRQ
  * and call the handler.
  */
-static void sa1100_gpio_handler(struct irq_desc *desc)
-{
-	struct sa1100_gpio_chip *sgc = irq_desc_get_handler_data(desc);
-	unsigned int irq, mask;
-	void __iomem *gedr = sgc->membase + R_GEDR;
+अटल व्योम sa1100_gpio_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा sa1100_gpio_chip *sgc = irq_desc_get_handler_data(desc);
+	अचिन्हित पूर्णांक irq, mask;
+	व्योम __iomem *gedr = sgc->membase + R_GEDR;
 
-	mask = readl_relaxed(gedr);
-	do {
+	mask = पढ़ोl_relaxed(gedr);
+	करो अणु
 		/*
-		 * clear down all currently active IRQ sources.
+		 * clear करोwn all currently active IRQ sources.
 		 * We will be processing them all.
 		 */
-		writel_relaxed(mask, gedr);
+		ग_लिखोl_relaxed(mask, gedr);
 
 		irq = sgc->irqbase;
-		do {
-			if (mask & 1)
+		करो अणु
+			अगर (mask & 1)
 				generic_handle_irq(irq);
 			mask >>= 1;
 			irq++;
-		} while (mask);
+		पूर्ण जबतक (mask);
 
-		mask = readl_relaxed(gedr);
-	} while (mask);
-}
+		mask = पढ़ोl_relaxed(gedr);
+	पूर्ण जबतक (mask);
+पूर्ण
 
-static int sa1100_gpio_suspend(void)
-{
-	struct sa1100_gpio_chip *sgc = &sa1100_gpio_chip;
-
-	/*
-	 * Set the appropriate edges for wakeup.
-	 */
-	writel_relaxed(sgc->irqwake & sgc->irqrising, sgc->membase + R_GRER);
-	writel_relaxed(sgc->irqwake & sgc->irqfalling, sgc->membase + R_GFER);
+अटल पूर्णांक sa1100_gpio_suspend(व्योम)
+अणु
+	काष्ठा sa1100_gpio_chip *sgc = &sa1100_gpio_chip;
 
 	/*
-	 * Clear any pending GPIO interrupts.
+	 * Set the appropriate edges क्रम wakeup.
 	 */
-	writel_relaxed(readl_relaxed(sgc->membase + R_GEDR),
+	ग_लिखोl_relaxed(sgc->irqwake & sgc->irqrising, sgc->membase + R_GRER);
+	ग_लिखोl_relaxed(sgc->irqwake & sgc->irqfalling, sgc->membase + R_GFER);
+
+	/*
+	 * Clear any pending GPIO पूर्णांकerrupts.
+	 */
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(sgc->membase + R_GEDR),
 		       sgc->membase + R_GEDR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sa1100_gpio_resume(void)
-{
+अटल व्योम sa1100_gpio_resume(व्योम)
+अणु
 	sa1100_update_edge_regs(&sa1100_gpio_chip);
-}
+पूर्ण
 
-static struct syscore_ops sa1100_gpio_syscore_ops = {
+अटल काष्ठा syscore_ops sa1100_gpio_syscore_ops = अणु
 	.suspend	= sa1100_gpio_suspend,
 	.resume		= sa1100_gpio_resume,
-};
+पूर्ण;
 
-static int __init sa1100_gpio_init_devicefs(void)
-{
-	register_syscore_ops(&sa1100_gpio_syscore_ops);
-	return 0;
-}
+अटल पूर्णांक __init sa1100_gpio_init_devicefs(व्योम)
+अणु
+	रेजिस्टर_syscore_ops(&sa1100_gpio_syscore_ops);
+	वापस 0;
+पूर्ण
 
 device_initcall(sa1100_gpio_init_devicefs);
 
-static const int sa1100_gpio_irqs[] __initconst = {
-	/* Install handlers for GPIO 0-10 edge detect interrupts */
+अटल स्थिर पूर्णांक sa1100_gpio_irqs[] __initस्थिर = अणु
+	/* Install handlers क्रम GPIO 0-10 edge detect पूर्णांकerrupts */
 	IRQ_GPIO0_SC,
 	IRQ_GPIO1_SC,
 	IRQ_GPIO2_SC,
@@ -302,27 +303,27 @@ static const int sa1100_gpio_irqs[] __initconst = {
 	IRQ_GPIO8_SC,
 	IRQ_GPIO9_SC,
 	IRQ_GPIO10_SC,
-	/* Install handler for GPIO 11-27 edge detect interrupts */
+	/* Install handler क्रम GPIO 11-27 edge detect पूर्णांकerrupts */
 	IRQ_GPIO11_27,
-};
+पूर्ण;
 
-void __init sa1100_init_gpio(void)
-{
-	struct sa1100_gpio_chip *sgc = &sa1100_gpio_chip;
-	int i;
+व्योम __init sa1100_init_gpio(व्योम)
+अणु
+	काष्ठा sa1100_gpio_chip *sgc = &sa1100_gpio_chip;
+	पूर्णांक i;
 
 	/* clear all GPIO edge detects */
-	writel_relaxed(0, sgc->membase + R_GFER);
-	writel_relaxed(0, sgc->membase + R_GRER);
-	writel_relaxed(-1, sgc->membase + R_GEDR);
+	ग_लिखोl_relaxed(0, sgc->membase + R_GFER);
+	ग_लिखोl_relaxed(0, sgc->membase + R_GRER);
+	ग_लिखोl_relaxed(-1, sgc->membase + R_GEDR);
 
-	gpiochip_add_data(&sa1100_gpio_chip.chip, NULL);
+	gpiochip_add_data(&sa1100_gpio_chip.chip, शून्य);
 
-	sa1100_gpio_irqdomain = irq_domain_add_simple(NULL,
+	sa1100_gpio_irqकरोमुख्य = irq_करोमुख्य_add_simple(शून्य,
 			28, IRQ_GPIO0,
-			&sa1100_gpio_irqdomain_ops, sgc);
+			&sa1100_gpio_irqकरोमुख्य_ops, sgc);
 
-	for (i = 0; i < ARRAY_SIZE(sa1100_gpio_irqs); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(sa1100_gpio_irqs); i++)
 		irq_set_chained_handler_and_data(sa1100_gpio_irqs[i],
 						 sa1100_gpio_handler, sgc);
-}
+पूर्ण

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Intel X38 Memory Controller kernel module
  * Copyright (C) 2008 Cluster Computing, Inc.
@@ -9,39 +10,39 @@
  *
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/pci_ids.h>
-#include <linux/edac.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/edac.h>
 
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include "edac_module.h"
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश "edac_module.h"
 
-#define EDAC_MOD_STR		"x38_edac"
+#घोषणा EDAC_MOD_STR		"x38_edac"
 
-#define PCI_DEVICE_ID_INTEL_X38_HB	0x29e0
+#घोषणा PCI_DEVICE_ID_INTEL_X38_HB	0x29e0
 
-#define X38_RANKS		8
-#define X38_RANKS_PER_CHANNEL	4
-#define X38_CHANNELS		2
+#घोषणा X38_RANKS		8
+#घोषणा X38_RANKS_PER_CHANNEL	4
+#घोषणा X38_CHANNELS		2
 
-/* Intel X38 register addresses - device 0 function 0 - DRAM Controller */
+/* Intel X38 रेजिस्टर addresses - device 0 function 0 - DRAM Controller */
 
-#define X38_MCHBAR_LOW	0x48	/* MCH Memory Mapped Register BAR */
-#define X38_MCHBAR_HIGH	0x4c
-#define X38_MCHBAR_MASK	0xfffffc000ULL	/* bits 35:14 */
-#define X38_MMR_WINDOW_SIZE	16384
+#घोषणा X38_MCHBAR_LOW	0x48	/* MCH Memory Mapped Register BAR */
+#घोषणा X38_MCHBAR_HIGH	0x4c
+#घोषणा X38_MCHBAR_MASK	0xfffffc000ULL	/* bits 35:14 */
+#घोषणा X38_MMR_WINDOW_SIZE	16384
 
-#define X38_TOM	0xa0	/* Top of Memory (16b)
+#घोषणा X38_TOM	0xa0	/* Top of Memory (16b)
 				 *
 				 * 15:10 reserved
 				 *  9:0  total populated physical memory
 				 */
-#define X38_TOM_MASK	0x3ff	/* bits 9:0 */
-#define X38_TOM_SHIFT 26	/* 64MiB grain */
+#घोषणा X38_TOM_MASK	0x3ff	/* bits 9:0 */
+#घोषणा X38_TOM_SHIFT 26	/* 64MiB grain */
 
-#define X38_ERRSTS	0xc8	/* Error Status Register (16b)
+#घोषणा X38_ERRSTS	0xc8	/* Error Status Register (16b)
 				 *
 				 * 15    reserved
 				 * 14    Isochronous TBWRR Run Behind FIFO Full
@@ -50,7 +51,7 @@
 				 *       (ITSTV)
 				 * 12    reserved
 				 * 11    MCH Thermal Sensor Event
-				 *       for SMI/SCI/SERR (GTSE)
+				 *       क्रम SMI/SCI/SERR (GTSE)
 				 * 10    reserved
 				 *  9    LOCK to non-DRAM Memory Flag (LCKF)
 				 *  8    reserved
@@ -59,23 +60,23 @@
 				 *  1    Multi-bit DRAM ECC Error Flag (DMERR)
 				 *  0    Single-bit DRAM ECC Error Flag (DSERR)
 				 */
-#define X38_ERRSTS_UE		0x0002
-#define X38_ERRSTS_CE		0x0001
-#define X38_ERRSTS_BITS	(X38_ERRSTS_UE | X38_ERRSTS_CE)
+#घोषणा X38_ERRSTS_UE		0x0002
+#घोषणा X38_ERRSTS_CE		0x0001
+#घोषणा X38_ERRSTS_BITS	(X38_ERRSTS_UE | X38_ERRSTS_CE)
 
 
-/* Intel  MMIO register space - device 0 function 0 - MMR space */
+/* Intel  MMIO रेजिस्टर space - device 0 function 0 - MMR space */
 
-#define X38_C0DRB	0x200	/* Channel 0 DRAM Rank Boundary (16b x 4)
+#घोषणा X38_C0DRB	0x200	/* Channel 0 DRAM Rank Boundary (16b x 4)
 				 *
 				 * 15:10 reserved
 				 *  9:0  Channel 0 DRAM Rank Boundary Address
 				 */
-#define X38_C1DRB	0x600	/* Channel 1 DRAM Rank Boundary (16b x 4) */
-#define X38_DRB_MASK	0x3ff	/* bits 9:0 */
-#define X38_DRB_SHIFT 26	/* 64MiB grain */
+#घोषणा X38_C1DRB	0x600	/* Channel 1 DRAM Rank Boundary (16b x 4) */
+#घोषणा X38_DRB_MASK	0x3ff	/* bits 9:0 */
+#घोषणा X38_DRB_SHIFT 26	/* 64MiB grain */
 
-#define X38_C0ECCERRLOG 0x280	/* Channel 0 ECC Error Log (64b)
+#घोषणा X38_C0ECCERRLOG 0x280	/* Channel 0 ECC Error Log (64b)
 				 *
 				 * 63:48 Error Column Address (ERRCOL)
 				 * 47:32 Error Row Address (ERRROW)
@@ -87,69 +88,69 @@
 				 *    1  Multiple Bit Error Status (MERRSTS)
 				 *    0  Correctable Error Status (CERRSTS)
 				 */
-#define X38_C1ECCERRLOG 0x680	/* Channel 1 ECC Error Log (64b) */
-#define X38_ECCERRLOG_CE	0x1
-#define X38_ECCERRLOG_UE	0x2
-#define X38_ECCERRLOG_RANK_BITS	0x18000000
-#define X38_ECCERRLOG_SYNDROME_BITS	0xff0000
+#घोषणा X38_C1ECCERRLOG 0x680	/* Channel 1 ECC Error Log (64b) */
+#घोषणा X38_ECCERRLOG_CE	0x1
+#घोषणा X38_ECCERRLOG_UE	0x2
+#घोषणा X38_ECCERRLOG_RANK_BITS	0x18000000
+#घोषणा X38_ECCERRLOG_SYNDROME_BITS	0xff0000
 
-#define X38_CAPID0 0xe0	/* see P.94 of spec for details */
+#घोषणा X38_CAPID0 0xe0	/* see P.94 of spec क्रम details */
 
-static int x38_channel_num;
+अटल पूर्णांक x38_channel_num;
 
-static int how_many_channel(struct pci_dev *pdev)
-{
-	unsigned char capid0_8b; /* 8th byte of CAPID0 */
+अटल पूर्णांक how_many_channel(काष्ठा pci_dev *pdev)
+अणु
+	अचिन्हित अक्षर capid0_8b; /* 8th byte of CAPID0 */
 
-	pci_read_config_byte(pdev, X38_CAPID0 + 8, &capid0_8b);
-	if (capid0_8b & 0x20) {	/* check DCD: Dual Channel Disable */
+	pci_पढ़ो_config_byte(pdev, X38_CAPID0 + 8, &capid0_8b);
+	अगर (capid0_8b & 0x20) अणु	/* check DCD: Dual Channel Disable */
 		edac_dbg(0, "In single channel mode\n");
 		x38_channel_num = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		edac_dbg(0, "In dual channel mode\n");
 		x38_channel_num = 2;
-	}
+	पूर्ण
 
-	return x38_channel_num;
-}
+	वापस x38_channel_num;
+पूर्ण
 
-static unsigned long eccerrlog_syndrome(u64 log)
-{
-	return (log & X38_ECCERRLOG_SYNDROME_BITS) >> 16;
-}
+अटल अचिन्हित दीर्घ eccerrlog_syndrome(u64 log)
+अणु
+	वापस (log & X38_ECCERRLOG_SYNDROME_BITS) >> 16;
+पूर्ण
 
-static int eccerrlog_row(int channel, u64 log)
-{
-	return ((log & X38_ECCERRLOG_RANK_BITS) >> 27) |
+अटल पूर्णांक eccerrlog_row(पूर्णांक channel, u64 log)
+अणु
+	वापस ((log & X38_ECCERRLOG_RANK_BITS) >> 27) |
 		(channel * X38_RANKS_PER_CHANNEL);
-}
+पूर्ण
 
-enum x38_chips {
+क्रमागत x38_chips अणु
 	X38 = 0,
-};
+पूर्ण;
 
-struct x38_dev_info {
-	const char *ctl_name;
-};
+काष्ठा x38_dev_info अणु
+	स्थिर अक्षर *ctl_name;
+पूर्ण;
 
-struct x38_error_info {
+काष्ठा x38_error_info अणु
 	u16 errsts;
 	u16 errsts2;
 	u64 eccerrlog[X38_CHANNELS];
-};
+पूर्ण;
 
-static const struct x38_dev_info x38_devs[] = {
-	[X38] = {
-		.ctl_name = "x38"},
-};
+अटल स्थिर काष्ठा x38_dev_info x38_devs[] = अणु
+	[X38] = अणु
+		.ctl_name = "x38"पूर्ण,
+पूर्ण;
 
-static struct pci_dev *mci_pdev;
-static int x38_registered = 1;
+अटल काष्ठा pci_dev *mci_pdev;
+अटल पूर्णांक x38_रेजिस्टरed = 1;
 
 
-static void x38_clear_error_info(struct mem_ctl_info *mci)
-{
-	struct pci_dev *pdev;
+अटल व्योम x38_clear_error_info(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा pci_dev *pdev;
 
 	pdev = to_pci_dev(mci->pdev);
 
@@ -157,180 +158,180 @@ static void x38_clear_error_info(struct mem_ctl_info *mci)
 	 * Clear any error bits.
 	 * (Yes, we really clear bits by writing 1 to them.)
 	 */
-	pci_write_bits16(pdev, X38_ERRSTS, X38_ERRSTS_BITS,
+	pci_ग_लिखो_bits16(pdev, X38_ERRSTS, X38_ERRSTS_BITS,
 			 X38_ERRSTS_BITS);
-}
+पूर्ण
 
-static void x38_get_and_clear_error_info(struct mem_ctl_info *mci,
-				 struct x38_error_info *info)
-{
-	struct pci_dev *pdev;
-	void __iomem *window = mci->pvt_info;
+अटल व्योम x38_get_and_clear_error_info(काष्ठा mem_ctl_info *mci,
+				 काष्ठा x38_error_info *info)
+अणु
+	काष्ठा pci_dev *pdev;
+	व्योम __iomem *winकरोw = mci->pvt_info;
 
 	pdev = to_pci_dev(mci->pdev);
 
 	/*
-	 * This is a mess because there is no atomic way to read all the
-	 * registers at once and the registers can transition from CE being
+	 * This is a mess because there is no atomic way to पढ़ो all the
+	 * रेजिस्टरs at once and the रेजिस्टरs can transition from CE being
 	 * overwritten by UE.
 	 */
-	pci_read_config_word(pdev, X38_ERRSTS, &info->errsts);
-	if (!(info->errsts & X38_ERRSTS_BITS))
-		return;
+	pci_पढ़ो_config_word(pdev, X38_ERRSTS, &info->errsts);
+	अगर (!(info->errsts & X38_ERRSTS_BITS))
+		वापस;
 
-	info->eccerrlog[0] = lo_hi_readq(window + X38_C0ECCERRLOG);
-	if (x38_channel_num == 2)
-		info->eccerrlog[1] = lo_hi_readq(window + X38_C1ECCERRLOG);
+	info->eccerrlog[0] = lo_hi_पढ़ोq(winकरोw + X38_C0ECCERRLOG);
+	अगर (x38_channel_num == 2)
+		info->eccerrlog[1] = lo_hi_पढ़ोq(winकरोw + X38_C1ECCERRLOG);
 
-	pci_read_config_word(pdev, X38_ERRSTS, &info->errsts2);
+	pci_पढ़ो_config_word(pdev, X38_ERRSTS, &info->errsts2);
 
 	/*
-	 * If the error is the same for both reads then the first set
-	 * of reads is valid.  If there is a change then there is a CE
-	 * with no info and the second set of reads is valid and
+	 * If the error is the same क्रम both पढ़ोs then the first set
+	 * of पढ़ोs is valid.  If there is a change then there is a CE
+	 * with no info and the second set of पढ़ोs is valid and
 	 * should be UE info.
 	 */
-	if ((info->errsts ^ info->errsts2) & X38_ERRSTS_BITS) {
-		info->eccerrlog[0] = lo_hi_readq(window + X38_C0ECCERRLOG);
-		if (x38_channel_num == 2)
+	अगर ((info->errsts ^ info->errsts2) & X38_ERRSTS_BITS) अणु
+		info->eccerrlog[0] = lo_hi_पढ़ोq(winकरोw + X38_C0ECCERRLOG);
+		अगर (x38_channel_num == 2)
 			info->eccerrlog[1] =
-				lo_hi_readq(window + X38_C1ECCERRLOG);
-	}
+				lo_hi_पढ़ोq(winकरोw + X38_C1ECCERRLOG);
+	पूर्ण
 
 	x38_clear_error_info(mci);
-}
+पूर्ण
 
-static void x38_process_error_info(struct mem_ctl_info *mci,
-				struct x38_error_info *info)
-{
-	int channel;
+अटल व्योम x38_process_error_info(काष्ठा mem_ctl_info *mci,
+				काष्ठा x38_error_info *info)
+अणु
+	पूर्णांक channel;
 	u64 log;
 
-	if (!(info->errsts & X38_ERRSTS_BITS))
-		return;
+	अगर (!(info->errsts & X38_ERRSTS_BITS))
+		वापस;
 
-	if ((info->errsts ^ info->errsts2) & X38_ERRSTS_BITS) {
+	अगर ((info->errsts ^ info->errsts2) & X38_ERRSTS_BITS) अणु
 		edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1, 0, 0, 0,
 				     -1, -1, -1,
 				     "UE overwrote CE", "");
 		info->errsts = info->errsts2;
-	}
+	पूर्ण
 
-	for (channel = 0; channel < x38_channel_num; channel++) {
+	क्रम (channel = 0; channel < x38_channel_num; channel++) अणु
 		log = info->eccerrlog[channel];
-		if (log & X38_ECCERRLOG_UE) {
+		अगर (log & X38_ECCERRLOG_UE) अणु
 			edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1,
 					     0, 0, 0,
 					     eccerrlog_row(channel, log),
 					     -1, -1,
 					     "x38 UE", "");
-		} else if (log & X38_ECCERRLOG_CE) {
+		पूर्ण अन्यथा अगर (log & X38_ECCERRLOG_CE) अणु
 			edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, 1,
 					     0, 0, eccerrlog_syndrome(log),
 					     eccerrlog_row(channel, log),
 					     -1, -1,
 					     "x38 CE", "");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void x38_check(struct mem_ctl_info *mci)
-{
-	struct x38_error_info info;
+अटल व्योम x38_check(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा x38_error_info info;
 
 	x38_get_and_clear_error_info(mci, &info);
 	x38_process_error_info(mci, &info);
-}
+पूर्ण
 
-static void __iomem *x38_map_mchbar(struct pci_dev *pdev)
-{
-	union {
+अटल व्योम __iomem *x38_map_mchbar(काष्ठा pci_dev *pdev)
+अणु
+	जोड़ अणु
 		u64 mchbar;
-		struct {
+		काष्ठा अणु
 			u32 mchbar_low;
 			u32 mchbar_high;
-		};
-	} u;
-	void __iomem *window;
+		पूर्ण;
+	पूर्ण u;
+	व्योम __iomem *winकरोw;
 
-	pci_read_config_dword(pdev, X38_MCHBAR_LOW, &u.mchbar_low);
-	pci_write_config_dword(pdev, X38_MCHBAR_LOW, u.mchbar_low | 0x1);
-	pci_read_config_dword(pdev, X38_MCHBAR_HIGH, &u.mchbar_high);
+	pci_पढ़ो_config_dword(pdev, X38_MCHBAR_LOW, &u.mchbar_low);
+	pci_ग_लिखो_config_dword(pdev, X38_MCHBAR_LOW, u.mchbar_low | 0x1);
+	pci_पढ़ो_config_dword(pdev, X38_MCHBAR_HIGH, &u.mchbar_high);
 	u.mchbar &= X38_MCHBAR_MASK;
 
-	if (u.mchbar != (resource_size_t)u.mchbar) {
-		printk(KERN_ERR
+	अगर (u.mchbar != (resource_माप_प्रकार)u.mchbar) अणु
+		prपूर्णांकk(KERN_ERR
 			"x38: mmio space beyond accessible range (0x%llx)\n",
-			(unsigned long long)u.mchbar);
-		return NULL;
-	}
+			(अचिन्हित दीर्घ दीर्घ)u.mchbar);
+		वापस शून्य;
+	पूर्ण
 
-	window = ioremap(u.mchbar, X38_MMR_WINDOW_SIZE);
-	if (!window)
-		printk(KERN_ERR "x38: cannot map mmio space at 0x%llx\n",
-			(unsigned long long)u.mchbar);
+	winकरोw = ioremap(u.mchbar, X38_MMR_WINDOW_SIZE);
+	अगर (!winकरोw)
+		prपूर्णांकk(KERN_ERR "x38: cannot map mmio space at 0x%llx\n",
+			(अचिन्हित दीर्घ दीर्घ)u.mchbar);
 
-	return window;
-}
+	वापस winकरोw;
+पूर्ण
 
 
-static void x38_get_drbs(void __iomem *window,
+अटल व्योम x38_get_drbs(व्योम __iomem *winकरोw,
 			u16 drbs[X38_CHANNELS][X38_RANKS_PER_CHANNEL])
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < X38_RANKS_PER_CHANNEL; i++) {
-		drbs[0][i] = readw(window + X38_C0DRB + 2*i) & X38_DRB_MASK;
-		drbs[1][i] = readw(window + X38_C1DRB + 2*i) & X38_DRB_MASK;
-	}
-}
+	क्रम (i = 0; i < X38_RANKS_PER_CHANNEL; i++) अणु
+		drbs[0][i] = पढ़ोw(winकरोw + X38_C0DRB + 2*i) & X38_DRB_MASK;
+		drbs[1][i] = पढ़ोw(winकरोw + X38_C1DRB + 2*i) & X38_DRB_MASK;
+	पूर्ण
+पूर्ण
 
-static bool x38_is_stacked(struct pci_dev *pdev,
+अटल bool x38_is_stacked(काष्ठा pci_dev *pdev,
 			u16 drbs[X38_CHANNELS][X38_RANKS_PER_CHANNEL])
-{
+अणु
 	u16 tom;
 
-	pci_read_config_word(pdev, X38_TOM, &tom);
+	pci_पढ़ो_config_word(pdev, X38_TOM, &tom);
 	tom &= X38_TOM_MASK;
 
-	return drbs[X38_CHANNELS - 1][X38_RANKS_PER_CHANNEL - 1] == tom;
-}
+	वापस drbs[X38_CHANNELS - 1][X38_RANKS_PER_CHANNEL - 1] == tom;
+पूर्ण
 
-static unsigned long drb_to_nr_pages(
+अटल अचिन्हित दीर्घ drb_to_nr_pages(
 			u16 drbs[X38_CHANNELS][X38_RANKS_PER_CHANNEL],
-			bool stacked, int channel, int rank)
-{
-	int n;
+			bool stacked, पूर्णांक channel, पूर्णांक rank)
+अणु
+	पूर्णांक n;
 
 	n = drbs[channel][rank];
-	if (rank > 0)
+	अगर (rank > 0)
 		n -= drbs[channel][rank - 1];
-	if (stacked && (channel == 1) && drbs[channel][rank] ==
-				drbs[channel][X38_RANKS_PER_CHANNEL - 1]) {
+	अगर (stacked && (channel == 1) && drbs[channel][rank] ==
+				drbs[channel][X38_RANKS_PER_CHANNEL - 1]) अणु
 		n -= drbs[0][X38_RANKS_PER_CHANNEL - 1];
-	}
+	पूर्ण
 
 	n <<= (X38_DRB_SHIFT - PAGE_SHIFT);
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static int x38_probe1(struct pci_dev *pdev, int dev_idx)
-{
-	int rc;
-	int i, j;
-	struct mem_ctl_info *mci = NULL;
-	struct edac_mc_layer layers[2];
+अटल पूर्णांक x38_probe1(काष्ठा pci_dev *pdev, पूर्णांक dev_idx)
+अणु
+	पूर्णांक rc;
+	पूर्णांक i, j;
+	काष्ठा mem_ctl_info *mci = शून्य;
+	काष्ठा edac_mc_layer layers[2];
 	u16 drbs[X38_CHANNELS][X38_RANKS_PER_CHANNEL];
 	bool stacked;
-	void __iomem *window;
+	व्योम __iomem *winकरोw;
 
 	edac_dbg(0, "MC:\n");
 
-	window = x38_map_mchbar(pdev);
-	if (!window)
-		return -ENODEV;
+	winकरोw = x38_map_mchbar(pdev);
+	अगर (!winकरोw)
+		वापस -ENODEV;
 
-	x38_get_drbs(window, drbs);
+	x38_get_drbs(winकरोw, drbs);
 
 	how_many_channel(pdev);
 
@@ -342,8 +343,8 @@ static int x38_probe1(struct pci_dev *pdev, int dev_idx)
 	layers[1].size = x38_channel_num;
 	layers[1].is_virt_csrow = false;
 	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers, 0);
-	if (!mci)
-		return -ENOMEM;
+	अगर (!mci)
+		वापस -ENOMEM;
 
 	edac_dbg(3, "MC: init mci\n");
 
@@ -357,167 +358,167 @@ static int x38_probe1(struct pci_dev *pdev, int dev_idx)
 	mci->ctl_name = x38_devs[dev_idx].ctl_name;
 	mci->dev_name = pci_name(pdev);
 	mci->edac_check = x38_check;
-	mci->ctl_page_to_phys = NULL;
-	mci->pvt_info = window;
+	mci->ctl_page_to_phys = शून्य;
+	mci->pvt_info = winकरोw;
 
 	stacked = x38_is_stacked(pdev, drbs);
 
 	/*
 	 * The dram rank boundary (DRB) reg values are boundary addresses
-	 * for each DRAM rank with a granularity of 64MB.  DRB regs are
+	 * क्रम each DRAM rank with a granularity of 64MB.  DRB regs are
 	 * cumulative; the last one will contain the total memory
 	 * contained in all ranks.
 	 */
-	for (i = 0; i < mci->nr_csrows; i++) {
-		unsigned long nr_pages;
-		struct csrow_info *csrow = mci->csrows[i];
+	क्रम (i = 0; i < mci->nr_csrows; i++) अणु
+		अचिन्हित दीर्घ nr_pages;
+		काष्ठा csrow_info *csrow = mci->csrows[i];
 
 		nr_pages = drb_to_nr_pages(drbs, stacked,
 			i / X38_RANKS_PER_CHANNEL,
 			i % X38_RANKS_PER_CHANNEL);
 
-		if (nr_pages == 0)
-			continue;
+		अगर (nr_pages == 0)
+			जारी;
 
-		for (j = 0; j < x38_channel_num; j++) {
-			struct dimm_info *dimm = csrow->channels[j]->dimm;
+		क्रम (j = 0; j < x38_channel_num; j++) अणु
+			काष्ठा dimm_info *dimm = csrow->channels[j]->dimm;
 
 			dimm->nr_pages = nr_pages / x38_channel_num;
 			dimm->grain = nr_pages << PAGE_SHIFT;
 			dimm->mtype = MEM_DDR2;
 			dimm->dtype = DEV_UNKNOWN;
 			dimm->edac_mode = EDAC_UNKNOWN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	x38_clear_error_info(mci);
 
 	rc = -ENODEV;
-	if (edac_mc_add_mc(mci)) {
+	अगर (edac_mc_add_mc(mci)) अणु
 		edac_dbg(3, "MC: failed edac_mc_add_mc()\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* get this far and it's successful */
 	edac_dbg(3, "MC: success\n");
-	return 0;
+	वापस 0;
 
 fail:
-	iounmap(window);
-	if (mci)
-		edac_mc_free(mci);
+	iounmap(winकरोw);
+	अगर (mci)
+		edac_mc_मुक्त(mci);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int x38_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	int rc;
+अटल पूर्णांक x38_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	पूर्णांक rc;
 
 	edac_dbg(0, "MC:\n");
 
-	if (pci_enable_device(pdev) < 0)
-		return -EIO;
+	अगर (pci_enable_device(pdev) < 0)
+		वापस -EIO;
 
 	rc = x38_probe1(pdev, ent->driver_data);
-	if (!mci_pdev)
+	अगर (!mci_pdev)
 		mci_pdev = pci_dev_get(pdev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void x38_remove_one(struct pci_dev *pdev)
-{
-	struct mem_ctl_info *mci;
+अटल व्योम x38_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा mem_ctl_info *mci;
 
 	edac_dbg(0, "\n");
 
 	mci = edac_mc_del_mc(&pdev->dev);
-	if (!mci)
-		return;
+	अगर (!mci)
+		वापस;
 
 	iounmap(mci->pvt_info);
 
-	edac_mc_free(mci);
-}
+	edac_mc_मुक्त(mci);
+पूर्ण
 
-static const struct pci_device_id x38_pci_tbl[] = {
-	{
+अटल स्थिर काष्ठा pci_device_id x38_pci_tbl[] = अणु
+	अणु
 	 PCI_VEND_DEV(INTEL, X38_HB), PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-	 X38},
-	{
+	 X38पूर्ण,
+	अणु
 	 0,
-	 }			/* 0 terminated list. */
-};
+	 पूर्ण			/* 0 terminated list. */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, x38_pci_tbl);
 
-static struct pci_driver x38_driver = {
+अटल काष्ठा pci_driver x38_driver = अणु
 	.name = EDAC_MOD_STR,
 	.probe = x38_init_one,
-	.remove = x38_remove_one,
+	.हटाओ = x38_हटाओ_one,
 	.id_table = x38_pci_tbl,
-};
+पूर्ण;
 
-static int __init x38_init(void)
-{
-	int pci_rc;
+अटल पूर्णांक __init x38_init(व्योम)
+अणु
+	पूर्णांक pci_rc;
 
 	edac_dbg(3, "MC:\n");
 
-	/* Ensure that the OPSTATE is set correctly for POLL or NMI */
+	/* Ensure that the OPSTATE is set correctly क्रम POLL or NMI */
 	opstate_init();
 
-	pci_rc = pci_register_driver(&x38_driver);
-	if (pci_rc < 0)
-		goto fail0;
+	pci_rc = pci_रेजिस्टर_driver(&x38_driver);
+	अगर (pci_rc < 0)
+		जाओ fail0;
 
-	if (!mci_pdev) {
-		x38_registered = 0;
+	अगर (!mci_pdev) अणु
+		x38_रेजिस्टरed = 0;
 		mci_pdev = pci_get_device(PCI_VENDOR_ID_INTEL,
-					PCI_DEVICE_ID_INTEL_X38_HB, NULL);
-		if (!mci_pdev) {
+					PCI_DEVICE_ID_INTEL_X38_HB, शून्य);
+		अगर (!mci_pdev) अणु
 			edac_dbg(0, "x38 pci_get_device fail\n");
 			pci_rc = -ENODEV;
-			goto fail1;
-		}
+			जाओ fail1;
+		पूर्ण
 
 		pci_rc = x38_init_one(mci_pdev, x38_pci_tbl);
-		if (pci_rc < 0) {
+		अगर (pci_rc < 0) अणु
 			edac_dbg(0, "x38 init fail\n");
 			pci_rc = -ENODEV;
-			goto fail1;
-		}
-	}
+			जाओ fail1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail1:
-	pci_unregister_driver(&x38_driver);
+	pci_unरेजिस्टर_driver(&x38_driver);
 
 fail0:
 	pci_dev_put(mci_pdev);
 
-	return pci_rc;
-}
+	वापस pci_rc;
+पूर्ण
 
-static void __exit x38_exit(void)
-{
+अटल व्योम __निकास x38_निकास(व्योम)
+अणु
 	edac_dbg(3, "MC:\n");
 
-	pci_unregister_driver(&x38_driver);
-	if (!x38_registered) {
-		x38_remove_one(mci_pdev);
+	pci_unरेजिस्टर_driver(&x38_driver);
+	अगर (!x38_रेजिस्टरed) अणु
+		x38_हटाओ_one(mci_pdev);
 		pci_dev_put(mci_pdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 module_init(x38_init);
-module_exit(x38_exit);
+module_निकास(x38_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Cluster Computing, Inc. Hitoshi Mitake");
 MODULE_DESCRIPTION("MC support for Intel X38 memory hub controllers");
 
-module_param(edac_op_state, int, 0444);
+module_param(edac_op_state, पूर्णांक, 0444);
 MODULE_PARM_DESC(edac_op_state, "EDAC Error Reporting state: 0=Poll,1=NMI");

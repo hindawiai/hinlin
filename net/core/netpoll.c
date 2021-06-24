@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Common framework for low-level network console, dump, and debugger code
+ * Common framework क्रम low-level network console, dump, and debugger code
  *
  * Sep 8 2003  Matt Mackall <mpm@selenic.com>
  *
@@ -10,142 +11,142 @@
  * Copyright (C) 2002  Red Hat, Inc.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/string.h>
-#include <linux/if_arp.h>
-#include <linux/inetdevice.h>
-#include <linux/inet.h>
-#include <linux/interrupt.h>
-#include <linux/netpoll.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/rcupdate.h>
-#include <linux/workqueue.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/if_vlan.h>
-#include <net/tcp.h>
-#include <net/udp.h>
-#include <net/addrconf.h>
-#include <net/ndisc.h>
-#include <net/ip6_checksum.h>
-#include <asm/unaligned.h>
-#include <trace/events/napi.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/netpoll.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/tcp.h>
+#समावेश <net/udp.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/ndisc.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <trace/events/napi.h>
 
 /*
- * We maintain a small pool of fully-sized skbs, to make sure the
- * message gets out even in extreme OOM situations.
+ * We मुख्यtain a small pool of fully-sized skbs, to make sure the
+ * message माला_लो out even in extreme OOM situations.
  */
 
-#define MAX_UDP_CHUNK 1460
-#define MAX_SKBS 32
+#घोषणा MAX_UDP_CHUNK 1460
+#घोषणा MAX_SKBS 32
 
-static struct sk_buff_head skb_pool;
+अटल काष्ठा sk_buff_head skb_pool;
 
 DEFINE_STATIC_SRCU(netpoll_srcu);
 
-#define USEC_PER_POLL	50
+#घोषणा USEC_PER_POLL	50
 
-#define MAX_SKB_SIZE							\
-	(sizeof(struct ethhdr) +					\
-	 sizeof(struct iphdr) +						\
-	 sizeof(struct udphdr) +					\
+#घोषणा MAX_SKB_SIZE							\
+	(माप(काष्ठा ethhdr) +					\
+	 माप(काष्ठा iphdr) +						\
+	 माप(काष्ठा udphdr) +					\
 	 MAX_UDP_CHUNK)
 
-static void zap_completion_queue(void);
+अटल व्योम zap_completion_queue(व्योम);
 
-static unsigned int carrier_timeout = 4;
-module_param(carrier_timeout, uint, 0644);
+अटल अचिन्हित पूर्णांक carrier_समयout = 4;
+module_param(carrier_समयout, uपूर्णांक, 0644);
 
-#define np_info(np, fmt, ...)				\
+#घोषणा np_info(np, fmt, ...)				\
 	pr_info("%s: " fmt, np->name, ##__VA_ARGS__)
-#define np_err(np, fmt, ...)				\
+#घोषणा np_err(np, fmt, ...)				\
 	pr_err("%s: " fmt, np->name, ##__VA_ARGS__)
-#define np_notice(np, fmt, ...)				\
+#घोषणा np_notice(np, fmt, ...)				\
 	pr_notice("%s: " fmt, np->name, ##__VA_ARGS__)
 
-static netdev_tx_t netpoll_start_xmit(struct sk_buff *skb,
-				      struct net_device *dev,
-				      struct netdev_queue *txq)
-{
+अटल netdev_tx_t netpoll_start_xmit(काष्ठा sk_buff *skb,
+				      काष्ठा net_device *dev,
+				      काष्ठा netdev_queue *txq)
+अणु
 	netdev_tx_t status = NETDEV_TX_OK;
 	netdev_features_t features;
 
-	features = netif_skb_features(skb);
+	features = netअगर_skb_features(skb);
 
-	if (skb_vlan_tag_present(skb) &&
-	    !vlan_hw_offload_capable(features, skb->vlan_proto)) {
+	अगर (skb_vlan_tag_present(skb) &&
+	    !vlan_hw_offload_capable(features, skb->vlan_proto)) अणु
 		skb = __vlan_hwaccel_push_inside(skb);
-		if (unlikely(!skb)) {
+		अगर (unlikely(!skb)) अणु
 			/* This is actually a packet drop, but we
-			 * don't want the code that calls this
-			 * function to try and operate on a NULL skb.
+			 * करोn't want the code that calls this
+			 * function to try and operate on a शून्य skb.
 			 */
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	status = netdev_start_xmit(skb, dev, txq, false);
 
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void queue_process(struct work_struct *work)
-{
-	struct netpoll_info *npinfo =
-		container_of(work, struct netpoll_info, tx_work.work);
-	struct sk_buff *skb;
-	unsigned long flags;
+अटल व्योम queue_process(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा netpoll_info *npinfo =
+		container_of(work, काष्ठा netpoll_info, tx_work.work);
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
 
-	while ((skb = skb_dequeue(&npinfo->txq))) {
-		struct net_device *dev = skb->dev;
-		struct netdev_queue *txq;
-		unsigned int q_index;
+	जबतक ((skb = skb_dequeue(&npinfo->txq))) अणु
+		काष्ठा net_device *dev = skb->dev;
+		काष्ठा netdev_queue *txq;
+		अचिन्हित पूर्णांक q_index;
 
-		if (!netif_device_present(dev) || !netif_running(dev)) {
-			kfree_skb(skb);
-			continue;
-		}
+		अगर (!netअगर_device_present(dev) || !netअगर_running(dev)) अणु
+			kमुक्त_skb(skb);
+			जारी;
+		पूर्ण
 
 		local_irq_save(flags);
-		/* check if skb->queue_mapping is still valid */
+		/* check अगर skb->queue_mapping is still valid */
 		q_index = skb_get_queue_mapping(skb);
-		if (unlikely(q_index >= dev->real_num_tx_queues)) {
+		अगर (unlikely(q_index >= dev->real_num_tx_queues)) अणु
 			q_index = q_index % dev->real_num_tx_queues;
 			skb_set_queue_mapping(skb, q_index);
-		}
+		पूर्ण
 		txq = netdev_get_tx_queue(dev, q_index);
 		HARD_TX_LOCK(dev, txq, smp_processor_id());
-		if (netif_xmit_frozen_or_stopped(txq) ||
-		    !dev_xmit_complete(netpoll_start_xmit(skb, dev, txq))) {
+		अगर (netअगर_xmit_frozen_or_stopped(txq) ||
+		    !dev_xmit_complete(netpoll_start_xmit(skb, dev, txq))) अणु
 			skb_queue_head(&npinfo->txq, skb);
 			HARD_TX_UNLOCK(dev, txq);
 			local_irq_restore(flags);
 
 			schedule_delayed_work(&npinfo->tx_work, HZ/10);
-			return;
-		}
+			वापस;
+		पूर्ण
 		HARD_TX_UNLOCK(dev, txq);
 		local_irq_restore(flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void poll_one_napi(struct napi_struct *napi)
-{
-	int work;
+अटल व्योम poll_one_napi(काष्ठा napi_काष्ठा *napi)
+अणु
+	पूर्णांक work;
 
-	/* If we set this bit but see that it has already been set,
+	/* If we set this bit but see that it has alपढ़ोy been set,
 	 * that indicates that napi has been disabled and we need
-	 * to abort this operation
+	 * to पात this operation
 	 */
-	if (test_and_set_bit(NAPI_STATE_NPSVC, &napi->state))
-		return;
+	अगर (test_and_set_bit(NAPI_STATE_NPSVC, &napi->state))
+		वापस;
 
 	/* We explicilty pass the polling call a budget of 0 to
 	 * indicate that we are clearing the Tx path only.
@@ -155,285 +156,285 @@ static void poll_one_napi(struct napi_struct *napi)
 	trace_napi_poll(napi, work, 0);
 
 	clear_bit(NAPI_STATE_NPSVC, &napi->state);
-}
+पूर्ण
 
-static void poll_napi(struct net_device *dev)
-{
-	struct napi_struct *napi;
-	int cpu = smp_processor_id();
+अटल व्योम poll_napi(काष्ठा net_device *dev)
+अणु
+	काष्ठा napi_काष्ठा *napi;
+	पूर्णांक cpu = smp_processor_id();
 
-	list_for_each_entry_rcu(napi, &dev->napi_list, dev_list) {
-		if (cmpxchg(&napi->poll_owner, -1, cpu) == -1) {
+	list_क्रम_each_entry_rcu(napi, &dev->napi_list, dev_list) अणु
+		अगर (cmpxchg(&napi->poll_owner, -1, cpu) == -1) अणु
 			poll_one_napi(napi);
 			smp_store_release(&napi->poll_owner, -1);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void netpoll_poll_dev(struct net_device *dev)
-{
-	struct netpoll_info *ni = rcu_dereference_bh(dev->npinfo);
-	const struct net_device_ops *ops;
+व्योम netpoll_poll_dev(काष्ठा net_device *dev)
+अणु
+	काष्ठा netpoll_info *ni = rcu_dereference_bh(dev->npinfo);
+	स्थिर काष्ठा net_device_ops *ops;
 
-	/* Don't do any rx activity if the dev_lock mutex is held
-	 * the dev_open/close paths use this to block netpoll activity
-	 * while changing device state
+	/* Don't करो any rx activity अगर the dev_lock mutex is held
+	 * the dev_खोलो/बंद paths use this to block netpoll activity
+	 * जबतक changing device state
 	 */
-	if (!ni || down_trylock(&ni->dev_lock))
-		return;
+	अगर (!ni || करोwn_trylock(&ni->dev_lock))
+		वापस;
 
-	if (!netif_running(dev)) {
+	अगर (!netअगर_running(dev)) अणु
 		up(&ni->dev_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ops = dev->netdev_ops;
-	if (ops->ndo_poll_controller)
-		ops->ndo_poll_controller(dev);
+	अगर (ops->nकरो_poll_controller)
+		ops->nकरो_poll_controller(dev);
 
 	poll_napi(dev);
 
 	up(&ni->dev_lock);
 
 	zap_completion_queue();
-}
+पूर्ण
 EXPORT_SYMBOL(netpoll_poll_dev);
 
-void netpoll_poll_disable(struct net_device *dev)
-{
-	struct netpoll_info *ni;
-	int idx;
+व्योम netpoll_poll_disable(काष्ठा net_device *dev)
+अणु
+	काष्ठा netpoll_info *ni;
+	पूर्णांक idx;
 	might_sleep();
-	idx = srcu_read_lock(&netpoll_srcu);
+	idx = srcu_पढ़ो_lock(&netpoll_srcu);
 	ni = srcu_dereference(dev->npinfo, &netpoll_srcu);
-	if (ni)
-		down(&ni->dev_lock);
-	srcu_read_unlock(&netpoll_srcu, idx);
-}
+	अगर (ni)
+		करोwn(&ni->dev_lock);
+	srcu_पढ़ो_unlock(&netpoll_srcu, idx);
+पूर्ण
 EXPORT_SYMBOL(netpoll_poll_disable);
 
-void netpoll_poll_enable(struct net_device *dev)
-{
-	struct netpoll_info *ni;
-	rcu_read_lock();
+व्योम netpoll_poll_enable(काष्ठा net_device *dev)
+अणु
+	काष्ठा netpoll_info *ni;
+	rcu_पढ़ो_lock();
 	ni = rcu_dereference(dev->npinfo);
-	if (ni)
+	अगर (ni)
 		up(&ni->dev_lock);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL(netpoll_poll_enable);
 
-static void refill_skbs(void)
-{
-	struct sk_buff *skb;
-	unsigned long flags;
+अटल व्योम refill_skbs(व्योम)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&skb_pool.lock, flags);
-	while (skb_pool.qlen < MAX_SKBS) {
+	जबतक (skb_pool.qlen < MAX_SKBS) अणु
 		skb = alloc_skb(MAX_SKB_SIZE, GFP_ATOMIC);
-		if (!skb)
-			break;
+		अगर (!skb)
+			अवरोध;
 
 		__skb_queue_tail(&skb_pool, skb);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&skb_pool.lock, flags);
-}
+पूर्ण
 
-static void zap_completion_queue(void)
-{
-	unsigned long flags;
-	struct softnet_data *sd = &get_cpu_var(softnet_data);
+अटल व्योम zap_completion_queue(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा softnet_data *sd = &get_cpu_var(softnet_data);
 
-	if (sd->completion_queue) {
-		struct sk_buff *clist;
+	अगर (sd->completion_queue) अणु
+		काष्ठा sk_buff *clist;
 
 		local_irq_save(flags);
 		clist = sd->completion_queue;
-		sd->completion_queue = NULL;
+		sd->completion_queue = शून्य;
 		local_irq_restore(flags);
 
-		while (clist != NULL) {
-			struct sk_buff *skb = clist;
+		जबतक (clist != शून्य) अणु
+			काष्ठा sk_buff *skb = clist;
 			clist = clist->next;
-			if (!skb_irq_freeable(skb)) {
+			अगर (!skb_irq_मुक्तable(skb)) अणु
 				refcount_set(&skb->users, 1);
-				dev_kfree_skb_any(skb); /* put this one back */
-			} else {
-				__kfree_skb(skb);
-			}
-		}
-	}
+				dev_kमुक्त_skb_any(skb); /* put this one back */
+			पूर्ण अन्यथा अणु
+				__kमुक्त_skb(skb);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	put_cpu_var(softnet_data);
-}
+पूर्ण
 
-static struct sk_buff *find_skb(struct netpoll *np, int len, int reserve)
-{
-	int count = 0;
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *find_skb(काष्ठा netpoll *np, पूर्णांक len, पूर्णांक reserve)
+अणु
+	पूर्णांक count = 0;
+	काष्ठा sk_buff *skb;
 
 	zap_completion_queue();
 	refill_skbs();
 repeat:
 
 	skb = alloc_skb(len, GFP_ATOMIC);
-	if (!skb)
+	अगर (!skb)
 		skb = skb_dequeue(&skb_pool);
 
-	if (!skb) {
-		if (++count < 10) {
+	अगर (!skb) अणु
+		अगर (++count < 10) अणु
 			netpoll_poll_dev(np->dev);
-			goto repeat;
-		}
-		return NULL;
-	}
+			जाओ repeat;
+		पूर्ण
+		वापस शून्य;
+	पूर्ण
 
 	refcount_set(&skb->users, 1);
 	skb_reserve(skb, reserve);
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int netpoll_owner_active(struct net_device *dev)
-{
-	struct napi_struct *napi;
+अटल पूर्णांक netpoll_owner_active(काष्ठा net_device *dev)
+अणु
+	काष्ठा napi_काष्ठा *napi;
 
-	list_for_each_entry_rcu(napi, &dev->napi_list, dev_list) {
-		if (napi->poll_owner == smp_processor_id())
-			return 1;
-	}
-	return 0;
-}
+	list_क्रम_each_entry_rcu(napi, &dev->napi_list, dev_list) अणु
+		अगर (napi->poll_owner == smp_processor_id())
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* call with IRQ disabled */
-static netdev_tx_t __netpoll_send_skb(struct netpoll *np, struct sk_buff *skb)
-{
+अटल netdev_tx_t __netpoll_send_skb(काष्ठा netpoll *np, काष्ठा sk_buff *skb)
+अणु
 	netdev_tx_t status = NETDEV_TX_BUSY;
-	struct net_device *dev;
-	unsigned long tries;
+	काष्ठा net_device *dev;
+	अचिन्हित दीर्घ tries;
 	/* It is up to the caller to keep npinfo alive. */
-	struct netpoll_info *npinfo;
+	काष्ठा netpoll_info *npinfo;
 
-	lockdep_assert_irqs_disabled();
+	lockdep_निश्चित_irqs_disabled();
 
 	dev = np->dev;
 	npinfo = rcu_dereference_bh(dev->npinfo);
 
-	if (!npinfo || !netif_running(dev) || !netif_device_present(dev)) {
-		dev_kfree_skb_irq(skb);
-		return NET_XMIT_DROP;
-	}
+	अगर (!npinfo || !netअगर_running(dev) || !netअगर_device_present(dev)) अणु
+		dev_kमुक्त_skb_irq(skb);
+		वापस NET_XMIT_DROP;
+	पूर्ण
 
-	/* don't get messages out of order, and no recursion */
-	if (skb_queue_len(&npinfo->txq) == 0 && !netpoll_owner_active(dev)) {
-		struct netdev_queue *txq;
+	/* करोn't get messages out of order, and no recursion */
+	अगर (skb_queue_len(&npinfo->txq) == 0 && !netpoll_owner_active(dev)) अणु
+		काष्ठा netdev_queue *txq;
 
-		txq = netdev_core_pick_tx(dev, skb, NULL);
+		txq = netdev_core_pick_tx(dev, skb, शून्य);
 
-		/* try until next clock tick */
-		for (tries = jiffies_to_usecs(1)/USEC_PER_POLL;
-		     tries > 0; --tries) {
-			if (HARD_TX_TRYLOCK(dev, txq)) {
-				if (!netif_xmit_stopped(txq))
+		/* try until next घड़ी tick */
+		क्रम (tries = jअगरfies_to_usecs(1)/USEC_PER_POLL;
+		     tries > 0; --tries) अणु
+			अगर (HARD_TX_TRYLOCK(dev, txq)) अणु
+				अगर (!netअगर_xmit_stopped(txq))
 					status = netpoll_start_xmit(skb, dev, txq);
 
 				HARD_TX_UNLOCK(dev, txq);
 
-				if (dev_xmit_complete(status))
-					break;
+				अगर (dev_xmit_complete(status))
+					अवरोध;
 
-			}
+			पूर्ण
 
 			/* tickle device maybe there is some cleanup */
 			netpoll_poll_dev(np->dev);
 
 			udelay(USEC_PER_POLL);
-		}
+		पूर्ण
 
 		WARN_ONCE(!irqs_disabled(),
 			"netpoll_send_skb_on_dev(): %s enabled interrupts in poll (%pS)\n",
-			dev->name, dev->netdev_ops->ndo_start_xmit);
+			dev->name, dev->netdev_ops->nकरो_start_xmit);
 
-	}
+	पूर्ण
 
-	if (!dev_xmit_complete(status)) {
+	अगर (!dev_xmit_complete(status)) अणु
 		skb_queue_tail(&npinfo->txq, skb);
 		schedule_delayed_work(&npinfo->tx_work,0);
-	}
-	return NETDEV_TX_OK;
-}
+	पूर्ण
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-netdev_tx_t netpoll_send_skb(struct netpoll *np, struct sk_buff *skb)
-{
-	unsigned long flags;
+netdev_tx_t netpoll_send_skb(काष्ठा netpoll *np, काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित दीर्घ flags;
 	netdev_tx_t ret;
 
-	if (unlikely(!np)) {
-		dev_kfree_skb_irq(skb);
+	अगर (unlikely(!np)) अणु
+		dev_kमुक्त_skb_irq(skb);
 		ret = NET_XMIT_DROP;
-	} else {
+	पूर्ण अन्यथा अणु
 		local_irq_save(flags);
 		ret = __netpoll_send_skb(np, skb);
 		local_irq_restore(flags);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(netpoll_send_skb);
 
-void netpoll_send_udp(struct netpoll *np, const char *msg, int len)
-{
-	int total_len, ip_len, udp_len;
-	struct sk_buff *skb;
-	struct udphdr *udph;
-	struct iphdr *iph;
-	struct ethhdr *eth;
-	static atomic_t ip_ident;
-	struct ipv6hdr *ip6h;
+व्योम netpoll_send_udp(काष्ठा netpoll *np, स्थिर अक्षर *msg, पूर्णांक len)
+अणु
+	पूर्णांक total_len, ip_len, udp_len;
+	काष्ठा sk_buff *skb;
+	काष्ठा udphdr *udph;
+	काष्ठा iphdr *iph;
+	काष्ठा ethhdr *eth;
+	अटल atomic_t ip_ident;
+	काष्ठा ipv6hdr *ip6h;
 
 	WARN_ON_ONCE(!irqs_disabled());
 
-	udp_len = len + sizeof(*udph);
-	if (np->ipv6)
-		ip_len = udp_len + sizeof(*ip6h);
-	else
-		ip_len = udp_len + sizeof(*iph);
+	udp_len = len + माप(*udph);
+	अगर (np->ipv6)
+		ip_len = udp_len + माप(*ip6h);
+	अन्यथा
+		ip_len = udp_len + माप(*iph);
 
 	total_len = ip_len + LL_RESERVED_SPACE(np->dev);
 
 	skb = find_skb(np, total_len + np->dev->needed_tailroom,
 		       total_len - len);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	skb_copy_to_linear_data(skb, msg, len);
 	skb_put(skb, len);
 
-	skb_push(skb, sizeof(*udph));
+	skb_push(skb, माप(*udph));
 	skb_reset_transport_header(skb);
 	udph = udp_hdr(skb);
 	udph->source = htons(np->local_port);
 	udph->dest = htons(np->remote_port);
 	udph->len = htons(udp_len);
 
-	if (np->ipv6) {
+	अगर (np->ipv6) अणु
 		udph->check = 0;
 		udph->check = csum_ipv6_magic(&np->local_ip.in6,
 					      &np->remote_ip.in6,
 					      udp_len, IPPROTO_UDP,
 					      csum_partial(udph, udp_len, 0));
-		if (udph->check == 0)
+		अगर (udph->check == 0)
 			udph->check = CSUM_MANGLED_0;
 
-		skb_push(skb, sizeof(*ip6h));
+		skb_push(skb, माप(*ip6h));
 		skb_reset_network_header(skb);
 		ip6h = ipv6_hdr(skb);
 
 		/* ip6h->version = 6; ip6h->priority = 0; */
-		put_unaligned(0x60, (unsigned char *)ip6h);
+		put_unaligned(0x60, (अचिन्हित अक्षर *)ip6h);
 		ip6h->flow_lbl[0] = 0;
 		ip6h->flow_lbl[1] = 0;
 		ip6h->flow_lbl[2] = 0;
 
-		ip6h->payload_len = htons(sizeof(struct udphdr) + len);
+		ip6h->payload_len = htons(माप(काष्ठा udphdr) + len);
 		ip6h->nexthdr = IPPROTO_UDP;
 		ip6h->hop_limit = 32;
 		ip6h->saddr = np->local_ip.in6;
@@ -442,36 +443,36 @@ void netpoll_send_udp(struct netpoll *np, const char *msg, int len)
 		eth = skb_push(skb, ETH_HLEN);
 		skb_reset_mac_header(skb);
 		skb->protocol = eth->h_proto = htons(ETH_P_IPV6);
-	} else {
+	पूर्ण अन्यथा अणु
 		udph->check = 0;
 		udph->check = csum_tcpudp_magic(np->local_ip.ip,
 						np->remote_ip.ip,
 						udp_len, IPPROTO_UDP,
 						csum_partial(udph, udp_len, 0));
-		if (udph->check == 0)
+		अगर (udph->check == 0)
 			udph->check = CSUM_MANGLED_0;
 
-		skb_push(skb, sizeof(*iph));
+		skb_push(skb, माप(*iph));
 		skb_reset_network_header(skb);
 		iph = ip_hdr(skb);
 
 		/* iph->version = 4; iph->ihl = 5; */
-		put_unaligned(0x45, (unsigned char *)iph);
+		put_unaligned(0x45, (अचिन्हित अक्षर *)iph);
 		iph->tos      = 0;
 		put_unaligned(htons(ip_len), &(iph->tot_len));
-		iph->id       = htons(atomic_inc_return(&ip_ident));
+		iph->id       = htons(atomic_inc_वापस(&ip_ident));
 		iph->frag_off = 0;
 		iph->ttl      = 64;
 		iph->protocol = IPPROTO_UDP;
 		iph->check    = 0;
 		put_unaligned(np->local_ip.ip, &(iph->saddr));
 		put_unaligned(np->remote_ip.ip, &(iph->daddr));
-		iph->check    = ip_fast_csum((unsigned char *)iph, iph->ihl);
+		iph->check    = ip_fast_csum((अचिन्हित अक्षर *)iph, iph->ihl);
 
 		eth = skb_push(skb, ETH_HLEN);
 		skb_reset_mac_header(skb);
 		skb->protocol = eth->h_proto = htons(ETH_P_IP);
-	}
+	पूर्ण
 
 	ether_addr_copy(eth->h_source, np->dev->dev_addr);
 	ether_addr_copy(eth->h_dest, np->remote_mac);
@@ -479,150 +480,150 @@ void netpoll_send_udp(struct netpoll *np, const char *msg, int len)
 	skb->dev = np->dev;
 
 	netpoll_send_skb(np, skb);
-}
+पूर्ण
 EXPORT_SYMBOL(netpoll_send_udp);
 
-void netpoll_print_options(struct netpoll *np)
-{
+व्योम netpoll_prपूर्णांक_options(काष्ठा netpoll *np)
+अणु
 	np_info(np, "local port %d\n", np->local_port);
-	if (np->ipv6)
+	अगर (np->ipv6)
 		np_info(np, "local IPv6 address %pI6c\n", &np->local_ip.in6);
-	else
+	अन्यथा
 		np_info(np, "local IPv4 address %pI4\n", &np->local_ip.ip);
 	np_info(np, "interface '%s'\n", np->dev_name);
 	np_info(np, "remote port %d\n", np->remote_port);
-	if (np->ipv6)
+	अगर (np->ipv6)
 		np_info(np, "remote IPv6 address %pI6c\n", &np->remote_ip.in6);
-	else
+	अन्यथा
 		np_info(np, "remote IPv4 address %pI4\n", &np->remote_ip.ip);
 	np_info(np, "remote ethernet address %pM\n", np->remote_mac);
-}
-EXPORT_SYMBOL(netpoll_print_options);
+पूर्ण
+EXPORT_SYMBOL(netpoll_prपूर्णांक_options);
 
-static int netpoll_parse_ip_addr(const char *str, union inet_addr *addr)
-{
-	const char *end;
+अटल पूर्णांक netpoll_parse_ip_addr(स्थिर अक्षर *str, जोड़ inet_addr *addr)
+अणु
+	स्थिर अक्षर *end;
 
-	if (!strchr(str, ':') &&
-	    in4_pton(str, -1, (void *)addr, -1, &end) > 0) {
-		if (!*end)
-			return 0;
-	}
-	if (in6_pton(str, -1, addr->in6.s6_addr, -1, &end) > 0) {
-#if IS_ENABLED(CONFIG_IPV6)
-		if (!*end)
-			return 1;
-#else
-		return -1;
-#endif
-	}
-	return -1;
-}
+	अगर (!म_अक्षर(str, ':') &&
+	    in4_pton(str, -1, (व्योम *)addr, -1, &end) > 0) अणु
+		अगर (!*end)
+			वापस 0;
+	पूर्ण
+	अगर (in6_pton(str, -1, addr->in6.s6_addr, -1, &end) > 0) अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अगर (!*end)
+			वापस 1;
+#अन्यथा
+		वापस -1;
+#पूर्ण_अगर
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-int netpoll_parse_options(struct netpoll *np, char *opt)
-{
-	char *cur=opt, *delim;
-	int ipv6;
+पूर्णांक netpoll_parse_options(काष्ठा netpoll *np, अक्षर *opt)
+अणु
+	अक्षर *cur=opt, *delim;
+	पूर्णांक ipv6;
 	bool ipversion_set = false;
 
-	if (*cur != '@') {
-		if ((delim = strchr(cur, '@')) == NULL)
-			goto parse_failed;
+	अगर (*cur != '@') अणु
+		अगर ((delim = म_अक्षर(cur, '@')) == शून्य)
+			जाओ parse_failed;
 		*delim = 0;
-		if (kstrtou16(cur, 10, &np->local_port))
-			goto parse_failed;
+		अगर (kstrtou16(cur, 10, &np->local_port))
+			जाओ parse_failed;
 		cur = delim;
-	}
+	पूर्ण
 	cur++;
 
-	if (*cur != '/') {
+	अगर (*cur != '/') अणु
 		ipversion_set = true;
-		if ((delim = strchr(cur, '/')) == NULL)
-			goto parse_failed;
+		अगर ((delim = म_अक्षर(cur, '/')) == शून्य)
+			जाओ parse_failed;
 		*delim = 0;
 		ipv6 = netpoll_parse_ip_addr(cur, &np->local_ip);
-		if (ipv6 < 0)
-			goto parse_failed;
-		else
+		अगर (ipv6 < 0)
+			जाओ parse_failed;
+		अन्यथा
 			np->ipv6 = (bool)ipv6;
 		cur = delim;
-	}
+	पूर्ण
 	cur++;
 
-	if (*cur != ',') {
+	अगर (*cur != ',') अणु
 		/* parse out dev name */
-		if ((delim = strchr(cur, ',')) == NULL)
-			goto parse_failed;
+		अगर ((delim = म_अक्षर(cur, ',')) == शून्य)
+			जाओ parse_failed;
 		*delim = 0;
-		strlcpy(np->dev_name, cur, sizeof(np->dev_name));
+		strlcpy(np->dev_name, cur, माप(np->dev_name));
 		cur = delim;
-	}
+	पूर्ण
 	cur++;
 
-	if (*cur != '@') {
+	अगर (*cur != '@') अणु
 		/* dst port */
-		if ((delim = strchr(cur, '@')) == NULL)
-			goto parse_failed;
+		अगर ((delim = म_अक्षर(cur, '@')) == शून्य)
+			जाओ parse_failed;
 		*delim = 0;
-		if (*cur == ' ' || *cur == '\t')
+		अगर (*cur == ' ' || *cur == '\t')
 			np_info(np, "warning: whitespace is not allowed\n");
-		if (kstrtou16(cur, 10, &np->remote_port))
-			goto parse_failed;
+		अगर (kstrtou16(cur, 10, &np->remote_port))
+			जाओ parse_failed;
 		cur = delim;
-	}
+	पूर्ण
 	cur++;
 
 	/* dst ip */
-	if ((delim = strchr(cur, '/')) == NULL)
-		goto parse_failed;
+	अगर ((delim = म_अक्षर(cur, '/')) == शून्य)
+		जाओ parse_failed;
 	*delim = 0;
 	ipv6 = netpoll_parse_ip_addr(cur, &np->remote_ip);
-	if (ipv6 < 0)
-		goto parse_failed;
-	else if (ipversion_set && np->ipv6 != (bool)ipv6)
-		goto parse_failed;
-	else
+	अगर (ipv6 < 0)
+		जाओ parse_failed;
+	अन्यथा अगर (ipversion_set && np->ipv6 != (bool)ipv6)
+		जाओ parse_failed;
+	अन्यथा
 		np->ipv6 = (bool)ipv6;
 	cur = delim + 1;
 
-	if (*cur != 0) {
+	अगर (*cur != 0) अणु
 		/* MAC address */
-		if (!mac_pton(cur, np->remote_mac))
-			goto parse_failed;
-	}
+		अगर (!mac_pton(cur, np->remote_mac))
+			जाओ parse_failed;
+	पूर्ण
 
-	netpoll_print_options(np);
+	netpoll_prपूर्णांक_options(np);
 
-	return 0;
+	वापस 0;
 
  parse_failed:
 	np_info(np, "couldn't parse config at '%s'!\n", cur);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL(netpoll_parse_options);
 
-int __netpoll_setup(struct netpoll *np, struct net_device *ndev)
-{
-	struct netpoll_info *npinfo;
-	const struct net_device_ops *ops;
-	int err;
+पूर्णांक __netpoll_setup(काष्ठा netpoll *np, काष्ठा net_device *ndev)
+अणु
+	काष्ठा netpoll_info *npinfo;
+	स्थिर काष्ठा net_device_ops *ops;
+	पूर्णांक err;
 
 	np->dev = ndev;
 	strlcpy(np->dev_name, ndev->name, IFNAMSIZ);
 
-	if (ndev->priv_flags & IFF_DISABLE_NETPOLL) {
+	अगर (ndev->priv_flags & IFF_DISABLE_NETPOLL) अणु
 		np_err(np, "%s doesn't support polling, aborting\n",
 		       np->dev_name);
 		err = -ENOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!ndev->npinfo) {
-		npinfo = kmalloc(sizeof(*npinfo), GFP_KERNEL);
-		if (!npinfo) {
+	अगर (!ndev->npinfo) अणु
+		npinfo = kदो_स्मृति(माप(*npinfo), GFP_KERNEL);
+		अगर (!npinfo) अणु
 			err = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		sema_init(&npinfo->dev_lock, 1);
 		skb_queue_head_init(&npinfo->txq);
@@ -631,172 +632,172 @@ int __netpoll_setup(struct netpoll *np, struct net_device *ndev)
 		refcount_set(&npinfo->refcnt, 1);
 
 		ops = np->dev->netdev_ops;
-		if (ops->ndo_netpoll_setup) {
-			err = ops->ndo_netpoll_setup(ndev, npinfo);
-			if (err)
-				goto free_npinfo;
-		}
-	} else {
+		अगर (ops->nकरो_netpoll_setup) अणु
+			err = ops->nकरो_netpoll_setup(ndev, npinfo);
+			अगर (err)
+				जाओ मुक्त_npinfo;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		npinfo = rtnl_dereference(ndev->npinfo);
 		refcount_inc(&npinfo->refcnt);
-	}
+	पूर्ण
 
 	npinfo->netpoll = np;
 
-	/* last thing to do is link it to the net device structure */
-	rcu_assign_pointer(ndev->npinfo, npinfo);
+	/* last thing to करो is link it to the net device काष्ठाure */
+	rcu_assign_poपूर्णांकer(ndev->npinfo, npinfo);
 
-	return 0;
+	वापस 0;
 
-free_npinfo:
-	kfree(npinfo);
+मुक्त_npinfo:
+	kमुक्त(npinfo);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(__netpoll_setup);
 
-int netpoll_setup(struct netpoll *np)
-{
-	struct net_device *ndev = NULL;
-	struct in_device *in_dev;
-	int err;
+पूर्णांक netpoll_setup(काष्ठा netpoll *np)
+अणु
+	काष्ठा net_device *ndev = शून्य;
+	काष्ठा in_device *in_dev;
+	पूर्णांक err;
 
 	rtnl_lock();
-	if (np->dev_name[0]) {
-		struct net *net = current->nsproxy->net_ns;
+	अगर (np->dev_name[0]) अणु
+		काष्ठा net *net = current->nsproxy->net_ns;
 		ndev = __dev_get_by_name(net, np->dev_name);
-	}
-	if (!ndev) {
+	पूर्ण
+	अगर (!ndev) अणु
 		np_err(np, "%s doesn't exist, aborting\n", np->dev_name);
 		err = -ENODEV;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 	dev_hold(ndev);
 
-	if (netdev_master_upper_dev_get(ndev)) {
+	अगर (netdev_master_upper_dev_get(ndev)) अणु
 		np_err(np, "%s is a slave device, aborting\n", np->dev_name);
 		err = -EBUSY;
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
-	if (!netif_running(ndev)) {
-		unsigned long atmost, atleast;
+	अगर (!netअगर_running(ndev)) अणु
+		अचिन्हित दीर्घ aपंचांगost, atleast;
 
 		np_info(np, "device %s not up yet, forcing it\n", np->dev_name);
 
-		err = dev_open(ndev, NULL);
+		err = dev_खोलो(ndev, शून्य);
 
-		if (err) {
+		अगर (err) अणु
 			np_err(np, "failed to open %s\n", ndev->name);
-			goto put;
-		}
+			जाओ put;
+		पूर्ण
 
 		rtnl_unlock();
-		atleast = jiffies + HZ/10;
-		atmost = jiffies + carrier_timeout * HZ;
-		while (!netif_carrier_ok(ndev)) {
-			if (time_after(jiffies, atmost)) {
+		atleast = jअगरfies + HZ/10;
+		aपंचांगost = jअगरfies + carrier_समयout * HZ;
+		जबतक (!netअगर_carrier_ok(ndev)) अणु
+			अगर (समय_after(jअगरfies, aपंचांगost)) अणु
 				np_notice(np, "timeout waiting for carrier\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			msleep(1);
-		}
+		पूर्ण
 
-		/* If carrier appears to come up instantly, we don't
-		 * trust it and pause so that we don't pump all our
-		 * queued console messages into the bitbucket.
+		/* If carrier appears to come up instantly, we करोn't
+		 * trust it and छोड़ो so that we करोn't pump all our
+		 * queued console messages पूर्णांकo the bitbucket.
 		 */
 
-		if (time_before(jiffies, atleast)) {
+		अगर (समय_beक्रमe(jअगरfies, atleast)) अणु
 			np_notice(np, "carrier detect appears untrustworthy, waiting 4 seconds\n");
 			msleep(4000);
-		}
+		पूर्ण
 		rtnl_lock();
-	}
+	पूर्ण
 
-	if (!np->local_ip.ip) {
-		if (!np->ipv6) {
-			const struct in_ifaddr *ifa;
+	अगर (!np->local_ip.ip) अणु
+		अगर (!np->ipv6) अणु
+			स्थिर काष्ठा in_अगरaddr *अगरa;
 
 			in_dev = __in_dev_get_rtnl(ndev);
-			if (!in_dev)
-				goto put_noaddr;
+			अगर (!in_dev)
+				जाओ put_noaddr;
 
-			ifa = rtnl_dereference(in_dev->ifa_list);
-			if (!ifa) {
+			अगरa = rtnl_dereference(in_dev->अगरa_list);
+			अगर (!अगरa) अणु
 put_noaddr:
 				np_err(np, "no IP address for %s, aborting\n",
 				       np->dev_name);
 				err = -EDESTADDRREQ;
-				goto put;
-			}
+				जाओ put;
+			पूर्ण
 
-			np->local_ip.ip = ifa->ifa_local;
+			np->local_ip.ip = अगरa->अगरa_local;
 			np_info(np, "local IP %pI4\n", &np->local_ip.ip);
-		} else {
-#if IS_ENABLED(CONFIG_IPV6)
-			struct inet6_dev *idev;
+		पूर्ण अन्यथा अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+			काष्ठा inet6_dev *idev;
 
 			err = -EDESTADDRREQ;
 			idev = __in6_dev_get(ndev);
-			if (idev) {
-				struct inet6_ifaddr *ifp;
+			अगर (idev) अणु
+				काष्ठा inet6_अगरaddr *अगरp;
 
-				read_lock_bh(&idev->lock);
-				list_for_each_entry(ifp, &idev->addr_list, if_list) {
-					if (!!(ipv6_addr_type(&ifp->addr) & IPV6_ADDR_LINKLOCAL) !=
+				पढ़ो_lock_bh(&idev->lock);
+				list_क्रम_each_entry(अगरp, &idev->addr_list, अगर_list) अणु
+					अगर (!!(ipv6_addr_type(&अगरp->addr) & IPV6_ADDR_LINKLOCAL) !=
 					    !!(ipv6_addr_type(&np->remote_ip.in6) & IPV6_ADDR_LINKLOCAL))
-						continue;
-					np->local_ip.in6 = ifp->addr;
+						जारी;
+					np->local_ip.in6 = अगरp->addr;
 					err = 0;
-					break;
-				}
-				read_unlock_bh(&idev->lock);
-			}
-			if (err) {
+					अवरोध;
+				पूर्ण
+				पढ़ो_unlock_bh(&idev->lock);
+			पूर्ण
+			अगर (err) अणु
 				np_err(np, "no IPv6 address for %s, aborting\n",
 				       np->dev_name);
-				goto put;
-			} else
+				जाओ put;
+			पूर्ण अन्यथा
 				np_info(np, "local IPv6 %pI6c\n", &np->local_ip.in6);
-#else
+#अन्यथा
 			np_err(np, "IPv6 is not supported %s, aborting\n",
 			       np->dev_name);
 			err = -EINVAL;
-			goto put;
-#endif
-		}
-	}
+			जाओ put;
+#पूर्ण_अगर
+		पूर्ण
+	पूर्ण
 
 	/* fill up the skb queue */
 	refill_skbs();
 
 	err = __netpoll_setup(np, ndev);
-	if (err)
-		goto put;
+	अगर (err)
+		जाओ put;
 
 	rtnl_unlock();
-	return 0;
+	वापस 0;
 
 put:
 	dev_put(ndev);
 unlock:
 	rtnl_unlock();
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(netpoll_setup);
 
-static int __init netpoll_init(void)
-{
+अटल पूर्णांक __init netpoll_init(व्योम)
+अणु
 	skb_queue_head_init(&skb_pool);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 core_initcall(netpoll_init);
 
-static void rcu_cleanup_netpoll_info(struct rcu_head *rcu_head)
-{
-	struct netpoll_info *npinfo =
-			container_of(rcu_head, struct netpoll_info, rcu);
+अटल व्योम rcu_cleanup_netpoll_info(काष्ठा rcu_head *rcu_head)
+अणु
+	काष्ठा netpoll_info *npinfo =
+			container_of(rcu_head, काष्ठा netpoll_info, rcu);
 
 	skb_queue_purge(&npinfo->txq);
 
@@ -807,53 +808,53 @@ static void rcu_cleanup_netpoll_info(struct rcu_head *rcu_head)
 	__skb_queue_purge(&npinfo->txq);
 	/* now cancel it again */
 	cancel_delayed_work(&npinfo->tx_work);
-	kfree(npinfo);
-}
+	kमुक्त(npinfo);
+पूर्ण
 
-void __netpoll_cleanup(struct netpoll *np)
-{
-	struct netpoll_info *npinfo;
+व्योम __netpoll_cleanup(काष्ठा netpoll *np)
+अणु
+	काष्ठा netpoll_info *npinfo;
 
 	npinfo = rtnl_dereference(np->dev->npinfo);
-	if (!npinfo)
-		return;
+	अगर (!npinfo)
+		वापस;
 
 	synchronize_srcu(&netpoll_srcu);
 
-	if (refcount_dec_and_test(&npinfo->refcnt)) {
-		const struct net_device_ops *ops;
+	अगर (refcount_dec_and_test(&npinfo->refcnt)) अणु
+		स्थिर काष्ठा net_device_ops *ops;
 
 		ops = np->dev->netdev_ops;
-		if (ops->ndo_netpoll_cleanup)
-			ops->ndo_netpoll_cleanup(np->dev);
+		अगर (ops->nकरो_netpoll_cleanup)
+			ops->nकरो_netpoll_cleanup(np->dev);
 
-		RCU_INIT_POINTER(np->dev->npinfo, NULL);
+		RCU_INIT_POINTER(np->dev->npinfo, शून्य);
 		call_rcu(&npinfo->rcu, rcu_cleanup_netpoll_info);
-	} else
-		RCU_INIT_POINTER(np->dev->npinfo, NULL);
-}
+	पूर्ण अन्यथा
+		RCU_INIT_POINTER(np->dev->npinfo, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(__netpoll_cleanup);
 
-void __netpoll_free(struct netpoll *np)
-{
+व्योम __netpoll_मुक्त(काष्ठा netpoll *np)
+अणु
 	ASSERT_RTNL();
 
-	/* Wait for transmitting packets to finish before freeing. */
+	/* Wait क्रम transmitting packets to finish beक्रमe मुक्तing. */
 	synchronize_rcu();
 	__netpoll_cleanup(np);
-	kfree(np);
-}
-EXPORT_SYMBOL_GPL(__netpoll_free);
+	kमुक्त(np);
+पूर्ण
+EXPORT_SYMBOL_GPL(__netpoll_मुक्त);
 
-void netpoll_cleanup(struct netpoll *np)
-{
+व्योम netpoll_cleanup(काष्ठा netpoll *np)
+अणु
 	rtnl_lock();
-	if (!np->dev)
-		goto out;
+	अगर (!np->dev)
+		जाओ out;
 	__netpoll_cleanup(np);
 	dev_put(np->dev);
-	np->dev = NULL;
+	np->dev = शून्य;
 out:
 	rtnl_unlock();
-}
+पूर्ण
 EXPORT_SYMBOL(netpoll_cleanup);

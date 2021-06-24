@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * printf.c:  Internal prom library printf facility.
+ * म_लिखो.c:  Internal prom library म_लिखो facility.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
 
-/* This routine is internal to the prom library, no one else should know
+/* This routine is पूर्णांकernal to the prom library, no one अन्यथा should know
  * about or use it!  It's simple and smelly anyway....
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include <asm/openprom.h>
-#include <asm/oplib.h>
+#समावेश <यंत्र/खोलोprom.h>
+#समावेश <यंत्र/oplib.h>
 
-#ifdef CONFIG_KGDB
-extern int kgdb_initialized;
-#endif
+#अगर_घोषित CONFIG_KGDB
+बाह्य पूर्णांक kgdb_initialized;
+#पूर्ण_अगर
 
-static char ppbuf[1024];
+अटल अक्षर ppbuf[1024];
 
-void
-prom_printf(char *fmt, ...)
-{
-	va_list args;
-	char ch, *bptr;
-	int i;
+व्योम
+prom_म_लिखो(अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	अक्षर ch, *bptr;
+	पूर्णांक i;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
-#ifdef CONFIG_KGDB
+#अगर_घोषित CONFIG_KGDB
 	ppbuf[0] = 'O';
-	i = vsprintf(ppbuf + 1, fmt, args) + 1;
-#else
-	i = vsprintf(ppbuf, fmt, args);
-#endif
+	i = भम_लिखो(ppbuf + 1, fmt, args) + 1;
+#अन्यथा
+	i = भम_लिखो(ppbuf, fmt, args);
+#पूर्ण_अगर
 
 	bptr = ppbuf;
 
-#ifdef CONFIG_KGDB
-	if (kgdb_initialized) {
+#अगर_घोषित CONFIG_KGDB
+	अगर (kgdb_initialized) अणु
 		pr_info("kgdb_initialized = %d\n", kgdb_initialized);
 		putpacket(bptr, 1);
-	} else
-#else
-	while((ch = *(bptr++)) != 0) {
-		if(ch == '\n')
-			prom_putchar('\r');
+	पूर्ण अन्यथा
+#अन्यथा
+	जबतक((ch = *(bptr++)) != 0) अणु
+		अगर(ch == '\n')
+			prom_अक्षर_दो('\r');
 
-		prom_putchar(ch);
-	}
-#endif
-	va_end(args);
-	return;
-}
+		prom_अक्षर_दो(ch);
+	पूर्ण
+#पूर्ण_अगर
+	बहु_पूर्ण(args);
+	वापस;
+पूर्ण

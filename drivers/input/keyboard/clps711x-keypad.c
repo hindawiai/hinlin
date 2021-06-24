@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cirrus Logic CLPS711X Keypad driver
  *
  * Copyright (C) 2014 Alexander Shiyan <shc_work@mail.ru>
  */
 
-#include <linux/input.h>
-#include <linux/module.h>
-#include <linux/of_gpio.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/sched.h>
-#include <linux/input/matrix_keypad.h>
-#include <linux/mfd/syscon.h>
-#include <linux/mfd/syscon/clps711x.h>
+#समावेश <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/input/matrix_keypad.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/mfd/syscon/clps711x.h>
 
-#define CLPS711X_KEYPAD_COL_COUNT	8
+#घोषणा CLPS711X_KEYPAD_COL_COUNT	8
 
-struct clps711x_gpio_data {
-	struct gpio_desc *desc;
+काष्ठा clps711x_gpio_data अणु
+	काष्ठा gpio_desc *desc;
 	DECLARE_BITMAP(last_state, CLPS711X_KEYPAD_COL_COUNT);
-};
+पूर्ण;
 
-struct clps711x_keypad_data {
-	struct regmap			*syscon;
-	int				row_count;
-	unsigned int			row_shift;
-	struct clps711x_gpio_data	*gpio_data;
-};
+काष्ठा clps711x_keypad_data अणु
+	काष्ठा regmap			*syscon;
+	पूर्णांक				row_count;
+	अचिन्हित पूर्णांक			row_shअगरt;
+	काष्ठा clps711x_gpio_data	*gpio_data;
+पूर्ण;
 
-static void clps711x_keypad_poll(struct input_dev *input)
-{
-	const unsigned short *keycodes = input->keycode;
-	struct clps711x_keypad_data *priv = input_get_drvdata(input);
+अटल व्योम clps711x_keypad_poll(काष्ठा input_dev *input)
+अणु
+	स्थिर अचिन्हित लघु *keycodes = input->keycode;
+	काष्ठा clps711x_keypad_data *priv = input_get_drvdata(input);
 	bool sync = false;
-	int col, row;
+	पूर्णांक col, row;
 
-	for (col = 0; col < CLPS711X_KEYPAD_COL_COUNT; col++) {
+	क्रम (col = 0; col < CLPS711X_KEYPAD_COL_COUNT; col++) अणु
 		/* Assert column */
 		regmap_update_bits(priv->syscon, SYSCON_OFFSET,
 				   SYSCON1_KBDSCAN_MASK,
 				   SYSCON1_KBDSCAN(8 + col));
 
 		/* Scan rows */
-		for (row = 0; row < priv->row_count; row++) {
-			struct clps711x_gpio_data *data = &priv->gpio_data[row];
+		क्रम (row = 0; row < priv->row_count; row++) अणु
+			काष्ठा clps711x_gpio_data *data = &priv->gpio_data[row];
 			bool state, state1;
 
-			/* Read twice for protection against fluctuations */
-			do {
+			/* Read twice क्रम protection against fluctuations */
+			करो अणु
 				state = gpiod_get_value_cansleep(data->desc);
 				cond_resched();
 				state1 = gpiod_get_value_cansleep(data->desc);
-			} while (state != state1);
+			पूर्ण जबतक (state != state1);
 
-			if (test_bit(col, data->last_state) != state) {
-				int code = MATRIX_SCAN_CODE(row, col,
-							    priv->row_shift);
+			अगर (test_bit(col, data->last_state) != state) अणु
+				पूर्णांक code = MATRIX_SCAN_CODE(row, col,
+							    priv->row_shअगरt);
 
-				if (state) {
+				अगर (state) अणु
 					set_bit(col, data->last_state);
 					input_event(input,
 						    EV_MSC, MSC_SCAN, code);
-				} else {
+				पूर्ण अन्यथा अणु
 					clear_bit(col, data->last_state);
-				}
+				पूर्ण
 
-				if (keycodes[code])
+				अगर (keycodes[code])
 					input_report_key(input,
 							 keycodes[code], state);
 				sync = true;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* Set all columns to low */
 		regmap_update_bits(priv->syscon, SYSCON_OFFSET,
 				   SYSCON1_KBDSCAN_MASK, SYSCON1_KBDSCAN(1));
-	}
+	पूर्ण
 
-	if (sync)
+	अगर (sync)
 		input_sync(input);
-}
+पूर्ण
 
-static int clps711x_keypad_probe(struct platform_device *pdev)
-{
-	struct clps711x_keypad_data *priv;
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct input_dev *input;
-	u32 poll_interval;
-	int i, err;
+अटल पूर्णांक clps711x_keypad_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clps711x_keypad_data *priv;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा input_dev *input;
+	u32 poll_पूर्णांकerval;
+	पूर्णांक i, err;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->syscon =
 		syscon_regmap_lookup_by_compatible("cirrus,ep7209-syscon1");
-	if (IS_ERR(priv->syscon))
-		return PTR_ERR(priv->syscon);
+	अगर (IS_ERR(priv->syscon))
+		वापस PTR_ERR(priv->syscon);
 
 	priv->row_count = of_gpio_named_count(np, "row-gpios");
-	if (priv->row_count < 1)
-		return -EINVAL;
+	अगर (priv->row_count < 1)
+		वापस -EINVAL;
 
-	priv->gpio_data = devm_kcalloc(dev,
-				priv->row_count, sizeof(*priv->gpio_data),
+	priv->gpio_data = devm_kसुस्मृति(dev,
+				priv->row_count, माप(*priv->gpio_data),
 				GFP_KERNEL);
-	if (!priv->gpio_data)
-		return -ENOMEM;
+	अगर (!priv->gpio_data)
+		वापस -ENOMEM;
 
-	priv->row_shift = get_count_order(CLPS711X_KEYPAD_COL_COUNT);
+	priv->row_shअगरt = get_count_order(CLPS711X_KEYPAD_COL_COUNT);
 
-	for (i = 0; i < priv->row_count; i++) {
-		struct clps711x_gpio_data *data = &priv->gpio_data[i];
+	क्रम (i = 0; i < priv->row_count; i++) अणु
+		काष्ठा clps711x_gpio_data *data = &priv->gpio_data[i];
 
 		data->desc = devm_gpiod_get_index(dev, "row", i, GPIOD_IN);
-		if (IS_ERR(data->desc))
-			return PTR_ERR(data->desc);
-	}
+		अगर (IS_ERR(data->desc))
+			वापस PTR_ERR(data->desc);
+	पूर्ण
 
-	err = of_property_read_u32(np, "poll-interval", &poll_interval);
-	if (err)
-		return err;
+	err = of_property_पढ़ो_u32(np, "poll-interval", &poll_पूर्णांकerval);
+	अगर (err)
+		वापस err;
 
 	input = devm_input_allocate_device(dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	input_set_drvdata(input, priv);
 
 	input->name		= pdev->name;
 	input->dev.parent	= dev;
 	input->id.bustype	= BUS_HOST;
-	input->id.vendor	= 0x0001;
+	input->id.venकरोr	= 0x0001;
 	input->id.product	= 0x0001;
 	input->id.version	= 0x0100;
 
-	err = matrix_keypad_build_keymap(NULL, NULL, priv->row_count,
+	err = matrix_keypad_build_keymap(शून्य, शून्य, priv->row_count,
 					 CLPS711X_KEYPAD_COL_COUNT,
-					 NULL, input);
-	if (err)
-		return err;
+					 शून्य, input);
+	अगर (err)
+		वापस err;
 
 	input_set_capability(input, EV_MSC, MSC_SCAN);
-	if (of_property_read_bool(np, "autorepeat"))
+	अगर (of_property_पढ़ो_bool(np, "autorepeat"))
 		__set_bit(EV_REP, input->evbit);
 
 	/* Set all columns to low */
@@ -153,32 +154,32 @@ static int clps711x_keypad_probe(struct platform_device *pdev)
 
 
 	err = input_setup_polling(input, clps711x_keypad_poll);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	input_set_poll_interval(input, poll_interval);
+	input_set_poll_पूर्णांकerval(input, poll_पूर्णांकerval);
 
-	err = input_register_device(input);
-	if (err)
-		return err;
+	err = input_रेजिस्टर_device(input);
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id clps711x_keypad_of_match[] = {
-	{ .compatible = "cirrus,ep7209-keypad", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id clps711x_keypad_of_match[] = अणु
+	अणु .compatible = "cirrus,ep7209-keypad", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, clps711x_keypad_of_match);
 
-static struct platform_driver clps711x_keypad_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver clps711x_keypad_driver = अणु
+	.driver	= अणु
 		.name		= "clps711x-keypad",
 		.of_match_table	= clps711x_keypad_of_match,
-	},
+	पूर्ण,
 	.probe	= clps711x_keypad_probe,
-};
-module_platform_driver(clps711x_keypad_driver);
+पूर्ण;
+module_platक्रमm_driver(clps711x_keypad_driver);
 
 MODULE_AUTHOR("Alexander Shiyan <shc_work@mail.ru>");
 MODULE_DESCRIPTION("Cirrus Logic CLPS711X Keypad driver");

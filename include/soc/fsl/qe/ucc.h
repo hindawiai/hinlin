@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2006 Freescale Semiconductor, Inc. All rights reserved.
  *
- * Authors: 	Shlomi Gridish <gridish@freescale.com>
- * 		Li Yang <leoli@freescale.com>
+ * Authors: 	Shlomi Gridish <gridish@मुक्तscale.com>
+ * 		Li Yang <leoli@मुक्तscale.com>
  *
  * Description:
- * Internal header file for UCC unit routines.
+ * Internal header file क्रम UCC unit routines.
  */
-#ifndef __UCC_H__
-#define __UCC_H__
+#अगर_अघोषित __UCC_H__
+#घोषणा __UCC_H__
 
-#include <soc/fsl/qe/immap_qe.h>
-#include <soc/fsl/qe/qe.h>
+#समावेश <soc/fsl/qe/immap_qe.h>
+#समावेश <soc/fsl/qe/qe.h>
 
-#define STATISTICS
+#घोषणा STATISTICS
 
-#define UCC_MAX_NUM	8
+#घोषणा UCC_MAX_NUM	8
 
-/* Slow or fast type for UCCs.
+/* Slow or fast type क्रम UCCs.
 */
-enum ucc_speed_type {
+क्रमागत ucc_speed_type अणु
 	UCC_SPEED_TYPE_FAST = UCC_GUEMR_MODE_FAST_RX | UCC_GUEMR_MODE_FAST_TX,
 	UCC_SPEED_TYPE_SLOW = UCC_GUEMR_MODE_SLOW_RX | UCC_GUEMR_MODE_SLOW_TX
-};
+पूर्ण;
 
 /* ucc_set_type
  * Sets UCC to slow or fast mode.
  *
  * ucc_num - (In) number of UCC (0-7).
- * speed   - (In) slow or fast mode for UCC.
+ * speed   - (In) slow or fast mode क्रम UCC.
  */
-int ucc_set_type(unsigned int ucc_num, enum ucc_speed_type speed);
+पूर्णांक ucc_set_type(अचिन्हित पूर्णांक ucc_num, क्रमागत ucc_speed_type speed);
 
-int ucc_set_qe_mux_mii_mng(unsigned int ucc_num);
+पूर्णांक ucc_set_qe_mux_mii_mng(अचिन्हित पूर्णांक ucc_num);
 
-int ucc_set_qe_mux_rxtx(unsigned int ucc_num, enum qe_clock clock,
-	enum comm_dir mode);
-int ucc_set_tdm_rxtx_clk(unsigned int tdm_num, enum qe_clock clock,
-			 enum comm_dir mode);
-int ucc_set_tdm_rxtx_sync(unsigned int tdm_num, enum qe_clock clock,
-			  enum comm_dir mode);
+पूर्णांक ucc_set_qe_mux_rxtx(अचिन्हित पूर्णांक ucc_num, क्रमागत qe_घड़ी घड़ी,
+	क्रमागत comm_dir mode);
+पूर्णांक ucc_set_tdm_rxtx_clk(अचिन्हित पूर्णांक tdm_num, क्रमागत qe_घड़ी घड़ी,
+			 क्रमागत comm_dir mode);
+पूर्णांक ucc_set_tdm_rxtx_sync(अचिन्हित पूर्णांक tdm_num, क्रमागत qe_घड़ी घड़ी,
+			  क्रमागत comm_dir mode);
 
-int ucc_mux_set_grant_tsa_bkpt(unsigned int ucc_num, int set, u32 mask);
+पूर्णांक ucc_mux_set_grant_tsa_bkpt(अचिन्हित पूर्णांक ucc_num, पूर्णांक set, u32 mask);
 
-/* QE MUX clock routing for UCC
+/* QE MUX घड़ी routing क्रम UCC
 */
-static inline int ucc_set_qe_mux_grant(unsigned int ucc_num, int set)
-{
-	return ucc_mux_set_grant_tsa_bkpt(ucc_num, set, QE_CMXUCR_GRANT);
-}
+अटल अंतरभूत पूर्णांक ucc_set_qe_mux_grant(अचिन्हित पूर्णांक ucc_num, पूर्णांक set)
+अणु
+	वापस ucc_mux_set_grant_tsa_bkpt(ucc_num, set, QE_CMXUCR_GRANT);
+पूर्ण
 
-static inline int ucc_set_qe_mux_tsa(unsigned int ucc_num, int set)
-{
-	return ucc_mux_set_grant_tsa_bkpt(ucc_num, set, QE_CMXUCR_TSA);
-}
+अटल अंतरभूत पूर्णांक ucc_set_qe_mux_tsa(अचिन्हित पूर्णांक ucc_num, पूर्णांक set)
+अणु
+	वापस ucc_mux_set_grant_tsa_bkpt(ucc_num, set, QE_CMXUCR_TSA);
+पूर्ण
 
-static inline int ucc_set_qe_mux_bkpt(unsigned int ucc_num, int set)
-{
-	return ucc_mux_set_grant_tsa_bkpt(ucc_num, set, QE_CMXUCR_BKPT);
-}
+अटल अंतरभूत पूर्णांक ucc_set_qe_mux_bkpt(अचिन्हित पूर्णांक ucc_num, पूर्णांक set)
+अणु
+	वापस ucc_mux_set_grant_tsa_bkpt(ucc_num, set, QE_CMXUCR_BKPT);
+पूर्ण
 
-#endif				/* __UCC_H__ */
+#पूर्ण_अगर				/* __UCC_H__ */

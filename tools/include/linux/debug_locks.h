@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LIBLOCKDEP_DEBUG_LOCKS_H_
-#define _LIBLOCKDEP_DEBUG_LOCKS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LIBLOCKDEP_DEBUG_LOCKS_H_
+#घोषणा _LIBLOCKDEP_DEBUG_LOCKS_H_
 
-#include <stddef.h>
-#include <linux/compiler.h>
-#include <asm/bug.h>
+#समावेश <मानकघोष.स>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/bug.h>
 
-#define DEBUG_LOCKS_WARN_ON(x) WARN_ON(x)
+#घोषणा DEBUG_LOCKS_WARN_ON(x) WARN_ON(x)
 
-extern bool debug_locks;
-extern bool debug_locks_silent;
+बाह्य bool debug_locks;
+बाह्य bool debug_locks_silent;
 
-#endif
+#पूर्ण_अगर

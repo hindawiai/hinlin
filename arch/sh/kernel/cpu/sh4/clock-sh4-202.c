@@ -1,174 +1,175 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * arch/sh/kernel/cpu/sh4/clock-sh4-202.c
+ * arch/sh/kernel/cpu/sh4/घड़ी-sh4-202.c
  *
- * Additional SH4-202 support for the clock framework
+ * Additional SH4-202 support क्रम the घड़ी framework
  *
  *  Copyright (C) 2005  Paul Mundt
  */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/clkdev.h>
-#include <asm/clock.h>
-#include <asm/freq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clkdev.h>
+#समावेश <यंत्र/घड़ी.h>
+#समावेश <यंत्र/freq.h>
 
-#define CPG2_FRQCR3	0xfe0a0018
+#घोषणा CPG2_FRQCR3	0xfe0a0018
 
-static int frqcr3_divisors[] = { 1, 2, 3, 4, 6, 8, 16 };
-static int frqcr3_values[]   = { 0, 1, 2, 3, 4, 5, 6  };
+अटल पूर्णांक frqcr3_भागisors[] = अणु 1, 2, 3, 4, 6, 8, 16 पूर्ण;
+अटल पूर्णांक frqcr3_values[]   = अणु 0, 1, 2, 3, 4, 5, 6  पूर्ण;
 
-static unsigned long emi_clk_recalc(struct clk *clk)
-{
-	int idx = __raw_readl(CPG2_FRQCR3) & 0x0007;
-	return clk->parent->rate / frqcr3_divisors[idx];
-}
+अटल अचिन्हित दीर्घ emi_clk_recalc(काष्ठा clk *clk)
+अणु
+	पूर्णांक idx = __raw_पढ़ोl(CPG2_FRQCR3) & 0x0007;
+	वापस clk->parent->rate / frqcr3_भागisors[idx];
+पूर्ण
 
-static inline int frqcr3_lookup(struct clk *clk, unsigned long rate)
-{
-	int divisor = clk->parent->rate / rate;
-	int i;
+अटल अंतरभूत पूर्णांक frqcr3_lookup(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	पूर्णांक भागisor = clk->parent->rate / rate;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(frqcr3_divisors); i++)
-		if (frqcr3_divisors[i] == divisor)
-			return frqcr3_values[i];
+	क्रम (i = 0; i < ARRAY_SIZE(frqcr3_भागisors); i++)
+		अगर (frqcr3_भागisors[i] == भागisor)
+			वापस frqcr3_values[i];
 
 	/* Safe fallback */
-	return 5;
-}
+	वापस 5;
+पूर्ण
 
-static struct sh_clk_ops sh4202_emi_clk_ops = {
+अटल काष्ठा sh_clk_ops sh4202_emi_clk_ops = अणु
 	.recalc		= emi_clk_recalc,
-};
+पूर्ण;
 
-static struct clk sh4202_emi_clk = {
+अटल काष्ठा clk sh4202_emi_clk = अणु
 	.flags		= CLK_ENABLE_ON_INIT,
 	.ops		= &sh4202_emi_clk_ops,
-};
+पूर्ण;
 
-static unsigned long femi_clk_recalc(struct clk *clk)
-{
-	int idx = (__raw_readl(CPG2_FRQCR3) >> 3) & 0x0007;
-	return clk->parent->rate / frqcr3_divisors[idx];
-}
+अटल अचिन्हित दीर्घ femi_clk_recalc(काष्ठा clk *clk)
+अणु
+	पूर्णांक idx = (__raw_पढ़ोl(CPG2_FRQCR3) >> 3) & 0x0007;
+	वापस clk->parent->rate / frqcr3_भागisors[idx];
+पूर्ण
 
-static struct sh_clk_ops sh4202_femi_clk_ops = {
+अटल काष्ठा sh_clk_ops sh4202_femi_clk_ops = अणु
 	.recalc		= femi_clk_recalc,
-};
+पूर्ण;
 
-static struct clk sh4202_femi_clk = {
+अटल काष्ठा clk sh4202_femi_clk = अणु
 	.flags		= CLK_ENABLE_ON_INIT,
 	.ops		= &sh4202_femi_clk_ops,
-};
+पूर्ण;
 
-static void shoc_clk_init(struct clk *clk)
-{
-	int i;
+अटल व्योम shoc_clk_init(काष्ठा clk *clk)
+अणु
+	पूर्णांक i;
 
 	/*
 	 * For some reason, the shoc_clk seems to be set to some really
 	 * insane value at boot (values outside of the allowable frequency
-	 * range for instance). We deal with this by scaling it back down
-	 * to something sensible just in case.
+	 * range क्रम instance). We deal with this by scaling it back करोwn
+	 * to something sensible just in हाल.
 	 *
-	 * Start scaling from the high end down until we find something
-	 * that passes rate verification..
+	 * Start scaling from the high end करोwn until we find something
+	 * that passes rate verअगरication..
 	 */
-	for (i = 0; i < ARRAY_SIZE(frqcr3_divisors); i++) {
-		int divisor = frqcr3_divisors[i];
+	क्रम (i = 0; i < ARRAY_SIZE(frqcr3_भागisors); i++) अणु
+		पूर्णांक भागisor = frqcr3_भागisors[i];
 
-		if (clk->ops->set_rate(clk, clk->parent->rate / divisor) == 0)
-			break;
-	}
+		अगर (clk->ops->set_rate(clk, clk->parent->rate / भागisor) == 0)
+			अवरोध;
+	पूर्ण
 
-	WARN_ON(i == ARRAY_SIZE(frqcr3_divisors));	/* Undefined clock */
-}
+	WARN_ON(i == ARRAY_SIZE(frqcr3_भागisors));	/* Undefined घड़ी */
+पूर्ण
 
-static unsigned long shoc_clk_recalc(struct clk *clk)
-{
-	int idx = (__raw_readl(CPG2_FRQCR3) >> 6) & 0x0007;
-	return clk->parent->rate / frqcr3_divisors[idx];
-}
+अटल अचिन्हित दीर्घ shoc_clk_recalc(काष्ठा clk *clk)
+अणु
+	पूर्णांक idx = (__raw_पढ़ोl(CPG2_FRQCR3) >> 6) & 0x0007;
+	वापस clk->parent->rate / frqcr3_भागisors[idx];
+पूर्ण
 
-static int shoc_clk_verify_rate(struct clk *clk, unsigned long rate)
-{
-	struct clk *bclk = clk_get(NULL, "bus_clk");
-	unsigned long bclk_rate = clk_get_rate(bclk);
+अटल पूर्णांक shoc_clk_verअगरy_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk *bclk = clk_get(शून्य, "bus_clk");
+	अचिन्हित दीर्घ bclk_rate = clk_get_rate(bclk);
 
 	clk_put(bclk);
 
-	if (rate > bclk_rate)
-		return 1;
-	if (rate > 66000000)
-		return 1;
+	अगर (rate > bclk_rate)
+		वापस 1;
+	अगर (rate > 66000000)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int shoc_clk_set_rate(struct clk *clk, unsigned long rate)
-{
-	unsigned long frqcr3;
-	unsigned int tmp;
+अटल पूर्णांक shoc_clk_set_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	अचिन्हित दीर्घ frqcr3;
+	अचिन्हित पूर्णांक पंचांगp;
 
-	/* Make sure we have something sensible to switch to */
-	if (shoc_clk_verify_rate(clk, rate) != 0)
-		return -EINVAL;
+	/* Make sure we have something sensible to चयन to */
+	अगर (shoc_clk_verअगरy_rate(clk, rate) != 0)
+		वापस -EINVAL;
 
-	tmp = frqcr3_lookup(clk, rate);
+	पंचांगp = frqcr3_lookup(clk, rate);
 
-	frqcr3 = __raw_readl(CPG2_FRQCR3);
+	frqcr3 = __raw_पढ़ोl(CPG2_FRQCR3);
 	frqcr3 &= ~(0x0007 << 6);
-	frqcr3 |= tmp << 6;
-	__raw_writel(frqcr3, CPG2_FRQCR3);
+	frqcr3 |= पंचांगp << 6;
+	__raw_ग_लिखोl(frqcr3, CPG2_FRQCR3);
 
-	clk->rate = clk->parent->rate / frqcr3_divisors[tmp];
+	clk->rate = clk->parent->rate / frqcr3_भागisors[पंचांगp];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sh_clk_ops sh4202_shoc_clk_ops = {
+अटल काष्ठा sh_clk_ops sh4202_shoc_clk_ops = अणु
 	.init		= shoc_clk_init,
 	.recalc		= shoc_clk_recalc,
 	.set_rate	= shoc_clk_set_rate,
-};
+पूर्ण;
 
-static struct clk sh4202_shoc_clk = {
+अटल काष्ठा clk sh4202_shoc_clk = अणु
 	.flags		= CLK_ENABLE_ON_INIT,
 	.ops		= &sh4202_shoc_clk_ops,
-};
+पूर्ण;
 
-static struct clk *sh4202_onchip_clocks[] = {
+अटल काष्ठा clk *sh4202_onchip_घड़ीs[] = अणु
 	&sh4202_emi_clk,
 	&sh4202_femi_clk,
 	&sh4202_shoc_clk,
-};
+पूर्ण;
 
-static struct clk_lookup lookups[] = {
-	/* main clocks */
+अटल काष्ठा clk_lookup lookups[] = अणु
+	/* मुख्य घड़ीs */
 	CLKDEV_CON_ID("emi_clk", &sh4202_emi_clk),
 	CLKDEV_CON_ID("femi_clk", &sh4202_femi_clk),
 	CLKDEV_CON_ID("shoc_clk", &sh4202_shoc_clk),
-};
+पूर्ण;
 
-int __init arch_clk_init(void)
-{
-	struct clk *clk;
-	int i, ret = 0;
+पूर्णांक __init arch_clk_init(व्योम)
+अणु
+	काष्ठा clk *clk;
+	पूर्णांक i, ret = 0;
 
 	cpg_clk_init();
 
-	clk = clk_get(NULL, "master_clk");
-	for (i = 0; i < ARRAY_SIZE(sh4202_onchip_clocks); i++) {
-		struct clk *clkp = sh4202_onchip_clocks[i];
+	clk = clk_get(शून्य, "master_clk");
+	क्रम (i = 0; i < ARRAY_SIZE(sh4202_onchip_घड़ीs); i++) अणु
+		काष्ठा clk *clkp = sh4202_onchip_घड़ीs[i];
 
 		clkp->parent = clk;
-		ret |= clk_register(clkp);
-	}
+		ret |= clk_रेजिस्टर(clkp);
+	पूर्ण
 
 	clk_put(clk);
 
 	clkdev_add_table(lookups, ARRAY_SIZE(lookups));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

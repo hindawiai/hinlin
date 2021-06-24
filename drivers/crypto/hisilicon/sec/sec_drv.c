@@ -1,896 +1,897 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for the HiSilicon SEC units found on Hip06 Hip07
+ * Driver क्रम the HiSilicon SEC units found on Hip06 Hip07
  *
  * Copyright (c) 2016-2017 HiSilicon Limited.
  */
-#include <linux/acpi.h>
-#include <linux/atomic.h>
-#include <linux/delay.h>
-#include <linux/dma-direction.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmapool.h>
-#include <linux/io.h>
-#include <linux/iommu.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irqreturn.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-direction.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iommu.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "sec_drv.h"
+#समावेश "sec_drv.h"
 
-#define SEC_QUEUE_AR_FROCE_ALLOC			0
-#define SEC_QUEUE_AR_FROCE_NOALLOC			1
-#define SEC_QUEUE_AR_FROCE_DIS				2
+#घोषणा SEC_QUEUE_AR_FROCE_ALLOC			0
+#घोषणा SEC_QUEUE_AR_FROCE_NOALLOC			1
+#घोषणा SEC_QUEUE_AR_FROCE_DIS				2
 
-#define SEC_QUEUE_AW_FROCE_ALLOC			0
-#define SEC_QUEUE_AW_FROCE_NOALLOC			1
-#define SEC_QUEUE_AW_FROCE_DIS				2
+#घोषणा SEC_QUEUE_AW_FROCE_ALLOC			0
+#घोषणा SEC_QUEUE_AW_FROCE_NOALLOC			1
+#घोषणा SEC_QUEUE_AW_FROCE_DIS				2
 
-/* SEC_ALGSUB registers */
-#define SEC_ALGSUB_CLK_EN_REG				0x03b8
-#define SEC_ALGSUB_CLK_DIS_REG				0x03bc
-#define SEC_ALGSUB_CLK_ST_REG				0x535c
-#define SEC_ALGSUB_RST_REQ_REG				0x0aa8
-#define SEC_ALGSUB_RST_DREQ_REG				0x0aac
-#define SEC_ALGSUB_RST_ST_REG				0x5a54
-#define   SEC_ALGSUB_RST_ST_IS_RST			BIT(0)
+/* SEC_ALGSUB रेजिस्टरs */
+#घोषणा SEC_ALGSUB_CLK_EN_REG				0x03b8
+#घोषणा SEC_ALGSUB_CLK_DIS_REG				0x03bc
+#घोषणा SEC_ALGSUB_CLK_ST_REG				0x535c
+#घोषणा SEC_ALGSUB_RST_REQ_REG				0x0aa8
+#घोषणा SEC_ALGSUB_RST_DREQ_REG				0x0aac
+#घोषणा SEC_ALGSUB_RST_ST_REG				0x5a54
+#घोषणा   SEC_ALGSUB_RST_ST_IS_RST			BIT(0)
 
-#define SEC_ALGSUB_BUILD_RST_REQ_REG			0x0ab8
-#define SEC_ALGSUB_BUILD_RST_DREQ_REG			0x0abc
-#define SEC_ALGSUB_BUILD_RST_ST_REG			0x5a5c
-#define   SEC_ALGSUB_BUILD_RST_ST_IS_RST		BIT(0)
+#घोषणा SEC_ALGSUB_BUILD_RST_REQ_REG			0x0ab8
+#घोषणा SEC_ALGSUB_BUILD_RST_DREQ_REG			0x0abc
+#घोषणा SEC_ALGSUB_BUILD_RST_ST_REG			0x5a5c
+#घोषणा   SEC_ALGSUB_BUILD_RST_ST_IS_RST		BIT(0)
 
-#define SEC_SAA_BASE					0x00001000UL
+#घोषणा SEC_SAA_BASE					0x00001000UL
 
-/* SEC_SAA registers */
-#define SEC_SAA_CTRL_REG(x)	((x) * SEC_SAA_ADDR_SIZE)
-#define   SEC_SAA_CTRL_GET_QM_EN			BIT(0)
+/* SEC_SAA रेजिस्टरs */
+#घोषणा SEC_SAA_CTRL_REG(x)	((x) * SEC_SAA_ADDR_SIZE)
+#घोषणा   SEC_SAA_CTRL_GET_QM_EN			BIT(0)
 
-#define SEC_ST_INTMSK1_REG				0x0200
-#define SEC_ST_RINT1_REG				0x0400
-#define SEC_ST_INTSTS1_REG				0x0600
-#define SEC_BD_MNG_STAT_REG				0x0800
-#define SEC_PARSING_STAT_REG				0x0804
-#define SEC_LOAD_TIME_OUT_CNT_REG			0x0808
-#define SEC_CORE_WORK_TIME_OUT_CNT_REG			0x080c
-#define SEC_BACK_TIME_OUT_CNT_REG			0x0810
-#define SEC_BD1_PARSING_RD_TIME_OUT_CNT_REG		0x0814
-#define SEC_BD1_PARSING_WR_TIME_OUT_CNT_REG		0x0818
-#define SEC_BD2_PARSING_RD_TIME_OUT_CNT_REG		0x081c
-#define SEC_BD2_PARSING_WR_TIME_OUT_CNT_REG		0x0820
-#define SEC_SAA_ACC_REG					0x083c
-#define SEC_BD_NUM_CNT_IN_SEC_REG			0x0858
-#define SEC_LOAD_WORK_TIME_CNT_REG			0x0860
-#define SEC_CORE_WORK_WORK_TIME_CNT_REG			0x0864
-#define SEC_BACK_WORK_TIME_CNT_REG			0x0868
-#define SEC_SAA_IDLE_TIME_CNT_REG			0x086c
-#define SEC_SAA_CLK_CNT_REG				0x0870
+#घोषणा SEC_ST_INTMSK1_REG				0x0200
+#घोषणा SEC_ST_RINT1_REG				0x0400
+#घोषणा SEC_ST_INTSTS1_REG				0x0600
+#घोषणा SEC_BD_MNG_STAT_REG				0x0800
+#घोषणा SEC_PARSING_STAT_REG				0x0804
+#घोषणा SEC_LOAD_TIME_OUT_CNT_REG			0x0808
+#घोषणा SEC_CORE_WORK_TIME_OUT_CNT_REG			0x080c
+#घोषणा SEC_BACK_TIME_OUT_CNT_REG			0x0810
+#घोषणा SEC_BD1_PARSING_RD_TIME_OUT_CNT_REG		0x0814
+#घोषणा SEC_BD1_PARSING_WR_TIME_OUT_CNT_REG		0x0818
+#घोषणा SEC_BD2_PARSING_RD_TIME_OUT_CNT_REG		0x081c
+#घोषणा SEC_BD2_PARSING_WR_TIME_OUT_CNT_REG		0x0820
+#घोषणा SEC_SAA_ACC_REG					0x083c
+#घोषणा SEC_BD_NUM_CNT_IN_SEC_REG			0x0858
+#घोषणा SEC_LOAD_WORK_TIME_CNT_REG			0x0860
+#घोषणा SEC_CORE_WORK_WORK_TIME_CNT_REG			0x0864
+#घोषणा SEC_BACK_WORK_TIME_CNT_REG			0x0868
+#घोषणा SEC_SAA_IDLE_TIME_CNT_REG			0x086c
+#घोषणा SEC_SAA_CLK_CNT_REG				0x0870
 
-/* SEC_COMMON registers */
-#define SEC_CLK_EN_REG					0x0000
-#define SEC_CTRL_REG					0x0004
+/* SEC_COMMON रेजिस्टरs */
+#घोषणा SEC_CLK_EN_REG					0x0000
+#घोषणा SEC_CTRL_REG					0x0004
 
-#define SEC_COMMON_CNT_CLR_CE_REG			0x0008
-#define   SEC_COMMON_CNT_CLR_CE_CLEAR			BIT(0)
-#define   SEC_COMMON_CNT_CLR_CE_SNAP_EN			BIT(1)
+#घोषणा SEC_COMMON_CNT_CLR_CE_REG			0x0008
+#घोषणा   SEC_COMMON_CNT_CLR_CE_CLEAR			BIT(0)
+#घोषणा   SEC_COMMON_CNT_CLR_CE_SNAP_EN			BIT(1)
 
-#define SEC_SECURE_CTRL_REG				0x000c
-#define SEC_AXI_CACHE_CFG_REG				0x0010
-#define SEC_AXI_QOS_CFG_REG				0x0014
-#define SEC_IPV4_MASK_TABLE_REG				0x0020
-#define SEC_IPV6_MASK_TABLE_X_REG(x)	(0x0024 + (x) * 4)
-#define SEC_FSM_MAX_CNT_REG				0x0064
+#घोषणा SEC_SECURE_CTRL_REG				0x000c
+#घोषणा SEC_AXI_CACHE_CFG_REG				0x0010
+#घोषणा SEC_AXI_QOS_CFG_REG				0x0014
+#घोषणा SEC_IPV4_MASK_TABLE_REG				0x0020
+#घोषणा SEC_IPV6_MASK_TABLE_X_REG(x)	(0x0024 + (x) * 4)
+#घोषणा SEC_FSM_MAX_CNT_REG				0x0064
 
-#define SEC_CTRL2_REG					0x0068
-#define   SEC_CTRL2_DATA_AXI_RD_OTSD_CFG_M		GENMASK(3, 0)
-#define   SEC_CTRL2_DATA_AXI_RD_OTSD_CFG_S		0
-#define   SEC_CTRL2_DATA_AXI_WR_OTSD_CFG_M		GENMASK(6, 4)
-#define   SEC_CTRL2_DATA_AXI_WR_OTSD_CFG_S		4
-#define   SEC_CTRL2_CLK_GATE_EN				BIT(7)
-#define   SEC_CTRL2_ENDIAN_BD				BIT(8)
-#define   SEC_CTRL2_ENDIAN_BD_TYPE			BIT(9)
+#घोषणा SEC_CTRL2_REG					0x0068
+#घोषणा   SEC_CTRL2_DATA_AXI_RD_OTSD_CFG_M		GENMASK(3, 0)
+#घोषणा   SEC_CTRL2_DATA_AXI_RD_OTSD_CFG_S		0
+#घोषणा   SEC_CTRL2_DATA_AXI_WR_OTSD_CFG_M		GENMASK(6, 4)
+#घोषणा   SEC_CTRL2_DATA_AXI_WR_OTSD_CFG_S		4
+#घोषणा   SEC_CTRL2_CLK_GATE_EN				BIT(7)
+#घोषणा   SEC_CTRL2_ENDIAN_BD				BIT(8)
+#घोषणा   SEC_CTRL2_ENDIAN_BD_TYPE			BIT(9)
 
-#define SEC_CNT_PRECISION_CFG_REG			0x006c
-#define SEC_DEBUG_BD_CFG_REG				0x0070
-#define   SEC_DEBUG_BD_CFG_WB_NORMAL			BIT(0)
-#define   SEC_DEBUG_BD_CFG_WB_EN			BIT(1)
+#घोषणा SEC_CNT_PRECISION_CFG_REG			0x006c
+#घोषणा SEC_DEBUG_BD_CFG_REG				0x0070
+#घोषणा   SEC_DEBUG_BD_CFG_WB_NORMAL			BIT(0)
+#घोषणा   SEC_DEBUG_BD_CFG_WB_EN			BIT(1)
 
-#define SEC_Q_SIGHT_SEL					0x0074
-#define SEC_Q_SIGHT_HIS_CLR				0x0078
-#define SEC_Q_VMID_CFG_REG(q)		(0x0100 + (q) * 4)
-#define SEC_Q_WEIGHT_CFG_REG(q)		(0x200 + (q) * 4)
-#define SEC_STAT_CLR_REG				0x0a00
-#define SEC_SAA_IDLE_CNT_CLR_REG			0x0a04
-#define SEC_QM_CPL_Q_IDBUF_DFX_CFG_REG			0x0b00
-#define SEC_QM_CPL_Q_IDBUF_DFX_RESULT_REG		0x0b04
-#define SEC_QM_BD_DFX_CFG_REG				0x0b08
-#define SEC_QM_BD_DFX_RESULT_REG			0x0b0c
-#define SEC_QM_BDID_DFX_RESULT_REG			0x0b10
-#define SEC_QM_BD_DFIFO_STATUS_REG			0x0b14
-#define SEC_QM_BD_DFX_CFG2_REG				0x0b1c
-#define SEC_QM_BD_DFX_RESULT2_REG			0x0b20
-#define SEC_QM_BD_IDFIFO_STATUS_REG			0x0b18
-#define SEC_QM_BD_DFIFO_STATUS2_REG			0x0b28
-#define SEC_QM_BD_IDFIFO_STATUS2_REG			0x0b2c
+#घोषणा SEC_Q_SIGHT_SEL					0x0074
+#घोषणा SEC_Q_SIGHT_HIS_CLR				0x0078
+#घोषणा SEC_Q_VMID_CFG_REG(q)		(0x0100 + (q) * 4)
+#घोषणा SEC_Q_WEIGHT_CFG_REG(q)		(0x200 + (q) * 4)
+#घोषणा SEC_STAT_CLR_REG				0x0a00
+#घोषणा SEC_SAA_IDLE_CNT_CLR_REG			0x0a04
+#घोषणा SEC_QM_CPL_Q_IDBUF_DFX_CFG_REG			0x0b00
+#घोषणा SEC_QM_CPL_Q_IDBUF_DFX_RESULT_REG		0x0b04
+#घोषणा SEC_QM_BD_DFX_CFG_REG				0x0b08
+#घोषणा SEC_QM_BD_DFX_RESULT_REG			0x0b0c
+#घोषणा SEC_QM_BDID_DFX_RESULT_REG			0x0b10
+#घोषणा SEC_QM_BD_DFIFO_STATUS_REG			0x0b14
+#घोषणा SEC_QM_BD_DFX_CFG2_REG				0x0b1c
+#घोषणा SEC_QM_BD_DFX_RESULT2_REG			0x0b20
+#घोषणा SEC_QM_BD_IDFIFO_STATUS_REG			0x0b18
+#घोषणा SEC_QM_BD_DFIFO_STATUS2_REG			0x0b28
+#घोषणा SEC_QM_BD_IDFIFO_STATUS2_REG			0x0b2c
 
-#define SEC_HASH_IPV4_MASK				0xfff00000
-#define SEC_MAX_SAA_NUM					0xa
-#define SEC_SAA_ADDR_SIZE				0x1000
+#घोषणा SEC_HASH_IPV4_MASK				0xfff00000
+#घोषणा SEC_MAX_SAA_NUM					0xa
+#घोषणा SEC_SAA_ADDR_SIZE				0x1000
 
-#define SEC_Q_INIT_REG					0x0
-#define   SEC_Q_INIT_WO_STAT_CLEAR			0x2
-#define   SEC_Q_INIT_AND_STAT_CLEAR			0x3
+#घोषणा SEC_Q_INIT_REG					0x0
+#घोषणा   SEC_Q_INIT_WO_STAT_CLEAR			0x2
+#घोषणा   SEC_Q_INIT_AND_STAT_CLEAR			0x3
 
-#define SEC_Q_CFG_REG					0x8
-#define   SEC_Q_CFG_REORDER				BIT(0)
+#घोषणा SEC_Q_CFG_REG					0x8
+#घोषणा   SEC_Q_CFG_REORDER				BIT(0)
 
-#define SEC_Q_PROC_NUM_CFG_REG				0x10
-#define SEC_QUEUE_ENB_REG				0x18
+#घोषणा SEC_Q_PROC_NUM_CFG_REG				0x10
+#घोषणा SEC_QUEUE_ENB_REG				0x18
 
-#define SEC_Q_DEPTH_CFG_REG				0x50
-#define   SEC_Q_DEPTH_CFG_DEPTH_M			GENMASK(11, 0)
-#define   SEC_Q_DEPTH_CFG_DEPTH_S			0
+#घोषणा SEC_Q_DEPTH_CFG_REG				0x50
+#घोषणा   SEC_Q_DEPTH_CFG_DEPTH_M			GENMASK(11, 0)
+#घोषणा   SEC_Q_DEPTH_CFG_DEPTH_S			0
 
-#define SEC_Q_BASE_HADDR_REG				0x54
-#define SEC_Q_BASE_LADDR_REG				0x58
-#define SEC_Q_WR_PTR_REG				0x5c
-#define SEC_Q_OUTORDER_BASE_HADDR_REG			0x60
-#define SEC_Q_OUTORDER_BASE_LADDR_REG			0x64
-#define SEC_Q_OUTORDER_RD_PTR_REG			0x68
-#define SEC_Q_OT_TH_REG					0x6c
+#घोषणा SEC_Q_BASE_HADDR_REG				0x54
+#घोषणा SEC_Q_BASE_LADDR_REG				0x58
+#घोषणा SEC_Q_WR_PTR_REG				0x5c
+#घोषणा SEC_Q_OUTORDER_BASE_HADDR_REG			0x60
+#घोषणा SEC_Q_OUTORDER_BASE_LADDR_REG			0x64
+#घोषणा SEC_Q_OUTORDER_RD_PTR_REG			0x68
+#घोषणा SEC_Q_OT_TH_REG					0x6c
 
-#define SEC_Q_ARUSER_CFG_REG				0x70
-#define   SEC_Q_ARUSER_CFG_FA				BIT(0)
-#define   SEC_Q_ARUSER_CFG_FNA				BIT(1)
-#define   SEC_Q_ARUSER_CFG_RINVLD			BIT(2)
-#define   SEC_Q_ARUSER_CFG_PKG				BIT(3)
+#घोषणा SEC_Q_ARUSER_CFG_REG				0x70
+#घोषणा   SEC_Q_ARUSER_CFG_FA				BIT(0)
+#घोषणा   SEC_Q_ARUSER_CFG_FNA				BIT(1)
+#घोषणा   SEC_Q_ARUSER_CFG_RINVLD			BIT(2)
+#घोषणा   SEC_Q_ARUSER_CFG_PKG				BIT(3)
 
-#define SEC_Q_AWUSER_CFG_REG				0x74
-#define   SEC_Q_AWUSER_CFG_FA				BIT(0)
-#define   SEC_Q_AWUSER_CFG_FNA				BIT(1)
-#define   SEC_Q_AWUSER_CFG_PKG				BIT(2)
+#घोषणा SEC_Q_AWUSER_CFG_REG				0x74
+#घोषणा   SEC_Q_AWUSER_CFG_FA				BIT(0)
+#घोषणा   SEC_Q_AWUSER_CFG_FNA				BIT(1)
+#घोषणा   SEC_Q_AWUSER_CFG_PKG				BIT(2)
 
-#define SEC_Q_ERR_BASE_HADDR_REG			0x7c
-#define SEC_Q_ERR_BASE_LADDR_REG			0x80
-#define SEC_Q_CFG_VF_NUM_REG				0x84
-#define SEC_Q_SOFT_PROC_PTR_REG				0x88
-#define SEC_Q_FAIL_INT_MSK_REG				0x300
-#define SEC_Q_FLOW_INT_MKS_REG				0x304
-#define SEC_Q_FAIL_RINT_REG				0x400
-#define SEC_Q_FLOW_RINT_REG				0x404
-#define SEC_Q_FAIL_INT_STATUS_REG			0x500
-#define SEC_Q_FLOW_INT_STATUS_REG			0x504
-#define SEC_Q_STATUS_REG				0x600
-#define SEC_Q_RD_PTR_REG				0x604
-#define SEC_Q_PRO_PTR_REG				0x608
-#define SEC_Q_OUTORDER_WR_PTR_REG			0x60c
-#define SEC_Q_OT_CNT_STATUS_REG				0x610
-#define SEC_Q_INORDER_BD_NUM_ST_REG			0x650
-#define SEC_Q_INORDER_GET_FLAG_ST_REG			0x654
-#define SEC_Q_INORDER_ADD_FLAG_ST_REG			0x658
-#define SEC_Q_INORDER_TASK_INT_NUM_LEFT_ST_REG		0x65c
-#define SEC_Q_RD_DONE_PTR_REG				0x660
-#define SEC_Q_CPL_Q_BD_NUM_ST_REG			0x700
-#define SEC_Q_CPL_Q_PTR_ST_REG				0x704
-#define SEC_Q_CPL_Q_H_ADDR_ST_REG			0x708
-#define SEC_Q_CPL_Q_L_ADDR_ST_REG			0x70c
-#define SEC_Q_CPL_TASK_INT_NUM_LEFT_ST_REG		0x710
-#define SEC_Q_WRR_ID_CHECK_REG				0x714
-#define SEC_Q_CPLQ_FULL_CHECK_REG			0x718
-#define SEC_Q_SUCCESS_BD_CNT_REG			0x800
-#define SEC_Q_FAIL_BD_CNT_REG				0x804
-#define SEC_Q_GET_BD_CNT_REG				0x808
-#define SEC_Q_IVLD_CNT_REG				0x80c
-#define SEC_Q_BD_PROC_GET_CNT_REG			0x810
-#define SEC_Q_BD_PROC_DONE_CNT_REG			0x814
-#define SEC_Q_LAT_CLR_REG				0x850
-#define SEC_Q_PKT_LAT_MAX_REG				0x854
-#define SEC_Q_PKT_LAT_AVG_REG				0x858
-#define SEC_Q_PKT_LAT_MIN_REG				0x85c
-#define SEC_Q_ID_CLR_CFG_REG				0x900
-#define SEC_Q_1ST_BD_ERR_ID_REG				0x904
-#define SEC_Q_1ST_AUTH_FAIL_ID_REG			0x908
-#define SEC_Q_1ST_RD_ERR_ID_REG				0x90c
-#define SEC_Q_1ST_ECC2_ERR_ID_REG			0x910
-#define SEC_Q_1ST_IVLD_ID_REG				0x914
-#define SEC_Q_1ST_BD_WR_ERR_ID_REG			0x918
-#define SEC_Q_1ST_ERR_BD_WR_ERR_ID_REG			0x91c
-#define SEC_Q_1ST_BD_MAC_WR_ERR_ID_REG			0x920
+#घोषणा SEC_Q_ERR_BASE_HADDR_REG			0x7c
+#घोषणा SEC_Q_ERR_BASE_LADDR_REG			0x80
+#घोषणा SEC_Q_CFG_VF_NUM_REG				0x84
+#घोषणा SEC_Q_SOFT_PROC_PTR_REG				0x88
+#घोषणा SEC_Q_FAIL_INT_MSK_REG				0x300
+#घोषणा SEC_Q_FLOW_INT_MKS_REG				0x304
+#घोषणा SEC_Q_FAIL_RINT_REG				0x400
+#घोषणा SEC_Q_FLOW_RINT_REG				0x404
+#घोषणा SEC_Q_FAIL_INT_STATUS_REG			0x500
+#घोषणा SEC_Q_FLOW_INT_STATUS_REG			0x504
+#घोषणा SEC_Q_STATUS_REG				0x600
+#घोषणा SEC_Q_RD_PTR_REG				0x604
+#घोषणा SEC_Q_PRO_PTR_REG				0x608
+#घोषणा SEC_Q_OUTORDER_WR_PTR_REG			0x60c
+#घोषणा SEC_Q_OT_CNT_STATUS_REG				0x610
+#घोषणा SEC_Q_INORDER_BD_NUM_ST_REG			0x650
+#घोषणा SEC_Q_INORDER_GET_FLAG_ST_REG			0x654
+#घोषणा SEC_Q_INORDER_ADD_FLAG_ST_REG			0x658
+#घोषणा SEC_Q_INORDER_TASK_INT_NUM_LEFT_ST_REG		0x65c
+#घोषणा SEC_Q_RD_DONE_PTR_REG				0x660
+#घोषणा SEC_Q_CPL_Q_BD_NUM_ST_REG			0x700
+#घोषणा SEC_Q_CPL_Q_PTR_ST_REG				0x704
+#घोषणा SEC_Q_CPL_Q_H_ADDR_ST_REG			0x708
+#घोषणा SEC_Q_CPL_Q_L_ADDR_ST_REG			0x70c
+#घोषणा SEC_Q_CPL_TASK_INT_NUM_LEFT_ST_REG		0x710
+#घोषणा SEC_Q_WRR_ID_CHECK_REG				0x714
+#घोषणा SEC_Q_CPLQ_FULL_CHECK_REG			0x718
+#घोषणा SEC_Q_SUCCESS_BD_CNT_REG			0x800
+#घोषणा SEC_Q_FAIL_BD_CNT_REG				0x804
+#घोषणा SEC_Q_GET_BD_CNT_REG				0x808
+#घोषणा SEC_Q_IVLD_CNT_REG				0x80c
+#घोषणा SEC_Q_BD_PROC_GET_CNT_REG			0x810
+#घोषणा SEC_Q_BD_PROC_DONE_CNT_REG			0x814
+#घोषणा SEC_Q_LAT_CLR_REG				0x850
+#घोषणा SEC_Q_PKT_LAT_MAX_REG				0x854
+#घोषणा SEC_Q_PKT_LAT_AVG_REG				0x858
+#घोषणा SEC_Q_PKT_LAT_MIN_REG				0x85c
+#घोषणा SEC_Q_ID_CLR_CFG_REG				0x900
+#घोषणा SEC_Q_1ST_BD_ERR_ID_REG				0x904
+#घोषणा SEC_Q_1ST_AUTH_FAIL_ID_REG			0x908
+#घोषणा SEC_Q_1ST_RD_ERR_ID_REG				0x90c
+#घोषणा SEC_Q_1ST_ECC2_ERR_ID_REG			0x910
+#घोषणा SEC_Q_1ST_IVLD_ID_REG				0x914
+#घोषणा SEC_Q_1ST_BD_WR_ERR_ID_REG			0x918
+#घोषणा SEC_Q_1ST_ERR_BD_WR_ERR_ID_REG			0x91c
+#घोषणा SEC_Q_1ST_BD_MAC_WR_ERR_ID_REG			0x920
 
-struct sec_debug_bd_info {
-#define SEC_DEBUG_BD_INFO_SOFT_ERR_CHECK_M	GENMASK(22, 0)
+काष्ठा sec_debug_bd_info अणु
+#घोषणा SEC_DEBUG_BD_INFO_SOFT_ERR_CHECK_M	GENMASK(22, 0)
 	u32 soft_err_check;
-#define SEC_DEBUG_BD_INFO_HARD_ERR_CHECK_M	GENMASK(9, 0)
+#घोषणा SEC_DEBUG_BD_INFO_HARD_ERR_CHECK_M	GENMASK(9, 0)
 	u32 hard_err_check;
 	u32 icv_mac1st_word;
-#define SEC_DEBUG_BD_INFO_GET_ID_M		GENMASK(19, 0)
+#घोषणा SEC_DEBUG_BD_INFO_GET_ID_M		GENMASK(19, 0)
 	u32 sec_get_id;
 	/* W4---W15 */
 	u32 reserv_left[12];
-};
+पूर्ण;
 
-struct sec_out_bd_info	{
-#define SEC_OUT_BD_INFO_Q_ID_M			GENMASK(11, 0)
-#define SEC_OUT_BD_INFO_ECC_2BIT_ERR		BIT(14)
+काष्ठा sec_out_bd_info	अणु
+#घोषणा SEC_OUT_BD_INFO_Q_ID_M			GENMASK(11, 0)
+#घोषणा SEC_OUT_BD_INFO_ECC_2BIT_ERR		BIT(14)
 	u16 data;
-};
+पूर्ण;
 
-#define SEC_MAX_DEVICES				8
-static struct sec_dev_info *sec_devices[SEC_MAX_DEVICES];
-static DEFINE_MUTEX(sec_id_lock);
+#घोषणा SEC_MAX_DEVICES				8
+अटल काष्ठा sec_dev_info *sec_devices[SEC_MAX_DEVICES];
+अटल DEFINE_MUTEX(sec_id_lock);
 
-static int sec_queue_map_io(struct sec_queue *queue)
-{
-	struct device *dev = queue->dev_info->dev;
-	struct resource *res;
+अटल पूर्णांक sec_queue_map_io(काष्ठा sec_queue *queue)
+अणु
+	काष्ठा device *dev = queue->dev_info->dev;
+	काष्ठा resource *res;
 
-	res = platform_get_resource(to_platform_device(dev),
+	res = platक्रमm_get_resource(to_platक्रमm_device(dev),
 				    IORESOURCE_MEM,
 				    2 + queue->queue_id);
-	if (!res) {
+	अगर (!res) अणु
 		dev_err(dev, "Failed to get queue %u memory resource\n",
 			queue->queue_id);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	queue->regs = ioremap(res->start, resource_size(res));
-	if (!queue->regs)
-		return -ENOMEM;
+	अगर (!queue->regs)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sec_queue_unmap_io(struct sec_queue *queue)
-{
+अटल व्योम sec_queue_unmap_io(काष्ठा sec_queue *queue)
+अणु
 	 iounmap(queue->regs);
-}
+पूर्ण
 
-static int sec_queue_ar_pkgattr(struct sec_queue *queue, u32 ar_pkg)
-{
-	void __iomem *addr = queue->regs +  SEC_Q_ARUSER_CFG_REG;
+अटल पूर्णांक sec_queue_ar_pkgattr(काष्ठा sec_queue *queue, u32 ar_pkg)
+अणु
+	व्योम __iomem *addr = queue->regs +  SEC_Q_ARUSER_CFG_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
-	if (ar_pkg)
+	regval = पढ़ोl_relaxed(addr);
+	अगर (ar_pkg)
 		regval |= SEC_Q_ARUSER_CFG_PKG;
-	else
+	अन्यथा
 		regval &= ~SEC_Q_ARUSER_CFG_PKG;
-	writel_relaxed(regval, addr);
+	ग_लिखोl_relaxed(regval, addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sec_queue_aw_pkgattr(struct sec_queue *queue, u32 aw_pkg)
-{
-	void __iomem *addr = queue->regs + SEC_Q_AWUSER_CFG_REG;
+अटल पूर्णांक sec_queue_aw_pkgattr(काष्ठा sec_queue *queue, u32 aw_pkg)
+अणु
+	व्योम __iomem *addr = queue->regs + SEC_Q_AWUSER_CFG_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
+	regval = पढ़ोl_relaxed(addr);
 	regval |= SEC_Q_AWUSER_CFG_PKG;
-	writel_relaxed(regval, addr);
+	ग_लिखोl_relaxed(regval, addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sec_clk_en(struct sec_dev_info *info)
-{
-	void __iomem *base = info->regs[SEC_COMMON];
+अटल पूर्णांक sec_clk_en(काष्ठा sec_dev_info *info)
+अणु
+	व्योम __iomem *base = info->regs[SEC_COMMON];
 	u32 i = 0;
 
-	writel_relaxed(0x7, base + SEC_ALGSUB_CLK_EN_REG);
-	do {
+	ग_लिखोl_relaxed(0x7, base + SEC_ALGSUB_CLK_EN_REG);
+	करो अणु
 		usleep_range(1000, 10000);
-		if ((readl_relaxed(base + SEC_ALGSUB_CLK_ST_REG) & 0x7) == 0x7)
-			return 0;
+		अगर ((पढ़ोl_relaxed(base + SEC_ALGSUB_CLK_ST_REG) & 0x7) == 0x7)
+			वापस 0;
 		i++;
-	} while (i < 10);
+	पूर्ण जबतक (i < 10);
 	dev_err(info->dev, "sec clock enable fail!\n");
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int sec_clk_dis(struct sec_dev_info *info)
-{
-	void __iomem *base = info->regs[SEC_COMMON];
+अटल पूर्णांक sec_clk_dis(काष्ठा sec_dev_info *info)
+अणु
+	व्योम __iomem *base = info->regs[SEC_COMMON];
 	u32 i = 0;
 
-	writel_relaxed(0x7, base + SEC_ALGSUB_CLK_DIS_REG);
-	do {
+	ग_लिखोl_relaxed(0x7, base + SEC_ALGSUB_CLK_DIS_REG);
+	करो अणु
 		usleep_range(1000, 10000);
-		if ((readl_relaxed(base + SEC_ALGSUB_CLK_ST_REG) & 0x7) == 0)
-			return 0;
+		अगर ((पढ़ोl_relaxed(base + SEC_ALGSUB_CLK_ST_REG) & 0x7) == 0)
+			वापस 0;
 		i++;
-	} while (i < 10);
+	पूर्ण जबतक (i < 10);
 	dev_err(info->dev, "sec clock disable fail!\n");
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int sec_reset_whole_module(struct sec_dev_info *info)
-{
-	void __iomem *base = info->regs[SEC_COMMON];
+अटल पूर्णांक sec_reset_whole_module(काष्ठा sec_dev_info *info)
+अणु
+	व्योम __iomem *base = info->regs[SEC_COMMON];
 	bool is_reset, b_is_reset;
 	u32 i = 0;
 
-	writel_relaxed(1, base + SEC_ALGSUB_RST_REQ_REG);
-	writel_relaxed(1, base + SEC_ALGSUB_BUILD_RST_REQ_REG);
-	while (1) {
+	ग_लिखोl_relaxed(1, base + SEC_ALGSUB_RST_REQ_REG);
+	ग_लिखोl_relaxed(1, base + SEC_ALGSUB_BUILD_RST_REQ_REG);
+	जबतक (1) अणु
 		usleep_range(1000, 10000);
-		is_reset = readl_relaxed(base + SEC_ALGSUB_RST_ST_REG) &
+		is_reset = पढ़ोl_relaxed(base + SEC_ALGSUB_RST_ST_REG) &
 			SEC_ALGSUB_RST_ST_IS_RST;
-		b_is_reset = readl_relaxed(base + SEC_ALGSUB_BUILD_RST_ST_REG) &
+		b_is_reset = पढ़ोl_relaxed(base + SEC_ALGSUB_BUILD_RST_ST_REG) &
 			SEC_ALGSUB_BUILD_RST_ST_IS_RST;
-		if (is_reset && b_is_reset)
-			break;
+		अगर (is_reset && b_is_reset)
+			अवरोध;
 		i++;
-		if (i > 10) {
+		अगर (i > 10) अणु
 			dev_err(info->dev, "Reset req failed\n");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	i = 0;
-	writel_relaxed(1, base + SEC_ALGSUB_RST_DREQ_REG);
-	writel_relaxed(1, base + SEC_ALGSUB_BUILD_RST_DREQ_REG);
-	while (1) {
+	ग_लिखोl_relaxed(1, base + SEC_ALGSUB_RST_DREQ_REG);
+	ग_लिखोl_relaxed(1, base + SEC_ALGSUB_BUILD_RST_DREQ_REG);
+	जबतक (1) अणु
 		usleep_range(1000, 10000);
-		is_reset = readl_relaxed(base + SEC_ALGSUB_RST_ST_REG) &
+		is_reset = पढ़ोl_relaxed(base + SEC_ALGSUB_RST_ST_REG) &
 			SEC_ALGSUB_RST_ST_IS_RST;
-		b_is_reset = readl_relaxed(base + SEC_ALGSUB_BUILD_RST_ST_REG) &
+		b_is_reset = पढ़ोl_relaxed(base + SEC_ALGSUB_BUILD_RST_ST_REG) &
 			SEC_ALGSUB_BUILD_RST_ST_IS_RST;
-		if (!is_reset && !b_is_reset)
-			break;
+		अगर (!is_reset && !b_is_reset)
+			अवरोध;
 
 		i++;
-		if (i > 10) {
+		अगर (i > 10) अणु
 			dev_err(info->dev, "Reset dreq failed\n");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sec_bd_endian_little(struct sec_dev_info *info)
-{
-	void __iomem *addr = info->regs[SEC_SAA] + SEC_CTRL2_REG;
+अटल व्योम sec_bd_endian_little(काष्ठा sec_dev_info *info)
+अणु
+	व्योम __iomem *addr = info->regs[SEC_SAA] + SEC_CTRL2_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
+	regval = पढ़ोl_relaxed(addr);
 	regval &= ~(SEC_CTRL2_ENDIAN_BD | SEC_CTRL2_ENDIAN_BD_TYPE);
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
 /*
  * sec_cache_config - configure optimum cache placement
  */
-static void sec_cache_config(struct sec_dev_info *info)
-{
-	struct iommu_domain *domain;
-	void __iomem *addr = info->regs[SEC_SAA] + SEC_CTRL_REG;
+अटल व्योम sec_cache_config(काष्ठा sec_dev_info *info)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य;
+	व्योम __iomem *addr = info->regs[SEC_SAA] + SEC_CTRL_REG;
 
-	domain = iommu_get_domain_for_dev(info->dev);
+	करोमुख्य = iommu_get_करोमुख्य_क्रम_dev(info->dev);
 
 	/* Check that translation is occurring */
-	if (domain && (domain->type & __IOMMU_DOMAIN_PAGING))
-		writel_relaxed(0x44cf9e, addr);
-	else
-		writel_relaxed(0x4cfd9, addr);
-}
+	अगर (करोमुख्य && (करोमुख्य->type & __IOMMU_DOMAIN_PAGING))
+		ग_लिखोl_relaxed(0x44cf9e, addr);
+	अन्यथा
+		ग_लिखोl_relaxed(0x4cfd9, addr);
+पूर्ण
 
-static void sec_data_axiwr_otsd_cfg(struct sec_dev_info *info, u32 cfg)
-{
-	void __iomem *addr = info->regs[SEC_SAA] + SEC_CTRL2_REG;
+अटल व्योम sec_data_axiwr_otsd_cfg(काष्ठा sec_dev_info *info, u32 cfg)
+अणु
+	व्योम __iomem *addr = info->regs[SEC_SAA] + SEC_CTRL2_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
+	regval = पढ़ोl_relaxed(addr);
 	regval &= ~SEC_CTRL2_DATA_AXI_WR_OTSD_CFG_M;
 	regval |= (cfg << SEC_CTRL2_DATA_AXI_WR_OTSD_CFG_S) &
 		SEC_CTRL2_DATA_AXI_WR_OTSD_CFG_M;
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
-static void sec_data_axird_otsd_cfg(struct sec_dev_info *info, u32 cfg)
-{
-	void __iomem *addr = info->regs[SEC_SAA] + SEC_CTRL2_REG;
+अटल व्योम sec_data_axird_otsd_cfg(काष्ठा sec_dev_info *info, u32 cfg)
+अणु
+	व्योम __iomem *addr = info->regs[SEC_SAA] + SEC_CTRL2_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
+	regval = पढ़ोl_relaxed(addr);
 	regval &= ~SEC_CTRL2_DATA_AXI_RD_OTSD_CFG_M;
 	regval |= (cfg << SEC_CTRL2_DATA_AXI_RD_OTSD_CFG_S) &
 		SEC_CTRL2_DATA_AXI_RD_OTSD_CFG_M;
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
-static void sec_clk_gate_en(struct sec_dev_info *info, bool clkgate)
-{
-	void __iomem *addr = info->regs[SEC_SAA] + SEC_CTRL2_REG;
+अटल व्योम sec_clk_gate_en(काष्ठा sec_dev_info *info, bool clkgate)
+अणु
+	व्योम __iomem *addr = info->regs[SEC_SAA] + SEC_CTRL2_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
-	if (clkgate)
+	regval = पढ़ोl_relaxed(addr);
+	अगर (clkgate)
 		regval |= SEC_CTRL2_CLK_GATE_EN;
-	else
+	अन्यथा
 		regval &= ~SEC_CTRL2_CLK_GATE_EN;
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
-static void sec_comm_cnt_cfg(struct sec_dev_info *info, bool clr_ce)
-{
-	void __iomem *addr = info->regs[SEC_SAA] + SEC_COMMON_CNT_CLR_CE_REG;
+अटल व्योम sec_comm_cnt_cfg(काष्ठा sec_dev_info *info, bool clr_ce)
+अणु
+	व्योम __iomem *addr = info->regs[SEC_SAA] + SEC_COMMON_CNT_CLR_CE_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
-	if (clr_ce)
+	regval = पढ़ोl_relaxed(addr);
+	अगर (clr_ce)
 		regval |= SEC_COMMON_CNT_CLR_CE_CLEAR;
-	else
+	अन्यथा
 		regval &= ~SEC_COMMON_CNT_CLR_CE_CLEAR;
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
-static void sec_commsnap_en(struct sec_dev_info *info, bool snap_en)
-{
-	void __iomem *addr = info->regs[SEC_SAA] + SEC_COMMON_CNT_CLR_CE_REG;
+अटल व्योम sec_commsnap_en(काष्ठा sec_dev_info *info, bool snap_en)
+अणु
+	व्योम __iomem *addr = info->regs[SEC_SAA] + SEC_COMMON_CNT_CLR_CE_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
-	if (snap_en)
+	regval = पढ़ोl_relaxed(addr);
+	अगर (snap_en)
 		regval |= SEC_COMMON_CNT_CLR_CE_SNAP_EN;
-	else
+	अन्यथा
 		regval &= ~SEC_COMMON_CNT_CLR_CE_SNAP_EN;
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
-static void sec_ipv6_hashmask(struct sec_dev_info *info, u32 hash_mask[])
-{
-	void __iomem *base = info->regs[SEC_SAA];
-	int i;
+अटल व्योम sec_ipv6_hashmask(काष्ठा sec_dev_info *info, u32 hash_mask[])
+अणु
+	व्योम __iomem *base = info->regs[SEC_SAA];
+	पूर्णांक i;
 
-	for (i = 0; i < 10; i++)
-		writel_relaxed(hash_mask[0],
+	क्रम (i = 0; i < 10; i++)
+		ग_लिखोl_relaxed(hash_mask[0],
 			       base + SEC_IPV6_MASK_TABLE_X_REG(i));
-}
+पूर्ण
 
-static int sec_ipv4_hashmask(struct sec_dev_info *info, u32 hash_mask)
-{
-	if (hash_mask & SEC_HASH_IPV4_MASK) {
+अटल पूर्णांक sec_ipv4_hashmask(काष्ठा sec_dev_info *info, u32 hash_mask)
+अणु
+	अगर (hash_mask & SEC_HASH_IPV4_MASK) अणु
 		dev_err(info->dev, "Sec Ipv4 Hash Mask Input Error!\n ");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	writel_relaxed(hash_mask,
+	ग_लिखोl_relaxed(hash_mask,
 		       info->regs[SEC_SAA] + SEC_IPV4_MASK_TABLE_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sec_set_dbg_bd_cfg(struct sec_dev_info *info, u32 cfg)
-{
-	void __iomem *addr = info->regs[SEC_SAA] + SEC_DEBUG_BD_CFG_REG;
+अटल व्योम sec_set_dbg_bd_cfg(काष्ठा sec_dev_info *info, u32 cfg)
+अणु
+	व्योम __iomem *addr = info->regs[SEC_SAA] + SEC_DEBUG_BD_CFG_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
-	/* Always disable write back of normal bd */
+	regval = पढ़ोl_relaxed(addr);
+	/* Always disable ग_लिखो back of normal bd */
 	regval &= ~SEC_DEBUG_BD_CFG_WB_NORMAL;
 
-	if (cfg)
+	अगर (cfg)
 		regval &= ~SEC_DEBUG_BD_CFG_WB_EN;
-	else
+	अन्यथा
 		regval |= SEC_DEBUG_BD_CFG_WB_EN;
 
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
-static void sec_saa_getqm_en(struct sec_dev_info *info, u32 saa_indx, u32 en)
-{
-	void __iomem *addr = info->regs[SEC_SAA] + SEC_SAA_BASE +
+अटल व्योम sec_saa_getqm_en(काष्ठा sec_dev_info *info, u32 saa_indx, u32 en)
+अणु
+	व्योम __iomem *addr = info->regs[SEC_SAA] + SEC_SAA_BASE +
 		SEC_SAA_CTRL_REG(saa_indx);
 	u32 regval;
 
-	regval = readl_relaxed(addr);
-	if (en)
+	regval = पढ़ोl_relaxed(addr);
+	अगर (en)
 		regval |= SEC_SAA_CTRL_GET_QM_EN;
-	else
+	अन्यथा
 		regval &= ~SEC_SAA_CTRL_GET_QM_EN;
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
-static void sec_saa_int_mask(struct sec_dev_info *info, u32 saa_indx,
-			     u32 saa_int_mask)
-{
-	writel_relaxed(saa_int_mask,
+अटल व्योम sec_saa_पूर्णांक_mask(काष्ठा sec_dev_info *info, u32 saa_indx,
+			     u32 saa_पूर्णांक_mask)
+अणु
+	ग_लिखोl_relaxed(saa_पूर्णांक_mask,
 		       info->regs[SEC_SAA] + SEC_SAA_BASE + SEC_ST_INTMSK1_REG +
 		       saa_indx * SEC_SAA_ADDR_SIZE);
-}
+पूर्ण
 
-static void sec_streamid(struct sec_dev_info *info, int i)
-{
-	#define SEC_SID 0x600
-	#define SEC_VMID 0
+अटल व्योम sec_streamid(काष्ठा sec_dev_info *info, पूर्णांक i)
+अणु
+	#घोषणा SEC_SID 0x600
+	#घोषणा SEC_VMID 0
 
-	writel_relaxed((SEC_VMID | ((SEC_SID & 0xffff) << 8)),
+	ग_लिखोl_relaxed((SEC_VMID | ((SEC_SID & 0xffff) << 8)),
 		       info->regs[SEC_SAA] + SEC_Q_VMID_CFG_REG(i));
-}
+पूर्ण
 
-static void sec_queue_ar_alloc(struct sec_queue *queue, u32 alloc)
-{
-	void __iomem *addr = queue->regs + SEC_Q_ARUSER_CFG_REG;
+अटल व्योम sec_queue_ar_alloc(काष्ठा sec_queue *queue, u32 alloc)
+अणु
+	व्योम __iomem *addr = queue->regs + SEC_Q_ARUSER_CFG_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
-	if (alloc == SEC_QUEUE_AR_FROCE_ALLOC) {
+	regval = पढ़ोl_relaxed(addr);
+	अगर (alloc == SEC_QUEUE_AR_FROCE_ALLOC) अणु
 		regval |= SEC_Q_ARUSER_CFG_FA;
 		regval &= ~SEC_Q_ARUSER_CFG_FNA;
-	} else {
+	पूर्ण अन्यथा अणु
 		regval &= ~SEC_Q_ARUSER_CFG_FA;
 		regval |= SEC_Q_ARUSER_CFG_FNA;
-	}
+	पूर्ण
 
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
-static void sec_queue_aw_alloc(struct sec_queue *queue, u32 alloc)
-{
-	void __iomem *addr = queue->regs + SEC_Q_AWUSER_CFG_REG;
+अटल व्योम sec_queue_aw_alloc(काष्ठा sec_queue *queue, u32 alloc)
+अणु
+	व्योम __iomem *addr = queue->regs + SEC_Q_AWUSER_CFG_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
-	if (alloc == SEC_QUEUE_AW_FROCE_ALLOC) {
+	regval = पढ़ोl_relaxed(addr);
+	अगर (alloc == SEC_QUEUE_AW_FROCE_ALLOC) अणु
 		regval |= SEC_Q_AWUSER_CFG_FA;
 		regval &= ~SEC_Q_AWUSER_CFG_FNA;
-	} else {
+	पूर्ण अन्यथा अणु
 		regval &= ~SEC_Q_AWUSER_CFG_FA;
 		regval |= SEC_Q_AWUSER_CFG_FNA;
-	}
+	पूर्ण
 
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
-static void sec_queue_reorder(struct sec_queue *queue, bool reorder)
-{
-	void __iomem *base = queue->regs;
+अटल व्योम sec_queue_reorder(काष्ठा sec_queue *queue, bool reorder)
+अणु
+	व्योम __iomem *base = queue->regs;
 	u32 regval;
 
-	regval = readl_relaxed(base + SEC_Q_CFG_REG);
-	if (reorder)
+	regval = पढ़ोl_relaxed(base + SEC_Q_CFG_REG);
+	अगर (reorder)
 		regval |= SEC_Q_CFG_REORDER;
-	else
+	अन्यथा
 		regval &= ~SEC_Q_CFG_REORDER;
-	writel_relaxed(regval, base + SEC_Q_CFG_REG);
-}
+	ग_लिखोl_relaxed(regval, base + SEC_Q_CFG_REG);
+पूर्ण
 
-static void sec_queue_depth(struct sec_queue *queue, u32 depth)
-{
-	void __iomem *addr = queue->regs + SEC_Q_DEPTH_CFG_REG;
+अटल व्योम sec_queue_depth(काष्ठा sec_queue *queue, u32 depth)
+अणु
+	व्योम __iomem *addr = queue->regs + SEC_Q_DEPTH_CFG_REG;
 	u32 regval;
 
-	regval = readl_relaxed(addr);
+	regval = पढ़ोl_relaxed(addr);
 	regval &= ~SEC_Q_DEPTH_CFG_DEPTH_M;
 	regval |= (depth << SEC_Q_DEPTH_CFG_DEPTH_S) & SEC_Q_DEPTH_CFG_DEPTH_M;
 
-	writel_relaxed(regval, addr);
-}
+	ग_लिखोl_relaxed(regval, addr);
+पूर्ण
 
-static void sec_queue_cmdbase_addr(struct sec_queue *queue, u64 addr)
-{
-	writel_relaxed(upper_32_bits(addr), queue->regs + SEC_Q_BASE_HADDR_REG);
-	writel_relaxed(lower_32_bits(addr), queue->regs + SEC_Q_BASE_LADDR_REG);
-}
+अटल व्योम sec_queue_cmdbase_addr(काष्ठा sec_queue *queue, u64 addr)
+अणु
+	ग_लिखोl_relaxed(upper_32_bits(addr), queue->regs + SEC_Q_BASE_HADDR_REG);
+	ग_लिखोl_relaxed(lower_32_bits(addr), queue->regs + SEC_Q_BASE_LADDR_REG);
+पूर्ण
 
-static void sec_queue_outorder_addr(struct sec_queue *queue, u64 addr)
-{
-	writel_relaxed(upper_32_bits(addr),
+अटल व्योम sec_queue_outorder_addr(काष्ठा sec_queue *queue, u64 addr)
+अणु
+	ग_लिखोl_relaxed(upper_32_bits(addr),
 		       queue->regs + SEC_Q_OUTORDER_BASE_HADDR_REG);
-	writel_relaxed(lower_32_bits(addr),
+	ग_लिखोl_relaxed(lower_32_bits(addr),
 		       queue->regs + SEC_Q_OUTORDER_BASE_LADDR_REG);
-}
+पूर्ण
 
-static void sec_queue_errbase_addr(struct sec_queue *queue, u64 addr)
-{
-	writel_relaxed(upper_32_bits(addr),
+अटल व्योम sec_queue_errbase_addr(काष्ठा sec_queue *queue, u64 addr)
+अणु
+	ग_लिखोl_relaxed(upper_32_bits(addr),
 		       queue->regs + SEC_Q_ERR_BASE_HADDR_REG);
-	writel_relaxed(lower_32_bits(addr),
+	ग_लिखोl_relaxed(lower_32_bits(addr),
 		       queue->regs + SEC_Q_ERR_BASE_LADDR_REG);
-}
+पूर्ण
 
-static void sec_queue_irq_disable(struct sec_queue *queue)
-{
-	writel_relaxed((u32)~0, queue->regs + SEC_Q_FLOW_INT_MKS_REG);
-}
+अटल व्योम sec_queue_irq_disable(काष्ठा sec_queue *queue)
+अणु
+	ग_लिखोl_relaxed((u32)~0, queue->regs + SEC_Q_FLOW_INT_MKS_REG);
+पूर्ण
 
-static void sec_queue_irq_enable(struct sec_queue *queue)
-{
-	writel_relaxed(0, queue->regs + SEC_Q_FLOW_INT_MKS_REG);
-}
+अटल व्योम sec_queue_irq_enable(काष्ठा sec_queue *queue)
+अणु
+	ग_लिखोl_relaxed(0, queue->regs + SEC_Q_FLOW_INT_MKS_REG);
+पूर्ण
 
-static void sec_queue_abn_irq_disable(struct sec_queue *queue)
-{
-	writel_relaxed((u32)~0, queue->regs + SEC_Q_FAIL_INT_MSK_REG);
-}
+अटल व्योम sec_queue_abn_irq_disable(काष्ठा sec_queue *queue)
+अणु
+	ग_लिखोl_relaxed((u32)~0, queue->regs + SEC_Q_FAIL_INT_MSK_REG);
+पूर्ण
 
-static void sec_queue_stop(struct sec_queue *queue)
-{
+अटल व्योम sec_queue_stop(काष्ठा sec_queue *queue)
+अणु
 	disable_irq(queue->task_irq);
 	sec_queue_irq_disable(queue);
-	writel_relaxed(0x0, queue->regs + SEC_QUEUE_ENB_REG);
-}
+	ग_लिखोl_relaxed(0x0, queue->regs + SEC_QUEUE_ENB_REG);
+पूर्ण
 
-static void sec_queue_start(struct sec_queue *queue)
-{
+अटल व्योम sec_queue_start(काष्ठा sec_queue *queue)
+अणु
 	sec_queue_irq_enable(queue);
 	enable_irq(queue->task_irq);
 	queue->expected = 0;
-	writel_relaxed(SEC_Q_INIT_AND_STAT_CLEAR, queue->regs + SEC_Q_INIT_REG);
-	writel_relaxed(0x1, queue->regs + SEC_QUEUE_ENB_REG);
-}
+	ग_लिखोl_relaxed(SEC_Q_INIT_AND_STAT_CLEAR, queue->regs + SEC_Q_INIT_REG);
+	ग_लिखोl_relaxed(0x1, queue->regs + SEC_QUEUE_ENB_REG);
+पूर्ण
 
-static struct sec_queue *sec_alloc_queue(struct sec_dev_info *info)
-{
-	int i;
+अटल काष्ठा sec_queue *sec_alloc_queue(काष्ठा sec_dev_info *info)
+अणु
+	पूर्णांक i;
 
 	mutex_lock(&info->dev_lock);
 
 	/* Get the first idle queue in SEC device */
-	for (i = 0; i < SEC_Q_NUM; i++)
-		if (!info->queues[i].in_use) {
+	क्रम (i = 0; i < SEC_Q_NUM; i++)
+		अगर (!info->queues[i].in_use) अणु
 			info->queues[i].in_use = true;
 			info->queues_in_use++;
 			mutex_unlock(&info->dev_lock);
 
-			return &info->queues[i];
-		}
+			वापस &info->queues[i];
+		पूर्ण
 	mutex_unlock(&info->dev_lock);
 
-	return ERR_PTR(-ENODEV);
-}
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static int sec_queue_free(struct sec_queue *queue)
-{
-	struct sec_dev_info *info = queue->dev_info;
+अटल पूर्णांक sec_queue_मुक्त(काष्ठा sec_queue *queue)
+अणु
+	काष्ठा sec_dev_info *info = queue->dev_info;
 
-	if (queue->queue_id >= SEC_Q_NUM) {
+	अगर (queue->queue_id >= SEC_Q_NUM) अणु
 		dev_err(info->dev, "No queue %u\n", queue->queue_id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!queue->in_use) {
+	अगर (!queue->in_use) अणु
 		dev_err(info->dev, "Queue %u is idle\n", queue->queue_id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	mutex_lock(&info->dev_lock);
 	queue->in_use = false;
 	info->queues_in_use--;
 	mutex_unlock(&info->dev_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t sec_isr_handle_th(int irq, void *q)
-{
+अटल irqवापस_t sec_isr_handle_th(पूर्णांक irq, व्योम *q)
+अणु
 	sec_queue_irq_disable(q);
-	return IRQ_WAKE_THREAD;
-}
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static irqreturn_t sec_isr_handle(int irq, void *q)
-{
-	struct sec_queue *queue = q;
-	struct sec_queue_ring_cmd *msg_ring = &queue->ring_cmd;
-	struct sec_queue_ring_cq *cq_ring = &queue->ring_cq;
-	struct sec_out_bd_info *outorder_msg;
-	struct sec_bd_info *msg;
-	u32 ooo_read, ooo_write;
-	void __iomem *base = queue->regs;
-	int q_id;
+अटल irqवापस_t sec_isr_handle(पूर्णांक irq, व्योम *q)
+अणु
+	काष्ठा sec_queue *queue = q;
+	काष्ठा sec_queue_ring_cmd *msg_ring = &queue->ring_cmd;
+	काष्ठा sec_queue_ring_cq *cq_ring = &queue->ring_cq;
+	काष्ठा sec_out_bd_info *outorder_msg;
+	काष्ठा sec_bd_info *msg;
+	u32 ooo_पढ़ो, ooo_ग_लिखो;
+	व्योम __iomem *base = queue->regs;
+	पूर्णांक q_id;
 
-	ooo_read = readl(base + SEC_Q_OUTORDER_RD_PTR_REG);
-	ooo_write = readl(base + SEC_Q_OUTORDER_WR_PTR_REG);
-	outorder_msg = cq_ring->vaddr + ooo_read;
+	ooo_पढ़ो = पढ़ोl(base + SEC_Q_OUTORDER_RD_PTR_REG);
+	ooo_ग_लिखो = पढ़ोl(base + SEC_Q_OUTORDER_WR_PTR_REG);
+	outorder_msg = cq_ring->vaddr + ooo_पढ़ो;
 	q_id = outorder_msg->data & SEC_OUT_BD_INFO_Q_ID_M;
 	msg = msg_ring->vaddr + q_id;
 
-	while ((ooo_write != ooo_read) && msg->w0 & SEC_BD_W0_DONE) {
+	जबतक ((ooo_ग_लिखो != ooo_पढ़ो) && msg->w0 & SEC_BD_W0_DONE) अणु
 		/*
-		 * Must be before callback otherwise blocks adding other chained
+		 * Must be beक्रमe callback otherwise blocks adding other chained
 		 * elements
 		 */
 		set_bit(q_id, queue->unprocessed);
-		if (q_id == queue->expected)
-			while (test_bit(queue->expected, queue->unprocessed)) {
+		अगर (q_id == queue->expected)
+			जबतक (test_bit(queue->expected, queue->unprocessed)) अणु
 				clear_bit(queue->expected, queue->unprocessed);
 				msg = msg_ring->vaddr + queue->expected;
 				msg->w0 &= ~SEC_BD_W0_DONE;
 				msg_ring->callback(msg,
-						queue->shadow[queue->expected]);
-				queue->shadow[queue->expected] = NULL;
+						queue->shaकरोw[queue->expected]);
+				queue->shaकरोw[queue->expected] = शून्य;
 				queue->expected = (queue->expected + 1) %
 					SEC_QUEUE_LEN;
 				atomic_dec(&msg_ring->used);
-			}
+			पूर्ण
 
-		ooo_read = (ooo_read + 1) % SEC_QUEUE_LEN;
-		writel(ooo_read, base + SEC_Q_OUTORDER_RD_PTR_REG);
-		ooo_write = readl(base + SEC_Q_OUTORDER_WR_PTR_REG);
-		outorder_msg = cq_ring->vaddr + ooo_read;
+		ooo_पढ़ो = (ooo_पढ़ो + 1) % SEC_QUEUE_LEN;
+		ग_लिखोl(ooo_पढ़ो, base + SEC_Q_OUTORDER_RD_PTR_REG);
+		ooo_ग_लिखो = पढ़ोl(base + SEC_Q_OUTORDER_WR_PTR_REG);
+		outorder_msg = cq_ring->vaddr + ooo_पढ़ो;
 		q_id = outorder_msg->data & SEC_OUT_BD_INFO_Q_ID_M;
 		msg = msg_ring->vaddr + q_id;
-	}
+	पूर्ण
 
 	sec_queue_irq_enable(queue);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int sec_queue_irq_init(struct sec_queue *queue)
-{
-	struct sec_dev_info *info = queue->dev_info;
-	int irq = queue->task_irq;
-	int ret;
+अटल पूर्णांक sec_queue_irq_init(काष्ठा sec_queue *queue)
+अणु
+	काष्ठा sec_dev_info *info = queue->dev_info;
+	पूर्णांक irq = queue->task_irq;
+	पूर्णांक ret;
 
-	ret = request_threaded_irq(irq, sec_isr_handle_th, sec_isr_handle,
+	ret = request_thपढ़ोed_irq(irq, sec_isr_handle_th, sec_isr_handle,
 				   IRQF_TRIGGER_RISING, queue->name, queue);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(info->dev, "request irq(%d) failed %d\n", irq, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	disable_irq(irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sec_queue_irq_uninit(struct sec_queue *queue)
-{
-	free_irq(queue->task_irq, queue);
+अटल पूर्णांक sec_queue_irq_uninit(काष्ठा sec_queue *queue)
+अणु
+	मुक्त_irq(queue->task_irq, queue);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sec_dev_info *sec_device_get(void)
-{
-	struct sec_dev_info *sec_dev = NULL;
-	struct sec_dev_info *this_sec_dev;
-	int least_busy_n = SEC_Q_NUM + 1;
-	int i;
+अटल काष्ठा sec_dev_info *sec_device_get(व्योम)
+अणु
+	काष्ठा sec_dev_info *sec_dev = शून्य;
+	काष्ठा sec_dev_info *this_sec_dev;
+	पूर्णांक least_busy_n = SEC_Q_NUM + 1;
+	पूर्णांक i;
 
 	/* Find which one is least busy and use that first */
-	for (i = 0; i < SEC_MAX_DEVICES; i++) {
+	क्रम (i = 0; i < SEC_MAX_DEVICES; i++) अणु
 		this_sec_dev = sec_devices[i];
-		if (this_sec_dev &&
-		    this_sec_dev->queues_in_use < least_busy_n) {
+		अगर (this_sec_dev &&
+		    this_sec_dev->queues_in_use < least_busy_n) अणु
 			least_busy_n = this_sec_dev->queues_in_use;
 			sec_dev = this_sec_dev;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return sec_dev;
-}
+	वापस sec_dev;
+पूर्ण
 
-static struct sec_queue *sec_queue_alloc_start(struct sec_dev_info *info)
-{
-	struct sec_queue *queue;
+अटल काष्ठा sec_queue *sec_queue_alloc_start(काष्ठा sec_dev_info *info)
+अणु
+	काष्ठा sec_queue *queue;
 
 	queue = sec_alloc_queue(info);
-	if (IS_ERR(queue)) {
+	अगर (IS_ERR(queue)) अणु
 		dev_err(info->dev, "alloc sec queue failed! %ld\n",
 			PTR_ERR(queue));
-		return queue;
-	}
+		वापस queue;
+	पूर्ण
 
 	sec_queue_start(queue);
 
-	return queue;
-}
+	वापस queue;
+पूर्ण
 
 /**
  * sec_queue_alloc_start_safe - get a hw queue from appropriate instance
  *
- * This function does extremely simplistic load balancing. It does not take into
+ * This function करोes extremely simplistic load balancing. It करोes not take पूर्णांकo
  * account NUMA locality of the accelerator, or which cpu has requested the
  * queue.  Future work may focus on optimizing this in order to improve full
  * machine throughput.
  */
-struct sec_queue *sec_queue_alloc_start_safe(void)
-{
-	struct sec_dev_info *info;
-	struct sec_queue *queue = ERR_PTR(-ENODEV);
+काष्ठा sec_queue *sec_queue_alloc_start_safe(व्योम)
+अणु
+	काष्ठा sec_dev_info *info;
+	काष्ठा sec_queue *queue = ERR_PTR(-ENODEV);
 
 	mutex_lock(&sec_id_lock);
 	info = sec_device_get();
-	if (!info)
-		goto unlock;
+	अगर (!info)
+		जाओ unlock;
 
 	queue = sec_queue_alloc_start(info);
 
 unlock:
 	mutex_unlock(&sec_id_lock);
 
-	return queue;
-}
+	वापस queue;
+पूर्ण
 
 /**
- * sec_queue_stop_release() - free up a hw queue for reuse
- * @queue: The queue we are done with.
+ * sec_queue_stop_release() - मुक्त up a hw queue क्रम reuse
+ * @queue: The queue we are करोne with.
  *
  * This will stop the current queue, terminanting any transactions
- * that are inflight an return it to the pool of available hw queuess
+ * that are inflight an वापस it to the pool of available hw queuess
  */
-int sec_queue_stop_release(struct sec_queue *queue)
-{
-	struct device *dev = queue->dev_info->dev;
-	int ret;
+पूर्णांक sec_queue_stop_release(काष्ठा sec_queue *queue)
+अणु
+	काष्ठा device *dev = queue->dev_info->dev;
+	पूर्णांक ret;
 
 	sec_queue_stop(queue);
 
-	ret = sec_queue_free(queue);
-	if (ret)
+	ret = sec_queue_मुक्त(queue);
+	अगर (ret)
 		dev_err(dev, "Releasing queue failed %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * sec_queue_empty() - Is this hardware queue currently empty.
  * @queue: The queue to test
  *
- * We need to know if we have an empty queue for some of the chaining modes
- * as if it is not empty we may need to hold the message in a software queue
+ * We need to know अगर we have an empty queue क्रम some of the chaining modes
+ * as अगर it is not empty we may need to hold the message in a software queue
  * until the hw queue is drained.
  */
-bool sec_queue_empty(struct sec_queue *queue)
-{
-	struct sec_queue_ring_cmd *msg_ring = &queue->ring_cmd;
+bool sec_queue_empty(काष्ठा sec_queue *queue)
+अणु
+	काष्ठा sec_queue_ring_cmd *msg_ring = &queue->ring_cmd;
 
-	return !atomic_read(&msg_ring->used);
-}
+	वापस !atomic_पढ़ो(&msg_ring->used);
+पूर्ण
 
 /**
  * sec_queue_send() - queue up a single operation in the hw queue
  * @queue: The queue in which to put the message
  * @msg: The message
- * @ctx: Context to be put in the shadow array and passed back to cb on result.
+ * @ctx: Context to be put in the shaकरोw array and passed back to cb on result.
  *
- * This function will return -EAGAIN if the queue is currently full.
+ * This function will वापस -EAGAIN अगर the queue is currently full.
  */
-int sec_queue_send(struct sec_queue *queue, struct sec_bd_info *msg, void *ctx)
-{
-	struct sec_queue_ring_cmd *msg_ring = &queue->ring_cmd;
-	void __iomem *base = queue->regs;
-	u32 write, read;
+पूर्णांक sec_queue_send(काष्ठा sec_queue *queue, काष्ठा sec_bd_info *msg, व्योम *ctx)
+अणु
+	काष्ठा sec_queue_ring_cmd *msg_ring = &queue->ring_cmd;
+	व्योम __iomem *base = queue->regs;
+	u32 ग_लिखो, पढ़ो;
 
 	mutex_lock(&msg_ring->lock);
-	read = readl(base + SEC_Q_RD_PTR_REG);
-	write = readl(base + SEC_Q_WR_PTR_REG);
-	if (write == read && atomic_read(&msg_ring->used) == SEC_QUEUE_LEN) {
+	पढ़ो = पढ़ोl(base + SEC_Q_RD_PTR_REG);
+	ग_लिखो = पढ़ोl(base + SEC_Q_WR_PTR_REG);
+	अगर (ग_लिखो == पढ़ो && atomic_पढ़ो(&msg_ring->used) == SEC_QUEUE_LEN) अणु
 		mutex_unlock(&msg_ring->lock);
-		return -EAGAIN;
-	}
-	memcpy(msg_ring->vaddr + write, msg, sizeof(*msg));
-	queue->shadow[write] = ctx;
-	write = (write + 1) % SEC_QUEUE_LEN;
+		वापस -EAGAIN;
+	पूर्ण
+	स_नकल(msg_ring->vaddr + ग_लिखो, msg, माप(*msg));
+	queue->shaकरोw[ग_लिखो] = ctx;
+	ग_लिखो = (ग_लिखो + 1) % SEC_QUEUE_LEN;
 
-	/* Ensure content updated before queue advance */
+	/* Ensure content updated beक्रमe queue advance */
 	wmb();
-	writel(write, base + SEC_Q_WR_PTR_REG);
+	ग_लिखोl(ग_लिखो, base + SEC_Q_WR_PTR_REG);
 
 	atomic_inc(&msg_ring->used);
 	mutex_unlock(&msg_ring->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool sec_queue_can_enqueue(struct sec_queue *queue, int num)
-{
-	struct sec_queue_ring_cmd *msg_ring = &queue->ring_cmd;
+bool sec_queue_can_enqueue(काष्ठा sec_queue *queue, पूर्णांक num)
+अणु
+	काष्ठा sec_queue_ring_cmd *msg_ring = &queue->ring_cmd;
 
-	return SEC_QUEUE_LEN - atomic_read(&msg_ring->used) >= num;
-}
+	वापस SEC_QUEUE_LEN - atomic_पढ़ो(&msg_ring->used) >= num;
+पूर्ण
 
-static void sec_queue_hw_init(struct sec_queue *queue)
-{
+अटल व्योम sec_queue_hw_init(काष्ठा sec_queue *queue)
+अणु
 	sec_queue_ar_alloc(queue, SEC_QUEUE_AR_FROCE_NOALLOC);
 	sec_queue_aw_alloc(queue, SEC_QUEUE_AR_FROCE_NOALLOC);
 	sec_queue_ar_pkgattr(queue, 1);
@@ -900,7 +901,7 @@ static void sec_queue_hw_init(struct sec_queue *queue)
 	sec_queue_reorder(queue, true);
 
 	/* Interrupt after a single complete element */
-	writel_relaxed(1, queue->regs + SEC_Q_PROC_NUM_CFG_REG);
+	ग_लिखोl_relaxed(1, queue->regs + SEC_Q_PROC_NUM_CFG_REG);
 
 	sec_queue_depth(queue, SEC_QUEUE_LEN - 1);
 
@@ -910,33 +911,33 @@ static void sec_queue_hw_init(struct sec_queue *queue)
 
 	sec_queue_errbase_addr(queue, queue->ring_db.paddr);
 
-	writel_relaxed(0x100, queue->regs + SEC_Q_OT_TH_REG);
+	ग_लिखोl_relaxed(0x100, queue->regs + SEC_Q_OT_TH_REG);
 
 	sec_queue_abn_irq_disable(queue);
 	sec_queue_irq_disable(queue);
-	writel_relaxed(SEC_Q_INIT_AND_STAT_CLEAR, queue->regs + SEC_Q_INIT_REG);
-}
+	ग_लिखोl_relaxed(SEC_Q_INIT_AND_STAT_CLEAR, queue->regs + SEC_Q_INIT_REG);
+पूर्ण
 
-static int sec_hw_init(struct sec_dev_info *info)
-{
-	struct iommu_domain *domain;
+अटल पूर्णांक sec_hw_init(काष्ठा sec_dev_info *info)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य;
 	u32 sec_ipv4_mask = 0;
-	u32 sec_ipv6_mask[10] = {};
+	u32 sec_ipv6_mask[10] = अणुपूर्ण;
 	u32 i, ret;
 
-	domain = iommu_get_domain_for_dev(info->dev);
+	करोमुख्य = iommu_get_करोमुख्य_क्रम_dev(info->dev);
 
 	/*
-	 * Enable all available processing unit clocks.
+	 * Enable all available processing unit घड़ीs.
 	 * Only the first cluster is usable with translations.
 	 */
-	if (domain && (domain->type & __IOMMU_DOMAIN_PAGING))
+	अगर (करोमुख्य && (करोमुख्य->type & __IOMMU_DOMAIN_PAGING))
 		info->num_saas = 5;
 
-	else
+	अन्यथा
 		info->num_saas = 10;
 
-	writel_relaxed(GENMASK(info->num_saas - 1, 0),
+	ग_लिखोl_relaxed(GENMASK(info->num_saas - 1, 0),
 		       info->regs[SEC_SAA] + SEC_CLK_EN_REG);
 
 	/* 32 bit little endian */
@@ -944,149 +945,149 @@ static int sec_hw_init(struct sec_dev_info *info)
 
 	sec_cache_config(info);
 
-	/* Data axi port write and read outstanding config as per datasheet */
+	/* Data axi port ग_लिखो and पढ़ो outstanding config as per datasheet */
 	sec_data_axiwr_otsd_cfg(info, 0x7);
 	sec_data_axird_otsd_cfg(info, 0x7);
 
-	/* Enable clock gating */
+	/* Enable घड़ी gating */
 	sec_clk_gate_en(info, true);
 
-	/* Set CNT_CYC register not read clear */
+	/* Set CNT_CYC रेजिस्टर not पढ़ो clear */
 	sec_comm_cnt_cfg(info, false);
 
 	/* Enable CNT_CYC */
 	sec_commsnap_en(info, false);
 
-	writel_relaxed((u32)~0, info->regs[SEC_SAA] + SEC_FSM_MAX_CNT_REG);
+	ग_लिखोl_relaxed((u32)~0, info->regs[SEC_SAA] + SEC_FSM_MAX_CNT_REG);
 
 	ret = sec_ipv4_hashmask(info, sec_ipv4_mask);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(info->dev, "Failed to set ipv4 hashmask %d\n", ret);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	sec_ipv6_hashmask(info, sec_ipv6_mask);
 
-	/*  do not use debug bd */
+	/*  करो not use debug bd */
 	sec_set_dbg_bd_cfg(info, 0);
 
-	if (domain && (domain->type & __IOMMU_DOMAIN_PAGING)) {
-		for (i = 0; i < SEC_Q_NUM; i++) {
+	अगर (करोमुख्य && (करोमुख्य->type & __IOMMU_DOMAIN_PAGING)) अणु
+		क्रम (i = 0; i < SEC_Q_NUM; i++) अणु
 			sec_streamid(info, i);
-			/* Same QoS for all queues */
-			writel_relaxed(0x3f,
+			/* Same QoS क्रम all queues */
+			ग_लिखोl_relaxed(0x3f,
 				       info->regs[SEC_SAA] +
 				       SEC_Q_WEIGHT_CFG_REG(i));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < info->num_saas; i++) {
+	क्रम (i = 0; i < info->num_saas; i++) अणु
 		sec_saa_getqm_en(info, i, 1);
-		sec_saa_int_mask(info, i, 0);
-	}
+		sec_saa_पूर्णांक_mask(info, i, 0);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sec_hw_exit(struct sec_dev_info *info)
-{
-	int i;
+अटल व्योम sec_hw_निकास(काष्ठा sec_dev_info *info)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SEC_MAX_SAA_NUM; i++) {
-		sec_saa_int_mask(info, i, (u32)~0);
+	क्रम (i = 0; i < SEC_MAX_SAA_NUM; i++) अणु
+		sec_saa_पूर्णांक_mask(info, i, (u32)~0);
 		sec_saa_getqm_en(info, i, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sec_queue_base_init(struct sec_dev_info *info,
-				struct sec_queue *queue, int queue_id)
-{
+अटल व्योम sec_queue_base_init(काष्ठा sec_dev_info *info,
+				काष्ठा sec_queue *queue, पूर्णांक queue_id)
+अणु
 	queue->dev_info = info;
 	queue->queue_id = queue_id;
-	snprintf(queue->name, sizeof(queue->name),
+	snम_लिखो(queue->name, माप(queue->name),
 		 "%s_%d", dev_name(info->dev), queue->queue_id);
-}
+पूर्ण
 
-static int sec_map_io(struct sec_dev_info *info, struct platform_device *pdev)
-{
-	struct resource *res;
-	int i;
+अटल पूर्णांक sec_map_io(काष्ठा sec_dev_info *info, काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	पूर्णांक i;
 
-	for (i = 0; i < SEC_NUM_ADDR_REGIONS; i++) {
-		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
+	क्रम (i = 0; i < SEC_NUM_ADDR_REGIONS; i++) अणु
+		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, i);
 
-		if (!res) {
+		अगर (!res) अणु
 			dev_err(info->dev, "Memory resource %d not found\n", i);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		info->regs[i] = devm_ioremap(info->dev, res->start,
 					     resource_size(res));
-		if (!info->regs[i]) {
+		अगर (!info->regs[i]) अणु
 			dev_err(info->dev,
 				"Memory resource %d could not be remapped\n",
 				i);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sec_base_init(struct sec_dev_info *info,
-			 struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक sec_base_init(काष्ठा sec_dev_info *info,
+			 काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 
 	ret = sec_map_io(info, pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = sec_clk_en(info);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = sec_reset_whole_module(info);
-	if (ret)
-		goto sec_clk_disable;
+	अगर (ret)
+		जाओ sec_clk_disable;
 
 	ret = sec_hw_init(info);
-	if (ret)
-		goto sec_clk_disable;
+	अगर (ret)
+		जाओ sec_clk_disable;
 
-	return 0;
+	वापस 0;
 
 sec_clk_disable:
 	sec_clk_dis(info);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sec_base_exit(struct sec_dev_info *info)
-{
-	sec_hw_exit(info);
+अटल व्योम sec_base_निकास(काष्ठा sec_dev_info *info)
+अणु
+	sec_hw_निकास(info);
 	sec_clk_dis(info);
-}
+पूर्ण
 
-#define SEC_Q_CMD_SIZE \
-	round_up(SEC_QUEUE_LEN * sizeof(struct sec_bd_info), PAGE_SIZE)
-#define SEC_Q_CQ_SIZE \
-	round_up(SEC_QUEUE_LEN * sizeof(struct sec_out_bd_info), PAGE_SIZE)
-#define SEC_Q_DB_SIZE \
-	round_up(SEC_QUEUE_LEN * sizeof(struct sec_debug_bd_info), PAGE_SIZE)
+#घोषणा SEC_Q_CMD_SIZE \
+	round_up(SEC_QUEUE_LEN * माप(काष्ठा sec_bd_info), PAGE_SIZE)
+#घोषणा SEC_Q_CQ_SIZE \
+	round_up(SEC_QUEUE_LEN * माप(काष्ठा sec_out_bd_info), PAGE_SIZE)
+#घोषणा SEC_Q_DB_SIZE \
+	round_up(SEC_QUEUE_LEN * माप(काष्ठा sec_debug_bd_info), PAGE_SIZE)
 
-static int sec_queue_res_cfg(struct sec_queue *queue)
-{
-	struct device *dev = queue->dev_info->dev;
-	struct sec_queue_ring_cmd *ring_cmd = &queue->ring_cmd;
-	struct sec_queue_ring_cq *ring_cq = &queue->ring_cq;
-	struct sec_queue_ring_db *ring_db = &queue->ring_db;
-	int ret;
+अटल पूर्णांक sec_queue_res_cfg(काष्ठा sec_queue *queue)
+अणु
+	काष्ठा device *dev = queue->dev_info->dev;
+	काष्ठा sec_queue_ring_cmd *ring_cmd = &queue->ring_cmd;
+	काष्ठा sec_queue_ring_cq *ring_cq = &queue->ring_cq;
+	काष्ठा sec_queue_ring_db *ring_db = &queue->ring_db;
+	पूर्णांक ret;
 
 	ring_cmd->vaddr = dma_alloc_coherent(dev, SEC_Q_CMD_SIZE,
 					     &ring_cmd->paddr, GFP_KERNEL);
-	if (!ring_cmd->vaddr)
-		return -ENOMEM;
+	अगर (!ring_cmd->vaddr)
+		वापस -ENOMEM;
 
 	atomic_set(&ring_cmd->used, 0);
 	mutex_init(&ring_cmd->lock);
@@ -1094,226 +1095,226 @@ static int sec_queue_res_cfg(struct sec_queue *queue)
 
 	ring_cq->vaddr = dma_alloc_coherent(dev, SEC_Q_CQ_SIZE,
 					    &ring_cq->paddr, GFP_KERNEL);
-	if (!ring_cq->vaddr) {
+	अगर (!ring_cq->vaddr) अणु
 		ret = -ENOMEM;
-		goto err_free_ring_cmd;
-	}
+		जाओ err_मुक्त_ring_cmd;
+	पूर्ण
 
 	ring_db->vaddr = dma_alloc_coherent(dev, SEC_Q_DB_SIZE,
 					    &ring_db->paddr, GFP_KERNEL);
-	if (!ring_db->vaddr) {
+	अगर (!ring_db->vaddr) अणु
 		ret = -ENOMEM;
-		goto err_free_ring_cq;
-	}
-	queue->task_irq = platform_get_irq(to_platform_device(dev),
+		जाओ err_मुक्त_ring_cq;
+	पूर्ण
+	queue->task_irq = platक्रमm_get_irq(to_platक्रमm_device(dev),
 					   queue->queue_id * 2 + 1);
-	if (queue->task_irq <= 0) {
+	अगर (queue->task_irq <= 0) अणु
 		ret = -EINVAL;
-		goto err_free_ring_db;
-	}
+		जाओ err_मुक्त_ring_db;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_ring_db:
-	dma_free_coherent(dev, SEC_Q_DB_SIZE, queue->ring_db.vaddr,
+err_मुक्त_ring_db:
+	dma_मुक्त_coherent(dev, SEC_Q_DB_SIZE, queue->ring_db.vaddr,
 			  queue->ring_db.paddr);
-err_free_ring_cq:
-	dma_free_coherent(dev, SEC_Q_CQ_SIZE, queue->ring_cq.vaddr,
+err_मुक्त_ring_cq:
+	dma_मुक्त_coherent(dev, SEC_Q_CQ_SIZE, queue->ring_cq.vaddr,
 			  queue->ring_cq.paddr);
-err_free_ring_cmd:
-	dma_free_coherent(dev, SEC_Q_CMD_SIZE, queue->ring_cmd.vaddr,
+err_मुक्त_ring_cmd:
+	dma_मुक्त_coherent(dev, SEC_Q_CMD_SIZE, queue->ring_cmd.vaddr,
 			  queue->ring_cmd.paddr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sec_queue_free_ring_pages(struct sec_queue *queue)
-{
-	struct device *dev = queue->dev_info->dev;
+अटल व्योम sec_queue_मुक्त_ring_pages(काष्ठा sec_queue *queue)
+अणु
+	काष्ठा device *dev = queue->dev_info->dev;
 
-	dma_free_coherent(dev, SEC_Q_DB_SIZE, queue->ring_db.vaddr,
+	dma_मुक्त_coherent(dev, SEC_Q_DB_SIZE, queue->ring_db.vaddr,
 			  queue->ring_db.paddr);
-	dma_free_coherent(dev, SEC_Q_CQ_SIZE, queue->ring_cq.vaddr,
+	dma_मुक्त_coherent(dev, SEC_Q_CQ_SIZE, queue->ring_cq.vaddr,
 			  queue->ring_cq.paddr);
-	dma_free_coherent(dev, SEC_Q_CMD_SIZE, queue->ring_cmd.vaddr,
+	dma_मुक्त_coherent(dev, SEC_Q_CMD_SIZE, queue->ring_cmd.vaddr,
 			  queue->ring_cmd.paddr);
-}
+पूर्ण
 
-static int sec_queue_config(struct sec_dev_info *info, struct sec_queue *queue,
-			    int queue_id)
-{
-	int ret;
+अटल पूर्णांक sec_queue_config(काष्ठा sec_dev_info *info, काष्ठा sec_queue *queue,
+			    पूर्णांक queue_id)
+अणु
+	पूर्णांक ret;
 
 	sec_queue_base_init(info, queue, queue_id);
 
 	ret = sec_queue_res_cfg(queue);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = sec_queue_map_io(queue);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(info->dev, "Queue map failed %d\n", ret);
-		sec_queue_free_ring_pages(queue);
-		return ret;
-	}
+		sec_queue_मुक्त_ring_pages(queue);
+		वापस ret;
+	पूर्ण
 
 	sec_queue_hw_init(queue);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sec_queue_unconfig(struct sec_dev_info *info,
-			       struct sec_queue *queue)
-{
+अटल व्योम sec_queue_unconfig(काष्ठा sec_dev_info *info,
+			       काष्ठा sec_queue *queue)
+अणु
 	sec_queue_unmap_io(queue);
-	sec_queue_free_ring_pages(queue);
-}
+	sec_queue_मुक्त_ring_pages(queue);
+पूर्ण
 
-static int sec_id_alloc(struct sec_dev_info *info)
-{
-	int ret = 0;
-	int i;
+अटल पूर्णांक sec_id_alloc(काष्ठा sec_dev_info *info)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
 	mutex_lock(&sec_id_lock);
 
-	for (i = 0; i < SEC_MAX_DEVICES; i++)
-		if (!sec_devices[i])
-			break;
-	if (i == SEC_MAX_DEVICES) {
+	क्रम (i = 0; i < SEC_MAX_DEVICES; i++)
+		अगर (!sec_devices[i])
+			अवरोध;
+	अगर (i == SEC_MAX_DEVICES) अणु
 		ret = -ENOMEM;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 	info->sec_id = i;
 	sec_devices[info->sec_id] = info;
 
 unlock:
 	mutex_unlock(&sec_id_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sec_id_free(struct sec_dev_info *info)
-{
+अटल व्योम sec_id_मुक्त(काष्ठा sec_dev_info *info)
+अणु
 	mutex_lock(&sec_id_lock);
-	sec_devices[info->sec_id] = NULL;
+	sec_devices[info->sec_id] = शून्य;
 	mutex_unlock(&sec_id_lock);
-}
+पूर्ण
 
-static int sec_probe(struct platform_device *pdev)
-{
-	struct sec_dev_info *info;
-	struct device *dev = &pdev->dev;
-	int i, j;
-	int ret;
+अटल पूर्णांक sec_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sec_dev_info *info;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक i, j;
+	पूर्णांक ret;
 
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to set 64 bit dma mask %d", ret);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	info = devm_kzalloc(dev, (sizeof(*info)), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(dev, (माप(*info)), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->dev = dev;
 	mutex_init(&info->dev_lock);
 
 	info->hw_sgl_pool = dmam_pool_create("sgl", dev,
-					     sizeof(struct sec_hw_sgl), 64, 0);
-	if (!info->hw_sgl_pool) {
+					     माप(काष्ठा sec_hw_sgl), 64, 0);
+	अगर (!info->hw_sgl_pool) अणु
 		dev_err(dev, "Failed to create sec sgl dma pool\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = sec_base_init(info, pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Base initialization fail! %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < SEC_Q_NUM; i++) {
+	क्रम (i = 0; i < SEC_Q_NUM; i++) अणु
 		ret = sec_queue_config(info, &info->queues[i], i);
-		if (ret)
-			goto queues_unconfig;
+		अगर (ret)
+			जाओ queues_unconfig;
 
 		ret = sec_queue_irq_init(&info->queues[i]);
-		if (ret) {
+		अगर (ret) अणु
 			sec_queue_unconfig(info, &info->queues[i]);
-			goto queues_unconfig;
-		}
-	}
+			जाओ queues_unconfig;
+		पूर्ण
+	पूर्ण
 
-	ret = sec_algs_register();
-	if (ret) {
+	ret = sec_algs_रेजिस्टर();
+	अगर (ret) अणु
 		dev_err(dev, "Failed to register algorithms with crypto %d\n",
 			ret);
-		goto queues_unconfig;
-	}
+		जाओ queues_unconfig;
+	पूर्ण
 
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 
 	ret = sec_id_alloc(info);
-	if (ret)
-		goto algs_unregister;
+	अगर (ret)
+		जाओ algs_unरेजिस्टर;
 
-	return 0;
+	वापस 0;
 
-algs_unregister:
-	sec_algs_unregister();
+algs_unरेजिस्टर:
+	sec_algs_unरेजिस्टर();
 queues_unconfig:
-	for (j = i - 1; j >= 0; j--) {
+	क्रम (j = i - 1; j >= 0; j--) अणु
 		sec_queue_irq_uninit(&info->queues[j]);
 		sec_queue_unconfig(info, &info->queues[j]);
-	}
-	sec_base_exit(info);
+	पूर्ण
+	sec_base_निकास(info);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sec_remove(struct platform_device *pdev)
-{
-	struct sec_dev_info *info = platform_get_drvdata(pdev);
-	int i;
+अटल पूर्णांक sec_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sec_dev_info *info = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
 
-	/* Unexpose as soon as possible, reuse during remove is fine */
-	sec_id_free(info);
+	/* Unexpose as soon as possible, reuse during हटाओ is fine */
+	sec_id_मुक्त(info);
 
-	sec_algs_unregister();
+	sec_algs_unरेजिस्टर();
 
-	for (i = 0; i < SEC_Q_NUM; i++) {
+	क्रम (i = 0; i < SEC_Q_NUM; i++) अणु
 		sec_queue_irq_uninit(&info->queues[i]);
 		sec_queue_unconfig(info, &info->queues[i]);
-	}
+	पूर्ण
 
-	sec_base_exit(info);
+	sec_base_निकास(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const __maybe_unused struct of_device_id sec_match[] = {
-	{ .compatible = "hisilicon,hip06-sec" },
-	{ .compatible = "hisilicon,hip07-sec" },
-	{}
-};
+अटल स्थिर __maybe_unused काष्ठा of_device_id sec_match[] = अणु
+	अणु .compatible = "hisilicon,hip06-sec" पूर्ण,
+	अणु .compatible = "hisilicon,hip07-sec" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sec_match);
 
-static const __maybe_unused struct acpi_device_id sec_acpi_match[] = {
-	{ "HISI02C1", 0 },
-	{ }
-};
+अटल स्थिर __maybe_unused काष्ठा acpi_device_id sec_acpi_match[] = अणु
+	अणु "HISI02C1", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, sec_acpi_match);
 
-static struct platform_driver sec_driver = {
+अटल काष्ठा platक्रमm_driver sec_driver = अणु
 	.probe = sec_probe,
-	.remove = sec_remove,
-	.driver = {
+	.हटाओ = sec_हटाओ,
+	.driver = अणु
 		.name = "hisi_sec_platform_driver",
 		.of_match_table = sec_match,
 		.acpi_match_table = ACPI_PTR(sec_acpi_match),
-	},
-};
-module_platform_driver(sec_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(sec_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("HiSilicon Security Accelerators");

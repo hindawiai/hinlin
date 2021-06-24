@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _M68KNOMMU_PGTABLE_H
-#define _M68KNOMMU_PGTABLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _M68KNOMMU_PGTABLE_H
+#घोषणा _M68KNOMMU_PGTABLE_H
 
-#include <asm-generic/pgtable-nopud.h>
+#समावेश <यंत्र-generic/pgtable-nopud.h>
 
 /*
  * (C) Copyright 2000-2002, Greg Ungerer <gerg@snapgear.com>
  */
 
-#include <linux/slab.h>
-#include <asm/processor.h>
-#include <asm/page.h>
-#include <asm/io.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/पन.स>
 
 /*
  * Trivial page table functions.
  */
-#define pgd_present(pgd)	(1)
-#define pgd_none(pgd)		(0)
-#define pgd_bad(pgd)		(0)
-#define pgd_clear(pgdp)
-#define kern_addr_valid(addr)	(1)
-#define	pmd_offset(a, b)	((void *)0)
+#घोषणा pgd_present(pgd)	(1)
+#घोषणा pgd_none(pgd)		(0)
+#घोषणा pgd_bad(pgd)		(0)
+#घोषणा pgd_clear(pgdp)
+#घोषणा kern_addr_valid(addr)	(1)
+#घोषणा	pmd_offset(a, b)	((व्योम *)0)
 
-#define PAGE_NONE	__pgprot(0)
-#define PAGE_SHARED	__pgprot(0)
-#define PAGE_COPY	__pgprot(0)
-#define PAGE_READONLY	__pgprot(0)
-#define PAGE_KERNEL	__pgprot(0)
+#घोषणा PAGE_NONE	__pgprot(0)
+#घोषणा PAGE_SHARED	__pgprot(0)
+#घोषणा PAGE_COPY	__pgprot(0)
+#घोषणा PAGE_READONLY	__pgprot(0)
+#घोषणा PAGE_KERNEL	__pgprot(0)
 
-extern void paging_init(void);
-#define swapper_pg_dir ((pgd_t *) 0)
+बाह्य व्योम paging_init(व्योम);
+#घोषणा swapper_pg_dir ((pgd_t *) 0)
 
-#define __swp_type(x)		(0)
-#define __swp_offset(x)		(0)
-#define __swp_entry(typ,off)	((swp_entry_t) { ((typ) | ((off) << 7)) })
-#define __pte_to_swp_entry(pte)	((swp_entry_t) { pte_val(pte) })
-#define __swp_entry_to_pte(x)	((pte_t) { (x).val })
+#घोषणा __swp_type(x)		(0)
+#घोषणा __swp_offset(x)		(0)
+#घोषणा __swp_entry(typ,off)	((swp_entry_t) अणु ((typ) | ((off) << 7)) पूर्ण)
+#घोषणा __pte_to_swp_entry(pte)	((swp_entry_t) अणु pte_val(pte) पूर्ण)
+#घोषणा __swp_entry_to_pte(x)	((pte_t) अणु (x).val पूर्ण)
 
 /*
  * ZERO_PAGE is a global shared page that is always zero: used
- * for zero-mapped memory areas etc..
+ * क्रम zero-mapped memory areas etc..
  */
-#define ZERO_PAGE(vaddr)	(virt_to_page(0))
+#घोषणा ZERO_PAGE(vaddr)	(virt_to_page(0))
 
 /*
- * All 32bit addresses are effectively valid for vmalloc...
- * Sort of meaningless for non-VM targets.
+ * All 32bit addresses are effectively valid क्रम vदो_स्मृति...
+ * Sort of meaningless क्रम non-VM tarमाला_लो.
  */
-#define	VMALLOC_START	0
-#define	VMALLOC_END	0xffffffff
-#define	KMAP_START	0
-#define	KMAP_END	0xffffffff
+#घोषणा	VMALLOC_START	0
+#घोषणा	VMALLOC_END	0xffffffff
+#घोषणा	KMAP_START	0
+#घोषणा	KMAP_END	0xffffffff
 
-#endif /* _M68KNOMMU_PGTABLE_H */
+#पूर्ण_अगर /* _M68KNOMMU_PGTABLE_H */

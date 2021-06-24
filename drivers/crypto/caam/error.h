@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * CAAM Error Reporting code header
  *
  * Copyright 2009-2011 Freescale Semiconductor, Inc.
  */
 
-#ifndef CAAM_ERROR_H
-#define CAAM_ERROR_H
+#अगर_अघोषित CAAM_ERROR_H
+#घोषणा CAAM_ERROR_H
 
-#include "desc.h"
+#समावेश "desc.h"
 
-#define CAAM_ERROR_STR_MAX 302
+#घोषणा CAAM_ERROR_STR_MAX 302
 
-int caam_strstatus(struct device *dev, u32 status, bool qi_v2);
+पूर्णांक caam_strstatus(काष्ठा device *dev, u32 status, bool qi_v2);
 
-#define caam_jr_strstatus(jrdev, status) caam_strstatus(jrdev, status, false)
-#define caam_qi2_strstatus(qidev, status) caam_strstatus(qidev, status, true)
+#घोषणा caam_jr_strstatus(jrdev, status) caam_strstatus(jrdev, status, false)
+#घोषणा caam_qi2_strstatus(qidev, status) caam_strstatus(qidev, status, true)
 
-void caam_dump_sg(const char *prefix_str, int prefix_type,
-		  int rowsize, int groupsize, struct scatterlist *sg,
-		  size_t tlen, bool ascii);
+व्योम caam_dump_sg(स्थिर अक्षर *prefix_str, पूर्णांक prefix_type,
+		  पूर्णांक rowsize, पूर्णांक groupsize, काष्ठा scatterlist *sg,
+		  माप_प्रकार tlen, bool ascii);
 
-static inline bool is_mdha(u32 algtype)
-{
-	return (algtype & OP_ALG_ALGSEL_MASK & ~OP_ALG_ALGSEL_SUBMASK) ==
+अटल अंतरभूत bool is_mdha(u32 algtype)
+अणु
+	वापस (algtype & OP_ALG_ALGSEL_MASK & ~OP_ALG_ALGSEL_SUBMASK) ==
 	       OP_ALG_CHA_MDHA;
-}
-#endif /* CAAM_ERROR_H */
+पूर्ण
+#पूर्ण_अगर /* CAAM_ERROR_H */

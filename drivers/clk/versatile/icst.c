@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/common/icst307.c
  *
  *  Copyright (C) 2003 Deep Blue Solutions, Ltd, All Rights Reserved.
  *
- *  Support functions for calculating clocks/divisors for the ICST307
- *  clock generators.  See https://www.idt.com/ for more information
+ *  Support functions क्रम calculating घड़ीs/भागisors क्रम the ICST307
+ *  घड़ी generators.  See https://www.idt.com/ क्रम more inक्रमmation
  *  on these devices.
  *
- *  This is an almost identical implementation to the ICST525 clock generator.
- *  The s2div and idx2s files are different
+ *  This is an almost identical implementation to the ICST525 घड़ी generator.
+ *  The s2भाग and idx2s files are dअगरferent
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <asm/div64.h>
-#include "icst.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश "icst.h"
 
 /*
- * Divisors for each OD setting.
+ * Divisors क्रम each OD setting.
  */
-const unsigned char icst307_s2div[8] = { 10, 2, 8, 4, 5, 7, 3, 6 };
-const unsigned char icst525_s2div[8] = { 10, 2, 8, 4, 5, 7, 9, 6 };
-EXPORT_SYMBOL(icst307_s2div);
-EXPORT_SYMBOL(icst525_s2div);
+स्थिर अचिन्हित अक्षर icst307_s2भाग[8] = अणु 10, 2, 8, 4, 5, 7, 3, 6 पूर्ण;
+स्थिर अचिन्हित अक्षर icst525_s2भाग[8] = अणु 10, 2, 8, 4, 5, 7, 9, 6 पूर्ण;
+EXPORT_SYMBOL(icst307_s2भाग);
+EXPORT_SYMBOL(icst525_s2भाग);
 
-unsigned long icst_hz(const struct icst_params *p, struct icst_vco vco)
-{
-	u64 dividend = p->ref * 2 * (u64)(vco.v + 8);
-	u32 divisor = (vco.r + 2) * p->s2div[vco.s];
+अचिन्हित दीर्घ icst_hz(स्थिर काष्ठा icst_params *p, काष्ठा icst_vco vco)
+अणु
+	u64 भागidend = p->ref * 2 * (u64)(vco.v + 8);
+	u32 भागisor = (vco.r + 2) * p->s2भाग[vco.s];
 
-	do_div(dividend, divisor);
-	return (unsigned long)dividend;
-}
+	करो_भाग(भागidend, भागisor);
+	वापस (अचिन्हित दीर्घ)भागidend;
+पूर्ण
 
 EXPORT_SYMBOL(icst_hz);
 
 /*
- * Ascending divisor S values.
+ * Ascending भागisor S values.
  */
-const unsigned char icst307_idx2s[8] = { 1, 6, 3, 4, 7, 5, 2, 0 };
-const unsigned char icst525_idx2s[8] = { 1, 3, 4, 7, 5, 2, 6, 0 };
+स्थिर अचिन्हित अक्षर icst307_idx2s[8] = अणु 1, 6, 3, 4, 7, 5, 2, 0 पूर्ण;
+स्थिर अचिन्हित अक्षर icst525_idx2s[8] = अणु 1, 3, 4, 7, 5, 2, 6, 0 पूर्ण;
 EXPORT_SYMBOL(icst307_idx2s);
 EXPORT_SYMBOL(icst525_idx2s);
 
-struct icst_vco
-icst_hz_to_vco(const struct icst_params *p, unsigned long freq)
-{
-	struct icst_vco vco = { .s = 1, .v = p->vd_max, .r = p->rd_max };
-	unsigned long f;
-	unsigned int i = 0, rd, best = (unsigned int)-1;
+काष्ठा icst_vco
+icst_hz_to_vco(स्थिर काष्ठा icst_params *p, अचिन्हित दीर्घ freq)
+अणु
+	काष्ठा icst_vco vco = अणु .s = 1, .v = p->vd_max, .r = p->rd_max पूर्ण;
+	अचिन्हित दीर्घ f;
+	अचिन्हित पूर्णांक i = 0, rd, best = (अचिन्हित पूर्णांक)-1;
 
 	/*
-	 * First, find the PLL output divisor such
+	 * First, find the PLL output भागisor such
 	 * that the PLL output is within spec.
 	 */
-	do {
-		f = freq * p->s2div[p->idx2s[i]];
+	करो अणु
+		f = freq * p->s2भाग[p->idx2s[i]];
 
-		if (f > p->vco_min && f <= p->vco_max)
-			break;
+		अगर (f > p->vco_min && f <= p->vco_max)
+			अवरोध;
 		i++;
-	} while (i < 8);
+	पूर्ण जबतक (i < 8);
 
-	if (i >= 8)
-		return vco;
+	अगर (i >= 8)
+		वापस vco;
 
 	vco.s = p->idx2s[i];
 
 	/*
-	 * Now find the closest divisor combination
+	 * Now find the बंदst भागisor combination
 	 * which gives a PLL output of 'f'.
 	 */
-	for (rd = p->rd_min; rd <= p->rd_max; rd++) {
-		unsigned long fref_div, f_pll;
-		unsigned int vd;
-		int f_diff;
+	क्रम (rd = p->rd_min; rd <= p->rd_max; rd++) अणु
+		अचिन्हित दीर्घ fref_भाग, f_pll;
+		अचिन्हित पूर्णांक vd;
+		पूर्णांक f_dअगरf;
 
-		fref_div = (2 * p->ref) / rd;
+		fref_भाग = (2 * p->ref) / rd;
 
-		vd = (f + fref_div / 2) / fref_div;
-		if (vd < p->vd_min || vd > p->vd_max)
-			continue;
+		vd = (f + fref_भाग / 2) / fref_भाग;
+		अगर (vd < p->vd_min || vd > p->vd_max)
+			जारी;
 
-		f_pll = fref_div * vd;
-		f_diff = f_pll - f;
-		if (f_diff < 0)
-			f_diff = -f_diff;
+		f_pll = fref_भाग * vd;
+		f_dअगरf = f_pll - f;
+		अगर (f_dअगरf < 0)
+			f_dअगरf = -f_dअगरf;
 
-		if ((unsigned)f_diff < best) {
+		अगर ((अचिन्हित)f_dअगरf < best) अणु
 			vco.v = vd - 8;
 			vco.r = rd - 2;
-			if (f_diff == 0)
-				break;
-			best = f_diff;
-		}
-	}
+			अगर (f_dअगरf == 0)
+				अवरोध;
+			best = f_dअगरf;
+		पूर्ण
+	पूर्ण
 
-	return vco;
-}
+	वापस vco;
+पूर्ण
 
 EXPORT_SYMBOL(icst_hz_to_vco);

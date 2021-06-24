@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
     MaxLinear MXL5005S VSB/QAM/DVBT tuner driver
 
@@ -5,8 +6,8 @@
     Copyright (C) 2006 Steven Toth <stoth@linuxtv.org>
       Functions:
 	mxl5005s_reset()
-	mxl5005s_writereg()
-	mxl5005s_writeregs()
+	mxl5005s_ग_लिखोreg()
+	mxl5005s_ग_लिखोregs()
 	mxl5005s_init()
 	mxl5005s_reconfigure()
 	mxl5005s_AssignTunerMode()
@@ -21,7 +22,7 @@
       Functions:
 	mxl5005s_SetRfFreqHz()
 
-    This program is free software; you can redistribute it and/or modify
+    This program is मुक्त software; you can redistribute it and/or modअगरy
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -29,87 +30,87 @@
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU General Public License क्रम more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
+    aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 */
 
 /*
     History of this driver (Steven Toth):
-      I was given a public release of a linux driver that included
-      support for the MaxLinear MXL5005S silicon tuner. Analysis of
+      I was given a खुला release of a linux driver that included
+      support क्रम the MaxLinear MXL5005S silicon tuner. Analysis of
       the tuner driver showed clearly three things.
 
       1. The tuner driver didn't support the LinuxTV tuner API
-	 so the code Realtek added had to be removed.
+	 so the code Realtek added had to be हटाओd.
 
-      2. A significant amount of the driver is reference driver code
-	 from MaxLinear, I felt it was important to identify and
+      2. A signअगरicant amount of the driver is reference driver code
+	 from MaxLinear, I felt it was important to identअगरy and
 	 preserve this.
 
-      3. New code has to be added to interface correctly with the
+      3. New code has to be added to पूर्णांकerface correctly with the
 	 LinuxTV API, as a regular kernel module.
 
-      Other than the reference driver enum's, I've clearly marked
+      Other than the reference driver क्रमागत's, I've clearly marked
       sections of the code and retained the copyright of the
       respective owners.
 */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <media/dvb_frontend.h>
-#include "mxl5005s.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश "mxl5005s.h"
 
-static int debug;
+अटल पूर्णांक debug;
 
-#define dprintk(level, arg...) do {    \
-	if (level <= debug)            \
-		printk(arg);    \
-	} while (0)
+#घोषणा dprपूर्णांकk(level, arg...) करो अणु    \
+	अगर (level <= debug)            \
+		prपूर्णांकk(arg);    \
+	पूर्ण जबतक (0)
 
-#define TUNER_REGS_NUM          104
-#define INITCTRL_NUM            40
+#घोषणा TUNER_REGS_NUM          104
+#घोषणा INITCTRL_NUM            40
 
-#ifdef _MXL_PRODUCTION
-#define CHCTRL_NUM              39
-#else
-#define CHCTRL_NUM              36
-#endif
+#अगर_घोषित _MXL_PRODUCTION
+#घोषणा CHCTRL_NUM              39
+#अन्यथा
+#घोषणा CHCTRL_NUM              36
+#पूर्ण_अगर
 
-#define MXLCTRL_NUM             189
-#define MASTER_CONTROL_ADDR     9
+#घोषणा MXLCTRL_NUM             189
+#घोषणा MASTER_CONTROL_ADDR     9
 
 /* Enumeration of Master Control Register State */
-enum master_control_state {
+क्रमागत master_control_state अणु
 	MC_LOAD_START = 1,
 	MC_POWER_DOWN,
 	MC_SYNTH_RESET,
 	MC_SEQ_OFF
-};
+पूर्ण;
 
 /* Enumeration of MXL5005 Tuner Modulation Type */
-enum {
+क्रमागत अणु
 	MXL_DEFAULT_MODULATION = 0,
 	MXL_DVBT,
 	MXL_ATSC,
 	MXL_QAM,
 	MXL_ANALOG_CABLE,
 	MXL_ANALOG_OTA
-};
+पूर्ण;
 
 /* MXL5005 Tuner Register Struct */
-struct TunerReg {
+काष्ठा TunerReg अणु
 	u16 Reg_Num;	/* Tuner Register Address */
-	u16 Reg_Val;	/* Current sw programmed value waiting to be written */
-};
+	u16 Reg_Val;	/* Current sw programmed value रुकोing to be written */
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	/* Initialization Control Names */
 	DN_IQTN_AMP_CUT = 1,       /* 1 */
 	BB_MODE,                   /* 2 */
@@ -189,12 +190,12 @@ enum {
 	DAC_B_ENABLE,              /* 84 */
 	DAC_DIN_A,                 /* 85 */
 	DAC_DIN_B,                 /* 86 */
-#ifdef _MXL_PRODUCTION
+#अगर_घोषित _MXL_PRODUCTION
 	RFSYN_EN_DIV,              /* 87 */
 	RFSYN_DIVM,                /* 88 */
 	DN_BYPASS_AGC_I2C          /* 89 */
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * The following context is source code provided by MaxLinear.
@@ -202,54 +203,54 @@ enum {
  */
 
 /* Constants */
-#define MXL5005S_REG_WRITING_TABLE_LEN_MAX	104
-#define MXL5005S_LATCH_BYTE			0xfe
+#घोषणा MXL5005S_REG_WRITING_TABLE_LEN_MAX	104
+#घोषणा MXL5005S_LATCH_BYTE			0xfe
 
 /* Register address, MSB, and LSB */
-#define MXL5005S_BB_IQSWAP_ADDR			59
-#define MXL5005S_BB_IQSWAP_MSB			0
-#define MXL5005S_BB_IQSWAP_LSB			0
+#घोषणा MXL5005S_BB_IQSWAP_ADDR			59
+#घोषणा MXL5005S_BB_IQSWAP_MSB			0
+#घोषणा MXL5005S_BB_IQSWAP_LSB			0
 
-#define MXL5005S_BB_DLPF_BANDSEL_ADDR		53
-#define MXL5005S_BB_DLPF_BANDSEL_MSB		4
-#define MXL5005S_BB_DLPF_BANDSEL_LSB		3
+#घोषणा MXL5005S_BB_DLPF_BANDSEL_ADDR		53
+#घोषणा MXL5005S_BB_DLPF_BANDSEL_MSB		4
+#घोषणा MXL5005S_BB_DLPF_BANDSEL_LSB		3
 
 /* Standard modes */
-enum {
+क्रमागत अणु
 	MXL5005S_STANDARD_DVBT,
 	MXL5005S_STANDARD_ATSC,
-};
-#define MXL5005S_STANDARD_MODE_NUM		2
+पूर्ण;
+#घोषणा MXL5005S_STANDARD_MODE_NUM		2
 
 /* Bandwidth modes */
-enum {
+क्रमागत अणु
 	MXL5005S_BANDWIDTH_6MHZ = 6000000,
 	MXL5005S_BANDWIDTH_7MHZ = 7000000,
 	MXL5005S_BANDWIDTH_8MHZ = 8000000,
-};
-#define MXL5005S_BANDWIDTH_MODE_NUM		3
+पूर्ण;
+#घोषणा MXL5005S_BANDWIDTH_MODE_NUM		3
 
 /* MXL5005 Tuner Control Struct */
-struct TunerControl {
+काष्ठा TunerControl अणु
 	u16 Ctrl_Num;	/* Control Number */
 	u16 size;	/* Number of bits to represent Value */
-	u16 addr[25];	/* Array of Tuner Register Address for each bit pos */
-	u16 bit[25];	/* Array of bit pos in Reg Addr for each bit pos */
+	u16 addr[25];	/* Array of Tuner Register Address क्रम each bit pos */
+	u16 bit[25];	/* Array of bit pos in Reg Addr क्रम each bit pos */
 	u16 val[25];	/* Binary representation of Value */
-};
+पूर्ण;
 
 /* MXL5005 Tuner Struct */
-struct mxl5005s_state {
+काष्ठा mxl5005s_state अणु
 	u8	Mode;		/* 0: Analog Mode ; 1: Digital Mode */
-	u8	IF_Mode;	/* for Analog Mode, 0: zero IF; 1: low IF */
+	u8	IF_Mode;	/* क्रम Analog Mode, 0: zero IF; 1: low IF */
 	u32	Chan_Bandwidth;	/* filter  channel bandwidth (6, 7, 8) */
 	u32	IF_OUT;		/* Desired IF Out Frequency */
 	u16	IF_OUT_LOAD;	/* IF Out Load Resistor (200/300 Ohms) */
 	u32	RF_IN;		/* RF Input Frequency */
 	u32	Fxtal;		/* XTAL Frequency */
 	u8	AGC_Mode;	/* AGC Mode 0: Dual AGC; 1: Single AGC */
-	u16	TOP;		/* Value: take over point */
-	u8	CLOCK_OUT;	/* 0: turn off clk out; 1: turn on clock out */
+	u16	TOP;		/* Value: take over poपूर्णांक */
+	u8	CLOCK_OUT;	/* 0: turn off clk out; 1: turn on घड़ी out */
 	u8	DIV_OUT;	/* 4MHz or 16MHz */
 	u8	CAPSELECT;	/* 0: disable On-Chip pulling cap; 1: enable */
 	u8	EN_RSSI;	/* 0: disable RSSI; 1: enable RSSI */
@@ -267,59 +268,59 @@ struct mxl5005s_state {
 	u32	IF_LO;		/* Synth IF LO Frequency */
 	u32	TG_LO;		/* Synth TG_LO Frequency */
 
-	/* Pointers to ControlName Arrays */
+	/* Poपूर्णांकers to ControlName Arrays */
 	u16	Init_Ctrl_Num;		/* Number of INIT Control Names */
-	struct TunerControl
-		Init_Ctrl[INITCTRL_NUM]; /* INIT Control Names Array Pointer */
+	काष्ठा TunerControl
+		Init_Ctrl[INITCTRL_NUM]; /* INIT Control Names Array Poपूर्णांकer */
 
 	u16	CH_Ctrl_Num;		/* Number of CH Control Names */
-	struct TunerControl
-		CH_Ctrl[CHCTRL_NUM];	/* CH Control Name Array Pointer */
+	काष्ठा TunerControl
+		CH_Ctrl[CHCTRL_NUM];	/* CH Control Name Array Poपूर्णांकer */
 
 	u16	MXL_Ctrl_Num;		/* Number of MXL Control Names */
-	struct TunerControl
-		MXL_Ctrl[MXLCTRL_NUM];	/* MXL Control Name Array Pointer */
+	काष्ठा TunerControl
+		MXL_Ctrl[MXLCTRL_NUM];	/* MXL Control Name Array Poपूर्णांकer */
 
-	/* Pointer to Tuner Register Array */
+	/* Poपूर्णांकer to Tuner Register Array */
 	u16	TunerRegs_Num;		/* Number of Tuner Registers */
-	struct TunerReg
-		TunerRegs[TUNER_REGS_NUM]; /* Tuner Register Array Pointer */
+	काष्ठा TunerReg
+		TunerRegs[TUNER_REGS_NUM]; /* Tuner Register Array Poपूर्णांकer */
 
-	/* Linux driver framework specific */
-	struct mxl5005s_config *config;
-	struct dvb_frontend *frontend;
-	struct i2c_adapter *i2c;
+	/* Linux driver framework specअगरic */
+	काष्ठा mxl5005s_config *config;
+	काष्ठा dvb_frontend *frontend;
+	काष्ठा i2c_adapter *i2c;
 
 	/* Cache values */
 	u32 current_mode;
 
-};
+पूर्ण;
 
-static u16 MXL_GetMasterControl(u8 *MasterReg, int state);
-static u16 MXL_ControlWrite(struct dvb_frontend *fe, u16 ControlNum, u32 value);
-static u16 MXL_ControlRead(struct dvb_frontend *fe, u16 controlNum, u32 *value);
-static void MXL_RegWriteBit(struct dvb_frontend *fe, u8 address, u8 bit,
+अटल u16 MXL_GetMasterControl(u8 *MasterReg, पूर्णांक state);
+अटल u16 MXL_ControlWrite(काष्ठा dvb_frontend *fe, u16 ControlNum, u32 value);
+अटल u16 MXL_ControlRead(काष्ठा dvb_frontend *fe, u16 controlNum, u32 *value);
+अटल व्योम MXL_RegWriteBit(काष्ठा dvb_frontend *fe, u8 address, u8 bit,
 	u8 bitVal);
-static u16 MXL_GetCHRegister(struct dvb_frontend *fe, u8 *RegNum,
-	u8 *RegVal, int *count);
-static u32 MXL_Ceiling(u32 value, u32 resolution);
-static u16 MXL_RegRead(struct dvb_frontend *fe, u8 RegNum, u8 *RegVal);
-static u16 MXL_ControlWrite_Group(struct dvb_frontend *fe, u16 controlNum,
+अटल u16 MXL_GetCHRegister(काष्ठा dvb_frontend *fe, u8 *RegNum,
+	u8 *RegVal, पूर्णांक *count);
+अटल u32 MXL_Ceiling(u32 value, u32 resolution);
+अटल u16 MXL_RegRead(काष्ठा dvb_frontend *fe, u8 RegNum, u8 *RegVal);
+अटल u16 MXL_ControlWrite_Group(काष्ठा dvb_frontend *fe, u16 controlNum,
 	u32 value, u16 controlGroup);
-static u16 MXL_SetGPIO(struct dvb_frontend *fe, u8 GPIO_Num, u8 GPIO_Val);
-static u16 MXL_GetInitRegister(struct dvb_frontend *fe, u8 *RegNum,
-	u8 *RegVal, int *count);
-static u16 MXL_TuneRF(struct dvb_frontend *fe, u32 RF_Freq);
-static void MXL_SynthIFLO_Calc(struct dvb_frontend *fe);
-static void MXL_SynthRFTGLO_Calc(struct dvb_frontend *fe);
-static u16 MXL_GetCHRegister_ZeroIF(struct dvb_frontend *fe, u8 *RegNum,
-	u8 *RegVal, int *count);
-static int mxl5005s_writeregs(struct dvb_frontend *fe, u8 *addrtable,
+अटल u16 MXL_SetGPIO(काष्ठा dvb_frontend *fe, u8 GPIO_Num, u8 GPIO_Val);
+अटल u16 MXL_GetInitRegister(काष्ठा dvb_frontend *fe, u8 *RegNum,
+	u8 *RegVal, पूर्णांक *count);
+अटल u16 MXL_TuneRF(काष्ठा dvb_frontend *fe, u32 RF_Freq);
+अटल व्योम MXL_SynthIFLO_Calc(काष्ठा dvb_frontend *fe);
+अटल व्योम MXL_SynthRFTGLO_Calc(काष्ठा dvb_frontend *fe);
+अटल u16 MXL_GetCHRegister_ZeroIF(काष्ठा dvb_frontend *fe, u8 *RegNum,
+	u8 *RegVal, पूर्णांक *count);
+अटल पूर्णांक mxl5005s_ग_लिखोregs(काष्ठा dvb_frontend *fe, u8 *addrtable,
 	u8 *datatable, u8 len);
-static u16 MXL_IFSynthInit(struct dvb_frontend *fe);
-static int mxl5005s_AssignTunerMode(struct dvb_frontend *fe, u32 mod_type,
+अटल u16 MXL_IFSynthInit(काष्ठा dvb_frontend *fe);
+अटल पूर्णांक mxl5005s_AssignTunerMode(काष्ठा dvb_frontend *fe, u32 mod_type,
 	u32 bandwidth);
-static int mxl5005s_reconfigure(struct dvb_frontend *fe, u32 mod_type,
+अटल पूर्णांक mxl5005s_reconfigure(काष्ठा dvb_frontend *fe, u32 mod_type,
 	u32 bandwidth);
 
 /* ----------------------------------------------------------------
@@ -329,22 +330,22 @@ static int mxl5005s_reconfigure(struct dvb_frontend *fe, u32 mod_type,
  * This code is placed under the terms of the GNU General Public License
  *
  * Released by Realtek under GPLv2.
- * Thanks to Realtek for a lot of support we received !
+ * Thanks to Realtek क्रम a lot of support we received !
  *
  *  Revision: 080314 - original version
  */
 
-static int mxl5005s_SetRfFreqHz(struct dvb_frontend *fe, unsigned long RfFreqHz)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	unsigned char AddrTable[MXL5005S_REG_WRITING_TABLE_LEN_MAX];
-	unsigned char ByteTable[MXL5005S_REG_WRITING_TABLE_LEN_MAX];
-	int TableLen;
+अटल पूर्णांक mxl5005s_SetRfFreqHz(काष्ठा dvb_frontend *fe, अचिन्हित दीर्घ RfFreqHz)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	अचिन्हित अक्षर AddrTable[MXL5005S_REG_WRITING_TABLE_LEN_MAX];
+	अचिन्हित अक्षर ByteTable[MXL5005S_REG_WRITING_TABLE_LEN_MAX];
+	पूर्णांक TableLen;
 
 	u32 IfDivval = 0;
-	unsigned char MasterControlByte;
+	अचिन्हित अक्षर MasterControlByte;
 
-	dprintk(1, "%s() freq=%ld\n", __func__, RfFreqHz);
+	dprपूर्णांकk(1, "%s() freq=%ld\n", __func__, RfFreqHz);
 
 	/* Set MxL5005S tuner RF frequency according to example code. */
 
@@ -353,7 +354,7 @@ static int mxl5005s_SetRfFreqHz(struct dvb_frontend *fe, unsigned long RfFreqHz)
 	AddrTable[0] = MASTER_CONTROL_ADDR;
 	ByteTable[0] |= state->config->AgcMasterByte;
 
-	mxl5005s_writeregs(fe, AddrTable, ByteTable, 1);
+	mxl5005s_ग_लिखोregs(fe, AddrTable, ByteTable, 1);
 
 	/* Tuner RF frequency setting stage 1 */
 	MXL_TuneRF(fe, RfFreqHz);
@@ -371,7 +372,7 @@ static int mxl5005s_SetRfFreqHz(struct dvb_frontend *fe, unsigned long RfFreqHz)
 		state->config->AgcMasterByte;
 	TableLen += 1;
 
-	mxl5005s_writeregs(fe, AddrTable, ByteTable, TableLen);
+	mxl5005s_ग_लिखोregs(fe, AddrTable, ByteTable, TableLen);
 
 	/* Wait 30 ms. */
 	msleep(150);
@@ -387,21 +388,21 @@ static int mxl5005s_SetRfFreqHz(struct dvb_frontend *fe, unsigned long RfFreqHz)
 		state->config->AgcMasterByte ;
 	TableLen += 1;
 
-	mxl5005s_writeregs(fe, AddrTable, ByteTable, TableLen);
+	mxl5005s_ग_लिखोregs(fe, AddrTable, ByteTable, TableLen);
 
 	msleep(100);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /* End: Custom code taken from the Realtek driver */
 
 /* ----------------------------------------------------------------
  * Begin: Reference driver code found in the Realtek driver.
  * Copyright (C) 2008 MaxLinear
  */
-static u16 MXL5005_RegisterInit(struct dvb_frontend *fe)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अटल u16 MXL5005_RegisterInit(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 	state->TunerRegs_Num = TUNER_REGS_NUM ;
 
 	state->TunerRegs[0].Reg_Num = 9 ;
@@ -716,12 +717,12 @@ static u16 MXL5005_RegisterInit(struct dvb_frontend *fe)
 	state->TunerRegs[103].Reg_Num = 195 ;
 	state->TunerRegs[103].Reg_Val = 0x00 ;
 
-	return 0 ;
-}
+	वापस 0 ;
+पूर्ण
 
-static u16 MXL5005_ControlInit(struct dvb_frontend *fe)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अटल u16 MXL5005_ControlInit(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 	state->Init_Ctrl_Num = INITCTRL_NUM;
 
 	state->Init_Ctrl[0].Ctrl_Num = DN_IQTN_AMP_CUT ;
@@ -1633,7 +1634,7 @@ static u16 MXL5005_ControlInit(struct dvb_frontend *fe)
 	state->CH_Ctrl[35].bit[5] = 7;
 	state->CH_Ctrl[35].val[5] = 0;
 
-#ifdef _MXL_PRODUCTION
+#अगर_घोषित _MXL_PRODUCTION
 	state->CH_Ctrl[36].Ctrl_Num = RFSYN_EN_DIV ;
 	state->CH_Ctrl[36].size = 1 ;
 	state->CH_Ctrl[36].addr[0] = 109;
@@ -1654,30 +1655,30 @@ static u16 MXL5005_ControlInit(struct dvb_frontend *fe)
 	state->CH_Ctrl[38].addr[0] = 65;
 	state->CH_Ctrl[38].bit[0] = 1;
 	state->CH_Ctrl[38].val[0] = 0;
-#endif
+#पूर्ण_अगर
 
-	return 0 ;
-}
+	वापस 0 ;
+पूर्ण
 
-static void InitTunerControls(struct dvb_frontend *fe)
-{
+अटल व्योम InitTunerControls(काष्ठा dvb_frontend *fe)
+अणु
 	MXL5005_RegisterInit(fe);
 	MXL5005_ControlInit(fe);
-#ifdef _MXL_INTERNAL
+#अगर_घोषित _MXL_INTERNAL
 	MXL5005_MXLControlInit(fe);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static u16 MXL5005_TunerConfig(struct dvb_frontend *fe,
+अटल u16 MXL5005_TunerConfig(काष्ठा dvb_frontend *fe,
 	u8	Mode,		/* 0: Analog Mode ; 1: Digital Mode */
-	u8	IF_mode,	/* for Analog Mode, 0: zero IF; 1: low IF */
+	u8	IF_mode,	/* क्रम Analog Mode, 0: zero IF; 1: low IF */
 	u32	Bandwidth,	/* filter  channel bandwidth (6, 7, 8) */
 	u32	IF_out,		/* Desired IF Out Frequency */
 	u32	Fxtal,		/* XTAL Frequency */
 	u8	AGC_Mode,	/* AGC Mode - Dual AGC: 0, Single AGC: 1 */
-	u16	TOP,		/* 0: Dual AGC; Value: take over point */
+	u16	TOP,		/* 0: Dual AGC; Value: take over poपूर्णांक */
 	u16	IF_OUT_LOAD,	/* IF Out Load Resistor (200 / 300 Ohms) */
-	u8	CLOCK_OUT,	/* 0: turn off clk out; 1: turn on clock out */
+	u8	CLOCK_OUT,	/* 0: turn off clk out; 1: turn on घड़ी out */
 	u8	DIV_OUT,	/* 0: Div-1; 1: Div-4 */
 	u8	CAPSELECT,	/* 0: disable On-Chip pulling cap; 1: enable */
 	u8	EN_RSSI,	/* 0: disable RSSI; 1: enable RSSI */
@@ -1690,8 +1691,8 @@ static u16 MXL5005_TunerConfig(struct dvb_frontend *fe,
 	/* 0 - Default; 1 - Off; 2 - Type C; 3 - Type C-H */
 	u8	TF_Type
 	)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 
 	state->Mode = Mode;
 	state->IF_Mode = IF_mode;
@@ -1708,51 +1709,51 @@ static u16 MXL5005_TunerConfig(struct dvb_frontend *fe,
 	state->Mod_Type = Mod_Type;
 	state->TF_Type = TF_Type;
 
-	/* Initialize all the controls and registers */
+	/* Initialize all the controls and रेजिस्टरs */
 	InitTunerControls(fe);
 
 	/* Synthesizer LO frequency calculation */
 	MXL_SynthIFLO_Calc(fe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void MXL_SynthIFLO_Calc(struct dvb_frontend *fe)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	if (state->Mode == 1) /* Digital Mode */
+अटल व्योम MXL_SynthIFLO_Calc(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	अगर (state->Mode == 1) /* Digital Mode */
 		state->IF_LO = state->IF_OUT;
-	else /* Analog Mode */ {
-		if (state->IF_Mode == 0) /* Analog Zero IF mode */
+	अन्यथा /* Analog Mode */ अणु
+		अगर (state->IF_Mode == 0) /* Analog Zero IF mode */
 			state->IF_LO = state->IF_OUT + 400000;
-		else /* Analog Low IF mode */
+		अन्यथा /* Analog Low IF mode */
 			state->IF_LO = state->IF_OUT + state->Chan_Bandwidth/2;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void MXL_SynthRFTGLO_Calc(struct dvb_frontend *fe)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अटल व्योम MXL_SynthRFTGLO_Calc(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 
-	if (state->Mode == 1) /* Digital Mode */ {
-			/* remove 20.48MHz setting for 2.6.10 */
+	अगर (state->Mode == 1) /* Digital Mode */ अणु
+			/* हटाओ 20.48MHz setting क्रम 2.6.10 */
 			state->RF_LO = state->RF_IN;
-			/* change for 2.6.6 */
+			/* change क्रम 2.6.6 */
 			state->TG_LO = state->RF_IN - 750000;
-	} else /* Analog Mode */ {
-		if (state->IF_Mode == 0) /* Analog Zero IF mode */ {
+	पूर्ण अन्यथा /* Analog Mode */ अणु
+		अगर (state->IF_Mode == 0) /* Analog Zero IF mode */ अणु
 			state->RF_LO = state->RF_IN - 400000;
 			state->TG_LO = state->RF_IN - 1750000;
-		} else /* Analog Low IF mode */ {
+		पूर्ण अन्यथा /* Analog Low IF mode */ अणु
 			state->RF_LO = state->RF_IN - state->Chan_Bandwidth/2;
 			state->TG_LO = state->RF_IN -
 				state->Chan_Bandwidth + 500000;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static u16 MXL_OverwriteICDefault(struct dvb_frontend *fe)
-{
+अटल u16 MXL_Overग_लिखोICDefault(काष्ठा dvb_frontend *fe)
+अणु
 	u16 status = 0;
 
 	status += MXL_ControlWrite(fe, OVERRIDE_1, 1);
@@ -1760,15 +1761,15 @@ static u16 MXL_OverwriteICDefault(struct dvb_frontend *fe)
 	status += MXL_ControlWrite(fe, OVERRIDE_3, 1);
 	status += MXL_ControlWrite(fe, OVERRIDE_4, 1);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static u16 MXL_BlockInit(struct dvb_frontend *fe)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अटल u16 MXL_BlockInit(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 	u16 status = 0;
 
-	status += MXL_OverwriteICDefault(fe);
+	status += MXL_Overग_लिखोICDefault(fe);
 
 	/* Downconverter Control Dig Ana */
 	status += MXL_ControlWrite(fe, DN_IQTN_AMP_CUT, state->Mode ? 1 : 0);
@@ -1781,35 +1782,35 @@ static u16 MXL_BlockInit(struct dvb_frontend *fe)
 	status += MXL_ControlWrite(fe, BB_INITSTATE_DLPF_TUNE, 0);
 
 	/* Initialize Low-Pass Filter */
-	if (state->Mode) { /* Digital Mode */
-		switch (state->Chan_Bandwidth) {
-		case 8000000:
+	अगर (state->Mode) अणु /* Digital Mode */
+		चयन (state->Chan_Bandwidth) अणु
+		हाल 8000000:
 			status += MXL_ControlWrite(fe, BB_DLPF_BANDSEL, 0);
-			break;
-		case 7000000:
+			अवरोध;
+		हाल 7000000:
 			status += MXL_ControlWrite(fe, BB_DLPF_BANDSEL, 2);
-			break;
-		case 6000000:
+			अवरोध;
+		हाल 6000000:
 			status += MXL_ControlWrite(fe,
 					BB_DLPF_BANDSEL, 3);
-			break;
-		}
-	} else { /* Analog Mode */
-		switch (state->Chan_Bandwidth) {
-		case 8000000:	/* Low Zero */
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु /* Analog Mode */
+		चयन (state->Chan_Bandwidth) अणु
+		हाल 8000000:	/* Low Zero */
 			status += MXL_ControlWrite(fe, BB_ALPF_BANDSELECT,
 					(state->IF_Mode ? 0 : 3));
-			break;
-		case 7000000:
+			अवरोध;
+		हाल 7000000:
 			status += MXL_ControlWrite(fe, BB_ALPF_BANDSELECT,
 					(state->IF_Mode ? 1 : 4));
-			break;
-		case 6000000:
+			अवरोध;
+		हाल 6000000:
 			status += MXL_ControlWrite(fe, BB_ALPF_BANDSELECT,
 					(state->IF_Mode ? 2 : 5));
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Charge Pump Control Dig  Ana */
 	status += MXL_ControlWrite(fe, RFSYN_CHP_GAIN, state->Mode ? 5 : 8);
@@ -1818,139 +1819,139 @@ static u16 MXL_BlockInit(struct dvb_frontend *fe)
 	status += MXL_ControlWrite(fe, EN_CHP_LIN_B, state->Mode ? 0 : 0);
 
 	/* AGC TOP Control */
-	if (state->AGC_Mode == 0) /* Dual AGC */ {
+	अगर (state->AGC_Mode == 0) /* Dual AGC */ अणु
 		status += MXL_ControlWrite(fe, AGC_IF, 15);
 		status += MXL_ControlWrite(fe, AGC_RF, 15);
-	} else /*  Single AGC Mode Dig  Ana */
+	पूर्ण अन्यथा /*  Single AGC Mode Dig  Ana */
 		status += MXL_ControlWrite(fe, AGC_RF, state->Mode ? 15 : 12);
 
-	if (state->TOP == 55) /* TOP == 5.5 */
+	अगर (state->TOP == 55) /* TOP == 5.5 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0x0);
 
-	if (state->TOP == 72) /* TOP == 7.2 */
+	अगर (state->TOP == 72) /* TOP == 7.2 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0x1);
 
-	if (state->TOP == 92) /* TOP == 9.2 */
+	अगर (state->TOP == 92) /* TOP == 9.2 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0x2);
 
-	if (state->TOP == 110) /* TOP == 11.0 */
+	अगर (state->TOP == 110) /* TOP == 11.0 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0x3);
 
-	if (state->TOP == 129) /* TOP == 12.9 */
+	अगर (state->TOP == 129) /* TOP == 12.9 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0x4);
 
-	if (state->TOP == 147) /* TOP == 14.7 */
+	अगर (state->TOP == 147) /* TOP == 14.7 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0x5);
 
-	if (state->TOP == 168) /* TOP == 16.8 */
+	अगर (state->TOP == 168) /* TOP == 16.8 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0x6);
 
-	if (state->TOP == 194) /* TOP == 19.4 */
+	अगर (state->TOP == 194) /* TOP == 19.4 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0x7);
 
-	if (state->TOP == 212) /* TOP == 21.2 */
+	अगर (state->TOP == 212) /* TOP == 21.2 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0x9);
 
-	if (state->TOP == 232) /* TOP == 23.2 */
+	अगर (state->TOP == 232) /* TOP == 23.2 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0xA);
 
-	if (state->TOP == 252) /* TOP == 25.2 */
+	अगर (state->TOP == 252) /* TOP == 25.2 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0xB);
 
-	if (state->TOP == 271) /* TOP == 27.1 */
+	अगर (state->TOP == 271) /* TOP == 27.1 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0xC);
 
-	if (state->TOP == 292) /* TOP == 29.2 */
+	अगर (state->TOP == 292) /* TOP == 29.2 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0xD);
 
-	if (state->TOP == 317) /* TOP == 31.7 */
+	अगर (state->TOP == 317) /* TOP == 31.7 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0xE);
 
-	if (state->TOP == 349) /* TOP == 34.9 */
+	अगर (state->TOP == 349) /* TOP == 34.9 */
 		status += MXL_ControlWrite(fe, AGC_IF, 0xF);
 
 	/* IF Synthesizer Control */
 	status += MXL_IFSynthInit(fe);
 
 	/* IF UpConverter Control */
-	if (state->IF_OUT_LOAD == 200) {
+	अगर (state->IF_OUT_LOAD == 200) अणु
 		status += MXL_ControlWrite(fe, DRV_RES_SEL, 6);
 		status += MXL_ControlWrite(fe, I_DRIVER, 2);
-	}
-	if (state->IF_OUT_LOAD == 300) {
+	पूर्ण
+	अगर (state->IF_OUT_LOAD == 300) अणु
 		status += MXL_ControlWrite(fe, DRV_RES_SEL, 4);
 		status += MXL_ControlWrite(fe, I_DRIVER, 1);
-	}
+	पूर्ण
 
 	/* Anti-Alias Filtering Control
 	 * initialise Anti-Aliasing Filter
 	 */
-	if (state->Mode) { /* Digital Mode */
-		if (state->IF_OUT >= 4000000UL && state->IF_OUT <= 6280000UL) {
+	अगर (state->Mode) अणु /* Digital Mode */
+		अगर (state->IF_OUT >= 4000000UL && state->IF_OUT <= 6280000UL) अणु
 			status += MXL_ControlWrite(fe, EN_AAF, 1);
 			status += MXL_ControlWrite(fe, EN_3P, 1);
 			status += MXL_ControlWrite(fe, EN_AUX_3P, 1);
 			status += MXL_ControlWrite(fe, SEL_AAF_BAND, 0);
-		}
-		if ((state->IF_OUT == 36125000UL) ||
-			(state->IF_OUT == 36150000UL)) {
+		पूर्ण
+		अगर ((state->IF_OUT == 36125000UL) ||
+			(state->IF_OUT == 36150000UL)) अणु
 			status += MXL_ControlWrite(fe, EN_AAF, 1);
 			status += MXL_ControlWrite(fe, EN_3P, 1);
 			status += MXL_ControlWrite(fe, EN_AUX_3P, 1);
 			status += MXL_ControlWrite(fe, SEL_AAF_BAND, 1);
-		}
-		if (state->IF_OUT > 36150000UL) {
+		पूर्ण
+		अगर (state->IF_OUT > 36150000UL) अणु
 			status += MXL_ControlWrite(fe, EN_AAF, 0);
 			status += MXL_ControlWrite(fe, EN_3P, 1);
 			status += MXL_ControlWrite(fe, EN_AUX_3P, 1);
 			status += MXL_ControlWrite(fe, SEL_AAF_BAND, 1);
-		}
-	} else { /* Analog Mode */
-		if (state->IF_OUT >= 4000000UL && state->IF_OUT <= 5000000UL) {
+		पूर्ण
+	पूर्ण अन्यथा अणु /* Analog Mode */
+		अगर (state->IF_OUT >= 4000000UL && state->IF_OUT <= 5000000UL) अणु
 			status += MXL_ControlWrite(fe, EN_AAF, 1);
 			status += MXL_ControlWrite(fe, EN_3P, 1);
 			status += MXL_ControlWrite(fe, EN_AUX_3P, 1);
 			status += MXL_ControlWrite(fe, SEL_AAF_BAND, 0);
-		}
-		if (state->IF_OUT > 5000000UL) {
+		पूर्ण
+		अगर (state->IF_OUT > 5000000UL) अणु
 			status += MXL_ControlWrite(fe, EN_AAF, 0);
 			status += MXL_ControlWrite(fe, EN_3P, 0);
 			status += MXL_ControlWrite(fe, EN_AUX_3P, 0);
 			status += MXL_ControlWrite(fe, SEL_AAF_BAND, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Demod Clock Out */
-	if (state->CLOCK_OUT)
+	अगर (state->CLOCK_OUT)
 		status += MXL_ControlWrite(fe, SEQ_ENCLK16_CLK_OUT, 1);
-	else
+	अन्यथा
 		status += MXL_ControlWrite(fe, SEQ_ENCLK16_CLK_OUT, 0);
 
-	if (state->DIV_OUT == 1)
+	अगर (state->DIV_OUT == 1)
 		status += MXL_ControlWrite(fe, SEQ_SEL4_16B, 1);
-	if (state->DIV_OUT == 0)
+	अगर (state->DIV_OUT == 0)
 		status += MXL_ControlWrite(fe, SEQ_SEL4_16B, 0);
 
 	/* Crystal Control */
-	if (state->CAPSELECT)
+	अगर (state->CAPSELECT)
 		status += MXL_ControlWrite(fe, XTAL_CAPSELECT, 1);
-	else
+	अन्यथा
 		status += MXL_ControlWrite(fe, XTAL_CAPSELECT, 0);
 
-	if (state->Fxtal >= 12000000UL && state->Fxtal <= 16000000UL)
+	अगर (state->Fxtal >= 12000000UL && state->Fxtal <= 16000000UL)
 		status += MXL_ControlWrite(fe, IF_SEL_DBL, 1);
-	if (state->Fxtal > 16000000UL && state->Fxtal <= 32000000UL)
+	अगर (state->Fxtal > 16000000UL && state->Fxtal <= 32000000UL)
 		status += MXL_ControlWrite(fe, IF_SEL_DBL, 0);
 
-	if (state->Fxtal >= 12000000UL && state->Fxtal <= 22000000UL)
+	अगर (state->Fxtal >= 12000000UL && state->Fxtal <= 22000000UL)
 		status += MXL_ControlWrite(fe, RFSYN_R_DIV, 3);
-	if (state->Fxtal > 22000000UL && state->Fxtal <= 32000000UL)
+	अगर (state->Fxtal > 22000000UL && state->Fxtal <= 32000000UL)
 		status += MXL_ControlWrite(fe, RFSYN_R_DIV, 0);
 
 	/* Misc Controls */
-	if (state->Mode == 0 && state->IF_Mode == 1) /* Analog LowIF mode */
+	अगर (state->Mode == 0 && state->IF_Mode == 1) /* Analog LowIF mode */
 		status += MXL_ControlWrite(fe, SEQ_EXTIQFSMPULSE, 0);
-	else
+	अन्यथा
 		status += MXL_ControlWrite(fe, SEQ_EXTIQFSMPULSE, 1);
 
 	/* status += MXL_ControlRead(fe, IF_DIVVAL, &IF_DIVVAL_Val); */
@@ -1962,26 +1963,26 @@ static u16 MXL_BlockInit(struct dvb_frontend *fe)
 	/* Apply Default value to BB_INITSTATE_DLPF_TUNE */
 
 	/* RSSI Control */
-	if (state->EN_RSSI) {
+	अगर (state->EN_RSSI) अणु
 		status += MXL_ControlWrite(fe, SEQ_EXTSYNTHCALIF, 1);
 		status += MXL_ControlWrite(fe, SEQ_EXTDCCAL, 1);
 		status += MXL_ControlWrite(fe, AGC_EN_RSSI, 1);
 		status += MXL_ControlWrite(fe, RFA_ENCLKRFAGC, 1);
 
-		/* RSSI reference point */
+		/* RSSI reference poपूर्णांक */
 		status += MXL_ControlWrite(fe, RFA_RSSI_REF, 2);
 		status += MXL_ControlWrite(fe, RFA_RSSI_REFH, 3);
 		status += MXL_ControlWrite(fe, RFA_RSSI_REFL, 1);
 
-		/* TOP point */
+		/* TOP poपूर्णांक */
 		status += MXL_ControlWrite(fe, RFA_FLR, 0);
 		status += MXL_ControlWrite(fe, RFA_CEIL, 12);
-	}
+	पूर्ण
 
 	/* Modulation type bit settings
 	 * Override the control values preset
 	 */
-	if (state->Mod_Type == MXL_DVBT) /* DVB-T Mode */ {
+	अगर (state->Mod_Type == MXL_DVBT) /* DVB-T Mode */ अणु
 		state->AGC_Mode = 1; /* Single AGC Mode */
 
 		/* Enable RSSI */
@@ -1990,21 +1991,21 @@ static u16 MXL_BlockInit(struct dvb_frontend *fe)
 		status += MXL_ControlWrite(fe, AGC_EN_RSSI, 1);
 		status += MXL_ControlWrite(fe, RFA_ENCLKRFAGC, 1);
 
-		/* RSSI reference point */
+		/* RSSI reference poपूर्णांक */
 		status += MXL_ControlWrite(fe, RFA_RSSI_REF, 3);
 		status += MXL_ControlWrite(fe, RFA_RSSI_REFH, 5);
 		status += MXL_ControlWrite(fe, RFA_RSSI_REFL, 1);
 
-		/* TOP point */
+		/* TOP poपूर्णांक */
 		status += MXL_ControlWrite(fe, RFA_FLR, 2);
 		status += MXL_ControlWrite(fe, RFA_CEIL, 13);
-		if (state->IF_OUT <= 6280000UL)	/* Low IF */
+		अगर (state->IF_OUT <= 6280000UL)	/* Low IF */
 			status += MXL_ControlWrite(fe, BB_IQSWAP, 0);
-		else /* High IF */
+		अन्यथा /* High IF */
 			status += MXL_ControlWrite(fe, BB_IQSWAP, 1);
 
-	}
-	if (state->Mod_Type == MXL_ATSC) /* ATSC Mode */ {
+	पूर्ण
+	अगर (state->Mod_Type == MXL_ATSC) /* ATSC Mode */ अणु
 		state->AGC_Mode = 1;	/* Single AGC Mode */
 
 		/* Enable RSSI */
@@ -2013,49 +2014,49 @@ static u16 MXL_BlockInit(struct dvb_frontend *fe)
 		status += MXL_ControlWrite(fe, AGC_EN_RSSI, 1);
 		status += MXL_ControlWrite(fe, RFA_ENCLKRFAGC, 1);
 
-		/* RSSI reference point */
+		/* RSSI reference poपूर्णांक */
 		status += MXL_ControlWrite(fe, RFA_RSSI_REF, 2);
 		status += MXL_ControlWrite(fe, RFA_RSSI_REFH, 4);
 		status += MXL_ControlWrite(fe, RFA_RSSI_REFL, 1);
 
-		/* TOP point */
+		/* TOP poपूर्णांक */
 		status += MXL_ControlWrite(fe, RFA_FLR, 2);
 		status += MXL_ControlWrite(fe, RFA_CEIL, 13);
 		status += MXL_ControlWrite(fe, BB_INITSTATE_DLPF_TUNE, 1);
 		/* Low Zero */
 		status += MXL_ControlWrite(fe, RFSYN_CHP_GAIN, 5);
 
-		if (state->IF_OUT <= 6280000UL)	/* Low IF */
+		अगर (state->IF_OUT <= 6280000UL)	/* Low IF */
 			status += MXL_ControlWrite(fe, BB_IQSWAP, 0);
-		else /* High IF */
+		अन्यथा /* High IF */
 			status += MXL_ControlWrite(fe, BB_IQSWAP, 1);
-	}
-	if (state->Mod_Type == MXL_QAM) /* QAM Mode */ {
+	पूर्ण
+	अगर (state->Mod_Type == MXL_QAM) /* QAM Mode */ अणु
 		state->Mode = MXL_DIGITAL_MODE;
 
 		/* state->AGC_Mode = 1; */ /* Single AGC Mode */
 
-		/* Disable RSSI */	/* change here for v2.6.5 */
+		/* Disable RSSI */	/* change here क्रम v2.6.5 */
 		status += MXL_ControlWrite(fe, SEQ_EXTSYNTHCALIF, 1);
 		status += MXL_ControlWrite(fe, SEQ_EXTDCCAL, 1);
 		status += MXL_ControlWrite(fe, AGC_EN_RSSI, 0);
 		status += MXL_ControlWrite(fe, RFA_ENCLKRFAGC, 1);
 
-		/* RSSI reference point */
+		/* RSSI reference poपूर्णांक */
 		status += MXL_ControlWrite(fe, RFA_RSSI_REFH, 5);
 		status += MXL_ControlWrite(fe, RFA_RSSI_REF, 3);
 		status += MXL_ControlWrite(fe, RFA_RSSI_REFL, 2);
-		/* change here for v2.6.5 */
+		/* change here क्रम v2.6.5 */
 		status += MXL_ControlWrite(fe, RFSYN_CHP_GAIN, 3);
 
-		if (state->IF_OUT <= 6280000UL)	/* Low IF */
+		अगर (state->IF_OUT <= 6280000UL)	/* Low IF */
 			status += MXL_ControlWrite(fe, BB_IQSWAP, 0);
-		else /* High IF */
+		अन्यथा /* High IF */
 			status += MXL_ControlWrite(fe, BB_IQSWAP, 1);
 		status += MXL_ControlWrite(fe, RFSYN_CHP_GAIN, 2);
 
-	}
-	if (state->Mod_Type == MXL_ANALOG_CABLE) {
+	पूर्ण
+	अगर (state->Mod_Type == MXL_ANALOG_CABLE) अणु
 		/* Analog Cable Mode */
 		/* state->Mode = MXL_DIGITAL_MODE; */
 
@@ -2066,14 +2067,14 @@ static u16 MXL_BlockInit(struct dvb_frontend *fe)
 		status += MXL_ControlWrite(fe, SEQ_EXTDCCAL, 1);
 		status += MXL_ControlWrite(fe, AGC_EN_RSSI, 0);
 		status += MXL_ControlWrite(fe, RFA_ENCLKRFAGC, 1);
-		/* change for 2.6.3 */
+		/* change क्रम 2.6.3 */
 		status += MXL_ControlWrite(fe, AGC_IF, 1);
 		status += MXL_ControlWrite(fe, AGC_RF, 15);
 		status += MXL_ControlWrite(fe, BB_IQSWAP, 1);
-	}
+	पूर्ण
 
-	if (state->Mod_Type == MXL_ANALOG_OTA) {
-		/* Analog OTA Terrestrial mode add for 2.6.7 */
+	अगर (state->Mod_Type == MXL_ANALOG_OTA) अणु
+		/* Analog OTA Terrestrial mode add क्रम 2.6.7 */
 		/* state->Mode = MXL_ANALOG_MODE; */
 
 		/* Enable RSSI */
@@ -2082,237 +2083,237 @@ static u16 MXL_BlockInit(struct dvb_frontend *fe)
 		status += MXL_ControlWrite(fe, AGC_EN_RSSI, 1);
 		status += MXL_ControlWrite(fe, RFA_ENCLKRFAGC, 1);
 
-		/* RSSI reference point */
+		/* RSSI reference poपूर्णांक */
 		status += MXL_ControlWrite(fe, RFA_RSSI_REFH, 5);
 		status += MXL_ControlWrite(fe, RFA_RSSI_REF, 3);
 		status += MXL_ControlWrite(fe, RFA_RSSI_REFL, 2);
 		status += MXL_ControlWrite(fe, RFSYN_CHP_GAIN, 3);
 		status += MXL_ControlWrite(fe, BB_IQSWAP, 1);
-	}
+	पूर्ण
 
 	/* RSSI disable */
-	if (state->EN_RSSI == 0) {
+	अगर (state->EN_RSSI == 0) अणु
 		status += MXL_ControlWrite(fe, SEQ_EXTSYNTHCALIF, 1);
 		status += MXL_ControlWrite(fe, SEQ_EXTDCCAL, 1);
 		status += MXL_ControlWrite(fe, AGC_EN_RSSI, 0);
 		status += MXL_ControlWrite(fe, RFA_ENCLKRFAGC, 1);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static u16 MXL_IFSynthInit(struct dvb_frontend *fe)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अटल u16 MXL_IFSynthInit(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 	u16 status = 0 ;
 	u32	Fref = 0 ;
-	u32	Kdbl, intModVal ;
+	u32	Kdbl, पूर्णांकModVal ;
 	u32	fracModVal ;
 	Kdbl = 2 ;
 
-	if (state->Fxtal >= 12000000UL && state->Fxtal <= 16000000UL)
+	अगर (state->Fxtal >= 12000000UL && state->Fxtal <= 16000000UL)
 		Kdbl = 2 ;
-	if (state->Fxtal > 16000000UL && state->Fxtal <= 32000000UL)
+	अगर (state->Fxtal > 16000000UL && state->Fxtal <= 32000000UL)
 		Kdbl = 1 ;
 
 	/* IF Synthesizer Control */
-	if (state->Mode == 0 && state->IF_Mode == 1) /* Analog Low IF mode */ {
-		if (state->IF_LO == 41000000UL) {
+	अगर (state->Mode == 0 && state->IF_Mode == 1) /* Analog Low IF mode */ अणु
+		अगर (state->IF_LO == 41000000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x08);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x0C);
 			Fref = 328000000UL ;
-		}
-		if (state->IF_LO == 47000000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 47000000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x08);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 376000000UL ;
-		}
-		if (state->IF_LO == 54000000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 54000000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x10);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x0C);
 			Fref = 324000000UL ;
-		}
-		if (state->IF_LO == 60000000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 60000000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x10);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 360000000UL ;
-		}
-		if (state->IF_LO == 39250000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 39250000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x08);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x0C);
 			Fref = 314000000UL ;
-		}
-		if (state->IF_LO == 39650000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 39650000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x08);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x0C);
 			Fref = 317200000UL ;
-		}
-		if (state->IF_LO == 40150000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 40150000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x08);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x0C);
 			Fref = 321200000UL ;
-		}
-		if (state->IF_LO == 40650000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 40650000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x08);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x0C);
 			Fref = 325200000UL ;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (state->Mode || (state->Mode == 0 && state->IF_Mode == 0)) {
-		if (state->IF_LO == 57000000UL) {
+	अगर (state->Mode || (state->Mode == 0 && state->IF_Mode == 0)) अणु
+		अगर (state->IF_LO == 57000000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x10);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 342000000UL ;
-		}
-		if (state->IF_LO == 44000000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 44000000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x08);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 352000000UL ;
-		}
-		if (state->IF_LO == 43750000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 43750000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x08);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 350000000UL ;
-		}
-		if (state->IF_LO == 36650000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 36650000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x04);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 366500000UL ;
-		}
-		if (state->IF_LO == 36150000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 36150000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x04);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 361500000UL ;
-		}
-		if (state->IF_LO == 36000000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 36000000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x04);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 360000000UL ;
-		}
-		if (state->IF_LO == 35250000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 35250000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x04);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 352500000UL ;
-		}
-		if (state->IF_LO == 34750000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 34750000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x04);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 347500000UL ;
-		}
-		if (state->IF_LO == 6280000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 6280000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x07);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 376800000UL ;
-		}
-		if (state->IF_LO == 5000000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 5000000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x09);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 360000000UL ;
-		}
-		if (state->IF_LO == 4500000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 4500000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x06);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 360000000UL ;
-		}
-		if (state->IF_LO == 4570000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 4570000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x06);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 365600000UL ;
-		}
-		if (state->IF_LO == 4000000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 4000000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x05);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 360000000UL ;
-		}
-		if (state->IF_LO == 57400000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 57400000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x10);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 344400000UL ;
-		}
-		if (state->IF_LO == 44400000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 44400000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x08);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 355200000UL ;
-		}
-		if (state->IF_LO == 44150000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 44150000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x08);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 353200000UL ;
-		}
-		if (state->IF_LO == 37050000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 37050000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x04);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 370500000UL ;
-		}
-		if (state->IF_LO == 36550000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 36550000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x04);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 365500000UL ;
-		}
-		if (state->IF_LO == 36125000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 36125000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x04);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 361250000UL ;
-		}
-		if (state->IF_LO == 6000000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 6000000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x07);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 360000000UL ;
-		}
-		if (state->IF_LO == 5400000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 5400000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x07);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x0C);
 			Fref = 324000000UL ;
-		}
-		if (state->IF_LO == 5380000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 5380000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x07);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x0C);
 			Fref = 322800000UL ;
-		}
-		if (state->IF_LO == 5200000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 5200000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x09);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 374400000UL ;
-		}
-		if (state->IF_LO == 4900000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 4900000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x09);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 352800000UL ;
-		}
-		if (state->IF_LO == 4400000UL) {
+		पूर्ण
+		अगर (state->IF_LO == 4400000UL) अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x06);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 352000000UL ;
-		}
-		if (state->IF_LO == 4063000UL)  /* add for 2.6.8 */ {
+		पूर्ण
+		अगर (state->IF_LO == 4063000UL)  /* add क्रम 2.6.8 */ अणु
 			status += MXL_ControlWrite(fe, IF_DIVVAL,   0x05);
 			status += MXL_ControlWrite(fe, IF_VCO_BIAS, 0x08);
 			Fref = 365670000UL ;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* CHCAL_INT_MOD_IF */
 	/* CHCAL_FRAC_MOD_IF */
-	intModVal = Fref / (state->Fxtal * Kdbl/2);
-	status += MXL_ControlWrite(fe, CHCAL_INT_MOD_IF, intModVal);
+	पूर्णांकModVal = Fref / (state->Fxtal * Kdbl/2);
+	status += MXL_ControlWrite(fe, CHCAL_INT_MOD_IF, पूर्णांकModVal);
 
 	fracModVal = (2<<15)*(Fref/1000 - (state->Fxtal/1000 * Kdbl/2) *
-		intModVal);
+		पूर्णांकModVal);
 
 	fracModVal = fracModVal / ((state->Fxtal * Kdbl/2)/1000);
 	status += MXL_ControlWrite(fe, CHCAL_FRAC_MOD_IF, fracModVal);
 
-	return status ;
-}
+	वापस status ;
+पूर्ण
 
-static u16 MXL_TuneRF(struct dvb_frontend *fe, u32 RF_Freq)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अटल u16 MXL_TuneRF(काष्ठा dvb_frontend *fe, u32 RF_Freq)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 	u16 status = 0;
-	u32 divider_val, E3, E4, E5, E5A;
+	u32 भागider_val, E3, E4, E5, E5A;
 	u32 Fmax, Fmin, FmaxBin, FminBin;
 	u32 Kdbl_RF = 2;
-	u32 tg_divval;
+	u32 tg_भागval;
 	u32 tg_lo;
 
 	u32 Fref_TG;
@@ -2322,13 +2323,13 @@ static u16 MXL_TuneRF(struct dvb_frontend *fe, u32 RF_Freq)
 
 	MXL_SynthRFTGLO_Calc(fe);
 
-	if (state->Fxtal >= 12000000UL && state->Fxtal <= 22000000UL)
+	अगर (state->Fxtal >= 12000000UL && state->Fxtal <= 22000000UL)
 		Kdbl_RF = 2;
-	if (state->Fxtal > 22000000 && state->Fxtal <= 32000000)
+	अगर (state->Fxtal > 22000000 && state->Fxtal <= 32000000)
 		Kdbl_RF = 1;
 
 	/* Downconverter Controls
-	 * Look-Up Table Implementation for:
+	 * Look-Up Table Implementation क्रम:
 	 *	DN_POLY
 	 *	DN_RFGAIN
 	 *	DN_CAP_RFLPF
@@ -2336,132 +2337,132 @@ static u16 MXL_TuneRF(struct dvb_frontend *fe, u32 RF_Freq)
 	 *	DN_GAIN_ADJUST
 	 *  Change the boundary reference from RF_IN to RF_LO
 	 */
-	if (state->RF_LO < 40000000UL)
-		return -1;
+	अगर (state->RF_LO < 40000000UL)
+		वापस -1;
 
-	if (state->RF_LO >= 40000000UL && state->RF_LO <= 75000000UL) {
+	अगर (state->RF_LO >= 40000000UL && state->RF_LO <= 75000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_POLY,              2);
 		status += MXL_ControlWrite(fe, DN_RFGAIN,            3);
 		status += MXL_ControlWrite(fe, DN_CAP_RFLPF,         423);
 		status += MXL_ControlWrite(fe, DN_EN_VHFUHFBAR,      1);
 		status += MXL_ControlWrite(fe, DN_GAIN_ADJUST,       1);
-	}
-	if (state->RF_LO > 75000000UL && state->RF_LO <= 100000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 75000000UL && state->RF_LO <= 100000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_POLY,              3);
 		status += MXL_ControlWrite(fe, DN_RFGAIN,            3);
 		status += MXL_ControlWrite(fe, DN_CAP_RFLPF,         222);
 		status += MXL_ControlWrite(fe, DN_EN_VHFUHFBAR,      1);
 		status += MXL_ControlWrite(fe, DN_GAIN_ADJUST,       1);
-	}
-	if (state->RF_LO > 100000000UL && state->RF_LO <= 150000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 100000000UL && state->RF_LO <= 150000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_POLY,              3);
 		status += MXL_ControlWrite(fe, DN_RFGAIN,            3);
 		status += MXL_ControlWrite(fe, DN_CAP_RFLPF,         147);
 		status += MXL_ControlWrite(fe, DN_EN_VHFUHFBAR,      1);
 		status += MXL_ControlWrite(fe, DN_GAIN_ADJUST,       2);
-	}
-	if (state->RF_LO > 150000000UL && state->RF_LO <= 200000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 150000000UL && state->RF_LO <= 200000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_POLY,              3);
 		status += MXL_ControlWrite(fe, DN_RFGAIN,            3);
 		status += MXL_ControlWrite(fe, DN_CAP_RFLPF,         9);
 		status += MXL_ControlWrite(fe, DN_EN_VHFUHFBAR,      1);
 		status += MXL_ControlWrite(fe, DN_GAIN_ADJUST,       2);
-	}
-	if (state->RF_LO > 200000000UL && state->RF_LO <= 300000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 200000000UL && state->RF_LO <= 300000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_POLY,              3);
 		status += MXL_ControlWrite(fe, DN_RFGAIN,            3);
 		status += MXL_ControlWrite(fe, DN_CAP_RFLPF,         0);
 		status += MXL_ControlWrite(fe, DN_EN_VHFUHFBAR,      1);
 		status += MXL_ControlWrite(fe, DN_GAIN_ADJUST,       3);
-	}
-	if (state->RF_LO > 300000000UL && state->RF_LO <= 650000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 300000000UL && state->RF_LO <= 650000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_POLY,              3);
 		status += MXL_ControlWrite(fe, DN_RFGAIN,            1);
 		status += MXL_ControlWrite(fe, DN_CAP_RFLPF,         0);
 		status += MXL_ControlWrite(fe, DN_EN_VHFUHFBAR,      0);
 		status += MXL_ControlWrite(fe, DN_GAIN_ADJUST,       3);
-	}
-	if (state->RF_LO > 650000000UL && state->RF_LO <= 900000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 650000000UL && state->RF_LO <= 900000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_POLY,              3);
 		status += MXL_ControlWrite(fe, DN_RFGAIN,            2);
 		status += MXL_ControlWrite(fe, DN_CAP_RFLPF,         0);
 		status += MXL_ControlWrite(fe, DN_EN_VHFUHFBAR,      0);
 		status += MXL_ControlWrite(fe, DN_GAIN_ADJUST,       3);
-	}
-	if (state->RF_LO > 900000000UL)
-		return -1;
+	पूर्ण
+	अगर (state->RF_LO > 900000000UL)
+		वापस -1;
 
 	/*	DN_IQTNBUF_AMP */
 	/*	DN_IQTNGNBFBIAS_BST */
-	if (state->RF_LO >= 40000000UL && state->RF_LO <= 75000000UL) {
+	अगर (state->RF_LO >= 40000000UL && state->RF_LO <= 75000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 75000000UL && state->RF_LO <= 100000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 75000000UL && state->RF_LO <= 100000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 100000000UL && state->RF_LO <= 150000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 100000000UL && state->RF_LO <= 150000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 150000000UL && state->RF_LO <= 200000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 150000000UL && state->RF_LO <= 200000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 200000000UL && state->RF_LO <= 300000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 200000000UL && state->RF_LO <= 300000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 300000000UL && state->RF_LO <= 400000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 300000000UL && state->RF_LO <= 400000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 400000000UL && state->RF_LO <= 450000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 400000000UL && state->RF_LO <= 450000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 450000000UL && state->RF_LO <= 500000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 450000000UL && state->RF_LO <= 500000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 500000000UL && state->RF_LO <= 550000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 500000000UL && state->RF_LO <= 550000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 550000000UL && state->RF_LO <= 600000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 550000000UL && state->RF_LO <= 600000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 600000000UL && state->RF_LO <= 650000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 600000000UL && state->RF_LO <= 650000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 650000000UL && state->RF_LO <= 700000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 650000000UL && state->RF_LO <= 700000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 700000000UL && state->RF_LO <= 750000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 700000000UL && state->RF_LO <= 750000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 750000000UL && state->RF_LO <= 800000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 750000000UL && state->RF_LO <= 800000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       1);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  0);
-	}
-	if (state->RF_LO > 800000000UL && state->RF_LO <= 850000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 800000000UL && state->RF_LO <= 850000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       10);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  1);
-	}
-	if (state->RF_LO > 850000000UL && state->RF_LO <= 900000000UL) {
+	पूर्ण
+	अगर (state->RF_LO > 850000000UL && state->RF_LO <= 900000000UL) अणु
 		status += MXL_ControlWrite(fe, DN_IQTNBUF_AMP,       10);
 		status += MXL_ControlWrite(fe, DN_IQTNGNBFBIAS_BST,  1);
-	}
+	पूर्ण
 
 	/*
 	 * Set RF Synth and LO Path Control
 	 *
-	 * Look-Up table implementation for:
+	 * Look-Up table implementation क्रम:
 	 *	RFSYN_EN_OUTMUX
 	 *	RFSYN_SEL_VCO_OUT
 	 *	RFSYN_SEL_VCO_HI
@@ -2469,151 +2470,151 @@ static u16 MXL_TuneRF(struct dvb_frontend *fe, u32 RF_Freq)
 	 *	RFSYN_RF_DIV_BIAS
 	 *	DN_SEL_FREQ
 	 *
-	 * Set divider_val, Fmax, Fmix to use in Equations
+	 * Set भागider_val, Fmax, Fmix to use in Equations
 	 */
 	FminBin = 28000000UL ;
 	FmaxBin = 42500000UL ;
-	if (state->RF_LO >= 40000000UL && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO >= 40000000UL && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      0);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         1);
-		divider_val = 64 ;
+		भागider_val = 64 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 42500000UL ;
 	FmaxBin = 56000000UL ;
-	if (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      0);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         1);
-		divider_val = 64 ;
+		भागider_val = 64 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 56000000UL ;
 	FmaxBin = 85000000UL ;
-	if (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      0);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         1);
-		divider_val = 32 ;
+		भागider_val = 32 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 85000000UL ;
 	FmaxBin = 112000000UL ;
-	if (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      0);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         1);
-		divider_val = 32 ;
+		भागider_val = 32 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 112000000UL ;
 	FmaxBin = 170000000UL ;
-	if (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      0);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         2);
-		divider_val = 16 ;
+		भागider_val = 16 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 170000000UL ;
 	FmaxBin = 225000000UL ;
-	if (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      0);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         2);
-		divider_val = 16 ;
+		भागider_val = 16 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 225000000UL ;
 	FmaxBin = 300000000UL ;
-	if (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      0);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         4);
-		divider_val = 8 ;
+		भागider_val = 8 ;
 		Fmax = 340000000UL ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 300000000UL ;
 	FmaxBin = 340000000UL ;
-	if (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      0);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         0);
-		divider_val = 8 ;
+		भागider_val = 8 ;
 		Fmax = FmaxBin ;
 		Fmin = 225000000UL ;
-	}
+	पूर्ण
 	FminBin = 340000000UL ;
 	FmaxBin = 450000000UL ;
-	if (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      0);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   2);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         0);
-		divider_val = 8 ;
+		भागider_val = 8 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 450000000UL ;
 	FmaxBin = 680000000UL ;
-	if (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      1);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         0);
-		divider_val = 4 ;
+		भागider_val = 4 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 680000000UL ;
 	FmaxBin = 900000000UL ;
-	if (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) {
+	अगर (state->RF_LO > FminBin && state->RF_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX,     0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT,   1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI,    1);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM,      1);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS,   1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ,         0);
-		divider_val = 4 ;
+		भागider_val = 4 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 
 	/*	CHCAL_INT_MOD_RF
 	 *	CHCAL_FRAC_MOD_RF
@@ -2625,11 +2626,11 @@ static u16 MXL_TuneRF(struct dvb_frontend *fe, u32 RF_Freq)
 	status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, E3);
 
 	/* Equation E4 CHCAL_INT_MOD_RF */
-	E4 = (state->RF_LO*divider_val/1000)/(2*state->Fxtal*Kdbl_RF/1000);
+	E4 = (state->RF_LO*भागider_val/1000)/(2*state->Fxtal*Kdbl_RF/1000);
 	MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, E4);
 
 	/* Equation E5 CHCAL_FRAC_MOD_RF CHCAL_EN_INT_RF */
-	E5 = ((2<<17)*(state->RF_LO/10000*divider_val -
+	E5 = ((2<<17)*(state->RF_LO/10000*भागider_val -
 		(E4*(2*state->Fxtal*Kdbl_RF)/10000))) /
 		(2*state->Fxtal*Kdbl_RF/10000);
 
@@ -2641,639 +2642,639 @@ static u16 MXL_TuneRF(struct dvb_frontend *fe, u32 RF_Freq)
 
 	/* Euqation E5B CHCAL_EN_INIT_RF */
 	status += MXL_ControlWrite(fe, CHCAL_EN_INT_RF, ((E5 == 0) ? 1 : 0));
-	/*if (E5 == 0)
+	/*अगर (E5 == 0)
 	 *	status += MXL_ControlWrite(fe, CHCAL_EN_INT_RF, 1);
-	 *else
+	 *अन्यथा
 	 *	status += MXL_ControlWrite(fe, CHCAL_FRAC_MOD_RF, E5);
 	 */
 
 	/*
 	 * Set TG Synth
 	 *
-	 * Look-Up table implementation for:
+	 * Look-Up table implementation क्रम:
 	 *	TG_LO_DIVVAL
 	 *	TG_LO_SELVAL
 	 *
-	 * Set divider_val, Fmax, Fmix to use in Equations
+	 * Set भागider_val, Fmax, Fmix to use in Equations
 	 */
-	if (state->TG_LO < 33000000UL)
-		return -1;
+	अगर (state->TG_LO < 33000000UL)
+		वापस -1;
 
 	FminBin = 33000000UL ;
 	FmaxBin = 50000000UL ;
-	if (state->TG_LO >= FminBin && state->TG_LO <= FmaxBin) {
+	अगर (state->TG_LO >= FminBin && state->TG_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, TG_LO_DIVVAL,	0x6);
 		status += MXL_ControlWrite(fe, TG_LO_SELVAL,	0x0);
-		divider_val = 36 ;
+		भागider_val = 36 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 50000000UL ;
 	FmaxBin = 67000000UL ;
-	if (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) {
+	अगर (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, TG_LO_DIVVAL,	0x1);
 		status += MXL_ControlWrite(fe, TG_LO_SELVAL,	0x0);
-		divider_val = 24 ;
+		भागider_val = 24 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 67000000UL ;
 	FmaxBin = 100000000UL ;
-	if (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) {
+	अगर (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, TG_LO_DIVVAL,	0xC);
 		status += MXL_ControlWrite(fe, TG_LO_SELVAL,	0x2);
-		divider_val = 18 ;
+		भागider_val = 18 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 100000000UL ;
 	FmaxBin = 150000000UL ;
-	if (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) {
+	अगर (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, TG_LO_DIVVAL,	0x8);
 		status += MXL_ControlWrite(fe, TG_LO_SELVAL,	0x2);
-		divider_val = 12 ;
+		भागider_val = 12 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 150000000UL ;
 	FmaxBin = 200000000UL ;
-	if (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) {
+	अगर (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, TG_LO_DIVVAL,	0x0);
 		status += MXL_ControlWrite(fe, TG_LO_SELVAL,	0x2);
-		divider_val = 8 ;
+		भागider_val = 8 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 200000000UL ;
 	FmaxBin = 300000000UL ;
-	if (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) {
+	अगर (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, TG_LO_DIVVAL,	0x8);
 		status += MXL_ControlWrite(fe, TG_LO_SELVAL,	0x3);
-		divider_val = 6 ;
+		भागider_val = 6 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 300000000UL ;
 	FmaxBin = 400000000UL ;
-	if (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) {
+	अगर (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, TG_LO_DIVVAL,	0x0);
 		status += MXL_ControlWrite(fe, TG_LO_SELVAL,	0x3);
-		divider_val = 4 ;
+		भागider_val = 4 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 400000000UL ;
 	FmaxBin = 600000000UL ;
-	if (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) {
+	अगर (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, TG_LO_DIVVAL,	0x8);
 		status += MXL_ControlWrite(fe, TG_LO_SELVAL,	0x7);
-		divider_val = 3 ;
+		भागider_val = 3 ;
 		Fmax = FmaxBin ;
 		Fmin = FminBin ;
-	}
+	पूर्ण
 	FminBin = 600000000UL ;
 	FmaxBin = 900000000UL ;
-	if (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) {
+	अगर (state->TG_LO > FminBin && state->TG_LO <= FmaxBin) अणु
 		status += MXL_ControlWrite(fe, TG_LO_DIVVAL,	0x0);
 		status += MXL_ControlWrite(fe, TG_LO_SELVAL,	0x7);
-		divider_val = 2 ;
-	}
+		भागider_val = 2 ;
+	पूर्ण
 
 	/* TG_DIV_VAL */
-	tg_divval = (state->TG_LO*divider_val/100000) *
+	tg_भागval = (state->TG_LO*भागider_val/100000) *
 		(MXL_Ceiling(state->Fxtal, 1000000) * 100) /
 		(state->Fxtal/1000);
 
-	status += MXL_ControlWrite(fe, TG_DIV_VAL, tg_divval);
+	status += MXL_ControlWrite(fe, TG_DIV_VAL, tg_भागval);
 
-	if (state->TG_LO > 600000000UL)
-		status += MXL_ControlWrite(fe, TG_DIV_VAL, tg_divval + 1);
+	अगर (state->TG_LO > 600000000UL)
+		status += MXL_ControlWrite(fe, TG_DIV_VAL, tg_भागval + 1);
 
 	Fmax = 1800000000UL ;
 	Fmin = 1200000000UL ;
 
-	/* prevent overflow of 32 bit unsigned integer, use
-	 * following equation. Edit for v2.6.4
+	/* prevent overflow of 32 bit अचिन्हित पूर्णांकeger, use
+	 * following equation. Edit क्रम v2.6.4
 	 */
 	/* Fref_TF = Fref_TG * 1000 */
 	Fref_TG = (state->Fxtal/1000) / MXL_Ceiling(state->Fxtal, 1000000);
 
 	/* Fvco = Fvco/10 */
-	Fvco = (state->TG_LO/10000) * divider_val * Fref_TG;
+	Fvco = (state->TG_LO/10000) * भागider_val * Fref_TG;
 
 	tg_lo = (((Fmax/10 - Fvco)/100)*32) / ((Fmax-Fmin)/1000)+8;
 
 	/* below equation is same as above but much harder to debug.
 	 *
-	 * static u32 MXL_GetXtalInt(u32 Xtal_Freq)
-	 * {
-	 *	if ((Xtal_Freq % 1000000) == 0)
-	 *		return (Xtal_Freq / 10000);
-	 *	else
-	 *		return (((Xtal_Freq / 1000000) + 1)*100);
-	 * }
+	 * अटल u32 MXL_GetXtalInt(u32 Xtal_Freq)
+	 * अणु
+	 *	अगर ((Xtal_Freq % 1000000) == 0)
+	 *		वापस (Xtal_Freq / 10000);
+	 *	अन्यथा
+	 *		वापस (((Xtal_Freq / 1000000) + 1)*100);
+	 * पूर्ण
 	 *
 	 * u32 Xtal_Int = MXL_GetXtalInt(state->Fxtal);
 	 * tg_lo = ( ((Fmax/10000 * Xtal_Int)/100) -
-	 * ((state->TG_LO/10000)*divider_val *
+	 * ((state->TG_LO/10000)*भागider_val *
 	 * (state->Fxtal/10000)/100) )*32/((Fmax-Fmin)/10000 *
 	 * Xtal_Int/100) + 8;
 	 */
 
 	status += MXL_ControlWrite(fe, TG_VCO_BIAS , tg_lo);
 
-	/* add for 2.6.5 Special setting for QAM */
-	if (state->Mod_Type == MXL_QAM) {
-		if (state->config->qam_gain != 0)
+	/* add क्रम 2.6.5 Special setting क्रम QAM */
+	अगर (state->Mod_Type == MXL_QAM) अणु
+		अगर (state->config->qam_gain != 0)
 			status += MXL_ControlWrite(fe, RFSYN_CHP_GAIN,
 						   state->config->qam_gain);
-		else if (state->RF_IN < 680000000)
+		अन्यथा अगर (state->RF_IN < 680000000)
 			status += MXL_ControlWrite(fe, RFSYN_CHP_GAIN, 3);
-		else
+		अन्यथा
 			status += MXL_ControlWrite(fe, RFSYN_CHP_GAIN, 2);
-	}
+	पूर्ण
 
 	/* Off Chip Tracking Filter Control */
-	if (state->TF_Type == MXL_TF_OFF) {
+	अगर (state->TF_Type == MXL_TF_OFF) अणु
 		/* Tracking Filter Off State; turn off all the banks */
 		status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 		status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 		status += MXL_SetGPIO(fe, 3, 1); /* Bank1 Off */
 		status += MXL_SetGPIO(fe, 1, 1); /* Bank2 Off */
 		status += MXL_SetGPIO(fe, 4, 1); /* Bank3 Off */
-	}
+	पूर्ण
 
-	if (state->TF_Type == MXL_TF_C) /* Tracking Filter type C */ {
+	अगर (state->TF_Type == MXL_TF_C) /* Tracking Filter type C */ अणु
 		status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 		status += MXL_ControlWrite(fe, DAC_DIN_A, 0);
 
-		if (state->RF_IN >= 43000000 && state->RF_IN < 150000000) {
+		अगर (state->RF_IN >= 43000000 && state->RF_IN < 150000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 			status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 			status += MXL_SetGPIO(fe, 3, 0);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
-		}
-		if (state->RF_IN >= 150000000 && state->RF_IN < 280000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 150000000 && state->RF_IN < 280000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 			status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
-		}
-		if (state->RF_IN >= 280000000 && state->RF_IN < 360000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 280000000 && state->RF_IN < 360000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 			status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
-		}
-		if (state->RF_IN >= 360000000 && state->RF_IN < 560000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 360000000 && state->RF_IN < 560000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 			status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 4, 0);
-		}
-		if (state->RF_IN >= 560000000 && state->RF_IN < 580000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 560000000 && state->RF_IN < 580000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 			status += MXL_ControlWrite(fe, DAC_DIN_B, 29);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 4, 0);
-		}
-		if (state->RF_IN >= 580000000 && state->RF_IN < 630000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 580000000 && state->RF_IN < 630000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 			status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 4, 0);
-		}
-		if (state->RF_IN >= 630000000 && state->RF_IN < 700000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 630000000 && state->RF_IN < 700000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 			status += MXL_ControlWrite(fe, DAC_DIN_B, 16);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
-		}
-		if (state->RF_IN >= 700000000 && state->RF_IN < 760000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 700000000 && state->RF_IN < 760000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 			status += MXL_ControlWrite(fe, DAC_DIN_B, 7);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
-		}
-		if (state->RF_IN >= 760000000 && state->RF_IN <= 900000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 760000000 && state->RF_IN <= 900000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 			status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (state->TF_Type == MXL_TF_C_H) {
+	अगर (state->TF_Type == MXL_TF_C_H) अणु
 
-		/* Tracking Filter type C-H for Hauppauge only */
+		/* Tracking Filter type C-H क्रम Hauppauge only */
 		status += MXL_ControlWrite(fe, DAC_DIN_A, 0);
 
-		if (state->RF_IN >= 43000000 && state->RF_IN < 150000000) {
+		अगर (state->RF_IN >= 43000000 && state->RF_IN < 150000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
-		}
-		if (state->RF_IN >= 150000000 && state->RF_IN < 280000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 150000000 && state->RF_IN < 280000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
 			status += MXL_SetGPIO(fe, 1, 1);
-		}
-		if (state->RF_IN >= 280000000 && state->RF_IN < 360000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 280000000 && state->RF_IN < 360000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
 			status += MXL_SetGPIO(fe, 1, 0);
-		}
-		if (state->RF_IN >= 360000000 && state->RF_IN < 560000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 360000000 && state->RF_IN < 560000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
-		}
-		if (state->RF_IN >= 560000000 && state->RF_IN < 580000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 560000000 && state->RF_IN < 580000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
-		}
-		if (state->RF_IN >= 580000000 && state->RF_IN < 630000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 580000000 && state->RF_IN < 630000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
-		}
-		if (state->RF_IN >= 630000000 && state->RF_IN < 700000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 630000000 && state->RF_IN < 700000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
-		}
-		if (state->RF_IN >= 700000000 && state->RF_IN < 760000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 700000000 && state->RF_IN < 760000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
-		}
-		if (state->RF_IN >= 760000000 && state->RF_IN <= 900000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 760000000 && state->RF_IN <= 900000000) अणु
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (state->TF_Type == MXL_TF_D) { /* Tracking Filter type D */
+	अगर (state->TF_Type == MXL_TF_D) अणु /* Tracking Filter type D */
 
 		status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 
-		if (state->RF_IN >= 43000000 && state->RF_IN < 174000000) {
+		अगर (state->RF_IN >= 43000000 && state->RF_IN < 174000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 174000000 && state->RF_IN < 250000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 174000000 && state->RF_IN < 250000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 250000000 && state->RF_IN < 310000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 250000000 && state->RF_IN < 310000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 310000000 && state->RF_IN < 360000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 310000000 && state->RF_IN < 360000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 360000000 && state->RF_IN < 470000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 360000000 && state->RF_IN < 470000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 470000000 && state->RF_IN < 640000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 470000000 && state->RF_IN < 640000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 640000000 && state->RF_IN <= 900000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 640000000 && state->RF_IN <= 900000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (state->TF_Type == MXL_TF_D_L) {
+	अगर (state->TF_Type == MXL_TF_D_L) अणु
 
-		/* Tracking Filter type D-L for Lumanate ONLY change 2.6.3 */
+		/* Tracking Filter type D-L क्रम Lumanate ONLY change 2.6.3 */
 		status += MXL_ControlWrite(fe, DAC_DIN_A, 0);
 
-		/* if UHF and terrestrial => Turn off Tracking Filter */
-		if (state->RF_IN >= 471000000 &&
-			(state->RF_IN - 471000000)%6000000 != 0) {
+		/* अगर UHF and terrestrial => Turn off Tracking Filter */
+		अगर (state->RF_IN >= 471000000 &&
+			(state->RF_IN - 471000000)%6000000 != 0) अणु
 			/* Turn off all the banks */
 			status += MXL_SetGPIO(fe, 3, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 			status += MXL_ControlWrite(fe, AGC_IF, 10);
-		} else {
-			/* if VHF or cable => Turn on Tracking Filter */
-			if (state->RF_IN >= 43000000 &&
-				state->RF_IN < 140000000) {
+		पूर्ण अन्यथा अणु
+			/* अगर VHF or cable => Turn on Tracking Filter */
+			अगर (state->RF_IN >= 43000000 &&
+				state->RF_IN < 140000000) अणु
 
 				status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 				status += MXL_SetGPIO(fe, 4, 1);
 				status += MXL_SetGPIO(fe, 1, 1);
 				status += MXL_SetGPIO(fe, 3, 0);
-			}
-			if (state->RF_IN >= 140000000 &&
-				state->RF_IN < 240000000) {
+			पूर्ण
+			अगर (state->RF_IN >= 140000000 &&
+				state->RF_IN < 240000000) अणु
 				status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 				status += MXL_SetGPIO(fe, 4, 1);
 				status += MXL_SetGPIO(fe, 1, 0);
 				status += MXL_SetGPIO(fe, 3, 0);
-			}
-			if (state->RF_IN >= 240000000 &&
-				state->RF_IN < 340000000) {
+			पूर्ण
+			अगर (state->RF_IN >= 240000000 &&
+				state->RF_IN < 340000000) अणु
 				status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 				status += MXL_SetGPIO(fe, 4, 0);
 				status += MXL_SetGPIO(fe, 1, 1);
 				status += MXL_SetGPIO(fe, 3, 0);
-			}
-			if (state->RF_IN >= 340000000 &&
-				state->RF_IN < 430000000) {
+			पूर्ण
+			अगर (state->RF_IN >= 340000000 &&
+				state->RF_IN < 430000000) अणु
 				status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 				status += MXL_SetGPIO(fe, 4, 0);
 				status += MXL_SetGPIO(fe, 1, 0);
 				status += MXL_SetGPIO(fe, 3, 1);
-			}
-			if (state->RF_IN >= 430000000 &&
-				state->RF_IN < 470000000) {
+			पूर्ण
+			अगर (state->RF_IN >= 430000000 &&
+				state->RF_IN < 470000000) अणु
 				status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 				status += MXL_SetGPIO(fe, 4, 1);
 				status += MXL_SetGPIO(fe, 1, 0);
 				status += MXL_SetGPIO(fe, 3, 1);
-			}
-			if (state->RF_IN >= 470000000 &&
-				state->RF_IN < 570000000) {
+			पूर्ण
+			अगर (state->RF_IN >= 470000000 &&
+				state->RF_IN < 570000000) अणु
 				status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 				status += MXL_SetGPIO(fe, 4, 0);
 				status += MXL_SetGPIO(fe, 1, 0);
 				status += MXL_SetGPIO(fe, 3, 1);
-			}
-			if (state->RF_IN >= 570000000 &&
-				state->RF_IN < 620000000) {
+			पूर्ण
+			अगर (state->RF_IN >= 570000000 &&
+				state->RF_IN < 620000000) अणु
 				status += MXL_ControlWrite(fe, DAC_A_ENABLE, 0);
 				status += MXL_SetGPIO(fe, 4, 0);
 				status += MXL_SetGPIO(fe, 1, 1);
 				status += MXL_SetGPIO(fe, 3, 1);
-			}
-			if (state->RF_IN >= 620000000 &&
-				state->RF_IN < 760000000) {
+			पूर्ण
+			अगर (state->RF_IN >= 620000000 &&
+				state->RF_IN < 760000000) अणु
 				status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 				status += MXL_SetGPIO(fe, 4, 0);
 				status += MXL_SetGPIO(fe, 1, 1);
 				status += MXL_SetGPIO(fe, 3, 1);
-			}
-			if (state->RF_IN >= 760000000 &&
-				state->RF_IN <= 900000000) {
+			पूर्ण
+			अगर (state->RF_IN >= 760000000 &&
+				state->RF_IN <= 900000000) अणु
 				status += MXL_ControlWrite(fe, DAC_A_ENABLE, 1);
 				status += MXL_SetGPIO(fe, 4, 1);
 				status += MXL_SetGPIO(fe, 1, 1);
 				status += MXL_SetGPIO(fe, 3, 1);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (state->TF_Type == MXL_TF_E) /* Tracking Filter type E */ {
+	अगर (state->TF_Type == MXL_TF_E) /* Tracking Filter type E */ अणु
 
 		status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 
-		if (state->RF_IN >= 43000000 && state->RF_IN < 174000000) {
+		अगर (state->RF_IN >= 43000000 && state->RF_IN < 174000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 174000000 && state->RF_IN < 250000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 174000000 && state->RF_IN < 250000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 250000000 && state->RF_IN < 310000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 250000000 && state->RF_IN < 310000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 310000000 && state->RF_IN < 360000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 310000000 && state->RF_IN < 360000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 360000000 && state->RF_IN < 470000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 360000000 && state->RF_IN < 470000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 470000000 && state->RF_IN < 640000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 470000000 && state->RF_IN < 640000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 640000000 && state->RF_IN <= 900000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 640000000 && state->RF_IN <= 900000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (state->TF_Type == MXL_TF_F) {
+	अगर (state->TF_Type == MXL_TF_F) अणु
 
 		/* Tracking Filter type F */
 		status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 
-		if (state->RF_IN >= 43000000 && state->RF_IN < 160000000) {
+		अगर (state->RF_IN >= 43000000 && state->RF_IN < 160000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 160000000 && state->RF_IN < 210000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 160000000 && state->RF_IN < 210000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 210000000 && state->RF_IN < 300000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 210000000 && state->RF_IN < 300000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 300000000 && state->RF_IN < 390000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 300000000 && state->RF_IN < 390000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 390000000 && state->RF_IN < 515000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 390000000 && state->RF_IN < 515000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 515000000 && state->RF_IN < 650000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 515000000 && state->RF_IN < 650000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 650000000 && state->RF_IN <= 900000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 650000000 && state->RF_IN <= 900000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (state->TF_Type == MXL_TF_E_2) {
+	अगर (state->TF_Type == MXL_TF_E_2) अणु
 
 		/* Tracking Filter type E_2 */
 		status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 
-		if (state->RF_IN >= 43000000 && state->RF_IN < 174000000) {
+		अगर (state->RF_IN >= 43000000 && state->RF_IN < 174000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 174000000 && state->RF_IN < 250000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 174000000 && state->RF_IN < 250000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 250000000 && state->RF_IN < 350000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 250000000 && state->RF_IN < 350000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 350000000 && state->RF_IN < 400000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 350000000 && state->RF_IN < 400000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 400000000 && state->RF_IN < 570000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 400000000 && state->RF_IN < 570000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 570000000 && state->RF_IN < 770000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 570000000 && state->RF_IN < 770000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 770000000 && state->RF_IN <= 900000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 770000000 && state->RF_IN <= 900000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (state->TF_Type == MXL_TF_G) {
+	अगर (state->TF_Type == MXL_TF_G) अणु
 
-		/* Tracking Filter type G add for v2.6.8 */
+		/* Tracking Filter type G add क्रम v2.6.8 */
 		status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 
-		if (state->RF_IN >= 50000000 && state->RF_IN < 190000000) {
+		अगर (state->RF_IN >= 50000000 && state->RF_IN < 190000000) अणु
 
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 190000000 && state->RF_IN < 280000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 190000000 && state->RF_IN < 280000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 280000000 && state->RF_IN < 350000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 280000000 && state->RF_IN < 350000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 350000000 && state->RF_IN < 400000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 350000000 && state->RF_IN < 400000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 400000000 && state->RF_IN < 470000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 400000000 && state->RF_IN < 470000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 470000000 && state->RF_IN < 640000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 470000000 && state->RF_IN < 640000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 640000000 && state->RF_IN < 820000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 640000000 && state->RF_IN < 820000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 820000000 && state->RF_IN <= 900000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 820000000 && state->RF_IN <= 900000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (state->TF_Type == MXL_TF_E_NA) {
+	अगर (state->TF_Type == MXL_TF_E_NA) अणु
 
-		/* Tracking Filter type E-NA for Empia ONLY change for 2.6.8 */
+		/* Tracking Filter type E-NA क्रम Empia ONLY change क्रम 2.6.8 */
 		status += MXL_ControlWrite(fe, DAC_DIN_B, 0);
 
-		/* if UHF and terrestrial=> Turn off Tracking Filter */
-		if (state->RF_IN >= 471000000 &&
-			(state->RF_IN - 471000000)%6000000 != 0) {
+		/* अगर UHF and terrestrial=> Turn off Tracking Filter */
+		अगर (state->RF_IN >= 471000000 &&
+			(state->RF_IN - 471000000)%6000000 != 0) अणु
 
 			/* Turn off all the banks */
 			status += MXL_SetGPIO(fe, 3, 1);
@@ -3287,16 +3288,16 @@ static u16 MXL_TuneRF(struct dvb_frontend *fe, u32 RF_Freq)
 			status += MXL_ControlWrite(fe, AGC_EN_RSSI, 1);
 			status += MXL_ControlWrite(fe, RFA_ENCLKRFAGC, 1);
 
-			/* RSSI reference point */
+			/* RSSI reference poपूर्णांक */
 			status += MXL_ControlWrite(fe, RFA_RSSI_REFH, 5);
 			status += MXL_ControlWrite(fe, RFA_RSSI_REF, 3);
 			status += MXL_ControlWrite(fe, RFA_RSSI_REFL, 2);
 
 			/* following parameter is from analog OTA mode,
-			 * can be change to seek better performance */
+			 * can be change to seek better perक्रमmance */
 			status += MXL_ControlWrite(fe, RFSYN_CHP_GAIN, 3);
-		} else {
-		/* if VHF or Cable =>  Turn on Tracking Filter */
+		पूर्ण अन्यथा अणु
+		/* अगर VHF or Cable =>  Turn on Tracking Filter */
 
 		/* 2.6.12 Turn off RSSI */
 		status += MXL_ControlWrite(fe, AGC_EN_RSSI, 0);
@@ -3305,383 +3306,383 @@ static u16 MXL_TuneRF(struct dvb_frontend *fe, u32 RF_Freq)
 		status += MXL_ControlWrite(fe, RFSYN_CHP_GAIN, 5);
 
 
-		if (state->RF_IN >= 43000000 && state->RF_IN < 174000000) {
+		अगर (state->RF_IN >= 43000000 && state->RF_IN < 174000000) अणु
 
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 174000000 && state->RF_IN < 250000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 174000000 && state->RF_IN < 250000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 0);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 250000000 && state->RF_IN < 350000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 250000000 && state->RF_IN < 350000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		if (state->RF_IN >= 350000000 && state->RF_IN < 400000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 350000000 && state->RF_IN < 400000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 0);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 400000000 && state->RF_IN < 570000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 400000000 && state->RF_IN < 570000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 0);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 570000000 && state->RF_IN < 770000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 570000000 && state->RF_IN < 770000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 0);
-		}
-		if (state->RF_IN >= 770000000 && state->RF_IN <= 900000000) {
+		पूर्ण
+		अगर (state->RF_IN >= 770000000 && state->RF_IN <= 900000000) अणु
 			status += MXL_ControlWrite(fe, DAC_B_ENABLE, 1);
 			status += MXL_SetGPIO(fe, 4, 1);
 			status += MXL_SetGPIO(fe, 1, 1);
 			status += MXL_SetGPIO(fe, 3, 1);
-		}
-		}
-	}
-	return status ;
-}
+		पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस status ;
+पूर्ण
 
-static u16 MXL_SetGPIO(struct dvb_frontend *fe, u8 GPIO_Num, u8 GPIO_Val)
-{
+अटल u16 MXL_SetGPIO(काष्ठा dvb_frontend *fe, u8 GPIO_Num, u8 GPIO_Val)
+अणु
 	u16 status = 0;
 
-	if (GPIO_Num == 1)
+	अगर (GPIO_Num == 1)
 		status += MXL_ControlWrite(fe, GPIO_1B, GPIO_Val ? 0 : 1);
 
 	/* GPIO2 is not available */
 
-	if (GPIO_Num == 3) {
-		if (GPIO_Val == 1) {
+	अगर (GPIO_Num == 3) अणु
+		अगर (GPIO_Val == 1) अणु
 			status += MXL_ControlWrite(fe, GPIO_3, 0);
 			status += MXL_ControlWrite(fe, GPIO_3B, 0);
-		}
-		if (GPIO_Val == 0) {
+		पूर्ण
+		अगर (GPIO_Val == 0) अणु
 			status += MXL_ControlWrite(fe, GPIO_3, 1);
 			status += MXL_ControlWrite(fe, GPIO_3B, 1);
-		}
-		if (GPIO_Val == 3) { /* tri-state */
+		पूर्ण
+		अगर (GPIO_Val == 3) अणु /* tri-state */
 			status += MXL_ControlWrite(fe, GPIO_3, 0);
 			status += MXL_ControlWrite(fe, GPIO_3B, 1);
-		}
-	}
-	if (GPIO_Num == 4) {
-		if (GPIO_Val == 1) {
+		पूर्ण
+	पूर्ण
+	अगर (GPIO_Num == 4) अणु
+		अगर (GPIO_Val == 1) अणु
 			status += MXL_ControlWrite(fe, GPIO_4, 0);
 			status += MXL_ControlWrite(fe, GPIO_4B, 0);
-		}
-		if (GPIO_Val == 0) {
+		पूर्ण
+		अगर (GPIO_Val == 0) अणु
 			status += MXL_ControlWrite(fe, GPIO_4, 1);
 			status += MXL_ControlWrite(fe, GPIO_4B, 1);
-		}
-		if (GPIO_Val == 3) { /* tri-state */
+		पूर्ण
+		अगर (GPIO_Val == 3) अणु /* tri-state */
 			status += MXL_ControlWrite(fe, GPIO_4, 0);
 			status += MXL_ControlWrite(fe, GPIO_4B, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static u16 MXL_ControlWrite(struct dvb_frontend *fe, u16 ControlNum, u32 value)
-{
+अटल u16 MXL_ControlWrite(काष्ठा dvb_frontend *fe, u16 ControlNum, u32 value)
+अणु
 	u16 status = 0;
 
-	/* Will write ALL Matching Control Name */
+	/* Will ग_लिखो ALL Matching Control Name */
 	/* Write Matching INIT Control */
 	status += MXL_ControlWrite_Group(fe, ControlNum, value, 1);
 	/* Write Matching CH Control */
 	status += MXL_ControlWrite_Group(fe, ControlNum, value, 2);
-#ifdef _MXL_INTERNAL
+#अगर_घोषित _MXL_INTERNAL
 	/* Write Matching MXL Control */
 	status += MXL_ControlWrite_Group(fe, ControlNum, value, 3);
-#endif
-	return status;
-}
+#पूर्ण_अगर
+	वापस status;
+पूर्ण
 
-static u16 MXL_ControlWrite_Group(struct dvb_frontend *fe, u16 controlNum,
+अटल u16 MXL_ControlWrite_Group(काष्ठा dvb_frontend *fe, u16 controlNum,
 	u32 value, u16 controlGroup)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 	u16 i, j, k;
 	u32 highLimit;
 	u32 ctrlVal;
 
-	if (controlGroup == 1) /* Initial Control */ {
+	अगर (controlGroup == 1) /* Initial Control */ अणु
 
-		for (i = 0; i < state->Init_Ctrl_Num; i++) {
+		क्रम (i = 0; i < state->Init_Ctrl_Num; i++) अणु
 
-			if (controlNum == state->Init_Ctrl[i].Ctrl_Num) {
+			अगर (controlNum == state->Init_Ctrl[i].Ctrl_Num) अणु
 
 				highLimit = 1 << state->Init_Ctrl[i].size;
-				if (value < highLimit) {
-					for (j = 0; j < state->Init_Ctrl[i].size; j++) {
+				अगर (value < highLimit) अणु
+					क्रम (j = 0; j < state->Init_Ctrl[i].size; j++) अणु
 						state->Init_Ctrl[i].val[j] = (u8)((value >> j) & 0x01);
 						MXL_RegWriteBit(fe, (u8)(state->Init_Ctrl[i].addr[j]),
 							(u8)(state->Init_Ctrl[i].bit[j]),
 							(u8)((value>>j) & 0x01));
-					}
+					पूर्ण
 					ctrlVal = 0;
-					for (k = 0; k < state->Init_Ctrl[i].size; k++)
+					क्रम (k = 0; k < state->Init_Ctrl[i].size; k++)
 						ctrlVal += state->Init_Ctrl[i].val[k] * (1 << k);
-				} else
-					return -1;
-			}
-		}
-	}
-	if (controlGroup == 2) /* Chan change Control */ {
+				पूर्ण अन्यथा
+					वापस -1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (controlGroup == 2) /* Chan change Control */ अणु
 
-		for (i = 0; i < state->CH_Ctrl_Num; i++) {
+		क्रम (i = 0; i < state->CH_Ctrl_Num; i++) अणु
 
-			if (controlNum == state->CH_Ctrl[i].Ctrl_Num) {
+			अगर (controlNum == state->CH_Ctrl[i].Ctrl_Num) अणु
 
 				highLimit = 1 << state->CH_Ctrl[i].size;
-				if (value < highLimit) {
-					for (j = 0; j < state->CH_Ctrl[i].size; j++) {
+				अगर (value < highLimit) अणु
+					क्रम (j = 0; j < state->CH_Ctrl[i].size; j++) अणु
 						state->CH_Ctrl[i].val[j] = (u8)((value >> j) & 0x01);
 						MXL_RegWriteBit(fe, (u8)(state->CH_Ctrl[i].addr[j]),
 							(u8)(state->CH_Ctrl[i].bit[j]),
 							(u8)((value>>j) & 0x01));
-					}
+					पूर्ण
 					ctrlVal = 0;
-					for (k = 0; k < state->CH_Ctrl[i].size; k++)
+					क्रम (k = 0; k < state->CH_Ctrl[i].size; k++)
 						ctrlVal += state->CH_Ctrl[i].val[k] * (1 << k);
-				} else
-					return -1;
-			}
-		}
-	}
-#ifdef _MXL_INTERNAL
-	if (controlGroup == 3) /* Maxlinear Control */ {
+				पूर्ण अन्यथा
+					वापस -1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+#अगर_घोषित _MXL_INTERNAL
+	अगर (controlGroup == 3) /* Maxlinear Control */ अणु
 
-		for (i = 0; i < state->MXL_Ctrl_Num; i++) {
+		क्रम (i = 0; i < state->MXL_Ctrl_Num; i++) अणु
 
-			if (controlNum == state->MXL_Ctrl[i].Ctrl_Num) {
+			अगर (controlNum == state->MXL_Ctrl[i].Ctrl_Num) अणु
 
 				highLimit = (1 << state->MXL_Ctrl[i].size);
-				if (value < highLimit) {
-					for (j = 0; j < state->MXL_Ctrl[i].size; j++) {
+				अगर (value < highLimit) अणु
+					क्रम (j = 0; j < state->MXL_Ctrl[i].size; j++) अणु
 						state->MXL_Ctrl[i].val[j] = (u8)((value >> j) & 0x01);
 						MXL_RegWriteBit(fe, (u8)(state->MXL_Ctrl[i].addr[j]),
 							(u8)(state->MXL_Ctrl[i].bit[j]),
 							(u8)((value>>j) & 0x01));
-					}
+					पूर्ण
 					ctrlVal = 0;
-					for (k = 0; k < state->MXL_Ctrl[i].size; k++)
+					क्रम (k = 0; k < state->MXL_Ctrl[i].size; k++)
 						ctrlVal += state->
 							MXL_Ctrl[i].val[k] *
 							(1 << k);
-				} else
-					return -1;
-			}
-		}
-	}
-#endif
-	return 0 ; /* successful return */
-}
+				पूर्ण अन्यथा
+					वापस -1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0 ; /* successful वापस */
+पूर्ण
 
-static u16 MXL_RegRead(struct dvb_frontend *fe, u8 RegNum, u8 *RegVal)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	int i ;
+अटल u16 MXL_RegRead(काष्ठा dvb_frontend *fe, u8 RegNum, u8 *RegVal)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	पूर्णांक i ;
 
-	for (i = 0; i < 104; i++) {
-		if (RegNum == state->TunerRegs[i].Reg_Num) {
+	क्रम (i = 0; i < 104; i++) अणु
+		अगर (RegNum == state->TunerRegs[i].Reg_Num) अणु
 			*RegVal = (u8)(state->TunerRegs[i].Reg_Val);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static u16 MXL_ControlRead(struct dvb_frontend *fe, u16 controlNum, u32 *value)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अटल u16 MXL_ControlRead(काष्ठा dvb_frontend *fe, u16 controlNum, u32 *value)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 	u32 ctrlVal ;
 	u16 i, k ;
 
-	for (i = 0; i < state->Init_Ctrl_Num ; i++) {
+	क्रम (i = 0; i < state->Init_Ctrl_Num ; i++) अणु
 
-		if (controlNum == state->Init_Ctrl[i].Ctrl_Num) {
+		अगर (controlNum == state->Init_Ctrl[i].Ctrl_Num) अणु
 
 			ctrlVal = 0;
-			for (k = 0; k < state->Init_Ctrl[i].size; k++)
+			क्रम (k = 0; k < state->Init_Ctrl[i].size; k++)
 				ctrlVal += state->Init_Ctrl[i].val[k] * (1<<k);
 			*value = ctrlVal;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < state->CH_Ctrl_Num ; i++) {
+	क्रम (i = 0; i < state->CH_Ctrl_Num ; i++) अणु
 
-		if (controlNum == state->CH_Ctrl[i].Ctrl_Num) {
+		अगर (controlNum == state->CH_Ctrl[i].Ctrl_Num) अणु
 
 			ctrlVal = 0;
-			for (k = 0; k < state->CH_Ctrl[i].size; k++)
+			क्रम (k = 0; k < state->CH_Ctrl[i].size; k++)
 				ctrlVal += state->CH_Ctrl[i].val[k] * (1 << k);
 			*value = ctrlVal;
-			return 0;
+			वापस 0;
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-#ifdef _MXL_INTERNAL
-	for (i = 0; i < state->MXL_Ctrl_Num ; i++) {
+#अगर_घोषित _MXL_INTERNAL
+	क्रम (i = 0; i < state->MXL_Ctrl_Num ; i++) अणु
 
-		if (controlNum == state->MXL_Ctrl[i].Ctrl_Num) {
+		अगर (controlNum == state->MXL_Ctrl[i].Ctrl_Num) अणु
 
 			ctrlVal = 0;
-			for (k = 0; k < state->MXL_Ctrl[i].size; k++)
+			क्रम (k = 0; k < state->MXL_Ctrl[i].size; k++)
 				ctrlVal += state->MXL_Ctrl[i].val[k] * (1<<k);
 			*value = ctrlVal;
-			return 0;
+			वापस 0;
 
-		}
-	}
-#endif
-	return 1;
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 1;
+पूर्ण
 
-static void MXL_RegWriteBit(struct dvb_frontend *fe, u8 address, u8 bit,
+अटल व्योम MXL_RegWriteBit(काष्ठा dvb_frontend *fe, u8 address, u8 bit,
 	u8 bitVal)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	int i ;
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	पूर्णांक i ;
 
-	const u8 AND_MAP[8] = {
+	स्थिर u8 AND_MAP[8] = अणु
 		0xFE, 0xFD, 0xFB, 0xF7,
-		0xEF, 0xDF, 0xBF, 0x7F } ;
+		0xEF, 0xDF, 0xBF, 0x7F पूर्ण ;
 
-	const u8 OR_MAP[8] = {
+	स्थिर u8 OR_MAP[8] = अणु
 		0x01, 0x02, 0x04, 0x08,
-		0x10, 0x20, 0x40, 0x80 } ;
+		0x10, 0x20, 0x40, 0x80 पूर्ण ;
 
-	for (i = 0; i < state->TunerRegs_Num; i++) {
-		if (state->TunerRegs[i].Reg_Num == address) {
-			if (bitVal)
+	क्रम (i = 0; i < state->TunerRegs_Num; i++) अणु
+		अगर (state->TunerRegs[i].Reg_Num == address) अणु
+			अगर (bitVal)
 				state->TunerRegs[i].Reg_Val |= OR_MAP[bit];
-			else
+			अन्यथा
 				state->TunerRegs[i].Reg_Val &= AND_MAP[bit];
-			break ;
-		}
-	}
-}
+			अवरोध ;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static u32 MXL_Ceiling(u32 value, u32 resolution)
-{
-	return value / resolution + (value % resolution > 0 ? 1 : 0);
-}
+अटल u32 MXL_Ceiling(u32 value, u32 resolution)
+अणु
+	वापस value / resolution + (value % resolution > 0 ? 1 : 0);
+पूर्ण
 
 /* Retrieve the Initialization Registers */
-static u16 MXL_GetInitRegister(struct dvb_frontend *fe, u8 *RegNum,
-	u8 *RegVal, int *count)
-{
+अटल u16 MXL_GetInitRegister(काष्ठा dvb_frontend *fe, u8 *RegNum,
+	u8 *RegVal, पूर्णांक *count)
+अणु
 	u16 status = 0;
-	int i ;
+	पूर्णांक i ;
 
-	static const u8 RegAddr[] = {
+	अटल स्थिर u8 RegAddr[] = अणु
 		11, 12, 13, 22, 32, 43, 44, 53, 56, 59, 73,
 		76, 77, 91, 134, 135, 137, 147,
 		156, 166, 167, 168, 25
-	};
+	पूर्ण;
 
 	*count = ARRAY_SIZE(RegAddr);
 
 	status += MXL_BlockInit(fe);
 
-	for (i = 0 ; i < *count; i++) {
+	क्रम (i = 0 ; i < *count; i++) अणु
 		RegNum[i] = RegAddr[i];
 		status += MXL_RegRead(fe, RegNum[i], &RegVal[i]);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static u16 MXL_GetCHRegister(struct dvb_frontend *fe, u8 *RegNum, u8 *RegVal,
-	int *count)
-{
+अटल u16 MXL_GetCHRegister(काष्ठा dvb_frontend *fe, u8 *RegNum, u8 *RegVal,
+	पूर्णांक *count)
+अणु
 	u16 status = 0;
-	int i ;
+	पूर्णांक i ;
 
-/* add 77, 166, 167, 168 register for 2.6.12 */
-#ifdef _MXL_PRODUCTION
-	static const u8 RegAddr[] = {
+/* add 77, 166, 167, 168 रेजिस्टर क्रम 2.6.12 */
+#अगर_घोषित _MXL_PRODUCTION
+	अटल स्थिर u8 RegAddr[] = अणु
 		14, 15, 16, 17, 22, 43, 65, 68, 69, 70, 73, 92, 93, 106,
 		107, 108, 109, 110, 111, 112, 136, 138, 149, 77, 166, 167, 168
-	};
-#else
-	static const u8 RegAddr[] = {
+	पूर्ण;
+#अन्यथा
+	अटल स्थिर u8 RegAddr[] = अणु
 		14, 15, 16, 17, 22, 43, 68, 69, 70, 73, 92, 93, 106,
 		107, 108, 109, 110, 111, 112, 136, 138, 149, 77, 166, 167, 168
-	};
+	पूर्ण;
 	/*
 	u8 RegAddr[171];
-	for (i = 0; i <= 170; i++)
+	क्रम (i = 0; i <= 170; i++)
 		RegAddr[i] = i;
 	*/
-#endif
+#पूर्ण_अगर
 
 	*count = ARRAY_SIZE(RegAddr);
 
-	for (i = 0 ; i < *count; i++) {
+	क्रम (i = 0 ; i < *count; i++) अणु
 		RegNum[i] = RegAddr[i];
 		status += MXL_RegRead(fe, RegNum[i], &RegVal[i]);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static u16 MXL_GetCHRegister_ZeroIF(struct dvb_frontend *fe, u8 *RegNum,
-	u8 *RegVal, int *count)
-{
+अटल u16 MXL_GetCHRegister_ZeroIF(काष्ठा dvb_frontend *fe, u8 *RegNum,
+	u8 *RegVal, पूर्णांक *count)
+अणु
 	u16 status = 0;
-	int i;
+	पूर्णांक i;
 
-	u8 RegAddr[] = {43, 136};
+	u8 RegAddr[] = अणु43, 136पूर्ण;
 
 	*count = ARRAY_SIZE(RegAddr);
 
-	for (i = 0; i < *count; i++) {
+	क्रम (i = 0; i < *count; i++) अणु
 		RegNum[i] = RegAddr[i];
 		status += MXL_RegRead(fe, RegNum[i], &RegVal[i]);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static u16 MXL_GetMasterControl(u8 *MasterReg, int state)
-{
-	if (state == 1) /* Load_Start */
+अटल u16 MXL_GetMasterControl(u8 *MasterReg, पूर्णांक state)
+अणु
+	अगर (state == 1) /* Load_Start */
 		*MasterReg = 0xF3;
-	if (state == 2) /* Power_Down */
+	अगर (state == 2) /* Power_Down */
 		*MasterReg = 0x41;
-	if (state == 3) /* Synth_Reset */
+	अगर (state == 3) /* Synth_Reset */
 		*MasterReg = 0xB1;
-	if (state == 4) /* Seq_Off */
+	अगर (state == 4) /* Seq_Off */
 		*MasterReg = 0xF1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef _MXL_PRODUCTION
-static u16 MXL_VCORange_Test(struct dvb_frontend *fe, int VCO_Range)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+#अगर_घोषित _MXL_PRODUCTION
+अटल u16 MXL_VCORange_Test(काष्ठा dvb_frontend *fe, पूर्णांक VCO_Range)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 	u16 status = 0 ;
 
-	if (VCO_Range == 1) {
+	अगर (VCO_Range == 1) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_DIV, 1);
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX, 0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM, 0);
@@ -3689,32 +3690,32 @@ static u16 MXL_VCORange_Test(struct dvb_frontend *fe, int VCO_Range)
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_OUT, 1);
 		status += MXL_ControlWrite(fe, RFSYN_RF_DIV_BIAS, 1);
 		status += MXL_ControlWrite(fe, DN_SEL_FREQ, 0);
-		if (state->Mode == 0 && state->IF_Mode == 1) {
+		अगर (state->Mode == 0 && state->IF_Mode == 1) अणु
 			/* Analog Low IF Mode */
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 1);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 8);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 56);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 180224);
-		}
-		if (state->Mode == 0 && state->IF_Mode == 0) {
+		पूर्ण
+		अगर (state->Mode == 0 && state->IF_Mode == 0) अणु
 			/* Analog Zero IF Mode */
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 1);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 8);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 56);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 222822);
-		}
-		if (state->Mode == 1) /* Digital Mode */ {
+		पूर्ण
+		अगर (state->Mode == 1) /* Digital Mode */ अणु
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 1);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 8);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 56);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 229376);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (VCO_Range == 2) {
+	अगर (VCO_Range == 2) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_DIV, 1);
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX, 0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM, 0);
@@ -3725,32 +3726,32 @@ static u16 MXL_VCORange_Test(struct dvb_frontend *fe, int VCO_Range)
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 1);
 		status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 40);
 		status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 41);
-		if (state->Mode == 0 && state->IF_Mode == 1) {
+		अगर (state->Mode == 0 && state->IF_Mode == 1) अणु
 			/* Analog Low IF Mode */
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 1);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 40);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 42);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 206438);
-		}
-		if (state->Mode == 0 && state->IF_Mode == 0) {
+		पूर्ण
+		अगर (state->Mode == 0 && state->IF_Mode == 0) अणु
 			/* Analog Zero IF Mode */
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 1);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 40);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 42);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 206438);
-		}
-		if (state->Mode == 1) /* Digital Mode */ {
+		पूर्ण
+		अगर (state->Mode == 1) /* Digital Mode */ अणु
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 1);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 40);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 41);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 16384);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (VCO_Range == 3) {
+	अगर (VCO_Range == 3) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_DIV, 1);
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX, 0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM, 0);
@@ -3761,32 +3762,32 @@ static u16 MXL_VCORange_Test(struct dvb_frontend *fe, int VCO_Range)
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 0);
 		status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 8);
 		status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 42);
-		if (state->Mode == 0 && state->IF_Mode == 1) {
+		अगर (state->Mode == 0 && state->IF_Mode == 1) अणु
 			/* Analog Low IF Mode */
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 0);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 8);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 44);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 173670);
-		}
-		if (state->Mode == 0 && state->IF_Mode == 0) {
+		पूर्ण
+		अगर (state->Mode == 0 && state->IF_Mode == 0) अणु
 			/* Analog Zero IF Mode */
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 0);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 8);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 44);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 173670);
-		}
-		if (state->Mode == 1) /* Digital Mode */ {
+		पूर्ण
+		अगर (state->Mode == 1) /* Digital Mode */ अणु
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 0);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 8);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 42);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 245760);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (VCO_Range == 4) {
+	अगर (VCO_Range == 4) अणु
 		status += MXL_ControlWrite(fe, RFSYN_EN_DIV, 1);
 		status += MXL_ControlWrite(fe, RFSYN_EN_OUTMUX, 0);
 		status += MXL_ControlWrite(fe, RFSYN_SEL_DIVM, 0);
@@ -3797,180 +3798,180 @@ static u16 MXL_VCORange_Test(struct dvb_frontend *fe, int VCO_Range)
 		status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 0);
 		status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 40);
 		status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 27);
-		if (state->Mode == 0 && state->IF_Mode == 1) {
+		अगर (state->Mode == 0 && state->IF_Mode == 1) अणु
 			/* Analog Low IF Mode */
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 0);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 40);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 27);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 206438);
-		}
-		if (state->Mode == 0 && state->IF_Mode == 0) {
+		पूर्ण
+		अगर (state->Mode == 0 && state->IF_Mode == 0) अणु
 			/* Analog Zero IF Mode */
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 0);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 40);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 27);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 206438);
-		}
-		if (state->Mode == 1) /* Digital Mode */ {
+		पूर्ण
+		अगर (state->Mode == 1) /* Digital Mode */ अणु
 			status += MXL_ControlWrite(fe, RFSYN_SEL_VCO_HI, 0);
 			status += MXL_ControlWrite(fe, RFSYN_VCO_BIAS, 40);
 			status += MXL_ControlWrite(fe, CHCAL_INT_MOD_RF, 27);
 			status += MXL_ControlWrite(fe,
 				CHCAL_FRAC_MOD_RF, 212992);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static u16 MXL_Hystersis_Test(struct dvb_frontend *fe, int Hystersis)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अटल u16 MXL_Hystersis_Test(काष्ठा dvb_frontend *fe, पूर्णांक Hystersis)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 	u16 status = 0;
 
-	if (Hystersis == 1)
+	अगर (Hystersis == 1)
 		status += MXL_ControlWrite(fe, DN_BYPASS_AGC_I2C, 1);
 
-	return status;
-}
-#endif
+	वापस status;
+पूर्ण
+#पूर्ण_अगर
 /* End: Reference driver code found in the Realtek driver that
  * is copyright MaxLinear */
 
 /* ----------------------------------------------------------------
  * Begin: Everything after here is new code to adapt the
- * proprietary Realtek driver into a Linux API tuner.
+ * proprietary Realtek driver पूर्णांकo a Linux API tuner.
  * Copyright (C) 2008 Steven Toth <stoth@linuxtv.org>
  */
-static int mxl5005s_reset(struct dvb_frontend *fe)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	int ret = 0;
+अटल पूर्णांक mxl5005s_reset(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	पूर्णांक ret = 0;
 
-	u8 buf[2] = { 0xff, 0x00 };
-	struct i2c_msg msg = { .addr = state->config->i2c_address, .flags = 0,
-			       .buf = buf, .len = 2 };
+	u8 buf[2] = अणु 0xff, 0x00 पूर्ण;
+	काष्ठा i2c_msg msg = अणु .addr = state->config->i2c_address, .flags = 0,
+			       .buf = buf, .len = 2 पूर्ण;
 
-	dprintk(2, "%s()\n", __func__);
+	dprपूर्णांकk(2, "%s()\n", __func__);
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
-	if (i2c_transfer(state->i2c, &msg, 1) != 1) {
-		printk(KERN_WARNING "mxl5005s I2C reset failed\n");
+	अगर (i2c_transfer(state->i2c, &msg, 1) != 1) अणु
+		prपूर्णांकk(KERN_WARNING "mxl5005s I2C reset failed\n");
 		ret = -EREMOTEIO;
-	}
+	पूर्ण
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Write a single byte to a single reg, latch the value if required by
+/* Write a single byte to a single reg, latch the value अगर required by
  * following the transaction with the latch byte.
  */
-static int mxl5005s_writereg(struct dvb_frontend *fe, u8 reg, u8 val, int latch)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	u8 buf[3] = { reg, val, MXL5005S_LATCH_BYTE };
-	struct i2c_msg msg = { .addr = state->config->i2c_address, .flags = 0,
-			       .buf = buf, .len = 3 };
+अटल पूर्णांक mxl5005s_ग_लिखोreg(काष्ठा dvb_frontend *fe, u8 reg, u8 val, पूर्णांक latch)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	u8 buf[3] = अणु reg, val, MXL5005S_LATCH_BYTE पूर्ण;
+	काष्ठा i2c_msg msg = अणु .addr = state->config->i2c_address, .flags = 0,
+			       .buf = buf, .len = 3 पूर्ण;
 
-	if (latch == 0)
+	अगर (latch == 0)
 		msg.len = 2;
 
-	dprintk(2, "%s(0x%x, 0x%x, 0x%x)\n", __func__, reg, val, msg.addr);
+	dprपूर्णांकk(2, "%s(0x%x, 0x%x, 0x%x)\n", __func__, reg, val, msg.addr);
 
-	if (i2c_transfer(state->i2c, &msg, 1) != 1) {
-		printk(KERN_WARNING "mxl5005s I2C write failed\n");
-		return -EREMOTEIO;
-	}
-	return 0;
-}
+	अगर (i2c_transfer(state->i2c, &msg, 1) != 1) अणु
+		prपूर्णांकk(KERN_WARNING "mxl5005s I2C write failed\n");
+		वापस -EREMOTEIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mxl5005s_writeregs(struct dvb_frontend *fe, u8 *addrtable,
+अटल पूर्णांक mxl5005s_ग_लिखोregs(काष्ठा dvb_frontend *fe, u8 *addrtable,
 	u8 *datatable, u8 len)
-{
-	int ret = 0, i;
+अणु
+	पूर्णांक ret = 0, i;
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
-	for (i = 0 ; i < len-1; i++) {
-		ret = mxl5005s_writereg(fe, addrtable[i], datatable[i], 0);
-		if (ret < 0)
-			break;
-	}
+	क्रम (i = 0 ; i < len-1; i++) अणु
+		ret = mxl5005s_ग_लिखोreg(fe, addrtable[i], datatable[i], 0);
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
 
-	ret = mxl5005s_writereg(fe, addrtable[i], datatable[i], 1);
+	ret = mxl5005s_ग_लिखोreg(fe, addrtable[i], datatable[i], 1);
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mxl5005s_init(struct dvb_frontend *fe)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अटल पूर्णांक mxl5005s_init(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 
-	dprintk(1, "%s()\n", __func__);
+	dprपूर्णांकk(1, "%s()\n", __func__);
 	state->current_mode = MXL_QAM;
-	return mxl5005s_reconfigure(fe, MXL_QAM, MXL5005S_BANDWIDTH_6MHZ);
-}
+	वापस mxl5005s_reconfigure(fe, MXL_QAM, MXL5005S_BANDWIDTH_6MHZ);
+पूर्ण
 
-static int mxl5005s_reconfigure(struct dvb_frontend *fe, u32 mod_type,
+अटल पूर्णांक mxl5005s_reconfigure(काष्ठा dvb_frontend *fe, u32 mod_type,
 	u32 bandwidth)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
 	u8 *AddrTable;
 	u8 *ByteTable;
-	int TableLen;
+	पूर्णांक TableLen;
 
-	dprintk(1, "%s(type=%d, bw=%d)\n", __func__, mod_type, bandwidth);
+	dprपूर्णांकk(1, "%s(type=%d, bw=%d)\n", __func__, mod_type, bandwidth);
 
 	mxl5005s_reset(fe);
 
-	AddrTable = kcalloc(MXL5005S_REG_WRITING_TABLE_LEN_MAX, sizeof(u8),
+	AddrTable = kसुस्मृति(MXL5005S_REG_WRITING_TABLE_LEN_MAX, माप(u8),
 			    GFP_KERNEL);
-	if (!AddrTable)
-		return -ENOMEM;
+	अगर (!AddrTable)
+		वापस -ENOMEM;
 
-	ByteTable = kcalloc(MXL5005S_REG_WRITING_TABLE_LEN_MAX, sizeof(u8),
+	ByteTable = kसुस्मृति(MXL5005S_REG_WRITING_TABLE_LEN_MAX, माप(u8),
 			    GFP_KERNEL);
-	if (!ByteTable) {
-		kfree(AddrTable);
-		return -ENOMEM;
-	}
+	अगर (!ByteTable) अणु
+		kमुक्त(AddrTable);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Tuner initialization stage 0 */
 	MXL_GetMasterControl(ByteTable, MC_SYNTH_RESET);
 	AddrTable[0] = MASTER_CONTROL_ADDR;
 	ByteTable[0] |= state->config->AgcMasterByte;
 
-	mxl5005s_writeregs(fe, AddrTable, ByteTable, 1);
+	mxl5005s_ग_लिखोregs(fe, AddrTable, ByteTable, 1);
 
 	mxl5005s_AssignTunerMode(fe, mod_type, bandwidth);
 
 	/* Tuner initialization stage 1 */
 	MXL_GetInitRegister(fe, AddrTable, ByteTable, &TableLen);
 
-	mxl5005s_writeregs(fe, AddrTable, ByteTable, TableLen);
+	mxl5005s_ग_लिखोregs(fe, AddrTable, ByteTable, TableLen);
 
-	kfree(AddrTable);
-	kfree(ByteTable);
+	kमुक्त(AddrTable);
+	kमुक्त(ByteTable);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mxl5005s_AssignTunerMode(struct dvb_frontend *fe, u32 mod_type,
+अटल पूर्णांक mxl5005s_AssignTunerMode(काष्ठा dvb_frontend *fe, u32 mod_type,
 	u32 bandwidth)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	struct mxl5005s_config *c = state->config;
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	काष्ठा mxl5005s_config *c = state->config;
 
 	InitTunerControls(fe);
 
@@ -3978,122 +3979,122 @@ static int mxl5005s_AssignTunerMode(struct dvb_frontend *fe, u32 mod_type,
 	MXL5005_TunerConfig(
 		fe,
 		c->mod_mode,
-		c->if_mode,
+		c->अगर_mode,
 		bandwidth,
-		c->if_freq,
+		c->अगर_freq,
 		c->xtal_freq,
 		c->agc_mode,
 		c->top,
 		c->output_load,
-		c->clock_out,
-		c->div_out,
+		c->घड़ी_out,
+		c->भाग_out,
 		c->cap_select,
 		c->rssi_enable,
 		mod_type,
 		c->tracking_filter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mxl5005s_set_params(struct dvb_frontend *fe)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	u32 delsys = c->delivery_system;
+अटल पूर्णांक mxl5005s_set_params(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	u32 delsys = c->delivery_प्रणाली;
 	u32 bw = c->bandwidth_hz;
 	u32 req_mode, req_bw = 0;
-	int ret;
+	पूर्णांक ret;
 
-	dprintk(1, "%s()\n", __func__);
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
-	switch (delsys) {
-	case SYS_ATSC:
+	चयन (delsys) अणु
+	हाल SYS_ATSC:
 		req_mode = MXL_ATSC;
 		req_bw  = MXL5005S_BANDWIDTH_6MHZ;
-		break;
-	case SYS_DVBC_ANNEX_B:
+		अवरोध;
+	हाल SYS_DVBC_ANNEX_B:
 		req_mode = MXL_QAM;
 		req_bw  = MXL5005S_BANDWIDTH_6MHZ;
-		break;
-	default:	/* Assume DVB-T */
+		अवरोध;
+	शेष:	/* Assume DVB-T */
 		req_mode = MXL_DVBT;
-		switch (bw) {
-		case 6000000:
+		चयन (bw) अणु
+		हाल 6000000:
 			req_bw = MXL5005S_BANDWIDTH_6MHZ;
-			break;
-		case 7000000:
+			अवरोध;
+		हाल 7000000:
 			req_bw = MXL5005S_BANDWIDTH_7MHZ;
-			break;
-		case 8000000:
-		case 0:
+			अवरोध;
+		हाल 8000000:
+		हाल 0:
 			req_bw = MXL5005S_BANDWIDTH_8MHZ;
-			break;
-		default:
-			return -EINVAL;
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* Change tuner for new modulation type if reqd */
-	if (req_mode != state->current_mode ||
-	    req_bw != state->Chan_Bandwidth) {
+	/* Change tuner क्रम new modulation type अगर reqd */
+	अगर (req_mode != state->current_mode ||
+	    req_bw != state->Chan_Bandwidth) अणु
 		state->current_mode = req_mode;
 		ret = mxl5005s_reconfigure(fe, req_mode, req_bw);
 
-	} else
+	पूर्ण अन्यथा
 		ret = 0;
 
-	if (ret == 0) {
-		dprintk(1, "%s() freq=%d\n", __func__, c->frequency);
+	अगर (ret == 0) अणु
+		dprपूर्णांकk(1, "%s() freq=%d\n", __func__, c->frequency);
 		ret = mxl5005s_SetRfFreqHz(fe, c->frequency);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mxl5005s_get_frequency(struct dvb_frontend *fe, u32 *frequency)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	dprintk(1, "%s()\n", __func__);
+अटल पूर्णांक mxl5005s_get_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
 	*frequency = state->RF_IN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mxl5005s_get_bandwidth(struct dvb_frontend *fe, u32 *bandwidth)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	dprintk(1, "%s()\n", __func__);
+अटल पूर्णांक mxl5005s_get_bandwidth(काष्ठा dvb_frontend *fe, u32 *bandwidth)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
 	*bandwidth = state->Chan_Bandwidth;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mxl5005s_get_if_frequency(struct dvb_frontend *fe, u32 *frequency)
-{
-	struct mxl5005s_state *state = fe->tuner_priv;
-	dprintk(1, "%s()\n", __func__);
+अटल पूर्णांक mxl5005s_get_अगर_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
+अणु
+	काष्ठा mxl5005s_state *state = fe->tuner_priv;
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
 	*frequency = state->IF_OUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mxl5005s_release(struct dvb_frontend *fe)
-{
-	dprintk(1, "%s()\n", __func__);
-	kfree(fe->tuner_priv);
-	fe->tuner_priv = NULL;
-}
+अटल व्योम mxl5005s_release(काष्ठा dvb_frontend *fe)
+अणु
+	dprपूर्णांकk(1, "%s()\n", __func__);
+	kमुक्त(fe->tuner_priv);
+	fe->tuner_priv = शून्य;
+पूर्ण
 
-static const struct dvb_tuner_ops mxl5005s_tuner_ops = {
-	.info = {
+अटल स्थिर काष्ठा dvb_tuner_ops mxl5005s_tuner_ops = अणु
+	.info = अणु
 		.name              = "MaxLinear MXL5005S",
 		.frequency_min_hz  =  48 * MHz,
 		.frequency_max_hz  = 860 * MHz,
 		.frequency_step_hz =  50 * kHz,
-	},
+	पूर्ण,
 
 	.release       = mxl5005s_release,
 	.init          = mxl5005s_init,
@@ -4101,33 +4102,33 @@ static const struct dvb_tuner_ops mxl5005s_tuner_ops = {
 	.set_params    = mxl5005s_set_params,
 	.get_frequency = mxl5005s_get_frequency,
 	.get_bandwidth = mxl5005s_get_bandwidth,
-	.get_if_frequency = mxl5005s_get_if_frequency,
-};
+	.get_अगर_frequency = mxl5005s_get_अगर_frequency,
+पूर्ण;
 
-struct dvb_frontend *mxl5005s_attach(struct dvb_frontend *fe,
-				     struct i2c_adapter *i2c,
-				     struct mxl5005s_config *config)
-{
-	struct mxl5005s_state *state = NULL;
-	dprintk(1, "%s()\n", __func__);
+काष्ठा dvb_frontend *mxl5005s_attach(काष्ठा dvb_frontend *fe,
+				     काष्ठा i2c_adapter *i2c,
+				     काष्ठा mxl5005s_config *config)
+अणु
+	काष्ठा mxl5005s_state *state = शून्य;
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
-	state = kzalloc(sizeof(struct mxl5005s_state), GFP_KERNEL);
-	if (state == NULL)
-		return NULL;
+	state = kzalloc(माप(काष्ठा mxl5005s_state), GFP_KERNEL);
+	अगर (state == शून्य)
+		वापस शून्य;
 
 	state->frontend = fe;
 	state->config = config;
 	state->i2c = i2c;
 
-	printk(KERN_INFO "MXL5005S: Attached at address 0x%02x\n",
+	prपूर्णांकk(KERN_INFO "MXL5005S: Attached at address 0x%02x\n",
 		config->i2c_address);
 
-	memcpy(&fe->ops.tuner_ops, &mxl5005s_tuner_ops,
-		sizeof(struct dvb_tuner_ops));
+	स_नकल(&fe->ops.tuner_ops, &mxl5005s_tuner_ops,
+		माप(काष्ठा dvb_tuner_ops));
 
 	fe->tuner_priv = state;
-	return fe;
-}
+	वापस fe;
+पूर्ण
 EXPORT_SYMBOL(mxl5005s_attach);
 
 MODULE_DESCRIPTION("MaxLinear MXL5005S silicon tuner driver");

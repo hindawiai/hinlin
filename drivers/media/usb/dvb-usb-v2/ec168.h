@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * E3C EC168 DVB USB driver
  *
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  */
 
-#ifndef EC168_H
-#define EC168_H
+#अगर_अघोषित EC168_H
+#घोषणा EC168_H
 
-#include "dvb_usb.h"
+#समावेश "dvb_usb.h"
 
-#define EC168_USB_TIMEOUT 1000
-#define EC168_FIRMWARE "dvb-usb-ec168.fw"
+#घोषणा EC168_USB_TIMEOUT 1000
+#घोषणा EC168_FIRMWARE "dvb-usb-ec168.fw"
 
-struct ec168_req {
+काष्ठा ec168_req अणु
 	u8  cmd;       /* [1] */
 	u16 value;     /* [2|3] */
 	u16 index;     /* [4|5] */
 	u16 size;      /* [6|7] */
 	u8  *data;
-};
+पूर्ण;
 
-enum ec168_cmd {
+क्रमागत ec168_cmd अणु
 	DOWNLOAD_FIRMWARE    = 0x00,
 	CONFIG               = 0x01,
 	DEMOD_RW             = 0x03,
@@ -34,6 +35,6 @@ enum ec168_cmd {
 	SET_CONFIG,
 	READ_DEMOD,
 	WRITE_DEMOD,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

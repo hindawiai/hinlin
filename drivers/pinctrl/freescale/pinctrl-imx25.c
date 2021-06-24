@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // imx25 pinctrl driver.
 //
-// Copyright 2013 Eukréa Electromatique <denis@eukrea.com>
+// Copyright 2013 Eukrथऊa Electromatique <denis@eukrea.com>
 //
 // This driver was mostly copied from the imx51 pinctrl driver which has:
 //
@@ -11,16 +12,16 @@
 //
 // Author: Denis Carikli <denis@eukrea.com>
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-imx.h"
+#समावेश "pinctrl-imx.h"
 
-enum imx25_pads {
+क्रमागत imx25_pads अणु
 	MX25_PAD_RESERVE0 = 0,
 	MX25_PAD_RESERVE1 = 1,
 	MX25_PAD_A10 = 2,
@@ -160,10 +161,10 @@ enum imx25_pads {
 	MX25_PAD_CLKO = 136,
 	MX25_PAD_BOOT_MODE0 = 137,
 	MX25_PAD_BOOT_MODE1 = 138,
-};
+पूर्ण;
 
-/* Pad names for the pinmux subsystem */
-static const struct pinctrl_pin_desc imx25_pinctrl_pads[] = {
+/* Pad names क्रम the pinmux subप्रणाली */
+अटल स्थिर काष्ठा pinctrl_pin_desc imx25_pinctrl_pads[] = अणु
 	IMX_PINCTRL_PIN(MX25_PAD_RESERVE0),
 	IMX_PINCTRL_PIN(MX25_PAD_RESERVE1),
 	IMX_PINCTRL_PIN(MX25_PAD_A10),
@@ -303,34 +304,34 @@ static const struct pinctrl_pin_desc imx25_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX25_PAD_CLKO),
 	IMX_PINCTRL_PIN(MX25_PAD_BOOT_MODE0),
 	IMX_PINCTRL_PIN(MX25_PAD_BOOT_MODE1),
-};
+पूर्ण;
 
-static const struct imx_pinctrl_soc_info imx25_pinctrl_info = {
+अटल स्थिर काष्ठा imx_pinctrl_soc_info imx25_pinctrl_info = अणु
 	.pins = imx25_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx25_pinctrl_pads),
-};
+पूर्ण;
 
-static const struct of_device_id imx25_pinctrl_of_match[] = {
-	{ .compatible = "fsl,imx25-iomuxc", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx25_pinctrl_of_match[] = अणु
+	अणु .compatible = "fsl,imx25-iomuxc", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int imx25_pinctrl_probe(struct platform_device *pdev)
-{
-	return imx_pinctrl_probe(pdev, &imx25_pinctrl_info);
-}
+अटल पूर्णांक imx25_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx_pinctrl_probe(pdev, &imx25_pinctrl_info);
+पूर्ण
 
-static struct platform_driver imx25_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx25_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "imx25-pinctrl",
 		.of_match_table = imx25_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = imx25_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init imx25_pinctrl_init(void)
-{
-	return platform_driver_register(&imx25_pinctrl_driver);
-}
+अटल पूर्णांक __init imx25_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&imx25_pinctrl_driver);
+पूर्ण
 arch_initcall(imx25_pinctrl_init);

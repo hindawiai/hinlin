@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Cyclades PC300 synchronous serial card driver for Linux
+ * Cyclades PC300 synchronous serial card driver क्रम Linux
  *
  * Copyright (C) 2000-2008 Krzysztof Halasa <khc@pm.waw.pl>
  *
- * For information see <https://www.kernel.org/pub/linux/utils/net/hdlc/>.
+ * For inक्रमmation see <https://www.kernel.org/pub/linux/utils/net/hdlc/>.
  *
- * Sources of information:
+ * Sources of inक्रमmation:
  *    Hitachi HD64572 SCA-II User's Manual
  *    Original Cyclades PC300 Linux driver
  *
@@ -14,52 +15,52 @@
  * PC300/X21 cards.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/in.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/moduleparam.h>
-#include <linux/netdevice.h>
-#include <linux/hdlc.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <asm/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/in.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/hdlc.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/पन.स>
 
-#include "hd64572.h"
+#समावेश "hd64572.h"
 
-#undef DEBUG_PKT
-#define DEBUG_RINGS
+#अघोषित DEBUG_PKT
+#घोषणा DEBUG_RINGS
 
-#define PC300_PLX_SIZE		0x80    /* PLX control window size (128 B) */
-#define PC300_SCA_SIZE		0x400   /* SCA window size (1 KB) */
-#define MAX_TX_BUFFERS		10
+#घोषणा PC300_PLX_SIZE		0x80    /* PLX control winकरोw size (128 B) */
+#घोषणा PC300_SCA_SIZE		0x400   /* SCA winकरोw size (1 KB) */
+#घोषणा MAX_TX_BUFFERS		10
 
-static int pci_clock_freq = 33000000;
-static int use_crystal_clock = 0;
-static unsigned int CLOCK_BASE;
+अटल पूर्णांक pci_घड़ी_freq = 33000000;
+अटल पूर्णांक use_crystal_घड़ी = 0;
+अटल अचिन्हित पूर्णांक CLOCK_BASE;
 
-/* Masks to access the init_ctrl PLX register */
-#define PC300_CLKSEL_MASK	 (0x00000004UL)
-#define PC300_CHMEDIA_MASK(port) (0x00000020UL << ((port) * 3))
-#define PC300_CTYPE_MASK	 (0x00000800UL)
+/* Masks to access the init_ctrl PLX रेजिस्टर */
+#घोषणा PC300_CLKSEL_MASK	 (0x00000004UL)
+#घोषणा PC300_CHMEDIA_MASK(port) (0x00000020UL << ((port) * 3))
+#घोषणा PC300_CTYPE_MASK	 (0x00000800UL)
 
 
-enum { PC300_RSV = 1, PC300_X21, PC300_TE }; /* card types */
+क्रमागत अणु PC300_RSV = 1, PC300_X21, PC300_TE पूर्ण; /* card types */
 
 /*
- *      PLX PCI9050-1 local configuration and shared runtime registers.
- *      This structure can be used to access 9050 registers (memory mapped).
+ *      PLX PCI9050-1 local configuration and shared runसमय रेजिस्टरs.
+ *      This काष्ठाure can be used to access 9050 रेजिस्टरs (memory mapped).
  */
-typedef struct {
+प्रकार काष्ठा अणु
 	u32 loc_addr_range[4];	/* 00-0Ch : Local Address Ranges */
 	u32 loc_rom_range;	/* 10h : Local ROM Range */
 	u32 loc_addr_base[4];	/* 14-20h : Local Address Base Addrs */
@@ -67,55 +68,55 @@ typedef struct {
 	u32 loc_bus_descr[4];	/* 28-34h : Local Bus Descriptors */
 	u32 rom_bus_descr;	/* 38h : ROM Bus Descriptor */
 	u32 cs_base[4];		/* 3C-48h : Chip Select Base Addrs */
-	u32 intr_ctrl_stat;	/* 4Ch : Interrupt Control/Status */
+	u32 पूर्णांकr_ctrl_stat;	/* 4Ch : Interrupt Control/Status */
 	u32 init_ctrl;		/* 50h : EEPROM ctrl, Init Ctrl, etc */
-}plx9050;
+पूर्णplx9050;
 
 
 
-typedef struct port_s {
-	struct napi_struct napi;
-	struct net_device *netdev;
-	struct card_s *card;
+प्रकार काष्ठा port_s अणु
+	काष्ठा napi_काष्ठा napi;
+	काष्ठा net_device *netdev;
+	काष्ठा card_s *card;
 	spinlock_t lock;	/* TX lock */
 	sync_serial_settings settings;
-	int rxpart;		/* partial frame received, next frame invalid*/
-	unsigned short encoding;
-	unsigned short parity;
-	unsigned int iface;
-	u16 rxin;		/* rx ring buffer 'in' pointer */
-	u16 txin;		/* tx ring buffer 'in' and 'last' pointers */
+	पूर्णांक rxpart;		/* partial frame received, next frame invalid*/
+	अचिन्हित लघु encoding;
+	अचिन्हित लघु parity;
+	अचिन्हित पूर्णांक अगरace;
+	u16 rxin;		/* rx ring buffer 'in' poपूर्णांकer */
+	u16 txin;		/* tx ring buffer 'in' and 'last' poपूर्णांकers */
 	u16 txlast;
-	u8 rxs, txs, tmc;	/* SCA registers */
+	u8 rxs, txs, पंचांगc;	/* SCA रेजिस्टरs */
 	u8 chan;		/* physical port # - 0 or 1 */
-}port_t;
+पूर्णport_t;
 
 
 
-typedef struct card_s {
-	int type;		/* RSV, X21, etc. */
-	int n_ports;		/* 1 or 2 ports */
-	u8 __iomem *rambase;	/* buffer memory base (virtual) */
-	u8 __iomem *scabase;	/* SCA memory base (virtual) */
-	plx9050 __iomem *plxbase; /* PLX registers memory base (virtual) */
+प्रकार काष्ठा card_s अणु
+	पूर्णांक type;		/* RSV, X21, etc. */
+	पूर्णांक n_ports;		/* 1 or 2 ports */
+	u8 __iomem *rambase;	/* buffer memory base (भव) */
+	u8 __iomem *scabase;	/* SCA memory base (भव) */
+	plx9050 __iomem *plxbase; /* PLX रेजिस्टरs memory base (भव) */
 	u32 init_ctrl_value;	/* Saved value - 9050 bug workaround */
 	u16 rx_ring_buffers;	/* number of buffers in a ring */
 	u16 tx_ring_buffers;
 	u16 buff_offset;	/* offset of first buffer of first channel */
-	u8 irq;			/* interrupt request level */
+	u8 irq;			/* पूर्णांकerrupt request level */
 
 	port_t ports[2];
-}card_t;
+पूर्णcard_t;
 
 
-#define get_port(card, port)	     ((port) < (card)->n_ports ? \
-					 (&(card)->ports[port]) : (NULL))
+#घोषणा get_port(card, port)	     ((port) < (card)->n_ports ? \
+					 (&(card)->ports[port]) : (शून्य))
 
-#include "hd64572.c"
+#समावेश "hd64572.c"
 
 
-static void pc300_set_iface(port_t *port)
-{
+अटल व्योम pc300_set_अगरace(port_t *port)
+अणु
 	card_t *card = port->card;
 	u32 __iomem * init_ctrl = &card->plxbase->init_ctrl;
 	u16 msci = get_msci(port);
@@ -124,27 +125,27 @@ static void pc300_set_iface(port_t *port)
 
 	sca_out(EXS_TES1, (port->chan ? MSCI1_OFFSET : MSCI0_OFFSET) + EXS,
 		port->card);
-	switch(port->settings.clock_type) {
-	case CLOCK_INT:
+	चयन(port->settings.घड़ी_प्रकारype) अणु
+	हाल CLOCK_INT:
 		rxs |= CLK_BRG; /* BRG output */
-		txs |= CLK_PIN_OUT | CLK_TX_RXCLK; /* RX clock */
-		break;
+		txs |= CLK_PIN_OUT | CLK_TX_RXCLK; /* RX घड़ी */
+		अवरोध;
 
-	case CLOCK_TXINT:
+	हाल CLOCK_TXINT:
 		rxs |= CLK_LINE; /* RXC input */
 		txs |= CLK_PIN_OUT | CLK_BRG; /* BRG output */
-		break;
+		अवरोध;
 
-	case CLOCK_TXFROMRX:
+	हाल CLOCK_TXFROMRX:
 		rxs |= CLK_LINE; /* RXC input */
-		txs |= CLK_PIN_OUT | CLK_TX_RXCLK; /* RX clock */
-		break;
+		txs |= CLK_PIN_OUT | CLK_TX_RXCLK; /* RX घड़ी */
+		अवरोध;
 
-	default:		/* EXTernal clock */
+	शेष:		/* EXTernal घड़ी */
 		rxs |= CLK_LINE; /* RXC input */
 		txs |= CLK_PIN_OUT | CLK_LINE; /* TXC input */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	port->rxs = rxs;
 	port->txs = txs;
@@ -152,182 +153,182 @@ static void pc300_set_iface(port_t *port)
 	sca_out(txs, msci + TXS, card);
 	sca_set_port(port);
 
-	if (port->card->type == PC300_RSV) {
-		if (port->iface == IF_IFACE_V35)
-			writel(card->init_ctrl_value |
+	अगर (port->card->type == PC300_RSV) अणु
+		अगर (port->अगरace == IF_IFACE_V35)
+			ग_लिखोl(card->init_ctrl_value |
 			       PC300_CHMEDIA_MASK(port->chan), init_ctrl);
-		else
-			writel(card->init_ctrl_value &
+		अन्यथा
+			ग_लिखोl(card->init_ctrl_value &
 			       ~PC300_CHMEDIA_MASK(port->chan), init_ctrl);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 
-static int pc300_open(struct net_device *dev)
-{
+अटल पूर्णांक pc300_खोलो(काष्ठा net_device *dev)
+अणु
 	port_t *port = dev_to_port(dev);
 
-	int result = hdlc_open(dev);
-	if (result)
-		return result;
+	पूर्णांक result = hdlc_खोलो(dev);
+	अगर (result)
+		वापस result;
 
-	sca_open(dev);
-	pc300_set_iface(port);
-	return 0;
-}
-
-
-
-static int pc300_close(struct net_device *dev)
-{
-	sca_close(dev);
-	hdlc_close(dev);
-	return 0;
-}
+	sca_खोलो(dev);
+	pc300_set_अगरace(port);
+	वापस 0;
+पूर्ण
 
 
 
-static int pc300_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	const size_t size = sizeof(sync_serial_settings);
+अटल पूर्णांक pc300_बंद(काष्ठा net_device *dev)
+अणु
+	sca_बंद(dev);
+	hdlc_बंद(dev);
+	वापस 0;
+पूर्ण
+
+
+
+अटल पूर्णांक pc300_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	स्थिर माप_प्रकार size = माप(sync_serial_settings);
 	sync_serial_settings new_line;
-	sync_serial_settings __user *line = ifr->ifr_settings.ifs_ifsu.sync;
-	int new_type;
+	sync_serial_settings __user *line = अगरr->अगरr_settings.अगरs_अगरsu.sync;
+	पूर्णांक new_type;
 	port_t *port = dev_to_port(dev);
 
-#ifdef DEBUG_RINGS
-	if (cmd == SIOCDEVPRIVATE) {
+#अगर_घोषित DEBUG_RINGS
+	अगर (cmd == SIOCDEVPRIVATE) अणु
 		sca_dump_rings(dev);
-		return 0;
-	}
-#endif
-	if (cmd != SIOCWANDEV)
-		return hdlc_ioctl(dev, ifr, cmd);
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (cmd != SIOCWANDEV)
+		वापस hdlc_ioctl(dev, अगरr, cmd);
 
-	if (ifr->ifr_settings.type == IF_GET_IFACE) {
-		ifr->ifr_settings.type = port->iface;
-		if (ifr->ifr_settings.size < size) {
-			ifr->ifr_settings.size = size; /* data size wanted */
-			return -ENOBUFS;
-		}
-		if (copy_to_user(line, &port->settings, size))
-			return -EFAULT;
-		return 0;
+	अगर (अगरr->अगरr_settings.type == IF_GET_IFACE) अणु
+		अगरr->अगरr_settings.type = port->अगरace;
+		अगर (अगरr->अगरr_settings.size < size) अणु
+			अगरr->अगरr_settings.size = size; /* data size wanted */
+			वापस -ENOBUFS;
+		पूर्ण
+		अगर (copy_to_user(line, &port->settings, size))
+			वापस -EFAULT;
+		वापस 0;
 
-	}
+	पूर्ण
 
-	if (port->card->type == PC300_X21 &&
-	    (ifr->ifr_settings.type == IF_IFACE_SYNC_SERIAL ||
-	     ifr->ifr_settings.type == IF_IFACE_X21))
+	अगर (port->card->type == PC300_X21 &&
+	    (अगरr->अगरr_settings.type == IF_IFACE_SYNC_SERIAL ||
+	     अगरr->अगरr_settings.type == IF_IFACE_X21))
 		new_type = IF_IFACE_X21;
 
-	else if (port->card->type == PC300_RSV &&
-		 (ifr->ifr_settings.type == IF_IFACE_SYNC_SERIAL ||
-		  ifr->ifr_settings.type == IF_IFACE_V35))
+	अन्यथा अगर (port->card->type == PC300_RSV &&
+		 (अगरr->अगरr_settings.type == IF_IFACE_SYNC_SERIAL ||
+		  अगरr->अगरr_settings.type == IF_IFACE_V35))
 		new_type = IF_IFACE_V35;
 
-	else if (port->card->type == PC300_RSV &&
-		 ifr->ifr_settings.type == IF_IFACE_V24)
+	अन्यथा अगर (port->card->type == PC300_RSV &&
+		 अगरr->अगरr_settings.type == IF_IFACE_V24)
 		new_type = IF_IFACE_V24;
 
-	else
-		return hdlc_ioctl(dev, ifr, cmd);
+	अन्यथा
+		वापस hdlc_ioctl(dev, अगरr, cmd);
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (copy_from_user(&new_line, line, size))
-		return -EFAULT;
+	अगर (copy_from_user(&new_line, line, size))
+		वापस -EFAULT;
 
-	if (new_line.clock_type != CLOCK_EXT &&
-	    new_line.clock_type != CLOCK_TXFROMRX &&
-	    new_line.clock_type != CLOCK_INT &&
-	    new_line.clock_type != CLOCK_TXINT)
-		return -EINVAL;	/* No such clock setting */
+	अगर (new_line.घड़ी_प्रकारype != CLOCK_EXT &&
+	    new_line.घड़ी_प्रकारype != CLOCK_TXFROMRX &&
+	    new_line.घड़ी_प्रकारype != CLOCK_INT &&
+	    new_line.घड़ी_प्रकारype != CLOCK_TXINT)
+		वापस -EINVAL;	/* No such घड़ी setting */
 
-	if (new_line.loopback != 0 && new_line.loopback != 1)
-		return -EINVAL;
+	अगर (new_line.loopback != 0 && new_line.loopback != 1)
+		वापस -EINVAL;
 
-	memcpy(&port->settings, &new_line, size); /* Update settings */
-	port->iface = new_type;
-	pc300_set_iface(port);
-	return 0;
-}
+	स_नकल(&port->settings, &new_line, size); /* Update settings */
+	port->अगरace = new_type;
+	pc300_set_अगरace(port);
+	वापस 0;
+पूर्ण
 
 
 
-static void pc300_pci_remove_one(struct pci_dev *pdev)
-{
-	int i;
+अटल व्योम pc300_pci_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक i;
 	card_t *card = pci_get_drvdata(pdev);
 
-	for (i = 0; i < 2; i++)
-		if (card->ports[i].card)
-			unregister_hdlc_device(card->ports[i].netdev);
+	क्रम (i = 0; i < 2; i++)
+		अगर (card->ports[i].card)
+			unरेजिस्टर_hdlc_device(card->ports[i].netdev);
 
-	if (card->irq)
-		free_irq(card->irq, card);
+	अगर (card->irq)
+		मुक्त_irq(card->irq, card);
 
-	if (card->rambase)
+	अगर (card->rambase)
 		iounmap(card->rambase);
-	if (card->scabase)
+	अगर (card->scabase)
 		iounmap(card->scabase);
-	if (card->plxbase)
+	अगर (card->plxbase)
 		iounmap(card->plxbase);
 
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-	if (card->ports[0].netdev)
-		free_netdev(card->ports[0].netdev);
-	if (card->ports[1].netdev)
-		free_netdev(card->ports[1].netdev);
-	kfree(card);
-}
+	अगर (card->ports[0].netdev)
+		मुक्त_netdev(card->ports[0].netdev);
+	अगर (card->ports[1].netdev)
+		मुक्त_netdev(card->ports[1].netdev);
+	kमुक्त(card);
+पूर्ण
 
-static const struct net_device_ops pc300_ops = {
-	.ndo_open       = pc300_open,
-	.ndo_stop       = pc300_close,
-	.ndo_start_xmit = hdlc_start_xmit,
-	.ndo_do_ioctl   = pc300_ioctl,
-};
+अटल स्थिर काष्ठा net_device_ops pc300_ops = अणु
+	.nकरो_खोलो       = pc300_खोलो,
+	.nकरो_stop       = pc300_बंद,
+	.nकरो_start_xmit = hdlc_start_xmit,
+	.nकरो_करो_ioctl   = pc300_ioctl,
+पूर्ण;
 
-static int pc300_pci_init_one(struct pci_dev *pdev,
-			      const struct pci_device_id *ent)
-{
+अटल पूर्णांक pc300_pci_init_one(काष्ठा pci_dev *pdev,
+			      स्थिर काष्ठा pci_device_id *ent)
+अणु
 	card_t *card;
 	u32 __iomem *p;
-	int i;
+	पूर्णांक i;
 	u32 ramsize;
 	u32 ramphys;		/* buffer memory base */
 	u32 scaphys;		/* SCA memory base */
-	u32 plxphys;		/* PLX registers memory base */
+	u32 plxphys;		/* PLX रेजिस्टरs memory base */
 
 	i = pci_enable_device(pdev);
-	if (i)
-		return i;
+	अगर (i)
+		वापस i;
 
 	i = pci_request_regions(pdev, "PC300");
-	if (i) {
+	अगर (i) अणु
 		pci_disable_device(pdev);
-		return i;
-	}
+		वापस i;
+	पूर्ण
 
-	card = kzalloc(sizeof(card_t), GFP_KERNEL);
-	if (card == NULL) {
+	card = kzalloc(माप(card_t), GFP_KERNEL);
+	अगर (card == शून्य) अणु
 		pci_release_regions(pdev);
 		pci_disable_device(pdev);
-		return -ENOBUFS;
-	}
+		वापस -ENOBUFS;
+	पूर्ण
 	pci_set_drvdata(pdev, card);
 
-	if (pci_resource_len(pdev, 0) != PC300_PLX_SIZE ||
+	अगर (pci_resource_len(pdev, 0) != PC300_PLX_SIZE ||
 	    pci_resource_len(pdev, 2) != PC300_SCA_SIZE ||
-	    pci_resource_len(pdev, 3) < 16384) {
+	    pci_resource_len(pdev, 3) < 16384) अणु
 		pr_err("invalid card EEPROM parameters\n");
-		pc300_pci_remove_one(pdev);
-		return -EFAULT;
-	}
+		pc300_pci_हटाओ_one(pdev);
+		वापस -EFAULT;
+	पूर्ण
 
 	plxphys = pci_resource_start(pdev, 0) & PCI_BASE_ADDRESS_MEM_MASK;
 	card->plxbase = ioremap(plxphys, PC300_PLX_SIZE);
@@ -338,74 +339,74 @@ static int pc300_pci_init_one(struct pci_dev *pdev,
 	ramphys = pci_resource_start(pdev, 3) & PCI_BASE_ADDRESS_MEM_MASK;
 	card->rambase = pci_ioremap_bar(pdev, 3);
 
-	if (card->plxbase == NULL ||
-	    card->scabase == NULL ||
-	    card->rambase == NULL) {
+	अगर (card->plxbase == शून्य ||
+	    card->scabase == शून्य ||
+	    card->rambase == शून्य) अणु
 		pr_err("ioremap() failed\n");
-		pc300_pci_remove_one(pdev);
-		return -ENOMEM;
-	}
+		pc300_pci_हटाओ_one(pdev);
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* PLX PCI 9050 workaround for local configuration register read bug */
-	pci_write_config_dword(pdev, PCI_BASE_ADDRESS_0, scaphys);
-	card->init_ctrl_value = readl(&((plx9050 __iomem *)card->scabase)->init_ctrl);
-	pci_write_config_dword(pdev, PCI_BASE_ADDRESS_0, plxphys);
+	/* PLX PCI 9050 workaround क्रम local configuration रेजिस्टर पढ़ो bug */
+	pci_ग_लिखो_config_dword(pdev, PCI_BASE_ADDRESS_0, scaphys);
+	card->init_ctrl_value = पढ़ोl(&((plx9050 __iomem *)card->scabase)->init_ctrl);
+	pci_ग_लिखो_config_dword(pdev, PCI_BASE_ADDRESS_0, plxphys);
 
-	if (pdev->device == PCI_DEVICE_ID_PC300_TE_1 ||
+	अगर (pdev->device == PCI_DEVICE_ID_PC300_TE_1 ||
 	    pdev->device == PCI_DEVICE_ID_PC300_TE_2)
 		card->type = PC300_TE; /* not fully supported */
-	else if (card->init_ctrl_value & PC300_CTYPE_MASK)
+	अन्यथा अगर (card->init_ctrl_value & PC300_CTYPE_MASK)
 		card->type = PC300_X21;
-	else
+	अन्यथा
 		card->type = PC300_RSV;
 
-	if (pdev->device == PCI_DEVICE_ID_PC300_RX_1 ||
+	अगर (pdev->device == PCI_DEVICE_ID_PC300_RX_1 ||
 	    pdev->device == PCI_DEVICE_ID_PC300_TE_1)
 		card->n_ports = 1;
-	else
+	अन्यथा
 		card->n_ports = 2;
 
-	for (i = 0; i < card->n_ports; i++)
-		if (!(card->ports[i].netdev = alloc_hdlcdev(&card->ports[i]))) {
+	क्रम (i = 0; i < card->n_ports; i++)
+		अगर (!(card->ports[i].netdev = alloc_hdlcdev(&card->ports[i]))) अणु
 			pr_err("unable to allocate memory\n");
-			pc300_pci_remove_one(pdev);
-			return -ENOMEM;
-		}
+			pc300_pci_हटाओ_one(pdev);
+			वापस -ENOMEM;
+		पूर्ण
 
 	/* Reset PLX */
 	p = &card->plxbase->init_ctrl;
-	writel(card->init_ctrl_value | 0x40000000, p);
-	readl(p);		/* Flush the write - do not use sca_flush */
+	ग_लिखोl(card->init_ctrl_value | 0x40000000, p);
+	पढ़ोl(p);		/* Flush the ग_लिखो - करो not use sca_flush */
 	udelay(1);
 
-	writel(card->init_ctrl_value, p);
-	readl(p);		/* Flush the write - do not use sca_flush */
+	ग_लिखोl(card->init_ctrl_value, p);
+	पढ़ोl(p);		/* Flush the ग_लिखो - करो not use sca_flush */
 	udelay(1);
 
 	/* Reload Config. Registers from EEPROM */
-	writel(card->init_ctrl_value | 0x20000000, p);
-	readl(p);		/* Flush the write - do not use sca_flush */
+	ग_लिखोl(card->init_ctrl_value | 0x20000000, p);
+	पढ़ोl(p);		/* Flush the ग_लिखो - करो not use sca_flush */
 	udelay(1);
 
-	writel(card->init_ctrl_value, p);
-	readl(p);		/* Flush the write - do not use sca_flush */
+	ग_लिखोl(card->init_ctrl_value, p);
+	पढ़ोl(p);		/* Flush the ग_लिखो - करो not use sca_flush */
 	udelay(1);
 
 	ramsize = sca_detect_ram(card, card->rambase,
 				 pci_resource_len(pdev, 3));
 
-	if (use_crystal_clock)
+	अगर (use_crystal_घड़ी)
 		card->init_ctrl_value &= ~PC300_CLKSEL_MASK;
-	else
+	अन्यथा
 		card->init_ctrl_value |= PC300_CLKSEL_MASK;
 
-	writel(card->init_ctrl_value, &card->plxbase->init_ctrl);
-	/* number of TX + RX buffers for one port */
-	i = ramsize / (card->n_ports * (sizeof(pkt_desc) + HDLC_MAX_MRU));
+	ग_लिखोl(card->init_ctrl_value, &card->plxbase->init_ctrl);
+	/* number of TX + RX buffers क्रम one port */
+	i = ramsize / (card->n_ports * (माप(pkt_desc) + HDLC_MAX_MRU));
 	card->tx_ring_buffers = min(i / 2, MAX_TX_BUFFERS);
 	card->rx_ring_buffers = i - card->tx_ring_buffers;
 
-	card->buff_offset = card->n_ports * sizeof(pkt_desc) *
+	card->buff_offset = card->n_ports * माप(pkt_desc) *
 		(card->tx_ring_buffers + card->rx_ring_buffers);
 
 	pr_info("PC300/%s, %u KB RAM at 0x%x, IRQ%u, using %u TX + %u RX packets rings\n",
@@ -414,21 +415,21 @@ static int pc300_pci_init_one(struct pci_dev *pdev,
 		ramsize / 1024, ramphys, pdev->irq,
 		card->tx_ring_buffers, card->rx_ring_buffers);
 
-	if (card->tx_ring_buffers < 1) {
+	अगर (card->tx_ring_buffers < 1) अणु
 		pr_err("RAM test failed\n");
-		pc300_pci_remove_one(pdev);
-		return -EFAULT;
-	}
+		pc300_pci_हटाओ_one(pdev);
+		वापस -EFAULT;
+	पूर्ण
 
-	/* Enable interrupts on the PCI bridge, LINTi1 active low */
-	writew(0x0041, &card->plxbase->intr_ctrl_stat);
+	/* Enable पूर्णांकerrupts on the PCI bridge, LINTi1 active low */
+	ग_लिखोw(0x0041, &card->plxbase->पूर्णांकr_ctrl_stat);
 
 	/* Allocate IRQ */
-	if (request_irq(pdev->irq, sca_intr, IRQF_SHARED, "pc300", card)) {
+	अगर (request_irq(pdev->irq, sca_पूर्णांकr, IRQF_SHARED, "pc300", card)) अणु
 		pr_warn("could not allocate IRQ%d\n", pdev->irq);
-		pc300_pci_remove_one(pdev);
-		return -EBUSY;
-	}
+		pc300_pci_हटाओ_one(pdev);
+		वापस -EBUSY;
+	पूर्ण
 	card->irq = pdev->irq;
 
 	sca_init(card, 0);
@@ -438,9 +439,9 @@ static int pc300_pci_init_one(struct pci_dev *pdev,
 
 	sca_out(0x10, BTCR, card);
 
-	for (i = 0; i < card->n_ports; i++) {
+	क्रम (i = 0; i < card->n_ports; i++) अणु
 		port_t *port = &card->ports[i];
-		struct net_device *dev = port->netdev;
+		काष्ठा net_device *dev = port->netdev;
 		hdlc_device *hdlc = dev_to_hdlc(dev);
 		port->chan = i;
 
@@ -452,80 +453,80 @@ static int pc300_pci_init_one(struct pci_dev *pdev,
 		dev->netdev_ops = &pc300_ops;
 		hdlc->attach = sca_attach;
 		hdlc->xmit = sca_xmit;
-		port->settings.clock_type = CLOCK_EXT;
+		port->settings.घड़ी_प्रकारype = CLOCK_EXT;
 		port->card = card;
-		if (card->type == PC300_X21)
-			port->iface = IF_IFACE_X21;
-		else
-			port->iface = IF_IFACE_V35;
+		अगर (card->type == PC300_X21)
+			port->अगरace = IF_IFACE_X21;
+		अन्यथा
+			port->अगरace = IF_IFACE_V35;
 
 		sca_init_port(port);
-		if (register_hdlc_device(dev)) {
+		अगर (रेजिस्टर_hdlc_device(dev)) अणु
 			pr_err("unable to register hdlc device\n");
-			port->card = NULL;
-			pc300_pci_remove_one(pdev);
-			return -ENOBUFS;
-		}
+			port->card = शून्य;
+			pc300_pci_हटाओ_one(pdev);
+			वापस -ENOBUFS;
+		पूर्ण
 
 		netdev_info(dev, "PC300 channel %d\n", port->chan);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 
-static const struct pci_device_id pc300_pci_tbl[] = {
-	{ PCI_VENDOR_ID_CYCLADES, PCI_DEVICE_ID_PC300_RX_1, PCI_ANY_ID,
-	  PCI_ANY_ID, 0, 0, 0 },
-	{ PCI_VENDOR_ID_CYCLADES, PCI_DEVICE_ID_PC300_RX_2, PCI_ANY_ID,
-	  PCI_ANY_ID, 0, 0, 0 },
-	{ PCI_VENDOR_ID_CYCLADES, PCI_DEVICE_ID_PC300_TE_1, PCI_ANY_ID,
-	  PCI_ANY_ID, 0, 0, 0 },
-	{ PCI_VENDOR_ID_CYCLADES, PCI_DEVICE_ID_PC300_TE_2, PCI_ANY_ID,
-	  PCI_ANY_ID, 0, 0, 0 },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id pc300_pci_tbl[] = अणु
+	अणु PCI_VENDOR_ID_CYCLADES, PCI_DEVICE_ID_PC300_RX_1, PCI_ANY_ID,
+	  PCI_ANY_ID, 0, 0, 0 पूर्ण,
+	अणु PCI_VENDOR_ID_CYCLADES, PCI_DEVICE_ID_PC300_RX_2, PCI_ANY_ID,
+	  PCI_ANY_ID, 0, 0, 0 पूर्ण,
+	अणु PCI_VENDOR_ID_CYCLADES, PCI_DEVICE_ID_PC300_TE_1, PCI_ANY_ID,
+	  PCI_ANY_ID, 0, 0, 0 पूर्ण,
+	अणु PCI_VENDOR_ID_CYCLADES, PCI_DEVICE_ID_PC300_TE_2, PCI_ANY_ID,
+	  PCI_ANY_ID, 0, 0, 0 पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 
-static struct pci_driver pc300_pci_driver = {
+अटल काष्ठा pci_driver pc300_pci_driver = अणु
 	.name =          "PC300",
 	.id_table =      pc300_pci_tbl,
 	.probe =         pc300_pci_init_one,
-	.remove =        pc300_pci_remove_one,
-};
+	.हटाओ =        pc300_pci_हटाओ_one,
+पूर्ण;
 
 
-static int __init pc300_init_module(void)
-{
-	if (pci_clock_freq < 1000000 || pci_clock_freq > 80000000) {
+अटल पूर्णांक __init pc300_init_module(व्योम)
+अणु
+	अगर (pci_घड़ी_freq < 1000000 || pci_घड़ी_freq > 80000000) अणु
 		pr_err("Invalid PCI clock frequency\n");
-		return -EINVAL;
-	}
-	if (use_crystal_clock != 0 && use_crystal_clock != 1) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (use_crystal_घड़ी != 0 && use_crystal_घड़ी != 1) अणु
 		pr_err("Invalid 'use_crystal_clock' value\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	CLOCK_BASE = use_crystal_clock ? 24576000 : pci_clock_freq;
+	CLOCK_BASE = use_crystal_घड़ी ? 24576000 : pci_घड़ी_freq;
 
-	return pci_register_driver(&pc300_pci_driver);
-}
+	वापस pci_रेजिस्टर_driver(&pc300_pci_driver);
+पूर्ण
 
 
 
-static void __exit pc300_cleanup_module(void)
-{
-	pci_unregister_driver(&pc300_pci_driver);
-}
+अटल व्योम __निकास pc300_cleanup_module(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&pc300_pci_driver);
+पूर्ण
 
 MODULE_AUTHOR("Krzysztof Halasa <khc@pm.waw.pl>");
 MODULE_DESCRIPTION("Cyclades PC300 serial port driver");
 MODULE_LICENSE("GPL v2");
 MODULE_DEVICE_TABLE(pci, pc300_pci_tbl);
-module_param(pci_clock_freq, int, 0444);
-MODULE_PARM_DESC(pci_clock_freq, "System PCI clock frequency in Hz");
-module_param(use_crystal_clock, int, 0444);
-MODULE_PARM_DESC(use_crystal_clock,
+module_param(pci_घड़ी_freq, पूर्णांक, 0444);
+MODULE_PARM_DESC(pci_घड़ी_freq, "System PCI clock frequency in Hz");
+module_param(use_crystal_घड़ी, पूर्णांक, 0444);
+MODULE_PARM_DESC(use_crystal_घड़ी,
 		 "Use 24.576 MHz clock instead of PCI clock");
 module_init(pc300_init_module);
-module_exit(pc300_cleanup_module);
+module_निकास(pc300_cleanup_module);

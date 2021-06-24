@@ -1,258 +1,259 @@
+<शैली गुरु>
 /*
  * Sonics Silicon Backplane
- * Embedded systems support code
+ * Embedded प्रणालीs support code
  *
  * Copyright 2005-2008, Broadcom Corporation
  * Copyright 2006-2008, Michael Buesch <m@bues.ch>
  * Copyright 2012, Hauke Mehrtens <hauke@hauke-m.de>
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
-#include "ssb_private.h"
+#समावेश "ssb_private.h"
 
-#include <linux/export.h>
-#include <linux/platform_device.h>
-#include <linux/ssb/ssb.h>
-#include <linux/ssb/ssb_embedded.h>
-#include <linux/ssb/ssb_driver_pci.h>
-#include <linux/ssb/ssb_driver_gige.h>
-#include <linux/pci.h>
+#समावेश <linux/export.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ssb/ssb.h>
+#समावेश <linux/ssb/ssb_embedded.h>
+#समावेश <linux/ssb/ssb_driver_pci.h>
+#समावेश <linux/ssb/ssb_driver_gige.h>
+#समावेश <linux/pci.h>
 
 
-int ssb_watchdog_timer_set(struct ssb_bus *bus, u32 ticks)
-{
-	if (ssb_chipco_available(&bus->chipco)) {
-		ssb_chipco_watchdog_timer_set(&bus->chipco, ticks);
-		return 0;
-	}
-	if (ssb_extif_available(&bus->extif)) {
-		ssb_extif_watchdog_timer_set(&bus->extif, ticks);
-		return 0;
-	}
-	return -ENODEV;
-}
-EXPORT_SYMBOL(ssb_watchdog_timer_set);
+पूर्णांक ssb_watchकरोg_समयr_set(काष्ठा ssb_bus *bus, u32 ticks)
+अणु
+	अगर (ssb_chipco_available(&bus->chipco)) अणु
+		ssb_chipco_watchकरोg_समयr_set(&bus->chipco, ticks);
+		वापस 0;
+	पूर्ण
+	अगर (ssb_extअगर_available(&bus->extअगर)) अणु
+		ssb_extअगर_watchकरोg_समयr_set(&bus->extअगर, ticks);
+		वापस 0;
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
+EXPORT_SYMBOL(ssb_watchकरोg_समयr_set);
 
-int ssb_watchdog_register(struct ssb_bus *bus)
-{
-	struct bcm47xx_wdt wdt = {};
-	struct platform_device *pdev;
+पूर्णांक ssb_watchकरोg_रेजिस्टर(काष्ठा ssb_bus *bus)
+अणु
+	काष्ठा bcm47xx_wdt wdt = अणुपूर्ण;
+	काष्ठा platक्रमm_device *pdev;
 
-	if (ssb_chipco_available(&bus->chipco)) {
+	अगर (ssb_chipco_available(&bus->chipco)) अणु
 		wdt.driver_data = &bus->chipco;
-		wdt.timer_set = ssb_chipco_watchdog_timer_set_wdt;
-		wdt.timer_set_ms = ssb_chipco_watchdog_timer_set_ms;
-		wdt.max_timer_ms = bus->chipco.max_timer_ms;
-	} else if (ssb_extif_available(&bus->extif)) {
-		wdt.driver_data = &bus->extif;
-		wdt.timer_set = ssb_extif_watchdog_timer_set_wdt;
-		wdt.timer_set_ms = ssb_extif_watchdog_timer_set_ms;
-		wdt.max_timer_ms = SSB_EXTIF_WATCHDOG_MAX_TIMER_MS;
-	} else {
-		return -ENODEV;
-	}
+		wdt.समयr_set = ssb_chipco_watchकरोg_समयr_set_wdt;
+		wdt.समयr_set_ms = ssb_chipco_watchकरोg_समयr_set_ms;
+		wdt.max_समयr_ms = bus->chipco.max_समयr_ms;
+	पूर्ण अन्यथा अगर (ssb_extअगर_available(&bus->extअगर)) अणु
+		wdt.driver_data = &bus->extअगर;
+		wdt.समयr_set = ssb_extअगर_watchकरोg_समयr_set_wdt;
+		wdt.समयr_set_ms = ssb_extअगर_watchकरोg_समयr_set_ms;
+		wdt.max_समयr_ms = SSB_EXTIF_WATCHDOG_MAX_TIMER_MS;
+	पूर्ण अन्यथा अणु
+		वापस -ENODEV;
+	पूर्ण
 
-	pdev = platform_device_register_data(NULL, "bcm47xx-wdt",
+	pdev = platक्रमm_device_रेजिस्टर_data(शून्य, "bcm47xx-wdt",
 					     bus->busnumber, &wdt,
-					     sizeof(wdt));
-	if (IS_ERR(pdev)) {
+					     माप(wdt));
+	अगर (IS_ERR(pdev)) अणु
 		pr_debug("can not register watchdog device, err: %li\n",
 			 PTR_ERR(pdev));
-		return PTR_ERR(pdev);
-	}
+		वापस PTR_ERR(pdev);
+	पूर्ण
 
-	bus->watchdog = pdev;
-	return 0;
-}
+	bus->watchकरोg = pdev;
+	वापस 0;
+पूर्ण
 
-u32 ssb_gpio_in(struct ssb_bus *bus, u32 mask)
-{
-	unsigned long flags;
+u32 ssb_gpio_in(काष्ठा ssb_bus *bus, u32 mask)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 res = 0;
 
 	spin_lock_irqsave(&bus->gpio_lock, flags);
-	if (ssb_chipco_available(&bus->chipco))
+	अगर (ssb_chipco_available(&bus->chipco))
 		res = ssb_chipco_gpio_in(&bus->chipco, mask);
-	else if (ssb_extif_available(&bus->extif))
-		res = ssb_extif_gpio_in(&bus->extif, mask);
-	else
+	अन्यथा अगर (ssb_extअगर_available(&bus->extअगर))
+		res = ssb_extअगर_gpio_in(&bus->extअगर, mask);
+	अन्यथा
 		WARN_ON(1);
 	spin_unlock_irqrestore(&bus->gpio_lock, flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(ssb_gpio_in);
 
-u32 ssb_gpio_out(struct ssb_bus *bus, u32 mask, u32 value)
-{
-	unsigned long flags;
+u32 ssb_gpio_out(काष्ठा ssb_bus *bus, u32 mask, u32 value)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 res = 0;
 
 	spin_lock_irqsave(&bus->gpio_lock, flags);
-	if (ssb_chipco_available(&bus->chipco))
+	अगर (ssb_chipco_available(&bus->chipco))
 		res = ssb_chipco_gpio_out(&bus->chipco, mask, value);
-	else if (ssb_extif_available(&bus->extif))
-		res = ssb_extif_gpio_out(&bus->extif, mask, value);
-	else
+	अन्यथा अगर (ssb_extअगर_available(&bus->extअगर))
+		res = ssb_extअगर_gpio_out(&bus->extअगर, mask, value);
+	अन्यथा
 		WARN_ON(1);
 	spin_unlock_irqrestore(&bus->gpio_lock, flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(ssb_gpio_out);
 
-u32 ssb_gpio_outen(struct ssb_bus *bus, u32 mask, u32 value)
-{
-	unsigned long flags;
+u32 ssb_gpio_outen(काष्ठा ssb_bus *bus, u32 mask, u32 value)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 res = 0;
 
 	spin_lock_irqsave(&bus->gpio_lock, flags);
-	if (ssb_chipco_available(&bus->chipco))
+	अगर (ssb_chipco_available(&bus->chipco))
 		res = ssb_chipco_gpio_outen(&bus->chipco, mask, value);
-	else if (ssb_extif_available(&bus->extif))
-		res = ssb_extif_gpio_outen(&bus->extif, mask, value);
-	else
+	अन्यथा अगर (ssb_extअगर_available(&bus->extअगर))
+		res = ssb_extअगर_gpio_outen(&bus->extअगर, mask, value);
+	अन्यथा
 		WARN_ON(1);
 	spin_unlock_irqrestore(&bus->gpio_lock, flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(ssb_gpio_outen);
 
-u32 ssb_gpio_control(struct ssb_bus *bus, u32 mask, u32 value)
-{
-	unsigned long flags;
+u32 ssb_gpio_control(काष्ठा ssb_bus *bus, u32 mask, u32 value)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 res = 0;
 
 	spin_lock_irqsave(&bus->gpio_lock, flags);
-	if (ssb_chipco_available(&bus->chipco))
+	अगर (ssb_chipco_available(&bus->chipco))
 		res = ssb_chipco_gpio_control(&bus->chipco, mask, value);
 	spin_unlock_irqrestore(&bus->gpio_lock, flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(ssb_gpio_control);
 
-u32 ssb_gpio_intmask(struct ssb_bus *bus, u32 mask, u32 value)
-{
-	unsigned long flags;
+u32 ssb_gpio_पूर्णांकmask(काष्ठा ssb_bus *bus, u32 mask, u32 value)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 res = 0;
 
 	spin_lock_irqsave(&bus->gpio_lock, flags);
-	if (ssb_chipco_available(&bus->chipco))
-		res = ssb_chipco_gpio_intmask(&bus->chipco, mask, value);
-	else if (ssb_extif_available(&bus->extif))
-		res = ssb_extif_gpio_intmask(&bus->extif, mask, value);
-	else
+	अगर (ssb_chipco_available(&bus->chipco))
+		res = ssb_chipco_gpio_पूर्णांकmask(&bus->chipco, mask, value);
+	अन्यथा अगर (ssb_extअगर_available(&bus->extअगर))
+		res = ssb_extअगर_gpio_पूर्णांकmask(&bus->extअगर, mask, value);
+	अन्यथा
 		WARN_ON(1);
 	spin_unlock_irqrestore(&bus->gpio_lock, flags);
 
-	return res;
-}
-EXPORT_SYMBOL(ssb_gpio_intmask);
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL(ssb_gpio_पूर्णांकmask);
 
-u32 ssb_gpio_polarity(struct ssb_bus *bus, u32 mask, u32 value)
-{
-	unsigned long flags;
+u32 ssb_gpio_polarity(काष्ठा ssb_bus *bus, u32 mask, u32 value)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 res = 0;
 
 	spin_lock_irqsave(&bus->gpio_lock, flags);
-	if (ssb_chipco_available(&bus->chipco))
+	अगर (ssb_chipco_available(&bus->chipco))
 		res = ssb_chipco_gpio_polarity(&bus->chipco, mask, value);
-	else if (ssb_extif_available(&bus->extif))
-		res = ssb_extif_gpio_polarity(&bus->extif, mask, value);
-	else
+	अन्यथा अगर (ssb_extअगर_available(&bus->extअगर))
+		res = ssb_extअगर_gpio_polarity(&bus->extअगर, mask, value);
+	अन्यथा
 		WARN_ON(1);
 	spin_unlock_irqrestore(&bus->gpio_lock, flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(ssb_gpio_polarity);
 
-#ifdef CONFIG_SSB_DRIVER_GIGE
-static int gige_pci_init_callback(struct ssb_bus *bus, unsigned long data)
-{
-	struct pci_dev *pdev = (struct pci_dev *)data;
-	struct ssb_device *dev;
-	unsigned int i;
-	int res;
+#अगर_घोषित CONFIG_SSB_DRIVER_GIGE
+अटल पूर्णांक gige_pci_init_callback(काष्ठा ssb_bus *bus, अचिन्हित दीर्घ data)
+अणु
+	काष्ठा pci_dev *pdev = (काष्ठा pci_dev *)data;
+	काष्ठा ssb_device *dev;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक res;
 
-	for (i = 0; i < bus->nr_devices; i++) {
+	क्रम (i = 0; i < bus->nr_devices; i++) अणु
 		dev = &(bus->devices[i]);
-		if (dev->id.coreid != SSB_DEV_ETHERNET_GBIT)
-			continue;
-		if (!dev->dev ||
+		अगर (dev->id.coreid != SSB_DEV_ETHERNET_GBIT)
+			जारी;
+		अगर (!dev->dev ||
 		    !dev->dev->driver ||
-		    !device_is_registered(dev->dev))
-			continue;
+		    !device_is_रेजिस्टरed(dev->dev))
+			जारी;
 		res = ssb_gige_pcibios_plat_dev_init(dev, pdev);
-		if (res >= 0)
-			return res;
-	}
+		अगर (res >= 0)
+			वापस res;
+	पूर्ण
 
-	return -ENODEV;
-}
-#endif /* CONFIG_SSB_DRIVER_GIGE */
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SSB_DRIVER_GIGE */
 
-int ssb_pcibios_plat_dev_init(struct pci_dev *dev)
-{
-	int err;
+पूर्णांक ssb_pcibios_plat_dev_init(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक err;
 
 	err = ssb_pcicore_plat_dev_init(dev);
-	if (!err)
-		return 0;
-#ifdef CONFIG_SSB_DRIVER_GIGE
-	err = ssb_for_each_bus_call((unsigned long)dev, gige_pci_init_callback);
-	if (err >= 0)
-		return err;
-#endif
+	अगर (!err)
+		वापस 0;
+#अगर_घोषित CONFIG_SSB_DRIVER_GIGE
+	err = ssb_क्रम_each_bus_call((अचिन्हित दीर्घ)dev, gige_pci_init_callback);
+	अगर (err >= 0)
+		वापस err;
+#पूर्ण_अगर
 	/* This is not a PCI device on any SSB device. */
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-#ifdef CONFIG_SSB_DRIVER_GIGE
-static int gige_map_irq_callback(struct ssb_bus *bus, unsigned long data)
-{
-	const struct pci_dev *pdev = (const struct pci_dev *)data;
-	struct ssb_device *dev;
-	unsigned int i;
-	int res;
+#अगर_घोषित CONFIG_SSB_DRIVER_GIGE
+अटल पूर्णांक gige_map_irq_callback(काष्ठा ssb_bus *bus, अचिन्हित दीर्घ data)
+अणु
+	स्थिर काष्ठा pci_dev *pdev = (स्थिर काष्ठा pci_dev *)data;
+	काष्ठा ssb_device *dev;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक res;
 
-	for (i = 0; i < bus->nr_devices; i++) {
+	क्रम (i = 0; i < bus->nr_devices; i++) अणु
 		dev = &(bus->devices[i]);
-		if (dev->id.coreid != SSB_DEV_ETHERNET_GBIT)
-			continue;
-		if (!dev->dev ||
+		अगर (dev->id.coreid != SSB_DEV_ETHERNET_GBIT)
+			जारी;
+		अगर (!dev->dev ||
 		    !dev->dev->driver ||
-		    !device_is_registered(dev->dev))
-			continue;
+		    !device_is_रेजिस्टरed(dev->dev))
+			जारी;
 		res = ssb_gige_map_irq(dev, pdev);
-		if (res >= 0)
-			return res;
-	}
+		अगर (res >= 0)
+			वापस res;
+	पूर्ण
 
-	return -ENODEV;
-}
-#endif /* CONFIG_SSB_DRIVER_GIGE */
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SSB_DRIVER_GIGE */
 
-int ssb_pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	int res;
+पूर्णांक ssb_pcibios_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	पूर्णांक res;
 
-	/* Check if this PCI device is a device on a SSB bus or device
-	 * and return the IRQ number for it. */
+	/* Check अगर this PCI device is a device on a SSB bus or device
+	 * and वापस the IRQ number क्रम it. */
 
 	res = ssb_pcicore_pcibios_map_irq(dev, slot, pin);
-	if (res >= 0)
-		return res;
-#ifdef CONFIG_SSB_DRIVER_GIGE
-	res = ssb_for_each_bus_call((unsigned long)dev, gige_map_irq_callback);
-	if (res >= 0)
-		return res;
-#endif
+	अगर (res >= 0)
+		वापस res;
+#अगर_घोषित CONFIG_SSB_DRIVER_GIGE
+	res = ssb_क्रम_each_bus_call((अचिन्हित दीर्घ)dev, gige_map_irq_callback);
+	अगर (res >= 0)
+		वापस res;
+#पूर्ण_अगर
 	/* This is not a PCI device on any SSB device. */
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण

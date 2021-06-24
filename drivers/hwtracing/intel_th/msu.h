@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Intel(R) Trace Hub Memory Storage Unit (MSU) data structures
+ * Intel(R) Trace Hub Memory Storage Unit (MSU) data काष्ठाures
  *
  * Copyright (C) 2014-2015 Intel Corporation.
  */
 
-#ifndef __INTEL_TH_MSU_H__
-#define __INTEL_TH_MSU_H__
+#अगर_अघोषित __INTEL_TH_MSU_H__
+#घोषणा __INTEL_TH_MSU_H__
 
-enum {
+क्रमागत अणु
 	REG_MSU_MSUPARAMS	= 0x0000,
 	REG_MSU_MSUSTS		= 0x0008,
-	REG_MSU_MINTCTL		= 0x0004, /* MSU-global interrupt control */
+	REG_MSU_MINTCTL		= 0x0004, /* MSU-global पूर्णांकerrupt control */
 	REG_MSU_MSC0CTL		= 0x0100, /* MSC0 control */
 	REG_MSU_MSC0STS		= 0x0104, /* MSC0 status */
 	REG_MSU_MSC0BAR		= 0x0108, /* MSC0 output base address */
 	REG_MSU_MSC0SIZE	= 0x010c, /* MSC0 output size */
-	REG_MSU_MSC0MWP		= 0x0110, /* MSC0 write pointer */
-	REG_MSU_MSC0NWSA	= 0x011c, /* MSC0 next window start address */
+	REG_MSU_MSC0MWP		= 0x0110, /* MSC0 ग_लिखो poपूर्णांकer */
+	REG_MSU_MSC0NWSA	= 0x011c, /* MSC0 next winकरोw start address */
 
 	REG_MSU_MSC1CTL		= 0x0200, /* MSC1 control */
 	REG_MSU_MSC1STS		= 0x0204, /* MSC1 status */
 	REG_MSU_MSC1BAR		= 0x0208, /* MSC1 output base address */
 	REG_MSU_MSC1SIZE	= 0x020c, /* MSC1 output size */
-	REG_MSU_MSC1MWP		= 0x0210, /* MSC1 write pointer */
-	REG_MSU_MSC1NWSA	= 0x021c, /* MSC1 next window start address */
-};
+	REG_MSU_MSC1MWP		= 0x0210, /* MSC1 ग_लिखो poपूर्णांकer */
+	REG_MSU_MSC1NWSA	= 0x021c, /* MSC1 next winकरोw start address */
+पूर्ण;
 
 /* MSUSTS bits */
-#define MSUSTS_MSU_INT	BIT(0)
-#define MSUSTS_MSC0BLAST	BIT(16)
-#define MSUSTS_MSC1BLAST	BIT(24)
+#घोषणा MSUSTS_MSU_INT	BIT(0)
+#घोषणा MSUSTS_MSC0BLAST	BIT(16)
+#घोषणा MSUSTS_MSC1BLAST	BIT(24)
 
 /* MSCnCTL bits */
-#define MSC_EN		BIT(0)
-#define MSC_WRAPEN	BIT(1)
-#define MSC_RD_HDR_OVRD	BIT(2)
-#define MSC_MODE	(BIT(4) | BIT(5))
-#define MSC_LEN		(BIT(8) | BIT(9) | BIT(10))
+#घोषणा MSC_EN		BIT(0)
+#घोषणा MSC_WRAPEN	BIT(1)
+#घोषणा MSC_RD_HDR_OVRD	BIT(2)
+#घोषणा MSC_MODE	(BIT(4) | BIT(5))
+#घोषणा MSC_LEN		(BIT(8) | BIT(9) | BIT(10))
 
 /* MINTCTL bits */
-#define MICDE		BIT(0)
-#define M0BLIE		BIT(16)
-#define M1BLIE		BIT(24)
+#घोषणा MICDE		BIT(0)
+#घोषणा M0BLIE		BIT(16)
+#घोषणा M1BLIE		BIT(24)
 
 /* MSCnSTS bits */
-#define MSCSTS_WRAPSTAT	BIT(1)	/* Wrap occurred */
-#define MSCSTS_PLE	BIT(2)	/* Pipeline Empty */
+#घोषणा MSCSTS_WRAPSTAT	BIT(1)	/* Wrap occurred */
+#घोषणा MSCSTS_PLE	BIT(2)	/* Pipeline Empty */
 
 /*
- * Multiblock/multiwindow block descriptor
+ * Multiblock/multiwinकरोw block descriptor
  */
-struct msc_block_desc {
+काष्ठा msc_block_desc अणु
 	u32	sw_tag;
 	u32	block_sz;
 	u32	next_blk;
@@ -62,57 +63,57 @@ struct msc_block_desc {
 	u32	ts_low;
 	u32	ts_high;
 	u32	res1[4];
-} __packed;
+पूर्ण __packed;
 
-#define MSC_BDESC	sizeof(struct msc_block_desc)
-#define DATA_IN_PAGE	(PAGE_SIZE - MSC_BDESC)
+#घोषणा MSC_BDESC	माप(काष्ठा msc_block_desc)
+#घोषणा DATA_IN_PAGE	(PAGE_SIZE - MSC_BDESC)
 
 /* MSC multiblock sw tag bits */
-#define MSC_SW_TAG_LASTBLK	BIT(0)
-#define MSC_SW_TAG_LASTWIN	BIT(1)
+#घोषणा MSC_SW_TAG_LASTBLK	BIT(0)
+#घोषणा MSC_SW_TAG_LASTWIN	BIT(1)
 
 /* MSC multiblock hw tag bits */
-#define MSC_HW_TAG_TRIGGER	BIT(0)
-#define MSC_HW_TAG_BLOCKWRAP	BIT(1)
-#define MSC_HW_TAG_WINWRAP	BIT(2)
-#define MSC_HW_TAG_ENDBIT	BIT(3)
+#घोषणा MSC_HW_TAG_TRIGGER	BIT(0)
+#घोषणा MSC_HW_TAG_BLOCKWRAP	BIT(1)
+#घोषणा MSC_HW_TAG_WINWRAP	BIT(2)
+#घोषणा MSC_HW_TAG_ENDBIT	BIT(3)
 
-static inline unsigned long msc_data_sz(struct msc_block_desc *bdesc)
-{
-	if (!bdesc->valid_dw)
-		return 0;
+अटल अंतरभूत अचिन्हित दीर्घ msc_data_sz(काष्ठा msc_block_desc *bdesc)
+अणु
+	अगर (!bdesc->valid_dw)
+		वापस 0;
 
-	return bdesc->valid_dw * 4 - MSC_BDESC;
-}
+	वापस bdesc->valid_dw * 4 - MSC_BDESC;
+पूर्ण
 
-static inline unsigned long msc_total_sz(struct msc_block_desc *bdesc)
-{
-	return bdesc->valid_dw * 4;
-}
+अटल अंतरभूत अचिन्हित दीर्घ msc_total_sz(काष्ठा msc_block_desc *bdesc)
+अणु
+	वापस bdesc->valid_dw * 4;
+पूर्ण
 
-static inline unsigned long msc_block_sz(struct msc_block_desc *bdesc)
-{
-	return bdesc->block_sz * 64 - MSC_BDESC;
-}
+अटल अंतरभूत अचिन्हित दीर्घ msc_block_sz(काष्ठा msc_block_desc *bdesc)
+अणु
+	वापस bdesc->block_sz * 64 - MSC_BDESC;
+पूर्ण
 
-static inline bool msc_block_wrapped(struct msc_block_desc *bdesc)
-{
-	if (bdesc->hw_tag & (MSC_HW_TAG_BLOCKWRAP | MSC_HW_TAG_WINWRAP))
-		return true;
+अटल अंतरभूत bool msc_block_wrapped(काष्ठा msc_block_desc *bdesc)
+अणु
+	अगर (bdesc->hw_tag & (MSC_HW_TAG_BLOCKWRAP | MSC_HW_TAG_WINWRAP))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool msc_block_last_written(struct msc_block_desc *bdesc)
-{
-	if ((bdesc->hw_tag & MSC_HW_TAG_ENDBIT) ||
+अटल अंतरभूत bool msc_block_last_written(काष्ठा msc_block_desc *bdesc)
+अणु
+	अगर ((bdesc->hw_tag & MSC_HW_TAG_ENDBIT) ||
 	    (msc_data_sz(bdesc) != msc_block_sz(bdesc)))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* waiting for Pipeline Empty bit(s) to assert for MSC */
-#define MSC_PLE_WAITLOOP_DEPTH	10000
+/* रुकोing क्रम Pipeline Empty bit(s) to निश्चित क्रम MSC */
+#घोषणा MSC_PLE_WAITLOOP_DEPTH	10000
 
-#endif /* __INTEL_TH_MSU_H__ */
+#पूर्ण_अगर /* __INTEL_TH_MSU_H__ */

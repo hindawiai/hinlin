@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Delay loops based on the OpenRISC implementation.
  *
@@ -7,99 +8,99 @@
  * Author: Will Deacon <will.deacon@arm.com>
  */
 
-#include <linux/clocksource.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/timex.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/समयx.h>
 
 /*
  * Default to the loop-based delay implementation.
  */
-struct arm_delay_ops arm_delay_ops __ro_after_init = {
+काष्ठा arm_delay_ops arm_delay_ops __ro_after_init = अणु
 	.delay		= __loop_delay,
-	.const_udelay	= __loop_const_udelay,
+	.स्थिर_udelay	= __loop_स्थिर_udelay,
 	.udelay		= __loop_udelay,
-};
+पूर्ण;
 
-static const struct delay_timer *delay_timer;
-static bool delay_calibrated;
-static u64 delay_res;
+अटल स्थिर काष्ठा delay_समयr *delay_समयr;
+अटल bool delay_calibrated;
+अटल u64 delay_res;
 
-int read_current_timer(unsigned long *timer_val)
-{
-	if (!delay_timer)
-		return -ENXIO;
+पूर्णांक पढ़ो_current_समयr(अचिन्हित दीर्घ *समयr_val)
+अणु
+	अगर (!delay_समयr)
+		वापस -ENXIO;
 
-	*timer_val = delay_timer->read_current_timer();
-	return 0;
-}
-EXPORT_SYMBOL_GPL(read_current_timer);
+	*समयr_val = delay_समयr->पढ़ो_current_समयr();
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(पढ़ो_current_समयr);
 
-static inline u64 cyc_to_ns(u64 cyc, u32 mult, u32 shift)
-{
-	return (cyc * mult) >> shift;
-}
+अटल अंतरभूत u64 cyc_to_ns(u64 cyc, u32 mult, u32 shअगरt)
+अणु
+	वापस (cyc * mult) >> shअगरt;
+पूर्ण
 
-static void __timer_delay(unsigned long cycles)
-{
+अटल व्योम __समयr_delay(अचिन्हित दीर्घ cycles)
+अणु
 	cycles_t start = get_cycles();
 
-	while ((get_cycles() - start) < cycles)
+	जबतक ((get_cycles() - start) < cycles)
 		cpu_relax();
-}
+पूर्ण
 
-static void __timer_const_udelay(unsigned long xloops)
-{
-	unsigned long long loops = xloops;
-	loops *= arm_delay_ops.ticks_per_jiffy;
-	__timer_delay(loops >> UDELAY_SHIFT);
-}
+अटल व्योम __समयr_स्थिर_udelay(अचिन्हित दीर्घ xloops)
+अणु
+	अचिन्हित दीर्घ दीर्घ loops = xloops;
+	loops *= arm_delay_ops.ticks_per_jअगरfy;
+	__समयr_delay(loops >> UDELAY_SHIFT);
+पूर्ण
 
-static void __timer_udelay(unsigned long usecs)
-{
-	__timer_const_udelay(usecs * UDELAY_MULT);
-}
+अटल व्योम __समयr_udelay(अचिन्हित दीर्घ usecs)
+अणु
+	__समयr_स्थिर_udelay(usecs * UDELAY_MULT);
+पूर्ण
 
-void __init register_current_timer_delay(const struct delay_timer *timer)
-{
-	u32 new_mult, new_shift;
+व्योम __init रेजिस्टर_current_समयr_delay(स्थिर काष्ठा delay_समयr *समयr)
+अणु
+	u32 new_mult, new_shअगरt;
 	u64 res;
 
-	clocks_calc_mult_shift(&new_mult, &new_shift, timer->freq,
+	घड़ीs_calc_mult_shअगरt(&new_mult, &new_shअगरt, समयr->freq,
 			       NSEC_PER_SEC, 3600);
-	res = cyc_to_ns(1ULL, new_mult, new_shift);
+	res = cyc_to_ns(1ULL, new_mult, new_shअगरt);
 
-	if (res > 1000) {
+	अगर (res > 1000) अणु
 		pr_err("Ignoring delay timer %ps, which has insufficient resolution of %lluns\n",
-			timer, res);
-		return;
-	}
+			समयr, res);
+		वापस;
+	पूर्ण
 
-	if (!delay_calibrated && (!delay_res || (res < delay_res))) {
+	अगर (!delay_calibrated && (!delay_res || (res < delay_res))) अणु
 		pr_info("Switching to timer-based delay loop, resolution %lluns\n", res);
-		delay_timer			= timer;
-		lpj_fine			= timer->freq / HZ;
+		delay_समयr			= समयr;
+		lpj_fine			= समयr->freq / HZ;
 		delay_res			= res;
 
-		/* cpufreq may scale loops_per_jiffy, so keep a private copy */
-		arm_delay_ops.ticks_per_jiffy	= lpj_fine;
-		arm_delay_ops.delay		= __timer_delay;
-		arm_delay_ops.const_udelay	= __timer_const_udelay;
-		arm_delay_ops.udelay		= __timer_udelay;
-	} else {
+		/* cpufreq may scale loops_per_jअगरfy, so keep a निजी copy */
+		arm_delay_ops.ticks_per_jअगरfy	= lpj_fine;
+		arm_delay_ops.delay		= __समयr_delay;
+		arm_delay_ops.स्थिर_udelay	= __समयr_स्थिर_udelay;
+		arm_delay_ops.udelay		= __समयr_udelay;
+	पूर्ण अन्यथा अणु
 		pr_info("Ignoring duplicate/late registration of read_current_timer delay\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-unsigned long calibrate_delay_is_known(void)
-{
+अचिन्हित दीर्घ calibrate_delay_is_known(व्योम)
+अणु
 	delay_calibrated = true;
-	return lpj_fine;
-}
+	वापस lpj_fine;
+पूर्ण
 
-void calibration_delay_done(void)
-{
+व्योम calibration_delay_करोne(व्योम)
+अणु
 	delay_calibrated = true;
-}
+पूर्ण

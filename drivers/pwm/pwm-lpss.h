@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Intel Low Power Subsystem PWM controller driver
+ * Intel Low Power Subप्रणाली PWM controller driver
  *
  * Copyright (C) 2014, Intel Corporation
  *
  * Derived from the original pwm-lpss.c
  */
 
-#ifndef __PWM_LPSS_H
-#define __PWM_LPSS_H
+#अगर_अघोषित __PWM_LPSS_H
+#घोषणा __PWM_LPSS_H
 
-#include <linux/device.h>
-#include <linux/pwm.h>
+#समावेश <linux/device.h>
+#समावेश <linux/pwm.h>
 
-#define MAX_PWMS			4
+#घोषणा MAX_PWMS			4
 
-struct pwm_lpss_chip {
-	struct pwm_chip chip;
-	void __iomem *regs;
-	const struct pwm_lpss_boardinfo *info;
-};
+काष्ठा pwm_lpss_chip अणु
+	काष्ठा pwm_chip chip;
+	व्योम __iomem *regs;
+	स्थिर काष्ठा pwm_lpss_boardinfo *info;
+पूर्ण;
 
-struct pwm_lpss_boardinfo {
-	unsigned long clk_rate;
-	unsigned int npwm;
-	unsigned long base_unit_bits;
+काष्ठा pwm_lpss_boardinfo अणु
+	अचिन्हित दीर्घ clk_rate;
+	अचिन्हित पूर्णांक npwm;
+	अचिन्हित दीर्घ base_unit_bits;
 	bool bypass;
 	/*
 	 * On some devices the _PS0/_PS3 AML code of the GPU (GFX0) device
 	 * messes with the PWM0 controllers state,
 	 */
 	bool other_devices_aml_touches_pwm_regs;
-};
+पूर्ण;
 
-struct pwm_lpss_chip *pwm_lpss_probe(struct device *dev, struct resource *r,
-				     const struct pwm_lpss_boardinfo *info);
-int pwm_lpss_remove(struct pwm_lpss_chip *lpwm);
+काष्ठा pwm_lpss_chip *pwm_lpss_probe(काष्ठा device *dev, काष्ठा resource *r,
+				     स्थिर काष्ठा pwm_lpss_boardinfo *info);
+पूर्णांक pwm_lpss_हटाओ(काष्ठा pwm_lpss_chip *lpwm);
 
-#endif	/* __PWM_LPSS_H */
+#पूर्ण_अगर	/* __PWM_LPSS_H */

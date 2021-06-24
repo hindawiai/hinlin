@@ -1,122 +1,123 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef MMC_QUEUE_H
-#define MMC_QUEUE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित MMC_QUEUE_H
+#घोषणा MMC_QUEUE_H
 
-#include <linux/types.h>
-#include <linux/blkdev.h>
-#include <linux/blk-mq.h>
-#include <linux/mmc/core.h>
-#include <linux/mmc/host.h>
+#समावेश <linux/types.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/mmc/core.h>
+#समावेश <linux/mmc/host.h>
 
-enum mmc_issued {
+क्रमागत mmc_issued अणु
 	MMC_REQ_STARTED,
 	MMC_REQ_BUSY,
 	MMC_REQ_FAILED_TO_START,
 	MMC_REQ_FINISHED,
-};
+पूर्ण;
 
-enum mmc_issue_type {
+क्रमागत mmc_issue_type अणु
 	MMC_ISSUE_SYNC,
 	MMC_ISSUE_DCMD,
 	MMC_ISSUE_ASYNC,
 	MMC_ISSUE_MAX,
-};
+पूर्ण;
 
-static inline struct mmc_queue_req *req_to_mmc_queue_req(struct request *rq)
-{
-	return blk_mq_rq_to_pdu(rq);
-}
+अटल अंतरभूत काष्ठा mmc_queue_req *req_to_mmc_queue_req(काष्ठा request *rq)
+अणु
+	वापस blk_mq_rq_to_pdu(rq);
+पूर्ण
 
-struct mmc_queue_req;
+काष्ठा mmc_queue_req;
 
-static inline struct request *mmc_queue_req_to_req(struct mmc_queue_req *mqr)
-{
-	return blk_mq_rq_from_pdu(mqr);
-}
+अटल अंतरभूत काष्ठा request *mmc_queue_req_to_req(काष्ठा mmc_queue_req *mqr)
+अणु
+	वापस blk_mq_rq_from_pdu(mqr);
+पूर्ण
 
-struct mmc_blk_data;
-struct mmc_blk_ioc_data;
+काष्ठा mmc_blk_data;
+काष्ठा mmc_blk_ioc_data;
 
-struct mmc_blk_request {
-	struct mmc_request	mrq;
-	struct mmc_command	sbc;
-	struct mmc_command	cmd;
-	struct mmc_command	stop;
-	struct mmc_data		data;
-};
+काष्ठा mmc_blk_request अणु
+	काष्ठा mmc_request	mrq;
+	काष्ठा mmc_command	sbc;
+	काष्ठा mmc_command	cmd;
+	काष्ठा mmc_command	stop;
+	काष्ठा mmc_data		data;
+पूर्ण;
 
 /**
- * enum mmc_drv_op - enumerates the operations in the mmc_queue_req
+ * क्रमागत mmc_drv_op - क्रमागतerates the operations in the mmc_queue_req
  * @MMC_DRV_OP_IOCTL: ioctl operation
  * @MMC_DRV_OP_IOCTL_RPMB: RPMB-oriented ioctl operation
- * @MMC_DRV_OP_BOOT_WP: write protect boot partitions
+ * @MMC_DRV_OP_BOOT_WP: ग_लिखो protect boot partitions
  * @MMC_DRV_OP_GET_CARD_STATUS: get card status
  * @MMC_DRV_OP_GET_EXT_CSD: get the EXT CSD from an eMMC card
  */
-enum mmc_drv_op {
+क्रमागत mmc_drv_op अणु
 	MMC_DRV_OP_IOCTL,
 	MMC_DRV_OP_IOCTL_RPMB,
 	MMC_DRV_OP_BOOT_WP,
 	MMC_DRV_OP_GET_CARD_STATUS,
 	MMC_DRV_OP_GET_EXT_CSD,
-};
+पूर्ण;
 
-struct mmc_queue_req {
-	struct mmc_blk_request	brq;
-	struct scatterlist	*sg;
-	enum mmc_drv_op		drv_op;
-	int			drv_op_result;
-	void			*drv_op_data;
-	unsigned int		ioc_count;
-	int			retries;
-};
+काष्ठा mmc_queue_req अणु
+	काष्ठा mmc_blk_request	brq;
+	काष्ठा scatterlist	*sg;
+	क्रमागत mmc_drv_op		drv_op;
+	पूर्णांक			drv_op_result;
+	व्योम			*drv_op_data;
+	अचिन्हित पूर्णांक		ioc_count;
+	पूर्णांक			retries;
+पूर्ण;
 
-struct mmc_queue {
-	struct mmc_card		*card;
-	struct mmc_ctx		ctx;
-	struct blk_mq_tag_set	tag_set;
-	struct mmc_blk_data	*blkdata;
-	struct request_queue	*queue;
+काष्ठा mmc_queue अणु
+	काष्ठा mmc_card		*card;
+	काष्ठा mmc_ctx		ctx;
+	काष्ठा blk_mq_tag_set	tag_set;
+	काष्ठा mmc_blk_data	*blkdata;
+	काष्ठा request_queue	*queue;
 	spinlock_t		lock;
-	int			in_flight[MMC_ISSUE_MAX];
-	unsigned int		cqe_busy;
-#define MMC_CQE_DCMD_BUSY	BIT(0)
+	पूर्णांक			in_flight[MMC_ISSUE_MAX];
+	अचिन्हित पूर्णांक		cqe_busy;
+#घोषणा MMC_CQE_DCMD_BUSY	BIT(0)
 	bool			busy;
 	bool			recovery_needed;
 	bool			in_recovery;
-	bool			rw_wait;
-	bool			waiting;
-	struct work_struct	recovery_work;
-	wait_queue_head_t	wait;
-	struct request		*recovery_req;
-	struct request		*complete_req;
-	struct mutex		complete_lock;
-	struct work_struct	complete_work;
-};
+	bool			rw_रुको;
+	bool			रुकोing;
+	काष्ठा work_काष्ठा	recovery_work;
+	रुको_queue_head_t	रुको;
+	काष्ठा request		*recovery_req;
+	काष्ठा request		*complete_req;
+	काष्ठा mutex		complete_lock;
+	काष्ठा work_काष्ठा	complete_work;
+पूर्ण;
 
-extern int mmc_init_queue(struct mmc_queue *, struct mmc_card *);
-extern void mmc_cleanup_queue(struct mmc_queue *);
-extern void mmc_queue_suspend(struct mmc_queue *);
-extern void mmc_queue_resume(struct mmc_queue *);
-extern unsigned int mmc_queue_map_sg(struct mmc_queue *,
-				     struct mmc_queue_req *);
+बाह्य पूर्णांक mmc_init_queue(काष्ठा mmc_queue *, काष्ठा mmc_card *);
+बाह्य व्योम mmc_cleanup_queue(काष्ठा mmc_queue *);
+बाह्य व्योम mmc_queue_suspend(काष्ठा mmc_queue *);
+बाह्य व्योम mmc_queue_resume(काष्ठा mmc_queue *);
+बाह्य अचिन्हित पूर्णांक mmc_queue_map_sg(काष्ठा mmc_queue *,
+				     काष्ठा mmc_queue_req *);
 
-void mmc_cqe_check_busy(struct mmc_queue *mq);
-void mmc_cqe_recovery_notifier(struct mmc_request *mrq);
+व्योम mmc_cqe_check_busy(काष्ठा mmc_queue *mq);
+व्योम mmc_cqe_recovery_notअगरier(काष्ठा mmc_request *mrq);
 
-enum mmc_issue_type mmc_issue_type(struct mmc_queue *mq, struct request *req);
+क्रमागत mmc_issue_type mmc_issue_type(काष्ठा mmc_queue *mq, काष्ठा request *req);
 
-static inline int mmc_tot_in_flight(struct mmc_queue *mq)
-{
-	return mq->in_flight[MMC_ISSUE_SYNC] +
+अटल अंतरभूत पूर्णांक mmc_tot_in_flight(काष्ठा mmc_queue *mq)
+अणु
+	वापस mq->in_flight[MMC_ISSUE_SYNC] +
 	       mq->in_flight[MMC_ISSUE_DCMD] +
 	       mq->in_flight[MMC_ISSUE_ASYNC];
-}
+पूर्ण
 
-static inline int mmc_cqe_qcnt(struct mmc_queue *mq)
-{
-	return mq->in_flight[MMC_ISSUE_DCMD] +
+अटल अंतरभूत पूर्णांक mmc_cqe_qcnt(काष्ठा mmc_queue *mq)
+अणु
+	वापस mq->in_flight[MMC_ISSUE_DCMD] +
 	       mq->in_flight[MMC_ISSUE_ASYNC];
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

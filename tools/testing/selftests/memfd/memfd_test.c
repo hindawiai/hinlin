@@ -1,1079 +1,1080 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
-#define __EXPORTED_HEADERS__
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
+#घोषणा __EXPORTED_HEADERS__
 
-#include <errno.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <linux/falloc.h>
-#include <fcntl.h>
-#include <linux/memfd.h>
-#include <sched.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <सीमा.स>
+#समावेश <linux/fभाग.स>
+#समावेश <fcntl.h>
+#समावेश <linux/memfd.h>
+#समावेश <sched.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <संकेत.स>
+#समावेश <माला.स>
+#समावेश <sys/mman.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/syscall.h>
+#समावेश <sys/रुको.h>
+#समावेश <unistd.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-#define MEMFD_STR	"memfd:"
-#define MEMFD_HUGE_STR	"memfd-hugetlb:"
-#define SHARED_FT_STR	"(shared file-table)"
+#घोषणा MEMFD_STR	"memfd:"
+#घोषणा MEMFD_HUGE_STR	"memfd-hugetlb:"
+#घोषणा SHARED_FT_STR	"(shared file-table)"
 
-#define MFD_DEF_SIZE 8192
-#define STACK_SIZE 65536
+#घोषणा MFD_DEF_SIZE 8192
+#घोषणा STACK_SIZE 65536
 
 /*
  * Default is not to test hugetlbfs
  */
-static size_t mfd_def_size = MFD_DEF_SIZE;
-static const char *memfd_str = MEMFD_STR;
+अटल माप_प्रकार mfd_def_size = MFD_DEF_SIZE;
+अटल स्थिर अक्षर *memfd_str = MEMFD_STR;
 
-static int mfd_assert_new(const char *name, loff_t sz, unsigned int flags)
-{
-	int r, fd;
+अटल पूर्णांक mfd_निश्चित_new(स्थिर अक्षर *name, loff_t sz, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक r, fd;
 
 	fd = sys_memfd_create(name, flags);
-	if (fd < 0) {
-		printf("memfd_create(\"%s\", %u) failed: %m\n",
+	अगर (fd < 0) अणु
+		म_लिखो("memfd_create(\"%s\", %u) failed: %m\n",
 		       name, flags);
-		abort();
-	}
+		पात();
+	पूर्ण
 
 	r = ftruncate(fd, sz);
-	if (r < 0) {
-		printf("ftruncate(%llu) failed: %m\n", (unsigned long long)sz);
-		abort();
-	}
+	अगर (r < 0) अणु
+		म_लिखो("ftruncate(%llu) failed: %m\n", (अचिन्हित दीर्घ दीर्घ)sz);
+		पात();
+	पूर्ण
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static int mfd_assert_reopen_fd(int fd_in)
-{
-	int r, fd;
-	char path[100];
+अटल पूर्णांक mfd_निश्चित_reखोलो_fd(पूर्णांक fd_in)
+अणु
+	पूर्णांक r, fd;
+	अक्षर path[100];
 
-	sprintf(path, "/proc/self/fd/%d", fd_in);
+	प्र_लिखो(path, "/proc/self/fd/%d", fd_in);
 
-	fd = open(path, O_RDWR);
-	if (fd < 0) {
-		printf("re-open of existing fd %d failed\n", fd_in);
-		abort();
-	}
+	fd = खोलो(path, O_RDWR);
+	अगर (fd < 0) अणु
+		म_लिखो("re-open of existing fd %d failed\n", fd_in);
+		पात();
+	पूर्ण
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static void mfd_fail_new(const char *name, unsigned int flags)
-{
-	int r;
+अटल व्योम mfd_fail_new(स्थिर अक्षर *name, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक r;
 
 	r = sys_memfd_create(name, flags);
-	if (r >= 0) {
-		printf("memfd_create(\"%s\", %u) succeeded, but failure expected\n",
+	अगर (r >= 0) अणु
+		म_लिखो("memfd_create(\"%s\", %u) succeeded, but failure expected\n",
 		       name, flags);
-		close(r);
-		abort();
-	}
-}
+		बंद(r);
+		पात();
+	पूर्ण
+पूर्ण
 
-static unsigned int mfd_assert_get_seals(int fd)
-{
-	int r;
+अटल अचिन्हित पूर्णांक mfd_निश्चित_get_seals(पूर्णांक fd)
+अणु
+	पूर्णांक r;
 
 	r = fcntl(fd, F_GET_SEALS);
-	if (r < 0) {
-		printf("GET_SEALS(%d) failed: %m\n", fd);
-		abort();
-	}
+	अगर (r < 0) अणु
+		म_लिखो("GET_SEALS(%d) failed: %m\n", fd);
+		पात();
+	पूर्ण
 
-	return (unsigned int)r;
-}
+	वापस (अचिन्हित पूर्णांक)r;
+पूर्ण
 
-static void mfd_assert_has_seals(int fd, unsigned int seals)
-{
-	unsigned int s;
+अटल व्योम mfd_निश्चित_has_seals(पूर्णांक fd, अचिन्हित पूर्णांक seals)
+अणु
+	अचिन्हित पूर्णांक s;
 
-	s = mfd_assert_get_seals(fd);
-	if (s != seals) {
-		printf("%u != %u = GET_SEALS(%d)\n", seals, s, fd);
-		abort();
-	}
-}
+	s = mfd_निश्चित_get_seals(fd);
+	अगर (s != seals) अणु
+		म_लिखो("%u != %u = GET_SEALS(%d)\n", seals, s, fd);
+		पात();
+	पूर्ण
+पूर्ण
 
-static void mfd_assert_add_seals(int fd, unsigned int seals)
-{
-	int r;
-	unsigned int s;
+अटल व्योम mfd_निश्चित_add_seals(पूर्णांक fd, अचिन्हित पूर्णांक seals)
+अणु
+	पूर्णांक r;
+	अचिन्हित पूर्णांक s;
 
-	s = mfd_assert_get_seals(fd);
+	s = mfd_निश्चित_get_seals(fd);
 	r = fcntl(fd, F_ADD_SEALS, seals);
-	if (r < 0) {
-		printf("ADD_SEALS(%d, %u -> %u) failed: %m\n", fd, s, seals);
-		abort();
-	}
-}
+	अगर (r < 0) अणु
+		म_लिखो("ADD_SEALS(%d, %u -> %u) failed: %m\n", fd, s, seals);
+		पात();
+	पूर्ण
+पूर्ण
 
-static void mfd_fail_add_seals(int fd, unsigned int seals)
-{
-	int r;
-	unsigned int s;
+अटल व्योम mfd_fail_add_seals(पूर्णांक fd, अचिन्हित पूर्णांक seals)
+अणु
+	पूर्णांक r;
+	अचिन्हित पूर्णांक s;
 
 	r = fcntl(fd, F_GET_SEALS);
-	if (r < 0)
+	अगर (r < 0)
 		s = 0;
-	else
-		s = (unsigned int)r;
+	अन्यथा
+		s = (अचिन्हित पूर्णांक)r;
 
 	r = fcntl(fd, F_ADD_SEALS, seals);
-	if (r >= 0) {
-		printf("ADD_SEALS(%d, %u -> %u) didn't fail as expected\n",
+	अगर (r >= 0) अणु
+		म_लिखो("ADD_SEALS(%d, %u -> %u) didn't fail as expected\n",
 				fd, s, seals);
-		abort();
-	}
-}
+		पात();
+	पूर्ण
+पूर्ण
 
-static void mfd_assert_size(int fd, size_t size)
-{
-	struct stat st;
-	int r;
+अटल व्योम mfd_निश्चित_size(पूर्णांक fd, माप_प्रकार size)
+अणु
+	काष्ठा stat st;
+	पूर्णांक r;
 
-	r = fstat(fd, &st);
-	if (r < 0) {
-		printf("fstat(%d) failed: %m\n", fd);
-		abort();
-	} else if (st.st_size != size) {
-		printf("wrong file size %lld, but expected %lld\n",
-		       (long long)st.st_size, (long long)size);
-		abort();
-	}
-}
+	r = ख_स्थिति(fd, &st);
+	अगर (r < 0) अणु
+		म_लिखो("fstat(%d) failed: %m\n", fd);
+		पात();
+	पूर्ण अन्यथा अगर (st.st_size != size) अणु
+		म_लिखो("wrong file size %lld, but expected %lld\n",
+		       (दीर्घ दीर्घ)st.st_size, (दीर्घ दीर्घ)size);
+		पात();
+	पूर्ण
+पूर्ण
 
-static int mfd_assert_dup(int fd)
-{
-	int r;
+अटल पूर्णांक mfd_निश्चित_dup(पूर्णांक fd)
+अणु
+	पूर्णांक r;
 
 	r = dup(fd);
-	if (r < 0) {
-		printf("dup(%d) failed: %m\n", fd);
-		abort();
-	}
+	अगर (r < 0) अणु
+		म_लिखो("dup(%d) failed: %m\n", fd);
+		पात();
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void *mfd_assert_mmap_shared(int fd)
-{
-	void *p;
+अटल व्योम *mfd_निश्चित_mmap_shared(पूर्णांक fd)
+अणु
+	व्योम *p;
 
-	p = mmap(NULL,
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ | PROT_WRITE,
 		 MAP_SHARED,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static void *mfd_assert_mmap_private(int fd)
-{
-	void *p;
+अटल व्योम *mfd_निश्चित_mmap_निजी(पूर्णांक fd)
+अणु
+	व्योम *p;
 
-	p = mmap(NULL,
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ,
 		 MAP_PRIVATE,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static int mfd_assert_open(int fd, int flags, mode_t mode)
-{
-	char buf[512];
-	int r;
+अटल पूर्णांक mfd_निश्चित_खोलो(पूर्णांक fd, पूर्णांक flags, mode_t mode)
+अणु
+	अक्षर buf[512];
+	पूर्णांक r;
 
-	sprintf(buf, "/proc/self/fd/%d", fd);
-	r = open(buf, flags, mode);
-	if (r < 0) {
-		printf("open(%s) failed: %m\n", buf);
-		abort();
-	}
+	प्र_लिखो(buf, "/proc/self/fd/%d", fd);
+	r = खोलो(buf, flags, mode);
+	अगर (r < 0) अणु
+		म_लिखो("open(%s) failed: %m\n", buf);
+		पात();
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void mfd_fail_open(int fd, int flags, mode_t mode)
-{
-	char buf[512];
-	int r;
+अटल व्योम mfd_fail_खोलो(पूर्णांक fd, पूर्णांक flags, mode_t mode)
+अणु
+	अक्षर buf[512];
+	पूर्णांक r;
 
-	sprintf(buf, "/proc/self/fd/%d", fd);
-	r = open(buf, flags, mode);
-	if (r >= 0) {
-		printf("open(%s) didn't fail as expected\n", buf);
-		abort();
-	}
-}
+	प्र_लिखो(buf, "/proc/self/fd/%d", fd);
+	r = खोलो(buf, flags, mode);
+	अगर (r >= 0) अणु
+		म_लिखो("open(%s) didn't fail as expected\n", buf);
+		पात();
+	पूर्ण
+पूर्ण
 
-static void mfd_assert_read(int fd)
-{
-	char buf[16];
-	void *p;
-	ssize_t l;
+अटल व्योम mfd_निश्चित_पढ़ो(पूर्णांक fd)
+अणु
+	अक्षर buf[16];
+	व्योम *p;
+	sमाप_प्रकार l;
 
-	l = read(fd, buf, sizeof(buf));
-	if (l != sizeof(buf)) {
-		printf("read() failed: %m\n");
-		abort();
-	}
+	l = पढ़ो(fd, buf, माप(buf));
+	अगर (l != माप(buf)) अणु
+		म_लिखो("read() failed: %m\n");
+		पात();
+	पूर्ण
 
-	/* verify PROT_READ *is* allowed */
-	p = mmap(NULL,
+	/* verअगरy PROT_READ *is* allowed */
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ,
 		 MAP_PRIVATE,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
 	munmap(p, mfd_def_size);
 
-	/* verify MAP_PRIVATE is *always* allowed (even writable) */
-	p = mmap(NULL,
+	/* verअगरy MAP_PRIVATE is *always* allowed (even writable) */
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ | PROT_WRITE,
 		 MAP_PRIVATE,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
 	munmap(p, mfd_def_size);
-}
+पूर्ण
 
 /* Test that PROT_READ + MAP_SHARED mappings work. */
-static void mfd_assert_read_shared(int fd)
-{
-	void *p;
+अटल व्योम mfd_निश्चित_पढ़ो_shared(पूर्णांक fd)
+अणु
+	व्योम *p;
 
-	/* verify PROT_READ and MAP_SHARED *is* allowed */
-	p = mmap(NULL,
+	/* verअगरy PROT_READ and MAP_SHARED *is* allowed */
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ,
 		 MAP_SHARED,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
 	munmap(p, mfd_def_size);
-}
+पूर्ण
 
-static void mfd_assert_fork_private_write(int fd)
-{
-	int *p;
+अटल व्योम mfd_निश्चित_विभाजन_निजी_ग_लिखो(पूर्णांक fd)
+अणु
+	पूर्णांक *p;
 	pid_t pid;
 
-	p = mmap(NULL,
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ | PROT_WRITE,
 		 MAP_PRIVATE,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
 
 	p[0] = 22;
 
-	pid = fork();
-	if (pid == 0) {
+	pid = विभाजन();
+	अगर (pid == 0) अणु
 		p[0] = 33;
-		exit(0);
-	} else {
-		waitpid(pid, NULL, 0);
+		निकास(0);
+	पूर्ण अन्यथा अणु
+		रुकोpid(pid, शून्य, 0);
 
-		if (p[0] != 22) {
-			printf("MAP_PRIVATE copy-on-write failed: %m\n");
-			abort();
-		}
-	}
+		अगर (p[0] != 22) अणु
+			म_लिखो("MAP_PRIVATE copy-on-write failed: %m\n");
+			पात();
+		पूर्ण
+	पूर्ण
 
 	munmap(p, mfd_def_size);
-}
+पूर्ण
 
-static void mfd_assert_write(int fd)
-{
-	ssize_t l;
-	void *p;
-	int r;
+अटल व्योम mfd_निश्चित_ग_लिखो(पूर्णांक fd)
+अणु
+	sमाप_प्रकार l;
+	व्योम *p;
+	पूर्णांक r;
 
 	/*
-	 * huegtlbfs does not support write, but we want to
-	 * verify everything else here.
+	 * huegtlbfs करोes not support ग_लिखो, but we want to
+	 * verअगरy everything अन्यथा here.
 	 */
-	if (!hugetlbfs_test) {
-		/* verify write() succeeds */
-		l = write(fd, "\0\0\0\0", 4);
-		if (l != 4) {
-			printf("write() failed: %m\n");
-			abort();
-		}
-	}
+	अगर (!hugetlbfs_test) अणु
+		/* verअगरy ग_लिखो() succeeds */
+		l = ग_लिखो(fd, "\0\0\0\0", 4);
+		अगर (l != 4) अणु
+			म_लिखो("write() failed: %m\n");
+			पात();
+		पूर्ण
+	पूर्ण
 
-	/* verify PROT_READ | PROT_WRITE is allowed */
-	p = mmap(NULL,
+	/* verअगरy PROT_READ | PROT_WRITE is allowed */
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ | PROT_WRITE,
 		 MAP_SHARED,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
-	*(char *)p = 0;
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
+	*(अक्षर *)p = 0;
 	munmap(p, mfd_def_size);
 
-	/* verify PROT_WRITE is allowed */
-	p = mmap(NULL,
+	/* verअगरy PROT_WRITE is allowed */
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_WRITE,
 		 MAP_SHARED,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
-	*(char *)p = 0;
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
+	*(अक्षर *)p = 0;
 	munmap(p, mfd_def_size);
 
-	/* verify PROT_READ with MAP_SHARED is allowed and a following
+	/* verअगरy PROT_READ with MAP_SHARED is allowed and a following
 	 * mprotect(PROT_WRITE) allows writing */
-	p = mmap(NULL,
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ,
 		 MAP_SHARED,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
 
 	r = mprotect(p, mfd_def_size, PROT_READ | PROT_WRITE);
-	if (r < 0) {
-		printf("mprotect() failed: %m\n");
-		abort();
-	}
+	अगर (r < 0) अणु
+		म_लिखो("mprotect() failed: %m\n");
+		पात();
+	पूर्ण
 
-	*(char *)p = 0;
+	*(अक्षर *)p = 0;
 	munmap(p, mfd_def_size);
 
-	/* verify PUNCH_HOLE works */
+	/* verअगरy PUNCH_HOLE works */
 	r = fallocate(fd,
 		      FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
 		      0,
 		      mfd_def_size);
-	if (r < 0) {
-		printf("fallocate(PUNCH_HOLE) failed: %m\n");
-		abort();
-	}
-}
+	अगर (r < 0) अणु
+		म_लिखो("fallocate(PUNCH_HOLE) failed: %m\n");
+		पात();
+	पूर्ण
+पूर्ण
 
-static void mfd_fail_write(int fd)
-{
-	ssize_t l;
-	void *p;
-	int r;
+अटल व्योम mfd_fail_ग_लिखो(पूर्णांक fd)
+अणु
+	sमाप_प्रकार l;
+	व्योम *p;
+	पूर्णांक r;
 
-	/* verify write() fails */
-	l = write(fd, "data", 4);
-	if (l != -EPERM) {
-		printf("expected EPERM on write(), but got %d: %m\n", (int)l);
-		abort();
-	}
+	/* verअगरy ग_लिखो() fails */
+	l = ग_लिखो(fd, "data", 4);
+	अगर (l != -EPERM) अणु
+		म_लिखो("expected EPERM on write(), but got %d: %m\n", (पूर्णांक)l);
+		पात();
+	पूर्ण
 
-	/* verify PROT_READ | PROT_WRITE is not allowed */
-	p = mmap(NULL,
+	/* verअगरy PROT_READ | PROT_WRITE is not allowed */
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ | PROT_WRITE,
 		 MAP_SHARED,
 		 fd,
 		 0);
-	if (p != MAP_FAILED) {
-		printf("mmap() didn't fail as expected\n");
-		abort();
-	}
+	अगर (p != MAP_FAILED) अणु
+		म_लिखो("mmap() didn't fail as expected\n");
+		पात();
+	पूर्ण
 
-	/* verify PROT_WRITE is not allowed */
-	p = mmap(NULL,
+	/* verअगरy PROT_WRITE is not allowed */
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_WRITE,
 		 MAP_SHARED,
 		 fd,
 		 0);
-	if (p != MAP_FAILED) {
-		printf("mmap() didn't fail as expected\n");
-		abort();
-	}
+	अगर (p != MAP_FAILED) अणु
+		म_लिखो("mmap() didn't fail as expected\n");
+		पात();
+	पूर्ण
 
-	/* Verify PROT_READ with MAP_SHARED with a following mprotect is not
-	 * allowed. Note that for r/w the kernel already prevents the mmap. */
-	p = mmap(NULL,
+	/* Verअगरy PROT_READ with MAP_SHARED with a following mprotect is not
+	 * allowed. Note that क्रम r/w the kernel alपढ़ोy prevents the mmap. */
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ,
 		 MAP_SHARED,
 		 fd,
 		 0);
-	if (p != MAP_FAILED) {
+	अगर (p != MAP_FAILED) अणु
 		r = mprotect(p, mfd_def_size, PROT_READ | PROT_WRITE);
-		if (r >= 0) {
-			printf("mmap()+mprotect() didn't fail as expected\n");
-			abort();
-		}
-	}
+		अगर (r >= 0) अणु
+			म_लिखो("mmap()+mprotect() didn't fail as expected\n");
+			पात();
+		पूर्ण
+	पूर्ण
 
-	/* verify PUNCH_HOLE fails */
+	/* verअगरy PUNCH_HOLE fails */
 	r = fallocate(fd,
 		      FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
 		      0,
 		      mfd_def_size);
-	if (r >= 0) {
-		printf("fallocate(PUNCH_HOLE) didn't fail as expected\n");
-		abort();
-	}
-}
+	अगर (r >= 0) अणु
+		म_लिखो("fallocate(PUNCH_HOLE) didn't fail as expected\n");
+		पात();
+	पूर्ण
+पूर्ण
 
-static void mfd_assert_shrink(int fd)
-{
-	int r, fd2;
+अटल व्योम mfd_निश्चित_shrink(पूर्णांक fd)
+अणु
+	पूर्णांक r, fd2;
 
 	r = ftruncate(fd, mfd_def_size / 2);
-	if (r < 0) {
-		printf("ftruncate(SHRINK) failed: %m\n");
-		abort();
-	}
+	अगर (r < 0) अणु
+		म_लिखो("ftruncate(SHRINK) failed: %m\n");
+		पात();
+	पूर्ण
 
-	mfd_assert_size(fd, mfd_def_size / 2);
+	mfd_निश्चित_size(fd, mfd_def_size / 2);
 
-	fd2 = mfd_assert_open(fd,
+	fd2 = mfd_निश्चित_खोलो(fd,
 			      O_RDWR | O_CREAT | O_TRUNC,
 			      S_IRUSR | S_IWUSR);
-	close(fd2);
+	बंद(fd2);
 
-	mfd_assert_size(fd, 0);
-}
+	mfd_निश्चित_size(fd, 0);
+पूर्ण
 
-static void mfd_fail_shrink(int fd)
-{
-	int r;
+अटल व्योम mfd_fail_shrink(पूर्णांक fd)
+अणु
+	पूर्णांक r;
 
 	r = ftruncate(fd, mfd_def_size / 2);
-	if (r >= 0) {
-		printf("ftruncate(SHRINK) didn't fail as expected\n");
-		abort();
-	}
+	अगर (r >= 0) अणु
+		म_लिखो("ftruncate(SHRINK) didn't fail as expected\n");
+		पात();
+	पूर्ण
 
-	mfd_fail_open(fd,
+	mfd_fail_खोलो(fd,
 		      O_RDWR | O_CREAT | O_TRUNC,
 		      S_IRUSR | S_IWUSR);
-}
+पूर्ण
 
-static void mfd_assert_grow(int fd)
-{
-	int r;
+अटल व्योम mfd_निश्चित_grow(पूर्णांक fd)
+अणु
+	पूर्णांक r;
 
 	r = ftruncate(fd, mfd_def_size * 2);
-	if (r < 0) {
-		printf("ftruncate(GROW) failed: %m\n");
-		abort();
-	}
+	अगर (r < 0) अणु
+		म_लिखो("ftruncate(GROW) failed: %m\n");
+		पात();
+	पूर्ण
 
-	mfd_assert_size(fd, mfd_def_size * 2);
+	mfd_निश्चित_size(fd, mfd_def_size * 2);
 
 	r = fallocate(fd,
 		      0,
 		      0,
 		      mfd_def_size * 4);
-	if (r < 0) {
-		printf("fallocate(ALLOC) failed: %m\n");
-		abort();
-	}
+	अगर (r < 0) अणु
+		म_लिखो("fallocate(ALLOC) failed: %m\n");
+		पात();
+	पूर्ण
 
-	mfd_assert_size(fd, mfd_def_size * 4);
-}
+	mfd_निश्चित_size(fd, mfd_def_size * 4);
+पूर्ण
 
-static void mfd_fail_grow(int fd)
-{
-	int r;
+अटल व्योम mfd_fail_grow(पूर्णांक fd)
+अणु
+	पूर्णांक r;
 
 	r = ftruncate(fd, mfd_def_size * 2);
-	if (r >= 0) {
-		printf("ftruncate(GROW) didn't fail as expected\n");
-		abort();
-	}
+	अगर (r >= 0) अणु
+		म_लिखो("ftruncate(GROW) didn't fail as expected\n");
+		पात();
+	पूर्ण
 
 	r = fallocate(fd,
 		      0,
 		      0,
 		      mfd_def_size * 4);
-	if (r >= 0) {
-		printf("fallocate(ALLOC) didn't fail as expected\n");
-		abort();
-	}
-}
+	अगर (r >= 0) अणु
+		म_लिखो("fallocate(ALLOC) didn't fail as expected\n");
+		पात();
+	पूर्ण
+पूर्ण
 
-static void mfd_assert_grow_write(int fd)
-{
-	static char *buf;
-	ssize_t l;
+अटल व्योम mfd_निश्चित_grow_ग_लिखो(पूर्णांक fd)
+अणु
+	अटल अक्षर *buf;
+	sमाप_प्रकार l;
 
-	/* hugetlbfs does not support write */
-	if (hugetlbfs_test)
-		return;
+	/* hugetlbfs करोes not support ग_लिखो */
+	अगर (hugetlbfs_test)
+		वापस;
 
-	buf = malloc(mfd_def_size * 8);
-	if (!buf) {
-		printf("malloc(%zu) failed: %m\n", mfd_def_size * 8);
-		abort();
-	}
+	buf = दो_स्मृति(mfd_def_size * 8);
+	अगर (!buf) अणु
+		म_लिखो("malloc(%zu) failed: %m\n", mfd_def_size * 8);
+		पात();
+	पूर्ण
 
-	l = pwrite(fd, buf, mfd_def_size * 8, 0);
-	if (l != (mfd_def_size * 8)) {
-		printf("pwrite() failed: %m\n");
-		abort();
-	}
+	l = pग_लिखो(fd, buf, mfd_def_size * 8, 0);
+	अगर (l != (mfd_def_size * 8)) अणु
+		म_लिखो("pwrite() failed: %m\n");
+		पात();
+	पूर्ण
 
-	mfd_assert_size(fd, mfd_def_size * 8);
-}
+	mfd_निश्चित_size(fd, mfd_def_size * 8);
+पूर्ण
 
-static void mfd_fail_grow_write(int fd)
-{
-	static char *buf;
-	ssize_t l;
+अटल व्योम mfd_fail_grow_ग_लिखो(पूर्णांक fd)
+अणु
+	अटल अक्षर *buf;
+	sमाप_प्रकार l;
 
-	/* hugetlbfs does not support write */
-	if (hugetlbfs_test)
-		return;
+	/* hugetlbfs करोes not support ग_लिखो */
+	अगर (hugetlbfs_test)
+		वापस;
 
-	buf = malloc(mfd_def_size * 8);
-	if (!buf) {
-		printf("malloc(%zu) failed: %m\n", mfd_def_size * 8);
-		abort();
-	}
+	buf = दो_स्मृति(mfd_def_size * 8);
+	अगर (!buf) अणु
+		म_लिखो("malloc(%zu) failed: %m\n", mfd_def_size * 8);
+		पात();
+	पूर्ण
 
-	l = pwrite(fd, buf, mfd_def_size * 8, 0);
-	if (l == (mfd_def_size * 8)) {
-		printf("pwrite() didn't fail as expected\n");
-		abort();
-	}
-}
+	l = pग_लिखो(fd, buf, mfd_def_size * 8, 0);
+	अगर (l == (mfd_def_size * 8)) अणु
+		म_लिखो("pwrite() didn't fail as expected\n");
+		पात();
+	पूर्ण
+पूर्ण
 
-static int idle_thread_fn(void *arg)
-{
+अटल पूर्णांक idle_thपढ़ो_fn(व्योम *arg)
+अणु
 	sigset_t set;
-	int sig;
+	पूर्णांक sig;
 
-	/* dummy waiter; SIGTERM terminates us anyway */
+	/* dummy रुकोer; संक_इति terminates us anyway */
 	sigemptyset(&set);
-	sigaddset(&set, SIGTERM);
-	sigwait(&set, &sig);
+	sigaddset(&set, संक_इति);
+	sigरुको(&set, &sig);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static pid_t spawn_idle_thread(unsigned int flags)
-{
-	uint8_t *stack;
+अटल pid_t spawn_idle_thपढ़ो(अचिन्हित पूर्णांक flags)
+अणु
+	uपूर्णांक8_t *stack;
 	pid_t pid;
 
-	stack = malloc(STACK_SIZE);
-	if (!stack) {
-		printf("malloc(STACK_SIZE) failed: %m\n");
-		abort();
-	}
+	stack = दो_स्मृति(STACK_SIZE);
+	अगर (!stack) अणु
+		म_लिखो("malloc(STACK_SIZE) failed: %m\n");
+		पात();
+	पूर्ण
 
-	pid = clone(idle_thread_fn,
+	pid = clone(idle_thपढ़ो_fn,
 		    stack + STACK_SIZE,
 		    SIGCHLD | flags,
-		    NULL);
-	if (pid < 0) {
-		printf("clone() failed: %m\n");
-		abort();
-	}
+		    शून्य);
+	अगर (pid < 0) अणु
+		म_लिखो("clone() failed: %m\n");
+		पात();
+	पूर्ण
 
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
-static void join_idle_thread(pid_t pid)
-{
-	kill(pid, SIGTERM);
-	waitpid(pid, NULL, 0);
-}
+अटल व्योम join_idle_thपढ़ो(pid_t pid)
+अणु
+	समाप्त(pid, संक_इति);
+	रुकोpid(pid, शून्य, 0);
+पूर्ण
 
 /*
  * Test memfd_create() syscall
- * Verify syscall-argument validation, including name checks, flag validation
+ * Verअगरy syscall-argument validation, including name checks, flag validation
  * and more.
  */
-static void test_create(void)
-{
-	char buf[2048];
-	int fd;
+अटल व्योम test_create(व्योम)
+अणु
+	अक्षर buf[2048];
+	पूर्णांक fd;
 
-	printf("%s CREATE\n", memfd_str);
+	म_लिखो("%s CREATE\n", memfd_str);
 
-	/* test NULL name */
-	mfd_fail_new(NULL, 0);
+	/* test शून्य name */
+	mfd_fail_new(शून्य, 0);
 
-	/* test over-long name (not zero-terminated) */
-	memset(buf, 0xff, sizeof(buf));
+	/* test over-दीर्घ name (not zero-terminated) */
+	स_रखो(buf, 0xff, माप(buf));
 	mfd_fail_new(buf, 0);
 
-	/* test over-long zero-terminated name */
-	memset(buf, 0xff, sizeof(buf));
-	buf[sizeof(buf) - 1] = 0;
+	/* test over-दीर्घ zero-terminated name */
+	स_रखो(buf, 0xff, माप(buf));
+	buf[माप(buf) - 1] = 0;
 	mfd_fail_new(buf, 0);
 
-	/* verify "" is a valid name */
-	fd = mfd_assert_new("", 0, 0);
-	close(fd);
+	/* verअगरy "" is a valid name */
+	fd = mfd_निश्चित_new("", 0, 0);
+	बंद(fd);
 
-	/* verify invalid O_* open flags */
+	/* verअगरy invalid O_* खोलो flags */
 	mfd_fail_new("", 0x0100);
 	mfd_fail_new("", ~MFD_CLOEXEC);
 	mfd_fail_new("", ~MFD_ALLOW_SEALING);
 	mfd_fail_new("", ~0);
 	mfd_fail_new("", 0x80000000U);
 
-	/* verify MFD_CLOEXEC is allowed */
-	fd = mfd_assert_new("", 0, MFD_CLOEXEC);
-	close(fd);
+	/* verअगरy MFD_CLOEXEC is allowed */
+	fd = mfd_निश्चित_new("", 0, MFD_CLOEXEC);
+	बंद(fd);
 
-	/* verify MFD_ALLOW_SEALING is allowed */
-	fd = mfd_assert_new("", 0, MFD_ALLOW_SEALING);
-	close(fd);
+	/* verअगरy MFD_ALLOW_SEALING is allowed */
+	fd = mfd_निश्चित_new("", 0, MFD_ALLOW_SEALING);
+	बंद(fd);
 
-	/* verify MFD_ALLOW_SEALING | MFD_CLOEXEC is allowed */
-	fd = mfd_assert_new("", 0, MFD_ALLOW_SEALING | MFD_CLOEXEC);
-	close(fd);
-}
+	/* verअगरy MFD_ALLOW_SEALING | MFD_CLOEXEC is allowed */
+	fd = mfd_निश्चित_new("", 0, MFD_ALLOW_SEALING | MFD_CLOEXEC);
+	बंद(fd);
+पूर्ण
 
 /*
  * Test basic sealing
  * A very basic sealing test to see whether setting/retrieving seals works.
  */
-static void test_basic(void)
-{
-	int fd;
+अटल व्योम test_basic(व्योम)
+अणु
+	पूर्णांक fd;
 
-	printf("%s BASIC\n", memfd_str);
+	म_लिखो("%s BASIC\n", memfd_str);
 
-	fd = mfd_assert_new("kern_memfd_basic",
+	fd = mfd_निश्चित_new("kern_memfd_basic",
 			    mfd_def_size,
 			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
 
 	/* add basic seals */
-	mfd_assert_has_seals(fd, 0);
-	mfd_assert_add_seals(fd, F_SEAL_SHRINK |
+	mfd_निश्चित_has_seals(fd, 0);
+	mfd_निश्चित_add_seals(fd, F_SEAL_SHRINK |
 				 F_SEAL_WRITE);
-	mfd_assert_has_seals(fd, F_SEAL_SHRINK |
+	mfd_निश्चित_has_seals(fd, F_SEAL_SHRINK |
 				 F_SEAL_WRITE);
 
 	/* add them again */
-	mfd_assert_add_seals(fd, F_SEAL_SHRINK |
+	mfd_निश्चित_add_seals(fd, F_SEAL_SHRINK |
 				 F_SEAL_WRITE);
-	mfd_assert_has_seals(fd, F_SEAL_SHRINK |
+	mfd_निश्चित_has_seals(fd, F_SEAL_SHRINK |
 				 F_SEAL_WRITE);
 
 	/* add more seals and seal against sealing */
-	mfd_assert_add_seals(fd, F_SEAL_GROW | F_SEAL_SEAL);
-	mfd_assert_has_seals(fd, F_SEAL_SHRINK |
+	mfd_निश्चित_add_seals(fd, F_SEAL_GROW | F_SEAL_SEAL);
+	mfd_निश्चित_has_seals(fd, F_SEAL_SHRINK |
 				 F_SEAL_GROW |
 				 F_SEAL_WRITE |
 				 F_SEAL_SEAL);
 
-	/* verify that sealing no longer works */
+	/* verअगरy that sealing no दीर्घer works */
 	mfd_fail_add_seals(fd, F_SEAL_GROW);
 	mfd_fail_add_seals(fd, 0);
 
-	close(fd);
+	बंद(fd);
 
-	/* verify sealing does not work without MFD_ALLOW_SEALING */
-	fd = mfd_assert_new("kern_memfd_basic",
+	/* verअगरy sealing करोes not work without MFD_ALLOW_SEALING */
+	fd = mfd_निश्चित_new("kern_memfd_basic",
 			    mfd_def_size,
 			    MFD_CLOEXEC);
-	mfd_assert_has_seals(fd, F_SEAL_SEAL);
+	mfd_निश्चित_has_seals(fd, F_SEAL_SEAL);
 	mfd_fail_add_seals(fd, F_SEAL_SHRINK |
 			       F_SEAL_GROW |
 			       F_SEAL_WRITE);
-	mfd_assert_has_seals(fd, F_SEAL_SEAL);
-	close(fd);
-}
+	mfd_निश्चित_has_seals(fd, F_SEAL_SEAL);
+	बंद(fd);
+पूर्ण
 
 /*
  * Test SEAL_WRITE
- * Test whether SEAL_WRITE actually prevents modifications.
+ * Test whether SEAL_WRITE actually prevents modअगरications.
  */
-static void test_seal_write(void)
-{
-	int fd;
+अटल व्योम test_seal_ग_लिखो(व्योम)
+अणु
+	पूर्णांक fd;
 
-	printf("%s SEAL-WRITE\n", memfd_str);
+	म_लिखो("%s SEAL-WRITE\n", memfd_str);
 
-	fd = mfd_assert_new("kern_memfd_seal_write",
+	fd = mfd_निश्चित_new("kern_memfd_seal_write",
 			    mfd_def_size,
 			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
-	mfd_assert_has_seals(fd, 0);
-	mfd_assert_add_seals(fd, F_SEAL_WRITE);
-	mfd_assert_has_seals(fd, F_SEAL_WRITE);
+	mfd_निश्चित_has_seals(fd, 0);
+	mfd_निश्चित_add_seals(fd, F_SEAL_WRITE);
+	mfd_निश्चित_has_seals(fd, F_SEAL_WRITE);
 
-	mfd_assert_read(fd);
-	mfd_fail_write(fd);
-	mfd_assert_shrink(fd);
-	mfd_assert_grow(fd);
-	mfd_fail_grow_write(fd);
+	mfd_निश्चित_पढ़ो(fd);
+	mfd_fail_ग_लिखो(fd);
+	mfd_निश्चित_shrink(fd);
+	mfd_निश्चित_grow(fd);
+	mfd_fail_grow_ग_लिखो(fd);
 
-	close(fd);
-}
+	बंद(fd);
+पूर्ण
 
 /*
  * Test SEAL_FUTURE_WRITE
- * Test whether SEAL_FUTURE_WRITE actually prevents modifications.
+ * Test whether SEAL_FUTURE_WRITE actually prevents modअगरications.
  */
-static void test_seal_future_write(void)
-{
-	int fd, fd2;
-	void *p;
+अटल व्योम test_seal_future_ग_लिखो(व्योम)
+अणु
+	पूर्णांक fd, fd2;
+	व्योम *p;
 
-	printf("%s SEAL-FUTURE-WRITE\n", memfd_str);
+	म_लिखो("%s SEAL-FUTURE-WRITE\n", memfd_str);
 
-	fd = mfd_assert_new("kern_memfd_seal_future_write",
+	fd = mfd_निश्चित_new("kern_memfd_seal_future_write",
 			    mfd_def_size,
 			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
 
-	p = mfd_assert_mmap_shared(fd);
+	p = mfd_निश्चित_mmap_shared(fd);
 
-	mfd_assert_has_seals(fd, 0);
+	mfd_निश्चित_has_seals(fd, 0);
 
-	mfd_assert_add_seals(fd, F_SEAL_FUTURE_WRITE);
-	mfd_assert_has_seals(fd, F_SEAL_FUTURE_WRITE);
+	mfd_निश्चित_add_seals(fd, F_SEAL_FUTURE_WRITE);
+	mfd_निश्चित_has_seals(fd, F_SEAL_FUTURE_WRITE);
 
-	/* read should pass, writes should fail */
-	mfd_assert_read(fd);
-	mfd_assert_read_shared(fd);
-	mfd_fail_write(fd);
+	/* पढ़ो should pass, ग_लिखोs should fail */
+	mfd_निश्चित_पढ़ो(fd);
+	mfd_निश्चित_पढ़ो_shared(fd);
+	mfd_fail_ग_लिखो(fd);
 
-	fd2 = mfd_assert_reopen_fd(fd);
-	/* read should pass, writes should still fail */
-	mfd_assert_read(fd2);
-	mfd_assert_read_shared(fd2);
-	mfd_fail_write(fd2);
+	fd2 = mfd_निश्चित_reखोलो_fd(fd);
+	/* पढ़ो should pass, ग_लिखोs should still fail */
+	mfd_निश्चित_पढ़ो(fd2);
+	mfd_निश्चित_पढ़ो_shared(fd2);
+	mfd_fail_ग_लिखो(fd2);
 
-	mfd_assert_fork_private_write(fd);
+	mfd_निश्चित_विभाजन_निजी_ग_लिखो(fd);
 
 	munmap(p, mfd_def_size);
-	close(fd2);
-	close(fd);
-}
+	बंद(fd2);
+	बंद(fd);
+पूर्ण
 
 /*
  * Test SEAL_SHRINK
  * Test whether SEAL_SHRINK actually prevents shrinking
  */
-static void test_seal_shrink(void)
-{
-	int fd;
+अटल व्योम test_seal_shrink(व्योम)
+अणु
+	पूर्णांक fd;
 
-	printf("%s SEAL-SHRINK\n", memfd_str);
+	म_लिखो("%s SEAL-SHRINK\n", memfd_str);
 
-	fd = mfd_assert_new("kern_memfd_seal_shrink",
+	fd = mfd_निश्चित_new("kern_memfd_seal_shrink",
 			    mfd_def_size,
 			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
-	mfd_assert_has_seals(fd, 0);
-	mfd_assert_add_seals(fd, F_SEAL_SHRINK);
-	mfd_assert_has_seals(fd, F_SEAL_SHRINK);
+	mfd_निश्चित_has_seals(fd, 0);
+	mfd_निश्चित_add_seals(fd, F_SEAL_SHRINK);
+	mfd_निश्चित_has_seals(fd, F_SEAL_SHRINK);
 
-	mfd_assert_read(fd);
-	mfd_assert_write(fd);
+	mfd_निश्चित_पढ़ो(fd);
+	mfd_निश्चित_ग_लिखो(fd);
 	mfd_fail_shrink(fd);
-	mfd_assert_grow(fd);
-	mfd_assert_grow_write(fd);
+	mfd_निश्चित_grow(fd);
+	mfd_निश्चित_grow_ग_लिखो(fd);
 
-	close(fd);
-}
+	बंद(fd);
+पूर्ण
 
 /*
  * Test SEAL_GROW
  * Test whether SEAL_GROW actually prevents growing
  */
-static void test_seal_grow(void)
-{
-	int fd;
+अटल व्योम test_seal_grow(व्योम)
+अणु
+	पूर्णांक fd;
 
-	printf("%s SEAL-GROW\n", memfd_str);
+	म_लिखो("%s SEAL-GROW\n", memfd_str);
 
-	fd = mfd_assert_new("kern_memfd_seal_grow",
+	fd = mfd_निश्चित_new("kern_memfd_seal_grow",
 			    mfd_def_size,
 			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
-	mfd_assert_has_seals(fd, 0);
-	mfd_assert_add_seals(fd, F_SEAL_GROW);
-	mfd_assert_has_seals(fd, F_SEAL_GROW);
+	mfd_निश्चित_has_seals(fd, 0);
+	mfd_निश्चित_add_seals(fd, F_SEAL_GROW);
+	mfd_निश्चित_has_seals(fd, F_SEAL_GROW);
 
-	mfd_assert_read(fd);
-	mfd_assert_write(fd);
-	mfd_assert_shrink(fd);
+	mfd_निश्चित_पढ़ो(fd);
+	mfd_निश्चित_ग_लिखो(fd);
+	mfd_निश्चित_shrink(fd);
 	mfd_fail_grow(fd);
-	mfd_fail_grow_write(fd);
+	mfd_fail_grow_ग_लिखो(fd);
 
-	close(fd);
-}
+	बंद(fd);
+पूर्ण
 
 /*
  * Test SEAL_SHRINK | SEAL_GROW
  * Test whether SEAL_SHRINK | SEAL_GROW actually prevents resizing
  */
-static void test_seal_resize(void)
-{
-	int fd;
+अटल व्योम test_seal_resize(व्योम)
+अणु
+	पूर्णांक fd;
 
-	printf("%s SEAL-RESIZE\n", memfd_str);
+	म_लिखो("%s SEAL-RESIZE\n", memfd_str);
 
-	fd = mfd_assert_new("kern_memfd_seal_resize",
+	fd = mfd_निश्चित_new("kern_memfd_seal_resize",
 			    mfd_def_size,
 			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
-	mfd_assert_has_seals(fd, 0);
-	mfd_assert_add_seals(fd, F_SEAL_SHRINK | F_SEAL_GROW);
-	mfd_assert_has_seals(fd, F_SEAL_SHRINK | F_SEAL_GROW);
+	mfd_निश्चित_has_seals(fd, 0);
+	mfd_निश्चित_add_seals(fd, F_SEAL_SHRINK | F_SEAL_GROW);
+	mfd_निश्चित_has_seals(fd, F_SEAL_SHRINK | F_SEAL_GROW);
 
-	mfd_assert_read(fd);
-	mfd_assert_write(fd);
+	mfd_निश्चित_पढ़ो(fd);
+	mfd_निश्चित_ग_लिखो(fd);
 	mfd_fail_shrink(fd);
 	mfd_fail_grow(fd);
-	mfd_fail_grow_write(fd);
+	mfd_fail_grow_ग_लिखो(fd);
 
-	close(fd);
-}
+	बंद(fd);
+पूर्ण
 
 /*
  * Test sharing via dup()
  * Test that seals are shared between dupped FDs and they're all equal.
  */
-static void test_share_dup(char *banner, char *b_suffix)
-{
-	int fd, fd2;
+अटल व्योम test_share_dup(अक्षर *banner, अक्षर *b_suffix)
+अणु
+	पूर्णांक fd, fd2;
 
-	printf("%s %s %s\n", memfd_str, banner, b_suffix);
+	म_लिखो("%s %s %s\n", memfd_str, banner, b_suffix);
 
-	fd = mfd_assert_new("kern_memfd_share_dup",
+	fd = mfd_निश्चित_new("kern_memfd_share_dup",
 			    mfd_def_size,
 			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
-	mfd_assert_has_seals(fd, 0);
+	mfd_निश्चित_has_seals(fd, 0);
 
-	fd2 = mfd_assert_dup(fd);
-	mfd_assert_has_seals(fd2, 0);
+	fd2 = mfd_निश्चित_dup(fd);
+	mfd_निश्चित_has_seals(fd2, 0);
 
-	mfd_assert_add_seals(fd, F_SEAL_WRITE);
-	mfd_assert_has_seals(fd, F_SEAL_WRITE);
-	mfd_assert_has_seals(fd2, F_SEAL_WRITE);
+	mfd_निश्चित_add_seals(fd, F_SEAL_WRITE);
+	mfd_निश्चित_has_seals(fd, F_SEAL_WRITE);
+	mfd_निश्चित_has_seals(fd2, F_SEAL_WRITE);
 
-	mfd_assert_add_seals(fd2, F_SEAL_SHRINK);
-	mfd_assert_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK);
-	mfd_assert_has_seals(fd2, F_SEAL_WRITE | F_SEAL_SHRINK);
+	mfd_निश्चित_add_seals(fd2, F_SEAL_SHRINK);
+	mfd_निश्चित_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK);
+	mfd_निश्चित_has_seals(fd2, F_SEAL_WRITE | F_SEAL_SHRINK);
 
-	mfd_assert_add_seals(fd, F_SEAL_SEAL);
-	mfd_assert_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK | F_SEAL_SEAL);
-	mfd_assert_has_seals(fd2, F_SEAL_WRITE | F_SEAL_SHRINK | F_SEAL_SEAL);
+	mfd_निश्चित_add_seals(fd, F_SEAL_SEAL);
+	mfd_निश्चित_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK | F_SEAL_SEAL);
+	mfd_निश्चित_has_seals(fd2, F_SEAL_WRITE | F_SEAL_SHRINK | F_SEAL_SEAL);
 
 	mfd_fail_add_seals(fd, F_SEAL_GROW);
 	mfd_fail_add_seals(fd2, F_SEAL_GROW);
 	mfd_fail_add_seals(fd, F_SEAL_SEAL);
 	mfd_fail_add_seals(fd2, F_SEAL_SEAL);
 
-	close(fd2);
+	बंद(fd2);
 
 	mfd_fail_add_seals(fd, F_SEAL_GROW);
-	close(fd);
-}
+	बंद(fd);
+पूर्ण
 
 /*
  * Test sealing with active mmap()s
- * Modifying seals is only allowed if no other mmap() refs exist.
+ * Modअगरying seals is only allowed अगर no other mmap() refs exist.
  */
-static void test_share_mmap(char *banner, char *b_suffix)
-{
-	int fd;
-	void *p;
+अटल व्योम test_share_mmap(अक्षर *banner, अक्षर *b_suffix)
+अणु
+	पूर्णांक fd;
+	व्योम *p;
 
-	printf("%s %s %s\n", memfd_str,  banner, b_suffix);
+	म_लिखो("%s %s %s\n", memfd_str,  banner, b_suffix);
 
-	fd = mfd_assert_new("kern_memfd_share_mmap",
+	fd = mfd_निश्चित_new("kern_memfd_share_mmap",
 			    mfd_def_size,
 			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
-	mfd_assert_has_seals(fd, 0);
+	mfd_निश्चित_has_seals(fd, 0);
 
 	/* shared/writable ref prevents sealing WRITE, but allows others */
-	p = mfd_assert_mmap_shared(fd);
+	p = mfd_निश्चित_mmap_shared(fd);
 	mfd_fail_add_seals(fd, F_SEAL_WRITE);
-	mfd_assert_has_seals(fd, 0);
-	mfd_assert_add_seals(fd, F_SEAL_SHRINK);
-	mfd_assert_has_seals(fd, F_SEAL_SHRINK);
+	mfd_निश्चित_has_seals(fd, 0);
+	mfd_निश्चित_add_seals(fd, F_SEAL_SHRINK);
+	mfd_निश्चित_has_seals(fd, F_SEAL_SHRINK);
 	munmap(p, mfd_def_size);
 
-	/* readable ref allows sealing */
-	p = mfd_assert_mmap_private(fd);
-	mfd_assert_add_seals(fd, F_SEAL_WRITE);
-	mfd_assert_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK);
+	/* पढ़ोable ref allows sealing */
+	p = mfd_निश्चित_mmap_निजी(fd);
+	mfd_निश्चित_add_seals(fd, F_SEAL_WRITE);
+	mfd_निश्चित_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK);
 	munmap(p, mfd_def_size);
 
-	close(fd);
-}
+	बंद(fd);
+पूर्ण
 
 /*
- * Test sealing with open(/proc/self/fd/%d)
- * Via /proc we can get access to a separate file-context for the same memfd.
- * This is *not* like dup(), but like a real separate open(). Make sure the
- * semantics are as expected and we correctly check for RDONLY / WRONLY / RDWR.
+ * Test sealing with खोलो(/proc/self/fd/%d)
+ * Via /proc we can get access to a separate file-context क्रम the same memfd.
+ * This is *not* like dup(), but like a real separate खोलो(). Make sure the
+ * semantics are as expected and we correctly check क्रम RDONLY / WRONLY / RDWR.
  */
-static void test_share_open(char *banner, char *b_suffix)
-{
-	int fd, fd2;
+अटल व्योम test_share_खोलो(अक्षर *banner, अक्षर *b_suffix)
+अणु
+	पूर्णांक fd, fd2;
 
-	printf("%s %s %s\n", memfd_str, banner, b_suffix);
+	म_लिखो("%s %s %s\n", memfd_str, banner, b_suffix);
 
-	fd = mfd_assert_new("kern_memfd_share_open",
+	fd = mfd_निश्चित_new("kern_memfd_share_open",
 			    mfd_def_size,
 			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
-	mfd_assert_has_seals(fd, 0);
+	mfd_निश्चित_has_seals(fd, 0);
 
-	fd2 = mfd_assert_open(fd, O_RDWR, 0);
-	mfd_assert_add_seals(fd, F_SEAL_WRITE);
-	mfd_assert_has_seals(fd, F_SEAL_WRITE);
-	mfd_assert_has_seals(fd2, F_SEAL_WRITE);
+	fd2 = mfd_निश्चित_खोलो(fd, O_RDWR, 0);
+	mfd_निश्चित_add_seals(fd, F_SEAL_WRITE);
+	mfd_निश्चित_has_seals(fd, F_SEAL_WRITE);
+	mfd_निश्चित_has_seals(fd2, F_SEAL_WRITE);
 
-	mfd_assert_add_seals(fd2, F_SEAL_SHRINK);
-	mfd_assert_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK);
-	mfd_assert_has_seals(fd2, F_SEAL_WRITE | F_SEAL_SHRINK);
+	mfd_निश्चित_add_seals(fd2, F_SEAL_SHRINK);
+	mfd_निश्चित_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK);
+	mfd_निश्चित_has_seals(fd2, F_SEAL_WRITE | F_SEAL_SHRINK);
 
-	close(fd);
-	fd = mfd_assert_open(fd2, O_RDONLY, 0);
+	बंद(fd);
+	fd = mfd_निश्चित_खोलो(fd2, O_RDONLY, 0);
 
 	mfd_fail_add_seals(fd, F_SEAL_SEAL);
-	mfd_assert_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK);
-	mfd_assert_has_seals(fd2, F_SEAL_WRITE | F_SEAL_SHRINK);
+	mfd_निश्चित_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK);
+	mfd_निश्चित_has_seals(fd2, F_SEAL_WRITE | F_SEAL_SHRINK);
 
-	close(fd2);
-	fd2 = mfd_assert_open(fd, O_RDWR, 0);
+	बंद(fd2);
+	fd2 = mfd_निश्चित_खोलो(fd, O_RDWR, 0);
 
-	mfd_assert_add_seals(fd2, F_SEAL_SEAL);
-	mfd_assert_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK | F_SEAL_SEAL);
-	mfd_assert_has_seals(fd2, F_SEAL_WRITE | F_SEAL_SHRINK | F_SEAL_SEAL);
+	mfd_निश्चित_add_seals(fd2, F_SEAL_SEAL);
+	mfd_निश्चित_has_seals(fd, F_SEAL_WRITE | F_SEAL_SHRINK | F_SEAL_SEAL);
+	mfd_निश्चित_has_seals(fd2, F_SEAL_WRITE | F_SEAL_SHRINK | F_SEAL_SEAL);
 
-	close(fd2);
-	close(fd);
-}
+	बंद(fd2);
+	बंद(fd);
+पूर्ण
 
 /*
- * Test sharing via fork()
- * Test whether seal-modifications work as expected with forked childs.
+ * Test sharing via विभाजन()
+ * Test whether seal-modअगरications work as expected with विभाजनed childs.
  */
-static void test_share_fork(char *banner, char *b_suffix)
-{
-	int fd;
+अटल व्योम test_share_विभाजन(अक्षर *banner, अक्षर *b_suffix)
+अणु
+	पूर्णांक fd;
 	pid_t pid;
 
-	printf("%s %s %s\n", memfd_str, banner, b_suffix);
+	म_लिखो("%s %s %s\n", memfd_str, banner, b_suffix);
 
-	fd = mfd_assert_new("kern_memfd_share_fork",
+	fd = mfd_निश्चित_new("kern_memfd_share_fork",
 			    mfd_def_size,
 			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
-	mfd_assert_has_seals(fd, 0);
+	mfd_निश्चित_has_seals(fd, 0);
 
-	pid = spawn_idle_thread(0);
-	mfd_assert_add_seals(fd, F_SEAL_SEAL);
-	mfd_assert_has_seals(fd, F_SEAL_SEAL);
-
-	mfd_fail_add_seals(fd, F_SEAL_WRITE);
-	mfd_assert_has_seals(fd, F_SEAL_SEAL);
-
-	join_idle_thread(pid);
+	pid = spawn_idle_thपढ़ो(0);
+	mfd_निश्चित_add_seals(fd, F_SEAL_SEAL);
+	mfd_निश्चित_has_seals(fd, F_SEAL_SEAL);
 
 	mfd_fail_add_seals(fd, F_SEAL_WRITE);
-	mfd_assert_has_seals(fd, F_SEAL_SEAL);
+	mfd_निश्चित_has_seals(fd, F_SEAL_SEAL);
 
-	close(fd);
-}
+	join_idle_thपढ़ो(pid);
 
-int main(int argc, char **argv)
-{
+	mfd_fail_add_seals(fd, F_SEAL_WRITE);
+	mfd_निश्चित_has_seals(fd, F_SEAL_SEAL);
+
+	बंद(fd);
+पूर्ण
+
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
 	pid_t pid;
 
-	if (argc == 2) {
-		if (!strcmp(argv[1], "hugetlbfs")) {
-			unsigned long hpage_size = default_huge_page_size();
+	अगर (argc == 2) अणु
+		अगर (!म_भेद(argv[1], "hugetlbfs")) अणु
+			अचिन्हित दीर्घ hpage_size = शेष_huge_page_size();
 
-			if (!hpage_size) {
-				printf("Unable to determine huge page size\n");
-				abort();
-			}
+			अगर (!hpage_size) अणु
+				म_लिखो("Unable to determine huge page size\n");
+				पात();
+			पूर्ण
 
 			hugetlbfs_test = 1;
 			memfd_str = MEMFD_HUGE_STR;
 			mfd_def_size = hpage_size * 2;
-		} else {
-			printf("Unknown option: %s\n", argv[1]);
-			abort();
-		}
-	}
+		पूर्ण अन्यथा अणु
+			म_लिखो("Unknown option: %s\n", argv[1]);
+			पात();
+		पूर्ण
+	पूर्ण
 
 	test_create();
 	test_basic();
 
-	test_seal_write();
-	test_seal_future_write();
+	test_seal_ग_लिखो();
+	test_seal_future_ग_लिखो();
 	test_seal_shrink();
 	test_seal_grow();
 	test_seal_resize();
 
 	test_share_dup("SHARE-DUP", "");
 	test_share_mmap("SHARE-MMAP", "");
-	test_share_open("SHARE-OPEN", "");
-	test_share_fork("SHARE-FORK", "");
+	test_share_खोलो("SHARE-OPEN", "");
+	test_share_विभाजन("SHARE-FORK", "");
 
-	/* Run test-suite in a multi-threaded environment with a shared
+	/* Run test-suite in a multi-thपढ़ोed environment with a shared
 	 * file-table. */
-	pid = spawn_idle_thread(CLONE_FILES | CLONE_FS | CLONE_VM);
+	pid = spawn_idle_thपढ़ो(CLONE_खाताS | CLONE_FS | CLONE_VM);
 	test_share_dup("SHARE-DUP", SHARED_FT_STR);
 	test_share_mmap("SHARE-MMAP", SHARED_FT_STR);
-	test_share_open("SHARE-OPEN", SHARED_FT_STR);
-	test_share_fork("SHARE-FORK", SHARED_FT_STR);
-	join_idle_thread(pid);
+	test_share_खोलो("SHARE-OPEN", SHARED_FT_STR);
+	test_share_विभाजन("SHARE-FORK", SHARED_FT_STR);
+	join_idle_thपढ़ो(pid);
 
-	printf("memfd: DONE\n");
+	म_लिखो("memfd: DONE\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

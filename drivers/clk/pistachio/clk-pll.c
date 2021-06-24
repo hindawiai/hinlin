@@ -1,247 +1,248 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Google, Inc.
  */
 
-#define pr_fmt(fmt) "%s: " fmt, __func__
+#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
 
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/slab.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-#define PLL_STATUS			0x0
-#define PLL_STATUS_LOCK			BIT(0)
+#घोषणा PLL_STATUS			0x0
+#घोषणा PLL_STATUS_LOCK			BIT(0)
 
-#define PLL_CTRL1			0x4
-#define PLL_CTRL1_REFDIV_SHIFT		0
-#define PLL_CTRL1_REFDIV_MASK		0x3f
-#define PLL_CTRL1_FBDIV_SHIFT		6
-#define PLL_CTRL1_FBDIV_MASK		0xfff
-#define PLL_INT_CTRL1_POSTDIV1_SHIFT	18
-#define PLL_INT_CTRL1_POSTDIV1_MASK	0x7
-#define PLL_INT_CTRL1_POSTDIV2_SHIFT	21
-#define PLL_INT_CTRL1_POSTDIV2_MASK	0x7
-#define PLL_INT_CTRL1_PD		BIT(24)
-#define PLL_INT_CTRL1_DSMPD		BIT(25)
-#define PLL_INT_CTRL1_FOUTPOSTDIVPD	BIT(26)
-#define PLL_INT_CTRL1_FOUTVCOPD		BIT(27)
+#घोषणा PLL_CTRL1			0x4
+#घोषणा PLL_CTRL1_REFDIV_SHIFT		0
+#घोषणा PLL_CTRL1_REFDIV_MASK		0x3f
+#घोषणा PLL_CTRL1_FBDIV_SHIFT		6
+#घोषणा PLL_CTRL1_FBDIV_MASK		0xfff
+#घोषणा PLL_INT_CTRL1_POSTDIV1_SHIFT	18
+#घोषणा PLL_INT_CTRL1_POSTDIV1_MASK	0x7
+#घोषणा PLL_INT_CTRL1_POSTDIV2_SHIFT	21
+#घोषणा PLL_INT_CTRL1_POSTDIV2_MASK	0x7
+#घोषणा PLL_INT_CTRL1_PD		BIT(24)
+#घोषणा PLL_INT_CTRL1_DSMPD		BIT(25)
+#घोषणा PLL_INT_CTRL1_FOUTPOSTDIVPD	BIT(26)
+#घोषणा PLL_INT_CTRL1_FOUTVCOPD		BIT(27)
 
-#define PLL_CTRL2			0x8
-#define PLL_FRAC_CTRL2_FRAC_SHIFT	0
-#define PLL_FRAC_CTRL2_FRAC_MASK	0xffffff
-#define PLL_FRAC_CTRL2_POSTDIV1_SHIFT	24
-#define PLL_FRAC_CTRL2_POSTDIV1_MASK	0x7
-#define PLL_FRAC_CTRL2_POSTDIV2_SHIFT	27
-#define PLL_FRAC_CTRL2_POSTDIV2_MASK	0x7
-#define PLL_INT_CTRL2_BYPASS		BIT(28)
+#घोषणा PLL_CTRL2			0x8
+#घोषणा PLL_FRAC_CTRL2_FRAC_SHIFT	0
+#घोषणा PLL_FRAC_CTRL2_FRAC_MASK	0xffffff
+#घोषणा PLL_FRAC_CTRL2_POSTDIV1_SHIFT	24
+#घोषणा PLL_FRAC_CTRL2_POSTDIV1_MASK	0x7
+#घोषणा PLL_FRAC_CTRL2_POSTDIV2_SHIFT	27
+#घोषणा PLL_FRAC_CTRL2_POSTDIV2_MASK	0x7
+#घोषणा PLL_INT_CTRL2_BYPASS		BIT(28)
 
-#define PLL_CTRL3			0xc
-#define PLL_FRAC_CTRL3_PD		BIT(0)
-#define PLL_FRAC_CTRL3_DACPD		BIT(1)
-#define PLL_FRAC_CTRL3_DSMPD		BIT(2)
-#define PLL_FRAC_CTRL3_FOUTPOSTDIVPD	BIT(3)
-#define PLL_FRAC_CTRL3_FOUT4PHASEPD	BIT(4)
-#define PLL_FRAC_CTRL3_FOUTVCOPD	BIT(5)
+#घोषणा PLL_CTRL3			0xc
+#घोषणा PLL_FRAC_CTRL3_PD		BIT(0)
+#घोषणा PLL_FRAC_CTRL3_DACPD		BIT(1)
+#घोषणा PLL_FRAC_CTRL3_DSMPD		BIT(2)
+#घोषणा PLL_FRAC_CTRL3_FOUTPOSTDIVPD	BIT(3)
+#घोषणा PLL_FRAC_CTRL3_FOUT4PHASEPD	BIT(4)
+#घोषणा PLL_FRAC_CTRL3_FOUTVCOPD	BIT(5)
 
-#define PLL_CTRL4			0x10
-#define PLL_FRAC_CTRL4_BYPASS		BIT(28)
+#घोषणा PLL_CTRL4			0x10
+#घोषणा PLL_FRAC_CTRL4_BYPASS		BIT(28)
 
-#define MIN_PFD				9600000UL
-#define MIN_VCO_LA			400000000UL
-#define MAX_VCO_LA			1600000000UL
-#define MIN_VCO_FRAC_INT		600000000UL
-#define MAX_VCO_FRAC_INT		1600000000UL
-#define MIN_VCO_FRAC_FRAC		600000000UL
-#define MAX_VCO_FRAC_FRAC		2400000000UL
-#define MIN_OUTPUT_LA			8000000UL
-#define MAX_OUTPUT_LA			1600000000UL
-#define MIN_OUTPUT_FRAC			12000000UL
-#define MAX_OUTPUT_FRAC			1600000000UL
+#घोषणा MIN_PFD				9600000UL
+#घोषणा MIN_VCO_LA			400000000UL
+#घोषणा MAX_VCO_LA			1600000000UL
+#घोषणा MIN_VCO_FRAC_INT		600000000UL
+#घोषणा MAX_VCO_FRAC_INT		1600000000UL
+#घोषणा MIN_VCO_FRAC_FRAC		600000000UL
+#घोषणा MAX_VCO_FRAC_FRAC		2400000000UL
+#घोषणा MIN_OUTPUT_LA			8000000UL
+#घोषणा MAX_OUTPUT_LA			1600000000UL
+#घोषणा MIN_OUTPUT_FRAC			12000000UL
+#घोषणा MAX_OUTPUT_FRAC			1600000000UL
 
 /* Fractional PLL operating modes */
-enum pll_mode {
+क्रमागत pll_mode अणु
 	PLL_MODE_FRAC,
 	PLL_MODE_INT,
-};
+पूर्ण;
 
-struct pistachio_clk_pll {
-	struct clk_hw hw;
-	void __iomem *base;
-	struct pistachio_pll_rate_table *rates;
-	unsigned int nr_rates;
-};
+काष्ठा pistachio_clk_pll अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *base;
+	काष्ठा pistachio_pll_rate_table *rates;
+	अचिन्हित पूर्णांक nr_rates;
+पूर्ण;
 
-static inline u32 pll_readl(struct pistachio_clk_pll *pll, u32 reg)
-{
-	return readl(pll->base + reg);
-}
+अटल अंतरभूत u32 pll_पढ़ोl(काष्ठा pistachio_clk_pll *pll, u32 reg)
+अणु
+	वापस पढ़ोl(pll->base + reg);
+पूर्ण
 
-static inline void pll_writel(struct pistachio_clk_pll *pll, u32 val, u32 reg)
-{
-	writel(val, pll->base + reg);
-}
+अटल अंतरभूत व्योम pll_ग_लिखोl(काष्ठा pistachio_clk_pll *pll, u32 val, u32 reg)
+अणु
+	ग_लिखोl(val, pll->base + reg);
+पूर्ण
 
-static inline void pll_lock(struct pistachio_clk_pll *pll)
-{
-	while (!(pll_readl(pll, PLL_STATUS) & PLL_STATUS_LOCK))
+अटल अंतरभूत व्योम pll_lock(काष्ठा pistachio_clk_pll *pll)
+अणु
+	जबतक (!(pll_पढ़ोl(pll, PLL_STATUS) & PLL_STATUS_LOCK))
 		cpu_relax();
-}
+पूर्ण
 
-static inline u64 do_div_round_closest(u64 dividend, u64 divisor)
-{
-	dividend += divisor / 2;
-	return div64_u64(dividend, divisor);
-}
+अटल अंतरभूत u64 करो_भाग_round_बंदst(u64 भागidend, u64 भागisor)
+अणु
+	भागidend += भागisor / 2;
+	वापस भाग64_u64(भागidend, भागisor);
+पूर्ण
 
-static inline struct pistachio_clk_pll *to_pistachio_pll(struct clk_hw *hw)
-{
-	return container_of(hw, struct pistachio_clk_pll, hw);
-}
+अटल अंतरभूत काष्ठा pistachio_clk_pll *to_pistachio_pll(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा pistachio_clk_pll, hw);
+पूर्ण
 
-static inline enum pll_mode pll_frac_get_mode(struct clk_hw *hw)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
+अटल अंतरभूत क्रमागत pll_mode pll_frac_get_mode(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
 	u32 val;
 
-	val = pll_readl(pll, PLL_CTRL3) & PLL_FRAC_CTRL3_DSMPD;
-	return val ? PLL_MODE_INT : PLL_MODE_FRAC;
-}
+	val = pll_पढ़ोl(pll, PLL_CTRL3) & PLL_FRAC_CTRL3_DSMPD;
+	वापस val ? PLL_MODE_INT : PLL_MODE_FRAC;
+पूर्ण
 
-static inline void pll_frac_set_mode(struct clk_hw *hw, enum pll_mode mode)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
+अटल अंतरभूत व्योम pll_frac_set_mode(काष्ठा clk_hw *hw, क्रमागत pll_mode mode)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
 	u32 val;
 
-	val = pll_readl(pll, PLL_CTRL3);
-	if (mode == PLL_MODE_INT)
+	val = pll_पढ़ोl(pll, PLL_CTRL3);
+	अगर (mode == PLL_MODE_INT)
 		val |= PLL_FRAC_CTRL3_DSMPD | PLL_FRAC_CTRL3_DACPD;
-	else
+	अन्यथा
 		val &= ~(PLL_FRAC_CTRL3_DSMPD | PLL_FRAC_CTRL3_DACPD);
 
-	pll_writel(pll, val, PLL_CTRL3);
-}
+	pll_ग_लिखोl(pll, val, PLL_CTRL3);
+पूर्ण
 
-static struct pistachio_pll_rate_table *
-pll_get_params(struct pistachio_clk_pll *pll, unsigned long fref,
-	       unsigned long fout)
-{
-	unsigned int i;
+अटल काष्ठा pistachio_pll_rate_table *
+pll_get_params(काष्ठा pistachio_clk_pll *pll, अचिन्हित दीर्घ fref,
+	       अचिन्हित दीर्घ fout)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pll->nr_rates; i++) {
-		if (pll->rates[i].fref == fref && pll->rates[i].fout == fout)
-			return &pll->rates[i];
-	}
+	क्रम (i = 0; i < pll->nr_rates; i++) अणु
+		अगर (pll->rates[i].fref == fref && pll->rates[i].fout == fout)
+			वापस &pll->rates[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static long pll_round_rate(struct clk_hw *hw, unsigned long rate,
-			   unsigned long *parent_rate)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
-	unsigned int i;
+अटल दीर्घ pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			   अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pll->nr_rates; i++) {
-		if (i > 0 && pll->rates[i].fref == *parent_rate &&
+	क्रम (i = 0; i < pll->nr_rates; i++) अणु
+		अगर (i > 0 && pll->rates[i].fref == *parent_rate &&
 		    pll->rates[i].fout <= rate)
-			return pll->rates[i - 1].fout;
-	}
+			वापस pll->rates[i - 1].fout;
+	पूर्ण
 
-	return pll->rates[0].fout;
-}
+	वापस pll->rates[0].fout;
+पूर्ण
 
-static int pll_gf40lp_frac_enable(struct clk_hw *hw)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
+अटल पूर्णांक pll_gf40lp_frac_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
 	u32 val;
 
-	val = pll_readl(pll, PLL_CTRL3);
+	val = pll_पढ़ोl(pll, PLL_CTRL3);
 	val &= ~(PLL_FRAC_CTRL3_PD | PLL_FRAC_CTRL3_FOUTPOSTDIVPD |
 		 PLL_FRAC_CTRL3_FOUT4PHASEPD | PLL_FRAC_CTRL3_FOUTVCOPD);
-	pll_writel(pll, val, PLL_CTRL3);
+	pll_ग_लिखोl(pll, val, PLL_CTRL3);
 
-	val = pll_readl(pll, PLL_CTRL4);
+	val = pll_पढ़ोl(pll, PLL_CTRL4);
 	val &= ~PLL_FRAC_CTRL4_BYPASS;
-	pll_writel(pll, val, PLL_CTRL4);
+	pll_ग_लिखोl(pll, val, PLL_CTRL4);
 
 	pll_lock(pll);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pll_gf40lp_frac_disable(struct clk_hw *hw)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
+अटल व्योम pll_gf40lp_frac_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
 	u32 val;
 
-	val = pll_readl(pll, PLL_CTRL3);
+	val = pll_पढ़ोl(pll, PLL_CTRL3);
 	val |= PLL_FRAC_CTRL3_PD;
-	pll_writel(pll, val, PLL_CTRL3);
-}
+	pll_ग_लिखोl(pll, val, PLL_CTRL3);
+पूर्ण
 
-static int pll_gf40lp_frac_is_enabled(struct clk_hw *hw)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
+अटल पूर्णांक pll_gf40lp_frac_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
 
-	return !(pll_readl(pll, PLL_CTRL3) & PLL_FRAC_CTRL3_PD);
-}
+	वापस !(pll_पढ़ोl(pll, PLL_CTRL3) & PLL_FRAC_CTRL3_PD);
+पूर्ण
 
-static int pll_gf40lp_frac_set_rate(struct clk_hw *hw, unsigned long rate,
-				    unsigned long parent_rate)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
-	struct pistachio_pll_rate_table *params;
-	int enabled = pll_gf40lp_frac_is_enabled(hw);
-	u64 val, vco, old_postdiv1, old_postdiv2;
-	const char *name = clk_hw_get_name(hw);
+अटल पूर्णांक pll_gf40lp_frac_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
+	काष्ठा pistachio_pll_rate_table *params;
+	पूर्णांक enabled = pll_gf40lp_frac_is_enabled(hw);
+	u64 val, vco, old_postभाग1, old_postभाग2;
+	स्थिर अक्षर *name = clk_hw_get_name(hw);
 
-	if (rate < MIN_OUTPUT_FRAC || rate > MAX_OUTPUT_FRAC)
-		return -EINVAL;
+	अगर (rate < MIN_OUTPUT_FRAC || rate > MAX_OUTPUT_FRAC)
+		वापस -EINVAL;
 
 	params = pll_get_params(pll, parent_rate, rate);
-	if (!params || !params->refdiv)
-		return -EINVAL;
+	अगर (!params || !params->refभाग)
+		वापस -EINVAL;
 
 	/* calculate vco */
 	vco = params->fref;
-	vco *= (params->fbdiv << 24) + params->frac;
-	vco = div64_u64(vco, params->refdiv << 24);
+	vco *= (params->fbभाग << 24) + params->frac;
+	vco = भाग64_u64(vco, params->refभाग << 24);
 
-	if (vco < MIN_VCO_FRAC_FRAC || vco > MAX_VCO_FRAC_FRAC)
+	अगर (vco < MIN_VCO_FRAC_FRAC || vco > MAX_VCO_FRAC_FRAC)
 		pr_warn("%s: VCO %llu is out of range %lu..%lu\n", name, vco,
 			MIN_VCO_FRAC_FRAC, MAX_VCO_FRAC_FRAC);
 
-	val = div64_u64(params->fref, params->refdiv);
-	if (val < MIN_PFD)
+	val = भाग64_u64(params->fref, params->refभाग);
+	अगर (val < MIN_PFD)
 		pr_warn("%s: PFD %llu is too low (min %lu)\n",
 			name, val, MIN_PFD);
-	if (val > vco / 16)
+	अगर (val > vco / 16)
 		pr_warn("%s: PFD %llu is too high (max %llu)\n",
 			name, val, vco / 16);
 
-	val = pll_readl(pll, PLL_CTRL1);
+	val = pll_पढ़ोl(pll, PLL_CTRL1);
 	val &= ~((PLL_CTRL1_REFDIV_MASK << PLL_CTRL1_REFDIV_SHIFT) |
 		 (PLL_CTRL1_FBDIV_MASK << PLL_CTRL1_FBDIV_SHIFT));
-	val |= (params->refdiv << PLL_CTRL1_REFDIV_SHIFT) |
-		(params->fbdiv << PLL_CTRL1_FBDIV_SHIFT);
-	pll_writel(pll, val, PLL_CTRL1);
+	val |= (params->refभाग << PLL_CTRL1_REFDIV_SHIFT) |
+		(params->fbभाग << PLL_CTRL1_FBDIV_SHIFT);
+	pll_ग_लिखोl(pll, val, PLL_CTRL1);
 
-	val = pll_readl(pll, PLL_CTRL2);
+	val = pll_पढ़ोl(pll, PLL_CTRL2);
 
-	old_postdiv1 = (val >> PLL_FRAC_CTRL2_POSTDIV1_SHIFT) &
+	old_postभाग1 = (val >> PLL_FRAC_CTRL2_POSTDIV1_SHIFT) &
 		       PLL_FRAC_CTRL2_POSTDIV1_MASK;
-	old_postdiv2 = (val >> PLL_FRAC_CTRL2_POSTDIV2_SHIFT) &
+	old_postभाग2 = (val >> PLL_FRAC_CTRL2_POSTDIV2_SHIFT) &
 		       PLL_FRAC_CTRL2_POSTDIV2_MASK;
-	if (enabled &&
-	    (params->postdiv1 != old_postdiv1 ||
-	     params->postdiv2 != old_postdiv2))
+	अगर (enabled &&
+	    (params->postभाग1 != old_postभाग1 ||
+	     params->postभाग2 != old_postभाग2))
 		pr_warn("%s: changing postdiv while PLL is enabled\n", name);
 
-	if (params->postdiv2 > params->postdiv1)
+	अगर (params->postभाग2 > params->postभाग1)
 		pr_warn("%s: postdiv2 should not exceed postdiv1\n", name);
 
 	val &= ~((PLL_FRAC_CTRL2_FRAC_MASK << PLL_FRAC_CTRL2_FRAC_SHIFT) |
@@ -250,261 +251,261 @@ static int pll_gf40lp_frac_set_rate(struct clk_hw *hw, unsigned long rate,
 		 (PLL_FRAC_CTRL2_POSTDIV2_MASK <<
 		  PLL_FRAC_CTRL2_POSTDIV2_SHIFT));
 	val |= (params->frac << PLL_FRAC_CTRL2_FRAC_SHIFT) |
-		(params->postdiv1 << PLL_FRAC_CTRL2_POSTDIV1_SHIFT) |
-		(params->postdiv2 << PLL_FRAC_CTRL2_POSTDIV2_SHIFT);
-	pll_writel(pll, val, PLL_CTRL2);
+		(params->postभाग1 << PLL_FRAC_CTRL2_POSTDIV1_SHIFT) |
+		(params->postभाग2 << PLL_FRAC_CTRL2_POSTDIV2_SHIFT);
+	pll_ग_लिखोl(pll, val, PLL_CTRL2);
 
 	/* set operating mode */
-	if (params->frac)
+	अगर (params->frac)
 		pll_frac_set_mode(hw, PLL_MODE_FRAC);
-	else
+	अन्यथा
 		pll_frac_set_mode(hw, PLL_MODE_INT);
 
-	if (enabled)
+	अगर (enabled)
 		pll_lock(pll);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long pll_gf40lp_frac_recalc_rate(struct clk_hw *hw,
-						 unsigned long parent_rate)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
-	u64 val, prediv, fbdiv, frac, postdiv1, postdiv2, rate;
+अटल अचिन्हित दीर्घ pll_gf40lp_frac_recalc_rate(काष्ठा clk_hw *hw,
+						 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
+	u64 val, preभाग, fbभाग, frac, postभाग1, postभाग2, rate;
 
-	val = pll_readl(pll, PLL_CTRL1);
-	prediv = (val >> PLL_CTRL1_REFDIV_SHIFT) & PLL_CTRL1_REFDIV_MASK;
-	fbdiv = (val >> PLL_CTRL1_FBDIV_SHIFT) & PLL_CTRL1_FBDIV_MASK;
+	val = pll_पढ़ोl(pll, PLL_CTRL1);
+	preभाग = (val >> PLL_CTRL1_REFDIV_SHIFT) & PLL_CTRL1_REFDIV_MASK;
+	fbभाग = (val >> PLL_CTRL1_FBDIV_SHIFT) & PLL_CTRL1_FBDIV_MASK;
 
-	val = pll_readl(pll, PLL_CTRL2);
-	postdiv1 = (val >> PLL_FRAC_CTRL2_POSTDIV1_SHIFT) &
+	val = pll_पढ़ोl(pll, PLL_CTRL2);
+	postभाग1 = (val >> PLL_FRAC_CTRL2_POSTDIV1_SHIFT) &
 		PLL_FRAC_CTRL2_POSTDIV1_MASK;
-	postdiv2 = (val >> PLL_FRAC_CTRL2_POSTDIV2_SHIFT) &
+	postभाग2 = (val >> PLL_FRAC_CTRL2_POSTDIV2_SHIFT) &
 		PLL_FRAC_CTRL2_POSTDIV2_MASK;
 	frac = (val >> PLL_FRAC_CTRL2_FRAC_SHIFT) & PLL_FRAC_CTRL2_FRAC_MASK;
 
-	/* get operating mode (int/frac) and calculate rate accordingly */
+	/* get operating mode (पूर्णांक/frac) and calculate rate accordingly */
 	rate = parent_rate;
-	if (pll_frac_get_mode(hw) == PLL_MODE_FRAC)
-		rate *= (fbdiv << 24) + frac;
-	else
-		rate *= (fbdiv << 24);
+	अगर (pll_frac_get_mode(hw) == PLL_MODE_FRAC)
+		rate *= (fbभाग << 24) + frac;
+	अन्यथा
+		rate *= (fbभाग << 24);
 
-	rate = do_div_round_closest(rate, (prediv * postdiv1 * postdiv2) << 24);
+	rate = करो_भाग_round_बंदst(rate, (preभाग * postभाग1 * postभाग2) << 24);
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static const struct clk_ops pll_gf40lp_frac_ops = {
+अटल स्थिर काष्ठा clk_ops pll_gf40lp_frac_ops = अणु
 	.enable = pll_gf40lp_frac_enable,
 	.disable = pll_gf40lp_frac_disable,
 	.is_enabled = pll_gf40lp_frac_is_enabled,
 	.recalc_rate = pll_gf40lp_frac_recalc_rate,
 	.round_rate = pll_round_rate,
 	.set_rate = pll_gf40lp_frac_set_rate,
-};
+पूर्ण;
 
-static const struct clk_ops pll_gf40lp_frac_fixed_ops = {
+अटल स्थिर काष्ठा clk_ops pll_gf40lp_frac_fixed_ops = अणु
 	.enable = pll_gf40lp_frac_enable,
 	.disable = pll_gf40lp_frac_disable,
 	.is_enabled = pll_gf40lp_frac_is_enabled,
 	.recalc_rate = pll_gf40lp_frac_recalc_rate,
-};
+पूर्ण;
 
-static int pll_gf40lp_laint_enable(struct clk_hw *hw)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
+अटल पूर्णांक pll_gf40lp_laपूर्णांक_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
 	u32 val;
 
-	val = pll_readl(pll, PLL_CTRL1);
+	val = pll_पढ़ोl(pll, PLL_CTRL1);
 	val &= ~(PLL_INT_CTRL1_PD |
 		 PLL_INT_CTRL1_FOUTPOSTDIVPD | PLL_INT_CTRL1_FOUTVCOPD);
-	pll_writel(pll, val, PLL_CTRL1);
+	pll_ग_लिखोl(pll, val, PLL_CTRL1);
 
-	val = pll_readl(pll, PLL_CTRL2);
+	val = pll_पढ़ोl(pll, PLL_CTRL2);
 	val &= ~PLL_INT_CTRL2_BYPASS;
-	pll_writel(pll, val, PLL_CTRL2);
+	pll_ग_लिखोl(pll, val, PLL_CTRL2);
 
 	pll_lock(pll);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pll_gf40lp_laint_disable(struct clk_hw *hw)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
+अटल व्योम pll_gf40lp_laपूर्णांक_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
 	u32 val;
 
-	val = pll_readl(pll, PLL_CTRL1);
+	val = pll_पढ़ोl(pll, PLL_CTRL1);
 	val |= PLL_INT_CTRL1_PD;
-	pll_writel(pll, val, PLL_CTRL1);
-}
+	pll_ग_लिखोl(pll, val, PLL_CTRL1);
+पूर्ण
 
-static int pll_gf40lp_laint_is_enabled(struct clk_hw *hw)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
+अटल पूर्णांक pll_gf40lp_laपूर्णांक_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
 
-	return !(pll_readl(pll, PLL_CTRL1) & PLL_INT_CTRL1_PD);
-}
+	वापस !(pll_पढ़ोl(pll, PLL_CTRL1) & PLL_INT_CTRL1_PD);
+पूर्ण
 
-static int pll_gf40lp_laint_set_rate(struct clk_hw *hw, unsigned long rate,
-				     unsigned long parent_rate)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
-	struct pistachio_pll_rate_table *params;
-	int enabled = pll_gf40lp_laint_is_enabled(hw);
-	u32 val, vco, old_postdiv1, old_postdiv2;
-	const char *name = clk_hw_get_name(hw);
+अटल पूर्णांक pll_gf40lp_laपूर्णांक_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
+	काष्ठा pistachio_pll_rate_table *params;
+	पूर्णांक enabled = pll_gf40lp_laपूर्णांक_is_enabled(hw);
+	u32 val, vco, old_postभाग1, old_postभाग2;
+	स्थिर अक्षर *name = clk_hw_get_name(hw);
 
-	if (rate < MIN_OUTPUT_LA || rate > MAX_OUTPUT_LA)
-		return -EINVAL;
+	अगर (rate < MIN_OUTPUT_LA || rate > MAX_OUTPUT_LA)
+		वापस -EINVAL;
 
 	params = pll_get_params(pll, parent_rate, rate);
-	if (!params || !params->refdiv)
-		return -EINVAL;
+	अगर (!params || !params->refभाग)
+		वापस -EINVAL;
 
-	vco = div_u64(params->fref * params->fbdiv, params->refdiv);
-	if (vco < MIN_VCO_LA || vco > MAX_VCO_LA)
+	vco = भाग_u64(params->fref * params->fbभाग, params->refभाग);
+	अगर (vco < MIN_VCO_LA || vco > MAX_VCO_LA)
 		pr_warn("%s: VCO %u is out of range %lu..%lu\n", name, vco,
 			MIN_VCO_LA, MAX_VCO_LA);
 
-	val = div_u64(params->fref, params->refdiv);
-	if (val < MIN_PFD)
+	val = भाग_u64(params->fref, params->refभाग);
+	अगर (val < MIN_PFD)
 		pr_warn("%s: PFD %u is too low (min %lu)\n",
 			name, val, MIN_PFD);
-	if (val > vco / 16)
+	अगर (val > vco / 16)
 		pr_warn("%s: PFD %u is too high (max %u)\n",
 			name, val, vco / 16);
 
-	val = pll_readl(pll, PLL_CTRL1);
+	val = pll_पढ़ोl(pll, PLL_CTRL1);
 
-	old_postdiv1 = (val >> PLL_INT_CTRL1_POSTDIV1_SHIFT) &
+	old_postभाग1 = (val >> PLL_INT_CTRL1_POSTDIV1_SHIFT) &
 		       PLL_INT_CTRL1_POSTDIV1_MASK;
-	old_postdiv2 = (val >> PLL_INT_CTRL1_POSTDIV2_SHIFT) &
+	old_postभाग2 = (val >> PLL_INT_CTRL1_POSTDIV2_SHIFT) &
 		       PLL_INT_CTRL1_POSTDIV2_MASK;
-	if (enabled &&
-	    (params->postdiv1 != old_postdiv1 ||
-	     params->postdiv2 != old_postdiv2))
+	अगर (enabled &&
+	    (params->postभाग1 != old_postभाग1 ||
+	     params->postभाग2 != old_postभाग2))
 		pr_warn("%s: changing postdiv while PLL is enabled\n", name);
 
-	if (params->postdiv2 > params->postdiv1)
+	अगर (params->postभाग2 > params->postभाग1)
 		pr_warn("%s: postdiv2 should not exceed postdiv1\n", name);
 
 	val &= ~((PLL_CTRL1_REFDIV_MASK << PLL_CTRL1_REFDIV_SHIFT) |
 		 (PLL_CTRL1_FBDIV_MASK << PLL_CTRL1_FBDIV_SHIFT) |
 		 (PLL_INT_CTRL1_POSTDIV1_MASK << PLL_INT_CTRL1_POSTDIV1_SHIFT) |
 		 (PLL_INT_CTRL1_POSTDIV2_MASK << PLL_INT_CTRL1_POSTDIV2_SHIFT));
-	val |= (params->refdiv << PLL_CTRL1_REFDIV_SHIFT) |
-		(params->fbdiv << PLL_CTRL1_FBDIV_SHIFT) |
-		(params->postdiv1 << PLL_INT_CTRL1_POSTDIV1_SHIFT) |
-		(params->postdiv2 << PLL_INT_CTRL1_POSTDIV2_SHIFT);
-	pll_writel(pll, val, PLL_CTRL1);
+	val |= (params->refभाग << PLL_CTRL1_REFDIV_SHIFT) |
+		(params->fbभाग << PLL_CTRL1_FBDIV_SHIFT) |
+		(params->postभाग1 << PLL_INT_CTRL1_POSTDIV1_SHIFT) |
+		(params->postभाग2 << PLL_INT_CTRL1_POSTDIV2_SHIFT);
+	pll_ग_लिखोl(pll, val, PLL_CTRL1);
 
-	if (enabled)
+	अगर (enabled)
 		pll_lock(pll);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long pll_gf40lp_laint_recalc_rate(struct clk_hw *hw,
-						  unsigned long parent_rate)
-{
-	struct pistachio_clk_pll *pll = to_pistachio_pll(hw);
-	u32 val, prediv, fbdiv, postdiv1, postdiv2;
+अटल अचिन्हित दीर्घ pll_gf40lp_laपूर्णांक_recalc_rate(काष्ठा clk_hw *hw,
+						  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा pistachio_clk_pll *pll = to_pistachio_pll(hw);
+	u32 val, preभाग, fbभाग, postभाग1, postभाग2;
 	u64 rate = parent_rate;
 
-	val = pll_readl(pll, PLL_CTRL1);
-	prediv = (val >> PLL_CTRL1_REFDIV_SHIFT) & PLL_CTRL1_REFDIV_MASK;
-	fbdiv = (val >> PLL_CTRL1_FBDIV_SHIFT) & PLL_CTRL1_FBDIV_MASK;
-	postdiv1 = (val >> PLL_INT_CTRL1_POSTDIV1_SHIFT) &
+	val = pll_पढ़ोl(pll, PLL_CTRL1);
+	preभाग = (val >> PLL_CTRL1_REFDIV_SHIFT) & PLL_CTRL1_REFDIV_MASK;
+	fbभाग = (val >> PLL_CTRL1_FBDIV_SHIFT) & PLL_CTRL1_FBDIV_MASK;
+	postभाग1 = (val >> PLL_INT_CTRL1_POSTDIV1_SHIFT) &
 		PLL_INT_CTRL1_POSTDIV1_MASK;
-	postdiv2 = (val >> PLL_INT_CTRL1_POSTDIV2_SHIFT) &
+	postभाग2 = (val >> PLL_INT_CTRL1_POSTDIV2_SHIFT) &
 		PLL_INT_CTRL1_POSTDIV2_MASK;
 
-	rate *= fbdiv;
-	rate = do_div_round_closest(rate, prediv * postdiv1 * postdiv2);
+	rate *= fbभाग;
+	rate = करो_भाग_round_बंदst(rate, preभाग * postभाग1 * postभाग2);
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static const struct clk_ops pll_gf40lp_laint_ops = {
-	.enable = pll_gf40lp_laint_enable,
-	.disable = pll_gf40lp_laint_disable,
-	.is_enabled = pll_gf40lp_laint_is_enabled,
-	.recalc_rate = pll_gf40lp_laint_recalc_rate,
+अटल स्थिर काष्ठा clk_ops pll_gf40lp_laपूर्णांक_ops = अणु
+	.enable = pll_gf40lp_laपूर्णांक_enable,
+	.disable = pll_gf40lp_laपूर्णांक_disable,
+	.is_enabled = pll_gf40lp_laपूर्णांक_is_enabled,
+	.recalc_rate = pll_gf40lp_laपूर्णांक_recalc_rate,
 	.round_rate = pll_round_rate,
-	.set_rate = pll_gf40lp_laint_set_rate,
-};
+	.set_rate = pll_gf40lp_laपूर्णांक_set_rate,
+पूर्ण;
 
-static const struct clk_ops pll_gf40lp_laint_fixed_ops = {
-	.enable = pll_gf40lp_laint_enable,
-	.disable = pll_gf40lp_laint_disable,
-	.is_enabled = pll_gf40lp_laint_is_enabled,
-	.recalc_rate = pll_gf40lp_laint_recalc_rate,
-};
+अटल स्थिर काष्ठा clk_ops pll_gf40lp_laपूर्णांक_fixed_ops = अणु
+	.enable = pll_gf40lp_laपूर्णांक_enable,
+	.disable = pll_gf40lp_laपूर्णांक_disable,
+	.is_enabled = pll_gf40lp_laपूर्णांक_is_enabled,
+	.recalc_rate = pll_gf40lp_laपूर्णांक_recalc_rate,
+पूर्ण;
 
-static struct clk *pll_register(const char *name, const char *parent_name,
-				unsigned long flags, void __iomem *base,
-				enum pistachio_pll_type type,
-				struct pistachio_pll_rate_table *rates,
-				unsigned int nr_rates)
-{
-	struct pistachio_clk_pll *pll;
-	struct clk_init_data init;
-	struct clk *clk;
+अटल काष्ठा clk *pll_रेजिस्टर(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+				अचिन्हित दीर्घ flags, व्योम __iomem *base,
+				क्रमागत pistachio_pll_type type,
+				काष्ठा pistachio_pll_rate_table *rates,
+				अचिन्हित पूर्णांक nr_rates)
+अणु
+	काष्ठा pistachio_clk_pll *pll;
+	काष्ठा clk_init_data init;
+	काष्ठा clk *clk;
 
-	pll = kzalloc(sizeof(*pll), GFP_KERNEL);
-	if (!pll)
-		return ERR_PTR(-ENOMEM);
+	pll = kzalloc(माप(*pll), GFP_KERNEL);
+	अगर (!pll)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.flags = flags | CLK_GET_RATE_NOCACHE;
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 
-	switch (type) {
-	case PLL_GF40LP_FRAC:
-		if (rates)
+	चयन (type) अणु
+	हाल PLL_GF40LP_FRAC:
+		अगर (rates)
 			init.ops = &pll_gf40lp_frac_ops;
-		else
+		अन्यथा
 			init.ops = &pll_gf40lp_frac_fixed_ops;
-		break;
-	case PLL_GF40LP_LAINT:
-		if (rates)
-			init.ops = &pll_gf40lp_laint_ops;
-		else
-			init.ops = &pll_gf40lp_laint_fixed_ops;
-		break;
-	default:
+		अवरोध;
+	हाल PLL_GF40LP_LAINT:
+		अगर (rates)
+			init.ops = &pll_gf40lp_laपूर्णांक_ops;
+		अन्यथा
+			init.ops = &pll_gf40lp_laपूर्णांक_fixed_ops;
+		अवरोध;
+	शेष:
 		pr_err("Unrecognized PLL type %u\n", type);
-		kfree(pll);
-		return ERR_PTR(-EINVAL);
-	}
+		kमुक्त(pll);
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	pll->hw.init = &init;
 	pll->base = base;
 	pll->rates = rates;
 	pll->nr_rates = nr_rates;
 
-	clk = clk_register(NULL, &pll->hw);
-	if (IS_ERR(clk))
-		kfree(pll);
+	clk = clk_रेजिस्टर(शून्य, &pll->hw);
+	अगर (IS_ERR(clk))
+		kमुक्त(pll);
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
-void pistachio_clk_register_pll(struct pistachio_clk_provider *p,
-				struct pistachio_pll *pll,
-				unsigned int num)
-{
-	struct clk *clk;
-	unsigned int i;
+व्योम pistachio_clk_रेजिस्टर_pll(काष्ठा pistachio_clk_provider *p,
+				काष्ठा pistachio_pll *pll,
+				अचिन्हित पूर्णांक num)
+अणु
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num; i++) {
-		clk = pll_register(pll[i].name, pll[i].parent,
+	क्रम (i = 0; i < num; i++) अणु
+		clk = pll_रेजिस्टर(pll[i].name, pll[i].parent,
 				   0, p->base + pll[i].reg_base,
 				   pll[i].type, pll[i].rates,
 				   pll[i].nr_rates);
 		p->clk_data.clks[pll[i].id] = clk;
-	}
-}
+	पूर्ण
+पूर्ण

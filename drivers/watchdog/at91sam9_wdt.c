@@ -1,338 +1,339 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Watchdog driver for Atmel AT91SAM9x processors.
+ * Watchकरोg driver क्रम Aपंचांगel AT91SAM9x processors.
  *
  * Copyright (C) 2008 Renaud CERRATO r.cerrato@til-technologies.fr
  *
  */
 
 /*
- * The Watchdog Timer Mode Register can be only written to once. If the
- * timeout need to be set from Linux, be sure that the bootstrap or the
- * bootloader doesn't write to this register.
+ * The Watchकरोg Timer Mode Register can be only written to once. If the
+ * समयout need to be set from Linux, be sure that the bootstrap or the
+ * bootloader करोesn't ग_लिखो to this रेजिस्टर.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/clk.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/types.h>
-#include <linux/watchdog.h>
-#include <linux/jiffies.h>
-#include <linux/timer.h>
-#include <linux/bitops.h>
-#include <linux/uaccess.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/types.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
 
-#include "at91sam9_wdt.h"
+#समावेश "at91sam9_wdt.h"
 
-#define DRV_NAME "AT91SAM9 Watchdog"
+#घोषणा DRV_NAME "AT91SAM9 Watchdog"
 
-#define wdt_read(wdt, field) \
-	readl_relaxed((wdt)->base + (field))
-#define wdt_write(wtd, field, val) \
-	writel_relaxed((val), (wdt)->base + (field))
+#घोषणा wdt_पढ़ो(wdt, field) \
+	पढ़ोl_relaxed((wdt)->base + (field))
+#घोषणा wdt_ग_लिखो(wtd, field, val) \
+	ग_लिखोl_relaxed((val), (wdt)->base + (field))
 
-/* AT91SAM9 watchdog runs a 12bit counter @ 256Hz,
- * use this to convert a watchdog
+/* AT91SAM9 watchकरोg runs a 12bit counter @ 256Hz,
+ * use this to convert a watchकरोg
  * value from/to milliseconds.
  */
-#define ticks_to_hz_rounddown(t)	((((t) + 1) * HZ) >> 8)
-#define ticks_to_hz_roundup(t)		(((((t) + 1) * HZ) + 255) >> 8)
-#define ticks_to_secs(t)		(((t) + 1) >> 8)
-#define secs_to_ticks(s)		((s) ? (((s) << 8) - 1) : 0)
+#घोषणा ticks_to_hz_roundकरोwn(t)	((((t) + 1) * HZ) >> 8)
+#घोषणा ticks_to_hz_roundup(t)		(((((t) + 1) * HZ) + 255) >> 8)
+#घोषणा ticks_to_secs(t)		(((t) + 1) >> 8)
+#घोषणा secs_to_ticks(s)		((s) ? (((s) << 8) - 1) : 0)
 
-#define WDT_MR_RESET	0x3FFF2FFF
+#घोषणा WDT_MR_RESET	0x3FFF2FFF
 
-/* Watchdog max counter value in ticks */
-#define WDT_COUNTER_MAX_TICKS	0xFFF
+/* Watchकरोg max counter value in ticks */
+#घोषणा WDT_COUNTER_MAX_TICKS	0xFFF
 
-/* Watchdog max delta/value in secs */
-#define WDT_COUNTER_MAX_SECS	ticks_to_secs(WDT_COUNTER_MAX_TICKS)
+/* Watchकरोg max delta/value in secs */
+#घोषणा WDT_COUNTER_MAX_SECS	ticks_to_secs(WDT_COUNTER_MAX_TICKS)
 
-/* Hardware timeout in seconds */
-#define WDT_HW_TIMEOUT 2
+/* Hardware समयout in seconds */
+#घोषणा WDT_HW_TIMEOUT 2
 
 /* Timer heartbeat (500ms) */
-#define WDT_TIMEOUT	(HZ/2)
+#घोषणा WDT_TIMEOUT	(HZ/2)
 
-/* User land timeout */
-#define WDT_HEARTBEAT 15
-static int heartbeat;
-module_param(heartbeat, int, 0);
+/* User land समयout */
+#घोषणा WDT_HEARTBEAT 15
+अटल पूर्णांक heartbeat;
+module_param(heartbeat, पूर्णांक, 0);
 MODULE_PARM_DESC(heartbeat, "Watchdog heartbeats in seconds. "
 	"(default = " __MODULE_STRING(WDT_HEARTBEAT) ")");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started "
 	"(default=" __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-#define to_wdt(wdd) container_of(wdd, struct at91wdt, wdd)
-struct at91wdt {
-	struct watchdog_device wdd;
-	void __iomem *base;
-	unsigned long next_heartbeat;	/* the next_heartbeat for the timer */
-	struct timer_list timer;	/* The timer that pings the watchdog */
+#घोषणा to_wdt(wdd) container_of(wdd, काष्ठा at91wdt, wdd)
+काष्ठा at91wdt अणु
+	काष्ठा watchकरोg_device wdd;
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ next_heartbeat;	/* the next_heartbeat क्रम the समयr */
+	काष्ठा समयr_list समयr;	/* The समयr that pings the watchकरोg */
 	u32 mr;
 	u32 mr_mask;
-	unsigned long heartbeat;	/* WDT heartbeat in jiffies */
+	अचिन्हित दीर्घ heartbeat;	/* WDT heartbeat in jअगरfies */
 	bool nowayout;
-	unsigned int irq;
-	struct clk *sclk;
-};
+	अचिन्हित पूर्णांक irq;
+	काष्ठा clk *sclk;
+पूर्ण;
 
 /* ......................................................................... */
 
-static irqreturn_t wdt_interrupt(int irq, void *dev_id)
-{
-	struct at91wdt *wdt = (struct at91wdt *)dev_id;
+अटल irqवापस_t wdt_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा at91wdt *wdt = (काष्ठा at91wdt *)dev_id;
 
-	if (wdt_read(wdt, AT91_WDT_SR)) {
+	अगर (wdt_पढ़ो(wdt, AT91_WDT_SR)) अणु
 		pr_crit("at91sam9 WDT software reset\n");
 		emergency_restart();
 		pr_crit("Reboot didn't ?????\n");
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * Reload the watchdog timer.  (ie, pat the watchdog)
+ * Reload the watchकरोg समयr.  (ie, pat the watchकरोg)
  */
-static inline void at91_wdt_reset(struct at91wdt *wdt)
-{
-	wdt_write(wdt, AT91_WDT_CR, AT91_WDT_KEY | AT91_WDT_WDRSTT);
-}
+अटल अंतरभूत व्योम at91_wdt_reset(काष्ठा at91wdt *wdt)
+अणु
+	wdt_ग_लिखो(wdt, AT91_WDT_CR, AT91_WDT_KEY | AT91_WDT_WDRSTT);
+पूर्ण
 
 /*
  * Timer tick
  */
-static void at91_ping(struct timer_list *t)
-{
-	struct at91wdt *wdt = from_timer(wdt, t, timer);
-	if (time_before(jiffies, wdt->next_heartbeat) ||
-	    !watchdog_active(&wdt->wdd)) {
+अटल व्योम at91_ping(काष्ठा समयr_list *t)
+अणु
+	काष्ठा at91wdt *wdt = from_समयr(wdt, t, समयr);
+	अगर (समय_beक्रमe(jअगरfies, wdt->next_heartbeat) ||
+	    !watchकरोg_active(&wdt->wdd)) अणु
 		at91_wdt_reset(wdt);
-		mod_timer(&wdt->timer, jiffies + wdt->heartbeat);
-	} else {
+		mod_समयr(&wdt->समयr, jअगरfies + wdt->heartbeat);
+	पूर्ण अन्यथा अणु
 		pr_crit("I will reset your machine !\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int at91_wdt_start(struct watchdog_device *wdd)
-{
-	struct at91wdt *wdt = to_wdt(wdd);
-	/* calculate when the next userspace timeout will be */
-	wdt->next_heartbeat = jiffies + wdd->timeout * HZ;
-	return 0;
-}
+अटल पूर्णांक at91_wdt_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा at91wdt *wdt = to_wdt(wdd);
+	/* calculate when the next userspace समयout will be */
+	wdt->next_heartbeat = jअगरfies + wdd->समयout * HZ;
+	वापस 0;
+पूर्ण
 
-static int at91_wdt_stop(struct watchdog_device *wdd)
-{
-	/* The watchdog timer hardware can not be stopped... */
-	return 0;
-}
+अटल पूर्णांक at91_wdt_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	/* The watchकरोg समयr hardware can not be stopped... */
+	वापस 0;
+पूर्ण
 
-static int at91_wdt_set_timeout(struct watchdog_device *wdd, unsigned int new_timeout)
-{
-	wdd->timeout = new_timeout;
-	return at91_wdt_start(wdd);
-}
+अटल पूर्णांक at91_wdt_set_समयout(काष्ठा watchकरोg_device *wdd, अचिन्हित पूर्णांक new_समयout)
+अणु
+	wdd->समयout = new_समयout;
+	वापस at91_wdt_start(wdd);
+पूर्ण
 
-static int at91_wdt_init(struct platform_device *pdev, struct at91wdt *wdt)
-{
-	u32 tmp;
+अटल पूर्णांक at91_wdt_init(काष्ठा platक्रमm_device *pdev, काष्ठा at91wdt *wdt)
+अणु
+	u32 पंचांगp;
 	u32 delta;
 	u32 value;
-	int err;
+	पूर्णांक err;
 	u32 mask = wdt->mr_mask;
-	unsigned long min_heartbeat = 1;
-	unsigned long max_heartbeat;
-	struct device *dev = &pdev->dev;
+	अचिन्हित दीर्घ min_heartbeat = 1;
+	अचिन्हित दीर्घ max_heartbeat;
+	काष्ठा device *dev = &pdev->dev;
 
-	tmp = wdt_read(wdt, AT91_WDT_MR);
-	if ((tmp & mask) != (wdt->mr & mask)) {
-		if (tmp == WDT_MR_RESET) {
-			wdt_write(wdt, AT91_WDT_MR, wdt->mr);
-			tmp = wdt_read(wdt, AT91_WDT_MR);
-		}
-	}
+	पंचांगp = wdt_पढ़ो(wdt, AT91_WDT_MR);
+	अगर ((पंचांगp & mask) != (wdt->mr & mask)) अणु
+		अगर (पंचांगp == WDT_MR_RESET) अणु
+			wdt_ग_लिखो(wdt, AT91_WDT_MR, wdt->mr);
+			पंचांगp = wdt_पढ़ो(wdt, AT91_WDT_MR);
+		पूर्ण
+	पूर्ण
 
-	if (tmp & AT91_WDT_WDDIS) {
-		if (wdt->mr & AT91_WDT_WDDIS)
-			return 0;
+	अगर (पंचांगp & AT91_WDT_WDDIS) अणु
+		अगर (wdt->mr & AT91_WDT_WDDIS)
+			वापस 0;
 		dev_err(dev, "watchdog is disabled\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	value = tmp & AT91_WDT_WDV;
-	delta = (tmp & AT91_WDT_WDD) >> 16;
+	value = पंचांगp & AT91_WDT_WDV;
+	delta = (पंचांगp & AT91_WDT_WDD) >> 16;
 
-	if (delta < value)
+	अगर (delta < value)
 		min_heartbeat = ticks_to_hz_roundup(value - delta);
 
-	max_heartbeat = ticks_to_hz_rounddown(value);
-	if (!max_heartbeat) {
+	max_heartbeat = ticks_to_hz_roundकरोwn(value);
+	अगर (!max_heartbeat) अणु
 		dev_err(dev,
 			"heartbeat is too small for the system to handle it correctly\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Try to reset the watchdog counter 4 or 2 times more often than
-	 * actually requested, to avoid spurious watchdog reset.
+	 * Try to reset the watchकरोg counter 4 or 2 बार more often than
+	 * actually requested, to aव्योम spurious watchकरोg reset.
 	 * If this is not possible because of the min_heartbeat value, reset
 	 * it at the min_heartbeat period.
 	 */
-	if ((max_heartbeat / 4) >= min_heartbeat)
+	अगर ((max_heartbeat / 4) >= min_heartbeat)
 		wdt->heartbeat = max_heartbeat / 4;
-	else if ((max_heartbeat / 2) >= min_heartbeat)
+	अन्यथा अगर ((max_heartbeat / 2) >= min_heartbeat)
 		wdt->heartbeat = max_heartbeat / 2;
-	else
+	अन्यथा
 		wdt->heartbeat = min_heartbeat;
 
-	if (max_heartbeat < min_heartbeat + 4)
+	अगर (max_heartbeat < min_heartbeat + 4)
 		dev_warn(dev,
 			 "min heartbeat and max heartbeat might be too close for the system to handle it correctly\n");
 
-	if ((tmp & AT91_WDT_WDFIEN) && wdt->irq) {
-		err = request_irq(wdt->irq, wdt_interrupt,
+	अगर ((पंचांगp & AT91_WDT_WDFIEN) && wdt->irq) अणु
+		err = request_irq(wdt->irq, wdt_पूर्णांकerrupt,
 				  IRQF_SHARED | IRQF_IRQPOLL |
 				  IRQF_NO_SUSPEND,
 				  pdev->name, wdt);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if ((tmp & wdt->mr_mask) != (wdt->mr & wdt->mr_mask))
+	अगर ((पंचांगp & wdt->mr_mask) != (wdt->mr & wdt->mr_mask))
 		dev_warn(dev,
 			 "watchdog already configured differently (mr = %x expecting %x)\n",
-			 tmp & wdt->mr_mask, wdt->mr & wdt->mr_mask);
+			 पंचांगp & wdt->mr_mask, wdt->mr & wdt->mr_mask);
 
-	timer_setup(&wdt->timer, at91_ping, 0);
+	समयr_setup(&wdt->समयr, at91_ping, 0);
 
 	/*
-	 * Use min_heartbeat the first time to avoid spurious watchdog reset:
-	 * we don't know for how long the watchdog counter is running, and
-	 *  - resetting it right now might trigger a watchdog fault reset
-	 *  - waiting for heartbeat time might lead to a watchdog timeout
+	 * Use min_heartbeat the first समय to aव्योम spurious watchकरोg reset:
+	 * we करोn't know क्रम how दीर्घ the watchकरोg counter is running, and
+	 *  - resetting it right now might trigger a watchकरोg fault reset
+	 *  - रुकोing क्रम heartbeat समय might lead to a watchकरोg समयout
 	 *    reset
 	 */
-	mod_timer(&wdt->timer, jiffies + min_heartbeat);
+	mod_समयr(&wdt->समयr, jअगरfies + min_heartbeat);
 
-	/* Try to set timeout from device tree first */
-	if (watchdog_init_timeout(&wdt->wdd, 0, dev))
-		watchdog_init_timeout(&wdt->wdd, heartbeat, dev);
-	watchdog_set_nowayout(&wdt->wdd, wdt->nowayout);
-	err = watchdog_register_device(&wdt->wdd);
-	if (err)
-		goto out_stop_timer;
+	/* Try to set समयout from device tree first */
+	अगर (watchकरोg_init_समयout(&wdt->wdd, 0, dev))
+		watchकरोg_init_समयout(&wdt->wdd, heartbeat, dev);
+	watchकरोg_set_nowayout(&wdt->wdd, wdt->nowayout);
+	err = watchकरोg_रेजिस्टर_device(&wdt->wdd);
+	अगर (err)
+		जाओ out_stop_समयr;
 
-	wdt->next_heartbeat = jiffies + wdt->wdd.timeout * HZ;
+	wdt->next_heartbeat = jअगरfies + wdt->wdd.समयout * HZ;
 
-	return 0;
+	वापस 0;
 
-out_stop_timer:
-	del_timer(&wdt->timer);
-	return err;
-}
+out_stop_समयr:
+	del_समयr(&wdt->समयr);
+	वापस err;
+पूर्ण
 
 /* ......................................................................... */
 
-static const struct watchdog_info at91_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info at91_wdt_info = अणु
 	.identity	= DRV_NAME,
 	.options	= WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING |
 						WDIOF_MAGICCLOSE,
-};
+पूर्ण;
 
-static const struct watchdog_ops at91_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops at91_wdt_ops = अणु
 	.owner =	THIS_MODULE,
 	.start =	at91_wdt_start,
 	.stop =		at91_wdt_stop,
-	.set_timeout =	at91_wdt_set_timeout,
-};
+	.set_समयout =	at91_wdt_set_समयout,
+पूर्ण;
 
-#if defined(CONFIG_OF)
-static int of_at91wdt_init(struct device_node *np, struct at91wdt *wdt)
-{
+#अगर defined(CONFIG_OF)
+अटल पूर्णांक of_at91wdt_init(काष्ठा device_node *np, काष्ठा at91wdt *wdt)
+अणु
 	u32 min = 0;
 	u32 max = WDT_COUNTER_MAX_SECS;
-	const char *tmp;
+	स्थिर अक्षर *पंचांगp;
 
-	/* Get the interrupts property */
+	/* Get the पूर्णांकerrupts property */
 	wdt->irq = irq_of_parse_and_map(np, 0);
-	if (!wdt->irq)
+	अगर (!wdt->irq)
 		dev_warn(wdt->wdd.parent, "failed to get IRQ from DT\n");
 
-	if (!of_property_read_u32_index(np, "atmel,max-heartbeat-sec", 0,
-					&max)) {
-		if (!max || max > WDT_COUNTER_MAX_SECS)
+	अगर (!of_property_पढ़ो_u32_index(np, "atmel,max-heartbeat-sec", 0,
+					&max)) अणु
+		अगर (!max || max > WDT_COUNTER_MAX_SECS)
 			max = WDT_COUNTER_MAX_SECS;
 
-		if (!of_property_read_u32_index(np, "atmel,min-heartbeat-sec",
-						0, &min)) {
-			if (min >= max)
+		अगर (!of_property_पढ़ो_u32_index(np, "atmel,min-heartbeat-sec",
+						0, &min)) अणु
+			अगर (min >= max)
 				min = max - 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	min = secs_to_ticks(min);
 	max = secs_to_ticks(max);
 
 	wdt->mr_mask = 0x3FFFFFFF;
 	wdt->mr = 0;
-	if (!of_property_read_string(np, "atmel,watchdog-type", &tmp) &&
-	    !strcmp(tmp, "software")) {
+	अगर (!of_property_पढ़ो_string(np, "atmel,watchdog-type", &पंचांगp) &&
+	    !म_भेद(पंचांगp, "software")) अणु
 		wdt->mr |= AT91_WDT_WDFIEN;
 		wdt->mr_mask &= ~AT91_WDT_WDRPROC;
-	} else {
+	पूर्ण अन्यथा अणु
 		wdt->mr |= AT91_WDT_WDRSTEN;
-	}
+	पूर्ण
 
-	if (!of_property_read_string(np, "atmel,reset-type", &tmp) &&
-	    !strcmp(tmp, "proc"))
+	अगर (!of_property_पढ़ो_string(np, "atmel,reset-type", &पंचांगp) &&
+	    !म_भेद(पंचांगp, "proc"))
 		wdt->mr |= AT91_WDT_WDRPROC;
 
-	if (of_property_read_bool(np, "atmel,disable")) {
+	अगर (of_property_पढ़ो_bool(np, "atmel,disable")) अणु
 		wdt->mr |= AT91_WDT_WDDIS;
 		wdt->mr_mask &= AT91_WDT_WDDIS;
-	}
+	पूर्ण
 
-	if (of_property_read_bool(np, "atmel,idle-halt"))
+	अगर (of_property_पढ़ो_bool(np, "atmel,idle-halt"))
 		wdt->mr |= AT91_WDT_WDIDLEHLT;
 
-	if (of_property_read_bool(np, "atmel,dbg-halt"))
+	अगर (of_property_पढ़ो_bool(np, "atmel,dbg-halt"))
 		wdt->mr |= AT91_WDT_WDDBGHLT;
 
 	wdt->mr |= max | ((max - min) << 16);
 
-	return 0;
-}
-#else
-static inline int of_at91wdt_init(struct device_node *np, struct at91wdt *wdt)
-{
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक of_at91wdt_init(काष्ठा device_node *np, काष्ठा at91wdt *wdt)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int __init at91wdt_probe(struct platform_device *pdev)
-{
-	int err;
-	struct at91wdt *wdt;
+अटल पूर्णांक __init at91wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक err;
+	काष्ठा at91wdt *wdt;
 
-	wdt = devm_kzalloc(&pdev->dev, sizeof(*wdt), GFP_KERNEL);
-	if (!wdt)
-		return -ENOMEM;
+	wdt = devm_kzalloc(&pdev->dev, माप(*wdt), GFP_KERNEL);
+	अगर (!wdt)
+		वापस -ENOMEM;
 
 	wdt->mr = (WDT_HW_TIMEOUT * 256) | AT91_WDT_WDRSTEN | AT91_WDT_WDD |
 		  AT91_WDT_WDDBGHLT | AT91_WDT_WDIDLEHLT;
@@ -341,77 +342,77 @@ static int __init at91wdt_probe(struct platform_device *pdev)
 	wdt->wdd.parent = &pdev->dev;
 	wdt->wdd.info = &at91_wdt_info;
 	wdt->wdd.ops = &at91_wdt_ops;
-	wdt->wdd.timeout = WDT_HEARTBEAT;
-	wdt->wdd.min_timeout = 1;
-	wdt->wdd.max_timeout = 0xFFFF;
+	wdt->wdd.समयout = WDT_HEARTBEAT;
+	wdt->wdd.min_समयout = 1;
+	wdt->wdd.max_समयout = 0xFFFF;
 
-	wdt->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(wdt->base))
-		return PTR_ERR(wdt->base);
+	wdt->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(wdt->base))
+		वापस PTR_ERR(wdt->base);
 
-	wdt->sclk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(wdt->sclk))
-		return PTR_ERR(wdt->sclk);
+	wdt->sclk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(wdt->sclk))
+		वापस PTR_ERR(wdt->sclk);
 
 	err = clk_prepare_enable(wdt->sclk);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Could not enable slow clock\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (pdev->dev.of_node) {
+	अगर (pdev->dev.of_node) अणु
 		err = of_at91wdt_init(pdev->dev.of_node, wdt);
-		if (err)
-			goto err_clk;
-	}
+		अगर (err)
+			जाओ err_clk;
+	पूर्ण
 
 	err = at91_wdt_init(pdev, wdt);
-	if (err)
-		goto err_clk;
+	अगर (err)
+		जाओ err_clk;
 
-	platform_set_drvdata(pdev, wdt);
+	platक्रमm_set_drvdata(pdev, wdt);
 
 	pr_info("enabled (heartbeat=%d sec, nowayout=%d)\n",
-		wdt->wdd.timeout, wdt->nowayout);
+		wdt->wdd.समयout, wdt->nowayout);
 
-	return 0;
+	वापस 0;
 
 err_clk:
 	clk_disable_unprepare(wdt->sclk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __exit at91wdt_remove(struct platform_device *pdev)
-{
-	struct at91wdt *wdt = platform_get_drvdata(pdev);
-	watchdog_unregister_device(&wdt->wdd);
+अटल पूर्णांक __निकास at91wdt_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा at91wdt *wdt = platक्रमm_get_drvdata(pdev);
+	watchकरोg_unरेजिस्टर_device(&wdt->wdd);
 
 	pr_warn("I quit now, hardware will probably reboot!\n");
-	del_timer(&wdt->timer);
+	del_समयr(&wdt->समयr);
 	clk_disable_unprepare(wdt->sclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if defined(CONFIG_OF)
-static const struct of_device_id at91_wdt_dt_ids[] = {
-	{ .compatible = "atmel,at91sam9260-wdt" },
-	{ /* sentinel */ }
-};
+#अगर defined(CONFIG_OF)
+अटल स्थिर काष्ठा of_device_id at91_wdt_dt_ids[] = अणु
+	अणु .compatible = "atmel,at91sam9260-wdt" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, at91_wdt_dt_ids);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver at91wdt_driver = {
-	.remove		= __exit_p(at91wdt_remove),
-	.driver		= {
+अटल काष्ठा platक्रमm_driver at91wdt_driver = अणु
+	.हटाओ		= __निकास_p(at91wdt_हटाओ),
+	.driver		= अणु
 		.name	= "at91_wdt",
 		.of_match_table = of_match_ptr(at91_wdt_dt_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver_probe(at91wdt_driver, at91wdt_probe);
+module_platक्रमm_driver_probe(at91wdt_driver, at91wdt_probe);
 
 MODULE_AUTHOR("Renaud CERRATO <r.cerrato@til-technologies.fr>");
 MODULE_DESCRIPTION("Watchdog driver for Atmel AT91SAM9x processors");

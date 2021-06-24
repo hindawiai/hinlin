@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AD5592R / AD5593R Digital <-> Analog converters driver
  *
@@ -6,18 +7,18 @@
  * Author: Paul Cercueil <paul.cercueil@analog.com>
  */
 
-#ifndef __DRIVERS_IIO_DAC_AD5592R_BASE_H__
-#define __DRIVERS_IIO_DAC_AD5592R_BASE_H__
+#अगर_अघोषित __DRIVERS_IIO_DAC_AD5592R_BASE_H__
+#घोषणा __DRIVERS_IIO_DAC_AD5592R_BASE_H__
 
-#include <linux/types.h>
-#include <linux/cache.h>
-#include <linux/mutex.h>
-#include <linux/gpio/driver.h>
+#समावेश <linux/types.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/gpio/driver.h>
 
-struct device;
-struct ad5592r_state;
+काष्ठा device;
+काष्ठा ad5592r_state;
 
-enum ad5592r_registers {
+क्रमागत ad5592r_रेजिस्टरs अणु
 	AD5592R_REG_NOOP		= 0x0,
 	AD5592R_REG_DAC_READBACK	= 0x1,
 	AD5592R_REG_ADC_SEQ		= 0x2,
@@ -33,33 +34,33 @@ enum ad5592r_registers {
 	AD5592R_REG_OPEN_DRAIN		= 0xC,
 	AD5592R_REG_TRISTATE		= 0xD,
 	AD5592R_REG_RESET		= 0xF,
-};
+पूर्ण;
 
-#define AD5592R_REG_PD_EN_REF		BIT(9)
-#define AD5592R_REG_CTRL_ADC_RANGE	BIT(5)
-#define AD5592R_REG_CTRL_DAC_RANGE	BIT(4)
+#घोषणा AD5592R_REG_PD_EN_REF		BIT(9)
+#घोषणा AD5592R_REG_CTRL_ADC_RANGE	BIT(5)
+#घोषणा AD5592R_REG_CTRL_DAC_RANGE	BIT(4)
 
-struct ad5592r_rw_ops {
-	int (*write_dac)(struct ad5592r_state *st, unsigned chan, u16 value);
-	int (*read_adc)(struct ad5592r_state *st, unsigned chan, u16 *value);
-	int (*reg_write)(struct ad5592r_state *st, u8 reg, u16 value);
-	int (*reg_read)(struct ad5592r_state *st, u8 reg, u16 *value);
-	int (*gpio_read)(struct ad5592r_state *st, u8 *value);
-};
+काष्ठा ad5592r_rw_ops अणु
+	पूर्णांक (*ग_लिखो_dac)(काष्ठा ad5592r_state *st, अचिन्हित chan, u16 value);
+	पूर्णांक (*पढ़ो_adc)(काष्ठा ad5592r_state *st, अचिन्हित chan, u16 *value);
+	पूर्णांक (*reg_ग_लिखो)(काष्ठा ad5592r_state *st, u8 reg, u16 value);
+	पूर्णांक (*reg_पढ़ो)(काष्ठा ad5592r_state *st, u8 reg, u16 *value);
+	पूर्णांक (*gpio_पढ़ो)(काष्ठा ad5592r_state *st, u8 *value);
+पूर्ण;
 
-struct ad5592r_state {
-	struct device *dev;
-	struct regulator *reg;
-	struct gpio_chip gpiochip;
-	struct mutex gpio_lock;	/* Protect cached gpio_out, gpio_val, etc. */
-	struct mutex lock;
-	unsigned int num_channels;
-	const struct ad5592r_rw_ops *ops;
-	int scale_avail[2][2];
+काष्ठा ad5592r_state अणु
+	काष्ठा device *dev;
+	काष्ठा regulator *reg;
+	काष्ठा gpio_chip gpiochip;
+	काष्ठा mutex gpio_lock;	/* Protect cached gpio_out, gpio_val, etc. */
+	काष्ठा mutex lock;
+	अचिन्हित पूर्णांक num_channels;
+	स्थिर काष्ठा ad5592r_rw_ops *ops;
+	पूर्णांक scale_avail[2][2];
 	u16 cached_dac[8];
 	u16 cached_gp_ctrl;
 	u8 channel_modes[8];
-	u8 channel_offstate[8];
+	u8 channel_ofख_स्थितिe[8];
 	u8 gpio_map;
 	u8 gpio_out;
 	u8 gpio_in;
@@ -67,10 +68,10 @@ struct ad5592r_state {
 
 	__be16 spi_msg ____cacheline_aligned;
 	__be16 spi_msg_nop;
-};
+पूर्ण;
 
-int ad5592r_probe(struct device *dev, const char *name,
-		const struct ad5592r_rw_ops *ops);
-int ad5592r_remove(struct device *dev);
+पूर्णांक ad5592r_probe(काष्ठा device *dev, स्थिर अक्षर *name,
+		स्थिर काष्ठा ad5592r_rw_ops *ops);
+पूर्णांक ad5592r_हटाओ(काष्ठा device *dev);
 
-#endif /* __DRIVERS_IIO_DAC_AD5592R_BASE_H__ */
+#पूर्ण_अगर /* __DRIVERS_IIO_DAC_AD5592R_BASE_H__ */

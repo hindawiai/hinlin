@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Samsung SoC USB 1.1/2.0 PHY driver - S5PV210 support
  *
@@ -6,183 +7,183 @@
  * Authors: Kamil Debski <k.debski@samsung.com>
  */
 
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/phy/phy.h>
-#include "phy-samsung-usb2.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/phy/phy.h>
+#समावेश "phy-samsung-usb2.h"
 
-/* Exynos USB PHY registers */
+/* Exynos USB PHY रेजिस्टरs */
 
-/* PHY power control */
-#define S5PV210_UPHYPWR			0x0
+/* PHY घातer control */
+#घोषणा S5PV210_UPHYPWR			0x0
 
-#define S5PV210_UPHYPWR_PHY0_SUSPEND	BIT(0)
-#define S5PV210_UPHYPWR_PHY0_PWR	BIT(3)
-#define S5PV210_UPHYPWR_PHY0_OTG_PWR	BIT(4)
-#define S5PV210_UPHYPWR_PHY0	( \
+#घोषणा S5PV210_UPHYPWR_PHY0_SUSPEND	BIT(0)
+#घोषणा S5PV210_UPHYPWR_PHY0_PWR	BIT(3)
+#घोषणा S5PV210_UPHYPWR_PHY0_OTG_PWR	BIT(4)
+#घोषणा S5PV210_UPHYPWR_PHY0	( \
 	S5PV210_UPHYPWR_PHY0_SUSPEND | \
 	S5PV210_UPHYPWR_PHY0_PWR | \
 	S5PV210_UPHYPWR_PHY0_OTG_PWR)
 
-#define S5PV210_UPHYPWR_PHY1_SUSPEND	BIT(6)
-#define S5PV210_UPHYPWR_PHY1_PWR	BIT(7)
-#define S5PV210_UPHYPWR_PHY1 ( \
+#घोषणा S5PV210_UPHYPWR_PHY1_SUSPEND	BIT(6)
+#घोषणा S5PV210_UPHYPWR_PHY1_PWR	BIT(7)
+#घोषणा S5PV210_UPHYPWR_PHY1 ( \
 	S5PV210_UPHYPWR_PHY1_SUSPEND | \
 	S5PV210_UPHYPWR_PHY1_PWR)
 
-/* PHY clock control */
-#define S5PV210_UPHYCLK			0x4
+/* PHY घड़ी control */
+#घोषणा S5PV210_UPHYCLK			0x4
 
-#define S5PV210_UPHYCLK_PHYFSEL_MASK	(0x3 << 0)
-#define S5PV210_UPHYCLK_PHYFSEL_48MHZ	(0x0 << 0)
-#define S5PV210_UPHYCLK_PHYFSEL_24MHZ	(0x3 << 0)
-#define S5PV210_UPHYCLK_PHYFSEL_12MHZ	(0x2 << 0)
+#घोषणा S5PV210_UPHYCLK_PHYFSEL_MASK	(0x3 << 0)
+#घोषणा S5PV210_UPHYCLK_PHYFSEL_48MHZ	(0x0 << 0)
+#घोषणा S5PV210_UPHYCLK_PHYFSEL_24MHZ	(0x3 << 0)
+#घोषणा S5PV210_UPHYCLK_PHYFSEL_12MHZ	(0x2 << 0)
 
-#define S5PV210_UPHYCLK_PHY0_ID_PULLUP	BIT(2)
-#define S5PV210_UPHYCLK_PHY0_COMMON_ON	BIT(4)
-#define S5PV210_UPHYCLK_PHY1_COMMON_ON	BIT(7)
+#घोषणा S5PV210_UPHYCLK_PHY0_ID_PULLUP	BIT(2)
+#घोषणा S5PV210_UPHYCLK_PHY0_COMMON_ON	BIT(4)
+#घोषणा S5PV210_UPHYCLK_PHY1_COMMON_ON	BIT(7)
 
 /* PHY reset control */
-#define S5PV210_UPHYRST			0x8
+#घोषणा S5PV210_UPHYRST			0x8
 
-#define S5PV210_URSTCON_PHY0		BIT(0)
-#define S5PV210_URSTCON_OTG_HLINK	BIT(1)
-#define S5PV210_URSTCON_OTG_PHYLINK	BIT(2)
-#define S5PV210_URSTCON_PHY1_ALL	BIT(3)
-#define S5PV210_URSTCON_HOST_LINK_ALL	BIT(4)
+#घोषणा S5PV210_URSTCON_PHY0		BIT(0)
+#घोषणा S5PV210_URSTCON_OTG_HLINK	BIT(1)
+#घोषणा S5PV210_URSTCON_OTG_PHYLINK	BIT(2)
+#घोषणा S5PV210_URSTCON_PHY1_ALL	BIT(3)
+#घोषणा S5PV210_URSTCON_HOST_LINK_ALL	BIT(4)
 
-/* Isolation, configured in the power management unit */
-#define S5PV210_USB_ISOL_OFFSET		0x680c
-#define S5PV210_USB_ISOL_DEVICE		BIT(0)
-#define S5PV210_USB_ISOL_HOST		BIT(1)
+/* Isolation, configured in the घातer management unit */
+#घोषणा S5PV210_USB_ISOL_OFFSET		0x680c
+#घोषणा S5PV210_USB_ISOL_DEVICE		BIT(0)
+#घोषणा S5PV210_USB_ISOL_HOST		BIT(1)
 
 
-enum s5pv210_phy_id {
+क्रमागत s5pv210_phy_id अणु
 	S5PV210_DEVICE,
 	S5PV210_HOST,
 	S5PV210_NUM_PHYS,
-};
+पूर्ण;
 
 /*
- * s5pv210_rate_to_clk() converts the supplied clock rate to the value that
- * can be written to the phy register.
+ * s5pv210_rate_to_clk() converts the supplied घड़ी rate to the value that
+ * can be written to the phy रेजिस्टर.
  */
-static int s5pv210_rate_to_clk(unsigned long rate, u32 *reg)
-{
-	switch (rate) {
-	case 12 * MHZ:
+अटल पूर्णांक s5pv210_rate_to_clk(अचिन्हित दीर्घ rate, u32 *reg)
+अणु
+	चयन (rate) अणु
+	हाल 12 * MHZ:
 		*reg = S5PV210_UPHYCLK_PHYFSEL_12MHZ;
-		break;
-	case 24 * MHZ:
+		अवरोध;
+	हाल 24 * MHZ:
 		*reg = S5PV210_UPHYCLK_PHYFSEL_24MHZ;
-		break;
-	case 48 * MHZ:
+		अवरोध;
+	हाल 48 * MHZ:
 		*reg = S5PV210_UPHYCLK_PHYFSEL_48MHZ;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void s5pv210_isol(struct samsung_usb2_phy_instance *inst, bool on)
-{
-	struct samsung_usb2_phy_driver *drv = inst->drv;
+अटल व्योम s5pv210_isol(काष्ठा samsung_usb2_phy_instance *inst, bool on)
+अणु
+	काष्ठा samsung_usb2_phy_driver *drv = inst->drv;
 	u32 mask;
 
-	switch (inst->cfg->id) {
-	case S5PV210_DEVICE:
+	चयन (inst->cfg->id) अणु
+	हाल S5PV210_DEVICE:
 		mask = S5PV210_USB_ISOL_DEVICE;
-		break;
-	case S5PV210_HOST:
+		अवरोध;
+	हाल S5PV210_HOST:
 		mask = S5PV210_USB_ISOL_HOST;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	regmap_update_bits(drv->reg_pmu, S5PV210_USB_ISOL_OFFSET,
 							mask, on ? 0 : mask);
-}
+पूर्ण
 
-static void s5pv210_phy_pwr(struct samsung_usb2_phy_instance *inst, bool on)
-{
-	struct samsung_usb2_phy_driver *drv = inst->drv;
+अटल व्योम s5pv210_phy_pwr(काष्ठा samsung_usb2_phy_instance *inst, bool on)
+अणु
+	काष्ठा samsung_usb2_phy_driver *drv = inst->drv;
 	u32 rstbits = 0;
 	u32 phypwr = 0;
 	u32 rst;
 	u32 pwr;
 
-	switch (inst->cfg->id) {
-	case S5PV210_DEVICE:
+	चयन (inst->cfg->id) अणु
+	हाल S5PV210_DEVICE:
 		phypwr =	S5PV210_UPHYPWR_PHY0;
 		rstbits =	S5PV210_URSTCON_PHY0;
-		break;
-	case S5PV210_HOST:
+		अवरोध;
+	हाल S5PV210_HOST:
 		phypwr =	S5PV210_UPHYPWR_PHY1;
 		rstbits =	S5PV210_URSTCON_PHY1_ALL |
 				S5PV210_URSTCON_HOST_LINK_ALL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (on) {
-		writel(drv->ref_reg_val, drv->reg_phy + S5PV210_UPHYCLK);
+	अगर (on) अणु
+		ग_लिखोl(drv->ref_reg_val, drv->reg_phy + S5PV210_UPHYCLK);
 
-		pwr = readl(drv->reg_phy + S5PV210_UPHYPWR);
+		pwr = पढ़ोl(drv->reg_phy + S5PV210_UPHYPWR);
 		pwr &= ~phypwr;
-		writel(pwr, drv->reg_phy + S5PV210_UPHYPWR);
+		ग_लिखोl(pwr, drv->reg_phy + S5PV210_UPHYPWR);
 
-		rst = readl(drv->reg_phy + S5PV210_UPHYRST);
+		rst = पढ़ोl(drv->reg_phy + S5PV210_UPHYRST);
 		rst |= rstbits;
-		writel(rst, drv->reg_phy + S5PV210_UPHYRST);
+		ग_लिखोl(rst, drv->reg_phy + S5PV210_UPHYRST);
 		udelay(10);
 		rst &= ~rstbits;
-		writel(rst, drv->reg_phy + S5PV210_UPHYRST);
-		/* The following delay is necessary for the reset sequence to be
+		ग_लिखोl(rst, drv->reg_phy + S5PV210_UPHYRST);
+		/* The following delay is necessary क्रम the reset sequence to be
 		 * completed
 		 */
 		udelay(80);
-	} else {
-		pwr = readl(drv->reg_phy + S5PV210_UPHYPWR);
+	पूर्ण अन्यथा अणु
+		pwr = पढ़ोl(drv->reg_phy + S5PV210_UPHYPWR);
 		pwr |= phypwr;
-		writel(pwr, drv->reg_phy + S5PV210_UPHYPWR);
-	}
-}
+		ग_लिखोl(pwr, drv->reg_phy + S5PV210_UPHYPWR);
+	पूर्ण
+पूर्ण
 
-static int s5pv210_power_on(struct samsung_usb2_phy_instance *inst)
-{
+अटल पूर्णांक s5pv210_घातer_on(काष्ठा samsung_usb2_phy_instance *inst)
+अणु
 	s5pv210_isol(inst, 0);
 	s5pv210_phy_pwr(inst, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5pv210_power_off(struct samsung_usb2_phy_instance *inst)
-{
+अटल पूर्णांक s5pv210_घातer_off(काष्ठा samsung_usb2_phy_instance *inst)
+अणु
 	s5pv210_phy_pwr(inst, 0);
 	s5pv210_isol(inst, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct samsung_usb2_common_phy s5pv210_phys[S5PV210_NUM_PHYS] = {
-	[S5PV210_DEVICE] = {
+अटल स्थिर काष्ठा samsung_usb2_common_phy s5pv210_phys[S5PV210_NUM_PHYS] = अणु
+	[S5PV210_DEVICE] = अणु
 		.label		= "device",
 		.id		= S5PV210_DEVICE,
-		.power_on	= s5pv210_power_on,
-		.power_off	= s5pv210_power_off,
-	},
-	[S5PV210_HOST] = {
+		.घातer_on	= s5pv210_घातer_on,
+		.घातer_off	= s5pv210_घातer_off,
+	पूर्ण,
+	[S5PV210_HOST] = अणु
 		.label		= "host",
 		.id		= S5PV210_HOST,
-		.power_on	= s5pv210_power_on,
-		.power_off	= s5pv210_power_off,
-	},
-};
+		.घातer_on	= s5pv210_घातer_on,
+		.घातer_off	= s5pv210_घातer_off,
+	पूर्ण,
+पूर्ण;
 
-const struct samsung_usb2_phy_config s5pv210_usb2_phy_config = {
+स्थिर काष्ठा samsung_usb2_phy_config s5pv210_usb2_phy_config = अणु
 	.num_phys	= ARRAY_SIZE(s5pv210_phys),
 	.phys		= s5pv210_phys,
 	.rate_to_clk	= s5pv210_rate_to_clk,
-};
+पूर्ण;

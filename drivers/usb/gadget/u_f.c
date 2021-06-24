@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * u_f.c -- USB function utilities for Gadget stack
+ * u_f.c -- USB function utilities क्रम Gadget stack
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -8,23 +9,23 @@
  * Author: Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
-#include "u_f.h"
-#include <linux/usb/ch9.h>
+#समावेश "u_f.h"
+#समावेश <linux/usb/ch9.h>
 
-struct usb_request *alloc_ep_req(struct usb_ep *ep, size_t len)
-{
-	struct usb_request      *req;
+काष्ठा usb_request *alloc_ep_req(काष्ठा usb_ep *ep, माप_प्रकार len)
+अणु
+	काष्ठा usb_request      *req;
 
 	req = usb_ep_alloc_request(ep, GFP_ATOMIC);
-	if (req) {
-		req->length = usb_endpoint_dir_out(ep->desc) ?
+	अगर (req) अणु
+		req->length = usb_endpoपूर्णांक_dir_out(ep->desc) ?
 			usb_ep_align(ep, len) : len;
-		req->buf = kmalloc(req->length, GFP_ATOMIC);
-		if (!req->buf) {
-			usb_ep_free_request(ep, req);
-			req = NULL;
-		}
-	}
-	return req;
-}
+		req->buf = kदो_स्मृति(req->length, GFP_ATOMIC);
+		अगर (!req->buf) अणु
+			usb_ep_मुक्त_request(ep, req);
+			req = शून्य;
+		पूर्ण
+	पूर्ण
+	वापस req;
+पूर्ण
 EXPORT_SYMBOL_GPL(alloc_ep_req);

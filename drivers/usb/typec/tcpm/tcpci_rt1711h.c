@@ -1,299 +1,300 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2018, Richtek Technology Corporation
  *
  * Richtek RT1711H Type-C Chip Driver
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/gpio/consumer.h>
-#include <linux/usb/tcpm.h>
-#include <linux/regmap.h>
-#include "tcpci.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/usb/tcpm.h>
+#समावेश <linux/regmap.h>
+#समावेश "tcpci.h"
 
-#define RT1711H_VID		0x29CF
-#define RT1711H_PID		0x1711
+#घोषणा RT1711H_VID		0x29CF
+#घोषणा RT1711H_PID		0x1711
 
-#define RT1711H_RTCTRL8		0x9B
+#घोषणा RT1711H_RTCTRL8		0x9B
 
-/* Autoidle timeout = (tout * 2 + 1) * 6.4ms */
-#define RT1711H_RTCTRL8_SET(ck300, ship_off, auto_idle, tout) \
+/* Autoidle समयout = (tout * 2 + 1) * 6.4ms */
+#घोषणा RT1711H_RTCTRL8_SET(ck300, ship_off, स्वतः_idle, tout) \
 			    (((ck300) << 7) | ((ship_off) << 5) | \
-			    ((auto_idle) << 3) | ((tout) & 0x07))
+			    ((स्वतः_idle) << 3) | ((tout) & 0x07))
 
-#define RT1711H_RTCTRL11	0x9E
+#घोषणा RT1711H_RTCTRL11	0x9E
 
-/* I2C timeout = (tout + 1) * 12.5ms */
-#define RT1711H_RTCTRL11_SET(en, tout) \
+/* I2C समयout = (tout + 1) * 12.5ms */
+#घोषणा RT1711H_RTCTRL11_SET(en, tout) \
 			     (((en) << 7) | ((tout) & 0x0F))
 
-#define RT1711H_RTCTRL13	0xA0
-#define RT1711H_RTCTRL14	0xA1
-#define RT1711H_RTCTRL15	0xA2
-#define RT1711H_RTCTRL16	0xA3
+#घोषणा RT1711H_RTCTRL13	0xA0
+#घोषणा RT1711H_RTCTRL14	0xA1
+#घोषणा RT1711H_RTCTRL15	0xA2
+#घोषणा RT1711H_RTCTRL16	0xA3
 
-struct rt1711h_chip {
-	struct tcpci_data data;
-	struct tcpci *tcpci;
-	struct device *dev;
-};
+काष्ठा rt1711h_chip अणु
+	काष्ठा tcpci_data data;
+	काष्ठा tcpci *tcpci;
+	काष्ठा device *dev;
+पूर्ण;
 
-static int rt1711h_read16(struct rt1711h_chip *chip, unsigned int reg, u16 *val)
-{
-	return regmap_raw_read(chip->data.regmap, reg, val, sizeof(u16));
-}
+अटल पूर्णांक rt1711h_पढ़ो16(काष्ठा rt1711h_chip *chip, अचिन्हित पूर्णांक reg, u16 *val)
+अणु
+	वापस regmap_raw_पढ़ो(chip->data.regmap, reg, val, माप(u16));
+पूर्ण
 
-static int rt1711h_write16(struct rt1711h_chip *chip, unsigned int reg, u16 val)
-{
-	return regmap_raw_write(chip->data.regmap, reg, &val, sizeof(u16));
-}
+अटल पूर्णांक rt1711h_ग_लिखो16(काष्ठा rt1711h_chip *chip, अचिन्हित पूर्णांक reg, u16 val)
+अणु
+	वापस regmap_raw_ग_लिखो(chip->data.regmap, reg, &val, माप(u16));
+पूर्ण
 
-static int rt1711h_read8(struct rt1711h_chip *chip, unsigned int reg, u8 *val)
-{
-	return regmap_raw_read(chip->data.regmap, reg, val, sizeof(u8));
-}
+अटल पूर्णांक rt1711h_पढ़ो8(काष्ठा rt1711h_chip *chip, अचिन्हित पूर्णांक reg, u8 *val)
+अणु
+	वापस regmap_raw_पढ़ो(chip->data.regmap, reg, val, माप(u8));
+पूर्ण
 
-static int rt1711h_write8(struct rt1711h_chip *chip, unsigned int reg, u8 val)
-{
-	return regmap_raw_write(chip->data.regmap, reg, &val, sizeof(u8));
-}
+अटल पूर्णांक rt1711h_ग_लिखो8(काष्ठा rt1711h_chip *chip, अचिन्हित पूर्णांक reg, u8 val)
+अणु
+	वापस regmap_raw_ग_लिखो(chip->data.regmap, reg, &val, माप(u8));
+पूर्ण
 
-static const struct regmap_config rt1711h_regmap_config = {
+अटल स्थिर काष्ठा regmap_config rt1711h_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = 0xFF, /* 0x80 .. 0xFF are vendor defined */
-};
+	.max_रेजिस्टर = 0xFF, /* 0x80 .. 0xFF are venकरोr defined */
+पूर्ण;
 
-static struct rt1711h_chip *tdata_to_rt1711h(struct tcpci_data *tdata)
-{
-	return container_of(tdata, struct rt1711h_chip, data);
-}
+अटल काष्ठा rt1711h_chip *tdata_to_rt1711h(काष्ठा tcpci_data *tdata)
+अणु
+	वापस container_of(tdata, काष्ठा rt1711h_chip, data);
+पूर्ण
 
-static int rt1711h_init(struct tcpci *tcpci, struct tcpci_data *tdata)
-{
-	int ret;
-	struct rt1711h_chip *chip = tdata_to_rt1711h(tdata);
+अटल पूर्णांक rt1711h_init(काष्ठा tcpci *tcpci, काष्ठा tcpci_data *tdata)
+अणु
+	पूर्णांक ret;
+	काष्ठा rt1711h_chip *chip = tdata_to_rt1711h(tdata);
 
-	/* CK 300K from 320K, shipping off, auto_idle enable, tout = 32ms */
-	ret = rt1711h_write8(chip, RT1711H_RTCTRL8,
+	/* CK 300K from 320K, shipping off, स्वतः_idle enable, tout = 32ms */
+	ret = rt1711h_ग_लिखो8(chip, RT1711H_RTCTRL8,
 			     RT1711H_RTCTRL8_SET(0, 1, 1, 2));
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* I2C reset : (val + 1) * 12.5ms */
-	ret = rt1711h_write8(chip, RT1711H_RTCTRL11,
+	ret = rt1711h_ग_लिखो8(chip, RT1711H_RTCTRL11,
 			     RT1711H_RTCTRL11_SET(1, 0x0F));
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* tTCPCfilter : (26.7 * val) us */
-	ret = rt1711h_write8(chip, RT1711H_RTCTRL14, 0x0F);
-	if (ret < 0)
-		return ret;
+	ret = rt1711h_ग_लिखो8(chip, RT1711H_RTCTRL14, 0x0F);
+	अगर (ret < 0)
+		वापस ret;
 
 	/*  tDRP : (51.2 + 6.4 * val) ms */
-	ret = rt1711h_write8(chip, RT1711H_RTCTRL15, 0x04);
-	if (ret < 0)
-		return ret;
+	ret = rt1711h_ग_लिखो8(chip, RT1711H_RTCTRL15, 0x04);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* dcSRC.DRP : 33% */
-	return rt1711h_write16(chip, RT1711H_RTCTRL16, 330);
-}
+	वापस rt1711h_ग_लिखो16(chip, RT1711H_RTCTRL16, 330);
+पूर्ण
 
-static int rt1711h_set_vconn(struct tcpci *tcpci, struct tcpci_data *tdata,
+अटल पूर्णांक rt1711h_set_vconn(काष्ठा tcpci *tcpci, काष्ठा tcpci_data *tdata,
 			     bool enable)
-{
-	struct rt1711h_chip *chip = tdata_to_rt1711h(tdata);
+अणु
+	काष्ठा rt1711h_chip *chip = tdata_to_rt1711h(tdata);
 
-	return rt1711h_write8(chip, RT1711H_RTCTRL8,
+	वापस rt1711h_ग_लिखो8(chip, RT1711H_RTCTRL8,
 			      RT1711H_RTCTRL8_SET(0, 1, !enable, 2));
-}
+पूर्ण
 
-static int rt1711h_start_drp_toggling(struct tcpci *tcpci,
-				      struct tcpci_data *tdata,
-				      enum typec_cc_status cc)
-{
-	struct rt1711h_chip *chip = tdata_to_rt1711h(tdata);
-	int ret;
-	unsigned int reg = 0;
+अटल पूर्णांक rt1711h_start_drp_toggling(काष्ठा tcpci *tcpci,
+				      काष्ठा tcpci_data *tdata,
+				      क्रमागत typec_cc_status cc)
+अणु
+	काष्ठा rt1711h_chip *chip = tdata_to_rt1711h(tdata);
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक reg = 0;
 
-	switch (cc) {
-	default:
-	case TYPEC_CC_RP_DEF:
+	चयन (cc) अणु
+	शेष:
+	हाल TYPEC_CC_RP_DEF:
 		reg |= (TCPC_ROLE_CTRL_RP_VAL_DEF <<
 			TCPC_ROLE_CTRL_RP_VAL_SHIFT);
-		break;
-	case TYPEC_CC_RP_1_5:
+		अवरोध;
+	हाल TYPEC_CC_RP_1_5:
 		reg |= (TCPC_ROLE_CTRL_RP_VAL_1_5 <<
 			TCPC_ROLE_CTRL_RP_VAL_SHIFT);
-		break;
-	case TYPEC_CC_RP_3_0:
+		अवरोध;
+	हाल TYPEC_CC_RP_3_0:
 		reg |= (TCPC_ROLE_CTRL_RP_VAL_3_0 <<
 			TCPC_ROLE_CTRL_RP_VAL_SHIFT);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (cc == TYPEC_CC_RD)
+	अगर (cc == TYPEC_CC_RD)
 		reg |= (TCPC_ROLE_CTRL_CC_RD << TCPC_ROLE_CTRL_CC1_SHIFT) |
 			   (TCPC_ROLE_CTRL_CC_RD << TCPC_ROLE_CTRL_CC2_SHIFT);
-	else
+	अन्यथा
 		reg |= (TCPC_ROLE_CTRL_CC_RP << TCPC_ROLE_CTRL_CC1_SHIFT) |
 			   (TCPC_ROLE_CTRL_CC_RP << TCPC_ROLE_CTRL_CC2_SHIFT);
 
-	ret = rt1711h_write8(chip, TCPC_ROLE_CTRL, reg);
-	if (ret < 0)
-		return ret;
+	ret = rt1711h_ग_लिखो8(chip, TCPC_ROLE_CTRL, reg);
+	अगर (ret < 0)
+		वापस ret;
 	usleep_range(500, 1000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t rt1711h_irq(int irq, void *dev_id)
-{
-	int ret;
+अटल irqवापस_t rt1711h_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	पूर्णांक ret;
 	u16 alert;
 	u8 status;
-	struct rt1711h_chip *chip = dev_id;
+	काष्ठा rt1711h_chip *chip = dev_id;
 
-	if (!chip->tcpci)
-		return IRQ_HANDLED;
+	अगर (!chip->tcpci)
+		वापस IRQ_HANDLED;
 
-	ret = rt1711h_read16(chip, TCPC_ALERT, &alert);
-	if (ret < 0)
-		goto out;
+	ret = rt1711h_पढ़ो16(chip, TCPC_ALERT, &alert);
+	अगर (ret < 0)
+		जाओ out;
 
-	if (alert & TCPC_ALERT_CC_STATUS) {
-		ret = rt1711h_read8(chip, TCPC_CC_STATUS, &status);
-		if (ret < 0)
-			goto out;
+	अगर (alert & TCPC_ALERT_CC_STATUS) अणु
+		ret = rt1711h_पढ़ो8(chip, TCPC_CC_STATUS, &status);
+		अगर (ret < 0)
+			जाओ out;
 		/* Clear cc change event triggered by starting toggling */
-		if (status & TCPC_CC_STATUS_TOGGLING)
-			rt1711h_write8(chip, TCPC_ALERT, TCPC_ALERT_CC_STATUS);
-	}
+		अगर (status & TCPC_CC_STATUS_TOGGLING)
+			rt1711h_ग_लिखो8(chip, TCPC_ALERT, TCPC_ALERT_CC_STATUS);
+	पूर्ण
 
 out:
-	return tcpci_irq(chip->tcpci);
-}
+	वापस tcpci_irq(chip->tcpci);
+पूर्ण
 
-static int rt1711h_sw_reset(struct rt1711h_chip *chip)
-{
-	int ret;
+अटल पूर्णांक rt1711h_sw_reset(काष्ठा rt1711h_chip *chip)
+अणु
+	पूर्णांक ret;
 
-	ret = rt1711h_write8(chip, RT1711H_RTCTRL13, 0x01);
-	if (ret < 0)
-		return ret;
+	ret = rt1711h_ग_लिखो8(chip, RT1711H_RTCTRL13, 0x01);
+	अगर (ret < 0)
+		वापस ret;
 
 	usleep_range(1000, 2000);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt1711h_check_revision(struct i2c_client *i2c)
-{
-	int ret;
+अटल पूर्णांक rt1711h_check_revision(काष्ठा i2c_client *i2c)
+अणु
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_word_data(i2c, TCPC_VENDOR_ID);
-	if (ret < 0)
-		return ret;
-	if (ret != RT1711H_VID) {
+	ret = i2c_smbus_पढ़ो_word_data(i2c, TCPC_VENDOR_ID);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret != RT1711H_VID) अणु
 		dev_err(&i2c->dev, "vid is not correct, 0x%04x\n", ret);
-		return -ENODEV;
-	}
-	ret = i2c_smbus_read_word_data(i2c, TCPC_PRODUCT_ID);
-	if (ret < 0)
-		return ret;
-	if (ret != RT1711H_PID) {
+		वापस -ENODEV;
+	पूर्ण
+	ret = i2c_smbus_पढ़ो_word_data(i2c, TCPC_PRODUCT_ID);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret != RT1711H_PID) अणु
 		dev_err(&i2c->dev, "pid is not correct, 0x%04x\n", ret);
-		return -ENODEV;
-	}
-	return 0;
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int rt1711h_probe(struct i2c_client *client,
-			 const struct i2c_device_id *i2c_id)
-{
-	int ret;
-	struct rt1711h_chip *chip;
+अटल पूर्णांक rt1711h_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *i2c_id)
+अणु
+	पूर्णांक ret;
+	काष्ठा rt1711h_chip *chip;
 
 	ret = rt1711h_check_revision(client);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "check vid/pid fail\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	chip = devm_kzalloc(&client->dev, sizeof(*chip), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(&client->dev, माप(*chip), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
 	chip->data.regmap = devm_regmap_init_i2c(client,
 						 &rt1711h_regmap_config);
-	if (IS_ERR(chip->data.regmap))
-		return PTR_ERR(chip->data.regmap);
+	अगर (IS_ERR(chip->data.regmap))
+		वापस PTR_ERR(chip->data.regmap);
 
 	chip->dev = &client->dev;
 	i2c_set_clientdata(client, chip);
 
 	ret = rt1711h_sw_reset(chip);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Disable chip interrupts before requesting irq */
-	ret = rt1711h_write16(chip, TCPC_ALERT_MASK, 0);
-	if (ret < 0)
-		return ret;
+	/* Disable chip पूर्णांकerrupts beक्रमe requesting irq */
+	ret = rt1711h_ग_लिखो16(chip, TCPC_ALERT_MASK, 0);
+	अगर (ret < 0)
+		वापस ret;
 
 	chip->data.init = rt1711h_init;
 	chip->data.set_vconn = rt1711h_set_vconn;
 	chip->data.start_drp_toggling = rt1711h_start_drp_toggling;
-	chip->tcpci = tcpci_register_port(chip->dev, &chip->data);
-	if (IS_ERR_OR_NULL(chip->tcpci))
-		return PTR_ERR(chip->tcpci);
+	chip->tcpci = tcpci_रेजिस्टर_port(chip->dev, &chip->data);
+	अगर (IS_ERR_OR_शून्य(chip->tcpci))
+		वापस PTR_ERR(chip->tcpci);
 
-	ret = devm_request_threaded_irq(chip->dev, client->irq, NULL,
+	ret = devm_request_thपढ़ोed_irq(chip->dev, client->irq, शून्य,
 					rt1711h_irq,
 					IRQF_ONESHOT | IRQF_TRIGGER_LOW,
 					dev_name(chip->dev), chip);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	enable_irq_wake(client->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt1711h_remove(struct i2c_client *client)
-{
-	struct rt1711h_chip *chip = i2c_get_clientdata(client);
+अटल पूर्णांक rt1711h_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा rt1711h_chip *chip = i2c_get_clientdata(client);
 
-	tcpci_unregister_port(chip->tcpci);
-	return 0;
-}
+	tcpci_unरेजिस्टर_port(chip->tcpci);
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id rt1711h_id[] = {
-	{ "rt1711h", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id rt1711h_id[] = अणु
+	अणु "rt1711h", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, rt1711h_id);
 
-#ifdef CONFIG_OF
-static const struct of_device_id rt1711h_of_match[] = {
-	{ .compatible = "richtek,rt1711h", },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id rt1711h_of_match[] = अणु
+	अणु .compatible = "richtek,rt1711h", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rt1711h_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver rt1711h_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver rt1711h_i2c_driver = अणु
+	.driver = अणु
 		.name = "rt1711h",
 		.of_match_table = of_match_ptr(rt1711h_of_match),
-	},
+	पूर्ण,
 	.probe = rt1711h_probe,
-	.remove = rt1711h_remove,
+	.हटाओ = rt1711h_हटाओ,
 	.id_table = rt1711h_id,
-};
+पूर्ण;
 module_i2c_driver(rt1711h_i2c_driver);
 
 MODULE_AUTHOR("ShuFan Lee <shufan_lee@richtek.com>");

@@ -1,154 +1,155 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* FS-Cache object state machine handler
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  *
- * See Documentation/filesystems/caching/object.rst for a description of the
+ * See Documentation/fileप्रणालीs/caching/object.rst क्रम a description of the
  * object state machine and the in-kernel representations.
  */
 
-#define FSCACHE_DEBUG_LEVEL COOKIE
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/prefetch.h>
-#include "internal.h"
+#घोषणा FSCACHE_DEBUG_LEVEL COOKIE
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/prefetch.h>
+#समावेश "internal.h"
 
-static const struct fscache_state *fscache_abort_initialisation(struct fscache_object *, int);
-static const struct fscache_state *fscache_kill_dependents(struct fscache_object *, int);
-static const struct fscache_state *fscache_drop_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_initialise_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_invalidate_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_jumpstart_dependents(struct fscache_object *, int);
-static const struct fscache_state *fscache_kill_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_lookup_failure(struct fscache_object *, int);
-static const struct fscache_state *fscache_look_up_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_object_available(struct fscache_object *, int);
-static const struct fscache_state *fscache_parent_ready(struct fscache_object *, int);
-static const struct fscache_state *fscache_update_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_object_dead(struct fscache_object *, int);
+अटल स्थिर काष्ठा fscache_state *fscache_पात_initialisation(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_समाप्त_dependents(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_drop_object(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_initialise_object(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_invalidate_object(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_jumpstart_dependents(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_समाप्त_object(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_lookup_failure(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_look_up_object(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_object_available(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_parent_पढ़ोy(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_update_object(काष्ठा fscache_object *, पूर्णांक);
+अटल स्थिर काष्ठा fscache_state *fscache_object_dead(काष्ठा fscache_object *, पूर्णांक);
 
-#define __STATE_NAME(n) fscache_osm_##n
-#define STATE(n) (&__STATE_NAME(n))
+#घोषणा __STATE_NAME(n) fscache_osm_##n
+#घोषणा STATE(n) (&__STATE_NAME(n))
 
 /*
  * Define a work state.  Work states are execution states.  No event processing
- * is performed by them.  The function attached to a work state returns a
- * pointer indicating the next state to which the state machine should
+ * is perक्रमmed by them.  The function attached to a work state वापसs a
+ * poपूर्णांकer indicating the next state to which the state machine should
  * transition.  Returning NO_TRANSIT repeats the current state, but goes back
  * to the scheduler first.
  */
-#define WORK_STATE(n, sn, f) \
-	const struct fscache_state __STATE_NAME(n) = {			\
+#घोषणा WORK_STATE(n, sn, f) \
+	स्थिर काष्ठा fscache_state __STATE_NAME(n) = अणु			\
 		.name = #n,						\
-		.short_name = sn,					\
+		.लघु_name = sn,					\
 		.work = f						\
-	}
+	पूर्ण
 
 /*
  * Returns from work states.
  */
-#define transit_to(state) ({ prefetch(&STATE(state)->work); STATE(state); })
+#घोषणा transit_to(state) (अणु prefetch(&STATE(state)->work); STATE(state); पूर्ण)
 
-#define NO_TRANSIT ((struct fscache_state *)NULL)
+#घोषणा NO_TRANSIT ((काष्ठा fscache_state *)शून्य)
 
 /*
- * Define a wait state.  Wait states are event processing states.  No execution
- * is performed by them.  Wait states are just tables of "if event X occurs,
- * clear it and transition to state Y".  The dispatcher returns to the
- * scheduler if none of the events in which the wait state has an interest are
+ * Define a रुको state.  Wait states are event processing states.  No execution
+ * is perक्रमmed by them.  Wait states are just tables of "अगर event X occurs,
+ * clear it and transition to state Y".  The dispatcher वापसs to the
+ * scheduler अगर none of the events in which the रुको state has an पूर्णांकerest are
  * currently pending.
  */
-#define WAIT_STATE(n, sn, ...) \
-	const struct fscache_state __STATE_NAME(n) = {			\
+#घोषणा WAIT_STATE(n, sn, ...) \
+	स्थिर काष्ठा fscache_state __STATE_NAME(n) = अणु			\
 		.name = #n,						\
-		.short_name = sn,					\
-		.work = NULL,						\
-		.transitions = { __VA_ARGS__, { 0, NULL } }		\
-	}
+		.लघु_name = sn,					\
+		.work = शून्य,						\
+		.transitions = अणु __VA_ARGS__, अणु 0, शून्य पूर्ण पूर्ण		\
+	पूर्ण
 
-#define TRANSIT_TO(state, emask) \
-	{ .events = (emask), .transit_to = STATE(state) }
+#घोषणा TRANSIT_TO(state, emask) \
+	अणु .events = (emask), .transit_to = STATE(state) पूर्ण
 
 /*
  * The object state machine.
  */
-static WORK_STATE(INIT_OBJECT,		"INIT", fscache_initialise_object);
-static WORK_STATE(PARENT_READY,		"PRDY", fscache_parent_ready);
-static WORK_STATE(ABORT_INIT,		"ABRT", fscache_abort_initialisation);
-static WORK_STATE(LOOK_UP_OBJECT,	"LOOK", fscache_look_up_object);
-static WORK_STATE(CREATE_OBJECT,	"CRTO", fscache_look_up_object);
-static WORK_STATE(OBJECT_AVAILABLE,	"AVBL", fscache_object_available);
-static WORK_STATE(JUMPSTART_DEPS,	"JUMP", fscache_jumpstart_dependents);
+अटल WORK_STATE(INIT_OBJECT,		"INIT", fscache_initialise_object);
+अटल WORK_STATE(PARENT_READY,		"PRDY", fscache_parent_पढ़ोy);
+अटल WORK_STATE(ABORT_INIT,		"ABRT", fscache_पात_initialisation);
+अटल WORK_STATE(LOOK_UP_OBJECT,	"LOOK", fscache_look_up_object);
+अटल WORK_STATE(CREATE_OBJECT,	"CRTO", fscache_look_up_object);
+अटल WORK_STATE(OBJECT_AVAILABLE,	"AVBL", fscache_object_available);
+अटल WORK_STATE(JUMPSTART_DEPS,	"JUMP", fscache_jumpstart_dependents);
 
-static WORK_STATE(INVALIDATE_OBJECT,	"INVL", fscache_invalidate_object);
-static WORK_STATE(UPDATE_OBJECT,	"UPDT", fscache_update_object);
+अटल WORK_STATE(INVALIDATE_OBJECT,	"INVL", fscache_invalidate_object);
+अटल WORK_STATE(UPDATE_OBJECT,	"UPDT", fscache_update_object);
 
-static WORK_STATE(LOOKUP_FAILURE,	"LCFL", fscache_lookup_failure);
-static WORK_STATE(KILL_OBJECT,		"KILL", fscache_kill_object);
-static WORK_STATE(KILL_DEPENDENTS,	"KDEP", fscache_kill_dependents);
-static WORK_STATE(DROP_OBJECT,		"DROP", fscache_drop_object);
-static WORK_STATE(OBJECT_DEAD,		"DEAD", fscache_object_dead);
+अटल WORK_STATE(LOOKUP_FAILURE,	"LCFL", fscache_lookup_failure);
+अटल WORK_STATE(KILL_OBJECT,		"KILL", fscache_समाप्त_object);
+अटल WORK_STATE(KILL_DEPENDENTS,	"KDEP", fscache_समाप्त_dependents);
+अटल WORK_STATE(DROP_OBJECT,		"DROP", fscache_drop_object);
+अटल WORK_STATE(OBJECT_DEAD,		"DEAD", fscache_object_dead);
 
-static WAIT_STATE(WAIT_FOR_INIT,	"?INI",
+अटल WAIT_STATE(WAIT_FOR_INIT,	"?INI",
 		  TRANSIT_TO(INIT_OBJECT,	1 << FSCACHE_OBJECT_EV_NEW_CHILD));
 
-static WAIT_STATE(WAIT_FOR_PARENT,	"?PRN",
+अटल WAIT_STATE(WAIT_FOR_PARENT,	"?PRN",
 		  TRANSIT_TO(PARENT_READY,	1 << FSCACHE_OBJECT_EV_PARENT_READY));
 
-static WAIT_STATE(WAIT_FOR_CMD,		"?CMD",
+अटल WAIT_STATE(WAIT_FOR_CMD,		"?CMD",
 		  TRANSIT_TO(INVALIDATE_OBJECT,	1 << FSCACHE_OBJECT_EV_INVALIDATE),
 		  TRANSIT_TO(UPDATE_OBJECT,	1 << FSCACHE_OBJECT_EV_UPDATE),
 		  TRANSIT_TO(JUMPSTART_DEPS,	1 << FSCACHE_OBJECT_EV_NEW_CHILD));
 
-static WAIT_STATE(WAIT_FOR_CLEARANCE,	"?CLR",
+अटल WAIT_STATE(WAIT_FOR_CLEARANCE,	"?CLR",
 		  TRANSIT_TO(KILL_OBJECT,	1 << FSCACHE_OBJECT_EV_CLEARED));
 
 /*
- * Out-of-band event transition tables.  These are for handling unexpected
+ * Out-of-band event transition tables.  These are क्रम handling unexpected
  * events, such as an I/O error.  If an OOB event occurs, the state machine
- * clears and disables the event and forces a transition to the nominated work
+ * clears and disables the event and क्रमces a transition to the nominated work
  * state (acurrently executing work states will complete first).
  *
  * In such a situation, object->state remembers the state the machine should
- * have been in/gone to and returning NO_TRANSIT returns to that.
+ * have been in/gone to and वापसing NO_TRANSIT वापसs to that.
  */
-static const struct fscache_transition fscache_osm_init_oob[] = {
+अटल स्थिर काष्ठा fscache_transition fscache_osm_init_oob[] = अणु
 	   TRANSIT_TO(ABORT_INIT,
 		      (1 << FSCACHE_OBJECT_EV_ERROR) |
 		      (1 << FSCACHE_OBJECT_EV_KILL)),
-	   { 0, NULL }
-};
+	   अणु 0, शून्य पूर्ण
+पूर्ण;
 
-static const struct fscache_transition fscache_osm_lookup_oob[] = {
+अटल स्थिर काष्ठा fscache_transition fscache_osm_lookup_oob[] = अणु
 	   TRANSIT_TO(LOOKUP_FAILURE,
 		      (1 << FSCACHE_OBJECT_EV_ERROR) |
 		      (1 << FSCACHE_OBJECT_EV_KILL)),
-	   { 0, NULL }
-};
+	   अणु 0, शून्य पूर्ण
+पूर्ण;
 
-static const struct fscache_transition fscache_osm_run_oob[] = {
+अटल स्थिर काष्ठा fscache_transition fscache_osm_run_oob[] = अणु
 	   TRANSIT_TO(KILL_OBJECT,
 		      (1 << FSCACHE_OBJECT_EV_ERROR) |
 		      (1 << FSCACHE_OBJECT_EV_KILL)),
-	   { 0, NULL }
-};
+	   अणु 0, शून्य पूर्ण
+पूर्ण;
 
-static int  fscache_get_object(struct fscache_object *,
-			       enum fscache_obj_ref_trace);
-static void fscache_put_object(struct fscache_object *,
-			       enum fscache_obj_ref_trace);
-static bool fscache_enqueue_dependents(struct fscache_object *, int);
-static void fscache_dequeue_object(struct fscache_object *);
-static void fscache_update_aux_data(struct fscache_object *);
+अटल पूर्णांक  fscache_get_object(काष्ठा fscache_object *,
+			       क्रमागत fscache_obj_ref_trace);
+अटल व्योम fscache_put_object(काष्ठा fscache_object *,
+			       क्रमागत fscache_obj_ref_trace);
+अटल bool fscache_enqueue_dependents(काष्ठा fscache_object *, पूर्णांक);
+अटल व्योम fscache_dequeue_object(काष्ठा fscache_object *);
+अटल व्योम fscache_update_aux_data(काष्ठा fscache_object *);
 
 /*
- * we need to notify the parent when an op completes that we had outstanding
+ * we need to notअगरy the parent when an op completes that we had outstanding
  * upon it
  */
-static inline void fscache_done_parent_op(struct fscache_object *object)
-{
-	struct fscache_object *parent = object->parent;
+अटल अंतरभूत व्योम fscache_करोne_parent_op(काष्ठा fscache_object *object)
+अणु
+	काष्ठा fscache_object *parent = object->parent;
 
 	_enter("OBJ%x {OBJ%x,%x}",
 	       object->debug_id, parent->debug_id, parent->n_ops);
@@ -156,23 +157,23 @@ static inline void fscache_done_parent_op(struct fscache_object *object)
 	spin_lock_nested(&parent->lock, 1);
 	parent->n_obj_ops--;
 	parent->n_ops--;
-	if (parent->n_ops == 0)
-		fscache_raise_event(parent, FSCACHE_OBJECT_EV_CLEARED);
+	अगर (parent->n_ops == 0)
+		fscache_उठाओ_event(parent, FSCACHE_OBJECT_EV_CLEARED);
 	spin_unlock(&parent->lock);
-}
+पूर्ण
 
 /*
  * Object state machine dispatcher.
  */
-static void fscache_object_sm_dispatcher(struct fscache_object *object)
-{
-	const struct fscache_transition *t;
-	const struct fscache_state *state, *new_state;
-	unsigned long events, event_mask;
+अटल व्योम fscache_object_sm_dispatcher(काष्ठा fscache_object *object)
+अणु
+	स्थिर काष्ठा fscache_transition *t;
+	स्थिर काष्ठा fscache_state *state, *new_state;
+	अचिन्हित दीर्घ events, event_mask;
 	bool oob;
-	int event = -1;
+	पूर्णांक event = -1;
 
-	ASSERT(object != NULL);
+	ASSERT(object != शून्य);
 
 	_enter("{OBJ%x,%s,%lx}",
 	       object->debug_id, object->state->name, object->events);
@@ -185,28 +186,28 @@ restart_masked:
 	events = object->events;
 
 	/* Handle any out-of-band events (typically an error) */
-	if (events & object->oob_event_mask) {
+	अगर (events & object->oob_event_mask) अणु
 		_debug("{OBJ%x} oob %lx",
 		       object->debug_id, events & object->oob_event_mask);
 		oob = true;
-		for (t = object->oob_table; t->events; t++) {
-			if (events & t->events) {
+		क्रम (t = object->oob_table; t->events; t++) अणु
+			अगर (events & t->events) अणु
 				state = t->transit_to;
-				ASSERT(state->work != NULL);
+				ASSERT(state->work != शून्य);
 				event = fls(events & t->events) - 1;
 				__clear_bit(event, &object->oob_event_mask);
 				clear_bit(event, &object->events);
-				goto execute_work_state;
-			}
-		}
-	}
+				जाओ execute_work_state;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	oob = false;
 
 	/* Wait states are just transition tables */
-	if (!state->work) {
-		if (events & event_mask) {
-			for (t = state->transitions; t->events; t++) {
-				if (events & t->events) {
+	अगर (!state->work) अणु
+		अगर (events & event_mask) अणु
+			क्रम (t = state->transitions; t->events; t++) अणु
+				अगर (events & t->events) अणु
 					new_state = t->transit_to;
 					event = fls(events & t->events) - 1;
 					trace_fscache_osm(object, state,
@@ -216,16 +217,16 @@ restart_masked:
 					       object->debug_id, event,
 					       state->name, new_state->name);
 					object->state = state = new_state;
-					goto execute_work_state;
-				}
-			}
+					जाओ execute_work_state;
+				पूर्ण
+			पूर्ण
 
 			/* The event mask didn't include all the tabled bits */
 			BUG();
-		}
-		/* Randomly woke up */
-		goto unmask_events;
-	}
+		पूर्ण
+		/* Ranकरोmly woke up */
+		जाओ unmask_events;
+	पूर्ण
 
 execute_work_state:
 	_debug("{OBJ%x} exec %s", object->debug_id, state->name);
@@ -233,59 +234,59 @@ execute_work_state:
 	trace_fscache_osm(object, state, false, oob, event);
 	new_state = state->work(object, event);
 	event = -1;
-	if (new_state == NO_TRANSIT) {
+	अगर (new_state == NO_TRANSIT) अणु
 		_debug("{OBJ%x} %s notrans", object->debug_id, state->name);
-		if (unlikely(state == STATE(OBJECT_DEAD))) {
+		अगर (unlikely(state == STATE(OBJECT_DEAD))) अणु
 			_leave(" [dead]");
-			return;
-		}
+			वापस;
+		पूर्ण
 		fscache_enqueue_object(object);
 		event_mask = object->oob_event_mask;
-		goto unmask_events;
-	}
+		जाओ unmask_events;
+	पूर्ण
 
 	_debug("{OBJ%x} %s -> %s",
 	       object->debug_id, state->name, new_state->name);
 	object->state = state = new_state;
 
-	if (state->work) {
-		if (unlikely(state == STATE(OBJECT_DEAD))) {
+	अगर (state->work) अणु
+		अगर (unlikely(state == STATE(OBJECT_DEAD))) अणु
 			_leave(" [dead]");
-			return;
-		}
-		goto restart_masked;
-	}
+			वापस;
+		पूर्ण
+		जाओ restart_masked;
+	पूर्ण
 
-	/* Transited to wait state */
+	/* Transited to रुको state */
 	event_mask = object->oob_event_mask;
-	for (t = state->transitions; t->events; t++)
+	क्रम (t = state->transitions; t->events; t++)
 		event_mask |= t->events;
 
 unmask_events:
 	object->event_mask = event_mask;
 	smp_mb();
 	events = object->events;
-	if (events & event_mask)
-		goto restart;
+	अगर (events & event_mask)
+		जाओ restart;
 	_leave(" [msk %lx]", event_mask);
-}
+पूर्ण
 
 /*
  * execute an object
  */
-static void fscache_object_work_func(struct work_struct *work)
-{
-	struct fscache_object *object =
-		container_of(work, struct fscache_object, work);
-	unsigned long start;
+अटल व्योम fscache_object_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fscache_object *object =
+		container_of(work, काष्ठा fscache_object, work);
+	अचिन्हित दीर्घ start;
 
 	_enter("{OBJ%x}", object->debug_id);
 
-	start = jiffies;
+	start = jअगरfies;
 	fscache_object_sm_dispatcher(object);
 	fscache_hist(fscache_objs_histogram, start);
 	fscache_put_object(object, fscache_obj_put_work);
-}
+पूर्ण
 
 /**
  * fscache_object_init - Initialise a cache object description
@@ -295,14 +296,14 @@ static void fscache_object_work_func(struct work_struct *work)
  *
  * Initialise a cache object description to its basic values.
  *
- * See Documentation/filesystems/caching/backend-api.rst for a complete
+ * See Documentation/fileप्रणालीs/caching/backend-api.rst क्रम a complete
  * description.
  */
-void fscache_object_init(struct fscache_object *object,
-			 struct fscache_cookie *cookie,
-			 struct fscache_cache *cache)
-{
-	const struct fscache_transition *t;
+व्योम fscache_object_init(काष्ठा fscache_object *object,
+			 काष्ठा fscache_cookie *cookie,
+			 काष्ठा fscache_cache *cache)
+अणु
+	स्थिर काष्ठा fscache_transition *t;
 
 	atomic_inc(&cache->object_count);
 
@@ -324,55 +325,55 @@ void fscache_object_init(struct fscache_object *object,
 	object->cache = cache;
 	object->cookie = cookie;
 	fscache_cookie_get(cookie, fscache_cookie_get_attach_object);
-	object->parent = NULL;
-#ifdef CONFIG_FSCACHE_OBJECT_LIST
+	object->parent = शून्य;
+#अगर_घोषित CONFIG_FSCACHE_OBJECT_LIST
 	RB_CLEAR_NODE(&object->objlist_link);
-#endif
+#पूर्ण_अगर
 
 	object->oob_event_mask = 0;
-	for (t = object->oob_table; t->events; t++)
+	क्रम (t = object->oob_table; t->events; t++)
 		object->oob_event_mask |= t->events;
 	object->event_mask = object->oob_event_mask;
-	for (t = object->state->transitions; t->events; t++)
+	क्रम (t = object->state->transitions; t->events; t++)
 		object->event_mask |= t->events;
-}
+पूर्ण
 EXPORT_SYMBOL(fscache_object_init);
 
 /*
- * Mark the object as no longer being live, making sure that we synchronise
+ * Mark the object as no दीर्घer being live, making sure that we synchronise
  * against op submission.
  */
-static inline void fscache_mark_object_dead(struct fscache_object *object)
-{
+अटल अंतरभूत व्योम fscache_mark_object_dead(काष्ठा fscache_object *object)
+अणु
 	spin_lock(&object->lock);
 	clear_bit(FSCACHE_OBJECT_IS_LIVE, &object->flags);
 	spin_unlock(&object->lock);
-}
+पूर्ण
 
 /*
- * Abort object initialisation before we start it.
+ * Abort object initialisation beक्रमe we start it.
  */
-static const struct fscache_state *fscache_abort_initialisation(struct fscache_object *object,
-								int event)
-{
+अटल स्थिर काष्ठा fscache_state *fscache_पात_initialisation(काष्ठा fscache_object *object,
+								पूर्णांक event)
+अणु
 	_enter("{OBJ%x},%d", object->debug_id, event);
 
 	object->oob_event_mask = 0;
 	fscache_dequeue_object(object);
-	return transit_to(KILL_OBJECT);
-}
+	वापस transit_to(KILL_OBJECT);
+पूर्ण
 
 /*
  * initialise an object
- * - check the specified object's parent to see if we can make use of it
- *   immediately to do a creation
- * - we may need to start the process of creating a parent and we need to wait
- *   for the parent's lookup and creation to complete if it's not there yet
+ * - check the specअगरied object's parent to see अगर we can make use of it
+ *   immediately to करो a creation
+ * - we may need to start the process of creating a parent and we need to रुको
+ *   क्रम the parent's lookup and creation to complete if it's not there yet
  */
-static const struct fscache_state *fscache_initialise_object(struct fscache_object *object,
-							     int event)
-{
-	struct fscache_object *parent;
+अटल स्थिर काष्ठा fscache_state *fscache_initialise_object(काष्ठा fscache_object *object,
+							     पूर्णांक event)
+अणु
+	काष्ठा fscache_object *parent;
 	bool success;
 
 	_enter("{OBJ%x},%d", object->debug_id, event);
@@ -380,98 +381,98 @@ static const struct fscache_state *fscache_initialise_object(struct fscache_obje
 	ASSERT(list_empty(&object->dep_link));
 
 	parent = object->parent;
-	if (!parent) {
+	अगर (!parent) अणु
 		_leave(" [no parent]");
-		return transit_to(DROP_OBJECT);
-	}
+		वापस transit_to(DROP_OBJECT);
+	पूर्ण
 
 	_debug("parent: %s of:%lx", parent->state->name, parent->flags);
 
-	if (fscache_object_is_dying(parent)) {
+	अगर (fscache_object_is_dying(parent)) अणु
 		_leave(" [bad parent]");
-		return transit_to(DROP_OBJECT);
-	}
+		वापस transit_to(DROP_OBJECT);
+	पूर्ण
 
-	if (fscache_object_is_available(parent)) {
+	अगर (fscache_object_is_available(parent)) अणु
 		_leave(" [ready]");
-		return transit_to(PARENT_READY);
-	}
+		वापस transit_to(PARENT_READY);
+	पूर्ण
 
 	_debug("wait");
 
 	spin_lock(&parent->lock);
 	fscache_stat(&fscache_n_cop_grab_object);
 	success = false;
-	if (fscache_object_is_live(parent) &&
-	    object->cache->ops->grab_object(object, fscache_obj_get_add_to_deps)) {
+	अगर (fscache_object_is_live(parent) &&
+	    object->cache->ops->grab_object(object, fscache_obj_get_add_to_deps)) अणु
 		list_add(&object->dep_link, &parent->dependents);
 		success = true;
-	}
+	पूर्ण
 	fscache_stat_d(&fscache_n_cop_grab_object);
 	spin_unlock(&parent->lock);
-	if (!success) {
+	अगर (!success) अणु
 		_leave(" [grab failed]");
-		return transit_to(DROP_OBJECT);
-	}
+		वापस transit_to(DROP_OBJECT);
+	पूर्ण
 
 	/* fscache_acquire_non_index_cookie() uses this
 	 * to wake the chain up */
-	fscache_raise_event(parent, FSCACHE_OBJECT_EV_NEW_CHILD);
+	fscache_उठाओ_event(parent, FSCACHE_OBJECT_EV_NEW_CHILD);
 	_leave(" [wait]");
-	return transit_to(WAIT_FOR_PARENT);
-}
+	वापस transit_to(WAIT_FOR_PARENT);
+पूर्ण
 
 /*
- * Once the parent object is ready, we should kick off our lookup op.
+ * Once the parent object is पढ़ोy, we should kick off our lookup op.
  */
-static const struct fscache_state *fscache_parent_ready(struct fscache_object *object,
-							int event)
-{
-	struct fscache_object *parent = object->parent;
+अटल स्थिर काष्ठा fscache_state *fscache_parent_पढ़ोy(काष्ठा fscache_object *object,
+							पूर्णांक event)
+अणु
+	काष्ठा fscache_object *parent = object->parent;
 
 	_enter("{OBJ%x},%d", object->debug_id, event);
 
-	ASSERT(parent != NULL);
+	ASSERT(parent != शून्य);
 
 	spin_lock(&parent->lock);
 	parent->n_ops++;
 	parent->n_obj_ops++;
-	object->lookup_jif = jiffies;
+	object->lookup_jअगर = jअगरfies;
 	spin_unlock(&parent->lock);
 
 	_leave("");
-	return transit_to(LOOK_UP_OBJECT);
-}
+	वापस transit_to(LOOK_UP_OBJECT);
+पूर्ण
 
 /*
  * look an object up in the cache from which it was allocated
  * - we hold an "access lock" on the parent object, so the parent object cannot
  *   be withdrawn by either party till we've finished
  */
-static const struct fscache_state *fscache_look_up_object(struct fscache_object *object,
-							  int event)
-{
-	struct fscache_cookie *cookie = object->cookie;
-	struct fscache_object *parent = object->parent;
-	int ret;
+अटल स्थिर काष्ठा fscache_state *fscache_look_up_object(काष्ठा fscache_object *object,
+							  पूर्णांक event)
+अणु
+	काष्ठा fscache_cookie *cookie = object->cookie;
+	काष्ठा fscache_object *parent = object->parent;
+	पूर्णांक ret;
 
 	_enter("{OBJ%x},%d", object->debug_id, event);
 
 	object->oob_table = fscache_osm_lookup_oob;
 
-	ASSERT(parent != NULL);
+	ASSERT(parent != शून्य);
 	ASSERTCMP(parent->n_ops, >, 0);
 	ASSERTCMP(parent->n_obj_ops, >, 0);
 
 	/* make sure the parent is still available */
 	ASSERT(fscache_object_is_available(parent));
 
-	if (fscache_object_is_dying(parent) ||
+	अगर (fscache_object_is_dying(parent) ||
 	    test_bit(FSCACHE_IOERROR, &object->cache->flags) ||
-	    !fscache_use_cookie(object)) {
+	    !fscache_use_cookie(object)) अणु
 		_leave(" [unavailable]");
-		return transit_to(LOOKUP_FAILURE);
-	}
+		वापस transit_to(LOOKUP_FAILURE);
+	पूर्ण
 
 	_debug("LOOKUP \"%s\" in \"%s\"",
 	       cookie->def->name, object->cache->tag->name);
@@ -483,41 +484,41 @@ static const struct fscache_state *fscache_look_up_object(struct fscache_object 
 
 	fscache_unuse_cookie(object);
 
-	if (ret == -ETIMEDOUT) {
+	अगर (ret == -ETIMEDOUT) अणु
 		/* probably stuck behind another object, so move this one to
 		 * the back of the queue */
-		fscache_stat(&fscache_n_object_lookups_timed_out);
+		fscache_stat(&fscache_n_object_lookups_समयd_out);
 		_leave(" [timeout]");
-		return NO_TRANSIT;
-	}
+		वापस NO_TRANSIT;
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		_leave(" [error]");
-		return transit_to(LOOKUP_FAILURE);
-	}
+		वापस transit_to(LOOKUP_FAILURE);
+	पूर्ण
 
 	_leave(" [ok]");
-	return transit_to(OBJECT_AVAILABLE);
-}
+	वापस transit_to(OBJECT_AVAILABLE);
+पूर्ण
 
 /**
  * fscache_object_lookup_negative - Note negative cookie lookup
- * @object: Object pointing to cookie to mark
+ * @object: Object poपूर्णांकing to cookie to mark
  *
- * Note negative lookup, permitting those waiting to read data from an already
- * existing backing object to continue as there's no data for them to read.
+ * Note negative lookup, permitting those रुकोing to पढ़ो data from an alपढ़ोy
+ * existing backing object to जारी as there's no data क्रम them to पढ़ो.
  */
-void fscache_object_lookup_negative(struct fscache_object *object)
-{
-	struct fscache_cookie *cookie = object->cookie;
+व्योम fscache_object_lookup_negative(काष्ठा fscache_object *object)
+अणु
+	काष्ठा fscache_cookie *cookie = object->cookie;
 
 	_enter("{OBJ%x,%s}", object->debug_id, object->state->name);
 
-	if (!test_and_set_bit(FSCACHE_OBJECT_IS_LOOKED_UP, &object->flags)) {
+	अगर (!test_and_set_bit(FSCACHE_OBJECT_IS_LOOKED_UP, &object->flags)) अणु
 		fscache_stat(&fscache_n_object_lookups_negative);
 
-		/* Allow write requests to begin stacking up and read requests to begin
-		 * returning ENODATA.
+		/* Allow ग_लिखो requests to begin stacking up and पढ़ो requests to begin
+		 * वापसing ENODATA.
 		 */
 		set_bit(FSCACHE_COOKIE_NO_DATA_YET, &cookie->flags);
 		clear_bit(FSCACHE_COOKIE_UNAVAILABLE, &cookie->flags);
@@ -525,104 +526,104 @@ void fscache_object_lookup_negative(struct fscache_object *object)
 		_debug("wake up lookup %p", &cookie->flags);
 		clear_bit_unlock(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags);
 		wake_up_bit(&cookie->flags, FSCACHE_COOKIE_LOOKING_UP);
-	}
+	पूर्ण
 	_leave("");
-}
+पूर्ण
 EXPORT_SYMBOL(fscache_object_lookup_negative);
 
 /**
  * fscache_obtained_object - Note successful object lookup or creation
- * @object: Object pointing to cookie to mark
+ * @object: Object poपूर्णांकing to cookie to mark
  *
- * Note successful lookup and/or creation, permitting those waiting to write
- * data to a backing object to continue.
+ * Note successful lookup and/or creation, permitting those रुकोing to ग_लिखो
+ * data to a backing object to जारी.
  *
  * Note that after calling this, an object's cookie may be relinquished by the
  * netfs, and so must be accessed with object lock held.
  */
-void fscache_obtained_object(struct fscache_object *object)
-{
-	struct fscache_cookie *cookie = object->cookie;
+व्योम fscache_obtained_object(काष्ठा fscache_object *object)
+अणु
+	काष्ठा fscache_cookie *cookie = object->cookie;
 
 	_enter("{OBJ%x,%s}", object->debug_id, object->state->name);
 
-	/* if we were still looking up, then we must have a positive lookup
-	 * result, in which case there may be data available */
-	if (!test_and_set_bit(FSCACHE_OBJECT_IS_LOOKED_UP, &object->flags)) {
+	/* अगर we were still looking up, then we must have a positive lookup
+	 * result, in which हाल there may be data available */
+	अगर (!test_and_set_bit(FSCACHE_OBJECT_IS_LOOKED_UP, &object->flags)) अणु
 		fscache_stat(&fscache_n_object_lookups_positive);
 
-		/* We do (presumably) have data */
+		/* We करो (presumably) have data */
 		clear_bit_unlock(FSCACHE_COOKIE_NO_DATA_YET, &cookie->flags);
 		clear_bit(FSCACHE_COOKIE_UNAVAILABLE, &cookie->flags);
 
-		/* Allow write requests to begin stacking up and read requests
+		/* Allow ग_लिखो requests to begin stacking up and पढ़ो requests
 		 * to begin shovelling data.
 		 */
 		clear_bit_unlock(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags);
 		wake_up_bit(&cookie->flags, FSCACHE_COOKIE_LOOKING_UP);
-	} else {
+	पूर्ण अन्यथा अणु
 		fscache_stat(&fscache_n_object_created);
-	}
+	पूर्ण
 
 	set_bit(FSCACHE_OBJECT_IS_AVAILABLE, &object->flags);
 	_leave("");
-}
+पूर्ण
 EXPORT_SYMBOL(fscache_obtained_object);
 
 /*
  * handle an object that has just become available
  */
-static const struct fscache_state *fscache_object_available(struct fscache_object *object,
-							    int event)
-{
+अटल स्थिर काष्ठा fscache_state *fscache_object_available(काष्ठा fscache_object *object,
+							    पूर्णांक event)
+अणु
 	_enter("{OBJ%x},%d", object->debug_id, event);
 
 	object->oob_table = fscache_osm_run_oob;
 
 	spin_lock(&object->lock);
 
-	fscache_done_parent_op(object);
-	if (object->n_in_progress == 0) {
-		if (object->n_ops > 0) {
+	fscache_करोne_parent_op(object);
+	अगर (object->n_in_progress == 0) अणु
+		अगर (object->n_ops > 0) अणु
 			ASSERTCMP(object->n_ops, >=, object->n_obj_ops);
 			fscache_start_operations(object);
-		} else {
+		पूर्ण अन्यथा अणु
 			ASSERT(list_empty(&object->pending_ops));
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&object->lock);
 
 	fscache_stat(&fscache_n_cop_lookup_complete);
 	object->cache->ops->lookup_complete(object);
 	fscache_stat_d(&fscache_n_cop_lookup_complete);
 
-	fscache_hist(fscache_obj_instantiate_histogram, object->lookup_jif);
+	fscache_hist(fscache_obj_instantiate_histogram, object->lookup_jअगर);
 	fscache_stat(&fscache_n_object_avail);
 
 	_leave("");
-	return transit_to(JUMPSTART_DEPS);
-}
+	वापस transit_to(JUMPSTART_DEPS);
+पूर्ण
 
 /*
  * Wake up this object's dependent objects now that we've become available.
  */
-static const struct fscache_state *fscache_jumpstart_dependents(struct fscache_object *object,
-								int event)
-{
+अटल स्थिर काष्ठा fscache_state *fscache_jumpstart_dependents(काष्ठा fscache_object *object,
+								पूर्णांक event)
+अणु
 	_enter("{OBJ%x},%d", object->debug_id, event);
 
-	if (!fscache_enqueue_dependents(object, FSCACHE_OBJECT_EV_PARENT_READY))
-		return NO_TRANSIT; /* Not finished; requeue */
-	return transit_to(WAIT_FOR_CMD);
-}
+	अगर (!fscache_enqueue_dependents(object, FSCACHE_OBJECT_EV_PARENT_READY))
+		वापस NO_TRANSIT; /* Not finished; requeue */
+	वापस transit_to(WAIT_FOR_CMD);
+पूर्ण
 
 /*
  * Handle lookup or creation failute.
  */
-static const struct fscache_state *fscache_lookup_failure(struct fscache_object *object,
-							  int event)
-{
-	struct fscache_cookie *cookie;
+अटल स्थिर काष्ठा fscache_state *fscache_lookup_failure(काष्ठा fscache_object *object,
+							  पूर्णांक event)
+अणु
+	काष्ठा fscache_cookie *cookie;
 
 	_enter("{OBJ%x},%d", object->debug_id, event);
 
@@ -636,102 +637,102 @@ static const struct fscache_state *fscache_lookup_failure(struct fscache_object 
 
 	cookie = object->cookie;
 	set_bit(FSCACHE_COOKIE_UNAVAILABLE, &cookie->flags);
-	if (test_and_clear_bit(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags))
+	अगर (test_and_clear_bit(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags))
 		wake_up_bit(&cookie->flags, FSCACHE_COOKIE_LOOKING_UP);
 
-	fscache_done_parent_op(object);
-	return transit_to(KILL_OBJECT);
-}
+	fscache_करोne_parent_op(object);
+	वापस transit_to(KILL_OBJECT);
+पूर्ण
 
 /*
- * Wait for completion of all active operations on this object and the death of
+ * Wait क्रम completion of all active operations on this object and the death of
  * all child objects of this object.
  */
-static const struct fscache_state *fscache_kill_object(struct fscache_object *object,
-						       int event)
-{
+अटल स्थिर काष्ठा fscache_state *fscache_समाप्त_object(काष्ठा fscache_object *object,
+						       पूर्णांक event)
+अणु
 	_enter("{OBJ%x,%d,%d},%d",
 	       object->debug_id, object->n_ops, object->n_children, event);
 
 	fscache_mark_object_dead(object);
 	object->oob_event_mask = 0;
 
-	if (test_bit(FSCACHE_OBJECT_RETIRED, &object->flags)) {
-		/* Reject any new read/write ops and abort any that are pending. */
+	अगर (test_bit(FSCACHE_OBJECT_RETIRED, &object->flags)) अणु
+		/* Reject any new पढ़ो/ग_लिखो ops and पात any that are pending. */
 		clear_bit(FSCACHE_OBJECT_PENDING_WRITE, &object->flags);
 		fscache_cancel_all_ops(object);
-	}
+	पूर्ण
 
-	if (list_empty(&object->dependents) &&
+	अगर (list_empty(&object->dependents) &&
 	    object->n_ops == 0 &&
 	    object->n_children == 0)
-		return transit_to(DROP_OBJECT);
+		वापस transit_to(DROP_OBJECT);
 
-	if (object->n_in_progress == 0) {
+	अगर (object->n_in_progress == 0) अणु
 		spin_lock(&object->lock);
-		if (object->n_ops > 0 && object->n_in_progress == 0)
+		अगर (object->n_ops > 0 && object->n_in_progress == 0)
 			fscache_start_operations(object);
 		spin_unlock(&object->lock);
-	}
+	पूर्ण
 
-	if (!list_empty(&object->dependents))
-		return transit_to(KILL_DEPENDENTS);
+	अगर (!list_empty(&object->dependents))
+		वापस transit_to(KILL_DEPENDENTS);
 
-	return transit_to(WAIT_FOR_CLEARANCE);
-}
+	वापस transit_to(WAIT_FOR_CLEARANCE);
+पूर्ण
 
 /*
  * Kill dependent objects.
  */
-static const struct fscache_state *fscache_kill_dependents(struct fscache_object *object,
-							   int event)
-{
+अटल स्थिर काष्ठा fscache_state *fscache_समाप्त_dependents(काष्ठा fscache_object *object,
+							   पूर्णांक event)
+अणु
 	_enter("{OBJ%x},%d", object->debug_id, event);
 
-	if (!fscache_enqueue_dependents(object, FSCACHE_OBJECT_EV_KILL))
-		return NO_TRANSIT; /* Not finished */
-	return transit_to(WAIT_FOR_CLEARANCE);
-}
+	अगर (!fscache_enqueue_dependents(object, FSCACHE_OBJECT_EV_KILL))
+		वापस NO_TRANSIT; /* Not finished */
+	वापस transit_to(WAIT_FOR_CLEARANCE);
+पूर्ण
 
 /*
  * Drop an object's attachments
  */
-static const struct fscache_state *fscache_drop_object(struct fscache_object *object,
-						       int event)
-{
-	struct fscache_object *parent = object->parent;
-	struct fscache_cookie *cookie = object->cookie;
-	struct fscache_cache *cache = object->cache;
+अटल स्थिर काष्ठा fscache_state *fscache_drop_object(काष्ठा fscache_object *object,
+						       पूर्णांक event)
+अणु
+	काष्ठा fscache_object *parent = object->parent;
+	काष्ठा fscache_cookie *cookie = object->cookie;
+	काष्ठा fscache_cache *cache = object->cache;
 	bool awaken = false;
 
 	_enter("{OBJ%x,%d},%d", object->debug_id, object->n_children, event);
 
-	ASSERT(cookie != NULL);
+	ASSERT(cookie != शून्य);
 	ASSERT(!hlist_unhashed(&object->cookie_link));
 
-	if (test_bit(FSCACHE_COOKIE_AUX_UPDATED, &cookie->flags)) {
+	अगर (test_bit(FSCACHE_COOKIE_AUX_UPDATED, &cookie->flags)) अणु
 		_debug("final update");
 		fscache_update_aux_data(object);
-	}
+	पूर्ण
 
-	/* Make sure the cookie no longer points here and that the netfs isn't
-	 * waiting for us.
+	/* Make sure the cookie no दीर्घer poपूर्णांकs here and that the netfs isn't
+	 * रुकोing क्रम us.
 	 */
 	spin_lock(&cookie->lock);
 	hlist_del_init(&object->cookie_link);
-	if (hlist_empty(&cookie->backing_objects) &&
+	अगर (hlist_empty(&cookie->backing_objects) &&
 	    test_and_clear_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags))
 		awaken = true;
 	spin_unlock(&cookie->lock);
 
-	if (awaken)
+	अगर (awaken)
 		wake_up_bit(&cookie->flags, FSCACHE_COOKIE_INVALIDATING);
-	if (test_and_clear_bit(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags))
+	अगर (test_and_clear_bit(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags))
 		wake_up_bit(&cookie->flags, FSCACHE_COOKIE_LOOKING_UP);
 
 
-	/* Prevent a race with our last child, which has to signal EV_CLEARED
-	 * before dropping our spinlock.
+	/* Prevent a race with our last child, which has to संकेत EV_CLEARED
+	 * beक्रमe dropping our spinlock.
 	 */
 	spin_lock(&object->lock);
 	spin_unlock(&object->lock);
@@ -746,174 +747,174 @@ static const struct fscache_state *fscache_drop_object(struct fscache_object *ob
 	fscache_stat_d(&fscache_n_cop_drop_object);
 
 	/* The parent object wants to know when all it dependents have gone */
-	if (parent) {
+	अगर (parent) अणु
 		_debug("release parent OBJ%x {%d}",
 		       parent->debug_id, parent->n_children);
 
 		spin_lock(&parent->lock);
 		parent->n_children--;
-		if (parent->n_children == 0)
-			fscache_raise_event(parent, FSCACHE_OBJECT_EV_CLEARED);
+		अगर (parent->n_children == 0)
+			fscache_उठाओ_event(parent, FSCACHE_OBJECT_EV_CLEARED);
 		spin_unlock(&parent->lock);
-		object->parent = NULL;
-	}
+		object->parent = शून्य;
+	पूर्ण
 
-	/* this just shifts the object release to the work processor */
+	/* this just shअगरts the object release to the work processor */
 	fscache_put_object(object, fscache_obj_put_drop_obj);
 	fscache_stat(&fscache_n_object_dead);
 
 	_leave("");
-	return transit_to(OBJECT_DEAD);
-}
+	वापस transit_to(OBJECT_DEAD);
+पूर्ण
 
 /*
  * get a ref on an object
  */
-static int fscache_get_object(struct fscache_object *object,
-			      enum fscache_obj_ref_trace why)
-{
-	int ret;
+अटल पूर्णांक fscache_get_object(काष्ठा fscache_object *object,
+			      क्रमागत fscache_obj_ref_trace why)
+अणु
+	पूर्णांक ret;
 
 	fscache_stat(&fscache_n_cop_grab_object);
 	ret = object->cache->ops->grab_object(object, why) ? 0 : -EAGAIN;
 	fscache_stat_d(&fscache_n_cop_grab_object);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Discard a ref on an object
  */
-static void fscache_put_object(struct fscache_object *object,
-			       enum fscache_obj_ref_trace why)
-{
+अटल व्योम fscache_put_object(काष्ठा fscache_object *object,
+			       क्रमागत fscache_obj_ref_trace why)
+अणु
 	fscache_stat(&fscache_n_cop_put_object);
 	object->cache->ops->put_object(object, why);
 	fscache_stat_d(&fscache_n_cop_put_object);
-}
+पूर्ण
 
 /**
  * fscache_object_destroy - Note that a cache object is about to be destroyed
  * @object: The object to be destroyed
  *
- * Note the imminent destruction and deallocation of a cache object record.
+ * Note the imminent deकाष्ठाion and deallocation of a cache object record.
  */
-void fscache_object_destroy(struct fscache_object *object)
-{
-	fscache_objlist_remove(object);
+व्योम fscache_object_destroy(काष्ठा fscache_object *object)
+अणु
+	fscache_objlist_हटाओ(object);
 
 	/* We can get rid of the cookie now */
 	fscache_cookie_put(object->cookie, fscache_cookie_put_object);
-	object->cookie = NULL;
-}
+	object->cookie = शून्य;
+पूर्ण
 EXPORT_SYMBOL(fscache_object_destroy);
 
 /*
- * enqueue an object for metadata-type processing
+ * enqueue an object क्रम metadata-type processing
  */
-void fscache_enqueue_object(struct fscache_object *object)
-{
+व्योम fscache_enqueue_object(काष्ठा fscache_object *object)
+अणु
 	_enter("{OBJ%x}", object->debug_id);
 
-	if (fscache_get_object(object, fscache_obj_get_queue) >= 0) {
-		wait_queue_head_t *cong_wq =
-			&get_cpu_var(fscache_object_cong_wait);
+	अगर (fscache_get_object(object, fscache_obj_get_queue) >= 0) अणु
+		रुको_queue_head_t *cong_wq =
+			&get_cpu_var(fscache_object_cong_रुको);
 
-		if (queue_work(fscache_object_wq, &object->work)) {
-			if (fscache_object_congested())
+		अगर (queue_work(fscache_object_wq, &object->work)) अणु
+			अगर (fscache_object_congested())
 				wake_up(cong_wq);
-		} else
+		पूर्ण अन्यथा
 			fscache_put_object(object, fscache_obj_put_queue);
 
-		put_cpu_var(fscache_object_cong_wait);
-	}
-}
+		put_cpu_var(fscache_object_cong_रुको);
+	पूर्ण
+पूर्ण
 
 /**
  * fscache_object_sleep_till_congested - Sleep until object wq is congested
- * @timeoutp: Scheduler sleep timeout
+ * @समयoutp: Scheduler sleep समयout
  *
  * Allow an object handler to sleep until the object workqueue is congested.
  *
- * The caller must set up a wake up event before calling this and must have set
+ * The caller must set up a wake up event beक्रमe calling this and must have set
  * the appropriate sleep mode (such as TASK_UNINTERRUPTIBLE) and tested its own
- * condition before calling this function as no test is made here.
+ * condition beक्रमe calling this function as no test is made here.
  *
- * %true is returned if the object wq is congested, %false otherwise.
+ * %true is वापसed अगर the object wq is congested, %false otherwise.
  */
-bool fscache_object_sleep_till_congested(signed long *timeoutp)
-{
-	wait_queue_head_t *cong_wq = this_cpu_ptr(&fscache_object_cong_wait);
-	DEFINE_WAIT(wait);
+bool fscache_object_sleep_till_congested(चिन्हित दीर्घ *समयoutp)
+अणु
+	रुको_queue_head_t *cong_wq = this_cpu_ptr(&fscache_object_cong_रुको);
+	DEFINE_WAIT(रुको);
 
-	if (fscache_object_congested())
-		return true;
+	अगर (fscache_object_congested())
+		वापस true;
 
-	add_wait_queue_exclusive(cong_wq, &wait);
-	if (!fscache_object_congested())
-		*timeoutp = schedule_timeout(*timeoutp);
-	finish_wait(cong_wq, &wait);
+	add_रुको_queue_exclusive(cong_wq, &रुको);
+	अगर (!fscache_object_congested())
+		*समयoutp = schedule_समयout(*समयoutp);
+	finish_रुको(cong_wq, &रुको);
 
-	return fscache_object_congested();
-}
+	वापस fscache_object_congested();
+पूर्ण
 EXPORT_SYMBOL_GPL(fscache_object_sleep_till_congested);
 
 /*
- * Enqueue the dependents of an object for metadata-type processing.
+ * Enqueue the dependents of an object क्रम metadata-type processing.
  *
- * If we don't manage to finish the list before the scheduler wants to run
- * again then return false immediately.  We return true if the list was
+ * If we करोn't manage to finish the list beक्रमe the scheduler wants to run
+ * again then वापस false immediately.  We वापस true अगर the list was
  * cleared.
  */
-static bool fscache_enqueue_dependents(struct fscache_object *object, int event)
-{
-	struct fscache_object *dep;
+अटल bool fscache_enqueue_dependents(काष्ठा fscache_object *object, पूर्णांक event)
+अणु
+	काष्ठा fscache_object *dep;
 	bool ret = true;
 
 	_enter("{OBJ%x}", object->debug_id);
 
-	if (list_empty(&object->dependents))
-		return true;
+	अगर (list_empty(&object->dependents))
+		वापस true;
 
 	spin_lock(&object->lock);
 
-	while (!list_empty(&object->dependents)) {
+	जबतक (!list_empty(&object->dependents)) अणु
 		dep = list_entry(object->dependents.next,
-				 struct fscache_object, dep_link);
+				 काष्ठा fscache_object, dep_link);
 		list_del_init(&dep->dep_link);
 
-		fscache_raise_event(dep, event);
+		fscache_उठाओ_event(dep, event);
 		fscache_put_object(dep, fscache_obj_put_enq_dep);
 
-		if (!list_empty(&object->dependents) && need_resched()) {
+		अगर (!list_empty(&object->dependents) && need_resched()) अणु
 			ret = false;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&object->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * remove an object from whatever queue it's waiting on
+ * हटाओ an object from whatever queue it's रुकोing on
  */
-static void fscache_dequeue_object(struct fscache_object *object)
-{
+अटल व्योम fscache_dequeue_object(काष्ठा fscache_object *object)
+अणु
 	_enter("{OBJ%x}", object->debug_id);
 
-	if (!list_empty(&object->dep_link)) {
+	अगर (!list_empty(&object->dep_link)) अणु
 		spin_lock(&object->parent->lock);
 		list_del_init(&object->dep_link);
 		spin_unlock(&object->parent->lock);
-	}
+	पूर्ण
 
 	_leave("");
-}
+पूर्ण
 
 /**
  * fscache_check_aux - Ask the netfs whether an object on disk is still valid
  * @object: The object to ask about
- * @data: The auxiliary data for the object
+ * @data: The auxiliary data क्रम the object
  * @datalen: The size of the auxiliary data
  *
  * This function consults the netfs about the coherency state of an object.
@@ -921,84 +922,84 @@ static void fscache_dequeue_object(struct fscache_object *object)
  * fscache_look_up_object() on behalf of the cache backend during object lookup
  * and creation).
  */
-enum fscache_checkaux fscache_check_aux(struct fscache_object *object,
-					const void *data, uint16_t datalen,
+क्रमागत fscache_checkaux fscache_check_aux(काष्ठा fscache_object *object,
+					स्थिर व्योम *data, uपूर्णांक16_t datalen,
 					loff_t object_size)
-{
-	enum fscache_checkaux result;
+अणु
+	क्रमागत fscache_checkaux result;
 
-	if (!object->cookie->def->check_aux) {
+	अगर (!object->cookie->def->check_aux) अणु
 		fscache_stat(&fscache_n_checkaux_none);
-		return FSCACHE_CHECKAUX_OKAY;
-	}
+		वापस FSCACHE_CHECKAUX_OKAY;
+	पूर्ण
 
 	result = object->cookie->def->check_aux(object->cookie->netfs_data,
 						data, datalen, object_size);
-	switch (result) {
+	चयन (result) अणु
 		/* entry okay as is */
-	case FSCACHE_CHECKAUX_OKAY:
+	हाल FSCACHE_CHECKAUX_OKAY:
 		fscache_stat(&fscache_n_checkaux_okay);
-		break;
+		अवरोध;
 
 		/* entry requires update */
-	case FSCACHE_CHECKAUX_NEEDS_UPDATE:
+	हाल FSCACHE_CHECKAUX_NEEDS_UPDATE:
 		fscache_stat(&fscache_n_checkaux_update);
-		break;
+		अवरोध;
 
 		/* entry requires deletion */
-	case FSCACHE_CHECKAUX_OBSOLETE:
+	हाल FSCACHE_CHECKAUX_OBSOLETE:
 		fscache_stat(&fscache_n_checkaux_obsolete);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(fscache_check_aux);
 
 /*
  * Asynchronously invalidate an object.
  */
-static const struct fscache_state *_fscache_invalidate_object(struct fscache_object *object,
-							      int event)
-{
-	struct fscache_operation *op;
-	struct fscache_cookie *cookie = object->cookie;
+अटल स्थिर काष्ठा fscache_state *_fscache_invalidate_object(काष्ठा fscache_object *object,
+							      पूर्णांक event)
+अणु
+	काष्ठा fscache_operation *op;
+	काष्ठा fscache_cookie *cookie = object->cookie;
 
 	_enter("{OBJ%x},%d", object->debug_id, event);
 
 	/* We're going to need the cookie.  If the cookie is not available then
 	 * retire the object instead.
 	 */
-	if (!fscache_use_cookie(object)) {
+	अगर (!fscache_use_cookie(object)) अणु
 		ASSERT(radix_tree_empty(&object->cookie->stores));
 		set_bit(FSCACHE_OBJECT_RETIRED, &object->flags);
 		_leave(" [no cookie]");
-		return transit_to(KILL_OBJECT);
-	}
+		वापस transit_to(KILL_OBJECT);
+	पूर्ण
 
-	/* Reject any new read/write ops and abort any that are pending. */
-	fscache_invalidate_writes(cookie);
+	/* Reject any new पढ़ो/ग_लिखो ops and पात any that are pending. */
+	fscache_invalidate_ग_लिखोs(cookie);
 	clear_bit(FSCACHE_OBJECT_PENDING_WRITE, &object->flags);
 	fscache_cancel_all_ops(object);
 
-	/* Now we have to wait for in-progress reads and writes */
-	op = kzalloc(sizeof(*op), GFP_KERNEL);
-	if (!op)
-		goto nomem;
+	/* Now we have to रुको क्रम in-progress पढ़ोs and ग_लिखोs */
+	op = kzalloc(माप(*op), GFP_KERNEL);
+	अगर (!op)
+		जाओ nomem;
 
 	fscache_operation_init(cookie, op, object->cache->ops->invalidate_object,
-			       NULL, NULL);
+			       शून्य, शून्य);
 	op->flags = FSCACHE_OP_ASYNC |
 		(1 << FSCACHE_OP_EXCLUSIVE) |
 		(1 << FSCACHE_OP_UNUSE_COOKIE);
-	trace_fscache_page_op(cookie, NULL, op, fscache_page_op_invalidate);
+	trace_fscache_page_op(cookie, शून्य, op, fscache_page_op_invalidate);
 
 	spin_lock(&cookie->lock);
-	if (fscache_submit_exclusive_op(object, op) < 0)
-		goto submit_op_failed;
+	अगर (fscache_submit_exclusive_op(object, op) < 0)
+		जाओ submit_op_failed;
 	spin_unlock(&cookie->lock);
 	fscache_put_operation(op);
 
@@ -1008,65 +1009,65 @@ static const struct fscache_state *_fscache_invalidate_object(struct fscache_obj
 	 */
 	set_bit(FSCACHE_COOKIE_NO_DATA_YET, &cookie->flags);
 
-	/* We can allow read and write requests to come in once again.  They'll
+	/* We can allow पढ़ो and ग_लिखो requests to come in once again.  They'll
 	 * queue up behind our exclusive invalidation operation.
 	 */
-	if (test_and_clear_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags))
+	अगर (test_and_clear_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags))
 		wake_up_bit(&cookie->flags, FSCACHE_COOKIE_INVALIDATING);
 	_leave(" [ok]");
-	return transit_to(UPDATE_OBJECT);
+	वापस transit_to(UPDATE_OBJECT);
 
 nomem:
 	fscache_mark_object_dead(object);
 	fscache_unuse_cookie(object);
 	_leave(" [ENOMEM]");
-	return transit_to(KILL_OBJECT);
+	वापस transit_to(KILL_OBJECT);
 
 submit_op_failed:
 	fscache_mark_object_dead(object);
 	spin_unlock(&cookie->lock);
 	fscache_unuse_cookie(object);
-	kfree(op);
+	kमुक्त(op);
 	_leave(" [EIO]");
-	return transit_to(KILL_OBJECT);
-}
+	वापस transit_to(KILL_OBJECT);
+पूर्ण
 
-static const struct fscache_state *fscache_invalidate_object(struct fscache_object *object,
-							     int event)
-{
-	const struct fscache_state *s;
+अटल स्थिर काष्ठा fscache_state *fscache_invalidate_object(काष्ठा fscache_object *object,
+							     पूर्णांक event)
+अणु
+	स्थिर काष्ठा fscache_state *s;
 
 	fscache_stat(&fscache_n_invalidates_run);
 	fscache_stat(&fscache_n_cop_invalidate_object);
 	s = _fscache_invalidate_object(object, event);
 	fscache_stat_d(&fscache_n_cop_invalidate_object);
-	return s;
-}
+	वापस s;
+पूर्ण
 
 /*
  * Update auxiliary data.
  */
-static void fscache_update_aux_data(struct fscache_object *object)
-{
+अटल व्योम fscache_update_aux_data(काष्ठा fscache_object *object)
+अणु
 	fscache_stat(&fscache_n_updates_run);
 	fscache_stat(&fscache_n_cop_update_object);
 	object->cache->ops->update_object(object);
 	fscache_stat_d(&fscache_n_cop_update_object);
-}
+पूर्ण
 
 /*
  * Asynchronously update an object.
  */
-static const struct fscache_state *fscache_update_object(struct fscache_object *object,
-							 int event)
-{
+अटल स्थिर काष्ठा fscache_state *fscache_update_object(काष्ठा fscache_object *object,
+							 पूर्णांक event)
+अणु
 	_enter("{OBJ%x},%d", object->debug_id, event);
 
 	fscache_update_aux_data(object);
 
 	_leave("");
-	return transit_to(WAIT_FOR_CMD);
-}
+	वापस transit_to(WAIT_FOR_CMD);
+पूर्ण
 
 /**
  * fscache_object_retrying_stale - Note retrying stale object
@@ -1075,59 +1076,59 @@ static const struct fscache_state *fscache_update_object(struct fscache_object *
  * Note that an object lookup found an on-disk object that was adjudged to be
  * stale and has been deleted.  The lookup will be retried.
  */
-void fscache_object_retrying_stale(struct fscache_object *object)
-{
+व्योम fscache_object_retrying_stale(काष्ठा fscache_object *object)
+अणु
 	fscache_stat(&fscache_n_cache_no_space_reject);
-}
+पूर्ण
 EXPORT_SYMBOL(fscache_object_retrying_stale);
 
 /**
- * fscache_object_mark_killed - Note that an object was killed
+ * fscache_object_mark_समाप्तed - Note that an object was समाप्तed
  * @object: The object that was culled
- * @why: The reason the object was killed.
+ * @why: The reason the object was समाप्तed.
  *
- * Note that an object was killed.  Returns true if the object was
- * already marked killed, false if it wasn't.
+ * Note that an object was समाप्तed.  Returns true अगर the object was
+ * alपढ़ोy marked समाप्तed, false अगर it wasn't.
  */
-void fscache_object_mark_killed(struct fscache_object *object,
-				enum fscache_why_object_killed why)
-{
-	if (test_and_set_bit(FSCACHE_OBJECT_KILLED_BY_CACHE, &object->flags)) {
+व्योम fscache_object_mark_समाप्तed(काष्ठा fscache_object *object,
+				क्रमागत fscache_why_object_समाप्तed why)
+अणु
+	अगर (test_and_set_bit(FSCACHE_OBJECT_KILLED_BY_CACHE, &object->flags)) अणु
 		pr_err("Error: Object already killed by cache [%s]\n",
-		       object->cache->identifier);
-		return;
-	}
+		       object->cache->identअगरier);
+		वापस;
+	पूर्ण
 
-	switch (why) {
-	case FSCACHE_OBJECT_NO_SPACE:
+	चयन (why) अणु
+	हाल FSCACHE_OBJECT_NO_SPACE:
 		fscache_stat(&fscache_n_cache_no_space_reject);
-		break;
-	case FSCACHE_OBJECT_IS_STALE:
+		अवरोध;
+	हाल FSCACHE_OBJECT_IS_STALE:
 		fscache_stat(&fscache_n_cache_stale_objects);
-		break;
-	case FSCACHE_OBJECT_WAS_RETIRED:
+		अवरोध;
+	हाल FSCACHE_OBJECT_WAS_RETIRED:
 		fscache_stat(&fscache_n_cache_retired_objects);
-		break;
-	case FSCACHE_OBJECT_WAS_CULLED:
+		अवरोध;
+	हाल FSCACHE_OBJECT_WAS_CULLED:
 		fscache_stat(&fscache_n_cache_culled_objects);
-		break;
-	}
-}
-EXPORT_SYMBOL(fscache_object_mark_killed);
+		अवरोध;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(fscache_object_mark_समाप्तed);
 
 /*
- * The object is dead.  We can get here if an object gets queued by an event
+ * The object is dead.  We can get here अगर an object माला_लो queued by an event
  * that would lead to its death (such as EV_KILL) when the dispatcher is
- * already running (and so can be requeued) but hasn't yet cleared the event
+ * alपढ़ोy running (and so can be requeued) but hasn't yet cleared the event
  * mask.
  */
-static const struct fscache_state *fscache_object_dead(struct fscache_object *object,
-						       int event)
-{
-	if (!test_and_set_bit(FSCACHE_OBJECT_RUN_AFTER_DEAD,
+अटल स्थिर काष्ठा fscache_state *fscache_object_dead(काष्ठा fscache_object *object,
+						       पूर्णांक event)
+अणु
+	अगर (!test_and_set_bit(FSCACHE_OBJECT_RUN_AFTER_DEAD,
 			      &object->flags))
-		return NO_TRANSIT;
+		वापस NO_TRANSIT;
 
 	WARN(true, "FS-Cache object redispatched after death");
-	return NO_TRANSIT;
-}
+	वापस NO_TRANSIT;
+पूर्ण

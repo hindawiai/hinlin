@@ -1,160 +1,161 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Coldfire generic GPIO support.
  *
  * (C) Copyright 2009, Steven King <sfking@fdwdc.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/gpio/driver.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/driver.h>
 
-#include <linux/io.h>
-#include <asm/coldfire.h>
-#include <asm/mcfsim.h>
-#include <asm/mcfgpio.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/coldfire.h>
+#समावेश <यंत्र/mcfsim.h>
+#समावेश <यंत्र/mcfgpपन.स>
 
-int __mcfgpio_get_value(unsigned gpio)
-{
-	return mcfgpio_read(__mcfgpio_ppdr(gpio)) & mcfgpio_bit(gpio);
-}
+पूर्णांक __mcfgpio_get_value(अचिन्हित gpio)
+अणु
+	वापस mcfgpio_पढ़ो(__mcfgpio_ppdr(gpio)) & mcfgpio_bit(gpio);
+पूर्ण
 EXPORT_SYMBOL(__mcfgpio_get_value);
 
-void __mcfgpio_set_value(unsigned gpio, int value)
-{
-	if (gpio < MCFGPIO_SCR_START) {
-		unsigned long flags;
+व्योम __mcfgpio_set_value(अचिन्हित gpio, पूर्णांक value)
+अणु
+	अगर (gpio < MCFGPIO_SCR_START) अणु
+		अचिन्हित दीर्घ flags;
 		MCFGPIO_PORTTYPE data;
 
 		local_irq_save(flags);
-		data = mcfgpio_read(__mcfgpio_podr(gpio));
-		if (value)
+		data = mcfgpio_पढ़ो(__mcfgpio_podr(gpio));
+		अगर (value)
 			data |= mcfgpio_bit(gpio);
-		else
+		अन्यथा
 			data &= ~mcfgpio_bit(gpio);
-		mcfgpio_write(data, __mcfgpio_podr(gpio));
+		mcfgpio_ग_लिखो(data, __mcfgpio_podr(gpio));
 		local_irq_restore(flags);
-	} else {
-		if (value)
-			mcfgpio_write(mcfgpio_bit(gpio),
+	पूर्ण अन्यथा अणु
+		अगर (value)
+			mcfgpio_ग_लिखो(mcfgpio_bit(gpio),
 					MCFGPIO_SETR_PORT(gpio));
-		else
-			mcfgpio_write(~mcfgpio_bit(gpio),
+		अन्यथा
+			mcfgpio_ग_लिखो(~mcfgpio_bit(gpio),
 					MCFGPIO_CLRR_PORT(gpio));
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(__mcfgpio_set_value);
 
-int __mcfgpio_direction_input(unsigned gpio)
-{
-	unsigned long flags;
+पूर्णांक __mcfgpio_direction_input(अचिन्हित gpio)
+अणु
+	अचिन्हित दीर्घ flags;
 	MCFGPIO_PORTTYPE dir;
 
 	local_irq_save(flags);
-	dir = mcfgpio_read(__mcfgpio_pddr(gpio));
+	dir = mcfgpio_पढ़ो(__mcfgpio_pddr(gpio));
 	dir &= ~mcfgpio_bit(gpio);
-	mcfgpio_write(dir, __mcfgpio_pddr(gpio));
+	mcfgpio_ग_लिखो(dir, __mcfgpio_pddr(gpio));
 	local_irq_restore(flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(__mcfgpio_direction_input);
 
-int __mcfgpio_direction_output(unsigned gpio, int value)
-{
-	unsigned long flags;
+पूर्णांक __mcfgpio_direction_output(अचिन्हित gpio, पूर्णांक value)
+अणु
+	अचिन्हित दीर्घ flags;
 	MCFGPIO_PORTTYPE data;
 
 	local_irq_save(flags);
-	data = mcfgpio_read(__mcfgpio_pddr(gpio));
+	data = mcfgpio_पढ़ो(__mcfgpio_pddr(gpio));
 	data |= mcfgpio_bit(gpio);
-	mcfgpio_write(data, __mcfgpio_pddr(gpio));
+	mcfgpio_ग_लिखो(data, __mcfgpio_pddr(gpio));
 
 	/* now set the data to output */
-	if (gpio < MCFGPIO_SCR_START) {
-		data = mcfgpio_read(__mcfgpio_podr(gpio));
-		if (value)
+	अगर (gpio < MCFGPIO_SCR_START) अणु
+		data = mcfgpio_पढ़ो(__mcfgpio_podr(gpio));
+		अगर (value)
 			data |= mcfgpio_bit(gpio);
-		else
+		अन्यथा
 			data &= ~mcfgpio_bit(gpio);
-		mcfgpio_write(data, __mcfgpio_podr(gpio));
-	} else {
-		 if (value)
-			mcfgpio_write(mcfgpio_bit(gpio),
+		mcfgpio_ग_लिखो(data, __mcfgpio_podr(gpio));
+	पूर्ण अन्यथा अणु
+		 अगर (value)
+			mcfgpio_ग_लिखो(mcfgpio_bit(gpio),
 					MCFGPIO_SETR_PORT(gpio));
-		 else
-			 mcfgpio_write(~mcfgpio_bit(gpio),
+		 अन्यथा
+			 mcfgpio_ग_लिखो(~mcfgpio_bit(gpio),
 					 MCFGPIO_CLRR_PORT(gpio));
-	}
+	पूर्ण
 	local_irq_restore(flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(__mcfgpio_direction_output);
 
-int __mcfgpio_request(unsigned gpio)
-{
-	return 0;
-}
+पूर्णांक __mcfgpio_request(अचिन्हित gpio)
+अणु
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(__mcfgpio_request);
 
-void __mcfgpio_free(unsigned gpio)
-{
+व्योम __mcfgpio_मुक्त(अचिन्हित gpio)
+अणु
 	__mcfgpio_direction_input(gpio);
-}
-EXPORT_SYMBOL(__mcfgpio_free);
+पूर्ण
+EXPORT_SYMBOL(__mcfgpio_मुक्त);
 
-#ifdef CONFIG_GPIOLIB
+#अगर_घोषित CONFIG_GPIOLIB
 
-static int mcfgpio_direction_input(struct gpio_chip *chip, unsigned offset)
-{
-	return __mcfgpio_direction_input(offset);
-}
+अटल पूर्णांक mcfgpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	वापस __mcfgpio_direction_input(offset);
+पूर्ण
 
-static int mcfgpio_get_value(struct gpio_chip *chip, unsigned offset)
-{
-	return !!__mcfgpio_get_value(offset);
-}
+अटल पूर्णांक mcfgpio_get_value(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	वापस !!__mcfgpio_get_value(offset);
+पूर्ण
 
-static int mcfgpio_direction_output(struct gpio_chip *chip, unsigned offset,
-				    int value)
-{
-	return __mcfgpio_direction_output(offset, value);
-}
+अटल पूर्णांक mcfgpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित offset,
+				    पूर्णांक value)
+अणु
+	वापस __mcfgpio_direction_output(offset, value);
+पूर्ण
 
-static void mcfgpio_set_value(struct gpio_chip *chip, unsigned offset,
-			      int value)
-{
+अटल व्योम mcfgpio_set_value(काष्ठा gpio_chip *chip, अचिन्हित offset,
+			      पूर्णांक value)
+अणु
 	__mcfgpio_set_value(offset, value);
-}
+पूर्ण
 
-static int mcfgpio_request(struct gpio_chip *chip, unsigned offset)
-{
-	return __mcfgpio_request(offset);
-}
+अटल पूर्णांक mcfgpio_request(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	वापस __mcfgpio_request(offset);
+पूर्ण
 
-static void mcfgpio_free(struct gpio_chip *chip, unsigned offset)
-{
-	__mcfgpio_free(offset);
-}
+अटल व्योम mcfgpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	__mcfgpio_मुक्त(offset);
+पूर्ण
 
-static int mcfgpio_to_irq(struct gpio_chip *chip, unsigned offset)
-{
-#if defined(MCFGPIO_IRQ_MIN)
-	if ((offset >= MCFGPIO_IRQ_MIN) && (offset < MCFGPIO_IRQ_MAX))
-#else
-	if (offset < MCFGPIO_IRQ_MAX)
-#endif
-		return MCFGPIO_IRQ_VECBASE + offset;
-	else
-		return -EINVAL;
-}
+अटल पूर्णांक mcfgpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+#अगर defined(MCFGPIO_IRQ_MIN)
+	अगर ((offset >= MCFGPIO_IRQ_MIN) && (offset < MCFGPIO_IRQ_MAX))
+#अन्यथा
+	अगर (offset < MCFGPIO_IRQ_MAX)
+#पूर्ण_अगर
+		वापस MCFGPIO_IRQ_VECBASE + offset;
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static struct gpio_chip mcfgpio_chip = {
+अटल काष्ठा gpio_chip mcfgpio_chip = अणु
 	.label			= "mcfgpio",
 	.request		= mcfgpio_request,
-	.free			= mcfgpio_free,
+	.मुक्त			= mcfgpio_मुक्त,
 	.direction_input	= mcfgpio_direction_input,
 	.direction_output	= mcfgpio_direction_output,
 	.get			= mcfgpio_get_value,
@@ -162,12 +163,12 @@ static struct gpio_chip mcfgpio_chip = {
 	.to_irq			= mcfgpio_to_irq,
 	.base			= 0,
 	.ngpio			= MCFGPIO_PIN_MAX,
-};
+पूर्ण;
 
-static int __init mcfgpio_sysinit(void)
-{
-	return gpiochip_add_data(&mcfgpio_chip, NULL);
-}
+अटल पूर्णांक __init mcfgpio_sysinit(व्योम)
+अणु
+	वापस gpiochip_add_data(&mcfgpio_chip, शून्य);
+पूर्ण
 
 core_initcall(mcfgpio_sysinit);
-#endif
+#पूर्ण_अगर

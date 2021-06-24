@@ -1,121 +1,122 @@
+<शैली गुरु>
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright © 2001-2007 Red Hat, Inc.
+ * Copyright तऊ 2001-2007 Red Hat, Inc.
  *
  * Created by David Woodhouse <dwmw2@infradead.org>
  *
- * For licensing information, see the file 'LICENCE' in this directory.
+ * For licensing inक्रमmation, see the file 'LICENCE' in this directory.
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/crc32.h>
-#include <linux/pagemap.h>
-#include <linux/mtd/mtd.h>
-#include <linux/compiler.h>
-#include "nodelist.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/compiler.h>
+#समावेश "nodelist.h"
 
 /*
  * Check the data CRC of the node.
  *
- * Returns: 0 if the data CRC is correct;
- * 	    1 - if incorrect;
- *	    error code if an error occurred.
+ * Returns: 0 अगर the data CRC is correct;
+ * 	    1 - अगर incorrect;
+ *	    error code अगर an error occurred.
  */
-static int check_node_data(struct jffs2_sb_info *c, struct jffs2_tmp_dnode_info *tn)
-{
-	struct jffs2_raw_node_ref *ref = tn->fn->raw;
-	int err = 0, pointed = 0;
-	struct jffs2_eraseblock *jeb;
-	unsigned char *buffer;
-	uint32_t crc, ofs, len;
-	size_t retlen;
+अटल पूर्णांक check_node_data(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_पंचांगp_dnode_info *tn)
+अणु
+	काष्ठा jffs2_raw_node_ref *ref = tn->fn->raw;
+	पूर्णांक err = 0, poपूर्णांकed = 0;
+	काष्ठा jffs2_eraseblock *jeb;
+	अचिन्हित अक्षर *buffer;
+	uपूर्णांक32_t crc, ofs, len;
+	माप_प्रकार retlen;
 
 	BUG_ON(tn->csize == 0);
 
-	/* Calculate how many bytes were already checked */
-	ofs = ref_offset(ref) + sizeof(struct jffs2_raw_inode);
+	/* Calculate how many bytes were alपढ़ोy checked */
+	ofs = ref_offset(ref) + माप(काष्ठा jffs2_raw_inode);
 	len = tn->csize;
 
-	if (jffs2_is_writebuffered(c)) {
-		int adj = ofs % c->wbuf_pagesize;
-		if (likely(adj))
+	अगर (jffs2_is_ग_लिखोbuffered(c)) अणु
+		पूर्णांक adj = ofs % c->wbuf_pagesize;
+		अगर (likely(adj))
 			adj = c->wbuf_pagesize - adj;
 
-		if (adj >= tn->csize) {
-			dbg_readinode("no need to check node at %#08x, data length %u, data starts at %#08x - it has already been checked.\n",
+		अगर (adj >= tn->csize) अणु
+			dbg_पढ़ोinode("no need to check node at %#08x, data length %u, data starts at %#08x - it has already been checked.\n",
 				      ref_offset(ref), tn->csize, ofs);
-			goto adj_acc;
-		}
+			जाओ adj_acc;
+		पूर्ण
 
 		ofs += adj;
 		len -= adj;
-	}
+	पूर्ण
 
-	dbg_readinode("check node at %#08x, data length %u, partial CRC %#08x, correct CRC %#08x, data starts at %#08x, start checking from %#08x - %u bytes.\n",
+	dbg_पढ़ोinode("check node at %#08x, data length %u, partial CRC %#08x, correct CRC %#08x, data starts at %#08x, start checking from %#08x - %u bytes.\n",
 		ref_offset(ref), tn->csize, tn->partial_crc, tn->data_crc, ofs - len, ofs, len);
 
-#ifndef __ECOS
-	/* TODO: instead, incapsulate point() stuff to jffs2_flash_read(),
-	 * adding and jffs2_flash_read_end() interface. */
-	err = mtd_point(c->mtd, ofs, len, &retlen, (void **)&buffer, NULL);
-	if (!err && retlen < len) {
+#अगर_अघोषित __ECOS
+	/* TODO: instead, incapsulate poपूर्णांक() stuff to jffs2_flash_पढ़ो(),
+	 * adding and jffs2_flash_पढ़ो_end() पूर्णांकerface. */
+	err = mtd_poपूर्णांक(c->mtd, ofs, len, &retlen, (व्योम **)&buffer, शून्य);
+	अगर (!err && retlen < len) अणु
 		JFFS2_WARNING("MTD point returned len too short: %zu instead of %u.\n", retlen, tn->csize);
-		mtd_unpoint(c->mtd, ofs, retlen);
-	} else if (err) {
-		if (err != -EOPNOTSUPP)
+		mtd_unpoपूर्णांक(c->mtd, ofs, retlen);
+	पूर्ण अन्यथा अगर (err) अणु
+		अगर (err != -EOPNOTSUPP)
 			JFFS2_WARNING("MTD point failed: error code %d.\n", err);
-	} else
-		pointed = 1; /* succefully pointed to device */
-#endif
+	पूर्ण अन्यथा
+		poपूर्णांकed = 1; /* succefully poपूर्णांकed to device */
+#पूर्ण_अगर
 
-	if (!pointed) {
-		buffer = kmalloc(len, GFP_KERNEL);
-		if (unlikely(!buffer))
-			return -ENOMEM;
+	अगर (!poपूर्णांकed) अणु
+		buffer = kदो_स्मृति(len, GFP_KERNEL);
+		अगर (unlikely(!buffer))
+			वापस -ENOMEM;
 
 		/* TODO: this is very frequent pattern, make it a separate
 		 * routine */
-		err = jffs2_flash_read(c, ofs, len, &retlen, buffer);
-		if (err) {
+		err = jffs2_flash_पढ़ो(c, ofs, len, &retlen, buffer);
+		अगर (err) अणु
 			JFFS2_ERROR("can not read %d bytes from 0x%08x, error code: %d.\n", len, ofs, err);
-			goto free_out;
-		}
+			जाओ मुक्त_out;
+		पूर्ण
 
-		if (retlen != len) {
+		अगर (retlen != len) अणु
 			JFFS2_ERROR("short read at %#08x: %zd instead of %d.\n", ofs, retlen, len);
 			err = -EIO;
-			goto free_out;
-		}
-	}
+			जाओ मुक्त_out;
+		पूर्ण
+	पूर्ण
 
 	/* Continue calculating CRC */
 	crc = crc32(tn->partial_crc, buffer, len);
-	if(!pointed)
-		kfree(buffer);
-#ifndef __ECOS
-	else
-		mtd_unpoint(c->mtd, ofs, len);
-#endif
+	अगर(!poपूर्णांकed)
+		kमुक्त(buffer);
+#अगर_अघोषित __ECOS
+	अन्यथा
+		mtd_unpoपूर्णांक(c->mtd, ofs, len);
+#पूर्ण_अगर
 
-	if (crc != tn->data_crc) {
+	अगर (crc != tn->data_crc) अणु
 		JFFS2_NOTICE("wrong data CRC in data node at 0x%08x: read %#08x, calculated %#08x.\n",
 			     ref_offset(ref), tn->data_crc, crc);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 adj_acc:
 	jeb = &c->blocks[ref->flash_offset / c->sector_size];
 	len = ref_totlen(c, jeb, ref);
 	/* If it should be REF_NORMAL, it'll get marked as such when
-	   we build the fragtree, shortly. No need to worry about GC
-	   moving it while it's marked REF_PRISTINE -- GC won't happen
+	   we build the fragtree, लघुly. No need to worry about GC
+	   moving it जबतक it's marked REF_PRISTINE -- GC won't happen
 	   till we've finished checking every inode anyway. */
 	ref->flash_offset |= REF_PRISTINE;
 	/*
@@ -130,489 +131,489 @@ adj_acc:
 	jffs2_dbg_acct_paranoia_check_nolock(c, jeb);
 	spin_unlock(&c->erase_completion_lock);
 
-	return 0;
+	वापस 0;
 
-free_out:
-	if(!pointed)
-		kfree(buffer);
-#ifndef __ECOS
-	else
-		mtd_unpoint(c->mtd, ofs, len);
-#endif
-	return err;
-}
+मुक्त_out:
+	अगर(!poपूर्णांकed)
+		kमुक्त(buffer);
+#अगर_अघोषित __ECOS
+	अन्यथा
+		mtd_unpoपूर्णांक(c->mtd, ofs, len);
+#पूर्ण_अगर
+	वापस err;
+पूर्ण
 
 /*
- * Helper function for jffs2_add_older_frag_to_fragtree().
+ * Helper function क्रम jffs2_add_older_frag_to_fragtree().
  *
- * Checks the node if we are in the checking stage.
+ * Checks the node अगर we are in the checking stage.
  */
-static int check_tn_node(struct jffs2_sb_info *c, struct jffs2_tmp_dnode_info *tn)
-{
-	int ret;
+अटल पूर्णांक check_tn_node(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_पंचांगp_dnode_info *tn)
+अणु
+	पूर्णांक ret;
 
 	BUG_ON(ref_obsolete(tn->fn->raw));
 
 	/* We only check the data CRC of unchecked nodes */
-	if (ref_flags(tn->fn->raw) != REF_UNCHECKED)
-		return 0;
+	अगर (ref_flags(tn->fn->raw) != REF_UNCHECKED)
+		वापस 0;
 
-	dbg_readinode("check node %#04x-%#04x, phys offs %#08x\n",
+	dbg_पढ़ोinode("check node %#04x-%#04x, phys offs %#08x\n",
 		      tn->fn->ofs, tn->fn->ofs + tn->fn->size, ref_offset(tn->fn->raw));
 
 	ret = check_node_data(c, tn);
-	if (unlikely(ret < 0)) {
+	अगर (unlikely(ret < 0)) अणु
 		JFFS2_ERROR("check_node_data() returned error: %d.\n",
 			ret);
-	} else if (unlikely(ret > 0)) {
-		dbg_readinode("CRC error, mark it obsolete.\n");
+	पूर्ण अन्यथा अगर (unlikely(ret > 0)) अणु
+		dbg_पढ़ोinode("CRC error, mark it obsolete.\n");
 		jffs2_mark_node_obsolete(c, tn->fn->raw);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct jffs2_tmp_dnode_info *jffs2_lookup_tn(struct rb_root *tn_root, uint32_t offset)
-{
-	struct rb_node *next;
-	struct jffs2_tmp_dnode_info *tn = NULL;
+अटल काष्ठा jffs2_पंचांगp_dnode_info *jffs2_lookup_tn(काष्ठा rb_root *tn_root, uपूर्णांक32_t offset)
+अणु
+	काष्ठा rb_node *next;
+	काष्ठा jffs2_पंचांगp_dnode_info *tn = शून्य;
 
-	dbg_readinode("root %p, offset %d\n", tn_root, offset);
+	dbg_पढ़ोinode("root %p, offset %d\n", tn_root, offset);
 
 	next = tn_root->rb_node;
 
-	while (next) {
-		tn = rb_entry(next, struct jffs2_tmp_dnode_info, rb);
+	जबतक (next) अणु
+		tn = rb_entry(next, काष्ठा jffs2_पंचांगp_dnode_info, rb);
 
-		if (tn->fn->ofs < offset)
+		अगर (tn->fn->ofs < offset)
 			next = tn->rb.rb_right;
-		else if (tn->fn->ofs >= offset)
+		अन्यथा अगर (tn->fn->ofs >= offset)
 			next = tn->rb.rb_left;
-		else
-			break;
-	}
+		अन्यथा
+			अवरोध;
+	पूर्ण
 
-	return tn;
-}
+	वापस tn;
+पूर्ण
 
 
-static void jffs2_kill_tn(struct jffs2_sb_info *c, struct jffs2_tmp_dnode_info *tn)
-{
+अटल व्योम jffs2_समाप्त_tn(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_पंचांगp_dnode_info *tn)
+अणु
 	jffs2_mark_node_obsolete(c, tn->fn->raw);
-	jffs2_free_full_dnode(tn->fn);
-	jffs2_free_tmp_dnode_info(tn);
-}
+	jffs2_मुक्त_full_dnode(tn->fn);
+	jffs2_मुक्त_पंचांगp_dnode_info(tn);
+पूर्ण
 /*
- * This function is used when we read an inode. Data nodes arrive in
+ * This function is used when we पढ़ो an inode. Data nodes arrive in
  * arbitrary order -- they may be older or newer than the nodes which
- * are already in the tree. Where overlaps occur, the older node can
- * be discarded as long as the newer passes the CRC check. We don't
- * bother to keep track of holes in this rbtree, and neither do we deal
+ * are alपढ़ोy in the tree. Where overlaps occur, the older node can
+ * be discarded as दीर्घ as the newer passes the CRC check. We करोn't
+ * bother to keep track of holes in this rbtree, and neither करो we deal
  * with frags -- we can have multiple entries starting at the same
  * offset, and the one with the smallest length will come first in the
  * ordering.
  *
- * Returns 0 if the node was handled (including marking it obsolete)
- *	 < 0 an if error occurred
+ * Returns 0 अगर the node was handled (including marking it obsolete)
+ *	 < 0 an अगर error occurred
  */
-static int jffs2_add_tn_to_tree(struct jffs2_sb_info *c,
-				struct jffs2_readinode_info *rii,
-				struct jffs2_tmp_dnode_info *tn)
-{
-	uint32_t fn_end = tn->fn->ofs + tn->fn->size;
-	struct jffs2_tmp_dnode_info *this, *ptn;
+अटल पूर्णांक jffs2_add_tn_to_tree(काष्ठा jffs2_sb_info *c,
+				काष्ठा jffs2_पढ़ोinode_info *rii,
+				काष्ठा jffs2_पंचांगp_dnode_info *tn)
+अणु
+	uपूर्णांक32_t fn_end = tn->fn->ofs + tn->fn->size;
+	काष्ठा jffs2_पंचांगp_dnode_info *this, *ptn;
 
-	dbg_readinode("insert fragment %#04x-%#04x, ver %u at %08x\n", tn->fn->ofs, fn_end, tn->version, ref_offset(tn->fn->raw));
+	dbg_पढ़ोinode("insert fragment %#04x-%#04x, ver %u at %08x\n", tn->fn->ofs, fn_end, tn->version, ref_offset(tn->fn->raw));
 
-	/* If a node has zero dsize, we only have to keep it if it might be the
+	/* If a node has zero dsize, we only have to keep it अगर it might be the
 	   node with highest version -- i.e. the one which will end up as f->metadata.
 	   Note that such nodes won't be REF_UNCHECKED since there are no data to
 	   check anyway. */
-	if (!tn->fn->size) {
-		if (rii->mdata_tn) {
-			if (rii->mdata_tn->version < tn->version) {
-				/* We had a candidate mdata node already */
-				dbg_readinode("kill old mdata with ver %d\n", rii->mdata_tn->version);
-				jffs2_kill_tn(c, rii->mdata_tn);
-			} else {
-				dbg_readinode("kill new mdata with ver %d (older than existing %d\n",
+	अगर (!tn->fn->size) अणु
+		अगर (rii->mdata_tn) अणु
+			अगर (rii->mdata_tn->version < tn->version) अणु
+				/* We had a candidate mdata node alपढ़ोy */
+				dbg_पढ़ोinode("kill old mdata with ver %d\n", rii->mdata_tn->version);
+				jffs2_समाप्त_tn(c, rii->mdata_tn);
+			पूर्ण अन्यथा अणु
+				dbg_पढ़ोinode("kill new mdata with ver %d (older than existing %d\n",
 					      tn->version, rii->mdata_tn->version);
-				jffs2_kill_tn(c, tn);
-				return 0;
-			}
-		}
+				jffs2_समाप्त_tn(c, tn);
+				वापस 0;
+			पूर्ण
+		पूर्ण
 		rii->mdata_tn = tn;
-		dbg_readinode("keep new mdata with ver %d\n", tn->version);
-		return 0;
-	}
+		dbg_पढ़ोinode("keep new mdata with ver %d\n", tn->version);
+		वापस 0;
+	पूर्ण
 
 	/* Find the earliest node which _may_ be relevant to this one */
 	this = jffs2_lookup_tn(&rii->tn_root, tn->fn->ofs);
-	if (this) {
+	अगर (this) अणु
 		/* If the node is coincident with another at a lower address,
 		   back up until the other node is found. It may be relevant */
-		while (this->overlapped) {
+		जबतक (this->overlapped) अणु
 			ptn = tn_prev(this);
-			if (!ptn) {
+			अगर (!ptn) अणु
 				/*
-				 * We killed a node which set the overlapped
+				 * We समाप्तed a node which set the overlapped
 				 * flags during the scan. Fix it up.
 				 */
 				this->overlapped = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			this = ptn;
-		}
-		dbg_readinode("'this' found %#04x-%#04x (%s)\n", this->fn->ofs, this->fn->ofs + this->fn->size, this->fn ? "data" : "hole");
-	}
+		पूर्ण
+		dbg_पढ़ोinode("'this' found %#04x-%#04x (%s)\n", this->fn->ofs, this->fn->ofs + this->fn->size, this->fn ? "data" : "hole");
+	पूर्ण
 
-	while (this) {
-		if (this->fn->ofs > fn_end)
-			break;
-		dbg_readinode("Ponder this ver %d, 0x%x-0x%x\n",
+	जबतक (this) अणु
+		अगर (this->fn->ofs > fn_end)
+			अवरोध;
+		dbg_पढ़ोinode("Ponder this ver %d, 0x%x-0x%x\n",
 			      this->version, this->fn->ofs, this->fn->size);
 
-		if (this->version == tn->version) {
+		अगर (this->version == tn->version) अणु
 			/* Version number collision means REF_PRISTINE GC. Accept either of them
-			   as long as the CRC is correct. Check the one we have already...  */
-			if (!check_tn_node(c, this)) {
-				/* The one we already had was OK. Keep it and throw away the new one */
-				dbg_readinode("Like old node. Throw away new\n");
-				jffs2_kill_tn(c, tn);
-				return 0;
-			} else {
-				/* Who cares if the new one is good; keep it for now anyway. */
-				dbg_readinode("Like new node. Throw away old\n");
+			   as दीर्घ as the CRC is correct. Check the one we have alपढ़ोy...  */
+			अगर (!check_tn_node(c, this)) अणु
+				/* The one we alपढ़ोy had was OK. Keep it and throw away the new one */
+				dbg_पढ़ोinode("Like old node. Throw away new\n");
+				jffs2_समाप्त_tn(c, tn);
+				वापस 0;
+			पूर्ण अन्यथा अणु
+				/* Who cares अगर the new one is good; keep it क्रम now anyway. */
+				dbg_पढ़ोinode("Like new node. Throw away old\n");
 				rb_replace_node(&this->rb, &tn->rb, &rii->tn_root);
-				jffs2_kill_tn(c, this);
+				jffs2_समाप्त_tn(c, this);
 				/* Same overlapping from in front and behind */
-				return 0;
-			}
-		}
-		if (this->version < tn->version &&
+				वापस 0;
+			पूर्ण
+		पूर्ण
+		अगर (this->version < tn->version &&
 		    this->fn->ofs >= tn->fn->ofs &&
-		    this->fn->ofs + this->fn->size <= fn_end) {
+		    this->fn->ofs + this->fn->size <= fn_end) अणु
 			/* New node entirely overlaps 'this' */
-			if (check_tn_node(c, tn)) {
-				dbg_readinode("new node bad CRC\n");
-				jffs2_kill_tn(c, tn);
-				return 0;
-			}
+			अगर (check_tn_node(c, tn)) अणु
+				dbg_पढ़ोinode("new node bad CRC\n");
+				jffs2_समाप्त_tn(c, tn);
+				वापस 0;
+			पूर्ण
 			/* ... and is good. Kill 'this' and any subsequent nodes which are also overlapped */
-			while (this && this->fn->ofs + this->fn->size <= fn_end) {
-				struct jffs2_tmp_dnode_info *next = tn_next(this);
-				if (this->version < tn->version) {
+			जबतक (this && this->fn->ofs + this->fn->size <= fn_end) अणु
+				काष्ठा jffs2_पंचांगp_dnode_info *next = tn_next(this);
+				अगर (this->version < tn->version) अणु
 					tn_erase(this, &rii->tn_root);
-					dbg_readinode("Kill overlapped ver %d, 0x%x-0x%x\n",
+					dbg_पढ़ोinode("Kill overlapped ver %d, 0x%x-0x%x\n",
 						      this->version, this->fn->ofs,
 						      this->fn->ofs+this->fn->size);
-					jffs2_kill_tn(c, this);
-				}
+					jffs2_समाप्त_tn(c, this);
+				पूर्ण
 				this = next;
-			}
-			dbg_readinode("Done killing overlapped nodes\n");
-			continue;
-		}
-		if (this->version > tn->version &&
+			पूर्ण
+			dbg_पढ़ोinode("Done killing overlapped nodes\n");
+			जारी;
+		पूर्ण
+		अगर (this->version > tn->version &&
 		    this->fn->ofs <= tn->fn->ofs &&
-		    this->fn->ofs+this->fn->size >= fn_end) {
+		    this->fn->ofs+this->fn->size >= fn_end) अणु
 			/* New node entirely overlapped by 'this' */
-			if (!check_tn_node(c, this)) {
-				dbg_readinode("Good CRC on old node. Kill new\n");
-				jffs2_kill_tn(c, tn);
-				return 0;
-			}
+			अगर (!check_tn_node(c, this)) अणु
+				dbg_पढ़ोinode("Good CRC on old node. Kill new\n");
+				jffs2_समाप्त_tn(c, tn);
+				वापस 0;
+			पूर्ण
 			/* ... but 'this' was bad. Replace it... */
-			dbg_readinode("Bad CRC on old overlapping node. Kill it\n");
+			dbg_पढ़ोinode("Bad CRC on old overlapping node. Kill it\n");
 			tn_erase(this, &rii->tn_root);
-			jffs2_kill_tn(c, this);
-			break;
-		}
+			jffs2_समाप्त_tn(c, this);
+			अवरोध;
+		पूर्ण
 
 		this = tn_next(this);
-	}
+	पूर्ण
 
 	/* We neither completely obsoleted nor were completely
-	   obsoleted by an earlier node. Insert into the tree */
-	{
-		struct rb_node *parent;
-		struct rb_node **link = &rii->tn_root.rb_node;
-		struct jffs2_tmp_dnode_info *insert_point = NULL;
+	   obsoleted by an earlier node. Insert पूर्णांकo the tree */
+	अणु
+		काष्ठा rb_node *parent;
+		काष्ठा rb_node **link = &rii->tn_root.rb_node;
+		काष्ठा jffs2_पंचांगp_dnode_info *insert_poपूर्णांक = शून्य;
 
-		while (*link) {
+		जबतक (*link) अणु
 			parent = *link;
-			insert_point = rb_entry(parent, struct jffs2_tmp_dnode_info, rb);
-			if (tn->fn->ofs > insert_point->fn->ofs)
-				link = &insert_point->rb.rb_right;
-			else if (tn->fn->ofs < insert_point->fn->ofs ||
-				 tn->fn->size < insert_point->fn->size)
-				link = &insert_point->rb.rb_left;
-			else
-				link = &insert_point->rb.rb_right;
-		}
-		rb_link_node(&tn->rb, &insert_point->rb, link);
+			insert_poपूर्णांक = rb_entry(parent, काष्ठा jffs2_पंचांगp_dnode_info, rb);
+			अगर (tn->fn->ofs > insert_poपूर्णांक->fn->ofs)
+				link = &insert_poपूर्णांक->rb.rb_right;
+			अन्यथा अगर (tn->fn->ofs < insert_poपूर्णांक->fn->ofs ||
+				 tn->fn->size < insert_poपूर्णांक->fn->size)
+				link = &insert_poपूर्णांक->rb.rb_left;
+			अन्यथा
+				link = &insert_poपूर्णांक->rb.rb_right;
+		पूर्ण
+		rb_link_node(&tn->rb, &insert_poपूर्णांक->rb, link);
 		rb_insert_color(&tn->rb, &rii->tn_root);
-	}
+	पूर्ण
 
 	/* If there's anything behind that overlaps us, note it */
 	this = tn_prev(tn);
-	if (this) {
-		while (1) {
-			if (this->fn->ofs + this->fn->size > tn->fn->ofs) {
-				dbg_readinode("Node is overlapped by %p (v %d, 0x%x-0x%x)\n",
+	अगर (this) अणु
+		जबतक (1) अणु
+			अगर (this->fn->ofs + this->fn->size > tn->fn->ofs) अणु
+				dbg_पढ़ोinode("Node is overlapped by %p (v %d, 0x%x-0x%x)\n",
 					      this, this->version, this->fn->ofs,
 					      this->fn->ofs+this->fn->size);
 				tn->overlapped = 1;
-				break;
-			}
-			if (!this->overlapped)
-				break;
+				अवरोध;
+			पूर्ण
+			अगर (!this->overlapped)
+				अवरोध;
 
 			ptn = tn_prev(this);
-			if (!ptn) {
+			अगर (!ptn) अणु
 				/*
-				 * We killed a node which set the overlapped
+				 * We समाप्तed a node which set the overlapped
 				 * flags during the scan. Fix it up.
 				 */
 				this->overlapped = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			this = ptn;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* If the new node overlaps anything ahead, note it */
 	this = tn_next(tn);
-	while (this && this->fn->ofs < fn_end) {
+	जबतक (this && this->fn->ofs < fn_end) अणु
 		this->overlapped = 1;
-		dbg_readinode("Node ver %d, 0x%x-0x%x is overlapped\n",
+		dbg_पढ़ोinode("Node ver %d, 0x%x-0x%x is overlapped\n",
 			      this->version, this->fn->ofs,
 			      this->fn->ofs+this->fn->size);
 		this = tn_next(this);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Trivial function to remove the last node in the tree. Which by definition
-   has no right-hand child — so can be removed just by making its left-hand
-   child (if any) take its place under its parent. Since this is only done
+/* Trivial function to हटाओ the last node in the tree. Which by definition
+   has no right-hand child ै  so can be हटाओd just by making its left-hand
+   child (अगर any) take its place under its parent. Since this is only करोne
    when we're consuming the whole tree, there's no need to use rb_erase()
    and let it worry about adjusting colours and balancing the tree. That
-   would just be a waste of time. */
-static void eat_last(struct rb_root *root, struct rb_node *node)
-{
-	struct rb_node *parent = rb_parent(node);
-	struct rb_node **link;
+   would just be a waste of समय. */
+अटल व्योम eat_last(काष्ठा rb_root *root, काष्ठा rb_node *node)
+अणु
+	काष्ठा rb_node *parent = rb_parent(node);
+	काष्ठा rb_node **link;
 
 	/* LAST! */
 	BUG_ON(node->rb_right);
 
-	if (!parent)
+	अगर (!parent)
 		link = &root->rb_node;
-	else if (node == parent->rb_left)
+	अन्यथा अगर (node == parent->rb_left)
 		link = &parent->rb_left;
-	else
+	अन्यथा
 		link = &parent->rb_right;
 
 	*link = node->rb_left;
-	if (node->rb_left)
+	अगर (node->rb_left)
 		node->rb_left->__rb_parent_color = node->__rb_parent_color;
-}
+पूर्ण
 
 /* We put the version tree in reverse order, so we can use the same eat_last()
-   function that we use to consume the tmpnode tree (tn_root). */
-static void ver_insert(struct rb_root *ver_root, struct jffs2_tmp_dnode_info *tn)
-{
-	struct rb_node **link = &ver_root->rb_node;
-	struct rb_node *parent = NULL;
-	struct jffs2_tmp_dnode_info *this_tn;
+   function that we use to consume the पंचांगpnode tree (tn_root). */
+अटल व्योम ver_insert(काष्ठा rb_root *ver_root, काष्ठा jffs2_पंचांगp_dnode_info *tn)
+अणु
+	काष्ठा rb_node **link = &ver_root->rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा jffs2_पंचांगp_dnode_info *this_tn;
 
-	while (*link) {
+	जबतक (*link) अणु
 		parent = *link;
-		this_tn = rb_entry(parent, struct jffs2_tmp_dnode_info, rb);
+		this_tn = rb_entry(parent, काष्ठा jffs2_पंचांगp_dnode_info, rb);
 
-		if (tn->version > this_tn->version)
+		अगर (tn->version > this_tn->version)
 			link = &parent->rb_left;
-		else
+		अन्यथा
 			link = &parent->rb_right;
-	}
-	dbg_readinode("Link new node at %p (root is %p)\n", link, ver_root);
+	पूर्ण
+	dbg_पढ़ोinode("Link new node at %p (root is %p)\n", link, ver_root);
 	rb_link_node(&tn->rb, parent, link);
 	rb_insert_color(&tn->rb, ver_root);
-}
+पूर्ण
 
-/* Build final, normal fragtree from tn tree. It doesn't matter which order
-   we add nodes to the real fragtree, as long as they don't overlap. And
+/* Build final, normal fragtree from tn tree. It करोesn't matter which order
+   we add nodes to the real fragtree, as दीर्घ as they करोn't overlap. And
    having thrown away the majority of overlapped nodes as we went, there
-   really shouldn't be many sets of nodes which do overlap. If we start at
+   really shouldn't be many sets of nodes which करो overlap. If we start at
    the end, we can use the overlap markers -- we can just eat nodes which
-   aren't overlapped, and when we encounter nodes which _do_ overlap we
-   sort them all into a temporary tree in version order before replaying them. */
-static int jffs2_build_inode_fragtree(struct jffs2_sb_info *c,
-				      struct jffs2_inode_info *f,
-				      struct jffs2_readinode_info *rii)
-{
-	struct jffs2_tmp_dnode_info *pen, *last, *this;
-	struct rb_root ver_root = RB_ROOT;
-	uint32_t high_ver = 0;
+   aren't overlapped, and when we encounter nodes which _करो_ overlap we
+   sort them all पूर्णांकo a temporary tree in version order beक्रमe replaying them. */
+अटल पूर्णांक jffs2_build_inode_fragtree(काष्ठा jffs2_sb_info *c,
+				      काष्ठा jffs2_inode_info *f,
+				      काष्ठा jffs2_पढ़ोinode_info *rii)
+अणु
+	काष्ठा jffs2_पंचांगp_dnode_info *pen, *last, *this;
+	काष्ठा rb_root ver_root = RB_ROOT;
+	uपूर्णांक32_t high_ver = 0;
 
-	if (rii->mdata_tn) {
-		dbg_readinode("potential mdata is ver %d at %p\n", rii->mdata_tn->version, rii->mdata_tn);
+	अगर (rii->mdata_tn) अणु
+		dbg_पढ़ोinode("potential mdata is ver %d at %p\n", rii->mdata_tn->version, rii->mdata_tn);
 		high_ver = rii->mdata_tn->version;
 		rii->latest_ref = rii->mdata_tn->fn->raw;
-	}
-#ifdef JFFS2_DBG_READINODE_MESSAGES
+	पूर्ण
+#अगर_घोषित JFFS2_DBG_READINODE_MESSAGES
 	this = tn_last(&rii->tn_root);
-	while (this) {
-		dbg_readinode("tn %p ver %d range 0x%x-0x%x ov %d\n", this, this->version, this->fn->ofs,
+	जबतक (this) अणु
+		dbg_पढ़ोinode("tn %p ver %d range 0x%x-0x%x ov %d\n", this, this->version, this->fn->ofs,
 			      this->fn->ofs+this->fn->size, this->overlapped);
 		this = tn_prev(this);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	pen = tn_last(&rii->tn_root);
-	while ((last = pen)) {
+	जबतक ((last = pen)) अणु
 		pen = tn_prev(last);
 
 		eat_last(&rii->tn_root, &last->rb);
 		ver_insert(&ver_root, last);
 
-		if (unlikely(last->overlapped)) {
-			if (pen)
-				continue;
+		अगर (unlikely(last->overlapped)) अणु
+			अगर (pen)
+				जारी;
 			/*
-			 * We killed a node which set the overlapped
+			 * We समाप्तed a node which set the overlapped
 			 * flags during the scan. Fix it up.
 			 */
 			last->overlapped = 0;
-		}
+		पूर्ण
 
 		/* Now we have a bunch of nodes in reverse version
-		   order, in the tree at ver_root. Most of the time,
+		   order, in the tree at ver_root. Most of the समय,
 		   there'll actually be only one node in the 'tree',
 		   in fact. */
 		this = tn_last(&ver_root);
 
-		while (this) {
-			struct jffs2_tmp_dnode_info *vers_next;
-			int ret;
+		जबतक (this) अणु
+			काष्ठा jffs2_पंचांगp_dnode_info *vers_next;
+			पूर्णांक ret;
 			vers_next = tn_prev(this);
 			eat_last(&ver_root, &this->rb);
-			if (check_tn_node(c, this)) {
-				dbg_readinode("node ver %d, 0x%x-0x%x failed CRC\n",
+			अगर (check_tn_node(c, this)) अणु
+				dbg_पढ़ोinode("node ver %d, 0x%x-0x%x failed CRC\n",
 					     this->version, this->fn->ofs,
 					     this->fn->ofs+this->fn->size);
-				jffs2_kill_tn(c, this);
-			} else {
-				if (this->version > high_ver) {
-					/* Note that this is different from the other
+				jffs2_समाप्त_tn(c, this);
+			पूर्ण अन्यथा अणु
+				अगर (this->version > high_ver) अणु
+					/* Note that this is dअगरferent from the other
 					   highest_version, because this one is only
 					   counting _valid_ nodes which could give the
 					   latest inode metadata */
 					high_ver = this->version;
 					rii->latest_ref = this->fn->raw;
-				}
-				dbg_readinode("Add %p (v %d, 0x%x-0x%x, ov %d) to fragtree\n",
+				पूर्ण
+				dbg_पढ़ोinode("Add %p (v %d, 0x%x-0x%x, ov %d) to fragtree\n",
 					     this, this->version, this->fn->ofs,
 					     this->fn->ofs+this->fn->size, this->overlapped);
 
 				ret = jffs2_add_full_dnode_to_inode(c, f, this->fn);
-				if (ret) {
+				अगर (ret) अणु
 					/* Free the nodes in vers_root; let the caller
 					   deal with the rest */
 					JFFS2_ERROR("Add node to tree failed %d\n", ret);
-					while (1) {
+					जबतक (1) अणु
 						vers_next = tn_prev(this);
-						if (check_tn_node(c, this))
+						अगर (check_tn_node(c, this))
 							jffs2_mark_node_obsolete(c, this->fn->raw);
-						jffs2_free_full_dnode(this->fn);
-						jffs2_free_tmp_dnode_info(this);
+						jffs2_मुक्त_full_dnode(this->fn);
+						jffs2_मुक्त_पंचांगp_dnode_info(this);
 						this = vers_next;
-						if (!this)
-							break;
+						अगर (!this)
+							अवरोध;
 						eat_last(&ver_root, &vers_next->rb);
-					}
-					return ret;
-				}
-				jffs2_free_tmp_dnode_info(this);
-			}
+					पूर्ण
+					वापस ret;
+				पूर्ण
+				jffs2_मुक्त_पंचांगp_dnode_info(this);
+			पूर्ण
 			this = vers_next;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void jffs2_free_tmp_dnode_info_list(struct rb_root *list)
-{
-	struct jffs2_tmp_dnode_info *tn, *next;
+अटल व्योम jffs2_मुक्त_पंचांगp_dnode_info_list(काष्ठा rb_root *list)
+अणु
+	काष्ठा jffs2_पंचांगp_dnode_info *tn, *next;
 
-	rbtree_postorder_for_each_entry_safe(tn, next, list, rb) {
-			jffs2_free_full_dnode(tn->fn);
-			jffs2_free_tmp_dnode_info(tn);
-	}
+	rbtree_postorder_क्रम_each_entry_safe(tn, next, list, rb) अणु
+			jffs2_मुक्त_full_dnode(tn->fn);
+			jffs2_मुक्त_पंचांगp_dnode_info(tn);
+	पूर्ण
 
 	*list = RB_ROOT;
-}
+पूर्ण
 
-static void jffs2_free_full_dirent_list(struct jffs2_full_dirent *fd)
-{
-	struct jffs2_full_dirent *next;
+अटल व्योम jffs2_मुक्त_full_dirent_list(काष्ठा jffs2_full_dirent *fd)
+अणु
+	काष्ठा jffs2_full_dirent *next;
 
-	while (fd) {
+	जबतक (fd) अणु
 		next = fd->next;
-		jffs2_free_full_dirent(fd);
+		jffs2_मुक्त_full_dirent(fd);
 		fd = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Returns first valid node after 'ref'. May return 'ref' */
-static struct jffs2_raw_node_ref *jffs2_first_valid_node(struct jffs2_raw_node_ref *ref)
-{
-	while (ref && ref->next_in_ino) {
-		if (!ref_obsolete(ref))
-			return ref;
+अटल काष्ठा jffs2_raw_node_ref *jffs2_first_valid_node(काष्ठा jffs2_raw_node_ref *ref)
+अणु
+	जबतक (ref && ref->next_in_ino) अणु
+		अगर (!ref_obsolete(ref))
+			वापस ref;
 		dbg_noderef("node at 0x%08x is obsoleted. Ignoring.\n", ref_offset(ref));
 		ref = ref->next_in_ino;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * Helper function for jffs2_get_inode_nodes().
- * It is called every time an directory entry node is found.
+ * Helper function क्रम jffs2_get_inode_nodes().
+ * It is called every समय an directory entry node is found.
  *
  * Returns: 0 on success;
  * 	    negative error code on failure.
  */
-static inline int read_direntry(struct jffs2_sb_info *c, struct jffs2_raw_node_ref *ref,
-				struct jffs2_raw_dirent *rd, size_t read,
-				struct jffs2_readinode_info *rii)
-{
-	struct jffs2_full_dirent *fd;
-	uint32_t crc;
+अटल अंतरभूत पूर्णांक पढ़ो_direntry(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_raw_node_ref *ref,
+				काष्ठा jffs2_raw_dirent *rd, माप_प्रकार पढ़ो,
+				काष्ठा jffs2_पढ़ोinode_info *rii)
+अणु
+	काष्ठा jffs2_full_dirent *fd;
+	uपूर्णांक32_t crc;
 
 	/* Obsoleted. This cannot happen, surely? dwmw2 20020308 */
 	BUG_ON(ref_obsolete(ref));
 
-	crc = crc32(0, rd, sizeof(*rd) - 8);
-	if (unlikely(crc != je32_to_cpu(rd->node_crc))) {
+	crc = crc32(0, rd, माप(*rd) - 8);
+	अगर (unlikely(crc != je32_to_cpu(rd->node_crc))) अणु
 		JFFS2_NOTICE("header CRC failed on dirent node at %#08x: read %#08x, calculated %#08x\n",
 			     ref_offset(ref), je32_to_cpu(rd->node_crc), crc);
 		jffs2_mark_node_obsolete(c, ref);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* If we've never checked the CRCs on this node, check them now */
-	if (ref_flags(ref) == REF_UNCHECKED) {
-		struct jffs2_eraseblock *jeb;
-		int len;
+	अगर (ref_flags(ref) == REF_UNCHECKED) अणु
+		काष्ठा jffs2_eraseblock *jeb;
+		पूर्णांक len;
 
 		/* Sanity check */
-		if (unlikely(PAD((rd->nsize + sizeof(*rd))) != PAD(je32_to_cpu(rd->totlen)))) {
+		अगर (unlikely(PAD((rd->nsize + माप(*rd))) != PAD(je32_to_cpu(rd->totlen)))) अणु
 			JFFS2_ERROR("illegal nsize in node at %#08x: nsize %#02x, totlen %#04x\n",
 				    ref_offset(ref), rd->nsize, je32_to_cpu(rd->totlen));
 			jffs2_mark_node_obsolete(c, ref);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		jeb = &c->blocks[ref->flash_offset / c->sector_size];
 		len = ref_totlen(c, jeb, ref);
@@ -624,142 +625,142 @@ static inline int read_direntry(struct jffs2_sb_info *c, struct jffs2_raw_node_r
 		c->unchecked_size -= len;
 		ref->flash_offset = ref_offset(ref) | dirent_node_state(rd);
 		spin_unlock(&c->erase_completion_lock);
-	}
+	पूर्ण
 
 	fd = jffs2_alloc_full_dirent(rd->nsize + 1);
-	if (unlikely(!fd))
-		return -ENOMEM;
+	अगर (unlikely(!fd))
+		वापस -ENOMEM;
 
 	fd->raw = ref;
 	fd->version = je32_to_cpu(rd->version);
 	fd->ino = je32_to_cpu(rd->ino);
 	fd->type = rd->type;
 
-	if (fd->version > rii->highest_version)
+	अगर (fd->version > rii->highest_version)
 		rii->highest_version = fd->version;
 
-	/* Pick out the mctime of the latest dirent */
-	if(fd->version > rii->mctime_ver && je32_to_cpu(rd->mctime)) {
-		rii->mctime_ver = fd->version;
-		rii->latest_mctime = je32_to_cpu(rd->mctime);
-	}
+	/* Pick out the mस_समय of the latest dirent */
+	अगर(fd->version > rii->mस_समय_ver && je32_to_cpu(rd->mस_समय)) अणु
+		rii->mस_समय_ver = fd->version;
+		rii->latest_mस_समय = je32_to_cpu(rd->mस_समय);
+	पूर्ण
 
 	/*
 	 * Copy as much of the name as possible from the raw
-	 * dirent we've already read from the flash.
+	 * dirent we've alपढ़ोy पढ़ो from the flash.
 	 */
-	if (read > sizeof(*rd))
-		memcpy(&fd->name[0], &rd->name[0],
-		       min_t(uint32_t, rd->nsize, (read - sizeof(*rd)) ));
+	अगर (पढ़ो > माप(*rd))
+		स_नकल(&fd->name[0], &rd->name[0],
+		       min_t(uपूर्णांक32_t, rd->nsize, (पढ़ो - माप(*rd)) ));
 
 	/* Do we need to copy any more of the name directly from the flash? */
-	if (rd->nsize + sizeof(*rd) > read) {
-		/* FIXME: point() */
-		int err;
-		int already = read - sizeof(*rd);
+	अगर (rd->nsize + माप(*rd) > पढ़ो) अणु
+		/* FIXME: poपूर्णांक() */
+		पूर्णांक err;
+		पूर्णांक alपढ़ोy = पढ़ो - माप(*rd);
 
-		err = jffs2_flash_read(c, (ref_offset(ref)) + read,
-				rd->nsize - already, &read, &fd->name[already]);
-		if (unlikely(read != rd->nsize - already) && likely(!err)) {
-			jffs2_free_full_dirent(fd);
+		err = jffs2_flash_पढ़ो(c, (ref_offset(ref)) + पढ़ो,
+				rd->nsize - alपढ़ोy, &पढ़ो, &fd->name[alपढ़ोy]);
+		अगर (unlikely(पढ़ो != rd->nsize - alपढ़ोy) && likely(!err)) अणु
+			jffs2_मुक्त_full_dirent(fd);
 			JFFS2_ERROR("short read: wanted %d bytes, got %zd\n",
-				    rd->nsize - already, read);
-			return -EIO;
-		}
+				    rd->nsize - alपढ़ोy, पढ़ो);
+			वापस -EIO;
+		पूर्ण
 
-		if (unlikely(err)) {
+		अगर (unlikely(err)) अणु
 			JFFS2_ERROR("read remainder of name: error %d\n", err);
-			jffs2_free_full_dirent(fd);
-			return -EIO;
-		}
+			jffs2_मुक्त_full_dirent(fd);
+			वापस -EIO;
+		पूर्ण
 
-#ifdef CONFIG_JFFS2_SUMMARY
+#अगर_घोषित CONFIG_JFFS2_SUMMARY
 		/*
 		 * we use CONFIG_JFFS2_SUMMARY because without it, we
-		 * have checked it while mounting
+		 * have checked it जबतक mounting
 		 */
 		crc = crc32(0, fd->name, rd->nsize);
-		if (unlikely(crc != je32_to_cpu(rd->name_crc))) {
+		अगर (unlikely(crc != je32_to_cpu(rd->name_crc))) अणु
 			JFFS2_NOTICE("name CRC failed on dirent node at"
 			   "%#08x: read %#08x,calculated %#08x\n",
 			   ref_offset(ref), je32_to_cpu(rd->node_crc), crc);
 			jffs2_mark_node_obsolete(c, ref);
-			jffs2_free_full_dirent(fd);
-			return 0;
-		}
-#endif
-	}
+			jffs2_मुक्त_full_dirent(fd);
+			वापस 0;
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	fd->nhash = full_name_hash(NULL, fd->name, rd->nsize);
-	fd->next = NULL;
+	fd->nhash = full_name_hash(शून्य, fd->name, rd->nsize);
+	fd->next = शून्य;
 	fd->name[rd->nsize] = '\0';
 
 	/*
-	 * Wheee. We now have a complete jffs2_full_dirent structure, with
-	 * the name in it and everything. Link it into the list
+	 * Wheee. We now have a complete jffs2_full_dirent काष्ठाure, with
+	 * the name in it and everything. Link it पूर्णांकo the list
 	 */
 	jffs2_add_fd_to_list(c, fd, &rii->fds);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Helper function for jffs2_get_inode_nodes().
- * It is called every time an inode node is found.
+ * Helper function क्रम jffs2_get_inode_nodes().
+ * It is called every समय an inode node is found.
  *
  * Returns: 0 on success (possibly after marking a bad node obsolete);
  * 	    negative error code on failure.
  */
-static inline int read_dnode(struct jffs2_sb_info *c, struct jffs2_raw_node_ref *ref,
-			     struct jffs2_raw_inode *rd, int rdlen,
-			     struct jffs2_readinode_info *rii)
-{
-	struct jffs2_tmp_dnode_info *tn;
-	uint32_t len, csize;
-	int ret = 0;
-	uint32_t crc;
+अटल अंतरभूत पूर्णांक पढ़ो_dnode(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_raw_node_ref *ref,
+			     काष्ठा jffs2_raw_inode *rd, पूर्णांक rdlen,
+			     काष्ठा jffs2_पढ़ोinode_info *rii)
+अणु
+	काष्ठा jffs2_पंचांगp_dnode_info *tn;
+	uपूर्णांक32_t len, csize;
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t crc;
 
 	/* Obsoleted. This cannot happen, surely? dwmw2 20020308 */
 	BUG_ON(ref_obsolete(ref));
 
-	crc = crc32(0, rd, sizeof(*rd) - 8);
-	if (unlikely(crc != je32_to_cpu(rd->node_crc))) {
+	crc = crc32(0, rd, माप(*rd) - 8);
+	अगर (unlikely(crc != je32_to_cpu(rd->node_crc))) अणु
 		JFFS2_NOTICE("node CRC failed on dnode at %#08x: read %#08x, calculated %#08x\n",
 			     ref_offset(ref), je32_to_cpu(rd->node_crc), crc);
 		jffs2_mark_node_obsolete(c, ref);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	tn = jffs2_alloc_tmp_dnode_info();
-	if (!tn) {
-		JFFS2_ERROR("failed to allocate tn (%zu bytes).\n", sizeof(*tn));
-		return -ENOMEM;
-	}
+	tn = jffs2_alloc_पंचांगp_dnode_info();
+	अगर (!tn) अणु
+		JFFS2_ERROR("failed to allocate tn (%zu bytes).\n", माप(*tn));
+		वापस -ENOMEM;
+	पूर्ण
 
 	tn->partial_crc = 0;
 	csize = je32_to_cpu(rd->csize);
 
 	/* If we've never checked the CRCs on this node, check them now */
-	if (ref_flags(ref) == REF_UNCHECKED) {
+	अगर (ref_flags(ref) == REF_UNCHECKED) अणु
 
 		/* Sanity checks */
-		if (unlikely(je32_to_cpu(rd->offset) > je32_to_cpu(rd->isize)) ||
-		    unlikely(PAD(je32_to_cpu(rd->csize) + sizeof(*rd)) != PAD(je32_to_cpu(rd->totlen)))) {
+		अगर (unlikely(je32_to_cpu(rd->offset) > je32_to_cpu(rd->isize)) ||
+		    unlikely(PAD(je32_to_cpu(rd->csize) + माप(*rd)) != PAD(je32_to_cpu(rd->totlen)))) अणु
 			JFFS2_WARNING("inode node header CRC is corrupted at %#08x\n", ref_offset(ref));
 			jffs2_dbg_dump_node(c, ref_offset(ref));
 			jffs2_mark_node_obsolete(c, ref);
-			goto free_out;
-		}
+			जाओ मुक्त_out;
+		पूर्ण
 
-		if (jffs2_is_writebuffered(c) && csize != 0) {
-			/* At this point we are supposed to check the data CRC
-			 * of our unchecked node. But thus far, we do not
+		अगर (jffs2_is_ग_लिखोbuffered(c) && csize != 0) अणु
+			/* At this poपूर्णांक we are supposed to check the data CRC
+			 * of our unchecked node. But thus far, we करो not
 			 * know whether the node is valid or obsolete. To
 			 * figure this out, we need to walk all the nodes of
-			 * the inode and build the inode fragtree. We don't
-			 * want to spend time checking data of nodes which may
+			 * the inode and build the inode fragtree. We करोn't
+			 * want to spend समय checking data of nodes which may
 			 * later be found to be obsolete. So we put off the full
-			 * data CRC checking until we have read all the inode
+			 * data CRC checking until we have पढ़ो all the inode
 			 * nodes and have started building the fragtree.
 			 *
 			 * The fragtree is being built starting with nodes
@@ -769,53 +770,53 @@ static inline int read_dnode(struct jffs2_sb_info *c, struct jffs2_raw_node_ref 
 			 * And we'll be able to check only those nodes, which
 			 * are not obsolete.
 			 *
-			 * Of course, this optimization only makes sense in case
-			 * of NAND flashes (or other flashes with
+			 * Of course, this optimization only makes sense in हाल
+			 * of न_अंकD flashes (or other flashes with
 			 * !jffs2_can_mark_obsolete()), since on NOR flashes
 			 * nodes are marked obsolete physically.
 			 *
-			 * Since NAND flashes (or other flashes with
-			 * jffs2_is_writebuffered(c)) are anyway read by
-			 * fractions of c->wbuf_pagesize, and we have just read
+			 * Since न_अंकD flashes (or other flashes with
+			 * jffs2_is_ग_लिखोbuffered(c)) are anyway पढ़ो by
+			 * fractions of c->wbuf_pagesize, and we have just पढ़ो
 			 * the node header, it is likely that the starting part
-			 * of the node data is also read when we read the
-			 * header. So we don't mind to check the CRC of the
+			 * of the node data is also पढ़ो when we पढ़ो the
+			 * header. So we करोn't mind to check the CRC of the
 			 * starting part of the data of the node now, and check
 			 * the second part later (in jffs2_check_node_data()).
-			 * Of course, we will not need to re-read and re-check
-			 * the NAND page which we have just read. This is why we
-			 * read the whole NAND page at jffs2_get_inode_nodes(),
-			 * while we needed only the node header.
+			 * Of course, we will not need to re-पढ़ो and re-check
+			 * the न_अंकD page which we have just पढ़ो. This is why we
+			 * पढ़ो the whole न_अंकD page at jffs2_get_inode_nodes(),
+			 * जबतक we needed only the node header.
 			 */
-			unsigned char *buf;
+			अचिन्हित अक्षर *buf;
 
-			/* 'buf' will point to the start of data */
-			buf = (unsigned char *)rd + sizeof(*rd);
-			/* len will be the read data length */
-			len = min_t(uint32_t, rdlen - sizeof(*rd), csize);
+			/* 'buf' will poपूर्णांक to the start of data */
+			buf = (अचिन्हित अक्षर *)rd + माप(*rd);
+			/* len will be the पढ़ो data length */
+			len = min_t(uपूर्णांक32_t, rdlen - माप(*rd), csize);
 			tn->partial_crc = crc32(0, buf, len);
 
-			dbg_readinode("Calculates CRC (%#08x) for %d bytes, csize %d\n", tn->partial_crc, len, csize);
+			dbg_पढ़ोinode("Calculates CRC (%#08x) for %d bytes, csize %d\n", tn->partial_crc, len, csize);
 
 			/* If we actually calculated the whole data CRC
 			 * and it is wrong, drop the node. */
-			if (len >= csize && unlikely(tn->partial_crc != je32_to_cpu(rd->data_crc))) {
+			अगर (len >= csize && unlikely(tn->partial_crc != je32_to_cpu(rd->data_crc))) अणु
 				JFFS2_NOTICE("wrong data CRC in data node at 0x%08x: read %#08x, calculated %#08x.\n",
 					ref_offset(ref), tn->partial_crc, je32_to_cpu(rd->data_crc));
 				jffs2_mark_node_obsolete(c, ref);
-				goto free_out;
-			}
+				जाओ मुक्त_out;
+			पूर्ण
 
-		} else if (csize == 0) {
+		पूर्ण अन्यथा अगर (csize == 0) अणु
 			/*
 			 * We checked the header CRC. If the node has no data, adjust
-			 * the space accounting now. For other nodes this will be done
+			 * the space accounting now. For other nodes this will be करोne
 			 * later either when the node is marked obsolete or when its
 			 * data is checked.
 			 */
-			struct jffs2_eraseblock *jeb;
+			काष्ठा jffs2_eraseblock *jeb;
 
-			dbg_readinode("the node has no data.\n");
+			dbg_पढ़ोinode("the node has no data.\n");
 			jeb = &c->blocks[ref->flash_offset / c->sector_size];
 			len = ref_totlen(c, jeb, ref);
 
@@ -826,15 +827,15 @@ static inline int read_dnode(struct jffs2_sb_info *c, struct jffs2_raw_node_ref 
 			c->unchecked_size -= len;
 			ref->flash_offset = ref_offset(ref) | REF_NORMAL;
 			spin_unlock(&c->erase_completion_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	tn->fn = jffs2_alloc_full_dnode();
-	if (!tn->fn) {
+	अगर (!tn->fn) अणु
 		JFFS2_ERROR("alloc fn failed\n");
 		ret = -ENOMEM;
-		goto free_out;
-	}
+		जाओ मुक्त_out;
+	पूर्ण
 
 	tn->version = je32_to_cpu(rd->version);
 	tn->fn->ofs = je32_to_cpu(rd->offset);
@@ -843,171 +844,171 @@ static inline int read_dnode(struct jffs2_sb_info *c, struct jffs2_raw_node_ref 
 	tn->fn->raw = ref;
 	tn->overlapped = 0;
 
-	if (tn->version > rii->highest_version)
+	अगर (tn->version > rii->highest_version)
 		rii->highest_version = tn->version;
 
 	/* There was a bug where we wrote hole nodes out with
 	   csize/dsize swapped. Deal with it */
-	if (rd->compr == JFFS2_COMPR_ZERO && !je32_to_cpu(rd->dsize) && csize)
+	अगर (rd->compr == JFFS2_COMPR_ZERO && !je32_to_cpu(rd->dsize) && csize)
 		tn->fn->size = csize;
-	else // normal case...
+	अन्यथा // normal हाल...
 		tn->fn->size = je32_to_cpu(rd->dsize);
 
-	dbg_readinode2("dnode @%08x: ver %u, offset %#04x, dsize %#04x, csize %#04x\n",
+	dbg_पढ़ोinode2("dnode @%08x: ver %u, offset %#04x, dsize %#04x, csize %#04x\n",
 		       ref_offset(ref), je32_to_cpu(rd->version),
 		       je32_to_cpu(rd->offset), je32_to_cpu(rd->dsize), csize);
 
 	ret = jffs2_add_tn_to_tree(c, rii, tn);
 
-	if (ret) {
-		jffs2_free_full_dnode(tn->fn);
-	free_out:
-		jffs2_free_tmp_dnode_info(tn);
-		return ret;
-	}
-#ifdef JFFS2_DBG_READINODE2_MESSAGES
-	dbg_readinode2("After adding ver %d:\n", je32_to_cpu(rd->version));
+	अगर (ret) अणु
+		jffs2_मुक्त_full_dnode(tn->fn);
+	मुक्त_out:
+		jffs2_मुक्त_पंचांगp_dnode_info(tn);
+		वापस ret;
+	पूर्ण
+#अगर_घोषित JFFS2_DBG_READINODE2_MESSAGES
+	dbg_पढ़ोinode2("After adding ver %d:\n", je32_to_cpu(rd->version));
 	tn = tn_first(&rii->tn_root);
-	while (tn) {
-		dbg_readinode2("%p: v %d r 0x%x-0x%x ov %d\n",
+	जबतक (tn) अणु
+		dbg_पढ़ोinode2("%p: v %d r 0x%x-0x%x ov %d\n",
 			       tn, tn->version, tn->fn->ofs,
 			       tn->fn->ofs+tn->fn->size, tn->overlapped);
 		tn = tn_next(tn);
-	}
-#endif
-	return 0;
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
- * Helper function for jffs2_get_inode_nodes().
- * It is called every time an unknown node is found.
+ * Helper function क्रम jffs2_get_inode_nodes().
+ * It is called every समय an unknown node is found.
  *
  * Returns: 0 on success;
  * 	    negative error code on failure.
  */
-static inline int read_unknown(struct jffs2_sb_info *c, struct jffs2_raw_node_ref *ref, struct jffs2_unknown_node *un)
-{
-	/* We don't mark unknown nodes as REF_UNCHECKED */
-	if (ref_flags(ref) == REF_UNCHECKED) {
+अटल अंतरभूत पूर्णांक पढ़ो_unknown(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_raw_node_ref *ref, काष्ठा jffs2_unknown_node *un)
+अणु
+	/* We करोn't mark unknown nodes as REF_UNCHECKED */
+	अगर (ref_flags(ref) == REF_UNCHECKED) अणु
 		JFFS2_ERROR("REF_UNCHECKED but unknown node at %#08x\n",
 			    ref_offset(ref));
 		JFFS2_ERROR("Node is {%04x,%04x,%08x,%08x}. Please report this error.\n",
 			    je16_to_cpu(un->magic), je16_to_cpu(un->nodetype),
 			    je32_to_cpu(un->totlen), je32_to_cpu(un->hdr_crc));
 		jffs2_mark_node_obsolete(c, ref);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	un->nodetype = cpu_to_je16(JFFS2_NODE_ACCURATE | je16_to_cpu(un->nodetype));
 
-	switch(je16_to_cpu(un->nodetype) & JFFS2_COMPAT_MASK) {
+	चयन(je16_to_cpu(un->nodetype) & JFFS2_COMPAT_MASK) अणु
 
-	case JFFS2_FEATURE_INCOMPAT:
+	हाल JFFS2_FEATURE_INCOMPAT:
 		JFFS2_ERROR("unknown INCOMPAT nodetype %#04X at %#08x\n",
 			    je16_to_cpu(un->nodetype), ref_offset(ref));
 		/* EEP */
 		BUG();
-		break;
+		अवरोध;
 
-	case JFFS2_FEATURE_ROCOMPAT:
+	हाल JFFS2_FEATURE_ROCOMPAT:
 		JFFS2_ERROR("unknown ROCOMPAT nodetype %#04X at %#08x\n",
 			    je16_to_cpu(un->nodetype), ref_offset(ref));
 		BUG_ON(!(c->flags & JFFS2_SB_FLAG_RO));
-		break;
+		अवरोध;
 
-	case JFFS2_FEATURE_RWCOMPAT_COPY:
+	हाल JFFS2_FEATURE_RWCOMPAT_COPY:
 		JFFS2_NOTICE("unknown RWCOMPAT_COPY nodetype %#04X at %#08x\n",
 			     je16_to_cpu(un->nodetype), ref_offset(ref));
-		break;
+		अवरोध;
 
-	case JFFS2_FEATURE_RWCOMPAT_DELETE:
+	हाल JFFS2_FEATURE_RWCOMPAT_DELETE:
 		JFFS2_NOTICE("unknown RWCOMPAT_DELETE nodetype %#04X at %#08x\n",
 			     je16_to_cpu(un->nodetype), ref_offset(ref));
 		jffs2_mark_node_obsolete(c, ref);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Helper function for jffs2_get_inode_nodes().
- * The function detects whether more data should be read and reads it if yes.
+ * Helper function क्रम jffs2_get_inode_nodes().
+ * The function detects whether more data should be पढ़ो and पढ़ोs it अगर yes.
  *
  * Returns: 0 on success;
  * 	    negative error code on failure.
  */
-static int read_more(struct jffs2_sb_info *c, struct jffs2_raw_node_ref *ref,
-		     int needed_len, int *rdlen, unsigned char *buf)
-{
-	int err, to_read = needed_len - *rdlen;
-	size_t retlen;
-	uint32_t offs;
+अटल पूर्णांक पढ़ो_more(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_raw_node_ref *ref,
+		     पूर्णांक needed_len, पूर्णांक *rdlen, अचिन्हित अक्षर *buf)
+अणु
+	पूर्णांक err, to_पढ़ो = needed_len - *rdlen;
+	माप_प्रकार retlen;
+	uपूर्णांक32_t offs;
 
-	if (jffs2_is_writebuffered(c)) {
-		int rem = to_read % c->wbuf_pagesize;
+	अगर (jffs2_is_ग_लिखोbuffered(c)) अणु
+		पूर्णांक rem = to_पढ़ो % c->wbuf_pagesize;
 
-		if (rem)
-			to_read += c->wbuf_pagesize - rem;
-	}
+		अगर (rem)
+			to_पढ़ो += c->wbuf_pagesize - rem;
+	पूर्ण
 
-	/* We need to read more data */
+	/* We need to पढ़ो more data */
 	offs = ref_offset(ref) + *rdlen;
 
-	dbg_readinode("read more %d bytes\n", to_read);
+	dbg_पढ़ोinode("read more %d bytes\n", to_पढ़ो);
 
-	err = jffs2_flash_read(c, offs, to_read, &retlen, buf + *rdlen);
-	if (err) {
+	err = jffs2_flash_पढ़ो(c, offs, to_पढ़ो, &retlen, buf + *rdlen);
+	अगर (err) अणु
 		JFFS2_ERROR("can not read %d bytes from 0x%08x, "
-			"error code: %d.\n", to_read, offs, err);
-		return err;
-	}
+			"error code: %d.\n", to_पढ़ो, offs, err);
+		वापस err;
+	पूर्ण
 
-	if (retlen < to_read) {
+	अगर (retlen < to_पढ़ो) अणु
 		JFFS2_ERROR("short read at %#08x: %zu instead of %d.\n",
-				offs, retlen, to_read);
-		return -EIO;
-	}
+				offs, retlen, to_पढ़ो);
+		वापस -EIO;
+	पूर्ण
 
-	*rdlen += to_read;
-	return 0;
-}
+	*rdlen += to_पढ़ो;
+	वापस 0;
+पूर्ण
 
-/* Get tmp_dnode_info and full_dirent for all non-obsolete nodes associated
-   with this ino. Perform a preliminary ordering on data nodes, throwing away
-   those which are completely obsoleted by newer ones. The naïve approach we
-   use to take of just returning them _all_ in version order will cause us to
-   run out of memory in certain degenerate cases. */
-static int jffs2_get_inode_nodes(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
-				 struct jffs2_readinode_info *rii)
-{
-	struct jffs2_raw_node_ref *ref, *valid_ref;
-	unsigned char *buf = NULL;
-	union jffs2_node_union *node;
-	size_t retlen;
-	int len, err;
+/* Get पंचांगp_dnode_info and full_dirent क्रम all non-obsolete nodes associated
+   with this ino. Perक्रमm a preliminary ordering on data nodes, throwing away
+   those which are completely obsoleted by newer ones. The naथ/ve approach we
+   use to take of just वापसing them _all_ in version order will cause us to
+   run out of memory in certain degenerate हालs. */
+अटल पूर्णांक jffs2_get_inode_nodes(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_info *f,
+				 काष्ठा jffs2_पढ़ोinode_info *rii)
+अणु
+	काष्ठा jffs2_raw_node_ref *ref, *valid_ref;
+	अचिन्हित अक्षर *buf = शून्य;
+	जोड़ jffs2_node_जोड़ *node;
+	माप_प्रकार retlen;
+	पूर्णांक len, err;
 
-	rii->mctime_ver = 0;
+	rii->mस_समय_ver = 0;
 
-	dbg_readinode("ino #%u\n", f->inocache->ino);
+	dbg_पढ़ोinode("ino #%u\n", f->inocache->ino);
 
-	/* FIXME: in case of NOR and available ->point() this
+	/* FIXME: in हाल of NOR and available ->poपूर्णांक() this
 	 * needs to be fixed. */
-	len = sizeof(union jffs2_node_union) + c->wbuf_pagesize;
-	buf = kmalloc(len, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	len = माप(जोड़ jffs2_node_जोड़) + c->wbuf_pagesize;
+	buf = kदो_स्मृति(len, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	spin_lock(&c->erase_completion_lock);
 	valid_ref = jffs2_first_valid_node(f->inocache->nodes);
-	if (!valid_ref && f->inocache->ino != 1)
+	अगर (!valid_ref && f->inocache->ino != 1)
 		JFFS2_WARNING("Eep. No valid nodes for ino #%u.\n", f->inocache->ino);
-	while (valid_ref) {
-		/* We can hold a pointer to a non-obsolete node without the spinlock,
-		   but _obsolete_ nodes may disappear at any time, if the block
+	जबतक (valid_ref) अणु
+		/* We can hold a poपूर्णांकer to a non-obsolete node without the spinlock,
+		   but _obsolete_ nodes may disappear at any समय, अगर the block
 		   they're in gets erased. So if we mark 'ref' obsolete while we're
 		   not holding the lock, it can go away immediately. For that reason,
-		   we find the next valid node first, before processing 'ref'.
+		   we find the next valid node first, beक्रमe processing 'ref'.
 		*/
 		ref = valid_ref;
 		valid_ref = jffs2_first_valid_node(ref->next_in_ino);
@@ -1016,48 +1017,48 @@ static int jffs2_get_inode_nodes(struct jffs2_sb_info *c, struct jffs2_inode_inf
 		cond_resched();
 
 		/*
-		 * At this point we don't know the type of the node we're going
-		 * to read, so we do not know the size of its header. In order
+		 * At this poपूर्णांक we करोn't know the type of the node we're going
+		 * to पढ़ो, so we करो not know the size of its header. In order
 		 * to minimize the amount of flash IO we assume the header is
 		 * of size = JFFS2_MIN_NODE_HEADER.
 		 */
 		len = JFFS2_MIN_NODE_HEADER;
-		if (jffs2_is_writebuffered(c)) {
-			int end, rem;
+		अगर (jffs2_is_ग_लिखोbuffered(c)) अणु
+			पूर्णांक end, rem;
 
 			/*
-			 * We are about to read JFFS2_MIN_NODE_HEADER bytes,
+			 * We are about to पढ़ो JFFS2_MIN_NODE_HEADER bytes,
 			 * but this flash has some minimal I/O unit. It is
-			 * possible that we'll need to read more soon, so read
+			 * possible that we'll need to पढ़ो more soon, so पढ़ो
 			 * up to the next min. I/O unit, in order not to
-			 * re-read the same min. I/O unit twice.
+			 * re-पढ़ो the same min. I/O unit twice.
 			 */
 			end = ref_offset(ref) + len;
 			rem = end % c->wbuf_pagesize;
-			if (rem)
+			अगर (rem)
 				end += c->wbuf_pagesize - rem;
 			len = end - ref_offset(ref);
-		}
+		पूर्ण
 
-		dbg_readinode("read %d bytes at %#08x(%d).\n", len, ref_offset(ref), ref_flags(ref));
+		dbg_पढ़ोinode("read %d bytes at %#08x(%d).\n", len, ref_offset(ref), ref_flags(ref));
 
-		/* FIXME: point() */
-		err = jffs2_flash_read(c, ref_offset(ref), len, &retlen, buf);
-		if (err) {
+		/* FIXME: poपूर्णांक() */
+		err = jffs2_flash_पढ़ो(c, ref_offset(ref), len, &retlen, buf);
+		अगर (err) अणु
 			JFFS2_ERROR("can not read %d bytes from 0x%08x, error code: %d.\n", len, ref_offset(ref), err);
-			goto free_out;
-		}
+			जाओ मुक्त_out;
+		पूर्ण
 
-		if (retlen < len) {
+		अगर (retlen < len) अणु
 			JFFS2_ERROR("short read at %#08x: %zu instead of %d.\n", ref_offset(ref), retlen, len);
 			err = -EIO;
-			goto free_out;
-		}
+			जाओ मुक्त_out;
+		पूर्ण
 
-		node = (union jffs2_node_union *)buf;
+		node = (जोड़ jffs2_node_जोड़ *)buf;
 
 		/* No need to mask in the valid bit; it shouldn't be invalid */
-		if (je32_to_cpu(node->u.hdr_crc) != crc32(0, node, sizeof(node->u)-4)) {
+		अगर (je32_to_cpu(node->u.hdr_crc) != crc32(0, node, माप(node->u)-4)) अणु
 			JFFS2_NOTICE("Node header CRC failed at %#08x. {%04x,%04x,%08x,%08x}\n",
 				     ref_offset(ref), je16_to_cpu(node->u.magic),
 				     je16_to_cpu(node->u.nodetype),
@@ -1065,383 +1066,383 @@ static int jffs2_get_inode_nodes(struct jffs2_sb_info *c, struct jffs2_inode_inf
 				     je32_to_cpu(node->u.hdr_crc));
 			jffs2_dbg_dump_node(c, ref_offset(ref));
 			jffs2_mark_node_obsolete(c, ref);
-			goto cont;
-		}
-		if (je16_to_cpu(node->u.magic) != JFFS2_MAGIC_BITMASK) {
+			जाओ cont;
+		पूर्ण
+		अगर (je16_to_cpu(node->u.magic) != JFFS2_MAGIC_BITMASK) अणु
 			/* Not a JFFS2 node, whinge and move on */
 			JFFS2_NOTICE("Wrong magic bitmask 0x%04x in node header at %#08x.\n",
 				     je16_to_cpu(node->u.magic), ref_offset(ref));
 			jffs2_mark_node_obsolete(c, ref);
-			goto cont;
-		}
+			जाओ cont;
+		पूर्ण
 
-		switch (je16_to_cpu(node->u.nodetype)) {
+		चयन (je16_to_cpu(node->u.nodetype)) अणु
 
-		case JFFS2_NODETYPE_DIRENT:
+		हाल JFFS2_NODETYPE_सूचीENT:
 
-			if (JFFS2_MIN_NODE_HEADER < sizeof(struct jffs2_raw_dirent) &&
-			    len < sizeof(struct jffs2_raw_dirent)) {
-				err = read_more(c, ref, sizeof(struct jffs2_raw_dirent), &len, buf);
-				if (unlikely(err))
-					goto free_out;
-			}
+			अगर (JFFS2_MIN_NODE_HEADER < माप(काष्ठा jffs2_raw_dirent) &&
+			    len < माप(काष्ठा jffs2_raw_dirent)) अणु
+				err = पढ़ो_more(c, ref, माप(काष्ठा jffs2_raw_dirent), &len, buf);
+				अगर (unlikely(err))
+					जाओ मुक्त_out;
+			पूर्ण
 
-			err = read_direntry(c, ref, &node->d, retlen, rii);
-			if (unlikely(err))
-				goto free_out;
+			err = पढ़ो_direntry(c, ref, &node->d, retlen, rii);
+			अगर (unlikely(err))
+				जाओ मुक्त_out;
 
-			break;
+			अवरोध;
 
-		case JFFS2_NODETYPE_INODE:
+		हाल JFFS2_NODETYPE_INODE:
 
-			if (JFFS2_MIN_NODE_HEADER < sizeof(struct jffs2_raw_inode) &&
-			    len < sizeof(struct jffs2_raw_inode)) {
-				err = read_more(c, ref, sizeof(struct jffs2_raw_inode), &len, buf);
-				if (unlikely(err))
-					goto free_out;
-			}
+			अगर (JFFS2_MIN_NODE_HEADER < माप(काष्ठा jffs2_raw_inode) &&
+			    len < माप(काष्ठा jffs2_raw_inode)) अणु
+				err = पढ़ो_more(c, ref, माप(काष्ठा jffs2_raw_inode), &len, buf);
+				अगर (unlikely(err))
+					जाओ मुक्त_out;
+			पूर्ण
 
-			err = read_dnode(c, ref, &node->i, len, rii);
-			if (unlikely(err))
-				goto free_out;
+			err = पढ़ो_dnode(c, ref, &node->i, len, rii);
+			अगर (unlikely(err))
+				जाओ मुक्त_out;
 
-			break;
+			अवरोध;
 
-		default:
-			if (JFFS2_MIN_NODE_HEADER < sizeof(struct jffs2_unknown_node) &&
-			    len < sizeof(struct jffs2_unknown_node)) {
-				err = read_more(c, ref, sizeof(struct jffs2_unknown_node), &len, buf);
-				if (unlikely(err))
-					goto free_out;
-			}
+		शेष:
+			अगर (JFFS2_MIN_NODE_HEADER < माप(काष्ठा jffs2_unknown_node) &&
+			    len < माप(काष्ठा jffs2_unknown_node)) अणु
+				err = पढ़ो_more(c, ref, माप(काष्ठा jffs2_unknown_node), &len, buf);
+				अगर (unlikely(err))
+					जाओ मुक्त_out;
+			पूर्ण
 
-			err = read_unknown(c, ref, &node->u);
-			if (unlikely(err))
-				goto free_out;
+			err = पढ़ो_unknown(c, ref, &node->u);
+			अगर (unlikely(err))
+				जाओ मुक्त_out;
 
-		}
+		पूर्ण
 	cont:
 		spin_lock(&c->erase_completion_lock);
-	}
+	पूर्ण
 
 	spin_unlock(&c->erase_completion_lock);
-	kfree(buf);
+	kमुक्त(buf);
 
 	f->highest_version = rii->highest_version;
 
-	dbg_readinode("nodes of inode #%u were read, the highest version is %u, latest_mctime %u, mctime_ver %u.\n",
-		      f->inocache->ino, rii->highest_version, rii->latest_mctime,
-		      rii->mctime_ver);
-	return 0;
+	dbg_पढ़ोinode("nodes of inode #%u were read, the highest version is %u, latest_mctime %u, mctime_ver %u.\n",
+		      f->inocache->ino, rii->highest_version, rii->latest_mस_समय,
+		      rii->mस_समय_ver);
+	वापस 0;
 
- free_out:
-	jffs2_free_tmp_dnode_info_list(&rii->tn_root);
-	jffs2_free_full_dirent_list(rii->fds);
-	rii->fds = NULL;
-	kfree(buf);
-	return err;
-}
+ मुक्त_out:
+	jffs2_मुक्त_पंचांगp_dnode_info_list(&rii->tn_root);
+	jffs2_मुक्त_full_dirent_list(rii->fds);
+	rii->fds = शून्य;
+	kमुक्त(buf);
+	वापस err;
+पूर्ण
 
-static int jffs2_do_read_inode_internal(struct jffs2_sb_info *c,
-					struct jffs2_inode_info *f,
-					struct jffs2_raw_inode *latest_node)
-{
-	struct jffs2_readinode_info rii;
-	uint32_t crc, new_size;
-	size_t retlen;
-	int ret;
+अटल पूर्णांक jffs2_करो_पढ़ो_inode_पूर्णांकernal(काष्ठा jffs2_sb_info *c,
+					काष्ठा jffs2_inode_info *f,
+					काष्ठा jffs2_raw_inode *latest_node)
+अणु
+	काष्ठा jffs2_पढ़ोinode_info rii;
+	uपूर्णांक32_t crc, new_size;
+	माप_प्रकार retlen;
+	पूर्णांक ret;
 
-	dbg_readinode("ino #%u pino/nlink is %d\n", f->inocache->ino,
+	dbg_पढ़ोinode("ino #%u pino/nlink is %d\n", f->inocache->ino,
 		      f->inocache->pino_nlink);
 
-	memset(&rii, 0, sizeof(rii));
+	स_रखो(&rii, 0, माप(rii));
 
 	/* Grab all nodes relevant to this ino */
 	ret = jffs2_get_inode_nodes(c, f, &rii);
 
-	if (ret) {
+	अगर (ret) अणु
 		JFFS2_ERROR("cannot read nodes for ino %u, returned error is %d\n", f->inocache->ino, ret);
-		if (f->inocache->state == INO_STATE_READING)
+		अगर (f->inocache->state == INO_STATE_READING)
 			jffs2_set_inocache_state(c, f->inocache, INO_STATE_CHECKEDABSENT);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = jffs2_build_inode_fragtree(c, f, &rii);
-	if (ret) {
+	अगर (ret) अणु
 		JFFS2_ERROR("Failed to build final fragtree for inode #%u: error %d\n",
 			    f->inocache->ino, ret);
-		if (f->inocache->state == INO_STATE_READING)
+		अगर (f->inocache->state == INO_STATE_READING)
 			jffs2_set_inocache_state(c, f->inocache, INO_STATE_CHECKEDABSENT);
-		jffs2_free_tmp_dnode_info_list(&rii.tn_root);
+		jffs2_मुक्त_पंचांगp_dnode_info_list(&rii.tn_root);
 		/* FIXME: We could at least crc-check them all */
-		if (rii.mdata_tn) {
-			jffs2_free_full_dnode(rii.mdata_tn->fn);
-			jffs2_free_tmp_dnode_info(rii.mdata_tn);
-			rii.mdata_tn = NULL;
-		}
-		return ret;
-	}
+		अगर (rii.mdata_tn) अणु
+			jffs2_मुक्त_full_dnode(rii.mdata_tn->fn);
+			jffs2_मुक्त_पंचांगp_dnode_info(rii.mdata_tn);
+			rii.mdata_tn = शून्य;
+		पूर्ण
+		वापस ret;
+	पूर्ण
 
-	if (rii.mdata_tn) {
-		if (rii.mdata_tn->fn->raw == rii.latest_ref) {
+	अगर (rii.mdata_tn) अणु
+		अगर (rii.mdata_tn->fn->raw == rii.latest_ref) अणु
 			f->metadata = rii.mdata_tn->fn;
-			jffs2_free_tmp_dnode_info(rii.mdata_tn);
-		} else {
-			jffs2_kill_tn(c, rii.mdata_tn);
-		}
-		rii.mdata_tn = NULL;
-	}
+			jffs2_मुक्त_पंचांगp_dnode_info(rii.mdata_tn);
+		पूर्ण अन्यथा अणु
+			jffs2_समाप्त_tn(c, rii.mdata_tn);
+		पूर्ण
+		rii.mdata_tn = शून्य;
+	पूर्ण
 
 	f->dents = rii.fds;
 
 	jffs2_dbg_fragtree_paranoia_check_nolock(f);
 
-	if (unlikely(!rii.latest_ref)) {
-		/* No data nodes for this inode. */
-		if (f->inocache->ino != 1) {
+	अगर (unlikely(!rii.latest_ref)) अणु
+		/* No data nodes क्रम this inode. */
+		अगर (f->inocache->ino != 1) अणु
 			JFFS2_WARNING("no data nodes found for ino #%u\n", f->inocache->ino);
-			if (!rii.fds) {
-				if (f->inocache->state == INO_STATE_READING)
+			अगर (!rii.fds) अणु
+				अगर (f->inocache->state == INO_STATE_READING)
 					jffs2_set_inocache_state(c, f->inocache, INO_STATE_CHECKEDABSENT);
-				return -EIO;
-			}
+				वापस -EIO;
+			पूर्ण
 			JFFS2_NOTICE("but it has children so we fake some modes for it\n");
-		}
-		latest_node->mode = cpu_to_jemode(S_IFDIR|S_IRUGO|S_IWUSR|S_IXUGO);
+		पूर्ण
+		latest_node->mode = cpu_to_jemode(S_IFसूची|S_IRUGO|S_IWUSR|S_IXUGO);
 		latest_node->version = cpu_to_je32(0);
-		latest_node->atime = latest_node->ctime = latest_node->mtime = cpu_to_je32(0);
+		latest_node->aसमय = latest_node->स_समय = latest_node->mसमय = cpu_to_je32(0);
 		latest_node->isize = cpu_to_je32(0);
 		latest_node->gid = cpu_to_je16(0);
 		latest_node->uid = cpu_to_je16(0);
-		if (f->inocache->state == INO_STATE_READING)
+		अगर (f->inocache->state == INO_STATE_READING)
 			jffs2_set_inocache_state(c, f->inocache, INO_STATE_PRESENT);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ret = jffs2_flash_read(c, ref_offset(rii.latest_ref), sizeof(*latest_node), &retlen, (void *)latest_node);
-	if (ret || retlen != sizeof(*latest_node)) {
+	ret = jffs2_flash_पढ़ो(c, ref_offset(rii.latest_ref), माप(*latest_node), &retlen, (व्योम *)latest_node);
+	अगर (ret || retlen != माप(*latest_node)) अणु
 		JFFS2_ERROR("failed to read from flash: error %d, %zd of %zd bytes read\n",
-			ret, retlen, sizeof(*latest_node));
+			ret, retlen, माप(*latest_node));
 		/* FIXME: If this fails, there seems to be a memory leak. Find it. */
-		return ret ? ret : -EIO;
-	}
+		वापस ret ? ret : -EIO;
+	पूर्ण
 
-	crc = crc32(0, latest_node, sizeof(*latest_node)-8);
-	if (crc != je32_to_cpu(latest_node->node_crc)) {
+	crc = crc32(0, latest_node, माप(*latest_node)-8);
+	अगर (crc != je32_to_cpu(latest_node->node_crc)) अणु
 		JFFS2_ERROR("CRC failed for read_inode of inode %u at physical location 0x%x\n",
 			f->inocache->ino, ref_offset(rii.latest_ref));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	switch(jemode_to_cpu(latest_node->mode) & S_IFMT) {
-	case S_IFDIR:
-		if (rii.mctime_ver > je32_to_cpu(latest_node->version)) {
-			/* The times in the latest_node are actually older than
-			   mctime in the latest dirent. Cheat. */
-			latest_node->ctime = latest_node->mtime = cpu_to_je32(rii.latest_mctime);
-		}
-		break;
+	चयन(jemode_to_cpu(latest_node->mode) & S_IFMT) अणु
+	हाल S_IFसूची:
+		अगर (rii.mस_समय_ver > je32_to_cpu(latest_node->version)) अणु
+			/* The बार in the latest_node are actually older than
+			   mस_समय in the latest dirent. Cheat. */
+			latest_node->स_समय = latest_node->mसमय = cpu_to_je32(rii.latest_mस_समय);
+		पूर्ण
+		अवरोध;
 
 
-	case S_IFREG:
+	हाल S_IFREG:
 		/* If it was a regular file, truncate it to the latest node's isize */
 		new_size = jffs2_truncate_fragtree(c, &f->fragtree, je32_to_cpu(latest_node->isize));
-		if (new_size != je32_to_cpu(latest_node->isize)) {
+		अगर (new_size != je32_to_cpu(latest_node->isize)) अणु
 			JFFS2_WARNING("Truncating ino #%u to %d bytes failed because it only had %d bytes to start with!\n",
 				      f->inocache->ino, je32_to_cpu(latest_node->isize), new_size);
 			latest_node->isize = cpu_to_je32(new_size);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case S_IFLNK:
+	हाल S_IFLNK:
 		/* Hack to work around broken isize in old symlink code.
 		   Remove this when dwmw2 comes to his senses and stops
 		   symlinks from being an entirely gratuitous special
-		   case. */
-		if (!je32_to_cpu(latest_node->isize))
+		   हाल. */
+		अगर (!je32_to_cpu(latest_node->isize))
 			latest_node->isize = latest_node->dsize;
 
-		if (f->inocache->state != INO_STATE_CHECKING) {
+		अगर (f->inocache->state != INO_STATE_CHECKING) अणु
 			/* Symlink's inode data is the target path. Read it and
 			 * keep in RAM to facilitate quick follow symlink
 			 * operation. */
-			uint32_t csize = je32_to_cpu(latest_node->csize);
-			if (csize > JFFS2_MAX_NAME_LEN)
-				return -ENAMETOOLONG;
-			f->target = kmalloc(csize + 1, GFP_KERNEL);
-			if (!f->target) {
+			uपूर्णांक32_t csize = je32_to_cpu(latest_node->csize);
+			अगर (csize > JFFS2_MAX_NAME_LEN)
+				वापस -ENAMETOOLONG;
+			f->target = kदो_स्मृति(csize + 1, GFP_KERNEL);
+			अगर (!f->target) अणु
 				JFFS2_ERROR("can't allocate %u bytes of memory for the symlink target path cache\n", csize);
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 
-			ret = jffs2_flash_read(c, ref_offset(rii.latest_ref) + sizeof(*latest_node),
-					       csize, &retlen, (char *)f->target);
+			ret = jffs2_flash_पढ़ो(c, ref_offset(rii.latest_ref) + माप(*latest_node),
+					       csize, &retlen, (अक्षर *)f->target);
 
-			if (ret || retlen != csize) {
-				if (retlen != csize)
+			अगर (ret || retlen != csize) अणु
+				अगर (retlen != csize)
 					ret = -EIO;
-				kfree(f->target);
-				f->target = NULL;
-				return ret;
-			}
+				kमुक्त(f->target);
+				f->target = शून्य;
+				वापस ret;
+			पूर्ण
 
 			f->target[csize] = '\0';
-			dbg_readinode("symlink's target '%s' cached\n", f->target);
-		}
+			dbg_पढ़ोinode("symlink's target '%s' cached\n", f->target);
+		पूर्ण
 
 		fallthrough;
 
-	case S_IFBLK:
-	case S_IFCHR:
+	हाल S_IFBLK:
+	हाल S_IFCHR:
 		/* Certain inode types should have only one data node, and it's
 		   kept as the metadata node */
-		if (f->metadata) {
+		अगर (f->metadata) अणु
 			JFFS2_ERROR("Argh. Special inode #%u with mode 0%o had metadata node\n",
 			       f->inocache->ino, jemode_to_cpu(latest_node->mode));
-			return -EIO;
-		}
-		if (!frag_first(&f->fragtree)) {
+			वापस -EIO;
+		पूर्ण
+		अगर (!frag_first(&f->fragtree)) अणु
 			JFFS2_ERROR("Argh. Special inode #%u with mode 0%o has no fragments\n",
 			       f->inocache->ino, jemode_to_cpu(latest_node->mode));
-			return -EIO;
-		}
-		/* ASSERT: f->fraglist != NULL */
-		if (frag_next(frag_first(&f->fragtree))) {
+			वापस -EIO;
+		पूर्ण
+		/* ASSERT: f->fraglist != शून्य */
+		अगर (frag_next(frag_first(&f->fragtree))) अणु
 			JFFS2_ERROR("Argh. Special inode #%u with mode 0x%x had more than one node\n",
 			       f->inocache->ino, jemode_to_cpu(latest_node->mode));
-			/* FIXME: Deal with it - check crc32, check for duplicate node, check times and discard the older one */
-			return -EIO;
-		}
+			/* FIXME: Deal with it - check crc32, check क्रम duplicate node, check बार and discard the older one */
+			वापस -EIO;
+		पूर्ण
 		/* OK. We're happy */
 		f->metadata = frag_first(&f->fragtree)->node;
-		jffs2_free_node_frag(frag_first(&f->fragtree));
+		jffs2_मुक्त_node_frag(frag_first(&f->fragtree));
 		f->fragtree = RB_ROOT;
-		break;
-	}
-	if (f->inocache->state == INO_STATE_READING)
+		अवरोध;
+	पूर्ण
+	अगर (f->inocache->state == INO_STATE_READING)
 		jffs2_set_inocache_state(c, f->inocache, INO_STATE_PRESENT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Scan the list of all nodes present for this ino, build map of versions, etc. */
-int jffs2_do_read_inode(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
-			uint32_t ino, struct jffs2_raw_inode *latest_node)
-{
-	dbg_readinode("read inode #%u\n", ino);
+/* Scan the list of all nodes present क्रम this ino, build map of versions, etc. */
+पूर्णांक jffs2_करो_पढ़ो_inode(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_info *f,
+			uपूर्णांक32_t ino, काष्ठा jffs2_raw_inode *latest_node)
+अणु
+	dbg_पढ़ोinode("read inode #%u\n", ino);
 
  retry_inocache:
 	spin_lock(&c->inocache_lock);
 	f->inocache = jffs2_get_ino_cache(c, ino);
 
-	if (f->inocache) {
-		/* Check its state. We may need to wait before we can use it */
-		switch(f->inocache->state) {
-		case INO_STATE_UNCHECKED:
-		case INO_STATE_CHECKEDABSENT:
+	अगर (f->inocache) अणु
+		/* Check its state. We may need to रुको beक्रमe we can use it */
+		चयन(f->inocache->state) अणु
+		हाल INO_STATE_UNCHECKED:
+		हाल INO_STATE_CHECKEDABSENT:
 			f->inocache->state = INO_STATE_READING;
-			break;
+			अवरोध;
 
-		case INO_STATE_CHECKING:
-		case INO_STATE_GC:
+		हाल INO_STATE_CHECKING:
+		हाल INO_STATE_GC:
 			/* If it's in either of these states, we need
-			   to wait for whoever's got it to finish and
+			   to रुको क्रम whoever's got it to finish and
 			   put it back. */
-			dbg_readinode("waiting for ino #%u in state %d\n", ino, f->inocache->state);
+			dbg_पढ़ोinode("waiting for ino #%u in state %d\n", ino, f->inocache->state);
 			sleep_on_spinunlock(&c->inocache_wq, &c->inocache_lock);
-			goto retry_inocache;
+			जाओ retry_inocache;
 
-		case INO_STATE_READING:
-		case INO_STATE_PRESENT:
+		हाल INO_STATE_READING:
+		हाल INO_STATE_PRESENT:
 			/* Eep. This should never happen. It can
-			happen if Linux calls read_inode() again
-			before clear_inode() has finished though. */
+			happen अगर Linux calls पढ़ो_inode() again
+			beक्रमe clear_inode() has finished though. */
 			JFFS2_ERROR("Eep. Trying to read_inode #%u when it's already in state %d!\n", ino, f->inocache->state);
 			/* Fail. That's probably better than allowing it to succeed */
-			f->inocache = NULL;
-			break;
+			f->inocache = शून्य;
+			अवरोध;
 
-		default:
+		शेष:
 			BUG();
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&c->inocache_lock);
 
-	if (!f->inocache && ino == 1) {
-		/* Special case - no root inode on medium */
+	अगर (!f->inocache && ino == 1) अणु
+		/* Special हाल - no root inode on medium */
 		f->inocache = jffs2_alloc_inode_cache();
-		if (!f->inocache) {
+		अगर (!f->inocache) अणु
 			JFFS2_ERROR("cannot allocate inocache for root inode\n");
-			return -ENOMEM;
-		}
-		dbg_readinode("creating inocache for root inode\n");
-		memset(f->inocache, 0, sizeof(struct jffs2_inode_cache));
+			वापस -ENOMEM;
+		पूर्ण
+		dbg_पढ़ोinode("creating inocache for root inode\n");
+		स_रखो(f->inocache, 0, माप(काष्ठा jffs2_inode_cache));
 		f->inocache->ino = f->inocache->pino_nlink = 1;
-		f->inocache->nodes = (struct jffs2_raw_node_ref *)f->inocache;
+		f->inocache->nodes = (काष्ठा jffs2_raw_node_ref *)f->inocache;
 		f->inocache->state = INO_STATE_READING;
 		jffs2_add_ino_cache(c, f->inocache);
-	}
-	if (!f->inocache) {
+	पूर्ण
+	अगर (!f->inocache) अणु
 		JFFS2_ERROR("requested to read a nonexistent ino %u\n", ino);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	return jffs2_do_read_inode_internal(c, f, latest_node);
-}
+	वापस jffs2_करो_पढ़ो_inode_पूर्णांकernal(c, f, latest_node);
+पूर्ण
 
-int jffs2_do_crccheck_inode(struct jffs2_sb_info *c, struct jffs2_inode_cache *ic)
-{
-	struct jffs2_raw_inode n;
-	struct jffs2_inode_info *f = kzalloc(sizeof(*f), GFP_KERNEL);
-	int ret;
+पूर्णांक jffs2_करो_crccheck_inode(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_cache *ic)
+अणु
+	काष्ठा jffs2_raw_inode n;
+	काष्ठा jffs2_inode_info *f = kzalloc(माप(*f), GFP_KERNEL);
+	पूर्णांक ret;
 
-	if (!f)
-		return -ENOMEM;
+	अगर (!f)
+		वापस -ENOMEM;
 
 	mutex_init(&f->sem);
 	mutex_lock(&f->sem);
 	f->inocache = ic;
 
-	ret = jffs2_do_read_inode_internal(c, f, &n);
+	ret = jffs2_करो_पढ़ो_inode_पूर्णांकernal(c, f, &n);
 	mutex_unlock(&f->sem);
-	jffs2_do_clear_inode(c, f);
-	jffs2_xattr_do_crccheck_inode(c, ic);
-	kfree (f);
-	return ret;
-}
+	jffs2_करो_clear_inode(c, f);
+	jffs2_xattr_करो_crccheck_inode(c, ic);
+	kमुक्त (f);
+	वापस ret;
+पूर्ण
 
-void jffs2_do_clear_inode(struct jffs2_sb_info *c, struct jffs2_inode_info *f)
-{
-	struct jffs2_full_dirent *fd, *fds;
-	int deleted;
+व्योम jffs2_करो_clear_inode(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_info *f)
+अणु
+	काष्ठा jffs2_full_dirent *fd, *fds;
+	पूर्णांक deleted;
 
 	jffs2_xattr_delete_inode(c, f->inocache);
 	mutex_lock(&f->sem);
 	deleted = f->inocache && !f->inocache->pino_nlink;
 
-	if (f->inocache && f->inocache->state != INO_STATE_CHECKING)
+	अगर (f->inocache && f->inocache->state != INO_STATE_CHECKING)
 		jffs2_set_inocache_state(c, f->inocache, INO_STATE_CLEARING);
 
-	if (f->metadata) {
-		if (deleted)
+	अगर (f->metadata) अणु
+		अगर (deleted)
 			jffs2_mark_node_obsolete(c, f->metadata->raw);
-		jffs2_free_full_dnode(f->metadata);
-	}
+		jffs2_मुक्त_full_dnode(f->metadata);
+	पूर्ण
 
-	jffs2_kill_fragtree(&f->fragtree, deleted?c:NULL);
+	jffs2_समाप्त_fragtree(&f->fragtree, deleted?c:शून्य);
 
 	fds = f->dents;
-	while(fds) {
+	जबतक(fds) अणु
 		fd = fds;
 		fds = fd->next;
-		jffs2_free_full_dirent(fd);
-	}
+		jffs2_मुक्त_full_dirent(fd);
+	पूर्ण
 
-	if (f->inocache && f->inocache->state != INO_STATE_CHECKING) {
+	अगर (f->inocache && f->inocache->state != INO_STATE_CHECKING) अणु
 		jffs2_set_inocache_state(c, f->inocache, INO_STATE_CHECKEDABSENT);
-		if (f->inocache->nodes == (void *)f->inocache)
+		अगर (f->inocache->nodes == (व्योम *)f->inocache)
 			jffs2_del_ino_cache(c, f->inocache);
-	}
+	पूर्ण
 
 	mutex_unlock(&f->sem);
-}
+पूर्ण

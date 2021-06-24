@@ -1,290 +1,291 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Distributed Switch Architecture loopback driver
  *
  * Copyright (C) 2016, Florian Fainelli <f.fainelli@gmail.com>
  */
 
-#include <linux/platform_device.h>
-#include <linux/netdevice.h>
-#include <linux/phy.h>
-#include <linux/phy_fixed.h>
-#include <linux/export.h>
-#include <linux/ethtool.h>
-#include <linux/workqueue.h>
-#include <linux/module.h>
-#include <linux/if_bridge.h>
-#include <linux/dsa/loop.h>
-#include <net/dsa.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/phy_fixed.h>
+#समावेश <linux/export.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/module.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/dsa/loop.h>
+#समावेश <net/dsa.h>
 
-#include "dsa_loop.h"
+#समावेश "dsa_loop.h"
 
-static struct dsa_loop_mib_entry dsa_loop_mibs[] = {
-	[DSA_LOOP_PHY_READ_OK]	= { "phy_read_ok", },
-	[DSA_LOOP_PHY_READ_ERR]	= { "phy_read_err", },
-	[DSA_LOOP_PHY_WRITE_OK] = { "phy_write_ok", },
-	[DSA_LOOP_PHY_WRITE_ERR] = { "phy_write_err", },
-};
+अटल काष्ठा dsa_loop_mib_entry dsa_loop_mibs[] = अणु
+	[DSA_LOOP_PHY_READ_OK]	= अणु "phy_read_ok", पूर्ण,
+	[DSA_LOOP_PHY_READ_ERR]	= अणु "phy_read_err", पूर्ण,
+	[DSA_LOOP_PHY_WRITE_OK] = अणु "phy_write_ok", पूर्ण,
+	[DSA_LOOP_PHY_WRITE_ERR] = अणु "phy_write_err", पूर्ण,
+पूर्ण;
 
-static struct phy_device *phydevs[PHY_MAX_ADDR];
+अटल काष्ठा phy_device *phydevs[PHY_MAX_ADDR];
 
-enum dsa_loop_devlink_resource_id {
+क्रमागत dsa_loop_devlink_resource_id अणु
 	DSA_LOOP_DEVLINK_PARAM_ID_VTU,
-};
+पूर्ण;
 
-static u64 dsa_loop_devlink_vtu_get(void *priv)
-{
-	struct dsa_loop_priv *ps = priv;
-	unsigned int i, count = 0;
-	struct dsa_loop_vlan *vl;
+अटल u64 dsa_loop_devlink_vtu_get(व्योम *priv)
+अणु
+	काष्ठा dsa_loop_priv *ps = priv;
+	अचिन्हित पूर्णांक i, count = 0;
+	काष्ठा dsa_loop_vlan *vl;
 
-	for (i = 0; i < ARRAY_SIZE(ps->vlans); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(ps->vlans); i++) अणु
 		vl = &ps->vlans[i];
-		if (vl->members)
+		अगर (vl->members)
 			count++;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int dsa_loop_setup_devlink_resources(struct dsa_switch *ds)
-{
-	struct devlink_resource_size_params size_params;
-	struct dsa_loop_priv *ps = ds->priv;
-	int err;
+अटल पूर्णांक dsa_loop_setup_devlink_resources(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा devlink_resource_size_params size_params;
+	काष्ठा dsa_loop_priv *ps = ds->priv;
+	पूर्णांक err;
 
 	devlink_resource_size_params_init(&size_params, ARRAY_SIZE(ps->vlans),
 					  ARRAY_SIZE(ps->vlans),
 					  1, DEVLINK_RESOURCE_UNIT_ENTRY);
 
-	err = dsa_devlink_resource_register(ds, "VTU", ARRAY_SIZE(ps->vlans),
+	err = dsa_devlink_resource_रेजिस्टर(ds, "VTU", ARRAY_SIZE(ps->vlans),
 					    DSA_LOOP_DEVLINK_PARAM_ID_VTU,
 					    DEVLINK_RESOURCE_ID_PARENT_TOP,
 					    &size_params);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	dsa_devlink_resource_occ_get_register(ds,
+	dsa_devlink_resource_occ_get_रेजिस्टर(ds,
 					      DSA_LOOP_DEVLINK_PARAM_ID_VTU,
 					      dsa_loop_devlink_vtu_get, ps);
 
-	return 0;
+	वापस 0;
 
 out:
-	dsa_devlink_resources_unregister(ds);
-	return err;
-}
+	dsa_devlink_resources_unरेजिस्टर(ds);
+	वापस err;
+पूर्ण
 
-static enum dsa_tag_protocol dsa_loop_get_protocol(struct dsa_switch *ds,
-						   int port,
-						   enum dsa_tag_protocol mp)
-{
+अटल क्रमागत dsa_tag_protocol dsa_loop_get_protocol(काष्ठा dsa_चयन *ds,
+						   पूर्णांक port,
+						   क्रमागत dsa_tag_protocol mp)
+अणु
 	dev_dbg(ds->dev, "%s: port: %d\n", __func__, port);
 
-	return DSA_TAG_PROTO_NONE;
-}
+	वापस DSA_TAG_PROTO_NONE;
+पूर्ण
 
-static int dsa_loop_setup(struct dsa_switch *ds)
-{
-	struct dsa_loop_priv *ps = ds->priv;
-	unsigned int i;
+अटल पूर्णांक dsa_loop_setup(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा dsa_loop_priv *ps = ds->priv;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ds->num_ports; i++)
-		memcpy(ps->ports[i].mib, dsa_loop_mibs,
-		       sizeof(dsa_loop_mibs));
+	क्रम (i = 0; i < ds->num_ports; i++)
+		स_नकल(ps->ports[i].mib, dsa_loop_mibs,
+		       माप(dsa_loop_mibs));
 
 	dev_dbg(ds->dev, "%s\n", __func__);
 
-	return dsa_loop_setup_devlink_resources(ds);
-}
+	वापस dsa_loop_setup_devlink_resources(ds);
+पूर्ण
 
-static void dsa_loop_teardown(struct dsa_switch *ds)
-{
-	dsa_devlink_resources_unregister(ds);
-}
+अटल व्योम dsa_loop_tearकरोwn(काष्ठा dsa_चयन *ds)
+अणु
+	dsa_devlink_resources_unरेजिस्टर(ds);
+पूर्ण
 
-static int dsa_loop_get_sset_count(struct dsa_switch *ds, int port, int sset)
-{
-	if (sset != ETH_SS_STATS && sset != ETH_SS_PHY_STATS)
-		return 0;
+अटल पूर्णांक dsa_loop_get_sset_count(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक sset)
+अणु
+	अगर (sset != ETH_SS_STATS && sset != ETH_SS_PHY_STATS)
+		वापस 0;
 
-	return __DSA_LOOP_CNT_MAX;
-}
+	वापस __DSA_LOOP_CNT_MAX;
+पूर्ण
 
-static void dsa_loop_get_strings(struct dsa_switch *ds, int port,
-				 u32 stringset, uint8_t *data)
-{
-	struct dsa_loop_priv *ps = ds->priv;
-	unsigned int i;
+अटल व्योम dsa_loop_get_strings(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				 u32 stringset, uपूर्णांक8_t *data)
+अणु
+	काष्ठा dsa_loop_priv *ps = ds->priv;
+	अचिन्हित पूर्णांक i;
 
-	if (stringset != ETH_SS_STATS && stringset != ETH_SS_PHY_STATS)
-		return;
+	अगर (stringset != ETH_SS_STATS && stringset != ETH_SS_PHY_STATS)
+		वापस;
 
-	for (i = 0; i < __DSA_LOOP_CNT_MAX; i++)
-		memcpy(data + i * ETH_GSTRING_LEN,
+	क्रम (i = 0; i < __DSA_LOOP_CNT_MAX; i++)
+		स_नकल(data + i * ETH_GSTRING_LEN,
 		       ps->ports[port].mib[i].name, ETH_GSTRING_LEN);
-}
+पूर्ण
 
-static void dsa_loop_get_ethtool_stats(struct dsa_switch *ds, int port,
-				       uint64_t *data)
-{
-	struct dsa_loop_priv *ps = ds->priv;
-	unsigned int i;
+अटल व्योम dsa_loop_get_ethtool_stats(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				       uपूर्णांक64_t *data)
+अणु
+	काष्ठा dsa_loop_priv *ps = ds->priv;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < __DSA_LOOP_CNT_MAX; i++)
+	क्रम (i = 0; i < __DSA_LOOP_CNT_MAX; i++)
 		data[i] = ps->ports[port].mib[i].val;
-}
+पूर्ण
 
-static int dsa_loop_phy_read(struct dsa_switch *ds, int port, int regnum)
-{
-	struct dsa_loop_priv *ps = ds->priv;
-	struct mii_bus *bus = ps->bus;
-	int ret;
+अटल पूर्णांक dsa_loop_phy_पढ़ो(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक regnum)
+अणु
+	काष्ठा dsa_loop_priv *ps = ds->priv;
+	काष्ठा mii_bus *bus = ps->bus;
+	पूर्णांक ret;
 
-	ret = mdiobus_read_nested(bus, ps->port_base + port, regnum);
-	if (ret < 0)
+	ret = mdiobus_पढ़ो_nested(bus, ps->port_base + port, regnum);
+	अगर (ret < 0)
 		ps->ports[port].mib[DSA_LOOP_PHY_READ_ERR].val++;
-	else
+	अन्यथा
 		ps->ports[port].mib[DSA_LOOP_PHY_READ_OK].val++;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dsa_loop_phy_write(struct dsa_switch *ds, int port,
-			      int regnum, u16 value)
-{
-	struct dsa_loop_priv *ps = ds->priv;
-	struct mii_bus *bus = ps->bus;
-	int ret;
+अटल पूर्णांक dsa_loop_phy_ग_लिखो(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			      पूर्णांक regnum, u16 value)
+अणु
+	काष्ठा dsa_loop_priv *ps = ds->priv;
+	काष्ठा mii_bus *bus = ps->bus;
+	पूर्णांक ret;
 
-	ret = mdiobus_write_nested(bus, ps->port_base + port, regnum, value);
-	if (ret < 0)
+	ret = mdiobus_ग_लिखो_nested(bus, ps->port_base + port, regnum, value);
+	अगर (ret < 0)
 		ps->ports[port].mib[DSA_LOOP_PHY_WRITE_ERR].val++;
-	else
+	अन्यथा
 		ps->ports[port].mib[DSA_LOOP_PHY_WRITE_OK].val++;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dsa_loop_port_bridge_join(struct dsa_switch *ds, int port,
-				     struct net_device *bridge)
-{
+अटल पूर्णांक dsa_loop_port_bridge_join(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				     काष्ठा net_device *bridge)
+अणु
 	dev_dbg(ds->dev, "%s: port: %d, bridge: %s\n",
 		__func__, port, bridge->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsa_loop_port_bridge_leave(struct dsa_switch *ds, int port,
-				       struct net_device *bridge)
-{
+अटल व्योम dsa_loop_port_bridge_leave(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				       काष्ठा net_device *bridge)
+अणु
 	dev_dbg(ds->dev, "%s: port: %d, bridge: %s\n",
 		__func__, port, bridge->name);
-}
+पूर्ण
 
-static void dsa_loop_port_stp_state_set(struct dsa_switch *ds, int port,
+अटल व्योम dsa_loop_port_stp_state_set(काष्ठा dsa_चयन *ds, पूर्णांक port,
 					u8 state)
-{
+अणु
 	dev_dbg(ds->dev, "%s: port: %d, state: %d\n",
 		__func__, port, state);
-}
+पूर्ण
 
-static int dsa_loop_port_vlan_filtering(struct dsa_switch *ds, int port,
+अटल पूर्णांक dsa_loop_port_vlan_filtering(काष्ठा dsa_चयन *ds, पूर्णांक port,
 					bool vlan_filtering,
-					struct netlink_ext_ack *extack)
-{
+					काष्ठा netlink_ext_ack *extack)
+अणु
 	dev_dbg(ds->dev, "%s: port: %d, vlan_filtering: %d\n",
 		__func__, port, vlan_filtering);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsa_loop_port_vlan_add(struct dsa_switch *ds, int port,
-				  const struct switchdev_obj_port_vlan *vlan,
-				  struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक dsa_loop_port_vlan_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				  स्थिर काष्ठा चयनdev_obj_port_vlan *vlan,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
 	bool untagged = vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED;
 	bool pvid = vlan->flags & BRIDGE_VLAN_INFO_PVID;
-	struct dsa_loop_priv *ps = ds->priv;
-	struct mii_bus *bus = ps->bus;
-	struct dsa_loop_vlan *vl;
+	काष्ठा dsa_loop_priv *ps = ds->priv;
+	काष्ठा mii_bus *bus = ps->bus;
+	काष्ठा dsa_loop_vlan *vl;
 
-	if (vlan->vid >= ARRAY_SIZE(ps->vlans))
-		return -ERANGE;
+	अगर (vlan->vid >= ARRAY_SIZE(ps->vlans))
+		वापस -दुस्फल;
 
-	/* Just do a sleeping operation to make lockdep checks effective */
-	mdiobus_read(bus, ps->port_base + port, MII_BMSR);
+	/* Just करो a sleeping operation to make lockdep checks effective */
+	mdiobus_पढ़ो(bus, ps->port_base + port, MII_BMSR);
 
 	vl = &ps->vlans[vlan->vid];
 
 	vl->members |= BIT(port);
-	if (untagged)
+	अगर (untagged)
 		vl->untagged |= BIT(port);
-	else
+	अन्यथा
 		vl->untagged &= ~BIT(port);
 
 	dev_dbg(ds->dev, "%s: port: %d vlan: %d, %stagged, pvid: %d\n",
 		__func__, port, vlan->vid, untagged ? "un" : "", pvid);
 
-	if (pvid)
+	अगर (pvid)
 		ps->ports[port].pvid = vlan->vid;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsa_loop_port_vlan_del(struct dsa_switch *ds, int port,
-				  const struct switchdev_obj_port_vlan *vlan)
-{
+अटल पूर्णांक dsa_loop_port_vlan_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				  स्थिर काष्ठा चयनdev_obj_port_vlan *vlan)
+अणु
 	bool untagged = vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED;
-	struct dsa_loop_priv *ps = ds->priv;
+	काष्ठा dsa_loop_priv *ps = ds->priv;
 	u16 pvid = ps->ports[port].pvid;
-	struct mii_bus *bus = ps->bus;
-	struct dsa_loop_vlan *vl;
+	काष्ठा mii_bus *bus = ps->bus;
+	काष्ठा dsa_loop_vlan *vl;
 
-	/* Just do a sleeping operation to make lockdep checks effective */
-	mdiobus_read(bus, ps->port_base + port, MII_BMSR);
+	/* Just करो a sleeping operation to make lockdep checks effective */
+	mdiobus_पढ़ो(bus, ps->port_base + port, MII_BMSR);
 
 	vl = &ps->vlans[vlan->vid];
 
 	vl->members &= ~BIT(port);
-	if (untagged)
+	अगर (untagged)
 		vl->untagged &= ~BIT(port);
 
-	if (pvid == vlan->vid)
+	अगर (pvid == vlan->vid)
 		pvid = 1;
 
 	dev_dbg(ds->dev, "%s: port: %d vlan: %d, %stagged, pvid: %d\n",
 		__func__, port, vlan->vid, untagged ? "un" : "", pvid);
 	ps->ports[port].pvid = pvid;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsa_loop_port_change_mtu(struct dsa_switch *ds, int port,
-				    int new_mtu)
-{
-	struct dsa_loop_priv *priv = ds->priv;
+अटल पूर्णांक dsa_loop_port_change_mtu(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				    पूर्णांक new_mtu)
+अणु
+	काष्ठा dsa_loop_priv *priv = ds->priv;
 
 	priv->ports[port].mtu = new_mtu;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsa_loop_port_max_mtu(struct dsa_switch *ds, int port)
-{
-	return ETH_MAX_MTU;
-}
+अटल पूर्णांक dsa_loop_port_max_mtu(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	वापस ETH_MAX_MTU;
+पूर्ण
 
-static const struct dsa_switch_ops dsa_loop_driver = {
+अटल स्थिर काष्ठा dsa_चयन_ops dsa_loop_driver = अणु
 	.get_tag_protocol	= dsa_loop_get_protocol,
 	.setup			= dsa_loop_setup,
-	.teardown		= dsa_loop_teardown,
+	.tearकरोwn		= dsa_loop_tearकरोwn,
 	.get_strings		= dsa_loop_get_strings,
 	.get_ethtool_stats	= dsa_loop_get_ethtool_stats,
 	.get_sset_count		= dsa_loop_get_sset_count,
 	.get_ethtool_phy_stats	= dsa_loop_get_ethtool_stats,
-	.phy_read		= dsa_loop_phy_read,
-	.phy_write		= dsa_loop_phy_write,
+	.phy_पढ़ो		= dsa_loop_phy_पढ़ो,
+	.phy_ग_लिखो		= dsa_loop_phy_ग_लिखो,
 	.port_bridge_join	= dsa_loop_port_bridge_join,
 	.port_bridge_leave	= dsa_loop_port_bridge_leave,
 	.port_stp_state_set	= dsa_loop_port_stp_state_set,
@@ -293,32 +294,32 @@ static const struct dsa_switch_ops dsa_loop_driver = {
 	.port_vlan_del		= dsa_loop_port_vlan_del,
 	.port_change_mtu	= dsa_loop_port_change_mtu,
 	.port_max_mtu		= dsa_loop_port_max_mtu,
-};
+पूर्ण;
 
-static int dsa_loop_drv_probe(struct mdio_device *mdiodev)
-{
-	struct dsa_loop_pdata *pdata = mdiodev->dev.platform_data;
-	struct dsa_loop_priv *ps;
-	struct dsa_switch *ds;
-	int ret;
+अटल पूर्णांक dsa_loop_drv_probe(काष्ठा mdio_device *mdiodev)
+अणु
+	काष्ठा dsa_loop_pdata *pdata = mdiodev->dev.platक्रमm_data;
+	काष्ठा dsa_loop_priv *ps;
+	काष्ठा dsa_चयन *ds;
+	पूर्णांक ret;
 
-	if (!pdata)
-		return -ENODEV;
+	अगर (!pdata)
+		वापस -ENODEV;
 
-	ds = devm_kzalloc(&mdiodev->dev, sizeof(*ds), GFP_KERNEL);
-	if (!ds)
-		return -ENOMEM;
+	ds = devm_kzalloc(&mdiodev->dev, माप(*ds), GFP_KERNEL);
+	अगर (!ds)
+		वापस -ENOMEM;
 
 	ds->dev = &mdiodev->dev;
 	ds->num_ports = DSA_LOOP_NUM_PORTS;
 
-	ps = devm_kzalloc(&mdiodev->dev, sizeof(*ps), GFP_KERNEL);
-	if (!ps)
-		return -ENOMEM;
+	ps = devm_kzalloc(&mdiodev->dev, माप(*ps), GFP_KERNEL);
+	अगर (!ps)
+		वापस -ENOMEM;
 
 	ps->netdev = dev_get_by_name(&init_net, pdata->netdev);
-	if (!ps->netdev)
-		return -EPROBE_DEFER;
+	अगर (!ps->netdev)
+		वापस -EPROBE_DEFER;
 
 	pdata->cd.netdev[DSA_LOOP_CPU_PORT] = &ps->netdev->dev;
 
@@ -329,59 +330,59 @@ static int dsa_loop_drv_probe(struct mdio_device *mdiodev)
 
 	dev_set_drvdata(&mdiodev->dev, ds);
 
-	ret = dsa_register_switch(ds);
-	if (!ret)
+	ret = dsa_रेजिस्टर_चयन(ds);
+	अगर (!ret)
 		dev_info(&mdiodev->dev, "%s: 0x%0x\n",
 			 pdata->name, pdata->enabled_ports);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dsa_loop_drv_remove(struct mdio_device *mdiodev)
-{
-	struct dsa_switch *ds = dev_get_drvdata(&mdiodev->dev);
-	struct dsa_loop_priv *ps = ds->priv;
+अटल व्योम dsa_loop_drv_हटाओ(काष्ठा mdio_device *mdiodev)
+अणु
+	काष्ठा dsa_चयन *ds = dev_get_drvdata(&mdiodev->dev);
+	काष्ठा dsa_loop_priv *ps = ds->priv;
 
-	dsa_unregister_switch(ds);
+	dsa_unरेजिस्टर_चयन(ds);
 	dev_put(ps->netdev);
-}
+पूर्ण
 
-static struct mdio_driver dsa_loop_drv = {
-	.mdiodrv.driver	= {
+अटल काष्ठा mdio_driver dsa_loop_drv = अणु
+	.mdiodrv.driver	= अणु
 		.name	= "dsa-loop",
-	},
+	पूर्ण,
 	.probe	= dsa_loop_drv_probe,
-	.remove	= dsa_loop_drv_remove,
-};
+	.हटाओ	= dsa_loop_drv_हटाओ,
+पूर्ण;
 
-#define NUM_FIXED_PHYS	(DSA_LOOP_NUM_PORTS - 2)
+#घोषणा NUM_FIXED_PHYS	(DSA_LOOP_NUM_PORTS - 2)
 
-static int __init dsa_loop_init(void)
-{
-	struct fixed_phy_status status = {
+अटल पूर्णांक __init dsa_loop_init(व्योम)
+अणु
+	काष्ठा fixed_phy_status status = अणु
 		.link = 1,
 		.speed = SPEED_100,
 		.duplex = DUPLEX_FULL,
-	};
-	unsigned int i;
+	पूर्ण;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < NUM_FIXED_PHYS; i++)
-		phydevs[i] = fixed_phy_register(PHY_POLL, &status, NULL);
+	क्रम (i = 0; i < NUM_FIXED_PHYS; i++)
+		phydevs[i] = fixed_phy_रेजिस्टर(PHY_POLL, &status, शून्य);
 
-	return mdio_driver_register(&dsa_loop_drv);
-}
+	वापस mdio_driver_रेजिस्टर(&dsa_loop_drv);
+पूर्ण
 module_init(dsa_loop_init);
 
-static void __exit dsa_loop_exit(void)
-{
-	unsigned int i;
+अटल व्योम __निकास dsa_loop_निकास(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	mdio_driver_unregister(&dsa_loop_drv);
-	for (i = 0; i < NUM_FIXED_PHYS; i++)
-		if (!IS_ERR(phydevs[i]))
-			fixed_phy_unregister(phydevs[i]);
-}
-module_exit(dsa_loop_exit);
+	mdio_driver_unरेजिस्टर(&dsa_loop_drv);
+	क्रम (i = 0; i < NUM_FIXED_PHYS; i++)
+		अगर (!IS_ERR(phydevs[i]))
+			fixed_phy_unरेजिस्टर(phydevs[i]);
+पूर्ण
+module_निकास(dsa_loop_निकास);
 
 MODULE_SOFTDEP("pre: dsa_loop_bdinfo");
 MODULE_LICENSE("GPL");

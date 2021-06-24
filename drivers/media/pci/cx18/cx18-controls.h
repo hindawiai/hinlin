@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  cx18 ioctl control functions
  *
@@ -8,4 +9,4 @@
 
  */
 
-extern const struct cx2341x_handler_ops cx18_cxhdl_ops;
+बाह्य स्थिर काष्ठा cx2341x_handler_ops cx18_cxhdl_ops;

@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0+
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/types.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <linux/mfd/core.h>
-#include <linux/platform_device.h>
-#include <linux/ioport.h>
-#include <linux/uio_driver.h>
-#include "pcie.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/types.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/uio_driver.h>
+#समावेश "pcie.h"
 
 /*  Core (Resource) Table Layout:
  *      one Resource per record (8 bytes)
@@ -19,7 +20,7 @@
  *              IIIIIIIIIIII                                                        Core Type    [up to 4095 types]
  *                          D                                                       S2C DMA Present
  *                           DDD                                                    S2C DMA Channel Number    [up to 8 channels]
- *                              LLLLLLLLLLLLLLLL                                    Register Count (64-bit registers)    [up to 65535 registers]
+ *                              LLLLLLLLLLLLLLLL                                    Register Count (64-bit रेजिस्टरs)    [up to 65535 रेजिस्टरs]
  *                                              OOOOOOOOOOOOOOOO                    Core Offset (in 4kB blocks)    [up to 65535 cores]
  *                                                              D                   C2S DMA Present
  *                                                               DDD                C2S DMA Channel Number    [up to 8 channels]
@@ -30,18 +31,18 @@
  *
  */
 
-#define KPC_OLD_DMA_CH_NUM(present, channel)   \
+#घोषणा KPC_OLD_DMA_CH_NUM(present, channel)   \
 		((present) ? (0x8 | ((channel) & 0x7)) : 0)
-#define KPC_OLD_S2C_DMA_CH_NUM(cte)   \
+#घोषणा KPC_OLD_S2C_DMA_CH_NUM(cte)   \
 		KPC_OLD_DMA_CH_NUM(cte.s2c_dma_present, cte.s2c_dma_channel_num)
-#define KPC_OLD_C2S_DMA_CH_NUM(cte)   \
+#घोषणा KPC_OLD_C2S_DMA_CH_NUM(cte)   \
 		KPC_OLD_DMA_CH_NUM(cte.c2s_dma_present, cte.c2s_dma_channel_num)
 
-#define KP_CORE_ID_INVALID      0
-#define KP_CORE_ID_I2C          3
-#define KP_CORE_ID_SPI          5
+#घोषणा KP_CORE_ID_INVALID      0
+#घोषणा KP_CORE_ID_I2C          3
+#घोषणा KP_CORE_ID_SPI          5
 
-struct core_table_entry {
+काष्ठा core_table_entry अणु
 	u16  type;
 	u32  offset;
 	u32  length;
@@ -51,25 +52,25 @@ struct core_table_entry {
 	u8   c2s_dma_channel_num;
 	u8   irq_count;
 	u8   irq_base_num;
-};
+पूर्ण;
 
-static
-void  parse_core_table_entry_v0(struct core_table_entry *cte, const u64 read_val)
-{
-	cte->type                = ((read_val & 0xFFF0000000000000UL) >> 52);
-	cte->offset              = ((read_val & 0x00000000FFFF0000UL) >> 16) * 4096;
-	cte->length              = ((read_val & 0x0000FFFF00000000UL) >> 32) * 8;
-	cte->s2c_dma_present     = ((read_val & 0x0008000000000000UL) >> 51);
-	cte->s2c_dma_channel_num = ((read_val & 0x0007000000000000UL) >> 48);
-	cte->c2s_dma_present     = ((read_val & 0x0000000000008000UL) >> 15);
-	cte->c2s_dma_channel_num = ((read_val & 0x0000000000007000UL) >> 12);
-	cte->irq_count           = ((read_val & 0x0000000000000C00UL) >> 10);
-	cte->irq_base_num        = ((read_val & 0x00000000000003F8UL) >>  3);
-}
+अटल
+व्योम  parse_core_table_entry_v0(काष्ठा core_table_entry *cte, स्थिर u64 पढ़ो_val)
+अणु
+	cte->type                = ((पढ़ो_val & 0xFFF0000000000000UL) >> 52);
+	cte->offset              = ((पढ़ो_val & 0x00000000FFFF0000UL) >> 16) * 4096;
+	cte->length              = ((पढ़ो_val & 0x0000FFFF00000000UL) >> 32) * 8;
+	cte->s2c_dma_present     = ((पढ़ो_val & 0x0008000000000000UL) >> 51);
+	cte->s2c_dma_channel_num = ((पढ़ो_val & 0x0007000000000000UL) >> 48);
+	cte->c2s_dma_present     = ((पढ़ो_val & 0x0000000000008000UL) >> 15);
+	cte->c2s_dma_channel_num = ((पढ़ो_val & 0x0000000000007000UL) >> 12);
+	cte->irq_count           = ((पढ़ो_val & 0x0000000000000C00UL) >> 10);
+	cte->irq_base_num        = ((पढ़ो_val & 0x00000000000003F8UL) >>  3);
+पूर्ण
 
-static
-void dbg_cte(struct kp2000_device *pcard, struct core_table_entry *cte)
-{
+अटल
+व्योम dbg_cte(काष्ठा kp2000_device *pcard, काष्ठा core_table_entry *cte)
+अणु
 	dev_dbg(&pcard->pdev->dev,
 		"CTE: type:%3d  offset:%3d (%3d)  length:%3d (%3d)  s2c:%d  c2s:%d  irq_count:%d  base_irq:%d\n",
 		cte->type,
@@ -82,34 +83,34 @@ void dbg_cte(struct kp2000_device *pcard, struct core_table_entry *cte)
 		cte->irq_count,
 		cte->irq_base_num
 	);
-}
+पूर्ण
 
-static
-void parse_core_table_entry(struct core_table_entry *cte, const u64 read_val, const u8 entry_rev)
-{
-	switch (entry_rev) {
-	case 0:
-		parse_core_table_entry_v0(cte, read_val);
-		break;
-	default:
+अटल
+व्योम parse_core_table_entry(काष्ठा core_table_entry *cte, स्थिर u64 पढ़ो_val, स्थिर u8 entry_rev)
+अणु
+	चयन (entry_rev) अणु
+	हाल 0:
+		parse_core_table_entry_v0(cte, पढ़ो_val);
+		अवरोध;
+	शेष:
 		cte->type = 0;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int probe_core_basic(unsigned int core_num, struct kp2000_device *pcard,
-			    char *name, const struct core_table_entry cte)
-{
-	struct mfd_cell  cell = { .id = core_num, .name = name };
-	struct resource resources[2];
+अटल पूर्णांक probe_core_basic(अचिन्हित पूर्णांक core_num, काष्ठा kp2000_device *pcard,
+			    अक्षर *name, स्थिर काष्ठा core_table_entry cte)
+अणु
+	काष्ठा mfd_cell  cell = अणु .id = core_num, .name = name पूर्ण;
+	काष्ठा resource resources[2];
 
-	struct kpc_core_device_platdata core_pdata = {
+	काष्ठा kpc_core_device_platdata core_pdata = अणु
 		.card_id           = pcard->card_id,
 		.build_version     = pcard->build_version,
 		.hardware_revision = pcard->hardware_revision,
 		.ssid              = pcard->ssid,
 		.ddna              = pcard->ddna,
-	};
+	पूर्ण;
 
 	dev_dbg(&pcard->pdev->dev,
 		"Found Basic core: type = %02d  dma = %02x / %02x  offset = 0x%x  length = 0x%x (%d regs)\n",
@@ -120,11 +121,11 @@ static int probe_core_basic(unsigned int core_num, struct kp2000_device *pcard,
 		cte.length,
 		cte.length / 8);
 
-	cell.platform_data = &core_pdata;
-	cell.pdata_size = sizeof(struct kpc_core_device_platdata);
+	cell.platक्रमm_data = &core_pdata;
+	cell.pdata_size = माप(काष्ठा kpc_core_device_platdata);
 	cell.num_resources = 2;
 
-	memset(&resources, 0, sizeof(resources));
+	स_रखो(&resources, 0, माप(resources));
 
 	resources[0].start = cte.offset;
 	resources[0].end   = cte.offset + (cte.length - 1);
@@ -136,103 +137,103 @@ static int probe_core_basic(unsigned int core_num, struct kp2000_device *pcard,
 
 	cell.resources = resources;
 
-	return mfd_add_devices(PCARD_TO_DEV(pcard),    // parent
+	वापस mfd_add_devices(PCARD_TO_DEV(pcard),    // parent
 			       pcard->card_num * 100,  // id
-			       &cell,                  // struct mfd_cell *
+			       &cell,                  // काष्ठा mfd_cell *
 			       1,                      // ndevs
 			       &pcard->regs_base_resource,
 			       0,                      // irq_base
-			       NULL);                  // struct irq_domain *
-}
+			       शून्य);                  // काष्ठा irq_करोमुख्य *
+पूर्ण
 
-struct kpc_uio_device {
-	struct list_head list;
-	struct kp2000_device *pcard;
-	struct device  *dev;
-	struct uio_info uioinfo;
-	struct core_table_entry cte;
+काष्ठा kpc_uio_device अणु
+	काष्ठा list_head list;
+	काष्ठा kp2000_device *pcard;
+	काष्ठा device  *dev;
+	काष्ठा uio_info uioinfo;
+	काष्ठा core_table_entry cte;
 	u16 core_num;
-};
+पूर्ण;
 
-static ssize_t offset_show(struct device *dev, struct device_attribute *attr,
-			   char *buf)
-{
-	struct kpc_uio_device *kudev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार offset_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा kpc_uio_device *kudev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", kudev->cte.offset);
-}
-static DEVICE_ATTR_RO(offset);
+	वापस प्र_लिखो(buf, "%u\n", kudev->cte.offset);
+पूर्ण
+अटल DEVICE_ATTR_RO(offset);
 
-static ssize_t size_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct kpc_uio_device *kudev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार size_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा kpc_uio_device *kudev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", kudev->cte.length);
-}
-static DEVICE_ATTR_RO(size);
+	वापस प्र_लिखो(buf, "%u\n", kudev->cte.length);
+पूर्ण
+अटल DEVICE_ATTR_RO(size);
 
-static ssize_t type_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct kpc_uio_device *kudev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा kpc_uio_device *kudev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", kudev->cte.type);
-}
-static DEVICE_ATTR_RO(type);
+	वापस प्र_लिखो(buf, "%u\n", kudev->cte.type);
+पूर्ण
+अटल DEVICE_ATTR_RO(type);
 
-static ssize_t s2c_dma_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct kpc_uio_device *kudev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार s2c_dma_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा kpc_uio_device *kudev = dev_get_drvdata(dev);
 
-	if (!kudev->cte.s2c_dma_present)
-		return sprintf(buf, "%s", "not present\n");
+	अगर (!kudev->cte.s2c_dma_present)
+		वापस प्र_लिखो(buf, "%s", "not present\n");
 
-	return sprintf(buf, "%u\n", kudev->cte.s2c_dma_channel_num);
-}
-static DEVICE_ATTR_RO(s2c_dma);
+	वापस प्र_लिखो(buf, "%u\n", kudev->cte.s2c_dma_channel_num);
+पूर्ण
+अटल DEVICE_ATTR_RO(s2c_dma);
 
-static ssize_t c2s_dma_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct kpc_uio_device *kudev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार c2s_dma_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा kpc_uio_device *kudev = dev_get_drvdata(dev);
 
-	if (!kudev->cte.c2s_dma_present)
-		return sprintf(buf, "%s", "not present\n");
+	अगर (!kudev->cte.c2s_dma_present)
+		वापस प्र_लिखो(buf, "%s", "not present\n");
 
-	return sprintf(buf, "%u\n", kudev->cte.c2s_dma_channel_num);
-}
-static DEVICE_ATTR_RO(c2s_dma);
+	वापस प्र_लिखो(buf, "%u\n", kudev->cte.c2s_dma_channel_num);
+पूर्ण
+अटल DEVICE_ATTR_RO(c2s_dma);
 
-static ssize_t irq_count_show(struct device *dev, struct device_attribute *attr,
-			      char *buf)
-{
-	struct kpc_uio_device *kudev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार irq_count_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा kpc_uio_device *kudev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", kudev->cte.irq_count);
-}
-static DEVICE_ATTR_RO(irq_count);
+	वापस प्र_लिखो(buf, "%u\n", kudev->cte.irq_count);
+पूर्ण
+अटल DEVICE_ATTR_RO(irq_count);
 
-static ssize_t irq_base_num_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct kpc_uio_device *kudev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार irq_base_num_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा kpc_uio_device *kudev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", kudev->cte.irq_base_num);
-}
-static DEVICE_ATTR_RO(irq_base_num);
+	वापस प्र_लिखो(buf, "%u\n", kudev->cte.irq_base_num);
+पूर्ण
+अटल DEVICE_ATTR_RO(irq_base_num);
 
-static ssize_t core_num_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct kpc_uio_device *kudev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार core_num_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा kpc_uio_device *kudev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", kudev->core_num);
-}
-static DEVICE_ATTR_RO(core_num);
+	वापस प्र_लिखो(buf, "%u\n", kudev->core_num);
+पूर्ण
+अटल DEVICE_ATTR_RO(core_num);
 
-struct attribute *kpc_uio_class_attrs[] = {
+काष्ठा attribute *kpc_uio_class_attrs[] = अणु
 	&dev_attr_offset.attr,
 	&dev_attr_size.attr,
 	&dev_attr_type.attr,
@@ -241,65 +242,65 @@ struct attribute *kpc_uio_class_attrs[] = {
 	&dev_attr_irq_count.attr,
 	&dev_attr_irq_base_num.attr,
 	&dev_attr_core_num.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static
-int  kp2000_check_uio_irq(struct kp2000_device *pcard, u32 irq_num)
-{
-	u64 interrupt_active   =  readq(pcard->sysinfo_regs_base + REG_INTERRUPT_ACTIVE);
-	u64 interrupt_mask_inv = ~readq(pcard->sysinfo_regs_base + REG_INTERRUPT_MASK);
+अटल
+पूर्णांक  kp2000_check_uio_irq(काष्ठा kp2000_device *pcard, u32 irq_num)
+अणु
+	u64 पूर्णांकerrupt_active   =  पढ़ोq(pcard->sysinfo_regs_base + REG_INTERRUPT_ACTIVE);
+	u64 पूर्णांकerrupt_mask_inv = ~पढ़ोq(pcard->sysinfo_regs_base + REG_INTERRUPT_MASK);
 	u64 irq_check_mask = BIT_ULL(irq_num);
 
-	if (interrupt_active & irq_check_mask) { // if it's active (interrupt pending)
-		if (interrupt_mask_inv & irq_check_mask) {    // and if it's not masked off
-			return 1;
-		}
-	}
-	return 0;
-}
+	अगर (पूर्णांकerrupt_active & irq_check_mask) अणु // अगर it's active (पूर्णांकerrupt pending)
+		अगर (पूर्णांकerrupt_mask_inv & irq_check_mask) अणु    // and अगर it's not masked off
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static
-irqreturn_t  kuio_handler(int irq, struct uio_info *uioinfo)
-{
-	struct kpc_uio_device *kudev = uioinfo->priv;
+अटल
+irqवापस_t  kuio_handler(पूर्णांक irq, काष्ठा uio_info *uioinfo)
+अणु
+	काष्ठा kpc_uio_device *kudev = uioinfo->priv;
 
-	if (irq != kudev->pcard->pdev->irq)
-		return IRQ_NONE;
+	अगर (irq != kudev->pcard->pdev->irq)
+		वापस IRQ_NONE;
 
-	if (kp2000_check_uio_irq(kudev->pcard, kudev->cte.irq_base_num)) {
+	अगर (kp2000_check_uio_irq(kudev->pcard, kudev->cte.irq_base_num)) अणु
 		/* Clear the active flag */
-		writeq(BIT_ULL(kudev->cte.irq_base_num),
+		ग_लिखोq(BIT_ULL(kudev->cte.irq_base_num),
 		       kudev->pcard->sysinfo_regs_base + REG_INTERRUPT_ACTIVE);
-		return IRQ_HANDLED;
-	}
-	return IRQ_NONE;
-}
+		वापस IRQ_HANDLED;
+	पूर्ण
+	वापस IRQ_NONE;
+पूर्ण
 
-static
-int kuio_irqcontrol(struct uio_info *uioinfo, s32 irq_on)
-{
-	struct kpc_uio_device *kudev = uioinfo->priv;
-	struct kp2000_device *pcard = kudev->pcard;
+अटल
+पूर्णांक kuio_irqcontrol(काष्ठा uio_info *uioinfo, s32 irq_on)
+अणु
+	काष्ठा kpc_uio_device *kudev = uioinfo->priv;
+	काष्ठा kp2000_device *pcard = kudev->pcard;
 	u64 mask;
 
 	mutex_lock(&pcard->sem);
-	mask = readq(pcard->sysinfo_regs_base + REG_INTERRUPT_MASK);
-	if (irq_on)
+	mask = पढ़ोq(pcard->sysinfo_regs_base + REG_INTERRUPT_MASK);
+	अगर (irq_on)
 		mask &= ~(BIT_ULL(kudev->cte.irq_base_num));
-	else
+	अन्यथा
 		mask |= BIT_ULL(kudev->cte.irq_base_num);
-	writeq(mask, pcard->sysinfo_regs_base + REG_INTERRUPT_MASK);
+	ग_लिखोq(mask, pcard->sysinfo_regs_base + REG_INTERRUPT_MASK);
 	mutex_unlock(&pcard->sem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int probe_core_uio(unsigned int core_num, struct kp2000_device *pcard,
-			  char *name, const struct core_table_entry cte)
-{
-	struct kpc_uio_device *kudev;
-	int rv;
+अटल पूर्णांक probe_core_uio(अचिन्हित पूर्णांक core_num, काष्ठा kp2000_device *pcard,
+			  अक्षर *name, स्थिर काष्ठा core_table_entry cte)
+अणु
+	काष्ठा kpc_uio_device *kudev;
+	पूर्णांक rv;
 
 	dev_dbg(&pcard->pdev->dev,
 		"Found UIO core:   type = %02d  dma = %02x / %02x  offset = 0x%x  length = 0x%x (%d regs)\n",
@@ -310,9 +311,9 @@ static int probe_core_uio(unsigned int core_num, struct kp2000_device *pcard,
 		cte.length,
 		cte.length / 8);
 
-	kudev = kzalloc(sizeof(*kudev), GFP_KERNEL);
-	if (!kudev)
-		return -ENOMEM;
+	kudev = kzalloc(माप(*kudev), GFP_KERNEL);
+	अगर (!kudev)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&kudev->list);
 	kudev->pcard = pcard;
@@ -322,14 +323,14 @@ static int probe_core_uio(unsigned int core_num, struct kp2000_device *pcard,
 	kudev->uioinfo.priv = kudev;
 	kudev->uioinfo.name = name;
 	kudev->uioinfo.version = "0.0";
-	if (cte.irq_count > 0) {
+	अगर (cte.irq_count > 0) अणु
 		kudev->uioinfo.irq_flags = IRQF_SHARED;
 		kudev->uioinfo.irq = pcard->pdev->irq;
 		kudev->uioinfo.handler = kuio_handler;
 		kudev->uioinfo.irqcontrol = kuio_irqcontrol;
-	} else {
+	पूर्ण अन्यथा अणु
 		kudev->uioinfo.irq = 0;
-	}
+	पूर्ण
 
 	kudev->uioinfo.mem[0].name = "uiomap";
 	kudev->uioinfo.mem[0].addr = pci_resource_start(pcard->pdev, REG_BAR) + cte.offset;
@@ -341,41 +342,41 @@ static int probe_core_uio(unsigned int core_num, struct kp2000_device *pcard,
 	kudev->dev = device_create(kpc_uio_class,
 				   &pcard->pdev->dev, MKDEV(0, 0), kudev, "%s.%d.%d.%d",
 				   kudev->uioinfo.name, pcard->card_num, cte.type, kudev->core_num);
-	if (IS_ERR(kudev->dev)) {
+	अगर (IS_ERR(kudev->dev)) अणु
 		dev_err(&pcard->pdev->dev, "%s: device_create failed!\n",
 			__func__);
-		kfree(kudev);
-		return -ENODEV;
-	}
+		kमुक्त(kudev);
+		वापस -ENODEV;
+	पूर्ण
 	dev_set_drvdata(kudev->dev, kudev);
 
-	rv = uio_register_device(kudev->dev, &kudev->uioinfo);
-	if (rv) {
+	rv = uio_रेजिस्टर_device(kudev->dev, &kudev->uioinfo);
+	अगर (rv) अणु
 		dev_err(&pcard->pdev->dev, "%s: failed uio_register_device: %d\n",
 			__func__, rv);
 		put_device(kudev->dev);
-		kfree(kudev);
-		return rv;
-	}
+		kमुक्त(kudev);
+		वापस rv;
+	पूर्ण
 
 	list_add_tail(&kudev->list, &pcard->uio_devices_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int  create_dma_engine_core(struct kp2000_device *pcard,
-				   size_t engine_regs_offset,
-				   int engine_num, int irq_num)
-{
-	struct mfd_cell  cell = { .id = engine_num };
-	struct resource  resources[2];
+अटल पूर्णांक  create_dma_engine_core(काष्ठा kp2000_device *pcard,
+				   माप_प्रकार engine_regs_offset,
+				   पूर्णांक engine_num, पूर्णांक irq_num)
+अणु
+	काष्ठा mfd_cell  cell = अणु .id = engine_num पूर्ण;
+	काष्ठा resource  resources[2];
 
-	cell.platform_data = NULL;
+	cell.platक्रमm_data = शून्य;
 	cell.pdata_size = 0;
 	cell.name = KP_DRIVER_NAME_DMA_CONTROLLER;
 	cell.num_resources = 2;
 
-	memset(&resources, 0, sizeof(resources));
+	स_रखो(&resources, 0, माप(resources));
 
 	resources[0].start = engine_regs_offset;
 	resources[0].end   = engine_regs_offset + (KPC_DMA_ENGINE_SIZE - 1);
@@ -387,126 +388,126 @@ static int  create_dma_engine_core(struct kp2000_device *pcard,
 
 	cell.resources = resources;
 
-	return mfd_add_devices(PCARD_TO_DEV(pcard),    // parent
+	वापस mfd_add_devices(PCARD_TO_DEV(pcard),    // parent
 			       pcard->card_num * 100,  // id
-			       &cell,                  // struct mfd_cell *
+			       &cell,                  // काष्ठा mfd_cell *
 			       1,                      // ndevs
 			       &pcard->dma_base_resource,
 			       0,                      // irq_base
-			       NULL);                  // struct irq_domain *
-}
+			       शून्य);                  // काष्ठा irq_करोमुख्य *
+पूर्ण
 
-static int  kp2000_setup_dma_controller(struct kp2000_device *pcard)
-{
-	int err;
-	unsigned int i;
+अटल पूर्णांक  kp2000_setup_dma_controller(काष्ठा kp2000_device *pcard)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक i;
 	u64 capabilities_reg;
 
 	// S2C Engines
-	for (i = 0 ; i < 32 ; i++) {
-		capabilities_reg = readq(pcard->dma_bar_base +
+	क्रम (i = 0 ; i < 32 ; i++) अणु
+		capabilities_reg = पढ़ोq(pcard->dma_bar_base +
 					 KPC_DMA_S2C_BASE_OFFSET +
 					 (KPC_DMA_ENGINE_SIZE * i));
 
-		if (capabilities_reg & ENGINE_CAP_PRESENT_MASK) {
+		अगर (capabilities_reg & ENGINE_CAP_PRESENT_MASK) अणु
 			err = create_dma_engine_core(pcard, (KPC_DMA_S2C_BASE_OFFSET +
 							    (KPC_DMA_ENGINE_SIZE * i)),
 						     i, pcard->pdev->irq);
-			if (err)
-				goto err_out;
-		}
-	}
+			अगर (err)
+				जाओ err_out;
+		पूर्ण
+	पूर्ण
 	// C2S Engines
-	for (i = 0 ; i < 32 ; i++) {
-		capabilities_reg = readq(pcard->dma_bar_base +
+	क्रम (i = 0 ; i < 32 ; i++) अणु
+		capabilities_reg = पढ़ोq(pcard->dma_bar_base +
 					 KPC_DMA_C2S_BASE_OFFSET +
 					 (KPC_DMA_ENGINE_SIZE * i));
 
-		if (capabilities_reg & ENGINE_CAP_PRESENT_MASK) {
+		अगर (capabilities_reg & ENGINE_CAP_PRESENT_MASK) अणु
 			err = create_dma_engine_core(pcard, (KPC_DMA_C2S_BASE_OFFSET +
 							    (KPC_DMA_ENGINE_SIZE * i)),
 						     32 + i,  pcard->pdev->irq);
-			if (err)
-				goto err_out;
-		}
-	}
+			अगर (err)
+				जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out:
 	dev_err(&pcard->pdev->dev, "%s: failed to add a DMA Engine: %d\n",
 		__func__, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int  kp2000_probe_cores(struct kp2000_device *pcard)
-{
-	int err = 0;
-	int i;
-	int current_type_id;
-	u64 read_val;
-	unsigned int highest_core_id = 0;
-	struct core_table_entry cte;
+पूर्णांक  kp2000_probe_cores(काष्ठा kp2000_device *pcard)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक i;
+	पूर्णांक current_type_id;
+	u64 पढ़ो_val;
+	अचिन्हित पूर्णांक highest_core_id = 0;
+	काष्ठा core_table_entry cte;
 
 	err = kp2000_setup_dma_controller(pcard);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	INIT_LIST_HEAD(&pcard->uio_devices_list);
 
-	// First, iterate the core table looking for the highest CORE_ID
-	for (i = 0 ; i < pcard->core_table_length ; i++) {
-		read_val = readq(pcard->sysinfo_regs_base + ((pcard->core_table_offset + i) * 8));
-		parse_core_table_entry(&cte, read_val, pcard->core_table_rev);
+	// First, iterate the core table looking क्रम the highest CORE_ID
+	क्रम (i = 0 ; i < pcard->core_table_length ; i++) अणु
+		पढ़ो_val = पढ़ोq(pcard->sysinfo_regs_base + ((pcard->core_table_offset + i) * 8));
+		parse_core_table_entry(&cte, पढ़ो_val, pcard->core_table_rev);
 		dbg_cte(pcard, &cte);
-		if (cte.type > highest_core_id)
+		अगर (cte.type > highest_core_id)
 			highest_core_id = cte.type;
-		if (cte.type == KP_CORE_ID_INVALID)
-			dev_info(&pcard->pdev->dev, "Found Invalid core: %016llx\n", read_val);
-	}
+		अगर (cte.type == KP_CORE_ID_INVALID)
+			dev_info(&pcard->pdev->dev, "Found Invalid core: %016llx\n", पढ़ो_val);
+	पूर्ण
 	// Then, iterate over the possible core types.
-	for (current_type_id = 1 ; current_type_id <= highest_core_id ; current_type_id++) {
-		unsigned int core_num = 0;
+	क्रम (current_type_id = 1 ; current_type_id <= highest_core_id ; current_type_id++) अणु
+		अचिन्हित पूर्णांक core_num = 0;
 		/*
 		 * Foreach core type, iterate the whole table and instantiate
-		 * subdevices for each core.
-		 * Yes, this is O(n*m) but the actual runtime is small enough
+		 * subdevices क्रम each core.
+		 * Yes, this is O(n*m) but the actual runसमय is small enough
 		 * that it's an acceptable tradeoff.
 		 */
-		for (i = 0 ; i < pcard->core_table_length ; i++) {
-			read_val = readq(pcard->sysinfo_regs_base +
+		क्रम (i = 0 ; i < pcard->core_table_length ; i++) अणु
+			पढ़ो_val = पढ़ोq(pcard->sysinfo_regs_base +
 					 ((pcard->core_table_offset + i) * 8));
-			parse_core_table_entry(&cte, read_val, pcard->core_table_rev);
+			parse_core_table_entry(&cte, पढ़ो_val, pcard->core_table_rev);
 
-			if (cte.type != current_type_id)
-				continue;
+			अगर (cte.type != current_type_id)
+				जारी;
 
-			switch (cte.type) {
-			case KP_CORE_ID_I2C:
+			चयन (cte.type) अणु
+			हाल KP_CORE_ID_I2C:
 				err = probe_core_basic(core_num, pcard,
 						       KP_DRIVER_NAME_I2C, cte);
-				break;
+				अवरोध;
 
-			case KP_CORE_ID_SPI:
+			हाल KP_CORE_ID_SPI:
 				err = probe_core_basic(core_num, pcard,
 						       KP_DRIVER_NAME_SPI, cte);
-				break;
+				अवरोध;
 
-			default:
+			शेष:
 				err = probe_core_uio(core_num, pcard, "kpc_uio", cte);
-				break;
-			}
-			if (err) {
+				अवरोध;
+			पूर्ण
+			अगर (err) अणु
 				dev_err(&pcard->pdev->dev,
 					"%s: failed to add core %d: %d\n",
 					__func__, i, err);
-				goto error;
-			}
+				जाओ error;
+			पूर्ण
 			core_num++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	// Finally, instantiate a UIO device for the core_table.
+	// Finally, instantiate a UIO device क्रम the core_table.
 	cte.type                = 0; // CORE_ID_BOARD_INFO
 	cte.offset              = 0; // board info is always at the beginning
 	cte.length              = 512 * 8;
@@ -517,32 +518,32 @@ int  kp2000_probe_cores(struct kp2000_device *pcard)
 	cte.irq_count           = 0;
 	cte.irq_base_num        = 0;
 	err = probe_core_uio(0, pcard, "kpc_uio", cte);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pcard->pdev->dev, "%s: failed to add board_info core: %d\n",
 			__func__, err);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	kp2000_remove_cores(pcard);
-	mfd_remove_devices(PCARD_TO_DEV(pcard));
-	return err;
-}
+	kp2000_हटाओ_cores(pcard);
+	mfd_हटाओ_devices(PCARD_TO_DEV(pcard));
+	वापस err;
+पूर्ण
 
-void  kp2000_remove_cores(struct kp2000_device *pcard)
-{
-	struct list_head *ptr;
-	struct list_head *next;
+व्योम  kp2000_हटाओ_cores(काष्ठा kp2000_device *pcard)
+अणु
+	काष्ठा list_head *ptr;
+	काष्ठा list_head *next;
 
-	list_for_each_safe(ptr, next, &pcard->uio_devices_list) {
-		struct kpc_uio_device *kudev = list_entry(ptr, struct kpc_uio_device, list);
+	list_क्रम_each_safe(ptr, next, &pcard->uio_devices_list) अणु
+		काष्ठा kpc_uio_device *kudev = list_entry(ptr, काष्ठा kpc_uio_device, list);
 
-		uio_unregister_device(&kudev->uioinfo);
-		device_unregister(kudev->dev);
+		uio_unरेजिस्टर_device(&kudev->uioinfo);
+		device_unरेजिस्टर(kudev->dev);
 		list_del(&kudev->list);
-		kfree(kudev);
-	}
-}
+		kमुक्त(kudev);
+	पूर्ण
+पूर्ण
 

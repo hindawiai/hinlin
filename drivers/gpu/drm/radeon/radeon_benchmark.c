@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,152 +23,152 @@
  * Authors: Jerome Glisse
  */
 
-#include <drm/radeon_drm.h>
-#include "radeon_reg.h"
-#include "radeon.h"
+#समावेश <drm/radeon_drm.h>
+#समावेश "radeon_reg.h"
+#समावेश "radeon.h"
 
-#define RADEON_BENCHMARK_COPY_BLIT 1
-#define RADEON_BENCHMARK_COPY_DMA  0
+#घोषणा RADEON_BENCHMARK_COPY_BLIT 1
+#घोषणा RADEON_BENCHMARK_COPY_DMA  0
 
-#define RADEON_BENCHMARK_ITERATIONS 1024
-#define RADEON_BENCHMARK_COMMON_MODES_N 17
+#घोषणा RADEON_BENCHMARK_ITERATIONS 1024
+#घोषणा RADEON_BENCHMARK_COMMON_MODES_N 17
 
-static int radeon_benchmark_do_move(struct radeon_device *rdev, unsigned size,
-				    uint64_t saddr, uint64_t daddr,
-				    int flag, int n,
-				    struct dma_resv *resv)
-{
-	unsigned long start_jiffies;
-	unsigned long end_jiffies;
-	struct radeon_fence *fence = NULL;
-	int i, r;
+अटल पूर्णांक radeon_benchmark_करो_move(काष्ठा radeon_device *rdev, अचिन्हित size,
+				    uपूर्णांक64_t saddr, uपूर्णांक64_t daddr,
+				    पूर्णांक flag, पूर्णांक n,
+				    काष्ठा dma_resv *resv)
+अणु
+	अचिन्हित दीर्घ start_jअगरfies;
+	अचिन्हित दीर्घ end_jअगरfies;
+	काष्ठा radeon_fence *fence = शून्य;
+	पूर्णांक i, r;
 
-	start_jiffies = jiffies;
-	for (i = 0; i < n; i++) {
-		switch (flag) {
-		case RADEON_BENCHMARK_COPY_DMA:
+	start_jअगरfies = jअगरfies;
+	क्रम (i = 0; i < n; i++) अणु
+		चयन (flag) अणु
+		हाल RADEON_BENCHMARK_COPY_DMA:
 			fence = radeon_copy_dma(rdev, saddr, daddr,
 						size / RADEON_GPU_PAGE_SIZE,
 						resv);
-			break;
-		case RADEON_BENCHMARK_COPY_BLIT:
+			अवरोध;
+		हाल RADEON_BENCHMARK_COPY_BLIT:
 			fence = radeon_copy_blit(rdev, saddr, daddr,
 						 size / RADEON_GPU_PAGE_SIZE,
 						 resv);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DRM_ERROR("Unknown copy method\n");
-			return -EINVAL;
-		}
-		if (IS_ERR(fence))
-			return PTR_ERR(fence);
+			वापस -EINVAL;
+		पूर्ण
+		अगर (IS_ERR(fence))
+			वापस PTR_ERR(fence);
 
-		r = radeon_fence_wait(fence, false);
+		r = radeon_fence_रुको(fence, false);
 		radeon_fence_unref(&fence);
-		if (r)
-			return r;
-	}
-	end_jiffies = jiffies;
-	return jiffies_to_msecs(end_jiffies - start_jiffies);
-}
+		अगर (r)
+			वापस r;
+	पूर्ण
+	end_jअगरfies = jअगरfies;
+	वापस jअगरfies_to_msecs(end_jअगरfies - start_jअगरfies);
+पूर्ण
 
 
-static void radeon_benchmark_log_results(int n, unsigned size,
-					 unsigned int time,
-					 unsigned sdomain, unsigned ddomain,
-					 char *kind)
-{
-	unsigned int throughput = (n * (size >> 10)) / time;
+अटल व्योम radeon_benchmark_log_results(पूर्णांक n, अचिन्हित size,
+					 अचिन्हित पूर्णांक समय,
+					 अचिन्हित sकरोमुख्य, अचिन्हित dकरोमुख्य,
+					 अक्षर *kind)
+अणु
+	अचिन्हित पूर्णांक throughput = (n * (size >> 10)) / समय;
 	DRM_INFO("radeon: %s %u bo moves of %u kB from"
 		 " %d to %d in %u ms, throughput: %u Mb/s or %u MB/s\n",
-		 kind, n, size >> 10, sdomain, ddomain, time,
+		 kind, n, size >> 10, sकरोमुख्य, dकरोमुख्य, समय,
 		 throughput * 8, throughput);
-}
+पूर्ण
 
-static void radeon_benchmark_move(struct radeon_device *rdev, unsigned size,
-				  unsigned sdomain, unsigned ddomain)
-{
-	struct radeon_bo *dobj = NULL;
-	struct radeon_bo *sobj = NULL;
-	uint64_t saddr, daddr;
-	int r, n;
-	int time;
+अटल व्योम radeon_benchmark_move(काष्ठा radeon_device *rdev, अचिन्हित size,
+				  अचिन्हित sकरोमुख्य, अचिन्हित dकरोमुख्य)
+अणु
+	काष्ठा radeon_bo *करोbj = शून्य;
+	काष्ठा radeon_bo *sobj = शून्य;
+	uपूर्णांक64_t saddr, daddr;
+	पूर्णांक r, n;
+	पूर्णांक समय;
 
 	n = RADEON_BENCHMARK_ITERATIONS;
-	r = radeon_bo_create(rdev, size, PAGE_SIZE, true, sdomain, 0, NULL, NULL, &sobj);
-	if (r) {
-		goto out_cleanup;
-	}
+	r = radeon_bo_create(rdev, size, PAGE_SIZE, true, sकरोमुख्य, 0, शून्य, शून्य, &sobj);
+	अगर (r) अणु
+		जाओ out_cleanup;
+	पूर्ण
 	r = radeon_bo_reserve(sobj, false);
-	if (unlikely(r != 0))
-		goto out_cleanup;
-	r = radeon_bo_pin(sobj, sdomain, &saddr);
+	अगर (unlikely(r != 0))
+		जाओ out_cleanup;
+	r = radeon_bo_pin(sobj, sकरोमुख्य, &saddr);
 	radeon_bo_unreserve(sobj);
-	if (r) {
-		goto out_cleanup;
-	}
-	r = radeon_bo_create(rdev, size, PAGE_SIZE, true, ddomain, 0, NULL, NULL, &dobj);
-	if (r) {
-		goto out_cleanup;
-	}
-	r = radeon_bo_reserve(dobj, false);
-	if (unlikely(r != 0))
-		goto out_cleanup;
-	r = radeon_bo_pin(dobj, ddomain, &daddr);
-	radeon_bo_unreserve(dobj);
-	if (r) {
-		goto out_cleanup;
-	}
+	अगर (r) अणु
+		जाओ out_cleanup;
+	पूर्ण
+	r = radeon_bo_create(rdev, size, PAGE_SIZE, true, dकरोमुख्य, 0, शून्य, शून्य, &करोbj);
+	अगर (r) अणु
+		जाओ out_cleanup;
+	पूर्ण
+	r = radeon_bo_reserve(करोbj, false);
+	अगर (unlikely(r != 0))
+		जाओ out_cleanup;
+	r = radeon_bo_pin(करोbj, dकरोमुख्य, &daddr);
+	radeon_bo_unreserve(करोbj);
+	अगर (r) अणु
+		जाओ out_cleanup;
+	पूर्ण
 
-	if (rdev->asic->copy.dma) {
-		time = radeon_benchmark_do_move(rdev, size, saddr, daddr,
+	अगर (rdev->asic->copy.dma) अणु
+		समय = radeon_benchmark_करो_move(rdev, size, saddr, daddr,
 						RADEON_BENCHMARK_COPY_DMA, n,
-						dobj->tbo.base.resv);
-		if (time < 0)
-			goto out_cleanup;
-		if (time > 0)
-			radeon_benchmark_log_results(n, size, time,
-						     sdomain, ddomain, "dma");
-	}
+						करोbj->tbo.base.resv);
+		अगर (समय < 0)
+			जाओ out_cleanup;
+		अगर (समय > 0)
+			radeon_benchmark_log_results(n, size, समय,
+						     sकरोमुख्य, dकरोमुख्य, "dma");
+	पूर्ण
 
-	if (rdev->asic->copy.blit) {
-		time = radeon_benchmark_do_move(rdev, size, saddr, daddr,
+	अगर (rdev->asic->copy.blit) अणु
+		समय = radeon_benchmark_करो_move(rdev, size, saddr, daddr,
 						RADEON_BENCHMARK_COPY_BLIT, n,
-						dobj->tbo.base.resv);
-		if (time < 0)
-			goto out_cleanup;
-		if (time > 0)
-			radeon_benchmark_log_results(n, size, time,
-						     sdomain, ddomain, "blit");
-	}
+						करोbj->tbo.base.resv);
+		अगर (समय < 0)
+			जाओ out_cleanup;
+		अगर (समय > 0)
+			radeon_benchmark_log_results(n, size, समय,
+						     sकरोमुख्य, dकरोमुख्य, "blit");
+	पूर्ण
 
 out_cleanup:
-	if (sobj) {
+	अगर (sobj) अणु
 		r = radeon_bo_reserve(sobj, false);
-		if (likely(r == 0)) {
+		अगर (likely(r == 0)) अणु
 			radeon_bo_unpin(sobj);
 			radeon_bo_unreserve(sobj);
-		}
+		पूर्ण
 		radeon_bo_unref(&sobj);
-	}
-	if (dobj) {
-		r = radeon_bo_reserve(dobj, false);
-		if (likely(r == 0)) {
-			radeon_bo_unpin(dobj);
-			radeon_bo_unreserve(dobj);
-		}
-		radeon_bo_unref(&dobj);
-	}
+	पूर्ण
+	अगर (करोbj) अणु
+		r = radeon_bo_reserve(करोbj, false);
+		अगर (likely(r == 0)) अणु
+			radeon_bo_unpin(करोbj);
+			radeon_bo_unreserve(करोbj);
+		पूर्ण
+		radeon_bo_unref(&करोbj);
+	पूर्ण
 
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Error while benchmarking BO move.\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void radeon_benchmark(struct radeon_device *rdev, int test_number)
-{
-	int i;
-	int common_modes[RADEON_BENCHMARK_COMMON_MODES_N] = {
+व्योम radeon_benchmark(काष्ठा radeon_device *rdev, पूर्णांक test_number)
+अणु
+	पूर्णांक i;
+	पूर्णांक common_modes[RADEON_BENCHMARK_COMMON_MODES_N] = अणु
 		640 * 480 * 4,
 		720 * 480 * 4,
 		800 * 600 * 4,
@@ -185,65 +186,65 @@ void radeon_benchmark(struct radeon_device *rdev, int test_number)
 		1600 * 1200 * 4,
 		1920 * 1080 * 4,
 		1920 * 1200 * 4
-	};
+	पूर्ण;
 
-	switch (test_number) {
-	case 1:
+	चयन (test_number) अणु
+	हाल 1:
 		/* simple test, VRAM to GTT and GTT to VRAM */
 		radeon_benchmark_move(rdev, 1024*1024, RADEON_GEM_DOMAIN_GTT,
 				      RADEON_GEM_DOMAIN_VRAM);
 		radeon_benchmark_move(rdev, 1024*1024, RADEON_GEM_DOMAIN_VRAM,
 				      RADEON_GEM_DOMAIN_GTT);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		/* simple test, VRAM to VRAM */
 		radeon_benchmark_move(rdev, 1024*1024, RADEON_GEM_DOMAIN_VRAM,
 				      RADEON_GEM_DOMAIN_VRAM);
-		break;
-	case 3:
-		/* GTT to VRAM, buffer size sweep, powers of 2 */
-		for (i = 1; i <= 16384; i <<= 1)
+		अवरोध;
+	हाल 3:
+		/* GTT to VRAM, buffer size sweep, घातers of 2 */
+		क्रम (i = 1; i <= 16384; i <<= 1)
 			radeon_benchmark_move(rdev, i * RADEON_GPU_PAGE_SIZE,
 					      RADEON_GEM_DOMAIN_GTT,
 					      RADEON_GEM_DOMAIN_VRAM);
-		break;
-	case 4:
-		/* VRAM to GTT, buffer size sweep, powers of 2 */
-		for (i = 1; i <= 16384; i <<= 1)
+		अवरोध;
+	हाल 4:
+		/* VRAM to GTT, buffer size sweep, घातers of 2 */
+		क्रम (i = 1; i <= 16384; i <<= 1)
 			radeon_benchmark_move(rdev, i * RADEON_GPU_PAGE_SIZE,
 					      RADEON_GEM_DOMAIN_VRAM,
 					      RADEON_GEM_DOMAIN_GTT);
-		break;
-	case 5:
-		/* VRAM to VRAM, buffer size sweep, powers of 2 */
-		for (i = 1; i <= 16384; i <<= 1)
+		अवरोध;
+	हाल 5:
+		/* VRAM to VRAM, buffer size sweep, घातers of 2 */
+		क्रम (i = 1; i <= 16384; i <<= 1)
 			radeon_benchmark_move(rdev, i * RADEON_GPU_PAGE_SIZE,
 					      RADEON_GEM_DOMAIN_VRAM,
 					      RADEON_GEM_DOMAIN_VRAM);
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		/* GTT to VRAM, buffer size sweep, common modes */
-		for (i = 0; i < RADEON_BENCHMARK_COMMON_MODES_N; i++)
+		क्रम (i = 0; i < RADEON_BENCHMARK_COMMON_MODES_N; i++)
 			radeon_benchmark_move(rdev, common_modes[i],
 					      RADEON_GEM_DOMAIN_GTT,
 					      RADEON_GEM_DOMAIN_VRAM);
-		break;
-	case 7:
+		अवरोध;
+	हाल 7:
 		/* VRAM to GTT, buffer size sweep, common modes */
-		for (i = 0; i < RADEON_BENCHMARK_COMMON_MODES_N; i++)
+		क्रम (i = 0; i < RADEON_BENCHMARK_COMMON_MODES_N; i++)
 			radeon_benchmark_move(rdev, common_modes[i],
 					      RADEON_GEM_DOMAIN_VRAM,
 					      RADEON_GEM_DOMAIN_GTT);
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		/* VRAM to VRAM, buffer size sweep, common modes */
-		for (i = 0; i < RADEON_BENCHMARK_COMMON_MODES_N; i++)
+		क्रम (i = 0; i < RADEON_BENCHMARK_COMMON_MODES_N; i++)
 			radeon_benchmark_move(rdev, common_modes[i],
 					      RADEON_GEM_DOMAIN_VRAM,
 					      RADEON_GEM_DOMAIN_VRAM);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		DRM_ERROR("Unknown benchmark\n");
-	}
-}
+	पूर्ण
+पूर्ण

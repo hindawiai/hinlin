@@ -1,641 +1,642 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * OF helpers for regulator framework
+ * OF helpers क्रम regulator framework
  *
  * Copyright (C) 2011 Texas Instruments, Inc.
  * Rajendra Nayak <rnayak@ti.com>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/regulator/machine.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/of_regulator.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/of_regulator.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static const char *const regulator_states[PM_SUSPEND_MAX + 1] = {
+अटल स्थिर अक्षर *स्थिर regulator_states[PM_SUSPEND_MAX + 1] = अणु
 	[PM_SUSPEND_STANDBY]	= "regulator-state-standby",
 	[PM_SUSPEND_MEM]	= "regulator-state-mem",
 	[PM_SUSPEND_MAX]	= "regulator-state-disk",
-};
+पूर्ण;
 
-static int of_get_regulation_constraints(struct device *dev,
-					struct device_node *np,
-					struct regulator_init_data **init_data,
-					const struct regulator_desc *desc)
-{
-	struct regulation_constraints *constraints = &(*init_data)->constraints;
-	struct regulator_state *suspend_state;
-	struct device_node *suspend_np;
-	unsigned int mode;
-	int ret, i, len;
-	int n_phandles;
+अटल पूर्णांक of_get_regulation_स्थिरraपूर्णांकs(काष्ठा device *dev,
+					काष्ठा device_node *np,
+					काष्ठा regulator_init_data **init_data,
+					स्थिर काष्ठा regulator_desc *desc)
+अणु
+	काष्ठा regulation_स्थिरraपूर्णांकs *स्थिरraपूर्णांकs = &(*init_data)->स्थिरraपूर्णांकs;
+	काष्ठा regulator_state *suspend_state;
+	काष्ठा device_node *suspend_np;
+	अचिन्हित पूर्णांक mode;
+	पूर्णांक ret, i, len;
+	पूर्णांक n_phandles;
 	u32 pval;
 
 	n_phandles = of_count_phandle_with_args(np, "regulator-coupled-with",
-						NULL);
+						शून्य);
 	n_phandles = max(n_phandles, 0);
 
-	constraints->name = of_get_property(np, "regulator-name", NULL);
+	स्थिरraपूर्णांकs->name = of_get_property(np, "regulator-name", शून्य);
 
-	if (!of_property_read_u32(np, "regulator-min-microvolt", &pval))
-		constraints->min_uV = pval;
+	अगर (!of_property_पढ़ो_u32(np, "regulator-min-microvolt", &pval))
+		स्थिरraपूर्णांकs->min_uV = pval;
 
-	if (!of_property_read_u32(np, "regulator-max-microvolt", &pval))
-		constraints->max_uV = pval;
+	अगर (!of_property_पढ़ो_u32(np, "regulator-max-microvolt", &pval))
+		स्थिरraपूर्णांकs->max_uV = pval;
 
 	/* Voltage change possible? */
-	if (constraints->min_uV != constraints->max_uV)
-		constraints->valid_ops_mask |= REGULATOR_CHANGE_VOLTAGE;
+	अगर (स्थिरraपूर्णांकs->min_uV != स्थिरraपूर्णांकs->max_uV)
+		स्थिरraपूर्णांकs->valid_ops_mask |= REGULATOR_CHANGE_VOLTAGE;
 
-	/* Do we have a voltage range, if so try to apply it? */
-	if (constraints->min_uV && constraints->max_uV)
-		constraints->apply_uV = true;
+	/* Do we have a voltage range, अगर so try to apply it? */
+	अगर (स्थिरraपूर्णांकs->min_uV && स्थिरraपूर्णांकs->max_uV)
+		स्थिरraपूर्णांकs->apply_uV = true;
 
-	if (!of_property_read_u32(np, "regulator-microvolt-offset", &pval))
-		constraints->uV_offset = pval;
-	if (!of_property_read_u32(np, "regulator-min-microamp", &pval))
-		constraints->min_uA = pval;
-	if (!of_property_read_u32(np, "regulator-max-microamp", &pval))
-		constraints->max_uA = pval;
+	अगर (!of_property_पढ़ो_u32(np, "regulator-microvolt-offset", &pval))
+		स्थिरraपूर्णांकs->uV_offset = pval;
+	अगर (!of_property_पढ़ो_u32(np, "regulator-min-microamp", &pval))
+		स्थिरraपूर्णांकs->min_uA = pval;
+	अगर (!of_property_पढ़ो_u32(np, "regulator-max-microamp", &pval))
+		स्थिरraपूर्णांकs->max_uA = pval;
 
-	if (!of_property_read_u32(np, "regulator-input-current-limit-microamp",
+	अगर (!of_property_पढ़ो_u32(np, "regulator-input-current-limit-microamp",
 				  &pval))
-		constraints->ilim_uA = pval;
+		स्थिरraपूर्णांकs->ilim_uA = pval;
 
 	/* Current change possible? */
-	if (constraints->min_uA != constraints->max_uA)
-		constraints->valid_ops_mask |= REGULATOR_CHANGE_CURRENT;
+	अगर (स्थिरraपूर्णांकs->min_uA != स्थिरraपूर्णांकs->max_uA)
+		स्थिरraपूर्णांकs->valid_ops_mask |= REGULATOR_CHANGE_CURRENT;
 
-	constraints->boot_on = of_property_read_bool(np, "regulator-boot-on");
-	constraints->always_on = of_property_read_bool(np, "regulator-always-on");
-	if (!constraints->always_on) /* status change should be possible. */
-		constraints->valid_ops_mask |= REGULATOR_CHANGE_STATUS;
+	स्थिरraपूर्णांकs->boot_on = of_property_पढ़ो_bool(np, "regulator-boot-on");
+	स्थिरraपूर्णांकs->always_on = of_property_पढ़ो_bool(np, "regulator-always-on");
+	अगर (!स्थिरraपूर्णांकs->always_on) /* status change should be possible. */
+		स्थिरraपूर्णांकs->valid_ops_mask |= REGULATOR_CHANGE_STATUS;
 
-	constraints->pull_down = of_property_read_bool(np, "regulator-pull-down");
+	स्थिरraपूर्णांकs->pull_करोwn = of_property_पढ़ो_bool(np, "regulator-pull-down");
 
-	if (of_property_read_bool(np, "regulator-allow-bypass"))
-		constraints->valid_ops_mask |= REGULATOR_CHANGE_BYPASS;
+	अगर (of_property_पढ़ो_bool(np, "regulator-allow-bypass"))
+		स्थिरraपूर्णांकs->valid_ops_mask |= REGULATOR_CHANGE_BYPASS;
 
-	if (of_property_read_bool(np, "regulator-allow-set-load"))
-		constraints->valid_ops_mask |= REGULATOR_CHANGE_DRMS;
+	अगर (of_property_पढ़ो_bool(np, "regulator-allow-set-load"))
+		स्थिरraपूर्णांकs->valid_ops_mask |= REGULATOR_CHANGE_DRMS;
 
-	ret = of_property_read_u32(np, "regulator-ramp-delay", &pval);
-	if (!ret) {
-		if (pval)
-			constraints->ramp_delay = pval;
-		else
-			constraints->ramp_disable = true;
-	}
+	ret = of_property_पढ़ो_u32(np, "regulator-ramp-delay", &pval);
+	अगर (!ret) अणु
+		अगर (pval)
+			स्थिरraपूर्णांकs->ramp_delay = pval;
+		अन्यथा
+			स्थिरraपूर्णांकs->ramp_disable = true;
+	पूर्ण
 
-	ret = of_property_read_u32(np, "regulator-settling-time-us", &pval);
-	if (!ret)
-		constraints->settling_time = pval;
+	ret = of_property_पढ़ो_u32(np, "regulator-settling-time-us", &pval);
+	अगर (!ret)
+		स्थिरraपूर्णांकs->settling_समय = pval;
 
-	ret = of_property_read_u32(np, "regulator-settling-time-up-us", &pval);
-	if (!ret)
-		constraints->settling_time_up = pval;
-	if (constraints->settling_time_up && constraints->settling_time) {
+	ret = of_property_पढ़ो_u32(np, "regulator-settling-time-up-us", &pval);
+	अगर (!ret)
+		स्थिरraपूर्णांकs->settling_समय_up = pval;
+	अगर (स्थिरraपूर्णांकs->settling_समय_up && स्थिरraपूर्णांकs->settling_समय) अणु
 		pr_warn("%pOFn: ambiguous configuration for settling time, ignoring 'regulator-settling-time-up-us'\n",
 			np);
-		constraints->settling_time_up = 0;
-	}
+		स्थिरraपूर्णांकs->settling_समय_up = 0;
+	पूर्ण
 
-	ret = of_property_read_u32(np, "regulator-settling-time-down-us",
+	ret = of_property_पढ़ो_u32(np, "regulator-settling-time-down-us",
 				   &pval);
-	if (!ret)
-		constraints->settling_time_down = pval;
-	if (constraints->settling_time_down && constraints->settling_time) {
+	अगर (!ret)
+		स्थिरraपूर्णांकs->settling_समय_करोwn = pval;
+	अगर (स्थिरraपूर्णांकs->settling_समय_करोwn && स्थिरraपूर्णांकs->settling_समय) अणु
 		pr_warn("%pOFn: ambiguous configuration for settling time, ignoring 'regulator-settling-time-down-us'\n",
 			np);
-		constraints->settling_time_down = 0;
-	}
+		स्थिरraपूर्णांकs->settling_समय_करोwn = 0;
+	पूर्ण
 
-	ret = of_property_read_u32(np, "regulator-enable-ramp-delay", &pval);
-	if (!ret)
-		constraints->enable_time = pval;
+	ret = of_property_पढ़ो_u32(np, "regulator-enable-ramp-delay", &pval);
+	अगर (!ret)
+		स्थिरraपूर्णांकs->enable_समय = pval;
 
-	constraints->soft_start = of_property_read_bool(np,
+	स्थिरraपूर्णांकs->soft_start = of_property_पढ़ो_bool(np,
 					"regulator-soft-start");
-	ret = of_property_read_u32(np, "regulator-active-discharge", &pval);
-	if (!ret) {
-		constraints->active_discharge =
+	ret = of_property_पढ़ो_u32(np, "regulator-active-discharge", &pval);
+	अगर (!ret) अणु
+		स्थिरraपूर्णांकs->active_disअक्षरge =
 				(pval) ? REGULATOR_ACTIVE_DISCHARGE_ENABLE :
 					REGULATOR_ACTIVE_DISCHARGE_DISABLE;
-	}
+	पूर्ण
 
-	if (!of_property_read_u32(np, "regulator-initial-mode", &pval)) {
-		if (desc && desc->of_map_mode) {
+	अगर (!of_property_पढ़ो_u32(np, "regulator-initial-mode", &pval)) अणु
+		अगर (desc && desc->of_map_mode) अणु
 			mode = desc->of_map_mode(pval);
-			if (mode == REGULATOR_MODE_INVALID)
+			अगर (mode == REGULATOR_MODE_INVALID)
 				pr_err("%pOFn: invalid mode %u\n", np, pval);
-			else
-				constraints->initial_mode = mode;
-		} else {
+			अन्यथा
+				स्थिरraपूर्णांकs->initial_mode = mode;
+		पूर्ण अन्यथा अणु
 			pr_warn("%pOFn: mapping for mode %d not defined\n",
 				np, pval);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	len = of_property_count_elems_of_size(np, "regulator-allowed-modes",
-						sizeof(u32));
-	if (len > 0) {
-		if (desc && desc->of_map_mode) {
-			for (i = 0; i < len; i++) {
-				ret = of_property_read_u32_index(np,
+						माप(u32));
+	अगर (len > 0) अणु
+		अगर (desc && desc->of_map_mode) अणु
+			क्रम (i = 0; i < len; i++) अणु
+				ret = of_property_पढ़ो_u32_index(np,
 					"regulator-allowed-modes", i, &pval);
-				if (ret) {
+				अगर (ret) अणु
 					pr_err("%pOFn: couldn't read allowed modes index %d, ret=%d\n",
 						np, i, ret);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				mode = desc->of_map_mode(pval);
-				if (mode == REGULATOR_MODE_INVALID)
+				अगर (mode == REGULATOR_MODE_INVALID)
 					pr_err("%pOFn: invalid regulator-allowed-modes element %u\n",
 						np, pval);
-				else
-					constraints->valid_modes_mask |= mode;
-			}
-			if (constraints->valid_modes_mask)
-				constraints->valid_ops_mask
+				अन्यथा
+					स्थिरraपूर्णांकs->valid_modes_mask |= mode;
+			पूर्ण
+			अगर (स्थिरraपूर्णांकs->valid_modes_mask)
+				स्थिरraपूर्णांकs->valid_ops_mask
 					|= REGULATOR_CHANGE_MODE;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_warn("%pOFn: mode mapping not defined\n", np);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!of_property_read_u32(np, "regulator-system-load", &pval))
-		constraints->system_load = pval;
+	अगर (!of_property_पढ़ो_u32(np, "regulator-system-load", &pval))
+		स्थिरraपूर्णांकs->प्रणाली_load = pval;
 
-	if (n_phandles) {
-		constraints->max_spread = devm_kzalloc(dev,
-				sizeof(*constraints->max_spread) * n_phandles,
+	अगर (n_phandles) अणु
+		स्थिरraपूर्णांकs->max_spपढ़ो = devm_kzalloc(dev,
+				माप(*स्थिरraपूर्णांकs->max_spपढ़ो) * n_phandles,
 				GFP_KERNEL);
 
-		if (!constraints->max_spread)
-			return -ENOMEM;
+		अगर (!स्थिरraपूर्णांकs->max_spपढ़ो)
+			वापस -ENOMEM;
 
-		of_property_read_u32_array(np, "regulator-coupled-max-spread",
-					   constraints->max_spread, n_phandles);
-	}
+		of_property_पढ़ो_u32_array(np, "regulator-coupled-max-spread",
+					   स्थिरraपूर्णांकs->max_spपढ़ो, n_phandles);
+	पूर्ण
 
-	if (!of_property_read_u32(np, "regulator-max-step-microvolt",
+	अगर (!of_property_पढ़ो_u32(np, "regulator-max-step-microvolt",
 				  &pval))
-		constraints->max_uV_step = pval;
+		स्थिरraपूर्णांकs->max_uV_step = pval;
 
-	constraints->over_current_protection = of_property_read_bool(np,
+	स्थिरraपूर्णांकs->over_current_protection = of_property_पढ़ो_bool(np,
 					"regulator-over-current-protection");
 
-	for (i = 0; i < ARRAY_SIZE(regulator_states); i++) {
-		switch (i) {
-		case PM_SUSPEND_MEM:
-			suspend_state = &constraints->state_mem;
-			break;
-		case PM_SUSPEND_MAX:
-			suspend_state = &constraints->state_disk;
-			break;
-		case PM_SUSPEND_STANDBY:
-			suspend_state = &constraints->state_standby;
-			break;
-		case PM_SUSPEND_ON:
-		case PM_SUSPEND_TO_IDLE:
-		default:
-			continue;
-		}
+	क्रम (i = 0; i < ARRAY_SIZE(regulator_states); i++) अणु
+		चयन (i) अणु
+		हाल PM_SUSPEND_MEM:
+			suspend_state = &स्थिरraपूर्णांकs->state_mem;
+			अवरोध;
+		हाल PM_SUSPEND_MAX:
+			suspend_state = &स्थिरraपूर्णांकs->state_disk;
+			अवरोध;
+		हाल PM_SUSPEND_STANDBY:
+			suspend_state = &स्थिरraपूर्णांकs->state_standby;
+			अवरोध;
+		हाल PM_SUSPEND_ON:
+		हाल PM_SUSPEND_TO_IDLE:
+		शेष:
+			जारी;
+		पूर्ण
 
 		suspend_np = of_get_child_by_name(np, regulator_states[i]);
-		if (!suspend_np || !suspend_state)
-			continue;
+		अगर (!suspend_np || !suspend_state)
+			जारी;
 
-		if (!of_property_read_u32(suspend_np, "regulator-mode",
-					  &pval)) {
-			if (desc && desc->of_map_mode) {
+		अगर (!of_property_पढ़ो_u32(suspend_np, "regulator-mode",
+					  &pval)) अणु
+			अगर (desc && desc->of_map_mode) अणु
 				mode = desc->of_map_mode(pval);
-				if (mode == REGULATOR_MODE_INVALID)
+				अगर (mode == REGULATOR_MODE_INVALID)
 					pr_err("%pOFn: invalid mode %u\n",
 					       np, pval);
-				else
+				अन्यथा
 					suspend_state->mode = mode;
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_warn("%pOFn: mapping for mode %d not defined\n",
 					np, pval);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (of_property_read_bool(suspend_np,
+		अगर (of_property_पढ़ो_bool(suspend_np,
 					"regulator-on-in-suspend"))
 			suspend_state->enabled = ENABLE_IN_SUSPEND;
-		else if (of_property_read_bool(suspend_np,
+		अन्यथा अगर (of_property_पढ़ो_bool(suspend_np,
 					"regulator-off-in-suspend"))
 			suspend_state->enabled = DISABLE_IN_SUSPEND;
 
-		if (!of_property_read_u32(suspend_np,
+		अगर (!of_property_पढ़ो_u32(suspend_np,
 				"regulator-suspend-min-microvolt", &pval))
 			suspend_state->min_uV = pval;
 
-		if (!of_property_read_u32(suspend_np,
+		अगर (!of_property_पढ़ो_u32(suspend_np,
 				"regulator-suspend-max-microvolt", &pval))
 			suspend_state->max_uV = pval;
 
-		if (!of_property_read_u32(suspend_np,
+		अगर (!of_property_पढ़ो_u32(suspend_np,
 					"regulator-suspend-microvolt", &pval))
 			suspend_state->uV = pval;
-		else /* otherwise use min_uV as default suspend voltage */
+		अन्यथा /* otherwise use min_uV as शेष suspend voltage */
 			suspend_state->uV = suspend_state->min_uV;
 
-		if (of_property_read_bool(suspend_np,
+		अगर (of_property_पढ़ो_bool(suspend_np,
 					"regulator-changeable-in-suspend"))
 			suspend_state->changeable = true;
 
-		if (i == PM_SUSPEND_MEM)
-			constraints->initial_state = PM_SUSPEND_MEM;
+		अगर (i == PM_SUSPEND_MEM)
+			स्थिरraपूर्णांकs->initial_state = PM_SUSPEND_MEM;
 
 		of_node_put(suspend_np);
-		suspend_state = NULL;
-		suspend_np = NULL;
-	}
+		suspend_state = शून्य;
+		suspend_np = शून्य;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * of_get_regulator_init_data - extract regulator_init_data structure info
- * @dev: device requesting for regulator_init_data
+ * of_get_regulator_init_data - extract regulator_init_data काष्ठाure info
+ * @dev: device requesting क्रम regulator_init_data
  * @node: regulator device node
  * @desc: regulator description
  *
- * Populates regulator_init_data structure by extracting data from device
- * tree node, returns a pointer to the populated structure or NULL if memory
+ * Populates regulator_init_data काष्ठाure by extracting data from device
+ * tree node, वापसs a poपूर्णांकer to the populated काष्ठाure or शून्य अगर memory
  * alloc fails.
  */
-struct regulator_init_data *of_get_regulator_init_data(struct device *dev,
-					  struct device_node *node,
-					  const struct regulator_desc *desc)
-{
-	struct regulator_init_data *init_data;
+काष्ठा regulator_init_data *of_get_regulator_init_data(काष्ठा device *dev,
+					  काष्ठा device_node *node,
+					  स्थिर काष्ठा regulator_desc *desc)
+अणु
+	काष्ठा regulator_init_data *init_data;
 
-	if (!node)
-		return NULL;
+	अगर (!node)
+		वापस शून्य;
 
-	init_data = devm_kzalloc(dev, sizeof(*init_data), GFP_KERNEL);
-	if (!init_data)
-		return NULL; /* Out of memory? */
+	init_data = devm_kzalloc(dev, माप(*init_data), GFP_KERNEL);
+	अगर (!init_data)
+		वापस शून्य; /* Out of memory? */
 
-	if (of_get_regulation_constraints(dev, node, &init_data, desc))
-		return NULL;
+	अगर (of_get_regulation_स्थिरraपूर्णांकs(dev, node, &init_data, desc))
+		वापस शून्य;
 
-	return init_data;
-}
+	वापस init_data;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_get_regulator_init_data);
 
-struct devm_of_regulator_matches {
-	struct of_regulator_match *matches;
-	unsigned int num_matches;
-};
+काष्ठा devm_of_regulator_matches अणु
+	काष्ठा of_regulator_match *matches;
+	अचिन्हित पूर्णांक num_matches;
+पूर्ण;
 
-static void devm_of_regulator_put_matches(struct device *dev, void *res)
-{
-	struct devm_of_regulator_matches *devm_matches = res;
-	int i;
+अटल व्योम devm_of_regulator_put_matches(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा devm_of_regulator_matches *devm_matches = res;
+	पूर्णांक i;
 
-	for (i = 0; i < devm_matches->num_matches; i++)
+	क्रम (i = 0; i < devm_matches->num_matches; i++)
 		of_node_put(devm_matches->matches[i].of_node);
-}
+पूर्ण
 
 /**
  * of_regulator_match - extract multiple regulator init data from device tree.
  * @dev: device requesting the data
  * @node: parent device node of the regulators
- * @matches: match table for the regulators
+ * @matches: match table क्रम the regulators
  * @num_matches: number of entries in match table
  *
- * This function uses a match table specified by the regulator driver to
+ * This function uses a match table specअगरied by the regulator driver to
  * parse regulator init data from the device tree. @node is expected to
- * contain a set of child nodes, each providing the init data for one
+ * contain a set of child nodes, each providing the init data क्रम one
  * regulator. The data parsed from a child node will be matched to a regulator
- * based on either the deprecated property regulator-compatible if present,
- * or otherwise the child node's name. Note that the match table is modified
- * in place and an additional of_node reference is taken for each matched
+ * based on either the deprecated property regulator-compatible अगर present,
+ * or otherwise the child node's name. Note that the match table is modअगरied
+ * in place and an additional of_node reference is taken क्रम each matched
  * regulator.
  *
  * Returns the number of matches found or a negative error code on failure.
  */
-int of_regulator_match(struct device *dev, struct device_node *node,
-		       struct of_regulator_match *matches,
-		       unsigned int num_matches)
-{
-	unsigned int count = 0;
-	unsigned int i;
-	const char *name;
-	struct device_node *child;
-	struct devm_of_regulator_matches *devm_matches;
+पूर्णांक of_regulator_match(काष्ठा device *dev, काष्ठा device_node *node,
+		       काष्ठा of_regulator_match *matches,
+		       अचिन्हित पूर्णांक num_matches)
+अणु
+	अचिन्हित पूर्णांक count = 0;
+	अचिन्हित पूर्णांक i;
+	स्थिर अक्षर *name;
+	काष्ठा device_node *child;
+	काष्ठा devm_of_regulator_matches *devm_matches;
 
-	if (!dev || !node)
-		return -EINVAL;
+	अगर (!dev || !node)
+		वापस -EINVAL;
 
 	devm_matches = devres_alloc(devm_of_regulator_put_matches,
-				    sizeof(struct devm_of_regulator_matches),
+				    माप(काष्ठा devm_of_regulator_matches),
 				    GFP_KERNEL);
-	if (!devm_matches)
-		return -ENOMEM;
+	अगर (!devm_matches)
+		वापस -ENOMEM;
 
 	devm_matches->matches = matches;
 	devm_matches->num_matches = num_matches;
 
 	devres_add(dev, devm_matches);
 
-	for (i = 0; i < num_matches; i++) {
-		struct of_regulator_match *match = &matches[i];
-		match->init_data = NULL;
-		match->of_node = NULL;
-	}
+	क्रम (i = 0; i < num_matches; i++) अणु
+		काष्ठा of_regulator_match *match = &matches[i];
+		match->init_data = शून्य;
+		match->of_node = शून्य;
+	पूर्ण
 
-	for_each_child_of_node(node, child) {
+	क्रम_each_child_of_node(node, child) अणु
 		name = of_get_property(child,
-					"regulator-compatible", NULL);
-		if (!name)
+					"regulator-compatible", शून्य);
+		अगर (!name)
 			name = child->name;
-		for (i = 0; i < num_matches; i++) {
-			struct of_regulator_match *match = &matches[i];
-			if (match->of_node)
-				continue;
+		क्रम (i = 0; i < num_matches; i++) अणु
+			काष्ठा of_regulator_match *match = &matches[i];
+			अगर (match->of_node)
+				जारी;
 
-			if (strcmp(match->name, name))
-				continue;
+			अगर (म_भेद(match->name, name))
+				जारी;
 
 			match->init_data =
 				of_get_regulator_init_data(dev, child,
 							   match->desc);
-			if (!match->init_data) {
+			अगर (!match->init_data) अणु
 				dev_err(dev,
 					"failed to parse DT for regulator %pOFn\n",
 					child);
 				of_node_put(child);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			match->of_node = of_node_get(child);
 			count++;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_regulator_match);
 
-static struct
-device_node *regulator_of_get_init_node(struct device *dev,
-					const struct regulator_desc *desc)
-{
-	struct device_node *search, *child;
-	const char *name;
+अटल काष्ठा
+device_node *regulator_of_get_init_node(काष्ठा device *dev,
+					स्थिर काष्ठा regulator_desc *desc)
+अणु
+	काष्ठा device_node *search, *child;
+	स्थिर अक्षर *name;
 
-	if (!dev->of_node || !desc->of_match)
-		return NULL;
+	अगर (!dev->of_node || !desc->of_match)
+		वापस शून्य;
 
-	if (desc->regulators_node) {
+	अगर (desc->regulators_node) अणु
 		search = of_get_child_by_name(dev->of_node,
 					      desc->regulators_node);
-	} else {
+	पूर्ण अन्यथा अणु
 		search = of_node_get(dev->of_node);
 
-		if (!strcmp(desc->of_match, search->name))
-			return search;
-	}
+		अगर (!म_भेद(desc->of_match, search->name))
+			वापस search;
+	पूर्ण
 
-	if (!search) {
+	अगर (!search) अणु
 		dev_dbg(dev, "Failed to find regulator container node '%s'\n",
 			desc->regulators_node);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	for_each_available_child_of_node(search, child) {
-		name = of_get_property(child, "regulator-compatible", NULL);
-		if (!name) {
-			if (!desc->of_match_full_name)
+	क्रम_each_available_child_of_node(search, child) अणु
+		name = of_get_property(child, "regulator-compatible", शून्य);
+		अगर (!name) अणु
+			अगर (!desc->of_match_full_name)
 				name = child->name;
-			else
+			अन्यथा
 				name = child->full_name;
-		}
+		पूर्ण
 
-		if (!strcmp(desc->of_match, name)) {
+		अगर (!म_भेद(desc->of_match, name)) अणु
 			of_node_put(search);
 			/*
-			 * 'of_node_get(child)' is already performed by the
-			 * for_each loop.
+			 * 'of_node_get(child)' is alपढ़ोy perक्रमmed by the
+			 * क्रम_each loop.
 			 */
-			return child;
-		}
-	}
+			वापस child;
+		पूर्ण
+	पूर्ण
 
 	of_node_put(search);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct regulator_init_data *regulator_of_get_init_data(struct device *dev,
-					    const struct regulator_desc *desc,
-					    struct regulator_config *config,
-					    struct device_node **node)
-{
-	struct device_node *child;
-	struct regulator_init_data *init_data = NULL;
+काष्ठा regulator_init_data *regulator_of_get_init_data(काष्ठा device *dev,
+					    स्थिर काष्ठा regulator_desc *desc,
+					    काष्ठा regulator_config *config,
+					    काष्ठा device_node **node)
+अणु
+	काष्ठा device_node *child;
+	काष्ठा regulator_init_data *init_data = शून्य;
 
 	child = regulator_of_get_init_node(dev, desc);
-	if (!child)
-		return NULL;
+	अगर (!child)
+		वापस शून्य;
 
 	init_data = of_get_regulator_init_data(dev, child, desc);
-	if (!init_data) {
+	अगर (!init_data) अणु
 		dev_err(dev, "failed to parse DT for regulator %pOFn\n", child);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (desc->of_parse_cb) {
-		int ret;
+	अगर (desc->of_parse_cb) अणु
+		पूर्णांक ret;
 
 		ret = desc->of_parse_cb(child, desc, config);
-		if (ret) {
-			if (ret == -EPROBE_DEFER) {
+		अगर (ret) अणु
+			अगर (ret == -EPROBE_DEFER) अणु
 				of_node_put(child);
-				return ERR_PTR(-EPROBE_DEFER);
-			}
+				वापस ERR_PTR(-EPROBE_DEFER);
+			पूर्ण
 			dev_err(dev,
 				"driver callback failed to parse DT for regulator %pOFn\n",
 				child);
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	*node = child;
 
-	return init_data;
+	वापस init_data;
 
 error:
 	of_node_put(child);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct regulator_dev *of_find_regulator_by_node(struct device_node *np)
-{
-	struct device *dev;
+काष्ठा regulator_dev *of_find_regulator_by_node(काष्ठा device_node *np)
+अणु
+	काष्ठा device *dev;
 
 	dev = class_find_device_by_of_node(&regulator_class, np);
 
-	return dev ? dev_to_rdev(dev) : NULL;
-}
+	वापस dev ? dev_to_rdev(dev) : शून्य;
+पूर्ण
 
 /*
  * Returns number of regulators coupled with rdev.
  */
-int of_get_n_coupled(struct regulator_dev *rdev)
-{
-	struct device_node *node = rdev->dev.of_node;
-	int n_phandles;
+पूर्णांक of_get_n_coupled(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा device_node *node = rdev->dev.of_node;
+	पूर्णांक n_phandles;
 
 	n_phandles = of_count_phandle_with_args(node,
 						"regulator-coupled-with",
-						NULL);
+						शून्य);
 
-	return (n_phandles > 0) ? n_phandles : 0;
-}
+	वापस (n_phandles > 0) ? n_phandles : 0;
+पूर्ण
 
-/* Looks for "to_find" device_node in src's "regulator-coupled-with" property */
-static bool of_coupling_find_node(struct device_node *src,
-				  struct device_node *to_find,
-				  int *index)
-{
-	int n_phandles, i;
+/* Looks क्रम "to_find" device_node in src's "regulator-coupled-with" property */
+अटल bool of_coupling_find_node(काष्ठा device_node *src,
+				  काष्ठा device_node *to_find,
+				  पूर्णांक *index)
+अणु
+	पूर्णांक n_phandles, i;
 	bool found = false;
 
 	n_phandles = of_count_phandle_with_args(src,
 						"regulator-coupled-with",
-						NULL);
+						शून्य);
 
-	for (i = 0; i < n_phandles; i++) {
-		struct device_node *tmp = of_parse_phandle(src,
+	क्रम (i = 0; i < n_phandles; i++) अणु
+		काष्ठा device_node *पंचांगp = of_parse_phandle(src,
 					   "regulator-coupled-with", i);
 
-		if (!tmp)
-			break;
+		अगर (!पंचांगp)
+			अवरोध;
 
 		/* found */
-		if (tmp == to_find)
+		अगर (पंचांगp == to_find)
 			found = true;
 
-		of_node_put(tmp);
+		of_node_put(पंचांगp);
 
-		if (found) {
+		अगर (found) अणु
 			*index = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
 /**
  * of_check_coupling_data - Parse rdev's coupling properties and check data
  *			    consistency
- * @rdev: pointer to regulator_dev whose data is checked
+ * @rdev: poपूर्णांकer to regulator_dev whose data is checked
  *
- * Function checks if all the following conditions are met:
- * - rdev's max_spread is greater than 0
- * - all coupled regulators have the same max_spread
+ * Function checks अगर all the following conditions are met:
+ * - rdev's max_spपढ़ो is greater than 0
+ * - all coupled regulators have the same max_spपढ़ो
  * - all coupled regulators have the same number of regulator_dev phandles
  * - all regulators are linked to each other
  *
- * Returns true if all conditions are met.
+ * Returns true अगर all conditions are met.
  */
-bool of_check_coupling_data(struct regulator_dev *rdev)
-{
-	struct device_node *node = rdev->dev.of_node;
-	int n_phandles = of_get_n_coupled(rdev);
-	struct device_node *c_node;
-	int index;
-	int i;
+bool of_check_coupling_data(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा device_node *node = rdev->dev.of_node;
+	पूर्णांक n_phandles = of_get_n_coupled(rdev);
+	काष्ठा device_node *c_node;
+	पूर्णांक index;
+	पूर्णांक i;
 	bool ret = true;
 
 	/* iterate over rdev's phandles */
-	for (i = 0; i < n_phandles; i++) {
-		int max_spread = rdev->constraints->max_spread[i];
-		int c_max_spread, c_n_phandles;
+	क्रम (i = 0; i < n_phandles; i++) अणु
+		पूर्णांक max_spपढ़ो = rdev->स्थिरraपूर्णांकs->max_spपढ़ो[i];
+		पूर्णांक c_max_spपढ़ो, c_n_phandles;
 
-		if (max_spread <= 0) {
+		अगर (max_spपढ़ो <= 0) अणु
 			dev_err(&rdev->dev, "max_spread value invalid\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		c_node = of_parse_phandle(node,
 					  "regulator-coupled-with", i);
 
-		if (!c_node)
+		अगर (!c_node)
 			ret = false;
 
 		c_n_phandles = of_count_phandle_with_args(c_node,
 							  "regulator-coupled-with",
-							  NULL);
+							  शून्य);
 
-		if (c_n_phandles != n_phandles) {
+		अगर (c_n_phandles != n_phandles) अणु
 			dev_err(&rdev->dev, "number of coupled reg phandles mismatch\n");
 			ret = false;
-			goto clean;
-		}
+			जाओ clean;
+		पूर्ण
 
-		if (!of_coupling_find_node(c_node, node, &index)) {
+		अगर (!of_coupling_find_node(c_node, node, &index)) अणु
 			dev_err(&rdev->dev, "missing 2-way linking for coupled regulators\n");
 			ret = false;
-			goto clean;
-		}
+			जाओ clean;
+		पूर्ण
 
-		if (of_property_read_u32_index(c_node, "regulator-coupled-max-spread",
-					       index, &c_max_spread)) {
+		अगर (of_property_पढ़ो_u32_index(c_node, "regulator-coupled-max-spread",
+					       index, &c_max_spपढ़ो)) अणु
 			ret = false;
-			goto clean;
-		}
+			जाओ clean;
+		पूर्ण
 
-		if (c_max_spread != max_spread) {
+		अगर (c_max_spपढ़ो != max_spपढ़ो) अणु
 			dev_err(&rdev->dev,
 				"coupled regulators max_spread mismatch\n");
 			ret = false;
-			goto clean;
-		}
+			जाओ clean;
+		पूर्ण
 
 clean:
 		of_node_put(c_node);
-		if (!ret)
-			break;
-	}
+		अगर (!ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * of_parse_coupled regulator - Get regulator_dev pointer from rdev's property
- * @rdev: Pointer to regulator_dev, whose DTS is used as a source to parse
+ * of_parse_coupled regulator - Get regulator_dev poपूर्णांकer from rdev's property
+ * @rdev: Poपूर्णांकer to regulator_dev, whose DTS is used as a source to parse
  *	  "regulator-coupled-with" property
  * @index: Index in phandles array
  *
- * Returns the regulator_dev pointer parsed from DTS. If it has not been yet
- * registered, returns NULL
+ * Returns the regulator_dev poपूर्णांकer parsed from DTS. If it has not been yet
+ * रेजिस्टरed, वापसs शून्य
  */
-struct regulator_dev *of_parse_coupled_regulator(struct regulator_dev *rdev,
-						 int index)
-{
-	struct device_node *node = rdev->dev.of_node;
-	struct device_node *c_node;
-	struct regulator_dev *c_rdev;
+काष्ठा regulator_dev *of_parse_coupled_regulator(काष्ठा regulator_dev *rdev,
+						 पूर्णांक index)
+अणु
+	काष्ठा device_node *node = rdev->dev.of_node;
+	काष्ठा device_node *c_node;
+	काष्ठा regulator_dev *c_rdev;
 
 	c_node = of_parse_phandle(node, "regulator-coupled-with", index);
-	if (!c_node)
-		return NULL;
+	अगर (!c_node)
+		वापस शून्य;
 
 	c_rdev = of_find_regulator_by_node(c_node);
 
 	of_node_put(c_node);
 
-	return c_rdev;
-}
+	वापस c_rdev;
+पूर्ण

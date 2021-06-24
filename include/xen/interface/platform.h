@@ -1,14 +1,15 @@
+<शैली गुरु>
 /******************************************************************************
- * platform.h
+ * platक्रमm.h
  *
- * Hardware platform operations. Intended for use by domain-0 kernel.
+ * Hardware platक्रमm operations. Intended क्रम use by करोमुख्य-0 kernel.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * of this software and associated करोcumentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * rights to use, copy, modअगरy, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,508 +25,508 @@
  * Copyright (c) 2002-2006, K Fraser
  */
 
-#ifndef __XEN_PUBLIC_PLATFORM_H__
-#define __XEN_PUBLIC_PLATFORM_H__
+#अगर_अघोषित __XEN_PUBLIC_PLATFORM_H__
+#घोषणा __XEN_PUBLIC_PLATFORM_H__
 
-#include <xen/interface/xen.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
 
-#define XENPF_INTERFACE_VERSION 0x03000001
+#घोषणा XENPF_INTERFACE_VERSION 0x03000001
 
 /*
- * Set clock such that it would read <secs,nsecs> after 00:00:00 UTC,
- * 1 January, 1970 if the current system time was <system_time>.
+ * Set घड़ी such that it would पढ़ो <secs,nsecs> after 00:00:00 UTC,
+ * 1 January, 1970 अगर the current प्रणाली समय was <प्रणाली_समय>.
  */
-#define XENPF_settime32             17
-struct xenpf_settime32 {
+#घोषणा XENPF_समय_रखो32             17
+काष्ठा xenpf_समय_रखो32 अणु
 	/* IN variables. */
-	uint32_t secs;
-	uint32_t nsecs;
-	uint64_t system_time;
-};
-DEFINE_GUEST_HANDLE_STRUCT(xenpf_settime32_t);
-#define XENPF_settime64           62
-struct xenpf_settime64 {
+	uपूर्णांक32_t secs;
+	uपूर्णांक32_t nsecs;
+	uपूर्णांक64_t प्रणाली_समय;
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(xenpf_समय_रखो32_t);
+#घोषणा XENPF_समय_रखो64           62
+काष्ठा xenpf_समय_रखो64 अणु
     /* IN variables. */
-    uint64_t secs;
-    uint32_t nsecs;
-    uint32_t mbz;
-    uint64_t system_time;
-};
-DEFINE_GUEST_HANDLE_STRUCT(xenpf_settime64_t);
+    uपूर्णांक64_t secs;
+    uपूर्णांक32_t nsecs;
+    uपूर्णांक32_t mbz;
+    uपूर्णांक64_t प्रणाली_समय;
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(xenpf_समय_रखो64_t);
 
 /*
  * Request memory range (@mfn, @mfn+@nr_mfns-1) to have type @type.
  * On x86, @type is an architecture-defined MTRR memory type.
- * On success, returns the MTRR that was used (@reg) and a handle that can
- * be passed to XENPF_DEL_MEMTYPE to accurately tear down the new setting.
- * (x86-specific).
+ * On success, वापसs the MTRR that was used (@reg) and a handle that can
+ * be passed to XENPF_DEL_MEMTYPE to accurately tear करोwn the new setting.
+ * (x86-specअगरic).
  */
-#define XENPF_add_memtype         31
-struct xenpf_add_memtype {
+#घोषणा XENPF_add_memtype         31
+काष्ठा xenpf_add_memtype अणु
 	/* IN variables. */
 	xen_pfn_t mfn;
-	uint64_t nr_mfns;
-	uint32_t type;
+	uपूर्णांक64_t nr_mfns;
+	uपूर्णांक32_t type;
 	/* OUT variables. */
-	uint32_t handle;
-	uint32_t reg;
-};
+	uपूर्णांक32_t handle;
+	uपूर्णांक32_t reg;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_add_memtype_t);
 
 /*
- * Tear down an existing memory-range type. If @handle is remembered then it
- * should be passed in to accurately tear down the correct setting (in case
- * of overlapping memory regions with differing types). If it is not known
- * then @handle should be set to zero. In all cases @reg must be set.
- * (x86-specific).
+ * Tear करोwn an existing memory-range type. If @handle is remembered then it
+ * should be passed in to accurately tear करोwn the correct setting (in हाल
+ * of overlapping memory regions with dअगरfering types). If it is not known
+ * then @handle should be set to zero. In all हालs @reg must be set.
+ * (x86-specअगरic).
  */
-#define XENPF_del_memtype         32
-struct xenpf_del_memtype {
+#घोषणा XENPF_del_memtype         32
+काष्ठा xenpf_del_memtype अणु
 	/* IN variables. */
-	uint32_t handle;
-	uint32_t reg;
-};
+	uपूर्णांक32_t handle;
+	uपूर्णांक32_t reg;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_del_memtype_t);
 
-/* Read current type of an MTRR (x86-specific). */
-#define XENPF_read_memtype        33
-struct xenpf_read_memtype {
+/* Read current type of an MTRR (x86-specअगरic). */
+#घोषणा XENPF_पढ़ो_memtype        33
+काष्ठा xenpf_पढ़ो_memtype अणु
 	/* IN variables. */
-	uint32_t reg;
+	uपूर्णांक32_t reg;
 	/* OUT variables. */
 	xen_pfn_t mfn;
-	uint64_t nr_mfns;
-	uint32_t type;
-};
-DEFINE_GUEST_HANDLE_STRUCT(xenpf_read_memtype_t);
+	uपूर्णांक64_t nr_mfns;
+	uपूर्णांक32_t type;
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(xenpf_पढ़ो_memtype_t);
 
-#define XENPF_microcode_update    35
-struct xenpf_microcode_update {
+#घोषणा XENPF_microcode_update    35
+काष्ठा xenpf_microcode_update अणु
 	/* IN variables. */
-	GUEST_HANDLE(void) data;          /* Pointer to microcode data */
-	uint32_t length;                  /* Length of microcode data. */
-};
+	GUEST_HANDLE(व्योम) data;          /* Poपूर्णांकer to microcode data */
+	uपूर्णांक32_t length;                  /* Length of microcode data. */
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_microcode_update_t);
 
-#define XENPF_platform_quirk      39
-#define QUIRK_NOIRQBALANCING      1 /* Do not restrict IO-APIC RTE targets */
-#define QUIRK_IOAPIC_BAD_REGSEL   2 /* IO-APIC REGSEL forgets its value    */
-#define QUIRK_IOAPIC_GOOD_REGSEL  3 /* IO-APIC REGSEL behaves properly     */
-struct xenpf_platform_quirk {
+#घोषणा XENPF_platक्रमm_quirk      39
+#घोषणा QUIRK_NOIRQBALANCING      1 /* Do not restrict IO-APIC RTE tarमाला_लो */
+#घोषणा QUIRK_IOAPIC_BAD_REGSEL   2 /* IO-APIC REGSEL क्रममाला_लो its value    */
+#घोषणा QUIRK_IOAPIC_GOOD_REGSEL  3 /* IO-APIC REGSEL behaves properly     */
+काष्ठा xenpf_platक्रमm_quirk अणु
 	/* IN variables. */
-	uint32_t quirk_id;
-};
-DEFINE_GUEST_HANDLE_STRUCT(xenpf_platform_quirk_t);
+	uपूर्णांक32_t quirk_id;
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(xenpf_platक्रमm_quirk_t);
 
-#define XENPF_efi_runtime_call    49
-#define XEN_EFI_get_time                      1
-#define XEN_EFI_set_time                      2
-#define XEN_EFI_get_wakeup_time               3
-#define XEN_EFI_set_wakeup_time               4
-#define XEN_EFI_get_next_high_monotonic_count 5
-#define XEN_EFI_get_variable                  6
-#define XEN_EFI_set_variable                  7
-#define XEN_EFI_get_next_variable_name        8
-#define XEN_EFI_query_variable_info           9
-#define XEN_EFI_query_capsule_capabilities   10
-#define XEN_EFI_update_capsule               11
+#घोषणा XENPF_efi_runसमय_call    49
+#घोषणा XEN_EFI_get_समय                      1
+#घोषणा XEN_EFI_set_समय                      2
+#घोषणा XEN_EFI_get_wakeup_समय               3
+#घोषणा XEN_EFI_set_wakeup_समय               4
+#घोषणा XEN_EFI_get_next_high_monotonic_count 5
+#घोषणा XEN_EFI_get_variable                  6
+#घोषणा XEN_EFI_set_variable                  7
+#घोषणा XEN_EFI_get_next_variable_name        8
+#घोषणा XEN_EFI_query_variable_info           9
+#घोषणा XEN_EFI_query_capsule_capabilities   10
+#घोषणा XEN_EFI_update_capsule               11
 
-struct xenpf_efi_runtime_call {
-	uint32_t function;
+काष्ठा xenpf_efi_runसमय_call अणु
+	uपूर्णांक32_t function;
 	/*
-	 * This field is generally used for per sub-function flags (defined
-	 * below), except for the XEN_EFI_get_next_high_monotonic_count case,
-	 * where it holds the single returned value.
+	 * This field is generally used क्रम per sub-function flags (defined
+	 * below), except क्रम the XEN_EFI_get_next_high_monotonic_count हाल,
+	 * where it holds the single वापसed value.
 	 */
-	uint32_t misc;
-	xen_ulong_t status;
-	union {
-#define XEN_EFI_GET_TIME_SET_CLEARS_NS 0x00000001
-		struct {
-			struct xenpf_efi_time {
-				uint16_t year;
-				uint8_t month;
-				uint8_t day;
-				uint8_t hour;
-				uint8_t min;
-				uint8_t sec;
-				uint32_t ns;
-				int16_t tz;
-				uint8_t daylight;
-			} time;
-			uint32_t resolution;
-			uint32_t accuracy;
-		} get_time;
+	uपूर्णांक32_t misc;
+	xen_uदीर्घ_t status;
+	जोड़ अणु
+#घोषणा XEN_EFI_GET_TIME_SET_CLEARS_NS 0x00000001
+		काष्ठा अणु
+			काष्ठा xenpf_efi_समय अणु
+				uपूर्णांक16_t year;
+				uपूर्णांक8_t month;
+				uपूर्णांक8_t day;
+				uपूर्णांक8_t hour;
+				uपूर्णांक8_t min;
+				uपूर्णांक8_t sec;
+				uपूर्णांक32_t ns;
+				पूर्णांक16_t tz;
+				uपूर्णांक8_t daylight;
+			पूर्ण समय;
+			uपूर्णांक32_t resolution;
+			uपूर्णांक32_t accuracy;
+		पूर्ण get_समय;
 
-		struct xenpf_efi_time set_time;
+		काष्ठा xenpf_efi_समय set_समय;
 
-#define XEN_EFI_GET_WAKEUP_TIME_ENABLED 0x00000001
-#define XEN_EFI_GET_WAKEUP_TIME_PENDING 0x00000002
-		struct xenpf_efi_time get_wakeup_time;
+#घोषणा XEN_EFI_GET_WAKEUP_TIME_ENABLED 0x00000001
+#घोषणा XEN_EFI_GET_WAKEUP_TIME_PENDING 0x00000002
+		काष्ठा xenpf_efi_समय get_wakeup_समय;
 
-#define XEN_EFI_SET_WAKEUP_TIME_ENABLE      0x00000001
-#define XEN_EFI_SET_WAKEUP_TIME_ENABLE_ONLY 0x00000002
-		struct xenpf_efi_time set_wakeup_time;
+#घोषणा XEN_EFI_SET_WAKEUP_TIME_ENABLE      0x00000001
+#घोषणा XEN_EFI_SET_WAKEUP_TIME_ENABLE_ONLY 0x00000002
+		काष्ठा xenpf_efi_समय set_wakeup_समय;
 
-#define XEN_EFI_VARIABLE_NON_VOLATILE       0x00000001
-#define XEN_EFI_VARIABLE_BOOTSERVICE_ACCESS 0x00000002
-#define XEN_EFI_VARIABLE_RUNTIME_ACCESS     0x00000004
-		struct {
-			GUEST_HANDLE(void) name;  /* UCS-2/UTF-16 string */
-			xen_ulong_t size;
-			GUEST_HANDLE(void) data;
-			struct xenpf_efi_guid {
-				uint32_t data1;
-				uint16_t data2;
-				uint16_t data3;
-				uint8_t data4[8];
-			} vendor_guid;
-		} get_variable, set_variable;
+#घोषणा XEN_EFI_VARIABLE_NON_VOLATILE       0x00000001
+#घोषणा XEN_EFI_VARIABLE_BOOTSERVICE_ACCESS 0x00000002
+#घोषणा XEN_EFI_VARIABLE_RUNTIME_ACCESS     0x00000004
+		काष्ठा अणु
+			GUEST_HANDLE(व्योम) name;  /* UCS-2/UTF-16 string */
+			xen_uदीर्घ_t size;
+			GUEST_HANDLE(व्योम) data;
+			काष्ठा xenpf_efi_guid अणु
+				uपूर्णांक32_t data1;
+				uपूर्णांक16_t data2;
+				uपूर्णांक16_t data3;
+				uपूर्णांक8_t data4[8];
+			पूर्ण venकरोr_guid;
+		पूर्ण get_variable, set_variable;
 
-		struct {
-			xen_ulong_t size;
-			GUEST_HANDLE(void) name;  /* UCS-2/UTF-16 string */
-			struct xenpf_efi_guid vendor_guid;
-		} get_next_variable_name;
+		काष्ठा अणु
+			xen_uदीर्घ_t size;
+			GUEST_HANDLE(व्योम) name;  /* UCS-2/UTF-16 string */
+			काष्ठा xenpf_efi_guid venकरोr_guid;
+		पूर्ण get_next_variable_name;
 
-		struct {
-			uint32_t attr;
-			uint64_t max_store_size;
-			uint64_t remain_store_size;
-			uint64_t max_size;
-		} query_variable_info;
+		काष्ठा अणु
+			uपूर्णांक32_t attr;
+			uपूर्णांक64_t max_store_size;
+			uपूर्णांक64_t reमुख्य_store_size;
+			uपूर्णांक64_t max_size;
+		पूर्ण query_variable_info;
 
-		struct {
-			GUEST_HANDLE(void) capsule_header_array;
-			xen_ulong_t capsule_count;
-			uint64_t max_capsule_size;
-			uint32_t reset_type;
-		} query_capsule_capabilities;
+		काष्ठा अणु
+			GUEST_HANDLE(व्योम) capsule_header_array;
+			xen_uदीर्घ_t capsule_count;
+			uपूर्णांक64_t max_capsule_size;
+			uपूर्णांक32_t reset_type;
+		पूर्ण query_capsule_capabilities;
 
-		struct {
-			GUEST_HANDLE(void) capsule_header_array;
-			xen_ulong_t capsule_count;
-			uint64_t sg_list; /* machine address */
-		} update_capsule;
-	} u;
-};
-DEFINE_GUEST_HANDLE_STRUCT(xenpf_efi_runtime_call);
+		काष्ठा अणु
+			GUEST_HANDLE(व्योम) capsule_header_array;
+			xen_uदीर्घ_t capsule_count;
+			uपूर्णांक64_t sg_list; /* machine address */
+		पूर्ण update_capsule;
+	पूर्ण u;
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(xenpf_efi_runसमय_call);
 
-#define  XEN_FW_EFI_VERSION        0
-#define  XEN_FW_EFI_CONFIG_TABLE   1
-#define  XEN_FW_EFI_VENDOR         2
-#define  XEN_FW_EFI_MEM_INFO       3
-#define  XEN_FW_EFI_RT_VERSION     4
+#घोषणा  XEN_FW_EFI_VERSION        0
+#घोषणा  XEN_FW_EFI_CONFIG_TABLE   1
+#घोषणा  XEN_FW_EFI_VENDOR         2
+#घोषणा  XEN_FW_EFI_MEM_INFO       3
+#घोषणा  XEN_FW_EFI_RT_VERSION     4
 
-#define XENPF_firmware_info       50
-#define XEN_FW_DISK_INFO          1 /* from int 13 AH=08/41/48 */
-#define XEN_FW_DISK_MBR_SIGNATURE 2 /* from MBR offset 0x1b8 */
-#define XEN_FW_VBEDDC_INFO        3 /* from int 10 AX=4f15 */
-#define XEN_FW_EFI_INFO           4 /* from EFI */
-#define XEN_FW_KBD_SHIFT_FLAGS    5 /* Int16, Fn02: Get keyboard shift flags. */
+#घोषणा XENPF_firmware_info       50
+#घोषणा XEN_FW_DISK_INFO          1 /* from पूर्णांक 13 AH=08/41/48 */
+#घोषणा XEN_FW_DISK_MBR_SIGNATURE 2 /* from MBR offset 0x1b8 */
+#घोषणा XEN_FW_VBEDDC_INFO        3 /* from पूर्णांक 10 AX=4f15 */
+#घोषणा XEN_FW_EFI_INFO           4 /* from EFI */
+#घोषणा XEN_FW_KBD_SHIFT_FLAGS    5 /* Int16, Fn02: Get keyboard shअगरt flags. */
 
-struct xenpf_firmware_info {
+काष्ठा xenpf_firmware_info अणु
 	/* IN variables. */
-	uint32_t type;
-	uint32_t index;
+	uपूर्णांक32_t type;
+	uपूर्णांक32_t index;
 	/* OUT variables. */
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			/* Int13, Fn48: Check Extensions Present. */
-			uint8_t device;                   /* %dl: bios device number */
-			uint8_t version;                  /* %ah: major version      */
-			uint16_t interface_support;       /* %cx: support bitmap     */
+			uपूर्णांक8_t device;                   /* %dl: bios device number */
+			uपूर्णांक8_t version;                  /* %ah: major version      */
+			uपूर्णांक16_t पूर्णांकerface_support;       /* %cx: support biपंचांगap     */
 			/* Int13, Fn08: Legacy Get Device Parameters. */
-			uint16_t legacy_max_cylinder;     /* %cl[7:6]:%ch: max cyl # */
-			uint8_t legacy_max_head;          /* %dh: max head #         */
-			uint8_t legacy_sectors_per_track; /* %cl[5:0]: max sector #  */
-			/* Int13, Fn41: Get Device Parameters (as filled into %ds:%esi). */
-			/* NB. First uint16_t of buffer must be set to buffer size.      */
-			GUEST_HANDLE(void) edd_params;
-		} disk_info; /* XEN_FW_DISK_INFO */
-		struct {
-			uint8_t device;                   /* bios device number  */
-			uint32_t mbr_signature;           /* offset 0x1b8 in mbr */
-		} disk_mbr_signature; /* XEN_FW_DISK_MBR_SIGNATURE */
-		struct {
+			uपूर्णांक16_t legacy_max_cylinder;     /* %cl[7:6]:%ch: max cyl # */
+			uपूर्णांक8_t legacy_max_head;          /* %dh: max head #         */
+			uपूर्णांक8_t legacy_sectors_per_track; /* %cl[5:0]: max sector #  */
+			/* Int13, Fn41: Get Device Parameters (as filled पूर्णांकo %ds:%esi). */
+			/* NB. First uपूर्णांक16_t of buffer must be set to buffer size.      */
+			GUEST_HANDLE(व्योम) edd_params;
+		पूर्ण disk_info; /* XEN_FW_DISK_INFO */
+		काष्ठा अणु
+			uपूर्णांक8_t device;                   /* bios device number  */
+			uपूर्णांक32_t mbr_signature;           /* offset 0x1b8 in mbr */
+		पूर्ण disk_mbr_signature; /* XEN_FW_DISK_MBR_SIGNATURE */
+		काष्ठा अणु
 			/* Int10, AX=4F15: Get EDID info. */
-			uint8_t capabilities;
-			uint8_t edid_transfer_time;
+			uपूर्णांक8_t capabilities;
+			uपूर्णांक8_t edid_transfer_समय;
 			/* must refer to 128-byte buffer */
-			GUEST_HANDLE(uchar) edid;
-		} vbeddc_info; /* XEN_FW_VBEDDC_INFO */
+			GUEST_HANDLE(uअक्षर) edid;
+		पूर्ण vbeddc_info; /* XEN_FW_VBEDDC_INFO */
 
-		union xenpf_efi_info {
-			uint32_t version;
-			struct {
-				uint64_t addr;   /* EFI_CONFIGURATION_TABLE */
-				uint32_t nent;
-			} cfg;
-			struct {
-				uint32_t revision;
-				uint32_t bufsz;  /* input, in bytes */
-				GUEST_HANDLE(void) name;
+		जोड़ xenpf_efi_info अणु
+			uपूर्णांक32_t version;
+			काष्ठा अणु
+				uपूर्णांक64_t addr;   /* EFI_CONFIGURATION_TABLE */
+				uपूर्णांक32_t nent;
+			पूर्ण cfg;
+			काष्ठा अणु
+				uपूर्णांक32_t revision;
+				uपूर्णांक32_t bufsz;  /* input, in bytes */
+				GUEST_HANDLE(व्योम) name;
 				/* UCS-2/UTF-16 string */
-			} vendor;
-			struct {
-				uint64_t addr;
-				uint64_t size;
-				uint64_t attr;
-				uint32_t type;
-			} mem;
-		} efi_info; /* XEN_FW_EFI_INFO */
+			पूर्ण venकरोr;
+			काष्ठा अणु
+				uपूर्णांक64_t addr;
+				uपूर्णांक64_t size;
+				uपूर्णांक64_t attr;
+				uपूर्णांक32_t type;
+			पूर्ण mem;
+		पूर्ण efi_info; /* XEN_FW_EFI_INFO */
 
-		uint8_t kbd_shift_flags; /* XEN_FW_KBD_SHIFT_FLAGS */
-	} u;
-};
+		uपूर्णांक8_t kbd_shअगरt_flags; /* XEN_FW_KBD_SHIFT_FLAGS */
+	पूर्ण u;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_firmware_info_t);
 
-#define XENPF_enter_acpi_sleep    51
-struct xenpf_enter_acpi_sleep {
+#घोषणा XENPF_enter_acpi_sleep    51
+काष्ठा xenpf_enter_acpi_sleep अणु
 	/* IN variables */
-	uint16_t val_a;             /* PM1a control / sleep type A. */
-	uint16_t val_b;             /* PM1b control / sleep type B. */
-	uint32_t sleep_state;       /* Which state to enter (Sn). */
-#define XENPF_ACPI_SLEEP_EXTENDED 0x00000001
-	uint32_t flags;             /* XENPF_ACPI_SLEEP_*. */
-};
+	uपूर्णांक16_t val_a;             /* PM1a control / sleep type A. */
+	uपूर्णांक16_t val_b;             /* PM1b control / sleep type B. */
+	uपूर्णांक32_t sleep_state;       /* Which state to enter (Sn). */
+#घोषणा XENPF_ACPI_SLEEP_EXTENDED 0x00000001
+	uपूर्णांक32_t flags;             /* XENPF_ACPI_SLEEP_*. */
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_enter_acpi_sleep_t);
 
-#define XENPF_change_freq         52
-struct xenpf_change_freq {
+#घोषणा XENPF_change_freq         52
+काष्ठा xenpf_change_freq अणु
 	/* IN variables */
-	uint32_t flags; /* Must be zero. */
-	uint32_t cpu;   /* Physical cpu. */
-	uint64_t freq;  /* New frequency (Hz). */
-};
+	uपूर्णांक32_t flags; /* Must be zero. */
+	uपूर्णांक32_t cpu;   /* Physical cpu. */
+	uपूर्णांक64_t freq;  /* New frequency (Hz). */
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_change_freq_t);
 
 /*
- * Get idle times (nanoseconds since boot) for physical CPUs specified in the
- * @cpumap_bitmap with range [0..@cpumap_nr_cpus-1]. The @idletime array is
- * indexed by CPU number; only entries with the corresponding @cpumap_bitmap
- * bit set are written to. On return, @cpumap_bitmap is modified so that any
- * non-existent CPUs are cleared. Such CPUs have their @idletime array entry
+ * Get idle बार (nanoseconds since boot) क्रम physical CPUs specअगरied in the
+ * @cpumap_biपंचांगap with range [0..@cpumap_nr_cpus-1]. The @idleसमय array is
+ * indexed by CPU number; only entries with the corresponding @cpumap_biपंचांगap
+ * bit set are written to. On वापस, @cpumap_biपंचांगap is modअगरied so that any
+ * non-existent CPUs are cleared. Such CPUs have their @idleसमय array entry
  * cleared.
  */
-#define XENPF_getidletime         53
-struct xenpf_getidletime {
+#घोषणा XENPF_getidleसमय         53
+काष्ठा xenpf_getidleसमय अणु
 	/* IN/OUT variables */
-	/* IN: CPUs to interrogate; OUT: subset of IN which are present */
-	GUEST_HANDLE(uchar) cpumap_bitmap;
+	/* IN: CPUs to पूर्णांकerrogate; OUT: subset of IN which are present */
+	GUEST_HANDLE(uअक्षर) cpumap_biपंचांगap;
 	/* IN variables */
-	/* Size of cpumap bitmap. */
-	uint32_t cpumap_nr_cpus;
-	/* Must be indexable for every cpu in cpumap_bitmap. */
-	GUEST_HANDLE(uint64_t) idletime;
+	/* Size of cpumap biपंचांगap. */
+	uपूर्णांक32_t cpumap_nr_cpus;
+	/* Must be indexable क्रम every cpu in cpumap_biपंचांगap. */
+	GUEST_HANDLE(uपूर्णांक64_t) idleसमय;
 	/* OUT variables */
-	/* System time when the idletime snapshots were taken. */
-	uint64_t now;
-};
-DEFINE_GUEST_HANDLE_STRUCT(xenpf_getidletime_t);
+	/* System समय when the idleसमय snapshots were taken. */
+	uपूर्णांक64_t now;
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(xenpf_getidleसमय_प्रकार);
 
-#define XENPF_set_processor_pminfo      54
+#घोषणा XENPF_set_processor_pminfo      54
 
 /* ability bits */
-#define XEN_PROCESSOR_PM_CX	1
-#define XEN_PROCESSOR_PM_PX	2
-#define XEN_PROCESSOR_PM_TX	4
+#घोषणा XEN_PROCESSOR_PM_CX	1
+#घोषणा XEN_PROCESSOR_PM_PX	2
+#घोषणा XEN_PROCESSOR_PM_TX	4
 
 /* cmd type */
-#define XEN_PM_CX   0
-#define XEN_PM_PX   1
-#define XEN_PM_TX   2
-#define XEN_PM_PDC  3
+#घोषणा XEN_PM_CX   0
+#घोषणा XEN_PM_PX   1
+#घोषणा XEN_PM_TX   2
+#घोषणा XEN_PM_PDC  3
 /* Px sub info type */
-#define XEN_PX_PCT   1
-#define XEN_PX_PSS   2
-#define XEN_PX_PPC   4
-#define XEN_PX_PSD   8
+#घोषणा XEN_PX_PCT   1
+#घोषणा XEN_PX_PSS   2
+#घोषणा XEN_PX_PPC   4
+#घोषणा XEN_PX_PSD   8
 
-struct xen_power_register {
-	uint32_t     space_id;
-	uint32_t     bit_width;
-	uint32_t     bit_offset;
-	uint32_t     access_size;
-	uint64_t     address;
-};
+काष्ठा xen_घातer_रेजिस्टर अणु
+	uपूर्णांक32_t     space_id;
+	uपूर्णांक32_t     bit_width;
+	uपूर्णांक32_t     bit_offset;
+	uपूर्णांक32_t     access_size;
+	uपूर्णांक64_t     address;
+पूर्ण;
 
-struct xen_processor_csd {
-	uint32_t    domain;      /* domain number of one dependent group */
-	uint32_t    coord_type;  /* coordination type */
-	uint32_t    num;         /* number of processors in same domain */
-};
+काष्ठा xen_processor_csd अणु
+	uपूर्णांक32_t    करोमुख्य;      /* करोमुख्य number of one dependent group */
+	uपूर्णांक32_t    coord_type;  /* coordination type */
+	uपूर्णांक32_t    num;         /* number of processors in same करोमुख्य */
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xen_processor_csd);
 
-struct xen_processor_cx {
-	struct xen_power_register  reg; /* GAS for Cx trigger register */
-	uint8_t     type;     /* cstate value, c0: 0, c1: 1, ... */
-	uint32_t    latency;  /* worst latency (ms) to enter/exit this cstate */
-	uint32_t    power;    /* average power consumption(mW) */
-	uint32_t    dpcnt;    /* number of dependency entries */
-	GUEST_HANDLE(xen_processor_csd) dp; /* NULL if no dependency */
-};
+काष्ठा xen_processor_cx अणु
+	काष्ठा xen_घातer_रेजिस्टर  reg; /* GAS क्रम Cx trigger रेजिस्टर */
+	uपूर्णांक8_t     type;     /* cstate value, c0: 0, c1: 1, ... */
+	uपूर्णांक32_t    latency;  /* worst latency (ms) to enter/निकास this cstate */
+	uपूर्णांक32_t    घातer;    /* average घातer consumption(mW) */
+	uपूर्णांक32_t    dpcnt;    /* number of dependency entries */
+	GUEST_HANDLE(xen_processor_csd) dp; /* शून्य अगर no dependency */
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xen_processor_cx);
 
-struct xen_processor_flags {
-	uint32_t bm_control:1;
-	uint32_t bm_check:1;
-	uint32_t has_cst:1;
-	uint32_t power_setup_done:1;
-	uint32_t bm_rld_set:1;
-};
+काष्ठा xen_processor_flags अणु
+	uपूर्णांक32_t bm_control:1;
+	uपूर्णांक32_t bm_check:1;
+	uपूर्णांक32_t has_cst:1;
+	uपूर्णांक32_t घातer_setup_करोne:1;
+	uपूर्णांक32_t bm_rld_set:1;
+पूर्ण;
 
-struct xen_processor_power {
-	uint32_t count;  /* number of C state entries in array below */
-	struct xen_processor_flags flags;  /* global flags of this processor */
+काष्ठा xen_processor_घातer अणु
+	uपूर्णांक32_t count;  /* number of C state entries in array below */
+	काष्ठा xen_processor_flags flags;  /* global flags of this processor */
 	GUEST_HANDLE(xen_processor_cx) states; /* supported c states */
-};
+पूर्ण;
 
-struct xen_pct_register {
-	uint8_t  descriptor;
-	uint16_t length;
-	uint8_t  space_id;
-	uint8_t  bit_width;
-	uint8_t  bit_offset;
-	uint8_t  reserved;
-	uint64_t address;
-};
+काष्ठा xen_pct_रेजिस्टर अणु
+	uपूर्णांक8_t  descriptor;
+	uपूर्णांक16_t length;
+	uपूर्णांक8_t  space_id;
+	uपूर्णांक8_t  bit_width;
+	uपूर्णांक8_t  bit_offset;
+	uपूर्णांक8_t  reserved;
+	uपूर्णांक64_t address;
+पूर्ण;
 
-struct xen_processor_px {
-	uint64_t core_frequency; /* megahertz */
-	uint64_t power;      /* milliWatts */
-	uint64_t transition_latency; /* microseconds */
-	uint64_t bus_master_latency; /* microseconds */
-	uint64_t control;        /* control value */
-	uint64_t status;     /* success indicator */
-};
+काष्ठा xen_processor_px अणु
+	uपूर्णांक64_t core_frequency; /* megahertz */
+	uपूर्णांक64_t घातer;      /* milliWatts */
+	uपूर्णांक64_t transition_latency; /* microseconds */
+	uपूर्णांक64_t bus_master_latency; /* microseconds */
+	uपूर्णांक64_t control;        /* control value */
+	uपूर्णांक64_t status;     /* success indicator */
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xen_processor_px);
 
-struct xen_psd_package {
-	uint64_t num_entries;
-	uint64_t revision;
-	uint64_t domain;
-	uint64_t coord_type;
-	uint64_t num_processors;
-};
+काष्ठा xen_psd_package अणु
+	uपूर्णांक64_t num_entries;
+	uपूर्णांक64_t revision;
+	uपूर्णांक64_t करोमुख्य;
+	uपूर्णांक64_t coord_type;
+	uपूर्णांक64_t num_processors;
+पूर्ण;
 
-struct xen_processor_performance {
-	uint32_t flags;     /* flag for Px sub info type */
-	uint32_t platform_limit;  /* Platform limitation on freq usage */
-	struct xen_pct_register control_register;
-	struct xen_pct_register status_register;
-	uint32_t state_count;     /* total available performance states */
+काष्ठा xen_processor_perक्रमmance अणु
+	uपूर्णांक32_t flags;     /* flag क्रम Px sub info type */
+	uपूर्णांक32_t platक्रमm_limit;  /* Platक्रमm limitation on freq usage */
+	काष्ठा xen_pct_रेजिस्टर control_रेजिस्टर;
+	काष्ठा xen_pct_रेजिस्टर status_रेजिस्टर;
+	uपूर्णांक32_t state_count;     /* total available perक्रमmance states */
 	GUEST_HANDLE(xen_processor_px) states;
-	struct xen_psd_package domain_info;
-	uint32_t shared_type;     /* coordination type of this processor */
-};
-DEFINE_GUEST_HANDLE_STRUCT(xen_processor_performance);
+	काष्ठा xen_psd_package करोमुख्य_info;
+	uपूर्णांक32_t shared_type;     /* coordination type of this processor */
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(xen_processor_perक्रमmance);
 
-struct xenpf_set_processor_pminfo {
+काष्ठा xenpf_set_processor_pminfo अणु
 	/* IN variables */
-	uint32_t id;    /* ACPI CPU ID */
-	uint32_t type;  /* {XEN_PM_CX, XEN_PM_PX} */
-	union {
-		struct xen_processor_power          power;/* Cx: _CST/_CSD */
-		struct xen_processor_performance    perf; /* Px: _PPC/_PCT/_PSS/_PSD */
-		GUEST_HANDLE(uint32_t)              pdc;
-	};
-};
+	uपूर्णांक32_t id;    /* ACPI CPU ID */
+	uपूर्णांक32_t type;  /* अणुXEN_PM_CX, XEN_PM_PXपूर्ण */
+	जोड़ अणु
+		काष्ठा xen_processor_घातer          घातer;/* Cx: _CST/_CSD */
+		काष्ठा xen_processor_perक्रमmance    perf; /* Px: _PPC/_PCT/_PSS/_PSD */
+		GUEST_HANDLE(uपूर्णांक32_t)              pdc;
+	पूर्ण;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_set_processor_pminfo);
 
-#define XENPF_get_cpuinfo 55
-struct xenpf_pcpuinfo {
+#घोषणा XENPF_get_cpuinfo 55
+काष्ठा xenpf_pcpuinfo अणु
 	/* IN */
-	uint32_t xen_cpuid;
+	uपूर्णांक32_t xen_cpuid;
 	/* OUT */
 	/* The maxium cpu_id that is present */
-	uint32_t max_present;
-#define XEN_PCPU_FLAGS_ONLINE   1
+	uपूर्णांक32_t max_present;
+#घोषणा XEN_PCPU_FLAGS_ONLINE   1
 	/* Correponding xen_cpuid is not present*/
-#define XEN_PCPU_FLAGS_INVALID  2
-	uint32_t flags;
-	uint32_t apic_id;
-	uint32_t acpi_id;
-};
+#घोषणा XEN_PCPU_FLAGS_INVALID  2
+	uपूर्णांक32_t flags;
+	uपूर्णांक32_t apic_id;
+	uपूर्णांक32_t acpi_id;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_pcpuinfo);
 
-#define XENPF_cpu_online	56
-#define XENPF_cpu_offline	57
-struct xenpf_cpu_ol {
-	uint32_t cpuid;
-};
+#घोषणा XENPF_cpu_online	56
+#घोषणा XENPF_cpu_offline	57
+काष्ठा xenpf_cpu_ol अणु
+	uपूर्णांक32_t cpuid;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_cpu_ol);
 
-#define XENPF_cpu_hotadd	58
-struct xenpf_cpu_hotadd {
-	uint32_t apic_id;
-	uint32_t acpi_id;
-	uint32_t pxm;
-};
+#घोषणा XENPF_cpu_hotadd	58
+काष्ठा xenpf_cpu_hotadd अणु
+	uपूर्णांक32_t apic_id;
+	uपूर्णांक32_t acpi_id;
+	uपूर्णांक32_t pxm;
+पूर्ण;
 
-#define XENPF_mem_hotadd	59
-struct xenpf_mem_hotadd {
-	uint64_t spfn;
-	uint64_t epfn;
-	uint32_t pxm;
-	uint32_t flags;
-};
+#घोषणा XENPF_mem_hotadd	59
+काष्ठा xenpf_mem_hotadd अणु
+	uपूर्णांक64_t spfn;
+	uपूर्णांक64_t epfn;
+	uपूर्णांक32_t pxm;
+	uपूर्णांक32_t flags;
+पूर्ण;
 
-#define XENPF_core_parking     60
-struct xenpf_core_parking {
+#घोषणा XENPF_core_parking     60
+काष्ठा xenpf_core_parking अणु
 	/* IN variables */
-#define XEN_CORE_PARKING_SET   1
-#define XEN_CORE_PARKING_GET   2
-	uint32_t type;
+#घोषणा XEN_CORE_PARKING_SET   1
+#घोषणा XEN_CORE_PARKING_GET   2
+	uपूर्णांक32_t type;
 	/* IN variables:  set cpu nums expected to be idled */
 	/* OUT variables: get cpu nums actually be idled */
-	uint32_t idle_nums;
-};
+	uपूर्णांक32_t idle_nums;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_core_parking);
 
-#define XENPF_get_symbol      63
-struct xenpf_symdata {
+#घोषणा XENPF_get_symbol      63
+काष्ठा xenpf_symdata अणु
 	/* IN/OUT variables */
-	uint32_t	namelen; /* size of 'name' buffer */
+	uपूर्णांक32_t	namelen; /* size of 'name' buffer */
 
 	/* IN/OUT variables */
-	uint32_t	symnum; /* IN:  Symbol to read                       */
+	uपूर्णांक32_t	symnum; /* IN:  Symbol to पढ़ो                       */
 				/* OUT: Next available symbol. If same as IN */
 				/* then  we reached the end                  */
 
 	/* OUT variables */
-	GUEST_HANDLE(char) name;
-	uint64_t	address;
-	char            type;
-};
+	GUEST_HANDLE(अक्षर) name;
+	uपूर्णांक64_t	address;
+	अक्षर            type;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xenpf_symdata);
 
-struct xen_platform_op {
-	uint32_t cmd;
-	uint32_t interface_version; /* XENPF_INTERFACE_VERSION */
-	union {
-		struct xenpf_settime32         settime32;
-		struct xenpf_settime64         settime64;
-		struct xenpf_add_memtype       add_memtype;
-		struct xenpf_del_memtype       del_memtype;
-		struct xenpf_read_memtype      read_memtype;
-		struct xenpf_microcode_update  microcode;
-		struct xenpf_platform_quirk    platform_quirk;
-		struct xenpf_efi_runtime_call  efi_runtime_call;
-		struct xenpf_firmware_info     firmware_info;
-		struct xenpf_enter_acpi_sleep  enter_acpi_sleep;
-		struct xenpf_change_freq       change_freq;
-		struct xenpf_getidletime       getidletime;
-		struct xenpf_set_processor_pminfo set_pminfo;
-		struct xenpf_pcpuinfo          pcpu_info;
-		struct xenpf_cpu_ol            cpu_ol;
-		struct xenpf_cpu_hotadd        cpu_add;
-		struct xenpf_mem_hotadd        mem_add;
-		struct xenpf_core_parking      core_parking;
-		struct xenpf_symdata           symdata;
-		uint8_t                        pad[128];
-	} u;
-};
-DEFINE_GUEST_HANDLE_STRUCT(xen_platform_op_t);
+काष्ठा xen_platक्रमm_op अणु
+	uपूर्णांक32_t cmd;
+	uपूर्णांक32_t पूर्णांकerface_version; /* XENPF_INTERFACE_VERSION */
+	जोड़ अणु
+		काष्ठा xenpf_समय_रखो32         समय_रखो32;
+		काष्ठा xenpf_समय_रखो64         समय_रखो64;
+		काष्ठा xenpf_add_memtype       add_memtype;
+		काष्ठा xenpf_del_memtype       del_memtype;
+		काष्ठा xenpf_पढ़ो_memtype      पढ़ो_memtype;
+		काष्ठा xenpf_microcode_update  microcode;
+		काष्ठा xenpf_platक्रमm_quirk    platक्रमm_quirk;
+		काष्ठा xenpf_efi_runसमय_call  efi_runसमय_call;
+		काष्ठा xenpf_firmware_info     firmware_info;
+		काष्ठा xenpf_enter_acpi_sleep  enter_acpi_sleep;
+		काष्ठा xenpf_change_freq       change_freq;
+		काष्ठा xenpf_getidleसमय       getidleसमय;
+		काष्ठा xenpf_set_processor_pminfo set_pminfo;
+		काष्ठा xenpf_pcpuinfo          pcpu_info;
+		काष्ठा xenpf_cpu_ol            cpu_ol;
+		काष्ठा xenpf_cpu_hotadd        cpu_add;
+		काष्ठा xenpf_mem_hotadd        mem_add;
+		काष्ठा xenpf_core_parking      core_parking;
+		काष्ठा xenpf_symdata           symdata;
+		uपूर्णांक8_t                        pad[128];
+	पूर्ण u;
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(xen_platक्रमm_op_t);
 
-#endif /* __XEN_PUBLIC_PLATFORM_H__ */
+#पूर्ण_अगर /* __XEN_PUBLIC_PLATFORM_H__ */

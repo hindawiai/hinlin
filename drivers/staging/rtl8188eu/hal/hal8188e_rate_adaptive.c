@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) Realtek Semiconductor Corp. All rights reserved.
  */
 
-#include "odm_precomp.h"
+#समावेश "odm_precomp.h"
 
 /*  Rate adaptive parameters */
 
-static u8 RETRY_PENALTY[PERENTRY][RETRYSIZE + 1] = {
-		{5, 4, 3, 2, 0, 3},      /* 92 , idx = 0 */
-		{6, 5, 4, 3, 0, 4},      /* 86 , idx = 1 */
-		{6, 5, 4, 2, 0, 4},      /* 81 , idx = 2 */
-		{8, 7, 6, 4, 0, 6},      /* 75 , idx = 3 */
-		{10, 9, 8, 6, 0, 8},     /* 71	, idx = 4 */
-		{10, 9, 8, 4, 0, 8},     /* 66	, idx = 5 */
-		{10, 9, 8, 2, 0, 8},     /* 62	, idx = 6 */
-		{10, 9, 8, 0, 0, 8},     /* 59	, idx = 7 */
-		{18, 17, 16, 8, 0, 16},  /* 53 , idx = 8 */
-		{26, 25, 24, 16, 0, 24}, /* 50	, idx = 9 */
-		{34, 33, 32, 24, 0, 32}, /* 47	, idx = 0x0a */
-		{34, 31, 28, 20, 0, 32}, /* 43	, idx = 0x0b */
-		{34, 31, 27, 18, 0, 32}, /* 40 , idx = 0x0c */
-		{34, 31, 26, 16, 0, 32}, /* 37 , idx = 0x0d */
-		{34, 30, 22, 16, 0, 32}, /* 32 , idx = 0x0e */
-		{34, 30, 24, 16, 0, 32}, /* 26 , idx = 0x0f */
-		{49, 46, 40, 16, 0, 48}, /* 20	, idx = 0x10 */
-		{49, 45, 32, 0, 0, 48},  /* 17 , idx = 0x11 */
-		{49, 45, 22, 18, 0, 48}, /* 15	, idx = 0x12 */
-		{49, 40, 24, 16, 0, 48}, /* 12	, idx = 0x13 */
-		{49, 32, 18, 12, 0, 48}, /* 9 , idx = 0x14 */
-		{49, 22, 18, 14, 0, 48}, /* 6 , idx = 0x15 */
-		{49, 16, 16, 0, 0, 48}
-	}; /* 3, idx = 0x16 */
+अटल u8 RETRY_PENALTY[PERENTRY][RETRYSIZE + 1] = अणु
+		अणु5, 4, 3, 2, 0, 3पूर्ण,      /* 92 , idx = 0 */
+		अणु6, 5, 4, 3, 0, 4पूर्ण,      /* 86 , idx = 1 */
+		अणु6, 5, 4, 2, 0, 4पूर्ण,      /* 81 , idx = 2 */
+		अणु8, 7, 6, 4, 0, 6पूर्ण,      /* 75 , idx = 3 */
+		अणु10, 9, 8, 6, 0, 8पूर्ण,     /* 71	, idx = 4 */
+		अणु10, 9, 8, 4, 0, 8पूर्ण,     /* 66	, idx = 5 */
+		अणु10, 9, 8, 2, 0, 8पूर्ण,     /* 62	, idx = 6 */
+		अणु10, 9, 8, 0, 0, 8पूर्ण,     /* 59	, idx = 7 */
+		अणु18, 17, 16, 8, 0, 16पूर्ण,  /* 53 , idx = 8 */
+		अणु26, 25, 24, 16, 0, 24पूर्ण, /* 50	, idx = 9 */
+		अणु34, 33, 32, 24, 0, 32पूर्ण, /* 47	, idx = 0x0a */
+		अणु34, 31, 28, 20, 0, 32पूर्ण, /* 43	, idx = 0x0b */
+		अणु34, 31, 27, 18, 0, 32पूर्ण, /* 40 , idx = 0x0c */
+		अणु34, 31, 26, 16, 0, 32पूर्ण, /* 37 , idx = 0x0d */
+		अणु34, 30, 22, 16, 0, 32पूर्ण, /* 32 , idx = 0x0e */
+		अणु34, 30, 24, 16, 0, 32पूर्ण, /* 26 , idx = 0x0f */
+		अणु49, 46, 40, 16, 0, 48पूर्ण, /* 20	, idx = 0x10 */
+		अणु49, 45, 32, 0, 0, 48पूर्ण,  /* 17 , idx = 0x11 */
+		अणु49, 45, 22, 18, 0, 48पूर्ण, /* 15	, idx = 0x12 */
+		अणु49, 40, 24, 16, 0, 48पूर्ण, /* 12	, idx = 0x13 */
+		अणु49, 32, 18, 12, 0, 48पूर्ण, /* 9 , idx = 0x14 */
+		अणु49, 22, 18, 14, 0, 48पूर्ण, /* 6 , idx = 0x15 */
+		अणु49, 16, 16, 0, 0, 48पूर्ण
+	पूर्ण; /* 3, idx = 0x16 */
 
-static u8 PT_PENALTY[RETRYSIZE + 1] = {34, 31, 30, 24, 0, 32};
+अटल u8 PT_PENALTY[RETRYSIZE + 1] = अणु34, 31, 30, 24, 0, 32पूर्ण;
 
-/*  wilson modify */
-static u8 RETRY_PENALTY_IDX[2][RATESIZE] = {
-		{4, 4, 4, 5, 4, 4, 5, 7, 7, 7, 8, 0x0a,	       /*  SS>TH */
+/*  wilson modअगरy */
+अटल u8 RETRY_PENALTY_IDX[2][RATESIZE] = अणु
+		अणु4, 4, 4, 5, 4, 4, 5, 7, 7, 7, 8, 0x0a,	       /*  SS>TH */
 		4, 4, 4, 4, 6, 0x0a, 0x0b, 0x0d,
-		5, 5, 7, 7, 8, 0x0b, 0x0d, 0x0f},			   /*  0329 R01 */
-		{0x0a, 0x0a, 0x0b, 0x0c, 0x0a,
+		5, 5, 7, 7, 8, 0x0b, 0x0d, 0x0fपूर्ण,			   /*  0329 R01 */
+		अणु0x0a, 0x0a, 0x0b, 0x0c, 0x0a,
 		0x0a, 0x0b, 0x0c, 0x0d, 0x10, 0x13, 0x14,	   /*  SS<TH */
 		0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x11, 0x13, 0x15,
-		9, 9, 9, 9, 0x0c, 0x0e, 0x11, 0x13}
-	};
+		9, 9, 9, 9, 0x0c, 0x0e, 0x11, 0x13पूर्ण
+	पूर्ण;
 
-static u8 RETRY_PENALTY_UP_IDX[RATESIZE] = {
+अटल u8 RETRY_PENALTY_UP_IDX[RATESIZE] = अणु
 		0x0c, 0x0d, 0x0d, 0x0f, 0x0d, 0x0e,
 		0x0f, 0x0f, 0x10, 0x12, 0x13, 0x14,	       /*  SS>TH */
 		0x0f, 0x10, 0x10, 0x12, 0x12, 0x13, 0x14, 0x15,
-		0x11, 0x11, 0x12, 0x13, 0x13, 0x13, 0x14, 0x15};
+		0x11, 0x11, 0x12, 0x13, 0x13, 0x13, 0x14, 0x15पूर्ण;
 
-static u8 RSSI_THRESHOLD[RATESIZE] = {
+अटल u8 RSSI_THRESHOLD[RATESIZE] = अणु
 		0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0x24, 0x26, 0x2a,
 		0x18, 0x1a, 0x1d, 0x1f, 0x21, 0x27, 0x29, 0x2a,
-		0, 0, 0, 0x1f, 0x23, 0x28, 0x2a, 0x2c};
+		0, 0, 0, 0x1f, 0x23, 0x28, 0x2a, 0x2cपूर्ण;
 
-static u16 N_THRESHOLD_HIGH[RATESIZE] = {
+अटल u16 N_THRESHOLD_HIGH[RATESIZE] = अणु
 		4, 4, 8, 16,
 		24, 36, 48, 72, 96, 144, 192, 216,
 		60, 80, 100, 160, 240, 400, 560, 640,
-		300, 320, 480, 720, 1000, 1200, 1600, 2000};
-static u16 N_THRESHOLD_LOW[RATESIZE] = {
+		300, 320, 480, 720, 1000, 1200, 1600, 2000पूर्ण;
+अटल u16 N_THRESHOLD_LOW[RATESIZE] = अणु
 		2, 2, 4, 8,
 		12, 18, 24, 36, 48, 72, 96, 108,
 		30, 40, 50, 80, 120, 200, 280, 320,
-		150, 160, 240, 360, 500, 600, 800, 1000};
+		150, 160, 240, 360, 500, 600, 800, 1000पूर्ण;
 
-static u8 DROPING_NECESSARY[RATESIZE] = {
+अटल u8 DROPING_NECESSARY[RATESIZE] = अणु
 		1, 1, 1, 1,
 		1, 2, 3, 4, 5, 6, 7, 8,
 		1, 2, 3, 4, 5, 6, 7, 8,
-		5, 6, 7, 8, 9, 10, 11, 12};
+		5, 6, 7, 8, 9, 10, 11, 12पूर्ण;
 
-static u8 PendingForRateUpFail[5] = {2, 10, 24, 40, 60};
-static u16 DynamicTxRPTTiming[6] = {
-	0x186a, 0x30d4, 0x493e, 0x61a8, 0x7a12, 0x927c}; /*  200ms-1200ms */
+अटल u8 PendingForRateUpFail[5] = अणु2, 10, 24, 40, 60पूर्ण;
+अटल u16 DynamicTxRPTTiming[6] = अणु
+	0x186a, 0x30d4, 0x493e, 0x61a8, 0x7a12, 0x927cपूर्ण; /*  200ms-1200ms */
 
 /*  End Rate adaptive parameters */
 
-static void odm_SetTxRPTTiming_8188E(struct odm_dm_struct *dm_odm,
-				     struct odm_ra_info *pRaInfo, u8 extend)
-{
+अटल व्योम odm_SetTxRPTTiming_8188E(काष्ठा odm_dm_काष्ठा *dm_odm,
+				     काष्ठा odm_ra_info *pRaInfo, u8 extend)
+अणु
 	u8 idx = 0;
 
-	for (idx = 0; idx < 5; idx++)
-		if (DynamicTxRPTTiming[idx] == pRaInfo->RptTime)
-			break;
+	क्रम (idx = 0; idx < 5; idx++)
+		अगर (DynamicTxRPTTiming[idx] == pRaInfo->RptTime)
+			अवरोध;
 
-	if (extend == 0) { /*  back to default timing */
+	अगर (extend == 0) अणु /*  back to शेष timing */
 		idx = 0;  /* 200ms */
-	} else if (extend == 1) {/*  increase the timing */
+	पूर्ण अन्यथा अगर (extend == 1) अणु/*  increase the timing */
 		idx += 1;
-		if (idx > 5)
+		अगर (idx > 5)
 			idx = 5;
-	} else if (extend == 2) {/*  decrease the timing */
-		if (idx != 0)
+	पूर्ण अन्यथा अगर (extend == 2) अणु/*  decrease the timing */
+		अगर (idx != 0)
 			idx -= 1;
-	}
+	पूर्ण
 	pRaInfo->RptTime = DynamicTxRPTTiming[idx];
 
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 		     ("pRaInfo->RptTime = 0x%x\n", pRaInfo->RptTime));
-}
+पूर्ण
 
-static int odm_RateDown_8188E(struct odm_dm_struct *dm_odm,
-			      struct odm_ra_info *pRaInfo)
-{
+अटल पूर्णांक odm_RateDown_8188E(काष्ठा odm_dm_काष्ठा *dm_odm,
+			      काष्ठा odm_ra_info *pRaInfo)
+अणु
 	u8 RateID, LowestRate, HighestRate;
 	u8 i;
 
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE,
 		     ODM_DBG_TRACE, ("=====>%s()\n", __func__));
-	if (!pRaInfo) {
+	अगर (!pRaInfo) अणु
 		ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 			     ("%s(): pRaInfo is NULL\n", __func__));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	RateID = pRaInfo->PreRate;
 	LowestRate = pRaInfo->LowestRate;
 	HighestRate = pRaInfo->HighestRate;
@@ -126,34 +127,34 @@ static int odm_RateDown_8188E(struct odm_dm_struct *dm_odm,
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     (" RateID =%d LowestRate =%d HighestRate =%d RateSGI =%d\n",
 		     RateID, LowestRate, HighestRate, pRaInfo->RateSGI));
-	if (RateID > HighestRate) {
+	अगर (RateID > HighestRate) अणु
 		RateID = HighestRate;
-	} else if (pRaInfo->RateSGI) {
+	पूर्ण अन्यथा अगर (pRaInfo->RateSGI) अणु
 		pRaInfo->RateSGI = 0;
-	} else if (RateID > LowestRate) {
-		if (RateID > 0) {
-			for (i = RateID - 1; i > LowestRate; i--) {
-				if (pRaInfo->RAUseRate & BIT(i)) {
+	पूर्ण अन्यथा अगर (RateID > LowestRate) अणु
+		अगर (RateID > 0) अणु
+			क्रम (i = RateID - 1; i > LowestRate; i--) अणु
+				अगर (pRaInfo->RAUseRate & BIT(i)) अणु
 					RateID = i;
-					goto RateDownFinish;
-				}
-			}
-		}
-	} else if (RateID <= LowestRate) {
+					जाओ RateDownFinish;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (RateID <= LowestRate) अणु
 		RateID = LowestRate;
-	}
+	पूर्ण
 RateDownFinish:
-	if (pRaInfo->RAWaitingCounter == 1) {
+	अगर (pRaInfo->RAWaitingCounter == 1) अणु
 		pRaInfo->RAWaitingCounter += 1;
 		pRaInfo->RAPendingCounter += 1;
-	} else if (pRaInfo->RAWaitingCounter == 0) {
+	पूर्ण अन्यथा अगर (pRaInfo->RAWaitingCounter == 0) अणु
 		;
-	} else {
+	पूर्ण अन्यथा अणु
 		pRaInfo->RAWaitingCounter = 0;
 		pRaInfo->RAPendingCounter = 0;
-	}
+	पूर्ण
 
-	if (pRaInfo->RAPendingCounter >= 4)
+	अगर (pRaInfo->RAPendingCounter >= 4)
 		pRaInfo->RAPendingCounter = 4;
 
 	pRaInfo->DecisionRate = RateID;
@@ -167,58 +168,58 @@ RateDownFinish:
 		     ("Rate down to RateID %d RateSGI %d\n", RateID, pRaInfo->RateSGI));
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     ("<===== %s()\n", __func__));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int odm_RateUp_8188E(struct odm_dm_struct *dm_odm,
-			    struct odm_ra_info *pRaInfo)
-{
+अटल पूर्णांक odm_RateUp_8188E(काष्ठा odm_dm_काष्ठा *dm_odm,
+			    काष्ठा odm_ra_info *pRaInfo)
+अणु
 	u8 RateID, HighestRate;
 	u8 i;
 
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE,
 		     ODM_DBG_TRACE, ("=====>%s()\n", __func__));
-	if (!pRaInfo) {
+	अगर (!pRaInfo) अणु
 		ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 			     ("%s(): pRaInfo is NULL\n", __func__));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	RateID = pRaInfo->PreRate;
 	HighestRate = pRaInfo->HighestRate;
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     (" RateID =%d HighestRate =%d\n",
 		     RateID, HighestRate));
-	if (pRaInfo->RAWaitingCounter == 1) {
+	अगर (pRaInfo->RAWaitingCounter == 1) अणु
 		pRaInfo->RAWaitingCounter = 0;
 		pRaInfo->RAPendingCounter = 0;
-	} else if (pRaInfo->RAWaitingCounter > 1) {
+	पूर्ण अन्यथा अगर (pRaInfo->RAWaitingCounter > 1) अणु
 		pRaInfo->PreRssiStaRA = pRaInfo->RssiStaRA;
-		goto RateUpfinish;
-	}
+		जाओ RateUpfinish;
+	पूर्ण
 	odm_SetTxRPTTiming_8188E(dm_odm, pRaInfo, 0);
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 		     ("%s():Decrease RPT Timing\n", __func__));
 
-	if (RateID < HighestRate) {
-		for (i = RateID + 1; i <= HighestRate; i++) {
-			if (pRaInfo->RAUseRate & BIT(i)) {
+	अगर (RateID < HighestRate) अणु
+		क्रम (i = RateID + 1; i <= HighestRate; i++) अणु
+			अगर (pRaInfo->RAUseRate & BIT(i)) अणु
 				RateID = i;
-				goto RateUpfinish;
-			}
-		}
-	} else if (RateID == HighestRate) {
-		if (pRaInfo->SGIEnable && (pRaInfo->RateSGI != 1))
+				जाओ RateUpfinish;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (RateID == HighestRate) अणु
+		अगर (pRaInfo->SGIEnable && (pRaInfo->RateSGI != 1))
 			pRaInfo->RateSGI = 1;
-		else if ((pRaInfo->SGIEnable) != 1)
+		अन्यथा अगर ((pRaInfo->SGIEnable) != 1)
 			pRaInfo->RateSGI = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		RateID = HighestRate;
-	}
+	पूर्ण
 RateUpfinish:
-	if (pRaInfo->RAWaitingCounter ==
+	अगर (pRaInfo->RAWaitingCounter ==
 		(4 + PendingForRateUpFail[pRaInfo->RAPendingCounter]))
 		pRaInfo->RAWaitingCounter = 0;
-	else
+	अन्यथा
 		pRaInfo->RAWaitingCounter++;
 
 	pRaInfo->DecisionRate = RateID;
@@ -229,11 +230,11 @@ RateUpfinish:
 		      pRaInfo->RAWaitingCounter, pRaInfo->RAPendingCounter));
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE,
 		     ODM_DBG_TRACE, ("<===== %s()\n", __func__));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void odm_ResetRaCounter_8188E(struct odm_ra_info *pRaInfo)
-{
+अटल व्योम odm_ResetRaCounter_8188E(काष्ठा odm_ra_info *pRaInfo)
+अणु
 	u8 RateID;
 
 	RateID = pRaInfo->DecisionRate;
@@ -241,48 +242,48 @@ static void odm_ResetRaCounter_8188E(struct odm_ra_info *pRaInfo)
 			  N_THRESHOLD_LOW[RateID]) >> 1;
 	pRaInfo->NscDown = (N_THRESHOLD_HIGH[RateID] +
 			    N_THRESHOLD_LOW[RateID]) >> 1;
-}
+पूर्ण
 
-static void odm_RateDecision_8188E(struct odm_dm_struct *dm_odm,
-				   struct odm_ra_info *pRaInfo)
-{
+अटल व्योम odm_RateDecision_8188E(काष्ठा odm_dm_काष्ठा *dm_odm,
+				   काष्ठा odm_ra_info *pRaInfo)
+अणु
 	u8 RateID = 0, RtyPtID = 0, PenaltyID1 = 0, PenaltyID2 = 0, i = 0;
 	/* u32 pool_retry; */
-	static u8 DynamicTxRPTTimingCounter;
+	अटल u8 DynamicTxRPTTimingCounter;
 
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     ("=====>%s()\n", __func__));
 
-	if (pRaInfo->Active && (pRaInfo->TOTAL > 0)) { /*  STA used and data packet exits */
-		if ((pRaInfo->RssiStaRA < (pRaInfo->PreRssiStaRA - 3)) ||
-		    (pRaInfo->RssiStaRA > (pRaInfo->PreRssiStaRA + 3))) {
+	अगर (pRaInfo->Active && (pRaInfo->TOTAL > 0)) अणु /*  STA used and data packet निकासs */
+		अगर ((pRaInfo->RssiStaRA < (pRaInfo->PreRssiStaRA - 3)) ||
+		    (pRaInfo->RssiStaRA > (pRaInfo->PreRssiStaRA + 3))) अणु
 			pRaInfo->RAWaitingCounter = 0;
 			pRaInfo->RAPendingCounter = 0;
-		}
+		पूर्ण
 		/*  Start RA decision */
-		if (pRaInfo->PreRate > pRaInfo->HighestRate)
+		अगर (pRaInfo->PreRate > pRaInfo->HighestRate)
 			RateID = pRaInfo->HighestRate;
-		else
+		अन्यथा
 			RateID = pRaInfo->PreRate;
-		if (pRaInfo->RssiStaRA > RSSI_THRESHOLD[RateID])
+		अगर (pRaInfo->RssiStaRA > RSSI_THRESHOLD[RateID])
 			RtyPtID = 0;
-		else
+		अन्यथा
 			RtyPtID = 1;
 		PenaltyID1 = RETRY_PENALTY_IDX[RtyPtID][RateID]; /* TODO by page */
 
 		ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 			     (" NscDown init is %d\n", pRaInfo->NscDown));
 
-		for (i = 0 ; i <= 4 ; i++)
+		क्रम (i = 0 ; i <= 4 ; i++)
 			pRaInfo->NscDown += pRaInfo->RTY[i] * RETRY_PENALTY[PenaltyID1][i];
 
 		ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 			     (" NscDown is %d, total*penalty[5] is %d\n", pRaInfo->NscDown,
 			      (pRaInfo->TOTAL * RETRY_PENALTY[PenaltyID1][5])));
 
-		if (pRaInfo->NscDown > (pRaInfo->TOTAL * RETRY_PENALTY[PenaltyID1][5]))
+		अगर (pRaInfo->NscDown > (pRaInfo->TOTAL * RETRY_PENALTY[PenaltyID1][5]))
 			pRaInfo->NscDown -= pRaInfo->TOTAL * RETRY_PENALTY[PenaltyID1][5];
-		else
+		अन्यथा
 			pRaInfo->NscDown = 0;
 
 		/*  rate up */
@@ -290,196 +291,196 @@ static void odm_RateDecision_8188E(struct odm_dm_struct *dm_odm,
 		ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 			     (" NscUp init is %d\n", pRaInfo->NscUp));
 
-		for (i = 0 ; i <= 4 ; i++)
+		क्रम (i = 0 ; i <= 4 ; i++)
 			pRaInfo->NscUp += pRaInfo->RTY[i] * RETRY_PENALTY[PenaltyID2][i];
 
 		ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 			     ("NscUp is %d, total*up[5] is %d\n",
 			     pRaInfo->NscUp, (pRaInfo->TOTAL * RETRY_PENALTY[PenaltyID2][5])));
 
-		if (pRaInfo->NscUp > (pRaInfo->TOTAL * RETRY_PENALTY[PenaltyID2][5]))
+		अगर (pRaInfo->NscUp > (pRaInfo->TOTAL * RETRY_PENALTY[PenaltyID2][5]))
 			pRaInfo->NscUp -= pRaInfo->TOTAL * RETRY_PENALTY[PenaltyID2][5];
-		else
+		अन्यथा
 			pRaInfo->NscUp = 0;
 
 		ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE | ODM_COMP_INIT, ODM_DBG_LOUD,
 			     (" RssiStaRa = %d RtyPtID =%d PenaltyID1 = 0x%x  PenaltyID2 = 0x%x RateID =%d NscDown =%d NscUp =%d SGI =%d\n",
 			     pRaInfo->RssiStaRA, RtyPtID, PenaltyID1, PenaltyID2, RateID, pRaInfo->NscDown, pRaInfo->NscUp, pRaInfo->RateSGI));
-		if ((pRaInfo->NscDown < N_THRESHOLD_LOW[RateID]) ||
+		अगर ((pRaInfo->NscDown < N_THRESHOLD_LOW[RateID]) ||
 		    (pRaInfo->DROP > DROPING_NECESSARY[RateID]))
 			odm_RateDown_8188E(dm_odm, pRaInfo);
-		else if (pRaInfo->NscUp > N_THRESHOLD_HIGH[RateID])
+		अन्यथा अगर (pRaInfo->NscUp > N_THRESHOLD_HIGH[RateID])
 			odm_RateUp_8188E(dm_odm, pRaInfo);
 
-		if (pRaInfo->DecisionRate > pRaInfo->HighestRate)
+		अगर (pRaInfo->DecisionRate > pRaInfo->HighestRate)
 			pRaInfo->DecisionRate = pRaInfo->HighestRate;
 
-		if ((pRaInfo->DecisionRate) == (pRaInfo->PreRate))
+		अगर ((pRaInfo->DecisionRate) == (pRaInfo->PreRate))
 			DynamicTxRPTTimingCounter += 1;
-		else
+		अन्यथा
 			DynamicTxRPTTimingCounter = 0;
 
-		if (DynamicTxRPTTimingCounter >= 4) {
+		अगर (DynamicTxRPTTimingCounter >= 4) अणु
 			odm_SetTxRPTTiming_8188E(dm_odm, pRaInfo, 1);
 			ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE,
 				     ODM_DBG_LOUD, ("<===== Rate don't change 4 times, Extend RPT Timing\n"));
 			DynamicTxRPTTimingCounter = 0;
-		}
+		पूर्ण
 
 		pRaInfo->PreRate = pRaInfo->DecisionRate;  /* YJ, add, 120120 */
 
 		odm_ResetRaCounter_8188E(pRaInfo);
-	}
+	पूर्ण
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     ("<===== %s()\n", __func__));
-}
+पूर्ण
 
-static int odm_ARFBRefresh_8188E(struct odm_dm_struct *dm_odm, struct odm_ra_info *pRaInfo)
-{  /*  Wilson 2011/10/26 */
-	struct adapter *adapt = dm_odm->Adapter;
+अटल पूर्णांक odm_ARFBRefresh_8188E(काष्ठा odm_dm_काष्ठा *dm_odm, काष्ठा odm_ra_info *pRaInfo)
+अणु  /*  Wilson 2011/10/26 */
+	काष्ठा adapter *adapt = dm_odm->Adapter;
 	u32 MaskFromReg;
 	s8 i;
 
-	switch (pRaInfo->RateID) {
-	case RATR_INX_WIRELESS_NGB:
+	चयन (pRaInfo->RateID) अणु
+	हाल RATR_INX_WIRELESS_NGB:
 		pRaInfo->RAUseRate = pRaInfo->RateMask & 0x0f8ff015;
-		break;
-	case RATR_INX_WIRELESS_NG:
+		अवरोध;
+	हाल RATR_INX_WIRELESS_NG:
 		pRaInfo->RAUseRate = pRaInfo->RateMask & 0x0f8ff010;
-		break;
-	case RATR_INX_WIRELESS_NB:
+		अवरोध;
+	हाल RATR_INX_WIRELESS_NB:
 		pRaInfo->RAUseRate = pRaInfo->RateMask & 0x0f8ff005;
-		break;
-	case RATR_INX_WIRELESS_N:
+		अवरोध;
+	हाल RATR_INX_WIRELESS_N:
 		pRaInfo->RAUseRate = pRaInfo->RateMask & 0x0f8ff000;
-		break;
-	case RATR_INX_WIRELESS_GB:
+		अवरोध;
+	हाल RATR_INX_WIRELESS_GB:
 		pRaInfo->RAUseRate = pRaInfo->RateMask & 0x00000ff5;
-		break;
-	case RATR_INX_WIRELESS_G:
+		अवरोध;
+	हाल RATR_INX_WIRELESS_G:
 		pRaInfo->RAUseRate = pRaInfo->RateMask & 0x00000ff0;
-		break;
-	case RATR_INX_WIRELESS_B:
+		अवरोध;
+	हाल RATR_INX_WIRELESS_B:
 		pRaInfo->RAUseRate = pRaInfo->RateMask & 0x0000000d;
-		break;
-	case 12:
-		MaskFromReg = usb_read32(adapt, REG_ARFR0);
+		अवरोध;
+	हाल 12:
+		MaskFromReg = usb_पढ़ो32(adapt, REG_ARFR0);
 		pRaInfo->RAUseRate = pRaInfo->RateMask & MaskFromReg;
-		break;
-	case 13:
-		MaskFromReg = usb_read32(adapt, REG_ARFR1);
+		अवरोध;
+	हाल 13:
+		MaskFromReg = usb_पढ़ो32(adapt, REG_ARFR1);
 		pRaInfo->RAUseRate = pRaInfo->RateMask & MaskFromReg;
-		break;
-	case 14:
-		MaskFromReg = usb_read32(adapt, REG_ARFR2);
+		अवरोध;
+	हाल 14:
+		MaskFromReg = usb_पढ़ो32(adapt, REG_ARFR2);
 		pRaInfo->RAUseRate = pRaInfo->RateMask & MaskFromReg;
-		break;
-	case 15:
-		MaskFromReg = usb_read32(adapt, REG_ARFR3);
+		अवरोध;
+	हाल 15:
+		MaskFromReg = usb_पढ़ो32(adapt, REG_ARFR3);
 		pRaInfo->RAUseRate = pRaInfo->RateMask & MaskFromReg;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pRaInfo->RAUseRate = (pRaInfo->RateMask);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	/*  Highest rate */
-	if (pRaInfo->RAUseRate) {
-		for (i = RATESIZE; i >= 0; i--) {
-			if (pRaInfo->RAUseRate & BIT(i)) {
+	अगर (pRaInfo->RAUseRate) अणु
+		क्रम (i = RATESIZE; i >= 0; i--) अणु
+			अगर (pRaInfo->RAUseRate & BIT(i)) अणु
 				pRaInfo->HighestRate = i;
-				break;
-			}
-		}
-	} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pRaInfo->HighestRate = 0;
-	}
+	पूर्ण
 	/*  Lowest rate */
-	if (pRaInfo->RAUseRate) {
-		for (i = 0; i < RATESIZE; i++) {
-			if ((pRaInfo->RAUseRate) & BIT(i)) {
+	अगर (pRaInfo->RAUseRate) अणु
+		क्रम (i = 0; i < RATESIZE; i++) अणु
+			अगर ((pRaInfo->RAUseRate) & BIT(i)) अणु
 				pRaInfo->LowestRate = i;
-				break;
-			}
-		}
-	} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pRaInfo->LowestRate = 0;
-	}
+	पूर्ण
 
-	if (pRaInfo->HighestRate > 0x13)
+	अगर (pRaInfo->HighestRate > 0x13)
 		pRaInfo->PTModeSS = 3;
-	else if (pRaInfo->HighestRate > 0x0b)
+	अन्यथा अगर (pRaInfo->HighestRate > 0x0b)
 		pRaInfo->PTModeSS = 2;
-	else if (pRaInfo->HighestRate > 0x03)
+	अन्यथा अगर (pRaInfo->HighestRate > 0x03)
 		pRaInfo->PTModeSS = 1;
-	else
+	अन्यथा
 		pRaInfo->PTModeSS = 0;
 
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 		     ("ODM_ARFBRefresh_8188E(): PTModeSS =%d\n", pRaInfo->PTModeSS));
 
-	if (pRaInfo->DecisionRate > pRaInfo->HighestRate)
+	अगर (pRaInfo->DecisionRate > pRaInfo->HighestRate)
 		pRaInfo->DecisionRate = pRaInfo->HighestRate;
 
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 		     ("ODM_ARFBRefresh_8188E(): RateID =%d RateMask =%8.8x RAUseRate =%8.8x HighestRate =%d, DecisionRate =%d\n",
 		     pRaInfo->RateID, pRaInfo->RateMask, pRaInfo->RAUseRate, pRaInfo->HighestRate, pRaInfo->DecisionRate));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void odm_PTTryState_8188E(struct odm_ra_info *pRaInfo)
-{
+अटल व्योम odm_PTTryState_8188E(काष्ठा odm_ra_info *pRaInfo)
+अणु
 	pRaInfo->PTTryState = 0;
-	switch (pRaInfo->PTModeSS) {
-	case 3:
-		if (pRaInfo->DecisionRate >= 0x19)
+	चयन (pRaInfo->PTModeSS) अणु
+	हाल 3:
+		अगर (pRaInfo->DecisionRate >= 0x19)
 			pRaInfo->PTTryState = 1;
-		break;
-	case 2:
-		if (pRaInfo->DecisionRate >= 0x11)
+		अवरोध;
+	हाल 2:
+		अगर (pRaInfo->DecisionRate >= 0x11)
 			pRaInfo->PTTryState = 1;
-		break;
-	case 1:
-		if (pRaInfo->DecisionRate >= 0x0a)
+		अवरोध;
+	हाल 1:
+		अगर (pRaInfo->DecisionRate >= 0x0a)
 			pRaInfo->PTTryState = 1;
-		break;
-	case 0:
-		if (pRaInfo->DecisionRate >= 0x03)
+		अवरोध;
+	हाल 0:
+		अगर (pRaInfo->DecisionRate >= 0x03)
 			pRaInfo->PTTryState = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pRaInfo->PTTryState = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (pRaInfo->RssiStaRA < 48) {
+	अगर (pRaInfo->RssiStaRA < 48) अणु
 		pRaInfo->PTStage = 0;
-	} else if (pRaInfo->PTTryState == 1) {
-		if ((pRaInfo->PTStopCount >= 10) ||
+	पूर्ण अन्यथा अगर (pRaInfo->PTTryState == 1) अणु
+		अगर ((pRaInfo->PTStopCount >= 10) ||
 		    (pRaInfo->PTPreRssi > pRaInfo->RssiStaRA + 5) ||
 		    (pRaInfo->PTPreRssi < pRaInfo->RssiStaRA - 5) ||
-		    (pRaInfo->DecisionRate != pRaInfo->PTPreRate)) {
-			if (pRaInfo->PTStage == 0)
+		    (pRaInfo->DecisionRate != pRaInfo->PTPreRate)) अणु
+			अगर (pRaInfo->PTStage == 0)
 				pRaInfo->PTStage = 1;
-			else if (pRaInfo->PTStage == 1)
+			अन्यथा अगर (pRaInfo->PTStage == 1)
 				pRaInfo->PTStage = 3;
-			else
+			अन्यथा
 				pRaInfo->PTStage = 5;
 
 			pRaInfo->PTPreRssi = pRaInfo->RssiStaRA;
 			pRaInfo->PTStopCount = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			pRaInfo->RAstage = 0;
 			pRaInfo->PTStopCount++;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pRaInfo->PTStage = 0;
 		pRaInfo->RAstage = 0;
-	}
+	पूर्ण
 	pRaInfo->PTPreRate = pRaInfo->DecisionRate;
-}
+पूर्ण
 
-static void odm_PTDecision_8188E(struct odm_ra_info *pRaInfo)
-{
+अटल व्योम odm_PTDecision_8188E(काष्ठा odm_ra_info *pRaInfo)
+अणु
 	u8 j;
 	u8 temp_stage;
 	u32 numsc;
@@ -488,66 +489,66 @@ static void odm_PTDecision_8188E(struct odm_ra_info *pRaInfo)
 
 	numsc  = 0;
 	num_total = pRaInfo->TOTAL * PT_PENALTY[5];
-	for (j = 0; j <= 4; j++) {
+	क्रम (j = 0; j <= 4; j++) अणु
 		numsc += pRaInfo->RTY[j] * PT_PENALTY[j];
-		if (numsc > num_total)
-			break;
-	}
+		अगर (numsc > num_total)
+			अवरोध;
+	पूर्ण
 
 	j >>= 1;
 	temp_stage = (pRaInfo->PTStage + 1) >> 1;
-	if (temp_stage > j)
+	अगर (temp_stage > j)
 		stage_id = temp_stage - j;
-	else
+	अन्यथा
 		stage_id = 0;
 
 	pRaInfo->PTSmoothFactor = (pRaInfo->PTSmoothFactor >> 1) +
 				  (pRaInfo->PTSmoothFactor >> 2) +
 				  stage_id * 16 + 2;
-	if (pRaInfo->PTSmoothFactor > 192)
+	अगर (pRaInfo->PTSmoothFactor > 192)
 		pRaInfo->PTSmoothFactor = 192;
 	stage_id = pRaInfo->PTSmoothFactor >> 6;
 	temp_stage = stage_id * 2;
-	if (temp_stage != 0)
+	अगर (temp_stage != 0)
 		temp_stage -= 1;
-	if (pRaInfo->DROP > 3)
+	अगर (pRaInfo->DROP > 3)
 		temp_stage = 0;
 	pRaInfo->PTStage = temp_stage;
-}
+पूर्ण
 
-static void odm_RATxRPTTimerSetting(struct odm_dm_struct *dm_odm,
+अटल व्योम odm_RATxRPTTimerSetting(काष्ठा odm_dm_काष्ठा *dm_odm,
 				    u16 minRptTime)
-{
+अणु
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     (" =====>%s()\n", __func__));
 
-	if (dm_odm->CurrminRptTime != minRptTime) {
+	अगर (dm_odm->CurrminRptTime != minRptTime) अणु
 		ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 			     (" CurrminRptTime = 0x%04x minRptTime = 0x%04x\n", dm_odm->CurrminRptTime, minRptTime));
-		rtw_rpt_timer_cfg_cmd(dm_odm->Adapter, minRptTime);
+		rtw_rpt_समयr_cfg_cmd(dm_odm->Adapter, minRptTime);
 		dm_odm->CurrminRptTime = minRptTime;
-	}
+	पूर्ण
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     (" <===== %s()\n", __func__));
-}
+पूर्ण
 
-int ODM_RAInfo_Init(struct odm_dm_struct *dm_odm, u8 macid)
-{
-	struct odm_ra_info *pRaInfo = &dm_odm->RAInfo[macid];
+पूर्णांक ODM_RAInfo_Init(काष्ठा odm_dm_काष्ठा *dm_odm, u8 macid)
+अणु
+	काष्ठा odm_ra_info *pRaInfo = &dm_odm->RAInfo[macid];
 	u8 WirelessMode = 0xFF; /* invalid value */
 	u8 max_rate_idx = 0x13; /* MCS7 */
 
-	if (dm_odm->pWirelessMode)
+	अगर (dm_odm->pWirelessMode)
 		WirelessMode = *dm_odm->pWirelessMode;
 
-	if (WirelessMode != 0xFF) {
-		if (WirelessMode & ODM_WM_N24G)
+	अगर (WirelessMode != 0xFF) अणु
+		अगर (WirelessMode & ODM_WM_N24G)
 			max_rate_idx = 0x13;
-		else if (WirelessMode & ODM_WM_G)
+		अन्यथा अगर (WirelessMode & ODM_WM_G)
 			max_rate_idx = 0x0b;
-		else if (WirelessMode & ODM_WM_B)
+		अन्यथा अगर (WirelessMode & ODM_WM_B)
 			max_rate_idx = 0x03;
-	}
+	पूर्ण
 
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 		     ("%s(): WirelessMode:0x%08x , max_raid_idx:0x%02x\n",
@@ -579,68 +580,68 @@ int ODM_RAInfo_Init(struct odm_dm_struct *dm_odm, u8 macid)
 	pRaInfo->RAPendingCounter = 0;
 	pRaInfo->PTActive = 1;   /*  Active when this STA is use */
 	pRaInfo->PTTryState = 0;
-	pRaInfo->PTStage = 5; /*  Need to fill into HW_PWR_STATUS */
+	pRaInfo->PTStage = 5; /*  Need to fill पूर्णांकo HW_PWR_STATUS */
 	pRaInfo->PTSmoothFactor = 192;
 	pRaInfo->PTStopCount = 0;
 	pRaInfo->PTPreRate = 0;
 	pRaInfo->PTPreRssi = 0;
 	pRaInfo->PTModeSS = 0;
 	pRaInfo->RAstage = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ODM_RAInfo_Init_all(struct odm_dm_struct *dm_odm)
-{
+पूर्णांक ODM_RAInfo_Init_all(काष्ठा odm_dm_काष्ठा *dm_odm)
+अणु
 	u8 macid = 0;
 
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD, ("=====>\n"));
 	dm_odm->CurrminRptTime = 0;
 
-	for (macid = 0; macid < ODM_ASSOCIATE_ENTRY_NUM; macid++)
+	क्रम (macid = 0; macid < ODM_ASSOCIATE_ENTRY_NUM; macid++)
 		ODM_RAInfo_Init(dm_odm, macid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u8 ODM_RA_GetShortGI_8188E(struct odm_dm_struct *dm_odm, u8 macid)
-{
-	if ((!dm_odm) || (macid >= ASSOCIATE_ENTRY_NUM))
-		return 0;
+u8 ODM_RA_GetShortGI_8188E(काष्ठा odm_dm_काष्ठा *dm_odm, u8 macid)
+अणु
+	अगर ((!dm_odm) || (macid >= ASSOCIATE_ENTRY_NUM))
+		वापस 0;
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     ("macid =%d SGI =%d\n", macid, dm_odm->RAInfo[macid].RateSGI));
-	return dm_odm->RAInfo[macid].RateSGI;
-}
+	वापस dm_odm->RAInfo[macid].RateSGI;
+पूर्ण
 
-u8 ODM_RA_GetDecisionRate_8188E(struct odm_dm_struct *dm_odm, u8 macid)
-{
+u8 ODM_RA_GetDecisionRate_8188E(काष्ठा odm_dm_काष्ठा *dm_odm, u8 macid)
+अणु
 	u8 DecisionRate = 0;
 
-	if ((!dm_odm) || (macid >= ASSOCIATE_ENTRY_NUM))
-		return 0;
+	अगर ((!dm_odm) || (macid >= ASSOCIATE_ENTRY_NUM))
+		वापस 0;
 	DecisionRate = dm_odm->RAInfo[macid].DecisionRate;
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     (" macid =%d DecisionRate = 0x%x\n", macid, DecisionRate));
-	return DecisionRate;
-}
+	वापस DecisionRate;
+पूर्ण
 
-u8 ODM_RA_GetHwPwrStatus_8188E(struct odm_dm_struct *dm_odm, u8 macid)
-{
+u8 ODM_RA_GetHwPwrStatus_8188E(काष्ठा odm_dm_काष्ठा *dm_odm, u8 macid)
+अणु
 	u8 PTStage = 5;
 
-	if ((!dm_odm) || (macid >= ASSOCIATE_ENTRY_NUM))
-		return 0;
+	अगर ((!dm_odm) || (macid >= ASSOCIATE_ENTRY_NUM))
+		वापस 0;
 	PTStage = dm_odm->RAInfo[macid].PTStage;
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     ("macid =%d PTStage = 0x%x\n", macid, PTStage));
-	return PTStage;
-}
+	वापस PTStage;
+पूर्ण
 
-void ODM_RA_UpdateRateInfo_8188E(struct odm_dm_struct *dm_odm, u8 macid, u8 RateID, u32 RateMask, u8 SGIEnable)
-{
-	struct odm_ra_info *pRaInfo = NULL;
+व्योम ODM_RA_UpdateRateInfo_8188E(काष्ठा odm_dm_काष्ठा *dm_odm, u8 macid, u8 RateID, u32 RateMask, u8 SGIEnable)
+अणु
+	काष्ठा odm_ra_info *pRaInfo = शून्य;
 
-	if ((!dm_odm) || (macid >= ASSOCIATE_ENTRY_NUM))
-		return;
+	अगर ((!dm_odm) || (macid >= ASSOCIATE_ENTRY_NUM))
+		वापस;
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 		     ("macid =%d RateID = 0x%x RateMask = 0x%x SGIEnable =%d\n",
 		     macid, RateID, RateMask, SGIEnable));
@@ -650,33 +651,33 @@ void ODM_RA_UpdateRateInfo_8188E(struct odm_dm_struct *dm_odm, u8 macid, u8 Rate
 	pRaInfo->RateMask = RateMask;
 	pRaInfo->SGIEnable = SGIEnable;
 	odm_ARFBRefresh_8188E(dm_odm, pRaInfo);
-}
+पूर्ण
 
-void ODM_RA_SetRSSI_8188E(struct odm_dm_struct *dm_odm, u8 macid, u8 Rssi)
-{
-	struct odm_ra_info *pRaInfo = NULL;
+व्योम ODM_RA_SetRSSI_8188E(काष्ठा odm_dm_काष्ठा *dm_odm, u8 macid, u8 Rssi)
+अणु
+	काष्ठा odm_ra_info *pRaInfo = शून्य;
 
-	if ((!dm_odm) || (macid >= ASSOCIATE_ENTRY_NUM))
-		return;
+	अगर ((!dm_odm) || (macid >= ASSOCIATE_ENTRY_NUM))
+		वापस;
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_TRACE,
 		     (" macid =%d Rssi =%d\n", macid, Rssi));
 
 	pRaInfo = &dm_odm->RAInfo[macid];
 	pRaInfo->RssiStaRA = Rssi;
-}
+पूर्ण
 
-void ODM_RA_Set_TxRPT_Time(struct odm_dm_struct *dm_odm, u16 minRptTime)
-{
-	struct adapter *adapt = dm_odm->Adapter;
+व्योम ODM_RA_Set_TxRPT_Time(काष्ठा odm_dm_काष्ठा *dm_odm, u16 minRptTime)
+अणु
+	काष्ठा adapter *adapt = dm_odm->Adapter;
 
-	usb_write16(adapt, REG_TX_RPT_TIME, minRptTime);
-}
+	usb_ग_लिखो16(adapt, REG_TX_RPT_TIME, minRptTime);
+पूर्ण
 
-void ODM_RA_TxRPT2Handle_8188E(struct odm_dm_struct *dm_odm, u8 *TxRPT_Buf, u16 TxRPT_Len, u32 macid_entry0, u32 macid_entry1)
-{
-	struct odm_ra_info *pRAInfo = NULL;
+व्योम ODM_RA_TxRPT2Handle_8188E(काष्ठा odm_dm_काष्ठा *dm_odm, u8 *TxRPT_Buf, u16 TxRPT_Len, u32 macid_entry0, u32 macid_entry1)
+अणु
+	काष्ठा odm_ra_info *pRAInfo = शून्य;
 	u8 MacId = 0;
-	u8 *pBuffer = NULL;
+	u8 *pBuffer = शून्य;
 	u32 valid = 0, ItemNum = 0;
 	u16 minRptTime = 0x927c;
 
@@ -687,16 +688,16 @@ void ODM_RA_TxRPT2Handle_8188E(struct odm_dm_struct *dm_odm, u8 *TxRPT_Buf, u16 
 	ItemNum = TxRPT_Len >> 3;
 	pBuffer = TxRPT_Buf;
 
-	do {
-		if (MacId >= ASSOCIATE_ENTRY_NUM)
+	करो अणु
+		अगर (MacId >= ASSOCIATE_ENTRY_NUM)
 			valid = 0;
-		else if (MacId >= 32)
+		अन्यथा अगर (MacId >= 32)
 			valid = (1 << (MacId - 32)) & macid_entry1;
-		else
+		अन्यथा
 			valid = (1 << MacId) & macid_entry0;
 
 		pRAInfo = &dm_odm->RAInfo[MacId];
-		if (valid) {
+		अगर (valid) अणु
 			pRAInfo->RTY[0] = (u16)GET_TX_REPORT_TYPE1_RERTY_0(pBuffer);
 			pRAInfo->RTY[1] = (u16)GET_TX_REPORT_TYPE1_RERTY_1(pBuffer);
 			pRAInfo->RTY[2] = (u16)GET_TX_REPORT_TYPE1_RERTY_2(pBuffer);
@@ -706,7 +707,7 @@ void ODM_RA_TxRPT2Handle_8188E(struct odm_dm_struct *dm_odm, u8 *TxRPT_Buf, u16 
 			pRAInfo->TOTAL = pRAInfo->RTY[0] + pRAInfo->RTY[1] +
 					 pRAInfo->RTY[2] + pRAInfo->RTY[3] +
 					 pRAInfo->RTY[4] + pRAInfo->DROP;
-			if (pRAInfo->TOTAL != 0) {
+			अगर (pRAInfo->TOTAL != 0) अणु
 				ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 					     ("macid =%d Total =%d R0 =%d R1 =%d R2 =%d R3 =%d R4 =%d D0 =%d valid0 =%x valid1 =%x\n",
 					     MacId, pRAInfo->TOTAL,
@@ -714,22 +715,22 @@ void ODM_RA_TxRPT2Handle_8188E(struct odm_dm_struct *dm_odm, u8 *TxRPT_Buf, u16 
 					     pRAInfo->RTY[2], pRAInfo->RTY[3],
 					     pRAInfo->RTY[4], pRAInfo->DROP,
 					     macid_entry0, macid_entry1));
-				if (pRAInfo->PTActive) {
-					if (pRAInfo->RAstage < 5)
+				अगर (pRAInfo->PTActive) अणु
+					अगर (pRAInfo->RAstage < 5)
 						odm_RateDecision_8188E(dm_odm, pRAInfo);
-					else if (pRAInfo->RAstage == 5) /*  Power training try state */
+					अन्यथा अगर (pRAInfo->RAstage == 5) /*  Power training try state */
 						odm_PTTryState_8188E(pRAInfo);
-					else /*  RAstage == 6 */
+					अन्यथा /*  RAstage == 6 */
 						odm_PTDecision_8188E(pRAInfo);
 
 					/*  Stage_RA counter */
-					if (pRAInfo->RAstage <= 5)
+					अगर (pRAInfo->RAstage <= 5)
 						pRAInfo->RAstage++;
-					else
+					अन्यथा
 						pRAInfo->RAstage = 0;
-				} else {
+				पूर्ण अन्यथा अणु
 					odm_RateDecision_8188E(dm_odm, pRAInfo);
-				}
+				पूर्ण
 				ODM_RT_TRACE(dm_odm, ODM_COMP_INIT, ODM_DBG_LOUD,
 					     ("macid =%d R0 =%d R1 =%d R2 =%d R3 =%d R4 =%d drop =%d valid0 =%x RateID =%d SGI =%d\n",
 					     MacId,
@@ -742,20 +743,20 @@ void ODM_RA_TxRPT2Handle_8188E(struct odm_dm_struct *dm_odm, u8 *TxRPT_Buf, u16 
 					     macid_entry0,
 					     pRAInfo->DecisionRate,
 					     pRAInfo->RateSGI));
-			} else {
+			पूर्ण अन्यथा अणु
 				ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD, (" TOTAL = 0!!!!\n"));
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (minRptTime > pRAInfo->RptTime)
+		अगर (minRptTime > pRAInfo->RptTime)
 			minRptTime = pRAInfo->RptTime;
 
 		pBuffer += TX_RPT2_ITEM_SIZE;
 		MacId++;
-	} while (MacId < ItemNum);
+	पूर्ण जबतक (MacId < ItemNum);
 
 	odm_RATxRPTTimerSetting(dm_odm, minRptTime);
 
 	ODM_RT_TRACE(dm_odm, ODM_COMP_RATE_ADAPTIVE, ODM_DBG_LOUD,
 		     ("<===== %s()\n", __func__));
-}
+पूर्ण

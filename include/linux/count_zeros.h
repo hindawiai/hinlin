@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* Count leading and trailing zeros functions
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _LINUX_BITOPS_COUNT_ZEROS_H_
-#define _LINUX_BITOPS_COUNT_ZEROS_H_
+#अगर_अघोषित _LINUX_BITOPS_COUNT_ZEROS_H_
+#घोषणा _LINUX_BITOPS_COUNT_ZEROS_H_
 
-#include <asm/bitops.h>
+#समावेश <यंत्र/bitops.h>
 
 /**
  * count_leading_zeros - Count the number of zeros from the MSB back
@@ -20,18 +21,18 @@
  * If only the LSB of @x is set, then the result is BITS_PER_LONG-1.
  * If @x is 0 then the result is COUNT_LEADING_ZEROS_0.
  */
-static inline int count_leading_zeros(unsigned long x)
-{
-	if (sizeof(x) == 4)
-		return BITS_PER_LONG - fls(x);
-	else
-		return BITS_PER_LONG - fls64(x);
-}
+अटल अंतरभूत पूर्णांक count_leading_zeros(अचिन्हित दीर्घ x)
+अणु
+	अगर (माप(x) == 4)
+		वापस BITS_PER_LONG - fls(x);
+	अन्यथा
+		वापस BITS_PER_LONG - fls64(x);
+पूर्ण
 
-#define COUNT_LEADING_ZEROS_0 BITS_PER_LONG
+#घोषणा COUNT_LEADING_ZEROS_0 BITS_PER_LONG
 
 /**
- * count_trailing_zeros - Count the number of zeros from the LSB forwards
+ * count_trailing_zeros - Count the number of zeros from the LSB क्रमwards
  * @x: The value
  *
  * Count the number of trailing zeros from the LSB going towards the MSB in @x.
@@ -40,14 +41,14 @@ static inline int count_leading_zeros(unsigned long x)
  * If only the MSB of @x is set, then the result is BITS_PER_LONG-1.
  * If @x is 0 then the result is COUNT_TRAILING_ZEROS_0.
  */
-static inline int count_trailing_zeros(unsigned long x)
-{
-#define COUNT_TRAILING_ZEROS_0 (-1)
+अटल अंतरभूत पूर्णांक count_trailing_zeros(अचिन्हित दीर्घ x)
+अणु
+#घोषणा COUNT_TRAILING_ZEROS_0 (-1)
 
-	if (sizeof(x) == 4)
-		return ffs(x);
-	else
-		return (x != 0) ? __ffs(x) : COUNT_TRAILING_ZEROS_0;
-}
+	अगर (माप(x) == 4)
+		वापस ffs(x);
+	अन्यथा
+		वापस (x != 0) ? __ffs(x) : COUNT_TRAILING_ZEROS_0;
+पूर्ण
 
-#endif /* _LINUX_BITOPS_COUNT_ZEROS_H_ */
+#पूर्ण_अगर /* _LINUX_BITOPS_COUNT_ZEROS_H_ */

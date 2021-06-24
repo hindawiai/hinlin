@@ -1,86 +1,87 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#include "i915_selftest.h"
+#समावेश "i915_selftest.h"
 
-#include "selftests/mock_gem_device.h"
+#समावेश "selftests/mock_gem_device.h"
 
-static int mock_phys_object(void *arg)
-{
-	struct drm_i915_private *i915 = arg;
-	struct drm_i915_gem_object *obj;
-	int err;
+अटल पूर्णांक mock_phys_object(व्योम *arg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा drm_i915_gem_object *obj;
+	पूर्णांक err;
 
 	/* Create an object and bind it to a contiguous set of physical pages,
 	 * i.e. exercise the i915_gem_object_phys API.
 	 */
 
 	obj = i915_gem_object_create_shmem(i915, PAGE_SIZE);
-	if (IS_ERR(obj)) {
+	अगर (IS_ERR(obj)) अणु
 		err = PTR_ERR(obj);
 		pr_err("i915_gem_object_create failed, err=%d\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!i915_gem_object_has_struct_page(obj)) {
+	अगर (!i915_gem_object_has_काष्ठा_page(obj)) अणु
 		err = -EINVAL;
 		pr_err("shmem has no struct page\n");
-		goto out_obj;
-	}
+		जाओ out_obj;
+	पूर्ण
 
-	i915_gem_object_lock(obj, NULL);
+	i915_gem_object_lock(obj, शून्य);
 	err = i915_gem_object_attach_phys(obj, PAGE_SIZE);
 	i915_gem_object_unlock(obj);
-	if (err) {
+	अगर (err) अणु
 		pr_err("i915_gem_object_attach_phys failed, err=%d\n", err);
-		goto out_obj;
-	}
+		जाओ out_obj;
+	पूर्ण
 
-	if (i915_gem_object_has_struct_page(obj)) {
+	अगर (i915_gem_object_has_काष्ठा_page(obj)) अणु
 		pr_err("i915_gem_object_attach_phys did not create a phys object\n");
 		err = -EINVAL;
-		goto out_obj;
-	}
+		जाओ out_obj;
+	पूर्ण
 
-	if (!atomic_read(&obj->mm.pages_pin_count)) {
+	अगर (!atomic_पढ़ो(&obj->mm.pages_pin_count)) अणु
 		pr_err("i915_gem_object_attach_phys did not pin its phys pages\n");
 		err = -EINVAL;
-		goto out_obj;
-	}
+		जाओ out_obj;
+	पूर्ण
 
-	/* Make the object dirty so that put_pages must do copy back the data */
-	i915_gem_object_lock(obj, NULL);
-	err = i915_gem_object_set_to_gtt_domain(obj, true);
+	/* Make the object dirty so that put_pages must करो copy back the data */
+	i915_gem_object_lock(obj, शून्य);
+	err = i915_gem_object_set_to_gtt_करोमुख्य(obj, true);
 	i915_gem_object_unlock(obj);
-	if (err) {
+	अगर (err) अणु
 		pr_err("i915_gem_object_set_to_gtt_domain failed with err=%d\n",
 		       err);
-		goto out_obj;
-	}
+		जाओ out_obj;
+	पूर्ण
 
 out_obj:
 	i915_gem_object_put(obj);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int i915_gem_phys_mock_selftests(void)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक i915_gem_phys_mock_selftests(व्योम)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(mock_phys_object),
-	};
-	struct drm_i915_private *i915;
-	int err;
+	पूर्ण;
+	काष्ठा drm_i915_निजी *i915;
+	पूर्णांक err;
 
 	i915 = mock_gem_device();
-	if (!i915)
-		return -ENOMEM;
+	अगर (!i915)
+		वापस -ENOMEM;
 
 	err = i915_subtests(tests, i915);
 
 	mock_destroy_device(i915);
-	return err;
-}
+	वापस err;
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * MIPS accelerated ChaCha and XChaCha stream ciphers,
  * including ChaCha20 (RFC7539)
@@ -6,64 +7,64 @@
  * Copyright (C) 2019 Linaro, Ltd. <ard.biesheuvel@linaro.org>
  */
 
-#include <asm/byteorder.h>
-#include <crypto/algapi.h>
-#include <crypto/internal/chacha.h>
-#include <crypto/internal/skcipher.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/पूर्णांकernal/chacha.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-asmlinkage void chacha_crypt_arch(u32 *state, u8 *dst, const u8 *src,
-				  unsigned int bytes, int nrounds);
+यंत्रlinkage व्योम chacha_crypt_arch(u32 *state, u8 *dst, स्थिर u8 *src,
+				  अचिन्हित पूर्णांक bytes, पूर्णांक nrounds);
 EXPORT_SYMBOL(chacha_crypt_arch);
 
-asmlinkage void hchacha_block_arch(const u32 *state, u32 *stream, int nrounds);
+यंत्रlinkage व्योम hchacha_block_arch(स्थिर u32 *state, u32 *stream, पूर्णांक nrounds);
 EXPORT_SYMBOL(hchacha_block_arch);
 
-void chacha_init_arch(u32 *state, const u32 *key, const u8 *iv)
-{
+व्योम chacha_init_arch(u32 *state, स्थिर u32 *key, स्थिर u8 *iv)
+अणु
 	chacha_init_generic(state, key, iv);
-}
+पूर्ण
 EXPORT_SYMBOL(chacha_init_arch);
 
-static int chacha_mips_stream_xor(struct skcipher_request *req,
-				  const struct chacha_ctx *ctx, const u8 *iv)
-{
-	struct skcipher_walk walk;
+अटल पूर्णांक chacha_mips_stream_xor(काष्ठा skcipher_request *req,
+				  स्थिर काष्ठा chacha_ctx *ctx, स्थिर u8 *iv)
+अणु
+	काष्ठा skcipher_walk walk;
 	u32 state[16];
-	int err;
+	पूर्णांक err;
 
 	err = skcipher_walk_virt(&walk, req, false);
 
 	chacha_init_generic(state, ctx->key, iv);
 
-	while (walk.nbytes > 0) {
-		unsigned int nbytes = walk.nbytes;
+	जबतक (walk.nbytes > 0) अणु
+		अचिन्हित पूर्णांक nbytes = walk.nbytes;
 
-		if (nbytes < walk.total)
-			nbytes = round_down(nbytes, walk.stride);
+		अगर (nbytes < walk.total)
+			nbytes = round_करोwn(nbytes, walk.stride);
 
 		chacha_crypt(state, walk.dst.virt.addr, walk.src.virt.addr,
 			     nbytes, ctx->nrounds);
-		err = skcipher_walk_done(&walk, walk.nbytes - nbytes);
-	}
+		err = skcipher_walk_करोne(&walk, walk.nbytes - nbytes);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int chacha_mips(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक chacha_mips(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	return chacha_mips_stream_xor(req, ctx, req->iv);
-}
+	वापस chacha_mips_stream_xor(req, ctx, req->iv);
+पूर्ण
 
-static int xchacha_mips(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct chacha_ctx subctx;
+अटल पूर्णांक xchacha_mips(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा chacha_ctx subctx;
 	u32 state[16];
 	u8 real_iv[16];
 
@@ -72,18 +73,18 @@ static int xchacha_mips(struct skcipher_request *req)
 	hchacha_block(state, subctx.key, ctx->nrounds);
 	subctx.nrounds = ctx->nrounds;
 
-	memcpy(&real_iv[0], req->iv + 24, 8);
-	memcpy(&real_iv[8], req->iv + 16, 8);
-	return chacha_mips_stream_xor(req, &subctx, real_iv);
-}
+	स_नकल(&real_iv[0], req->iv + 24, 8);
+	स_नकल(&real_iv[8], req->iv + 16, 8);
+	वापस chacha_mips_stream_xor(req, &subctx, real_iv);
+पूर्ण
 
-static struct skcipher_alg algs[] = {
-	{
+अटल काष्ठा skcipher_alg algs[] = अणु
+	अणु
 		.base.cra_name		= "chacha20",
 		.base.cra_driver_name	= "chacha20-mips",
 		.base.cra_priority	= 200,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -93,12 +94,12 @@ static struct skcipher_alg algs[] = {
 		.setkey			= chacha20_setkey,
 		.encrypt		= chacha_mips,
 		.decrypt		= chacha_mips,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "xchacha20",
 		.base.cra_driver_name	= "xchacha20-mips",
 		.base.cra_priority	= 200,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -108,12 +109,12 @@ static struct skcipher_alg algs[] = {
 		.setkey			= chacha20_setkey,
 		.encrypt		= xchacha_mips,
 		.decrypt		= xchacha_mips,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "xchacha12",
 		.base.cra_driver_name	= "xchacha12-mips",
 		.base.cra_priority	= 200,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -123,23 +124,23 @@ static struct skcipher_alg algs[] = {
 		.setkey			= chacha12_setkey,
 		.encrypt		= xchacha_mips,
 		.decrypt		= xchacha_mips,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init chacha_simd_mod_init(void)
-{
-	return IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER) ?
-		crypto_register_skciphers(algs, ARRAY_SIZE(algs)) : 0;
-}
+अटल पूर्णांक __init chacha_simd_mod_init(व्योम)
+अणु
+	वापस IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER) ?
+		crypto_रेजिस्टर_skciphers(algs, ARRAY_SIZE(algs)) : 0;
+पूर्ण
 
-static void __exit chacha_simd_mod_fini(void)
-{
-	if (IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER))
-		crypto_unregister_skciphers(algs, ARRAY_SIZE(algs));
-}
+अटल व्योम __निकास chacha_simd_mod_fini(व्योम)
+अणु
+	अगर (IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER))
+		crypto_unरेजिस्टर_skciphers(algs, ARRAY_SIZE(algs));
+पूर्ण
 
 module_init(chacha_simd_mod_init);
-module_exit(chacha_simd_mod_fini);
+module_निकास(chacha_simd_mod_fini);
 
 MODULE_DESCRIPTION("ChaCha and XChaCha stream ciphers (MIPS accelerated)");
 MODULE_AUTHOR("Ard Biesheuvel <ard.biesheuvel@linaro.org>");

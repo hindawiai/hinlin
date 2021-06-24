@@ -1,77 +1,78 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  Copyright 2003-2005 Red Hat, Inc.  All rights reserved.
  *  Copyright 2003-2005 Jeff Garzik
  *
- *  libata documentation is available via 'make {ps|pdf}docs',
+ *  libata करोcumentation is available via 'make {ps|pdf}docs',
  *  as Documentation/driver-api/libata.rst
  */
 
-#ifndef __LINUX_LIBATA_H__
-#define __LINUX_LIBATA_H__
+#अगर_अघोषित __LINUX_LIBATA_H__
+#घोषणा __LINUX_LIBATA_H__
 
-#include <linux/delay.h>
-#include <linux/jiffies.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/scatterlist.h>
-#include <linux/io.h>
-#include <linux/ata.h>
-#include <linux/workqueue.h>
-#include <scsi/scsi_host.h>
-#include <linux/acpi.h>
-#include <linux/cdrom.h>
-#include <linux/sched.h>
-#include <linux/async.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ata.h>
+#समावेश <linux/workqueue.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/cdrom.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/async.h>
 
 /*
- * Define if arch has non-standard setup.  This is a _PCI_ standard
+ * Define अगर arch has non-standard setup.  This is a _PCI_ standard
  * not a legacy or ISA standard.
  */
-#ifdef CONFIG_ATA_NONSTANDARD
-#include <asm/libata-portmap.h>
-#else
-#define ATA_PRIMARY_IRQ(dev)	14
-#define ATA_SECONDARY_IRQ(dev)	15
-#endif
+#अगर_घोषित CONFIG_ATA_NONSTANDARD
+#समावेश <यंत्र/libata-porपंचांगap.h>
+#अन्यथा
+#घोषणा ATA_PRIMARY_IRQ(dev)	14
+#घोषणा ATA_SECONDARY_IRQ(dev)	15
+#पूर्ण_अगर
 
 /*
- * compile-time options: to be removed as soon as all the drivers are
+ * compile-समय options: to be हटाओd as soon as all the drivers are
  * converted to the new debugging mechanism
  */
-#undef ATA_DEBUG		/* debugging output */
-#undef ATA_VERBOSE_DEBUG	/* yet more debugging output */
-#undef ATA_IRQ_TRAP		/* define to ack screaming irqs */
-#undef ATA_NDEBUG		/* define to disable quick runtime checks */
+#अघोषित ATA_DEBUG		/* debugging output */
+#अघोषित ATA_VERBOSE_DEBUG	/* yet more debugging output */
+#अघोषित ATA_IRQ_TRAP		/* define to ack screaming irqs */
+#अघोषित ATA_न_संशोधन		/* define to disable quick runसमय checks */
 
 
-/* note: prints function name for you */
-#ifdef ATA_DEBUG
-#define DPRINTK(fmt, args...) printk(KERN_ERR "%s: " fmt, __func__, ## args)
-#ifdef ATA_VERBOSE_DEBUG
-#define VPRINTK(fmt, args...) printk(KERN_ERR "%s: " fmt, __func__, ## args)
-#else
-#define VPRINTK(fmt, args...)
-#endif	/* ATA_VERBOSE_DEBUG */
-#else
-#define DPRINTK(fmt, args...)
-#define VPRINTK(fmt, args...)
-#endif	/* ATA_DEBUG */
+/* note: prपूर्णांकs function name क्रम you */
+#अगर_घोषित ATA_DEBUG
+#घोषणा DPRINTK(fmt, args...) prपूर्णांकk(KERN_ERR "%s: " fmt, __func__, ## args)
+#अगर_घोषित ATA_VERBOSE_DEBUG
+#घोषणा VPRINTK(fmt, args...) prपूर्णांकk(KERN_ERR "%s: " fmt, __func__, ## args)
+#अन्यथा
+#घोषणा VPRINTK(fmt, args...)
+#पूर्ण_अगर	/* ATA_VERBOSE_DEBUG */
+#अन्यथा
+#घोषणा DPRINTK(fmt, args...)
+#घोषणा VPRINTK(fmt, args...)
+#पूर्ण_अगर	/* ATA_DEBUG */
 
-#define ata_print_version_once(dev, version)			\
-({								\
-	static bool __print_once;				\
+#घोषणा ata_prपूर्णांक_version_once(dev, version)			\
+(अणु								\
+	अटल bool __prपूर्णांक_once;				\
 								\
-	if (!__print_once) {					\
-		__print_once = true;				\
-		ata_print_version(dev, version);		\
-	}							\
-})
+	अगर (!__prपूर्णांक_once) अणु					\
+		__prपूर्णांक_once = true;				\
+		ata_prपूर्णांक_version(dev, version);		\
+	पूर्ण							\
+पूर्ण)
 
 /* NEW: debug levels */
-#define HAVE_LIBATA_MSG 1
+#घोषणा HAVE_LIBATA_MSG 1
 
-enum {
+क्रमागत अणु
 	ATA_MSG_DRV	= 0x0001,
 	ATA_MSG_INFO	= 0x0002,
 	ATA_MSG_PROBE	= 0x0004,
@@ -80,33 +81,33 @@ enum {
 	ATA_MSG_CTL	= 0x0020,
 	ATA_MSG_INTR	= 0x0040,
 	ATA_MSG_ERR	= 0x0080,
-};
+पूर्ण;
 
-#define ata_msg_drv(p)    ((p)->msg_enable & ATA_MSG_DRV)
-#define ata_msg_info(p)   ((p)->msg_enable & ATA_MSG_INFO)
-#define ata_msg_probe(p)  ((p)->msg_enable & ATA_MSG_PROBE)
-#define ata_msg_warn(p)   ((p)->msg_enable & ATA_MSG_WARN)
-#define ata_msg_malloc(p) ((p)->msg_enable & ATA_MSG_MALLOC)
-#define ata_msg_ctl(p)    ((p)->msg_enable & ATA_MSG_CTL)
-#define ata_msg_intr(p)   ((p)->msg_enable & ATA_MSG_INTR)
-#define ata_msg_err(p)    ((p)->msg_enable & ATA_MSG_ERR)
+#घोषणा ata_msg_drv(p)    ((p)->msg_enable & ATA_MSG_DRV)
+#घोषणा ata_msg_info(p)   ((p)->msg_enable & ATA_MSG_INFO)
+#घोषणा ata_msg_probe(p)  ((p)->msg_enable & ATA_MSG_PROBE)
+#घोषणा ata_msg_warn(p)   ((p)->msg_enable & ATA_MSG_WARN)
+#घोषणा ata_msg_दो_स्मृति(p) ((p)->msg_enable & ATA_MSG_MALLOC)
+#घोषणा ata_msg_ctl(p)    ((p)->msg_enable & ATA_MSG_CTL)
+#घोषणा ata_msg_पूर्णांकr(p)   ((p)->msg_enable & ATA_MSG_INTR)
+#घोषणा ata_msg_err(p)    ((p)->msg_enable & ATA_MSG_ERR)
 
-static inline u32 ata_msg_init(int dval, int default_msg_enable_bits)
-{
-	if (dval < 0 || dval >= (sizeof(u32) * 8))
-		return default_msg_enable_bits; /* should be 0x1 - only driver info msgs */
-	if (!dval)
-		return 0;
-	return (1 << dval) - 1;
-}
+अटल अंतरभूत u32 ata_msg_init(पूर्णांक dval, पूर्णांक शेष_msg_enable_bits)
+अणु
+	अगर (dval < 0 || dval >= (माप(u32) * 8))
+		वापस शेष_msg_enable_bits; /* should be 0x1 - only driver info msgs */
+	अगर (!dval)
+		वापस 0;
+	वापस (1 << dval) - 1;
+पूर्ण
 
-/* defines only for the constants which don't work well as enums */
-#define ATA_TAG_POISON		0xfafbfcfdU
+/* defines only क्रम the स्थिरants which करोn't work well as क्रमागतs */
+#घोषणा ATA_TAG_POISON		0xfafbfcfdU
 
-enum {
-	/* various global constants */
+क्रमागत अणु
+	/* various global स्थिरants */
 	LIBATA_MAX_PRD		= ATA_MAX_PRD / 2,
-	LIBATA_DUMB_MAX_PRD	= ATA_MAX_PRD / 4,	/* Worst case */
+	LIBATA_DUMB_MAX_PRD	= ATA_MAX_PRD / 4,	/* Worst हाल */
 	ATA_DEF_QUEUE		= 1,
 	ATA_MAX_QUEUE		= 32,
 	ATA_TAG_INTERNAL	= ATA_MAX_QUEUE,
@@ -119,33 +120,33 @@ enum {
 	ATA_SHT_EMULATED	= 1,
 	ATA_SHT_THIS_ID		= -1,
 
-	/* struct ata_taskfile flags */
+	/* काष्ठा ata_taskfile flags */
 	ATA_TFLAG_LBA48		= (1 << 0), /* enable 48-bit LBA and "HOB" */
 	ATA_TFLAG_ISADDR	= (1 << 1), /* enable r/w to nsect/lba regs */
 	ATA_TFLAG_DEVICE	= (1 << 2), /* enable r/w to device reg */
-	ATA_TFLAG_WRITE		= (1 << 3), /* data dir: host->dev==1 (write) */
+	ATA_TFLAG_WRITE		= (1 << 3), /* data dir: host->dev==1 (ग_लिखो) */
 	ATA_TFLAG_LBA		= (1 << 4), /* enable LBA */
 	ATA_TFLAG_FUA		= (1 << 5), /* enable FUA */
 	ATA_TFLAG_POLLING	= (1 << 6), /* set nIEN to 1 and use polling */
 
-	/* struct ata_device stuff */
+	/* काष्ठा ata_device stuff */
 	ATA_DFLAG_LBA		= (1 << 0), /* device supports LBA */
 	ATA_DFLAG_LBA48		= (1 << 1), /* device supports LBA48 */
-	ATA_DFLAG_CDB_INTR	= (1 << 2), /* device asserts INTRQ when ready for CDB */
+	ATA_DFLAG_CDB_INTR	= (1 << 2), /* device निश्चितs INTRQ when पढ़ोy क्रम CDB */
 	ATA_DFLAG_NCQ		= (1 << 3), /* device supports NCQ */
-	ATA_DFLAG_FLUSH_EXT	= (1 << 4), /* do FLUSH_EXT instead of FLUSH */
+	ATA_DFLAG_FLUSH_EXT	= (1 << 4), /* करो FLUSH_EXT instead of FLUSH */
 	ATA_DFLAG_ACPI_PENDING	= (1 << 5), /* ACPI resume action pending */
 	ATA_DFLAG_ACPI_FAILED	= (1 << 6), /* ACPI on devcfg has failed */
 	ATA_DFLAG_AN		= (1 << 7), /* AN configured */
 	ATA_DFLAG_TRUSTED	= (1 << 8), /* device supports trusted send/recv */
-	ATA_DFLAG_DMADIR	= (1 << 10), /* device requires DMADIR */
+	ATA_DFLAG_DMAसूची	= (1 << 10), /* device requires DMAसूची */
 	ATA_DFLAG_CFG_MASK	= (1 << 12) - 1,
 
 	ATA_DFLAG_PIO		= (1 << 12), /* device limited to PIO mode */
 	ATA_DFLAG_NCQ_OFF	= (1 << 13), /* device limited to non-NCQ mode */
 	ATA_DFLAG_SLEEPING	= (1 << 15), /* device is sleeping */
-	ATA_DFLAG_DUBIOUS_XFER	= (1 << 16), /* data transfer not verified */
-	ATA_DFLAG_NO_UNLOAD	= (1 << 17), /* device doesn't support unload */
+	ATA_DFLAG_DUBIOUS_XFER	= (1 << 16), /* data transfer not verअगरied */
+	ATA_DFLAG_NO_UNLOAD	= (1 << 17), /* device करोesn't support unload */
 	ATA_DFLAG_UNLOCK_HPA	= (1 << 18), /* unlock HPA */
 	ATA_DFLAG_NCQ_SEND_RECV = (1 << 19), /* device supports NCQ SEND and RECV */
 	ATA_DFLAG_NCQ_PRIO	= (1 << 20), /* device supports NCQ priority */
@@ -157,7 +158,7 @@ enum {
 
 	ATA_DFLAG_DA		= (1 << 26), /* device supports Device Attention */
 	ATA_DFLAG_DEVSLP	= (1 << 27), /* device supports Device Sleep */
-	ATA_DFLAG_ACPI_DISABLED = (1 << 28), /* ACPI for the device is disabled */
+	ATA_DFLAG_ACPI_DISABLED = (1 << 28), /* ACPI क्रम the device is disabled */
 	ATA_DFLAG_D_SENSE	= (1 << 29), /* Descriptor sense requested */
 	ATA_DFLAG_ZAC		= (1 << 30), /* ZAC device */
 
@@ -174,14 +175,14 @@ enum {
 	ATA_DEV_ZAC_UNSUP	= 10,	/* ZAC device (unsupported) */
 	ATA_DEV_NONE		= 11,	/* no device */
 
-	/* struct ata_link flags */
-	/* NOTE: struct ata_force_param currently stores lflags in u16 */
-	ATA_LFLAG_NO_HRST	= (1 << 1), /* avoid hardreset */
-	ATA_LFLAG_NO_SRST	= (1 << 2), /* avoid softreset */
+	/* काष्ठा ata_link flags */
+	/* NOTE: काष्ठा ata_क्रमce_param currently stores lflags in u16 */
+	ATA_LFLAG_NO_HRST	= (1 << 1), /* aव्योम hardreset */
+	ATA_LFLAG_NO_SRST	= (1 << 2), /* aव्योम softreset */
 	ATA_LFLAG_ASSUME_ATA	= (1 << 3), /* assume ATA class */
 	ATA_LFLAG_ASSUME_SEMB	= (1 << 4), /* assume SEMB class */
 	ATA_LFLAG_ASSUME_CLASS	= ATA_LFLAG_ASSUME_ATA | ATA_LFLAG_ASSUME_SEMB,
-	ATA_LFLAG_NO_RETRY	= (1 << 5), /* don't retry this link */
+	ATA_LFLAG_NO_RETRY	= (1 << 5), /* करोn't retry this link */
 	ATA_LFLAG_DISABLED	= (1 << 6), /* link is disabled */
 	ATA_LFLAG_SW_ACTIVITY	= (1 << 7), /* keep activity stats */
 	ATA_LFLAG_NO_LPM	= (1 << 8), /* disable LPM on this link */
@@ -189,20 +190,20 @@ enum {
 	ATA_LFLAG_CHANGED	= (1 << 10), /* LPM state changed on this link */
 	ATA_LFLAG_NO_DB_DELAY	= (1 << 11), /* no debounce delay on link resume */
 
-	/* struct ata_port flags */
+	/* काष्ठा ata_port flags */
 	ATA_FLAG_SLAVE_POSS	= (1 << 0), /* host supports slave dev */
-					    /* (doesn't imply presence) */
+					    /* (करोesn't imply presence) */
 	ATA_FLAG_SATA		= (1 << 1),
 	ATA_FLAG_NO_LPM		= (1 << 2), /* host not happy with LPM */
-	ATA_FLAG_NO_LOG_PAGE	= (1 << 5), /* do not issue log page read */
+	ATA_FLAG_NO_LOG_PAGE	= (1 << 5), /* करो not issue log page पढ़ो */
 	ATA_FLAG_NO_ATAPI	= (1 << 6), /* No ATAPI support */
 	ATA_FLAG_PIO_DMA	= (1 << 7), /* PIO cmds via DMA */
 	ATA_FLAG_PIO_LBA48	= (1 << 8), /* Host DMA engine is LBA28 only */
-	ATA_FLAG_PIO_POLLING	= (1 << 9), /* use polling PIO if LLD
-					     * doesn't handle PIO interrupts */
+	ATA_FLAG_PIO_POLLING	= (1 << 9), /* use polling PIO अगर LLD
+					     * करोesn't handle PIO पूर्णांकerrupts */
 	ATA_FLAG_NCQ		= (1 << 10), /* host supports NCQ */
-	ATA_FLAG_NO_POWEROFF_SPINDOWN = (1 << 11), /* don't spindown before poweroff */
-	ATA_FLAG_NO_HIBERNATE_SPINDOWN = (1 << 12), /* don't spindown before hibernation */
+	ATA_FLAG_NO_POWEROFF_SPINDOWN = (1 << 11), /* करोn't spinकरोwn beक्रमe घातeroff */
+	ATA_FLAG_NO_HIBERNATE_SPINDOWN = (1 << 12), /* करोn't spinकरोwn beक्रमe hibernation */
 	ATA_FLAG_DEBUGMSG	= (1 << 13),
 	ATA_FLAG_FPDMA_AA		= (1 << 14), /* driver supports Auto-Activate */
 	ATA_FLAG_IGN_SIMPLEX	= (1 << 15), /* ignore SIMPLEX */
@@ -218,36 +219,36 @@ enum {
 	ATA_FLAG_NO_DIPM	= (1 << 23), /* host not happy with DIPM */
 	ATA_FLAG_SAS_HOST	= (1 << 24), /* SAS host */
 
-	/* bits 24:31 of ap->flags are reserved for LLD specific flags */
+	/* bits 24:31 of ap->flags are reserved क्रम LLD specअगरic flags */
 
 
-	/* struct ata_port pflags */
+	/* काष्ठा ata_port pflags */
 	ATA_PFLAG_EH_PENDING	= (1 << 0), /* EH pending */
 	ATA_PFLAG_EH_IN_PROGRESS = (1 << 1), /* EH in progress */
 	ATA_PFLAG_FROZEN	= (1 << 2), /* port is frozen */
-	ATA_PFLAG_RECOVERED	= (1 << 3), /* recovery action performed */
+	ATA_PFLAG_RECOVERED	= (1 << 3), /* recovery action perक्रमmed */
 	ATA_PFLAG_LOADING	= (1 << 4), /* boot/loading probe */
 	ATA_PFLAG_SCSI_HOTPLUG	= (1 << 6), /* SCSI hotplug scheduled */
-	ATA_PFLAG_INITIALIZING	= (1 << 7), /* being initialized, don't touch */
+	ATA_PFLAG_INITIALIZING	= (1 << 7), /* being initialized, करोn't touch */
 	ATA_PFLAG_RESETTING	= (1 << 8), /* reset in progress */
 	ATA_PFLAG_UNLOADING	= (1 << 9), /* driver is being unloaded */
 	ATA_PFLAG_UNLOADED	= (1 << 10), /* driver is unloaded */
 
-	ATA_PFLAG_SUSPENDED	= (1 << 17), /* port is suspended (power) */
+	ATA_PFLAG_SUSPENDED	= (1 << 17), /* port is suspended (घातer) */
 	ATA_PFLAG_PM_PENDING	= (1 << 18), /* PM operation pending */
-	ATA_PFLAG_INIT_GTM_VALID = (1 << 19), /* initial gtm data valid */
+	ATA_PFLAG_INIT_GTM_VALID = (1 << 19), /* initial gपंचांग data valid */
 
 	ATA_PFLAG_PIO32		= (1 << 20),  /* 32bit PIO */
 	ATA_PFLAG_PIO32CHANGE	= (1 << 21),  /* 32bit PIO can be turned on/off */
-	ATA_PFLAG_EXTERNAL	= (1 << 22),  /* eSATA/external port */
+	ATA_PFLAG_EXTERNAL	= (1 << 22),  /* eSATA/बाह्यal port */
 
-	/* struct ata_queued_cmd flags */
+	/* काष्ठा ata_queued_cmd flags */
 	ATA_QCFLAG_ACTIVE	= (1 << 0), /* cmd not yet ack'd to scsi lyer */
 	ATA_QCFLAG_DMAMAP	= (1 << 1), /* SG table is DMA mapped */
 	ATA_QCFLAG_IO		= (1 << 3), /* standard IO command */
 	ATA_QCFLAG_RESULT_TF	= (1 << 4), /* result TF requested */
 	ATA_QCFLAG_CLEAR_EXCL	= (1 << 5), /* clear excl_link on completion */
-	ATA_QCFLAG_QUIET	= (1 << 6), /* don't report device error */
+	ATA_QCFLAG_QUIET	= (1 << 6), /* करोn't report device error */
 	ATA_QCFLAG_RETRY	= (1 << 7), /* retry after failure */
 
 	ATA_QCFLAG_FAILED	= (1 << 16), /* cmd failed and is owned by EH */
@@ -260,9 +261,9 @@ enum {
 	ATA_HOST_PARALLEL_SCAN	= (1 << 2),	/* Ports on this host can be scanned in parallel */
 	ATA_HOST_IGNORE_ATA	= (1 << 3),	/* Ignore ATA devices on this host. */
 
-	/* bits 24:31 of host->flags are reserved for LLD specific flags */
+	/* bits 24:31 of host->flags are reserved क्रम LLD specअगरic flags */
 
-	/* various lengths of time */
+	/* various lengths of समय */
 	ATA_TMOUT_BOOT		= 30000,	/* heuristic */
 	ATA_TMOUT_BOOT_QUICK	=  7000,	/* heuristic */
 	ATA_TMOUT_INTERNAL_QUICK = 5000,
@@ -270,28 +271,28 @@ enum {
 
 	/*
 	 * GoVault needs 2s and iVDR disk HHD424020F7SV00 800ms.  2s
-	 * is too much without parallel probing.  Use 2s if parallel
+	 * is too much without parallel probing.  Use 2s अगर parallel
 	 * probing is available, 800ms otherwise.
 	 */
 	ATA_TMOUT_FF_WAIT_LONG	=  2000,
 	ATA_TMOUT_FF_WAIT	=   800,
 
-	/* Spec mandates to wait for ">= 2ms" before checking status
-	 * after reset.  We wait 150ms, because that was the magic
-	 * delay used for ATAPI devices in Hale Landis's ATADRVR, for
-	 * the period of time between when the ATA command register is
-	 * written, and then status is checked.  Because waiting for
-	 * "a while" before checking status is fine, post SRST, we
-	 * perform this magic delay here as well.
+	/* Spec mandates to रुको क्रम ">= 2ms" beक्रमe checking status
+	 * after reset.  We रुको 150ms, because that was the magic
+	 * delay used क्रम ATAPI devices in Hale Landis's ATADRVR, क्रम
+	 * the period of समय between when the ATA command रेजिस्टर is
+	 * written, and then status is checked.  Because रुकोing क्रम
+	 * "a while" beक्रमe checking status is fine, post SRST, we
+	 * perक्रमm this magic delay here as well.
 	 *
-	 * Old drivers/ide uses the 2mS rule and then waits for ready.
+	 * Old drivers/ide uses the 2mS rule and then रुकोs क्रम पढ़ोy.
 	 */
 	ATA_WAIT_AFTER_RESET	=  150,
 
-	/* If PMP is supported, we have to do follow-up SRST.  As some
-	 * PMPs don't send D2H Reg FIS after hardreset, LLDs are
-	 * advised to wait only for the following duration before
-	 * doing SRST.
+	/* If PMP is supported, we have to करो follow-up SRST.  As some
+	 * PMPs करोn't send D2H Reg FIS after hardreset, LLDs are
+	 * advised to रुको only क्रम the following duration beक्रमe
+	 * करोing SRST.
 	 */
 	ATA_TMOUT_PMP_SRST_WAIT	= 5000,
 
@@ -318,8 +319,8 @@ enum {
 	PORT_ENABLED		= 1,
 	PORT_DISABLED		= 2,
 
-	/* encoding various smaller bitmaps into a single
-	 * unsigned long bitmap
+	/* encoding various smaller biपंचांगaps पूर्णांकo a single
+	 * अचिन्हित दीर्घ biपंचांगap
 	 */
 	ATA_NR_PIO_MODES	= 7,
 	ATA_NR_MWDMA_MODES	= 5,
@@ -337,11 +338,11 @@ enum {
 	/* ering size */
 	ATA_ERING_SIZE		= 32,
 
-	/* return values for ->qc_defer */
+	/* वापस values क्रम ->qc_defer */
 	ATA_DEFER_LINK		= 1,
 	ATA_DEFER_PORT		= 2,
 
-	/* desc_len for ata_eh_info and context */
+	/* desc_len क्रम ata_eh_info and context */
 	ATA_EH_DESC_LEN		= 80,
 
 	/* reset / recovery action types */
@@ -358,25 +359,25 @@ enum {
 
 	/* ata_eh_info->flags */
 	ATA_EHI_HOTPLUGGED	= (1 << 0),  /* could have been hotplugged */
-	ATA_EHI_NO_AUTOPSY	= (1 << 2),  /* no autopsy */
+	ATA_EHI_NO_AUTOPSY	= (1 << 2),  /* no स्वतःpsy */
 	ATA_EHI_QUIET		= (1 << 3),  /* be quiet */
 	ATA_EHI_NO_RECOVERY	= (1 << 4),  /* no recovery */
 
-	ATA_EHI_DID_SOFTRESET	= (1 << 16), /* already soft-reset this port */
-	ATA_EHI_DID_HARDRESET	= (1 << 17), /* already soft-reset this port */
-	ATA_EHI_PRINTINFO	= (1 << 18), /* print configuration info */
+	ATA_EHI_DID_SOFTRESET	= (1 << 16), /* alपढ़ोy soft-reset this port */
+	ATA_EHI_DID_HARDRESET	= (1 << 17), /* alपढ़ोy soft-reset this port */
+	ATA_EHI_PRINTINFO	= (1 << 18), /* prपूर्णांक configuration info */
 	ATA_EHI_SETMODE		= (1 << 19), /* configure transfer mode */
-	ATA_EHI_POST_SETMODE	= (1 << 20), /* revalidating after setmode */
+	ATA_EHI_POST_SETMODE	= (1 << 20), /* revalidating after seपंचांगode */
 
 	ATA_EHI_DID_RESET	= ATA_EHI_DID_SOFTRESET | ATA_EHI_DID_HARDRESET,
 
 	/* mask of flags to transfer *to* the slave link */
 	ATA_EHI_TO_SLAVE_MASK	= ATA_EHI_NO_AUTOPSY | ATA_EHI_QUIET,
 
-	/* max tries if error condition is still set after ->error_handler */
+	/* max tries अगर error condition is still set after ->error_handler */
 	ATA_EH_MAX_TRIES	= 5,
 
-	/* sometimes resuming a link requires several retries */
+	/* someबार resuming a link requires several retries */
 	ATA_LINK_RESUME_TRIES	= 5,
 
 	/* how hard are we gonna try to probe/recover devices */
@@ -385,10 +386,10 @@ enum {
 	ATA_EH_PMP_TRIES	= 5,
 	ATA_EH_PMP_LINK_TRIES	= 3,
 
-	SATA_PMP_RW_TIMEOUT	= 3000,		/* PMP read/write timeout */
+	SATA_PMP_RW_TIMEOUT	= 3000,		/* PMP पढ़ो/ग_लिखो समयout */
 
 	/* This should match the actual table size of
-	 * ata_eh_cmd_timeout_table in libata-eh.c.
+	 * ata_eh_cmd_समयout_table in libata-eh.c.
 	 */
 	ATA_EH_CMD_TIMEOUT_TABLE_SIZE = 6,
 
@@ -405,26 +406,26 @@ enum {
 	ATA_HORKAGE_IVB		= (1 << 8),	/* cbl det validity bit bugs */
 	ATA_HORKAGE_STUCK_ERR	= (1 << 9),	/* stuck ERR on next PACKET */
 	ATA_HORKAGE_BRIDGE_OK	= (1 << 10),	/* no bridge limits */
-	ATA_HORKAGE_ATAPI_MOD16_DMA = (1 << 11), /* use ATAPI DMA for commands
+	ATA_HORKAGE_ATAPI_MOD16_DMA = (1 << 11), /* use ATAPI DMA क्रम commands
 						    not multiple of 16 bytes */
 	ATA_HORKAGE_FIRMWARE_WARN = (1 << 12),	/* firmware update warning */
-	ATA_HORKAGE_1_5_GBPS	= (1 << 13),	/* force 1.5 Gbps */
+	ATA_HORKAGE_1_5_GBPS	= (1 << 13),	/* क्रमce 1.5 Gbps */
 	ATA_HORKAGE_NOSETXFER	= (1 << 14),	/* skip SETXFER, SATA only */
 	ATA_HORKAGE_BROKEN_FPDMA_AA	= (1 << 15),	/* skip AA */
 	ATA_HORKAGE_DUMP_ID	= (1 << 16),	/* dump IDENTIFY data */
 	ATA_HORKAGE_MAX_SEC_LBA48 = (1 << 17),	/* Set max sects to 65535 */
-	ATA_HORKAGE_ATAPI_DMADIR = (1 << 18),	/* device requires dmadir */
-	ATA_HORKAGE_NO_NCQ_TRIM	= (1 << 19),	/* don't use queued TRIM */
-	ATA_HORKAGE_NOLPM	= (1 << 20),	/* don't use LPM */
+	ATA_HORKAGE_ATAPI_DMAसूची = (1 << 18),	/* device requires dmadir */
+	ATA_HORKAGE_NO_NCQ_TRIM	= (1 << 19),	/* करोn't use queued TRIM */
+	ATA_HORKAGE_NOLPM	= (1 << 20),	/* करोn't use LPM */
 	ATA_HORKAGE_WD_BROKEN_LPM = (1 << 21),	/* some WDs have broken LPM */
 	ATA_HORKAGE_ZERO_AFTER_TRIM = (1 << 22),/* guarantees zero after trim */
-	ATA_HORKAGE_NO_DMA_LOG	= (1 << 23),	/* don't use DMA for log read */
-	ATA_HORKAGE_NOTRIM	= (1 << 24),	/* don't use TRIM */
+	ATA_HORKAGE_NO_DMA_LOG	= (1 << 23),	/* करोn't use DMA क्रम log पढ़ो */
+	ATA_HORKAGE_NOTRIM	= (1 << 24),	/* करोn't use TRIM */
 	ATA_HORKAGE_MAX_SEC_1024 = (1 << 25),	/* Limit max sects to 1024 */
 	ATA_HORKAGE_MAX_TRIM_128M = (1 << 26),	/* Limit max trim size to 128M */
 
-	 /* DMA mask for user DMA control: User visible values; DO NOT
-	    renumber */
+	 /* DMA mask क्रम user DMA control: User visible values; DO NOT
+	    rक्रमागतber */
 	ATA_DMA_MASK_ATA	= (1 << 0),	/* DMA on ATA Disk */
 	ATA_DMA_MASK_ATAPI	= (1 << 1),	/* DMA on ATAPI */
 	ATA_DMA_MASK_CFA	= (1 << 2),	/* DMA on CF Card */
@@ -436,7 +437,7 @@ enum {
 	ATAPI_PASS_THRU		= 3,		/* SAT pass-thru */
 	ATAPI_MISC		= 4,		/* the rest */
 
-	/* Timing constants */
+	/* Timing स्थिरants */
 	ATA_TIMING_SETUP	= (1 << 0),
 	ATA_TIMING_ACT8B	= (1 << 1),
 	ATA_TIMING_REC8B	= (1 << 2),
@@ -454,101 +455,101 @@ enum {
 				  ATA_TIMING_DMACK_HOLD | ATA_TIMING_CYCLE |
 				  ATA_TIMING_UDMA,
 
-	/* ACPI constants */
+	/* ACPI स्थिरants */
 	ATA_ACPI_FILTER_SETXFER	= 1 << 0,
 	ATA_ACPI_FILTER_LOCK	= 1 << 1,
 	ATA_ACPI_FILTER_DIPM	= 1 << 2,
 	ATA_ACPI_FILTER_FPDMA_OFFSET = 1 << 3,	/* FPDMA non-zero offset */
-	ATA_ACPI_FILTER_FPDMA_AA = 1 << 4,	/* FPDMA auto activate */
+	ATA_ACPI_FILTER_FPDMA_AA = 1 << 4,	/* FPDMA स्वतः activate */
 
 	ATA_ACPI_FILTER_DEFAULT	= ATA_ACPI_FILTER_SETXFER |
 				  ATA_ACPI_FILTER_LOCK |
 				  ATA_ACPI_FILTER_DIPM,
-};
+पूर्ण;
 
-enum ata_xfer_mask {
+क्रमागत ata_xfer_mask अणु
 	ATA_MASK_PIO		= ((1LU << ATA_NR_PIO_MODES) - 1)
 					<< ATA_SHIFT_PIO,
 	ATA_MASK_MWDMA		= ((1LU << ATA_NR_MWDMA_MODES) - 1)
 					<< ATA_SHIFT_MWDMA,
 	ATA_MASK_UDMA		= ((1LU << ATA_NR_UDMA_MODES) - 1)
 					<< ATA_SHIFT_UDMA,
-};
+पूर्ण;
 
-enum hsm_task_states {
+क्रमागत hsm_task_states अणु
 	HSM_ST_IDLE,		/* no command on going */
-	HSM_ST_FIRST,		/* (waiting the device to)
-				   write CDB or first data block */
-	HSM_ST,			/* (waiting the device to) transfer data */
-	HSM_ST_LAST,		/* (waiting the device to) complete command */
+	HSM_ST_FIRST,		/* (रुकोing the device to)
+				   ग_लिखो CDB or first data block */
+	HSM_ST,			/* (रुकोing the device to) transfer data */
+	HSM_ST_LAST,		/* (रुकोing the device to) complete command */
 	HSM_ST_ERR,		/* error */
-};
+पूर्ण;
 
-enum ata_completion_errors {
+क्रमागत ata_completion_errors अणु
 	AC_ERR_OK		= 0,	    /* no error */
 	AC_ERR_DEV		= (1 << 0), /* device reported error */
 	AC_ERR_HSM		= (1 << 1), /* host state machine violation */
-	AC_ERR_TIMEOUT		= (1 << 2), /* timeout */
+	AC_ERR_TIMEOUT		= (1 << 2), /* समयout */
 	AC_ERR_MEDIA		= (1 << 3), /* media error */
 	AC_ERR_ATA_BUS		= (1 << 4), /* ATA bus error */
 	AC_ERR_HOST_BUS		= (1 << 5), /* host bus error */
-	AC_ERR_SYSTEM		= (1 << 6), /* system error */
+	AC_ERR_SYSTEM		= (1 << 6), /* प्रणाली error */
 	AC_ERR_INVALID		= (1 << 7), /* invalid argument */
 	AC_ERR_OTHER		= (1 << 8), /* unknown */
-	AC_ERR_NODEV_HINT	= (1 << 9), /* polling device detection hint */
-	AC_ERR_NCQ		= (1 << 10), /* marker for offending NCQ qc */
-};
+	AC_ERR_NODEV_HINT	= (1 << 9), /* polling device detection hपूर्णांक */
+	AC_ERR_NCQ		= (1 << 10), /* marker क्रम offending NCQ qc */
+पूर्ण;
 
 /*
- * Link power management policy: If you alter this, you also need to
- * alter libata-scsi.c (for the ascii descriptions)
+ * Link घातer management policy: If you alter this, you also need to
+ * alter libata-scsi.c (क्रम the ascii descriptions)
  */
-enum ata_lpm_policy {
+क्रमागत ata_lpm_policy अणु
 	ATA_LPM_UNKNOWN,
 	ATA_LPM_MAX_POWER,
 	ATA_LPM_MED_POWER,
-	ATA_LPM_MED_POWER_WITH_DIPM, /* Med power + DIPM as win IRST does */
+	ATA_LPM_MED_POWER_WITH_DIPM, /* Med घातer + DIPM as win IRST करोes */
 	ATA_LPM_MIN_POWER_WITH_PARTIAL, /* Min Power + partial and slumber */
-	ATA_LPM_MIN_POWER, /* Min power + no partial (slumber only) */
-};
+	ATA_LPM_MIN_POWER, /* Min घातer + no partial (slumber only) */
+पूर्ण;
 
-enum ata_lpm_hints {
+क्रमागत ata_lpm_hपूर्णांकs अणु
 	ATA_LPM_EMPTY		= (1 << 0), /* port empty/probing */
 	ATA_LPM_HIPM		= (1 << 1), /* may use HIPM */
 	ATA_LPM_WAKE_ONLY	= (1 << 2), /* only wake up link */
-};
+पूर्ण;
 
-/* forward declarations */
-struct scsi_device;
-struct ata_port_operations;
-struct ata_port;
-struct ata_link;
-struct ata_queued_cmd;
+/* क्रमward declarations */
+काष्ठा scsi_device;
+काष्ठा ata_port_operations;
+काष्ठा ata_port;
+काष्ठा ata_link;
+काष्ठा ata_queued_cmd;
 
-/* typedefs */
-typedef void (*ata_qc_cb_t) (struct ata_queued_cmd *qc);
-typedef int (*ata_prereset_fn_t)(struct ata_link *link, unsigned long deadline);
-typedef int (*ata_reset_fn_t)(struct ata_link *link, unsigned int *classes,
-			      unsigned long deadline);
-typedef void (*ata_postreset_fn_t)(struct ata_link *link, unsigned int *classes);
+/* प्रकारs */
+प्रकार व्योम (*ata_qc_cb_t) (काष्ठा ata_queued_cmd *qc);
+प्रकार पूर्णांक (*ata_prereset_fn_t)(काष्ठा ata_link *link, अचिन्हित दीर्घ deadline);
+प्रकार पूर्णांक (*ata_reset_fn_t)(काष्ठा ata_link *link, अचिन्हित पूर्णांक *classes,
+			      अचिन्हित दीर्घ deadline);
+प्रकार व्योम (*ata_postreset_fn_t)(काष्ठा ata_link *link, अचिन्हित पूर्णांक *classes);
 
-extern struct device_attribute dev_attr_unload_heads;
-#ifdef CONFIG_SATA_HOST
-extern struct device_attribute dev_attr_link_power_management_policy;
-extern struct device_attribute dev_attr_ncq_prio_enable;
-extern struct device_attribute dev_attr_em_message_type;
-extern struct device_attribute dev_attr_em_message;
-extern struct device_attribute dev_attr_sw_activity;
-#endif
+बाह्य काष्ठा device_attribute dev_attr_unload_heads;
+#अगर_घोषित CONFIG_SATA_HOST
+बाह्य काष्ठा device_attribute dev_attr_link_घातer_management_policy;
+बाह्य काष्ठा device_attribute dev_attr_ncq_prio_enable;
+बाह्य काष्ठा device_attribute dev_attr_em_message_type;
+बाह्य काष्ठा device_attribute dev_attr_em_message;
+बाह्य काष्ठा device_attribute dev_attr_sw_activity;
+#पूर्ण_अगर
 
-enum sw_activity {
+क्रमागत sw_activity अणु
 	OFF,
 	BLINK_ON,
 	BLINK_OFF,
-};
+पूर्ण;
 
-struct ata_taskfile {
-	unsigned long		flags;		/* ATA_TFLAG_xxx */
+काष्ठा ata_taskfile अणु
+	अचिन्हित दीर्घ		flags;		/* ATA_TFLAG_xxx */
 	u8			protocol;	/* ATA_PROT_xxx */
 
 	u8			ctl;		/* control reg */
@@ -572,151 +573,151 @@ struct ata_taskfile {
 	u32			auxiliary;	/* auxiliary field */
 						/* from SATA 3.1 and */
 						/* ATA-8 ACS-3 */
-};
+पूर्ण;
 
-#ifdef CONFIG_ATA_SFF
-struct ata_ioports {
-	void __iomem		*cmd_addr;
-	void __iomem		*data_addr;
-	void __iomem		*error_addr;
-	void __iomem		*feature_addr;
-	void __iomem		*nsect_addr;
-	void __iomem		*lbal_addr;
-	void __iomem		*lbam_addr;
-	void __iomem		*lbah_addr;
-	void __iomem		*device_addr;
-	void __iomem		*status_addr;
-	void __iomem		*command_addr;
-	void __iomem		*altstatus_addr;
-	void __iomem		*ctl_addr;
-#ifdef CONFIG_ATA_BMDMA
-	void __iomem		*bmdma_addr;
-#endif /* CONFIG_ATA_BMDMA */
-	void __iomem		*scr_addr;
-};
-#endif /* CONFIG_ATA_SFF */
+#अगर_घोषित CONFIG_ATA_SFF
+काष्ठा ata_ioports अणु
+	व्योम __iomem		*cmd_addr;
+	व्योम __iomem		*data_addr;
+	व्योम __iomem		*error_addr;
+	व्योम __iomem		*feature_addr;
+	व्योम __iomem		*nsect_addr;
+	व्योम __iomem		*lbal_addr;
+	व्योम __iomem		*lbam_addr;
+	व्योम __iomem		*lbah_addr;
+	व्योम __iomem		*device_addr;
+	व्योम __iomem		*status_addr;
+	व्योम __iomem		*command_addr;
+	व्योम __iomem		*altstatus_addr;
+	व्योम __iomem		*ctl_addr;
+#अगर_घोषित CONFIG_ATA_BMDMA
+	व्योम __iomem		*bmdma_addr;
+#पूर्ण_अगर /* CONFIG_ATA_BMDMA */
+	व्योम __iomem		*scr_addr;
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_ATA_SFF */
 
-struct ata_host {
+काष्ठा ata_host अणु
 	spinlock_t		lock;
-	struct device 		*dev;
-	void __iomem * const	*iomap;
-	unsigned int		n_ports;
-	unsigned int		n_tags;			/* nr of NCQ tags */
-	void			*private_data;
-	struct ata_port_operations *ops;
-	unsigned long		flags;
-	struct kref		kref;
+	काष्ठा device 		*dev;
+	व्योम __iomem * स्थिर	*iomap;
+	अचिन्हित पूर्णांक		n_ports;
+	अचिन्हित पूर्णांक		n_tags;			/* nr of NCQ tags */
+	व्योम			*निजी_data;
+	काष्ठा ata_port_operations *ops;
+	अचिन्हित दीर्घ		flags;
+	काष्ठा kref		kref;
 
-	struct mutex		eh_mutex;
-	struct task_struct	*eh_owner;
+	काष्ठा mutex		eh_mutex;
+	काष्ठा task_काष्ठा	*eh_owner;
 
-	struct ata_port		*simplex_claimed;	/* channel owning the DMA */
-	struct ata_port		*ports[];
-};
+	काष्ठा ata_port		*simplex_claimed;	/* channel owning the DMA */
+	काष्ठा ata_port		*ports[];
+पूर्ण;
 
-struct ata_queued_cmd {
-	struct ata_port		*ap;
-	struct ata_device	*dev;
+काष्ठा ata_queued_cmd अणु
+	काष्ठा ata_port		*ap;
+	काष्ठा ata_device	*dev;
 
-	struct scsi_cmnd	*scsicmd;
-	void			(*scsidone)(struct scsi_cmnd *);
+	काष्ठा scsi_cmnd	*scsicmd;
+	व्योम			(*scsiकरोne)(काष्ठा scsi_cmnd *);
 
-	struct ata_taskfile	tf;
+	काष्ठा ata_taskfile	tf;
 	u8			cdb[ATAPI_CDB_LEN];
 
-	unsigned long		flags;		/* ATA_QCFLAG_xxx */
-	unsigned int		tag;		/* libata core tag */
-	unsigned int		hw_tag;		/* driver tag */
-	unsigned int		n_elem;
-	unsigned int		orig_n_elem;
+	अचिन्हित दीर्घ		flags;		/* ATA_QCFLAG_xxx */
+	अचिन्हित पूर्णांक		tag;		/* libata core tag */
+	अचिन्हित पूर्णांक		hw_tag;		/* driver tag */
+	अचिन्हित पूर्णांक		n_elem;
+	अचिन्हित पूर्णांक		orig_n_elem;
 
-	int			dma_dir;
+	पूर्णांक			dma_dir;
 
-	unsigned int		sect_size;
+	अचिन्हित पूर्णांक		sect_size;
 
-	unsigned int		nbytes;
-	unsigned int		extrabytes;
-	unsigned int		curbytes;
+	अचिन्हित पूर्णांक		nbytes;
+	अचिन्हित पूर्णांक		extrabytes;
+	अचिन्हित पूर्णांक		curbytes;
 
-	struct scatterlist	sgent;
+	काष्ठा scatterlist	sgent;
 
-	struct scatterlist	*sg;
+	काष्ठा scatterlist	*sg;
 
-	struct scatterlist	*cursg;
-	unsigned int		cursg_ofs;
+	काष्ठा scatterlist	*cursg;
+	अचिन्हित पूर्णांक		cursg_ofs;
 
-	unsigned int		err_mask;
-	struct ata_taskfile	result_tf;
+	अचिन्हित पूर्णांक		err_mask;
+	काष्ठा ata_taskfile	result_tf;
 	ata_qc_cb_t		complete_fn;
 
-	void			*private_data;
-	void			*lldd_task;
-};
+	व्योम			*निजी_data;
+	व्योम			*lldd_task;
+पूर्ण;
 
-struct ata_port_stats {
-	unsigned long		unhandled_irq;
-	unsigned long		idle_irq;
-	unsigned long		rw_reqbuf;
-};
+काष्ठा ata_port_stats अणु
+	अचिन्हित दीर्घ		unhandled_irq;
+	अचिन्हित दीर्घ		idle_irq;
+	अचिन्हित दीर्घ		rw_reqbuf;
+पूर्ण;
 
-struct ata_ering_entry {
-	unsigned int		eflags;
-	unsigned int		err_mask;
-	u64			timestamp;
-};
+काष्ठा ata_ering_entry अणु
+	अचिन्हित पूर्णांक		eflags;
+	अचिन्हित पूर्णांक		err_mask;
+	u64			बारtamp;
+पूर्ण;
 
-struct ata_ering {
-	int			cursor;
-	struct ata_ering_entry	ring[ATA_ERING_SIZE];
-};
+काष्ठा ata_ering अणु
+	पूर्णांक			cursor;
+	काष्ठा ata_ering_entry	ring[ATA_ERING_SIZE];
+पूर्ण;
 
-struct ata_device {
-	struct ata_link		*link;
-	unsigned int		devno;		/* 0 or 1 */
-	unsigned int		horkage;	/* List of broken features */
-	unsigned long		flags;		/* ATA_DFLAG_xxx */
-	struct scsi_device	*sdev;		/* attached SCSI device */
-	void			*private_data;
-#ifdef CONFIG_ATA_ACPI
-	union acpi_object	*gtf_cache;
-	unsigned int		gtf_filter;
-#endif
-#ifdef CONFIG_SATA_ZPODD
-	void			*zpodd;
-#endif
-	struct device		tdev;
-	/* n_sector is CLEAR_BEGIN, read comment above CLEAR_BEGIN */
-	u64			n_sectors;	/* size of device, if ATA */
-	u64			n_native_sectors; /* native size, if ATA */
-	unsigned int		class;		/* ATA_DEV_xxx */
-	unsigned long		unpark_deadline;
+काष्ठा ata_device अणु
+	काष्ठा ata_link		*link;
+	अचिन्हित पूर्णांक		devno;		/* 0 or 1 */
+	अचिन्हित पूर्णांक		horkage;	/* List of broken features */
+	अचिन्हित दीर्घ		flags;		/* ATA_DFLAG_xxx */
+	काष्ठा scsi_device	*sdev;		/* attached SCSI device */
+	व्योम			*निजी_data;
+#अगर_घोषित CONFIG_ATA_ACPI
+	जोड़ acpi_object	*gtf_cache;
+	अचिन्हित पूर्णांक		gtf_filter;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SATA_ZPODD
+	व्योम			*zpodd;
+#पूर्ण_अगर
+	काष्ठा device		tdev;
+	/* n_sector is CLEAR_BEGIN, पढ़ो comment above CLEAR_BEGIN */
+	u64			n_sectors;	/* size of device, अगर ATA */
+	u64			n_native_sectors; /* native size, अगर ATA */
+	अचिन्हित पूर्णांक		class;		/* ATA_DEV_xxx */
+	अचिन्हित दीर्घ		unpark_deadline;
 
 	u8			pio_mode;
 	u8			dma_mode;
 	u8			xfer_mode;
-	unsigned int		xfer_shift;	/* ATA_SHIFT_xxx */
+	अचिन्हित पूर्णांक		xfer_shअगरt;	/* ATA_SHIFT_xxx */
 
-	unsigned int		multi_count;	/* sectors count for
+	अचिन्हित पूर्णांक		multi_count;	/* sectors count क्रम
 						   READ/WRITE MULTIPLE */
-	unsigned int		max_sectors;	/* per-device max sectors */
-	unsigned int		cdb_len;
+	अचिन्हित पूर्णांक		max_sectors;	/* per-device max sectors */
+	अचिन्हित पूर्णांक		cdb_len;
 
 	/* per-dev xfer mask */
-	unsigned long		pio_mask;
-	unsigned long		mwdma_mask;
-	unsigned long		udma_mask;
+	अचिन्हित दीर्घ		pio_mask;
+	अचिन्हित दीर्घ		mwdma_mask;
+	अचिन्हित दीर्घ		udma_mask;
 
-	/* for CHS addressing */
+	/* क्रम CHS addressing */
 	u16			cylinders;	/* Number of cylinders */
 	u16			heads;		/* Number of heads */
 	u16			sectors;	/* Number of sectors per track */
 
-	union {
+	जोड़ अणु
 		u16		id[ATA_ID_WORDS]; /* IDENTIFY xxx DEVICE data */
 		u32		gscr[SATA_PMP_GSCR_DWORDS]; /* PMP GSCR block */
-	} ____cacheline_aligned;
+	पूर्ण ____cacheline_aligned;
 
-	/* DEVSLP Timing Variables from Identify Device Data Log */
+	/* DEVSLP Timing Variables from Identअगरy Device Data Log */
 	u8			devslp_timing[ATA_LOG_DEVSLP_SIZE];
 
 	/* NCQ send and receive log subcommand support */
@@ -725,198 +726,198 @@ struct ata_device {
 
 	/* ZAC zone configuration */
 	u32			zac_zoned_cap;
-	u32			zac_zones_optimal_open;
+	u32			zac_zones_optimal_खोलो;
 	u32			zac_zones_optimal_nonseq;
-	u32			zac_zones_max_open;
+	u32			zac_zones_max_खोलो;
 
 	/* error history */
-	int			spdn_cnt;
-	/* ering is CLEAR_END, read comment above CLEAR_END */
-	struct ata_ering	ering;
-};
+	पूर्णांक			spdn_cnt;
+	/* ering is CLEAR_END, पढ़ो comment above CLEAR_END */
+	काष्ठा ata_ering	ering;
+पूर्ण;
 
 /* Fields between ATA_DEVICE_CLEAR_BEGIN and ATA_DEVICE_CLEAR_END are
  * cleared to zero on ata_dev_init().
  */
-#define ATA_DEVICE_CLEAR_BEGIN		offsetof(struct ata_device, n_sectors)
-#define ATA_DEVICE_CLEAR_END		offsetof(struct ata_device, ering)
+#घोषणा ATA_DEVICE_CLEAR_BEGIN		दुरत्व(काष्ठा ata_device, n_sectors)
+#घोषणा ATA_DEVICE_CLEAR_END		दुरत्व(काष्ठा ata_device, ering)
 
-struct ata_eh_info {
-	struct ata_device	*dev;		/* offending device */
+काष्ठा ata_eh_info अणु
+	काष्ठा ata_device	*dev;		/* offending device */
 	u32			serror;		/* SError from LLDD */
-	unsigned int		err_mask;	/* port-wide err_mask */
-	unsigned int		action;		/* ATA_EH_* action mask */
-	unsigned int		dev_action[ATA_MAX_DEVICES]; /* dev EH action */
-	unsigned int		flags;		/* ATA_EHI_* flags */
+	अचिन्हित पूर्णांक		err_mask;	/* port-wide err_mask */
+	अचिन्हित पूर्णांक		action;		/* ATA_EH_* action mask */
+	अचिन्हित पूर्णांक		dev_action[ATA_MAX_DEVICES]; /* dev EH action */
+	अचिन्हित पूर्णांक		flags;		/* ATA_EHI_* flags */
 
-	unsigned int		probe_mask;
+	अचिन्हित पूर्णांक		probe_mask;
 
-	char			desc[ATA_EH_DESC_LEN];
-	int			desc_len;
-};
+	अक्षर			desc[ATA_EH_DESC_LEN];
+	पूर्णांक			desc_len;
+पूर्ण;
 
-struct ata_eh_context {
-	struct ata_eh_info	i;
-	int			tries[ATA_MAX_DEVICES];
-	int			cmd_timeout_idx[ATA_MAX_DEVICES]
+काष्ठा ata_eh_context अणु
+	काष्ठा ata_eh_info	i;
+	पूर्णांक			tries[ATA_MAX_DEVICES];
+	पूर्णांक			cmd_समयout_idx[ATA_MAX_DEVICES]
 					       [ATA_EH_CMD_TIMEOUT_TABLE_SIZE];
-	unsigned int		classes[ATA_MAX_DEVICES];
-	unsigned int		did_probe_mask;
-	unsigned int		unloaded_mask;
-	unsigned int		saved_ncq_enabled;
+	अचिन्हित पूर्णांक		classes[ATA_MAX_DEVICES];
+	अचिन्हित पूर्णांक		did_probe_mask;
+	अचिन्हित पूर्णांक		unloaded_mask;
+	अचिन्हित पूर्णांक		saved_ncq_enabled;
 	u8			saved_xfer_mode[ATA_MAX_DEVICES];
-	/* timestamp for the last reset attempt or success */
-	unsigned long		last_reset;
-};
+	/* बारtamp क्रम the last reset attempt or success */
+	अचिन्हित दीर्घ		last_reset;
+पूर्ण;
 
-struct ata_acpi_drive
-{
+काष्ठा ata_acpi_drive
+अणु
 	u32 pio;
 	u32 dma;
-} __packed;
+पूर्ण __packed;
 
-struct ata_acpi_gtm {
-	struct ata_acpi_drive drive[2];
+काष्ठा ata_acpi_gपंचांग अणु
+	काष्ठा ata_acpi_drive drive[2];
 	u32 flags;
-} __packed;
+पूर्ण __packed;
 
-struct ata_link {
-	struct ata_port		*ap;
-	int			pmp;		/* port multiplier port # */
+काष्ठा ata_link अणु
+	काष्ठा ata_port		*ap;
+	पूर्णांक			pmp;		/* port multiplier port # */
 
-	struct device		tdev;
-	unsigned int		active_tag;	/* active tag on this link */
+	काष्ठा device		tdev;
+	अचिन्हित पूर्णांक		active_tag;	/* active tag on this link */
 	u32			sactive;	/* active NCQ commands */
 
-	unsigned int		flags;		/* ATA_LFLAG_xxx */
+	अचिन्हित पूर्णांक		flags;		/* ATA_LFLAG_xxx */
 
 	u32			saved_scontrol;	/* SControl on probe */
-	unsigned int		hw_sata_spd_limit;
-	unsigned int		sata_spd_limit;
-	unsigned int		sata_spd;	/* current SATA PHY speed */
-	enum ata_lpm_policy	lpm_policy;
+	अचिन्हित पूर्णांक		hw_sata_spd_limit;
+	अचिन्हित पूर्णांक		sata_spd_limit;
+	अचिन्हित पूर्णांक		sata_spd;	/* current SATA PHY speed */
+	क्रमागत ata_lpm_policy	lpm_policy;
 
-	/* record runtime error info, protected by host_set lock */
-	struct ata_eh_info	eh_info;
+	/* record runसमय error info, रक्षित by host_set lock */
+	काष्ठा ata_eh_info	eh_info;
 	/* EH context */
-	struct ata_eh_context	eh_context;
+	काष्ठा ata_eh_context	eh_context;
 
-	struct ata_device	device[ATA_MAX_DEVICES];
+	काष्ठा ata_device	device[ATA_MAX_DEVICES];
 
-	unsigned long		last_lpm_change; /* when last LPM change happened */
-};
-#define ATA_LINK_CLEAR_BEGIN		offsetof(struct ata_link, active_tag)
-#define ATA_LINK_CLEAR_END		offsetof(struct ata_link, device[0])
+	अचिन्हित दीर्घ		last_lpm_change; /* when last LPM change happened */
+पूर्ण;
+#घोषणा ATA_LINK_CLEAR_BEGIN		दुरत्व(काष्ठा ata_link, active_tag)
+#घोषणा ATA_LINK_CLEAR_END		दुरत्व(काष्ठा ata_link, device[0])
 
-struct ata_port {
-	struct Scsi_Host	*scsi_host; /* our co-allocated scsi host */
-	struct ata_port_operations *ops;
+काष्ठा ata_port अणु
+	काष्ठा Scsi_Host	*scsi_host; /* our co-allocated scsi host */
+	काष्ठा ata_port_operations *ops;
 	spinlock_t		*lock;
 	/* Flags owned by the EH context. Only EH should touch these once the
 	   port is active */
-	unsigned long		flags;	/* ATA_FLAG_xxx */
-	/* Flags that change dynamically, protected by ap->lock */
-	unsigned int		pflags; /* ATA_PFLAG_xxx */
-	unsigned int		print_id; /* user visible unique port ID */
-	unsigned int            local_port_no; /* host local port num */
-	unsigned int		port_no; /* 0 based port no. inside the host */
+	अचिन्हित दीर्घ		flags;	/* ATA_FLAG_xxx */
+	/* Flags that change dynamically, रक्षित by ap->lock */
+	अचिन्हित पूर्णांक		pflags; /* ATA_PFLAG_xxx */
+	अचिन्हित पूर्णांक		prपूर्णांक_id; /* user visible unique port ID */
+	अचिन्हित पूर्णांक            local_port_no; /* host local port num */
+	अचिन्हित पूर्णांक		port_no; /* 0 based port no. inside the host */
 
-#ifdef CONFIG_ATA_SFF
-	struct ata_ioports	ioaddr;	/* ATA cmd/ctl/dma register blocks */
-	u8			ctl;	/* cache of ATA control register */
+#अगर_घोषित CONFIG_ATA_SFF
+	काष्ठा ata_ioports	ioaddr;	/* ATA cmd/ctl/dma रेजिस्टर blocks */
+	u8			ctl;	/* cache of ATA control रेजिस्टर */
 	u8			last_ctl;	/* Cache last written value */
-	struct ata_link*	sff_pio_task_link; /* link currently used */
-	struct delayed_work	sff_pio_task;
-#ifdef CONFIG_ATA_BMDMA
-	struct ata_bmdma_prd	*bmdma_prd;	/* BMDMA SG list */
+	काष्ठा ata_link*	sff_pio_task_link; /* link currently used */
+	काष्ठा delayed_work	sff_pio_task;
+#अगर_घोषित CONFIG_ATA_BMDMA
+	काष्ठा ata_bmdma_prd	*bmdma_prd;	/* BMDMA SG list */
 	dma_addr_t		bmdma_prd_dma;	/* and its DMA mapping */
-#endif /* CONFIG_ATA_BMDMA */
-#endif /* CONFIG_ATA_SFF */
+#पूर्ण_अगर /* CONFIG_ATA_BMDMA */
+#पूर्ण_अगर /* CONFIG_ATA_SFF */
 
-	unsigned int		pio_mask;
-	unsigned int		mwdma_mask;
-	unsigned int		udma_mask;
-	unsigned int		cbl;	/* cable type; ATA_CBL_xxx */
+	अचिन्हित पूर्णांक		pio_mask;
+	अचिन्हित पूर्णांक		mwdma_mask;
+	अचिन्हित पूर्णांक		udma_mask;
+	अचिन्हित पूर्णांक		cbl;	/* cable type; ATA_CBL_xxx */
 
-	struct ata_queued_cmd	qcmd[ATA_MAX_QUEUE + 1];
-	unsigned long		sas_tag_allocated; /* for sas tag allocation only */
+	काष्ठा ata_queued_cmd	qcmd[ATA_MAX_QUEUE + 1];
+	अचिन्हित दीर्घ		sas_tag_allocated; /* क्रम sas tag allocation only */
 	u64			qc_active;
-	int			nr_active_links; /* #links with active qcs */
-	unsigned int		sas_last_tag;	/* track next tag hw expects */
+	पूर्णांक			nr_active_links; /* #links with active qcs */
+	अचिन्हित पूर्णांक		sas_last_tag;	/* track next tag hw expects */
 
-	struct ata_link		link;		/* host default link */
-	struct ata_link		*slave_link;	/* see ata_slave_link_init() */
+	काष्ठा ata_link		link;		/* host शेष link */
+	काष्ठा ata_link		*slave_link;	/* see ata_slave_link_init() */
 
-	int			nr_pmp_links;	/* nr of available PMP links */
-	struct ata_link		*pmp_link;	/* array of PMP links */
-	struct ata_link		*excl_link;	/* for PMP qc exclusion */
+	पूर्णांक			nr_pmp_links;	/* nr of available PMP links */
+	काष्ठा ata_link		*pmp_link;	/* array of PMP links */
+	काष्ठा ata_link		*excl_link;	/* क्रम PMP qc exclusion */
 
-	struct ata_port_stats	stats;
-	struct ata_host		*host;
-	struct device 		*dev;
-	struct device		tdev;
+	काष्ठा ata_port_stats	stats;
+	काष्ठा ata_host		*host;
+	काष्ठा device 		*dev;
+	काष्ठा device		tdev;
 
-	struct mutex		scsi_scan_mutex;
-	struct delayed_work	hotplug_task;
-	struct work_struct	scsi_rescan_task;
+	काष्ठा mutex		scsi_scan_mutex;
+	काष्ठा delayed_work	hotplug_task;
+	काष्ठा work_काष्ठा	scsi_rescan_task;
 
-	unsigned int		hsm_task_state;
+	अचिन्हित पूर्णांक		hsm_task_state;
 
 	u32			msg_enable;
-	struct list_head	eh_done_q;
-	wait_queue_head_t	eh_wait_q;
-	int			eh_tries;
-	struct completion	park_req_pending;
+	काष्ठा list_head	eh_करोne_q;
+	रुको_queue_head_t	eh_रुको_q;
+	पूर्णांक			eh_tries;
+	काष्ठा completion	park_req_pending;
 
 	pm_message_t		pm_mesg;
-	enum ata_lpm_policy	target_lpm_policy;
+	क्रमागत ata_lpm_policy	target_lpm_policy;
 
-	struct timer_list	fastdrain_timer;
-	unsigned long		fastdrain_cnt;
+	काष्ठा समयr_list	fastdrain_समयr;
+	अचिन्हित दीर्घ		fastdrain_cnt;
 
 	async_cookie_t		cookie;
 
-	int			em_message_type;
-	void			*private_data;
+	पूर्णांक			em_message_type;
+	व्योम			*निजी_data;
 
-#ifdef CONFIG_ATA_ACPI
-	struct ata_acpi_gtm	__acpi_init_gtm; /* use ata_acpi_init_gtm() */
-#endif
+#अगर_घोषित CONFIG_ATA_ACPI
+	काष्ठा ata_acpi_gपंचांग	__acpi_init_gपंचांग; /* use ata_acpi_init_gपंचांग() */
+#पूर्ण_अगर
 	/* owned by EH */
 	u8			sector_buf[ATA_SECT_SIZE] ____cacheline_aligned;
-};
+पूर्ण;
 
-/* The following initializer overrides a method to NULL whether one of
+/* The following initializer overrides a method to शून्य whether one of
  * its parent has the method defined or not.  This is equivalent to
- * ERR_PTR(-ENOENT).  Unfortunately, ERR_PTR doesn't render a constant
+ * ERR_PTR(-ENOENT).  Unक्रमtunately, ERR_PTR करोesn't render a स्थिरant
  * expression and thus can't be used as an initializer.
  */
-#define ATA_OP_NULL		(void *)(unsigned long)(-ENOENT)
+#घोषणा ATA_OP_शून्य		(व्योम *)(अचिन्हित दीर्घ)(-ENOENT)
 
-struct ata_port_operations {
+काष्ठा ata_port_operations अणु
 	/*
 	 * Command execution
 	 */
-	int (*qc_defer)(struct ata_queued_cmd *qc);
-	int (*check_atapi_dma)(struct ata_queued_cmd *qc);
-	enum ata_completion_errors (*qc_prep)(struct ata_queued_cmd *qc);
-	unsigned int (*qc_issue)(struct ata_queued_cmd *qc);
-	bool (*qc_fill_rtf)(struct ata_queued_cmd *qc);
+	पूर्णांक (*qc_defer)(काष्ठा ata_queued_cmd *qc);
+	पूर्णांक (*check_atapi_dma)(काष्ठा ata_queued_cmd *qc);
+	क्रमागत ata_completion_errors (*qc_prep)(काष्ठा ata_queued_cmd *qc);
+	अचिन्हित पूर्णांक (*qc_issue)(काष्ठा ata_queued_cmd *qc);
+	bool (*qc_fill_rtf)(काष्ठा ata_queued_cmd *qc);
 
 	/*
 	 * Configuration and exception handling
 	 */
-	int  (*cable_detect)(struct ata_port *ap);
-	unsigned long (*mode_filter)(struct ata_device *dev, unsigned long xfer_mask);
-	void (*set_piomode)(struct ata_port *ap, struct ata_device *dev);
-	void (*set_dmamode)(struct ata_port *ap, struct ata_device *dev);
-	int  (*set_mode)(struct ata_link *link, struct ata_device **r_failed_dev);
-	unsigned int (*read_id)(struct ata_device *dev, struct ata_taskfile *tf, u16 *id);
+	पूर्णांक  (*cable_detect)(काष्ठा ata_port *ap);
+	अचिन्हित दीर्घ (*mode_filter)(काष्ठा ata_device *dev, अचिन्हित दीर्घ xfer_mask);
+	व्योम (*set_piomode)(काष्ठा ata_port *ap, काष्ठा ata_device *dev);
+	व्योम (*set_dmamode)(काष्ठा ata_port *ap, काष्ठा ata_device *dev);
+	पूर्णांक  (*set_mode)(काष्ठा ata_link *link, काष्ठा ata_device **r_failed_dev);
+	अचिन्हित पूर्णांक (*पढ़ो_id)(काष्ठा ata_device *dev, काष्ठा ata_taskfile *tf, u16 *id);
 
-	void (*dev_config)(struct ata_device *dev);
+	व्योम (*dev_config)(काष्ठा ata_device *dev);
 
-	void (*freeze)(struct ata_port *ap);
-	void (*thaw)(struct ata_port *ap);
+	व्योम (*मुक्तze)(काष्ठा ata_port *ap);
+	व्योम (*thaw)(काष्ठा ata_port *ap);
 	ata_prereset_fn_t	prereset;
 	ata_reset_fn_t		softreset;
 	ata_reset_fn_t		hardreset;
@@ -925,447 +926,447 @@ struct ata_port_operations {
 	ata_reset_fn_t		pmp_softreset;
 	ata_reset_fn_t		pmp_hardreset;
 	ata_postreset_fn_t	pmp_postreset;
-	void (*error_handler)(struct ata_port *ap);
-	void (*lost_interrupt)(struct ata_port *ap);
-	void (*post_internal_cmd)(struct ata_queued_cmd *qc);
-	void (*sched_eh)(struct ata_port *ap);
-	void (*end_eh)(struct ata_port *ap);
+	व्योम (*error_handler)(काष्ठा ata_port *ap);
+	व्योम (*lost_पूर्णांकerrupt)(काष्ठा ata_port *ap);
+	व्योम (*post_पूर्णांकernal_cmd)(काष्ठा ata_queued_cmd *qc);
+	व्योम (*sched_eh)(काष्ठा ata_port *ap);
+	व्योम (*end_eh)(काष्ठा ata_port *ap);
 
 	/*
 	 * Optional features
 	 */
-	int  (*scr_read)(struct ata_link *link, unsigned int sc_reg, u32 *val);
-	int  (*scr_write)(struct ata_link *link, unsigned int sc_reg, u32 val);
-	void (*pmp_attach)(struct ata_port *ap);
-	void (*pmp_detach)(struct ata_port *ap);
-	int  (*set_lpm)(struct ata_link *link, enum ata_lpm_policy policy,
-			unsigned hints);
+	पूर्णांक  (*scr_पढ़ो)(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg, u32 *val);
+	पूर्णांक  (*scr_ग_लिखो)(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg, u32 val);
+	व्योम (*pmp_attach)(काष्ठा ata_port *ap);
+	व्योम (*pmp_detach)(काष्ठा ata_port *ap);
+	पूर्णांक  (*set_lpm)(काष्ठा ata_link *link, क्रमागत ata_lpm_policy policy,
+			अचिन्हित hपूर्णांकs);
 
 	/*
 	 * Start, stop, suspend and resume
 	 */
-	int  (*port_suspend)(struct ata_port *ap, pm_message_t mesg);
-	int  (*port_resume)(struct ata_port *ap);
-	int  (*port_start)(struct ata_port *ap);
-	void (*port_stop)(struct ata_port *ap);
-	void (*host_stop)(struct ata_host *host);
+	पूर्णांक  (*port_suspend)(काष्ठा ata_port *ap, pm_message_t mesg);
+	पूर्णांक  (*port_resume)(काष्ठा ata_port *ap);
+	पूर्णांक  (*port_start)(काष्ठा ata_port *ap);
+	व्योम (*port_stop)(काष्ठा ata_port *ap);
+	व्योम (*host_stop)(काष्ठा ata_host *host);
 
-#ifdef CONFIG_ATA_SFF
+#अगर_घोषित CONFIG_ATA_SFF
 	/*
 	 * SFF / taskfile oriented ops
 	 */
-	void (*sff_dev_select)(struct ata_port *ap, unsigned int device);
-	void (*sff_set_devctl)(struct ata_port *ap, u8 ctl);
-	u8   (*sff_check_status)(struct ata_port *ap);
-	u8   (*sff_check_altstatus)(struct ata_port *ap);
-	void (*sff_tf_load)(struct ata_port *ap, const struct ata_taskfile *tf);
-	void (*sff_tf_read)(struct ata_port *ap, struct ata_taskfile *tf);
-	void (*sff_exec_command)(struct ata_port *ap,
-				 const struct ata_taskfile *tf);
-	unsigned int (*sff_data_xfer)(struct ata_queued_cmd *qc,
-			unsigned char *buf, unsigned int buflen, int rw);
-	void (*sff_irq_on)(struct ata_port *);
-	bool (*sff_irq_check)(struct ata_port *);
-	void (*sff_irq_clear)(struct ata_port *);
-	void (*sff_drain_fifo)(struct ata_queued_cmd *qc);
+	व्योम (*sff_dev_select)(काष्ठा ata_port *ap, अचिन्हित पूर्णांक device);
+	व्योम (*sff_set_devctl)(काष्ठा ata_port *ap, u8 ctl);
+	u8   (*sff_check_status)(काष्ठा ata_port *ap);
+	u8   (*sff_check_altstatus)(काष्ठा ata_port *ap);
+	व्योम (*sff_tf_load)(काष्ठा ata_port *ap, स्थिर काष्ठा ata_taskfile *tf);
+	व्योम (*sff_tf_पढ़ो)(काष्ठा ata_port *ap, काष्ठा ata_taskfile *tf);
+	व्योम (*sff_exec_command)(काष्ठा ata_port *ap,
+				 स्थिर काष्ठा ata_taskfile *tf);
+	अचिन्हित पूर्णांक (*sff_data_xfer)(काष्ठा ata_queued_cmd *qc,
+			अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक buflen, पूर्णांक rw);
+	व्योम (*sff_irq_on)(काष्ठा ata_port *);
+	bool (*sff_irq_check)(काष्ठा ata_port *);
+	व्योम (*sff_irq_clear)(काष्ठा ata_port *);
+	व्योम (*sff_drain_fअगरo)(काष्ठा ata_queued_cmd *qc);
 
-#ifdef CONFIG_ATA_BMDMA
-	void (*bmdma_setup)(struct ata_queued_cmd *qc);
-	void (*bmdma_start)(struct ata_queued_cmd *qc);
-	void (*bmdma_stop)(struct ata_queued_cmd *qc);
-	u8   (*bmdma_status)(struct ata_port *ap);
-#endif /* CONFIG_ATA_BMDMA */
-#endif /* CONFIG_ATA_SFF */
+#अगर_घोषित CONFIG_ATA_BMDMA
+	व्योम (*bmdma_setup)(काष्ठा ata_queued_cmd *qc);
+	व्योम (*bmdma_start)(काष्ठा ata_queued_cmd *qc);
+	व्योम (*bmdma_stop)(काष्ठा ata_queued_cmd *qc);
+	u8   (*bmdma_status)(काष्ठा ata_port *ap);
+#पूर्ण_अगर /* CONFIG_ATA_BMDMA */
+#पूर्ण_अगर /* CONFIG_ATA_SFF */
 
-	ssize_t (*em_show)(struct ata_port *ap, char *buf);
-	ssize_t (*em_store)(struct ata_port *ap, const char *message,
-			    size_t size);
-	ssize_t (*sw_activity_show)(struct ata_device *dev, char *buf);
-	ssize_t (*sw_activity_store)(struct ata_device *dev,
-				     enum sw_activity val);
-	ssize_t (*transmit_led_message)(struct ata_port *ap, u32 state,
-					ssize_t size);
+	sमाप_प्रकार (*em_show)(काष्ठा ata_port *ap, अक्षर *buf);
+	sमाप_प्रकार (*em_store)(काष्ठा ata_port *ap, स्थिर अक्षर *message,
+			    माप_प्रकार size);
+	sमाप_प्रकार (*sw_activity_show)(काष्ठा ata_device *dev, अक्षर *buf);
+	sमाप_प्रकार (*sw_activity_store)(काष्ठा ata_device *dev,
+				     क्रमागत sw_activity val);
+	sमाप_प्रकार (*transmit_led_message)(काष्ठा ata_port *ap, u32 state,
+					sमाप_प्रकार size);
 
 	/*
 	 * Obsolete
 	 */
-	void (*phy_reset)(struct ata_port *ap);
-	void (*eng_timeout)(struct ata_port *ap);
+	व्योम (*phy_reset)(काष्ठा ata_port *ap);
+	व्योम (*eng_समयout)(काष्ठा ata_port *ap);
 
 	/*
 	 * ->inherits must be the last field and all the preceding
-	 * fields must be pointers.
+	 * fields must be poपूर्णांकers.
 	 */
-	const struct ata_port_operations	*inherits;
-};
+	स्थिर काष्ठा ata_port_operations	*inherits;
+पूर्ण;
 
-struct ata_port_info {
-	unsigned long		flags;
-	unsigned long		link_flags;
-	unsigned long		pio_mask;
-	unsigned long		mwdma_mask;
-	unsigned long		udma_mask;
-	struct ata_port_operations *port_ops;
-	void 			*private_data;
-};
+काष्ठा ata_port_info अणु
+	अचिन्हित दीर्घ		flags;
+	अचिन्हित दीर्घ		link_flags;
+	अचिन्हित दीर्घ		pio_mask;
+	अचिन्हित दीर्घ		mwdma_mask;
+	अचिन्हित दीर्घ		udma_mask;
+	काष्ठा ata_port_operations *port_ops;
+	व्योम 			*निजी_data;
+पूर्ण;
 
-struct ata_timing {
-	unsigned short mode;		/* ATA mode */
-	unsigned short setup;		/* t1 */
-	unsigned short act8b;		/* t2 for 8-bit I/O */
-	unsigned short rec8b;		/* t2i for 8-bit I/O */
-	unsigned short cyc8b;		/* t0 for 8-bit I/O */
-	unsigned short active;		/* t2 or tD */
-	unsigned short recover;		/* t2i or tK */
-	unsigned short dmack_hold;	/* tj */
-	unsigned short cycle;		/* t0 */
-	unsigned short udma;		/* t2CYCTYP/2 */
-};
+काष्ठा ata_timing अणु
+	अचिन्हित लघु mode;		/* ATA mode */
+	अचिन्हित लघु setup;		/* t1 */
+	अचिन्हित लघु act8b;		/* t2 क्रम 8-bit I/O */
+	अचिन्हित लघु rec8b;		/* t2i क्रम 8-bit I/O */
+	अचिन्हित लघु cyc8b;		/* t0 क्रम 8-bit I/O */
+	अचिन्हित लघु active;		/* t2 or tD */
+	अचिन्हित लघु recover;		/* t2i or tK */
+	अचिन्हित लघु dmack_hold;	/* tj */
+	अचिन्हित लघु cycle;		/* t0 */
+	अचिन्हित लघु udma;		/* t2CYCTYP/2 */
+पूर्ण;
 
 /*
  * Core layer - drivers/ata/libata-core.c
  */
-extern struct ata_port_operations ata_dummy_port_ops;
-extern const struct ata_port_info ata_dummy_port_info;
+बाह्य काष्ठा ata_port_operations ata_dummy_port_ops;
+बाह्य स्थिर काष्ठा ata_port_info ata_dummy_port_info;
 
-static inline bool ata_is_atapi(u8 prot)
-{
-	return prot & ATA_PROT_FLAG_ATAPI;
-}
+अटल अंतरभूत bool ata_is_atapi(u8 prot)
+अणु
+	वापस prot & ATA_PROT_FLAG_ATAPI;
+पूर्ण
 
-static inline bool ata_is_pio(u8 prot)
-{
-	return prot & ATA_PROT_FLAG_PIO;
-}
+अटल अंतरभूत bool ata_is_pio(u8 prot)
+अणु
+	वापस prot & ATA_PROT_FLAG_PIO;
+पूर्ण
 
-static inline bool ata_is_dma(u8 prot)
-{
-	return prot & ATA_PROT_FLAG_DMA;
-}
+अटल अंतरभूत bool ata_is_dma(u8 prot)
+अणु
+	वापस prot & ATA_PROT_FLAG_DMA;
+पूर्ण
 
-static inline bool ata_is_ncq(u8 prot)
-{
-	return prot & ATA_PROT_FLAG_NCQ;
-}
+अटल अंतरभूत bool ata_is_ncq(u8 prot)
+अणु
+	वापस prot & ATA_PROT_FLAG_NCQ;
+पूर्ण
 
-static inline bool ata_is_data(u8 prot)
-{
-	return prot & (ATA_PROT_FLAG_PIO | ATA_PROT_FLAG_DMA);
-}
+अटल अंतरभूत bool ata_is_data(u8 prot)
+अणु
+	वापस prot & (ATA_PROT_FLAG_PIO | ATA_PROT_FLAG_DMA);
+पूर्ण
 
-static inline int is_multi_taskfile(struct ata_taskfile *tf)
-{
-	return (tf->command == ATA_CMD_READ_MULTI) ||
+अटल अंतरभूत पूर्णांक is_multi_taskfile(काष्ठा ata_taskfile *tf)
+अणु
+	वापस (tf->command == ATA_CMD_READ_MULTI) ||
 	       (tf->command == ATA_CMD_WRITE_MULTI) ||
 	       (tf->command == ATA_CMD_READ_MULTI_EXT) ||
 	       (tf->command == ATA_CMD_WRITE_MULTI_EXT) ||
 	       (tf->command == ATA_CMD_WRITE_MULTI_FUA_EXT);
-}
+पूर्ण
 
-static inline int ata_port_is_dummy(struct ata_port *ap)
-{
-	return ap->ops == &ata_dummy_port_ops;
-}
+अटल अंतरभूत पूर्णांक ata_port_is_dummy(काष्ठा ata_port *ap)
+अणु
+	वापस ap->ops == &ata_dummy_port_ops;
+पूर्ण
 
-extern int ata_std_prereset(struct ata_link *link, unsigned long deadline);
-extern int ata_wait_after_reset(struct ata_link *link, unsigned long deadline,
-				int (*check_ready)(struct ata_link *link));
-extern int sata_std_hardreset(struct ata_link *link, unsigned int *class,
-			      unsigned long deadline);
-extern void ata_std_postreset(struct ata_link *link, unsigned int *classes);
+बाह्य पूर्णांक ata_std_prereset(काष्ठा ata_link *link, अचिन्हित दीर्घ deadline);
+बाह्य पूर्णांक ata_रुको_after_reset(काष्ठा ata_link *link, अचिन्हित दीर्घ deadline,
+				पूर्णांक (*check_पढ़ोy)(काष्ठा ata_link *link));
+बाह्य पूर्णांक sata_std_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+			      अचिन्हित दीर्घ deadline);
+बाह्य व्योम ata_std_postreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *classes);
 
-extern struct ata_host *ata_host_alloc(struct device *dev, int max_ports);
-extern struct ata_host *ata_host_alloc_pinfo(struct device *dev,
-			const struct ata_port_info * const * ppi, int n_ports);
-extern void ata_host_get(struct ata_host *host);
-extern void ata_host_put(struct ata_host *host);
-extern int ata_host_start(struct ata_host *host);
-extern int ata_host_register(struct ata_host *host,
-			     struct scsi_host_template *sht);
-extern int ata_host_activate(struct ata_host *host, int irq,
-			     irq_handler_t irq_handler, unsigned long irq_flags,
-			     struct scsi_host_template *sht);
-extern void ata_host_detach(struct ata_host *host);
-extern void ata_host_init(struct ata_host *, struct device *, struct ata_port_operations *);
-extern int ata_scsi_detect(struct scsi_host_template *sht);
-extern int ata_scsi_ioctl(struct scsi_device *dev, unsigned int cmd,
-			  void __user *arg);
-#ifdef CONFIG_COMPAT
-#define ATA_SCSI_COMPAT_IOCTL .compat_ioctl = ata_scsi_ioctl,
-#else
-#define ATA_SCSI_COMPAT_IOCTL /* empty */
-#endif
-extern int ata_scsi_queuecmd(struct Scsi_Host *h, struct scsi_cmnd *cmd);
-#if IS_REACHABLE(CONFIG_ATA)
-bool ata_scsi_dma_need_drain(struct request *rq);
-#else
-#define ata_scsi_dma_need_drain NULL
-#endif
-extern int ata_sas_scsi_ioctl(struct ata_port *ap, struct scsi_device *dev,
-			    unsigned int cmd, void __user *arg);
-extern bool ata_link_online(struct ata_link *link);
-extern bool ata_link_offline(struct ata_link *link);
-#ifdef CONFIG_PM
-extern int ata_host_suspend(struct ata_host *host, pm_message_t mesg);
-extern void ata_host_resume(struct ata_host *host);
-extern void ata_sas_port_suspend(struct ata_port *ap);
-extern void ata_sas_port_resume(struct ata_port *ap);
-#else
-static inline void ata_sas_port_suspend(struct ata_port *ap)
-{
-}
-static inline void ata_sas_port_resume(struct ata_port *ap)
-{
-}
-#endif
-extern int ata_ratelimit(void);
-extern void ata_msleep(struct ata_port *ap, unsigned int msecs);
-extern u32 ata_wait_register(struct ata_port *ap, void __iomem *reg, u32 mask,
-			u32 val, unsigned long interval, unsigned long timeout);
-extern int atapi_cmd_type(u8 opcode);
-extern unsigned long ata_pack_xfermask(unsigned long pio_mask,
-			unsigned long mwdma_mask, unsigned long udma_mask);
-extern void ata_unpack_xfermask(unsigned long xfer_mask,
-			unsigned long *pio_mask, unsigned long *mwdma_mask,
-			unsigned long *udma_mask);
-extern u8 ata_xfer_mask2mode(unsigned long xfer_mask);
-extern unsigned long ata_xfer_mode2mask(u8 xfer_mode);
-extern int ata_xfer_mode2shift(unsigned long xfer_mode);
-extern const char *ata_mode_string(unsigned long xfer_mask);
-extern unsigned long ata_id_xfermask(const u16 *id);
-extern int ata_std_qc_defer(struct ata_queued_cmd *qc);
-extern enum ata_completion_errors ata_noop_qc_prep(struct ata_queued_cmd *qc);
-extern void ata_sg_init(struct ata_queued_cmd *qc, struct scatterlist *sg,
-		 unsigned int n_elem);
-extern unsigned int ata_dev_classify(const struct ata_taskfile *tf);
-extern void ata_dev_disable(struct ata_device *adev);
-extern void ata_id_string(const u16 *id, unsigned char *s,
-			  unsigned int ofs, unsigned int len);
-extern void ata_id_c_string(const u16 *id, unsigned char *s,
-			    unsigned int ofs, unsigned int len);
-extern unsigned int ata_do_dev_read_id(struct ata_device *dev,
-					struct ata_taskfile *tf, u16 *id);
-extern void ata_qc_complete(struct ata_queued_cmd *qc);
-extern u64 ata_qc_get_active(struct ata_port *ap);
-extern void ata_scsi_simulate(struct ata_device *dev, struct scsi_cmnd *cmd);
-extern int ata_std_bios_param(struct scsi_device *sdev,
-			      struct block_device *bdev,
-			      sector_t capacity, int geom[]);
-extern void ata_scsi_unlock_native_capacity(struct scsi_device *sdev);
-extern int ata_scsi_slave_config(struct scsi_device *sdev);
-extern void ata_scsi_slave_destroy(struct scsi_device *sdev);
-extern int ata_scsi_change_queue_depth(struct scsi_device *sdev,
-				       int queue_depth);
-extern int __ata_change_queue_depth(struct ata_port *ap, struct scsi_device *sdev,
-				    int queue_depth);
-extern struct ata_device *ata_dev_pair(struct ata_device *adev);
-extern int ata_do_set_mode(struct ata_link *link, struct ata_device **r_failed_dev);
-extern void ata_scsi_port_error_handler(struct Scsi_Host *host, struct ata_port *ap);
-extern void ata_scsi_cmd_error_handler(struct Scsi_Host *host, struct ata_port *ap, struct list_head *eh_q);
+बाह्य काष्ठा ata_host *ata_host_alloc(काष्ठा device *dev, पूर्णांक max_ports);
+बाह्य काष्ठा ata_host *ata_host_alloc_pinfo(काष्ठा device *dev,
+			स्थिर काष्ठा ata_port_info * स्थिर * ppi, पूर्णांक n_ports);
+बाह्य व्योम ata_host_get(काष्ठा ata_host *host);
+बाह्य व्योम ata_host_put(काष्ठा ata_host *host);
+बाह्य पूर्णांक ata_host_start(काष्ठा ata_host *host);
+बाह्य पूर्णांक ata_host_रेजिस्टर(काष्ठा ata_host *host,
+			     काष्ठा scsi_host_ढाँचा *sht);
+बाह्य पूर्णांक ata_host_activate(काष्ठा ata_host *host, पूर्णांक irq,
+			     irq_handler_t irq_handler, अचिन्हित दीर्घ irq_flags,
+			     काष्ठा scsi_host_ढाँचा *sht);
+बाह्य व्योम ata_host_detach(काष्ठा ata_host *host);
+बाह्य व्योम ata_host_init(काष्ठा ata_host *, काष्ठा device *, काष्ठा ata_port_operations *);
+बाह्य पूर्णांक ata_scsi_detect(काष्ठा scsi_host_ढाँचा *sht);
+बाह्य पूर्णांक ata_scsi_ioctl(काष्ठा scsi_device *dev, अचिन्हित पूर्णांक cmd,
+			  व्योम __user *arg);
+#अगर_घोषित CONFIG_COMPAT
+#घोषणा ATA_SCSI_COMPAT_IOCTL .compat_ioctl = ata_scsi_ioctl,
+#अन्यथा
+#घोषणा ATA_SCSI_COMPAT_IOCTL /* empty */
+#पूर्ण_अगर
+बाह्य पूर्णांक ata_scsi_queuecmd(काष्ठा Scsi_Host *h, काष्ठा scsi_cmnd *cmd);
+#अगर IS_REACHABLE(CONFIG_ATA)
+bool ata_scsi_dma_need_drain(काष्ठा request *rq);
+#अन्यथा
+#घोषणा ata_scsi_dma_need_drain शून्य
+#पूर्ण_अगर
+बाह्य पूर्णांक ata_sas_scsi_ioctl(काष्ठा ata_port *ap, काष्ठा scsi_device *dev,
+			    अचिन्हित पूर्णांक cmd, व्योम __user *arg);
+बाह्य bool ata_link_online(काष्ठा ata_link *link);
+बाह्य bool ata_link_offline(काष्ठा ata_link *link);
+#अगर_घोषित CONFIG_PM
+बाह्य पूर्णांक ata_host_suspend(काष्ठा ata_host *host, pm_message_t mesg);
+बाह्य व्योम ata_host_resume(काष्ठा ata_host *host);
+बाह्य व्योम ata_sas_port_suspend(काष्ठा ata_port *ap);
+बाह्य व्योम ata_sas_port_resume(काष्ठा ata_port *ap);
+#अन्यथा
+अटल अंतरभूत व्योम ata_sas_port_suspend(काष्ठा ata_port *ap)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ata_sas_port_resume(काष्ठा ata_port *ap)
+अणु
+पूर्ण
+#पूर्ण_अगर
+बाह्य पूर्णांक ata_ratelimit(व्योम);
+बाह्य व्योम ata_msleep(काष्ठा ata_port *ap, अचिन्हित पूर्णांक msecs);
+बाह्य u32 ata_रुको_रेजिस्टर(काष्ठा ata_port *ap, व्योम __iomem *reg, u32 mask,
+			u32 val, अचिन्हित दीर्घ पूर्णांकerval, अचिन्हित दीर्घ समयout);
+बाह्य पूर्णांक atapi_cmd_type(u8 opcode);
+बाह्य अचिन्हित दीर्घ ata_pack_xfermask(अचिन्हित दीर्घ pio_mask,
+			अचिन्हित दीर्घ mwdma_mask, अचिन्हित दीर्घ udma_mask);
+बाह्य व्योम ata_unpack_xfermask(अचिन्हित दीर्घ xfer_mask,
+			अचिन्हित दीर्घ *pio_mask, अचिन्हित दीर्घ *mwdma_mask,
+			अचिन्हित दीर्घ *udma_mask);
+बाह्य u8 ata_xfer_mask2mode(अचिन्हित दीर्घ xfer_mask);
+बाह्य अचिन्हित दीर्घ ata_xfer_mode2mask(u8 xfer_mode);
+बाह्य पूर्णांक ata_xfer_mode2shअगरt(अचिन्हित दीर्घ xfer_mode);
+बाह्य स्थिर अक्षर *ata_mode_string(अचिन्हित दीर्घ xfer_mask);
+बाह्य अचिन्हित दीर्घ ata_id_xfermask(स्थिर u16 *id);
+बाह्य पूर्णांक ata_std_qc_defer(काष्ठा ata_queued_cmd *qc);
+बाह्य क्रमागत ata_completion_errors ata_noop_qc_prep(काष्ठा ata_queued_cmd *qc);
+बाह्य व्योम ata_sg_init(काष्ठा ata_queued_cmd *qc, काष्ठा scatterlist *sg,
+		 अचिन्हित पूर्णांक n_elem);
+बाह्य अचिन्हित पूर्णांक ata_dev_classअगरy(स्थिर काष्ठा ata_taskfile *tf);
+बाह्य व्योम ata_dev_disable(काष्ठा ata_device *adev);
+बाह्य व्योम ata_id_string(स्थिर u16 *id, अचिन्हित अक्षर *s,
+			  अचिन्हित पूर्णांक ofs, अचिन्हित पूर्णांक len);
+बाह्य व्योम ata_id_c_string(स्थिर u16 *id, अचिन्हित अक्षर *s,
+			    अचिन्हित पूर्णांक ofs, अचिन्हित पूर्णांक len);
+बाह्य अचिन्हित पूर्णांक ata_करो_dev_पढ़ो_id(काष्ठा ata_device *dev,
+					काष्ठा ata_taskfile *tf, u16 *id);
+बाह्य व्योम ata_qc_complete(काष्ठा ata_queued_cmd *qc);
+बाह्य u64 ata_qc_get_active(काष्ठा ata_port *ap);
+बाह्य व्योम ata_scsi_simulate(काष्ठा ata_device *dev, काष्ठा scsi_cmnd *cmd);
+बाह्य पूर्णांक ata_std_bios_param(काष्ठा scsi_device *sdev,
+			      काष्ठा block_device *bdev,
+			      sector_t capacity, पूर्णांक geom[]);
+बाह्य व्योम ata_scsi_unlock_native_capacity(काष्ठा scsi_device *sdev);
+बाह्य पूर्णांक ata_scsi_slave_config(काष्ठा scsi_device *sdev);
+बाह्य व्योम ata_scsi_slave_destroy(काष्ठा scsi_device *sdev);
+बाह्य पूर्णांक ata_scsi_change_queue_depth(काष्ठा scsi_device *sdev,
+				       पूर्णांक queue_depth);
+बाह्य पूर्णांक __ata_change_queue_depth(काष्ठा ata_port *ap, काष्ठा scsi_device *sdev,
+				    पूर्णांक queue_depth);
+बाह्य काष्ठा ata_device *ata_dev_pair(काष्ठा ata_device *adev);
+बाह्य पूर्णांक ata_करो_set_mode(काष्ठा ata_link *link, काष्ठा ata_device **r_failed_dev);
+बाह्य व्योम ata_scsi_port_error_handler(काष्ठा Scsi_Host *host, काष्ठा ata_port *ap);
+बाह्य व्योम ata_scsi_cmd_error_handler(काष्ठा Scsi_Host *host, काष्ठा ata_port *ap, काष्ठा list_head *eh_q);
 
 /*
- * SATA specific code - drivers/ata/libata-sata.c
+ * SATA specअगरic code - drivers/ata/libata-sata.c
  */
-#ifdef CONFIG_SATA_HOST
-extern const unsigned long sata_deb_timing_normal[];
-extern const unsigned long sata_deb_timing_hotplug[];
-extern const unsigned long sata_deb_timing_long[];
+#अगर_घोषित CONFIG_SATA_HOST
+बाह्य स्थिर अचिन्हित दीर्घ sata_deb_timing_normal[];
+बाह्य स्थिर अचिन्हित दीर्घ sata_deb_timing_hotplug[];
+बाह्य स्थिर अचिन्हित दीर्घ sata_deb_timing_दीर्घ[];
 
-static inline const unsigned long *
-sata_ehc_deb_timing(struct ata_eh_context *ehc)
-{
-	if (ehc->i.flags & ATA_EHI_HOTPLUGGED)
-		return sata_deb_timing_hotplug;
-	else
-		return sata_deb_timing_normal;
-}
+अटल अंतरभूत स्थिर अचिन्हित दीर्घ *
+sata_ehc_deb_timing(काष्ठा ata_eh_context *ehc)
+अणु
+	अगर (ehc->i.flags & ATA_EHI_HOTPLUGGED)
+		वापस sata_deb_timing_hotplug;
+	अन्यथा
+		वापस sata_deb_timing_normal;
+पूर्ण
 
-extern int sata_scr_valid(struct ata_link *link);
-extern int sata_scr_read(struct ata_link *link, int reg, u32 *val);
-extern int sata_scr_write(struct ata_link *link, int reg, u32 val);
-extern int sata_scr_write_flush(struct ata_link *link, int reg, u32 val);
-extern int sata_set_spd(struct ata_link *link);
-extern int sata_link_hardreset(struct ata_link *link,
-			const unsigned long *timing, unsigned long deadline,
-			bool *online, int (*check_ready)(struct ata_link *));
-extern int sata_link_resume(struct ata_link *link, const unsigned long *params,
-			    unsigned long deadline);
-extern void ata_eh_analyze_ncq_error(struct ata_link *link);
-#else
-static inline const unsigned long *
-sata_ehc_deb_timing(struct ata_eh_context *ehc)
-{
-	return NULL;
-}
-static inline int sata_scr_valid(struct ata_link *link) { return 0; }
-static inline int sata_scr_read(struct ata_link *link, int reg, u32 *val)
-{
-	return -EOPNOTSUPP;
-}
-static inline int sata_scr_write(struct ata_link *link, int reg, u32 val)
-{
-	return -EOPNOTSUPP;
-}
-static inline int sata_scr_write_flush(struct ata_link *link, int reg, u32 val)
-{
-	return -EOPNOTSUPP;
-}
-static inline int sata_set_spd(struct ata_link *link) { return -EOPNOTSUPP; }
-static inline int sata_link_hardreset(struct ata_link *link,
-				      const unsigned long *timing,
-				      unsigned long deadline,
+बाह्य पूर्णांक sata_scr_valid(काष्ठा ata_link *link);
+बाह्य पूर्णांक sata_scr_पढ़ो(काष्ठा ata_link *link, पूर्णांक reg, u32 *val);
+बाह्य पूर्णांक sata_scr_ग_लिखो(काष्ठा ata_link *link, पूर्णांक reg, u32 val);
+बाह्य पूर्णांक sata_scr_ग_लिखो_flush(काष्ठा ata_link *link, पूर्णांक reg, u32 val);
+बाह्य पूर्णांक sata_set_spd(काष्ठा ata_link *link);
+बाह्य पूर्णांक sata_link_hardreset(काष्ठा ata_link *link,
+			स्थिर अचिन्हित दीर्घ *timing, अचिन्हित दीर्घ deadline,
+			bool *online, पूर्णांक (*check_पढ़ोy)(काष्ठा ata_link *));
+बाह्य पूर्णांक sata_link_resume(काष्ठा ata_link *link, स्थिर अचिन्हित दीर्घ *params,
+			    अचिन्हित दीर्घ deadline);
+बाह्य व्योम ata_eh_analyze_ncq_error(काष्ठा ata_link *link);
+#अन्यथा
+अटल अंतरभूत स्थिर अचिन्हित दीर्घ *
+sata_ehc_deb_timing(काष्ठा ata_eh_context *ehc)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत पूर्णांक sata_scr_valid(काष्ठा ata_link *link) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक sata_scr_पढ़ो(काष्ठा ata_link *link, पूर्णांक reg, u32 *val)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+अटल अंतरभूत पूर्णांक sata_scr_ग_लिखो(काष्ठा ata_link *link, पूर्णांक reg, u32 val)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+अटल अंतरभूत पूर्णांक sata_scr_ग_लिखो_flush(काष्ठा ata_link *link, पूर्णांक reg, u32 val)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+अटल अंतरभूत पूर्णांक sata_set_spd(काष्ठा ata_link *link) अणु वापस -EOPNOTSUPP; पूर्ण
+अटल अंतरभूत पूर्णांक sata_link_hardreset(काष्ठा ata_link *link,
+				      स्थिर अचिन्हित दीर्घ *timing,
+				      अचिन्हित दीर्घ deadline,
 				      bool *online,
-				      int (*check_ready)(struct ata_link *))
-{
-	if (online)
+				      पूर्णांक (*check_पढ़ोy)(काष्ठा ata_link *))
+अणु
+	अगर (online)
 		*online = false;
-	return -EOPNOTSUPP;
-}
-static inline int sata_link_resume(struct ata_link *link,
-				   const unsigned long *params,
-				   unsigned long deadline)
-{
-	return -EOPNOTSUPP;
-}
-static inline void ata_eh_analyze_ncq_error(struct ata_link *link) { }
-#endif
-extern int sata_link_debounce(struct ata_link *link,
-			const unsigned long *params, unsigned long deadline);
-extern int sata_link_scr_lpm(struct ata_link *link, enum ata_lpm_policy policy,
+	वापस -EOPNOTSUPP;
+पूर्ण
+अटल अंतरभूत पूर्णांक sata_link_resume(काष्ठा ata_link *link,
+				   स्थिर अचिन्हित दीर्घ *params,
+				   अचिन्हित दीर्घ deadline)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+अटल अंतरभूत व्योम ata_eh_analyze_ncq_error(काष्ठा ata_link *link) अणु पूर्ण
+#पूर्ण_अगर
+बाह्य पूर्णांक sata_link_debounce(काष्ठा ata_link *link,
+			स्थिर अचिन्हित दीर्घ *params, अचिन्हित दीर्घ deadline);
+बाह्य पूर्णांक sata_link_scr_lpm(काष्ठा ata_link *link, क्रमागत ata_lpm_policy policy,
 			     bool spm_wakeup);
-extern int ata_slave_link_init(struct ata_port *ap);
-extern void ata_sas_port_destroy(struct ata_port *);
-extern struct ata_port *ata_sas_port_alloc(struct ata_host *,
-					   struct ata_port_info *, struct Scsi_Host *);
-extern void ata_sas_async_probe(struct ata_port *ap);
-extern int ata_sas_sync_probe(struct ata_port *ap);
-extern int ata_sas_port_init(struct ata_port *);
-extern int ata_sas_port_start(struct ata_port *ap);
-extern int ata_sas_tport_add(struct device *parent, struct ata_port *ap);
-extern void ata_sas_tport_delete(struct ata_port *ap);
-extern void ata_sas_port_stop(struct ata_port *ap);
-extern int ata_sas_slave_configure(struct scsi_device *, struct ata_port *);
-extern int ata_sas_queuecmd(struct scsi_cmnd *cmd, struct ata_port *ap);
-extern void ata_tf_to_fis(const struct ata_taskfile *tf,
-			  u8 pmp, int is_cmd, u8 *fis);
-extern void ata_tf_from_fis(const u8 *fis, struct ata_taskfile *tf);
-extern int ata_qc_complete_multiple(struct ata_port *ap, u64 qc_active);
-extern bool sata_lpm_ignore_phy_events(struct ata_link *link);
-extern int sata_async_notification(struct ata_port *ap);
+बाह्य पूर्णांक ata_slave_link_init(काष्ठा ata_port *ap);
+बाह्य व्योम ata_sas_port_destroy(काष्ठा ata_port *);
+बाह्य काष्ठा ata_port *ata_sas_port_alloc(काष्ठा ata_host *,
+					   काष्ठा ata_port_info *, काष्ठा Scsi_Host *);
+बाह्य व्योम ata_sas_async_probe(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_sas_sync_probe(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_sas_port_init(काष्ठा ata_port *);
+बाह्य पूर्णांक ata_sas_port_start(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_sas_tport_add(काष्ठा device *parent, काष्ठा ata_port *ap);
+बाह्य व्योम ata_sas_tport_delete(काष्ठा ata_port *ap);
+बाह्य व्योम ata_sas_port_stop(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_sas_slave_configure(काष्ठा scsi_device *, काष्ठा ata_port *);
+बाह्य पूर्णांक ata_sas_queuecmd(काष्ठा scsi_cmnd *cmd, काष्ठा ata_port *ap);
+बाह्य व्योम ata_tf_to_fis(स्थिर काष्ठा ata_taskfile *tf,
+			  u8 pmp, पूर्णांक is_cmd, u8 *fis);
+बाह्य व्योम ata_tf_from_fis(स्थिर u8 *fis, काष्ठा ata_taskfile *tf);
+बाह्य पूर्णांक ata_qc_complete_multiple(काष्ठा ata_port *ap, u64 qc_active);
+बाह्य bool sata_lpm_ignore_phy_events(काष्ठा ata_link *link);
+बाह्य पूर्णांक sata_async_notअगरication(काष्ठा ata_port *ap);
 
-extern int ata_cable_40wire(struct ata_port *ap);
-extern int ata_cable_80wire(struct ata_port *ap);
-extern int ata_cable_sata(struct ata_port *ap);
-extern int ata_cable_ignore(struct ata_port *ap);
-extern int ata_cable_unknown(struct ata_port *ap);
+बाह्य पूर्णांक ata_cable_40wire(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_cable_80wire(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_cable_sata(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_cable_ignore(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_cable_unknown(काष्ठा ata_port *ap);
 
 /* Timing helpers */
-extern unsigned int ata_pio_need_iordy(const struct ata_device *);
-extern u8 ata_timing_cycle2mode(unsigned int xfer_shift, int cycle);
+बाह्य अचिन्हित पूर्णांक ata_pio_need_iordy(स्थिर काष्ठा ata_device *);
+बाह्य u8 ata_timing_cycle2mode(अचिन्हित पूर्णांक xfer_shअगरt, पूर्णांक cycle);
 
 /* PCI */
-#ifdef CONFIG_PCI
-struct pci_dev;
+#अगर_घोषित CONFIG_PCI
+काष्ठा pci_dev;
 
-struct pci_bits {
-	unsigned int		reg;	/* PCI config register to read */
-	unsigned int		width;	/* 1 (8 bit), 2 (16 bit), 4 (32 bit) */
-	unsigned long		mask;
-	unsigned long		val;
-};
+काष्ठा pci_bits अणु
+	अचिन्हित पूर्णांक		reg;	/* PCI config रेजिस्टर to पढ़ो */
+	अचिन्हित पूर्णांक		width;	/* 1 (8 bit), 2 (16 bit), 4 (32 bit) */
+	अचिन्हित दीर्घ		mask;
+	अचिन्हित दीर्घ		val;
+पूर्ण;
 
-extern int pci_test_config_bits(struct pci_dev *pdev, const struct pci_bits *bits);
-extern void ata_pci_shutdown_one(struct pci_dev *pdev);
-extern void ata_pci_remove_one(struct pci_dev *pdev);
+बाह्य पूर्णांक pci_test_config_bits(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_bits *bits);
+बाह्य व्योम ata_pci_shutकरोwn_one(काष्ठा pci_dev *pdev);
+बाह्य व्योम ata_pci_हटाओ_one(काष्ठा pci_dev *pdev);
 
-#ifdef CONFIG_PM
-extern void ata_pci_device_do_suspend(struct pci_dev *pdev, pm_message_t mesg);
-extern int __must_check ata_pci_device_do_resume(struct pci_dev *pdev);
-extern int ata_pci_device_suspend(struct pci_dev *pdev, pm_message_t mesg);
-extern int ata_pci_device_resume(struct pci_dev *pdev);
-#endif /* CONFIG_PM */
-#endif /* CONFIG_PCI */
+#अगर_घोषित CONFIG_PM
+बाह्य व्योम ata_pci_device_करो_suspend(काष्ठा pci_dev *pdev, pm_message_t mesg);
+बाह्य पूर्णांक __must_check ata_pci_device_करो_resume(काष्ठा pci_dev *pdev);
+बाह्य पूर्णांक ata_pci_device_suspend(काष्ठा pci_dev *pdev, pm_message_t mesg);
+बाह्य पूर्णांक ata_pci_device_resume(काष्ठा pci_dev *pdev);
+#पूर्ण_अगर /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PCI */
 
-struct platform_device;
+काष्ठा platक्रमm_device;
 
-extern int ata_platform_remove_one(struct platform_device *pdev);
+बाह्य पूर्णांक ata_platक्रमm_हटाओ_one(काष्ठा platक्रमm_device *pdev);
 
 /*
  * ACPI - drivers/ata/libata-acpi.c
  */
-#ifdef CONFIG_ATA_ACPI
-static inline const struct ata_acpi_gtm *ata_acpi_init_gtm(struct ata_port *ap)
-{
-	if (ap->pflags & ATA_PFLAG_INIT_GTM_VALID)
-		return &ap->__acpi_init_gtm;
-	return NULL;
-}
-int ata_acpi_stm(struct ata_port *ap, const struct ata_acpi_gtm *stm);
-int ata_acpi_gtm(struct ata_port *ap, struct ata_acpi_gtm *stm);
-unsigned long ata_acpi_gtm_xfermask(struct ata_device *dev,
-				    const struct ata_acpi_gtm *gtm);
-int ata_acpi_cbl_80wire(struct ata_port *ap, const struct ata_acpi_gtm *gtm);
-#else
-static inline const struct ata_acpi_gtm *ata_acpi_init_gtm(struct ata_port *ap)
-{
-	return NULL;
-}
+#अगर_घोषित CONFIG_ATA_ACPI
+अटल अंतरभूत स्थिर काष्ठा ata_acpi_gपंचांग *ata_acpi_init_gपंचांग(काष्ठा ata_port *ap)
+अणु
+	अगर (ap->pflags & ATA_PFLAG_INIT_GTM_VALID)
+		वापस &ap->__acpi_init_gपंचांग;
+	वापस शून्य;
+पूर्ण
+पूर्णांक ata_acpi_sपंचांग(काष्ठा ata_port *ap, स्थिर काष्ठा ata_acpi_gपंचांग *sपंचांग);
+पूर्णांक ata_acpi_gपंचांग(काष्ठा ata_port *ap, काष्ठा ata_acpi_gपंचांग *sपंचांग);
+अचिन्हित दीर्घ ata_acpi_gपंचांग_xfermask(काष्ठा ata_device *dev,
+				    स्थिर काष्ठा ata_acpi_gपंचांग *gपंचांग);
+पूर्णांक ata_acpi_cbl_80wire(काष्ठा ata_port *ap, स्थिर काष्ठा ata_acpi_gपंचांग *gपंचांग);
+#अन्यथा
+अटल अंतरभूत स्थिर काष्ठा ata_acpi_gपंचांग *ata_acpi_init_gपंचांग(काष्ठा ata_port *ap)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int ata_acpi_stm(const struct ata_port *ap,
-			       struct ata_acpi_gtm *stm)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक ata_acpi_sपंचांग(स्थिर काष्ठा ata_port *ap,
+			       काष्ठा ata_acpi_gपंचांग *sपंचांग)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int ata_acpi_gtm(const struct ata_port *ap,
-			       struct ata_acpi_gtm *stm)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक ata_acpi_gपंचांग(स्थिर काष्ठा ata_port *ap,
+			       काष्ठा ata_acpi_gपंचांग *sपंचांग)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline unsigned int ata_acpi_gtm_xfermask(struct ata_device *dev,
-					const struct ata_acpi_gtm *gtm)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ata_acpi_gपंचांग_xfermask(काष्ठा ata_device *dev,
+					स्थिर काष्ठा ata_acpi_gपंचांग *gपंचांग)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int ata_acpi_cbl_80wire(struct ata_port *ap,
-				      const struct ata_acpi_gtm *gtm)
-{
-	return 0;
-}
-#endif
+अटल अंतरभूत पूर्णांक ata_acpi_cbl_80wire(काष्ठा ata_port *ap,
+				      स्थिर काष्ठा ata_acpi_gपंचांग *gपंचांग)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * EH - drivers/ata/libata-eh.c
  */
-extern void ata_port_schedule_eh(struct ata_port *ap);
-extern void ata_port_wait_eh(struct ata_port *ap);
-extern int ata_link_abort(struct ata_link *link);
-extern int ata_port_abort(struct ata_port *ap);
-extern int ata_port_freeze(struct ata_port *ap);
+बाह्य व्योम ata_port_schedule_eh(काष्ठा ata_port *ap);
+बाह्य व्योम ata_port_रुको_eh(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_link_पात(काष्ठा ata_link *link);
+बाह्य पूर्णांक ata_port_पात(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_port_मुक्तze(काष्ठा ata_port *ap);
 
-extern void ata_eh_freeze_port(struct ata_port *ap);
-extern void ata_eh_thaw_port(struct ata_port *ap);
+बाह्य व्योम ata_eh_मुक्तze_port(काष्ठा ata_port *ap);
+बाह्य व्योम ata_eh_thaw_port(काष्ठा ata_port *ap);
 
-extern void ata_eh_qc_complete(struct ata_queued_cmd *qc);
-extern void ata_eh_qc_retry(struct ata_queued_cmd *qc);
+बाह्य व्योम ata_eh_qc_complete(काष्ठा ata_queued_cmd *qc);
+बाह्य व्योम ata_eh_qc_retry(काष्ठा ata_queued_cmd *qc);
 
-extern void ata_do_eh(struct ata_port *ap, ata_prereset_fn_t prereset,
+बाह्य व्योम ata_करो_eh(काष्ठा ata_port *ap, ata_prereset_fn_t prereset,
 		      ata_reset_fn_t softreset, ata_reset_fn_t hardreset,
 		      ata_postreset_fn_t postreset);
-extern void ata_std_error_handler(struct ata_port *ap);
-extern void ata_std_sched_eh(struct ata_port *ap);
-extern void ata_std_end_eh(struct ata_port *ap);
-extern int ata_link_nr_enabled(struct ata_link *link);
+बाह्य व्योम ata_std_error_handler(काष्ठा ata_port *ap);
+बाह्य व्योम ata_std_sched_eh(काष्ठा ata_port *ap);
+बाह्य व्योम ata_std_end_eh(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_link_nr_enabled(काष्ठा ata_link *link);
 
 /*
- * Base operations to inherit from and initializers for sht
+ * Base operations to inherit from and initializers क्रम sht
  *
  * Operations
  *
  * base  : Common to all libata drivers.
- * sata  : SATA controllers w/ native interface.
+ * sata  : SATA controllers w/ native पूर्णांकerface.
  * pmp   : SATA controllers w/ PMP support.
  * sff   : SFF ATA controllers w/o BMDMA support.
  * bmdma : SFF ATA controllers w/ BMDMA support.
@@ -1380,17 +1381,17 @@ extern int ata_link_nr_enabled(struct ata_link *link);
  * NCQ   : SATA controllers supporting NCQ.  The user must set
  *	   sg_tablesize, dma_boundary and can_queue.
  */
-extern const struct ata_port_operations ata_base_port_ops;
-extern const struct ata_port_operations sata_port_ops;
-extern struct device_attribute *ata_common_sdev_attrs[];
+बाह्य स्थिर काष्ठा ata_port_operations ata_base_port_ops;
+बाह्य स्थिर काष्ठा ata_port_operations sata_port_ops;
+बाह्य काष्ठा device_attribute *ata_common_sdev_attrs[];
 
 /*
  * All sht initializers (BASE, PIO, BMDMA, NCQ) must be instantiated
  * by the edge drivers.  Because the 'module' field of sht must be the
  * edge driver's module reference, otherwise the driver can be unloaded
- * even if the scsi_device is being accessed.
+ * even अगर the scsi_device is being accessed.
  */
-#define __ATA_BASE_SHT(drv_name)				\
+#घोषणा __ATA_BASE_SHT(drv_name)				\
 	.module			= THIS_MODULE,			\
 	.name			= drv_name,			\
 	.ioctl			= ata_scsi_ioctl,		\
@@ -1407,377 +1408,377 @@ extern struct device_attribute *ata_common_sdev_attrs[];
 	.bios_param		= ata_std_bios_param,		\
 	.unlock_native_capacity	= ata_scsi_unlock_native_capacity
 
-#define ATA_BASE_SHT(drv_name)					\
+#घोषणा ATA_BASE_SHT(drv_name)					\
 	__ATA_BASE_SHT(drv_name),				\
 	.sdev_attrs		= ata_common_sdev_attrs
 
-#ifdef CONFIG_SATA_HOST
-extern struct device_attribute *ata_ncq_sdev_attrs[];
+#अगर_घोषित CONFIG_SATA_HOST
+बाह्य काष्ठा device_attribute *ata_ncq_sdev_attrs[];
 
-#define ATA_NCQ_SHT(drv_name)					\
+#घोषणा ATA_NCQ_SHT(drv_name)					\
 	__ATA_BASE_SHT(drv_name),				\
 	.sdev_attrs		= ata_ncq_sdev_attrs,		\
 	.change_queue_depth	= ata_scsi_change_queue_depth
-#endif
+#पूर्ण_अगर
 
 /*
  * PMP helpers
  */
-#ifdef CONFIG_SATA_PMP
-static inline bool sata_pmp_supported(struct ata_port *ap)
-{
-	return ap->flags & ATA_FLAG_PMP;
-}
+#अगर_घोषित CONFIG_SATA_PMP
+अटल अंतरभूत bool sata_pmp_supported(काष्ठा ata_port *ap)
+अणु
+	वापस ap->flags & ATA_FLAG_PMP;
+पूर्ण
 
-static inline bool sata_pmp_attached(struct ata_port *ap)
-{
-	return ap->nr_pmp_links != 0;
-}
+अटल अंतरभूत bool sata_pmp_attached(काष्ठा ata_port *ap)
+अणु
+	वापस ap->nr_pmp_links != 0;
+पूर्ण
 
-static inline bool ata_is_host_link(const struct ata_link *link)
-{
-	return link == &link->ap->link || link == link->ap->slave_link;
-}
-#else /* CONFIG_SATA_PMP */
-static inline bool sata_pmp_supported(struct ata_port *ap)
-{
-	return false;
-}
+अटल अंतरभूत bool ata_is_host_link(स्थिर काष्ठा ata_link *link)
+अणु
+	वापस link == &link->ap->link || link == link->ap->slave_link;
+पूर्ण
+#अन्यथा /* CONFIG_SATA_PMP */
+अटल अंतरभूत bool sata_pmp_supported(काष्ठा ata_port *ap)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool sata_pmp_attached(struct ata_port *ap)
-{
-	return false;
-}
+अटल अंतरभूत bool sata_pmp_attached(काष्ठा ata_port *ap)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool ata_is_host_link(const struct ata_link *link)
-{
-	return 1;
-}
-#endif /* CONFIG_SATA_PMP */
+अटल अंतरभूत bool ata_is_host_link(स्थिर काष्ठा ata_link *link)
+अणु
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SATA_PMP */
 
-static inline int sata_srst_pmp(struct ata_link *link)
-{
-	if (sata_pmp_supported(link->ap) && ata_is_host_link(link))
-		return SATA_PMP_CTRL_PORT;
-	return link->pmp;
-}
+अटल अंतरभूत पूर्णांक sata_srst_pmp(काष्ठा ata_link *link)
+अणु
+	अगर (sata_pmp_supported(link->ap) && ata_is_host_link(link))
+		वापस SATA_PMP_CTRL_PORT;
+	वापस link->pmp;
+पूर्ण
 
 /*
- * printk helpers
+ * prपूर्णांकk helpers
  */
-__printf(3, 4)
-void ata_port_printk(const struct ata_port *ap, const char *level,
-		     const char *fmt, ...);
-__printf(3, 4)
-void ata_link_printk(const struct ata_link *link, const char *level,
-		     const char *fmt, ...);
-__printf(3, 4)
-void ata_dev_printk(const struct ata_device *dev, const char *level,
-		    const char *fmt, ...);
+__म_लिखो(3, 4)
+व्योम ata_port_prपूर्णांकk(स्थिर काष्ठा ata_port *ap, स्थिर अक्षर *level,
+		     स्थिर अक्षर *fmt, ...);
+__म_लिखो(3, 4)
+व्योम ata_link_prपूर्णांकk(स्थिर काष्ठा ata_link *link, स्थिर अक्षर *level,
+		     स्थिर अक्षर *fmt, ...);
+__म_लिखो(3, 4)
+व्योम ata_dev_prपूर्णांकk(स्थिर काष्ठा ata_device *dev, स्थिर अक्षर *level,
+		    स्थिर अक्षर *fmt, ...);
 
-#define ata_port_err(ap, fmt, ...)				\
-	ata_port_printk(ap, KERN_ERR, fmt, ##__VA_ARGS__)
-#define ata_port_warn(ap, fmt, ...)				\
-	ata_port_printk(ap, KERN_WARNING, fmt, ##__VA_ARGS__)
-#define ata_port_notice(ap, fmt, ...)				\
-	ata_port_printk(ap, KERN_NOTICE, fmt, ##__VA_ARGS__)
-#define ata_port_info(ap, fmt, ...)				\
-	ata_port_printk(ap, KERN_INFO, fmt, ##__VA_ARGS__)
-#define ata_port_dbg(ap, fmt, ...)				\
-	ata_port_printk(ap, KERN_DEBUG, fmt, ##__VA_ARGS__)
+#घोषणा ata_port_err(ap, fmt, ...)				\
+	ata_port_prपूर्णांकk(ap, KERN_ERR, fmt, ##__VA_ARGS__)
+#घोषणा ata_port_warn(ap, fmt, ...)				\
+	ata_port_prपूर्णांकk(ap, KERN_WARNING, fmt, ##__VA_ARGS__)
+#घोषणा ata_port_notice(ap, fmt, ...)				\
+	ata_port_prपूर्णांकk(ap, KERN_NOTICE, fmt, ##__VA_ARGS__)
+#घोषणा ata_port_info(ap, fmt, ...)				\
+	ata_port_prपूर्णांकk(ap, KERN_INFO, fmt, ##__VA_ARGS__)
+#घोषणा ata_port_dbg(ap, fmt, ...)				\
+	ata_port_prपूर्णांकk(ap, KERN_DEBUG, fmt, ##__VA_ARGS__)
 
-#define ata_link_err(link, fmt, ...)				\
-	ata_link_printk(link, KERN_ERR, fmt, ##__VA_ARGS__)
-#define ata_link_warn(link, fmt, ...)				\
-	ata_link_printk(link, KERN_WARNING, fmt, ##__VA_ARGS__)
-#define ata_link_notice(link, fmt, ...)				\
-	ata_link_printk(link, KERN_NOTICE, fmt, ##__VA_ARGS__)
-#define ata_link_info(link, fmt, ...)				\
-	ata_link_printk(link, KERN_INFO, fmt, ##__VA_ARGS__)
-#define ata_link_dbg(link, fmt, ...)				\
-	ata_link_printk(link, KERN_DEBUG, fmt, ##__VA_ARGS__)
+#घोषणा ata_link_err(link, fmt, ...)				\
+	ata_link_prपूर्णांकk(link, KERN_ERR, fmt, ##__VA_ARGS__)
+#घोषणा ata_link_warn(link, fmt, ...)				\
+	ata_link_prपूर्णांकk(link, KERN_WARNING, fmt, ##__VA_ARGS__)
+#घोषणा ata_link_notice(link, fmt, ...)				\
+	ata_link_prपूर्णांकk(link, KERN_NOTICE, fmt, ##__VA_ARGS__)
+#घोषणा ata_link_info(link, fmt, ...)				\
+	ata_link_prपूर्णांकk(link, KERN_INFO, fmt, ##__VA_ARGS__)
+#घोषणा ata_link_dbg(link, fmt, ...)				\
+	ata_link_prपूर्णांकk(link, KERN_DEBUG, fmt, ##__VA_ARGS__)
 
-#define ata_dev_err(dev, fmt, ...)				\
-	ata_dev_printk(dev, KERN_ERR, fmt, ##__VA_ARGS__)
-#define ata_dev_warn(dev, fmt, ...)				\
-	ata_dev_printk(dev, KERN_WARNING, fmt, ##__VA_ARGS__)
-#define ata_dev_notice(dev, fmt, ...)				\
-	ata_dev_printk(dev, KERN_NOTICE, fmt, ##__VA_ARGS__)
-#define ata_dev_info(dev, fmt, ...)				\
-	ata_dev_printk(dev, KERN_INFO, fmt, ##__VA_ARGS__)
-#define ata_dev_dbg(dev, fmt, ...)				\
-	ata_dev_printk(dev, KERN_DEBUG, fmt, ##__VA_ARGS__)
+#घोषणा ata_dev_err(dev, fmt, ...)				\
+	ata_dev_prपूर्णांकk(dev, KERN_ERR, fmt, ##__VA_ARGS__)
+#घोषणा ata_dev_warn(dev, fmt, ...)				\
+	ata_dev_prपूर्णांकk(dev, KERN_WARNING, fmt, ##__VA_ARGS__)
+#घोषणा ata_dev_notice(dev, fmt, ...)				\
+	ata_dev_prपूर्णांकk(dev, KERN_NOTICE, fmt, ##__VA_ARGS__)
+#घोषणा ata_dev_info(dev, fmt, ...)				\
+	ata_dev_prपूर्णांकk(dev, KERN_INFO, fmt, ##__VA_ARGS__)
+#घोषणा ata_dev_dbg(dev, fmt, ...)				\
+	ata_dev_prपूर्णांकk(dev, KERN_DEBUG, fmt, ##__VA_ARGS__)
 
-void ata_print_version(const struct device *dev, const char *version);
+व्योम ata_prपूर्णांक_version(स्थिर काष्ठा device *dev, स्थिर अक्षर *version);
 
 /*
  * ata_eh_info helpers
  */
-extern __printf(2, 3)
-void __ata_ehi_push_desc(struct ata_eh_info *ehi, const char *fmt, ...);
-extern __printf(2, 3)
-void ata_ehi_push_desc(struct ata_eh_info *ehi, const char *fmt, ...);
-extern void ata_ehi_clear_desc(struct ata_eh_info *ehi);
+बाह्य __म_लिखो(2, 3)
+व्योम __ata_ehi_push_desc(काष्ठा ata_eh_info *ehi, स्थिर अक्षर *fmt, ...);
+बाह्य __म_लिखो(2, 3)
+व्योम ata_ehi_push_desc(काष्ठा ata_eh_info *ehi, स्थिर अक्षर *fmt, ...);
+बाह्य व्योम ata_ehi_clear_desc(काष्ठा ata_eh_info *ehi);
 
-static inline void ata_ehi_hotplugged(struct ata_eh_info *ehi)
-{
+अटल अंतरभूत व्योम ata_ehi_hotplugged(काष्ठा ata_eh_info *ehi)
+अणु
 	ehi->probe_mask |= (1 << ATA_MAX_DEVICES) - 1;
 	ehi->flags |= ATA_EHI_HOTPLUGGED;
 	ehi->action |= ATA_EH_RESET | ATA_EH_ENABLE_LINK;
 	ehi->err_mask |= AC_ERR_ATA_BUS;
-}
+पूर्ण
 
 /*
  * port description helpers
  */
-extern __printf(2, 3)
-void ata_port_desc(struct ata_port *ap, const char *fmt, ...);
-#ifdef CONFIG_PCI
-extern void ata_port_pbar_desc(struct ata_port *ap, int bar, ssize_t offset,
-			       const char *name);
-#endif
+बाह्य __म_लिखो(2, 3)
+व्योम ata_port_desc(काष्ठा ata_port *ap, स्थिर अक्षर *fmt, ...);
+#अगर_घोषित CONFIG_PCI
+बाह्य व्योम ata_port_pbar_desc(काष्ठा ata_port *ap, पूर्णांक bar, sमाप_प्रकार offset,
+			       स्थिर अक्षर *name);
+#पूर्ण_अगर
 
-static inline bool ata_tag_internal(unsigned int tag)
-{
-	return tag == ATA_TAG_INTERNAL;
-}
+अटल अंतरभूत bool ata_tag_पूर्णांकernal(अचिन्हित पूर्णांक tag)
+अणु
+	वापस tag == ATA_TAG_INTERNAL;
+पूर्ण
 
-static inline bool ata_tag_valid(unsigned int tag)
-{
-	return tag < ATA_MAX_QUEUE || ata_tag_internal(tag);
-}
+अटल अंतरभूत bool ata_tag_valid(अचिन्हित पूर्णांक tag)
+अणु
+	वापस tag < ATA_MAX_QUEUE || ata_tag_पूर्णांकernal(tag);
+पूर्ण
 
-#define __ata_qc_for_each(ap, qc, tag, max_tag, fn)		\
-	for ((tag) = 0; (tag) < (max_tag) &&			\
-	     ({ qc = fn((ap), (tag)); 1; }); (tag)++)		\
+#घोषणा __ata_qc_क्रम_each(ap, qc, tag, max_tag, fn)		\
+	क्रम ((tag) = 0; (tag) < (max_tag) &&			\
+	     (अणु qc = fn((ap), (tag)); 1; पूर्ण); (tag)++)		\
 
 /*
  * Internal use only, iterate commands ignoring error handling and
  * status of 'qc'.
  */
-#define ata_qc_for_each_raw(ap, qc, tag)					\
-	__ata_qc_for_each(ap, qc, tag, ATA_MAX_QUEUE, __ata_qc_from_tag)
+#घोषणा ata_qc_क्रम_each_raw(ap, qc, tag)					\
+	__ata_qc_क्रम_each(ap, qc, tag, ATA_MAX_QUEUE, __ata_qc_from_tag)
 
 /*
  * Iterate all potential commands that can be queued
  */
-#define ata_qc_for_each(ap, qc, tag)					\
-	__ata_qc_for_each(ap, qc, tag, ATA_MAX_QUEUE, ata_qc_from_tag)
+#घोषणा ata_qc_क्रम_each(ap, qc, tag)					\
+	__ata_qc_क्रम_each(ap, qc, tag, ATA_MAX_QUEUE, ata_qc_from_tag)
 
 /*
- * Like ata_qc_for_each, but with the internal tag included
+ * Like ata_qc_क्रम_each, but with the पूर्णांकernal tag included
  */
-#define ata_qc_for_each_with_internal(ap, qc, tag)			\
-	__ata_qc_for_each(ap, qc, tag, ATA_MAX_QUEUE + 1, ata_qc_from_tag)
+#घोषणा ata_qc_क्रम_each_with_पूर्णांकernal(ap, qc, tag)			\
+	__ata_qc_क्रम_each(ap, qc, tag, ATA_MAX_QUEUE + 1, ata_qc_from_tag)
 
 /*
  * device helpers
  */
-static inline unsigned int ata_class_enabled(unsigned int class)
-{
-	return class == ATA_DEV_ATA || class == ATA_DEV_ATAPI ||
+अटल अंतरभूत अचिन्हित पूर्णांक ata_class_enabled(अचिन्हित पूर्णांक class)
+अणु
+	वापस class == ATA_DEV_ATA || class == ATA_DEV_ATAPI ||
 		class == ATA_DEV_PMP || class == ATA_DEV_SEMB ||
 		class == ATA_DEV_ZAC;
-}
+पूर्ण
 
-static inline unsigned int ata_class_disabled(unsigned int class)
-{
-	return class == ATA_DEV_ATA_UNSUP || class == ATA_DEV_ATAPI_UNSUP ||
+अटल अंतरभूत अचिन्हित पूर्णांक ata_class_disabled(अचिन्हित पूर्णांक class)
+अणु
+	वापस class == ATA_DEV_ATA_UNSUP || class == ATA_DEV_ATAPI_UNSUP ||
 		class == ATA_DEV_PMP_UNSUP || class == ATA_DEV_SEMB_UNSUP ||
 		class == ATA_DEV_ZAC_UNSUP;
-}
+पूर्ण
 
-static inline unsigned int ata_class_absent(unsigned int class)
-{
-	return !ata_class_enabled(class) && !ata_class_disabled(class);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ata_class_असलent(अचिन्हित पूर्णांक class)
+अणु
+	वापस !ata_class_enabled(class) && !ata_class_disabled(class);
+पूर्ण
 
-static inline unsigned int ata_dev_enabled(const struct ata_device *dev)
-{
-	return ata_class_enabled(dev->class);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ata_dev_enabled(स्थिर काष्ठा ata_device *dev)
+अणु
+	वापस ata_class_enabled(dev->class);
+पूर्ण
 
-static inline unsigned int ata_dev_disabled(const struct ata_device *dev)
-{
-	return ata_class_disabled(dev->class);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ata_dev_disabled(स्थिर काष्ठा ata_device *dev)
+अणु
+	वापस ata_class_disabled(dev->class);
+पूर्ण
 
-static inline unsigned int ata_dev_absent(const struct ata_device *dev)
-{
-	return ata_class_absent(dev->class);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ata_dev_असलent(स्थिर काष्ठा ata_device *dev)
+अणु
+	वापस ata_class_असलent(dev->class);
+पूर्ण
 
 /*
  * link helpers
  */
-static inline int ata_link_max_devices(const struct ata_link *link)
-{
-	if (ata_is_host_link(link) && link->ap->flags & ATA_FLAG_SLAVE_POSS)
-		return 2;
-	return 1;
-}
+अटल अंतरभूत पूर्णांक ata_link_max_devices(स्थिर काष्ठा ata_link *link)
+अणु
+	अगर (ata_is_host_link(link) && link->ap->flags & ATA_FLAG_SLAVE_POSS)
+		वापस 2;
+	वापस 1;
+पूर्ण
 
-static inline int ata_link_active(struct ata_link *link)
-{
-	return ata_tag_valid(link->active_tag) || link->sactive;
-}
+अटल अंतरभूत पूर्णांक ata_link_active(काष्ठा ata_link *link)
+अणु
+	वापस ata_tag_valid(link->active_tag) || link->sactive;
+पूर्ण
 
 /*
  * Iterators
  *
- * ATA_LITER_* constants are used to select link iteration mode and
+ * ATA_LITER_* स्थिरants are used to select link iteration mode and
  * ATA_DITER_* device iteration mode.
  *
- * For a custom iteration directly using ata_{link|dev}_next(), if
- * @link or @dev, respectively, is NULL, the first element is
- * returned.  @dev and @link can be any valid device or link and the
- * next element according to the iteration mode will be returned.
- * After the last element, NULL is returned.
+ * For a custom iteration directly using ata_अणुlink|devपूर्ण_next(), अगर
+ * @link or @dev, respectively, is शून्य, the first element is
+ * वापसed.  @dev and @link can be any valid device or link and the
+ * next element according to the iteration mode will be वापसed.
+ * After the last element, शून्य is वापसed.
  */
-enum ata_link_iter_mode {
-	ATA_LITER_EDGE,		/* if present, PMP links only; otherwise,
+क्रमागत ata_link_iter_mode अणु
+	ATA_LITER_EDGE,		/* अगर present, PMP links only; otherwise,
 				 * host link.  no slave link */
 	ATA_LITER_HOST_FIRST,	/* host link followed by PMP or slave links */
 	ATA_LITER_PMP_FIRST,	/* PMP links followed by host link,
 				 * slave link still comes after host link */
-};
+पूर्ण;
 
-enum ata_dev_iter_mode {
+क्रमागत ata_dev_iter_mode अणु
 	ATA_DITER_ENABLED,
 	ATA_DITER_ENABLED_REVERSE,
 	ATA_DITER_ALL,
 	ATA_DITER_ALL_REVERSE,
-};
+पूर्ण;
 
-extern struct ata_link *ata_link_next(struct ata_link *link,
-				      struct ata_port *ap,
-				      enum ata_link_iter_mode mode);
+बाह्य काष्ठा ata_link *ata_link_next(काष्ठा ata_link *link,
+				      काष्ठा ata_port *ap,
+				      क्रमागत ata_link_iter_mode mode);
 
-extern struct ata_device *ata_dev_next(struct ata_device *dev,
-				       struct ata_link *link,
-				       enum ata_dev_iter_mode mode);
+बाह्य काष्ठा ata_device *ata_dev_next(काष्ठा ata_device *dev,
+				       काष्ठा ata_link *link,
+				       क्रमागत ata_dev_iter_mode mode);
 
 /*
- * Shortcut notation for iterations
+ * Shortcut notation क्रम iterations
  *
- * ata_for_each_link() iterates over each link of @ap according to
- * @mode.  @link points to the current link in the loop.  @link is
- * NULL after loop termination.  ata_for_each_dev() works the same way
+ * ata_क्रम_each_link() iterates over each link of @ap according to
+ * @mode.  @link poपूर्णांकs to the current link in the loop.  @link is
+ * शून्य after loop termination.  ata_क्रम_each_dev() works the same way
  * except that it iterates over each device of @link.
  *
- * Note that the mode prefixes ATA_{L|D}ITER_ shouldn't need to be
- * specified when using the following shorthand notations.  Only the
+ * Note that the mode prefixes ATA_अणुL|Dपूर्णITER_ shouldn't need to be
+ * specअगरied when using the following लघुhand notations.  Only the
  * mode itself (EDGE, HOST_FIRST, ENABLED, etc...) should be
- * specified.  This not only increases brevity but also makes it
- * impossible to use ATA_LITER_* for device iteration or vice-versa.
+ * specअगरied.  This not only increases brevity but also makes it
+ * impossible to use ATA_LITER_* क्रम device iteration or vice-versa.
  */
-#define ata_for_each_link(link, ap, mode) \
-	for ((link) = ata_link_next(NULL, (ap), ATA_LITER_##mode); (link); \
+#घोषणा ata_क्रम_each_link(link, ap, mode) \
+	क्रम ((link) = ata_link_next(शून्य, (ap), ATA_LITER_##mode); (link); \
 	     (link) = ata_link_next((link), (ap), ATA_LITER_##mode))
 
-#define ata_for_each_dev(dev, link, mode) \
-	for ((dev) = ata_dev_next(NULL, (link), ATA_DITER_##mode); (dev); \
+#घोषणा ata_क्रम_each_dev(dev, link, mode) \
+	क्रम ((dev) = ata_dev_next(शून्य, (link), ATA_DITER_##mode); (dev); \
 	     (dev) = ata_dev_next((dev), (link), ATA_DITER_##mode))
 
 /**
  *	ata_ncq_enabled - Test whether NCQ is enabled
- *	@dev: ATA device to test for
+ *	@dev: ATA device to test क्रम
  *
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  *
  *	RETURNS:
- *	1 if NCQ is enabled for @dev, 0 otherwise.
+ *	1 अगर NCQ is enabled क्रम @dev, 0 otherwise.
  */
-static inline int ata_ncq_enabled(struct ata_device *dev)
-{
-	if (!IS_ENABLED(CONFIG_SATA_HOST))
-		return 0;
-	return (dev->flags & (ATA_DFLAG_PIO | ATA_DFLAG_NCQ_OFF |
+अटल अंतरभूत पूर्णांक ata_ncq_enabled(काष्ठा ata_device *dev)
+अणु
+	अगर (!IS_ENABLED(CONFIG_SATA_HOST))
+		वापस 0;
+	वापस (dev->flags & (ATA_DFLAG_PIO | ATA_DFLAG_NCQ_OFF |
 			      ATA_DFLAG_NCQ)) == ATA_DFLAG_NCQ;
-}
+पूर्ण
 
-static inline bool ata_fpdma_dsm_supported(struct ata_device *dev)
-{
-	return (dev->flags & ATA_DFLAG_NCQ_SEND_RECV) &&
+अटल अंतरभूत bool ata_fpdma_dsm_supported(काष्ठा ata_device *dev)
+अणु
+	वापस (dev->flags & ATA_DFLAG_NCQ_SEND_RECV) &&
 		(dev->ncq_send_recv_cmds[ATA_LOG_NCQ_SEND_RECV_DSM_OFFSET] &
 		 ATA_LOG_NCQ_SEND_RECV_DSM_TRIM);
-}
+पूर्ण
 
-static inline bool ata_fpdma_read_log_supported(struct ata_device *dev)
-{
-	return (dev->flags & ATA_DFLAG_NCQ_SEND_RECV) &&
+अटल अंतरभूत bool ata_fpdma_पढ़ो_log_supported(काष्ठा ata_device *dev)
+अणु
+	वापस (dev->flags & ATA_DFLAG_NCQ_SEND_RECV) &&
 		(dev->ncq_send_recv_cmds[ATA_LOG_NCQ_SEND_RECV_RD_LOG_OFFSET] &
 		 ATA_LOG_NCQ_SEND_RECV_RD_LOG_SUPPORTED);
-}
+पूर्ण
 
-static inline bool ata_fpdma_zac_mgmt_in_supported(struct ata_device *dev)
-{
-	return (dev->flags & ATA_DFLAG_NCQ_SEND_RECV) &&
+अटल अंतरभूत bool ata_fpdma_zac_mgmt_in_supported(काष्ठा ata_device *dev)
+अणु
+	वापस (dev->flags & ATA_DFLAG_NCQ_SEND_RECV) &&
 		(dev->ncq_send_recv_cmds[ATA_LOG_NCQ_SEND_RECV_ZAC_MGMT_OFFSET] &
 		ATA_LOG_NCQ_SEND_RECV_ZAC_MGMT_IN_SUPPORTED);
-}
+पूर्ण
 
-static inline bool ata_fpdma_zac_mgmt_out_supported(struct ata_device *dev)
-{
-	return (dev->ncq_non_data_cmds[ATA_LOG_NCQ_NON_DATA_ZAC_MGMT_OFFSET] &
+अटल अंतरभूत bool ata_fpdma_zac_mgmt_out_supported(काष्ठा ata_device *dev)
+अणु
+	वापस (dev->ncq_non_data_cmds[ATA_LOG_NCQ_NON_DATA_ZAC_MGMT_OFFSET] &
 		ATA_LOG_NCQ_NON_DATA_ZAC_MGMT_OUT);
-}
+पूर्ण
 
-static inline void ata_qc_set_polling(struct ata_queued_cmd *qc)
-{
+अटल अंतरभूत व्योम ata_qc_set_polling(काष्ठा ata_queued_cmd *qc)
+अणु
 	qc->tf.ctl |= ATA_NIEN;
-}
+पूर्ण
 
-static inline struct ata_queued_cmd *__ata_qc_from_tag(struct ata_port *ap,
-						       unsigned int tag)
-{
-	if (ata_tag_valid(tag))
-		return &ap->qcmd[tag];
-	return NULL;
-}
+अटल अंतरभूत काष्ठा ata_queued_cmd *__ata_qc_from_tag(काष्ठा ata_port *ap,
+						       अचिन्हित पूर्णांक tag)
+अणु
+	अगर (ata_tag_valid(tag))
+		वापस &ap->qcmd[tag];
+	वापस शून्य;
+पूर्ण
 
-static inline struct ata_queued_cmd *ata_qc_from_tag(struct ata_port *ap,
-						     unsigned int tag)
-{
-	struct ata_queued_cmd *qc = __ata_qc_from_tag(ap, tag);
+अटल अंतरभूत काष्ठा ata_queued_cmd *ata_qc_from_tag(काष्ठा ata_port *ap,
+						     अचिन्हित पूर्णांक tag)
+अणु
+	काष्ठा ata_queued_cmd *qc = __ata_qc_from_tag(ap, tag);
 
-	if (unlikely(!qc) || !ap->ops->error_handler)
-		return qc;
+	अगर (unlikely(!qc) || !ap->ops->error_handler)
+		वापस qc;
 
-	if ((qc->flags & (ATA_QCFLAG_ACTIVE |
+	अगर ((qc->flags & (ATA_QCFLAG_ACTIVE |
 			  ATA_QCFLAG_FAILED)) == ATA_QCFLAG_ACTIVE)
-		return qc;
+		वापस qc;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline unsigned int ata_qc_raw_nbytes(struct ata_queued_cmd *qc)
-{
-	return qc->nbytes - min(qc->extrabytes, qc->nbytes);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ata_qc_raw_nbytes(काष्ठा ata_queued_cmd *qc)
+अणु
+	वापस qc->nbytes - min(qc->extrabytes, qc->nbytes);
+पूर्ण
 
-static inline void ata_tf_init(struct ata_device *dev, struct ata_taskfile *tf)
-{
-	memset(tf, 0, sizeof(*tf));
+अटल अंतरभूत व्योम ata_tf_init(काष्ठा ata_device *dev, काष्ठा ata_taskfile *tf)
+अणु
+	स_रखो(tf, 0, माप(*tf));
 
-#ifdef CONFIG_ATA_SFF
+#अगर_घोषित CONFIG_ATA_SFF
 	tf->ctl = dev->link->ap->ctl;
-#else
+#अन्यथा
 	tf->ctl = ATA_DEVCTL_OBS;
-#endif
-	if (dev->devno == 0)
+#पूर्ण_अगर
+	अगर (dev->devno == 0)
 		tf->device = ATA_DEVICE_OBS;
-	else
+	अन्यथा
 		tf->device = ATA_DEVICE_OBS | ATA_DEV1;
-}
+पूर्ण
 
-static inline void ata_qc_reinit(struct ata_queued_cmd *qc)
-{
+अटल अंतरभूत व्योम ata_qc_reinit(काष्ठा ata_queued_cmd *qc)
+अणु
 	qc->dma_dir = DMA_NONE;
-	qc->sg = NULL;
+	qc->sg = शून्य;
 	qc->flags = 0;
-	qc->cursg = NULL;
+	qc->cursg = शून्य;
 	qc->cursg_ofs = 0;
 	qc->nbytes = qc->extrabytes = qc->curbytes = 0;
 	qc->n_elem = 0;
@@ -1789,265 +1790,265 @@ static inline void ata_qc_reinit(struct ata_queued_cmd *qc)
 	/* init result_tf such that it indicates normal completion */
 	qc->result_tf.command = ATA_DRDY;
 	qc->result_tf.feature = 0;
-}
+पूर्ण
 
-static inline int ata_try_flush_cache(const struct ata_device *dev)
-{
-	return ata_id_wcache_enabled(dev->id) ||
+अटल अंतरभूत पूर्णांक ata_try_flush_cache(स्थिर काष्ठा ata_device *dev)
+अणु
+	वापस ata_id_wcache_enabled(dev->id) ||
 	       ata_id_has_flush(dev->id) ||
 	       ata_id_has_flush_ext(dev->id);
-}
+पूर्ण
 
-static inline unsigned int ac_err_mask(u8 status)
-{
-	if (status & (ATA_BUSY | ATA_DRQ))
-		return AC_ERR_HSM;
-	if (status & (ATA_ERR | ATA_DF))
-		return AC_ERR_DEV;
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ac_err_mask(u8 status)
+अणु
+	अगर (status & (ATA_BUSY | ATA_DRQ))
+		वापस AC_ERR_HSM;
+	अगर (status & (ATA_ERR | ATA_DF))
+		वापस AC_ERR_DEV;
+	वापस 0;
+पूर्ण
 
-static inline unsigned int __ac_err_mask(u8 status)
-{
-	unsigned int mask = ac_err_mask(status);
-	if (mask == 0)
-		return AC_ERR_OTHER;
-	return mask;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __ac_err_mask(u8 status)
+अणु
+	अचिन्हित पूर्णांक mask = ac_err_mask(status);
+	अगर (mask == 0)
+		वापस AC_ERR_OTHER;
+	वापस mask;
+पूर्ण
 
-static inline struct ata_port *ata_shost_to_port(struct Scsi_Host *host)
-{
-	return *(struct ata_port **)&host->hostdata[0];
-}
+अटल अंतरभूत काष्ठा ata_port *ata_shost_to_port(काष्ठा Scsi_Host *host)
+अणु
+	वापस *(काष्ठा ata_port **)&host->hostdata[0];
+पूर्ण
 
-static inline int ata_check_ready(u8 status)
-{
-	if (!(status & ATA_BUSY))
-		return 1;
+अटल अंतरभूत पूर्णांक ata_check_पढ़ोy(u8 status)
+अणु
+	अगर (!(status & ATA_BUSY))
+		वापस 1;
 
-	/* 0xff indicates either no device or device not ready */
-	if (status == 0xff)
-		return -ENODEV;
+	/* 0xff indicates either no device or device not पढ़ोy */
+	अगर (status == 0xff)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline unsigned long ata_deadline(unsigned long from_jiffies,
-					 unsigned long timeout_msecs)
-{
-	return from_jiffies + msecs_to_jiffies(timeout_msecs);
-}
+अटल अंतरभूत अचिन्हित दीर्घ ata_deadline(अचिन्हित दीर्घ from_jअगरfies,
+					 अचिन्हित दीर्घ समयout_msecs)
+अणु
+	वापस from_jअगरfies + msecs_to_jअगरfies(समयout_msecs);
+पूर्ण
 
-/* Don't open code these in drivers as there are traps. Firstly the range may
+/* Don't खोलो code these in drivers as there are traps. Firstly the range may
    change in future hardware and specs, secondly 0xFF means 'no DMA' but is
    > UDMA_0. Dyma ddreigiau */
 
-static inline int ata_using_mwdma(struct ata_device *adev)
-{
-	if (adev->dma_mode >= XFER_MW_DMA_0 && adev->dma_mode <= XFER_MW_DMA_4)
-		return 1;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ata_using_mwdma(काष्ठा ata_device *adev)
+अणु
+	अगर (adev->dma_mode >= XFER_MW_DMA_0 && adev->dma_mode <= XFER_MW_DMA_4)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static inline int ata_using_udma(struct ata_device *adev)
-{
-	if (adev->dma_mode >= XFER_UDMA_0 && adev->dma_mode <= XFER_UDMA_7)
-		return 1;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ata_using_udma(काष्ठा ata_device *adev)
+अणु
+	अगर (adev->dma_mode >= XFER_UDMA_0 && adev->dma_mode <= XFER_UDMA_7)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static inline int ata_dma_enabled(struct ata_device *adev)
-{
-	return (adev->dma_mode == 0xFF ? 0 : 1);
-}
+अटल अंतरभूत पूर्णांक ata_dma_enabled(काष्ठा ata_device *adev)
+अणु
+	वापस (adev->dma_mode == 0xFF ? 0 : 1);
+पूर्ण
 
 /**************************************************************************
  * PATA timings - drivers/ata/libata-pata-timings.c
  */
-extern const struct ata_timing *ata_timing_find_mode(u8 xfer_mode);
-extern int ata_timing_compute(struct ata_device *, unsigned short,
-			      struct ata_timing *, int, int);
-extern void ata_timing_merge(const struct ata_timing *,
-			     const struct ata_timing *, struct ata_timing *,
-			     unsigned int);
+बाह्य स्थिर काष्ठा ata_timing *ata_timing_find_mode(u8 xfer_mode);
+बाह्य पूर्णांक ata_timing_compute(काष्ठा ata_device *, अचिन्हित लघु,
+			      काष्ठा ata_timing *, पूर्णांक, पूर्णांक);
+बाह्य व्योम ata_timing_merge(स्थिर काष्ठा ata_timing *,
+			     स्थिर काष्ठा ata_timing *, काष्ठा ata_timing *,
+			     अचिन्हित पूर्णांक);
 
 /**************************************************************************
  * PMP - drivers/ata/libata-pmp.c
  */
-#ifdef CONFIG_SATA_PMP
+#अगर_घोषित CONFIG_SATA_PMP
 
-extern const struct ata_port_operations sata_pmp_port_ops;
+बाह्य स्थिर काष्ठा ata_port_operations sata_pmp_port_ops;
 
-extern int sata_pmp_qc_defer_cmd_switch(struct ata_queued_cmd *qc);
-extern void sata_pmp_error_handler(struct ata_port *ap);
+बाह्य पूर्णांक sata_pmp_qc_defer_cmd_चयन(काष्ठा ata_queued_cmd *qc);
+बाह्य व्योम sata_pmp_error_handler(काष्ठा ata_port *ap);
 
-#else /* CONFIG_SATA_PMP */
+#अन्यथा /* CONFIG_SATA_PMP */
 
-#define sata_pmp_port_ops		sata_port_ops
-#define sata_pmp_qc_defer_cmd_switch	ata_std_qc_defer
-#define sata_pmp_error_handler		ata_std_error_handler
+#घोषणा sata_pmp_port_ops		sata_port_ops
+#घोषणा sata_pmp_qc_defer_cmd_चयन	ata_std_qc_defer
+#घोषणा sata_pmp_error_handler		ata_std_error_handler
 
-#endif /* CONFIG_SATA_PMP */
+#पूर्ण_अगर /* CONFIG_SATA_PMP */
 
 
 /**************************************************************************
  * SFF - drivers/ata/libata-sff.c
  */
-#ifdef CONFIG_ATA_SFF
+#अगर_घोषित CONFIG_ATA_SFF
 
-extern const struct ata_port_operations ata_sff_port_ops;
-extern const struct ata_port_operations ata_bmdma32_port_ops;
+बाह्य स्थिर काष्ठा ata_port_operations ata_sff_port_ops;
+बाह्य स्थिर काष्ठा ata_port_operations ata_bmdma32_port_ops;
 
-/* PIO only, sg_tablesize and dma_boundary limits can be removed */
-#define ATA_PIO_SHT(drv_name)					\
+/* PIO only, sg_tablesize and dma_boundary limits can be हटाओd */
+#घोषणा ATA_PIO_SHT(drv_name)					\
 	ATA_BASE_SHT(drv_name),					\
 	.sg_tablesize		= LIBATA_MAX_PRD,		\
 	.dma_boundary		= ATA_DMA_BOUNDARY
 
-extern void ata_sff_dev_select(struct ata_port *ap, unsigned int device);
-extern u8 ata_sff_check_status(struct ata_port *ap);
-extern void ata_sff_pause(struct ata_port *ap);
-extern void ata_sff_dma_pause(struct ata_port *ap);
-extern int ata_sff_busy_sleep(struct ata_port *ap,
-			      unsigned long timeout_pat, unsigned long timeout);
-extern int ata_sff_wait_ready(struct ata_link *link, unsigned long deadline);
-extern void ata_sff_tf_load(struct ata_port *ap, const struct ata_taskfile *tf);
-extern void ata_sff_tf_read(struct ata_port *ap, struct ata_taskfile *tf);
-extern void ata_sff_exec_command(struct ata_port *ap,
-				 const struct ata_taskfile *tf);
-extern unsigned int ata_sff_data_xfer(struct ata_queued_cmd *qc,
-			unsigned char *buf, unsigned int buflen, int rw);
-extern unsigned int ata_sff_data_xfer32(struct ata_queued_cmd *qc,
-			unsigned char *buf, unsigned int buflen, int rw);
-extern void ata_sff_irq_on(struct ata_port *ap);
-extern void ata_sff_irq_clear(struct ata_port *ap);
-extern int ata_sff_hsm_move(struct ata_port *ap, struct ata_queued_cmd *qc,
-			    u8 status, int in_wq);
-extern void ata_sff_queue_work(struct work_struct *work);
-extern void ata_sff_queue_delayed_work(struct delayed_work *dwork,
-		unsigned long delay);
-extern void ata_sff_queue_pio_task(struct ata_link *link, unsigned long delay);
-extern unsigned int ata_sff_qc_issue(struct ata_queued_cmd *qc);
-extern bool ata_sff_qc_fill_rtf(struct ata_queued_cmd *qc);
-extern unsigned int ata_sff_port_intr(struct ata_port *ap,
-				      struct ata_queued_cmd *qc);
-extern irqreturn_t ata_sff_interrupt(int irq, void *dev_instance);
-extern void ata_sff_lost_interrupt(struct ata_port *ap);
-extern void ata_sff_freeze(struct ata_port *ap);
-extern void ata_sff_thaw(struct ata_port *ap);
-extern int ata_sff_prereset(struct ata_link *link, unsigned long deadline);
-extern unsigned int ata_sff_dev_classify(struct ata_device *dev, int present,
+बाह्य व्योम ata_sff_dev_select(काष्ठा ata_port *ap, अचिन्हित पूर्णांक device);
+बाह्य u8 ata_sff_check_status(काष्ठा ata_port *ap);
+बाह्य व्योम ata_sff_छोड़ो(काष्ठा ata_port *ap);
+बाह्य व्योम ata_sff_dma_छोड़ो(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_sff_busy_sleep(काष्ठा ata_port *ap,
+			      अचिन्हित दीर्घ समयout_pat, अचिन्हित दीर्घ समयout);
+बाह्य पूर्णांक ata_sff_रुको_पढ़ोy(काष्ठा ata_link *link, अचिन्हित दीर्घ deadline);
+बाह्य व्योम ata_sff_tf_load(काष्ठा ata_port *ap, स्थिर काष्ठा ata_taskfile *tf);
+बाह्य व्योम ata_sff_tf_पढ़ो(काष्ठा ata_port *ap, काष्ठा ata_taskfile *tf);
+बाह्य व्योम ata_sff_exec_command(काष्ठा ata_port *ap,
+				 स्थिर काष्ठा ata_taskfile *tf);
+बाह्य अचिन्हित पूर्णांक ata_sff_data_xfer(काष्ठा ata_queued_cmd *qc,
+			अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक buflen, पूर्णांक rw);
+बाह्य अचिन्हित पूर्णांक ata_sff_data_xfer32(काष्ठा ata_queued_cmd *qc,
+			अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक buflen, पूर्णांक rw);
+बाह्य व्योम ata_sff_irq_on(काष्ठा ata_port *ap);
+बाह्य व्योम ata_sff_irq_clear(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_sff_hsm_move(काष्ठा ata_port *ap, काष्ठा ata_queued_cmd *qc,
+			    u8 status, पूर्णांक in_wq);
+बाह्य व्योम ata_sff_queue_work(काष्ठा work_काष्ठा *work);
+बाह्य व्योम ata_sff_queue_delayed_work(काष्ठा delayed_work *dwork,
+		अचिन्हित दीर्घ delay);
+बाह्य व्योम ata_sff_queue_pio_task(काष्ठा ata_link *link, अचिन्हित दीर्घ delay);
+बाह्य अचिन्हित पूर्णांक ata_sff_qc_issue(काष्ठा ata_queued_cmd *qc);
+बाह्य bool ata_sff_qc_fill_rtf(काष्ठा ata_queued_cmd *qc);
+बाह्य अचिन्हित पूर्णांक ata_sff_port_पूर्णांकr(काष्ठा ata_port *ap,
+				      काष्ठा ata_queued_cmd *qc);
+बाह्य irqवापस_t ata_sff_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance);
+बाह्य व्योम ata_sff_lost_पूर्णांकerrupt(काष्ठा ata_port *ap);
+बाह्य व्योम ata_sff_मुक्तze(काष्ठा ata_port *ap);
+बाह्य व्योम ata_sff_thaw(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_sff_prereset(काष्ठा ata_link *link, अचिन्हित दीर्घ deadline);
+बाह्य अचिन्हित पूर्णांक ata_sff_dev_classअगरy(काष्ठा ata_device *dev, पूर्णांक present,
 					  u8 *r_err);
-extern int ata_sff_wait_after_reset(struct ata_link *link, unsigned int devmask,
-				    unsigned long deadline);
-extern int ata_sff_softreset(struct ata_link *link, unsigned int *classes,
-			     unsigned long deadline);
-extern int sata_sff_hardreset(struct ata_link *link, unsigned int *class,
-			       unsigned long deadline);
-extern void ata_sff_postreset(struct ata_link *link, unsigned int *classes);
-extern void ata_sff_drain_fifo(struct ata_queued_cmd *qc);
-extern void ata_sff_error_handler(struct ata_port *ap);
-extern void ata_sff_std_ports(struct ata_ioports *ioaddr);
-#ifdef CONFIG_PCI
-extern int ata_pci_sff_init_host(struct ata_host *host);
-extern int ata_pci_sff_prepare_host(struct pci_dev *pdev,
-				    const struct ata_port_info * const * ppi,
-				    struct ata_host **r_host);
-extern int ata_pci_sff_activate_host(struct ata_host *host,
+बाह्य पूर्णांक ata_sff_रुको_after_reset(काष्ठा ata_link *link, अचिन्हित पूर्णांक devmask,
+				    अचिन्हित दीर्घ deadline);
+बाह्य पूर्णांक ata_sff_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *classes,
+			     अचिन्हित दीर्घ deadline);
+बाह्य पूर्णांक sata_sff_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+			       अचिन्हित दीर्घ deadline);
+बाह्य व्योम ata_sff_postreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *classes);
+बाह्य व्योम ata_sff_drain_fअगरo(काष्ठा ata_queued_cmd *qc);
+बाह्य व्योम ata_sff_error_handler(काष्ठा ata_port *ap);
+बाह्य व्योम ata_sff_std_ports(काष्ठा ata_ioports *ioaddr);
+#अगर_घोषित CONFIG_PCI
+बाह्य पूर्णांक ata_pci_sff_init_host(काष्ठा ata_host *host);
+बाह्य पूर्णांक ata_pci_sff_prepare_host(काष्ठा pci_dev *pdev,
+				    स्थिर काष्ठा ata_port_info * स्थिर * ppi,
+				    काष्ठा ata_host **r_host);
+बाह्य पूर्णांक ata_pci_sff_activate_host(काष्ठा ata_host *host,
 				     irq_handler_t irq_handler,
-				     struct scsi_host_template *sht);
-extern int ata_pci_sff_init_one(struct pci_dev *pdev,
-		const struct ata_port_info * const * ppi,
-		struct scsi_host_template *sht, void *host_priv, int hflags);
-#endif /* CONFIG_PCI */
+				     काष्ठा scsi_host_ढाँचा *sht);
+बाह्य पूर्णांक ata_pci_sff_init_one(काष्ठा pci_dev *pdev,
+		स्थिर काष्ठा ata_port_info * स्थिर * ppi,
+		काष्ठा scsi_host_ढाँचा *sht, व्योम *host_priv, पूर्णांक hflags);
+#पूर्ण_अगर /* CONFIG_PCI */
 
-#ifdef CONFIG_ATA_BMDMA
+#अगर_घोषित CONFIG_ATA_BMDMA
 
-extern const struct ata_port_operations ata_bmdma_port_ops;
+बाह्य स्थिर काष्ठा ata_port_operations ata_bmdma_port_ops;
 
-#define ATA_BMDMA_SHT(drv_name)					\
+#घोषणा ATA_BMDMA_SHT(drv_name)					\
 	ATA_BASE_SHT(drv_name),					\
 	.sg_tablesize		= LIBATA_MAX_PRD,		\
 	.dma_boundary		= ATA_DMA_BOUNDARY
 
-extern enum ata_completion_errors ata_bmdma_qc_prep(struct ata_queued_cmd *qc);
-extern unsigned int ata_bmdma_qc_issue(struct ata_queued_cmd *qc);
-extern enum ata_completion_errors ata_bmdma_dumb_qc_prep(struct ata_queued_cmd *qc);
-extern unsigned int ata_bmdma_port_intr(struct ata_port *ap,
-				      struct ata_queued_cmd *qc);
-extern irqreturn_t ata_bmdma_interrupt(int irq, void *dev_instance);
-extern void ata_bmdma_error_handler(struct ata_port *ap);
-extern void ata_bmdma_post_internal_cmd(struct ata_queued_cmd *qc);
-extern void ata_bmdma_irq_clear(struct ata_port *ap);
-extern void ata_bmdma_setup(struct ata_queued_cmd *qc);
-extern void ata_bmdma_start(struct ata_queued_cmd *qc);
-extern void ata_bmdma_stop(struct ata_queued_cmd *qc);
-extern u8 ata_bmdma_status(struct ata_port *ap);
-extern int ata_bmdma_port_start(struct ata_port *ap);
-extern int ata_bmdma_port_start32(struct ata_port *ap);
+बाह्य क्रमागत ata_completion_errors ata_bmdma_qc_prep(काष्ठा ata_queued_cmd *qc);
+बाह्य अचिन्हित पूर्णांक ata_bmdma_qc_issue(काष्ठा ata_queued_cmd *qc);
+बाह्य क्रमागत ata_completion_errors ata_bmdma_dumb_qc_prep(काष्ठा ata_queued_cmd *qc);
+बाह्य अचिन्हित पूर्णांक ata_bmdma_port_पूर्णांकr(काष्ठा ata_port *ap,
+				      काष्ठा ata_queued_cmd *qc);
+बाह्य irqवापस_t ata_bmdma_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance);
+बाह्य व्योम ata_bmdma_error_handler(काष्ठा ata_port *ap);
+बाह्य व्योम ata_bmdma_post_पूर्णांकernal_cmd(काष्ठा ata_queued_cmd *qc);
+बाह्य व्योम ata_bmdma_irq_clear(काष्ठा ata_port *ap);
+बाह्य व्योम ata_bmdma_setup(काष्ठा ata_queued_cmd *qc);
+बाह्य व्योम ata_bmdma_start(काष्ठा ata_queued_cmd *qc);
+बाह्य व्योम ata_bmdma_stop(काष्ठा ata_queued_cmd *qc);
+बाह्य u8 ata_bmdma_status(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_bmdma_port_start(काष्ठा ata_port *ap);
+बाह्य पूर्णांक ata_bmdma_port_start32(काष्ठा ata_port *ap);
 
-#ifdef CONFIG_PCI
-extern int ata_pci_bmdma_clear_simplex(struct pci_dev *pdev);
-extern void ata_pci_bmdma_init(struct ata_host *host);
-extern int ata_pci_bmdma_prepare_host(struct pci_dev *pdev,
-				      const struct ata_port_info * const * ppi,
-				      struct ata_host **r_host);
-extern int ata_pci_bmdma_init_one(struct pci_dev *pdev,
-				  const struct ata_port_info * const * ppi,
-				  struct scsi_host_template *sht,
-				  void *host_priv, int hflags);
-#endif /* CONFIG_PCI */
-#endif /* CONFIG_ATA_BMDMA */
+#अगर_घोषित CONFIG_PCI
+बाह्य पूर्णांक ata_pci_bmdma_clear_simplex(काष्ठा pci_dev *pdev);
+बाह्य व्योम ata_pci_bmdma_init(काष्ठा ata_host *host);
+बाह्य पूर्णांक ata_pci_bmdma_prepare_host(काष्ठा pci_dev *pdev,
+				      स्थिर काष्ठा ata_port_info * स्थिर * ppi,
+				      काष्ठा ata_host **r_host);
+बाह्य पूर्णांक ata_pci_bmdma_init_one(काष्ठा pci_dev *pdev,
+				  स्थिर काष्ठा ata_port_info * स्थिर * ppi,
+				  काष्ठा scsi_host_ढाँचा *sht,
+				  व्योम *host_priv, पूर्णांक hflags);
+#पूर्ण_अगर /* CONFIG_PCI */
+#पूर्ण_अगर /* CONFIG_ATA_BMDMA */
 
 /**
- *	ata_sff_busy_wait - Wait for a port status register
- *	@ap: Port to wait for.
+ *	ata_sff_busy_रुको - Wait क्रम a port status रेजिस्टर
+ *	@ap: Port to रुको क्रम.
  *	@bits: bits that must be clear
- *	@max: number of 10uS waits to perform
+ *	@max: number of 10uS रुकोs to perक्रमm
  *
- *	Waits up to max*10 microseconds for the selected bits in the port's
- *	status register to be cleared.
- *	Returns final value of status register.
+ *	Waits up to max*10 microseconds क्रम the selected bits in the port's
+ *	status रेजिस्टर to be cleared.
+ *	Returns final value of status रेजिस्टर.
  *
  *	LOCKING:
  *	Inherited from caller.
  */
-static inline u8 ata_sff_busy_wait(struct ata_port *ap, unsigned int bits,
-				   unsigned int max)
-{
+अटल अंतरभूत u8 ata_sff_busy_रुको(काष्ठा ata_port *ap, अचिन्हित पूर्णांक bits,
+				   अचिन्हित पूर्णांक max)
+अणु
 	u8 status;
 
-	do {
+	करो अणु
 		udelay(10);
 		status = ap->ops->sff_check_status(ap);
 		max--;
-	} while (status != 0xff && (status & bits) && (max > 0));
+	पूर्ण जबतक (status != 0xff && (status & bits) && (max > 0));
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- *	ata_wait_idle - Wait for a port to be idle.
- *	@ap: Port to wait for.
+ *	ata_रुको_idle - Wait क्रम a port to be idle.
+ *	@ap: Port to रुको क्रम.
  *
- *	Waits up to 10ms for port's BUSY and DRQ signals to clear.
- *	Returns final value of status register.
+ *	Waits up to 10ms क्रम port's BUSY and DRQ संकेतs to clear.
+ *	Returns final value of status रेजिस्टर.
  *
  *	LOCKING:
  *	Inherited from caller.
  */
-static inline u8 ata_wait_idle(struct ata_port *ap)
-{
-	u8 status = ata_sff_busy_wait(ap, ATA_BUSY | ATA_DRQ, 1000);
+अटल अंतरभूत u8 ata_रुको_idle(काष्ठा ata_port *ap)
+अणु
+	u8 status = ata_sff_busy_रुको(ap, ATA_BUSY | ATA_DRQ, 1000);
 
-#ifdef ATA_DEBUG
-	if (status != 0xff && (status & (ATA_BUSY | ATA_DRQ)))
-		ata_port_printk(ap, KERN_DEBUG, "abnormal Status 0x%X\n",
+#अगर_घोषित ATA_DEBUG
+	अगर (status != 0xff && (status & (ATA_BUSY | ATA_DRQ)))
+		ata_port_prपूर्णांकk(ap, KERN_DEBUG, "abnormal Status 0x%X\n",
 				status);
-#endif
+#पूर्ण_अगर
 
-	return status;
-}
-#endif /* CONFIG_ATA_SFF */
+	वापस status;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ATA_SFF */
 
-#endif /* __LINUX_LIBATA_H__ */
+#पूर्ण_अगर /* __LINUX_LIBATA_H__ */

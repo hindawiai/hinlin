@@ -1,361 +1,362 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * VGIC: KVM DEVICE API
  *
  * Copyright (C) 2015 ARM Ltd.
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
-#include <linux/kvm_host.h>
-#include <kvm/arm_vgic.h>
-#include <linux/uaccess.h>
-#include <asm/kvm_mmu.h>
-#include <asm/cputype.h>
-#include "vgic.h"
+#समावेश <linux/kvm_host.h>
+#समावेश <kvm/arm_vgic.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/kvm_mmu.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश "vgic.h"
 
 /* common helpers */
 
-int vgic_check_ioaddr(struct kvm *kvm, phys_addr_t *ioaddr,
+पूर्णांक vgic_check_ioaddr(काष्ठा kvm *kvm, phys_addr_t *ioaddr,
 		      phys_addr_t addr, phys_addr_t alignment)
-{
-	if (addr & ~kvm_phys_mask(kvm))
-		return -E2BIG;
+अणु
+	अगर (addr & ~kvm_phys_mask(kvm))
+		वापस -E2BIG;
 
-	if (!IS_ALIGNED(addr, alignment))
-		return -EINVAL;
+	अगर (!IS_ALIGNED(addr, alignment))
+		वापस -EINVAL;
 
-	if (!IS_VGIC_ADDR_UNDEF(*ioaddr))
-		return -EEXIST;
+	अगर (!IS_VGIC_ADDR_UNDEF(*ioaddr))
+		वापस -EEXIST;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vgic_check_type(struct kvm *kvm, int type_needed)
-{
-	if (kvm->arch.vgic.vgic_model != type_needed)
-		return -ENODEV;
-	else
-		return 0;
-}
+अटल पूर्णांक vgic_check_type(काष्ठा kvm *kvm, पूर्णांक type_needed)
+अणु
+	अगर (kvm->arch.vgic.vgic_model != type_needed)
+		वापस -ENODEV;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 /**
  * kvm_vgic_addr - set or get vgic VM base addresses
- * @kvm:   pointer to the vm struct
+ * @kvm:   poपूर्णांकer to the vm काष्ठा
  * @type:  the VGIC addr type, one of KVM_VGIC_V[23]_ADDR_TYPE_XXX
- * @addr:  pointer to address value
- * @write: if true set the address in the VM address space, if false read the
+ * @addr:  poपूर्णांकer to address value
+ * @ग_लिखो: अगर true set the address in the VM address space, अगर false पढ़ो the
  *          address
  *
- * Set or get the vgic base addresses for the distributor and the virtual CPU
- * interface in the VM physical address space.  These addresses are properties
- * of the emulated core/SoC and therefore user space initially knows this
- * information.
- * Check them for sanity (alignment, double assignment). We can't check for
- * overlapping regions in case of a virtual GICv3 here, since we don't know
+ * Set or get the vgic base addresses क्रम the distributor and the भव CPU
+ * पूर्णांकerface in the VM physical address space.  These addresses are properties
+ * of the emulated core/SoC and thereक्रमe user space initially knows this
+ * inक्रमmation.
+ * Check them क्रम sanity (alignment, द्विगुन assignment). We can't check क्रम
+ * overlapping regions in हाल of a भव GICv3 here, since we करोn't know
  * the number of VCPUs yet, so we defer this check to map_resources().
  */
-int kvm_vgic_addr(struct kvm *kvm, unsigned long type, u64 *addr, bool write)
-{
-	int r = 0;
-	struct vgic_dist *vgic = &kvm->arch.vgic;
+पूर्णांक kvm_vgic_addr(काष्ठा kvm *kvm, अचिन्हित दीर्घ type, u64 *addr, bool ग_लिखो)
+अणु
+	पूर्णांक r = 0;
+	काष्ठा vgic_dist *vgic = &kvm->arch.vgic;
 	phys_addr_t *addr_ptr, alignment;
 	u64 undef_value = VGIC_ADDR_UNDEF;
 
 	mutex_lock(&kvm->lock);
-	switch (type) {
-	case KVM_VGIC_V2_ADDR_TYPE_DIST:
+	चयन (type) अणु
+	हाल KVM_VGIC_V2_ADDR_TYPE_DIST:
 		r = vgic_check_type(kvm, KVM_DEV_TYPE_ARM_VGIC_V2);
 		addr_ptr = &vgic->vgic_dist_base;
 		alignment = SZ_4K;
-		break;
-	case KVM_VGIC_V2_ADDR_TYPE_CPU:
+		अवरोध;
+	हाल KVM_VGIC_V2_ADDR_TYPE_CPU:
 		r = vgic_check_type(kvm, KVM_DEV_TYPE_ARM_VGIC_V2);
 		addr_ptr = &vgic->vgic_cpu_base;
 		alignment = SZ_4K;
-		break;
-	case KVM_VGIC_V3_ADDR_TYPE_DIST:
+		अवरोध;
+	हाल KVM_VGIC_V3_ADDR_TYPE_DIST:
 		r = vgic_check_type(kvm, KVM_DEV_TYPE_ARM_VGIC_V3);
 		addr_ptr = &vgic->vgic_dist_base;
 		alignment = SZ_64K;
-		break;
-	case KVM_VGIC_V3_ADDR_TYPE_REDIST: {
-		struct vgic_redist_region *rdreg;
+		अवरोध;
+	हाल KVM_VGIC_V3_ADDR_TYPE_REDIST: अणु
+		काष्ठा vgic_redist_region *rdreg;
 
 		r = vgic_check_type(kvm, KVM_DEV_TYPE_ARM_VGIC_V3);
-		if (r)
-			break;
-		if (write) {
+		अगर (r)
+			अवरोध;
+		अगर (ग_लिखो) अणु
 			r = vgic_v3_set_redist_base(kvm, 0, *addr, 0);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		rdreg = list_first_entry_or_null(&vgic->rd_regions,
-						 struct vgic_redist_region, list);
-		if (!rdreg)
+						 काष्ठा vgic_redist_region, list);
+		अगर (!rdreg)
 			addr_ptr = &undef_value;
-		else
+		अन्यथा
 			addr_ptr = &rdreg->base;
-		break;
-	}
-	case KVM_VGIC_V3_ADDR_TYPE_REDIST_REGION:
-	{
-		struct vgic_redist_region *rdreg;
+		अवरोध;
+	पूर्ण
+	हाल KVM_VGIC_V3_ADDR_TYPE_REDIST_REGION:
+	अणु
+		काष्ठा vgic_redist_region *rdreg;
 		u8 index;
 
 		r = vgic_check_type(kvm, KVM_DEV_TYPE_ARM_VGIC_V3);
-		if (r)
-			break;
+		अगर (r)
+			अवरोध;
 
 		index = *addr & KVM_VGIC_V3_RDIST_INDEX_MASK;
 
-		if (write) {
+		अगर (ग_लिखो) अणु
 			gpa_t base = *addr & KVM_VGIC_V3_RDIST_BASE_MASK;
 			u32 count = (*addr & KVM_VGIC_V3_RDIST_COUNT_MASK)
 					>> KVM_VGIC_V3_RDIST_COUNT_SHIFT;
 			u8 flags = (*addr & KVM_VGIC_V3_RDIST_FLAGS_MASK)
 					>> KVM_VGIC_V3_RDIST_FLAGS_SHIFT;
 
-			if (!count || flags)
+			अगर (!count || flags)
 				r = -EINVAL;
-			else
+			अन्यथा
 				r = vgic_v3_set_redist_base(kvm, index,
 							    base, count);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		rdreg = vgic_v3_rdist_region_from_index(kvm, index);
-		if (!rdreg) {
+		अगर (!rdreg) अणु
 			r = -ENOENT;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		*addr = index;
 		*addr |= rdreg->base;
 		*addr |= (u64)rdreg->count << KVM_VGIC_V3_RDIST_COUNT_SHIFT;
-		goto out;
-	}
-	default:
+		जाओ out;
+	पूर्ण
+	शेष:
 		r = -ENODEV;
-	}
+	पूर्ण
 
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 
-	if (write) {
+	अगर (ग_लिखो) अणु
 		r = vgic_check_ioaddr(kvm, addr_ptr, *addr, alignment);
-		if (!r)
+		अगर (!r)
 			*addr_ptr = *addr;
-	} else {
+	पूर्ण अन्यथा अणु
 		*addr = *addr_ptr;
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&kvm->lock);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int vgic_set_common_attr(struct kvm_device *dev,
-				struct kvm_device_attr *attr)
-{
-	int r;
+अटल पूर्णांक vgic_set_common_attr(काष्ठा kvm_device *dev,
+				काष्ठा kvm_device_attr *attr)
+अणु
+	पूर्णांक r;
 
-	switch (attr->group) {
-	case KVM_DEV_ARM_VGIC_GRP_ADDR: {
-		u64 __user *uaddr = (u64 __user *)(long)attr->addr;
+	चयन (attr->group) अणु
+	हाल KVM_DEV_ARM_VGIC_GRP_ADDR: अणु
+		u64 __user *uaddr = (u64 __user *)(दीर्घ)attr->addr;
 		u64 addr;
-		unsigned long type = (unsigned long)attr->attr;
+		अचिन्हित दीर्घ type = (अचिन्हित दीर्घ)attr->attr;
 
-		if (copy_from_user(&addr, uaddr, sizeof(addr)))
-			return -EFAULT;
+		अगर (copy_from_user(&addr, uaddr, माप(addr)))
+			वापस -EFAULT;
 
 		r = kvm_vgic_addr(dev->kvm, type, &addr, true);
-		return (r == -ENODEV) ? -ENXIO : r;
-	}
-	case KVM_DEV_ARM_VGIC_GRP_NR_IRQS: {
-		u32 __user *uaddr = (u32 __user *)(long)attr->addr;
+		वापस (r == -ENODEV) ? -ENXIO : r;
+	पूर्ण
+	हाल KVM_DEV_ARM_VGIC_GRP_NR_IRQS: अणु
+		u32 __user *uaddr = (u32 __user *)(दीर्घ)attr->addr;
 		u32 val;
-		int ret = 0;
+		पूर्णांक ret = 0;
 
-		if (get_user(val, uaddr))
-			return -EFAULT;
+		अगर (get_user(val, uaddr))
+			वापस -EFAULT;
 
 		/*
 		 * We require:
 		 * - at least 32 SPIs on top of the 16 SGIs and 16 PPIs
-		 * - at most 1024 interrupts
-		 * - a multiple of 32 interrupts
+		 * - at most 1024 पूर्णांकerrupts
+		 * - a multiple of 32 पूर्णांकerrupts
 		 */
-		if (val < (VGIC_NR_PRIVATE_IRQS + 32) ||
+		अगर (val < (VGIC_NR_PRIVATE_IRQS + 32) ||
 		    val > VGIC_MAX_RESERVED ||
 		    (val & 31))
-			return -EINVAL;
+			वापस -EINVAL;
 
 		mutex_lock(&dev->kvm->lock);
 
-		if (vgic_ready(dev->kvm) || dev->kvm->arch.vgic.nr_spis)
+		अगर (vgic_पढ़ोy(dev->kvm) || dev->kvm->arch.vgic.nr_spis)
 			ret = -EBUSY;
-		else
+		अन्यथा
 			dev->kvm->arch.vgic.nr_spis =
 				val - VGIC_NR_PRIVATE_IRQS;
 
 		mutex_unlock(&dev->kvm->lock);
 
-		return ret;
-	}
-	case KVM_DEV_ARM_VGIC_GRP_CTRL: {
-		switch (attr->attr) {
-		case KVM_DEV_ARM_VGIC_CTRL_INIT:
+		वापस ret;
+	पूर्ण
+	हाल KVM_DEV_ARM_VGIC_GRP_CTRL: अणु
+		चयन (attr->attr) अणु
+		हाल KVM_DEV_ARM_VGIC_CTRL_INIT:
 			mutex_lock(&dev->kvm->lock);
 			r = vgic_init(dev->kvm);
 			mutex_unlock(&dev->kvm->lock);
-			return r;
-		}
-		break;
-	}
-	}
+			वापस r;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	पूर्ण
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static int vgic_get_common_attr(struct kvm_device *dev,
-				struct kvm_device_attr *attr)
-{
-	int r = -ENXIO;
+अटल पूर्णांक vgic_get_common_attr(काष्ठा kvm_device *dev,
+				काष्ठा kvm_device_attr *attr)
+अणु
+	पूर्णांक r = -ENXIO;
 
-	switch (attr->group) {
-	case KVM_DEV_ARM_VGIC_GRP_ADDR: {
-		u64 __user *uaddr = (u64 __user *)(long)attr->addr;
+	चयन (attr->group) अणु
+	हाल KVM_DEV_ARM_VGIC_GRP_ADDR: अणु
+		u64 __user *uaddr = (u64 __user *)(दीर्घ)attr->addr;
 		u64 addr;
-		unsigned long type = (unsigned long)attr->attr;
+		अचिन्हित दीर्घ type = (अचिन्हित दीर्घ)attr->attr;
 
-		if (copy_from_user(&addr, uaddr, sizeof(addr)))
-			return -EFAULT;
+		अगर (copy_from_user(&addr, uaddr, माप(addr)))
+			वापस -EFAULT;
 
 		r = kvm_vgic_addr(dev->kvm, type, &addr, false);
-		if (r)
-			return (r == -ENODEV) ? -ENXIO : r;
+		अगर (r)
+			वापस (r == -ENODEV) ? -ENXIO : r;
 
-		if (copy_to_user(uaddr, &addr, sizeof(addr)))
-			return -EFAULT;
-		break;
-	}
-	case KVM_DEV_ARM_VGIC_GRP_NR_IRQS: {
-		u32 __user *uaddr = (u32 __user *)(long)attr->addr;
+		अगर (copy_to_user(uaddr, &addr, माप(addr)))
+			वापस -EFAULT;
+		अवरोध;
+	पूर्ण
+	हाल KVM_DEV_ARM_VGIC_GRP_NR_IRQS: अणु
+		u32 __user *uaddr = (u32 __user *)(दीर्घ)attr->addr;
 
 		r = put_user(dev->kvm->arch.vgic.nr_spis +
 			     VGIC_NR_PRIVATE_IRQS, uaddr);
-		break;
-	}
-	}
+		अवरोध;
+	पूर्ण
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int vgic_create(struct kvm_device *dev, u32 type)
-{
-	return kvm_vgic_create(dev->kvm, type);
-}
+अटल पूर्णांक vgic_create(काष्ठा kvm_device *dev, u32 type)
+अणु
+	वापस kvm_vgic_create(dev->kvm, type);
+पूर्ण
 
-static void vgic_destroy(struct kvm_device *dev)
-{
-	kfree(dev);
-}
+अटल व्योम vgic_destroy(काष्ठा kvm_device *dev)
+अणु
+	kमुक्त(dev);
+पूर्ण
 
-int kvm_register_vgic_device(unsigned long type)
-{
-	int ret = -ENODEV;
+पूर्णांक kvm_रेजिस्टर_vgic_device(अचिन्हित दीर्घ type)
+अणु
+	पूर्णांक ret = -ENODEV;
 
-	switch (type) {
-	case KVM_DEV_TYPE_ARM_VGIC_V2:
-		ret = kvm_register_device_ops(&kvm_arm_vgic_v2_ops,
+	चयन (type) अणु
+	हाल KVM_DEV_TYPE_ARM_VGIC_V2:
+		ret = kvm_रेजिस्टर_device_ops(&kvm_arm_vgic_v2_ops,
 					      KVM_DEV_TYPE_ARM_VGIC_V2);
-		break;
-	case KVM_DEV_TYPE_ARM_VGIC_V3:
-		ret = kvm_register_device_ops(&kvm_arm_vgic_v3_ops,
+		अवरोध;
+	हाल KVM_DEV_TYPE_ARM_VGIC_V3:
+		ret = kvm_रेजिस्टर_device_ops(&kvm_arm_vgic_v3_ops,
 					      KVM_DEV_TYPE_ARM_VGIC_V3);
 
-		if (ret)
-			break;
-		ret = kvm_vgic_register_its_device();
-		break;
-	}
+		अगर (ret)
+			अवरोध;
+		ret = kvm_vgic_रेजिस्टर_its_device();
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int vgic_v2_parse_attr(struct kvm_device *dev, struct kvm_device_attr *attr,
-		       struct vgic_reg_attr *reg_attr)
-{
-	int cpuid;
+पूर्णांक vgic_v2_parse_attr(काष्ठा kvm_device *dev, काष्ठा kvm_device_attr *attr,
+		       काष्ठा vgic_reg_attr *reg_attr)
+अणु
+	पूर्णांक cpuid;
 
 	cpuid = (attr->attr & KVM_DEV_ARM_VGIC_CPUID_MASK) >>
 		 KVM_DEV_ARM_VGIC_CPUID_SHIFT;
 
-	if (cpuid >= atomic_read(&dev->kvm->online_vcpus))
-		return -EINVAL;
+	अगर (cpuid >= atomic_पढ़ो(&dev->kvm->online_vcpus))
+		वापस -EINVAL;
 
 	reg_attr->vcpu = kvm_get_vcpu(dev->kvm, cpuid);
 	reg_attr->addr = attr->attr & KVM_DEV_ARM_VGIC_OFFSET_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* unlocks vcpus from @vcpu_lock_idx and smaller */
-static void unlock_vcpus(struct kvm *kvm, int vcpu_lock_idx)
-{
-	struct kvm_vcpu *tmp_vcpu;
+अटल व्योम unlock_vcpus(काष्ठा kvm *kvm, पूर्णांक vcpu_lock_idx)
+अणु
+	काष्ठा kvm_vcpu *पंचांगp_vcpu;
 
-	for (; vcpu_lock_idx >= 0; vcpu_lock_idx--) {
-		tmp_vcpu = kvm_get_vcpu(kvm, vcpu_lock_idx);
-		mutex_unlock(&tmp_vcpu->mutex);
-	}
-}
+	क्रम (; vcpu_lock_idx >= 0; vcpu_lock_idx--) अणु
+		पंचांगp_vcpu = kvm_get_vcpu(kvm, vcpu_lock_idx);
+		mutex_unlock(&पंचांगp_vcpu->mutex);
+	पूर्ण
+पूर्ण
 
-void unlock_all_vcpus(struct kvm *kvm)
-{
-	unlock_vcpus(kvm, atomic_read(&kvm->online_vcpus) - 1);
-}
+व्योम unlock_all_vcpus(काष्ठा kvm *kvm)
+अणु
+	unlock_vcpus(kvm, atomic_पढ़ो(&kvm->online_vcpus) - 1);
+पूर्ण
 
-/* Returns true if all vcpus were locked, false otherwise */
-bool lock_all_vcpus(struct kvm *kvm)
-{
-	struct kvm_vcpu *tmp_vcpu;
-	int c;
+/* Returns true अगर all vcpus were locked, false otherwise */
+bool lock_all_vcpus(काष्ठा kvm *kvm)
+अणु
+	काष्ठा kvm_vcpu *पंचांगp_vcpu;
+	पूर्णांक c;
 
 	/*
-	 * Any time a vcpu is run, vcpu_load is called which tries to grab the
+	 * Any समय a vcpu is run, vcpu_load is called which tries to grab the
 	 * vcpu->mutex.  By grabbing the vcpu->mutex of all VCPUs we ensure
-	 * that no other VCPUs are run and fiddle with the vgic state while we
+	 * that no other VCPUs are run and fiddle with the vgic state जबतक we
 	 * access it.
 	 */
-	kvm_for_each_vcpu(c, tmp_vcpu, kvm) {
-		if (!mutex_trylock(&tmp_vcpu->mutex)) {
+	kvm_क्रम_each_vcpu(c, पंचांगp_vcpu, kvm) अणु
+		अगर (!mutex_trylock(&पंचांगp_vcpu->mutex)) अणु
 			unlock_vcpus(kvm, c - 1);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * vgic_v2_attr_regs_access - allows user space to access VGIC v2 state
  *
  * @dev:      kvm device handle
  * @attr:     kvm device attribute
- * @reg:      address the value is read or written
- * @is_write: true if userspace is writing a register
+ * @reg:      address the value is पढ़ो or written
+ * @is_ग_लिखो: true अगर userspace is writing a रेजिस्टर
  */
-static int vgic_v2_attr_regs_access(struct kvm_device *dev,
-				    struct kvm_device_attr *attr,
-				    u32 *reg, bool is_write)
-{
-	struct vgic_reg_attr reg_attr;
+अटल पूर्णांक vgic_v2_attr_regs_access(काष्ठा kvm_device *dev,
+				    काष्ठा kvm_device_attr *attr,
+				    u32 *reg, bool is_ग_लिखो)
+अणु
+	काष्ठा vgic_reg_attr reg_attr;
 	gpa_t addr;
-	struct kvm_vcpu *vcpu;
-	int ret;
+	काष्ठा kvm_vcpu *vcpu;
+	पूर्णांक ret;
 
 	ret = vgic_v2_parse_attr(dev, attr, &reg_attr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	vcpu = reg_attr.vcpu;
 	addr = reg_attr.addr;
@@ -363,382 +364,382 @@ static int vgic_v2_attr_regs_access(struct kvm_device *dev,
 	mutex_lock(&dev->kvm->lock);
 
 	ret = vgic_init(dev->kvm);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (!lock_all_vcpus(dev->kvm)) {
+	अगर (!lock_all_vcpus(dev->kvm)) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (attr->group) {
-	case KVM_DEV_ARM_VGIC_GRP_CPU_REGS:
-		ret = vgic_v2_cpuif_uaccess(vcpu, is_write, addr, reg);
-		break;
-	case KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
-		ret = vgic_v2_dist_uaccess(vcpu, is_write, addr, reg);
-		break;
-	default:
+	चयन (attr->group) अणु
+	हाल KVM_DEV_ARM_VGIC_GRP_CPU_REGS:
+		ret = vgic_v2_cpuअगर_uaccess(vcpu, is_ग_लिखो, addr, reg);
+		अवरोध;
+	हाल KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
+		ret = vgic_v2_dist_uaccess(vcpu, is_ग_लिखो, addr, reg);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	unlock_all_vcpus(dev->kvm);
 out:
 	mutex_unlock(&dev->kvm->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vgic_v2_set_attr(struct kvm_device *dev,
-			    struct kvm_device_attr *attr)
-{
-	int ret;
+अटल पूर्णांक vgic_v2_set_attr(काष्ठा kvm_device *dev,
+			    काष्ठा kvm_device_attr *attr)
+अणु
+	पूर्णांक ret;
 
 	ret = vgic_set_common_attr(dev, attr);
-	if (ret != -ENXIO)
-		return ret;
+	अगर (ret != -ENXIO)
+		वापस ret;
 
-	switch (attr->group) {
-	case KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
-	case KVM_DEV_ARM_VGIC_GRP_CPU_REGS: {
-		u32 __user *uaddr = (u32 __user *)(long)attr->addr;
+	चयन (attr->group) अणु
+	हाल KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
+	हाल KVM_DEV_ARM_VGIC_GRP_CPU_REGS: अणु
+		u32 __user *uaddr = (u32 __user *)(दीर्घ)attr->addr;
 		u32 reg;
 
-		if (get_user(reg, uaddr))
-			return -EFAULT;
+		अगर (get_user(reg, uaddr))
+			वापस -EFAULT;
 
-		return vgic_v2_attr_regs_access(dev, attr, &reg, true);
-	}
-	}
+		वापस vgic_v2_attr_regs_access(dev, attr, &reg, true);
+	पूर्ण
+	पूर्ण
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static int vgic_v2_get_attr(struct kvm_device *dev,
-			    struct kvm_device_attr *attr)
-{
-	int ret;
+अटल पूर्णांक vgic_v2_get_attr(काष्ठा kvm_device *dev,
+			    काष्ठा kvm_device_attr *attr)
+अणु
+	पूर्णांक ret;
 
 	ret = vgic_get_common_attr(dev, attr);
-	if (ret != -ENXIO)
-		return ret;
+	अगर (ret != -ENXIO)
+		वापस ret;
 
-	switch (attr->group) {
-	case KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
-	case KVM_DEV_ARM_VGIC_GRP_CPU_REGS: {
-		u32 __user *uaddr = (u32 __user *)(long)attr->addr;
+	चयन (attr->group) अणु
+	हाल KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
+	हाल KVM_DEV_ARM_VGIC_GRP_CPU_REGS: अणु
+		u32 __user *uaddr = (u32 __user *)(दीर्घ)attr->addr;
 		u32 reg = 0;
 
 		ret = vgic_v2_attr_regs_access(dev, attr, &reg, false);
-		if (ret)
-			return ret;
-		return put_user(reg, uaddr);
-	}
-	}
+		अगर (ret)
+			वापस ret;
+		वापस put_user(reg, uaddr);
+	पूर्ण
+	पूर्ण
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static int vgic_v2_has_attr(struct kvm_device *dev,
-			    struct kvm_device_attr *attr)
-{
-	switch (attr->group) {
-	case KVM_DEV_ARM_VGIC_GRP_ADDR:
-		switch (attr->attr) {
-		case KVM_VGIC_V2_ADDR_TYPE_DIST:
-		case KVM_VGIC_V2_ADDR_TYPE_CPU:
-			return 0;
-		}
-		break;
-	case KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
-	case KVM_DEV_ARM_VGIC_GRP_CPU_REGS:
-		return vgic_v2_has_attr_regs(dev, attr);
-	case KVM_DEV_ARM_VGIC_GRP_NR_IRQS:
-		return 0;
-	case KVM_DEV_ARM_VGIC_GRP_CTRL:
-		switch (attr->attr) {
-		case KVM_DEV_ARM_VGIC_CTRL_INIT:
-			return 0;
-		}
-	}
-	return -ENXIO;
-}
+अटल पूर्णांक vgic_v2_has_attr(काष्ठा kvm_device *dev,
+			    काष्ठा kvm_device_attr *attr)
+अणु
+	चयन (attr->group) अणु
+	हाल KVM_DEV_ARM_VGIC_GRP_ADDR:
+		चयन (attr->attr) अणु
+		हाल KVM_VGIC_V2_ADDR_TYPE_DIST:
+		हाल KVM_VGIC_V2_ADDR_TYPE_CPU:
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
+	हाल KVM_DEV_ARM_VGIC_GRP_CPU_REGS:
+		वापस vgic_v2_has_attr_regs(dev, attr);
+	हाल KVM_DEV_ARM_VGIC_GRP_NR_IRQS:
+		वापस 0;
+	हाल KVM_DEV_ARM_VGIC_GRP_CTRL:
+		चयन (attr->attr) अणु
+		हाल KVM_DEV_ARM_VGIC_CTRL_INIT:
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -ENXIO;
+पूर्ण
 
-struct kvm_device_ops kvm_arm_vgic_v2_ops = {
+काष्ठा kvm_device_ops kvm_arm_vgic_v2_ops = अणु
 	.name = "kvm-arm-vgic-v2",
 	.create = vgic_create,
 	.destroy = vgic_destroy,
 	.set_attr = vgic_v2_set_attr,
 	.get_attr = vgic_v2_get_attr,
 	.has_attr = vgic_v2_has_attr,
-};
+पूर्ण;
 
-int vgic_v3_parse_attr(struct kvm_device *dev, struct kvm_device_attr *attr,
-		       struct vgic_reg_attr *reg_attr)
-{
-	unsigned long vgic_mpidr, mpidr_reg;
+पूर्णांक vgic_v3_parse_attr(काष्ठा kvm_device *dev, काष्ठा kvm_device_attr *attr,
+		       काष्ठा vgic_reg_attr *reg_attr)
+अणु
+	अचिन्हित दीर्घ vgic_mpidr, mpidr_reg;
 
 	/*
 	 * For KVM_DEV_ARM_VGIC_GRP_DIST_REGS group,
 	 * attr might not hold MPIDR. Hence assume vcpu0.
 	 */
-	if (attr->group != KVM_DEV_ARM_VGIC_GRP_DIST_REGS) {
+	अगर (attr->group != KVM_DEV_ARM_VGIC_GRP_DIST_REGS) अणु
 		vgic_mpidr = (attr->attr & KVM_DEV_ARM_VGIC_V3_MPIDR_MASK) >>
 			      KVM_DEV_ARM_VGIC_V3_MPIDR_SHIFT;
 
 		mpidr_reg = VGIC_TO_MPIDR(vgic_mpidr);
 		reg_attr->vcpu = kvm_mpidr_to_vcpu(dev->kvm, mpidr_reg);
-	} else {
+	पूर्ण अन्यथा अणु
 		reg_attr->vcpu = kvm_get_vcpu(dev->kvm, 0);
-	}
+	पूर्ण
 
-	if (!reg_attr->vcpu)
-		return -EINVAL;
+	अगर (!reg_attr->vcpu)
+		वापस -EINVAL;
 
 	reg_attr->addr = attr->attr & KVM_DEV_ARM_VGIC_OFFSET_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * vgic_v3_attr_regs_access - allows user space to access VGIC v3 state
  *
  * @dev:      kvm device handle
  * @attr:     kvm device attribute
- * @reg:      address the value is read or written
- * @is_write: true if userspace is writing a register
+ * @reg:      address the value is पढ़ो or written
+ * @is_ग_लिखो: true अगर userspace is writing a रेजिस्टर
  */
-static int vgic_v3_attr_regs_access(struct kvm_device *dev,
-				    struct kvm_device_attr *attr,
-				    u64 *reg, bool is_write)
-{
-	struct vgic_reg_attr reg_attr;
+अटल पूर्णांक vgic_v3_attr_regs_access(काष्ठा kvm_device *dev,
+				    काष्ठा kvm_device_attr *attr,
+				    u64 *reg, bool is_ग_लिखो)
+अणु
+	काष्ठा vgic_reg_attr reg_attr;
 	gpa_t addr;
-	struct kvm_vcpu *vcpu;
-	int ret;
-	u32 tmp32;
+	काष्ठा kvm_vcpu *vcpu;
+	पूर्णांक ret;
+	u32 पंचांगp32;
 
 	ret = vgic_v3_parse_attr(dev, attr, &reg_attr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	vcpu = reg_attr.vcpu;
 	addr = reg_attr.addr;
 
 	mutex_lock(&dev->kvm->lock);
 
-	if (unlikely(!vgic_initialized(dev->kvm))) {
+	अगर (unlikely(!vgic_initialized(dev->kvm))) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!lock_all_vcpus(dev->kvm)) {
+	अगर (!lock_all_vcpus(dev->kvm)) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (attr->group) {
-	case KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
-		if (is_write)
-			tmp32 = *reg;
+	चयन (attr->group) अणु
+	हाल KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
+		अगर (is_ग_लिखो)
+			पंचांगp32 = *reg;
 
-		ret = vgic_v3_dist_uaccess(vcpu, is_write, addr, &tmp32);
-		if (!is_write)
-			*reg = tmp32;
-		break;
-	case KVM_DEV_ARM_VGIC_GRP_REDIST_REGS:
-		if (is_write)
-			tmp32 = *reg;
+		ret = vgic_v3_dist_uaccess(vcpu, is_ग_लिखो, addr, &पंचांगp32);
+		अगर (!is_ग_लिखो)
+			*reg = पंचांगp32;
+		अवरोध;
+	हाल KVM_DEV_ARM_VGIC_GRP_REDIST_REGS:
+		अगर (is_ग_लिखो)
+			पंचांगp32 = *reg;
 
-		ret = vgic_v3_redist_uaccess(vcpu, is_write, addr, &tmp32);
-		if (!is_write)
-			*reg = tmp32;
-		break;
-	case KVM_DEV_ARM_VGIC_GRP_CPU_SYSREGS: {
+		ret = vgic_v3_redist_uaccess(vcpu, is_ग_लिखो, addr, &पंचांगp32);
+		अगर (!is_ग_लिखो)
+			*reg = पंचांगp32;
+		अवरोध;
+	हाल KVM_DEV_ARM_VGIC_GRP_CPU_SYSREGS: अणु
 		u64 regid;
 
 		regid = (attr->attr & KVM_DEV_ARM_VGIC_SYSREG_INSTR_MASK);
-		ret = vgic_v3_cpu_sysregs_uaccess(vcpu, is_write,
+		ret = vgic_v3_cpu_sysregs_uaccess(vcpu, is_ग_लिखो,
 						  regid, reg);
-		break;
-	}
-	case KVM_DEV_ARM_VGIC_GRP_LEVEL_INFO: {
-		unsigned int info, intid;
+		अवरोध;
+	पूर्ण
+	हाल KVM_DEV_ARM_VGIC_GRP_LEVEL_INFO: अणु
+		अचिन्हित पूर्णांक info, पूर्णांकid;
 
 		info = (attr->attr & KVM_DEV_ARM_VGIC_LINE_LEVEL_INFO_MASK) >>
 			KVM_DEV_ARM_VGIC_LINE_LEVEL_INFO_SHIFT;
-		if (info == VGIC_LEVEL_INFO_LINE_LEVEL) {
-			intid = attr->attr &
+		अगर (info == VGIC_LEVEL_INFO_LINE_LEVEL) अणु
+			पूर्णांकid = attr->attr &
 				KVM_DEV_ARM_VGIC_LINE_LEVEL_INTID_MASK;
-			ret = vgic_v3_line_level_info_uaccess(vcpu, is_write,
-							      intid, reg);
-		} else {
+			ret = vgic_v3_line_level_info_uaccess(vcpu, is_ग_लिखो,
+							      पूर्णांकid, reg);
+		पूर्ण अन्यथा अणु
 			ret = -EINVAL;
-		}
-		break;
-	}
-	default:
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	unlock_all_vcpus(dev->kvm);
 out:
 	mutex_unlock(&dev->kvm->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vgic_v3_set_attr(struct kvm_device *dev,
-			    struct kvm_device_attr *attr)
-{
-	int ret;
+अटल पूर्णांक vgic_v3_set_attr(काष्ठा kvm_device *dev,
+			    काष्ठा kvm_device_attr *attr)
+अणु
+	पूर्णांक ret;
 
 	ret = vgic_set_common_attr(dev, attr);
-	if (ret != -ENXIO)
-		return ret;
+	अगर (ret != -ENXIO)
+		वापस ret;
 
-	switch (attr->group) {
-	case KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
-	case KVM_DEV_ARM_VGIC_GRP_REDIST_REGS: {
-		u32 __user *uaddr = (u32 __user *)(long)attr->addr;
-		u32 tmp32;
+	चयन (attr->group) अणु
+	हाल KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
+	हाल KVM_DEV_ARM_VGIC_GRP_REDIST_REGS: अणु
+		u32 __user *uaddr = (u32 __user *)(दीर्घ)attr->addr;
+		u32 पंचांगp32;
 		u64 reg;
 
-		if (get_user(tmp32, uaddr))
-			return -EFAULT;
+		अगर (get_user(पंचांगp32, uaddr))
+			वापस -EFAULT;
 
-		reg = tmp32;
-		return vgic_v3_attr_regs_access(dev, attr, &reg, true);
-	}
-	case KVM_DEV_ARM_VGIC_GRP_CPU_SYSREGS: {
-		u64 __user *uaddr = (u64 __user *)(long)attr->addr;
+		reg = पंचांगp32;
+		वापस vgic_v3_attr_regs_access(dev, attr, &reg, true);
+	पूर्ण
+	हाल KVM_DEV_ARM_VGIC_GRP_CPU_SYSREGS: अणु
+		u64 __user *uaddr = (u64 __user *)(दीर्घ)attr->addr;
 		u64 reg;
 
-		if (get_user(reg, uaddr))
-			return -EFAULT;
+		अगर (get_user(reg, uaddr))
+			वापस -EFAULT;
 
-		return vgic_v3_attr_regs_access(dev, attr, &reg, true);
-	}
-	case KVM_DEV_ARM_VGIC_GRP_LEVEL_INFO: {
-		u32 __user *uaddr = (u32 __user *)(long)attr->addr;
+		वापस vgic_v3_attr_regs_access(dev, attr, &reg, true);
+	पूर्ण
+	हाल KVM_DEV_ARM_VGIC_GRP_LEVEL_INFO: अणु
+		u32 __user *uaddr = (u32 __user *)(दीर्घ)attr->addr;
 		u64 reg;
-		u32 tmp32;
+		u32 पंचांगp32;
 
-		if (get_user(tmp32, uaddr))
-			return -EFAULT;
+		अगर (get_user(पंचांगp32, uaddr))
+			वापस -EFAULT;
 
-		reg = tmp32;
-		return vgic_v3_attr_regs_access(dev, attr, &reg, true);
-	}
-	case KVM_DEV_ARM_VGIC_GRP_CTRL: {
-		int ret;
+		reg = पंचांगp32;
+		वापस vgic_v3_attr_regs_access(dev, attr, &reg, true);
+	पूर्ण
+	हाल KVM_DEV_ARM_VGIC_GRP_CTRL: अणु
+		पूर्णांक ret;
 
-		switch (attr->attr) {
-		case KVM_DEV_ARM_VGIC_SAVE_PENDING_TABLES:
+		चयन (attr->attr) अणु
+		हाल KVM_DEV_ARM_VGIC_SAVE_PENDING_TABLES:
 			mutex_lock(&dev->kvm->lock);
 
-			if (!lock_all_vcpus(dev->kvm)) {
+			अगर (!lock_all_vcpus(dev->kvm)) अणु
 				mutex_unlock(&dev->kvm->lock);
-				return -EBUSY;
-			}
+				वापस -EBUSY;
+			पूर्ण
 			ret = vgic_v3_save_pending_tables(dev->kvm);
 			unlock_all_vcpus(dev->kvm);
 			mutex_unlock(&dev->kvm->lock);
-			return ret;
-		}
-		break;
-	}
-	}
-	return -ENXIO;
-}
+			वापस ret;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	पूर्ण
+	वापस -ENXIO;
+पूर्ण
 
-static int vgic_v3_get_attr(struct kvm_device *dev,
-			    struct kvm_device_attr *attr)
-{
-	int ret;
+अटल पूर्णांक vgic_v3_get_attr(काष्ठा kvm_device *dev,
+			    काष्ठा kvm_device_attr *attr)
+अणु
+	पूर्णांक ret;
 
 	ret = vgic_get_common_attr(dev, attr);
-	if (ret != -ENXIO)
-		return ret;
+	अगर (ret != -ENXIO)
+		वापस ret;
 
-	switch (attr->group) {
-	case KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
-	case KVM_DEV_ARM_VGIC_GRP_REDIST_REGS: {
-		u32 __user *uaddr = (u32 __user *)(long)attr->addr;
+	चयन (attr->group) अणु
+	हाल KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
+	हाल KVM_DEV_ARM_VGIC_GRP_REDIST_REGS: अणु
+		u32 __user *uaddr = (u32 __user *)(दीर्घ)attr->addr;
 		u64 reg;
-		u32 tmp32;
+		u32 पंचांगp32;
 
 		ret = vgic_v3_attr_regs_access(dev, attr, &reg, false);
-		if (ret)
-			return ret;
-		tmp32 = reg;
-		return put_user(tmp32, uaddr);
-	}
-	case KVM_DEV_ARM_VGIC_GRP_CPU_SYSREGS: {
-		u64 __user *uaddr = (u64 __user *)(long)attr->addr;
+		अगर (ret)
+			वापस ret;
+		पंचांगp32 = reg;
+		वापस put_user(पंचांगp32, uaddr);
+	पूर्ण
+	हाल KVM_DEV_ARM_VGIC_GRP_CPU_SYSREGS: अणु
+		u64 __user *uaddr = (u64 __user *)(दीर्घ)attr->addr;
 		u64 reg;
 
 		ret = vgic_v3_attr_regs_access(dev, attr, &reg, false);
-		if (ret)
-			return ret;
-		return put_user(reg, uaddr);
-	}
-	case KVM_DEV_ARM_VGIC_GRP_LEVEL_INFO: {
-		u32 __user *uaddr = (u32 __user *)(long)attr->addr;
+		अगर (ret)
+			वापस ret;
+		वापस put_user(reg, uaddr);
+	पूर्ण
+	हाल KVM_DEV_ARM_VGIC_GRP_LEVEL_INFO: अणु
+		u32 __user *uaddr = (u32 __user *)(दीर्घ)attr->addr;
 		u64 reg;
-		u32 tmp32;
+		u32 पंचांगp32;
 
 		ret = vgic_v3_attr_regs_access(dev, attr, &reg, false);
-		if (ret)
-			return ret;
-		tmp32 = reg;
-		return put_user(tmp32, uaddr);
-	}
-	}
-	return -ENXIO;
-}
+		अगर (ret)
+			वापस ret;
+		पंचांगp32 = reg;
+		वापस put_user(पंचांगp32, uaddr);
+	पूर्ण
+	पूर्ण
+	वापस -ENXIO;
+पूर्ण
 
-static int vgic_v3_has_attr(struct kvm_device *dev,
-			    struct kvm_device_attr *attr)
-{
-	switch (attr->group) {
-	case KVM_DEV_ARM_VGIC_GRP_ADDR:
-		switch (attr->attr) {
-		case KVM_VGIC_V3_ADDR_TYPE_DIST:
-		case KVM_VGIC_V3_ADDR_TYPE_REDIST:
-		case KVM_VGIC_V3_ADDR_TYPE_REDIST_REGION:
-			return 0;
-		}
-		break;
-	case KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
-	case KVM_DEV_ARM_VGIC_GRP_REDIST_REGS:
-	case KVM_DEV_ARM_VGIC_GRP_CPU_SYSREGS:
-		return vgic_v3_has_attr_regs(dev, attr);
-	case KVM_DEV_ARM_VGIC_GRP_NR_IRQS:
-		return 0;
-	case KVM_DEV_ARM_VGIC_GRP_LEVEL_INFO: {
-		if (((attr->attr & KVM_DEV_ARM_VGIC_LINE_LEVEL_INFO_MASK) >>
+अटल पूर्णांक vgic_v3_has_attr(काष्ठा kvm_device *dev,
+			    काष्ठा kvm_device_attr *attr)
+अणु
+	चयन (attr->group) अणु
+	हाल KVM_DEV_ARM_VGIC_GRP_ADDR:
+		चयन (attr->attr) अणु
+		हाल KVM_VGIC_V3_ADDR_TYPE_DIST:
+		हाल KVM_VGIC_V3_ADDR_TYPE_REDIST:
+		हाल KVM_VGIC_V3_ADDR_TYPE_REDIST_REGION:
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल KVM_DEV_ARM_VGIC_GRP_DIST_REGS:
+	हाल KVM_DEV_ARM_VGIC_GRP_REDIST_REGS:
+	हाल KVM_DEV_ARM_VGIC_GRP_CPU_SYSREGS:
+		वापस vgic_v3_has_attr_regs(dev, attr);
+	हाल KVM_DEV_ARM_VGIC_GRP_NR_IRQS:
+		वापस 0;
+	हाल KVM_DEV_ARM_VGIC_GRP_LEVEL_INFO: अणु
+		अगर (((attr->attr & KVM_DEV_ARM_VGIC_LINE_LEVEL_INFO_MASK) >>
 		      KVM_DEV_ARM_VGIC_LINE_LEVEL_INFO_SHIFT) ==
 		      VGIC_LEVEL_INFO_LINE_LEVEL)
-			return 0;
-		break;
-	}
-	case KVM_DEV_ARM_VGIC_GRP_CTRL:
-		switch (attr->attr) {
-		case KVM_DEV_ARM_VGIC_CTRL_INIT:
-			return 0;
-		case KVM_DEV_ARM_VGIC_SAVE_PENDING_TABLES:
-			return 0;
-		}
-	}
-	return -ENXIO;
-}
+			वापस 0;
+		अवरोध;
+	पूर्ण
+	हाल KVM_DEV_ARM_VGIC_GRP_CTRL:
+		चयन (attr->attr) अणु
+		हाल KVM_DEV_ARM_VGIC_CTRL_INIT:
+			वापस 0;
+		हाल KVM_DEV_ARM_VGIC_SAVE_PENDING_TABLES:
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -ENXIO;
+पूर्ण
 
-struct kvm_device_ops kvm_arm_vgic_v3_ops = {
+काष्ठा kvm_device_ops kvm_arm_vgic_v3_ops = अणु
 	.name = "kvm-arm-vgic-v3",
 	.create = vgic_create,
 	.destroy = vgic_destroy,
 	.set_attr = vgic_v3_set_attr,
 	.get_attr = vgic_v3_get_attr,
 	.has_attr = vgic_v3_has_attr,
-};
+पूर्ण;

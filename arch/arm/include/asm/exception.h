@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Annotations for marking C functions as exception handlers.
+ * Annotations क्रम marking C functions as exception handlers.
  *
- * These should only be used for C functions that are called from the low
- * level exception entry code and not any intervening C code.
+ * These should only be used क्रम C functions that are called from the low
+ * level exception entry code and not any पूर्णांकervening C code.
  */
-#ifndef __ASM_ARM_EXCEPTION_H
-#define __ASM_ARM_EXCEPTION_H
+#अगर_अघोषित __ASM_ARM_EXCEPTION_H
+#घोषणा __ASM_ARM_EXCEPTION_H
 
-#include <linux/interrupt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
-#define __exception_irq_entry	__irq_entry
-#else
-#define __exception_irq_entry
-#endif
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
+#घोषणा __exception_irq_entry	__irq_entry
+#अन्यथा
+#घोषणा __exception_irq_entry
+#पूर्ण_अगर
 
-#endif /* __ASM_ARM_EXCEPTION_H */
+#पूर्ण_अगर /* __ASM_ARM_EXCEPTION_H */

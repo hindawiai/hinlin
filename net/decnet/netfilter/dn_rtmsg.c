@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * DECnet       An implementation of the DECnet protocol suite for the LINUX
- *              operating system.  DECnet is implemented using the  BSD Socket
- *              interface as the means of communication with the user level.
+ * DECnet       An implementation of the DECnet protocol suite क्रम the LINUX
+ *              operating प्रणाली.  DECnet is implemented using the  BSD Socket
+ *              पूर्णांकerface as the means of communication with the user level.
  *
  *              DECnet Routing Message Grabulator
  *
@@ -10,143 +11,143 @@
  *
  * Author:      Steven Whitehouse <steve@chygwyn.com>
  */
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/netdevice.h>
-#include <linux/netfilter.h>
-#include <linux/spinlock.h>
-#include <net/netlink.h>
-#include <linux/netfilter_decnet.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/spinlock.h>
+#समावेश <net/netlink.h>
+#समावेश <linux/netfilter_decnet.h>
 
-#include <net/sock.h>
-#include <net/flow.h>
-#include <net/dn.h>
-#include <net/dn_route.h>
+#समावेश <net/sock.h>
+#समावेश <net/flow.h>
+#समावेश <net/dn.h>
+#समावेश <net/dn_route.h>
 
-static struct sock *dnrmg = NULL;
+अटल काष्ठा sock *dnrmg = शून्य;
 
 
-static struct sk_buff *dnrmg_build_message(struct sk_buff *rt_skb, int *errp)
-{
-	struct sk_buff *skb = NULL;
-	size_t size;
+अटल काष्ठा sk_buff *dnrmg_build_message(काष्ठा sk_buff *rt_skb, पूर्णांक *errp)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
+	माप_प्रकार size;
 	sk_buff_data_t old_tail;
-	struct nlmsghdr *nlh;
-	unsigned char *ptr;
-	struct nf_dn_rtmsg *rtm;
+	काष्ठा nlmsghdr *nlh;
+	अचिन्हित अक्षर *ptr;
+	काष्ठा nf_dn_rपंचांगsg *rपंचांग;
 
 	size = NLMSG_ALIGN(rt_skb->len) +
-	       NLMSG_ALIGN(sizeof(struct nf_dn_rtmsg));
+	       NLMSG_ALIGN(माप(काष्ठा nf_dn_rपंचांगsg));
 	skb = nlmsg_new(size, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		*errp = -ENOMEM;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	old_tail = skb->tail;
 	nlh = nlmsg_put(skb, 0, 0, 0, size, 0);
-	if (!nlh) {
-		kfree_skb(skb);
+	अगर (!nlh) अणु
+		kमुक्त_skb(skb);
 		*errp = -ENOMEM;
-		return NULL;
-	}
-	rtm = (struct nf_dn_rtmsg *)nlmsg_data(nlh);
-	rtm->nfdn_ifindex = rt_skb->dev->ifindex;
-	ptr = NFDN_RTMSG(rtm);
+		वापस शून्य;
+	पूर्ण
+	rपंचांग = (काष्ठा nf_dn_rपंचांगsg *)nlmsg_data(nlh);
+	rपंचांग->nfdn_अगरindex = rt_skb->dev->अगरindex;
+	ptr = NFDN_RTMSG(rपंचांग);
 	skb_copy_from_linear_data(rt_skb, ptr, rt_skb->len);
 	nlh->nlmsg_len = skb->tail - old_tail;
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static void dnrmg_send_peer(struct sk_buff *skb)
-{
-	struct sk_buff *skb2;
-	int status = 0;
-	int group = 0;
-	unsigned char flags = *skb->data;
+अटल व्योम dnrmg_send_peer(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *skb2;
+	पूर्णांक status = 0;
+	पूर्णांक group = 0;
+	अचिन्हित अक्षर flags = *skb->data;
 
-	switch (flags & DN_RT_CNTL_MSK) {
-	case DN_RT_PKT_L1RT:
+	चयन (flags & DN_RT_CNTL_MSK) अणु
+	हाल DN_RT_PKT_L1RT:
 		group = DNRNG_NLGRP_L1;
-		break;
-	case DN_RT_PKT_L2RT:
+		अवरोध;
+	हाल DN_RT_PKT_L2RT:
 		group = DNRNG_NLGRP_L2;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	skb2 = dnrmg_build_message(skb, &status);
-	if (skb2 == NULL)
-		return;
+	अगर (skb2 == शून्य)
+		वापस;
 	NETLINK_CB(skb2).dst_group = group;
 	netlink_broadcast(dnrmg, skb2, 0, group, GFP_ATOMIC);
-}
+पूर्ण
 
 
-static unsigned int dnrmg_hook(void *priv,
-			struct sk_buff *skb,
-			const struct nf_hook_state *state)
-{
+अटल अचिन्हित पूर्णांक dnrmg_hook(व्योम *priv,
+			काष्ठा sk_buff *skb,
+			स्थिर काष्ठा nf_hook_state *state)
+अणु
 	dnrmg_send_peer(skb);
-	return NF_ACCEPT;
-}
+	वापस NF_ACCEPT;
+पूर्ण
 
 
-#define RCV_SKB_FAIL(err) do { netlink_ack(skb, nlh, (err), NULL); return; } while (0)
+#घोषणा RCV_SKB_FAIL(err) करो अणु netlink_ack(skb, nlh, (err), शून्य); वापस; पूर्ण जबतक (0)
 
-static inline void dnrmg_receive_user_skb(struct sk_buff *skb)
-{
-	struct nlmsghdr *nlh = nlmsg_hdr(skb);
+अटल अंतरभूत व्योम dnrmg_receive_user_skb(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlmsghdr *nlh = nlmsg_hdr(skb);
 
-	if (skb->len < sizeof(*nlh) ||
-	    nlh->nlmsg_len < sizeof(*nlh) ||
+	अगर (skb->len < माप(*nlh) ||
+	    nlh->nlmsg_len < माप(*nlh) ||
 	    skb->len < nlh->nlmsg_len)
-		return;
+		वापस;
 
-	if (!netlink_capable(skb, CAP_NET_ADMIN))
+	अगर (!netlink_capable(skb, CAP_NET_ADMIN))
 		RCV_SKB_FAIL(-EPERM);
 
 	/* Eventually we might send routing messages too */
 
 	RCV_SKB_FAIL(-EINVAL);
-}
+पूर्ण
 
-static const struct nf_hook_ops dnrmg_ops = {
+अटल स्थिर काष्ठा nf_hook_ops dnrmg_ops = अणु
 	.hook		= dnrmg_hook,
 	.pf		= NFPROTO_DECNET,
 	.hooknum	= NF_DN_ROUTE,
 	.priority	= NF_DN_PRI_DNRTMSG,
-};
+पूर्ण;
 
-static int __init dn_rtmsg_init(void)
-{
-	int rv = 0;
-	struct netlink_kernel_cfg cfg = {
+अटल पूर्णांक __init dn_rपंचांगsg_init(व्योम)
+अणु
+	पूर्णांक rv = 0;
+	काष्ठा netlink_kernel_cfg cfg = अणु
 		.groups	= DNRNG_NLGRP_MAX,
 		.input	= dnrmg_receive_user_skb,
-	};
+	पूर्ण;
 
 	dnrmg = netlink_kernel_create(&init_net, NETLINK_DNRTMSG, &cfg);
-	if (dnrmg == NULL) {
-		printk(KERN_ERR "dn_rtmsg: Cannot create netlink socket");
-		return -ENOMEM;
-	}
+	अगर (dnrmg == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "dn_rtmsg: Cannot create netlink socket");
+		वापस -ENOMEM;
+	पूर्ण
 
-	rv = nf_register_net_hook(&init_net, &dnrmg_ops);
-	if (rv) {
+	rv = nf_रेजिस्टर_net_hook(&init_net, &dnrmg_ops);
+	अगर (rv) अणु
 		netlink_kernel_release(dnrmg);
-	}
+	पूर्ण
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static void __exit dn_rtmsg_fini(void)
-{
-	nf_unregister_net_hook(&init_net, &dnrmg_ops);
+अटल व्योम __निकास dn_rपंचांगsg_fini(व्योम)
+अणु
+	nf_unरेजिस्टर_net_hook(&init_net, &dnrmg_ops);
 	netlink_kernel_release(dnrmg);
-}
+पूर्ण
 
 
 MODULE_DESCRIPTION("DECnet Routing Message Grabulator");
@@ -154,5 +155,5 @@ MODULE_AUTHOR("Steven Whitehouse <steve@chygwyn.com>");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NET_PF_PROTO(PF_NETLINK, NETLINK_DNRTMSG);
 
-module_init(dn_rtmsg_init);
-module_exit(dn_rtmsg_fini);
+module_init(dn_rपंचांगsg_init);
+module_निकास(dn_rपंचांगsg_fini);

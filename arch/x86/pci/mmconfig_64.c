@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * mmconfig.c - Low-level direct PCI config space access via MMCONFIG
  *
@@ -6,149 +7,149 @@
  * space mapped. This allows lockless config space operation.
  */
 
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/acpi.h>
-#include <linux/bitmap.h>
-#include <linux/rcupdate.h>
-#include <asm/e820/api.h>
-#include <asm/pci_x86.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/pci_x86.h>
 
-#define PREFIX "PCI: "
+#घोषणा PREFIX "PCI: "
 
-static char __iomem *pci_dev_base(unsigned int seg, unsigned int bus, unsigned int devfn)
-{
-	struct pci_mmcfg_region *cfg = pci_mmconfig_lookup(seg, bus);
+अटल अक्षर __iomem *pci_dev_base(अचिन्हित पूर्णांक seg, अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक devfn)
+अणु
+	काष्ठा pci_mmcfg_region *cfg = pci_mmconfig_lookup(seg, bus);
 
-	if (cfg && cfg->virt)
-		return cfg->virt + (PCI_MMCFG_BUS_OFFSET(bus) | (devfn << 12));
-	return NULL;
-}
+	अगर (cfg && cfg->virt)
+		वापस cfg->virt + (PCI_MMCFG_BUS_OFFSET(bus) | (devfn << 12));
+	वापस शून्य;
+पूर्ण
 
-static int pci_mmcfg_read(unsigned int seg, unsigned int bus,
-			  unsigned int devfn, int reg, int len, u32 *value)
-{
-	char __iomem *addr;
+अटल पूर्णांक pci_mmcfg_पढ़ो(अचिन्हित पूर्णांक seg, अचिन्हित पूर्णांक bus,
+			  अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 *value)
+अणु
+	अक्षर __iomem *addr;
 
-	/* Why do we have this when nobody checks it. How about a BUG()!? -AK */
-	if (unlikely((bus > 255) || (devfn > 255) || (reg > 4095))) {
+	/* Why करो we have this when nobody checks it. How about a BUG()!? -AK */
+	अगर (unlikely((bus > 255) || (devfn > 255) || (reg > 4095))) अणु
 err:		*value = -1;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	addr = pci_dev_base(seg, bus, devfn);
-	if (!addr) {
-		rcu_read_unlock();
-		goto err;
-	}
+	अगर (!addr) अणु
+		rcu_पढ़ो_unlock();
+		जाओ err;
+	पूर्ण
 
-	switch (len) {
-	case 1:
-		*value = mmio_config_readb(addr + reg);
-		break;
-	case 2:
-		*value = mmio_config_readw(addr + reg);
-		break;
-	case 4:
-		*value = mmio_config_readl(addr + reg);
-		break;
-	}
-	rcu_read_unlock();
+	चयन (len) अणु
+	हाल 1:
+		*value = mmio_config_पढ़ोb(addr + reg);
+		अवरोध;
+	हाल 2:
+		*value = mmio_config_पढ़ोw(addr + reg);
+		अवरोध;
+	हाल 4:
+		*value = mmio_config_पढ़ोl(addr + reg);
+		अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pci_mmcfg_write(unsigned int seg, unsigned int bus,
-			   unsigned int devfn, int reg, int len, u32 value)
-{
-	char __iomem *addr;
+अटल पूर्णांक pci_mmcfg_ग_लिखो(अचिन्हित पूर्णांक seg, अचिन्हित पूर्णांक bus,
+			   अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 value)
+अणु
+	अक्षर __iomem *addr;
 
-	/* Why do we have this when nobody checks it. How about a BUG()!? -AK */
-	if (unlikely((bus > 255) || (devfn > 255) || (reg > 4095)))
-		return -EINVAL;
+	/* Why करो we have this when nobody checks it. How about a BUG()!? -AK */
+	अगर (unlikely((bus > 255) || (devfn > 255) || (reg > 4095)))
+		वापस -EINVAL;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	addr = pci_dev_base(seg, bus, devfn);
-	if (!addr) {
-		rcu_read_unlock();
-		return -EINVAL;
-	}
+	अगर (!addr) अणु
+		rcu_पढ़ो_unlock();
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (len) {
-	case 1:
-		mmio_config_writeb(addr + reg, value);
-		break;
-	case 2:
-		mmio_config_writew(addr + reg, value);
-		break;
-	case 4:
-		mmio_config_writel(addr + reg, value);
-		break;
-	}
-	rcu_read_unlock();
+	चयन (len) अणु
+	हाल 1:
+		mmio_config_ग_लिखोb(addr + reg, value);
+		अवरोध;
+	हाल 2:
+		mmio_config_ग_लिखोw(addr + reg, value);
+		अवरोध;
+	हाल 4:
+		mmio_config_ग_लिखोl(addr + reg, value);
+		अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct pci_raw_ops pci_mmcfg = {
-	.read =		pci_mmcfg_read,
-	.write =	pci_mmcfg_write,
-};
+स्थिर काष्ठा pci_raw_ops pci_mmcfg = अणु
+	.पढ़ो =		pci_mmcfg_पढ़ो,
+	.ग_लिखो =	pci_mmcfg_ग_लिखो,
+पूर्ण;
 
-static void __iomem *mcfg_ioremap(struct pci_mmcfg_region *cfg)
-{
-	void __iomem *addr;
+अटल व्योम __iomem *mcfg_ioremap(काष्ठा pci_mmcfg_region *cfg)
+अणु
+	व्योम __iomem *addr;
 	u64 start, size;
-	int num_buses;
+	पूर्णांक num_buses;
 
 	start = cfg->address + PCI_MMCFG_BUS_OFFSET(cfg->start_bus);
 	num_buses = cfg->end_bus - cfg->start_bus + 1;
 	size = PCI_MMCFG_BUS_OFFSET(num_buses);
 	addr = ioremap(start, size);
-	if (addr)
+	अगर (addr)
 		addr -= PCI_MMCFG_BUS_OFFSET(cfg->start_bus);
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-int __init pci_mmcfg_arch_init(void)
-{
-	struct pci_mmcfg_region *cfg;
+पूर्णांक __init pci_mmcfg_arch_init(व्योम)
+अणु
+	काष्ठा pci_mmcfg_region *cfg;
 
-	list_for_each_entry(cfg, &pci_mmcfg_list, list)
-		if (pci_mmcfg_arch_map(cfg)) {
-			pci_mmcfg_arch_free();
-			return 0;
-		}
+	list_क्रम_each_entry(cfg, &pci_mmcfg_list, list)
+		अगर (pci_mmcfg_arch_map(cfg)) अणु
+			pci_mmcfg_arch_मुक्त();
+			वापस 0;
+		पूर्ण
 
 	raw_pci_ext_ops = &pci_mmcfg;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void __init pci_mmcfg_arch_free(void)
-{
-	struct pci_mmcfg_region *cfg;
+व्योम __init pci_mmcfg_arch_मुक्त(व्योम)
+अणु
+	काष्ठा pci_mmcfg_region *cfg;
 
-	list_for_each_entry(cfg, &pci_mmcfg_list, list)
+	list_क्रम_each_entry(cfg, &pci_mmcfg_list, list)
 		pci_mmcfg_arch_unmap(cfg);
-}
+पूर्ण
 
-int pci_mmcfg_arch_map(struct pci_mmcfg_region *cfg)
-{
+पूर्णांक pci_mmcfg_arch_map(काष्ठा pci_mmcfg_region *cfg)
+अणु
 	cfg->virt = mcfg_ioremap(cfg);
-	if (!cfg->virt) {
+	अगर (!cfg->virt) अणु
 		pr_err(PREFIX "can't map MMCONFIG at %pR\n", &cfg->res);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pci_mmcfg_arch_unmap(struct pci_mmcfg_region *cfg)
-{
-	if (cfg && cfg->virt) {
+व्योम pci_mmcfg_arch_unmap(काष्ठा pci_mmcfg_region *cfg)
+अणु
+	अगर (cfg && cfg->virt) अणु
 		iounmap(cfg->virt + PCI_MMCFG_BUS_OFFSET(cfg->start_bus));
-		cfg->virt = NULL;
-	}
-}
+		cfg->virt = शून्य;
+	पूर्ण
+पूर्ण

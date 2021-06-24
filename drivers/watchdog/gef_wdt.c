@@ -1,329 +1,330 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * GE watchdog userspace interface
+ * GE watchकरोg userspace पूर्णांकerface
  *
  * Author:  Martyn Welch <martyn.welch@ge.com>
  *
- * Copyright 2008 GE Intelligent Platforms Embedded Systems, Inc.
+ * Copyright 2008 GE Intelligent Platक्रमms Embedded Systems, Inc.
  *
- * Based on: mv64x60_wdt.c (MV64X60 watchdog userspace interface)
+ * Based on: mv64x60_wdt.c (MV64X60 watchकरोg userspace पूर्णांकerface)
  *   Author: James Chapman <jchapman@katalix.com>
  */
 
 /* TODO:
- * This driver does not provide support for the hardwares capability of sending
- * an interrupt at a programmable threshold.
+ * This driver करोes not provide support क्रम the hardwares capability of sending
+ * an पूर्णांकerrupt at a programmable threshold.
  *
- * This driver currently can only support 1 watchdog - there are 2 in the
+ * This driver currently can only support 1 watchकरोg - there are 2 in the
  * hardware that this driver supports. Thus one could be configured as a
- * process-based watchdog (via /dev/watchdog), the second (using the interrupt
- * capabilities) a kernel-based watchdog.
+ * process-based watchकरोg (via /dev/watchकरोg), the second (using the पूर्णांकerrupt
+ * capabilities) a kernel-based watchकरोg.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/compiler.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/miscdevice.h>
-#include <linux/watchdog.h>
-#include <linux/fs.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/uaccess.h>
 
-#include <sysdev/fsl_soc.h>
+#समावेश <sysdev/fsl_soc.h>
 
 /*
- * The watchdog configuration register contains a pair of 2-bit fields,
+ * The watchकरोg configuration रेजिस्टर contains a pair of 2-bit fields,
  *   1.  a reload field, bits 27-26, which triggers a reload of
- *       the countdown register, and
+ *       the countकरोwn रेजिस्टर, and
  *   2.  an enable field, bits 25-24, which toggles between
- *       enabling and disabling the watchdog timer.
- * Bit 31 is a read-only field which indicates whether the
- * watchdog timer is currently enabled.
+ *       enabling and disabling the watchकरोg समयr.
+ * Bit 31 is a पढ़ो-only field which indicates whether the
+ * watchकरोg समयr is currently enabled.
  *
- * The low 24 bits contain the timer reload value.
+ * The low 24 bits contain the समयr reload value.
  */
-#define GEF_WDC_ENABLE_SHIFT	24
-#define GEF_WDC_SERVICE_SHIFT	26
-#define GEF_WDC_ENABLED_SHIFT	31
+#घोषणा GEF_WDC_ENABLE_SHIFT	24
+#घोषणा GEF_WDC_SERVICE_SHIFT	26
+#घोषणा GEF_WDC_ENABLED_SHIFT	31
 
-#define GEF_WDC_ENABLED_TRUE	1
-#define GEF_WDC_ENABLED_FALSE	0
+#घोषणा GEF_WDC_ENABLED_TRUE	1
+#घोषणा GEF_WDC_ENABLED_FALSE	0
 
 /* Flags bits */
-#define GEF_WDOG_FLAG_OPENED	0
+#घोषणा GEF_WDOG_FLAG_OPENED	0
 
-static unsigned long wdt_flags;
-static int wdt_status;
-static void __iomem *gef_wdt_regs;
-static int gef_wdt_timeout;
-static int gef_wdt_count;
-static unsigned int bus_clk;
-static char expect_close;
-static DEFINE_SPINLOCK(gef_wdt_spinlock);
+अटल अचिन्हित दीर्घ wdt_flags;
+अटल पूर्णांक wdt_status;
+अटल व्योम __iomem *gef_wdt_regs;
+अटल पूर्णांक gef_wdt_समयout;
+अटल पूर्णांक gef_wdt_count;
+अटल अचिन्हित पूर्णांक bus_clk;
+अटल अक्षर expect_बंद;
+अटल DEFINE_SPINLOCK(gef_wdt_spinlock);
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 	__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
 
-static int gef_wdt_toggle_wdc(int enabled_predicate, int field_shift)
-{
+अटल पूर्णांक gef_wdt_toggle_wdc(पूर्णांक enabled_predicate, पूर्णांक field_shअगरt)
+अणु
 	u32 data;
 	u32 enabled;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	spin_lock(&gef_wdt_spinlock);
-	data = ioread32be(gef_wdt_regs);
+	data = ioपढ़ो32be(gef_wdt_regs);
 	enabled = (data >> GEF_WDC_ENABLED_SHIFT) & 1;
 
-	/* only toggle the requested field if enabled state matches predicate */
-	if ((enabled ^ enabled_predicate) == 0) {
-		/* We write a 1, then a 2 -- to the appropriate field */
-		data = (1 << field_shift) | gef_wdt_count;
-		iowrite32be(data, gef_wdt_regs);
+	/* only toggle the requested field अगर enabled state matches predicate */
+	अगर ((enabled ^ enabled_predicate) == 0) अणु
+		/* We ग_लिखो a 1, then a 2 -- to the appropriate field */
+		data = (1 << field_shअगरt) | gef_wdt_count;
+		ioग_लिखो32be(data, gef_wdt_regs);
 
-		data = (2 << field_shift) | gef_wdt_count;
-		iowrite32be(data, gef_wdt_regs);
+		data = (2 << field_shअगरt) | gef_wdt_count;
+		ioग_लिखो32be(data, gef_wdt_regs);
 		ret = 1;
-	}
+	पूर्ण
 	spin_unlock(&gef_wdt_spinlock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void gef_wdt_service(void)
-{
+अटल व्योम gef_wdt_service(व्योम)
+अणु
 	gef_wdt_toggle_wdc(GEF_WDC_ENABLED_TRUE,
 		GEF_WDC_SERVICE_SHIFT);
-}
+पूर्ण
 
-static void gef_wdt_handler_enable(void)
-{
-	if (gef_wdt_toggle_wdc(GEF_WDC_ENABLED_FALSE,
-				   GEF_WDC_ENABLE_SHIFT)) {
+अटल व्योम gef_wdt_handler_enable(व्योम)
+अणु
+	अगर (gef_wdt_toggle_wdc(GEF_WDC_ENABLED_FALSE,
+				   GEF_WDC_ENABLE_SHIFT)) अणु
 		gef_wdt_service();
 		pr_notice("watchdog activated\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gef_wdt_handler_disable(void)
-{
-	if (gef_wdt_toggle_wdc(GEF_WDC_ENABLED_TRUE,
+अटल व्योम gef_wdt_handler_disable(व्योम)
+अणु
+	अगर (gef_wdt_toggle_wdc(GEF_WDC_ENABLED_TRUE,
 				   GEF_WDC_ENABLE_SHIFT))
 		pr_notice("watchdog deactivated\n");
-}
+पूर्ण
 
-static void gef_wdt_set_timeout(unsigned int timeout)
-{
+अटल व्योम gef_wdt_set_समयout(अचिन्हित पूर्णांक समयout)
+अणु
 	/* maximum bus cycle count is 0xFFFFFFFF */
-	if (timeout > 0xFFFFFFFF / bus_clk)
-		timeout = 0xFFFFFFFF / bus_clk;
+	अगर (समयout > 0xFFFFFFFF / bus_clk)
+		समयout = 0xFFFFFFFF / bus_clk;
 
-	/* Register only holds upper 24 bits, bit shifted into lower 24 */
-	gef_wdt_count = (timeout * bus_clk) >> 8;
-	gef_wdt_timeout = timeout;
-}
+	/* Register only holds upper 24 bits, bit shअगरted पूर्णांकo lower 24 */
+	gef_wdt_count = (समयout * bus_clk) >> 8;
+	gef_wdt_समयout = समयout;
+पूर्ण
 
 
-static ssize_t gef_wdt_write(struct file *file, const char __user *data,
-				 size_t len, loff_t *ppos)
-{
-	if (len) {
-		if (!nowayout) {
-			size_t i;
+अटल sमाप_प्रकार gef_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+				 माप_प्रकार len, loff_t *ppos)
+अणु
+	अगर (len) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
 
-			expect_close = 0;
+			expect_बंद = 0;
 
-			for (i = 0; i != len; i++) {
-				char c;
-				if (get_user(c, data + i))
-					return -EFAULT;
-				if (c == 'V')
-					expect_close = 42;
-			}
-		}
+			क्रम (i = 0; i != len; i++) अणु
+				अक्षर c;
+				अगर (get_user(c, data + i))
+					वापस -EFAULT;
+				अगर (c == 'V')
+					expect_बंद = 42;
+			पूर्ण
+		पूर्ण
 		gef_wdt_service();
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static long gef_wdt_ioctl(struct file *file, unsigned int cmd,
-							unsigned long arg)
-{
-	int timeout;
-	int options;
-	void __user *argp = (void __user *)arg;
-	static const struct watchdog_info info = {
+अटल दीर्घ gef_wdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+							अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक समयout;
+	पूर्णांक options;
+	व्योम __user *argp = (व्योम __user *)arg;
+	अटल स्थिर काष्ठा watchकरोg_info info = अणु
 		.options =	WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE |
 				WDIOF_KEEPALIVEPING,
 		.firmware_version = 0,
 		.identity = "GE watchdog",
-	};
+	पूर्ण;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		if (copy_to_user(argp, &info, sizeof(info)))
-			return -EFAULT;
-		break;
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		अगर (copy_to_user(argp, &info, माप(info)))
+			वापस -EFAULT;
+		अवरोध;
 
-	case WDIOC_GETSTATUS:
-	case WDIOC_GETBOOTSTATUS:
-		if (put_user(wdt_status, (int __user *)argp))
-			return -EFAULT;
+	हाल WDIOC_GETSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
+		अगर (put_user(wdt_status, (पूर्णांक __user *)argp))
+			वापस -EFAULT;
 		wdt_status &= ~WDIOF_KEEPALIVEPING;
-		break;
+		अवरोध;
 
-	case WDIOC_SETOPTIONS:
-		if (get_user(options, (int __user *)argp))
-			return -EFAULT;
+	हाल WDIOC_SETOPTIONS:
+		अगर (get_user(options, (पूर्णांक __user *)argp))
+			वापस -EFAULT;
 
-		if (options & WDIOS_DISABLECARD)
+		अगर (options & WDIOS_DISABLECARD)
 			gef_wdt_handler_disable();
 
-		if (options & WDIOS_ENABLECARD)
+		अगर (options & WDIOS_ENABLECARD)
 			gef_wdt_handler_enable();
-		break;
+		अवरोध;
 
-	case WDIOC_KEEPALIVE:
+	हाल WDIOC_KEEPALIVE:
 		gef_wdt_service();
 		wdt_status |= WDIOF_KEEPALIVEPING;
-		break;
+		अवरोध;
 
-	case WDIOC_SETTIMEOUT:
-		if (get_user(timeout, (int __user *)argp))
-			return -EFAULT;
-		gef_wdt_set_timeout(timeout);
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(समयout, (पूर्णांक __user *)argp))
+			वापस -EFAULT;
+		gef_wdt_set_समयout(समयout);
 		fallthrough;
 
-	case WDIOC_GETTIMEOUT:
-		if (put_user(gef_wdt_timeout, (int __user *)argp))
-			return -EFAULT;
-		break;
+	हाल WDIOC_GETTIMEOUT:
+		अगर (put_user(gef_wdt_समयout, (पूर्णांक __user *)argp))
+			वापस -EFAULT;
+		अवरोध;
 
-	default:
-		return -ENOTTY;
-	}
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gef_wdt_open(struct inode *inode, struct file *file)
-{
-	if (test_and_set_bit(GEF_WDOG_FLAG_OPENED, &wdt_flags))
-		return -EBUSY;
+अटल पूर्णांक gef_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_and_set_bit(GEF_WDOG_FLAG_OPENED, &wdt_flags))
+		वापस -EBUSY;
 
-	if (nowayout)
+	अगर (nowayout)
 		__module_get(THIS_MODULE);
 
 	gef_wdt_handler_enable();
 
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int gef_wdt_release(struct inode *inode, struct file *file)
-{
-	if (expect_close == 42)
+अटल पूर्णांक gef_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (expect_बंद == 42)
 		gef_wdt_handler_disable();
-	else {
+	अन्यथा अणु
 		pr_crit("unexpected close, not stopping timer!\n");
 		gef_wdt_service();
-	}
-	expect_close = 0;
+	पूर्ण
+	expect_बंद = 0;
 
 	clear_bit(GEF_WDOG_FLAG_OPENED, &wdt_flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations gef_wdt_fops = {
+अटल स्थिर काष्ठा file_operations gef_wdt_fops = अणु
 	.owner = THIS_MODULE,
 	.llseek = no_llseek,
-	.write = gef_wdt_write,
+	.ग_लिखो = gef_wdt_ग_लिखो,
 	.unlocked_ioctl = gef_wdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open = gef_wdt_open,
+	.खोलो = gef_wdt_खोलो,
 	.release = gef_wdt_release,
-};
+पूर्ण;
 
-static struct miscdevice gef_wdt_miscdev = {
+अटल काष्ठा miscdevice gef_wdt_miscdev = अणु
 	.minor = WATCHDOG_MINOR,
 	.name = "watchdog",
 	.fops = &gef_wdt_fops,
-};
+पूर्ण;
 
 
-static int gef_wdt_probe(struct platform_device *dev)
-{
-	int timeout = 10;
+अटल पूर्णांक gef_wdt_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक समयout = 10;
 	u32 freq;
 
 	bus_clk = 133; /* in MHz */
 
 	freq = fsl_get_sys_freq();
-	if (freq != -1)
+	अगर (freq != -1)
 		bus_clk = freq;
 
-	/* Map devices registers into memory */
+	/* Map devices रेजिस्टरs पूर्णांकo memory */
 	gef_wdt_regs = of_iomap(dev->dev.of_node, 0);
-	if (gef_wdt_regs == NULL)
-		return -ENOMEM;
+	अगर (gef_wdt_regs == शून्य)
+		वापस -ENOMEM;
 
-	gef_wdt_set_timeout(timeout);
+	gef_wdt_set_समयout(समयout);
 
-	gef_wdt_handler_disable();	/* in case timer was already running */
+	gef_wdt_handler_disable();	/* in हाल समयr was alपढ़ोy running */
 
-	return misc_register(&gef_wdt_miscdev);
-}
+	वापस misc_रेजिस्टर(&gef_wdt_miscdev);
+पूर्ण
 
-static int gef_wdt_remove(struct platform_device *dev)
-{
-	misc_deregister(&gef_wdt_miscdev);
+अटल पूर्णांक gef_wdt_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	misc_deरेजिस्टर(&gef_wdt_miscdev);
 
 	gef_wdt_handler_disable();
 
 	iounmap(gef_wdt_regs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id gef_wdt_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id gef_wdt_ids[] = अणु
+	अणु
 		.compatible = "gef,fpga-wdt",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, gef_wdt_ids);
 
-static struct platform_driver gef_wdt_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver gef_wdt_driver = अणु
+	.driver = अणु
 		.name = "gef_wdt",
 		.of_match_table = gef_wdt_ids,
-	},
+	पूर्ण,
 	.probe		= gef_wdt_probe,
-	.remove		= gef_wdt_remove,
-};
+	.हटाओ		= gef_wdt_हटाओ,
+पूर्ण;
 
-static int __init gef_wdt_init(void)
-{
+अटल पूर्णांक __init gef_wdt_init(व्योम)
+अणु
 	pr_info("GE watchdog driver\n");
-	return platform_driver_register(&gef_wdt_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&gef_wdt_driver);
+पूर्ण
 
-static void __exit gef_wdt_exit(void)
-{
-	platform_driver_unregister(&gef_wdt_driver);
-}
+अटल व्योम __निकास gef_wdt_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&gef_wdt_driver);
+पूर्ण
 
 module_init(gef_wdt_init);
-module_exit(gef_wdt_exit);
+module_निकास(gef_wdt_निकास);
 
 MODULE_AUTHOR("Martyn Welch <martyn.welch@ge.com>");
 MODULE_DESCRIPTION("GE watchdog driver");

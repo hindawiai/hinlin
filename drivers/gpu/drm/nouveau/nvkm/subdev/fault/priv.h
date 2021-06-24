@@ -1,57 +1,58 @@
-#ifndef __NVKM_FAULT_PRIV_H__
-#define __NVKM_FAULT_PRIV_H__
-#define nvkm_fault_buffer(p) container_of((p), struct nvkm_fault_buffer, object)
-#define nvkm_fault(p) container_of((p), struct nvkm_fault, subdev)
-#include <subdev/fault.h>
+<शैली गुरु>
+#अगर_अघोषित __NVKM_FAULT_PRIV_H__
+#घोषणा __NVKM_FAULT_PRIV_H__
+#घोषणा nvkm_fault_buffer(p) container_of((p), काष्ठा nvkm_fault_buffer, object)
+#घोषणा nvkm_fault(p) container_of((p), काष्ठा nvkm_fault, subdev)
+#समावेश <subdev/fault.h>
 
-#include <core/event.h>
-#include <core/object.h>
+#समावेश <core/event.h>
+#समावेश <core/object.h>
 
-struct nvkm_fault_buffer {
-	struct nvkm_object object;
-	struct nvkm_fault *fault;
-	int id;
-	int entries;
+काष्ठा nvkm_fault_buffer अणु
+	काष्ठा nvkm_object object;
+	काष्ठा nvkm_fault *fault;
+	पूर्णांक id;
+	पूर्णांक entries;
 	u32 get;
 	u32 put;
-	struct nvkm_memory *mem;
+	काष्ठा nvkm_memory *mem;
 	u64 addr;
-};
+पूर्ण;
 
-int nvkm_fault_new_(const struct nvkm_fault_func *, struct nvkm_device *, enum nvkm_subdev_type,
-		    int inst, struct nvkm_fault **);
+पूर्णांक nvkm_fault_new_(स्थिर काष्ठा nvkm_fault_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type,
+		    पूर्णांक inst, काष्ठा nvkm_fault **);
 
-struct nvkm_fault_func {
-	int (*oneinit)(struct nvkm_fault *);
-	void (*init)(struct nvkm_fault *);
-	void (*fini)(struct nvkm_fault *);
-	void (*intr)(struct nvkm_fault *);
-	struct {
-		int nr;
+काष्ठा nvkm_fault_func अणु
+	पूर्णांक (*oneinit)(काष्ठा nvkm_fault *);
+	व्योम (*init)(काष्ठा nvkm_fault *);
+	व्योम (*fini)(काष्ठा nvkm_fault *);
+	व्योम (*पूर्णांकr)(काष्ठा nvkm_fault *);
+	काष्ठा अणु
+		पूर्णांक nr;
 		u32 entry_size;
-		void (*info)(struct nvkm_fault_buffer *);
-		u64 (*pin)(struct nvkm_fault_buffer *);
-		void (*init)(struct nvkm_fault_buffer *);
-		void (*fini)(struct nvkm_fault_buffer *);
-		void (*intr)(struct nvkm_fault_buffer *, bool enable);
-	} buffer;
-	struct {
-		struct nvkm_sclass base;
-		int rp;
-	} user;
-};
+		व्योम (*info)(काष्ठा nvkm_fault_buffer *);
+		u64 (*pin)(काष्ठा nvkm_fault_buffer *);
+		व्योम (*init)(काष्ठा nvkm_fault_buffer *);
+		व्योम (*fini)(काष्ठा nvkm_fault_buffer *);
+		व्योम (*पूर्णांकr)(काष्ठा nvkm_fault_buffer *, bool enable);
+	पूर्ण buffer;
+	काष्ठा अणु
+		काष्ठा nvkm_sclass base;
+		पूर्णांक rp;
+	पूर्ण user;
+पूर्ण;
 
-void gp100_fault_buffer_intr(struct nvkm_fault_buffer *, bool enable);
-void gp100_fault_buffer_fini(struct nvkm_fault_buffer *);
-void gp100_fault_buffer_init(struct nvkm_fault_buffer *);
-u64 gp100_fault_buffer_pin(struct nvkm_fault_buffer *);
-void gp100_fault_buffer_info(struct nvkm_fault_buffer *);
-void gp100_fault_intr(struct nvkm_fault *);
+व्योम gp100_fault_buffer_पूर्णांकr(काष्ठा nvkm_fault_buffer *, bool enable);
+व्योम gp100_fault_buffer_fini(काष्ठा nvkm_fault_buffer *);
+व्योम gp100_fault_buffer_init(काष्ठा nvkm_fault_buffer *);
+u64 gp100_fault_buffer_pin(काष्ठा nvkm_fault_buffer *);
+व्योम gp100_fault_buffer_info(काष्ठा nvkm_fault_buffer *);
+व्योम gp100_fault_पूर्णांकr(काष्ठा nvkm_fault *);
 
-u64 gp10b_fault_buffer_pin(struct nvkm_fault_buffer *);
+u64 gp10b_fault_buffer_pin(काष्ठा nvkm_fault_buffer *);
 
-int gv100_fault_oneinit(struct nvkm_fault *);
+पूर्णांक gv100_fault_oneinit(काष्ठा nvkm_fault *);
 
-int nvkm_ufault_new(struct nvkm_device *, const struct nvkm_oclass *,
-		    void *, u32, struct nvkm_object **);
-#endif
+पूर्णांक nvkm_ufault_new(काष्ठा nvkm_device *, स्थिर काष्ठा nvkm_oclass *,
+		    व्योम *, u32, काष्ठा nvkm_object **);
+#पूर्ण_अगर

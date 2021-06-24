@@ -1,135 +1,136 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Resizable, Scalable, Concurrent Hash Table
  *
- * Simple structures that might be needed in include
+ * Simple काष्ठाures that might be needed in include
  * files.
  */
 
-#ifndef _LINUX_RHASHTABLE_TYPES_H
-#define _LINUX_RHASHTABLE_TYPES_H
+#अगर_अघोषित _LINUX_RHASHTABLE_TYPES_H
+#घोषणा _LINUX_RHASHTABLE_TYPES_H
 
-#include <linux/atomic.h>
-#include <linux/compiler.h>
-#include <linux/mutex.h>
-#include <linux/workqueue.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/workqueue.h>
 
-struct rhash_head {
-	struct rhash_head __rcu		*next;
-};
+काष्ठा rhash_head अणु
+	काष्ठा rhash_head __rcu		*next;
+पूर्ण;
 
-struct rhlist_head {
-	struct rhash_head		rhead;
-	struct rhlist_head __rcu	*next;
-};
+काष्ठा rhlist_head अणु
+	काष्ठा rhash_head		rhead;
+	काष्ठा rhlist_head __rcu	*next;
+पूर्ण;
 
-struct bucket_table;
+काष्ठा bucket_table;
 
 /**
- * struct rhashtable_compare_arg - Key for the function rhashtable_compare
+ * काष्ठा rhashtable_compare_arg - Key क्रम the function rhashtable_compare
  * @ht: Hash table
  * @key: Key to compare against
  */
-struct rhashtable_compare_arg {
-	struct rhashtable *ht;
-	const void *key;
-};
+काष्ठा rhashtable_compare_arg अणु
+	काष्ठा rhashtable *ht;
+	स्थिर व्योम *key;
+पूर्ण;
 
-typedef u32 (*rht_hashfn_t)(const void *data, u32 len, u32 seed);
-typedef u32 (*rht_obj_hashfn_t)(const void *data, u32 len, u32 seed);
-typedef int (*rht_obj_cmpfn_t)(struct rhashtable_compare_arg *arg,
-			       const void *obj);
+प्रकार u32 (*rht_hashfn_t)(स्थिर व्योम *data, u32 len, u32 seed);
+प्रकार u32 (*rht_obj_hashfn_t)(स्थिर व्योम *data, u32 len, u32 seed);
+प्रकार पूर्णांक (*rht_obj_cmpfn_t)(काष्ठा rhashtable_compare_arg *arg,
+			       स्थिर व्योम *obj);
 
 /**
- * struct rhashtable_params - Hash table construction parameters
- * @nelem_hint: Hint on number of elements, should be 75% of desired size
+ * काष्ठा rhashtable_params - Hash table स्थिरruction parameters
+ * @nelem_hपूर्णांक: Hपूर्णांक on number of elements, should be 75% of desired size
  * @key_len: Length of key
- * @key_offset: Offset of key in struct to be hashed
- * @head_offset: Offset of rhash_head in struct to be hashed
- * @max_size: Maximum size while expanding
- * @min_size: Minimum size while shrinking
- * @automatic_shrinking: Enable automatic shrinking of tables
- * @hashfn: Hash function (default: jhash2 if !(key_len % 4), or jhash)
+ * @key_offset: Offset of key in काष्ठा to be hashed
+ * @head_offset: Offset of rhash_head in काष्ठा to be hashed
+ * @max_size: Maximum size जबतक expanding
+ * @min_size: Minimum size जबतक shrinking
+ * @स्वतःmatic_shrinking: Enable स्वतःmatic shrinking of tables
+ * @hashfn: Hash function (शेष: jhash2 अगर !(key_len % 4), or jhash)
  * @obj_hashfn: Function to hash object
  * @obj_cmpfn: Function to compare key with object
  */
-struct rhashtable_params {
-	u16			nelem_hint;
+काष्ठा rhashtable_params अणु
+	u16			nelem_hपूर्णांक;
 	u16			key_len;
 	u16			key_offset;
 	u16			head_offset;
-	unsigned int		max_size;
+	अचिन्हित पूर्णांक		max_size;
 	u16			min_size;
-	bool			automatic_shrinking;
+	bool			स्वतःmatic_shrinking;
 	rht_hashfn_t		hashfn;
 	rht_obj_hashfn_t	obj_hashfn;
 	rht_obj_cmpfn_t		obj_cmpfn;
-};
+पूर्ण;
 
 /**
- * struct rhashtable - Hash table handle
+ * काष्ठा rhashtable - Hash table handle
  * @tbl: Bucket table
- * @key_len: Key length for hashfn
+ * @key_len: Key length क्रम hashfn
  * @max_elems: Maximum number of elements in table
  * @p: Configuration parameters
- * @rhlist: True if this is an rhltable
+ * @rhlist: True अगर this is an rhltable
  * @run_work: Deferred worker to expand/shrink asynchronously
  * @mutex: Mutex to protect current/future table swapping
  * @lock: Spin lock to protect walker list
  * @nelems: Number of elements in table
  */
-struct rhashtable {
-	struct bucket_table __rcu	*tbl;
-	unsigned int			key_len;
-	unsigned int			max_elems;
-	struct rhashtable_params	p;
+काष्ठा rhashtable अणु
+	काष्ठा bucket_table __rcu	*tbl;
+	अचिन्हित पूर्णांक			key_len;
+	अचिन्हित पूर्णांक			max_elems;
+	काष्ठा rhashtable_params	p;
 	bool				rhlist;
-	struct work_struct		run_work;
-	struct mutex                    mutex;
+	काष्ठा work_काष्ठा		run_work;
+	काष्ठा mutex                    mutex;
 	spinlock_t			lock;
 	atomic_t			nelems;
-};
+पूर्ण;
 
 /**
- * struct rhltable - Hash table with duplicate objects in a list
+ * काष्ठा rhltable - Hash table with duplicate objects in a list
  * @ht: Underlying rhtable
  */
-struct rhltable {
-	struct rhashtable ht;
-};
+काष्ठा rhltable अणु
+	काष्ठा rhashtable ht;
+पूर्ण;
 
 /**
- * struct rhashtable_walker - Hash table walker
+ * काष्ठा rhashtable_walker - Hash table walker
  * @list: List entry on list of walkers
  * @tbl: The table that we were walking over
  */
-struct rhashtable_walker {
-	struct list_head list;
-	struct bucket_table *tbl;
-};
+काष्ठा rhashtable_walker अणु
+	काष्ठा list_head list;
+	काष्ठा bucket_table *tbl;
+पूर्ण;
 
 /**
- * struct rhashtable_iter - Hash table iterator
+ * काष्ठा rhashtable_iter - Hash table iterator
  * @ht: Table to iterate through
- * @p: Current pointer
- * @list: Current hash list pointer
+ * @p: Current poपूर्णांकer
+ * @list: Current hash list poपूर्णांकer
  * @walker: Associated rhashtable walker
  * @slot: Current slot
  * @skip: Number of entries to skip in slot
  */
-struct rhashtable_iter {
-	struct rhashtable *ht;
-	struct rhash_head *p;
-	struct rhlist_head *list;
-	struct rhashtable_walker walker;
-	unsigned int slot;
-	unsigned int skip;
+काष्ठा rhashtable_iter अणु
+	काष्ठा rhashtable *ht;
+	काष्ठा rhash_head *p;
+	काष्ठा rhlist_head *list;
+	काष्ठा rhashtable_walker walker;
+	अचिन्हित पूर्णांक slot;
+	अचिन्हित पूर्णांक skip;
 	bool end_of_table;
-};
+पूर्ण;
 
-int rhashtable_init(struct rhashtable *ht,
-		    const struct rhashtable_params *params);
-int rhltable_init(struct rhltable *hlt,
-		  const struct rhashtable_params *params);
+पूर्णांक rhashtable_init(काष्ठा rhashtable *ht,
+		    स्थिर काष्ठा rhashtable_params *params);
+पूर्णांक rhltable_init(काष्ठा rhltable *hlt,
+		  स्थिर काष्ठा rhashtable_params *params);
 
-#endif /* _LINUX_RHASHTABLE_TYPES_H */
+#पूर्ण_अगर /* _LINUX_RHASHTABLE_TYPES_H */

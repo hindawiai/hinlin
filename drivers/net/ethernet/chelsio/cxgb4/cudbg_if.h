@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  Copyright (C) 2017 Chelsio Communications.  All rights reserved.
  */
 
-#ifndef __CUDBG_IF_H__
-#define __CUDBG_IF_H__
+#अगर_अघोषित __CUDBG_IF_H__
+#घोषणा __CUDBG_IF_H__
 
 /* Error codes */
-#define CUDBG_STATUS_NO_MEM -19
-#define CUDBG_STATUS_ENTITY_NOT_FOUND -24
-#define CUDBG_STATUS_NOT_IMPLEMENTED -28
-#define CUDBG_SYSTEM_ERROR -29
-#define CUDBG_STATUS_CCLK_NOT_DEFINED -32
-#define CUDBG_STATUS_PARTIAL_DATA -41
+#घोषणा CUDBG_STATUS_NO_MEM -19
+#घोषणा CUDBG_STATUS_ENTITY_NOT_FOUND -24
+#घोषणा CUDBG_STATUS_NOT_IMPLEMENTED -28
+#घोषणा CUDBG_SYSTEM_ERROR -29
+#घोषणा CUDBG_STATUS_CCLK_NOT_DEFINED -32
+#घोषणा CUDBG_STATUS_PARTIAL_DATA -41
 
-#define CUDBG_MAJOR_VERSION 1
-#define CUDBG_MINOR_VERSION 14
+#घोषणा CUDBG_MAJOR_VERSION 1
+#घोषणा CUDBG_MINOR_VERSION 14
 
-enum cudbg_dbg_entity_type {
+क्रमागत cudbg_dbg_entity_type अणु
 	CUDBG_REG_DUMP = 1,
 	CUDBG_DEV_LOG = 2,
 	CUDBG_CIM_LA = 3,
@@ -44,8 +45,8 @@ enum cudbg_dbg_entity_type {
 	CUDBG_PATH_MTU = 27,
 	CUDBG_PM_STATS = 30,
 	CUDBG_HW_SCHED = 31,
-	CUDBG_TP_INDIRECT = 36,
-	CUDBG_SGE_INDIRECT = 37,
+	CUDBG_TP_INसूचीECT = 36,
+	CUDBG_SGE_INसूचीECT = 37,
 	CUDBG_ULPRX_LA = 41,
 	CUDBG_TP_LA = 43,
 	CUDBG_MEMINFO = 44,
@@ -53,8 +54,8 @@ enum cudbg_dbg_entity_type {
 	CUDBG_CLK = 46,
 	CUDBG_CIM_OBQ_RXQ0 = 47,
 	CUDBG_CIM_OBQ_RXQ1 = 48,
-	CUDBG_PCIE_INDIRECT = 50,
-	CUDBG_PM_INDIRECT = 51,
+	CUDBG_PCIE_INसूचीECT = 50,
+	CUDBG_PM_INसूचीECT = 51,
 	CUDBG_TID_INFO = 54,
 	CUDBG_PCIE_CONFIG = 55,
 	CUDBG_DUMP_CONTEXT = 56,
@@ -62,30 +63,30 @@ enum cudbg_dbg_entity_type {
 	CUDBG_VPD_DATA = 58,
 	CUDBG_LE_TCAM = 59,
 	CUDBG_CCTRL = 60,
-	CUDBG_MA_INDIRECT = 61,
+	CUDBG_MA_INसूचीECT = 61,
 	CUDBG_ULPTX_LA = 62,
-	CUDBG_UP_CIM_INDIRECT = 64,
+	CUDBG_UP_CIM_INसूचीECT = 64,
 	CUDBG_PBT_TABLE = 65,
 	CUDBG_MBOX_LOG = 66,
-	CUDBG_HMA_INDIRECT = 67,
+	CUDBG_HMA_INसूचीECT = 67,
 	CUDBG_HMA = 68,
 	CUDBG_QDESC = 70,
 	CUDBG_FLASH = 71,
 	CUDBG_MAX_ENTITY = 72,
-};
+पूर्ण;
 
-struct cudbg_init {
-	struct adapter *adap; /* Pointer to adapter structure */
-	void *outbuf; /* Output buffer */
+काष्ठा cudbg_init अणु
+	काष्ठा adapter *adap; /* Poपूर्णांकer to adapter काष्ठाure */
+	व्योम *outbuf; /* Output buffer */
 	u32 outbuf_size;  /* Output buffer size */
 	u8 compress_type; /* Type of compression to use */
-	void *compress_buff; /* Compression buffer */
+	व्योम *compress_buff; /* Compression buffer */
 	u32 compress_buff_size; /* Compression buffer size */
-	void *workspace; /* Workspace for zlib */
-};
+	व्योम *workspace; /* Workspace क्रम zlib */
+पूर्ण;
 
-static inline unsigned int cudbg_mbytes_to_bytes(unsigned int size)
-{
-	return size * 1024 * 1024;
-}
-#endif /* __CUDBG_IF_H__ */
+अटल अंतरभूत अचिन्हित पूर्णांक cudbg_mbytes_to_bytes(अचिन्हित पूर्णांक size)
+अणु
+	वापस size * 1024 * 1024;
+पूर्ण
+#पूर्ण_अगर /* __CUDBG_IF_H__ */

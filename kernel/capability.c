@@ -1,184 +1,185 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/kernel/capability.c
  *
  * Copyright (C) 1997  Andrew Main <zefram@fysh.org>
  *
- * Integrated into 2.1.97+,  Andrew G. Morgan <morgan@kernel.org>
+ * Integrated पूर्णांकo 2.1.97+,  Andrew G. Morgan <morgan@kernel.org>
  * 30 May 2002:	Cleanup, Robert M. Love <rml@tech9.net>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/audit.h>
-#include <linux/capability.h>
-#include <linux/mm.h>
-#include <linux/export.h>
-#include <linux/security.h>
-#include <linux/syscalls.h>
-#include <linux/pid_namespace.h>
-#include <linux/user_namespace.h>
-#include <linux/uaccess.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/export.h>
+#समावेश <linux/security.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <linux/uaccess.h>
 
 /*
- * Leveraged for setting/resetting capabilities
+ * Leveraged क्रम setting/resetting capabilities
  */
 
-const kernel_cap_t __cap_empty_set = CAP_EMPTY_SET;
+स्थिर kernel_cap_t __cap_empty_set = CAP_EMPTY_SET;
 EXPORT_SYMBOL(__cap_empty_set);
 
-int file_caps_enabled = 1;
+पूर्णांक file_caps_enabled = 1;
 
-static int __init file_caps_disable(char *str)
-{
+अटल पूर्णांक __init file_caps_disable(अक्षर *str)
+अणु
 	file_caps_enabled = 0;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("no_file_caps", file_caps_disable);
 
-#ifdef CONFIG_MULTIUSER
+#अगर_घोषित CONFIG_MULTIUSER
 /*
  * More recent versions of libcap are available from:
  *
  *   http://www.kernel.org/pub/linux/libs/security/linux-privs/
  */
 
-static void warn_legacy_capability_use(void)
-{
-	char name[sizeof(current->comm)];
+अटल व्योम warn_legacy_capability_use(व्योम)
+अणु
+	अक्षर name[माप(current->comm)];
 
 	pr_info_once("warning: `%s' uses 32-bit capabilities (legacy support in use)\n",
 		     get_task_comm(name, current));
-}
+पूर्ण
 
 /*
  * Version 2 capabilities worked fine, but the linux/capability.h file
- * that accompanied their introduction encouraged their use without
+ * that accompanied their पूर्णांकroduction encouraged their use without
  * the necessary user-space source code changes. As such, we have
  * created a version 3 with equivalent functionality to version 2, but
  * with a header change to protect legacy source code from using
- * version 2 when it wanted to use version 1. If your system has code
- * that trips the following warning, it is using version 2 specific
- * capabilities and may be doing so insecurely.
+ * version 2 when it wanted to use version 1. If your प्रणाली has code
+ * that trips the following warning, it is using version 2 specअगरic
+ * capabilities and may be करोing so insecurely.
  *
  * The remedy is to either upgrade your version of libcap (to 2.10+,
- * if the application is linked against it), or recompile your
+ * अगर the application is linked against it), or recompile your
  * application with modern kernel headers and this warning will go
  * away.
  */
 
-static void warn_deprecated_v2(void)
-{
-	char name[sizeof(current->comm)];
+अटल व्योम warn_deprecated_v2(व्योम)
+अणु
+	अक्षर name[माप(current->comm)];
 
 	pr_info_once("warning: `%s' uses deprecated v2 capabilities in a way that may be insecure\n",
 		     get_task_comm(name, current));
-}
+पूर्ण
 
 /*
  * Version check. Return the number of u32s in each capability flag
  * array, or a negative value on error.
  */
-static int cap_validate_magic(cap_user_header_t header, unsigned *tocopy)
-{
+अटल पूर्णांक cap_validate_magic(cap_user_header_t header, अचिन्हित *tocopy)
+अणु
 	__u32 version;
 
-	if (get_user(version, &header->version))
-		return -EFAULT;
+	अगर (get_user(version, &header->version))
+		वापस -EFAULT;
 
-	switch (version) {
-	case _LINUX_CAPABILITY_VERSION_1:
+	चयन (version) अणु
+	हाल _LINUX_CAPABILITY_VERSION_1:
 		warn_legacy_capability_use();
 		*tocopy = _LINUX_CAPABILITY_U32S_1;
-		break;
-	case _LINUX_CAPABILITY_VERSION_2:
+		अवरोध;
+	हाल _LINUX_CAPABILITY_VERSION_2:
 		warn_deprecated_v2();
 		fallthrough;	/* v3 is otherwise equivalent to v2 */
-	case _LINUX_CAPABILITY_VERSION_3:
+	हाल _LINUX_CAPABILITY_VERSION_3:
 		*tocopy = _LINUX_CAPABILITY_U32S_3;
-		break;
-	default:
-		if (put_user((u32)_KERNEL_CAPABILITY_VERSION, &header->version))
-			return -EFAULT;
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		अगर (put_user((u32)_KERNEL_CAPABILITY_VERSION, &header->version))
+			वापस -EFAULT;
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * The only thing that can change the capabilities of the current
  * process is the current process. As such, we can't be in this code
- * at the same time as we are in the process of setting capabilities
+ * at the same समय as we are in the process of setting capabilities
  * in this process. The net result is that we can limit our use of
- * locks to when we are reading the caps of another process.
+ * locks to when we are पढ़ोing the caps of another process.
  */
-static inline int cap_get_target_pid(pid_t pid, kernel_cap_t *pEp,
+अटल अंतरभूत पूर्णांक cap_get_target_pid(pid_t pid, kernel_cap_t *pEp,
 				     kernel_cap_t *pIp, kernel_cap_t *pPp)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	if (pid && (pid != task_pid_vnr(current))) {
-		struct task_struct *target;
+	अगर (pid && (pid != task_pid_vnr(current))) अणु
+		काष्ठा task_काष्ठा *target;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 
 		target = find_task_by_vpid(pid);
-		if (!target)
+		अगर (!target)
 			ret = -ESRCH;
-		else
+		अन्यथा
 			ret = security_capget(target, pEp, pIp, pPp);
 
-		rcu_read_unlock();
-	} else
+		rcu_पढ़ो_unlock();
+	पूर्ण अन्यथा
 		ret = security_capget(current, pEp, pIp, pPp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * sys_capget - get the capabilities of a given process.
- * @header: pointer to struct that contains capability version and
+ * @header: poपूर्णांकer to काष्ठा that contains capability version and
  *	target pid data
- * @dataptr: pointer to struct that contains the effective, permitted,
- *	and inheritable capabilities that are returned
+ * @dataptr: poपूर्णांकer to काष्ठा that contains the effective, permitted,
+ *	and inheritable capabilities that are वापसed
  *
  * Returns 0 on success and < 0 on error.
  */
 SYSCALL_DEFINE2(capget, cap_user_header_t, header, cap_user_data_t, dataptr)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 	pid_t pid;
-	unsigned tocopy;
+	अचिन्हित tocopy;
 	kernel_cap_t pE, pI, pP;
 
 	ret = cap_validate_magic(header, &tocopy);
-	if ((dataptr == NULL) || (ret != 0))
-		return ((dataptr == NULL) && (ret == -EINVAL)) ? 0 : ret;
+	अगर ((dataptr == शून्य) || (ret != 0))
+		वापस ((dataptr == शून्य) && (ret == -EINVAL)) ? 0 : ret;
 
-	if (get_user(pid, &header->pid))
-		return -EFAULT;
+	अगर (get_user(pid, &header->pid))
+		वापस -EFAULT;
 
-	if (pid < 0)
-		return -EINVAL;
+	अगर (pid < 0)
+		वापस -EINVAL;
 
 	ret = cap_get_target_pid(pid, &pE, &pI, &pP);
-	if (!ret) {
-		struct __user_cap_data_struct kdata[_KERNEL_CAPABILITY_U32S];
-		unsigned i;
+	अगर (!ret) अणु
+		काष्ठा __user_cap_data_काष्ठा kdata[_KERNEL_CAPABILITY_U32S];
+		अचिन्हित i;
 
-		for (i = 0; i < tocopy; i++) {
+		क्रम (i = 0; i < tocopy; i++) अणु
 			kdata[i].effective = pE.cap[i];
 			kdata[i].permitted = pP.cap[i];
 			kdata[i].inheritable = pI.cap[i];
-		}
+		पूर्ण
 
 		/*
-		 * Note, in the case, tocopy < _KERNEL_CAPABILITY_U32S,
+		 * Note, in the हाल, tocopy < _KERNEL_CAPABILITY_U32S,
 		 * we silently drop the upper capabilities here. This
 		 * has the effect of making older libcap
 		 * implementations implicitly drop upper capability
-		 * bits when they perform a: capget/modify/capset
+		 * bits when they perक्रमm a: capget/modअगरy/capset
 		 * sequence.
 		 *
 		 * This behavior is considered fail-safe
@@ -186,295 +187,295 @@ SYSCALL_DEFINE2(capget, cap_user_header_t, header, cap_user_data_t, dataptr)
 		 * version of libcap will enable access to the newer
 		 * capabilities.
 		 *
-		 * An alternative would be to return an error here
-		 * (-ERANGE), but that causes legacy applications to
-		 * unexpectedly fail; the capget/modify/capset aborts
-		 * before modification is attempted and the application
+		 * An alternative would be to वापस an error here
+		 * (-दुस्फल), but that causes legacy applications to
+		 * unexpectedly fail; the capget/modअगरy/capset पातs
+		 * beक्रमe modअगरication is attempted and the application
 		 * fails.
 		 */
-		if (copy_to_user(dataptr, kdata, tocopy
-				 * sizeof(struct __user_cap_data_struct))) {
-			return -EFAULT;
-		}
-	}
+		अगर (copy_to_user(dataptr, kdata, tocopy
+				 * माप(काष्ठा __user_cap_data_काष्ठा))) अणु
+			वापस -EFAULT;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * sys_capset - set capabilities for a process or (*) a group of processes
- * @header: pointer to struct that contains capability version and
+ * sys_capset - set capabilities क्रम a process or (*) a group of processes
+ * @header: poपूर्णांकer to काष्ठा that contains capability version and
  *	target pid data
- * @data: pointer to struct that contains the effective, permitted,
+ * @data: poपूर्णांकer to काष्ठा that contains the effective, permitted,
  *	and inheritable capabilities
  *
- * Set capabilities for the current process only.  The ability to any other
- * process(es) has been deprecated and removed.
+ * Set capabilities क्रम the current process only.  The ability to any other
+ * process(es) has been deprecated and हटाओd.
  *
- * The restrictions on setting capabilities are specified as:
+ * The restrictions on setting capabilities are specअगरied as:
  *
- * I: any raised capabilities must be a subset of the old permitted
- * P: any raised capabilities must be a subset of the old permitted
+ * I: any उठाओd capabilities must be a subset of the old permitted
+ * P: any उठाओd capabilities must be a subset of the old permitted
  * E: must be set to a subset of new permitted
  *
  * Returns 0 on success and < 0 on error.
  */
-SYSCALL_DEFINE2(capset, cap_user_header_t, header, const cap_user_data_t, data)
-{
-	struct __user_cap_data_struct kdata[_KERNEL_CAPABILITY_U32S];
-	unsigned i, tocopy, copybytes;
+SYSCALL_DEFINE2(capset, cap_user_header_t, header, स्थिर cap_user_data_t, data)
+अणु
+	काष्ठा __user_cap_data_काष्ठा kdata[_KERNEL_CAPABILITY_U32S];
+	अचिन्हित i, tocopy, copybytes;
 	kernel_cap_t inheritable, permitted, effective;
-	struct cred *new;
-	int ret;
+	काष्ठा cred *new;
+	पूर्णांक ret;
 	pid_t pid;
 
 	ret = cap_validate_magic(header, &tocopy);
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
-	if (get_user(pid, &header->pid))
-		return -EFAULT;
+	अगर (get_user(pid, &header->pid))
+		वापस -EFAULT;
 
 	/* may only affect current now */
-	if (pid != 0 && pid != task_pid_vnr(current))
-		return -EPERM;
+	अगर (pid != 0 && pid != task_pid_vnr(current))
+		वापस -EPERM;
 
-	copybytes = tocopy * sizeof(struct __user_cap_data_struct);
-	if (copybytes > sizeof(kdata))
-		return -EFAULT;
+	copybytes = tocopy * माप(काष्ठा __user_cap_data_काष्ठा);
+	अगर (copybytes > माप(kdata))
+		वापस -EFAULT;
 
-	if (copy_from_user(&kdata, data, copybytes))
-		return -EFAULT;
+	अगर (copy_from_user(&kdata, data, copybytes))
+		वापस -EFAULT;
 
-	for (i = 0; i < tocopy; i++) {
+	क्रम (i = 0; i < tocopy; i++) अणु
 		effective.cap[i] = kdata[i].effective;
 		permitted.cap[i] = kdata[i].permitted;
 		inheritable.cap[i] = kdata[i].inheritable;
-	}
-	while (i < _KERNEL_CAPABILITY_U32S) {
+	पूर्ण
+	जबतक (i < _KERNEL_CAPABILITY_U32S) अणु
 		effective.cap[i] = 0;
 		permitted.cap[i] = 0;
 		inheritable.cap[i] = 0;
 		i++;
-	}
+	पूर्ण
 
 	effective.cap[CAP_LAST_U32] &= CAP_LAST_U32_VALID_MASK;
 	permitted.cap[CAP_LAST_U32] &= CAP_LAST_U32_VALID_MASK;
 	inheritable.cap[CAP_LAST_U32] &= CAP_LAST_U32_VALID_MASK;
 
 	new = prepare_creds();
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 
 	ret = security_capset(new, current_cred(),
 			      &effective, &inheritable, &permitted);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
 	audit_log_capset(new, current_cred());
 
-	return commit_creds(new);
+	वापस commit_creds(new);
 
 error:
-	abort_creds(new);
-	return ret;
-}
+	पात_creds(new);
+	वापस ret;
+पूर्ण
 
 /**
- * has_ns_capability - Does a task have a capability in a specific user ns
+ * has_ns_capability - Does a task have a capability in a specअगरic user ns
  * @t: The task in question
  * @ns: target user namespace
- * @cap: The capability to be tested for
+ * @cap: The capability to be tested क्रम
  *
- * Return true if the specified task has the given superior capability
- * currently in effect to the specified user namespace, false if not.
+ * Return true अगर the specअगरied task has the given superior capability
+ * currently in effect to the specअगरied user namespace, false अगर not.
  *
- * Note that this does not set PF_SUPERPRIV on the task.
+ * Note that this करोes not set PF_SUPERPRIV on the task.
  */
-bool has_ns_capability(struct task_struct *t,
-		       struct user_namespace *ns, int cap)
-{
-	int ret;
+bool has_ns_capability(काष्ठा task_काष्ठा *t,
+		       काष्ठा user_namespace *ns, पूर्णांक cap)
+अणु
+	पूर्णांक ret;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ret = security_capable(__task_cred(t), ns, cap, CAP_OPT_NONE);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return (ret == 0);
-}
+	वापस (ret == 0);
+पूर्ण
 
 /**
  * has_capability - Does a task have a capability in init_user_ns
  * @t: The task in question
- * @cap: The capability to be tested for
+ * @cap: The capability to be tested क्रम
  *
- * Return true if the specified task has the given superior capability
- * currently in effect to the initial user namespace, false if not.
+ * Return true अगर the specअगरied task has the given superior capability
+ * currently in effect to the initial user namespace, false अगर not.
  *
- * Note that this does not set PF_SUPERPRIV on the task.
+ * Note that this करोes not set PF_SUPERPRIV on the task.
  */
-bool has_capability(struct task_struct *t, int cap)
-{
-	return has_ns_capability(t, &init_user_ns, cap);
-}
+bool has_capability(काष्ठा task_काष्ठा *t, पूर्णांक cap)
+अणु
+	वापस has_ns_capability(t, &init_user_ns, cap);
+पूर्ण
 EXPORT_SYMBOL(has_capability);
 
 /**
  * has_ns_capability_noaudit - Does a task have a capability (unaudited)
- * in a specific user ns.
+ * in a specअगरic user ns.
  * @t: The task in question
  * @ns: target user namespace
- * @cap: The capability to be tested for
+ * @cap: The capability to be tested क्रम
  *
- * Return true if the specified task has the given superior capability
- * currently in effect to the specified user namespace, false if not.
- * Do not write an audit message for the check.
+ * Return true अगर the specअगरied task has the given superior capability
+ * currently in effect to the specअगरied user namespace, false अगर not.
+ * Do not ग_लिखो an audit message क्रम the check.
  *
- * Note that this does not set PF_SUPERPRIV on the task.
+ * Note that this करोes not set PF_SUPERPRIV on the task.
  */
-bool has_ns_capability_noaudit(struct task_struct *t,
-			       struct user_namespace *ns, int cap)
-{
-	int ret;
+bool has_ns_capability_noaudit(काष्ठा task_काष्ठा *t,
+			       काष्ठा user_namespace *ns, पूर्णांक cap)
+अणु
+	पूर्णांक ret;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ret = security_capable(__task_cred(t), ns, cap, CAP_OPT_NOAUDIT);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return (ret == 0);
-}
+	वापस (ret == 0);
+पूर्ण
 
 /**
  * has_capability_noaudit - Does a task have a capability (unaudited) in the
  * initial user ns
  * @t: The task in question
- * @cap: The capability to be tested for
+ * @cap: The capability to be tested क्रम
  *
- * Return true if the specified task has the given superior capability
- * currently in effect to init_user_ns, false if not.  Don't write an
- * audit message for the check.
+ * Return true अगर the specअगरied task has the given superior capability
+ * currently in effect to init_user_ns, false अगर not.  Don't ग_लिखो an
+ * audit message क्रम the check.
  *
- * Note that this does not set PF_SUPERPRIV on the task.
+ * Note that this करोes not set PF_SUPERPRIV on the task.
  */
-bool has_capability_noaudit(struct task_struct *t, int cap)
-{
-	return has_ns_capability_noaudit(t, &init_user_ns, cap);
-}
+bool has_capability_noaudit(काष्ठा task_काष्ठा *t, पूर्णांक cap)
+अणु
+	वापस has_ns_capability_noaudit(t, &init_user_ns, cap);
+पूर्ण
 
-static bool ns_capable_common(struct user_namespace *ns,
-			      int cap,
-			      unsigned int opts)
-{
-	int capable;
+अटल bool ns_capable_common(काष्ठा user_namespace *ns,
+			      पूर्णांक cap,
+			      अचिन्हित पूर्णांक opts)
+अणु
+	पूर्णांक capable;
 
-	if (unlikely(!cap_valid(cap))) {
+	अगर (unlikely(!cap_valid(cap))) अणु
 		pr_crit("capable() called with invalid cap=%u\n", cap);
 		BUG();
-	}
+	पूर्ण
 
 	capable = security_capable(current_cred(), ns, cap, opts);
-	if (capable == 0) {
+	अगर (capable == 0) अणु
 		current->flags |= PF_SUPERPRIV;
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * ns_capable - Determine if the current task has a superior capability in effect
+ * ns_capable - Determine अगर the current task has a superior capability in effect
  * @ns:  The usernamespace we want the capability in
- * @cap: The capability to be tested for
+ * @cap: The capability to be tested क्रम
  *
- * Return true if the current task has the given superior capability currently
- * available for use, false if not.
+ * Return true अगर the current task has the given superior capability currently
+ * available क्रम use, false अगर not.
  *
- * This sets PF_SUPERPRIV on the task if the capability is available on the
+ * This sets PF_SUPERPRIV on the task अगर the capability is available on the
  * assumption that it's about to be used.
  */
-bool ns_capable(struct user_namespace *ns, int cap)
-{
-	return ns_capable_common(ns, cap, CAP_OPT_NONE);
-}
+bool ns_capable(काष्ठा user_namespace *ns, पूर्णांक cap)
+अणु
+	वापस ns_capable_common(ns, cap, CAP_OPT_NONE);
+पूर्ण
 EXPORT_SYMBOL(ns_capable);
 
 /**
- * ns_capable_noaudit - Determine if the current task has a superior capability
+ * ns_capable_noaudit - Determine अगर the current task has a superior capability
  * (unaudited) in effect
  * @ns:  The usernamespace we want the capability in
- * @cap: The capability to be tested for
+ * @cap: The capability to be tested क्रम
  *
- * Return true if the current task has the given superior capability currently
- * available for use, false if not.
+ * Return true अगर the current task has the given superior capability currently
+ * available क्रम use, false अगर not.
  *
- * This sets PF_SUPERPRIV on the task if the capability is available on the
+ * This sets PF_SUPERPRIV on the task अगर the capability is available on the
  * assumption that it's about to be used.
  */
-bool ns_capable_noaudit(struct user_namespace *ns, int cap)
-{
-	return ns_capable_common(ns, cap, CAP_OPT_NOAUDIT);
-}
+bool ns_capable_noaudit(काष्ठा user_namespace *ns, पूर्णांक cap)
+अणु
+	वापस ns_capable_common(ns, cap, CAP_OPT_NOAUDIT);
+पूर्ण
 EXPORT_SYMBOL(ns_capable_noaudit);
 
 /**
- * ns_capable_setid - Determine if the current task has a superior capability
- * in effect, while signalling that this check is being done from within a
+ * ns_capable_setid - Determine अगर the current task has a superior capability
+ * in effect, जबतक संकेतling that this check is being करोne from within a
  * setid or setgroups syscall.
  * @ns:  The usernamespace we want the capability in
- * @cap: The capability to be tested for
+ * @cap: The capability to be tested क्रम
  *
- * Return true if the current task has the given superior capability currently
- * available for use, false if not.
+ * Return true अगर the current task has the given superior capability currently
+ * available क्रम use, false अगर not.
  *
- * This sets PF_SUPERPRIV on the task if the capability is available on the
+ * This sets PF_SUPERPRIV on the task अगर the capability is available on the
  * assumption that it's about to be used.
  */
-bool ns_capable_setid(struct user_namespace *ns, int cap)
-{
-	return ns_capable_common(ns, cap, CAP_OPT_INSETID);
-}
+bool ns_capable_setid(काष्ठा user_namespace *ns, पूर्णांक cap)
+अणु
+	वापस ns_capable_common(ns, cap, CAP_OPT_INSETID);
+पूर्ण
 EXPORT_SYMBOL(ns_capable_setid);
 
 /**
- * capable - Determine if the current task has a superior capability in effect
- * @cap: The capability to be tested for
+ * capable - Determine अगर the current task has a superior capability in effect
+ * @cap: The capability to be tested क्रम
  *
- * Return true if the current task has the given superior capability currently
- * available for use, false if not.
+ * Return true अगर the current task has the given superior capability currently
+ * available क्रम use, false अगर not.
  *
- * This sets PF_SUPERPRIV on the task if the capability is available on the
+ * This sets PF_SUPERPRIV on the task अगर the capability is available on the
  * assumption that it's about to be used.
  */
-bool capable(int cap)
-{
-	return ns_capable(&init_user_ns, cap);
-}
+bool capable(पूर्णांक cap)
+अणु
+	वापस ns_capable(&init_user_ns, cap);
+पूर्ण
 EXPORT_SYMBOL(capable);
-#endif /* CONFIG_MULTIUSER */
+#पूर्ण_अगर /* CONFIG_MULTIUSER */
 
 /**
- * file_ns_capable - Determine if the file's opener had a capability in effect
+ * file_ns_capable - Determine अगर the file's खोलोer had a capability in effect
  * @file:  The file we want to check
  * @ns:  The usernamespace we want the capability in
- * @cap: The capability to be tested for
+ * @cap: The capability to be tested क्रम
  *
- * Return true if task that opened the file had a capability in effect
- * when the file was opened.
+ * Return true अगर task that खोलोed the file had a capability in effect
+ * when the file was खोलोed.
  *
- * This does not set PF_SUPERPRIV because the caller may not
+ * This करोes not set PF_SUPERPRIV because the caller may not
  * actually be privileged.
  */
-bool file_ns_capable(const struct file *file, struct user_namespace *ns,
-		     int cap)
-{
+bool file_ns_capable(स्थिर काष्ठा file *file, काष्ठा user_namespace *ns,
+		     पूर्णांक cap)
+अणु
 
-	if (WARN_ON_ONCE(!cap_valid(cap)))
-		return false;
+	अगर (WARN_ON_ONCE(!cap_valid(cap)))
+		वापस false;
 
-	if (security_capable(file->f_cred, ns, cap, CAP_OPT_NONE) == 0)
-		return true;
+	अगर (security_capable(file->f_cred, ns, cap, CAP_OPT_NONE) == 0)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL(file_ns_capable);
 
 /**
@@ -482,53 +483,53 @@ EXPORT_SYMBOL(file_ns_capable);
  * @ns: The user namespace in question
  * @inode: The inode in question
  *
- * Return true if the inode uid and gid are within the namespace.
+ * Return true अगर the inode uid and gid are within the namespace.
  */
-bool privileged_wrt_inode_uidgid(struct user_namespace *ns,
-				 struct user_namespace *mnt_userns,
-				 const struct inode *inode)
-{
-	return kuid_has_mapping(ns, i_uid_into_mnt(mnt_userns, inode)) &&
-	       kgid_has_mapping(ns, i_gid_into_mnt(mnt_userns, inode));
-}
+bool privileged_wrt_inode_uidgid(काष्ठा user_namespace *ns,
+				 काष्ठा user_namespace *mnt_userns,
+				 स्थिर काष्ठा inode *inode)
+अणु
+	वापस kuid_has_mapping(ns, i_uid_पूर्णांकo_mnt(mnt_userns, inode)) &&
+	       kgid_has_mapping(ns, i_gid_पूर्णांकo_mnt(mnt_userns, inode));
+पूर्ण
 
 /**
  * capable_wrt_inode_uidgid - Check nsown_capable and uid and gid mapped
  * @inode: The inode in question
  * @cap: The capability in question
  *
- * Return true if the current task has the given capability targeted at
+ * Return true अगर the current task has the given capability targeted at
  * its own user namespace and that the given inode's uid and gid are
- * mapped into the current user namespace.
+ * mapped पूर्णांकo the current user namespace.
  */
-bool capable_wrt_inode_uidgid(struct user_namespace *mnt_userns,
-			      const struct inode *inode, int cap)
-{
-	struct user_namespace *ns = current_user_ns();
+bool capable_wrt_inode_uidgid(काष्ठा user_namespace *mnt_userns,
+			      स्थिर काष्ठा inode *inode, पूर्णांक cap)
+अणु
+	काष्ठा user_namespace *ns = current_user_ns();
 
-	return ns_capable(ns, cap) &&
+	वापस ns_capable(ns, cap) &&
 	       privileged_wrt_inode_uidgid(ns, mnt_userns, inode);
-}
+पूर्ण
 EXPORT_SYMBOL(capable_wrt_inode_uidgid);
 
 /**
- * ptracer_capable - Determine if the ptracer holds CAP_SYS_PTRACE in the namespace
+ * ptracer_capable - Determine अगर the ptracer holds CAP_SYS_PTRACE in the namespace
  * @tsk: The task that may be ptraced
- * @ns: The user namespace to search for CAP_SYS_PTRACE in
+ * @ns: The user namespace to search क्रम CAP_SYS_PTRACE in
  *
- * Return true if the task that is ptracing the current task had CAP_SYS_PTRACE
- * in the specified user namespace.
+ * Return true अगर the task that is ptracing the current task had CAP_SYS_PTRACE
+ * in the specअगरied user namespace.
  */
-bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns)
-{
-	int ret = 0;  /* An absent tracer adds no restrictions */
-	const struct cred *cred;
+bool ptracer_capable(काष्ठा task_काष्ठा *tsk, काष्ठा user_namespace *ns)
+अणु
+	पूर्णांक ret = 0;  /* An असलent tracer adds no restrictions */
+	स्थिर काष्ठा cred *cred;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	cred = rcu_dereference(tsk->ptracer_cred);
-	if (cred)
+	अगर (cred)
 		ret = security_capable(cred, ns, CAP_SYS_PTRACE,
 				       CAP_OPT_NOAUDIT);
-	rcu_read_unlock();
-	return (ret == 0);
-}
+	rcu_पढ़ो_unlock();
+	वापस (ret == 0);
+पूर्ण

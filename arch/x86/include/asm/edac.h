@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_EDAC_H
-#define _ASM_X86_EDAC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_EDAC_H
+#घोषणा _ASM_X86_EDAC_H
 
-/* ECC atomic, DMA, SMP and interrupt safe scrub function */
+/* ECC atomic, DMA, SMP and पूर्णांकerrupt safe scrub function */
 
-static inline void edac_atomic_scrub(void *va, u32 size)
-{
+अटल अंतरभूत व्योम edac_atomic_scrub(व्योम *va, u32 size)
+अणु
 	u32 i, *virt_addr = va;
 
 	/*
-	 * Very carefully read and write to memory atomically so we
-	 * are interrupt, DMA and SMP safe.
+	 * Very carefully पढ़ो and ग_लिखो to memory atomically so we
+	 * are पूर्णांकerrupt, DMA and SMP safe.
 	 */
-	for (i = 0; i < size / 4; i++, virt_addr++)
-		asm volatile("lock; addl $0, %0"::"m" (*virt_addr));
-}
+	क्रम (i = 0; i < size / 4; i++, virt_addr++)
+		यंत्र अस्थिर("lock; addl $0, %0"::"m" (*virt_addr));
+पूर्ण
 
-#endif /* _ASM_X86_EDAC_H */
+#पूर्ण_अगर /* _ASM_X86_EDAC_H */

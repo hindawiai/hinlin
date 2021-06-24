@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * twl4030-irq.c - TWL4030/TPS659x0 irq support
  *
  * Copyright (C) 2005-2006 Texas Instruments, Inc.
  *
- * Modifications to defer interrupt handling to a kernel thread:
+ * Modअगरications to defer पूर्णांकerrupt handling to a kernel thपढ़ो:
  * Copyright (C) 2006 MontaVista Software, Inc.
  *
  * Based on tlv320aic23.c:
  * Copyright (c) by Kai Svahn <kai.svahn@nokia.com>
  *
- * Code cleanup and modifications to IRQ handler.
+ * Code cleanup and modअगरications to IRQ handler.
  * by syed khasim <x0khasim@ti.com>
  */
 
-#include <linux/export.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/irqdomain.h>
-#include <linux/mfd/twl.h>
+#समावेश <linux/export.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/mfd/twl.h>
 
-#include "twl-core.h"
+#समावेश "twl-core.h"
 
 /*
  * TWL4030 IRQ handling has two stages in hardware, and thus in software.
  * The Primary Interrupt Handler (PIH) stage exposes status bits saying
- * which Secondary Interrupt Handler (SIH) stage is raising an interrupt.
+ * which Secondary Interrupt Handler (SIH) stage is raising an पूर्णांकerrupt.
  * SIH modules are more traditional IRQ components, which support per-IRQ
- * enable/disable and trigger controls; they do most of the work.
+ * enable/disable and trigger controls; they करो most of the work.
  *
- * These chips are designed to support IRQ handling from two different
+ * These chips are deचिन्हित to support IRQ handling from two dअगरferent
  * I2C masters.  Each has a dedicated IRQ line, and dedicated IRQ status
- * and mask registers in the PIH and SIH modules.
+ * and mask रेजिस्टरs in the PIH and SIH modules.
  *
- * We set up IRQs starting at a platform-specified base, always starting
- * with PIH and the SIH for PWR_INT and then usually adding GPIO:
+ * We set up IRQs starting at a platक्रमm-specअगरied base, always starting
+ * with PIH and the SIH क्रम PWR_INT and then usually adding GPIO:
  *	base + 0  .. base + 7	PIH
- *	base + 8  .. base + 15	SIH for PWR_INT
- *	base + 16 .. base + 33	SIH for GPIO
+ *	base + 8  .. base + 15	SIH क्रम PWR_INT
+ *	base + 16 .. base + 33	SIH क्रम GPIO
  */
-#define TWL4030_CORE_NR_IRQS	8
-#define TWL4030_PWR_NR_IRQS	8
+#घोषणा TWL4030_CORE_NR_IRQS	8
+#घोषणा TWL4030_PWR_NR_IRQS	8
 
-/* PIH register offsets */
-#define REG_PIH_ISR_P1			0x01
-#define REG_PIH_ISR_P2			0x02
-#define REG_PIH_SIR			0x03	/* for testing */
+/* PIH रेजिस्टर offsets */
+#घोषणा REG_PIH_ISR_P1			0x01
+#घोषणा REG_PIH_ISR_P2			0x02
+#घोषणा REG_PIH_SIR			0x03	/* क्रम testing */
 
 /* Linux could (eventually) use either IRQ line */
-static int irq_line;
+अटल पूर्णांक irq_line;
 
-struct sih {
-	char	name[8];
+काष्ठा sih अणु
+	अक्षर	name[8];
 	u8	module;			/* module id */
-	u8	control_offset;		/* for SIH_CTRL */
+	u8	control_offset;		/* क्रम SIH_CTRL */
 	bool	set_cor;
 
 	u8	bits;			/* valid in isr/imr */
@@ -66,18 +67,18 @@ struct sih {
 
 	u8	irq_lines;		/* number of supported irq lines */
 
-	/* SIR ignored -- set interrupt, for testing only */
-	struct sih_irq_data {
+	/* SIR ignored -- set पूर्णांकerrupt, क्रम testing only */
+	काष्ठा sih_irq_data अणु
 		u8	isr_offset;
 		u8	imr_offset;
-	} mask[2];
+	पूर्ण mask[2];
 	/* + 2 bytes padding */
-};
+पूर्ण;
 
-static const struct sih *sih_modules;
-static int nr_sih_modules;
+अटल स्थिर काष्ठा sih *sih_modules;
+अटल पूर्णांक nr_sih_modules;
 
-#define SIH_INITIALIZER(modname, nbits) \
+#घोषणा SIH_INITIALIZER(modname, nbits) \
 	.module		= TWL4030_MODULE_ ## modname, \
 	.control_offset = TWL4030_ ## modname ## _SIH_CTRL, \
 	.bits		= nbits, \
@@ -85,19 +86,19 @@ static int nr_sih_modules;
 	.edr_offset	= TWL4030_ ## modname ## _EDR, \
 	.bytes_edr	= DIV_ROUND_UP((2*(nbits)), 8), \
 	.irq_lines	= 2, \
-	.mask = { { \
+	.mask = अणु अणु \
 		.isr_offset	= TWL4030_ ## modname ## _ISR1, \
 		.imr_offset	= TWL4030_ ## modname ## _IMR1, \
-	}, \
-	{ \
+	पूर्ण, \
+	अणु \
 		.isr_offset	= TWL4030_ ## modname ## _ISR2, \
 		.imr_offset	= TWL4030_ ## modname ## _IMR2, \
-	}, },
+	पूर्ण, पूर्ण,
 
-/* register naming policies are inconsistent ... */
-#define TWL4030_INT_PWR_EDR		TWL4030_INT_PWR_EDR1
-#define TWL4030_MODULE_KEYPAD_KEYP	TWL4030_MODULE_KEYPAD
-#define TWL4030_MODULE_INT_PWR		TWL4030_MODULE_INT
+/* रेजिस्टर naming policies are inconsistent ... */
+#घोषणा TWL4030_INT_PWR_EDR		TWL4030_INT_PWR_EDR1
+#घोषणा TWL4030_MODULE_KEYPAD_KEYP	TWL4030_MODULE_KEYPAD
+#घोषणा TWL4030_MODULE_INT_PWR		TWL4030_MODULE_INT
 
 
 /*
@@ -105,32 +106,32 @@ static int nr_sih_modules;
  * BIT(n) in PIH_ISR is sih_modules[n].
  */
 /* sih_modules_twl4030 is used both in twl4030 and twl5030 */
-static const struct sih sih_modules_twl4030[6] = {
-	[0] = {
+अटल स्थिर काष्ठा sih sih_modules_twl4030[6] = अणु
+	[0] = अणु
 		.name		= "gpio",
 		.module		= TWL4030_MODULE_GPIO,
 		.control_offset	= REG_GPIO_SIH_CTRL,
 		.set_cor	= true,
 		.bits		= TWL4030_GPIO_MAX,
 		.bytes_ixr	= 3,
-		/* Note: *all* of these IRQs default to no-trigger */
+		/* Note: *all* of these IRQs शेष to no-trigger */
 		.edr_offset	= REG_GPIO_EDR1,
 		.bytes_edr	= 5,
 		.irq_lines	= 2,
-		.mask = { {
+		.mask = अणु अणु
 			.isr_offset	= REG_GPIO_ISR1A,
 			.imr_offset	= REG_GPIO_IMR1A,
-		}, {
+		पूर्ण, अणु
 			.isr_offset	= REG_GPIO_ISR1B,
 			.imr_offset	= REG_GPIO_IMR1B,
-		}, },
-	},
-	[1] = {
+		पूर्ण, पूर्ण,
+	पूर्ण,
+	[1] = अणु
 		.name		= "keypad",
 		.set_cor	= true,
 		SIH_INITIALIZER(KEYPAD_KEYP, 4)
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.name		= "bci",
 		.module		= TWL4030_MODULE_INTERRUPTS,
 		.control_offset	= TWL4030_INTERRUPTS_BCISIHCTRL,
@@ -138,107 +139,107 @@ static const struct sih sih_modules_twl4030[6] = {
 		.bits		= 12,
 		.bytes_ixr	= 2,
 		.edr_offset	= TWL4030_INTERRUPTS_BCIEDR1,
-		/* Note: most of these IRQs default to no-trigger */
+		/* Note: most of these IRQs शेष to no-trigger */
 		.bytes_edr	= 3,
 		.irq_lines	= 2,
-		.mask = { {
+		.mask = अणु अणु
 			.isr_offset	= TWL4030_INTERRUPTS_BCIISR1A,
 			.imr_offset	= TWL4030_INTERRUPTS_BCIIMR1A,
-		}, {
+		पूर्ण, अणु
 			.isr_offset	= TWL4030_INTERRUPTS_BCIISR1B,
 			.imr_offset	= TWL4030_INTERRUPTS_BCIIMR1B,
-		}, },
-	},
-	[3] = {
+		पूर्ण, पूर्ण,
+	पूर्ण,
+	[3] = अणु
 		.name		= "madc",
 		SIH_INITIALIZER(MADC, 4)
-	},
-	[4] = {
-		/* USB doesn't use the same SIH organization */
+	पूर्ण,
+	[4] = अणु
+		/* USB करोesn't use the same SIH organization */
 		.name		= "usb",
-	},
-	[5] = {
+	पूर्ण,
+	[5] = अणु
 		.name		= "power",
 		.set_cor	= true,
 		SIH_INITIALIZER(INT_PWR, 8)
-	},
+	पूर्ण,
 		/* there are no SIH modules #6 or #7 ... */
-};
+पूर्ण;
 
-static const struct sih sih_modules_twl5031[8] = {
-	[0] = {
+अटल स्थिर काष्ठा sih sih_modules_twl5031[8] = अणु
+	[0] = अणु
 		.name		= "gpio",
 		.module		= TWL4030_MODULE_GPIO,
 		.control_offset	= REG_GPIO_SIH_CTRL,
 		.set_cor	= true,
 		.bits		= TWL4030_GPIO_MAX,
 		.bytes_ixr	= 3,
-		/* Note: *all* of these IRQs default to no-trigger */
+		/* Note: *all* of these IRQs शेष to no-trigger */
 		.edr_offset	= REG_GPIO_EDR1,
 		.bytes_edr	= 5,
 		.irq_lines	= 2,
-		.mask = { {
+		.mask = अणु अणु
 			.isr_offset	= REG_GPIO_ISR1A,
 			.imr_offset	= REG_GPIO_IMR1A,
-		}, {
+		पूर्ण, अणु
 			.isr_offset	= REG_GPIO_ISR1B,
 			.imr_offset	= REG_GPIO_IMR1B,
-		}, },
-	},
-	[1] = {
+		पूर्ण, पूर्ण,
+	पूर्ण,
+	[1] = अणु
 		.name		= "keypad",
 		.set_cor	= true,
 		SIH_INITIALIZER(KEYPAD_KEYP, 4)
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.name		= "bci",
 		.module		= TWL5031_MODULE_INTERRUPTS,
 		.control_offset	= TWL5031_INTERRUPTS_BCISIHCTRL,
 		.bits		= 7,
 		.bytes_ixr	= 1,
 		.edr_offset	= TWL5031_INTERRUPTS_BCIEDR1,
-		/* Note: most of these IRQs default to no-trigger */
+		/* Note: most of these IRQs शेष to no-trigger */
 		.bytes_edr	= 2,
 		.irq_lines	= 2,
-		.mask = { {
+		.mask = अणु अणु
 			.isr_offset	= TWL5031_INTERRUPTS_BCIISR1,
 			.imr_offset	= TWL5031_INTERRUPTS_BCIIMR1,
-		}, {
+		पूर्ण, अणु
 			.isr_offset	= TWL5031_INTERRUPTS_BCIISR2,
 			.imr_offset	= TWL5031_INTERRUPTS_BCIIMR2,
-		}, },
-	},
-	[3] = {
+		पूर्ण, पूर्ण,
+	पूर्ण,
+	[3] = अणु
 		.name		= "madc",
 		SIH_INITIALIZER(MADC, 4)
-	},
-	[4] = {
-		/* USB doesn't use the same SIH organization */
+	पूर्ण,
+	[4] = अणु
+		/* USB करोesn't use the same SIH organization */
 		.name		= "usb",
-	},
-	[5] = {
+	पूर्ण,
+	[5] = अणु
 		.name		= "power",
 		.set_cor	= true,
 		SIH_INITIALIZER(INT_PWR, 8)
-	},
-	[6] = {
+	पूर्ण,
+	[6] = अणु
 		/*
-		 * ECI/DBI doesn't use the same SIH organization.
-		 * For example, it supports only one interrupt output line.
-		 * That is, the interrupts are seen on both INT1 and INT2 lines.
+		 * ECI/DBI करोesn't use the same SIH organization.
+		 * For example, it supports only one पूर्णांकerrupt output line.
+		 * That is, the पूर्णांकerrupts are seen on both INT1 and INT2 lines.
 		 */
 		.name		= "eci_dbi",
 		.module		= TWL5031_MODULE_ACCESSORY,
 		.bits		= 9,
 		.bytes_ixr	= 2,
 		.irq_lines	= 1,
-		.mask = { {
+		.mask = अणु अणु
 			.isr_offset	= TWL5031_ACIIDR_LSB,
 			.imr_offset	= TWL5031_ACIIMR_LSB,
-		}, },
+		पूर्ण, पूर्ण,
 
-	},
-	[7] = {
+	पूर्ण,
+	[7] = अणु
 		/* Audio accessory */
 		.name		= "audio",
 		.module		= TWL5031_MODULE_ACCESSORY,
@@ -246,59 +247,59 @@ static const struct sih sih_modules_twl5031[8] = {
 		.bits		= 2,
 		.bytes_ixr	= 1,
 		.edr_offset	= TWL5031_ACCEDR1,
-		/* Note: most of these IRQs default to no-trigger */
+		/* Note: most of these IRQs शेष to no-trigger */
 		.bytes_edr	= 1,
 		.irq_lines	= 2,
-		.mask = { {
+		.mask = अणु अणु
 			.isr_offset	= TWL5031_ACCISR1,
 			.imr_offset	= TWL5031_ACCIMR1,
-		}, {
+		पूर्ण, अणु
 			.isr_offset	= TWL5031_ACCISR2,
 			.imr_offset	= TWL5031_ACCIMR2,
-		}, },
-	},
-};
+		पूर्ण, पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-#undef TWL4030_MODULE_KEYPAD_KEYP
-#undef TWL4030_MODULE_INT_PWR
-#undef TWL4030_INT_PWR_EDR
+#अघोषित TWL4030_MODULE_KEYPAD_KEYP
+#अघोषित TWL4030_MODULE_INT_PWR
+#अघोषित TWL4030_INT_PWR_EDR
 
 /*----------------------------------------------------------------------*/
 
-static unsigned twl4030_irq_base;
+अटल अचिन्हित twl4030_irq_base;
 
 /*
- * handle_twl4030_pih() is the desc->handle method for the twl4030 interrupt.
- * This is a chained interrupt, so there is no desc->action method for it.
- * Now we need to query the interrupt controller in the twl4030 to determine
- * which module is generating the interrupt request.  However, we can't do i2c
- * transactions in interrupt context, so we must defer that work to a kernel
- * thread.  All we do here is acknowledge and mask the interrupt and wakeup
- * the kernel thread.
+ * handle_twl4030_pih() is the desc->handle method क्रम the twl4030 पूर्णांकerrupt.
+ * This is a chained पूर्णांकerrupt, so there is no desc->action method क्रम it.
+ * Now we need to query the पूर्णांकerrupt controller in the twl4030 to determine
+ * which module is generating the पूर्णांकerrupt request.  However, we can't करो i2c
+ * transactions in पूर्णांकerrupt context, so we must defer that work to a kernel
+ * thपढ़ो.  All we करो here is acknowledge and mask the पूर्णांकerrupt and wakeup
+ * the kernel thपढ़ो.
  */
-static irqreturn_t handle_twl4030_pih(int irq, void *devid)
-{
-	irqreturn_t	ret;
+अटल irqवापस_t handle_twl4030_pih(पूर्णांक irq, व्योम *devid)
+अणु
+	irqवापस_t	ret;
 	u8		pih_isr;
 
-	ret = twl_i2c_read_u8(TWL_MODULE_PIH, &pih_isr,
+	ret = twl_i2c_पढ़ो_u8(TWL_MODULE_PIH, &pih_isr,
 			      REG_PIH_ISR_P1);
-	if (ret) {
+	अगर (ret) अणु
 		pr_warn("twl4030: I2C error %d reading PIH ISR\n", ret);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	while (pih_isr) {
-		unsigned long	pending = __ffs(pih_isr);
-		unsigned int	irq;
+	जबतक (pih_isr) अणु
+		अचिन्हित दीर्घ	pending = __ffs(pih_isr);
+		अचिन्हित पूर्णांक	irq;
 
 		pih_isr &= ~BIT(pending);
 		irq = pending + twl4030_irq_base;
 		handle_nested_irq(irq);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
@@ -307,38 +308,38 @@ static irqreturn_t handle_twl4030_pih(int irq, void *devid)
  * IRQs will be coming in, and where we can quickly enable them then
  * handle them as they arrive.  Mask all IRQs: maybe init SIH_CTRL.
  *
- * NOTE:  we don't touch EDR registers here; they stay with hardware
- * defaults or whatever the last value was.  Note that when both EDR
- * bits for an IRQ are clear, that's as if its IMR bit is set...
+ * NOTE:  we करोn't touch EDR रेजिस्टरs here; they stay with hardware
+ * शेषs or whatever the last value was.  Note that when both EDR
+ * bits क्रम an IRQ are clear, that's as अगर its IMR bit is set...
  */
-static int twl4030_init_sih_modules(unsigned line)
-{
-	const struct sih *sih;
+अटल पूर्णांक twl4030_init_sih_modules(अचिन्हित line)
+अणु
+	स्थिर काष्ठा sih *sih;
 	u8 buf[4];
-	int i;
-	int status;
+	पूर्णांक i;
+	पूर्णांक status;
 
-	/* line 0 == int1_n signal; line 1 == int2_n signal */
-	if (line > 1)
-		return -EINVAL;
+	/* line 0 == पूर्णांक1_n संकेत; line 1 == पूर्णांक2_n संकेत */
+	अगर (line > 1)
+		वापस -EINVAL;
 
 	irq_line = line;
 
-	/* disable all interrupts on our line */
-	memset(buf, 0xff, sizeof(buf));
+	/* disable all पूर्णांकerrupts on our line */
+	स_रखो(buf, 0xff, माप(buf));
 	sih = sih_modules;
-	for (i = 0; i < nr_sih_modules; i++, sih++) {
+	क्रम (i = 0; i < nr_sih_modules; i++, sih++) अणु
 		/* skip USB -- it's funky */
-		if (!sih->bytes_ixr)
-			continue;
+		अगर (!sih->bytes_ixr)
+			जारी;
 
-		/* Not all the SIH modules support multiple interrupt lines */
-		if (sih->irq_lines <= line)
-			continue;
+		/* Not all the SIH modules support multiple पूर्णांकerrupt lines */
+		अगर (sih->irq_lines <= line)
+			जारी;
 
-		status = twl_i2c_write(sih->module, buf,
+		status = twl_i2c_ग_लिखो(sih->module, buf,
 				sih->mask[line].imr_offset, sih->bytes_ixr);
-		if (status < 0)
+		अगर (status < 0)
 			pr_err("twl4030: err %d initializing %s %s\n",
 					status, sih->name, "IMR");
 
@@ -346,155 +347,155 @@ static int twl4030_init_sih_modules(unsigned line)
 		 * Maybe disable "exclusive" mode; buffer second pending irq;
 		 * set Clear-On-Read (COR) bit.
 		 *
-		 * NOTE that sometimes COR polarity is documented as being
-		 * inverted:  for MADC, COR=1 means "clear on write".
-		 * And for PWR_INT it's not documented...
+		 * NOTE that someबार COR polarity is करोcumented as being
+		 * inverted:  क्रम MADC, COR=1 means "clear on write".
+		 * And क्रम PWR_INT it's not करोcumented...
 		 */
-		if (sih->set_cor) {
-			status = twl_i2c_write_u8(sih->module,
+		अगर (sih->set_cor) अणु
+			status = twl_i2c_ग_लिखो_u8(sih->module,
 					TWL4030_SIH_CTRL_COR_MASK,
 					sih->control_offset);
-			if (status < 0)
+			अगर (status < 0)
 				pr_err("twl4030: err %d initializing %s %s\n",
 						status, sih->name, "SIH_CTRL");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	sih = sih_modules;
-	for (i = 0; i < nr_sih_modules; i++, sih++) {
+	क्रम (i = 0; i < nr_sih_modules; i++, sih++) अणु
 		u8 rxbuf[4];
-		int j;
+		पूर्णांक j;
 
 		/* skip USB */
-		if (!sih->bytes_ixr)
-			continue;
+		अगर (!sih->bytes_ixr)
+			जारी;
 
-		/* Not all the SIH modules support multiple interrupt lines */
-		if (sih->irq_lines <= line)
-			continue;
+		/* Not all the SIH modules support multiple पूर्णांकerrupt lines */
+		अगर (sih->irq_lines <= line)
+			जारी;
 
 		/*
-		 * Clear pending interrupt status.  Either the read was
-		 * enough, or we need to write those bits.  Repeat, in
-		 * case an IRQ is pending (PENDDIS=0) ... that's not
+		 * Clear pending पूर्णांकerrupt status.  Either the पढ़ो was
+		 * enough, or we need to ग_लिखो those bits.  Repeat, in
+		 * हाल an IRQ is pending (PENDDIS=0) ... that's not
 		 * uncommon with PWR_INT.PWRON.
 		 */
-		for (j = 0; j < 2; j++) {
-			status = twl_i2c_read(sih->module, rxbuf,
+		क्रम (j = 0; j < 2; j++) अणु
+			status = twl_i2c_पढ़ो(sih->module, rxbuf,
 				sih->mask[line].isr_offset, sih->bytes_ixr);
-			if (status < 0)
+			अगर (status < 0)
 				pr_warn("twl4030: err %d initializing %s %s\n",
 					status, sih->name, "ISR");
 
-			if (!sih->set_cor) {
-				status = twl_i2c_write(sih->module, buf,
+			अगर (!sih->set_cor) अणु
+				status = twl_i2c_ग_लिखो(sih->module, buf,
 					sih->mask[line].isr_offset,
 					sih->bytes_ixr);
-				if (status < 0)
+				अगर (status < 0)
 					pr_warn("twl4030: write failed: %d\n",
 						status);
-			}
+			पूर्ण
 			/*
-			 * else COR=1 means read sufficed.
-			 * (for most SIH modules...)
+			 * अन्यथा COR=1 means पढ़ो sufficed.
+			 * (क्रम most SIH modules...)
 			 */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void activate_irq(int irq)
-{
+अटल अंतरभूत व्योम activate_irq(पूर्णांक irq)
+अणु
 	irq_clear_status_flags(irq, IRQ_NOREQUEST | IRQ_NOPROBE);
-}
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
-struct sih_agent {
-	int			irq_base;
-	const struct sih	*sih;
+काष्ठा sih_agent अणु
+	पूर्णांक			irq_base;
+	स्थिर काष्ठा sih	*sih;
 
 	u32			imr;
 	bool			imr_change_pending;
 
 	u32			edge_change;
 
-	struct mutex		irq_lock;
-	char			*irq_name;
-};
+	काष्ठा mutex		irq_lock;
+	अक्षर			*irq_name;
+पूर्ण;
 
 /*----------------------------------------------------------------------*/
 
 /*
  * All irq_chip methods get issued from code holding irq_desc[irq].lock,
- * which can't perform the underlying I2C operations (because they sleep).
- * So we must hand them off to a thread (workqueue) and cope with asynch
+ * which can't perक्रमm the underlying I2C operations (because they sleep).
+ * So we must hand them off to a thपढ़ो (workqueue) and cope with asynch
  * completion, potentially including some re-ordering, of these requests.
  */
 
-static void twl4030_sih_mask(struct irq_data *data)
-{
-	struct sih_agent *agent = irq_data_get_irq_chip_data(data);
+अटल व्योम twl4030_sih_mask(काष्ठा irq_data *data)
+अणु
+	काष्ठा sih_agent *agent = irq_data_get_irq_chip_data(data);
 
 	agent->imr |= BIT(data->irq - agent->irq_base);
 	agent->imr_change_pending = true;
-}
+पूर्ण
 
-static void twl4030_sih_unmask(struct irq_data *data)
-{
-	struct sih_agent *agent = irq_data_get_irq_chip_data(data);
+अटल व्योम twl4030_sih_unmask(काष्ठा irq_data *data)
+अणु
+	काष्ठा sih_agent *agent = irq_data_get_irq_chip_data(data);
 
 	agent->imr &= ~BIT(data->irq - agent->irq_base);
 	agent->imr_change_pending = true;
-}
+पूर्ण
 
-static int twl4030_sih_set_type(struct irq_data *data, unsigned trigger)
-{
-	struct sih_agent *agent = irq_data_get_irq_chip_data(data);
+अटल पूर्णांक twl4030_sih_set_type(काष्ठा irq_data *data, अचिन्हित trigger)
+अणु
+	काष्ठा sih_agent *agent = irq_data_get_irq_chip_data(data);
 
-	if (trigger & ~(IRQ_TYPE_EDGE_FALLING | IRQ_TYPE_EDGE_RISING))
-		return -EINVAL;
+	अगर (trigger & ~(IRQ_TYPE_EDGE_FALLING | IRQ_TYPE_EDGE_RISING))
+		वापस -EINVAL;
 
-	if (irqd_get_trigger_type(data) != trigger)
+	अगर (irqd_get_trigger_type(data) != trigger)
 		agent->edge_change |= BIT(data->irq - agent->irq_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void twl4030_sih_bus_lock(struct irq_data *data)
-{
-	struct sih_agent	*agent = irq_data_get_irq_chip_data(data);
+अटल व्योम twl4030_sih_bus_lock(काष्ठा irq_data *data)
+अणु
+	काष्ठा sih_agent	*agent = irq_data_get_irq_chip_data(data);
 
 	mutex_lock(&agent->irq_lock);
-}
+पूर्ण
 
-static void twl4030_sih_bus_sync_unlock(struct irq_data *data)
-{
-	struct sih_agent	*agent = irq_data_get_irq_chip_data(data);
-	const struct sih	*sih = agent->sih;
-	int			status;
+अटल व्योम twl4030_sih_bus_sync_unlock(काष्ठा irq_data *data)
+अणु
+	काष्ठा sih_agent	*agent = irq_data_get_irq_chip_data(data);
+	स्थिर काष्ठा sih	*sih = agent->sih;
+	पूर्णांक			status;
 
-	if (agent->imr_change_pending) {
-		union {
+	अगर (agent->imr_change_pending) अणु
+		जोड़ अणु
 			__le32	word;
 			u8	bytes[4];
-		} imr;
+		पूर्ण imr;
 
-		/* byte[0] gets overwritten as we write ... */
+		/* byte[0] माला_लो overwritten as we ग_लिखो ... */
 		imr.word = cpu_to_le32(agent->imr);
 		agent->imr_change_pending = false;
 
-		/* write the whole mask ... simpler than subsetting it */
-		status = twl_i2c_write(sih->module, imr.bytes,
+		/* ग_लिखो the whole mask ... simpler than subsetting it */
+		status = twl_i2c_ग_लिखो(sih->module, imr.bytes,
 				sih->mask[irq_line].imr_offset,
 				sih->bytes_ixr);
-		if (status)
+		अगर (status)
 			pr_err("twl4030: %s, %s --> %d\n", __func__,
 					"write", status);
-	}
+	पूर्ण
 
-	if (agent->edge_change) {
+	अगर (agent->edge_change) अणु
 		u32		edge_change;
 		u8		bytes[6];
 
@@ -502,49 +503,49 @@ static void twl4030_sih_bus_sync_unlock(struct irq_data *data)
 		agent->edge_change = 0;
 
 		/*
-		 * Read, reserving first byte for write scratch.  Yes, this
-		 * could be cached for some speedup ... but be careful about
-		 * any processor on the other IRQ line, EDR registers are
+		 * Read, reserving first byte क्रम ग_लिखो scratch.  Yes, this
+		 * could be cached क्रम some speedup ... but be careful about
+		 * any processor on the other IRQ line, EDR रेजिस्टरs are
 		 * shared.
 		 */
-		status = twl_i2c_read(sih->module, bytes,
+		status = twl_i2c_पढ़ो(sih->module, bytes,
 				sih->edr_offset, sih->bytes_edr);
-		if (status) {
+		अगर (status) अणु
 			pr_err("twl4030: %s, %s --> %d\n", __func__,
 					"read", status);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		/* Modify only the bits we know must change */
-		while (edge_change) {
-			int		i = fls(edge_change) - 1;
-			int		byte = i >> 2;
-			int		off = (i & 0x3) * 2;
-			unsigned int	type;
+		/* Modअगरy only the bits we know must change */
+		जबतक (edge_change) अणु
+			पूर्णांक		i = fls(edge_change) - 1;
+			पूर्णांक		byte = i >> 2;
+			पूर्णांक		off = (i & 0x3) * 2;
+			अचिन्हित पूर्णांक	type;
 
 			bytes[byte] &= ~(0x03 << off);
 
 			type = irq_get_trigger_type(i + agent->irq_base);
-			if (type & IRQ_TYPE_EDGE_RISING)
+			अगर (type & IRQ_TYPE_EDGE_RISING)
 				bytes[byte] |= BIT(off + 1);
-			if (type & IRQ_TYPE_EDGE_FALLING)
+			अगर (type & IRQ_TYPE_EDGE_FALLING)
 				bytes[byte] |= BIT(off + 0);
 
 			edge_change &= ~BIT(i);
-		}
+		पूर्ण
 
 		/* Write */
-		status = twl_i2c_write(sih->module, bytes,
+		status = twl_i2c_ग_लिखो(sih->module, bytes,
 				sih->edr_offset, sih->bytes_edr);
-		if (status)
+		अगर (status)
 			pr_err("twl4030: %s, %s --> %d\n", __func__,
 					"write", status);
-	}
+	पूर्ण
 
 	mutex_unlock(&agent->irq_lock);
-}
+पूर्ण
 
-static struct irq_chip twl4030_sih_irq_chip = {
+अटल काष्ठा irq_chip twl4030_sih_irq_chip = अणु
 	.name		= "twl4030",
 	.irq_mask	= twl4030_sih_mask,
 	.irq_unmask	= twl4030_sih_unmask,
@@ -552,226 +553,226 @@ static struct irq_chip twl4030_sih_irq_chip = {
 	.irq_bus_lock	= twl4030_sih_bus_lock,
 	.irq_bus_sync_unlock = twl4030_sih_bus_sync_unlock,
 	.flags		= IRQCHIP_SKIP_SET_WAKE,
-};
+पूर्ण;
 
 /*----------------------------------------------------------------------*/
 
-static inline int sih_read_isr(const struct sih *sih)
-{
-	int status;
-	union {
+अटल अंतरभूत पूर्णांक sih_पढ़ो_isr(स्थिर काष्ठा sih *sih)
+अणु
+	पूर्णांक status;
+	जोड़ अणु
 		u8 bytes[4];
 		__le32 word;
-	} isr;
+	पूर्ण isr;
 
 	/* FIXME need retry-on-error ... */
 
 	isr.word = 0;
-	status = twl_i2c_read(sih->module, isr.bytes,
+	status = twl_i2c_पढ़ो(sih->module, isr.bytes,
 			sih->mask[irq_line].isr_offset, sih->bytes_ixr);
 
-	return (status < 0) ? status : le32_to_cpu(isr.word);
-}
+	वापस (status < 0) ? status : le32_to_cpu(isr.word);
+पूर्ण
 
 /*
- * Generic handler for SIH interrupts ... we "know" this is called
+ * Generic handler क्रम SIH पूर्णांकerrupts ... we "know" this is called
  * in task context, with IRQs enabled.
  */
-static irqreturn_t handle_twl4030_sih(int irq, void *data)
-{
-	struct sih_agent *agent = irq_get_handler_data(irq);
-	const struct sih *sih = agent->sih;
-	int isr;
+अटल irqवापस_t handle_twl4030_sih(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा sih_agent *agent = irq_get_handler_data(irq);
+	स्थिर काष्ठा sih *sih = agent->sih;
+	पूर्णांक isr;
 
-	/* reading ISR acks the IRQs, using clear-on-read mode */
-	isr = sih_read_isr(sih);
+	/* पढ़ोing ISR acks the IRQs, using clear-on-पढ़ो mode */
+	isr = sih_पढ़ो_isr(sih);
 
-	if (isr < 0) {
+	अगर (isr < 0) अणु
 		pr_err("twl4030: %s SIH, read ISR error %d\n",
 			sih->name, isr);
 		/* REVISIT:  recover; eventually mask it all, etc */
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	while (isr) {
+	जबतक (isr) अणु
 		irq = fls(isr);
 		irq--;
 		isr &= ~BIT(irq);
 
-		if (irq < sih->bits)
+		अगर (irq < sih->bits)
 			handle_nested_irq(agent->irq_base + irq);
-		else
+		अन्यथा
 			pr_err("twl4030: %s SIH, invalid ISR bit %d\n",
 				sih->name, irq);
-	}
-	return IRQ_HANDLED;
-}
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* returns the first IRQ used by this SIH bank, or negative errno */
-int twl4030_sih_setup(struct device *dev, int module, int irq_base)
-{
-	int			sih_mod;
-	const struct sih	*sih = NULL;
-	struct sih_agent	*agent;
-	int			i, irq;
-	int			status = -EINVAL;
+/* वापसs the first IRQ used by this SIH bank, or negative त्रुटि_सं */
+पूर्णांक twl4030_sih_setup(काष्ठा device *dev, पूर्णांक module, पूर्णांक irq_base)
+अणु
+	पूर्णांक			sih_mod;
+	स्थिर काष्ठा sih	*sih = शून्य;
+	काष्ठा sih_agent	*agent;
+	पूर्णांक			i, irq;
+	पूर्णांक			status = -EINVAL;
 
-	/* only support modules with standard clear-on-read for now */
-	for (sih_mod = 0, sih = sih_modules; sih_mod < nr_sih_modules;
-			sih_mod++, sih++) {
-		if (sih->module == module && sih->set_cor) {
+	/* only support modules with standard clear-on-पढ़ो क्रम now */
+	क्रम (sih_mod = 0, sih = sih_modules; sih_mod < nr_sih_modules;
+			sih_mod++, sih++) अणु
+		अगर (sih->module == module && sih->set_cor) अणु
 			status = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (status < 0) {
+	अगर (status < 0) अणु
 		dev_err(dev, "module to setup SIH for not found\n");
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	agent = kzalloc(sizeof(*agent), GFP_KERNEL);
-	if (!agent)
-		return -ENOMEM;
+	agent = kzalloc(माप(*agent), GFP_KERNEL);
+	अगर (!agent)
+		वापस -ENOMEM;
 
 	agent->irq_base = irq_base;
 	agent->sih = sih;
 	agent->imr = ~0;
 	mutex_init(&agent->irq_lock);
 
-	for (i = 0; i < sih->bits; i++) {
+	क्रम (i = 0; i < sih->bits; i++) अणु
 		irq = irq_base + i;
 
 		irq_set_chip_data(irq, agent);
 		irq_set_chip_and_handler(irq, &twl4030_sih_irq_chip,
 					 handle_edge_irq);
-		irq_set_nested_thread(irq, 1);
+		irq_set_nested_thपढ़ो(irq, 1);
 		activate_irq(irq);
-	}
+	पूर्ण
 
 	/* replace generic PIH handler (handle_simple_irq) */
 	irq = sih_mod + twl4030_irq_base;
 	irq_set_handler_data(irq, agent);
-	agent->irq_name = kasprintf(GFP_KERNEL, "twl4030_%s", sih->name);
-	status = request_threaded_irq(irq, NULL, handle_twl4030_sih,
+	agent->irq_name = kaप्र_लिखो(GFP_KERNEL, "twl4030_%s", sih->name);
+	status = request_thपढ़ोed_irq(irq, शून्य, handle_twl4030_sih,
 				      IRQF_EARLY_RESUME | IRQF_ONESHOT,
-				      agent->irq_name ?: sih->name, NULL);
+				      agent->irq_name ?: sih->name, शून्य);
 
 	dev_info(dev, "%s (irq %d) chaining IRQs %d..%d\n", sih->name,
 			irq, irq_base, irq_base + i - 1);
 
-	return status < 0 ? status : irq_base;
-}
+	वापस status < 0 ? status : irq_base;
+पूर्ण
 
 /* FIXME need a call to reverse twl4030_sih_setup() ... */
 
 /*----------------------------------------------------------------------*/
 
-/* FIXME pass in which interrupt line we'll use ... */
-#define twl_irq_line	0
+/* FIXME pass in which पूर्णांकerrupt line we'll use ... */
+#घोषणा twl_irq_line	0
 
-int twl4030_init_irq(struct device *dev, int irq_num)
-{
-	static struct irq_chip	twl4030_irq_chip;
-	int			status, i;
-	int			irq_base, irq_end, nr_irqs;
-	struct			device_node *node = dev->of_node;
+पूर्णांक twl4030_init_irq(काष्ठा device *dev, पूर्णांक irq_num)
+अणु
+	अटल काष्ठा irq_chip	twl4030_irq_chip;
+	पूर्णांक			status, i;
+	पूर्णांक			irq_base, irq_end, nr_irqs;
+	काष्ठा			device_node *node = dev->of_node;
 
 	/*
-	 * TWL core and pwr interrupts must be contiguous because
+	 * TWL core and pwr पूर्णांकerrupts must be contiguous because
 	 * the hwirqs numbers are defined contiguously from 1 to 15.
-	 * Create only one domain for both.
+	 * Create only one करोमुख्य क्रम both.
 	 */
 	nr_irqs = TWL4030_PWR_NR_IRQS + TWL4030_CORE_NR_IRQS;
 
 	irq_base = irq_alloc_descs(-1, 0, nr_irqs, 0);
-	if (irq_base < 0) {
+	अगर (irq_base < 0) अणु
 		dev_err(dev, "Fail to allocate IRQ descs\n");
-		return irq_base;
-	}
+		वापस irq_base;
+	पूर्ण
 
-	irq_domain_add_legacy(node, nr_irqs, irq_base, 0,
-			      &irq_domain_simple_ops, NULL);
+	irq_करोमुख्य_add_legacy(node, nr_irqs, irq_base, 0,
+			      &irq_करोमुख्य_simple_ops, शून्य);
 
 	irq_end = irq_base + TWL4030_CORE_NR_IRQS;
 
 	/*
-	 * Mask and clear all TWL4030 interrupts since initially we do
-	 * not have any TWL4030 module interrupt handlers present
+	 * Mask and clear all TWL4030 पूर्णांकerrupts since initially we करो
+	 * not have any TWL4030 module पूर्णांकerrupt handlers present
 	 */
 	status = twl4030_init_sih_modules(twl_irq_line);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
 	twl4030_irq_base = irq_base;
 
 	/*
-	 * Install an irq handler for each of the SIH modules;
-	 * clone dummy irq_chip since PIH can't *do* anything
+	 * Install an irq handler क्रम each of the SIH modules;
+	 * clone dummy irq_chip since PIH can't *करो* anything
 	 */
 	twl4030_irq_chip = dummy_irq_chip;
 	twl4030_irq_chip.name = "twl4030";
 
 	twl4030_sih_irq_chip.irq_ack = dummy_irq_chip.irq_ack;
 
-	for (i = irq_base; i < irq_end; i++) {
+	क्रम (i = irq_base; i < irq_end; i++) अणु
 		irq_set_chip_and_handler(i, &twl4030_irq_chip,
 					 handle_simple_irq);
-		irq_set_nested_thread(i, 1);
+		irq_set_nested_thपढ़ो(i, 1);
 		activate_irq(i);
-	}
+	पूर्ण
 
 	dev_info(dev, "%s (irq %d) chaining IRQs %d..%d\n", "PIH",
 			irq_num, irq_base, irq_end);
 
 	/* ... and the PWR_INT module ... */
 	status = twl4030_sih_setup(dev, TWL4030_MODULE_INT, irq_end);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		dev_err(dev, "sih_setup PWR INT --> %d\n", status);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	/* install an irq handler to demultiplex the TWL4030 interrupt */
-	status = request_threaded_irq(irq_num, NULL, handle_twl4030_pih,
+	/* install an irq handler to demultiplex the TWL4030 पूर्णांकerrupt */
+	status = request_thपढ़ोed_irq(irq_num, शून्य, handle_twl4030_pih,
 				      IRQF_ONESHOT,
-				      "TWL4030-PIH", NULL);
-	if (status < 0) {
+				      "TWL4030-PIH", शून्य);
+	अगर (status < 0) अणु
 		dev_err(dev, "could not claim irq%d: %d\n", irq_num, status);
-		goto fail_rqirq;
-	}
+		जाओ fail_rqirq;
+	पूर्ण
 	enable_irq_wake(irq_num);
 
-	return irq_base;
+	वापस irq_base;
 fail_rqirq:
 	/* clean up twl4030_sih_setup */
 fail:
-	for (i = irq_base; i < irq_end; i++) {
-		irq_set_nested_thread(i, 0);
-		irq_set_chip_and_handler(i, NULL, NULL);
-	}
+	क्रम (i = irq_base; i < irq_end; i++) अणु
+		irq_set_nested_thपढ़ो(i, 0);
+		irq_set_chip_and_handler(i, शून्य, शून्य);
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int twl4030_exit_irq(void)
-{
-	/* FIXME undo twl_init_irq() */
-	if (twl4030_irq_base) {
+पूर्णांक twl4030_निकास_irq(व्योम)
+अणु
+	/* FIXME unकरो twl_init_irq() */
+	अगर (twl4030_irq_base) अणु
 		pr_err("twl4030: can't yet clean up IRQs?\n");
-		return -ENOSYS;
-	}
-	return 0;
-}
+		वापस -ENOSYS;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int twl4030_init_chip_irq(const char *chip)
-{
-	if (!strcmp(chip, "twl5031")) {
+पूर्णांक twl4030_init_chip_irq(स्थिर अक्षर *chip)
+अणु
+	अगर (!म_भेद(chip, "twl5031")) अणु
 		sih_modules = sih_modules_twl5031;
 		nr_sih_modules = ARRAY_SIZE(sih_modules_twl5031);
-	} else {
+	पूर्ण अन्यथा अणु
 		sih_modules = sih_modules_twl4030;
 		nr_sih_modules = ARRAY_SIZE(sih_modules_twl4030);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

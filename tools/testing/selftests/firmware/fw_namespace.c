@@ -1,151 +1,152 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Test triggering of loading of firmware from different mount
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Test triggering of loading of firmware from dअगरferent mount
  * namespaces. Expect firmware to be always loaded from the mount
  * namespace of PID 1. */
-#define _GNU_SOURCE
-#include <errno.h>
-#include <fcntl.h>
-#include <sched.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mount.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#घोषणा _GNU_SOURCE
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <sched.h>
+#समावेश <मानकतर्क.स>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/mount.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <unistd.h>
 
-#ifndef CLONE_NEWNS
+#अगर_अघोषित CLONE_NEWNS
 # define CLONE_NEWNS 0x00020000
-#endif
+#पूर्ण_अगर
 
-static char *fw_path = NULL;
+अटल अक्षर *fw_path = शून्य;
 
-static void die(char *fmt, ...)
-{
-	va_list ap;
+अटल व्योम die(अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	if (fw_path)
+	बहु_शुरू(ap, fmt);
+	भख_लिखो(मानक_त्रुटि, fmt, ap);
+	बहु_पूर्ण(ap);
+	अगर (fw_path)
 		unlink(fw_path);
 	umount("/lib/firmware");
-	exit(EXIT_FAILURE);
-}
+	निकास(निकास_त्रुटि);
+पूर्ण
 
-static void trigger_fw(const char *fw_name, const char *sys_path)
-{
-	int fd;
+अटल व्योम trigger_fw(स्थिर अक्षर *fw_name, स्थिर अक्षर *sys_path)
+अणु
+	पूर्णांक fd;
 
-	fd = open(sys_path, O_WRONLY);
-	if (fd < 0)
+	fd = खोलो(sys_path, O_WRONLY);
+	अगर (fd < 0)
 		die("open failed: %s\n",
-		    strerror(errno));
-	if (write(fd, fw_name, strlen(fw_name)) != strlen(fw_name))
-		exit(EXIT_FAILURE);
-	close(fd);
-}
+		    म_त्रुटि(त्रुटि_सं));
+	अगर (ग_लिखो(fd, fw_name, म_माप(fw_name)) != म_माप(fw_name))
+		निकास(निकास_त्रुटि);
+	बंद(fd);
+पूर्ण
 
-static void setup_fw(const char *fw_path)
-{
-	int fd;
-	const char fw[] = "ABCD0123";
+अटल व्योम setup_fw(स्थिर अक्षर *fw_path)
+अणु
+	पूर्णांक fd;
+	स्थिर अक्षर fw[] = "ABCD0123";
 
-	fd = open(fw_path, O_WRONLY | O_CREAT, 0600);
-	if (fd < 0)
+	fd = खोलो(fw_path, O_WRONLY | O_CREAT, 0600);
+	अगर (fd < 0)
 		die("open failed: %s\n",
-		    strerror(errno));
-	if (write(fd, fw, sizeof(fw) -1) != sizeof(fw) -1)
+		    म_त्रुटि(त्रुटि_सं));
+	अगर (ग_लिखो(fd, fw, माप(fw) -1) != माप(fw) -1)
 		die("write failed: %s\n",
-		    strerror(errno));
-	close(fd);
-}
+		    म_त्रुटि(त्रुटि_सं));
+	बंद(fd);
+पूर्ण
 
-static bool test_fw_in_ns(const char *fw_name, const char *sys_path, bool block_fw_in_parent_ns)
-{
+अटल bool test_fw_in_ns(स्थिर अक्षर *fw_name, स्थिर अक्षर *sys_path, bool block_fw_in_parent_ns)
+अणु
 	pid_t child;
 
-	if (block_fw_in_parent_ns)
-		if (mount("test", "/lib/firmware", "tmpfs", MS_RDONLY, NULL) == -1)
+	अगर (block_fw_in_parent_ns)
+		अगर (mount("test", "/lib/firmware", "tmpfs", MS_RDONLY, शून्य) == -1)
 			die("blocking firmware in parent ns failed\n");
 
-	child = fork();
-	if (child == -1) {
+	child = विभाजन();
+	अगर (child == -1) अणु
 		die("fork failed: %s\n",
-			strerror(errno));
-	}
-	if (child != 0) { /* parent */
+			म_त्रुटि(त्रुटि_सं));
+	पूर्ण
+	अगर (child != 0) अणु /* parent */
 		pid_t pid;
-		int status;
+		पूर्णांक status;
 
-		pid = waitpid(child, &status, 0);
-		if (pid == -1) {
+		pid = रुकोpid(child, &status, 0);
+		अगर (pid == -1) अणु
 			die("waitpid failed: %s\n",
-				strerror(errno));
-		}
-		if (pid != child) {
+				म_त्रुटि(त्रुटि_सं));
+		पूर्ण
+		अगर (pid != child) अणु
 			die("waited for %d got %d\n",
 				child, pid);
-		}
-		if (!WIFEXITED(status)) {
+		पूर्ण
+		अगर (!WIFEXITED(status)) अणु
 			die("child did not terminate cleanly\n");
-		}
-		if (block_fw_in_parent_ns)
+		पूर्ण
+		अगर (block_fw_in_parent_ns)
 			umount("/lib/firmware");
-		return WEXITSTATUS(status) == EXIT_SUCCESS;
-	}
+		वापस WEXITSTATUS(status) == निकास_सफल;
+	पूर्ण
 
-	if (unshare(CLONE_NEWNS) != 0) {
+	अगर (unshare(CLONE_NEWNS) != 0) अणु
 		die("unshare(CLONE_NEWNS) failed: %s\n",
-			strerror(errno));
-	}
-	if (mount(NULL, "/", NULL, MS_SLAVE|MS_REC, NULL) == -1)
+			म_त्रुटि(त्रुटि_सं));
+	पूर्ण
+	अगर (mount(शून्य, "/", शून्य, MS_SLAVE|MS_REC, शून्य) == -1)
 		die("remount root in child ns failed\n");
 
-	if (!block_fw_in_parent_ns) {
-		if (mount("test", "/lib/firmware", "tmpfs", MS_RDONLY, NULL) == -1)
+	अगर (!block_fw_in_parent_ns) अणु
+		अगर (mount("test", "/lib/firmware", "tmpfs", MS_RDONLY, शून्य) == -1)
 			die("blocking firmware in child ns failed\n");
-	} else
+	पूर्ण अन्यथा
 		umount("/lib/firmware");
 
 	trigger_fw(fw_name, sys_path);
 
-	exit(EXIT_SUCCESS);
-}
+	निकास(निकास_सफल);
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	const char *fw_name = "test-firmware.bin";
-	char *sys_path;
-	if (argc != 2)
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	स्थिर अक्षर *fw_name = "test-firmware.bin";
+	अक्षर *sys_path;
+	अगर (argc != 2)
 		die("usage: %s sys_path\n", argv[0]);
 
-	/* Mount tmpfs to /lib/firmware so we don't have to assume
-	   that it is writable for us.*/
-	if (mount("test", "/lib/firmware", "tmpfs", 0, NULL) == -1)
+	/* Mount पंचांगpfs to /lib/firmware so we करोn't have to assume
+	   that it is writable क्रम us.*/
+	अगर (mount("test", "/lib/firmware", "tmpfs", 0, शून्य) == -1)
 		die("mounting tmpfs to /lib/firmware failed\n");
 
 	sys_path = argv[1];
-	asprintf(&fw_path, "/lib/firmware/%s", fw_name);
+	aप्र_लिखो(&fw_path, "/lib/firmware/%s", fw_name);
 
 	setup_fw(fw_path);
 
-	setvbuf(stdout, NULL, _IONBF, 0);
-	/* Positive case: firmware in PID1 mount namespace */
-	printf("Testing with firmware in parent namespace (assumed to be same file system as PID1)\n");
-	if (!test_fw_in_ns(fw_name, sys_path, false))
+	रखो_भबफ(मानक_निकास, शून्य, _IONBF, 0);
+	/* Positive हाल: firmware in PID1 mount namespace */
+	म_लिखो("Testing with firmware in parent namespace (assumed to be same file system as PID1)\n");
+	अगर (!test_fw_in_ns(fw_name, sys_path, false))
 		die("error: failed to access firmware\n");
 
-	/* Negative case: firmware in child mount namespace, expected to fail */
-	printf("Testing with firmware in child namespace\n");
-	if (test_fw_in_ns(fw_name, sys_path, true))
+	/* Negative हाल: firmware in child mount namespace, expected to fail */
+	म_लिखो("Testing with firmware in child namespace\n");
+	अगर (test_fw_in_ns(fw_name, sys_path, true))
 		die("error: firmware access did not fail\n");
 
 	unlink(fw_path);
-	free(fw_path);
+	मुक्त(fw_path);
 	umount("/lib/firmware");
-	exit(EXIT_SUCCESS);
-}
+	निकास(निकास_सफल);
+पूर्ण

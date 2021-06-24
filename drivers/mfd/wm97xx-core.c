@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Wolfson WM97xx -- Core device
  *
@@ -10,351 +11,351 @@
  *  - a GPIO block
  */
 
-#include <linux/device.h>
-#include <linux/mfd/core.h>
-#include <linux/mfd/wm97xx.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/wm97xx.h>
-#include <sound/ac97/codec.h>
-#include <sound/ac97/compat.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/mfd/wm97xx.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/wm97xx.h>
+#समावेश <sound/ac97/codec.h>
+#समावेश <sound/ac97/compat.h>
 
-#define WM9705_VENDOR_ID 0x574d4c05
-#define WM9712_VENDOR_ID 0x574d4c12
-#define WM9713_VENDOR_ID 0x574d4c13
-#define WM97xx_VENDOR_ID_MASK 0xffffffff
+#घोषणा WM9705_VENDOR_ID 0x574d4c05
+#घोषणा WM9712_VENDOR_ID 0x574d4c12
+#घोषणा WM9713_VENDOR_ID 0x574d4c13
+#घोषणा WM97xx_VENDOR_ID_MASK 0xffffffff
 
-struct wm97xx_priv {
-	struct regmap *regmap;
-	struct snd_ac97 *ac97;
-	struct device *dev;
-	struct wm97xx_platform_data codec_pdata;
-};
+काष्ठा wm97xx_priv अणु
+	काष्ठा regmap *regmap;
+	काष्ठा snd_ac97 *ac97;
+	काष्ठा device *dev;
+	काष्ठा wm97xx_platक्रमm_data codec_pdata;
+पूर्ण;
 
-static bool wm97xx_readable_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case AC97_RESET ... AC97_PCM_SURR_DAC_RATE:
-	case AC97_PCM_LR_ADC_RATE:
-	case AC97_CENTER_LFE_MASTER:
-	case AC97_SPDIF ... AC97_LINE1_LEVEL:
-	case AC97_GPIO_CFG ... 0x5c:
-	case AC97_CODEC_CLASS_REV ... AC97_PCI_SID:
-	case 0x74 ... AC97_VENDOR_ID2:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool wm97xx_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल AC97_RESET ... AC97_PCM_SURR_DAC_RATE:
+	हाल AC97_PCM_LR_ADC_RATE:
+	हाल AC97_CENTER_LFE_MASTER:
+	हाल AC97_SPDIF ... AC97_LINE1_LEVEL:
+	हाल AC97_GPIO_CFG ... 0x5c:
+	हाल AC97_CODEC_CLASS_REV ... AC97_PCI_SID:
+	हाल 0x74 ... AC97_VENDOR_ID2:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool wm97xx_writeable_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case AC97_VENDOR_ID1:
-	case AC97_VENDOR_ID2:
-		return false;
-	default:
-		return wm97xx_readable_reg(dev, reg);
-	}
-}
+अटल bool wm97xx_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल AC97_VENDOR_ID1:
+	हाल AC97_VENDOR_ID2:
+		वापस false;
+	शेष:
+		वापस wm97xx_पढ़ोable_reg(dev, reg);
+	पूर्ण
+पूर्ण
 
-static const struct reg_default wm9705_reg_defaults[] = {
-	{ 0x02, 0x8000 },
-	{ 0x04, 0x8000 },
-	{ 0x06, 0x8000 },
-	{ 0x0a, 0x8000 },
-	{ 0x0c, 0x8008 },
-	{ 0x0e, 0x8008 },
-	{ 0x10, 0x8808 },
-	{ 0x12, 0x8808 },
-	{ 0x14, 0x8808 },
-	{ 0x16, 0x8808 },
-	{ 0x18, 0x8808 },
-	{ 0x1a, 0x0000 },
-	{ 0x1c, 0x8000 },
-	{ 0x20, 0x0000 },
-	{ 0x22, 0x0000 },
-	{ 0x26, 0x000f },
-	{ 0x28, 0x0605 },
-	{ 0x2a, 0x0000 },
-	{ 0x2c, 0xbb80 },
-	{ 0x32, 0xbb80 },
-	{ 0x34, 0x2000 },
-	{ 0x5a, 0x0000 },
-	{ 0x5c, 0x0000 },
-	{ 0x72, 0x0808 },
-	{ 0x74, 0x0000 },
-	{ 0x76, 0x0006 },
-	{ 0x78, 0x0000 },
-	{ 0x7a, 0x0000 },
-};
+अटल स्थिर काष्ठा reg_शेष wm9705_reg_शेषs[] = अणु
+	अणु 0x02, 0x8000 पूर्ण,
+	अणु 0x04, 0x8000 पूर्ण,
+	अणु 0x06, 0x8000 पूर्ण,
+	अणु 0x0a, 0x8000 पूर्ण,
+	अणु 0x0c, 0x8008 पूर्ण,
+	अणु 0x0e, 0x8008 पूर्ण,
+	अणु 0x10, 0x8808 पूर्ण,
+	अणु 0x12, 0x8808 पूर्ण,
+	अणु 0x14, 0x8808 पूर्ण,
+	अणु 0x16, 0x8808 पूर्ण,
+	अणु 0x18, 0x8808 पूर्ण,
+	अणु 0x1a, 0x0000 पूर्ण,
+	अणु 0x1c, 0x8000 पूर्ण,
+	अणु 0x20, 0x0000 पूर्ण,
+	अणु 0x22, 0x0000 पूर्ण,
+	अणु 0x26, 0x000f पूर्ण,
+	अणु 0x28, 0x0605 पूर्ण,
+	अणु 0x2a, 0x0000 पूर्ण,
+	अणु 0x2c, 0xbb80 पूर्ण,
+	अणु 0x32, 0xbb80 पूर्ण,
+	अणु 0x34, 0x2000 पूर्ण,
+	अणु 0x5a, 0x0000 पूर्ण,
+	अणु 0x5c, 0x0000 पूर्ण,
+	अणु 0x72, 0x0808 पूर्ण,
+	अणु 0x74, 0x0000 पूर्ण,
+	अणु 0x76, 0x0006 पूर्ण,
+	अणु 0x78, 0x0000 पूर्ण,
+	अणु 0x7a, 0x0000 पूर्ण,
+पूर्ण;
 
-static const struct regmap_config wm9705_regmap_config = {
+अटल स्थिर काष्ठा regmap_config wm9705_regmap_config = अणु
 	.reg_bits = 16,
 	.reg_stride = 2,
 	.val_bits = 16,
-	.max_register = 0x7e,
+	.max_रेजिस्टर = 0x7e,
 	.cache_type = REGCACHE_RBTREE,
 
-	.reg_defaults = wm9705_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(wm9705_reg_defaults),
-	.volatile_reg = regmap_ac97_default_volatile,
-	.readable_reg = wm97xx_readable_reg,
-	.writeable_reg = wm97xx_writeable_reg,
-};
+	.reg_शेषs = wm9705_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(wm9705_reg_शेषs),
+	.अस्थिर_reg = regmap_ac97_शेष_अस्थिर,
+	.पढ़ोable_reg = wm97xx_पढ़ोable_reg,
+	.ग_लिखोable_reg = wm97xx_ग_लिखोable_reg,
+पूर्ण;
 
-static struct mfd_cell wm9705_cells[] = {
-	{ .name = "wm9705-codec", },
-	{ .name = "wm97xx-ts", },
-};
+अटल काष्ठा mfd_cell wm9705_cells[] = अणु
+	अणु .name = "wm9705-codec", पूर्ण,
+	अणु .name = "wm97xx-ts", पूर्ण,
+पूर्ण;
 
-static bool wm9712_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case AC97_REC_GAIN:
-		return true;
-	default:
-		return regmap_ac97_default_volatile(dev, reg);
-	}
-}
+अटल bool wm9712_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल AC97_REC_GAIN:
+		वापस true;
+	शेष:
+		वापस regmap_ac97_शेष_अस्थिर(dev, reg);
+	पूर्ण
+पूर्ण
 
-static const struct reg_default wm9712_reg_defaults[] = {
-	{ 0x02, 0x8000 },
-	{ 0x04, 0x8000 },
-	{ 0x06, 0x8000 },
-	{ 0x08, 0x0f0f },
-	{ 0x0a, 0xaaa0 },
-	{ 0x0c, 0xc008 },
-	{ 0x0e, 0x6808 },
-	{ 0x10, 0xe808 },
-	{ 0x12, 0xaaa0 },
-	{ 0x14, 0xad00 },
-	{ 0x16, 0x8000 },
-	{ 0x18, 0xe808 },
-	{ 0x1a, 0x3000 },
-	{ 0x1c, 0x8000 },
-	{ 0x20, 0x0000 },
-	{ 0x22, 0x0000 },
-	{ 0x26, 0x000f },
-	{ 0x28, 0x0605 },
-	{ 0x2a, 0x0410 },
-	{ 0x2c, 0xbb80 },
-	{ 0x2e, 0xbb80 },
-	{ 0x32, 0xbb80 },
-	{ 0x34, 0x2000 },
-	{ 0x4c, 0xf83e },
-	{ 0x4e, 0xffff },
-	{ 0x50, 0x0000 },
-	{ 0x52, 0x0000 },
-	{ 0x56, 0xf83e },
-	{ 0x58, 0x0008 },
-	{ 0x5c, 0x0000 },
-	{ 0x60, 0xb032 },
-	{ 0x62, 0x3e00 },
-	{ 0x64, 0x0000 },
-	{ 0x76, 0x0006 },
-	{ 0x78, 0x0001 },
-	{ 0x7a, 0x0000 },
-};
+अटल स्थिर काष्ठा reg_शेष wm9712_reg_शेषs[] = अणु
+	अणु 0x02, 0x8000 पूर्ण,
+	अणु 0x04, 0x8000 पूर्ण,
+	अणु 0x06, 0x8000 पूर्ण,
+	अणु 0x08, 0x0f0f पूर्ण,
+	अणु 0x0a, 0xaaa0 पूर्ण,
+	अणु 0x0c, 0xc008 पूर्ण,
+	अणु 0x0e, 0x6808 पूर्ण,
+	अणु 0x10, 0xe808 पूर्ण,
+	अणु 0x12, 0xaaa0 पूर्ण,
+	अणु 0x14, 0xad00 पूर्ण,
+	अणु 0x16, 0x8000 पूर्ण,
+	अणु 0x18, 0xe808 पूर्ण,
+	अणु 0x1a, 0x3000 पूर्ण,
+	अणु 0x1c, 0x8000 पूर्ण,
+	अणु 0x20, 0x0000 पूर्ण,
+	अणु 0x22, 0x0000 पूर्ण,
+	अणु 0x26, 0x000f पूर्ण,
+	अणु 0x28, 0x0605 पूर्ण,
+	अणु 0x2a, 0x0410 पूर्ण,
+	अणु 0x2c, 0xbb80 पूर्ण,
+	अणु 0x2e, 0xbb80 पूर्ण,
+	अणु 0x32, 0xbb80 पूर्ण,
+	अणु 0x34, 0x2000 पूर्ण,
+	अणु 0x4c, 0xf83e पूर्ण,
+	अणु 0x4e, 0xffff पूर्ण,
+	अणु 0x50, 0x0000 पूर्ण,
+	अणु 0x52, 0x0000 पूर्ण,
+	अणु 0x56, 0xf83e पूर्ण,
+	अणु 0x58, 0x0008 पूर्ण,
+	अणु 0x5c, 0x0000 पूर्ण,
+	अणु 0x60, 0xb032 पूर्ण,
+	अणु 0x62, 0x3e00 पूर्ण,
+	अणु 0x64, 0x0000 पूर्ण,
+	अणु 0x76, 0x0006 पूर्ण,
+	अणु 0x78, 0x0001 पूर्ण,
+	अणु 0x7a, 0x0000 पूर्ण,
+पूर्ण;
 
-static const struct regmap_config wm9712_regmap_config = {
+अटल स्थिर काष्ठा regmap_config wm9712_regmap_config = अणु
 	.reg_bits = 16,
 	.reg_stride = 2,
 	.val_bits = 16,
-	.max_register = 0x7e,
+	.max_रेजिस्टर = 0x7e,
 	.cache_type = REGCACHE_RBTREE,
 
-	.reg_defaults = wm9712_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(wm9712_reg_defaults),
-	.volatile_reg = wm9712_volatile_reg,
-	.readable_reg = wm97xx_readable_reg,
-	.writeable_reg = wm97xx_writeable_reg,
-};
+	.reg_शेषs = wm9712_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(wm9712_reg_शेषs),
+	.अस्थिर_reg = wm9712_अस्थिर_reg,
+	.पढ़ोable_reg = wm97xx_पढ़ोable_reg,
+	.ग_लिखोable_reg = wm97xx_ग_लिखोable_reg,
+पूर्ण;
 
-static struct mfd_cell wm9712_cells[] = {
-	{ .name = "wm9712-codec", },
-	{ .name = "wm97xx-ts", },
-};
+अटल काष्ठा mfd_cell wm9712_cells[] = अणु
+	अणु .name = "wm9712-codec", पूर्ण,
+	अणु .name = "wm97xx-ts", पूर्ण,
+पूर्ण;
 
-static const struct reg_default wm9713_reg_defaults[] = {
-	{ 0x02, 0x8080 },	/* Speaker Output Volume */
-	{ 0x04, 0x8080 },	/* Headphone Output Volume */
-	{ 0x06, 0x8080 },	/* Out3/OUT4 Volume */
-	{ 0x08, 0xc880 },	/* Mono Volume */
-	{ 0x0a, 0xe808 },	/* LINEIN Volume */
-	{ 0x0c, 0xe808 },	/* DAC PGA Volume */
-	{ 0x0e, 0x0808 },	/* MIC PGA Volume */
-	{ 0x10, 0x00da },	/* MIC Routing Control */
-	{ 0x12, 0x8000 },	/* Record PGA Volume */
-	{ 0x14, 0xd600 },	/* Record Routing */
-	{ 0x16, 0xaaa0 },	/* PCBEEP Volume */
-	{ 0x18, 0xaaa0 },	/* VxDAC Volume */
-	{ 0x1a, 0xaaa0 },	/* AUXDAC Volume */
-	{ 0x1c, 0x0000 },	/* Output PGA Mux */
-	{ 0x1e, 0x0000 },	/* DAC 3D control */
-	{ 0x20, 0x0f0f },	/* DAC Tone Control*/
-	{ 0x22, 0x0040 },	/* MIC Input Select & Bias */
-	{ 0x24, 0x0000 },	/* Output Volume Mapping & Jack */
-	{ 0x26, 0x7f00 },	/* Powerdown Ctrl/Stat*/
-	{ 0x28, 0x0405 },	/* Extended Audio ID */
-	{ 0x2a, 0x0410 },	/* Extended Audio Start/Ctrl */
-	{ 0x2c, 0xbb80 },	/* Audio DACs Sample Rate */
-	{ 0x2e, 0xbb80 },	/* AUXDAC Sample Rate */
-	{ 0x32, 0xbb80 },	/* Audio ADCs Sample Rate */
-	{ 0x36, 0x4523 },	/* PCM codec control */
-	{ 0x3a, 0x2000 },	/* SPDIF control */
-	{ 0x3c, 0xfdff },	/* Powerdown 1 */
-	{ 0x3e, 0xffff },	/* Powerdown 2 */
-	{ 0x40, 0x0000 },	/* General Purpose */
-	{ 0x42, 0x0000 },	/* Fast Power-Up Control */
-	{ 0x44, 0x0080 },	/* MCLK/PLL Control */
-	{ 0x46, 0x0000 },	/* MCLK/PLL Control */
+अटल स्थिर काष्ठा reg_शेष wm9713_reg_शेषs[] = अणु
+	अणु 0x02, 0x8080 पूर्ण,	/* Speaker Output Volume */
+	अणु 0x04, 0x8080 पूर्ण,	/* Headphone Output Volume */
+	अणु 0x06, 0x8080 पूर्ण,	/* Out3/OUT4 Volume */
+	अणु 0x08, 0xc880 पूर्ण,	/* Mono Volume */
+	अणु 0x0a, 0xe808 पूर्ण,	/* LINEIN Volume */
+	अणु 0x0c, 0xe808 पूर्ण,	/* DAC PGA Volume */
+	अणु 0x0e, 0x0808 पूर्ण,	/* MIC PGA Volume */
+	अणु 0x10, 0x00da पूर्ण,	/* MIC Routing Control */
+	अणु 0x12, 0x8000 पूर्ण,	/* Record PGA Volume */
+	अणु 0x14, 0xd600 पूर्ण,	/* Record Routing */
+	अणु 0x16, 0xaaa0 पूर्ण,	/* PCBEEP Volume */
+	अणु 0x18, 0xaaa0 पूर्ण,	/* VxDAC Volume */
+	अणु 0x1a, 0xaaa0 पूर्ण,	/* AUXDAC Volume */
+	अणु 0x1c, 0x0000 पूर्ण,	/* Output PGA Mux */
+	अणु 0x1e, 0x0000 पूर्ण,	/* DAC 3D control */
+	अणु 0x20, 0x0f0f पूर्ण,	/* DAC Tone Control*/
+	अणु 0x22, 0x0040 पूर्ण,	/* MIC Input Select & Bias */
+	अणु 0x24, 0x0000 पूर्ण,	/* Output Volume Mapping & Jack */
+	अणु 0x26, 0x7f00 पूर्ण,	/* Powerकरोwn Ctrl/Stat*/
+	अणु 0x28, 0x0405 पूर्ण,	/* Extended Audio ID */
+	अणु 0x2a, 0x0410 पूर्ण,	/* Extended Audio Start/Ctrl */
+	अणु 0x2c, 0xbb80 पूर्ण,	/* Audio DACs Sample Rate */
+	अणु 0x2e, 0xbb80 पूर्ण,	/* AUXDAC Sample Rate */
+	अणु 0x32, 0xbb80 पूर्ण,	/* Audio ADCs Sample Rate */
+	अणु 0x36, 0x4523 पूर्ण,	/* PCM codec control */
+	अणु 0x3a, 0x2000 पूर्ण,	/* SPDIF control */
+	अणु 0x3c, 0xfdff पूर्ण,	/* Powerकरोwn 1 */
+	अणु 0x3e, 0xffff पूर्ण,	/* Powerकरोwn 2 */
+	अणु 0x40, 0x0000 पूर्ण,	/* General Purpose */
+	अणु 0x42, 0x0000 पूर्ण,	/* Fast Power-Up Control */
+	अणु 0x44, 0x0080 पूर्ण,	/* MCLK/PLL Control */
+	अणु 0x46, 0x0000 पूर्ण,	/* MCLK/PLL Control */
 
-	{ 0x4c, 0xfffe },	/* GPIO Pin Configuration */
-	{ 0x4e, 0xffff },	/* GPIO Pin Polarity / Type */
-	{ 0x50, 0x0000 },	/* GPIO Pin Sticky */
-	{ 0x52, 0x0000 },	/* GPIO Pin Wake-Up */
+	अणु 0x4c, 0xfffe पूर्ण,	/* GPIO Pin Configuration */
+	अणु 0x4e, 0xffff पूर्ण,	/* GPIO Pin Polarity / Type */
+	अणु 0x50, 0x0000 पूर्ण,	/* GPIO Pin Sticky */
+	अणु 0x52, 0x0000 पूर्ण,	/* GPIO Pin Wake-Up */
 				/* GPIO Pin Status */
-	{ 0x56, 0xfffe },	/* GPIO Pin Sharing */
-	{ 0x58, 0x4000 },	/* GPIO PullUp/PullDown */
-	{ 0x5a, 0x0000 },	/* Additional Functions 1 */
-	{ 0x5c, 0x0000 },	/* Additional Functions 2 */
-	{ 0x60, 0xb032 },	/* ALC Control */
-	{ 0x62, 0x3e00 },	/* ALC / Noise Gate Control */
-	{ 0x64, 0x0000 },	/* AUXDAC input control */
-	{ 0x74, 0x0000 },	/* Digitiser Reg 1 */
-	{ 0x76, 0x0006 },	/* Digitiser Reg 2 */
-	{ 0x78, 0x0001 },	/* Digitiser Reg 3 */
-	{ 0x7a, 0x0000 },	/* Digitiser Read Back */
-};
+	अणु 0x56, 0xfffe पूर्ण,	/* GPIO Pin Sharing */
+	अणु 0x58, 0x4000 पूर्ण,	/* GPIO PullUp/PullDown */
+	अणु 0x5a, 0x0000 पूर्ण,	/* Additional Functions 1 */
+	अणु 0x5c, 0x0000 पूर्ण,	/* Additional Functions 2 */
+	अणु 0x60, 0xb032 पूर्ण,	/* ALC Control */
+	अणु 0x62, 0x3e00 पूर्ण,	/* ALC / Noise Gate Control */
+	अणु 0x64, 0x0000 पूर्ण,	/* AUXDAC input control */
+	अणु 0x74, 0x0000 पूर्ण,	/* Digitiser Reg 1 */
+	अणु 0x76, 0x0006 पूर्ण,	/* Digitiser Reg 2 */
+	अणु 0x78, 0x0001 पूर्ण,	/* Digitiser Reg 3 */
+	अणु 0x7a, 0x0000 पूर्ण,	/* Digitiser Read Back */
+पूर्ण;
 
-static const struct regmap_config wm9713_regmap_config = {
+अटल स्थिर काष्ठा regmap_config wm9713_regmap_config = अणु
 	.reg_bits = 16,
 	.reg_stride = 2,
 	.val_bits = 16,
-	.max_register = 0x7e,
+	.max_रेजिस्टर = 0x7e,
 	.cache_type = REGCACHE_RBTREE,
 
-	.reg_defaults = wm9713_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(wm9713_reg_defaults),
-	.volatile_reg = regmap_ac97_default_volatile,
-	.readable_reg = wm97xx_readable_reg,
-	.writeable_reg = wm97xx_writeable_reg,
-};
+	.reg_शेषs = wm9713_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(wm9713_reg_शेषs),
+	.अस्थिर_reg = regmap_ac97_शेष_अस्थिर,
+	.पढ़ोable_reg = wm97xx_पढ़ोable_reg,
+	.ग_लिखोable_reg = wm97xx_ग_लिखोable_reg,
+पूर्ण;
 
-static struct mfd_cell wm9713_cells[] = {
-	{ .name = "wm9713-codec", },
-	{ .name = "wm97xx-ts", },
-};
+अटल काष्ठा mfd_cell wm9713_cells[] = अणु
+	अणु .name = "wm9713-codec", पूर्ण,
+	अणु .name = "wm97xx-ts", पूर्ण,
+पूर्ण;
 
-static int wm97xx_ac97_probe(struct ac97_codec_device *adev)
-{
-	struct wm97xx_priv *wm97xx;
-	const struct regmap_config *config;
-	struct wm97xx_platform_data *codec_pdata;
-	struct mfd_cell *cells;
-	int ret = -ENODEV, nb_cells, i;
-	struct wm97xx_pdata *pdata = snd_ac97_codec_get_platdata(adev);
+अटल पूर्णांक wm97xx_ac97_probe(काष्ठा ac97_codec_device *adev)
+अणु
+	काष्ठा wm97xx_priv *wm97xx;
+	स्थिर काष्ठा regmap_config *config;
+	काष्ठा wm97xx_platक्रमm_data *codec_pdata;
+	काष्ठा mfd_cell *cells;
+	पूर्णांक ret = -ENODEV, nb_cells, i;
+	काष्ठा wm97xx_pdata *pdata = snd_ac97_codec_get_platdata(adev);
 
 	wm97xx = devm_kzalloc(ac97_codec_dev2dev(adev),
-			      sizeof(*wm97xx), GFP_KERNEL);
-	if (!wm97xx)
-		return -ENOMEM;
+			      माप(*wm97xx), GFP_KERNEL);
+	अगर (!wm97xx)
+		वापस -ENOMEM;
 
 	wm97xx->dev = ac97_codec_dev2dev(adev);
 	wm97xx->ac97 = snd_ac97_compat_alloc(adev);
-	if (IS_ERR(wm97xx->ac97))
-		return PTR_ERR(wm97xx->ac97);
+	अगर (IS_ERR(wm97xx->ac97))
+		वापस PTR_ERR(wm97xx->ac97);
 
 
 	ac97_set_drvdata(adev, wm97xx);
 	dev_info(wm97xx->dev, "wm97xx core found, id=0x%x\n",
-		 adev->vendor_id);
+		 adev->venकरोr_id);
 
 	codec_pdata = &wm97xx->codec_pdata;
 	codec_pdata->ac97 = wm97xx->ac97;
-	codec_pdata->batt_pdata = pdata ? pdata->batt_pdata : NULL;
+	codec_pdata->batt_pdata = pdata ? pdata->batt_pdata : शून्य;
 
-	switch (adev->vendor_id) {
-	case WM9705_VENDOR_ID:
+	चयन (adev->venकरोr_id) अणु
+	हाल WM9705_VENDOR_ID:
 		config = &wm9705_regmap_config;
 		cells = wm9705_cells;
 		nb_cells = ARRAY_SIZE(wm9705_cells);
-		break;
-	case WM9712_VENDOR_ID:
+		अवरोध;
+	हाल WM9712_VENDOR_ID:
 		config = &wm9712_regmap_config;
 		cells = wm9712_cells;
 		nb_cells = ARRAY_SIZE(wm9712_cells);
-		break;
-	case WM9713_VENDOR_ID:
+		अवरोध;
+	हाल WM9713_VENDOR_ID:
 		config = &wm9713_regmap_config;
 		cells = wm9713_cells;
 		nb_cells = ARRAY_SIZE(wm9713_cells);
-		break;
-	default:
-		goto err_free_compat;
-	}
+		अवरोध;
+	शेष:
+		जाओ err_मुक्त_compat;
+	पूर्ण
 
-	for (i = 0; i < nb_cells; i++) {
-		cells[i].platform_data = codec_pdata;
-		cells[i].pdata_size = sizeof(*codec_pdata);
-	}
+	क्रम (i = 0; i < nb_cells; i++) अणु
+		cells[i].platक्रमm_data = codec_pdata;
+		cells[i].pdata_size = माप(*codec_pdata);
+	पूर्ण
 
 	codec_pdata->regmap = devm_regmap_init_ac97(wm97xx->ac97, config);
-	if (IS_ERR(codec_pdata->regmap)) {
+	अगर (IS_ERR(codec_pdata->regmap)) अणु
 		ret = PTR_ERR(codec_pdata->regmap);
-		goto err_free_compat;
-	}
+		जाओ err_मुक्त_compat;
+	पूर्ण
 
 	ret = devm_mfd_add_devices(wm97xx->dev, PLATFORM_DEVID_NONE,
-				   cells, nb_cells, NULL, 0, NULL);
-	if (ret)
-		goto err_free_compat;
+				   cells, nb_cells, शून्य, 0, शून्य);
+	अगर (ret)
+		जाओ err_मुक्त_compat;
 
-	return ret;
+	वापस ret;
 
-err_free_compat:
+err_मुक्त_compat:
 	snd_ac97_compat_release(wm97xx->ac97);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wm97xx_ac97_remove(struct ac97_codec_device *adev)
-{
-	struct wm97xx_priv *wm97xx = ac97_get_drvdata(adev);
+अटल पूर्णांक wm97xx_ac97_हटाओ(काष्ठा ac97_codec_device *adev)
+अणु
+	काष्ठा wm97xx_priv *wm97xx = ac97_get_drvdata(adev);
 
 	snd_ac97_compat_release(wm97xx->ac97);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ac97_id wm97xx_ac97_ids[] = {
-	{ .id = WM9705_VENDOR_ID, .mask = WM97xx_VENDOR_ID_MASK },
-	{ .id = WM9712_VENDOR_ID, .mask = WM97xx_VENDOR_ID_MASK },
-	{ .id = WM9713_VENDOR_ID, .mask = WM97xx_VENDOR_ID_MASK },
-	{ }
-};
+अटल स्थिर काष्ठा ac97_id wm97xx_ac97_ids[] = अणु
+	अणु .id = WM9705_VENDOR_ID, .mask = WM97xx_VENDOR_ID_MASK पूर्ण,
+	अणु .id = WM9712_VENDOR_ID, .mask = WM97xx_VENDOR_ID_MASK पूर्ण,
+	अणु .id = WM9713_VENDOR_ID, .mask = WM97xx_VENDOR_ID_MASK पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ac97_codec_driver wm97xx_ac97_driver = {
-	.driver = {
+अटल काष्ठा ac97_codec_driver wm97xx_ac97_driver = अणु
+	.driver = अणु
 		.name = "wm97xx-core",
-	},
+	पूर्ण,
 	.probe		= wm97xx_ac97_probe,
-	.remove		= wm97xx_ac97_remove,
+	.हटाओ		= wm97xx_ac97_हटाओ,
 	.id_table	= wm97xx_ac97_ids,
-};
+पूर्ण;
 
-static int __init wm97xx_module_init(void)
-{
-	return snd_ac97_codec_driver_register(&wm97xx_ac97_driver);
-}
+अटल पूर्णांक __init wm97xx_module_init(व्योम)
+अणु
+	वापस snd_ac97_codec_driver_रेजिस्टर(&wm97xx_ac97_driver);
+पूर्ण
 module_init(wm97xx_module_init);
 
-static void __exit wm97xx_module_exit(void)
-{
-	snd_ac97_codec_driver_unregister(&wm97xx_ac97_driver);
-}
-module_exit(wm97xx_module_exit);
+अटल व्योम __निकास wm97xx_module_निकास(व्योम)
+अणु
+	snd_ac97_codec_driver_unरेजिस्टर(&wm97xx_ac97_driver);
+पूर्ण
+module_निकास(wm97xx_module_निकास);
 
 MODULE_DESCRIPTION("WM9712, WM9713 core driver");
 MODULE_AUTHOR("Robert Jarzmik <robert.jarzmik@free.fr>");

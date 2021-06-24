@@ -1,643 +1,644 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2017 - 2018 Covalent IO, Inc. http://covalent.io */
 
-#include <linux/bpf.h>
-#include <linux/btf_ids.h>
-#include <linux/filter.h>
-#include <linux/errno.h>
-#include <linux/file.h>
-#include <linux/net.h>
-#include <linux/workqueue.h>
-#include <linux/skmsg.h>
-#include <linux/list.h>
-#include <linux/jhash.h>
-#include <linux/sock_diag.h>
-#include <net/udp.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/btf_ids.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/file.h>
+#समावेश <linux/net.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/skmsg.h>
+#समावेश <linux/list.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/sock_diag.h>
+#समावेश <net/udp.h>
 
-struct bpf_stab {
-	struct bpf_map map;
-	struct sock **sks;
-	struct sk_psock_progs progs;
+काष्ठा bpf_stab अणु
+	काष्ठा bpf_map map;
+	काष्ठा sock **sks;
+	काष्ठा sk_psock_progs progs;
 	raw_spinlock_t lock;
-};
+पूर्ण;
 
-#define SOCK_CREATE_FLAG_MASK				\
+#घोषणा SOCK_CREATE_FLAG_MASK				\
 	(BPF_F_NUMA_NODE | BPF_F_RDONLY | BPF_F_WRONLY)
 
-static int sock_map_prog_update(struct bpf_map *map, struct bpf_prog *prog,
-				struct bpf_prog *old, u32 which);
-static struct sk_psock_progs *sock_map_progs(struct bpf_map *map);
+अटल पूर्णांक sock_map_prog_update(काष्ठा bpf_map *map, काष्ठा bpf_prog *prog,
+				काष्ठा bpf_prog *old, u32 which);
+अटल काष्ठा sk_psock_progs *sock_map_progs(काष्ठा bpf_map *map);
 
-static struct bpf_map *sock_map_alloc(union bpf_attr *attr)
-{
-	struct bpf_stab *stab;
+अटल काष्ठा bpf_map *sock_map_alloc(जोड़ bpf_attr *attr)
+अणु
+	काष्ठा bpf_stab *stab;
 
-	if (!capable(CAP_NET_ADMIN))
-		return ERR_PTR(-EPERM);
-	if (attr->max_entries == 0 ||
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस ERR_PTR(-EPERM);
+	अगर (attr->max_entries == 0 ||
 	    attr->key_size    != 4 ||
-	    (attr->value_size != sizeof(u32) &&
-	     attr->value_size != sizeof(u64)) ||
+	    (attr->value_size != माप(u32) &&
+	     attr->value_size != माप(u64)) ||
 	    attr->map_flags & ~SOCK_CREATE_FLAG_MASK)
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	stab = kzalloc(sizeof(*stab), GFP_USER | __GFP_ACCOUNT);
-	if (!stab)
-		return ERR_PTR(-ENOMEM);
+	stab = kzalloc(माप(*stab), GFP_USER | __GFP_ACCOUNT);
+	अगर (!stab)
+		वापस ERR_PTR(-ENOMEM);
 
 	bpf_map_init_from_attr(&stab->map, attr);
 	raw_spin_lock_init(&stab->lock);
 
 	stab->sks = bpf_map_area_alloc(stab->map.max_entries *
-				       sizeof(struct sock *),
+				       माप(काष्ठा sock *),
 				       stab->map.numa_node);
-	if (!stab->sks) {
-		kfree(stab);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!stab->sks) अणु
+		kमुक्त(stab);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	return &stab->map;
-}
+	वापस &stab->map;
+पूर्ण
 
-int sock_map_get_from_fd(const union bpf_attr *attr, struct bpf_prog *prog)
-{
+पूर्णांक sock_map_get_from_fd(स्थिर जोड़ bpf_attr *attr, काष्ठा bpf_prog *prog)
+अणु
 	u32 ufd = attr->target_fd;
-	struct bpf_map *map;
-	struct fd f;
-	int ret;
+	काष्ठा bpf_map *map;
+	काष्ठा fd f;
+	पूर्णांक ret;
 
-	if (attr->attach_flags || attr->replace_bpf_fd)
-		return -EINVAL;
+	अगर (attr->attach_flags || attr->replace_bpf_fd)
+		वापस -EINVAL;
 
 	f = fdget(ufd);
 	map = __bpf_map_get(f);
-	if (IS_ERR(map))
-		return PTR_ERR(map);
-	ret = sock_map_prog_update(map, prog, NULL, attr->attach_type);
+	अगर (IS_ERR(map))
+		वापस PTR_ERR(map);
+	ret = sock_map_prog_update(map, prog, शून्य, attr->attach_type);
 	fdput(f);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int sock_map_prog_detach(const union bpf_attr *attr, enum bpf_prog_type ptype)
-{
+पूर्णांक sock_map_prog_detach(स्थिर जोड़ bpf_attr *attr, क्रमागत bpf_prog_type ptype)
+अणु
 	u32 ufd = attr->target_fd;
-	struct bpf_prog *prog;
-	struct bpf_map *map;
-	struct fd f;
-	int ret;
+	काष्ठा bpf_prog *prog;
+	काष्ठा bpf_map *map;
+	काष्ठा fd f;
+	पूर्णांक ret;
 
-	if (attr->attach_flags || attr->replace_bpf_fd)
-		return -EINVAL;
+	अगर (attr->attach_flags || attr->replace_bpf_fd)
+		वापस -EINVAL;
 
 	f = fdget(ufd);
 	map = __bpf_map_get(f);
-	if (IS_ERR(map))
-		return PTR_ERR(map);
+	अगर (IS_ERR(map))
+		वापस PTR_ERR(map);
 
 	prog = bpf_prog_get(attr->attach_bpf_fd);
-	if (IS_ERR(prog)) {
+	अगर (IS_ERR(prog)) अणु
 		ret = PTR_ERR(prog);
-		goto put_map;
-	}
+		जाओ put_map;
+	पूर्ण
 
-	if (prog->type != ptype) {
+	अगर (prog->type != ptype) अणु
 		ret = -EINVAL;
-		goto put_prog;
-	}
+		जाओ put_prog;
+	पूर्ण
 
-	ret = sock_map_prog_update(map, NULL, prog, attr->attach_type);
+	ret = sock_map_prog_update(map, शून्य, prog, attr->attach_type);
 put_prog:
 	bpf_prog_put(prog);
 put_map:
 	fdput(f);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sock_map_sk_acquire(struct sock *sk)
+अटल व्योम sock_map_sk_acquire(काष्ठा sock *sk)
 	__acquires(&sk->sk_lock.slock)
-{
+अणु
 	lock_sock(sk);
 	preempt_disable();
-	rcu_read_lock();
-}
+	rcu_पढ़ो_lock();
+पूर्ण
 
-static void sock_map_sk_release(struct sock *sk)
+अटल व्योम sock_map_sk_release(काष्ठा sock *sk)
 	__releases(&sk->sk_lock.slock)
-{
-	rcu_read_unlock();
+अणु
+	rcu_पढ़ो_unlock();
 	preempt_enable();
 	release_sock(sk);
-}
+पूर्ण
 
-static void sock_map_add_link(struct sk_psock *psock,
-			      struct sk_psock_link *link,
-			      struct bpf_map *map, void *link_raw)
-{
+अटल व्योम sock_map_add_link(काष्ठा sk_psock *psock,
+			      काष्ठा sk_psock_link *link,
+			      काष्ठा bpf_map *map, व्योम *link_raw)
+अणु
 	link->link_raw = link_raw;
 	link->map = map;
 	spin_lock_bh(&psock->link_lock);
 	list_add_tail(&link->list, &psock->link);
 	spin_unlock_bh(&psock->link_lock);
-}
+पूर्ण
 
-static void sock_map_del_link(struct sock *sk,
-			      struct sk_psock *psock, void *link_raw)
-{
+अटल व्योम sock_map_del_link(काष्ठा sock *sk,
+			      काष्ठा sk_psock *psock, व्योम *link_raw)
+अणु
 	bool strp_stop = false, verdict_stop = false;
-	struct sk_psock_link *link, *tmp;
+	काष्ठा sk_psock_link *link, *पंचांगp;
 
 	spin_lock_bh(&psock->link_lock);
-	list_for_each_entry_safe(link, tmp, &psock->link, list) {
-		if (link->link_raw == link_raw) {
-			struct bpf_map *map = link->map;
-			struct bpf_stab *stab = container_of(map, struct bpf_stab,
+	list_क्रम_each_entry_safe(link, पंचांगp, &psock->link, list) अणु
+		अगर (link->link_raw == link_raw) अणु
+			काष्ठा bpf_map *map = link->map;
+			काष्ठा bpf_stab *stab = container_of(map, काष्ठा bpf_stab,
 							     map);
-			if (psock->saved_data_ready && stab->progs.stream_parser)
+			अगर (psock->saved_data_पढ़ोy && stab->progs.stream_parser)
 				strp_stop = true;
-			if (psock->saved_data_ready && stab->progs.stream_verdict)
+			अगर (psock->saved_data_पढ़ोy && stab->progs.stream_verdict)
 				verdict_stop = true;
-			if (psock->saved_data_ready && stab->progs.skb_verdict)
+			अगर (psock->saved_data_पढ़ोy && stab->progs.skb_verdict)
 				verdict_stop = true;
 			list_del(&link->list);
-			sk_psock_free_link(link);
-		}
-	}
+			sk_psock_मुक्त_link(link);
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&psock->link_lock);
-	if (strp_stop || verdict_stop) {
-		write_lock_bh(&sk->sk_callback_lock);
-		if (strp_stop)
+	अगर (strp_stop || verdict_stop) अणु
+		ग_लिखो_lock_bh(&sk->sk_callback_lock);
+		अगर (strp_stop)
 			sk_psock_stop_strp(sk, psock);
-		else
+		अन्यथा
 			sk_psock_stop_verdict(sk, psock);
-		write_unlock_bh(&sk->sk_callback_lock);
-	}
-}
+		ग_लिखो_unlock_bh(&sk->sk_callback_lock);
+	पूर्ण
+पूर्ण
 
-static void sock_map_unref(struct sock *sk, void *link_raw)
-{
-	struct sk_psock *psock = sk_psock(sk);
+अटल व्योम sock_map_unref(काष्ठा sock *sk, व्योम *link_raw)
+अणु
+	काष्ठा sk_psock *psock = sk_psock(sk);
 
-	if (likely(psock)) {
+	अगर (likely(psock)) अणु
 		sock_map_del_link(sk, psock, link_raw);
 		sk_psock_put(sk, psock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sock_map_init_proto(struct sock *sk, struct sk_psock *psock)
-{
-	if (!sk->sk_prot->psock_update_sk_prot)
-		return -EINVAL;
+अटल पूर्णांक sock_map_init_proto(काष्ठा sock *sk, काष्ठा sk_psock *psock)
+अणु
+	अगर (!sk->sk_prot->psock_update_sk_prot)
+		वापस -EINVAL;
 	psock->psock_update_sk_prot = sk->sk_prot->psock_update_sk_prot;
-	return sk->sk_prot->psock_update_sk_prot(sk, psock, false);
-}
+	वापस sk->sk_prot->psock_update_sk_prot(sk, psock, false);
+पूर्ण
 
-static struct sk_psock *sock_map_psock_get_checked(struct sock *sk)
-{
-	struct sk_psock *psock;
+अटल काष्ठा sk_psock *sock_map_psock_get_checked(काष्ठा sock *sk)
+अणु
+	काष्ठा sk_psock *psock;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	psock = sk_psock(sk);
-	if (psock) {
-		if (sk->sk_prot->close != sock_map_close) {
+	अगर (psock) अणु
+		अगर (sk->sk_prot->बंद != sock_map_बंद) अणु
 			psock = ERR_PTR(-EBUSY);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!refcount_inc_not_zero(&psock->refcnt))
+		अगर (!refcount_inc_not_zero(&psock->refcnt))
 			psock = ERR_PTR(-EBUSY);
-	}
+	पूर्ण
 out:
-	rcu_read_unlock();
-	return psock;
-}
+	rcu_पढ़ो_unlock();
+	वापस psock;
+पूर्ण
 
-static bool sock_map_redirect_allowed(const struct sock *sk);
+अटल bool sock_map_redirect_allowed(स्थिर काष्ठा sock *sk);
 
-static int sock_map_link(struct bpf_map *map, struct sock *sk)
-{
-	struct sk_psock_progs *progs = sock_map_progs(map);
-	struct bpf_prog *stream_verdict = NULL;
-	struct bpf_prog *stream_parser = NULL;
-	struct bpf_prog *skb_verdict = NULL;
-	struct bpf_prog *msg_parser = NULL;
-	struct sk_psock *psock;
-	int ret;
+अटल पूर्णांक sock_map_link(काष्ठा bpf_map *map, काष्ठा sock *sk)
+अणु
+	काष्ठा sk_psock_progs *progs = sock_map_progs(map);
+	काष्ठा bpf_prog *stream_verdict = शून्य;
+	काष्ठा bpf_prog *stream_parser = शून्य;
+	काष्ठा bpf_prog *skb_verdict = शून्य;
+	काष्ठा bpf_prog *msg_parser = शून्य;
+	काष्ठा sk_psock *psock;
+	पूर्णांक ret;
 
-	/* Only sockets we can redirect into/from in BPF need to hold
-	 * refs to parser/verdict progs and have their sk_data_ready
-	 * and sk_write_space callbacks overridden.
+	/* Only sockets we can redirect पूर्णांकo/from in BPF need to hold
+	 * refs to parser/verdict progs and have their sk_data_पढ़ोy
+	 * and sk_ग_लिखो_space callbacks overridden.
 	 */
-	if (!sock_map_redirect_allowed(sk))
-		goto no_progs;
+	अगर (!sock_map_redirect_allowed(sk))
+		जाओ no_progs;
 
 	stream_verdict = READ_ONCE(progs->stream_verdict);
-	if (stream_verdict) {
+	अगर (stream_verdict) अणु
 		stream_verdict = bpf_prog_inc_not_zero(stream_verdict);
-		if (IS_ERR(stream_verdict))
-			return PTR_ERR(stream_verdict);
-	}
+		अगर (IS_ERR(stream_verdict))
+			वापस PTR_ERR(stream_verdict);
+	पूर्ण
 
 	stream_parser = READ_ONCE(progs->stream_parser);
-	if (stream_parser) {
+	अगर (stream_parser) अणु
 		stream_parser = bpf_prog_inc_not_zero(stream_parser);
-		if (IS_ERR(stream_parser)) {
+		अगर (IS_ERR(stream_parser)) अणु
 			ret = PTR_ERR(stream_parser);
-			goto out_put_stream_verdict;
-		}
-	}
+			जाओ out_put_stream_verdict;
+		पूर्ण
+	पूर्ण
 
 	msg_parser = READ_ONCE(progs->msg_parser);
-	if (msg_parser) {
+	अगर (msg_parser) अणु
 		msg_parser = bpf_prog_inc_not_zero(msg_parser);
-		if (IS_ERR(msg_parser)) {
+		अगर (IS_ERR(msg_parser)) अणु
 			ret = PTR_ERR(msg_parser);
-			goto out_put_stream_parser;
-		}
-	}
+			जाओ out_put_stream_parser;
+		पूर्ण
+	पूर्ण
 
 	skb_verdict = READ_ONCE(progs->skb_verdict);
-	if (skb_verdict) {
+	अगर (skb_verdict) अणु
 		skb_verdict = bpf_prog_inc_not_zero(skb_verdict);
-		if (IS_ERR(skb_verdict)) {
+		अगर (IS_ERR(skb_verdict)) अणु
 			ret = PTR_ERR(skb_verdict);
-			goto out_put_msg_parser;
-		}
-	}
+			जाओ out_put_msg_parser;
+		पूर्ण
+	पूर्ण
 
 no_progs:
 	psock = sock_map_psock_get_checked(sk);
-	if (IS_ERR(psock)) {
+	अगर (IS_ERR(psock)) अणु
 		ret = PTR_ERR(psock);
-		goto out_progs;
-	}
+		जाओ out_progs;
+	पूर्ण
 
-	if (psock) {
-		if ((msg_parser && READ_ONCE(psock->progs.msg_parser)) ||
+	अगर (psock) अणु
+		अगर ((msg_parser && READ_ONCE(psock->progs.msg_parser)) ||
 		    (stream_parser  && READ_ONCE(psock->progs.stream_parser)) ||
 		    (skb_verdict && READ_ONCE(psock->progs.skb_verdict)) ||
 		    (skb_verdict && READ_ONCE(psock->progs.stream_verdict)) ||
 		    (stream_verdict && READ_ONCE(psock->progs.skb_verdict)) ||
-		    (stream_verdict && READ_ONCE(psock->progs.stream_verdict))) {
+		    (stream_verdict && READ_ONCE(psock->progs.stream_verdict))) अणु
 			sk_psock_put(sk, psock);
 			ret = -EBUSY;
-			goto out_progs;
-		}
-	} else {
+			जाओ out_progs;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		psock = sk_psock_init(sk, map->numa_node);
-		if (IS_ERR(psock)) {
+		अगर (IS_ERR(psock)) अणु
 			ret = PTR_ERR(psock);
-			goto out_progs;
-		}
-	}
+			जाओ out_progs;
+		पूर्ण
+	पूर्ण
 
-	if (msg_parser)
+	अगर (msg_parser)
 		psock_set_prog(&psock->progs.msg_parser, msg_parser);
 
 	ret = sock_map_init_proto(sk, psock);
-	if (ret < 0)
-		goto out_drop;
+	अगर (ret < 0)
+		जाओ out_drop;
 
-	write_lock_bh(&sk->sk_callback_lock);
-	if (stream_parser && stream_verdict && !psock->saved_data_ready) {
+	ग_लिखो_lock_bh(&sk->sk_callback_lock);
+	अगर (stream_parser && stream_verdict && !psock->saved_data_पढ़ोy) अणु
 		ret = sk_psock_init_strp(sk, psock);
-		if (ret)
-			goto out_unlock_drop;
+		अगर (ret)
+			जाओ out_unlock_drop;
 		psock_set_prog(&psock->progs.stream_verdict, stream_verdict);
 		psock_set_prog(&psock->progs.stream_parser, stream_parser);
 		sk_psock_start_strp(sk, psock);
-	} else if (!stream_parser && stream_verdict && !psock->saved_data_ready) {
+	पूर्ण अन्यथा अगर (!stream_parser && stream_verdict && !psock->saved_data_पढ़ोy) अणु
 		psock_set_prog(&psock->progs.stream_verdict, stream_verdict);
 		sk_psock_start_verdict(sk,psock);
-	} else if (!stream_verdict && skb_verdict && !psock->saved_data_ready) {
+	पूर्ण अन्यथा अगर (!stream_verdict && skb_verdict && !psock->saved_data_पढ़ोy) अणु
 		psock_set_prog(&psock->progs.skb_verdict, skb_verdict);
 		sk_psock_start_verdict(sk, psock);
-	}
-	write_unlock_bh(&sk->sk_callback_lock);
-	return 0;
+	पूर्ण
+	ग_लिखो_unlock_bh(&sk->sk_callback_lock);
+	वापस 0;
 out_unlock_drop:
-	write_unlock_bh(&sk->sk_callback_lock);
+	ग_लिखो_unlock_bh(&sk->sk_callback_lock);
 out_drop:
 	sk_psock_put(sk, psock);
 out_progs:
-	if (skb_verdict)
+	अगर (skb_verdict)
 		bpf_prog_put(skb_verdict);
 out_put_msg_parser:
-	if (msg_parser)
+	अगर (msg_parser)
 		bpf_prog_put(msg_parser);
 out_put_stream_parser:
-	if (stream_parser)
+	अगर (stream_parser)
 		bpf_prog_put(stream_parser);
 out_put_stream_verdict:
-	if (stream_verdict)
+	अगर (stream_verdict)
 		bpf_prog_put(stream_verdict);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sock_map_free(struct bpf_map *map)
-{
-	struct bpf_stab *stab = container_of(map, struct bpf_stab, map);
-	int i;
+अटल व्योम sock_map_मुक्त(काष्ठा bpf_map *map)
+अणु
+	काष्ठा bpf_stab *stab = container_of(map, काष्ठा bpf_stab, map);
+	पूर्णांक i;
 
 	/* After the sync no updates or deletes will be in-flight so it
-	 * is safe to walk map and remove entries without risking a race
-	 * in EEXIST update case.
+	 * is safe to walk map and हटाओ entries without risking a race
+	 * in EEXIST update हाल.
 	 */
 	synchronize_rcu();
-	for (i = 0; i < stab->map.max_entries; i++) {
-		struct sock **psk = &stab->sks[i];
-		struct sock *sk;
+	क्रम (i = 0; i < stab->map.max_entries; i++) अणु
+		काष्ठा sock **psk = &stab->sks[i];
+		काष्ठा sock *sk;
 
-		sk = xchg(psk, NULL);
-		if (sk) {
+		sk = xchg(psk, शून्य);
+		अगर (sk) अणु
 			lock_sock(sk);
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			sock_map_unref(sk, psk);
-			rcu_read_unlock();
+			rcu_पढ़ो_unlock();
 			release_sock(sk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* wait for psock readers accessing its map link */
+	/* रुको क्रम psock पढ़ोers accessing its map link */
 	synchronize_rcu();
 
-	bpf_map_area_free(stab->sks);
-	kfree(stab);
-}
+	bpf_map_area_मुक्त(stab->sks);
+	kमुक्त(stab);
+पूर्ण
 
-static void sock_map_release_progs(struct bpf_map *map)
-{
-	psock_progs_drop(&container_of(map, struct bpf_stab, map)->progs);
-}
+अटल व्योम sock_map_release_progs(काष्ठा bpf_map *map)
+अणु
+	psock_progs_drop(&container_of(map, काष्ठा bpf_stab, map)->progs);
+पूर्ण
 
-static struct sock *__sock_map_lookup_elem(struct bpf_map *map, u32 key)
-{
-	struct bpf_stab *stab = container_of(map, struct bpf_stab, map);
+अटल काष्ठा sock *__sock_map_lookup_elem(काष्ठा bpf_map *map, u32 key)
+अणु
+	काष्ठा bpf_stab *stab = container_of(map, काष्ठा bpf_stab, map);
 
-	WARN_ON_ONCE(!rcu_read_lock_held());
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
 
-	if (unlikely(key >= map->max_entries))
-		return NULL;
-	return READ_ONCE(stab->sks[key]);
-}
+	अगर (unlikely(key >= map->max_entries))
+		वापस शून्य;
+	वापस READ_ONCE(stab->sks[key]);
+पूर्ण
 
-static void *sock_map_lookup(struct bpf_map *map, void *key)
-{
-	struct sock *sk;
-
-	sk = __sock_map_lookup_elem(map, *(u32 *)key);
-	if (!sk)
-		return NULL;
-	if (sk_is_refcounted(sk) && !refcount_inc_not_zero(&sk->sk_refcnt))
-		return NULL;
-	return sk;
-}
-
-static void *sock_map_lookup_sys(struct bpf_map *map, void *key)
-{
-	struct sock *sk;
-
-	if (map->value_size != sizeof(u64))
-		return ERR_PTR(-ENOSPC);
+अटल व्योम *sock_map_lookup(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	काष्ठा sock *sk;
 
 	sk = __sock_map_lookup_elem(map, *(u32 *)key);
-	if (!sk)
-		return ERR_PTR(-ENOENT);
+	अगर (!sk)
+		वापस शून्य;
+	अगर (sk_is_refcounted(sk) && !refcount_inc_not_zero(&sk->sk_refcnt))
+		वापस शून्य;
+	वापस sk;
+पूर्ण
+
+अटल व्योम *sock_map_lookup_sys(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	काष्ठा sock *sk;
+
+	अगर (map->value_size != माप(u64))
+		वापस ERR_PTR(-ENOSPC);
+
+	sk = __sock_map_lookup_elem(map, *(u32 *)key);
+	अगर (!sk)
+		वापस ERR_PTR(-ENOENT);
 
 	__sock_gen_cookie(sk);
-	return &sk->sk_cookie;
-}
+	वापस &sk->sk_cookie;
+पूर्ण
 
-static int __sock_map_delete(struct bpf_stab *stab, struct sock *sk_test,
-			     struct sock **psk)
-{
-	struct sock *sk;
-	int err = 0;
+अटल पूर्णांक __sock_map_delete(काष्ठा bpf_stab *stab, काष्ठा sock *sk_test,
+			     काष्ठा sock **psk)
+अणु
+	काष्ठा sock *sk;
+	पूर्णांक err = 0;
 
 	raw_spin_lock_bh(&stab->lock);
 	sk = *psk;
-	if (!sk_test || sk_test == sk)
-		sk = xchg(psk, NULL);
+	अगर (!sk_test || sk_test == sk)
+		sk = xchg(psk, शून्य);
 
-	if (likely(sk))
+	अगर (likely(sk))
 		sock_map_unref(sk, psk);
-	else
+	अन्यथा
 		err = -EINVAL;
 
 	raw_spin_unlock_bh(&stab->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void sock_map_delete_from_link(struct bpf_map *map, struct sock *sk,
-				      void *link_raw)
-{
-	struct bpf_stab *stab = container_of(map, struct bpf_stab, map);
+अटल व्योम sock_map_delete_from_link(काष्ठा bpf_map *map, काष्ठा sock *sk,
+				      व्योम *link_raw)
+अणु
+	काष्ठा bpf_stab *stab = container_of(map, काष्ठा bpf_stab, map);
 
 	__sock_map_delete(stab, sk, link_raw);
-}
+पूर्ण
 
-static int sock_map_delete_elem(struct bpf_map *map, void *key)
-{
-	struct bpf_stab *stab = container_of(map, struct bpf_stab, map);
+अटल पूर्णांक sock_map_delete_elem(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	काष्ठा bpf_stab *stab = container_of(map, काष्ठा bpf_stab, map);
 	u32 i = *(u32 *)key;
-	struct sock **psk;
+	काष्ठा sock **psk;
 
-	if (unlikely(i >= map->max_entries))
-		return -EINVAL;
+	अगर (unlikely(i >= map->max_entries))
+		वापस -EINVAL;
 
 	psk = &stab->sks[i];
-	return __sock_map_delete(stab, NULL, psk);
-}
+	वापस __sock_map_delete(stab, शून्य, psk);
+पूर्ण
 
-static int sock_map_get_next_key(struct bpf_map *map, void *key, void *next)
-{
-	struct bpf_stab *stab = container_of(map, struct bpf_stab, map);
+अटल पूर्णांक sock_map_get_next_key(काष्ठा bpf_map *map, व्योम *key, व्योम *next)
+अणु
+	काष्ठा bpf_stab *stab = container_of(map, काष्ठा bpf_stab, map);
 	u32 i = key ? *(u32 *)key : U32_MAX;
 	u32 *key_next = next;
 
-	if (i == stab->map.max_entries - 1)
-		return -ENOENT;
-	if (i >= stab->map.max_entries)
+	अगर (i == stab->map.max_entries - 1)
+		वापस -ENOENT;
+	अगर (i >= stab->map.max_entries)
 		*key_next = 0;
-	else
+	अन्यथा
 		*key_next = i + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sock_map_update_common(struct bpf_map *map, u32 idx,
-				  struct sock *sk, u64 flags)
-{
-	struct bpf_stab *stab = container_of(map, struct bpf_stab, map);
-	struct sk_psock_link *link;
-	struct sk_psock *psock;
-	struct sock *osk;
-	int ret;
+अटल पूर्णांक sock_map_update_common(काष्ठा bpf_map *map, u32 idx,
+				  काष्ठा sock *sk, u64 flags)
+अणु
+	काष्ठा bpf_stab *stab = container_of(map, काष्ठा bpf_stab, map);
+	काष्ठा sk_psock_link *link;
+	काष्ठा sk_psock *psock;
+	काष्ठा sock *osk;
+	पूर्णांक ret;
 
-	WARN_ON_ONCE(!rcu_read_lock_held());
-	if (unlikely(flags > BPF_EXIST))
-		return -EINVAL;
-	if (unlikely(idx >= map->max_entries))
-		return -E2BIG;
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	अगर (unlikely(flags > BPF_EXIST))
+		वापस -EINVAL;
+	अगर (unlikely(idx >= map->max_entries))
+		वापस -E2BIG;
 
 	link = sk_psock_init_link();
-	if (!link)
-		return -ENOMEM;
+	अगर (!link)
+		वापस -ENOMEM;
 
 	ret = sock_map_link(map, sk);
-	if (ret < 0)
-		goto out_free;
+	अगर (ret < 0)
+		जाओ out_मुक्त;
 
 	psock = sk_psock(sk);
 	WARN_ON_ONCE(!psock);
 
 	raw_spin_lock_bh(&stab->lock);
 	osk = stab->sks[idx];
-	if (osk && flags == BPF_NOEXIST) {
+	अगर (osk && flags == BPF_NOEXIST) अणु
 		ret = -EEXIST;
-		goto out_unlock;
-	} else if (!osk && flags == BPF_EXIST) {
+		जाओ out_unlock;
+	पूर्ण अन्यथा अगर (!osk && flags == BPF_EXIST) अणु
 		ret = -ENOENT;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	sock_map_add_link(psock, link, map, &stab->sks[idx]);
 	stab->sks[idx] = sk;
-	if (osk)
+	अगर (osk)
 		sock_map_unref(osk, &stab->sks[idx]);
 	raw_spin_unlock_bh(&stab->lock);
-	return 0;
+	वापस 0;
 out_unlock:
 	raw_spin_unlock_bh(&stab->lock);
-	if (psock)
+	अगर (psock)
 		sk_psock_put(sk, psock);
-out_free:
-	sk_psock_free_link(link);
-	return ret;
-}
+out_मुक्त:
+	sk_psock_मुक्त_link(link);
+	वापस ret;
+पूर्ण
 
-static bool sock_map_op_okay(const struct bpf_sock_ops_kern *ops)
-{
-	return ops->op == BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB ||
+अटल bool sock_map_op_okay(स्थिर काष्ठा bpf_sock_ops_kern *ops)
+अणु
+	वापस ops->op == BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB ||
 	       ops->op == BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB ||
 	       ops->op == BPF_SOCK_OPS_TCP_LISTEN_CB;
-}
+पूर्ण
 
-static bool sk_is_tcp(const struct sock *sk)
-{
-	return sk->sk_type == SOCK_STREAM &&
+अटल bool sk_is_tcp(स्थिर काष्ठा sock *sk)
+अणु
+	वापस sk->sk_type == SOCK_STREAM &&
 	       sk->sk_protocol == IPPROTO_TCP;
-}
+पूर्ण
 
-static bool sk_is_udp(const struct sock *sk)
-{
-	return sk->sk_type == SOCK_DGRAM &&
+अटल bool sk_is_udp(स्थिर काष्ठा sock *sk)
+अणु
+	वापस sk->sk_type == SOCK_DGRAM &&
 	       sk->sk_protocol == IPPROTO_UDP;
-}
+पूर्ण
 
-static bool sock_map_redirect_allowed(const struct sock *sk)
-{
-	if (sk_is_tcp(sk))
-		return sk->sk_state != TCP_LISTEN;
-	else
-		return sk->sk_state == TCP_ESTABLISHED;
-}
+अटल bool sock_map_redirect_allowed(स्थिर काष्ठा sock *sk)
+अणु
+	अगर (sk_is_tcp(sk))
+		वापस sk->sk_state != TCP_LISTEN;
+	अन्यथा
+		वापस sk->sk_state == TCP_ESTABLISHED;
+पूर्ण
 
-static bool sock_map_sk_is_suitable(const struct sock *sk)
-{
-	return !!sk->sk_prot->psock_update_sk_prot;
-}
+अटल bool sock_map_sk_is_suitable(स्थिर काष्ठा sock *sk)
+अणु
+	वापस !!sk->sk_prot->psock_update_sk_prot;
+पूर्ण
 
-static bool sock_map_sk_state_allowed(const struct sock *sk)
-{
-	if (sk_is_tcp(sk))
-		return (1 << sk->sk_state) & (TCPF_ESTABLISHED | TCPF_LISTEN);
-	else if (sk_is_udp(sk))
-		return sk_hashed(sk);
+अटल bool sock_map_sk_state_allowed(स्थिर काष्ठा sock *sk)
+अणु
+	अगर (sk_is_tcp(sk))
+		वापस (1 << sk->sk_state) & (TCPF_ESTABLISHED | TCPF_LISTEN);
+	अन्यथा अगर (sk_is_udp(sk))
+		वापस sk_hashed(sk);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int sock_hash_update_common(struct bpf_map *map, void *key,
-				   struct sock *sk, u64 flags);
+अटल पूर्णांक sock_hash_update_common(काष्ठा bpf_map *map, व्योम *key,
+				   काष्ठा sock *sk, u64 flags);
 
-int sock_map_update_elem_sys(struct bpf_map *map, void *key, void *value,
+पूर्णांक sock_map_update_elem_sys(काष्ठा bpf_map *map, व्योम *key, व्योम *value,
 			     u64 flags)
-{
-	struct socket *sock;
-	struct sock *sk;
-	int ret;
+अणु
+	काष्ठा socket *sock;
+	काष्ठा sock *sk;
+	पूर्णांक ret;
 	u64 ufd;
 
-	if (map->value_size == sizeof(u64))
+	अगर (map->value_size == माप(u64))
 		ufd = *(u64 *)value;
-	else
+	अन्यथा
 		ufd = *(u32 *)value;
-	if (ufd > S32_MAX)
-		return -EINVAL;
+	अगर (ufd > S32_MAX)
+		वापस -EINVAL;
 
 	sock = sockfd_lookup(ufd, &ret);
-	if (!sock)
-		return ret;
+	अगर (!sock)
+		वापस ret;
 	sk = sock->sk;
-	if (!sk) {
+	अगर (!sk) अणु
 		ret = -EINVAL;
-		goto out;
-	}
-	if (!sock_map_sk_is_suitable(sk)) {
+		जाओ out;
+	पूर्ण
+	अगर (!sock_map_sk_is_suitable(sk)) अणु
 		ret = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	sock_map_sk_acquire(sk);
-	if (!sock_map_sk_state_allowed(sk))
+	अगर (!sock_map_sk_state_allowed(sk))
 		ret = -EOPNOTSUPP;
-	else if (map->map_type == BPF_MAP_TYPE_SOCKMAP)
+	अन्यथा अगर (map->map_type == BPF_MAP_TYPE_SOCKMAP)
 		ret = sock_map_update_common(map, *(u32 *)key, sk, flags);
-	else
+	अन्यथा
 		ret = sock_hash_update_common(map, key, sk, flags);
 	sock_map_sk_release(sk);
 out:
 	sockfd_put(sock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sock_map_update_elem(struct bpf_map *map, void *key,
-				void *value, u64 flags)
-{
-	struct sock *sk = (struct sock *)value;
-	int ret;
+अटल पूर्णांक sock_map_update_elem(काष्ठा bpf_map *map, व्योम *key,
+				व्योम *value, u64 flags)
+अणु
+	काष्ठा sock *sk = (काष्ठा sock *)value;
+	पूर्णांक ret;
 
-	if (unlikely(!sk || !sk_fullsock(sk)))
-		return -EINVAL;
+	अगर (unlikely(!sk || !sk_fullsock(sk)))
+		वापस -EINVAL;
 
-	if (!sock_map_sk_is_suitable(sk))
-		return -EOPNOTSUPP;
+	अगर (!sock_map_sk_is_suitable(sk))
+		वापस -EOPNOTSUPP;
 
 	local_bh_disable();
 	bh_lock_sock(sk);
-	if (!sock_map_sk_state_allowed(sk))
+	अगर (!sock_map_sk_state_allowed(sk))
 		ret = -EOPNOTSUPP;
-	else if (map->map_type == BPF_MAP_TYPE_SOCKMAP)
+	अन्यथा अगर (map->map_type == BPF_MAP_TYPE_SOCKMAP)
 		ret = sock_map_update_common(map, *(u32 *)key, sk, flags);
-	else
+	अन्यथा
 		ret = sock_hash_update_common(map, key, sk, flags);
 	bh_unlock_sock(sk);
 	local_bh_enable();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-BPF_CALL_4(bpf_sock_map_update, struct bpf_sock_ops_kern *, sops,
-	   struct bpf_map *, map, void *, key, u64, flags)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held());
+BPF_CALL_4(bpf_sock_map_update, काष्ठा bpf_sock_ops_kern *, sops,
+	   काष्ठा bpf_map *, map, व्योम *, key, u64, flags)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
 
-	if (likely(sock_map_sk_is_suitable(sops->sk) &&
+	अगर (likely(sock_map_sk_is_suitable(sops->sk) &&
 		   sock_map_op_okay(sops)))
-		return sock_map_update_common(map, *(u32 *)key, sops->sk,
+		वापस sock_map_update_common(map, *(u32 *)key, sops->sk,
 					      flags);
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-const struct bpf_func_proto bpf_sock_map_update_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_sock_map_update_proto = अणु
 	.func		= bpf_sock_map_update,
 	.gpl_only	= false,
 	.pkt_access	= true,
@@ -646,25 +647,25 @@ const struct bpf_func_proto bpf_sock_map_update_proto = {
 	.arg2_type	= ARG_CONST_MAP_PTR,
 	.arg3_type	= ARG_PTR_TO_MAP_KEY,
 	.arg4_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_4(bpf_sk_redirect_map, struct sk_buff *, skb,
-	   struct bpf_map *, map, u32, key, u64, flags)
-{
-	struct sock *sk;
+BPF_CALL_4(bpf_sk_redirect_map, काष्ठा sk_buff *, skb,
+	   काष्ठा bpf_map *, map, u32, key, u64, flags)
+अणु
+	काष्ठा sock *sk;
 
-	if (unlikely(flags & ~(BPF_F_INGRESS)))
-		return SK_DROP;
+	अगर (unlikely(flags & ~(BPF_F_INGRESS)))
+		वापस SK_DROP;
 
 	sk = __sock_map_lookup_elem(map, key);
-	if (unlikely(!sk || !sock_map_redirect_allowed(sk)))
-		return SK_DROP;
+	अगर (unlikely(!sk || !sock_map_redirect_allowed(sk)))
+		वापस SK_DROP;
 
 	skb_bpf_set_redir(skb, sk, flags & BPF_F_INGRESS);
-	return SK_PASS;
-}
+	वापस SK_PASS;
+पूर्ण
 
-const struct bpf_func_proto bpf_sk_redirect_map_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_sk_redirect_map_proto = अणु
 	.func           = bpf_sk_redirect_map,
 	.gpl_only       = false,
 	.ret_type       = RET_INTEGER,
@@ -672,26 +673,26 @@ const struct bpf_func_proto bpf_sk_redirect_map_proto = {
 	.arg2_type      = ARG_CONST_MAP_PTR,
 	.arg3_type      = ARG_ANYTHING,
 	.arg4_type      = ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_4(bpf_msg_redirect_map, struct sk_msg *, msg,
-	   struct bpf_map *, map, u32, key, u64, flags)
-{
-	struct sock *sk;
+BPF_CALL_4(bpf_msg_redirect_map, काष्ठा sk_msg *, msg,
+	   काष्ठा bpf_map *, map, u32, key, u64, flags)
+अणु
+	काष्ठा sock *sk;
 
-	if (unlikely(flags & ~(BPF_F_INGRESS)))
-		return SK_DROP;
+	अगर (unlikely(flags & ~(BPF_F_INGRESS)))
+		वापस SK_DROP;
 
 	sk = __sock_map_lookup_elem(map, key);
-	if (unlikely(!sk || !sock_map_redirect_allowed(sk)))
-		return SK_DROP;
+	अगर (unlikely(!sk || !sock_map_redirect_allowed(sk)))
+		वापस SK_DROP;
 
 	msg->flags = flags;
 	msg->sk_redir = sk;
-	return SK_PASS;
-}
+	वापस SK_PASS;
+पूर्ण
 
-const struct bpf_func_proto bpf_msg_redirect_map_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_msg_redirect_map_proto = अणु
 	.func           = bpf_msg_redirect_map,
 	.gpl_only       = false,
 	.ret_type       = RET_INTEGER,
@@ -699,120 +700,120 @@ const struct bpf_func_proto bpf_msg_redirect_map_proto = {
 	.arg2_type      = ARG_CONST_MAP_PTR,
 	.arg3_type      = ARG_ANYTHING,
 	.arg4_type      = ARG_ANYTHING,
-};
+पूर्ण;
 
-struct sock_map_seq_info {
-	struct bpf_map *map;
-	struct sock *sk;
+काष्ठा sock_map_seq_info अणु
+	काष्ठा bpf_map *map;
+	काष्ठा sock *sk;
 	u32 index;
-};
+पूर्ण;
 
-struct bpf_iter__sockmap {
-	__bpf_md_ptr(struct bpf_iter_meta *, meta);
-	__bpf_md_ptr(struct bpf_map *, map);
-	__bpf_md_ptr(void *, key);
-	__bpf_md_ptr(struct sock *, sk);
-};
+काष्ठा bpf_iter__sockmap अणु
+	__bpf_md_ptr(काष्ठा bpf_iter_meta *, meta);
+	__bpf_md_ptr(काष्ठा bpf_map *, map);
+	__bpf_md_ptr(व्योम *, key);
+	__bpf_md_ptr(काष्ठा sock *, sk);
+पूर्ण;
 
-DEFINE_BPF_ITER_FUNC(sockmap, struct bpf_iter_meta *meta,
-		     struct bpf_map *map, void *key,
-		     struct sock *sk)
+DEFINE_BPF_ITER_FUNC(sockmap, काष्ठा bpf_iter_meta *meta,
+		     काष्ठा bpf_map *map, व्योम *key,
+		     काष्ठा sock *sk)
 
-static void *sock_map_seq_lookup_elem(struct sock_map_seq_info *info)
-{
-	if (unlikely(info->index >= info->map->max_entries))
-		return NULL;
+अटल व्योम *sock_map_seq_lookup_elem(काष्ठा sock_map_seq_info *info)
+अणु
+	अगर (unlikely(info->index >= info->map->max_entries))
+		वापस शून्य;
 
 	info->sk = __sock_map_lookup_elem(info->map, info->index);
 
-	/* can't return sk directly, since that might be NULL */
-	return info;
-}
+	/* can't वापस sk directly, since that might be शून्य */
+	वापस info;
+पूर्ण
 
-static void *sock_map_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *sock_map_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(rcu)
-{
-	struct sock_map_seq_info *info = seq->private;
+अणु
+	काष्ठा sock_map_seq_info *info = seq->निजी;
 
-	if (*pos == 0)
+	अगर (*pos == 0)
 		++*pos;
 
 	/* pairs with sock_map_seq_stop */
-	rcu_read_lock();
-	return sock_map_seq_lookup_elem(info);
-}
+	rcu_पढ़ो_lock();
+	वापस sock_map_seq_lookup_elem(info);
+पूर्ण
 
-static void *sock_map_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+अटल व्योम *sock_map_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
 	__must_hold(rcu)
-{
-	struct sock_map_seq_info *info = seq->private;
+अणु
+	काष्ठा sock_map_seq_info *info = seq->निजी;
 
 	++*pos;
 	++info->index;
 
-	return sock_map_seq_lookup_elem(info);
-}
+	वापस sock_map_seq_lookup_elem(info);
+पूर्ण
 
-static int sock_map_seq_show(struct seq_file *seq, void *v)
+अटल पूर्णांक sock_map_seq_show(काष्ठा seq_file *seq, व्योम *v)
 	__must_hold(rcu)
-{
-	struct sock_map_seq_info *info = seq->private;
-	struct bpf_iter__sockmap ctx = {};
-	struct bpf_iter_meta meta;
-	struct bpf_prog *prog;
+अणु
+	काष्ठा sock_map_seq_info *info = seq->निजी;
+	काष्ठा bpf_iter__sockmap ctx = अणुपूर्ण;
+	काष्ठा bpf_iter_meta meta;
+	काष्ठा bpf_prog *prog;
 
 	meta.seq = seq;
 	prog = bpf_iter_get_info(&meta, !v);
-	if (!prog)
-		return 0;
+	अगर (!prog)
+		वापस 0;
 
 	ctx.meta = &meta;
 	ctx.map = info->map;
-	if (v) {
+	अगर (v) अणु
 		ctx.key = &info->index;
 		ctx.sk = info->sk;
-	}
+	पूर्ण
 
-	return bpf_iter_run_prog(prog, &ctx);
-}
+	वापस bpf_iter_run_prog(prog, &ctx);
+पूर्ण
 
-static void sock_map_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम sock_map_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(rcu)
-{
-	if (!v)
-		(void)sock_map_seq_show(seq, NULL);
+अणु
+	अगर (!v)
+		(व्योम)sock_map_seq_show(seq, शून्य);
 
 	/* pairs with sock_map_seq_start */
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static const struct seq_operations sock_map_seq_ops = {
+अटल स्थिर काष्ठा seq_operations sock_map_seq_ops = अणु
 	.start	= sock_map_seq_start,
 	.next	= sock_map_seq_next,
 	.stop	= sock_map_seq_stop,
 	.show	= sock_map_seq_show,
-};
+पूर्ण;
 
-static int sock_map_init_seq_private(void *priv_data,
-				     struct bpf_iter_aux_info *aux)
-{
-	struct sock_map_seq_info *info = priv_data;
+अटल पूर्णांक sock_map_init_seq_निजी(व्योम *priv_data,
+				     काष्ठा bpf_iter_aux_info *aux)
+अणु
+	काष्ठा sock_map_seq_info *info = priv_data;
 
 	info->map = aux->map;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct bpf_iter_seq_info sock_map_iter_seq_info = {
+अटल स्थिर काष्ठा bpf_iter_seq_info sock_map_iter_seq_info = अणु
 	.seq_ops		= &sock_map_seq_ops,
-	.init_seq_private	= sock_map_init_seq_private,
-	.seq_priv_size		= sizeof(struct sock_map_seq_info),
-};
+	.init_seq_निजी	= sock_map_init_seq_निजी,
+	.seq_priv_size		= माप(काष्ठा sock_map_seq_info),
+पूर्ण;
 
-static int sock_map_btf_id;
-const struct bpf_map_ops sock_map_ops = {
+अटल पूर्णांक sock_map_btf_id;
+स्थिर काष्ठा bpf_map_ops sock_map_ops = अणु
 	.map_meta_equal		= bpf_map_meta_equal,
 	.map_alloc		= sock_map_alloc,
-	.map_free		= sock_map_free,
+	.map_मुक्त		= sock_map_मुक्त,
 	.map_get_next_key	= sock_map_get_next_key,
 	.map_lookup_elem_sys_only = sock_map_lookup_sys,
 	.map_update_elem	= sock_map_update_elem,
@@ -823,87 +824,87 @@ const struct bpf_map_ops sock_map_ops = {
 	.map_btf_name		= "bpf_stab",
 	.map_btf_id		= &sock_map_btf_id,
 	.iter_seq_info		= &sock_map_iter_seq_info,
-};
+पूर्ण;
 
-struct bpf_shtab_elem {
-	struct rcu_head rcu;
+काष्ठा bpf_shtab_elem अणु
+	काष्ठा rcu_head rcu;
 	u32 hash;
-	struct sock *sk;
-	struct hlist_node node;
+	काष्ठा sock *sk;
+	काष्ठा hlist_node node;
 	u8 key[];
-};
+पूर्ण;
 
-struct bpf_shtab_bucket {
-	struct hlist_head head;
+काष्ठा bpf_shtab_bucket अणु
+	काष्ठा hlist_head head;
 	raw_spinlock_t lock;
-};
+पूर्ण;
 
-struct bpf_shtab {
-	struct bpf_map map;
-	struct bpf_shtab_bucket *buckets;
+काष्ठा bpf_shtab अणु
+	काष्ठा bpf_map map;
+	काष्ठा bpf_shtab_bucket *buckets;
 	u32 buckets_num;
 	u32 elem_size;
-	struct sk_psock_progs progs;
+	काष्ठा sk_psock_progs progs;
 	atomic_t count;
-};
+पूर्ण;
 
-static inline u32 sock_hash_bucket_hash(const void *key, u32 len)
-{
-	return jhash(key, len, 0);
-}
+अटल अंतरभूत u32 sock_hash_bucket_hash(स्थिर व्योम *key, u32 len)
+अणु
+	वापस jhash(key, len, 0);
+पूर्ण
 
-static struct bpf_shtab_bucket *sock_hash_select_bucket(struct bpf_shtab *htab,
+अटल काष्ठा bpf_shtab_bucket *sock_hash_select_bucket(काष्ठा bpf_shtab *htab,
 							u32 hash)
-{
-	return &htab->buckets[hash & (htab->buckets_num - 1)];
-}
+अणु
+	वापस &htab->buckets[hash & (htab->buckets_num - 1)];
+पूर्ण
 
-static struct bpf_shtab_elem *
-sock_hash_lookup_elem_raw(struct hlist_head *head, u32 hash, void *key,
+अटल काष्ठा bpf_shtab_elem *
+sock_hash_lookup_elem_raw(काष्ठा hlist_head *head, u32 hash, व्योम *key,
 			  u32 key_size)
-{
-	struct bpf_shtab_elem *elem;
+अणु
+	काष्ठा bpf_shtab_elem *elem;
 
-	hlist_for_each_entry_rcu(elem, head, node) {
-		if (elem->hash == hash &&
-		    !memcmp(&elem->key, key, key_size))
-			return elem;
-	}
+	hlist_क्रम_each_entry_rcu(elem, head, node) अणु
+		अगर (elem->hash == hash &&
+		    !स_भेद(&elem->key, key, key_size))
+			वापस elem;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct sock *__sock_hash_lookup_elem(struct bpf_map *map, void *key)
-{
-	struct bpf_shtab *htab = container_of(map, struct bpf_shtab, map);
+अटल काष्ठा sock *__sock_hash_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	काष्ठा bpf_shtab *htab = container_of(map, काष्ठा bpf_shtab, map);
 	u32 key_size = map->key_size, hash;
-	struct bpf_shtab_bucket *bucket;
-	struct bpf_shtab_elem *elem;
+	काष्ठा bpf_shtab_bucket *bucket;
+	काष्ठा bpf_shtab_elem *elem;
 
-	WARN_ON_ONCE(!rcu_read_lock_held());
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
 
 	hash = sock_hash_bucket_hash(key, key_size);
 	bucket = sock_hash_select_bucket(htab, hash);
 	elem = sock_hash_lookup_elem_raw(&bucket->head, hash, key, key_size);
 
-	return elem ? elem->sk : NULL;
-}
+	वापस elem ? elem->sk : शून्य;
+पूर्ण
 
-static void sock_hash_free_elem(struct bpf_shtab *htab,
-				struct bpf_shtab_elem *elem)
-{
+अटल व्योम sock_hash_मुक्त_elem(काष्ठा bpf_shtab *htab,
+				काष्ठा bpf_shtab_elem *elem)
+अणु
 	atomic_dec(&htab->count);
-	kfree_rcu(elem, rcu);
-}
+	kमुक्त_rcu(elem, rcu);
+पूर्ण
 
-static void sock_hash_delete_from_link(struct bpf_map *map, struct sock *sk,
-				       void *link_raw)
-{
-	struct bpf_shtab *htab = container_of(map, struct bpf_shtab, map);
-	struct bpf_shtab_elem *elem_probe, *elem = link_raw;
-	struct bpf_shtab_bucket *bucket;
+अटल व्योम sock_hash_delete_from_link(काष्ठा bpf_map *map, काष्ठा sock *sk,
+				       व्योम *link_raw)
+अणु
+	काष्ठा bpf_shtab *htab = container_of(map, काष्ठा bpf_shtab, map);
+	काष्ठा bpf_shtab_elem *elem_probe, *elem = link_raw;
+	काष्ठा bpf_shtab_bucket *bucket;
 
-	WARN_ON_ONCE(!rcu_read_lock_held());
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
 	bucket = sock_hash_select_bucket(htab, elem->hash);
 
 	/* elem may be deleted in parallel from the map, but access here
@@ -913,86 +914,86 @@ static void sock_hash_delete_from_link(struct bpf_map *map, struct sock *sk,
 	raw_spin_lock_bh(&bucket->lock);
 	elem_probe = sock_hash_lookup_elem_raw(&bucket->head, elem->hash,
 					       elem->key, map->key_size);
-	if (elem_probe && elem_probe == elem) {
+	अगर (elem_probe && elem_probe == elem) अणु
 		hlist_del_rcu(&elem->node);
 		sock_map_unref(elem->sk, elem);
-		sock_hash_free_elem(htab, elem);
-	}
+		sock_hash_मुक्त_elem(htab, elem);
+	पूर्ण
 	raw_spin_unlock_bh(&bucket->lock);
-}
+पूर्ण
 
-static int sock_hash_delete_elem(struct bpf_map *map, void *key)
-{
-	struct bpf_shtab *htab = container_of(map, struct bpf_shtab, map);
+अटल पूर्णांक sock_hash_delete_elem(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	काष्ठा bpf_shtab *htab = container_of(map, काष्ठा bpf_shtab, map);
 	u32 hash, key_size = map->key_size;
-	struct bpf_shtab_bucket *bucket;
-	struct bpf_shtab_elem *elem;
-	int ret = -ENOENT;
+	काष्ठा bpf_shtab_bucket *bucket;
+	काष्ठा bpf_shtab_elem *elem;
+	पूर्णांक ret = -ENOENT;
 
 	hash = sock_hash_bucket_hash(key, key_size);
 	bucket = sock_hash_select_bucket(htab, hash);
 
 	raw_spin_lock_bh(&bucket->lock);
 	elem = sock_hash_lookup_elem_raw(&bucket->head, hash, key, key_size);
-	if (elem) {
+	अगर (elem) अणु
 		hlist_del_rcu(&elem->node);
 		sock_map_unref(elem->sk, elem);
-		sock_hash_free_elem(htab, elem);
+		sock_hash_मुक्त_elem(htab, elem);
 		ret = 0;
-	}
+	पूर्ण
 	raw_spin_unlock_bh(&bucket->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct bpf_shtab_elem *sock_hash_alloc_elem(struct bpf_shtab *htab,
-						   void *key, u32 key_size,
-						   u32 hash, struct sock *sk,
-						   struct bpf_shtab_elem *old)
-{
-	struct bpf_shtab_elem *new;
+अटल काष्ठा bpf_shtab_elem *sock_hash_alloc_elem(काष्ठा bpf_shtab *htab,
+						   व्योम *key, u32 key_size,
+						   u32 hash, काष्ठा sock *sk,
+						   काष्ठा bpf_shtab_elem *old)
+अणु
+	काष्ठा bpf_shtab_elem *new;
 
-	if (atomic_inc_return(&htab->count) > htab->map.max_entries) {
-		if (!old) {
+	अगर (atomic_inc_वापस(&htab->count) > htab->map.max_entries) अणु
+		अगर (!old) अणु
 			atomic_dec(&htab->count);
-			return ERR_PTR(-E2BIG);
-		}
-	}
+			वापस ERR_PTR(-E2BIG);
+		पूर्ण
+	पूर्ण
 
-	new = bpf_map_kmalloc_node(&htab->map, htab->elem_size,
+	new = bpf_map_kदो_स्मृति_node(&htab->map, htab->elem_size,
 				   GFP_ATOMIC | __GFP_NOWARN,
 				   htab->map.numa_node);
-	if (!new) {
+	अगर (!new) अणु
 		atomic_dec(&htab->count);
-		return ERR_PTR(-ENOMEM);
-	}
-	memcpy(new->key, key, key_size);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
+	स_नकल(new->key, key, key_size);
 	new->sk = sk;
 	new->hash = hash;
-	return new;
-}
+	वापस new;
+पूर्ण
 
-static int sock_hash_update_common(struct bpf_map *map, void *key,
-				   struct sock *sk, u64 flags)
-{
-	struct bpf_shtab *htab = container_of(map, struct bpf_shtab, map);
+अटल पूर्णांक sock_hash_update_common(काष्ठा bpf_map *map, व्योम *key,
+				   काष्ठा sock *sk, u64 flags)
+अणु
+	काष्ठा bpf_shtab *htab = container_of(map, काष्ठा bpf_shtab, map);
 	u32 key_size = map->key_size, hash;
-	struct bpf_shtab_elem *elem, *elem_new;
-	struct bpf_shtab_bucket *bucket;
-	struct sk_psock_link *link;
-	struct sk_psock *psock;
-	int ret;
+	काष्ठा bpf_shtab_elem *elem, *elem_new;
+	काष्ठा bpf_shtab_bucket *bucket;
+	काष्ठा sk_psock_link *link;
+	काष्ठा sk_psock *psock;
+	पूर्णांक ret;
 
-	WARN_ON_ONCE(!rcu_read_lock_held());
-	if (unlikely(flags > BPF_EXIST))
-		return -EINVAL;
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	अगर (unlikely(flags > BPF_EXIST))
+		वापस -EINVAL;
 
 	link = sk_psock_init_link();
-	if (!link)
-		return -ENOMEM;
+	अगर (!link)
+		वापस -ENOMEM;
 
 	ret = sock_map_link(map, sk);
-	if (ret < 0)
-		goto out_free;
+	अगर (ret < 0)
+		जाओ out_मुक्त;
 
 	psock = sk_psock(sk);
 	WARN_ON_ONCE(!psock);
@@ -1002,145 +1003,145 @@ static int sock_hash_update_common(struct bpf_map *map, void *key,
 
 	raw_spin_lock_bh(&bucket->lock);
 	elem = sock_hash_lookup_elem_raw(&bucket->head, hash, key, key_size);
-	if (elem && flags == BPF_NOEXIST) {
+	अगर (elem && flags == BPF_NOEXIST) अणु
 		ret = -EEXIST;
-		goto out_unlock;
-	} else if (!elem && flags == BPF_EXIST) {
+		जाओ out_unlock;
+	पूर्ण अन्यथा अगर (!elem && flags == BPF_EXIST) अणु
 		ret = -ENOENT;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	elem_new = sock_hash_alloc_elem(htab, key, key_size, hash, sk, elem);
-	if (IS_ERR(elem_new)) {
+	अगर (IS_ERR(elem_new)) अणु
 		ret = PTR_ERR(elem_new);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	sock_map_add_link(psock, link, map, elem_new);
 	/* Add new element to the head of the list, so that
-	 * concurrent search will find it before old elem.
+	 * concurrent search will find it beक्रमe old elem.
 	 */
 	hlist_add_head_rcu(&elem_new->node, &bucket->head);
-	if (elem) {
+	अगर (elem) अणु
 		hlist_del_rcu(&elem->node);
 		sock_map_unref(elem->sk, elem);
-		sock_hash_free_elem(htab, elem);
-	}
+		sock_hash_मुक्त_elem(htab, elem);
+	पूर्ण
 	raw_spin_unlock_bh(&bucket->lock);
-	return 0;
+	वापस 0;
 out_unlock:
 	raw_spin_unlock_bh(&bucket->lock);
 	sk_psock_put(sk, psock);
-out_free:
-	sk_psock_free_link(link);
-	return ret;
-}
+out_मुक्त:
+	sk_psock_मुक्त_link(link);
+	वापस ret;
+पूर्ण
 
-static int sock_hash_get_next_key(struct bpf_map *map, void *key,
-				  void *key_next)
-{
-	struct bpf_shtab *htab = container_of(map, struct bpf_shtab, map);
-	struct bpf_shtab_elem *elem, *elem_next;
+अटल पूर्णांक sock_hash_get_next_key(काष्ठा bpf_map *map, व्योम *key,
+				  व्योम *key_next)
+अणु
+	काष्ठा bpf_shtab *htab = container_of(map, काष्ठा bpf_shtab, map);
+	काष्ठा bpf_shtab_elem *elem, *elem_next;
 	u32 hash, key_size = map->key_size;
-	struct hlist_head *head;
-	int i = 0;
+	काष्ठा hlist_head *head;
+	पूर्णांक i = 0;
 
-	if (!key)
-		goto find_first_elem;
+	अगर (!key)
+		जाओ find_first_elem;
 	hash = sock_hash_bucket_hash(key, key_size);
 	head = &sock_hash_select_bucket(htab, hash)->head;
 	elem = sock_hash_lookup_elem_raw(head, hash, key, key_size);
-	if (!elem)
-		goto find_first_elem;
+	अगर (!elem)
+		जाओ find_first_elem;
 
 	elem_next = hlist_entry_safe(rcu_dereference(hlist_next_rcu(&elem->node)),
-				     struct bpf_shtab_elem, node);
-	if (elem_next) {
-		memcpy(key_next, elem_next->key, key_size);
-		return 0;
-	}
+				     काष्ठा bpf_shtab_elem, node);
+	अगर (elem_next) अणु
+		स_नकल(key_next, elem_next->key, key_size);
+		वापस 0;
+	पूर्ण
 
 	i = hash & (htab->buckets_num - 1);
 	i++;
 find_first_elem:
-	for (; i < htab->buckets_num; i++) {
+	क्रम (; i < htab->buckets_num; i++) अणु
 		head = &sock_hash_select_bucket(htab, i)->head;
 		elem_next = hlist_entry_safe(rcu_dereference(hlist_first_rcu(head)),
-					     struct bpf_shtab_elem, node);
-		if (elem_next) {
-			memcpy(key_next, elem_next->key, key_size);
-			return 0;
-		}
-	}
+					     काष्ठा bpf_shtab_elem, node);
+		अगर (elem_next) अणु
+			स_नकल(key_next, elem_next->key, key_size);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static struct bpf_map *sock_hash_alloc(union bpf_attr *attr)
-{
-	struct bpf_shtab *htab;
-	int i, err;
+अटल काष्ठा bpf_map *sock_hash_alloc(जोड़ bpf_attr *attr)
+अणु
+	काष्ठा bpf_shtab *htab;
+	पूर्णांक i, err;
 
-	if (!capable(CAP_NET_ADMIN))
-		return ERR_PTR(-EPERM);
-	if (attr->max_entries == 0 ||
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस ERR_PTR(-EPERM);
+	अगर (attr->max_entries == 0 ||
 	    attr->key_size    == 0 ||
-	    (attr->value_size != sizeof(u32) &&
-	     attr->value_size != sizeof(u64)) ||
+	    (attr->value_size != माप(u32) &&
+	     attr->value_size != माप(u64)) ||
 	    attr->map_flags & ~SOCK_CREATE_FLAG_MASK)
-		return ERR_PTR(-EINVAL);
-	if (attr->key_size > MAX_BPF_STACK)
-		return ERR_PTR(-E2BIG);
+		वापस ERR_PTR(-EINVAL);
+	अगर (attr->key_size > MAX_BPF_STACK)
+		वापस ERR_PTR(-E2BIG);
 
-	htab = kzalloc(sizeof(*htab), GFP_USER | __GFP_ACCOUNT);
-	if (!htab)
-		return ERR_PTR(-ENOMEM);
+	htab = kzalloc(माप(*htab), GFP_USER | __GFP_ACCOUNT);
+	अगर (!htab)
+		वापस ERR_PTR(-ENOMEM);
 
 	bpf_map_init_from_attr(&htab->map, attr);
 
-	htab->buckets_num = roundup_pow_of_two(htab->map.max_entries);
-	htab->elem_size = sizeof(struct bpf_shtab_elem) +
+	htab->buckets_num = roundup_घात_of_two(htab->map.max_entries);
+	htab->elem_size = माप(काष्ठा bpf_shtab_elem) +
 			  round_up(htab->map.key_size, 8);
-	if (htab->buckets_num == 0 ||
-	    htab->buckets_num > U32_MAX / sizeof(struct bpf_shtab_bucket)) {
+	अगर (htab->buckets_num == 0 ||
+	    htab->buckets_num > U32_MAX / माप(काष्ठा bpf_shtab_bucket)) अणु
 		err = -EINVAL;
-		goto free_htab;
-	}
+		जाओ मुक्त_htab;
+	पूर्ण
 
 	htab->buckets = bpf_map_area_alloc(htab->buckets_num *
-					   sizeof(struct bpf_shtab_bucket),
+					   माप(काष्ठा bpf_shtab_bucket),
 					   htab->map.numa_node);
-	if (!htab->buckets) {
+	अगर (!htab->buckets) अणु
 		err = -ENOMEM;
-		goto free_htab;
-	}
+		जाओ मुक्त_htab;
+	पूर्ण
 
-	for (i = 0; i < htab->buckets_num; i++) {
+	क्रम (i = 0; i < htab->buckets_num; i++) अणु
 		INIT_HLIST_HEAD(&htab->buckets[i].head);
 		raw_spin_lock_init(&htab->buckets[i].lock);
-	}
+	पूर्ण
 
-	return &htab->map;
-free_htab:
-	kfree(htab);
-	return ERR_PTR(err);
-}
+	वापस &htab->map;
+मुक्त_htab:
+	kमुक्त(htab);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void sock_hash_free(struct bpf_map *map)
-{
-	struct bpf_shtab *htab = container_of(map, struct bpf_shtab, map);
-	struct bpf_shtab_bucket *bucket;
-	struct hlist_head unlink_list;
-	struct bpf_shtab_elem *elem;
-	struct hlist_node *node;
-	int i;
+अटल व्योम sock_hash_मुक्त(काष्ठा bpf_map *map)
+अणु
+	काष्ठा bpf_shtab *htab = container_of(map, काष्ठा bpf_shtab, map);
+	काष्ठा bpf_shtab_bucket *bucket;
+	काष्ठा hlist_head unlink_list;
+	काष्ठा bpf_shtab_elem *elem;
+	काष्ठा hlist_node *node;
+	पूर्णांक i;
 
 	/* After the sync no updates or deletes will be in-flight so it
-	 * is safe to walk map and remove entries without risking a race
-	 * in EEXIST update case.
+	 * is safe to walk map and हटाओ entries without risking a race
+	 * in EEXIST update हाल.
 	 */
 	synchronize_rcu();
-	for (i = 0; i < htab->buckets_num; i++) {
+	क्रम (i = 0; i < htab->buckets_num; i++) अणु
 		bucket = sock_hash_select_bucket(htab, i);
 
 		/* We are racing with sock_hash_delete_from_link to
@@ -1150,78 +1151,78 @@ static void sock_hash_free(struct bpf_map *map)
 		 * lets us to grab a socket ref too.
 		 */
 		raw_spin_lock_bh(&bucket->lock);
-		hlist_for_each_entry(elem, &bucket->head, node)
+		hlist_क्रम_each_entry(elem, &bucket->head, node)
 			sock_hold(elem->sk);
 		hlist_move_list(&bucket->head, &unlink_list);
 		raw_spin_unlock_bh(&bucket->lock);
 
-		/* Process removed entries out of atomic context to
-		 * block for socket lock before deleting the psock's
+		/* Process हटाओd entries out of atomic context to
+		 * block क्रम socket lock beक्रमe deleting the psock's
 		 * link to sockhash.
 		 */
-		hlist_for_each_entry_safe(elem, node, &unlink_list, node) {
+		hlist_क्रम_each_entry_safe(elem, node, &unlink_list, node) अणु
 			hlist_del(&elem->node);
 			lock_sock(elem->sk);
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			sock_map_unref(elem->sk, elem);
-			rcu_read_unlock();
+			rcu_पढ़ो_unlock();
 			release_sock(elem->sk);
 			sock_put(elem->sk);
-			sock_hash_free_elem(htab, elem);
-		}
-	}
+			sock_hash_मुक्त_elem(htab, elem);
+		पूर्ण
+	पूर्ण
 
-	/* wait for psock readers accessing its map link */
+	/* रुको क्रम psock पढ़ोers accessing its map link */
 	synchronize_rcu();
 
-	bpf_map_area_free(htab->buckets);
-	kfree(htab);
-}
+	bpf_map_area_मुक्त(htab->buckets);
+	kमुक्त(htab);
+पूर्ण
 
-static void *sock_hash_lookup_sys(struct bpf_map *map, void *key)
-{
-	struct sock *sk;
+अटल व्योम *sock_hash_lookup_sys(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	काष्ठा sock *sk;
 
-	if (map->value_size != sizeof(u64))
-		return ERR_PTR(-ENOSPC);
+	अगर (map->value_size != माप(u64))
+		वापस ERR_PTR(-ENOSPC);
 
 	sk = __sock_hash_lookup_elem(map, key);
-	if (!sk)
-		return ERR_PTR(-ENOENT);
+	अगर (!sk)
+		वापस ERR_PTR(-ENOENT);
 
 	__sock_gen_cookie(sk);
-	return &sk->sk_cookie;
-}
+	वापस &sk->sk_cookie;
+पूर्ण
 
-static void *sock_hash_lookup(struct bpf_map *map, void *key)
-{
-	struct sock *sk;
+अटल व्योम *sock_hash_lookup(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	काष्ठा sock *sk;
 
 	sk = __sock_hash_lookup_elem(map, key);
-	if (!sk)
-		return NULL;
-	if (sk_is_refcounted(sk) && !refcount_inc_not_zero(&sk->sk_refcnt))
-		return NULL;
-	return sk;
-}
+	अगर (!sk)
+		वापस शून्य;
+	अगर (sk_is_refcounted(sk) && !refcount_inc_not_zero(&sk->sk_refcnt))
+		वापस शून्य;
+	वापस sk;
+पूर्ण
 
-static void sock_hash_release_progs(struct bpf_map *map)
-{
-	psock_progs_drop(&container_of(map, struct bpf_shtab, map)->progs);
-}
+अटल व्योम sock_hash_release_progs(काष्ठा bpf_map *map)
+अणु
+	psock_progs_drop(&container_of(map, काष्ठा bpf_shtab, map)->progs);
+पूर्ण
 
-BPF_CALL_4(bpf_sock_hash_update, struct bpf_sock_ops_kern *, sops,
-	   struct bpf_map *, map, void *, key, u64, flags)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held());
+BPF_CALL_4(bpf_sock_hash_update, काष्ठा bpf_sock_ops_kern *, sops,
+	   काष्ठा bpf_map *, map, व्योम *, key, u64, flags)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
 
-	if (likely(sock_map_sk_is_suitable(sops->sk) &&
+	अगर (likely(sock_map_sk_is_suitable(sops->sk) &&
 		   sock_map_op_okay(sops)))
-		return sock_hash_update_common(map, key, sops->sk, flags);
-	return -EOPNOTSUPP;
-}
+		वापस sock_hash_update_common(map, key, sops->sk, flags);
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-const struct bpf_func_proto bpf_sock_hash_update_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_sock_hash_update_proto = अणु
 	.func		= bpf_sock_hash_update,
 	.gpl_only	= false,
 	.pkt_access	= true,
@@ -1230,25 +1231,25 @@ const struct bpf_func_proto bpf_sock_hash_update_proto = {
 	.arg2_type	= ARG_CONST_MAP_PTR,
 	.arg3_type	= ARG_PTR_TO_MAP_KEY,
 	.arg4_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_4(bpf_sk_redirect_hash, struct sk_buff *, skb,
-	   struct bpf_map *, map, void *, key, u64, flags)
-{
-	struct sock *sk;
+BPF_CALL_4(bpf_sk_redirect_hash, काष्ठा sk_buff *, skb,
+	   काष्ठा bpf_map *, map, व्योम *, key, u64, flags)
+अणु
+	काष्ठा sock *sk;
 
-	if (unlikely(flags & ~(BPF_F_INGRESS)))
-		return SK_DROP;
+	अगर (unlikely(flags & ~(BPF_F_INGRESS)))
+		वापस SK_DROP;
 
 	sk = __sock_hash_lookup_elem(map, key);
-	if (unlikely(!sk || !sock_map_redirect_allowed(sk)))
-		return SK_DROP;
+	अगर (unlikely(!sk || !sock_map_redirect_allowed(sk)))
+		वापस SK_DROP;
 
 	skb_bpf_set_redir(skb, sk, flags & BPF_F_INGRESS);
-	return SK_PASS;
-}
+	वापस SK_PASS;
+पूर्ण
 
-const struct bpf_func_proto bpf_sk_redirect_hash_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_sk_redirect_hash_proto = अणु
 	.func           = bpf_sk_redirect_hash,
 	.gpl_only       = false,
 	.ret_type       = RET_INTEGER,
@@ -1256,26 +1257,26 @@ const struct bpf_func_proto bpf_sk_redirect_hash_proto = {
 	.arg2_type      = ARG_CONST_MAP_PTR,
 	.arg3_type      = ARG_PTR_TO_MAP_KEY,
 	.arg4_type      = ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_4(bpf_msg_redirect_hash, struct sk_msg *, msg,
-	   struct bpf_map *, map, void *, key, u64, flags)
-{
-	struct sock *sk;
+BPF_CALL_4(bpf_msg_redirect_hash, काष्ठा sk_msg *, msg,
+	   काष्ठा bpf_map *, map, व्योम *, key, u64, flags)
+अणु
+	काष्ठा sock *sk;
 
-	if (unlikely(flags & ~(BPF_F_INGRESS)))
-		return SK_DROP;
+	अगर (unlikely(flags & ~(BPF_F_INGRESS)))
+		वापस SK_DROP;
 
 	sk = __sock_hash_lookup_elem(map, key);
-	if (unlikely(!sk || !sock_map_redirect_allowed(sk)))
-		return SK_DROP;
+	अगर (unlikely(!sk || !sock_map_redirect_allowed(sk)))
+		वापस SK_DROP;
 
 	msg->flags = flags;
 	msg->sk_redir = sk;
-	return SK_PASS;
-}
+	वापस SK_PASS;
+पूर्ण
 
-const struct bpf_func_proto bpf_msg_redirect_hash_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_msg_redirect_hash_proto = अणु
 	.func           = bpf_msg_redirect_hash,
 	.gpl_only       = false,
 	.ret_type       = RET_INTEGER,
@@ -1283,128 +1284,128 @@ const struct bpf_func_proto bpf_msg_redirect_hash_proto = {
 	.arg2_type      = ARG_CONST_MAP_PTR,
 	.arg3_type      = ARG_PTR_TO_MAP_KEY,
 	.arg4_type      = ARG_ANYTHING,
-};
+पूर्ण;
 
-struct sock_hash_seq_info {
-	struct bpf_map *map;
-	struct bpf_shtab *htab;
+काष्ठा sock_hash_seq_info अणु
+	काष्ठा bpf_map *map;
+	काष्ठा bpf_shtab *htab;
 	u32 bucket_id;
-};
+पूर्ण;
 
-static void *sock_hash_seq_find_next(struct sock_hash_seq_info *info,
-				     struct bpf_shtab_elem *prev_elem)
-{
-	const struct bpf_shtab *htab = info->htab;
-	struct bpf_shtab_bucket *bucket;
-	struct bpf_shtab_elem *elem;
-	struct hlist_node *node;
+अटल व्योम *sock_hash_seq_find_next(काष्ठा sock_hash_seq_info *info,
+				     काष्ठा bpf_shtab_elem *prev_elem)
+अणु
+	स्थिर काष्ठा bpf_shtab *htab = info->htab;
+	काष्ठा bpf_shtab_bucket *bucket;
+	काष्ठा bpf_shtab_elem *elem;
+	काष्ठा hlist_node *node;
 
 	/* try to find next elem in the same bucket */
-	if (prev_elem) {
+	अगर (prev_elem) अणु
 		node = rcu_dereference(hlist_next_rcu(&prev_elem->node));
-		elem = hlist_entry_safe(node, struct bpf_shtab_elem, node);
-		if (elem)
-			return elem;
+		elem = hlist_entry_safe(node, काष्ठा bpf_shtab_elem, node);
+		अगर (elem)
+			वापस elem;
 
-		/* no more elements, continue in the next bucket */
+		/* no more elements, जारी in the next bucket */
 		info->bucket_id++;
-	}
+	पूर्ण
 
-	for (; info->bucket_id < htab->buckets_num; info->bucket_id++) {
+	क्रम (; info->bucket_id < htab->buckets_num; info->bucket_id++) अणु
 		bucket = &htab->buckets[info->bucket_id];
 		node = rcu_dereference(hlist_first_rcu(&bucket->head));
-		elem = hlist_entry_safe(node, struct bpf_shtab_elem, node);
-		if (elem)
-			return elem;
-	}
+		elem = hlist_entry_safe(node, काष्ठा bpf_shtab_elem, node);
+		अगर (elem)
+			वापस elem;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *sock_hash_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *sock_hash_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(rcu)
-{
-	struct sock_hash_seq_info *info = seq->private;
+अणु
+	काष्ठा sock_hash_seq_info *info = seq->निजी;
 
-	if (*pos == 0)
+	अगर (*pos == 0)
 		++*pos;
 
 	/* pairs with sock_hash_seq_stop */
-	rcu_read_lock();
-	return sock_hash_seq_find_next(info, NULL);
-}
+	rcu_पढ़ो_lock();
+	वापस sock_hash_seq_find_next(info, शून्य);
+पूर्ण
 
-static void *sock_hash_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+अटल व्योम *sock_hash_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
 	__must_hold(rcu)
-{
-	struct sock_hash_seq_info *info = seq->private;
+अणु
+	काष्ठा sock_hash_seq_info *info = seq->निजी;
 
 	++*pos;
-	return sock_hash_seq_find_next(info, v);
-}
+	वापस sock_hash_seq_find_next(info, v);
+पूर्ण
 
-static int sock_hash_seq_show(struct seq_file *seq, void *v)
+अटल पूर्णांक sock_hash_seq_show(काष्ठा seq_file *seq, व्योम *v)
 	__must_hold(rcu)
-{
-	struct sock_hash_seq_info *info = seq->private;
-	struct bpf_iter__sockmap ctx = {};
-	struct bpf_shtab_elem *elem = v;
-	struct bpf_iter_meta meta;
-	struct bpf_prog *prog;
+अणु
+	काष्ठा sock_hash_seq_info *info = seq->निजी;
+	काष्ठा bpf_iter__sockmap ctx = अणुपूर्ण;
+	काष्ठा bpf_shtab_elem *elem = v;
+	काष्ठा bpf_iter_meta meta;
+	काष्ठा bpf_prog *prog;
 
 	meta.seq = seq;
 	prog = bpf_iter_get_info(&meta, !elem);
-	if (!prog)
-		return 0;
+	अगर (!prog)
+		वापस 0;
 
 	ctx.meta = &meta;
 	ctx.map = info->map;
-	if (elem) {
+	अगर (elem) अणु
 		ctx.key = elem->key;
 		ctx.sk = elem->sk;
-	}
+	पूर्ण
 
-	return bpf_iter_run_prog(prog, &ctx);
-}
+	वापस bpf_iter_run_prog(prog, &ctx);
+पूर्ण
 
-static void sock_hash_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम sock_hash_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(rcu)
-{
-	if (!v)
-		(void)sock_hash_seq_show(seq, NULL);
+अणु
+	अगर (!v)
+		(व्योम)sock_hash_seq_show(seq, शून्य);
 
 	/* pairs with sock_hash_seq_start */
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static const struct seq_operations sock_hash_seq_ops = {
+अटल स्थिर काष्ठा seq_operations sock_hash_seq_ops = अणु
 	.start	= sock_hash_seq_start,
 	.next	= sock_hash_seq_next,
 	.stop	= sock_hash_seq_stop,
 	.show	= sock_hash_seq_show,
-};
+पूर्ण;
 
-static int sock_hash_init_seq_private(void *priv_data,
-				     struct bpf_iter_aux_info *aux)
-{
-	struct sock_hash_seq_info *info = priv_data;
+अटल पूर्णांक sock_hash_init_seq_निजी(व्योम *priv_data,
+				     काष्ठा bpf_iter_aux_info *aux)
+अणु
+	काष्ठा sock_hash_seq_info *info = priv_data;
 
 	info->map = aux->map;
-	info->htab = container_of(aux->map, struct bpf_shtab, map);
-	return 0;
-}
+	info->htab = container_of(aux->map, काष्ठा bpf_shtab, map);
+	वापस 0;
+पूर्ण
 
-static const struct bpf_iter_seq_info sock_hash_iter_seq_info = {
+अटल स्थिर काष्ठा bpf_iter_seq_info sock_hash_iter_seq_info = अणु
 	.seq_ops		= &sock_hash_seq_ops,
-	.init_seq_private	= sock_hash_init_seq_private,
-	.seq_priv_size		= sizeof(struct sock_hash_seq_info),
-};
+	.init_seq_निजी	= sock_hash_init_seq_निजी,
+	.seq_priv_size		= माप(काष्ठा sock_hash_seq_info),
+पूर्ण;
 
-static int sock_hash_map_btf_id;
-const struct bpf_map_ops sock_hash_ops = {
+अटल पूर्णांक sock_hash_map_btf_id;
+स्थिर काष्ठा bpf_map_ops sock_hash_ops = अणु
 	.map_meta_equal		= bpf_map_meta_equal,
 	.map_alloc		= sock_hash_alloc,
-	.map_free		= sock_hash_free,
+	.map_मुक्त		= sock_hash_मुक्त,
 	.map_get_next_key	= sock_hash_get_next_key,
 	.map_update_elem	= sock_map_update_elem,
 	.map_delete_elem	= sock_hash_delete_elem,
@@ -1415,183 +1416,183 @@ const struct bpf_map_ops sock_hash_ops = {
 	.map_btf_name		= "bpf_shtab",
 	.map_btf_id		= &sock_hash_map_btf_id,
 	.iter_seq_info		= &sock_hash_iter_seq_info,
-};
+पूर्ण;
 
-static struct sk_psock_progs *sock_map_progs(struct bpf_map *map)
-{
-	switch (map->map_type) {
-	case BPF_MAP_TYPE_SOCKMAP:
-		return &container_of(map, struct bpf_stab, map)->progs;
-	case BPF_MAP_TYPE_SOCKHASH:
-		return &container_of(map, struct bpf_shtab, map)->progs;
-	default:
-		break;
-	}
+अटल काष्ठा sk_psock_progs *sock_map_progs(काष्ठा bpf_map *map)
+अणु
+	चयन (map->map_type) अणु
+	हाल BPF_MAP_TYPE_SOCKMAP:
+		वापस &container_of(map, काष्ठा bpf_stab, map)->progs;
+	हाल BPF_MAP_TYPE_SOCKHASH:
+		वापस &container_of(map, काष्ठा bpf_shtab, map)->progs;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int sock_map_prog_update(struct bpf_map *map, struct bpf_prog *prog,
-				struct bpf_prog *old, u32 which)
-{
-	struct sk_psock_progs *progs = sock_map_progs(map);
-	struct bpf_prog **pprog;
+अटल पूर्णांक sock_map_prog_update(काष्ठा bpf_map *map, काष्ठा bpf_prog *prog,
+				काष्ठा bpf_prog *old, u32 which)
+अणु
+	काष्ठा sk_psock_progs *progs = sock_map_progs(map);
+	काष्ठा bpf_prog **pprog;
 
-	if (!progs)
-		return -EOPNOTSUPP;
+	अगर (!progs)
+		वापस -EOPNOTSUPP;
 
-	switch (which) {
-	case BPF_SK_MSG_VERDICT:
+	चयन (which) अणु
+	हाल BPF_SK_MSG_VERDICT:
 		pprog = &progs->msg_parser;
-		break;
-#if IS_ENABLED(CONFIG_BPF_STREAM_PARSER)
-	case BPF_SK_SKB_STREAM_PARSER:
+		अवरोध;
+#अगर IS_ENABLED(CONFIG_BPF_STREAM_PARSER)
+	हाल BPF_SK_SKB_STREAM_PARSER:
 		pprog = &progs->stream_parser;
-		break;
-#endif
-	case BPF_SK_SKB_STREAM_VERDICT:
-		if (progs->skb_verdict)
-			return -EBUSY;
+		अवरोध;
+#पूर्ण_अगर
+	हाल BPF_SK_SKB_STREAM_VERDICT:
+		अगर (progs->skb_verdict)
+			वापस -EBUSY;
 		pprog = &progs->stream_verdict;
-		break;
-	case BPF_SK_SKB_VERDICT:
-		if (progs->stream_verdict)
-			return -EBUSY;
+		अवरोध;
+	हाल BPF_SK_SKB_VERDICT:
+		अगर (progs->stream_verdict)
+			वापस -EBUSY;
 		pprog = &progs->skb_verdict;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (old)
-		return psock_replace_prog(pprog, prog, old);
+	अगर (old)
+		वापस psock_replace_prog(pprog, prog, old);
 
 	psock_set_prog(pprog, prog);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sock_map_unlink(struct sock *sk, struct sk_psock_link *link)
-{
-	switch (link->map->map_type) {
-	case BPF_MAP_TYPE_SOCKMAP:
-		return sock_map_delete_from_link(link->map, sk,
+अटल व्योम sock_map_unlink(काष्ठा sock *sk, काष्ठा sk_psock_link *link)
+अणु
+	चयन (link->map->map_type) अणु
+	हाल BPF_MAP_TYPE_SOCKMAP:
+		वापस sock_map_delete_from_link(link->map, sk,
 						 link->link_raw);
-	case BPF_MAP_TYPE_SOCKHASH:
-		return sock_hash_delete_from_link(link->map, sk,
+	हाल BPF_MAP_TYPE_SOCKHASH:
+		वापस sock_hash_delete_from_link(link->map, sk,
 						  link->link_raw);
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void sock_map_remove_links(struct sock *sk, struct sk_psock *psock)
-{
-	struct sk_psock_link *link;
+अटल व्योम sock_map_हटाओ_links(काष्ठा sock *sk, काष्ठा sk_psock *psock)
+अणु
+	काष्ठा sk_psock_link *link;
 
-	while ((link = sk_psock_link_pop(psock))) {
+	जबतक ((link = sk_psock_link_pop(psock))) अणु
 		sock_map_unlink(sk, link);
-		sk_psock_free_link(link);
-	}
-}
+		sk_psock_मुक्त_link(link);
+	पूर्ण
+पूर्ण
 
-void sock_map_unhash(struct sock *sk)
-{
-	void (*saved_unhash)(struct sock *sk);
-	struct sk_psock *psock;
+व्योम sock_map_unhash(काष्ठा sock *sk)
+अणु
+	व्योम (*saved_unhash)(काष्ठा sock *sk);
+	काष्ठा sk_psock *psock;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	psock = sk_psock(sk);
-	if (unlikely(!psock)) {
-		rcu_read_unlock();
-		if (sk->sk_prot->unhash)
+	अगर (unlikely(!psock)) अणु
+		rcu_पढ़ो_unlock();
+		अगर (sk->sk_prot->unhash)
 			sk->sk_prot->unhash(sk);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	saved_unhash = psock->saved_unhash;
-	sock_map_remove_links(sk, psock);
-	rcu_read_unlock();
+	sock_map_हटाओ_links(sk, psock);
+	rcu_पढ़ो_unlock();
 	saved_unhash(sk);
-}
+पूर्ण
 
-void sock_map_close(struct sock *sk, long timeout)
-{
-	void (*saved_close)(struct sock *sk, long timeout);
-	struct sk_psock *psock;
+व्योम sock_map_बंद(काष्ठा sock *sk, दीर्घ समयout)
+अणु
+	व्योम (*saved_बंद)(काष्ठा sock *sk, दीर्घ समयout);
+	काष्ठा sk_psock *psock;
 
 	lock_sock(sk);
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	psock = sk_psock_get(sk);
-	if (unlikely(!psock)) {
-		rcu_read_unlock();
+	अगर (unlikely(!psock)) अणु
+		rcu_पढ़ो_unlock();
 		release_sock(sk);
-		return sk->sk_prot->close(sk, timeout);
-	}
+		वापस sk->sk_prot->बंद(sk, समयout);
+	पूर्ण
 
-	saved_close = psock->saved_close;
-	sock_map_remove_links(sk, psock);
-	rcu_read_unlock();
+	saved_बंद = psock->saved_बंद;
+	sock_map_हटाओ_links(sk, psock);
+	rcu_पढ़ो_unlock();
 	sk_psock_stop(psock, true);
 	sk_psock_put(sk, psock);
 	release_sock(sk);
-	saved_close(sk, timeout);
-}
+	saved_बंद(sk, समयout);
+पूर्ण
 
-static int sock_map_iter_attach_target(struct bpf_prog *prog,
-				       union bpf_iter_link_info *linfo,
-				       struct bpf_iter_aux_info *aux)
-{
-	struct bpf_map *map;
-	int err = -EINVAL;
+अटल पूर्णांक sock_map_iter_attach_target(काष्ठा bpf_prog *prog,
+				       जोड़ bpf_iter_link_info *linfo,
+				       काष्ठा bpf_iter_aux_info *aux)
+अणु
+	काष्ठा bpf_map *map;
+	पूर्णांक err = -EINVAL;
 
-	if (!linfo->map.map_fd)
-		return -EBADF;
+	अगर (!linfo->map.map_fd)
+		वापस -EBADF;
 
 	map = bpf_map_get_with_uref(linfo->map.map_fd);
-	if (IS_ERR(map))
-		return PTR_ERR(map);
+	अगर (IS_ERR(map))
+		वापस PTR_ERR(map);
 
-	if (map->map_type != BPF_MAP_TYPE_SOCKMAP &&
+	अगर (map->map_type != BPF_MAP_TYPE_SOCKMAP &&
 	    map->map_type != BPF_MAP_TYPE_SOCKHASH)
-		goto put_map;
+		जाओ put_map;
 
-	if (prog->aux->max_rdonly_access > map->key_size) {
+	अगर (prog->aux->max_rकरोnly_access > map->key_size) अणु
 		err = -EACCES;
-		goto put_map;
-	}
+		जाओ put_map;
+	पूर्ण
 
 	aux->map = map;
-	return 0;
+	वापस 0;
 
 put_map:
 	bpf_map_put_with_uref(map);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void sock_map_iter_detach_target(struct bpf_iter_aux_info *aux)
-{
+अटल व्योम sock_map_iter_detach_target(काष्ठा bpf_iter_aux_info *aux)
+अणु
 	bpf_map_put_with_uref(aux->map);
-}
+पूर्ण
 
-static struct bpf_iter_reg sock_map_iter_reg = {
+अटल काष्ठा bpf_iter_reg sock_map_iter_reg = अणु
 	.target			= "sockmap",
 	.attach_target		= sock_map_iter_attach_target,
 	.detach_target		= sock_map_iter_detach_target,
 	.show_fdinfo		= bpf_iter_map_show_fdinfo,
 	.fill_link_info		= bpf_iter_map_fill_link_info,
 	.ctx_arg_info_size	= 2,
-	.ctx_arg_info		= {
-		{ offsetof(struct bpf_iter__sockmap, key),
-		  PTR_TO_RDONLY_BUF_OR_NULL },
-		{ offsetof(struct bpf_iter__sockmap, sk),
-		  PTR_TO_BTF_ID_OR_NULL },
-	},
-};
+	.ctx_arg_info		= अणु
+		अणु दुरत्व(काष्ठा bpf_iter__sockmap, key),
+		  PTR_TO_RDONLY_BUF_OR_शून्य पूर्ण,
+		अणु दुरत्व(काष्ठा bpf_iter__sockmap, sk),
+		  PTR_TO_BTF_ID_OR_शून्य पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int __init bpf_sockmap_iter_init(void)
-{
+अटल पूर्णांक __init bpf_sockmap_iter_init(व्योम)
+अणु
 	sock_map_iter_reg.ctx_arg_info[1].btf_id =
 		btf_sock_ids[BTF_SOCK_TYPE_SOCK];
-	return bpf_iter_reg_target(&sock_map_iter_reg);
-}
+	वापस bpf_iter_reg_target(&sock_map_iter_reg);
+पूर्ण
 late_initcall(bpf_sockmap_iter_init);

@@ -1,205 +1,206 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2000 Jens Axboe <axboe@suse.de>
  * Copyright (C) 2001-2004 Peter Osterlund <petero2@telia.com>
  *
- * May be copied or modified under the terms of the GNU General Public
- * License.  See linux/COPYING for more information.
+ * May be copied or modअगरied under the terms of the GNU General Public
+ * License.  See linux/COPYING क्रम more inक्रमmation.
  *
- * Packet writing layer for ATAPI and SCSI CD-R, CD-RW, DVD-R, and
+ * Packet writing layer क्रम ATAPI and SCSI CD-R, CD-RW, DVD-R, and
  * DVD-RW devices.
  *
  */
-#ifndef __PKTCDVD_H
-#define __PKTCDVD_H
+#अगर_अघोषित __PKTCDVD_H
+#घोषणा __PKTCDVD_H
 
-#include <linux/blkdev.h>
-#include <linux/completion.h>
-#include <linux/cdrom.h>
-#include <linux/kobject.h>
-#include <linux/sysfs.h>
-#include <linux/mempool.h>
-#include <uapi/linux/pktcdvd.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/cdrom.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/mempool.h>
+#समावेश <uapi/linux/pktcdvd.h>
 
-/* default bio write queue congestion marks */
-#define PKT_WRITE_CONGESTION_ON    10000
-#define PKT_WRITE_CONGESTION_OFF   9000
+/* शेष bio ग_लिखो queue congestion marks */
+#घोषणा PKT_WRITE_CONGESTION_ON    10000
+#घोषणा PKT_WRITE_CONGESTION_OFF   9000
 
 
-struct packet_settings
-{
+काष्ठा packet_settings
+अणु
 	__u32			size;		/* packet size in (512 byte) sectors */
 	__u8			fp;		/* fixed packets */
-	__u8			link_loss;	/* the rest is specified
+	__u8			link_loss;	/* the rest is specअगरied
 						 * as per Mt Fuji */
-	__u8			write_type;
+	__u8			ग_लिखो_type;
 	__u8			track_mode;
 	__u8			block_mode;
-};
+पूर्ण;
 
 /*
- * Very crude stats for now
+ * Very crude stats क्रम now
  */
-struct packet_stats
-{
-	unsigned long		pkt_started;
-	unsigned long		pkt_ended;
-	unsigned long		secs_w;
-	unsigned long		secs_rg;
-	unsigned long		secs_r;
-};
+काष्ठा packet_stats
+अणु
+	अचिन्हित दीर्घ		pkt_started;
+	अचिन्हित दीर्घ		pkt_ended;
+	अचिन्हित दीर्घ		secs_w;
+	अचिन्हित दीर्घ		secs_rg;
+	अचिन्हित दीर्घ		secs_r;
+पूर्ण;
 
-struct packet_cdrw
-{
-	struct list_head	pkt_free_list;
-	struct list_head	pkt_active_list;
+काष्ठा packet_cdrw
+अणु
+	काष्ठा list_head	pkt_मुक्त_list;
+	काष्ठा list_head	pkt_active_list;
 	spinlock_t		active_list_lock; /* Serialize access to pkt_active_list */
-	struct task_struct	*thread;
+	काष्ठा task_काष्ठा	*thपढ़ो;
 	atomic_t		pending_bios;
-};
+पूर्ण;
 
 /*
- * Switch to high speed reading after reading this many kilobytes
- * with no interspersed writes.
+ * Switch to high speed पढ़ोing after पढ़ोing this many kilobytes
+ * with no पूर्णांकerspersed ग_लिखोs.
  */
-#define HI_SPEED_SWITCH 512
+#घोषणा HI_SPEED_SWITCH 512
 
-struct packet_iosched
-{
+काष्ठा packet_iosched
+अणु
 	atomic_t		attention;	/* Set to non-zero when queue processing is needed */
-	int			writing;	/* Non-zero when writing, zero when reading */
-	spinlock_t		lock;		/* Protecting read/write queue manipulations */
-	struct bio_list		read_queue;
-	struct bio_list		write_queue;
-	sector_t		last_write;	/* The sector where the last write ended */
-	int			successive_reads;
-};
+	पूर्णांक			writing;	/* Non-zero when writing, zero when पढ़ोing */
+	spinlock_t		lock;		/* Protecting पढ़ो/ग_लिखो queue manipulations */
+	काष्ठा bio_list		पढ़ो_queue;
+	काष्ठा bio_list		ग_लिखो_queue;
+	sector_t		last_ग_लिखो;	/* The sector where the last ग_लिखो ended */
+	पूर्णांक			successive_पढ़ोs;
+पूर्ण;
 
 /*
  * 32 buffers of 2048 bytes
  */
-#if (PAGE_SIZE % CD_FRAMESIZE) != 0
-#error "PAGE_SIZE must be a multiple of CD_FRAMESIZE"
-#endif
-#define PACKET_MAX_SIZE		128
-#define FRAMES_PER_PAGE		(PAGE_SIZE / CD_FRAMESIZE)
-#define PACKET_MAX_SECTORS	(PACKET_MAX_SIZE * CD_FRAMESIZE >> 9)
+#अगर (PAGE_SIZE % CD_FRAMESIZE) != 0
+#त्रुटि "PAGE_SIZE must be a multiple of CD_FRAMESIZE"
+#पूर्ण_अगर
+#घोषणा PACKET_MAX_SIZE		128
+#घोषणा FRAMES_PER_PAGE		(PAGE_SIZE / CD_FRAMESIZE)
+#घोषणा PACKET_MAX_SECTORS	(PACKET_MAX_SIZE * CD_FRAMESIZE >> 9)
 
-enum packet_data_state {
+क्रमागत packet_data_state अणु
 	PACKET_IDLE_STATE,			/* Not used at the moment */
-	PACKET_WAITING_STATE,			/* Waiting for more bios to arrive, so */
-						/* we don't have to do as much */
+	PACKET_WAITING_STATE,			/* Waiting क्रम more bios to arrive, so */
+						/* we करोn't have to करो as much */
 						/* data gathering */
-	PACKET_READ_WAIT_STATE,			/* Waiting for reads to fill in holes */
-	PACKET_WRITE_WAIT_STATE,		/* Waiting for the write to complete */
-	PACKET_RECOVERY_STATE,			/* Recover after read/write errors */
-	PACKET_FINISHED_STATE,			/* After write has finished */
+	PACKET_READ_WAIT_STATE,			/* Waiting क्रम पढ़ोs to fill in holes */
+	PACKET_WRITE_WAIT_STATE,		/* Waiting क्रम the ग_लिखो to complete */
+	PACKET_RECOVERY_STATE,			/* Recover after पढ़ो/ग_लिखो errors */
+	PACKET_FINISHED_STATE,			/* After ग_लिखो has finished */
 
 	PACKET_NUM_STATES			/* Number of possible states */
-};
+पूर्ण;
 
 /*
- * Information needed for writing a single packet
+ * Inक्रमmation needed क्रम writing a single packet
  */
-struct pktcdvd_device;
+काष्ठा pktcdvd_device;
 
-struct packet_data
-{
-	struct list_head	list;
+काष्ठा packet_data
+अणु
+	काष्ठा list_head	list;
 
 	spinlock_t		lock;		/* Lock protecting state transitions and */
 						/* orig_bios list */
 
-	struct bio_list		orig_bios;	/* Original bios passed to pkt_make_request */
+	काष्ठा bio_list		orig_bios;	/* Original bios passed to pkt_make_request */
 						/* that will be handled by this packet */
-	int			write_size;	/* Total size of all bios in the orig_bios */
+	पूर्णांक			ग_लिखो_size;	/* Total size of all bios in the orig_bios */
 						/* list, measured in number of frames */
 
-	struct bio		*w_bio;		/* The bio we will send to the real CD */
-						/* device once we have all data for the */
-						/* packet we are going to write */
+	काष्ठा bio		*w_bio;		/* The bio we will send to the real CD */
+						/* device once we have all data क्रम the */
+						/* packet we are going to ग_लिखो */
 	sector_t		sector;		/* First sector in this packet */
-	int			frames;		/* Number of frames in this packet */
+	पूर्णांक			frames;		/* Number of frames in this packet */
 
-	enum packet_data_state	state;		/* Current state */
+	क्रमागत packet_data_state	state;		/* Current state */
 	atomic_t		run_sm;		/* Incremented whenever the state */
 						/* machine needs to be run */
-	long			sleep_time;	/* Set this to non-zero to make the state */
-						/* machine run after this many jiffies. */
+	दीर्घ			sleep_समय;	/* Set this to non-zero to make the state */
+						/* machine run after this many jअगरfies. */
 
-	atomic_t		io_wait;	/* Number of pending IO operations */
-	atomic_t		io_errors;	/* Number of read/write errors during IO */
+	atomic_t		io_रुको;	/* Number of pending IO operations */
+	atomic_t		io_errors;	/* Number of पढ़ो/ग_लिखो errors during IO */
 
-	struct bio		*r_bios[PACKET_MAX_SIZE]; /* bios to use during data gathering */
-	struct page		*pages[PACKET_MAX_SIZE / FRAMES_PER_PAGE];
+	काष्ठा bio		*r_bios[PACKET_MAX_SIZE]; /* bios to use during data gathering */
+	काष्ठा page		*pages[PACKET_MAX_SIZE / FRAMES_PER_PAGE];
 
-	int			cache_valid;	/* If non-zero, the data for the zone defined */
+	पूर्णांक			cache_valid;	/* If non-zero, the data क्रम the zone defined */
 						/* by the sector variable is completely cached */
 						/* in the pages[] vector. */
 
-	int			id;		/* ID number for debugging */
-	struct pktcdvd_device	*pd;
-};
+	पूर्णांक			id;		/* ID number क्रम debugging */
+	काष्ठा pktcdvd_device	*pd;
+पूर्ण;
 
-struct pkt_rb_node {
-	struct rb_node		rb_node;
-	struct bio		*bio;
-};
+काष्ठा pkt_rb_node अणु
+	काष्ठा rb_node		rb_node;
+	काष्ठा bio		*bio;
+पूर्ण;
 
-struct packet_stacked_data
-{
-	struct bio		*bio;		/* Original read request bio */
-	struct pktcdvd_device	*pd;
-};
-#define PSD_POOL_SIZE		64
+काष्ठा packet_stacked_data
+अणु
+	काष्ठा bio		*bio;		/* Original पढ़ो request bio */
+	काष्ठा pktcdvd_device	*pd;
+पूर्ण;
+#घोषणा PSD_POOL_SIZE		64
 
-struct pktcdvd_kobj
-{
-	struct kobject		kobj;
-	struct pktcdvd_device	*pd;
-};
-#define to_pktcdvdkobj(_k) \
-  ((struct pktcdvd_kobj*)container_of(_k,struct pktcdvd_kobj,kobj))
+काष्ठा pktcdvd_kobj
+अणु
+	काष्ठा kobject		kobj;
+	काष्ठा pktcdvd_device	*pd;
+पूर्ण;
+#घोषणा to_pktcdvdkobj(_k) \
+  ((काष्ठा pktcdvd_kobj*)container_of(_k,काष्ठा pktcdvd_kobj,kobj))
 
-struct pktcdvd_device
-{
-	struct block_device	*bdev;		/* dev attached */
+काष्ठा pktcdvd_device
+अणु
+	काष्ठा block_device	*bdev;		/* dev attached */
 	dev_t			pkt_dev;	/* our dev */
-	char			name[20];
-	struct packet_settings	settings;
-	struct packet_stats	stats;
-	int			refcnt;		/* Open count */
-	int			write_speed;	/* current write speed, kB/s */
-	int			read_speed;	/* current read speed, kB/s */
-	unsigned long		offset;		/* start offset */
+	अक्षर			name[20];
+	काष्ठा packet_settings	settings;
+	काष्ठा packet_stats	stats;
+	पूर्णांक			refcnt;		/* Open count */
+	पूर्णांक			ग_लिखो_speed;	/* current ग_लिखो speed, kB/s */
+	पूर्णांक			पढ़ो_speed;	/* current पढ़ो speed, kB/s */
+	अचिन्हित दीर्घ		offset;		/* start offset */
 	__u8			mode_offset;	/* 0 / 8 */
 	__u8			type;
-	unsigned long		flags;
+	अचिन्हित दीर्घ		flags;
 	__u16			mmc3_profile;
 	__u32			nwa;		/* next writable address */
 	__u32			lra;		/* last recorded address */
-	struct packet_cdrw	cdrw;
-	wait_queue_head_t	wqueue;
+	काष्ठा packet_cdrw	cdrw;
+	रुको_queue_head_t	wqueue;
 
 	spinlock_t		lock;		/* Serialize access to bio_queue */
-	struct rb_root		bio_queue;	/* Work queue of bios we need to handle */
-	int			bio_queue_size;	/* Number of nodes in bio_queue */
+	काष्ठा rb_root		bio_queue;	/* Work queue of bios we need to handle */
+	पूर्णांक			bio_queue_size;	/* Number of nodes in bio_queue */
 	sector_t		current_sector;	/* Keep track of where the elevator is */
 	atomic_t		scan_queue;	/* Set to non-zero when pkt_handle_queue */
 						/* needs to be run. */
-	mempool_t		rb_pool;	/* mempool for pkt_rb_node allocations */
+	mempool_t		rb_pool;	/* mempool क्रम pkt_rb_node allocations */
 
-	struct packet_iosched   iosched;
-	struct gendisk		*disk;
+	काष्ठा packet_iosched   iosched;
+	काष्ठा gendisk		*disk;
 
-	int			write_congestion_off;
-	int			write_congestion_on;
+	पूर्णांक			ग_लिखो_congestion_off;
+	पूर्णांक			ग_लिखो_congestion_on;
 
-	struct device		*dev;		/* sysfs pktcdvd[0-7] dev */
-	struct pktcdvd_kobj	*kobj_stat;	/* sysfs pktcdvd[0-7]/stat/     */
-	struct pktcdvd_kobj	*kobj_wqueue;	/* sysfs pktcdvd[0-7]/write_queue/ */
+	काष्ठा device		*dev;		/* sysfs pktcdvd[0-7] dev */
+	काष्ठा pktcdvd_kobj	*kobj_stat;	/* sysfs pktcdvd[0-7]/stat/     */
+	काष्ठा pktcdvd_kobj	*kobj_wqueue;	/* sysfs pktcdvd[0-7]/ग_लिखो_queue/ */
 
-	struct dentry		*dfs_d_root;	/* debugfs: devname directory */
-	struct dentry		*dfs_f_info;	/* debugfs: info file */
-};
+	काष्ठा dentry		*dfs_d_root;	/* debugfs: devname directory */
+	काष्ठा dentry		*dfs_f_info;	/* debugfs: info file */
+पूर्ण;
 
-#endif /* __PKTCDVD_H */
+#पूर्ण_अगर /* __PKTCDVD_H */

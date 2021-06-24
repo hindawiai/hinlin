@@ -1,190 +1,191 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * item.c - library routines for handling generic config items
+ * item.c - library routines क्रम handling generic config items
  *
  * Based on kobject:
  *	kobject is Copyright (c) 2002-2003 Patrick Mochel
  *
  * configfs Copyright (C) 2005 Oracle.  All rights reserved.
  *
- * Please see the file Documentation/filesystems/configfs.rst for
- * critical information about using the config_item interface.
+ * Please see the file Documentation/fileप्रणालीs/configfs.rst क्रम
+ * critical inक्रमmation about using the config_item पूर्णांकerface.
  */
 
-#include <linux/string.h>
-#include <linux/module.h>
-#include <linux/stat.h>
-#include <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/module.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/slab.h>
 
-#include <linux/configfs.h>
+#समावेश <linux/configfs.h>
 
 
-static inline struct config_item *to_item(struct list_head *entry)
-{
-	return container_of(entry, struct config_item, ci_entry);
-}
+अटल अंतरभूत काष्ठा config_item *to_item(काष्ठा list_head *entry)
+अणु
+	वापस container_of(entry, काष्ठा config_item, ci_entry);
+पूर्ण
 
 /* Evil kernel */
-static void config_item_release(struct kref *kref);
+अटल व्योम config_item_release(काष्ठा kref *kref);
 
 /**
  *	config_item_init - initialize item.
  *	@item:	item in question.
  */
-static void config_item_init(struct config_item *item)
-{
+अटल व्योम config_item_init(काष्ठा config_item *item)
+अणु
 	kref_init(&item->ci_kref);
 	INIT_LIST_HEAD(&item->ci_entry);
-}
+पूर्ण
 
 /**
  *	config_item_set_name - Set the name of an item
  *	@item:	item.
- *	@fmt:  The vsnprintf()'s format string.
+ *	@fmt:  The vsnम_लिखो()'s क्रमmat string.
  *
- *	If strlen(name) >= CONFIGFS_ITEM_NAME_LEN, then use a
- *	dynamically allocated string that @item->ci_name points to.
- *	Otherwise, use the static @item->ci_namebuf array.
+ *	If म_माप(name) >= CONFIGFS_ITEM_NAME_LEN, then use a
+ *	dynamically allocated string that @item->ci_name poपूर्णांकs to.
+ *	Otherwise, use the अटल @item->ci_namebuf array.
  */
-int config_item_set_name(struct config_item *item, const char *fmt, ...)
-{
-	int limit = CONFIGFS_ITEM_NAME_LEN;
-	int need;
-	va_list args;
-	char *name;
+पूर्णांक config_item_set_name(काष्ठा config_item *item, स्थिर अक्षर *fmt, ...)
+अणु
+	पूर्णांक limit = CONFIGFS_ITEM_NAME_LEN;
+	पूर्णांक need;
+	बहु_सूची args;
+	अक्षर *name;
 
 	/*
-	 * First, try the static array
+	 * First, try the अटल array
 	 */
-	va_start(args, fmt);
-	need = vsnprintf(item->ci_namebuf, limit, fmt, args);
-	va_end(args);
-	if (need < limit)
+	बहु_शुरू(args, fmt);
+	need = vsnम_लिखो(item->ci_namebuf, limit, fmt, args);
+	बहु_पूर्ण(args);
+	अगर (need < limit)
 		name = item->ci_namebuf;
-	else {
-		va_start(args, fmt);
-		name = kvasprintf(GFP_KERNEL, fmt, args);
-		va_end(args);
-		if (!name)
-			return -EFAULT;
-	}
+	अन्यथा अणु
+		बहु_शुरू(args, fmt);
+		name = kvaप्र_लिखो(GFP_KERNEL, fmt, args);
+		बहु_पूर्ण(args);
+		अगर (!name)
+			वापस -EFAULT;
+	पूर्ण
 
-	/* Free the old name, if necessary. */
-	if (item->ci_name && item->ci_name != item->ci_namebuf)
-		kfree(item->ci_name);
+	/* Free the old name, अगर necessary. */
+	अगर (item->ci_name && item->ci_name != item->ci_namebuf)
+		kमुक्त(item->ci_name);
 
 	/* Now, set the new name */
 	item->ci_name = name;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(config_item_set_name);
 
-void config_item_init_type_name(struct config_item *item,
-				const char *name,
-				const struct config_item_type *type)
-{
+व्योम config_item_init_type_name(काष्ठा config_item *item,
+				स्थिर अक्षर *name,
+				स्थिर काष्ठा config_item_type *type)
+अणु
 	config_item_set_name(item, "%s", name);
 	item->ci_type = type;
 	config_item_init(item);
-}
+पूर्ण
 EXPORT_SYMBOL(config_item_init_type_name);
 
-void config_group_init_type_name(struct config_group *group, const char *name,
-			 const struct config_item_type *type)
-{
+व्योम config_group_init_type_name(काष्ठा config_group *group, स्थिर अक्षर *name,
+			 स्थिर काष्ठा config_item_type *type)
+अणु
 	config_item_set_name(&group->cg_item, "%s", name);
 	group->cg_item.ci_type = type;
 	config_group_init(group);
-}
+पूर्ण
 EXPORT_SYMBOL(config_group_init_type_name);
 
-struct config_item *config_item_get(struct config_item *item)
-{
-	if (item)
+काष्ठा config_item *config_item_get(काष्ठा config_item *item)
+अणु
+	अगर (item)
 		kref_get(&item->ci_kref);
-	return item;
-}
+	वापस item;
+पूर्ण
 EXPORT_SYMBOL(config_item_get);
 
-struct config_item *config_item_get_unless_zero(struct config_item *item)
-{
-	if (item && kref_get_unless_zero(&item->ci_kref))
-		return item;
-	return NULL;
-}
+काष्ठा config_item *config_item_get_unless_zero(काष्ठा config_item *item)
+अणु
+	अगर (item && kref_get_unless_zero(&item->ci_kref))
+		वापस item;
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(config_item_get_unless_zero);
 
-static void config_item_cleanup(struct config_item *item)
-{
-	const struct config_item_type *t = item->ci_type;
-	struct config_group *s = item->ci_group;
-	struct config_item *parent = item->ci_parent;
+अटल व्योम config_item_cleanup(काष्ठा config_item *item)
+अणु
+	स्थिर काष्ठा config_item_type *t = item->ci_type;
+	काष्ठा config_group *s = item->ci_group;
+	काष्ठा config_item *parent = item->ci_parent;
 
 	pr_debug("config_item %s: cleaning up\n", config_item_name(item));
-	if (item->ci_name != item->ci_namebuf)
-		kfree(item->ci_name);
-	item->ci_name = NULL;
-	if (t && t->ct_item_ops && t->ct_item_ops->release)
+	अगर (item->ci_name != item->ci_namebuf)
+		kमुक्त(item->ci_name);
+	item->ci_name = शून्य;
+	अगर (t && t->ct_item_ops && t->ct_item_ops->release)
 		t->ct_item_ops->release(item);
-	if (s)
+	अगर (s)
 		config_group_put(s);
-	if (parent)
+	अगर (parent)
 		config_item_put(parent);
-}
+पूर्ण
 
-static void config_item_release(struct kref *kref)
-{
-	config_item_cleanup(container_of(kref, struct config_item, ci_kref));
-}
+अटल व्योम config_item_release(काष्ठा kref *kref)
+अणु
+	config_item_cleanup(container_of(kref, काष्ठा config_item, ci_kref));
+पूर्ण
 
 /**
- *	config_item_put - decrement refcount for item.
+ *	config_item_put - decrement refcount क्रम item.
  *	@item:	item.
  *
- *	Decrement the refcount, and if 0, call config_item_cleanup().
+ *	Decrement the refcount, and अगर 0, call config_item_cleanup().
  */
-void config_item_put(struct config_item *item)
-{
-	if (item)
+व्योम config_item_put(काष्ठा config_item *item)
+अणु
+	अगर (item)
 		kref_put(&item->ci_kref, config_item_release);
-}
+पूर्ण
 EXPORT_SYMBOL(config_item_put);
 
 /**
- *	config_group_init - initialize a group for use
+ *	config_group_init - initialize a group क्रम use
  *	@group:	config_group
  */
-void config_group_init(struct config_group *group)
-{
+व्योम config_group_init(काष्ठा config_group *group)
+अणु
 	config_item_init(&group->cg_item);
 	INIT_LIST_HEAD(&group->cg_children);
-	INIT_LIST_HEAD(&group->default_groups);
-}
+	INIT_LIST_HEAD(&group->शेष_groups);
+पूर्ण
 EXPORT_SYMBOL(config_group_init);
 
 /**
- *	config_group_find_item - search for item in group.
+ *	config_group_find_item - search क्रम item in group.
  *	@group:	group we're looking in.
  *	@name:	item's name.
  *
- *	Iterate over @group->cg_list, looking for a matching config_item.
- *	If matching item is found take a reference and return the item.
+ *	Iterate over @group->cg_list, looking क्रम a matching config_item.
+ *	If matching item is found take a reference and वापस the item.
  *	Caller must have locked group via @group->cg_subsys->su_mtx.
  */
-struct config_item *config_group_find_item(struct config_group *group,
-					   const char *name)
-{
-	struct list_head *entry;
-	struct config_item *ret = NULL;
+काष्ठा config_item *config_group_find_item(काष्ठा config_group *group,
+					   स्थिर अक्षर *name)
+अणु
+	काष्ठा list_head *entry;
+	काष्ठा config_item *ret = शून्य;
 
-	list_for_each(entry, &group->cg_children) {
-		struct config_item *item = to_item(entry);
-		if (config_item_name(item) &&
-		    !strcmp(config_item_name(item), name)) {
+	list_क्रम_each(entry, &group->cg_children) अणु
+		काष्ठा config_item *item = to_item(entry);
+		अगर (config_item_name(item) &&
+		    !म_भेद(config_item_name(item), name)) अणु
 			ret = config_item_get(item);
-			break;
-		}
-	}
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(config_group_find_item);

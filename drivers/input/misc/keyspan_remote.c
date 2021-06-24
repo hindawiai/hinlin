@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * keyspan_remote: USB driver for the Keyspan DMR
+ * keyspan_remote: USB driver क्रम the Keyspan DMR
  *
- * Copyright (C) 2005 Zymeta Corporation - Michael Downey (downey@zymeta.com)
+ * Copyright (C) 2005 Zymeta Corporation - Michael Downey (करोwney@zymeta.com)
  *
  * This driver has been put together with the support of Innosys, Inc.
  * and Keyspan, Inc the manufacturers of the Keyspan USB DMR product.
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/usb/input.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb/input.h>
 
 /* Parameters that can be passed to the driver. */
-static int debug;
-module_param(debug, int, 0444);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0444);
 MODULE_PARM_DESC(debug, "Enable extra debug messages and information");
 
-/* Vendor and product ids */
-#define USB_KEYSPAN_VENDOR_ID		0x06CD
-#define USB_KEYSPAN_PRODUCT_UIA11	0x0202
+/* Venकरोr and product ids */
+#घोषणा USB_KEYSPAN_VENDOR_ID		0x06CD
+#घोषणा USB_KEYSPAN_PRODUCT_UIA11	0x0202
 
-/* Defines for converting the data from the remote. */
-#define ZERO		0x18
-#define ZERO_MASK	0x1F	/* 5 bits for a 0 */
-#define ONE		0x3C
-#define ONE_MASK	0x3F	/* 6 bits for a 1 */
-#define SYNC		0x3F80
-#define SYNC_MASK	0x3FFF	/* 14 bits for a SYNC sequence */
-#define STOP		0x00
-#define STOP_MASK	0x1F	/* 5 bits for the STOP sequence */
-#define GAP		0xFF
+/* Defines क्रम converting the data from the remote. */
+#घोषणा ZERO		0x18
+#घोषणा ZERO_MASK	0x1F	/* 5 bits क्रम a 0 */
+#घोषणा ONE		0x3C
+#घोषणा ONE_MASK	0x3F	/* 6 bits क्रम a 1 */
+#घोषणा SYNC		0x3F80
+#घोषणा SYNC_MASK	0x3FFF	/* 14 bits क्रम a SYNC sequence */
+#घोषणा STOP		0x00
+#घोषणा STOP_MASK	0x1F	/* 5 bits क्रम the STOP sequence */
+#घोषणा GAP		0xFF
 
-#define RECV_SIZE	8	/* The UIA-11 type have a 8 byte limit. */
+#घोषणा RECV_SIZE	8	/* The UIA-11 type have a 8 byte limit. */
 
 /*
  * Table that maps the 31 possible keycodes to input keys.
  * Currently there are 15 and 17 button models so RESERVED codes
  * are blank areas in the mapping.
  */
-static const unsigned short keyspan_key_table[] = {
+अटल स्थिर अचिन्हित लघु keyspan_key_table[] = अणु
 	KEY_RESERVED,		/* 0 is just a place holder. */
 	KEY_RESERVED,
 	KEY_STOP,
@@ -74,513 +75,513 @@ static const unsigned short keyspan_key_table[] = {
 	KEY_KPASTERISK,
 	KEY_RESERVED,
 	KEY_MENU
-};
+पूर्ण;
 
 /* table of devices that work with this driver */
-static const struct usb_device_id keyspan_table[] = {
-	{ USB_DEVICE(USB_KEYSPAN_VENDOR_ID, USB_KEYSPAN_PRODUCT_UIA11) },
-	{ }					/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id keyspan_table[] = अणु
+	अणु USB_DEVICE(USB_KEYSPAN_VENDOR_ID, USB_KEYSPAN_PRODUCT_UIA11) पूर्ण,
+	अणु पूर्ण					/* Terminating entry */
+पूर्ण;
 
 /* Structure to store all the real stuff that a remote sends to us. */
-struct keyspan_message {
-	u16	system;
+काष्ठा keyspan_message अणु
+	u16	प्रणाली;
 	u8	button;
 	u8	toggle;
-};
+पूर्ण;
 
-/* Structure used for all the bit testing magic needed to be done. */
-struct bit_tester {
+/* Structure used क्रम all the bit testing magic needed to be करोne. */
+काष्ठा bit_tester अणु
 	u32	tester;
-	int	len;
-	int	pos;
-	int	bits_left;
+	पूर्णांक	len;
+	पूर्णांक	pos;
+	पूर्णांक	bits_left;
 	u8	buffer[32];
-};
+पूर्ण;
 
-/* Structure to hold all of our driver specific stuff */
-struct usb_keyspan {
-	char				name[128];
-	char				phys[64];
-	unsigned short			keymap[ARRAY_SIZE(keyspan_key_table)];
-	struct usb_device		*udev;
-	struct input_dev		*input;
-	struct usb_interface		*interface;
-	struct usb_endpoint_descriptor	*in_endpoint;
-	struct urb*			irq_urb;
-	int				open;
+/* Structure to hold all of our driver specअगरic stuff */
+काष्ठा usb_keyspan अणु
+	अक्षर				name[128];
+	अक्षर				phys[64];
+	अचिन्हित लघु			keymap[ARRAY_SIZE(keyspan_key_table)];
+	काष्ठा usb_device		*udev;
+	काष्ठा input_dev		*input;
+	काष्ठा usb_पूर्णांकerface		*पूर्णांकerface;
+	काष्ठा usb_endpoपूर्णांक_descriptor	*in_endpoपूर्णांक;
+	काष्ठा urb*			irq_urb;
+	पूर्णांक				खोलो;
 	dma_addr_t			in_dma;
-	unsigned char			*in_buffer;
+	अचिन्हित अक्षर			*in_buffer;
 
 	/* variables used to parse messages from remote. */
-	struct bit_tester		data;
-	int				stage;
-	int				toggle;
-};
+	काष्ठा bit_tester		data;
+	पूर्णांक				stage;
+	पूर्णांक				toggle;
+पूर्ण;
 
-static struct usb_driver keyspan_driver;
+अटल काष्ठा usb_driver keyspan_driver;
 
 /*
- * Debug routine that prints out what we've received from the remote.
+ * Debug routine that prपूर्णांकs out what we've received from the remote.
  */
-static void keyspan_print(struct usb_keyspan* dev) /*unsigned char* data)*/
-{
-	char codes[4 * RECV_SIZE];
-	int i;
+अटल व्योम keyspan_prपूर्णांक(काष्ठा usb_keyspan* dev) /*अचिन्हित अक्षर* data)*/
+अणु
+	अक्षर codes[4 * RECV_SIZE];
+	पूर्णांक i;
 
-	for (i = 0; i < RECV_SIZE; i++)
-		snprintf(codes + i * 3, 4, "%02x ", dev->in_buffer[i]);
+	क्रम (i = 0; i < RECV_SIZE; i++)
+		snम_लिखो(codes + i * 3, 4, "%02x ", dev->in_buffer[i]);
 
 	dev_info(&dev->udev->dev, "%s\n", codes);
-}
+पूर्ण
 
 /*
- * Routine that manages the bit_tester structure.  It makes sure that there are
- * at least bits_needed bits loaded into the tester.
+ * Routine that manages the bit_tester काष्ठाure.  It makes sure that there are
+ * at least bits_needed bits loaded पूर्णांकo the tester.
  */
-static int keyspan_load_tester(struct usb_keyspan* dev, int bits_needed)
-{
-	if (dev->data.bits_left >= bits_needed)
-		return 0;
+अटल पूर्णांक keyspan_load_tester(काष्ठा usb_keyspan* dev, पूर्णांक bits_needed)
+अणु
+	अगर (dev->data.bits_left >= bits_needed)
+		वापस 0;
 
 	/*
 	 * Somehow we've missed the last message. The message will be repeated
 	 * though so it's not too big a deal
 	 */
-	if (dev->data.pos >= dev->data.len) {
-		dev_dbg(&dev->interface->dev,
+	अगर (dev->data.pos >= dev->data.len) अणु
+		dev_dbg(&dev->पूर्णांकerface->dev,
 			"%s - Error ran out of data. pos: %d, len: %d\n",
 			__func__, dev->data.pos, dev->data.len);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	/* Load as much as we can into the tester. */
-	while ((dev->data.bits_left + 7 < (sizeof(dev->data.tester) * 8)) &&
-	       (dev->data.pos < dev->data.len)) {
+	/* Load as much as we can पूर्णांकo the tester. */
+	जबतक ((dev->data.bits_left + 7 < (माप(dev->data.tester) * 8)) &&
+	       (dev->data.pos < dev->data.len)) अणु
 		dev->data.tester += (dev->data.buffer[dev->data.pos++] << dev->data.bits_left);
 		dev->data.bits_left += 8;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void keyspan_report_button(struct usb_keyspan *remote, int button, int press)
-{
-	struct input_dev *input = remote->input;
+अटल व्योम keyspan_report_button(काष्ठा usb_keyspan *remote, पूर्णांक button, पूर्णांक press)
+अणु
+	काष्ठा input_dev *input = remote->input;
 
 	input_event(input, EV_MSC, MSC_SCAN, button);
 	input_report_key(input, remote->keymap[button], press);
 	input_sync(input);
-}
+पूर्ण
 
 /*
  * Routine that handles all the logic needed to parse out the message from the remote.
  */
-static void keyspan_check_data(struct usb_keyspan *remote)
-{
-	int i;
-	int found = 0;
-	struct keyspan_message message;
+अटल व्योम keyspan_check_data(काष्ठा usb_keyspan *remote)
+अणु
+	पूर्णांक i;
+	पूर्णांक found = 0;
+	काष्ठा keyspan_message message;
 
-	switch(remote->stage) {
-	case 0:
+	चयन(remote->stage) अणु
+	हाल 0:
 		/*
 		 * In stage 0 we want to find the start of a message.  The remote sends a 0xFF as filler.
 		 * So the first byte that isn't a FF should be the start of a new message.
 		 */
-		for (i = 0; i < RECV_SIZE && remote->in_buffer[i] == GAP; ++i);
+		क्रम (i = 0; i < RECV_SIZE && remote->in_buffer[i] == GAP; ++i);
 
-		if (i < RECV_SIZE) {
-			memcpy(remote->data.buffer, remote->in_buffer, RECV_SIZE);
+		अगर (i < RECV_SIZE) अणु
+			स_नकल(remote->data.buffer, remote->in_buffer, RECV_SIZE);
 			remote->data.len = RECV_SIZE;
 			remote->data.pos = 0;
 			remote->data.tester = 0;
 			remote->data.bits_left = 0;
 			remote->stage = 1;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 1:
+	हाल 1:
 		/*
 		 * Stage 1 we should have 16 bytes and should be able to detect a
 		 * SYNC.  The SYNC is 14 bits, 7 0's and then 7 1's.
 		 */
-		memcpy(remote->data.buffer + remote->data.len, remote->in_buffer, RECV_SIZE);
+		स_नकल(remote->data.buffer + remote->data.len, remote->in_buffer, RECV_SIZE);
 		remote->data.len += RECV_SIZE;
 
 		found = 0;
-		while ((remote->data.bits_left >= 14 || remote->data.pos < remote->data.len) && !found) {
-			for (i = 0; i < 8; ++i) {
-				if (keyspan_load_tester(remote, 14) != 0) {
+		जबतक ((remote->data.bits_left >= 14 || remote->data.pos < remote->data.len) && !found) अणु
+			क्रम (i = 0; i < 8; ++i) अणु
+				अगर (keyspan_load_tester(remote, 14) != 0) अणु
 					remote->stage = 0;
-					return;
-				}
+					वापस;
+				पूर्ण
 
-				if ((remote->data.tester & SYNC_MASK) == SYNC) {
+				अगर ((remote->data.tester & SYNC_MASK) == SYNC) अणु
 					remote->data.tester = remote->data.tester >> 14;
 					remote->data.bits_left -= 14;
 					found = 1;
-					break;
-				} else {
+					अवरोध;
+				पूर्ण अन्यथा अणु
 					remote->data.tester = remote->data.tester >> 1;
 					--remote->data.bits_left;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (!found) {
+		अगर (!found) अणु
 			remote->stage = 0;
 			remote->data.len = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			remote->stage = 2;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		/*
-		 * Stage 2 we should have 24 bytes which will be enough for a full
-		 * message.  We need to parse out the system code, button code,
+		 * Stage 2 we should have 24 bytes which will be enough क्रम a full
+		 * message.  We need to parse out the प्रणाली code, button code,
 		 * toggle code, and stop.
 		 */
-		memcpy(remote->data.buffer + remote->data.len, remote->in_buffer, RECV_SIZE);
+		स_नकल(remote->data.buffer + remote->data.len, remote->in_buffer, RECV_SIZE);
 		remote->data.len += RECV_SIZE;
 
-		message.system = 0;
-		for (i = 0; i < 9; i++) {
+		message.प्रणाली = 0;
+		क्रम (i = 0; i < 9; i++) अणु
 			keyspan_load_tester(remote, 6);
 
-			if ((remote->data.tester & ZERO_MASK) == ZERO) {
-				message.system = message.system << 1;
+			अगर ((remote->data.tester & ZERO_MASK) == ZERO) अणु
+				message.प्रणाली = message.प्रणाली << 1;
 				remote->data.tester = remote->data.tester >> 5;
 				remote->data.bits_left -= 5;
-			} else if ((remote->data.tester & ONE_MASK) == ONE) {
-				message.system = (message.system << 1) + 1;
+			पूर्ण अन्यथा अगर ((remote->data.tester & ONE_MASK) == ONE) अणु
+				message.प्रणाली = (message.प्रणाली << 1) + 1;
 				remote->data.tester = remote->data.tester >> 6;
 				remote->data.bits_left -= 6;
-			} else {
-				dev_err(&remote->interface->dev,
+			पूर्ण अन्यथा अणु
+				dev_err(&remote->पूर्णांकerface->dev,
 					"%s - Unknown sequence found in system data.\n",
 					__func__);
 				remote->stage = 0;
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 
 		message.button = 0;
-		for (i = 0; i < 5; i++) {
+		क्रम (i = 0; i < 5; i++) अणु
 			keyspan_load_tester(remote, 6);
 
-			if ((remote->data.tester & ZERO_MASK) == ZERO) {
+			अगर ((remote->data.tester & ZERO_MASK) == ZERO) अणु
 				message.button = message.button << 1;
 				remote->data.tester = remote->data.tester >> 5;
 				remote->data.bits_left -= 5;
-			} else if ((remote->data.tester & ONE_MASK) == ONE) {
+			पूर्ण अन्यथा अगर ((remote->data.tester & ONE_MASK) == ONE) अणु
 				message.button = (message.button << 1) + 1;
 				remote->data.tester = remote->data.tester >> 6;
 				remote->data.bits_left -= 6;
-			} else {
-				dev_err(&remote->interface->dev,
+			पूर्ण अन्यथा अणु
+				dev_err(&remote->पूर्णांकerface->dev,
 					"%s - Unknown sequence found in button data.\n",
 					__func__);
 				remote->stage = 0;
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 
 		keyspan_load_tester(remote, 6);
-		if ((remote->data.tester & ZERO_MASK) == ZERO) {
+		अगर ((remote->data.tester & ZERO_MASK) == ZERO) अणु
 			message.toggle = 0;
 			remote->data.tester = remote->data.tester >> 5;
 			remote->data.bits_left -= 5;
-		} else if ((remote->data.tester & ONE_MASK) == ONE) {
+		पूर्ण अन्यथा अगर ((remote->data.tester & ONE_MASK) == ONE) अणु
 			message.toggle = 1;
 			remote->data.tester = remote->data.tester >> 6;
 			remote->data.bits_left -= 6;
-		} else {
-			dev_err(&remote->interface->dev,
+		पूर्ण अन्यथा अणु
+			dev_err(&remote->पूर्णांकerface->dev,
 				"%s - Error in message, invalid toggle.\n",
 				__func__);
 			remote->stage = 0;
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		keyspan_load_tester(remote, 5);
-		if ((remote->data.tester & STOP_MASK) == STOP) {
+		अगर ((remote->data.tester & STOP_MASK) == STOP) अणु
 			remote->data.tester = remote->data.tester >> 5;
 			remote->data.bits_left -= 5;
-		} else {
-			dev_err(&remote->interface->dev,
+		पूर्ण अन्यथा अणु
+			dev_err(&remote->पूर्णांकerface->dev,
 				"Bad message received, no stop bit found.\n");
-		}
+		पूर्ण
 
-		dev_dbg(&remote->interface->dev,
+		dev_dbg(&remote->पूर्णांकerface->dev,
 			"%s found valid message: system: %d, button: %d, toggle: %d\n",
-			__func__, message.system, message.button, message.toggle);
+			__func__, message.प्रणाली, message.button, message.toggle);
 
-		if (message.toggle != remote->toggle) {
+		अगर (message.toggle != remote->toggle) अणु
 			keyspan_report_button(remote, message.button, 1);
 			keyspan_report_button(remote, message.button, 0);
 			remote->toggle = message.toggle;
-		}
+		पूर्ण
 
 		remote->stage = 0;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * Routine for sending all the initialization messages to the remote.
+ * Routine क्रम sending all the initialization messages to the remote.
  */
-static int keyspan_setup(struct usb_device* dev)
-{
-	int retval = 0;
+अटल पूर्णांक keyspan_setup(काष्ठा usb_device* dev)
+अणु
+	पूर्णांक retval = 0;
 
 	retval = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
-				 0x11, 0x40, 0x5601, 0x0, NULL, 0,
+				 0x11, 0x40, 0x5601, 0x0, शून्य, 0,
 				 USB_CTRL_SET_TIMEOUT);
-	if (retval) {
+	अगर (retval) अणु
 		dev_dbg(&dev->dev, "%s - failed to set bit rate due to error: %d\n",
 			__func__, retval);
-		return(retval);
-	}
+		वापस(retval);
+	पूर्ण
 
 	retval = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
-				 0x44, 0x40, 0x0, 0x0, NULL, 0,
+				 0x44, 0x40, 0x0, 0x0, शून्य, 0,
 				 USB_CTRL_SET_TIMEOUT);
-	if (retval) {
+	अगर (retval) अणु
 		dev_dbg(&dev->dev, "%s - failed to set resume sensitivity due to error: %d\n",
 			__func__, retval);
-		return(retval);
-	}
+		वापस(retval);
+	पूर्ण
 
 	retval = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
-				 0x22, 0x40, 0x0, 0x0, NULL, 0,
+				 0x22, 0x40, 0x0, 0x0, शून्य, 0,
 				 USB_CTRL_SET_TIMEOUT);
-	if (retval) {
+	अगर (retval) अणु
 		dev_dbg(&dev->dev, "%s - failed to turn receive on due to error: %d\n",
 			__func__, retval);
-		return(retval);
-	}
+		वापस(retval);
+	पूर्ण
 
 	dev_dbg(&dev->dev, "%s - Setup complete.\n", __func__);
-	return(retval);
-}
+	वापस(retval);
+पूर्ण
 
 /*
  * Routine used to handle a new message that has come in.
  */
-static void keyspan_irq_recv(struct urb *urb)
-{
-	struct usb_keyspan *dev = urb->context;
-	int retval;
+अटल व्योम keyspan_irq_recv(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_keyspan *dev = urb->context;
+	पूर्णांक retval;
 
-	/* Check our status in case we need to bail out early. */
-	switch (urb->status) {
-	case 0:
-		break;
+	/* Check our status in हाल we need to bail out early. */
+	चयन (urb->status) अणु
+	हाल 0:
+		अवरोध;
 
-	/* Device went away so don't keep trying to read from it. */
-	case -ECONNRESET:
-	case -ENOENT:
-	case -ESHUTDOWN:
-		return;
+	/* Device went away so करोn't keep trying to पढ़ो from it. */
+	हाल -ECONNRESET:
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
+		वापस;
 
-	default:
-		goto resubmit;
-	}
+	शेष:
+		जाओ resubmit;
+	पूर्ण
 
-	if (debug)
-		keyspan_print(dev);
+	अगर (debug)
+		keyspan_prपूर्णांक(dev);
 
 	keyspan_check_data(dev);
 
 resubmit:
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
-	if (retval)
-		dev_err(&dev->interface->dev,
+	अगर (retval)
+		dev_err(&dev->पूर्णांकerface->dev,
 			"%s - usb_submit_urb failed with result: %d\n",
 			__func__, retval);
-}
+पूर्ण
 
-static int keyspan_open(struct input_dev *dev)
-{
-	struct usb_keyspan *remote = input_get_drvdata(dev);
+अटल पूर्णांक keyspan_खोलो(काष्ठा input_dev *dev)
+अणु
+	काष्ठा usb_keyspan *remote = input_get_drvdata(dev);
 
 	remote->irq_urb->dev = remote->udev;
-	if (usb_submit_urb(remote->irq_urb, GFP_KERNEL))
-		return -EIO;
+	अगर (usb_submit_urb(remote->irq_urb, GFP_KERNEL))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void keyspan_close(struct input_dev *dev)
-{
-	struct usb_keyspan *remote = input_get_drvdata(dev);
+अटल व्योम keyspan_बंद(काष्ठा input_dev *dev)
+अणु
+	काष्ठा usb_keyspan *remote = input_get_drvdata(dev);
 
-	usb_kill_urb(remote->irq_urb);
-}
+	usb_समाप्त_urb(remote->irq_urb);
+पूर्ण
 
-static struct usb_endpoint_descriptor *keyspan_get_in_endpoint(struct usb_host_interface *iface)
-{
+अटल काष्ठा usb_endpoपूर्णांक_descriptor *keyspan_get_in_endpoपूर्णांक(काष्ठा usb_host_पूर्णांकerface *अगरace)
+अणु
 
-	struct usb_endpoint_descriptor *endpoint;
-	int i;
+	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
+	पूर्णांक i;
 
-	for (i = 0; i < iface->desc.bNumEndpoints; ++i) {
-		endpoint = &iface->endpoint[i].desc;
+	क्रम (i = 0; i < अगरace->desc.bNumEndpoपूर्णांकs; ++i) अणु
+		endpoपूर्णांक = &अगरace->endpoपूर्णांक[i].desc;
 
-		if (usb_endpoint_is_int_in(endpoint)) {
-			/* we found our interrupt in endpoint */
-			return endpoint;
-		}
-	}
+		अगर (usb_endpoपूर्णांक_is_पूर्णांक_in(endpoपूर्णांक)) अणु
+			/* we found our पूर्णांकerrupt in endpoपूर्णांक */
+			वापस endpoपूर्णांक;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Routine that sets up the driver to handle a specific USB device detected on the bus.
+ * Routine that sets up the driver to handle a specअगरic USB device detected on the bus.
  */
-static int keyspan_probe(struct usb_interface *interface, const struct usb_device_id *id)
-{
-	struct usb_device *udev = interface_to_usbdev(interface);
-	struct usb_endpoint_descriptor *endpoint;
-	struct usb_keyspan *remote;
-	struct input_dev *input_dev;
-	int i, error;
+अटल पूर्णांक keyspan_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface, स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
+	काष्ठा usb_keyspan *remote;
+	काष्ठा input_dev *input_dev;
+	पूर्णांक i, error;
 
-	endpoint = keyspan_get_in_endpoint(interface->cur_altsetting);
-	if (!endpoint)
-		return -ENODEV;
+	endpoपूर्णांक = keyspan_get_in_endpoपूर्णांक(पूर्णांकerface->cur_altsetting);
+	अगर (!endpoपूर्णांक)
+		वापस -ENODEV;
 
-	remote = kzalloc(sizeof(*remote), GFP_KERNEL);
+	remote = kzalloc(माप(*remote), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	if (!remote || !input_dev) {
+	अगर (!remote || !input_dev) अणु
 		error = -ENOMEM;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	remote->udev = udev;
 	remote->input = input_dev;
-	remote->interface = interface;
-	remote->in_endpoint = endpoint;
+	remote->पूर्णांकerface = पूर्णांकerface;
+	remote->in_endpoपूर्णांक = endpoपूर्णांक;
 	remote->toggle = -1;	/* Set to -1 so we will always not match the toggle from the first remote message. */
 
 	remote->in_buffer = usb_alloc_coherent(udev, RECV_SIZE, GFP_KERNEL, &remote->in_dma);
-	if (!remote->in_buffer) {
+	अगर (!remote->in_buffer) अणु
 		error = -ENOMEM;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	remote->irq_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!remote->irq_urb) {
+	अगर (!remote->irq_urb) अणु
 		error = -ENOMEM;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 
 	error = keyspan_setup(udev);
-	if (error) {
+	अगर (error) अणु
 		error = -ENODEV;
-		goto fail3;
-	}
+		जाओ fail3;
+	पूर्ण
 
-	if (udev->manufacturer)
-		strlcpy(remote->name, udev->manufacturer, sizeof(remote->name));
+	अगर (udev->manufacturer)
+		strlcpy(remote->name, udev->manufacturer, माप(remote->name));
 
-	if (udev->product) {
-		if (udev->manufacturer)
-			strlcat(remote->name, " ", sizeof(remote->name));
-		strlcat(remote->name, udev->product, sizeof(remote->name));
-	}
+	अगर (udev->product) अणु
+		अगर (udev->manufacturer)
+			strlcat(remote->name, " ", माप(remote->name));
+		strlcat(remote->name, udev->product, माप(remote->name));
+	पूर्ण
 
-	if (!strlen(remote->name))
-		snprintf(remote->name, sizeof(remote->name),
+	अगर (!म_माप(remote->name))
+		snम_लिखो(remote->name, माप(remote->name),
 			 "USB Keyspan Remote %04x:%04x",
-			 le16_to_cpu(udev->descriptor.idVendor),
+			 le16_to_cpu(udev->descriptor.idVenकरोr),
 			 le16_to_cpu(udev->descriptor.idProduct));
 
-	usb_make_path(udev, remote->phys, sizeof(remote->phys));
-	strlcat(remote->phys, "/input0", sizeof(remote->phys));
-	memcpy(remote->keymap, keyspan_key_table, sizeof(remote->keymap));
+	usb_make_path(udev, remote->phys, माप(remote->phys));
+	strlcat(remote->phys, "/input0", माप(remote->phys));
+	स_नकल(remote->keymap, keyspan_key_table, माप(remote->keymap));
 
 	input_dev->name = remote->name;
 	input_dev->phys = remote->phys;
 	usb_to_input_id(udev, &input_dev->id);
-	input_dev->dev.parent = &interface->dev;
+	input_dev->dev.parent = &पूर्णांकerface->dev;
 	input_dev->keycode = remote->keymap;
-	input_dev->keycodesize = sizeof(unsigned short);
+	input_dev->keycodesize = माप(अचिन्हित लघु);
 	input_dev->keycodemax = ARRAY_SIZE(remote->keymap);
 
 	input_set_capability(input_dev, EV_MSC, MSC_SCAN);
 	__set_bit(EV_KEY, input_dev->evbit);
-	for (i = 0; i < ARRAY_SIZE(keyspan_key_table); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(keyspan_key_table); i++)
 		__set_bit(keyspan_key_table[i], input_dev->keybit);
 	__clear_bit(KEY_RESERVED, input_dev->keybit);
 
 	input_set_drvdata(input_dev, remote);
 
-	input_dev->open = keyspan_open;
-	input_dev->close = keyspan_close;
+	input_dev->खोलो = keyspan_खोलो;
+	input_dev->बंद = keyspan_बंद;
 
 	/*
 	 * Initialize the URB to access the device.
-	 * The urb gets sent to the device in keyspan_open()
+	 * The urb माला_लो sent to the device in keyspan_खोलो()
 	 */
-	usb_fill_int_urb(remote->irq_urb,
+	usb_fill_पूर्णांक_urb(remote->irq_urb,
 			 remote->udev,
-			 usb_rcvintpipe(remote->udev, endpoint->bEndpointAddress),
+			 usb_rcvपूर्णांकpipe(remote->udev, endpoपूर्णांक->bEndpoपूर्णांकAddress),
 			 remote->in_buffer, RECV_SIZE, keyspan_irq_recv, remote,
-			 endpoint->bInterval);
+			 endpoपूर्णांक->bInterval);
 	remote->irq_urb->transfer_dma = remote->in_dma;
 	remote->irq_urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	/* we can register the device now, as it is ready */
-	error = input_register_device(remote->input);
-	if (error)
-		goto fail3;
+	/* we can रेजिस्टर the device now, as it is पढ़ोy */
+	error = input_रेजिस्टर_device(remote->input);
+	अगर (error)
+		जाओ fail3;
 
-	/* save our data pointer in this interface device */
-	usb_set_intfdata(interface, remote);
+	/* save our data poपूर्णांकer in this पूर्णांकerface device */
+	usb_set_पूर्णांकfdata(पूर्णांकerface, remote);
 
-	return 0;
+	वापस 0;
 
- fail3:	usb_free_urb(remote->irq_urb);
- fail2:	usb_free_coherent(udev, RECV_SIZE, remote->in_buffer, remote->in_dma);
- fail1:	kfree(remote);
-	input_free_device(input_dev);
+ fail3:	usb_मुक्त_urb(remote->irq_urb);
+ fail2:	usb_मुक्त_coherent(udev, RECV_SIZE, remote->in_buffer, remote->in_dma);
+ fail1:	kमुक्त(remote);
+	input_मुक्त_device(input_dev);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * Routine called when a device is disconnected from the USB.
  */
-static void keyspan_disconnect(struct usb_interface *interface)
-{
-	struct usb_keyspan *remote;
+अटल व्योम keyspan_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा usb_keyspan *remote;
 
-	remote = usb_get_intfdata(interface);
-	usb_set_intfdata(interface, NULL);
+	remote = usb_get_पूर्णांकfdata(पूर्णांकerface);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
 
-	if (remote) {	/* We have a valid driver structure so clean up everything we allocated. */
-		input_unregister_device(remote->input);
-		usb_kill_urb(remote->irq_urb);
-		usb_free_urb(remote->irq_urb);
-		usb_free_coherent(remote->udev, RECV_SIZE, remote->in_buffer, remote->in_dma);
-		kfree(remote);
-	}
-}
+	अगर (remote) अणु	/* We have a valid driver काष्ठाure so clean up everything we allocated. */
+		input_unरेजिस्टर_device(remote->input);
+		usb_समाप्त_urb(remote->irq_urb);
+		usb_मुक्त_urb(remote->irq_urb);
+		usb_मुक्त_coherent(remote->udev, RECV_SIZE, remote->in_buffer, remote->in_dma);
+		kमुक्त(remote);
+	पूर्ण
+पूर्ण
 
 /*
  * Standard driver set up sections
  */
-static struct usb_driver keyspan_driver =
-{
+अटल काष्ठा usb_driver keyspan_driver =
+अणु
 	.name =		"keyspan_remote",
 	.probe =	keyspan_probe,
 	.disconnect =	keyspan_disconnect,
 	.id_table =	keyspan_table
-};
+पूर्ण;
 
 module_usb_driver(keyspan_driver);
 

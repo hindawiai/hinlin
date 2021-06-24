@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015 MediaTek Inc.
  * Author: Andrew-CT Chen <andrew-ct.chen@mediatek.com>
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/io.h>
-#include <linux/nvmem-provider.h>
-#include <linux/platform_device.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/platक्रमm_device.h>
 
-struct mtk_efuse_priv {
-	void __iomem *base;
-};
+काष्ठा mtk_efuse_priv अणु
+	व्योम __iomem *base;
+पूर्ण;
 
-static int mtk_reg_read(void *context,
-			unsigned int reg, void *_val, size_t bytes)
-{
-	struct mtk_efuse_priv *priv = context;
+अटल पूर्णांक mtk_reg_पढ़ो(व्योम *context,
+			अचिन्हित पूर्णांक reg, व्योम *_val, माप_प्रकार bytes)
+अणु
+	काष्ठा mtk_efuse_priv *priv = context;
 	u32 *val = _val;
-	int i = 0, words = bytes / 4;
+	पूर्णांक i = 0, words = bytes / 4;
 
-	while (words--)
-		*val++ = readl(priv->base + reg + (i++ * 4));
+	जबतक (words--)
+		*val++ = पढ़ोl(priv->base + reg + (i++ * 4));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_efuse_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	struct nvmem_device *nvmem;
-	struct nvmem_config econfig = {};
-	struct mtk_efuse_priv *priv;
+अटल पूर्णांक mtk_efuse_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	काष्ठा nvmem_device *nvmem;
+	काष्ठा nvmem_config econfig = अणुपूर्ण;
+	काष्ठा mtk_efuse_priv *priv;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->base))
-		return PTR_ERR(priv->base);
+	अगर (IS_ERR(priv->base))
+		वापस PTR_ERR(priv->base);
 
 	econfig.stride = 4;
 	econfig.word_size = 4;
-	econfig.reg_read = mtk_reg_read;
+	econfig.reg_पढ़ो = mtk_reg_पढ़ो;
 	econfig.size = resource_size(res);
 	econfig.priv = priv;
 	econfig.dev = dev;
-	nvmem = devm_nvmem_register(dev, &econfig);
+	nvmem = devm_nvmem_रेजिस्टर(dev, &econfig);
 
-	return PTR_ERR_OR_ZERO(nvmem);
-}
+	वापस PTR_ERR_OR_ZERO(nvmem);
+पूर्ण
 
-static const struct of_device_id mtk_efuse_of_match[] = {
-	{ .compatible = "mediatek,mt8173-efuse",},
-	{ .compatible = "mediatek,efuse",},
-	{/* sentinel */},
-};
+अटल स्थिर काष्ठा of_device_id mtk_efuse_of_match[] = अणु
+	अणु .compatible = "mediatek,mt8173-efuse",पूर्ण,
+	अणु .compatible = "mediatek,efuse",पूर्ण,
+	अणु/* sentinel */पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk_efuse_of_match);
 
-static struct platform_driver mtk_efuse_driver = {
+अटल काष्ठा platक्रमm_driver mtk_efuse_driver = अणु
 	.probe = mtk_efuse_probe,
-	.driver = {
+	.driver = अणु
 		.name = "mediatek,efuse",
 		.of_match_table = mtk_efuse_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init mtk_efuse_init(void)
-{
-	int ret;
+अटल पूर्णांक __init mtk_efuse_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&mtk_efuse_driver);
-	if (ret) {
+	ret = platक्रमm_driver_रेजिस्टर(&mtk_efuse_driver);
+	अगर (ret) अणु
 		pr_err("Failed to register efuse driver\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit mtk_efuse_exit(void)
-{
-	return platform_driver_unregister(&mtk_efuse_driver);
-}
+अटल व्योम __निकास mtk_efuse_निकास(व्योम)
+अणु
+	वापस platक्रमm_driver_unरेजिस्टर(&mtk_efuse_driver);
+पूर्ण
 
 subsys_initcall(mtk_efuse_init);
-module_exit(mtk_efuse_exit);
+module_निकास(mtk_efuse_निकास);
 
 MODULE_AUTHOR("Andrew-CT Chen <andrew-ct.chen@mediatek.com>");
 MODULE_DESCRIPTION("Mediatek EFUSE driver");

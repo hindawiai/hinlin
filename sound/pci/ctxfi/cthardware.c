@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
@@ -11,79 +12,79 @@
  * @Date 	Jun 26 2008
  */
 
-#include "cthardware.h"
-#include "cthw20k1.h"
-#include "cthw20k2.h"
-#include <linux/bug.h>
+#समावेश "cthardware.h"
+#समावेश "cthw20k1.h"
+#समावेश "cthw20k2.h"
+#समावेश <linux/bug.h>
 
-int create_hw_obj(struct pci_dev *pci, enum CHIPTYP chip_type,
-		  enum CTCARDS model, struct hw **rhw)
-{
-	int err;
+पूर्णांक create_hw_obj(काष्ठा pci_dev *pci, क्रमागत CHIPTYP chip_type,
+		  क्रमागत CTCARDS model, काष्ठा hw **rhw)
+अणु
+	पूर्णांक err;
 
-	switch (chip_type) {
-	case ATC20K1:
+	चयन (chip_type) अणु
+	हाल ATC20K1:
 		err = create_20k1_hw_obj(rhw);
-		break;
-	case ATC20K2:
+		अवरोध;
+	हाल ATC20K2:
 		err = create_20k2_hw_obj(rhw);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -ENODEV;
-		break;
-	}
-	if (err)
-		return err;
+		अवरोध;
+	पूर्ण
+	अगर (err)
+		वापस err;
 
 	(*rhw)->pci = pci;
 	(*rhw)->chip_type = chip_type;
 	(*rhw)->model = model;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int destroy_hw_obj(struct hw *hw)
-{
-	int err;
+पूर्णांक destroy_hw_obj(काष्ठा hw *hw)
+अणु
+	पूर्णांक err;
 
-	switch (hw->pci->device) {
-	case 0x0005:	/* 20k1 device */
+	चयन (hw->pci->device) अणु
+	हाल 0x0005:	/* 20k1 device */
 		err = destroy_20k1_hw_obj(hw);
-		break;
-	case 0x000B:	/* 20k2 device */
+		अवरोध;
+	हाल 0x000B:	/* 20k2 device */
 		err = destroy_20k2_hw_obj(hw);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -ENODEV;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-unsigned int get_field(unsigned int data, unsigned int field)
-{
-	int i;
+अचिन्हित पूर्णांक get_field(अचिन्हित पूर्णांक data, अचिन्हित पूर्णांक field)
+अणु
+	पूर्णांक i;
 
-	if (WARN_ON(!field))
-		return 0;
+	अगर (WARN_ON(!field))
+		वापस 0;
 	/* @field should always be greater than 0 */
-	for (i = 0; !(field & (1 << i)); )
+	क्रम (i = 0; !(field & (1 << i)); )
 		i++;
 
-	return (data & field) >> i;
-}
+	वापस (data & field) >> i;
+पूर्ण
 
-void set_field(unsigned int *data, unsigned int field, unsigned int value)
-{
-	int i;
+व्योम set_field(अचिन्हित पूर्णांक *data, अचिन्हित पूर्णांक field, अचिन्हित पूर्णांक value)
+अणु
+	पूर्णांक i;
 
-	if (WARN_ON(!field))
-		return;
+	अगर (WARN_ON(!field))
+		वापस;
 	/* @field should always be greater than 0 */
-	for (i = 0; !(field & (1 << i)); )
+	क्रम (i = 0; !(field & (1 << i)); )
 		i++;
 
 	*data = (*data & (~field)) | ((value << i) & field);
-}
+पूर्ण
 

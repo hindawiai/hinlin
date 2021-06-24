@@ -1,98 +1,99 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015, Linaro Limited
  */
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include "optee_private.h"
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश "optee_private.h"
 
-struct optee_supp_req {
-	struct list_head link;
+काष्ठा optee_supp_req अणु
+	काष्ठा list_head link;
 
 	bool in_queue;
 	u32 func;
 	u32 ret;
-	size_t num_params;
-	struct tee_param *param;
+	माप_प्रकार num_params;
+	काष्ठा tee_param *param;
 
-	struct completion c;
-};
+	काष्ठा completion c;
+पूर्ण;
 
-void optee_supp_init(struct optee_supp *supp)
-{
-	memset(supp, 0, sizeof(*supp));
+व्योम optee_supp_init(काष्ठा optee_supp *supp)
+अणु
+	स_रखो(supp, 0, माप(*supp));
 	mutex_init(&supp->mutex);
 	init_completion(&supp->reqs_c);
 	idr_init(&supp->idr);
 	INIT_LIST_HEAD(&supp->reqs);
 	supp->req_id = -1;
-}
+पूर्ण
 
-void optee_supp_uninit(struct optee_supp *supp)
-{
+व्योम optee_supp_uninit(काष्ठा optee_supp *supp)
+अणु
 	mutex_destroy(&supp->mutex);
 	idr_destroy(&supp->idr);
-}
+पूर्ण
 
-void optee_supp_release(struct optee_supp *supp)
-{
-	int id;
-	struct optee_supp_req *req;
-	struct optee_supp_req *req_tmp;
+व्योम optee_supp_release(काष्ठा optee_supp *supp)
+अणु
+	पूर्णांक id;
+	काष्ठा optee_supp_req *req;
+	काष्ठा optee_supp_req *req_पंचांगp;
 
 	mutex_lock(&supp->mutex);
 
 	/* Abort all request retrieved by supplicant */
-	idr_for_each_entry(&supp->idr, req, id) {
-		idr_remove(&supp->idr, id);
+	idr_क्रम_each_entry(&supp->idr, req, id) अणु
+		idr_हटाओ(&supp->idr, id);
 		req->ret = TEEC_ERROR_COMMUNICATION;
 		complete(&req->c);
-	}
+	पूर्ण
 
 	/* Abort all queued requests */
-	list_for_each_entry_safe(req, req_tmp, &supp->reqs, link) {
+	list_क्रम_each_entry_safe(req, req_पंचांगp, &supp->reqs, link) अणु
 		list_del(&req->link);
 		req->in_queue = false;
 		req->ret = TEEC_ERROR_COMMUNICATION;
 		complete(&req->c);
-	}
+	पूर्ण
 
-	supp->ctx = NULL;
+	supp->ctx = शून्य;
 	supp->req_id = -1;
 
 	mutex_unlock(&supp->mutex);
-}
+पूर्ण
 
 /**
  * optee_supp_thrd_req() - request service from supplicant
- * @ctx:	context doing the request
+ * @ctx:	context करोing the request
  * @func:	function requested
  * @num_params:	number of elements in @param array
- * @param:	parameters for function
+ * @param:	parameters क्रम function
  *
  * Returns result of operation to be passed to secure world
  */
-u32 optee_supp_thrd_req(struct tee_context *ctx, u32 func, size_t num_params,
-			struct tee_param *param)
+u32 optee_supp_thrd_req(काष्ठा tee_context *ctx, u32 func, माप_प्रकार num_params,
+			काष्ठा tee_param *param)
 
-{
-	struct optee *optee = tee_get_drvdata(ctx->teedev);
-	struct optee_supp *supp = &optee->supp;
-	struct optee_supp_req *req;
-	bool interruptable;
+अणु
+	काष्ठा optee *optee = tee_get_drvdata(ctx->teedev);
+	काष्ठा optee_supp *supp = &optee->supp;
+	काष्ठा optee_supp_req *req;
+	bool पूर्णांकerruptable;
 	u32 ret;
 
 	/*
-	 * Return in case there is no supplicant available and
+	 * Return in हाल there is no supplicant available and
 	 * non-blocking request.
 	 */
-	if (!supp->ctx && ctx->supp_nowait)
-		return TEEC_ERROR_COMMUNICATION;
+	अगर (!supp->ctx && ctx->supp_noरुको)
+		वापस TEEC_ERROR_COMMUNICATION;
 
-	req = kzalloc(sizeof(*req), GFP_KERNEL);
-	if (!req)
-		return TEEC_ERROR_OUT_OF_MEMORY;
+	req = kzalloc(माप(*req), GFP_KERNEL);
+	अगर (!req)
+		वापस TEEC_ERROR_OUT_OF_MEMORY;
 
 	init_completion(&req->c);
 	req->func = func;
@@ -105,18 +106,18 @@ u32 optee_supp_thrd_req(struct tee_context *ctx, u32 func, size_t num_params,
 	req->in_queue = true;
 	mutex_unlock(&supp->mutex);
 
-	/* Tell an eventual waiter there's a new request */
+	/* Tell an eventual रुकोer there's a new request */
 	complete(&supp->reqs_c);
 
 	/*
-	 * Wait for supplicant to process and return result, once we've
-	 * returned from wait_for_completion(&req->c) successfully we have
+	 * Wait क्रम supplicant to process and वापस result, once we've
+	 * वापसed from रुको_क्रम_completion(&req->c) successfully we have
 	 * exclusive access again.
 	 */
-	while (wait_for_completion_interruptible(&req->c)) {
+	जबतक (रुको_क्रम_completion_पूर्णांकerruptible(&req->c)) अणु
 		mutex_lock(&supp->mutex);
-		interruptable = !supp->ctx;
-		if (interruptable) {
+		पूर्णांकerruptable = !supp->ctx;
+		अगर (पूर्णांकerruptable) अणु
 			/*
 			 * There's no supplicant available and since the
 			 * supp->mutex currently is held none can
@@ -125,146 +126,146 @@ u32 optee_supp_thrd_req(struct tee_context *ctx, u32 func, size_t num_params,
 			 *
 			 * Interrupting an RPC to supplicant is only
 			 * allowed as a way of slightly improving the user
-			 * experience in case the supplicant hasn't been
+			 * experience in हाल the supplicant hasn't been
 			 * started yet. During normal operation the supplicant
-			 * will serve all requests in a timely manner and
-			 * interrupting then wouldn't make sense.
+			 * will serve all requests in a समयly manner and
+			 * पूर्णांकerrupting then wouldn't make sense.
 			 */
-			if (req->in_queue) {
+			अगर (req->in_queue) अणु
 				list_del(&req->link);
 				req->in_queue = false;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		mutex_unlock(&supp->mutex);
 
-		if (interruptable) {
+		अगर (पूर्णांकerruptable) अणु
 			req->ret = TEEC_ERROR_COMMUNICATION;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ret = req->ret;
-	kfree(req);
+	kमुक्त(req);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct optee_supp_req  *supp_pop_entry(struct optee_supp *supp,
-					      int num_params, int *id)
-{
-	struct optee_supp_req *req;
+अटल काष्ठा optee_supp_req  *supp_pop_entry(काष्ठा optee_supp *supp,
+					      पूर्णांक num_params, पूर्णांक *id)
+अणु
+	काष्ठा optee_supp_req *req;
 
-	if (supp->req_id != -1) {
+	अगर (supp->req_id != -1) अणु
 		/*
 		 * Supplicant should not mix synchronous and asnynchronous
 		 * requests.
 		 */
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (list_empty(&supp->reqs))
-		return NULL;
+	अगर (list_empty(&supp->reqs))
+		वापस शून्य;
 
-	req = list_first_entry(&supp->reqs, struct optee_supp_req, link);
+	req = list_first_entry(&supp->reqs, काष्ठा optee_supp_req, link);
 
-	if (num_params < req->num_params) {
-		/* Not enough room for parameters */
-		return ERR_PTR(-EINVAL);
-	}
+	अगर (num_params < req->num_params) अणु
+		/* Not enough room क्रम parameters */
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	*id = idr_alloc(&supp->idr, req, 1, 0, GFP_KERNEL);
-	if (*id < 0)
-		return ERR_PTR(-ENOMEM);
+	अगर (*id < 0)
+		वापस ERR_PTR(-ENOMEM);
 
 	list_del(&req->link);
 	req->in_queue = false;
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
-static int supp_check_recv_params(size_t num_params, struct tee_param *params,
-				  size_t *num_meta)
-{
-	size_t n;
+अटल पूर्णांक supp_check_recv_params(माप_प्रकार num_params, काष्ठा tee_param *params,
+				  माप_प्रकार *num_meta)
+अणु
+	माप_प्रकार n;
 
-	if (!num_params)
-		return -EINVAL;
+	अगर (!num_params)
+		वापस -EINVAL;
 
 	/*
 	 * If there's memrefs we need to decrease those as they where
 	 * increased earlier and we'll even refuse to accept any below.
 	 */
-	for (n = 0; n < num_params; n++)
-		if (tee_param_is_memref(params + n) && params[n].u.memref.shm)
+	क्रम (n = 0; n < num_params; n++)
+		अगर (tee_param_is_memref(params + n) && params[n].u.memref.shm)
 			tee_shm_put(params[n].u.memref.shm);
 
 	/*
 	 * We only expect parameters as TEE_IOCTL_PARAM_ATTR_TYPE_NONE with
 	 * or without the TEE_IOCTL_PARAM_ATTR_META bit set.
 	 */
-	for (n = 0; n < num_params; n++)
-		if (params[n].attr &&
+	क्रम (n = 0; n < num_params; n++)
+		अगर (params[n].attr &&
 		    params[n].attr != TEE_IOCTL_PARAM_ATTR_META)
-			return -EINVAL;
+			वापस -EINVAL;
 
-	/* At most we'll need one meta parameter so no need to check for more */
-	if (params->attr == TEE_IOCTL_PARAM_ATTR_META)
+	/* At most we'll need one meta parameter so no need to check क्रम more */
+	अगर (params->attr == TEE_IOCTL_PARAM_ATTR_META)
 		*num_meta = 1;
-	else
+	अन्यथा
 		*num_meta = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * optee_supp_recv() - receive request for supplicant
+ * optee_supp_recv() - receive request क्रम supplicant
  * @ctx:	context receiving the request
  * @func:	requested function in supplicant
  * @num_params:	number of elements allocated in @param, updated with number
  *		used elements
- * @param:	space for parameters for @func
+ * @param:	space क्रम parameters क्रम @func
  *
  * Returns 0 on success or <0 on failure
  */
-int optee_supp_recv(struct tee_context *ctx, u32 *func, u32 *num_params,
-		    struct tee_param *param)
-{
-	struct tee_device *teedev = ctx->teedev;
-	struct optee *optee = tee_get_drvdata(teedev);
-	struct optee_supp *supp = &optee->supp;
-	struct optee_supp_req *req = NULL;
-	int id;
-	size_t num_meta;
-	int rc;
+पूर्णांक optee_supp_recv(काष्ठा tee_context *ctx, u32 *func, u32 *num_params,
+		    काष्ठा tee_param *param)
+अणु
+	काष्ठा tee_device *teedev = ctx->teedev;
+	काष्ठा optee *optee = tee_get_drvdata(teedev);
+	काष्ठा optee_supp *supp = &optee->supp;
+	काष्ठा optee_supp_req *req = शून्य;
+	पूर्णांक id;
+	माप_प्रकार num_meta;
+	पूर्णांक rc;
 
 	rc = supp_check_recv_params(*num_params, param, &num_meta);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	while (true) {
+	जबतक (true) अणु
 		mutex_lock(&supp->mutex);
 		req = supp_pop_entry(supp, *num_params - num_meta, &id);
 		mutex_unlock(&supp->mutex);
 
-		if (req) {
-			if (IS_ERR(req))
-				return PTR_ERR(req);
-			break;
-		}
+		अगर (req) अणु
+			अगर (IS_ERR(req))
+				वापस PTR_ERR(req);
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * If we didn't get a request we'll block in
-		 * wait_for_completion() to avoid needless spinning.
+		 * रुको_क्रम_completion() to aव्योम needless spinning.
 		 *
 		 * This is where supplicant will be hanging most of
-		 * the time, let's make this interruptable so we
-		 * can easily restart supplicant if needed.
+		 * the समय, let's make this पूर्णांकerruptable so we
+		 * can easily restart supplicant अगर needed.
 		 */
-		if (wait_for_completion_interruptible(&supp->reqs_c))
-			return -ERESTARTSYS;
-	}
+		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&supp->reqs_c))
+			वापस -ERESTARTSYS;
+	पूर्ण
 
-	if (num_meta) {
+	अगर (num_meta) अणु
 		/*
 		 * tee-supplicant support meta parameters -> requsts can be
 		 * processed asynchronously.
@@ -274,109 +275,109 @@ int optee_supp_recv(struct tee_context *ctx, u32 *func, u32 *num_params,
 		param->u.value.a = id;
 		param->u.value.b = 0;
 		param->u.value.c = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_lock(&supp->mutex);
 		supp->req_id = id;
 		mutex_unlock(&supp->mutex);
-	}
+	पूर्ण
 
 	*func = req->func;
 	*num_params = req->num_params + num_meta;
-	memcpy(param + num_meta, req->param,
-	       sizeof(struct tee_param) * req->num_params);
+	स_नकल(param + num_meta, req->param,
+	       माप(काष्ठा tee_param) * req->num_params);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct optee_supp_req *supp_pop_req(struct optee_supp *supp,
-					   size_t num_params,
-					   struct tee_param *param,
-					   size_t *num_meta)
-{
-	struct optee_supp_req *req;
-	int id;
-	size_t nm;
-	const u32 attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT |
+अटल काष्ठा optee_supp_req *supp_pop_req(काष्ठा optee_supp *supp,
+					   माप_प्रकार num_params,
+					   काष्ठा tee_param *param,
+					   माप_प्रकार *num_meta)
+अणु
+	काष्ठा optee_supp_req *req;
+	पूर्णांक id;
+	माप_प्रकार nm;
+	स्थिर u32 attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT |
 			 TEE_IOCTL_PARAM_ATTR_META;
 
-	if (!num_params)
-		return ERR_PTR(-EINVAL);
+	अगर (!num_params)
+		वापस ERR_PTR(-EINVAL);
 
-	if (supp->req_id == -1) {
-		if (param->attr != attr)
-			return ERR_PTR(-EINVAL);
+	अगर (supp->req_id == -1) अणु
+		अगर (param->attr != attr)
+			वापस ERR_PTR(-EINVAL);
 		id = param->u.value.a;
 		nm = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		id = supp->req_id;
 		nm = 0;
-	}
+	पूर्ण
 
 	req = idr_find(&supp->idr, id);
-	if (!req)
-		return ERR_PTR(-ENOENT);
+	अगर (!req)
+		वापस ERR_PTR(-ENOENT);
 
-	if ((num_params - nm) != req->num_params)
-		return ERR_PTR(-EINVAL);
+	अगर ((num_params - nm) != req->num_params)
+		वापस ERR_PTR(-EINVAL);
 
-	idr_remove(&supp->idr, id);
+	idr_हटाओ(&supp->idr, id);
 	supp->req_id = -1;
 	*num_meta = nm;
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
 /**
  * optee_supp_send() - send result of request from supplicant
  * @ctx:	context sending result
- * @ret:	return value of request
- * @num_params:	number of parameters returned
- * @param:	returned parameters
+ * @ret:	वापस value of request
+ * @num_params:	number of parameters वापसed
+ * @param:	वापसed parameters
  *
  * Returns 0 on success or <0 on failure.
  */
-int optee_supp_send(struct tee_context *ctx, u32 ret, u32 num_params,
-		    struct tee_param *param)
-{
-	struct tee_device *teedev = ctx->teedev;
-	struct optee *optee = tee_get_drvdata(teedev);
-	struct optee_supp *supp = &optee->supp;
-	struct optee_supp_req *req;
-	size_t n;
-	size_t num_meta;
+पूर्णांक optee_supp_send(काष्ठा tee_context *ctx, u32 ret, u32 num_params,
+		    काष्ठा tee_param *param)
+अणु
+	काष्ठा tee_device *teedev = ctx->teedev;
+	काष्ठा optee *optee = tee_get_drvdata(teedev);
+	काष्ठा optee_supp *supp = &optee->supp;
+	काष्ठा optee_supp_req *req;
+	माप_प्रकार n;
+	माप_प्रकार num_meta;
 
 	mutex_lock(&supp->mutex);
 	req = supp_pop_req(supp, num_params, param, &num_meta);
 	mutex_unlock(&supp->mutex);
 
-	if (IS_ERR(req)) {
+	अगर (IS_ERR(req)) अणु
 		/* Something is wrong, let supplicant restart. */
-		return PTR_ERR(req);
-	}
+		वापस PTR_ERR(req);
+	पूर्ण
 
 	/* Update out and in/out parameters */
-	for (n = 0; n < req->num_params; n++) {
-		struct tee_param *p = req->param + n;
+	क्रम (n = 0; n < req->num_params; n++) अणु
+		काष्ठा tee_param *p = req->param + n;
 
-		switch (p->attr & TEE_IOCTL_PARAM_ATTR_TYPE_MASK) {
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT:
+		चयन (p->attr & TEE_IOCTL_PARAM_ATTR_TYPE_MASK) अणु
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT:
 			p->u.value.a = param[n + num_meta].u.value.a;
 			p->u.value.b = param[n + num_meta].u.value.b;
 			p->u.value.c = param[n + num_meta].u.value.c;
-			break;
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT:
+			अवरोध;
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT:
 			p->u.memref.size = param[n + num_meta].u.memref.size;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	req->ret = ret;
 
-	/* Let the requesting thread continue */
+	/* Let the requesting thपढ़ो जारी */
 	complete(&req->c);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

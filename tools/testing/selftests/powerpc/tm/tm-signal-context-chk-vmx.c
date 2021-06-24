@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2016, Cyril Bur, IBM Corp.
  *
- * Test the kernel's signal frame code.
+ * Test the kernel's संकेत frame code.
  *
- * The kernel sets up two sets of ucontexts if the signal was to be
- * delivered while the thread was in a transaction (referred too as
+ * The kernel sets up two sets of ucontexts अगर the संकेत was to be
+ * delivered जबतक the thपढ़ो was in a transaction (referred too as
  * first and second contexts).
- * Expected behaviour is that the checkpointed state is in the user
- * context passed to the signal handler (first context). The speculated
- * state can be accessed with the uc_link pointer (second context).
+ * Expected behaviour is that the checkpoपूर्णांकed state is in the user
+ * context passed to the संकेत handler (first context). The speculated
+ * state can be accessed with the uc_link poपूर्णांकer (second context).
  *
- * The rationale for this is that if TM unaware code (which linked
- * against TM libs) installs a signal handler it will not know of the
- * speculative nature of the 'live' registers and may infer the wrong
+ * The rationale क्रम this is that अगर TM unaware code (which linked
+ * against TM libs) installs a संकेत handler it will not know of the
+ * speculative nature of the 'live' रेजिस्टरs and may infer the wrong
  * thing.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
-#include <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश <unistd.h>
 
-#include <altivec.h>
+#समावेश <altivec.h>
 
-#include "utils.h"
-#include "tm.h"
+#समावेश "utils.h"
+#समावेश "tm.h"
 
-#define MAX_ATTEMPT 500000
+#घोषणा MAX_ATTEMPT 500000
 
-#define NV_VMX_REGS 12 /* Number of non-volatile VMX registers */
-#define VMX20 20 /* First non-volatile register to check in vr20-31 subset */
+#घोषणा NV_VMX_REGS 12 /* Number of non-अस्थिर VMX रेजिस्टरs */
+#घोषणा VMX20 20 /* First non-अस्थिर रेजिस्टर to check in vr20-31 subset */
 
-long tm_signal_self_context_load(pid_t pid, long *gprs, double *fps, vector int *vms, vector int *vss);
+दीर्घ पंचांग_संकेत_self_context_load(pid_t pid, दीर्घ *gprs, द्विगुन *fps, vector पूर्णांक *vms, vector पूर्णांक *vss);
 
-static sig_atomic_t fail, broken;
+अटल संक_पूर्ण_प्रकार fail, broken;
 
-/* Test only non-volatile registers, i.e. 12 vmx registers from vr20 to vr31 */
-vector int vms[] = {
+/* Test only non-अस्थिर रेजिस्टरs, i.e. 12 vmx रेजिस्टरs from vr20 to vr31 */
+vector पूर्णांक vms[] = अणु
 	/* First context will be set with these values, i.e. non-speculative */
 	/* VMX20     ,  VMX21      , ... */
-	{ 1, 2, 3, 4},{ 5, 6, 7, 8},{ 9,10,11,12},
-	{13,14,15,16},{17,18,19,20},{21,22,23,24},
-	{25,26,27,28},{29,30,31,32},{33,34,35,36},
-	{37,38,39,40},{41,42,43,44},{45,46,47,48},
+	अणु 1, 2, 3, 4पूर्ण,अणु 5, 6, 7, 8पूर्ण,अणु 9,10,11,12पूर्ण,
+	अणु13,14,15,16पूर्ण,अणु17,18,19,20पूर्ण,अणु21,22,23,24पूर्ण,
+	अणु25,26,27,28पूर्ण,अणु29,30,31,32पूर्ण,अणु33,34,35,36पूर्ण,
+	अणु37,38,39,40पूर्ण,अणु41,42,43,44पूर्ण,अणु45,46,47,48पूर्ण,
 	/* Second context will be set with these values, i.e. speculative */
 	/* VMX20        , VMX21            , ... */
-	{ -1, -2, -3, -4},{ -5, -6, -7, -8},{ -9,-10,-11,-12},
-	{-13,-14,-15,-16},{-17,-18,-19,-20},{-21,-22,-23,-24},
-	{-25,-26,-27,-28},{-29,-30,-31,-32},{-33,-34,-35,-36},
-	{-37,-38,-39,-40},{-41,-42,-43,-44},{-45,-46,-47,-48}
-};
+	अणु -1, -2, -3, -4पूर्ण,अणु -5, -6, -7, -8पूर्ण,अणु -9,-10,-11,-12पूर्ण,
+	अणु-13,-14,-15,-16पूर्ण,अणु-17,-18,-19,-20पूर्ण,अणु-21,-22,-23,-24पूर्ण,
+	अणु-25,-26,-27,-28पूर्ण,अणु-29,-30,-31,-32पूर्ण,अणु-33,-34,-35,-36पूर्ण,
+	अणु-37,-38,-39,-40पूर्ण,अणु-41,-42,-43,-44पूर्ण,अणु-45,-46,-47,-48पूर्ण
+पूर्ण;
 
-static void signal_usr1(int signum, siginfo_t *info, void *uc)
-{
-	int i, j;
+अटल व्योम संकेत_usr1(पूर्णांक signum, siginfo_t *info, व्योम *uc)
+अणु
+	पूर्णांक i, j;
 	ucontext_t *ucp = uc;
-	ucontext_t *tm_ucp = ucp->uc_link;
+	ucontext_t *पंचांग_ucp = ucp->uc_link;
 
-	for (i = 0; i < NV_VMX_REGS; i++) {
-		/* Check first context. Print all mismatches. */
-		fail = memcmp(ucp->uc_mcontext.v_regs->vrregs[VMX20 + i],
-				&vms[i], sizeof(vector int));
-		if (fail) {
+	क्रम (i = 0; i < NV_VMX_REGS; i++) अणु
+		/* Check first context. Prपूर्णांक all mismatches. */
+		fail = स_भेद(ucp->uc_mcontext.v_regs->vrregs[VMX20 + i],
+				&vms[i], माप(vector पूर्णांक));
+		अगर (fail) अणु
 			broken = 1;
-			printf("VMX%d (1st context) == 0x", VMX20 + i);
-			/* Print actual value in first context. */
-			for (j = 0; j < 4; j++)
-				printf("%08x", ucp->uc_mcontext.v_regs->vrregs[VMX20 + i][j]);
-			printf(" instead of 0x");
-			/* Print expected value. */
-			for (j = 0; j < 4; j++)
-				printf("%08x", vms[i][j]);
-			printf(" (expected)\n");
-		}
-	}
+			म_लिखो("VMX%d (1st context) == 0x", VMX20 + i);
+			/* Prपूर्णांक actual value in first context. */
+			क्रम (j = 0; j < 4; j++)
+				म_लिखो("%08x", ucp->uc_mcontext.v_regs->vrregs[VMX20 + i][j]);
+			म_लिखो(" instead of 0x");
+			/* Prपूर्णांक expected value. */
+			क्रम (j = 0; j < 4; j++)
+				म_लिखो("%08x", vms[i][j]);
+			म_लिखो(" (expected)\n");
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < NV_VMX_REGS; i++)  {
-		/* Check second context. Print all mismatches. */
-		fail = memcmp(tm_ucp->uc_mcontext.v_regs->vrregs[VMX20 + i],
-				&vms[NV_VMX_REGS + i], sizeof (vector int));
-		if (fail) {
+	क्रम (i = 0; i < NV_VMX_REGS; i++)  अणु
+		/* Check second context. Prपूर्णांक all mismatches. */
+		fail = स_भेद(पंचांग_ucp->uc_mcontext.v_regs->vrregs[VMX20 + i],
+				&vms[NV_VMX_REGS + i], माप (vector पूर्णांक));
+		अगर (fail) अणु
 			broken = 1;
-			printf("VMX%d (2nd context) == 0x", NV_VMX_REGS + i);
-			/* Print actual value in second context. */
-			for (j = 0; j < 4; j++)
-				printf("%08x", tm_ucp->uc_mcontext.v_regs->vrregs[VMX20 + i][j]);
-			printf(" instead of 0x");
-			/* Print expected value. */
-			for (j = 0; j < 4; j++)
-				printf("%08x", vms[NV_VMX_REGS + i][j]);
-			printf(" (expected)\n");
-		}
-	}
-}
+			म_लिखो("VMX%d (2nd context) == 0x", NV_VMX_REGS + i);
+			/* Prपूर्णांक actual value in second context. */
+			क्रम (j = 0; j < 4; j++)
+				म_लिखो("%08x", पंचांग_ucp->uc_mcontext.v_regs->vrregs[VMX20 + i][j]);
+			म_लिखो(" instead of 0x");
+			/* Prपूर्णांक expected value. */
+			क्रम (j = 0; j < 4; j++)
+				म_लिखो("%08x", vms[NV_VMX_REGS + i][j]);
+			म_लिखो(" (expected)\n");
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int tm_signal_context_chk()
-{
-	struct sigaction act;
-	int i;
-	long rc;
+अटल पूर्णांक पंचांग_संकेत_context_chk()
+अणु
+	काष्ठा sigaction act;
+	पूर्णांक i;
+	दीर्घ rc;
 	pid_t pid = getpid();
 
-	SKIP_IF(!have_htm());
+	SKIP_IF(!have_hपंचांग());
 
-	act.sa_sigaction = signal_usr1;
+	act.sa_sigaction = संकेत_usr1;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
-	if (sigaction(SIGUSR1, &act, NULL) < 0) {
-		perror("sigaction sigusr1");
-		exit(1);
-	}
+	अगर (sigaction(SIGUSR1, &act, शून्य) < 0) अणु
+		लिखो_त्रुटि("sigaction sigusr1");
+		निकास(1);
+	पूर्ण
 
 	i = 0;
-	while (i < MAX_ATTEMPT && !broken) {
+	जबतक (i < MAX_ATTEMPT && !broken) अणु
 		/*
-		 * tm_signal_self_context_load will set both first and second
-		 * contexts accordingly to the values passed through non-NULL
-		 * array pointers to it, in that case 'vms', and invoke the
-		 * signal handler installed for SIGUSR1.
+		 * पंचांग_संकेत_self_context_load will set both first and second
+		 * contexts accordingly to the values passed through non-शून्य
+		 * array poपूर्णांकers to it, in that हाल 'vms', and invoke the
+		 * संकेत handler installed क्रम SIGUSR1.
 		 */
-		rc = tm_signal_self_context_load(pid, NULL, NULL, vms, NULL);
+		rc = पंचांग_संकेत_self_context_load(pid, शून्य, शून्य, vms, शून्य);
 		FAIL_IF(rc != pid);
 		i++;
-	}
+	पूर्ण
 
-	return (broken);
-}
+	वापस (broken);
+पूर्ण
 
-int main(void)
-{
-	return test_harness(tm_signal_context_chk, "tm_signal_context_chk_vmx");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(पंचांग_संकेत_context_chk, "tm_signal_context_chk_vmx");
+पूर्ण

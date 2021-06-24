@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *   ALSA driver for RME Digi96, Digi96/8 and Digi96/8 PRO/PAD/PST audio
- *   interfaces 
+ *   ALSA driver क्रम RME Digi96, Digi96/8 and Digi96/8 PRO/PAD/PST audio
+ *   पूर्णांकerfaces 
  *
  *	Copyright (c) 2000, 2001 Anders Torger <torger@ludd.luth.se>
  *    
- *      Thanks to Henk Hesselink <henk@anda.nl> for the analog volume control
+ *      Thanks to Henk Hesselink <henk@anda.nl> क्रम the analog volume control
  *      code.
  */      
 
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/vmalloc.h>
-#include <linux/io.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/पन.स>
 
-#include <sound/core.h>
-#include <sound/info.h>
-#include <sound/control.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/asoundef.h>
-#include <sound/initval.h>
+#समावेश <sound/core.h>
+#समावेश <sound/info.h>
+#समावेश <sound/control.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/initval.h>
 
 /* note, two last pcis should be equal, it is not a bug */
 
@@ -32,348 +33,348 @@ MODULE_DESCRIPTION("RME Digi96, Digi96/8, Digi96/8 PRO, Digi96/8 PST, "
 		   "Digi96/8 PAD");
 MODULE_LICENSE("GPL");
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable this card */
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;	/* Enable this card */
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for RME Digi96 soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for RME Digi96 soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable RME Digi96 soundcard.");
 
 /*
- * Defines for RME Digi96 series, from internal RME reference documents
+ * Defines क्रम RME Digi96 series, from पूर्णांकernal RME reference करोcuments
  * dated 12.01.00
  */
 
-#define RME96_SPDIF_NCHANNELS 2
+#घोषणा RME96_SPDIF_NCHANNELS 2
 
 /* Playback and capture buffer size */
-#define RME96_BUFFER_SIZE 0x10000
+#घोषणा RME96_BUFFER_SIZE 0x10000
 
 /* IO area size */
-#define RME96_IO_SIZE 0x60000
+#घोषणा RME96_IO_SIZE 0x60000
 
 /* IO area offsets */
-#define RME96_IO_PLAY_BUFFER      0x0
-#define RME96_IO_REC_BUFFER       0x10000
-#define RME96_IO_CONTROL_REGISTER 0x20000
-#define RME96_IO_ADDITIONAL_REG   0x20004
-#define RME96_IO_CONFIRM_PLAY_IRQ 0x20008
-#define RME96_IO_CONFIRM_REC_IRQ  0x2000C
-#define RME96_IO_SET_PLAY_POS     0x40000
-#define RME96_IO_RESET_PLAY_POS   0x4FFFC
-#define RME96_IO_SET_REC_POS      0x50000
-#define RME96_IO_RESET_REC_POS    0x5FFFC
-#define RME96_IO_GET_PLAY_POS     0x20000
-#define RME96_IO_GET_REC_POS      0x30000
+#घोषणा RME96_IO_PLAY_BUFFER      0x0
+#घोषणा RME96_IO_REC_BUFFER       0x10000
+#घोषणा RME96_IO_CONTROL_REGISTER 0x20000
+#घोषणा RME96_IO_ADDITIONAL_REG   0x20004
+#घोषणा RME96_IO_CONFIRM_PLAY_IRQ 0x20008
+#घोषणा RME96_IO_CONFIRM_REC_IRQ  0x2000C
+#घोषणा RME96_IO_SET_PLAY_POS     0x40000
+#घोषणा RME96_IO_RESET_PLAY_POS   0x4FFFC
+#घोषणा RME96_IO_SET_REC_POS      0x50000
+#घोषणा RME96_IO_RESET_REC_POS    0x5FFFC
+#घोषणा RME96_IO_GET_PLAY_POS     0x20000
+#घोषणा RME96_IO_GET_REC_POS      0x30000
 
-/* Write control register bits */
-#define RME96_WCR_START     (1 << 0)
-#define RME96_WCR_START_2   (1 << 1)
-#define RME96_WCR_GAIN_0    (1 << 2)
-#define RME96_WCR_GAIN_1    (1 << 3)
-#define RME96_WCR_MODE24    (1 << 4)
-#define RME96_WCR_MODE24_2  (1 << 5)
-#define RME96_WCR_BM        (1 << 6)
-#define RME96_WCR_BM_2      (1 << 7)
-#define RME96_WCR_ADAT      (1 << 8)
-#define RME96_WCR_FREQ_0    (1 << 9)
-#define RME96_WCR_FREQ_1    (1 << 10)
-#define RME96_WCR_DS        (1 << 11)
-#define RME96_WCR_PRO       (1 << 12)
-#define RME96_WCR_EMP       (1 << 13)
-#define RME96_WCR_SEL       (1 << 14)
-#define RME96_WCR_MASTER    (1 << 15)
-#define RME96_WCR_PD        (1 << 16)
-#define RME96_WCR_INP_0     (1 << 17)
-#define RME96_WCR_INP_1     (1 << 18)
-#define RME96_WCR_THRU_0    (1 << 19)
-#define RME96_WCR_THRU_1    (1 << 20)
-#define RME96_WCR_THRU_2    (1 << 21)
-#define RME96_WCR_THRU_3    (1 << 22)
-#define RME96_WCR_THRU_4    (1 << 23)
-#define RME96_WCR_THRU_5    (1 << 24)
-#define RME96_WCR_THRU_6    (1 << 25)
-#define RME96_WCR_THRU_7    (1 << 26)
-#define RME96_WCR_DOLBY     (1 << 27)
-#define RME96_WCR_MONITOR_0 (1 << 28)
-#define RME96_WCR_MONITOR_1 (1 << 29)
-#define RME96_WCR_ISEL      (1 << 30)
-#define RME96_WCR_IDIS      (1 << 31)
+/* Write control रेजिस्टर bits */
+#घोषणा RME96_WCR_START     (1 << 0)
+#घोषणा RME96_WCR_START_2   (1 << 1)
+#घोषणा RME96_WCR_GAIN_0    (1 << 2)
+#घोषणा RME96_WCR_GAIN_1    (1 << 3)
+#घोषणा RME96_WCR_MODE24    (1 << 4)
+#घोषणा RME96_WCR_MODE24_2  (1 << 5)
+#घोषणा RME96_WCR_BM        (1 << 6)
+#घोषणा RME96_WCR_BM_2      (1 << 7)
+#घोषणा RME96_WCR_ADAT      (1 << 8)
+#घोषणा RME96_WCR_FREQ_0    (1 << 9)
+#घोषणा RME96_WCR_FREQ_1    (1 << 10)
+#घोषणा RME96_WCR_DS        (1 << 11)
+#घोषणा RME96_WCR_PRO       (1 << 12)
+#घोषणा RME96_WCR_EMP       (1 << 13)
+#घोषणा RME96_WCR_SEL       (1 << 14)
+#घोषणा RME96_WCR_MASTER    (1 << 15)
+#घोषणा RME96_WCR_PD        (1 << 16)
+#घोषणा RME96_WCR_INP_0     (1 << 17)
+#घोषणा RME96_WCR_INP_1     (1 << 18)
+#घोषणा RME96_WCR_THRU_0    (1 << 19)
+#घोषणा RME96_WCR_THRU_1    (1 << 20)
+#घोषणा RME96_WCR_THRU_2    (1 << 21)
+#घोषणा RME96_WCR_THRU_3    (1 << 22)
+#घोषणा RME96_WCR_THRU_4    (1 << 23)
+#घोषणा RME96_WCR_THRU_5    (1 << 24)
+#घोषणा RME96_WCR_THRU_6    (1 << 25)
+#घोषणा RME96_WCR_THRU_7    (1 << 26)
+#घोषणा RME96_WCR_DOLBY     (1 << 27)
+#घोषणा RME96_WCR_MONITOR_0 (1 << 28)
+#घोषणा RME96_WCR_MONITOR_1 (1 << 29)
+#घोषणा RME96_WCR_ISEL      (1 << 30)
+#घोषणा RME96_WCR_IDIS      (1 << 31)
 
-#define RME96_WCR_BITPOS_GAIN_0 2
-#define RME96_WCR_BITPOS_GAIN_1 3
-#define RME96_WCR_BITPOS_FREQ_0 9
-#define RME96_WCR_BITPOS_FREQ_1 10
-#define RME96_WCR_BITPOS_INP_0 17
-#define RME96_WCR_BITPOS_INP_1 18
-#define RME96_WCR_BITPOS_MONITOR_0 28
-#define RME96_WCR_BITPOS_MONITOR_1 29
+#घोषणा RME96_WCR_BITPOS_GAIN_0 2
+#घोषणा RME96_WCR_BITPOS_GAIN_1 3
+#घोषणा RME96_WCR_BITPOS_FREQ_0 9
+#घोषणा RME96_WCR_BITPOS_FREQ_1 10
+#घोषणा RME96_WCR_BITPOS_INP_0 17
+#घोषणा RME96_WCR_BITPOS_INP_1 18
+#घोषणा RME96_WCR_BITPOS_MONITOR_0 28
+#घोषणा RME96_WCR_BITPOS_MONITOR_1 29
 
-/* Read control register bits */
-#define RME96_RCR_AUDIO_ADDR_MASK 0xFFFF
-#define RME96_RCR_IRQ_2     (1 << 16)
-#define RME96_RCR_T_OUT     (1 << 17)
-#define RME96_RCR_DEV_ID_0  (1 << 21)
-#define RME96_RCR_DEV_ID_1  (1 << 22)
-#define RME96_RCR_LOCK      (1 << 23)
-#define RME96_RCR_VERF      (1 << 26)
-#define RME96_RCR_F0        (1 << 27)
-#define RME96_RCR_F1        (1 << 28)
-#define RME96_RCR_F2        (1 << 29)
-#define RME96_RCR_AUTOSYNC  (1 << 30)
-#define RME96_RCR_IRQ       (1 << 31)
+/* Read control रेजिस्टर bits */
+#घोषणा RME96_RCR_AUDIO_ADDR_MASK 0xFFFF
+#घोषणा RME96_RCR_IRQ_2     (1 << 16)
+#घोषणा RME96_RCR_T_OUT     (1 << 17)
+#घोषणा RME96_RCR_DEV_ID_0  (1 << 21)
+#घोषणा RME96_RCR_DEV_ID_1  (1 << 22)
+#घोषणा RME96_RCR_LOCK      (1 << 23)
+#घोषणा RME96_RCR_VERF      (1 << 26)
+#घोषणा RME96_RCR_F0        (1 << 27)
+#घोषणा RME96_RCR_F1        (1 << 28)
+#घोषणा RME96_RCR_F2        (1 << 29)
+#घोषणा RME96_RCR_AUTOSYNC  (1 << 30)
+#घोषणा RME96_RCR_IRQ       (1 << 31)
 
-#define RME96_RCR_BITPOS_F0 27
-#define RME96_RCR_BITPOS_F1 28
-#define RME96_RCR_BITPOS_F2 29
+#घोषणा RME96_RCR_BITPOS_F0 27
+#घोषणा RME96_RCR_BITPOS_F1 28
+#घोषणा RME96_RCR_BITPOS_F2 29
 
-/* Additional register bits */
-#define RME96_AR_WSEL       (1 << 0)
-#define RME96_AR_ANALOG     (1 << 1)
-#define RME96_AR_FREQPAD_0  (1 << 2)
-#define RME96_AR_FREQPAD_1  (1 << 3)
-#define RME96_AR_FREQPAD_2  (1 << 4)
-#define RME96_AR_PD2        (1 << 5)
-#define RME96_AR_DAC_EN     (1 << 6)
-#define RME96_AR_CLATCH     (1 << 7)
-#define RME96_AR_CCLK       (1 << 8)
-#define RME96_AR_CDATA      (1 << 9)
+/* Additional रेजिस्टर bits */
+#घोषणा RME96_AR_WSEL       (1 << 0)
+#घोषणा RME96_AR_ANALOG     (1 << 1)
+#घोषणा RME96_AR_FREQPAD_0  (1 << 2)
+#घोषणा RME96_AR_FREQPAD_1  (1 << 3)
+#घोषणा RME96_AR_FREQPAD_2  (1 << 4)
+#घोषणा RME96_AR_PD2        (1 << 5)
+#घोषणा RME96_AR_DAC_EN     (1 << 6)
+#घोषणा RME96_AR_CLATCH     (1 << 7)
+#घोषणा RME96_AR_CCLK       (1 << 8)
+#घोषणा RME96_AR_CDATA      (1 << 9)
 
-#define RME96_AR_BITPOS_F0 2
-#define RME96_AR_BITPOS_F1 3
-#define RME96_AR_BITPOS_F2 4
+#घोषणा RME96_AR_BITPOS_F0 2
+#घोषणा RME96_AR_BITPOS_F1 3
+#घोषणा RME96_AR_BITPOS_F2 4
 
 /* Monitor tracks */
-#define RME96_MONITOR_TRACKS_1_2 0
-#define RME96_MONITOR_TRACKS_3_4 1
-#define RME96_MONITOR_TRACKS_5_6 2
-#define RME96_MONITOR_TRACKS_7_8 3
+#घोषणा RME96_MONITOR_TRACKS_1_2 0
+#घोषणा RME96_MONITOR_TRACKS_3_4 1
+#घोषणा RME96_MONITOR_TRACKS_5_6 2
+#घोषणा RME96_MONITOR_TRACKS_7_8 3
 
 /* Attenuation */
-#define RME96_ATTENUATION_0 0
-#define RME96_ATTENUATION_6 1
-#define RME96_ATTENUATION_12 2
-#define RME96_ATTENUATION_18 3
+#घोषणा RME96_ATTENUATION_0 0
+#घोषणा RME96_ATTENUATION_6 1
+#घोषणा RME96_ATTENUATION_12 2
+#घोषणा RME96_ATTENUATION_18 3
 
 /* Input types */
-#define RME96_INPUT_OPTICAL 0
-#define RME96_INPUT_COAXIAL 1
-#define RME96_INPUT_INTERNAL 2
-#define RME96_INPUT_XLR 3
-#define RME96_INPUT_ANALOG 4
+#घोषणा RME96_INPUT_OPTICAL 0
+#घोषणा RME96_INPUT_COAXIAL 1
+#घोषणा RME96_INPUT_INTERNAL 2
+#घोषणा RME96_INPUT_XLR 3
+#घोषणा RME96_INPUT_ANALOG 4
 
 /* Clock modes */
-#define RME96_CLOCKMODE_SLAVE 0
-#define RME96_CLOCKMODE_MASTER 1
-#define RME96_CLOCKMODE_WORDCLOCK 2
+#घोषणा RME96_CLOCKMODE_SLAVE 0
+#घोषणा RME96_CLOCKMODE_MASTER 1
+#घोषणा RME96_CLOCKMODE_WORDCLOCK 2
 
 /* Block sizes in bytes */
-#define RME96_SMALL_BLOCK_SIZE 2048
-#define RME96_LARGE_BLOCK_SIZE 8192
+#घोषणा RME96_SMALL_BLOCK_SIZE 2048
+#घोषणा RME96_LARGE_BLOCK_SIZE 8192
 
 /* Volume control */
-#define RME96_AD1852_VOL_BITS 14
-#define RME96_AD1855_VOL_BITS 10
+#घोषणा RME96_AD1852_VOL_BITS 14
+#घोषणा RME96_AD1855_VOL_BITS 10
 
-/* Defines for snd_rme96_trigger */
-#define RME96_TB_START_PLAYBACK 1
-#define RME96_TB_START_CAPTURE 2
-#define RME96_TB_STOP_PLAYBACK 4
-#define RME96_TB_STOP_CAPTURE 8
-#define RME96_TB_RESET_PLAYPOS 16
-#define RME96_TB_RESET_CAPTUREPOS 32
-#define RME96_TB_CLEAR_PLAYBACK_IRQ 64
-#define RME96_TB_CLEAR_CAPTURE_IRQ 128
-#define RME96_RESUME_PLAYBACK	(RME96_TB_START_PLAYBACK)
-#define RME96_RESUME_CAPTURE	(RME96_TB_START_CAPTURE)
-#define RME96_RESUME_BOTH	(RME96_RESUME_PLAYBACK \
+/* Defines क्रम snd_rme96_trigger */
+#घोषणा RME96_TB_START_PLAYBACK 1
+#घोषणा RME96_TB_START_CAPTURE 2
+#घोषणा RME96_TB_STOP_PLAYBACK 4
+#घोषणा RME96_TB_STOP_CAPTURE 8
+#घोषणा RME96_TB_RESET_PLAYPOS 16
+#घोषणा RME96_TB_RESET_CAPTUREPOS 32
+#घोषणा RME96_TB_CLEAR_PLAYBACK_IRQ 64
+#घोषणा RME96_TB_CLEAR_CAPTURE_IRQ 128
+#घोषणा RME96_RESUME_PLAYBACK	(RME96_TB_START_PLAYBACK)
+#घोषणा RME96_RESUME_CAPTURE	(RME96_TB_START_CAPTURE)
+#घोषणा RME96_RESUME_BOTH	(RME96_RESUME_PLAYBACK \
 				| RME96_RESUME_CAPTURE)
-#define RME96_START_PLAYBACK	(RME96_TB_START_PLAYBACK \
+#घोषणा RME96_START_PLAYBACK	(RME96_TB_START_PLAYBACK \
 				| RME96_TB_RESET_PLAYPOS)
-#define RME96_START_CAPTURE	(RME96_TB_START_CAPTURE \
+#घोषणा RME96_START_CAPTURE	(RME96_TB_START_CAPTURE \
 				| RME96_TB_RESET_CAPTUREPOS)
-#define RME96_START_BOTH	(RME96_START_PLAYBACK \
+#घोषणा RME96_START_BOTH	(RME96_START_PLAYBACK \
 				| RME96_START_CAPTURE)
-#define RME96_STOP_PLAYBACK	(RME96_TB_STOP_PLAYBACK \
+#घोषणा RME96_STOP_PLAYBACK	(RME96_TB_STOP_PLAYBACK \
 				| RME96_TB_CLEAR_PLAYBACK_IRQ)
-#define RME96_STOP_CAPTURE	(RME96_TB_STOP_CAPTURE \
+#घोषणा RME96_STOP_CAPTURE	(RME96_TB_STOP_CAPTURE \
 				| RME96_TB_CLEAR_CAPTURE_IRQ)
-#define RME96_STOP_BOTH		(RME96_STOP_PLAYBACK \
+#घोषणा RME96_STOP_BOTH		(RME96_STOP_PLAYBACK \
 				| RME96_STOP_CAPTURE)
 
-struct rme96 {
+काष्ठा rme96 अणु
 	spinlock_t    lock;
-	int irq;
-	unsigned long port;
-	void __iomem *iobase;
+	पूर्णांक irq;
+	अचिन्हित दीर्घ port;
+	व्योम __iomem *iobase;
 	
-	u32 wcreg;    /* cached write control register value */
-	u32 wcreg_spdif;		/* S/PDIF setup */
-	u32 wcreg_spdif_stream;		/* S/PDIF setup (temporary) */
-	u32 rcreg;    /* cached read control register value */
-	u32 areg;     /* cached additional register value */
+	u32 wcreg;    /* cached ग_लिखो control रेजिस्टर value */
+	u32 wcreg_spdअगर;		/* S/PDIF setup */
+	u32 wcreg_spdअगर_stream;		/* S/PDIF setup (temporary) */
+	u32 rcreg;    /* cached पढ़ो control रेजिस्टर value */
+	u32 areg;     /* cached additional रेजिस्टर value */
 	u16 vol[2]; /* cached volume of analog output */
 
 	u8 rev; /* card revision number */
 
-#ifdef CONFIG_PM_SLEEP
-	u32 playback_pointer;
-	u32 capture_pointer;
-	void *playback_suspend_buffer;
-	void *capture_suspend_buffer;
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP
+	u32 playback_poपूर्णांकer;
+	u32 capture_poपूर्णांकer;
+	व्योम *playback_suspend_buffer;
+	व्योम *capture_suspend_buffer;
+#पूर्ण_अगर
 
-	struct snd_pcm_substream *playback_substream;
-	struct snd_pcm_substream *capture_substream;
+	काष्ठा snd_pcm_substream *playback_substream;
+	काष्ठा snd_pcm_substream *capture_substream;
 
-	int playback_frlog; /* log2 of framesize */
-	int capture_frlog;
+	पूर्णांक playback_frlog; /* log2 of framesize */
+	पूर्णांक capture_frlog;
 	
-        size_t playback_periodsize; /* in bytes, zero if not used */
-	size_t capture_periodsize; /* in bytes, zero if not used */
+        माप_प्रकार playback_periodsize; /* in bytes, zero अगर not used */
+	माप_प्रकार capture_periodsize; /* in bytes, zero अगर not used */
 
-	struct snd_card *card;
-	struct snd_pcm *spdif_pcm;
-	struct snd_pcm *adat_pcm; 
-	struct pci_dev     *pci;
-	struct snd_kcontrol   *spdif_ctl;
-};
+	काष्ठा snd_card *card;
+	काष्ठा snd_pcm *spdअगर_pcm;
+	काष्ठा snd_pcm *adat_pcm; 
+	काष्ठा pci_dev     *pci;
+	काष्ठा snd_kcontrol   *spdअगर_ctl;
+पूर्ण;
 
-static const struct pci_device_id snd_rme96_ids[] = {
-	{ PCI_VDEVICE(XILINX, PCI_DEVICE_ID_RME_DIGI96), 0, },
-	{ PCI_VDEVICE(XILINX, PCI_DEVICE_ID_RME_DIGI96_8), 0, },
-	{ PCI_VDEVICE(XILINX, PCI_DEVICE_ID_RME_DIGI96_8_PRO), 0, },
-	{ PCI_VDEVICE(XILINX, PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST), 0, },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id snd_rme96_ids[] = अणु
+	अणु PCI_VDEVICE(XILINX, PCI_DEVICE_ID_RME_DIGI96), 0, पूर्ण,
+	अणु PCI_VDEVICE(XILINX, PCI_DEVICE_ID_RME_DIGI96_8), 0, पूर्ण,
+	अणु PCI_VDEVICE(XILINX, PCI_DEVICE_ID_RME_DIGI96_8_PRO), 0, पूर्ण,
+	अणु PCI_VDEVICE(XILINX, PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST), 0, पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, snd_rme96_ids);
 
-#define RME96_ISPLAYING(rme96) ((rme96)->wcreg & RME96_WCR_START)
-#define RME96_ISRECORDING(rme96) ((rme96)->wcreg & RME96_WCR_START_2)
-#define	RME96_HAS_ANALOG_IN(rme96) ((rme96)->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST)
-#define	RME96_HAS_ANALOG_OUT(rme96) ((rme96)->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PRO || \
+#घोषणा RME96_ISPLAYING(rme96) ((rme96)->wcreg & RME96_WCR_START)
+#घोषणा RME96_ISRECORDING(rme96) ((rme96)->wcreg & RME96_WCR_START_2)
+#घोषणा	RME96_HAS_ANALOG_IN(rme96) ((rme96)->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST)
+#घोषणा	RME96_HAS_ANALOG_OUT(rme96) ((rme96)->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PRO || \
 				     (rme96)->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST)
-#define	RME96_DAC_IS_1852(rme96) (RME96_HAS_ANALOG_OUT(rme96) && (rme96)->rev >= 4)
-#define	RME96_DAC_IS_1855(rme96) (((rme96)->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST && (rme96)->rev < 4) || \
+#घोषणा	RME96_DAC_IS_1852(rme96) (RME96_HAS_ANALOG_OUT(rme96) && (rme96)->rev >= 4)
+#घोषणा	RME96_DAC_IS_1855(rme96) (((rme96)->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST && (rme96)->rev < 4) || \
 			          ((rme96)->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PRO && (rme96)->rev == 2))
-#define	RME96_185X_MAX_OUT(rme96) ((1 << (RME96_DAC_IS_1852(rme96) ? RME96_AD1852_VOL_BITS : RME96_AD1855_VOL_BITS)) - 1)
+#घोषणा	RME96_185X_MAX_OUT(rme96) ((1 << (RME96_DAC_IS_1852(rme96) ? RME96_AD1852_VOL_BITS : RME96_AD1855_VOL_BITS)) - 1)
 
-static int
-snd_rme96_playback_prepare(struct snd_pcm_substream *substream);
+अटल पूर्णांक
+snd_rme96_playback_prepare(काष्ठा snd_pcm_substream *substream);
 
-static int
-snd_rme96_capture_prepare(struct snd_pcm_substream *substream);
+अटल पूर्णांक
+snd_rme96_capture_prepare(काष्ठा snd_pcm_substream *substream);
 
-static int
-snd_rme96_playback_trigger(struct snd_pcm_substream *substream, 
-			   int cmd);
+अटल पूर्णांक
+snd_rme96_playback_trigger(काष्ठा snd_pcm_substream *substream, 
+			   पूर्णांक cmd);
 
-static int
-snd_rme96_capture_trigger(struct snd_pcm_substream *substream, 
-			  int cmd);
+अटल पूर्णांक
+snd_rme96_capture_trigger(काष्ठा snd_pcm_substream *substream, 
+			  पूर्णांक cmd);
 
-static snd_pcm_uframes_t
-snd_rme96_playback_pointer(struct snd_pcm_substream *substream);
+अटल snd_pcm_uframes_t
+snd_rme96_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream);
 
-static snd_pcm_uframes_t
-snd_rme96_capture_pointer(struct snd_pcm_substream *substream);
+अटल snd_pcm_uframes_t
+snd_rme96_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream);
 
-static void snd_rme96_proc_init(struct rme96 *rme96);
+अटल व्योम snd_rme96_proc_init(काष्ठा rme96 *rme96);
 
-static int
-snd_rme96_create_switches(struct snd_card *card,
-			  struct rme96 *rme96);
+अटल पूर्णांक
+snd_rme96_create_चयनes(काष्ठा snd_card *card,
+			  काष्ठा rme96 *rme96);
 
-static int
-snd_rme96_getinputtype(struct rme96 *rme96);
+अटल पूर्णांक
+snd_rme96_getinputtype(काष्ठा rme96 *rme96);
 
-static inline unsigned int
-snd_rme96_playback_ptr(struct rme96 *rme96)
-{
-	return (readl(rme96->iobase + RME96_IO_GET_PLAY_POS)
+अटल अंतरभूत अचिन्हित पूर्णांक
+snd_rme96_playback_ptr(काष्ठा rme96 *rme96)
+अणु
+	वापस (पढ़ोl(rme96->iobase + RME96_IO_GET_PLAY_POS)
 		& RME96_RCR_AUDIO_ADDR_MASK) >> rme96->playback_frlog;
-}
+पूर्ण
 
-static inline unsigned int
-snd_rme96_capture_ptr(struct rme96 *rme96)
-{
-	return (readl(rme96->iobase + RME96_IO_GET_REC_POS)
+अटल अंतरभूत अचिन्हित पूर्णांक
+snd_rme96_capture_ptr(काष्ठा rme96 *rme96)
+अणु
+	वापस (पढ़ोl(rme96->iobase + RME96_IO_GET_REC_POS)
 		& RME96_RCR_AUDIO_ADDR_MASK) >> rme96->capture_frlog;
-}
+पूर्ण
 
-static int
-snd_rme96_playback_silence(struct snd_pcm_substream *substream,
-			   int channel, unsigned long pos, unsigned long count)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
+अटल पूर्णांक
+snd_rme96_playback_silence(काष्ठा snd_pcm_substream *substream,
+			   पूर्णांक channel, अचिन्हित दीर्घ pos, अचिन्हित दीर्घ count)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
 
-	memset_io(rme96->iobase + RME96_IO_PLAY_BUFFER + pos,
+	स_रखो_io(rme96->iobase + RME96_IO_PLAY_BUFFER + pos,
 		  0, count);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_playback_copy(struct snd_pcm_substream *substream,
-			int channel, unsigned long pos,
-			void __user *src, unsigned long count)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
+अटल पूर्णांक
+snd_rme96_playback_copy(काष्ठा snd_pcm_substream *substream,
+			पूर्णांक channel, अचिन्हित दीर्घ pos,
+			व्योम __user *src, अचिन्हित दीर्घ count)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
 
-	return copy_from_user_toio(rme96->iobase + RME96_IO_PLAY_BUFFER + pos,
+	वापस copy_from_user_toio(rme96->iobase + RME96_IO_PLAY_BUFFER + pos,
 				   src, count);
-}
+पूर्ण
 
-static int
-snd_rme96_playback_copy_kernel(struct snd_pcm_substream *substream,
-			       int channel, unsigned long pos,
-			       void *src, unsigned long count)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
+अटल पूर्णांक
+snd_rme96_playback_copy_kernel(काष्ठा snd_pcm_substream *substream,
+			       पूर्णांक channel, अचिन्हित दीर्घ pos,
+			       व्योम *src, अचिन्हित दीर्घ count)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
 
-	memcpy_toio(rme96->iobase + RME96_IO_PLAY_BUFFER + pos, src, count);
-	return 0;
-}
+	स_नकल_toio(rme96->iobase + RME96_IO_PLAY_BUFFER + pos, src, count);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_capture_copy(struct snd_pcm_substream *substream,
-		       int channel, unsigned long pos,
-		       void __user *dst, unsigned long count)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
+अटल पूर्णांक
+snd_rme96_capture_copy(काष्ठा snd_pcm_substream *substream,
+		       पूर्णांक channel, अचिन्हित दीर्घ pos,
+		       व्योम __user *dst, अचिन्हित दीर्घ count)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
 
-	return copy_to_user_fromio(dst,
+	वापस copy_to_user_fromio(dst,
 				   rme96->iobase + RME96_IO_REC_BUFFER + pos,
 				   count);
-}
+पूर्ण
 
-static int
-snd_rme96_capture_copy_kernel(struct snd_pcm_substream *substream,
-			      int channel, unsigned long pos,
-			      void *dst, unsigned long count)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
+अटल पूर्णांक
+snd_rme96_capture_copy_kernel(काष्ठा snd_pcm_substream *substream,
+			      पूर्णांक channel, अचिन्हित दीर्घ pos,
+			      व्योम *dst, अचिन्हित दीर्घ count)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
 
-	memcpy_fromio(dst, rme96->iobase + RME96_IO_REC_BUFFER + pos, count);
-	return 0;
-}
+	स_नकल_fromio(dst, rme96->iobase + RME96_IO_REC_BUFFER + pos, count);
+	वापस 0;
+पूर्ण
 
 /*
  * Digital output capabilities (S/PDIF)
  */
-static const struct snd_pcm_hardware snd_rme96_playback_spdif_info =
-{
+अटल स्थिर काष्ठा snd_pcm_hardware snd_rme96_playback_spdअगर_info =
+अणु
 	.info =		     (SNDRV_PCM_INFO_MMAP_IOMEM |
 			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_SYNC_START |
 			      SNDRV_PCM_INFO_RESUME |
 			      SNDRV_PCM_INFO_INTERLEAVED |
 			      SNDRV_PCM_INFO_PAUSE),
-	.formats =	     (SNDRV_PCM_FMTBIT_S16_LE |
+	.क्रमmats =	     (SNDRV_PCM_FMTBIT_S16_LE |
 			      SNDRV_PCM_FMTBIT_S32_LE),
 	.rates =	     (SNDRV_PCM_RATE_32000 |
 			      SNDRV_PCM_RATE_44100 | 
@@ -390,21 +391,21 @@ static const struct snd_pcm_hardware snd_rme96_playback_spdif_info =
 	.period_bytes_max =  RME96_LARGE_BLOCK_SIZE,
 	.periods_min =	     RME96_BUFFER_SIZE / RME96_LARGE_BLOCK_SIZE,
 	.periods_max =	     RME96_BUFFER_SIZE / RME96_SMALL_BLOCK_SIZE,
-	.fifo_size =	     0,
-};
+	.fअगरo_size =	     0,
+पूर्ण;
 
 /*
  * Digital input capabilities (S/PDIF)
  */
-static const struct snd_pcm_hardware snd_rme96_capture_spdif_info =
-{
+अटल स्थिर काष्ठा snd_pcm_hardware snd_rme96_capture_spdअगर_info =
+अणु
 	.info =		     (SNDRV_PCM_INFO_MMAP_IOMEM |
 			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_SYNC_START |
 			      SNDRV_PCM_INFO_RESUME |
 			      SNDRV_PCM_INFO_INTERLEAVED |
 			      SNDRV_PCM_INFO_PAUSE),
-	.formats =	     (SNDRV_PCM_FMTBIT_S16_LE |
+	.क्रमmats =	     (SNDRV_PCM_FMTBIT_S16_LE |
 			      SNDRV_PCM_FMTBIT_S32_LE),
 	.rates =	     (SNDRV_PCM_RATE_32000 |
 			      SNDRV_PCM_RATE_44100 | 
@@ -421,21 +422,21 @@ static const struct snd_pcm_hardware snd_rme96_capture_spdif_info =
 	.period_bytes_max =  RME96_LARGE_BLOCK_SIZE,
 	.periods_min =	     RME96_BUFFER_SIZE / RME96_LARGE_BLOCK_SIZE,
 	.periods_max =	     RME96_BUFFER_SIZE / RME96_SMALL_BLOCK_SIZE,
-	.fifo_size =	     0,
-};
+	.fअगरo_size =	     0,
+पूर्ण;
 
 /*
  * Digital output capabilities (ADAT)
  */
-static const struct snd_pcm_hardware snd_rme96_playback_adat_info =
-{
+अटल स्थिर काष्ठा snd_pcm_hardware snd_rme96_playback_adat_info =
+अणु
 	.info =		     (SNDRV_PCM_INFO_MMAP_IOMEM |
 			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_SYNC_START |
 			      SNDRV_PCM_INFO_RESUME |
 			      SNDRV_PCM_INFO_INTERLEAVED |
 			      SNDRV_PCM_INFO_PAUSE),
-	.formats =	     (SNDRV_PCM_FMTBIT_S16_LE |
+	.क्रमmats =	     (SNDRV_PCM_FMTBIT_S16_LE |
 			      SNDRV_PCM_FMTBIT_S32_LE),
 	.rates =             (SNDRV_PCM_RATE_44100 | 
 			      SNDRV_PCM_RATE_48000),
@@ -448,21 +449,21 @@ static const struct snd_pcm_hardware snd_rme96_playback_adat_info =
 	.period_bytes_max =  RME96_LARGE_BLOCK_SIZE,
 	.periods_min =	     RME96_BUFFER_SIZE / RME96_LARGE_BLOCK_SIZE,
 	.periods_max =	     RME96_BUFFER_SIZE / RME96_SMALL_BLOCK_SIZE,
-	.fifo_size =	     0,
-};
+	.fअगरo_size =	     0,
+पूर्ण;
 
 /*
  * Digital input capabilities (ADAT)
  */
-static const struct snd_pcm_hardware snd_rme96_capture_adat_info =
-{
+अटल स्थिर काष्ठा snd_pcm_hardware snd_rme96_capture_adat_info =
+अणु
 	.info =		     (SNDRV_PCM_INFO_MMAP_IOMEM |
 			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_SYNC_START |
 			      SNDRV_PCM_INFO_RESUME |
 			      SNDRV_PCM_INFO_INTERLEAVED |
 			      SNDRV_PCM_INFO_PAUSE),
-	.formats =	     (SNDRV_PCM_FMTBIT_S16_LE |
+	.क्रमmats =	     (SNDRV_PCM_FMTBIT_S16_LE |
 			      SNDRV_PCM_FMTBIT_S32_LE),
 	.rates =	     (SNDRV_PCM_RATE_44100 | 
 			      SNDRV_PCM_RATE_48000),
@@ -475,2049 +476,2049 @@ static const struct snd_pcm_hardware snd_rme96_capture_adat_info =
 	.period_bytes_max =  RME96_LARGE_BLOCK_SIZE,
 	.periods_min =	     RME96_BUFFER_SIZE / RME96_LARGE_BLOCK_SIZE,
 	.periods_max =	     RME96_BUFFER_SIZE / RME96_SMALL_BLOCK_SIZE,
-	.fifo_size =         0,
-};
+	.fअगरo_size =         0,
+पूर्ण;
 
 /*
- * The CDATA, CCLK and CLATCH bits can be used to write to the SPI interface
+ * The CDATA, CCLK and CLATCH bits can be used to ग_लिखो to the SPI पूर्णांकerface
  * of the AD1852 or AD1852 D/A converter on the board.  CDATA must be set up
  * on the falling edge of CCLK and be stable on the rising edge.  The rising
- * edge of CLATCH after the last data bit clocks in the whole data word.
- * A fast processor could probably drive the SPI interface faster than the
- * DAC can handle (3MHz for the 1855, unknown for the 1852).  The udelay(1)
+ * edge of CLATCH after the last data bit घड़ीs in the whole data word.
+ * A fast processor could probably drive the SPI पूर्णांकerface faster than the
+ * DAC can handle (3MHz क्रम the 1855, unknown क्रम the 1852).  The udelay(1)
  * limits the data rate to 500KHz and only causes a delay of 33 microsecs.
  *
  * NOTE: increased delay from 1 to 10, since there where problems setting
  * the volume.
  */
-static void
-snd_rme96_write_SPI(struct rme96 *rme96, u16 val)
-{
-	int i;
+अटल व्योम
+snd_rme96_ग_लिखो_SPI(काष्ठा rme96 *rme96, u16 val)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 16; i++) {
-		if (val & 0x8000) {
+	क्रम (i = 0; i < 16; i++) अणु
+		अगर (val & 0x8000) अणु
 			rme96->areg |= RME96_AR_CDATA;
-		} else {
+		पूर्ण अन्यथा अणु
 			rme96->areg &= ~RME96_AR_CDATA;
-		}
+		पूर्ण
 		rme96->areg &= ~(RME96_AR_CCLK | RME96_AR_CLATCH);
-		writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+		ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
 		udelay(10);
 		rme96->areg |= RME96_AR_CCLK;
-		writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+		ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
 		udelay(10);
 		val <<= 1;
-	}
+	पूर्ण
 	rme96->areg &= ~(RME96_AR_CCLK | RME96_AR_CDATA);
 	rme96->areg |= RME96_AR_CLATCH;
-	writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+	ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
 	udelay(10);
 	rme96->areg &= ~RME96_AR_CLATCH;
-	writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
-}
+	ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+पूर्ण
 
-static void
-snd_rme96_apply_dac_volume(struct rme96 *rme96)
-{
-	if (RME96_DAC_IS_1852(rme96)) {
-		snd_rme96_write_SPI(rme96, (rme96->vol[0] << 2) | 0x0);
-		snd_rme96_write_SPI(rme96, (rme96->vol[1] << 2) | 0x2);
-	} else if (RME96_DAC_IS_1855(rme96)) {
-		snd_rme96_write_SPI(rme96, (rme96->vol[0] & 0x3FF) | 0x000);
-		snd_rme96_write_SPI(rme96, (rme96->vol[1] & 0x3FF) | 0x400);
-	}
-}
+अटल व्योम
+snd_rme96_apply_dac_volume(काष्ठा rme96 *rme96)
+अणु
+	अगर (RME96_DAC_IS_1852(rme96)) अणु
+		snd_rme96_ग_लिखो_SPI(rme96, (rme96->vol[0] << 2) | 0x0);
+		snd_rme96_ग_लिखो_SPI(rme96, (rme96->vol[1] << 2) | 0x2);
+	पूर्ण अन्यथा अगर (RME96_DAC_IS_1855(rme96)) अणु
+		snd_rme96_ग_लिखो_SPI(rme96, (rme96->vol[0] & 0x3FF) | 0x000);
+		snd_rme96_ग_लिखो_SPI(rme96, (rme96->vol[1] & 0x3FF) | 0x400);
+	पूर्ण
+पूर्ण
 
-static void
-snd_rme96_reset_dac(struct rme96 *rme96)
-{
-	writel(rme96->wcreg | RME96_WCR_PD,
+अटल व्योम
+snd_rme96_reset_dac(काष्ठा rme96 *rme96)
+अणु
+	ग_लिखोl(rme96->wcreg | RME96_WCR_PD,
 	       rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-}
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+पूर्ण
 
-static int
-snd_rme96_getmontracks(struct rme96 *rme96)
-{
-	return ((rme96->wcreg >> RME96_WCR_BITPOS_MONITOR_0) & 1) +
+अटल पूर्णांक
+snd_rme96_geपंचांगontracks(काष्ठा rme96 *rme96)
+अणु
+	वापस ((rme96->wcreg >> RME96_WCR_BITPOS_MONITOR_0) & 1) +
 		(((rme96->wcreg >> RME96_WCR_BITPOS_MONITOR_1) & 1) << 1);
-}
+पूर्ण
 
-static int
-snd_rme96_setmontracks(struct rme96 *rme96,
-		       int montracks)
-{
-	if (montracks & 1) {
+अटल पूर्णांक
+snd_rme96_seपंचांगontracks(काष्ठा rme96 *rme96,
+		       पूर्णांक montracks)
+अणु
+	अगर (montracks & 1) अणु
 		rme96->wcreg |= RME96_WCR_MONITOR_0;
-	} else {
+	पूर्ण अन्यथा अणु
 		rme96->wcreg &= ~RME96_WCR_MONITOR_0;
-	}
-	if (montracks & 2) {
+	पूर्ण
+	अगर (montracks & 2) अणु
 		rme96->wcreg |= RME96_WCR_MONITOR_1;
-	} else {
+	पूर्ण अन्यथा अणु
 		rme96->wcreg &= ~RME96_WCR_MONITOR_1;
-	}
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	return 0;
-}
+	पूर्ण
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_getattenuation(struct rme96 *rme96)
-{
-	return ((rme96->wcreg >> RME96_WCR_BITPOS_GAIN_0) & 1) +
+अटल पूर्णांक
+snd_rme96_getattenuation(काष्ठा rme96 *rme96)
+अणु
+	वापस ((rme96->wcreg >> RME96_WCR_BITPOS_GAIN_0) & 1) +
 		(((rme96->wcreg >> RME96_WCR_BITPOS_GAIN_1) & 1) << 1);
-}
+पूर्ण
 
-static int
-snd_rme96_setattenuation(struct rme96 *rme96,
-			 int attenuation)
-{
-	switch (attenuation) {
-	case 0:
+अटल पूर्णांक
+snd_rme96_setattenuation(काष्ठा rme96 *rme96,
+			 पूर्णांक attenuation)
+अणु
+	चयन (attenuation) अणु
+	हाल 0:
 		rme96->wcreg = (rme96->wcreg & ~RME96_WCR_GAIN_0) &
 			~RME96_WCR_GAIN_1;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		rme96->wcreg = (rme96->wcreg | RME96_WCR_GAIN_0) &
 			~RME96_WCR_GAIN_1;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		rme96->wcreg = (rme96->wcreg & ~RME96_WCR_GAIN_0) |
 			RME96_WCR_GAIN_1;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		rme96->wcreg = (rme96->wcreg | RME96_WCR_GAIN_0) |
 			RME96_WCR_GAIN_1;
-		break;
-	default:
-		return -EINVAL;
-	}
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_capture_getrate(struct rme96 *rme96,
-			  int *is_adat)
-{	
-	int n, rate;
+अटल पूर्णांक
+snd_rme96_capture_getrate(काष्ठा rme96 *rme96,
+			  पूर्णांक *is_adat)
+अणु	
+	पूर्णांक n, rate;
 
 	*is_adat = 0;
-	if (rme96->areg & RME96_AR_ANALOG) {
+	अगर (rme96->areg & RME96_AR_ANALOG) अणु
 		/* Analog input, overrides S/PDIF setting */
 		n = ((rme96->areg >> RME96_AR_BITPOS_F0) & 1) +
 			(((rme96->areg >> RME96_AR_BITPOS_F1) & 1) << 1);
-		switch (n) {
-		case 1:
+		चयन (n) अणु
+		हाल 1:
 			rate = 32000;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			rate = 44100;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			rate = 48000;
-			break;
-		default:
-			return -1;
-		}
-		return (rme96->areg & RME96_AR_BITPOS_F2) ? rate << 1 : rate;
-	}
+			अवरोध;
+		शेष:
+			वापस -1;
+		पूर्ण
+		वापस (rme96->areg & RME96_AR_BITPOS_F2) ? rate << 1 : rate;
+	पूर्ण
 
-	rme96->rcreg = readl(rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	if (rme96->rcreg & RME96_RCR_LOCK) {
+	rme96->rcreg = पढ़ोl(rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	अगर (rme96->rcreg & RME96_RCR_LOCK) अणु
 		/* ADAT rate */
 		*is_adat = 1;
-		if (rme96->rcreg & RME96_RCR_T_OUT) {
-			return 48000;
-		}
-		return 44100;
-	}
+		अगर (rme96->rcreg & RME96_RCR_T_OUT) अणु
+			वापस 48000;
+		पूर्ण
+		वापस 44100;
+	पूर्ण
 
-	if (rme96->rcreg & RME96_RCR_VERF) {
-		return -1;
-	}
+	अगर (rme96->rcreg & RME96_RCR_VERF) अणु
+		वापस -1;
+	पूर्ण
 	
 	/* S/PDIF rate */
 	n = ((rme96->rcreg >> RME96_RCR_BITPOS_F0) & 1) +
 		(((rme96->rcreg >> RME96_RCR_BITPOS_F1) & 1) << 1) +
 		(((rme96->rcreg >> RME96_RCR_BITPOS_F2) & 1) << 2);
 	
-	switch (n) {
-	case 0:		
-		if (rme96->rcreg & RME96_RCR_T_OUT) {
-			return 64000;
-		}
-		return -1;
-	case 3: return 96000;
-	case 4: return 88200;
-	case 5: return 48000;
-	case 6: return 44100;
-	case 7: return 32000;
-	default:
-		break;
-	}
-	return -1;
-}
+	चयन (n) अणु
+	हाल 0:		
+		अगर (rme96->rcreg & RME96_RCR_T_OUT) अणु
+			वापस 64000;
+		पूर्ण
+		वापस -1;
+	हाल 3: वापस 96000;
+	हाल 4: वापस 88200;
+	हाल 5: वापस 48000;
+	हाल 6: वापस 44100;
+	हाल 7: वापस 32000;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int
-snd_rme96_playback_getrate(struct rme96 *rme96)
-{
-	int rate, dummy;
+अटल पूर्णांक
+snd_rme96_playback_getrate(काष्ठा rme96 *rme96)
+अणु
+	पूर्णांक rate, dummy;
 
-	if (!(rme96->wcreg & RME96_WCR_MASTER) &&
+	अगर (!(rme96->wcreg & RME96_WCR_MASTER) &&
             snd_rme96_getinputtype(rme96) != RME96_INPUT_ANALOG &&
 	    (rate = snd_rme96_capture_getrate(rme96, &dummy)) > 0)
-	{
-	        /* slave clock */
-	        return rate;
-	}
+	अणु
+	        /* slave घड़ी */
+	        वापस rate;
+	पूर्ण
 	rate = ((rme96->wcreg >> RME96_WCR_BITPOS_FREQ_0) & 1) +
 		(((rme96->wcreg >> RME96_WCR_BITPOS_FREQ_1) & 1) << 1);
-	switch (rate) {
-	case 1:
+	चयन (rate) अणु
+	हाल 1:
 		rate = 32000;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		rate = 44100;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		rate = 48000;
-		break;
-	default:
-		return -1;
-	}
-	return (rme96->wcreg & RME96_WCR_DS) ? rate << 1 : rate;
-}
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
+	वापस (rme96->wcreg & RME96_WCR_DS) ? rate << 1 : rate;
+पूर्ण
 
-static int
-snd_rme96_playback_setrate(struct rme96 *rme96,
-			   int rate)
-{
-	int ds;
+अटल पूर्णांक
+snd_rme96_playback_setrate(काष्ठा rme96 *rme96,
+			   पूर्णांक rate)
+अणु
+	पूर्णांक ds;
 
 	ds = rme96->wcreg & RME96_WCR_DS;
-	switch (rate) {
-	case 32000:
+	चयन (rate) अणु
+	हाल 32000:
 		rme96->wcreg &= ~RME96_WCR_DS;
 		rme96->wcreg = (rme96->wcreg | RME96_WCR_FREQ_0) &
 			~RME96_WCR_FREQ_1;
-		break;
-	case 44100:
+		अवरोध;
+	हाल 44100:
 		rme96->wcreg &= ~RME96_WCR_DS;
 		rme96->wcreg = (rme96->wcreg | RME96_WCR_FREQ_1) &
 			~RME96_WCR_FREQ_0;
-		break;
-	case 48000:
+		अवरोध;
+	हाल 48000:
 		rme96->wcreg &= ~RME96_WCR_DS;
 		rme96->wcreg = (rme96->wcreg | RME96_WCR_FREQ_0) |
 			RME96_WCR_FREQ_1;
-		break;
-	case 64000:
+		अवरोध;
+	हाल 64000:
 		rme96->wcreg |= RME96_WCR_DS;
 		rme96->wcreg = (rme96->wcreg | RME96_WCR_FREQ_0) &
 			~RME96_WCR_FREQ_1;
-		break;
-	case 88200:
+		अवरोध;
+	हाल 88200:
 		rme96->wcreg |= RME96_WCR_DS;
 		rme96->wcreg = (rme96->wcreg | RME96_WCR_FREQ_1) &
 			~RME96_WCR_FREQ_0;
-		break;
-	case 96000:
+		अवरोध;
+	हाल 96000:
 		rme96->wcreg |= RME96_WCR_DS;
 		rme96->wcreg = (rme96->wcreg | RME96_WCR_FREQ_0) |
 			RME96_WCR_FREQ_1;
-		break;
-	default:
-		return -EINVAL;
-	}
-	if ((!ds && rme96->wcreg & RME96_WCR_DS) ||
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	अगर ((!ds && rme96->wcreg & RME96_WCR_DS) ||
 	    (ds && !(rme96->wcreg & RME96_WCR_DS)))
-	{
-		/* change to/from double-speed: reset the DAC (if available) */
+	अणु
+		/* change to/from द्विगुन-speed: reset the DAC (अगर available) */
 		snd_rme96_reset_dac(rme96);
-		return 1; /* need to restore volume */
-	} else {
-		writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-		return 0;
-	}
-}
+		वापस 1; /* need to restore volume */
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int
-snd_rme96_capture_analog_setrate(struct rme96 *rme96,
-				 int rate)
-{
-	switch (rate) {
-	case 32000:
+अटल पूर्णांक
+snd_rme96_capture_analog_setrate(काष्ठा rme96 *rme96,
+				 पूर्णांक rate)
+अणु
+	चयन (rate) अणु
+	हाल 32000:
 		rme96->areg = ((rme96->areg | RME96_AR_FREQPAD_0) &
 			       ~RME96_AR_FREQPAD_1) & ~RME96_AR_FREQPAD_2;
-		break;
-	case 44100:
+		अवरोध;
+	हाल 44100:
 		rme96->areg = ((rme96->areg & ~RME96_AR_FREQPAD_0) |
 			       RME96_AR_FREQPAD_1) & ~RME96_AR_FREQPAD_2;
-		break;
-	case 48000:
+		अवरोध;
+	हाल 48000:
 		rme96->areg = ((rme96->areg | RME96_AR_FREQPAD_0) |
 			       RME96_AR_FREQPAD_1) & ~RME96_AR_FREQPAD_2;
-		break;
-	case 64000:
-		if (rme96->rev < 4) {
-			return -EINVAL;
-		}
+		अवरोध;
+	हाल 64000:
+		अगर (rme96->rev < 4) अणु
+			वापस -EINVAL;
+		पूर्ण
 		rme96->areg = ((rme96->areg | RME96_AR_FREQPAD_0) &
 			       ~RME96_AR_FREQPAD_1) | RME96_AR_FREQPAD_2;
-		break;
-	case 88200:
-		if (rme96->rev < 4) {
-			return -EINVAL;
-		}
+		अवरोध;
+	हाल 88200:
+		अगर (rme96->rev < 4) अणु
+			वापस -EINVAL;
+		पूर्ण
 		rme96->areg = ((rme96->areg & ~RME96_AR_FREQPAD_0) |
 			       RME96_AR_FREQPAD_1) | RME96_AR_FREQPAD_2;
-		break;
-	case 96000:
+		अवरोध;
+	हाल 96000:
 		rme96->areg = ((rme96->areg | RME96_AR_FREQPAD_0) |
 			       RME96_AR_FREQPAD_1) | RME96_AR_FREQPAD_2;
-		break;
-	default:
-		return -EINVAL;
-	}
-	writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_setclockmode(struct rme96 *rme96,
-		       int mode)
-{
-	switch (mode) {
-	case RME96_CLOCKMODE_SLAVE:
+अटल पूर्णांक
+snd_rme96_setघड़ीmode(काष्ठा rme96 *rme96,
+		       पूर्णांक mode)
+अणु
+	चयन (mode) अणु
+	हाल RME96_CLOCKMODE_SLAVE:
 	        /* AutoSync */ 
 		rme96->wcreg &= ~RME96_WCR_MASTER;
 		rme96->areg &= ~RME96_AR_WSEL;
-		break;
-	case RME96_CLOCKMODE_MASTER:
+		अवरोध;
+	हाल RME96_CLOCKMODE_MASTER:
 	        /* Internal */
 		rme96->wcreg |= RME96_WCR_MASTER;
 		rme96->areg &= ~RME96_AR_WSEL;
-		break;
-	case RME96_CLOCKMODE_WORDCLOCK:
-		/* Word clock is a master mode */
+		अवरोध;
+	हाल RME96_CLOCKMODE_WORDCLOCK:
+		/* Word घड़ी is a master mode */
 		rme96->wcreg |= RME96_WCR_MASTER; 
 		rme96->areg |= RME96_AR_WSEL;
-		break;
-	default:
-		return -EINVAL;
-	}
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_getclockmode(struct rme96 *rme96)
-{
-	if (rme96->areg & RME96_AR_WSEL) {
-		return RME96_CLOCKMODE_WORDCLOCK;
-	}
-	return (rme96->wcreg & RME96_WCR_MASTER) ? RME96_CLOCKMODE_MASTER :
+अटल पूर्णांक
+snd_rme96_अ_लोlockmode(काष्ठा rme96 *rme96)
+अणु
+	अगर (rme96->areg & RME96_AR_WSEL) अणु
+		वापस RME96_CLOCKMODE_WORDCLOCK;
+	पूर्ण
+	वापस (rme96->wcreg & RME96_WCR_MASTER) ? RME96_CLOCKMODE_MASTER :
 		RME96_CLOCKMODE_SLAVE;
-}
+पूर्ण
 
-static int
-snd_rme96_setinputtype(struct rme96 *rme96,
-		       int type)
-{
-	int n;
+अटल पूर्णांक
+snd_rme96_setinputtype(काष्ठा rme96 *rme96,
+		       पूर्णांक type)
+अणु
+	पूर्णांक n;
 
-	switch (type) {
-	case RME96_INPUT_OPTICAL:
+	चयन (type) अणु
+	हाल RME96_INPUT_OPTICAL:
 		rme96->wcreg = (rme96->wcreg & ~RME96_WCR_INP_0) &
 			~RME96_WCR_INP_1;
-		break;
-	case RME96_INPUT_COAXIAL:
+		अवरोध;
+	हाल RME96_INPUT_COAXIAL:
 		rme96->wcreg = (rme96->wcreg | RME96_WCR_INP_0) &
 			~RME96_WCR_INP_1;
-		break;
-	case RME96_INPUT_INTERNAL:
+		अवरोध;
+	हाल RME96_INPUT_INTERNAL:
 		rme96->wcreg = (rme96->wcreg & ~RME96_WCR_INP_0) |
 			RME96_WCR_INP_1;
-		break;
-	case RME96_INPUT_XLR:
-		if ((rme96->pci->device != PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST &&
+		अवरोध;
+	हाल RME96_INPUT_XLR:
+		अगर ((rme96->pci->device != PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST &&
 		     rme96->pci->device != PCI_DEVICE_ID_RME_DIGI96_8_PRO) ||
 		    (rme96->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST &&
 		     rme96->rev > 4))
-		{
+		अणु
 			/* Only Digi96/8 PRO and Digi96/8 PAD supports XLR */
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		rme96->wcreg = (rme96->wcreg | RME96_WCR_INP_0) |
 			RME96_WCR_INP_1;
-		break;
-	case RME96_INPUT_ANALOG:
-		if (!RME96_HAS_ANALOG_IN(rme96)) {
-			return -EINVAL;
-		}
+		अवरोध;
+	हाल RME96_INPUT_ANALOG:
+		अगर (!RME96_HAS_ANALOG_IN(rme96)) अणु
+			वापस -EINVAL;
+		पूर्ण
 		rme96->areg |= RME96_AR_ANALOG;
-		writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
-		if (rme96->rev < 4) {
+		ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+		अगर (rme96->rev < 4) अणु
 			/*
-			 * Revision less than 004 does not support 64 and
+			 * Revision less than 004 करोes not support 64 and
 			 * 88.2 kHz
 			 */
-			if (snd_rme96_capture_getrate(rme96, &n) == 88200) {
+			अगर (snd_rme96_capture_getrate(rme96, &n) == 88200) अणु
 				snd_rme96_capture_analog_setrate(rme96, 44100);
-			}
-			if (snd_rme96_capture_getrate(rme96, &n) == 64000) {
+			पूर्ण
+			अगर (snd_rme96_capture_getrate(rme96, &n) == 64000) अणु
 				snd_rme96_capture_analog_setrate(rme96, 32000);
-			}
-		}
-		return 0;
-	default:
-		return -EINVAL;
-	}
-	if (type != RME96_INPUT_ANALOG && RME96_HAS_ANALOG_IN(rme96)) {
+			पूर्ण
+		पूर्ण
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	अगर (type != RME96_INPUT_ANALOG && RME96_HAS_ANALOG_IN(rme96)) अणु
 		rme96->areg &= ~RME96_AR_ANALOG;
-		writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
-	}
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	return 0;
-}
+		ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+	पूर्ण
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_getinputtype(struct rme96 *rme96)
-{
-	if (rme96->areg & RME96_AR_ANALOG) {
-		return RME96_INPUT_ANALOG;
-	}
-	return ((rme96->wcreg >> RME96_WCR_BITPOS_INP_0) & 1) +
+अटल पूर्णांक
+snd_rme96_getinputtype(काष्ठा rme96 *rme96)
+अणु
+	अगर (rme96->areg & RME96_AR_ANALOG) अणु
+		वापस RME96_INPUT_ANALOG;
+	पूर्ण
+	वापस ((rme96->wcreg >> RME96_WCR_BITPOS_INP_0) & 1) +
 		(((rme96->wcreg >> RME96_WCR_BITPOS_INP_1) & 1) << 1);
-}
+पूर्ण
 
-static void
-snd_rme96_setframelog(struct rme96 *rme96,
-		      int n_channels,
-		      int is_playback)
-{
-	int frlog;
+अटल व्योम
+snd_rme96_setframelog(काष्ठा rme96 *rme96,
+		      पूर्णांक n_channels,
+		      पूर्णांक is_playback)
+अणु
+	पूर्णांक frlog;
 	
-	if (n_channels == 2) {
+	अगर (n_channels == 2) अणु
 		frlog = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* assume 8 channels */
 		frlog = 3;
-	}
-	if (is_playback) {
+	पूर्ण
+	अगर (is_playback) अणु
 		frlog += (rme96->wcreg & RME96_WCR_MODE24) ? 2 : 1;
 		rme96->playback_frlog = frlog;
-	} else {
+	पूर्ण अन्यथा अणु
 		frlog += (rme96->wcreg & RME96_WCR_MODE24_2) ? 2 : 1;
 		rme96->capture_frlog = frlog;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-snd_rme96_playback_setformat(struct rme96 *rme96, snd_pcm_format_t format)
-{
-	switch (format) {
-	case SNDRV_PCM_FORMAT_S16_LE:
+अटल पूर्णांक
+snd_rme96_playback_setक्रमmat(काष्ठा rme96 *rme96, snd_pcm_क्रमmat_t क्रमmat)
+अणु
+	चयन (क्रमmat) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
 		rme96->wcreg &= ~RME96_WCR_MODE24;
-		break;
-	case SNDRV_PCM_FORMAT_S32_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S32_LE:
 		rme96->wcreg |= RME96_WCR_MODE24;
-		break;
-	default:
-		return -EINVAL;
-	}
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_capture_setformat(struct rme96 *rme96, snd_pcm_format_t format)
-{
-	switch (format) {
-	case SNDRV_PCM_FORMAT_S16_LE:
+अटल पूर्णांक
+snd_rme96_capture_setक्रमmat(काष्ठा rme96 *rme96, snd_pcm_क्रमmat_t क्रमmat)
+अणु
+	चयन (क्रमmat) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
 		rme96->wcreg &= ~RME96_WCR_MODE24_2;
-		break;
-	case SNDRV_PCM_FORMAT_S32_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S32_LE:
 		rme96->wcreg |= RME96_WCR_MODE24_2;
-		break;
-	default:
-		return -EINVAL;
-	}
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	वापस 0;
+पूर्ण
 
-static void
-snd_rme96_set_period_properties(struct rme96 *rme96,
-				size_t period_bytes)
-{
-	switch (period_bytes) {
-	case RME96_LARGE_BLOCK_SIZE:
+अटल व्योम
+snd_rme96_set_period_properties(काष्ठा rme96 *rme96,
+				माप_प्रकार period_bytes)
+अणु
+	चयन (period_bytes) अणु
+	हाल RME96_LARGE_BLOCK_SIZE:
 		rme96->wcreg &= ~RME96_WCR_ISEL;
-		break;
-	case RME96_SMALL_BLOCK_SIZE:
+		अवरोध;
+	हाल RME96_SMALL_BLOCK_SIZE:
 		rme96->wcreg |= RME96_WCR_ISEL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		snd_BUG();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	rme96->wcreg &= ~RME96_WCR_IDIS;
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-}
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+पूर्ण
 
-static int
-snd_rme96_playback_hw_params(struct snd_pcm_substream *substream,
-			     struct snd_pcm_hw_params *params)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int err, rate, dummy;
+अटल पूर्णांक
+snd_rme96_playback_hw_params(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक err, rate, dummy;
 	bool apply_dac_volume = false;
 
-	runtime->dma_area = (void __force *)(rme96->iobase +
+	runसमय->dma_area = (व्योम __क्रमce *)(rme96->iobase +
 					     RME96_IO_PLAY_BUFFER);
-	runtime->dma_addr = rme96->port + RME96_IO_PLAY_BUFFER;
-	runtime->dma_bytes = RME96_BUFFER_SIZE;
+	runसमय->dma_addr = rme96->port + RME96_IO_PLAY_BUFFER;
+	runसमय->dma_bytes = RME96_BUFFER_SIZE;
 
 	spin_lock_irq(&rme96->lock);
-	if (!(rme96->wcreg & RME96_WCR_MASTER) &&
+	अगर (!(rme96->wcreg & RME96_WCR_MASTER) &&
             snd_rme96_getinputtype(rme96) != RME96_INPUT_ANALOG &&
 	    (rate = snd_rme96_capture_getrate(rme96, &dummy)) > 0)
-	{
-                /* slave clock */
-                if ((int)params_rate(params) != rate) {
+	अणु
+                /* slave घड़ी */
+                अगर ((पूर्णांक)params_rate(params) != rate) अणु
 			err = -EIO;
-			goto error;
-		}
-	} else {
+			जाओ error;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = snd_rme96_playback_setrate(rme96, params_rate(params));
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 		apply_dac_volume = err > 0; /* need to restore volume later? */
-	}
+	पूर्ण
 
-	err = snd_rme96_playback_setformat(rme96, params_format(params));
-	if (err < 0)
-		goto error;
+	err = snd_rme96_playback_setक्रमmat(rme96, params_क्रमmat(params));
+	अगर (err < 0)
+		जाओ error;
 	snd_rme96_setframelog(rme96, params_channels(params), 1);
-	if (rme96->capture_periodsize != 0) {
-		if (params_period_size(params) << rme96->playback_frlog !=
+	अगर (rme96->capture_periodsize != 0) अणु
+		अगर (params_period_size(params) << rme96->playback_frlog !=
 		    rme96->capture_periodsize)
-		{
+		अणु
 			err = -EBUSY;
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 	rme96->playback_periodsize =
 		params_period_size(params) << rme96->playback_frlog;
 	snd_rme96_set_period_properties(rme96, rme96->playback_periodsize);
 	/* S/PDIF setup */
-	if ((rme96->wcreg & RME96_WCR_ADAT) == 0) {
+	अगर ((rme96->wcreg & RME96_WCR_ADAT) == 0) अणु
 		rme96->wcreg &= ~(RME96_WCR_PRO | RME96_WCR_DOLBY | RME96_WCR_EMP);
-		writel(rme96->wcreg |= rme96->wcreg_spdif_stream, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	}
+		ग_लिखोl(rme96->wcreg |= rme96->wcreg_spdअगर_stream, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	पूर्ण
 
 	err = 0;
  error:
 	spin_unlock_irq(&rme96->lock);
-	if (apply_dac_volume) {
+	अगर (apply_dac_volume) अणु
 		usleep_range(3000, 10000);
 		snd_rme96_apply_dac_volume(rme96);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-snd_rme96_capture_hw_params(struct snd_pcm_substream *substream,
-			    struct snd_pcm_hw_params *params)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int err, isadat, rate;
+अटल पूर्णांक
+snd_rme96_capture_hw_params(काष्ठा snd_pcm_substream *substream,
+			    काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक err, isadat, rate;
 	
-	runtime->dma_area = (void __force *)(rme96->iobase +
+	runसमय->dma_area = (व्योम __क्रमce *)(rme96->iobase +
 					     RME96_IO_REC_BUFFER);
-	runtime->dma_addr = rme96->port + RME96_IO_REC_BUFFER;
-	runtime->dma_bytes = RME96_BUFFER_SIZE;
+	runसमय->dma_addr = rme96->port + RME96_IO_REC_BUFFER;
+	runसमय->dma_bytes = RME96_BUFFER_SIZE;
 
 	spin_lock_irq(&rme96->lock);
-	if ((err = snd_rme96_capture_setformat(rme96, params_format(params))) < 0) {
+	अगर ((err = snd_rme96_capture_setक्रमmat(rme96, params_क्रमmat(params))) < 0) अणु
 		spin_unlock_irq(&rme96->lock);
-		return err;
-	}
-	if (snd_rme96_getinputtype(rme96) == RME96_INPUT_ANALOG) {
-		if ((err = snd_rme96_capture_analog_setrate(rme96,
+		वापस err;
+	पूर्ण
+	अगर (snd_rme96_getinputtype(rme96) == RME96_INPUT_ANALOG) अणु
+		अगर ((err = snd_rme96_capture_analog_setrate(rme96,
 							    params_rate(params))) < 0)
-		{
+		अणु
 			spin_unlock_irq(&rme96->lock);
-			return err;
-		}
-	} else if ((rate = snd_rme96_capture_getrate(rme96, &isadat)) > 0) {
-                if ((int)params_rate(params) != rate) {
+			वापस err;
+		पूर्ण
+	पूर्ण अन्यथा अगर ((rate = snd_rme96_capture_getrate(rme96, &isadat)) > 0) अणु
+                अगर ((पूर्णांक)params_rate(params) != rate) अणु
 			spin_unlock_irq(&rme96->lock);
-			return -EIO;                    
-                }
-                if ((isadat && runtime->hw.channels_min == 2) ||
-                    (!isadat && runtime->hw.channels_min == 8))
-                {
+			वापस -EIO;                    
+                पूर्ण
+                अगर ((isadat && runसमय->hw.channels_min == 2) ||
+                    (!isadat && runसमय->hw.channels_min == 8))
+                अणु
 			spin_unlock_irq(&rme96->lock);
-			return -EIO;
-                }
-        }
+			वापस -EIO;
+                पूर्ण
+        पूर्ण
 	snd_rme96_setframelog(rme96, params_channels(params), 0);
-	if (rme96->playback_periodsize != 0) {
-		if (params_period_size(params) << rme96->capture_frlog !=
+	अगर (rme96->playback_periodsize != 0) अणु
+		अगर (params_period_size(params) << rme96->capture_frlog !=
 		    rme96->playback_periodsize)
-		{
+		अणु
 			spin_unlock_irq(&rme96->lock);
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 	rme96->capture_periodsize =
 		params_period_size(params) << rme96->capture_frlog;
 	snd_rme96_set_period_properties(rme96, rme96->capture_periodsize);
 	spin_unlock_irq(&rme96->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-snd_rme96_trigger(struct rme96 *rme96,
-		  int op)
-{
-	if (op & RME96_TB_RESET_PLAYPOS)
-		writel(0, rme96->iobase + RME96_IO_RESET_PLAY_POS);
-	if (op & RME96_TB_RESET_CAPTUREPOS)
-		writel(0, rme96->iobase + RME96_IO_RESET_REC_POS);
-	if (op & RME96_TB_CLEAR_PLAYBACK_IRQ) {
-		rme96->rcreg = readl(rme96->iobase + RME96_IO_CONTROL_REGISTER);
-		if (rme96->rcreg & RME96_RCR_IRQ)
-			writel(0, rme96->iobase + RME96_IO_CONFIRM_PLAY_IRQ);
-	}
-	if (op & RME96_TB_CLEAR_CAPTURE_IRQ) {
-		rme96->rcreg = readl(rme96->iobase + RME96_IO_CONTROL_REGISTER);
-		if (rme96->rcreg & RME96_RCR_IRQ_2)
-			writel(0, rme96->iobase + RME96_IO_CONFIRM_REC_IRQ);
-	}
-	if (op & RME96_TB_START_PLAYBACK)
+अटल व्योम
+snd_rme96_trigger(काष्ठा rme96 *rme96,
+		  पूर्णांक op)
+अणु
+	अगर (op & RME96_TB_RESET_PLAYPOS)
+		ग_लिखोl(0, rme96->iobase + RME96_IO_RESET_PLAY_POS);
+	अगर (op & RME96_TB_RESET_CAPTUREPOS)
+		ग_लिखोl(0, rme96->iobase + RME96_IO_RESET_REC_POS);
+	अगर (op & RME96_TB_CLEAR_PLAYBACK_IRQ) अणु
+		rme96->rcreg = पढ़ोl(rme96->iobase + RME96_IO_CONTROL_REGISTER);
+		अगर (rme96->rcreg & RME96_RCR_IRQ)
+			ग_लिखोl(0, rme96->iobase + RME96_IO_CONFIRM_PLAY_IRQ);
+	पूर्ण
+	अगर (op & RME96_TB_CLEAR_CAPTURE_IRQ) अणु
+		rme96->rcreg = पढ़ोl(rme96->iobase + RME96_IO_CONTROL_REGISTER);
+		अगर (rme96->rcreg & RME96_RCR_IRQ_2)
+			ग_लिखोl(0, rme96->iobase + RME96_IO_CONFIRM_REC_IRQ);
+	पूर्ण
+	अगर (op & RME96_TB_START_PLAYBACK)
 		rme96->wcreg |= RME96_WCR_START;
-	if (op & RME96_TB_STOP_PLAYBACK)
+	अगर (op & RME96_TB_STOP_PLAYBACK)
 		rme96->wcreg &= ~RME96_WCR_START;
-	if (op & RME96_TB_START_CAPTURE)
+	अगर (op & RME96_TB_START_CAPTURE)
 		rme96->wcreg |= RME96_WCR_START_2;
-	if (op & RME96_TB_STOP_CAPTURE)
+	अगर (op & RME96_TB_STOP_CAPTURE)
 		rme96->wcreg &= ~RME96_WCR_START_2;
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-}
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+पूर्ण
 
 
 
-static irqreturn_t
-snd_rme96_interrupt(int irq,
-		    void *dev_id)
-{
-	struct rme96 *rme96 = (struct rme96 *)dev_id;
+अटल irqवापस_t
+snd_rme96_पूर्णांकerrupt(पूर्णांक irq,
+		    व्योम *dev_id)
+अणु
+	काष्ठा rme96 *rme96 = (काष्ठा rme96 *)dev_id;
 
-	rme96->rcreg = readl(rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	/* fastpath out, to ease interrupt sharing */
-	if (!((rme96->rcreg & RME96_RCR_IRQ) ||
+	rme96->rcreg = पढ़ोl(rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	/* fastpath out, to ease पूर्णांकerrupt sharing */
+	अगर (!((rme96->rcreg & RME96_RCR_IRQ) ||
 	      (rme96->rcreg & RME96_RCR_IRQ_2)))
-	{
-		return IRQ_NONE;
-	}
+	अणु
+		वापस IRQ_NONE;
+	पूर्ण
 	
-	if (rme96->rcreg & RME96_RCR_IRQ) {
+	अगर (rme96->rcreg & RME96_RCR_IRQ) अणु
 		/* playback */
                 snd_pcm_period_elapsed(rme96->playback_substream);
-		writel(0, rme96->iobase + RME96_IO_CONFIRM_PLAY_IRQ);
-	}
-	if (rme96->rcreg & RME96_RCR_IRQ_2) {
+		ग_लिखोl(0, rme96->iobase + RME96_IO_CONFIRM_PLAY_IRQ);
+	पूर्ण
+	अगर (rme96->rcreg & RME96_RCR_IRQ_2) अणु
 		/* capture */
 		snd_pcm_period_elapsed(rme96->capture_substream);		
-		writel(0, rme96->iobase + RME96_IO_CONFIRM_REC_IRQ);
-	}
-	return IRQ_HANDLED;
-}
+		ग_लिखोl(0, rme96->iobase + RME96_IO_CONFIRM_REC_IRQ);
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const unsigned int period_bytes[] = { RME96_SMALL_BLOCK_SIZE, RME96_LARGE_BLOCK_SIZE };
+अटल स्थिर अचिन्हित पूर्णांक period_bytes[] = अणु RME96_SMALL_BLOCK_SIZE, RME96_LARGE_BLOCK_SIZE पूर्ण;
 
-static const struct snd_pcm_hw_constraint_list hw_constraints_period_bytes = {
+अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list hw_स्थिरraपूर्णांकs_period_bytes = अणु
 	.count = ARRAY_SIZE(period_bytes),
 	.list = period_bytes,
 	.mask = 0
-};
+पूर्ण;
 
-static void
-rme96_set_buffer_size_constraint(struct rme96 *rme96,
-				 struct snd_pcm_runtime *runtime)
-{
-	unsigned int size;
+अटल व्योम
+rme96_set_buffer_size_स्थिरraपूर्णांक(काष्ठा rme96 *rme96,
+				 काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	अचिन्हित पूर्णांक size;
 
-	snd_pcm_hw_constraint_single(runtime, SNDRV_PCM_HW_PARAM_BUFFER_BYTES,
+	snd_pcm_hw_स्थिरraपूर्णांक_single(runसमय, SNDRV_PCM_HW_PARAM_BUFFER_BYTES,
 				     RME96_BUFFER_SIZE);
-	if ((size = rme96->playback_periodsize) != 0 ||
+	अगर ((size = rme96->playback_periodsize) != 0 ||
 	    (size = rme96->capture_periodsize) != 0)
-		snd_pcm_hw_constraint_single(runtime,
+		snd_pcm_hw_स्थिरraपूर्णांक_single(runसमय,
 					     SNDRV_PCM_HW_PARAM_PERIOD_BYTES,
 					     size);
-	else
-		snd_pcm_hw_constraint_list(runtime, 0,
+	अन्यथा
+		snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0,
 					   SNDRV_PCM_HW_PARAM_PERIOD_BYTES,
-					   &hw_constraints_period_bytes);
-}
+					   &hw_स्थिरraपूर्णांकs_period_bytes);
+पूर्ण
 
-static int
-snd_rme96_playback_spdif_open(struct snd_pcm_substream *substream)
-{
-        int rate, dummy;
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक
+snd_rme96_playback_spdअगर_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+        पूर्णांक rate, dummy;
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
 	snd_pcm_set_sync(substream);
 	spin_lock_irq(&rme96->lock);	
-	if (rme96->playback_substream) {
+	अगर (rme96->playback_substream) अणु
 		spin_unlock_irq(&rme96->lock);
-                return -EBUSY;
-        }
+                वापस -EBUSY;
+        पूर्ण
 	rme96->wcreg &= ~RME96_WCR_ADAT;
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
 	rme96->playback_substream = substream;
 	spin_unlock_irq(&rme96->lock);
 
-	runtime->hw = snd_rme96_playback_spdif_info;
-	if (!(rme96->wcreg & RME96_WCR_MASTER) &&
+	runसमय->hw = snd_rme96_playback_spdअगर_info;
+	अगर (!(rme96->wcreg & RME96_WCR_MASTER) &&
             snd_rme96_getinputtype(rme96) != RME96_INPUT_ANALOG &&
 	    (rate = snd_rme96_capture_getrate(rme96, &dummy)) > 0)
-	{
-                /* slave clock */
-                runtime->hw.rates = snd_pcm_rate_to_rate_bit(rate);
-                runtime->hw.rate_min = rate;
-                runtime->hw.rate_max = rate;
-	}        
-	rme96_set_buffer_size_constraint(rme96, runtime);
+	अणु
+                /* slave घड़ी */
+                runसमय->hw.rates = snd_pcm_rate_to_rate_bit(rate);
+                runसमय->hw.rate_min = rate;
+                runसमय->hw.rate_max = rate;
+	पूर्ण        
+	rme96_set_buffer_size_स्थिरraपूर्णांक(rme96, runसमय);
 
-	rme96->wcreg_spdif_stream = rme96->wcreg_spdif;
-	rme96->spdif_ctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-	snd_ctl_notify(rme96->card, SNDRV_CTL_EVENT_MASK_VALUE |
-		       SNDRV_CTL_EVENT_MASK_INFO, &rme96->spdif_ctl->id);
-	return 0;
-}
+	rme96->wcreg_spdअगर_stream = rme96->wcreg_spdअगर;
+	rme96->spdअगर_ctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_INACTIVE;
+	snd_ctl_notअगरy(rme96->card, SNDRV_CTL_EVENT_MASK_VALUE |
+		       SNDRV_CTL_EVENT_MASK_INFO, &rme96->spdअगर_ctl->id);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_capture_spdif_open(struct snd_pcm_substream *substream)
-{
-        int isadat, rate;
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक
+snd_rme96_capture_spdअगर_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+        पूर्णांक isadat, rate;
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
 	snd_pcm_set_sync(substream);
-	runtime->hw = snd_rme96_capture_spdif_info;
-        if (snd_rme96_getinputtype(rme96) != RME96_INPUT_ANALOG &&
+	runसमय->hw = snd_rme96_capture_spdअगर_info;
+        अगर (snd_rme96_getinputtype(rme96) != RME96_INPUT_ANALOG &&
             (rate = snd_rme96_capture_getrate(rme96, &isadat)) > 0)
-        {
-                if (isadat) {
-                        return -EIO;
-                }
-                runtime->hw.rates = snd_pcm_rate_to_rate_bit(rate);
-                runtime->hw.rate_min = rate;
-                runtime->hw.rate_max = rate;
-        }
+        अणु
+                अगर (isadat) अणु
+                        वापस -EIO;
+                पूर्ण
+                runसमय->hw.rates = snd_pcm_rate_to_rate_bit(rate);
+                runसमय->hw.rate_min = rate;
+                runसमय->hw.rate_max = rate;
+        पूर्ण
         
 	spin_lock_irq(&rme96->lock);
-	if (rme96->capture_substream) {
+	अगर (rme96->capture_substream) अणु
 		spin_unlock_irq(&rme96->lock);
-                return -EBUSY;
-        }
+                वापस -EBUSY;
+        पूर्ण
 	rme96->capture_substream = substream;
 	spin_unlock_irq(&rme96->lock);
 	
-	rme96_set_buffer_size_constraint(rme96, runtime);
-	return 0;
-}
+	rme96_set_buffer_size_स्थिरraपूर्णांक(rme96, runसमय);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_playback_adat_open(struct snd_pcm_substream *substream)
-{
-        int rate, dummy;
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;        
+अटल पूर्णांक
+snd_rme96_playback_adat_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+        पूर्णांक rate, dummy;
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;        
 	
 	snd_pcm_set_sync(substream);
 	spin_lock_irq(&rme96->lock);	
-	if (rme96->playback_substream) {
+	अगर (rme96->playback_substream) अणु
 		spin_unlock_irq(&rme96->lock);
-                return -EBUSY;
-        }
+                वापस -EBUSY;
+        पूर्ण
 	rme96->wcreg |= RME96_WCR_ADAT;
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
 	rme96->playback_substream = substream;
 	spin_unlock_irq(&rme96->lock);
 	
-	runtime->hw = snd_rme96_playback_adat_info;
-	if (!(rme96->wcreg & RME96_WCR_MASTER) &&
+	runसमय->hw = snd_rme96_playback_adat_info;
+	अगर (!(rme96->wcreg & RME96_WCR_MASTER) &&
             snd_rme96_getinputtype(rme96) != RME96_INPUT_ANALOG &&
 	    (rate = snd_rme96_capture_getrate(rme96, &dummy)) > 0)
-	{
-                /* slave clock */
-                runtime->hw.rates = snd_pcm_rate_to_rate_bit(rate);
-                runtime->hw.rate_min = rate;
-                runtime->hw.rate_max = rate;
-	}        
-	rme96_set_buffer_size_constraint(rme96, runtime);
-	return 0;
-}
+	अणु
+                /* slave घड़ी */
+                runसमय->hw.rates = snd_pcm_rate_to_rate_bit(rate);
+                runसमय->hw.rate_min = rate;
+                runसमय->hw.rate_max = rate;
+	पूर्ण        
+	rme96_set_buffer_size_स्थिरraपूर्णांक(rme96, runसमय);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_capture_adat_open(struct snd_pcm_substream *substream)
-{
-        int isadat, rate;
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक
+snd_rme96_capture_adat_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+        पूर्णांक isadat, rate;
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
 	snd_pcm_set_sync(substream);
-	runtime->hw = snd_rme96_capture_adat_info;
-        if (snd_rme96_getinputtype(rme96) == RME96_INPUT_ANALOG) {
+	runसमय->hw = snd_rme96_capture_adat_info;
+        अगर (snd_rme96_getinputtype(rme96) == RME96_INPUT_ANALOG) अणु
                 /* makes no sense to use analog input. Note that analog
                    expension cards AEB4/8-I are RME96_INPUT_INTERNAL */
-                return -EIO;
-        }
-        if ((rate = snd_rme96_capture_getrate(rme96, &isadat)) > 0) {
-                if (!isadat) {
-                        return -EIO;
-                }
-                runtime->hw.rates = snd_pcm_rate_to_rate_bit(rate);
-                runtime->hw.rate_min = rate;
-                runtime->hw.rate_max = rate;
-        }
+                वापस -EIO;
+        पूर्ण
+        अगर ((rate = snd_rme96_capture_getrate(rme96, &isadat)) > 0) अणु
+                अगर (!isadat) अणु
+                        वापस -EIO;
+                पूर्ण
+                runसमय->hw.rates = snd_pcm_rate_to_rate_bit(rate);
+                runसमय->hw.rate_min = rate;
+                runसमय->hw.rate_max = rate;
+        पूर्ण
         
 	spin_lock_irq(&rme96->lock);	
-	if (rme96->capture_substream) {
+	अगर (rme96->capture_substream) अणु
 		spin_unlock_irq(&rme96->lock);
-                return -EBUSY;
-        }
+                वापस -EBUSY;
+        पूर्ण
 	rme96->capture_substream = substream;
 	spin_unlock_irq(&rme96->lock);
 
-	rme96_set_buffer_size_constraint(rme96, runtime);
-	return 0;
-}
+	rme96_set_buffer_size_स्थिरraपूर्णांक(rme96, runसमय);
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_playback_close(struct snd_pcm_substream *substream)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	int spdif = 0;
+अटल पूर्णांक
+snd_rme96_playback_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	पूर्णांक spdअगर = 0;
 
 	spin_lock_irq(&rme96->lock);	
-	if (RME96_ISPLAYING(rme96)) {
+	अगर (RME96_ISPLAYING(rme96)) अणु
 		snd_rme96_trigger(rme96, RME96_STOP_PLAYBACK);
-	}
-	rme96->playback_substream = NULL;
+	पूर्ण
+	rme96->playback_substream = शून्य;
 	rme96->playback_periodsize = 0;
-	spdif = (rme96->wcreg & RME96_WCR_ADAT) == 0;
+	spdअगर = (rme96->wcreg & RME96_WCR_ADAT) == 0;
 	spin_unlock_irq(&rme96->lock);
-	if (spdif) {
-		rme96->spdif_ctl->vd[0].access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-		snd_ctl_notify(rme96->card, SNDRV_CTL_EVENT_MASK_VALUE |
-			       SNDRV_CTL_EVENT_MASK_INFO, &rme96->spdif_ctl->id);
-	}
-	return 0;
-}
+	अगर (spdअगर) अणु
+		rme96->spdअगर_ctl->vd[0].access |= SNDRV_CTL_ELEM_ACCESS_INACTIVE;
+		snd_ctl_notअगरy(rme96->card, SNDRV_CTL_EVENT_MASK_VALUE |
+			       SNDRV_CTL_EVENT_MASK_INFO, &rme96->spdअगर_ctl->id);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_capture_close(struct snd_pcm_substream *substream)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
+अटल पूर्णांक
+snd_rme96_capture_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
 	
 	spin_lock_irq(&rme96->lock);	
-	if (RME96_ISRECORDING(rme96)) {
+	अगर (RME96_ISRECORDING(rme96)) अणु
 		snd_rme96_trigger(rme96, RME96_STOP_CAPTURE);
-	}
-	rme96->capture_substream = NULL;
+	पूर्ण
+	rme96->capture_substream = शून्य;
 	rme96->capture_periodsize = 0;
 	spin_unlock_irq(&rme96->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_playback_prepare(struct snd_pcm_substream *substream)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
+अटल पूर्णांक
+snd_rme96_playback_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
 	
 	spin_lock_irq(&rme96->lock);	
-	if (RME96_ISPLAYING(rme96)) {
+	अगर (RME96_ISPLAYING(rme96)) अणु
 		snd_rme96_trigger(rme96, RME96_STOP_PLAYBACK);
-	}
-	writel(0, rme96->iobase + RME96_IO_RESET_PLAY_POS);
+	पूर्ण
+	ग_लिखोl(0, rme96->iobase + RME96_IO_RESET_PLAY_POS);
 	spin_unlock_irq(&rme96->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_capture_prepare(struct snd_pcm_substream *substream)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
+अटल पूर्णांक
+snd_rme96_capture_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
 	
 	spin_lock_irq(&rme96->lock);	
-	if (RME96_ISRECORDING(rme96)) {
+	अगर (RME96_ISRECORDING(rme96)) अणु
 		snd_rme96_trigger(rme96, RME96_STOP_CAPTURE);
-	}
-	writel(0, rme96->iobase + RME96_IO_RESET_REC_POS);
+	पूर्ण
+	ग_लिखोl(0, rme96->iobase + RME96_IO_RESET_REC_POS);
 	spin_unlock_irq(&rme96->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_playback_trigger(struct snd_pcm_substream *substream, 
-			   int cmd)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	struct snd_pcm_substream *s;
+अटल पूर्णांक
+snd_rme96_playback_trigger(काष्ठा snd_pcm_substream *substream, 
+			   पूर्णांक cmd)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_substream *s;
 	bool sync;
 
-	snd_pcm_group_for_each_entry(s, substream) {
-		if (snd_pcm_substream_chip(s) == rme96)
-			snd_pcm_trigger_done(s, substream);
-	}
+	snd_pcm_group_क्रम_each_entry(s, substream) अणु
+		अगर (snd_pcm_substream_chip(s) == rme96)
+			snd_pcm_trigger_करोne(s, substream);
+	पूर्ण
 
 	sync = (rme96->playback_substream && rme96->capture_substream) &&
 	       (rme96->playback_substream->group ==
 		rme96->capture_substream->group);
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-		if (!RME96_ISPLAYING(rme96)) {
-			if (substream != rme96->playback_substream)
-				return -EBUSY;
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+		अगर (!RME96_ISPLAYING(rme96)) अणु
+			अगर (substream != rme96->playback_substream)
+				वापस -EBUSY;
 			snd_rme96_trigger(rme96, sync ? RME96_START_BOTH
 						 : RME96_START_PLAYBACK);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_STOP:
-		if (RME96_ISPLAYING(rme96)) {
-			if (substream != rme96->playback_substream)
-				return -EBUSY;
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		अगर (RME96_ISPLAYING(rme96)) अणु
+			अगर (substream != rme96->playback_substream)
+				वापस -EBUSY;
 			snd_rme96_trigger(rme96, sync ? RME96_STOP_BOTH
 						 :  RME96_STOP_PLAYBACK);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		if (RME96_ISPLAYING(rme96))
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		अगर (RME96_ISPLAYING(rme96))
 			snd_rme96_trigger(rme96, sync ? RME96_STOP_BOTH
 						 : RME96_STOP_PLAYBACK);
-		break;
+		अवरोध;
 
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		if (!RME96_ISPLAYING(rme96))
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		अगर (!RME96_ISPLAYING(rme96))
 			snd_rme96_trigger(rme96, sync ? RME96_RESUME_BOTH
 						 : RME96_RESUME_PLAYBACK);
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_capture_trigger(struct snd_pcm_substream *substream, 
-			  int cmd)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	struct snd_pcm_substream *s;
+अटल पूर्णांक
+snd_rme96_capture_trigger(काष्ठा snd_pcm_substream *substream, 
+			  पूर्णांक cmd)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_substream *s;
 	bool sync;
 
-	snd_pcm_group_for_each_entry(s, substream) {
-		if (snd_pcm_substream_chip(s) == rme96)
-			snd_pcm_trigger_done(s, substream);
-	}
+	snd_pcm_group_क्रम_each_entry(s, substream) अणु
+		अगर (snd_pcm_substream_chip(s) == rme96)
+			snd_pcm_trigger_करोne(s, substream);
+	पूर्ण
 
 	sync = (rme96->playback_substream && rme96->capture_substream) &&
 	       (rme96->playback_substream->group ==
 		rme96->capture_substream->group);
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-		if (!RME96_ISRECORDING(rme96)) {
-			if (substream != rme96->capture_substream)
-				return -EBUSY;
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+		अगर (!RME96_ISRECORDING(rme96)) अणु
+			अगर (substream != rme96->capture_substream)
+				वापस -EBUSY;
 			snd_rme96_trigger(rme96, sync ? RME96_START_BOTH
 						 : RME96_START_CAPTURE);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_STOP:
-		if (RME96_ISRECORDING(rme96)) {
-			if (substream != rme96->capture_substream)
-				return -EBUSY;
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		अगर (RME96_ISRECORDING(rme96)) अणु
+			अगर (substream != rme96->capture_substream)
+				वापस -EBUSY;
 			snd_rme96_trigger(rme96, sync ? RME96_STOP_BOTH
 						 : RME96_STOP_CAPTURE);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		if (RME96_ISRECORDING(rme96))
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		अगर (RME96_ISRECORDING(rme96))
 			snd_rme96_trigger(rme96, sync ? RME96_STOP_BOTH
 						 : RME96_STOP_CAPTURE);
-		break;
+		अवरोध;
 
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		if (!RME96_ISRECORDING(rme96))
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		अगर (!RME96_ISRECORDING(rme96))
 			snd_rme96_trigger(rme96, sync ? RME96_RESUME_BOTH
 						 : RME96_RESUME_CAPTURE);
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static snd_pcm_uframes_t
-snd_rme96_playback_pointer(struct snd_pcm_substream *substream)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	return snd_rme96_playback_ptr(rme96);
-}
+अटल snd_pcm_uframes_t
+snd_rme96_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	वापस snd_rme96_playback_ptr(rme96);
+पूर्ण
 
-static snd_pcm_uframes_t
-snd_rme96_capture_pointer(struct snd_pcm_substream *substream)
-{
-	struct rme96 *rme96 = snd_pcm_substream_chip(substream);
-	return snd_rme96_capture_ptr(rme96);
-}
+अटल snd_pcm_uframes_t
+snd_rme96_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा rme96 *rme96 = snd_pcm_substream_chip(substream);
+	वापस snd_rme96_capture_ptr(rme96);
+पूर्ण
 
-static const struct snd_pcm_ops snd_rme96_playback_spdif_ops = {
-	.open =		snd_rme96_playback_spdif_open,
-	.close =	snd_rme96_playback_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_rme96_playback_spdअगर_ops = अणु
+	.खोलो =		snd_rme96_playback_spdअगर_खोलो,
+	.बंद =	snd_rme96_playback_बंद,
 	.hw_params =	snd_rme96_playback_hw_params,
 	.prepare =	snd_rme96_playback_prepare,
 	.trigger =	snd_rme96_playback_trigger,
-	.pointer =	snd_rme96_playback_pointer,
+	.poपूर्णांकer =	snd_rme96_playback_poपूर्णांकer,
 	.copy_user =	snd_rme96_playback_copy,
 	.copy_kernel =	snd_rme96_playback_copy_kernel,
 	.fill_silence =	snd_rme96_playback_silence,
 	.mmap =		snd_pcm_lib_mmap_iomem,
-};
+पूर्ण;
 
-static const struct snd_pcm_ops snd_rme96_capture_spdif_ops = {
-	.open =		snd_rme96_capture_spdif_open,
-	.close =	snd_rme96_capture_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_rme96_capture_spdअगर_ops = अणु
+	.खोलो =		snd_rme96_capture_spdअगर_खोलो,
+	.बंद =	snd_rme96_capture_बंद,
 	.hw_params =	snd_rme96_capture_hw_params,
 	.prepare =	snd_rme96_capture_prepare,
 	.trigger =	snd_rme96_capture_trigger,
-	.pointer =	snd_rme96_capture_pointer,
+	.poपूर्णांकer =	snd_rme96_capture_poपूर्णांकer,
 	.copy_user =	snd_rme96_capture_copy,
 	.copy_kernel =	snd_rme96_capture_copy_kernel,
 	.mmap =		snd_pcm_lib_mmap_iomem,
-};
+पूर्ण;
 
-static const struct snd_pcm_ops snd_rme96_playback_adat_ops = {
-	.open =		snd_rme96_playback_adat_open,
-	.close =	snd_rme96_playback_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_rme96_playback_adat_ops = अणु
+	.खोलो =		snd_rme96_playback_adat_खोलो,
+	.बंद =	snd_rme96_playback_बंद,
 	.hw_params =	snd_rme96_playback_hw_params,
 	.prepare =	snd_rme96_playback_prepare,
 	.trigger =	snd_rme96_playback_trigger,
-	.pointer =	snd_rme96_playback_pointer,
+	.poपूर्णांकer =	snd_rme96_playback_poपूर्णांकer,
 	.copy_user =	snd_rme96_playback_copy,
 	.copy_kernel =	snd_rme96_playback_copy_kernel,
 	.fill_silence =	snd_rme96_playback_silence,
 	.mmap =		snd_pcm_lib_mmap_iomem,
-};
+पूर्ण;
 
-static const struct snd_pcm_ops snd_rme96_capture_adat_ops = {
-	.open =		snd_rme96_capture_adat_open,
-	.close =	snd_rme96_capture_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_rme96_capture_adat_ops = अणु
+	.खोलो =		snd_rme96_capture_adat_खोलो,
+	.बंद =	snd_rme96_capture_बंद,
 	.hw_params =	snd_rme96_capture_hw_params,
 	.prepare =	snd_rme96_capture_prepare,
 	.trigger =	snd_rme96_capture_trigger,
-	.pointer =	snd_rme96_capture_pointer,
+	.poपूर्णांकer =	snd_rme96_capture_poपूर्णांकer,
 	.copy_user =	snd_rme96_capture_copy,
 	.copy_kernel =	snd_rme96_capture_copy_kernel,
 	.mmap =		snd_pcm_lib_mmap_iomem,
-};
+पूर्ण;
 
-static void
-snd_rme96_free(void *private_data)
-{
-	struct rme96 *rme96 = (struct rme96 *)private_data;
+अटल व्योम
+snd_rme96_मुक्त(व्योम *निजी_data)
+अणु
+	काष्ठा rme96 *rme96 = (काष्ठा rme96 *)निजी_data;
 
-	if (!rme96)
-	        return;
+	अगर (!rme96)
+	        वापस;
 
-	if (rme96->irq >= 0) {
+	अगर (rme96->irq >= 0) अणु
 		snd_rme96_trigger(rme96, RME96_STOP_BOTH);
 		rme96->areg &= ~RME96_AR_DAC_EN;
-		writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
-		free_irq(rme96->irq, (void *)rme96);
+		ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+		मुक्त_irq(rme96->irq, (व्योम *)rme96);
 		rme96->irq = -1;
-	}
-	if (rme96->iobase) {
+	पूर्ण
+	अगर (rme96->iobase) अणु
 		iounmap(rme96->iobase);
-		rme96->iobase = NULL;
-	}
-	if (rme96->port) {
+		rme96->iobase = शून्य;
+	पूर्ण
+	अगर (rme96->port) अणु
 		pci_release_regions(rme96->pci);
 		rme96->port = 0;
-	}
-#ifdef CONFIG_PM_SLEEP
-	vfree(rme96->playback_suspend_buffer);
-	vfree(rme96->capture_suspend_buffer);
-#endif
+	पूर्ण
+#अगर_घोषित CONFIG_PM_SLEEP
+	vमुक्त(rme96->playback_suspend_buffer);
+	vमुक्त(rme96->capture_suspend_buffer);
+#पूर्ण_अगर
 	pci_disable_device(rme96->pci);
-}
+पूर्ण
 
-static void
-snd_rme96_free_spdif_pcm(struct snd_pcm *pcm)
-{
-	struct rme96 *rme96 = pcm->private_data;
-	rme96->spdif_pcm = NULL;
-}
+अटल व्योम
+snd_rme96_मुक्त_spdअगर_pcm(काष्ठा snd_pcm *pcm)
+अणु
+	काष्ठा rme96 *rme96 = pcm->निजी_data;
+	rme96->spdअगर_pcm = शून्य;
+पूर्ण
 
-static void
-snd_rme96_free_adat_pcm(struct snd_pcm *pcm)
-{
-	struct rme96 *rme96 = pcm->private_data;
-	rme96->adat_pcm = NULL;
-}
+अटल व्योम
+snd_rme96_मुक्त_adat_pcm(काष्ठा snd_pcm *pcm)
+अणु
+	काष्ठा rme96 *rme96 = pcm->निजी_data;
+	rme96->adat_pcm = शून्य;
+पूर्ण
 
-static int
-snd_rme96_create(struct rme96 *rme96)
-{
-	struct pci_dev *pci = rme96->pci;
-	int err;
+अटल पूर्णांक
+snd_rme96_create(काष्ठा rme96 *rme96)
+अणु
+	काष्ठा pci_dev *pci = rme96->pci;
+	पूर्णांक err;
 
 	rme96->irq = -1;
 	spin_lock_init(&rme96->lock);
 
-	if ((err = pci_enable_device(pci)) < 0)
-		return err;
+	अगर ((err = pci_enable_device(pci)) < 0)
+		वापस err;
 
-	if ((err = pci_request_regions(pci, "RME96")) < 0)
-		return err;
+	अगर ((err = pci_request_regions(pci, "RME96")) < 0)
+		वापस err;
 	rme96->port = pci_resource_start(rme96->pci, 0);
 
 	rme96->iobase = ioremap(rme96->port, RME96_IO_SIZE);
-	if (!rme96->iobase) {
+	अगर (!rme96->iobase) अणु
 		dev_err(rme96->card->dev,
 			"unable to remap memory region 0x%lx-0x%lx\n",
 			rme96->port, rme96->port + RME96_IO_SIZE - 1);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (request_irq(pci->irq, snd_rme96_interrupt, IRQF_SHARED,
-			KBUILD_MODNAME, rme96)) {
+	अगर (request_irq(pci->irq, snd_rme96_पूर्णांकerrupt, IRQF_SHARED,
+			KBUILD_MODNAME, rme96)) अणु
 		dev_err(rme96->card->dev, "unable to grab IRQ %d\n", pci->irq);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	rme96->irq = pci->irq;
 	rme96->card->sync_irq = rme96->irq;
 
-	/* read the card's revision number */
-	pci_read_config_byte(pci, 8, &rme96->rev);	
+	/* पढ़ो the card's revision number */
+	pci_पढ़ो_config_byte(pci, 8, &rme96->rev);	
 	
-	/* set up ALSA pcm device for S/PDIF */
-	if ((err = snd_pcm_new(rme96->card, "Digi96 IEC958", 0,
-			       1, 1, &rme96->spdif_pcm)) < 0)
-	{
-		return err;
-	}
-	rme96->spdif_pcm->private_data = rme96;
-	rme96->spdif_pcm->private_free = snd_rme96_free_spdif_pcm;
-	strcpy(rme96->spdif_pcm->name, "Digi96 IEC958");
-	snd_pcm_set_ops(rme96->spdif_pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_rme96_playback_spdif_ops);
-	snd_pcm_set_ops(rme96->spdif_pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_rme96_capture_spdif_ops);
+	/* set up ALSA pcm device क्रम S/PDIF */
+	अगर ((err = snd_pcm_new(rme96->card, "Digi96 IEC958", 0,
+			       1, 1, &rme96->spdअगर_pcm)) < 0)
+	अणु
+		वापस err;
+	पूर्ण
+	rme96->spdअगर_pcm->निजी_data = rme96;
+	rme96->spdअगर_pcm->निजी_मुक्त = snd_rme96_मुक्त_spdअगर_pcm;
+	म_नकल(rme96->spdअगर_pcm->name, "Digi96 IEC958");
+	snd_pcm_set_ops(rme96->spdअगर_pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_rme96_playback_spdअगर_ops);
+	snd_pcm_set_ops(rme96->spdअगर_pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_rme96_capture_spdअगर_ops);
 
-	rme96->spdif_pcm->info_flags = 0;
+	rme96->spdअगर_pcm->info_flags = 0;
 
-	/* set up ALSA pcm device for ADAT */
-	if (pci->device == PCI_DEVICE_ID_RME_DIGI96) {
+	/* set up ALSA pcm device क्रम ADAT */
+	अगर (pci->device == PCI_DEVICE_ID_RME_DIGI96) अणु
 		/* ADAT is not available on the base model */
-		rme96->adat_pcm = NULL;
-	} else {
-		if ((err = snd_pcm_new(rme96->card, "Digi96 ADAT", 1,
+		rme96->adat_pcm = शून्य;
+	पूर्ण अन्यथा अणु
+		अगर ((err = snd_pcm_new(rme96->card, "Digi96 ADAT", 1,
 				       1, 1, &rme96->adat_pcm)) < 0)
-		{
-			return err;
-		}		
-		rme96->adat_pcm->private_data = rme96;
-		rme96->adat_pcm->private_free = snd_rme96_free_adat_pcm;
-		strcpy(rme96->adat_pcm->name, "Digi96 ADAT");
+		अणु
+			वापस err;
+		पूर्ण		
+		rme96->adat_pcm->निजी_data = rme96;
+		rme96->adat_pcm->निजी_मुक्त = snd_rme96_मुक्त_adat_pcm;
+		म_नकल(rme96->adat_pcm->name, "Digi96 ADAT");
 		snd_pcm_set_ops(rme96->adat_pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_rme96_playback_adat_ops);
 		snd_pcm_set_ops(rme96->adat_pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_rme96_capture_adat_ops);
 		
 		rme96->adat_pcm->info_flags = 0;
-	}
+	पूर्ण
 
 	rme96->playback_periodsize = 0;
 	rme96->capture_periodsize = 0;
 	
-	/* make sure playback/capture is stopped, if by some reason active */
+	/* make sure playback/capture is stopped, अगर by some reason active */
 	snd_rme96_trigger(rme96, RME96_STOP_BOTH);
 	
-	/* set default values in registers */
+	/* set शेष values in रेजिस्टरs */
 	rme96->wcreg =
 		RME96_WCR_FREQ_1 | /* set 44.1 kHz playback */
 		RME96_WCR_SEL |    /* normal playback */
-		RME96_WCR_MASTER | /* set to master clock mode */
+		RME96_WCR_MASTER | /* set to master घड़ी mode */
 		RME96_WCR_INP_0;   /* set coaxial input */
 
 	rme96->areg = RME96_AR_FREQPAD_1; /* set 44.1 kHz analog capture */
 
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
-	writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
 	
 	/* reset the ADC */
-	writel(rme96->areg | RME96_AR_PD2,
+	ग_लिखोl(rme96->areg | RME96_AR_PD2,
 	       rme96->iobase + RME96_IO_ADDITIONAL_REG);
-	writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);	
+	ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);	
 
 	/* reset and enable the DAC (order is important). */
 	snd_rme96_reset_dac(rme96);
 	rme96->areg |= RME96_AR_DAC_EN;
-	writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+	ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
 
-	/* reset playback and record buffer pointers */
-	writel(0, rme96->iobase + RME96_IO_RESET_PLAY_POS);
-	writel(0, rme96->iobase + RME96_IO_RESET_REC_POS);
+	/* reset playback and record buffer poपूर्णांकers */
+	ग_लिखोl(0, rme96->iobase + RME96_IO_RESET_PLAY_POS);
+	ग_लिखोl(0, rme96->iobase + RME96_IO_RESET_REC_POS);
 
 	/* reset volume */
 	rme96->vol[0] = rme96->vol[1] = 0;
-	if (RME96_HAS_ANALOG_OUT(rme96)) {
+	अगर (RME96_HAS_ANALOG_OUT(rme96)) अणु
 		snd_rme96_apply_dac_volume(rme96);
-	}
+	पूर्ण
 	
-	/* init switch interface */
-	if ((err = snd_rme96_create_switches(rme96->card, rme96)) < 0) {
-		return err;
-	}
+	/* init चयन पूर्णांकerface */
+	अगर ((err = snd_rme96_create_चयनes(rme96->card, rme96)) < 0) अणु
+		वापस err;
+	पूर्ण
 
-        /* init proc interface */
+        /* init proc पूर्णांकerface */
 	snd_rme96_proc_init(rme96);
 	
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * proc interface
+ * proc पूर्णांकerface
  */
 
-static void 
-snd_rme96_proc_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
-{
-	int n;
-	struct rme96 *rme96 = entry->private_data;
+अटल व्योम 
+snd_rme96_proc_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer)
+अणु
+	पूर्णांक n;
+	काष्ठा rme96 *rme96 = entry->निजी_data;
 	
-	rme96->rcreg = readl(rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	rme96->rcreg = पढ़ोl(rme96->iobase + RME96_IO_CONTROL_REGISTER);
 
-	snd_iprintf(buffer, rme96->card->longname);
-	snd_iprintf(buffer, " (index #%d)\n", rme96->card->number + 1);
+	snd_iम_लिखो(buffer, rme96->card->दीर्घname);
+	snd_iम_लिखो(buffer, " (index #%d)\n", rme96->card->number + 1);
 
-	snd_iprintf(buffer, "\nGeneral settings\n");
-	if (rme96->wcreg & RME96_WCR_IDIS) {
-		snd_iprintf(buffer, "  period size: N/A (interrupts "
+	snd_iम_लिखो(buffer, "\nGeneral settings\n");
+	अगर (rme96->wcreg & RME96_WCR_IDIS) अणु
+		snd_iम_लिखो(buffer, "  period size: N/A (interrupts "
 			    "disabled)\n");
-	} else if (rme96->wcreg & RME96_WCR_ISEL) {
-		snd_iprintf(buffer, "  period size: 2048 bytes\n");
-	} else {
-		snd_iprintf(buffer, "  period size: 8192 bytes\n");
-	}	
-	snd_iprintf(buffer, "\nInput settings\n");
-	switch (snd_rme96_getinputtype(rme96)) {
-	case RME96_INPUT_OPTICAL:
-		snd_iprintf(buffer, "  input: optical");
-		break;
-	case RME96_INPUT_COAXIAL:
-		snd_iprintf(buffer, "  input: coaxial");
-		break;
-	case RME96_INPUT_INTERNAL:
-		snd_iprintf(buffer, "  input: internal");
-		break;
-	case RME96_INPUT_XLR:
-		snd_iprintf(buffer, "  input: XLR");
-		break;
-	case RME96_INPUT_ANALOG:
-		snd_iprintf(buffer, "  input: analog");
-		break;
-	}
-	if (snd_rme96_capture_getrate(rme96, &n) < 0) {
-		snd_iprintf(buffer, "\n  sample rate: no valid signal\n");
-	} else {
-		if (n) {
-			snd_iprintf(buffer, " (8 channels)\n");
-		} else {
-			snd_iprintf(buffer, " (2 channels)\n");
-		}
-		snd_iprintf(buffer, "  sample rate: %d Hz\n",
+	पूर्ण अन्यथा अगर (rme96->wcreg & RME96_WCR_ISEL) अणु
+		snd_iम_लिखो(buffer, "  period size: 2048 bytes\n");
+	पूर्ण अन्यथा अणु
+		snd_iम_लिखो(buffer, "  period size: 8192 bytes\n");
+	पूर्ण	
+	snd_iम_लिखो(buffer, "\nInput settings\n");
+	चयन (snd_rme96_getinputtype(rme96)) अणु
+	हाल RME96_INPUT_OPTICAL:
+		snd_iम_लिखो(buffer, "  input: optical");
+		अवरोध;
+	हाल RME96_INPUT_COAXIAL:
+		snd_iम_लिखो(buffer, "  input: coaxial");
+		अवरोध;
+	हाल RME96_INPUT_INTERNAL:
+		snd_iम_लिखो(buffer, "  input: internal");
+		अवरोध;
+	हाल RME96_INPUT_XLR:
+		snd_iम_लिखो(buffer, "  input: XLR");
+		अवरोध;
+	हाल RME96_INPUT_ANALOG:
+		snd_iम_लिखो(buffer, "  input: analog");
+		अवरोध;
+	पूर्ण
+	अगर (snd_rme96_capture_getrate(rme96, &n) < 0) अणु
+		snd_iम_लिखो(buffer, "\n  sample rate: no valid signal\n");
+	पूर्ण अन्यथा अणु
+		अगर (n) अणु
+			snd_iम_लिखो(buffer, " (8 channels)\n");
+		पूर्ण अन्यथा अणु
+			snd_iम_लिखो(buffer, " (2 channels)\n");
+		पूर्ण
+		snd_iम_लिखो(buffer, "  sample rate: %d Hz\n",
 			    snd_rme96_capture_getrate(rme96, &n));
-	}
-	if (rme96->wcreg & RME96_WCR_MODE24_2) {
-		snd_iprintf(buffer, "  sample format: 24 bit\n");
-	} else {
-		snd_iprintf(buffer, "  sample format: 16 bit\n");
-	}
+	पूर्ण
+	अगर (rme96->wcreg & RME96_WCR_MODE24_2) अणु
+		snd_iम_लिखो(buffer, "  sample format: 24 bit\n");
+	पूर्ण अन्यथा अणु
+		snd_iम_लिखो(buffer, "  sample format: 16 bit\n");
+	पूर्ण
 	
-	snd_iprintf(buffer, "\nOutput settings\n");
-	if (rme96->wcreg & RME96_WCR_SEL) {
-		snd_iprintf(buffer, "  output signal: normal playback\n");
-	} else {
-		snd_iprintf(buffer, "  output signal: same as input\n");
-	}
-	snd_iprintf(buffer, "  sample rate: %d Hz\n",
+	snd_iम_लिखो(buffer, "\nOutput settings\n");
+	अगर (rme96->wcreg & RME96_WCR_SEL) अणु
+		snd_iम_लिखो(buffer, "  output signal: normal playback\n");
+	पूर्ण अन्यथा अणु
+		snd_iम_लिखो(buffer, "  output signal: same as input\n");
+	पूर्ण
+	snd_iम_लिखो(buffer, "  sample rate: %d Hz\n",
 		    snd_rme96_playback_getrate(rme96));
-	if (rme96->wcreg & RME96_WCR_MODE24) {
-		snd_iprintf(buffer, "  sample format: 24 bit\n");
-	} else {
-		snd_iprintf(buffer, "  sample format: 16 bit\n");
-	}
-	if (rme96->areg & RME96_AR_WSEL) {
-		snd_iprintf(buffer, "  sample clock source: word clock\n");
-	} else if (rme96->wcreg & RME96_WCR_MASTER) {
-		snd_iprintf(buffer, "  sample clock source: internal\n");
-	} else if (snd_rme96_getinputtype(rme96) == RME96_INPUT_ANALOG) {
-		snd_iprintf(buffer, "  sample clock source: autosync (internal anyway due to analog input setting)\n");
-	} else if (snd_rme96_capture_getrate(rme96, &n) < 0) {
-		snd_iprintf(buffer, "  sample clock source: autosync (internal anyway due to no valid signal)\n");
-	} else {
-		snd_iprintf(buffer, "  sample clock source: autosync\n");
-	}
-	if (rme96->wcreg & RME96_WCR_PRO) {
-		snd_iprintf(buffer, "  format: AES/EBU (professional)\n");
-	} else {
-		snd_iprintf(buffer, "  format: IEC958 (consumer)\n");
-	}
-	if (rme96->wcreg & RME96_WCR_EMP) {
-		snd_iprintf(buffer, "  emphasis: on\n");
-	} else {
-		snd_iprintf(buffer, "  emphasis: off\n");
-	}
-	if (rme96->wcreg & RME96_WCR_DOLBY) {
-		snd_iprintf(buffer, "  non-audio (dolby): on\n");
-	} else {
-		snd_iprintf(buffer, "  non-audio (dolby): off\n");
-	}
-	if (RME96_HAS_ANALOG_IN(rme96)) {
-		snd_iprintf(buffer, "\nAnalog output settings\n");
-		switch (snd_rme96_getmontracks(rme96)) {
-		case RME96_MONITOR_TRACKS_1_2:
-			snd_iprintf(buffer, "  monitored ADAT tracks: 1+2\n");
-			break;
-		case RME96_MONITOR_TRACKS_3_4:
-			snd_iprintf(buffer, "  monitored ADAT tracks: 3+4\n");
-			break;
-		case RME96_MONITOR_TRACKS_5_6:
-			snd_iprintf(buffer, "  monitored ADAT tracks: 5+6\n");
-			break;
-		case RME96_MONITOR_TRACKS_7_8:
-			snd_iprintf(buffer, "  monitored ADAT tracks: 7+8\n");
-			break;
-		}
-		switch (snd_rme96_getattenuation(rme96)) {
-		case RME96_ATTENUATION_0:
-			snd_iprintf(buffer, "  attenuation: 0 dB\n");
-			break;
-		case RME96_ATTENUATION_6:
-			snd_iprintf(buffer, "  attenuation: -6 dB\n");
-			break;
-		case RME96_ATTENUATION_12:
-			snd_iprintf(buffer, "  attenuation: -12 dB\n");
-			break;
-		case RME96_ATTENUATION_18:
-			snd_iprintf(buffer, "  attenuation: -18 dB\n");
-			break;
-		}
-		snd_iprintf(buffer, "  volume left: %u\n", rme96->vol[0]);
-		snd_iprintf(buffer, "  volume right: %u\n", rme96->vol[1]);
-	}
-}
+	अगर (rme96->wcreg & RME96_WCR_MODE24) अणु
+		snd_iम_लिखो(buffer, "  sample format: 24 bit\n");
+	पूर्ण अन्यथा अणु
+		snd_iम_लिखो(buffer, "  sample format: 16 bit\n");
+	पूर्ण
+	अगर (rme96->areg & RME96_AR_WSEL) अणु
+		snd_iम_लिखो(buffer, "  sample clock source: word clock\n");
+	पूर्ण अन्यथा अगर (rme96->wcreg & RME96_WCR_MASTER) अणु
+		snd_iम_लिखो(buffer, "  sample clock source: internal\n");
+	पूर्ण अन्यथा अगर (snd_rme96_getinputtype(rme96) == RME96_INPUT_ANALOG) अणु
+		snd_iम_लिखो(buffer, "  sample clock source: autosync (internal anyway due to analog input setting)\n");
+	पूर्ण अन्यथा अगर (snd_rme96_capture_getrate(rme96, &n) < 0) अणु
+		snd_iम_लिखो(buffer, "  sample clock source: autosync (internal anyway due to no valid signal)\n");
+	पूर्ण अन्यथा अणु
+		snd_iम_लिखो(buffer, "  sample clock source: autosync\n");
+	पूर्ण
+	अगर (rme96->wcreg & RME96_WCR_PRO) अणु
+		snd_iम_लिखो(buffer, "  format: AES/EBU (professional)\n");
+	पूर्ण अन्यथा अणु
+		snd_iम_लिखो(buffer, "  format: IEC958 (consumer)\n");
+	पूर्ण
+	अगर (rme96->wcreg & RME96_WCR_EMP) अणु
+		snd_iम_लिखो(buffer, "  emphasis: on\n");
+	पूर्ण अन्यथा अणु
+		snd_iम_लिखो(buffer, "  emphasis: off\n");
+	पूर्ण
+	अगर (rme96->wcreg & RME96_WCR_DOLBY) अणु
+		snd_iम_लिखो(buffer, "  non-audio (dolby): on\n");
+	पूर्ण अन्यथा अणु
+		snd_iम_लिखो(buffer, "  non-audio (dolby): off\n");
+	पूर्ण
+	अगर (RME96_HAS_ANALOG_IN(rme96)) अणु
+		snd_iम_लिखो(buffer, "\nAnalog output settings\n");
+		चयन (snd_rme96_geपंचांगontracks(rme96)) अणु
+		हाल RME96_MONITOR_TRACKS_1_2:
+			snd_iम_लिखो(buffer, "  monitored ADAT tracks: 1+2\n");
+			अवरोध;
+		हाल RME96_MONITOR_TRACKS_3_4:
+			snd_iम_लिखो(buffer, "  monitored ADAT tracks: 3+4\n");
+			अवरोध;
+		हाल RME96_MONITOR_TRACKS_5_6:
+			snd_iम_लिखो(buffer, "  monitored ADAT tracks: 5+6\n");
+			अवरोध;
+		हाल RME96_MONITOR_TRACKS_7_8:
+			snd_iम_लिखो(buffer, "  monitored ADAT tracks: 7+8\n");
+			अवरोध;
+		पूर्ण
+		चयन (snd_rme96_getattenuation(rme96)) अणु
+		हाल RME96_ATTENUATION_0:
+			snd_iम_लिखो(buffer, "  attenuation: 0 dB\n");
+			अवरोध;
+		हाल RME96_ATTENUATION_6:
+			snd_iम_लिखो(buffer, "  attenuation: -6 dB\n");
+			अवरोध;
+		हाल RME96_ATTENUATION_12:
+			snd_iम_लिखो(buffer, "  attenuation: -12 dB\n");
+			अवरोध;
+		हाल RME96_ATTENUATION_18:
+			snd_iम_लिखो(buffer, "  attenuation: -18 dB\n");
+			अवरोध;
+		पूर्ण
+		snd_iम_लिखो(buffer, "  volume left: %u\n", rme96->vol[0]);
+		snd_iम_लिखो(buffer, "  volume right: %u\n", rme96->vol[1]);
+	पूर्ण
+पूर्ण
 
-static void snd_rme96_proc_init(struct rme96 *rme96)
-{
-	snd_card_ro_proc_new(rme96->card, "rme96", rme96, snd_rme96_proc_read);
-}
+अटल व्योम snd_rme96_proc_init(काष्ठा rme96 *rme96)
+अणु
+	snd_card_ro_proc_new(rme96->card, "rme96", rme96, snd_rme96_proc_पढ़ो);
+पूर्ण
 
 /*
- * control interface
+ * control पूर्णांकerface
  */
 
-#define snd_rme96_info_loopback_control		snd_ctl_boolean_mono_info
+#घोषणा snd_rme96_info_loopback_control		snd_ctl_boolean_mono_info
 
-static int
-snd_rme96_get_loopback_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक
+snd_rme96_get_loopback_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
 	
 	spin_lock_irq(&rme96->lock);
-	ucontrol->value.integer.value[0] = rme96->wcreg & RME96_WCR_SEL ? 0 : 1;
+	ucontrol->value.पूर्णांकeger.value[0] = rme96->wcreg & RME96_WCR_SEL ? 0 : 1;
 	spin_unlock_irq(&rme96->lock);
-	return 0;
-}
-static int
-snd_rme96_put_loopback_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
-	unsigned int val;
-	int change;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक
+snd_rme96_put_loopback_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक change;
 	
-	val = ucontrol->value.integer.value[0] ? 0 : RME96_WCR_SEL;
+	val = ucontrol->value.पूर्णांकeger.value[0] ? 0 : RME96_WCR_SEL;
 	spin_lock_irq(&rme96->lock);
 	val = (rme96->wcreg & ~RME96_WCR_SEL) | val;
 	change = val != rme96->wcreg;
 	rme96->wcreg = val;
-	writel(val, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	ग_लिखोl(val, rme96->iobase + RME96_IO_CONTROL_REGISTER);
 	spin_unlock_irq(&rme96->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int
-snd_rme96_info_inputtype_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const _texts[5] = {
+अटल पूर्णांक
+snd_rme96_info_inputtype_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर _texts[5] = अणु
 		"Optical", "Coaxial", "Internal", "XLR", "Analog"
-	};
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
-	const char *texts[5] = {
+	पूर्ण;
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	स्थिर अक्षर *texts[5] = अणु
 		_texts[0], _texts[1], _texts[2], _texts[3], _texts[4]
-	};
-	int num_items;
+	पूर्ण;
+	पूर्णांक num_items;
 	
-	switch (rme96->pci->device) {
-	case PCI_DEVICE_ID_RME_DIGI96:
-	case PCI_DEVICE_ID_RME_DIGI96_8:
+	चयन (rme96->pci->device) अणु
+	हाल PCI_DEVICE_ID_RME_DIGI96:
+	हाल PCI_DEVICE_ID_RME_DIGI96_8:
 		num_items = 3;
-		break;
-	case PCI_DEVICE_ID_RME_DIGI96_8_PRO:
+		अवरोध;
+	हाल PCI_DEVICE_ID_RME_DIGI96_8_PRO:
 		num_items = 4;
-		break;
-	case PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST:
-		if (rme96->rev > 4) {
+		अवरोध;
+	हाल PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST:
+		अगर (rme96->rev > 4) अणु
 			/* PST */
 			num_items = 4;
 			texts[3] = _texts[4]; /* Analog instead of XLR */
-		} else {
+		पूर्ण अन्यथा अणु
 			/* PAD */
 			num_items = 5;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		snd_BUG();
-		return -EINVAL;
-	}
-	return snd_ctl_enum_info(uinfo, 1, num_items, texts);
-}
-static int
-snd_rme96_get_inputtype_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
-	unsigned int items = 3;
+		वापस -EINVAL;
+	पूर्ण
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, num_items, texts);
+पूर्ण
+अटल पूर्णांक
+snd_rme96_get_inputtype_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	अचिन्हित पूर्णांक items = 3;
 	
 	spin_lock_irq(&rme96->lock);
-	ucontrol->value.enumerated.item[0] = snd_rme96_getinputtype(rme96);
+	ucontrol->value.क्रमागतerated.item[0] = snd_rme96_getinputtype(rme96);
 	
-	switch (rme96->pci->device) {
-	case PCI_DEVICE_ID_RME_DIGI96:
-	case PCI_DEVICE_ID_RME_DIGI96_8:
+	चयन (rme96->pci->device) अणु
+	हाल PCI_DEVICE_ID_RME_DIGI96:
+	हाल PCI_DEVICE_ID_RME_DIGI96_8:
 		items = 3;
-		break;
-	case PCI_DEVICE_ID_RME_DIGI96_8_PRO:
+		अवरोध;
+	हाल PCI_DEVICE_ID_RME_DIGI96_8_PRO:
 		items = 4;
-		break;
-	case PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST:
-		if (rme96->rev > 4) {
-			/* for handling PST case, (INPUT_ANALOG is moved to INPUT_XLR */
-			if (ucontrol->value.enumerated.item[0] == RME96_INPUT_ANALOG) {
-				ucontrol->value.enumerated.item[0] = RME96_INPUT_XLR;
-			}
+		अवरोध;
+	हाल PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST:
+		अगर (rme96->rev > 4) अणु
+			/* क्रम handling PST हाल, (INPUT_ANALOG is moved to INPUT_XLR */
+			अगर (ucontrol->value.क्रमागतerated.item[0] == RME96_INPUT_ANALOG) अणु
+				ucontrol->value.क्रमागतerated.item[0] = RME96_INPUT_XLR;
+			पूर्ण
 			items = 4;
-		} else {
+		पूर्ण अन्यथा अणु
 			items = 5;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		snd_BUG();
-		break;
-	}
-	if (ucontrol->value.enumerated.item[0] >= items) {
-		ucontrol->value.enumerated.item[0] = items - 1;
-	}
+		अवरोध;
+	पूर्ण
+	अगर (ucontrol->value.क्रमागतerated.item[0] >= items) अणु
+		ucontrol->value.क्रमागतerated.item[0] = items - 1;
+	पूर्ण
 	
 	spin_unlock_irq(&rme96->lock);
-	return 0;
-}
-static int
-snd_rme96_put_inputtype_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
-	unsigned int val;
-	int change, items = 3;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक
+snd_rme96_put_inputtype_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक change, items = 3;
 	
-	switch (rme96->pci->device) {
-	case PCI_DEVICE_ID_RME_DIGI96:
-	case PCI_DEVICE_ID_RME_DIGI96_8:
+	चयन (rme96->pci->device) अणु
+	हाल PCI_DEVICE_ID_RME_DIGI96:
+	हाल PCI_DEVICE_ID_RME_DIGI96_8:
 		items = 3;
-		break;
-	case PCI_DEVICE_ID_RME_DIGI96_8_PRO:
+		अवरोध;
+	हाल PCI_DEVICE_ID_RME_DIGI96_8_PRO:
 		items = 4;
-		break;
-	case PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST:
-		if (rme96->rev > 4) {
+		अवरोध;
+	हाल PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST:
+		अगर (rme96->rev > 4) अणु
 			items = 4;
-		} else {
+		पूर्ण अन्यथा अणु
 			items = 5;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		snd_BUG();
-		break;
-	}
-	val = ucontrol->value.enumerated.item[0] % items;
+		अवरोध;
+	पूर्ण
+	val = ucontrol->value.क्रमागतerated.item[0] % items;
 	
-	/* special case for PST */
-	if (rme96->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST && rme96->rev > 4) {
-		if (val == RME96_INPUT_XLR) {
+	/* special हाल क्रम PST */
+	अगर (rme96->pci->device == PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST && rme96->rev > 4) अणु
+		अगर (val == RME96_INPUT_XLR) अणु
 			val = RME96_INPUT_ANALOG;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	
 	spin_lock_irq(&rme96->lock);
-	change = (int)val != snd_rme96_getinputtype(rme96);
+	change = (पूर्णांक)val != snd_rme96_getinputtype(rme96);
 	snd_rme96_setinputtype(rme96, val);
 	spin_unlock_irq(&rme96->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int
-snd_rme96_info_clockmode_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[3] = { "AutoSync", "Internal", "Word" };
+अटल पूर्णांक
+snd_rme96_info_घड़ीmode_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[3] = अणु "AutoSync", "Internal", "Word" पूर्ण;
 	
-	return snd_ctl_enum_info(uinfo, 1, 3, texts);
-}
-static int
-snd_rme96_get_clockmode_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 3, texts);
+पूर्ण
+अटल पूर्णांक
+snd_rme96_get_घड़ीmode_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
 	
 	spin_lock_irq(&rme96->lock);
-	ucontrol->value.enumerated.item[0] = snd_rme96_getclockmode(rme96);
+	ucontrol->value.क्रमागतerated.item[0] = snd_rme96_अ_लोlockmode(rme96);
 	spin_unlock_irq(&rme96->lock);
-	return 0;
-}
-static int
-snd_rme96_put_clockmode_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
-	unsigned int val;
-	int change;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक
+snd_rme96_put_घड़ीmode_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक change;
 	
-	val = ucontrol->value.enumerated.item[0] % 3;
+	val = ucontrol->value.क्रमागतerated.item[0] % 3;
 	spin_lock_irq(&rme96->lock);
-	change = (int)val != snd_rme96_getclockmode(rme96);
-	snd_rme96_setclockmode(rme96, val);
+	change = (पूर्णांक)val != snd_rme96_अ_लोlockmode(rme96);
+	snd_rme96_setघड़ीmode(rme96, val);
 	spin_unlock_irq(&rme96->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int
-snd_rme96_info_attenuation_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[4] = {
+अटल पूर्णांक
+snd_rme96_info_attenuation_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[4] = अणु
 		"0 dB", "-6 dB", "-12 dB", "-18 dB"
-	};
+	पूर्ण;
 	
-	return snd_ctl_enum_info(uinfo, 1, 4, texts);
-}
-static int
-snd_rme96_get_attenuation_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 4, texts);
+पूर्ण
+अटल पूर्णांक
+snd_rme96_get_attenuation_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
 	
 	spin_lock_irq(&rme96->lock);
-	ucontrol->value.enumerated.item[0] = snd_rme96_getattenuation(rme96);
+	ucontrol->value.क्रमागतerated.item[0] = snd_rme96_getattenuation(rme96);
 	spin_unlock_irq(&rme96->lock);
-	return 0;
-}
-static int
-snd_rme96_put_attenuation_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
-	unsigned int val;
-	int change;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक
+snd_rme96_put_attenuation_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक change;
 	
-	val = ucontrol->value.enumerated.item[0] % 4;
+	val = ucontrol->value.क्रमागतerated.item[0] % 4;
 	spin_lock_irq(&rme96->lock);
 
-	change = (int)val != snd_rme96_getattenuation(rme96);
+	change = (पूर्णांक)val != snd_rme96_getattenuation(rme96);
 	snd_rme96_setattenuation(rme96, val);
 	spin_unlock_irq(&rme96->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int
-snd_rme96_info_montracks_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[4] = { "1+2", "3+4", "5+6", "7+8" };
+अटल पूर्णांक
+snd_rme96_info_montracks_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[4] = अणु "1+2", "3+4", "5+6", "7+8" पूर्ण;
 	
-	return snd_ctl_enum_info(uinfo, 1, 4, texts);
-}
-static int
-snd_rme96_get_montracks_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 4, texts);
+पूर्ण
+अटल पूर्णांक
+snd_rme96_get_montracks_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
 	
 	spin_lock_irq(&rme96->lock);
-	ucontrol->value.enumerated.item[0] = snd_rme96_getmontracks(rme96);
+	ucontrol->value.क्रमागतerated.item[0] = snd_rme96_geपंचांगontracks(rme96);
 	spin_unlock_irq(&rme96->lock);
-	return 0;
-}
-static int
-snd_rme96_put_montracks_control(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
-	unsigned int val;
-	int change;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक
+snd_rme96_put_montracks_control(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक change;
 	
-	val = ucontrol->value.enumerated.item[0] % 4;
+	val = ucontrol->value.क्रमागतerated.item[0] % 4;
 	spin_lock_irq(&rme96->lock);
-	change = (int)val != snd_rme96_getmontracks(rme96);
-	snd_rme96_setmontracks(rme96, val);
+	change = (पूर्णांक)val != snd_rme96_geपंचांगontracks(rme96);
+	snd_rme96_seपंचांगontracks(rme96, val);
 	spin_unlock_irq(&rme96->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static u32 snd_rme96_convert_from_aes(struct snd_aes_iec958 *aes)
-{
+अटल u32 snd_rme96_convert_from_aes(काष्ठा snd_aes_iec958 *aes)
+अणु
 	u32 val = 0;
 	val |= (aes->status[0] & IEC958_AES0_PROFESSIONAL) ? RME96_WCR_PRO : 0;
 	val |= (aes->status[0] & IEC958_AES0_NONAUDIO) ? RME96_WCR_DOLBY : 0;
-	if (val & RME96_WCR_PRO)
+	अगर (val & RME96_WCR_PRO)
 		val |= (aes->status[0] & IEC958_AES0_PRO_EMPHASIS_5015) ? RME96_WCR_EMP : 0;
-	else
+	अन्यथा
 		val |= (aes->status[0] & IEC958_AES0_CON_EMPHASIS_5015) ? RME96_WCR_EMP : 0;
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void snd_rme96_convert_to_aes(struct snd_aes_iec958 *aes, u32 val)
-{
+अटल व्योम snd_rme96_convert_to_aes(काष्ठा snd_aes_iec958 *aes, u32 val)
+अणु
 	aes->status[0] = ((val & RME96_WCR_PRO) ? IEC958_AES0_PROFESSIONAL : 0) |
 			 ((val & RME96_WCR_DOLBY) ? IEC958_AES0_NONAUDIO : 0);
-	if (val & RME96_WCR_PRO)
+	अगर (val & RME96_WCR_PRO)
 		aes->status[0] |= (val & RME96_WCR_EMP) ? IEC958_AES0_PRO_EMPHASIS_5015 : 0;
-	else
+	अन्यथा
 		aes->status[0] |= (val & RME96_WCR_EMP) ? IEC958_AES0_CON_EMPHASIS_5015 : 0;
-}
+पूर्ण
 
-static int snd_rme96_control_spdif_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_rme96_control_spdअगर_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_rme96_control_spdif_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_rme96_control_spdअगर_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
 	
-	snd_rme96_convert_to_aes(&ucontrol->value.iec958, rme96->wcreg_spdif);
-	return 0;
-}
+	snd_rme96_convert_to_aes(&ucontrol->value.iec958, rme96->wcreg_spdअगर);
+	वापस 0;
+पूर्ण
 
-static int snd_rme96_control_spdif_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
-	int change;
+अटल पूर्णांक snd_rme96_control_spdअगर_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
 	u32 val;
 	
 	val = snd_rme96_convert_from_aes(&ucontrol->value.iec958);
 	spin_lock_irq(&rme96->lock);
-	change = val != rme96->wcreg_spdif;
-	rme96->wcreg_spdif = val;
+	change = val != rme96->wcreg_spdअगर;
+	rme96->wcreg_spdअगर = val;
 	spin_unlock_irq(&rme96->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int snd_rme96_control_spdif_stream_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_rme96_control_spdअगर_stream_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_rme96_control_spdif_stream_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_rme96_control_spdअगर_stream_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
 	
-	snd_rme96_convert_to_aes(&ucontrol->value.iec958, rme96->wcreg_spdif_stream);
-	return 0;
-}
+	snd_rme96_convert_to_aes(&ucontrol->value.iec958, rme96->wcreg_spdअगर_stream);
+	वापस 0;
+पूर्ण
 
-static int snd_rme96_control_spdif_stream_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
-	int change;
+अटल पूर्णांक snd_rme96_control_spdअगर_stream_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+	पूर्णांक change;
 	u32 val;
 	
 	val = snd_rme96_convert_from_aes(&ucontrol->value.iec958);
 	spin_lock_irq(&rme96->lock);
-	change = val != rme96->wcreg_spdif_stream;
-	rme96->wcreg_spdif_stream = val;
+	change = val != rme96->wcreg_spdअगर_stream;
+	rme96->wcreg_spdअगर_stream = val;
 	rme96->wcreg &= ~(RME96_WCR_PRO | RME96_WCR_DOLBY | RME96_WCR_EMP);
 	rme96->wcreg |= val;
-	writel(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
+	ग_लिखोl(rme96->wcreg, rme96->iobase + RME96_IO_CONTROL_REGISTER);
 	spin_unlock_irq(&rme96->lock);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int snd_rme96_control_spdif_mask_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_rme96_control_spdअगर_mask_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_rme96_control_spdif_mask_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
-{
-	ucontrol->value.iec958.status[0] = kcontrol->private_value;
-	return 0;
-}
+अटल पूर्णांक snd_rme96_control_spdअगर_mask_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	ucontrol->value.iec958.status[0] = kcontrol->निजी_value;
+	वापस 0;
+पूर्ण
 
-static int
-snd_rme96_dac_volume_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक
+snd_rme96_dac_volume_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
 	
         uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
         uinfo->count = 2;
-        uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = RME96_185X_MAX_OUT(rme96);
-        return 0;
-}
+        uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = RME96_185X_MAX_OUT(rme96);
+        वापस 0;
+पूर्ण
 
-static int
-snd_rme96_dac_volume_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *u)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक
+snd_rme96_dac_volume_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *u)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
 
 	spin_lock_irq(&rme96->lock);
-        u->value.integer.value[0] = rme96->vol[0];
-        u->value.integer.value[1] = rme96->vol[1];
+        u->value.पूर्णांकeger.value[0] = rme96->vol[0];
+        u->value.पूर्णांकeger.value[1] = rme96->vol[1];
 	spin_unlock_irq(&rme96->lock);
 
-        return 0;
-}
+        वापस 0;
+पूर्ण
 
-static int
-snd_rme96_dac_volume_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *u)
-{
-	struct rme96 *rme96 = snd_kcontrol_chip(kcontrol);
-        int change = 0;
-	unsigned int vol, maxvol;
+अटल पूर्णांक
+snd_rme96_dac_volume_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *u)
+अणु
+	काष्ठा rme96 *rme96 = snd_kcontrol_chip(kcontrol);
+        पूर्णांक change = 0;
+	अचिन्हित पूर्णांक vol, maxvol;
 
 
-	if (!RME96_HAS_ANALOG_OUT(rme96))
-		return -EINVAL;
+	अगर (!RME96_HAS_ANALOG_OUT(rme96))
+		वापस -EINVAL;
 	maxvol = RME96_185X_MAX_OUT(rme96);
 	spin_lock_irq(&rme96->lock);
-	vol = u->value.integer.value[0];
-	if (vol != rme96->vol[0] && vol <= maxvol) {
+	vol = u->value.पूर्णांकeger.value[0];
+	अगर (vol != rme96->vol[0] && vol <= maxvol) अणु
 		rme96->vol[0] = vol;
 		change = 1;
-	}
-	vol = u->value.integer.value[1];
-	if (vol != rme96->vol[1] && vol <= maxvol) {
+	पूर्ण
+	vol = u->value.पूर्णांकeger.value[1];
+	अगर (vol != rme96->vol[1] && vol <= maxvol) अणु
 		rme96->vol[1] = vol;
 		change = 1;
-	}
-	if (change)
+	पूर्ण
+	अगर (change)
 		snd_rme96_apply_dac_volume(rme96);
 	spin_unlock_irq(&rme96->lock);
 
-        return change;
-}
+        वापस change;
+पूर्ण
 
-static const struct snd_kcontrol_new snd_rme96_controls[] = {
-{
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+अटल स्थिर काष्ठा snd_kcontrol_new snd_rme96_controls[] = अणु
+अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,DEFAULT),
-	.info =		snd_rme96_control_spdif_info,
-	.get =		snd_rme96_control_spdif_get,
-	.put =		snd_rme96_control_spdif_put
-},
-{
+	.info =		snd_rme96_control_spdअगर_info,
+	.get =		snd_rme96_control_spdअगर_get,
+	.put =		snd_rme96_control_spdअगर_put
+पूर्ण,
+अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READWRITE | SNDRV_CTL_ELEM_ACCESS_INACTIVE,
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,PCM_STREAM),
-	.info =		snd_rme96_control_spdif_stream_info,
-	.get =		snd_rme96_control_spdif_stream_get,
-	.put =		snd_rme96_control_spdif_stream_put
-},
-{
+	.info =		snd_rme96_control_spdअगर_stream_info,
+	.get =		snd_rme96_control_spdअगर_stream_get,
+	.put =		snd_rme96_control_spdअगर_stream_put
+पूर्ण,
+अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,CON_MASK),
-	.info =		snd_rme96_control_spdif_mask_info,
-	.get =		snd_rme96_control_spdif_mask_get,
-	.private_value = IEC958_AES0_NONAUDIO |
+	.info =		snd_rme96_control_spdअगर_mask_info,
+	.get =		snd_rme96_control_spdअगर_mask_get,
+	.निजी_value = IEC958_AES0_NONAUDIO |
 			IEC958_AES0_PROFESSIONAL |
 			IEC958_AES0_CON_EMPHASIS
-},
-{
+पूर्ण,
+अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,PRO_MASK),
-	.info =		snd_rme96_control_spdif_mask_info,
-	.get =		snd_rme96_control_spdif_mask_get,
-	.private_value = IEC958_AES0_NONAUDIO |
+	.info =		snd_rme96_control_spdअगर_mask_info,
+	.get =		snd_rme96_control_spdअगर_mask_get,
+	.निजी_value = IEC958_AES0_NONAUDIO |
 			IEC958_AES0_PROFESSIONAL |
 			IEC958_AES0_PRO_EMPHASIS
-},
-{
-        .iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
+पूर्ण,
+अणु
+        .अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Input Connector",
 	.info =         snd_rme96_info_inputtype_control, 
 	.get =          snd_rme96_get_inputtype_control,
 	.put =          snd_rme96_put_inputtype_control 
-},
-{
-        .iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
+पूर्ण,
+अणु
+        .अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Loopback Input",
 	.info =         snd_rme96_info_loopback_control,
 	.get =          snd_rme96_get_loopback_control,
 	.put =          snd_rme96_put_loopback_control
-},
-{
-        .iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
+पूर्ण,
+अणु
+        .अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Sample Clock Source",
-	.info =         snd_rme96_info_clockmode_control, 
-	.get =          snd_rme96_get_clockmode_control,
-	.put =          snd_rme96_put_clockmode_control
-},
-{
-        .iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
+	.info =         snd_rme96_info_घड़ीmode_control, 
+	.get =          snd_rme96_get_घड़ीmode_control,
+	.put =          snd_rme96_put_घड़ीmode_control
+पूर्ण,
+अणु
+        .अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Monitor Tracks",
 	.info =         snd_rme96_info_montracks_control, 
 	.get =          snd_rme96_get_montracks_control,
 	.put =          snd_rme96_put_montracks_control
-},
-{
-        .iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
+पूर्ण,
+अणु
+        .अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "Attenuation",
 	.info =         snd_rme96_info_attenuation_control, 
 	.get =          snd_rme96_get_attenuation_control,
 	.put =          snd_rme96_put_attenuation_control
-},
-{
-        .iface =        SNDRV_CTL_ELEM_IFACE_MIXER,
+पूर्ण,
+अणु
+        .अगरace =        SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name =         "DAC Playback Volume",
 	.info =         snd_rme96_dac_volume_info,
 	.get =          snd_rme96_dac_volume_get,
 	.put =          snd_rme96_dac_volume_put
-}
-};
+पूर्ण
+पूर्ण;
 
-static int
-snd_rme96_create_switches(struct snd_card *card,
-			  struct rme96 *rme96)
-{
-	int idx, err;
-	struct snd_kcontrol *kctl;
+अटल पूर्णांक
+snd_rme96_create_चयनes(काष्ठा snd_card *card,
+			  काष्ठा rme96 *rme96)
+अणु
+	पूर्णांक idx, err;
+	काष्ठा snd_kcontrol *kctl;
 
-	for (idx = 0; idx < 7; idx++) {
-		if ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_rme96_controls[idx], rme96))) < 0)
-			return err;
-		if (idx == 1)	/* IEC958 (S/PDIF) Stream */
-			rme96->spdif_ctl = kctl;
-	}
+	क्रम (idx = 0; idx < 7; idx++) अणु
+		अगर ((err = snd_ctl_add(card, kctl = snd_ctl_new1(&snd_rme96_controls[idx], rme96))) < 0)
+			वापस err;
+		अगर (idx == 1)	/* IEC958 (S/PDIF) Stream */
+			rme96->spdअगर_ctl = kctl;
+	पूर्ण
 
-	if (RME96_HAS_ANALOG_OUT(rme96)) {
-		for (idx = 7; idx < 10; idx++)
-			if ((err = snd_ctl_add(card, snd_ctl_new1(&snd_rme96_controls[idx], rme96))) < 0)
-				return err;
-	}
+	अगर (RME96_HAS_ANALOG_OUT(rme96)) अणु
+		क्रम (idx = 7; idx < 10; idx++)
+			अगर ((err = snd_ctl_add(card, snd_ctl_new1(&snd_rme96_controls[idx], rme96))) < 0)
+				वापस err;
+	पूर्ण
 	
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Card initialisation
  */
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 
-static int rme96_suspend(struct device *dev)
-{
-	struct snd_card *card = dev_get_drvdata(dev);
-	struct rme96 *rme96 = card->private_data;
+अटल पूर्णांक rme96_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा snd_card *card = dev_get_drvdata(dev);
+	काष्ठा rme96 *rme96 = card->निजी_data;
 
-	snd_power_change_state(card, SNDRV_CTL_POWER_D3hot);
+	snd_घातer_change_state(card, SNDRV_CTL_POWER_D3hot);
 
-	/* save capture & playback pointers */
-	rme96->playback_pointer = readl(rme96->iobase + RME96_IO_GET_PLAY_POS)
+	/* save capture & playback poपूर्णांकers */
+	rme96->playback_poपूर्णांकer = पढ़ोl(rme96->iobase + RME96_IO_GET_PLAY_POS)
 				  & RME96_RCR_AUDIO_ADDR_MASK;
-	rme96->capture_pointer = readl(rme96->iobase + RME96_IO_GET_REC_POS)
+	rme96->capture_poपूर्णांकer = पढ़ोl(rme96->iobase + RME96_IO_GET_REC_POS)
 				 & RME96_RCR_AUDIO_ADDR_MASK;
 
 	/* save playback and capture buffers */
-	memcpy_fromio(rme96->playback_suspend_buffer,
+	स_नकल_fromio(rme96->playback_suspend_buffer,
 		      rme96->iobase + RME96_IO_PLAY_BUFFER, RME96_BUFFER_SIZE);
-	memcpy_fromio(rme96->capture_suspend_buffer,
+	स_नकल_fromio(rme96->capture_suspend_buffer,
 		      rme96->iobase + RME96_IO_REC_BUFFER, RME96_BUFFER_SIZE);
 
 	/* disable the DAC  */
 	rme96->areg &= ~RME96_AR_DAC_EN;
-	writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
-	return 0;
-}
+	ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+	वापस 0;
+पूर्ण
 
-static int rme96_resume(struct device *dev)
-{
-	struct snd_card *card = dev_get_drvdata(dev);
-	struct rme96 *rme96 = card->private_data;
+अटल पूर्णांक rme96_resume(काष्ठा device *dev)
+अणु
+	काष्ठा snd_card *card = dev_get_drvdata(dev);
+	काष्ठा rme96 *rme96 = card->निजी_data;
 
-	/* reset playback and record buffer pointers */
-	writel(0, rme96->iobase + RME96_IO_SET_PLAY_POS
-		  + rme96->playback_pointer);
-	writel(0, rme96->iobase + RME96_IO_SET_REC_POS
-		  + rme96->capture_pointer);
+	/* reset playback and record buffer poपूर्णांकers */
+	ग_लिखोl(0, rme96->iobase + RME96_IO_SET_PLAY_POS
+		  + rme96->playback_poपूर्णांकer);
+	ग_लिखोl(0, rme96->iobase + RME96_IO_SET_REC_POS
+		  + rme96->capture_poपूर्णांकer);
 
 	/* restore playback and capture buffers */
-	memcpy_toio(rme96->iobase + RME96_IO_PLAY_BUFFER,
+	स_नकल_toio(rme96->iobase + RME96_IO_PLAY_BUFFER,
 		    rme96->playback_suspend_buffer, RME96_BUFFER_SIZE);
-	memcpy_toio(rme96->iobase + RME96_IO_REC_BUFFER,
+	स_नकल_toio(rme96->iobase + RME96_IO_REC_BUFFER,
 		    rme96->capture_suspend_buffer, RME96_BUFFER_SIZE);
 
 	/* reset the ADC */
-	writel(rme96->areg | RME96_AR_PD2,
+	ग_लिखोl(rme96->areg | RME96_AR_PD2,
 	       rme96->iobase + RME96_IO_ADDITIONAL_REG);
-	writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+	ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
 
 	/* reset and enable DAC, restore analog volume */
 	snd_rme96_reset_dac(rme96);
 	rme96->areg |= RME96_AR_DAC_EN;
-	writel(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
-	if (RME96_HAS_ANALOG_OUT(rme96)) {
+	ग_लिखोl(rme96->areg, rme96->iobase + RME96_IO_ADDITIONAL_REG);
+	अगर (RME96_HAS_ANALOG_OUT(rme96)) अणु
 		usleep_range(3000, 10000);
 		snd_rme96_apply_dac_volume(rme96);
-	}
+	पूर्ण
 
-	snd_power_change_state(card, SNDRV_CTL_POWER_D0);
+	snd_घातer_change_state(card, SNDRV_CTL_POWER_D0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(rme96_pm, rme96_suspend, rme96_resume);
-#define RME96_PM_OPS	&rme96_pm
-#else
-#define RME96_PM_OPS	NULL
-#endif /* CONFIG_PM_SLEEP */
+अटल SIMPLE_DEV_PM_OPS(rme96_pm, rme96_suspend, rme96_resume);
+#घोषणा RME96_PM_OPS	&rme96_pm
+#अन्यथा
+#घोषणा RME96_PM_OPS	शून्य
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static void snd_rme96_card_free(struct snd_card *card)
-{
-	snd_rme96_free(card->private_data);
-}
+अटल व्योम snd_rme96_card_मुक्त(काष्ठा snd_card *card)
+अणु
+	snd_rme96_मुक्त(card->निजी_data);
+पूर्ण
 
-static int
-snd_rme96_probe(struct pci_dev *pci,
-		const struct pci_device_id *pci_id)
-{
-	static int dev;
-	struct rme96 *rme96;
-	struct snd_card *card;
-	int err;
+अटल पूर्णांक
+snd_rme96_probe(काष्ठा pci_dev *pci,
+		स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	अटल पूर्णांक dev;
+	काष्ठा rme96 *rme96;
+	काष्ठा snd_card *card;
+	पूर्णांक err;
 	u8 val;
 
-	if (dev >= SNDRV_CARDS) {
-		return -ENODEV;
-	}
-	if (!enable[dev]) {
+	अगर (dev >= SNDRV_CARDS) अणु
+		वापस -ENODEV;
+	पूर्ण
+	अगर (!enable[dev]) अणु
 		dev++;
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
-			   sizeof(struct rme96), &card);
-	if (err < 0)
-		return err;
-	card->private_free = snd_rme96_card_free;
-	rme96 = card->private_data;
+			   माप(काष्ठा rme96), &card);
+	अगर (err < 0)
+		वापस err;
+	card->निजी_मुक्त = snd_rme96_card_मुक्त;
+	rme96 = card->निजी_data;
 	rme96->card = card;
 	rme96->pci = pci;
 	err = snd_rme96_create(rme96);
-	if (err)
-		goto free_card;
+	अगर (err)
+		जाओ मुक्त_card;
 	
-#ifdef CONFIG_PM_SLEEP
-	rme96->playback_suspend_buffer = vmalloc(RME96_BUFFER_SIZE);
-	if (!rme96->playback_suspend_buffer) {
+#अगर_घोषित CONFIG_PM_SLEEP
+	rme96->playback_suspend_buffer = vदो_स्मृति(RME96_BUFFER_SIZE);
+	अगर (!rme96->playback_suspend_buffer) अणु
 		err = -ENOMEM;
-		goto free_card;
-	}
-	rme96->capture_suspend_buffer = vmalloc(RME96_BUFFER_SIZE);
-	if (!rme96->capture_suspend_buffer) {
+		जाओ मुक्त_card;
+	पूर्ण
+	rme96->capture_suspend_buffer = vदो_स्मृति(RME96_BUFFER_SIZE);
+	अगर (!rme96->capture_suspend_buffer) अणु
 		err = -ENOMEM;
-		goto free_card;
-	}
-#endif
+		जाओ मुक्त_card;
+	पूर्ण
+#पूर्ण_अगर
 
-	strcpy(card->driver, "Digi96");
-	switch (rme96->pci->device) {
-	case PCI_DEVICE_ID_RME_DIGI96:
-		strcpy(card->shortname, "RME Digi96");
-		break;
-	case PCI_DEVICE_ID_RME_DIGI96_8:
-		strcpy(card->shortname, "RME Digi96/8");
-		break;
-	case PCI_DEVICE_ID_RME_DIGI96_8_PRO:
-		strcpy(card->shortname, "RME Digi96/8 PRO");
-		break;
-	case PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST:
-		pci_read_config_byte(rme96->pci, 8, &val);
-		if (val < 5) {
-			strcpy(card->shortname, "RME Digi96/8 PAD");
-		} else {
-			strcpy(card->shortname, "RME Digi96/8 PST");
-		}
-		break;
-	}
-	sprintf(card->longname, "%s at 0x%lx, irq %d", card->shortname,
+	म_नकल(card->driver, "Digi96");
+	चयन (rme96->pci->device) अणु
+	हाल PCI_DEVICE_ID_RME_DIGI96:
+		म_नकल(card->लघुname, "RME Digi96");
+		अवरोध;
+	हाल PCI_DEVICE_ID_RME_DIGI96_8:
+		म_नकल(card->लघुname, "RME Digi96/8");
+		अवरोध;
+	हाल PCI_DEVICE_ID_RME_DIGI96_8_PRO:
+		म_नकल(card->लघुname, "RME Digi96/8 PRO");
+		अवरोध;
+	हाल PCI_DEVICE_ID_RME_DIGI96_8_PAD_OR_PST:
+		pci_पढ़ो_config_byte(rme96->pci, 8, &val);
+		अगर (val < 5) अणु
+			म_नकल(card->लघुname, "RME Digi96/8 PAD");
+		पूर्ण अन्यथा अणु
+			म_नकल(card->लघुname, "RME Digi96/8 PST");
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	प्र_लिखो(card->दीर्घname, "%s at 0x%lx, irq %d", card->लघुname,
 		rme96->port, rme96->irq);
-	err = snd_card_register(card);
-	if (err)
-		goto free_card;
+	err = snd_card_रेजिस्टर(card);
+	अगर (err)
+		जाओ मुक्त_card;
 
 	pci_set_drvdata(pci, card);
 	dev++;
-	return 0;
-free_card:
-	snd_card_free(card);
-	return err;
-}
+	वापस 0;
+मुक्त_card:
+	snd_card_मुक्त(card);
+	वापस err;
+पूर्ण
 
-static void snd_rme96_remove(struct pci_dev *pci)
-{
-	snd_card_free(pci_get_drvdata(pci));
-}
+अटल व्योम snd_rme96_हटाओ(काष्ठा pci_dev *pci)
+अणु
+	snd_card_मुक्त(pci_get_drvdata(pci));
+पूर्ण
 
-static struct pci_driver rme96_driver = {
+अटल काष्ठा pci_driver rme96_driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = snd_rme96_ids,
 	.probe = snd_rme96_probe,
-	.remove = snd_rme96_remove,
-	.driver = {
+	.हटाओ = snd_rme96_हटाओ,
+	.driver = अणु
 		.pm = RME96_PM_OPS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_pci_driver(rme96_driver);

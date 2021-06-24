@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
-#include <linux/skbuff.h>
-#include <net/devlink.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/devlink.h>
+#समावेश <net/pkt_cls.h>
 
-#include "cmsg.h"
-#include "main.h"
-#include "../nfpcore/nfp_cpp.h"
-#include "../nfpcore/nfp_nsp.h"
-#include "../nfp_app.h"
-#include "../nfp_main.h"
-#include "../nfp_net.h"
-#include "../nfp_port.h"
+#समावेश "cmsg.h"
+#समावेश "main.h"
+#समावेश "../nfpcore/nfp_cpp.h"
+#समावेश "../nfpcore/nfp_nsp.h"
+#समावेश "../nfp_app.h"
+#समावेश "../nfp_main.h"
+#समावेश "../nfp_net.h"
+#समावेश "../nfp_port.h"
 
-#define NFP_FLOWER_SUPPORTED_TCPFLAGS \
+#घोषणा NFP_FLOWER_SUPPORTED_TCPFLAGS \
 	(TCPHDR_FIN | TCPHDR_SYN | TCPHDR_RST | \
 	 TCPHDR_PSH | TCPHDR_URG)
 
-#define NFP_FLOWER_SUPPORTED_CTLFLAGS \
+#घोषणा NFP_FLOWER_SUPPORTED_CTLFLAGS \
 	(FLOW_DIS_IS_FRAGMENT | \
 	 FLOW_DIS_FIRST_FRAG)
 
-#define NFP_FLOWER_WHITELIST_DISSECTOR \
+#घोषणा NFP_FLOWER_WHITELIST_DISSECTOR \
 	(BIT(FLOW_DISSECTOR_KEY_CONTROL) | \
 	 BIT(FLOW_DISSECTOR_KEY_BASIC) | \
 	 BIT(FLOW_DISSECTOR_KEY_IPV4_ADDRS) | \
@@ -42,7 +43,7 @@
 	 BIT(FLOW_DISSECTOR_KEY_MPLS) | \
 	 BIT(FLOW_DISSECTOR_KEY_IP))
 
-#define NFP_FLOWER_WHITELIST_TUN_DISSECTOR \
+#घोषणा NFP_FLOWER_WHITELIST_TUN_DISSECTOR \
 	(BIT(FLOW_DISSECTOR_KEY_ENC_CONTROL) | \
 	 BIT(FLOW_DISSECTOR_KEY_ENC_KEYID) | \
 	 BIT(FLOW_DISSECTOR_KEY_ENC_IPV4_ADDRS) | \
@@ -51,59 +52,59 @@
 	 BIT(FLOW_DISSECTOR_KEY_ENC_PORTS) | \
 	 BIT(FLOW_DISSECTOR_KEY_ENC_IP))
 
-#define NFP_FLOWER_WHITELIST_TUN_DISSECTOR_R \
+#घोषणा NFP_FLOWER_WHITELIST_TUN_DISSECTOR_R \
 	(BIT(FLOW_DISSECTOR_KEY_ENC_CONTROL) | \
 	 BIT(FLOW_DISSECTOR_KEY_ENC_IPV4_ADDRS))
 
-#define NFP_FLOWER_WHITELIST_TUN_DISSECTOR_V6_R \
+#घोषणा NFP_FLOWER_WHITELIST_TUN_DISSECTOR_V6_R \
 	(BIT(FLOW_DISSECTOR_KEY_ENC_CONTROL) | \
 	 BIT(FLOW_DISSECTOR_KEY_ENC_IPV6_ADDRS))
 
-#define NFP_FLOWER_MERGE_FIELDS \
+#घोषणा NFP_FLOWER_MERGE_FIELDS \
 	(NFP_FLOWER_LAYER_PORT | \
 	 NFP_FLOWER_LAYER_MAC | \
 	 NFP_FLOWER_LAYER_TP | \
 	 NFP_FLOWER_LAYER_IPV4 | \
 	 NFP_FLOWER_LAYER_IPV6)
 
-#define NFP_FLOWER_PRE_TUN_RULE_FIELDS \
+#घोषणा NFP_FLOWER_PRE_TUN_RULE_FIELDS \
 	(NFP_FLOWER_LAYER_EXT_META | \
 	 NFP_FLOWER_LAYER_PORT | \
 	 NFP_FLOWER_LAYER_MAC | \
 	 NFP_FLOWER_LAYER_IPV4 | \
 	 NFP_FLOWER_LAYER_IPV6)
 
-struct nfp_flower_merge_check {
-	union {
-		struct {
+काष्ठा nfp_flower_merge_check अणु
+	जोड़ अणु
+		काष्ठा अणु
 			__be16 tci;
-			struct nfp_flower_mac_mpls l2;
-			struct nfp_flower_tp_ports l4;
-			union {
-				struct nfp_flower_ipv4 ipv4;
-				struct nfp_flower_ipv6 ipv6;
-			};
-		};
-		unsigned long vals[8];
-	};
-};
+			काष्ठा nfp_flower_mac_mpls l2;
+			काष्ठा nfp_flower_tp_ports l4;
+			जोड़ अणु
+				काष्ठा nfp_flower_ipv4 ipv4;
+				काष्ठा nfp_flower_ipv6 ipv6;
+			पूर्ण;
+		पूर्ण;
+		अचिन्हित दीर्घ vals[8];
+	पूर्ण;
+पूर्ण;
 
-static int
-nfp_flower_xmit_flow(struct nfp_app *app, struct nfp_fl_payload *nfp_flow,
+अटल पूर्णांक
+nfp_flower_xmit_flow(काष्ठा nfp_app *app, काष्ठा nfp_fl_payload *nfp_flow,
 		     u8 mtype)
-{
+अणु
 	u32 meta_len, key_len, mask_len, act_len, tot_len;
-	struct sk_buff *skb;
-	unsigned char *msg;
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *msg;
 
-	meta_len =  sizeof(struct nfp_fl_rule_metadata);
+	meta_len =  माप(काष्ठा nfp_fl_rule_metadata);
 	key_len = nfp_flow->meta.key_len;
 	mask_len = nfp_flow->meta.mask_len;
 	act_len = nfp_flow->meta.act_len;
 
 	tot_len = meta_len + key_len + mask_len + act_len;
 
-	/* Convert to long words as firmware expects
+	/* Convert to दीर्घ words as firmware expects
 	 * lengths in units of NFP_FL_LW_SIZ.
 	 */
 	nfp_flow->meta.key_len >>= NFP_FL_LW_SIZ;
@@ -111,14 +112,14 @@ nfp_flower_xmit_flow(struct nfp_app *app, struct nfp_fl_payload *nfp_flow,
 	nfp_flow->meta.act_len >>= NFP_FL_LW_SIZ;
 
 	skb = nfp_flower_cmsg_alloc(app, tot_len, mtype, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	msg = nfp_flower_cmsg_get_data(skb);
-	memcpy(msg, &nfp_flow->meta, meta_len);
-	memcpy(&msg[meta_len], nfp_flow->unmasked_data, key_len);
-	memcpy(&msg[meta_len + key_len], nfp_flow->mask_data, mask_len);
-	memcpy(&msg[meta_len + key_len + mask_len],
+	स_नकल(msg, &nfp_flow->meta, meta_len);
+	स_नकल(&msg[meta_len], nfp_flow->unmasked_data, key_len);
+	स_नकल(&msg[meta_len + key_len], nfp_flow->mask_data, mask_len);
+	स_नकल(&msg[meta_len + key_len + mask_len],
 	       nfp_flow->action_data, act_len);
 
 	/* Convert back to bytes as software expects
@@ -130,267 +131,267 @@ nfp_flower_xmit_flow(struct nfp_app *app, struct nfp_fl_payload *nfp_flow,
 
 	nfp_ctrl_tx(app->ctrl, skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool nfp_flower_check_higher_than_mac(struct flow_cls_offload *f)
-{
-	struct flow_rule *rule = flow_cls_offload_flow_rule(f);
+अटल bool nfp_flower_check_higher_than_mac(काष्ठा flow_cls_offload *f)
+अणु
+	काष्ठा flow_rule *rule = flow_cls_offload_flow_rule(f);
 
-	return flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_IPV4_ADDRS) ||
+	वापस flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_IPV4_ADDRS) ||
 	       flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_IPV6_ADDRS) ||
 	       flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_PORTS) ||
 	       flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_ICMP);
-}
+पूर्ण
 
-static bool nfp_flower_check_higher_than_l3(struct flow_cls_offload *f)
-{
-	struct flow_rule *rule = flow_cls_offload_flow_rule(f);
+अटल bool nfp_flower_check_higher_than_l3(काष्ठा flow_cls_offload *f)
+अणु
+	काष्ठा flow_rule *rule = flow_cls_offload_flow_rule(f);
 
-	return flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_PORTS) ||
+	वापस flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_PORTS) ||
 	       flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_ICMP);
-}
+पूर्ण
 
-static int
-nfp_flower_calc_opt_layer(struct flow_dissector_key_enc_opts *enc_opts,
-			  u32 *key_layer_two, int *key_size, bool ipv6,
-			  struct netlink_ext_ack *extack)
-{
-	if (enc_opts->len > NFP_FL_MAX_GENEVE_OPT_KEY ||
-	    (ipv6 && enc_opts->len > NFP_FL_MAX_GENEVE_OPT_KEY_V6)) {
+अटल पूर्णांक
+nfp_flower_calc_opt_layer(काष्ठा flow_dissector_key_enc_opts *enc_opts,
+			  u32 *key_layer_two, पूर्णांक *key_size, bool ipv6,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (enc_opts->len > NFP_FL_MAX_GENEVE_OPT_KEY ||
+	    (ipv6 && enc_opts->len > NFP_FL_MAX_GENEVE_OPT_KEY_V6)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported offload: geneve options exceed maximum length");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (enc_opts->len > 0) {
+	अगर (enc_opts->len > 0) अणु
 		*key_layer_two |= NFP_FLOWER_LAYER2_GENEVE_OP;
-		*key_size += sizeof(struct nfp_flower_geneve_options);
-	}
+		*key_size += माप(काष्ठा nfp_flower_geneve_options);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_flower_calc_udp_tun_layer(struct flow_dissector_key_ports *enc_ports,
-			      struct flow_dissector_key_enc_opts *enc_op,
-			      u32 *key_layer_two, u8 *key_layer, int *key_size,
-			      struct nfp_flower_priv *priv,
-			      enum nfp_flower_tun_type *tun_type, bool ipv6,
-			      struct netlink_ext_ack *extack)
-{
-	int err;
+अटल पूर्णांक
+nfp_flower_calc_udp_tun_layer(काष्ठा flow_dissector_key_ports *enc_ports,
+			      काष्ठा flow_dissector_key_enc_opts *enc_op,
+			      u32 *key_layer_two, u8 *key_layer, पूर्णांक *key_size,
+			      काष्ठा nfp_flower_priv *priv,
+			      क्रमागत nfp_flower_tun_type *tun_type, bool ipv6,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err;
 
-	switch (enc_ports->dst) {
-	case htons(IANA_VXLAN_UDP_PORT):
+	चयन (enc_ports->dst) अणु
+	हाल htons(IANA_VXLAN_UDP_PORT):
 		*tun_type = NFP_FL_TUNNEL_VXLAN;
 		*key_layer |= NFP_FLOWER_LAYER_VXLAN;
 
-		if (ipv6) {
+		अगर (ipv6) अणु
 			*key_layer |= NFP_FLOWER_LAYER_EXT_META;
-			*key_size += sizeof(struct nfp_flower_ext_meta);
+			*key_size += माप(काष्ठा nfp_flower_ext_meta);
 			*key_layer_two |= NFP_FLOWER_LAYER2_TUN_IPV6;
-			*key_size += sizeof(struct nfp_flower_ipv6_udp_tun);
-		} else {
-			*key_size += sizeof(struct nfp_flower_ipv4_udp_tun);
-		}
+			*key_size += माप(काष्ठा nfp_flower_ipv6_udp_tun);
+		पूर्ण अन्यथा अणु
+			*key_size += माप(काष्ठा nfp_flower_ipv4_udp_tun);
+		पूर्ण
 
-		if (enc_op) {
+		अगर (enc_op) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: encap options not supported on vxlan tunnels");
-			return -EOPNOTSUPP;
-		}
-		break;
-	case htons(GENEVE_UDP_PORT):
-		if (!(priv->flower_ext_feats & NFP_FL_FEATS_GENEVE)) {
+			वापस -EOPNOTSUPP;
+		पूर्ण
+		अवरोध;
+	हाल htons(GENEVE_UDP_PORT):
+		अगर (!(priv->flower_ext_feats & NFP_FL_FEATS_GENEVE)) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: loaded firmware does not support geneve offload");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 		*tun_type = NFP_FL_TUNNEL_GENEVE;
 		*key_layer |= NFP_FLOWER_LAYER_EXT_META;
-		*key_size += sizeof(struct nfp_flower_ext_meta);
+		*key_size += माप(काष्ठा nfp_flower_ext_meta);
 		*key_layer_two |= NFP_FLOWER_LAYER2_GENEVE;
 
-		if (ipv6) {
+		अगर (ipv6) अणु
 			*key_layer_two |= NFP_FLOWER_LAYER2_TUN_IPV6;
-			*key_size += sizeof(struct nfp_flower_ipv6_udp_tun);
-		} else {
-			*key_size += sizeof(struct nfp_flower_ipv4_udp_tun);
-		}
+			*key_size += माप(काष्ठा nfp_flower_ipv6_udp_tun);
+		पूर्ण अन्यथा अणु
+			*key_size += माप(काष्ठा nfp_flower_ipv4_udp_tun);
+		पूर्ण
 
-		if (!enc_op)
-			break;
-		if (!(priv->flower_ext_feats & NFP_FL_FEATS_GENEVE_OPT)) {
+		अगर (!enc_op)
+			अवरोध;
+		अगर (!(priv->flower_ext_feats & NFP_FL_FEATS_GENEVE_OPT)) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: loaded firmware does not support geneve option offload");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 		err = nfp_flower_calc_opt_layer(enc_op, key_layer_two, key_size,
 						ipv6, extack);
-		if (err)
-			return err;
-		break;
-	default:
+		अगर (err)
+			वापस err;
+		अवरोध;
+	शेष:
 		NL_SET_ERR_MSG_MOD(extack, "unsupported offload: tunnel type unknown");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_flower_calculate_key_layers(struct nfp_app *app,
-				struct net_device *netdev,
-				struct nfp_fl_key_ls *ret_key_ls,
-				struct flow_cls_offload *flow,
-				enum nfp_flower_tun_type *tun_type,
-				struct netlink_ext_ack *extack)
-{
-	struct flow_rule *rule = flow_cls_offload_flow_rule(flow);
-	struct flow_dissector *dissector = rule->match.dissector;
-	struct flow_match_basic basic = { NULL, NULL};
-	struct nfp_flower_priv *priv = app->priv;
+अटल पूर्णांक
+nfp_flower_calculate_key_layers(काष्ठा nfp_app *app,
+				काष्ठा net_device *netdev,
+				काष्ठा nfp_fl_key_ls *ret_key_ls,
+				काष्ठा flow_cls_offload *flow,
+				क्रमागत nfp_flower_tun_type *tun_type,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा flow_rule *rule = flow_cls_offload_flow_rule(flow);
+	काष्ठा flow_dissector *dissector = rule->match.dissector;
+	काष्ठा flow_match_basic basic = अणु शून्य, शून्यपूर्ण;
+	काष्ठा nfp_flower_priv *priv = app->priv;
 	u32 key_layer_two;
 	u8 key_layer;
-	int key_size;
-	int err;
+	पूर्णांक key_size;
+	पूर्णांक err;
 
-	if (dissector->used_keys & ~NFP_FLOWER_WHITELIST_DISSECTOR) {
+	अगर (dissector->used_keys & ~NFP_FLOWER_WHITELIST_DISSECTOR) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported offload: match not supported");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	/* If any tun dissector is used then the required set must be used. */
-	if (dissector->used_keys & NFP_FLOWER_WHITELIST_TUN_DISSECTOR &&
+	अगर (dissector->used_keys & NFP_FLOWER_WHITELIST_TUN_DISSECTOR &&
 	    (dissector->used_keys & NFP_FLOWER_WHITELIST_TUN_DISSECTOR_V6_R)
 	    != NFP_FLOWER_WHITELIST_TUN_DISSECTOR_V6_R &&
 	    (dissector->used_keys & NFP_FLOWER_WHITELIST_TUN_DISSECTOR_R)
-	    != NFP_FLOWER_WHITELIST_TUN_DISSECTOR_R) {
+	    != NFP_FLOWER_WHITELIST_TUN_DISSECTOR_R) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported offload: tunnel match not supported");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	key_layer_two = 0;
 	key_layer = NFP_FLOWER_LAYER_PORT;
-	key_size = sizeof(struct nfp_flower_meta_tci) +
-		   sizeof(struct nfp_flower_in_port);
+	key_size = माप(काष्ठा nfp_flower_meta_tci) +
+		   माप(काष्ठा nfp_flower_in_port);
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_ETH_ADDRS) ||
-	    flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_MPLS)) {
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_ETH_ADDRS) ||
+	    flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_MPLS)) अणु
 		key_layer |= NFP_FLOWER_LAYER_MAC;
-		key_size += sizeof(struct nfp_flower_mac_mpls);
-	}
+		key_size += माप(काष्ठा nfp_flower_mac_mpls);
+	पूर्ण
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_VLAN)) {
-		struct flow_match_vlan vlan;
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_VLAN)) अणु
+		काष्ठा flow_match_vlan vlan;
 
 		flow_rule_match_vlan(rule, &vlan);
-		if (!(priv->flower_ext_feats & NFP_FL_FEATS_VLAN_PCP) &&
-		    vlan.key->vlan_priority) {
+		अगर (!(priv->flower_ext_feats & NFP_FL_FEATS_VLAN_PCP) &&
+		    vlan.key->vlan_priority) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: loaded firmware does not support VLAN PCP offload");
-			return -EOPNOTSUPP;
-		}
-		if (priv->flower_ext_feats & NFP_FL_FEATS_VLAN_QINQ &&
-		    !(key_layer_two & NFP_FLOWER_LAYER2_QINQ)) {
+			वापस -EOPNOTSUPP;
+		पूर्ण
+		अगर (priv->flower_ext_feats & NFP_FL_FEATS_VLAN_QINQ &&
+		    !(key_layer_two & NFP_FLOWER_LAYER2_QINQ)) अणु
 			key_layer |= NFP_FLOWER_LAYER_EXT_META;
-			key_size += sizeof(struct nfp_flower_ext_meta);
-			key_size += sizeof(struct nfp_flower_vlan);
+			key_size += माप(काष्ठा nfp_flower_ext_meta);
+			key_size += माप(काष्ठा nfp_flower_vlan);
 			key_layer_two |= NFP_FLOWER_LAYER2_QINQ;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_CVLAN)) {
-		struct flow_match_vlan cvlan;
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_CVLAN)) अणु
+		काष्ठा flow_match_vlan cvlan;
 
-		if (!(priv->flower_ext_feats & NFP_FL_FEATS_VLAN_QINQ)) {
+		अगर (!(priv->flower_ext_feats & NFP_FL_FEATS_VLAN_QINQ)) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: loaded firmware does not support VLAN QinQ offload");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
 		flow_rule_match_vlan(rule, &cvlan);
-		if (!(key_layer_two & NFP_FLOWER_LAYER2_QINQ)) {
+		अगर (!(key_layer_two & NFP_FLOWER_LAYER2_QINQ)) अणु
 			key_layer |= NFP_FLOWER_LAYER_EXT_META;
-			key_size += sizeof(struct nfp_flower_ext_meta);
-			key_size += sizeof(struct nfp_flower_vlan);
+			key_size += माप(काष्ठा nfp_flower_ext_meta);
+			key_size += माप(काष्ठा nfp_flower_vlan);
 			key_layer_two |= NFP_FLOWER_LAYER2_QINQ;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_ENC_CONTROL)) {
-		struct flow_match_enc_opts enc_op = { NULL, NULL };
-		struct flow_match_ipv4_addrs ipv4_addrs;
-		struct flow_match_ipv6_addrs ipv6_addrs;
-		struct flow_match_control enc_ctl;
-		struct flow_match_ports enc_ports;
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_ENC_CONTROL)) अणु
+		काष्ठा flow_match_enc_opts enc_op = अणु शून्य, शून्य पूर्ण;
+		काष्ठा flow_match_ipv4_addrs ipv4_addrs;
+		काष्ठा flow_match_ipv6_addrs ipv6_addrs;
+		काष्ठा flow_match_control enc_ctl;
+		काष्ठा flow_match_ports enc_ports;
 		bool ipv6_tun = false;
 
 		flow_rule_match_enc_control(rule, &enc_ctl);
 
-		if (enc_ctl.mask->addr_type != 0xffff) {
+		अगर (enc_ctl.mask->addr_type != 0xffff) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: wildcarded protocols on tunnels are not supported");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
 		ipv6_tun = enc_ctl.key->addr_type ==
 				FLOW_DISSECTOR_KEY_IPV6_ADDRS;
-		if (ipv6_tun &&
-		    !(priv->flower_ext_feats & NFP_FL_FEATS_IPV6_TUN)) {
+		अगर (ipv6_tun &&
+		    !(priv->flower_ext_feats & NFP_FL_FEATS_IPV6_TUN)) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: firmware does not support IPv6 tunnels");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		if (!ipv6_tun &&
-		    enc_ctl.key->addr_type != FLOW_DISSECTOR_KEY_IPV4_ADDRS) {
+		अगर (!ipv6_tun &&
+		    enc_ctl.key->addr_type != FLOW_DISSECTOR_KEY_IPV4_ADDRS) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: tunnel address type not IPv4 or IPv6");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		if (ipv6_tun) {
+		अगर (ipv6_tun) अणु
 			flow_rule_match_enc_ipv6_addrs(rule, &ipv6_addrs);
-			if (memchr_inv(&ipv6_addrs.mask->dst, 0xff,
-				       sizeof(ipv6_addrs.mask->dst))) {
+			अगर (स_प्रथम_inv(&ipv6_addrs.mask->dst, 0xff,
+				       माप(ipv6_addrs.mask->dst))) अणु
 				NL_SET_ERR_MSG_MOD(extack, "unsupported offload: only an exact match IPv6 destination address is supported");
-				return -EOPNOTSUPP;
-			}
-		} else {
+				वापस -EOPNOTSUPP;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			flow_rule_match_enc_ipv4_addrs(rule, &ipv4_addrs);
-			if (ipv4_addrs.mask->dst != cpu_to_be32(~0)) {
+			अगर (ipv4_addrs.mask->dst != cpu_to_be32(~0)) अणु
 				NL_SET_ERR_MSG_MOD(extack, "unsupported offload: only an exact match IPv4 destination address is supported");
-				return -EOPNOTSUPP;
-			}
-		}
+				वापस -EOPNOTSUPP;
+			पूर्ण
+		पूर्ण
 
-		if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_ENC_OPTS))
+		अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_ENC_OPTS))
 			flow_rule_match_enc_opts(rule, &enc_op);
 
-		if (!flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_ENC_PORTS)) {
-			/* check if GRE, which has no enc_ports */
-			if (!netif_is_gretap(netdev)) {
+		अगर (!flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_ENC_PORTS)) अणु
+			/* check अगर GRE, which has no enc_ports */
+			अगर (!netअगर_is_gretap(netdev)) अणु
 				NL_SET_ERR_MSG_MOD(extack, "unsupported offload: an exact match on L4 destination port is required for non-GRE tunnels");
-				return -EOPNOTSUPP;
-			}
+				वापस -EOPNOTSUPP;
+			पूर्ण
 
 			*tun_type = NFP_FL_TUNNEL_GRE;
 			key_layer |= NFP_FLOWER_LAYER_EXT_META;
-			key_size += sizeof(struct nfp_flower_ext_meta);
+			key_size += माप(काष्ठा nfp_flower_ext_meta);
 			key_layer_two |= NFP_FLOWER_LAYER2_GRE;
 
-			if (ipv6_tun) {
+			अगर (ipv6_tun) अणु
 				key_layer_two |= NFP_FLOWER_LAYER2_TUN_IPV6;
 				key_size +=
-					sizeof(struct nfp_flower_ipv6_udp_tun);
-			} else {
+					माप(काष्ठा nfp_flower_ipv6_udp_tun);
+			पूर्ण अन्यथा अणु
 				key_size +=
-					sizeof(struct nfp_flower_ipv4_udp_tun);
-			}
+					माप(काष्ठा nfp_flower_ipv4_udp_tun);
+			पूर्ण
 
-			if (enc_op.key) {
+			अगर (enc_op.key) अणु
 				NL_SET_ERR_MSG_MOD(extack, "unsupported offload: encap options not supported on GRE tunnels");
-				return -EOPNOTSUPP;
-			}
-		} else {
+				वापस -EOPNOTSUPP;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			flow_rule_match_enc_ports(rule, &enc_ports);
-			if (enc_ports.mask->dst != cpu_to_be16(~0)) {
+			अगर (enc_ports.mask->dst != cpu_to_be16(~0)) अणु
 				NL_SET_ERR_MSG_MOD(extack, "unsupported offload: only an exact match L4 destination port is supported");
-				return -EOPNOTSUPP;
-			}
+				वापस -EOPNOTSUPP;
+			पूर्ण
 
 			err = nfp_flower_calc_udp_tun_layer(enc_ports.key,
 							    enc_op.key,
@@ -399,506 +400,506 @@ nfp_flower_calculate_key_layers(struct nfp_app *app,
 							    &key_size, priv,
 							    tun_type, ipv6_tun,
 							    extack);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 
 			/* Ensure the ingress netdev matches the expected
 			 * tun type.
 			 */
-			if (!nfp_fl_netdev_is_tunnel_type(netdev, *tun_type)) {
+			अगर (!nfp_fl_netdev_is_tunnel_type(netdev, *tun_type)) अणु
 				NL_SET_ERR_MSG_MOD(extack, "unsupported offload: ingress netdev does not match the expected tunnel type");
-				return -EOPNOTSUPP;
-			}
-		}
-	}
+				वापस -EOPNOTSUPP;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_BASIC))
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_BASIC))
 		flow_rule_match_basic(rule, &basic);
 
-	if (basic.mask && basic.mask->n_proto) {
+	अगर (basic.mask && basic.mask->n_proto) अणु
 		/* Ethernet type is present in the key. */
-		switch (basic.key->n_proto) {
-		case cpu_to_be16(ETH_P_IP):
+		चयन (basic.key->n_proto) अणु
+		हाल cpu_to_be16(ETH_P_IP):
 			key_layer |= NFP_FLOWER_LAYER_IPV4;
-			key_size += sizeof(struct nfp_flower_ipv4);
-			break;
+			key_size += माप(काष्ठा nfp_flower_ipv4);
+			अवरोध;
 
-		case cpu_to_be16(ETH_P_IPV6):
+		हाल cpu_to_be16(ETH_P_IPV6):
 			key_layer |= NFP_FLOWER_LAYER_IPV6;
-			key_size += sizeof(struct nfp_flower_ipv6);
-			break;
+			key_size += माप(काष्ठा nfp_flower_ipv6);
+			अवरोध;
 
-		/* Currently we do not offload ARP
+		/* Currently we करो not offload ARP
 		 * because we rely on it to get to the host.
 		 */
-		case cpu_to_be16(ETH_P_ARP):
+		हाल cpu_to_be16(ETH_P_ARP):
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: ARP not supported");
-			return -EOPNOTSUPP;
+			वापस -EOPNOTSUPP;
 
-		case cpu_to_be16(ETH_P_MPLS_UC):
-		case cpu_to_be16(ETH_P_MPLS_MC):
-			if (!(key_layer & NFP_FLOWER_LAYER_MAC)) {
+		हाल cpu_to_be16(ETH_P_MPLS_UC):
+		हाल cpu_to_be16(ETH_P_MPLS_MC):
+			अगर (!(key_layer & NFP_FLOWER_LAYER_MAC)) अणु
 				key_layer |= NFP_FLOWER_LAYER_MAC;
-				key_size += sizeof(struct nfp_flower_mac_mpls);
-			}
-			break;
+				key_size += माप(काष्ठा nfp_flower_mac_mpls);
+			पूर्ण
+			अवरोध;
 
 		/* Will be included in layer 2. */
-		case cpu_to_be16(ETH_P_8021Q):
-			break;
+		हाल cpu_to_be16(ETH_P_8021Q):
+			अवरोध;
 
-		default:
+		शेष:
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: match on given EtherType is not supported");
-			return -EOPNOTSUPP;
-		}
-	} else if (nfp_flower_check_higher_than_mac(flow)) {
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण अन्यथा अगर (nfp_flower_check_higher_than_mac(flow)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported offload: cannot match above L2 without specified EtherType");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (basic.mask && basic.mask->ip_proto) {
-		switch (basic.key->ip_proto) {
-		case IPPROTO_TCP:
-		case IPPROTO_UDP:
-		case IPPROTO_SCTP:
-		case IPPROTO_ICMP:
-		case IPPROTO_ICMPV6:
+	अगर (basic.mask && basic.mask->ip_proto) अणु
+		चयन (basic.key->ip_proto) अणु
+		हाल IPPROTO_TCP:
+		हाल IPPROTO_UDP:
+		हाल IPPROTO_SCTP:
+		हाल IPPROTO_ICMP:
+		हाल IPPROTO_ICMPV6:
 			key_layer |= NFP_FLOWER_LAYER_TP;
-			key_size += sizeof(struct nfp_flower_tp_ports);
-			break;
-		}
-	}
+			key_size += माप(काष्ठा nfp_flower_tp_ports);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!(key_layer & NFP_FLOWER_LAYER_TP) &&
-	    nfp_flower_check_higher_than_l3(flow)) {
+	अगर (!(key_layer & NFP_FLOWER_LAYER_TP) &&
+	    nfp_flower_check_higher_than_l3(flow)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported offload: cannot match on L4 information without specified IP protocol type");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_TCP)) {
-		struct flow_match_tcp tcp;
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_TCP)) अणु
+		काष्ठा flow_match_tcp tcp;
 		u32 tcp_flags;
 
 		flow_rule_match_tcp(rule, &tcp);
 		tcp_flags = be16_to_cpu(tcp.key->flags);
 
-		if (tcp_flags & ~NFP_FLOWER_SUPPORTED_TCPFLAGS) {
+		अगर (tcp_flags & ~NFP_FLOWER_SUPPORTED_TCPFLAGS) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: no match support for selected TCP flags");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
 		/* We only support PSH and URG flags when either
 		 * FIN, SYN or RST is present as well.
 		 */
-		if ((tcp_flags & (TCPHDR_PSH | TCPHDR_URG)) &&
-		    !(tcp_flags & (TCPHDR_FIN | TCPHDR_SYN | TCPHDR_RST))) {
+		अगर ((tcp_flags & (TCPHDR_PSH | TCPHDR_URG)) &&
+		    !(tcp_flags & (TCPHDR_FIN | TCPHDR_SYN | TCPHDR_RST))) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: PSH and URG is only supported when used with FIN, SYN or RST");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
 		/* We need to store TCP flags in the either the IPv4 or IPv6 key
 		 * space, thus we need to ensure we include a IPv4/IPv6 key
-		 * layer if we have not done so already.
+		 * layer अगर we have not करोne so alपढ़ोy.
 		 */
-		if (!basic.key) {
+		अगर (!basic.key) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: match on TCP flags requires a match on L3 protocol");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		if (!(key_layer & NFP_FLOWER_LAYER_IPV4) &&
-		    !(key_layer & NFP_FLOWER_LAYER_IPV6)) {
-			switch (basic.key->n_proto) {
-			case cpu_to_be16(ETH_P_IP):
+		अगर (!(key_layer & NFP_FLOWER_LAYER_IPV4) &&
+		    !(key_layer & NFP_FLOWER_LAYER_IPV6)) अणु
+			चयन (basic.key->n_proto) अणु
+			हाल cpu_to_be16(ETH_P_IP):
 				key_layer |= NFP_FLOWER_LAYER_IPV4;
-				key_size += sizeof(struct nfp_flower_ipv4);
-				break;
+				key_size += माप(काष्ठा nfp_flower_ipv4);
+				अवरोध;
 
-			case cpu_to_be16(ETH_P_IPV6):
+			हाल cpu_to_be16(ETH_P_IPV6):
 					key_layer |= NFP_FLOWER_LAYER_IPV6;
-				key_size += sizeof(struct nfp_flower_ipv6);
-				break;
+				key_size += माप(काष्ठा nfp_flower_ipv6);
+				अवरोध;
 
-			default:
+			शेष:
 				NL_SET_ERR_MSG_MOD(extack, "unsupported offload: match on TCP flags requires a match on IPv4/IPv6");
-				return -EOPNOTSUPP;
-			}
-		}
-	}
+				वापस -EOPNOTSUPP;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_CONTROL)) {
-		struct flow_match_control ctl;
+	अगर (flow_rule_match_key(rule, FLOW_DISSECTOR_KEY_CONTROL)) अणु
+		काष्ठा flow_match_control ctl;
 
 		flow_rule_match_control(rule, &ctl);
-		if (ctl.key->flags & ~NFP_FLOWER_SUPPORTED_CTLFLAGS) {
+		अगर (ctl.key->flags & ~NFP_FLOWER_SUPPORTED_CTLFLAGS) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: match on unknown control flag");
-			return -EOPNOTSUPP;
-		}
-	}
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण
 
 	ret_key_ls->key_layer = key_layer;
 	ret_key_ls->key_layer_two = key_layer_two;
 	ret_key_ls->key_size = key_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct nfp_fl_payload *
-nfp_flower_allocate_new(struct nfp_fl_key_ls *key_layer)
-{
-	struct nfp_fl_payload *flow_pay;
+अटल काष्ठा nfp_fl_payload *
+nfp_flower_allocate_new(काष्ठा nfp_fl_key_ls *key_layer)
+अणु
+	काष्ठा nfp_fl_payload *flow_pay;
 
-	flow_pay = kmalloc(sizeof(*flow_pay), GFP_KERNEL);
-	if (!flow_pay)
-		return NULL;
+	flow_pay = kदो_स्मृति(माप(*flow_pay), GFP_KERNEL);
+	अगर (!flow_pay)
+		वापस शून्य;
 
 	flow_pay->meta.key_len = key_layer->key_size;
-	flow_pay->unmasked_data = kmalloc(key_layer->key_size, GFP_KERNEL);
-	if (!flow_pay->unmasked_data)
-		goto err_free_flow;
+	flow_pay->unmasked_data = kदो_स्मृति(key_layer->key_size, GFP_KERNEL);
+	अगर (!flow_pay->unmasked_data)
+		जाओ err_मुक्त_flow;
 
 	flow_pay->meta.mask_len = key_layer->key_size;
-	flow_pay->mask_data = kmalloc(key_layer->key_size, GFP_KERNEL);
-	if (!flow_pay->mask_data)
-		goto err_free_unmasked;
+	flow_pay->mask_data = kदो_स्मृति(key_layer->key_size, GFP_KERNEL);
+	अगर (!flow_pay->mask_data)
+		जाओ err_मुक्त_unmasked;
 
-	flow_pay->action_data = kmalloc(NFP_FL_MAX_A_SIZ, GFP_KERNEL);
-	if (!flow_pay->action_data)
-		goto err_free_mask;
+	flow_pay->action_data = kदो_स्मृति(NFP_FL_MAX_A_SIZ, GFP_KERNEL);
+	अगर (!flow_pay->action_data)
+		जाओ err_मुक्त_mask;
 
 	flow_pay->nfp_tun_ipv4_addr = 0;
-	flow_pay->nfp_tun_ipv6 = NULL;
+	flow_pay->nfp_tun_ipv6 = शून्य;
 	flow_pay->meta.flags = 0;
 	INIT_LIST_HEAD(&flow_pay->linked_flows);
 	flow_pay->in_hw = false;
-	flow_pay->pre_tun_rule.dev = NULL;
+	flow_pay->pre_tun_rule.dev = शून्य;
 
-	return flow_pay;
+	वापस flow_pay;
 
-err_free_mask:
-	kfree(flow_pay->mask_data);
-err_free_unmasked:
-	kfree(flow_pay->unmasked_data);
-err_free_flow:
-	kfree(flow_pay);
-	return NULL;
-}
+err_मुक्त_mask:
+	kमुक्त(flow_pay->mask_data);
+err_मुक्त_unmasked:
+	kमुक्त(flow_pay->unmasked_data);
+err_मुक्त_flow:
+	kमुक्त(flow_pay);
+	वापस शून्य;
+पूर्ण
 
-static int
-nfp_flower_update_merge_with_actions(struct nfp_fl_payload *flow,
-				     struct nfp_flower_merge_check *merge,
-				     u8 *last_act_id, int *act_out)
-{
-	struct nfp_fl_set_ipv6_tc_hl_fl *ipv6_tc_hl_fl;
-	struct nfp_fl_set_ip4_ttl_tos *ipv4_ttl_tos;
-	struct nfp_fl_set_ip4_addrs *ipv4_add;
-	struct nfp_fl_set_ipv6_addr *ipv6_add;
-	struct nfp_fl_push_vlan *push_vlan;
-	struct nfp_fl_pre_tunnel *pre_tun;
-	struct nfp_fl_set_tport *tport;
-	struct nfp_fl_set_eth *eth;
-	struct nfp_fl_act_head *a;
-	unsigned int act_off = 0;
+अटल पूर्णांक
+nfp_flower_update_merge_with_actions(काष्ठा nfp_fl_payload *flow,
+				     काष्ठा nfp_flower_merge_check *merge,
+				     u8 *last_act_id, पूर्णांक *act_out)
+अणु
+	काष्ठा nfp_fl_set_ipv6_tc_hl_fl *ipv6_tc_hl_fl;
+	काष्ठा nfp_fl_set_ip4_ttl_tos *ipv4_ttl_tos;
+	काष्ठा nfp_fl_set_ip4_addrs *ipv4_add;
+	काष्ठा nfp_fl_set_ipv6_addr *ipv6_add;
+	काष्ठा nfp_fl_push_vlan *push_vlan;
+	काष्ठा nfp_fl_pre_tunnel *pre_tun;
+	काष्ठा nfp_fl_set_tport *tport;
+	काष्ठा nfp_fl_set_eth *eth;
+	काष्ठा nfp_fl_act_head *a;
+	अचिन्हित पूर्णांक act_off = 0;
 	bool ipv6_tun = false;
 	u8 act_id = 0;
 	u8 *ports;
-	int i;
+	पूर्णांक i;
 
-	while (act_off < flow->meta.act_len) {
-		a = (struct nfp_fl_act_head *)&flow->action_data[act_off];
+	जबतक (act_off < flow->meta.act_len) अणु
+		a = (काष्ठा nfp_fl_act_head *)&flow->action_data[act_off];
 		act_id = a->jump_id;
 
-		switch (act_id) {
-		case NFP_FL_ACTION_OPCODE_OUTPUT:
-			if (act_out)
+		चयन (act_id) अणु
+		हाल NFP_FL_ACTION_OPCODE_OUTPUT:
+			अगर (act_out)
 				(*act_out)++;
-			break;
-		case NFP_FL_ACTION_OPCODE_PUSH_VLAN:
-			push_vlan = (struct nfp_fl_push_vlan *)a;
-			if (push_vlan->vlan_tci)
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_PUSH_VLAN:
+			push_vlan = (काष्ठा nfp_fl_push_vlan *)a;
+			अगर (push_vlan->vlan_tci)
 				merge->tci = cpu_to_be16(0xffff);
-			break;
-		case NFP_FL_ACTION_OPCODE_POP_VLAN:
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_POP_VLAN:
 			merge->tci = cpu_to_be16(0);
-			break;
-		case NFP_FL_ACTION_OPCODE_SET_TUNNEL:
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_SET_TUNNEL:
 			/* New tunnel header means l2 to l4 can be matched. */
 			eth_broadcast_addr(&merge->l2.mac_dst[0]);
 			eth_broadcast_addr(&merge->l2.mac_src[0]);
-			memset(&merge->l4, 0xff,
-			       sizeof(struct nfp_flower_tp_ports));
-			if (ipv6_tun)
-				memset(&merge->ipv6, 0xff,
-				       sizeof(struct nfp_flower_ipv6));
-			else
-				memset(&merge->ipv4, 0xff,
-				       sizeof(struct nfp_flower_ipv4));
-			break;
-		case NFP_FL_ACTION_OPCODE_SET_ETHERNET:
-			eth = (struct nfp_fl_set_eth *)a;
-			for (i = 0; i < ETH_ALEN; i++)
+			स_रखो(&merge->l4, 0xff,
+			       माप(काष्ठा nfp_flower_tp_ports));
+			अगर (ipv6_tun)
+				स_रखो(&merge->ipv6, 0xff,
+				       माप(काष्ठा nfp_flower_ipv6));
+			अन्यथा
+				स_रखो(&merge->ipv4, 0xff,
+				       माप(काष्ठा nfp_flower_ipv4));
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_SET_ETHERNET:
+			eth = (काष्ठा nfp_fl_set_eth *)a;
+			क्रम (i = 0; i < ETH_ALEN; i++)
 				merge->l2.mac_dst[i] |= eth->eth_addr_mask[i];
-			for (i = 0; i < ETH_ALEN; i++)
+			क्रम (i = 0; i < ETH_ALEN; i++)
 				merge->l2.mac_src[i] |=
 					eth->eth_addr_mask[ETH_ALEN + i];
-			break;
-		case NFP_FL_ACTION_OPCODE_SET_IPV4_ADDRS:
-			ipv4_add = (struct nfp_fl_set_ip4_addrs *)a;
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_SET_IPV4_ADDRS:
+			ipv4_add = (काष्ठा nfp_fl_set_ip4_addrs *)a;
 			merge->ipv4.ipv4_src |= ipv4_add->ipv4_src_mask;
 			merge->ipv4.ipv4_dst |= ipv4_add->ipv4_dst_mask;
-			break;
-		case NFP_FL_ACTION_OPCODE_SET_IPV4_TTL_TOS:
-			ipv4_ttl_tos = (struct nfp_fl_set_ip4_ttl_tos *)a;
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_SET_IPV4_TTL_TOS:
+			ipv4_ttl_tos = (काष्ठा nfp_fl_set_ip4_ttl_tos *)a;
 			merge->ipv4.ip_ext.ttl |= ipv4_ttl_tos->ipv4_ttl_mask;
 			merge->ipv4.ip_ext.tos |= ipv4_ttl_tos->ipv4_tos_mask;
-			break;
-		case NFP_FL_ACTION_OPCODE_SET_IPV6_SRC:
-			ipv6_add = (struct nfp_fl_set_ipv6_addr *)a;
-			for (i = 0; i < 4; i++)
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_SET_IPV6_SRC:
+			ipv6_add = (काष्ठा nfp_fl_set_ipv6_addr *)a;
+			क्रम (i = 0; i < 4; i++)
 				merge->ipv6.ipv6_src.in6_u.u6_addr32[i] |=
 					ipv6_add->ipv6[i].mask;
-			break;
-		case NFP_FL_ACTION_OPCODE_SET_IPV6_DST:
-			ipv6_add = (struct nfp_fl_set_ipv6_addr *)a;
-			for (i = 0; i < 4; i++)
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_SET_IPV6_DST:
+			ipv6_add = (काष्ठा nfp_fl_set_ipv6_addr *)a;
+			क्रम (i = 0; i < 4; i++)
 				merge->ipv6.ipv6_dst.in6_u.u6_addr32[i] |=
 					ipv6_add->ipv6[i].mask;
-			break;
-		case NFP_FL_ACTION_OPCODE_SET_IPV6_TC_HL_FL:
-			ipv6_tc_hl_fl = (struct nfp_fl_set_ipv6_tc_hl_fl *)a;
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_SET_IPV6_TC_HL_FL:
+			ipv6_tc_hl_fl = (काष्ठा nfp_fl_set_ipv6_tc_hl_fl *)a;
 			merge->ipv6.ip_ext.ttl |=
 				ipv6_tc_hl_fl->ipv6_hop_limit_mask;
 			merge->ipv6.ip_ext.tos |= ipv6_tc_hl_fl->ipv6_tc_mask;
 			merge->ipv6.ipv6_flow_label_exthdr |=
 				ipv6_tc_hl_fl->ipv6_label_mask;
-			break;
-		case NFP_FL_ACTION_OPCODE_SET_UDP:
-		case NFP_FL_ACTION_OPCODE_SET_TCP:
-			tport = (struct nfp_fl_set_tport *)a;
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_SET_UDP:
+		हाल NFP_FL_ACTION_OPCODE_SET_TCP:
+			tport = (काष्ठा nfp_fl_set_tport *)a;
 			ports = (u8 *)&merge->l4.port_src;
-			for (i = 0; i < 4; i++)
+			क्रम (i = 0; i < 4; i++)
 				ports[i] |= tport->tp_port_mask[i];
-			break;
-		case NFP_FL_ACTION_OPCODE_PRE_TUNNEL:
-			pre_tun = (struct nfp_fl_pre_tunnel *)a;
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_PRE_TUNNEL:
+			pre_tun = (काष्ठा nfp_fl_pre_tunnel *)a;
 			ipv6_tun = be16_to_cpu(pre_tun->flags) &
 					NFP_FL_PRE_TUN_IPV6;
-			break;
-		case NFP_FL_ACTION_OPCODE_PRE_LAG:
-		case NFP_FL_ACTION_OPCODE_PUSH_GENEVE:
-			break;
-		default:
-			return -EOPNOTSUPP;
-		}
+			अवरोध;
+		हाल NFP_FL_ACTION_OPCODE_PRE_LAG:
+		हाल NFP_FL_ACTION_OPCODE_PUSH_GENEVE:
+			अवरोध;
+		शेष:
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
 		act_off += a->len_lw << NFP_FL_LW_SIZ;
-	}
+	पूर्ण
 
-	if (last_act_id)
+	अगर (last_act_id)
 		*last_act_id = act_id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_flower_populate_merge_match(struct nfp_fl_payload *flow,
-				struct nfp_flower_merge_check *merge,
+अटल पूर्णांक
+nfp_flower_populate_merge_match(काष्ठा nfp_fl_payload *flow,
+				काष्ठा nfp_flower_merge_check *merge,
 				bool extra_fields)
-{
-	struct nfp_flower_meta_tci *meta_tci;
+अणु
+	काष्ठा nfp_flower_meta_tci *meta_tci;
 	u8 *mask = flow->mask_data;
 	u8 key_layer, match_size;
 
-	memset(merge, 0, sizeof(struct nfp_flower_merge_check));
+	स_रखो(merge, 0, माप(काष्ठा nfp_flower_merge_check));
 
-	meta_tci = (struct nfp_flower_meta_tci *)mask;
+	meta_tci = (काष्ठा nfp_flower_meta_tci *)mask;
 	key_layer = meta_tci->nfp_flow_key_layer;
 
-	if (key_layer & ~NFP_FLOWER_MERGE_FIELDS && !extra_fields)
-		return -EOPNOTSUPP;
+	अगर (key_layer & ~NFP_FLOWER_MERGE_FIELDS && !extra_fields)
+		वापस -EOPNOTSUPP;
 
 	merge->tci = meta_tci->tci;
-	mask += sizeof(struct nfp_flower_meta_tci);
+	mask += माप(काष्ठा nfp_flower_meta_tci);
 
-	if (key_layer & NFP_FLOWER_LAYER_EXT_META)
-		mask += sizeof(struct nfp_flower_ext_meta);
+	अगर (key_layer & NFP_FLOWER_LAYER_EXT_META)
+		mask += माप(काष्ठा nfp_flower_ext_meta);
 
-	mask += sizeof(struct nfp_flower_in_port);
+	mask += माप(काष्ठा nfp_flower_in_port);
 
-	if (key_layer & NFP_FLOWER_LAYER_MAC) {
-		match_size = sizeof(struct nfp_flower_mac_mpls);
-		memcpy(&merge->l2, mask, match_size);
+	अगर (key_layer & NFP_FLOWER_LAYER_MAC) अणु
+		match_size = माप(काष्ठा nfp_flower_mac_mpls);
+		स_नकल(&merge->l2, mask, match_size);
 		mask += match_size;
-	}
+	पूर्ण
 
-	if (key_layer & NFP_FLOWER_LAYER_TP) {
-		match_size = sizeof(struct nfp_flower_tp_ports);
-		memcpy(&merge->l4, mask, match_size);
+	अगर (key_layer & NFP_FLOWER_LAYER_TP) अणु
+		match_size = माप(काष्ठा nfp_flower_tp_ports);
+		स_नकल(&merge->l4, mask, match_size);
 		mask += match_size;
-	}
+	पूर्ण
 
-	if (key_layer & NFP_FLOWER_LAYER_IPV4) {
-		match_size = sizeof(struct nfp_flower_ipv4);
-		memcpy(&merge->ipv4, mask, match_size);
-	}
+	अगर (key_layer & NFP_FLOWER_LAYER_IPV4) अणु
+		match_size = माप(काष्ठा nfp_flower_ipv4);
+		स_नकल(&merge->ipv4, mask, match_size);
+	पूर्ण
 
-	if (key_layer & NFP_FLOWER_LAYER_IPV6) {
-		match_size = sizeof(struct nfp_flower_ipv6);
-		memcpy(&merge->ipv6, mask, match_size);
-	}
+	अगर (key_layer & NFP_FLOWER_LAYER_IPV6) अणु
+		match_size = माप(काष्ठा nfp_flower_ipv6);
+		स_नकल(&merge->ipv6, mask, match_size);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_flower_can_merge(struct nfp_fl_payload *sub_flow1,
-		     struct nfp_fl_payload *sub_flow2)
-{
-	/* Two flows can be merged if sub_flow2 only matches on bits that are
+अटल पूर्णांक
+nfp_flower_can_merge(काष्ठा nfp_fl_payload *sub_flow1,
+		     काष्ठा nfp_fl_payload *sub_flow2)
+अणु
+	/* Two flows can be merged अगर sub_flow2 only matches on bits that are
 	 * either matched by sub_flow1 or set by a sub_flow1 action. This
 	 * ensures that every packet that hits sub_flow1 and recirculates is
 	 * guaranteed to hit sub_flow2.
 	 */
-	struct nfp_flower_merge_check sub_flow1_merge, sub_flow2_merge;
-	int err, act_out = 0;
+	काष्ठा nfp_flower_merge_check sub_flow1_merge, sub_flow2_merge;
+	पूर्णांक err, act_out = 0;
 	u8 last_act_id = 0;
 
 	err = nfp_flower_populate_merge_match(sub_flow1, &sub_flow1_merge,
 					      true);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = nfp_flower_populate_merge_match(sub_flow2, &sub_flow2_merge,
 					      false);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = nfp_flower_update_merge_with_actions(sub_flow1, &sub_flow1_merge,
 						   &last_act_id, &act_out);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Must only be 1 output action and it must be the last in sequence. */
-	if (act_out != 1 || last_act_id != NFP_FL_ACTION_OPCODE_OUTPUT)
-		return -EOPNOTSUPP;
+	अगर (act_out != 1 || last_act_id != NFP_FL_ACTION_OPCODE_OUTPUT)
+		वापस -EOPNOTSUPP;
 
-	/* Reject merge if sub_flow2 matches on something that is not matched
+	/* Reject merge अगर sub_flow2 matches on something that is not matched
 	 * on or set in an action by sub_flow1.
 	 */
-	err = bitmap_andnot(sub_flow2_merge.vals, sub_flow2_merge.vals,
+	err = biपंचांगap_andnot(sub_flow2_merge.vals, sub_flow2_merge.vals,
 			    sub_flow1_merge.vals,
-			    sizeof(struct nfp_flower_merge_check) * 8);
-	if (err)
-		return -EINVAL;
+			    माप(काष्ठा nfp_flower_merge_check) * 8);
+	अगर (err)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int
-nfp_flower_copy_pre_actions(char *act_dst, char *act_src, int len,
+अटल अचिन्हित पूर्णांक
+nfp_flower_copy_pre_actions(अक्षर *act_dst, अक्षर *act_src, पूर्णांक len,
 			    bool *tunnel_act)
-{
-	unsigned int act_off = 0, act_len;
-	struct nfp_fl_act_head *a;
+अणु
+	अचिन्हित पूर्णांक act_off = 0, act_len;
+	काष्ठा nfp_fl_act_head *a;
 	u8 act_id = 0;
 
-	while (act_off < len) {
-		a = (struct nfp_fl_act_head *)&act_src[act_off];
+	जबतक (act_off < len) अणु
+		a = (काष्ठा nfp_fl_act_head *)&act_src[act_off];
 		act_len = a->len_lw << NFP_FL_LW_SIZ;
 		act_id = a->jump_id;
 
-		switch (act_id) {
-		case NFP_FL_ACTION_OPCODE_PRE_TUNNEL:
-			if (tunnel_act)
+		चयन (act_id) अणु
+		हाल NFP_FL_ACTION_OPCODE_PRE_TUNNEL:
+			अगर (tunnel_act)
 				*tunnel_act = true;
 			fallthrough;
-		case NFP_FL_ACTION_OPCODE_PRE_LAG:
-			memcpy(act_dst + act_off, act_src + act_off, act_len);
-			break;
-		default:
-			return act_off;
-		}
+		हाल NFP_FL_ACTION_OPCODE_PRE_LAG:
+			स_नकल(act_dst + act_off, act_src + act_off, act_len);
+			अवरोध;
+		शेष:
+			वापस act_off;
+		पूर्ण
 
 		act_off += act_len;
-	}
+	पूर्ण
 
-	return act_off;
-}
+	वापस act_off;
+पूर्ण
 
-static int
-nfp_fl_verify_post_tun_acts(char *acts, int len, struct nfp_fl_push_vlan **vlan)
-{
-	struct nfp_fl_act_head *a;
-	unsigned int act_off = 0;
+अटल पूर्णांक
+nfp_fl_verअगरy_post_tun_acts(अक्षर *acts, पूर्णांक len, काष्ठा nfp_fl_push_vlan **vlan)
+अणु
+	काष्ठा nfp_fl_act_head *a;
+	अचिन्हित पूर्णांक act_off = 0;
 
-	while (act_off < len) {
-		a = (struct nfp_fl_act_head *)&acts[act_off];
+	जबतक (act_off < len) अणु
+		a = (काष्ठा nfp_fl_act_head *)&acts[act_off];
 
-		if (a->jump_id == NFP_FL_ACTION_OPCODE_PUSH_VLAN && !act_off)
-			*vlan = (struct nfp_fl_push_vlan *)a;
-		else if (a->jump_id != NFP_FL_ACTION_OPCODE_OUTPUT)
-			return -EOPNOTSUPP;
+		अगर (a->jump_id == NFP_FL_ACTION_OPCODE_PUSH_VLAN && !act_off)
+			*vlan = (काष्ठा nfp_fl_push_vlan *)a;
+		अन्यथा अगर (a->jump_id != NFP_FL_ACTION_OPCODE_OUTPUT)
+			वापस -EOPNOTSUPP;
 
 		act_off += a->len_lw << NFP_FL_LW_SIZ;
-	}
+	पूर्ण
 
 	/* Ensure any VLAN push also has an egress action. */
-	if (*vlan && act_off <= sizeof(struct nfp_fl_push_vlan))
-		return -EOPNOTSUPP;
+	अगर (*vlan && act_off <= माप(काष्ठा nfp_fl_push_vlan))
+		वापस -EOPNOTSUPP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_fl_push_vlan_after_tun(char *acts, int len, struct nfp_fl_push_vlan *vlan)
-{
-	struct nfp_fl_set_tun *tun;
-	struct nfp_fl_act_head *a;
-	unsigned int act_off = 0;
+अटल पूर्णांक
+nfp_fl_push_vlan_after_tun(अक्षर *acts, पूर्णांक len, काष्ठा nfp_fl_push_vlan *vlan)
+अणु
+	काष्ठा nfp_fl_set_tun *tun;
+	काष्ठा nfp_fl_act_head *a;
+	अचिन्हित पूर्णांक act_off = 0;
 
-	while (act_off < len) {
-		a = (struct nfp_fl_act_head *)&acts[act_off];
+	जबतक (act_off < len) अणु
+		a = (काष्ठा nfp_fl_act_head *)&acts[act_off];
 
-		if (a->jump_id == NFP_FL_ACTION_OPCODE_SET_TUNNEL) {
-			tun = (struct nfp_fl_set_tun *)a;
+		अगर (a->jump_id == NFP_FL_ACTION_OPCODE_SET_TUNNEL) अणु
+			tun = (काष्ठा nfp_fl_set_tun *)a;
 			tun->outer_vlan_tpid = vlan->vlan_tpid;
 			tun->outer_vlan_tci = vlan->vlan_tci;
 
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		act_off += a->len_lw << NFP_FL_LW_SIZ;
-	}
+	पूर्ण
 
-	/* Return error if no tunnel action is found. */
-	return -EOPNOTSUPP;
-}
+	/* Return error अगर no tunnel action is found. */
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int
-nfp_flower_merge_action(struct nfp_fl_payload *sub_flow1,
-			struct nfp_fl_payload *sub_flow2,
-			struct nfp_fl_payload *merge_flow)
-{
-	unsigned int sub1_act_len, sub2_act_len, pre_off1, pre_off2;
-	struct nfp_fl_push_vlan *post_tun_push_vlan = NULL;
+अटल पूर्णांक
+nfp_flower_merge_action(काष्ठा nfp_fl_payload *sub_flow1,
+			काष्ठा nfp_fl_payload *sub_flow2,
+			काष्ठा nfp_fl_payload *merge_flow)
+अणु
+	अचिन्हित पूर्णांक sub1_act_len, sub2_act_len, pre_off1, pre_off2;
+	काष्ठा nfp_fl_push_vlan *post_tun_push_vlan = शून्य;
 	bool tunnel_act = false;
-	char *merge_act;
-	int err;
+	अक्षर *merge_act;
+	पूर्णांक err;
 
-	/* The last action of sub_flow1 must be output - do not merge this. */
-	sub1_act_len = sub_flow1->meta.act_len - sizeof(struct nfp_fl_output);
+	/* The last action of sub_flow1 must be output - करो not merge this. */
+	sub1_act_len = sub_flow1->meta.act_len - माप(काष्ठा nfp_fl_output);
 	sub2_act_len = sub_flow2->meta.act_len;
 
-	if (!sub2_act_len)
-		return -EINVAL;
+	अगर (!sub2_act_len)
+		वापस -EINVAL;
 
-	if (sub1_act_len + sub2_act_len > NFP_FL_MAX_A_SIZ)
-		return -EINVAL;
+	अगर (sub1_act_len + sub2_act_len > NFP_FL_MAX_A_SIZ)
+		वापस -EINVAL;
 
-	/* A shortcut can only be applied if there is a single action. */
-	if (sub1_act_len)
-		merge_flow->meta.shortcut = cpu_to_be32(NFP_FL_SC_ACT_NULL);
-	else
-		merge_flow->meta.shortcut = sub_flow2->meta.shortcut;
+	/* A लघुcut can only be applied अगर there is a single action. */
+	अगर (sub1_act_len)
+		merge_flow->meta.लघुcut = cpu_to_be32(NFP_FL_SC_ACT_शून्य);
+	अन्यथा
+		merge_flow->meta.लघुcut = sub_flow2->meta.लघुcut;
 
 	merge_flow->meta.act_len = sub1_act_len + sub2_act_len;
 	merge_act = merge_flow->action_data;
@@ -911,706 +912,706 @@ nfp_flower_merge_action(struct nfp_fl_payload *sub_flow1,
 	sub1_act_len -= pre_off1;
 	pre_off2 = nfp_flower_copy_pre_actions(merge_act,
 					       sub_flow2->action_data,
-					       sub2_act_len, NULL);
+					       sub2_act_len, शून्य);
 	merge_act += pre_off2;
 	sub2_act_len -= pre_off2;
 
-	/* FW does a tunnel push when egressing, therefore, if sub_flow 1 pushes
+	/* FW करोes a tunnel push when egressing, thereक्रमe, अगर sub_flow 1 pushes
 	 * a tunnel, there are restrictions on what sub_flow 2 actions lead to a
 	 * valid merge.
 	 */
-	if (tunnel_act) {
-		char *post_tun_acts = &sub_flow2->action_data[pre_off2];
+	अगर (tunnel_act) अणु
+		अक्षर *post_tun_acts = &sub_flow2->action_data[pre_off2];
 
-		err = nfp_fl_verify_post_tun_acts(post_tun_acts, sub2_act_len,
+		err = nfp_fl_verअगरy_post_tun_acts(post_tun_acts, sub2_act_len,
 						  &post_tun_push_vlan);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (post_tun_push_vlan) {
-			pre_off2 += sizeof(*post_tun_push_vlan);
-			sub2_act_len -= sizeof(*post_tun_push_vlan);
-		}
-	}
+		अगर (post_tun_push_vlan) अणु
+			pre_off2 += माप(*post_tun_push_vlan);
+			sub2_act_len -= माप(*post_tun_push_vlan);
+		पूर्ण
+	पूर्ण
 
-	/* Copy remaining actions from sub_flows 1 and 2. */
-	memcpy(merge_act, sub_flow1->action_data + pre_off1, sub1_act_len);
+	/* Copy reमुख्यing actions from sub_flows 1 and 2. */
+	स_नकल(merge_act, sub_flow1->action_data + pre_off1, sub1_act_len);
 
-	if (post_tun_push_vlan) {
+	अगर (post_tun_push_vlan) अणु
 		/* Update tunnel action in merge to include VLAN push. */
 		err = nfp_fl_push_vlan_after_tun(merge_act, sub1_act_len,
 						 post_tun_push_vlan);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		merge_flow->meta.act_len -= sizeof(*post_tun_push_vlan);
-	}
+		merge_flow->meta.act_len -= माप(*post_tun_push_vlan);
+	पूर्ण
 
 	merge_act += sub1_act_len;
-	memcpy(merge_act, sub_flow2->action_data + pre_off2, sub2_act_len);
+	स_नकल(merge_act, sub_flow2->action_data + pre_off2, sub2_act_len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Flow link code should only be accessed under RTNL. */
-static void nfp_flower_unlink_flow(struct nfp_fl_payload_link *link)
-{
+अटल व्योम nfp_flower_unlink_flow(काष्ठा nfp_fl_payload_link *link)
+अणु
 	list_del(&link->merge_flow.list);
 	list_del(&link->sub_flow.list);
-	kfree(link);
-}
+	kमुक्त(link);
+पूर्ण
 
-static void nfp_flower_unlink_flows(struct nfp_fl_payload *merge_flow,
-				    struct nfp_fl_payload *sub_flow)
-{
-	struct nfp_fl_payload_link *link;
+अटल व्योम nfp_flower_unlink_flows(काष्ठा nfp_fl_payload *merge_flow,
+				    काष्ठा nfp_fl_payload *sub_flow)
+अणु
+	काष्ठा nfp_fl_payload_link *link;
 
-	list_for_each_entry(link, &merge_flow->linked_flows, merge_flow.list)
-		if (link->sub_flow.flow == sub_flow) {
+	list_क्रम_each_entry(link, &merge_flow->linked_flows, merge_flow.list)
+		अगर (link->sub_flow.flow == sub_flow) अणु
 			nfp_flower_unlink_flow(link);
-			return;
-		}
-}
+			वापस;
+		पूर्ण
+पूर्ण
 
-static int nfp_flower_link_flows(struct nfp_fl_payload *merge_flow,
-				 struct nfp_fl_payload *sub_flow)
-{
-	struct nfp_fl_payload_link *link;
+अटल पूर्णांक nfp_flower_link_flows(काष्ठा nfp_fl_payload *merge_flow,
+				 काष्ठा nfp_fl_payload *sub_flow)
+अणु
+	काष्ठा nfp_fl_payload_link *link;
 
-	link = kmalloc(sizeof(*link), GFP_KERNEL);
-	if (!link)
-		return -ENOMEM;
+	link = kदो_स्मृति(माप(*link), GFP_KERNEL);
+	अगर (!link)
+		वापस -ENOMEM;
 
 	link->merge_flow.flow = merge_flow;
 	list_add_tail(&link->merge_flow.list, &merge_flow->linked_flows);
 	link->sub_flow.flow = sub_flow;
 	list_add_tail(&link->sub_flow.list, &sub_flow->linked_flows);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * nfp_flower_merge_offloaded_flows() - Merge 2 existing flows to single flow.
- * @app:	Pointer to the APP handle
- * @sub_flow1:	Initial flow matched to produce merge hint
- * @sub_flow2:	Post recirculation flow matched in merge hint
+ * @app:	Poपूर्णांकer to the APP handle
+ * @sub_flow1:	Initial flow matched to produce merge hपूर्णांक
+ * @sub_flow2:	Post recirculation flow matched in merge hपूर्णांक
  *
- * Combines 2 flows (if valid) to a single flow, removing the initial from hw
+ * Combines 2 flows (अगर valid) to a single flow, removing the initial from hw
  * and offloading the new, merged flow.
  *
  * Return: negative value on error, 0 in success.
  */
-int nfp_flower_merge_offloaded_flows(struct nfp_app *app,
-				     struct nfp_fl_payload *sub_flow1,
-				     struct nfp_fl_payload *sub_flow2)
-{
-	struct flow_cls_offload merge_tc_off;
-	struct nfp_flower_priv *priv = app->priv;
-	struct netlink_ext_ack *extack = NULL;
-	struct nfp_fl_payload *merge_flow;
-	struct nfp_fl_key_ls merge_key_ls;
-	struct nfp_merge_info *merge_info;
+पूर्णांक nfp_flower_merge_offloaded_flows(काष्ठा nfp_app *app,
+				     काष्ठा nfp_fl_payload *sub_flow1,
+				     काष्ठा nfp_fl_payload *sub_flow2)
+अणु
+	काष्ठा flow_cls_offload merge_tc_off;
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा netlink_ext_ack *extack = शून्य;
+	काष्ठा nfp_fl_payload *merge_flow;
+	काष्ठा nfp_fl_key_ls merge_key_ls;
+	काष्ठा nfp_merge_info *merge_info;
 	u64 parent_ctx = 0;
-	int err;
+	पूर्णांक err;
 
 	ASSERT_RTNL();
 
 	extack = merge_tc_off.common.extack;
-	if (sub_flow1 == sub_flow2 ||
+	अगर (sub_flow1 == sub_flow2 ||
 	    nfp_flower_is_merge_flow(sub_flow1) ||
 	    nfp_flower_is_merge_flow(sub_flow2))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* check if the two flows are already merged */
+	/* check अगर the two flows are alपढ़ोy merged */
 	parent_ctx = (u64)(be32_to_cpu(sub_flow1->meta.host_ctx_id)) << 32;
 	parent_ctx |= (u64)(be32_to_cpu(sub_flow2->meta.host_ctx_id));
-	if (rhashtable_lookup_fast(&priv->merge_table,
-				   &parent_ctx, merge_table_params)) {
+	अगर (rhashtable_lookup_fast(&priv->merge_table,
+				   &parent_ctx, merge_table_params)) अणु
 		nfp_flower_cmsg_warn(app, "The two flows are already merged.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	err = nfp_flower_can_merge(sub_flow1, sub_flow2);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	merge_key_ls.key_size = sub_flow1->meta.key_len;
 
 	merge_flow = nfp_flower_allocate_new(&merge_key_ls);
-	if (!merge_flow)
-		return -ENOMEM;
+	अगर (!merge_flow)
+		वापस -ENOMEM;
 
-	merge_flow->tc_flower_cookie = (unsigned long)merge_flow;
+	merge_flow->tc_flower_cookie = (अचिन्हित दीर्घ)merge_flow;
 	merge_flow->ingress_dev = sub_flow1->ingress_dev;
 
-	memcpy(merge_flow->unmasked_data, sub_flow1->unmasked_data,
+	स_नकल(merge_flow->unmasked_data, sub_flow1->unmasked_data,
 	       sub_flow1->meta.key_len);
-	memcpy(merge_flow->mask_data, sub_flow1->mask_data,
+	स_नकल(merge_flow->mask_data, sub_flow1->mask_data,
 	       sub_flow1->meta.mask_len);
 
 	err = nfp_flower_merge_action(sub_flow1, sub_flow2, merge_flow);
-	if (err)
-		goto err_destroy_merge_flow;
+	अगर (err)
+		जाओ err_destroy_merge_flow;
 
 	err = nfp_flower_link_flows(merge_flow, sub_flow1);
-	if (err)
-		goto err_destroy_merge_flow;
+	अगर (err)
+		जाओ err_destroy_merge_flow;
 
 	err = nfp_flower_link_flows(merge_flow, sub_flow2);
-	if (err)
-		goto err_unlink_sub_flow1;
+	अगर (err)
+		जाओ err_unlink_sub_flow1;
 
 	merge_tc_off.cookie = merge_flow->tc_flower_cookie;
 	err = nfp_compile_flow_metadata(app, &merge_tc_off, merge_flow,
 					merge_flow->ingress_dev, extack);
-	if (err)
-		goto err_unlink_sub_flow2;
+	अगर (err)
+		जाओ err_unlink_sub_flow2;
 
 	err = rhashtable_insert_fast(&priv->flow_table, &merge_flow->fl_node,
 				     nfp_flower_table_params);
-	if (err)
-		goto err_release_metadata;
+	अगर (err)
+		जाओ err_release_metadata;
 
-	merge_info = kmalloc(sizeof(*merge_info), GFP_KERNEL);
-	if (!merge_info) {
+	merge_info = kदो_स्मृति(माप(*merge_info), GFP_KERNEL);
+	अगर (!merge_info) अणु
 		err = -ENOMEM;
-		goto err_remove_rhash;
-	}
+		जाओ err_हटाओ_rhash;
+	पूर्ण
 	merge_info->parent_ctx = parent_ctx;
 	err = rhashtable_insert_fast(&priv->merge_table, &merge_info->ht_node,
 				     merge_table_params);
-	if (err)
-		goto err_destroy_merge_info;
+	अगर (err)
+		जाओ err_destroy_merge_info;
 
 	err = nfp_flower_xmit_flow(app, merge_flow,
 				   NFP_FLOWER_CMSG_TYPE_FLOW_MOD);
-	if (err)
-		goto err_remove_merge_info;
+	अगर (err)
+		जाओ err_हटाओ_merge_info;
 
 	merge_flow->in_hw = true;
 	sub_flow1->in_hw = false;
 
-	return 0;
+	वापस 0;
 
-err_remove_merge_info:
-	WARN_ON_ONCE(rhashtable_remove_fast(&priv->merge_table,
+err_हटाओ_merge_info:
+	WARN_ON_ONCE(rhashtable_हटाओ_fast(&priv->merge_table,
 					    &merge_info->ht_node,
 					    merge_table_params));
 err_destroy_merge_info:
-	kfree(merge_info);
-err_remove_rhash:
-	WARN_ON_ONCE(rhashtable_remove_fast(&priv->flow_table,
+	kमुक्त(merge_info);
+err_हटाओ_rhash:
+	WARN_ON_ONCE(rhashtable_हटाओ_fast(&priv->flow_table,
 					    &merge_flow->fl_node,
 					    nfp_flower_table_params));
 err_release_metadata:
-	nfp_modify_flow_metadata(app, merge_flow);
+	nfp_modअगरy_flow_metadata(app, merge_flow);
 err_unlink_sub_flow2:
 	nfp_flower_unlink_flows(merge_flow, sub_flow2);
 err_unlink_sub_flow1:
 	nfp_flower_unlink_flows(merge_flow, sub_flow1);
 err_destroy_merge_flow:
-	kfree(merge_flow->action_data);
-	kfree(merge_flow->mask_data);
-	kfree(merge_flow->unmasked_data);
-	kfree(merge_flow);
-	return err;
-}
+	kमुक्त(merge_flow->action_data);
+	kमुक्त(merge_flow->mask_data);
+	kमुक्त(merge_flow->unmasked_data);
+	kमुक्त(merge_flow);
+	वापस err;
+पूर्ण
 
 /**
  * nfp_flower_validate_pre_tun_rule()
- * @app:	Pointer to the APP handle
- * @flow:	Pointer to NFP flow representation of rule
- * @key_ls:	Pointer to NFP key layers structure
+ * @app:	Poपूर्णांकer to the APP handle
+ * @flow:	Poपूर्णांकer to NFP flow representation of rule
+ * @key_ls:	Poपूर्णांकer to NFP key layers काष्ठाure
  * @extack:	Netlink extended ACK report
  *
- * Verifies the flow as a pre-tunnel rule.
+ * Verअगरies the flow as a pre-tunnel rule.
  *
- * Return: negative value on error, 0 if verified.
+ * Return: negative value on error, 0 अगर verअगरied.
  */
-static int
-nfp_flower_validate_pre_tun_rule(struct nfp_app *app,
-				 struct nfp_fl_payload *flow,
-				 struct nfp_fl_key_ls *key_ls,
-				 struct netlink_ext_ack *extack)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	struct nfp_flower_meta_tci *meta_tci;
-	struct nfp_flower_mac_mpls *mac;
+अटल पूर्णांक
+nfp_flower_validate_pre_tun_rule(काष्ठा nfp_app *app,
+				 काष्ठा nfp_fl_payload *flow,
+				 काष्ठा nfp_fl_key_ls *key_ls,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा nfp_flower_meta_tci *meta_tci;
+	काष्ठा nfp_flower_mac_mpls *mac;
 	u8 *ext = flow->unmasked_data;
-	struct nfp_fl_act_head *act;
+	काष्ठा nfp_fl_act_head *act;
 	u8 *mask = flow->mask_data;
 	bool vlan = false;
-	int act_offset;
+	पूर्णांक act_offset;
 	u8 key_layer;
 
-	meta_tci = (struct nfp_flower_meta_tci *)flow->unmasked_data;
+	meta_tci = (काष्ठा nfp_flower_meta_tci *)flow->unmasked_data;
 	key_layer = key_ls->key_layer;
-	if (!(priv->flower_ext_feats & NFP_FL_FEATS_VLAN_QINQ)) {
-		if (meta_tci->tci & cpu_to_be16(NFP_FLOWER_MASK_VLAN_PRESENT)) {
+	अगर (!(priv->flower_ext_feats & NFP_FL_FEATS_VLAN_QINQ)) अणु
+		अगर (meta_tci->tci & cpu_to_be16(NFP_FLOWER_MASK_VLAN_PRESENT)) अणु
 			u16 vlan_tci = be16_to_cpu(meta_tci->tci);
 
 			vlan_tci &= ~NFP_FLOWER_MASK_VLAN_PRESENT;
 			flow->pre_tun_rule.vlan_tci = cpu_to_be16(vlan_tci);
 			vlan = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			flow->pre_tun_rule.vlan_tci = cpu_to_be16(0xffff);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (key_layer & ~NFP_FLOWER_PRE_TUN_RULE_FIELDS) {
+	अगर (key_layer & ~NFP_FLOWER_PRE_TUN_RULE_FIELDS) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: too many match fields");
-		return -EOPNOTSUPP;
-	} else if (key_ls->key_layer_two & ~NFP_FLOWER_LAYER2_QINQ) {
+		वापस -EOPNOTSUPP;
+	पूर्ण अन्यथा अगर (key_ls->key_layer_two & ~NFP_FLOWER_LAYER2_QINQ) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: non-vlan in extended match fields");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!(key_layer & NFP_FLOWER_LAYER_MAC)) {
+	अगर (!(key_layer & NFP_FLOWER_LAYER_MAC)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: MAC fields match required");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!(key_layer & NFP_FLOWER_LAYER_IPV4) &&
-	    !(key_layer & NFP_FLOWER_LAYER_IPV6)) {
+	अगर (!(key_layer & NFP_FLOWER_LAYER_IPV4) &&
+	    !(key_layer & NFP_FLOWER_LAYER_IPV6)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: match on ipv4/ipv6 eth_type must be present");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	/* Skip fields known to exist. */
-	mask += sizeof(struct nfp_flower_meta_tci);
-	ext += sizeof(struct nfp_flower_meta_tci);
-	if (key_ls->key_layer_two) {
-		mask += sizeof(struct nfp_flower_ext_meta);
-		ext += sizeof(struct nfp_flower_ext_meta);
-	}
-	mask += sizeof(struct nfp_flower_in_port);
-	ext += sizeof(struct nfp_flower_in_port);
+	mask += माप(काष्ठा nfp_flower_meta_tci);
+	ext += माप(काष्ठा nfp_flower_meta_tci);
+	अगर (key_ls->key_layer_two) अणु
+		mask += माप(काष्ठा nfp_flower_ext_meta);
+		ext += माप(काष्ठा nfp_flower_ext_meta);
+	पूर्ण
+	mask += माप(काष्ठा nfp_flower_in_port);
+	ext += माप(काष्ठा nfp_flower_in_port);
 
 	/* Ensure destination MAC address matches pre_tun_dev. */
-	mac = (struct nfp_flower_mac_mpls *)ext;
-	if (memcmp(&mac->mac_dst[0], flow->pre_tun_rule.dev->dev_addr, 6)) {
+	mac = (काष्ठा nfp_flower_mac_mpls *)ext;
+	अगर (स_भेद(&mac->mac_dst[0], flow->pre_tun_rule.dev->dev_addr, 6)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: dest MAC must match output dev MAC");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	/* Ensure destination MAC address is fully matched. */
-	mac = (struct nfp_flower_mac_mpls *)mask;
-	if (!is_broadcast_ether_addr(&mac->mac_dst[0])) {
+	mac = (काष्ठा nfp_flower_mac_mpls *)mask;
+	अगर (!is_broadcast_ether_addr(&mac->mac_dst[0])) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: dest MAC field must not be masked");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (mac->mpls_lse) {
+	अगर (mac->mpls_lse) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: MPLS not supported");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	mask += sizeof(struct nfp_flower_mac_mpls);
-	ext += sizeof(struct nfp_flower_mac_mpls);
-	if (key_layer & NFP_FLOWER_LAYER_IPV4 ||
-	    key_layer & NFP_FLOWER_LAYER_IPV6) {
+	mask += माप(काष्ठा nfp_flower_mac_mpls);
+	ext += माप(काष्ठा nfp_flower_mac_mpls);
+	अगर (key_layer & NFP_FLOWER_LAYER_IPV4 ||
+	    key_layer & NFP_FLOWER_LAYER_IPV6) अणु
 		/* Flags and proto fields have same offset in IPv4 and IPv6. */
-		int ip_flags = offsetof(struct nfp_flower_ipv4, ip_ext.flags);
-		int ip_proto = offsetof(struct nfp_flower_ipv4, ip_ext.proto);
-		int size;
-		int i;
+		पूर्णांक ip_flags = दुरत्व(काष्ठा nfp_flower_ipv4, ip_ext.flags);
+		पूर्णांक ip_proto = दुरत्व(काष्ठा nfp_flower_ipv4, ip_ext.proto);
+		पूर्णांक size;
+		पूर्णांक i;
 
 		size = key_layer & NFP_FLOWER_LAYER_IPV4 ?
-			sizeof(struct nfp_flower_ipv4) :
-			sizeof(struct nfp_flower_ipv6);
+			माप(काष्ठा nfp_flower_ipv4) :
+			माप(काष्ठा nfp_flower_ipv6);
 
 
 		/* Ensure proto and flags are the only IP layer fields. */
-		for (i = 0; i < size; i++)
-			if (mask[i] && i != ip_flags && i != ip_proto) {
+		क्रम (i = 0; i < size; i++)
+			अगर (mask[i] && i != ip_flags && i != ip_proto) अणु
 				NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: only flags and proto can be matched in ip header");
-				return -EOPNOTSUPP;
-			}
+				वापस -EOPNOTSUPP;
+			पूर्ण
 		ext += size;
 		mask += size;
-	}
+	पूर्ण
 
-	if ((priv->flower_ext_feats & NFP_FL_FEATS_VLAN_QINQ)) {
-		if (key_ls->key_layer_two & NFP_FLOWER_LAYER2_QINQ) {
-			struct nfp_flower_vlan *vlan_tags;
+	अगर ((priv->flower_ext_feats & NFP_FL_FEATS_VLAN_QINQ)) अणु
+		अगर (key_ls->key_layer_two & NFP_FLOWER_LAYER2_QINQ) अणु
+			काष्ठा nfp_flower_vlan *vlan_tags;
 			u16 vlan_tci;
 
-			vlan_tags = (struct nfp_flower_vlan *)ext;
+			vlan_tags = (काष्ठा nfp_flower_vlan *)ext;
 
 			vlan_tci = be16_to_cpu(vlan_tags->outer_tci);
 
 			vlan_tci &= ~NFP_FLOWER_MASK_VLAN_PRESENT;
 			flow->pre_tun_rule.vlan_tci = cpu_to_be16(vlan_tci);
 			vlan = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			flow->pre_tun_rule.vlan_tci = cpu_to_be16(0xffff);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Action must be a single egress or pop_vlan and egress. */
 	act_offset = 0;
-	act = (struct nfp_fl_act_head *)&flow->action_data[act_offset];
-	if (vlan) {
-		if (act->jump_id != NFP_FL_ACTION_OPCODE_POP_VLAN) {
+	act = (काष्ठा nfp_fl_act_head *)&flow->action_data[act_offset];
+	अगर (vlan) अणु
+		अगर (act->jump_id != NFP_FL_ACTION_OPCODE_POP_VLAN) अणु
 			NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: match on VLAN must have VLAN pop as first action");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
 		act_offset += act->len_lw << NFP_FL_LW_SIZ;
-		act = (struct nfp_fl_act_head *)&flow->action_data[act_offset];
-	}
+		act = (काष्ठा nfp_fl_act_head *)&flow->action_data[act_offset];
+	पूर्ण
 
-	if (act->jump_id != NFP_FL_ACTION_OPCODE_OUTPUT) {
+	अगर (act->jump_id != NFP_FL_ACTION_OPCODE_OUTPUT) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: non egress action detected where egress was expected");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	act_offset += act->len_lw << NFP_FL_LW_SIZ;
 
 	/* Ensure there are no more actions after egress. */
-	if (act_offset != flow->meta.act_len) {
+	अगर (act_offset != flow->meta.act_len) अणु
 		NL_SET_ERR_MSG_MOD(extack, "unsupported pre-tunnel rule: egress is not the last action");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * nfp_flower_add_offload() - Adds a new flow to hardware.
- * @app:	Pointer to the APP handle
- * @netdev:	netdev structure.
- * @flow:	TC flower classifier offload structure.
+ * @app:	Poपूर्णांकer to the APP handle
+ * @netdev:	netdev काष्ठाure.
+ * @flow:	TC flower classअगरier offload काष्ठाure.
  *
- * Adds a new flow to the repeated hash structure and action payload.
+ * Adds a new flow to the repeated hash काष्ठाure and action payload.
  *
- * Return: negative value on error, 0 if configured successfully.
+ * Return: negative value on error, 0 अगर configured successfully.
  */
-static int
-nfp_flower_add_offload(struct nfp_app *app, struct net_device *netdev,
-		       struct flow_cls_offload *flow)
-{
-	enum nfp_flower_tun_type tun_type = NFP_FL_TUNNEL_NONE;
-	struct nfp_flower_priv *priv = app->priv;
-	struct netlink_ext_ack *extack = NULL;
-	struct nfp_fl_payload *flow_pay;
-	struct nfp_fl_key_ls *key_layer;
-	struct nfp_port *port = NULL;
-	int err;
+अटल पूर्णांक
+nfp_flower_add_offload(काष्ठा nfp_app *app, काष्ठा net_device *netdev,
+		       काष्ठा flow_cls_offload *flow)
+अणु
+	क्रमागत nfp_flower_tun_type tun_type = NFP_FL_TUNNEL_NONE;
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा netlink_ext_ack *extack = शून्य;
+	काष्ठा nfp_fl_payload *flow_pay;
+	काष्ठा nfp_fl_key_ls *key_layer;
+	काष्ठा nfp_port *port = शून्य;
+	पूर्णांक err;
 
 	extack = flow->common.extack;
-	if (nfp_netdev_is_nfp_repr(netdev))
+	अगर (nfp_netdev_is_nfp_repr(netdev))
 		port = nfp_port_from_netdev(netdev);
 
-	key_layer = kmalloc(sizeof(*key_layer), GFP_KERNEL);
-	if (!key_layer)
-		return -ENOMEM;
+	key_layer = kदो_स्मृति(माप(*key_layer), GFP_KERNEL);
+	अगर (!key_layer)
+		वापस -ENOMEM;
 
 	err = nfp_flower_calculate_key_layers(app, netdev, key_layer, flow,
 					      &tun_type, extack);
-	if (err)
-		goto err_free_key_ls;
+	अगर (err)
+		जाओ err_मुक्त_key_ls;
 
 	flow_pay = nfp_flower_allocate_new(key_layer);
-	if (!flow_pay) {
+	अगर (!flow_pay) अणु
 		err = -ENOMEM;
-		goto err_free_key_ls;
-	}
+		जाओ err_मुक्त_key_ls;
+	पूर्ण
 
 	err = nfp_flower_compile_flow_match(app, flow, key_layer, netdev,
 					    flow_pay, tun_type, extack);
-	if (err)
-		goto err_destroy_flow;
+	अगर (err)
+		जाओ err_destroy_flow;
 
 	err = nfp_flower_compile_action(app, flow, netdev, flow_pay, extack);
-	if (err)
-		goto err_destroy_flow;
+	अगर (err)
+		जाओ err_destroy_flow;
 
-	if (flow_pay->pre_tun_rule.dev) {
+	अगर (flow_pay->pre_tun_rule.dev) अणु
 		err = nfp_flower_validate_pre_tun_rule(app, flow_pay, key_layer, extack);
-		if (err)
-			goto err_destroy_flow;
-	}
+		अगर (err)
+			जाओ err_destroy_flow;
+	पूर्ण
 
 	err = nfp_compile_flow_metadata(app, flow, flow_pay, netdev, extack);
-	if (err)
-		goto err_destroy_flow;
+	अगर (err)
+		जाओ err_destroy_flow;
 
 	flow_pay->tc_flower_cookie = flow->cookie;
 	err = rhashtable_insert_fast(&priv->flow_table, &flow_pay->fl_node,
 				     nfp_flower_table_params);
-	if (err) {
+	अगर (err) अणु
 		NL_SET_ERR_MSG_MOD(extack, "invalid entry: cannot insert flow into tables for offloads");
-		goto err_release_metadata;
-	}
+		जाओ err_release_metadata;
+	पूर्ण
 
-	if (flow_pay->pre_tun_rule.dev)
+	अगर (flow_pay->pre_tun_rule.dev)
 		err = nfp_flower_xmit_pre_tun_flow(app, flow_pay);
-	else
+	अन्यथा
 		err = nfp_flower_xmit_flow(app, flow_pay,
 					   NFP_FLOWER_CMSG_TYPE_FLOW_ADD);
-	if (err)
-		goto err_remove_rhash;
+	अगर (err)
+		जाओ err_हटाओ_rhash;
 
-	if (port)
+	अगर (port)
 		port->tc_offload_cnt++;
 
 	flow_pay->in_hw = true;
 
 	/* Deallocate flow payload when flower rule has been destroyed. */
-	kfree(key_layer);
+	kमुक्त(key_layer);
 
-	return 0;
+	वापस 0;
 
-err_remove_rhash:
-	WARN_ON_ONCE(rhashtable_remove_fast(&priv->flow_table,
+err_हटाओ_rhash:
+	WARN_ON_ONCE(rhashtable_हटाओ_fast(&priv->flow_table,
 					    &flow_pay->fl_node,
 					    nfp_flower_table_params));
 err_release_metadata:
-	nfp_modify_flow_metadata(app, flow_pay);
+	nfp_modअगरy_flow_metadata(app, flow_pay);
 err_destroy_flow:
-	if (flow_pay->nfp_tun_ipv6)
+	अगर (flow_pay->nfp_tun_ipv6)
 		nfp_tunnel_put_ipv6_off(app, flow_pay->nfp_tun_ipv6);
-	kfree(flow_pay->action_data);
-	kfree(flow_pay->mask_data);
-	kfree(flow_pay->unmasked_data);
-	kfree(flow_pay);
-err_free_key_ls:
-	kfree(key_layer);
-	return err;
-}
+	kमुक्त(flow_pay->action_data);
+	kमुक्त(flow_pay->mask_data);
+	kमुक्त(flow_pay->unmasked_data);
+	kमुक्त(flow_pay);
+err_मुक्त_key_ls:
+	kमुक्त(key_layer);
+	वापस err;
+पूर्ण
 
-static void
-nfp_flower_remove_merge_flow(struct nfp_app *app,
-			     struct nfp_fl_payload *del_sub_flow,
-			     struct nfp_fl_payload *merge_flow)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	struct nfp_fl_payload_link *link, *temp;
-	struct nfp_merge_info *merge_info;
-	struct nfp_fl_payload *origin;
+अटल व्योम
+nfp_flower_हटाओ_merge_flow(काष्ठा nfp_app *app,
+			     काष्ठा nfp_fl_payload *del_sub_flow,
+			     काष्ठा nfp_fl_payload *merge_flow)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा nfp_fl_payload_link *link, *temp;
+	काष्ठा nfp_merge_info *merge_info;
+	काष्ठा nfp_fl_payload *origin;
 	u64 parent_ctx = 0;
 	bool mod = false;
-	int err;
+	पूर्णांक err;
 
 	link = list_first_entry(&merge_flow->linked_flows,
-				struct nfp_fl_payload_link, merge_flow.list);
+				काष्ठा nfp_fl_payload_link, merge_flow.list);
 	origin = link->sub_flow.flow;
 
-	/* Re-add rule the merge had overwritten if it has not been deleted. */
-	if (origin != del_sub_flow)
+	/* Re-add rule the merge had overwritten अगर it has not been deleted. */
+	अगर (origin != del_sub_flow)
 		mod = true;
 
-	err = nfp_modify_flow_metadata(app, merge_flow);
-	if (err) {
+	err = nfp_modअगरy_flow_metadata(app, merge_flow);
+	अगर (err) अणु
 		nfp_flower_cmsg_warn(app, "Metadata fail for merge flow delete.\n");
-		goto err_free_links;
-	}
+		जाओ err_मुक्त_links;
+	पूर्ण
 
-	if (!mod) {
+	अगर (!mod) अणु
 		err = nfp_flower_xmit_flow(app, merge_flow,
 					   NFP_FLOWER_CMSG_TYPE_FLOW_DEL);
-		if (err) {
+		अगर (err) अणु
 			nfp_flower_cmsg_warn(app, "Failed to delete merged flow.\n");
-			goto err_free_links;
-		}
-	} else {
-		__nfp_modify_flow_metadata(priv, origin);
+			जाओ err_मुक्त_links;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		__nfp_modअगरy_flow_metadata(priv, origin);
 		err = nfp_flower_xmit_flow(app, origin,
 					   NFP_FLOWER_CMSG_TYPE_FLOW_MOD);
-		if (err)
+		अगर (err)
 			nfp_flower_cmsg_warn(app, "Failed to revert merge flow.\n");
 		origin->in_hw = true;
-	}
+	पूर्ण
 
-err_free_links:
+err_मुक्त_links:
 	/* Clean any links connected with the merged flow. */
-	list_for_each_entry_safe(link, temp, &merge_flow->linked_flows,
-				 merge_flow.list) {
+	list_क्रम_each_entry_safe(link, temp, &merge_flow->linked_flows,
+				 merge_flow.list) अणु
 		u32 ctx_id = be32_to_cpu(link->sub_flow.flow->meta.host_ctx_id);
 
 		parent_ctx = (parent_ctx << 32) | (u64)(ctx_id);
 		nfp_flower_unlink_flow(link);
-	}
+	पूर्ण
 
 	merge_info = rhashtable_lookup_fast(&priv->merge_table,
 					    &parent_ctx,
 					    merge_table_params);
-	if (merge_info) {
-		WARN_ON_ONCE(rhashtable_remove_fast(&priv->merge_table,
+	अगर (merge_info) अणु
+		WARN_ON_ONCE(rhashtable_हटाओ_fast(&priv->merge_table,
 						    &merge_info->ht_node,
 						    merge_table_params));
-		kfree(merge_info);
-	}
+		kमुक्त(merge_info);
+	पूर्ण
 
-	kfree(merge_flow->action_data);
-	kfree(merge_flow->mask_data);
-	kfree(merge_flow->unmasked_data);
-	WARN_ON_ONCE(rhashtable_remove_fast(&priv->flow_table,
+	kमुक्त(merge_flow->action_data);
+	kमुक्त(merge_flow->mask_data);
+	kमुक्त(merge_flow->unmasked_data);
+	WARN_ON_ONCE(rhashtable_हटाओ_fast(&priv->flow_table,
 					    &merge_flow->fl_node,
 					    nfp_flower_table_params));
-	kfree_rcu(merge_flow, rcu);
-}
+	kमुक्त_rcu(merge_flow, rcu);
+पूर्ण
 
-static void
-nfp_flower_del_linked_merge_flows(struct nfp_app *app,
-				  struct nfp_fl_payload *sub_flow)
-{
-	struct nfp_fl_payload_link *link, *temp;
+अटल व्योम
+nfp_flower_del_linked_merge_flows(काष्ठा nfp_app *app,
+				  काष्ठा nfp_fl_payload *sub_flow)
+अणु
+	काष्ठा nfp_fl_payload_link *link, *temp;
 
-	/* Remove any merge flow formed from the deleted sub_flow. */
-	list_for_each_entry_safe(link, temp, &sub_flow->linked_flows,
+	/* Remove any merge flow क्रमmed from the deleted sub_flow. */
+	list_क्रम_each_entry_safe(link, temp, &sub_flow->linked_flows,
 				 sub_flow.list)
-		nfp_flower_remove_merge_flow(app, sub_flow,
+		nfp_flower_हटाओ_merge_flow(app, sub_flow,
 					     link->merge_flow.flow);
-}
+पूर्ण
 
 /**
  * nfp_flower_del_offload() - Removes a flow from hardware.
- * @app:	Pointer to the APP handle
- * @netdev:	netdev structure.
- * @flow:	TC flower classifier offload structure
+ * @app:	Poपूर्णांकer to the APP handle
+ * @netdev:	netdev काष्ठाure.
+ * @flow:	TC flower classअगरier offload काष्ठाure
  *
- * Removes a flow from the repeated hash structure and clears the
+ * Removes a flow from the repeated hashत काष्ठाure and clears the
  * action payload. Any flows merged from this are also deleted.
  *
- * Return: negative value on error, 0 if removed successfully.
+ * Return: negative value on error, 0 अगर हटाओd successfully.
  */
-static int
-nfp_flower_del_offload(struct nfp_app *app, struct net_device *netdev,
-		       struct flow_cls_offload *flow)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	struct netlink_ext_ack *extack = NULL;
-	struct nfp_fl_payload *nfp_flow;
-	struct nfp_port *port = NULL;
-	int err;
+अटल पूर्णांक
+nfp_flower_del_offload(काष्ठा nfp_app *app, काष्ठा net_device *netdev,
+		       काष्ठा flow_cls_offload *flow)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा netlink_ext_ack *extack = शून्य;
+	काष्ठा nfp_fl_payload *nfp_flow;
+	काष्ठा nfp_port *port = शून्य;
+	पूर्णांक err;
 
 	extack = flow->common.extack;
-	if (nfp_netdev_is_nfp_repr(netdev))
+	अगर (nfp_netdev_is_nfp_repr(netdev))
 		port = nfp_port_from_netdev(netdev);
 
 	nfp_flow = nfp_flower_search_fl_table(app, flow->cookie, netdev);
-	if (!nfp_flow) {
+	अगर (!nfp_flow) अणु
 		NL_SET_ERR_MSG_MOD(extack, "invalid entry: cannot remove flow that does not exist");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	err = nfp_modify_flow_metadata(app, nfp_flow);
-	if (err)
-		goto err_free_merge_flow;
+	err = nfp_modअगरy_flow_metadata(app, nfp_flow);
+	अगर (err)
+		जाओ err_मुक्त_merge_flow;
 
-	if (nfp_flow->nfp_tun_ipv4_addr)
+	अगर (nfp_flow->nfp_tun_ipv4_addr)
 		nfp_tunnel_del_ipv4_off(app, nfp_flow->nfp_tun_ipv4_addr);
 
-	if (nfp_flow->nfp_tun_ipv6)
+	अगर (nfp_flow->nfp_tun_ipv6)
 		nfp_tunnel_put_ipv6_off(app, nfp_flow->nfp_tun_ipv6);
 
-	if (!nfp_flow->in_hw) {
+	अगर (!nfp_flow->in_hw) अणु
 		err = 0;
-		goto err_free_merge_flow;
-	}
+		जाओ err_मुक्त_merge_flow;
+	पूर्ण
 
-	if (nfp_flow->pre_tun_rule.dev)
+	अगर (nfp_flow->pre_tun_rule.dev)
 		err = nfp_flower_xmit_pre_tun_del_flow(app, nfp_flow);
-	else
+	अन्यथा
 		err = nfp_flower_xmit_flow(app, nfp_flow,
 					   NFP_FLOWER_CMSG_TYPE_FLOW_DEL);
 	/* Fall through on error. */
 
-err_free_merge_flow:
+err_मुक्त_merge_flow:
 	nfp_flower_del_linked_merge_flows(app, nfp_flow);
-	if (port)
+	अगर (port)
 		port->tc_offload_cnt--;
-	kfree(nfp_flow->action_data);
-	kfree(nfp_flow->mask_data);
-	kfree(nfp_flow->unmasked_data);
-	WARN_ON_ONCE(rhashtable_remove_fast(&priv->flow_table,
+	kमुक्त(nfp_flow->action_data);
+	kमुक्त(nfp_flow->mask_data);
+	kमुक्त(nfp_flow->unmasked_data);
+	WARN_ON_ONCE(rhashtable_हटाओ_fast(&priv->flow_table,
 					    &nfp_flow->fl_node,
 					    nfp_flower_table_params));
-	kfree_rcu(nfp_flow, rcu);
-	return err;
-}
+	kमुक्त_rcu(nfp_flow, rcu);
+	वापस err;
+पूर्ण
 
-static void
-__nfp_flower_update_merge_stats(struct nfp_app *app,
-				struct nfp_fl_payload *merge_flow)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	struct nfp_fl_payload_link *link;
-	struct nfp_fl_payload *sub_flow;
+अटल व्योम
+__nfp_flower_update_merge_stats(काष्ठा nfp_app *app,
+				काष्ठा nfp_fl_payload *merge_flow)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा nfp_fl_payload_link *link;
+	काष्ठा nfp_fl_payload *sub_flow;
 	u64 pkts, bytes, used;
 	u32 ctx_id;
 
 	ctx_id = be32_to_cpu(merge_flow->meta.host_ctx_id);
 	pkts = priv->stats[ctx_id].pkts;
-	/* Do not cycle subflows if no stats to distribute. */
-	if (!pkts)
-		return;
+	/* Do not cycle subflows अगर no stats to distribute. */
+	अगर (!pkts)
+		वापस;
 	bytes = priv->stats[ctx_id].bytes;
 	used = priv->stats[ctx_id].used;
 
-	/* Reset stats for the merge flow. */
+	/* Reset stats क्रम the merge flow. */
 	priv->stats[ctx_id].pkts = 0;
 	priv->stats[ctx_id].bytes = 0;
 
 	/* The merge flow has received stats updates from firmware.
-	 * Distribute these stats to all subflows that form the merge.
+	 * Distribute these stats to all subflows that क्रमm the merge.
 	 * The stats will collected from TC via the subflows.
 	 */
-	list_for_each_entry(link, &merge_flow->linked_flows, merge_flow.list) {
+	list_क्रम_each_entry(link, &merge_flow->linked_flows, merge_flow.list) अणु
 		sub_flow = link->sub_flow.flow;
 		ctx_id = be32_to_cpu(sub_flow->meta.host_ctx_id);
 		priv->stats[ctx_id].pkts += pkts;
 		priv->stats[ctx_id].bytes += bytes;
 		priv->stats[ctx_id].used = max_t(u64, used,
 						 priv->stats[ctx_id].used);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-nfp_flower_update_merge_stats(struct nfp_app *app,
-			      struct nfp_fl_payload *sub_flow)
-{
-	struct nfp_fl_payload_link *link;
+अटल व्योम
+nfp_flower_update_merge_stats(काष्ठा nfp_app *app,
+			      काष्ठा nfp_fl_payload *sub_flow)
+अणु
+	काष्ठा nfp_fl_payload_link *link;
 
-	/* Get merge flows that the subflow forms to distribute their stats. */
-	list_for_each_entry(link, &sub_flow->linked_flows, sub_flow.list)
+	/* Get merge flows that the subflow क्रमms to distribute their stats. */
+	list_क्रम_each_entry(link, &sub_flow->linked_flows, sub_flow.list)
 		__nfp_flower_update_merge_stats(app, link->merge_flow.flow);
-}
+पूर्ण
 
 /**
  * nfp_flower_get_stats() - Populates flow stats obtained from hardware.
- * @app:	Pointer to the APP handle
- * @netdev:	Netdev structure.
- * @flow:	TC flower classifier offload structure
+ * @app:	Poपूर्णांकer to the APP handle
+ * @netdev:	Netdev काष्ठाure.
+ * @flow:	TC flower classअगरier offload काष्ठाure
  *
- * Populates a flow statistics structure which which corresponds to a
- * specific flow.
+ * Populates a flow statistics काष्ठाure whichत which corresponds to a
+ * specअगरic flow.
  *
- * Return: negative value on error, 0 if stats populated successfully.
+ * Return: negative value on error, 0 अगर stats populated successfully.
  */
-static int
-nfp_flower_get_stats(struct nfp_app *app, struct net_device *netdev,
-		     struct flow_cls_offload *flow)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	struct netlink_ext_ack *extack = NULL;
-	struct nfp_fl_payload *nfp_flow;
+अटल पूर्णांक
+nfp_flower_get_stats(काष्ठा nfp_app *app, काष्ठा net_device *netdev,
+		     काष्ठा flow_cls_offload *flow)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा netlink_ext_ack *extack = शून्य;
+	काष्ठा nfp_fl_payload *nfp_flow;
 	u32 ctx_id;
 
 	extack = flow->common.extack;
 	nfp_flow = nfp_flower_search_fl_table(app, flow->cookie, netdev);
-	if (!nfp_flow) {
+	अगर (!nfp_flow) अणु
 		NL_SET_ERR_MSG_MOD(extack, "invalid entry: cannot dump stats for flow that does not exist");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ctx_id = be32_to_cpu(nfp_flow->meta.host_ctx_id);
 
 	spin_lock_bh(&priv->stats_lock);
-	/* If request is for a sub_flow, update stats from merged flows. */
-	if (!list_empty(&nfp_flow->linked_flows))
+	/* If request is क्रम a sub_flow, update stats from merged flows. */
+	अगर (!list_empty(&nfp_flow->linked_flows))
 		nfp_flower_update_merge_stats(app, nfp_flow);
 
 	flow_stats_update(&flow->stats, priv->stats[ctx_id].bytes,
@@ -1621,180 +1622,180 @@ nfp_flower_get_stats(struct nfp_app *app, struct net_device *netdev,
 	priv->stats[ctx_id].bytes = 0;
 	spin_unlock_bh(&priv->stats_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_flower_repr_offload(struct nfp_app *app, struct net_device *netdev,
-			struct flow_cls_offload *flower)
-{
-	if (!eth_proto_is_802_3(flower->common.protocol))
-		return -EOPNOTSUPP;
+अटल पूर्णांक
+nfp_flower_repr_offload(काष्ठा nfp_app *app, काष्ठा net_device *netdev,
+			काष्ठा flow_cls_offload *flower)
+अणु
+	अगर (!eth_proto_is_802_3(flower->common.protocol))
+		वापस -EOPNOTSUPP;
 
-	switch (flower->command) {
-	case FLOW_CLS_REPLACE:
-		return nfp_flower_add_offload(app, netdev, flower);
-	case FLOW_CLS_DESTROY:
-		return nfp_flower_del_offload(app, netdev, flower);
-	case FLOW_CLS_STATS:
-		return nfp_flower_get_stats(app, netdev, flower);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (flower->command) अणु
+	हाल FLOW_CLS_REPLACE:
+		वापस nfp_flower_add_offload(app, netdev, flower);
+	हाल FLOW_CLS_DESTROY:
+		वापस nfp_flower_del_offload(app, netdev, flower);
+	हाल FLOW_CLS_STATS:
+		वापस nfp_flower_get_stats(app, netdev, flower);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int nfp_flower_setup_tc_block_cb(enum tc_setup_type type,
-					void *type_data, void *cb_priv)
-{
-	struct nfp_repr *repr = cb_priv;
+अटल पूर्णांक nfp_flower_setup_tc_block_cb(क्रमागत tc_setup_type type,
+					व्योम *type_data, व्योम *cb_priv)
+अणु
+	काष्ठा nfp_repr *repr = cb_priv;
 
-	if (!tc_cls_can_offload_and_chain0(repr->netdev, type_data))
-		return -EOPNOTSUPP;
+	अगर (!tc_cls_can_offload_and_chain0(repr->netdev, type_data))
+		वापस -EOPNOTSUPP;
 
-	switch (type) {
-	case TC_SETUP_CLSFLOWER:
-		return nfp_flower_repr_offload(repr->app, repr->netdev,
+	चयन (type) अणु
+	हाल TC_SETUP_CLSFLOWER:
+		वापस nfp_flower_repr_offload(repr->app, repr->netdev,
 					       type_data);
-	case TC_SETUP_CLSMATCHALL:
-		return nfp_flower_setup_qos_offload(repr->app, repr->netdev,
+	हाल TC_SETUP_CLSMATCHALL:
+		वापस nfp_flower_setup_qos_offload(repr->app, repr->netdev,
 						    type_data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static LIST_HEAD(nfp_block_cb_list);
+अटल LIST_HEAD(nfp_block_cb_list);
 
-static int nfp_flower_setup_tc_block(struct net_device *netdev,
-				     struct flow_block_offload *f)
-{
-	struct nfp_repr *repr = netdev_priv(netdev);
-	struct nfp_flower_repr_priv *repr_priv;
-	struct flow_block_cb *block_cb;
+अटल पूर्णांक nfp_flower_setup_tc_block(काष्ठा net_device *netdev,
+				     काष्ठा flow_block_offload *f)
+अणु
+	काष्ठा nfp_repr *repr = netdev_priv(netdev);
+	काष्ठा nfp_flower_repr_priv *repr_priv;
+	काष्ठा flow_block_cb *block_cb;
 
-	if (f->binder_type != FLOW_BLOCK_BINDER_TYPE_CLSACT_INGRESS)
-		return -EOPNOTSUPP;
+	अगर (f->binder_type != FLOW_BLOCK_BINDER_TYPE_CLSACT_INGRESS)
+		वापस -EOPNOTSUPP;
 
 	repr_priv = repr->app_priv;
 	repr_priv->block_shared = f->block_shared;
 	f->driver_block_list = &nfp_block_cb_list;
 
-	switch (f->command) {
-	case FLOW_BLOCK_BIND:
-		if (flow_block_cb_is_busy(nfp_flower_setup_tc_block_cb, repr,
+	चयन (f->command) अणु
+	हाल FLOW_BLOCK_BIND:
+		अगर (flow_block_cb_is_busy(nfp_flower_setup_tc_block_cb, repr,
 					  &nfp_block_cb_list))
-			return -EBUSY;
+			वापस -EBUSY;
 
 		block_cb = flow_block_cb_alloc(nfp_flower_setup_tc_block_cb,
-					       repr, repr, NULL);
-		if (IS_ERR(block_cb))
-			return PTR_ERR(block_cb);
+					       repr, repr, शून्य);
+		अगर (IS_ERR(block_cb))
+			वापस PTR_ERR(block_cb);
 
 		flow_block_cb_add(block_cb, f);
 		list_add_tail(&block_cb->driver_list, &nfp_block_cb_list);
-		return 0;
-	case FLOW_BLOCK_UNBIND:
+		वापस 0;
+	हाल FLOW_BLOCK_UNBIND:
 		block_cb = flow_block_cb_lookup(f->block,
 						nfp_flower_setup_tc_block_cb,
 						repr);
-		if (!block_cb)
-			return -ENOENT;
+		अगर (!block_cb)
+			वापस -ENOENT;
 
-		flow_block_cb_remove(block_cb, f);
+		flow_block_cb_हटाओ(block_cb, f);
 		list_del(&block_cb->driver_list);
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-int nfp_flower_setup_tc(struct nfp_app *app, struct net_device *netdev,
-			enum tc_setup_type type, void *type_data)
-{
-	switch (type) {
-	case TC_SETUP_BLOCK:
-		return nfp_flower_setup_tc_block(netdev, type_data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+पूर्णांक nfp_flower_setup_tc(काष्ठा nfp_app *app, काष्ठा net_device *netdev,
+			क्रमागत tc_setup_type type, व्योम *type_data)
+अणु
+	चयन (type) अणु
+	हाल TC_SETUP_BLOCK:
+		वापस nfp_flower_setup_tc_block(netdev, type_data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-struct nfp_flower_indr_block_cb_priv {
-	struct net_device *netdev;
-	struct nfp_app *app;
-	struct list_head list;
-};
+काष्ठा nfp_flower_indr_block_cb_priv अणु
+	काष्ठा net_device *netdev;
+	काष्ठा nfp_app *app;
+	काष्ठा list_head list;
+पूर्ण;
 
-static struct nfp_flower_indr_block_cb_priv *
-nfp_flower_indr_block_cb_priv_lookup(struct nfp_app *app,
-				     struct net_device *netdev)
-{
-	struct nfp_flower_indr_block_cb_priv *cb_priv;
-	struct nfp_flower_priv *priv = app->priv;
+अटल काष्ठा nfp_flower_indr_block_cb_priv *
+nfp_flower_indr_block_cb_priv_lookup(काष्ठा nfp_app *app,
+				     काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_flower_indr_block_cb_priv *cb_priv;
+	काष्ठा nfp_flower_priv *priv = app->priv;
 
-	/* All callback list access should be protected by RTNL. */
+	/* All callback list access should be रक्षित by RTNL. */
 	ASSERT_RTNL();
 
-	list_for_each_entry(cb_priv, &priv->indr_block_cb_priv, list)
-		if (cb_priv->netdev == netdev)
-			return cb_priv;
+	list_क्रम_each_entry(cb_priv, &priv->indr_block_cb_priv, list)
+		अगर (cb_priv->netdev == netdev)
+			वापस cb_priv;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int nfp_flower_setup_indr_block_cb(enum tc_setup_type type,
-					  void *type_data, void *cb_priv)
-{
-	struct nfp_flower_indr_block_cb_priv *priv = cb_priv;
-	struct flow_cls_offload *flower = type_data;
+अटल पूर्णांक nfp_flower_setup_indr_block_cb(क्रमागत tc_setup_type type,
+					  व्योम *type_data, व्योम *cb_priv)
+अणु
+	काष्ठा nfp_flower_indr_block_cb_priv *priv = cb_priv;
+	काष्ठा flow_cls_offload *flower = type_data;
 
-	if (flower->common.chain_index)
-		return -EOPNOTSUPP;
+	अगर (flower->common.chain_index)
+		वापस -EOPNOTSUPP;
 
-	switch (type) {
-	case TC_SETUP_CLSFLOWER:
-		return nfp_flower_repr_offload(priv->app, priv->netdev,
+	चयन (type) अणु
+	हाल TC_SETUP_CLSFLOWER:
+		वापस nfp_flower_repr_offload(priv->app, priv->netdev,
 					       type_data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-void nfp_flower_setup_indr_tc_release(void *cb_priv)
-{
-	struct nfp_flower_indr_block_cb_priv *priv = cb_priv;
+व्योम nfp_flower_setup_indr_tc_release(व्योम *cb_priv)
+अणु
+	काष्ठा nfp_flower_indr_block_cb_priv *priv = cb_priv;
 
 	list_del(&priv->list);
-	kfree(priv);
-}
+	kमुक्त(priv);
+पूर्ण
 
-static int
-nfp_flower_setup_indr_tc_block(struct net_device *netdev, struct Qdisc *sch, struct nfp_app *app,
-			       struct flow_block_offload *f, void *data,
-			       void (*cleanup)(struct flow_block_cb *block_cb))
-{
-	struct nfp_flower_indr_block_cb_priv *cb_priv;
-	struct nfp_flower_priv *priv = app->priv;
-	struct flow_block_cb *block_cb;
+अटल पूर्णांक
+nfp_flower_setup_indr_tc_block(काष्ठा net_device *netdev, काष्ठा Qdisc *sch, काष्ठा nfp_app *app,
+			       काष्ठा flow_block_offload *f, व्योम *data,
+			       व्योम (*cleanup)(काष्ठा flow_block_cb *block_cb))
+अणु
+	काष्ठा nfp_flower_indr_block_cb_priv *cb_priv;
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा flow_block_cb *block_cb;
 
-	if ((f->binder_type != FLOW_BLOCK_BINDER_TYPE_CLSACT_INGRESS &&
-	     !nfp_flower_internal_port_can_offload(app, netdev)) ||
+	अगर ((f->binder_type != FLOW_BLOCK_BINDER_TYPE_CLSACT_INGRESS &&
+	     !nfp_flower_पूर्णांकernal_port_can_offload(app, netdev)) ||
 	    (f->binder_type != FLOW_BLOCK_BINDER_TYPE_CLSACT_EGRESS &&
-	     nfp_flower_internal_port_can_offload(app, netdev)))
-		return -EOPNOTSUPP;
+	     nfp_flower_पूर्णांकernal_port_can_offload(app, netdev)))
+		वापस -EOPNOTSUPP;
 
-	switch (f->command) {
-	case FLOW_BLOCK_BIND:
+	चयन (f->command) अणु
+	हाल FLOW_BLOCK_BIND:
 		cb_priv = nfp_flower_indr_block_cb_priv_lookup(app, netdev);
-		if (cb_priv &&
+		अगर (cb_priv &&
 		    flow_block_cb_is_busy(nfp_flower_setup_indr_block_cb,
 					  cb_priv,
 					  &nfp_block_cb_list))
-			return -EBUSY;
+			वापस -EBUSY;
 
-		cb_priv = kmalloc(sizeof(*cb_priv), GFP_KERNEL);
-		if (!cb_priv)
-			return -ENOMEM;
+		cb_priv = kदो_स्मृति(माप(*cb_priv), GFP_KERNEL);
+		अगर (!cb_priv)
+			वापस -ENOMEM;
 
 		cb_priv->netdev = netdev;
 		cb_priv->app = app;
@@ -1804,49 +1805,49 @@ nfp_flower_setup_indr_tc_block(struct net_device *netdev, struct Qdisc *sch, str
 						    cb_priv, cb_priv,
 						    nfp_flower_setup_indr_tc_release,
 						    f, netdev, sch, data, app, cleanup);
-		if (IS_ERR(block_cb)) {
+		अगर (IS_ERR(block_cb)) अणु
 			list_del(&cb_priv->list);
-			kfree(cb_priv);
-			return PTR_ERR(block_cb);
-		}
+			kमुक्त(cb_priv);
+			वापस PTR_ERR(block_cb);
+		पूर्ण
 
 		flow_block_cb_add(block_cb, f);
 		list_add_tail(&block_cb->driver_list, &nfp_block_cb_list);
-		return 0;
-	case FLOW_BLOCK_UNBIND:
+		वापस 0;
+	हाल FLOW_BLOCK_UNBIND:
 		cb_priv = nfp_flower_indr_block_cb_priv_lookup(app, netdev);
-		if (!cb_priv)
-			return -ENOENT;
+		अगर (!cb_priv)
+			वापस -ENOENT;
 
 		block_cb = flow_block_cb_lookup(f->block,
 						nfp_flower_setup_indr_block_cb,
 						cb_priv);
-		if (!block_cb)
-			return -ENOENT;
+		अगर (!block_cb)
+			वापस -ENOENT;
 
-		flow_indr_block_cb_remove(block_cb, f);
+		flow_indr_block_cb_हटाओ(block_cb, f);
 		list_del(&block_cb->driver_list);
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-	return 0;
-}
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int
-nfp_flower_indr_setup_tc_cb(struct net_device *netdev, struct Qdisc *sch, void *cb_priv,
-			    enum tc_setup_type type, void *type_data,
-			    void *data,
-			    void (*cleanup)(struct flow_block_cb *block_cb))
-{
-	if (!nfp_fl_is_netdev_to_offload(netdev))
-		return -EOPNOTSUPP;
+पूर्णांक
+nfp_flower_indr_setup_tc_cb(काष्ठा net_device *netdev, काष्ठा Qdisc *sch, व्योम *cb_priv,
+			    क्रमागत tc_setup_type type, व्योम *type_data,
+			    व्योम *data,
+			    व्योम (*cleanup)(काष्ठा flow_block_cb *block_cb))
+अणु
+	अगर (!nfp_fl_is_netdev_to_offload(netdev))
+		वापस -EOPNOTSUPP;
 
-	switch (type) {
-	case TC_SETUP_BLOCK:
-		return nfp_flower_setup_indr_tc_block(netdev, sch, cb_priv,
+	चयन (type) अणु
+	हाल TC_SETUP_BLOCK:
+		वापस nfp_flower_setup_indr_tc_block(netdev, sch, cb_priv,
 						      type_data, data, cleanup);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण

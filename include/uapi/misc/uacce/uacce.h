@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
-#ifndef _UAPIUUACCE_H
-#define _UAPIUUACCE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
+#अगर_अघोषित _UAPIUUACCE_H
+#घोषणा _UAPIUUACCE_H
 
-#include <linux/types.h>
-#include <linux/ioctl.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ioctl.h>
 
 /*
  * UACCE_CMD_START_Q: Start queue
  */
-#define UACCE_CMD_START_Q	_IO('W', 0)
+#घोषणा UACCE_CMD_START_Q	_IO('W', 0)
 
 /*
  * UACCE_CMD_PUT_Q:
- * User actively stop queue and free queue resource immediately
- * Optimization method since close fd may delay
+ * User actively stop queue and मुक्त queue resource immediately
+ * Optimization method since बंद fd may delay
  */
-#define UACCE_CMD_PUT_Q		_IO('W', 1)
+#घोषणा UACCE_CMD_PUT_Q		_IO('W', 1)
 
 /*
  * UACCE Device flags:
@@ -23,16 +24,16 @@
  *		  Support PASID
  *		  Support device page faults (PCI PRI or SMMU Stall)
  */
-#define UACCE_DEV_SVA		BIT(0)
+#घोषणा UACCE_DEV_SVA		BIT(0)
 
 /**
- * enum uacce_qfrt: queue file region type
+ * क्रमागत uacce_qfrt: queue file region type
  * @UACCE_QFRT_MMIO: device mmio region
  * @UACCE_QFRT_DUS: device user share region
  */
-enum uacce_qfrt {
+क्रमागत uacce_qfrt अणु
 	UACCE_QFRT_MMIO = 0,
 	UACCE_QFRT_DUS = 1,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

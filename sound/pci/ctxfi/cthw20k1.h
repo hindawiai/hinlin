@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
@@ -11,12 +12,12 @@
  * @Date 	May 13 2008
  */
 
-#ifndef CTHW20K1_H
-#define CTHW20K1_H
+#अगर_अघोषित CTHW20K1_H
+#घोषणा CTHW20K1_H
 
-#include "cthardware.h"
+#समावेश "cthardware.h"
 
-int create_20k1_hw_obj(struct hw **rhw);
-int destroy_20k1_hw_obj(struct hw *hw);
+पूर्णांक create_20k1_hw_obj(काष्ठा hw **rhw);
+पूर्णांक destroy_20k1_hw_obj(काष्ठा hw *hw);
 
-#endif /* CTHW20K1_H */
+#पूर्ण_अगर /* CTHW20K1_H */

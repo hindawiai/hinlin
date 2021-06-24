@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/types.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/io.h>
-#include <linux/mcb.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/types.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mcb.h>
 
-#include "mcb-internal.h"
+#समावेश "mcb-internal.h"
 
-struct mcb_parse_priv {
+काष्ठा mcb_parse_priv अणु
 	phys_addr_t mapbase;
-	void __iomem *base;
-};
+	व्योम __iomem *base;
+पूर्ण;
 
-#define for_each_chameleon_cell(dtype, p)	\
-	for ((dtype) = get_next_dtype((p));	\
+#घोषणा क्रम_each_chameleon_cell(dtype, p)	\
+	क्रम ((dtype) = get_next_dtype((p));	\
 	     (dtype) != CHAMELEON_DTYPE_END;	\
 	     (dtype) = get_next_dtype((p)))
 
-static inline uint32_t get_next_dtype(void __iomem *p)
-{
-	uint32_t dtype;
+अटल अंतरभूत uपूर्णांक32_t get_next_dtype(व्योम __iomem *p)
+अणु
+	uपूर्णांक32_t dtype;
 
-	dtype = readl(p);
-	return dtype >> 28;
-}
+	dtype = पढ़ोl(p);
+	वापस dtype >> 28;
+पूर्ण
 
-static int chameleon_parse_bdd(struct mcb_bus *bus,
-			struct chameleon_bar *cb,
-			void __iomem *base)
-{
-	return 0;
-}
+अटल पूर्णांक chameleon_parse_bdd(काष्ठा mcb_bus *bus,
+			काष्ठा chameleon_bar *cb,
+			व्योम __iomem *base)
+अणु
+	वापस 0;
+पूर्ण
 
-static int chameleon_parse_gdd(struct mcb_bus *bus,
-			struct chameleon_bar *cb,
-			void __iomem *base, int bar_count)
-{
-	struct chameleon_gdd __iomem *gdd =
-		(struct chameleon_gdd __iomem *) base;
-	struct mcb_device *mdev;
+अटल पूर्णांक chameleon_parse_gdd(काष्ठा mcb_bus *bus,
+			काष्ठा chameleon_bar *cb,
+			व्योम __iomem *base, पूर्णांक bar_count)
+अणु
+	काष्ठा chameleon_gdd __iomem *gdd =
+		(काष्ठा chameleon_gdd __iomem *) base;
+	काष्ठा mcb_device *mdev;
 	u32 dev_mapbase;
 	u32 offset;
 	u32 size;
-	int ret;
+	पूर्णांक ret;
 	__le32 reg1;
 	__le32 reg2;
 
 	mdev = mcb_alloc_dev(bus);
-	if (!mdev)
-		return -ENOMEM;
+	अगर (!mdev)
+		वापस -ENOMEM;
 
-	reg1 = readl(&gdd->reg1);
-	reg2 = readl(&gdd->reg2);
-	offset = readl(&gdd->offset);
-	size = readl(&gdd->size);
+	reg1 = पढ़ोl(&gdd->reg1);
+	reg2 = पढ़ोl(&gdd->reg2);
+	offset = पढ़ोl(&gdd->offset);
+	size = पढ़ोl(&gdd->size);
 
 	mdev->id = GDD_DEV(reg1);
 	mdev->rev = GDD_REV(reg1);
@@ -64,29 +65,29 @@ static int chameleon_parse_gdd(struct mcb_bus *bus,
 	mdev->inst = GDD_INS(reg2);
 
 	/*
-	 * If the BAR is missing, dev_mapbase is zero, or if the
-	 * device is IO mapped we just print a warning and go on with the
+	 * If the BAR is missing, dev_mapbase is zero, or अगर the
+	 * device is IO mapped we just prपूर्णांक a warning and go on with the
 	 * next device, instead of completely stop the gdd parser
 	 */
-	if (mdev->bar > bar_count - 1) {
+	अगर (mdev->bar > bar_count - 1) अणु
 		pr_info("No BAR for 16z%03d\n", mdev->id);
 		ret = 0;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	dev_mapbase = cb[mdev->bar].addr;
-	if (!dev_mapbase) {
+	अगर (!dev_mapbase) अणु
 		pr_info("BAR not assigned for 16z%03d\n", mdev->id);
 		ret = 0;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (dev_mapbase & 0x01) {
+	अगर (dev_mapbase & 0x01) अणु
 		pr_info("IO mapped Device (16z%03d) not yet supported\n",
 			mdev->id);
 		ret = 0;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	pr_debug("Found a 16z%03d\n", mdev->id);
 
@@ -101,40 +102,40 @@ static int chameleon_parse_gdd(struct mcb_bus *bus,
 
 	mdev->is_added = false;
 
-	ret = mcb_device_register(bus, mdev);
-	if (ret < 0)
-		goto err;
+	ret = mcb_device_रेजिस्टर(bus, mdev);
+	अगर (ret < 0)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
-	mcb_free_dev(mdev);
+	mcb_मुक्त_dev(mdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void chameleon_parse_bar(void __iomem *base,
-				struct chameleon_bar *cb, int bar_count)
-{
-	char __iomem *p = base;
-	int i;
+अटल व्योम chameleon_parse_bar(व्योम __iomem *base,
+				काष्ठा chameleon_bar *cb, पूर्णांक bar_count)
+अणु
+	अक्षर __iomem *p = base;
+	पूर्णांक i;
 
 	/* skip reg1 */
-	p += sizeof(__le32);
+	p += माप(__le32);
 
-	for (i = 0; i < bar_count; i++) {
-		cb[i].addr = readl(p);
-		cb[i].size = readl(p + 4);
+	क्रम (i = 0; i < bar_count; i++) अणु
+		cb[i].addr = पढ़ोl(p);
+		cb[i].size = पढ़ोl(p + 4);
 
-		p += sizeof(struct chameleon_bar);
-	}
-}
+		p += माप(काष्ठा chameleon_bar);
+	पूर्ण
+पूर्ण
 
-static int chameleon_get_bar(char __iomem **base, phys_addr_t mapbase,
-			     struct chameleon_bar **cb)
-{
-	struct chameleon_bar *c;
-	int bar_count;
+अटल पूर्णांक chameleon_get_bar(अक्षर __iomem **base, phys_addr_t mapbase,
+			     काष्ठा chameleon_bar **cb)
+अणु
+	काष्ठा chameleon_bar *c;
+	पूर्णांक bar_count;
 	__le32 reg;
 	u32 dtype;
 
@@ -146,111 +147,111 @@ static int chameleon_get_bar(char __iomem **base, phys_addr_t mapbase,
 	 * to a PCI header.
 	 */
 	dtype = get_next_dtype(*base);
-	if (dtype == CHAMELEON_DTYPE_BAR) {
-		reg = readl(*base);
+	अगर (dtype == CHAMELEON_DTYPE_BAR) अणु
+		reg = पढ़ोl(*base);
 
 		bar_count = BAR_CNT(reg);
-		if (bar_count <= 0 || bar_count > CHAMELEON_BAR_MAX)
-			return -ENODEV;
+		अगर (bar_count <= 0 || bar_count > CHAMELEON_BAR_MAX)
+			वापस -ENODEV;
 
-		c = kcalloc(bar_count, sizeof(struct chameleon_bar),
+		c = kसुस्मृति(bar_count, माप(काष्ठा chameleon_bar),
 			    GFP_KERNEL);
-		if (!c)
-			return -ENOMEM;
+		अगर (!c)
+			वापस -ENOMEM;
 
 		chameleon_parse_bar(*base, c, bar_count);
 		*base += BAR_DESC_SIZE(bar_count);
-	} else {
-		c = kzalloc(sizeof(struct chameleon_bar), GFP_KERNEL);
-		if (!c)
-			return -ENOMEM;
+	पूर्ण अन्यथा अणु
+		c = kzalloc(माप(काष्ठा chameleon_bar), GFP_KERNEL);
+		अगर (!c)
+			वापस -ENOMEM;
 
 		bar_count = 1;
 		c->addr = mapbase;
-	}
+	पूर्ण
 
 	*cb = c;
 
-	return bar_count;
-}
+	वापस bar_count;
+पूर्ण
 
-int chameleon_parse_cells(struct mcb_bus *bus, phys_addr_t mapbase,
-			void __iomem *base)
-{
-	struct chameleon_fpga_header *header;
-	struct chameleon_bar *cb;
-	char __iomem *p = base;
-	int num_cells = 0;
-	uint32_t dtype;
-	int bar_count;
-	int ret;
+पूर्णांक chameleon_parse_cells(काष्ठा mcb_bus *bus, phys_addr_t mapbase,
+			व्योम __iomem *base)
+अणु
+	काष्ठा chameleon_fpga_header *header;
+	काष्ठा chameleon_bar *cb;
+	अक्षर __iomem *p = base;
+	पूर्णांक num_cells = 0;
+	uपूर्णांक32_t dtype;
+	पूर्णांक bar_count;
+	पूर्णांक ret;
 	u32 hsize;
 
-	hsize = sizeof(struct chameleon_fpga_header);
+	hsize = माप(काष्ठा chameleon_fpga_header);
 
 	header = kzalloc(hsize, GFP_KERNEL);
-	if (!header)
-		return -ENOMEM;
+	अगर (!header)
+		वापस -ENOMEM;
 
-	/* Extract header information */
-	memcpy_fromio(header, p, hsize);
+	/* Extract header inक्रमmation */
+	स_नकल_fromio(header, p, hsize);
 	/* We only support chameleon v2 at the moment */
 	header->magic = le16_to_cpu(header->magic);
-	if (header->magic != CHAMELEONV2_MAGIC) {
+	अगर (header->magic != CHAMELEONV2_MAGIC) अणु
 		pr_err("Unsupported chameleon version 0x%x\n",
 				header->magic);
 		ret = -ENODEV;
-		goto free_header;
-	}
+		जाओ मुक्त_header;
+	पूर्ण
 	p += hsize;
 
 	bus->revision = header->revision;
 	bus->model = header->model;
 	bus->minor = header->minor;
-	snprintf(bus->name, CHAMELEON_FILENAME_LEN + 1, "%s",
+	snम_लिखो(bus->name, CHAMELEON_खाताNAME_LEN + 1, "%s",
 		 header->filename);
 
 	bar_count = chameleon_get_bar(&p, mapbase, &cb);
-	if (bar_count < 0) {
+	अगर (bar_count < 0) अणु
 		ret = bar_count;
-		goto free_header;
-	}
+		जाओ मुक्त_header;
+	पूर्ण
 
-	for_each_chameleon_cell(dtype, p) {
-		switch (dtype) {
-		case CHAMELEON_DTYPE_GENERAL:
+	क्रम_each_chameleon_cell(dtype, p) अणु
+		चयन (dtype) अणु
+		हाल CHAMELEON_DTYPE_GENERAL:
 			ret = chameleon_parse_gdd(bus, cb, p, bar_count);
-			if (ret < 0)
-				goto free_bar;
-			p += sizeof(struct chameleon_gdd);
-			break;
-		case CHAMELEON_DTYPE_BRIDGE:
+			अगर (ret < 0)
+				जाओ मुक्त_bar;
+			p += माप(काष्ठा chameleon_gdd);
+			अवरोध;
+		हाल CHAMELEON_DTYPE_BRIDGE:
 			chameleon_parse_bdd(bus, cb, p);
-			p += sizeof(struct chameleon_bdd);
-			break;
-		case CHAMELEON_DTYPE_END:
-			break;
-		default:
+			p += माप(काष्ठा chameleon_bdd);
+			अवरोध;
+		हाल CHAMELEON_DTYPE_END:
+			अवरोध;
+		शेष:
 			pr_err("Invalid chameleon descriptor type 0x%x\n",
 				dtype);
 			ret = -EINVAL;
-			goto free_bar;
-		}
+			जाओ मुक्त_bar;
+		पूर्ण
 		num_cells++;
-	}
+	पूर्ण
 
-	if (num_cells == 0)
+	अगर (num_cells == 0)
 		num_cells = -EINVAL;
 
-	kfree(cb);
-	kfree(header);
-	return num_cells;
+	kमुक्त(cb);
+	kमुक्त(header);
+	वापस num_cells;
 
-free_bar:
-	kfree(cb);
-free_header:
-	kfree(header);
+मुक्त_bar:
+	kमुक्त(cb);
+मुक्त_header:
+	kमुक्त(header);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_NS_GPL(chameleon_parse_cells, MCB);

@@ -1,235 +1,236 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Handle device page faults
  *
  * Copyright (C) 2020 ARM Ltd.
  */
 
-#include <linux/iommu.h>
-#include <linux/list.h>
-#include <linux/sched/mm.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/list.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
 
-#include "iommu-sva-lib.h"
+#समावेश "iommu-sva-lib.h"
 
 /**
- * struct iopf_queue - IO Page Fault queue
+ * काष्ठा iopf_queue - IO Page Fault queue
  * @wq: the fault workqueue
  * @devices: devices attached to this queue
  * @lock: protects the device list
  */
-struct iopf_queue {
-	struct workqueue_struct		*wq;
-	struct list_head		devices;
-	struct mutex			lock;
-};
+काष्ठा iopf_queue अणु
+	काष्ठा workqueue_काष्ठा		*wq;
+	काष्ठा list_head		devices;
+	काष्ठा mutex			lock;
+पूर्ण;
 
 /**
- * struct iopf_device_param - IO Page Fault data attached to a device
+ * काष्ठा iopf_device_param - IO Page Fault data attached to a device
  * @dev: the device that owns this param
  * @queue: IOPF queue
- * @queue_list: index into queue->devices
- * @partial: faults that are part of a Page Request Group for which the last
+ * @queue_list: index पूर्णांकo queue->devices
+ * @partial: faults that are part of a Page Request Group क्रम which the last
  *           request hasn't been submitted yet.
  */
-struct iopf_device_param {
-	struct device			*dev;
-	struct iopf_queue		*queue;
-	struct list_head		queue_list;
-	struct list_head		partial;
-};
+काष्ठा iopf_device_param अणु
+	काष्ठा device			*dev;
+	काष्ठा iopf_queue		*queue;
+	काष्ठा list_head		queue_list;
+	काष्ठा list_head		partial;
+पूर्ण;
 
-struct iopf_fault {
-	struct iommu_fault		fault;
-	struct list_head		list;
-};
+काष्ठा iopf_fault अणु
+	काष्ठा iommu_fault		fault;
+	काष्ठा list_head		list;
+पूर्ण;
 
-struct iopf_group {
-	struct iopf_fault		last_fault;
-	struct list_head		faults;
-	struct work_struct		work;
-	struct device			*dev;
-};
+काष्ठा iopf_group अणु
+	काष्ठा iopf_fault		last_fault;
+	काष्ठा list_head		faults;
+	काष्ठा work_काष्ठा		work;
+	काष्ठा device			*dev;
+पूर्ण;
 
-static int iopf_complete_group(struct device *dev, struct iopf_fault *iopf,
-			       enum iommu_page_response_code status)
-{
-	struct iommu_page_response resp = {
+अटल पूर्णांक iopf_complete_group(काष्ठा device *dev, काष्ठा iopf_fault *iopf,
+			       क्रमागत iommu_page_response_code status)
+अणु
+	काष्ठा iommu_page_response resp = अणु
 		.version		= IOMMU_PAGE_RESP_VERSION_1,
 		.pasid			= iopf->fault.prm.pasid,
 		.grpid			= iopf->fault.prm.grpid,
 		.code			= status,
-	};
+	पूर्ण;
 
-	if ((iopf->fault.prm.flags & IOMMU_FAULT_PAGE_REQUEST_PASID_VALID) &&
+	अगर ((iopf->fault.prm.flags & IOMMU_FAULT_PAGE_REQUEST_PASID_VALID) &&
 	    (iopf->fault.prm.flags & IOMMU_FAULT_PAGE_RESPONSE_NEEDS_PASID))
 		resp.flags = IOMMU_PAGE_RESP_PASID_VALID;
 
-	return iommu_page_response(dev, &resp);
-}
+	वापस iommu_page_response(dev, &resp);
+पूर्ण
 
-static enum iommu_page_response_code
-iopf_handle_single(struct iopf_fault *iopf)
-{
+अटल क्रमागत iommu_page_response_code
+iopf_handle_single(काष्ठा iopf_fault *iopf)
+अणु
 	vm_fault_t ret;
-	struct mm_struct *mm;
-	struct vm_area_struct *vma;
-	unsigned int access_flags = 0;
-	unsigned int fault_flags = FAULT_FLAG_REMOTE;
-	struct iommu_fault_page_request *prm = &iopf->fault.prm;
-	enum iommu_page_response_code status = IOMMU_PAGE_RESP_INVALID;
+	काष्ठा mm_काष्ठा *mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	अचिन्हित पूर्णांक access_flags = 0;
+	अचिन्हित पूर्णांक fault_flags = FAULT_FLAG_REMOTE;
+	काष्ठा iommu_fault_page_request *prm = &iopf->fault.prm;
+	क्रमागत iommu_page_response_code status = IOMMU_PAGE_RESP_INVALID;
 
-	if (!(prm->flags & IOMMU_FAULT_PAGE_REQUEST_PASID_VALID))
-		return status;
+	अगर (!(prm->flags & IOMMU_FAULT_PAGE_REQUEST_PASID_VALID))
+		वापस status;
 
 	mm = iommu_sva_find(prm->pasid);
-	if (IS_ERR_OR_NULL(mm))
-		return status;
+	अगर (IS_ERR_OR_शून्य(mm))
+		वापस status;
 
-	mmap_read_lock(mm);
+	mmap_पढ़ो_lock(mm);
 
 	vma = find_extend_vma(mm, prm->addr);
-	if (!vma)
+	अगर (!vma)
 		/* Unmapped area */
-		goto out_put_mm;
+		जाओ out_put_mm;
 
-	if (prm->perm & IOMMU_FAULT_PERM_READ)
+	अगर (prm->perm & IOMMU_FAULT_PERM_READ)
 		access_flags |= VM_READ;
 
-	if (prm->perm & IOMMU_FAULT_PERM_WRITE) {
+	अगर (prm->perm & IOMMU_FAULT_PERM_WRITE) अणु
 		access_flags |= VM_WRITE;
 		fault_flags |= FAULT_FLAG_WRITE;
-	}
+	पूर्ण
 
-	if (prm->perm & IOMMU_FAULT_PERM_EXEC) {
+	अगर (prm->perm & IOMMU_FAULT_PERM_EXEC) अणु
 		access_flags |= VM_EXEC;
 		fault_flags |= FAULT_FLAG_INSTRUCTION;
-	}
+	पूर्ण
 
-	if (!(prm->perm & IOMMU_FAULT_PERM_PRIV))
+	अगर (!(prm->perm & IOMMU_FAULT_PERM_PRIV))
 		fault_flags |= FAULT_FLAG_USER;
 
-	if (access_flags & ~vma->vm_flags)
+	अगर (access_flags & ~vma->vm_flags)
 		/* Access fault */
-		goto out_put_mm;
+		जाओ out_put_mm;
 
-	ret = handle_mm_fault(vma, prm->addr, fault_flags, NULL);
+	ret = handle_mm_fault(vma, prm->addr, fault_flags, शून्य);
 	status = ret & VM_FAULT_ERROR ? IOMMU_PAGE_RESP_INVALID :
 		IOMMU_PAGE_RESP_SUCCESS;
 
 out_put_mm:
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 	mmput(mm);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void iopf_handle_group(struct work_struct *work)
-{
-	struct iopf_group *group;
-	struct iopf_fault *iopf, *next;
-	enum iommu_page_response_code status = IOMMU_PAGE_RESP_SUCCESS;
+अटल व्योम iopf_handle_group(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा iopf_group *group;
+	काष्ठा iopf_fault *iopf, *next;
+	क्रमागत iommu_page_response_code status = IOMMU_PAGE_RESP_SUCCESS;
 
-	group = container_of(work, struct iopf_group, work);
+	group = container_of(work, काष्ठा iopf_group, work);
 
-	list_for_each_entry_safe(iopf, next, &group->faults, list) {
+	list_क्रम_each_entry_safe(iopf, next, &group->faults, list) अणु
 		/*
-		 * For the moment, errors are sticky: don't handle subsequent
-		 * faults in the group if there is an error.
+		 * For the moment, errors are sticky: करोn't handle subsequent
+		 * faults in the group अगर there is an error.
 		 */
-		if (status == IOMMU_PAGE_RESP_SUCCESS)
+		अगर (status == IOMMU_PAGE_RESP_SUCCESS)
 			status = iopf_handle_single(iopf);
 
-		if (!(iopf->fault.prm.flags &
+		अगर (!(iopf->fault.prm.flags &
 		      IOMMU_FAULT_PAGE_REQUEST_LAST_PAGE))
-			kfree(iopf);
-	}
+			kमुक्त(iopf);
+	पूर्ण
 
 	iopf_complete_group(group->dev, &group->last_fault, status);
-	kfree(group);
-}
+	kमुक्त(group);
+पूर्ण
 
 /**
  * iommu_queue_iopf - IO Page Fault handler
  * @fault: fault event
- * @cookie: struct device, passed to iommu_register_device_fault_handler.
+ * @cookie: काष्ठा device, passed to iommu_रेजिस्टर_device_fault_handler.
  *
  * Add a fault to the device workqueue, to be handled by mm.
  *
- * This module doesn't handle PCI PASID Stop Marker; IOMMU drivers must discard
- * them before reporting faults. A PASID Stop Marker (LRW = 0b100) doesn't
+ * This module करोesn't handle PCI PASID Stop Marker; IOMMU drivers must discard
+ * them beक्रमe reporting faults. A PASID Stop Marker (LRW = 0b100) करोesn't
  * expect a response. It may be generated when disabling a PASID (issuing a
  * PASID stop request) by some PCI devices.
  *
- * The PASID stop request is issued by the device driver before unbind(). Once
- * it completes, no page request is generated for this PASID anymore and
+ * The PASID stop request is issued by the device driver beक्रमe unbind(). Once
+ * it completes, no page request is generated क्रम this PASID anymore and
  * outstanding ones have been pushed to the IOMMU (as per PCIe 4.0r1.0 - 6.20.1
- * and 10.4.1.2 - Managing PASID TLP Prefix Usage). Some PCI devices will wait
- * for all outstanding page requests to come back with a response before
- * completing the PASID stop request. Others do not wait for page responses, and
+ * and 10.4.1.2 - Managing PASID TLP Prefix Usage). Some PCI devices will रुको
+ * क्रम all outstanding page requests to come back with a response beक्रमe
+ * completing the PASID stop request. Others करो not रुको क्रम page responses, and
  * instead issue this Stop Marker that tells us when the PASID can be
- * reallocated.
+ * पुनः_स्मृतिated.
  *
  * It is safe to discard the Stop Marker because it is an optimization.
  * a. Page requests, which are posted requests, have been flushed to the IOMMU
  *    when the stop request completes.
- * b. The IOMMU driver flushes all fault queues on unbind() before freeing the
+ * b. The IOMMU driver flushes all fault queues on unbind() beक्रमe मुक्तing the
  *    PASID.
  *
  * So even though the Stop Marker might be issued by the device *after* the stop
- * request completes, outstanding faults will have been dealt with by the time
- * the PASID is freed.
+ * request completes, outstanding faults will have been dealt with by the समय
+ * the PASID is मुक्तd.
  *
  * Return: 0 on success and <0 on error.
  */
-int iommu_queue_iopf(struct iommu_fault *fault, void *cookie)
-{
-	int ret;
-	struct iopf_group *group;
-	struct iopf_fault *iopf, *next;
-	struct iopf_device_param *iopf_param;
+पूर्णांक iommu_queue_iopf(काष्ठा iommu_fault *fault, व्योम *cookie)
+अणु
+	पूर्णांक ret;
+	काष्ठा iopf_group *group;
+	काष्ठा iopf_fault *iopf, *next;
+	काष्ठा iopf_device_param *iopf_param;
 
-	struct device *dev = cookie;
-	struct dev_iommu *param = dev->iommu;
+	काष्ठा device *dev = cookie;
+	काष्ठा dev_iommu *param = dev->iommu;
 
-	lockdep_assert_held(&param->lock);
+	lockdep_निश्चित_held(&param->lock);
 
-	if (fault->type != IOMMU_FAULT_PAGE_REQ)
+	अगर (fault->type != IOMMU_FAULT_PAGE_REQ)
 		/* Not a recoverable page fault */
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	/*
-	 * As long as we're holding param->lock, the queue can't be unlinked
-	 * from the device and therefore cannot disappear.
+	 * As दीर्घ as we're holding param->lock, the queue can't be unlinked
+	 * from the device and thereक्रमe cannot disappear.
 	 */
 	iopf_param = param->iopf_param;
-	if (!iopf_param)
-		return -ENODEV;
+	अगर (!iopf_param)
+		वापस -ENODEV;
 
-	if (!(fault->prm.flags & IOMMU_FAULT_PAGE_REQUEST_LAST_PAGE)) {
-		iopf = kzalloc(sizeof(*iopf), GFP_KERNEL);
-		if (!iopf)
-			return -ENOMEM;
+	अगर (!(fault->prm.flags & IOMMU_FAULT_PAGE_REQUEST_LAST_PAGE)) अणु
+		iopf = kzalloc(माप(*iopf), GFP_KERNEL);
+		अगर (!iopf)
+			वापस -ENOMEM;
 
 		iopf->fault = *fault;
 
 		/* Non-last request of a group. Postpone until the last one */
 		list_add(&iopf->list, &iopf_param->partial);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	group = kzalloc(sizeof(*group), GFP_KERNEL);
-	if (!group) {
+	group = kzalloc(माप(*group), GFP_KERNEL);
+	अगर (!group) अणु
 		/*
-		 * The caller will send a response to the hardware. But we do
-		 * need to clean up before leaving, otherwise partial faults
+		 * The caller will send a response to the hardware. But we करो
+		 * need to clean up beक्रमe leaving, otherwise partial faults
 		 * will be stuck.
 		 */
 		ret = -ENOMEM;
-		goto cleanup_partial;
-	}
+		जाओ cleanup_partial;
+	पूर्ण
 
 	group->dev = dev;
 	group->last_fault.fault = *fault;
@@ -237,58 +238,58 @@ int iommu_queue_iopf(struct iommu_fault *fault, void *cookie)
 	list_add(&group->last_fault.list, &group->faults);
 	INIT_WORK(&group->work, iopf_handle_group);
 
-	/* See if we have partial faults for this group */
-	list_for_each_entry_safe(iopf, next, &iopf_param->partial, list) {
-		if (iopf->fault.prm.grpid == fault->prm.grpid)
-			/* Insert *before* the last fault */
+	/* See अगर we have partial faults क्रम this group */
+	list_क्रम_each_entry_safe(iopf, next, &iopf_param->partial, list) अणु
+		अगर (iopf->fault.prm.grpid == fault->prm.grpid)
+			/* Insert *beक्रमe* the last fault */
 			list_move(&iopf->list, &group->faults);
-	}
+	पूर्ण
 
 	queue_work(iopf_param->queue->wq, &group->work);
-	return 0;
+	वापस 0;
 
 cleanup_partial:
-	list_for_each_entry_safe(iopf, next, &iopf_param->partial, list) {
-		if (iopf->fault.prm.grpid == fault->prm.grpid) {
+	list_क्रम_each_entry_safe(iopf, next, &iopf_param->partial, list) अणु
+		अगर (iopf->fault.prm.grpid == fault->prm.grpid) अणु
 			list_del(&iopf->list);
-			kfree(iopf);
-		}
-	}
-	return ret;
-}
+			kमुक्त(iopf);
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iommu_queue_iopf);
 
 /**
  * iopf_queue_flush_dev - Ensure that all queued faults have been processed
- * @dev: the endpoint whose faults need to be flushed.
+ * @dev: the endpoपूर्णांक whose faults need to be flushed.
  *
- * The IOMMU driver calls this before releasing a PASID, to ensure that all
- * pending faults for this PASID have been handled, and won't hit the address
+ * The IOMMU driver calls this beक्रमe releasing a PASID, to ensure that all
+ * pending faults क्रम this PASID have been handled, and won't hit the address
  * space of the next process that uses this PASID. The driver must make sure
  * that no new fault is added to the queue. In particular it must flush its
- * low-level queue before calling this function.
+ * low-level queue beक्रमe calling this function.
  *
  * Return: 0 on success and <0 on error.
  */
-int iopf_queue_flush_dev(struct device *dev)
-{
-	int ret = 0;
-	struct iopf_device_param *iopf_param;
-	struct dev_iommu *param = dev->iommu;
+पूर्णांक iopf_queue_flush_dev(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा iopf_device_param *iopf_param;
+	काष्ठा dev_iommu *param = dev->iommu;
 
-	if (!param)
-		return -ENODEV;
+	अगर (!param)
+		वापस -ENODEV;
 
 	mutex_lock(&param->lock);
 	iopf_param = param->iopf_param;
-	if (iopf_param)
+	अगर (iopf_param)
 		flush_workqueue(iopf_param->queue->wq);
-	else
+	अन्यथा
 		ret = -ENODEV;
 	mutex_unlock(&param->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iopf_queue_flush_dev);
 
 /**
@@ -301,25 +302,25 @@ EXPORT_SYMBOL_GPL(iopf_queue_flush_dev);
  *
  * Return: 0 on success and <0 on error.
  */
-int iopf_queue_discard_partial(struct iopf_queue *queue)
-{
-	struct iopf_fault *iopf, *next;
-	struct iopf_device_param *iopf_param;
+पूर्णांक iopf_queue_discard_partial(काष्ठा iopf_queue *queue)
+अणु
+	काष्ठा iopf_fault *iopf, *next;
+	काष्ठा iopf_device_param *iopf_param;
 
-	if (!queue)
-		return -EINVAL;
+	अगर (!queue)
+		वापस -EINVAL;
 
 	mutex_lock(&queue->lock);
-	list_for_each_entry(iopf_param, &queue->devices, queue_list) {
-		list_for_each_entry_safe(iopf, next, &iopf_param->partial,
-					 list) {
+	list_क्रम_each_entry(iopf_param, &queue->devices, queue_list) अणु
+		list_क्रम_each_entry_safe(iopf, next, &iopf_param->partial,
+					 list) अणु
 			list_del(&iopf->list);
-			kfree(iopf);
-		}
-	}
+			kमुक्त(iopf);
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&queue->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(iopf_queue_discard_partial);
 
 /**
@@ -329,18 +330,18 @@ EXPORT_SYMBOL_GPL(iopf_queue_discard_partial);
  *
  * Return: 0 on success and <0 on error.
  */
-int iopf_queue_add_device(struct iopf_queue *queue, struct device *dev)
-{
-	int ret = -EBUSY;
-	struct iopf_device_param *iopf_param;
-	struct dev_iommu *param = dev->iommu;
+पूर्णांक iopf_queue_add_device(काष्ठा iopf_queue *queue, काष्ठा device *dev)
+अणु
+	पूर्णांक ret = -EBUSY;
+	काष्ठा iopf_device_param *iopf_param;
+	काष्ठा dev_iommu *param = dev->iommu;
 
-	if (!param)
-		return -ENODEV;
+	अगर (!param)
+		वापस -ENODEV;
 
-	iopf_param = kzalloc(sizeof(*iopf_param), GFP_KERNEL);
-	if (!iopf_param)
-		return -ENOMEM;
+	iopf_param = kzalloc(माप(*iopf_param), GFP_KERNEL);
+	अगर (!iopf_param)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&iopf_param->partial);
 	iopf_param->queue = queue;
@@ -348,76 +349,76 @@ int iopf_queue_add_device(struct iopf_queue *queue, struct device *dev)
 
 	mutex_lock(&queue->lock);
 	mutex_lock(&param->lock);
-	if (!param->iopf_param) {
+	अगर (!param->iopf_param) अणु
 		list_add(&iopf_param->queue_list, &queue->devices);
 		param->iopf_param = iopf_param;
 		ret = 0;
-	}
+	पूर्ण
 	mutex_unlock(&param->lock);
 	mutex_unlock(&queue->lock);
 
-	if (ret)
-		kfree(iopf_param);
+	अगर (ret)
+		kमुक्त(iopf_param);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(iopf_queue_add_device);
 
 /**
- * iopf_queue_remove_device - Remove producer from fault queue
+ * iopf_queue_हटाओ_device - Remove producer from fault queue
  * @queue: IOPF queue
- * @dev: device to remove
+ * @dev: device to हटाओ
  *
- * Caller makes sure that no more faults are reported for this device.
+ * Caller makes sure that no more faults are reported क्रम this device.
  *
  * Return: 0 on success and <0 on error.
  */
-int iopf_queue_remove_device(struct iopf_queue *queue, struct device *dev)
-{
-	int ret = -EINVAL;
-	struct iopf_fault *iopf, *next;
-	struct iopf_device_param *iopf_param;
-	struct dev_iommu *param = dev->iommu;
+पूर्णांक iopf_queue_हटाओ_device(काष्ठा iopf_queue *queue, काष्ठा device *dev)
+अणु
+	पूर्णांक ret = -EINVAL;
+	काष्ठा iopf_fault *iopf, *next;
+	काष्ठा iopf_device_param *iopf_param;
+	काष्ठा dev_iommu *param = dev->iommu;
 
-	if (!param || !queue)
-		return -EINVAL;
+	अगर (!param || !queue)
+		वापस -EINVAL;
 
 	mutex_lock(&queue->lock);
 	mutex_lock(&param->lock);
 	iopf_param = param->iopf_param;
-	if (iopf_param && iopf_param->queue == queue) {
+	अगर (iopf_param && iopf_param->queue == queue) अणु
 		list_del(&iopf_param->queue_list);
-		param->iopf_param = NULL;
+		param->iopf_param = शून्य;
 		ret = 0;
-	}
+	पूर्ण
 	mutex_unlock(&param->lock);
 	mutex_unlock(&queue->lock);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Just in case some faults are still stuck */
-	list_for_each_entry_safe(iopf, next, &iopf_param->partial, list)
-		kfree(iopf);
+	/* Just in हाल some faults are still stuck */
+	list_क्रम_each_entry_safe(iopf, next, &iopf_param->partial, list)
+		kमुक्त(iopf);
 
-	kfree(iopf_param);
+	kमुक्त(iopf_param);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(iopf_queue_remove_device);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(iopf_queue_हटाओ_device);
 
 /**
  * iopf_queue_alloc - Allocate and initialize a fault queue
- * @name: a unique string identifying the queue (for workqueue)
+ * @name: a unique string identअगरying the queue (क्रम workqueue)
  *
- * Return: the queue on success and NULL on error.
+ * Return: the queue on success and शून्य on error.
  */
-struct iopf_queue *iopf_queue_alloc(const char *name)
-{
-	struct iopf_queue *queue;
+काष्ठा iopf_queue *iopf_queue_alloc(स्थिर अक्षर *name)
+अणु
+	काष्ठा iopf_queue *queue;
 
-	queue = kzalloc(sizeof(*queue), GFP_KERNEL);
-	if (!queue)
-		return NULL;
+	queue = kzalloc(माप(*queue), GFP_KERNEL);
+	अगर (!queue)
+		वापस शून्य;
 
 	/*
 	 * The WQ is unordered because the low-level handler enqueues faults by
@@ -426,36 +427,36 @@ struct iopf_queue *iopf_queue_alloc(const char *name)
 	 * order.
 	 */
 	queue->wq = alloc_workqueue("iopf_queue/%s", WQ_UNBOUND, 0, name);
-	if (!queue->wq) {
-		kfree(queue);
-		return NULL;
-	}
+	अगर (!queue->wq) अणु
+		kमुक्त(queue);
+		वापस शून्य;
+	पूर्ण
 
 	INIT_LIST_HEAD(&queue->devices);
 	mutex_init(&queue->lock);
 
-	return queue;
-}
+	वापस queue;
+पूर्ण
 EXPORT_SYMBOL_GPL(iopf_queue_alloc);
 
 /**
- * iopf_queue_free - Free IOPF queue
- * @queue: queue to free
+ * iopf_queue_मुक्त - Free IOPF queue
+ * @queue: queue to मुक्त
  *
  * Counterpart to iopf_queue_alloc(). The driver must not be queuing faults or
  * adding/removing devices on this queue anymore.
  */
-void iopf_queue_free(struct iopf_queue *queue)
-{
-	struct iopf_device_param *iopf_param, *next;
+व्योम iopf_queue_मुक्त(काष्ठा iopf_queue *queue)
+अणु
+	काष्ठा iopf_device_param *iopf_param, *next;
 
-	if (!queue)
-		return;
+	अगर (!queue)
+		वापस;
 
-	list_for_each_entry_safe(iopf_param, next, &queue->devices, queue_list)
-		iopf_queue_remove_device(queue, iopf_param->dev);
+	list_क्रम_each_entry_safe(iopf_param, next, &queue->devices, queue_list)
+		iopf_queue_हटाओ_device(queue, iopf_param->dev);
 
 	destroy_workqueue(queue->wq);
-	kfree(queue);
-}
-EXPORT_SYMBOL_GPL(iopf_queue_free);
+	kमुक्त(queue);
+पूर्ण
+EXPORT_SYMBOL_GPL(iopf_queue_मुक्त);

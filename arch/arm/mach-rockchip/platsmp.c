@@ -1,218 +1,219 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright (c) 2013 MundoReader S.L.
+ * Copyright (c) 2013 MunकरोReader S.L.
  * Author: Heiko Stuebner <heiko@sntech.de>
  */
 
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/smp.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/regmap.h>
-#include <linux/mfd/syscon.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
 
-#include <linux/reset.h>
-#include <linux/cpu.h>
-#include <asm/cacheflush.h>
-#include <asm/cp15.h>
-#include <asm/smp_scu.h>
-#include <asm/smp_plat.h>
-#include <asm/mach/map.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/cpu.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/smp_scu.h>
+#समावेश <यंत्र/smp_plat.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include "core.h"
+#समावेश "core.h"
 
-static void __iomem *scu_base_addr;
-static void __iomem *sram_base_addr;
-static int ncores;
+अटल व्योम __iomem *scu_base_addr;
+अटल व्योम __iomem *sram_base_addr;
+अटल पूर्णांक ncores;
 
-#define PMU_PWRDN_CON		0x08
-#define PMU_PWRDN_ST		0x0c
+#घोषणा PMU_PWRDN_CON		0x08
+#घोषणा PMU_PWRDN_ST		0x0c
 
-#define PMU_PWRDN_SCU		4
+#घोषणा PMU_PWRDN_SCU		4
 
-static struct regmap *pmu;
-static int has_pmu = true;
+अटल काष्ठा regmap *pmu;
+अटल पूर्णांक has_pmu = true;
 
-static int pmu_power_domain_is_on(int pd)
-{
+अटल पूर्णांक pmu_घातer_करोमुख्य_is_on(पूर्णांक pd)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(pmu, PMU_PWRDN_ST, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(pmu, PMU_PWRDN_ST, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return !(val & BIT(pd));
-}
+	वापस !(val & BIT(pd));
+पूर्ण
 
-static struct reset_control *rockchip_get_core_reset(int cpu)
-{
-	struct device *dev = get_cpu_device(cpu);
-	struct device_node *np;
+अटल काष्ठा reset_control *rockchip_get_core_reset(पूर्णांक cpu)
+अणु
+	काष्ठा device *dev = get_cpu_device(cpu);
+	काष्ठा device_node *np;
 
 	/* The cpu device is only available after the initial core bringup */
-	if (dev)
+	अगर (dev)
 		np = dev->of_node;
-	else
-		np = of_get_cpu_node(cpu, NULL);
+	अन्यथा
+		np = of_get_cpu_node(cpu, शून्य);
 
-	return of_reset_control_get_exclusive(np, NULL);
-}
+	वापस of_reset_control_get_exclusive(np, शून्य);
+पूर्ण
 
-static int pmu_set_power_domain(int pd, bool on)
-{
+अटल पूर्णांक pmu_set_घातer_करोमुख्य(पूर्णांक pd, bool on)
+अणु
 	u32 val = (on) ? 0 : BIT(pd);
-	struct reset_control *rstc = rockchip_get_core_reset(pd);
-	int ret;
+	काष्ठा reset_control *rstc = rockchip_get_core_reset(pd);
+	पूर्णांक ret;
 
-	if (IS_ERR(rstc) && read_cpuid_part() != ARM_CPU_PART_CORTEX_A9) {
+	अगर (IS_ERR(rstc) && पढ़ो_cpuid_part() != ARM_CPU_PART_CORTEX_A9) अणु
 		pr_err("%s: could not get reset control for core %d\n",
 		       __func__, pd);
-		return PTR_ERR(rstc);
-	}
+		वापस PTR_ERR(rstc);
+	पूर्ण
 
 	/*
-	 * We need to soft reset the cpu when we turn off the cpu power domain,
-	 * or else the active processors might be stalled when the individual
-	 * processor is powered down.
+	 * We need to soft reset the cpu when we turn off the cpu घातer करोमुख्य,
+	 * or अन्यथा the active processors might be stalled when the inभागidual
+	 * processor is घातered करोwn.
 	 */
-	if (!IS_ERR(rstc) && !on)
-		reset_control_assert(rstc);
+	अगर (!IS_ERR(rstc) && !on)
+		reset_control_निश्चित(rstc);
 
-	if (has_pmu) {
+	अगर (has_pmu) अणु
 		ret = regmap_update_bits(pmu, PMU_PWRDN_CON, BIT(pd), val);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err("%s: could not update power domain\n",
 			       __func__);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = -1;
-		while (ret != on) {
-			ret = pmu_power_domain_is_on(pd);
-			if (ret < 0) {
+		जबतक (ret != on) अणु
+			ret = pmu_घातer_करोमुख्य_is_on(pd);
+			अगर (ret < 0) अणु
 				pr_err("%s: could not read power domain state\n",
 				       __func__);
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!IS_ERR(rstc)) {
-		if (on)
-			reset_control_deassert(rstc);
+	अगर (!IS_ERR(rstc)) अणु
+		अगर (on)
+			reset_control_deनिश्चित(rstc);
 		reset_control_put(rstc);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Handling of CPU cores
  */
 
-static int rockchip_boot_secondary(unsigned int cpu, struct task_struct *idle)
-{
-	int ret;
+अटल पूर्णांक rockchip_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	पूर्णांक ret;
 
-	if (!sram_base_addr || (has_pmu && !pmu)) {
+	अगर (!sram_base_addr || (has_pmu && !pmu)) अणु
 		pr_err("%s: sram or pmu missing for cpu boot\n", __func__);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (cpu >= ncores) {
+	अगर (cpu >= ncores) अणु
 		pr_err("%s: cpu %d outside maximum number of cpus %d\n",
 		       __func__, cpu, ncores);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/* start the core */
-	ret = pmu_set_power_domain(0 + cpu, true);
-	if (ret < 0)
-		return ret;
+	ret = pmu_set_घातer_करोमुख्य(0 + cpu, true);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (read_cpuid_part() != ARM_CPU_PART_CORTEX_A9) {
+	अगर (पढ़ो_cpuid_part() != ARM_CPU_PART_CORTEX_A9) अणु
 		/*
 		 * We communicate with the bootrom to active the cpus other
 		 * than cpu0, after a blob of initialize code, they will
 		 * stay at wfe state, once they are actived, they will check
 		 * the mailbox:
 		 * sram_base_addr + 4: 0xdeadbeaf
-		 * sram_base_addr + 8: start address for pc
-		 * The cpu0 need to wait the other cpus other than cpu0 entering
-		 * the wfe state.The wait time is affected by many aspects.
+		 * sram_base_addr + 8: start address क्रम pc
+		 * The cpu0 need to रुको the other cpus other than cpu0 entering
+		 * the wfe state.The रुको समय is affected by many aspects.
 		 * (e.g: cpu frequency, bootrom frequency, sram frequency, ...)
 		 */
 		mdelay(1); /* ensure the cpus other than cpu0 to startup */
 
-		writel(__pa_symbol(secondary_startup), sram_base_addr + 8);
-		writel(0xDEADBEAF, sram_base_addr + 4);
+		ग_लिखोl(__pa_symbol(secondary_startup), sram_base_addr + 8);
+		ग_लिखोl(0xDEADBEAF, sram_base_addr + 4);
 		dsb_sev();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * rockchip_smp_prepare_sram - populate necessary sram block
  * Starting cores execute the code residing at the start of the on-chip sram
- * after power-on. Therefore make sure, this sram region is reserved and
+ * after घातer-on. Thereक्रमe make sure, this sram region is reserved and
  * big enough. After this check, copy the trampoline code that directs the
- * core to the real startup code in ram into the sram-region.
+ * core to the real startup code in ram पूर्णांकo the sram-region.
  * @node: mmio-sram device node
  */
-static int __init rockchip_smp_prepare_sram(struct device_node *node)
-{
-	unsigned int trampoline_sz = &rockchip_secondary_trampoline_end -
+अटल पूर्णांक __init rockchip_smp_prepare_sram(काष्ठा device_node *node)
+अणु
+	अचिन्हित पूर्णांक trampoline_sz = &rockchip_secondary_trampoline_end -
 					    &rockchip_secondary_trampoline;
-	struct resource res;
-	unsigned int rsize;
-	int ret;
+	काष्ठा resource res;
+	अचिन्हित पूर्णांक rsize;
+	पूर्णांक ret;
 
 	ret = of_address_to_resource(node, 0, &res);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("%s: could not get address for node %pOF\n",
 		       __func__, node);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	rsize = resource_size(&res);
-	if (rsize < trampoline_sz) {
+	अगर (rsize < trampoline_sz) अणु
 		pr_err("%s: reserved block with size 0x%x is too small for trampoline size 0x%x\n",
 		       __func__, rsize, trampoline_sz);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* set the boot function for the sram code */
+	/* set the boot function क्रम the sram code */
 	rockchip_boot_fn = __pa_symbol(secondary_startup);
 
 	/* copy the trampoline to sram, that runs during startup of the core */
-	memcpy(sram_base_addr, &rockchip_secondary_trampoline, trampoline_sz);
+	स_नकल(sram_base_addr, &rockchip_secondary_trampoline, trampoline_sz);
 	flush_cache_all();
 	outer_clean_range(0, trampoline_sz);
 
 	dsb_sev();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regmap_config rockchip_pmu_regmap_config = {
+अटल स्थिर काष्ठा regmap_config rockchip_pmu_regmap_config = अणु
 	.name = "rockchip-pmu",
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-};
+पूर्ण;
 
-static int __init rockchip_smp_prepare_pmu(void)
-{
-	struct device_node *node;
-	void __iomem *pmu_base;
+अटल पूर्णांक __init rockchip_smp_prepare_pmu(व्योम)
+अणु
+	काष्ठा device_node *node;
+	व्योम __iomem *pmu_base;
 
 	/*
 	 * This function is only called via smp_ops->smp_prepare_cpu().
-	 * That only happens if a "/cpus" device tree node exists
+	 * That only happens अगर a "/cpus" device tree node exists
 	 * and has an "enable-method" property that selects the SMP
 	 * operations defined herein.
 	 */
@@ -220,155 +221,155 @@ static int __init rockchip_smp_prepare_pmu(void)
 
 	pmu = syscon_regmap_lookup_by_phandle(node, "rockchip,pmu");
 	of_node_put(node);
-	if (!IS_ERR(pmu))
-		return 0;
+	अगर (!IS_ERR(pmu))
+		वापस 0;
 
 	pmu = syscon_regmap_lookup_by_compatible("rockchip,rk3066-pmu");
-	if (!IS_ERR(pmu))
-		return 0;
+	अगर (!IS_ERR(pmu))
+		वापस 0;
 
-	/* fallback, create our own regmap for the pmu area */
-	pmu = NULL;
-	node = of_find_compatible_node(NULL, NULL, "rockchip,rk3066-pmu");
-	if (!node) {
+	/* fallback, create our own regmap क्रम the pmu area */
+	pmu = शून्य;
+	node = of_find_compatible_node(शून्य, शून्य, "rockchip,rk3066-pmu");
+	अगर (!node) अणु
 		pr_err("%s: could not find pmu dt node\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	pmu_base = of_iomap(node, 0);
 	of_node_put(node);
-	if (!pmu_base) {
+	अगर (!pmu_base) अणु
 		pr_err("%s: could not map pmu registers\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	pmu = regmap_init_mmio(NULL, pmu_base, &rockchip_pmu_regmap_config);
-	if (IS_ERR(pmu)) {
-		int ret = PTR_ERR(pmu);
+	pmu = regmap_init_mmio(शून्य, pmu_base, &rockchip_pmu_regmap_config);
+	अगर (IS_ERR(pmu)) अणु
+		पूर्णांक ret = PTR_ERR(pmu);
 
 		iounmap(pmu_base);
-		pmu = NULL;
+		pmu = शून्य;
 		pr_err("%s: regmap init failed\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init rockchip_smp_prepare_cpus(unsigned int max_cpus)
-{
-	struct device_node *node;
-	unsigned int i;
+अटल व्योम __init rockchip_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	काष्ठा device_node *node;
+	अचिन्हित पूर्णांक i;
 
-	node = of_find_compatible_node(NULL, NULL, "rockchip,rk3066-smp-sram");
-	if (!node) {
+	node = of_find_compatible_node(शून्य, शून्य, "rockchip,rk3066-smp-sram");
+	अगर (!node) अणु
 		pr_err("%s: could not find sram dt node\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sram_base_addr = of_iomap(node, 0);
-	if (!sram_base_addr) {
+	अगर (!sram_base_addr) अणु
 		pr_err("%s: could not map sram registers\n", __func__);
 		of_node_put(node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (has_pmu && rockchip_smp_prepare_pmu()) {
+	अगर (has_pmu && rockchip_smp_prepare_pmu()) अणु
 		of_node_put(node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (read_cpuid_part() == ARM_CPU_PART_CORTEX_A9) {
-		if (rockchip_smp_prepare_sram(node)) {
+	अगर (पढ़ो_cpuid_part() == ARM_CPU_PART_CORTEX_A9) अणु
+		अगर (rockchip_smp_prepare_sram(node)) अणु
 			of_node_put(node);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		/* enable the SCU power domain */
-		pmu_set_power_domain(PMU_PWRDN_SCU, true);
+		/* enable the SCU घातer करोमुख्य */
+		pmu_set_घातer_करोमुख्य(PMU_PWRDN_SCU, true);
 
 		of_node_put(node);
-		node = of_find_compatible_node(NULL, NULL, "arm,cortex-a9-scu");
-		if (!node) {
+		node = of_find_compatible_node(शून्य, शून्य, "arm,cortex-a9-scu");
+		अगर (!node) अणु
 			pr_err("%s: missing scu\n", __func__);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		scu_base_addr = of_iomap(node, 0);
-		if (!scu_base_addr) {
+		अगर (!scu_base_addr) अणु
 			pr_err("%s: could not map scu registers\n", __func__);
 			of_node_put(node);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/*
 		 * While the number of cpus is gathered from dt, also get the
-		 * number of cores from the scu to verify this value when
+		 * number of cores from the scu to verअगरy this value when
 		 * booting the cores.
 		 */
 		ncores = scu_get_core_count(scu_base_addr);
 		pr_err("%s: ncores %d\n", __func__, ncores);
 
 		scu_enable(scu_base_addr);
-	} else {
-		unsigned int l2ctlr;
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक l2ctlr;
 
-		asm ("mrc p15, 1, %0, c9, c0, 2\n" : "=r" (l2ctlr));
+		यंत्र ("mrc p15, 1, %0, c9, c0, 2\n" : "=r" (l2ctlr));
 		ncores = ((l2ctlr >> 24) & 0x3) + 1;
-	}
+	पूर्ण
 	of_node_put(node);
 
 	/* Make sure that all cores except the first are really off */
-	for (i = 1; i < ncores; i++)
-		pmu_set_power_domain(0 + i, false);
-}
+	क्रम (i = 1; i < ncores; i++)
+		pmu_set_घातer_करोमुख्य(0 + i, false);
+पूर्ण
 
-static void __init rk3036_smp_prepare_cpus(unsigned int max_cpus)
-{
+अटल व्योम __init rk3036_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
 	has_pmu = false;
 
 	rockchip_smp_prepare_cpus(max_cpus);
-}
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static int rockchip_cpu_kill(unsigned int cpu)
-{
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल पूर्णांक rockchip_cpu_समाप्त(अचिन्हित पूर्णांक cpu)
+अणु
 	/*
 	 * We need a delay here to ensure that the dying CPU can finish
-	 * executing v7_coherency_exit() and reach the WFI/WFE state
-	 * prior to having the power domain disabled.
+	 * executing v7_coherency_निकास() and reach the WFI/WFE state
+	 * prior to having the घातer करोमुख्य disabled.
 	 */
 	mdelay(1);
 
-	pmu_set_power_domain(0 + cpu, false);
-	return 1;
-}
+	pmu_set_घातer_करोमुख्य(0 + cpu, false);
+	वापस 1;
+पूर्ण
 
-static void rockchip_cpu_die(unsigned int cpu)
-{
-	v7_exit_coherency_flush(louis);
-	while (1)
-		cpu_do_idle();
-}
-#endif
+अटल व्योम rockchip_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
+	v7_निकास_coherency_flush(louis);
+	जबतक (1)
+		cpu_करो_idle();
+पूर्ण
+#पूर्ण_अगर
 
-static const struct smp_operations rk3036_smp_ops __initconst = {
+अटल स्थिर काष्ठा smp_operations rk3036_smp_ops __initस्थिर = अणु
 	.smp_prepare_cpus	= rk3036_smp_prepare_cpus,
 	.smp_boot_secondary	= rockchip_boot_secondary,
-#ifdef CONFIG_HOTPLUG_CPU
-	.cpu_kill		= rockchip_cpu_kill,
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+	.cpu_समाप्त		= rockchip_cpu_समाप्त,
 	.cpu_die		= rockchip_cpu_die,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct smp_operations rockchip_smp_ops __initconst = {
+अटल स्थिर काष्ठा smp_operations rockchip_smp_ops __initस्थिर = अणु
 	.smp_prepare_cpus	= rockchip_smp_prepare_cpus,
 	.smp_boot_secondary	= rockchip_boot_secondary,
-#ifdef CONFIG_HOTPLUG_CPU
-	.cpu_kill		= rockchip_cpu_kill,
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+	.cpu_समाप्त		= rockchip_cpu_समाप्त,
 	.cpu_die		= rockchip_cpu_die,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 CPU_METHOD_OF_DECLARE(rk3036_smp, "rockchip,rk3036-smp", &rk3036_smp_ops);
 CPU_METHOD_OF_DECLARE(rk3066_smp, "rockchip,rk3066-smp", &rockchip_smp_ops);

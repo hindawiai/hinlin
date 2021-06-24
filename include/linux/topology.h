@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * include/linux/topology.h
  *
@@ -7,7 +8,7 @@
  *
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -15,201 +16,201 @@
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
- * NON INFRINGEMENT.  See the GNU General Public License for more
+ * NON INFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * Send feedback to <colpatch@us.ibm.com>
  */
-#ifndef _LINUX_TOPOLOGY_H
-#define _LINUX_TOPOLOGY_H
+#अगर_अघोषित _LINUX_TOPOLOGY_H
+#घोषणा _LINUX_TOPOLOGY_H
 
-#include <linux/arch_topology.h>
-#include <linux/cpumask.h>
-#include <linux/bitops.h>
-#include <linux/mmzone.h>
-#include <linux/smp.h>
-#include <linux/percpu.h>
-#include <asm/topology.h>
+#समावेश <linux/arch_topology.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/percpu.h>
+#समावेश <यंत्र/topology.h>
 
-#ifndef nr_cpus_node
-#define nr_cpus_node(node) cpumask_weight(cpumask_of_node(node))
-#endif
+#अगर_अघोषित nr_cpus_node
+#घोषणा nr_cpus_node(node) cpumask_weight(cpumask_of_node(node))
+#पूर्ण_अगर
 
-#define for_each_node_with_cpus(node)			\
-	for_each_online_node(node)			\
-		if (nr_cpus_node(node))
+#घोषणा क्रम_each_node_with_cpus(node)			\
+	क्रम_each_online_node(node)			\
+		अगर (nr_cpus_node(node))
 
-int arch_update_cpu_topology(void);
+पूर्णांक arch_update_cpu_topology(व्योम);
 
-/* Conform to ACPI 2.0 SLIT distance definitions */
-#define LOCAL_DISTANCE		10
-#define REMOTE_DISTANCE		20
-#define DISTANCE_BITS           8
-#ifndef node_distance
-#define node_distance(from,to)	((from) == (to) ? LOCAL_DISTANCE : REMOTE_DISTANCE)
-#endif
-#ifndef RECLAIM_DISTANCE
+/* Conक्रमm to ACPI 2.0 SLIT distance definitions */
+#घोषणा LOCAL_DISTANCE		10
+#घोषणा REMOTE_DISTANCE		20
+#घोषणा DISTANCE_BITS           8
+#अगर_अघोषित node_distance
+#घोषणा node_distance(from,to)	((from) == (to) ? LOCAL_DISTANCE : REMOTE_DISTANCE)
+#पूर्ण_अगर
+#अगर_अघोषित RECLAIM_DISTANCE
 /*
- * If the distance between nodes in a system is larger than RECLAIM_DISTANCE
- * (in whatever arch specific measurement units returned by node_distance())
+ * If the distance between nodes in a प्रणाली is larger than RECLAIM_DISTANCE
+ * (in whatever arch specअगरic measurement units वापसed by node_distance())
  * and node_reclaim_mode is enabled then the VM will only call node_reclaim()
  * on nodes within this distance.
  */
-#define RECLAIM_DISTANCE 30
-#endif
+#घोषणा RECLAIM_DISTANCE 30
+#पूर्ण_अगर
 
 /*
- * The following tunable allows platforms to override the default node
- * reclaim distance (RECLAIM_DISTANCE) if remote memory accesses are
- * sufficiently fast that the default value actually hurts
- * performance.
+ * The following tunable allows platक्रमms to override the शेष node
+ * reclaim distance (RECLAIM_DISTANCE) अगर remote memory accesses are
+ * sufficiently fast that the शेष value actually hurts
+ * perक्रमmance.
  *
  * AMD EPYC machines use this because even though the 2-hop distance
- * is 32 (3.2x slower than a local memory access) performance actually
- * *improves* if allowed to reclaim memory and load balance tasks
+ * is 32 (3.2x slower than a local memory access) perक्रमmance actually
+ * *improves* अगर allowed to reclaim memory and load balance tasks
  * between NUMA nodes 2-hops apart.
  */
-extern int __read_mostly node_reclaim_distance;
+बाह्य पूर्णांक __पढ़ो_mostly node_reclaim_distance;
 
-#ifndef PENALTY_FOR_NODE_WITH_CPUS
-#define PENALTY_FOR_NODE_WITH_CPUS	(1)
-#endif
+#अगर_अघोषित PENALTY_FOR_NODE_WITH_CPUS
+#घोषणा PENALTY_FOR_NODE_WITH_CPUS	(1)
+#पूर्ण_अगर
 
-#ifdef CONFIG_USE_PERCPU_NUMA_NODE_ID
-DECLARE_PER_CPU(int, numa_node);
+#अगर_घोषित CONFIG_USE_PERCPU_NUMA_NODE_ID
+DECLARE_PER_CPU(पूर्णांक, numa_node);
 
-#ifndef numa_node_id
+#अगर_अघोषित numa_node_id
 /* Returns the number of the current Node. */
-static inline int numa_node_id(void)
-{
-	return raw_cpu_read(numa_node);
-}
-#endif
+अटल अंतरभूत पूर्णांक numa_node_id(व्योम)
+अणु
+	वापस raw_cpu_पढ़ो(numa_node);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef cpu_to_node
-static inline int cpu_to_node(int cpu)
-{
-	return per_cpu(numa_node, cpu);
-}
-#endif
+#अगर_अघोषित cpu_to_node
+अटल अंतरभूत पूर्णांक cpu_to_node(पूर्णांक cpu)
+अणु
+	वापस per_cpu(numa_node, cpu);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef set_numa_node
-static inline void set_numa_node(int node)
-{
-	this_cpu_write(numa_node, node);
-}
-#endif
+#अगर_अघोषित set_numa_node
+अटल अंतरभूत व्योम set_numa_node(पूर्णांक node)
+अणु
+	this_cpu_ग_लिखो(numa_node, node);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef set_cpu_numa_node
-static inline void set_cpu_numa_node(int cpu, int node)
-{
+#अगर_अघोषित set_cpu_numa_node
+अटल अंतरभूत व्योम set_cpu_numa_node(पूर्णांक cpu, पूर्णांक node)
+अणु
 	per_cpu(numa_node, cpu) = node;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#else	/* !CONFIG_USE_PERCPU_NUMA_NODE_ID */
+#अन्यथा	/* !CONFIG_USE_PERCPU_NUMA_NODE_ID */
 
 /* Returns the number of the current Node. */
-#ifndef numa_node_id
-static inline int numa_node_id(void)
-{
-	return cpu_to_node(raw_smp_processor_id());
-}
-#endif
+#अगर_अघोषित numa_node_id
+अटल अंतरभूत पूर्णांक numa_node_id(व्योम)
+अणु
+	वापस cpu_to_node(raw_smp_processor_id());
+पूर्ण
+#पूर्ण_अगर
 
-#endif	/* [!]CONFIG_USE_PERCPU_NUMA_NODE_ID */
+#पूर्ण_अगर	/* [!]CONFIG_USE_PERCPU_NUMA_NODE_ID */
 
-#ifdef CONFIG_HAVE_MEMORYLESS_NODES
+#अगर_घोषित CONFIG_HAVE_MEMORYLESS_NODES
 
 /*
  * N.B., Do NOT reference the '_numa_mem_' per cpu variable directly.
  * It will not be defined when CONFIG_HAVE_MEMORYLESS_NODES is not defined.
  * Use the accessor functions set_numa_mem(), numa_mem_id() and cpu_to_mem().
  */
-DECLARE_PER_CPU(int, _numa_mem_);
+DECLARE_PER_CPU(पूर्णांक, _numa_mem_);
 
-#ifndef set_numa_mem
-static inline void set_numa_mem(int node)
-{
-	this_cpu_write(_numa_mem_, node);
-}
-#endif
+#अगर_अघोषित set_numa_mem
+अटल अंतरभूत व्योम set_numa_mem(पूर्णांक node)
+अणु
+	this_cpu_ग_लिखो(_numa_mem_, node);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef numa_mem_id
+#अगर_अघोषित numa_mem_id
 /* Returns the number of the nearest Node with memory */
-static inline int numa_mem_id(void)
-{
-	return raw_cpu_read(_numa_mem_);
-}
-#endif
+अटल अंतरभूत पूर्णांक numa_mem_id(व्योम)
+अणु
+	वापस raw_cpu_पढ़ो(_numa_mem_);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef cpu_to_mem
-static inline int cpu_to_mem(int cpu)
-{
-	return per_cpu(_numa_mem_, cpu);
-}
-#endif
+#अगर_अघोषित cpu_to_mem
+अटल अंतरभूत पूर्णांक cpu_to_mem(पूर्णांक cpu)
+अणु
+	वापस per_cpu(_numa_mem_, cpu);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef set_cpu_numa_mem
-static inline void set_cpu_numa_mem(int cpu, int node)
-{
+#अगर_अघोषित set_cpu_numa_mem
+अटल अंतरभूत व्योम set_cpu_numa_mem(पूर्णांक cpu, पूर्णांक node)
+अणु
 	per_cpu(_numa_mem_, cpu) = node;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#else	/* !CONFIG_HAVE_MEMORYLESS_NODES */
+#अन्यथा	/* !CONFIG_HAVE_MEMORYLESS_NODES */
 
-#ifndef numa_mem_id
+#अगर_अघोषित numa_mem_id
 /* Returns the number of the nearest Node with memory */
-static inline int numa_mem_id(void)
-{
-	return numa_node_id();
-}
-#endif
+अटल अंतरभूत पूर्णांक numa_mem_id(व्योम)
+अणु
+	वापस numa_node_id();
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef cpu_to_mem
-static inline int cpu_to_mem(int cpu)
-{
-	return cpu_to_node(cpu);
-}
-#endif
+#अगर_अघोषित cpu_to_mem
+अटल अंतरभूत पूर्णांक cpu_to_mem(पूर्णांक cpu)
+अणु
+	वापस cpu_to_node(cpu);
+पूर्ण
+#पूर्ण_अगर
 
-#endif	/* [!]CONFIG_HAVE_MEMORYLESS_NODES */
+#पूर्ण_अगर	/* [!]CONFIG_HAVE_MEMORYLESS_NODES */
 
-#ifndef topology_physical_package_id
-#define topology_physical_package_id(cpu)	((void)(cpu), -1)
-#endif
-#ifndef topology_die_id
-#define topology_die_id(cpu)			((void)(cpu), -1)
-#endif
-#ifndef topology_core_id
-#define topology_core_id(cpu)			((void)(cpu), 0)
-#endif
-#ifndef topology_sibling_cpumask
-#define topology_sibling_cpumask(cpu)		cpumask_of(cpu)
-#endif
-#ifndef topology_core_cpumask
-#define topology_core_cpumask(cpu)		cpumask_of(cpu)
-#endif
-#ifndef topology_die_cpumask
-#define topology_die_cpumask(cpu)		cpumask_of(cpu)
-#endif
+#अगर_अघोषित topology_physical_package_id
+#घोषणा topology_physical_package_id(cpu)	((व्योम)(cpu), -1)
+#पूर्ण_अगर
+#अगर_अघोषित topology_die_id
+#घोषणा topology_die_id(cpu)			((व्योम)(cpu), -1)
+#पूर्ण_अगर
+#अगर_अघोषित topology_core_id
+#घोषणा topology_core_id(cpu)			((व्योम)(cpu), 0)
+#पूर्ण_अगर
+#अगर_अघोषित topology_sibling_cpumask
+#घोषणा topology_sibling_cpumask(cpu)		cpumask_of(cpu)
+#पूर्ण_अगर
+#अगर_अघोषित topology_core_cpumask
+#घोषणा topology_core_cpumask(cpu)		cpumask_of(cpu)
+#पूर्ण_अगर
+#अगर_अघोषित topology_die_cpumask
+#घोषणा topology_die_cpumask(cpu)		cpumask_of(cpu)
+#पूर्ण_अगर
 
-#if defined(CONFIG_SCHED_SMT) && !defined(cpu_smt_mask)
-static inline const struct cpumask *cpu_smt_mask(int cpu)
-{
-	return topology_sibling_cpumask(cpu);
-}
-#endif
+#अगर defined(CONFIG_SCHED_SMT) && !defined(cpu_smt_mask)
+अटल अंतरभूत स्थिर काष्ठा cpumask *cpu_smt_mask(पूर्णांक cpu)
+अणु
+	वापस topology_sibling_cpumask(cpu);
+पूर्ण
+#पूर्ण_अगर
 
-static inline const struct cpumask *cpu_cpu_mask(int cpu)
-{
-	return cpumask_of_node(cpu_to_node(cpu));
-}
+अटल अंतरभूत स्थिर काष्ठा cpumask *cpu_cpu_mask(पूर्णांक cpu)
+अणु
+	वापस cpumask_of_node(cpu_to_node(cpu));
+पूर्ण
 
 
-#endif /* _LINUX_TOPOLOGY_H */
+#पूर्ण_अगर /* _LINUX_TOPOLOGY_H */

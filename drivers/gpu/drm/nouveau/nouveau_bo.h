@@ -1,176 +1,177 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NOUVEAU_BO_H__
-#define __NOUVEAU_BO_H__
-#include <drm/ttm/ttm_bo_driver.h>
-#include <drm/drm_gem.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NOUVEAU_BO_H__
+#घोषणा __NOUVEAU_BO_H__
+#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
+#समावेश <drm/drm_gem.h>
 
-struct nouveau_channel;
-struct nouveau_cli;
-struct nouveau_drm;
-struct nouveau_fence;
+काष्ठा nouveau_channel;
+काष्ठा nouveau_cli;
+काष्ठा nouveau_drm;
+काष्ठा nouveau_fence;
 
-struct nouveau_bo {
-	struct ttm_buffer_object bo;
-	struct ttm_placement placement;
-	u32 valid_domains;
-	struct ttm_place placements[3];
-	struct ttm_place busy_placements[3];
-	bool force_coherent;
-	struct ttm_bo_kmap_obj kmap;
-	struct list_head head;
-	struct list_head io_reserve_lru;
+काष्ठा nouveau_bo अणु
+	काष्ठा tपंचांग_buffer_object bo;
+	काष्ठा tपंचांग_placement placement;
+	u32 valid_करोमुख्यs;
+	काष्ठा tपंचांग_place placements[3];
+	काष्ठा tपंचांग_place busy_placements[3];
+	bool क्रमce_coherent;
+	काष्ठा tपंचांग_bo_kmap_obj kmap;
+	काष्ठा list_head head;
+	काष्ठा list_head io_reserve_lru;
 
-	/* protected by ttm_bo_reserve() */
-	struct drm_file *reserved_by;
-	struct list_head entry;
-	int pbbo_index;
+	/* रक्षित by tपंचांग_bo_reserve() */
+	काष्ठा drm_file *reserved_by;
+	काष्ठा list_head entry;
+	पूर्णांक pbbo_index;
 	bool validate_mapped;
 
 	/* GPU address space is independent of CPU word size */
-	uint64_t offset;
+	uपूर्णांक64_t offset;
 
-	struct list_head vma_list;
+	काष्ठा list_head vma_list;
 
-	unsigned contig:1;
-	unsigned page:5;
-	unsigned kind:8;
-	unsigned comp:3;
-	unsigned zeta:3;
-	unsigned mode;
+	अचिन्हित contig:1;
+	अचिन्हित page:5;
+	अचिन्हित kind:8;
+	अचिन्हित comp:3;
+	अचिन्हित zeta:3;
+	अचिन्हित mode;
 
-	struct nouveau_drm_tile *tile;
-};
+	काष्ठा nouveau_drm_tile *tile;
+पूर्ण;
 
-static inline struct nouveau_bo *
-nouveau_bo(struct ttm_buffer_object *bo)
-{
-	return container_of(bo, struct nouveau_bo, bo);
-}
+अटल अंतरभूत काष्ठा nouveau_bo *
+nouveau_bo(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	वापस container_of(bo, काष्ठा nouveau_bo, bo);
+पूर्ण
 
-static inline int
-nouveau_bo_ref(struct nouveau_bo *ref, struct nouveau_bo **pnvbo)
-{
-	struct nouveau_bo *prev;
+अटल अंतरभूत पूर्णांक
+nouveau_bo_ref(काष्ठा nouveau_bo *ref, काष्ठा nouveau_bo **pnvbo)
+अणु
+	काष्ठा nouveau_bo *prev;
 
-	if (!pnvbo)
-		return -EINVAL;
+	अगर (!pnvbo)
+		वापस -EINVAL;
 	prev = *pnvbo;
 
-	if (ref) {
-		ttm_bo_get(&ref->bo);
+	अगर (ref) अणु
+		tपंचांग_bo_get(&ref->bo);
 		*pnvbo = nouveau_bo(&ref->bo);
-	} else {
-		*pnvbo = NULL;
-	}
-	if (prev)
-		ttm_bo_put(&prev->bo);
+	पूर्ण अन्यथा अणु
+		*pnvbo = शून्य;
+	पूर्ण
+	अगर (prev)
+		tपंचांग_bo_put(&prev->bo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-extern struct ttm_device_funcs nouveau_bo_driver;
+बाह्य काष्ठा tपंचांग_device_funcs nouveau_bo_driver;
 
-void nouveau_bo_move_init(struct nouveau_drm *);
-struct nouveau_bo *nouveau_bo_alloc(struct nouveau_cli *, u64 *size, int *align,
-				    u32 domain, u32 tile_mode, u32 tile_flags);
-int  nouveau_bo_init(struct nouveau_bo *, u64 size, int align, u32 domain,
-		     struct sg_table *sg, struct dma_resv *robj);
-int  nouveau_bo_new(struct nouveau_cli *, u64 size, int align, u32 domain,
-		    u32 tile_mode, u32 tile_flags, struct sg_table *sg,
-		    struct dma_resv *robj,
-		    struct nouveau_bo **);
-int  nouveau_bo_pin(struct nouveau_bo *, u32 flags, bool contig);
-int  nouveau_bo_unpin(struct nouveau_bo *);
-int  nouveau_bo_map(struct nouveau_bo *);
-void nouveau_bo_unmap(struct nouveau_bo *);
-void nouveau_bo_placement_set(struct nouveau_bo *, u32 type, u32 busy);
-void nouveau_bo_wr16(struct nouveau_bo *, unsigned index, u16 val);
-u32  nouveau_bo_rd32(struct nouveau_bo *, unsigned index);
-void nouveau_bo_wr32(struct nouveau_bo *, unsigned index, u32 val);
-vm_fault_t nouveau_ttm_fault_reserve_notify(struct ttm_buffer_object *bo);
-void nouveau_bo_fence(struct nouveau_bo *, struct nouveau_fence *, bool exclusive);
-int  nouveau_bo_validate(struct nouveau_bo *, bool interruptible,
-			 bool no_wait_gpu);
-void nouveau_bo_sync_for_device(struct nouveau_bo *nvbo);
-void nouveau_bo_sync_for_cpu(struct nouveau_bo *nvbo);
-void nouveau_bo_add_io_reserve_lru(struct ttm_buffer_object *bo);
-void nouveau_bo_del_io_reserve_lru(struct ttm_buffer_object *bo);
+व्योम nouveau_bo_move_init(काष्ठा nouveau_drm *);
+काष्ठा nouveau_bo *nouveau_bo_alloc(काष्ठा nouveau_cli *, u64 *size, पूर्णांक *align,
+				    u32 करोमुख्य, u32 tile_mode, u32 tile_flags);
+पूर्णांक  nouveau_bo_init(काष्ठा nouveau_bo *, u64 size, पूर्णांक align, u32 करोमुख्य,
+		     काष्ठा sg_table *sg, काष्ठा dma_resv *robj);
+पूर्णांक  nouveau_bo_new(काष्ठा nouveau_cli *, u64 size, पूर्णांक align, u32 करोमुख्य,
+		    u32 tile_mode, u32 tile_flags, काष्ठा sg_table *sg,
+		    काष्ठा dma_resv *robj,
+		    काष्ठा nouveau_bo **);
+पूर्णांक  nouveau_bo_pin(काष्ठा nouveau_bo *, u32 flags, bool contig);
+पूर्णांक  nouveau_bo_unpin(काष्ठा nouveau_bo *);
+पूर्णांक  nouveau_bo_map(काष्ठा nouveau_bo *);
+व्योम nouveau_bo_unmap(काष्ठा nouveau_bo *);
+व्योम nouveau_bo_placement_set(काष्ठा nouveau_bo *, u32 type, u32 busy);
+व्योम nouveau_bo_wr16(काष्ठा nouveau_bo *, अचिन्हित index, u16 val);
+u32  nouveau_bo_rd32(काष्ठा nouveau_bo *, अचिन्हित index);
+व्योम nouveau_bo_wr32(काष्ठा nouveau_bo *, अचिन्हित index, u32 val);
+vm_fault_t nouveau_tपंचांग_fault_reserve_notअगरy(काष्ठा tपंचांग_buffer_object *bo);
+व्योम nouveau_bo_fence(काष्ठा nouveau_bo *, काष्ठा nouveau_fence *, bool exclusive);
+पूर्णांक  nouveau_bo_validate(काष्ठा nouveau_bo *, bool पूर्णांकerruptible,
+			 bool no_रुको_gpu);
+व्योम nouveau_bo_sync_क्रम_device(काष्ठा nouveau_bo *nvbo);
+व्योम nouveau_bo_sync_क्रम_cpu(काष्ठा nouveau_bo *nvbo);
+व्योम nouveau_bo_add_io_reserve_lru(काष्ठा tपंचांग_buffer_object *bo);
+व्योम nouveau_bo_del_io_reserve_lru(काष्ठा tपंचांग_buffer_object *bo);
 
 /* TODO: submit equivalent to TTM generic API upstream? */
-static inline void __iomem *
-nvbo_kmap_obj_iovirtual(struct nouveau_bo *nvbo)
-{
+अटल अंतरभूत व्योम __iomem *
+nvbo_kmap_obj_ioभव(काष्ठा nouveau_bo *nvbo)
+अणु
 	bool is_iomem;
-	void __iomem *ioptr = (void __force __iomem *)ttm_kmap_obj_virtual(
+	व्योम __iomem *ioptr = (व्योम __क्रमce __iomem *)tपंचांग_kmap_obj_भव(
 						&nvbo->kmap, &is_iomem);
 	WARN_ON_ONCE(ioptr && !is_iomem);
-	return ioptr;
-}
+	वापस ioptr;
+पूर्ण
 
-static inline void
-nouveau_bo_unmap_unpin_unref(struct nouveau_bo **pnvbo)
-{
-	if (*pnvbo) {
+अटल अंतरभूत व्योम
+nouveau_bo_unmap_unpin_unref(काष्ठा nouveau_bo **pnvbo)
+अणु
+	अगर (*pnvbo) अणु
 		nouveau_bo_unmap(*pnvbo);
 		nouveau_bo_unpin(*pnvbo);
-		nouveau_bo_ref(NULL, pnvbo);
-	}
-}
+		nouveau_bo_ref(शून्य, pnvbo);
+	पूर्ण
+पूर्ण
 
-static inline int
-nouveau_bo_new_pin_map(struct nouveau_cli *cli, u64 size, int align, u32 domain,
-		       struct nouveau_bo **pnvbo)
-{
-	int ret = nouveau_bo_new(cli, size, align, domain,
-				 0, 0, NULL, NULL, pnvbo);
-	if (ret == 0) {
-		ret = nouveau_bo_pin(*pnvbo, domain, true);
-		if (ret == 0) {
+अटल अंतरभूत पूर्णांक
+nouveau_bo_new_pin_map(काष्ठा nouveau_cli *cli, u64 size, पूर्णांक align, u32 करोमुख्य,
+		       काष्ठा nouveau_bo **pnvbo)
+अणु
+	पूर्णांक ret = nouveau_bo_new(cli, size, align, करोमुख्य,
+				 0, 0, शून्य, शून्य, pnvbo);
+	अगर (ret == 0) अणु
+		ret = nouveau_bo_pin(*pnvbo, करोमुख्य, true);
+		अगर (ret == 0) अणु
 			ret = nouveau_bo_map(*pnvbo);
-			if (ret == 0)
-				return ret;
+			अगर (ret == 0)
+				वापस ret;
 			nouveau_bo_unpin(*pnvbo);
-		}
-		nouveau_bo_ref(NULL, pnvbo);
-	}
-	return ret;
-}
+		पूर्ण
+		nouveau_bo_ref(शून्य, pnvbo);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int nv04_bo_move_init(struct nouveau_channel *, u32);
-int nv04_bo_move_m2mf(struct nouveau_channel *, struct ttm_buffer_object *,
-		      struct ttm_resource *, struct ttm_resource *);
+पूर्णांक nv04_bo_move_init(काष्ठा nouveau_channel *, u32);
+पूर्णांक nv04_bo_move_m2mf(काष्ठा nouveau_channel *, काष्ठा tपंचांग_buffer_object *,
+		      काष्ठा tपंचांग_resource *, काष्ठा tपंचांग_resource *);
 
-int nv50_bo_move_init(struct nouveau_channel *, u32);
-int nv50_bo_move_m2mf(struct nouveau_channel *, struct ttm_buffer_object *,
-		      struct ttm_resource *, struct ttm_resource *);
+पूर्णांक nv50_bo_move_init(काष्ठा nouveau_channel *, u32);
+पूर्णांक nv50_bo_move_m2mf(काष्ठा nouveau_channel *, काष्ठा tपंचांग_buffer_object *,
+		      काष्ठा tपंचांग_resource *, काष्ठा tपंचांग_resource *);
 
-int nv84_bo_move_exec(struct nouveau_channel *, struct ttm_buffer_object *,
-		      struct ttm_resource *, struct ttm_resource *);
+पूर्णांक nv84_bo_move_exec(काष्ठा nouveau_channel *, काष्ठा tपंचांग_buffer_object *,
+		      काष्ठा tपंचांग_resource *, काष्ठा tपंचांग_resource *);
 
-int nva3_bo_move_copy(struct nouveau_channel *, struct ttm_buffer_object *,
-		      struct ttm_resource *, struct ttm_resource *);
+पूर्णांक nva3_bo_move_copy(काष्ठा nouveau_channel *, काष्ठा tपंचांग_buffer_object *,
+		      काष्ठा tपंचांग_resource *, काष्ठा tपंचांग_resource *);
 
-int nvc0_bo_move_init(struct nouveau_channel *, u32);
-int nvc0_bo_move_m2mf(struct nouveau_channel *, struct ttm_buffer_object *,
-		      struct ttm_resource *, struct ttm_resource *);
+पूर्णांक nvc0_bo_move_init(काष्ठा nouveau_channel *, u32);
+पूर्णांक nvc0_bo_move_m2mf(काष्ठा nouveau_channel *, काष्ठा tपंचांग_buffer_object *,
+		      काष्ठा tपंचांग_resource *, काष्ठा tपंचांग_resource *);
 
-int nvc0_bo_move_copy(struct nouveau_channel *, struct ttm_buffer_object *,
-		      struct ttm_resource *, struct ttm_resource *);
+पूर्णांक nvc0_bo_move_copy(काष्ठा nouveau_channel *, काष्ठा tपंचांग_buffer_object *,
+		      काष्ठा tपंचांग_resource *, काष्ठा tपंचांग_resource *);
 
-int nve0_bo_move_init(struct nouveau_channel *, u32);
-int nve0_bo_move_copy(struct nouveau_channel *, struct ttm_buffer_object *,
-		      struct ttm_resource *, struct ttm_resource *);
+पूर्णांक nve0_bo_move_init(काष्ठा nouveau_channel *, u32);
+पूर्णांक nve0_bo_move_copy(काष्ठा nouveau_channel *, काष्ठा tपंचांग_buffer_object *,
+		      काष्ठा tपंचांग_resource *, काष्ठा tपंचांग_resource *);
 
-#define NVBO_WR32_(b,o,dr,f) nouveau_bo_wr32((b), (o)/4 + (dr), (f))
-#define NVBO_RD32_(b,o,dr)   nouveau_bo_rd32((b), (o)/4 + (dr))
-#define NVBO_RD32(A...) DRF_RD(NVBO_RD32_,                  ##A)
-#define NVBO_RV32(A...) DRF_RV(NVBO_RD32_,                  ##A)
-#define NVBO_TV32(A...) DRF_TV(NVBO_RD32_,                  ##A)
-#define NVBO_TD32(A...) DRF_TD(NVBO_RD32_,                  ##A)
-#define NVBO_WR32(A...) DRF_WR(            NVBO_WR32_,      ##A)
-#define NVBO_WV32(A...) DRF_WV(            NVBO_WR32_,      ##A)
-#define NVBO_WD32(A...) DRF_WD(            NVBO_WR32_,      ##A)
-#define NVBO_MR32(A...) DRF_MR(NVBO_RD32_, NVBO_WR32_, u32, ##A)
-#define NVBO_MV32(A...) DRF_MV(NVBO_RD32_, NVBO_WR32_, u32, ##A)
-#define NVBO_MD32(A...) DRF_MD(NVBO_RD32_, NVBO_WR32_, u32, ##A)
-#endif
+#घोषणा NVBO_WR32_(b,o,dr,f) nouveau_bo_wr32((b), (o)/4 + (dr), (f))
+#घोषणा NVBO_RD32_(b,o,dr)   nouveau_bo_rd32((b), (o)/4 + (dr))
+#घोषणा NVBO_RD32(A...) DRF_RD(NVBO_RD32_,                  ##A)
+#घोषणा NVBO_RV32(A...) DRF_RV(NVBO_RD32_,                  ##A)
+#घोषणा NVBO_TV32(A...) DRF_TV(NVBO_RD32_,                  ##A)
+#घोषणा NVBO_TD32(A...) DRF_TD(NVBO_RD32_,                  ##A)
+#घोषणा NVBO_WR32(A...) DRF_WR(            NVBO_WR32_,      ##A)
+#घोषणा NVBO_WV32(A...) DRF_WV(            NVBO_WR32_,      ##A)
+#घोषणा NVBO_WD32(A...) DRF_WD(            NVBO_WR32_,      ##A)
+#घोषणा NVBO_MR32(A...) DRF_MR(NVBO_RD32_, NVBO_WR32_, u32, ##A)
+#घोषणा NVBO_MV32(A...) DRF_MV(NVBO_RD32_, NVBO_WR32_, u32, ##A)
+#घोषणा NVBO_MD32(A...) DRF_MD(NVBO_RD32_, NVBO_WR32_, u32, ##A)
+#पूर्ण_अगर

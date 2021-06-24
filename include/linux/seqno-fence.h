@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * seqno-fence, using a dma-buf to synchronize fencing
  *
@@ -9,93 +10,93 @@
  *   Maarten Lankhorst <maarten.lankhorst@canonical.com>
  */
 
-#ifndef __LINUX_SEQNO_FENCE_H
-#define __LINUX_SEQNO_FENCE_H
+#अगर_अघोषित __LINUX_SEQNO_FENCE_H
+#घोषणा __LINUX_SEQNO_FENCE_H
 
-#include <linux/dma-fence.h>
-#include <linux/dma-buf.h>
+#समावेश <linux/dma-fence.h>
+#समावेश <linux/dma-buf.h>
 
-enum seqno_fence_condition {
+क्रमागत seqno_fence_condition अणु
 	SEQNO_FENCE_WAIT_GEQUAL,
 	SEQNO_FENCE_WAIT_NONZERO
-};
+पूर्ण;
 
-struct seqno_fence {
-	struct dma_fence base;
+काष्ठा seqno_fence अणु
+	काष्ठा dma_fence base;
 
-	const struct dma_fence_ops *ops;
-	struct dma_buf *sync_buf;
-	uint32_t seqno_ofs;
-	enum seqno_fence_condition condition;
-};
+	स्थिर काष्ठा dma_fence_ops *ops;
+	काष्ठा dma_buf *sync_buf;
+	uपूर्णांक32_t seqno_ofs;
+	क्रमागत seqno_fence_condition condition;
+पूर्ण;
 
-extern const struct dma_fence_ops seqno_fence_ops;
+बाह्य स्थिर काष्ठा dma_fence_ops seqno_fence_ops;
 
 /**
  * to_seqno_fence - cast a fence to a seqno_fence
  * @fence: fence to cast to a seqno_fence
  *
- * Returns NULL if the fence is not a seqno_fence,
+ * Returns शून्य अगर the fence is not a seqno_fence,
  * or the seqno_fence otherwise.
  */
-static inline struct seqno_fence *
-to_seqno_fence(struct dma_fence *fence)
-{
-	if (fence->ops != &seqno_fence_ops)
-		return NULL;
-	return container_of(fence, struct seqno_fence, base);
-}
+अटल अंतरभूत काष्ठा seqno_fence *
+to_seqno_fence(काष्ठा dma_fence *fence)
+अणु
+	अगर (fence->ops != &seqno_fence_ops)
+		वापस शून्य;
+	वापस container_of(fence, काष्ठा seqno_fence, base);
+पूर्ण
 
 /**
  * seqno_fence_init - initialize a seqno fence
  * @fence: seqno_fence to initialize
- * @lock: pointer to spinlock to use for fence
- * @sync_buf: buffer containing the memory location to signal on
+ * @lock: poपूर्णांकer to spinlock to use क्रम fence
+ * @sync_buf: buffer containing the memory location to संकेत on
  * @context: the execution context this fence is a part of
  * @seqno_ofs: the offset within @sync_buf
- * @seqno: the sequence # to signal on
- * @cond: fence wait condition
- * @ops: the fence_ops for operations on this seqno fence
+ * @seqno: the sequence # to संकेत on
+ * @cond: fence रुको condition
+ * @ops: the fence_ops क्रम operations on this seqno fence
  *
- * This function initializes a struct seqno_fence with passed parameters,
- * and takes a reference on sync_buf which is released on fence destruction.
+ * This function initializes a काष्ठा seqno_fence with passed parameters,
+ * and takes a reference on sync_buf which is released on fence deकाष्ठाion.
  *
  * A seqno_fence is a dma_fence which can complete in software when
- * enable_signaling is called, but it also completes when
+ * enable_संकेतing is called, but it also completes when
  * (s32)((sync_buf)[seqno_ofs] - seqno) >= 0 is true
  *
  * The seqno_fence will take a refcount on the sync_buf until it's
- * destroyed, but actual lifetime of sync_buf may be longer if one of the
+ * destroyed, but actual lअगरeसमय of sync_buf may be दीर्घer अगर one of the
  * callers take a reference to it.
  *
- * Certain hardware have instructions to insert this type of wait condition
- * in the command stream, so no intervention from software would be needed.
- * This type of fence can be destroyed before completed, however a reference
+ * Certain hardware have inकाष्ठाions to insert this type of रुको condition
+ * in the command stream, so no पूर्णांकervention from software would be needed.
+ * This type of fence can be destroyed beक्रमe completed, however a reference
  * on the sync_buf dma-buf can be taken. It is encouraged to re-use the same
- * dma-buf for sync_buf, since mapping or unmapping the sync_buf to the
+ * dma-buf क्रम sync_buf, since mapping or unmapping the sync_buf to the
  * device's vm can be expensive.
  *
- * It is recommended for creators of seqno_fence to call dma_fence_signal()
- * before destruction. This will prevent possible issues from wraparound at
- * time of issue vs time of check, since users can check dma_fence_is_signaled()
- * before submitting instructions for the hardware to wait on the fence.
- * However, when ops.enable_signaling is not called, it doesn't have to be
- * done as soon as possible, just before there's any real danger of seqno
+ * It is recommended क्रम creators of seqno_fence to call dma_fence_संकेत()
+ * beक्रमe deकाष्ठाion. This will prevent possible issues from wraparound at
+ * समय of issue vs समय of check, since users can check dma_fence_is_संकेतed()
+ * beक्रमe submitting inकाष्ठाions क्रम the hardware to रुको on the fence.
+ * However, when ops.enable_संकेतing is not called, it करोesn't have to be
+ * करोne as soon as possible, just beक्रमe there's any real danger of seqno
  * wraparound.
  */
-static inline void
-seqno_fence_init(struct seqno_fence *fence, spinlock_t *lock,
-		 struct dma_buf *sync_buf,  uint32_t context,
-		 uint32_t seqno_ofs, uint32_t seqno,
-		 enum seqno_fence_condition cond,
-		 const struct dma_fence_ops *ops)
-{
+अटल अंतरभूत व्योम
+seqno_fence_init(काष्ठा seqno_fence *fence, spinlock_t *lock,
+		 काष्ठा dma_buf *sync_buf,  uपूर्णांक32_t context,
+		 uपूर्णांक32_t seqno_ofs, uपूर्णांक32_t seqno,
+		 क्रमागत seqno_fence_condition cond,
+		 स्थिर काष्ठा dma_fence_ops *ops)
+अणु
 	BUG_ON(!fence || !sync_buf || !ops);
-	BUG_ON(!ops->wait || !ops->enable_signaling ||
-	       !ops->get_driver_name || !ops->get_timeline_name);
+	BUG_ON(!ops->रुको || !ops->enable_संकेतing ||
+	       !ops->get_driver_name || !ops->get_समयline_name);
 
 	/*
-	 * ops is used in dma_fence_init for get_driver_name, so needs to be
+	 * ops is used in dma_fence_init क्रम get_driver_name, so needs to be
 	 * initialized first
 	 */
 	fence->ops = ops;
@@ -104,6 +105,6 @@ seqno_fence_init(struct seqno_fence *fence, spinlock_t *lock,
 	fence->sync_buf = sync_buf;
 	fence->seqno_ofs = seqno_ofs;
 	fence->condition = cond;
-}
+पूर्ण
 
-#endif /* __LINUX_SEQNO_FENCE_H */
+#पूर्ण_अगर /* __LINUX_SEQNO_FENCE_H */

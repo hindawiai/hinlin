@@ -1,218 +1,219 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
-#include <linux/etherdevice.h>
-#include <linux/if.h>
-#include <linux/if_vlan.h>
-#include <linux/jhash.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/percpu.h>
-#include <linux/rcupdate.h>
-#include <linux/rtnetlink.h>
-#include <linux/compat.h>
-#include <net/net_namespace.h>
-#include <linux/module.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/compat.h>
+#समावेश <net/net_namespace.h>
+#समावेश <linux/module.h>
 
-#include "datapath.h"
-#include "vport.h"
-#include "vport-internal_dev.h"
+#समावेश "datapath.h"
+#समावेश "vport.h"
+#समावेश "vport-internal_dev.h"
 
-static LIST_HEAD(vport_ops_list);
+अटल LIST_HEAD(vport_ops_list);
 
-/* Protected by RCU read lock for reading, ovs_mutex for writing. */
-static struct hlist_head *dev_table;
-#define VPORT_HASH_BUCKETS 1024
+/* Protected by RCU पढ़ो lock क्रम पढ़ोing, ovs_mutex क्रम writing. */
+अटल काष्ठा hlist_head *dev_table;
+#घोषणा VPORT_HASH_BUCKETS 1024
 
 /**
- *	ovs_vport_init - initialize vport subsystem
+ *	ovs_vport_init - initialize vport subप्रणाली
  *
- * Called at module load time to initialize the vport subsystem.
+ * Called at module load समय to initialize the vport subप्रणाली.
  */
-int ovs_vport_init(void)
-{
-	dev_table = kcalloc(VPORT_HASH_BUCKETS, sizeof(struct hlist_head),
+पूर्णांक ovs_vport_init(व्योम)
+अणु
+	dev_table = kसुस्मृति(VPORT_HASH_BUCKETS, माप(काष्ठा hlist_head),
 			    GFP_KERNEL);
-	if (!dev_table)
-		return -ENOMEM;
+	अगर (!dev_table)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	ovs_vport_exit - shutdown vport subsystem
+ *	ovs_vport_निकास - shutकरोwn vport subप्रणाली
  *
- * Called at module exit time to shutdown the vport subsystem.
+ * Called at module निकास समय to shutकरोwn the vport subप्रणाली.
  */
-void ovs_vport_exit(void)
-{
-	kfree(dev_table);
-}
+व्योम ovs_vport_निकास(व्योम)
+अणु
+	kमुक्त(dev_table);
+पूर्ण
 
-static struct hlist_head *hash_bucket(const struct net *net, const char *name)
-{
-	unsigned int hash = jhash(name, strlen(name), (unsigned long) net);
-	return &dev_table[hash & (VPORT_HASH_BUCKETS - 1)];
-}
+अटल काष्ठा hlist_head *hash_bucket(स्थिर काष्ठा net *net, स्थिर अक्षर *name)
+अणु
+	अचिन्हित पूर्णांक hash = jhash(name, म_माप(name), (अचिन्हित दीर्घ) net);
+	वापस &dev_table[hash & (VPORT_HASH_BUCKETS - 1)];
+पूर्ण
 
-int __ovs_vport_ops_register(struct vport_ops *ops)
-{
-	int err = -EEXIST;
-	struct vport_ops *o;
+पूर्णांक __ovs_vport_ops_रेजिस्टर(काष्ठा vport_ops *ops)
+अणु
+	पूर्णांक err = -EEXIST;
+	काष्ठा vport_ops *o;
 
 	ovs_lock();
-	list_for_each_entry(o, &vport_ops_list, list)
-		if (ops->type == o->type)
-			goto errout;
+	list_क्रम_each_entry(o, &vport_ops_list, list)
+		अगर (ops->type == o->type)
+			जाओ errout;
 
 	list_add_tail(&ops->list, &vport_ops_list);
 	err = 0;
 errout:
 	ovs_unlock();
-	return err;
-}
-EXPORT_SYMBOL_GPL(__ovs_vport_ops_register);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(__ovs_vport_ops_रेजिस्टर);
 
-void ovs_vport_ops_unregister(struct vport_ops *ops)
-{
+व्योम ovs_vport_ops_unरेजिस्टर(काष्ठा vport_ops *ops)
+अणु
 	ovs_lock();
 	list_del(&ops->list);
 	ovs_unlock();
-}
-EXPORT_SYMBOL_GPL(ovs_vport_ops_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(ovs_vport_ops_unरेजिस्टर);
 
 /**
- *	ovs_vport_locate - find a port that has already been created
+ *	ovs_vport_locate - find a port that has alपढ़ोy been created
  *
  * @net: network namespace
  * @name: name of port to find
  *
- * Must be called with ovs or RCU read lock.
+ * Must be called with ovs or RCU पढ़ो lock.
  */
-struct vport *ovs_vport_locate(const struct net *net, const char *name)
-{
-	struct hlist_head *bucket = hash_bucket(net, name);
-	struct vport *vport;
+काष्ठा vport *ovs_vport_locate(स्थिर काष्ठा net *net, स्थिर अक्षर *name)
+अणु
+	काष्ठा hlist_head *bucket = hash_bucket(net, name);
+	काष्ठा vport *vport;
 
-	hlist_for_each_entry_rcu(vport, bucket, hash_node,
+	hlist_क्रम_each_entry_rcu(vport, bucket, hash_node,
 				 lockdep_ovsl_is_held())
-		if (!strcmp(name, ovs_vport_name(vport)) &&
+		अगर (!म_भेद(name, ovs_vport_name(vport)) &&
 		    net_eq(ovs_dp_get_net(vport->dp), net))
-			return vport;
+			वापस vport;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  *	ovs_vport_alloc - allocate and initialize new vport
  *
- * @priv_size: Size of private data area to allocate.
+ * @priv_size: Size of निजी data area to allocate.
  * @ops: vport device ops
- * @parms: information about new vport.
+ * @parms: inक्रमmation about new vport.
  *
  * Allocate and initialize a new vport defined by @ops.  The vport will contain
- * a private data area of size @priv_size that can be accessed using
+ * a निजी data area of size @priv_size that can be accessed using
  * vport_priv().  Some parameters of the vport will be initialized from @parms.
- * @vports that are no longer needed should be released with
- * vport_free().
+ * @vports that are no दीर्घer needed should be released with
+ * vport_मुक्त().
  */
-struct vport *ovs_vport_alloc(int priv_size, const struct vport_ops *ops,
-			      const struct vport_parms *parms)
-{
-	struct vport *vport;
-	size_t alloc_size;
+काष्ठा vport *ovs_vport_alloc(पूर्णांक priv_size, स्थिर काष्ठा vport_ops *ops,
+			      स्थिर काष्ठा vport_parms *parms)
+अणु
+	काष्ठा vport *vport;
+	माप_प्रकार alloc_size;
 
-	alloc_size = sizeof(struct vport);
-	if (priv_size) {
+	alloc_size = माप(काष्ठा vport);
+	अगर (priv_size) अणु
 		alloc_size = ALIGN(alloc_size, VPORT_ALIGN);
 		alloc_size += priv_size;
-	}
+	पूर्ण
 
 	vport = kzalloc(alloc_size, GFP_KERNEL);
-	if (!vport)
-		return ERR_PTR(-ENOMEM);
+	अगर (!vport)
+		वापस ERR_PTR(-ENOMEM);
 
 	vport->dp = parms->dp;
 	vport->port_no = parms->port_no;
 	vport->ops = ops;
 	INIT_HLIST_NODE(&vport->dp_hash_node);
 
-	if (ovs_vport_set_upcall_portids(vport, parms->upcall_portids)) {
-		kfree(vport);
-		return ERR_PTR(-EINVAL);
-	}
+	अगर (ovs_vport_set_upcall_portids(vport, parms->upcall_portids)) अणु
+		kमुक्त(vport);
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return vport;
-}
+	वापस vport;
+पूर्ण
 EXPORT_SYMBOL_GPL(ovs_vport_alloc);
 
 /**
- *	ovs_vport_free - uninitialize and free vport
+ *	ovs_vport_मुक्त - uninitialize and मुक्त vport
  *
- * @vport: vport to free
+ * @vport: vport to मुक्त
  *
- * Frees a vport allocated with vport_alloc() when it is no longer needed.
+ * Frees a vport allocated with vport_alloc() when it is no दीर्घer needed.
  *
  * The caller must ensure that an RCU grace period has passed since the last
- * time @vport was in a datapath.
+ * समय @vport was in a datapath.
  */
-void ovs_vport_free(struct vport *vport)
-{
-	/* vport is freed from RCU callback or error path, Therefore
+व्योम ovs_vport_मुक्त(काष्ठा vport *vport)
+अणु
+	/* vport is मुक्तd from RCU callback or error path, Thereक्रमe
 	 * it is safe to use raw dereference.
 	 */
-	kfree(rcu_dereference_raw(vport->upcall_portids));
-	kfree(vport);
-}
-EXPORT_SYMBOL_GPL(ovs_vport_free);
+	kमुक्त(rcu_dereference_raw(vport->upcall_portids));
+	kमुक्त(vport);
+पूर्ण
+EXPORT_SYMBOL_GPL(ovs_vport_मुक्त);
 
-static struct vport_ops *ovs_vport_lookup(const struct vport_parms *parms)
-{
-	struct vport_ops *ops;
+अटल काष्ठा vport_ops *ovs_vport_lookup(स्थिर काष्ठा vport_parms *parms)
+अणु
+	काष्ठा vport_ops *ops;
 
-	list_for_each_entry(ops, &vport_ops_list, list)
-		if (ops->type == parms->type)
-			return ops;
+	list_क्रम_each_entry(ops, &vport_ops_list, list)
+		अगर (ops->type == parms->type)
+			वापस ops;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- *	ovs_vport_add - add vport device (for kernel callers)
+ *	ovs_vport_add - add vport device (क्रम kernel callers)
  *
- * @parms: Information about new vport.
+ * @parms: Inक्रमmation about new vport.
  *
- * Creates a new vport with the specified configuration (which is dependent on
+ * Creates a new vport with the specअगरied configuration (which is dependent on
  * device type).  ovs_mutex must be held.
  */
-struct vport *ovs_vport_add(const struct vport_parms *parms)
-{
-	struct vport_ops *ops;
-	struct vport *vport;
+काष्ठा vport *ovs_vport_add(स्थिर काष्ठा vport_parms *parms)
+अणु
+	काष्ठा vport_ops *ops;
+	काष्ठा vport *vport;
 
 	ops = ovs_vport_lookup(parms);
-	if (ops) {
-		struct hlist_head *bucket;
+	अगर (ops) अणु
+		काष्ठा hlist_head *bucket;
 
-		if (!try_module_get(ops->owner))
-			return ERR_PTR(-EAFNOSUPPORT);
+		अगर (!try_module_get(ops->owner))
+			वापस ERR_PTR(-EAFNOSUPPORT);
 
 		vport = ops->create(parms);
-		if (IS_ERR(vport)) {
+		अगर (IS_ERR(vport)) अणु
 			module_put(ops->owner);
-			return vport;
-		}
+			वापस vport;
+		पूर्ण
 
 		bucket = hash_bucket(ovs_dp_get_net(vport->dp),
 				     ovs_vport_name(vport));
 		hlist_add_head_rcu(&vport->hash_node, bucket);
-		return vport;
-	}
+		वापस vport;
+	पूर्ण
 
-	/* Unlock to attempt module load and return -EAGAIN if load
+	/* Unlock to attempt module load and वापस -EAGAIN अगर load
 	 * was successful as we need to restart the port addition
 	 * workflow.
 	 */
@@ -220,27 +221,27 @@ struct vport *ovs_vport_add(const struct vport_parms *parms)
 	request_module("vport-type-%d", parms->type);
 	ovs_lock();
 
-	if (!ovs_vport_lookup(parms))
-		return ERR_PTR(-EAFNOSUPPORT);
-	else
-		return ERR_PTR(-EAGAIN);
-}
+	अगर (!ovs_vport_lookup(parms))
+		वापस ERR_PTR(-EAFNOSUPPORT);
+	अन्यथा
+		वापस ERR_PTR(-EAGAIN);
+पूर्ण
 
 /**
- *	ovs_vport_set_options - modify existing vport device (for kernel callers)
+ *	ovs_vport_set_options - modअगरy existing vport device (क्रम kernel callers)
  *
- * @vport: vport to modify.
+ * @vport: vport to modअगरy.
  * @options: New configuration.
  *
- * Modifies an existing device with the specified configuration (which is
+ * Modअगरies an existing device with the specअगरied configuration (which is
  * dependent on device type).  ovs_mutex must be held.
  */
-int ovs_vport_set_options(struct vport *vport, struct nlattr *options)
-{
-	if (!vport->ops->set_options)
-		return -EOPNOTSUPP;
-	return vport->ops->set_options(vport, options);
-}
+पूर्णांक ovs_vport_set_options(काष्ठा vport *vport, काष्ठा nlattr *options)
+अणु
+	अगर (!vport->ops->set_options)
+		वापस -EOPNOTSUPP;
+	वापस vport->ops->set_options(vport, options);
+पूर्ण
 
 /**
  *	ovs_vport_del - delete existing vport device
@@ -250,12 +251,12 @@ int ovs_vport_set_options(struct vport *vport, struct nlattr *options)
  * Detaches @vport from its datapath and destroys it.  ovs_mutex must
  * be held.
  */
-void ovs_vport_del(struct vport *vport)
-{
+व्योम ovs_vport_del(काष्ठा vport *vport)
+अणु
 	hlist_del_rcu(&vport->hash_node);
 	module_put(vport->ops->owner);
 	vport->ops->destroy(vport);
-}
+पूर्ण
 
 /**
  *	ovs_vport_get_stats - retrieve device stats
@@ -263,14 +264,14 @@ void ovs_vport_del(struct vport *vport)
  * @vport: vport from which to retrieve the stats
  * @stats: location to store stats
  *
- * Retrieves transmit, receive, and error stats for the given device.
+ * Retrieves transmit, receive, and error stats क्रम the given device.
  *
- * Must be called with ovs_mutex or rcu_read_lock.
+ * Must be called with ovs_mutex or rcu_पढ़ो_lock.
  */
-void ovs_vport_get_stats(struct vport *vport, struct ovs_vport_stats *stats)
-{
-	const struct rtnl_link_stats64 *dev_stats;
-	struct rtnl_link_stats64 temp;
+व्योम ovs_vport_get_stats(काष्ठा vport *vport, काष्ठा ovs_vport_stats *stats)
+अणु
+	स्थिर काष्ठा rtnl_link_stats64 *dev_stats;
+	काष्ठा rtnl_link_stats64 temp;
 
 	dev_stats = dev_get_stats(vport->dev, &temp);
 	stats->rx_errors  = dev_stats->rx_errors;
@@ -282,7 +283,7 @@ void ovs_vport_get_stats(struct vport *vport, struct ovs_vport_stats *stats)
 	stats->rx_packets = dev_stats->rx_packets;
 	stats->tx_bytes	  = dev_stats->tx_bytes;
 	stats->tx_packets = dev_stats->tx_packets;
-}
+पूर्ण
 
 /**
  *	ovs_vport_get_options - retrieve device options
@@ -292,73 +293,73 @@ void ovs_vport_get_stats(struct vport *vport, struct ovs_vport_stats *stats)
  *
  * Retrieves the configuration of the given device, appending an
  * %OVS_VPORT_ATTR_OPTIONS attribute that in turn contains nested
- * vport-specific attributes to @skb.
+ * vport-specअगरic attributes to @skb.
  *
- * Returns 0 if successful, -EMSGSIZE if @skb has insufficient room, or another
- * negative error code if a real error occurred.  If an error occurs, @skb is
- * left unmodified.
+ * Returns 0 अगर successful, -EMSGSIZE अगर @skb has insufficient room, or another
+ * negative error code अगर a real error occurred.  If an error occurs, @skb is
+ * left unmodअगरied.
  *
- * Must be called with ovs_mutex or rcu_read_lock.
+ * Must be called with ovs_mutex or rcu_पढ़ो_lock.
  */
-int ovs_vport_get_options(const struct vport *vport, struct sk_buff *skb)
-{
-	struct nlattr *nla;
-	int err;
+पूर्णांक ovs_vport_get_options(स्थिर काष्ठा vport *vport, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *nla;
+	पूर्णांक err;
 
-	if (!vport->ops->get_options)
-		return 0;
+	अगर (!vport->ops->get_options)
+		वापस 0;
 
 	nla = nla_nest_start_noflag(skb, OVS_VPORT_ATTR_OPTIONS);
-	if (!nla)
-		return -EMSGSIZE;
+	अगर (!nla)
+		वापस -EMSGSIZE;
 
 	err = vport->ops->get_options(vport, skb);
-	if (err) {
+	अगर (err) अणु
 		nla_nest_cancel(skb, nla);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	nla_nest_end(skb, nla);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	ovs_vport_set_upcall_portids - set upcall portids of @vport.
  *
- * @vport: vport to modify.
+ * @vport: vport to modअगरy.
  * @ids: new configuration, an array of port ids.
  *
  * Sets the vport's upcall_portids to @ids.
  *
- * Returns 0 if successful, -EINVAL if @ids is zero length or cannot be parsed
+ * Returns 0 अगर successful, -EINVAL अगर @ids is zero length or cannot be parsed
  * as an array of U32.
  *
  * Must be called with ovs_mutex.
  */
-int ovs_vport_set_upcall_portids(struct vport *vport, const struct nlattr *ids)
-{
-	struct vport_portids *old, *vport_portids;
+पूर्णांक ovs_vport_set_upcall_portids(काष्ठा vport *vport, स्थिर काष्ठा nlattr *ids)
+अणु
+	काष्ठा vport_portids *old, *vport_portids;
 
-	if (!nla_len(ids) || nla_len(ids) % sizeof(u32))
-		return -EINVAL;
+	अगर (!nla_len(ids) || nla_len(ids) % माप(u32))
+		वापस -EINVAL;
 
 	old = ovsl_dereference(vport->upcall_portids);
 
-	vport_portids = kmalloc(sizeof(*vport_portids) + nla_len(ids),
+	vport_portids = kदो_स्मृति(माप(*vport_portids) + nla_len(ids),
 				GFP_KERNEL);
-	if (!vport_portids)
-		return -ENOMEM;
+	अगर (!vport_portids)
+		वापस -ENOMEM;
 
-	vport_portids->n_ids = nla_len(ids) / sizeof(u32);
+	vport_portids->n_ids = nla_len(ids) / माप(u32);
 	vport_portids->rn_ids = reciprocal_value(vport_portids->n_ids);
-	nla_memcpy(vport_portids->ids, ids, nla_len(ids));
+	nla_स_नकल(vport_portids->ids, ids, nla_len(ids));
 
-	rcu_assign_pointer(vport->upcall_portids, vport_portids);
+	rcu_assign_poपूर्णांकer(vport->upcall_portids, vport_portids);
 
-	if (old)
-		kfree_rcu(old, rcu);
-	return 0;
-}
+	अगर (old)
+		kमुक्त_rcu(old, rcu);
+	वापस 0;
+पूर्ण
 
 /**
  *	ovs_vport_get_upcall_portids - get the upcall_portids of @vport.
@@ -370,23 +371,23 @@ int ovs_vport_set_upcall_portids(struct vport *vport, const struct nlattr *ids)
  * %OVS_VPORT_ATTR_UPCALL_PID attribute which is the array of upcall
  * portids to @skb.
  *
- * Returns 0 if successful, -EMSGSIZE if @skb has insufficient room.
- * If an error occurs, @skb is left unmodified.  Must be called with
- * ovs_mutex or rcu_read_lock.
+ * Returns 0 अगर successful, -EMSGSIZE अगर @skb has insufficient room.
+ * If an error occurs, @skb is left unmodअगरied.  Must be called with
+ * ovs_mutex or rcu_पढ़ो_lock.
  */
-int ovs_vport_get_upcall_portids(const struct vport *vport,
-				 struct sk_buff *skb)
-{
-	struct vport_portids *ids;
+पूर्णांक ovs_vport_get_upcall_portids(स्थिर काष्ठा vport *vport,
+				 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा vport_portids *ids;
 
 	ids = rcu_dereference_ovsl(vport->upcall_portids);
 
-	if (vport->dp->user_features & OVS_DP_F_VPORT_PIDS)
-		return nla_put(skb, OVS_VPORT_ATTR_UPCALL_PID,
-			       ids->n_ids * sizeof(u32), (void *)ids->ids);
-	else
-		return nla_put_u32(skb, OVS_VPORT_ATTR_UPCALL_PID, ids->ids[0]);
-}
+	अगर (vport->dp->user_features & OVS_DP_F_VPORT_PIDS)
+		वापस nla_put(skb, OVS_VPORT_ATTR_UPCALL_PID,
+			       ids->n_ids * माप(u32), (व्योम *)ids->ids);
+	अन्यथा
+		वापस nla_put_u32(skb, OVS_VPORT_ATTR_UPCALL_PID, ids->ids[0]);
+पूर्ण
 
 /**
  *	ovs_vport_find_upcall_portid - find the upcall portid to send upcall.
@@ -397,119 +398,119 @@ int ovs_vport_get_upcall_portids(const struct vport *vport,
  * Uses the skb_get_hash() to select the upcall portid to send the
  * upcall.
  *
- * Returns the portid of the target socket.  Must be called with rcu_read_lock.
+ * Returns the portid of the target socket.  Must be called with rcu_पढ़ो_lock.
  */
-u32 ovs_vport_find_upcall_portid(const struct vport *vport,
-				 struct sk_buff *skb)
-{
-	struct vport_portids *ids;
+u32 ovs_vport_find_upcall_portid(स्थिर काष्ठा vport *vport,
+				 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा vport_portids *ids;
 	u32 ids_index;
 	u32 hash;
 
 	ids = rcu_dereference(vport->upcall_portids);
 
 	/* If there is only one portid, select it in the fast-path. */
-	if (ids->n_ids == 1)
-		return ids->ids[0];
+	अगर (ids->n_ids == 1)
+		वापस ids->ids[0];
 
 	hash = skb_get_hash(skb);
-	ids_index = hash - ids->n_ids * reciprocal_divide(hash, ids->rn_ids);
-	return ids->ids[ids_index];
-}
+	ids_index = hash - ids->n_ids * reciprocal_भागide(hash, ids->rn_ids);
+	वापस ids->ids[ids_index];
+पूर्ण
 
 /**
- *	ovs_vport_receive - pass up received packet to the datapath for processing
+ *	ovs_vport_receive - pass up received packet to the datapath क्रम processing
  *
  * @vport: vport that received the packet
  * @skb: skb that was received
- * @tun_info: tunnel (if any) that carried packet
+ * @tun_info: tunnel (अगर any) that carried packet
  *
- * Must be called with rcu_read_lock.  The packet cannot be shared and
- * skb->data should point to the Ethernet header.
+ * Must be called with rcu_पढ़ो_lock.  The packet cannot be shared and
+ * skb->data should poपूर्णांक to the Ethernet header.
  */
-int ovs_vport_receive(struct vport *vport, struct sk_buff *skb,
-		      const struct ip_tunnel_info *tun_info)
-{
-	struct sw_flow_key key;
-	int error;
+पूर्णांक ovs_vport_receive(काष्ठा vport *vport, काष्ठा sk_buff *skb,
+		      स्थिर काष्ठा ip_tunnel_info *tun_info)
+अणु
+	काष्ठा sw_flow_key key;
+	पूर्णांक error;
 
 	OVS_CB(skb)->input_vport = vport;
 	OVS_CB(skb)->mru = 0;
 	OVS_CB(skb)->cutlen = 0;
-	if (unlikely(dev_net(skb->dev) != ovs_dp_get_net(vport->dp))) {
+	अगर (unlikely(dev_net(skb->dev) != ovs_dp_get_net(vport->dp))) अणु
 		u32 mark;
 
 		mark = skb->mark;
 		skb_scrub_packet(skb, true);
 		skb->mark = mark;
-		tun_info = NULL;
-	}
+		tun_info = शून्य;
+	पूर्ण
 
 	/* Extract flow from 'skb' into 'key'. */
 	error = ovs_flow_key_extract(tun_info, skb, &key);
-	if (unlikely(error)) {
-		kfree_skb(skb);
-		return error;
-	}
+	अगर (unlikely(error)) अणु
+		kमुक्त_skb(skb);
+		वापस error;
+	पूर्ण
 	ovs_dp_process_packet(skb, &key);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int packet_length(const struct sk_buff *skb,
-			 struct net_device *dev)
-{
-	int length = skb->len - dev->hard_header_len;
+अटल पूर्णांक packet_length(स्थिर काष्ठा sk_buff *skb,
+			 काष्ठा net_device *dev)
+अणु
+	पूर्णांक length = skb->len - dev->hard_header_len;
 
-	if (!skb_vlan_tag_present(skb) &&
+	अगर (!skb_vlan_tag_present(skb) &&
 	    eth_type_vlan(skb->protocol))
 		length -= VLAN_HLEN;
 
-	/* Don't subtract for multiple VLAN tags. Most (all?) drivers allow
+	/* Don't subtract क्रम multiple VLAN tags. Most (all?) drivers allow
 	 * (ETH_LEN + VLAN_HLEN) in addition to the mtu value, but almost none
-	 * account for 802.1ad. e.g. is_skb_forwardable().
+	 * account क्रम 802.1ad. e.g. is_skb_क्रमwardable().
 	 */
 
-	return length > 0 ? length : 0;
-}
+	वापस length > 0 ? length : 0;
+पूर्ण
 
-void ovs_vport_send(struct vport *vport, struct sk_buff *skb, u8 mac_proto)
-{
-	int mtu = vport->dev->mtu;
+व्योम ovs_vport_send(काष्ठा vport *vport, काष्ठा sk_buff *skb, u8 mac_proto)
+अणु
+	पूर्णांक mtu = vport->dev->mtu;
 
-	switch (vport->dev->type) {
-	case ARPHRD_NONE:
-		if (mac_proto == MAC_PROTO_ETHERNET) {
+	चयन (vport->dev->type) अणु
+	हाल ARPHRD_NONE:
+		अगर (mac_proto == MAC_PROTO_ETHERNET) अणु
 			skb_reset_network_header(skb);
 			skb_reset_mac_len(skb);
 			skb->protocol = htons(ETH_P_TEB);
-		} else if (mac_proto != MAC_PROTO_NONE) {
+		पूर्ण अन्यथा अगर (mac_proto != MAC_PROTO_NONE) अणु
 			WARN_ON_ONCE(1);
-			goto drop;
-		}
-		break;
-	case ARPHRD_ETHER:
-		if (mac_proto != MAC_PROTO_ETHERNET)
-			goto drop;
-		break;
-	default:
-		goto drop;
-	}
+			जाओ drop;
+		पूर्ण
+		अवरोध;
+	हाल ARPHRD_ETHER:
+		अगर (mac_proto != MAC_PROTO_ETHERNET)
+			जाओ drop;
+		अवरोध;
+	शेष:
+		जाओ drop;
+	पूर्ण
 
-	if (unlikely(packet_length(skb, vport->dev) > mtu &&
-		     !skb_is_gso(skb))) {
+	अगर (unlikely(packet_length(skb, vport->dev) > mtu &&
+		     !skb_is_gso(skb))) अणु
 		vport->dev->stats.tx_errors++;
-		if (vport->dev->flags & IFF_UP)
+		अगर (vport->dev->flags & IFF_UP)
 			net_warn_ratelimited("%s: dropped over-mtu packet: "
 					     "%d > %d\n", vport->dev->name,
 					     packet_length(skb, vport->dev),
 					     mtu);
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 
 	skb->dev = vport->dev;
 	vport->ops->send(skb);
-	return;
+	वापस;
 
 drop:
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण

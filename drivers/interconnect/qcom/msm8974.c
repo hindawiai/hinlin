@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2019 Brian Masney <masneyb@onstation.org>
  *
- * Based on MSM bus code from downstream MSM kernel sources.
+ * Based on MSM bus code from करोwnstream MSM kernel sources.
  * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
  *
  * Based on qcs404.c
  * Copyright (C) 2019 Linaro Ltd
  *
- * Here's a rough representation that shows the various buses that form the
- * Network On Chip (NOC) for the msm8974:
+ * Here's a rough representation that shows the various buses that क्रमm the
+ * Network On Chip (NOC) क्रम the msm8974:
  *
- *                         Multimedia Subsystem (MMSS)
+ *                         Mulसमयdia Subप्रणाली (MMSS)
  *         |----------+-----------------------------------+-----------|
  *                    |                                   |
  *                    |                                   |
@@ -27,20 +28,20 @@
  *       |------------+-------------|        |------------+-------------|
  */
 
-#include <dt-bindings/interconnect/qcom,msm8974.h>
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/interconnect-provider.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <dt-bindings/पूर्णांकerconnect/qcom,msm8974.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerconnect-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "smd-rpm.h"
+#समावेश "smd-rpm.h"
 
-enum {
+क्रमागत अणु
 	MSM8974_BIMC_MAS_AMPSS_M0 = 1,
 	MSM8974_BIMC_MAS_AMPSS_M1,
 	MSM8974_BIMC_MAS_MSS_PROC,
@@ -170,71 +171,71 @@ enum {
 	MSM8974_SNOC_SLV_SNOC_OCMEM,
 	MSM8974_SNOC_SLV_SERVICE_SNOC,
 	MSM8974_SNOC_SLV_QDSS_STM,
-};
+पूर्ण;
 
-#define RPM_BUS_MASTER_REQ	0x73616d62
-#define RPM_BUS_SLAVE_REQ	0x766c7362
+#घोषणा RPM_BUS_MASTER_REQ	0x73616d62
+#घोषणा RPM_BUS_SLAVE_REQ	0x766c7362
 
-#define to_msm8974_icc_provider(_provider) \
-	container_of(_provider, struct msm8974_icc_provider, provider)
+#घोषणा to_msm8974_icc_provider(_provider) \
+	container_of(_provider, काष्ठा msm8974_icc_provider, provider)
 
-static const struct clk_bulk_data msm8974_icc_bus_clocks[] = {
-	{ .id = "bus" },
-	{ .id = "bus_a" },
-};
+अटल स्थिर काष्ठा clk_bulk_data msm8974_icc_bus_घड़ीs[] = अणु
+	अणु .id = "bus" पूर्ण,
+	अणु .id = "bus_a" पूर्ण,
+पूर्ण;
 
 /**
- * struct msm8974_icc_provider - Qualcomm specific interconnect provider
- * @provider: generic interconnect provider
- * @bus_clks: the clk_bulk_data table of bus clocks
+ * काष्ठा msm8974_icc_provider - Qualcomm specअगरic पूर्णांकerconnect provider
+ * @provider: generic पूर्णांकerconnect provider
+ * @bus_clks: the clk_bulk_data table of bus घड़ीs
  * @num_clks: the total number of clk_bulk_data entries
  */
-struct msm8974_icc_provider {
-	struct icc_provider provider;
-	struct clk_bulk_data *bus_clks;
-	int num_clks;
-};
+काष्ठा msm8974_icc_provider अणु
+	काष्ठा icc_provider provider;
+	काष्ठा clk_bulk_data *bus_clks;
+	पूर्णांक num_clks;
+पूर्ण;
 
-#define MSM8974_ICC_MAX_LINKS	3
+#घोषणा MSM8974_ICC_MAX_LINKS	3
 
 /**
- * struct msm8974_icc_node - Qualcomm specific interconnect nodes
+ * काष्ठा msm8974_icc_node - Qualcomm specअगरic पूर्णांकerconnect nodes
  * @name: the node name used in debugfs
- * @id: a unique node identifier
- * @links: an array of nodes where we can go next while traversing
+ * @id: a unique node identअगरier
+ * @links: an array of nodes where we can go next जबतक traversing
  * @num_links: the total number of @links
- * @buswidth: width of the interconnect between a node and the bus (bytes)
- * @mas_rpm_id:	RPM ID for devices that are bus masters
- * @slv_rpm_id:	RPM ID for devices that are bus slaves
- * @rate: current bus clock rate in Hz
+ * @buswidth: width of the पूर्णांकerconnect between a node and the bus (bytes)
+ * @mas_rpm_id:	RPM ID क्रम devices that are bus masters
+ * @slv_rpm_id:	RPM ID क्रम devices that are bus slaves
+ * @rate: current bus घड़ी rate in Hz
  */
-struct msm8974_icc_node {
-	unsigned char *name;
+काष्ठा msm8974_icc_node अणु
+	अचिन्हित अक्षर *name;
 	u16 id;
 	u16 links[MSM8974_ICC_MAX_LINKS];
 	u16 num_links;
 	u16 buswidth;
-	int mas_rpm_id;
-	int slv_rpm_id;
+	पूर्णांक mas_rpm_id;
+	पूर्णांक slv_rpm_id;
 	u64 rate;
-};
+पूर्ण;
 
-struct msm8974_icc_desc {
-	struct msm8974_icc_node **nodes;
-	size_t num_nodes;
-};
+काष्ठा msm8974_icc_desc अणु
+	काष्ठा msm8974_icc_node **nodes;
+	माप_प्रकार num_nodes;
+पूर्ण;
 
-#define DEFINE_QNODE(_name, _id, _buswidth, _mas_rpm_id, _slv_rpm_id,	\
+#घोषणा DEFINE_QNODE(_name, _id, _buswidth, _mas_rpm_id, _slv_rpm_id,	\
 		     ...)						\
-		static struct msm8974_icc_node _name = {		\
+		अटल काष्ठा msm8974_icc_node _name = अणु		\
 		.name = #_name,						\
 		.id = _id,						\
 		.buswidth = _buswidth,					\
 		.mas_rpm_id = _mas_rpm_id,				\
 		.slv_rpm_id = _slv_rpm_id,				\
-		.num_links = ARRAY_SIZE(((int[]){ __VA_ARGS__ })),	\
-		.links = { __VA_ARGS__ },				\
-	}
+		.num_links = ARRAY_SIZE(((पूर्णांक[])अणु __VA_ARGS__ पूर्ण)),	\
+		.links = अणु __VA_ARGS__ पूर्ण,				\
+	पूर्ण
 
 DEFINE_QNODE(mas_ampss_m0, MSM8974_BIMC_MAS_AMPSS_M0, 8, 0, -1);
 DEFINE_QNODE(mas_ampss_m1, MSM8974_BIMC_MAS_AMPSS_M1, 8, 0, -1);
@@ -244,7 +245,7 @@ DEFINE_QNODE(bimc_to_snoc, MSM8974_BIMC_TO_SNOC, 8, 3, 2, MSM8974_SNOC_TO_BIMC, 
 DEFINE_QNODE(slv_ebi_ch0, MSM8974_BIMC_SLV_EBI_CH0, 8, -1, 0);
 DEFINE_QNODE(slv_ampss_l2, MSM8974_BIMC_SLV_AMPSS_L2, 8, -1, 1);
 
-static struct msm8974_icc_node *msm8974_bimc_nodes[] = {
+अटल काष्ठा msm8974_icc_node *msm8974_bimc_nodes[] = अणु
 	[BIMC_MAS_AMPSS_M0] = &mas_ampss_m0,
 	[BIMC_MAS_AMPSS_M1] = &mas_ampss_m1,
 	[BIMC_MAS_MSS_PROC] = &mas_mss_proc,
@@ -252,12 +253,12 @@ static struct msm8974_icc_node *msm8974_bimc_nodes[] = {
 	[BIMC_TO_SNOC] = &bimc_to_snoc,
 	[BIMC_SLV_EBI_CH0] = &slv_ebi_ch0,
 	[BIMC_SLV_AMPSS_L2] = &slv_ampss_l2,
-};
+पूर्ण;
 
-static struct msm8974_icc_desc msm8974_bimc = {
+अटल काष्ठा msm8974_icc_desc msm8974_bimc = अणु
 	.nodes = msm8974_bimc_nodes,
 	.num_nodes = ARRAY_SIZE(msm8974_bimc_nodes),
-};
+पूर्ण;
 
 DEFINE_QNODE(mas_rpm_inst, MSM8974_CNOC_MAS_RPM_INST, 8, 45, -1);
 DEFINE_QNODE(mas_rpm_data, MSM8974_CNOC_MAS_RPM_DATA, 8, 46, -1);
@@ -297,7 +298,7 @@ DEFINE_QNODE(slv_ebi1_phy_cfg, MSM8974_CNOC_SLV_EBI1_PHY_CFG, 8, -1, 73);
 DEFINE_QNODE(slv_rpm, MSM8974_CNOC_SLV_RPM, 8, -1, 74);
 DEFINE_QNODE(slv_service_cnoc, MSM8974_CNOC_SLV_SERVICE_CNOC, 8, -1, 76);
 
-static struct msm8974_icc_node *msm8974_cnoc_nodes[] = {
+अटल काष्ठा msm8974_icc_node *msm8974_cnoc_nodes[] = अणु
 	[CNOC_MAS_RPM_INST] = &mas_rpm_inst,
 	[CNOC_MAS_RPM_DATA] = &mas_rpm_data,
 	[CNOC_MAS_RPM_SYS] = &mas_rpm_sys,
@@ -335,12 +336,12 @@ static struct msm8974_icc_node *msm8974_cnoc_nodes[] = {
 	[CNOC_SLV_EBI1_PHY_CFG] = &slv_ebi1_phy_cfg,
 	[CNOC_SLV_RPM] = &slv_rpm,
 	[CNOC_SLV_SERVICE_CNOC] = &slv_service_cnoc,
-};
+पूर्ण;
 
-static struct msm8974_icc_desc msm8974_cnoc = {
+अटल काष्ठा msm8974_icc_desc msm8974_cnoc = अणु
 	.nodes = msm8974_cnoc_nodes,
 	.num_nodes = ARRAY_SIZE(msm8974_cnoc_nodes),
-};
+पूर्ण;
 
 DEFINE_QNODE(mas_graphics_3d, MSM8974_MNOC_MAS_GRAPHICS_3D, 16, 6, -1, MSM8974_MNOC_TO_BIMC);
 DEFINE_QNODE(mas_jpeg, MSM8974_MNOC_MAS_JPEG, 16, 7, -1, MSM8974_MNOC_TO_BIMC);
@@ -365,7 +366,7 @@ DEFINE_QNODE(slv_mnoc_mpu_cfg, MSM8974_MNOC_SLV_MNOC_MPU_CFG, 16, -1, 14);
 DEFINE_QNODE(slv_onoc_mpu_cfg, MSM8974_MNOC_SLV_ONOC_MPU_CFG, 16, -1, 15);
 DEFINE_QNODE(slv_service_mnoc, MSM8974_MNOC_SLV_SERVICE_MNOC, 16, -1, 17);
 
-static struct msm8974_icc_node *msm8974_mnoc_nodes[] = {
+अटल काष्ठा msm8974_icc_node *msm8974_mnoc_nodes[] = अणु
 	[MNOC_MAS_GRAPHICS_3D] = &mas_graphics_3d,
 	[MNOC_MAS_JPEG] = &mas_jpeg,
 	[MNOC_MAS_MDP_PORT0] = &mas_mdp_port0,
@@ -388,12 +389,12 @@ static struct msm8974_icc_node *msm8974_mnoc_nodes[] = {
 	[MNOC_SLV_MNOC_MPU_CFG] = &slv_mnoc_mpu_cfg,
 	[MNOC_SLV_ONOC_MPU_CFG] = &slv_onoc_mpu_cfg,
 	[MNOC_SLV_SERVICE_MNOC] = &slv_service_mnoc,
-};
+पूर्ण;
 
-static struct msm8974_icc_desc msm8974_mnoc = {
+अटल काष्ठा msm8974_icc_desc msm8974_mnoc = अणु
 	.nodes = msm8974_mnoc_nodes,
 	.num_nodes = ARRAY_SIZE(msm8974_mnoc_nodes),
-};
+पूर्ण;
 
 DEFINE_QNODE(ocmem_noc_to_ocmem_vnoc, MSM8974_OCMEM_NOC_TO_OCMEM_VNOC, 16, 54, 78, MSM8974_OCMEM_SLV_OCMEM);
 DEFINE_QNODE(mas_jpeg_ocmem, MSM8974_OCMEM_MAS_JPEG_OCMEM, 16, 13, -1);
@@ -405,12 +406,12 @@ DEFINE_QNODE(mas_cnoc_onoc_cfg, MSM8974_OCMEM_MAS_CNOC_ONOC_CFG, 16, 12, -1);
 DEFINE_QNODE(slv_service_onoc, MSM8974_OCMEM_SLV_SERVICE_ONOC, 16, -1, 19);
 DEFINE_QNODE(slv_ocmem, MSM8974_OCMEM_SLV_OCMEM, 16, -1, 18);
 
-/* Virtual NoC is needed for connection to OCMEM */
+/* Virtual NoC is needed क्रम connection to OCMEM */
 DEFINE_QNODE(ocmem_vnoc_to_onoc, MSM8974_OCMEM_VNOC_TO_OCMEM_NOC, 16, 56, 79, MSM8974_OCMEM_NOC_TO_OCMEM_VNOC);
 DEFINE_QNODE(ocmem_vnoc_to_snoc, MSM8974_OCMEM_VNOC_TO_SNOC, 8, 57, 80);
 DEFINE_QNODE(mas_v_ocmem_gfx3d, MSM8974_OCMEM_VNOC_MAS_GFX3D, 8, 55, -1, MSM8974_OCMEM_VNOC_TO_OCMEM_NOC);
 
-static struct msm8974_icc_node *msm8974_onoc_nodes[] = {
+अटल काष्ठा msm8974_icc_node *msm8974_onoc_nodes[] = अणु
 	[OCMEM_NOC_TO_OCMEM_VNOC] = &ocmem_noc_to_ocmem_vnoc,
 	[OCMEM_MAS_JPEG_OCMEM] = &mas_jpeg_ocmem,
 	[OCMEM_MAS_MDP_OCMEM] = &mas_mdp_ocmem,
@@ -423,19 +424,19 @@ static struct msm8974_icc_node *msm8974_onoc_nodes[] = {
 	[OCMEM_VNOC_TO_OCMEM_NOC] = &ocmem_vnoc_to_onoc,
 	[OCMEM_VNOC_MAS_GFX3D] = &mas_v_ocmem_gfx3d,
 	[OCMEM_SLV_OCMEM] = &slv_ocmem,
-};
+पूर्ण;
 
-static struct msm8974_icc_desc msm8974_onoc = {
+अटल काष्ठा msm8974_icc_desc msm8974_onoc = अणु
 	.nodes = msm8974_onoc_nodes,
 	.num_nodes = ARRAY_SIZE(msm8974_onoc_nodes),
-};
+पूर्ण;
 
 DEFINE_QNODE(mas_pnoc_cfg, MSM8974_PNOC_MAS_PNOC_CFG, 8, 43, -1);
 DEFINE_QNODE(mas_sdcc_1, MSM8974_PNOC_MAS_SDCC_1, 8, 33, -1, MSM8974_PNOC_TO_SNOC);
 DEFINE_QNODE(mas_sdcc_3, MSM8974_PNOC_MAS_SDCC_3, 8, 34, -1, MSM8974_PNOC_TO_SNOC);
 DEFINE_QNODE(mas_sdcc_4, MSM8974_PNOC_MAS_SDCC_4, 8, 36, -1, MSM8974_PNOC_TO_SNOC);
 DEFINE_QNODE(mas_sdcc_2, MSM8974_PNOC_MAS_SDCC_2, 8, 35, -1, MSM8974_PNOC_TO_SNOC);
-DEFINE_QNODE(mas_tsif, MSM8974_PNOC_MAS_TSIF, 8, 37, -1, MSM8974_PNOC_TO_SNOC);
+DEFINE_QNODE(mas_tsअगर, MSM8974_PNOC_MAS_TSIF, 8, 37, -1, MSM8974_PNOC_TO_SNOC);
 DEFINE_QNODE(mas_bam_dma, MSM8974_PNOC_MAS_BAM_DMA, 8, 38, -1);
 DEFINE_QNODE(mas_blsp_2, MSM8974_PNOC_MAS_BLSP_2, 8, 39, -1, MSM8974_PNOC_TO_SNOC);
 DEFINE_QNODE(mas_usb_hsic, MSM8974_PNOC_MAS_USB_HSIC, 8, 40, -1, MSM8974_PNOC_TO_SNOC);
@@ -446,7 +447,7 @@ DEFINE_QNODE(slv_sdcc_1, MSM8974_PNOC_SLV_SDCC_1, 8, -1, 31);
 DEFINE_QNODE(slv_sdcc_3, MSM8974_PNOC_SLV_SDCC_3, 8, -1, 32);
 DEFINE_QNODE(slv_sdcc_2, MSM8974_PNOC_SLV_SDCC_2, 8, -1, 33);
 DEFINE_QNODE(slv_sdcc_4, MSM8974_PNOC_SLV_SDCC_4, 8, -1, 34);
-DEFINE_QNODE(slv_tsif, MSM8974_PNOC_SLV_TSIF, 8, -1, 35);
+DEFINE_QNODE(slv_tsअगर, MSM8974_PNOC_SLV_TSIF, 8, -1, 35);
 DEFINE_QNODE(slv_bam_dma, MSM8974_PNOC_SLV_BAM_DMA, 8, -1, 36);
 DEFINE_QNODE(slv_blsp_2, MSM8974_PNOC_SLV_BLSP_2, 8, -1, 37);
 DEFINE_QNODE(slv_usb_hsic, MSM8974_PNOC_SLV_USB_HSIC, 8, -1, 38);
@@ -458,13 +459,13 @@ DEFINE_QNODE(slv_pnoc_mpu_cfg, MSM8974_PNOC_SLV_PNOC_MPU_CFG, 8, -1, 43);
 DEFINE_QNODE(slv_prng, MSM8974_PNOC_SLV_PRNG, 8, -1, 44, MSM8974_PNOC_TO_SNOC);
 DEFINE_QNODE(slv_service_pnoc, MSM8974_PNOC_SLV_SERVICE_PNOC, 8, -1, 46);
 
-static struct msm8974_icc_node *msm8974_pnoc_nodes[] = {
+अटल काष्ठा msm8974_icc_node *msm8974_pnoc_nodes[] = अणु
 	[PNOC_MAS_PNOC_CFG] = &mas_pnoc_cfg,
 	[PNOC_MAS_SDCC_1] = &mas_sdcc_1,
 	[PNOC_MAS_SDCC_3] = &mas_sdcc_3,
 	[PNOC_MAS_SDCC_4] = &mas_sdcc_4,
 	[PNOC_MAS_SDCC_2] = &mas_sdcc_2,
-	[PNOC_MAS_TSIF] = &mas_tsif,
+	[PNOC_MAS_TSIF] = &mas_tsअगर,
 	[PNOC_MAS_BAM_DMA] = &mas_bam_dma,
 	[PNOC_MAS_BLSP_2] = &mas_blsp_2,
 	[PNOC_MAS_USB_HSIC] = &mas_usb_hsic,
@@ -475,7 +476,7 @@ static struct msm8974_icc_node *msm8974_pnoc_nodes[] = {
 	[PNOC_SLV_SDCC_3] = &slv_sdcc_3,
 	[PNOC_SLV_SDCC_2] = &slv_sdcc_2,
 	[PNOC_SLV_SDCC_4] = &slv_sdcc_4,
-	[PNOC_SLV_TSIF] = &slv_tsif,
+	[PNOC_SLV_TSIF] = &slv_tsअगर,
 	[PNOC_SLV_BAM_DMA] = &slv_bam_dma,
 	[PNOC_SLV_BLSP_2] = &slv_blsp_2,
 	[PNOC_SLV_USB_HSIC] = &slv_usb_hsic,
@@ -486,12 +487,12 @@ static struct msm8974_icc_node *msm8974_pnoc_nodes[] = {
 	[PNOC_SLV_PNOC_MPU_CFG] = &slv_pnoc_mpu_cfg,
 	[PNOC_SLV_PRNG] = &slv_prng,
 	[PNOC_SLV_SERVICE_PNOC] = &slv_service_pnoc,
-};
+पूर्ण;
 
-static struct msm8974_icc_desc msm8974_pnoc = {
+अटल काष्ठा msm8974_icc_desc msm8974_pnoc = अणु
 	.nodes = msm8974_pnoc_nodes,
 	.num_nodes = ARRAY_SIZE(msm8974_pnoc_nodes),
-};
+पूर्ण;
 
 DEFINE_QNODE(mas_lpass_ahb, MSM8974_SNOC_MAS_LPASS_AHB, 8, 18, -1);
 DEFINE_QNODE(mas_qdss_bam, MSM8974_SNOC_MAS_QDSS_BAM, 8, 19, -1);
@@ -516,9 +517,9 @@ DEFINE_QNODE(slv_wcss, MSM8974_SNOC_SLV_WCSS, 8, -1, 23);
 DEFINE_QNODE(slv_ocimem, MSM8974_SNOC_SLV_OCIMEM, 8, -1, 26);
 DEFINE_QNODE(slv_snoc_ocmem, MSM8974_SNOC_SLV_SNOC_OCMEM, 8, -1, 27);
 DEFINE_QNODE(slv_service_snoc, MSM8974_SNOC_SLV_SERVICE_SNOC, 8, -1, 29);
-DEFINE_QNODE(slv_qdss_stm, MSM8974_SNOC_SLV_QDSS_STM, 8, -1, 30);
+DEFINE_QNODE(slv_qdss_sपंचांग, MSM8974_SNOC_SLV_QDSS_STM, 8, -1, 30);
 
-static struct msm8974_icc_node *msm8974_snoc_nodes[] = {
+अटल काष्ठा msm8974_icc_node *msm8974_snoc_nodes[] = अणु
 	[SNOC_MAS_LPASS_AHB] = &mas_lpass_ahb,
 	[SNOC_MAS_QDSS_BAM] = &mas_qdss_bam,
 	[SNOC_MAS_SNOC_CFG] = &mas_snoc_cfg,
@@ -542,58 +543,58 @@ static struct msm8974_icc_node *msm8974_snoc_nodes[] = {
 	[SNOC_SLV_OCIMEM] = &slv_ocimem,
 	[SNOC_SLV_SNOC_OCMEM] = &slv_snoc_ocmem,
 	[SNOC_SLV_SERVICE_SNOC] = &slv_service_snoc,
-	[SNOC_SLV_QDSS_STM] = &slv_qdss_stm,
-};
+	[SNOC_SLV_QDSS_STM] = &slv_qdss_sपंचांग,
+पूर्ण;
 
-static struct msm8974_icc_desc msm8974_snoc = {
+अटल काष्ठा msm8974_icc_desc msm8974_snoc = अणु
 	.nodes = msm8974_snoc_nodes,
 	.num_nodes = ARRAY_SIZE(msm8974_snoc_nodes),
-};
+पूर्ण;
 
-static void msm8974_icc_rpm_smd_send(struct device *dev, int rsc_type,
-				     char *name, int id, u64 val)
-{
-	int ret;
+अटल व्योम msm8974_icc_rpm_smd_send(काष्ठा device *dev, पूर्णांक rsc_type,
+				     अक्षर *name, पूर्णांक id, u64 val)
+अणु
+	पूर्णांक ret;
 
-	if (id == -1)
-		return;
+	अगर (id == -1)
+		वापस;
 
 	/*
-	 * Setting the bandwidth requests for some nodes fails and this same
-	 * behavior occurs on the downstream MSM 3.4 kernel sources based on
+	 * Setting the bandwidth requests क्रम some nodes fails and this same
+	 * behavior occurs on the करोwnstream MSM 3.4 kernel sources based on
 	 * errors like this in that kernel:
 	 *
 	 *   msm_rpm_get_error_from_ack(): RPM NACK Unsupported resource
 	 *   AXI: msm_bus_rpm_req(): RPM: Ack failed
 	 *   AXI: msm_bus_rpm_commit_arb(): RPM: Req fail: mas:32, bw:240000000
 	 *
-	 * Since there's no publicly available documentation for this hardware,
-	 * and the bandwidth for some nodes in the path can be set properly,
-	 * let's not return an error.
+	 * Since there's no खुलाly available करोcumentation क्रम this hardware,
+	 * and the bandwidth क्रम some nodes in the path can be set properly,
+	 * let's not वापस an error.
 	 */
 	ret = qcom_icc_rpm_smd_send(QCOM_SMD_RPM_ACTIVE_STATE, rsc_type, id,
 				    val);
-	if (ret)
+	अगर (ret)
 		dev_dbg(dev, "Cannot set bandwidth for node %s (%d): %d\n",
 			name, id, ret);
-}
+पूर्ण
 
-static int msm8974_icc_set(struct icc_node *src, struct icc_node *dst)
-{
-	struct msm8974_icc_node *src_qn, *dst_qn;
-	struct msm8974_icc_provider *qp;
+अटल पूर्णांक msm8974_icc_set(काष्ठा icc_node *src, काष्ठा icc_node *dst)
+अणु
+	काष्ठा msm8974_icc_node *src_qn, *dst_qn;
+	काष्ठा msm8974_icc_provider *qp;
 	u64 sum_bw, max_peak_bw, rate;
 	u32 agg_avg = 0, agg_peak = 0;
-	struct icc_provider *provider;
-	struct icc_node *n;
-	int ret, i;
+	काष्ठा icc_provider *provider;
+	काष्ठा icc_node *n;
+	पूर्णांक ret, i;
 
 	src_qn = src->data;
 	dst_qn = dst->data;
 	provider = src->provider;
 	qp = to_msm8974_icc_provider(provider);
 
-	list_for_each_entry(n, &provider->nodes, node_list)
+	list_क्रम_each_entry(n, &provider->nodes, node_list)
 		provider->aggregate(n, 0, n->avg_bw, n->peak_bw,
 				    &agg_avg, &agg_peak);
 
@@ -616,80 +617,80 @@ static int msm8974_icc_set(struct icc_node *src, struct icc_node *dst)
 
 	rate = max(sum_bw, max_peak_bw);
 
-	do_div(rate, src_qn->buswidth);
+	करो_भाग(rate, src_qn->buswidth);
 
-	rate = min_t(u32, rate, INT_MAX);
+	rate = min_t(u32, rate, पूर्णांक_उच्च);
 
-	if (src_qn->rate == rate)
-		return 0;
+	अगर (src_qn->rate == rate)
+		वापस 0;
 
-	for (i = 0; i < qp->num_clks; i++) {
+	क्रम (i = 0; i < qp->num_clks; i++) अणु
 		ret = clk_set_rate(qp->bus_clks[i].clk, rate);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(provider->dev, "%s clk_set_rate error: %d\n",
 				qp->bus_clks[i].id, ret);
 			ret = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	src_qn->rate = rate;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int msm8974_get_bw(struct icc_node *node, u32 *avg, u32 *peak)
-{
+अटल पूर्णांक msm8974_get_bw(काष्ठा icc_node *node, u32 *avg, u32 *peak)
+अणु
 	*avg = 0;
 	*peak = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int msm8974_icc_probe(struct platform_device *pdev)
-{
-	const struct msm8974_icc_desc *desc;
-	struct msm8974_icc_node **qnodes;
-	struct msm8974_icc_provider *qp;
-	struct device *dev = &pdev->dev;
-	struct icc_onecell_data *data;
-	struct icc_provider *provider;
-	struct icc_node *node;
-	size_t num_nodes, i;
-	int ret;
+अटल पूर्णांक msm8974_icc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा msm8974_icc_desc *desc;
+	काष्ठा msm8974_icc_node **qnodes;
+	काष्ठा msm8974_icc_provider *qp;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा icc_onecell_data *data;
+	काष्ठा icc_provider *provider;
+	काष्ठा icc_node *node;
+	माप_प्रकार num_nodes, i;
+	पूर्णांक ret;
 
-	/* wait for the RPM proxy */
-	if (!qcom_icc_rpm_smd_available())
-		return -EPROBE_DEFER;
+	/* रुको क्रम the RPM proxy */
+	अगर (!qcom_icc_rpm_smd_available())
+		वापस -EPROBE_DEFER;
 
 	desc = of_device_get_match_data(dev);
-	if (!desc)
-		return -EINVAL;
+	अगर (!desc)
+		वापस -EINVAL;
 
 	qnodes = desc->nodes;
 	num_nodes = desc->num_nodes;
 
-	qp = devm_kzalloc(dev, sizeof(*qp), GFP_KERNEL);
-	if (!qp)
-		return -ENOMEM;
+	qp = devm_kzalloc(dev, माप(*qp), GFP_KERNEL);
+	अगर (!qp)
+		वापस -ENOMEM;
 
-	data = devm_kzalloc(dev, struct_size(data, nodes, num_nodes),
+	data = devm_kzalloc(dev, काष्ठा_size(data, nodes, num_nodes),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
-	qp->bus_clks = devm_kmemdup(dev, msm8974_icc_bus_clocks,
-				    sizeof(msm8974_icc_bus_clocks), GFP_KERNEL);
-	if (!qp->bus_clks)
-		return -ENOMEM;
+	qp->bus_clks = devm_kmemdup(dev, msm8974_icc_bus_घड़ीs,
+				    माप(msm8974_icc_bus_घड़ीs), GFP_KERNEL);
+	अगर (!qp->bus_clks)
+		वापस -ENOMEM;
 
-	qp->num_clks = ARRAY_SIZE(msm8974_icc_bus_clocks);
+	qp->num_clks = ARRAY_SIZE(msm8974_icc_bus_घड़ीs);
 	ret = devm_clk_bulk_get(dev, qp->num_clks, qp->bus_clks);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_bulk_prepare_enable(qp->num_clks, qp->bus_clks);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	provider = &qp->provider;
 	INIT_LIST_HEAD(&provider->nodes);
@@ -701,19 +702,19 @@ static int msm8974_icc_probe(struct platform_device *pdev)
 	provider->get_bw = msm8974_get_bw;
 
 	ret = icc_provider_add(provider);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "error adding interconnect provider: %d\n", ret);
-		goto err_disable_clks;
-	}
+		जाओ err_disable_clks;
+	पूर्ण
 
-	for (i = 0; i < num_nodes; i++) {
-		size_t j;
+	क्रम (i = 0; i < num_nodes; i++) अणु
+		माप_प्रकार j;
 
 		node = icc_node_create(qnodes[i]->id);
-		if (IS_ERR(node)) {
+		अगर (IS_ERR(node)) अणु
 			ret = PTR_ERR(node);
-			goto err_del_icc;
-		}
+			जाओ err_del_icc;
+		पूर्ण
 
 		node->name = qnodes[i]->name;
 		node->data = qnodes[i];
@@ -722,57 +723,57 @@ static int msm8974_icc_probe(struct platform_device *pdev)
 		dev_dbg(dev, "registered node %s\n", node->name);
 
 		/* populate links */
-		for (j = 0; j < qnodes[i]->num_links; j++)
+		क्रम (j = 0; j < qnodes[i]->num_links; j++)
 			icc_link_create(node, qnodes[i]->links[j]);
 
 		data->nodes[i] = node;
-	}
+	पूर्ण
 	data->num_nodes = num_nodes;
 
-	platform_set_drvdata(pdev, qp);
+	platक्रमm_set_drvdata(pdev, qp);
 
-	return 0;
+	वापस 0;
 
 err_del_icc:
-	icc_nodes_remove(provider);
+	icc_nodes_हटाओ(provider);
 	icc_provider_del(provider);
 
 err_disable_clks:
 	clk_bulk_disable_unprepare(qp->num_clks, qp->bus_clks);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int msm8974_icc_remove(struct platform_device *pdev)
-{
-	struct msm8974_icc_provider *qp = platform_get_drvdata(pdev);
+अटल पूर्णांक msm8974_icc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा msm8974_icc_provider *qp = platक्रमm_get_drvdata(pdev);
 
-	icc_nodes_remove(&qp->provider);
+	icc_nodes_हटाओ(&qp->provider);
 	clk_bulk_disable_unprepare(qp->num_clks, qp->bus_clks);
-	return icc_provider_del(&qp->provider);
-}
+	वापस icc_provider_del(&qp->provider);
+पूर्ण
 
-static const struct of_device_id msm8974_noc_of_match[] = {
-	{ .compatible = "qcom,msm8974-bimc", .data = &msm8974_bimc},
-	{ .compatible = "qcom,msm8974-cnoc", .data = &msm8974_cnoc},
-	{ .compatible = "qcom,msm8974-mmssnoc", .data = &msm8974_mnoc},
-	{ .compatible = "qcom,msm8974-ocmemnoc", .data = &msm8974_onoc},
-	{ .compatible = "qcom,msm8974-pnoc", .data = &msm8974_pnoc},
-	{ .compatible = "qcom,msm8974-snoc", .data = &msm8974_snoc},
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id msm8974_noc_of_match[] = अणु
+	अणु .compatible = "qcom,msm8974-bimc", .data = &msm8974_bimcपूर्ण,
+	अणु .compatible = "qcom,msm8974-cnoc", .data = &msm8974_cnocपूर्ण,
+	अणु .compatible = "qcom,msm8974-mmssnoc", .data = &msm8974_mnocपूर्ण,
+	अणु .compatible = "qcom,msm8974-ocmemnoc", .data = &msm8974_onocपूर्ण,
+	अणु .compatible = "qcom,msm8974-pnoc", .data = &msm8974_pnocपूर्ण,
+	अणु .compatible = "qcom,msm8974-snoc", .data = &msm8974_snocपूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, msm8974_noc_of_match);
 
-static struct platform_driver msm8974_noc_driver = {
+अटल काष्ठा platक्रमm_driver msm8974_noc_driver = अणु
 	.probe = msm8974_icc_probe,
-	.remove = msm8974_icc_remove,
-	.driver = {
+	.हटाओ = msm8974_icc_हटाओ,
+	.driver = अणु
 		.name = "qnoc-msm8974",
 		.of_match_table = msm8974_noc_of_match,
 		.sync_state = icc_sync_state,
-	},
-};
-module_platform_driver(msm8974_noc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(msm8974_noc_driver);
 MODULE_DESCRIPTION("Qualcomm MSM8974 NoC driver");
 MODULE_AUTHOR("Brian Masney <masneyb@onstation.org>");
 MODULE_LICENSE("GPL v2");

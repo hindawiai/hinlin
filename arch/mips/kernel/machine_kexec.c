@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * machine_kexec.c for kexec
- * Created by <nschichan@corp.free.fr> on Thu Oct 12 15:15:06 2006
+ * machine_kexec.c क्रम kexec
+ * Created by <nschichan@corp.मुक्त.fr> on Thu Oct 12 15:15:06 2006
  */
-#include <linux/compiler.h>
-#include <linux/kexec.h>
-#include <linux/mm.h>
-#include <linux/delay.h>
-#include <linux/libfdt.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/libfdt.h>
 
-#include <asm/cacheflush.h>
-#include <asm/page.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/page.h>
 
-extern const unsigned char relocate_new_kernel[];
-extern const size_t relocate_new_kernel_size;
+बाह्य स्थिर अचिन्हित अक्षर relocate_new_kernel[];
+बाह्य स्थिर माप_प्रकार relocate_new_kernel_size;
 
-extern unsigned long kexec_start_address;
-extern unsigned long kexec_indirection_page;
+बाह्य अचिन्हित दीर्घ kexec_start_address;
+बाह्य अचिन्हित दीर्घ kexec_indirection_page;
 
-static unsigned long reboot_code_buffer;
+अटल अचिन्हित दीर्घ reboot_code_buffer;
 
-#ifdef CONFIG_SMP
-static void (*relocated_kexec_smp_wait)(void *);
+#अगर_घोषित CONFIG_SMP
+अटल व्योम (*relocated_kexec_smp_रुको)(व्योम *);
 
-atomic_t kexec_ready_to_reboot = ATOMIC_INIT(0);
-void (*_crash_smp_send_stop)(void) = NULL;
-#endif
+atomic_t kexec_पढ़ोy_to_reboot = ATOMIC_INIT(0);
+व्योम (*_crash_smp_send_stop)(व्योम) = शून्य;
+#पूर्ण_अगर
 
-void (*_machine_kexec_shutdown)(void) = NULL;
-void (*_machine_crash_shutdown)(struct pt_regs *regs) = NULL;
+व्योम (*_machine_kexec_shutकरोwn)(व्योम) = शून्य;
+व्योम (*_machine_crash_shutकरोwn)(काष्ठा pt_regs *regs) = शून्य;
 
-static void kexec_image_info(const struct kimage *kimage)
-{
-	unsigned long i;
+अटल व्योम kexec_image_info(स्थिर काष्ठा kimage *kimage)
+अणु
+	अचिन्हित दीर्घ i;
 
 	pr_debug("kexec kimage info:\n");
 	pr_debug("  type:        %d\n", kimage->type);
@@ -40,225 +41,225 @@ static void kexec_image_info(const struct kimage *kimage)
 	pr_debug("  head:        %lx\n", kimage->head);
 	pr_debug("  nr_segments: %lu\n", kimage->nr_segments);
 
-	for (i = 0; i < kimage->nr_segments; i++) {
+	क्रम (i = 0; i < kimage->nr_segments; i++) अणु
 		pr_debug("    segment[%lu]: %016lx - %016lx, 0x%lx bytes, %lu pages\n",
 			i,
 			kimage->segment[i].mem,
 			kimage->segment[i].mem + kimage->segment[i].memsz,
-			(unsigned long)kimage->segment[i].memsz,
-			(unsigned long)kimage->segment[i].memsz /  PAGE_SIZE);
-	}
-}
+			(अचिन्हित दीर्घ)kimage->segment[i].memsz,
+			(अचिन्हित दीर्घ)kimage->segment[i].memsz /  PAGE_SIZE);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_UHI_BOOT
+#अगर_घोषित CONFIG_UHI_BOOT
 
-static int uhi_machine_kexec_prepare(struct kimage *kimage)
-{
-	int i;
+अटल पूर्णांक uhi_machine_kexec_prepare(काष्ठा kimage *kimage)
+अणु
+	पूर्णांक i;
 
 	/*
-	 * In case DTB file is not passed to the new kernel, a flat device
-	 * tree will be created by kexec tool. It holds modified command
-	 * line for the new kernel.
+	 * In हाल DTB file is not passed to the new kernel, a flat device
+	 * tree will be created by kexec tool. It holds modअगरied command
+	 * line क्रम the new kernel.
 	 */
-	for (i = 0; i < kimage->nr_segments; i++) {
-		struct fdt_header fdt;
+	क्रम (i = 0; i < kimage->nr_segments; i++) अणु
+		काष्ठा fdt_header fdt;
 
-		if (kimage->segment[i].memsz <= sizeof(fdt))
-			continue;
+		अगर (kimage->segment[i].memsz <= माप(fdt))
+			जारी;
 
-		if (copy_from_user(&fdt, kimage->segment[i].buf, sizeof(fdt)))
-			continue;
+		अगर (copy_from_user(&fdt, kimage->segment[i].buf, माप(fdt)))
+			जारी;
 
-		if (fdt_check_header(&fdt))
-			continue;
+		अगर (fdt_check_header(&fdt))
+			जारी;
 
 		kexec_args[0] = -2;
-		kexec_args[1] = (unsigned long)
-			phys_to_virt((unsigned long)kimage->segment[i].mem);
-		break;
-	}
+		kexec_args[1] = (अचिन्हित दीर्घ)
+			phys_to_virt((अचिन्हित दीर्घ)kimage->segment[i].mem);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int (*_machine_kexec_prepare)(struct kimage *) = uhi_machine_kexec_prepare;
+पूर्णांक (*_machine_kexec_prepare)(काष्ठा kimage *) = uhi_machine_kexec_prepare;
 
-#else
+#अन्यथा
 
-int (*_machine_kexec_prepare)(struct kimage *) = NULL;
+पूर्णांक (*_machine_kexec_prepare)(काष्ठा kimage *) = शून्य;
 
-#endif /* CONFIG_UHI_BOOT */
+#पूर्ण_अगर /* CONFIG_UHI_BOOT */
 
-int
-machine_kexec_prepare(struct kimage *kimage)
-{
-#ifdef CONFIG_SMP
-	if (!kexec_nonboot_cpu_func())
-		return -EINVAL;
-#endif
+पूर्णांक
+machine_kexec_prepare(काष्ठा kimage *kimage)
+अणु
+#अगर_घोषित CONFIG_SMP
+	अगर (!kexec_nonboot_cpu_func())
+		वापस -EINVAL;
+#पूर्ण_अगर
 
 	kexec_image_info(kimage);
 
-	if (_machine_kexec_prepare)
-		return _machine_kexec_prepare(kimage);
+	अगर (_machine_kexec_prepare)
+		वापस _machine_kexec_prepare(kimage);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-machine_kexec_cleanup(struct kimage *kimage)
-{
-}
+व्योम
+machine_kexec_cleanup(काष्ठा kimage *kimage)
+अणु
+पूर्ण
 
-#ifdef CONFIG_SMP
-static void kexec_shutdown_secondary(void *param)
-{
-	int cpu = smp_processor_id();
+#अगर_घोषित CONFIG_SMP
+अटल व्योम kexec_shutकरोwn_secondary(व्योम *param)
+अणु
+	पूर्णांक cpu = smp_processor_id();
 
-	if (!cpu_online(cpu))
-		return;
+	अगर (!cpu_online(cpu))
+		वापस;
 
 	/* We won't be sent IPIs any more. */
 	set_cpu_online(cpu, false);
 
 	local_irq_disable();
-	while (!atomic_read(&kexec_ready_to_reboot))
+	जबतक (!atomic_पढ़ो(&kexec_पढ़ोy_to_reboot))
 		cpu_relax();
 
 	kexec_reboot();
 
 	/* NOTREACHED */
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void
-machine_shutdown(void)
-{
-	if (_machine_kexec_shutdown)
-		_machine_kexec_shutdown();
+व्योम
+machine_shutकरोwn(व्योम)
+अणु
+	अगर (_machine_kexec_shutकरोwn)
+		_machine_kexec_shutकरोwn();
 
-#ifdef CONFIG_SMP
-	smp_call_function(kexec_shutdown_secondary, NULL, 0);
+#अगर_घोषित CONFIG_SMP
+	smp_call_function(kexec_shutकरोwn_secondary, शून्य, 0);
 
-	while (num_online_cpus() > 1) {
+	जबतक (num_online_cpus() > 1) अणु
 		cpu_relax();
 		mdelay(1);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-void
-machine_crash_shutdown(struct pt_regs *regs)
-{
-	if (_machine_crash_shutdown)
-		_machine_crash_shutdown(regs);
-	else
-		default_machine_crash_shutdown(regs);
-}
+व्योम
+machine_crash_shutकरोwn(काष्ठा pt_regs *regs)
+अणु
+	अगर (_machine_crash_shutकरोwn)
+		_machine_crash_shutकरोwn(regs);
+	अन्यथा
+		शेष_machine_crash_shutकरोwn(regs);
+पूर्ण
 
-#ifdef CONFIG_SMP
-void kexec_nonboot_cpu_jump(void)
-{
-	local_flush_icache_range((unsigned long)relocated_kexec_smp_wait,
+#अगर_घोषित CONFIG_SMP
+व्योम kexec_nonboot_cpu_jump(व्योम)
+अणु
+	local_flush_icache_range((अचिन्हित दीर्घ)relocated_kexec_smp_रुको,
 				 reboot_code_buffer + relocate_new_kernel_size);
 
-	relocated_kexec_smp_wait(NULL);
-}
-#endif
+	relocated_kexec_smp_रुको(शून्य);
+पूर्ण
+#पूर्ण_अगर
 
-void kexec_reboot(void)
-{
-	void (*do_kexec)(void) __noreturn;
+व्योम kexec_reboot(व्योम)
+अणु
+	व्योम (*करो_kexec)(व्योम) __noवापस;
 
 	/*
 	 * We know we were online, and there will be no incoming IPIs at
-	 * this point. Mark online again before rebooting so that the crash
+	 * this poपूर्णांक. Mark online again beक्रमe rebooting so that the crash
 	 * analysis tool will see us correctly.
 	 */
 	set_cpu_online(smp_processor_id(), true);
 
-	/* Ensure remote CPUs observe that we're online before rebooting. */
+	/* Ensure remote CPUs observe that we're online beक्रमe rebooting. */
 	smp_mb__after_atomic();
 
-#ifdef CONFIG_SMP
-	if (smp_processor_id() > 0) {
+#अगर_घोषित CONFIG_SMP
+	अगर (smp_processor_id() > 0) अणु
 		/*
-		 * Instead of cpu_relax() or wait, this is needed for kexec
-		 * smp reboot. Kdump usually doesn't require an smp new
-		 * kernel, but kexec may do.
+		 * Instead of cpu_relax() or रुको, this is needed क्रम kexec
+		 * smp reboot. Kdump usually करोesn't require an smp new
+		 * kernel, but kexec may करो.
 		 */
 		kexec_nonboot_cpu();
 
 		/* NOTREACHED */
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
-	 * Make sure we get correct instructions written by the
+	 * Make sure we get correct inकाष्ठाions written by the
 	 * machine_kexec() CPU.
 	 */
 	local_flush_icache_range(reboot_code_buffer,
 				 reboot_code_buffer + relocate_new_kernel_size);
 
-	do_kexec = (void *)reboot_code_buffer;
-	do_kexec();
-}
+	करो_kexec = (व्योम *)reboot_code_buffer;
+	करो_kexec();
+पूर्ण
 
-void
-machine_kexec(struct kimage *image)
-{
-	unsigned long entry;
-	unsigned long *ptr;
+व्योम
+machine_kexec(काष्ठा kimage *image)
+अणु
+	अचिन्हित दीर्घ entry;
+	अचिन्हित दीर्घ *ptr;
 
 	reboot_code_buffer =
-	  (unsigned long)page_address(image->control_code_page);
+	  (अचिन्हित दीर्घ)page_address(image->control_code_page);
 
 	kexec_start_address =
-		(unsigned long) phys_to_virt(image->start);
+		(अचिन्हित दीर्घ) phys_to_virt(image->start);
 
-	if (image->type == KEXEC_TYPE_DEFAULT) {
+	अगर (image->type == KEXEC_TYPE_DEFAULT) अणु
 		kexec_indirection_page =
-			(unsigned long) phys_to_virt(image->head & PAGE_MASK);
-	} else {
-		kexec_indirection_page = (unsigned long)&image->head;
-	}
+			(अचिन्हित दीर्घ) phys_to_virt(image->head & PAGE_MASK);
+	पूर्ण अन्यथा अणु
+		kexec_indirection_page = (अचिन्हित दीर्घ)&image->head;
+	पूर्ण
 
-	memcpy((void*)reboot_code_buffer, relocate_new_kernel,
+	स_नकल((व्योम*)reboot_code_buffer, relocate_new_kernel,
 	       relocate_new_kernel_size);
 
 	/*
 	 * The generic kexec code builds a page list with physical
 	 * addresses. they are directly accessible through KSEG0 (or
-	 * CKSEG0 or XPHYS if on 64bit system), hence the
+	 * CKSEG0 or XPHYS अगर on 64bit प्रणाली), hence the
 	 * phys_to_virt() call.
 	 */
-	for (ptr = &image->head; (entry = *ptr) && !(entry &IND_DONE);
-	     ptr = (entry & IND_INDIRECTION) ?
-	       phys_to_virt(entry & PAGE_MASK) : ptr + 1) {
-		if (*ptr & IND_SOURCE || *ptr & IND_INDIRECTION ||
+	क्रम (ptr = &image->head; (entry = *ptr) && !(entry &IND_DONE);
+	     ptr = (entry & IND_INसूचीECTION) ?
+	       phys_to_virt(entry & PAGE_MASK) : ptr + 1) अणु
+		अगर (*ptr & IND_SOURCE || *ptr & IND_INसूचीECTION ||
 		    *ptr & IND_DESTINATION)
-			*ptr = (unsigned long) phys_to_virt(*ptr);
-	}
+			*ptr = (अचिन्हित दीर्घ) phys_to_virt(*ptr);
+	पूर्ण
 
 	/* Mark offline BEFORE disabling local irq. */
 	set_cpu_online(smp_processor_id(), false);
 
 	/*
-	 * we do not want to be bothered.
+	 * we करो not want to be bothered.
 	 */
 	local_irq_disable();
 
-	printk("Will call new kernel at %08lx\n", image->start);
-	printk("Bye ...\n");
+	prपूर्णांकk("Will call new kernel at %08lx\n", image->start);
+	prपूर्णांकk("Bye ...\n");
 	/* Make reboot code buffer available to the boot CPU. */
 	__flush_cache_all();
-#ifdef CONFIG_SMP
-	/* All secondary cpus now may jump to kexec_wait cycle */
-	relocated_kexec_smp_wait = reboot_code_buffer +
-		(void *)(kexec_smp_wait - relocate_new_kernel);
+#अगर_घोषित CONFIG_SMP
+	/* All secondary cpus now may jump to kexec_रुको cycle */
+	relocated_kexec_smp_रुको = reboot_code_buffer +
+		(व्योम *)(kexec_smp_रुको - relocate_new_kernel);
 	smp_wmb();
-	atomic_set(&kexec_ready_to_reboot, 1);
-#endif
+	atomic_set(&kexec_पढ़ोy_to_reboot, 1);
+#पूर्ण_अगर
 	kexec_reboot();
-}
+पूर्ण

@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * AES CTR routines supporting VMX instructions on the Power 8
+ * AES CTR routines supporting VMX inकाष्ठाions on the Power 8
  *
  * Copyright (C) 2015 International Business Machines Inc.
  *
  * Author: Marcelo Henrique Cerri <mhcerri@br.ibm.com>
  */
 
-#include <asm/simd.h>
-#include <asm/switch_to.h>
-#include <crypto/aes.h>
-#include <crypto/internal/simd.h>
-#include <crypto/internal/skcipher.h>
+#समावेश <यंत्र/simd.h>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
 
-#include "aesp8-ppc.h"
+#समावेश "aesp8-ppc.h"
 
-struct p8_aes_ctr_ctx {
-	struct crypto_skcipher *fallback;
-	struct aes_key enc_key;
-};
+काष्ठा p8_aes_ctr_ctx अणु
+	काष्ठा crypto_skcipher *fallback;
+	काष्ठा aes_key enc_key;
+पूर्ण;
 
-static int p8_aes_ctr_init(struct crypto_skcipher *tfm)
-{
-	struct p8_aes_ctr_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct crypto_skcipher *fallback;
+अटल पूर्णांक p8_aes_ctr_init(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा p8_aes_ctr_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा crypto_skcipher *fallback;
 
 	fallback = crypto_alloc_skcipher("ctr(aes)", 0,
 					 CRYPTO_ALG_NEED_FALLBACK |
 					 CRYPTO_ALG_ASYNC);
-	if (IS_ERR(fallback)) {
+	अगर (IS_ERR(fallback)) अणु
 		pr_err("Failed to allocate ctr(aes) fallback: %ld\n",
 		       PTR_ERR(fallback));
-		return PTR_ERR(fallback);
-	}
+		वापस PTR_ERR(fallback);
+	पूर्ण
 
-	crypto_skcipher_set_reqsize(tfm, sizeof(struct skcipher_request) +
+	crypto_skcipher_set_reqsize(tfm, माप(काष्ठा skcipher_request) +
 				    crypto_skcipher_reqsize(fallback));
 	ctx->fallback = fallback;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void p8_aes_ctr_exit(struct crypto_skcipher *tfm)
-{
-	struct p8_aes_ctr_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल व्योम p8_aes_ctr_निकास(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा p8_aes_ctr_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	crypto_free_skcipher(ctx->fallback);
-}
+	crypto_मुक्त_skcipher(ctx->fallback);
+पूर्ण
 
-static int p8_aes_ctr_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			     unsigned int keylen)
-{
-	struct p8_aes_ctr_ctx *ctx = crypto_skcipher_ctx(tfm);
-	int ret;
+अटल पूर्णांक p8_aes_ctr_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			     अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा p8_aes_ctr_ctx *ctx = crypto_skcipher_ctx(tfm);
+	पूर्णांक ret;
 
 	preempt_disable();
 	pagefault_disable();
@@ -63,17 +64,17 @@ static int p8_aes_ctr_setkey(struct crypto_skcipher *tfm, const u8 *key,
 
 	ret |= crypto_skcipher_setkey(ctx->fallback, key, keylen);
 
-	return ret ? -EINVAL : 0;
-}
+	वापस ret ? -EINVAL : 0;
+पूर्ण
 
-static void p8_aes_ctr_final(const struct p8_aes_ctr_ctx *ctx,
-			     struct skcipher_walk *walk)
-{
+अटल व्योम p8_aes_ctr_final(स्थिर काष्ठा p8_aes_ctr_ctx *ctx,
+			     काष्ठा skcipher_walk *walk)
+अणु
 	u8 *ctrblk = walk->iv;
 	u8 keystream[AES_BLOCK_SIZE];
 	u8 *src = walk->src.virt.addr;
 	u8 *dst = walk->dst.virt.addr;
-	unsigned int nbytes = walk->nbytes;
+	अचिन्हित पूर्णांक nbytes = walk->nbytes;
 
 	preempt_disable();
 	pagefault_disable();
@@ -85,26 +86,26 @@ static void p8_aes_ctr_final(const struct p8_aes_ctr_ctx *ctx,
 
 	crypto_xor_cpy(dst, keystream, src, nbytes);
 	crypto_inc(ctrblk, AES_BLOCK_SIZE);
-}
+पूर्ण
 
-static int p8_aes_ctr_crypt(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	const struct p8_aes_ctr_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct skcipher_walk walk;
-	unsigned int nbytes;
-	int ret;
+अटल पूर्णांक p8_aes_ctr_crypt(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	स्थिर काष्ठा p8_aes_ctr_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक nbytes;
+	पूर्णांक ret;
 
-	if (!crypto_simd_usable()) {
-		struct skcipher_request *subreq = skcipher_request_ctx(req);
+	अगर (!crypto_simd_usable()) अणु
+		काष्ठा skcipher_request *subreq = skcipher_request_ctx(req);
 
 		*subreq = *req;
 		skcipher_request_set_tfm(subreq, ctx->fallback);
-		return crypto_skcipher_encrypt(subreq);
-	}
+		वापस crypto_skcipher_encrypt(subreq);
+	पूर्ण
 
 	ret = skcipher_walk_virt(&walk, req, false);
-	while ((nbytes = walk.nbytes) >= AES_BLOCK_SIZE) {
+	जबतक ((nbytes = walk.nbytes) >= AES_BLOCK_SIZE) अणु
 		preempt_disable();
 		pagefault_disable();
 		enable_kernel_vsx();
@@ -116,34 +117,34 @@ static int p8_aes_ctr_crypt(struct skcipher_request *req)
 		pagefault_enable();
 		preempt_enable();
 
-		do {
+		करो अणु
 			crypto_inc(walk.iv, AES_BLOCK_SIZE);
-		} while ((nbytes -= AES_BLOCK_SIZE) >= AES_BLOCK_SIZE);
+		पूर्ण जबतक ((nbytes -= AES_BLOCK_SIZE) >= AES_BLOCK_SIZE);
 
-		ret = skcipher_walk_done(&walk, nbytes);
-	}
-	if (nbytes) {
+		ret = skcipher_walk_करोne(&walk, nbytes);
+	पूर्ण
+	अगर (nbytes) अणु
 		p8_aes_ctr_final(ctx, &walk);
-		ret = skcipher_walk_done(&walk, 0);
-	}
-	return ret;
-}
+		ret = skcipher_walk_करोne(&walk, 0);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-struct skcipher_alg p8_aes_ctr_alg = {
+काष्ठा skcipher_alg p8_aes_ctr_alg = अणु
 	.base.cra_name = "ctr(aes)",
 	.base.cra_driver_name = "p8_aes_ctr",
 	.base.cra_module = THIS_MODULE,
 	.base.cra_priority = 2000,
 	.base.cra_flags = CRYPTO_ALG_NEED_FALLBACK,
 	.base.cra_blocksize = 1,
-	.base.cra_ctxsize = sizeof(struct p8_aes_ctr_ctx),
+	.base.cra_ctxsize = माप(काष्ठा p8_aes_ctr_ctx),
 	.setkey = p8_aes_ctr_setkey,
 	.encrypt = p8_aes_ctr_crypt,
 	.decrypt = p8_aes_ctr_crypt,
 	.init = p8_aes_ctr_init,
-	.exit = p8_aes_ctr_exit,
+	.निकास = p8_aes_ctr_निकास,
 	.min_keysize = AES_MIN_KEY_SIZE,
 	.max_keysize = AES_MAX_KEY_SIZE,
 	.ivsize = AES_BLOCK_SIZE,
 	.chunksize = AES_BLOCK_SIZE,
-};
+पूर्ण;

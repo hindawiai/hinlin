@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c)  2018 Intel Corporation */
 
-#ifndef _IGC_MAC_H_
-#define _IGC_MAC_H_
+#अगर_अघोषित _IGC_MAC_H_
+#घोषणा _IGC_MAC_H_
 
-#include "igc_hw.h"
-#include "igc_phy.h"
-#include "igc_defines.h"
+#समावेश "igc_hw.h"
+#समावेश "igc_phy.h"
+#समावेश "igc_defines.h"
 
-/* forward declaration */
-s32 igc_disable_pcie_master(struct igc_hw *hw);
-s32 igc_check_for_copper_link(struct igc_hw *hw);
-s32 igc_config_fc_after_link_up(struct igc_hw *hw);
-s32 igc_force_mac_fc(struct igc_hw *hw);
-void igc_init_rx_addrs(struct igc_hw *hw, u16 rar_count);
-s32 igc_setup_link(struct igc_hw *hw);
-void igc_clear_hw_cntrs_base(struct igc_hw *hw);
-s32 igc_get_auto_rd_done(struct igc_hw *hw);
-void igc_put_hw_semaphore(struct igc_hw *hw);
-void igc_rar_set(struct igc_hw *hw, u8 *addr, u32 index);
-void igc_config_collision_dist(struct igc_hw *hw);
+/* क्रमward declaration */
+s32 igc_disable_pcie_master(काष्ठा igc_hw *hw);
+s32 igc_check_क्रम_copper_link(काष्ठा igc_hw *hw);
+s32 igc_config_fc_after_link_up(काष्ठा igc_hw *hw);
+s32 igc_क्रमce_mac_fc(काष्ठा igc_hw *hw);
+व्योम igc_init_rx_addrs(काष्ठा igc_hw *hw, u16 rar_count);
+s32 igc_setup_link(काष्ठा igc_hw *hw);
+व्योम igc_clear_hw_cntrs_base(काष्ठा igc_hw *hw);
+s32 igc_get_स्वतः_rd_करोne(काष्ठा igc_hw *hw);
+व्योम igc_put_hw_semaphore(काष्ठा igc_hw *hw);
+व्योम igc_rar_set(काष्ठा igc_hw *hw, u8 *addr, u32 index);
+व्योम igc_config_collision_dist(काष्ठा igc_hw *hw);
 
-s32 igc_get_speed_and_duplex_copper(struct igc_hw *hw, u16 *speed,
+s32 igc_get_speed_and_duplex_copper(काष्ठा igc_hw *hw, u16 *speed,
 				    u16 *duplex);
 
-bool igc_enable_mng_pass_thru(struct igc_hw *hw);
-void igc_update_mc_addr_list(struct igc_hw *hw,
+bool igc_enable_mng_pass_thru(काष्ठा igc_hw *hw);
+व्योम igc_update_mc_addr_list(काष्ठा igc_hw *hw,
 			     u8 *mc_addr_list, u32 mc_addr_count);
 
-enum igc_mng_mode {
+क्रमागत igc_mng_mode अणु
 	igc_mng_mode_none = 0,
 	igc_mng_mode_asf,
 	igc_mng_mode_pt,
 	igc_mng_mode_ipmi,
-	igc_mng_mode_host_if_only
-};
+	igc_mng_mode_host_अगर_only
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

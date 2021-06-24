@@ -1,95 +1,96 @@
+<शैली गुरु>
 /*
- * Driver for (BCM4706)? GBit MAC core on BCMA bus.
+ * Driver क्रम (BCM4706)? GBit MAC core on BCMA bus.
  *
- * Copyright (C) 2012 Rafał Miłecki <zajec5@gmail.com>
+ * Copyright (C) 2012 Rafaध Miधecki <zajec5@gmail.com>
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
 
-#define pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
 
-#include <linux/bcma/bcma.h>
-#include <linux/etherdevice.h>
-#include <linux/interrupt.h>
-#include <linux/bcm47xx_nvram.h>
-#include <linux/phy.h>
-#include <linux/phy_fixed.h>
-#include <net/dsa.h>
-#include "bgmac.h"
+#समावेश <linux/bcma/bcma.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/bcm47xx_nvram.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/phy_fixed.h>
+#समावेश <net/dsa.h>
+#समावेश "bgmac.h"
 
-static bool bgmac_wait_value(struct bgmac *bgmac, u16 reg, u32 mask,
-			     u32 value, int timeout)
-{
+अटल bool bgmac_रुको_value(काष्ठा bgmac *bgmac, u16 reg, u32 mask,
+			     u32 value, पूर्णांक समयout)
+अणु
 	u32 val;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < timeout / 10; i++) {
-		val = bgmac_read(bgmac, reg);
-		if ((val & mask) == value)
-			return true;
+	क्रम (i = 0; i < समयout / 10; i++) अणु
+		val = bgmac_पढ़ो(bgmac, reg);
+		अगर ((val & mask) == value)
+			वापस true;
 		udelay(10);
-	}
+	पूर्ण
 	dev_err(bgmac->dev, "Timeout waiting for reg 0x%X\n", reg);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**************************************************
  * DMA
  **************************************************/
 
-static void bgmac_dma_tx_reset(struct bgmac *bgmac, struct bgmac_dma_ring *ring)
-{
+अटल व्योम bgmac_dma_tx_reset(काष्ठा bgmac *bgmac, काष्ठा bgmac_dma_ring *ring)
+अणु
 	u32 val;
-	int i;
+	पूर्णांक i;
 
-	if (!ring->mmio_base)
-		return;
+	अगर (!ring->mmio_base)
+		वापस;
 
 	/* Suspend DMA TX ring first.
-	 * bgmac_wait_value doesn't support waiting for any of few values, so
+	 * bgmac_रुको_value करोesn't support रुकोing क्रम any of few values, so
 	 * implement whole loop here.
 	 */
-	bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_TX_CTL,
+	bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_TX_CTL,
 		    BGMAC_DMA_TX_SUSPEND);
-	for (i = 0; i < 10000 / 10; i++) {
-		val = bgmac_read(bgmac, ring->mmio_base + BGMAC_DMA_TX_STATUS);
+	क्रम (i = 0; i < 10000 / 10; i++) अणु
+		val = bgmac_पढ़ो(bgmac, ring->mmio_base + BGMAC_DMA_TX_STATUS);
 		val &= BGMAC_DMA_TX_STAT;
-		if (val == BGMAC_DMA_TX_STAT_DISABLED ||
+		अगर (val == BGMAC_DMA_TX_STAT_DISABLED ||
 		    val == BGMAC_DMA_TX_STAT_IDLEWAIT ||
-		    val == BGMAC_DMA_TX_STAT_STOPPED) {
+		    val == BGMAC_DMA_TX_STAT_STOPPED) अणु
 			i = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		udelay(10);
-	}
-	if (i)
+	पूर्ण
+	अगर (i)
 		dev_err(bgmac->dev, "Timeout suspending DMA TX ring 0x%X (BGMAC_DMA_TX_STAT: 0x%08X)\n",
 			ring->mmio_base, val);
 
 	/* Remove SUSPEND bit */
-	bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_TX_CTL, 0);
-	if (!bgmac_wait_value(bgmac,
+	bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_TX_CTL, 0);
+	अगर (!bgmac_रुको_value(bgmac,
 			      ring->mmio_base + BGMAC_DMA_TX_STATUS,
 			      BGMAC_DMA_TX_STAT, BGMAC_DMA_TX_STAT_DISABLED,
-			      10000)) {
+			      10000)) अणु
 		dev_warn(bgmac->dev, "DMA TX ring 0x%X wasn't disabled on time, waiting additional 300us\n",
 			 ring->mmio_base);
 		udelay(300);
-		val = bgmac_read(bgmac, ring->mmio_base + BGMAC_DMA_TX_STATUS);
-		if ((val & BGMAC_DMA_TX_STAT) != BGMAC_DMA_TX_STAT_DISABLED)
+		val = bgmac_पढ़ो(bgmac, ring->mmio_base + BGMAC_DMA_TX_STATUS);
+		अगर ((val & BGMAC_DMA_TX_STAT) != BGMAC_DMA_TX_STAT_DISABLED)
 			dev_err(bgmac->dev, "Reset of DMA TX ring 0x%X failed\n",
 				ring->mmio_base);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bgmac_dma_tx_enable(struct bgmac *bgmac,
-				struct bgmac_dma_ring *ring)
-{
+अटल व्योम bgmac_dma_tx_enable(काष्ठा bgmac *bgmac,
+				काष्ठा bgmac_dma_ring *ring)
+अणु
 	u32 ctl;
 
-	ctl = bgmac_read(bgmac, ring->mmio_base + BGMAC_DMA_TX_CTL);
-	if (bgmac->feature_flags & BGMAC_FEAT_TX_MASK_SETUP) {
+	ctl = bgmac_पढ़ो(bgmac, ring->mmio_base + BGMAC_DMA_TX_CTL);
+	अगर (bgmac->feature_flags & BGMAC_FEAT_TX_MASK_SETUP) अणु
 		ctl &= ~BGMAC_DMA_TX_BL_MASK;
 		ctl |= BGMAC_DMA_TX_BL_128 << BGMAC_DMA_TX_BL_SHIFT;
 
@@ -101,21 +102,21 @@ static void bgmac_dma_tx_enable(struct bgmac *bgmac,
 
 		ctl &= ~BGMAC_DMA_TX_PT_MASK;
 		ctl |= BGMAC_DMA_TX_PT_8 << BGMAC_DMA_TX_PT_SHIFT;
-	}
+	पूर्ण
 	ctl |= BGMAC_DMA_TX_ENABLE;
 	ctl |= BGMAC_DMA_TX_PARITY_DISABLE;
-	bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_TX_CTL, ctl);
-}
+	bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_TX_CTL, ctl);
+पूर्ण
 
-static void
-bgmac_dma_tx_add_buf(struct bgmac *bgmac, struct bgmac_dma_ring *ring,
-		     int i, int len, u32 ctl0)
-{
-	struct bgmac_slot_info *slot;
-	struct bgmac_dma_desc *dma_desc;
+अटल व्योम
+bgmac_dma_tx_add_buf(काष्ठा bgmac *bgmac, काष्ठा bgmac_dma_ring *ring,
+		     पूर्णांक i, पूर्णांक len, u32 ctl0)
+अणु
+	काष्ठा bgmac_slot_info *slot;
+	काष्ठा bgmac_dma_desc *dma_desc;
 	u32 ctl1;
 
-	if (i == BGMAC_TX_RING_SLOTS - 1)
+	अगर (i == BGMAC_TX_RING_SLOTS - 1)
 		ctl0 |= BGMAC_DESC_CTL0_EOT;
 
 	ctl1 = len & BGMAC_DESC_CTL1_LEN;
@@ -126,67 +127,67 @@ bgmac_dma_tx_add_buf(struct bgmac *bgmac, struct bgmac_dma_ring *ring,
 	dma_desc->addr_high = cpu_to_le32(upper_32_bits(slot->dma_addr));
 	dma_desc->ctl0 = cpu_to_le32(ctl0);
 	dma_desc->ctl1 = cpu_to_le32(ctl1);
-}
+पूर्ण
 
-static netdev_tx_t bgmac_dma_tx_add(struct bgmac *bgmac,
-				    struct bgmac_dma_ring *ring,
-				    struct sk_buff *skb)
-{
-	struct device *dma_dev = bgmac->dma_dev;
-	struct net_device *net_dev = bgmac->net_dev;
-	int index = ring->end % BGMAC_TX_RING_SLOTS;
-	struct bgmac_slot_info *slot = &ring->slots[index];
-	int nr_frags;
+अटल netdev_tx_t bgmac_dma_tx_add(काष्ठा bgmac *bgmac,
+				    काष्ठा bgmac_dma_ring *ring,
+				    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा device *dma_dev = bgmac->dma_dev;
+	काष्ठा net_device *net_dev = bgmac->net_dev;
+	पूर्णांक index = ring->end % BGMAC_TX_RING_SLOTS;
+	काष्ठा bgmac_slot_info *slot = &ring->slots[index];
+	पूर्णांक nr_frags;
 	u32 flags;
-	int i;
+	पूर्णांक i;
 
-	if (skb->len > BGMAC_DESC_CTL1_LEN) {
+	अगर (skb->len > BGMAC_DESC_CTL1_LEN) अणु
 		netdev_err(bgmac->net_dev, "Too long skb (%d)\n", skb->len);
-		goto err_drop;
-	}
+		जाओ err_drop;
+	पूर्ण
 
-	if (skb->ip_summed == CHECKSUM_PARTIAL)
+	अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 		skb_checksum_help(skb);
 
 	nr_frags = skb_shinfo(skb)->nr_frags;
 
-	/* ring->end - ring->start will return the number of valid slots,
+	/* ring->end - ring->start will वापस the number of valid slots,
 	 * even when ring->end overflows
 	 */
-	if (ring->end - ring->start + nr_frags + 1 >= BGMAC_TX_RING_SLOTS) {
+	अगर (ring->end - ring->start + nr_frags + 1 >= BGMAC_TX_RING_SLOTS) अणु
 		netdev_err(bgmac->net_dev, "TX ring is full, queue should be stopped!\n");
-		netif_stop_queue(net_dev);
-		return NETDEV_TX_BUSY;
-	}
+		netअगर_stop_queue(net_dev);
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	slot->dma_addr = dma_map_single(dma_dev, skb->data, skb_headlen(skb),
 					DMA_TO_DEVICE);
-	if (unlikely(dma_mapping_error(dma_dev, slot->dma_addr)))
-		goto err_dma_head;
+	अगर (unlikely(dma_mapping_error(dma_dev, slot->dma_addr)))
+		जाओ err_dma_head;
 
 	flags = BGMAC_DESC_CTL0_SOF;
-	if (!nr_frags)
-		flags |= BGMAC_DESC_CTL0_EOF | BGMAC_DESC_CTL0_IOC;
+	अगर (!nr_frags)
+		flags |= BGMAC_DESC_CTL0_खातापूर्ण | BGMAC_DESC_CTL0_IOC;
 
 	bgmac_dma_tx_add_buf(bgmac, ring, index, skb_headlen(skb), flags);
 	flags = 0;
 
-	for (i = 0; i < nr_frags; i++) {
+	क्रम (i = 0; i < nr_frags; i++) अणु
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
-		int len = skb_frag_size(frag);
+		पूर्णांक len = skb_frag_size(frag);
 
 		index = (index + 1) % BGMAC_TX_RING_SLOTS;
 		slot = &ring->slots[index];
 		slot->dma_addr = skb_frag_dma_map(dma_dev, frag, 0,
 						  len, DMA_TO_DEVICE);
-		if (unlikely(dma_mapping_error(dma_dev, slot->dma_addr)))
-			goto err_dma;
+		अगर (unlikely(dma_mapping_error(dma_dev, slot->dma_addr)))
+			जाओ err_dma;
 
-		if (i == nr_frags - 1)
-			flags |= BGMAC_DESC_CTL0_EOF | BGMAC_DESC_CTL0_IOC;
+		अगर (i == nr_frags - 1)
+			flags |= BGMAC_DESC_CTL0_खातापूर्ण | BGMAC_DESC_CTL0_IOC;
 
 		bgmac_dma_tx_add_buf(bgmac, ring, index, len, flags);
-	}
+	पूर्ण
 
 	slot->skb = skb;
 	ring->end += nr_frags + 1;
@@ -194,126 +195,126 @@ static netdev_tx_t bgmac_dma_tx_add(struct bgmac *bgmac,
 
 	wmb();
 
-	/* Increase ring->end to point empty slot. We tell hardware the first
-	 * slot it should *not* read.
+	/* Increase ring->end to poपूर्णांक empty slot. We tell hardware the first
+	 * slot it should *not* पढ़ो.
 	 */
-	bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_TX_INDEX,
+	bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_TX_INDEX,
 		    ring->index_base +
 		    (ring->end % BGMAC_TX_RING_SLOTS) *
-		    sizeof(struct bgmac_dma_desc));
+		    माप(काष्ठा bgmac_dma_desc));
 
-	if (ring->end - ring->start >= BGMAC_TX_RING_SLOTS - 8)
-		netif_stop_queue(net_dev);
+	अगर (ring->end - ring->start >= BGMAC_TX_RING_SLOTS - 8)
+		netअगर_stop_queue(net_dev);
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 err_dma:
 	dma_unmap_single(dma_dev, slot->dma_addr, skb_headlen(skb),
 			 DMA_TO_DEVICE);
 
-	while (i-- > 0) {
-		int index = (ring->end + i) % BGMAC_TX_RING_SLOTS;
-		struct bgmac_slot_info *slot = &ring->slots[index];
+	जबतक (i-- > 0) अणु
+		पूर्णांक index = (ring->end + i) % BGMAC_TX_RING_SLOTS;
+		काष्ठा bgmac_slot_info *slot = &ring->slots[index];
 		u32 ctl1 = le32_to_cpu(ring->cpu_base[index].ctl1);
-		int len = ctl1 & BGMAC_DESC_CTL1_LEN;
+		पूर्णांक len = ctl1 & BGMAC_DESC_CTL1_LEN;
 
 		dma_unmap_page(dma_dev, slot->dma_addr, len, DMA_TO_DEVICE);
-	}
+	पूर्ण
 
 err_dma_head:
 	netdev_err(bgmac->net_dev, "Mapping error of skb on ring 0x%X\n",
 		   ring->mmio_base);
 
 err_drop:
-	dev_kfree_skb(skb);
+	dev_kमुक्त_skb(skb);
 	net_dev->stats.tx_dropped++;
 	net_dev->stats.tx_errors++;
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 /* Free transmitted packets */
-static void bgmac_dma_tx_free(struct bgmac *bgmac, struct bgmac_dma_ring *ring)
-{
-	struct device *dma_dev = bgmac->dma_dev;
-	int empty_slot;
-	unsigned bytes_compl = 0, pkts_compl = 0;
+अटल व्योम bgmac_dma_tx_मुक्त(काष्ठा bgmac *bgmac, काष्ठा bgmac_dma_ring *ring)
+अणु
+	काष्ठा device *dma_dev = bgmac->dma_dev;
+	पूर्णांक empty_slot;
+	अचिन्हित bytes_compl = 0, pkts_compl = 0;
 
 	/* The last slot that hardware didn't consume yet */
-	empty_slot = bgmac_read(bgmac, ring->mmio_base + BGMAC_DMA_TX_STATUS);
+	empty_slot = bgmac_पढ़ो(bgmac, ring->mmio_base + BGMAC_DMA_TX_STATUS);
 	empty_slot &= BGMAC_DMA_TX_STATDPTR;
 	empty_slot -= ring->index_base;
 	empty_slot &= BGMAC_DMA_TX_STATDPTR;
-	empty_slot /= sizeof(struct bgmac_dma_desc);
+	empty_slot /= माप(काष्ठा bgmac_dma_desc);
 
-	while (ring->start != ring->end) {
-		int slot_idx = ring->start % BGMAC_TX_RING_SLOTS;
-		struct bgmac_slot_info *slot = &ring->slots[slot_idx];
+	जबतक (ring->start != ring->end) अणु
+		पूर्णांक slot_idx = ring->start % BGMAC_TX_RING_SLOTS;
+		काष्ठा bgmac_slot_info *slot = &ring->slots[slot_idx];
 		u32 ctl0, ctl1;
-		int len;
+		पूर्णांक len;
 
-		if (slot_idx == empty_slot)
-			break;
+		अगर (slot_idx == empty_slot)
+			अवरोध;
 
 		ctl0 = le32_to_cpu(ring->cpu_base[slot_idx].ctl0);
 		ctl1 = le32_to_cpu(ring->cpu_base[slot_idx].ctl1);
 		len = ctl1 & BGMAC_DESC_CTL1_LEN;
-		if (ctl0 & BGMAC_DESC_CTL0_SOF)
-			/* Unmap no longer used buffer */
+		अगर (ctl0 & BGMAC_DESC_CTL0_SOF)
+			/* Unmap no दीर्घer used buffer */
 			dma_unmap_single(dma_dev, slot->dma_addr, len,
 					 DMA_TO_DEVICE);
-		else
+		अन्यथा
 			dma_unmap_page(dma_dev, slot->dma_addr, len,
 				       DMA_TO_DEVICE);
 
-		if (slot->skb) {
+		अगर (slot->skb) अणु
 			bgmac->net_dev->stats.tx_bytes += slot->skb->len;
 			bgmac->net_dev->stats.tx_packets++;
 			bytes_compl += slot->skb->len;
 			pkts_compl++;
 
 			/* Free memory! :) */
-			dev_kfree_skb(slot->skb);
-			slot->skb = NULL;
-		}
+			dev_kमुक्त_skb(slot->skb);
+			slot->skb = शून्य;
+		पूर्ण
 
 		slot->dma_addr = 0;
 		ring->start++;
-	}
+	पूर्ण
 
-	if (!pkts_compl)
-		return;
+	अगर (!pkts_compl)
+		वापस;
 
 	netdev_completed_queue(bgmac->net_dev, pkts_compl, bytes_compl);
 
-	if (netif_queue_stopped(bgmac->net_dev))
-		netif_wake_queue(bgmac->net_dev);
-}
+	अगर (netअगर_queue_stopped(bgmac->net_dev))
+		netअगर_wake_queue(bgmac->net_dev);
+पूर्ण
 
-static void bgmac_dma_rx_reset(struct bgmac *bgmac, struct bgmac_dma_ring *ring)
-{
-	if (!ring->mmio_base)
-		return;
+अटल व्योम bgmac_dma_rx_reset(काष्ठा bgmac *bgmac, काष्ठा bgmac_dma_ring *ring)
+अणु
+	अगर (!ring->mmio_base)
+		वापस;
 
-	bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_RX_CTL, 0);
-	if (!bgmac_wait_value(bgmac,
+	bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_RX_CTL, 0);
+	अगर (!bgmac_रुको_value(bgmac,
 			      ring->mmio_base + BGMAC_DMA_RX_STATUS,
 			      BGMAC_DMA_RX_STAT, BGMAC_DMA_RX_STAT_DISABLED,
 			      10000))
 		dev_err(bgmac->dev, "Reset of ring 0x%X RX failed\n",
 			ring->mmio_base);
-}
+पूर्ण
 
-static void bgmac_dma_rx_enable(struct bgmac *bgmac,
-				struct bgmac_dma_ring *ring)
-{
+अटल व्योम bgmac_dma_rx_enable(काष्ठा bgmac *bgmac,
+				काष्ठा bgmac_dma_ring *ring)
+अणु
 	u32 ctl;
 
-	ctl = bgmac_read(bgmac, ring->mmio_base + BGMAC_DMA_RX_CTL);
+	ctl = bgmac_पढ़ो(bgmac, ring->mmio_base + BGMAC_DMA_RX_CTL);
 
 	/* preserve ONLY bits 16-17 from current hardware value */
 	ctl &= BGMAC_DMA_RX_ADDREXT_MASK;
 
-	if (bgmac->feature_flags & BGMAC_FEAT_RX_MASK_SETUP) {
+	अगर (bgmac->feature_flags & BGMAC_FEAT_RX_MASK_SETUP) अणु
 		ctl &= ~BGMAC_DMA_RX_BL_MASK;
 		ctl |= BGMAC_DMA_RX_BL_128 << BGMAC_DMA_RX_BL_SHIFT;
 
@@ -322,65 +323,65 @@ static void bgmac_dma_rx_enable(struct bgmac *bgmac,
 
 		ctl &= ~BGMAC_DMA_RX_PT_MASK;
 		ctl |= BGMAC_DMA_RX_PT_1 << BGMAC_DMA_RX_PT_SHIFT;
-	}
+	पूर्ण
 	ctl |= BGMAC_DMA_RX_ENABLE;
 	ctl |= BGMAC_DMA_RX_PARITY_DISABLE;
 	ctl |= BGMAC_DMA_RX_OVERFLOW_CONT;
 	ctl |= BGMAC_RX_FRAME_OFFSET << BGMAC_DMA_RX_FRAME_OFFSET_SHIFT;
-	bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_RX_CTL, ctl);
-}
+	bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_RX_CTL, ctl);
+पूर्ण
 
-static int bgmac_dma_rx_skb_for_slot(struct bgmac *bgmac,
-				     struct bgmac_slot_info *slot)
-{
-	struct device *dma_dev = bgmac->dma_dev;
+अटल पूर्णांक bgmac_dma_rx_skb_क्रम_slot(काष्ठा bgmac *bgmac,
+				     काष्ठा bgmac_slot_info *slot)
+अणु
+	काष्ठा device *dma_dev = bgmac->dma_dev;
 	dma_addr_t dma_addr;
-	struct bgmac_rx_header *rx;
-	void *buf;
+	काष्ठा bgmac_rx_header *rx;
+	व्योम *buf;
 
 	/* Alloc skb */
 	buf = netdev_alloc_frag(BGMAC_RX_ALLOC_SIZE);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	/* Poison - if everything goes fine, hardware will overwrite it */
+	/* Poison - अगर everything goes fine, hardware will overग_लिखो it */
 	rx = buf + BGMAC_RX_BUF_OFFSET;
 	rx->len = cpu_to_le16(0xdead);
 	rx->flags = cpu_to_le16(0xbeef);
 
-	/* Map skb for the DMA */
+	/* Map skb क्रम the DMA */
 	dma_addr = dma_map_single(dma_dev, buf + BGMAC_RX_BUF_OFFSET,
 				  BGMAC_RX_BUF_SIZE, DMA_FROM_DEVICE);
-	if (dma_mapping_error(dma_dev, dma_addr)) {
+	अगर (dma_mapping_error(dma_dev, dma_addr)) अणु
 		netdev_err(bgmac->net_dev, "DMA mapping error\n");
 		put_page(virt_to_head_page(buf));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Update the slot */
 	slot->buf = buf;
 	slot->dma_addr = dma_addr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bgmac_dma_rx_update_index(struct bgmac *bgmac,
-				      struct bgmac_dma_ring *ring)
-{
+अटल व्योम bgmac_dma_rx_update_index(काष्ठा bgmac *bgmac,
+				      काष्ठा bgmac_dma_ring *ring)
+अणु
 	dma_wmb();
 
-	bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_RX_INDEX,
+	bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_RX_INDEX,
 		    ring->index_base +
-		    ring->end * sizeof(struct bgmac_dma_desc));
-}
+		    ring->end * माप(काष्ठा bgmac_dma_desc));
+पूर्ण
 
-static void bgmac_dma_rx_setup_desc(struct bgmac *bgmac,
-				    struct bgmac_dma_ring *ring, int desc_idx)
-{
-	struct bgmac_dma_desc *dma_desc = ring->cpu_base + desc_idx;
+अटल व्योम bgmac_dma_rx_setup_desc(काष्ठा bgmac *bgmac,
+				    काष्ठा bgmac_dma_ring *ring, पूर्णांक desc_idx)
+अणु
+	काष्ठा bgmac_dma_desc *dma_desc = ring->cpu_base + desc_idx;
 	u32 ctl0 = 0, ctl1 = 0;
 
-	if (desc_idx == BGMAC_RX_RING_SLOTS - 1)
+	अगर (desc_idx == BGMAC_RX_RING_SLOTS - 1)
 		ctl0 |= BGMAC_DESC_CTL0_EOT;
 	ctl1 |= BGMAC_RX_BUF_SIZE & BGMAC_DESC_CTL1_LEN;
 	/* Is there any BGMAC device that requires extension? */
@@ -394,48 +395,48 @@ static void bgmac_dma_rx_setup_desc(struct bgmac *bgmac,
 	dma_desc->ctl1 = cpu_to_le32(ctl1);
 
 	ring->end = desc_idx;
-}
+पूर्ण
 
-static void bgmac_dma_rx_poison_buf(struct device *dma_dev,
-				    struct bgmac_slot_info *slot)
-{
-	struct bgmac_rx_header *rx = slot->buf + BGMAC_RX_BUF_OFFSET;
+अटल व्योम bgmac_dma_rx_poison_buf(काष्ठा device *dma_dev,
+				    काष्ठा bgmac_slot_info *slot)
+अणु
+	काष्ठा bgmac_rx_header *rx = slot->buf + BGMAC_RX_BUF_OFFSET;
 
-	dma_sync_single_for_cpu(dma_dev, slot->dma_addr, BGMAC_RX_BUF_SIZE,
+	dma_sync_single_क्रम_cpu(dma_dev, slot->dma_addr, BGMAC_RX_BUF_SIZE,
 				DMA_FROM_DEVICE);
 	rx->len = cpu_to_le16(0xdead);
 	rx->flags = cpu_to_le16(0xbeef);
-	dma_sync_single_for_device(dma_dev, slot->dma_addr, BGMAC_RX_BUF_SIZE,
+	dma_sync_single_क्रम_device(dma_dev, slot->dma_addr, BGMAC_RX_BUF_SIZE,
 				   DMA_FROM_DEVICE);
-}
+पूर्ण
 
-static int bgmac_dma_rx_read(struct bgmac *bgmac, struct bgmac_dma_ring *ring,
-			     int weight)
-{
+अटल पूर्णांक bgmac_dma_rx_पढ़ो(काष्ठा bgmac *bgmac, काष्ठा bgmac_dma_ring *ring,
+			     पूर्णांक weight)
+अणु
 	u32 end_slot;
-	int handled = 0;
+	पूर्णांक handled = 0;
 
-	end_slot = bgmac_read(bgmac, ring->mmio_base + BGMAC_DMA_RX_STATUS);
+	end_slot = bgmac_पढ़ो(bgmac, ring->mmio_base + BGMAC_DMA_RX_STATUS);
 	end_slot &= BGMAC_DMA_RX_STATDPTR;
 	end_slot -= ring->index_base;
 	end_slot &= BGMAC_DMA_RX_STATDPTR;
-	end_slot /= sizeof(struct bgmac_dma_desc);
+	end_slot /= माप(काष्ठा bgmac_dma_desc);
 
-	while (ring->start != end_slot) {
-		struct device *dma_dev = bgmac->dma_dev;
-		struct bgmac_slot_info *slot = &ring->slots[ring->start];
-		struct bgmac_rx_header *rx = slot->buf + BGMAC_RX_BUF_OFFSET;
-		struct sk_buff *skb;
-		void *buf = slot->buf;
+	जबतक (ring->start != end_slot) अणु
+		काष्ठा device *dma_dev = bgmac->dma_dev;
+		काष्ठा bgmac_slot_info *slot = &ring->slots[ring->start];
+		काष्ठा bgmac_rx_header *rx = slot->buf + BGMAC_RX_BUF_OFFSET;
+		काष्ठा sk_buff *skb;
+		व्योम *buf = slot->buf;
 		dma_addr_t dma_addr = slot->dma_addr;
 		u16 len, flags;
 
-		do {
+		करो अणु
 			/* Prepare new skb as replacement */
-			if (bgmac_dma_rx_skb_for_slot(bgmac, slot)) {
+			अगर (bgmac_dma_rx_skb_क्रम_slot(bgmac, slot)) अणु
 				bgmac_dma_rx_poison_buf(dma_dev, slot);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Unmap buffer to make it accessible to the CPU */
 			dma_unmap_single(dma_dev, dma_addr,
@@ -445,554 +446,554 @@ static int bgmac_dma_rx_read(struct bgmac *bgmac, struct bgmac_dma_ring *ring,
 			len = le16_to_cpu(rx->len);
 			flags = le16_to_cpu(rx->flags);
 
-			/* Check for poison and drop or pass the packet */
-			if (len == 0xdead && flags == 0xbeef) {
+			/* Check क्रम poison and drop or pass the packet */
+			अगर (len == 0xdead && flags == 0xbeef) अणु
 				netdev_err(bgmac->net_dev, "Found poisoned packet at slot %d, DMA issue!\n",
 					   ring->start);
 				put_page(virt_to_head_page(buf));
 				bgmac->net_dev->stats.rx_errors++;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (len > BGMAC_RX_ALLOC_SIZE) {
+			अगर (len > BGMAC_RX_ALLOC_SIZE) अणु
 				netdev_err(bgmac->net_dev, "Found oversized packet at slot %d, DMA issue!\n",
 					   ring->start);
 				put_page(virt_to_head_page(buf));
 				bgmac->net_dev->stats.rx_length_errors++;
 				bgmac->net_dev->stats.rx_errors++;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Omit CRC. */
 			len -= ETH_FCS_LEN;
 
 			skb = build_skb(buf, BGMAC_RX_ALLOC_SIZE);
-			if (unlikely(!skb)) {
+			अगर (unlikely(!skb)) अणु
 				netdev_err(bgmac->net_dev, "build_skb failed\n");
 				put_page(virt_to_head_page(buf));
 				bgmac->net_dev->stats.rx_errors++;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			skb_put(skb, BGMAC_RX_FRAME_OFFSET +
 				BGMAC_RX_BUF_OFFSET + len);
 			skb_pull(skb, BGMAC_RX_FRAME_OFFSET +
 				 BGMAC_RX_BUF_OFFSET);
 
-			skb_checksum_none_assert(skb);
+			skb_checksum_none_निश्चित(skb);
 			skb->protocol = eth_type_trans(skb, bgmac->net_dev);
 			bgmac->net_dev->stats.rx_bytes += len;
 			bgmac->net_dev->stats.rx_packets++;
 			napi_gro_receive(&bgmac->napi, skb);
 			handled++;
-		} while (0);
+		पूर्ण जबतक (0);
 
 		bgmac_dma_rx_setup_desc(bgmac, ring, ring->start);
 
-		if (++ring->start >= BGMAC_RX_RING_SLOTS)
+		अगर (++ring->start >= BGMAC_RX_RING_SLOTS)
 			ring->start = 0;
 
-		if (handled >= weight) /* Should never be greater */
-			break;
-	}
+		अगर (handled >= weight) /* Should never be greater */
+			अवरोध;
+	पूर्ण
 
 	bgmac_dma_rx_update_index(bgmac, ring);
 
-	return handled;
-}
+	वापस handled;
+पूर्ण
 
 /* Does ring support unaligned addressing? */
-static bool bgmac_dma_unaligned(struct bgmac *bgmac,
-				struct bgmac_dma_ring *ring,
-				enum bgmac_dma_ring_type ring_type)
-{
-	switch (ring_type) {
-	case BGMAC_DMA_RING_TX:
-		bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_TX_RINGLO,
+अटल bool bgmac_dma_unaligned(काष्ठा bgmac *bgmac,
+				काष्ठा bgmac_dma_ring *ring,
+				क्रमागत bgmac_dma_ring_type ring_type)
+अणु
+	चयन (ring_type) अणु
+	हाल BGMAC_DMA_RING_TX:
+		bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_TX_RINGLO,
 			    0xff0);
-		if (bgmac_read(bgmac, ring->mmio_base + BGMAC_DMA_TX_RINGLO))
-			return true;
-		break;
-	case BGMAC_DMA_RING_RX:
-		bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_RX_RINGLO,
+		अगर (bgmac_पढ़ो(bgmac, ring->mmio_base + BGMAC_DMA_TX_RINGLO))
+			वापस true;
+		अवरोध;
+	हाल BGMAC_DMA_RING_RX:
+		bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_RX_RINGLO,
 			    0xff0);
-		if (bgmac_read(bgmac, ring->mmio_base + BGMAC_DMA_RX_RINGLO))
-			return true;
-		break;
-	}
-	return false;
-}
+		अगर (bgmac_पढ़ो(bgmac, ring->mmio_base + BGMAC_DMA_RX_RINGLO))
+			वापस true;
+		अवरोध;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static void bgmac_dma_tx_ring_free(struct bgmac *bgmac,
-				   struct bgmac_dma_ring *ring)
-{
-	struct device *dma_dev = bgmac->dma_dev;
-	struct bgmac_dma_desc *dma_desc = ring->cpu_base;
-	struct bgmac_slot_info *slot;
-	int i;
+अटल व्योम bgmac_dma_tx_ring_मुक्त(काष्ठा bgmac *bgmac,
+				   काष्ठा bgmac_dma_ring *ring)
+अणु
+	काष्ठा device *dma_dev = bgmac->dma_dev;
+	काष्ठा bgmac_dma_desc *dma_desc = ring->cpu_base;
+	काष्ठा bgmac_slot_info *slot;
+	पूर्णांक i;
 
-	for (i = 0; i < BGMAC_TX_RING_SLOTS; i++) {
+	क्रम (i = 0; i < BGMAC_TX_RING_SLOTS; i++) अणु
 		u32 ctl1 = le32_to_cpu(dma_desc[i].ctl1);
-		unsigned int len = ctl1 & BGMAC_DESC_CTL1_LEN;
+		अचिन्हित पूर्णांक len = ctl1 & BGMAC_DESC_CTL1_LEN;
 
 		slot = &ring->slots[i];
-		dev_kfree_skb(slot->skb);
+		dev_kमुक्त_skb(slot->skb);
 
-		if (!slot->dma_addr)
-			continue;
+		अगर (!slot->dma_addr)
+			जारी;
 
-		if (slot->skb)
+		अगर (slot->skb)
 			dma_unmap_single(dma_dev, slot->dma_addr,
 					 len, DMA_TO_DEVICE);
-		else
+		अन्यथा
 			dma_unmap_page(dma_dev, slot->dma_addr,
 				       len, DMA_TO_DEVICE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bgmac_dma_rx_ring_free(struct bgmac *bgmac,
-				   struct bgmac_dma_ring *ring)
-{
-	struct device *dma_dev = bgmac->dma_dev;
-	struct bgmac_slot_info *slot;
-	int i;
+अटल व्योम bgmac_dma_rx_ring_मुक्त(काष्ठा bgmac *bgmac,
+				   काष्ठा bgmac_dma_ring *ring)
+अणु
+	काष्ठा device *dma_dev = bgmac->dma_dev;
+	काष्ठा bgmac_slot_info *slot;
+	पूर्णांक i;
 
-	for (i = 0; i < BGMAC_RX_RING_SLOTS; i++) {
+	क्रम (i = 0; i < BGMAC_RX_RING_SLOTS; i++) अणु
 		slot = &ring->slots[i];
-		if (!slot->dma_addr)
-			continue;
+		अगर (!slot->dma_addr)
+			जारी;
 
 		dma_unmap_single(dma_dev, slot->dma_addr,
 				 BGMAC_RX_BUF_SIZE,
 				 DMA_FROM_DEVICE);
 		put_page(virt_to_head_page(slot->buf));
 		slot->dma_addr = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bgmac_dma_ring_desc_free(struct bgmac *bgmac,
-				     struct bgmac_dma_ring *ring,
-				     int num_slots)
-{
-	struct device *dma_dev = bgmac->dma_dev;
-	int size;
+अटल व्योम bgmac_dma_ring_desc_मुक्त(काष्ठा bgmac *bgmac,
+				     काष्ठा bgmac_dma_ring *ring,
+				     पूर्णांक num_slots)
+अणु
+	काष्ठा device *dma_dev = bgmac->dma_dev;
+	पूर्णांक size;
 
-	if (!ring->cpu_base)
-	    return;
+	अगर (!ring->cpu_base)
+	    वापस;
 
 	/* Free ring of descriptors */
-	size = num_slots * sizeof(struct bgmac_dma_desc);
-	dma_free_coherent(dma_dev, size, ring->cpu_base,
+	size = num_slots * माप(काष्ठा bgmac_dma_desc);
+	dma_मुक्त_coherent(dma_dev, size, ring->cpu_base,
 			  ring->dma_base);
-}
+पूर्ण
 
-static void bgmac_dma_cleanup(struct bgmac *bgmac)
-{
-	int i;
+अटल व्योम bgmac_dma_cleanup(काष्ठा bgmac *bgmac)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BGMAC_MAX_TX_RINGS; i++)
-		bgmac_dma_tx_ring_free(bgmac, &bgmac->tx_ring[i]);
+	क्रम (i = 0; i < BGMAC_MAX_TX_RINGS; i++)
+		bgmac_dma_tx_ring_मुक्त(bgmac, &bgmac->tx_ring[i]);
 
-	for (i = 0; i < BGMAC_MAX_RX_RINGS; i++)
-		bgmac_dma_rx_ring_free(bgmac, &bgmac->rx_ring[i]);
-}
+	क्रम (i = 0; i < BGMAC_MAX_RX_RINGS; i++)
+		bgmac_dma_rx_ring_मुक्त(bgmac, &bgmac->rx_ring[i]);
+पूर्ण
 
-static void bgmac_dma_free(struct bgmac *bgmac)
-{
-	int i;
+अटल व्योम bgmac_dma_मुक्त(काष्ठा bgmac *bgmac)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BGMAC_MAX_TX_RINGS; i++)
-		bgmac_dma_ring_desc_free(bgmac, &bgmac->tx_ring[i],
+	क्रम (i = 0; i < BGMAC_MAX_TX_RINGS; i++)
+		bgmac_dma_ring_desc_मुक्त(bgmac, &bgmac->tx_ring[i],
 					 BGMAC_TX_RING_SLOTS);
 
-	for (i = 0; i < BGMAC_MAX_RX_RINGS; i++)
-		bgmac_dma_ring_desc_free(bgmac, &bgmac->rx_ring[i],
+	क्रम (i = 0; i < BGMAC_MAX_RX_RINGS; i++)
+		bgmac_dma_ring_desc_मुक्त(bgmac, &bgmac->rx_ring[i],
 					 BGMAC_RX_RING_SLOTS);
-}
+पूर्ण
 
-static int bgmac_dma_alloc(struct bgmac *bgmac)
-{
-	struct device *dma_dev = bgmac->dma_dev;
-	struct bgmac_dma_ring *ring;
-	static const u16 ring_base[] = { BGMAC_DMA_BASE0, BGMAC_DMA_BASE1,
-					 BGMAC_DMA_BASE2, BGMAC_DMA_BASE3, };
-	int size; /* ring size: different for Tx and Rx */
-	int i;
+अटल पूर्णांक bgmac_dma_alloc(काष्ठा bgmac *bgmac)
+अणु
+	काष्ठा device *dma_dev = bgmac->dma_dev;
+	काष्ठा bgmac_dma_ring *ring;
+	अटल स्थिर u16 ring_base[] = अणु BGMAC_DMA_BASE0, BGMAC_DMA_BASE1,
+					 BGMAC_DMA_BASE2, BGMAC_DMA_BASE3, पूर्ण;
+	पूर्णांक size; /* ring size: dअगरferent क्रम Tx and Rx */
+	पूर्णांक i;
 
 	BUILD_BUG_ON(BGMAC_MAX_TX_RINGS > ARRAY_SIZE(ring_base));
 	BUILD_BUG_ON(BGMAC_MAX_RX_RINGS > ARRAY_SIZE(ring_base));
 
-	if (!(bgmac->feature_flags & BGMAC_FEAT_IDM_MASK)) {
-		if (!(bgmac_idm_read(bgmac, BCMA_IOST) & BCMA_IOST_DMA64)) {
+	अगर (!(bgmac->feature_flags & BGMAC_FEAT_IDM_MASK)) अणु
+		अगर (!(bgmac_idm_पढ़ो(bgmac, BCMA_IOST) & BCMA_IOST_DMA64)) अणु
 			dev_err(bgmac->dev, "Core does not report 64-bit DMA\n");
-			return -ENOTSUPP;
-		}
-	}
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < BGMAC_MAX_TX_RINGS; i++) {
+	क्रम (i = 0; i < BGMAC_MAX_TX_RINGS; i++) अणु
 		ring = &bgmac->tx_ring[i];
 		ring->mmio_base = ring_base[i];
 
 		/* Alloc ring of descriptors */
-		size = BGMAC_TX_RING_SLOTS * sizeof(struct bgmac_dma_desc);
+		size = BGMAC_TX_RING_SLOTS * माप(काष्ठा bgmac_dma_desc);
 		ring->cpu_base = dma_alloc_coherent(dma_dev, size,
 						    &ring->dma_base,
 						    GFP_KERNEL);
-		if (!ring->cpu_base) {
+		अगर (!ring->cpu_base) अणु
 			dev_err(bgmac->dev, "Allocation of TX ring 0x%X failed\n",
 				ring->mmio_base);
-			goto err_dma_free;
-		}
+			जाओ err_dma_मुक्त;
+		पूर्ण
 
 		ring->unaligned = bgmac_dma_unaligned(bgmac, ring,
 						      BGMAC_DMA_RING_TX);
-		if (ring->unaligned)
+		अगर (ring->unaligned)
 			ring->index_base = lower_32_bits(ring->dma_base);
-		else
+		अन्यथा
 			ring->index_base = 0;
 
 		/* No need to alloc TX slots yet */
-	}
+	पूर्ण
 
-	for (i = 0; i < BGMAC_MAX_RX_RINGS; i++) {
+	क्रम (i = 0; i < BGMAC_MAX_RX_RINGS; i++) अणु
 		ring = &bgmac->rx_ring[i];
 		ring->mmio_base = ring_base[i];
 
 		/* Alloc ring of descriptors */
-		size = BGMAC_RX_RING_SLOTS * sizeof(struct bgmac_dma_desc);
+		size = BGMAC_RX_RING_SLOTS * माप(काष्ठा bgmac_dma_desc);
 		ring->cpu_base = dma_alloc_coherent(dma_dev, size,
 						    &ring->dma_base,
 						    GFP_KERNEL);
-		if (!ring->cpu_base) {
+		अगर (!ring->cpu_base) अणु
 			dev_err(bgmac->dev, "Allocation of RX ring 0x%X failed\n",
 				ring->mmio_base);
-			goto err_dma_free;
-		}
+			जाओ err_dma_मुक्त;
+		पूर्ण
 
 		ring->unaligned = bgmac_dma_unaligned(bgmac, ring,
 						      BGMAC_DMA_RING_RX);
-		if (ring->unaligned)
+		अगर (ring->unaligned)
 			ring->index_base = lower_32_bits(ring->dma_base);
-		else
+		अन्यथा
 			ring->index_base = 0;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_dma_free:
-	bgmac_dma_free(bgmac);
-	return -ENOMEM;
-}
+err_dma_मुक्त:
+	bgmac_dma_मुक्त(bgmac);
+	वापस -ENOMEM;
+पूर्ण
 
-static int bgmac_dma_init(struct bgmac *bgmac)
-{
-	struct bgmac_dma_ring *ring;
-	int i, err;
+अटल पूर्णांक bgmac_dma_init(काष्ठा bgmac *bgmac)
+अणु
+	काष्ठा bgmac_dma_ring *ring;
+	पूर्णांक i, err;
 
-	for (i = 0; i < BGMAC_MAX_TX_RINGS; i++) {
+	क्रम (i = 0; i < BGMAC_MAX_TX_RINGS; i++) अणु
 		ring = &bgmac->tx_ring[i];
 
-		if (!ring->unaligned)
+		अगर (!ring->unaligned)
 			bgmac_dma_tx_enable(bgmac, ring);
-		bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_TX_RINGLO,
+		bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_TX_RINGLO,
 			    lower_32_bits(ring->dma_base));
-		bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_TX_RINGHI,
+		bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_TX_RINGHI,
 			    upper_32_bits(ring->dma_base));
-		if (ring->unaligned)
+		अगर (ring->unaligned)
 			bgmac_dma_tx_enable(bgmac, ring);
 
 		ring->start = 0;
-		ring->end = 0;	/* Points the slot that should *not* be read */
-	}
+		ring->end = 0;	/* Poपूर्णांकs the slot that should *not* be पढ़ो */
+	पूर्ण
 
-	for (i = 0; i < BGMAC_MAX_RX_RINGS; i++) {
-		int j;
+	क्रम (i = 0; i < BGMAC_MAX_RX_RINGS; i++) अणु
+		पूर्णांक j;
 
 		ring = &bgmac->rx_ring[i];
 
-		if (!ring->unaligned)
+		अगर (!ring->unaligned)
 			bgmac_dma_rx_enable(bgmac, ring);
-		bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_RX_RINGLO,
+		bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_RX_RINGLO,
 			    lower_32_bits(ring->dma_base));
-		bgmac_write(bgmac, ring->mmio_base + BGMAC_DMA_RX_RINGHI,
+		bgmac_ग_लिखो(bgmac, ring->mmio_base + BGMAC_DMA_RX_RINGHI,
 			    upper_32_bits(ring->dma_base));
-		if (ring->unaligned)
+		अगर (ring->unaligned)
 			bgmac_dma_rx_enable(bgmac, ring);
 
 		ring->start = 0;
 		ring->end = 0;
-		for (j = 0; j < BGMAC_RX_RING_SLOTS; j++) {
-			err = bgmac_dma_rx_skb_for_slot(bgmac, &ring->slots[j]);
-			if (err)
-				goto error;
+		क्रम (j = 0; j < BGMAC_RX_RING_SLOTS; j++) अणु
+			err = bgmac_dma_rx_skb_क्रम_slot(bgmac, &ring->slots[j]);
+			अगर (err)
+				जाओ error;
 
 			bgmac_dma_rx_setup_desc(bgmac, ring, j);
-		}
+		पूर्ण
 
 		bgmac_dma_rx_update_index(bgmac, ring);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
 	bgmac_dma_cleanup(bgmac);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 /**************************************************
  * Chip ops
  **************************************************/
 
-/* TODO: can we just drop @force? Can we don't reset MAC at all if there is
- * nothing to change? Try if after stabilizng driver.
+/* TODO: can we just drop @क्रमce? Can we करोn't reset MAC at all अगर there is
+ * nothing to change? Try अगर after stabilizng driver.
  */
-static void bgmac_umac_cmd_maskset(struct bgmac *bgmac, u32 mask, u32 set,
-				   bool force)
-{
-	u32 cmdcfg = bgmac_umac_read(bgmac, UMAC_CMD);
+अटल व्योम bgmac_umac_cmd_maskset(काष्ठा bgmac *bgmac, u32 mask, u32 set,
+				   bool क्रमce)
+अणु
+	u32 cmdcfg = bgmac_umac_पढ़ो(bgmac, UMAC_CMD);
 	u32 new_val = (cmdcfg & mask) | set;
 	u32 cmdcfg_sr;
 
-	if (bgmac->feature_flags & BGMAC_FEAT_CMDCFG_SR_REV4)
+	अगर (bgmac->feature_flags & BGMAC_FEAT_CMDCFG_SR_REV4)
 		cmdcfg_sr = CMD_SW_RESET;
-	else
+	अन्यथा
 		cmdcfg_sr = CMD_SW_RESET_OLD;
 
 	bgmac_umac_maskset(bgmac, UMAC_CMD, ~0, cmdcfg_sr);
 	udelay(2);
 
-	if (new_val != cmdcfg || force)
-		bgmac_umac_write(bgmac, UMAC_CMD, new_val);
+	अगर (new_val != cmdcfg || क्रमce)
+		bgmac_umac_ग_लिखो(bgmac, UMAC_CMD, new_val);
 
 	bgmac_umac_maskset(bgmac, UMAC_CMD, ~cmdcfg_sr, 0);
 	udelay(2);
-}
+पूर्ण
 
-static void bgmac_write_mac_address(struct bgmac *bgmac, u8 *addr)
-{
-	u32 tmp;
+अटल व्योम bgmac_ग_लिखो_mac_address(काष्ठा bgmac *bgmac, u8 *addr)
+अणु
+	u32 पंचांगp;
 
-	tmp = (addr[0] << 24) | (addr[1] << 16) | (addr[2] << 8) | addr[3];
-	bgmac_umac_write(bgmac, UMAC_MAC0, tmp);
-	tmp = (addr[4] << 8) | addr[5];
-	bgmac_umac_write(bgmac, UMAC_MAC1, tmp);
-}
+	पंचांगp = (addr[0] << 24) | (addr[1] << 16) | (addr[2] << 8) | addr[3];
+	bgmac_umac_ग_लिखो(bgmac, UMAC_MAC0, पंचांगp);
+	पंचांगp = (addr[4] << 8) | addr[5];
+	bgmac_umac_ग_लिखो(bgmac, UMAC_MAC1, पंचांगp);
+पूर्ण
 
-static void bgmac_set_rx_mode(struct net_device *net_dev)
-{
-	struct bgmac *bgmac = netdev_priv(net_dev);
+अटल व्योम bgmac_set_rx_mode(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा bgmac *bgmac = netdev_priv(net_dev);
 
-	if (net_dev->flags & IFF_PROMISC)
+	अगर (net_dev->flags & IFF_PROMISC)
 		bgmac_umac_cmd_maskset(bgmac, ~0, CMD_PROMISC, true);
-	else
+	अन्यथा
 		bgmac_umac_cmd_maskset(bgmac, ~CMD_PROMISC, 0, true);
-}
+पूर्ण
 
-#if 0 /* We don't use that regs yet */
-static void bgmac_chip_stats_update(struct bgmac *bgmac)
-{
-	int i;
+#अगर 0 /* We करोn't use that regs yet */
+अटल व्योम bgmac_chip_stats_update(काष्ठा bgmac *bgmac)
+अणु
+	पूर्णांक i;
 
-	if (!(bgmac->feature_flags & BGMAC_FEAT_NO_CLR_MIB)) {
-		for (i = 0; i < BGMAC_NUM_MIB_TX_REGS; i++)
+	अगर (!(bgmac->feature_flags & BGMAC_FEAT_NO_CLR_MIB)) अणु
+		क्रम (i = 0; i < BGMAC_NUM_MIB_TX_REGS; i++)
 			bgmac->mib_tx_regs[i] =
-				bgmac_read(bgmac,
+				bgmac_पढ़ो(bgmac,
 					   BGMAC_TX_GOOD_OCTETS + (i * 4));
-		for (i = 0; i < BGMAC_NUM_MIB_RX_REGS; i++)
+		क्रम (i = 0; i < BGMAC_NUM_MIB_RX_REGS; i++)
 			bgmac->mib_rx_regs[i] =
-				bgmac_read(bgmac,
+				bgmac_पढ़ो(bgmac,
 					   BGMAC_RX_GOOD_OCTETS + (i * 4));
-	}
+	पूर्ण
 
-	/* TODO: what else? how to handle BCM4706? Specs are needed */
-}
-#endif
+	/* TODO: what अन्यथा? how to handle BCM4706? Specs are needed */
+पूर्ण
+#पूर्ण_अगर
 
-static void bgmac_clear_mib(struct bgmac *bgmac)
-{
-	int i;
+अटल व्योम bgmac_clear_mib(काष्ठा bgmac *bgmac)
+अणु
+	पूर्णांक i;
 
-	if (bgmac->feature_flags & BGMAC_FEAT_NO_CLR_MIB)
-		return;
+	अगर (bgmac->feature_flags & BGMAC_FEAT_NO_CLR_MIB)
+		वापस;
 
 	bgmac_set(bgmac, BGMAC_DEV_CTL, BGMAC_DC_MROR);
-	for (i = 0; i < BGMAC_NUM_MIB_TX_REGS; i++)
-		bgmac_read(bgmac, BGMAC_TX_GOOD_OCTETS + (i * 4));
-	for (i = 0; i < BGMAC_NUM_MIB_RX_REGS; i++)
-		bgmac_read(bgmac, BGMAC_RX_GOOD_OCTETS + (i * 4));
-}
+	क्रम (i = 0; i < BGMAC_NUM_MIB_TX_REGS; i++)
+		bgmac_पढ़ो(bgmac, BGMAC_TX_GOOD_OCTETS + (i * 4));
+	क्रम (i = 0; i < BGMAC_NUM_MIB_RX_REGS; i++)
+		bgmac_पढ़ो(bgmac, BGMAC_RX_GOOD_OCTETS + (i * 4));
+पूर्ण
 
 /* http://bcm-v4.sipsolutions.net/mac-gbit/gmac/gmac_speed */
-static void bgmac_mac_speed(struct bgmac *bgmac)
-{
+अटल व्योम bgmac_mac_speed(काष्ठा bgmac *bgmac)
+अणु
 	u32 mask = ~(CMD_SPEED_MASK << CMD_SPEED_SHIFT | CMD_HD_EN);
 	u32 set = 0;
 
-	switch (bgmac->mac_speed) {
-	case SPEED_10:
+	चयन (bgmac->mac_speed) अणु
+	हाल SPEED_10:
 		set |= CMD_SPEED_10 << CMD_SPEED_SHIFT;
-		break;
-	case SPEED_100:
+		अवरोध;
+	हाल SPEED_100:
 		set |= CMD_SPEED_100 << CMD_SPEED_SHIFT;
-		break;
-	case SPEED_1000:
+		अवरोध;
+	हाल SPEED_1000:
 		set |= CMD_SPEED_1000 << CMD_SPEED_SHIFT;
-		break;
-	case SPEED_2500:
+		अवरोध;
+	हाल SPEED_2500:
 		set |= CMD_SPEED_2500 << CMD_SPEED_SHIFT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(bgmac->dev, "Unsupported speed: %d\n",
 			bgmac->mac_speed);
-	}
+	पूर्ण
 
-	if (bgmac->mac_duplex == DUPLEX_HALF)
+	अगर (bgmac->mac_duplex == DUPLEX_HALF)
 		set |= CMD_HD_EN;
 
 	bgmac_umac_cmd_maskset(bgmac, mask, set, true);
-}
+पूर्ण
 
-static void bgmac_miiconfig(struct bgmac *bgmac)
-{
-	if (bgmac->feature_flags & BGMAC_FEAT_FORCE_SPEED_2500) {
-		if (!(bgmac->feature_flags & BGMAC_FEAT_IDM_MASK)) {
-			bgmac_idm_write(bgmac, BCMA_IOCTL,
-					bgmac_idm_read(bgmac, BCMA_IOCTL) |
+अटल व्योम bgmac_miiconfig(काष्ठा bgmac *bgmac)
+अणु
+	अगर (bgmac->feature_flags & BGMAC_FEAT_FORCE_SPEED_2500) अणु
+		अगर (!(bgmac->feature_flags & BGMAC_FEAT_IDM_MASK)) अणु
+			bgmac_idm_ग_लिखो(bgmac, BCMA_IOCTL,
+					bgmac_idm_पढ़ो(bgmac, BCMA_IOCTL) |
 					0x40 | BGMAC_BCMA_IOCTL_SW_CLKEN);
-		}
+		पूर्ण
 		bgmac->mac_speed = SPEED_2500;
 		bgmac->mac_duplex = DUPLEX_FULL;
 		bgmac_mac_speed(bgmac);
-	} else {
+	पूर्ण अन्यथा अणु
 		u8 imode;
 
-		imode = (bgmac_read(bgmac, BGMAC_DEV_STATUS) &
+		imode = (bgmac_पढ़ो(bgmac, BGMAC_DEV_STATUS) &
 			BGMAC_DS_MM_MASK) >> BGMAC_DS_MM_SHIFT;
-		if (imode == 0 || imode == 1) {
+		अगर (imode == 0 || imode == 1) अणु
 			bgmac->mac_speed = SPEED_100;
 			bgmac->mac_duplex = DUPLEX_FULL;
 			bgmac_mac_speed(bgmac);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void bgmac_chip_reset_idm_config(struct bgmac *bgmac)
-{
+अटल व्योम bgmac_chip_reset_idm_config(काष्ठा bgmac *bgmac)
+अणु
 	u32 iost;
 
-	iost = bgmac_idm_read(bgmac, BCMA_IOST);
-	if (bgmac->feature_flags & BGMAC_FEAT_IOST_ATTACHED)
+	iost = bgmac_idm_पढ़ो(bgmac, BCMA_IOST);
+	अगर (bgmac->feature_flags & BGMAC_FEAT_IOST_ATTACHED)
 		iost &= ~BGMAC_BCMA_IOST_ATTACHED;
 
-	/* 3GMAC: for BCM4707 & BCM47094, only do core reset at bgmac_probe() */
-	if (!(bgmac->feature_flags & BGMAC_FEAT_NO_RESET)) {
+	/* 3GMAC: क्रम BCM4707 & BCM47094, only करो core reset at bgmac_probe() */
+	अगर (!(bgmac->feature_flags & BGMAC_FEAT_NO_RESET)) अणु
 		u32 flags = 0;
 
-		if (iost & BGMAC_BCMA_IOST_ATTACHED) {
+		अगर (iost & BGMAC_BCMA_IOST_ATTACHED) अणु
 			flags = BGMAC_BCMA_IOCTL_SW_CLKEN;
-			if (!bgmac->has_robosw)
+			अगर (!bgmac->has_robosw)
 				flags |= BGMAC_BCMA_IOCTL_SW_RESET;
-		}
+		पूर्ण
 		bgmac_clk_enable(bgmac, flags);
-	}
+	पूर्ण
 
-	if (iost & BGMAC_BCMA_IOST_ATTACHED && !bgmac->has_robosw)
-		bgmac_idm_write(bgmac, BCMA_IOCTL,
-				bgmac_idm_read(bgmac, BCMA_IOCTL) &
+	अगर (iost & BGMAC_BCMA_IOST_ATTACHED && !bgmac->has_robosw)
+		bgmac_idm_ग_लिखो(bgmac, BCMA_IOCTL,
+				bgmac_idm_पढ़ो(bgmac, BCMA_IOCTL) &
 				~BGMAC_BCMA_IOCTL_SW_RESET);
-}
+पूर्ण
 
 /* http://bcm-v4.sipsolutions.net/mac-gbit/gmac/chipreset */
-static void bgmac_chip_reset(struct bgmac *bgmac)
-{
+अटल व्योम bgmac_chip_reset(काष्ठा bgmac *bgmac)
+अणु
 	u32 cmdcfg_sr;
-	int i;
+	पूर्णांक i;
 
-	if (bgmac_clk_enabled(bgmac)) {
-		if (!bgmac->stats_grabbed) {
+	अगर (bgmac_clk_enabled(bgmac)) अणु
+		अगर (!bgmac->stats_grabbed) अणु
 			/* bgmac_chip_stats_update(bgmac); */
 			bgmac->stats_grabbed = true;
-		}
+		पूर्ण
 
-		for (i = 0; i < BGMAC_MAX_TX_RINGS; i++)
+		क्रम (i = 0; i < BGMAC_MAX_TX_RINGS; i++)
 			bgmac_dma_tx_reset(bgmac, &bgmac->tx_ring[i]);
 
 		bgmac_umac_cmd_maskset(bgmac, ~0, CMD_LCL_LOOP_EN, false);
 		udelay(1);
 
-		for (i = 0; i < BGMAC_MAX_RX_RINGS; i++)
+		क्रम (i = 0; i < BGMAC_MAX_RX_RINGS; i++)
 			bgmac_dma_rx_reset(bgmac, &bgmac->rx_ring[i]);
 
 		/* TODO: Clear software multicast filter list */
-	}
+	पूर्ण
 
-	if (!(bgmac->feature_flags & BGMAC_FEAT_IDM_MASK))
+	अगर (!(bgmac->feature_flags & BGMAC_FEAT_IDM_MASK))
 		bgmac_chip_reset_idm_config(bgmac);
 
-	/* Request Misc PLL for corerev > 2 */
-	if (bgmac->feature_flags & BGMAC_FEAT_MISC_PLL_REQ) {
+	/* Request Misc PLL क्रम corerev > 2 */
+	अगर (bgmac->feature_flags & BGMAC_FEAT_MISC_PLL_REQ) अणु
 		bgmac_set(bgmac, BCMA_CLKCTLST,
 			  BGMAC_BCMA_CLKCTLST_MISC_PLL_REQ);
-		bgmac_wait_value(bgmac, BCMA_CLKCTLST,
+		bgmac_रुको_value(bgmac, BCMA_CLKCTLST,
 				 BGMAC_BCMA_CLKCTLST_MISC_PLL_ST,
 				 BGMAC_BCMA_CLKCTLST_MISC_PLL_ST,
 				 1000);
-	}
+	पूर्ण
 
-	if (bgmac->feature_flags & BGMAC_FEAT_SW_TYPE_PHY) {
+	अगर (bgmac->feature_flags & BGMAC_FEAT_SW_TYPE_PHY) अणु
 		u8 et_swtype = 0;
 		u8 sw_type = BGMAC_CHIPCTL_1_SW_TYPE_EPHY |
 			     BGMAC_CHIPCTL_1_IF_TYPE_MII;
-		char buf[4];
+		अक्षर buf[4];
 
-		if (bcm47xx_nvram_getenv("et_swtype", buf, sizeof(buf)) > 0) {
-			if (kstrtou8(buf, 0, &et_swtype))
+		अगर (bcm47xx_nvram_दो_पर्या("et_swtype", buf, माप(buf)) > 0) अणु
+			अगर (kstrtou8(buf, 0, &et_swtype))
 				dev_err(bgmac->dev, "Failed to parse et_swtype (%s)\n",
 					buf);
 			et_swtype &= 0x0f;
 			et_swtype <<= 4;
 			sw_type = et_swtype;
-		} else if (bgmac->feature_flags & BGMAC_FEAT_SW_TYPE_EPHYRMII) {
+		पूर्ण अन्यथा अगर (bgmac->feature_flags & BGMAC_FEAT_SW_TYPE_EPHYRMII) अणु
 			sw_type = BGMAC_CHIPCTL_1_IF_TYPE_RMII |
 				  BGMAC_CHIPCTL_1_SW_TYPE_EPHYRMII;
-		} else if (bgmac->feature_flags & BGMAC_FEAT_SW_TYPE_RGMII) {
+		पूर्ण अन्यथा अगर (bgmac->feature_flags & BGMAC_FEAT_SW_TYPE_RGMII) अणु
 			sw_type = BGMAC_CHIPCTL_1_IF_TYPE_RGMII |
 				  BGMAC_CHIPCTL_1_SW_TYPE_RGMII;
-		}
+		पूर्ण
 		bgmac_cco_ctl_maskset(bgmac, 1, ~(BGMAC_CHIPCTL_1_IF_TYPE_MASK |
 						  BGMAC_CHIPCTL_1_SW_TYPE_MASK),
 				      sw_type);
-	} else if (bgmac->feature_flags & BGMAC_FEAT_CC4_IF_SW_TYPE) {
+	पूर्ण अन्यथा अगर (bgmac->feature_flags & BGMAC_FEAT_CC4_IF_SW_TYPE) अणु
 		u32 sw_type = BGMAC_CHIPCTL_4_IF_TYPE_MII |
 			      BGMAC_CHIPCTL_4_SW_TYPE_EPHY;
 		u8 et_swtype = 0;
-		char buf[4];
+		अक्षर buf[4];
 
-		if (bcm47xx_nvram_getenv("et_swtype", buf, sizeof(buf)) > 0) {
-			if (kstrtou8(buf, 0, &et_swtype))
+		अगर (bcm47xx_nvram_दो_पर्या("et_swtype", buf, माप(buf)) > 0) अणु
+			अगर (kstrtou8(buf, 0, &et_swtype))
 				dev_err(bgmac->dev, "Failed to parse et_swtype (%s)\n",
 					buf);
 			sw_type = (et_swtype & 0x0f) << 12;
-		} else if (bgmac->feature_flags & BGMAC_FEAT_CC4_IF_SW_TYPE_RGMII) {
+		पूर्ण अन्यथा अगर (bgmac->feature_flags & BGMAC_FEAT_CC4_IF_SW_TYPE_RGMII) अणु
 			sw_type = BGMAC_CHIPCTL_4_IF_TYPE_RGMII |
 				  BGMAC_CHIPCTL_4_SW_TYPE_RGMII;
-		}
+		पूर्ण
 		bgmac_cco_ctl_maskset(bgmac, 4, ~(BGMAC_CHIPCTL_4_IF_TYPE_MASK |
 						  BGMAC_CHIPCTL_4_SW_TYPE_MASK),
 				      sw_type);
-	} else if (bgmac->feature_flags & BGMAC_FEAT_CC7_IF_TYPE_RGMII) {
+	पूर्ण अन्यथा अगर (bgmac->feature_flags & BGMAC_FEAT_CC7_IF_TYPE_RGMII) अणु
 		bgmac_cco_ctl_maskset(bgmac, 7, ~BGMAC_CHIPCTL_7_IF_TYPE_MASK,
 				      BGMAC_CHIPCTL_7_IF_TYPE_RGMII);
-	}
+	पूर्ण
 
 	/* http://bcm-v4.sipsolutions.net/mac-gbit/gmac/gmac_reset
-	 * Specs don't say about using UMAC_CMD_SR, but in this routine
-	 * UMAC_CMD is read _after_ putting chip in a reset. So it has to
+	 * Specs करोn't say about using UMAC_CMD_SR, but in this routine
+	 * UMAC_CMD is पढ़ो _after_ putting chip in a reset. So it has to
 	 * be keps until taking MAC out of the reset.
 	 */
-	if (bgmac->feature_flags & BGMAC_FEAT_CMDCFG_SR_REV4)
+	अगर (bgmac->feature_flags & BGMAC_FEAT_CMDCFG_SR_REV4)
 		cmdcfg_sr = CMD_SW_RESET;
-	else
+	अन्यथा
 		cmdcfg_sr = CMD_SW_RESET_OLD;
 
 	bgmac_umac_cmd_maskset(bgmac,
@@ -1018,461 +1019,461 @@ static void bgmac_chip_reset(struct bgmac *bgmac)
 	bgmac->mac_duplex = DUPLEX_UNKNOWN;
 
 	bgmac_clear_mib(bgmac);
-	if (bgmac->feature_flags & BGMAC_FEAT_CMN_PHY_CTL)
+	अगर (bgmac->feature_flags & BGMAC_FEAT_CMN_PHY_CTL)
 		bgmac_cmn_maskset32(bgmac, BCMA_GMAC_CMN_PHY_CTL, ~0,
 				    BCMA_GMAC_CMN_PC_MTE);
-	else
+	अन्यथा
 		bgmac_set(bgmac, BGMAC_PHY_CNTL, BGMAC_PC_MTE);
 	bgmac_miiconfig(bgmac);
-	if (bgmac->mii_bus)
+	अगर (bgmac->mii_bus)
 		bgmac->mii_bus->reset(bgmac->mii_bus);
 
 	netdev_reset_queue(bgmac->net_dev);
-}
+पूर्ण
 
-static void bgmac_chip_intrs_on(struct bgmac *bgmac)
-{
-	bgmac_write(bgmac, BGMAC_INT_MASK, bgmac->int_mask);
-}
+अटल व्योम bgmac_chip_पूर्णांकrs_on(काष्ठा bgmac *bgmac)
+अणु
+	bgmac_ग_लिखो(bgmac, BGMAC_INT_MASK, bgmac->पूर्णांक_mask);
+पूर्ण
 
-static void bgmac_chip_intrs_off(struct bgmac *bgmac)
-{
-	bgmac_write(bgmac, BGMAC_INT_MASK, 0);
-	bgmac_read(bgmac, BGMAC_INT_MASK);
-}
+अटल व्योम bgmac_chip_पूर्णांकrs_off(काष्ठा bgmac *bgmac)
+अणु
+	bgmac_ग_लिखो(bgmac, BGMAC_INT_MASK, 0);
+	bgmac_पढ़ो(bgmac, BGMAC_INT_MASK);
+पूर्ण
 
 /* http://bcm-v4.sipsolutions.net/mac-gbit/gmac/gmac_enable */
-static void bgmac_enable(struct bgmac *bgmac)
-{
+अटल व्योम bgmac_enable(काष्ठा bgmac *bgmac)
+अणु
 	u32 cmdcfg_sr;
 	u32 cmdcfg;
 	u32 mode;
 
-	if (bgmac->feature_flags & BGMAC_FEAT_CMDCFG_SR_REV4)
+	अगर (bgmac->feature_flags & BGMAC_FEAT_CMDCFG_SR_REV4)
 		cmdcfg_sr = CMD_SW_RESET;
-	else
+	अन्यथा
 		cmdcfg_sr = CMD_SW_RESET_OLD;
 
-	cmdcfg = bgmac_umac_read(bgmac, UMAC_CMD);
+	cmdcfg = bgmac_umac_पढ़ो(bgmac, UMAC_CMD);
 	bgmac_umac_cmd_maskset(bgmac, ~(CMD_TX_EN | CMD_RX_EN),
 			       cmdcfg_sr, true);
 	udelay(2);
 	cmdcfg |= CMD_TX_EN | CMD_RX_EN;
-	bgmac_umac_write(bgmac, UMAC_CMD, cmdcfg);
+	bgmac_umac_ग_लिखो(bgmac, UMAC_CMD, cmdcfg);
 
-	mode = (bgmac_read(bgmac, BGMAC_DEV_STATUS) & BGMAC_DS_MM_MASK) >>
+	mode = (bgmac_पढ़ो(bgmac, BGMAC_DEV_STATUS) & BGMAC_DS_MM_MASK) >>
 		BGMAC_DS_MM_SHIFT;
-	if (bgmac->feature_flags & BGMAC_FEAT_CLKCTLST || mode != 0)
+	अगर (bgmac->feature_flags & BGMAC_FEAT_CLKCTLST || mode != 0)
 		bgmac_set(bgmac, BCMA_CLKCTLST, BCMA_CLKCTLST_FORCEHT);
-	if (!(bgmac->feature_flags & BGMAC_FEAT_CLKCTLST) && mode == 2)
+	अगर (!(bgmac->feature_flags & BGMAC_FEAT_CLKCTLST) && mode == 2)
 		bgmac_cco_ctl_maskset(bgmac, 1, ~0,
 				      BGMAC_CHIPCTL_1_RXC_DLL_BYPASS);
 
-	if (bgmac->feature_flags & (BGMAC_FEAT_FLW_CTRL1 |
-				    BGMAC_FEAT_FLW_CTRL2)) {
+	अगर (bgmac->feature_flags & (BGMAC_FEAT_FLW_CTRL1 |
+				    BGMAC_FEAT_FLW_CTRL2)) अणु
 		u32 fl_ctl;
 
-		if (bgmac->feature_flags & BGMAC_FEAT_FLW_CTRL1)
+		अगर (bgmac->feature_flags & BGMAC_FEAT_FLW_CTRL1)
 			fl_ctl = 0x2300e1;
-		else
+		अन्यथा
 			fl_ctl = 0x03cb04cb;
 
-		bgmac_write(bgmac, BGMAC_FLOW_CTL_THRESH, fl_ctl);
-		bgmac_umac_write(bgmac, UMAC_PAUSE_CTRL, 0x27fff);
-	}
+		bgmac_ग_लिखो(bgmac, BGMAC_FLOW_CTL_THRESH, fl_ctl);
+		bgmac_umac_ग_लिखो(bgmac, UMAC_PAUSE_CTRL, 0x27fff);
+	पूर्ण
 
-	if (bgmac->feature_flags & BGMAC_FEAT_SET_RXQ_CLK) {
+	अगर (bgmac->feature_flags & BGMAC_FEAT_SET_RXQ_CLK) अणु
 		u32 rxq_ctl;
 		u16 bp_clk;
 		u8 mdp;
 
-		rxq_ctl = bgmac_read(bgmac, BGMAC_RXQ_CTL);
+		rxq_ctl = bgmac_पढ़ो(bgmac, BGMAC_RXQ_CTL);
 		rxq_ctl &= ~BGMAC_RXQ_CTL_MDP_MASK;
-		bp_clk = bgmac_get_bus_clock(bgmac) / 1000000;
+		bp_clk = bgmac_get_bus_घड़ी(bgmac) / 1000000;
 		mdp = (bp_clk * 128 / 1000) - 3;
 		rxq_ctl |= (mdp << BGMAC_RXQ_CTL_MDP_SHIFT);
-		bgmac_write(bgmac, BGMAC_RXQ_CTL, rxq_ctl);
-	}
-}
+		bgmac_ग_लिखो(bgmac, BGMAC_RXQ_CTL, rxq_ctl);
+	पूर्ण
+पूर्ण
 
 /* http://bcm-v4.sipsolutions.net/mac-gbit/gmac/chipinit */
-static void bgmac_chip_init(struct bgmac *bgmac)
-{
-	/* Clear any erroneously pending interrupts */
-	bgmac_write(bgmac, BGMAC_INT_STATUS, ~0);
+अटल व्योम bgmac_chip_init(काष्ठा bgmac *bgmac)
+अणु
+	/* Clear any erroneously pending पूर्णांकerrupts */
+	bgmac_ग_लिखो(bgmac, BGMAC_INT_STATUS, ~0);
 
-	/* 1 interrupt per received frame */
-	bgmac_write(bgmac, BGMAC_INT_RECV_LAZY, 1 << BGMAC_IRL_FC_SHIFT);
+	/* 1 पूर्णांकerrupt per received frame */
+	bgmac_ग_लिखो(bgmac, BGMAC_INT_RECV_LAZY, 1 << BGMAC_IRL_FC_SHIFT);
 
 	/* Enable 802.3x tx flow control (honor received PAUSE frames) */
 	bgmac_umac_cmd_maskset(bgmac, ~CMD_RX_PAUSE_IGNORE, 0, true);
 
 	bgmac_set_rx_mode(bgmac->net_dev);
 
-	bgmac_write_mac_address(bgmac, bgmac->net_dev->dev_addr);
+	bgmac_ग_लिखो_mac_address(bgmac, bgmac->net_dev->dev_addr);
 
-	if (bgmac->loopback)
+	अगर (bgmac->loopback)
 		bgmac_umac_cmd_maskset(bgmac, ~0, CMD_LCL_LOOP_EN, false);
-	else
+	अन्यथा
 		bgmac_umac_cmd_maskset(bgmac, ~CMD_LCL_LOOP_EN, 0, false);
 
-	bgmac_umac_write(bgmac, UMAC_MAX_FRAME_LEN, 32 + ETHER_MAX_LEN);
+	bgmac_umac_ग_लिखो(bgmac, UMAC_MAX_FRAME_LEN, 32 + ETHER_MAX_LEN);
 
-	bgmac_chip_intrs_on(bgmac);
+	bgmac_chip_पूर्णांकrs_on(bgmac);
 
 	bgmac_enable(bgmac);
-}
+पूर्ण
 
-static irqreturn_t bgmac_interrupt(int irq, void *dev_id)
-{
-	struct bgmac *bgmac = netdev_priv(dev_id);
+अटल irqवापस_t bgmac_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा bgmac *bgmac = netdev_priv(dev_id);
 
-	u32 int_status = bgmac_read(bgmac, BGMAC_INT_STATUS);
-	int_status &= bgmac->int_mask;
+	u32 पूर्णांक_status = bgmac_पढ़ो(bgmac, BGMAC_INT_STATUS);
+	पूर्णांक_status &= bgmac->पूर्णांक_mask;
 
-	if (!int_status)
-		return IRQ_NONE;
+	अगर (!पूर्णांक_status)
+		वापस IRQ_NONE;
 
-	int_status &= ~(BGMAC_IS_TX0 | BGMAC_IS_RX);
-	if (int_status)
-		dev_err(bgmac->dev, "Unknown IRQs: 0x%08X\n", int_status);
+	पूर्णांक_status &= ~(BGMAC_IS_TX0 | BGMAC_IS_RX);
+	अगर (पूर्णांक_status)
+		dev_err(bgmac->dev, "Unknown IRQs: 0x%08X\n", पूर्णांक_status);
 
-	/* Disable new interrupts until handling existing ones */
-	bgmac_chip_intrs_off(bgmac);
+	/* Disable new पूर्णांकerrupts until handling existing ones */
+	bgmac_chip_पूर्णांकrs_off(bgmac);
 
 	napi_schedule(&bgmac->napi);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int bgmac_poll(struct napi_struct *napi, int weight)
-{
-	struct bgmac *bgmac = container_of(napi, struct bgmac, napi);
-	int handled = 0;
+अटल पूर्णांक bgmac_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक weight)
+अणु
+	काष्ठा bgmac *bgmac = container_of(napi, काष्ठा bgmac, napi);
+	पूर्णांक handled = 0;
 
 	/* Ack */
-	bgmac_write(bgmac, BGMAC_INT_STATUS, ~0);
+	bgmac_ग_लिखो(bgmac, BGMAC_INT_STATUS, ~0);
 
-	bgmac_dma_tx_free(bgmac, &bgmac->tx_ring[0]);
-	handled += bgmac_dma_rx_read(bgmac, &bgmac->rx_ring[0], weight);
+	bgmac_dma_tx_मुक्त(bgmac, &bgmac->tx_ring[0]);
+	handled += bgmac_dma_rx_पढ़ो(bgmac, &bgmac->rx_ring[0], weight);
 
-	/* Poll again if more events arrived in the meantime */
-	if (bgmac_read(bgmac, BGMAC_INT_STATUS) & (BGMAC_IS_TX0 | BGMAC_IS_RX))
-		return weight;
+	/* Poll again अगर more events arrived in the meanसमय */
+	अगर (bgmac_पढ़ो(bgmac, BGMAC_INT_STATUS) & (BGMAC_IS_TX0 | BGMAC_IS_RX))
+		वापस weight;
 
-	if (handled < weight) {
-		napi_complete_done(napi, handled);
-		bgmac_chip_intrs_on(bgmac);
-	}
+	अगर (handled < weight) अणु
+		napi_complete_करोne(napi, handled);
+		bgmac_chip_पूर्णांकrs_on(bgmac);
+	पूर्ण
 
-	return handled;
-}
+	वापस handled;
+पूर्ण
 
 /**************************************************
  * net_device_ops
  **************************************************/
 
-static int bgmac_open(struct net_device *net_dev)
-{
-	struct bgmac *bgmac = netdev_priv(net_dev);
-	int err = 0;
+अटल पूर्णांक bgmac_खोलो(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा bgmac *bgmac = netdev_priv(net_dev);
+	पूर्णांक err = 0;
 
 	bgmac_chip_reset(bgmac);
 
 	err = bgmac_dma_init(bgmac);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* Specs say about reclaiming rings here, but we do that in DMA init */
+	/* Specs say about reclaiming rings here, but we करो that in DMA init */
 	bgmac_chip_init(bgmac);
 
-	err = request_irq(bgmac->irq, bgmac_interrupt, IRQF_SHARED,
+	err = request_irq(bgmac->irq, bgmac_पूर्णांकerrupt, IRQF_SHARED,
 			  net_dev->name, net_dev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(bgmac->dev, "IRQ request error: %d!\n", err);
 		bgmac_dma_cleanup(bgmac);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	napi_enable(&bgmac->napi);
 
 	phy_start(net_dev->phydev);
 
-	netif_start_queue(net_dev);
+	netअगर_start_queue(net_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bgmac_stop(struct net_device *net_dev)
-{
-	struct bgmac *bgmac = netdev_priv(net_dev);
+अटल पूर्णांक bgmac_stop(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा bgmac *bgmac = netdev_priv(net_dev);
 
-	netif_carrier_off(net_dev);
+	netअगर_carrier_off(net_dev);
 
 	phy_stop(net_dev->phydev);
 
 	napi_disable(&bgmac->napi);
-	bgmac_chip_intrs_off(bgmac);
-	free_irq(bgmac->irq, net_dev);
+	bgmac_chip_पूर्णांकrs_off(bgmac);
+	मुक्त_irq(bgmac->irq, net_dev);
 
 	bgmac_chip_reset(bgmac);
 	bgmac_dma_cleanup(bgmac);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t bgmac_start_xmit(struct sk_buff *skb,
-				    struct net_device *net_dev)
-{
-	struct bgmac *bgmac = netdev_priv(net_dev);
-	struct bgmac_dma_ring *ring;
+अटल netdev_tx_t bgmac_start_xmit(काष्ठा sk_buff *skb,
+				    काष्ठा net_device *net_dev)
+अणु
+	काष्ठा bgmac *bgmac = netdev_priv(net_dev);
+	काष्ठा bgmac_dma_ring *ring;
 
 	/* No QOS support yet */
 	ring = &bgmac->tx_ring[0];
-	return bgmac_dma_tx_add(bgmac, ring, skb);
-}
+	वापस bgmac_dma_tx_add(bgmac, ring, skb);
+पूर्ण
 
-static int bgmac_set_mac_address(struct net_device *net_dev, void *addr)
-{
-	struct bgmac *bgmac = netdev_priv(net_dev);
-	struct sockaddr *sa = addr;
-	int ret;
+अटल पूर्णांक bgmac_set_mac_address(काष्ठा net_device *net_dev, व्योम *addr)
+अणु
+	काष्ठा bgmac *bgmac = netdev_priv(net_dev);
+	काष्ठा sockaddr *sa = addr;
+	पूर्णांक ret;
 
 	ret = eth_prepare_mac_addr_change(net_dev, addr);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ether_addr_copy(net_dev->dev_addr, sa->sa_data);
-	bgmac_write_mac_address(bgmac, net_dev->dev_addr);
+	bgmac_ग_लिखो_mac_address(bgmac, net_dev->dev_addr);
 
 	eth_commit_mac_addr_change(net_dev, addr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bgmac_change_mtu(struct net_device *net_dev, int mtu)
-{
-	struct bgmac *bgmac = netdev_priv(net_dev);
+अटल पूर्णांक bgmac_change_mtu(काष्ठा net_device *net_dev, पूर्णांक mtu)
+अणु
+	काष्ठा bgmac *bgmac = netdev_priv(net_dev);
 
-	bgmac_umac_write(bgmac, UMAC_MAX_FRAME_LEN, 32 + mtu);
-	return 0;
-}
+	bgmac_umac_ग_लिखो(bgmac, UMAC_MAX_FRAME_LEN, 32 + mtu);
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops bgmac_netdev_ops = {
-	.ndo_open		= bgmac_open,
-	.ndo_stop		= bgmac_stop,
-	.ndo_start_xmit		= bgmac_start_xmit,
-	.ndo_set_rx_mode	= bgmac_set_rx_mode,
-	.ndo_set_mac_address	= bgmac_set_mac_address,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_do_ioctl           = phy_do_ioctl_running,
-	.ndo_change_mtu		= bgmac_change_mtu,
-};
+अटल स्थिर काष्ठा net_device_ops bgmac_netdev_ops = अणु
+	.nकरो_खोलो		= bgmac_खोलो,
+	.nकरो_stop		= bgmac_stop,
+	.nकरो_start_xmit		= bgmac_start_xmit,
+	.nकरो_set_rx_mode	= bgmac_set_rx_mode,
+	.nकरो_set_mac_address	= bgmac_set_mac_address,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_करो_ioctl           = phy_करो_ioctl_running,
+	.nकरो_change_mtu		= bgmac_change_mtu,
+पूर्ण;
 
 /**************************************************
  * ethtool_ops
  **************************************************/
 
-struct bgmac_stat {
+काष्ठा bgmac_stat अणु
 	u8 size;
 	u32 offset;
-	const char *name;
-};
+	स्थिर अक्षर *name;
+पूर्ण;
 
-static struct bgmac_stat bgmac_get_strings_stats[] = {
-	{ 8, BGMAC_TX_GOOD_OCTETS, "tx_good_octets" },
-	{ 4, BGMAC_TX_GOOD_PKTS, "tx_good" },
-	{ 8, BGMAC_TX_OCTETS, "tx_octets" },
-	{ 4, BGMAC_TX_PKTS, "tx_pkts" },
-	{ 4, BGMAC_TX_BROADCAST_PKTS, "tx_broadcast" },
-	{ 4, BGMAC_TX_MULTICAST_PKTS, "tx_multicast" },
-	{ 4, BGMAC_TX_LEN_64, "tx_64" },
-	{ 4, BGMAC_TX_LEN_65_TO_127, "tx_65_127" },
-	{ 4, BGMAC_TX_LEN_128_TO_255, "tx_128_255" },
-	{ 4, BGMAC_TX_LEN_256_TO_511, "tx_256_511" },
-	{ 4, BGMAC_TX_LEN_512_TO_1023, "tx_512_1023" },
-	{ 4, BGMAC_TX_LEN_1024_TO_1522, "tx_1024_1522" },
-	{ 4, BGMAC_TX_LEN_1523_TO_2047, "tx_1523_2047" },
-	{ 4, BGMAC_TX_LEN_2048_TO_4095, "tx_2048_4095" },
-	{ 4, BGMAC_TX_LEN_4096_TO_8191, "tx_4096_8191" },
-	{ 4, BGMAC_TX_LEN_8192_TO_MAX, "tx_8192_max" },
-	{ 4, BGMAC_TX_JABBER_PKTS, "tx_jabber" },
-	{ 4, BGMAC_TX_OVERSIZE_PKTS, "tx_oversize" },
-	{ 4, BGMAC_TX_FRAGMENT_PKTS, "tx_fragment" },
-	{ 4, BGMAC_TX_UNDERRUNS, "tx_underruns" },
-	{ 4, BGMAC_TX_TOTAL_COLS, "tx_total_cols" },
-	{ 4, BGMAC_TX_SINGLE_COLS, "tx_single_cols" },
-	{ 4, BGMAC_TX_MULTIPLE_COLS, "tx_multiple_cols" },
-	{ 4, BGMAC_TX_EXCESSIVE_COLS, "tx_excessive_cols" },
-	{ 4, BGMAC_TX_LATE_COLS, "tx_late_cols" },
-	{ 4, BGMAC_TX_DEFERED, "tx_defered" },
-	{ 4, BGMAC_TX_CARRIER_LOST, "tx_carrier_lost" },
-	{ 4, BGMAC_TX_PAUSE_PKTS, "tx_pause" },
-	{ 4, BGMAC_TX_UNI_PKTS, "tx_unicast" },
-	{ 4, BGMAC_TX_Q0_PKTS, "tx_q0" },
-	{ 8, BGMAC_TX_Q0_OCTETS, "tx_q0_octets" },
-	{ 4, BGMAC_TX_Q1_PKTS, "tx_q1" },
-	{ 8, BGMAC_TX_Q1_OCTETS, "tx_q1_octets" },
-	{ 4, BGMAC_TX_Q2_PKTS, "tx_q2" },
-	{ 8, BGMAC_TX_Q2_OCTETS, "tx_q2_octets" },
-	{ 4, BGMAC_TX_Q3_PKTS, "tx_q3" },
-	{ 8, BGMAC_TX_Q3_OCTETS, "tx_q3_octets" },
-	{ 8, BGMAC_RX_GOOD_OCTETS, "rx_good_octets" },
-	{ 4, BGMAC_RX_GOOD_PKTS, "rx_good" },
-	{ 8, BGMAC_RX_OCTETS, "rx_octets" },
-	{ 4, BGMAC_RX_PKTS, "rx_pkts" },
-	{ 4, BGMAC_RX_BROADCAST_PKTS, "rx_broadcast" },
-	{ 4, BGMAC_RX_MULTICAST_PKTS, "rx_multicast" },
-	{ 4, BGMAC_RX_LEN_64, "rx_64" },
-	{ 4, BGMAC_RX_LEN_65_TO_127, "rx_65_127" },
-	{ 4, BGMAC_RX_LEN_128_TO_255, "rx_128_255" },
-	{ 4, BGMAC_RX_LEN_256_TO_511, "rx_256_511" },
-	{ 4, BGMAC_RX_LEN_512_TO_1023, "rx_512_1023" },
-	{ 4, BGMAC_RX_LEN_1024_TO_1522, "rx_1024_1522" },
-	{ 4, BGMAC_RX_LEN_1523_TO_2047, "rx_1523_2047" },
-	{ 4, BGMAC_RX_LEN_2048_TO_4095, "rx_2048_4095" },
-	{ 4, BGMAC_RX_LEN_4096_TO_8191, "rx_4096_8191" },
-	{ 4, BGMAC_RX_LEN_8192_TO_MAX, "rx_8192_max" },
-	{ 4, BGMAC_RX_JABBER_PKTS, "rx_jabber" },
-	{ 4, BGMAC_RX_OVERSIZE_PKTS, "rx_oversize" },
-	{ 4, BGMAC_RX_FRAGMENT_PKTS, "rx_fragment" },
-	{ 4, BGMAC_RX_MISSED_PKTS, "rx_missed" },
-	{ 4, BGMAC_RX_CRC_ALIGN_ERRS, "rx_crc_align" },
-	{ 4, BGMAC_RX_UNDERSIZE, "rx_undersize" },
-	{ 4, BGMAC_RX_CRC_ERRS, "rx_crc" },
-	{ 4, BGMAC_RX_ALIGN_ERRS, "rx_align" },
-	{ 4, BGMAC_RX_SYMBOL_ERRS, "rx_symbol" },
-	{ 4, BGMAC_RX_PAUSE_PKTS, "rx_pause" },
-	{ 4, BGMAC_RX_NONPAUSE_PKTS, "rx_nonpause" },
-	{ 4, BGMAC_RX_SACHANGES, "rx_sa_changes" },
-	{ 4, BGMAC_RX_UNI_PKTS, "rx_unicast" },
-};
+अटल काष्ठा bgmac_stat bgmac_get_strings_stats[] = अणु
+	अणु 8, BGMAC_TX_GOOD_OCTETS, "tx_good_octets" पूर्ण,
+	अणु 4, BGMAC_TX_GOOD_PKTS, "tx_good" पूर्ण,
+	अणु 8, BGMAC_TX_OCTETS, "tx_octets" पूर्ण,
+	अणु 4, BGMAC_TX_PKTS, "tx_pkts" पूर्ण,
+	अणु 4, BGMAC_TX_BROADCAST_PKTS, "tx_broadcast" पूर्ण,
+	अणु 4, BGMAC_TX_MULTICAST_PKTS, "tx_multicast" पूर्ण,
+	अणु 4, BGMAC_TX_LEN_64, "tx_64" पूर्ण,
+	अणु 4, BGMAC_TX_LEN_65_TO_127, "tx_65_127" पूर्ण,
+	अणु 4, BGMAC_TX_LEN_128_TO_255, "tx_128_255" पूर्ण,
+	अणु 4, BGMAC_TX_LEN_256_TO_511, "tx_256_511" पूर्ण,
+	अणु 4, BGMAC_TX_LEN_512_TO_1023, "tx_512_1023" पूर्ण,
+	अणु 4, BGMAC_TX_LEN_1024_TO_1522, "tx_1024_1522" पूर्ण,
+	अणु 4, BGMAC_TX_LEN_1523_TO_2047, "tx_1523_2047" पूर्ण,
+	अणु 4, BGMAC_TX_LEN_2048_TO_4095, "tx_2048_4095" पूर्ण,
+	अणु 4, BGMAC_TX_LEN_4096_TO_8191, "tx_4096_8191" पूर्ण,
+	अणु 4, BGMAC_TX_LEN_8192_TO_MAX, "tx_8192_max" पूर्ण,
+	अणु 4, BGMAC_TX_JABBER_PKTS, "tx_jabber" पूर्ण,
+	अणु 4, BGMAC_TX_OVERSIZE_PKTS, "tx_oversize" पूर्ण,
+	अणु 4, BGMAC_TX_FRAGMENT_PKTS, "tx_fragment" पूर्ण,
+	अणु 4, BGMAC_TX_UNDERRUNS, "tx_underruns" पूर्ण,
+	अणु 4, BGMAC_TX_TOTAL_COLS, "tx_total_cols" पूर्ण,
+	अणु 4, BGMAC_TX_SINGLE_COLS, "tx_single_cols" पूर्ण,
+	अणु 4, BGMAC_TX_MULTIPLE_COLS, "tx_multiple_cols" पूर्ण,
+	अणु 4, BGMAC_TX_EXCESSIVE_COLS, "tx_excessive_cols" पूर्ण,
+	अणु 4, BGMAC_TX_LATE_COLS, "tx_late_cols" पूर्ण,
+	अणु 4, BGMAC_TX_DEFERED, "tx_defered" पूर्ण,
+	अणु 4, BGMAC_TX_CARRIER_LOST, "tx_carrier_lost" पूर्ण,
+	अणु 4, BGMAC_TX_PAUSE_PKTS, "tx_pause" पूर्ण,
+	अणु 4, BGMAC_TX_UNI_PKTS, "tx_unicast" पूर्ण,
+	अणु 4, BGMAC_TX_Q0_PKTS, "tx_q0" पूर्ण,
+	अणु 8, BGMAC_TX_Q0_OCTETS, "tx_q0_octets" पूर्ण,
+	अणु 4, BGMAC_TX_Q1_PKTS, "tx_q1" पूर्ण,
+	अणु 8, BGMAC_TX_Q1_OCTETS, "tx_q1_octets" पूर्ण,
+	अणु 4, BGMAC_TX_Q2_PKTS, "tx_q2" पूर्ण,
+	अणु 8, BGMAC_TX_Q2_OCTETS, "tx_q2_octets" पूर्ण,
+	अणु 4, BGMAC_TX_Q3_PKTS, "tx_q3" पूर्ण,
+	अणु 8, BGMAC_TX_Q3_OCTETS, "tx_q3_octets" पूर्ण,
+	अणु 8, BGMAC_RX_GOOD_OCTETS, "rx_good_octets" पूर्ण,
+	अणु 4, BGMAC_RX_GOOD_PKTS, "rx_good" पूर्ण,
+	अणु 8, BGMAC_RX_OCTETS, "rx_octets" पूर्ण,
+	अणु 4, BGMAC_RX_PKTS, "rx_pkts" पूर्ण,
+	अणु 4, BGMAC_RX_BROADCAST_PKTS, "rx_broadcast" पूर्ण,
+	अणु 4, BGMAC_RX_MULTICAST_PKTS, "rx_multicast" पूर्ण,
+	अणु 4, BGMAC_RX_LEN_64, "rx_64" पूर्ण,
+	अणु 4, BGMAC_RX_LEN_65_TO_127, "rx_65_127" पूर्ण,
+	अणु 4, BGMAC_RX_LEN_128_TO_255, "rx_128_255" पूर्ण,
+	अणु 4, BGMAC_RX_LEN_256_TO_511, "rx_256_511" पूर्ण,
+	अणु 4, BGMAC_RX_LEN_512_TO_1023, "rx_512_1023" पूर्ण,
+	अणु 4, BGMAC_RX_LEN_1024_TO_1522, "rx_1024_1522" पूर्ण,
+	अणु 4, BGMAC_RX_LEN_1523_TO_2047, "rx_1523_2047" पूर्ण,
+	अणु 4, BGMAC_RX_LEN_2048_TO_4095, "rx_2048_4095" पूर्ण,
+	अणु 4, BGMAC_RX_LEN_4096_TO_8191, "rx_4096_8191" पूर्ण,
+	अणु 4, BGMAC_RX_LEN_8192_TO_MAX, "rx_8192_max" पूर्ण,
+	अणु 4, BGMAC_RX_JABBER_PKTS, "rx_jabber" पूर्ण,
+	अणु 4, BGMAC_RX_OVERSIZE_PKTS, "rx_oversize" पूर्ण,
+	अणु 4, BGMAC_RX_FRAGMENT_PKTS, "rx_fragment" पूर्ण,
+	अणु 4, BGMAC_RX_MISSED_PKTS, "rx_missed" पूर्ण,
+	अणु 4, BGMAC_RX_CRC_ALIGN_ERRS, "rx_crc_align" पूर्ण,
+	अणु 4, BGMAC_RX_UNDERSIZE, "rx_undersize" पूर्ण,
+	अणु 4, BGMAC_RX_CRC_ERRS, "rx_crc" पूर्ण,
+	अणु 4, BGMAC_RX_ALIGN_ERRS, "rx_align" पूर्ण,
+	अणु 4, BGMAC_RX_SYMBOL_ERRS, "rx_symbol" पूर्ण,
+	अणु 4, BGMAC_RX_PAUSE_PKTS, "rx_pause" पूर्ण,
+	अणु 4, BGMAC_RX_NONPAUSE_PKTS, "rx_nonpause" पूर्ण,
+	अणु 4, BGMAC_RX_SACHANGES, "rx_sa_changes" पूर्ण,
+	अणु 4, BGMAC_RX_UNI_PKTS, "rx_unicast" पूर्ण,
+पूर्ण;
 
-#define BGMAC_STATS_LEN	ARRAY_SIZE(bgmac_get_strings_stats)
+#घोषणा BGMAC_STATS_LEN	ARRAY_SIZE(bgmac_get_strings_stats)
 
-static int bgmac_get_sset_count(struct net_device *dev, int string_set)
-{
-	switch (string_set) {
-	case ETH_SS_STATS:
-		return BGMAC_STATS_LEN;
-	}
+अटल पूर्णांक bgmac_get_sset_count(काष्ठा net_device *dev, पूर्णांक string_set)
+अणु
+	चयन (string_set) अणु
+	हाल ETH_SS_STATS:
+		वापस BGMAC_STATS_LEN;
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static void bgmac_get_strings(struct net_device *dev, u32 stringset,
+अटल व्योम bgmac_get_strings(काष्ठा net_device *dev, u32 stringset,
 			      u8 *data)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	if (stringset != ETH_SS_STATS)
-		return;
+	अगर (stringset != ETH_SS_STATS)
+		वापस;
 
-	for (i = 0; i < BGMAC_STATS_LEN; i++)
+	क्रम (i = 0; i < BGMAC_STATS_LEN; i++)
 		strlcpy(data + i * ETH_GSTRING_LEN,
 			bgmac_get_strings_stats[i].name, ETH_GSTRING_LEN);
-}
+पूर्ण
 
-static void bgmac_get_ethtool_stats(struct net_device *dev,
-				    struct ethtool_stats *ss, uint64_t *data)
-{
-	struct bgmac *bgmac = netdev_priv(dev);
-	const struct bgmac_stat *s;
-	unsigned int i;
+अटल व्योम bgmac_get_ethtool_stats(काष्ठा net_device *dev,
+				    काष्ठा ethtool_stats *ss, uपूर्णांक64_t *data)
+अणु
+	काष्ठा bgmac *bgmac = netdev_priv(dev);
+	स्थिर काष्ठा bgmac_stat *s;
+	अचिन्हित पूर्णांक i;
 	u64 val;
 
-	if (!netif_running(dev))
-		return;
+	अगर (!netअगर_running(dev))
+		वापस;
 
-	for (i = 0; i < BGMAC_STATS_LEN; i++) {
+	क्रम (i = 0; i < BGMAC_STATS_LEN; i++) अणु
 		s = &bgmac_get_strings_stats[i];
 		val = 0;
-		if (s->size == 8)
-			val = (u64)bgmac_read(bgmac, s->offset + 4) << 32;
-		val |= bgmac_read(bgmac, s->offset);
+		अगर (s->size == 8)
+			val = (u64)bgmac_पढ़ो(bgmac, s->offset + 4) << 32;
+		val |= bgmac_पढ़ो(bgmac, s->offset);
 		data[i] = val;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bgmac_get_drvinfo(struct net_device *net_dev,
-			      struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, KBUILD_MODNAME, sizeof(info->driver));
-	strlcpy(info->bus_info, "AXI", sizeof(info->bus_info));
-}
+अटल व्योम bgmac_get_drvinfo(काष्ठा net_device *net_dev,
+			      काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, KBUILD_MODNAME, माप(info->driver));
+	strlcpy(info->bus_info, "AXI", माप(info->bus_info));
+पूर्ण
 
-static const struct ethtool_ops bgmac_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops bgmac_ethtool_ops = अणु
 	.get_strings		= bgmac_get_strings,
 	.get_sset_count		= bgmac_get_sset_count,
 	.get_ethtool_stats	= bgmac_get_ethtool_stats,
 	.get_drvinfo		= bgmac_get_drvinfo,
 	.get_link_ksettings     = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings     = phy_ethtool_set_link_ksettings,
-};
+पूर्ण;
 
 /**************************************************
  * MII
  **************************************************/
 
-void bgmac_adjust_link(struct net_device *net_dev)
-{
-	struct bgmac *bgmac = netdev_priv(net_dev);
-	struct phy_device *phy_dev = net_dev->phydev;
+व्योम bgmac_adjust_link(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा bgmac *bgmac = netdev_priv(net_dev);
+	काष्ठा phy_device *phy_dev = net_dev->phydev;
 	bool update = false;
 
-	if (phy_dev->link) {
-		if (phy_dev->speed != bgmac->mac_speed) {
+	अगर (phy_dev->link) अणु
+		अगर (phy_dev->speed != bgmac->mac_speed) अणु
 			bgmac->mac_speed = phy_dev->speed;
 			update = true;
-		}
+		पूर्ण
 
-		if (phy_dev->duplex != bgmac->mac_duplex) {
+		अगर (phy_dev->duplex != bgmac->mac_duplex) अणु
 			bgmac->mac_duplex = phy_dev->duplex;
 			update = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (update) {
+	अगर (update) अणु
 		bgmac_mac_speed(bgmac);
-		phy_print_status(phy_dev);
-	}
-}
+		phy_prपूर्णांक_status(phy_dev);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(bgmac_adjust_link);
 
-int bgmac_phy_connect_direct(struct bgmac *bgmac)
-{
-	struct fixed_phy_status fphy_status = {
+पूर्णांक bgmac_phy_connect_direct(काष्ठा bgmac *bgmac)
+अणु
+	काष्ठा fixed_phy_status fphy_status = अणु
 		.link = 1,
 		.speed = SPEED_1000,
 		.duplex = DUPLEX_FULL,
-	};
-	struct phy_device *phy_dev;
-	int err;
+	पूर्ण;
+	काष्ठा phy_device *phy_dev;
+	पूर्णांक err;
 
-	phy_dev = fixed_phy_register(PHY_POLL, &fphy_status, NULL);
-	if (!phy_dev || IS_ERR(phy_dev)) {
+	phy_dev = fixed_phy_रेजिस्टर(PHY_POLL, &fphy_status, शून्य);
+	अगर (!phy_dev || IS_ERR(phy_dev)) अणु
 		dev_err(bgmac->dev, "Failed to register fixed PHY device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	err = phy_connect_direct(bgmac->net_dev, phy_dev, bgmac_adjust_link,
 				 PHY_INTERFACE_MODE_MII);
-	if (err) {
+	अगर (err) अणु
 		dev_err(bgmac->dev, "Connecting PHY failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(bgmac_phy_connect_direct);
 
-struct bgmac *bgmac_alloc(struct device *dev)
-{
-	struct net_device *net_dev;
-	struct bgmac *bgmac;
+काष्ठा bgmac *bgmac_alloc(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *net_dev;
+	काष्ठा bgmac *bgmac;
 
 	/* Allocation and references */
-	net_dev = devm_alloc_etherdev(dev, sizeof(*bgmac));
-	if (!net_dev)
-		return NULL;
+	net_dev = devm_alloc_etherdev(dev, माप(*bgmac));
+	अगर (!net_dev)
+		वापस शून्य;
 
 	net_dev->netdev_ops = &bgmac_netdev_ops;
 	net_dev->ethtool_ops = &bgmac_ethtool_ops;
@@ -1481,59 +1482,59 @@ struct bgmac *bgmac_alloc(struct device *dev)
 	bgmac->dev = dev;
 	bgmac->net_dev = net_dev;
 
-	return bgmac;
-}
+	वापस bgmac;
+पूर्ण
 EXPORT_SYMBOL_GPL(bgmac_alloc);
 
-int bgmac_enet_probe(struct bgmac *bgmac)
-{
-	struct net_device *net_dev = bgmac->net_dev;
-	int err;
+पूर्णांक bgmac_enet_probe(काष्ठा bgmac *bgmac)
+अणु
+	काष्ठा net_device *net_dev = bgmac->net_dev;
+	पूर्णांक err;
 
-	bgmac_chip_intrs_off(bgmac);
+	bgmac_chip_पूर्णांकrs_off(bgmac);
 
 	net_dev->irq = bgmac->irq;
 	SET_NETDEV_DEV(net_dev, bgmac->dev);
 	dev_set_drvdata(bgmac->dev, bgmac);
 
-	if (!is_valid_ether_addr(net_dev->dev_addr)) {
+	अगर (!is_valid_ether_addr(net_dev->dev_addr)) अणु
 		dev_err(bgmac->dev, "Invalid MAC addr: %pM\n",
 			net_dev->dev_addr);
-		eth_hw_addr_random(net_dev);
+		eth_hw_addr_अक्रमom(net_dev);
 		dev_warn(bgmac->dev, "Using random MAC: %pM\n",
 			 net_dev->dev_addr);
-	}
+	पूर्ण
 
 	/* This (reset &) enable is not preset in specs or reference driver but
-	 * Broadcom does it in arch PCI code when enabling fake PCI device.
+	 * Broadcom करोes it in arch PCI code when enabling fake PCI device.
 	 */
 	bgmac_clk_enable(bgmac, 0);
 
 	/* This seems to be fixing IRQ by assigning OOB #6 to the core */
-	if (!(bgmac->feature_flags & BGMAC_FEAT_IDM_MASK)) {
-		if (bgmac->feature_flags & BGMAC_FEAT_IRQ_ID_OOB_6)
-			bgmac_idm_write(bgmac, BCMA_OOB_SEL_OUT_A30, 0x86);
-	}
+	अगर (!(bgmac->feature_flags & BGMAC_FEAT_IDM_MASK)) अणु
+		अगर (bgmac->feature_flags & BGMAC_FEAT_IRQ_ID_OOB_6)
+			bgmac_idm_ग_लिखो(bgmac, BCMA_OOB_SEL_OUT_A30, 0x86);
+	पूर्ण
 
 	bgmac_chip_reset(bgmac);
 
 	err = bgmac_dma_alloc(bgmac);
-	if (err) {
+	अगर (err) अणु
 		dev_err(bgmac->dev, "Unable to alloc memory for DMA\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	bgmac->int_mask = BGMAC_IS_ERRMASK | BGMAC_IS_RX | BGMAC_IS_TX_MASK;
-	if (bcm47xx_nvram_getenv("et0_no_txint", NULL, 0) == 0)
-		bgmac->int_mask &= ~BGMAC_IS_TX_MASK;
+	bgmac->पूर्णांक_mask = BGMAC_IS_ERRMASK | BGMAC_IS_RX | BGMAC_IS_TX_MASK;
+	अगर (bcm47xx_nvram_दो_पर्या("et0_no_txint", शून्य, 0) == 0)
+		bgmac->पूर्णांक_mask &= ~BGMAC_IS_TX_MASK;
 
-	netif_napi_add(net_dev, &bgmac->napi, bgmac_poll, BGMAC_WEIGHT);
+	netअगर_napi_add(net_dev, &bgmac->napi, bgmac_poll, BGMAC_WEIGHT);
 
 	err = bgmac_phy_connect(bgmac);
-	if (err) {
+	अगर (err) अणु
 		dev_err(bgmac->dev, "Cannot connect to phy\n");
-		goto err_dma_free;
-	}
+		जाओ err_dma_मुक्त;
+	पूर्ण
 
 	net_dev->features = NETIF_F_SG | NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
 	net_dev->hw_features = net_dev->features;
@@ -1542,85 +1543,85 @@ int bgmac_enet_probe(struct bgmac *bgmac)
 	/* Omit FCS from max MTU size */
 	net_dev->max_mtu = BGMAC_RX_MAX_FRAME_SIZE - ETH_FCS_LEN;
 
-	err = register_netdev(bgmac->net_dev);
-	if (err) {
+	err = रेजिस्टर_netdev(bgmac->net_dev);
+	अगर (err) अणु
 		dev_err(bgmac->dev, "Cannot register net device\n");
-		goto err_phy_disconnect;
-	}
+		जाओ err_phy_disconnect;
+	पूर्ण
 
-	netif_carrier_off(net_dev);
+	netअगर_carrier_off(net_dev);
 
-	return 0;
+	वापस 0;
 
 err_phy_disconnect:
 	phy_disconnect(net_dev->phydev);
-err_dma_free:
-	bgmac_dma_free(bgmac);
+err_dma_मुक्त:
+	bgmac_dma_मुक्त(bgmac);
 err_out:
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(bgmac_enet_probe);
 
-void bgmac_enet_remove(struct bgmac *bgmac)
-{
-	unregister_netdev(bgmac->net_dev);
+व्योम bgmac_enet_हटाओ(काष्ठा bgmac *bgmac)
+अणु
+	unरेजिस्टर_netdev(bgmac->net_dev);
 	phy_disconnect(bgmac->net_dev->phydev);
-	netif_napi_del(&bgmac->napi);
-	bgmac_dma_free(bgmac);
-	free_netdev(bgmac->net_dev);
-}
-EXPORT_SYMBOL_GPL(bgmac_enet_remove);
+	netअगर_napi_del(&bgmac->napi);
+	bgmac_dma_मुक्त(bgmac);
+	मुक्त_netdev(bgmac->net_dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(bgmac_enet_हटाओ);
 
-int bgmac_enet_suspend(struct bgmac *bgmac)
-{
-	if (!netif_running(bgmac->net_dev))
-		return 0;
+पूर्णांक bgmac_enet_suspend(काष्ठा bgmac *bgmac)
+अणु
+	अगर (!netअगर_running(bgmac->net_dev))
+		वापस 0;
 
 	phy_stop(bgmac->net_dev->phydev);
 
-	netif_stop_queue(bgmac->net_dev);
+	netअगर_stop_queue(bgmac->net_dev);
 
 	napi_disable(&bgmac->napi);
 
-	netif_tx_lock(bgmac->net_dev);
-	netif_device_detach(bgmac->net_dev);
-	netif_tx_unlock(bgmac->net_dev);
+	netअगर_tx_lock(bgmac->net_dev);
+	netअगर_device_detach(bgmac->net_dev);
+	netअगर_tx_unlock(bgmac->net_dev);
 
-	bgmac_chip_intrs_off(bgmac);
+	bgmac_chip_पूर्णांकrs_off(bgmac);
 	bgmac_chip_reset(bgmac);
 	bgmac_dma_cleanup(bgmac);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(bgmac_enet_suspend);
 
-int bgmac_enet_resume(struct bgmac *bgmac)
-{
-	int rc;
+पूर्णांक bgmac_enet_resume(काष्ठा bgmac *bgmac)
+अणु
+	पूर्णांक rc;
 
-	if (!netif_running(bgmac->net_dev))
-		return 0;
+	अगर (!netअगर_running(bgmac->net_dev))
+		वापस 0;
 
 	rc = bgmac_dma_init(bgmac);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	bgmac_chip_init(bgmac);
 
 	napi_enable(&bgmac->napi);
 
-	netif_tx_lock(bgmac->net_dev);
-	netif_device_attach(bgmac->net_dev);
-	netif_tx_unlock(bgmac->net_dev);
+	netअगर_tx_lock(bgmac->net_dev);
+	netअगर_device_attach(bgmac->net_dev);
+	netअगर_tx_unlock(bgmac->net_dev);
 
-	netif_start_queue(bgmac->net_dev);
+	netअगर_start_queue(bgmac->net_dev);
 
 	phy_start(bgmac->net_dev->phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(bgmac_enet_resume);
 
-MODULE_AUTHOR("Rafał Miłecki");
+MODULE_AUTHOR("Rafaध Miधecki");
 MODULE_LICENSE("GPL");

@@ -1,121 +1,122 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file "COPYING" in the main directory of this
- * archive for more details.
+ * Public License.  See the file "COPYING" in the मुख्य directory of this
+ * archive क्रम more details.
  *
  * Copyright (C) 2000 - 2001 by Kanoj Sarcar (kanoj@sgi.com)
  * Copyright (C) 2000 - 2001 by Silicon Graphics, Inc.
  * Copyright (C) 2000, 2001, 2002 Ralf Baechle
  * Copyright (C) 2000, 2001 Broadcom Corporation
  */
-#ifndef __ASM_SMP_OPS_H
-#define __ASM_SMP_OPS_H
+#अगर_अघोषित __ASM_SMP_OPS_H
+#घोषणा __ASM_SMP_OPS_H
 
-#include <linux/errno.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#include <asm/mips-cps.h>
+#समावेश <यंत्र/mips-cps.h>
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-#include <linux/cpumask.h>
+#समावेश <linux/cpumask.h>
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-struct plat_smp_ops {
-	void (*send_ipi_single)(int cpu, unsigned int action);
-	void (*send_ipi_mask)(const struct cpumask *mask, unsigned int action);
-	void (*init_secondary)(void);
-	void (*smp_finish)(void);
-	int (*boot_secondary)(int cpu, struct task_struct *idle);
-	void (*smp_setup)(void);
-	void (*prepare_cpus)(unsigned int max_cpus);
-	void (*prepare_boot_cpu)(void);
-#ifdef CONFIG_HOTPLUG_CPU
-	int (*cpu_disable)(void);
-	void (*cpu_die)(unsigned int cpu);
-#endif
-#ifdef CONFIG_KEXEC
-	void (*kexec_nonboot_cpu)(void);
-#endif
-};
+काष्ठा plat_smp_ops अणु
+	व्योम (*send_ipi_single)(पूर्णांक cpu, अचिन्हित पूर्णांक action);
+	व्योम (*send_ipi_mask)(स्थिर काष्ठा cpumask *mask, अचिन्हित पूर्णांक action);
+	व्योम (*init_secondary)(व्योम);
+	व्योम (*smp_finish)(व्योम);
+	पूर्णांक (*boot_secondary)(पूर्णांक cpu, काष्ठा task_काष्ठा *idle);
+	व्योम (*smp_setup)(व्योम);
+	व्योम (*prepare_cpus)(अचिन्हित पूर्णांक max_cpus);
+	व्योम (*prepare_boot_cpu)(व्योम);
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+	पूर्णांक (*cpu_disable)(व्योम);
+	व्योम (*cpu_die)(अचिन्हित पूर्णांक cpu);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_KEXEC
+	व्योम (*kexec_nonboot_cpu)(व्योम);
+#पूर्ण_अगर
+पूर्ण;
 
-extern void register_smp_ops(const struct plat_smp_ops *ops);
+बाह्य व्योम रेजिस्टर_smp_ops(स्थिर काष्ठा plat_smp_ops *ops);
 
-static inline void plat_smp_setup(void)
-{
-	extern const struct plat_smp_ops *mp_ops;	/* private */
+अटल अंतरभूत व्योम plat_smp_setup(व्योम)
+अणु
+	बाह्य स्थिर काष्ठा plat_smp_ops *mp_ops;	/* निजी */
 
 	mp_ops->smp_setup();
-}
+पूर्ण
 
-extern void mips_smp_send_ipi_single(int cpu, unsigned int action);
-extern void mips_smp_send_ipi_mask(const struct cpumask *mask,
-				      unsigned int action);
+बाह्य व्योम mips_smp_send_ipi_single(पूर्णांक cpu, अचिन्हित पूर्णांक action);
+बाह्य व्योम mips_smp_send_ipi_mask(स्थिर काष्ठा cpumask *mask,
+				      अचिन्हित पूर्णांक action);
 
-#else /* !CONFIG_SMP */
+#अन्यथा /* !CONFIG_SMP */
 
-struct plat_smp_ops;
+काष्ठा plat_smp_ops;
 
-static inline void plat_smp_setup(void)
-{
-	/* UP, nothing to do ...  */
-}
+अटल अंतरभूत व्योम plat_smp_setup(व्योम)
+अणु
+	/* UP, nothing to करो ...  */
+पूर्ण
 
-static inline void register_smp_ops(const struct plat_smp_ops *ops)
-{
-}
+अटल अंतरभूत व्योम रेजिस्टर_smp_ops(स्थिर काष्ठा plat_smp_ops *ops)
+अणु
+पूर्ण
 
-#endif /* !CONFIG_SMP */
+#पूर्ण_अगर /* !CONFIG_SMP */
 
-static inline int register_up_smp_ops(void)
-{
-#ifdef CONFIG_SMP_UP
-	extern const struct plat_smp_ops up_smp_ops;
+अटल अंतरभूत पूर्णांक रेजिस्टर_up_smp_ops(व्योम)
+अणु
+#अगर_घोषित CONFIG_SMP_UP
+	बाह्य स्थिर काष्ठा plat_smp_ops up_smp_ops;
 
-	register_smp_ops(&up_smp_ops);
+	रेजिस्टर_smp_ops(&up_smp_ops);
 
-	return 0;
-#else
-	return -ENODEV;
-#endif
-}
+	वापस 0;
+#अन्यथा
+	वापस -ENODEV;
+#पूर्ण_अगर
+पूर्ण
 
-static inline int register_cmp_smp_ops(void)
-{
-#ifdef CONFIG_MIPS_CMP
-	extern const struct plat_smp_ops cmp_smp_ops;
+अटल अंतरभूत पूर्णांक रेजिस्टर_cmp_smp_ops(व्योम)
+अणु
+#अगर_घोषित CONFIG_MIPS_CMP
+	बाह्य स्थिर काष्ठा plat_smp_ops cmp_smp_ops;
 
-	if (!mips_cm_present())
-		return -ENODEV;
+	अगर (!mips_cm_present())
+		वापस -ENODEV;
 
-	register_smp_ops(&cmp_smp_ops);
+	रेजिस्टर_smp_ops(&cmp_smp_ops);
 
-	return 0;
-#else
-	return -ENODEV;
-#endif
-}
+	वापस 0;
+#अन्यथा
+	वापस -ENODEV;
+#पूर्ण_अगर
+पूर्ण
 
-static inline int register_vsmp_smp_ops(void)
-{
-#ifdef CONFIG_MIPS_MT_SMP
-	extern const struct plat_smp_ops vsmp_smp_ops;
+अटल अंतरभूत पूर्णांक रेजिस्टर_vsmp_smp_ops(व्योम)
+अणु
+#अगर_घोषित CONFIG_MIPS_MT_SMP
+	बाह्य स्थिर काष्ठा plat_smp_ops vsmp_smp_ops;
 
-	register_smp_ops(&vsmp_smp_ops);
+	रेजिस्टर_smp_ops(&vsmp_smp_ops);
 
-	return 0;
-#else
-	return -ENODEV;
-#endif
-}
+	वापस 0;
+#अन्यथा
+	वापस -ENODEV;
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_MIPS_CPS
-extern int register_cps_smp_ops(void);
-#else
-static inline int register_cps_smp_ops(void)
-{
-	return -ENODEV;
-}
-#endif
+#अगर_घोषित CONFIG_MIPS_CPS
+बाह्य पूर्णांक रेजिस्टर_cps_smp_ops(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक रेजिस्टर_cps_smp_ops(व्योम)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __ASM_SMP_OPS_H */
+#पूर्ण_अगर /* __ASM_SMP_OPS_H */

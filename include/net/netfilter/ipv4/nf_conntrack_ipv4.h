@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * IPv4 support for nf_conntrack.
+ * IPv4 support क्रम nf_conntrack.
  *
  * 23 Mar 2004: Yasuyuki Kozakai @ USAGI <yasuyuki.kozakai@toshiba.co.jp>
  *	- move L3 protocol dependent part from include/linux/netfilter_ipv4/
  *	  ip_conntarck.h
  */
 
-#ifndef _NF_CONNTRACK_IPV4_H
-#define _NF_CONNTRACK_IPV4_H
+#अगर_अघोषित _NF_CONNTRACK_IPV4_H
+#घोषणा _NF_CONNTRACK_IPV4_H
 
-extern const struct nf_conntrack_l4proto nf_conntrack_l4proto_tcp;
-extern const struct nf_conntrack_l4proto nf_conntrack_l4proto_udp;
-extern const struct nf_conntrack_l4proto nf_conntrack_l4proto_icmp;
-#ifdef CONFIG_NF_CT_PROTO_DCCP
-extern const struct nf_conntrack_l4proto nf_conntrack_l4proto_dccp;
-#endif
-#ifdef CONFIG_NF_CT_PROTO_SCTP
-extern const struct nf_conntrack_l4proto nf_conntrack_l4proto_sctp;
-#endif
-#ifdef CONFIG_NF_CT_PROTO_UDPLITE
-extern const struct nf_conntrack_l4proto nf_conntrack_l4proto_udplite;
-#endif
-#ifdef CONFIG_NF_CT_PROTO_GRE
-extern const struct nf_conntrack_l4proto nf_conntrack_l4proto_gre;
-#endif
+बाह्य स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_tcp;
+बाह्य स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_udp;
+बाह्य स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_icmp;
+#अगर_घोषित CONFIG_NF_CT_PROTO_DCCP
+बाह्य स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_dccp;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CT_PROTO_SCTP
+बाह्य स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_sctp;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CT_PROTO_UDPLITE
+बाह्य स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_udplite;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CT_PROTO_GRE
+बाह्य स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_gre;
+#पूर्ण_अगर
 
-#endif /*_NF_CONNTRACK_IPV4_H*/
+#पूर्ण_अगर /*_NF_CONNTRACK_IPV4_H*/

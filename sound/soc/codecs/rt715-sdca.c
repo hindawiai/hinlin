@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 //
 // rt715-sdca.c -- rt715 ALSA SoC audio driver
 //
@@ -7,455 +8,455 @@
 //
 //
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/pm_runtime.h>
-#include <linux/pm.h>
-#include <linux/soundwire/sdw.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-dapm.h>
-#include <sound/initval.h>
-#include <sound/tlv.h>
-#include <linux/soundwire/sdw_registers.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/pm.h>
+#समावेश <linux/soundwire/sdw.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dapm.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/tlv.h>
+#समावेश <linux/soundwire/sdw_रेजिस्टरs.h>
 
-#include "rt715-sdca.h"
+#समावेश "rt715-sdca.h"
 
-static int rt715_sdca_index_write(struct rt715_sdca_priv *rt715,
-		unsigned int nid, unsigned int reg, unsigned int value)
-{
-	struct regmap *regmap = rt715->mbq_regmap;
-	unsigned int addr;
-	int ret;
+अटल पूर्णांक rt715_sdca_index_ग_लिखो(काष्ठा rt715_sdca_priv *rt715,
+		अचिन्हित पूर्णांक nid, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक value)
+अणु
+	काष्ठा regmap *regmap = rt715->mbq_regmap;
+	अचिन्हित पूर्णांक addr;
+	पूर्णांक ret;
 
 	addr = (nid << 20) | reg;
 
-	ret = regmap_write(regmap, addr, value);
-	if (ret < 0)
+	ret = regmap_ग_लिखो(regmap, addr, value);
+	अगर (ret < 0)
 		dev_err(&rt715->slave->dev,
 				"Failed to set private value: %08x <= %04x %d\n", ret, addr,
 				value);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rt715_sdca_index_read(struct rt715_sdca_priv *rt715,
-		unsigned int nid, unsigned int reg, unsigned int *value)
-{
-	struct regmap *regmap = rt715->mbq_regmap;
-	unsigned int addr;
-	int ret;
+अटल पूर्णांक rt715_sdca_index_पढ़ो(काष्ठा rt715_sdca_priv *rt715,
+		अचिन्हित पूर्णांक nid, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *value)
+अणु
+	काष्ठा regmap *regmap = rt715->mbq_regmap;
+	अचिन्हित पूर्णांक addr;
+	पूर्णांक ret;
 
 	addr = (nid << 20) | reg;
 
-	ret = regmap_read(regmap, addr, value);
-	if (ret < 0)
+	ret = regmap_पढ़ो(regmap, addr, value);
+	अगर (ret < 0)
 		dev_err(&rt715->slave->dev,
 				"Failed to get private value: %06x => %04x ret=%d\n",
 				addr, *value, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rt715_sdca_index_update_bits(struct rt715_sdca_priv *rt715,
-	unsigned int nid, unsigned int reg, unsigned int mask, unsigned int val)
-{
-	unsigned int tmp;
-	int ret;
+अटल पूर्णांक rt715_sdca_index_update_bits(काष्ठा rt715_sdca_priv *rt715,
+	अचिन्हित पूर्णांक nid, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
+	पूर्णांक ret;
 
-	ret = rt715_sdca_index_read(rt715, nid, reg, &tmp);
-	if (ret < 0)
-		return ret;
+	ret = rt715_sdca_index_पढ़ो(rt715, nid, reg, &पंचांगp);
+	अगर (ret < 0)
+		वापस ret;
 
-	set_mask_bits(&tmp, mask, val);
+	set_mask_bits(&पंचांगp, mask, val);
 
-	return rt715_sdca_index_write(rt715, nid, reg, tmp);
-}
+	वापस rt715_sdca_index_ग_लिखो(rt715, nid, reg, पंचांगp);
+पूर्ण
 
-static inline unsigned int rt715_sdca_vol_gain(unsigned int u_ctrl_val,
-		unsigned int vol_max, unsigned int vol_gain_sft)
-{
-	unsigned int val;
+अटल अंतरभूत अचिन्हित पूर्णांक rt715_sdca_vol_gain(अचिन्हित पूर्णांक u_ctrl_val,
+		अचिन्हित पूर्णांक vol_max, अचिन्हित पूर्णांक vol_gain_sft)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	if (u_ctrl_val > vol_max)
+	अगर (u_ctrl_val > vol_max)
 		u_ctrl_val = vol_max;
 	val = u_ctrl_val;
 	u_ctrl_val =
-		((abs(u_ctrl_val - vol_gain_sft) * RT715_SDCA_DB_STEP) << 8) / 1000;
-	if (val <= vol_gain_sft) {
+		((असल(u_ctrl_val - vol_gain_sft) * RT715_SDCA_DB_STEP) << 8) / 1000;
+	अगर (val <= vol_gain_sft) अणु
 		u_ctrl_val = ~u_ctrl_val;
 		u_ctrl_val += 1;
-	}
+	पूर्ण
 	u_ctrl_val &= 0xffff;
 
-	return u_ctrl_val;
-}
+	वापस u_ctrl_val;
+पूर्ण
 
-static inline unsigned int rt715_sdca_boost_gain(unsigned int u_ctrl_val,
-		unsigned int b_max, unsigned int b_gain_sft)
-{
-	if (u_ctrl_val > b_max)
+अटल अंतरभूत अचिन्हित पूर्णांक rt715_sdca_boost_gain(अचिन्हित पूर्णांक u_ctrl_val,
+		अचिन्हित पूर्णांक b_max, अचिन्हित पूर्णांक b_gain_sft)
+अणु
+	अगर (u_ctrl_val > b_max)
 		u_ctrl_val = b_max;
 
-	return (u_ctrl_val * 10) << b_gain_sft;
-}
+	वापस (u_ctrl_val * 10) << b_gain_sft;
+पूर्ण
 
-static inline unsigned int rt715_sdca_get_gain(unsigned int reg_val,
-		unsigned int gain_sft)
-{
-	unsigned int neg_flag = 0;
+अटल अंतरभूत अचिन्हित पूर्णांक rt715_sdca_get_gain(अचिन्हित पूर्णांक reg_val,
+		अचिन्हित पूर्णांक gain_sft)
+अणु
+	अचिन्हित पूर्णांक neg_flag = 0;
 
-	if (reg_val & BIT(15)) {
+	अगर (reg_val & BIT(15)) अणु
 		reg_val = ~(reg_val - 1) & 0xffff;
 		neg_flag = 1;
-	}
+	पूर्ण
 	reg_val *= 1000;
 	reg_val >>= 8;
-	if (neg_flag)
+	अगर (neg_flag)
 		reg_val = gain_sft - reg_val / RT715_SDCA_DB_STEP;
-	else
+	अन्यथा
 		reg_val = gain_sft + reg_val / RT715_SDCA_DB_STEP;
 
-	return reg_val;
-}
+	वापस reg_val;
+पूर्ण
 
 /* SDCA Volume/Boost control */
-static int rt715_sdca_set_amp_gain_put(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	unsigned int gain_val, i, k_changed = 0;
-	int ret;
+अटल पूर्णांक rt715_sdca_set_amp_gain_put(काष्ठा snd_kcontrol *kcontrol,
+		काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	काष्ठा soc_mixer_control *mc =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक gain_val, i, k_changed = 0;
+	पूर्णांक ret;
 
-	for (i = 0; i < 2; i++) {
-		if (ucontrol->value.integer.value[i] != rt715->kctl_2ch_orig[i]) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (ucontrol->value.पूर्णांकeger.value[i] != rt715->kctl_2ch_orig[i]) अणु
 			k_changed = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 2; i++) {
-		rt715->kctl_2ch_orig[i] = ucontrol->value.integer.value[i];
+	क्रम (i = 0; i < 2; i++) अणु
+		rt715->kctl_2ch_orig[i] = ucontrol->value.पूर्णांकeger.value[i];
 		gain_val =
-			rt715_sdca_vol_gain(ucontrol->value.integer.value[i], mc->max,
-				mc->shift);
-		ret = regmap_write(rt715->mbq_regmap, mc->reg + i, gain_val);
-		if (ret != 0) {
+			rt715_sdca_vol_gain(ucontrol->value.पूर्णांकeger.value[i], mc->max,
+				mc->shअगरt);
+		ret = regmap_ग_लिखो(rt715->mbq_regmap, mc->reg + i, gain_val);
+		अगर (ret != 0) अणु
 			dev_err(component->dev, "Failed to write 0x%x=0x%x\n",
 				mc->reg + i, gain_val);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return k_changed;
-}
+	वापस k_changed;
+पूर्ण
 
-static int rt715_sdca_set_amp_gain_4ch_put(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	struct rt715_sdca_kcontrol_private *p =
-		(struct rt715_sdca_kcontrol_private *)kcontrol->private_value;
-	unsigned int reg_base = p->reg_base, k_changed = 0;
-	const unsigned int gain_sft = 0x2f;
-	unsigned int gain_val, i;
-	int ret;
+अटल पूर्णांक rt715_sdca_set_amp_gain_4ch_put(काष्ठा snd_kcontrol *kcontrol,
+		काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	काष्ठा rt715_sdca_kcontrol_निजी *p =
+		(काष्ठा rt715_sdca_kcontrol_निजी *)kcontrol->निजी_value;
+	अचिन्हित पूर्णांक reg_base = p->reg_base, k_changed = 0;
+	स्थिर अचिन्हित पूर्णांक gain_sft = 0x2f;
+	अचिन्हित पूर्णांक gain_val, i;
+	पूर्णांक ret;
 
-	for (i = 0; i < 4; i++) {
-		if (ucontrol->value.integer.value[i] != rt715->kctl_4ch_orig[i]) {
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (ucontrol->value.पूर्णांकeger.value[i] != rt715->kctl_4ch_orig[i]) अणु
 			k_changed = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 4; i++) {
-		rt715->kctl_4ch_orig[i] = ucontrol->value.integer.value[i];
+	क्रम (i = 0; i < 4; i++) अणु
+		rt715->kctl_4ch_orig[i] = ucontrol->value.पूर्णांकeger.value[i];
 		gain_val =
-			rt715_sdca_vol_gain(ucontrol->value.integer.value[i], p->max,
+			rt715_sdca_vol_gain(ucontrol->value.पूर्णांकeger.value[i], p->max,
 				gain_sft);
-		ret = regmap_write(rt715->mbq_regmap, reg_base + i,
+		ret = regmap_ग_लिखो(rt715->mbq_regmap, reg_base + i,
 				gain_val);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			dev_err(component->dev, "Failed to write 0x%x=0x%x\n",
 				reg_base + i, gain_val);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return k_changed;
-}
+	वापस k_changed;
+पूर्ण
 
-static int rt715_sdca_set_amp_gain_8ch_put(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	struct rt715_sdca_kcontrol_private *p =
-		(struct rt715_sdca_kcontrol_private *)kcontrol->private_value;
-	unsigned int reg_base = p->reg_base, i, k_changed = 0;
-	const unsigned int gain_sft = 8;
-	unsigned int gain_val, reg;
-	int ret;
+अटल पूर्णांक rt715_sdca_set_amp_gain_8ch_put(काष्ठा snd_kcontrol *kcontrol,
+		काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	काष्ठा rt715_sdca_kcontrol_निजी *p =
+		(काष्ठा rt715_sdca_kcontrol_निजी *)kcontrol->निजी_value;
+	अचिन्हित पूर्णांक reg_base = p->reg_base, i, k_changed = 0;
+	स्थिर अचिन्हित पूर्णांक gain_sft = 8;
+	अचिन्हित पूर्णांक gain_val, reg;
+	पूर्णांक ret;
 
-	for (i = 0; i < 8; i++) {
-		if (ucontrol->value.integer.value[i] != rt715->kctl_8ch_orig[i]) {
+	क्रम (i = 0; i < 8; i++) अणु
+		अगर (ucontrol->value.पूर्णांकeger.value[i] != rt715->kctl_8ch_orig[i]) अणु
 			k_changed = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 8; i++) {
-		rt715->kctl_8ch_orig[i] = ucontrol->value.integer.value[i];
+	क्रम (i = 0; i < 8; i++) अणु
+		rt715->kctl_8ch_orig[i] = ucontrol->value.पूर्णांकeger.value[i];
 		gain_val =
-			rt715_sdca_boost_gain(ucontrol->value.integer.value[i], p->max,
+			rt715_sdca_boost_gain(ucontrol->value.पूर्णांकeger.value[i], p->max,
 				gain_sft);
 		reg = i < 7 ? reg_base + i : (reg_base - 1) | BIT(15);
-		ret = regmap_write(rt715->mbq_regmap, reg, gain_val);
-		if (ret != 0) {
+		ret = regmap_ग_लिखो(rt715->mbq_regmap, reg, gain_val);
+		अगर (ret != 0) अणु
 			dev_err(component->dev, "Failed to write 0x%x=0x%x\n",
 				reg, gain_val);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return k_changed;
-}
+	वापस k_changed;
+पूर्ण
 
-static int rt715_sdca_set_amp_gain_get(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	unsigned int val, i;
-	int ret;
+अटल पूर्णांक rt715_sdca_set_amp_gain_get(काष्ठा snd_kcontrol *kcontrol,
+		काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	काष्ठा soc_mixer_control *mc =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक val, i;
+	पूर्णांक ret;
 
-	for (i = 0; i < 2; i++) {
-		ret = regmap_read(rt715->mbq_regmap, mc->reg + i, &val);
-		if (ret < 0) {
+	क्रम (i = 0; i < 2; i++) अणु
+		ret = regmap_पढ़ो(rt715->mbq_regmap, mc->reg + i, &val);
+		अगर (ret < 0) अणु
 			dev_err(component->dev, "Failed to read 0x%x, ret=%d\n",
 				mc->reg + i, ret);
-			return ret;
-		}
-		ucontrol->value.integer.value[i] = rt715_sdca_get_gain(val, mc->shift);
-	}
+			वापस ret;
+		पूर्ण
+		ucontrol->value.पूर्णांकeger.value[i] = rt715_sdca_get_gain(val, mc->shअगरt);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt715_sdca_set_amp_gain_4ch_get(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	struct rt715_sdca_kcontrol_private *p =
-		(struct rt715_sdca_kcontrol_private *)kcontrol->private_value;
-	unsigned int reg_base = p->reg_base, i;
-	const unsigned int gain_sft = 0x2f;
-	unsigned int val;
-	int ret;
+अटल पूर्णांक rt715_sdca_set_amp_gain_4ch_get(काष्ठा snd_kcontrol *kcontrol,
+		काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	काष्ठा rt715_sdca_kcontrol_निजी *p =
+		(काष्ठा rt715_sdca_kcontrol_निजी *)kcontrol->निजी_value;
+	अचिन्हित पूर्णांक reg_base = p->reg_base, i;
+	स्थिर अचिन्हित पूर्णांक gain_sft = 0x2f;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	for (i = 0; i < 4; i++) {
-		ret = regmap_read(rt715->mbq_regmap, reg_base + i, &val);
-		if (ret < 0) {
+	क्रम (i = 0; i < 4; i++) अणु
+		ret = regmap_पढ़ो(rt715->mbq_regmap, reg_base + i, &val);
+		अगर (ret < 0) अणु
 			dev_err(component->dev, "Failed to read 0x%x, ret=%d\n",
 				reg_base + i, ret);
-			return ret;
-		}
-		ucontrol->value.integer.value[i] = rt715_sdca_get_gain(val, gain_sft);
-	}
+			वापस ret;
+		पूर्ण
+		ucontrol->value.पूर्णांकeger.value[i] = rt715_sdca_get_gain(val, gain_sft);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt715_sdca_set_amp_gain_8ch_get(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	struct rt715_sdca_kcontrol_private *p =
-		(struct rt715_sdca_kcontrol_private *)kcontrol->private_value;
-	unsigned int reg_base = p->reg_base;
-	const unsigned int gain_sft = 8;
-	unsigned int val_l, val_r;
-	unsigned int i, reg;
-	int ret;
+अटल पूर्णांक rt715_sdca_set_amp_gain_8ch_get(काष्ठा snd_kcontrol *kcontrol,
+		काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	काष्ठा rt715_sdca_kcontrol_निजी *p =
+		(काष्ठा rt715_sdca_kcontrol_निजी *)kcontrol->निजी_value;
+	अचिन्हित पूर्णांक reg_base = p->reg_base;
+	स्थिर अचिन्हित पूर्णांक gain_sft = 8;
+	अचिन्हित पूर्णांक val_l, val_r;
+	अचिन्हित पूर्णांक i, reg;
+	पूर्णांक ret;
 
-	for (i = 0; i < 8; i += 2) {
-		ret = regmap_read(rt715->mbq_regmap, reg_base + i, &val_l);
-		if (ret < 0) {
+	क्रम (i = 0; i < 8; i += 2) अणु
+		ret = regmap_पढ़ो(rt715->mbq_regmap, reg_base + i, &val_l);
+		अगर (ret < 0) अणु
 			dev_err(component->dev, "Failed to read 0x%x, ret=%d\n",
 					reg_base + i, ret);
-			return ret;
-		}
-		ucontrol->value.integer.value[i] = (val_l >> gain_sft) / 10;
+			वापस ret;
+		पूर्ण
+		ucontrol->value.पूर्णांकeger.value[i] = (val_l >> gain_sft) / 10;
 
 		reg = (i == 6) ? (reg_base - 1) | BIT(15) : reg_base + 1 + i;
-		ret = regmap_read(rt715->mbq_regmap, reg, &val_r);
-		if (ret < 0) {
+		ret = regmap_पढ़ो(rt715->mbq_regmap, reg, &val_r);
+		अगर (ret < 0) अणु
 			dev_err(component->dev, "Failed to read 0x%x, ret=%d\n",
 					reg, ret);
-			return ret;
-		}
-		ucontrol->value.integer.value[i + 1] = (val_r >> gain_sft) / 10;
-	}
+			वापस ret;
+		पूर्ण
+		ucontrol->value.पूर्णांकeger.value[i + 1] = (val_r >> gain_sft) / 10;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const DECLARE_TLV_DB_SCALE(in_vol_tlv, -17625, 375, 0);
-static const DECLARE_TLV_DB_SCALE(mic_vol_tlv, 0, 1000, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(in_vol_tlv, -17625, 375, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(mic_vol_tlv, 0, 1000, 0);
 
-static int rt715_sdca_get_volsw(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	struct rt715_sdca_kcontrol_private *p =
-		(struct rt715_sdca_kcontrol_private *)kcontrol->private_value;
-	unsigned int reg_base = p->reg_base;
-	unsigned int invert = p->invert, i;
-	int val;
+अटल पूर्णांक rt715_sdca_get_volsw(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	काष्ठा rt715_sdca_kcontrol_निजी *p =
+		(काष्ठा rt715_sdca_kcontrol_निजी *)kcontrol->निजी_value;
+	अचिन्हित पूर्णांक reg_base = p->reg_base;
+	अचिन्हित पूर्णांक invert = p->invert, i;
+	पूर्णांक val;
 
-	for (i = 0; i < p->count; i += 2) {
-		val = snd_soc_component_read(component, reg_base + i);
-		if (val < 0)
-			return -EINVAL;
-		ucontrol->value.integer.value[i] = invert ? p->max - val : val;
+	क्रम (i = 0; i < p->count; i += 2) अणु
+		val = snd_soc_component_पढ़ो(component, reg_base + i);
+		अगर (val < 0)
+			वापस -EINVAL;
+		ucontrol->value.पूर्णांकeger.value[i] = invert ? p->max - val : val;
 
-		val = snd_soc_component_read(component, reg_base + 1 + i);
-		if (val < 0)
-			return -EINVAL;
-		ucontrol->value.integer.value[i + 1] =
+		val = snd_soc_component_पढ़ो(component, reg_base + 1 + i);
+		अगर (val < 0)
+			वापस -EINVAL;
+		ucontrol->value.पूर्णांकeger.value[i + 1] =
 			invert ? p->max - val : val;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt715_sdca_put_volsw(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	struct rt715_sdca_kcontrol_private *p =
-		(struct rt715_sdca_kcontrol_private *)kcontrol->private_value;
-	unsigned int val[4] = {0}, val_mask, i, k_changed = 0;
-	unsigned int reg = p->reg_base;
-	unsigned int shift = p->shift;
-	unsigned int max = p->max;
-	unsigned int mask = (1 << fls(max)) - 1;
-	unsigned int invert = p->invert;
-	int err;
+अटल पूर्णांक rt715_sdca_put_volsw(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	काष्ठा rt715_sdca_kcontrol_निजी *p =
+		(काष्ठा rt715_sdca_kcontrol_निजी *)kcontrol->निजी_value;
+	अचिन्हित पूर्णांक val[4] = अणु0पूर्ण, val_mask, i, k_changed = 0;
+	अचिन्हित पूर्णांक reg = p->reg_base;
+	अचिन्हित पूर्णांक shअगरt = p->shअगरt;
+	अचिन्हित पूर्णांक max = p->max;
+	अचिन्हित पूर्णांक mask = (1 << fls(max)) - 1;
+	अचिन्हित पूर्णांक invert = p->invert;
+	पूर्णांक err;
 
-	for (i = 0; i < 4; i++) {
-		if (ucontrol->value.integer.value[i] != rt715->kctl_switch_orig[i]) {
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (ucontrol->value.पूर्णांकeger.value[i] != rt715->kctl_चयन_orig[i]) अणु
 			k_changed = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 2; i++) {
-		rt715->kctl_switch_orig[i * 2] = ucontrol->value.integer.value[i * 2];
-		val[i * 2] = ucontrol->value.integer.value[i * 2] & mask;
-		if (invert)
+	क्रम (i = 0; i < 2; i++) अणु
+		rt715->kctl_चयन_orig[i * 2] = ucontrol->value.पूर्णांकeger.value[i * 2];
+		val[i * 2] = ucontrol->value.पूर्णांकeger.value[i * 2] & mask;
+		अगर (invert)
 			val[i * 2] = max - val[i * 2];
-		val_mask = mask << shift;
-		val[i * 2] <<= shift;
+		val_mask = mask << shअगरt;
+		val[i * 2] <<= shअगरt;
 
-		rt715->kctl_switch_orig[i * 2 + 1] =
-			ucontrol->value.integer.value[i * 2 + 1];
+		rt715->kctl_चयन_orig[i * 2 + 1] =
+			ucontrol->value.पूर्णांकeger.value[i * 2 + 1];
 		val[i * 2 + 1] =
-			ucontrol->value.integer.value[i * 2 + 1] & mask;
-		if (invert)
+			ucontrol->value.पूर्णांकeger.value[i * 2 + 1] & mask;
+		अगर (invert)
 			val[i * 2 + 1] = max - val[i * 2 + 1];
 
-		val[i * 2 + 1] <<=  shift;
+		val[i * 2 + 1] <<=  shअगरt;
 
 		err = snd_soc_component_update_bits(component, reg + i * 2, val_mask,
 				val[i * 2]);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = snd_soc_component_update_bits(component, reg + 1 + i * 2,
 			val_mask, val[i * 2 + 1]);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	return k_changed;
-}
+	वापस k_changed;
+पूर्ण
 
-static int rt715_sdca_fu_info(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_info *uinfo)
-{
-	struct rt715_sdca_kcontrol_private *p =
-		(struct rt715_sdca_kcontrol_private *)kcontrol->private_value;
+अटल पूर्णांक rt715_sdca_fu_info(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	काष्ठा rt715_sdca_kcontrol_निजी *p =
+		(काष्ठा rt715_sdca_kcontrol_निजी *)kcontrol->निजी_value;
 
-	if (p->max == 1)
+	अगर (p->max == 1)
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	else
+	अन्यथा
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = p->count;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = p->max;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = p->max;
+	वापस 0;
+पूर्ण
 
-#define RT715_SDCA_PR_VALUE(xreg_base, xcount, xmax, xshift, xinvert) \
-	((unsigned long)&(struct rt715_sdca_kcontrol_private) \
-		{.reg_base = xreg_base, .count = xcount, .max = xmax, \
-		.shift = xshift, .invert = xinvert})
+#घोषणा RT715_SDCA_PR_VALUE(xreg_base, xcount, xmax, xshअगरt, xinvert) \
+	((अचिन्हित दीर्घ)&(काष्ठा rt715_sdca_kcontrol_निजी) \
+		अणु.reg_base = xreg_base, .count = xcount, .max = xmax, \
+		.shअगरt = xshअगरt, .invert = xinvertपूर्ण)
 
-#define RT715_SDCA_FU_CTRL(xname, reg_base, xshift, xmax, xinvert, xcount) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
+#घोषणा RT715_SDCA_FU_CTRL(xname, reg_base, xshअगरt, xmax, xinvert, xcount) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
 	.info = rt715_sdca_fu_info, \
 	.get = rt715_sdca_get_volsw, \
 	.put = rt715_sdca_put_volsw, \
-	.private_value = RT715_SDCA_PR_VALUE(reg_base, xcount, xmax, \
-					xshift, xinvert)}
+	.निजी_value = RT715_SDCA_PR_VALUE(reg_base, xcount, xmax, \
+					xshअगरt, xinvert)पूर्ण
 
-#define SOC_DOUBLE_R_EXT(xname, reg_left, reg_right, xshift, xmax, xinvert,\
+#घोषणा SOC_DOUBLE_R_EXT(xname, reg_left, reg_right, xshअगरt, xmax, xinvert,\
 	 xhandler_get, xhandler_put) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
 	.info = snd_soc_info_volsw, \
 	.get = xhandler_get, .put = xhandler_put, \
-	.private_value = SOC_DOUBLE_R_VALUE(reg_left, reg_right, xshift, \
-					    xmax, xinvert) }
+	.निजी_value = SOC_DOUBLE_R_VALUE(reg_left, reg_right, xshअगरt, \
+					    xmax, xinvert) पूर्ण
 
-#define RT715_SDCA_EXT_TLV(xname, reg_base, xhandler_get,\
+#घोषणा RT715_SDCA_EXT_TLV(xname, reg_base, xhandler_get,\
 	 xhandler_put, tlv_array, xcount, xmax) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
 	.access = SNDRV_CTL_ELEM_ACCESS_TLV_READ | \
 		 SNDRV_CTL_ELEM_ACCESS_READWRITE, \
 	.tlv.p = (tlv_array), \
 	.info = rt715_sdca_fu_info, \
 	.get = xhandler_get, .put = xhandler_put, \
-	.private_value = RT715_SDCA_PR_VALUE(reg_base, xcount, xmax, 0, 0) }
+	.निजी_value = RT715_SDCA_PR_VALUE(reg_base, xcount, xmax, 0, 0) पूर्ण
 
-#define RT715_SDCA_BOOST_EXT_TLV(xname, reg_base, xhandler_get,\
+#घोषणा RT715_SDCA_BOOST_EXT_TLV(xname, reg_base, xhandler_get,\
 	 xhandler_put, tlv_array, xcount, xmax) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
 	.access = SNDRV_CTL_ELEM_ACCESS_TLV_READ | \
 		 SNDRV_CTL_ELEM_ACCESS_READWRITE, \
 	.tlv.p = (tlv_array), \
 	.info = rt715_sdca_fu_info, \
 	.get = xhandler_get, .put = xhandler_put, \
-	.private_value = RT715_SDCA_PR_VALUE(reg_base, xcount, xmax, 0, 0) }
+	.निजी_value = RT715_SDCA_PR_VALUE(reg_base, xcount, xmax, 0, 0) पूर्ण
 
-static const struct snd_kcontrol_new rt715_sdca_snd_controls[] = {
-	/* Capture switch */
+अटल स्थिर काष्ठा snd_kcontrol_new rt715_sdca_snd_controls[] = अणु
+	/* Capture चयन */
 	SOC_DOUBLE_R("FU0A Capture Switch",
 		SDW_SDCA_CTL(FUN_MIC_ARRAY, RT715_SDCA_FU_ADC7_27_VOL,
 			RT715_SDCA_FU_MUTE_CTRL, CH_01),
@@ -504,89 +505,89 @@ static const struct snd_kcontrol_new rt715_sdca_snd_controls[] = {
 			rt715_sdca_set_amp_gain_8ch_get,
 			rt715_sdca_set_amp_gain_8ch_put,
 			mic_vol_tlv, 8, 3),
-};
+पूर्ण;
 
-static int rt715_sdca_mux_get(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
+अटल पूर्णांक rt715_sdca_mux_get(काष्ठा snd_kcontrol *kcontrol,
+			काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component =
 		snd_soc_dapm_kcontrol_component(kcontrol);
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	unsigned int val, mask_sft;
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक val, mask_sft;
 
-	if (strstr(ucontrol->id.name, "ADC 22 Mux"))
+	अगर (म_माला(ucontrol->id.name, "ADC 22 Mux"))
 		mask_sft = 12;
-	else if (strstr(ucontrol->id.name, "ADC 23 Mux"))
+	अन्यथा अगर (म_माला(ucontrol->id.name, "ADC 23 Mux"))
 		mask_sft = 8;
-	else if (strstr(ucontrol->id.name, "ADC 24 Mux"))
+	अन्यथा अगर (म_माला(ucontrol->id.name, "ADC 24 Mux"))
 		mask_sft = 4;
-	else if (strstr(ucontrol->id.name, "ADC 25 Mux"))
+	अन्यथा अगर (म_माला(ucontrol->id.name, "ADC 25 Mux"))
 		mask_sft = 0;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	rt715_sdca_index_read(rt715, RT715_VENDOR_HDA_CTL,
+	rt715_sdca_index_पढ़ो(rt715, RT715_VENDOR_HDA_CTL,
 		RT715_HDA_LEGACY_MUX_CTL1, &val);
 	val = (val >> mask_sft) & 0xf;
 
 	/*
 	 * The first two indices of ADC Mux 24/25 are routed to the same
 	 * hardware source. ie, ADC Mux 24 0/1 will both connect to MIC2.
-	 * To have a unique set of inputs, we skip the index1 of the muxes.
+	 * To have a unique set of inमाला_दो, we skip the index1 of the muxes.
 	 */
-	if ((strstr(ucontrol->id.name, "ADC 24 Mux") ||
-		strstr(ucontrol->id.name, "ADC 25 Mux")) && val > 0)
+	अगर ((म_माला(ucontrol->id.name, "ADC 24 Mux") ||
+		म_माला(ucontrol->id.name, "ADC 25 Mux")) && val > 0)
 		val -= 1;
-	ucontrol->value.enumerated.item[0] = val;
+	ucontrol->value.क्रमागतerated.item[0] = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt715_sdca_mux_put(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
+अटल पूर्णांक rt715_sdca_mux_put(काष्ठा snd_kcontrol *kcontrol,
+			काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component =
 		snd_soc_dapm_kcontrol_component(kcontrol);
-	struct snd_soc_dapm_context *dapm =
+	काष्ठा snd_soc_dapm_context *dapm =
 				snd_soc_dapm_kcontrol_dapm(kcontrol);
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
-	unsigned int *item = ucontrol->value.enumerated.item;
-	unsigned int val, val2 = 0, change, mask_sft;
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	काष्ठा soc_क्रमागत *e = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+	अचिन्हित पूर्णांक *item = ucontrol->value.क्रमागतerated.item;
+	अचिन्हित पूर्णांक val, val2 = 0, change, mask_sft;
 
-	if (item[0] >= e->items)
-		return -EINVAL;
+	अगर (item[0] >= e->items)
+		वापस -EINVAL;
 
-	if (strstr(ucontrol->id.name, "ADC 22 Mux"))
+	अगर (म_माला(ucontrol->id.name, "ADC 22 Mux"))
 		mask_sft = 12;
-	else if (strstr(ucontrol->id.name, "ADC 23 Mux"))
+	अन्यथा अगर (म_माला(ucontrol->id.name, "ADC 23 Mux"))
 		mask_sft = 8;
-	else if (strstr(ucontrol->id.name, "ADC 24 Mux"))
+	अन्यथा अगर (म_माला(ucontrol->id.name, "ADC 24 Mux"))
 		mask_sft = 4;
-	else if (strstr(ucontrol->id.name, "ADC 25 Mux"))
+	अन्यथा अगर (म_माला(ucontrol->id.name, "ADC 25 Mux"))
 		mask_sft = 0;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	/* Verb ID = 0x701h, nid = e->reg */
-	val = snd_soc_enum_item_to_val(e, item[0]) << e->shift_l;
+	val = snd_soc_क्रमागत_item_to_val(e, item[0]) << e->shअगरt_l;
 
-	rt715_sdca_index_read(rt715, RT715_VENDOR_HDA_CTL,
+	rt715_sdca_index_पढ़ो(rt715, RT715_VENDOR_HDA_CTL,
 		RT715_HDA_LEGACY_MUX_CTL1, &val2);
 	val2 = (val2 >> mask_sft) & 0xf;
 
 	change = val != val2;
 
-	if (change)
+	अगर (change)
 		rt715_sdca_index_update_bits(rt715, RT715_VENDOR_HDA_CTL,
 			RT715_HDA_LEGACY_MUX_CTL1, 0xf << mask_sft, val << mask_sft);
 
-	snd_soc_dapm_mux_update_power(dapm, kcontrol, item[0], e, NULL);
+	snd_soc_dapm_mux_update_घातer(dapm, kcontrol, item[0], e, शून्य);
 
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static const char * const adc_22_23_mux_text[] = {
+अटल स्थिर अक्षर * स्थिर adc_22_23_mux_text[] = अणु
 	"MIC1",
 	"MIC2",
 	"LINE1",
@@ -595,91 +596,91 @@ static const char * const adc_22_23_mux_text[] = {
 	"DMIC2",
 	"DMIC3",
 	"DMIC4",
-};
+पूर्ण;
 
 /*
- * Due to mux design for nid 24 (MUX_IN3)/25 (MUX_IN4), connection index 0 and
- * 1 will be connected to the same dmic source, therefore we skip index 1 to
- * avoid misunderstanding on usage of dapm routing.
+ * Due to mux design क्रम nid 24 (MUX_IN3)/25 (MUX_IN4), connection index 0 and
+ * 1 will be connected to the same dmic source, thereक्रमe we skip index 1 to
+ * aव्योम misunderstanding on usage of dapm routing.
  */
-static int rt715_adc_24_25_values[] = {
+अटल पूर्णांक rt715_adc_24_25_values[] = अणु
 	0,
 	2,
 	3,
 	4,
 	5,
-};
+पूर्ण;
 
-static const char * const adc_24_mux_text[] = {
+अटल स्थिर अक्षर * स्थिर adc_24_mux_text[] = अणु
 	"MIC2",
 	"DMIC1",
 	"DMIC2",
 	"DMIC3",
 	"DMIC4",
-};
+पूर्ण;
 
-static const char * const adc_25_mux_text[] = {
+अटल स्थिर अक्षर * स्थिर adc_25_mux_text[] = अणु
 	"MIC1",
 	"DMIC1",
 	"DMIC2",
 	"DMIC3",
 	"DMIC4",
-};
+पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(rt715_adc22_enum, SND_SOC_NOPM, 0,
+अटल SOC_ENUM_SINGLE_DECL(rt715_adc22_क्रमागत, SND_SOC_NOPM, 0,
 	adc_22_23_mux_text);
 
-static SOC_ENUM_SINGLE_DECL(rt715_adc23_enum, SND_SOC_NOPM, 0,
+अटल SOC_ENUM_SINGLE_DECL(rt715_adc23_क्रमागत, SND_SOC_NOPM, 0,
 	adc_22_23_mux_text);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(rt715_adc24_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(rt715_adc24_क्रमागत,
 	SND_SOC_NOPM, 0, 0xf,
 	adc_24_mux_text, rt715_adc_24_25_values);
-static SOC_VALUE_ENUM_SINGLE_DECL(rt715_adc25_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(rt715_adc25_क्रमागत,
 	SND_SOC_NOPM, 0, 0xf,
 	adc_25_mux_text, rt715_adc_24_25_values);
 
-static const struct snd_kcontrol_new rt715_adc22_mux =
-	SOC_DAPM_ENUM_EXT("ADC 22 Mux", rt715_adc22_enum,
+अटल स्थिर काष्ठा snd_kcontrol_new rt715_adc22_mux =
+	SOC_DAPM_ENUM_EXT("ADC 22 Mux", rt715_adc22_क्रमागत,
 			rt715_sdca_mux_get, rt715_sdca_mux_put);
 
-static const struct snd_kcontrol_new rt715_adc23_mux =
-	SOC_DAPM_ENUM_EXT("ADC 23 Mux", rt715_adc23_enum,
+अटल स्थिर काष्ठा snd_kcontrol_new rt715_adc23_mux =
+	SOC_DAPM_ENUM_EXT("ADC 23 Mux", rt715_adc23_क्रमागत,
 			rt715_sdca_mux_get, rt715_sdca_mux_put);
 
-static const struct snd_kcontrol_new rt715_adc24_mux =
-	SOC_DAPM_ENUM_EXT("ADC 24 Mux", rt715_adc24_enum,
+अटल स्थिर काष्ठा snd_kcontrol_new rt715_adc24_mux =
+	SOC_DAPM_ENUM_EXT("ADC 24 Mux", rt715_adc24_क्रमागत,
 			rt715_sdca_mux_get, rt715_sdca_mux_put);
 
-static const struct snd_kcontrol_new rt715_adc25_mux =
-	SOC_DAPM_ENUM_EXT("ADC 25 Mux", rt715_adc25_enum,
+अटल स्थिर काष्ठा snd_kcontrol_new rt715_adc25_mux =
+	SOC_DAPM_ENUM_EXT("ADC 25 Mux", rt715_adc25_क्रमागत,
 			rt715_sdca_mux_get, rt715_sdca_mux_put);
 
-static int rt715_sdca_pde23_24_event(struct snd_soc_dapm_widget *w,
-	struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component =
+अटल पूर्णांक rt715_sdca_pde23_24_event(काष्ठा snd_soc_dapm_widget *w,
+	काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component =
 		snd_soc_dapm_to_component(w->dapm);
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
 
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
-		regmap_write(rt715->regmap,
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_POST_PMU:
+		regmap_ग_लिखो(rt715->regmap,
 			SDW_SDCA_CTL(FUN_MIC_ARRAY, RT715_SDCA_CREQ_POW_EN,
 				RT715_SDCA_REQ_POW_CTRL,
 				CH_00), 0x00);
-		break;
-	case SND_SOC_DAPM_PRE_PMD:
-		regmap_write(rt715->regmap,
+		अवरोध;
+	हाल SND_SOC_DAPM_PRE_PMD:
+		regmap_ग_लिखो(rt715->regmap,
 			SDW_SDCA_CTL(FUN_MIC_ARRAY, RT715_SDCA_CREQ_POW_EN,
 				RT715_SDCA_REQ_POW_CTRL,
 				CH_00), 0x03);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dapm_widget rt715_sdca_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget rt715_sdca_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_INPUT("DMIC1"),
 	SND_SOC_DAPM_INPUT("DMIC2"),
 	SND_SOC_DAPM_INPUT("DMIC3"),
@@ -693,10 +694,10 @@ static const struct snd_soc_dapm_widget rt715_sdca_dapm_widgets[] = {
 		rt715_sdca_pde23_24_event,
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
-	SND_SOC_DAPM_ADC("ADC 07", NULL, SND_SOC_NOPM, 4, 0),
-	SND_SOC_DAPM_ADC("ADC 08", NULL, SND_SOC_NOPM, 4, 0),
-	SND_SOC_DAPM_ADC("ADC 09", NULL, SND_SOC_NOPM, 4, 0),
-	SND_SOC_DAPM_ADC("ADC 27", NULL, SND_SOC_NOPM, 4, 0),
+	SND_SOC_DAPM_ADC("ADC 07", शून्य, SND_SOC_NOPM, 4, 0),
+	SND_SOC_DAPM_ADC("ADC 08", शून्य, SND_SOC_NOPM, 4, 0),
+	SND_SOC_DAPM_ADC("ADC 09", शून्य, SND_SOC_NOPM, 4, 0),
+	SND_SOC_DAPM_ADC("ADC 27", शून्य, SND_SOC_NOPM, 4, 0),
 	SND_SOC_DAPM_MUX("ADC 22 Mux", SND_SOC_NOPM, 0, 0,
 		&rt715_adc22_mux),
 	SND_SOC_DAPM_MUX("ADC 23 Mux", SND_SOC_NOPM, 0, 0,
@@ -707,142 +708,142 @@ static const struct snd_soc_dapm_widget rt715_sdca_dapm_widgets[] = {
 		&rt715_adc25_mux),
 	SND_SOC_DAPM_AIF_OUT("DP4TX", "DP4 Capture", 0, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("DP6TX", "DP6 Capture", 0, SND_SOC_NOPM, 0, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route rt715_sdca_audio_map[] = {
-	{"DP6TX", NULL, "ADC 09"},
-	{"DP6TX", NULL, "ADC 08"},
-	{"DP4TX", NULL, "ADC 07"},
-	{"DP4TX", NULL, "ADC 27"},
-	{"DP4TX", NULL, "ADC 09"},
-	{"DP4TX", NULL, "ADC 08"},
+अटल स्थिर काष्ठा snd_soc_dapm_route rt715_sdca_audio_map[] = अणु
+	अणु"DP6TX", शून्य, "ADC 09"पूर्ण,
+	अणु"DP6TX", शून्य, "ADC 08"पूर्ण,
+	अणु"DP4TX", शून्य, "ADC 07"पूर्ण,
+	अणु"DP4TX", शून्य, "ADC 27"पूर्ण,
+	अणु"DP4TX", शून्य, "ADC 09"पूर्ण,
+	अणु"DP4TX", शून्य, "ADC 08"पूर्ण,
 
-	{"LINE1", NULL, "PDE23_24"},
-	{"LINE2", NULL, "PDE23_24"},
-	{"MIC1", NULL, "PDE23_24"},
-	{"MIC2", NULL, "PDE23_24"},
-	{"DMIC1", NULL, "PDE23_24"},
-	{"DMIC2", NULL, "PDE23_24"},
-	{"DMIC3", NULL, "PDE23_24"},
-	{"DMIC4", NULL, "PDE23_24"},
+	अणु"LINE1", शून्य, "PDE23_24"पूर्ण,
+	अणु"LINE2", शून्य, "PDE23_24"पूर्ण,
+	अणु"MIC1", शून्य, "PDE23_24"पूर्ण,
+	अणु"MIC2", शून्य, "PDE23_24"पूर्ण,
+	अणु"DMIC1", शून्य, "PDE23_24"पूर्ण,
+	अणु"DMIC2", शून्य, "PDE23_24"पूर्ण,
+	अणु"DMIC3", शून्य, "PDE23_24"पूर्ण,
+	अणु"DMIC4", शून्य, "PDE23_24"पूर्ण,
 
-	{"ADC 09", NULL, "ADC 22 Mux"},
-	{"ADC 08", NULL, "ADC 23 Mux"},
-	{"ADC 07", NULL, "ADC 24 Mux"},
-	{"ADC 27", NULL, "ADC 25 Mux"},
-	{"ADC 22 Mux", "MIC1", "MIC1"},
-	{"ADC 22 Mux", "MIC2", "MIC2"},
-	{"ADC 22 Mux", "LINE1", "LINE1"},
-	{"ADC 22 Mux", "LINE2", "LINE2"},
-	{"ADC 22 Mux", "DMIC1", "DMIC1"},
-	{"ADC 22 Mux", "DMIC2", "DMIC2"},
-	{"ADC 22 Mux", "DMIC3", "DMIC3"},
-	{"ADC 22 Mux", "DMIC4", "DMIC4"},
-	{"ADC 23 Mux", "MIC1", "MIC1"},
-	{"ADC 23 Mux", "MIC2", "MIC2"},
-	{"ADC 23 Mux", "LINE1", "LINE1"},
-	{"ADC 23 Mux", "LINE2", "LINE2"},
-	{"ADC 23 Mux", "DMIC1", "DMIC1"},
-	{"ADC 23 Mux", "DMIC2", "DMIC2"},
-	{"ADC 23 Mux", "DMIC3", "DMIC3"},
-	{"ADC 23 Mux", "DMIC4", "DMIC4"},
-	{"ADC 24 Mux", "MIC2", "MIC2"},
-	{"ADC 24 Mux", "DMIC1", "DMIC1"},
-	{"ADC 24 Mux", "DMIC2", "DMIC2"},
-	{"ADC 24 Mux", "DMIC3", "DMIC3"},
-	{"ADC 24 Mux", "DMIC4", "DMIC4"},
-	{"ADC 25 Mux", "MIC1", "MIC1"},
-	{"ADC 25 Mux", "DMIC1", "DMIC1"},
-	{"ADC 25 Mux", "DMIC2", "DMIC2"},
-	{"ADC 25 Mux", "DMIC3", "DMIC3"},
-	{"ADC 25 Mux", "DMIC4", "DMIC4"},
-};
+	अणु"ADC 09", शून्य, "ADC 22 Mux"पूर्ण,
+	अणु"ADC 08", शून्य, "ADC 23 Mux"पूर्ण,
+	अणु"ADC 07", शून्य, "ADC 24 Mux"पूर्ण,
+	अणु"ADC 27", शून्य, "ADC 25 Mux"पूर्ण,
+	अणु"ADC 22 Mux", "MIC1", "MIC1"पूर्ण,
+	अणु"ADC 22 Mux", "MIC2", "MIC2"पूर्ण,
+	अणु"ADC 22 Mux", "LINE1", "LINE1"पूर्ण,
+	अणु"ADC 22 Mux", "LINE2", "LINE2"पूर्ण,
+	अणु"ADC 22 Mux", "DMIC1", "DMIC1"पूर्ण,
+	अणु"ADC 22 Mux", "DMIC2", "DMIC2"पूर्ण,
+	अणु"ADC 22 Mux", "DMIC3", "DMIC3"पूर्ण,
+	अणु"ADC 22 Mux", "DMIC4", "DMIC4"पूर्ण,
+	अणु"ADC 23 Mux", "MIC1", "MIC1"पूर्ण,
+	अणु"ADC 23 Mux", "MIC2", "MIC2"पूर्ण,
+	अणु"ADC 23 Mux", "LINE1", "LINE1"पूर्ण,
+	अणु"ADC 23 Mux", "LINE2", "LINE2"पूर्ण,
+	अणु"ADC 23 Mux", "DMIC1", "DMIC1"पूर्ण,
+	अणु"ADC 23 Mux", "DMIC2", "DMIC2"पूर्ण,
+	अणु"ADC 23 Mux", "DMIC3", "DMIC3"पूर्ण,
+	अणु"ADC 23 Mux", "DMIC4", "DMIC4"पूर्ण,
+	अणु"ADC 24 Mux", "MIC2", "MIC2"पूर्ण,
+	अणु"ADC 24 Mux", "DMIC1", "DMIC1"पूर्ण,
+	अणु"ADC 24 Mux", "DMIC2", "DMIC2"पूर्ण,
+	अणु"ADC 24 Mux", "DMIC3", "DMIC3"पूर्ण,
+	अणु"ADC 24 Mux", "DMIC4", "DMIC4"पूर्ण,
+	अणु"ADC 25 Mux", "MIC1", "MIC1"पूर्ण,
+	अणु"ADC 25 Mux", "DMIC1", "DMIC1"पूर्ण,
+	अणु"ADC 25 Mux", "DMIC2", "DMIC2"पूर्ण,
+	अणु"ADC 25 Mux", "DMIC3", "DMIC3"पूर्ण,
+	अणु"ADC 25 Mux", "DMIC4", "DMIC4"पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_component_driver soc_codec_dev_rt715_sdca = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_codec_dev_rt715_sdca = अणु
 	.controls = rt715_sdca_snd_controls,
 	.num_controls = ARRAY_SIZE(rt715_sdca_snd_controls),
-	.dapm_widgets = rt715_sdca_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(rt715_sdca_dapm_widgets),
+	.dapm_widमाला_लो = rt715_sdca_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो = ARRAY_SIZE(rt715_sdca_dapm_widमाला_लो),
 	.dapm_routes = rt715_sdca_audio_map,
 	.num_dapm_routes = ARRAY_SIZE(rt715_sdca_audio_map),
-};
+पूर्ण;
 
-static int rt715_sdca_set_sdw_stream(struct snd_soc_dai *dai, void *sdw_stream,
-				int direction)
-{
-	struct rt715_sdw_stream_data *stream;
+अटल पूर्णांक rt715_sdca_set_sdw_stream(काष्ठा snd_soc_dai *dai, व्योम *sdw_stream,
+				पूर्णांक direction)
+अणु
+	काष्ठा rt715_sdw_stream_data *stream;
 
-	stream = kzalloc(sizeof(*stream), GFP_KERNEL);
-	if (!stream)
-		return -ENOMEM;
+	stream = kzalloc(माप(*stream), GFP_KERNEL);
+	अगर (!stream)
+		वापस -ENOMEM;
 
 	stream->sdw_stream = sdw_stream;
 
 	/* Use tx_mask or rx_mask to configure stream tag and set dma_data */
-	if (direction == SNDRV_PCM_STREAM_PLAYBACK)
+	अगर (direction == SNDRV_PCM_STREAM_PLAYBACK)
 		dai->playback_dma_data = stream;
-	else
+	अन्यथा
 		dai->capture_dma_data = stream;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rt715_sdca_shutdown(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *dai)
+अटल व्योम rt715_sdca_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_soc_dai *dai)
 
-{
-	struct rt715_sdw_stream_data *stream;
-
-	stream = snd_soc_dai_get_dma_data(dai, substream);
-	if (!stream)
-		return;
-
-	snd_soc_dai_set_dma_data(dai, substream, NULL);
-	kfree(stream);
-}
-
-static int rt715_sdca_pcm_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params,
-				struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	struct sdw_stream_config stream_config;
-	struct sdw_port_config port_config;
-	enum sdw_data_direction direction;
-	struct rt715_sdw_stream_data *stream;
-	int retval, port, num_channels;
-	unsigned int val;
+अणु
+	काष्ठा rt715_sdw_stream_data *stream;
 
 	stream = snd_soc_dai_get_dma_data(dai, substream);
+	अगर (!stream)
+		वापस;
 
-	if (!stream)
-		return -EINVAL;
+	snd_soc_dai_set_dma_data(dai, substream, शून्य);
+	kमुक्त(stream);
+पूर्ण
 
-	if (!rt715->slave)
-		return -EINVAL;
+अटल पूर्णांक rt715_sdca_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_pcm_hw_params *params,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	काष्ठा sdw_stream_config stream_config;
+	काष्ठा sdw_port_config port_config;
+	क्रमागत sdw_data_direction direction;
+	काष्ठा rt715_sdw_stream_data *stream;
+	पूर्णांक retval, port, num_channels;
+	अचिन्हित पूर्णांक val;
 
-	switch (dai->id) {
-	case RT715_AIF1:
-		direction = SDW_DATA_DIR_TX;
+	stream = snd_soc_dai_get_dma_data(dai, substream);
+
+	अगर (!stream)
+		वापस -EINVAL;
+
+	अगर (!rt715->slave)
+		वापस -EINVAL;
+
+	चयन (dai->id) अणु
+	हाल RT715_AIF1:
+		direction = SDW_DATA_सूची_TX;
 		port = 6;
-		rt715_sdca_index_write(rt715, RT715_VENDOR_REG, RT715_SDW_INPUT_SEL,
+		rt715_sdca_index_ग_लिखो(rt715, RT715_VENDOR_REG, RT715_SDW_INPUT_SEL,
 			0xa500);
-		break;
-	case RT715_AIF2:
-		direction = SDW_DATA_DIR_TX;
+		अवरोध;
+	हाल RT715_AIF2:
+		direction = SDW_DATA_सूची_TX;
 		port = 4;
-		rt715_sdca_index_write(rt715, RT715_VENDOR_REG, RT715_SDW_INPUT_SEL,
+		rt715_sdca_index_ग_लिखो(rt715, RT715_VENDOR_REG, RT715_SDW_INPUT_SEL,
 			0xaf00);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(component->dev, "Invalid DAI id %d\n", dai->id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	stream_config.frame_rate =  params_rate(params);
 	stream_config.ch_count = params_channels(params);
-	stream_config.bps = snd_pcm_format_width(params_format(params));
+	stream_config.bps = snd_pcm_क्रमmat_width(params_क्रमmat(params));
 	stream_config.direction = direction;
 
 	num_channels = params_channels(params);
@@ -851,141 +852,141 @@ static int rt715_sdca_pcm_hw_params(struct snd_pcm_substream *substream,
 
 	retval = sdw_stream_add_slave(rt715->slave, &stream_config,
 					&port_config, 1, stream->sdw_stream);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(component->dev, "Unable to configure port, retval:%d\n",
 			retval);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	switch (params_rate(params)) {
-	case 8000:
+	चयन (params_rate(params)) अणु
+	हाल 8000:
 		val = 0x1;
-		break;
-	case 11025:
+		अवरोध;
+	हाल 11025:
 		val = 0x2;
-		break;
-	case 12000:
+		अवरोध;
+	हाल 12000:
 		val = 0x3;
-		break;
-	case 16000:
+		अवरोध;
+	हाल 16000:
 		val = 0x4;
-		break;
-	case 22050:
+		अवरोध;
+	हाल 22050:
 		val = 0x5;
-		break;
-	case 24000:
+		अवरोध;
+	हाल 24000:
 		val = 0x6;
-		break;
-	case 32000:
+		अवरोध;
+	हाल 32000:
 		val = 0x7;
-		break;
-	case 44100:
+		अवरोध;
+	हाल 44100:
 		val = 0x8;
-		break;
-	case 48000:
+		अवरोध;
+	हाल 48000:
 		val = 0x9;
-		break;
-	case 88200:
+		अवरोध;
+	हाल 88200:
 		val = 0xa;
-		break;
-	case 96000:
+		अवरोध;
+	हाल 96000:
 		val = 0xb;
-		break;
-	case 176400:
+		अवरोध;
+	हाल 176400:
 		val = 0xc;
-		break;
-	case 192000:
+		अवरोध;
+	हाल 192000:
 		val = 0xd;
-		break;
-	case 384000:
+		अवरोध;
+	हाल 384000:
 		val = 0xe;
-		break;
-	case 768000:
+		अवरोध;
+	हाल 768000:
 		val = 0xf;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(component->dev, "Unsupported sample rate %d\n",
 			params_rate(params));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	regmap_write(rt715->regmap,
+	regmap_ग_लिखो(rt715->regmap,
 		SDW_SDCA_CTL(FUN_MIC_ARRAY, RT715_SDCA_CS_FREQ_IND_EN,
 			RT715_SDCA_FREQ_IND_CTRL, CH_00), val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt715_sdca_pcm_hw_free(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
-	struct rt715_sdw_stream_data *stream =
+अटल पूर्णांक rt715_sdca_pcm_hw_मुक्त(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा rt715_sdca_priv *rt715 = snd_soc_component_get_drvdata(component);
+	काष्ठा rt715_sdw_stream_data *stream =
 		snd_soc_dai_get_dma_data(dai, substream);
 
-	if (!rt715->slave)
-		return -EINVAL;
+	अगर (!rt715->slave)
+		वापस -EINVAL;
 
-	sdw_stream_remove_slave(rt715->slave, stream->sdw_stream);
-	return 0;
-}
+	sdw_stream_हटाओ_slave(rt715->slave, stream->sdw_stream);
+	वापस 0;
+पूर्ण
 
-#define RT715_STEREO_RATES (SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000)
-#define RT715_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | \
+#घोषणा RT715_STEREO_RATES (SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000)
+#घोषणा RT715_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | \
 			SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S8)
 
-static const struct snd_soc_dai_ops rt715_sdca_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops rt715_sdca_ops = अणु
 	.hw_params	= rt715_sdca_pcm_hw_params,
-	.hw_free	= rt715_sdca_pcm_hw_free,
+	.hw_मुक्त	= rt715_sdca_pcm_hw_मुक्त,
 	.set_sdw_stream	= rt715_sdca_set_sdw_stream,
-	.shutdown	= rt715_sdca_shutdown,
-};
+	.shutकरोwn	= rt715_sdca_shutकरोwn,
+पूर्ण;
 
-static struct snd_soc_dai_driver rt715_sdca_dai[] = {
-	{
+अटल काष्ठा snd_soc_dai_driver rt715_sdca_dai[] = अणु
+	अणु
 		.name = "rt715-aif1",
 		.id = RT715_AIF1,
-		.capture = {
+		.capture = अणु
 			.stream_name = "DP6 Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = RT715_STEREO_RATES,
-			.formats = RT715_FORMATS,
-		},
+			.क्रमmats = RT715_FORMATS,
+		पूर्ण,
 		.ops = &rt715_sdca_ops,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "rt715-aif2",
 		.id = RT715_AIF2,
-		.capture = {
+		.capture = अणु
 			.stream_name = "DP4 Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = RT715_STEREO_RATES,
-			.formats = RT715_FORMATS,
-		},
+			.क्रमmats = RT715_FORMATS,
+		पूर्ण,
 		.ops = &rt715_sdca_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* Bus clock frequency */
-#define RT715_CLK_FREQ_9600000HZ 9600000
-#define RT715_CLK_FREQ_12000000HZ 12000000
-#define RT715_CLK_FREQ_6000000HZ 6000000
-#define RT715_CLK_FREQ_4800000HZ 4800000
-#define RT715_CLK_FREQ_2400000HZ 2400000
-#define RT715_CLK_FREQ_12288000HZ 12288000
+/* Bus घड़ी frequency */
+#घोषणा RT715_CLK_FREQ_9600000HZ 9600000
+#घोषणा RT715_CLK_FREQ_12000000HZ 12000000
+#घोषणा RT715_CLK_FREQ_6000000HZ 6000000
+#घोषणा RT715_CLK_FREQ_4800000HZ 4800000
+#घोषणा RT715_CLK_FREQ_2400000HZ 2400000
+#घोषणा RT715_CLK_FREQ_12288000HZ 12288000
 
-int rt715_sdca_init(struct device *dev, struct regmap *mbq_regmap,
-	struct regmap *regmap, struct sdw_slave *slave)
-{
-	struct rt715_sdca_priv *rt715;
-	int ret;
+पूर्णांक rt715_sdca_init(काष्ठा device *dev, काष्ठा regmap *mbq_regmap,
+	काष्ठा regmap *regmap, काष्ठा sdw_slave *slave)
+अणु
+	काष्ठा rt715_sdca_priv *rt715;
+	पूर्णांक ret;
 
-	rt715 = devm_kzalloc(dev, sizeof(*rt715), GFP_KERNEL);
-	if (!rt715)
-		return -ENOMEM;
+	rt715 = devm_kzalloc(dev, माप(*rt715), GFP_KERNEL);
+	अगर (!rt715)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(dev, rt715);
 	rt715->slave = slave;
@@ -994,81 +995,81 @@ int rt715_sdca_init(struct device *dev, struct regmap *mbq_regmap,
 	rt715->hw_sdw_ver = slave->id.sdw_version;
 	/*
 	 * Mark hw_init to false
-	 * HW init will be performed when device reports present
+	 * HW init will be perक्रमmed when device reports present
 	 */
 	rt715->hw_init = false;
 	rt715->first_init = false;
 
-	ret = devm_snd_soc_register_component(dev,
+	ret = devm_snd_soc_रेजिस्टर_component(dev,
 			&soc_codec_dev_rt715_sdca,
 			rt715_sdca_dai,
 			ARRAY_SIZE(rt715_sdca_dai));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int rt715_sdca_io_init(struct device *dev, struct sdw_slave *slave)
-{
-	struct rt715_sdca_priv *rt715 = dev_get_drvdata(dev);
-	unsigned int hw_ver;
+पूर्णांक rt715_sdca_io_init(काष्ठा device *dev, काष्ठा sdw_slave *slave)
+अणु
+	काष्ठा rt715_sdca_priv *rt715 = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक hw_ver;
 
-	if (rt715->hw_init)
-		return 0;
+	अगर (rt715->hw_init)
+		वापस 0;
 
 	/*
-	 * PM runtime is only enabled when a Slave reports as Attached
+	 * PM runसमय is only enabled when a Slave reports as Attached
 	 */
-	if (!rt715->first_init) {
-		/* set autosuspend parameters */
-		pm_runtime_set_autosuspend_delay(&slave->dev, 3000);
-		pm_runtime_use_autosuspend(&slave->dev);
+	अगर (!rt715->first_init) अणु
+		/* set स्वतःsuspend parameters */
+		pm_runसमय_set_स्वतःsuspend_delay(&slave->dev, 3000);
+		pm_runसमय_use_स्वतःsuspend(&slave->dev);
 
 		/* update count of parent 'active' children */
-		pm_runtime_set_active(&slave->dev);
+		pm_runसमय_set_active(&slave->dev);
 
-		/* make sure the device does not suspend immediately */
-		pm_runtime_mark_last_busy(&slave->dev);
+		/* make sure the device करोes not suspend immediately */
+		pm_runसमय_mark_last_busy(&slave->dev);
 
-		pm_runtime_enable(&slave->dev);
+		pm_runसमय_enable(&slave->dev);
 
 		rt715->first_init = true;
-	}
+	पूर्ण
 
-	pm_runtime_get_noresume(&slave->dev);
+	pm_runसमय_get_noresume(&slave->dev);
 
-	rt715_sdca_index_read(rt715, RT715_VENDOR_REG,
+	rt715_sdca_index_पढ़ो(rt715, RT715_VENDOR_REG,
 		RT715_PRODUCT_NUM, &hw_ver);
 	hw_ver = hw_ver & 0x000f;
 
-	/* set clock selector = external */
-	regmap_write(rt715->regmap,
+	/* set घड़ी selector = बाह्यal */
+	regmap_ग_लिखो(rt715->regmap,
 		SDW_SDCA_CTL(FUN_MIC_ARRAY, RT715_SDCA_CX_CLK_SEL_EN,
 			RT715_SDCA_CX_CLK_SEL_CTRL, CH_00), 0x1);
 	/* set GPIO_4/5/6 to be 3rd/4th DMIC usage */
-	if (hw_ver == 0x0)
+	अगर (hw_ver == 0x0)
 		rt715_sdca_index_update_bits(rt715, RT715_VENDOR_REG,
 			RT715_AD_FUNC_EN, 0x54, 0x54);
-	else if (hw_ver == 0x1) {
+	अन्यथा अगर (hw_ver == 0x1) अणु
 		rt715_sdca_index_update_bits(rt715, RT715_VENDOR_REG,
 			RT715_AD_FUNC_EN, 0x55, 0x55);
 		rt715_sdca_index_update_bits(rt715, RT715_VENDOR_REG,
 			RT715_REV_1, 0x40, 0x40);
-	}
+	पूर्ण
 	/* trigger mode = VAD enable */
-	regmap_write(rt715->regmap,
+	regmap_ग_लिखो(rt715->regmap,
 		SDW_SDCA_CTL(FUN_MIC_ARRAY, RT715_SDCA_SMPU_TRIG_ST_EN,
 			RT715_SDCA_SMPU_TRIG_EN_CTRL, CH_00), 0x2);
-	/* SMPU-1 interrupt enable mask */
+	/* SMPU-1 पूर्णांकerrupt enable mask */
 	regmap_update_bits(rt715->regmap, RT715_INT_MASK, 0x1, 0x1);
 
 	/* Mark Slave initialization complete */
 	rt715->hw_init = true;
 
-	pm_runtime_mark_last_busy(&slave->dev);
-	pm_runtime_put_autosuspend(&slave->dev);
+	pm_runसमय_mark_last_busy(&slave->dev);
+	pm_runसमय_put_स्वतःsuspend(&slave->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 MODULE_DESCRIPTION("ASoC rt715 driver SDW SDCA");
 MODULE_AUTHOR("Jack Yu <jack.yu@realtek.com>");

@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_VDSOCLOCKSOURCE_H
-#define __ASM_VDSOCLOCKSOURCE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_VDSOCLOCKSOURCE_H
+#घोषणा __ASM_VDSOCLOCKSOURCE_H
 
-#define VDSO_ARCH_CLOCKMODES	\
+#घोषणा VDSO_ARCH_CLOCKMODES	\
 	VDSO_CLOCKMODE_ARCHTIMER
 
-#endif
+#पूर्ण_अगर

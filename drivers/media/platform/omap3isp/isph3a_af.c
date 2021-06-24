@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * isph3a_af.c
  *
@@ -8,24 +9,24 @@
  * Copyright (C) 2009 Texas Instruments, Inc.
  *
  * Contacts: David Cohen <dacohen@gmail.com>
- *	     Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ *	     Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-/* Linux specific include files */
-#include <linux/device.h>
-#include <linux/slab.h>
+/* Linux specअगरic include files */
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
 
-#include "isp.h"
-#include "isph3a.h"
-#include "ispstat.h"
+#समावेश "isp.h"
+#समावेश "isph3a.h"
+#समावेश "ispstat.h"
 
-#define IS_OUT_OF_BOUNDS(value, min, max)		\
+#घोषणा IS_OUT_OF_BOUNDS(value, min, max)		\
 	(((value) < (min)) || ((value) > (max)))
 
-static void h3a_af_setup_regs(struct ispstat *af, void *priv)
-{
-	struct omap3isp_h3a_af_config *conf = priv;
+अटल व्योम h3a_af_setup_regs(काष्ठा ispstat *af, व्योम *priv)
+अणु
+	काष्ठा omap3isp_h3a_af_config *conf = priv;
 	u32 pcr;
 	u32 pax1;
 	u32 pax2;
@@ -33,22 +34,22 @@ static void h3a_af_setup_regs(struct ispstat *af, void *priv)
 	u32 coef;
 	u32 base_coef_set0;
 	u32 base_coef_set1;
-	int index;
+	पूर्णांक index;
 
-	if (af->state == ISPSTAT_DISABLED)
-		return;
+	अगर (af->state == ISPSTAT_DISABLED)
+		वापस;
 
-	isp_reg_writel(af->isp, af->active_buf->dma_addr, OMAP3_ISP_IOMEM_H3A,
+	isp_reg_ग_लिखोl(af->isp, af->active_buf->dma_addr, OMAP3_ISP_IOMEM_H3A,
 		       ISPH3A_AFBUFST);
 
-	if (!af->update)
-		return;
+	अगर (!af->update)
+		वापस;
 
 	/* Configure Hardware Registers */
 	pax1 = ((conf->paxel.width >> 1) - 1) << AF_PAXW_SHIFT;
 	/* Set height in AFPAX1 */
 	pax1 |= (conf->paxel.height >> 1) - 1;
-	isp_reg_writel(af->isp, pax1, OMAP3_ISP_IOMEM_H3A, ISPH3A_AFPAX1);
+	isp_reg_ग_लिखोl(af->isp, pax1, OMAP3_ISP_IOMEM_H3A, ISPH3A_AFPAX1);
 
 	/* Configure AFPAX2 Register */
 	/* Set Line Increment in AFPAX2 Register */
@@ -57,29 +58,29 @@ static void h3a_af_setup_regs(struct ispstat *af, void *priv)
 	pax2 |= (conf->paxel.v_cnt - 1) << AF_VT_COUNT_SHIFT;
 	/* Set Horizontal Count */
 	pax2 |= (conf->paxel.h_cnt - 1);
-	isp_reg_writel(af->isp, pax2, OMAP3_ISP_IOMEM_H3A, ISPH3A_AFPAX2);
+	isp_reg_ग_लिखोl(af->isp, pax2, OMAP3_ISP_IOMEM_H3A, ISPH3A_AFPAX2);
 
 	/* Configure PAXSTART Register */
 	/*Configure Horizontal Start */
 	paxstart = conf->paxel.h_start << AF_HZ_START_SHIFT;
 	/* Configure Vertical Start */
 	paxstart |= conf->paxel.v_start;
-	isp_reg_writel(af->isp, paxstart, OMAP3_ISP_IOMEM_H3A,
+	isp_reg_ग_लिखोl(af->isp, paxstart, OMAP3_ISP_IOMEM_H3A,
 		       ISPH3A_AFPAXSTART);
 
 	/*SetIIRSH Register */
-	isp_reg_writel(af->isp, conf->iir.h_start,
+	isp_reg_ग_लिखोl(af->isp, conf->iir.h_start,
 		       OMAP3_ISP_IOMEM_H3A, ISPH3A_AFIIRSH);
 
 	base_coef_set0 = ISPH3A_AFCOEF010;
 	base_coef_set1 = ISPH3A_AFCOEF110;
-	for (index = 0; index <= 8; index += 2) {
+	क्रम (index = 0; index <= 8; index += 2) अणु
 		/*Set IIR Filter0 Coefficients */
 		coef = 0;
 		coef |= conf->iir.coeff_set0[index];
 		coef |= conf->iir.coeff_set0[index + 1] <<
 			AF_COEF_SHIFT;
-		isp_reg_writel(af->isp, coef, OMAP3_ISP_IOMEM_H3A,
+		isp_reg_ग_लिखोl(af->isp, coef, OMAP3_ISP_IOMEM_H3A,
 			       base_coef_set0);
 		base_coef_set0 += AFCOEF_OFFSET;
 
@@ -88,33 +89,33 @@ static void h3a_af_setup_regs(struct ispstat *af, void *priv)
 		coef |= conf->iir.coeff_set1[index];
 		coef |= conf->iir.coeff_set1[index + 1] <<
 			AF_COEF_SHIFT;
-		isp_reg_writel(af->isp, coef, OMAP3_ISP_IOMEM_H3A,
+		isp_reg_ग_लिखोl(af->isp, coef, OMAP3_ISP_IOMEM_H3A,
 			       base_coef_set1);
 		base_coef_set1 += AFCOEF_OFFSET;
-	}
+	पूर्ण
 	/* set AFCOEF0010 Register */
-	isp_reg_writel(af->isp, conf->iir.coeff_set0[10],
+	isp_reg_ग_लिखोl(af->isp, conf->iir.coeff_set0[10],
 		       OMAP3_ISP_IOMEM_H3A, ISPH3A_AFCOEF0010);
 	/* set AFCOEF1010 Register */
-	isp_reg_writel(af->isp, conf->iir.coeff_set1[10],
+	isp_reg_ग_लिखोl(af->isp, conf->iir.coeff_set1[10],
 		       OMAP3_ISP_IOMEM_H3A, ISPH3A_AFCOEF1010);
 
 	/* PCR Register */
 	/* Set RGB Position */
 	pcr = conf->rgb_pos << AF_RGBPOS_SHIFT;
 	/* Set Accumulator Mode */
-	if (conf->fvmode == OMAP3ISP_AF_MODE_PEAK)
+	अगर (conf->fvmode == OMAP3ISP_AF_MODE_PEAK)
 		pcr |= AF_FVMODE;
 	/* Set A-law */
-	if (conf->alaw_enable)
+	अगर (conf->alaw_enable)
 		pcr |= AF_ALAW_EN;
 	/* HMF Configurations */
-	if (conf->hmf.enable) {
+	अगर (conf->hmf.enable) अणु
 		/* Enable HMF */
 		pcr |= AF_MED_EN;
 		/* Set Median Threshold */
 		pcr |= conf->hmf.threshold << AF_MED_TH_SHIFT;
-	}
+	पूर्ण
 	/* Set PCR Register */
 	isp_reg_clr_set(af->isp, OMAP3_ISP_IOMEM_H3A, ISPH3A_PCR,
 			AF_PCR_MASK, pcr);
@@ -123,240 +124,240 @@ static void h3a_af_setup_regs(struct ispstat *af, void *priv)
 	af->config_counter += af->inc_config;
 	af->inc_config = 0;
 	af->buf_size = conf->buf_size;
-}
+पूर्ण
 
-static void h3a_af_enable(struct ispstat *af, int enable)
-{
-	if (enable) {
+अटल व्योम h3a_af_enable(काष्ठा ispstat *af, पूर्णांक enable)
+अणु
+	अगर (enable) अणु
 		isp_reg_set(af->isp, OMAP3_ISP_IOMEM_H3A, ISPH3A_PCR,
 			    ISPH3A_PCR_AF_EN);
 		omap3isp_subclk_enable(af->isp, OMAP3_ISP_SUBCLK_AF);
-	} else {
+	पूर्ण अन्यथा अणु
 		isp_reg_clr(af->isp, OMAP3_ISP_IOMEM_H3A, ISPH3A_PCR,
 			    ISPH3A_PCR_AF_EN);
 		omap3isp_subclk_disable(af->isp, OMAP3_ISP_SUBCLK_AF);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int h3a_af_busy(struct ispstat *af)
-{
-	return isp_reg_readl(af->isp, OMAP3_ISP_IOMEM_H3A, ISPH3A_PCR)
+अटल पूर्णांक h3a_af_busy(काष्ठा ispstat *af)
+अणु
+	वापस isp_reg_पढ़ोl(af->isp, OMAP3_ISP_IOMEM_H3A, ISPH3A_PCR)
 						& ISPH3A_PCR_BUSYAF;
-}
+पूर्ण
 
-static u32 h3a_af_get_buf_size(struct omap3isp_h3a_af_config *conf)
-{
-	return conf->paxel.h_cnt * conf->paxel.v_cnt * OMAP3ISP_AF_PAXEL_SIZE;
-}
+अटल u32 h3a_af_get_buf_size(काष्ठा omap3isp_h3a_af_config *conf)
+अणु
+	वापस conf->paxel.h_cnt * conf->paxel.v_cnt * OMAP3ISP_AF_PAXEL_SIZE;
+पूर्ण
 
 /* Function to check paxel parameters */
-static int h3a_af_validate_params(struct ispstat *af, void *new_conf)
-{
-	struct omap3isp_h3a_af_config *user_cfg = new_conf;
-	struct omap3isp_h3a_af_paxel *paxel_cfg = &user_cfg->paxel;
-	struct omap3isp_h3a_af_iir *iir_cfg = &user_cfg->iir;
-	int index;
+अटल पूर्णांक h3a_af_validate_params(काष्ठा ispstat *af, व्योम *new_conf)
+अणु
+	काष्ठा omap3isp_h3a_af_config *user_cfg = new_conf;
+	काष्ठा omap3isp_h3a_af_paxel *paxel_cfg = &user_cfg->paxel;
+	काष्ठा omap3isp_h3a_af_iir *iir_cfg = &user_cfg->iir;
+	पूर्णांक index;
 	u32 buf_size;
 
 	/* Check horizontal Count */
-	if (IS_OUT_OF_BOUNDS(paxel_cfg->h_cnt,
+	अगर (IS_OUT_OF_BOUNDS(paxel_cfg->h_cnt,
 			     OMAP3ISP_AF_PAXEL_HORIZONTAL_COUNT_MIN,
 			     OMAP3ISP_AF_PAXEL_HORIZONTAL_COUNT_MAX))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Check Vertical Count */
-	if (IS_OUT_OF_BOUNDS(paxel_cfg->v_cnt,
+	अगर (IS_OUT_OF_BOUNDS(paxel_cfg->v_cnt,
 			     OMAP3ISP_AF_PAXEL_VERTICAL_COUNT_MIN,
 			     OMAP3ISP_AF_PAXEL_VERTICAL_COUNT_MAX))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (IS_OUT_OF_BOUNDS(paxel_cfg->height, OMAP3ISP_AF_PAXEL_HEIGHT_MIN,
+	अगर (IS_OUT_OF_BOUNDS(paxel_cfg->height, OMAP3ISP_AF_PAXEL_HEIGHT_MIN,
 			     OMAP3ISP_AF_PAXEL_HEIGHT_MAX) ||
 	    paxel_cfg->height % 2)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Check width */
-	if (IS_OUT_OF_BOUNDS(paxel_cfg->width, OMAP3ISP_AF_PAXEL_WIDTH_MIN,
+	अगर (IS_OUT_OF_BOUNDS(paxel_cfg->width, OMAP3ISP_AF_PAXEL_WIDTH_MIN,
 			     OMAP3ISP_AF_PAXEL_WIDTH_MAX) ||
 	    paxel_cfg->width % 2)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Check Line Increment */
-	if (IS_OUT_OF_BOUNDS(paxel_cfg->line_inc,
+	अगर (IS_OUT_OF_BOUNDS(paxel_cfg->line_inc,
 			     OMAP3ISP_AF_PAXEL_INCREMENT_MIN,
 			     OMAP3ISP_AF_PAXEL_INCREMENT_MAX) ||
 	    paxel_cfg->line_inc % 2)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Check Horizontal Start */
-	if ((paxel_cfg->h_start < iir_cfg->h_start) ||
+	अगर ((paxel_cfg->h_start < iir_cfg->h_start) ||
 	    IS_OUT_OF_BOUNDS(paxel_cfg->h_start,
 			     OMAP3ISP_AF_PAXEL_HZSTART_MIN,
 			     OMAP3ISP_AF_PAXEL_HZSTART_MAX))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Check IIR */
-	for (index = 0; index < OMAP3ISP_AF_NUM_COEF; index++) {
-		if ((iir_cfg->coeff_set0[index]) > OMAP3ISP_AF_COEF_MAX)
-			return -EINVAL;
+	क्रम (index = 0; index < OMAP3ISP_AF_NUM_COEF; index++) अणु
+		अगर ((iir_cfg->coeff_set0[index]) > OMAP3ISP_AF_COEF_MAX)
+			वापस -EINVAL;
 
-		if ((iir_cfg->coeff_set1[index]) > OMAP3ISP_AF_COEF_MAX)
-			return -EINVAL;
-	}
+		अगर ((iir_cfg->coeff_set1[index]) > OMAP3ISP_AF_COEF_MAX)
+			वापस -EINVAL;
+	पूर्ण
 
-	if (IS_OUT_OF_BOUNDS(iir_cfg->h_start, OMAP3ISP_AF_IIRSH_MIN,
+	अगर (IS_OUT_OF_BOUNDS(iir_cfg->h_start, OMAP3ISP_AF_IIRSH_MIN,
 			     OMAP3ISP_AF_IIRSH_MAX))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Hack: If paxel size is 12, the 10th AF window may be corrupted */
-	if ((paxel_cfg->h_cnt * paxel_cfg->v_cnt > 9) &&
+	/* Hack: If paxel size is 12, the 10th AF winकरोw may be corrupted */
+	अगर ((paxel_cfg->h_cnt * paxel_cfg->v_cnt > 9) &&
 	    (paxel_cfg->width * paxel_cfg->height == 12))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	buf_size = h3a_af_get_buf_size(user_cfg);
-	if (buf_size > user_cfg->buf_size)
+	अगर (buf_size > user_cfg->buf_size)
 		/* User buf_size request wasn't enough */
 		user_cfg->buf_size = buf_size;
-	else if (user_cfg->buf_size > OMAP3ISP_AF_MAX_BUF_SIZE)
+	अन्यथा अगर (user_cfg->buf_size > OMAP3ISP_AF_MAX_BUF_SIZE)
 		user_cfg->buf_size = OMAP3ISP_AF_MAX_BUF_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Update local parameters */
-static void h3a_af_set_params(struct ispstat *af, void *new_conf)
-{
-	struct omap3isp_h3a_af_config *user_cfg = new_conf;
-	struct omap3isp_h3a_af_config *cur_cfg = af->priv;
-	int update = 0;
-	int index;
+अटल व्योम h3a_af_set_params(काष्ठा ispstat *af, व्योम *new_conf)
+अणु
+	काष्ठा omap3isp_h3a_af_config *user_cfg = new_conf;
+	काष्ठा omap3isp_h3a_af_config *cur_cfg = af->priv;
+	पूर्णांक update = 0;
+	पूर्णांक index;
 
 	/* alaw */
-	if (cur_cfg->alaw_enable != user_cfg->alaw_enable) {
+	अगर (cur_cfg->alaw_enable != user_cfg->alaw_enable) अणु
 		update = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* hmf */
-	if (cur_cfg->hmf.enable != user_cfg->hmf.enable) {
+	अगर (cur_cfg->hmf.enable != user_cfg->hmf.enable) अणु
 		update = 1;
-		goto out;
-	}
-	if (cur_cfg->hmf.threshold != user_cfg->hmf.threshold) {
+		जाओ out;
+	पूर्ण
+	अगर (cur_cfg->hmf.threshold != user_cfg->hmf.threshold) अणु
 		update = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* rgbpos */
-	if (cur_cfg->rgb_pos != user_cfg->rgb_pos) {
+	अगर (cur_cfg->rgb_pos != user_cfg->rgb_pos) अणु
 		update = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* iir */
-	if (cur_cfg->iir.h_start != user_cfg->iir.h_start) {
+	अगर (cur_cfg->iir.h_start != user_cfg->iir.h_start) अणु
 		update = 1;
-		goto out;
-	}
-	for (index = 0; index < OMAP3ISP_AF_NUM_COEF; index++) {
-		if (cur_cfg->iir.coeff_set0[index] !=
-				user_cfg->iir.coeff_set0[index]) {
+		जाओ out;
+	पूर्ण
+	क्रम (index = 0; index < OMAP3ISP_AF_NUM_COEF; index++) अणु
+		अगर (cur_cfg->iir.coeff_set0[index] !=
+				user_cfg->iir.coeff_set0[index]) अणु
 			update = 1;
-			goto out;
-		}
-		if (cur_cfg->iir.coeff_set1[index] !=
-				user_cfg->iir.coeff_set1[index]) {
+			जाओ out;
+		पूर्ण
+		अगर (cur_cfg->iir.coeff_set1[index] !=
+				user_cfg->iir.coeff_set1[index]) अणु
 			update = 1;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* paxel */
-	if ((cur_cfg->paxel.width != user_cfg->paxel.width) ||
+	अगर ((cur_cfg->paxel.width != user_cfg->paxel.width) ||
 	    (cur_cfg->paxel.height != user_cfg->paxel.height) ||
 	    (cur_cfg->paxel.h_start != user_cfg->paxel.h_start) ||
 	    (cur_cfg->paxel.v_start != user_cfg->paxel.v_start) ||
 	    (cur_cfg->paxel.h_cnt != user_cfg->paxel.h_cnt) ||
 	    (cur_cfg->paxel.v_cnt != user_cfg->paxel.v_cnt) ||
-	    (cur_cfg->paxel.line_inc != user_cfg->paxel.line_inc)) {
+	    (cur_cfg->paxel.line_inc != user_cfg->paxel.line_inc)) अणु
 		update = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* af_mode */
-	if (cur_cfg->fvmode != user_cfg->fvmode)
+	अगर (cur_cfg->fvmode != user_cfg->fvmode)
 		update = 1;
 
 out:
-	if (update || !af->configured) {
-		memcpy(cur_cfg, user_cfg, sizeof(*cur_cfg));
+	अगर (update || !af->configured) अणु
+		स_नकल(cur_cfg, user_cfg, माप(*cur_cfg));
 		af->inc_config++;
 		af->update = 1;
 		/*
-		 * User might be asked for a bigger buffer than necessary for
-		 * this configuration. In order to return the right amount of
+		 * User might be asked क्रम a bigger buffer than necessary क्रम
+		 * this configuration. In order to वापस the right amount of
 		 * data during buffer request, let's calculate the size here
 		 * instead of stick with user_cfg->buf_size.
 		 */
 		cur_cfg->buf_size = h3a_af_get_buf_size(cur_cfg);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static long h3a_af_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
-{
-	struct ispstat *stat = v4l2_get_subdevdata(sd);
+अटल दीर्घ h3a_af_ioctl(काष्ठा v4l2_subdev *sd, अचिन्हित पूर्णांक cmd, व्योम *arg)
+अणु
+	काष्ठा ispstat *stat = v4l2_get_subdevdata(sd);
 
-	switch (cmd) {
-	case VIDIOC_OMAP3ISP_AF_CFG:
-		return omap3isp_stat_config(stat, arg);
-	case VIDIOC_OMAP3ISP_STAT_REQ:
-		return omap3isp_stat_request_statistics(stat, arg);
-	case VIDIOC_OMAP3ISP_STAT_REQ_TIME32:
-		return omap3isp_stat_request_statistics_time32(stat, arg);
-	case VIDIOC_OMAP3ISP_STAT_EN: {
-		int *en = arg;
-		return omap3isp_stat_enable(stat, !!*en);
-	}
-	}
+	चयन (cmd) अणु
+	हाल VIDIOC_OMAP3ISP_AF_CFG:
+		वापस omap3isp_stat_config(stat, arg);
+	हाल VIDIOC_OMAP3ISP_STAT_REQ:
+		वापस omap3isp_stat_request_statistics(stat, arg);
+	हाल VIDIOC_OMAP3ISP_STAT_REQ_TIME32:
+		वापस omap3isp_stat_request_statistics_समय32(stat, arg);
+	हाल VIDIOC_OMAP3ISP_STAT_EN: अणु
+		पूर्णांक *en = arg;
+		वापस omap3isp_stat_enable(stat, !!*en);
+	पूर्ण
+	पूर्ण
 
-	return -ENOIOCTLCMD;
+	वापस -ENOIOCTLCMD;
 
-}
+पूर्ण
 
-static const struct ispstat_ops h3a_af_ops = {
+अटल स्थिर काष्ठा ispstat_ops h3a_af_ops = अणु
 	.validate_params	= h3a_af_validate_params,
 	.set_params		= h3a_af_set_params,
 	.setup_regs		= h3a_af_setup_regs,
 	.enable			= h3a_af_enable,
 	.busy			= h3a_af_busy,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_core_ops h3a_af_subdev_core_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_core_ops h3a_af_subdev_core_ops = अणु
 	.ioctl = h3a_af_ioctl,
 	.subscribe_event = omap3isp_stat_subscribe_event,
 	.unsubscribe_event = omap3isp_stat_unsubscribe_event,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_video_ops h3a_af_subdev_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops h3a_af_subdev_video_ops = अणु
 	.s_stream = omap3isp_stat_s_stream,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops h3a_af_subdev_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops h3a_af_subdev_ops = अणु
 	.core = &h3a_af_subdev_core_ops,
 	.video = &h3a_af_subdev_video_ops,
-};
+पूर्ण;
 
-/* Function to register the AF character device driver. */
-int omap3isp_h3a_af_init(struct isp_device *isp)
-{
-	struct ispstat *af = &isp->isp_af;
-	struct omap3isp_h3a_af_config *af_cfg;
-	struct omap3isp_h3a_af_config *af_recover_cfg = NULL;
-	int ret;
+/* Function to रेजिस्टर the AF अक्षरacter device driver. */
+पूर्णांक omap3isp_h3a_af_init(काष्ठा isp_device *isp)
+अणु
+	काष्ठा ispstat *af = &isp->isp_af;
+	काष्ठा omap3isp_h3a_af_config *af_cfg;
+	काष्ठा omap3isp_h3a_af_config *af_recover_cfg = शून्य;
+	पूर्णांक ret;
 
-	af_cfg = kzalloc(sizeof(*af_cfg), GFP_KERNEL);
-	if (af_cfg == NULL)
-		return -ENOMEM;
+	af_cfg = kzalloc(माप(*af_cfg), GFP_KERNEL);
+	अगर (af_cfg == शून्य)
+		वापस -ENOMEM;
 
 	af->ops = &h3a_af_ops;
 	af->priv = af_cfg;
@@ -364,13 +365,13 @@ int omap3isp_h3a_af_init(struct isp_device *isp)
 	af->isp = isp;
 
 	/* Set recover state configuration */
-	af_recover_cfg = kzalloc(sizeof(*af_recover_cfg), GFP_KERNEL);
-	if (!af_recover_cfg) {
+	af_recover_cfg = kzalloc(माप(*af_recover_cfg), GFP_KERNEL);
+	अगर (!af_recover_cfg) अणु
 		dev_err(af->isp->dev,
 			"AF: cannot allocate memory for recover configuration.\n");
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	af_recover_cfg->paxel.h_start = OMAP3ISP_AF_PAXEL_HZSTART_MIN;
 	af_recover_cfg->paxel.width = OMAP3ISP_AF_PAXEL_WIDTH_MIN;
@@ -378,12 +379,12 @@ int omap3isp_h3a_af_init(struct isp_device *isp)
 	af_recover_cfg->paxel.h_cnt = OMAP3ISP_AF_PAXEL_HORIZONTAL_COUNT_MIN;
 	af_recover_cfg->paxel.v_cnt = OMAP3ISP_AF_PAXEL_VERTICAL_COUNT_MIN;
 	af_recover_cfg->paxel.line_inc = OMAP3ISP_AF_PAXEL_INCREMENT_MIN;
-	if (h3a_af_validate_params(af, af_recover_cfg)) {
+	अगर (h3a_af_validate_params(af, af_recover_cfg)) अणु
 		dev_err(af->isp->dev,
 			"AF: recover configuration is invalid.\n");
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	af_recover_cfg->buf_size = h3a_af_get_buf_size(af_recover_cfg);
 	af->recover_priv = af_recover_cfg;
@@ -391,15 +392,15 @@ int omap3isp_h3a_af_init(struct isp_device *isp)
 	ret = omap3isp_stat_init(af, "AF", &h3a_af_subdev_ops);
 
 err:
-	if (ret) {
-		kfree(af_cfg);
-		kfree(af_recover_cfg);
-	}
+	अगर (ret) अणु
+		kमुक्त(af_cfg);
+		kमुक्त(af_recover_cfg);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void omap3isp_h3a_af_cleanup(struct isp_device *isp)
-{
+व्योम omap3isp_h3a_af_cleanup(काष्ठा isp_device *isp)
+अणु
 	omap3isp_stat_cleanup(&isp->isp_af);
-}
+पूर्ण

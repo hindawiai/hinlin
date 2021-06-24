@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * AMD 10Gb Ethernet driver
  *
@@ -8,7 +9,7 @@
  *
  * Copyright (c) 2016 Advanced Micro Devices, Inc.
  *
- * This file is free software; you may copy, redistribute and/or modify
+ * This file is मुक्त software; you may copy, redistribute and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or (at
  * your option) any later version.
@@ -16,27 +17,27 @@
  * This file is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * aदीर्घ with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
- *     The Synopsys DWC ETHER XGMAC Software Driver and documentation
+ *     The Synopsys DWC ETHER XGMAC Software Driver and करोcumentation
  *     (hereinafter "Software") is an unsupported proprietary work of Synopsys,
  *     Inc. unless otherwise expressly agreed to in writing between Synopsys
  *     and you.
  *
  *     The Software IS NOT an item of Licensed Software or Licensed Product
- *     under any End User Software License Agreement or Agreement for Licensed
+ *     under any End User Software License Agreement or Agreement क्रम Licensed
  *     Product with Synopsys or any supplement thereto.  Permission is hereby
- *     granted, free of charge, to any person obtaining a copy of this software
+ *     granted, मुक्त of अक्षरge, to any person obtaining a copy of this software
  *     annotated with this license and the Software, to deal in the Software
  *     without restriction, including without limitation the rights to use,
- *     copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ *     copy, modअगरy, merge, publish, distribute, sublicense, and/or sell copies
  *     of the Software, and to permit persons to whom the Software is furnished
- *     to do so, subject to the following conditions:
+ *     to करो so, subject to the following conditions:
  *
  *     The above copyright notice and this permission notice shall be included
  *     in all copies or substantial portions of the Software.
@@ -45,7 +46,7 @@
  *     BASIS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
  *     PARTICULAR PURPOSE ARE HEREBY DISCLAIMED. IN NO EVENT SHALL SYNOPSYS
- *     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *     BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *     CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *     SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  *     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -54,27 +55,27 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * License 2: Modified BSD
+ * License 2: Modअगरied BSD
  *
  * Copyright (c) 2016 Advanced Micro Devices, Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
+ *     * Redistributions in binary क्रमm must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
+ *       करोcumentation and/or other materials provided with the distribution.
  *     * Neither the name of Advanced Micro Devices, Inc. nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this software without specific prior written permission.
+ *       names of its contributors may be used to enकरोrse or promote products
+ *       derived from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -83,20 +84,20 @@
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
- *     The Synopsys DWC ETHER XGMAC Software Driver and documentation
+ *     The Synopsys DWC ETHER XGMAC Software Driver and करोcumentation
  *     (hereinafter "Software") is an unsupported proprietary work of Synopsys,
  *     Inc. unless otherwise expressly agreed to in writing between Synopsys
  *     and you.
  *
  *     The Software IS NOT an item of Licensed Software or Licensed Product
- *     under any End User Software License Agreement or Agreement for Licensed
+ *     under any End User Software License Agreement or Agreement क्रम Licensed
  *     Product with Synopsys or any supplement thereto.  Permission is hereby
- *     granted, free of charge, to any person obtaining a copy of this software
+ *     granted, मुक्त of अक्षरge, to any person obtaining a copy of this software
  *     annotated with this license and the Software, to deal in the Software
  *     without restriction, including without limitation the rights to use,
- *     copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ *     copy, modअगरy, merge, publish, distribute, sublicense, and/or sell copies
  *     of the Software, and to permit persons to whom the Software is furnished
- *     to do so, subject to the following conditions:
+ *     to करो so, subject to the following conditions:
  *
  *     The above copyright notice and this permission notice shall be included
  *     in all copies or substantial portions of the Software.
@@ -105,7 +106,7 @@
  *     BASIS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
  *     PARTICULAR PURPOSE ARE HEREBY DISCLAIMED. IN NO EVENT SHALL SYNOPSYS
- *     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *     BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *     CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *     SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  *     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -114,49 +115,49 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/kmod.h>
-#include <linux/mdio.h>
-#include <linux/phy.h>
-#include <linux/ethtool.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/mdपन.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/ethtool.h>
 
-#include "xgbe.h"
-#include "xgbe-common.h"
+#समावेश "xgbe.h"
+#समावेश "xgbe-common.h"
 
-#define XGBE_PHY_PORT_SPEED_100		BIT(0)
-#define XGBE_PHY_PORT_SPEED_1000	BIT(1)
-#define XGBE_PHY_PORT_SPEED_2500	BIT(2)
-#define XGBE_PHY_PORT_SPEED_10000	BIT(3)
+#घोषणा XGBE_PHY_PORT_SPEED_100		BIT(0)
+#घोषणा XGBE_PHY_PORT_SPEED_1000	BIT(1)
+#घोषणा XGBE_PHY_PORT_SPEED_2500	BIT(2)
+#घोषणा XGBE_PHY_PORT_SPEED_10000	BIT(3)
 
-#define XGBE_MUTEX_RELEASE		0x80000000
+#घोषणा XGBE_MUTEX_RELEASE		0x80000000
 
-#define XGBE_SFP_DIRECT			7
+#घोषणा XGBE_SFP_सूचीECT			7
 
 /* I2C target addresses */
-#define XGBE_SFP_SERIAL_ID_ADDRESS	0x50
-#define XGBE_SFP_DIAG_INFO_ADDRESS	0x51
-#define XGBE_SFP_PHY_ADDRESS		0x56
-#define XGBE_GPIO_ADDRESS_PCA9555	0x20
+#घोषणा XGBE_SFP_SERIAL_ID_ADDRESS	0x50
+#घोषणा XGBE_SFP_DIAG_INFO_ADDRESS	0x51
+#घोषणा XGBE_SFP_PHY_ADDRESS		0x56
+#घोषणा XGBE_GPIO_ADDRESS_PCA9555	0x20
 
-/* SFP sideband signal indicators */
-#define XGBE_GPIO_NO_TX_FAULT		BIT(0)
-#define XGBE_GPIO_NO_RATE_SELECT	BIT(1)
-#define XGBE_GPIO_NO_MOD_ABSENT		BIT(2)
-#define XGBE_GPIO_NO_RX_LOS		BIT(3)
+/* SFP sideband संकेत indicators */
+#घोषणा XGBE_GPIO_NO_TX_FAULT		BIT(0)
+#घोषणा XGBE_GPIO_NO_RATE_SELECT	BIT(1)
+#घोषणा XGBE_GPIO_NO_MOD_ABSENT		BIT(2)
+#घोषणा XGBE_GPIO_NO_RX_LOS		BIT(3)
 
-/* Rate-change complete wait/retry count */
-#define XGBE_RATECHANGE_COUNT		500
+/* Rate-change complete रुको/retry count */
+#घोषणा XGBE_RATECHANGE_COUNT		500
 
-/* CDR delay values for KR support (in usec) */
-#define XGBE_CDR_DELAY_INIT		10000
-#define XGBE_CDR_DELAY_INC		10000
-#define XGBE_CDR_DELAY_MAX		100000
+/* CDR delay values क्रम KR support (in usec) */
+#घोषणा XGBE_CDR_DELAY_INIT		10000
+#घोषणा XGBE_CDR_DELAY_INC		10000
+#घोषणा XGBE_CDR_DELAY_MAX		100000
 
 /* RRC frequency during link status check */
-#define XGBE_RRC_FREQUENCY		10
+#घोषणा XGBE_RRC_FREQUENCY		10
 
-enum xgbe_port_mode {
+क्रमागत xgbe_port_mode अणु
 	XGBE_PORT_MODE_RSVD = 0,
 	XGBE_PORT_MODE_BACKPLANE,
 	XGBE_PORT_MODE_BACKPLANE_2500,
@@ -168,30 +169,30 @@ enum xgbe_port_mode {
 	XGBE_PORT_MODE_SFP,
 	XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG,
 	XGBE_PORT_MODE_MAX,
-};
+पूर्ण;
 
-enum xgbe_conn_type {
+क्रमागत xgbe_conn_type अणु
 	XGBE_CONN_TYPE_NONE = 0,
 	XGBE_CONN_TYPE_SFP,
 	XGBE_CONN_TYPE_MDIO,
 	XGBE_CONN_TYPE_RSVD1,
 	XGBE_CONN_TYPE_BACKPLANE,
 	XGBE_CONN_TYPE_MAX,
-};
+पूर्ण;
 
 /* SFP/SFP+ related definitions */
-enum xgbe_sfp_comm {
-	XGBE_SFP_COMM_DIRECT = 0,
+क्रमागत xgbe_sfp_comm अणु
+	XGBE_SFP_COMM_सूचीECT = 0,
 	XGBE_SFP_COMM_PCA9545,
-};
+पूर्ण;
 
-enum xgbe_sfp_cable {
+क्रमागत xgbe_sfp_cable अणु
 	XGBE_SFP_CABLE_UNKNOWN = 0,
 	XGBE_SFP_CABLE_ACTIVE,
 	XGBE_SFP_CABLE_PASSIVE,
-};
+पूर्ण;
 
-enum xgbe_sfp_base {
+क्रमागत xgbe_sfp_base अणु
 	XGBE_SFP_BASE_UNKNOWN = 0,
 	XGBE_SFP_BASE_1000_T,
 	XGBE_SFP_BASE_1000_SX,
@@ -202,208 +203,208 @@ enum xgbe_sfp_base {
 	XGBE_SFP_BASE_10000_LRM,
 	XGBE_SFP_BASE_10000_ER,
 	XGBE_SFP_BASE_10000_CR,
-};
+पूर्ण;
 
-enum xgbe_sfp_speed {
+क्रमागत xgbe_sfp_speed अणु
 	XGBE_SFP_SPEED_UNKNOWN = 0,
 	XGBE_SFP_SPEED_100_1000,
 	XGBE_SFP_SPEED_1000,
 	XGBE_SFP_SPEED_10000,
-};
+पूर्ण;
 
 /* SFP Serial ID Base ID values relative to an offset of 0 */
-#define XGBE_SFP_BASE_ID			0
-#define XGBE_SFP_ID_SFP				0x03
+#घोषणा XGBE_SFP_BASE_ID			0
+#घोषणा XGBE_SFP_ID_SFP				0x03
 
-#define XGBE_SFP_BASE_EXT_ID			1
-#define XGBE_SFP_EXT_ID_SFP			0x04
+#घोषणा XGBE_SFP_BASE_EXT_ID			1
+#घोषणा XGBE_SFP_EXT_ID_SFP			0x04
 
-#define XGBE_SFP_BASE_10GBE_CC			3
-#define XGBE_SFP_BASE_10GBE_CC_SR		BIT(4)
-#define XGBE_SFP_BASE_10GBE_CC_LR		BIT(5)
-#define XGBE_SFP_BASE_10GBE_CC_LRM		BIT(6)
-#define XGBE_SFP_BASE_10GBE_CC_ER		BIT(7)
+#घोषणा XGBE_SFP_BASE_10GBE_CC			3
+#घोषणा XGBE_SFP_BASE_10GBE_CC_SR		BIT(4)
+#घोषणा XGBE_SFP_BASE_10GBE_CC_LR		BIT(5)
+#घोषणा XGBE_SFP_BASE_10GBE_CC_LRM		BIT(6)
+#घोषणा XGBE_SFP_BASE_10GBE_CC_ER		BIT(7)
 
-#define XGBE_SFP_BASE_1GBE_CC			6
-#define XGBE_SFP_BASE_1GBE_CC_SX		BIT(0)
-#define XGBE_SFP_BASE_1GBE_CC_LX		BIT(1)
-#define XGBE_SFP_BASE_1GBE_CC_CX		BIT(2)
-#define XGBE_SFP_BASE_1GBE_CC_T			BIT(3)
+#घोषणा XGBE_SFP_BASE_1GBE_CC			6
+#घोषणा XGBE_SFP_BASE_1GBE_CC_SX		BIT(0)
+#घोषणा XGBE_SFP_BASE_1GBE_CC_LX		BIT(1)
+#घोषणा XGBE_SFP_BASE_1GBE_CC_CX		BIT(2)
+#घोषणा XGBE_SFP_BASE_1GBE_CC_T			BIT(3)
 
-#define XGBE_SFP_BASE_CABLE			8
-#define XGBE_SFP_BASE_CABLE_PASSIVE		BIT(2)
-#define XGBE_SFP_BASE_CABLE_ACTIVE		BIT(3)
+#घोषणा XGBE_SFP_BASE_CABLE			8
+#घोषणा XGBE_SFP_BASE_CABLE_PASSIVE		BIT(2)
+#घोषणा XGBE_SFP_BASE_CABLE_ACTIVE		BIT(3)
 
-#define XGBE_SFP_BASE_BR			12
-#define XGBE_SFP_BASE_BR_1GBE_MIN		0x0a
-#define XGBE_SFP_BASE_BR_1GBE_MAX		0x0d
-#define XGBE_SFP_BASE_BR_10GBE_MIN		0x64
-#define XGBE_SFP_BASE_BR_10GBE_MAX		0x68
+#घोषणा XGBE_SFP_BASE_BR			12
+#घोषणा XGBE_SFP_BASE_BR_1GBE_MIN		0x0a
+#घोषणा XGBE_SFP_BASE_BR_1GBE_MAX		0x0d
+#घोषणा XGBE_SFP_BASE_BR_10GBE_MIN		0x64
+#घोषणा XGBE_SFP_BASE_BR_10GBE_MAX		0x68
 
-#define XGBE_SFP_BASE_CU_CABLE_LEN		18
+#घोषणा XGBE_SFP_BASE_CU_CABLE_LEN		18
 
-#define XGBE_SFP_BASE_VENDOR_NAME		20
-#define XGBE_SFP_BASE_VENDOR_NAME_LEN		16
-#define XGBE_SFP_BASE_VENDOR_PN			40
-#define XGBE_SFP_BASE_VENDOR_PN_LEN		16
-#define XGBE_SFP_BASE_VENDOR_REV		56
-#define XGBE_SFP_BASE_VENDOR_REV_LEN		4
+#घोषणा XGBE_SFP_BASE_VENDOR_NAME		20
+#घोषणा XGBE_SFP_BASE_VENDOR_NAME_LEN		16
+#घोषणा XGBE_SFP_BASE_VENDOR_PN			40
+#घोषणा XGBE_SFP_BASE_VENDOR_PN_LEN		16
+#घोषणा XGBE_SFP_BASE_VENDOR_REV		56
+#घोषणा XGBE_SFP_BASE_VENDOR_REV_LEN		4
 
-#define XGBE_SFP_BASE_CC			63
+#घोषणा XGBE_SFP_BASE_CC			63
 
 /* SFP Serial ID Extended ID values relative to an offset of 64 */
-#define XGBE_SFP_BASE_VENDOR_SN			4
-#define XGBE_SFP_BASE_VENDOR_SN_LEN		16
+#घोषणा XGBE_SFP_BASE_VENDOR_SN			4
+#घोषणा XGBE_SFP_BASE_VENDOR_SN_LEN		16
 
-#define XGBE_SFP_EXTD_OPT1			1
-#define XGBE_SFP_EXTD_OPT1_RX_LOS		BIT(1)
-#define XGBE_SFP_EXTD_OPT1_TX_FAULT		BIT(3)
+#घोषणा XGBE_SFP_EXTD_OPT1			1
+#घोषणा XGBE_SFP_EXTD_OPT1_RX_LOS		BIT(1)
+#घोषणा XGBE_SFP_EXTD_OPT1_TX_FAULT		BIT(3)
 
-#define XGBE_SFP_EXTD_DIAG			28
-#define XGBE_SFP_EXTD_DIAG_ADDR_CHANGE		BIT(2)
+#घोषणा XGBE_SFP_EXTD_DIAG			28
+#घोषणा XGBE_SFP_EXTD_DIAG_ADDR_CHANGE		BIT(2)
 
-#define XGBE_SFP_EXTD_SFF_8472			30
+#घोषणा XGBE_SFP_EXTD_SFF_8472			30
 
-#define XGBE_SFP_EXTD_CC			31
+#घोषणा XGBE_SFP_EXTD_CC			31
 
-struct xgbe_sfp_eeprom {
+काष्ठा xgbe_sfp_eeprom अणु
 	u8 base[64];
 	u8 extd[32];
-	u8 vendor[32];
-};
+	u8 venकरोr[32];
+पूर्ण;
 
-#define XGBE_SFP_DIAGS_SUPPORTED(_x)			\
+#घोषणा XGBE_SFP_DIAGS_SUPPORTED(_x)			\
 	((_x)->extd[XGBE_SFP_EXTD_SFF_8472] &&		\
 	 !((_x)->extd[XGBE_SFP_EXTD_DIAG] & XGBE_SFP_EXTD_DIAG_ADDR_CHANGE))
 
-#define XGBE_SFP_EEPROM_BASE_LEN	256
-#define XGBE_SFP_EEPROM_DIAG_LEN	256
-#define XGBE_SFP_EEPROM_MAX		(XGBE_SFP_EEPROM_BASE_LEN +	\
+#घोषणा XGBE_SFP_EEPROM_BASE_LEN	256
+#घोषणा XGBE_SFP_EEPROM_DIAG_LEN	256
+#घोषणा XGBE_SFP_EEPROM_MAX		(XGBE_SFP_EEPROM_BASE_LEN +	\
 					 XGBE_SFP_EEPROM_DIAG_LEN)
 
-#define XGBE_BEL_FUSE_VENDOR	"BEL-FUSE        "
-#define XGBE_BEL_FUSE_PARTNO	"1GBT-SFP06      "
+#घोषणा XGBE_BEL_FUSE_VENDOR	"BEL-FUSE        "
+#घोषणा XGBE_BEL_FUSE_PARTNO	"1GBT-SFP06      "
 
-struct xgbe_sfp_ascii {
-	union {
-		char vendor[XGBE_SFP_BASE_VENDOR_NAME_LEN + 1];
-		char partno[XGBE_SFP_BASE_VENDOR_PN_LEN + 1];
-		char rev[XGBE_SFP_BASE_VENDOR_REV_LEN + 1];
-		char serno[XGBE_SFP_BASE_VENDOR_SN_LEN + 1];
-	} u;
-};
+काष्ठा xgbe_sfp_ascii अणु
+	जोड़ अणु
+		अक्षर venकरोr[XGBE_SFP_BASE_VENDOR_NAME_LEN + 1];
+		अक्षर partno[XGBE_SFP_BASE_VENDOR_PN_LEN + 1];
+		अक्षर rev[XGBE_SFP_BASE_VENDOR_REV_LEN + 1];
+		अक्षर serno[XGBE_SFP_BASE_VENDOR_SN_LEN + 1];
+	पूर्ण u;
+पूर्ण;
 
 /* MDIO PHY reset types */
-enum xgbe_mdio_reset {
+क्रमागत xgbe_mdio_reset अणु
 	XGBE_MDIO_RESET_NONE = 0,
 	XGBE_MDIO_RESET_I2C_GPIO,
 	XGBE_MDIO_RESET_INT_GPIO,
 	XGBE_MDIO_RESET_MAX,
-};
+पूर्ण;
 
 /* Re-driver related definitions */
-enum xgbe_phy_redrv_if {
+क्रमागत xgbe_phy_redrv_अगर अणु
 	XGBE_PHY_REDRV_IF_MDIO = 0,
 	XGBE_PHY_REDRV_IF_I2C,
 	XGBE_PHY_REDRV_IF_MAX,
-};
+पूर्ण;
 
-enum xgbe_phy_redrv_model {
+क्रमागत xgbe_phy_redrv_model अणु
 	XGBE_PHY_REDRV_MODEL_4223 = 0,
 	XGBE_PHY_REDRV_MODEL_4227,
 	XGBE_PHY_REDRV_MODEL_MAX,
-};
+पूर्ण;
 
-enum xgbe_phy_redrv_mode {
+क्रमागत xgbe_phy_redrv_mode अणु
 	XGBE_PHY_REDRV_MODE_CX = 5,
 	XGBE_PHY_REDRV_MODE_SR = 9,
-};
+पूर्ण;
 
-#define XGBE_PHY_REDRV_MODE_REG	0x12b0
+#घोषणा XGBE_PHY_REDRV_MODE_REG	0x12b0
 
-/* PHY related configuration information */
-struct xgbe_phy_data {
-	enum xgbe_port_mode port_mode;
+/* PHY related configuration inक्रमmation */
+काष्ठा xgbe_phy_data अणु
+	क्रमागत xgbe_port_mode port_mode;
 
-	unsigned int port_id;
+	अचिन्हित पूर्णांक port_id;
 
-	unsigned int port_speeds;
+	अचिन्हित पूर्णांक port_speeds;
 
-	enum xgbe_conn_type conn_type;
+	क्रमागत xgbe_conn_type conn_type;
 
-	enum xgbe_mode cur_mode;
-	enum xgbe_mode start_mode;
+	क्रमागत xgbe_mode cur_mode;
+	क्रमागत xgbe_mode start_mode;
 
-	unsigned int rrc_count;
+	अचिन्हित पूर्णांक rrc_count;
 
-	unsigned int mdio_addr;
+	अचिन्हित पूर्णांक mdio_addr;
 
 	/* SFP Support */
-	enum xgbe_sfp_comm sfp_comm;
-	unsigned int sfp_mux_address;
-	unsigned int sfp_mux_channel;
+	क्रमागत xgbe_sfp_comm sfp_comm;
+	अचिन्हित पूर्णांक sfp_mux_address;
+	अचिन्हित पूर्णांक sfp_mux_channel;
 
-	unsigned int sfp_gpio_address;
-	unsigned int sfp_gpio_mask;
-	unsigned int sfp_gpio_inputs;
-	unsigned int sfp_gpio_rx_los;
-	unsigned int sfp_gpio_tx_fault;
-	unsigned int sfp_gpio_mod_absent;
-	unsigned int sfp_gpio_rate_select;
+	अचिन्हित पूर्णांक sfp_gpio_address;
+	अचिन्हित पूर्णांक sfp_gpio_mask;
+	अचिन्हित पूर्णांक sfp_gpio_inमाला_दो;
+	अचिन्हित पूर्णांक sfp_gpio_rx_los;
+	अचिन्हित पूर्णांक sfp_gpio_tx_fault;
+	अचिन्हित पूर्णांक sfp_gpio_mod_असलent;
+	अचिन्हित पूर्णांक sfp_gpio_rate_select;
 
-	unsigned int sfp_rx_los;
-	unsigned int sfp_tx_fault;
-	unsigned int sfp_mod_absent;
-	unsigned int sfp_changed;
-	unsigned int sfp_phy_avail;
-	unsigned int sfp_cable_len;
-	enum xgbe_sfp_base sfp_base;
-	enum xgbe_sfp_cable sfp_cable;
-	enum xgbe_sfp_speed sfp_speed;
-	struct xgbe_sfp_eeprom sfp_eeprom;
+	अचिन्हित पूर्णांक sfp_rx_los;
+	अचिन्हित पूर्णांक sfp_tx_fault;
+	अचिन्हित पूर्णांक sfp_mod_असलent;
+	अचिन्हित पूर्णांक sfp_changed;
+	अचिन्हित पूर्णांक sfp_phy_avail;
+	अचिन्हित पूर्णांक sfp_cable_len;
+	क्रमागत xgbe_sfp_base sfp_base;
+	क्रमागत xgbe_sfp_cable sfp_cable;
+	क्रमागत xgbe_sfp_speed sfp_speed;
+	काष्ठा xgbe_sfp_eeprom sfp_eeprom;
 
 	/* External PHY support */
-	enum xgbe_mdio_mode phydev_mode;
-	struct mii_bus *mii;
-	struct phy_device *phydev;
-	enum xgbe_mdio_reset mdio_reset;
-	unsigned int mdio_reset_addr;
-	unsigned int mdio_reset_gpio;
+	क्रमागत xgbe_mdio_mode phydev_mode;
+	काष्ठा mii_bus *mii;
+	काष्ठा phy_device *phydev;
+	क्रमागत xgbe_mdio_reset mdio_reset;
+	अचिन्हित पूर्णांक mdio_reset_addr;
+	अचिन्हित पूर्णांक mdio_reset_gpio;
 
 	/* Re-driver support */
-	unsigned int redrv;
-	unsigned int redrv_if;
-	unsigned int redrv_addr;
-	unsigned int redrv_lane;
-	unsigned int redrv_model;
+	अचिन्हित पूर्णांक redrv;
+	अचिन्हित पूर्णांक redrv_अगर;
+	अचिन्हित पूर्णांक redrv_addr;
+	अचिन्हित पूर्णांक redrv_lane;
+	अचिन्हित पूर्णांक redrv_model;
 
 	/* KR AN support */
-	unsigned int phy_cdr_notrack;
-	unsigned int phy_cdr_delay;
-};
+	अचिन्हित पूर्णांक phy_cdr_notrack;
+	अचिन्हित पूर्णांक phy_cdr_delay;
+पूर्ण;
 
-/* I2C, MDIO and GPIO lines are muxed, so only one device at a time */
-static DEFINE_MUTEX(xgbe_phy_comm_lock);
+/* I2C, MDIO and GPIO lines are muxed, so only one device at a समय */
+अटल DEFINE_MUTEX(xgbe_phy_comm_lock);
 
-static enum xgbe_an_mode xgbe_phy_an_mode(struct xgbe_prv_data *pdata);
+अटल क्रमागत xgbe_an_mode xgbe_phy_an_mode(काष्ठा xgbe_prv_data *pdata);
 
-static int xgbe_phy_i2c_xfer(struct xgbe_prv_data *pdata,
-			     struct xgbe_i2c_op *i2c_op)
-{
-	return pdata->i2c_if.i2c_xfer(pdata, i2c_op);
-}
+अटल पूर्णांक xgbe_phy_i2c_xfer(काष्ठा xgbe_prv_data *pdata,
+			     काष्ठा xgbe_i2c_op *i2c_op)
+अणु
+	वापस pdata->i2c_अगर.i2c_xfer(pdata, i2c_op);
+पूर्ण
 
-static int xgbe_phy_redrv_write(struct xgbe_prv_data *pdata, unsigned int reg,
-				unsigned int val)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	struct xgbe_i2c_op i2c_op;
+अटल पूर्णांक xgbe_phy_redrv_ग_लिखो(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक reg,
+				अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	काष्ठा xgbe_i2c_op i2c_op;
 	__be16 *redrv_val;
 	u8 redrv_data[5], csum;
-	unsigned int i, retry;
-	int ret;
+	अचिन्हित पूर्णांक i, retry;
+	पूर्णांक ret;
 
-	/* High byte of register contains read/write indicator */
+	/* High byte of रेजिस्टर contains पढ़ो/ग_लिखो indicator */
 	redrv_data[0] = ((reg >> 8) & 0xff) << 1;
 	redrv_data[1] = reg & 0xff;
 	redrv_val = (__be16 *)&redrv_data[2];
@@ -411,26 +412,26 @@ static int xgbe_phy_redrv_write(struct xgbe_prv_data *pdata, unsigned int reg,
 
 	/* Calculate 1 byte checksum */
 	csum = 0;
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		csum += redrv_data[i];
-		if (redrv_data[i] > csum)
+		अगर (redrv_data[i] > csum)
 			csum++;
-	}
+	पूर्ण
 	redrv_data[4] = ~csum;
 
 	retry = 1;
 again1:
 	i2c_op.cmd = XGBE_I2C_CMD_WRITE;
 	i2c_op.target = phy_data->redrv_addr;
-	i2c_op.len = sizeof(redrv_data);
+	i2c_op.len = माप(redrv_data);
 	i2c_op.buf = redrv_data;
 	ret = xgbe_phy_i2c_xfer(pdata, &i2c_op);
-	if (ret) {
-		if ((ret == -EAGAIN) && retry--)
-			goto again1;
+	अगर (ret) अणु
+		अगर ((ret == -EAGAIN) && retry--)
+			जाओ again1;
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	retry = 1;
 again2:
@@ -439,130 +440,130 @@ again2:
 	i2c_op.len = 1;
 	i2c_op.buf = redrv_data;
 	ret = xgbe_phy_i2c_xfer(pdata, &i2c_op);
-	if (ret) {
-		if ((ret == -EAGAIN) && retry--)
-			goto again2;
+	अगर (ret) अणु
+		अगर ((ret == -EAGAIN) && retry--)
+			जाओ again2;
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (redrv_data[0] != 0xff) {
-		netif_dbg(pdata, drv, pdata->netdev,
+	अगर (redrv_data[0] != 0xff) अणु
+		netअगर_dbg(pdata, drv, pdata->netdev,
 			  "Redriver write checksum error\n");
 		ret = -EIO;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_phy_i2c_write(struct xgbe_prv_data *pdata, unsigned int target,
-			      void *val, unsigned int val_len)
-{
-	struct xgbe_i2c_op i2c_op;
-	int retry, ret;
+अटल पूर्णांक xgbe_phy_i2c_ग_लिखो(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक target,
+			      व्योम *val, अचिन्हित पूर्णांक val_len)
+अणु
+	काष्ठा xgbe_i2c_op i2c_op;
+	पूर्णांक retry, ret;
 
 	retry = 1;
 again:
-	/* Write the specfied register */
+	/* Write the specfied रेजिस्टर */
 	i2c_op.cmd = XGBE_I2C_CMD_WRITE;
 	i2c_op.target = target;
 	i2c_op.len = val_len;
 	i2c_op.buf = val;
 	ret = xgbe_phy_i2c_xfer(pdata, &i2c_op);
-	if ((ret == -EAGAIN) && retry--)
-		goto again;
+	अगर ((ret == -EAGAIN) && retry--)
+		जाओ again;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_phy_i2c_read(struct xgbe_prv_data *pdata, unsigned int target,
-			     void *reg, unsigned int reg_len,
-			     void *val, unsigned int val_len)
-{
-	struct xgbe_i2c_op i2c_op;
-	int retry, ret;
+अटल पूर्णांक xgbe_phy_i2c_पढ़ो(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक target,
+			     व्योम *reg, अचिन्हित पूर्णांक reg_len,
+			     व्योम *val, अचिन्हित पूर्णांक val_len)
+अणु
+	काष्ठा xgbe_i2c_op i2c_op;
+	पूर्णांक retry, ret;
 
 	retry = 1;
 again1:
-	/* Set the specified register to read */
+	/* Set the specअगरied रेजिस्टर to पढ़ो */
 	i2c_op.cmd = XGBE_I2C_CMD_WRITE;
 	i2c_op.target = target;
 	i2c_op.len = reg_len;
 	i2c_op.buf = reg;
 	ret = xgbe_phy_i2c_xfer(pdata, &i2c_op);
-	if (ret) {
-		if ((ret == -EAGAIN) && retry--)
-			goto again1;
+	अगर (ret) अणु
+		अगर ((ret == -EAGAIN) && retry--)
+			जाओ again1;
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	retry = 1;
 again2:
-	/* Read the specfied register */
+	/* Read the specfied रेजिस्टर */
 	i2c_op.cmd = XGBE_I2C_CMD_READ;
 	i2c_op.target = target;
 	i2c_op.len = val_len;
 	i2c_op.buf = val;
 	ret = xgbe_phy_i2c_xfer(pdata, &i2c_op);
-	if ((ret == -EAGAIN) && retry--)
-		goto again2;
+	अगर ((ret == -EAGAIN) && retry--)
+		जाओ again2;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_phy_sfp_put_mux(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	struct xgbe_i2c_op i2c_op;
+अटल पूर्णांक xgbe_phy_sfp_put_mux(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	काष्ठा xgbe_i2c_op i2c_op;
 	u8 mux_channel;
 
-	if (phy_data->sfp_comm == XGBE_SFP_COMM_DIRECT)
-		return 0;
+	अगर (phy_data->sfp_comm == XGBE_SFP_COMM_सूचीECT)
+		वापस 0;
 
 	/* Select no mux channels */
 	mux_channel = 0;
 	i2c_op.cmd = XGBE_I2C_CMD_WRITE;
 	i2c_op.target = phy_data->sfp_mux_address;
-	i2c_op.len = sizeof(mux_channel);
+	i2c_op.len = माप(mux_channel);
 	i2c_op.buf = &mux_channel;
 
-	return xgbe_phy_i2c_xfer(pdata, &i2c_op);
-}
+	वापस xgbe_phy_i2c_xfer(pdata, &i2c_op);
+पूर्ण
 
-static int xgbe_phy_sfp_get_mux(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	struct xgbe_i2c_op i2c_op;
+अटल पूर्णांक xgbe_phy_sfp_get_mux(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	काष्ठा xgbe_i2c_op i2c_op;
 	u8 mux_channel;
 
-	if (phy_data->sfp_comm == XGBE_SFP_COMM_DIRECT)
-		return 0;
+	अगर (phy_data->sfp_comm == XGBE_SFP_COMM_सूचीECT)
+		वापस 0;
 
 	/* Select desired mux channel */
 	mux_channel = 1 << phy_data->sfp_mux_channel;
 	i2c_op.cmd = XGBE_I2C_CMD_WRITE;
 	i2c_op.target = phy_data->sfp_mux_address;
-	i2c_op.len = sizeof(mux_channel);
+	i2c_op.len = माप(mux_channel);
 	i2c_op.buf = &mux_channel;
 
-	return xgbe_phy_i2c_xfer(pdata, &i2c_op);
-}
+	वापस xgbe_phy_i2c_xfer(pdata, &i2c_op);
+पूर्ण
 
-static void xgbe_phy_put_comm_ownership(struct xgbe_prv_data *pdata)
-{
+अटल व्योम xgbe_phy_put_comm_ownership(काष्ठा xgbe_prv_data *pdata)
+अणु
 	mutex_unlock(&xgbe_phy_comm_lock);
-}
+पूर्ण
 
-static int xgbe_phy_get_comm_ownership(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	unsigned long timeout;
-	unsigned int mutex_id;
+अटल पूर्णांक xgbe_phy_get_comm_ownership(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	अचिन्हित दीर्घ समयout;
+	अचिन्हित पूर्णांक mutex_id;
 
 	/* The I2C and MDIO/GPIO bus is multiplexed between multiple devices,
 	 * the driver needs to take the software mutex and then the hardware
-	 * mutexes before being able to use the busses.
+	 * mutexes beक्रमe being able to use the busses.
 	 */
 	mutex_lock(&xgbe_phy_comm_lock);
 
@@ -570,169 +571,169 @@ static int xgbe_phy_get_comm_ownership(struct xgbe_prv_data *pdata)
 	XP_IOWRITE(pdata, XP_I2C_MUTEX, XGBE_MUTEX_RELEASE);
 	XP_IOWRITE(pdata, XP_MDIO_MUTEX, XGBE_MUTEX_RELEASE);
 
-	/* Mutex formats are the same for I2C and MDIO/GPIO */
+	/* Mutex क्रमmats are the same क्रम I2C and MDIO/GPIO */
 	mutex_id = 0;
 	XP_SET_BITS(mutex_id, XP_I2C_MUTEX, ID, phy_data->port_id);
 	XP_SET_BITS(mutex_id, XP_I2C_MUTEX, ACTIVE, 1);
 
-	timeout = jiffies + (5 * HZ);
-	while (time_before(jiffies, timeout)) {
+	समयout = jअगरfies + (5 * HZ);
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
 		/* Must be all zeroes in order to obtain the mutex */
-		if (XP_IOREAD(pdata, XP_I2C_MUTEX) ||
-		    XP_IOREAD(pdata, XP_MDIO_MUTEX)) {
+		अगर (XP_IOREAD(pdata, XP_I2C_MUTEX) ||
+		    XP_IOREAD(pdata, XP_MDIO_MUTEX)) अणु
 			usleep_range(100, 200);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Obtain the mutex */
 		XP_IOWRITE(pdata, XP_I2C_MUTEX, mutex_id);
 		XP_IOWRITE(pdata, XP_MDIO_MUTEX, mutex_id);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	mutex_unlock(&xgbe_phy_comm_lock);
 
 	netdev_err(pdata->netdev, "unable to obtain hardware mutexes\n");
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int xgbe_phy_mdio_mii_write(struct xgbe_prv_data *pdata, int addr,
-				   int reg, u16 val)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल पूर्णांक xgbe_phy_mdio_mii_ग_लिखो(काष्ठा xgbe_prv_data *pdata, पूर्णांक addr,
+				   पूर्णांक reg, u16 val)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	if (reg & MII_ADDR_C45) {
-		if (phy_data->phydev_mode != XGBE_MDIO_MODE_CL45)
-			return -ENOTSUPP;
-	} else {
-		if (phy_data->phydev_mode != XGBE_MDIO_MODE_CL22)
-			return -ENOTSUPP;
-	}
+	अगर (reg & MII_ADDR_C45) अणु
+		अगर (phy_data->phydev_mode != XGBE_MDIO_MODE_CL45)
+			वापस -ENOTSUPP;
+	पूर्ण अन्यथा अणु
+		अगर (phy_data->phydev_mode != XGBE_MDIO_MODE_CL22)
+			वापस -ENOTSUPP;
+	पूर्ण
 
-	return pdata->hw_if.write_ext_mii_regs(pdata, addr, reg, val);
-}
+	वापस pdata->hw_अगर.ग_लिखो_ext_mii_regs(pdata, addr, reg, val);
+पूर्ण
 
-static int xgbe_phy_i2c_mii_write(struct xgbe_prv_data *pdata, int reg, u16 val)
-{
+अटल पूर्णांक xgbe_phy_i2c_mii_ग_लिखो(काष्ठा xgbe_prv_data *pdata, पूर्णांक reg, u16 val)
+अणु
 	__be16 *mii_val;
 	u8 mii_data[3];
-	int ret;
+	पूर्णांक ret;
 
 	ret = xgbe_phy_sfp_get_mux(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mii_data[0] = reg & 0xff;
 	mii_val = (__be16 *)&mii_data[1];
 	*mii_val = cpu_to_be16(val);
 
-	ret = xgbe_phy_i2c_write(pdata, XGBE_SFP_PHY_ADDRESS,
-				 mii_data, sizeof(mii_data));
+	ret = xgbe_phy_i2c_ग_लिखो(pdata, XGBE_SFP_PHY_ADDRESS,
+				 mii_data, माप(mii_data));
 
 	xgbe_phy_sfp_put_mux(pdata);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_phy_mii_write(struct mii_bus *mii, int addr, int reg, u16 val)
-{
-	struct xgbe_prv_data *pdata = mii->priv;
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	int ret;
+अटल पूर्णांक xgbe_phy_mii_ग_लिखो(काष्ठा mii_bus *mii, पूर्णांक addr, पूर्णांक reg, u16 val)
+अणु
+	काष्ठा xgbe_prv_data *pdata = mii->priv;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	पूर्णांक ret;
 
 	ret = xgbe_phy_get_comm_ownership(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (phy_data->conn_type == XGBE_CONN_TYPE_SFP)
-		ret = xgbe_phy_i2c_mii_write(pdata, reg, val);
-	else if (phy_data->conn_type & XGBE_CONN_TYPE_MDIO)
-		ret = xgbe_phy_mdio_mii_write(pdata, addr, reg, val);
-	else
+	अगर (phy_data->conn_type == XGBE_CONN_TYPE_SFP)
+		ret = xgbe_phy_i2c_mii_ग_लिखो(pdata, reg, val);
+	अन्यथा अगर (phy_data->conn_type & XGBE_CONN_TYPE_MDIO)
+		ret = xgbe_phy_mdio_mii_ग_लिखो(pdata, addr, reg, val);
+	अन्यथा
 		ret = -ENOTSUPP;
 
 	xgbe_phy_put_comm_ownership(pdata);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_phy_mdio_mii_read(struct xgbe_prv_data *pdata, int addr,
-				  int reg)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल पूर्णांक xgbe_phy_mdio_mii_पढ़ो(काष्ठा xgbe_prv_data *pdata, पूर्णांक addr,
+				  पूर्णांक reg)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	if (reg & MII_ADDR_C45) {
-		if (phy_data->phydev_mode != XGBE_MDIO_MODE_CL45)
-			return -ENOTSUPP;
-	} else {
-		if (phy_data->phydev_mode != XGBE_MDIO_MODE_CL22)
-			return -ENOTSUPP;
-	}
+	अगर (reg & MII_ADDR_C45) अणु
+		अगर (phy_data->phydev_mode != XGBE_MDIO_MODE_CL45)
+			वापस -ENOTSUPP;
+	पूर्ण अन्यथा अणु
+		अगर (phy_data->phydev_mode != XGBE_MDIO_MODE_CL22)
+			वापस -ENOTSUPP;
+	पूर्ण
 
-	return pdata->hw_if.read_ext_mii_regs(pdata, addr, reg);
-}
+	वापस pdata->hw_अगर.पढ़ो_ext_mii_regs(pdata, addr, reg);
+पूर्ण
 
-static int xgbe_phy_i2c_mii_read(struct xgbe_prv_data *pdata, int reg)
-{
+अटल पूर्णांक xgbe_phy_i2c_mii_पढ़ो(काष्ठा xgbe_prv_data *pdata, पूर्णांक reg)
+अणु
 	__be16 mii_val;
 	u8 mii_reg;
-	int ret;
+	पूर्णांक ret;
 
 	ret = xgbe_phy_sfp_get_mux(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mii_reg = reg;
-	ret = xgbe_phy_i2c_read(pdata, XGBE_SFP_PHY_ADDRESS,
-				&mii_reg, sizeof(mii_reg),
-				&mii_val, sizeof(mii_val));
-	if (!ret)
+	ret = xgbe_phy_i2c_पढ़ो(pdata, XGBE_SFP_PHY_ADDRESS,
+				&mii_reg, माप(mii_reg),
+				&mii_val, माप(mii_val));
+	अगर (!ret)
 		ret = be16_to_cpu(mii_val);
 
 	xgbe_phy_sfp_put_mux(pdata);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_phy_mii_read(struct mii_bus *mii, int addr, int reg)
-{
-	struct xgbe_prv_data *pdata = mii->priv;
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	int ret;
+अटल पूर्णांक xgbe_phy_mii_पढ़ो(काष्ठा mii_bus *mii, पूर्णांक addr, पूर्णांक reg)
+अणु
+	काष्ठा xgbe_prv_data *pdata = mii->priv;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	पूर्णांक ret;
 
 	ret = xgbe_phy_get_comm_ownership(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (phy_data->conn_type == XGBE_CONN_TYPE_SFP)
-		ret = xgbe_phy_i2c_mii_read(pdata, reg);
-	else if (phy_data->conn_type & XGBE_CONN_TYPE_MDIO)
-		ret = xgbe_phy_mdio_mii_read(pdata, addr, reg);
-	else
+	अगर (phy_data->conn_type == XGBE_CONN_TYPE_SFP)
+		ret = xgbe_phy_i2c_mii_पढ़ो(pdata, reg);
+	अन्यथा अगर (phy_data->conn_type & XGBE_CONN_TYPE_MDIO)
+		ret = xgbe_phy_mdio_mii_पढ़ो(pdata, addr, reg);
+	अन्यथा
 		ret = -ENOTSUPP;
 
 	xgbe_phy_put_comm_ownership(pdata);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void xgbe_phy_sfp_phy_settings(struct xgbe_prv_data *pdata)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_sfp_phy_settings(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	if (!phy_data->sfp_mod_absent && !phy_data->sfp_changed)
-		return;
+	अगर (!phy_data->sfp_mod_असलent && !phy_data->sfp_changed)
+		वापस;
 
 	XGBE_ZERO_SUP(lks);
 
-	if (phy_data->sfp_mod_absent) {
+	अगर (phy_data->sfp_mod_असलent) अणु
 		pdata->phy.speed = SPEED_UNKNOWN;
 		pdata->phy.duplex = DUPLEX_UNKNOWN;
-		pdata->phy.autoneg = AUTONEG_ENABLE;
-		pdata->phy.pause_autoneg = AUTONEG_ENABLE;
+		pdata->phy.स्वतःneg = AUTONEG_ENABLE;
+		pdata->phy.छोड़ो_स्वतःneg = AUTONEG_ENABLE;
 
 		XGBE_SET_SUP(lks, Autoneg);
 		XGBE_SET_SUP(lks, Pause);
@@ -742,143 +743,143 @@ static void xgbe_phy_sfp_phy_settings(struct xgbe_prv_data *pdata)
 
 		XGBE_LM_COPY(lks, advertising, lks, supported);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (phy_data->sfp_base) {
-	case XGBE_SFP_BASE_1000_T:
-	case XGBE_SFP_BASE_1000_SX:
-	case XGBE_SFP_BASE_1000_LX:
-	case XGBE_SFP_BASE_1000_CX:
+	चयन (phy_data->sfp_base) अणु
+	हाल XGBE_SFP_BASE_1000_T:
+	हाल XGBE_SFP_BASE_1000_SX:
+	हाल XGBE_SFP_BASE_1000_LX:
+	हाल XGBE_SFP_BASE_1000_CX:
 		pdata->phy.speed = SPEED_UNKNOWN;
 		pdata->phy.duplex = DUPLEX_UNKNOWN;
-		pdata->phy.autoneg = AUTONEG_ENABLE;
-		pdata->phy.pause_autoneg = AUTONEG_ENABLE;
+		pdata->phy.स्वतःneg = AUTONEG_ENABLE;
+		pdata->phy.छोड़ो_स्वतःneg = AUTONEG_ENABLE;
 		XGBE_SET_SUP(lks, Autoneg);
 		XGBE_SET_SUP(lks, Pause);
 		XGBE_SET_SUP(lks, Asym_Pause);
-		if (phy_data->sfp_base == XGBE_SFP_BASE_1000_T) {
-			if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100)
+		अगर (phy_data->sfp_base == XGBE_SFP_BASE_1000_T) अणु
+			अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100)
 				XGBE_SET_SUP(lks, 100baseT_Full);
-			if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000)
+			अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000)
 				XGBE_SET_SUP(lks, 1000baseT_Full);
-		} else {
-			if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000)
+		पूर्ण अन्यथा अणु
+			अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000)
 				XGBE_SET_SUP(lks, 1000baseX_Full);
-		}
-		break;
-	case XGBE_SFP_BASE_10000_SR:
-	case XGBE_SFP_BASE_10000_LR:
-	case XGBE_SFP_BASE_10000_LRM:
-	case XGBE_SFP_BASE_10000_ER:
-	case XGBE_SFP_BASE_10000_CR:
+		पूर्ण
+		अवरोध;
+	हाल XGBE_SFP_BASE_10000_SR:
+	हाल XGBE_SFP_BASE_10000_LR:
+	हाल XGBE_SFP_BASE_10000_LRM:
+	हाल XGBE_SFP_BASE_10000_ER:
+	हाल XGBE_SFP_BASE_10000_CR:
 		pdata->phy.speed = SPEED_10000;
 		pdata->phy.duplex = DUPLEX_FULL;
-		pdata->phy.autoneg = AUTONEG_DISABLE;
-		pdata->phy.pause_autoneg = AUTONEG_DISABLE;
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000) {
-			switch (phy_data->sfp_base) {
-			case XGBE_SFP_BASE_10000_SR:
+		pdata->phy.स्वतःneg = AUTONEG_DISABLE;
+		pdata->phy.छोड़ो_स्वतःneg = AUTONEG_DISABLE;
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000) अणु
+			चयन (phy_data->sfp_base) अणु
+			हाल XGBE_SFP_BASE_10000_SR:
 				XGBE_SET_SUP(lks, 10000baseSR_Full);
-				break;
-			case XGBE_SFP_BASE_10000_LR:
+				अवरोध;
+			हाल XGBE_SFP_BASE_10000_LR:
 				XGBE_SET_SUP(lks, 10000baseLR_Full);
-				break;
-			case XGBE_SFP_BASE_10000_LRM:
+				अवरोध;
+			हाल XGBE_SFP_BASE_10000_LRM:
 				XGBE_SET_SUP(lks, 10000baseLRM_Full);
-				break;
-			case XGBE_SFP_BASE_10000_ER:
+				अवरोध;
+			हाल XGBE_SFP_BASE_10000_ER:
 				XGBE_SET_SUP(lks, 10000baseER_Full);
-				break;
-			case XGBE_SFP_BASE_10000_CR:
+				अवरोध;
+			हाल XGBE_SFP_BASE_10000_CR:
 				XGBE_SET_SUP(lks, 10000baseCR_Full);
-				break;
-			default:
-				break;
-			}
-		}
-		break;
-	default:
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
 		pdata->phy.speed = SPEED_UNKNOWN;
 		pdata->phy.duplex = DUPLEX_UNKNOWN;
-		pdata->phy.autoneg = AUTONEG_DISABLE;
-		pdata->phy.pause_autoneg = AUTONEG_DISABLE;
-		break;
-	}
+		pdata->phy.स्वतःneg = AUTONEG_DISABLE;
+		pdata->phy.छोड़ो_स्वतःneg = AUTONEG_DISABLE;
+		अवरोध;
+	पूर्ण
 
-	switch (phy_data->sfp_base) {
-	case XGBE_SFP_BASE_1000_T:
-	case XGBE_SFP_BASE_1000_CX:
-	case XGBE_SFP_BASE_10000_CR:
+	चयन (phy_data->sfp_base) अणु
+	हाल XGBE_SFP_BASE_1000_T:
+	हाल XGBE_SFP_BASE_1000_CX:
+	हाल XGBE_SFP_BASE_10000_CR:
 		XGBE_SET_SUP(lks, TP);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		XGBE_SET_SUP(lks, FIBRE);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	XGBE_LM_COPY(lks, advertising, lks, supported);
-}
+पूर्ण
 
-static bool xgbe_phy_sfp_bit_rate(struct xgbe_sfp_eeprom *sfp_eeprom,
-				  enum xgbe_sfp_speed sfp_speed)
-{
+अटल bool xgbe_phy_sfp_bit_rate(काष्ठा xgbe_sfp_eeprom *sfp_eeprom,
+				  क्रमागत xgbe_sfp_speed sfp_speed)
+अणु
 	u8 *sfp_base, min, max;
 
 	sfp_base = sfp_eeprom->base;
 
-	switch (sfp_speed) {
-	case XGBE_SFP_SPEED_1000:
+	चयन (sfp_speed) अणु
+	हाल XGBE_SFP_SPEED_1000:
 		min = XGBE_SFP_BASE_BR_1GBE_MIN;
 		max = XGBE_SFP_BASE_BR_1GBE_MAX;
-		break;
-	case XGBE_SFP_SPEED_10000:
+		अवरोध;
+	हाल XGBE_SFP_SPEED_10000:
 		min = XGBE_SFP_BASE_BR_10GBE_MIN;
 		max = XGBE_SFP_BASE_BR_10GBE_MAX;
-		break;
-	default:
-		return false;
-	}
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	return ((sfp_base[XGBE_SFP_BASE_BR] >= min) &&
+	वापस ((sfp_base[XGBE_SFP_BASE_BR] >= min) &&
 		(sfp_base[XGBE_SFP_BASE_BR] <= max));
-}
+पूर्ण
 
-static void xgbe_phy_free_phy_device(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_मुक्त_phy_device(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	if (phy_data->phydev) {
+	अगर (phy_data->phydev) अणु
 		phy_detach(phy_data->phydev);
-		phy_device_remove(phy_data->phydev);
-		phy_device_free(phy_data->phydev);
-		phy_data->phydev = NULL;
-	}
-}
+		phy_device_हटाओ(phy_data->phydev);
+		phy_device_मुक्त(phy_data->phydev);
+		phy_data->phydev = शून्य;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_finisar_phy_quirks(struct xgbe_prv_data *pdata)
-{
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(supported) = { 0, };
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	unsigned int phy_id = phy_data->phydev->phy_id;
+अटल bool xgbe_phy_finisar_phy_quirks(काष्ठा xgbe_prv_data *pdata)
+अणु
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(supported) = अणु 0, पूर्ण;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	अचिन्हित पूर्णांक phy_id = phy_data->phydev->phy_id;
 
-	if (phy_data->port_mode != XGBE_PORT_MODE_SFP)
-		return false;
+	अगर (phy_data->port_mode != XGBE_PORT_MODE_SFP)
+		वापस false;
 
-	if ((phy_id & 0xfffffff0) != 0x01ff0cc0)
-		return false;
+	अगर ((phy_id & 0xfffffff0) != 0x01ff0cc0)
+		वापस false;
 
 	/* Enable Base-T AN */
-	phy_write(phy_data->phydev, 0x16, 0x0001);
-	phy_write(phy_data->phydev, 0x00, 0x9140);
-	phy_write(phy_data->phydev, 0x16, 0x0000);
+	phy_ग_लिखो(phy_data->phydev, 0x16, 0x0001);
+	phy_ग_लिखो(phy_data->phydev, 0x00, 0x9140);
+	phy_ग_लिखो(phy_data->phydev, 0x16, 0x0000);
 
 	/* Enable SGMII at 100Base-T/1000Base-T Full Duplex */
-	phy_write(phy_data->phydev, 0x1b, 0x9084);
-	phy_write(phy_data->phydev, 0x09, 0x0e00);
-	phy_write(phy_data->phydev, 0x00, 0x8140);
-	phy_write(phy_data->phydev, 0x04, 0x0d01);
-	phy_write(phy_data->phydev, 0x00, 0x9140);
+	phy_ग_लिखो(phy_data->phydev, 0x1b, 0x9084);
+	phy_ग_लिखो(phy_data->phydev, 0x09, 0x0e00);
+	phy_ग_लिखो(phy_data->phydev, 0x00, 0x8140);
+	phy_ग_लिखो(phy_data->phydev, 0x04, 0x0d01);
+	phy_ग_लिखो(phy_data->phydev, 0x00, 0x9140);
 
 	linkmode_set_bit_array(phy_10_100_features_array,
 			       ARRAY_SIZE(phy_10_100_features_array),
@@ -889,79 +890,79 @@ static bool xgbe_phy_finisar_phy_quirks(struct xgbe_prv_data *pdata)
 
 	linkmode_copy(phy_data->phydev->supported, supported);
 
-	phy_support_asym_pause(phy_data->phydev);
+	phy_support_asym_छोड़ो(phy_data->phydev);
 
-	netif_dbg(pdata, drv, pdata->netdev,
+	netअगर_dbg(pdata, drv, pdata->netdev,
 		  "Finisar PHY quirk in place\n");
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool xgbe_phy_belfuse_phy_quirks(struct xgbe_prv_data *pdata)
-{
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(supported) = { 0, };
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	struct xgbe_sfp_eeprom *sfp_eeprom = &phy_data->sfp_eeprom;
-	unsigned int phy_id = phy_data->phydev->phy_id;
-	int reg;
+अटल bool xgbe_phy_belfuse_phy_quirks(काष्ठा xgbe_prv_data *pdata)
+अणु
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(supported) = अणु 0, पूर्ण;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	काष्ठा xgbe_sfp_eeprom *sfp_eeprom = &phy_data->sfp_eeprom;
+	अचिन्हित पूर्णांक phy_id = phy_data->phydev->phy_id;
+	पूर्णांक reg;
 
-	if (phy_data->port_mode != XGBE_PORT_MODE_SFP)
-		return false;
+	अगर (phy_data->port_mode != XGBE_PORT_MODE_SFP)
+		वापस false;
 
-	if (memcmp(&sfp_eeprom->base[XGBE_SFP_BASE_VENDOR_NAME],
+	अगर (स_भेद(&sfp_eeprom->base[XGBE_SFP_BASE_VENDOR_NAME],
 		   XGBE_BEL_FUSE_VENDOR, XGBE_SFP_BASE_VENDOR_NAME_LEN))
-		return false;
+		वापस false;
 
 	/* For Bel-Fuse, use the extra AN flag */
 	pdata->an_again = 1;
 
-	if (memcmp(&sfp_eeprom->base[XGBE_SFP_BASE_VENDOR_PN],
+	अगर (स_भेद(&sfp_eeprom->base[XGBE_SFP_BASE_VENDOR_PN],
 		   XGBE_BEL_FUSE_PARTNO, XGBE_SFP_BASE_VENDOR_PN_LEN))
-		return false;
+		वापस false;
 
-	if ((phy_id & 0xfffffff0) != 0x03625d10)
-		return false;
+	अगर ((phy_id & 0xfffffff0) != 0x03625d10)
+		वापस false;
 
-	/* Reset PHY - wait for self-clearing reset bit to clear */
+	/* Reset PHY - रुको क्रम self-clearing reset bit to clear */
 	genphy_soft_reset(phy_data->phydev);
 
 	/* Disable RGMII mode */
-	phy_write(phy_data->phydev, 0x18, 0x7007);
-	reg = phy_read(phy_data->phydev, 0x18);
-	phy_write(phy_data->phydev, 0x18, reg & ~0x0080);
+	phy_ग_लिखो(phy_data->phydev, 0x18, 0x7007);
+	reg = phy_पढ़ो(phy_data->phydev, 0x18);
+	phy_ग_लिखो(phy_data->phydev, 0x18, reg & ~0x0080);
 
-	/* Enable fiber register bank */
-	phy_write(phy_data->phydev, 0x1c, 0x7c00);
-	reg = phy_read(phy_data->phydev, 0x1c);
+	/* Enable fiber रेजिस्टर bank */
+	phy_ग_लिखो(phy_data->phydev, 0x1c, 0x7c00);
+	reg = phy_पढ़ो(phy_data->phydev, 0x1c);
 	reg &= 0x03ff;
 	reg &= ~0x0001;
-	phy_write(phy_data->phydev, 0x1c, 0x8000 | 0x7c00 | reg | 0x0001);
+	phy_ग_लिखो(phy_data->phydev, 0x1c, 0x8000 | 0x7c00 | reg | 0x0001);
 
-	/* Power down SerDes */
-	reg = phy_read(phy_data->phydev, 0x00);
-	phy_write(phy_data->phydev, 0x00, reg | 0x00800);
+	/* Power करोwn SerDes */
+	reg = phy_पढ़ो(phy_data->phydev, 0x00);
+	phy_ग_लिखो(phy_data->phydev, 0x00, reg | 0x00800);
 
 	/* Configure SGMII-to-Copper mode */
-	phy_write(phy_data->phydev, 0x1c, 0x7c00);
-	reg = phy_read(phy_data->phydev, 0x1c);
+	phy_ग_लिखो(phy_data->phydev, 0x1c, 0x7c00);
+	reg = phy_पढ़ो(phy_data->phydev, 0x1c);
 	reg &= 0x03ff;
 	reg &= ~0x0006;
-	phy_write(phy_data->phydev, 0x1c, 0x8000 | 0x7c00 | reg | 0x0004);
+	phy_ग_लिखो(phy_data->phydev, 0x1c, 0x8000 | 0x7c00 | reg | 0x0004);
 
 	/* Power up SerDes */
-	reg = phy_read(phy_data->phydev, 0x00);
-	phy_write(phy_data->phydev, 0x00, reg & ~0x00800);
+	reg = phy_पढ़ो(phy_data->phydev, 0x00);
+	phy_ग_लिखो(phy_data->phydev, 0x00, reg & ~0x00800);
 
-	/* Enable copper register bank */
-	phy_write(phy_data->phydev, 0x1c, 0x7c00);
-	reg = phy_read(phy_data->phydev, 0x1c);
+	/* Enable copper रेजिस्टर bank */
+	phy_ग_लिखो(phy_data->phydev, 0x1c, 0x7c00);
+	reg = phy_पढ़ो(phy_data->phydev, 0x1c);
 	reg &= 0x03ff;
 	reg &= ~0x0001;
-	phy_write(phy_data->phydev, 0x1c, 0x8000 | 0x7c00 | reg);
+	phy_ग_लिखो(phy_data->phydev, 0x1c, 0x8000 | 0x7c00 | reg);
 
 	/* Power up SerDes */
-	reg = phy_read(phy_data->phydev, 0x00);
-	phy_write(phy_data->phydev, 0x00, reg & ~0x00800);
+	reg = phy_पढ़ो(phy_data->phydev, 0x00);
+	phy_ग_लिखो(phy_data->phydev, 0x00, reg & ~0x00800);
 
 	linkmode_set_bit_array(phy_10_100_features_array,
 			       ARRAY_SIZE(phy_10_100_features_array),
@@ -970,496 +971,496 @@ static bool xgbe_phy_belfuse_phy_quirks(struct xgbe_prv_data *pdata)
 			       ARRAY_SIZE(phy_gbit_features_array),
 			       supported);
 	linkmode_copy(phy_data->phydev->supported, supported);
-	phy_support_asym_pause(phy_data->phydev);
+	phy_support_asym_छोड़ो(phy_data->phydev);
 
-	netif_dbg(pdata, drv, pdata->netdev,
+	netअगर_dbg(pdata, drv, pdata->netdev,
 		  "BelFuse PHY quirk in place\n");
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void xgbe_phy_external_phy_quirks(struct xgbe_prv_data *pdata)
-{
-	if (xgbe_phy_belfuse_phy_quirks(pdata))
-		return;
+अटल व्योम xgbe_phy_बाह्यal_phy_quirks(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अगर (xgbe_phy_belfuse_phy_quirks(pdata))
+		वापस;
 
-	if (xgbe_phy_finisar_phy_quirks(pdata))
-		return;
-}
+	अगर (xgbe_phy_finisar_phy_quirks(pdata))
+		वापस;
+पूर्ण
 
-static int xgbe_phy_find_phy_device(struct xgbe_prv_data *pdata)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	struct phy_device *phydev;
-	int ret;
+अटल पूर्णांक xgbe_phy_find_phy_device(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	काष्ठा phy_device *phydev;
+	पूर्णांक ret;
 
-	/* If we already have a PHY, just return */
-	if (phy_data->phydev)
-		return 0;
+	/* If we alपढ़ोy have a PHY, just वापस */
+	अगर (phy_data->phydev)
+		वापस 0;
 
 	/* Clear the extra AN flag */
 	pdata->an_again = 0;
 
-	/* Check for the use of an external PHY */
-	if (phy_data->phydev_mode == XGBE_MDIO_MODE_NONE)
-		return 0;
+	/* Check क्रम the use of an बाह्यal PHY */
+	अगर (phy_data->phydev_mode == XGBE_MDIO_MODE_NONE)
+		वापस 0;
 
-	/* For SFP, only use an external PHY if available */
-	if ((phy_data->port_mode == XGBE_PORT_MODE_SFP) &&
+	/* For SFP, only use an बाह्यal PHY अगर available */
+	अगर ((phy_data->port_mode == XGBE_PORT_MODE_SFP) &&
 	    !phy_data->sfp_phy_avail)
-		return 0;
+		वापस 0;
 
-	/* Set the proper MDIO mode for the PHY */
-	ret = pdata->hw_if.set_ext_mii_mode(pdata, phy_data->mdio_addr,
+	/* Set the proper MDIO mode क्रम the PHY */
+	ret = pdata->hw_अगर.set_ext_mii_mode(pdata, phy_data->mdio_addr,
 					    phy_data->phydev_mode);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(pdata->netdev,
 			   "mdio port/clause not compatible (%u/%u)\n",
 			   phy_data->mdio_addr, phy_data->phydev_mode);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Create and connect to the PHY device */
 	phydev = get_phy_device(phy_data->mii, phy_data->mdio_addr,
 				(phy_data->phydev_mode == XGBE_MDIO_MODE_CL45));
-	if (IS_ERR(phydev)) {
+	अगर (IS_ERR(phydev)) अणु
 		netdev_err(pdata->netdev, "get_phy_device failed\n");
-		return -ENODEV;
-	}
-	netif_dbg(pdata, drv, pdata->netdev, "external PHY id is %#010x\n",
+		वापस -ENODEV;
+	पूर्ण
+	netअगर_dbg(pdata, drv, pdata->netdev, "external PHY id is %#010x\n",
 		  phydev->phy_id);
 
 	/*TODO: If c45, add request_module based on one of the MMD ids? */
 
-	ret = phy_device_register(phydev);
-	if (ret) {
+	ret = phy_device_रेजिस्टर(phydev);
+	अगर (ret) अणु
 		netdev_err(pdata->netdev, "phy_device_register failed\n");
-		phy_device_free(phydev);
-		return ret;
-	}
+		phy_device_मुक्त(phydev);
+		वापस ret;
+	पूर्ण
 
 	ret = phy_attach_direct(pdata->netdev, phydev, phydev->dev_flags,
 				PHY_INTERFACE_MODE_SGMII);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(pdata->netdev, "phy_attach_direct failed\n");
-		phy_device_remove(phydev);
-		phy_device_free(phydev);
-		return ret;
-	}
+		phy_device_हटाओ(phydev);
+		phy_device_मुक्त(phydev);
+		वापस ret;
+	पूर्ण
 	phy_data->phydev = phydev;
 
-	xgbe_phy_external_phy_quirks(pdata);
+	xgbe_phy_बाह्यal_phy_quirks(pdata);
 
 	linkmode_and(phydev->advertising, phydev->advertising,
 		     lks->link_modes.advertising);
 
 	phy_start_aneg(phy_data->phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgbe_phy_sfp_external_phy(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	int ret;
+अटल व्योम xgbe_phy_sfp_बाह्यal_phy(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	पूर्णांक ret;
 
-	if (!phy_data->sfp_changed)
-		return;
+	अगर (!phy_data->sfp_changed)
+		वापस;
 
 	phy_data->sfp_phy_avail = 0;
 
-	if (phy_data->sfp_base != XGBE_SFP_BASE_1000_T)
-		return;
+	अगर (phy_data->sfp_base != XGBE_SFP_BASE_1000_T)
+		वापस;
 
-	/* Check access to the PHY by reading CTRL1 */
-	ret = xgbe_phy_i2c_mii_read(pdata, MII_BMCR);
-	if (ret < 0)
-		return;
+	/* Check access to the PHY by पढ़ोing CTRL1 */
+	ret = xgbe_phy_i2c_mii_पढ़ो(pdata, MII_BMCR);
+	अगर (ret < 0)
+		वापस;
 
 	/* Successfully accessed the PHY */
 	phy_data->sfp_phy_avail = 1;
-}
+पूर्ण
 
-static bool xgbe_phy_check_sfp_rx_los(struct xgbe_phy_data *phy_data)
-{
+अटल bool xgbe_phy_check_sfp_rx_los(काष्ठा xgbe_phy_data *phy_data)
+अणु
 	u8 *sfp_extd = phy_data->sfp_eeprom.extd;
 
-	if (!(sfp_extd[XGBE_SFP_EXTD_OPT1] & XGBE_SFP_EXTD_OPT1_RX_LOS))
-		return false;
+	अगर (!(sfp_extd[XGBE_SFP_EXTD_OPT1] & XGBE_SFP_EXTD_OPT1_RX_LOS))
+		वापस false;
 
-	if (phy_data->sfp_gpio_mask & XGBE_GPIO_NO_RX_LOS)
-		return false;
+	अगर (phy_data->sfp_gpio_mask & XGBE_GPIO_NO_RX_LOS)
+		वापस false;
 
-	if (phy_data->sfp_gpio_inputs & (1 << phy_data->sfp_gpio_rx_los))
-		return true;
+	अगर (phy_data->sfp_gpio_inमाला_दो & (1 << phy_data->sfp_gpio_rx_los))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool xgbe_phy_check_sfp_tx_fault(struct xgbe_phy_data *phy_data)
-{
+अटल bool xgbe_phy_check_sfp_tx_fault(काष्ठा xgbe_phy_data *phy_data)
+अणु
 	u8 *sfp_extd = phy_data->sfp_eeprom.extd;
 
-	if (!(sfp_extd[XGBE_SFP_EXTD_OPT1] & XGBE_SFP_EXTD_OPT1_TX_FAULT))
-		return false;
+	अगर (!(sfp_extd[XGBE_SFP_EXTD_OPT1] & XGBE_SFP_EXTD_OPT1_TX_FAULT))
+		वापस false;
 
-	if (phy_data->sfp_gpio_mask & XGBE_GPIO_NO_TX_FAULT)
-		return false;
+	अगर (phy_data->sfp_gpio_mask & XGBE_GPIO_NO_TX_FAULT)
+		वापस false;
 
-	if (phy_data->sfp_gpio_inputs & (1 << phy_data->sfp_gpio_tx_fault))
-		return true;
+	अगर (phy_data->sfp_gpio_inमाला_दो & (1 << phy_data->sfp_gpio_tx_fault))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool xgbe_phy_check_sfp_mod_absent(struct xgbe_phy_data *phy_data)
-{
-	if (phy_data->sfp_gpio_mask & XGBE_GPIO_NO_MOD_ABSENT)
-		return false;
+अटल bool xgbe_phy_check_sfp_mod_असलent(काष्ठा xgbe_phy_data *phy_data)
+अणु
+	अगर (phy_data->sfp_gpio_mask & XGBE_GPIO_NO_MOD_ABSENT)
+		वापस false;
 
-	if (phy_data->sfp_gpio_inputs & (1 << phy_data->sfp_gpio_mod_absent))
-		return true;
+	अगर (phy_data->sfp_gpio_inमाला_दो & (1 << phy_data->sfp_gpio_mod_असलent))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void xgbe_phy_sfp_parse_eeprom(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	struct xgbe_sfp_eeprom *sfp_eeprom = &phy_data->sfp_eeprom;
+अटल व्योम xgbe_phy_sfp_parse_eeprom(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	काष्ठा xgbe_sfp_eeprom *sfp_eeprom = &phy_data->sfp_eeprom;
 	u8 *sfp_base;
 
 	sfp_base = sfp_eeprom->base;
 
-	if (sfp_base[XGBE_SFP_BASE_ID] != XGBE_SFP_ID_SFP)
-		return;
+	अगर (sfp_base[XGBE_SFP_BASE_ID] != XGBE_SFP_ID_SFP)
+		वापस;
 
-	if (sfp_base[XGBE_SFP_BASE_EXT_ID] != XGBE_SFP_EXT_ID_SFP)
-		return;
+	अगर (sfp_base[XGBE_SFP_BASE_EXT_ID] != XGBE_SFP_EXT_ID_SFP)
+		वापस;
 
-	/* Update transceiver signals (eeprom extd/options) */
+	/* Update transceiver संकेतs (eeprom extd/options) */
 	phy_data->sfp_tx_fault = xgbe_phy_check_sfp_tx_fault(phy_data);
 	phy_data->sfp_rx_los = xgbe_phy_check_sfp_rx_los(phy_data);
 
 	/* Assume ACTIVE cable unless told it is PASSIVE */
-	if (sfp_base[XGBE_SFP_BASE_CABLE] & XGBE_SFP_BASE_CABLE_PASSIVE) {
+	अगर (sfp_base[XGBE_SFP_BASE_CABLE] & XGBE_SFP_BASE_CABLE_PASSIVE) अणु
 		phy_data->sfp_cable = XGBE_SFP_CABLE_PASSIVE;
 		phy_data->sfp_cable_len = sfp_base[XGBE_SFP_BASE_CU_CABLE_LEN];
-	} else {
+	पूर्ण अन्यथा अणु
 		phy_data->sfp_cable = XGBE_SFP_CABLE_ACTIVE;
-	}
+	पूर्ण
 
 	/* Determine the type of SFP */
-	if (sfp_base[XGBE_SFP_BASE_10GBE_CC] & XGBE_SFP_BASE_10GBE_CC_SR)
+	अगर (sfp_base[XGBE_SFP_BASE_10GBE_CC] & XGBE_SFP_BASE_10GBE_CC_SR)
 		phy_data->sfp_base = XGBE_SFP_BASE_10000_SR;
-	else if (sfp_base[XGBE_SFP_BASE_10GBE_CC] & XGBE_SFP_BASE_10GBE_CC_LR)
+	अन्यथा अगर (sfp_base[XGBE_SFP_BASE_10GBE_CC] & XGBE_SFP_BASE_10GBE_CC_LR)
 		phy_data->sfp_base = XGBE_SFP_BASE_10000_LR;
-	else if (sfp_base[XGBE_SFP_BASE_10GBE_CC] & XGBE_SFP_BASE_10GBE_CC_LRM)
+	अन्यथा अगर (sfp_base[XGBE_SFP_BASE_10GBE_CC] & XGBE_SFP_BASE_10GBE_CC_LRM)
 		phy_data->sfp_base = XGBE_SFP_BASE_10000_LRM;
-	else if (sfp_base[XGBE_SFP_BASE_10GBE_CC] & XGBE_SFP_BASE_10GBE_CC_ER)
+	अन्यथा अगर (sfp_base[XGBE_SFP_BASE_10GBE_CC] & XGBE_SFP_BASE_10GBE_CC_ER)
 		phy_data->sfp_base = XGBE_SFP_BASE_10000_ER;
-	else if (sfp_base[XGBE_SFP_BASE_1GBE_CC] & XGBE_SFP_BASE_1GBE_CC_SX)
+	अन्यथा अगर (sfp_base[XGBE_SFP_BASE_1GBE_CC] & XGBE_SFP_BASE_1GBE_CC_SX)
 		phy_data->sfp_base = XGBE_SFP_BASE_1000_SX;
-	else if (sfp_base[XGBE_SFP_BASE_1GBE_CC] & XGBE_SFP_BASE_1GBE_CC_LX)
+	अन्यथा अगर (sfp_base[XGBE_SFP_BASE_1GBE_CC] & XGBE_SFP_BASE_1GBE_CC_LX)
 		phy_data->sfp_base = XGBE_SFP_BASE_1000_LX;
-	else if (sfp_base[XGBE_SFP_BASE_1GBE_CC] & XGBE_SFP_BASE_1GBE_CC_CX)
+	अन्यथा अगर (sfp_base[XGBE_SFP_BASE_1GBE_CC] & XGBE_SFP_BASE_1GBE_CC_CX)
 		phy_data->sfp_base = XGBE_SFP_BASE_1000_CX;
-	else if (sfp_base[XGBE_SFP_BASE_1GBE_CC] & XGBE_SFP_BASE_1GBE_CC_T)
+	अन्यथा अगर (sfp_base[XGBE_SFP_BASE_1GBE_CC] & XGBE_SFP_BASE_1GBE_CC_T)
 		phy_data->sfp_base = XGBE_SFP_BASE_1000_T;
-	else if ((phy_data->sfp_cable == XGBE_SFP_CABLE_PASSIVE) &&
+	अन्यथा अगर ((phy_data->sfp_cable == XGBE_SFP_CABLE_PASSIVE) &&
 		 xgbe_phy_sfp_bit_rate(sfp_eeprom, XGBE_SFP_SPEED_10000))
 		phy_data->sfp_base = XGBE_SFP_BASE_10000_CR;
 
-	switch (phy_data->sfp_base) {
-	case XGBE_SFP_BASE_1000_T:
+	चयन (phy_data->sfp_base) अणु
+	हाल XGBE_SFP_BASE_1000_T:
 		phy_data->sfp_speed = XGBE_SFP_SPEED_100_1000;
-		break;
-	case XGBE_SFP_BASE_1000_SX:
-	case XGBE_SFP_BASE_1000_LX:
-	case XGBE_SFP_BASE_1000_CX:
+		अवरोध;
+	हाल XGBE_SFP_BASE_1000_SX:
+	हाल XGBE_SFP_BASE_1000_LX:
+	हाल XGBE_SFP_BASE_1000_CX:
 		phy_data->sfp_speed = XGBE_SFP_SPEED_1000;
-		break;
-	case XGBE_SFP_BASE_10000_SR:
-	case XGBE_SFP_BASE_10000_LR:
-	case XGBE_SFP_BASE_10000_LRM:
-	case XGBE_SFP_BASE_10000_ER:
-	case XGBE_SFP_BASE_10000_CR:
+		अवरोध;
+	हाल XGBE_SFP_BASE_10000_SR:
+	हाल XGBE_SFP_BASE_10000_LR:
+	हाल XGBE_SFP_BASE_10000_LRM:
+	हाल XGBE_SFP_BASE_10000_ER:
+	हाल XGBE_SFP_BASE_10000_CR:
 		phy_data->sfp_speed = XGBE_SFP_SPEED_10000;
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void xgbe_phy_sfp_eeprom_info(struct xgbe_prv_data *pdata,
-				     struct xgbe_sfp_eeprom *sfp_eeprom)
-{
-	struct xgbe_sfp_ascii sfp_ascii;
-	char *sfp_data = (char *)&sfp_ascii;
+अटल व्योम xgbe_phy_sfp_eeprom_info(काष्ठा xgbe_prv_data *pdata,
+				     काष्ठा xgbe_sfp_eeprom *sfp_eeprom)
+अणु
+	काष्ठा xgbe_sfp_ascii sfp_ascii;
+	अक्षर *sfp_data = (अक्षर *)&sfp_ascii;
 
-	netif_dbg(pdata, drv, pdata->netdev, "SFP detected:\n");
-	memcpy(sfp_data, &sfp_eeprom->base[XGBE_SFP_BASE_VENDOR_NAME],
+	netअगर_dbg(pdata, drv, pdata->netdev, "SFP detected:\n");
+	स_नकल(sfp_data, &sfp_eeprom->base[XGBE_SFP_BASE_VENDOR_NAME],
 	       XGBE_SFP_BASE_VENDOR_NAME_LEN);
 	sfp_data[XGBE_SFP_BASE_VENDOR_NAME_LEN] = '\0';
-	netif_dbg(pdata, drv, pdata->netdev, "  vendor:         %s\n",
+	netअगर_dbg(pdata, drv, pdata->netdev, "  vendor:         %s\n",
 		  sfp_data);
 
-	memcpy(sfp_data, &sfp_eeprom->base[XGBE_SFP_BASE_VENDOR_PN],
+	स_नकल(sfp_data, &sfp_eeprom->base[XGBE_SFP_BASE_VENDOR_PN],
 	       XGBE_SFP_BASE_VENDOR_PN_LEN);
 	sfp_data[XGBE_SFP_BASE_VENDOR_PN_LEN] = '\0';
-	netif_dbg(pdata, drv, pdata->netdev, "  part number:    %s\n",
+	netअगर_dbg(pdata, drv, pdata->netdev, "  part number:    %s\n",
 		  sfp_data);
 
-	memcpy(sfp_data, &sfp_eeprom->base[XGBE_SFP_BASE_VENDOR_REV],
+	स_नकल(sfp_data, &sfp_eeprom->base[XGBE_SFP_BASE_VENDOR_REV],
 	       XGBE_SFP_BASE_VENDOR_REV_LEN);
 	sfp_data[XGBE_SFP_BASE_VENDOR_REV_LEN] = '\0';
-	netif_dbg(pdata, drv, pdata->netdev, "  revision level: %s\n",
+	netअगर_dbg(pdata, drv, pdata->netdev, "  revision level: %s\n",
 		  sfp_data);
 
-	memcpy(sfp_data, &sfp_eeprom->extd[XGBE_SFP_BASE_VENDOR_SN],
+	स_नकल(sfp_data, &sfp_eeprom->extd[XGBE_SFP_BASE_VENDOR_SN],
 	       XGBE_SFP_BASE_VENDOR_SN_LEN);
 	sfp_data[XGBE_SFP_BASE_VENDOR_SN_LEN] = '\0';
-	netif_dbg(pdata, drv, pdata->netdev, "  serial number:  %s\n",
+	netअगर_dbg(pdata, drv, pdata->netdev, "  serial number:  %s\n",
 		  sfp_data);
-}
+पूर्ण
 
-static bool xgbe_phy_sfp_verify_eeprom(u8 cc_in, u8 *buf, unsigned int len)
-{
+अटल bool xgbe_phy_sfp_verअगरy_eeprom(u8 cc_in, u8 *buf, अचिन्हित पूर्णांक len)
+अणु
 	u8 cc;
 
-	for (cc = 0; len; buf++, len--)
+	क्रम (cc = 0; len; buf++, len--)
 		cc += *buf;
 
-	return cc == cc_in;
-}
+	वापस cc == cc_in;
+पूर्ण
 
-static int xgbe_phy_sfp_read_eeprom(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	struct xgbe_sfp_eeprom sfp_eeprom;
+अटल पूर्णांक xgbe_phy_sfp_पढ़ो_eeprom(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	काष्ठा xgbe_sfp_eeprom sfp_eeprom;
 	u8 eeprom_addr;
-	int ret;
+	पूर्णांक ret;
 
 	ret = xgbe_phy_sfp_get_mux(pdata);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err_once(pdata->dev, "%s: I2C error setting SFP MUX\n",
 			     netdev_name(pdata->netdev));
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Read the SFP serial ID eeprom */
 	eeprom_addr = 0;
-	ret = xgbe_phy_i2c_read(pdata, XGBE_SFP_SERIAL_ID_ADDRESS,
-				&eeprom_addr, sizeof(eeprom_addr),
-				&sfp_eeprom, sizeof(sfp_eeprom));
-	if (ret) {
+	ret = xgbe_phy_i2c_पढ़ो(pdata, XGBE_SFP_SERIAL_ID_ADDRESS,
+				&eeprom_addr, माप(eeprom_addr),
+				&sfp_eeprom, माप(sfp_eeprom));
+	अगर (ret) अणु
 		dev_err_once(pdata->dev, "%s: I2C error reading SFP EEPROM\n",
 			     netdev_name(pdata->netdev));
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
-	/* Validate the contents read */
-	if (!xgbe_phy_sfp_verify_eeprom(sfp_eeprom.base[XGBE_SFP_BASE_CC],
+	/* Validate the contents पढ़ो */
+	अगर (!xgbe_phy_sfp_verअगरy_eeprom(sfp_eeprom.base[XGBE_SFP_BASE_CC],
 					sfp_eeprom.base,
-					sizeof(sfp_eeprom.base) - 1)) {
+					माप(sfp_eeprom.base) - 1)) अणु
 		ret = -EINVAL;
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
-	if (!xgbe_phy_sfp_verify_eeprom(sfp_eeprom.extd[XGBE_SFP_EXTD_CC],
+	अगर (!xgbe_phy_sfp_verअगरy_eeprom(sfp_eeprom.extd[XGBE_SFP_EXTD_CC],
 					sfp_eeprom.extd,
-					sizeof(sfp_eeprom.extd) - 1)) {
+					माप(sfp_eeprom.extd) - 1)) अणु
 		ret = -EINVAL;
-		goto put;
-	}
+		जाओ put;
+	पूर्ण
 
-	/* Check for an added or changed SFP */
-	if (memcmp(&phy_data->sfp_eeprom, &sfp_eeprom, sizeof(sfp_eeprom))) {
+	/* Check क्रम an added or changed SFP */
+	अगर (स_भेद(&phy_data->sfp_eeprom, &sfp_eeprom, माप(sfp_eeprom))) अणु
 		phy_data->sfp_changed = 1;
 
-		if (netif_msg_drv(pdata))
+		अगर (netअगर_msg_drv(pdata))
 			xgbe_phy_sfp_eeprom_info(pdata, &sfp_eeprom);
 
-		memcpy(&phy_data->sfp_eeprom, &sfp_eeprom, sizeof(sfp_eeprom));
+		स_नकल(&phy_data->sfp_eeprom, &sfp_eeprom, माप(sfp_eeprom));
 
-		xgbe_phy_free_phy_device(pdata);
-	} else {
+		xgbe_phy_मुक्त_phy_device(pdata);
+	पूर्ण अन्यथा अणु
 		phy_data->sfp_changed = 0;
-	}
+	पूर्ण
 
 put:
 	xgbe_phy_sfp_put_mux(pdata);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void xgbe_phy_sfp_signals(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_sfp_संकेतs(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 	u8 gpio_reg, gpio_ports[2];
-	int ret;
+	पूर्णांक ret;
 
-	/* Read the input port registers */
+	/* Read the input port रेजिस्टरs */
 	gpio_reg = 0;
-	ret = xgbe_phy_i2c_read(pdata, phy_data->sfp_gpio_address,
-				&gpio_reg, sizeof(gpio_reg),
-				gpio_ports, sizeof(gpio_ports));
-	if (ret) {
+	ret = xgbe_phy_i2c_पढ़ो(pdata, phy_data->sfp_gpio_address,
+				&gpio_reg, माप(gpio_reg),
+				gpio_ports, माप(gpio_ports));
+	अगर (ret) अणु
 		dev_err_once(pdata->dev, "%s: I2C error reading SFP GPIOs\n",
 			     netdev_name(pdata->netdev));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	phy_data->sfp_gpio_inputs = (gpio_ports[1] << 8) | gpio_ports[0];
+	phy_data->sfp_gpio_inमाला_दो = (gpio_ports[1] << 8) | gpio_ports[0];
 
-	phy_data->sfp_mod_absent = xgbe_phy_check_sfp_mod_absent(phy_data);
-}
+	phy_data->sfp_mod_असलent = xgbe_phy_check_sfp_mod_असलent(phy_data);
+पूर्ण
 
-static void xgbe_phy_sfp_mod_absent(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_sfp_mod_असलent(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	xgbe_phy_free_phy_device(pdata);
+	xgbe_phy_मुक्त_phy_device(pdata);
 
-	phy_data->sfp_mod_absent = 1;
+	phy_data->sfp_mod_असलent = 1;
 	phy_data->sfp_phy_avail = 0;
-	memset(&phy_data->sfp_eeprom, 0, sizeof(phy_data->sfp_eeprom));
-}
+	स_रखो(&phy_data->sfp_eeprom, 0, माप(phy_data->sfp_eeprom));
+पूर्ण
 
-static void xgbe_phy_sfp_reset(struct xgbe_phy_data *phy_data)
-{
+अटल व्योम xgbe_phy_sfp_reset(काष्ठा xgbe_phy_data *phy_data)
+अणु
 	phy_data->sfp_rx_los = 0;
 	phy_data->sfp_tx_fault = 0;
-	phy_data->sfp_mod_absent = 1;
+	phy_data->sfp_mod_असलent = 1;
 	phy_data->sfp_base = XGBE_SFP_BASE_UNKNOWN;
 	phy_data->sfp_cable = XGBE_SFP_CABLE_UNKNOWN;
 	phy_data->sfp_speed = XGBE_SFP_SPEED_UNKNOWN;
-}
+पूर्ण
 
-static void xgbe_phy_sfp_detect(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	int ret;
+अटल व्योम xgbe_phy_sfp_detect(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	पूर्णांक ret;
 
-	/* Reset the SFP signals and info */
+	/* Reset the SFP संकेतs and info */
 	xgbe_phy_sfp_reset(phy_data);
 
 	ret = xgbe_phy_get_comm_ownership(pdata);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
-	/* Read the SFP signals and check for module presence */
-	xgbe_phy_sfp_signals(pdata);
-	if (phy_data->sfp_mod_absent) {
-		xgbe_phy_sfp_mod_absent(pdata);
-		goto put;
-	}
+	/* Read the SFP संकेतs and check क्रम module presence */
+	xgbe_phy_sfp_संकेतs(pdata);
+	अगर (phy_data->sfp_mod_असलent) अणु
+		xgbe_phy_sfp_mod_असलent(pdata);
+		जाओ put;
+	पूर्ण
 
-	ret = xgbe_phy_sfp_read_eeprom(pdata);
-	if (ret) {
-		/* Treat any error as if there isn't an SFP plugged in */
+	ret = xgbe_phy_sfp_पढ़ो_eeprom(pdata);
+	अगर (ret) अणु
+		/* Treat any error as अगर there isn't an SFP plugged in */
 		xgbe_phy_sfp_reset(phy_data);
-		xgbe_phy_sfp_mod_absent(pdata);
-		goto put;
-	}
+		xgbe_phy_sfp_mod_असलent(pdata);
+		जाओ put;
+	पूर्ण
 
 	xgbe_phy_sfp_parse_eeprom(pdata);
 
-	xgbe_phy_sfp_external_phy(pdata);
+	xgbe_phy_sfp_बाह्यal_phy(pdata);
 
 put:
 	xgbe_phy_sfp_phy_settings(pdata);
 
 	xgbe_phy_put_comm_ownership(pdata);
-}
+पूर्ण
 
-static int xgbe_phy_module_eeprom(struct xgbe_prv_data *pdata,
-				  struct ethtool_eeprom *eeprom, u8 *data)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल पूर्णांक xgbe_phy_module_eeprom(काष्ठा xgbe_prv_data *pdata,
+				  काष्ठा ethtool_eeprom *eeprom, u8 *data)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 	u8 eeprom_addr, eeprom_data[XGBE_SFP_EEPROM_MAX];
-	struct xgbe_sfp_eeprom *sfp_eeprom;
-	unsigned int i, j, rem;
-	int ret;
+	काष्ठा xgbe_sfp_eeprom *sfp_eeprom;
+	अचिन्हित पूर्णांक i, j, rem;
+	पूर्णांक ret;
 
 	rem = eeprom->len;
 
-	if (!eeprom->len) {
+	अगर (!eeprom->len) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if ((eeprom->offset + eeprom->len) > XGBE_SFP_EEPROM_MAX) {
+	अगर ((eeprom->offset + eeprom->len) > XGBE_SFP_EEPROM_MAX) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (phy_data->port_mode != XGBE_PORT_MODE_SFP) {
+	अगर (phy_data->port_mode != XGBE_PORT_MODE_SFP) अणु
 		ret = -ENXIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (!netif_running(pdata->netdev)) {
+	अगर (!netअगर_running(pdata->netdev)) अणु
 		ret = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (phy_data->sfp_mod_absent) {
+	अगर (phy_data->sfp_mod_असलent) अणु
 		ret = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	ret = xgbe_phy_get_comm_ownership(pdata);
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	ret = xgbe_phy_sfp_get_mux(pdata);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(pdata->netdev, "I2C error setting SFP MUX\n");
 		ret = -EIO;
-		goto put_own;
-	}
+		जाओ put_own;
+	पूर्ण
 
 	/* Read the SFP serial ID eeprom */
 	eeprom_addr = 0;
-	ret = xgbe_phy_i2c_read(pdata, XGBE_SFP_SERIAL_ID_ADDRESS,
-				&eeprom_addr, sizeof(eeprom_addr),
+	ret = xgbe_phy_i2c_पढ़ो(pdata, XGBE_SFP_SERIAL_ID_ADDRESS,
+				&eeprom_addr, माप(eeprom_addr),
 				eeprom_data, XGBE_SFP_EEPROM_BASE_LEN);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(pdata->netdev,
 			   "I2C error reading SFP EEPROM\n");
 		ret = -EIO;
-		goto put_mux;
-	}
+		जाओ put_mux;
+	पूर्ण
 
-	sfp_eeprom = (struct xgbe_sfp_eeprom *)eeprom_data;
+	sfp_eeprom = (काष्ठा xgbe_sfp_eeprom *)eeprom_data;
 
-	if (XGBE_SFP_DIAGS_SUPPORTED(sfp_eeprom)) {
+	अगर (XGBE_SFP_DIAGS_SUPPORTED(sfp_eeprom)) अणु
 		/* Read the SFP diagnostic eeprom */
 		eeprom_addr = 0;
-		ret = xgbe_phy_i2c_read(pdata, XGBE_SFP_DIAG_INFO_ADDRESS,
-					&eeprom_addr, sizeof(eeprom_addr),
+		ret = xgbe_phy_i2c_पढ़ो(pdata, XGBE_SFP_DIAG_INFO_ADDRESS,
+					&eeprom_addr, माप(eeprom_addr),
 					eeprom_data + XGBE_SFP_EEPROM_BASE_LEN,
 					XGBE_SFP_EEPROM_DIAG_LEN);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(pdata->netdev,
 				   "I2C error reading SFP DIAGS\n");
 			ret = -EIO;
-			goto put_mux;
-		}
-	}
+			जाओ put_mux;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0, j = eeprom->offset; i < eeprom->len; i++, j++) {
-		if ((j >= XGBE_SFP_EEPROM_BASE_LEN) &&
+	क्रम (i = 0, j = eeprom->offset; i < eeprom->len; i++, j++) अणु
+		अगर ((j >= XGBE_SFP_EEPROM_BASE_LEN) &&
 		    !XGBE_SFP_DIAGS_SUPPORTED(sfp_eeprom))
-			break;
+			अवरोध;
 
 		data[i] = eeprom_data[j];
 		rem--;
-	}
+	पूर्ण
 
 put_mux:
 	xgbe_phy_sfp_put_mux(pdata);
@@ -1467,504 +1468,504 @@ put_mux:
 put_own:
 	xgbe_phy_put_comm_ownership(pdata);
 
-done:
+करोne:
 	eeprom->len -= rem;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_phy_module_info(struct xgbe_prv_data *pdata,
-				struct ethtool_modinfo *modinfo)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल पूर्णांक xgbe_phy_module_info(काष्ठा xgbe_prv_data *pdata,
+				काष्ठा ethtool_modinfo *modinfo)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	if (phy_data->port_mode != XGBE_PORT_MODE_SFP)
-		return -ENXIO;
+	अगर (phy_data->port_mode != XGBE_PORT_MODE_SFP)
+		वापस -ENXIO;
 
-	if (!netif_running(pdata->netdev))
-		return -EIO;
+	अगर (!netअगर_running(pdata->netdev))
+		वापस -EIO;
 
-	if (phy_data->sfp_mod_absent)
-		return -EIO;
+	अगर (phy_data->sfp_mod_असलent)
+		वापस -EIO;
 
-	if (XGBE_SFP_DIAGS_SUPPORTED(&phy_data->sfp_eeprom)) {
+	अगर (XGBE_SFP_DIAGS_SUPPORTED(&phy_data->sfp_eeprom)) अणु
 		modinfo->type = ETH_MODULE_SFF_8472;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8472_LEN;
-	} else {
+	पूर्ण अन्यथा अणु
 		modinfo->type = ETH_MODULE_SFF_8079;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8079_LEN;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgbe_phy_phydev_flowctrl(struct xgbe_prv_data *pdata)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_phydev_flowctrl(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 	u16 lcl_adv = 0, rmt_adv = 0;
 	u8 fc;
 
-	pdata->phy.tx_pause = 0;
-	pdata->phy.rx_pause = 0;
+	pdata->phy.tx_छोड़ो = 0;
+	pdata->phy.rx_छोड़ो = 0;
 
-	if (!phy_data->phydev)
-		return;
+	अगर (!phy_data->phydev)
+		वापस;
 
 	lcl_adv = linkmode_adv_to_lcl_adv_t(phy_data->phydev->advertising);
 
-	if (phy_data->phydev->pause) {
+	अगर (phy_data->phydev->छोड़ो) अणु
 		XGBE_SET_LP_ADV(lks, Pause);
 		rmt_adv |= LPA_PAUSE_CAP;
-	}
-	if (phy_data->phydev->asym_pause) {
+	पूर्ण
+	अगर (phy_data->phydev->asym_छोड़ो) अणु
 		XGBE_SET_LP_ADV(lks, Asym_Pause);
 		rmt_adv |= LPA_PAUSE_ASYM;
-	}
+	पूर्ण
 
 	fc = mii_resolve_flowctrl_fdx(lcl_adv, rmt_adv);
-	if (fc & FLOW_CTRL_TX)
-		pdata->phy.tx_pause = 1;
-	if (fc & FLOW_CTRL_RX)
-		pdata->phy.rx_pause = 1;
-}
+	अगर (fc & FLOW_CTRL_TX)
+		pdata->phy.tx_छोड़ो = 1;
+	अगर (fc & FLOW_CTRL_RX)
+		pdata->phy.rx_छोड़ो = 1;
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_an37_sgmii_outcome(struct xgbe_prv_data *pdata)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
-	enum xgbe_mode mode;
+अटल क्रमागत xgbe_mode xgbe_phy_an37_sgmii_outcome(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+	क्रमागत xgbe_mode mode;
 
 	XGBE_SET_LP_ADV(lks, Autoneg);
 	XGBE_SET_LP_ADV(lks, TP);
 
-	/* Use external PHY to determine flow control */
-	if (pdata->phy.pause_autoneg)
+	/* Use बाह्यal PHY to determine flow control */
+	अगर (pdata->phy.छोड़ो_स्वतःneg)
 		xgbe_phy_phydev_flowctrl(pdata);
 
-	switch (pdata->an_status & XGBE_SGMII_AN_LINK_SPEED) {
-	case XGBE_SGMII_AN_LINK_SPEED_100:
-		if (pdata->an_status & XGBE_SGMII_AN_LINK_DUPLEX) {
+	चयन (pdata->an_status & XGBE_SGMII_AN_LINK_SPEED) अणु
+	हाल XGBE_SGMII_AN_LINK_SPEED_100:
+		अगर (pdata->an_status & XGBE_SGMII_AN_LINK_DUPLEX) अणु
 			XGBE_SET_LP_ADV(lks, 100baseT_Full);
 			mode = XGBE_MODE_SGMII_100;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Half-duplex not supported */
 			XGBE_SET_LP_ADV(lks, 100baseT_Half);
 			mode = XGBE_MODE_UNKNOWN;
-		}
-		break;
-	case XGBE_SGMII_AN_LINK_SPEED_1000:
-		if (pdata->an_status & XGBE_SGMII_AN_LINK_DUPLEX) {
+		पूर्ण
+		अवरोध;
+	हाल XGBE_SGMII_AN_LINK_SPEED_1000:
+		अगर (pdata->an_status & XGBE_SGMII_AN_LINK_DUPLEX) अणु
 			XGBE_SET_LP_ADV(lks, 1000baseT_Full);
 			mode = XGBE_MODE_SGMII_1000;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Half-duplex not supported */
 			XGBE_SET_LP_ADV(lks, 1000baseT_Half);
 			mode = XGBE_MODE_UNKNOWN;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		mode = XGBE_MODE_UNKNOWN;
-	}
+	पूर्ण
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_an37_outcome(struct xgbe_prv_data *pdata)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
-	enum xgbe_mode mode;
-	unsigned int ad_reg, lp_reg;
+अटल क्रमागत xgbe_mode xgbe_phy_an37_outcome(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+	क्रमागत xgbe_mode mode;
+	अचिन्हित पूर्णांक ad_reg, lp_reg;
 
 	XGBE_SET_LP_ADV(lks, Autoneg);
 	XGBE_SET_LP_ADV(lks, FIBRE);
 
-	/* Compare Advertisement and Link Partner register */
+	/* Compare Advertisement and Link Partner रेजिस्टर */
 	ad_reg = XMDIO_READ(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_ADVERTISE);
 	lp_reg = XMDIO_READ(pdata, MDIO_MMD_VEND2, MDIO_VEND2_AN_LP_ABILITY);
-	if (lp_reg & 0x100)
+	अगर (lp_reg & 0x100)
 		XGBE_SET_LP_ADV(lks, Pause);
-	if (lp_reg & 0x80)
+	अगर (lp_reg & 0x80)
 		XGBE_SET_LP_ADV(lks, Asym_Pause);
 
-	if (pdata->phy.pause_autoneg) {
-		/* Set flow control based on auto-negotiation result */
-		pdata->phy.tx_pause = 0;
-		pdata->phy.rx_pause = 0;
+	अगर (pdata->phy.छोड़ो_स्वतःneg) अणु
+		/* Set flow control based on स्वतः-negotiation result */
+		pdata->phy.tx_छोड़ो = 0;
+		pdata->phy.rx_छोड़ो = 0;
 
-		if (ad_reg & lp_reg & 0x100) {
-			pdata->phy.tx_pause = 1;
-			pdata->phy.rx_pause = 1;
-		} else if (ad_reg & lp_reg & 0x80) {
-			if (ad_reg & 0x100)
-				pdata->phy.rx_pause = 1;
-			else if (lp_reg & 0x100)
-				pdata->phy.tx_pause = 1;
-		}
-	}
+		अगर (ad_reg & lp_reg & 0x100) अणु
+			pdata->phy.tx_छोड़ो = 1;
+			pdata->phy.rx_छोड़ो = 1;
+		पूर्ण अन्यथा अगर (ad_reg & lp_reg & 0x80) अणु
+			अगर (ad_reg & 0x100)
+				pdata->phy.rx_छोड़ो = 1;
+			अन्यथा अगर (lp_reg & 0x100)
+				pdata->phy.tx_छोड़ो = 1;
+		पूर्ण
+	पूर्ण
 
-	if (lp_reg & 0x20)
+	अगर (lp_reg & 0x20)
 		XGBE_SET_LP_ADV(lks, 1000baseX_Full);
 
 	/* Half duplex is not supported */
 	ad_reg &= lp_reg;
 	mode = (ad_reg & 0x20) ? XGBE_MODE_X : XGBE_MODE_UNKNOWN;
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_an73_redrv_outcome(struct xgbe_prv_data *pdata)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	enum xgbe_mode mode;
-	unsigned int ad_reg, lp_reg;
+अटल क्रमागत xgbe_mode xgbe_phy_an73_redrv_outcome(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	क्रमागत xgbe_mode mode;
+	अचिन्हित पूर्णांक ad_reg, lp_reg;
 
 	XGBE_SET_LP_ADV(lks, Autoneg);
 	XGBE_SET_LP_ADV(lks, Backplane);
 
-	/* Use external PHY to determine flow control */
-	if (pdata->phy.pause_autoneg)
+	/* Use बाह्यal PHY to determine flow control */
+	अगर (pdata->phy.छोड़ो_स्वतःneg)
 		xgbe_phy_phydev_flowctrl(pdata);
 
-	/* Compare Advertisement and Link Partner register 2 */
+	/* Compare Advertisement and Link Partner रेजिस्टर 2 */
 	ad_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE + 1);
 	lp_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_LPA + 1);
-	if (lp_reg & 0x80)
+	अगर (lp_reg & 0x80)
 		XGBE_SET_LP_ADV(lks, 10000baseKR_Full);
-	if (lp_reg & 0x20)
+	अगर (lp_reg & 0x20)
 		XGBE_SET_LP_ADV(lks, 1000baseKX_Full);
 
 	ad_reg &= lp_reg;
-	if (ad_reg & 0x80) {
-		switch (phy_data->port_mode) {
-		case XGBE_PORT_MODE_BACKPLANE:
-		case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+	अगर (ad_reg & 0x80) अणु
+		चयन (phy_data->port_mode) अणु
+		हाल XGBE_PORT_MODE_BACKPLANE:
+		हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
 			mode = XGBE_MODE_KR;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			mode = XGBE_MODE_SFI;
-			break;
-		}
-	} else if (ad_reg & 0x20) {
-		switch (phy_data->port_mode) {
-		case XGBE_PORT_MODE_BACKPLANE:
-		case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (ad_reg & 0x20) अणु
+		चयन (phy_data->port_mode) अणु
+		हाल XGBE_PORT_MODE_BACKPLANE:
+		हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
 			mode = XGBE_MODE_KX_1000;
-			break;
-		case XGBE_PORT_MODE_1000BASE_X:
+			अवरोध;
+		हाल XGBE_PORT_MODE_1000BASE_X:
 			mode = XGBE_MODE_X;
-			break;
-		case XGBE_PORT_MODE_SFP:
-			switch (phy_data->sfp_base) {
-			case XGBE_SFP_BASE_1000_T:
-				if (phy_data->phydev &&
+			अवरोध;
+		हाल XGBE_PORT_MODE_SFP:
+			चयन (phy_data->sfp_base) अणु
+			हाल XGBE_SFP_BASE_1000_T:
+				अगर (phy_data->phydev &&
 				    (phy_data->phydev->speed == SPEED_100))
 					mode = XGBE_MODE_SGMII_100;
-				else
+				अन्यथा
 					mode = XGBE_MODE_SGMII_1000;
-				break;
-			case XGBE_SFP_BASE_1000_SX:
-			case XGBE_SFP_BASE_1000_LX:
-			case XGBE_SFP_BASE_1000_CX:
-			default:
+				अवरोध;
+			हाल XGBE_SFP_BASE_1000_SX:
+			हाल XGBE_SFP_BASE_1000_LX:
+			हाल XGBE_SFP_BASE_1000_CX:
+			शेष:
 				mode = XGBE_MODE_X;
-				break;
-			}
-			break;
-		default:
-			if (phy_data->phydev &&
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		शेष:
+			अगर (phy_data->phydev &&
 			    (phy_data->phydev->speed == SPEED_100))
 				mode = XGBE_MODE_SGMII_100;
-			else
+			अन्यथा
 				mode = XGBE_MODE_SGMII_1000;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mode = XGBE_MODE_UNKNOWN;
-	}
+	पूर्ण
 
-	/* Compare Advertisement and Link Partner register 3 */
+	/* Compare Advertisement and Link Partner रेजिस्टर 3 */
 	ad_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE + 2);
 	lp_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_LPA + 2);
-	if (lp_reg & 0xc000)
+	अगर (lp_reg & 0xc000)
 		XGBE_SET_LP_ADV(lks, 10000baseR_FEC);
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_an73_outcome(struct xgbe_prv_data *pdata)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
-	enum xgbe_mode mode;
-	unsigned int ad_reg, lp_reg;
+अटल क्रमागत xgbe_mode xgbe_phy_an73_outcome(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+	क्रमागत xgbe_mode mode;
+	अचिन्हित पूर्णांक ad_reg, lp_reg;
 
 	XGBE_SET_LP_ADV(lks, Autoneg);
 	XGBE_SET_LP_ADV(lks, Backplane);
 
-	/* Compare Advertisement and Link Partner register 1 */
+	/* Compare Advertisement and Link Partner रेजिस्टर 1 */
 	ad_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE);
 	lp_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_LPA);
-	if (lp_reg & 0x400)
+	अगर (lp_reg & 0x400)
 		XGBE_SET_LP_ADV(lks, Pause);
-	if (lp_reg & 0x800)
+	अगर (lp_reg & 0x800)
 		XGBE_SET_LP_ADV(lks, Asym_Pause);
 
-	if (pdata->phy.pause_autoneg) {
-		/* Set flow control based on auto-negotiation result */
-		pdata->phy.tx_pause = 0;
-		pdata->phy.rx_pause = 0;
+	अगर (pdata->phy.छोड़ो_स्वतःneg) अणु
+		/* Set flow control based on स्वतः-negotiation result */
+		pdata->phy.tx_छोड़ो = 0;
+		pdata->phy.rx_छोड़ो = 0;
 
-		if (ad_reg & lp_reg & 0x400) {
-			pdata->phy.tx_pause = 1;
-			pdata->phy.rx_pause = 1;
-		} else if (ad_reg & lp_reg & 0x800) {
-			if (ad_reg & 0x400)
-				pdata->phy.rx_pause = 1;
-			else if (lp_reg & 0x400)
-				pdata->phy.tx_pause = 1;
-		}
-	}
+		अगर (ad_reg & lp_reg & 0x400) अणु
+			pdata->phy.tx_छोड़ो = 1;
+			pdata->phy.rx_छोड़ो = 1;
+		पूर्ण अन्यथा अगर (ad_reg & lp_reg & 0x800) अणु
+			अगर (ad_reg & 0x400)
+				pdata->phy.rx_छोड़ो = 1;
+			अन्यथा अगर (lp_reg & 0x400)
+				pdata->phy.tx_छोड़ो = 1;
+		पूर्ण
+	पूर्ण
 
-	/* Compare Advertisement and Link Partner register 2 */
+	/* Compare Advertisement and Link Partner रेजिस्टर 2 */
 	ad_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE + 1);
 	lp_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_LPA + 1);
-	if (lp_reg & 0x80)
+	अगर (lp_reg & 0x80)
 		XGBE_SET_LP_ADV(lks, 10000baseKR_Full);
-	if (lp_reg & 0x20)
+	अगर (lp_reg & 0x20)
 		XGBE_SET_LP_ADV(lks, 1000baseKX_Full);
 
 	ad_reg &= lp_reg;
-	if (ad_reg & 0x80)
+	अगर (ad_reg & 0x80)
 		mode = XGBE_MODE_KR;
-	else if (ad_reg & 0x20)
+	अन्यथा अगर (ad_reg & 0x20)
 		mode = XGBE_MODE_KX_1000;
-	else
+	अन्यथा
 		mode = XGBE_MODE_UNKNOWN;
 
-	/* Compare Advertisement and Link Partner register 3 */
+	/* Compare Advertisement and Link Partner रेजिस्टर 3 */
 	ad_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_ADVERTISE + 2);
 	lp_reg = XMDIO_READ(pdata, MDIO_MMD_AN, MDIO_AN_LPA + 2);
-	if (lp_reg & 0xc000)
+	अगर (lp_reg & 0xc000)
 		XGBE_SET_LP_ADV(lks, 10000baseR_FEC);
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_an_outcome(struct xgbe_prv_data *pdata)
-{
-	switch (pdata->an_mode) {
-	case XGBE_AN_MODE_CL73:
-		return xgbe_phy_an73_outcome(pdata);
-	case XGBE_AN_MODE_CL73_REDRV:
-		return xgbe_phy_an73_redrv_outcome(pdata);
-	case XGBE_AN_MODE_CL37:
-		return xgbe_phy_an37_outcome(pdata);
-	case XGBE_AN_MODE_CL37_SGMII:
-		return xgbe_phy_an37_sgmii_outcome(pdata);
-	default:
-		return XGBE_MODE_UNKNOWN;
-	}
-}
+अटल क्रमागत xgbe_mode xgbe_phy_an_outcome(काष्ठा xgbe_prv_data *pdata)
+अणु
+	चयन (pdata->an_mode) अणु
+	हाल XGBE_AN_MODE_CL73:
+		वापस xgbe_phy_an73_outcome(pdata);
+	हाल XGBE_AN_MODE_CL73_REDRV:
+		वापस xgbe_phy_an73_redrv_outcome(pdata);
+	हाल XGBE_AN_MODE_CL37:
+		वापस xgbe_phy_an37_outcome(pdata);
+	हाल XGBE_AN_MODE_CL37_SGMII:
+		वापस xgbe_phy_an37_sgmii_outcome(pdata);
+	शेष:
+		वापस XGBE_MODE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static void xgbe_phy_an_advertising(struct xgbe_prv_data *pdata,
-				    struct ethtool_link_ksettings *dlks)
-{
-	struct ethtool_link_ksettings *slks = &pdata->phy.lks;
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_an_advertising(काष्ठा xgbe_prv_data *pdata,
+				    काष्ठा ethtool_link_ksettings *dlks)
+अणु
+	काष्ठा ethtool_link_ksettings *slks = &pdata->phy.lks;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	XGBE_LM_COPY(dlks, advertising, slks, advertising);
 
-	/* Without a re-driver, just return current advertising */
-	if (!phy_data->redrv)
-		return;
+	/* Without a re-driver, just वापस current advertising */
+	अगर (!phy_data->redrv)
+		वापस;
 
 	/* With the KR re-driver we need to advertise a single speed */
 	XGBE_CLR_ADV(dlks, 1000baseKX_Full);
 	XGBE_CLR_ADV(dlks, 10000baseKR_Full);
 
 	/* Advertise FEC support is present */
-	if (pdata->fec_ability & MDIO_PMA_10GBR_FECABLE_ABLE)
+	अगर (pdata->fec_ability & MDIO_PMA_10GBR_FECABLE_ABLE)
 		XGBE_SET_ADV(dlks, 10000baseR_FEC);
 
-	switch (phy_data->port_mode) {
-	case XGBE_PORT_MODE_BACKPLANE:
-	case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+	चयन (phy_data->port_mode) अणु
+	हाल XGBE_PORT_MODE_BACKPLANE:
+	हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
 		XGBE_SET_ADV(dlks, 10000baseKR_Full);
-		break;
-	case XGBE_PORT_MODE_BACKPLANE_2500:
+		अवरोध;
+	हाल XGBE_PORT_MODE_BACKPLANE_2500:
 		XGBE_SET_ADV(dlks, 1000baseKX_Full);
-		break;
-	case XGBE_PORT_MODE_1000BASE_T:
-	case XGBE_PORT_MODE_1000BASE_X:
-	case XGBE_PORT_MODE_NBASE_T:
+		अवरोध;
+	हाल XGBE_PORT_MODE_1000BASE_T:
+	हाल XGBE_PORT_MODE_1000BASE_X:
+	हाल XGBE_PORT_MODE_NBASE_T:
 		XGBE_SET_ADV(dlks, 1000baseKX_Full);
-		break;
-	case XGBE_PORT_MODE_10GBASE_T:
-		if (phy_data->phydev &&
+		अवरोध;
+	हाल XGBE_PORT_MODE_10GBASE_T:
+		अगर (phy_data->phydev &&
 		    (phy_data->phydev->speed == SPEED_10000))
 			XGBE_SET_ADV(dlks, 10000baseKR_Full);
-		else
+		अन्यथा
 			XGBE_SET_ADV(dlks, 1000baseKX_Full);
-		break;
-	case XGBE_PORT_MODE_10GBASE_R:
+		अवरोध;
+	हाल XGBE_PORT_MODE_10GBASE_R:
 		XGBE_SET_ADV(dlks, 10000baseKR_Full);
-		break;
-	case XGBE_PORT_MODE_SFP:
-		switch (phy_data->sfp_base) {
-		case XGBE_SFP_BASE_1000_T:
-		case XGBE_SFP_BASE_1000_SX:
-		case XGBE_SFP_BASE_1000_LX:
-		case XGBE_SFP_BASE_1000_CX:
+		अवरोध;
+	हाल XGBE_PORT_MODE_SFP:
+		चयन (phy_data->sfp_base) अणु
+		हाल XGBE_SFP_BASE_1000_T:
+		हाल XGBE_SFP_BASE_1000_SX:
+		हाल XGBE_SFP_BASE_1000_LX:
+		हाल XGBE_SFP_BASE_1000_CX:
 			XGBE_SET_ADV(dlks, 1000baseKX_Full);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			XGBE_SET_ADV(dlks, 10000baseKR_Full);
-			break;
-		}
-		break;
-	default:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
 		XGBE_SET_ADV(dlks, 10000baseKR_Full);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int xgbe_phy_an_config(struct xgbe_prv_data *pdata)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	int ret;
+अटल पूर्णांक xgbe_phy_an_config(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	पूर्णांक ret;
 
 	ret = xgbe_phy_find_phy_device(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!phy_data->phydev)
-		return 0;
+	अगर (!phy_data->phydev)
+		वापस 0;
 
-	phy_data->phydev->autoneg = pdata->phy.autoneg;
+	phy_data->phydev->स्वतःneg = pdata->phy.स्वतःneg;
 	linkmode_and(phy_data->phydev->advertising,
 		     phy_data->phydev->supported,
 		     lks->link_modes.advertising);
 
-	if (pdata->phy.autoneg != AUTONEG_ENABLE) {
+	अगर (pdata->phy.स्वतःneg != AUTONEG_ENABLE) अणु
 		phy_data->phydev->speed = pdata->phy.speed;
 		phy_data->phydev->duplex = pdata->phy.duplex;
-	}
+	पूर्ण
 
 	ret = phy_start_aneg(phy_data->phydev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum xgbe_an_mode xgbe_phy_an_sfp_mode(struct xgbe_phy_data *phy_data)
-{
-	switch (phy_data->sfp_base) {
-	case XGBE_SFP_BASE_1000_T:
-		return XGBE_AN_MODE_CL37_SGMII;
-	case XGBE_SFP_BASE_1000_SX:
-	case XGBE_SFP_BASE_1000_LX:
-	case XGBE_SFP_BASE_1000_CX:
-		return XGBE_AN_MODE_CL37;
-	default:
-		return XGBE_AN_MODE_NONE;
-	}
-}
+अटल क्रमागत xgbe_an_mode xgbe_phy_an_sfp_mode(काष्ठा xgbe_phy_data *phy_data)
+अणु
+	चयन (phy_data->sfp_base) अणु
+	हाल XGBE_SFP_BASE_1000_T:
+		वापस XGBE_AN_MODE_CL37_SGMII;
+	हाल XGBE_SFP_BASE_1000_SX:
+	हाल XGBE_SFP_BASE_1000_LX:
+	हाल XGBE_SFP_BASE_1000_CX:
+		वापस XGBE_AN_MODE_CL37;
+	शेष:
+		वापस XGBE_AN_MODE_NONE;
+	पूर्ण
+पूर्ण
 
-static enum xgbe_an_mode xgbe_phy_an_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल क्रमागत xgbe_an_mode xgbe_phy_an_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	/* A KR re-driver will always require CL73 AN */
-	if (phy_data->redrv)
-		return XGBE_AN_MODE_CL73_REDRV;
+	अगर (phy_data->redrv)
+		वापस XGBE_AN_MODE_CL73_REDRV;
 
-	switch (phy_data->port_mode) {
-	case XGBE_PORT_MODE_BACKPLANE:
-		return XGBE_AN_MODE_CL73;
-	case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
-	case XGBE_PORT_MODE_BACKPLANE_2500:
-		return XGBE_AN_MODE_NONE;
-	case XGBE_PORT_MODE_1000BASE_T:
-		return XGBE_AN_MODE_CL37_SGMII;
-	case XGBE_PORT_MODE_1000BASE_X:
-		return XGBE_AN_MODE_CL37;
-	case XGBE_PORT_MODE_NBASE_T:
-		return XGBE_AN_MODE_CL37_SGMII;
-	case XGBE_PORT_MODE_10GBASE_T:
-		return XGBE_AN_MODE_CL73;
-	case XGBE_PORT_MODE_10GBASE_R:
-		return XGBE_AN_MODE_NONE;
-	case XGBE_PORT_MODE_SFP:
-		return xgbe_phy_an_sfp_mode(phy_data);
-	default:
-		return XGBE_AN_MODE_NONE;
-	}
-}
+	चयन (phy_data->port_mode) अणु
+	हाल XGBE_PORT_MODE_BACKPLANE:
+		वापस XGBE_AN_MODE_CL73;
+	हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+	हाल XGBE_PORT_MODE_BACKPLANE_2500:
+		वापस XGBE_AN_MODE_NONE;
+	हाल XGBE_PORT_MODE_1000BASE_T:
+		वापस XGBE_AN_MODE_CL37_SGMII;
+	हाल XGBE_PORT_MODE_1000BASE_X:
+		वापस XGBE_AN_MODE_CL37;
+	हाल XGBE_PORT_MODE_NBASE_T:
+		वापस XGBE_AN_MODE_CL37_SGMII;
+	हाल XGBE_PORT_MODE_10GBASE_T:
+		वापस XGBE_AN_MODE_CL73;
+	हाल XGBE_PORT_MODE_10GBASE_R:
+		वापस XGBE_AN_MODE_NONE;
+	हाल XGBE_PORT_MODE_SFP:
+		वापस xgbe_phy_an_sfp_mode(phy_data);
+	शेष:
+		वापस XGBE_AN_MODE_NONE;
+	पूर्ण
+पूर्ण
 
-static int xgbe_phy_set_redrv_mode_mdio(struct xgbe_prv_data *pdata,
-					enum xgbe_phy_redrv_mode mode)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल पूर्णांक xgbe_phy_set_redrv_mode_mdio(काष्ठा xgbe_prv_data *pdata,
+					क्रमागत xgbe_phy_redrv_mode mode)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 	u16 redrv_reg, redrv_val;
 
 	redrv_reg = XGBE_PHY_REDRV_MODE_REG + (phy_data->redrv_lane * 0x1000);
 	redrv_val = (u16)mode;
 
-	return pdata->hw_if.write_ext_mii_regs(pdata, phy_data->redrv_addr,
+	वापस pdata->hw_अगर.ग_लिखो_ext_mii_regs(pdata, phy_data->redrv_addr,
 					       redrv_reg, redrv_val);
-}
+पूर्ण
 
-static int xgbe_phy_set_redrv_mode_i2c(struct xgbe_prv_data *pdata,
-				       enum xgbe_phy_redrv_mode mode)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	unsigned int redrv_reg;
-	int ret;
+अटल पूर्णांक xgbe_phy_set_redrv_mode_i2c(काष्ठा xgbe_prv_data *pdata,
+				       क्रमागत xgbe_phy_redrv_mode mode)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	अचिन्हित पूर्णांक redrv_reg;
+	पूर्णांक ret;
 
-	/* Calculate the register to write */
+	/* Calculate the रेजिस्टर to ग_लिखो */
 	redrv_reg = XGBE_PHY_REDRV_MODE_REG + (phy_data->redrv_lane * 0x1000);
 
-	ret = xgbe_phy_redrv_write(pdata, redrv_reg, mode);
+	ret = xgbe_phy_redrv_ग_लिखो(pdata, redrv_reg, mode);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void xgbe_phy_set_redrv_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	enum xgbe_phy_redrv_mode mode;
-	int ret;
+अटल व्योम xgbe_phy_set_redrv_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	क्रमागत xgbe_phy_redrv_mode mode;
+	पूर्णांक ret;
 
-	if (!phy_data->redrv)
-		return;
+	अगर (!phy_data->redrv)
+		वापस;
 
 	mode = XGBE_PHY_REDRV_MODE_CX;
-	if ((phy_data->port_mode == XGBE_PORT_MODE_SFP) &&
+	अगर ((phy_data->port_mode == XGBE_PORT_MODE_SFP) &&
 	    (phy_data->sfp_base != XGBE_SFP_BASE_1000_CX) &&
 	    (phy_data->sfp_base != XGBE_SFP_BASE_10000_CR))
 		mode = XGBE_PHY_REDRV_MODE_SR;
 
 	ret = xgbe_phy_get_comm_ownership(pdata);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
-	if (phy_data->redrv_if)
+	अगर (phy_data->redrv_अगर)
 		xgbe_phy_set_redrv_mode_i2c(pdata, mode);
-	else
+	अन्यथा
 		xgbe_phy_set_redrv_mode_mdio(pdata, mode);
 
 	xgbe_phy_put_comm_ownership(pdata);
-}
+पूर्ण
 
-static void xgbe_phy_rx_reset(struct xgbe_prv_data *pdata)
-{
-	int reg;
+अटल व्योम xgbe_phy_rx_reset(काष्ठा xgbe_prv_data *pdata)
+अणु
+	पूर्णांक reg;
 
 	reg = XMDIO_READ_BITS(pdata, MDIO_MMD_PCS, MDIO_PCS_DIGITAL_STAT,
 			      XGBE_PCS_PSEQ_STATE_MASK);
-	if (reg == XGBE_PCS_PSEQ_STATE_POWER_GOOD) {
-		/* Mailbox command timed out, reset of RX block is required.
-		 * This can be done by asseting the reset bit and wait for
+	अगर (reg == XGBE_PCS_PSEQ_STATE_POWER_GOOD) अणु
+		/* Mailbox command समयd out, reset of RX block is required.
+		 * This can be करोne by asseting the reset bit and रुको क्रम
 		 * its compeletion.
 		 */
 		XMDIO_WRITE_BITS(pdata, MDIO_MMD_PMAPMD, MDIO_PMA_RX_CTRL1,
@@ -1973,24 +1974,24 @@ static void xgbe_phy_rx_reset(struct xgbe_prv_data *pdata)
 		XMDIO_WRITE_BITS(pdata, MDIO_MMD_PMAPMD, MDIO_PMA_RX_CTRL1,
 				 XGBE_PMA_RX_RST_0_MASK, XGBE_PMA_RX_RST_0_RESET_OFF);
 		usleep_range(40, 50);
-		netif_err(pdata, link, pdata->netdev, "firmware mailbox reset performed\n");
-	}
-}
+		netअगर_err(pdata, link, pdata->netdev, "firmware mailbox reset performed\n");
+	पूर्ण
+पूर्ण
 
-static void xgbe_phy_perform_ratechange(struct xgbe_prv_data *pdata,
-					unsigned int cmd, unsigned int sub_cmd)
-{
-	unsigned int s0 = 0;
-	unsigned int wait;
+अटल व्योम xgbe_phy_perक्रमm_ratechange(काष्ठा xgbe_prv_data *pdata,
+					अचिन्हित पूर्णांक cmd, अचिन्हित पूर्णांक sub_cmd)
+अणु
+	अचिन्हित पूर्णांक s0 = 0;
+	अचिन्हित पूर्णांक रुको;
 
-	/* Log if a previous command did not complete */
-	if (XP_IOREAD_BITS(pdata, XP_DRIVER_INT_RO, STATUS)) {
-		netif_dbg(pdata, link, pdata->netdev,
+	/* Log अगर a previous command did not complete */
+	अगर (XP_IOREAD_BITS(pdata, XP_DRIVER_INT_RO, STATUS)) अणु
+		netअगर_dbg(pdata, link, pdata->netdev,
 			  "firmware mailbox not ready for command\n");
 		xgbe_phy_rx_reset(pdata);
-	}
+	पूर्ण
 
-	/* Construct the command */
+	/* Conकाष्ठा the command */
 	XP_SET_BITS(s0, XP_DRIVER_SCRATCH_0, COMMAND, cmd);
 	XP_SET_BITS(s0, XP_DRIVER_SCRATCH_0, SUB_COMMAND, sub_cmd);
 
@@ -1999,640 +2000,640 @@ static void xgbe_phy_perform_ratechange(struct xgbe_prv_data *pdata,
 	XP_IOWRITE(pdata, XP_DRIVER_SCRATCH_1, 0);
 	XP_IOWRITE_BITS(pdata, XP_DRIVER_INT_REQ, REQUEST, 1);
 
-	/* Wait for command to complete */
-	wait = XGBE_RATECHANGE_COUNT;
-	while (wait--) {
-		if (!XP_IOREAD_BITS(pdata, XP_DRIVER_INT_RO, STATUS))
-			return;
+	/* Wait क्रम command to complete */
+	रुको = XGBE_RATECHANGE_COUNT;
+	जबतक (रुको--) अणु
+		अगर (!XP_IOREAD_BITS(pdata, XP_DRIVER_INT_RO, STATUS))
+			वापस;
 
 		usleep_range(1000, 2000);
-	}
+	पूर्ण
 
-	netif_dbg(pdata, link, pdata->netdev,
+	netअगर_dbg(pdata, link, pdata->netdev,
 		  "firmware mailbox command did not complete\n");
 
 	/* Reset on error */
 	xgbe_phy_rx_reset(pdata);
-}
+पूर्ण
 
-static void xgbe_phy_rrc(struct xgbe_prv_data *pdata)
-{
+अटल व्योम xgbe_phy_rrc(काष्ठा xgbe_prv_data *pdata)
+अणु
 	/* Receiver Reset Cycle */
-	xgbe_phy_perform_ratechange(pdata, 5, 0);
+	xgbe_phy_perक्रमm_ratechange(pdata, 5, 0);
 
-	netif_dbg(pdata, link, pdata->netdev, "receiver reset complete\n");
-}
+	netअगर_dbg(pdata, link, pdata->netdev, "receiver reset complete\n");
+पूर्ण
 
-static void xgbe_phy_power_off(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_घातer_off(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	/* Power off */
-	xgbe_phy_perform_ratechange(pdata, 0, 0);
+	xgbe_phy_perक्रमm_ratechange(pdata, 0, 0);
 
 	phy_data->cur_mode = XGBE_MODE_UNKNOWN;
 
-	netif_dbg(pdata, link, pdata->netdev, "phy powered off\n");
-}
+	netअगर_dbg(pdata, link, pdata->netdev, "phy powered off\n");
+पूर्ण
 
-static void xgbe_phy_sfi_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_sfi_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	xgbe_phy_set_redrv_mode(pdata);
 
 	/* 10G/SFI */
-	if (phy_data->sfp_cable != XGBE_SFP_CABLE_PASSIVE) {
-		xgbe_phy_perform_ratechange(pdata, 3, 0);
-	} else {
-		if (phy_data->sfp_cable_len <= 1)
-			xgbe_phy_perform_ratechange(pdata, 3, 1);
-		else if (phy_data->sfp_cable_len <= 3)
-			xgbe_phy_perform_ratechange(pdata, 3, 2);
-		else
-			xgbe_phy_perform_ratechange(pdata, 3, 3);
-	}
+	अगर (phy_data->sfp_cable != XGBE_SFP_CABLE_PASSIVE) अणु
+		xgbe_phy_perक्रमm_ratechange(pdata, 3, 0);
+	पूर्ण अन्यथा अणु
+		अगर (phy_data->sfp_cable_len <= 1)
+			xgbe_phy_perक्रमm_ratechange(pdata, 3, 1);
+		अन्यथा अगर (phy_data->sfp_cable_len <= 3)
+			xgbe_phy_perक्रमm_ratechange(pdata, 3, 2);
+		अन्यथा
+			xgbe_phy_perक्रमm_ratechange(pdata, 3, 3);
+	पूर्ण
 
 	phy_data->cur_mode = XGBE_MODE_SFI;
 
-	netif_dbg(pdata, link, pdata->netdev, "10GbE SFI mode set\n");
-}
+	netअगर_dbg(pdata, link, pdata->netdev, "10GbE SFI mode set\n");
+पूर्ण
 
-static void xgbe_phy_x_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_x_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	xgbe_phy_set_redrv_mode(pdata);
 
 	/* 1G/X */
-	xgbe_phy_perform_ratechange(pdata, 1, 3);
+	xgbe_phy_perक्रमm_ratechange(pdata, 1, 3);
 
 	phy_data->cur_mode = XGBE_MODE_X;
 
-	netif_dbg(pdata, link, pdata->netdev, "1GbE X mode set\n");
-}
+	netअगर_dbg(pdata, link, pdata->netdev, "1GbE X mode set\n");
+पूर्ण
 
-static void xgbe_phy_sgmii_1000_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_sgmii_1000_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	xgbe_phy_set_redrv_mode(pdata);
 
 	/* 1G/SGMII */
-	xgbe_phy_perform_ratechange(pdata, 1, 2);
+	xgbe_phy_perक्रमm_ratechange(pdata, 1, 2);
 
 	phy_data->cur_mode = XGBE_MODE_SGMII_1000;
 
-	netif_dbg(pdata, link, pdata->netdev, "1GbE SGMII mode set\n");
-}
+	netअगर_dbg(pdata, link, pdata->netdev, "1GbE SGMII mode set\n");
+पूर्ण
 
-static void xgbe_phy_sgmii_100_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_sgmii_100_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	xgbe_phy_set_redrv_mode(pdata);
 
 	/* 100M/SGMII */
-	xgbe_phy_perform_ratechange(pdata, 1, 1);
+	xgbe_phy_perक्रमm_ratechange(pdata, 1, 1);
 
 	phy_data->cur_mode = XGBE_MODE_SGMII_100;
 
-	netif_dbg(pdata, link, pdata->netdev, "100MbE SGMII mode set\n");
-}
+	netअगर_dbg(pdata, link, pdata->netdev, "100MbE SGMII mode set\n");
+पूर्ण
 
-static void xgbe_phy_kr_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_kr_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	xgbe_phy_set_redrv_mode(pdata);
 
 	/* 10G/KR */
-	xgbe_phy_perform_ratechange(pdata, 4, 0);
+	xgbe_phy_perक्रमm_ratechange(pdata, 4, 0);
 
 	phy_data->cur_mode = XGBE_MODE_KR;
 
-	netif_dbg(pdata, link, pdata->netdev, "10GbE KR mode set\n");
-}
+	netअगर_dbg(pdata, link, pdata->netdev, "10GbE KR mode set\n");
+पूर्ण
 
-static void xgbe_phy_kx_2500_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_kx_2500_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	xgbe_phy_set_redrv_mode(pdata);
 
 	/* 2.5G/KX */
-	xgbe_phy_perform_ratechange(pdata, 2, 0);
+	xgbe_phy_perक्रमm_ratechange(pdata, 2, 0);
 
 	phy_data->cur_mode = XGBE_MODE_KX_2500;
 
-	netif_dbg(pdata, link, pdata->netdev, "2.5GbE KX mode set\n");
-}
+	netअगर_dbg(pdata, link, pdata->netdev, "2.5GbE KX mode set\n");
+पूर्ण
 
-static void xgbe_phy_kx_1000_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_kx_1000_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	xgbe_phy_set_redrv_mode(pdata);
 
 	/* 1G/KX */
-	xgbe_phy_perform_ratechange(pdata, 1, 3);
+	xgbe_phy_perक्रमm_ratechange(pdata, 1, 3);
 
 	phy_data->cur_mode = XGBE_MODE_KX_1000;
 
-	netif_dbg(pdata, link, pdata->netdev, "1GbE KX mode set\n");
-}
+	netअगर_dbg(pdata, link, pdata->netdev, "1GbE KX mode set\n");
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_cur_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल क्रमागत xgbe_mode xgbe_phy_cur_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	return phy_data->cur_mode;
-}
+	वापस phy_data->cur_mode;
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_switch_baset_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल क्रमागत xgbe_mode xgbe_phy_चयन_baset_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	/* No switching if not 10GBase-T */
-	if (phy_data->port_mode != XGBE_PORT_MODE_10GBASE_T)
-		return xgbe_phy_cur_mode(pdata);
+	/* No चयनing अगर not 10GBase-T */
+	अगर (phy_data->port_mode != XGBE_PORT_MODE_10GBASE_T)
+		वापस xgbe_phy_cur_mode(pdata);
 
-	switch (xgbe_phy_cur_mode(pdata)) {
-	case XGBE_MODE_SGMII_100:
-	case XGBE_MODE_SGMII_1000:
-		return XGBE_MODE_KR;
-	case XGBE_MODE_KR:
-	default:
-		return XGBE_MODE_SGMII_1000;
-	}
-}
+	चयन (xgbe_phy_cur_mode(pdata)) अणु
+	हाल XGBE_MODE_SGMII_100:
+	हाल XGBE_MODE_SGMII_1000:
+		वापस XGBE_MODE_KR;
+	हाल XGBE_MODE_KR:
+	शेष:
+		वापस XGBE_MODE_SGMII_1000;
+	पूर्ण
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_switch_bp_2500_mode(struct xgbe_prv_data *pdata)
-{
-	return XGBE_MODE_KX_2500;
-}
+अटल क्रमागत xgbe_mode xgbe_phy_चयन_bp_2500_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	वापस XGBE_MODE_KX_2500;
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_switch_bp_mode(struct xgbe_prv_data *pdata)
-{
-	/* If we are in KR switch to KX, and vice-versa */
-	switch (xgbe_phy_cur_mode(pdata)) {
-	case XGBE_MODE_KX_1000:
-		return XGBE_MODE_KR;
-	case XGBE_MODE_KR:
-	default:
-		return XGBE_MODE_KX_1000;
-	}
-}
+अटल क्रमागत xgbe_mode xgbe_phy_चयन_bp_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	/* If we are in KR चयन to KX, and vice-versa */
+	चयन (xgbe_phy_cur_mode(pdata)) अणु
+	हाल XGBE_MODE_KX_1000:
+		वापस XGBE_MODE_KR;
+	हाल XGBE_MODE_KR:
+	शेष:
+		वापस XGBE_MODE_KX_1000;
+	पूर्ण
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_switch_mode(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल क्रमागत xgbe_mode xgbe_phy_चयन_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	switch (phy_data->port_mode) {
-	case XGBE_PORT_MODE_BACKPLANE:
-	case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
-		return xgbe_phy_switch_bp_mode(pdata);
-	case XGBE_PORT_MODE_BACKPLANE_2500:
-		return xgbe_phy_switch_bp_2500_mode(pdata);
-	case XGBE_PORT_MODE_1000BASE_T:
-	case XGBE_PORT_MODE_NBASE_T:
-	case XGBE_PORT_MODE_10GBASE_T:
-		return xgbe_phy_switch_baset_mode(pdata);
-	case XGBE_PORT_MODE_1000BASE_X:
-	case XGBE_PORT_MODE_10GBASE_R:
-	case XGBE_PORT_MODE_SFP:
-		/* No switching, so just return current mode */
-		return xgbe_phy_cur_mode(pdata);
-	default:
-		return XGBE_MODE_UNKNOWN;
-	}
-}
+	चयन (phy_data->port_mode) अणु
+	हाल XGBE_PORT_MODE_BACKPLANE:
+	हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+		वापस xgbe_phy_चयन_bp_mode(pdata);
+	हाल XGBE_PORT_MODE_BACKPLANE_2500:
+		वापस xgbe_phy_चयन_bp_2500_mode(pdata);
+	हाल XGBE_PORT_MODE_1000BASE_T:
+	हाल XGBE_PORT_MODE_NBASE_T:
+	हाल XGBE_PORT_MODE_10GBASE_T:
+		वापस xgbe_phy_चयन_baset_mode(pdata);
+	हाल XGBE_PORT_MODE_1000BASE_X:
+	हाल XGBE_PORT_MODE_10GBASE_R:
+	हाल XGBE_PORT_MODE_SFP:
+		/* No चयनing, so just वापस current mode */
+		वापस xgbe_phy_cur_mode(pdata);
+	शेष:
+		वापस XGBE_MODE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_get_basex_mode(struct xgbe_phy_data *phy_data,
-					      int speed)
-{
-	switch (speed) {
-	case SPEED_1000:
-		return XGBE_MODE_X;
-	case SPEED_10000:
-		return XGBE_MODE_KR;
-	default:
-		return XGBE_MODE_UNKNOWN;
-	}
-}
+अटल क्रमागत xgbe_mode xgbe_phy_get_basex_mode(काष्ठा xgbe_phy_data *phy_data,
+					      पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल SPEED_1000:
+		वापस XGBE_MODE_X;
+	हाल SPEED_10000:
+		वापस XGBE_MODE_KR;
+	शेष:
+		वापस XGBE_MODE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_get_baset_mode(struct xgbe_phy_data *phy_data,
-					      int speed)
-{
-	switch (speed) {
-	case SPEED_100:
-		return XGBE_MODE_SGMII_100;
-	case SPEED_1000:
-		return XGBE_MODE_SGMII_1000;
-	case SPEED_2500:
-		return XGBE_MODE_KX_2500;
-	case SPEED_10000:
-		return XGBE_MODE_KR;
-	default:
-		return XGBE_MODE_UNKNOWN;
-	}
-}
+अटल क्रमागत xgbe_mode xgbe_phy_get_baset_mode(काष्ठा xgbe_phy_data *phy_data,
+					      पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल SPEED_100:
+		वापस XGBE_MODE_SGMII_100;
+	हाल SPEED_1000:
+		वापस XGBE_MODE_SGMII_1000;
+	हाल SPEED_2500:
+		वापस XGBE_MODE_KX_2500;
+	हाल SPEED_10000:
+		वापस XGBE_MODE_KR;
+	शेष:
+		वापस XGBE_MODE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_get_sfp_mode(struct xgbe_phy_data *phy_data,
-					    int speed)
-{
-	switch (speed) {
-	case SPEED_100:
-		return XGBE_MODE_SGMII_100;
-	case SPEED_1000:
-		if (phy_data->sfp_base == XGBE_SFP_BASE_1000_T)
-			return XGBE_MODE_SGMII_1000;
-		else
-			return XGBE_MODE_X;
-	case SPEED_10000:
-	case SPEED_UNKNOWN:
-		return XGBE_MODE_SFI;
-	default:
-		return XGBE_MODE_UNKNOWN;
-	}
-}
+अटल क्रमागत xgbe_mode xgbe_phy_get_sfp_mode(काष्ठा xgbe_phy_data *phy_data,
+					    पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल SPEED_100:
+		वापस XGBE_MODE_SGMII_100;
+	हाल SPEED_1000:
+		अगर (phy_data->sfp_base == XGBE_SFP_BASE_1000_T)
+			वापस XGBE_MODE_SGMII_1000;
+		अन्यथा
+			वापस XGBE_MODE_X;
+	हाल SPEED_10000:
+	हाल SPEED_UNKNOWN:
+		वापस XGBE_MODE_SFI;
+	शेष:
+		वापस XGBE_MODE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_get_bp_2500_mode(int speed)
-{
-	switch (speed) {
-	case SPEED_2500:
-		return XGBE_MODE_KX_2500;
-	default:
-		return XGBE_MODE_UNKNOWN;
-	}
-}
+अटल क्रमागत xgbe_mode xgbe_phy_get_bp_2500_mode(पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल SPEED_2500:
+		वापस XGBE_MODE_KX_2500;
+	शेष:
+		वापस XGBE_MODE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_get_bp_mode(int speed)
-{
-	switch (speed) {
-	case SPEED_1000:
-		return XGBE_MODE_KX_1000;
-	case SPEED_10000:
-		return XGBE_MODE_KR;
-	default:
-		return XGBE_MODE_UNKNOWN;
-	}
-}
+अटल क्रमागत xgbe_mode xgbe_phy_get_bp_mode(पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल SPEED_1000:
+		वापस XGBE_MODE_KX_1000;
+	हाल SPEED_10000:
+		वापस XGBE_MODE_KR;
+	शेष:
+		वापस XGBE_MODE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static enum xgbe_mode xgbe_phy_get_mode(struct xgbe_prv_data *pdata,
-					int speed)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल क्रमागत xgbe_mode xgbe_phy_get_mode(काष्ठा xgbe_prv_data *pdata,
+					पूर्णांक speed)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	switch (phy_data->port_mode) {
-	case XGBE_PORT_MODE_BACKPLANE:
-	case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
-		return xgbe_phy_get_bp_mode(speed);
-	case XGBE_PORT_MODE_BACKPLANE_2500:
-		return xgbe_phy_get_bp_2500_mode(speed);
-	case XGBE_PORT_MODE_1000BASE_T:
-	case XGBE_PORT_MODE_NBASE_T:
-	case XGBE_PORT_MODE_10GBASE_T:
-		return xgbe_phy_get_baset_mode(phy_data, speed);
-	case XGBE_PORT_MODE_1000BASE_X:
-	case XGBE_PORT_MODE_10GBASE_R:
-		return xgbe_phy_get_basex_mode(phy_data, speed);
-	case XGBE_PORT_MODE_SFP:
-		return xgbe_phy_get_sfp_mode(phy_data, speed);
-	default:
-		return XGBE_MODE_UNKNOWN;
-	}
-}
+	चयन (phy_data->port_mode) अणु
+	हाल XGBE_PORT_MODE_BACKPLANE:
+	हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+		वापस xgbe_phy_get_bp_mode(speed);
+	हाल XGBE_PORT_MODE_BACKPLANE_2500:
+		वापस xgbe_phy_get_bp_2500_mode(speed);
+	हाल XGBE_PORT_MODE_1000BASE_T:
+	हाल XGBE_PORT_MODE_NBASE_T:
+	हाल XGBE_PORT_MODE_10GBASE_T:
+		वापस xgbe_phy_get_baset_mode(phy_data, speed);
+	हाल XGBE_PORT_MODE_1000BASE_X:
+	हाल XGBE_PORT_MODE_10GBASE_R:
+		वापस xgbe_phy_get_basex_mode(phy_data, speed);
+	हाल XGBE_PORT_MODE_SFP:
+		वापस xgbe_phy_get_sfp_mode(phy_data, speed);
+	शेष:
+		वापस XGBE_MODE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static void xgbe_phy_set_mode(struct xgbe_prv_data *pdata, enum xgbe_mode mode)
-{
-	switch (mode) {
-	case XGBE_MODE_KX_1000:
+अटल व्योम xgbe_phy_set_mode(काष्ठा xgbe_prv_data *pdata, क्रमागत xgbe_mode mode)
+अणु
+	चयन (mode) अणु
+	हाल XGBE_MODE_KX_1000:
 		xgbe_phy_kx_1000_mode(pdata);
-		break;
-	case XGBE_MODE_KX_2500:
+		अवरोध;
+	हाल XGBE_MODE_KX_2500:
 		xgbe_phy_kx_2500_mode(pdata);
-		break;
-	case XGBE_MODE_KR:
+		अवरोध;
+	हाल XGBE_MODE_KR:
 		xgbe_phy_kr_mode(pdata);
-		break;
-	case XGBE_MODE_SGMII_100:
+		अवरोध;
+	हाल XGBE_MODE_SGMII_100:
 		xgbe_phy_sgmii_100_mode(pdata);
-		break;
-	case XGBE_MODE_SGMII_1000:
+		अवरोध;
+	हाल XGBE_MODE_SGMII_1000:
 		xgbe_phy_sgmii_1000_mode(pdata);
-		break;
-	case XGBE_MODE_X:
+		अवरोध;
+	हाल XGBE_MODE_X:
 		xgbe_phy_x_mode(pdata);
-		break;
-	case XGBE_MODE_SFI:
+		अवरोध;
+	हाल XGBE_MODE_SFI:
 		xgbe_phy_sfi_mode(pdata);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_check_mode(struct xgbe_prv_data *pdata,
-				enum xgbe_mode mode, bool advert)
-{
-	if (pdata->phy.autoneg == AUTONEG_ENABLE) {
-		return advert;
-	} else {
-		enum xgbe_mode cur_mode;
+अटल bool xgbe_phy_check_mode(काष्ठा xgbe_prv_data *pdata,
+				क्रमागत xgbe_mode mode, bool advert)
+अणु
+	अगर (pdata->phy.स्वतःneg == AUTONEG_ENABLE) अणु
+		वापस advert;
+	पूर्ण अन्यथा अणु
+		क्रमागत xgbe_mode cur_mode;
 
 		cur_mode = xgbe_phy_get_mode(pdata, pdata->phy.speed);
-		if (cur_mode == mode)
-			return true;
-	}
+		अगर (cur_mode == mode)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool xgbe_phy_use_basex_mode(struct xgbe_prv_data *pdata,
-				    enum xgbe_mode mode)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
+अटल bool xgbe_phy_use_basex_mode(काष्ठा xgbe_prv_data *pdata,
+				    क्रमागत xgbe_mode mode)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
 
-	switch (mode) {
-	case XGBE_MODE_X:
-		return xgbe_phy_check_mode(pdata, mode,
+	चयन (mode) अणु
+	हाल XGBE_MODE_X:
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 1000baseX_Full));
-	case XGBE_MODE_KR:
-		return xgbe_phy_check_mode(pdata, mode,
+	हाल XGBE_MODE_KR:
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 10000baseKR_Full));
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_use_baset_mode(struct xgbe_prv_data *pdata,
-				    enum xgbe_mode mode)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
+अटल bool xgbe_phy_use_baset_mode(काष्ठा xgbe_prv_data *pdata,
+				    क्रमागत xgbe_mode mode)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
 
-	switch (mode) {
-	case XGBE_MODE_SGMII_100:
-		return xgbe_phy_check_mode(pdata, mode,
+	चयन (mode) अणु
+	हाल XGBE_MODE_SGMII_100:
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 100baseT_Full));
-	case XGBE_MODE_SGMII_1000:
-		return xgbe_phy_check_mode(pdata, mode,
+	हाल XGBE_MODE_SGMII_1000:
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 1000baseT_Full));
-	case XGBE_MODE_KX_2500:
-		return xgbe_phy_check_mode(pdata, mode,
+	हाल XGBE_MODE_KX_2500:
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 2500baseT_Full));
-	case XGBE_MODE_KR:
-		return xgbe_phy_check_mode(pdata, mode,
+	हाल XGBE_MODE_KR:
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 10000baseT_Full));
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_use_sfp_mode(struct xgbe_prv_data *pdata,
-				  enum xgbe_mode mode)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल bool xgbe_phy_use_sfp_mode(काष्ठा xgbe_prv_data *pdata,
+				  क्रमागत xgbe_mode mode)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	switch (mode) {
-	case XGBE_MODE_X:
-		if (phy_data->sfp_base == XGBE_SFP_BASE_1000_T)
-			return false;
-		return xgbe_phy_check_mode(pdata, mode,
+	चयन (mode) अणु
+	हाल XGBE_MODE_X:
+		अगर (phy_data->sfp_base == XGBE_SFP_BASE_1000_T)
+			वापस false;
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 1000baseX_Full));
-	case XGBE_MODE_SGMII_100:
-		if (phy_data->sfp_base != XGBE_SFP_BASE_1000_T)
-			return false;
-		return xgbe_phy_check_mode(pdata, mode,
+	हाल XGBE_MODE_SGMII_100:
+		अगर (phy_data->sfp_base != XGBE_SFP_BASE_1000_T)
+			वापस false;
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 100baseT_Full));
-	case XGBE_MODE_SGMII_1000:
-		if (phy_data->sfp_base != XGBE_SFP_BASE_1000_T)
-			return false;
-		return xgbe_phy_check_mode(pdata, mode,
+	हाल XGBE_MODE_SGMII_1000:
+		अगर (phy_data->sfp_base != XGBE_SFP_BASE_1000_T)
+			वापस false;
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 1000baseT_Full));
-	case XGBE_MODE_SFI:
-		if (phy_data->sfp_mod_absent)
-			return true;
-		return xgbe_phy_check_mode(pdata, mode,
+	हाल XGBE_MODE_SFI:
+		अगर (phy_data->sfp_mod_असलent)
+			वापस true;
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 10000baseSR_Full)  ||
 					   XGBE_ADV(lks, 10000baseLR_Full)  ||
 					   XGBE_ADV(lks, 10000baseLRM_Full) ||
 					   XGBE_ADV(lks, 10000baseER_Full)  ||
 					   XGBE_ADV(lks, 10000baseCR_Full));
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_use_bp_2500_mode(struct xgbe_prv_data *pdata,
-				      enum xgbe_mode mode)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
+अटल bool xgbe_phy_use_bp_2500_mode(काष्ठा xgbe_prv_data *pdata,
+				      क्रमागत xgbe_mode mode)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
 
-	switch (mode) {
-	case XGBE_MODE_KX_2500:
-		return xgbe_phy_check_mode(pdata, mode,
+	चयन (mode) अणु
+	हाल XGBE_MODE_KX_2500:
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 2500baseX_Full));
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_use_bp_mode(struct xgbe_prv_data *pdata,
-				 enum xgbe_mode mode)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
+अटल bool xgbe_phy_use_bp_mode(काष्ठा xgbe_prv_data *pdata,
+				 क्रमागत xgbe_mode mode)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
 
-	switch (mode) {
-	case XGBE_MODE_KX_1000:
-		return xgbe_phy_check_mode(pdata, mode,
+	चयन (mode) अणु
+	हाल XGBE_MODE_KX_1000:
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 1000baseKX_Full));
-	case XGBE_MODE_KR:
-		return xgbe_phy_check_mode(pdata, mode,
+	हाल XGBE_MODE_KR:
+		वापस xgbe_phy_check_mode(pdata, mode,
 					   XGBE_ADV(lks, 10000baseKR_Full));
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_use_mode(struct xgbe_prv_data *pdata, enum xgbe_mode mode)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल bool xgbe_phy_use_mode(काष्ठा xgbe_prv_data *pdata, क्रमागत xgbe_mode mode)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	switch (phy_data->port_mode) {
-	case XGBE_PORT_MODE_BACKPLANE:
-	case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
-		return xgbe_phy_use_bp_mode(pdata, mode);
-	case XGBE_PORT_MODE_BACKPLANE_2500:
-		return xgbe_phy_use_bp_2500_mode(pdata, mode);
-	case XGBE_PORT_MODE_1000BASE_T:
-	case XGBE_PORT_MODE_NBASE_T:
-	case XGBE_PORT_MODE_10GBASE_T:
-		return xgbe_phy_use_baset_mode(pdata, mode);
-	case XGBE_PORT_MODE_1000BASE_X:
-	case XGBE_PORT_MODE_10GBASE_R:
-		return xgbe_phy_use_basex_mode(pdata, mode);
-	case XGBE_PORT_MODE_SFP:
-		return xgbe_phy_use_sfp_mode(pdata, mode);
-	default:
-		return false;
-	}
-}
+	चयन (phy_data->port_mode) अणु
+	हाल XGBE_PORT_MODE_BACKPLANE:
+	हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+		वापस xgbe_phy_use_bp_mode(pdata, mode);
+	हाल XGBE_PORT_MODE_BACKPLANE_2500:
+		वापस xgbe_phy_use_bp_2500_mode(pdata, mode);
+	हाल XGBE_PORT_MODE_1000BASE_T:
+	हाल XGBE_PORT_MODE_NBASE_T:
+	हाल XGBE_PORT_MODE_10GBASE_T:
+		वापस xgbe_phy_use_baset_mode(pdata, mode);
+	हाल XGBE_PORT_MODE_1000BASE_X:
+	हाल XGBE_PORT_MODE_10GBASE_R:
+		वापस xgbe_phy_use_basex_mode(pdata, mode);
+	हाल XGBE_PORT_MODE_SFP:
+		वापस xgbe_phy_use_sfp_mode(pdata, mode);
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_valid_speed_basex_mode(struct xgbe_phy_data *phy_data,
-					    int speed)
-{
-	switch (speed) {
-	case SPEED_1000:
-		return (phy_data->port_mode == XGBE_PORT_MODE_1000BASE_X);
-	case SPEED_10000:
-		return (phy_data->port_mode == XGBE_PORT_MODE_10GBASE_R);
-	default:
-		return false;
-	}
-}
+अटल bool xgbe_phy_valid_speed_basex_mode(काष्ठा xgbe_phy_data *phy_data,
+					    पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल SPEED_1000:
+		वापस (phy_data->port_mode == XGBE_PORT_MODE_1000BASE_X);
+	हाल SPEED_10000:
+		वापस (phy_data->port_mode == XGBE_PORT_MODE_10GBASE_R);
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_valid_speed_baset_mode(struct xgbe_phy_data *phy_data,
-					    int speed)
-{
-	switch (speed) {
-	case SPEED_100:
-	case SPEED_1000:
-		return true;
-	case SPEED_2500:
-		return (phy_data->port_mode == XGBE_PORT_MODE_NBASE_T);
-	case SPEED_10000:
-		return (phy_data->port_mode == XGBE_PORT_MODE_10GBASE_T);
-	default:
-		return false;
-	}
-}
+अटल bool xgbe_phy_valid_speed_baset_mode(काष्ठा xgbe_phy_data *phy_data,
+					    पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल SPEED_100:
+	हाल SPEED_1000:
+		वापस true;
+	हाल SPEED_2500:
+		वापस (phy_data->port_mode == XGBE_PORT_MODE_NBASE_T);
+	हाल SPEED_10000:
+		वापस (phy_data->port_mode == XGBE_PORT_MODE_10GBASE_T);
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_valid_speed_sfp_mode(struct xgbe_phy_data *phy_data,
-					  int speed)
-{
-	switch (speed) {
-	case SPEED_100:
-		return (phy_data->sfp_speed == XGBE_SFP_SPEED_100_1000);
-	case SPEED_1000:
-		return ((phy_data->sfp_speed == XGBE_SFP_SPEED_100_1000) ||
+अटल bool xgbe_phy_valid_speed_sfp_mode(काष्ठा xgbe_phy_data *phy_data,
+					  पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल SPEED_100:
+		वापस (phy_data->sfp_speed == XGBE_SFP_SPEED_100_1000);
+	हाल SPEED_1000:
+		वापस ((phy_data->sfp_speed == XGBE_SFP_SPEED_100_1000) ||
 			(phy_data->sfp_speed == XGBE_SFP_SPEED_1000));
-	case SPEED_10000:
-		return (phy_data->sfp_speed == XGBE_SFP_SPEED_10000);
-	default:
-		return false;
-	}
-}
+	हाल SPEED_10000:
+		वापस (phy_data->sfp_speed == XGBE_SFP_SPEED_10000);
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_valid_speed_bp_2500_mode(int speed)
-{
-	switch (speed) {
-	case SPEED_2500:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool xgbe_phy_valid_speed_bp_2500_mode(पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल SPEED_2500:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_valid_speed_bp_mode(int speed)
-{
-	switch (speed) {
-	case SPEED_1000:
-	case SPEED_10000:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool xgbe_phy_valid_speed_bp_mode(पूर्णांक speed)
+अणु
+	चयन (speed) अणु
+	हाल SPEED_1000:
+	हाल SPEED_10000:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool xgbe_phy_valid_speed(struct xgbe_prv_data *pdata, int speed)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल bool xgbe_phy_valid_speed(काष्ठा xgbe_prv_data *pdata, पूर्णांक speed)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	switch (phy_data->port_mode) {
-	case XGBE_PORT_MODE_BACKPLANE:
-	case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
-		return xgbe_phy_valid_speed_bp_mode(speed);
-	case XGBE_PORT_MODE_BACKPLANE_2500:
-		return xgbe_phy_valid_speed_bp_2500_mode(speed);
-	case XGBE_PORT_MODE_1000BASE_T:
-	case XGBE_PORT_MODE_NBASE_T:
-	case XGBE_PORT_MODE_10GBASE_T:
-		return xgbe_phy_valid_speed_baset_mode(phy_data, speed);
-	case XGBE_PORT_MODE_1000BASE_X:
-	case XGBE_PORT_MODE_10GBASE_R:
-		return xgbe_phy_valid_speed_basex_mode(phy_data, speed);
-	case XGBE_PORT_MODE_SFP:
-		return xgbe_phy_valid_speed_sfp_mode(phy_data, speed);
-	default:
-		return false;
-	}
-}
+	चयन (phy_data->port_mode) अणु
+	हाल XGBE_PORT_MODE_BACKPLANE:
+	हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+		वापस xgbe_phy_valid_speed_bp_mode(speed);
+	हाल XGBE_PORT_MODE_BACKPLANE_2500:
+		वापस xgbe_phy_valid_speed_bp_2500_mode(speed);
+	हाल XGBE_PORT_MODE_1000BASE_T:
+	हाल XGBE_PORT_MODE_NBASE_T:
+	हाल XGBE_PORT_MODE_10GBASE_T:
+		वापस xgbe_phy_valid_speed_baset_mode(phy_data, speed);
+	हाल XGBE_PORT_MODE_1000BASE_X:
+	हाल XGBE_PORT_MODE_10GBASE_R:
+		वापस xgbe_phy_valid_speed_basex_mode(phy_data, speed);
+	हाल XGBE_PORT_MODE_SFP:
+		वापस xgbe_phy_valid_speed_sfp_mode(phy_data, speed);
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int xgbe_phy_link_status(struct xgbe_prv_data *pdata, int *an_restart)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	unsigned int reg;
-	int ret;
+अटल पूर्णांक xgbe_phy_link_status(काष्ठा xgbe_prv_data *pdata, पूर्णांक *an_restart)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
 
 	*an_restart = 0;
 
-	if (phy_data->port_mode == XGBE_PORT_MODE_SFP) {
-		/* Check SFP signals */
+	अगर (phy_data->port_mode == XGBE_PORT_MODE_SFP) अणु
+		/* Check SFP संकेतs */
 		xgbe_phy_sfp_detect(pdata);
 
-		if (phy_data->sfp_changed) {
+		अगर (phy_data->sfp_changed) अणु
 			*an_restart = 1;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		if (phy_data->sfp_mod_absent || phy_data->sfp_rx_los)
-			return 0;
-	}
+		अगर (phy_data->sfp_mod_असलent || phy_data->sfp_rx_los)
+			वापस 0;
+	पूर्ण
 
-	if (phy_data->phydev) {
-		/* Check external PHY */
-		ret = phy_read_status(phy_data->phydev);
-		if (ret < 0)
-			return 0;
+	अगर (phy_data->phydev) अणु
+		/* Check बाह्यal PHY */
+		ret = phy_पढ़ो_status(phy_data->phydev);
+		अगर (ret < 0)
+			वापस 0;
 
-		if ((pdata->phy.autoneg == AUTONEG_ENABLE) &&
-		    !phy_aneg_done(phy_data->phydev))
-			return 0;
+		अगर ((pdata->phy.स्वतःneg == AUTONEG_ENABLE) &&
+		    !phy_aneg_करोne(phy_data->phydev))
+			वापस 0;
 
-		if (!phy_data->phydev->link)
-			return 0;
-	}
+		अगर (!phy_data->phydev->link)
+			वापस 0;
+	पूर्ण
 
-	/* Link status is latched low, so read once to clear
-	 * and then read again to get current state
+	/* Link status is latched low, so पढ़ो once to clear
+	 * and then पढ़ो again to get current state
 	 */
 	reg = XMDIO_READ(pdata, MDIO_MMD_PCS, MDIO_STAT1);
 	reg = XMDIO_READ(pdata, MDIO_MMD_PCS, MDIO_STAT1);
-	if (reg & MDIO_STAT1_LSTATUS)
-		return 1;
+	अगर (reg & MDIO_STAT1_LSTATUS)
+		वापस 1;
 
-	if (pdata->phy.autoneg == AUTONEG_ENABLE &&
-	    phy_data->port_mode == XGBE_PORT_MODE_BACKPLANE) {
-		if (!test_bit(XGBE_LINK_INIT, &pdata->dev_state)) {
-			netif_carrier_off(pdata->netdev);
+	अगर (pdata->phy.स्वतःneg == AUTONEG_ENABLE &&
+	    phy_data->port_mode == XGBE_PORT_MODE_BACKPLANE) अणु
+		अगर (!test_bit(XGBE_LINK_INIT, &pdata->dev_state)) अणु
+			netअगर_carrier_off(pdata->netdev);
 			*an_restart = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* No link, attempt a receiver reset cycle */
-	if (phy_data->rrc_count++ > XGBE_RRC_FREQUENCY) {
+	अगर (phy_data->rrc_count++ > XGBE_RRC_FREQUENCY) अणु
 		phy_data->rrc_count = 0;
 		xgbe_phy_rrc(pdata);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgbe_phy_sfp_gpio_setup(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_sfp_gpio_setup(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
 	phy_data->sfp_gpio_address = XGBE_GPIO_ADDRESS_PCA9555 +
 				     XP_GET_BITS(pdata->pp3, XP_PROP_3,
@@ -2645,12 +2646,12 @@ static void xgbe_phy_sfp_gpio_setup(struct xgbe_prv_data *pdata)
 						GPIO_RX_LOS);
 	phy_data->sfp_gpio_tx_fault = XP_GET_BITS(pdata->pp3, XP_PROP_3,
 						  GPIO_TX_FAULT);
-	phy_data->sfp_gpio_mod_absent = XP_GET_BITS(pdata->pp3, XP_PROP_3,
+	phy_data->sfp_gpio_mod_असलent = XP_GET_BITS(pdata->pp3, XP_PROP_3,
 						    GPIO_MOD_ABS);
 	phy_data->sfp_gpio_rate_select = XP_GET_BITS(pdata->pp3, XP_PROP_3,
 						     GPIO_RATE_SELECT);
 
-	if (netif_msg_probe(pdata)) {
+	अगर (netअगर_msg_probe(pdata)) अणु
 		dev_dbg(pdata->dev, "SFP: gpio_address=%#x\n",
 			phy_data->sfp_gpio_address);
 		dev_dbg(pdata->dev, "SFP: gpio_mask=%#x\n",
@@ -2660,280 +2661,280 @@ static void xgbe_phy_sfp_gpio_setup(struct xgbe_prv_data *pdata)
 		dev_dbg(pdata->dev, "SFP: gpio_tx_fault=%u\n",
 			phy_data->sfp_gpio_tx_fault);
 		dev_dbg(pdata->dev, "SFP: gpio_mod_absent=%u\n",
-			phy_data->sfp_gpio_mod_absent);
+			phy_data->sfp_gpio_mod_असलent);
 		dev_dbg(pdata->dev, "SFP: gpio_rate_select=%u\n",
 			phy_data->sfp_gpio_rate_select);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_phy_sfp_comm_setup(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	unsigned int mux_addr_hi, mux_addr_lo;
+अटल व्योम xgbe_phy_sfp_comm_setup(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	अचिन्हित पूर्णांक mux_addr_hi, mux_addr_lo;
 
 	mux_addr_hi = XP_GET_BITS(pdata->pp4, XP_PROP_4, MUX_ADDR_HI);
 	mux_addr_lo = XP_GET_BITS(pdata->pp4, XP_PROP_4, MUX_ADDR_LO);
-	if (mux_addr_lo == XGBE_SFP_DIRECT)
-		return;
+	अगर (mux_addr_lo == XGBE_SFP_सूचीECT)
+		वापस;
 
 	phy_data->sfp_comm = XGBE_SFP_COMM_PCA9545;
 	phy_data->sfp_mux_address = (mux_addr_hi << 2) + mux_addr_lo;
 	phy_data->sfp_mux_channel = XP_GET_BITS(pdata->pp4, XP_PROP_4,
 						MUX_CHAN);
 
-	if (netif_msg_probe(pdata)) {
+	अगर (netअगर_msg_probe(pdata)) अणु
 		dev_dbg(pdata->dev, "SFP: mux_address=%#x\n",
 			phy_data->sfp_mux_address);
 		dev_dbg(pdata->dev, "SFP: mux_channel=%u\n",
 			phy_data->sfp_mux_channel);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_phy_sfp_setup(struct xgbe_prv_data *pdata)
-{
+अटल व्योम xgbe_phy_sfp_setup(काष्ठा xgbe_prv_data *pdata)
+अणु
 	xgbe_phy_sfp_comm_setup(pdata);
 	xgbe_phy_sfp_gpio_setup(pdata);
-}
+पूर्ण
 
-static int xgbe_phy_int_mdio_reset(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	unsigned int ret;
+अटल पूर्णांक xgbe_phy_पूर्णांक_mdio_reset(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	अचिन्हित पूर्णांक ret;
 
-	ret = pdata->hw_if.set_gpio(pdata, phy_data->mdio_reset_gpio);
-	if (ret)
-		return ret;
+	ret = pdata->hw_अगर.set_gpio(pdata, phy_data->mdio_reset_gpio);
+	अगर (ret)
+		वापस ret;
 
-	ret = pdata->hw_if.clr_gpio(pdata, phy_data->mdio_reset_gpio);
+	ret = pdata->hw_अगर.clr_gpio(pdata, phy_data->mdio_reset_gpio);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_phy_i2c_mdio_reset(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल पूर्णांक xgbe_phy_i2c_mdio_reset(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 	u8 gpio_reg, gpio_ports[2], gpio_data[3];
-	int ret;
+	पूर्णांक ret;
 
-	/* Read the output port registers */
+	/* Read the output port रेजिस्टरs */
 	gpio_reg = 2;
-	ret = xgbe_phy_i2c_read(pdata, phy_data->mdio_reset_addr,
-				&gpio_reg, sizeof(gpio_reg),
-				gpio_ports, sizeof(gpio_ports));
-	if (ret)
-		return ret;
+	ret = xgbe_phy_i2c_पढ़ो(pdata, phy_data->mdio_reset_addr,
+				&gpio_reg, माप(gpio_reg),
+				gpio_ports, माप(gpio_ports));
+	अगर (ret)
+		वापस ret;
 
-	/* Prepare to write the GPIO data */
+	/* Prepare to ग_लिखो the GPIO data */
 	gpio_data[0] = 2;
 	gpio_data[1] = gpio_ports[0];
 	gpio_data[2] = gpio_ports[1];
 
 	/* Set the GPIO pin */
-	if (phy_data->mdio_reset_gpio < 8)
+	अगर (phy_data->mdio_reset_gpio < 8)
 		gpio_data[1] |= (1 << (phy_data->mdio_reset_gpio % 8));
-	else
+	अन्यथा
 		gpio_data[2] |= (1 << (phy_data->mdio_reset_gpio % 8));
 
-	/* Write the output port registers */
-	ret = xgbe_phy_i2c_write(pdata, phy_data->mdio_reset_addr,
-				 gpio_data, sizeof(gpio_data));
-	if (ret)
-		return ret;
+	/* Write the output port रेजिस्टरs */
+	ret = xgbe_phy_i2c_ग_लिखो(pdata, phy_data->mdio_reset_addr,
+				 gpio_data, माप(gpio_data));
+	अगर (ret)
+		वापस ret;
 
 	/* Clear the GPIO pin */
-	if (phy_data->mdio_reset_gpio < 8)
+	अगर (phy_data->mdio_reset_gpio < 8)
 		gpio_data[1] &= ~(1 << (phy_data->mdio_reset_gpio % 8));
-	else
+	अन्यथा
 		gpio_data[2] &= ~(1 << (phy_data->mdio_reset_gpio % 8));
 
-	/* Write the output port registers */
-	ret = xgbe_phy_i2c_write(pdata, phy_data->mdio_reset_addr,
-				 gpio_data, sizeof(gpio_data));
+	/* Write the output port रेजिस्टरs */
+	ret = xgbe_phy_i2c_ग_लिखो(pdata, phy_data->mdio_reset_addr,
+				 gpio_data, माप(gpio_data));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_phy_mdio_reset(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	int ret;
+अटल पूर्णांक xgbe_phy_mdio_reset(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	पूर्णांक ret;
 
-	if (phy_data->conn_type != XGBE_CONN_TYPE_MDIO)
-		return 0;
+	अगर (phy_data->conn_type != XGBE_CONN_TYPE_MDIO)
+		वापस 0;
 
 	ret = xgbe_phy_get_comm_ownership(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (phy_data->mdio_reset == XGBE_MDIO_RESET_I2C_GPIO)
+	अगर (phy_data->mdio_reset == XGBE_MDIO_RESET_I2C_GPIO)
 		ret = xgbe_phy_i2c_mdio_reset(pdata);
-	else if (phy_data->mdio_reset == XGBE_MDIO_RESET_INT_GPIO)
-		ret = xgbe_phy_int_mdio_reset(pdata);
+	अन्यथा अगर (phy_data->mdio_reset == XGBE_MDIO_RESET_INT_GPIO)
+		ret = xgbe_phy_पूर्णांक_mdio_reset(pdata);
 
 	xgbe_phy_put_comm_ownership(pdata);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool xgbe_phy_redrv_error(struct xgbe_phy_data *phy_data)
-{
-	if (!phy_data->redrv)
-		return false;
+अटल bool xgbe_phy_redrv_error(काष्ठा xgbe_phy_data *phy_data)
+अणु
+	अगर (!phy_data->redrv)
+		वापस false;
 
-	if (phy_data->redrv_if >= XGBE_PHY_REDRV_IF_MAX)
-		return true;
+	अगर (phy_data->redrv_अगर >= XGBE_PHY_REDRV_IF_MAX)
+		वापस true;
 
-	switch (phy_data->redrv_model) {
-	case XGBE_PHY_REDRV_MODEL_4223:
-		if (phy_data->redrv_lane > 3)
-			return true;
-		break;
-	case XGBE_PHY_REDRV_MODEL_4227:
-		if (phy_data->redrv_lane > 1)
-			return true;
-		break;
-	default:
-		return true;
-	}
+	चयन (phy_data->redrv_model) अणु
+	हाल XGBE_PHY_REDRV_MODEL_4223:
+		अगर (phy_data->redrv_lane > 3)
+			वापस true;
+		अवरोध;
+	हाल XGBE_PHY_REDRV_MODEL_4227:
+		अगर (phy_data->redrv_lane > 1)
+			वापस true;
+		अवरोध;
+	शेष:
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int xgbe_phy_mdio_reset_setup(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल पूर्णांक xgbe_phy_mdio_reset_setup(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	if (phy_data->conn_type != XGBE_CONN_TYPE_MDIO)
-		return 0;
+	अगर (phy_data->conn_type != XGBE_CONN_TYPE_MDIO)
+		वापस 0;
 
 	phy_data->mdio_reset = XP_GET_BITS(pdata->pp3, XP_PROP_3, MDIO_RESET);
-	switch (phy_data->mdio_reset) {
-	case XGBE_MDIO_RESET_NONE:
-	case XGBE_MDIO_RESET_I2C_GPIO:
-	case XGBE_MDIO_RESET_INT_GPIO:
-		break;
-	default:
+	चयन (phy_data->mdio_reset) अणु
+	हाल XGBE_MDIO_RESET_NONE:
+	हाल XGBE_MDIO_RESET_I2C_GPIO:
+	हाल XGBE_MDIO_RESET_INT_GPIO:
+		अवरोध;
+	शेष:
 		dev_err(pdata->dev, "unsupported MDIO reset (%#x)\n",
 			phy_data->mdio_reset);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (phy_data->mdio_reset == XGBE_MDIO_RESET_I2C_GPIO) {
+	अगर (phy_data->mdio_reset == XGBE_MDIO_RESET_I2C_GPIO) अणु
 		phy_data->mdio_reset_addr = XGBE_GPIO_ADDRESS_PCA9555 +
 					    XP_GET_BITS(pdata->pp3, XP_PROP_3,
 							MDIO_RESET_I2C_ADDR);
 		phy_data->mdio_reset_gpio = XP_GET_BITS(pdata->pp3, XP_PROP_3,
 							MDIO_RESET_I2C_GPIO);
-	} else if (phy_data->mdio_reset == XGBE_MDIO_RESET_INT_GPIO) {
+	पूर्ण अन्यथा अगर (phy_data->mdio_reset == XGBE_MDIO_RESET_INT_GPIO) अणु
 		phy_data->mdio_reset_gpio = XP_GET_BITS(pdata->pp3, XP_PROP_3,
 							MDIO_RESET_INT_GPIO);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool xgbe_phy_port_mode_mismatch(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल bool xgbe_phy_port_mode_mismatch(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	switch (phy_data->port_mode) {
-	case XGBE_PORT_MODE_BACKPLANE:
-	case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
-		if ((phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) ||
+	चयन (phy_data->port_mode) अणु
+	हाल XGBE_PORT_MODE_BACKPLANE:
+	हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+		अगर ((phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) ||
 		    (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000))
-			return false;
-		break;
-	case XGBE_PORT_MODE_BACKPLANE_2500:
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_2500)
-			return false;
-		break;
-	case XGBE_PORT_MODE_1000BASE_T:
-		if ((phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) ||
+			वापस false;
+		अवरोध;
+	हाल XGBE_PORT_MODE_BACKPLANE_2500:
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_2500)
+			वापस false;
+		अवरोध;
+	हाल XGBE_PORT_MODE_1000BASE_T:
+		अगर ((phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) ||
 		    (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000))
-			return false;
-		break;
-	case XGBE_PORT_MODE_1000BASE_X:
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000)
-			return false;
-		break;
-	case XGBE_PORT_MODE_NBASE_T:
-		if ((phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) ||
+			वापस false;
+		अवरोध;
+	हाल XGBE_PORT_MODE_1000BASE_X:
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000)
+			वापस false;
+		अवरोध;
+	हाल XGBE_PORT_MODE_NBASE_T:
+		अगर ((phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) ||
 		    (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) ||
 		    (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_2500))
-			return false;
-		break;
-	case XGBE_PORT_MODE_10GBASE_T:
-		if ((phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) ||
+			वापस false;
+		अवरोध;
+	हाल XGBE_PORT_MODE_10GBASE_T:
+		अगर ((phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) ||
 		    (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) ||
 		    (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000))
-			return false;
-		break;
-	case XGBE_PORT_MODE_10GBASE_R:
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000)
-			return false;
-		break;
-	case XGBE_PORT_MODE_SFP:
-		if ((phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) ||
+			वापस false;
+		अवरोध;
+	हाल XGBE_PORT_MODE_10GBASE_R:
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000)
+			वापस false;
+		अवरोध;
+	हाल XGBE_PORT_MODE_SFP:
+		अगर ((phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) ||
 		    (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) ||
 		    (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000))
-			return false;
-		break;
-	default:
-		break;
-	}
+			वापस false;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool xgbe_phy_conn_type_mismatch(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल bool xgbe_phy_conn_type_mismatch(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	switch (phy_data->port_mode) {
-	case XGBE_PORT_MODE_BACKPLANE:
-	case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
-	case XGBE_PORT_MODE_BACKPLANE_2500:
-		if (phy_data->conn_type == XGBE_CONN_TYPE_BACKPLANE)
-			return false;
-		break;
-	case XGBE_PORT_MODE_1000BASE_T:
-	case XGBE_PORT_MODE_1000BASE_X:
-	case XGBE_PORT_MODE_NBASE_T:
-	case XGBE_PORT_MODE_10GBASE_T:
-	case XGBE_PORT_MODE_10GBASE_R:
-		if (phy_data->conn_type == XGBE_CONN_TYPE_MDIO)
-			return false;
-		break;
-	case XGBE_PORT_MODE_SFP:
-		if (phy_data->conn_type == XGBE_CONN_TYPE_SFP)
-			return false;
-		break;
-	default:
-		break;
-	}
+	चयन (phy_data->port_mode) अणु
+	हाल XGBE_PORT_MODE_BACKPLANE:
+	हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+	हाल XGBE_PORT_MODE_BACKPLANE_2500:
+		अगर (phy_data->conn_type == XGBE_CONN_TYPE_BACKPLANE)
+			वापस false;
+		अवरोध;
+	हाल XGBE_PORT_MODE_1000BASE_T:
+	हाल XGBE_PORT_MODE_1000BASE_X:
+	हाल XGBE_PORT_MODE_NBASE_T:
+	हाल XGBE_PORT_MODE_10GBASE_T:
+	हाल XGBE_PORT_MODE_10GBASE_R:
+		अगर (phy_data->conn_type == XGBE_CONN_TYPE_MDIO)
+			वापस false;
+		अवरोध;
+	हाल XGBE_PORT_MODE_SFP:
+		अगर (phy_data->conn_type == XGBE_CONN_TYPE_SFP)
+			वापस false;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool xgbe_phy_port_enabled(struct xgbe_prv_data *pdata)
-{
-	if (!XP_GET_BITS(pdata->pp0, XP_PROP_0, PORT_SPEEDS))
-		return false;
-	if (!XP_GET_BITS(pdata->pp0, XP_PROP_0, CONN_TYPE))
-		return false;
+अटल bool xgbe_phy_port_enabled(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अगर (!XP_GET_BITS(pdata->pp0, XP_PROP_0, PORT_SPEEDS))
+		वापस false;
+	अगर (!XP_GET_BITS(pdata->pp0, XP_PROP_0, CONN_TYPE))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void xgbe_phy_cdr_track(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_cdr_track(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	if (!pdata->debugfs_an_cdr_workaround)
-		return;
+	अगर (!pdata->debugfs_an_cdr_workaround)
+		वापस;
 
-	if (!phy_data->phy_cdr_notrack)
-		return;
+	अगर (!phy_data->phy_cdr_notrack)
+		वापस;
 
 	usleep_range(phy_data->phy_cdr_delay,
 		     phy_data->phy_cdr_delay + 500);
@@ -2943,17 +2944,17 @@ static void xgbe_phy_cdr_track(struct xgbe_prv_data *pdata)
 			 XGBE_PMA_CDR_TRACK_EN_ON);
 
 	phy_data->phy_cdr_notrack = 0;
-}
+पूर्ण
 
-static void xgbe_phy_cdr_notrack(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_cdr_notrack(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	if (!pdata->debugfs_an_cdr_workaround)
-		return;
+	अगर (!pdata->debugfs_an_cdr_workaround)
+		वापस;
 
-	if (phy_data->phy_cdr_notrack)
-		return;
+	अगर (phy_data->phy_cdr_notrack)
+		वापस;
 
 	XMDIO_WRITE_BITS(pdata, MDIO_MMD_PMAPMD, MDIO_VEND2_PMA_CDR_CONTROL,
 			 XGBE_PMA_CDR_TRACK_EN_MASK,
@@ -2962,108 +2963,108 @@ static void xgbe_phy_cdr_notrack(struct xgbe_prv_data *pdata)
 	xgbe_phy_rrc(pdata);
 
 	phy_data->phy_cdr_notrack = 1;
-}
+पूर्ण
 
-static void xgbe_phy_kr_training_post(struct xgbe_prv_data *pdata)
-{
-	if (!pdata->debugfs_an_cdr_track_early)
+अटल व्योम xgbe_phy_kr_training_post(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अगर (!pdata->debugfs_an_cdr_track_early)
 		xgbe_phy_cdr_track(pdata);
-}
+पूर्ण
 
-static void xgbe_phy_kr_training_pre(struct xgbe_prv_data *pdata)
-{
-	if (pdata->debugfs_an_cdr_track_early)
+अटल व्योम xgbe_phy_kr_training_pre(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अगर (pdata->debugfs_an_cdr_track_early)
 		xgbe_phy_cdr_track(pdata);
-}
+पूर्ण
 
-static void xgbe_phy_an_post(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_an_post(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	switch (pdata->an_mode) {
-	case XGBE_AN_MODE_CL73:
-	case XGBE_AN_MODE_CL73_REDRV:
-		if (phy_data->cur_mode != XGBE_MODE_KR)
-			break;
+	चयन (pdata->an_mode) अणु
+	हाल XGBE_AN_MODE_CL73:
+	हाल XGBE_AN_MODE_CL73_REDRV:
+		अगर (phy_data->cur_mode != XGBE_MODE_KR)
+			अवरोध;
 
 		xgbe_phy_cdr_track(pdata);
 
-		switch (pdata->an_result) {
-		case XGBE_AN_READY:
-		case XGBE_AN_COMPLETE:
-			break;
-		default:
-			if (phy_data->phy_cdr_delay < XGBE_CDR_DELAY_MAX)
+		चयन (pdata->an_result) अणु
+		हाल XGBE_AN_READY:
+		हाल XGBE_AN_COMPLETE:
+			अवरोध;
+		शेष:
+			अगर (phy_data->phy_cdr_delay < XGBE_CDR_DELAY_MAX)
 				phy_data->phy_cdr_delay += XGBE_CDR_DELAY_INC;
-			else
+			अन्यथा
 				phy_data->phy_cdr_delay = XGBE_CDR_DELAY_INIT;
-			break;
-		}
-		break;
-	default:
-		break;
-	}
-}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void xgbe_phy_an_pre(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_an_pre(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	switch (pdata->an_mode) {
-	case XGBE_AN_MODE_CL73:
-	case XGBE_AN_MODE_CL73_REDRV:
-		if (phy_data->cur_mode != XGBE_MODE_KR)
-			break;
+	चयन (pdata->an_mode) अणु
+	हाल XGBE_AN_MODE_CL73:
+	हाल XGBE_AN_MODE_CL73_REDRV:
+		अगर (phy_data->cur_mode != XGBE_MODE_KR)
+			अवरोध;
 
 		xgbe_phy_cdr_notrack(pdata);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void xgbe_phy_stop(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_stop(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	/* If we have an external PHY, free it */
-	xgbe_phy_free_phy_device(pdata);
+	/* If we have an बाह्यal PHY, मुक्त it */
+	xgbe_phy_मुक्त_phy_device(pdata);
 
 	/* Reset SFP data */
 	xgbe_phy_sfp_reset(phy_data);
-	xgbe_phy_sfp_mod_absent(pdata);
+	xgbe_phy_sfp_mod_असलent(pdata);
 
 	/* Reset CDR support */
 	xgbe_phy_cdr_track(pdata);
 
 	/* Power off the PHY */
-	xgbe_phy_power_off(pdata);
+	xgbe_phy_घातer_off(pdata);
 
 	/* Stop the I2C controller */
-	pdata->i2c_if.i2c_stop(pdata);
-}
+	pdata->i2c_अगर.i2c_stop(pdata);
+पूर्ण
 
-static int xgbe_phy_start(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	int ret;
+अटल पूर्णांक xgbe_phy_start(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	पूर्णांक ret;
 
 	/* Start the I2C controller */
-	ret = pdata->i2c_if.i2c_start(pdata);
-	if (ret)
-		return ret;
+	ret = pdata->i2c_अगर.i2c_start(pdata);
+	अगर (ret)
+		वापस ret;
 
-	/* Set the proper MDIO mode for the re-driver */
-	if (phy_data->redrv && !phy_data->redrv_if) {
-		ret = pdata->hw_if.set_ext_mii_mode(pdata, phy_data->redrv_addr,
+	/* Set the proper MDIO mode क्रम the re-driver */
+	अगर (phy_data->redrv && !phy_data->redrv_अगर) अणु
+		ret = pdata->hw_अगर.set_ext_mii_mode(pdata, phy_data->redrv_addr,
 						    XGBE_MDIO_MODE_CL22);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(pdata->netdev,
 				   "redriver mdio port not compatible (%u)\n",
 				   phy_data->redrv_addr);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* Start in highest supported mode */
 	xgbe_phy_set_mode(pdata, phy_data->start_mode);
@@ -3071,79 +3072,79 @@ static int xgbe_phy_start(struct xgbe_prv_data *pdata)
 	/* Reset CDR support */
 	xgbe_phy_cdr_track(pdata);
 
-	/* After starting the I2C controller, we can check for an SFP */
-	switch (phy_data->port_mode) {
-	case XGBE_PORT_MODE_SFP:
+	/* After starting the I2C controller, we can check क्रम an SFP */
+	चयन (phy_data->port_mode) अणु
+	हाल XGBE_PORT_MODE_SFP:
 		xgbe_phy_sfp_detect(pdata);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	/* If we have an external PHY, start it */
+	/* If we have an बाह्यal PHY, start it */
 	ret = xgbe_phy_find_phy_device(pdata);
-	if (ret)
-		goto err_i2c;
+	अगर (ret)
+		जाओ err_i2c;
 
-	return 0;
+	वापस 0;
 
 err_i2c:
-	pdata->i2c_if.i2c_stop(pdata);
+	pdata->i2c_अगर.i2c_stop(pdata);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_phy_reset(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
-	enum xgbe_mode cur_mode;
-	int ret;
+अटल पूर्णांक xgbe_phy_reset(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
+	क्रमागत xgbe_mode cur_mode;
+	पूर्णांक ret;
 
-	/* Reset by power cycling the PHY */
+	/* Reset by घातer cycling the PHY */
 	cur_mode = phy_data->cur_mode;
-	xgbe_phy_power_off(pdata);
+	xgbe_phy_घातer_off(pdata);
 	xgbe_phy_set_mode(pdata, cur_mode);
 
-	if (!phy_data->phydev)
-		return 0;
+	अगर (!phy_data->phydev)
+		वापस 0;
 
-	/* Reset the external PHY */
+	/* Reset the बाह्यal PHY */
 	ret = xgbe_phy_mdio_reset(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return phy_init_hw(phy_data->phydev);
-}
+	वापस phy_init_hw(phy_data->phydev);
+पूर्ण
 
-static void xgbe_phy_exit(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_phy_data *phy_data = pdata->phy_data;
+अटल व्योम xgbe_phy_निकास(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_phy_data *phy_data = pdata->phy_data;
 
-	/* Unregister for driving external PHYs */
-	mdiobus_unregister(phy_data->mii);
-}
+	/* Unरेजिस्टर क्रम driving बाह्यal PHYs */
+	mdiobus_unरेजिस्टर(phy_data->mii);
+पूर्ण
 
-static int xgbe_phy_init(struct xgbe_prv_data *pdata)
-{
-	struct ethtool_link_ksettings *lks = &pdata->phy.lks;
-	struct xgbe_phy_data *phy_data;
-	struct mii_bus *mii;
-	int ret;
+अटल पूर्णांक xgbe_phy_init(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ethtool_link_ksettings *lks = &pdata->phy.lks;
+	काष्ठा xgbe_phy_data *phy_data;
+	काष्ठा mii_bus *mii;
+	पूर्णांक ret;
 
-	/* Check if enabled */
-	if (!xgbe_phy_port_enabled(pdata)) {
+	/* Check अगर enabled */
+	अगर (!xgbe_phy_port_enabled(pdata)) अणु
 		dev_info(pdata->dev, "device is not enabled\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Initialize the I2C controller */
-	ret = pdata->i2c_if.i2c_init(pdata);
-	if (ret)
-		return ret;
+	ret = pdata->i2c_अगर.i2c_init(pdata);
+	अगर (ret)
+		वापस ret;
 
-	phy_data = devm_kzalloc(pdata->dev, sizeof(*phy_data), GFP_KERNEL);
-	if (!phy_data)
-		return -ENOMEM;
+	phy_data = devm_kzalloc(pdata->dev, माप(*phy_data), GFP_KERNEL);
+	अगर (!phy_data)
+		वापस -ENOMEM;
 	pdata->phy_data = phy_data;
 
 	phy_data->port_mode = XP_GET_BITS(pdata->pp0, XP_PROP_0, PORT_MODE);
@@ -3151,51 +3152,51 @@ static int xgbe_phy_init(struct xgbe_prv_data *pdata)
 	phy_data->port_speeds = XP_GET_BITS(pdata->pp0, XP_PROP_0, PORT_SPEEDS);
 	phy_data->conn_type = XP_GET_BITS(pdata->pp0, XP_PROP_0, CONN_TYPE);
 	phy_data->mdio_addr = XP_GET_BITS(pdata->pp0, XP_PROP_0, MDIO_ADDR);
-	if (netif_msg_probe(pdata)) {
+	अगर (netअगर_msg_probe(pdata)) अणु
 		dev_dbg(pdata->dev, "port mode=%u\n", phy_data->port_mode);
 		dev_dbg(pdata->dev, "port id=%u\n", phy_data->port_id);
 		dev_dbg(pdata->dev, "port speeds=%#x\n", phy_data->port_speeds);
 		dev_dbg(pdata->dev, "conn type=%u\n", phy_data->conn_type);
 		dev_dbg(pdata->dev, "mdio addr=%u\n", phy_data->mdio_addr);
-	}
+	पूर्ण
 
 	phy_data->redrv = XP_GET_BITS(pdata->pp4, XP_PROP_4, REDRV_PRESENT);
-	phy_data->redrv_if = XP_GET_BITS(pdata->pp4, XP_PROP_4, REDRV_IF);
+	phy_data->redrv_अगर = XP_GET_BITS(pdata->pp4, XP_PROP_4, REDRV_IF);
 	phy_data->redrv_addr = XP_GET_BITS(pdata->pp4, XP_PROP_4, REDRV_ADDR);
 	phy_data->redrv_lane = XP_GET_BITS(pdata->pp4, XP_PROP_4, REDRV_LANE);
 	phy_data->redrv_model = XP_GET_BITS(pdata->pp4, XP_PROP_4, REDRV_MODEL);
-	if (phy_data->redrv && netif_msg_probe(pdata)) {
+	अगर (phy_data->redrv && netअगर_msg_probe(pdata)) अणु
 		dev_dbg(pdata->dev, "redrv present\n");
-		dev_dbg(pdata->dev, "redrv i/f=%u\n", phy_data->redrv_if);
+		dev_dbg(pdata->dev, "redrv i/f=%u\n", phy_data->redrv_अगर);
 		dev_dbg(pdata->dev, "redrv addr=%#x\n", phy_data->redrv_addr);
 		dev_dbg(pdata->dev, "redrv lane=%u\n", phy_data->redrv_lane);
 		dev_dbg(pdata->dev, "redrv model=%u\n", phy_data->redrv_model);
-	}
+	पूर्ण
 
 	/* Validate the connection requested */
-	if (xgbe_phy_conn_type_mismatch(pdata)) {
+	अगर (xgbe_phy_conn_type_mismatch(pdata)) अणु
 		dev_err(pdata->dev, "phy mode/connection mismatch (%#x/%#x)\n",
 			phy_data->port_mode, phy_data->conn_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Validate the mode requested */
-	if (xgbe_phy_port_mode_mismatch(pdata)) {
+	अगर (xgbe_phy_port_mode_mismatch(pdata)) अणु
 		dev_err(pdata->dev, "phy mode/speed mismatch (%#x/%#x)\n",
 			phy_data->port_mode, phy_data->port_speeds);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check for and validate MDIO reset support */
+	/* Check क्रम and validate MDIO reset support */
 	ret = xgbe_phy_mdio_reset_setup(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Validate the re-driver information */
-	if (xgbe_phy_redrv_error(phy_data)) {
+	/* Validate the re-driver inक्रमmation */
+	अगर (xgbe_phy_redrv_error(phy_data)) अणु
 		dev_err(pdata->dev, "phy re-driver settings error\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	pdata->kr_redrv = phy_data->redrv;
 
 	/* Indicate current mode is unknown */
@@ -3204,29 +3205,29 @@ static int xgbe_phy_init(struct xgbe_prv_data *pdata)
 	/* Initialize supported features */
 	XGBE_ZERO_SUP(lks);
 
-	switch (phy_data->port_mode) {
+	चयन (phy_data->port_mode) अणु
 	/* Backplane support */
-	case XGBE_PORT_MODE_BACKPLANE:
+	हाल XGBE_PORT_MODE_BACKPLANE:
 		XGBE_SET_SUP(lks, Autoneg);
 		fallthrough;
-	case XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
+	हाल XGBE_PORT_MODE_BACKPLANE_NO_AUTONEG:
 		XGBE_SET_SUP(lks, Pause);
 		XGBE_SET_SUP(lks, Asym_Pause);
 		XGBE_SET_SUP(lks, Backplane);
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) {
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) अणु
 			XGBE_SET_SUP(lks, 1000baseKX_Full);
 			phy_data->start_mode = XGBE_MODE_KX_1000;
-		}
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000) {
+		पूर्ण
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000) अणु
 			XGBE_SET_SUP(lks, 10000baseKR_Full);
-			if (pdata->fec_ability & MDIO_PMA_10GBR_FECABLE_ABLE)
+			अगर (pdata->fec_ability & MDIO_PMA_10GBR_FECABLE_ABLE)
 				XGBE_SET_SUP(lks, 10000baseR_FEC);
 			phy_data->start_mode = XGBE_MODE_KR;
-		}
+		पूर्ण
 
 		phy_data->phydev_mode = XGBE_MDIO_MODE_NONE;
-		break;
-	case XGBE_PORT_MODE_BACKPLANE_2500:
+		अवरोध;
+	हाल XGBE_PORT_MODE_BACKPLANE_2500:
 		XGBE_SET_SUP(lks, Pause);
 		XGBE_SET_SUP(lks, Asym_Pause);
 		XGBE_SET_SUP(lks, Backplane);
@@ -3234,28 +3235,28 @@ static int xgbe_phy_init(struct xgbe_prv_data *pdata)
 		phy_data->start_mode = XGBE_MODE_KX_2500;
 
 		phy_data->phydev_mode = XGBE_MDIO_MODE_NONE;
-		break;
+		अवरोध;
 
 	/* MDIO 1GBase-T support */
-	case XGBE_PORT_MODE_1000BASE_T:
+	हाल XGBE_PORT_MODE_1000BASE_T:
 		XGBE_SET_SUP(lks, Autoneg);
 		XGBE_SET_SUP(lks, Pause);
 		XGBE_SET_SUP(lks, Asym_Pause);
 		XGBE_SET_SUP(lks, TP);
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) {
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) अणु
 			XGBE_SET_SUP(lks, 100baseT_Full);
 			phy_data->start_mode = XGBE_MODE_SGMII_100;
-		}
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) {
+		पूर्ण
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) अणु
 			XGBE_SET_SUP(lks, 1000baseT_Full);
 			phy_data->start_mode = XGBE_MODE_SGMII_1000;
-		}
+		पूर्ण
 
 		phy_data->phydev_mode = XGBE_MDIO_MODE_CL22;
-		break;
+		अवरोध;
 
 	/* MDIO Base-X support */
-	case XGBE_PORT_MODE_1000BASE_X:
+	हाल XGBE_PORT_MODE_1000BASE_X:
 		XGBE_SET_SUP(lks, Autoneg);
 		XGBE_SET_SUP(lks, Pause);
 		XGBE_SET_SUP(lks, Asym_Pause);
@@ -3264,54 +3265,54 @@ static int xgbe_phy_init(struct xgbe_prv_data *pdata)
 		phy_data->start_mode = XGBE_MODE_X;
 
 		phy_data->phydev_mode = XGBE_MDIO_MODE_CL22;
-		break;
+		अवरोध;
 
 	/* MDIO NBase-T support */
-	case XGBE_PORT_MODE_NBASE_T:
+	हाल XGBE_PORT_MODE_NBASE_T:
 		XGBE_SET_SUP(lks, Autoneg);
 		XGBE_SET_SUP(lks, Pause);
 		XGBE_SET_SUP(lks, Asym_Pause);
 		XGBE_SET_SUP(lks, TP);
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) {
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) अणु
 			XGBE_SET_SUP(lks, 100baseT_Full);
 			phy_data->start_mode = XGBE_MODE_SGMII_100;
-		}
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) {
+		पूर्ण
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) अणु
 			XGBE_SET_SUP(lks, 1000baseT_Full);
 			phy_data->start_mode = XGBE_MODE_SGMII_1000;
-		}
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_2500) {
+		पूर्ण
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_2500) अणु
 			XGBE_SET_SUP(lks, 2500baseT_Full);
 			phy_data->start_mode = XGBE_MODE_KX_2500;
-		}
+		पूर्ण
 
 		phy_data->phydev_mode = XGBE_MDIO_MODE_CL45;
-		break;
+		अवरोध;
 
 	/* 10GBase-T support */
-	case XGBE_PORT_MODE_10GBASE_T:
+	हाल XGBE_PORT_MODE_10GBASE_T:
 		XGBE_SET_SUP(lks, Autoneg);
 		XGBE_SET_SUP(lks, Pause);
 		XGBE_SET_SUP(lks, Asym_Pause);
 		XGBE_SET_SUP(lks, TP);
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) {
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100) अणु
 			XGBE_SET_SUP(lks, 100baseT_Full);
 			phy_data->start_mode = XGBE_MODE_SGMII_100;
-		}
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) {
+		पूर्ण
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000) अणु
 			XGBE_SET_SUP(lks, 1000baseT_Full);
 			phy_data->start_mode = XGBE_MODE_SGMII_1000;
-		}
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000) {
+		पूर्ण
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000) अणु
 			XGBE_SET_SUP(lks, 10000baseT_Full);
 			phy_data->start_mode = XGBE_MODE_KR;
-		}
+		पूर्ण
 
 		phy_data->phydev_mode = XGBE_MDIO_MODE_CL45;
-		break;
+		अवरोध;
 
 	/* 10GBase-R support */
-	case XGBE_PORT_MODE_10GBASE_R:
+	हाल XGBE_PORT_MODE_10GBASE_R:
 		XGBE_SET_SUP(lks, Autoneg);
 		XGBE_SET_SUP(lks, Pause);
 		XGBE_SET_SUP(lks, Asym_Pause);
@@ -3320,95 +3321,95 @@ static int xgbe_phy_init(struct xgbe_prv_data *pdata)
 		XGBE_SET_SUP(lks, 10000baseLR_Full);
 		XGBE_SET_SUP(lks, 10000baseLRM_Full);
 		XGBE_SET_SUP(lks, 10000baseER_Full);
-		if (pdata->fec_ability & MDIO_PMA_10GBR_FECABLE_ABLE)
+		अगर (pdata->fec_ability & MDIO_PMA_10GBR_FECABLE_ABLE)
 			XGBE_SET_SUP(lks, 10000baseR_FEC);
 		phy_data->start_mode = XGBE_MODE_SFI;
 
 		phy_data->phydev_mode = XGBE_MDIO_MODE_NONE;
-		break;
+		अवरोध;
 
 	/* SFP support */
-	case XGBE_PORT_MODE_SFP:
+	हाल XGBE_PORT_MODE_SFP:
 		XGBE_SET_SUP(lks, Autoneg);
 		XGBE_SET_SUP(lks, Pause);
 		XGBE_SET_SUP(lks, Asym_Pause);
 		XGBE_SET_SUP(lks, TP);
 		XGBE_SET_SUP(lks, FIBRE);
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100)
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_100)
 			phy_data->start_mode = XGBE_MODE_SGMII_100;
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000)
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_1000)
 			phy_data->start_mode = XGBE_MODE_SGMII_1000;
-		if (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000)
+		अगर (phy_data->port_speeds & XGBE_PHY_PORT_SPEED_10000)
 			phy_data->start_mode = XGBE_MODE_SFI;
 
 		phy_data->phydev_mode = XGBE_MDIO_MODE_CL22;
 
 		xgbe_phy_sfp_setup(pdata);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (netif_msg_probe(pdata))
+	अगर (netअगर_msg_probe(pdata))
 		dev_dbg(pdata->dev, "phy supported=0x%*pb\n",
 			__ETHTOOL_LINK_MODE_MASK_NBITS,
 			lks->link_modes.supported);
 
-	if ((phy_data->conn_type & XGBE_CONN_TYPE_MDIO) &&
-	    (phy_data->phydev_mode != XGBE_MDIO_MODE_NONE)) {
-		ret = pdata->hw_if.set_ext_mii_mode(pdata, phy_data->mdio_addr,
+	अगर ((phy_data->conn_type & XGBE_CONN_TYPE_MDIO) &&
+	    (phy_data->phydev_mode != XGBE_MDIO_MODE_NONE)) अणु
+		ret = pdata->hw_अगर.set_ext_mii_mode(pdata, phy_data->mdio_addr,
 						    phy_data->phydev_mode);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(pdata->dev,
 				"mdio port/clause not compatible (%d/%u)\n",
 				phy_data->mdio_addr, phy_data->phydev_mode);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (phy_data->redrv && !phy_data->redrv_if) {
-		ret = pdata->hw_if.set_ext_mii_mode(pdata, phy_data->redrv_addr,
+	अगर (phy_data->redrv && !phy_data->redrv_अगर) अणु
+		ret = pdata->hw_अगर.set_ext_mii_mode(pdata, phy_data->redrv_addr,
 						    XGBE_MDIO_MODE_CL22);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(pdata->dev,
 				"redriver mdio port not compatible (%u)\n",
 				phy_data->redrv_addr);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	phy_data->phy_cdr_delay = XGBE_CDR_DELAY_INIT;
 
-	/* Register for driving external PHYs */
+	/* Register क्रम driving बाह्यal PHYs */
 	mii = devm_mdiobus_alloc(pdata->dev);
-	if (!mii) {
+	अगर (!mii) अणु
 		dev_err(pdata->dev, "mdiobus_alloc failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	mii->priv = pdata;
 	mii->name = "amd-xgbe-mii";
-	mii->read = xgbe_phy_mii_read;
-	mii->write = xgbe_phy_mii_write;
+	mii->पढ़ो = xgbe_phy_mii_पढ़ो;
+	mii->ग_लिखो = xgbe_phy_mii_ग_लिखो;
 	mii->parent = pdata->dev;
 	mii->phy_mask = ~0;
-	snprintf(mii->id, sizeof(mii->id), "%s", dev_name(pdata->dev));
-	ret = mdiobus_register(mii);
-	if (ret) {
+	snम_लिखो(mii->id, माप(mii->id), "%s", dev_name(pdata->dev));
+	ret = mdiobus_रेजिस्टर(mii);
+	अगर (ret) अणु
 		dev_err(pdata->dev, "mdiobus_register failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	phy_data->mii = mii;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void xgbe_init_function_ptrs_phy_v2(struct xgbe_phy_if *phy_if)
-{
-	struct xgbe_phy_impl_if *phy_impl = &phy_if->phy_impl;
+व्योम xgbe_init_function_ptrs_phy_v2(काष्ठा xgbe_phy_अगर *phy_अगर)
+अणु
+	काष्ठा xgbe_phy_impl_अगर *phy_impl = &phy_अगर->phy_impl;
 
 	phy_impl->init			= xgbe_phy_init;
-	phy_impl->exit			= xgbe_phy_exit;
+	phy_impl->निकास			= xgbe_phy_निकास;
 
 	phy_impl->reset			= xgbe_phy_reset;
 	phy_impl->start			= xgbe_phy_start;
@@ -3421,7 +3422,7 @@ void xgbe_init_function_ptrs_phy_v2(struct xgbe_phy_if *phy_if)
 	phy_impl->use_mode		= xgbe_phy_use_mode;
 	phy_impl->set_mode		= xgbe_phy_set_mode;
 	phy_impl->get_mode		= xgbe_phy_get_mode;
-	phy_impl->switch_mode		= xgbe_phy_switch_mode;
+	phy_impl->चयन_mode		= xgbe_phy_चयन_mode;
 	phy_impl->cur_mode		= xgbe_phy_cur_mode;
 
 	phy_impl->an_mode		= xgbe_phy_an_mode;
@@ -3440,4 +3441,4 @@ void xgbe_init_function_ptrs_phy_v2(struct xgbe_phy_if *phy_if)
 
 	phy_impl->module_info		= xgbe_phy_module_info;
 	phy_impl->module_eeprom		= xgbe_phy_module_eeprom;
-}
+पूर्ण

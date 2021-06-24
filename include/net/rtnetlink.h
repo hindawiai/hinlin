@@ -1,175 +1,176 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_RTNETLINK_H
-#define __NET_RTNETLINK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_RTNETLINK_H
+#घोषणा __NET_RTNETLINK_H
 
-#include <linux/rtnetlink.h>
-#include <net/netlink.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <net/netlink.h>
 
-typedef int (*rtnl_doit_func)(struct sk_buff *, struct nlmsghdr *,
-			      struct netlink_ext_ack *);
-typedef int (*rtnl_dumpit_func)(struct sk_buff *, struct netlink_callback *);
+प्रकार पूर्णांक (*rtnl_करोit_func)(काष्ठा sk_buff *, काष्ठा nlmsghdr *,
+			      काष्ठा netlink_ext_ack *);
+प्रकार पूर्णांक (*rtnl_dumpit_func)(काष्ठा sk_buff *, काष्ठा netlink_callback *);
 
-enum rtnl_link_flags {
+क्रमागत rtnl_link_flags अणु
 	RTNL_FLAG_DOIT_UNLOCKED = 1,
-};
+पूर्ण;
 
-void rtnl_register(int protocol, int msgtype,
-		   rtnl_doit_func, rtnl_dumpit_func, unsigned int flags);
-int rtnl_register_module(struct module *owner, int protocol, int msgtype,
-			 rtnl_doit_func, rtnl_dumpit_func, unsigned int flags);
-int rtnl_unregister(int protocol, int msgtype);
-void rtnl_unregister_all(int protocol);
+व्योम rtnl_रेजिस्टर(पूर्णांक protocol, पूर्णांक msgtype,
+		   rtnl_करोit_func, rtnl_dumpit_func, अचिन्हित पूर्णांक flags);
+पूर्णांक rtnl_रेजिस्टर_module(काष्ठा module *owner, पूर्णांक protocol, पूर्णांक msgtype,
+			 rtnl_करोit_func, rtnl_dumpit_func, अचिन्हित पूर्णांक flags);
+पूर्णांक rtnl_unरेजिस्टर(पूर्णांक protocol, पूर्णांक msgtype);
+व्योम rtnl_unरेजिस्टर_all(पूर्णांक protocol);
 
-static inline int rtnl_msg_family(const struct nlmsghdr *nlh)
-{
-	if (nlmsg_len(nlh) >= sizeof(struct rtgenmsg))
-		return ((struct rtgenmsg *) nlmsg_data(nlh))->rtgen_family;
-	else
-		return AF_UNSPEC;
-}
+अटल अंतरभूत पूर्णांक rtnl_msg_family(स्थिर काष्ठा nlmsghdr *nlh)
+अणु
+	अगर (nlmsg_len(nlh) >= माप(काष्ठा rtgenmsg))
+		वापस ((काष्ठा rtgenmsg *) nlmsg_data(nlh))->rtgen_family;
+	अन्यथा
+		वापस AF_UNSPEC;
+पूर्ण
 
 /**
- *	struct rtnl_link_ops - rtnetlink link operations
+ *	काष्ठा rtnl_link_ops - rtnetlink link operations
  *
- *	@list: Used internally
- *	@kind: Identifier
- *	@netns_refund: Physical device, move to init_net on netns exit
- *	@maxtype: Highest device specific netlink attribute number
- *	@policy: Netlink policy for device specific attribute validation
- *	@validate: Optional validation function for netlink/changelink parameters
- *	@priv_size: sizeof net_device private space
+ *	@list: Used पूर्णांकernally
+ *	@kind: Identअगरier
+ *	@netns_refund: Physical device, move to init_net on netns निकास
+ *	@maxtype: Highest device specअगरic netlink attribute number
+ *	@policy: Netlink policy क्रम device specअगरic attribute validation
+ *	@validate: Optional validation function क्रम netlink/changelink parameters
+ *	@priv_size: माप net_device निजी space
  *	@setup: net_device setup function
- *	@newlink: Function for configuring and registering a new device
- *	@changelink: Function for changing parameters of an existing device
- *	@dellink: Function to remove a device
- *	@get_size: Function to calculate required room for dumping device
- *		   specific netlink attributes
- *	@fill_info: Function to dump device specific netlink attributes
- *	@get_xstats_size: Function to calculate required room for dumping device
- *			  specific statistics
- *	@fill_xstats: Function to dump device specific statistics
+ *	@newlink: Function क्रम configuring and रेजिस्टरing a new device
+ *	@changelink: Function क्रम changing parameters of an existing device
+ *	@dellink: Function to हटाओ a device
+ *	@get_size: Function to calculate required room क्रम dumping device
+ *		   specअगरic netlink attributes
+ *	@fill_info: Function to dump device specअगरic netlink attributes
+ *	@get_xstats_size: Function to calculate required room क्रम dumping device
+ *			  specअगरic statistics
+ *	@fill_xstats: Function to dump device specअगरic statistics
  *	@get_num_tx_queues: Function to determine number of transmit queues
  *			    to create when creating a new device.
  *	@get_num_rx_queues: Function to determine number of receive queues
  *			    to create when creating a new device.
  *	@get_link_net: Function to get the i/o netns of the device
- *	@get_linkxstats_size: Function to calculate the required room for
- *			      dumping device-specific extended link stats
- *	@fill_linkxstats: Function to dump device-specific extended link stats
+ *	@get_linkxstats_size: Function to calculate the required room क्रम
+ *			      dumping device-specअगरic extended link stats
+ *	@fill_linkxstats: Function to dump device-specअगरic extended link stats
  */
-struct rtnl_link_ops {
-	struct list_head	list;
+काष्ठा rtnl_link_ops अणु
+	काष्ठा list_head	list;
 
-	const char		*kind;
+	स्थिर अक्षर		*kind;
 
-	size_t			priv_size;
-	void			(*setup)(struct net_device *dev);
+	माप_प्रकार			priv_size;
+	व्योम			(*setup)(काष्ठा net_device *dev);
 
 	bool			netns_refund;
-	unsigned int		maxtype;
-	const struct nla_policy	*policy;
-	int			(*validate)(struct nlattr *tb[],
-					    struct nlattr *data[],
-					    struct netlink_ext_ack *extack);
+	अचिन्हित पूर्णांक		maxtype;
+	स्थिर काष्ठा nla_policy	*policy;
+	पूर्णांक			(*validate)(काष्ठा nlattr *tb[],
+					    काष्ठा nlattr *data[],
+					    काष्ठा netlink_ext_ack *extack);
 
-	int			(*newlink)(struct net *src_net,
-					   struct net_device *dev,
-					   struct nlattr *tb[],
-					   struct nlattr *data[],
-					   struct netlink_ext_ack *extack);
-	int			(*changelink)(struct net_device *dev,
-					      struct nlattr *tb[],
-					      struct nlattr *data[],
-					      struct netlink_ext_ack *extack);
-	void			(*dellink)(struct net_device *dev,
-					   struct list_head *head);
+	पूर्णांक			(*newlink)(काष्ठा net *src_net,
+					   काष्ठा net_device *dev,
+					   काष्ठा nlattr *tb[],
+					   काष्ठा nlattr *data[],
+					   काष्ठा netlink_ext_ack *extack);
+	पूर्णांक			(*changelink)(काष्ठा net_device *dev,
+					      काष्ठा nlattr *tb[],
+					      काष्ठा nlattr *data[],
+					      काष्ठा netlink_ext_ack *extack);
+	व्योम			(*dellink)(काष्ठा net_device *dev,
+					   काष्ठा list_head *head);
 
-	size_t			(*get_size)(const struct net_device *dev);
-	int			(*fill_info)(struct sk_buff *skb,
-					     const struct net_device *dev);
+	माप_प्रकार			(*get_size)(स्थिर काष्ठा net_device *dev);
+	पूर्णांक			(*fill_info)(काष्ठा sk_buff *skb,
+					     स्थिर काष्ठा net_device *dev);
 
-	size_t			(*get_xstats_size)(const struct net_device *dev);
-	int			(*fill_xstats)(struct sk_buff *skb,
-					       const struct net_device *dev);
-	unsigned int		(*get_num_tx_queues)(void);
-	unsigned int		(*get_num_rx_queues)(void);
+	माप_प्रकार			(*get_xstats_size)(स्थिर काष्ठा net_device *dev);
+	पूर्णांक			(*fill_xstats)(काष्ठा sk_buff *skb,
+					       स्थिर काष्ठा net_device *dev);
+	अचिन्हित पूर्णांक		(*get_num_tx_queues)(व्योम);
+	अचिन्हित पूर्णांक		(*get_num_rx_queues)(व्योम);
 
-	unsigned int		slave_maxtype;
-	const struct nla_policy	*slave_policy;
-	int			(*slave_changelink)(struct net_device *dev,
-						    struct net_device *slave_dev,
-						    struct nlattr *tb[],
-						    struct nlattr *data[],
-						    struct netlink_ext_ack *extack);
-	size_t			(*get_slave_size)(const struct net_device *dev,
-						  const struct net_device *slave_dev);
-	int			(*fill_slave_info)(struct sk_buff *skb,
-						   const struct net_device *dev,
-						   const struct net_device *slave_dev);
-	struct net		*(*get_link_net)(const struct net_device *dev);
-	size_t			(*get_linkxstats_size)(const struct net_device *dev,
-						       int attr);
-	int			(*fill_linkxstats)(struct sk_buff *skb,
-						   const struct net_device *dev,
-						   int *prividx, int attr);
-};
+	अचिन्हित पूर्णांक		slave_maxtype;
+	स्थिर काष्ठा nla_policy	*slave_policy;
+	पूर्णांक			(*slave_changelink)(काष्ठा net_device *dev,
+						    काष्ठा net_device *slave_dev,
+						    काष्ठा nlattr *tb[],
+						    काष्ठा nlattr *data[],
+						    काष्ठा netlink_ext_ack *extack);
+	माप_प्रकार			(*get_slave_size)(स्थिर काष्ठा net_device *dev,
+						  स्थिर काष्ठा net_device *slave_dev);
+	पूर्णांक			(*fill_slave_info)(काष्ठा sk_buff *skb,
+						   स्थिर काष्ठा net_device *dev,
+						   स्थिर काष्ठा net_device *slave_dev);
+	काष्ठा net		*(*get_link_net)(स्थिर काष्ठा net_device *dev);
+	माप_प्रकार			(*get_linkxstats_size)(स्थिर काष्ठा net_device *dev,
+						       पूर्णांक attr);
+	पूर्णांक			(*fill_linkxstats)(काष्ठा sk_buff *skb,
+						   स्थिर काष्ठा net_device *dev,
+						   पूर्णांक *prividx, पूर्णांक attr);
+पूर्ण;
 
-int __rtnl_link_register(struct rtnl_link_ops *ops);
-void __rtnl_link_unregister(struct rtnl_link_ops *ops);
+पूर्णांक __rtnl_link_रेजिस्टर(काष्ठा rtnl_link_ops *ops);
+व्योम __rtnl_link_unरेजिस्टर(काष्ठा rtnl_link_ops *ops);
 
-int rtnl_link_register(struct rtnl_link_ops *ops);
-void rtnl_link_unregister(struct rtnl_link_ops *ops);
+पूर्णांक rtnl_link_रेजिस्टर(काष्ठा rtnl_link_ops *ops);
+व्योम rtnl_link_unरेजिस्टर(काष्ठा rtnl_link_ops *ops);
 
 /**
- * 	struct rtnl_af_ops - rtnetlink address family operations
+ * 	काष्ठा rtnl_af_ops - rtnetlink address family operations
  *
- *	@list: Used internally
+ *	@list: Used पूर्णांकernally
  * 	@family: Address family
  * 	@fill_link_af: Function to fill IFLA_AF_SPEC with address family
- * 		       specific netlink attributes.
- * 	@get_link_af_size: Function to calculate size of address family specific
+ * 		       specअगरic netlink attributes.
+ * 	@get_link_af_size: Function to calculate size of address family specअगरic
  * 			   netlink attributes.
  *	@validate_link_af: Validate a IFLA_AF_SPEC attribute, must check attr
- *			   for invalid configuration settings.
- * 	@set_link_af: Function to parse a IFLA_AF_SPEC attribute and modify
+ *			   क्रम invalid configuration settings.
+ * 	@set_link_af: Function to parse a IFLA_AF_SPEC attribute and modअगरy
  *		      net_device accordingly.
  */
-struct rtnl_af_ops {
-	struct list_head	list;
-	int			family;
+काष्ठा rtnl_af_ops अणु
+	काष्ठा list_head	list;
+	पूर्णांक			family;
 
-	int			(*fill_link_af)(struct sk_buff *skb,
-						const struct net_device *dev,
+	पूर्णांक			(*fill_link_af)(काष्ठा sk_buff *skb,
+						स्थिर काष्ठा net_device *dev,
 						u32 ext_filter_mask);
-	size_t			(*get_link_af_size)(const struct net_device *dev,
+	माप_प्रकार			(*get_link_af_size)(स्थिर काष्ठा net_device *dev,
 						    u32 ext_filter_mask);
 
-	int			(*validate_link_af)(const struct net_device *dev,
-						    const struct nlattr *attr);
-	int			(*set_link_af)(struct net_device *dev,
-					       const struct nlattr *attr,
-					       struct netlink_ext_ack *extack);
-	int			(*fill_stats_af)(struct sk_buff *skb,
-						 const struct net_device *dev);
-	size_t			(*get_stats_af_size)(const struct net_device *dev);
-};
+	पूर्णांक			(*validate_link_af)(स्थिर काष्ठा net_device *dev,
+						    स्थिर काष्ठा nlattr *attr);
+	पूर्णांक			(*set_link_af)(काष्ठा net_device *dev,
+					       स्थिर काष्ठा nlattr *attr,
+					       काष्ठा netlink_ext_ack *extack);
+	पूर्णांक			(*fill_stats_af)(काष्ठा sk_buff *skb,
+						 स्थिर काष्ठा net_device *dev);
+	माप_प्रकार			(*get_stats_af_size)(स्थिर काष्ठा net_device *dev);
+पूर्ण;
 
-void rtnl_af_register(struct rtnl_af_ops *ops);
-void rtnl_af_unregister(struct rtnl_af_ops *ops);
+व्योम rtnl_af_रेजिस्टर(काष्ठा rtnl_af_ops *ops);
+व्योम rtnl_af_unरेजिस्टर(काष्ठा rtnl_af_ops *ops);
 
-struct net *rtnl_link_get_net(struct net *src_net, struct nlattr *tb[]);
-struct net_device *rtnl_create_link(struct net *net, const char *ifname,
-				    unsigned char name_assign_type,
-				    const struct rtnl_link_ops *ops,
-				    struct nlattr *tb[],
-				    struct netlink_ext_ack *extack);
-int rtnl_delete_link(struct net_device *dev);
-int rtnl_configure_link(struct net_device *dev, const struct ifinfomsg *ifm);
+काष्ठा net *rtnl_link_get_net(काष्ठा net *src_net, काष्ठा nlattr *tb[]);
+काष्ठा net_device *rtnl_create_link(काष्ठा net *net, स्थिर अक्षर *अगरname,
+				    अचिन्हित अक्षर name_assign_type,
+				    स्थिर काष्ठा rtnl_link_ops *ops,
+				    काष्ठा nlattr *tb[],
+				    काष्ठा netlink_ext_ack *extack);
+पूर्णांक rtnl_delete_link(काष्ठा net_device *dev);
+पूर्णांक rtnl_configure_link(काष्ठा net_device *dev, स्थिर काष्ठा अगरinfomsg *अगरm);
 
-int rtnl_nla_parse_ifla(struct nlattr **tb, const struct nlattr *head, int len,
-			struct netlink_ext_ack *exterr);
-struct net *rtnl_get_net_ns_capable(struct sock *sk, int netnsid);
+पूर्णांक rtnl_nla_parse_अगरla(काष्ठा nlattr **tb, स्थिर काष्ठा nlattr *head, पूर्णांक len,
+			काष्ठा netlink_ext_ack *exterr);
+काष्ठा net *rtnl_get_net_ns_capable(काष्ठा sock *sk, पूर्णांक netnsid);
 
-#define MODULE_ALIAS_RTNL_LINK(kind) MODULE_ALIAS("rtnl-link-" kind)
+#घोषणा MODULE_ALIAS_RTNL_LINK(kind) MODULE_ALIAS("rtnl-link-" kind)
 
-#endif
+#पूर्ण_अगर

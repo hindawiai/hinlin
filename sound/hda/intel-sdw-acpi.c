@@ -1,179 +1,180 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
 // Copyright(c) 2015-2021 Intel Corporation.
 
 /*
  * SDW Intel ACPI scan helpers
  */
 
-#include <linux/acpi.h>
-#include <linux/bits.h>
-#include <linux/bitfield.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/fwnode.h>
-#include <linux/module.h>
-#include <linux/soundwire/sdw_intel.h>
-#include <linux/string.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
+#समावेश <linux/fwnode.h>
+#समावेश <linux/module.h>
+#समावेश <linux/soundwire/sdw_पूर्णांकel.h>
+#समावेश <linux/माला.स>
 
-#define SDW_LINK_TYPE		4 /* from Intel ACPI documentation */
-#define SDW_MAX_LINKS		4
+#घोषणा SDW_LINK_TYPE		4 /* from Intel ACPI करोcumentation */
+#घोषणा SDW_MAX_LINKS		4
 
-static int ctrl_link_mask;
-module_param_named(sdw_link_mask, ctrl_link_mask, int, 0444);
+अटल पूर्णांक ctrl_link_mask;
+module_param_named(sdw_link_mask, ctrl_link_mask, पूर्णांक, 0444);
 MODULE_PARM_DESC(sdw_link_mask, "Intel link mask (one bit per link)");
 
-static bool is_link_enabled(struct fwnode_handle *fw_node, int i)
-{
-	struct fwnode_handle *link;
-	char name[32];
+अटल bool is_link_enabled(काष्ठा fwnode_handle *fw_node, पूर्णांक i)
+अणु
+	काष्ठा fwnode_handle *link;
+	अक्षर name[32];
 	u32 quirk_mask = 0;
 
 	/* Find master handle */
-	snprintf(name, sizeof(name),
+	snम_लिखो(name, माप(name),
 		 "mipi-sdw-link-%d-subproperties", i);
 
 	link = fwnode_get_named_child_node(fw_node, name);
-	if (!link)
-		return false;
+	अगर (!link)
+		वापस false;
 
-	fwnode_property_read_u32(link,
+	fwnode_property_पढ़ो_u32(link,
 				 "intel-quirk-mask",
 				 &quirk_mask);
 
-	if (quirk_mask & SDW_INTEL_QUIRK_MASK_BUS_DISABLE)
-		return false;
+	अगर (quirk_mask & SDW_INTEL_QUIRK_MASK_BUS_DISABLE)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int
-sdw_intel_scan_controller(struct sdw_intel_acpi_info *info)
-{
-	struct acpi_device *adev;
-	int ret, i;
+अटल पूर्णांक
+sdw_पूर्णांकel_scan_controller(काष्ठा sdw_पूर्णांकel_acpi_info *info)
+अणु
+	काष्ठा acpi_device *adev;
+	पूर्णांक ret, i;
 	u8 count;
 
-	if (acpi_bus_get_device(info->handle, &adev))
-		return -EINVAL;
+	अगर (acpi_bus_get_device(info->handle, &adev))
+		वापस -EINVAL;
 
 	/* Found controller, find links supported */
 	count = 0;
-	ret = fwnode_property_read_u8_array(acpi_fwnode_handle(adev),
+	ret = fwnode_property_पढ़ो_u8_array(acpi_fwnode_handle(adev),
 					    "mipi-sdw-master-count", &count, 1);
 
 	/*
 	 * In theory we could check the number of links supported in
 	 * hardware, but in that step we cannot assume SoundWire IP is
-	 * powered.
+	 * घातered.
 	 *
-	 * In addition, if the BIOS doesn't even provide this
+	 * In addition, अगर the BIOS करोesn't even provide this
 	 * 'master-count' property then all the inits based on link
 	 * masks will fail as well.
 	 *
 	 * We will check the hardware capabilities in the startup() step
 	 */
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&adev->dev,
 			"Failed to read mipi-sdw-master-count: %d\n", ret);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Check count is within bounds */
-	if (count > SDW_MAX_LINKS) {
+	अगर (count > SDW_MAX_LINKS) अणु
 		dev_err(&adev->dev, "Link count %d exceeds max %d\n",
 			count, SDW_MAX_LINKS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!count) {
+	अगर (!count) अणु
 		dev_warn(&adev->dev, "No SoundWire links detected\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dev_dbg(&adev->dev, "ACPI reports %d SDW Link devices\n", count);
 
 	info->count = count;
 	info->link_mask = 0;
 
-	for (i = 0; i < count; i++) {
-		if (ctrl_link_mask && !(ctrl_link_mask & BIT(i))) {
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (ctrl_link_mask && !(ctrl_link_mask & BIT(i))) अणु
 			dev_dbg(&adev->dev,
 				"Link %d masked, will not be enabled\n", i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!is_link_enabled(acpi_fwnode_handle(adev), i)) {
+		अगर (!is_link_enabled(acpi_fwnode_handle(adev), i)) अणु
 			dev_dbg(&adev->dev,
 				"Link %d not selected in firmware\n", i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		info->link_mask |= BIT(i);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static acpi_status sdw_intel_acpi_cb(acpi_handle handle, u32 level,
-				     void *cdata, void **return_value)
-{
-	struct sdw_intel_acpi_info *info = cdata;
-	struct acpi_device *adev;
+अटल acpi_status sdw_पूर्णांकel_acpi_cb(acpi_handle handle, u32 level,
+				     व्योम *cdata, व्योम **वापस_value)
+अणु
+	काष्ठा sdw_पूर्णांकel_acpi_info *info = cdata;
+	काष्ठा acpi_device *adev;
 	acpi_status status;
 	u64 adr;
 
-	status = acpi_evaluate_integer(handle, METHOD_NAME__ADR, NULL, &adr);
-	if (ACPI_FAILURE(status))
-		return AE_OK; /* keep going */
+	status = acpi_evaluate_पूर्णांकeger(handle, METHOD_NAME__ADR, शून्य, &adr);
+	अगर (ACPI_FAILURE(status))
+		वापस AE_OK; /* keep going */
 
-	if (acpi_bus_get_device(handle, &adev)) {
+	अगर (acpi_bus_get_device(handle, &adev)) अणु
 		pr_err("%s: Couldn't find ACPI handle\n", __func__);
-		return AE_NOT_FOUND;
-	}
+		वापस AE_NOT_FOUND;
+	पूर्ण
 
 	info->handle = handle;
 
 	/*
-	 * On some Intel platforms, multiple children of the HDAS
+	 * On some Intel platक्रमms, multiple children of the HDAS
 	 * device can be found, but only one of them is the SoundWire
 	 * controller. The SNDW device is always exposed with
 	 * Name(_ADR, 0x40000000), with bits 31..28 representing the
 	 * SoundWire link so filter accordingly
 	 */
-	if (FIELD_GET(GENMASK(31, 28), adr) != SDW_LINK_TYPE)
-		return AE_OK; /* keep going */
+	अगर (FIELD_GET(GENMASK(31, 28), adr) != SDW_LINK_TYPE)
+		वापस AE_OK; /* keep going */
 
 	/* device found, stop namespace walk */
-	return AE_CTRL_TERMINATE;
-}
+	वापस AE_CTRL_TERMINATE;
+पूर्ण
 
 /**
- * sdw_intel_acpi_scan() - SoundWire Intel init routine
+ * sdw_पूर्णांकel_acpi_scan() - SoundWire Intel init routine
  * @parent_handle: ACPI parent handle
  * @info: description of what firmware/DSDT tables expose
  *
  * This scans the namespace and queries firmware to figure out which
- * links to enable. A follow-up use of sdw_intel_probe() and
- * sdw_intel_startup() is required for creation of devices and bus
+ * links to enable. A follow-up use of sdw_पूर्णांकel_probe() and
+ * sdw_पूर्णांकel_startup() is required क्रम creation of devices and bus
  * startup
  */
-int sdw_intel_acpi_scan(acpi_handle *parent_handle,
-			struct sdw_intel_acpi_info *info)
-{
+पूर्णांक sdw_पूर्णांकel_acpi_scan(acpi_handle *parent_handle,
+			काष्ठा sdw_पूर्णांकel_acpi_info *info)
+अणु
 	acpi_status status;
 
-	info->handle = NULL;
+	info->handle = शून्य;
 	status = acpi_walk_namespace(ACPI_TYPE_DEVICE,
 				     parent_handle, 1,
-				     sdw_intel_acpi_cb,
-				     NULL, info, NULL);
-	if (ACPI_FAILURE(status) || info->handle == NULL)
-		return -ENODEV;
+				     sdw_पूर्णांकel_acpi_cb,
+				     शून्य, info, शून्य);
+	अगर (ACPI_FAILURE(status) || info->handle == शून्य)
+		वापस -ENODEV;
 
-	return sdw_intel_scan_controller(info);
-}
-EXPORT_SYMBOL_NS(sdw_intel_acpi_scan, SND_INTEL_SOUNDWIRE_ACPI);
+	वापस sdw_पूर्णांकel_scan_controller(info);
+पूर्ण
+EXPORT_SYMBOL_NS(sdw_पूर्णांकel_acpi_scan, SND_INTEL_SOUNDWIRE_ACPI);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("Intel Soundwire ACPI helpers");

@@ -1,104 +1,105 @@
+<शैली गुरु>
 /*
- * CPUFreq support for Armada 370/XP platforms.
+ * CPUFreq support क्रम Armada 370/XP platक्रमms.
  *
  * Copyright (C) 2012-2016 Marvell
  *
  * Yehuda Yitschak <yehuday@marvell.com>
- * Gregory Clement <gregory.clement@free-electrons.com>
- * Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+ * Gregory Clement <gregory.clement@मुक्त-electrons.com>
+ * Thomas Petazzoni <thomas.petazzoni@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#define pr_fmt(fmt) "mvebu-pmsu: " fmt
+#घोषणा pr_fmt(fmt) "mvebu-pmsu: " fmt
 
-#include <linux/clk.h>
-#include <linux/cpu.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/of_address.h>
-#include <linux/platform_device.h>
-#include <linux/pm_opp.h>
-#include <linux/resource.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_opp.h>
+#समावेश <linux/resource.h>
 
-static int __init armada_xp_pmsu_cpufreq_init(void)
-{
-	struct device_node *np;
-	struct resource res;
-	int ret, cpu;
+अटल पूर्णांक __init armada_xp_pmsu_cpufreq_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा resource res;
+	पूर्णांक ret, cpu;
 
-	if (!of_machine_is_compatible("marvell,armadaxp"))
-		return 0;
+	अगर (!of_machine_is_compatible("marvell,armadaxp"))
+		वापस 0;
 
 	/*
 	 * In order to have proper cpufreq handling, we need to ensure
-	 * that the Device Tree description of the CPU clock includes
-	 * the definition of the PMU DFS registers. If not, we do not
-	 * register the clock notifier and the cpufreq driver. This
-	 * piece of code is only for compatibility with old Device
+	 * that the Device Tree description of the CPU घड़ी includes
+	 * the definition of the PMU DFS रेजिस्टरs. If not, we करो not
+	 * रेजिस्टर the घड़ी notअगरier and the cpufreq driver. This
+	 * piece of code is only क्रम compatibility with old Device
 	 * Trees.
 	 */
-	np = of_find_compatible_node(NULL, NULL, "marvell,armada-xp-cpu-clock");
-	if (!np)
-		return 0;
+	np = of_find_compatible_node(शून्य, शून्य, "marvell,armada-xp-cpu-clock");
+	अगर (!np)
+		वापस 0;
 
 	ret = of_address_to_resource(np, 1, &res);
-	if (ret) {
+	अगर (ret) अणु
 		pr_warn(FW_WARN "not enabling cpufreq, deprecated armada-xp-cpu-clock binding\n");
 		of_node_put(np);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	of_node_put(np);
 
 	/*
-	 * For each CPU, this loop registers the operating points
+	 * For each CPU, this loop रेजिस्टरs the operating poपूर्णांकs
 	 * supported (which are the nominal CPU frequency and half of
-	 * it), and registers the clock notifier that will take care
-	 * of doing the PMSU part of a frequency transition.
+	 * it), and रेजिस्टरs the घड़ी notअगरier that will take care
+	 * of करोing the PMSU part of a frequency transition.
 	 */
-	for_each_possible_cpu(cpu) {
-		struct device *cpu_dev;
-		struct clk *clk;
-		int ret;
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा device *cpu_dev;
+		काष्ठा clk *clk;
+		पूर्णांक ret;
 
 		cpu_dev = get_cpu_device(cpu);
-		if (!cpu_dev) {
+		अगर (!cpu_dev) अणु
 			pr_err("Cannot get CPU %d\n", cpu);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		clk = clk_get(cpu_dev, NULL);
-		if (IS_ERR(clk)) {
+		clk = clk_get(cpu_dev, शून्य);
+		अगर (IS_ERR(clk)) अणु
 			pr_err("Cannot get clock for CPU %d\n", cpu);
-			return PTR_ERR(clk);
-		}
+			वापस PTR_ERR(clk);
+		पूर्ण
 
 		ret = dev_pm_opp_add(cpu_dev, clk_get_rate(clk), 0);
-		if (ret) {
+		अगर (ret) अणु
 			clk_put(clk);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = dev_pm_opp_add(cpu_dev, clk_get_rate(clk) / 2, 0);
-		if (ret) {
-			dev_pm_opp_remove(cpu_dev, clk_get_rate(clk));
+		अगर (ret) अणु
+			dev_pm_opp_हटाओ(cpu_dev, clk_get_rate(clk));
 			clk_put(clk);
 			dev_err(cpu_dev, "Failed to register OPPs\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = dev_pm_opp_set_sharing_cpus(cpu_dev,
 						  cpumask_of(cpu_dev->id));
-		if (ret)
+		अगर (ret)
 			dev_err(cpu_dev, "%s: failed to mark OPPs as shared: %d\n",
 				__func__, ret);
 		clk_put(clk);
-	}
+	पूर्ण
 
-	platform_device_register_simple("cpufreq-dt", -1, NULL, 0);
-	return 0;
-}
+	platक्रमm_device_रेजिस्टर_simple("cpufreq-dt", -1, शून्य, 0);
+	वापस 0;
+पूर्ण
 device_initcall(armada_xp_pmsu_cpufreq_init);

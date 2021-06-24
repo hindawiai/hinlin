@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * ee1004 - driver for DDR4 SPD EEPROMs
+ * ee1004 - driver क्रम DDR4 SPD EEPROMs
  *
  * Copyright (C) 2017-2019 Jean Delvare
  *
@@ -9,101 +10,101 @@
  * Copyright (C) 2008 Wolfram Sang, Pengutronix
  */
 
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
 
 /*
  * DDR4 memory modules use special EEPROMs following the Jedec EE1004
- * specification. These are 512-byte EEPROMs using a single I2C address
- * in the 0x50-0x57 range for data. One of two 256-byte page is selected
+ * specअगरication. These are 512-byte EEPROMs using a single I2C address
+ * in the 0x50-0x57 range क्रम data. One of two 256-byte page is selected
  * by writing a command to I2C address 0x36 or 0x37 on the same I2C bus.
  *
- * Therefore we need to request these 2 additional addresses, and serialize
+ * Thereक्रमe we need to request these 2 additional addresses, and serialize
  * access to all such EEPROMs with a single mutex.
  *
- * We assume it is safe to read up to 32 bytes at once from these EEPROMs.
- * We use SMBus access even if I2C is available, these EEPROMs are small
- * enough, and reading from them infrequent enough, that we favor simplicity
- * over performance.
+ * We assume it is safe to पढ़ो up to 32 bytes at once from these EEPROMs.
+ * We use SMBus access even अगर I2C is available, these EEPROMs are small
+ * enough, and पढ़ोing from them infrequent enough, that we favor simplicity
+ * over perक्रमmance.
  */
 
-#define EE1004_ADDR_SET_PAGE		0x36
-#define EE1004_EEPROM_SIZE		512
-#define EE1004_PAGE_SIZE		256
-#define EE1004_PAGE_SHIFT		8
+#घोषणा EE1004_ADDR_SET_PAGE		0x36
+#घोषणा EE1004_EEPROM_SIZE		512
+#घोषणा EE1004_PAGE_SIZE		256
+#घोषणा EE1004_PAGE_SHIFT		8
 
 /*
  * Mutex protects ee1004_set_page and ee1004_dev_count, and must be held
- * from page selection to end of read.
+ * from page selection to end of पढ़ो.
  */
-static DEFINE_MUTEX(ee1004_bus_lock);
-static struct i2c_client *ee1004_set_page[2];
-static unsigned int ee1004_dev_count;
-static int ee1004_current_page;
+अटल DEFINE_MUTEX(ee1004_bus_lock);
+अटल काष्ठा i2c_client *ee1004_set_page[2];
+अटल अचिन्हित पूर्णांक ee1004_dev_count;
+अटल पूर्णांक ee1004_current_page;
 
-static const struct i2c_device_id ee1004_ids[] = {
-	{ "ee1004", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id ee1004_ids[] = अणु
+	अणु "ee1004", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ee1004_ids);
 
 /*-------------------------------------------------------------------------*/
 
-static int ee1004_get_current_page(void)
-{
-	int err;
+अटल पूर्णांक ee1004_get_current_page(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = i2c_smbus_read_byte(ee1004_set_page[0]);
-	if (err == -ENXIO) {
+	err = i2c_smbus_पढ़ो_byte(ee1004_set_page[0]);
+	अगर (err == -ENXIO) अणु
 		/* Nack means page 1 is selected */
-		return 1;
-	}
-	if (err < 0) {
-		/* Anything else is a real error, bail out */
-		return err;
-	}
+		वापस 1;
+	पूर्ण
+	अगर (err < 0) अणु
+		/* Anything अन्यथा is a real error, bail out */
+		वापस err;
+	पूर्ण
 
-	/* Ack means page 0 is selected, returned value meaningless */
-	return 0;
-}
+	/* Ack means page 0 is selected, वापसed value meaningless */
+	वापस 0;
+पूर्ण
 
-static ssize_t ee1004_eeprom_read(struct i2c_client *client, char *buf,
-				  unsigned int offset, size_t count)
-{
-	int status;
+अटल sमाप_प्रकार ee1004_eeprom_पढ़ो(काष्ठा i2c_client *client, अक्षर *buf,
+				  अचिन्हित पूर्णांक offset, माप_प्रकार count)
+अणु
+	पूर्णांक status;
 
-	if (count > I2C_SMBUS_BLOCK_MAX)
+	अगर (count > I2C_SMBUS_BLOCK_MAX)
 		count = I2C_SMBUS_BLOCK_MAX;
 	/* Can't cross page boundaries */
-	if (unlikely(offset + count > EE1004_PAGE_SIZE))
+	अगर (unlikely(offset + count > EE1004_PAGE_SIZE))
 		count = EE1004_PAGE_SIZE - offset;
 
-	status = i2c_smbus_read_i2c_block_data_or_emulated(client, offset,
+	status = i2c_smbus_पढ़ो_i2c_block_data_or_emulated(client, offset,
 							   count, buf);
 	dev_dbg(&client->dev, "read %zu@%d --> %d\n", count, offset, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static ssize_t ee1004_read(struct file *filp, struct kobject *kobj,
-			   struct bin_attribute *bin_attr,
-			   char *buf, loff_t off, size_t count)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct i2c_client *client = to_i2c_client(dev);
-	size_t requested = count;
-	int page;
+अटल sमाप_प्रकार ee1004_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			   काष्ठा bin_attribute *bin_attr,
+			   अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	माप_प्रकार requested = count;
+	पूर्णांक page;
 
-	if (unlikely(!count))
-		return count;
+	अगर (unlikely(!count))
+		वापस count;
 
 	page = off >> EE1004_PAGE_SHIFT;
-	if (unlikely(page > 1))
-		return 0;
+	अगर (unlikely(page > 1))
+		वापस 0;
 	off &= (1 << EE1004_PAGE_SHIFT) - 1;
 
 	/*
@@ -112,111 +113,111 @@ static ssize_t ee1004_read(struct file *filp, struct kobject *kobj,
 	 */
 	mutex_lock(&ee1004_bus_lock);
 
-	while (count) {
-		int status;
+	जबतक (count) अणु
+		पूर्णांक status;
 
 		/* Select page */
-		if (page != ee1004_current_page) {
+		अगर (page != ee1004_current_page) अणु
 			/* Data is ignored */
-			status = i2c_smbus_write_byte(ee1004_set_page[page],
+			status = i2c_smbus_ग_लिखो_byte(ee1004_set_page[page],
 						      0x00);
-			if (status == -ENXIO) {
+			अगर (status == -ENXIO) अणु
 				/*
 				 * Don't give up just yet. Some memory
 				 * modules will select the page but not
 				 * ack the command. Check which page is
 				 * selected now.
 				 */
-				if (ee1004_get_current_page() == page)
+				अगर (ee1004_get_current_page() == page)
 					status = 0;
-			}
-			if (status < 0) {
+			पूर्ण
+			अगर (status < 0) अणु
 				dev_err(dev, "Failed to select page %d (%d)\n",
 					page, status);
 				mutex_unlock(&ee1004_bus_lock);
-				return status;
-			}
+				वापस status;
+			पूर्ण
 			dev_dbg(dev, "Selected page %d\n", page);
 			ee1004_current_page = page;
-		}
+		पूर्ण
 
-		status = ee1004_eeprom_read(client, buf, off, count);
-		if (status < 0) {
+		status = ee1004_eeprom_पढ़ो(client, buf, off, count);
+		अगर (status < 0) अणु
 			mutex_unlock(&ee1004_bus_lock);
-			return status;
-		}
+			वापस status;
+		पूर्ण
 		buf += status;
 		off += status;
 		count -= status;
 
-		if (off == EE1004_PAGE_SIZE) {
+		अगर (off == EE1004_PAGE_SIZE) अणु
 			page++;
 			off = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&ee1004_bus_lock);
 
-	return requested;
-}
+	वापस requested;
+पूर्ण
 
-static const struct bin_attribute eeprom_attr = {
-	.attr = {
+अटल स्थिर काष्ठा bin_attribute eeprom_attr = अणु
+	.attr = अणु
 		.name = "eeprom",
 		.mode = 0444,
-	},
+	पूर्ण,
 	.size = EE1004_EEPROM_SIZE,
-	.read = ee1004_read,
-};
+	.पढ़ो = ee1004_पढ़ो,
+पूर्ण;
 
-static int ee1004_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	int err, cnr = 0;
-	const char *slow = NULL;
+अटल पूर्णांक ee1004_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक err, cnr = 0;
+	स्थिर अक्षर *slow = शून्य;
 
 	/* Make sure we can operate on this adapter */
-	if (!i2c_check_functionality(client->adapter,
+	अगर (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_BYTE |
-				     I2C_FUNC_SMBUS_READ_I2C_BLOCK)) {
-		if (i2c_check_functionality(client->adapter,
+				     I2C_FUNC_SMBUS_READ_I2C_BLOCK)) अणु
+		अगर (i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_BYTE |
 				     I2C_FUNC_SMBUS_READ_WORD_DATA))
 			slow = "word";
-		else if (i2c_check_functionality(client->adapter,
+		अन्यथा अगर (i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_BYTE |
 				     I2C_FUNC_SMBUS_READ_BYTE_DATA))
 			slow = "byte";
-		else
-			return -EPFNOSUPPORT;
-	}
+		अन्यथा
+			वापस -EPFNOSUPPORT;
+	पूर्ण
 
-	/* Use 2 dummy devices for page select command */
+	/* Use 2 dummy devices क्रम page select command */
 	mutex_lock(&ee1004_bus_lock);
-	if (++ee1004_dev_count == 1) {
-		for (cnr = 0; cnr < 2; cnr++) {
+	अगर (++ee1004_dev_count == 1) अणु
+		क्रम (cnr = 0; cnr < 2; cnr++) अणु
 			ee1004_set_page[cnr] = i2c_new_dummy_device(client->adapter,
 						EE1004_ADDR_SET_PAGE + cnr);
-			if (IS_ERR(ee1004_set_page[cnr])) {
+			अगर (IS_ERR(ee1004_set_page[cnr])) अणु
 				dev_err(&client->dev,
 					"address 0x%02x unavailable\n",
 					EE1004_ADDR_SET_PAGE + cnr);
 				err = PTR_ERR(ee1004_set_page[cnr]);
-				goto err_clients;
-			}
-		}
-	} else if (i2c_adapter_id(client->adapter) !=
-		   i2c_adapter_id(ee1004_set_page[0]->adapter)) {
+				जाओ err_clients;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (i2c_adapter_id(client->adapter) !=
+		   i2c_adapter_id(ee1004_set_page[0]->adapter)) अणु
 		dev_err(&client->dev,
 			"Driver only supports devices on a single I2C bus\n");
 		err = -EOPNOTSUPP;
-		goto err_clients;
-	}
+		जाओ err_clients;
+	पूर्ण
 
-	/* Remember current page to avoid unneeded page select */
+	/* Remember current page to aव्योम unneeded page select */
 	err = ee1004_get_current_page();
-	if (err < 0)
-		goto err_clients;
+	अगर (err < 0)
+		जाओ err_clients;
 	ee1004_current_page = err;
 	dev_dbg(&client->dev, "Currently selected page: %d\n",
 		ee1004_current_page);
@@ -224,62 +225,62 @@ static int ee1004_probe(struct i2c_client *client,
 
 	/* Create the sysfs eeprom file */
 	err = sysfs_create_bin_file(&client->dev.kobj, &eeprom_attr);
-	if (err)
-		goto err_clients_lock;
+	अगर (err)
+		जाओ err_clients_lock;
 
 	dev_info(&client->dev,
 		 "%u byte EE1004-compliant SPD EEPROM, read-only\n",
 		 EE1004_EEPROM_SIZE);
-	if (slow)
+	अगर (slow)
 		dev_notice(&client->dev,
 			   "Falling back to %s reads, performance will suffer\n",
 			   slow);
 
-	return 0;
+	वापस 0;
 
  err_clients_lock:
 	mutex_lock(&ee1004_bus_lock);
  err_clients:
-	if (--ee1004_dev_count == 0) {
-		for (cnr--; cnr >= 0; cnr--) {
-			i2c_unregister_device(ee1004_set_page[cnr]);
-			ee1004_set_page[cnr] = NULL;
-		}
-	}
+	अगर (--ee1004_dev_count == 0) अणु
+		क्रम (cnr--; cnr >= 0; cnr--) अणु
+			i2c_unरेजिस्टर_device(ee1004_set_page[cnr]);
+			ee1004_set_page[cnr] = शून्य;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&ee1004_bus_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ee1004_remove(struct i2c_client *client)
-{
-	int i;
+अटल पूर्णांक ee1004_हटाओ(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक i;
 
-	sysfs_remove_bin_file(&client->dev.kobj, &eeprom_attr);
+	sysfs_हटाओ_bin_file(&client->dev.kobj, &eeprom_attr);
 
-	/* Remove page select clients if this is the last device */
+	/* Remove page select clients अगर this is the last device */
 	mutex_lock(&ee1004_bus_lock);
-	if (--ee1004_dev_count == 0) {
-		for (i = 0; i < 2; i++) {
-			i2c_unregister_device(ee1004_set_page[i]);
-			ee1004_set_page[i] = NULL;
-		}
-	}
+	अगर (--ee1004_dev_count == 0) अणु
+		क्रम (i = 0; i < 2; i++) अणु
+			i2c_unरेजिस्टर_device(ee1004_set_page[i]);
+			ee1004_set_page[i] = शून्य;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&ee1004_bus_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static struct i2c_driver ee1004_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ee1004_driver = अणु
+	.driver = अणु
 		.name = "ee1004",
-	},
+	पूर्ण,
 	.probe = ee1004_probe,
-	.remove = ee1004_remove,
+	.हटाओ = ee1004_हटाओ,
 	.id_table = ee1004_ids,
-};
+पूर्ण;
 module_i2c_driver(ee1004_driver);
 
 MODULE_DESCRIPTION("Driver for EE1004-compliant DDR4 SPD EEPROMs");

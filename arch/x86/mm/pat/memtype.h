@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MEMTYPE_H_
-#define __MEMTYPE_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MEMTYPE_H_
+#घोषणा __MEMTYPE_H_
 
-extern int pat_debug_enable;
+बाह्य पूर्णांक pat_debug_enable;
 
-#define dprintk(fmt, arg...) \
-	do { if (pat_debug_enable) pr_info("x86/PAT: " fmt, ##arg); } while (0)
+#घोषणा dprपूर्णांकk(fmt, arg...) \
+	करो अणु अगर (pat_debug_enable) pr_info("x86/PAT: " fmt, ##arg); पूर्ण जबतक (0)
 
-struct memtype {
+काष्ठा memtype अणु
 	u64			start;
 	u64			end;
 	u64			subtree_max_end;
-	enum page_cache_mode	type;
-	struct rb_node		rb;
-};
+	क्रमागत page_cache_mode	type;
+	काष्ठा rb_node		rb;
+पूर्ण;
 
-static inline char *cattr_name(enum page_cache_mode pcm)
-{
-	switch (pcm) {
-	case _PAGE_CACHE_MODE_UC:		return "uncached";
-	case _PAGE_CACHE_MODE_UC_MINUS:		return "uncached-minus";
-	case _PAGE_CACHE_MODE_WB:		return "write-back";
-	case _PAGE_CACHE_MODE_WC:		return "write-combining";
-	case _PAGE_CACHE_MODE_WT:		return "write-through";
-	case _PAGE_CACHE_MODE_WP:		return "write-protected";
-	default:				return "broken";
-	}
-}
+अटल अंतरभूत अक्षर *cattr_name(क्रमागत page_cache_mode pcm)
+अणु
+	चयन (pcm) अणु
+	हाल _PAGE_CACHE_MODE_UC:		वापस "uncached";
+	हाल _PAGE_CACHE_MODE_UC_MINUS:		वापस "uncached-minus";
+	हाल _PAGE_CACHE_MODE_WB:		वापस "write-back";
+	हाल _PAGE_CACHE_MODE_WC:		वापस "write-combining";
+	हाल _PAGE_CACHE_MODE_WT:		वापस "write-through";
+	हाल _PAGE_CACHE_MODE_WP:		वापस "write-protected";
+	शेष:				वापस "broken";
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_X86_PAT
-extern int memtype_check_insert(struct memtype *entry_new,
-				enum page_cache_mode *new_type);
-extern struct memtype *memtype_erase(u64 start, u64 end);
-extern struct memtype *memtype_lookup(u64 addr);
-extern int memtype_copy_nth_element(struct memtype *entry_out, loff_t pos);
-#else
-static inline int memtype_check_insert(struct memtype *entry_new,
-				       enum page_cache_mode *new_type)
-{ return 0; }
-static inline struct memtype *memtype_erase(u64 start, u64 end)
-{ return NULL; }
-static inline struct memtype *memtype_lookup(u64 addr)
-{ return NULL; }
-static inline int memtype_copy_nth_element(struct memtype *out, loff_t pos)
-{ return 0; }
-#endif
+#अगर_घोषित CONFIG_X86_PAT
+बाह्य पूर्णांक memtype_check_insert(काष्ठा memtype *entry_new,
+				क्रमागत page_cache_mode *new_type);
+बाह्य काष्ठा memtype *memtype_erase(u64 start, u64 end);
+बाह्य काष्ठा memtype *memtype_lookup(u64 addr);
+बाह्य पूर्णांक memtype_copy_nth_element(काष्ठा memtype *entry_out, loff_t pos);
+#अन्यथा
+अटल अंतरभूत पूर्णांक memtype_check_insert(काष्ठा memtype *entry_new,
+				       क्रमागत page_cache_mode *new_type)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत काष्ठा memtype *memtype_erase(u64 start, u64 end)
+अणु वापस शून्य; पूर्ण
+अटल अंतरभूत काष्ठा memtype *memtype_lookup(u64 addr)
+अणु वापस शून्य; पूर्ण
+अटल अंतरभूत पूर्णांक memtype_copy_nth_element(काष्ठा memtype *out, loff_t pos)
+अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-#endif /* __MEMTYPE_H_ */
+#पूर्ण_अगर /* __MEMTYPE_H_ */

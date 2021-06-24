@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_HUGETLB_H
-#define _ASM_X86_HUGETLB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_HUGETLB_H
+#घोषणा _ASM_X86_HUGETLB_H
 
-#include <asm/page.h>
-#include <asm-generic/hugetlb.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र-generic/hugetlb.h>
 
-#define hugepages_supported() boot_cpu_has(X86_FEATURE_PSE)
+#घोषणा hugepages_supported() boot_cpu_has(X86_FEATURE_PSE)
 
-#endif /* _ASM_X86_HUGETLB_H */
+#पूर्ण_अगर /* _ASM_X86_HUGETLB_H */

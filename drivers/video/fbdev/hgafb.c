@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * linux/drivers/video/hgafb.c -- Hercules graphics adaptor frame buffer device
  * 
- *      Created 25 Nov 1999 by Ferenc Bakonyi (fero@drama.obuda.kando.hu)
+ *      Created 25 Nov 1999 by Ferenc Bakonyi (fero@drama.obuda.kanकरो.hu)
  *      Based on skeletonfb.c by Geert Uytterhoeven and
  *               mdacon.c by Andrew Apted
  *
@@ -11,116 +12,116 @@
  * 
  * - Revision 0.1.7 (23 Jan 2001): fix crash resulting from MDA only cards 
  *				   being detected as Hercules.	 (Paul G.)
- * - Revision 0.1.6 (17 Aug 2000): new style structs
- *                                 documentation
+ * - Revision 0.1.6 (17 Aug 2000): new style काष्ठाs
+ *                                 करोcumentation
  * - Revision 0.1.5 (13 Mar 2000): spinlocks instead of saveflags();cli();etc
  *                                 minor fixes
- * - Revision 0.1.4 (24 Jan 2000): fixed a bug in hga_card_detect() for 
- *                                  HGA-only systems
- * - Revision 0.1.3 (22 Jan 2000): modified for the new fb_info structure
+ * - Revision 0.1.4 (24 Jan 2000): fixed a bug in hga_card_detect() क्रम 
+ *                                  HGA-only प्रणालीs
+ * - Revision 0.1.3 (22 Jan 2000): modअगरied क्रम the new fb_info काष्ठाure
  *                                 screen is cleared after rmmod
- *                                 virtual resolutions
+ *                                 भव resolutions
  *                                 module parameter 'nologo={0|1}'
  *                                 the most important: boot logo :)
  * - Revision 0.1.0  (6 Dec 1999): faster scrolling and minor fixes
  * - First release  (25 Nov 1999)
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/delay.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
-#include <asm/io.h>
-#include <asm/vga.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/vga.h>
 
-#if 0
-#define DPRINTK(args...) printk(KERN_DEBUG __FILE__": " ##args)
-#else
-#define DPRINTK(args...)
-#endif
+#अगर 0
+#घोषणा DPRINTK(args...) prपूर्णांकk(KERN_DEBUG __खाता__": " ##args)
+#अन्यथा
+#घोषणा DPRINTK(args...)
+#पूर्ण_अगर
 
-#if 0
-#define CHKINFO(ret) if (info != &fb_info) { printk(KERN_DEBUG __FILE__": This should never happen, line:%d \n", __LINE__); return ret; }
-#else
-#define CHKINFO(ret)
-#endif
+#अगर 0
+#घोषणा CHKINFO(ret) अगर (info != &fb_info) अणु prपूर्णांकk(KERN_DEBUG __खाता__": This should never happen, line:%d \n", __LINE__); वापस ret; पूर्ण
+#अन्यथा
+#घोषणा CHKINFO(ret)
+#पूर्ण_अगर
 
 /* Description of the hardware layout */
 
-static void __iomem *hga_vram;			/* Base of video memory */
-static unsigned long hga_vram_len;		/* Size of video memory */
+अटल व्योम __iomem *hga_vram;			/* Base of video memory */
+अटल अचिन्हित दीर्घ hga_vram_len;		/* Size of video memory */
 
-#define HGA_ROWADDR(row) ((row%4)*8192 + (row>>2)*90)
-#define HGA_TXT			0
-#define HGA_GFX			1
+#घोषणा HGA_ROWADDR(row) ((row%4)*8192 + (row>>2)*90)
+#घोषणा HGA_TXT			0
+#घोषणा HGA_GFX			1
 
-static inline u8 __iomem * rowaddr(struct fb_info *info, u_int row)
-{
-	return info->screen_base + HGA_ROWADDR(row);
-}
+अटल अंतरभूत u8 __iomem * rowaddr(काष्ठा fb_info *info, u_पूर्णांक row)
+अणु
+	वापस info->screen_base + HGA_ROWADDR(row);
+पूर्ण
 
-static int hga_mode = -1;			/* 0 = txt, 1 = gfx mode */
+अटल पूर्णांक hga_mode = -1;			/* 0 = txt, 1 = gfx mode */
 
-static enum { TYPE_HERC, TYPE_HERCPLUS, TYPE_HERCCOLOR } hga_type;
-static char *hga_type_name;
+अटल क्रमागत अणु TYPE_HERC, TYPE_HERCPLUS, TYPE_HERCCOLOR पूर्ण hga_type;
+अटल अक्षर *hga_type_name;
 
-#define HGA_INDEX_PORT		0x3b4		/* Register select port */
-#define HGA_VALUE_PORT		0x3b5		/* Register value port */
-#define HGA_MODE_PORT		0x3b8		/* Mode control port */
-#define HGA_STATUS_PORT		0x3ba		/* Status and Config port */
-#define HGA_GFX_PORT		0x3bf		/* Graphics control port */
+#घोषणा HGA_INDEX_PORT		0x3b4		/* Register select port */
+#घोषणा HGA_VALUE_PORT		0x3b5		/* Register value port */
+#घोषणा HGA_MODE_PORT		0x3b8		/* Mode control port */
+#घोषणा HGA_STATUS_PORT		0x3ba		/* Status and Config port */
+#घोषणा HGA_GFX_PORT		0x3bf		/* Graphics control port */
 
-/* HGA register values */
+/* HGA रेजिस्टर values */
 
-#define HGA_CURSOR_BLINKING	0x00
-#define HGA_CURSOR_OFF		0x20
-#define HGA_CURSOR_SLOWBLINK	0x60
+#घोषणा HGA_CURSOR_BLINKING	0x00
+#घोषणा HGA_CURSOR_OFF		0x20
+#घोषणा HGA_CURSOR_SLOWBLINK	0x60
 
-#define HGA_MODE_GRAPHICS	0x02
-#define HGA_MODE_VIDEO_EN	0x08
-#define HGA_MODE_BLINK_EN	0x20
-#define HGA_MODE_GFX_PAGE1	0x80
+#घोषणा HGA_MODE_GRAPHICS	0x02
+#घोषणा HGA_MODE_VIDEO_EN	0x08
+#घोषणा HGA_MODE_BLINK_EN	0x20
+#घोषणा HGA_MODE_GFX_PAGE1	0x80
 
-#define HGA_STATUS_HSYNC	0x01
-#define HGA_STATUS_VSYNC	0x80
-#define HGA_STATUS_VIDEO	0x08
+#घोषणा HGA_STATUS_HSYNC	0x01
+#घोषणा HGA_STATUS_VSYNC	0x80
+#घोषणा HGA_STATUS_VIDEO	0x08
 
-#define HGA_CONFIG_COL132	0x08
-#define HGA_GFX_MODE_EN		0x01
-#define HGA_GFX_PAGE_EN		0x02
+#घोषणा HGA_CONFIG_COL132	0x08
+#घोषणा HGA_GFX_MODE_EN		0x01
+#घोषणा HGA_GFX_PAGE_EN		0x02
 
 /* Global locks */
 
-static DEFINE_SPINLOCK(hga_reg_lock);
+अटल DEFINE_SPINLOCK(hga_reg_lock);
 
-/* Framebuffer driver structures */
+/* Framebuffer driver काष्ठाures */
 
-static const struct fb_var_screeninfo hga_default_var = {
+अटल स्थिर काष्ठा fb_var_screeninfo hga_शेष_var = अणु
 	.xres		= 720,
 	.yres 		= 348,
-	.xres_virtual 	= 720,
-	.yres_virtual	= 348,
+	.xres_भव 	= 720,
+	.yres_भव	= 348,
 	.bits_per_pixel = 1,
-	.red 		= {0, 1, 0},
-	.green 		= {0, 1, 0},
-	.blue 		= {0, 1, 0},
-	.transp 	= {0, 0, 0},
+	.red 		= अणु0, 1, 0पूर्ण,
+	.green 		= अणु0, 1, 0पूर्ण,
+	.blue 		= अणु0, 1, 0पूर्ण,
+	.transp 	= अणु0, 0, 0पूर्ण,
 	.height 	= -1,
 	.width 		= -1,
-};
+पूर्ण;
 
-static struct fb_fix_screeninfo hga_fix = {
+अटल काष्ठा fb_fix_screeninfo hga_fix = अणु
 	.id 		= "HGA",
 	.type 		= FB_TYPE_PACKED_PIXELS,	/* (not sure) */
 	.visual 	= FB_VISUAL_MONO10,
@@ -128,12 +129,12 @@ static struct fb_fix_screeninfo hga_fix = {
 	.ypanstep 	= 8,
 	.line_length 	= 90,
 	.accel 		= FB_ACCEL_NONE
-};
+पूर्ण;
 
 /* Don't assume that tty1 will be the initial current console. */
-static int release_io_port = 0;
-static int release_io_ports = 0;
-static bool nologo = 0;
+अटल पूर्णांक release_io_port = 0;
+अटल पूर्णांक release_io_ports = 0;
+अटल bool nologo = 0;
 
 /* -------------------------------------------------------------------------
  *
@@ -141,396 +142,396 @@ static bool nologo = 0;
  *
  * ------------------------------------------------------------------------- */
 
-static void write_hga_b(unsigned int val, unsigned char reg)
-{
+अटल व्योम ग_लिखो_hga_b(अचिन्हित पूर्णांक val, अचिन्हित अक्षर reg)
+अणु
 	outb_p(reg, HGA_INDEX_PORT); 
 	outb_p(val, HGA_VALUE_PORT);
-}
+पूर्ण
 
-static void write_hga_w(unsigned int val, unsigned char reg)
-{
+अटल व्योम ग_लिखो_hga_w(अचिन्हित पूर्णांक val, अचिन्हित अक्षर reg)
+अणु
 	outb_p(reg,   HGA_INDEX_PORT); outb_p(val >> 8,   HGA_VALUE_PORT);
 	outb_p(reg+1, HGA_INDEX_PORT); outb_p(val & 0xff, HGA_VALUE_PORT);
-}
+पूर्ण
 
-static int test_hga_b(unsigned char val, unsigned char reg)
-{
+अटल पूर्णांक test_hga_b(अचिन्हित अक्षर val, अचिन्हित अक्षर reg)
+अणु
 	outb_p(reg, HGA_INDEX_PORT); 
 	outb  (val, HGA_VALUE_PORT);
 	udelay(20); val = (inb_p(HGA_VALUE_PORT) == val);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void hga_clear_screen(void)
-{
-	unsigned char fillchar = 0xbf; /* magic */
-	unsigned long flags;
+अटल व्योम hga_clear_screen(व्योम)
+अणु
+	अचिन्हित अक्षर fillअक्षर = 0xbf; /* magic */
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&hga_reg_lock, flags);
-	if (hga_mode == HGA_TXT)
-		fillchar = ' ';
-	else if (hga_mode == HGA_GFX)
-		fillchar = 0x00;
+	अगर (hga_mode == HGA_TXT)
+		fillअक्षर = ' ';
+	अन्यथा अगर (hga_mode == HGA_GFX)
+		fillअक्षर = 0x00;
 	spin_unlock_irqrestore(&hga_reg_lock, flags);
-	if (fillchar != 0xbf)
-		memset_io(hga_vram, fillchar, hga_vram_len);
-}
+	अगर (fillअक्षर != 0xbf)
+		स_रखो_io(hga_vram, fillअक्षर, hga_vram_len);
+पूर्ण
 
-static void hga_txt_mode(void)
-{
-	unsigned long flags;
+अटल व्योम hga_txt_mode(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&hga_reg_lock, flags);
 	outb_p(HGA_MODE_VIDEO_EN | HGA_MODE_BLINK_EN, HGA_MODE_PORT);
 	outb_p(0x00, HGA_GFX_PORT);
 	outb_p(0x00, HGA_STATUS_PORT);
 
-	write_hga_b(0x61, 0x00);	/* horizontal total */
-	write_hga_b(0x50, 0x01);	/* horizontal displayed */
-	write_hga_b(0x52, 0x02);	/* horizontal sync pos */
-	write_hga_b(0x0f, 0x03);	/* horizontal sync width */
+	ग_लिखो_hga_b(0x61, 0x00);	/* horizontal total */
+	ग_लिखो_hga_b(0x50, 0x01);	/* horizontal displayed */
+	ग_लिखो_hga_b(0x52, 0x02);	/* horizontal sync pos */
+	ग_लिखो_hga_b(0x0f, 0x03);	/* horizontal sync width */
 
-	write_hga_b(0x19, 0x04);	/* vertical total */
-	write_hga_b(0x06, 0x05);	/* vertical total adjust */
-	write_hga_b(0x19, 0x06);	/* vertical displayed */
-	write_hga_b(0x19, 0x07);	/* vertical sync pos */
+	ग_लिखो_hga_b(0x19, 0x04);	/* vertical total */
+	ग_लिखो_hga_b(0x06, 0x05);	/* vertical total adjust */
+	ग_लिखो_hga_b(0x19, 0x06);	/* vertical displayed */
+	ग_लिखो_hga_b(0x19, 0x07);	/* vertical sync pos */
 
-	write_hga_b(0x02, 0x08);	/* interlace mode */
-	write_hga_b(0x0d, 0x09);	/* maximum scanline */
-	write_hga_b(0x0c, 0x0a);	/* cursor start */
-	write_hga_b(0x0d, 0x0b);	/* cursor end */
+	ग_लिखो_hga_b(0x02, 0x08);	/* पूर्णांकerlace mode */
+	ग_लिखो_hga_b(0x0d, 0x09);	/* maximum scanline */
+	ग_लिखो_hga_b(0x0c, 0x0a);	/* cursor start */
+	ग_लिखो_hga_b(0x0d, 0x0b);	/* cursor end */
 
-	write_hga_w(0x0000, 0x0c);	/* start address */
-	write_hga_w(0x0000, 0x0e);	/* cursor location */
+	ग_लिखो_hga_w(0x0000, 0x0c);	/* start address */
+	ग_लिखो_hga_w(0x0000, 0x0e);	/* cursor location */
 
 	hga_mode = HGA_TXT;
 	spin_unlock_irqrestore(&hga_reg_lock, flags);
-}
+पूर्ण
 
-static void hga_gfx_mode(void)
-{
-	unsigned long flags;
+अटल व्योम hga_gfx_mode(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&hga_reg_lock, flags);
 	outb_p(0x00, HGA_STATUS_PORT);
 	outb_p(HGA_GFX_MODE_EN, HGA_GFX_PORT);
 	outb_p(HGA_MODE_VIDEO_EN | HGA_MODE_GRAPHICS, HGA_MODE_PORT);
 
-	write_hga_b(0x35, 0x00);	/* horizontal total */
-	write_hga_b(0x2d, 0x01);	/* horizontal displayed */
-	write_hga_b(0x2e, 0x02);	/* horizontal sync pos */
-	write_hga_b(0x07, 0x03);	/* horizontal sync width */
+	ग_लिखो_hga_b(0x35, 0x00);	/* horizontal total */
+	ग_लिखो_hga_b(0x2d, 0x01);	/* horizontal displayed */
+	ग_लिखो_hga_b(0x2e, 0x02);	/* horizontal sync pos */
+	ग_लिखो_hga_b(0x07, 0x03);	/* horizontal sync width */
 
-	write_hga_b(0x5b, 0x04);	/* vertical total */
-	write_hga_b(0x02, 0x05);	/* vertical total adjust */
-	write_hga_b(0x57, 0x06);	/* vertical displayed */
-	write_hga_b(0x57, 0x07);	/* vertical sync pos */
+	ग_लिखो_hga_b(0x5b, 0x04);	/* vertical total */
+	ग_लिखो_hga_b(0x02, 0x05);	/* vertical total adjust */
+	ग_लिखो_hga_b(0x57, 0x06);	/* vertical displayed */
+	ग_लिखो_hga_b(0x57, 0x07);	/* vertical sync pos */
 
-	write_hga_b(0x02, 0x08);	/* interlace mode */
-	write_hga_b(0x03, 0x09);	/* maximum scanline */
-	write_hga_b(0x00, 0x0a);	/* cursor start */
-	write_hga_b(0x00, 0x0b);	/* cursor end */
+	ग_लिखो_hga_b(0x02, 0x08);	/* पूर्णांकerlace mode */
+	ग_लिखो_hga_b(0x03, 0x09);	/* maximum scanline */
+	ग_लिखो_hga_b(0x00, 0x0a);	/* cursor start */
+	ग_लिखो_hga_b(0x00, 0x0b);	/* cursor end */
 
-	write_hga_w(0x0000, 0x0c);	/* start address */
-	write_hga_w(0x0000, 0x0e);	/* cursor location */
+	ग_लिखो_hga_w(0x0000, 0x0c);	/* start address */
+	ग_लिखो_hga_w(0x0000, 0x0e);	/* cursor location */
 
 	hga_mode = HGA_GFX;
 	spin_unlock_irqrestore(&hga_reg_lock, flags);
-}
+पूर्ण
 
-static void hga_show_logo(struct fb_info *info)
-{
+अटल व्योम hga_show_logo(काष्ठा fb_info *info)
+अणु
 /*
-	void __iomem *dest = hga_vram;
-	char *logo = linux_logo_bw;
-	int x, y;
+	व्योम __iomem *dest = hga_vram;
+	अक्षर *logo = linux_logo_bw;
+	पूर्णांक x, y;
 	
-	for (y = 134; y < 134 + 80 ; y++) * this needs some cleanup *
-		for (x = 0; x < 10 ; x++)
-			writeb(~*(logo++),(dest + HGA_ROWADDR(y) + x + 40));
+	क्रम (y = 134; y < 134 + 80 ; y++) * this needs some cleanup *
+		क्रम (x = 0; x < 10 ; x++)
+			ग_लिखोb(~*(logo++),(dest + HGA_ROWADDR(y) + x + 40));
 */
-}
+पूर्ण
 
-static void hga_pan(unsigned int xoffset, unsigned int yoffset)
-{
-	unsigned int base;
-	unsigned long flags;
+अटल व्योम hga_pan(अचिन्हित पूर्णांक xoffset, अचिन्हित पूर्णांक yoffset)
+अणु
+	अचिन्हित पूर्णांक base;
+	अचिन्हित दीर्घ flags;
 	
 	base = (yoffset / 8) * 90 + xoffset;
 	spin_lock_irqsave(&hga_reg_lock, flags);
-	write_hga_w(base, 0x0c);	/* start address */
+	ग_लिखो_hga_w(base, 0x0c);	/* start address */
 	spin_unlock_irqrestore(&hga_reg_lock, flags);
 	DPRINTK("hga_pan: base:%d\n", base);
-}
+पूर्ण
 
-static void hga_blank(int blank_mode)
-{
-	unsigned long flags;
+अटल व्योम hga_blank(पूर्णांक blank_mode)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&hga_reg_lock, flags);
-	if (blank_mode) {
+	अगर (blank_mode) अणु
 		outb_p(0x00, HGA_MODE_PORT);	/* disable video */
-	} else {
+	पूर्ण अन्यथा अणु
 		outb_p(HGA_MODE_VIDEO_EN | HGA_MODE_GRAPHICS, HGA_MODE_PORT);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&hga_reg_lock, flags);
-}
+पूर्ण
 
-static int hga_card_detect(void)
-{
-	int count = 0;
-	void __iomem *p, *q;
-	unsigned short p_save, q_save;
+अटल पूर्णांक hga_card_detect(व्योम)
+अणु
+	पूर्णांक count = 0;
+	व्योम __iomem *p, *q;
+	अचिन्हित लघु p_save, q_save;
 
 	hga_vram_len  = 0x08000;
 
 	hga_vram = ioremap(0xb0000, hga_vram_len);
-	if (!hga_vram)
-		return -ENOMEM;
+	अगर (!hga_vram)
+		वापस -ENOMEM;
 
-	if (request_region(0x3b0, 12, "hgafb"))
+	अगर (request_region(0x3b0, 12, "hgafb"))
 		release_io_ports = 1;
-	if (request_region(0x3bf, 1, "hgafb"))
+	अगर (request_region(0x3bf, 1, "hgafb"))
 		release_io_port = 1;
 
-	/* do a memory check */
+	/* करो a memory check */
 
 	p = hga_vram;
 	q = hga_vram + 0x01000;
 
-	p_save = readw(p); q_save = readw(q);
+	p_save = पढ़ोw(p); q_save = पढ़ोw(q);
 
-	writew(0xaa55, p); if (readw(p) == 0xaa55) count++;
-	writew(0x55aa, p); if (readw(p) == 0x55aa) count++;
-	writew(p_save, p);
+	ग_लिखोw(0xaa55, p); अगर (पढ़ोw(p) == 0xaa55) count++;
+	ग_लिखोw(0x55aa, p); अगर (पढ़ोw(p) == 0x55aa) count++;
+	ग_लिखोw(p_save, p);
 
-	if (count != 2)
-		goto error;
+	अगर (count != 2)
+		जाओ error;
 
-	/* Ok, there is definitely a card registering at the correct
-	 * memory location, so now we do an I/O port test.
+	/* Ok, there is definitely a card रेजिस्टरing at the correct
+	 * memory location, so now we करो an I/O port test.
 	 */
 	
-	if (!test_hga_b(0x66, 0x0f))	    /* cursor low register */
-		goto error;
+	अगर (!test_hga_b(0x66, 0x0f))	    /* cursor low रेजिस्टर */
+		जाओ error;
 
-	if (!test_hga_b(0x99, 0x0f))     /* cursor low register */
-		goto error;
+	अगर (!test_hga_b(0x99, 0x0f))     /* cursor low रेजिस्टर */
+		जाओ error;
 
-	/* See if the card is a Hercules, by checking whether the vsync
-	 * bit of the status register is changing.  This test lasts for
+	/* See अगर the card is a Hercules, by checking whether the vsync
+	 * bit of the status रेजिस्टर is changing.  This test lasts क्रम
 	 * approximately 1/10th of a second.
 	 */
 	
 	p_save = q_save = inb_p(HGA_STATUS_PORT) & HGA_STATUS_VSYNC;
 
-	for (count=0; count < 50000 && p_save == q_save; count++) {
+	क्रम (count=0; count < 50000 && p_save == q_save; count++) अणु
 		q_save = inb(HGA_STATUS_PORT) & HGA_STATUS_VSYNC;
 		udelay(2);
-	}
+	पूर्ण
 
-	if (p_save == q_save) 
-		goto error;
+	अगर (p_save == q_save) 
+		जाओ error;
 
-	switch (inb_p(HGA_STATUS_PORT) & 0x70) {
-		case 0x10:
+	चयन (inb_p(HGA_STATUS_PORT) & 0x70) अणु
+		हाल 0x10:
 			hga_type = TYPE_HERCPLUS;
 			hga_type_name = "HerculesPlus";
-			break;
-		case 0x50:
+			अवरोध;
+		हाल 0x50:
 			hga_type = TYPE_HERCCOLOR;
 			hga_type_name = "HerculesColor";
-			break;
-		default:
+			अवरोध;
+		शेष:
 			hga_type = TYPE_HERC;
 			hga_type_name = "Hercules";
-			break;
-	}
-	return 0;
+			अवरोध;
+	पूर्ण
+	वापस 0;
 error:
-	if (release_io_ports)
+	अगर (release_io_ports)
 		release_region(0x3b0, 12);
-	if (release_io_port)
+	अगर (release_io_port)
 		release_region(0x3bf, 1);
 
 	iounmap(hga_vram);
 
 	pr_err("hgafb: HGA card not detected.\n");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
- *	hgafb_open - open the framebuffer device
- *	@info: pointer to fb_info object containing info for current hga board
- *	@init: open by console system or userland.
+ *	hgafb_खोलो - खोलो the framebuffer device
+ *	@info: poपूर्णांकer to fb_info object containing info क्रम current hga board
+ *	@init: खोलो by console प्रणाली or userland.
  */
 
-static int hgafb_open(struct fb_info *info, int init)
-{
+अटल पूर्णांक hgafb_खोलो(काष्ठा fb_info *info, पूर्णांक init)
+अणु
 	hga_gfx_mode();
 	hga_clear_screen();
-	if (!nologo) hga_show_logo(info);
-	return 0;
-}
+	अगर (!nologo) hga_show_logo(info);
+	वापस 0;
+पूर्ण
 
 /**
- *	hgafb_release - open the framebuffer device
- *	@info: pointer to fb_info object containing info for current hga board
- *	@init: open by console system or userland.
+ *	hgafb_release - खोलो the framebuffer device
+ *	@info: poपूर्णांकer to fb_info object containing info क्रम current hga board
+ *	@init: खोलो by console प्रणाली or userland.
  */
 
-static int hgafb_release(struct fb_info *info, int init)
-{
+अटल पूर्णांक hgafb_release(काष्ठा fb_info *info, पूर्णांक init)
+अणु
 	hga_txt_mode();
 	hga_clear_screen();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	hgafb_setcolreg - set color registers
- *	@regno:register index to set
+ *	hgafb_setcolreg - set color रेजिस्टरs
+ *	@regno:रेजिस्टर index to set
  *	@red:red value, unused
  *	@green:green value, unused
  *	@blue:blue value, unused
  *	@transp:transparency value, unused
  *	@info:unused
  *
- *	This callback function is used to set the color registers of a HGA
+ *	This callback function is used to set the color रेजिस्टरs of a HGA
  *	board. Since we have only two fixed colors only @regno is checked.
- *	A zero is returned on success and 1 for failure.
+ *	A zero is वापसed on success and 1 क्रम failure.
  */
 
-static int hgafb_setcolreg(u_int regno, u_int red, u_int green, u_int blue,
-			   u_int transp, struct fb_info *info)
-{
-	if (regno > 1)
-		return 1;
-	return 0;
-}
+अटल पूर्णांक hgafb_setcolreg(u_पूर्णांक regno, u_पूर्णांक red, u_पूर्णांक green, u_पूर्णांक blue,
+			   u_पूर्णांक transp, काष्ठा fb_info *info)
+अणु
+	अगर (regno > 1)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /**
  *	hga_pan_display - pan or wrap the display
  *	@var:contains new xoffset, yoffset and vmode values
- *	@info:pointer to fb_info object containing info for current hga board
+ *	@info:poपूर्णांकer to fb_info object containing info क्रम current hga board
  *
  *	This function looks only at xoffset, yoffset and the %FB_VMODE_YWRAP
  *	flag in @var. If input parameters are correct it calls hga_pan() to 
  *	program the hardware. @info->var is updated to the new values.
- *	A zero is returned on success and %-EINVAL for failure.
+ *	A zero is वापसed on success and %-EINVAL क्रम failure.
  */
 
-static int hgafb_pan_display(struct fb_var_screeninfo *var,
-			     struct fb_info *info)
-{
-	if (var->vmode & FB_VMODE_YWRAP) {
-		if (var->yoffset >= info->var.yres_virtual ||
+अटल पूर्णांक hgafb_pan_display(काष्ठा fb_var_screeninfo *var,
+			     काष्ठा fb_info *info)
+अणु
+	अगर (var->vmode & FB_VMODE_YWRAP) अणु
+		अगर (var->yoffset >= info->var.yres_भव ||
 		    var->xoffset)
-			return -EINVAL;
-	} else {
-		if (var->xoffset + info->var.xres > info->var.xres_virtual
-		 || var->yoffset + info->var.yres > info->var.yres_virtual
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (var->xoffset + info->var.xres > info->var.xres_भव
+		 || var->yoffset + info->var.yres > info->var.yres_भव
 		 || var->yoffset % 8)
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
 	hga_pan(var->xoffset, var->yoffset);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	hgafb_blank - (un)blank the screen
  *	@blank_mode:blanking method to use
  *	@info:unused
  *	
- *	Blank the screen if blank_mode != 0, else unblank. 
- *	Implements VESA suspend and powerdown modes on hardware that supports 
+ *	Blank the screen अगर blank_mode != 0, अन्यथा unblank. 
+ *	Implements VESA suspend and घातerकरोwn modes on hardware that supports 
  *	disabling hsync/vsync:
  *		@blank_mode == 2 means suspend vsync,
  *		@blank_mode == 3 means suspend hsync,
- *		@blank_mode == 4 means powerdown.
+ *		@blank_mode == 4 means घातerकरोwn.
  */
 
-static int hgafb_blank(int blank_mode, struct fb_info *info)
-{
+अटल पूर्णांक hgafb_blank(पूर्णांक blank_mode, काष्ठा fb_info *info)
+अणु
 	hga_blank(blank_mode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Accel functions
  */
-static void hgafb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
-{
-	u_int rows, y;
+अटल व्योम hgafb_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	u_पूर्णांक rows, y;
 	u8 __iomem *dest;
 
 	y = rect->dy;
 
-	for (rows = rect->height; rows--; y++) {
+	क्रम (rows = rect->height; rows--; y++) अणु
 		dest = rowaddr(info, y) + (rect->dx >> 3);
-		switch (rect->rop) {
-		case ROP_COPY:
-			memset_io(dest, rect->color, (rect->width >> 3));
-			break;
-		case ROP_XOR:
-			fb_writeb(~(fb_readb(dest)), dest);
-			break;
-		}
-	}
-}
+		चयन (rect->rop) अणु
+		हाल ROP_COPY:
+			स_रखो_io(dest, rect->color, (rect->width >> 3));
+			अवरोध;
+		हाल ROP_XOR:
+			fb_ग_लिखोb(~(fb_पढ़ोb(dest)), dest);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void hgafb_copyarea(struct fb_info *info, const struct fb_copyarea *area)
-{
-	u_int rows, y1, y2;
+अटल व्योम hgafb_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *area)
+अणु
+	u_पूर्णांक rows, y1, y2;
 	u8 __iomem *src;
 	u8 __iomem *dest;
 
-	if (area->dy <= area->sy) {
+	अगर (area->dy <= area->sy) अणु
 		y1 = area->sy;
 		y2 = area->dy;
 
-		for (rows = area->height; rows--; ) {
+		क्रम (rows = area->height; rows--; ) अणु
 			src = rowaddr(info, y1) + (area->sx >> 3);
 			dest = rowaddr(info, y2) + (area->dx >> 3);
-			memmove(dest, src, (area->width >> 3));
+			स_हटाओ(dest, src, (area->width >> 3));
 			y1++;
 			y2++;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		y1 = area->sy + area->height - 1;
 		y2 = area->dy + area->height - 1;
 
-		for (rows = area->height; rows--;) {
+		क्रम (rows = area->height; rows--;) अणु
 			src = rowaddr(info, y1) + (area->sx >> 3);
 			dest = rowaddr(info, y2) + (area->dx >> 3);
-			memmove(dest, src, (area->width >> 3));
+			स_हटाओ(dest, src, (area->width >> 3));
 			y1--;
 			y2--;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void hgafb_imageblit(struct fb_info *info, const struct fb_image *image)
-{
+अटल व्योम hgafb_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
+अणु
 	u8 __iomem *dest;
 	u8 *cdat = (u8 *) image->data;
-	u_int rows, y = image->dy;
-	u_int x;
+	u_पूर्णांक rows, y = image->dy;
+	u_पूर्णांक x;
 	u8 d;
 
-	for (rows = image->height; rows--; y++) {
-		for (x = 0; x < image->width; x+= 8) {
+	क्रम (rows = image->height; rows--; y++) अणु
+		क्रम (x = 0; x < image->width; x+= 8) अणु
 			d = *cdat++;
 			dest = rowaddr(info, y) + ((image->dx + x)>> 3);
-			fb_writeb(d, dest);
-		}
-	}
-}
+			fb_ग_लिखोb(d, dest);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static const struct fb_ops hgafb_ops = {
+अटल स्थिर काष्ठा fb_ops hgafb_ops = अणु
 	.owner		= THIS_MODULE,
-	.fb_open	= hgafb_open,
+	.fb_खोलो	= hgafb_खोलो,
 	.fb_release	= hgafb_release,
 	.fb_setcolreg	= hgafb_setcolreg,
 	.fb_pan_display	= hgafb_pan_display,
@@ -538,7 +539,7 @@ static const struct fb_ops hgafb_ops = {
 	.fb_fillrect	= hgafb_fillrect,
 	.fb_copyarea	= hgafb_copyarea,
 	.fb_imageblit	= hgafb_imageblit,
-};
+पूर्ण;
 		
 /* ------------------------------------------------------------------------- *
  *
@@ -552,29 +553,29 @@ static const struct fb_ops hgafb_ops = {
 	 *  Initialization
 	 */
 
-static int hgafb_probe(struct platform_device *pdev)
-{
-	struct fb_info *info;
-	int ret;
+अटल पूर्णांक hgafb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fb_info *info;
+	पूर्णांक ret;
 
 	ret = hga_card_detect();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	printk(KERN_INFO "hgafb: %s with %ldK of memory detected.\n",
+	prपूर्णांकk(KERN_INFO "hgafb: %s with %ldK of memory detected.\n",
 		hga_type_name, hga_vram_len/1024);
 
 	info = framebuffer_alloc(0, &pdev->dev);
-	if (!info) {
+	अगर (!info) अणु
 		iounmap(hga_vram);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	hga_fix.smem_start = (unsigned long)hga_vram;
+	hga_fix.smem_start = (अचिन्हित दीर्घ)hga_vram;
 	hga_fix.smem_len = hga_vram_len;
 
 	info->flags = FBINFO_DEFAULT | FBINFO_HWACCEL_YPAN;
-	info->var = hga_default_var;
+	info->var = hga_शेष_var;
 	info->fix = hga_fix;
 	info->monspecs.hfmin = 0;
 	info->monspecs.hfmax = 0;
@@ -584,76 +585,76 @@ static int hgafb_probe(struct platform_device *pdev)
 	info->fbops = &hgafb_ops;
 	info->screen_base = hga_vram;
 
-        if (register_framebuffer(info) < 0) {
+        अगर (रेजिस्टर_framebuffer(info) < 0) अणु
 		framebuffer_release(info);
 		iounmap(hga_vram);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	fb_info(info, "%s frame buffer device\n", info->fix.id);
-	platform_set_drvdata(pdev, info);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, info);
+	वापस 0;
+पूर्ण
 
-static int hgafb_remove(struct platform_device *pdev)
-{
-	struct fb_info *info = platform_get_drvdata(pdev);
+अटल पूर्णांक hgafb_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(pdev);
 
 	hga_txt_mode();
 	hga_clear_screen();
 
-	if (info) {
-		unregister_framebuffer(info);
+	अगर (info) अणु
+		unरेजिस्टर_framebuffer(info);
 		framebuffer_release(info);
-	}
+	पूर्ण
 
 	iounmap(hga_vram);
 
-	if (release_io_ports)
+	अगर (release_io_ports)
 		release_region(0x3b0, 12);
 
-	if (release_io_port)
+	अगर (release_io_port)
 		release_region(0x3bf, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver hgafb_driver = {
+अटल काष्ठा platक्रमm_driver hgafb_driver = अणु
 	.probe = hgafb_probe,
-	.remove = hgafb_remove,
-	.driver = {
+	.हटाओ = hgafb_हटाओ,
+	.driver = अणु
 		.name = "hgafb",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device *hgafb_device;
+अटल काष्ठा platक्रमm_device *hgafb_device;
 
-static int __init hgafb_init(void)
-{
-	int ret;
+अटल पूर्णांक __init hgafb_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (fb_get_options("hgafb", NULL))
-		return -ENODEV;
+	अगर (fb_get_options("hgafb", शून्य))
+		वापस -ENODEV;
 
-	ret = platform_driver_register(&hgafb_driver);
+	ret = platक्रमm_driver_रेजिस्टर(&hgafb_driver);
 
-	if (!ret) {
-		hgafb_device = platform_device_register_simple("hgafb", 0, NULL, 0);
+	अगर (!ret) अणु
+		hgafb_device = platक्रमm_device_रेजिस्टर_simple("hgafb", 0, शून्य, 0);
 
-		if (IS_ERR(hgafb_device)) {
-			platform_driver_unregister(&hgafb_driver);
+		अगर (IS_ERR(hgafb_device)) अणु
+			platक्रमm_driver_unरेजिस्टर(&hgafb_driver);
 			ret = PTR_ERR(hgafb_device);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit hgafb_exit(void)
-{
-	platform_device_unregister(hgafb_device);
-	platform_driver_unregister(&hgafb_driver);
-}
+अटल व्योम __निकास hgafb_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(hgafb_device);
+	platक्रमm_driver_unरेजिस्टर(&hgafb_driver);
+पूर्ण
 
 /* -------------------------------------------------------------------------
  *
@@ -668,4 +669,4 @@ MODULE_LICENSE("GPL");
 module_param(nologo, bool, 0);
 MODULE_PARM_DESC(nologo, "Disables startup logo if != 0 (default=0)");
 module_init(hgafb_init);
-module_exit(hgafb_exit);
+module_निकास(hgafb_निकास);

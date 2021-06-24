@@ -1,413 +1,414 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012 Linutronix GmbH
  * Copyright (c) 2014 sigma star gmbh
- * Author: Richard Weinberger <richard@nod.at>
+ * Author: Riअक्षरd Weinberger <riअक्षरd@nod.at>
  */
 
 /**
- * update_fastmap_work_fn - calls ubi_update_fastmap from a work queue
+ * update_fasपंचांगap_work_fn - calls ubi_update_fasपंचांगap from a work queue
  * @wrk: the work description object
  */
-static void update_fastmap_work_fn(struct work_struct *wrk)
-{
-	struct ubi_device *ubi = container_of(wrk, struct ubi_device, fm_work);
+अटल व्योम update_fasपंचांगap_work_fn(काष्ठा work_काष्ठा *wrk)
+अणु
+	काष्ठा ubi_device *ubi = container_of(wrk, काष्ठा ubi_device, fm_work);
 
-	ubi_update_fastmap(ubi);
+	ubi_update_fasपंचांगap(ubi);
 	spin_lock(&ubi->wl_lock);
 	ubi->fm_work_scheduled = 0;
 	spin_unlock(&ubi->wl_lock);
-}
+पूर्ण
 
 /**
  * find_anchor_wl_entry - find wear-leveling entry to used as anchor PEB.
- * @root: the RB-tree where to look for
+ * @root: the RB-tree where to look क्रम
  */
-static struct ubi_wl_entry *find_anchor_wl_entry(struct rb_root *root)
-{
-	struct rb_node *p;
-	struct ubi_wl_entry *e, *victim = NULL;
-	int max_ec = UBI_MAX_ERASECOUNTER;
+अटल काष्ठा ubi_wl_entry *find_anchor_wl_entry(काष्ठा rb_root *root)
+अणु
+	काष्ठा rb_node *p;
+	काष्ठा ubi_wl_entry *e, *victim = शून्य;
+	पूर्णांक max_ec = UBI_MAX_ERASECOUNTER;
 
-	ubi_rb_for_each_entry(p, e, root, u.rb) {
-		if (e->pnum < UBI_FM_MAX_START && e->ec < max_ec) {
+	ubi_rb_क्रम_each_entry(p, e, root, u.rb) अणु
+		अगर (e->pnum < UBI_FM_MAX_START && e->ec < max_ec) अणु
 			victim = e;
 			max_ec = e->ec;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return victim;
-}
+	वापस victim;
+पूर्ण
 
-static inline void return_unused_peb(struct ubi_device *ubi,
-				     struct ubi_wl_entry *e)
-{
-	wl_tree_add(e, &ubi->free);
-	ubi->free_count++;
-}
+अटल अंतरभूत व्योम वापस_unused_peb(काष्ठा ubi_device *ubi,
+				     काष्ठा ubi_wl_entry *e)
+अणु
+	wl_tree_add(e, &ubi->मुक्त);
+	ubi->मुक्त_count++;
+पूर्ण
 
 /**
- * return_unused_pool_pebs - returns unused PEB to the free tree.
+ * वापस_unused_pool_pebs - वापसs unused PEB to the मुक्त tree.
  * @ubi: UBI device description object
- * @pool: fastmap pool description object
+ * @pool: fasपंचांगap pool description object
  */
-static void return_unused_pool_pebs(struct ubi_device *ubi,
-				    struct ubi_fm_pool *pool)
-{
-	int i;
-	struct ubi_wl_entry *e;
+अटल व्योम वापस_unused_pool_pebs(काष्ठा ubi_device *ubi,
+				    काष्ठा ubi_fm_pool *pool)
+अणु
+	पूर्णांक i;
+	काष्ठा ubi_wl_entry *e;
 
-	for (i = pool->used; i < pool->size; i++) {
+	क्रम (i = pool->used; i < pool->size; i++) अणु
 		e = ubi->lookuptbl[pool->pebs[i]];
-		return_unused_peb(ubi, e);
-	}
-}
+		वापस_unused_peb(ubi, e);
+	पूर्ण
+पूर्ण
 
 /**
  * ubi_wl_get_fm_peb - find a physical erase block with a given maximal number.
  * @ubi: UBI device description object
- * @anchor: This PEB will be used as anchor PEB by fastmap
+ * @anchor: This PEB will be used as anchor PEB by fasपंचांगap
  *
- * The function returns a physical erase block with a given maximal number
- * and removes it from the wl subsystem.
+ * The function वापसs a physical erase block with a given maximal number
+ * and हटाओs it from the wl subप्रणाली.
  * Must be called with wl_lock held!
  */
-struct ubi_wl_entry *ubi_wl_get_fm_peb(struct ubi_device *ubi, int anchor)
-{
-	struct ubi_wl_entry *e = NULL;
+काष्ठा ubi_wl_entry *ubi_wl_get_fm_peb(काष्ठा ubi_device *ubi, पूर्णांक anchor)
+अणु
+	काष्ठा ubi_wl_entry *e = शून्य;
 
-	if (!ubi->free.rb_node || (ubi->free_count - ubi->beb_rsvd_pebs < 1))
-		goto out;
+	अगर (!ubi->मुक्त.rb_node || (ubi->मुक्त_count - ubi->beb_rsvd_pebs < 1))
+		जाओ out;
 
-	if (anchor)
-		e = find_anchor_wl_entry(&ubi->free);
-	else
-		e = find_mean_wl_entry(ubi, &ubi->free);
+	अगर (anchor)
+		e = find_anchor_wl_entry(&ubi->मुक्त);
+	अन्यथा
+		e = find_mean_wl_entry(ubi, &ubi->मुक्त);
 
-	if (!e)
-		goto out;
+	अगर (!e)
+		जाओ out;
 
-	self_check_in_wl_tree(ubi, e, &ubi->free);
+	self_check_in_wl_tree(ubi, e, &ubi->मुक्त);
 
-	/* remove it from the free list,
-	 * the wl subsystem does no longer know this erase block */
-	rb_erase(&e->u.rb, &ubi->free);
-	ubi->free_count--;
+	/* हटाओ it from the मुक्त list,
+	 * the wl subप्रणाली करोes no दीर्घer know this erase block */
+	rb_erase(&e->u.rb, &ubi->मुक्त);
+	ubi->मुक्त_count--;
 out:
-	return e;
-}
+	वापस e;
+पूर्ण
 
 /**
- * ubi_refill_pools - refills all fastmap PEB pools.
+ * ubi_refill_pools - refills all fasपंचांगap PEB pools.
  * @ubi: UBI device description object
  */
-void ubi_refill_pools(struct ubi_device *ubi)
-{
-	struct ubi_fm_pool *wl_pool = &ubi->fm_wl_pool;
-	struct ubi_fm_pool *pool = &ubi->fm_pool;
-	struct ubi_wl_entry *e;
-	int enough;
+व्योम ubi_refill_pools(काष्ठा ubi_device *ubi)
+अणु
+	काष्ठा ubi_fm_pool *wl_pool = &ubi->fm_wl_pool;
+	काष्ठा ubi_fm_pool *pool = &ubi->fm_pool;
+	काष्ठा ubi_wl_entry *e;
+	पूर्णांक enough;
 
 	spin_lock(&ubi->wl_lock);
 
-	return_unused_pool_pebs(ubi, wl_pool);
-	return_unused_pool_pebs(ubi, pool);
+	वापस_unused_pool_pebs(ubi, wl_pool);
+	वापस_unused_pool_pebs(ubi, pool);
 
 	wl_pool->size = 0;
 	pool->size = 0;
 
-	if (ubi->fm_anchor) {
-		wl_tree_add(ubi->fm_anchor, &ubi->free);
-		ubi->free_count++;
-	}
-	if (ubi->fm_next_anchor) {
-		wl_tree_add(ubi->fm_next_anchor, &ubi->free);
-		ubi->free_count++;
-	}
+	अगर (ubi->fm_anchor) अणु
+		wl_tree_add(ubi->fm_anchor, &ubi->मुक्त);
+		ubi->मुक्त_count++;
+	पूर्ण
+	अगर (ubi->fm_next_anchor) अणु
+		wl_tree_add(ubi->fm_next_anchor, &ubi->मुक्त);
+		ubi->मुक्त_count++;
+	पूर्ण
 
-	/* All available PEBs are in ubi->free, now is the time to get
+	/* All available PEBs are in ubi->मुक्त, now is the समय to get
 	 * the best anchor PEBs.
 	 */
 	ubi->fm_anchor = ubi_wl_get_fm_peb(ubi, 1);
 	ubi->fm_next_anchor = ubi_wl_get_fm_peb(ubi, 1);
 
-	for (;;) {
+	क्रम (;;) अणु
 		enough = 0;
-		if (pool->size < pool->max_size) {
-			if (!ubi->free.rb_node)
-				break;
+		अगर (pool->size < pool->max_size) अणु
+			अगर (!ubi->मुक्त.rb_node)
+				अवरोध;
 
 			e = wl_get_wle(ubi);
-			if (!e)
-				break;
+			अगर (!e)
+				अवरोध;
 
 			pool->pebs[pool->size] = e->pnum;
 			pool->size++;
-		} else
+		पूर्ण अन्यथा
 			enough++;
 
-		if (wl_pool->size < wl_pool->max_size) {
-			if (!ubi->free.rb_node ||
-			   (ubi->free_count - ubi->beb_rsvd_pebs < 5))
-				break;
+		अगर (wl_pool->size < wl_pool->max_size) अणु
+			अगर (!ubi->मुक्त.rb_node ||
+			   (ubi->मुक्त_count - ubi->beb_rsvd_pebs < 5))
+				अवरोध;
 
-			e = find_wl_entry(ubi, &ubi->free, WL_FREE_MAX_DIFF);
-			self_check_in_wl_tree(ubi, e, &ubi->free);
-			rb_erase(&e->u.rb, &ubi->free);
-			ubi->free_count--;
+			e = find_wl_entry(ubi, &ubi->मुक्त, WL_FREE_MAX_DIFF);
+			self_check_in_wl_tree(ubi, e, &ubi->मुक्त);
+			rb_erase(&e->u.rb, &ubi->मुक्त);
+			ubi->मुक्त_count--;
 
 			wl_pool->pebs[wl_pool->size] = e->pnum;
 			wl_pool->size++;
-		} else
+		पूर्ण अन्यथा
 			enough++;
 
-		if (enough == 2)
-			break;
-	}
+		अगर (enough == 2)
+			अवरोध;
+	पूर्ण
 
 	wl_pool->used = 0;
 	pool->used = 0;
 
 	spin_unlock(&ubi->wl_lock);
-}
+पूर्ण
 
 /**
- * produce_free_peb - produce a free physical eraseblock.
+ * produce_मुक्त_peb - produce a मुक्त physical eraseblock.
  * @ubi: UBI device description object
  *
- * This function tries to make a free PEB by means of synchronous execution of
- * pending works. This may be needed if, for example the background thread is
- * disabled. Returns zero in case of success and a negative error code in case
+ * This function tries to make a मुक्त PEB by means of synchronous execution of
+ * pending works. This may be needed अगर, क्रम example the background thपढ़ो is
+ * disabled. Returns zero in हाल of success and a negative error code in हाल
  * of failure.
  */
-static int produce_free_peb(struct ubi_device *ubi)
-{
-	int err;
+अटल पूर्णांक produce_मुक्त_peb(काष्ठा ubi_device *ubi)
+अणु
+	पूर्णांक err;
 
-	while (!ubi->free.rb_node && ubi->works_count) {
+	जबतक (!ubi->मुक्त.rb_node && ubi->works_count) अणु
 		dbg_wl("do one work synchronously");
-		err = do_work(ubi);
+		err = करो_work(ubi);
 
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ubi_wl_get_peb - get a physical eraseblock.
  * @ubi: UBI device description object
  *
- * This function returns a physical eraseblock in case of success and a
- * negative error code in case of failure.
- * Returns with ubi->fm_eba_sem held in read mode!
+ * This function वापसs a physical eraseblock in हाल of success and a
+ * negative error code in हाल of failure.
+ * Returns with ubi->fm_eba_sem held in पढ़ो mode!
  */
-int ubi_wl_get_peb(struct ubi_device *ubi)
-{
-	int ret, attempts = 0;
-	struct ubi_fm_pool *pool = &ubi->fm_pool;
-	struct ubi_fm_pool *wl_pool = &ubi->fm_wl_pool;
+पूर्णांक ubi_wl_get_peb(काष्ठा ubi_device *ubi)
+अणु
+	पूर्णांक ret, attempts = 0;
+	काष्ठा ubi_fm_pool *pool = &ubi->fm_pool;
+	काष्ठा ubi_fm_pool *wl_pool = &ubi->fm_wl_pool;
 
 again:
-	down_read(&ubi->fm_eba_sem);
+	करोwn_पढ़ो(&ubi->fm_eba_sem);
 	spin_lock(&ubi->wl_lock);
 
-	/* We check here also for the WL pool because at this point we can
+	/* We check here also क्रम the WL pool because at this poपूर्णांक we can
 	 * refill the WL pool synchronous. */
-	if (pool->used == pool->size || wl_pool->used == wl_pool->size) {
+	अगर (pool->used == pool->size || wl_pool->used == wl_pool->size) अणु
 		spin_unlock(&ubi->wl_lock);
-		up_read(&ubi->fm_eba_sem);
-		ret = ubi_update_fastmap(ubi);
-		if (ret) {
+		up_पढ़ो(&ubi->fm_eba_sem);
+		ret = ubi_update_fasपंचांगap(ubi);
+		अगर (ret) अणु
 			ubi_msg(ubi, "Unable to write a new fastmap: %i", ret);
-			down_read(&ubi->fm_eba_sem);
-			return -ENOSPC;
-		}
-		down_read(&ubi->fm_eba_sem);
+			करोwn_पढ़ो(&ubi->fm_eba_sem);
+			वापस -ENOSPC;
+		पूर्ण
+		करोwn_पढ़ो(&ubi->fm_eba_sem);
 		spin_lock(&ubi->wl_lock);
-	}
+	पूर्ण
 
-	if (pool->used == pool->size) {
+	अगर (pool->used == pool->size) अणु
 		spin_unlock(&ubi->wl_lock);
 		attempts++;
-		if (attempts == 10) {
+		अगर (attempts == 10) अणु
 			ubi_err(ubi, "Unable to get a free PEB from user WL pool");
 			ret = -ENOSPC;
-			goto out;
-		}
-		up_read(&ubi->fm_eba_sem);
-		ret = produce_free_peb(ubi);
-		if (ret < 0) {
-			down_read(&ubi->fm_eba_sem);
-			goto out;
-		}
-		goto again;
-	}
+			जाओ out;
+		पूर्ण
+		up_पढ़ो(&ubi->fm_eba_sem);
+		ret = produce_मुक्त_peb(ubi);
+		अगर (ret < 0) अणु
+			करोwn_पढ़ो(&ubi->fm_eba_sem);
+			जाओ out;
+		पूर्ण
+		जाओ again;
+	पूर्ण
 
-	ubi_assert(pool->used < pool->size);
+	ubi_निश्चित(pool->used < pool->size);
 	ret = pool->pebs[pool->used++];
 	prot_queue_add(ubi, ubi->lookuptbl[ret]);
 	spin_unlock(&ubi->wl_lock);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* get_peb_for_wl - returns a PEB to be used internally by the WL sub-system.
+/* get_peb_क्रम_wl - वापसs a PEB to be used पूर्णांकernally by the WL sub-प्रणाली.
  *
  * @ubi: UBI device description object
  */
-static struct ubi_wl_entry *get_peb_for_wl(struct ubi_device *ubi)
-{
-	struct ubi_fm_pool *pool = &ubi->fm_wl_pool;
-	int pnum;
+अटल काष्ठा ubi_wl_entry *get_peb_क्रम_wl(काष्ठा ubi_device *ubi)
+अणु
+	काष्ठा ubi_fm_pool *pool = &ubi->fm_wl_pool;
+	पूर्णांक pnum;
 
-	ubi_assert(rwsem_is_locked(&ubi->fm_eba_sem));
+	ubi_निश्चित(rwsem_is_locked(&ubi->fm_eba_sem));
 
-	if (pool->used == pool->size) {
-		/* We cannot update the fastmap here because this
+	अगर (pool->used == pool->size) अणु
+		/* We cannot update the fasपंचांगap here because this
 		 * function is called in atomic context.
 		 * Let's fail here and refill/update it as soon as possible. */
-		if (!ubi->fm_work_scheduled) {
+		अगर (!ubi->fm_work_scheduled) अणु
 			ubi->fm_work_scheduled = 1;
 			schedule_work(&ubi->fm_work);
-		}
-		return NULL;
-	}
+		पूर्ण
+		वापस शून्य;
+	पूर्ण
 
 	pnum = pool->pebs[pool->used++];
-	return ubi->lookuptbl[pnum];
-}
+	वापस ubi->lookuptbl[pnum];
+पूर्ण
 
 /**
  * ubi_ensure_anchor_pebs - schedule wear-leveling to produce an anchor PEB.
  * @ubi: UBI device description object
  */
-int ubi_ensure_anchor_pebs(struct ubi_device *ubi)
-{
-	struct ubi_work *wrk;
+पूर्णांक ubi_ensure_anchor_pebs(काष्ठा ubi_device *ubi)
+अणु
+	काष्ठा ubi_work *wrk;
 
 	spin_lock(&ubi->wl_lock);
 
 	/* Do we have a next anchor? */
-	if (!ubi->fm_next_anchor) {
+	अगर (!ubi->fm_next_anchor) अणु
 		ubi->fm_next_anchor = ubi_wl_get_fm_peb(ubi, 1);
-		if (!ubi->fm_next_anchor)
+		अगर (!ubi->fm_next_anchor)
 			/* Tell wear leveling to produce a new anchor PEB */
-			ubi->fm_do_produce_anchor = 1;
-	}
+			ubi->fm_करो_produce_anchor = 1;
+	पूर्ण
 
 	/* Do wear leveling to get a new anchor PEB or check the
 	 * existing next anchor candidate.
 	 */
-	if (ubi->wl_scheduled) {
+	अगर (ubi->wl_scheduled) अणु
 		spin_unlock(&ubi->wl_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	ubi->wl_scheduled = 1;
 	spin_unlock(&ubi->wl_lock);
 
-	wrk = kmalloc(sizeof(struct ubi_work), GFP_NOFS);
-	if (!wrk) {
+	wrk = kदो_स्मृति(माप(काष्ठा ubi_work), GFP_NOFS);
+	अगर (!wrk) अणु
 		spin_lock(&ubi->wl_lock);
 		ubi->wl_scheduled = 0;
 		spin_unlock(&ubi->wl_lock);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	wrk->func = &wear_leveling_worker;
 	__schedule_ubi_work(ubi, wrk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ubi_wl_put_fm_peb - returns a PEB used in a fastmap to the wear-leveling
- * sub-system.
+ * ubi_wl_put_fm_peb - वापसs a PEB used in a fasपंचांगap to the wear-leveling
+ * sub-प्रणाली.
  * see: ubi_wl_put_peb()
  *
  * @ubi: UBI device description object
- * @fm_e: physical eraseblock to return
- * @lnum: the last used logical eraseblock number for the PEB
- * @torture: if this physical eraseblock has to be tortured
+ * @fm_e: physical eraseblock to वापस
+ * @lnum: the last used logical eraseblock number क्रम the PEB
+ * @torture: अगर this physical eraseblock has to be tortured
  */
-int ubi_wl_put_fm_peb(struct ubi_device *ubi, struct ubi_wl_entry *fm_e,
-		      int lnum, int torture)
-{
-	struct ubi_wl_entry *e;
-	int vol_id, pnum = fm_e->pnum;
+पूर्णांक ubi_wl_put_fm_peb(काष्ठा ubi_device *ubi, काष्ठा ubi_wl_entry *fm_e,
+		      पूर्णांक lnum, पूर्णांक torture)
+अणु
+	काष्ठा ubi_wl_entry *e;
+	पूर्णांक vol_id, pnum = fm_e->pnum;
 
 	dbg_wl("PEB %d", pnum);
 
-	ubi_assert(pnum >= 0);
-	ubi_assert(pnum < ubi->peb_count);
+	ubi_निश्चित(pnum >= 0);
+	ubi_निश्चित(pnum < ubi->peb_count);
 
 	spin_lock(&ubi->wl_lock);
 	e = ubi->lookuptbl[pnum];
 
-	/* This can happen if we recovered from a fastmap the very
-	 * first time and writing now a new one. In this case the wl system
-	 * has never seen any PEB used by the original fastmap.
+	/* This can happen अगर we recovered from a fasपंचांगap the very
+	 * first समय and writing now a new one. In this हाल the wl प्रणाली
+	 * has never seen any PEB used by the original fasपंचांगap.
 	 */
-	if (!e) {
+	अगर (!e) अणु
 		e = fm_e;
-		ubi_assert(e->ec >= 0);
+		ubi_निश्चित(e->ec >= 0);
 		ubi->lookuptbl[pnum] = e;
-	}
+	पूर्ण
 
 	spin_unlock(&ubi->wl_lock);
 
 	vol_id = lnum ? UBI_FM_DATA_VOLUME_ID : UBI_FM_SB_VOLUME_ID;
-	return schedule_erase(ubi, e, vol_id, lnum, torture, true);
-}
+	वापस schedule_erase(ubi, e, vol_id, lnum, torture, true);
+पूर्ण
 
 /**
  * ubi_is_erase_work - checks whether a work is erase work.
  * @wrk: The work object to be checked
  */
-int ubi_is_erase_work(struct ubi_work *wrk)
-{
-	return wrk->func == erase_worker;
-}
+पूर्णांक ubi_is_erase_work(काष्ठा ubi_work *wrk)
+अणु
+	वापस wrk->func == erase_worker;
+पूर्ण
 
-static void ubi_fastmap_close(struct ubi_device *ubi)
-{
-	int i;
+अटल व्योम ubi_fasपंचांगap_बंद(काष्ठा ubi_device *ubi)
+अणु
+	पूर्णांक i;
 
-	return_unused_pool_pebs(ubi, &ubi->fm_pool);
-	return_unused_pool_pebs(ubi, &ubi->fm_wl_pool);
+	वापस_unused_pool_pebs(ubi, &ubi->fm_pool);
+	वापस_unused_pool_pebs(ubi, &ubi->fm_wl_pool);
 
-	if (ubi->fm_anchor) {
-		return_unused_peb(ubi, ubi->fm_anchor);
-		ubi->fm_anchor = NULL;
-	}
+	अगर (ubi->fm_anchor) अणु
+		वापस_unused_peb(ubi, ubi->fm_anchor);
+		ubi->fm_anchor = शून्य;
+	पूर्ण
 
-	if (ubi->fm_next_anchor) {
-		return_unused_peb(ubi, ubi->fm_next_anchor);
-		ubi->fm_next_anchor = NULL;
-	}
+	अगर (ubi->fm_next_anchor) अणु
+		वापस_unused_peb(ubi, ubi->fm_next_anchor);
+		ubi->fm_next_anchor = शून्य;
+	पूर्ण
 
-	if (ubi->fm) {
-		for (i = 0; i < ubi->fm->used_blocks; i++)
-			kfree(ubi->fm->e[i]);
-	}
-	kfree(ubi->fm);
-}
+	अगर (ubi->fm) अणु
+		क्रम (i = 0; i < ubi->fm->used_blocks; i++)
+			kमुक्त(ubi->fm->e[i]);
+	पूर्ण
+	kमुक्त(ubi->fm);
+पूर्ण
 
 /**
- * may_reserve_for_fm - tests whether a PEB shall be reserved for fastmap.
+ * may_reserve_क्रम_fm - tests whether a PEB shall be reserved क्रम fasपंचांगap.
  * See find_mean_wl_entry()
  *
  * @ubi: UBI device description object
- * @e: physical eraseblock to return
+ * @e: physical eraseblock to वापस
  * @root: RB tree to test against.
  */
-static struct ubi_wl_entry *may_reserve_for_fm(struct ubi_device *ubi,
-					   struct ubi_wl_entry *e,
-					   struct rb_root *root) {
-	if (e && !ubi->fm_disabled && !ubi->fm &&
+अटल काष्ठा ubi_wl_entry *may_reserve_क्रम_fm(काष्ठा ubi_device *ubi,
+					   काष्ठा ubi_wl_entry *e,
+					   काष्ठा rb_root *root) अणु
+	अगर (e && !ubi->fm_disabled && !ubi->fm &&
 	    e->pnum < UBI_FM_MAX_START)
 		e = rb_entry(rb_next(root->rb_node),
-			     struct ubi_wl_entry, u.rb);
+			     काष्ठा ubi_wl_entry, u.rb);
 
-	return e;
-}
+	वापस e;
+पूर्ण

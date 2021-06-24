@@ -1,1 +1,2 @@
-#include <asm-generic/topology.h>
+<शैली गुरु>
+#समावेश <यंत्र-generic/topology.h>

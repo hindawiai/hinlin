@@ -1,81 +1,82 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_PART_STAT_H
-#define _LINUX_PART_STAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_PART_STAT_H
+#घोषणा _LINUX_PART_STAT_H
 
-#include <linux/genhd.h>
+#समावेश <linux/genhd.h>
 
-struct disk_stats {
+काष्ठा disk_stats अणु
 	u64 nsecs[NR_STAT_GROUPS];
-	unsigned long sectors[NR_STAT_GROUPS];
-	unsigned long ios[NR_STAT_GROUPS];
-	unsigned long merges[NR_STAT_GROUPS];
-	unsigned long io_ticks;
+	अचिन्हित दीर्घ sectors[NR_STAT_GROUPS];
+	अचिन्हित दीर्घ ios[NR_STAT_GROUPS];
+	अचिन्हित दीर्घ merges[NR_STAT_GROUPS];
+	अचिन्हित दीर्घ io_ticks;
 	local_t in_flight[2];
-};
+पूर्ण;
 
 /*
  * Macros to operate on percpu disk statistics:
  *
- * {disk|part|all}_stat_{add|sub|inc|dec}() modify the stat counters and should
+ * अणुdisk|part|allपूर्ण_stat_अणुadd|sub|inc|decपूर्ण() modअगरy the stat counters and should
  * be called between disk_stat_lock() and disk_stat_unlock().
  *
- * part_stat_read() can be called at any time.
+ * part_stat_पढ़ो() can be called at any समय.
  */
-#define part_stat_lock()	preempt_disable()
-#define part_stat_unlock()	preempt_enable()
+#घोषणा part_stat_lock()	preempt_disable()
+#घोषणा part_stat_unlock()	preempt_enable()
 
-#define part_stat_get_cpu(part, field, cpu)				\
+#घोषणा part_stat_get_cpu(part, field, cpu)				\
 	(per_cpu_ptr((part)->bd_stats, (cpu))->field)
 
-#define part_stat_get(part, field)					\
+#घोषणा part_stat_get(part, field)					\
 	part_stat_get_cpu(part, field, smp_processor_id())
 
-#define part_stat_read(part, field)					\
-({									\
+#घोषणा part_stat_पढ़ो(part, field)					\
+(अणु									\
 	typeof((part)->bd_stats->field) res = 0;			\
-	unsigned int _cpu;						\
-	for_each_possible_cpu(_cpu)					\
+	अचिन्हित पूर्णांक _cpu;						\
+	क्रम_each_possible_cpu(_cpu)					\
 		res += per_cpu_ptr((part)->bd_stats, _cpu)->field; \
 	res;								\
-})
+पूर्ण)
 
-static inline void part_stat_set_all(struct block_device *part, int value)
-{
-	int i;
+अटल अंतरभूत व्योम part_stat_set_all(काष्ठा block_device *part, पूर्णांक value)
+अणु
+	पूर्णांक i;
 
-	for_each_possible_cpu(i)
-		memset(per_cpu_ptr(part->bd_stats, i), value,
-				sizeof(struct disk_stats));
-}
+	क्रम_each_possible_cpu(i)
+		स_रखो(per_cpu_ptr(part->bd_stats, i), value,
+				माप(काष्ठा disk_stats));
+पूर्ण
 
-#define part_stat_read_accum(part, field)				\
-	(part_stat_read(part, field[STAT_READ]) +			\
-	 part_stat_read(part, field[STAT_WRITE]) +			\
-	 part_stat_read(part, field[STAT_DISCARD]))
+#घोषणा part_stat_पढ़ो_accum(part, field)				\
+	(part_stat_पढ़ो(part, field[STAT_READ]) +			\
+	 part_stat_पढ़ो(part, field[STAT_WRITE]) +			\
+	 part_stat_पढ़ो(part, field[STAT_DISCARD]))
 
-#define __part_stat_add(part, field, addnd)				\
+#घोषणा __part_stat_add(part, field, addnd)				\
 	__this_cpu_add((part)->bd_stats->field, addnd)
 
-#define part_stat_add(part, field, addnd)	do {			\
+#घोषणा part_stat_add(part, field, addnd)	करो अणु			\
 	__part_stat_add((part), field, addnd);				\
-	if ((part)->bd_partno)						\
+	अगर ((part)->bd_partno)						\
 		__part_stat_add(bdev_whole(part), field, addnd);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define part_stat_dec(part, field)					\
+#घोषणा part_stat_dec(part, field)					\
 	part_stat_add(part, field, -1)
-#define part_stat_inc(part, field)					\
+#घोषणा part_stat_inc(part, field)					\
 	part_stat_add(part, field, 1)
-#define part_stat_sub(part, field, subnd)				\
+#घोषणा part_stat_sub(part, field, subnd)				\
 	part_stat_add(part, field, -subnd)
 
-#define part_stat_local_dec(part, field)				\
+#घोषणा part_stat_local_dec(part, field)				\
 	local_dec(&(part_stat_get(part, field)))
-#define part_stat_local_inc(part, field)				\
+#घोषणा part_stat_local_inc(part, field)				\
 	local_inc(&(part_stat_get(part, field)))
-#define part_stat_local_read(part, field)				\
-	local_read(&(part_stat_get(part, field)))
-#define part_stat_local_read_cpu(part, field, cpu)			\
-	local_read(&(part_stat_get_cpu(part, field, cpu)))
+#घोषणा part_stat_local_पढ़ो(part, field)				\
+	local_पढ़ो(&(part_stat_get(part, field)))
+#घोषणा part_stat_local_पढ़ो_cpu(part, field, cpu)			\
+	local_पढ़ो(&(part_stat_get_cpu(part, field, cpu)))
 
-#endif /* _LINUX_PART_STAT_H */
+#पूर्ण_अगर /* _LINUX_PART_STAT_H */

@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * debugfs attributes for Wilco EC
+ * debugfs attributes क्रम Wilco EC
  *
  * Copyright 2019 Google LLC
  *
- * See Documentation/ABI/testing/debugfs-wilco-ec for usage.
+ * See Documentation/ABI/testing/debugfs-wilco-ec क्रम usage.
  */
 
-#include <linux/ctype.h>
-#include <linux/debugfs.h>
-#include <linux/fs.h>
-#include <linux/module.h>
-#include <linux/platform_data/wilco-ec.h>
-#include <linux/platform_device.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/wilco-ec.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define DRV_NAME "wilco-ec-debugfs"
+#घोषणा DRV_NAME "wilco-ec-debugfs"
 
 /* The raw bytes will take up more space when represented as a hex string */
-#define FORMATTED_BUFFER_SIZE (EC_MAILBOX_DATA_SIZE * 4)
+#घोषणा FORMATTED_BUFFER_SIZE (EC_MAILBOX_DATA_SIZE * 4)
 
-struct wilco_ec_debugfs {
-	struct wilco_ec_device *ec;
-	struct dentry *dir;
-	size_t response_size;
+काष्ठा wilco_ec_debugfs अणु
+	काष्ठा wilco_ec_device *ec;
+	काष्ठा dentry *dir;
+	माप_प्रकार response_size;
 	u8 raw_data[EC_MAILBOX_DATA_SIZE];
-	u8 formatted_data[FORMATTED_BUFFER_SIZE];
-};
-static struct wilco_ec_debugfs *debug_info;
+	u8 क्रमmatted_data[FORMATTED_BUFFER_SIZE];
+पूर्ण;
+अटल काष्ठा wilco_ec_debugfs *debug_info;
 
 /**
- * parse_hex_sentence() - Convert a ascii hex representation into byte array.
+ * parse_hex_sentence() - Convert a ascii hex representation पूर्णांकo byte array.
  * @in: Input buffer of ascii.
  * @isize: Length of input buffer.
  * @out: Output buffer.
@@ -39,245 +40,245 @@ static struct wilco_ec_debugfs *debug_info;
  * An example valid input is
  * "   00 f2 0    000076 6 0  ff"
  *
- * If an individual "word" within the hex sentence is longer than MAX_WORD_SIZE,
+ * If an inभागidual "word" within the hex sentence is दीर्घer than MAX_WORD_SIZE,
  * then the sentence is illegal, and parsing will fail.
  *
  * Return: Number of bytes parsed, or negative error code on failure.
  */
-static int parse_hex_sentence(const char *in, int isize, u8 *out, int osize)
-{
-	int n_parsed = 0;
-	int word_start = 0;
-	int word_end;
-	int word_len;
-	/* Temp buffer for holding a "word" of chars that represents one byte */
-	#define MAX_WORD_SIZE 16
-	char tmp[MAX_WORD_SIZE + 1];
+अटल पूर्णांक parse_hex_sentence(स्थिर अक्षर *in, पूर्णांक isize, u8 *out, पूर्णांक osize)
+अणु
+	पूर्णांक n_parsed = 0;
+	पूर्णांक word_start = 0;
+	पूर्णांक word_end;
+	पूर्णांक word_len;
+	/* Temp buffer क्रम holding a "word" of अक्षरs that represents one byte */
+	#घोषणा MAX_WORD_SIZE 16
+	अक्षर पंचांगp[MAX_WORD_SIZE + 1];
 	u8 byte;
 
-	while (word_start < isize && n_parsed < osize) {
+	जबतक (word_start < isize && n_parsed < osize) अणु
 		/* Find the start of the next word */
-		while (word_start < isize && isspace(in[word_start]))
+		जबतक (word_start < isize && है_खाली(in[word_start]))
 			word_start++;
-		 /* reached the end of the input before next word? */
-		if (word_start >= isize)
-			break;
+		 /* reached the end of the input beक्रमe next word? */
+		अगर (word_start >= isize)
+			अवरोध;
 
 		/* Find the end of this word */
 		word_end = word_start;
-		while (word_end < isize && !isspace(in[word_end]))
+		जबतक (word_end < isize && !है_खाली(in[word_end]))
 			word_end++;
 
-		/* Copy to a tmp NULL terminated string */
+		/* Copy to a पंचांगp शून्य terminated string */
 		word_len = word_end - word_start;
-		if (word_len > MAX_WORD_SIZE)
-			return -EINVAL;
-		memcpy(tmp, in + word_start, word_len);
-		tmp[word_len] = '\0';
+		अगर (word_len > MAX_WORD_SIZE)
+			वापस -EINVAL;
+		स_नकल(पंचांगp, in + word_start, word_len);
+		पंचांगp[word_len] = '\0';
 
 		/*
 		 * Convert from hex string, place in output. If fails to parse,
-		 * just return -EINVAL because specific error code is only
-		 * relevant for this one word, returning it would be confusing.
+		 * just वापस -EINVAL because specअगरic error code is only
+		 * relevant क्रम this one word, वापसing it would be confusing.
 		 */
-		if (kstrtou8(tmp, 16, &byte))
-			return -EINVAL;
+		अगर (kstrtou8(पंचांगp, 16, &byte))
+			वापस -EINVAL;
 		out[n_parsed++] = byte;
 
 		word_start = word_end;
-	}
-	return n_parsed;
-}
+	पूर्ण
+	वापस n_parsed;
+पूर्ण
 
 /* The message type takes up two bytes*/
-#define TYPE_AND_DATA_SIZE ((EC_MAILBOX_DATA_SIZE) + 2)
+#घोषणा TYPE_AND_DATA_SIZE ((EC_MAILBOX_DATA_SIZE) + 2)
 
-static ssize_t raw_write(struct file *file, const char __user *user_buf,
-			 size_t count, loff_t *ppos)
-{
-	char *buf = debug_info->formatted_data;
-	struct wilco_ec_message msg;
+अटल sमाप_प्रकार raw_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *buf = debug_info->क्रमmatted_data;
+	काष्ठा wilco_ec_message msg;
 	u8 request_data[TYPE_AND_DATA_SIZE];
-	ssize_t kcount;
-	int ret;
+	sमाप_प्रकार kcount;
+	पूर्णांक ret;
 
-	if (count > FORMATTED_BUFFER_SIZE)
-		return -EINVAL;
+	अगर (count > FORMATTED_BUFFER_SIZE)
+		वापस -EINVAL;
 
-	kcount = simple_write_to_buffer(buf, FORMATTED_BUFFER_SIZE, ppos,
+	kcount = simple_ग_लिखो_to_buffer(buf, FORMATTED_BUFFER_SIZE, ppos,
 					user_buf, count);
-	if (kcount < 0)
-		return kcount;
+	अगर (kcount < 0)
+		वापस kcount;
 
 	ret = parse_hex_sentence(buf, kcount, request_data, TYPE_AND_DATA_SIZE);
-	if (ret < 0)
-		return ret;
-	/* Need at least two bytes for message type and one byte of data */
-	if (ret < 3)
-		return -EINVAL;
+	अगर (ret < 0)
+		वापस ret;
+	/* Need at least two bytes क्रम message type and one byte of data */
+	अगर (ret < 3)
+		वापस -EINVAL;
 
 	msg.type = request_data[0] << 8 | request_data[1];
 	msg.flags = 0;
 	msg.request_data = request_data + 2;
 	msg.request_size = ret - 2;
-	memset(debug_info->raw_data, 0, sizeof(debug_info->raw_data));
+	स_रखो(debug_info->raw_data, 0, माप(debug_info->raw_data));
 	msg.response_data = debug_info->raw_data;
 	msg.response_size = EC_MAILBOX_DATA_SIZE;
 
 	ret = wilco_ec_mailbox(debug_info->ec, &msg);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	debug_info->response_size = ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t raw_read(struct file *file, char __user *user_buf, size_t count,
+अटल sमाप_प्रकार raw_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf, माप_प्रकार count,
 			loff_t *ppos)
-{
-	int fmt_len = 0;
+अणु
+	पूर्णांक fmt_len = 0;
 
-	if (debug_info->response_size) {
+	अगर (debug_info->response_size) अणु
 		fmt_len = hex_dump_to_buffer(debug_info->raw_data,
 					     debug_info->response_size,
-					     16, 1, debug_info->formatted_data,
-					     sizeof(debug_info->formatted_data),
+					     16, 1, debug_info->क्रमmatted_data,
+					     माप(debug_info->क्रमmatted_data),
 					     true);
-		/* Only return response the first time it is read */
+		/* Only वापस response the first समय it is पढ़ो */
 		debug_info->response_size = 0;
-	}
+	पूर्ण
 
-	return simple_read_from_buffer(user_buf, count, ppos,
-				       debug_info->formatted_data, fmt_len);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos,
+				       debug_info->क्रमmatted_data, fmt_len);
+पूर्ण
 
-static const struct file_operations fops_raw = {
+अटल स्थिर काष्ठा file_operations fops_raw = अणु
 	.owner = THIS_MODULE,
-	.read = raw_read,
-	.write = raw_write,
+	.पढ़ो = raw_पढ़ो,
+	.ग_लिखो = raw_ग_लिखो,
 	.llseek = no_llseek,
-};
+पूर्ण;
 
-#define CMD_KB_CHROME		0x88
-#define SUB_CMD_H1_GPIO		0x0A
-#define SUB_CMD_TEST_EVENT	0x0B
+#घोषणा CMD_KB_CHROME		0x88
+#घोषणा SUB_CMD_H1_GPIO		0x0A
+#घोषणा SUB_CMD_TEST_EVENT	0x0B
 
-struct ec_request {
+काष्ठा ec_request अणु
 	u8 cmd;		/* Always CMD_KB_CHROME */
 	u8 reserved;
 	u8 sub_cmd;
-} __packed;
+पूर्ण __packed;
 
-struct ec_response {
-	u8 status;	/* 0 if allowed */
+काष्ठा ec_response अणु
+	u8 status;	/* 0 अगर allowed */
 	u8 val;
-} __packed;
+पूर्ण __packed;
 
-static int send_ec_cmd(struct wilco_ec_device *ec, u8 sub_cmd, u8 *out_val)
-{
-	struct ec_request rq;
-	struct ec_response rs;
-	struct wilco_ec_message msg;
-	int ret;
+अटल पूर्णांक send_ec_cmd(काष्ठा wilco_ec_device *ec, u8 sub_cmd, u8 *out_val)
+अणु
+	काष्ठा ec_request rq;
+	काष्ठा ec_response rs;
+	काष्ठा wilco_ec_message msg;
+	पूर्णांक ret;
 
-	memset(&rq, 0, sizeof(rq));
+	स_रखो(&rq, 0, माप(rq));
 	rq.cmd = CMD_KB_CHROME;
 	rq.sub_cmd = sub_cmd;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.type = WILCO_EC_MSG_LEGACY;
 	msg.request_data = &rq;
-	msg.request_size = sizeof(rq);
+	msg.request_size = माप(rq);
 	msg.response_data = &rs;
-	msg.response_size = sizeof(rs);
+	msg.response_size = माप(rs);
 	ret = wilco_ec_mailbox(ec, &msg);
-	if (ret < 0)
-		return ret;
-	if (rs.status)
-		return -EIO;
+	अगर (ret < 0)
+		वापस ret;
+	अगर (rs.status)
+		वापस -EIO;
 
 	*out_val = rs.val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * h1_gpio_get() - Gets h1 gpio status.
  * @arg: The wilco EC device.
  * @val: BIT(0)=ENTRY_TO_FACT_MODE, BIT(1)=SPI_CHROME_SEL
  */
-static int h1_gpio_get(void *arg, u64 *val)
-{
-	int ret;
+अटल पूर्णांक h1_gpio_get(व्योम *arg, u64 *val)
+अणु
+	पूर्णांक ret;
 
 	ret = send_ec_cmd(arg, SUB_CMD_H1_GPIO, (u8 *)val);
-	if (ret == 0)
+	अगर (ret == 0)
 		*val &= 0xFF;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-DEFINE_DEBUGFS_ATTRIBUTE(fops_h1_gpio, h1_gpio_get, NULL, "0x%02llx\n");
+DEFINE_DEBUGFS_ATTRIBUTE(fops_h1_gpio, h1_gpio_get, शून्य, "0x%02llx\n");
 
 /**
  * test_event_set() - Sends command to EC to cause an EC test event.
  * @arg: The wilco EC device.
  * @val: unused.
  */
-static int test_event_set(void *arg, u64 val)
-{
+अटल पूर्णांक test_event_set(व्योम *arg, u64 val)
+अणु
 	u8 ret;
 
-	return send_ec_cmd(arg, SUB_CMD_TEST_EVENT, &ret);
-}
+	वापस send_ec_cmd(arg, SUB_CMD_TEST_EVENT, &ret);
+पूर्ण
 
-/* Format is unused since it is only required for get method which is NULL */
-DEFINE_DEBUGFS_ATTRIBUTE(fops_test_event, NULL, test_event_set, "%llu\n");
+/* Format is unused since it is only required क्रम get method which is शून्य */
+DEFINE_DEBUGFS_ATTRIBUTE(fops_test_event, शून्य, test_event_set, "%llu\n");
 
 /**
  * wilco_ec_debugfs_probe() - Create the debugfs node
- * @pdev: The platform device, probably created in core.c
+ * @pdev: The platक्रमm device, probably created in core.c
  *
- * Try to create a debugfs node. If it fails, then we don't want to change
- * behavior at all, this is for debugging after all. Just fail silently.
+ * Try to create a debugfs node. If it fails, then we करोn't want to change
+ * behavior at all, this is क्रम debugging after all. Just fail silently.
  *
  * Return: 0 always.
  */
-static int wilco_ec_debugfs_probe(struct platform_device *pdev)
-{
-	struct wilco_ec_device *ec = dev_get_drvdata(pdev->dev.parent);
+अटल पूर्णांक wilco_ec_debugfs_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wilco_ec_device *ec = dev_get_drvdata(pdev->dev.parent);
 
-	debug_info = devm_kzalloc(&pdev->dev, sizeof(*debug_info), GFP_KERNEL);
-	if (!debug_info)
-		return 0;
+	debug_info = devm_kzalloc(&pdev->dev, माप(*debug_info), GFP_KERNEL);
+	अगर (!debug_info)
+		वापस 0;
 	debug_info->ec = ec;
-	debug_info->dir = debugfs_create_dir("wilco_ec", NULL);
-	if (!debug_info->dir)
-		return 0;
-	debugfs_create_file("raw", 0644, debug_info->dir, NULL, &fops_raw);
+	debug_info->dir = debugfs_create_dir("wilco_ec", शून्य);
+	अगर (!debug_info->dir)
+		वापस 0;
+	debugfs_create_file("raw", 0644, debug_info->dir, शून्य, &fops_raw);
 	debugfs_create_file("h1_gpio", 0444, debug_info->dir, ec,
 			    &fops_h1_gpio);
 	debugfs_create_file("test_event", 0200, debug_info->dir, ec,
 			    &fops_test_event);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wilco_ec_debugfs_remove(struct platform_device *pdev)
-{
-	debugfs_remove_recursive(debug_info->dir);
+अटल पूर्णांक wilco_ec_debugfs_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	debugfs_हटाओ_recursive(debug_info->dir);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver wilco_ec_debugfs_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver wilco_ec_debugfs_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
-	},
+	पूर्ण,
 	.probe = wilco_ec_debugfs_probe,
-	.remove = wilco_ec_debugfs_remove,
-};
+	.हटाओ = wilco_ec_debugfs_हटाओ,
+पूर्ण;
 
-module_platform_driver(wilco_ec_debugfs_driver);
+module_platक्रमm_driver(wilco_ec_debugfs_driver);
 
 MODULE_ALIAS("platform:" DRV_NAME);
 MODULE_AUTHOR("Nick Crews <ncrews@chromium.org>");

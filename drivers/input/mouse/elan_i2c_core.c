@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Elan I2C/SMBus Touchpad driver
  *
  * Copyright (c) 2013 ELAN Microelectronics Corp.
  *
- * Author: 林政維 (Duson Lin) <dusonlin@emc.com.tw>
+ * Author: ौौडॉघऐ (Duson Lin) <dusonlin@emc.com.tw>
  * Author: KT Liao <kt.liao@emc.com.tw>
  * Version: 1.6.3
  *
@@ -15,61 +16,61 @@
  * Trademarks are the property of their respective owners.
  */
 
-#include <linux/acpi.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/firmware.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/input/mt.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/input.h>
-#include <linux/uaccess.h>
-#include <linux/jiffies.h>
-#include <linux/completion.h>
-#include <linux/of.h>
-#include <linux/property.h>
-#include <linux/regulator/consumer.h>
-#include <asm/unaligned.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/input.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/of.h>
+#समावेश <linux/property.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "elan_i2c.h"
+#समावेश "elan_i2c.h"
 
-#define DRIVER_NAME		"elan_i2c"
-#define ELAN_VENDOR_ID		0x04f3
-#define ETP_MAX_PRESSURE	255
-#define ETP_FWIDTH_REDUCE	90
-#define ETP_FINGER_WIDTH	15
-#define ETP_RETRY_COUNT		3
+#घोषणा DRIVER_NAME		"elan_i2c"
+#घोषणा ELAN_VENDOR_ID		0x04f3
+#घोषणा ETP_MAX_PRESSURE	255
+#घोषणा ETP_FWIDTH_REDUCE	90
+#घोषणा ETP_FINGER_WIDTH	15
+#घोषणा ETP_RETRY_COUNT		3
 
 /* quirks to control the device */
-#define ETP_QUIRK_QUICK_WAKEUP	BIT(0)
+#घोषणा ETP_QUIRK_QUICK_WAKEUP	BIT(0)
 
-/* The main device structure */
-struct elan_tp_data {
-	struct i2c_client	*client;
-	struct input_dev	*input;
-	struct input_dev	*tp_input; /* trackpoint input node */
-	struct regulator	*vcc;
+/* The मुख्य device काष्ठाure */
+काष्ठा elan_tp_data अणु
+	काष्ठा i2c_client	*client;
+	काष्ठा input_dev	*input;
+	काष्ठा input_dev	*tp_input; /* trackpoपूर्णांक input node */
+	काष्ठा regulator	*vcc;
 
-	const struct elan_transport_ops *ops;
+	स्थिर काष्ठा elan_transport_ops *ops;
 
-	/* for fw update */
-	struct completion	fw_completion;
+	/* क्रम fw update */
+	काष्ठा completion	fw_completion;
 	bool			in_fw_update;
 
-	struct mutex		sysfs_mutex;
+	काष्ठा mutex		sysfs_mutex;
 
-	unsigned int		max_x;
-	unsigned int		max_y;
-	unsigned int		width_x;
-	unsigned int		width_y;
-	unsigned int		x_res;
-	unsigned int		y_res;
+	अचिन्हित पूर्णांक		max_x;
+	अचिन्हित पूर्णांक		max_y;
+	अचिन्हित पूर्णांक		width_x;
+	अचिन्हित पूर्णांक		width_y;
+	अचिन्हित पूर्णांक		x_res;
+	अचिन्हित पूर्णांक		y_res;
 
 	u8			pattern;
 	u16			product_id;
@@ -77,9 +78,9 @@ struct elan_tp_data {
 	u8			sm_version;
 	u8			iap_version;
 	u16			fw_checksum;
-	unsigned int		report_features;
-	unsigned int		report_len;
-	int			pressure_adjustment;
+	अचिन्हित पूर्णांक		report_features;
+	अचिन्हित पूर्णांक		report_len;
+	पूर्णांक			pressure_adjusपंचांगent;
 	u8			mode;
 	u16			ic_type;
 	u16			fw_validpage_count;
@@ -90,308 +91,308 @@ struct elan_tp_data {
 
 	u8			min_baseline;
 	u8			max_baseline;
-	bool			baseline_ready;
+	bool			baseline_पढ़ोy;
 	u8			clickpad;
 	bool			middle_button;
 
 	u32			quirks;		/* Various quirks */
-};
+पूर्ण;
 
-static u32 elan_i2c_lookup_quirks(u16 ic_type, u16 product_id)
-{
-	static const struct {
+अटल u32 elan_i2c_lookup_quirks(u16 ic_type, u16 product_id)
+अणु
+	अटल स्थिर काष्ठा अणु
 		u16 ic_type;
 		u16 product_id;
 		u32 quirks;
-	} elan_i2c_quirks[] = {
-		{ 0x0D, ETP_PRODUCT_ID_DELBIN, ETP_QUIRK_QUICK_WAKEUP },
-		{ 0x10, ETP_PRODUCT_ID_VOXEL, ETP_QUIRK_QUICK_WAKEUP },
-		{ 0x14, ETP_PRODUCT_ID_MAGPIE, ETP_QUIRK_QUICK_WAKEUP },
-		{ 0x14, ETP_PRODUCT_ID_BOBBA, ETP_QUIRK_QUICK_WAKEUP },
-	};
+	पूर्ण elan_i2c_quirks[] = अणु
+		अणु 0x0D, ETP_PRODUCT_ID_DELBIN, ETP_QUIRK_QUICK_WAKEUP पूर्ण,
+		अणु 0x10, ETP_PRODUCT_ID_VOXEL, ETP_QUIRK_QUICK_WAKEUP पूर्ण,
+		अणु 0x14, ETP_PRODUCT_ID_MAGPIE, ETP_QUIRK_QUICK_WAKEUP पूर्ण,
+		अणु 0x14, ETP_PRODUCT_ID_BOBBA, ETP_QUIRK_QUICK_WAKEUP पूर्ण,
+	पूर्ण;
 	u32 quirks = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(elan_i2c_quirks); i++) {
-		if (elan_i2c_quirks[i].ic_type == ic_type &&
-		    elan_i2c_quirks[i].product_id == product_id) {
+	क्रम (i = 0; i < ARRAY_SIZE(elan_i2c_quirks); i++) अणु
+		अगर (elan_i2c_quirks[i].ic_type == ic_type &&
+		    elan_i2c_quirks[i].product_id == product_id) अणु
 			quirks = elan_i2c_quirks[i].quirks;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ic_type >= 0x0D && product_id >= 0x123)
+	अगर (ic_type >= 0x0D && product_id >= 0x123)
 		quirks |= ETP_QUIRK_QUICK_WAKEUP;
 
-	return quirks;
-}
+	वापस quirks;
+पूर्ण
 
-static int elan_get_fwinfo(u16 ic_type, u8 iap_version, u16 *validpage_count,
+अटल पूर्णांक elan_get_fwinfo(u16 ic_type, u8 iap_version, u16 *validpage_count,
 			   u32 *signature_address, u16 *page_size)
-{
-	switch (ic_type) {
-	case 0x00:
-	case 0x06:
-	case 0x08:
+अणु
+	चयन (ic_type) अणु
+	हाल 0x00:
+	हाल 0x06:
+	हाल 0x08:
 		*validpage_count = 512;
-		break;
-	case 0x03:
-	case 0x07:
-	case 0x09:
-	case 0x0A:
-	case 0x0B:
-	case 0x0C:
+		अवरोध;
+	हाल 0x03:
+	हाल 0x07:
+	हाल 0x09:
+	हाल 0x0A:
+	हाल 0x0B:
+	हाल 0x0C:
 		*validpage_count = 768;
-		break;
-	case 0x0D:
+		अवरोध;
+	हाल 0x0D:
 		*validpage_count = 896;
-		break;
-	case 0x0E:
+		अवरोध;
+	हाल 0x0E:
 		*validpage_count = 640;
-		break;
-	case 0x10:
+		अवरोध;
+	हाल 0x10:
 		*validpage_count = 1024;
-		break;
-	case 0x11:
+		अवरोध;
+	हाल 0x11:
 		*validpage_count = 1280;
-		break;
-	case 0x13:
+		अवरोध;
+	हाल 0x13:
 		*validpage_count = 2048;
-		break;
-	case 0x14:
-	case 0x15:
+		अवरोध;
+	हाल 0x14:
+	हाल 0x15:
 		*validpage_count = 1024;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* unknown ic type clear value */
 		*validpage_count = 0;
 		*signature_address = 0;
 		*page_size = 0;
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	*signature_address =
 		(*validpage_count * ETP_FW_PAGE_SIZE) - ETP_FW_SIGNATURE_SIZE;
 
-	if ((ic_type == 0x14 || ic_type == 0x15) && iap_version >= 2) {
+	अगर ((ic_type == 0x14 || ic_type == 0x15) && iap_version >= 2) अणु
 		*validpage_count /= 8;
 		*page_size = ETP_FW_PAGE_SIZE_512;
-	} else if (ic_type >= 0x0D && iap_version >= 1) {
+	पूर्ण अन्यथा अगर (ic_type >= 0x0D && iap_version >= 1) अणु
 		*validpage_count /= 2;
 		*page_size = ETP_FW_PAGE_SIZE_128;
-	} else {
+	पूर्ण अन्यथा अणु
 		*page_size = ETP_FW_PAGE_SIZE;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int elan_enable_power(struct elan_tp_data *data)
-{
-	int repeat = ETP_RETRY_COUNT;
-	int error;
+अटल पूर्णांक elan_enable_घातer(काष्ठा elan_tp_data *data)
+अणु
+	पूर्णांक repeat = ETP_RETRY_COUNT;
+	पूर्णांक error;
 
 	error = regulator_enable(data->vcc);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&data->client->dev,
 			"failed to enable regulator: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	do {
-		error = data->ops->power_control(data->client, true);
-		if (error >= 0)
-			return 0;
+	करो अणु
+		error = data->ops->घातer_control(data->client, true);
+		अगर (error >= 0)
+			वापस 0;
 
 		msleep(30);
-	} while (--repeat > 0);
+	पूर्ण जबतक (--repeat > 0);
 
 	dev_err(&data->client->dev, "failed to enable power: %d\n", error);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int elan_disable_power(struct elan_tp_data *data)
-{
-	int repeat = ETP_RETRY_COUNT;
-	int error;
+अटल पूर्णांक elan_disable_घातer(काष्ठा elan_tp_data *data)
+अणु
+	पूर्णांक repeat = ETP_RETRY_COUNT;
+	पूर्णांक error;
 
-	do {
-		error = data->ops->power_control(data->client, false);
-		if (!error) {
+	करो अणु
+		error = data->ops->घातer_control(data->client, false);
+		अगर (!error) अणु
 			error = regulator_disable(data->vcc);
-			if (error) {
+			अगर (error) अणु
 				dev_err(&data->client->dev,
 					"failed to disable regulator: %d\n",
 					error);
-				/* Attempt to power the chip back up */
-				data->ops->power_control(data->client, true);
-				break;
-			}
+				/* Attempt to घातer the chip back up */
+				data->ops->घातer_control(data->client, true);
+				अवरोध;
+			पूर्ण
 
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		msleep(30);
-	} while (--repeat > 0);
+	पूर्ण जबतक (--repeat > 0);
 
 	dev_err(&data->client->dev, "failed to disable power: %d\n", error);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int elan_sleep(struct elan_tp_data *data)
-{
-	int repeat = ETP_RETRY_COUNT;
-	int error;
+अटल पूर्णांक elan_sleep(काष्ठा elan_tp_data *data)
+अणु
+	पूर्णांक repeat = ETP_RETRY_COUNT;
+	पूर्णांक error;
 
-	do {
+	करो अणु
 		error = data->ops->sleep_control(data->client, true);
-		if (!error)
-			return 0;
+		अगर (!error)
+			वापस 0;
 
 		msleep(30);
-	} while (--repeat > 0);
+	पूर्ण जबतक (--repeat > 0);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int elan_query_product(struct elan_tp_data *data)
-{
-	int error;
+अटल पूर्णांक elan_query_product(काष्ठा elan_tp_data *data)
+अणु
+	पूर्णांक error;
 
 	error = data->ops->get_product_id(data->client, &data->product_id);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = data->ops->get_pattern(data->client, &data->pattern);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = data->ops->get_sm_version(data->client, data->pattern,
 					  &data->ic_type, &data->sm_version,
 					  &data->clickpad);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int elan_check_ASUS_special_fw(struct elan_tp_data *data)
-{
-	if (data->ic_type == 0x0E) {
-		switch (data->product_id) {
-		case 0x05 ... 0x07:
-		case 0x09:
-		case 0x13:
-			return true;
-		}
-	} else if (data->ic_type == 0x08 && data->product_id == 0x26) {
+अटल पूर्णांक elan_check_ASUS_special_fw(काष्ठा elan_tp_data *data)
+अणु
+	अगर (data->ic_type == 0x0E) अणु
+		चयन (data->product_id) अणु
+		हाल 0x05 ... 0x07:
+		हाल 0x09:
+		हाल 0x13:
+			वापस true;
+		पूर्ण
+	पूर्ण अन्यथा अगर (data->ic_type == 0x08 && data->product_id == 0x26) अणु
 		/* ASUS EeeBook X205TA */
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int __elan_initialize(struct elan_tp_data *data, bool skip_reset)
-{
-	struct i2c_client *client = data->client;
+अटल पूर्णांक __elan_initialize(काष्ठा elan_tp_data *data, bool skip_reset)
+अणु
+	काष्ठा i2c_client *client = data->client;
 	bool woken_up = false;
-	int error;
+	पूर्णांक error;
 
-	if (!skip_reset) {
+	अगर (!skip_reset) अणु
 		error = data->ops->initialize(client);
-		if (error) {
+		अगर (error) अणु
 			dev_err(&client->dev, "device initialize failed: %d\n", error);
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
 	error = elan_query_product(data);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	/*
 	 * Some ASUS devices were shipped with firmware that requires
-	 * touchpads to be woken up first, before attempting to switch
-	 * them into absolute reporting mode.
+	 * touchpads to be woken up first, beक्रमe attempting to चयन
+	 * them पूर्णांकo असलolute reporting mode.
 	 */
-	if (elan_check_ASUS_special_fw(data)) {
+	अगर (elan_check_ASUS_special_fw(data)) अणु
 		error = data->ops->sleep_control(client, false);
-		if (error) {
+		अगर (error) अणु
 			dev_err(&client->dev,
 				"failed to wake device up: %d\n", error);
-			return error;
-		}
+			वापस error;
+		पूर्ण
 
 		msleep(200);
 		woken_up = true;
-	}
+	पूर्ण
 
 	data->mode |= ETP_ENABLE_ABS;
 	error = data->ops->set_mode(client, data->mode);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev,
 			"failed to switch to absolute mode: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	if (!woken_up) {
+	अगर (!woken_up) अणु
 		error = data->ops->sleep_control(client, false);
-		if (error) {
+		अगर (error) अणु
 			dev_err(&client->dev,
 				"failed to wake device up: %d\n", error);
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int elan_initialize(struct elan_tp_data *data, bool skip_reset)
-{
-	int repeat = ETP_RETRY_COUNT;
-	int error;
+अटल पूर्णांक elan_initialize(काष्ठा elan_tp_data *data, bool skip_reset)
+अणु
+	पूर्णांक repeat = ETP_RETRY_COUNT;
+	पूर्णांक error;
 
-	do {
+	करो अणु
 		error = __elan_initialize(data, skip_reset);
-		if (!error)
-			return 0;
+		अगर (!error)
+			वापस 0;
 
 		skip_reset = false;
 		msleep(30);
-	} while (--repeat > 0);
+	पूर्ण जबतक (--repeat > 0);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int elan_query_device_info(struct elan_tp_data *data)
-{
-	int error;
+अटल पूर्णांक elan_query_device_info(काष्ठा elan_tp_data *data)
+अणु
+	पूर्णांक error;
 
 	error = data->ops->get_version(data->client, data->pattern, false,
 				       &data->fw_version);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = data->ops->get_checksum(data->client, false,
 					&data->fw_checksum);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = data->ops->get_version(data->client, data->pattern,
 				       true, &data->iap_version);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = data->ops->get_pressure_adjustment(data->client,
-						   &data->pressure_adjustment);
-	if (error)
-		return error;
+	error = data->ops->get_pressure_adjusपंचांगent(data->client,
+						   &data->pressure_adjusपंचांगent);
+	अगर (error)
+		वापस error;
 
 	error = data->ops->get_report_features(data->client, data->pattern,
 					       &data->report_features,
 					       &data->report_len);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	data->quirks = elan_i2c_lookup_quirks(data->ic_type, data->product_id);
 
@@ -399,124 +400,124 @@ static int elan_query_device_info(struct elan_tp_data *data)
 				&data->fw_validpage_count,
 				&data->fw_signature_address,
 				&data->fw_page_size);
-	if (error)
+	अगर (error)
 		dev_warn(&data->client->dev,
 			 "unexpected iap version %#04x (ic type: %#04x), firmware update will not work\n",
 			 data->iap_version, data->ic_type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int elan_convert_resolution(u8 val, u8 pattern)
-{
+अटल अचिन्हित पूर्णांक elan_convert_resolution(u8 val, u8 pattern)
+अणु
 	/*
 	 * pattern <= 0x01:
 	 *	(value from firmware) * 10 + 790 = dpi
-	 * else
+	 * अन्यथा
 	 *	((value from firmware) + 3) * 100 = dpi
 	 */
-	int res = pattern <= 0x01 ?
-		(int)(char)val * 10 + 790 : ((int)(char)val + 3) * 100;
+	पूर्णांक res = pattern <= 0x01 ?
+		(पूर्णांक)(अक्षर)val * 10 + 790 : ((पूर्णांक)(अक्षर)val + 3) * 100;
 	/*
-	 * We also have to convert dpi to dots/mm (*10/254 to avoid floating
-	 * point).
+	 * We also have to convert dpi to करोts/mm (*10/254 to aव्योम भग्नing
+	 * poपूर्णांक).
 	 */
-	return res * 10 / 254;
-}
+	वापस res * 10 / 254;
+पूर्ण
 
-static int elan_query_device_parameters(struct elan_tp_data *data)
-{
-	struct i2c_client *client = data->client;
-	unsigned int x_traces, y_traces;
+अटल पूर्णांक elan_query_device_parameters(काष्ठा elan_tp_data *data)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	अचिन्हित पूर्णांक x_traces, y_traces;
 	u32 x_mm, y_mm;
 	u8 hw_x_res, hw_y_res;
-	int error;
+	पूर्णांक error;
 
-	if (device_property_read_u32(&client->dev,
+	अगर (device_property_पढ़ो_u32(&client->dev,
 				     "touchscreen-size-x", &data->max_x) ||
-	    device_property_read_u32(&client->dev,
-				     "touchscreen-size-y", &data->max_y)) {
+	    device_property_पढ़ो_u32(&client->dev,
+				     "touchscreen-size-y", &data->max_y)) अणु
 		error = data->ops->get_max(data->client,
 					   &data->max_x,
 					   &data->max_y);
-		if (error)
-			return error;
-	} else {
+		अगर (error)
+			वापस error;
+	पूर्ण अन्यथा अणु
 		/* size is the maximum + 1 */
 		--data->max_x;
 		--data->max_y;
-	}
+	पूर्ण
 
-	if (device_property_read_u32(&client->dev,
+	अगर (device_property_पढ़ो_u32(&client->dev,
 				     "elan,x_traces",
 				     &x_traces) ||
-	    device_property_read_u32(&client->dev,
+	    device_property_पढ़ो_u32(&client->dev,
 				     "elan,y_traces",
-				     &y_traces)) {
+				     &y_traces)) अणु
 		error = data->ops->get_num_traces(data->client,
 						  &x_traces, &y_traces);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 	data->width_x = data->max_x / x_traces;
 	data->width_y = data->max_y / y_traces;
 
-	if (device_property_read_u32(&client->dev,
+	अगर (device_property_पढ़ो_u32(&client->dev,
 				     "touchscreen-x-mm", &x_mm) ||
-	    device_property_read_u32(&client->dev,
-				     "touchscreen-y-mm", &y_mm)) {
+	    device_property_पढ़ो_u32(&client->dev,
+				     "touchscreen-y-mm", &y_mm)) अणु
 		error = data->ops->get_resolution(data->client,
 						  &hw_x_res, &hw_y_res);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
 		data->x_res = elan_convert_resolution(hw_x_res, data->pattern);
 		data->y_res = elan_convert_resolution(hw_y_res, data->pattern);
-	} else {
+	पूर्ण अन्यथा अणु
 		data->x_res = (data->max_x + 1) / x_mm;
 		data->y_res = (data->max_y + 1) / y_mm;
-	}
+	पूर्ण
 
-	if (device_property_read_bool(&client->dev, "elan,clickpad"))
+	अगर (device_property_पढ़ो_bool(&client->dev, "elan,clickpad"))
 		data->clickpad = 1;
 
-	if (device_property_read_bool(&client->dev, "elan,middle-button"))
+	अगर (device_property_पढ़ो_bool(&client->dev, "elan,middle-button"))
 		data->middle_button = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  **********************************************************
  * IAP firmware updater related routines
  **********************************************************
  */
-static int elan_write_fw_block(struct elan_tp_data *data, u16 page_size,
-			       const u8 *page, u16 checksum, int idx)
-{
-	int retry = ETP_RETRY_COUNT;
-	int error;
+अटल पूर्णांक elan_ग_लिखो_fw_block(काष्ठा elan_tp_data *data, u16 page_size,
+			       स्थिर u8 *page, u16 checksum, पूर्णांक idx)
+अणु
+	पूर्णांक retry = ETP_RETRY_COUNT;
+	पूर्णांक error;
 
-	do {
-		error = data->ops->write_fw_block(data->client, page_size,
+	करो अणु
+		error = data->ops->ग_लिखो_fw_block(data->client, page_size,
 						  page, checksum, idx);
-		if (!error)
-			return 0;
+		अगर (!error)
+			वापस 0;
 
 		dev_dbg(&data->client->dev,
 			"IAP retrying page %d (error: %d)\n", idx, error);
-	} while (--retry > 0);
+	पूर्ण जबतक (--retry > 0);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int __elan_update_firmware(struct elan_tp_data *data,
-				  const struct firmware *fw)
-{
-	struct i2c_client *client = data->client;
-	struct device *dev = &client->dev;
-	int i, j;
-	int error;
+अटल पूर्णांक __elan_update_firmware(काष्ठा elan_tp_data *data,
+				  स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	काष्ठा device *dev = &client->dev;
+	पूर्णांक i, j;
+	पूर्णांक error;
 	u16 iap_start_addr;
 	u16 boot_page_count;
 	u16 sw_checksum = 0, fw_checksum = 0;
@@ -524,54 +525,54 @@ static int __elan_update_firmware(struct elan_tp_data *data,
 	error = data->ops->prepare_fw_update(client, data->ic_type,
 					     data->iap_version,
 					     data->fw_page_size);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	iap_start_addr = get_unaligned_le16(&fw->data[ETP_IAP_START_ADDR * 2]);
 
 	boot_page_count = (iap_start_addr * 2) / data->fw_page_size;
-	for (i = boot_page_count; i < data->fw_validpage_count; i++) {
+	क्रम (i = boot_page_count; i < data->fw_validpage_count; i++) अणु
 		u16 checksum = 0;
-		const u8 *page = &fw->data[i * data->fw_page_size];
+		स्थिर u8 *page = &fw->data[i * data->fw_page_size];
 
-		for (j = 0; j < data->fw_page_size; j += 2)
+		क्रम (j = 0; j < data->fw_page_size; j += 2)
 			checksum += ((page[j + 1] << 8) | page[j]);
 
-		error = elan_write_fw_block(data, data->fw_page_size,
+		error = elan_ग_लिखो_fw_block(data, data->fw_page_size,
 					    page, checksum, i);
-		if (error) {
+		अगर (error) अणु
 			dev_err(dev, "write page %d fail: %d\n", i, error);
-			return error;
-		}
+			वापस error;
+		पूर्ण
 
 		sw_checksum += checksum;
-	}
+	पूर्ण
 
-	/* Wait WDT reset and power on reset */
+	/* Wait WDT reset and घातer on reset */
 	msleep(600);
 
 	error = data->ops->finish_fw_update(client, &data->fw_completion);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = data->ops->get_checksum(client, true, &fw_checksum);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (sw_checksum != fw_checksum) {
+	अगर (sw_checksum != fw_checksum) अणु
 		dev_err(dev, "checksum diff sw=[%04X], fw=[%04X]\n",
 			sw_checksum, fw_checksum);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int elan_update_firmware(struct elan_tp_data *data,
-				const struct firmware *fw)
-{
-	struct i2c_client *client = data->client;
-	int retval;
+अटल पूर्णांक elan_update_firmware(काष्ठा elan_tp_data *data,
+				स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक retval;
 
 	dev_dbg(&client->dev, "Starting firmware update....\n");
 
@@ -579,119 +580,119 @@ static int elan_update_firmware(struct elan_tp_data *data,
 	data->in_fw_update = true;
 
 	retval = __elan_update_firmware(data, fw);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(&client->dev, "firmware update failed: %d\n", retval);
 		data->ops->iap_reset(client);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Reinitialize TP after fw is updated */
 		elan_initialize(data, false);
 		elan_query_device_info(data);
-	}
+	पूर्ण
 
 	data->in_fw_update = false;
 	enable_irq(client->irq);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
  *******************************************************************
  * SYSFS attributes
  *******************************************************************
  */
-static ssize_t elan_sysfs_read_fw_checksum(struct device *dev,
-					   struct device_attribute *attr,
-					   char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
+अटल sमाप_प्रकार elan_sysfs_पढ़ो_fw_checksum(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
 
-	return sprintf(buf, "0x%04x\n", data->fw_checksum);
-}
+	वापस प्र_लिखो(buf, "0x%04x\n", data->fw_checksum);
+पूर्ण
 
-static ssize_t elan_sysfs_read_product_id(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
+अटल sमाप_प्रकार elan_sysfs_पढ़ो_product_id(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
 
-	return sprintf(buf, ETP_PRODUCT_ID_FORMAT_STRING "\n",
+	वापस प्र_लिखो(buf, ETP_PRODUCT_ID_FORMAT_STRING "\n",
 		       data->product_id);
-}
+पूर्ण
 
-static ssize_t elan_sysfs_read_fw_ver(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
+अटल sमाप_प्रकार elan_sysfs_पढ़ो_fw_ver(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
 
-	return sprintf(buf, "%d.0\n", data->fw_version);
-}
+	वापस प्र_लिखो(buf, "%d.0\n", data->fw_version);
+पूर्ण
 
-static ssize_t elan_sysfs_read_sm_ver(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
+अटल sमाप_प्रकार elan_sysfs_पढ़ो_sm_ver(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
 
-	return sprintf(buf, "%d.0\n", data->sm_version);
-}
+	वापस प्र_लिखो(buf, "%d.0\n", data->sm_version);
+पूर्ण
 
-static ssize_t elan_sysfs_read_iap_ver(struct device *dev,
-				       struct device_attribute *attr,
-				       char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
+अटल sमाप_प्रकार elan_sysfs_पढ़ो_iap_ver(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
 
-	return sprintf(buf, "%d.0\n", data->iap_version);
-}
+	वापस प्र_लिखो(buf, "%d.0\n", data->iap_version);
+पूर्ण
 
-static ssize_t elan_sysfs_update_fw(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct elan_tp_data *data = dev_get_drvdata(dev);
-	const struct firmware *fw;
-	char *fw_name;
-	int error;
-	const u8 *fw_signature;
-	static const u8 signature[] = {0xAA, 0x55, 0xCC, 0x33, 0xFF, 0xFF};
+अटल sमाप_प्रकार elan_sysfs_update_fw(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा elan_tp_data *data = dev_get_drvdata(dev);
+	स्थिर काष्ठा firmware *fw;
+	अक्षर *fw_name;
+	पूर्णांक error;
+	स्थिर u8 *fw_signature;
+	अटल स्थिर u8 signature[] = अणु0xAA, 0x55, 0xCC, 0x33, 0xFF, 0xFFपूर्ण;
 
-	if (data->fw_validpage_count == 0)
-		return -EINVAL;
+	अगर (data->fw_validpage_count == 0)
+		वापस -EINVAL;
 
-	/* Look for a firmware with the product id appended. */
-	fw_name = kasprintf(GFP_KERNEL, ETP_FW_NAME, data->product_id);
-	if (!fw_name) {
+	/* Look क्रम a firmware with the product id appended. */
+	fw_name = kaप्र_लिखो(GFP_KERNEL, ETP_FW_NAME, data->product_id);
+	अगर (!fw_name) अणु
 		dev_err(dev, "failed to allocate memory for firmware name\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dev_info(dev, "requesting fw '%s'\n", fw_name);
 	error = request_firmware(&fw, fw_name, dev);
-	kfree(fw_name);
-	if (error) {
+	kमुक्त(fw_name);
+	अगर (error) अणु
 		dev_err(dev, "failed to request firmware: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	/* Firmware file must match signature data */
 	fw_signature = &fw->data[data->fw_signature_address];
-	if (memcmp(fw_signature, signature, sizeof(signature)) != 0) {
+	अगर (स_भेद(fw_signature, signature, माप(signature)) != 0) अणु
 		dev_err(dev, "signature mismatch (expected %*ph, got %*ph)\n",
-			(int)sizeof(signature), signature,
-			(int)sizeof(signature), fw_signature);
+			(पूर्णांक)माप(signature), signature,
+			(पूर्णांक)माप(signature), fw_signature);
 		error = -EBADF;
-		goto out_release_fw;
-	}
+		जाओ out_release_fw;
+	पूर्ण
 
-	error = mutex_lock_interruptible(&data->sysfs_mutex);
-	if (error)
-		goto out_release_fw;
+	error = mutex_lock_पूर्णांकerruptible(&data->sysfs_mutex);
+	अगर (error)
+		जाओ out_release_fw;
 
 	error = elan_update_firmware(data, fw);
 
@@ -699,109 +700,109 @@ static ssize_t elan_sysfs_update_fw(struct device *dev,
 
 out_release_fw:
 	release_firmware(fw);
-	return error ?: count;
-}
+	वापस error ?: count;
+पूर्ण
 
-static ssize_t calibrate_store(struct device *dev,
-			       struct device_attribute *attr,
-			       const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
-	int tries = 20;
-	int retval;
-	int error;
+अटल sमाप_प्रकार calibrate_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
+	पूर्णांक tries = 20;
+	पूर्णांक retval;
+	पूर्णांक error;
 	u8 val[ETP_CALIBRATE_MAX_LEN];
 
-	retval = mutex_lock_interruptible(&data->sysfs_mutex);
-	if (retval)
-		return retval;
+	retval = mutex_lock_पूर्णांकerruptible(&data->sysfs_mutex);
+	अगर (retval)
+		वापस retval;
 
 	disable_irq(client->irq);
 
 	data->mode |= ETP_ENABLE_CALIBRATE;
 	retval = data->ops->set_mode(client, data->mode);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(dev, "failed to enable calibration mode: %d\n",
 			retval);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	retval = data->ops->calibrate(client);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(dev, "failed to start calibration: %d\n",
 			retval);
-		goto out_disable_calibrate;
-	}
+		जाओ out_disable_calibrate;
+	पूर्ण
 
 	val[0] = 0xff;
-	do {
-		/* Wait 250ms before checking if calibration has completed. */
+	करो अणु
+		/* Wait 250ms beक्रमe checking अगर calibration has completed. */
 		msleep(250);
 
 		retval = data->ops->calibrate_result(client, val);
-		if (retval)
+		अगर (retval)
 			dev_err(dev, "failed to check calibration result: %d\n",
 				retval);
-		else if (val[0] == 0)
-			break; /* calibration done */
+		अन्यथा अगर (val[0] == 0)
+			अवरोध; /* calibration करोne */
 
-	} while (--tries);
+	पूर्ण जबतक (--tries);
 
-	if (tries == 0) {
+	अगर (tries == 0) अणु
 		dev_err(dev, "failed to calibrate. Timeout.\n");
 		retval = -ETIMEDOUT;
-	}
+	पूर्ण
 
 out_disable_calibrate:
 	data->mode &= ~ETP_ENABLE_CALIBRATE;
 	error = data->ops->set_mode(data->client, data->mode);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "failed to disable calibration mode: %d\n",
 			error);
-		if (!retval)
+		अगर (!retval)
 			retval = error;
-	}
+	पूर्ण
 out:
 	enable_irq(client->irq);
 	mutex_unlock(&data->sysfs_mutex);
-	return retval ?: count;
-}
+	वापस retval ?: count;
+पूर्ण
 
-static ssize_t elan_sysfs_read_mode(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
-	int error;
-	enum tp_mode mode;
+अटल sमाप_प्रकार elan_sysfs_पढ़ो_mode(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
+	पूर्णांक error;
+	क्रमागत tp_mode mode;
 
-	error = mutex_lock_interruptible(&data->sysfs_mutex);
-	if (error)
-		return error;
+	error = mutex_lock_पूर्णांकerruptible(&data->sysfs_mutex);
+	अगर (error)
+		वापस error;
 
 	error = data->ops->iap_get_mode(data->client, &mode);
 
 	mutex_unlock(&data->sysfs_mutex);
 
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return sprintf(buf, "%d\n", (int)mode);
-}
+	वापस प्र_लिखो(buf, "%d\n", (पूर्णांक)mode);
+पूर्ण
 
-static DEVICE_ATTR(product_id, S_IRUGO, elan_sysfs_read_product_id, NULL);
-static DEVICE_ATTR(firmware_version, S_IRUGO, elan_sysfs_read_fw_ver, NULL);
-static DEVICE_ATTR(sample_version, S_IRUGO, elan_sysfs_read_sm_ver, NULL);
-static DEVICE_ATTR(iap_version, S_IRUGO, elan_sysfs_read_iap_ver, NULL);
-static DEVICE_ATTR(fw_checksum, S_IRUGO, elan_sysfs_read_fw_checksum, NULL);
-static DEVICE_ATTR(mode, S_IRUGO, elan_sysfs_read_mode, NULL);
-static DEVICE_ATTR(update_fw, S_IWUSR, NULL, elan_sysfs_update_fw);
+अटल DEVICE_ATTR(product_id, S_IRUGO, elan_sysfs_पढ़ो_product_id, शून्य);
+अटल DEVICE_ATTR(firmware_version, S_IRUGO, elan_sysfs_पढ़ो_fw_ver, शून्य);
+अटल DEVICE_ATTR(sample_version, S_IRUGO, elan_sysfs_पढ़ो_sm_ver, शून्य);
+अटल DEVICE_ATTR(iap_version, S_IRUGO, elan_sysfs_पढ़ो_iap_ver, शून्य);
+अटल DEVICE_ATTR(fw_checksum, S_IRUGO, elan_sysfs_पढ़ो_fw_checksum, शून्य);
+अटल DEVICE_ATTR(mode, S_IRUGO, elan_sysfs_पढ़ो_mode, शून्य);
+अटल DEVICE_ATTR(update_fw, S_IWUSR, शून्य, elan_sysfs_update_fw);
 
-static DEVICE_ATTR_WO(calibrate);
+अटल DEVICE_ATTR_WO(calibrate);
 
-static struct attribute *elan_sysfs_entries[] = {
+अटल काष्ठा attribute *elan_sysfs_entries[] = अणु
 	&dev_attr_product_id.attr,
 	&dev_attr_firmware_version.attr,
 	&dev_attr_sample_version.attr,
@@ -810,184 +811,184 @@ static struct attribute *elan_sysfs_entries[] = {
 	&dev_attr_calibrate.attr,
 	&dev_attr_mode.attr,
 	&dev_attr_update_fw.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group elan_sysfs_group = {
+अटल स्थिर काष्ठा attribute_group elan_sysfs_group = अणु
 	.attrs = elan_sysfs_entries,
-};
+पूर्ण;
 
-static ssize_t acquire_store(struct device *dev, struct device_attribute *attr,
-			     const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
-	int error;
-	int retval;
+अटल sमाप_प्रकार acquire_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
+	पूर्णांक error;
+	पूर्णांक retval;
 
-	retval = mutex_lock_interruptible(&data->sysfs_mutex);
-	if (retval)
-		return retval;
+	retval = mutex_lock_पूर्णांकerruptible(&data->sysfs_mutex);
+	अगर (retval)
+		वापस retval;
 
 	disable_irq(client->irq);
 
-	data->baseline_ready = false;
+	data->baseline_पढ़ोy = false;
 
 	data->mode |= ETP_ENABLE_CALIBRATE;
 	retval = data->ops->set_mode(data->client, data->mode);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(dev, "Failed to enable calibration mode to get baseline: %d\n",
 			retval);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	msleep(250);
 
 	retval = data->ops->get_baseline_data(data->client, true,
 					      &data->max_baseline);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(dev, "Failed to read max baseline form device: %d\n",
 			retval);
-		goto out_disable_calibrate;
-	}
+		जाओ out_disable_calibrate;
+	पूर्ण
 
 	retval = data->ops->get_baseline_data(data->client, false,
 					      &data->min_baseline);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(dev, "Failed to read min baseline form device: %d\n",
 			retval);
-		goto out_disable_calibrate;
-	}
+		जाओ out_disable_calibrate;
+	पूर्ण
 
-	data->baseline_ready = true;
+	data->baseline_पढ़ोy = true;
 
 out_disable_calibrate:
 	data->mode &= ~ETP_ENABLE_CALIBRATE;
 	error = data->ops->set_mode(data->client, data->mode);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "Failed to disable calibration mode after acquiring baseline: %d\n",
 			error);
-		if (!retval)
+		अगर (!retval)
 			retval = error;
-	}
+	पूर्ण
 out:
 	enable_irq(client->irq);
 	mutex_unlock(&data->sysfs_mutex);
-	return retval ?: count;
-}
+	वापस retval ?: count;
+पूर्ण
 
-static ssize_t min_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
-	int retval;
+अटल sमाप_प्रकार min_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
+	पूर्णांक retval;
 
-	retval = mutex_lock_interruptible(&data->sysfs_mutex);
-	if (retval)
-		return retval;
+	retval = mutex_lock_पूर्णांकerruptible(&data->sysfs_mutex);
+	अगर (retval)
+		वापस retval;
 
-	if (!data->baseline_ready) {
+	अगर (!data->baseline_पढ़ोy) अणु
 		retval = -ENODATA;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	retval = snprintf(buf, PAGE_SIZE, "%d", data->min_baseline);
+	retval = snम_लिखो(buf, PAGE_SIZE, "%d", data->min_baseline);
 
 out:
 	mutex_unlock(&data->sysfs_mutex);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static ssize_t max_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
-	int retval;
+अटल sमाप_प्रकार max_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
+	पूर्णांक retval;
 
-	retval = mutex_lock_interruptible(&data->sysfs_mutex);
-	if (retval)
-		return retval;
+	retval = mutex_lock_पूर्णांकerruptible(&data->sysfs_mutex);
+	अगर (retval)
+		वापस retval;
 
-	if (!data->baseline_ready) {
+	अगर (!data->baseline_पढ़ोy) अणु
 		retval = -ENODATA;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	retval = snprintf(buf, PAGE_SIZE, "%d", data->max_baseline);
+	retval = snम_लिखो(buf, PAGE_SIZE, "%d", data->max_baseline);
 
 out:
 	mutex_unlock(&data->sysfs_mutex);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
-static DEVICE_ATTR_WO(acquire);
-static DEVICE_ATTR_RO(min);
-static DEVICE_ATTR_RO(max);
+अटल DEVICE_ATTR_WO(acquire);
+अटल DEVICE_ATTR_RO(min);
+अटल DEVICE_ATTR_RO(max);
 
-static struct attribute *elan_baseline_sysfs_entries[] = {
+अटल काष्ठा attribute *elan_baseline_sysfs_entries[] = अणु
 	&dev_attr_acquire.attr,
 	&dev_attr_min.attr,
 	&dev_attr_max.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group elan_baseline_sysfs_group = {
+अटल स्थिर काष्ठा attribute_group elan_baseline_sysfs_group = अणु
 	.name = "baseline",
 	.attrs = elan_baseline_sysfs_entries,
-};
+पूर्ण;
 
-static const struct attribute_group *elan_sysfs_groups[] = {
+अटल स्थिर काष्ठा attribute_group *elan_sysfs_groups[] = अणु
 	&elan_sysfs_group,
 	&elan_baseline_sysfs_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /*
  ******************************************************************
  * Elan isr functions
  ******************************************************************
  */
-static void elan_report_contact(struct elan_tp_data *data, int contact_num,
+अटल व्योम elan_report_contact(काष्ठा elan_tp_data *data, पूर्णांक contact_num,
 				bool contact_valid, bool high_precision,
 				u8 *packet, u8 *finger_data)
-{
-	struct input_dev *input = data->input;
-	unsigned int pos_x, pos_y;
-	unsigned int pressure, scaled_pressure;
+अणु
+	काष्ठा input_dev *input = data->input;
+	अचिन्हित पूर्णांक pos_x, pos_y;
+	अचिन्हित पूर्णांक pressure, scaled_pressure;
 
-	if (contact_valid) {
-		if (high_precision) {
+	अगर (contact_valid) अणु
+		अगर (high_precision) अणु
 			pos_x = get_unaligned_be16(&finger_data[0]);
 			pos_y = get_unaligned_be16(&finger_data[2]);
-		} else {
+		पूर्ण अन्यथा अणु
 			pos_x = ((finger_data[0] & 0xf0) << 4) | finger_data[1];
 			pos_y = ((finger_data[0] & 0x0f) << 8) | finger_data[2];
-		}
+		पूर्ण
 
-		if (pos_x > data->max_x || pos_y > data->max_y) {
+		अगर (pos_x > data->max_x || pos_y > data->max_y) अणु
 			dev_dbg(input->dev.parent,
 				"[%d] x=%d y=%d over max (%d, %d)",
 				contact_num, pos_x, pos_y,
 				data->max_x, data->max_y);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		pressure = finger_data[4];
-		scaled_pressure = pressure + data->pressure_adjustment;
-		if (scaled_pressure > ETP_MAX_PRESSURE)
+		scaled_pressure = pressure + data->pressure_adjusपंचांगent;
+		अगर (scaled_pressure > ETP_MAX_PRESSURE)
 			scaled_pressure = ETP_MAX_PRESSURE;
 
 		input_mt_slot(input, contact_num);
 		input_mt_report_slot_state(input, MT_TOOL_FINGER, true);
-		input_report_abs(input, ABS_MT_POSITION_X, pos_x);
-		input_report_abs(input, ABS_MT_POSITION_Y, data->max_y - pos_y);
-		input_report_abs(input, ABS_MT_PRESSURE, scaled_pressure);
+		input_report_असल(input, ABS_MT_POSITION_X, pos_x);
+		input_report_असल(input, ABS_MT_POSITION_Y, data->max_y - pos_y);
+		input_report_असल(input, ABS_MT_PRESSURE, scaled_pressure);
 
-		if (data->report_features & ETP_FEATURE_REPORT_MK) {
-			unsigned int mk_x, mk_y, area_x, area_y;
+		अगर (data->report_features & ETP_FEATURE_REPORT_MK) अणु
+			अचिन्हित पूर्णांक mk_x, mk_y, area_x, area_y;
 			u8 mk_data = high_precision ?
 				packet[ETP_MK_DATA_OFFSET + contact_num] :
 				finger_data[3];
@@ -996,30 +997,30 @@ static void elan_report_contact(struct elan_tp_data *data, int contact_num,
 			mk_y = mk_data >> 4;
 
 			/*
-			 * To avoid treating large finger as palm, let's reduce
+			 * To aव्योम treating large finger as palm, let's reduce
 			 * the width x and y per trace.
 			 */
 			area_x = mk_x * (data->width_x - ETP_FWIDTH_REDUCE);
 			area_y = mk_y * (data->width_y - ETP_FWIDTH_REDUCE);
 
-			input_report_abs(input, ABS_TOOL_WIDTH, mk_x);
-			input_report_abs(input, ABS_MT_TOUCH_MAJOR,
+			input_report_असल(input, ABS_TOOL_WIDTH, mk_x);
+			input_report_असल(input, ABS_MT_TOUCH_MAJOR,
 					 max(area_x, area_y));
-			input_report_abs(input, ABS_MT_TOUCH_MINOR,
+			input_report_असल(input, ABS_MT_TOUCH_MINOR,
 					 min(area_x, area_y));
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		input_mt_slot(input, contact_num);
 		input_mt_report_slot_inactive(input);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void elan_report_absolute(struct elan_tp_data *data, u8 *packet,
+अटल व्योम elan_report_असलolute(काष्ठा elan_tp_data *data, u8 *packet,
 				 bool high_precision)
-{
-	struct input_dev *input = data->input;
+अणु
+	काष्ठा input_dev *input = data->input;
 	u8 *finger_data = &packet[ETP_FINGER_DATA_OFFSET];
-	int i;
+	पूर्णांक i;
 	u8 tp_info = packet[ETP_TOUCH_INFO_OFFSET];
 	u8 hover_info = packet[ETP_HOVER_INFO_OFFSET];
 	bool contact_valid, hover_event;
@@ -1028,90 +1029,90 @@ static void elan_report_absolute(struct elan_tp_data *data, u8 *packet,
 
 	hover_event = hover_info & BIT(6);
 
-	for (i = 0; i < ETP_MAX_FINGERS; i++) {
+	क्रम (i = 0; i < ETP_MAX_FINGERS; i++) अणु
 		contact_valid = tp_info & BIT(3 + i);
 		elan_report_contact(data, i, contact_valid, high_precision,
 				    packet, finger_data);
-		if (contact_valid)
+		अगर (contact_valid)
 			finger_data += ETP_FINGER_DATA_LEN;
-	}
+	पूर्ण
 
 	input_report_key(input, BTN_LEFT,   tp_info & BIT(0));
 	input_report_key(input, BTN_MIDDLE, tp_info & BIT(2));
 	input_report_key(input, BTN_RIGHT,  tp_info & BIT(1));
-	input_report_abs(input, ABS_DISTANCE, hover_event != 0);
-	input_mt_report_pointer_emulation(input, true);
+	input_report_असल(input, ABS_DISTANCE, hover_event != 0);
+	input_mt_report_poपूर्णांकer_emulation(input, true);
 	input_sync(input);
-}
+पूर्ण
 
-static void elan_report_trackpoint(struct elan_tp_data *data, u8 *report)
-{
-	struct input_dev *input = data->tp_input;
+अटल व्योम elan_report_trackpoपूर्णांक(काष्ठा elan_tp_data *data, u8 *report)
+अणु
+	काष्ठा input_dev *input = data->tp_input;
 	u8 *packet = &report[ETP_REPORT_ID_OFFSET + 1];
-	int x, y;
+	पूर्णांक x, y;
 
 	pm_wakeup_event(&data->client->dev, 0);
 
-	if (!data->tp_input) {
+	अगर (!data->tp_input) अणु
 		dev_warn_once(&data->client->dev,
 			      "received a trackpoint report while no trackpoint device has been created. Please report upstream.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	input_report_key(input, BTN_LEFT, packet[0] & 0x01);
 	input_report_key(input, BTN_RIGHT, packet[0] & 0x02);
 	input_report_key(input, BTN_MIDDLE, packet[0] & 0x04);
 
-	if ((packet[3] & 0x0F) == 0x06) {
-		x = packet[4] - (int)((packet[1] ^ 0x80) << 1);
-		y = (int)((packet[2] ^ 0x80) << 1) - packet[5];
+	अगर ((packet[3] & 0x0F) == 0x06) अणु
+		x = packet[4] - (पूर्णांक)((packet[1] ^ 0x80) << 1);
+		y = (पूर्णांक)((packet[2] ^ 0x80) << 1) - packet[5];
 
 		input_report_rel(input, REL_X, x);
 		input_report_rel(input, REL_Y, y);
-	}
+	पूर्ण
 
 	input_sync(input);
-}
+पूर्ण
 
-static irqreturn_t elan_isr(int irq, void *dev_id)
-{
-	struct elan_tp_data *data = dev_id;
-	int error;
+अटल irqवापस_t elan_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा elan_tp_data *data = dev_id;
+	पूर्णांक error;
 	u8 report[ETP_MAX_REPORT_LEN];
 
 	/*
-	 * When device is connected to i2c bus, when all IAP page writes
-	 * complete, the driver will receive interrupt and must read
+	 * When device is connected to i2c bus, when all IAP page ग_लिखोs
+	 * complete, the driver will receive पूर्णांकerrupt and must पढ़ो
 	 * 0000 to confirm that IAP is finished.
 	*/
-	if (data->in_fw_update) {
+	अगर (data->in_fw_update) अणु
 		complete(&data->fw_completion);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	error = data->ops->get_report(data->client, report, data->report_len);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	switch (report[ETP_REPORT_ID_OFFSET]) {
-	case ETP_REPORT_ID:
-		elan_report_absolute(data, report, false);
-		break;
-	case ETP_REPORT_ID2:
-		elan_report_absolute(data, report, true);
-		break;
-	case ETP_TP_REPORT_ID:
-	case ETP_TP_REPORT_ID2:
-		elan_report_trackpoint(data, report);
-		break;
-	default:
+	चयन (report[ETP_REPORT_ID_OFFSET]) अणु
+	हाल ETP_REPORT_ID:
+		elan_report_असलolute(data, report, false);
+		अवरोध;
+	हाल ETP_REPORT_ID2:
+		elan_report_असलolute(data, report, true);
+		अवरोध;
+	हाल ETP_TP_REPORT_ID:
+	हाल ETP_TP_REPORT_ID2:
+		elan_report_trackpoपूर्णांक(data, report);
+		अवरोध;
+	शेष:
 		dev_err(&data->client->dev, "invalid report id data (%x)\n",
 			report[ETP_REPORT_ID_OFFSET]);
-	}
+	पूर्ण
 
 out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  ******************************************************************
@@ -1119,18 +1120,18 @@ out:
  ******************************************************************
  */
 
-static int elan_setup_trackpoint_input_device(struct elan_tp_data *data)
-{
-	struct device *dev = &data->client->dev;
-	struct input_dev *input;
+अटल पूर्णांक elan_setup_trackpoपूर्णांक_input_device(काष्ठा elan_tp_data *data)
+अणु
+	काष्ठा device *dev = &data->client->dev;
+	काष्ठा input_dev *input;
 
 	input = devm_input_allocate_device(dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	input->name = "Elan TrackPoint";
 	input->id.bustype = BUS_I2C;
-	input->id.vendor = ELAN_VENDOR_ID;
+	input->id.venकरोr = ELAN_VENDOR_ID;
 	input->id.product = data->product_id;
 	input_set_drvdata(input, data);
 
@@ -1145,108 +1146,108 @@ static int elan_setup_trackpoint_input_device(struct elan_tp_data *data)
 
 	data->tp_input = input;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int elan_setup_input_device(struct elan_tp_data *data)
-{
-	struct device *dev = &data->client->dev;
-	struct input_dev *input;
-	unsigned int max_width = max(data->width_x, data->width_y);
-	unsigned int min_width = min(data->width_x, data->width_y);
-	int error;
+अटल पूर्णांक elan_setup_input_device(काष्ठा elan_tp_data *data)
+अणु
+	काष्ठा device *dev = &data->client->dev;
+	काष्ठा input_dev *input;
+	अचिन्हित पूर्णांक max_width = max(data->width_x, data->width_y);
+	अचिन्हित पूर्णांक min_width = min(data->width_x, data->width_y);
+	पूर्णांक error;
 
 	input = devm_input_allocate_device(dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	input->name = "Elan Touchpad";
 	input->id.bustype = BUS_I2C;
-	input->id.vendor = ELAN_VENDOR_ID;
+	input->id.venकरोr = ELAN_VENDOR_ID;
 	input->id.product = data->product_id;
 	input_set_drvdata(input, data);
 
 	error = input_mt_init_slots(input, ETP_MAX_FINGERS,
 				    INPUT_MT_POINTER | INPUT_MT_DROP_UNUSED);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "failed to initialize MT slots: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	__set_bit(EV_ABS, input->evbit);
 	__set_bit(INPUT_PROP_POINTER, input->propbit);
-	if (data->clickpad) {
+	अगर (data->clickpad) अणु
 		__set_bit(INPUT_PROP_BUTTONPAD, input->propbit);
-	} else {
+	पूर्ण अन्यथा अणु
 		__set_bit(BTN_RIGHT, input->keybit);
-		if (data->middle_button)
+		अगर (data->middle_button)
 			__set_bit(BTN_MIDDLE, input->keybit);
-	}
+	पूर्ण
 	__set_bit(BTN_LEFT, input->keybit);
 
 	/* Set up ST parameters */
-	input_set_abs_params(input, ABS_X, 0, data->max_x, 0, 0);
-	input_set_abs_params(input, ABS_Y, 0, data->max_y, 0, 0);
-	input_abs_set_res(input, ABS_X, data->x_res);
-	input_abs_set_res(input, ABS_Y, data->y_res);
-	input_set_abs_params(input, ABS_PRESSURE, 0, ETP_MAX_PRESSURE, 0, 0);
-	if (data->report_features & ETP_FEATURE_REPORT_MK)
-		input_set_abs_params(input, ABS_TOOL_WIDTH,
+	input_set_असल_params(input, ABS_X, 0, data->max_x, 0, 0);
+	input_set_असल_params(input, ABS_Y, 0, data->max_y, 0, 0);
+	input_असल_set_res(input, ABS_X, data->x_res);
+	input_असल_set_res(input, ABS_Y, data->y_res);
+	input_set_असल_params(input, ABS_PRESSURE, 0, ETP_MAX_PRESSURE, 0, 0);
+	अगर (data->report_features & ETP_FEATURE_REPORT_MK)
+		input_set_असल_params(input, ABS_TOOL_WIDTH,
 				     0, ETP_FINGER_WIDTH, 0, 0);
-	input_set_abs_params(input, ABS_DISTANCE, 0, 1, 0, 0);
+	input_set_असल_params(input, ABS_DISTANCE, 0, 1, 0, 0);
 
 	/* And MT parameters */
-	input_set_abs_params(input, ABS_MT_POSITION_X, 0, data->max_x, 0, 0);
-	input_set_abs_params(input, ABS_MT_POSITION_Y, 0, data->max_y, 0, 0);
-	input_abs_set_res(input, ABS_MT_POSITION_X, data->x_res);
-	input_abs_set_res(input, ABS_MT_POSITION_Y, data->y_res);
-	input_set_abs_params(input, ABS_MT_PRESSURE, 0,
+	input_set_असल_params(input, ABS_MT_POSITION_X, 0, data->max_x, 0, 0);
+	input_set_असल_params(input, ABS_MT_POSITION_Y, 0, data->max_y, 0, 0);
+	input_असल_set_res(input, ABS_MT_POSITION_X, data->x_res);
+	input_असल_set_res(input, ABS_MT_POSITION_Y, data->y_res);
+	input_set_असल_params(input, ABS_MT_PRESSURE, 0,
 			     ETP_MAX_PRESSURE, 0, 0);
-	if (data->report_features & ETP_FEATURE_REPORT_MK) {
-		input_set_abs_params(input, ABS_MT_TOUCH_MAJOR,
+	अगर (data->report_features & ETP_FEATURE_REPORT_MK) अणु
+		input_set_असल_params(input, ABS_MT_TOUCH_MAJOR,
 				     0, ETP_FINGER_WIDTH * max_width, 0, 0);
-		input_set_abs_params(input, ABS_MT_TOUCH_MINOR,
+		input_set_असल_params(input, ABS_MT_TOUCH_MINOR,
 				     0, ETP_FINGER_WIDTH * min_width, 0, 0);
-	}
+	पूर्ण
 
 	data->input = input;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void elan_disable_regulator(void *_data)
-{
-	struct elan_tp_data *data = _data;
+अटल व्योम elan_disable_regulator(व्योम *_data)
+अणु
+	काष्ठा elan_tp_data *data = _data;
 
 	regulator_disable(data->vcc);
-}
+पूर्ण
 
-static int elan_probe(struct i2c_client *client,
-		      const struct i2c_device_id *dev_id)
-{
-	const struct elan_transport_ops *transport_ops;
-	struct device *dev = &client->dev;
-	struct elan_tp_data *data;
-	unsigned long irqflags;
-	int error;
+अटल पूर्णांक elan_probe(काष्ठा i2c_client *client,
+		      स्थिर काष्ठा i2c_device_id *dev_id)
+अणु
+	स्थिर काष्ठा elan_transport_ops *transport_ops;
+	काष्ठा device *dev = &client->dev;
+	काष्ठा elan_tp_data *data;
+	अचिन्हित दीर्घ irqflags;
+	पूर्णांक error;
 
-	if (IS_ENABLED(CONFIG_MOUSE_ELAN_I2C_I2C) &&
-	    i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
+	अगर (IS_ENABLED(CONFIG_MOUSE_ELAN_I2C_I2C) &&
+	    i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
 		transport_ops = &elan_i2c_ops;
-	} else if (IS_ENABLED(CONFIG_MOUSE_ELAN_I2C_SMBUS) &&
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_MOUSE_ELAN_I2C_SMBUS) &&
 		   i2c_check_functionality(client->adapter,
 					   I2C_FUNC_SMBUS_BYTE_DATA |
 						I2C_FUNC_SMBUS_BLOCK_DATA |
-						I2C_FUNC_SMBUS_I2C_BLOCK)) {
+						I2C_FUNC_SMBUS_I2C_BLOCK)) अणु
 		transport_ops = &elan_smbus_ops;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "not a supported I2C/SMBus adapter\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	data = devm_kzalloc(dev, sizeof(struct elan_tp_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(काष्ठा elan_tp_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, data);
 
@@ -1256,46 +1257,46 @@ static int elan_probe(struct i2c_client *client,
 	mutex_init(&data->sysfs_mutex);
 
 	data->vcc = devm_regulator_get(dev, "vcc");
-	if (IS_ERR(data->vcc)) {
+	अगर (IS_ERR(data->vcc)) अणु
 		error = PTR_ERR(data->vcc);
-		if (error != -EPROBE_DEFER)
+		अगर (error != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get 'vcc' regulator: %d\n",
 				error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = regulator_enable(data->vcc);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "Failed to enable regulator: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = devm_add_action_or_reset(dev, elan_disable_regulator, data);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "Failed to add disable regulator action: %d\n",
 			error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	/* Make sure there is something at this address */
-	error = i2c_smbus_read_byte(client);
-	if (error < 0) {
+	error = i2c_smbus_पढ़ो_byte(client);
+	अगर (error < 0) अणु
 		dev_dbg(&client->dev, "nothing at this address: %d\n", error);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/* Initialize the touchpad. */
 	error = elan_initialize(data, false);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = elan_query_device_info(data);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = elan_query_device_parameters(data);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	dev_info(dev,
 		 "Elan Touchpad: Module ID: 0x%04x, Firmware: 0x%04x, Sample: 0x%04x, IAP: 0x%04x\n",
@@ -1318,151 +1319,151 @@ static int elan_probe(struct i2c_client *client,
 
 	/* Set up input device properties based on queried parameters. */
 	error = elan_setup_input_device(data);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (device_property_read_bool(&client->dev, "elan,trackpoint")) {
-		error = elan_setup_trackpoint_input_device(data);
-		if (error)
-			return error;
-	}
+	अगर (device_property_पढ़ो_bool(&client->dev, "elan,trackpoint")) अणु
+		error = elan_setup_trackpoपूर्णांक_input_device(data);
+		अगर (error)
+			वापस error;
+	पूर्ण
 
 	/*
-	 * Platform code (ACPI, DTS) should normally set up interrupt
-	 * for us, but in case it did not let's fall back to using falling
+	 * Platक्रमm code (ACPI, DTS) should normally set up पूर्णांकerrupt
+	 * क्रम us, but in हाल it did not let's fall back to using falling
 	 * edge to be compatible with older Chromebooks.
 	 */
 	irqflags = irq_get_trigger_type(client->irq);
-	if (!irqflags)
+	अगर (!irqflags)
 		irqflags = IRQF_TRIGGER_FALLING;
 
-	error = devm_request_threaded_irq(dev, client->irq, NULL, elan_isr,
+	error = devm_request_thपढ़ोed_irq(dev, client->irq, शून्य, elan_isr,
 					  irqflags | IRQF_ONESHOT,
 					  client->name, data);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "cannot register irq=%d\n", client->irq);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = devm_device_add_groups(dev, elan_sysfs_groups);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "failed to create sysfs attributes: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(data->input);
-	if (error) {
+	error = input_रेजिस्टर_device(data->input);
+	अगर (error) अणु
 		dev_err(dev, "failed to register input device: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	if (data->tp_input) {
-		error = input_register_device(data->tp_input);
-		if (error) {
+	अगर (data->tp_input) अणु
+		error = input_रेजिस्टर_device(data->tp_input);
+		अगर (error) अणु
 			dev_err(&client->dev,
 				"failed to register TrackPoint input device: %d\n",
 				error);
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Systems using device tree should set up wakeup via DTS,
-	 * the rest will configure device as wakeup source by default.
+	 * the rest will configure device as wakeup source by शेष.
 	 */
-	if (!dev->of_node)
+	अगर (!dev->of_node)
 		device_init_wakeup(dev, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused elan_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
-	int ret;
+अटल पूर्णांक __maybe_unused elan_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
 	/*
 	 * We are taking the mutex to make sure sysfs operations are
-	 * complete before we attempt to bring the device into low[er]
-	 * power mode.
+	 * complete beक्रमe we attempt to bring the device पूर्णांकo low[er]
+	 * घातer mode.
 	 */
-	ret = mutex_lock_interruptible(&data->sysfs_mutex);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&data->sysfs_mutex);
+	अगर (ret)
+		वापस ret;
 
 	disable_irq(client->irq);
 
-	if (device_may_wakeup(dev)) {
+	अगर (device_may_wakeup(dev)) अणु
 		ret = elan_sleep(data);
 		/* Enable wake from IRQ */
 		data->irq_wake = (enable_irq_wake(client->irq) == 0);
-	} else {
-		ret = elan_disable_power(data);
-	}
+	पूर्ण अन्यथा अणु
+		ret = elan_disable_घातer(data);
+	पूर्ण
 
 	mutex_unlock(&data->sysfs_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused elan_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct elan_tp_data *data = i2c_get_clientdata(client);
-	int error;
+अटल पूर्णांक __maybe_unused elan_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा elan_tp_data *data = i2c_get_clientdata(client);
+	पूर्णांक error;
 
-	if (device_may_wakeup(dev) && data->irq_wake) {
+	अगर (device_may_wakeup(dev) && data->irq_wake) अणु
 		disable_irq_wake(client->irq);
 		data->irq_wake = false;
-	}
+	पूर्ण
 
-	error = elan_enable_power(data);
-	if (error) {
+	error = elan_enable_घातer(data);
+	अगर (error) अणु
 		dev_err(dev, "power up when resuming failed: %d\n", error);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	error = elan_initialize(data, data->quirks & ETP_QUIRK_QUICK_WAKEUP);
-	if (error)
+	अगर (error)
 		dev_err(dev, "initialize when resuming failed: %d\n", error);
 
 err:
 	enable_irq(data->client->irq);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(elan_pm_ops, elan_suspend, elan_resume);
+अटल SIMPLE_DEV_PM_OPS(elan_pm_ops, elan_suspend, elan_resume);
 
-static const struct i2c_device_id elan_id[] = {
-	{ DRIVER_NAME, 0 },
-	{ },
-};
+अटल स्थिर काष्ठा i2c_device_id elan_id[] = अणु
+	अणु DRIVER_NAME, 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, elan_id);
 
-#ifdef CONFIG_ACPI
-#include <linux/input/elan-i2c-ids.h>
+#अगर_घोषित CONFIG_ACPI
+#समावेश <linux/input/elan-i2c-ids.h>
 MODULE_DEVICE_TABLE(acpi, elan_acpi_id);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_OF
-static const struct of_device_id elan_of_match[] = {
-	{ .compatible = "elan,ekth3000" },
-	{ /* sentinel */ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id elan_of_match[] = अणु
+	अणु .compatible = "elan,ekth3000" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, elan_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver elan_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver elan_driver = अणु
+	.driver = अणु
 		.name	= DRIVER_NAME,
 		.pm	= &elan_pm_ops,
 		.acpi_match_table = ACPI_PTR(elan_acpi_id),
 		.of_match_table = of_match_ptr(elan_of_match),
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
+	पूर्ण,
 	.probe		= elan_probe,
 	.id_table	= elan_id,
-};
+पूर्ण;
 
 module_i2c_driver(elan_driver);
 

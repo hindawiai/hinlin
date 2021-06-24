@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Common values for serpent algorithms
+ * Common values क्रम serpent algorithms
  */
 
-#ifndef _CRYPTO_SERPENT_H
-#define _CRYPTO_SERPENT_H
+#अगर_अघोषित _CRYPTO_SERPENT_H
+#घोषणा _CRYPTO_SERPENT_H
 
-#include <linux/types.h>
-#include <linux/crypto.h>
+#समावेश <linux/types.h>
+#समावेश <linux/crypto.h>
 
-#define SERPENT_MIN_KEY_SIZE		  0
-#define SERPENT_MAX_KEY_SIZE		 32
-#define SERPENT_EXPKEY_WORDS		132
-#define SERPENT_BLOCK_SIZE		 16
+#घोषणा SERPENT_MIN_KEY_SIZE		  0
+#घोषणा SERPENT_MAX_KEY_SIZE		 32
+#घोषणा SERPENT_EXPKEY_WORDS		132
+#घोषणा SERPENT_BLOCK_SIZE		 16
 
-struct serpent_ctx {
+काष्ठा serpent_ctx अणु
 	u32 expkey[SERPENT_EXPKEY_WORDS];
-};
+पूर्ण;
 
-int __serpent_setkey(struct serpent_ctx *ctx, const u8 *key,
-		     unsigned int keylen);
-int serpent_setkey(struct crypto_tfm *tfm, const u8 *key, unsigned int keylen);
+पूर्णांक __serpent_setkey(काष्ठा serpent_ctx *ctx, स्थिर u8 *key,
+		     अचिन्हित पूर्णांक keylen);
+पूर्णांक serpent_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key, अचिन्हित पूर्णांक keylen);
 
-void __serpent_encrypt(const void *ctx, u8 *dst, const u8 *src);
-void __serpent_decrypt(const void *ctx, u8 *dst, const u8 *src);
+व्योम __serpent_encrypt(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
+व्योम __serpent_decrypt(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 
-#endif
+#पूर्ण_अगर

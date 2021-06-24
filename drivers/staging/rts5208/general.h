@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Driver for Realtek PCI-Express card reader
+ * Driver क्रम Realtek PCI-Express card पढ़ोer
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -9,11 +10,11 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
-#ifndef __RTSX_GENERAL_H
-#define __RTSX_GENERAL_H
+#अगर_अघोषित __RTSX_GENERAL_H
+#घोषणा __RTSX_GENERAL_H
 
-#include "rtsx.h"
+#समावेश "rtsx.h"
 
-int bit1cnt_long(u32 data);
+पूर्णांक bit1cnt_दीर्घ(u32 data);
 
-#endif /* __RTSX_GENERAL_H */
+#पूर्ण_अगर /* __RTSX_GENERAL_H */

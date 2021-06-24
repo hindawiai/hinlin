@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2019-2020 Marvell International Ltd. All rights reserved. */
 
-#ifndef _PRESTERA_DEVLINK_H_
-#define _PRESTERA_DEVLINK_H_
+#अगर_अघोषित _PRESTERA_DEVLINK_H_
+#घोषणा _PRESTERA_DEVLINK_H_
 
-#include "prestera.h"
+#समावेश "prestera.h"
 
-struct prestera_switch *prestera_devlink_alloc(void);
-void prestera_devlink_free(struct prestera_switch *sw);
+काष्ठा prestera_चयन *prestera_devlink_alloc(व्योम);
+व्योम prestera_devlink_मुक्त(काष्ठा prestera_चयन *sw);
 
-int prestera_devlink_register(struct prestera_switch *sw);
-void prestera_devlink_unregister(struct prestera_switch *sw);
+पूर्णांक prestera_devlink_रेजिस्टर(काष्ठा prestera_चयन *sw);
+व्योम prestera_devlink_unरेजिस्टर(काष्ठा prestera_चयन *sw);
 
-int prestera_devlink_port_register(struct prestera_port *port);
-void prestera_devlink_port_unregister(struct prestera_port *port);
+पूर्णांक prestera_devlink_port_रेजिस्टर(काष्ठा prestera_port *port);
+व्योम prestera_devlink_port_unरेजिस्टर(काष्ठा prestera_port *port);
 
-void prestera_devlink_port_set(struct prestera_port *port);
-void prestera_devlink_port_clear(struct prestera_port *port);
+व्योम prestera_devlink_port_set(काष्ठा prestera_port *port);
+व्योम prestera_devlink_port_clear(काष्ठा prestera_port *port);
 
-struct devlink_port *prestera_devlink_get_port(struct net_device *dev);
+काष्ठा devlink_port *prestera_devlink_get_port(काष्ठा net_device *dev);
 
-#endif /* _PRESTERA_DEVLINK_H_ */
+#पूर्ण_अगर /* _PRESTERA_DEVLINK_H_ */

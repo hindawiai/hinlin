@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include "k3-psil-priv.h"
+#समावेश "k3-psil-priv.h"
 
-#define PSIL_PDMA_XY_TR(x)				\
-	{						\
-		.thread_id = x,				\
-		.ep_config = {				\
+#घोषणा PSIL_PDMA_XY_TR(x)				\
+	अणु						\
+		.thपढ़ो_id = x,				\
+		.ep_config = अणु				\
 			.ep_type = PSIL_EP_PDMA_XY,	\
-		},					\
-	}
+		पूर्ण,					\
+	पूर्ण
 
-#define PSIL_PDMA_XY_PKT(x)				\
-	{						\
-		.thread_id = x,				\
-		.ep_config = {				\
+#घोषणा PSIL_PDMA_XY_PKT(x)				\
+	अणु						\
+		.thपढ़ो_id = x,				\
+		.ep_config = अणु				\
 			.ep_type = PSIL_EP_PDMA_XY,	\
 			.pkt_mode = 1,			\
-		},					\
-	}
+		पूर्ण,					\
+	पूर्ण
 
-#define PSIL_ETHERNET(x)				\
-	{						\
-		.thread_id = x,				\
-		.ep_config = {				\
+#घोषणा PSIL_ETHERNET(x)				\
+	अणु						\
+		.thपढ़ो_id = x,				\
+		.ep_config = अणु				\
 			.ep_type = PSIL_EP_NATIVE,	\
 			.pkt_mode = 1,			\
 			.needs_epib = 1,		\
 			.psd_size = 16,			\
-		},					\
-	}
+		पूर्ण,					\
+	पूर्ण
 
-#define PSIL_SA2UL(x, tx)				\
-	{						\
-		.thread_id = x,				\
-		.ep_config = {				\
+#घोषणा PSIL_SA2UL(x, tx)				\
+	अणु						\
+		.thपढ़ो_id = x,				\
+		.ep_config = अणु				\
 			.ep_type = PSIL_EP_NATIVE,	\
 			.pkt_mode = 1,			\
 			.needs_epib = 1,		\
 			.psd_size = 64,			\
 			.notdpkt = tx,			\
-		},					\
-	}
+		पूर्ण,					\
+	पूर्ण
 
-/* PSI-L source thread IDs, used for RX (DMA_DEV_TO_MEM) */
-static struct psil_ep am654_src_ep_map[] = {
+/* PSI-L source thपढ़ो IDs, used क्रम RX (DMA_DEV_TO_MEM) */
+अटल काष्ठा psil_ep am654_src_ep_map[] = अणु
 	/* SA2UL */
 	PSIL_SA2UL(0x4000, 0),
 	PSIL_SA2UL(0x4001, 0),
@@ -121,10 +122,10 @@ static struct psil_ep am654_src_ep_map[] = {
 	PSIL_PDMA_XY_PKT(0x720b),
 	/* MCU_PDMA1 - MCU_USART0 */
 	PSIL_PDMA_XY_PKT(0x7212),
-};
+पूर्ण;
 
-/* PSI-L destination thread IDs, used for TX (DMA_MEM_TO_DEV) */
-static struct psil_ep am654_dst_ep_map[] = {
+/* PSI-L destination thपढ़ो IDs, used क्रम TX (DMA_MEM_TO_DEV) */
+अटल काष्ठा psil_ep am654_dst_ep_map[] = अणु
 	/* SA2UL */
 	PSIL_SA2UL(0xc000, 1),
 	PSIL_SA2UL(0xc001, 1),
@@ -164,12 +165,12 @@ static struct psil_ep am654_dst_ep_map[] = {
 	PSIL_ETHERNET(0xf005),
 	PSIL_ETHERNET(0xf006),
 	PSIL_ETHERNET(0xf007),
-};
+पूर्ण;
 
-struct psil_ep_map am654_ep_map = {
+काष्ठा psil_ep_map am654_ep_map = अणु
 	.name = "am654",
 	.src = am654_src_ep_map,
 	.src_count = ARRAY_SIZE(am654_src_ep_map),
 	.dst = am654_dst_ep_map,
 	.dst_count = ARRAY_SIZE(am654_dst_ep_map),
-};
+पूर्ण;

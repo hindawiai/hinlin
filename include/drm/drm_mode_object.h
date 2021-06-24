@@ -1,97 +1,98 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016 Intel Corporation
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
+ * Permission to use, copy, modअगरy, distribute, and sell this software and its
+ * करोcumentation क्रम any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that copyright
- * notice and this permission notice appear in supporting documentation, and
+ * notice and this permission notice appear in supporting करोcumentation, and
  * that the name of the copyright holders not be used in advertising or
- * publicity pertaining to distribution of the software without specific,
+ * खुलाity pertaining to distribution of the software without specअगरic,
  * written prior permission.  The copyright holders make no representations
- * about the suitability of this software for any purpose.  It is provided "as
+ * about the suitability of this software क्रम any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
  * THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INसूचीECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
-#ifndef __DRM_MODESET_H__
-#define __DRM_MODESET_H__
+#अगर_अघोषित __DRM_MODESET_H__
+#घोषणा __DRM_MODESET_H__
 
-#include <linux/kref.h>
-#include <drm/drm_lease.h>
-struct drm_object_properties;
-struct drm_property;
-struct drm_device;
-struct drm_file;
+#समावेश <linux/kref.h>
+#समावेश <drm/drm_lease.h>
+काष्ठा drm_object_properties;
+काष्ठा drm_property;
+काष्ठा drm_device;
+काष्ठा drm_file;
 
 /**
- * struct drm_mode_object - base structure for modeset objects
- * @id: userspace visible identifier
+ * काष्ठा drm_mode_object - base काष्ठाure क्रम modeset objects
+ * @id: userspace visible identअगरier
  * @type: type of the object, one of DRM_MODE_OBJECT\_\*
  * @properties: properties attached to this object, including values
- * @refcount: reference count for objects which with dynamic lifetime
- * @free_cb: free function callback, only set for objects with dynamic lifetime
+ * @refcount: reference count क्रम objects which with dynamic lअगरeसमय
+ * @मुक्त_cb: मुक्त function callback, only set क्रम objects with dynamic lअगरeसमय
  *
- * Base structure for modeset objects visible to userspace. Objects can be
- * looked up using drm_mode_object_find(). Besides basic uapi interface
+ * Base काष्ठाure क्रम modeset objects visible to userspace. Objects can be
+ * looked up using drm_mode_object_find(). Besides basic uapi पूर्णांकerface
  * properties like @id and @type it provides two services:
  *
  * - It tracks attached properties and their values. This is used by &drm_crtc,
  *   &drm_plane and &drm_connector. Properties are attached by calling
- *   drm_object_attach_property() before the object is visible to userspace.
+ *   drm_object_attach_property() beक्रमe the object is visible to userspace.
  *
- * - For objects with dynamic lifetimes (as indicated by a non-NULL @free_cb) it
+ * - For objects with dynamic lअगरeबार (as indicated by a non-शून्य @मुक्त_cb) it
  *   provides reference counting through drm_mode_object_get() and
  *   drm_mode_object_put(). This is used by &drm_framebuffer, &drm_connector
  *   and &drm_property_blob. These objects provide specialized reference
  *   counting wrappers.
  */
-struct drm_mode_object {
-	uint32_t id;
-	uint32_t type;
-	struct drm_object_properties *properties;
-	struct kref refcount;
-	void (*free_cb)(struct kref *kref);
-};
+काष्ठा drm_mode_object अणु
+	uपूर्णांक32_t id;
+	uपूर्णांक32_t type;
+	काष्ठा drm_object_properties *properties;
+	काष्ठा kref refcount;
+	व्योम (*मुक्त_cb)(काष्ठा kref *kref);
+पूर्ण;
 
-#define DRM_OBJECT_MAX_PROPERTY 24
+#घोषणा DRM_OBJECT_MAX_PROPERTY 24
 /**
- * struct drm_object_properties - property tracking for &drm_mode_object
+ * काष्ठा drm_object_properties - property tracking क्रम &drm_mode_object
  */
-struct drm_object_properties {
+काष्ठा drm_object_properties अणु
 	/**
 	 * @count: number of valid properties, must be less than or equal to
 	 * DRM_OBJECT_MAX_PROPERTY.
 	 */
 
-	int count;
+	पूर्णांक count;
 	/**
-	 * @properties: Array of pointers to &drm_property.
+	 * @properties: Array of poपूर्णांकers to &drm_property.
 	 *
-	 * NOTE: if we ever start dynamically destroying properties (ie.
-	 * not at drm_mode_config_cleanup() time), then we'd have to do
-	 * a better job of detaching property from mode objects to avoid
-	 * dangling property pointers:
+	 * NOTE: अगर we ever start dynamically destroying properties (ie.
+	 * not at drm_mode_config_cleanup() समय), then we'd have to करो
+	 * a better job of detaching property from mode objects to aव्योम
+	 * dangling property poपूर्णांकers:
 	 */
-	struct drm_property *properties[DRM_OBJECT_MAX_PROPERTY];
+	काष्ठा drm_property *properties[DRM_OBJECT_MAX_PROPERTY];
 
 	/**
 	 * @values: Array to store the property values, matching @properties. Do
-	 * not read/write values directly, but use
+	 * not पढ़ो/ग_लिखो values directly, but use
 	 * drm_object_property_get_value() and drm_object_property_set_value().
 	 *
-	 * Note that atomic drivers do not store mutable properties in this
+	 * Note that atomic drivers करो not store mutable properties in this
 	 * array, but only the decoded values in the corresponding state
-	 * structure. The decoding is done using the &drm_crtc.atomic_get_property and
-	 * &drm_crtc.atomic_set_property hooks for &struct drm_crtc. For
-	 * &struct drm_plane the hooks are &drm_plane_funcs.atomic_get_property and
-	 * &drm_plane_funcs.atomic_set_property. And for &struct drm_connector
+	 * काष्ठाure. The decoding is करोne using the &drm_crtc.atomic_get_property and
+	 * &drm_crtc.atomic_set_property hooks क्रम &काष्ठा drm_crtc. For
+	 * &काष्ठा drm_plane the hooks are &drm_plane_funcs.atomic_get_property and
+	 * &drm_plane_funcs.atomic_set_property. And क्रम &काष्ठा drm_connector
 	 * the hooks are &drm_connector_funcs.atomic_get_property and
 	 * &drm_connector_funcs.atomic_set_property .
 	 *
@@ -99,37 +100,37 @@ struct drm_object_properties {
 	 * and drm_object_property_get_value() on mutable objects, i.e. those
 	 * without the DRM_MODE_PROP_IMMUTABLE flag set.
 	 */
-	uint64_t values[DRM_OBJECT_MAX_PROPERTY];
-};
+	uपूर्णांक64_t values[DRM_OBJECT_MAX_PROPERTY];
+पूर्ण;
 
-/* Avoid boilerplate.  I'm tired of typing. */
-#define DRM_ENUM_NAME_FN(fnname, list)				\
-	const char *fnname(int val)				\
-	{							\
-		int i;						\
-		for (i = 0; i < ARRAY_SIZE(list); i++) {	\
-			if (list[i].type == val)		\
-				return list[i].name;		\
-		}						\
-		return "(unknown)";				\
-	}
+/* Aव्योम boilerplate.  I'm tired of typing. */
+#घोषणा DRM_ENUM_NAME_FN(fnname, list)				\
+	स्थिर अक्षर *fnname(पूर्णांक val)				\
+	अणु							\
+		पूर्णांक i;						\
+		क्रम (i = 0; i < ARRAY_SIZE(list); i++) अणु	\
+			अगर (list[i].type == val)		\
+				वापस list[i].name;		\
+		पूर्ण						\
+		वापस "(unknown)";				\
+	पूर्ण
 
-struct drm_mode_object *drm_mode_object_find(struct drm_device *dev,
-					     struct drm_file *file_priv,
-					     uint32_t id, uint32_t type);
-void drm_mode_object_get(struct drm_mode_object *obj);
-void drm_mode_object_put(struct drm_mode_object *obj);
+काष्ठा drm_mode_object *drm_mode_object_find(काष्ठा drm_device *dev,
+					     काष्ठा drm_file *file_priv,
+					     uपूर्णांक32_t id, uपूर्णांक32_t type);
+व्योम drm_mode_object_get(काष्ठा drm_mode_object *obj);
+व्योम drm_mode_object_put(काष्ठा drm_mode_object *obj);
 
-int drm_object_property_set_value(struct drm_mode_object *obj,
-				  struct drm_property *property,
-				  uint64_t val);
-int drm_object_property_get_value(struct drm_mode_object *obj,
-				  struct drm_property *property,
-				  uint64_t *value);
+पूर्णांक drm_object_property_set_value(काष्ठा drm_mode_object *obj,
+				  काष्ठा drm_property *property,
+				  uपूर्णांक64_t val);
+पूर्णांक drm_object_property_get_value(काष्ठा drm_mode_object *obj,
+				  काष्ठा drm_property *property,
+				  uपूर्णांक64_t *value);
 
-void drm_object_attach_property(struct drm_mode_object *obj,
-				struct drm_property *property,
-				uint64_t init_val);
+व्योम drm_object_attach_property(काष्ठा drm_mode_object *obj,
+				काष्ठा drm_property *property,
+				uपूर्णांक64_t init_val);
 
-bool drm_mode_object_lease_required(uint32_t type);
-#endif
+bool drm_mode_object_lease_required(uपूर्णांक32_t type);
+#पूर्ण_अगर

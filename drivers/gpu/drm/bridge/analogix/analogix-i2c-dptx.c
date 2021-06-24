@@ -1,87 +1,88 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright(c) 2016, Analogix Semiconductor.
  *
  * Based on anx7808 driver obtained from chromeos with copyright:
  * Copyright(c) 2013, Google Inc.
  */
-#include <linux/regmap.h>
+#समावेश <linux/regmap.h>
 
-#include <drm/drm.h>
-#include <drm/drm_dp_helper.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm.h>
+#समावेश <drm/drm_dp_helper.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "analogix-i2c-dptx.h"
+#समावेश "analogix-i2c-dptx.h"
 
-#define AUX_WAIT_TIMEOUT_MS	15
-#define AUX_CH_BUFFER_SIZE	16
+#घोषणा AUX_WAIT_TIMEOUT_MS	15
+#घोषणा AUX_CH_BUFFER_SIZE	16
 
-static int anx_i2c_dp_clear_bits(struct regmap *map, u8 reg, u8 mask)
-{
-	return regmap_update_bits(map, reg, mask, 0);
-}
+अटल पूर्णांक anx_i2c_dp_clear_bits(काष्ठा regmap *map, u8 reg, u8 mask)
+अणु
+	वापस regmap_update_bits(map, reg, mask, 0);
+पूर्ण
 
-static bool anx_dp_aux_op_finished(struct regmap *map_dptx)
-{
-	unsigned int value;
-	int err;
+अटल bool anx_dp_aux_op_finished(काष्ठा regmap *map_dptx)
+अणु
+	अचिन्हित पूर्णांक value;
+	पूर्णांक err;
 
-	err = regmap_read(map_dptx, SP_DP_AUX_CH_CTRL2_REG, &value);
-	if (err < 0)
-		return false;
+	err = regmap_पढ़ो(map_dptx, SP_DP_AUX_CH_CTRL2_REG, &value);
+	अगर (err < 0)
+		वापस false;
 
-	return (value & SP_AUX_EN) == 0;
-}
+	वापस (value & SP_AUX_EN) == 0;
+पूर्ण
 
-static int anx_dp_aux_wait(struct regmap *map_dptx)
-{
-	unsigned long timeout;
-	unsigned int status;
-	int err;
+अटल पूर्णांक anx_dp_aux_रुको(काष्ठा regmap *map_dptx)
+अणु
+	अचिन्हित दीर्घ समयout;
+	अचिन्हित पूर्णांक status;
+	पूर्णांक err;
 
-	timeout = jiffies + msecs_to_jiffies(AUX_WAIT_TIMEOUT_MS) + 1;
+	समयout = jअगरfies + msecs_to_jअगरfies(AUX_WAIT_TIMEOUT_MS) + 1;
 
-	while (!anx_dp_aux_op_finished(map_dptx)) {
-		if (time_after(jiffies, timeout)) {
-			if (!anx_dp_aux_op_finished(map_dptx)) {
+	जबतक (!anx_dp_aux_op_finished(map_dptx)) अणु
+		अगर (समय_after(jअगरfies, समयout)) अणु
+			अगर (!anx_dp_aux_op_finished(map_dptx)) अणु
 				DRM_ERROR("Timed out waiting AUX to finish\n");
-				return -ETIMEDOUT;
-			}
+				वापस -ETIMEDOUT;
+			पूर्ण
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		usleep_range(1000, 2000);
-	}
+	पूर्ण
 
 	/* Read the AUX channel access status */
-	err = regmap_read(map_dptx, SP_AUX_CH_STATUS_REG, &status);
-	if (err < 0) {
+	err = regmap_पढ़ो(map_dptx, SP_AUX_CH_STATUS_REG, &status);
+	अगर (err < 0) अणु
 		DRM_ERROR("Failed to read from AUX channel: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (status & SP_AUX_STATUS) {
+	अगर (status & SP_AUX_STATUS) अणु
 		DRM_ERROR("Failed to wait for AUX channel (status: %02x)\n",
 			  status);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int anx_dp_aux_address(struct regmap *map_dptx, unsigned int addr)
-{
-	int err;
+अटल पूर्णांक anx_dp_aux_address(काष्ठा regmap *map_dptx, अचिन्हित पूर्णांक addr)
+अणु
+	पूर्णांक err;
 
-	err = regmap_write(map_dptx, SP_AUX_ADDR_7_0_REG, addr & 0xff);
-	if (err)
-		return err;
+	err = regmap_ग_लिखो(map_dptx, SP_AUX_ADDR_7_0_REG, addr & 0xff);
+	अगर (err)
+		वापस err;
 
-	err = regmap_write(map_dptx, SP_AUX_ADDR_15_8_REG,
+	err = regmap_ग_लिखो(map_dptx, SP_AUX_ADDR_15_8_REG,
 			   (addr & 0xff00) >> 8);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/*
 	 * DP AUX CH Address Register #2, only update bits[3:0]
@@ -92,74 +93,74 @@ static int anx_dp_aux_address(struct regmap *map_dptx, unsigned int addr)
 				 SP_AUX_ADDR_19_16_MASK,
 				 (addr & 0xf0000) >> 16);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-ssize_t anx_dp_aux_transfer(struct regmap *map_dptx,
-				struct drm_dp_aux_msg *msg)
-{
+sमाप_प्रकार anx_dp_aux_transfer(काष्ठा regmap *map_dptx,
+				काष्ठा drm_dp_aux_msg *msg)
+अणु
 	u8 ctrl1 = msg->request;
 	u8 ctrl2 = SP_AUX_EN;
 	u8 *buffer = msg->buffer;
-	int err;
+	पूर्णांक err;
 
 	/* The DP AUX transmit and receive buffer has 16 bytes. */
-	if (WARN_ON(msg->size > AUX_CH_BUFFER_SIZE))
-		return -E2BIG;
+	अगर (WARN_ON(msg->size > AUX_CH_BUFFER_SIZE))
+		वापस -E2BIG;
 
-	/* Zero-sized messages specify address-only transactions. */
-	if (msg->size < 1)
+	/* Zero-sized messages specअगरy address-only transactions. */
+	अगर (msg->size < 1)
 		ctrl2 |= SP_ADDR_ONLY;
-	else	/* For non-zero-sized set the length field. */
+	अन्यथा	/* For non-zero-sized set the length field. */
 		ctrl1 |= (msg->size - 1) << SP_AUX_LENGTH_SHIFT;
 
-	if ((msg->size > 0) && ((msg->request & DP_AUX_I2C_READ) == 0)) {
-		/* When WRITE | MOT write values to data buffer */
-		err = regmap_bulk_write(map_dptx,
+	अगर ((msg->size > 0) && ((msg->request & DP_AUX_I2C_READ) == 0)) अणु
+		/* When WRITE | MOT ग_लिखो values to data buffer */
+		err = regmap_bulk_ग_लिखो(map_dptx,
 					SP_DP_BUF_DATA0_REG, buffer,
 					msg->size);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	/* Write address and request */
 	err = anx_dp_aux_address(map_dptx, msg->address);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = regmap_write(map_dptx, SP_DP_AUX_CH_CTRL1_REG, ctrl1);
-	if (err)
-		return err;
+	err = regmap_ग_लिखो(map_dptx, SP_DP_AUX_CH_CTRL1_REG, ctrl1);
+	अगर (err)
+		वापस err;
 
 	/* Start transaction */
 	err = regmap_update_bits(map_dptx, SP_DP_AUX_CH_CTRL2_REG,
 				 SP_ADDR_ONLY | SP_AUX_EN, ctrl2);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = anx_dp_aux_wait(map_dptx);
-	if (err)
-		return err;
+	err = anx_dp_aux_रुको(map_dptx);
+	अगर (err)
+		वापस err;
 
 	msg->reply = DP_AUX_I2C_REPLY_ACK;
 
-	if ((msg->size > 0) && (msg->request & DP_AUX_I2C_READ)) {
+	अगर ((msg->size > 0) && (msg->request & DP_AUX_I2C_READ)) अणु
 		/* Read values from data buffer */
-		err = regmap_bulk_read(map_dptx,
+		err = regmap_bulk_पढ़ो(map_dptx,
 				       SP_DP_BUF_DATA0_REG, buffer,
 				       msg->size);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	err = anx_i2c_dp_clear_bits(map_dptx, SP_DP_AUX_CH_CTRL2_REG,
 				    SP_ADDR_ONLY);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return msg->size;
-}
+	वापस msg->size;
+पूर्ण
 EXPORT_SYMBOL_GPL(anx_dp_aux_transfer);

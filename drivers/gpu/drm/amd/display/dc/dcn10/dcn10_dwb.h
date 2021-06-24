@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2012-17 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,36 +22,36 @@
  * Authors: AMD
  *
  */
-#ifndef __DC_DWBC_DCN10_H__
-#define __DC_DWBC_DCN10_H__
+#अगर_अघोषित __DC_DWBC_DCN10_H__
+#घोषणा __DC_DWBC_DCN10_H__
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
 
 /* DCN */
-#define BASE_INNER(seg) \
+#घोषणा BASE_INNER(seg) \
 	DCE_BASE__INST0_SEG ## seg
 
-#define BASE(seg) \
+#घोषणा BASE(seg) \
 	BASE_INNER(seg)
 
-#define SR(reg_name)\
+#घोषणा SR(reg_name)\
 		.reg_name = BASE(mm ## reg_name ## _BASE_IDX) +  \
 					mm ## reg_name
 
-#define SRI(reg_name, block, id)\
+#घोषणा SRI(reg_name, block, id)\
 	.reg_name = BASE(mm ## block ## id ## _ ## reg_name ## _BASE_IDX) + \
 					mm ## block ## id ## _ ## reg_name
 
 
-#define SRII(reg_name, block, id)\
+#घोषणा SRII(reg_name, block, id)\
 	.reg_name[id] = BASE(mm ## block ## id ## _ ## reg_name ## _BASE_IDX) + \
 					mm ## block ## id ## _ ## reg_name
 
-#define SF(reg_name, field_name, post_fix)\
+#घोषणा SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
 
-#define DWBC_COMMON_REG_LIST_DCN1_0(inst) \
+#घोषणा DWBC_COMMON_REG_LIST_DCN1_0(inst) \
 	SRI(WB_ENABLE, CNV, inst),\
 	SRI(WB_EC_CONFIG, CNV, inst),\
 	SRI(CNV_MODE, CNV, inst),\
@@ -83,7 +84,7 @@
 	SRI(MCIF_WB_BUF_LUMA_SIZE, MCIF_WB, inst),\
 	SRI(MCIF_WB_BUF_CHROMA_SIZE, MCIF_WB, inst)
 
-#define DWBC_COMMON_MASK_SH_LIST_DCN1_0(mask_sh) \
+#घोषणा DWBC_COMMON_MASK_SH_LIST_DCN1_0(mask_sh) \
 	SF(CNV0_WB_ENABLE, WB_ENABLE, mask_sh),\
 	SF(CNV0_WB_EC_CONFIG, DISPCLK_R_WB_GATE_DIS, mask_sh),\
 	SF(CNV0_WB_EC_CONFIG, DISPCLK_G_WB_GATE_DIS, mask_sh),\
@@ -147,7 +148,7 @@
 	SF(MCIF_WB0_MCIF_WB_BUF_LUMA_SIZE, MCIF_WB_BUF_LUMA_SIZE, mask_sh),\
 	SF(MCIF_WB0_MCIF_WB_BUF_CHROMA_SIZE, MCIF_WB_BUF_CHROMA_SIZE, mask_sh)
 
-#define DWBC_REG_FIELD_LIST(type) \
+#घोषणा DWBC_REG_FIELD_LIST(type) \
 	type WB_ENABLE;\
 	type DISPCLK_R_WB_GATE_DIS;\
 	type DISPCLK_G_WB_GATE_DIS;\
@@ -213,59 +214,59 @@
 	type MCIF_WB_BUF_LUMA_SIZE;\
 	type MCIF_WB_BUF_CHROMA_SIZE;\
 
-struct dcn10_dwbc_registers {
-	uint32_t WB_ENABLE;
-	uint32_t WB_EC_CONFIG;
-	uint32_t CNV_MODE;
-	uint32_t WB_SOFT_RESET;
-	uint32_t MCIF_WB_BUFMGR_SW_CONTROL;
-	uint32_t MCIF_WB_BUF_PITCH;
-	uint32_t MCIF_WB_ARBITRATION_CONTROL;
-	uint32_t MCIF_WB_SCLK_CHANGE;
-	uint32_t MCIF_WB_BUF_1_ADDR_Y;
-	uint32_t MCIF_WB_BUF_1_ADDR_Y_OFFSET;
-	uint32_t MCIF_WB_BUF_1_ADDR_C;
-	uint32_t MCIF_WB_BUF_1_ADDR_C_OFFSET;
-	uint32_t MCIF_WB_BUF_2_ADDR_Y;
-	uint32_t MCIF_WB_BUF_2_ADDR_Y_OFFSET;
-	uint32_t MCIF_WB_BUF_2_ADDR_C;
-	uint32_t MCIF_WB_BUF_2_ADDR_C_OFFSET;
-	uint32_t MCIF_WB_BUF_3_ADDR_Y;
-	uint32_t MCIF_WB_BUF_3_ADDR_Y_OFFSET;
-	uint32_t MCIF_WB_BUF_3_ADDR_C;
-	uint32_t MCIF_WB_BUF_3_ADDR_C_OFFSET;
-	uint32_t MCIF_WB_BUF_4_ADDR_Y;
-	uint32_t MCIF_WB_BUF_4_ADDR_Y_OFFSET;
-	uint32_t MCIF_WB_BUF_4_ADDR_C;
-	uint32_t MCIF_WB_BUF_4_ADDR_C_OFFSET;
-	uint32_t MCIF_WB_BUFMGR_VCE_CONTROL;
-	uint32_t MCIF_WB_NB_PSTATE_LATENCY_WATERMARK;
-	uint32_t MCIF_WB_NB_PSTATE_CONTROL;
-	uint32_t MCIF_WB_WATERMARK;
-	uint32_t MCIF_WB_WARM_UP_CNTL;
-	uint32_t MCIF_WB_BUF_LUMA_SIZE;
-	uint32_t MCIF_WB_BUF_CHROMA_SIZE;
-};
-struct dcn10_dwbc_mask {
-	DWBC_REG_FIELD_LIST(uint32_t)
-};
-struct dcn10_dwbc_shift {
-	DWBC_REG_FIELD_LIST(uint8_t)
-};
-struct dcn10_dwbc {
-	struct dwbc base;
-	const struct dcn10_dwbc_registers *dwbc_regs;
-	const struct dcn10_dwbc_shift *dwbc_shift;
-	const struct dcn10_dwbc_mask *dwbc_mask;
-};
+काष्ठा dcn10_dwbc_रेजिस्टरs अणु
+	uपूर्णांक32_t WB_ENABLE;
+	uपूर्णांक32_t WB_EC_CONFIG;
+	uपूर्णांक32_t CNV_MODE;
+	uपूर्णांक32_t WB_SOFT_RESET;
+	uपूर्णांक32_t MCIF_WB_BUFMGR_SW_CONTROL;
+	uपूर्णांक32_t MCIF_WB_BUF_PITCH;
+	uपूर्णांक32_t MCIF_WB_ARBITRATION_CONTROL;
+	uपूर्णांक32_t MCIF_WB_SCLK_CHANGE;
+	uपूर्णांक32_t MCIF_WB_BUF_1_ADDR_Y;
+	uपूर्णांक32_t MCIF_WB_BUF_1_ADDR_Y_OFFSET;
+	uपूर्णांक32_t MCIF_WB_BUF_1_ADDR_C;
+	uपूर्णांक32_t MCIF_WB_BUF_1_ADDR_C_OFFSET;
+	uपूर्णांक32_t MCIF_WB_BUF_2_ADDR_Y;
+	uपूर्णांक32_t MCIF_WB_BUF_2_ADDR_Y_OFFSET;
+	uपूर्णांक32_t MCIF_WB_BUF_2_ADDR_C;
+	uपूर्णांक32_t MCIF_WB_BUF_2_ADDR_C_OFFSET;
+	uपूर्णांक32_t MCIF_WB_BUF_3_ADDR_Y;
+	uपूर्णांक32_t MCIF_WB_BUF_3_ADDR_Y_OFFSET;
+	uपूर्णांक32_t MCIF_WB_BUF_3_ADDR_C;
+	uपूर्णांक32_t MCIF_WB_BUF_3_ADDR_C_OFFSET;
+	uपूर्णांक32_t MCIF_WB_BUF_4_ADDR_Y;
+	uपूर्णांक32_t MCIF_WB_BUF_4_ADDR_Y_OFFSET;
+	uपूर्णांक32_t MCIF_WB_BUF_4_ADDR_C;
+	uपूर्णांक32_t MCIF_WB_BUF_4_ADDR_C_OFFSET;
+	uपूर्णांक32_t MCIF_WB_BUFMGR_VCE_CONTROL;
+	uपूर्णांक32_t MCIF_WB_NB_PSTATE_LATENCY_WATERMARK;
+	uपूर्णांक32_t MCIF_WB_NB_PSTATE_CONTROL;
+	uपूर्णांक32_t MCIF_WB_WATERMARK;
+	uपूर्णांक32_t MCIF_WB_WARM_UP_CNTL;
+	uपूर्णांक32_t MCIF_WB_BUF_LUMA_SIZE;
+	uपूर्णांक32_t MCIF_WB_BUF_CHROMA_SIZE;
+पूर्ण;
+काष्ठा dcn10_dwbc_mask अणु
+	DWBC_REG_FIELD_LIST(uपूर्णांक32_t)
+पूर्ण;
+काष्ठा dcn10_dwbc_shअगरt अणु
+	DWBC_REG_FIELD_LIST(uपूर्णांक8_t)
+पूर्ण;
+काष्ठा dcn10_dwbc अणु
+	काष्ठा dwbc base;
+	स्थिर काष्ठा dcn10_dwbc_रेजिस्टरs *dwbc_regs;
+	स्थिर काष्ठा dcn10_dwbc_shअगरt *dwbc_shअगरt;
+	स्थिर काष्ठा dcn10_dwbc_mask *dwbc_mask;
+पूर्ण;
 
-void dcn10_dwbc_construct(struct dcn10_dwbc *dwbc10,
-		struct dc_context *ctx,
-		const struct dcn10_dwbc_registers *dwbc_regs,
-		const struct dcn10_dwbc_shift *dwbc_shift,
-		const struct dcn10_dwbc_mask *dwbc_mask,
-		int inst);
+व्योम dcn10_dwbc_स्थिरruct(काष्ठा dcn10_dwbc *dwbc10,
+		काष्ठा dc_context *ctx,
+		स्थिर काष्ठा dcn10_dwbc_रेजिस्टरs *dwbc_regs,
+		स्थिर काष्ठा dcn10_dwbc_shअगरt *dwbc_shअगरt,
+		स्थिर काष्ठा dcn10_dwbc_mask *dwbc_mask,
+		पूर्णांक inst);
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

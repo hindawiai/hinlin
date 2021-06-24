@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  * Xen balloon functionality
  */
-#ifndef _XEN_BALLOON_H
-#define _XEN_BALLOON_H
+#अगर_अघोषित _XEN_BALLOON_H
+#घोषणा _XEN_BALLOON_H
 
-#define RETRY_UNLIMITED	0
+#घोषणा RETRY_UNLIMITED	0
 
-struct balloon_stats {
-	/* We aim for 'current allocation' == 'target allocation'. */
-	unsigned long current_pages;
-	unsigned long target_pages;
-	unsigned long target_unpopulated;
+काष्ठा balloon_stats अणु
+	/* We aim क्रम 'current allocation' == 'target allocation'. */
+	अचिन्हित दीर्घ current_pages;
+	अचिन्हित दीर्घ target_pages;
+	अचिन्हित दीर्घ target_unpopulated;
 	/* Number of pages in high- and low-memory balloons. */
-	unsigned long balloon_low;
-	unsigned long balloon_high;
-	unsigned long total_pages;
-	unsigned long schedule_delay;
-	unsigned long max_schedule_delay;
-	unsigned long retry_count;
-	unsigned long max_retry_count;
-};
+	अचिन्हित दीर्घ balloon_low;
+	अचिन्हित दीर्घ balloon_high;
+	अचिन्हित दीर्घ total_pages;
+	अचिन्हित दीर्घ schedule_delay;
+	अचिन्हित दीर्घ max_schedule_delay;
+	अचिन्हित दीर्घ retry_count;
+	अचिन्हित दीर्घ max_retry_count;
+पूर्ण;
 
-extern struct balloon_stats balloon_stats;
+बाह्य काष्ठा balloon_stats balloon_stats;
 
-void balloon_set_new_target(unsigned long target);
+व्योम balloon_set_new_target(अचिन्हित दीर्घ target);
 
-int alloc_xenballooned_pages(int nr_pages, struct page **pages);
-void free_xenballooned_pages(int nr_pages, struct page **pages);
+पूर्णांक alloc_xenballooned_pages(पूर्णांक nr_pages, काष्ठा page **pages);
+व्योम मुक्त_xenballooned_pages(पूर्णांक nr_pages, काष्ठा page **pages);
 
-#ifdef CONFIG_XEN_BALLOON
-void xen_balloon_init(void);
-#else
-static inline void xen_balloon_init(void)
-{
-}
-#endif
+#अगर_घोषित CONFIG_XEN_BALLOON
+व्योम xen_balloon_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम xen_balloon_init(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif	/* _XEN_BALLOON_H */
+#पूर्ण_अगर	/* _XEN_BALLOON_H */

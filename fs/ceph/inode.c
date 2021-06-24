@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ceph/ceph_debug.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/ceph/ceph_debug.h>
 
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/uaccess.h>
-#include <linux/kernel.h>
-#include <linux/writeback.h>
-#include <linux/vmalloc.h>
-#include <linux/xattr.h>
-#include <linux/posix_acl.h>
-#include <linux/random.h>
-#include <linux/sort.h>
-#include <linux/iversion.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/iversion.h>
 
-#include "super.h"
-#include "mds_client.h"
-#include "cache.h"
-#include <linux/ceph/decode.h>
+#समावेश "super.h"
+#समावेश "mds_client.h"
+#समावेश "cache.h"
+#समावेश <linux/ceph/decode.h>
 
 /*
  * Ceph inode operations
  *
  * Implement basic inode helpers (get, alloc) and inode ops (getattr,
- * setattr, etc.), xattr helpers, and helpers for assimilating
- * metadata returned by the MDS into our cache.
+ * setattr, etc.), xattr helpers, and helpers क्रम assimilating
+ * metadata वापसed by the MDS पूर्णांकo our cache.
  *
- * Also define helpers for doing asynchronous writeback, invalidation,
- * and truncation for the benefit of those who can't afford to block
+ * Also define helpers क्रम करोing asynchronous ग_लिखोback, invalidation,
+ * and truncation क्रम the benefit of those who can't afक्रमd to block
  * (typically because they are in the message handler path).
  */
 
-static const struct inode_operations ceph_symlink_iops;
+अटल स्थिर काष्ठा inode_operations ceph_symlink_iops;
 
-static void ceph_inode_work(struct work_struct *work);
+अटल व्योम ceph_inode_work(काष्ठा work_काष्ठा *work);
 
 /*
  * find or create an inode, given the ceph ino number
  */
-static int ceph_set_ino_cb(struct inode *inode, void *data)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	struct ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
+अटल पूर्णांक ceph_set_ino_cb(काष्ठा inode *inode, व्योम *data)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	काष्ठा ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
 
-	ci->i_vino = *(struct ceph_vino *)data;
+	ci->i_vino = *(काष्ठा ceph_vino *)data;
 	inode->i_ino = ceph_vino_to_ino_t(ci->i_vino);
 	inode_set_iversion_raw(inode, 0);
 	percpu_counter_inc(&mdsc->metric.total_inodes);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct inode *ceph_get_inode(struct super_block *sb, struct ceph_vino vino)
-{
-	struct inode *inode;
+काष्ठा inode *ceph_get_inode(काष्ठा super_block *sb, काष्ठा ceph_vino vino)
+अणु
+	काष्ठा inode *inode;
 
-	if (ceph_vino_is_reserved(vino))
-		return ERR_PTR(-EREMOTEIO);
+	अगर (ceph_vino_is_reserved(vino))
+		वापस ERR_PTR(-EREMOTEIO);
 
-	inode = iget5_locked(sb, (unsigned long)vino.ino, ceph_ino_compare,
+	inode = iget5_locked(sb, (अचिन्हित दीर्घ)vino.ino, ceph_ino_compare,
 			     ceph_set_ino_cb, &vino);
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
 
-	dout("get_inode on %llu=%llx.%llx got %p new %d\n", ceph_present_inode(inode),
+	करोut("get_inode on %llu=%llx.%llx got %p new %d\n", ceph_present_inode(inode),
 	     ceph_vinop(inode), inode, !!(inode->i_state & I_NEW));
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
 /*
- * get/constuct snapdir inode for a given directory
+ * get/स्थिरuct snapdir inode क्रम a given directory
  */
-struct inode *ceph_get_snapdir(struct inode *parent)
-{
-	struct ceph_vino vino = {
+काष्ठा inode *ceph_get_snapdir(काष्ठा inode *parent)
+अणु
+	काष्ठा ceph_vino vino = अणु
 		.ino = ceph_ino(parent),
-		.snap = CEPH_SNAPDIR,
-	};
-	struct inode *inode = ceph_get_inode(parent->i_sb, vino);
-	struct ceph_inode_info *ci = ceph_inode(inode);
+		.snap = CEPH_SNAPसूची,
+	पूर्ण;
+	काष्ठा inode *inode = ceph_get_inode(parent->i_sb, vino);
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
 
-	if (IS_ERR(inode))
-		return inode;
+	अगर (IS_ERR(inode))
+		वापस inode;
 
-	if (!S_ISDIR(parent->i_mode)) {
+	अगर (!S_ISसूची(parent->i_mode)) अणु
 		pr_warn_once("bad snapdir parent type (mode=0%o)\n",
 			     parent->i_mode);
-		return ERR_PTR(-ENOTDIR);
-	}
+		वापस ERR_PTR(-ENOTसूची);
+	पूर्ण
 
-	if (!(inode->i_state & I_NEW) && !S_ISDIR(inode->i_mode)) {
+	अगर (!(inode->i_state & I_NEW) && !S_ISसूची(inode->i_mode)) अणु
 		pr_warn_once("bad snapdir inode type (mode=0%o)\n",
 			     inode->i_mode);
-		return ERR_PTR(-ENOTDIR);
-	}
+		वापस ERR_PTR(-ENOTसूची);
+	पूर्ण
 
 	inode->i_mode = parent->i_mode;
 	inode->i_uid = parent->i_uid;
 	inode->i_gid = parent->i_gid;
-	inode->i_mtime = parent->i_mtime;
-	inode->i_ctime = parent->i_ctime;
-	inode->i_atime = parent->i_atime;
+	inode->i_mसमय = parent->i_mसमय;
+	inode->i_स_समय = parent->i_स_समय;
+	inode->i_aसमय = parent->i_aसमय;
 	ci->i_rbytes = 0;
-	ci->i_btime = ceph_inode(parent)->i_btime;
+	ci->i_bसमय = ceph_inode(parent)->i_bसमय;
 
-	if (inode->i_state & I_NEW) {
+	अगर (inode->i_state & I_NEW) अणु
 		inode->i_op = &ceph_snapdir_iops;
 		inode->i_fop = &ceph_snapdir_fops;
-		ci->i_snap_caps = CEPH_CAP_PIN; /* so we can open */
+		ci->i_snap_caps = CEPH_CAP_PIN; /* so we can खोलो */
 		unlock_new_inode(inode);
-	}
+	पूर्ण
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-const struct inode_operations ceph_file_iops = {
+स्थिर काष्ठा inode_operations ceph_file_iops = अणु
 	.permission = ceph_permission,
 	.setattr = ceph_setattr,
 	.getattr = ceph_getattr,
 	.listxattr = ceph_listxattr,
 	.get_acl = ceph_get_acl,
 	.set_acl = ceph_set_acl,
-};
+पूर्ण;
 
 
 /*
  * We use a 'frag tree' to keep track of the MDS's directory fragments
- * for a given inode (usually there is just a single fragment).  We
+ * क्रम a given inode (usually there is just a single fragment).  We
  * need to know when a child frag is delegated to a new MDS, or when
  * it is flagged as replicated, so we can direct our requests
  * accordingly.
@@ -136,30 +137,30 @@ const struct inode_operations ceph_file_iops = {
 /*
  * find/create a frag in the tree
  */
-static struct ceph_inode_frag *__get_or_create_frag(struct ceph_inode_info *ci,
+अटल काष्ठा ceph_inode_frag *__get_or_create_frag(काष्ठा ceph_inode_info *ci,
 						    u32 f)
-{
-	struct rb_node **p;
-	struct rb_node *parent = NULL;
-	struct ceph_inode_frag *frag;
-	int c;
+अणु
+	काष्ठा rb_node **p;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा ceph_inode_frag *frag;
+	पूर्णांक c;
 
 	p = &ci->i_fragtree.rb_node;
-	while (*p) {
+	जबतक (*p) अणु
 		parent = *p;
-		frag = rb_entry(parent, struct ceph_inode_frag, node);
+		frag = rb_entry(parent, काष्ठा ceph_inode_frag, node);
 		c = ceph_frag_compare(f, frag->frag);
-		if (c < 0)
+		अगर (c < 0)
 			p = &(*p)->rb_left;
-		else if (c > 0)
+		अन्यथा अगर (c > 0)
 			p = &(*p)->rb_right;
-		else
-			return frag;
-	}
+		अन्यथा
+			वापस frag;
+	पूर्ण
 
-	frag = kmalloc(sizeof(*frag), GFP_NOFS);
-	if (!frag)
-		return ERR_PTR(-ENOMEM);
+	frag = kदो_स्मृति(माप(*frag), GFP_NOFS);
+	अगर (!frag)
+		वापस ERR_PTR(-ENOMEM);
 
 	frag->frag = f;
 	frag->split_by = 0;
@@ -169,314 +170,314 @@ static struct ceph_inode_frag *__get_or_create_frag(struct ceph_inode_info *ci,
 	rb_link_node(&frag->node, parent, p);
 	rb_insert_color(&frag->node, &ci->i_fragtree);
 
-	dout("get_or_create_frag added %llx.%llx frag %x\n",
+	करोut("get_or_create_frag added %llx.%llx frag %x\n",
 	     ceph_vinop(&ci->vfs_inode), f);
-	return frag;
-}
+	वापस frag;
+पूर्ण
 
 /*
- * find a specific frag @f
+ * find a specअगरic frag @f
  */
-struct ceph_inode_frag *__ceph_find_frag(struct ceph_inode_info *ci, u32 f)
-{
-	struct rb_node *n = ci->i_fragtree.rb_node;
+काष्ठा ceph_inode_frag *__ceph_find_frag(काष्ठा ceph_inode_info *ci, u32 f)
+अणु
+	काष्ठा rb_node *n = ci->i_fragtree.rb_node;
 
-	while (n) {
-		struct ceph_inode_frag *frag =
-			rb_entry(n, struct ceph_inode_frag, node);
-		int c = ceph_frag_compare(f, frag->frag);
-		if (c < 0)
+	जबतक (n) अणु
+		काष्ठा ceph_inode_frag *frag =
+			rb_entry(n, काष्ठा ceph_inode_frag, node);
+		पूर्णांक c = ceph_frag_compare(f, frag->frag);
+		अगर (c < 0)
 			n = n->rb_left;
-		else if (c > 0)
+		अन्यथा अगर (c > 0)
 			n = n->rb_right;
-		else
-			return frag;
-	}
-	return NULL;
-}
+		अन्यथा
+			वापस frag;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * Choose frag containing the given value @v.  If @pfrag is
- * specified, copy the frag delegation info to the caller if
+ * specअगरied, copy the frag delegation info to the caller अगर
  * it is present.
  */
-static u32 __ceph_choose_frag(struct ceph_inode_info *ci, u32 v,
-			      struct ceph_inode_frag *pfrag, int *found)
-{
+अटल u32 __ceph_choose_frag(काष्ठा ceph_inode_info *ci, u32 v,
+			      काष्ठा ceph_inode_frag *pfrag, पूर्णांक *found)
+अणु
 	u32 t = ceph_frag_make(0, 0);
-	struct ceph_inode_frag *frag;
-	unsigned nway, i;
+	काष्ठा ceph_inode_frag *frag;
+	अचिन्हित nway, i;
 	u32 n;
 
-	if (found)
+	अगर (found)
 		*found = 0;
 
-	while (1) {
+	जबतक (1) अणु
 		WARN_ON(!ceph_frag_contains_value(t, v));
 		frag = __ceph_find_frag(ci, t);
-		if (!frag)
-			break; /* t is a leaf */
-		if (frag->split_by == 0) {
-			if (pfrag)
-				memcpy(pfrag, frag, sizeof(*pfrag));
-			if (found)
+		अगर (!frag)
+			अवरोध; /* t is a leaf */
+		अगर (frag->split_by == 0) अणु
+			अगर (pfrag)
+				स_नकल(pfrag, frag, माप(*pfrag));
+			अगर (found)
 				*found = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* choose child */
 		nway = 1 << frag->split_by;
-		dout("choose_frag(%x) %x splits by %d (%d ways)\n", v, t,
+		करोut("choose_frag(%x) %x splits by %d (%d ways)\n", v, t,
 		     frag->split_by, nway);
-		for (i = 0; i < nway; i++) {
+		क्रम (i = 0; i < nway; i++) अणु
 			n = ceph_frag_make_child(t, frag->split_by, i);
-			if (ceph_frag_contains_value(n, v)) {
+			अगर (ceph_frag_contains_value(n, v)) अणु
 				t = n;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		BUG_ON(i == nway);
-	}
-	dout("choose_frag(%x) = %x\n", v, t);
+	पूर्ण
+	करोut("choose_frag(%x) = %x\n", v, t);
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-u32 ceph_choose_frag(struct ceph_inode_info *ci, u32 v,
-		     struct ceph_inode_frag *pfrag, int *found)
-{
+u32 ceph_choose_frag(काष्ठा ceph_inode_info *ci, u32 v,
+		     काष्ठा ceph_inode_frag *pfrag, पूर्णांक *found)
+अणु
 	u32 ret;
 	mutex_lock(&ci->i_fragtree_mutex);
 	ret = __ceph_choose_frag(ci, v, pfrag, found);
 	mutex_unlock(&ci->i_fragtree_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Process dirfrag (delegation) info from the mds.  Include leaf
- * fragment in tree ONLY if ndist > 0.  Otherwise, only
+ * fragment in tree ONLY अगर ndist > 0.  Otherwise, only
  * branches/splits are included in i_fragtree)
  */
-static int ceph_fill_dirfrag(struct inode *inode,
-			     struct ceph_mds_reply_dirfrag *dirinfo)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	struct ceph_inode_frag *frag;
+अटल पूर्णांक ceph_fill_dirfrag(काष्ठा inode *inode,
+			     काष्ठा ceph_mds_reply_dirfrag *dirinfo)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	काष्ठा ceph_inode_frag *frag;
 	u32 id = le32_to_cpu(dirinfo->frag);
-	int mds = le32_to_cpu(dirinfo->auth);
-	int ndist = le32_to_cpu(dirinfo->ndist);
-	int diri_auth = -1;
-	int i;
-	int err = 0;
+	पूर्णांक mds = le32_to_cpu(dirinfo->auth);
+	पूर्णांक ndist = le32_to_cpu(dirinfo->ndist);
+	पूर्णांक diri_auth = -1;
+	पूर्णांक i;
+	पूर्णांक err = 0;
 
 	spin_lock(&ci->i_ceph_lock);
-	if (ci->i_auth_cap)
+	अगर (ci->i_auth_cap)
 		diri_auth = ci->i_auth_cap->mds;
 	spin_unlock(&ci->i_ceph_lock);
 
-	if (mds == -1) /* CDIR_AUTH_PARENT */
+	अगर (mds == -1) /* Cसूची_AUTH_PARENT */
 		mds = diri_auth;
 
 	mutex_lock(&ci->i_fragtree_mutex);
-	if (ndist == 0 && mds == diri_auth) {
+	अगर (ndist == 0 && mds == diri_auth) अणु
 		/* no delegation info needed. */
 		frag = __ceph_find_frag(ci, id);
-		if (!frag)
-			goto out;
-		if (frag->split_by == 0) {
-			/* tree leaf, remove */
-			dout("fill_dirfrag removed %llx.%llx frag %x"
+		अगर (!frag)
+			जाओ out;
+		अगर (frag->split_by == 0) अणु
+			/* tree leaf, हटाओ */
+			करोut("fill_dirfrag removed %llx.%llx frag %x"
 			     " (no ref)\n", ceph_vinop(inode), id);
 			rb_erase(&frag->node, &ci->i_fragtree);
-			kfree(frag);
-		} else {
+			kमुक्त(frag);
+		पूर्ण अन्यथा अणु
 			/* tree branch, keep and clear */
-			dout("fill_dirfrag cleared %llx.%llx frag %x"
+			करोut("fill_dirfrag cleared %llx.%llx frag %x"
 			     " referral\n", ceph_vinop(inode), id);
 			frag->mds = -1;
 			frag->ndist = 0;
-		}
-		goto out;
-	}
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
 
 	/* find/add this frag to store mds delegation info */
 	frag = __get_or_create_frag(ci, id);
-	if (IS_ERR(frag)) {
-		/* this is not the end of the world; we can continue
+	अगर (IS_ERR(frag)) अणु
+		/* this is not the end of the world; we can जारी
 		   with bad/inaccurate delegation info */
 		pr_err("fill_dirfrag ENOMEM on mds ref %llx.%llx fg %x\n",
 		       ceph_vinop(inode), le32_to_cpu(dirinfo->frag));
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	frag->mds = mds;
-	frag->ndist = min_t(u32, ndist, CEPH_MAX_DIRFRAG_REP);
-	for (i = 0; i < frag->ndist; i++)
+	frag->ndist = min_t(u32, ndist, CEPH_MAX_सूचीFRAG_REP);
+	क्रम (i = 0; i < frag->ndist; i++)
 		frag->dist[i] = le32_to_cpu(dirinfo->dist[i]);
-	dout("fill_dirfrag %llx.%llx frag %x ndist=%d\n",
+	करोut("fill_dirfrag %llx.%llx frag %x ndist=%d\n",
 	     ceph_vinop(inode), frag->frag, frag->ndist);
 
 out:
 	mutex_unlock(&ci->i_fragtree_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int frag_tree_split_cmp(const void *l, const void *r)
-{
-	struct ceph_frag_tree_split *ls = (struct ceph_frag_tree_split*)l;
-	struct ceph_frag_tree_split *rs = (struct ceph_frag_tree_split*)r;
-	return ceph_frag_compare(le32_to_cpu(ls->frag),
+अटल पूर्णांक frag_tree_split_cmp(स्थिर व्योम *l, स्थिर व्योम *r)
+अणु
+	काष्ठा ceph_frag_tree_split *ls = (काष्ठा ceph_frag_tree_split*)l;
+	काष्ठा ceph_frag_tree_split *rs = (काष्ठा ceph_frag_tree_split*)r;
+	वापस ceph_frag_compare(le32_to_cpu(ls->frag),
 				 le32_to_cpu(rs->frag));
-}
+पूर्ण
 
-static bool is_frag_child(u32 f, struct ceph_inode_frag *frag)
-{
-	if (!frag)
-		return f == ceph_frag_make(0, 0);
-	if (ceph_frag_bits(f) != ceph_frag_bits(frag->frag) + frag->split_by)
-		return false;
-	return ceph_frag_contains_value(frag->frag, ceph_frag_value(f));
-}
+अटल bool is_frag_child(u32 f, काष्ठा ceph_inode_frag *frag)
+अणु
+	अगर (!frag)
+		वापस f == ceph_frag_make(0, 0);
+	अगर (ceph_frag_bits(f) != ceph_frag_bits(frag->frag) + frag->split_by)
+		वापस false;
+	वापस ceph_frag_contains_value(frag->frag, ceph_frag_value(f));
+पूर्ण
 
-static int ceph_fill_fragtree(struct inode *inode,
-			      struct ceph_frag_tree_head *fragtree,
-			      struct ceph_mds_reply_dirfrag *dirinfo)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	struct ceph_inode_frag *frag, *prev_frag = NULL;
-	struct rb_node *rb_node;
-	unsigned i, split_by, nsplits;
+अटल पूर्णांक ceph_fill_fragtree(काष्ठा inode *inode,
+			      काष्ठा ceph_frag_tree_head *fragtree,
+			      काष्ठा ceph_mds_reply_dirfrag *dirinfo)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	काष्ठा ceph_inode_frag *frag, *prev_frag = शून्य;
+	काष्ठा rb_node *rb_node;
+	अचिन्हित i, split_by, nsplits;
 	u32 id;
 	bool update = false;
 
 	mutex_lock(&ci->i_fragtree_mutex);
 	nsplits = le32_to_cpu(fragtree->nsplits);
-	if (nsplits != ci->i_fragtree_nsplits) {
+	अगर (nsplits != ci->i_fragtree_nsplits) अणु
 		update = true;
-	} else if (nsplits) {
-		i = prandom_u32() % nsplits;
+	पूर्ण अन्यथा अगर (nsplits) अणु
+		i = pअक्रमom_u32() % nsplits;
 		id = le32_to_cpu(fragtree->splits[i].frag);
-		if (!__ceph_find_frag(ci, id))
+		अगर (!__ceph_find_frag(ci, id))
 			update = true;
-	} else if (!RB_EMPTY_ROOT(&ci->i_fragtree)) {
+	पूर्ण अन्यथा अगर (!RB_EMPTY_ROOT(&ci->i_fragtree)) अणु
 		rb_node = rb_first(&ci->i_fragtree);
-		frag = rb_entry(rb_node, struct ceph_inode_frag, node);
-		if (frag->frag != ceph_frag_make(0, 0) || rb_next(rb_node))
+		frag = rb_entry(rb_node, काष्ठा ceph_inode_frag, node);
+		अगर (frag->frag != ceph_frag_make(0, 0) || rb_next(rb_node))
 			update = true;
-	}
-	if (!update && dirinfo) {
+	पूर्ण
+	अगर (!update && dirinfo) अणु
 		id = le32_to_cpu(dirinfo->frag);
-		if (id != __ceph_choose_frag(ci, id, NULL, NULL))
+		अगर (id != __ceph_choose_frag(ci, id, शून्य, शून्य))
 			update = true;
-	}
-	if (!update)
-		goto out_unlock;
+	पूर्ण
+	अगर (!update)
+		जाओ out_unlock;
 
-	if (nsplits > 1) {
-		sort(fragtree->splits, nsplits, sizeof(fragtree->splits[0]),
-		     frag_tree_split_cmp, NULL);
-	}
+	अगर (nsplits > 1) अणु
+		sort(fragtree->splits, nsplits, माप(fragtree->splits[0]),
+		     frag_tree_split_cmp, शून्य);
+	पूर्ण
 
-	dout("fill_fragtree %llx.%llx\n", ceph_vinop(inode));
+	करोut("fill_fragtree %llx.%llx\n", ceph_vinop(inode));
 	rb_node = rb_first(&ci->i_fragtree);
-	for (i = 0; i < nsplits; i++) {
+	क्रम (i = 0; i < nsplits; i++) अणु
 		id = le32_to_cpu(fragtree->splits[i].frag);
 		split_by = le32_to_cpu(fragtree->splits[i].by);
-		if (split_by == 0 || ceph_frag_bits(id) + split_by > 24) {
+		अगर (split_by == 0 || ceph_frag_bits(id) + split_by > 24) अणु
 			pr_err("fill_fragtree %llx.%llx invalid split %d/%u, "
 			       "frag %x split by %d\n", ceph_vinop(inode),
 			       i, nsplits, id, split_by);
-			continue;
-		}
-		frag = NULL;
-		while (rb_node) {
-			frag = rb_entry(rb_node, struct ceph_inode_frag, node);
-			if (ceph_frag_compare(frag->frag, id) >= 0) {
-				if (frag->frag != id)
-					frag = NULL;
-				else
+			जारी;
+		पूर्ण
+		frag = शून्य;
+		जबतक (rb_node) अणु
+			frag = rb_entry(rb_node, काष्ठा ceph_inode_frag, node);
+			अगर (ceph_frag_compare(frag->frag, id) >= 0) अणु
+				अगर (frag->frag != id)
+					frag = शून्य;
+				अन्यथा
 					rb_node = rb_next(rb_node);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			rb_node = rb_next(rb_node);
 			/* delete stale split/leaf node */
-			if (frag->split_by > 0 ||
-			    !is_frag_child(frag->frag, prev_frag)) {
+			अगर (frag->split_by > 0 ||
+			    !is_frag_child(frag->frag, prev_frag)) अणु
 				rb_erase(&frag->node, &ci->i_fragtree);
-				if (frag->split_by > 0)
+				अगर (frag->split_by > 0)
 					ci->i_fragtree_nsplits--;
-				kfree(frag);
-			}
-			frag = NULL;
-		}
-		if (!frag) {
+				kमुक्त(frag);
+			पूर्ण
+			frag = शून्य;
+		पूर्ण
+		अगर (!frag) अणु
 			frag = __get_or_create_frag(ci, id);
-			if (IS_ERR(frag))
-				continue;
-		}
-		if (frag->split_by == 0)
+			अगर (IS_ERR(frag))
+				जारी;
+		पूर्ण
+		अगर (frag->split_by == 0)
 			ci->i_fragtree_nsplits++;
 		frag->split_by = split_by;
-		dout(" frag %x split by %d\n", frag->frag, frag->split_by);
+		करोut(" frag %x split by %d\n", frag->frag, frag->split_by);
 		prev_frag = frag;
-	}
-	while (rb_node) {
-		frag = rb_entry(rb_node, struct ceph_inode_frag, node);
+	पूर्ण
+	जबतक (rb_node) अणु
+		frag = rb_entry(rb_node, काष्ठा ceph_inode_frag, node);
 		rb_node = rb_next(rb_node);
 		/* delete stale split/leaf node */
-		if (frag->split_by > 0 ||
-		    !is_frag_child(frag->frag, prev_frag)) {
+		अगर (frag->split_by > 0 ||
+		    !is_frag_child(frag->frag, prev_frag)) अणु
 			rb_erase(&frag->node, &ci->i_fragtree);
-			if (frag->split_by > 0)
+			अगर (frag->split_by > 0)
 				ci->i_fragtree_nsplits--;
-			kfree(frag);
-		}
-	}
+			kमुक्त(frag);
+		पूर्ण
+	पूर्ण
 out_unlock:
 	mutex_unlock(&ci->i_fragtree_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * initialize a newly allocated inode.
  */
-struct inode *ceph_alloc_inode(struct super_block *sb)
-{
-	struct ceph_inode_info *ci;
-	int i;
+काष्ठा inode *ceph_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा ceph_inode_info *ci;
+	पूर्णांक i;
 
 	ci = kmem_cache_alloc(ceph_inode_cachep, GFP_NOFS);
-	if (!ci)
-		return NULL;
+	अगर (!ci)
+		वापस शून्य;
 
-	dout("alloc_inode %p\n", &ci->vfs_inode);
+	करोut("alloc_inode %p\n", &ci->vfs_inode);
 
 	spin_lock_init(&ci->i_ceph_lock);
 
 	ci->i_version = 0;
-	ci->i_inline_version = 0;
-	ci->i_time_warp_seq = 0;
+	ci->i_अंतरभूत_version = 0;
+	ci->i_समय_warp_seq = 0;
 	ci->i_ceph_flags = 0;
 	atomic64_set(&ci->i_ordered_count, 1);
 	atomic64_set(&ci->i_release_count, 1);
 	atomic64_set(&ci->i_complete_seq[0], 0);
 	atomic64_set(&ci->i_complete_seq[1], 0);
-	ci->i_symlink = NULL;
+	ci->i_symlink = शून्य;
 
 	ci->i_max_bytes = 0;
 	ci->i_max_files = 0;
 
-	memset(&ci->i_dir_layout, 0, sizeof(ci->i_dir_layout));
-	memset(&ci->i_cached_layout, 0, sizeof(ci->i_cached_layout));
-	RCU_INIT_POINTER(ci->i_layout.pool_ns, NULL);
+	स_रखो(&ci->i_dir_layout, 0, माप(ci->i_dir_layout));
+	स_रखो(&ci->i_cached_layout, 0, माप(ci->i_cached_layout));
+	RCU_INIT_POINTER(ci->i_layout.pool_ns, शून्य);
 
 	ci->i_fragtree = RB_ROOT;
 	mutex_init(&ci->i_fragtree_mutex);
 
-	ci->i_xattrs.blob = NULL;
-	ci->i_xattrs.prealloc_blob = NULL;
+	ci->i_xattrs.blob = शून्य;
+	ci->i_xattrs.pपुनः_स्मृति_blob = शून्य;
 	ci->i_xattrs.dirty = false;
 	ci->i_xattrs.index = RB_ROOT;
 	ci->i_xattrs.count = 0;
@@ -486,22 +487,22 @@ struct inode *ceph_alloc_inode(struct super_block *sb)
 	ci->i_xattrs.index_version = 0;
 
 	ci->i_caps = RB_ROOT;
-	ci->i_auth_cap = NULL;
+	ci->i_auth_cap = शून्य;
 	ci->i_dirty_caps = 0;
 	ci->i_flushing_caps = 0;
 	INIT_LIST_HEAD(&ci->i_dirty_item);
 	INIT_LIST_HEAD(&ci->i_flushing_item);
-	ci->i_prealloc_cap_flush = NULL;
+	ci->i_pपुनः_स्मृति_cap_flush = शून्य;
 	INIT_LIST_HEAD(&ci->i_cap_flush_list);
-	init_waitqueue_head(&ci->i_cap_wq);
+	init_रुकोqueue_head(&ci->i_cap_wq);
 	ci->i_hold_caps_max = 0;
 	INIT_LIST_HEAD(&ci->i_cap_delay_list);
 	INIT_LIST_HEAD(&ci->i_cap_snaps);
-	ci->i_head_snapc = NULL;
+	ci->i_head_snapc = शून्य;
 	ci->i_snap_caps = 0;
 
-	ci->i_last_rd = ci->i_last_wr = jiffies - 3600 * HZ;
-	for (i = 0; i < CEPH_FILE_MODE_BITS; i++)
+	ci->i_last_rd = ci->i_last_wr = jअगरfies - 3600 * HZ;
+	क्रम (i = 0; i < CEPH_खाता_MODE_BITS; i++)
 		ci->i_nr_by_mode[i] = 0;
 
 	mutex_init(&ci->i_truncate_mutex);
@@ -531,317 +532,317 @@ struct inode *ceph_alloc_inode(struct super_block *sb)
 	INIT_LIST_HEAD(&ci->i_unsafe_iops);
 	spin_lock_init(&ci->i_unsafe_lock);
 
-	ci->i_snap_realm = NULL;
+	ci->i_snap_realm = शून्य;
 	INIT_LIST_HEAD(&ci->i_snap_realm_item);
 	INIT_LIST_HEAD(&ci->i_snap_flush_item);
 
 	INIT_WORK(&ci->i_work, ceph_inode_work);
 	ci->i_work_mask = 0;
-	memset(&ci->i_btime, '\0', sizeof(ci->i_btime));
+	स_रखो(&ci->i_bसमय, '\0', माप(ci->i_bसमय));
 
 	ceph_fscache_inode_init(ci);
 
 	ci->i_meta_err = 0;
 
-	return &ci->vfs_inode;
-}
+	वापस &ci->vfs_inode;
+पूर्ण
 
-void ceph_free_inode(struct inode *inode)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
+व्योम ceph_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
 
-	kfree(ci->i_symlink);
-	kmem_cache_free(ceph_inode_cachep, ci);
-}
+	kमुक्त(ci->i_symlink);
+	kmem_cache_मुक्त(ceph_inode_cachep, ci);
+पूर्ण
 
-void ceph_evict_inode(struct inode *inode)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	struct ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
-	struct ceph_inode_frag *frag;
-	struct rb_node *n;
+व्योम ceph_evict_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	काष्ठा ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
+	काष्ठा ceph_inode_frag *frag;
+	काष्ठा rb_node *n;
 
-	dout("evict_inode %p ino %llx.%llx\n", inode, ceph_vinop(inode));
+	करोut("evict_inode %p ino %llx.%llx\n", inode, ceph_vinop(inode));
 
 	percpu_counter_dec(&mdsc->metric.total_inodes);
 
 	truncate_inode_pages_final(&inode->i_data);
 	clear_inode(inode);
 
-	ceph_fscache_unregister_inode_cookie(ci);
+	ceph_fscache_unरेजिस्टर_inode_cookie(ci);
 
-	__ceph_remove_caps(ci);
+	__ceph_हटाओ_caps(ci);
 
-	if (__ceph_has_any_quota(ci))
+	अगर (__ceph_has_any_quota(ci))
 		ceph_adjust_quota_realms_count(inode, false);
 
 	/*
-	 * we may still have a snap_realm reference if there are stray
+	 * we may still have a snap_realm reference अगर there are stray
 	 * caps in i_snap_caps.
 	 */
-	if (ci->i_snap_realm) {
-		if (ceph_snap(inode) == CEPH_NOSNAP) {
-			struct ceph_snap_realm *realm = ci->i_snap_realm;
-			dout(" dropping residual ref to snap realm %p\n",
+	अगर (ci->i_snap_realm) अणु
+		अगर (ceph_snap(inode) == CEPH_NOSNAP) अणु
+			काष्ठा ceph_snap_realm *realm = ci->i_snap_realm;
+			करोut(" dropping residual ref to snap realm %p\n",
 			     realm);
 			spin_lock(&realm->inodes_with_caps_lock);
 			list_del_init(&ci->i_snap_realm_item);
-			ci->i_snap_realm = NULL;
-			if (realm->ino == ci->i_vino.ino)
-				realm->inode = NULL;
+			ci->i_snap_realm = शून्य;
+			अगर (realm->ino == ci->i_vino.ino)
+				realm->inode = शून्य;
 			spin_unlock(&realm->inodes_with_caps_lock);
 			ceph_put_snap_realm(mdsc, realm);
-		} else {
+		पूर्ण अन्यथा अणु
 			ceph_put_snapid_map(mdsc, ci->i_snapid_map);
-			ci->i_snap_realm = NULL;
-		}
-	}
+			ci->i_snap_realm = शून्य;
+		पूर्ण
+	पूर्ण
 
-	while ((n = rb_first(&ci->i_fragtree)) != NULL) {
-		frag = rb_entry(n, struct ceph_inode_frag, node);
+	जबतक ((n = rb_first(&ci->i_fragtree)) != शून्य) अणु
+		frag = rb_entry(n, काष्ठा ceph_inode_frag, node);
 		rb_erase(n, &ci->i_fragtree);
-		kfree(frag);
-	}
+		kमुक्त(frag);
+	पूर्ण
 	ci->i_fragtree_nsplits = 0;
 
 	__ceph_destroy_xattrs(ci);
-	if (ci->i_xattrs.blob)
+	अगर (ci->i_xattrs.blob)
 		ceph_buffer_put(ci->i_xattrs.blob);
-	if (ci->i_xattrs.prealloc_blob)
-		ceph_buffer_put(ci->i_xattrs.prealloc_blob);
+	अगर (ci->i_xattrs.pपुनः_स्मृति_blob)
+		ceph_buffer_put(ci->i_xattrs.pपुनः_स्मृति_blob);
 
 	ceph_put_string(rcu_dereference_raw(ci->i_layout.pool_ns));
 	ceph_put_string(rcu_dereference_raw(ci->i_cached_layout.pool_ns));
-}
+पूर्ण
 
-static inline blkcnt_t calc_inode_blocks(u64 size)
-{
-	return (size + (1<<9) - 1) >> 9;
-}
+अटल अंतरभूत blkcnt_t calc_inode_blocks(u64 size)
+अणु
+	वापस (size + (1<<9) - 1) >> 9;
+पूर्ण
 
 /*
- * Helpers to fill in size, ctime, mtime, and atime.  We have to be
+ * Helpers to fill in size, स_समय, mसमय, and aसमय.  We have to be
  * careful because either the client or MDS may have more up to date
  * info, depending on which capabilities are held, and whether
- * time_warp_seq or truncate_seq have increased.  (Ordinarily, mtime
- * and size are monotonically increasing, except when utimes() or
+ * समय_warp_seq or truncate_seq have increased.  (Ordinarily, mसमय
+ * and size are monotonically increasing, except when uबार() or
  * truncate() increments the corresponding _seq values.)
  */
-int ceph_fill_file_size(struct inode *inode, int issued,
+पूर्णांक ceph_fill_file_size(काष्ठा inode *inode, पूर्णांक issued,
 			u32 truncate_seq, u64 truncate_size, u64 size)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	int queue_trunc = 0;
-	loff_t isize = i_size_read(inode);
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	पूर्णांक queue_trunc = 0;
+	loff_t isize = i_size_पढ़ो(inode);
 
-	if (ceph_seq_cmp(truncate_seq, ci->i_truncate_seq) > 0 ||
-	    (truncate_seq == ci->i_truncate_seq && size > isize)) {
-		dout("size %lld -> %llu\n", isize, size);
-		if (size > 0 && S_ISDIR(inode->i_mode)) {
+	अगर (ceph_seq_cmp(truncate_seq, ci->i_truncate_seq) > 0 ||
+	    (truncate_seq == ci->i_truncate_seq && size > isize)) अणु
+		करोut("size %lld -> %llu\n", isize, size);
+		अगर (size > 0 && S_ISसूची(inode->i_mode)) अणु
 			pr_err("fill_file_size non-zero size for directory\n");
 			size = 0;
-		}
-		i_size_write(inode, size);
+		पूर्ण
+		i_size_ग_लिखो(inode, size);
 		inode->i_blocks = calc_inode_blocks(size);
 		ci->i_reported_size = size;
-		if (truncate_seq != ci->i_truncate_seq) {
-			dout("truncate_seq %u -> %u\n",
+		अगर (truncate_seq != ci->i_truncate_seq) अणु
+			करोut("truncate_seq %u -> %u\n",
 			     ci->i_truncate_seq, truncate_seq);
 			ci->i_truncate_seq = truncate_seq;
 
 			/* the MDS should have revoked these caps */
-			WARN_ON_ONCE(issued & (CEPH_CAP_FILE_EXCL |
-					       CEPH_CAP_FILE_RD |
-					       CEPH_CAP_FILE_WR |
-					       CEPH_CAP_FILE_LAZYIO));
+			WARN_ON_ONCE(issued & (CEPH_CAP_खाता_EXCL |
+					       CEPH_CAP_खाता_RD |
+					       CEPH_CAP_खाता_WR |
+					       CEPH_CAP_खाता_LAZYIO));
 			/*
-			 * If we hold relevant caps, or in the case where we're
+			 * If we hold relevant caps, or in the हाल where we're
 			 * not the only client referencing this file and we
-			 * don't hold those caps, then we need to check whether
-			 * the file is either opened or mmaped
+			 * करोn't hold those caps, then we need to check whether
+			 * the file is either खोलोed or mmaped
 			 */
-			if ((issued & (CEPH_CAP_FILE_CACHE|
-				       CEPH_CAP_FILE_BUFFER)) ||
+			अगर ((issued & (CEPH_CAP_खाता_CACHE|
+				       CEPH_CAP_खाता_BUFFER)) ||
 			    mapping_mapped(inode->i_mapping) ||
-			    __ceph_is_file_opened(ci)) {
+			    __ceph_is_file_खोलोed(ci)) अणु
 				ci->i_truncate_pending++;
 				queue_trunc = 1;
-			}
-		}
-	}
-	if (ceph_seq_cmp(truncate_seq, ci->i_truncate_seq) >= 0 &&
-	    ci->i_truncate_size != truncate_size) {
-		dout("truncate_size %lld -> %llu\n", ci->i_truncate_size,
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (ceph_seq_cmp(truncate_seq, ci->i_truncate_seq) >= 0 &&
+	    ci->i_truncate_size != truncate_size) अणु
+		करोut("truncate_size %lld -> %llu\n", ci->i_truncate_size,
 		     truncate_size);
 		ci->i_truncate_size = truncate_size;
-	}
+	पूर्ण
 
-	if (queue_trunc)
+	अगर (queue_trunc)
 		ceph_fscache_invalidate(inode);
 
-	return queue_trunc;
-}
+	वापस queue_trunc;
+पूर्ण
 
-void ceph_fill_file_time(struct inode *inode, int issued,
-			 u64 time_warp_seq, struct timespec64 *ctime,
-			 struct timespec64 *mtime, struct timespec64 *atime)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	int warn = 0;
+व्योम ceph_fill_file_समय(काष्ठा inode *inode, पूर्णांक issued,
+			 u64 समय_warp_seq, काष्ठा बारpec64 *स_समय,
+			 काष्ठा बारpec64 *mसमय, काष्ठा बारpec64 *aसमय)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	पूर्णांक warn = 0;
 
-	if (issued & (CEPH_CAP_FILE_EXCL|
-		      CEPH_CAP_FILE_WR|
-		      CEPH_CAP_FILE_BUFFER|
+	अगर (issued & (CEPH_CAP_खाता_EXCL|
+		      CEPH_CAP_खाता_WR|
+		      CEPH_CAP_खाता_BUFFER|
 		      CEPH_CAP_AUTH_EXCL|
-		      CEPH_CAP_XATTR_EXCL)) {
-		if (ci->i_version == 0 ||
-		    timespec64_compare(ctime, &inode->i_ctime) > 0) {
-			dout("ctime %lld.%09ld -> %lld.%09ld inc w/ cap\n",
-			     inode->i_ctime.tv_sec, inode->i_ctime.tv_nsec,
-			     ctime->tv_sec, ctime->tv_nsec);
-			inode->i_ctime = *ctime;
-		}
-		if (ci->i_version == 0 ||
-		    ceph_seq_cmp(time_warp_seq, ci->i_time_warp_seq) > 0) {
-			/* the MDS did a utimes() */
-			dout("mtime %lld.%09ld -> %lld.%09ld "
+		      CEPH_CAP_XATTR_EXCL)) अणु
+		अगर (ci->i_version == 0 ||
+		    बारpec64_compare(स_समय, &inode->i_स_समय) > 0) अणु
+			करोut("ctime %lld.%09ld -> %lld.%09ld inc w/ cap\n",
+			     inode->i_स_समय.tv_sec, inode->i_स_समय.tv_nsec,
+			     स_समय->tv_sec, स_समय->tv_nsec);
+			inode->i_स_समय = *स_समय;
+		पूर्ण
+		अगर (ci->i_version == 0 ||
+		    ceph_seq_cmp(समय_warp_seq, ci->i_समय_warp_seq) > 0) अणु
+			/* the MDS did a uबार() */
+			करोut("mtime %lld.%09ld -> %lld.%09ld "
 			     "tw %d -> %d\n",
-			     inode->i_mtime.tv_sec, inode->i_mtime.tv_nsec,
-			     mtime->tv_sec, mtime->tv_nsec,
-			     ci->i_time_warp_seq, (int)time_warp_seq);
+			     inode->i_mसमय.tv_sec, inode->i_mसमय.tv_nsec,
+			     mसमय->tv_sec, mसमय->tv_nsec,
+			     ci->i_समय_warp_seq, (पूर्णांक)समय_warp_seq);
 
-			inode->i_mtime = *mtime;
-			inode->i_atime = *atime;
-			ci->i_time_warp_seq = time_warp_seq;
-		} else if (time_warp_seq == ci->i_time_warp_seq) {
-			/* nobody did utimes(); take the max */
-			if (timespec64_compare(mtime, &inode->i_mtime) > 0) {
-				dout("mtime %lld.%09ld -> %lld.%09ld inc\n",
-				     inode->i_mtime.tv_sec,
-				     inode->i_mtime.tv_nsec,
-				     mtime->tv_sec, mtime->tv_nsec);
-				inode->i_mtime = *mtime;
-			}
-			if (timespec64_compare(atime, &inode->i_atime) > 0) {
-				dout("atime %lld.%09ld -> %lld.%09ld inc\n",
-				     inode->i_atime.tv_sec,
-				     inode->i_atime.tv_nsec,
-				     atime->tv_sec, atime->tv_nsec);
-				inode->i_atime = *atime;
-			}
-		} else if (issued & CEPH_CAP_FILE_EXCL) {
-			/* we did a utimes(); ignore mds values */
-		} else {
+			inode->i_mसमय = *mसमय;
+			inode->i_aसमय = *aसमय;
+			ci->i_समय_warp_seq = समय_warp_seq;
+		पूर्ण अन्यथा अगर (समय_warp_seq == ci->i_समय_warp_seq) अणु
+			/* nobody did uबार(); take the max */
+			अगर (बारpec64_compare(mसमय, &inode->i_mसमय) > 0) अणु
+				करोut("mtime %lld.%09ld -> %lld.%09ld inc\n",
+				     inode->i_mसमय.tv_sec,
+				     inode->i_mसमय.tv_nsec,
+				     mसमय->tv_sec, mसमय->tv_nsec);
+				inode->i_mसमय = *mसमय;
+			पूर्ण
+			अगर (बारpec64_compare(aसमय, &inode->i_aसमय) > 0) अणु
+				करोut("atime %lld.%09ld -> %lld.%09ld inc\n",
+				     inode->i_aसमय.tv_sec,
+				     inode->i_aसमय.tv_nsec,
+				     aसमय->tv_sec, aसमय->tv_nsec);
+				inode->i_aसमय = *aसमय;
+			पूर्ण
+		पूर्ण अन्यथा अगर (issued & CEPH_CAP_खाता_EXCL) अणु
+			/* we did a uबार(); ignore mds values */
+		पूर्ण अन्यथा अणु
 			warn = 1;
-		}
-	} else {
-		/* we have no write|excl caps; whatever the MDS says is true */
-		if (ceph_seq_cmp(time_warp_seq, ci->i_time_warp_seq) >= 0) {
-			inode->i_ctime = *ctime;
-			inode->i_mtime = *mtime;
-			inode->i_atime = *atime;
-			ci->i_time_warp_seq = time_warp_seq;
-		} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* we have no ग_लिखो|excl caps; whatever the MDS says is true */
+		अगर (ceph_seq_cmp(समय_warp_seq, ci->i_समय_warp_seq) >= 0) अणु
+			inode->i_स_समय = *स_समय;
+			inode->i_mसमय = *mसमय;
+			inode->i_aसमय = *aसमय;
+			ci->i_समय_warp_seq = समय_warp_seq;
+		पूर्ण अन्यथा अणु
 			warn = 1;
-		}
-	}
-	if (warn) /* time_warp_seq shouldn't go backwards */
-		dout("%p mds time_warp_seq %llu < %u\n",
-		     inode, time_warp_seq, ci->i_time_warp_seq);
-}
+		पूर्ण
+	पूर्ण
+	अगर (warn) /* समय_warp_seq shouldn't go backwards */
+		करोut("%p mds time_warp_seq %llu < %u\n",
+		     inode, समय_warp_seq, ci->i_समय_warp_seq);
+पूर्ण
 
 /*
  * Populate an inode based on info from mds.  May be called on new or
  * existing inodes.
  */
-int ceph_fill_inode(struct inode *inode, struct page *locked_page,
-		    struct ceph_mds_reply_info_in *iinfo,
-		    struct ceph_mds_reply_dirfrag *dirinfo,
-		    struct ceph_mds_session *session, int cap_fmode,
-		    struct ceph_cap_reservation *caps_reservation)
-{
-	struct ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
-	struct ceph_mds_reply_inode *info = iinfo->in;
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	int issued, new_issued, info_caps;
-	struct timespec64 mtime, atime, ctime;
-	struct ceph_buffer *xattr_blob = NULL;
-	struct ceph_buffer *old_blob = NULL;
-	struct ceph_string *pool_ns = NULL;
-	struct ceph_cap *new_cap = NULL;
-	int err = 0;
+पूर्णांक ceph_fill_inode(काष्ठा inode *inode, काष्ठा page *locked_page,
+		    काष्ठा ceph_mds_reply_info_in *iinfo,
+		    काष्ठा ceph_mds_reply_dirfrag *dirinfo,
+		    काष्ठा ceph_mds_session *session, पूर्णांक cap_भ_शेषe,
+		    काष्ठा ceph_cap_reservation *caps_reservation)
+अणु
+	काष्ठा ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
+	काष्ठा ceph_mds_reply_inode *info = iinfo->in;
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	पूर्णांक issued, new_issued, info_caps;
+	काष्ठा बारpec64 mसमय, aसमय, स_समय;
+	काष्ठा ceph_buffer *xattr_blob = शून्य;
+	काष्ठा ceph_buffer *old_blob = शून्य;
+	काष्ठा ceph_string *pool_ns = शून्य;
+	काष्ठा ceph_cap *new_cap = शून्य;
+	पूर्णांक err = 0;
 	bool wake = false;
 	bool queue_trunc = false;
 	bool new_version = false;
-	bool fill_inline = false;
+	bool fill_अंतरभूत = false;
 	umode_t mode = le32_to_cpu(info->mode);
 	dev_t rdev = le32_to_cpu(info->rdev);
 
-	dout("%s %p ino %llx.%llx v %llu had %llu\n", __func__,
+	करोut("%s %p ino %llx.%llx v %llu had %llu\n", __func__,
 	     inode, ceph_vinop(inode), le64_to_cpu(info->version),
 	     ci->i_version);
 
 	/* Once I_NEW is cleared, we can't change type or dev numbers */
-	if (inode->i_state & I_NEW) {
+	अगर (inode->i_state & I_NEW) अणु
 		inode->i_mode = mode;
-	} else {
-		if (inode_wrong_type(inode, mode)) {
+	पूर्ण अन्यथा अणु
+		अगर (inode_wrong_type(inode, mode)) अणु
 			pr_warn_once("inode type changed! (ino %llx.%llx is 0%o, mds says 0%o)\n",
 				     ceph_vinop(inode), inode->i_mode, mode);
-			return -ESTALE;
-		}
+			वापस -ESTALE;
+		पूर्ण
 
-		if ((S_ISCHR(mode) || S_ISBLK(mode)) && inode->i_rdev != rdev) {
+		अगर ((S_ISCHR(mode) || S_ISBLK(mode)) && inode->i_rdev != rdev) अणु
 			pr_warn_once("dev inode rdev changed! (ino %llx.%llx is %u:%u, mds says %u:%u)\n",
 				     ceph_vinop(inode), MAJOR(inode->i_rdev),
 				     MINOR(inode->i_rdev), MAJOR(rdev),
 				     MINOR(rdev));
-			return -ESTALE;
-		}
-	}
+			वापस -ESTALE;
+		पूर्ण
+	पूर्ण
 
 	info_caps = le32_to_cpu(info->cap.caps);
 
-	/* prealloc new cap struct */
-	if (info_caps && ceph_snap(inode) == CEPH_NOSNAP) {
+	/* pपुनः_स्मृति new cap काष्ठा */
+	अगर (info_caps && ceph_snap(inode) == CEPH_NOSNAP) अणु
 		new_cap = ceph_get_cap(mdsc, caps_reservation);
-		if (!new_cap)
-			return -ENOMEM;
-	}
+		अगर (!new_cap)
+			वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * prealloc xattr data, if it looks like we'll need it.  only
-	 * if len > 4 (meaning there are actually xattrs; the first 4
+	 * pपुनः_स्मृति xattr data, अगर it looks like we'll need it.  only
+	 * अगर len > 4 (meaning there are actually xattrs; the first 4
 	 * bytes are the xattr count).
 	 */
-	if (iinfo->xattr_len > 4) {
+	अगर (iinfo->xattr_len > 4) अणु
 		xattr_blob = ceph_buffer_new(iinfo->xattr_len, GFP_NOFS);
-		if (!xattr_blob)
+		अगर (!xattr_blob)
 			pr_err("%s ENOMEM xattr blob %d bytes\n", __func__,
 			       iinfo->xattr_len);
-	}
+	पूर्ण
 
-	if (iinfo->pool_ns_len > 0)
+	अगर (iinfo->pool_ns_len > 0)
 		pool_ns = ceph_find_or_create_string(iinfo->pool_ns_data,
 						     iinfo->pool_ns_len);
 
-	if (ceph_snap(inode) != CEPH_NOSNAP && !ci->i_snapid_map)
+	अगर (ceph_snap(inode) != CEPH_NOSNAP && !ci->i_snapid_map)
 		ci->i_snapid_map = ceph_get_snapid_map(mdsc, ceph_snap(inode));
 
 	spin_lock(&ci->i_ceph_lock);
 
 	/*
-	 * provided version will be odd if inode value is projected,
-	 * even if stable.  skip the update if we have newer stable
+	 * provided version will be odd अगर inode value is projected,
+	 * even अगर stable.  skip the update अगर we have newer stable
 	 * info (ours>=theirs, e.g. due to racing mds replies), unless
-	 * we are getting projected (unstable) info (in which case the
+	 * we are getting projected (unstable) info (in which हाल the
 	 * version is odd, and we want ours>theirs).
 	 *   us   them
 	 *   2    2     skip
 	 *   3    2     skip
 	 *   3    3     update
 	 */
-	if (ci->i_version == 0 ||
+	अगर (ci->i_version == 0 ||
 	    ((info->cap.flags & CEPH_CAP_FLAG_AUTH) &&
 	     le64_to_cpu(info->version) > (ci->i_version & ~1)))
 		new_version = true;
@@ -854,56 +855,56 @@ int ceph_fill_inode(struct inode *inode, struct page *locked_page,
 	new_issued = ~issued & info_caps;
 
 	/* directories have fl_stripe_unit set to zero */
-	if (le32_to_cpu(info->layout.fl_stripe_unit))
+	अगर (le32_to_cpu(info->layout.fl_stripe_unit))
 		inode->i_blkbits =
 			fls(le32_to_cpu(info->layout.fl_stripe_unit)) - 1;
-	else
+	अन्यथा
 		inode->i_blkbits = CEPH_BLOCK_SHIFT;
 
 	__ceph_update_quota(ci, iinfo->max_bytes, iinfo->max_files);
 
-	if ((new_version || (new_issued & CEPH_CAP_AUTH_SHARED)) &&
-	    (issued & CEPH_CAP_AUTH_EXCL) == 0) {
+	अगर ((new_version || (new_issued & CEPH_CAP_AUTH_SHARED)) &&
+	    (issued & CEPH_CAP_AUTH_EXCL) == 0) अणु
 		inode->i_mode = mode;
 		inode->i_uid = make_kuid(&init_user_ns, le32_to_cpu(info->uid));
 		inode->i_gid = make_kgid(&init_user_ns, le32_to_cpu(info->gid));
-		dout("%p mode 0%o uid.gid %d.%d\n", inode, inode->i_mode,
+		करोut("%p mode 0%o uid.gid %d.%d\n", inode, inode->i_mode,
 		     from_kuid(&init_user_ns, inode->i_uid),
 		     from_kgid(&init_user_ns, inode->i_gid));
-		ceph_decode_timespec64(&ci->i_btime, &iinfo->btime);
-		ceph_decode_timespec64(&ci->i_snap_btime, &iinfo->snap_btime);
-	}
+		ceph_decode_बारpec64(&ci->i_bसमय, &iinfo->bसमय);
+		ceph_decode_बारpec64(&ci->i_snap_bसमय, &iinfo->snap_bसमय);
+	पूर्ण
 
-	if ((new_version || (new_issued & CEPH_CAP_LINK_SHARED)) &&
+	अगर ((new_version || (new_issued & CEPH_CAP_LINK_SHARED)) &&
 	    (issued & CEPH_CAP_LINK_EXCL) == 0)
 		set_nlink(inode, le32_to_cpu(info->nlink));
 
-	if (new_version || (new_issued & CEPH_CAP_ANY_RD)) {
-		/* be careful with mtime, atime, size */
-		ceph_decode_timespec64(&atime, &info->atime);
-		ceph_decode_timespec64(&mtime, &info->mtime);
-		ceph_decode_timespec64(&ctime, &info->ctime);
-		ceph_fill_file_time(inode, issued,
-				le32_to_cpu(info->time_warp_seq),
-				&ctime, &mtime, &atime);
-	}
+	अगर (new_version || (new_issued & CEPH_CAP_ANY_RD)) अणु
+		/* be careful with mसमय, aसमय, size */
+		ceph_decode_बारpec64(&aसमय, &info->aसमय);
+		ceph_decode_बारpec64(&mसमय, &info->mसमय);
+		ceph_decode_बारpec64(&स_समय, &info->स_समय);
+		ceph_fill_file_समय(inode, issued,
+				le32_to_cpu(info->समय_warp_seq),
+				&स_समय, &mसमय, &aसमय);
+	पूर्ण
 
-	if (new_version || (info_caps & CEPH_CAP_FILE_SHARED)) {
+	अगर (new_version || (info_caps & CEPH_CAP_खाता_SHARED)) अणु
 		ci->i_files = le64_to_cpu(info->files);
 		ci->i_subdirs = le64_to_cpu(info->subdirs);
-	}
+	पूर्ण
 
-	if (new_version ||
-	    (new_issued & (CEPH_CAP_ANY_FILE_RD | CEPH_CAP_ANY_FILE_WR))) {
+	अगर (new_version ||
+	    (new_issued & (CEPH_CAP_ANY_खाता_RD | CEPH_CAP_ANY_खाता_WR))) अणु
 		s64 old_pool = ci->i_layout.pool_id;
-		struct ceph_string *old_ns;
+		काष्ठा ceph_string *old_ns;
 
 		ceph_file_layout_from_legacy(&ci->i_layout, &info->layout);
-		old_ns = rcu_dereference_protected(ci->i_layout.pool_ns,
+		old_ns = rcu_dereference_रक्षित(ci->i_layout.pool_ns,
 					lockdep_is_held(&ci->i_ceph_lock));
-		rcu_assign_pointer(ci->i_layout.pool_ns, pool_ns);
+		rcu_assign_poपूर्णांकer(ci->i_layout.pool_ns, pool_ns);
 
-		if (ci->i_layout.pool_id != old_pool || pool_ns != old_ns)
+		अगर (ci->i_layout.pool_id != old_pool || pool_ns != old_ns)
 			ci->i_ceph_flags &= ~CEPH_I_POOL_PERM;
 
 		pool_ns = old_ns;
@@ -913,105 +914,105 @@ int ceph_fill_inode(struct inode *inode, struct page *locked_page,
 					le64_to_cpu(info->truncate_size),
 					le64_to_cpu(info->size));
 		/* only update max_size on auth cap */
-		if ((info->cap.flags & CEPH_CAP_FLAG_AUTH) &&
-		    ci->i_max_size != le64_to_cpu(info->max_size)) {
-			dout("max_size %lld -> %llu\n", ci->i_max_size,
+		अगर ((info->cap.flags & CEPH_CAP_FLAG_AUTH) &&
+		    ci->i_max_size != le64_to_cpu(info->max_size)) अणु
+			करोut("max_size %lld -> %llu\n", ci->i_max_size,
 					le64_to_cpu(info->max_size));
 			ci->i_max_size = le64_to_cpu(info->max_size);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* layout and rstat are not tracked by capability, update them if
+	/* layout and rstat are not tracked by capability, update them अगर
 	 * the inode info is from auth mds */
-	if (new_version || (info->cap.flags & CEPH_CAP_FLAG_AUTH)) {
-		if (S_ISDIR(inode->i_mode)) {
+	अगर (new_version || (info->cap.flags & CEPH_CAP_FLAG_AUTH)) अणु
+		अगर (S_ISसूची(inode->i_mode)) अणु
 			ci->i_dir_layout = iinfo->dir_layout;
 			ci->i_rbytes = le64_to_cpu(info->rbytes);
 			ci->i_rfiles = le64_to_cpu(info->rfiles);
 			ci->i_rsubdirs = le64_to_cpu(info->rsubdirs);
 			ci->i_dir_pin = iinfo->dir_pin;
 			ci->i_rsnaps = iinfo->rsnaps;
-			ceph_decode_timespec64(&ci->i_rctime, &info->rctime);
-		}
-	}
+			ceph_decode_बारpec64(&ci->i_rस_समय, &info->rस_समय);
+		पूर्ण
+	पूर्ण
 
 	/* xattrs */
-	/* note that if i_xattrs.len <= 4, i_xattrs.data will still be NULL. */
-	if ((ci->i_xattrs.version == 0 || !(issued & CEPH_CAP_XATTR_EXCL))  &&
-	    le64_to_cpu(info->xattr_version) > ci->i_xattrs.version) {
-		if (ci->i_xattrs.blob)
+	/* note that अगर i_xattrs.len <= 4, i_xattrs.data will still be शून्य. */
+	अगर ((ci->i_xattrs.version == 0 || !(issued & CEPH_CAP_XATTR_EXCL))  &&
+	    le64_to_cpu(info->xattr_version) > ci->i_xattrs.version) अणु
+		अगर (ci->i_xattrs.blob)
 			old_blob = ci->i_xattrs.blob;
 		ci->i_xattrs.blob = xattr_blob;
-		if (xattr_blob)
-			memcpy(ci->i_xattrs.blob->vec.iov_base,
+		अगर (xattr_blob)
+			स_नकल(ci->i_xattrs.blob->vec.iov_base,
 			       iinfo->xattr_data, iinfo->xattr_len);
 		ci->i_xattrs.version = le64_to_cpu(info->xattr_version);
-		ceph_forget_all_cached_acls(inode);
+		ceph_क्रमget_all_cached_acls(inode);
 		ceph_security_invalidate_secctx(inode);
-		xattr_blob = NULL;
-	}
+		xattr_blob = शून्य;
+	पूर्ण
 
 	/* finally update i_version */
-	if (le64_to_cpu(info->version) > ci->i_version)
+	अगर (le64_to_cpu(info->version) > ci->i_version)
 		ci->i_version = le64_to_cpu(info->version);
 
 	inode->i_mapping->a_ops = &ceph_aops;
 
-	switch (inode->i_mode & S_IFMT) {
-	case S_IFIFO:
-	case S_IFBLK:
-	case S_IFCHR:
-	case S_IFSOCK:
+	चयन (inode->i_mode & S_IFMT) अणु
+	हाल S_IFIFO:
+	हाल S_IFBLK:
+	हाल S_IFCHR:
+	हाल S_IFSOCK:
 		inode->i_blkbits = PAGE_SHIFT;
 		init_special_inode(inode, inode->i_mode, rdev);
 		inode->i_op = &ceph_file_iops;
-		break;
-	case S_IFREG:
+		अवरोध;
+	हाल S_IFREG:
 		inode->i_op = &ceph_file_iops;
 		inode->i_fop = &ceph_file_fops;
-		break;
-	case S_IFLNK:
+		अवरोध;
+	हाल S_IFLNK:
 		inode->i_op = &ceph_symlink_iops;
-		if (!ci->i_symlink) {
+		अगर (!ci->i_symlink) अणु
 			u32 symlen = iinfo->symlink_len;
-			char *sym;
+			अक्षर *sym;
 
 			spin_unlock(&ci->i_ceph_lock);
 
-			if (symlen != i_size_read(inode)) {
+			अगर (symlen != i_size_पढ़ो(inode)) अणु
 				pr_err("%s %llx.%llx BAD symlink "
 					"size %lld\n", __func__,
 					ceph_vinop(inode),
-					i_size_read(inode));
-				i_size_write(inode, symlen);
+					i_size_पढ़ो(inode));
+				i_size_ग_लिखो(inode, symlen);
 				inode->i_blocks = calc_inode_blocks(symlen);
-			}
+			पूर्ण
 
 			err = -ENOMEM;
 			sym = kstrndup(iinfo->symlink, symlen, GFP_NOFS);
-			if (!sym)
-				goto out;
+			अगर (!sym)
+				जाओ out;
 
 			spin_lock(&ci->i_ceph_lock);
-			if (!ci->i_symlink)
+			अगर (!ci->i_symlink)
 				ci->i_symlink = sym;
-			else
-				kfree(sym); /* lost a race */
-		}
+			अन्यथा
+				kमुक्त(sym); /* lost a race */
+		पूर्ण
 		inode->i_link = ci->i_symlink;
-		break;
-	case S_IFDIR:
+		अवरोध;
+	हाल S_IFसूची:
 		inode->i_op = &ceph_dir_iops;
 		inode->i_fop = &ceph_dir_fops;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("%s %llx.%llx BAD mode 0%o\n", __func__,
 		       ceph_vinop(inode), inode->i_mode);
-	}
+	पूर्ण
 
 	/* were we issued a capability? */
-	if (info_caps) {
-		if (ceph_snap(inode) == CEPH_NOSNAP) {
+	अगर (info_caps) अणु
+		अगर (ceph_snap(inode) == CEPH_NOSNAP) अणु
 			ceph_add_cap(inode, session,
 				     le64_to_cpu(info->cap.cap_id),
 				     info_caps,
@@ -1022,292 +1023,292 @@ int ceph_fill_inode(struct inode *inode, struct page *locked_page,
 				     info->cap.flags, &new_cap);
 
 			/* set dir completion flag? */
-			if (S_ISDIR(inode->i_mode) &&
+			अगर (S_ISसूची(inode->i_mode) &&
 			    ci->i_files == 0 && ci->i_subdirs == 0 &&
-			    (info_caps & CEPH_CAP_FILE_SHARED) &&
-			    (issued & CEPH_CAP_FILE_EXCL) == 0 &&
-			    !__ceph_dir_is_complete(ci)) {
-				dout(" marking %p complete (empty)\n", inode);
-				i_size_write(inode, 0);
+			    (info_caps & CEPH_CAP_खाता_SHARED) &&
+			    (issued & CEPH_CAP_खाता_EXCL) == 0 &&
+			    !__ceph_dir_is_complete(ci)) अणु
+				करोut(" marking %p complete (empty)\n", inode);
+				i_size_ग_लिखो(inode, 0);
 				__ceph_dir_set_complete(ci,
-					atomic64_read(&ci->i_release_count),
-					atomic64_read(&ci->i_ordered_count));
-			}
+					atomic64_पढ़ो(&ci->i_release_count),
+					atomic64_पढ़ो(&ci->i_ordered_count));
+			पूर्ण
 
 			wake = true;
-		} else {
-			dout(" %p got snap_caps %s\n", inode,
+		पूर्ण अन्यथा अणु
+			करोut(" %p got snap_caps %s\n", inode,
 			     ceph_cap_string(info_caps));
 			ci->i_snap_caps |= info_caps;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (iinfo->inline_version > 0 &&
-	    iinfo->inline_version >= ci->i_inline_version) {
-		int cache_caps = CEPH_CAP_FILE_CACHE | CEPH_CAP_FILE_LAZYIO;
-		ci->i_inline_version = iinfo->inline_version;
-		if (ci->i_inline_version != CEPH_INLINE_NONE &&
+	अगर (iinfo->अंतरभूत_version > 0 &&
+	    iinfo->अंतरभूत_version >= ci->i_अंतरभूत_version) अणु
+		पूर्णांक cache_caps = CEPH_CAP_खाता_CACHE | CEPH_CAP_खाता_LAZYIO;
+		ci->i_अंतरभूत_version = iinfo->अंतरभूत_version;
+		अगर (ci->i_अंतरभूत_version != CEPH_INLINE_NONE &&
 		    (locked_page || (info_caps & cache_caps)))
-			fill_inline = true;
-	}
+			fill_अंतरभूत = true;
+	पूर्ण
 
-	if (cap_fmode >= 0) {
-		if (!info_caps)
+	अगर (cap_भ_शेषe >= 0) अणु
+		अगर (!info_caps)
 			pr_warn("mds issued no caps on %llx.%llx\n",
 				ceph_vinop(inode));
-		__ceph_touch_fmode(ci, mdsc, cap_fmode);
-	}
+		__ceph_touch_भ_शेषe(ci, mdsc, cap_भ_शेषe);
+	पूर्ण
 
 	spin_unlock(&ci->i_ceph_lock);
 
-	if (fill_inline)
-		ceph_fill_inline_data(inode, locked_page,
-				      iinfo->inline_data, iinfo->inline_len);
+	अगर (fill_अंतरभूत)
+		ceph_fill_अंतरभूत_data(inode, locked_page,
+				      iinfo->अंतरभूत_data, iinfo->अंतरभूत_len);
 
-	if (wake)
+	अगर (wake)
 		wake_up_all(&ci->i_cap_wq);
 
-	/* queue truncate if we saw i_size decrease */
-	if (queue_trunc)
+	/* queue truncate अगर we saw i_size decrease */
+	अगर (queue_trunc)
 		ceph_queue_vmtruncate(inode);
 
 	/* populate frag tree */
-	if (S_ISDIR(inode->i_mode))
+	अगर (S_ISसूची(inode->i_mode))
 		ceph_fill_fragtree(inode, &info->fragtree, dirinfo);
 
 	/* update delegation info? */
-	if (dirinfo)
+	अगर (dirinfo)
 		ceph_fill_dirfrag(inode, dirinfo);
 
 	err = 0;
 out:
-	if (new_cap)
+	अगर (new_cap)
 		ceph_put_cap(mdsc, new_cap);
 	ceph_buffer_put(old_blob);
 	ceph_buffer_put(xattr_blob);
 	ceph_put_string(pool_ns);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * caller should hold session s_mutex and dentry->d_lock.
  */
-static void __update_dentry_lease(struct inode *dir, struct dentry *dentry,
-				  struct ceph_mds_reply_lease *lease,
-				  struct ceph_mds_session *session,
-				  unsigned long from_time,
-				  struct ceph_mds_session **old_lease_session)
-{
-	struct ceph_dentry_info *di = ceph_dentry(dentry);
-	unsigned mask = le16_to_cpu(lease->mask);
-	long unsigned duration = le32_to_cpu(lease->duration_ms);
-	long unsigned ttl = from_time + (duration * HZ) / 1000;
-	long unsigned half_ttl = from_time + (duration * HZ / 2) / 1000;
+अटल व्योम __update_dentry_lease(काष्ठा inode *dir, काष्ठा dentry *dentry,
+				  काष्ठा ceph_mds_reply_lease *lease,
+				  काष्ठा ceph_mds_session *session,
+				  अचिन्हित दीर्घ from_समय,
+				  काष्ठा ceph_mds_session **old_lease_session)
+अणु
+	काष्ठा ceph_dentry_info *di = ceph_dentry(dentry);
+	अचिन्हित mask = le16_to_cpu(lease->mask);
+	दीर्घ अचिन्हित duration = le32_to_cpu(lease->duration_ms);
+	दीर्घ अचिन्हित ttl = from_समय + (duration * HZ) / 1000;
+	दीर्घ अचिन्हित half_ttl = from_समय + (duration * HZ / 2) / 1000;
 
-	dout("update_dentry_lease %p duration %lu ms ttl %lu\n",
+	करोut("update_dentry_lease %p duration %lu ms ttl %lu\n",
 	     dentry, duration, ttl);
 
 	/* only track leases on regular dentries */
-	if (ceph_snap(dir) != CEPH_NOSNAP)
-		return;
+	अगर (ceph_snap(dir) != CEPH_NOSNAP)
+		वापस;
 
-	if (mask & CEPH_LEASE_PRIMARY_LINK)
+	अगर (mask & CEPH_LEASE_PRIMARY_LINK)
 		di->flags |= CEPH_DENTRY_PRIMARY_LINK;
-	else
+	अन्यथा
 		di->flags &= ~CEPH_DENTRY_PRIMARY_LINK;
 
-	di->lease_shared_gen = atomic_read(&ceph_inode(dir)->i_shared_gen);
-	if (!(mask & CEPH_LEASE_VALID)) {
+	di->lease_shared_gen = atomic_पढ़ो(&ceph_inode(dir)->i_shared_gen);
+	अगर (!(mask & CEPH_LEASE_VALID)) अणु
 		__ceph_dentry_dir_lease_touch(di);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (di->lease_gen == session->s_cap_gen &&
-	    time_before(ttl, di->time))
-		return;  /* we already have a newer lease. */
+	अगर (di->lease_gen == session->s_cap_gen &&
+	    समय_beक्रमe(ttl, di->समय))
+		वापस;  /* we alपढ़ोy have a newer lease. */
 
-	if (di->lease_session && di->lease_session != session) {
+	अगर (di->lease_session && di->lease_session != session) अणु
 		*old_lease_session = di->lease_session;
-		di->lease_session = NULL;
-	}
+		di->lease_session = शून्य;
+	पूर्ण
 
-	if (!di->lease_session)
+	अगर (!di->lease_session)
 		di->lease_session = ceph_get_mds_session(session);
 	di->lease_gen = session->s_cap_gen;
 	di->lease_seq = le32_to_cpu(lease->seq);
 	di->lease_renew_after = half_ttl;
 	di->lease_renew_from = 0;
-	di->time = ttl;
+	di->समय = ttl;
 
 	__ceph_dentry_lease_touch(di);
-}
+पूर्ण
 
-static inline void update_dentry_lease(struct inode *dir, struct dentry *dentry,
-					struct ceph_mds_reply_lease *lease,
-					struct ceph_mds_session *session,
-					unsigned long from_time)
-{
-	struct ceph_mds_session *old_lease_session = NULL;
+अटल अंतरभूत व्योम update_dentry_lease(काष्ठा inode *dir, काष्ठा dentry *dentry,
+					काष्ठा ceph_mds_reply_lease *lease,
+					काष्ठा ceph_mds_session *session,
+					अचिन्हित दीर्घ from_समय)
+अणु
+	काष्ठा ceph_mds_session *old_lease_session = शून्य;
 	spin_lock(&dentry->d_lock);
-	__update_dentry_lease(dir, dentry, lease, session, from_time,
+	__update_dentry_lease(dir, dentry, lease, session, from_समय,
 			      &old_lease_session);
 	spin_unlock(&dentry->d_lock);
-	if (old_lease_session)
+	अगर (old_lease_session)
 		ceph_put_mds_session(old_lease_session);
-}
+पूर्ण
 
 /*
  * update dentry lease without having parent inode locked
  */
-static void update_dentry_lease_careful(struct dentry *dentry,
-					struct ceph_mds_reply_lease *lease,
-					struct ceph_mds_session *session,
-					unsigned long from_time,
-					char *dname, u32 dname_len,
-					struct ceph_vino *pdvino,
-					struct ceph_vino *ptvino)
+अटल व्योम update_dentry_lease_careful(काष्ठा dentry *dentry,
+					काष्ठा ceph_mds_reply_lease *lease,
+					काष्ठा ceph_mds_session *session,
+					अचिन्हित दीर्घ from_समय,
+					अक्षर *dname, u32 dname_len,
+					काष्ठा ceph_vino *pdvino,
+					काष्ठा ceph_vino *ptvino)
 
-{
-	struct inode *dir;
-	struct ceph_mds_session *old_lease_session = NULL;
+अणु
+	काष्ठा inode *dir;
+	काष्ठा ceph_mds_session *old_lease_session = शून्य;
 
 	spin_lock(&dentry->d_lock);
 	/* make sure dentry's name matches target */
-	if (dentry->d_name.len != dname_len ||
-	    memcmp(dentry->d_name.name, dname, dname_len))
-		goto out_unlock;
+	अगर (dentry->d_name.len != dname_len ||
+	    स_भेद(dentry->d_name.name, dname, dname_len))
+		जाओ out_unlock;
 
 	dir = d_inode(dentry->d_parent);
 	/* make sure parent matches dvino */
-	if (!ceph_ino_compare(dir, pdvino))
-		goto out_unlock;
+	अगर (!ceph_ino_compare(dir, pdvino))
+		जाओ out_unlock;
 
-	/* make sure dentry's inode matches target. NULL ptvino means that
+	/* make sure dentry's inode matches target. शून्य ptvino means that
 	 * we expect a negative dentry */
-	if (ptvino) {
-		if (d_really_is_negative(dentry))
-			goto out_unlock;
-		if (!ceph_ino_compare(d_inode(dentry), ptvino))
-			goto out_unlock;
-	} else {
-		if (d_really_is_positive(dentry))
-			goto out_unlock;
-	}
+	अगर (ptvino) अणु
+		अगर (d_really_is_negative(dentry))
+			जाओ out_unlock;
+		अगर (!ceph_ino_compare(d_inode(dentry), ptvino))
+			जाओ out_unlock;
+	पूर्ण अन्यथा अणु
+		अगर (d_really_is_positive(dentry))
+			जाओ out_unlock;
+	पूर्ण
 
 	__update_dentry_lease(dir, dentry, lease, session,
-			      from_time, &old_lease_session);
+			      from_समय, &old_lease_session);
 out_unlock:
 	spin_unlock(&dentry->d_lock);
-	if (old_lease_session)
+	अगर (old_lease_session)
 		ceph_put_mds_session(old_lease_session);
-}
+पूर्ण
 
 /*
  * splice a dentry to an inode.
- * caller must hold directory i_mutex for this to be safe.
+ * caller must hold directory i_mutex क्रम this to be safe.
  */
-static int splice_dentry(struct dentry **pdn, struct inode *in)
-{
-	struct dentry *dn = *pdn;
-	struct dentry *realdn;
+अटल पूर्णांक splice_dentry(काष्ठा dentry **pdn, काष्ठा inode *in)
+अणु
+	काष्ठा dentry *dn = *pdn;
+	काष्ठा dentry *realdn;
 
 	BUG_ON(d_inode(dn));
 
-	if (S_ISDIR(in->i_mode)) {
-		/* If inode is directory, d_splice_alias() below will remove
+	अगर (S_ISसूची(in->i_mode)) अणु
+		/* If inode is directory, d_splice_alias() below will हटाओ
 		 * 'realdn' from its origin parent. We need to ensure that
 		 * origin parent's readdir cache will not reference 'realdn'
 		 */
 		realdn = d_find_any_alias(in);
-		if (realdn) {
-			struct ceph_dentry_info *di = ceph_dentry(realdn);
+		अगर (realdn) अणु
+			काष्ठा ceph_dentry_info *di = ceph_dentry(realdn);
 			spin_lock(&realdn->d_lock);
 
 			realdn->d_op->d_prune(realdn);
 
-			di->time = jiffies;
+			di->समय = jअगरfies;
 			di->lease_shared_gen = 0;
 			di->offset = 0;
 
 			spin_unlock(&realdn->d_lock);
 			dput(realdn);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* dn must be unhashed */
-	if (!d_unhashed(dn))
+	अगर (!d_unhashed(dn))
 		d_drop(dn);
 	realdn = d_splice_alias(in, dn);
-	if (IS_ERR(realdn)) {
+	अगर (IS_ERR(realdn)) अणु
 		pr_err("splice_dentry error %ld %p inode %p ino %llx.%llx\n",
 		       PTR_ERR(realdn), dn, in, ceph_vinop(in));
-		return PTR_ERR(realdn);
-	}
+		वापस PTR_ERR(realdn);
+	पूर्ण
 
-	if (realdn) {
-		dout("dn %p (%d) spliced with %p (%d) "
+	अगर (realdn) अणु
+		करोut("dn %p (%d) spliced with %p (%d) "
 		     "inode %p ino %llx.%llx\n",
 		     dn, d_count(dn),
 		     realdn, d_count(realdn),
 		     d_inode(realdn), ceph_vinop(d_inode(realdn)));
 		dput(dn);
 		*pdn = realdn;
-	} else {
+	पूर्ण अन्यथा अणु
 		BUG_ON(!ceph_dentry(dn));
-		dout("dn %p attached to %p ino %llx.%llx\n",
+		करोut("dn %p attached to %p ino %llx.%llx\n",
 		     dn, d_inode(dn), ceph_vinop(d_inode(dn)));
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Incorporate results into the local cache.  This is either just
+ * Incorporate results पूर्णांकo the local cache.  This is either just
  * one inode, or a directory, dentry, and possibly linked-to inode (e.g.,
  * after a lookup).
  *
  * A reply may contain
- *         a directory inode along with a dentry.
+ *         a directory inode aदीर्घ with a dentry.
  *  and/or a target inode
  *
- * Called with snap_rwsem (read).
+ * Called with snap_rwsem (पढ़ो).
  */
-int ceph_fill_trace(struct super_block *sb, struct ceph_mds_request *req)
-{
-	struct ceph_mds_session *session = req->r_session;
-	struct ceph_mds_reply_info_parsed *rinfo = &req->r_reply_info;
-	struct inode *in = NULL;
-	struct ceph_vino tvino, dvino;
-	struct ceph_fs_client *fsc = ceph_sb_to_client(sb);
-	int err = 0;
+पूर्णांक ceph_fill_trace(काष्ठा super_block *sb, काष्ठा ceph_mds_request *req)
+अणु
+	काष्ठा ceph_mds_session *session = req->r_session;
+	काष्ठा ceph_mds_reply_info_parsed *rinfo = &req->r_reply_info;
+	काष्ठा inode *in = शून्य;
+	काष्ठा ceph_vino tvino, dvino;
+	काष्ठा ceph_fs_client *fsc = ceph_sb_to_client(sb);
+	पूर्णांक err = 0;
 
-	dout("fill_trace %p is_dentry %d is_target %d\n", req,
+	करोut("fill_trace %p is_dentry %d is_target %d\n", req,
 	     rinfo->head->is_dentry, rinfo->head->is_target);
 
-	if (!rinfo->head->is_target && !rinfo->head->is_dentry) {
-		dout("fill_trace reply is empty!\n");
-		if (rinfo->head->result == 0 && req->r_parent)
+	अगर (!rinfo->head->is_target && !rinfo->head->is_dentry) अणु
+		करोut("fill_trace reply is empty!\n");
+		अगर (rinfo->head->result == 0 && req->r_parent)
 			ceph_invalidate_dir_request(req);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (rinfo->head->is_dentry) {
-		struct inode *dir = req->r_parent;
+	अगर (rinfo->head->is_dentry) अणु
+		काष्ठा inode *dir = req->r_parent;
 
-		if (dir) {
-			err = ceph_fill_inode(dir, NULL, &rinfo->diri,
+		अगर (dir) अणु
+			err = ceph_fill_inode(dir, शून्य, &rinfo->diri,
 					      rinfo->dirfrag, session, -1,
 					      &req->r_caps_reservation);
-			if (err < 0)
-				goto done;
-		} else {
+			अगर (err < 0)
+				जाओ करोne;
+		पूर्ण अन्यथा अणु
 			WARN_ON_ONCE(1);
-		}
+		पूर्ण
 
-		if (dir && req->r_op == CEPH_MDS_OP_LOOKUPNAME &&
+		अगर (dir && req->r_op == CEPH_MDS_OP_LOOKUPNAME &&
 		    test_bit(CEPH_MDS_R_PARENT_LOCKED, &req->r_req_flags) &&
-		    !test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags)) {
-			struct qstr dname;
-			struct dentry *dn, *parent;
+		    !test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags)) अणु
+			काष्ठा qstr dname;
+			काष्ठा dentry *dn, *parent;
 
 			BUG_ON(!rinfo->head->is_target);
 			BUG_ON(req->r_dentry);
@@ -1322,77 +1323,77 @@ int ceph_fill_trace(struct super_block *sb, struct ceph_mds_request *req)
 			tvino.snap = le64_to_cpu(rinfo->targeti.in->snapid);
 retry_lookup:
 			dn = d_lookup(parent, &dname);
-			dout("d_lookup on parent=%p name=%.*s got %p\n",
+			करोut("d_lookup on parent=%p name=%.*s got %p\n",
 			     parent, dname.len, dname.name, dn);
 
-			if (!dn) {
+			अगर (!dn) अणु
 				dn = d_alloc(parent, &dname);
-				dout("d_alloc %p '%.*s' = %p\n", parent,
+				करोut("d_alloc %p '%.*s' = %p\n", parent,
 				     dname.len, dname.name, dn);
-				if (!dn) {
+				अगर (!dn) अणु
 					dput(parent);
 					err = -ENOMEM;
-					goto done;
-				}
+					जाओ करोne;
+				पूर्ण
 				err = 0;
-			} else if (d_really_is_positive(dn) &&
+			पूर्ण अन्यथा अगर (d_really_is_positive(dn) &&
 				   (ceph_ino(d_inode(dn)) != tvino.ino ||
-				    ceph_snap(d_inode(dn)) != tvino.snap)) {
-				dout(" dn %p points to wrong inode %p\n",
+				    ceph_snap(d_inode(dn)) != tvino.snap)) अणु
+				करोut(" dn %p points to wrong inode %p\n",
 				     dn, d_inode(dn));
 				ceph_dir_clear_ordered(dir);
 				d_delete(dn);
 				dput(dn);
-				goto retry_lookup;
-			}
+				जाओ retry_lookup;
+			पूर्ण
 
 			req->r_dentry = dn;
 			dput(parent);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rinfo->head->is_target) {
+	अगर (rinfo->head->is_target) अणु
 		/* Should be filled in by handle_reply */
 		BUG_ON(!req->r_target_inode);
 
 		in = req->r_target_inode;
 		err = ceph_fill_inode(in, req->r_locked_page, &rinfo->targeti,
-				NULL, session,
+				शून्य, session,
 				(!test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags) &&
 				 !test_bit(CEPH_MDS_R_ASYNC, &req->r_req_flags) &&
-				 rinfo->head->result == 0) ?  req->r_fmode : -1,
+				 rinfo->head->result == 0) ?  req->r_भ_शेषe : -1,
 				&req->r_caps_reservation);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			pr_err("ceph_fill_inode badness %p %llx.%llx\n",
 				in, ceph_vinop(in));
-			req->r_target_inode = NULL;
-			if (in->i_state & I_NEW)
+			req->r_target_inode = शून्य;
+			अगर (in->i_state & I_NEW)
 				discard_new_inode(in);
-			else
+			अन्यथा
 				iput(in);
-			goto done;
-		}
-		if (in->i_state & I_NEW)
+			जाओ करोne;
+		पूर्ण
+		अगर (in->i_state & I_NEW)
 			unlock_new_inode(in);
-	}
+	पूर्ण
 
 	/*
-	 * ignore null lease/binding on snapdir ENOENT, or else we
-	 * will have trouble splicing in the virtual snapdir later
+	 * ignore null lease/binding on snapdir ENOENT, or अन्यथा we
+	 * will have trouble splicing in the भव snapdir later
 	 */
-	if (rinfo->head->is_dentry &&
+	अगर (rinfo->head->is_dentry &&
             !test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags) &&
 	    test_bit(CEPH_MDS_R_PARENT_LOCKED, &req->r_req_flags) &&
-	    (rinfo->head->is_target || strncmp(req->r_dentry->d_name.name,
+	    (rinfo->head->is_target || म_भेदन(req->r_dentry->d_name.name,
 					       fsc->mount_options->snapdir_name,
-					       req->r_dentry->d_name.len))) {
+					       req->r_dentry->d_name.len))) अणु
 		/*
-		 * lookup link rename   : null -> possibly existing inode
-		 * mknod symlink mkdir  : null -> new inode
+		 * lookup link नाम   : null -> possibly existing inode
+		 * mknod symlink सूची_गढ़ो  : null -> new inode
 		 * unlink               : linked -> null
 		 */
-		struct inode *dir = req->r_parent;
-		struct dentry *dn = req->r_dentry;
+		काष्ठा inode *dir = req->r_parent;
+		काष्ठा dentry *dn = req->r_dentry;
 		bool have_dir_cap, have_lease;
 
 		BUG_ON(!dn);
@@ -1405,27 +1406,27 @@ retry_lookup:
 		BUG_ON(ceph_ino(dir) != dvino.ino);
 		BUG_ON(ceph_snap(dir) != dvino.snap);
 
-		/* do we have a lease on the whole dir? */
+		/* करो we have a lease on the whole dir? */
 		have_dir_cap =
 			(le32_to_cpu(rinfo->diri.in->cap.caps) &
-			 CEPH_CAP_FILE_SHARED);
+			 CEPH_CAP_खाता_SHARED);
 
-		/* do we have a dn lease? */
+		/* करो we have a dn lease? */
 		have_lease = have_dir_cap ||
 			le32_to_cpu(rinfo->dlease->duration_ms);
-		if (!have_lease)
-			dout("fill_trace  no dentry lease or dir cap\n");
+		अगर (!have_lease)
+			करोut("fill_trace  no dentry lease or dir cap\n");
 
-		/* rename? */
-		if (req->r_old_dentry && req->r_op == CEPH_MDS_OP_RENAME) {
-			struct inode *olddir = req->r_old_dentry_dir;
+		/* नाम? */
+		अगर (req->r_old_dentry && req->r_op == CEPH_MDS_OP_RENAME) अणु
+			काष्ठा inode *olddir = req->r_old_dentry_dir;
 			BUG_ON(!olddir);
 
-			dout(" src %p '%pd' dst %p '%pd'\n",
+			करोut(" src %p '%pd' dst %p '%pd'\n",
 			     req->r_old_dentry,
 			     req->r_old_dentry,
 			     dn, dn);
-			dout("fill_trace doing d_move %p -> %p\n",
+			करोut("fill_trace doing d_move %p -> %p\n",
 			     req->r_old_dentry, dn);
 
 			/* d_move screws up sibling dentries' offsets */
@@ -1433,263 +1434,263 @@ retry_lookup:
 			ceph_dir_clear_ordered(olddir);
 
 			d_move(req->r_old_dentry, dn);
-			dout(" src %p '%pd' dst %p '%pd'\n",
+			करोut(" src %p '%pd' dst %p '%pd'\n",
 			     req->r_old_dentry,
 			     req->r_old_dentry,
 			     dn, dn);
 
 			/* ensure target dentry is invalidated, despite
-			   rehashing bug in vfs_rename_dir */
+			   rehashing bug in vfs_नाम_dir */
 			ceph_invalidate_dentry_lease(dn);
 
-			dout("dn %p gets new offset %lld\n", req->r_old_dentry,
+			करोut("dn %p gets new offset %lld\n", req->r_old_dentry,
 			     ceph_dentry(req->r_old_dentry)->offset);
 
-			/* swap r_dentry and r_old_dentry in case that
-			 * splice_dentry() gets called later. This is safe
+			/* swap r_dentry and r_old_dentry in हाल that
+			 * splice_dentry() माला_लो called later. This is safe
 			 * because no other place will use them */
 			req->r_dentry = req->r_old_dentry;
 			req->r_old_dentry = dn;
 			dn = req->r_dentry;
-		}
+		पूर्ण
 
 		/* null dentry? */
-		if (!rinfo->head->is_target) {
-			dout("fill_trace null dentry\n");
-			if (d_really_is_positive(dn)) {
-				dout("d_delete %p\n", dn);
+		अगर (!rinfo->head->is_target) अणु
+			करोut("fill_trace null dentry\n");
+			अगर (d_really_is_positive(dn)) अणु
+				करोut("d_delete %p\n", dn);
 				ceph_dir_clear_ordered(dir);
 				d_delete(dn);
-			} else if (have_lease) {
-				if (d_unhashed(dn))
-					d_add(dn, NULL);
+			पूर्ण अन्यथा अगर (have_lease) अणु
+				अगर (d_unhashed(dn))
+					d_add(dn, शून्य);
 				update_dentry_lease(dir, dn,
 						    rinfo->dlease, session,
 						    req->r_request_started);
-			}
-			goto done;
-		}
+			पूर्ण
+			जाओ करोne;
+		पूर्ण
 
 		/* attach proper inode */
-		if (d_really_is_negative(dn)) {
+		अगर (d_really_is_negative(dn)) अणु
 			ceph_dir_clear_ordered(dir);
 			ihold(in);
 			err = splice_dentry(&req->r_dentry, in);
-			if (err < 0)
-				goto done;
+			अगर (err < 0)
+				जाओ करोne;
 			dn = req->r_dentry;  /* may have spliced */
-		} else if (d_really_is_positive(dn) && d_inode(dn) != in) {
-			dout(" %p links to %p %llx.%llx, not %llx.%llx\n",
+		पूर्ण अन्यथा अगर (d_really_is_positive(dn) && d_inode(dn) != in) अणु
+			करोut(" %p links to %p %llx.%llx, not %llx.%llx\n",
 			     dn, d_inode(dn), ceph_vinop(d_inode(dn)),
 			     ceph_vinop(in));
 			d_invalidate(dn);
 			have_lease = false;
-		}
+		पूर्ण
 
-		if (have_lease) {
+		अगर (have_lease) अणु
 			update_dentry_lease(dir, dn,
 					    rinfo->dlease, session,
 					    req->r_request_started);
-		}
-		dout(" final dn %p\n", dn);
-	} else if ((req->r_op == CEPH_MDS_OP_LOOKUPSNAP ||
+		पूर्ण
+		करोut(" final dn %p\n", dn);
+	पूर्ण अन्यथा अगर ((req->r_op == CEPH_MDS_OP_LOOKUPSNAP ||
 		    req->r_op == CEPH_MDS_OP_MKSNAP) &&
 	           test_bit(CEPH_MDS_R_PARENT_LOCKED, &req->r_req_flags) &&
-		   !test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags)) {
-		struct inode *dir = req->r_parent;
+		   !test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags)) अणु
+		काष्ठा inode *dir = req->r_parent;
 
 		/* fill out a snapdir LOOKUPSNAP dentry */
 		BUG_ON(!dir);
-		BUG_ON(ceph_snap(dir) != CEPH_SNAPDIR);
+		BUG_ON(ceph_snap(dir) != CEPH_SNAPसूची);
 		BUG_ON(!req->r_dentry);
-		dout(" linking snapped dir %p to dn %p\n", in, req->r_dentry);
+		करोut(" linking snapped dir %p to dn %p\n", in, req->r_dentry);
 		ceph_dir_clear_ordered(dir);
 		ihold(in);
 		err = splice_dentry(&req->r_dentry, in);
-		if (err < 0)
-			goto done;
-	} else if (rinfo->head->is_dentry && req->r_dentry) {
+		अगर (err < 0)
+			जाओ करोne;
+	पूर्ण अन्यथा अगर (rinfo->head->is_dentry && req->r_dentry) अणु
 		/* parent inode is not locked, be carefull */
-		struct ceph_vino *ptvino = NULL;
+		काष्ठा ceph_vino *ptvino = शून्य;
 		dvino.ino = le64_to_cpu(rinfo->diri.in->ino);
 		dvino.snap = le64_to_cpu(rinfo->diri.in->snapid);
-		if (rinfo->head->is_target) {
+		अगर (rinfo->head->is_target) अणु
 			tvino.ino = le64_to_cpu(rinfo->targeti.in->ino);
 			tvino.snap = le64_to_cpu(rinfo->targeti.in->snapid);
 			ptvino = &tvino;
-		}
+		पूर्ण
 		update_dentry_lease_careful(req->r_dentry, rinfo->dlease,
 					    session, req->r_request_started,
 					    rinfo->dname, rinfo->dname_len,
 					    &dvino, ptvino);
-	}
-done:
-	dout("fill_trace done err=%d\n", err);
-	return err;
-}
+	पूर्ण
+करोne:
+	करोut("fill_trace done err=%d\n", err);
+	वापस err;
+पूर्ण
 
 /*
- * Prepopulate our cache with readdir results, leases, etc.
+ * Prepopulate our cache with सूची_पढ़ो results, leases, etc.
  */
-static int readdir_prepopulate_inodes_only(struct ceph_mds_request *req,
-					   struct ceph_mds_session *session)
-{
-	struct ceph_mds_reply_info_parsed *rinfo = &req->r_reply_info;
-	int i, err = 0;
+अटल पूर्णांक सूची_पढ़ो_prepopulate_inodes_only(काष्ठा ceph_mds_request *req,
+					   काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा ceph_mds_reply_info_parsed *rinfo = &req->r_reply_info;
+	पूर्णांक i, err = 0;
 
-	for (i = 0; i < rinfo->dir_nr; i++) {
-		struct ceph_mds_reply_dir_entry *rde = rinfo->dir_entries + i;
-		struct ceph_vino vino;
-		struct inode *in;
-		int rc;
+	क्रम (i = 0; i < rinfo->dir_nr; i++) अणु
+		काष्ठा ceph_mds_reply_dir_entry *rde = rinfo->dir_entries + i;
+		काष्ठा ceph_vino vino;
+		काष्ठा inode *in;
+		पूर्णांक rc;
 
 		vino.ino = le64_to_cpu(rde->inode.in->ino);
 		vino.snap = le64_to_cpu(rde->inode.in->snapid);
 
 		in = ceph_get_inode(req->r_dentry->d_sb, vino);
-		if (IS_ERR(in)) {
+		अगर (IS_ERR(in)) अणु
 			err = PTR_ERR(in);
-			dout("new_inode badness got %d\n", err);
-			continue;
-		}
-		rc = ceph_fill_inode(in, NULL, &rde->inode, NULL, session,
+			करोut("new_inode badness got %d\n", err);
+			जारी;
+		पूर्ण
+		rc = ceph_fill_inode(in, शून्य, &rde->inode, शून्य, session,
 				     -1, &req->r_caps_reservation);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			pr_err("ceph_fill_inode badness on %p got %d\n",
 			       in, rc);
 			err = rc;
-			if (in->i_state & I_NEW) {
+			अगर (in->i_state & I_NEW) अणु
 				ihold(in);
 				discard_new_inode(in);
-			}
-		} else if (in->i_state & I_NEW) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (in->i_state & I_NEW) अणु
 			unlock_new_inode(in);
-		}
+		पूर्ण
 
-		/* avoid calling iput_final() in mds dispatch threads */
+		/* aव्योम calling iput_final() in mds dispatch thपढ़ोs */
 		ceph_async_iput(in);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void ceph_readdir_cache_release(struct ceph_readdir_cache_control *ctl)
-{
-	if (ctl->page) {
+व्योम ceph_सूची_पढ़ो_cache_release(काष्ठा ceph_सूची_पढ़ो_cache_control *ctl)
+अणु
+	अगर (ctl->page) अणु
 		kunmap(ctl->page);
 		put_page(ctl->page);
-		ctl->page = NULL;
-	}
-}
+		ctl->page = शून्य;
+	पूर्ण
+पूर्ण
 
-static int fill_readdir_cache(struct inode *dir, struct dentry *dn,
-			      struct ceph_readdir_cache_control *ctl,
-			      struct ceph_mds_request *req)
-{
-	struct ceph_inode_info *ci = ceph_inode(dir);
-	unsigned nsize = PAGE_SIZE / sizeof(struct dentry*);
-	unsigned idx = ctl->index % nsize;
+अटल पूर्णांक fill_सूची_पढ़ो_cache(काष्ठा inode *dir, काष्ठा dentry *dn,
+			      काष्ठा ceph_सूची_पढ़ो_cache_control *ctl,
+			      काष्ठा ceph_mds_request *req)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(dir);
+	अचिन्हित nsize = PAGE_SIZE / माप(काष्ठा dentry*);
+	अचिन्हित idx = ctl->index % nsize;
 	pgoff_t pgoff = ctl->index / nsize;
 
-	if (!ctl->page || pgoff != page_index(ctl->page)) {
-		ceph_readdir_cache_release(ctl);
-		if (idx == 0)
+	अगर (!ctl->page || pgoff != page_index(ctl->page)) अणु
+		ceph_सूची_पढ़ो_cache_release(ctl);
+		अगर (idx == 0)
 			ctl->page = grab_cache_page(&dir->i_data, pgoff);
-		else
+		अन्यथा
 			ctl->page = find_lock_page(&dir->i_data, pgoff);
-		if (!ctl->page) {
+		अगर (!ctl->page) अणु
 			ctl->index = -1;
-			return idx == 0 ? -ENOMEM : 0;
-		}
-		/* reading/filling the cache are serialized by
+			वापस idx == 0 ? -ENOMEM : 0;
+		पूर्ण
+		/* पढ़ोing/filling the cache are serialized by
 		 * i_mutex, no need to use page lock */
 		unlock_page(ctl->page);
 		ctl->dentries = kmap(ctl->page);
-		if (idx == 0)
-			memset(ctl->dentries, 0, PAGE_SIZE);
-	}
+		अगर (idx == 0)
+			स_रखो(ctl->dentries, 0, PAGE_SIZE);
+	पूर्ण
 
-	if (req->r_dir_release_cnt == atomic64_read(&ci->i_release_count) &&
-	    req->r_dir_ordered_cnt == atomic64_read(&ci->i_ordered_count)) {
-		dout("readdir cache dn %p idx %d\n", dn, ctl->index);
+	अगर (req->r_dir_release_cnt == atomic64_पढ़ो(&ci->i_release_count) &&
+	    req->r_dir_ordered_cnt == atomic64_पढ़ो(&ci->i_ordered_count)) अणु
+		करोut("readdir cache dn %p idx %d\n", dn, ctl->index);
 		ctl->dentries[idx] = dn;
 		ctl->index++;
-	} else {
-		dout("disable readdir cache\n");
+	पूर्ण अन्यथा अणु
+		करोut("disable readdir cache\n");
 		ctl->index = -1;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int ceph_readdir_prepopulate(struct ceph_mds_request *req,
-			     struct ceph_mds_session *session)
-{
-	struct dentry *parent = req->r_dentry;
-	struct ceph_inode_info *ci = ceph_inode(d_inode(parent));
-	struct ceph_mds_reply_info_parsed *rinfo = &req->r_reply_info;
-	struct qstr dname;
-	struct dentry *dn;
-	struct inode *in;
-	int err = 0, skipped = 0, ret, i;
-	u32 frag = le32_to_cpu(req->r_args.readdir.frag);
+पूर्णांक ceph_सूची_पढ़ो_prepopulate(काष्ठा ceph_mds_request *req,
+			     काष्ठा ceph_mds_session *session)
+अणु
+	काष्ठा dentry *parent = req->r_dentry;
+	काष्ठा ceph_inode_info *ci = ceph_inode(d_inode(parent));
+	काष्ठा ceph_mds_reply_info_parsed *rinfo = &req->r_reply_info;
+	काष्ठा qstr dname;
+	काष्ठा dentry *dn;
+	काष्ठा inode *in;
+	पूर्णांक err = 0, skipped = 0, ret, i;
+	u32 frag = le32_to_cpu(req->r_args.सूची_पढ़ो.frag);
 	u32 last_hash = 0;
 	u32 fpos_offset;
-	struct ceph_readdir_cache_control cache_ctl = {};
+	काष्ठा ceph_सूची_पढ़ो_cache_control cache_ctl = अणुपूर्ण;
 
-	if (test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags))
-		return readdir_prepopulate_inodes_only(req, session);
+	अगर (test_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags))
+		वापस सूची_पढ़ो_prepopulate_inodes_only(req, session);
 
-	if (rinfo->hash_order) {
-		if (req->r_path2) {
+	अगर (rinfo->hash_order) अणु
+		अगर (req->r_path2) अणु
 			last_hash = ceph_str_hash(ci->i_dir_layout.dl_dir_hash,
 						  req->r_path2,
-						  strlen(req->r_path2));
+						  म_माप(req->r_path2));
 			last_hash = ceph_frag_value(last_hash);
-		} else if (rinfo->offset_hash) {
+		पूर्ण अन्यथा अगर (rinfo->offset_hash) अणु
 			/* mds understands offset_hash */
-			WARN_ON_ONCE(req->r_readdir_offset != 2);
-			last_hash = le32_to_cpu(req->r_args.readdir.offset_hash);
-		}
-	}
+			WARN_ON_ONCE(req->r_सूची_पढ़ो_offset != 2);
+			last_hash = le32_to_cpu(req->r_args.सूची_पढ़ो.offset_hash);
+		पूर्ण
+	पूर्ण
 
-	if (rinfo->dir_dir &&
-	    le32_to_cpu(rinfo->dir_dir->frag) != frag) {
-		dout("readdir_prepopulate got new frag %x -> %x\n",
+	अगर (rinfo->dir_dir &&
+	    le32_to_cpu(rinfo->dir_dir->frag) != frag) अणु
+		करोut("readdir_prepopulate got new frag %x -> %x\n",
 		     frag, le32_to_cpu(rinfo->dir_dir->frag));
 		frag = le32_to_cpu(rinfo->dir_dir->frag);
-		if (!rinfo->hash_order)
-			req->r_readdir_offset = 2;
-	}
+		अगर (!rinfo->hash_order)
+			req->r_सूची_पढ़ो_offset = 2;
+	पूर्ण
 
-	if (le32_to_cpu(rinfo->head->op) == CEPH_MDS_OP_LSSNAP) {
-		dout("readdir_prepopulate %d items under SNAPDIR dn %p\n",
+	अगर (le32_to_cpu(rinfo->head->op) == CEPH_MDS_OP_LSSNAP) अणु
+		करोut("readdir_prepopulate %d items under SNAPDIR dn %p\n",
 		     rinfo->dir_nr, parent);
-	} else {
-		dout("readdir_prepopulate %d items under dn %p\n",
+	पूर्ण अन्यथा अणु
+		करोut("readdir_prepopulate %d items under dn %p\n",
 		     rinfo->dir_nr, parent);
-		if (rinfo->dir_dir)
+		अगर (rinfo->dir_dir)
 			ceph_fill_dirfrag(d_inode(parent), rinfo->dir_dir);
 
-		if (ceph_frag_is_leftmost(frag) &&
-		    req->r_readdir_offset == 2 &&
-		    !(rinfo->hash_order && last_hash)) {
-			/* note dir version at start of readdir so we can
-			 * tell if any dentries get dropped */
+		अगर (ceph_frag_is_lefपंचांगost(frag) &&
+		    req->r_सूची_पढ़ो_offset == 2 &&
+		    !(rinfo->hash_order && last_hash)) अणु
+			/* note dir version at start of सूची_पढ़ो so we can
+			 * tell अगर any dentries get dropped */
 			req->r_dir_release_cnt =
-				atomic64_read(&ci->i_release_count);
+				atomic64_पढ़ो(&ci->i_release_count);
 			req->r_dir_ordered_cnt =
-				atomic64_read(&ci->i_ordered_count);
-			req->r_readdir_cache_idx = 0;
-		}
-	}
+				atomic64_पढ़ो(&ci->i_ordered_count);
+			req->r_सूची_पढ़ो_cache_idx = 0;
+		पूर्ण
+	पूर्ण
 
-	cache_ctl.index = req->r_readdir_cache_idx;
-	fpos_offset = req->r_readdir_offset;
+	cache_ctl.index = req->r_सूची_पढ़ो_cache_idx;
+	fpos_offset = req->r_सूची_पढ़ो_offset;
 
-	/* FIXME: release caps/leases if error occurs */
-	for (i = 0; i < rinfo->dir_nr; i++) {
-		struct ceph_mds_reply_dir_entry *rde = rinfo->dir_entries + i;
-		struct ceph_vino tvino;
+	/* FIXME: release caps/leases अगर error occurs */
+	क्रम (i = 0; i < rinfo->dir_nr; i++) अणु
+		काष्ठा ceph_mds_reply_dir_entry *rde = rinfo->dir_entries + i;
+		काष्ठा ceph_vino tvino;
 
 		dname.name = rde->name;
 		dname.len = rde->name_len;
@@ -1698,100 +1699,100 @@ int ceph_readdir_prepopulate(struct ceph_mds_request *req,
 		tvino.ino = le64_to_cpu(rde->inode.in->ino);
 		tvino.snap = le64_to_cpu(rde->inode.in->snapid);
 
-		if (rinfo->hash_order) {
+		अगर (rinfo->hash_order) अणु
 			u32 hash = ceph_str_hash(ci->i_dir_layout.dl_dir_hash,
 						 rde->name, rde->name_len);
 			hash = ceph_frag_value(hash);
-			if (hash != last_hash)
+			अगर (hash != last_hash)
 				fpos_offset = 2;
 			last_hash = hash;
 			rde->offset = ceph_make_fpos(hash, fpos_offset++, true);
-		} else {
+		पूर्ण अन्यथा अणु
 			rde->offset = ceph_make_fpos(frag, fpos_offset++, false);
-		}
+		पूर्ण
 
 retry_lookup:
 		dn = d_lookup(parent, &dname);
-		dout("d_lookup on parent=%p name=%.*s got %p\n",
+		करोut("d_lookup on parent=%p name=%.*s got %p\n",
 		     parent, dname.len, dname.name, dn);
 
-		if (!dn) {
+		अगर (!dn) अणु
 			dn = d_alloc(parent, &dname);
-			dout("d_alloc %p '%.*s' = %p\n", parent,
+			करोut("d_alloc %p '%.*s' = %p\n", parent,
 			     dname.len, dname.name, dn);
-			if (!dn) {
-				dout("d_alloc badness\n");
+			अगर (!dn) अणु
+				करोut("d_alloc badness\n");
 				err = -ENOMEM;
-				goto out;
-			}
-		} else if (d_really_is_positive(dn) &&
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (d_really_is_positive(dn) &&
 			   (ceph_ino(d_inode(dn)) != tvino.ino ||
-			    ceph_snap(d_inode(dn)) != tvino.snap)) {
-			struct ceph_dentry_info *di = ceph_dentry(dn);
-			dout(" dn %p points to wrong inode %p\n",
+			    ceph_snap(d_inode(dn)) != tvino.snap)) अणु
+			काष्ठा ceph_dentry_info *di = ceph_dentry(dn);
+			करोut(" dn %p points to wrong inode %p\n",
 			     dn, d_inode(dn));
 
 			spin_lock(&dn->d_lock);
-			if (di->offset > 0 &&
+			अगर (di->offset > 0 &&
 			    di->lease_shared_gen ==
-			    atomic_read(&ci->i_shared_gen)) {
+			    atomic_पढ़ो(&ci->i_shared_gen)) अणु
 				__ceph_dir_clear_ordered(ci);
 				di->offset = 0;
-			}
+			पूर्ण
 			spin_unlock(&dn->d_lock);
 
 			d_delete(dn);
 			dput(dn);
-			goto retry_lookup;
-		}
+			जाओ retry_lookup;
+		पूर्ण
 
 		/* inode */
-		if (d_really_is_positive(dn)) {
+		अगर (d_really_is_positive(dn)) अणु
 			in = d_inode(dn);
-		} else {
+		पूर्ण अन्यथा अणु
 			in = ceph_get_inode(parent->d_sb, tvino);
-			if (IS_ERR(in)) {
-				dout("new_inode badness\n");
+			अगर (IS_ERR(in)) अणु
+				करोut("new_inode badness\n");
 				d_drop(dn);
 				dput(dn);
 				err = PTR_ERR(in);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		ret = ceph_fill_inode(in, NULL, &rde->inode, NULL, session,
+		ret = ceph_fill_inode(in, शून्य, &rde->inode, शून्य, session,
 				      -1, &req->r_caps_reservation);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err("ceph_fill_inode badness on %p\n", in);
-			if (d_really_is_negative(dn)) {
-				/* avoid calling iput_final() in mds
-				 * dispatch threads */
-				if (in->i_state & I_NEW) {
+			अगर (d_really_is_negative(dn)) अणु
+				/* aव्योम calling iput_final() in mds
+				 * dispatch thपढ़ोs */
+				अगर (in->i_state & I_NEW) अणु
 					ihold(in);
 					discard_new_inode(in);
-				}
+				पूर्ण
 				ceph_async_iput(in);
-			}
+			पूर्ण
 			d_drop(dn);
 			err = ret;
-			goto next_item;
-		}
-		if (in->i_state & I_NEW)
+			जाओ next_item;
+		पूर्ण
+		अगर (in->i_state & I_NEW)
 			unlock_new_inode(in);
 
-		if (d_really_is_negative(dn)) {
-			if (ceph_security_xattr_deadlock(in)) {
-				dout(" skip splicing dn %p to inode %p"
+		अगर (d_really_is_negative(dn)) अणु
+			अगर (ceph_security_xattr_deadlock(in)) अणु
+				करोut(" skip splicing dn %p to inode %p"
 				     " (security xattr deadlock)\n", dn, in);
 				ceph_async_iput(in);
 				skipped++;
-				goto next_item;
-			}
+				जाओ next_item;
+			पूर्ण
 
 			err = splice_dentry(&dn, in);
-			if (err < 0)
-				goto next_item;
-		}
+			अगर (err < 0)
+				जाओ next_item;
+		पूर्ण
 
 		ceph_dentry(dn)->offset = rde->offset;
 
@@ -1799,629 +1800,629 @@ retry_lookup:
 				    rde->lease, req->r_session,
 				    req->r_request_started);
 
-		if (err == 0 && skipped == 0 && cache_ctl.index >= 0) {
-			ret = fill_readdir_cache(d_inode(parent), dn,
+		अगर (err == 0 && skipped == 0 && cache_ctl.index >= 0) अणु
+			ret = fill_सूची_पढ़ो_cache(d_inode(parent), dn,
 						 &cache_ctl, req);
-			if (ret < 0)
+			अगर (ret < 0)
 				err = ret;
-		}
+		पूर्ण
 next_item:
 		dput(dn);
-	}
+	पूर्ण
 out:
-	if (err == 0 && skipped == 0) {
+	अगर (err == 0 && skipped == 0) अणु
 		set_bit(CEPH_MDS_R_DID_PREPOPULATE, &req->r_req_flags);
-		req->r_readdir_cache_idx = cache_ctl.index;
-	}
-	ceph_readdir_cache_release(&cache_ctl);
-	dout("readdir_prepopulate done\n");
-	return err;
-}
+		req->r_सूची_पढ़ो_cache_idx = cache_ctl.index;
+	पूर्ण
+	ceph_सूची_पढ़ो_cache_release(&cache_ctl);
+	करोut("readdir_prepopulate done\n");
+	वापस err;
+पूर्ण
 
-bool ceph_inode_set_size(struct inode *inode, loff_t size)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
+bool ceph_inode_set_size(काष्ठा inode *inode, loff_t size)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
 	bool ret;
 
 	spin_lock(&ci->i_ceph_lock);
-	dout("set_size %p %llu -> %llu\n", inode, i_size_read(inode), size);
-	i_size_write(inode, size);
+	करोut("set_size %p %llu -> %llu\n", inode, i_size_पढ़ो(inode), size);
+	i_size_ग_लिखो(inode, size);
 	inode->i_blocks = calc_inode_blocks(size);
 
 	ret = __ceph_should_report_size(ci);
 
 	spin_unlock(&ci->i_ceph_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Put reference to inode, but avoid calling iput_final() in current thread.
- * iput_final() may wait for reahahead pages. The wait can cause deadlock in
+ * Put reference to inode, but aव्योम calling iput_final() in current thपढ़ो.
+ * iput_final() may रुको क्रम reahahead pages. The रुको can cause deadlock in
  * some contexts.
  */
-void ceph_async_iput(struct inode *inode)
-{
-	if (!inode)
-		return;
-	for (;;) {
-		if (atomic_add_unless(&inode->i_count, -1, 1))
-			break;
-		if (queue_work(ceph_inode_to_client(inode)->inode_wq,
+व्योम ceph_async_iput(काष्ठा inode *inode)
+अणु
+	अगर (!inode)
+		वापस;
+	क्रम (;;) अणु
+		अगर (atomic_add_unless(&inode->i_count, -1, 1))
+			अवरोध;
+		अगर (queue_work(ceph_inode_to_client(inode)->inode_wq,
 			       &ceph_inode(inode)->i_work))
-			break;
+			अवरोध;
 		/* queue work failed, i_count must be at least 2 */
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ceph_queue_inode_work(struct inode *inode, int work_bit)
-{
-	struct ceph_fs_client *fsc = ceph_inode_to_client(inode);
-	struct ceph_inode_info *ci = ceph_inode(inode);
+व्योम ceph_queue_inode_work(काष्ठा inode *inode, पूर्णांक work_bit)
+अणु
+	काष्ठा ceph_fs_client *fsc = ceph_inode_to_client(inode);
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
 	set_bit(work_bit, &ci->i_work_mask);
 
 	ihold(inode);
-	if (queue_work(fsc->inode_wq, &ci->i_work)) {
-		dout("queue_inode_work %p, mask=%lx\n", inode, ci->i_work_mask);
-	} else {
-		dout("queue_inode_work %p already queued, mask=%lx\n",
+	अगर (queue_work(fsc->inode_wq, &ci->i_work)) अणु
+		करोut("queue_inode_work %p, mask=%lx\n", inode, ci->i_work_mask);
+	पूर्ण अन्यथा अणु
+		करोut("queue_inode_work %p already queued, mask=%lx\n",
 		     inode, ci->i_work_mask);
 		iput(inode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ceph_do_invalidate_pages(struct inode *inode)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	struct ceph_fs_client *fsc = ceph_inode_to_client(inode);
+अटल व्योम ceph_करो_invalidate_pages(काष्ठा inode *inode)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	काष्ठा ceph_fs_client *fsc = ceph_inode_to_client(inode);
 	u32 orig_gen;
-	int check = 0;
+	पूर्णांक check = 0;
 
 	mutex_lock(&ci->i_truncate_mutex);
 
-	if (READ_ONCE(fsc->mount_state) >= CEPH_MOUNT_SHUTDOWN) {
+	अगर (READ_ONCE(fsc->mount_state) >= CEPH_MOUNT_SHUTDOWN) अणु
 		pr_warn_ratelimited("invalidate_pages %p %lld forced umount\n",
 				    inode, ceph_ino(inode));
 		mapping_set_error(inode->i_mapping, -EIO);
 		truncate_pagecache(inode, 0);
 		mutex_unlock(&ci->i_truncate_mutex);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	spin_lock(&ci->i_ceph_lock);
-	dout("invalidate_pages %p gen %d revoking %d\n", inode,
+	करोut("invalidate_pages %p gen %d revoking %d\n", inode,
 	     ci->i_rdcache_gen, ci->i_rdcache_revoking);
-	if (ci->i_rdcache_revoking != ci->i_rdcache_gen) {
-		if (__ceph_caps_revoking_other(ci, NULL, CEPH_CAP_FILE_CACHE))
+	अगर (ci->i_rdcache_revoking != ci->i_rdcache_gen) अणु
+		अगर (__ceph_caps_revoking_other(ci, शून्य, CEPH_CAP_खाता_CACHE))
 			check = 1;
 		spin_unlock(&ci->i_ceph_lock);
 		mutex_unlock(&ci->i_truncate_mutex);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	orig_gen = ci->i_rdcache_gen;
 	spin_unlock(&ci->i_ceph_lock);
 
 	ceph_fscache_invalidate(inode);
-	if (invalidate_inode_pages2(inode->i_mapping) < 0) {
+	अगर (invalidate_inode_pages2(inode->i_mapping) < 0) अणु
 		pr_err("invalidate_pages %p fails\n", inode);
-	}
+	पूर्ण
 
 	spin_lock(&ci->i_ceph_lock);
-	if (orig_gen == ci->i_rdcache_gen &&
-	    orig_gen == ci->i_rdcache_revoking) {
-		dout("invalidate_pages %p gen %d successful\n", inode,
+	अगर (orig_gen == ci->i_rdcache_gen &&
+	    orig_gen == ci->i_rdcache_revoking) अणु
+		करोut("invalidate_pages %p gen %d successful\n", inode,
 		     ci->i_rdcache_gen);
 		ci->i_rdcache_revoking--;
 		check = 1;
-	} else {
-		dout("invalidate_pages %p gen %d raced, now %d revoking %d\n",
+	पूर्ण अन्यथा अणु
+		करोut("invalidate_pages %p gen %d raced, now %d revoking %d\n",
 		     inode, orig_gen, ci->i_rdcache_gen,
 		     ci->i_rdcache_revoking);
-		if (__ceph_caps_revoking_other(ci, NULL, CEPH_CAP_FILE_CACHE))
+		अगर (__ceph_caps_revoking_other(ci, शून्य, CEPH_CAP_खाता_CACHE))
 			check = 1;
-	}
+	पूर्ण
 	spin_unlock(&ci->i_ceph_lock);
 	mutex_unlock(&ci->i_truncate_mutex);
 out:
-	if (check)
-		ceph_check_caps(ci, 0, NULL);
-}
+	अगर (check)
+		ceph_check_caps(ci, 0, शून्य);
+पूर्ण
 
 /*
- * Make sure any pending truncation is applied before doing anything
+ * Make sure any pending truncation is applied beक्रमe करोing anything
  * that may depend on it.
  */
-void __ceph_do_pending_vmtruncate(struct inode *inode)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
+व्योम __ceph_करो_pending_vmtruncate(काष्ठा inode *inode)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
 	u64 to;
-	int wrbuffer_refs, finish = 0;
+	पूर्णांक wrbuffer_refs, finish = 0;
 
 	mutex_lock(&ci->i_truncate_mutex);
 retry:
 	spin_lock(&ci->i_ceph_lock);
-	if (ci->i_truncate_pending == 0) {
-		dout("__do_pending_vmtruncate %p none pending\n", inode);
+	अगर (ci->i_truncate_pending == 0) अणु
+		करोut("__do_pending_vmtruncate %p none pending\n", inode);
 		spin_unlock(&ci->i_ceph_lock);
 		mutex_unlock(&ci->i_truncate_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * make sure any dirty snapped pages are flushed before we
-	 * possibly truncate them.. so write AND block!
+	 * make sure any dirty snapped pages are flushed beक्रमe we
+	 * possibly truncate them.. so ग_लिखो AND block!
 	 */
-	if (ci->i_wrbuffer_ref_head < ci->i_wrbuffer_ref) {
+	अगर (ci->i_wrbuffer_ref_head < ci->i_wrbuffer_ref) अणु
 		spin_unlock(&ci->i_ceph_lock);
-		dout("__do_pending_vmtruncate %p flushing snaps first\n",
+		करोut("__do_pending_vmtruncate %p flushing snaps first\n",
 		     inode);
-		filemap_write_and_wait_range(&inode->i_data, 0,
+		filemap_ग_लिखो_and_रुको_range(&inode->i_data, 0,
 					     inode->i_sb->s_maxbytes);
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	/* there should be no reader or writer */
+	/* there should be no पढ़ोer or ग_लिखोr */
 	WARN_ON_ONCE(ci->i_rd_ref || ci->i_wr_ref);
 
 	to = ci->i_truncate_size;
 	wrbuffer_refs = ci->i_wrbuffer_ref;
-	dout("__do_pending_vmtruncate %p (%d) to %lld\n", inode,
+	करोut("__do_pending_vmtruncate %p (%d) to %lld\n", inode,
 	     ci->i_truncate_pending, to);
 	spin_unlock(&ci->i_ceph_lock);
 
 	truncate_pagecache(inode, to);
 
 	spin_lock(&ci->i_ceph_lock);
-	if (to == ci->i_truncate_size) {
+	अगर (to == ci->i_truncate_size) अणु
 		ci->i_truncate_pending = 0;
 		finish = 1;
-	}
+	पूर्ण
 	spin_unlock(&ci->i_ceph_lock);
-	if (!finish)
-		goto retry;
+	अगर (!finish)
+		जाओ retry;
 
 	mutex_unlock(&ci->i_truncate_mutex);
 
-	if (wrbuffer_refs == 0)
-		ceph_check_caps(ci, 0, NULL);
+	अगर (wrbuffer_refs == 0)
+		ceph_check_caps(ci, 0, शून्य);
 
 	wake_up_all(&ci->i_cap_wq);
-}
+पूर्ण
 
-static void ceph_inode_work(struct work_struct *work)
-{
-	struct ceph_inode_info *ci = container_of(work, struct ceph_inode_info,
+अटल व्योम ceph_inode_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ceph_inode_info *ci = container_of(work, काष्ठा ceph_inode_info,
 						 i_work);
-	struct inode *inode = &ci->vfs_inode;
+	काष्ठा inode *inode = &ci->vfs_inode;
 
-	if (test_and_clear_bit(CEPH_I_WORK_WRITEBACK, &ci->i_work_mask)) {
-		dout("writeback %p\n", inode);
-		filemap_fdatawrite(&inode->i_data);
-	}
-	if (test_and_clear_bit(CEPH_I_WORK_INVALIDATE_PAGES, &ci->i_work_mask))
-		ceph_do_invalidate_pages(inode);
+	अगर (test_and_clear_bit(CEPH_I_WORK_WRITEBACK, &ci->i_work_mask)) अणु
+		करोut("writeback %p\n", inode);
+		filemap_fdataग_लिखो(&inode->i_data);
+	पूर्ण
+	अगर (test_and_clear_bit(CEPH_I_WORK_INVALIDATE_PAGES, &ci->i_work_mask))
+		ceph_करो_invalidate_pages(inode);
 
-	if (test_and_clear_bit(CEPH_I_WORK_VMTRUNCATE, &ci->i_work_mask))
-		__ceph_do_pending_vmtruncate(inode);
+	अगर (test_and_clear_bit(CEPH_I_WORK_VMTRUNCATE, &ci->i_work_mask))
+		__ceph_करो_pending_vmtruncate(inode);
 
-	if (test_and_clear_bit(CEPH_I_WORK_CHECK_CAPS, &ci->i_work_mask))
-		ceph_check_caps(ci, 0, NULL);
+	अगर (test_and_clear_bit(CEPH_I_WORK_CHECK_CAPS, &ci->i_work_mask))
+		ceph_check_caps(ci, 0, शून्य);
 
-	if (test_and_clear_bit(CEPH_I_WORK_FLUSH_SNAPS, &ci->i_work_mask))
-		ceph_flush_snaps(ci, NULL);
+	अगर (test_and_clear_bit(CEPH_I_WORK_FLUSH_SNAPS, &ci->i_work_mask))
+		ceph_flush_snaps(ci, शून्य);
 
 	iput(inode);
-}
+पूर्ण
 
 /*
  * symlinks
  */
-static const struct inode_operations ceph_symlink_iops = {
+अटल स्थिर काष्ठा inode_operations ceph_symlink_iops = अणु
 	.get_link = simple_get_link,
 	.setattr = ceph_setattr,
 	.getattr = ceph_getattr,
 	.listxattr = ceph_listxattr,
-};
+पूर्ण;
 
-int __ceph_setattr(struct inode *inode, struct iattr *attr)
-{
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	unsigned int ia_valid = attr->ia_valid;
-	struct ceph_mds_request *req;
-	struct ceph_mds_client *mdsc = ceph_sb_to_client(inode->i_sb)->mdsc;
-	struct ceph_cap_flush *prealloc_cf;
-	int issued;
-	int release = 0, dirtied = 0;
-	int mask = 0;
-	int err = 0;
-	int inode_dirty_flags = 0;
+पूर्णांक __ceph_setattr(काष्ठा inode *inode, काष्ठा iattr *attr)
+अणु
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	अचिन्हित पूर्णांक ia_valid = attr->ia_valid;
+	काष्ठा ceph_mds_request *req;
+	काष्ठा ceph_mds_client *mdsc = ceph_sb_to_client(inode->i_sb)->mdsc;
+	काष्ठा ceph_cap_flush *pपुनः_स्मृति_cf;
+	पूर्णांक issued;
+	पूर्णांक release = 0, dirtied = 0;
+	पूर्णांक mask = 0;
+	पूर्णांक err = 0;
+	पूर्णांक inode_dirty_flags = 0;
 	bool lock_snap_rwsem = false;
 
-	prealloc_cf = ceph_alloc_cap_flush();
-	if (!prealloc_cf)
-		return -ENOMEM;
+	pपुनः_स्मृति_cf = ceph_alloc_cap_flush();
+	अगर (!pपुनः_स्मृति_cf)
+		वापस -ENOMEM;
 
 	req = ceph_mdsc_create_request(mdsc, CEPH_MDS_OP_SETATTR,
 				       USE_AUTH_MDS);
-	if (IS_ERR(req)) {
-		ceph_free_cap_flush(prealloc_cf);
-		return PTR_ERR(req);
-	}
+	अगर (IS_ERR(req)) अणु
+		ceph_मुक्त_cap_flush(pपुनः_स्मृति_cf);
+		वापस PTR_ERR(req);
+	पूर्ण
 
 	spin_lock(&ci->i_ceph_lock);
-	issued = __ceph_caps_issued(ci, NULL);
+	issued = __ceph_caps_issued(ci, शून्य);
 
-	if (!ci->i_head_snapc &&
-	    (issued & (CEPH_CAP_ANY_EXCL | CEPH_CAP_FILE_WR))) {
+	अगर (!ci->i_head_snapc &&
+	    (issued & (CEPH_CAP_ANY_EXCL | CEPH_CAP_खाता_WR))) अणु
 		lock_snap_rwsem = true;
-		if (!down_read_trylock(&mdsc->snap_rwsem)) {
+		अगर (!करोwn_पढ़ो_trylock(&mdsc->snap_rwsem)) अणु
 			spin_unlock(&ci->i_ceph_lock);
-			down_read(&mdsc->snap_rwsem);
+			करोwn_पढ़ो(&mdsc->snap_rwsem);
 			spin_lock(&ci->i_ceph_lock);
-			issued = __ceph_caps_issued(ci, NULL);
-		}
-	}
+			issued = __ceph_caps_issued(ci, शून्य);
+		पूर्ण
+	पूर्ण
 
-	dout("setattr %p issued %s\n", inode, ceph_cap_string(issued));
+	करोut("setattr %p issued %s\n", inode, ceph_cap_string(issued));
 
-	if (ia_valid & ATTR_UID) {
-		dout("setattr %p uid %d -> %d\n", inode,
+	अगर (ia_valid & ATTR_UID) अणु
+		करोut("setattr %p uid %d -> %d\n", inode,
 		     from_kuid(&init_user_ns, inode->i_uid),
 		     from_kuid(&init_user_ns, attr->ia_uid));
-		if (issued & CEPH_CAP_AUTH_EXCL) {
+		अगर (issued & CEPH_CAP_AUTH_EXCL) अणु
 			inode->i_uid = attr->ia_uid;
 			dirtied |= CEPH_CAP_AUTH_EXCL;
-		} else if ((issued & CEPH_CAP_AUTH_SHARED) == 0 ||
-			   !uid_eq(attr->ia_uid, inode->i_uid)) {
+		पूर्ण अन्यथा अगर ((issued & CEPH_CAP_AUTH_SHARED) == 0 ||
+			   !uid_eq(attr->ia_uid, inode->i_uid)) अणु
 			req->r_args.setattr.uid = cpu_to_le32(
 				from_kuid(&init_user_ns, attr->ia_uid));
 			mask |= CEPH_SETATTR_UID;
 			release |= CEPH_CAP_AUTH_SHARED;
-		}
-	}
-	if (ia_valid & ATTR_GID) {
-		dout("setattr %p gid %d -> %d\n", inode,
+		पूर्ण
+	पूर्ण
+	अगर (ia_valid & ATTR_GID) अणु
+		करोut("setattr %p gid %d -> %d\n", inode,
 		     from_kgid(&init_user_ns, inode->i_gid),
 		     from_kgid(&init_user_ns, attr->ia_gid));
-		if (issued & CEPH_CAP_AUTH_EXCL) {
+		अगर (issued & CEPH_CAP_AUTH_EXCL) अणु
 			inode->i_gid = attr->ia_gid;
 			dirtied |= CEPH_CAP_AUTH_EXCL;
-		} else if ((issued & CEPH_CAP_AUTH_SHARED) == 0 ||
-			   !gid_eq(attr->ia_gid, inode->i_gid)) {
+		पूर्ण अन्यथा अगर ((issued & CEPH_CAP_AUTH_SHARED) == 0 ||
+			   !gid_eq(attr->ia_gid, inode->i_gid)) अणु
 			req->r_args.setattr.gid = cpu_to_le32(
 				from_kgid(&init_user_ns, attr->ia_gid));
 			mask |= CEPH_SETATTR_GID;
 			release |= CEPH_CAP_AUTH_SHARED;
-		}
-	}
-	if (ia_valid & ATTR_MODE) {
-		dout("setattr %p mode 0%o -> 0%o\n", inode, inode->i_mode,
+		पूर्ण
+	पूर्ण
+	अगर (ia_valid & ATTR_MODE) अणु
+		करोut("setattr %p mode 0%o -> 0%o\n", inode, inode->i_mode,
 		     attr->ia_mode);
-		if (issued & CEPH_CAP_AUTH_EXCL) {
+		अगर (issued & CEPH_CAP_AUTH_EXCL) अणु
 			inode->i_mode = attr->ia_mode;
 			dirtied |= CEPH_CAP_AUTH_EXCL;
-		} else if ((issued & CEPH_CAP_AUTH_SHARED) == 0 ||
-			   attr->ia_mode != inode->i_mode) {
+		पूर्ण अन्यथा अगर ((issued & CEPH_CAP_AUTH_SHARED) == 0 ||
+			   attr->ia_mode != inode->i_mode) अणु
 			inode->i_mode = attr->ia_mode;
 			req->r_args.setattr.mode = cpu_to_le32(attr->ia_mode);
 			mask |= CEPH_SETATTR_MODE;
 			release |= CEPH_CAP_AUTH_SHARED;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ia_valid & ATTR_ATIME) {
-		dout("setattr %p atime %lld.%ld -> %lld.%ld\n", inode,
-		     inode->i_atime.tv_sec, inode->i_atime.tv_nsec,
-		     attr->ia_atime.tv_sec, attr->ia_atime.tv_nsec);
-		if (issued & CEPH_CAP_FILE_EXCL) {
-			ci->i_time_warp_seq++;
-			inode->i_atime = attr->ia_atime;
-			dirtied |= CEPH_CAP_FILE_EXCL;
-		} else if ((issued & CEPH_CAP_FILE_WR) &&
-			   timespec64_compare(&inode->i_atime,
-					    &attr->ia_atime) < 0) {
-			inode->i_atime = attr->ia_atime;
-			dirtied |= CEPH_CAP_FILE_WR;
-		} else if ((issued & CEPH_CAP_FILE_SHARED) == 0 ||
-			   !timespec64_equal(&inode->i_atime, &attr->ia_atime)) {
-			ceph_encode_timespec64(&req->r_args.setattr.atime,
-					       &attr->ia_atime);
+	अगर (ia_valid & ATTR_ATIME) अणु
+		करोut("setattr %p atime %lld.%ld -> %lld.%ld\n", inode,
+		     inode->i_aसमय.tv_sec, inode->i_aसमय.tv_nsec,
+		     attr->ia_aसमय.tv_sec, attr->ia_aसमय.tv_nsec);
+		अगर (issued & CEPH_CAP_खाता_EXCL) अणु
+			ci->i_समय_warp_seq++;
+			inode->i_aसमय = attr->ia_aसमय;
+			dirtied |= CEPH_CAP_खाता_EXCL;
+		पूर्ण अन्यथा अगर ((issued & CEPH_CAP_खाता_WR) &&
+			   बारpec64_compare(&inode->i_aसमय,
+					    &attr->ia_aसमय) < 0) अणु
+			inode->i_aसमय = attr->ia_aसमय;
+			dirtied |= CEPH_CAP_खाता_WR;
+		पूर्ण अन्यथा अगर ((issued & CEPH_CAP_खाता_SHARED) == 0 ||
+			   !बारpec64_equal(&inode->i_aसमय, &attr->ia_aसमय)) अणु
+			ceph_encode_बारpec64(&req->r_args.setattr.aसमय,
+					       &attr->ia_aसमय);
 			mask |= CEPH_SETATTR_ATIME;
-			release |= CEPH_CAP_FILE_SHARED |
-				   CEPH_CAP_FILE_RD | CEPH_CAP_FILE_WR;
-		}
-	}
-	if (ia_valid & ATTR_SIZE) {
-		loff_t isize = i_size_read(inode);
+			release |= CEPH_CAP_खाता_SHARED |
+				   CEPH_CAP_खाता_RD | CEPH_CAP_खाता_WR;
+		पूर्ण
+	पूर्ण
+	अगर (ia_valid & ATTR_SIZE) अणु
+		loff_t isize = i_size_पढ़ो(inode);
 
-		dout("setattr %p size %lld -> %lld\n", inode, isize, attr->ia_size);
-		if ((issued & CEPH_CAP_FILE_EXCL) && attr->ia_size > isize) {
-			i_size_write(inode, attr->ia_size);
+		करोut("setattr %p size %lld -> %lld\n", inode, isize, attr->ia_size);
+		अगर ((issued & CEPH_CAP_खाता_EXCL) && attr->ia_size > isize) अणु
+			i_size_ग_लिखो(inode, attr->ia_size);
 			inode->i_blocks = calc_inode_blocks(attr->ia_size);
 			ci->i_reported_size = attr->ia_size;
-			dirtied |= CEPH_CAP_FILE_EXCL;
+			dirtied |= CEPH_CAP_खाता_EXCL;
 			ia_valid |= ATTR_MTIME;
-		} else if ((issued & CEPH_CAP_FILE_SHARED) == 0 ||
-			   attr->ia_size != isize) {
+		पूर्ण अन्यथा अगर ((issued & CEPH_CAP_खाता_SHARED) == 0 ||
+			   attr->ia_size != isize) अणु
 			req->r_args.setattr.size = cpu_to_le64(attr->ia_size);
 			req->r_args.setattr.old_size = cpu_to_le64(isize);
 			mask |= CEPH_SETATTR_SIZE;
-			release |= CEPH_CAP_FILE_SHARED | CEPH_CAP_FILE_EXCL |
-				   CEPH_CAP_FILE_RD | CEPH_CAP_FILE_WR;
-		}
-	}
-	if (ia_valid & ATTR_MTIME) {
-		dout("setattr %p mtime %lld.%ld -> %lld.%ld\n", inode,
-		     inode->i_mtime.tv_sec, inode->i_mtime.tv_nsec,
-		     attr->ia_mtime.tv_sec, attr->ia_mtime.tv_nsec);
-		if (issued & CEPH_CAP_FILE_EXCL) {
-			ci->i_time_warp_seq++;
-			inode->i_mtime = attr->ia_mtime;
-			dirtied |= CEPH_CAP_FILE_EXCL;
-		} else if ((issued & CEPH_CAP_FILE_WR) &&
-			   timespec64_compare(&inode->i_mtime,
-					    &attr->ia_mtime) < 0) {
-			inode->i_mtime = attr->ia_mtime;
-			dirtied |= CEPH_CAP_FILE_WR;
-		} else if ((issued & CEPH_CAP_FILE_SHARED) == 0 ||
-			   !timespec64_equal(&inode->i_mtime, &attr->ia_mtime)) {
-			ceph_encode_timespec64(&req->r_args.setattr.mtime,
-					       &attr->ia_mtime);
+			release |= CEPH_CAP_खाता_SHARED | CEPH_CAP_खाता_EXCL |
+				   CEPH_CAP_खाता_RD | CEPH_CAP_खाता_WR;
+		पूर्ण
+	पूर्ण
+	अगर (ia_valid & ATTR_MTIME) अणु
+		करोut("setattr %p mtime %lld.%ld -> %lld.%ld\n", inode,
+		     inode->i_mसमय.tv_sec, inode->i_mसमय.tv_nsec,
+		     attr->ia_mसमय.tv_sec, attr->ia_mसमय.tv_nsec);
+		अगर (issued & CEPH_CAP_खाता_EXCL) अणु
+			ci->i_समय_warp_seq++;
+			inode->i_mसमय = attr->ia_mसमय;
+			dirtied |= CEPH_CAP_खाता_EXCL;
+		पूर्ण अन्यथा अगर ((issued & CEPH_CAP_खाता_WR) &&
+			   बारpec64_compare(&inode->i_mसमय,
+					    &attr->ia_mसमय) < 0) अणु
+			inode->i_mसमय = attr->ia_mसमय;
+			dirtied |= CEPH_CAP_खाता_WR;
+		पूर्ण अन्यथा अगर ((issued & CEPH_CAP_खाता_SHARED) == 0 ||
+			   !बारpec64_equal(&inode->i_mसमय, &attr->ia_mसमय)) अणु
+			ceph_encode_बारpec64(&req->r_args.setattr.mसमय,
+					       &attr->ia_mसमय);
 			mask |= CEPH_SETATTR_MTIME;
-			release |= CEPH_CAP_FILE_SHARED |
-				   CEPH_CAP_FILE_RD | CEPH_CAP_FILE_WR;
-		}
-	}
+			release |= CEPH_CAP_खाता_SHARED |
+				   CEPH_CAP_खाता_RD | CEPH_CAP_खाता_WR;
+		पूर्ण
+	पूर्ण
 
-	/* these do nothing */
-	if (ia_valid & ATTR_CTIME) {
+	/* these करो nothing */
+	अगर (ia_valid & ATTR_CTIME) अणु
 		bool only = (ia_valid & (ATTR_SIZE|ATTR_MTIME|ATTR_ATIME|
 					 ATTR_MODE|ATTR_UID|ATTR_GID)) == 0;
-		dout("setattr %p ctime %lld.%ld -> %lld.%ld (%s)\n", inode,
-		     inode->i_ctime.tv_sec, inode->i_ctime.tv_nsec,
-		     attr->ia_ctime.tv_sec, attr->ia_ctime.tv_nsec,
+		करोut("setattr %p ctime %lld.%ld -> %lld.%ld (%s)\n", inode,
+		     inode->i_स_समय.tv_sec, inode->i_स_समय.tv_nsec,
+		     attr->ia_स_समय.tv_sec, attr->ia_स_समय.tv_nsec,
 		     only ? "ctime only" : "ignored");
-		if (only) {
+		अगर (only) अणु
 			/*
-			 * if kernel wants to dirty ctime but nothing else,
-			 * we need to choose a cap to dirty under, or do
+			 * अगर kernel wants to dirty स_समय but nothing अन्यथा,
+			 * we need to choose a cap to dirty under, or करो
 			 * a almost-no-op setattr
 			 */
-			if (issued & CEPH_CAP_AUTH_EXCL)
+			अगर (issued & CEPH_CAP_AUTH_EXCL)
 				dirtied |= CEPH_CAP_AUTH_EXCL;
-			else if (issued & CEPH_CAP_FILE_EXCL)
-				dirtied |= CEPH_CAP_FILE_EXCL;
-			else if (issued & CEPH_CAP_XATTR_EXCL)
+			अन्यथा अगर (issued & CEPH_CAP_खाता_EXCL)
+				dirtied |= CEPH_CAP_खाता_EXCL;
+			अन्यथा अगर (issued & CEPH_CAP_XATTR_EXCL)
 				dirtied |= CEPH_CAP_XATTR_EXCL;
-			else
+			अन्यथा
 				mask |= CEPH_SETATTR_CTIME;
-		}
-	}
-	if (ia_valid & ATTR_FILE)
-		dout("setattr %p ATTR_FILE ... hrm!\n", inode);
+		पूर्ण
+	पूर्ण
+	अगर (ia_valid & ATTR_खाता)
+		करोut("setattr %p ATTR_FILE ... hrm!\n", inode);
 
-	if (dirtied) {
+	अगर (dirtied) अणु
 		inode_dirty_flags = __ceph_mark_dirty_caps(ci, dirtied,
-							   &prealloc_cf);
-		inode->i_ctime = attr->ia_ctime;
-	}
+							   &pपुनः_स्मृति_cf);
+		inode->i_स_समय = attr->ia_स_समय;
+	पूर्ण
 
 	release &= issued;
 	spin_unlock(&ci->i_ceph_lock);
-	if (lock_snap_rwsem)
-		up_read(&mdsc->snap_rwsem);
+	अगर (lock_snap_rwsem)
+		up_पढ़ो(&mdsc->snap_rwsem);
 
-	if (inode_dirty_flags)
+	अगर (inode_dirty_flags)
 		__mark_inode_dirty(inode, inode_dirty_flags);
 
 
-	if (mask) {
+	अगर (mask) अणु
 		req->r_inode = inode;
 		ihold(inode);
 		req->r_inode_drop = release;
 		req->r_args.setattr.mask = cpu_to_le32(mask);
 		req->r_num_caps = 1;
-		req->r_stamp = attr->ia_ctime;
-		err = ceph_mdsc_do_request(mdsc, NULL, req);
-	}
-	dout("setattr %p result=%d (%s locally, %d remote)\n", inode, err,
+		req->r_stamp = attr->ia_स_समय;
+		err = ceph_mdsc_करो_request(mdsc, शून्य, req);
+	पूर्ण
+	करोut("setattr %p result=%d (%s locally, %d remote)\n", inode, err,
 	     ceph_cap_string(dirtied), mask);
 
 	ceph_mdsc_put_request(req);
-	ceph_free_cap_flush(prealloc_cf);
+	ceph_मुक्त_cap_flush(pपुनः_स्मृति_cf);
 
-	if (err >= 0 && (mask & CEPH_SETATTR_SIZE))
-		__ceph_do_pending_vmtruncate(inode);
+	अगर (err >= 0 && (mask & CEPH_SETATTR_SIZE))
+		__ceph_करो_pending_vmtruncate(inode);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * setattr
  */
-int ceph_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-		 struct iattr *attr)
-{
-	struct inode *inode = d_inode(dentry);
-	struct ceph_fs_client *fsc = ceph_inode_to_client(inode);
-	int err;
+पूर्णांक ceph_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		 काष्ठा iattr *attr)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा ceph_fs_client *fsc = ceph_inode_to_client(inode);
+	पूर्णांक err;
 
-	if (ceph_snap(inode) != CEPH_NOSNAP)
-		return -EROFS;
+	अगर (ceph_snap(inode) != CEPH_NOSNAP)
+		वापस -EROFS;
 
 	err = setattr_prepare(&init_user_ns, dentry, attr);
-	if (err != 0)
-		return err;
+	अगर (err != 0)
+		वापस err;
 
-	if ((attr->ia_valid & ATTR_SIZE) &&
-	    attr->ia_size > max(i_size_read(inode), fsc->max_file_size))
-		return -EFBIG;
+	अगर ((attr->ia_valid & ATTR_SIZE) &&
+	    attr->ia_size > max(i_size_पढ़ो(inode), fsc->max_file_size))
+		वापस -EFBIG;
 
-	if ((attr->ia_valid & ATTR_SIZE) &&
+	अगर ((attr->ia_valid & ATTR_SIZE) &&
 	    ceph_quota_is_max_bytes_exceeded(inode, attr->ia_size))
-		return -EDQUOT;
+		वापस -EDQUOT;
 
 	err = __ceph_setattr(inode, attr);
 
-	if (err >= 0 && (attr->ia_valid & ATTR_MODE))
+	अगर (err >= 0 && (attr->ia_valid & ATTR_MODE))
 		err = posix_acl_chmod(&init_user_ns, inode, attr->ia_mode);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Verify that we have a lease on the given mask.  If not,
- * do a getattr against an mds.
+ * Verअगरy that we have a lease on the given mask.  If not,
+ * करो a getattr against an mds.
  */
-int __ceph_do_getattr(struct inode *inode, struct page *locked_page,
-		      int mask, bool force)
-{
-	struct ceph_fs_client *fsc = ceph_sb_to_client(inode->i_sb);
-	struct ceph_mds_client *mdsc = fsc->mdsc;
-	struct ceph_mds_request *req;
-	int mode;
-	int err;
+पूर्णांक __ceph_करो_getattr(काष्ठा inode *inode, काष्ठा page *locked_page,
+		      पूर्णांक mask, bool क्रमce)
+अणु
+	काष्ठा ceph_fs_client *fsc = ceph_sb_to_client(inode->i_sb);
+	काष्ठा ceph_mds_client *mdsc = fsc->mdsc;
+	काष्ठा ceph_mds_request *req;
+	पूर्णांक mode;
+	पूर्णांक err;
 
-	if (ceph_snap(inode) == CEPH_SNAPDIR) {
-		dout("do_getattr inode %p SNAPDIR\n", inode);
-		return 0;
-	}
+	अगर (ceph_snap(inode) == CEPH_SNAPसूची) अणु
+		करोut("do_getattr inode %p SNAPDIR\n", inode);
+		वापस 0;
+	पूर्ण
 
-	dout("do_getattr inode %p mask %s mode 0%o\n",
+	करोut("do_getattr inode %p mask %s mode 0%o\n",
 	     inode, ceph_cap_string(mask), inode->i_mode);
-	if (!force && ceph_caps_issued_mask_metric(ceph_inode(inode), mask, 1))
-			return 0;
+	अगर (!क्रमce && ceph_caps_issued_mask_metric(ceph_inode(inode), mask, 1))
+			वापस 0;
 
 	mode = (mask & CEPH_STAT_RSTAT) ? USE_AUTH_MDS : USE_ANY_MDS;
 	req = ceph_mdsc_create_request(mdsc, CEPH_MDS_OP_GETATTR, mode);
-	if (IS_ERR(req))
-		return PTR_ERR(req);
+	अगर (IS_ERR(req))
+		वापस PTR_ERR(req);
 	req->r_inode = inode;
 	ihold(inode);
 	req->r_num_caps = 1;
 	req->r_args.getattr.mask = cpu_to_le32(mask);
 	req->r_locked_page = locked_page;
-	err = ceph_mdsc_do_request(mdsc, NULL, req);
-	if (locked_page && err == 0) {
-		u64 inline_version = req->r_reply_info.targeti.inline_version;
-		if (inline_version == 0) {
-			/* the reply is supposed to contain inline data */
+	err = ceph_mdsc_करो_request(mdsc, शून्य, req);
+	अगर (locked_page && err == 0) अणु
+		u64 अंतरभूत_version = req->r_reply_info.targeti.अंतरभूत_version;
+		अगर (अंतरभूत_version == 0) अणु
+			/* the reply is supposed to contain अंतरभूत data */
 			err = -EINVAL;
-		} else if (inline_version == CEPH_INLINE_NONE) {
+		पूर्ण अन्यथा अगर (अंतरभूत_version == CEPH_INLINE_NONE) अणु
 			err = -ENODATA;
-		} else {
-			err = req->r_reply_info.targeti.inline_len;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			err = req->r_reply_info.targeti.अंतरभूत_len;
+		पूर्ण
+	पूर्ण
 	ceph_mdsc_put_request(req);
-	dout("do_getattr result=%d\n", err);
-	return err;
-}
+	करोut("do_getattr result=%d\n", err);
+	वापस err;
+पूर्ण
 
 
 /*
- * Check inode permissions.  We verify we have a valid value for
+ * Check inode permissions.  We verअगरy we have a valid value क्रम
  * the AUTH cap, then call the generic handler.
  */
-int ceph_permission(struct user_namespace *mnt_userns, struct inode *inode,
-		    int mask)
-{
-	int err;
+पूर्णांक ceph_permission(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		    पूर्णांक mask)
+अणु
+	पूर्णांक err;
 
-	if (mask & MAY_NOT_BLOCK)
-		return -ECHILD;
+	अगर (mask & MAY_NOT_BLOCK)
+		वापस -ECHILD;
 
-	err = ceph_do_getattr(inode, CEPH_CAP_AUTH_SHARED, false);
+	err = ceph_करो_getattr(inode, CEPH_CAP_AUTH_SHARED, false);
 
-	if (!err)
+	अगर (!err)
 		err = generic_permission(&init_user_ns, inode, mask);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Craft a mask of needed caps given a set of requested statx attrs. */
-static int statx_to_caps(u32 want, umode_t mode)
-{
-	int mask = 0;
+अटल पूर्णांक statx_to_caps(u32 want, umode_t mode)
+अणु
+	पूर्णांक mask = 0;
 
-	if (want & (STATX_MODE|STATX_UID|STATX_GID|STATX_CTIME|STATX_BTIME))
+	अगर (want & (STATX_MODE|STATX_UID|STATX_GID|STATX_CTIME|STATX_BTIME))
 		mask |= CEPH_CAP_AUTH_SHARED;
 
-	if (want & (STATX_NLINK|STATX_CTIME)) {
+	अगर (want & (STATX_NLINK|STATX_CTIME)) अणु
 		/*
-		 * The link count for directories depends on inode->i_subdirs,
+		 * The link count क्रम directories depends on inode->i_subdirs,
 		 * and that is only updated when Fs caps are held.
 		 */
-		if (S_ISDIR(mode))
-			mask |= CEPH_CAP_FILE_SHARED;
-		else
+		अगर (S_ISसूची(mode))
+			mask |= CEPH_CAP_खाता_SHARED;
+		अन्यथा
 			mask |= CEPH_CAP_LINK_SHARED;
-	}
+	पूर्ण
 
-	if (want & (STATX_ATIME|STATX_MTIME|STATX_CTIME|STATX_SIZE|
+	अगर (want & (STATX_ATIME|STATX_MTIME|STATX_CTIME|STATX_SIZE|
 		    STATX_BLOCKS))
-		mask |= CEPH_CAP_FILE_SHARED;
+		mask |= CEPH_CAP_खाता_SHARED;
 
-	if (want & (STATX_CTIME))
+	अगर (want & (STATX_CTIME))
 		mask |= CEPH_CAP_XATTR_SHARED;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 /*
- * Get all the attributes. If we have sufficient caps for the requested attrs,
- * then we can avoid talking to the MDS at all.
+ * Get all the attributes. If we have sufficient caps क्रम the requested attrs,
+ * then we can aव्योम talking to the MDS at all.
  */
-int ceph_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		 struct kstat *stat, u32 request_mask, unsigned int flags)
-{
-	struct inode *inode = d_inode(path->dentry);
-	struct ceph_inode_info *ci = ceph_inode(inode);
+पूर्णांक ceph_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		 काष्ठा kstat *stat, u32 request_mask, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode *inode = d_inode(path->dentry);
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
 	u32 valid_mask = STATX_BASIC_STATS;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	/* Skip the getattr altogether if we're asked not to sync */
-	if (!(flags & AT_STATX_DONT_SYNC)) {
-		err = ceph_do_getattr(inode,
+	/* Skip the getattr altogether अगर we're asked not to sync */
+	अगर (!(flags & AT_STATX_DONT_SYNC)) अणु
+		err = ceph_करो_getattr(inode,
 				statx_to_caps(request_mask, inode->i_mode),
 				flags & AT_STATX_FORCE_SYNC);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	generic_fillattr(&init_user_ns, inode, stat);
 	stat->ino = ceph_present_inode(inode);
 
 	/*
-	 * btime on newly-allocated inodes is 0, so if this is still set to
+	 * bसमय on newly-allocated inodes is 0, so अगर this is still set to
 	 * that, then assume that it's not valid.
 	 */
-	if (ci->i_btime.tv_sec || ci->i_btime.tv_nsec) {
-		stat->btime = ci->i_btime;
+	अगर (ci->i_bसमय.tv_sec || ci->i_bसमय.tv_nsec) अणु
+		stat->bसमय = ci->i_bसमय;
 		valid_mask |= STATX_BTIME;
-	}
+	पूर्ण
 
-	if (ceph_snap(inode) == CEPH_NOSNAP)
+	अगर (ceph_snap(inode) == CEPH_NOSNAP)
 		stat->dev = inode->i_sb->s_dev;
-	else
+	अन्यथा
 		stat->dev = ci->i_snapid_map ? ci->i_snapid_map->dev : 0;
 
-	if (S_ISDIR(inode->i_mode)) {
-		if (ceph_test_mount_opt(ceph_sb_to_client(inode->i_sb),
+	अगर (S_ISसूची(inode->i_mode)) अणु
+		अगर (ceph_test_mount_opt(ceph_sb_to_client(inode->i_sb),
 					RBYTES))
 			stat->size = ci->i_rbytes;
-		else
+		अन्यथा
 			stat->size = ci->i_files + ci->i_subdirs;
 		stat->blocks = 0;
 		stat->blksize = 65536;
 		/*
 		 * Some applications rely on the number of st_nlink
-		 * value on directories to be either 0 (if unlinked)
+		 * value on directories to be either 0 (अगर unlinked)
 		 * or 2 + number of subdirectories.
 		 */
-		if (stat->nlink == 1)
+		अगर (stat->nlink == 1)
 			/* '.' + '..' + subdirs */
 			stat->nlink = 1 + 1 + ci->i_subdirs;
-	}
+	पूर्ण
 
 	stat->result_mask = request_mask & valid_mask;
-	return err;
-}
+	वापस err;
+पूर्ण

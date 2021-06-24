@@ -1,32 +1,33 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2004 Fujitsu Siemens Computers GmbH
- * Author: Bodo Stroesser <bstroesser@fujitsu-siemens.com>
+ * Author: Boकरो Stroesser <bstroesser@fujitsu-siemens.com>
  * Licensed under the GPL
  */
 
-#ifndef __FAULTINFO_X86_64_H
-#define __FAULTINFO_X86_64_H
+#अगर_अघोषित __FAULTINFO_X86_64_H
+#घोषणा __FAULTINFO_X86_64_H
 
-/* this structure contains the full arch-specific faultinfo
+/* this काष्ठाure contains the full arch-specअगरic faultinfo
  * from the traps.
- * On i386, ptrace_faultinfo unfortunately doesn't provide
+ * On i386, ptrace_faultinfo unक्रमtunately करोesn't provide
  * all the info, since trap_no is missing.
  * All common elements are defined at the same position in
- * both structures, thus making it easy to copy the
- * contents without knowledge about the structure elements.
+ * both काष्ठाures, thus making it easy to copy the
+ * contents without knowledge about the काष्ठाure elements.
  */
-struct faultinfo {
-        int error_code; /* in ptrace_faultinfo misleadingly called is_write */
-        unsigned long cr2; /* in ptrace_faultinfo called addr */
-        int trap_no; /* missing in ptrace_faultinfo */
-};
+काष्ठा faultinfo अणु
+        पूर्णांक error_code; /* in ptrace_faultinfo misleadingly called is_ग_लिखो */
+        अचिन्हित दीर्घ cr2; /* in ptrace_faultinfo called addr */
+        पूर्णांक trap_no; /* missing in ptrace_faultinfo */
+पूर्ण;
 
-#define FAULT_WRITE(fi) ((fi).error_code & 2)
-#define FAULT_ADDRESS(fi) ((fi).cr2)
+#घोषणा FAULT_WRITE(fi) ((fi).error_code & 2)
+#घोषणा FAULT_ADDRESS(fi) ((fi).cr2)
 
 /* This is Page Fault */
-#define SEGV_IS_FIXABLE(fi)	((fi)->trap_no == 14)
+#घोषणा SEGV_IS_FIXABLE(fi)	((fi)->trap_no == 14)
 
-#define PTRACE_FULL_FAULTINFO 1
+#घोषणा PTRACE_FULL_FAULTINFO 1
 
-#endif
+#पूर्ण_अगर

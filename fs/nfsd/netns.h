@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * per net namespace data structures for nfsd
+ * per net namespace data काष्ठाures क्रम nfsd
  *
  * Copyright (C) 2012, Jeff Layton <jlayton@redhat.com>
  */
 
-#ifndef __NFSD_NETNS_H__
-#define __NFSD_NETNS_H__
+#अगर_अघोषित __NFSD_NETNS_H__
+#घोषणा __NFSD_NETNS_H__
 
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
-#include <linux/percpu_counter.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
+#समावेश <linux/percpu_counter.h>
 
-/* Hash tables for nfs4_clientid state */
-#define CLIENT_HASH_BITS                 4
-#define CLIENT_HASH_SIZE                (1 << CLIENT_HASH_BITS)
-#define CLIENT_HASH_MASK                (CLIENT_HASH_SIZE - 1)
+/* Hash tables क्रम nfs4_clientid state */
+#घोषणा CLIENT_HASH_BITS                 4
+#घोषणा CLIENT_HASH_SIZE                (1 << CLIENT_HASH_BITS)
+#घोषणा CLIENT_HASH_MASK                (CLIENT_HASH_SIZE - 1)
 
-#define SESSION_HASH_SIZE	512
+#घोषणा SESSION_HASH_SIZE	512
 
-struct cld_net;
-struct nfsd4_client_tracking_ops;
+काष्ठा cld_net;
+काष्ठा nfsd4_client_tracking_ops;
 
-enum {
+क्रमागत अणु
 	/* cache misses due only to checksum comparison failures */
 	NFSD_NET_PAYLOAD_MISSES,
 	/* amount of memory (in bytes) currently consumed by the DRC */
 	NFSD_NET_DRC_MEM_USAGE,
 	NFSD_NET_COUNTERS_NUM
-};
+पूर्ण;
 
 /*
  * Represents a nfsd "container". With respect to nfsv4 state tracking, the
- * fields of interest are the *_id_hashtbls and the *_name_tree. These track
- * the nfs4_client objects by either short or long form clientid.
+ * fields of पूर्णांकerest are the *_id_hashtbls and the *_name_tree. These track
+ * the nfs4_client objects by either लघु or दीर्घ क्रमm clientid.
  *
  * Each nfsd_net runs a nfs4_laundromat workqueue job when necessary to clean
  * up expired clients and delegations within the container.
  */
-struct nfsd_net {
-	struct cld_net *cld_net;
+काष्ठा nfsd_net अणु
+	काष्ठा cld_net *cld_net;
 
-	struct cache_detail *svc_expkey_cache;
-	struct cache_detail *svc_export_cache;
+	काष्ठा cache_detail *svc_expkey_cache;
+	काष्ठा cache_detail *svc_export_cache;
 
-	struct cache_detail *idtoname_cache;
-	struct cache_detail *nametoid_cache;
+	काष्ठा cache_detail *idtoname_cache;
+	काष्ठा cache_detail *nametoid_cache;
 
-	struct lock_manager nfsd4_manager;
+	काष्ठा lock_manager nfsd4_manager;
 	bool grace_ended;
-	time64_t boot_time;
+	समय64_t boot_समय;
 
-	struct dentry *nfsd_client_dir;
+	काष्ठा dentry *nfsd_client_dir;
 
 	/*
 	 * reclaim_str_hashtbl[] holds known client info from previous reset/reboot
@@ -63,30 +64,30 @@ struct nfsd_net {
 	 * unconf_str_hastbl[] and unconf_name_tree hold unconfirmed
 	 * setclientid info.
 	 */
-	struct list_head *reclaim_str_hashtbl;
-	int reclaim_str_hashtbl_size;
-	struct list_head *conf_id_hashtbl;
-	struct rb_root conf_name_tree;
-	struct list_head *unconf_id_hashtbl;
-	struct rb_root unconf_name_tree;
-	struct list_head *sessionid_hashtbl;
+	काष्ठा list_head *reclaim_str_hashtbl;
+	पूर्णांक reclaim_str_hashtbl_size;
+	काष्ठा list_head *conf_id_hashtbl;
+	काष्ठा rb_root conf_name_tree;
+	काष्ठा list_head *unconf_id_hashtbl;
+	काष्ठा rb_root unconf_name_tree;
+	काष्ठा list_head *sessionid_hashtbl;
 	/*
-	 * client_lru holds client queue ordered by nfs4_client.cl_time
-	 * for lease renewal.
+	 * client_lru holds client queue ordered by nfs4_client.cl_समय
+	 * क्रम lease renewal.
 	 *
-	 * close_lru holds (open) stateowner queue ordered by nfs4_stateowner.so_time
-	 * for last close replay.
+	 * बंद_lru holds (खोलो) stateowner queue ordered by nfs4_stateowner.so_समय
+	 * क्रम last बंद replay.
 	 *
-	 * All of the above fields are protected by the client_mutex.
+	 * All of the above fields are रक्षित by the client_mutex.
 	 */
-	struct list_head client_lru;
-	struct list_head close_lru;
-	struct list_head del_recall_lru;
+	काष्ठा list_head client_lru;
+	काष्ठा list_head बंद_lru;
+	काष्ठा list_head del_recall_lru;
 
-	/* protected by blocked_locks_lock */
-	struct list_head blocked_locks_lru;
+	/* रक्षित by blocked_locks_lock */
+	काष्ठा list_head blocked_locks_lru;
 
-	struct delayed_work laundromat_work;
+	काष्ठा delayed_work laundromat_work;
 
 	/* client_lock protects the client lru list and session hash table */
 	spinlock_t client_lock;
@@ -94,12 +95,12 @@ struct nfsd_net {
 	/* protects blocked_locks_lru */
 	spinlock_t blocked_locks_lock;
 
-	struct file *rec_file;
+	काष्ठा file *rec_file;
 	bool in_grace;
-	const struct nfsd4_client_tracking_ops *client_tracking_ops;
+	स्थिर काष्ठा nfsd4_client_tracking_ops *client_tracking_ops;
 
-	time64_t nfsd4_lease;
-	time64_t nfsd4_grace;
+	समय64_t nfsd4_lease;
+	समय64_t nfsd4_grace;
 	bool somebody_reclaimed;
 
 	bool track_reclaim_completes;
@@ -109,37 +110,37 @@ struct nfsd_net {
 	bool lockd_up;
 
 	/* Time of server startup */
-	struct timespec64 nfssvc_boot;
+	काष्ठा बारpec64 nfssvc_boot;
 	seqlock_t boot_lock;
 
 	/*
 	 * Max number of connections this nfsd container will allow. Defaults
-	 * to '0' which is means that it bases this on the number of threads.
+	 * to '0' which is means that it bases this on the number of thपढ़ोs.
 	 */
-	unsigned int max_connections;
+	अचिन्हित पूर्णांक max_connections;
 
 	u32 clientid_base;
 	u32 clientid_counter;
-	u32 clverifier_counter;
+	u32 clverअगरier_counter;
 
-	struct svc_serv *nfsd_serv;
+	काष्ठा svc_serv *nfsd_serv;
 
-	wait_queue_head_t ntf_wq;
+	रुको_queue_head_t ntf_wq;
 	atomic_t ntf_refcnt;
 
-	/* Allow umount to wait for nfsd state cleanup */
-	struct completion nfsd_shutdown_complete;
+	/* Allow umount to रुको क्रम nfsd state cleanup */
+	काष्ठा completion nfsd_shutकरोwn_complete;
 
 	/*
-	 * clientid and stateid data for construction of net unique COPY
+	 * clientid and stateid data क्रम स्थिरruction of net unique COPY
 	 * stateids.
 	 */
 	u32		s2s_cp_cl_id;
-	struct idr	s2s_cp_stateids;
+	काष्ठा idr	s2s_cp_stateids;
 	spinlock_t	s2s_cp_lock;
 
 	/*
-	 * Version information
+	 * Version inक्रमmation
 	 */
 	bool *nfsd_versions;
 	bool *nfsd4_minorversions;
@@ -147,19 +148,19 @@ struct nfsd_net {
 	/*
 	 * Duplicate reply cache
 	 */
-	struct nfsd_drc_bucket   *drc_hashtbl;
+	काष्ठा nfsd_drc_bucket   *drc_hashtbl;
 
 	/* max number of entries allowed in the cache */
-	unsigned int             max_drc_entries;
+	अचिन्हित पूर्णांक             max_drc_entries;
 
-	/* number of significant bits in the hash value */
-	unsigned int             maskbits;
-	unsigned int             drc_hashsize;
+	/* number of signअगरicant bits in the hash value */
+	अचिन्हित पूर्णांक             maskbits;
+	अचिन्हित पूर्णांक             drc_hashsize;
 
 	/*
 	 * Stats and other tracking of on the duplicate reply cache.
-	 * The longest_chain* fields are modified with only the per-bucket
-	 * cache lock, which isn't really safe and should be fixed if we want
+	 * The दीर्घest_chain* fields are modअगरied with only the per-bucket
+	 * cache lock, which isn't really safe and should be fixed अगर we want
 	 * these statistics to be completely accurate.
 	 */
 
@@ -167,26 +168,26 @@ struct nfsd_net {
 	atomic_t                 num_drc_entries;
 
 	/* Per-netns stats counters */
-	struct percpu_counter    counter[NFSD_NET_COUNTERS_NUM];
+	काष्ठा percpu_counter    counter[NFSD_NET_COUNTERS_NUM];
 
-	/* longest hash chain seen */
-	unsigned int             longest_chain;
+	/* दीर्घest hash chain seen */
+	अचिन्हित पूर्णांक             दीर्घest_chain;
 
-	/* size of cache when we saw the longest hash chain */
-	unsigned int             longest_chain_cachesize;
+	/* size of cache when we saw the दीर्घest hash chain */
+	अचिन्हित पूर्णांक             दीर्घest_chain_cachesize;
 
-	struct shrinker		nfsd_reply_cache_shrinker;
+	काष्ठा shrinker		nfsd_reply_cache_shrinker;
 	/* utsname taken from the process that starts the server */
-	char			nfsd_name[UNX_MAXNODENAME+1];
-};
+	अक्षर			nfsd_name[UNX_MAXNODENAME+1];
+पूर्ण;
 
-/* Simple check to find out if a given net was properly initialized */
-#define nfsd_netns_ready(nn) ((nn)->sessionid_hashtbl)
+/* Simple check to find out अगर a given net was properly initialized */
+#घोषणा nfsd_netns_पढ़ोy(nn) ((nn)->sessionid_hashtbl)
 
-extern void nfsd_netns_free_versions(struct nfsd_net *nn);
+बाह्य व्योम nfsd_netns_मुक्त_versions(काष्ठा nfsd_net *nn);
 
-extern unsigned int nfsd_net_id;
+बाह्य अचिन्हित पूर्णांक nfsd_net_id;
 
-void nfsd_copy_boot_verifier(__be32 verf[2], struct nfsd_net *nn);
-void nfsd_reset_boot_verifier(struct nfsd_net *nn);
-#endif /* __NFSD_NETNS_H__ */
+व्योम nfsd_copy_boot_verअगरier(__be32 verf[2], काष्ठा nfsd_net *nn);
+व्योम nfsd_reset_boot_verअगरier(काष्ठा nfsd_net *nn);
+#पूर्ण_अगर /* __NFSD_NETNS_H__ */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Realtek USB Memstick Card Interface driver
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
@@ -7,75 +8,75 @@
  *   Roger Tseng <rogerable@realtek.com>
  */
 
-#include <linux/module.h>
-#include <linux/highmem.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/workqueue.h>
-#include <linux/memstick.h>
-#include <linux/kthread.h>
-#include <linux/rtsx_usb.h>
-#include <linux/pm_runtime.h>
-#include <linux/mutex.h>
-#include <linux/sched.h>
-#include <linux/completion.h>
-#include <asm/unaligned.h>
+#समावेश <linux/module.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/memstick.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/rtsx_usb.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/completion.h>
+#समावेश <यंत्र/unaligned.h>
 
-struct rtsx_usb_ms {
-	struct platform_device	*pdev;
-	struct rtsx_ucr	*ucr;
-	struct memstick_host	*msh;
-	struct memstick_request	*req;
+काष्ठा rtsx_usb_ms अणु
+	काष्ठा platक्रमm_device	*pdev;
+	काष्ठा rtsx_ucr	*ucr;
+	काष्ठा memstick_host	*msh;
+	काष्ठा memstick_request	*req;
 
-	struct mutex		host_mutex;
-	struct work_struct	handle_req;
-	struct delayed_work	poll_card;
+	काष्ठा mutex		host_mutex;
+	काष्ठा work_काष्ठा	handle_req;
+	काष्ठा delayed_work	poll_card;
 
 	u8			ssc_depth;
-	unsigned int		clock;
-	int			power_mode;
-	unsigned char           ifmode;
+	अचिन्हित पूर्णांक		घड़ी;
+	पूर्णांक			घातer_mode;
+	अचिन्हित अक्षर           अगरmode;
 	bool			eject;
-	bool			system_suspending;
-};
+	bool			प्रणाली_suspending;
+पूर्ण;
 
-static inline struct device *ms_dev(struct rtsx_usb_ms *host)
-{
-	return &(host->pdev->dev);
-}
+अटल अंतरभूत काष्ठा device *ms_dev(काष्ठा rtsx_usb_ms *host)
+अणु
+	वापस &(host->pdev->dev);
+पूर्ण
 
-static inline void ms_clear_error(struct rtsx_usb_ms *host)
-{
-	struct rtsx_ucr *ucr = host->ucr;
-	rtsx_usb_ep0_write_register(ucr, CARD_STOP,
+अटल अंतरभूत व्योम ms_clear_error(काष्ठा rtsx_usb_ms *host)
+अणु
+	काष्ठा rtsx_ucr *ucr = host->ucr;
+	rtsx_usb_ep0_ग_लिखो_रेजिस्टर(ucr, CARD_STOP,
 				  MS_STOP | MS_CLR_ERR,
 				  MS_STOP | MS_CLR_ERR);
 
 	rtsx_usb_clear_dma_err(ucr);
 	rtsx_usb_clear_fsm_err(ucr);
-}
+पूर्ण
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 
-static void ms_print_debug_regs(struct rtsx_usb_ms *host)
-{
-	struct rtsx_ucr *ucr = host->ucr;
+अटल व्योम ms_prपूर्णांक_debug_regs(काष्ठा rtsx_usb_ms *host)
+अणु
+	काष्ठा rtsx_ucr *ucr = host->ucr;
 	u16 i;
 	u8 *ptr;
 
-	/* Print MS host internal registers */
+	/* Prपूर्णांक MS host पूर्णांकernal रेजिस्टरs */
 	rtsx_usb_init_cmd(ucr);
 
 	/* MS_CFG to MS_INT_REG */
-	for (i = 0xFD40; i <= 0xFD44; i++)
+	क्रम (i = 0xFD40; i <= 0xFD44; i++)
 		rtsx_usb_add_cmd(ucr, READ_REG_CMD, i, 0, 0);
 
 	/* CARD_SHARE_MODE to CARD_GPIO */
-	for (i = 0xFD51; i <= 0xFD56; i++)
+	क्रम (i = 0xFD51; i <= 0xFD56; i++)
 		rtsx_usb_add_cmd(ucr, READ_REG_CMD, i, 0, 0);
 
 	/* CARD_PULL_CTLx */
-	for (i = 0xFD60; i <= 0xFD65; i++)
+	क्रम (i = 0xFD60; i <= 0xFD65; i++)
 		rtsx_usb_add_cmd(ucr, READ_REG_CMD, i, 0, 0);
 
 	/* CARD_DATA_SOURCE, CARD_SELECT, CARD_CLK_EN, CARD_PWR_CTL */
@@ -88,29 +89,29 @@ static void ms_print_debug_regs(struct rtsx_usb_ms *host)
 	rtsx_usb_get_rsp(ucr, 21, 100);
 
 	ptr = ucr->rsp_buf;
-	for (i = 0xFD40; i <= 0xFD44; i++)
+	क्रम (i = 0xFD40; i <= 0xFD44; i++)
 		dev_dbg(ms_dev(host), "0x%04X: 0x%02x\n", i, *(ptr++));
-	for (i = 0xFD51; i <= 0xFD56; i++)
+	क्रम (i = 0xFD51; i <= 0xFD56; i++)
 		dev_dbg(ms_dev(host), "0x%04X: 0x%02x\n", i, *(ptr++));
-	for (i = 0xFD60; i <= 0xFD65; i++)
+	क्रम (i = 0xFD60; i <= 0xFD65; i++)
 		dev_dbg(ms_dev(host), "0x%04X: 0x%02x\n", i, *(ptr++));
 
 	dev_dbg(ms_dev(host), "0x%04X: 0x%02x\n", CARD_DATA_SOURCE, *(ptr++));
 	dev_dbg(ms_dev(host), "0x%04X: 0x%02x\n", CARD_SELECT, *(ptr++));
 	dev_dbg(ms_dev(host), "0x%04X: 0x%02x\n", CARD_CLK_EN, *(ptr++));
 	dev_dbg(ms_dev(host), "0x%04X: 0x%02x\n", CARD_PWR_CTL, *(ptr++));
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static void ms_print_debug_regs(struct rtsx_usb_ms *host)
-{
-}
+अटल व्योम ms_prपूर्णांक_debug_regs(काष्ठा rtsx_usb_ms *host)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int ms_pull_ctl_disable_lqfp48(struct rtsx_ucr *ucr)
-{
+अटल पूर्णांक ms_pull_ctl_disable_lqfp48(काष्ठा rtsx_ucr *ucr)
+अणु
 	rtsx_usb_init_cmd(ucr);
 
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL1, 0xFF, 0x55);
@@ -120,11 +121,11 @@ static int ms_pull_ctl_disable_lqfp48(struct rtsx_ucr *ucr)
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL5, 0xFF, 0x55);
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL6, 0xFF, 0xA5);
 
-	return rtsx_usb_send_cmd(ucr, MODE_C, 100);
-}
+	वापस rtsx_usb_send_cmd(ucr, MODE_C, 100);
+पूर्ण
 
-static int ms_pull_ctl_disable_qfn24(struct rtsx_ucr *ucr)
-{
+अटल पूर्णांक ms_pull_ctl_disable_qfn24(काष्ठा rtsx_ucr *ucr)
+अणु
 	rtsx_usb_init_cmd(ucr);
 
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL1, 0xFF, 0x65);
@@ -134,11 +135,11 @@ static int ms_pull_ctl_disable_qfn24(struct rtsx_ucr *ucr)
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL5, 0xFF, 0x56);
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL6, 0xFF, 0x59);
 
-	return rtsx_usb_send_cmd(ucr, MODE_C, 100);
-}
+	वापस rtsx_usb_send_cmd(ucr, MODE_C, 100);
+पूर्ण
 
-static int ms_pull_ctl_enable_lqfp48(struct rtsx_ucr *ucr)
-{
+अटल पूर्णांक ms_pull_ctl_enable_lqfp48(काष्ठा rtsx_ucr *ucr)
+अणु
 	rtsx_usb_init_cmd(ucr);
 
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL1, 0xFF, 0x55);
@@ -148,11 +149,11 @@ static int ms_pull_ctl_enable_lqfp48(struct rtsx_ucr *ucr)
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL5, 0xFF, 0x55);
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL6, 0xFF, 0xA5);
 
-	return rtsx_usb_send_cmd(ucr, MODE_C, 100);
-}
+	वापस rtsx_usb_send_cmd(ucr, MODE_C, 100);
+पूर्ण
 
-static int ms_pull_ctl_enable_qfn24(struct rtsx_ucr *ucr)
-{
+अटल पूर्णांक ms_pull_ctl_enable_qfn24(काष्ठा rtsx_ucr *ucr)
+अणु
 	rtsx_usb_init_cmd(ucr);
 
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL1, 0xFF, 0x65);
@@ -162,13 +163,13 @@ static int ms_pull_ctl_enable_qfn24(struct rtsx_ucr *ucr)
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL5, 0xFF, 0x55);
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_PULL_CTL6, 0xFF, 0x59);
 
-	return rtsx_usb_send_cmd(ucr, MODE_C, 100);
-}
+	वापस rtsx_usb_send_cmd(ucr, MODE_C, 100);
+पूर्ण
 
-static int ms_power_on(struct rtsx_usb_ms *host)
-{
-	struct rtsx_ucr *ucr = host->ucr;
-	int err;
+अटल पूर्णांक ms_घातer_on(काष्ठा rtsx_usb_ms *host)
+अणु
+	काष्ठा rtsx_ucr *ucr = host->ucr;
+	पूर्णांक err;
 
 	dev_dbg(ms_dev(host), "%s\n", __func__);
 
@@ -179,20 +180,20 @@ static int ms_power_on(struct rtsx_usb_ms *host)
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_CLK_EN,
 			MS_CLK_EN, MS_CLK_EN);
 	err = rtsx_usb_send_cmd(ucr, MODE_C, 100);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (CHECK_PKG(ucr, LQFP48))
+	अगर (CHECK_PKG(ucr, LQFP48))
 		err = ms_pull_ctl_enable_lqfp48(ucr);
-	else
+	अन्यथा
 		err = ms_pull_ctl_enable_qfn24(ucr);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = rtsx_usb_write_register(ucr, CARD_PWR_CTL,
+	err = rtsx_usb_ग_लिखो_रेजिस्टर(ucr, CARD_PWR_CTL,
 			POWER_MASK, PARTIAL_POWER_ON);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	usleep_range(800, 1000);
 
@@ -202,13 +203,13 @@ static int ms_power_on(struct rtsx_usb_ms *host)
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_OE,
 			MS_OUTPUT_EN, MS_OUTPUT_EN);
 
-	return rtsx_usb_send_cmd(ucr, MODE_C, 100);
-}
+	वापस rtsx_usb_send_cmd(ucr, MODE_C, 100);
+पूर्ण
 
-static int ms_power_off(struct rtsx_usb_ms *host)
-{
-	struct rtsx_ucr *ucr = host->ucr;
-	int err;
+अटल पूर्णांक ms_घातer_off(काष्ठा rtsx_usb_ms *host)
+अणु
+	काष्ठा rtsx_ucr *ucr = host->ucr;
+	पूर्णांक err;
 
 	dev_dbg(ms_dev(host), "%s\n", __func__);
 
@@ -218,57 +219,57 @@ static int ms_power_off(struct rtsx_usb_ms *host)
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, CARD_OE, MS_OUTPUT_EN, 0);
 
 	err = rtsx_usb_send_cmd(ucr, MODE_C, 100);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (CHECK_PKG(ucr, LQFP48))
-		return ms_pull_ctl_disable_lqfp48(ucr);
+	अगर (CHECK_PKG(ucr, LQFP48))
+		वापस ms_pull_ctl_disable_lqfp48(ucr);
 
-	return ms_pull_ctl_disable_qfn24(ucr);
-}
+	वापस ms_pull_ctl_disable_qfn24(ucr);
+पूर्ण
 
-static int ms_transfer_data(struct rtsx_usb_ms *host, unsigned char data_dir,
-		u8 tpc, u8 cfg, struct scatterlist *sg)
-{
-	struct rtsx_ucr *ucr = host->ucr;
-	int err;
-	unsigned int length = sg->length;
+अटल पूर्णांक ms_transfer_data(काष्ठा rtsx_usb_ms *host, अचिन्हित अक्षर data_dir,
+		u8 tpc, u8 cfg, काष्ठा scatterlist *sg)
+अणु
+	काष्ठा rtsx_ucr *ucr = host->ucr;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक length = sg->length;
 	u16 sec_cnt = (u16)(length / 512);
 	u8 trans_mode, dma_dir, flag;
-	unsigned int pipe;
-	struct memstick_dev *card = host->msh->card;
+	अचिन्हित पूर्णांक pipe;
+	काष्ठा memstick_dev *card = host->msh->card;
 
 	dev_dbg(ms_dev(host), "%s: tpc = 0x%02x, data_dir = %s, length = %d\n",
 			__func__, tpc, (data_dir == READ) ? "READ" : "WRITE",
 			length);
 
-	if (data_dir == READ) {
-		flag = MODE_CDIR;
-		dma_dir = DMA_DIR_FROM_CARD;
-		if (card->id.type != MEMSTICK_TYPE_PRO)
+	अगर (data_dir == READ) अणु
+		flag = MODE_Cसूची;
+		dma_dir = DMA_सूची_FROM_CARD;
+		अगर (card->id.type != MEMSTICK_TYPE_PRO)
 			trans_mode = MS_TM_NORMAL_READ;
-		else
+		अन्यथा
 			trans_mode = MS_TM_AUTO_READ;
 		pipe = usb_rcvbulkpipe(ucr->pusb_dev, EP_BULK_IN);
-	} else {
+	पूर्ण अन्यथा अणु
 		flag = MODE_CDOR;
-		dma_dir = DMA_DIR_TO_CARD;
-		if (card->id.type != MEMSTICK_TYPE_PRO)
+		dma_dir = DMA_सूची_TO_CARD;
+		अगर (card->id.type != MEMSTICK_TYPE_PRO)
 			trans_mode = MS_TM_NORMAL_WRITE;
-		else
+		अन्यथा
 			trans_mode = MS_TM_AUTO_WRITE;
 		pipe = usb_sndbulkpipe(ucr->pusb_dev, EP_BULK_OUT);
-	}
+	पूर्ण
 
 	rtsx_usb_init_cmd(ucr);
 
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, MS_TPC, 0xFF, tpc);
-	if (card->id.type == MEMSTICK_TYPE_PRO) {
+	अगर (card->id.type == MEMSTICK_TYPE_PRO) अणु
 		rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, MS_SECTOR_CNT_H,
 				0xFF, (u8)(sec_cnt >> 8));
 		rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, MS_SECTOR_CNT_L,
 				0xFF, (u8)sec_cnt);
-	}
+	पूर्ण
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, MS_TRANS_CFG, 0xFF, cfg);
 
 	rtsx_usb_add_cmd(ucr, WRITE_REG_CMD, MC_DMA_TC3,
@@ -290,44 +291,44 @@ static int ms_transfer_data(struct rtsx_usb_ms *host, unsigned char data_dir,
 			MS_TRANSFER_END, MS_TRANSFER_END);
 
 	err = rtsx_usb_send_cmd(ucr, flag | STAGE_MS_STATUS, 100);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = rtsx_usb_transfer_data(ucr, pipe, sg, length,
-			1, NULL, 10000);
-	if (err)
-		goto err_out;
+			1, शून्य, 10000);
+	अगर (err)
+		जाओ err_out;
 
 	err = rtsx_usb_get_rsp(ucr, 3, 15000);
-	if (err)
-		goto err_out;
+	अगर (err)
+		जाओ err_out;
 
-	if (ucr->rsp_buf[0] & MS_TRANSFER_ERR ||
-	    ucr->rsp_buf[1] & (MS_CRC16_ERR | MS_RDY_TIMEOUT)) {
+	अगर (ucr->rsp_buf[0] & MS_TRANSFER_ERR ||
+	    ucr->rsp_buf[1] & (MS_CRC16_ERR | MS_RDY_TIMEOUT)) अणु
 		err = -EIO;
-		goto err_out;
-	}
-	return 0;
+		जाओ err_out;
+	पूर्ण
+	वापस 0;
 err_out:
 	ms_clear_error(host);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ms_write_bytes(struct rtsx_usb_ms *host, u8 tpc,
-		u8 cfg, u8 cnt, u8 *data, u8 *int_reg)
-{
-	struct rtsx_ucr *ucr = host->ucr;
-	int err, i;
+अटल पूर्णांक ms_ग_लिखो_bytes(काष्ठा rtsx_usb_ms *host, u8 tpc,
+		u8 cfg, u8 cnt, u8 *data, u8 *पूर्णांक_reg)
+अणु
+	काष्ठा rtsx_ucr *ucr = host->ucr;
+	पूर्णांक err, i;
 
 	dev_dbg(ms_dev(host), "%s: tpc = 0x%02x\n", __func__, tpc);
 
 	rtsx_usb_init_cmd(ucr);
 
-	for (i = 0; i < cnt; i++)
+	क्रम (i = 0; i < cnt; i++)
 		rtsx_usb_add_cmd(ucr, WRITE_REG_CMD,
 				PPBUF_BASE2 + i, 0xFF, data[i]);
 
-	if (cnt % 2)
+	अगर (cnt % 2)
 		rtsx_usb_add_cmd(ucr, WRITE_REG_CMD,
 				PPBUF_BASE2 + i, 0xFF, 0xFF);
 
@@ -344,47 +345,47 @@ static int ms_write_bytes(struct rtsx_usb_ms *host, u8 tpc,
 	rtsx_usb_add_cmd(ucr, READ_REG_CMD, MS_TRANS_CFG, 0, 0);
 
 	err = rtsx_usb_send_cmd(ucr, MODE_CR, 100);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = rtsx_usb_get_rsp(ucr, 2, 5000);
-	if (err || (ucr->rsp_buf[0] & MS_TRANSFER_ERR)) {
+	अगर (err || (ucr->rsp_buf[0] & MS_TRANSFER_ERR)) अणु
 		u8 val;
 
-		rtsx_usb_ep0_read_register(ucr, MS_TRANS_CFG, &val);
+		rtsx_usb_ep0_पढ़ो_रेजिस्टर(ucr, MS_TRANS_CFG, &val);
 		dev_dbg(ms_dev(host), "MS_TRANS_CFG: 0x%02x\n", val);
 
-		if (int_reg)
-			*int_reg = val & 0x0F;
+		अगर (पूर्णांक_reg)
+			*पूर्णांक_reg = val & 0x0F;
 
-		ms_print_debug_regs(host);
+		ms_prपूर्णांक_debug_regs(host);
 
 		ms_clear_error(host);
 
-		if (!(tpc & 0x08)) {
-			if (val & MS_CRC16_ERR)
-				return -EIO;
-		} else {
-			if (!(val & 0x80)) {
-				if (val & (MS_INT_ERR | MS_INT_CMDNK))
-					return -EIO;
-			}
-		}
+		अगर (!(tpc & 0x08)) अणु
+			अगर (val & MS_CRC16_ERR)
+				वापस -EIO;
+		पूर्ण अन्यथा अणु
+			अगर (!(val & 0x80)) अणु
+				अगर (val & (MS_INT_ERR | MS_INT_CMDNK))
+					वापस -EIO;
+			पूर्ण
+		पूर्ण
 
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	if (int_reg)
-		*int_reg = ucr->rsp_buf[1] & 0x0F;
+	अगर (पूर्णांक_reg)
+		*पूर्णांक_reg = ucr->rsp_buf[1] & 0x0F;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ms_read_bytes(struct rtsx_usb_ms *host, u8 tpc,
-		u8 cfg, u8 cnt, u8 *data, u8 *int_reg)
-{
-	struct rtsx_ucr *ucr = host->ucr;
-	int err, i;
+अटल पूर्णांक ms_पढ़ो_bytes(काष्ठा rtsx_usb_ms *host, u8 tpc,
+		u8 cfg, u8 cnt, u8 *data, u8 *पूर्णांक_reg)
+अणु
+	काष्ठा rtsx_ucr *ucr = host->ucr;
+	पूर्णांक err, i;
 	u8 *ptr;
 
 	dev_dbg(ms_dev(host), "%s: tpc = 0x%02x\n", __func__, tpc);
@@ -401,129 +402,129 @@ static int ms_read_bytes(struct rtsx_usb_ms *host, u8 tpc,
 			0xFF, MS_TRANSFER_START | MS_TM_READ_BYTES);
 	rtsx_usb_add_cmd(ucr, CHECK_REG_CMD, MS_TRANSFER,
 			MS_TRANSFER_END, MS_TRANSFER_END);
-	for (i = 0; i < cnt - 1; i++)
+	क्रम (i = 0; i < cnt - 1; i++)
 		rtsx_usb_add_cmd(ucr, READ_REG_CMD, PPBUF_BASE2 + i, 0, 0);
-	if (cnt % 2)
+	अगर (cnt % 2)
 		rtsx_usb_add_cmd(ucr, READ_REG_CMD, PPBUF_BASE2 + cnt, 0, 0);
-	else
+	अन्यथा
 		rtsx_usb_add_cmd(ucr, READ_REG_CMD,
 				PPBUF_BASE2 + cnt - 1, 0, 0);
 
 	rtsx_usb_add_cmd(ucr, READ_REG_CMD, MS_TRANS_CFG, 0, 0);
 
 	err = rtsx_usb_send_cmd(ucr, MODE_CR, 100);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = rtsx_usb_get_rsp(ucr, cnt + 2, 5000);
-	if (err || (ucr->rsp_buf[0] & MS_TRANSFER_ERR)) {
+	अगर (err || (ucr->rsp_buf[0] & MS_TRANSFER_ERR)) अणु
 		u8 val;
 
-		rtsx_usb_ep0_read_register(ucr, MS_TRANS_CFG, &val);
+		rtsx_usb_ep0_पढ़ो_रेजिस्टर(ucr, MS_TRANS_CFG, &val);
 		dev_dbg(ms_dev(host), "MS_TRANS_CFG: 0x%02x\n", val);
 
-		if (int_reg && (host->ifmode != MEMSTICK_SERIAL))
-			*int_reg = val & 0x0F;
+		अगर (पूर्णांक_reg && (host->अगरmode != MEMSTICK_SERIAL))
+			*पूर्णांक_reg = val & 0x0F;
 
-		ms_print_debug_regs(host);
+		ms_prपूर्णांक_debug_regs(host);
 
 		ms_clear_error(host);
 
-		if (!(tpc & 0x08)) {
-			if (val & MS_CRC16_ERR)
-				return -EIO;
-		} else {
-			if (!(val & 0x80)) {
-				if (val & (MS_INT_ERR | MS_INT_CMDNK))
-					return -EIO;
-			}
-		}
+		अगर (!(tpc & 0x08)) अणु
+			अगर (val & MS_CRC16_ERR)
+				वापस -EIO;
+		पूर्ण अन्यथा अणु
+			अगर (!(val & 0x80)) अणु
+				अगर (val & (MS_INT_ERR | MS_INT_CMDNK))
+					वापस -EIO;
+			पूर्ण
+		पूर्ण
 
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	ptr = ucr->rsp_buf + 1;
-	for (i = 0; i < cnt; i++)
+	क्रम (i = 0; i < cnt; i++)
 		data[i] = *ptr++;
 
 
-	if (int_reg && (host->ifmode != MEMSTICK_SERIAL))
-		*int_reg = *ptr & 0x0F;
+	अगर (पूर्णांक_reg && (host->अगरmode != MEMSTICK_SERIAL))
+		*पूर्णांक_reg = *ptr & 0x0F;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtsx_usb_ms_issue_cmd(struct rtsx_usb_ms *host)
-{
-	struct memstick_request *req = host->req;
-	int err = 0;
-	u8 cfg = 0, int_reg;
+अटल पूर्णांक rtsx_usb_ms_issue_cmd(काष्ठा rtsx_usb_ms *host)
+अणु
+	काष्ठा memstick_request *req = host->req;
+	पूर्णांक err = 0;
+	u8 cfg = 0, पूर्णांक_reg;
 
 	dev_dbg(ms_dev(host), "%s\n", __func__);
 
-	if (req->need_card_int) {
-		if (host->ifmode != MEMSTICK_SERIAL)
+	अगर (req->need_card_पूर्णांक) अणु
+		अगर (host->अगरmode != MEMSTICK_SERIAL)
 			cfg = WAIT_INT;
-	}
+	पूर्ण
 
-	if (req->long_data) {
+	अगर (req->दीर्घ_data) अणु
 		err = ms_transfer_data(host, req->data_dir,
 				req->tpc, cfg, &(req->sg));
-	} else {
-		if (req->data_dir == READ)
-			err = ms_read_bytes(host, req->tpc, cfg,
-					req->data_len, req->data, &int_reg);
-		else
-			err = ms_write_bytes(host, req->tpc, cfg,
-					req->data_len, req->data, &int_reg);
-	}
-	if (err < 0)
-		return err;
+	पूर्ण अन्यथा अणु
+		अगर (req->data_dir == READ)
+			err = ms_पढ़ो_bytes(host, req->tpc, cfg,
+					req->data_len, req->data, &पूर्णांक_reg);
+		अन्यथा
+			err = ms_ग_लिखो_bytes(host, req->tpc, cfg,
+					req->data_len, req->data, &पूर्णांक_reg);
+	पूर्ण
+	अगर (err < 0)
+		वापस err;
 
-	if (req->need_card_int) {
-		if (host->ifmode == MEMSTICK_SERIAL) {
-			err = ms_read_bytes(host, MS_TPC_GET_INT,
-					NO_WAIT_INT, 1, &req->int_reg, NULL);
-			if (err < 0)
-				return err;
-		} else {
+	अगर (req->need_card_पूर्णांक) अणु
+		अगर (host->अगरmode == MEMSTICK_SERIAL) अणु
+			err = ms_पढ़ो_bytes(host, MS_TPC_GET_INT,
+					NO_WAIT_INT, 1, &req->पूर्णांक_reg, शून्य);
+			अगर (err < 0)
+				वापस err;
+		पूर्ण अन्यथा अणु
 
-			if (int_reg & MS_INT_CMDNK)
-				req->int_reg |= MEMSTICK_INT_CMDNAK;
-			if (int_reg & MS_INT_BREQ)
-				req->int_reg |= MEMSTICK_INT_BREQ;
-			if (int_reg & MS_INT_ERR)
-				req->int_reg |= MEMSTICK_INT_ERR;
-			if (int_reg & MS_INT_CED)
-				req->int_reg |= MEMSTICK_INT_CED;
-		}
-		dev_dbg(ms_dev(host), "int_reg: 0x%02x\n", req->int_reg);
-	}
+			अगर (पूर्णांक_reg & MS_INT_CMDNK)
+				req->पूर्णांक_reg |= MEMSTICK_INT_CMDNAK;
+			अगर (पूर्णांक_reg & MS_INT_BREQ)
+				req->पूर्णांक_reg |= MEMSTICK_INT_BREQ;
+			अगर (पूर्णांक_reg & MS_INT_ERR)
+				req->पूर्णांक_reg |= MEMSTICK_INT_ERR;
+			अगर (पूर्णांक_reg & MS_INT_CED)
+				req->पूर्णांक_reg |= MEMSTICK_INT_CED;
+		पूर्ण
+		dev_dbg(ms_dev(host), "int_reg: 0x%02x\n", req->पूर्णांक_reg);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtsx_usb_ms_handle_req(struct work_struct *work)
-{
-	struct rtsx_usb_ms *host = container_of(work,
-			struct rtsx_usb_ms, handle_req);
-	struct rtsx_ucr *ucr = host->ucr;
-	struct memstick_host *msh = host->msh;
-	int rc;
+अटल व्योम rtsx_usb_ms_handle_req(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtsx_usb_ms *host = container_of(work,
+			काष्ठा rtsx_usb_ms, handle_req);
+	काष्ठा rtsx_ucr *ucr = host->ucr;
+	काष्ठा memstick_host *msh = host->msh;
+	पूर्णांक rc;
 
-	if (!host->req) {
-		pm_runtime_get_sync(ms_dev(host));
-		do {
+	अगर (!host->req) अणु
+		pm_runसमय_get_sync(ms_dev(host));
+		करो अणु
 			rc = memstick_next_req(msh, &host->req);
 			dev_dbg(ms_dev(host), "next req %d\n", rc);
 
-			if (!rc) {
+			अगर (!rc) अणु
 				mutex_lock(&ucr->dev_mutex);
 
-				if (rtsx_usb_card_exclusive_check(ucr,
+				अगर (rtsx_usb_card_exclusive_check(ucr,
 							RTSX_USB_MS_CARD))
 					host->req->error = -EIO;
-				else
+				अन्यथा
 					host->req->error =
 						rtsx_usb_ms_issue_cmd(host);
 
@@ -531,252 +532,252 @@ static void rtsx_usb_ms_handle_req(struct work_struct *work)
 
 				dev_dbg(ms_dev(host), "req result %d\n",
 						host->req->error);
-			}
-		} while (!rc);
-		pm_runtime_put_sync(ms_dev(host));
-	}
+			पूर्ण
+		पूर्ण जबतक (!rc);
+		pm_runसमय_put_sync(ms_dev(host));
+	पूर्ण
 
-}
+पूर्ण
 
-static void rtsx_usb_ms_request(struct memstick_host *msh)
-{
-	struct rtsx_usb_ms *host = memstick_priv(msh);
+अटल व्योम rtsx_usb_ms_request(काष्ठा memstick_host *msh)
+अणु
+	काष्ठा rtsx_usb_ms *host = memstick_priv(msh);
 
 	dev_dbg(ms_dev(host), "--> %s\n", __func__);
 
-	if (!host->eject)
+	अगर (!host->eject)
 		schedule_work(&host->handle_req);
-}
+पूर्ण
 
-static int rtsx_usb_ms_set_param(struct memstick_host *msh,
-		enum memstick_param param, int value)
-{
-	struct rtsx_usb_ms *host = memstick_priv(msh);
-	struct rtsx_ucr *ucr = host->ucr;
-	unsigned int clock = 0;
+अटल पूर्णांक rtsx_usb_ms_set_param(काष्ठा memstick_host *msh,
+		क्रमागत memstick_param param, पूर्णांक value)
+अणु
+	काष्ठा rtsx_usb_ms *host = memstick_priv(msh);
+	काष्ठा rtsx_ucr *ucr = host->ucr;
+	अचिन्हित पूर्णांक घड़ी = 0;
 	u8 ssc_depth = 0;
-	int err;
+	पूर्णांक err;
 
 	dev_dbg(ms_dev(host), "%s: param = %d, value = %d\n",
 			__func__, param, value);
 
-	pm_runtime_get_sync(ms_dev(host));
+	pm_runसमय_get_sync(ms_dev(host));
 	mutex_lock(&ucr->dev_mutex);
 
 	err = rtsx_usb_card_exclusive_check(ucr, RTSX_USB_MS_CARD);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	switch (param) {
-	case MEMSTICK_POWER:
-		if (value == host->power_mode)
-			break;
+	चयन (param) अणु
+	हाल MEMSTICK_POWER:
+		अगर (value == host->घातer_mode)
+			अवरोध;
 
-		if (value == MEMSTICK_POWER_ON) {
-			pm_runtime_get_noresume(ms_dev(host));
-			err = ms_power_on(host);
-			if (err)
-				pm_runtime_put_noidle(ms_dev(host));
-		} else if (value == MEMSTICK_POWER_OFF) {
-			err = ms_power_off(host);
-			if (!err)
-				pm_runtime_put_noidle(ms_dev(host));
-		} else
+		अगर (value == MEMSTICK_POWER_ON) अणु
+			pm_runसमय_get_noresume(ms_dev(host));
+			err = ms_घातer_on(host);
+			अगर (err)
+				pm_runसमय_put_noidle(ms_dev(host));
+		पूर्ण अन्यथा अगर (value == MEMSTICK_POWER_OFF) अणु
+			err = ms_घातer_off(host);
+			अगर (!err)
+				pm_runसमय_put_noidle(ms_dev(host));
+		पूर्ण अन्यथा
 			err = -EINVAL;
-		if (!err)
-			host->power_mode = value;
-		break;
+		अगर (!err)
+			host->घातer_mode = value;
+		अवरोध;
 
-	case MEMSTICK_INTERFACE:
-		if (value == MEMSTICK_SERIAL) {
-			clock = 19000000;
+	हाल MEMSTICK_INTERFACE:
+		अगर (value == MEMSTICK_SERIAL) अणु
+			घड़ी = 19000000;
 			ssc_depth = SSC_DEPTH_512K;
-			err = rtsx_usb_write_register(ucr, MS_CFG, 0x5A,
+			err = rtsx_usb_ग_लिखो_रेजिस्टर(ucr, MS_CFG, 0x5A,
 				       MS_BUS_WIDTH_1 | PUSH_TIME_DEFAULT);
-			if (err < 0)
-				break;
-		} else if (value == MEMSTICK_PAR4) {
-			clock = 39000000;
+			अगर (err < 0)
+				अवरोध;
+		पूर्ण अन्यथा अगर (value == MEMSTICK_PAR4) अणु
+			घड़ी = 39000000;
 			ssc_depth = SSC_DEPTH_1M;
 
-			err = rtsx_usb_write_register(ucr, MS_CFG, 0x5A,
+			err = rtsx_usb_ग_लिखो_रेजिस्टर(ucr, MS_CFG, 0x5A,
 					MS_BUS_WIDTH_4 | PUSH_TIME_ODD |
 					MS_NO_CHECK_INT);
-			if (err < 0)
-				break;
-		} else {
+			अगर (err < 0)
+				अवरोध;
+		पूर्ण अन्यथा अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		err = rtsx_usb_switch_clock(ucr, clock,
+		err = rtsx_usb_चयन_घड़ी(ucr, घड़ी,
 				ssc_depth, false, true, false);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_dbg(ms_dev(host), "switch clock failed\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		host->ssc_depth = ssc_depth;
-		host->clock = clock;
-		host->ifmode = value;
-		break;
-	default:
+		host->घड़ी = घड़ी;
+		host->अगरmode = value;
+		अवरोध;
+	शेष:
 		err = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 out:
 	mutex_unlock(&ucr->dev_mutex);
-	pm_runtime_put_sync(ms_dev(host));
+	pm_runसमय_put_sync(ms_dev(host));
 
-	/* power-on delay */
-	if (param == MEMSTICK_POWER && value == MEMSTICK_POWER_ON) {
+	/* घातer-on delay */
+	अगर (param == MEMSTICK_POWER && value == MEMSTICK_POWER_ON) अणु
 		usleep_range(10000, 12000);
 
-		if (!host->eject)
+		अगर (!host->eject)
 			schedule_delayed_work(&host->poll_card, 100);
-	}
+	पूर्ण
 
 	dev_dbg(ms_dev(host), "%s: return = %d\n", __func__, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int rtsx_usb_ms_suspend(struct device *dev)
-{
-	struct rtsx_usb_ms *host = dev_get_drvdata(dev);
-	struct memstick_host *msh = host->msh;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक rtsx_usb_ms_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा rtsx_usb_ms *host = dev_get_drvdata(dev);
+	काष्ठा memstick_host *msh = host->msh;
 
-	/* Since we use rtsx_usb's resume callback to runtime resume its
-	 * children to implement remote wakeup signaling, this causes
-	 * rtsx_usb_ms' runtime resume callback runs after its suspend
+	/* Since we use rtsx_usb's resume callback to runसमय resume its
+	 * children to implement remote wakeup संकेतing, this causes
+	 * rtsx_usb_ms' runसमय resume callback runs after its suspend
 	 * callback:
 	 * rtsx_usb_ms_suspend()
 	 * rtsx_usb_resume()
-	 *   -> rtsx_usb_ms_runtime_resume()
+	 *   -> rtsx_usb_ms_runसमय_resume()
 	 *     -> memstick_detect_change()
 	 *
 	 * rtsx_usb_suspend()
 	 *
-	 * To avoid this, skip runtime resume/suspend if system suspend is
+	 * To aव्योम this, skip runसमय resume/suspend अगर प्रणाली suspend is
 	 * underway.
 	 */
 
-	host->system_suspending = true;
+	host->प्रणाली_suspending = true;
 	memstick_suspend_host(msh);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtsx_usb_ms_resume(struct device *dev)
-{
-	struct rtsx_usb_ms *host = dev_get_drvdata(dev);
-	struct memstick_host *msh = host->msh;
+अटल पूर्णांक rtsx_usb_ms_resume(काष्ठा device *dev)
+अणु
+	काष्ठा rtsx_usb_ms *host = dev_get_drvdata(dev);
+	काष्ठा memstick_host *msh = host->msh;
 
 	memstick_resume_host(msh);
-	host->system_suspending = false;
+	host->प्रणाली_suspending = false;
 
-	return 0;
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-#ifdef CONFIG_PM
-static int rtsx_usb_ms_runtime_suspend(struct device *dev)
-{
-	struct rtsx_usb_ms *host = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक rtsx_usb_ms_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा rtsx_usb_ms *host = dev_get_drvdata(dev);
 
-	if (host->system_suspending)
-		return 0;
+	अगर (host->प्रणाली_suspending)
+		वापस 0;
 
-	if (host->msh->card || host->power_mode != MEMSTICK_POWER_OFF)
-		return -EAGAIN;
+	अगर (host->msh->card || host->घातer_mode != MEMSTICK_POWER_OFF)
+		वापस -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtsx_usb_ms_runtime_resume(struct device *dev)
-{
-	struct rtsx_usb_ms *host = dev_get_drvdata(dev);
+अटल पूर्णांक rtsx_usb_ms_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा rtsx_usb_ms *host = dev_get_drvdata(dev);
 
 
-	if (host->system_suspending)
-		return 0;
+	अगर (host->प्रणाली_suspending)
+		वापस 0;
 
 	memstick_detect_change(host->msh);
 
-	return 0;
-}
-#endif /* CONFIG_PM */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct dev_pm_ops rtsx_usb_ms_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops rtsx_usb_ms_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(rtsx_usb_ms_suspend, rtsx_usb_ms_resume)
-	SET_RUNTIME_PM_OPS(rtsx_usb_ms_runtime_suspend, rtsx_usb_ms_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(rtsx_usb_ms_runसमय_suspend, rtsx_usb_ms_runसमय_resume, शून्य)
+पूर्ण;
 
 
-static void rtsx_usb_ms_poll_card(struct work_struct *work)
-{
-	struct rtsx_usb_ms *host = container_of(work, struct rtsx_usb_ms,
+अटल व्योम rtsx_usb_ms_poll_card(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtsx_usb_ms *host = container_of(work, काष्ठा rtsx_usb_ms,
 			poll_card.work);
-	struct rtsx_ucr *ucr = host->ucr;
-	int err;
+	काष्ठा rtsx_ucr *ucr = host->ucr;
+	पूर्णांक err;
 	u8 val;
 
-	if (host->eject || host->power_mode != MEMSTICK_POWER_ON)
-		return;
+	अगर (host->eject || host->घातer_mode != MEMSTICK_POWER_ON)
+		वापस;
 
-	pm_runtime_get_sync(ms_dev(host));
+	pm_runसमय_get_sync(ms_dev(host));
 	mutex_lock(&ucr->dev_mutex);
 
 	/* Check pending MS card changes */
-	err = rtsx_usb_read_register(ucr, CARD_INT_PEND, &val);
-	if (err) {
+	err = rtsx_usb_पढ़ो_रेजिस्टर(ucr, CARD_INT_PEND, &val);
+	अगर (err) अणु
 		mutex_unlock(&ucr->dev_mutex);
-		goto poll_again;
-	}
+		जाओ poll_again;
+	पूर्ण
 
 	/* Clear the pending */
-	rtsx_usb_write_register(ucr, CARD_INT_PEND,
+	rtsx_usb_ग_लिखो_रेजिस्टर(ucr, CARD_INT_PEND,
 			XD_INT | MS_INT | SD_INT,
 			XD_INT | MS_INT | SD_INT);
 
 	mutex_unlock(&ucr->dev_mutex);
 
-	if (val & MS_INT) {
+	अगर (val & MS_INT) अणु
 		dev_dbg(ms_dev(host), "MS slot change detected\n");
 		memstick_detect_change(host->msh);
-	}
+	पूर्ण
 
 poll_again:
-	pm_runtime_put_sync(ms_dev(host));
+	pm_runसमय_put_sync(ms_dev(host));
 
-	if (!host->eject && host->power_mode == MEMSTICK_POWER_ON)
+	अगर (!host->eject && host->घातer_mode == MEMSTICK_POWER_ON)
 		schedule_delayed_work(&host->poll_card, 100);
-}
+पूर्ण
 
-static int rtsx_usb_ms_drv_probe(struct platform_device *pdev)
-{
-	struct memstick_host *msh;
-	struct rtsx_usb_ms *host;
-	struct rtsx_ucr *ucr;
-	int err;
+अटल पूर्णांक rtsx_usb_ms_drv_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा memstick_host *msh;
+	काष्ठा rtsx_usb_ms *host;
+	काष्ठा rtsx_ucr *ucr;
+	पूर्णांक err;
 
-	ucr = usb_get_intfdata(to_usb_interface(pdev->dev.parent));
-	if (!ucr)
-		return -ENXIO;
+	ucr = usb_get_पूर्णांकfdata(to_usb_पूर्णांकerface(pdev->dev.parent));
+	अगर (!ucr)
+		वापस -ENXIO;
 
 	dev_dbg(&(pdev->dev),
 			"Realtek USB Memstick controller found\n");
 
-	msh = memstick_alloc_host(sizeof(*host), &pdev->dev);
-	if (!msh)
-		return -ENOMEM;
+	msh = memstick_alloc_host(माप(*host), &pdev->dev);
+	अगर (!msh)
+		वापस -ENOMEM;
 
 	host = memstick_priv(msh);
 	host->ucr = ucr;
 	host->msh = msh;
 	host->pdev = pdev;
-	host->power_mode = MEMSTICK_POWER_OFF;
-	platform_set_drvdata(pdev, host);
+	host->घातer_mode = MEMSTICK_POWER_OFF;
+	platक्रमm_set_drvdata(pdev, host);
 
 	mutex_init(&host->host_mutex);
 	INIT_WORK(&host->handle_req, rtsx_usb_ms_handle_req);
@@ -787,84 +788,84 @@ static int rtsx_usb_ms_drv_probe(struct platform_device *pdev)
 	msh->set_param = rtsx_usb_ms_set_param;
 	msh->caps = MEMSTICK_CAP_PAR4;
 
-	pm_runtime_get_noresume(ms_dev(host));
-	pm_runtime_set_active(ms_dev(host));
-	pm_runtime_enable(ms_dev(host));
+	pm_runसमय_get_noresume(ms_dev(host));
+	pm_runसमय_set_active(ms_dev(host));
+	pm_runसमय_enable(ms_dev(host));
 
 	err = memstick_add_host(msh);
-	if (err)
-		goto err_out;
+	अगर (err)
+		जाओ err_out;
 
-	pm_runtime_put(ms_dev(host));
+	pm_runसमय_put(ms_dev(host));
 
-	return 0;
+	वापस 0;
 err_out:
-	memstick_free_host(msh);
-	pm_runtime_disable(ms_dev(host));
-	pm_runtime_put_noidle(ms_dev(host));
-	return err;
-}
+	memstick_मुक्त_host(msh);
+	pm_runसमय_disable(ms_dev(host));
+	pm_runसमय_put_noidle(ms_dev(host));
+	वापस err;
+पूर्ण
 
-static int rtsx_usb_ms_drv_remove(struct platform_device *pdev)
-{
-	struct rtsx_usb_ms *host = platform_get_drvdata(pdev);
-	struct memstick_host *msh = host->msh;
-	int err;
+अटल पूर्णांक rtsx_usb_ms_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rtsx_usb_ms *host = platक्रमm_get_drvdata(pdev);
+	काष्ठा memstick_host *msh = host->msh;
+	पूर्णांक err;
 
 	host->eject = true;
 	cancel_work_sync(&host->handle_req);
 
 	mutex_lock(&host->host_mutex);
-	if (host->req) {
+	अगर (host->req) अणु
 		dev_dbg(ms_dev(host),
 			"%s: Controller removed during transfer\n",
 			dev_name(&msh->dev));
 		host->req->error = -ENOMEDIUM;
-		do {
+		करो अणु
 			err = memstick_next_req(msh, &host->req);
-			if (!err)
+			अगर (!err)
 				host->req->error = -ENOMEDIUM;
-		} while (!err);
-	}
+		पूर्ण जबतक (!err);
+	पूर्ण
 	mutex_unlock(&host->host_mutex);
 
-	memstick_remove_host(msh);
-	memstick_free_host(msh);
+	memstick_हटाओ_host(msh);
+	memstick_मुक्त_host(msh);
 
 	/* Balance possible unbalanced usage count
 	 * e.g. unconditional module removal
 	 */
-	if (pm_runtime_active(ms_dev(host)))
-		pm_runtime_put(ms_dev(host));
+	अगर (pm_runसमय_active(ms_dev(host)))
+		pm_runसमय_put(ms_dev(host));
 
-	pm_runtime_disable(ms_dev(host));
-	platform_set_drvdata(pdev, NULL);
+	pm_runसमय_disable(ms_dev(host));
+	platक्रमm_set_drvdata(pdev, शून्य);
 
 	dev_dbg(ms_dev(host),
 		": Realtek USB Memstick controller has been removed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_device_id rtsx_usb_ms_ids[] = {
-	{
+अटल काष्ठा platक्रमm_device_id rtsx_usb_ms_ids[] = अणु
+	अणु
 		.name = "rtsx_usb_ms",
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
-MODULE_DEVICE_TABLE(platform, rtsx_usb_ms_ids);
+	पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, rtsx_usb_ms_ids);
 
-static struct platform_driver rtsx_usb_ms_driver = {
+अटल काष्ठा platक्रमm_driver rtsx_usb_ms_driver = अणु
 	.probe		= rtsx_usb_ms_drv_probe,
-	.remove		= rtsx_usb_ms_drv_remove,
+	.हटाओ		= rtsx_usb_ms_drv_हटाओ,
 	.id_table       = rtsx_usb_ms_ids,
-	.driver		= {
+	.driver		= अणु
 		.name	= "rtsx_usb_ms",
 		.pm	= &rtsx_usb_ms_pm_ops,
-	},
-};
-module_platform_driver(rtsx_usb_ms_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(rtsx_usb_ms_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Roger Tseng <rogerable@realtek.com>");

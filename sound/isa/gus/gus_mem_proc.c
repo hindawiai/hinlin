@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
- *  GUS's memory access via proc filesystem
+ *  GUS's memory access via proc fileप्रणाली
  */
 
-#include <linux/slab.h>
-#include <sound/core.h>
-#include <sound/gus.h>
-#include <sound/info.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/core.h>
+#समावेश <sound/gus.h>
+#समावेश <sound/info.h>
 
-struct gus_proc_private {
-	int rom;		/* data are in ROM */
-	unsigned int address;
-	unsigned int size;
-	struct snd_gus_card * gus;
-};
+काष्ठा gus_proc_निजी अणु
+	पूर्णांक rom;		/* data are in ROM */
+	अचिन्हित पूर्णांक address;
+	अचिन्हित पूर्णांक size;
+	काष्ठा snd_gus_card * gus;
+पूर्ण;
 
-static ssize_t snd_gf1_mem_proc_dump(struct snd_info_entry *entry,
-				     void *file_private_data,
-				     struct file *file, char __user *buf,
-				     size_t count, loff_t pos)
-{
-	struct gus_proc_private *priv = entry->private_data;
-	struct snd_gus_card *gus = priv->gus;
-	int err;
+अटल sमाप_प्रकार snd_gf1_mem_proc_dump(काष्ठा snd_info_entry *entry,
+				     व्योम *file_निजी_data,
+				     काष्ठा file *file, अक्षर __user *buf,
+				     माप_प्रकार count, loff_t pos)
+अणु
+	काष्ठा gus_proc_निजी *priv = entry->निजी_data;
+	काष्ठा snd_gus_card *gus = priv->gus;
+	पूर्णांक err;
 
-	err = snd_gus_dram_read(gus, buf, pos, count, priv->rom);
-	if (err < 0)
-		return err;
-	return count;
-}			
+	err = snd_gus_dram_पढ़ो(gus, buf, pos, count, priv->rom);
+	अगर (err < 0)
+		वापस err;
+	वापस count;
+पूर्ण			
 
-static void snd_gf1_mem_proc_free(struct snd_info_entry *entry)
-{
-	struct gus_proc_private *priv = entry->private_data;
-	kfree(priv);
-}
+अटल व्योम snd_gf1_mem_proc_मुक्त(काष्ठा snd_info_entry *entry)
+अणु
+	काष्ठा gus_proc_निजी *priv = entry->निजी_data;
+	kमुक्त(priv);
+पूर्ण
 
-static const struct snd_info_entry_ops snd_gf1_mem_proc_ops = {
-	.read = snd_gf1_mem_proc_dump,
-};
+अटल स्थिर काष्ठा snd_info_entry_ops snd_gf1_mem_proc_ops = अणु
+	.पढ़ो = snd_gf1_mem_proc_dump,
+पूर्ण;
 
-int snd_gf1_mem_proc_init(struct snd_gus_card * gus)
-{
-	int idx;
-	char name[16];
-	struct gus_proc_private *priv;
-	struct snd_info_entry *entry;
+पूर्णांक snd_gf1_mem_proc_init(काष्ठा snd_gus_card * gus)
+अणु
+	पूर्णांक idx;
+	अक्षर name[16];
+	काष्ठा gus_proc_निजी *priv;
+	काष्ठा snd_info_entry *entry;
 
-	for (idx = 0; idx < 4; idx++) {
-		if (gus->gf1.mem_alloc.banks_8[idx].size > 0) {
-			priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-			if (priv == NULL)
-				return -ENOMEM;
+	क्रम (idx = 0; idx < 4; idx++) अणु
+		अगर (gus->gf1.mem_alloc.banks_8[idx].size > 0) अणु
+			priv = kzalloc(माप(*priv), GFP_KERNEL);
+			अगर (priv == शून्य)
+				वापस -ENOMEM;
 			priv->gus = gus;
-			sprintf(name, "gus-ram-%i", idx);
-			if (! snd_card_proc_new(gus->card, name, &entry)) {
+			प्र_लिखो(name, "gus-ram-%i", idx);
+			अगर (! snd_card_proc_new(gus->card, name, &entry)) अणु
 				entry->content = SNDRV_INFO_CONTENT_DATA;
-				entry->private_data = priv;
-				entry->private_free = snd_gf1_mem_proc_free;
+				entry->निजी_data = priv;
+				entry->निजी_मुक्त = snd_gf1_mem_proc_मुक्त;
 				entry->c.ops = &snd_gf1_mem_proc_ops;
 				priv->address = gus->gf1.mem_alloc.banks_8[idx].address;
 				priv->size = entry->size = gus->gf1.mem_alloc.banks_8[idx].size;
-			}
-		}
-	}
-	for (idx = 0; idx < 4; idx++) {
-		if (gus->gf1.rom_present & (1 << idx)) {
-			priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-			if (priv == NULL)
-				return -ENOMEM;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	क्रम (idx = 0; idx < 4; idx++) अणु
+		अगर (gus->gf1.rom_present & (1 << idx)) अणु
+			priv = kzalloc(माप(*priv), GFP_KERNEL);
+			अगर (priv == शून्य)
+				वापस -ENOMEM;
 			priv->rom = 1;
 			priv->gus = gus;
-			sprintf(name, "gus-rom-%i", idx);
-			if (! snd_card_proc_new(gus->card, name, &entry)) {
+			प्र_लिखो(name, "gus-rom-%i", idx);
+			अगर (! snd_card_proc_new(gus->card, name, &entry)) अणु
 				entry->content = SNDRV_INFO_CONTENT_DATA;
-				entry->private_data = priv;
-				entry->private_free = snd_gf1_mem_proc_free;
+				entry->निजी_data = priv;
+				entry->निजी_मुक्त = snd_gf1_mem_proc_मुक्त;
 				entry->c.ops = &snd_gf1_mem_proc_ops;
 				priv->address = idx * 4096 * 1024;
 				priv->size = entry->size = gus->gf1.rom_memory;
-			}
-		}
-	}
-	return 0;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण

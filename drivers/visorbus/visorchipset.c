@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2010 - 2015 UNISYS CORPORATION
  * All rights reserved.
  */
 
-#include <linux/acpi.h>
-#include <linux/crash_dump.h>
-#include <linux/visorbus.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/crash_dump.h>
+#समावेश <linux/visorbus.h>
 
-#include "visorbus_private.h"
+#समावेश "visorbus_private.h"
 
-/* {72120008-4AAB-11DC-8530-444553544200} */
-#define VISOR_SIOVM_GUID GUID_INIT(0x72120008, 0x4AAB, 0x11DC, 0x85, 0x30, \
+/* अणु72120008-4AAB-11DC-8530-444553544200पूर्ण */
+#घोषणा VISOR_SIOVM_GUID GUID_INIT(0x72120008, 0x4AAB, 0x11DC, 0x85, 0x30, \
 				   0x44, 0x45, 0x53, 0x54, 0x42, 0x00)
 
-static const guid_t visor_vhba_channel_guid = VISOR_VHBA_CHANNEL_GUID;
-static const guid_t visor_siovm_guid = VISOR_SIOVM_GUID;
-static const guid_t visor_controlvm_channel_guid = VISOR_CONTROLVM_CHANNEL_GUID;
+अटल स्थिर guid_t visor_vhba_channel_guid = VISOR_VHBA_CHANNEL_GUID;
+अटल स्थिर guid_t visor_siovm_guid = VISOR_SIOVM_GUID;
+अटल स्थिर guid_t visor_controlvm_channel_guid = VISOR_CONTROLVM_CHANNEL_GUID;
 
-#define POLLJIFFIES_CONTROLVM_FAST 1
-#define POLLJIFFIES_CONTROLVM_SLOW 100
+#घोषणा POLLJIFFIES_CONTROLVM_FAST 1
+#घोषणा POLLJIFFIES_CONTROLVM_SLOW 100
 
-#define MAX_CONTROLVM_PAYLOAD_BYTES (1024 * 128)
+#घोषणा MAX_CONTROLVM_PAYLOAD_BYTES (1024 * 128)
 
-#define UNISYS_VISOR_LEAF_ID 0x40000000
+#घोषणा UNISYS_VISOR_LEAF_ID 0x40000000
 
-/* The s-Par leaf ID returns "UnisysSpar64" encoded across ebx, ecx, edx */
-#define UNISYS_VISOR_ID_EBX 0x73696e55
-#define UNISYS_VISOR_ID_ECX 0x70537379
-#define UNISYS_VISOR_ID_EDX 0x34367261
+/* The s-Par leaf ID वापसs "UnisysSpar64" encoded across ebx, ecx, edx */
+#घोषणा UNISYS_VISOR_ID_EBX 0x73696e55
+#घोषणा UNISYS_VISOR_ID_ECX 0x70537379
+#घोषणा UNISYS_VISOR_ID_EDX 0x34367261
 
 /*
- * When the controlvm channel is idle for at least MIN_IDLE_SECONDS, we switch
- * to slow polling mode. As soon as we get a controlvm message, we switch back
+ * When the controlvm channel is idle क्रम at least MIN_IDLE_SECONDS, we चयन
+ * to slow polling mode. As soon as we get a controlvm message, we चयन back
  * to fast polling mode.
  */
-#define MIN_IDLE_SECONDS 10
+#घोषणा MIN_IDLE_SECONDS 10
 
-struct parser_context {
-	unsigned long allocbytes;
-	unsigned long param_bytes;
+काष्ठा parser_context अणु
+	अचिन्हित दीर्घ allocbytes;
+	अचिन्हित दीर्घ param_bytes;
 	u8 *curr;
-	unsigned long bytes_remaining;
+	अचिन्हित दीर्घ bytes_reमुख्यing;
 	bool byte_stream;
-	struct visor_controlvm_parameters_header data;
-};
+	काष्ठा visor_controlvm_parameters_header data;
+पूर्ण;
 
 /* VMCALL_CONTROLVM_ADDR: Used by all guests, not just IO. */
-#define VMCALL_CONTROLVM_ADDR 0x0501
+#घोषणा VMCALL_CONTROLVM_ADDR 0x0501
 
-enum vmcall_result {
+क्रमागत vmcall_result अणु
 	VMCALL_RESULT_SUCCESS = 0,
 	VMCALL_RESULT_INVALID_PARAM = 1,
 	VMCALL_RESULT_DATA_UNAVAILABLE = 2,
 	VMCALL_RESULT_FAILURE_UNAVAILABLE = 3,
 	VMCALL_RESULT_DEVICE_ERROR = 4,
 	VMCALL_RESULT_DEVICE_NOT_READY = 5
-};
+पूर्ण;
 
 /*
- * struct vmcall_io_controlvm_addr_params - Structure for IO VMCALLS. Has
+ * काष्ठा vmcall_io_controlvm_addr_params - Structure क्रम IO VMCALLS. Has
  *					    parameters to VMCALL_CONTROLVM_ADDR
- *					    interface.
+ *					    पूर्णांकerface.
  * @address:	   The Guest-relative physical address of the ControlVm channel.
  *		   This VMCall fills this in with the appropriate address.
  *		   Contents provided by this VMCALL (OUT).
@@ -70,258 +71,258 @@ enum vmcall_result {
  *		   this VMCALL (OUT).
  * @unused:	   Unused Bytes in the 64-Bit Aligned Struct.
  */
-struct vmcall_io_controlvm_addr_params {
+काष्ठा vmcall_io_controlvm_addr_params अणु
 	u64 address;
 	u32 channel_bytes;
 	u8 unused[4];
-} __packed;
+पूर्ण __packed;
 
-struct visorchipset_device {
-	struct acpi_device *acpi_device;
-	unsigned long poll_jiffies;
+काष्ठा visorchipset_device अणु
+	काष्ठा acpi_device *acpi_device;
+	अचिन्हित दीर्घ poll_jअगरfies;
 	/* when we got our last controlvm message */
-	unsigned long most_recent_message_jiffies;
-	struct delayed_work periodic_controlvm_work;
-	struct visorchannel *controlvm_channel;
-	unsigned long controlvm_payload_bytes_buffered;
+	अचिन्हित दीर्घ most_recent_message_jअगरfies;
+	काष्ठा delayed_work periodic_controlvm_work;
+	काष्ठा visorchannel *controlvm_channel;
+	अचिन्हित दीर्घ controlvm_payload_bytes_buffered;
 	/*
 	 * The following variables are used to handle the scenario where we are
 	 * unable to offload the payload from a controlvm message due to memory
 	 * requirements. In this scenario, we simply stash the controlvm
-	 * message, then attempt to process it again the next time
+	 * message, then attempt to process it again the next समय
 	 * controlvm_periodic_work() runs.
 	 */
-	struct controlvm_message controlvm_pending_msg;
+	काष्ठा controlvm_message controlvm_pending_msg;
 	bool controlvm_pending_msg_valid;
-	struct vmcall_io_controlvm_addr_params controlvm_params;
-};
+	काष्ठा vmcall_io_controlvm_addr_params controlvm_params;
+पूर्ण;
 
-static struct visorchipset_device *chipset_dev;
+अटल काष्ठा visorchipset_device *chipset_dev;
 
-struct parahotplug_request {
-	struct list_head list;
-	int id;
-	unsigned long expiration;
-	struct controlvm_message msg;
-};
+काष्ठा parahotplug_request अणु
+	काष्ठा list_head list;
+	पूर्णांक id;
+	अचिन्हित दीर्घ expiration;
+	काष्ठा controlvm_message msg;
+पूर्ण;
 
-/* prototypes for attributes */
-static ssize_t toolaction_show(struct device *dev,
-			       struct device_attribute *attr,
-			       char *buf)
-{
+/* prototypes क्रम attributes */
+अटल sमाप_प्रकार toolaction_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
 	u8 tool_action = 0;
-	int err;
+	पूर्णांक err;
 
-	err = visorchannel_read(chipset_dev->controlvm_channel,
-				offsetof(struct visor_controlvm_channel,
+	err = visorchannel_पढ़ो(chipset_dev->controlvm_channel,
+				दुरत्व(काष्ठा visor_controlvm_channel,
 					 tool_action),
-				&tool_action, sizeof(u8));
-	if (err)
-		return err;
-	return sprintf(buf, "%u\n", tool_action);
-}
+				&tool_action, माप(u8));
+	अगर (err)
+		वापस err;
+	वापस प्र_लिखो(buf, "%u\n", tool_action);
+पूर्ण
 
-static ssize_t toolaction_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
+अटल sमाप_प्रकार toolaction_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	u8 tool_action;
-	int err;
+	पूर्णांक err;
 
-	if (kstrtou8(buf, 10, &tool_action))
-		return -EINVAL;
-	err = visorchannel_write(chipset_dev->controlvm_channel,
-				 offsetof(struct visor_controlvm_channel,
+	अगर (kstrtou8(buf, 10, &tool_action))
+		वापस -EINVAL;
+	err = visorchannel_ग_लिखो(chipset_dev->controlvm_channel,
+				 दुरत्व(काष्ठा visor_controlvm_channel,
 					  tool_action),
-				 &tool_action, sizeof(u8));
-	if (err)
-		return err;
-	return count;
-}
-static DEVICE_ATTR_RW(toolaction);
+				 &tool_action, माप(u8));
+	अगर (err)
+		वापस err;
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(toolaction);
 
-static ssize_t boottotool_show(struct device *dev,
-			       struct device_attribute *attr,
-			       char *buf)
-{
-	struct efi_visor_indication efi_visor_indication;
-	int err;
+अटल sमाप_प्रकार boottotool_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा efi_visor_indication efi_visor_indication;
+	पूर्णांक err;
 
-	err = visorchannel_read(chipset_dev->controlvm_channel,
-				offsetof(struct visor_controlvm_channel,
+	err = visorchannel_पढ़ो(chipset_dev->controlvm_channel,
+				दुरत्व(काष्ठा visor_controlvm_channel,
 					 efi_visor_ind),
 				&efi_visor_indication,
-				sizeof(struct efi_visor_indication));
-	if (err)
-		return err;
-	return sprintf(buf, "%u\n", efi_visor_indication.boot_to_tool);
-}
+				माप(काष्ठा efi_visor_indication));
+	अगर (err)
+		वापस err;
+	वापस प्र_लिखो(buf, "%u\n", efi_visor_indication.boot_to_tool);
+पूर्ण
 
-static ssize_t boottotool_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	int val, err;
-	struct efi_visor_indication efi_visor_indication;
+अटल sमाप_प्रकार boottotool_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक val, err;
+	काष्ठा efi_visor_indication efi_visor_indication;
 
-	if (kstrtoint(buf, 10, &val))
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 10, &val))
+		वापस -EINVAL;
 	efi_visor_indication.boot_to_tool = val;
-	err = visorchannel_write(chipset_dev->controlvm_channel,
-				 offsetof(struct visor_controlvm_channel,
+	err = visorchannel_ग_लिखो(chipset_dev->controlvm_channel,
+				 दुरत्व(काष्ठा visor_controlvm_channel,
 					  efi_visor_ind),
 				 &(efi_visor_indication),
-				 sizeof(struct efi_visor_indication));
-	if (err)
-		return err;
-	return count;
-}
-static DEVICE_ATTR_RW(boottotool);
+				 माप(काष्ठा efi_visor_indication));
+	अगर (err)
+		वापस err;
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(boottotool);
 
-static ssize_t error_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
+अटल sमाप_प्रकार error_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
 	u32 error = 0;
-	int err;
+	पूर्णांक err;
 
-	err = visorchannel_read(chipset_dev->controlvm_channel,
-				offsetof(struct visor_controlvm_channel,
+	err = visorchannel_पढ़ो(chipset_dev->controlvm_channel,
+				दुरत्व(काष्ठा visor_controlvm_channel,
 					 installation_error),
-				&error, sizeof(u32));
-	if (err)
-		return err;
-	return sprintf(buf, "%u\n", error);
-}
+				&error, माप(u32));
+	अगर (err)
+		वापस err;
+	वापस प्र_लिखो(buf, "%u\n", error);
+पूर्ण
 
-static ssize_t error_store(struct device *dev, struct device_attribute *attr,
-			   const char *buf, size_t count)
-{
+अटल sमाप_प्रकार error_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	u32 error;
-	int err;
+	पूर्णांक err;
 
-	if (kstrtou32(buf, 10, &error))
-		return -EINVAL;
-	err = visorchannel_write(chipset_dev->controlvm_channel,
-				 offsetof(struct visor_controlvm_channel,
+	अगर (kstrtou32(buf, 10, &error))
+		वापस -EINVAL;
+	err = visorchannel_ग_लिखो(chipset_dev->controlvm_channel,
+				 दुरत्व(काष्ठा visor_controlvm_channel,
 					  installation_error),
-				 &error, sizeof(u32));
-	if (err)
-		return err;
-	return count;
-}
-static DEVICE_ATTR_RW(error);
+				 &error, माप(u32));
+	अगर (err)
+		वापस err;
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(error);
 
-static ssize_t textid_show(struct device *dev, struct device_attribute *attr,
-			   char *buf)
-{
+अटल sमाप_प्रकार textid_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
 	u32 text_id = 0;
-	int err;
+	पूर्णांक err;
 
-	err = visorchannel_read(chipset_dev->controlvm_channel,
-				offsetof(struct visor_controlvm_channel,
+	err = visorchannel_पढ़ो(chipset_dev->controlvm_channel,
+				दुरत्व(काष्ठा visor_controlvm_channel,
 					 installation_text_id),
-				&text_id, sizeof(u32));
-	if (err)
-		return err;
-	return sprintf(buf, "%u\n", text_id);
-}
+				&text_id, माप(u32));
+	अगर (err)
+		वापस err;
+	वापस प्र_लिखो(buf, "%u\n", text_id);
+पूर्ण
 
-static ssize_t textid_store(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
+अटल sमाप_प्रकार textid_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	u32 text_id;
-	int err;
+	पूर्णांक err;
 
-	if (kstrtou32(buf, 10, &text_id))
-		return -EINVAL;
-	err = visorchannel_write(chipset_dev->controlvm_channel,
-				 offsetof(struct visor_controlvm_channel,
+	अगर (kstrtou32(buf, 10, &text_id))
+		वापस -EINVAL;
+	err = visorchannel_ग_लिखो(chipset_dev->controlvm_channel,
+				 दुरत्व(काष्ठा visor_controlvm_channel,
 					  installation_text_id),
-				 &text_id, sizeof(u32));
-	if (err)
-		return err;
-	return count;
-}
-static DEVICE_ATTR_RW(textid);
+				 &text_id, माप(u32));
+	अगर (err)
+		वापस err;
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(textid);
 
-static ssize_t remaining_steps_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	u16 remaining_steps = 0;
-	int err;
+अटल sमाप_प्रकार reमुख्यing_steps_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	u16 reमुख्यing_steps = 0;
+	पूर्णांक err;
 
-	err = visorchannel_read(chipset_dev->controlvm_channel,
-				offsetof(struct visor_controlvm_channel,
-					 installation_remaining_steps),
-				&remaining_steps, sizeof(u16));
-	if (err)
-		return err;
-	return sprintf(buf, "%hu\n", remaining_steps);
-}
+	err = visorchannel_पढ़ो(chipset_dev->controlvm_channel,
+				दुरत्व(काष्ठा visor_controlvm_channel,
+					 installation_reमुख्यing_steps),
+				&reमुख्यing_steps, माप(u16));
+	अगर (err)
+		वापस err;
+	वापस प्र_लिखो(buf, "%hu\n", reमुख्यing_steps);
+पूर्ण
 
-static ssize_t remaining_steps_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	u16 remaining_steps;
-	int err;
+अटल sमाप_प्रकार reमुख्यing_steps_store(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	u16 reमुख्यing_steps;
+	पूर्णांक err;
 
-	if (kstrtou16(buf, 10, &remaining_steps))
-		return -EINVAL;
-	err = visorchannel_write(chipset_dev->controlvm_channel,
-				 offsetof(struct visor_controlvm_channel,
-					  installation_remaining_steps),
-				 &remaining_steps, sizeof(u16));
-	if (err)
-		return err;
-	return count;
-}
-static DEVICE_ATTR_RW(remaining_steps);
+	अगर (kstrtou16(buf, 10, &reमुख्यing_steps))
+		वापस -EINVAL;
+	err = visorchannel_ग_लिखो(chipset_dev->controlvm_channel,
+				 दुरत्व(काष्ठा visor_controlvm_channel,
+					  installation_reमुख्यing_steps),
+				 &reमुख्यing_steps, माप(u16));
+	अगर (err)
+		वापस err;
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(reमुख्यing_steps);
 
-static void controlvm_init_response(struct controlvm_message *msg,
-				    struct controlvm_message_header *msg_hdr,
-				    int response)
-{
-	memset(msg, 0, sizeof(struct controlvm_message));
-	memcpy(&msg->hdr, msg_hdr, sizeof(struct controlvm_message_header));
+अटल व्योम controlvm_init_response(काष्ठा controlvm_message *msg,
+				    काष्ठा controlvm_message_header *msg_hdr,
+				    पूर्णांक response)
+अणु
+	स_रखो(msg, 0, माप(काष्ठा controlvm_message));
+	स_नकल(&msg->hdr, msg_hdr, माप(काष्ठा controlvm_message_header));
 	msg->hdr.payload_bytes = 0;
 	msg->hdr.payload_vm_offset = 0;
 	msg->hdr.payload_max_bytes = 0;
-	if (response < 0) {
+	अगर (response < 0) अणु
 		msg->hdr.flags.failed = 1;
 		msg->hdr.completion_status = (u32)(-response);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int controlvm_respond_chipset_init(
-				struct controlvm_message_header *msg_hdr,
-				int response,
-				enum visor_chipset_feature features)
-{
-	struct controlvm_message outmsg;
+अटल पूर्णांक controlvm_respond_chipset_init(
+				काष्ठा controlvm_message_header *msg_hdr,
+				पूर्णांक response,
+				क्रमागत visor_chipset_feature features)
+अणु
+	काष्ठा controlvm_message ouपंचांगsg;
 
-	controlvm_init_response(&outmsg, msg_hdr, response);
-	outmsg.cmd.init_chipset.features = features;
-	return visorchannel_signalinsert(chipset_dev->controlvm_channel,
-					 CONTROLVM_QUEUE_REQUEST, &outmsg);
-}
+	controlvm_init_response(&ouपंचांगsg, msg_hdr, response);
+	ouपंचांगsg.cmd.init_chipset.features = features;
+	वापस visorchannel_संकेतinsert(chipset_dev->controlvm_channel,
+					 CONTROLVM_QUEUE_REQUEST, &ouपंचांगsg);
+पूर्ण
 
-static int chipset_init(struct controlvm_message *inmsg)
-{
-	static int chipset_inited;
-	enum visor_chipset_feature features = 0;
-	int rc = CONTROLVM_RESP_SUCCESS;
-	int res = 0;
+अटल पूर्णांक chipset_init(काष्ठा controlvm_message *inmsg)
+अणु
+	अटल पूर्णांक chipset_inited;
+	क्रमागत visor_chipset_feature features = 0;
+	पूर्णांक rc = CONTROLVM_RESP_SUCCESS;
+	पूर्णांक res = 0;
 
-	if (chipset_inited) {
+	अगर (chipset_inited) अणु
 		rc = -CONTROLVM_RESP_ALREADY_DONE;
 		res = -EIO;
-		goto out_respond;
-	}
+		जाओ out_respond;
+	पूर्ण
 	chipset_inited = 1;
 	/*
-	 * Set features to indicate we support parahotplug (if Command also
+	 * Set features to indicate we support parahotplug (अगर Command also
 	 * supports it). Set the "reply" bit so Command knows this is a
 	 * features-aware driver.
 	 */
@@ -330,346 +331,346 @@ static int chipset_init(struct controlvm_message *inmsg)
 	features |= VISOR_CHIPSET_FEATURE_REPLY;
 
 out_respond:
-	if (inmsg->hdr.flags.response_expected)
+	अगर (inmsg->hdr.flags.response_expected)
 		res = controlvm_respond_chipset_init(&inmsg->hdr, rc, features);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int controlvm_respond(struct controlvm_message_header *msg_hdr,
-			     int response, struct visor_segment_state *state)
-{
-	struct controlvm_message outmsg;
+अटल पूर्णांक controlvm_respond(काष्ठा controlvm_message_header *msg_hdr,
+			     पूर्णांक response, काष्ठा visor_segment_state *state)
+अणु
+	काष्ठा controlvm_message ouपंचांगsg;
 
-	controlvm_init_response(&outmsg, msg_hdr, response);
-	if (outmsg.hdr.flags.test_message == 1)
-		return -EINVAL;
-	if (state) {
-		outmsg.cmd.device_change_state.state = *state;
-		outmsg.cmd.device_change_state.flags.phys_device = 1;
-	}
-	return visorchannel_signalinsert(chipset_dev->controlvm_channel,
-					 CONTROLVM_QUEUE_REQUEST, &outmsg);
-}
+	controlvm_init_response(&ouपंचांगsg, msg_hdr, response);
+	अगर (ouपंचांगsg.hdr.flags.test_message == 1)
+		वापस -EINVAL;
+	अगर (state) अणु
+		ouपंचांगsg.cmd.device_change_state.state = *state;
+		ouपंचांगsg.cmd.device_change_state.flags.phys_device = 1;
+	पूर्ण
+	वापस visorchannel_संकेतinsert(chipset_dev->controlvm_channel,
+					 CONTROLVM_QUEUE_REQUEST, &ouपंचांगsg);
+पूर्ण
 
-enum crash_obj_type {
+क्रमागत crash_obj_type अणु
 	CRASH_DEV,
 	CRASH_BUS,
-};
+पूर्ण;
 
-static int save_crash_message(struct controlvm_message *msg,
-			      enum crash_obj_type cr_type)
-{
+अटल पूर्णांक save_crash_message(काष्ठा controlvm_message *msg,
+			      क्रमागत crash_obj_type cr_type)
+अणु
 	u32 local_crash_msg_offset;
 	u16 local_crash_msg_count;
-	int err;
+	पूर्णांक err;
 
-	err = visorchannel_read(chipset_dev->controlvm_channel,
-				offsetof(struct visor_controlvm_channel,
+	err = visorchannel_पढ़ो(chipset_dev->controlvm_channel,
+				दुरत्व(काष्ठा visor_controlvm_channel,
 					 saved_crash_message_count),
-				&local_crash_msg_count, sizeof(u16));
-	if (err) {
+				&local_crash_msg_count, माप(u16));
+	अगर (err) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"failed to read message count\n");
-		return err;
-	}
-	if (local_crash_msg_count != CONTROLVM_CRASHMSG_MAX) {
+		वापस err;
+	पूर्ण
+	अगर (local_crash_msg_count != CONTROLVM_CRASHMSG_MAX) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"invalid number of messages\n");
-		return -EIO;
-	}
-	err = visorchannel_read(chipset_dev->controlvm_channel,
-				offsetof(struct visor_controlvm_channel,
+		वापस -EIO;
+	पूर्ण
+	err = visorchannel_पढ़ो(chipset_dev->controlvm_channel,
+				दुरत्व(काष्ठा visor_controlvm_channel,
 					 saved_crash_message_offset),
-				&local_crash_msg_offset, sizeof(u32));
-	if (err) {
+				&local_crash_msg_offset, माप(u32));
+	अगर (err) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"failed to read offset\n");
-		return err;
-	}
-	switch (cr_type) {
-	case CRASH_DEV:
-		local_crash_msg_offset += sizeof(struct controlvm_message);
-		err = visorchannel_write(chipset_dev->controlvm_channel,
+		वापस err;
+	पूर्ण
+	चयन (cr_type) अणु
+	हाल CRASH_DEV:
+		local_crash_msg_offset += माप(काष्ठा controlvm_message);
+		err = visorchannel_ग_लिखो(chipset_dev->controlvm_channel,
 					 local_crash_msg_offset, msg,
-					 sizeof(struct controlvm_message));
-		if (err) {
+					 माप(काष्ठा controlvm_message));
+		अगर (err) अणु
 			dev_err(&chipset_dev->acpi_device->dev,
 				"failed to write dev msg\n");
-			return err;
-		}
-		break;
-	case CRASH_BUS:
-		err = visorchannel_write(chipset_dev->controlvm_channel,
+			वापस err;
+		पूर्ण
+		अवरोध;
+	हाल CRASH_BUS:
+		err = visorchannel_ग_लिखो(chipset_dev->controlvm_channel,
 					 local_crash_msg_offset, msg,
-					 sizeof(struct controlvm_message));
-		if (err) {
+					 माप(काष्ठा controlvm_message));
+		अगर (err) अणु
 			dev_err(&chipset_dev->acpi_device->dev,
 				"failed to write bus msg\n");
-			return err;
-		}
-		break;
-	default:
+			वापस err;
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_err(&chipset_dev->acpi_device->dev,
 			"Invalid crash_obj_type\n");
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int controlvm_responder(enum controlvm_id cmd_id,
-			       struct controlvm_message_header *pending_msg_hdr,
-			       int response)
-{
-	if (pending_msg_hdr->id != (u32)cmd_id)
-		return -EINVAL;
+अटल पूर्णांक controlvm_responder(क्रमागत controlvm_id cmd_id,
+			       काष्ठा controlvm_message_header *pending_msg_hdr,
+			       पूर्णांक response)
+अणु
+	अगर (pending_msg_hdr->id != (u32)cmd_id)
+		वापस -EINVAL;
 
-	return controlvm_respond(pending_msg_hdr, response, NULL);
-}
+	वापस controlvm_respond(pending_msg_hdr, response, शून्य);
+पूर्ण
 
-static int device_changestate_responder(enum controlvm_id cmd_id,
-					struct visor_device *p, int response,
-					struct visor_segment_state state)
-{
-	struct controlvm_message outmsg;
+अटल पूर्णांक device_changestate_responder(क्रमागत controlvm_id cmd_id,
+					काष्ठा visor_device *p, पूर्णांक response,
+					काष्ठा visor_segment_state state)
+अणु
+	काष्ठा controlvm_message ouपंचांगsg;
 
-	if (p->pending_msg_hdr->id != cmd_id)
-		return -EINVAL;
+	अगर (p->pending_msg_hdr->id != cmd_id)
+		वापस -EINVAL;
 
-	controlvm_init_response(&outmsg, p->pending_msg_hdr, response);
-	outmsg.cmd.device_change_state.bus_no = p->chipset_bus_no;
-	outmsg.cmd.device_change_state.dev_no = p->chipset_dev_no;
-	outmsg.cmd.device_change_state.state = state;
-	return visorchannel_signalinsert(chipset_dev->controlvm_channel,
-					 CONTROLVM_QUEUE_REQUEST, &outmsg);
-}
+	controlvm_init_response(&ouपंचांगsg, p->pending_msg_hdr, response);
+	ouपंचांगsg.cmd.device_change_state.bus_no = p->chipset_bus_no;
+	ouपंचांगsg.cmd.device_change_state.dev_no = p->chipset_dev_no;
+	ouपंचांगsg.cmd.device_change_state.state = state;
+	वापस visorchannel_संकेतinsert(chipset_dev->controlvm_channel,
+					 CONTROLVM_QUEUE_REQUEST, &ouपंचांगsg);
+पूर्ण
 
-static int visorbus_create(struct controlvm_message *inmsg)
-{
-	struct controlvm_message_packet *cmd = &inmsg->cmd;
-	struct controlvm_message_header *pmsg_hdr;
+अटल पूर्णांक visorbus_create(काष्ठा controlvm_message *inmsg)
+अणु
+	काष्ठा controlvm_message_packet *cmd = &inmsg->cmd;
+	काष्ठा controlvm_message_header *pmsg_hdr;
 	u32 bus_no = cmd->create_bus.bus_no;
-	struct visor_device *bus_info;
-	struct visorchannel *visorchannel;
-	int err;
+	काष्ठा visor_device *bus_info;
+	काष्ठा visorchannel *visorchannel;
+	पूर्णांक err;
 
-	bus_info = visorbus_get_device_by_id(bus_no, BUS_ROOT_DEVICE, NULL);
-	if (bus_info && bus_info->state.created == 1) {
+	bus_info = visorbus_get_device_by_id(bus_no, BUS_ROOT_DEVICE, शून्य);
+	अगर (bus_info && bus_info->state.created == 1) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"failed %s: already exists\n", __func__);
 		err = -EEXIST;
-		goto err_respond;
-	}
-	bus_info = kzalloc(sizeof(*bus_info), GFP_KERNEL);
-	if (!bus_info) {
+		जाओ err_respond;
+	पूर्ण
+	bus_info = kzalloc(माप(*bus_info), GFP_KERNEL);
+	अगर (!bus_info) अणु
 		err = -ENOMEM;
-		goto err_respond;
-	}
+		जाओ err_respond;
+	पूर्ण
 	INIT_LIST_HEAD(&bus_info->list_all);
 	bus_info->chipset_bus_no = bus_no;
 	bus_info->chipset_dev_no = BUS_ROOT_DEVICE;
-	if (guid_equal(&cmd->create_bus.bus_inst_guid, &visor_siovm_guid)) {
+	अगर (guid_equal(&cmd->create_bus.bus_inst_guid, &visor_siovm_guid)) अणु
 		err = save_crash_message(inmsg, CRASH_BUS);
-		if (err)
-			goto err_free_bus_info;
-	}
-	if (inmsg->hdr.flags.response_expected == 1) {
-		pmsg_hdr = kzalloc(sizeof(*pmsg_hdr), GFP_KERNEL);
-		if (!pmsg_hdr) {
+		अगर (err)
+			जाओ err_मुक्त_bus_info;
+	पूर्ण
+	अगर (inmsg->hdr.flags.response_expected == 1) अणु
+		pmsg_hdr = kzalloc(माप(*pmsg_hdr), GFP_KERNEL);
+		अगर (!pmsg_hdr) अणु
 			err = -ENOMEM;
-			goto err_free_bus_info;
-		}
-		memcpy(pmsg_hdr, &inmsg->hdr,
-		       sizeof(struct controlvm_message_header));
+			जाओ err_मुक्त_bus_info;
+		पूर्ण
+		स_नकल(pmsg_hdr, &inmsg->hdr,
+		       माप(काष्ठा controlvm_message_header));
 		bus_info->pending_msg_hdr = pmsg_hdr;
-	}
+	पूर्ण
 	visorchannel = visorchannel_create(cmd->create_bus.channel_addr,
 					   GFP_KERNEL,
 					   &cmd->create_bus.bus_data_type_guid,
 					   false);
-	if (!visorchannel) {
+	अगर (!visorchannel) अणु
 		err = -ENOMEM;
-		goto err_free_pending_msg;
-	}
+		जाओ err_मुक्त_pending_msg;
+	पूर्ण
 	bus_info->visorchannel = visorchannel;
 	/* Response will be handled by visorbus_create_instance on success */
 	err = visorbus_create_instance(bus_info);
-	if (err)
-		goto err_destroy_channel;
-	return 0;
+	अगर (err)
+		जाओ err_destroy_channel;
+	वापस 0;
 
 err_destroy_channel:
 	visorchannel_destroy(visorchannel);
 
-err_free_pending_msg:
-	kfree(bus_info->pending_msg_hdr);
+err_मुक्त_pending_msg:
+	kमुक्त(bus_info->pending_msg_hdr);
 
-err_free_bus_info:
-	kfree(bus_info);
+err_मुक्त_bus_info:
+	kमुक्त(bus_info);
 
 err_respond:
-	if (inmsg->hdr.flags.response_expected == 1)
+	अगर (inmsg->hdr.flags.response_expected == 1)
 		controlvm_responder(inmsg->hdr.id, &inmsg->hdr, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int visorbus_destroy(struct controlvm_message *inmsg)
-{
-	struct controlvm_message_header *pmsg_hdr;
+अटल पूर्णांक visorbus_destroy(काष्ठा controlvm_message *inmsg)
+अणु
+	काष्ठा controlvm_message_header *pmsg_hdr;
 	u32 bus_no = inmsg->cmd.destroy_bus.bus_no;
-	struct visor_device *bus_info;
-	int err;
+	काष्ठा visor_device *bus_info;
+	पूर्णांक err;
 
-	bus_info = visorbus_get_device_by_id(bus_no, BUS_ROOT_DEVICE, NULL);
-	if (!bus_info) {
+	bus_info = visorbus_get_device_by_id(bus_no, BUS_ROOT_DEVICE, शून्य);
+	अगर (!bus_info) अणु
 		err = -ENODEV;
-		goto err_respond;
-	}
-	if (bus_info->state.created == 0) {
+		जाओ err_respond;
+	पूर्ण
+	अगर (bus_info->state.created == 0) अणु
 		err = -ENOENT;
-		goto err_respond;
-	}
-	if (bus_info->pending_msg_hdr) {
-		/* only non-NULL if dev is still waiting on a response */
+		जाओ err_respond;
+	पूर्ण
+	अगर (bus_info->pending_msg_hdr) अणु
+		/* only non-शून्य अगर dev is still रुकोing on a response */
 		err = -EEXIST;
-		goto err_respond;
-	}
-	if (inmsg->hdr.flags.response_expected == 1) {
-		pmsg_hdr = kzalloc(sizeof(*pmsg_hdr), GFP_KERNEL);
-		if (!pmsg_hdr) {
+		जाओ err_respond;
+	पूर्ण
+	अगर (inmsg->hdr.flags.response_expected == 1) अणु
+		pmsg_hdr = kzalloc(माप(*pmsg_hdr), GFP_KERNEL);
+		अगर (!pmsg_hdr) अणु
 			err = -ENOMEM;
-			goto err_respond;
-		}
-		memcpy(pmsg_hdr, &inmsg->hdr,
-		       sizeof(struct controlvm_message_header));
+			जाओ err_respond;
+		पूर्ण
+		स_नकल(pmsg_hdr, &inmsg->hdr,
+		       माप(काष्ठा controlvm_message_header));
 		bus_info->pending_msg_hdr = pmsg_hdr;
-	}
-	/* Response will be handled by visorbus_remove_instance */
-	visorbus_remove_instance(bus_info);
-	return 0;
+	पूर्ण
+	/* Response will be handled by visorbus_हटाओ_instance */
+	visorbus_हटाओ_instance(bus_info);
+	वापस 0;
 
 err_respond:
-	if (inmsg->hdr.flags.response_expected == 1)
+	अगर (inmsg->hdr.flags.response_expected == 1)
 		controlvm_responder(inmsg->hdr.id, &inmsg->hdr, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const guid_t *parser_id_get(struct parser_context *ctx)
-{
-	return &ctx->data.id;
-}
+अटल स्थिर guid_t *parser_id_get(काष्ठा parser_context *ctx)
+अणु
+	वापस &ctx->data.id;
+पूर्ण
 
-static void *parser_string_get(u8 *pscan, int nscan)
-{
-	int value_length;
-	void *value;
+अटल व्योम *parser_string_get(u8 *pscan, पूर्णांक nscan)
+अणु
+	पूर्णांक value_length;
+	व्योम *value;
 
-	if (nscan == 0)
-		return NULL;
+	अगर (nscan == 0)
+		वापस शून्य;
 
 	value_length = strnlen(pscan, nscan);
 	value = kzalloc(value_length + 1, GFP_KERNEL);
-	if (!value)
-		return NULL;
-	if (value_length > 0)
-		memcpy(value, pscan, value_length);
-	return value;
-}
+	अगर (!value)
+		वापस शून्य;
+	अगर (value_length > 0)
+		स_नकल(value, pscan, value_length);
+	वापस value;
+पूर्ण
 
-static void *parser_name_get(struct parser_context *ctx)
-{
-	struct visor_controlvm_parameters_header *phdr;
+अटल व्योम *parser_name_get(काष्ठा parser_context *ctx)
+अणु
+	काष्ठा visor_controlvm_parameters_header *phdr;
 
 	phdr = &ctx->data;
-	if ((unsigned long)phdr->name_offset +
-	    (unsigned long)phdr->name_length > ctx->param_bytes)
-		return NULL;
-	ctx->curr = (char *)&phdr + phdr->name_offset;
-	ctx->bytes_remaining = phdr->name_length;
-	return parser_string_get(ctx->curr, phdr->name_length);
-}
+	अगर ((अचिन्हित दीर्घ)phdr->name_offset +
+	    (अचिन्हित दीर्घ)phdr->name_length > ctx->param_bytes)
+		वापस शून्य;
+	ctx->curr = (अक्षर *)&phdr + phdr->name_offset;
+	ctx->bytes_reमुख्यing = phdr->name_length;
+	वापस parser_string_get(ctx->curr, phdr->name_length);
+पूर्ण
 
-static int visorbus_configure(struct controlvm_message *inmsg,
-			      struct parser_context *parser_ctx)
-{
-	struct controlvm_message_packet *cmd = &inmsg->cmd;
+अटल पूर्णांक visorbus_configure(काष्ठा controlvm_message *inmsg,
+			      काष्ठा parser_context *parser_ctx)
+अणु
+	काष्ठा controlvm_message_packet *cmd = &inmsg->cmd;
 	u32 bus_no;
-	struct visor_device *bus_info;
-	int err = 0;
+	काष्ठा visor_device *bus_info;
+	पूर्णांक err = 0;
 
 	bus_no = cmd->configure_bus.bus_no;
-	bus_info = visorbus_get_device_by_id(bus_no, BUS_ROOT_DEVICE, NULL);
-	if (!bus_info) {
+	bus_info = visorbus_get_device_by_id(bus_no, BUS_ROOT_DEVICE, शून्य);
+	अगर (!bus_info) अणु
 		err = -EINVAL;
-		goto err_respond;
-	}
-	if (bus_info->state.created == 0) {
+		जाओ err_respond;
+	पूर्ण
+	अगर (bus_info->state.created == 0) अणु
 		err = -EINVAL;
-		goto err_respond;
-	}
-	if (bus_info->pending_msg_hdr) {
+		जाओ err_respond;
+	पूर्ण
+	अगर (bus_info->pending_msg_hdr) अणु
 		err = -EIO;
-		goto err_respond;
-	}
+		जाओ err_respond;
+	पूर्ण
 	err = visorchannel_set_clientpartition(bus_info->visorchannel,
 					       cmd->configure_bus.guest_handle);
-	if (err)
-		goto err_respond;
-	if (parser_ctx) {
-		const guid_t *partition_guid = parser_id_get(parser_ctx);
+	अगर (err)
+		जाओ err_respond;
+	अगर (parser_ctx) अणु
+		स्थिर guid_t *partition_guid = parser_id_get(parser_ctx);
 
 		guid_copy(&bus_info->partition_guid, partition_guid);
 		bus_info->name = parser_name_get(parser_ctx);
-	}
-	if (inmsg->hdr.flags.response_expected == 1)
+	पूर्ण
+	अगर (inmsg->hdr.flags.response_expected == 1)
 		controlvm_responder(inmsg->hdr.id, &inmsg->hdr, err);
-	return 0;
+	वापस 0;
 
 err_respond:
 	dev_err(&chipset_dev->acpi_device->dev,
 		"%s exited with err: %d\n", __func__, err);
-	if (inmsg->hdr.flags.response_expected == 1)
+	अगर (inmsg->hdr.flags.response_expected == 1)
 		controlvm_responder(inmsg->hdr.id, &inmsg->hdr, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int visorbus_device_create(struct controlvm_message *inmsg)
-{
-	struct controlvm_message_packet *cmd = &inmsg->cmd;
-	struct controlvm_message_header *pmsg_hdr;
+अटल पूर्णांक visorbus_device_create(काष्ठा controlvm_message *inmsg)
+अणु
+	काष्ठा controlvm_message_packet *cmd = &inmsg->cmd;
+	काष्ठा controlvm_message_header *pmsg_hdr;
 	u32 bus_no = cmd->create_device.bus_no;
 	u32 dev_no = cmd->create_device.dev_no;
-	struct visor_device *dev_info;
-	struct visor_device *bus_info;
-	struct visorchannel *visorchannel;
-	int err;
+	काष्ठा visor_device *dev_info;
+	काष्ठा visor_device *bus_info;
+	काष्ठा visorchannel *visorchannel;
+	पूर्णांक err;
 
-	bus_info = visorbus_get_device_by_id(bus_no, BUS_ROOT_DEVICE, NULL);
-	if (!bus_info) {
+	bus_info = visorbus_get_device_by_id(bus_no, BUS_ROOT_DEVICE, शून्य);
+	अगर (!bus_info) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"failed to get bus by id: %d\n", bus_no);
 		err = -ENODEV;
-		goto err_respond;
-	}
-	if (bus_info->state.created == 0) {
+		जाओ err_respond;
+	पूर्ण
+	अगर (bus_info->state.created == 0) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"bus not created, id: %d\n", bus_no);
 		err = -EINVAL;
-		goto err_respond;
-	}
-	dev_info = visorbus_get_device_by_id(bus_no, dev_no, NULL);
-	if (dev_info && dev_info->state.created == 1) {
+		जाओ err_respond;
+	पूर्ण
+	dev_info = visorbus_get_device_by_id(bus_no, dev_no, शून्य);
+	अगर (dev_info && dev_info->state.created == 1) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"failed to get bus by id: %d/%d\n", bus_no, dev_no);
 		err = -EEXIST;
-		goto err_respond;
-	}
+		जाओ err_respond;
+	पूर्ण
 
-	dev_info = kzalloc(sizeof(*dev_info), GFP_KERNEL);
-	if (!dev_info) {
+	dev_info = kzalloc(माप(*dev_info), GFP_KERNEL);
+	अगर (!dev_info) अणु
 		err = -ENOMEM;
-		goto err_respond;
-	}
+		जाओ err_respond;
+	पूर्ण
 	dev_info->chipset_bus_no = bus_no;
 	dev_info->chipset_dev_no = dev_no;
 	guid_copy(&dev_info->inst, &cmd->create_device.dev_inst_guid);
@@ -678,250 +679,250 @@ static int visorbus_device_create(struct controlvm_message *inmsg)
 					   GFP_KERNEL,
 					   &cmd->create_device.data_type_guid,
 					   true);
-	if (!visorchannel) {
+	अगर (!visorchannel) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"failed to create visorchannel: %d/%d\n",
 			bus_no, dev_no);
 		err = -ENOMEM;
-		goto err_free_dev_info;
-	}
+		जाओ err_मुक्त_dev_info;
+	पूर्ण
 	dev_info->visorchannel = visorchannel;
 	guid_copy(&dev_info->channel_type_guid,
 		  &cmd->create_device.data_type_guid);
-	if (guid_equal(&cmd->create_device.data_type_guid,
-		       &visor_vhba_channel_guid)) {
+	अगर (guid_equal(&cmd->create_device.data_type_guid,
+		       &visor_vhba_channel_guid)) अणु
 		err = save_crash_message(inmsg, CRASH_DEV);
-		if (err)
-			goto err_destroy_visorchannel;
-	}
-	if (inmsg->hdr.flags.response_expected == 1) {
-		pmsg_hdr = kzalloc(sizeof(*pmsg_hdr), GFP_KERNEL);
-		if (!pmsg_hdr) {
+		अगर (err)
+			जाओ err_destroy_visorchannel;
+	पूर्ण
+	अगर (inmsg->hdr.flags.response_expected == 1) अणु
+		pmsg_hdr = kzalloc(माप(*pmsg_hdr), GFP_KERNEL);
+		अगर (!pmsg_hdr) अणु
 			err = -ENOMEM;
-			goto err_destroy_visorchannel;
-		}
-		memcpy(pmsg_hdr, &inmsg->hdr,
-		       sizeof(struct controlvm_message_header));
+			जाओ err_destroy_visorchannel;
+		पूर्ण
+		स_नकल(pmsg_hdr, &inmsg->hdr,
+		       माप(काष्ठा controlvm_message_header));
 		dev_info->pending_msg_hdr = pmsg_hdr;
-	}
+	पूर्ण
 	/* create_visor_device will send response */
 	err = create_visor_device(dev_info);
-	if (err)
-		goto err_destroy_visorchannel;
+	अगर (err)
+		जाओ err_destroy_visorchannel;
 
-	return 0;
+	वापस 0;
 
 err_destroy_visorchannel:
 	visorchannel_destroy(visorchannel);
 
-err_free_dev_info:
-	kfree(dev_info);
+err_मुक्त_dev_info:
+	kमुक्त(dev_info);
 
 err_respond:
-	if (inmsg->hdr.flags.response_expected == 1)
+	अगर (inmsg->hdr.flags.response_expected == 1)
 		controlvm_responder(inmsg->hdr.id, &inmsg->hdr, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int visorbus_device_changestate(struct controlvm_message *inmsg)
-{
-	struct controlvm_message_packet *cmd = &inmsg->cmd;
-	struct controlvm_message_header *pmsg_hdr;
+अटल पूर्णांक visorbus_device_changestate(काष्ठा controlvm_message *inmsg)
+अणु
+	काष्ठा controlvm_message_packet *cmd = &inmsg->cmd;
+	काष्ठा controlvm_message_header *pmsg_hdr;
 	u32 bus_no = cmd->device_change_state.bus_no;
 	u32 dev_no = cmd->device_change_state.dev_no;
-	struct visor_segment_state state = cmd->device_change_state.state;
-	struct visor_device *dev_info;
-	int err = 0;
+	काष्ठा visor_segment_state state = cmd->device_change_state.state;
+	काष्ठा visor_device *dev_info;
+	पूर्णांक err = 0;
 
-	dev_info = visorbus_get_device_by_id(bus_no, dev_no, NULL);
-	if (!dev_info) {
+	dev_info = visorbus_get_device_by_id(bus_no, dev_no, शून्य);
+	अगर (!dev_info) अणु
 		err = -ENODEV;
-		goto err_respond;
-	}
-	if (dev_info->state.created == 0) {
+		जाओ err_respond;
+	पूर्ण
+	अगर (dev_info->state.created == 0) अणु
 		err = -EINVAL;
-		goto err_respond;
-	}
-	if (dev_info->pending_msg_hdr) {
-		/* only non-NULL if dev is still waiting on a response */
+		जाओ err_respond;
+	पूर्ण
+	अगर (dev_info->pending_msg_hdr) अणु
+		/* only non-शून्य अगर dev is still रुकोing on a response */
 		err = -EIO;
-		goto err_respond;
-	}
+		जाओ err_respond;
+	पूर्ण
 
-	if (inmsg->hdr.flags.response_expected == 1) {
-		pmsg_hdr = kzalloc(sizeof(*pmsg_hdr), GFP_KERNEL);
-		if (!pmsg_hdr) {
+	अगर (inmsg->hdr.flags.response_expected == 1) अणु
+		pmsg_hdr = kzalloc(माप(*pmsg_hdr), GFP_KERNEL);
+		अगर (!pmsg_hdr) अणु
 			err = -ENOMEM;
-			goto err_respond;
-		}
-		memcpy(pmsg_hdr, &inmsg->hdr,
-		       sizeof(struct controlvm_message_header));
+			जाओ err_respond;
+		पूर्ण
+		स_नकल(pmsg_hdr, &inmsg->hdr,
+		       माप(काष्ठा controlvm_message_header));
 		dev_info->pending_msg_hdr = pmsg_hdr;
-	}
-	if (state.alive == segment_state_running.alive &&
+	पूर्ण
+	अगर (state.alive == segment_state_running.alive &&
 	    state.operating == segment_state_running.operating)
 		/* Response will be sent from visorchipset_device_resume */
 		err = visorchipset_device_resume(dev_info);
 	/* ServerNotReady / ServerLost / SegmentStateStandby */
-	else if (state.alive == segment_state_standby.alive &&
+	अन्यथा अगर (state.alive == segment_state_standby.alive &&
 		 state.operating == segment_state_standby.operating)
 		/*
-		 * technically this is standby case where server is lost.
-		 * Response will be sent from visorchipset_device_pause.
+		 * technically this is standby हाल where server is lost.
+		 * Response will be sent from visorchipset_device_छोड़ो.
 		 */
-		err = visorchipset_device_pause(dev_info);
-	if (err)
-		goto err_respond;
-	return 0;
+		err = visorchipset_device_छोड़ो(dev_info);
+	अगर (err)
+		जाओ err_respond;
+	वापस 0;
 
 err_respond:
 	dev_err(&chipset_dev->acpi_device->dev, "failed: %d\n", err);
-	if (inmsg->hdr.flags.response_expected == 1)
+	अगर (inmsg->hdr.flags.response_expected == 1)
 		controlvm_responder(inmsg->hdr.id, &inmsg->hdr, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int visorbus_device_destroy(struct controlvm_message *inmsg)
-{
-	struct controlvm_message_packet *cmd = &inmsg->cmd;
-	struct controlvm_message_header *pmsg_hdr;
+अटल पूर्णांक visorbus_device_destroy(काष्ठा controlvm_message *inmsg)
+अणु
+	काष्ठा controlvm_message_packet *cmd = &inmsg->cmd;
+	काष्ठा controlvm_message_header *pmsg_hdr;
 	u32 bus_no = cmd->destroy_device.bus_no;
 	u32 dev_no = cmd->destroy_device.dev_no;
-	struct visor_device *dev_info;
-	int err;
+	काष्ठा visor_device *dev_info;
+	पूर्णांक err;
 
-	dev_info = visorbus_get_device_by_id(bus_no, dev_no, NULL);
-	if (!dev_info) {
+	dev_info = visorbus_get_device_by_id(bus_no, dev_no, शून्य);
+	अगर (!dev_info) अणु
 		err = -ENODEV;
-		goto err_respond;
-	}
-	if (dev_info->state.created == 0) {
+		जाओ err_respond;
+	पूर्ण
+	अगर (dev_info->state.created == 0) अणु
 		err = -EINVAL;
-		goto err_respond;
-	}
-	if (dev_info->pending_msg_hdr) {
-		/* only non-NULL if dev is still waiting on a response */
+		जाओ err_respond;
+	पूर्ण
+	अगर (dev_info->pending_msg_hdr) अणु
+		/* only non-शून्य अगर dev is still रुकोing on a response */
 		err = -EIO;
-		goto err_respond;
-	}
-	if (inmsg->hdr.flags.response_expected == 1) {
-		pmsg_hdr = kzalloc(sizeof(*pmsg_hdr), GFP_KERNEL);
-		if (!pmsg_hdr) {
+		जाओ err_respond;
+	पूर्ण
+	अगर (inmsg->hdr.flags.response_expected == 1) अणु
+		pmsg_hdr = kzalloc(माप(*pmsg_hdr), GFP_KERNEL);
+		अगर (!pmsg_hdr) अणु
 			err = -ENOMEM;
-			goto err_respond;
-		}
+			जाओ err_respond;
+		पूर्ण
 
-		memcpy(pmsg_hdr, &inmsg->hdr,
-		       sizeof(struct controlvm_message_header));
+		स_नकल(pmsg_hdr, &inmsg->hdr,
+		       माप(काष्ठा controlvm_message_header));
 		dev_info->pending_msg_hdr = pmsg_hdr;
-	}
-	kfree(dev_info->name);
-	remove_visor_device(dev_info);
-	return 0;
+	पूर्ण
+	kमुक्त(dev_info->name);
+	हटाओ_visor_device(dev_info);
+	वापस 0;
 
 err_respond:
-	if (inmsg->hdr.flags.response_expected == 1)
+	अगर (inmsg->hdr.flags.response_expected == 1)
 		controlvm_responder(inmsg->hdr.id, &inmsg->hdr, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * The general parahotplug flow works as follows. The visorchipset receives
- * a DEVICE_CHANGESTATE message from Command specifying a physical device
+ * a DEVICE_CHANGESTATE message from Command specअगरying a physical device
  * to enable or disable. The CONTROLVM message handler calls
  * parahotplug_process_message, which then adds the message to a global list
  * and kicks off a udev event which causes a user level script to enable or
- * disable the specified device. The udev script then writes to
- * /sys/devices/platform/visorchipset/parahotplug, which causes the
- * parahotplug store functions to get called, at which point the
+ * disable the specअगरied device. The udev script then ग_लिखोs to
+ * /sys/devices/platक्रमm/visorchipset/parahotplug, which causes the
+ * parahotplug store functions to get called, at which poपूर्णांक the
  * appropriate CONTROLVM message is retrieved from the list and responded to.
  */
 
-#define PARAHOTPLUG_TIMEOUT_MS 2000
+#घोषणा PARAHOTPLUG_TIMEOUT_MS 2000
 
 /*
- * parahotplug_next_id() - generate unique int to match an outstanding
+ * parahotplug_next_id() - generate unique पूर्णांक to match an outstanding
  *                         CONTROLVM message with a udev script /sys
  *                         response
  *
- * Return: a unique integer value
+ * Return: a unique पूर्णांकeger value
  */
-static int parahotplug_next_id(void)
-{
-	static atomic_t id = ATOMIC_INIT(0);
+अटल पूर्णांक parahotplug_next_id(व्योम)
+अणु
+	अटल atomic_t id = ATOMIC_INIT(0);
 
-	return atomic_inc_return(&id);
-}
+	वापस atomic_inc_वापस(&id);
+पूर्ण
 
 /*
- * parahotplug_next_expiration() - returns the time (in jiffies) when a
+ * parahotplug_next_expiration() - वापसs the समय (in jअगरfies) when a
  *                                 CONTROLVM message on the list should expire
  *                                 -- PARAHOTPLUG_TIMEOUT_MS in the future
  *
- * Return: expected expiration time (in jiffies)
+ * Return: expected expiration समय (in jअगरfies)
  */
-static unsigned long parahotplug_next_expiration(void)
-{
-	return jiffies + msecs_to_jiffies(PARAHOTPLUG_TIMEOUT_MS);
-}
+अटल अचिन्हित दीर्घ parahotplug_next_expiration(व्योम)
+अणु
+	वापस jअगरfies + msecs_to_jअगरfies(PARAHOTPLUG_TIMEOUT_MS);
+पूर्ण
 
 /*
  * parahotplug_request_create() - create a parahotplug_request, which is
- *                                basically a wrapper for a CONTROLVM_MESSAGE
+ *                                basically a wrapper क्रम a CONTROLVM_MESSAGE
  *                                that we can stick on a list
  * @msg: the message to insert in the request
  *
  * Return: the request containing the provided message
  */
-static struct parahotplug_request *parahotplug_request_create(
-						struct controlvm_message *msg)
-{
-	struct parahotplug_request *req;
+अटल काष्ठा parahotplug_request *parahotplug_request_create(
+						काष्ठा controlvm_message *msg)
+अणु
+	काष्ठा parahotplug_request *req;
 
-	req = kmalloc(sizeof(*req), GFP_KERNEL);
-	if (!req)
-		return NULL;
+	req = kदो_स्मृति(माप(*req), GFP_KERNEL);
+	अगर (!req)
+		वापस शून्य;
 	req->id = parahotplug_next_id();
 	req->expiration = parahotplug_next_expiration();
 	req->msg = *msg;
-	return req;
-}
+	वापस req;
+पूर्ण
 
 /*
- * parahotplug_request_destroy() - free a parahotplug_request
+ * parahotplug_request_destroy() - मुक्त a parahotplug_request
  * @req: the request to deallocate
  */
-static void parahotplug_request_destroy(struct parahotplug_request *req)
-{
-	kfree(req);
-}
+अटल व्योम parahotplug_request_destroy(काष्ठा parahotplug_request *req)
+अणु
+	kमुक्त(req);
+पूर्ण
 
-static LIST_HEAD(parahotplug_request_list);
-/* lock for above */
-static DEFINE_SPINLOCK(parahotplug_request_list_lock);
+अटल LIST_HEAD(parahotplug_request_list);
+/* lock क्रम above */
+अटल DEFINE_SPINLOCK(parahotplug_request_list_lock);
 
 /*
  * parahotplug_request_complete() - mark request as complete
  * @id:     the id of the request
- * @active: indicates whether the request is assigned to active partition
+ * @active: indicates whether the request is asचिन्हित to active partition
  *
  * Called from the /sys handler, which means the user script has
- * finished the enable/disable. Find the matching identifier, and
+ * finished the enable/disable. Find the matching identअगरier, and
  * respond to the CONTROLVM message with success.
  *
  * Return: 0 on success or -EINVAL on failure
  */
-static int parahotplug_request_complete(int id, u16 active)
-{
-	struct list_head *pos;
-	struct list_head *tmp;
-	struct parahotplug_request *req;
+अटल पूर्णांक parahotplug_request_complete(पूर्णांक id, u16 active)
+अणु
+	काष्ठा list_head *pos;
+	काष्ठा list_head *पंचांगp;
+	काष्ठा parahotplug_request *req;
 
 	spin_lock(&parahotplug_request_list_lock);
-	/* Look for a request matching "id". */
-	list_for_each_safe(pos, tmp, &parahotplug_request_list) {
-		req = list_entry(pos, struct parahotplug_request, list);
-		if (req->id == id) {
+	/* Look क्रम a request matching "id". */
+	list_क्रम_each_safe(pos, पंचांगp, &parahotplug_request_list) अणु
+		req = list_entry(pos, काष्ठा parahotplug_request, list);
+		अगर (req->id == id) अणु
 			/*
 			 * Found a match. Remove it from the list and
 			 * respond.
@@ -929,422 +930,422 @@ static int parahotplug_request_complete(int id, u16 active)
 			list_del(pos);
 			spin_unlock(&parahotplug_request_list_lock);
 			req->msg.cmd.device_change_state.state.active = active;
-			if (req->msg.hdr.flags.response_expected)
+			अगर (req->msg.hdr.flags.response_expected)
 				controlvm_respond(
 				       &req->msg.hdr, CONTROLVM_RESP_SUCCESS,
 				       &req->msg.cmd.device_change_state.state);
 			parahotplug_request_destroy(req);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&parahotplug_request_list_lock);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * devicedisabled_store() - disables the hotplug device
- * @dev:   sysfs interface variable not utilized in this function
- * @attr:  sysfs interface variable not utilized in this function
+ * @dev:   sysfs पूर्णांकerface variable not utilized in this function
+ * @attr:  sysfs पूर्णांकerface variable not utilized in this function
  * @buf:   buffer containing the device id
  * @count: the size of the buffer
  *
- * The parahotplug/devicedisabled interface gets called by our support script
- * when an SR-IOV device has been shut down. The ID is passed to the script
- * and then passed back when the device has been removed.
+ * The parahotplug/devicedisabled पूर्णांकerface माला_लो called by our support script
+ * when an SR-IOV device has been shut करोwn. The ID is passed to the script
+ * and then passed back when the device has been हटाओd.
  *
- * Return: the size of the buffer for success or negative for error
+ * Return: the size of the buffer क्रम success or negative क्रम error
  */
-static ssize_t devicedisabled_store(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	unsigned int id;
-	int err;
+अटल sमाप_प्रकार devicedisabled_store(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक id;
+	पूर्णांक err;
 
-	if (kstrtouint(buf, 10, &id))
-		return -EINVAL;
+	अगर (kstrtouपूर्णांक(buf, 10, &id))
+		वापस -EINVAL;
 	err = parahotplug_request_complete(id, 0);
-	if (err < 0)
-		return err;
-	return count;
-}
-static DEVICE_ATTR_WO(devicedisabled);
+	अगर (err < 0)
+		वापस err;
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_WO(devicedisabled);
 
 /*
  * deviceenabled_store() - enables the hotplug device
- * @dev:   sysfs interface variable not utilized in this function
- * @attr:  sysfs interface variable not utilized in this function
+ * @dev:   sysfs पूर्णांकerface variable not utilized in this function
+ * @attr:  sysfs पूर्णांकerface variable not utilized in this function
  * @buf:   buffer containing the device id
  * @count: the size of the buffer
  *
- * The parahotplug/deviceenabled interface gets called by our support script
+ * The parahotplug/deviceenabled पूर्णांकerface माला_लो called by our support script
  * when an SR-IOV device has been recovered. The ID is passed to the script
  * and then passed back when the device has been brought back up.
  *
- * Return: the size of the buffer for success or negative for error
+ * Return: the size of the buffer क्रम success or negative क्रम error
  */
-static ssize_t deviceenabled_store(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t count)
-{
-	unsigned int id;
+अटल sमाप_प्रकार deviceenabled_store(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक id;
 
-	if (kstrtouint(buf, 10, &id))
-		return -EINVAL;
+	अगर (kstrtouपूर्णांक(buf, 10, &id))
+		वापस -EINVAL;
 	parahotplug_request_complete(id, 1);
-	return count;
-}
-static DEVICE_ATTR_WO(deviceenabled);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_WO(deviceenabled);
 
-static struct attribute *visorchipset_install_attrs[] = {
+अटल काष्ठा attribute *visorchipset_install_attrs[] = अणु
 	&dev_attr_toolaction.attr,
 	&dev_attr_boottotool.attr,
 	&dev_attr_error.attr,
 	&dev_attr_textid.attr,
-	&dev_attr_remaining_steps.attr,
-	NULL
-};
+	&dev_attr_reमुख्यing_steps.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group visorchipset_install_group = {
+अटल स्थिर काष्ठा attribute_group visorchipset_install_group = अणु
 	.name = "install",
 	.attrs = visorchipset_install_attrs
-};
+पूर्ण;
 
-static struct attribute *visorchipset_parahotplug_attrs[] = {
+अटल काष्ठा attribute *visorchipset_parahotplug_attrs[] = अणु
 	&dev_attr_devicedisabled.attr,
 	&dev_attr_deviceenabled.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group visorchipset_parahotplug_group = {
+अटल स्थिर काष्ठा attribute_group visorchipset_parahotplug_group = अणु
 	.name = "parahotplug",
 	.attrs = visorchipset_parahotplug_attrs
-};
+पूर्ण;
 
-static const struct attribute_group *visorchipset_dev_groups[] = {
+अटल स्थिर काष्ठा attribute_group *visorchipset_dev_groups[] = अणु
 	&visorchipset_install_group,
 	&visorchipset_parahotplug_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /*
  * parahotplug_request_kickoff() - initiate parahotplug request
  * @req: the request to initiate
  *
- * Cause uevent to run the user level script to do the disable/enable specified
+ * Cause uevent to run the user level script to करो the disable/enable specअगरied
  * in the parahotplug_request.
  */
-static int parahotplug_request_kickoff(struct parahotplug_request *req)
-{
-	struct controlvm_message_packet *cmd = &req->msg.cmd;
-	char env_cmd[40], env_id[40], env_state[40], env_bus[40], env_dev[40],
+अटल पूर्णांक parahotplug_request_kickoff(काष्ठा parahotplug_request *req)
+अणु
+	काष्ठा controlvm_message_packet *cmd = &req->msg.cmd;
+	अक्षर env_cmd[40], env_id[40], env_state[40], env_bus[40], env_dev[40],
 	     env_func[40];
-	char *envp[] = { env_cmd, env_id, env_state, env_bus, env_dev,
-			 env_func, NULL
-	};
+	अक्षर *envp[] = अणु env_cmd, env_id, env_state, env_bus, env_dev,
+			 env_func, शून्य
+	पूर्ण;
 
-	sprintf(env_cmd, "VISOR_PARAHOTPLUG=1");
-	sprintf(env_id, "VISOR_PARAHOTPLUG_ID=%d", req->id);
-	sprintf(env_state, "VISOR_PARAHOTPLUG_STATE=%d",
+	प्र_लिखो(env_cmd, "VISOR_PARAHOTPLUG=1");
+	प्र_लिखो(env_id, "VISOR_PARAHOTPLUG_ID=%d", req->id);
+	प्र_लिखो(env_state, "VISOR_PARAHOTPLUG_STATE=%d",
 		cmd->device_change_state.state.active);
-	sprintf(env_bus, "VISOR_PARAHOTPLUG_BUS=%d",
+	प्र_लिखो(env_bus, "VISOR_PARAHOTPLUG_BUS=%d",
 		cmd->device_change_state.bus_no);
-	sprintf(env_dev, "VISOR_PARAHOTPLUG_DEVICE=%d",
+	प्र_लिखो(env_dev, "VISOR_PARAHOTPLUG_DEVICE=%d",
 		cmd->device_change_state.dev_no >> 3);
-	sprintf(env_func, "VISOR_PARAHOTPLUG_FUNCTION=%d",
+	प्र_लिखो(env_func, "VISOR_PARAHOTPLUG_FUNCTION=%d",
 		cmd->device_change_state.dev_no & 0x7);
-	return kobject_uevent_env(&chipset_dev->acpi_device->dev.kobj,
+	वापस kobject_uevent_env(&chipset_dev->acpi_device->dev.kobj,
 				  KOBJ_CHANGE, envp);
-}
+पूर्ण
 
 /*
  * parahotplug_process_message() - enables or disables a PCI device by kicking
  *                                 off a udev script
  * @inmsg: the message indicating whether to enable or disable
  */
-static int parahotplug_process_message(struct controlvm_message *inmsg)
-{
-	struct parahotplug_request *req;
-	int err;
+अटल पूर्णांक parahotplug_process_message(काष्ठा controlvm_message *inmsg)
+अणु
+	काष्ठा parahotplug_request *req;
+	पूर्णांक err;
 
 	req = parahotplug_request_create(inmsg);
-	if (!req)
-		return -ENOMEM;
+	अगर (!req)
+		वापस -ENOMEM;
 	/*
-	 * For enable messages, just respond with success right away, we don't
-	 * need to wait to see if the enable was successful.
+	 * For enable messages, just respond with success right away, we करोn't
+	 * need to रुको to see अगर the enable was successful.
 	 */
-	if (inmsg->cmd.device_change_state.state.active) {
+	अगर (inmsg->cmd.device_change_state.state.active) अणु
 		err = parahotplug_request_kickoff(req);
-		if (err)
-			goto err_respond;
+		अगर (err)
+			जाओ err_respond;
 		controlvm_respond(&inmsg->hdr, CONTROLVM_RESP_SUCCESS,
 				  &inmsg->cmd.device_change_state.state);
 		parahotplug_request_destroy(req);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/*
-	 * For disable messages, add the request to the request list before
+	 * For disable messages, add the request to the request list beक्रमe
 	 * kicking off the udev script. It won't get responded to until the
-	 * script has indicated it's done.
+	 * script has indicated it's करोne.
 	 */
 	spin_lock(&parahotplug_request_list_lock);
 	list_add_tail(&req->list, &parahotplug_request_list);
 	spin_unlock(&parahotplug_request_list_lock);
 	err = parahotplug_request_kickoff(req);
-	if (err)
-		goto err_respond;
-	return 0;
+	अगर (err)
+		जाओ err_respond;
+	वापस 0;
 
 err_respond:
 	controlvm_respond(&inmsg->hdr, err,
 			  &inmsg->cmd.device_change_state.state);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * chipset_ready_uevent() - sends chipset_ready action
+ * chipset_पढ़ोy_uevent() - sends chipset_पढ़ोy action
  *
- * Send ACTION=online for DEVPATH=/sys/devices/platform/visorchipset.
+ * Send ACTION=online क्रम DEVPATH=/sys/devices/platक्रमm/visorchipset.
  *
  * Return: 0 on success, negative on failure
  */
-static int chipset_ready_uevent(struct controlvm_message_header *msg_hdr)
-{
-	int res;
+अटल पूर्णांक chipset_पढ़ोy_uevent(काष्ठा controlvm_message_header *msg_hdr)
+अणु
+	पूर्णांक res;
 
 	res = kobject_uevent(&chipset_dev->acpi_device->dev.kobj, KOBJ_ONLINE);
-	if (msg_hdr->flags.response_expected)
-		controlvm_respond(msg_hdr, res, NULL);
-	return res;
-}
+	अगर (msg_hdr->flags.response_expected)
+		controlvm_respond(msg_hdr, res, शून्य);
+	वापस res;
+पूर्ण
 
 /*
  * chipset_selftest_uevent() - sends chipset_selftest action
  *
- * Send ACTION=online for DEVPATH=/sys/devices/platform/visorchipset.
+ * Send ACTION=online क्रम DEVPATH=/sys/devices/platक्रमm/visorchipset.
  *
  * Return: 0 on success, negative on failure
  */
-static int chipset_selftest_uevent(struct controlvm_message_header *msg_hdr)
-{
-	char env_selftest[20];
-	char *envp[] = { env_selftest, NULL };
-	int res;
+अटल पूर्णांक chipset_selftest_uevent(काष्ठा controlvm_message_header *msg_hdr)
+अणु
+	अक्षर env_selftest[20];
+	अक्षर *envp[] = अणु env_selftest, शून्य पूर्ण;
+	पूर्णांक res;
 
-	sprintf(env_selftest, "SPARSP_SELFTEST=%d", 1);
+	प्र_लिखो(env_selftest, "SPARSP_SELFTEST=%d", 1);
 	res = kobject_uevent_env(&chipset_dev->acpi_device->dev.kobj,
 				 KOBJ_CHANGE, envp);
-	if (msg_hdr->flags.response_expected)
-		controlvm_respond(msg_hdr, res, NULL);
-	return res;
-}
+	अगर (msg_hdr->flags.response_expected)
+		controlvm_respond(msg_hdr, res, शून्य);
+	वापस res;
+पूर्ण
 
 /*
- * chipset_notready_uevent() - sends chipset_notready action
+ * chipset_notपढ़ोy_uevent() - sends chipset_notपढ़ोy action
  *
- * Send ACTION=offline for DEVPATH=/sys/devices/platform/visorchipset.
+ * Send ACTION=offline क्रम DEVPATH=/sys/devices/platक्रमm/visorchipset.
  *
  * Return: 0 on success, negative on failure
  */
-static int chipset_notready_uevent(struct controlvm_message_header *msg_hdr)
-{
-	int res = kobject_uevent(&chipset_dev->acpi_device->dev.kobj,
+अटल पूर्णांक chipset_notपढ़ोy_uevent(काष्ठा controlvm_message_header *msg_hdr)
+अणु
+	पूर्णांक res = kobject_uevent(&chipset_dev->acpi_device->dev.kobj,
 				 KOBJ_OFFLINE);
 
-	if (msg_hdr->flags.response_expected)
-		controlvm_respond(msg_hdr, res, NULL);
-	return res;
-}
+	अगर (msg_hdr->flags.response_expected)
+		controlvm_respond(msg_hdr, res, शून्य);
+	वापस res;
+पूर्ण
 
-static int unisys_vmcall(unsigned long tuple, unsigned long param)
-{
-	int result = 0;
-	unsigned int cpuid_eax, cpuid_ebx, cpuid_ecx, cpuid_edx;
-	unsigned long reg_ebx;
-	unsigned long reg_ecx;
+अटल पूर्णांक unisys_vmcall(अचिन्हित दीर्घ tuple, अचिन्हित दीर्घ param)
+अणु
+	पूर्णांक result = 0;
+	अचिन्हित पूर्णांक cpuid_eax, cpuid_ebx, cpuid_ecx, cpuid_edx;
+	अचिन्हित दीर्घ reg_ebx;
+	अचिन्हित दीर्घ reg_ecx;
 
 	reg_ebx = param & 0xFFFFFFFF;
 	reg_ecx = param >> 32;
 	cpuid(0x00000001, &cpuid_eax, &cpuid_ebx, &cpuid_ecx, &cpuid_edx);
-	if (!(cpuid_ecx & 0x80000000))
-		return -EPERM;
-	__asm__ __volatile__(".byte 0x00f, 0x001, 0x0c1" : "=a"(result) :
+	अगर (!(cpuid_ecx & 0x80000000))
+		वापस -EPERM;
+	__यंत्र__ __अस्थिर__(".byte 0x00f, 0x001, 0x0c1" : "=a"(result) :
 			     "a"(tuple), "b"(reg_ebx), "c"(reg_ecx));
-	if (result)
-		goto error;
-	return 0;
+	अगर (result)
+		जाओ error;
+	वापस 0;
 
 /* Need to convert from VMCALL error codes to Linux */
 error:
-	switch (result) {
-	case VMCALL_RESULT_INVALID_PARAM:
-		return -EINVAL;
-	case VMCALL_RESULT_DATA_UNAVAILABLE:
-		return -ENODEV;
-	default:
-		return -EFAULT;
-	}
-}
+	चयन (result) अणु
+	हाल VMCALL_RESULT_INVALID_PARAM:
+		वापस -EINVAL;
+	हाल VMCALL_RESULT_DATA_UNAVAILABLE:
+		वापस -ENODEV;
+	शेष:
+		वापस -EFAULT;
+	पूर्ण
+पूर्ण
 
-static int controlvm_channel_create(struct visorchipset_device *dev)
-{
-	struct visorchannel *chan;
+अटल पूर्णांक controlvm_channel_create(काष्ठा visorchipset_device *dev)
+अणु
+	काष्ठा visorchannel *chan;
 	u64 addr;
-	int err;
+	पूर्णांक err;
 
 	err = unisys_vmcall(VMCALL_CONTROLVM_ADDR,
 			    virt_to_phys(&dev->controlvm_params));
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	addr = dev->controlvm_params.address;
 	chan = visorchannel_create(addr, GFP_KERNEL,
 				   &visor_controlvm_channel_guid, true);
-	if (!chan)
-		return -ENOMEM;
+	अगर (!chan)
+		वापस -ENOMEM;
 	dev->controlvm_channel = chan;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void setup_crash_devices_work_queue(struct work_struct *work)
-{
-	struct controlvm_message local_crash_bus_msg;
-	struct controlvm_message local_crash_dev_msg;
-	struct controlvm_message msg = {
+अटल व्योम setup_crash_devices_work_queue(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा controlvm_message local_crash_bus_msg;
+	काष्ठा controlvm_message local_crash_dev_msg;
+	काष्ठा controlvm_message msg = अणु
 		.hdr.id = CONTROLVM_CHIPSET_INIT,
-		.cmd.init_chipset = {
+		.cmd.init_chipset = अणु
 			.bus_count = 23,
-			.switch_count = 0,
-		},
-	};
+			.चयन_count = 0,
+		पूर्ण,
+	पूर्ण;
 	u32 local_crash_msg_offset;
 	u16 local_crash_msg_count;
 
 	/* send init chipset msg */
 	chipset_init(&msg);
 	/* get saved message count */
-	if (visorchannel_read(chipset_dev->controlvm_channel,
-			      offsetof(struct visor_controlvm_channel,
+	अगर (visorchannel_पढ़ो(chipset_dev->controlvm_channel,
+			      दुरत्व(काष्ठा visor_controlvm_channel,
 				       saved_crash_message_count),
-			      &local_crash_msg_count, sizeof(u16)) < 0) {
+			      &local_crash_msg_count, माप(u16)) < 0) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"failed to read channel\n");
-		return;
-	}
-	if (local_crash_msg_count != CONTROLVM_CRASHMSG_MAX) {
+		वापस;
+	पूर्ण
+	अगर (local_crash_msg_count != CONTROLVM_CRASHMSG_MAX) अणु
 		dev_err(&chipset_dev->acpi_device->dev, "invalid count\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* get saved crash message offset */
-	if (visorchannel_read(chipset_dev->controlvm_channel,
-			      offsetof(struct visor_controlvm_channel,
+	अगर (visorchannel_पढ़ो(chipset_dev->controlvm_channel,
+			      दुरत्व(काष्ठा visor_controlvm_channel,
 				       saved_crash_message_offset),
-			      &local_crash_msg_offset, sizeof(u32)) < 0) {
+			      &local_crash_msg_offset, माप(u32)) < 0) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"failed to read channel\n");
-		return;
-	}
-	/* read create device message for storage bus offset */
-	if (visorchannel_read(chipset_dev->controlvm_channel,
+		वापस;
+	पूर्ण
+	/* पढ़ो create device message क्रम storage bus offset */
+	अगर (visorchannel_पढ़ो(chipset_dev->controlvm_channel,
 			      local_crash_msg_offset,
 			      &local_crash_bus_msg,
-			      sizeof(struct controlvm_message)) < 0) {
+			      माप(काष्ठा controlvm_message)) < 0) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"failed to read channel\n");
-		return;
-	}
-	/* read create device message for storage device */
-	if (visorchannel_read(chipset_dev->controlvm_channel,
+		वापस;
+	पूर्ण
+	/* पढ़ो create device message क्रम storage device */
+	अगर (visorchannel_पढ़ो(chipset_dev->controlvm_channel,
 			      local_crash_msg_offset +
-			      sizeof(struct controlvm_message),
+			      माप(काष्ठा controlvm_message),
 			      &local_crash_dev_msg,
-			      sizeof(struct controlvm_message)) < 0) {
+			      माप(काष्ठा controlvm_message)) < 0) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"failed to read channel\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* reuse IOVM create bus message */
-	if (!local_crash_bus_msg.cmd.create_bus.channel_addr) {
+	अगर (!local_crash_bus_msg.cmd.create_bus.channel_addr) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"no valid create_bus message\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	visorbus_create(&local_crash_bus_msg);
-	/* reuse create device message for storage device */
-	if (!local_crash_dev_msg.cmd.create_device.channel_addr) {
+	/* reuse create device message क्रम storage device */
+	अगर (!local_crash_dev_msg.cmd.create_device.channel_addr) अणु
 		dev_err(&chipset_dev->acpi_device->dev,
 			"no valid create_device message\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	visorbus_device_create(&local_crash_dev_msg);
-}
+पूर्ण
 
-void visorbus_response(struct visor_device *bus_info, int response,
-		       int controlvm_id)
-{
-	if (!bus_info->pending_msg_hdr)
-		return;
+व्योम visorbus_response(काष्ठा visor_device *bus_info, पूर्णांक response,
+		       पूर्णांक controlvm_id)
+अणु
+	अगर (!bus_info->pending_msg_hdr)
+		वापस;
 
 	controlvm_responder(controlvm_id, bus_info->pending_msg_hdr, response);
-	kfree(bus_info->pending_msg_hdr);
-	bus_info->pending_msg_hdr = NULL;
-}
+	kमुक्त(bus_info->pending_msg_hdr);
+	bus_info->pending_msg_hdr = शून्य;
+पूर्ण
 
-void visorbus_device_changestate_response(struct visor_device *dev_info,
-					  int response,
-					  struct visor_segment_state state)
-{
-	if (!dev_info->pending_msg_hdr)
-		return;
+व्योम visorbus_device_changestate_response(काष्ठा visor_device *dev_info,
+					  पूर्णांक response,
+					  काष्ठा visor_segment_state state)
+अणु
+	अगर (!dev_info->pending_msg_hdr)
+		वापस;
 
 	device_changestate_responder(CONTROLVM_DEVICE_CHANGESTATE, dev_info,
 				     response, state);
-	kfree(dev_info->pending_msg_hdr);
-	dev_info->pending_msg_hdr = NULL;
-}
+	kमुक्त(dev_info->pending_msg_hdr);
+	dev_info->pending_msg_hdr = शून्य;
+पूर्ण
 
-static void parser_done(struct parser_context *ctx)
-{
+अटल व्योम parser_करोne(काष्ठा parser_context *ctx)
+अणु
 	chipset_dev->controlvm_payload_bytes_buffered -= ctx->param_bytes;
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण
 
-static struct parser_context *parser_init_stream(u64 addr, u32 bytes,
+अटल काष्ठा parser_context *parser_init_stream(u64 addr, u32 bytes,
 						 bool *retry)
-{
-	unsigned long allocbytes;
-	struct parser_context *ctx;
-	void *mapping;
+अणु
+	अचिन्हित दीर्घ allocbytes;
+	काष्ठा parser_context *ctx;
+	व्योम *mapping;
 
 	*retry = false;
 	/* alloc an extra byte to ensure payload is \0 terminated */
-	allocbytes = (unsigned long)bytes + 1 + (sizeof(struct parser_context) -
-		     sizeof(struct visor_controlvm_parameters_header));
-	if ((chipset_dev->controlvm_payload_bytes_buffered + bytes) >
-	     MAX_CONTROLVM_PAYLOAD_BYTES) {
+	allocbytes = (अचिन्हित दीर्घ)bytes + 1 + (माप(काष्ठा parser_context) -
+		     माप(काष्ठा visor_controlvm_parameters_header));
+	अगर ((chipset_dev->controlvm_payload_bytes_buffered + bytes) >
+	     MAX_CONTROLVM_PAYLOAD_BYTES) अणु
 		*retry = true;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	ctx = kzalloc(allocbytes, GFP_KERNEL);
-	if (!ctx) {
+	अगर (!ctx) अणु
 		*retry = true;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	ctx->allocbytes = allocbytes;
 	ctx->param_bytes = bytes;
 	mapping = memremap(addr, bytes, MEMREMAP_WB);
-	if (!mapping)
-		goto err_finish_ctx;
-	memcpy(&ctx->data, mapping, bytes);
+	अगर (!mapping)
+		जाओ err_finish_ctx;
+	स_नकल(&ctx->data, mapping, bytes);
 	memunmap(mapping);
 	ctx->byte_stream = true;
 	chipset_dev->controlvm_payload_bytes_buffered += ctx->param_bytes;
-	return ctx;
+	वापस ctx;
 
 err_finish_ctx:
-	kfree(ctx);
-	return NULL;
-}
+	kमुक्त(ctx);
+	वापस शून्य;
+पूर्ण
 
 /*
  * handle_command() - process a controlvm message
@@ -1354,335 +1355,335 @@ err_finish_ctx:
  * Return:
  *	0	- Successfully processed the message
  *	-EAGAIN - ControlVM message was not processed and should be retried
- *		  reading the next controlvm message; a scenario where this can
+ *		  पढ़ोing the next controlvm message; a scenario where this can
  *		  occur is when we need to throttle the allocation of memory in
  *		  which to copy out controlvm payload data.
  *	< 0	- error: ControlVM message was processed but an error occurred.
  */
-static int handle_command(struct controlvm_message inmsg, u64 channel_addr)
-{
-	struct controlvm_message_packet *cmd = &inmsg.cmd;
+अटल पूर्णांक handle_command(काष्ठा controlvm_message inmsg, u64 channel_addr)
+अणु
+	काष्ठा controlvm_message_packet *cmd = &inmsg.cmd;
 	u64 parm_addr;
 	u32 parm_bytes;
-	struct parser_context *parser_ctx = NULL;
-	struct controlvm_message ackmsg;
-	int err = 0;
+	काष्ठा parser_context *parser_ctx = शून्य;
+	काष्ठा controlvm_message ackmsg;
+	पूर्णांक err = 0;
 
-	/* create parsing context if necessary */
+	/* create parsing context अगर necessary */
 	parm_addr = channel_addr + inmsg.hdr.payload_vm_offset;
 	parm_bytes = inmsg.hdr.payload_bytes;
 	/*
 	 * Parameter and channel addresses within test messages actually lie
 	 * within our OS-controlled memory. We need to know that, because it
-	 * makes a difference in how we compute the virtual address.
+	 * makes a dअगरference in how we compute the भव address.
 	 */
-	if (parm_bytes) {
+	अगर (parm_bytes) अणु
 		bool retry;
 
 		parser_ctx = parser_init_stream(parm_addr, parm_bytes, &retry);
-		if (!parser_ctx && retry)
-			return -EAGAIN;
-	}
+		अगर (!parser_ctx && retry)
+			वापस -EAGAIN;
+	पूर्ण
 	controlvm_init_response(&ackmsg, &inmsg.hdr, CONTROLVM_RESP_SUCCESS);
-	err = visorchannel_signalinsert(chipset_dev->controlvm_channel,
+	err = visorchannel_संकेतinsert(chipset_dev->controlvm_channel,
 					CONTROLVM_QUEUE_ACK, &ackmsg);
-	if (err)
-		return err;
-	switch (inmsg.hdr.id) {
-	case CONTROLVM_CHIPSET_INIT:
+	अगर (err)
+		वापस err;
+	चयन (inmsg.hdr.id) अणु
+	हाल CONTROLVM_CHIPSET_INIT:
 		err = chipset_init(&inmsg);
-		break;
-	case CONTROLVM_BUS_CREATE:
+		अवरोध;
+	हाल CONTROLVM_BUS_CREATE:
 		err = visorbus_create(&inmsg);
-		break;
-	case CONTROLVM_BUS_DESTROY:
+		अवरोध;
+	हाल CONTROLVM_BUS_DESTROY:
 		err = visorbus_destroy(&inmsg);
-		break;
-	case CONTROLVM_BUS_CONFIGURE:
+		अवरोध;
+	हाल CONTROLVM_BUS_CONFIGURE:
 		err = visorbus_configure(&inmsg, parser_ctx);
-		break;
-	case CONTROLVM_DEVICE_CREATE:
+		अवरोध;
+	हाल CONTROLVM_DEVICE_CREATE:
 		err = visorbus_device_create(&inmsg);
-		break;
-	case CONTROLVM_DEVICE_CHANGESTATE:
-		if (cmd->device_change_state.flags.phys_device) {
+		अवरोध;
+	हाल CONTROLVM_DEVICE_CHANGESTATE:
+		अगर (cmd->device_change_state.flags.phys_device) अणु
 			err = parahotplug_process_message(&inmsg);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * save the hdr and cmd structures for later use when
+			 * save the hdr and cmd काष्ठाures क्रम later use when
 			 * sending back the response to Command
 			 */
 			err = visorbus_device_changestate(&inmsg);
-			break;
-		}
-		break;
-	case CONTROLVM_DEVICE_DESTROY:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल CONTROLVM_DEVICE_DESTROY:
 		err = visorbus_device_destroy(&inmsg);
-		break;
-	case CONTROLVM_DEVICE_CONFIGURE:
+		अवरोध;
+	हाल CONTROLVM_DEVICE_CONFIGURE:
 		/* no op just send a respond that we passed */
-		if (inmsg.hdr.flags.response_expected)
+		अगर (inmsg.hdr.flags.response_expected)
 			controlvm_respond(&inmsg.hdr, CONTROLVM_RESP_SUCCESS,
-					  NULL);
-		break;
-	case CONTROLVM_CHIPSET_READY:
-		err = chipset_ready_uevent(&inmsg.hdr);
-		break;
-	case CONTROLVM_CHIPSET_SELFTEST:
+					  शून्य);
+		अवरोध;
+	हाल CONTROLVM_CHIPSET_READY:
+		err = chipset_पढ़ोy_uevent(&inmsg.hdr);
+		अवरोध;
+	हाल CONTROLVM_CHIPSET_SELFTEST:
 		err = chipset_selftest_uevent(&inmsg.hdr);
-		break;
-	case CONTROLVM_CHIPSET_STOP:
-		err = chipset_notready_uevent(&inmsg.hdr);
-		break;
-	default:
+		अवरोध;
+	हाल CONTROLVM_CHIPSET_STOP:
+		err = chipset_notपढ़ोy_uevent(&inmsg.hdr);
+		अवरोध;
+	शेष:
 		err = -ENOMSG;
-		if (inmsg.hdr.flags.response_expected)
+		अगर (inmsg.hdr.flags.response_expected)
 			controlvm_respond(&inmsg.hdr,
-					  -CONTROLVM_RESP_ID_UNKNOWN, NULL);
-		break;
-	}
-	if (parser_ctx) {
-		parser_done(parser_ctx);
-		parser_ctx = NULL;
-	}
-	return err;
-}
+					  -CONTROLVM_RESP_ID_UNKNOWN, शून्य);
+		अवरोध;
+	पूर्ण
+	अगर (parser_ctx) अणु
+		parser_करोne(parser_ctx);
+		parser_ctx = शून्य;
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /*
- * read_controlvm_event() - retreives the next message from the
+ * पढ़ो_controlvm_event() - retreives the next message from the
  *                          CONTROLVM_QUEUE_EVENT queue in the controlvm
  *                          channel
- * @msg: pointer to the retrieved message
+ * @msg: poपूर्णांकer to the retrieved message
  *
- * Return: 0 if valid message was retrieved or -error
+ * Return: 0 अगर valid message was retrieved or -error
  */
-static int read_controlvm_event(struct controlvm_message *msg)
-{
-	int err = visorchannel_signalremove(chipset_dev->controlvm_channel,
+अटल पूर्णांक पढ़ो_controlvm_event(काष्ठा controlvm_message *msg)
+अणु
+	पूर्णांक err = visorchannel_संकेतहटाओ(chipset_dev->controlvm_channel,
 					    CONTROLVM_QUEUE_EVENT, msg);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	/* got a message */
-	if (msg->hdr.flags.test_message == 1)
-		return -EINVAL;
-	return 0;
-}
+	अगर (msg->hdr.flags.test_message == 1)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
 /*
- * parahotplug_process_list() - remove any request from the list that's been on
- *                              there too long and respond with an error
+ * parahotplug_process_list() - हटाओ any request from the list that's been on
+ *                              there too दीर्घ and respond with an error
  */
-static void parahotplug_process_list(void)
-{
-	struct list_head *pos;
-	struct list_head *tmp;
+अटल व्योम parahotplug_process_list(व्योम)
+अणु
+	काष्ठा list_head *pos;
+	काष्ठा list_head *पंचांगp;
 
 	spin_lock(&parahotplug_request_list_lock);
-	list_for_each_safe(pos, tmp, &parahotplug_request_list) {
-		struct parahotplug_request *req =
-		    list_entry(pos, struct parahotplug_request, list);
+	list_क्रम_each_safe(pos, पंचांगp, &parahotplug_request_list) अणु
+		काष्ठा parahotplug_request *req =
+		    list_entry(pos, काष्ठा parahotplug_request, list);
 
-		if (!time_after_eq(jiffies, req->expiration))
-			continue;
+		अगर (!समय_after_eq(jअगरfies, req->expiration))
+			जारी;
 		list_del(pos);
-		if (req->msg.hdr.flags.response_expected)
+		अगर (req->msg.hdr.flags.response_expected)
 			controlvm_respond(
 				&req->msg.hdr,
 				CONTROLVM_RESP_DEVICE_UDEV_TIMEOUT,
 				&req->msg.cmd.device_change_state.state);
 		parahotplug_request_destroy(req);
-	}
+	पूर्ण
 	spin_unlock(&parahotplug_request_list_lock);
-}
+पूर्ण
 
-static void controlvm_periodic_work(struct work_struct *work)
-{
-	struct controlvm_message inmsg;
-	int count = 0;
-	int err;
+अटल व्योम controlvm_periodic_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा controlvm_message inmsg;
+	पूर्णांक count = 0;
+	पूर्णांक err;
 
 	/* Drain the RESPONSE queue make it empty */
-	do {
-		err = visorchannel_signalremove(chipset_dev->controlvm_channel,
+	करो अणु
+		err = visorchannel_संकेतहटाओ(chipset_dev->controlvm_channel,
 						CONTROLVM_QUEUE_RESPONSE,
 						&inmsg);
-	} while ((!err) && (++count < CONTROLVM_MESSAGE_MAX));
-	if (err != -EAGAIN)
-		goto schedule_out;
-	if (chipset_dev->controlvm_pending_msg_valid) {
+	पूर्ण जबतक ((!err) && (++count < CONTROLVM_MESSAGE_MAX));
+	अगर (err != -EAGAIN)
+		जाओ schedule_out;
+	अगर (chipset_dev->controlvm_pending_msg_valid) अणु
 		/*
 		 * we throttled processing of a prior msg, so try to process
-		 * it again rather than reading a new one
+		 * it again rather than पढ़ोing a new one
 		 */
 		inmsg = chipset_dev->controlvm_pending_msg;
 		chipset_dev->controlvm_pending_msg_valid = false;
 		err = 0;
-	} else {
-		err = read_controlvm_event(&inmsg);
-	}
-	while (!err) {
-		chipset_dev->most_recent_message_jiffies = jiffies;
+	पूर्ण अन्यथा अणु
+		err = पढ़ो_controlvm_event(&inmsg);
+	पूर्ण
+	जबतक (!err) अणु
+		chipset_dev->most_recent_message_jअगरfies = jअगरfies;
 		err = handle_command(inmsg,
 				     visorchannel_get_physaddr
 				     (chipset_dev->controlvm_channel));
-		if (err == -EAGAIN) {
+		अगर (err == -EAGAIN) अणु
 			chipset_dev->controlvm_pending_msg = inmsg;
 			chipset_dev->controlvm_pending_msg_valid = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		err = read_controlvm_event(&inmsg);
-	}
+		err = पढ़ो_controlvm_event(&inmsg);
+	पूर्ण
 	/* parahotplug_worker */
 	parahotplug_process_list();
 
 /*
  * The controlvm messages are sent in a bulk. If we start receiving messages, we
- * want the polling to be fast. If we do not receive any message for
- * MIN_IDLE_SECONDS, we can slow down the polling.
+ * want the polling to be fast. If we करो not receive any message क्रम
+ * MIN_IDLE_SECONDS, we can slow करोwn the polling.
  */
 schedule_out:
-	if (time_after(jiffies, chipset_dev->most_recent_message_jiffies +
-				(HZ * MIN_IDLE_SECONDS))) {
+	अगर (समय_after(jअगरfies, chipset_dev->most_recent_message_jअगरfies +
+				(HZ * MIN_IDLE_SECONDS))) अणु
 		/*
-		 * it's been longer than MIN_IDLE_SECONDS since we processed
-		 * our last controlvm message; slow down the polling
+		 * it's been दीर्घer than MIN_IDLE_SECONDS since we processed
+		 * our last controlvm message; slow करोwn the polling
 		 */
-		if (chipset_dev->poll_jiffies != POLLJIFFIES_CONTROLVM_SLOW)
-			chipset_dev->poll_jiffies = POLLJIFFIES_CONTROLVM_SLOW;
-	} else {
-		if (chipset_dev->poll_jiffies != POLLJIFFIES_CONTROLVM_FAST)
-			chipset_dev->poll_jiffies = POLLJIFFIES_CONTROLVM_FAST;
-	}
+		अगर (chipset_dev->poll_jअगरfies != POLLJIFFIES_CONTROLVM_SLOW)
+			chipset_dev->poll_jअगरfies = POLLJIFFIES_CONTROLVM_SLOW;
+	पूर्ण अन्यथा अणु
+		अगर (chipset_dev->poll_jअगरfies != POLLJIFFIES_CONTROLVM_FAST)
+			chipset_dev->poll_jअगरfies = POLLJIFFIES_CONTROLVM_FAST;
+	पूर्ण
 	schedule_delayed_work(&chipset_dev->periodic_controlvm_work,
-			      chipset_dev->poll_jiffies);
-}
+			      chipset_dev->poll_jअगरfies);
+पूर्ण
 
-static int visorchipset_init(struct acpi_device *acpi_device)
-{
-	int err = -ENODEV;
-	struct visorchannel *controlvm_channel;
+अटल पूर्णांक visorchipset_init(काष्ठा acpi_device *acpi_device)
+अणु
+	पूर्णांक err = -ENODEV;
+	काष्ठा visorchannel *controlvm_channel;
 
-	chipset_dev = kzalloc(sizeof(*chipset_dev), GFP_KERNEL);
-	if (!chipset_dev)
-		goto error;
+	chipset_dev = kzalloc(माप(*chipset_dev), GFP_KERNEL);
+	अगर (!chipset_dev)
+		जाओ error;
 	err = controlvm_channel_create(chipset_dev);
-	if (err)
-		goto error_free_chipset_dev;
+	अगर (err)
+		जाओ error_मुक्त_chipset_dev;
 	acpi_device->driver_data = chipset_dev;
 	chipset_dev->acpi_device = acpi_device;
-	chipset_dev->poll_jiffies = POLLJIFFIES_CONTROLVM_FAST;
+	chipset_dev->poll_jअगरfies = POLLJIFFIES_CONTROLVM_FAST;
 	err = sysfs_create_groups(&chipset_dev->acpi_device->dev.kobj,
 				  visorchipset_dev_groups);
-	if (err < 0)
-		goto error_destroy_channel;
+	अगर (err < 0)
+		जाओ error_destroy_channel;
 	controlvm_channel = chipset_dev->controlvm_channel;
-	if (!visor_check_channel(visorchannel_get_header(controlvm_channel),
+	अगर (!visor_check_channel(visorchannel_get_header(controlvm_channel),
 				 &chipset_dev->acpi_device->dev,
 				 &visor_controlvm_channel_guid,
 				 "controlvm",
-				 sizeof(struct visor_controlvm_channel),
+				 माप(काष्ठा visor_controlvm_channel),
 				 VISOR_CONTROLVM_CHANNEL_VERSIONID,
 				 VISOR_CHANNEL_SIGNATURE))
-		goto error_delete_groups;
-	/* if booting in a crash kernel */
-	if (is_kdump_kernel())
+		जाओ error_delete_groups;
+	/* अगर booting in a crash kernel */
+	अगर (is_kdump_kernel())
 		INIT_DELAYED_WORK(&chipset_dev->periodic_controlvm_work,
 				  setup_crash_devices_work_queue);
-	else
+	अन्यथा
 		INIT_DELAYED_WORK(&chipset_dev->periodic_controlvm_work,
 				  controlvm_periodic_work);
-	chipset_dev->most_recent_message_jiffies = jiffies;
-	chipset_dev->poll_jiffies = POLLJIFFIES_CONTROLVM_FAST;
+	chipset_dev->most_recent_message_jअगरfies = jअगरfies;
+	chipset_dev->poll_jअगरfies = POLLJIFFIES_CONTROLVM_FAST;
 	schedule_delayed_work(&chipset_dev->periodic_controlvm_work,
-			      chipset_dev->poll_jiffies);
+			      chipset_dev->poll_jअगरfies);
 	err = visorbus_init();
-	if (err < 0)
-		goto error_cancel_work;
-	return 0;
+	अगर (err < 0)
+		जाओ error_cancel_work;
+	वापस 0;
 
 error_cancel_work:
 	cancel_delayed_work_sync(&chipset_dev->periodic_controlvm_work);
 
 error_delete_groups:
-	sysfs_remove_groups(&chipset_dev->acpi_device->dev.kobj,
+	sysfs_हटाओ_groups(&chipset_dev->acpi_device->dev.kobj,
 			    visorchipset_dev_groups);
 
 error_destroy_channel:
 	visorchannel_destroy(chipset_dev->controlvm_channel);
 
-error_free_chipset_dev:
-	kfree(chipset_dev);
+error_मुक्त_chipset_dev:
+	kमुक्त(chipset_dev);
 
 error:
 	dev_err(&acpi_device->dev, "failed with error %d\n", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int visorchipset_exit(struct acpi_device *acpi_device)
-{
-	visorbus_exit();
+अटल पूर्णांक visorchipset_निकास(काष्ठा acpi_device *acpi_device)
+अणु
+	visorbus_निकास();
 	cancel_delayed_work_sync(&chipset_dev->periodic_controlvm_work);
-	sysfs_remove_groups(&chipset_dev->acpi_device->dev.kobj,
+	sysfs_हटाओ_groups(&chipset_dev->acpi_device->dev.kobj,
 			    visorchipset_dev_groups);
 	visorchannel_destroy(chipset_dev->controlvm_channel);
-	kfree(chipset_dev);
-	return 0;
-}
+	kमुक्त(chipset_dev);
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id unisys_device_ids[] = {
-	{"PNP0A07", 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id unisys_device_ids[] = अणु
+	अणु"PNP0A07", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 
-static struct acpi_driver unisys_acpi_driver = {
+अटल काष्ठा acpi_driver unisys_acpi_driver = अणु
 	.name = "unisys_acpi",
 	.class = "unisys_acpi_class",
 	.owner = THIS_MODULE,
 	.ids = unisys_device_ids,
-	.ops = {
+	.ops = अणु
 		.add = visorchipset_init,
-		.remove = visorchipset_exit,
-	},
-};
+		.हटाओ = visorchipset_निकास,
+	पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(acpi, unisys_device_ids);
 
-static __init int visorutil_spar_detect(void)
-{
-	unsigned int eax, ebx, ecx, edx;
+अटल __init पूर्णांक visorutil_spar_detect(व्योम)
+अणु
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
 
-	if (boot_cpu_has(X86_FEATURE_HYPERVISOR)) {
+	अगर (boot_cpu_has(X86_FEATURE_HYPERVISOR)) अणु
 		/* check the ID */
 		cpuid(UNISYS_VISOR_LEAF_ID, &eax, &ebx, &ecx, &edx);
-		return  (ebx == UNISYS_VISOR_ID_EBX) &&
+		वापस  (ebx == UNISYS_VISOR_ID_EBX) &&
 			(ecx == UNISYS_VISOR_ID_ECX) &&
 			(edx == UNISYS_VISOR_ID_EDX);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __init init_unisys(void)
-{
-	int result;
+अटल पूर्णांक __init init_unisys(व्योम)
+अणु
+	पूर्णांक result;
 
-	if (!visorutil_spar_detect())
-		return -ENODEV;
-	result = acpi_bus_register_driver(&unisys_acpi_driver);
-	if (result)
-		return -ENODEV;
+	अगर (!visorutil_spar_detect())
+		वापस -ENODEV;
+	result = acpi_bus_रेजिस्टर_driver(&unisys_acpi_driver);
+	अगर (result)
+		वापस -ENODEV;
 	pr_info("Unisys Visorchipset Driver Loaded.\n");
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static void __exit exit_unisys(void)
-{
-	acpi_bus_unregister_driver(&unisys_acpi_driver);
-}
+अटल व्योम __निकास निकास_unisys(व्योम)
+अणु
+	acpi_bus_unरेजिस्टर_driver(&unisys_acpi_driver);
+पूर्ण
 
 module_init(init_unisys);
-module_exit(exit_unisys);
+module_निकास(निकास_unisys);
 
 MODULE_AUTHOR("Unisys");
 MODULE_LICENSE("GPL");

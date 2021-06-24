@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /* industrial I/O data types needed both in and out of kernel
  *
  * Copyright (c) 2008 Jonathan Cameron
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License version 2 as published by
  * the Free Software Foundation.
  */
 
-#ifndef _UAPI_IIO_TYPES_H_
-#define _UAPI_IIO_TYPES_H_
+#अगर_अघोषित _UAPI_IIO_TYPES_H_
+#घोषणा _UAPI_IIO_TYPES_H_
 
-enum iio_chan_type {
+क्रमागत iio_chan_type अणु
 	IIO_VOLTAGE,
 	IIO_CURRENT,
 	IIO_POWER,
@@ -47,9 +48,9 @@ enum iio_chan_type {
 	IIO_POSITIONRELATIVE,
 	IIO_PHASE,
 	IIO_MASSCONCENTRATION,
-};
+पूर्ण;
 
-enum iio_modifier {
+क्रमागत iio_modअगरier अणु
 	IIO_NO_MOD,
 	IIO_MOD_X,
 	IIO_MOD_Y,
@@ -95,23 +96,23 @@ enum iio_modifier {
 	IIO_MOD_ETHANOL,
 	IIO_MOD_H2,
 	IIO_MOD_O2,
-};
+पूर्ण;
 
-enum iio_event_type {
+क्रमागत iio_event_type अणु
 	IIO_EV_TYPE_THRESH,
 	IIO_EV_TYPE_MAG,
 	IIO_EV_TYPE_ROC,
 	IIO_EV_TYPE_THRESH_ADAPTIVE,
 	IIO_EV_TYPE_MAG_ADAPTIVE,
 	IIO_EV_TYPE_CHANGE,
-};
+पूर्ण;
 
-enum iio_event_direction {
-	IIO_EV_DIR_EITHER,
-	IIO_EV_DIR_RISING,
-	IIO_EV_DIR_FALLING,
-	IIO_EV_DIR_NONE,
-};
+क्रमागत iio_event_direction अणु
+	IIO_EV_सूची_EITHER,
+	IIO_EV_सूची_RISING,
+	IIO_EV_सूची_FALLING,
+	IIO_EV_सूची_NONE,
+पूर्ण;
 
-#endif /* _UAPI_IIO_TYPES_H_ */
+#पूर्ण_अगर /* _UAPI_IIO_TYPES_H_ */
 

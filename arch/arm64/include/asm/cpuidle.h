@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_CPUIDLE_H
-#define __ASM_CPUIDLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_CPUIDLE_H
+#घोषणा __ASM_CPUIDLE_H
 
-#include <asm/proc-fns.h>
+#समावेश <यंत्र/proc-fns.h>
 
-#ifdef CONFIG_CPU_IDLE
-extern int arm_cpuidle_init(unsigned int cpu);
-extern int arm_cpuidle_suspend(int index);
-#else
-static inline int arm_cpuidle_init(unsigned int cpu)
-{
-	return -EOPNOTSUPP;
-}
+#अगर_घोषित CONFIG_CPU_IDLE
+बाह्य पूर्णांक arm_cpuidle_init(अचिन्हित पूर्णांक cpu);
+बाह्य पूर्णांक arm_cpuidle_suspend(पूर्णांक index);
+#अन्यथा
+अटल अंतरभूत पूर्णांक arm_cpuidle_init(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int arm_cpuidle_suspend(int index)
-{
-	return -EOPNOTSUPP;
-}
-#endif
-#endif
+अटल अंतरभूत पूर्णांक arm_cpuidle_suspend(पूर्णांक index)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर

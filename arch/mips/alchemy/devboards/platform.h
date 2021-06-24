@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _DEVBOARD_PLATFORM_H_
-#define _DEVBOARD_PLATFORM_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _DEVBOARD_PLATFORM_H_
+#घोषणा _DEVBOARD_PLATFORM_H_
 
-#include <linux/init.h>
+#समावेश <linux/init.h>
 
-int __init db1x_register_pcmcia_socket(phys_addr_t pcmcia_attr_start,
+पूर्णांक __init db1x_रेजिस्टर_pcmcia_socket(phys_addr_t pcmcia_attr_start,
 				       phys_addr_t pcmcia_attr_len,
 				       phys_addr_t pcmcia_mem_start,
 				       phys_addr_t pcmcia_mem_end,
 				       phys_addr_t pcmcia_io_start,
 				       phys_addr_t pcmcia_io_end,
-				       int card_irq,
-				       int cd_irq,
-				       int stschg_irq,
-				       int eject_irq,
-				       int id);
+				       पूर्णांक card_irq,
+				       पूर्णांक cd_irq,
+				       पूर्णांक stschg_irq,
+				       पूर्णांक eject_irq,
+				       पूर्णांक id);
 
-int __init db1x_register_norflash(unsigned long size, int width,
-				  int swapped);
+पूर्णांक __init db1x_रेजिस्टर_norflash(अचिन्हित दीर्घ size, पूर्णांक width,
+				  पूर्णांक swapped);
 
-#endif
+#पूर्ण_अगर

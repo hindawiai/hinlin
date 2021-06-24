@@ -1,184 +1,185 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * ISA bus.
  */
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/dma-mapping.h>
-#include <linux/isa.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/isa.h>
 
-static struct device isa_bus = {
+अटल काष्ठा device isa_bus = अणु
 	.init_name	= "isa"
-};
+पूर्ण;
 
-struct isa_dev {
-	struct device dev;
-	struct device *next;
-	unsigned int id;
-};
+काष्ठा isa_dev अणु
+	काष्ठा device dev;
+	काष्ठा device *next;
+	अचिन्हित पूर्णांक id;
+पूर्ण;
 
-#define to_isa_dev(x) container_of((x), struct isa_dev, dev)
+#घोषणा to_isa_dev(x) container_of((x), काष्ठा isa_dev, dev)
 
-static int isa_bus_match(struct device *dev, struct device_driver *driver)
-{
-	struct isa_driver *isa_driver = to_isa_driver(driver);
+अटल पूर्णांक isa_bus_match(काष्ठा device *dev, काष्ठा device_driver *driver)
+अणु
+	काष्ठा isa_driver *isa_driver = to_isa_driver(driver);
 
-	if (dev->platform_data == isa_driver) {
-		if (!isa_driver->match ||
+	अगर (dev->platक्रमm_data == isa_driver) अणु
+		अगर (!isa_driver->match ||
 			isa_driver->match(dev, to_isa_dev(dev)->id))
-			return 1;
-		dev->platform_data = NULL;
-	}
-	return 0;
-}
+			वापस 1;
+		dev->platक्रमm_data = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int isa_bus_probe(struct device *dev)
-{
-	struct isa_driver *isa_driver = dev->platform_data;
+अटल पूर्णांक isa_bus_probe(काष्ठा device *dev)
+अणु
+	काष्ठा isa_driver *isa_driver = dev->platक्रमm_data;
 
-	if (isa_driver && isa_driver->probe)
-		return isa_driver->probe(dev, to_isa_dev(dev)->id);
+	अगर (isa_driver && isa_driver->probe)
+		वापस isa_driver->probe(dev, to_isa_dev(dev)->id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isa_bus_remove(struct device *dev)
-{
-	struct isa_driver *isa_driver = dev->platform_data;
+अटल पूर्णांक isa_bus_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा isa_driver *isa_driver = dev->platक्रमm_data;
 
-	if (isa_driver && isa_driver->remove)
-		isa_driver->remove(dev, to_isa_dev(dev)->id);
+	अगर (isa_driver && isa_driver->हटाओ)
+		isa_driver->हटाओ(dev, to_isa_dev(dev)->id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void isa_bus_shutdown(struct device *dev)
-{
-	struct isa_driver *isa_driver = dev->platform_data;
+अटल व्योम isa_bus_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा isa_driver *isa_driver = dev->platक्रमm_data;
 
-	if (isa_driver && isa_driver->shutdown)
-		isa_driver->shutdown(dev, to_isa_dev(dev)->id);
-}
+	अगर (isa_driver && isa_driver->shutकरोwn)
+		isa_driver->shutकरोwn(dev, to_isa_dev(dev)->id);
+पूर्ण
 
-static int isa_bus_suspend(struct device *dev, pm_message_t state)
-{
-	struct isa_driver *isa_driver = dev->platform_data;
+अटल पूर्णांक isa_bus_suspend(काष्ठा device *dev, pm_message_t state)
+अणु
+	काष्ठा isa_driver *isa_driver = dev->platक्रमm_data;
 
-	if (isa_driver && isa_driver->suspend)
-		return isa_driver->suspend(dev, to_isa_dev(dev)->id, state);
+	अगर (isa_driver && isa_driver->suspend)
+		वापस isa_driver->suspend(dev, to_isa_dev(dev)->id, state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isa_bus_resume(struct device *dev)
-{
-	struct isa_driver *isa_driver = dev->platform_data;
+अटल पूर्णांक isa_bus_resume(काष्ठा device *dev)
+अणु
+	काष्ठा isa_driver *isa_driver = dev->platक्रमm_data;
 
-	if (isa_driver && isa_driver->resume)
-		return isa_driver->resume(dev, to_isa_dev(dev)->id);
+	अगर (isa_driver && isa_driver->resume)
+		वापस isa_driver->resume(dev, to_isa_dev(dev)->id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct bus_type isa_bus_type = {
+अटल काष्ठा bus_type isa_bus_type = अणु
 	.name		= "isa",
 	.match		= isa_bus_match,
 	.probe		= isa_bus_probe,
-	.remove		= isa_bus_remove,
-	.shutdown	= isa_bus_shutdown,
+	.हटाओ		= isa_bus_हटाओ,
+	.shutकरोwn	= isa_bus_shutकरोwn,
 	.suspend	= isa_bus_suspend,
 	.resume		= isa_bus_resume
-};
+पूर्ण;
 
-static void isa_dev_release(struct device *dev)
-{
-	kfree(to_isa_dev(dev));
-}
+अटल व्योम isa_dev_release(काष्ठा device *dev)
+अणु
+	kमुक्त(to_isa_dev(dev));
+पूर्ण
 
-void isa_unregister_driver(struct isa_driver *isa_driver)
-{
-	struct device *dev = isa_driver->devices;
+व्योम isa_unरेजिस्टर_driver(काष्ठा isa_driver *isa_driver)
+अणु
+	काष्ठा device *dev = isa_driver->devices;
 
-	while (dev) {
-		struct device *tmp = to_isa_dev(dev)->next;
-		device_unregister(dev);
-		dev = tmp;
-	}
-	driver_unregister(&isa_driver->driver);
-}
-EXPORT_SYMBOL_GPL(isa_unregister_driver);
+	जबतक (dev) अणु
+		काष्ठा device *पंचांगp = to_isa_dev(dev)->next;
+		device_unरेजिस्टर(dev);
+		dev = पंचांगp;
+	पूर्ण
+	driver_unरेजिस्टर(&isa_driver->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(isa_unरेजिस्टर_driver);
 
-int isa_register_driver(struct isa_driver *isa_driver, unsigned int ndev)
-{
-	int error;
-	unsigned int id;
+पूर्णांक isa_रेजिस्टर_driver(काष्ठा isa_driver *isa_driver, अचिन्हित पूर्णांक ndev)
+अणु
+	पूर्णांक error;
+	अचिन्हित पूर्णांक id;
 
 	isa_driver->driver.bus	= &isa_bus_type;
-	isa_driver->devices	= NULL;
+	isa_driver->devices	= शून्य;
 
-	error = driver_register(&isa_driver->driver);
-	if (error)
-		return error;
+	error = driver_रेजिस्टर(&isa_driver->driver);
+	अगर (error)
+		वापस error;
 
-	for (id = 0; id < ndev; id++) {
-		struct isa_dev *isa_dev;
+	क्रम (id = 0; id < ndev; id++) अणु
+		काष्ठा isa_dev *isa_dev;
 
-		isa_dev = kzalloc(sizeof *isa_dev, GFP_KERNEL);
-		if (!isa_dev) {
+		isa_dev = kzalloc(माप *isa_dev, GFP_KERNEL);
+		अगर (!isa_dev) अणु
 			error = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		isa_dev->dev.parent	= &isa_bus;
 		isa_dev->dev.bus	= &isa_bus_type;
 
 		dev_set_name(&isa_dev->dev, "%s.%u",
 			     isa_driver->driver.name, id);
-		isa_dev->dev.platform_data	= isa_driver;
+		isa_dev->dev.platक्रमm_data	= isa_driver;
 		isa_dev->dev.release		= isa_dev_release;
 		isa_dev->id			= id;
 
 		isa_dev->dev.coherent_dma_mask = DMA_BIT_MASK(24);
 		isa_dev->dev.dma_mask = &isa_dev->dev.coherent_dma_mask;
 
-		error = device_register(&isa_dev->dev);
-		if (error) {
+		error = device_रेजिस्टर(&isa_dev->dev);
+		अगर (error) अणु
 			put_device(&isa_dev->dev);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (isa_dev->dev.platform_data) {
+		अगर (isa_dev->dev.platक्रमm_data) अणु
 			isa_dev->next = isa_driver->devices;
 			isa_driver->devices = &isa_dev->dev;
-		} else
-			device_unregister(&isa_dev->dev);
-	}
+		पूर्ण अन्यथा
+			device_unरेजिस्टर(&isa_dev->dev);
+	पूर्ण
 
-	if (!error && !isa_driver->devices)
+	अगर (!error && !isa_driver->devices)
 		error = -ENODEV;
 
-	if (error)
-		isa_unregister_driver(isa_driver);
+	अगर (error)
+		isa_unरेजिस्टर_driver(isa_driver);
 
-	return error;
-}
-EXPORT_SYMBOL_GPL(isa_register_driver);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL_GPL(isa_रेजिस्टर_driver);
 
-static int __init isa_bus_init(void)
-{
-	int error;
+अटल पूर्णांक __init isa_bus_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	error = bus_register(&isa_bus_type);
-	if (!error) {
-		error = device_register(&isa_bus);
-		if (error)
-			bus_unregister(&isa_bus_type);
-	}
-	return error;
-}
+	error = bus_रेजिस्टर(&isa_bus_type);
+	अगर (!error) अणु
+		error = device_रेजिस्टर(&isa_bus);
+		अगर (error)
+			bus_unरेजिस्टर(&isa_bus_type);
+	पूर्ण
+	वापस error;
+पूर्ण
 
 postcore_initcall(isa_bus_init);

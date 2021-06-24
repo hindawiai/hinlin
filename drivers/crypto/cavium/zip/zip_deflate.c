@@ -1,3 +1,4 @@
+<शैली गुरु>
 /***********************license start************************************
  * Copyright (c) 2003-2017 Cavium, Inc.
  * All rights reserved.
@@ -7,23 +8,23 @@
  * This file is provided under the terms of the Cavium License (see below)
  * or under the terms of GNU General Public License, Version 2, as
  * published by the Free Software Foundation. When using or redistributing
- * this file, you may do so under either license.
+ * this file, you may करो so under either license.
  *
- * Cavium License:  Redistribution and use in source and binary forms, with
- * or without modification, are permitted provided that the following
+ * Cavium License:  Redistribution and use in source and binary क्रमms, with
+ * or without modअगरication, are permitted provided that the following
  * conditions are met:
  *
  *  * Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  *
- *  * Redistributions in binary form must reproduce the above
+ *  * Redistributions in binary क्रमm must reproduce the above
  *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials provided
+ *    disclaimer in the करोcumentation and/or other materials provided
  *    with the distribution.
  *
  *  * Neither the name of Cavium Inc. nor the names of its contributors may be
- *    used to endorse or promote products derived from this software without
- *    specific prior written permission.
+ *    used to enकरोrse or promote products derived from this software without
+ *    specअगरic prior written permission.
  *
  * This Software, including technical data, may be subject to U.S. export
  * control laws, including the U.S. Export Administration Act and its
@@ -43,33 +44,33 @@
  * WITH YOU.
  ***********************license end**************************************/
 
-#include <linux/delay.h>
-#include <linux/sched.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
 
-#include "common.h"
-#include "zip_deflate.h"
+#समावेश "common.h"
+#समावेश "zip_deflate.h"
 
 /* Prepares the deflate zip command */
-static int prepare_zip_command(struct zip_operation *zip_ops,
-			       struct zip_state *s, union zip_inst_s *zip_cmd)
-{
-	union zip_zres_s *result_ptr = &s->result;
+अटल पूर्णांक prepare_zip_command(काष्ठा zip_operation *zip_ops,
+			       काष्ठा zip_state *s, जोड़ zip_inst_s *zip_cmd)
+अणु
+	जोड़ zip_zres_s *result_ptr = &s->result;
 
-	memset(zip_cmd, 0, sizeof(s->zip_cmd));
-	memset(result_ptr, 0, sizeof(s->result));
+	स_रखो(zip_cmd, 0, माप(s->zip_cmd));
+	स_रखो(result_ptr, 0, माप(s->result));
 
 	/* IWORD #0 */
 	/* History gather */
 	zip_cmd->s.hg = 0;
-	/* compression enable = 1 for deflate */
+	/* compression enable = 1 क्रम deflate */
 	zip_cmd->s.ce = 1;
 	/* sf (sync flush) */
 	zip_cmd->s.sf = 1;
 	/* ef (end of file) */
-	if (zip_ops->flush == ZIP_FLUSH_FINISH) {
+	अगर (zip_ops->flush == ZIP_FLUSH_FINISH) अणु
 		zip_cmd->s.ef = 1;
 		zip_cmd->s.sf = 0;
-	}
+	पूर्ण
 
 	zip_cmd->s.cc = zip_ops->ccode;
 	/* ss (compression speed/storage) */
@@ -81,120 +82,120 @@ static int prepare_zip_command(struct zip_operation *zip_ops,
 	zip_cmd->s.historylength = zip_ops->history_len;
 	zip_cmd->s.dg = 0;
 
-	/* IWORD # 6 and 7 - compression input/history pointer */
+	/* IWORD # 6 and 7 - compression input/history poपूर्णांकer */
 	zip_cmd->s.inp_ptr_addr.s.addr  = __pa(zip_ops->input);
 	zip_cmd->s.inp_ptr_ctl.s.length = (zip_ops->input_len +
 					   zip_ops->history_len);
 	zip_cmd->s.ds = 0;
 
-	/* IWORD # 8 and 9 - Output pointer */
+	/* IWORD # 8 and 9 - Output poपूर्णांकer */
 	zip_cmd->s.out_ptr_addr.s.addr  = __pa(zip_ops->output);
 	zip_cmd->s.out_ptr_ctl.s.length = zip_ops->output_len;
 	/* maximum number of output-stream bytes that can be written */
 	zip_cmd->s.totaloutputlength    = zip_ops->output_len;
 
-	/* IWORD # 10 and 11 - Result pointer */
+	/* IWORD # 10 and 11 - Result poपूर्णांकer */
 	zip_cmd->s.res_ptr_addr.s.addr = __pa(result_ptr);
 	/* Clearing completion code */
 	result_ptr->s.compcode = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * zip_deflate - API to offload deflate operation to hardware
- * @zip_ops: Pointer to zip operation structure
- * @s:       Pointer to the structure representing zip state
- * @zip_dev: Pointer to zip device structure
+ * @zip_ops: Poपूर्णांकer to zip operation काष्ठाure
+ * @s:       Poपूर्णांकer to the काष्ठाure representing zip state
+ * @zip_dev: Poपूर्णांकer to zip device काष्ठाure
  *
  * This function prepares the zip deflate command and submits it to the zip
- * engine for processing.
+ * engine क्रम processing.
  *
- * Return: 0 if successful or error code
+ * Return: 0 अगर successful or error code
  */
-int zip_deflate(struct zip_operation *zip_ops, struct zip_state *s,
-		struct zip_device *zip_dev)
-{
-	union zip_inst_s *zip_cmd = &s->zip_cmd;
-	union zip_zres_s *result_ptr = &s->result;
+पूर्णांक zip_deflate(काष्ठा zip_operation *zip_ops, काष्ठा zip_state *s,
+		काष्ठा zip_device *zip_dev)
+अणु
+	जोड़ zip_inst_s *zip_cmd = &s->zip_cmd;
+	जोड़ zip_zres_s *result_ptr = &s->result;
 	u32 queue;
 
 	/* Prepares zip command based on the input parameters */
 	prepare_zip_command(zip_ops, s, zip_cmd);
 
 	atomic64_add(zip_ops->input_len, &zip_dev->stats.comp_in_bytes);
-	/* Loads zip command into command queues and rings door bell */
+	/* Loads zip command पूर्णांकo command queues and rings करोor bell */
 	queue = zip_load_instr(zip_cmd, zip_dev);
 
-	/* Stats update for compression requests submitted */
+	/* Stats update क्रम compression requests submitted */
 	atomic64_inc(&zip_dev->stats.comp_req_submit);
 
-	/* Wait for completion or error */
+	/* Wait क्रम completion or error */
 	zip_poll_result(result_ptr);
 
-	/* Stats update for compression requests completed */
+	/* Stats update क्रम compression requests completed */
 	atomic64_inc(&zip_dev->stats.comp_req_complete);
 
 	zip_ops->compcode = result_ptr->s.compcode;
-	switch (zip_ops->compcode) {
-	case ZIP_CMD_NOTDONE:
+	चयन (zip_ops->compcode) अणु
+	हाल ZIP_CMD_NOTDONE:
 		zip_dbg("Zip instruction not yet completed");
-		return ZIP_ERROR;
+		वापस ZIP_ERROR;
 
-	case ZIP_CMD_SUCCESS:
+	हाल ZIP_CMD_SUCCESS:
 		zip_dbg("Zip instruction completed successfully");
 		zip_update_cmd_bufs(zip_dev, queue);
-		break;
+		अवरोध;
 
-	case ZIP_CMD_DTRUNC:
+	हाल ZIP_CMD_DTRUNC:
 		zip_dbg("Output Truncate error");
-		/* Returning ZIP_ERROR to avoid copy to user */
-		return ZIP_ERROR;
+		/* Returning ZIP_ERROR to aव्योम copy to user */
+		वापस ZIP_ERROR;
 
-	default:
+	शेष:
 		zip_err("Zip instruction failed. Code:%d", zip_ops->compcode);
-		return ZIP_ERROR;
-	}
+		वापस ZIP_ERROR;
+	पूर्ण
 
-	/* Update the CRC depending on the format */
-	switch (zip_ops->format) {
-	case RAW_FORMAT:
-		zip_dbg("RAW Format: %d ", zip_ops->format);
+	/* Update the CRC depending on the क्रमmat */
+	चयन (zip_ops->क्रमmat) अणु
+	हाल RAW_FORMAT:
+		zip_dbg("RAW Format: %d ", zip_ops->क्रमmat);
 		/* Get checksum from engine, need to feed it again */
 		zip_ops->csum = result_ptr->s.adler32;
-		break;
+		अवरोध;
 
-	case ZLIB_FORMAT:
-		zip_dbg("ZLIB Format: %d ", zip_ops->format);
+	हाल ZLIB_FORMAT:
+		zip_dbg("ZLIB Format: %d ", zip_ops->क्रमmat);
 		zip_ops->csum = result_ptr->s.adler32;
-		break;
+		अवरोध;
 
-	case GZIP_FORMAT:
-		zip_dbg("GZIP Format: %d ", zip_ops->format);
+	हाल GZIP_FORMAT:
+		zip_dbg("GZIP Format: %d ", zip_ops->क्रमmat);
 		zip_ops->csum = result_ptr->s.crc32;
-		break;
+		अवरोध;
 
-	case LZS_FORMAT:
-		zip_dbg("LZS Format: %d ", zip_ops->format);
-		break;
+	हाल LZS_FORMAT:
+		zip_dbg("LZS Format: %d ", zip_ops->क्रमmat);
+		अवरोध;
 
-	default:
-		zip_err("Unknown Format:%d\n", zip_ops->format);
-	}
+	शेष:
+		zip_err("Unknown Format:%d\n", zip_ops->क्रमmat);
+	पूर्ण
 
 	atomic64_add(result_ptr->s.totalbyteswritten,
 		     &zip_dev->stats.comp_out_bytes);
 
 	/* Update output_len */
-	if (zip_ops->output_len < result_ptr->s.totalbyteswritten) {
-		/* Dynamic stop && strm->output_len < zipconstants[onfsize] */
+	अगर (zip_ops->output_len < result_ptr->s.totalbyteswritten) अणु
+		/* Dynamic stop && strm->output_len < zipस्थिरants[onfsize] */
 		zip_err("output_len (%d) < total bytes written(%d)\n",
 			zip_ops->output_len, result_ptr->s.totalbyteswritten);
 		zip_ops->output_len = 0;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		zip_ops->output_len = result_ptr->s.totalbyteswritten;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

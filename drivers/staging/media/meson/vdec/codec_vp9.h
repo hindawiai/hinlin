@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Copyright (C) 2018 Maxime Jourdan <maxi.jourdan@wanadoo.fr>
+ * Copyright (C) 2018 Maxime Jourdan <maxi.jourdan@wanaकरोo.fr>
  */
 
-#ifndef __MESON_VDEC_CODEC_VP9_H_
-#define __MESON_VDEC_CODEC_VP9_H_
+#अगर_अघोषित __MESON_VDEC_CODEC_VP9_H_
+#घोषणा __MESON_VDEC_CODEC_VP9_H_
 
-#include "vdec.h"
+#समावेश "vdec.h"
 
-extern struct amvdec_codec_ops codec_vp9_ops;
+बाह्य काष्ठा amvdec_codec_ops codec_vp9_ops;
 
-#endif
+#पूर्ण_अगर

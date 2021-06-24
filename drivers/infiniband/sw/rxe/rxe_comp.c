@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#include <linux/skbuff.h>
+#समावेश <linux/skbuff.h>
 
-#include "rxe.h"
-#include "rxe_loc.h"
-#include "rxe_queue.h"
-#include "rxe_task.h"
+#समावेश "rxe.h"
+#समावेश "rxe_loc.h"
+#समावेश "rxe_queue.h"
+#समावेश "rxe_task.h"
 
-enum comp_state {
+क्रमागत comp_state अणु
 	COMPST_GET_ACK,
 	COMPST_GET_WQE,
 	COMPST_COMP_WQE,
@@ -27,9 +28,9 @@ enum comp_state {
 	COMPST_ERROR,
 	COMPST_EXIT, /* We have an issue, and we want to rerun the completer */
 	COMPST_DONE, /* The completer finished successflly */
-};
+पूर्ण;
 
-static char *comp_state_name[] =  {
+अटल अक्षर *comp_state_name[] =  अणु
 	[COMPST_GET_ACK]		= "GET ACK",
 	[COMPST_GET_WQE]		= "GET WQE",
 	[COMPST_COMP_WQE]		= "COMP WQE",
@@ -45,9 +46,9 @@ static char *comp_state_name[] =  {
 	[COMPST_ERROR]			= "ERROR",
 	[COMPST_EXIT]			= "EXIT",
 	[COMPST_DONE]			= "DONE",
-};
+पूर्ण;
 
-static unsigned long rnrnak_usec[32] = {
+अटल अचिन्हित दीर्घ rnrnak_usec[32] = अणु
 	[IB_RNR_TIMER_655_36] = 655360,
 	[IB_RNR_TIMER_000_01] = 10,
 	[IB_RNR_TIMER_000_02] = 20,
@@ -80,679 +81,679 @@ static unsigned long rnrnak_usec[32] = {
 	[IB_RNR_TIMER_245_76] = 245760,
 	[IB_RNR_TIMER_327_68] = 327680,
 	[IB_RNR_TIMER_491_52] = 491520,
-};
+पूर्ण;
 
-static inline unsigned long rnrnak_jiffies(u8 timeout)
-{
-	return max_t(unsigned long,
-		usecs_to_jiffies(rnrnak_usec[timeout]), 1);
-}
+अटल अंतरभूत अचिन्हित दीर्घ rnrnak_jअगरfies(u8 समयout)
+अणु
+	वापस max_t(अचिन्हित दीर्घ,
+		usecs_to_jअगरfies(rnrnak_usec[समयout]), 1);
+पूर्ण
 
-static enum ib_wc_opcode wr_to_wc_opcode(enum ib_wr_opcode opcode)
-{
-	switch (opcode) {
-	case IB_WR_RDMA_WRITE:			return IB_WC_RDMA_WRITE;
-	case IB_WR_RDMA_WRITE_WITH_IMM:		return IB_WC_RDMA_WRITE;
-	case IB_WR_SEND:			return IB_WC_SEND;
-	case IB_WR_SEND_WITH_IMM:		return IB_WC_SEND;
-	case IB_WR_RDMA_READ:			return IB_WC_RDMA_READ;
-	case IB_WR_ATOMIC_CMP_AND_SWP:		return IB_WC_COMP_SWAP;
-	case IB_WR_ATOMIC_FETCH_AND_ADD:	return IB_WC_FETCH_ADD;
-	case IB_WR_LSO:				return IB_WC_LSO;
-	case IB_WR_SEND_WITH_INV:		return IB_WC_SEND;
-	case IB_WR_RDMA_READ_WITH_INV:		return IB_WC_RDMA_READ;
-	case IB_WR_LOCAL_INV:			return IB_WC_LOCAL_INV;
-	case IB_WR_REG_MR:			return IB_WC_REG_MR;
+अटल क्रमागत ib_wc_opcode wr_to_wc_opcode(क्रमागत ib_wr_opcode opcode)
+अणु
+	चयन (opcode) अणु
+	हाल IB_WR_RDMA_WRITE:			वापस IB_WC_RDMA_WRITE;
+	हाल IB_WR_RDMA_WRITE_WITH_IMM:		वापस IB_WC_RDMA_WRITE;
+	हाल IB_WR_SEND:			वापस IB_WC_SEND;
+	हाल IB_WR_SEND_WITH_IMM:		वापस IB_WC_SEND;
+	हाल IB_WR_RDMA_READ:			वापस IB_WC_RDMA_READ;
+	हाल IB_WR_ATOMIC_CMP_AND_SWP:		वापस IB_WC_COMP_SWAP;
+	हाल IB_WR_ATOMIC_FETCH_AND_ADD:	वापस IB_WC_FETCH_ADD;
+	हाल IB_WR_LSO:				वापस IB_WC_LSO;
+	हाल IB_WR_SEND_WITH_INV:		वापस IB_WC_SEND;
+	हाल IB_WR_RDMA_READ_WITH_INV:		वापस IB_WC_RDMA_READ;
+	हाल IB_WR_LOCAL_INV:			वापस IB_WC_LOCAL_INV;
+	हाल IB_WR_REG_MR:			वापस IB_WC_REG_MR;
 
-	default:
-		return 0xff;
-	}
-}
+	शेष:
+		वापस 0xff;
+	पूर्ण
+पूर्ण
 
-void retransmit_timer(struct timer_list *t)
-{
-	struct rxe_qp *qp = from_timer(qp, t, retrans_timer);
+व्योम retransmit_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा rxe_qp *qp = from_समयr(qp, t, retrans_समयr);
 
-	if (qp->valid) {
-		qp->comp.timeout = 1;
+	अगर (qp->valid) अणु
+		qp->comp.समयout = 1;
 		rxe_run_task(&qp->comp.task, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void rxe_comp_queue_pkt(struct rxe_qp *qp, struct sk_buff *skb)
-{
-	int must_sched;
+व्योम rxe_comp_queue_pkt(काष्ठा rxe_qp *qp, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक must_sched;
 
 	skb_queue_tail(&qp->resp_pkts, skb);
 
 	must_sched = skb_queue_len(&qp->resp_pkts) > 1;
-	if (must_sched != 0)
+	अगर (must_sched != 0)
 		rxe_counter_inc(SKB_TO_PKT(skb)->rxe, RXE_CNT_COMPLETER_SCHED);
 
 	rxe_run_task(&qp->comp.task, must_sched);
-}
+पूर्ण
 
-static inline enum comp_state get_wqe(struct rxe_qp *qp,
-				      struct rxe_pkt_info *pkt,
-				      struct rxe_send_wqe **wqe_p)
-{
-	struct rxe_send_wqe *wqe;
+अटल अंतरभूत क्रमागत comp_state get_wqe(काष्ठा rxe_qp *qp,
+				      काष्ठा rxe_pkt_info *pkt,
+				      काष्ठा rxe_send_wqe **wqe_p)
+अणु
+	काष्ठा rxe_send_wqe *wqe;
 
-	/* we come here whether or not we found a response packet to see if
+	/* we come here whether or not we found a response packet to see अगर
 	 * there are any posted WQEs
 	 */
 	wqe = queue_head(qp->sq.queue);
 	*wqe_p = wqe;
 
 	/* no WQE or requester has not started it yet */
-	if (!wqe || wqe->state == wqe_state_posted)
-		return pkt ? COMPST_DONE : COMPST_EXIT;
+	अगर (!wqe || wqe->state == wqe_state_posted)
+		वापस pkt ? COMPST_DONE : COMPST_EXIT;
 
-	/* WQE does not require an ack */
-	if (wqe->state == wqe_state_done)
-		return COMPST_COMP_WQE;
+	/* WQE करोes not require an ack */
+	अगर (wqe->state == wqe_state_करोne)
+		वापस COMPST_COMP_WQE;
 
 	/* WQE caused an error */
-	if (wqe->state == wqe_state_error)
-		return COMPST_ERROR;
+	अगर (wqe->state == wqe_state_error)
+		वापस COMPST_ERROR;
 
-	/* we have a WQE, if we also have an ack check its PSN */
-	return pkt ? COMPST_CHECK_PSN : COMPST_EXIT;
-}
+	/* we have a WQE, अगर we also have an ack check its PSN */
+	वापस pkt ? COMPST_CHECK_PSN : COMPST_EXIT;
+पूर्ण
 
-static inline void reset_retry_counters(struct rxe_qp *qp)
-{
+अटल अंतरभूत व्योम reset_retry_counters(काष्ठा rxe_qp *qp)
+अणु
 	qp->comp.retry_cnt = qp->attr.retry_cnt;
 	qp->comp.rnr_retry = qp->attr.rnr_retry;
 	qp->comp.started_retry = 0;
-}
+पूर्ण
 
-static inline enum comp_state check_psn(struct rxe_qp *qp,
-					struct rxe_pkt_info *pkt,
-					struct rxe_send_wqe *wqe)
-{
-	s32 diff;
+अटल अंतरभूत क्रमागत comp_state check_psn(काष्ठा rxe_qp *qp,
+					काष्ठा rxe_pkt_info *pkt,
+					काष्ठा rxe_send_wqe *wqe)
+अणु
+	s32 dअगरf;
 
-	/* check to see if response is past the oldest WQE. if it is, complete
-	 * send/write or error read/atomic
+	/* check to see अगर response is past the oldest WQE. अगर it is, complete
+	 * send/ग_लिखो or error पढ़ो/atomic
 	 */
-	diff = psn_compare(pkt->psn, wqe->last_psn);
-	if (diff > 0) {
-		if (wqe->state == wqe_state_pending) {
-			if (wqe->mask & WR_ATOMIC_OR_READ_MASK)
-				return COMPST_ERROR_RETRY;
+	dअगरf = psn_compare(pkt->psn, wqe->last_psn);
+	अगर (dअगरf > 0) अणु
+		अगर (wqe->state == wqe_state_pending) अणु
+			अगर (wqe->mask & WR_ATOMIC_OR_READ_MASK)
+				वापस COMPST_ERROR_RETRY;
 
 			reset_retry_counters(qp);
-			return COMPST_COMP_WQE;
-		} else {
-			return COMPST_DONE;
-		}
-	}
+			वापस COMPST_COMP_WQE;
+		पूर्ण अन्यथा अणु
+			वापस COMPST_DONE;
+		पूर्ण
+	पूर्ण
 
 	/* compare response packet to expected response */
-	diff = psn_compare(pkt->psn, qp->comp.psn);
-	if (diff < 0) {
-		/* response is most likely a retried packet if it matches an
-		 * uncompleted WQE go complete it else ignore it
+	dअगरf = psn_compare(pkt->psn, qp->comp.psn);
+	अगर (dअगरf < 0) अणु
+		/* response is most likely a retried packet अगर it matches an
+		 * uncompleted WQE go complete it अन्यथा ignore it
 		 */
-		if (pkt->psn == wqe->last_psn)
-			return COMPST_COMP_ACK;
-		else
-			return COMPST_DONE;
-	} else if ((diff > 0) && (wqe->mask & WR_ATOMIC_OR_READ_MASK)) {
-		return COMPST_DONE;
-	} else {
-		return COMPST_CHECK_ACK;
-	}
-}
+		अगर (pkt->psn == wqe->last_psn)
+			वापस COMPST_COMP_ACK;
+		अन्यथा
+			वापस COMPST_DONE;
+	पूर्ण अन्यथा अगर ((dअगरf > 0) && (wqe->mask & WR_ATOMIC_OR_READ_MASK)) अणु
+		वापस COMPST_DONE;
+	पूर्ण अन्यथा अणु
+		वापस COMPST_CHECK_ACK;
+	पूर्ण
+पूर्ण
 
-static inline enum comp_state check_ack(struct rxe_qp *qp,
-					struct rxe_pkt_info *pkt,
-					struct rxe_send_wqe *wqe)
-{
-	unsigned int mask = pkt->mask;
+अटल अंतरभूत क्रमागत comp_state check_ack(काष्ठा rxe_qp *qp,
+					काष्ठा rxe_pkt_info *pkt,
+					काष्ठा rxe_send_wqe *wqe)
+अणु
+	अचिन्हित पूर्णांक mask = pkt->mask;
 	u8 syn;
-	struct rxe_dev *rxe = to_rdev(qp->ibqp.device);
+	काष्ठा rxe_dev *rxe = to_rdev(qp->ibqp.device);
 
 	/* Check the sequence only */
-	switch (qp->comp.opcode) {
-	case -1:
-		/* Will catch all *_ONLY cases. */
-		if (!(mask & RXE_START_MASK))
-			return COMPST_ERROR;
+	चयन (qp->comp.opcode) अणु
+	हाल -1:
+		/* Will catch all *_ONLY हालs. */
+		अगर (!(mask & RXE_START_MASK))
+			वापस COMPST_ERROR;
 
-		break;
+		अवरोध;
 
-	case IB_OPCODE_RC_RDMA_READ_RESPONSE_FIRST:
-	case IB_OPCODE_RC_RDMA_READ_RESPONSE_MIDDLE:
-		if (pkt->opcode != IB_OPCODE_RC_RDMA_READ_RESPONSE_MIDDLE &&
-		    pkt->opcode != IB_OPCODE_RC_RDMA_READ_RESPONSE_LAST) {
-			/* read retries of partial data may restart from
-			 * read response first or response only.
+	हाल IB_OPCODE_RC_RDMA_READ_RESPONSE_FIRST:
+	हाल IB_OPCODE_RC_RDMA_READ_RESPONSE_MIDDLE:
+		अगर (pkt->opcode != IB_OPCODE_RC_RDMA_READ_RESPONSE_MIDDLE &&
+		    pkt->opcode != IB_OPCODE_RC_RDMA_READ_RESPONSE_LAST) अणु
+			/* पढ़ो retries of partial data may restart from
+			 * पढ़ो response first or response only.
 			 */
-			if ((pkt->psn == wqe->first_psn &&
+			अगर ((pkt->psn == wqe->first_psn &&
 			     pkt->opcode ==
 			     IB_OPCODE_RC_RDMA_READ_RESPONSE_FIRST) ||
 			    (wqe->first_psn == wqe->last_psn &&
 			     pkt->opcode ==
 			     IB_OPCODE_RC_RDMA_READ_RESPONSE_ONLY))
-				break;
+				अवरोध;
 
-			return COMPST_ERROR;
-		}
-		break;
-	default:
+			वापस COMPST_ERROR;
+		पूर्ण
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-	}
+	पूर्ण
 
 	/* Check operation validity. */
-	switch (pkt->opcode) {
-	case IB_OPCODE_RC_RDMA_READ_RESPONSE_FIRST:
-	case IB_OPCODE_RC_RDMA_READ_RESPONSE_LAST:
-	case IB_OPCODE_RC_RDMA_READ_RESPONSE_ONLY:
+	चयन (pkt->opcode) अणु
+	हाल IB_OPCODE_RC_RDMA_READ_RESPONSE_FIRST:
+	हाल IB_OPCODE_RC_RDMA_READ_RESPONSE_LAST:
+	हाल IB_OPCODE_RC_RDMA_READ_RESPONSE_ONLY:
 		syn = aeth_syn(pkt);
 
-		if ((syn & AETH_TYPE_MASK) != AETH_ACK)
-			return COMPST_ERROR;
+		अगर ((syn & AETH_TYPE_MASK) != AETH_ACK)
+			वापस COMPST_ERROR;
 
 		fallthrough;
-		/* (IB_OPCODE_RC_RDMA_READ_RESPONSE_MIDDLE doesn't have an AETH)
+		/* (IB_OPCODE_RC_RDMA_READ_RESPONSE_MIDDLE करोesn't have an AETH)
 		 */
-	case IB_OPCODE_RC_RDMA_READ_RESPONSE_MIDDLE:
-		if (wqe->wr.opcode != IB_WR_RDMA_READ &&
-		    wqe->wr.opcode != IB_WR_RDMA_READ_WITH_INV) {
+	हाल IB_OPCODE_RC_RDMA_READ_RESPONSE_MIDDLE:
+		अगर (wqe->wr.opcode != IB_WR_RDMA_READ &&
+		    wqe->wr.opcode != IB_WR_RDMA_READ_WITH_INV) अणु
 			wqe->status = IB_WC_FATAL_ERR;
-			return COMPST_ERROR;
-		}
+			वापस COMPST_ERROR;
+		पूर्ण
 		reset_retry_counters(qp);
-		return COMPST_READ;
+		वापस COMPST_READ;
 
-	case IB_OPCODE_RC_ATOMIC_ACKNOWLEDGE:
+	हाल IB_OPCODE_RC_ATOMIC_ACKNOWLEDGE:
 		syn = aeth_syn(pkt);
 
-		if ((syn & AETH_TYPE_MASK) != AETH_ACK)
-			return COMPST_ERROR;
+		अगर ((syn & AETH_TYPE_MASK) != AETH_ACK)
+			वापस COMPST_ERROR;
 
-		if (wqe->wr.opcode != IB_WR_ATOMIC_CMP_AND_SWP &&
+		अगर (wqe->wr.opcode != IB_WR_ATOMIC_CMP_AND_SWP &&
 		    wqe->wr.opcode != IB_WR_ATOMIC_FETCH_AND_ADD)
-			return COMPST_ERROR;
+			वापस COMPST_ERROR;
 		reset_retry_counters(qp);
-		return COMPST_ATOMIC;
+		वापस COMPST_ATOMIC;
 
-	case IB_OPCODE_RC_ACKNOWLEDGE:
+	हाल IB_OPCODE_RC_ACKNOWLEDGE:
 		syn = aeth_syn(pkt);
-		switch (syn & AETH_TYPE_MASK) {
-		case AETH_ACK:
+		चयन (syn & AETH_TYPE_MASK) अणु
+		हाल AETH_ACK:
 			reset_retry_counters(qp);
-			return COMPST_WRITE_SEND;
+			वापस COMPST_WRITE_SEND;
 
-		case AETH_RNR_NAK:
+		हाल AETH_RNR_NAK:
 			rxe_counter_inc(rxe, RXE_CNT_RCV_RNR);
-			return COMPST_RNR_RETRY;
+			वापस COMPST_RNR_RETRY;
 
-		case AETH_NAK:
-			switch (syn) {
-			case AETH_NAK_PSN_SEQ_ERROR:
+		हाल AETH_NAK:
+			चयन (syn) अणु
+			हाल AETH_NAK_PSN_SEQ_ERROR:
 				/* a nak implicitly acks all packets with psns
-				 * before
+				 * beक्रमe
 				 */
-				if (psn_compare(pkt->psn, qp->comp.psn) > 0) {
+				अगर (psn_compare(pkt->psn, qp->comp.psn) > 0) अणु
 					rxe_counter_inc(rxe,
 							RXE_CNT_RCV_SEQ_ERR);
 					qp->comp.psn = pkt->psn;
-					if (qp->req.wait_psn) {
-						qp->req.wait_psn = 0;
+					अगर (qp->req.रुको_psn) अणु
+						qp->req.रुको_psn = 0;
 						rxe_run_task(&qp->req.task, 0);
-					}
-				}
-				return COMPST_ERROR_RETRY;
+					पूर्ण
+				पूर्ण
+				वापस COMPST_ERROR_RETRY;
 
-			case AETH_NAK_INVALID_REQ:
+			हाल AETH_NAK_INVALID_REQ:
 				wqe->status = IB_WC_REM_INV_REQ_ERR;
-				return COMPST_ERROR;
+				वापस COMPST_ERROR;
 
-			case AETH_NAK_REM_ACC_ERR:
+			हाल AETH_NAK_REM_ACC_ERR:
 				wqe->status = IB_WC_REM_ACCESS_ERR;
-				return COMPST_ERROR;
+				वापस COMPST_ERROR;
 
-			case AETH_NAK_REM_OP_ERR:
+			हाल AETH_NAK_REM_OP_ERR:
 				wqe->status = IB_WC_REM_OP_ERR;
-				return COMPST_ERROR;
+				वापस COMPST_ERROR;
 
-			default:
+			शेष:
 				pr_warn("unexpected nak %x\n", syn);
 				wqe->status = IB_WC_REM_OP_ERR;
-				return COMPST_ERROR;
-			}
+				वापस COMPST_ERROR;
+			पूर्ण
 
-		default:
-			return COMPST_ERROR;
-		}
-		break;
+		शेष:
+			वापस COMPST_ERROR;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		pr_warn("unexpected opcode\n");
-	}
+	पूर्ण
 
-	return COMPST_ERROR;
-}
+	वापस COMPST_ERROR;
+पूर्ण
 
-static inline enum comp_state do_read(struct rxe_qp *qp,
-				      struct rxe_pkt_info *pkt,
-				      struct rxe_send_wqe *wqe)
-{
-	int ret;
+अटल अंतरभूत क्रमागत comp_state करो_पढ़ो(काष्ठा rxe_qp *qp,
+				      काष्ठा rxe_pkt_info *pkt,
+				      काष्ठा rxe_send_wqe *wqe)
+अणु
+	पूर्णांक ret;
 
 	ret = copy_data(qp->pd, IB_ACCESS_LOCAL_WRITE,
 			&wqe->dma, payload_addr(pkt),
-			payload_size(pkt), to_mr_obj, NULL);
-	if (ret) {
+			payload_size(pkt), to_mr_obj, शून्य);
+	अगर (ret) अणु
 		wqe->status = IB_WC_LOC_PROT_ERR;
-		return COMPST_ERROR;
-	}
+		वापस COMPST_ERROR;
+	पूर्ण
 
-	if (wqe->dma.resid == 0 && (pkt->mask & RXE_END_MASK))
-		return COMPST_COMP_ACK;
+	अगर (wqe->dma.resid == 0 && (pkt->mask & RXE_END_MASK))
+		वापस COMPST_COMP_ACK;
 
-	return COMPST_UPDATE_COMP;
-}
+	वापस COMPST_UPDATE_COMP;
+पूर्ण
 
-static inline enum comp_state do_atomic(struct rxe_qp *qp,
-					struct rxe_pkt_info *pkt,
-					struct rxe_send_wqe *wqe)
-{
-	int ret;
+अटल अंतरभूत क्रमागत comp_state करो_atomic(काष्ठा rxe_qp *qp,
+					काष्ठा rxe_pkt_info *pkt,
+					काष्ठा rxe_send_wqe *wqe)
+अणु
+	पूर्णांक ret;
 
-	u64 atomic_orig = atmack_orig(pkt);
+	u64 atomic_orig = aपंचांगack_orig(pkt);
 
 	ret = copy_data(qp->pd, IB_ACCESS_LOCAL_WRITE,
 			&wqe->dma, &atomic_orig,
-			sizeof(u64), to_mr_obj, NULL);
-	if (ret) {
+			माप(u64), to_mr_obj, शून्य);
+	अगर (ret) अणु
 		wqe->status = IB_WC_LOC_PROT_ERR;
-		return COMPST_ERROR;
-	}
+		वापस COMPST_ERROR;
+	पूर्ण
 
-	return COMPST_COMP_ACK;
-}
+	वापस COMPST_COMP_ACK;
+पूर्ण
 
-static void make_send_cqe(struct rxe_qp *qp, struct rxe_send_wqe *wqe,
-			  struct rxe_cqe *cqe)
-{
-	memset(cqe, 0, sizeof(*cqe));
+अटल व्योम make_send_cqe(काष्ठा rxe_qp *qp, काष्ठा rxe_send_wqe *wqe,
+			  काष्ठा rxe_cqe *cqe)
+अणु
+	स_रखो(cqe, 0, माप(*cqe));
 
-	if (!qp->is_user) {
-		struct ib_wc		*wc	= &cqe->ibwc;
+	अगर (!qp->is_user) अणु
+		काष्ठा ib_wc		*wc	= &cqe->ibwc;
 
 		wc->wr_id		= wqe->wr.wr_id;
 		wc->status		= wqe->status;
 		wc->opcode		= wr_to_wc_opcode(wqe->wr.opcode);
-		if (wqe->wr.opcode == IB_WR_RDMA_WRITE_WITH_IMM ||
+		अगर (wqe->wr.opcode == IB_WR_RDMA_WRITE_WITH_IMM ||
 		    wqe->wr.opcode == IB_WR_SEND_WITH_IMM)
 			wc->wc_flags = IB_WC_WITH_IMM;
 		wc->byte_len		= wqe->dma.length;
 		wc->qp			= &qp->ibqp;
-	} else {
-		struct ib_uverbs_wc	*uwc	= &cqe->uibwc;
+	पूर्ण अन्यथा अणु
+		काष्ठा ib_uverbs_wc	*uwc	= &cqe->uibwc;
 
 		uwc->wr_id		= wqe->wr.wr_id;
 		uwc->status		= wqe->status;
 		uwc->opcode		= wr_to_wc_opcode(wqe->wr.opcode);
-		if (wqe->wr.opcode == IB_WR_RDMA_WRITE_WITH_IMM ||
+		अगर (wqe->wr.opcode == IB_WR_RDMA_WRITE_WITH_IMM ||
 		    wqe->wr.opcode == IB_WR_SEND_WITH_IMM)
 			uwc->wc_flags = IB_WC_WITH_IMM;
 		uwc->byte_len		= wqe->dma.length;
 		uwc->qp_num		= qp->ibqp.qp_num;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * IBA Spec. Section 10.7.3.1 SIGNALED COMPLETIONS
  * ---------8<---------8<-------------
- * ...Note that if a completion error occurs, a Work Completion
- * will always be generated, even if the signaling
- * indicator requests an Unsignaled Completion.
+ * ...Note that अगर a completion error occurs, a Work Completion
+ * will always be generated, even अगर the संकेतing
+ * indicator requests an Unसंकेतed Completion.
  * ---------8<---------8<-------------
  */
-static void do_complete(struct rxe_qp *qp, struct rxe_send_wqe *wqe)
-{
-	struct rxe_dev *rxe = to_rdev(qp->ibqp.device);
-	struct rxe_cqe cqe;
+अटल व्योम करो_complete(काष्ठा rxe_qp *qp, काष्ठा rxe_send_wqe *wqe)
+अणु
+	काष्ठा rxe_dev *rxe = to_rdev(qp->ibqp.device);
+	काष्ठा rxe_cqe cqe;
 
-	if ((qp->sq_sig_type == IB_SIGNAL_ALL_WR) ||
+	अगर ((qp->sq_sig_type == IB_SIGNAL_ALL_WR) ||
 	    (wqe->wr.send_flags & IB_SEND_SIGNALED) ||
-	    wqe->status != IB_WC_SUCCESS) {
+	    wqe->status != IB_WC_SUCCESS) अणु
 		make_send_cqe(qp, wqe, &cqe);
 		advance_consumer(qp->sq.queue);
 		rxe_cq_post(qp->scq, &cqe, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		advance_consumer(qp->sq.queue);
-	}
+	पूर्ण
 
-	if (wqe->wr.opcode == IB_WR_SEND ||
+	अगर (wqe->wr.opcode == IB_WR_SEND ||
 	    wqe->wr.opcode == IB_WR_SEND_WITH_IMM ||
 	    wqe->wr.opcode == IB_WR_SEND_WITH_INV)
 		rxe_counter_inc(rxe, RXE_CNT_RDMA_SEND);
 
 	/*
 	 * we completed something so let req run again
-	 * if it is trying to fence
+	 * अगर it is trying to fence
 	 */
-	if (qp->req.wait_fence) {
-		qp->req.wait_fence = 0;
+	अगर (qp->req.रुको_fence) अणु
+		qp->req.रुको_fence = 0;
 		rxe_run_task(&qp->req.task, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline enum comp_state complete_ack(struct rxe_qp *qp,
-					   struct rxe_pkt_info *pkt,
-					   struct rxe_send_wqe *wqe)
-{
-	unsigned long flags;
+अटल अंतरभूत क्रमागत comp_state complete_ack(काष्ठा rxe_qp *qp,
+					   काष्ठा rxe_pkt_info *pkt,
+					   काष्ठा rxe_send_wqe *wqe)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (wqe->has_rd_atomic) {
+	अगर (wqe->has_rd_atomic) अणु
 		wqe->has_rd_atomic = 0;
 		atomic_inc(&qp->req.rd_atomic);
-		if (qp->req.need_rd_atomic) {
-			qp->comp.timeout_retry = 0;
+		अगर (qp->req.need_rd_atomic) अणु
+			qp->comp.समयout_retry = 0;
 			qp->req.need_rd_atomic = 0;
 			rxe_run_task(&qp->req.task, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(qp->req.state == QP_STATE_DRAIN)) {
+	अगर (unlikely(qp->req.state == QP_STATE_DRAIN)) अणु
 		/* state_lock used by requester & completer */
 		spin_lock_irqsave(&qp->state_lock, flags);
-		if ((qp->req.state == QP_STATE_DRAIN) &&
-		    (qp->comp.psn == qp->req.psn)) {
+		अगर ((qp->req.state == QP_STATE_DRAIN) &&
+		    (qp->comp.psn == qp->req.psn)) अणु
 			qp->req.state = QP_STATE_DRAINED;
 			spin_unlock_irqrestore(&qp->state_lock, flags);
 
-			if (qp->ibqp.event_handler) {
-				struct ib_event ev;
+			अगर (qp->ibqp.event_handler) अणु
+				काष्ठा ib_event ev;
 
 				ev.device = qp->ibqp.device;
 				ev.element.qp = &qp->ibqp;
 				ev.event = IB_EVENT_SQ_DRAINED;
 				qp->ibqp.event_handler(&ev,
 					qp->ibqp.qp_context);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			spin_unlock_irqrestore(&qp->state_lock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	do_complete(qp, wqe);
+	करो_complete(qp, wqe);
 
-	if (psn_compare(pkt->psn, qp->comp.psn) >= 0)
-		return COMPST_UPDATE_COMP;
-	else
-		return COMPST_DONE;
-}
+	अगर (psn_compare(pkt->psn, qp->comp.psn) >= 0)
+		वापस COMPST_UPDATE_COMP;
+	अन्यथा
+		वापस COMPST_DONE;
+पूर्ण
 
-static inline enum comp_state complete_wqe(struct rxe_qp *qp,
-					   struct rxe_pkt_info *pkt,
-					   struct rxe_send_wqe *wqe)
-{
-	if (pkt && wqe->state == wqe_state_pending) {
-		if (psn_compare(wqe->last_psn, qp->comp.psn) >= 0) {
+अटल अंतरभूत क्रमागत comp_state complete_wqe(काष्ठा rxe_qp *qp,
+					   काष्ठा rxe_pkt_info *pkt,
+					   काष्ठा rxe_send_wqe *wqe)
+अणु
+	अगर (pkt && wqe->state == wqe_state_pending) अणु
+		अगर (psn_compare(wqe->last_psn, qp->comp.psn) >= 0) अणु
 			qp->comp.psn = (wqe->last_psn + 1) & BTH_PSN_MASK;
 			qp->comp.opcode = -1;
-		}
+		पूर्ण
 
-		if (qp->req.wait_psn) {
-			qp->req.wait_psn = 0;
+		अगर (qp->req.रुको_psn) अणु
+			qp->req.रुको_psn = 0;
 			rxe_run_task(&qp->req.task, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	do_complete(qp, wqe);
+	करो_complete(qp, wqe);
 
-	return COMPST_GET_WQE;
-}
+	वापस COMPST_GET_WQE;
+पूर्ण
 
-static void rxe_drain_resp_pkts(struct rxe_qp *qp, bool notify)
-{
-	struct sk_buff *skb;
-	struct rxe_send_wqe *wqe;
+अटल व्योम rxe_drain_resp_pkts(काष्ठा rxe_qp *qp, bool notअगरy)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा rxe_send_wqe *wqe;
 
-	while ((skb = skb_dequeue(&qp->resp_pkts))) {
+	जबतक ((skb = skb_dequeue(&qp->resp_pkts))) अणु
 		rxe_drop_ref(qp);
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 		ib_device_put(qp->ibqp.device);
-	}
+	पूर्ण
 
-	while ((wqe = queue_head(qp->sq.queue))) {
-		if (notify) {
+	जबतक ((wqe = queue_head(qp->sq.queue))) अणु
+		अगर (notअगरy) अणु
 			wqe->status = IB_WC_WR_FLUSH_ERR;
-			do_complete(qp, wqe);
-		} else {
+			करो_complete(qp, wqe);
+		पूर्ण अन्यथा अणु
 			advance_consumer(qp->sq.queue);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void free_pkt(struct rxe_pkt_info *pkt)
-{
-	struct sk_buff *skb = PKT_TO_SKB(pkt);
-	struct rxe_qp *qp = pkt->qp;
-	struct ib_device *dev = qp->ibqp.device;
+अटल व्योम मुक्त_pkt(काष्ठा rxe_pkt_info *pkt)
+अणु
+	काष्ठा sk_buff *skb = PKT_TO_SKB(pkt);
+	काष्ठा rxe_qp *qp = pkt->qp;
+	काष्ठा ib_device *dev = qp->ibqp.device;
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 	rxe_drop_ref(qp);
 	ib_device_put(dev);
-}
+पूर्ण
 
-int rxe_completer(void *arg)
-{
-	struct rxe_qp *qp = (struct rxe_qp *)arg;
-	struct rxe_dev *rxe = to_rdev(qp->ibqp.device);
-	struct rxe_send_wqe *wqe = NULL;
-	struct sk_buff *skb = NULL;
-	struct rxe_pkt_info *pkt = NULL;
-	enum comp_state state;
-	int ret = 0;
+पूर्णांक rxe_completer(व्योम *arg)
+अणु
+	काष्ठा rxe_qp *qp = (काष्ठा rxe_qp *)arg;
+	काष्ठा rxe_dev *rxe = to_rdev(qp->ibqp.device);
+	काष्ठा rxe_send_wqe *wqe = शून्य;
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा rxe_pkt_info *pkt = शून्य;
+	क्रमागत comp_state state;
+	पूर्णांक ret = 0;
 
 	rxe_add_ref(qp);
 
-	if (!qp->valid || qp->req.state == QP_STATE_ERROR ||
-	    qp->req.state == QP_STATE_RESET) {
+	अगर (!qp->valid || qp->req.state == QP_STATE_ERROR ||
+	    qp->req.state == QP_STATE_RESET) अणु
 		rxe_drain_resp_pkts(qp, qp->valid &&
 				    qp->req.state == QP_STATE_ERROR);
 		ret = -EAGAIN;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (qp->comp.timeout) {
-		qp->comp.timeout_retry = 1;
-		qp->comp.timeout = 0;
-	} else {
-		qp->comp.timeout_retry = 0;
-	}
+	अगर (qp->comp.समयout) अणु
+		qp->comp.समयout_retry = 1;
+		qp->comp.समयout = 0;
+	पूर्ण अन्यथा अणु
+		qp->comp.समयout_retry = 0;
+	पूर्ण
 
-	if (qp->req.need_retry) {
+	अगर (qp->req.need_retry) अणु
 		ret = -EAGAIN;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	state = COMPST_GET_ACK;
 
-	while (1) {
+	जबतक (1) अणु
 		pr_debug("qp#%d state = %s\n", qp_num(qp),
 			 comp_state_name[state]);
-		switch (state) {
-		case COMPST_GET_ACK:
+		चयन (state) अणु
+		हाल COMPST_GET_ACK:
 			skb = skb_dequeue(&qp->resp_pkts);
-			if (skb) {
+			अगर (skb) अणु
 				pkt = SKB_TO_PKT(skb);
-				qp->comp.timeout_retry = 0;
-			}
+				qp->comp.समयout_retry = 0;
+			पूर्ण
 			state = COMPST_GET_WQE;
-			break;
+			अवरोध;
 
-		case COMPST_GET_WQE:
+		हाल COMPST_GET_WQE:
 			state = get_wqe(qp, pkt, &wqe);
-			break;
+			अवरोध;
 
-		case COMPST_CHECK_PSN:
+		हाल COMPST_CHECK_PSN:
 			state = check_psn(qp, pkt, wqe);
-			break;
+			अवरोध;
 
-		case COMPST_CHECK_ACK:
+		हाल COMPST_CHECK_ACK:
 			state = check_ack(qp, pkt, wqe);
-			break;
+			अवरोध;
 
-		case COMPST_READ:
-			state = do_read(qp, pkt, wqe);
-			break;
+		हाल COMPST_READ:
+			state = करो_पढ़ो(qp, pkt, wqe);
+			अवरोध;
 
-		case COMPST_ATOMIC:
-			state = do_atomic(qp, pkt, wqe);
-			break;
+		हाल COMPST_ATOMIC:
+			state = करो_atomic(qp, pkt, wqe);
+			अवरोध;
 
-		case COMPST_WRITE_SEND:
-			if (wqe->state == wqe_state_pending &&
+		हाल COMPST_WRITE_SEND:
+			अगर (wqe->state == wqe_state_pending &&
 			    wqe->last_psn == pkt->psn)
 				state = COMPST_COMP_ACK;
-			else
+			अन्यथा
 				state = COMPST_UPDATE_COMP;
-			break;
+			अवरोध;
 
-		case COMPST_COMP_ACK:
+		हाल COMPST_COMP_ACK:
 			state = complete_ack(qp, pkt, wqe);
-			break;
+			अवरोध;
 
-		case COMPST_COMP_WQE:
+		हाल COMPST_COMP_WQE:
 			state = complete_wqe(qp, pkt, wqe);
-			break;
+			अवरोध;
 
-		case COMPST_UPDATE_COMP:
-			if (pkt->mask & RXE_END_MASK)
+		हाल COMPST_UPDATE_COMP:
+			अगर (pkt->mask & RXE_END_MASK)
 				qp->comp.opcode = -1;
-			else
+			अन्यथा
 				qp->comp.opcode = pkt->opcode;
 
-			if (psn_compare(pkt->psn, qp->comp.psn) >= 0)
+			अगर (psn_compare(pkt->psn, qp->comp.psn) >= 0)
 				qp->comp.psn = (pkt->psn + 1) & BTH_PSN_MASK;
 
-			if (qp->req.wait_psn) {
-				qp->req.wait_psn = 0;
+			अगर (qp->req.रुको_psn) अणु
+				qp->req.रुको_psn = 0;
 				rxe_run_task(&qp->req.task, 1);
-			}
+			पूर्ण
 
 			state = COMPST_DONE;
-			break;
+			अवरोध;
 
-		case COMPST_DONE:
-			goto done;
+		हाल COMPST_DONE:
+			जाओ करोne;
 
-		case COMPST_EXIT:
-			if (qp->comp.timeout_retry && wqe) {
+		हाल COMPST_EXIT:
+			अगर (qp->comp.समयout_retry && wqe) अणु
 				state = COMPST_ERROR_RETRY;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			/* re reset the timeout counter if
+			/* re reset the समयout counter अगर
 			 * (1) QP is type RC
 			 * (2) the QP is alive
 			 * (3) there is a packet sent by the requester that
 			 *     might be acked (we still might get spurious
-			 *     timeouts but try to keep them as few as possible)
-			 * (4) the timeout parameter is set
+			 *     समयouts but try to keep them as few as possible)
+			 * (4) the समयout parameter is set
 			 */
-			if ((qp_type(qp) == IB_QPT_RC) &&
+			अगर ((qp_type(qp) == IB_QPT_RC) &&
 			    (qp->req.state == QP_STATE_READY) &&
 			    (psn_compare(qp->req.psn, qp->comp.psn) > 0) &&
-			    qp->qp_timeout_jiffies)
-				mod_timer(&qp->retrans_timer,
-					  jiffies + qp->qp_timeout_jiffies);
+			    qp->qp_समयout_jअगरfies)
+				mod_समयr(&qp->retrans_समयr,
+					  jअगरfies + qp->qp_समयout_jअगरfies);
 			ret = -EAGAIN;
-			goto done;
+			जाओ करोne;
 
-		case COMPST_ERROR_RETRY:
-			/* we come here if the retry timer fired and we did
+		हाल COMPST_ERROR_RETRY:
+			/* we come here अगर the retry समयr fired and we did
 			 * not receive a response packet. try to retry the send
-			 * queue if that makes sense and the limits have not
-			 * been exceeded. remember that some timeouts are
-			 * spurious since we do not reset the timer but kick
-			 * it down the road or let it expire
+			 * queue अगर that makes sense and the limits have not
+			 * been exceeded. remember that some समयouts are
+			 * spurious since we करो not reset the समयr but kick
+			 * it करोwn the road or let it expire
 			 */
 
-			/* there is nothing to retry in this case */
-			if (!wqe || (wqe->state == wqe_state_posted)) {
+			/* there is nothing to retry in this हाल */
+			अगर (!wqe || (wqe->state == wqe_state_posted)) अणु
 				ret = -EAGAIN;
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 
-			/* if we've started a retry, don't start another
-			 * retry sequence, unless this is a timeout.
+			/* अगर we've started a retry, don't start another
+			 * retry sequence, unless this is a समयout.
 			 */
-			if (qp->comp.started_retry &&
-			    !qp->comp.timeout_retry)
-				goto done;
+			अगर (qp->comp.started_retry &&
+			    !qp->comp.समयout_retry)
+				जाओ करोne;
 
-			if (qp->comp.retry_cnt > 0) {
-				if (qp->comp.retry_cnt != 7)
+			अगर (qp->comp.retry_cnt > 0) अणु
+				अगर (qp->comp.retry_cnt != 7)
 					qp->comp.retry_cnt--;
 
-				/* no point in retrying if we have already
+				/* no poपूर्णांक in retrying अगर we have alपढ़ोy
 				 * seen the last ack that the requester could
 				 * have caused
 				 */
-				if (psn_compare(qp->req.psn,
-						qp->comp.psn) > 0) {
+				अगर (psn_compare(qp->req.psn,
+						qp->comp.psn) > 0) अणु
 					/* tell the requester to retry the
-					 * send queue next time around
+					 * send queue next समय around
 					 */
 					rxe_counter_inc(rxe,
 							RXE_CNT_COMP_RETRY);
 					qp->req.need_retry = 1;
 					qp->comp.started_retry = 1;
 					rxe_run_task(&qp->req.task, 0);
-				}
-				goto done;
+				पूर्ण
+				जाओ करोne;
 
-			} else {
+			पूर्ण अन्यथा अणु
 				rxe_counter_inc(rxe, RXE_CNT_RETRY_EXCEEDED);
 				wqe->status = IB_WC_RETRY_EXC_ERR;
 				state = COMPST_ERROR;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case COMPST_RNR_RETRY:
-			if (qp->comp.rnr_retry > 0) {
-				if (qp->comp.rnr_retry != 7)
+		हाल COMPST_RNR_RETRY:
+			अगर (qp->comp.rnr_retry > 0) अणु
+				अगर (qp->comp.rnr_retry != 7)
 					qp->comp.rnr_retry--;
 
 				qp->req.need_retry = 1;
 				pr_debug("qp#%d set rnr nak timer\n",
 					 qp_num(qp));
-				mod_timer(&qp->rnr_nak_timer,
-					  jiffies + rnrnak_jiffies(aeth_syn(pkt)
+				mod_समयr(&qp->rnr_nak_समयr,
+					  jअगरfies + rnrnak_jअगरfies(aeth_syn(pkt)
 						& ~AETH_TYPE_MASK));
 				ret = -EAGAIN;
-				goto done;
-			} else {
+				जाओ करोne;
+			पूर्ण अन्यथा अणु
 				rxe_counter_inc(rxe,
 						RXE_CNT_RNR_RETRY_EXCEEDED);
 				wqe->status = IB_WC_RNR_RETRY_EXC_ERR;
 				state = COMPST_ERROR;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case COMPST_ERROR:
+		हाल COMPST_ERROR:
 			WARN_ON_ONCE(wqe->status == IB_WC_SUCCESS);
-			do_complete(qp, wqe);
+			करो_complete(qp, wqe);
 			rxe_qp_error(qp);
 			ret = -EAGAIN;
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-done:
-	if (pkt)
-		free_pkt(pkt);
+करोne:
+	अगर (pkt)
+		मुक्त_pkt(pkt);
 	rxe_drop_ref(qp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,194 +1,195 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2011-2015 Synaptics Incorporated
  * Copyright (c) 2011 Unixphere
  */
 
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/input.h>
-#include <linux/input/mt.h>
-#include <linux/rmi.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include "rmi_driver.h"
-#include "rmi_2d_sensor.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/rmi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश "rmi_driver.h"
+#समावेश "rmi_2d_sensor.h"
 
-#define F11_MAX_NUM_OF_FINGERS		10
-#define F11_MAX_NUM_OF_TOUCH_SHAPES	16
+#घोषणा F11_MAX_NUM_OF_FINGERS		10
+#घोषणा F11_MAX_NUM_OF_TOUCH_SHAPES	16
 
-#define FINGER_STATE_MASK	0x03
+#घोषणा FINGER_STATE_MASK	0x03
 
-#define F11_CTRL_SENSOR_MAX_X_POS_OFFSET	6
-#define F11_CTRL_SENSOR_MAX_Y_POS_OFFSET	8
+#घोषणा F11_CTRL_SENSOR_MAX_X_POS_OFFSET	6
+#घोषणा F11_CTRL_SENSOR_MAX_Y_POS_OFFSET	8
 
-#define DEFAULT_XY_MAX 9999
-#define DEFAULT_MAX_ABS_MT_PRESSURE 255
-#define DEFAULT_MAX_ABS_MT_TOUCH 15
-#define DEFAULT_MAX_ABS_MT_ORIENTATION 1
-#define DEFAULT_MIN_ABS_MT_TRACKING_ID 1
-#define DEFAULT_MAX_ABS_MT_TRACKING_ID 10
+#घोषणा DEFAULT_XY_MAX 9999
+#घोषणा DEFAULT_MAX_ABS_MT_PRESSURE 255
+#घोषणा DEFAULT_MAX_ABS_MT_TOUCH 15
+#घोषणा DEFAULT_MAX_ABS_MT_ORIENTATION 1
+#घोषणा DEFAULT_MIN_ABS_MT_TRACKING_ID 1
+#घोषणा DEFAULT_MAX_ABS_MT_TRACKING_ID 10
 
 /*
- * A note about RMI4 F11 register structure.
+ * A note about RMI4 F11 रेजिस्टर काष्ठाure.
  *
- * The properties for a given sensor are described by its query registers.  The
- * number of query registers and the layout of their contents are described by
- * the F11 device queries as well as the sensor query information.
+ * The properties क्रम a given sensor are described by its query रेजिस्टरs.  The
+ * number of query रेजिस्टरs and the layout of their contents are described by
+ * the F11 device queries as well as the sensor query inक्रमmation.
  *
- * Similarly, each sensor has control registers that govern its behavior.  The
- * size and layout of the control registers for a given sensor can be determined
- * by parsing that sensors query registers.
+ * Similarly, each sensor has control रेजिस्टरs that govern its behavior.  The
+ * size and layout of the control रेजिस्टरs क्रम a given sensor can be determined
+ * by parsing that sensors query रेजिस्टरs.
  *
- * And in a likewise fashion, each sensor has data registers where it reports
- * its touch data and other interesting stuff.  The size and layout of a
- * sensors data registers must be determined by parsing its query registers.
+ * And in a likewise fashion, each sensor has data रेजिस्टरs where it reports
+ * its touch data and other पूर्णांकeresting stuff.  The size and layout of a
+ * sensors data रेजिस्टरs must be determined by parsing its query रेजिस्टरs.
  *
- * The short story is that we need to read and parse a lot of query
- * registers in order to determine the attributes of a sensor. Then
+ * The लघु story is that we need to पढ़ो and parse a lot of query
+ * रेजिस्टरs in order to determine the attributes of a sensor. Then
  * we need to use that data to compute the size of the control and data
- * registers for sensor.
+ * रेजिस्टरs क्रम sensor.
  *
- * The end result is that we have a number of structs that aren't used to
+ * The end result is that we have a number of काष्ठाs that aren't used to
  * directly generate the input events, but their size, location and contents
- * are critical to determining where the data we are interested in lives.
+ * are critical to determining where the data we are पूर्णांकerested in lives.
  *
- * At this time, the driver does not yet comprehend all possible F11
+ * At this समय, the driver करोes not yet comprehend all possible F11
  * configuration options, but it should be sufficient to cover 99% of RMI4 F11
  * devices currently in the field.
  */
 
 /* maximum ABS_MT_POSITION displacement (in mm) */
-#define DMAX 10
+#घोषणा DMAX 10
 
 /*
- * Writing this to the F11 command register will cause the sensor to
+ * Writing this to the F11 command रेजिस्टर will cause the sensor to
  * calibrate to the current capacitive state.
  */
-#define RMI_F11_REZERO  0x01
+#घोषणा RMI_F11_REZERO  0x01
 
-#define RMI_F11_HAS_QUERY9              (1 << 3)
-#define RMI_F11_HAS_QUERY11             (1 << 4)
-#define RMI_F11_HAS_QUERY12             (1 << 5)
-#define RMI_F11_HAS_QUERY27             (1 << 6)
-#define RMI_F11_HAS_QUERY28             (1 << 7)
+#घोषणा RMI_F11_HAS_QUERY9              (1 << 3)
+#घोषणा RMI_F11_HAS_QUERY11             (1 << 4)
+#घोषणा RMI_F11_HAS_QUERY12             (1 << 5)
+#घोषणा RMI_F11_HAS_QUERY27             (1 << 6)
+#घोषणा RMI_F11_HAS_QUERY28             (1 << 7)
 
-/** Defs for Query 1 */
+/** Defs क्रम Query 1 */
 
-#define RMI_F11_NR_FINGERS_MASK 0x07
-#define RMI_F11_HAS_REL                 (1 << 3)
-#define RMI_F11_HAS_ABS                 (1 << 4)
-#define RMI_F11_HAS_GESTURES            (1 << 5)
-#define RMI_F11_HAS_SENSITIVITY_ADJ     (1 << 6)
-#define RMI_F11_CONFIGURABLE            (1 << 7)
+#घोषणा RMI_F11_NR_FINGERS_MASK 0x07
+#घोषणा RMI_F11_HAS_REL                 (1 << 3)
+#घोषणा RMI_F11_HAS_ABS                 (1 << 4)
+#घोषणा RMI_F11_HAS_GESTURES            (1 << 5)
+#घोषणा RMI_F11_HAS_SENSITIVITY_ADJ     (1 << 6)
+#घोषणा RMI_F11_CONFIGURABLE            (1 << 7)
 
-/** Defs for Query 2, 3, and 4. */
-#define RMI_F11_NR_ELECTRODES_MASK      0x7F
+/** Defs क्रम Query 2, 3, and 4. */
+#घोषणा RMI_F11_NR_ELECTRODES_MASK      0x7F
 
-/** Defs for Query 5 */
+/** Defs क्रम Query 5 */
 
-#define RMI_F11_ABS_DATA_SIZE_MASK      0x03
-#define RMI_F11_HAS_ANCHORED_FINGER     (1 << 2)
-#define RMI_F11_HAS_ADJ_HYST            (1 << 3)
-#define RMI_F11_HAS_DRIBBLE             (1 << 4)
-#define RMI_F11_HAS_BENDING_CORRECTION  (1 << 5)
-#define RMI_F11_HAS_LARGE_OBJECT_SUPPRESSION    (1 << 6)
-#define RMI_F11_HAS_JITTER_FILTER       (1 << 7)
+#घोषणा RMI_F11_ABS_DATA_SIZE_MASK      0x03
+#घोषणा RMI_F11_HAS_ANCHORED_FINGER     (1 << 2)
+#घोषणा RMI_F11_HAS_ADJ_HYST            (1 << 3)
+#घोषणा RMI_F11_HAS_DRIBBLE             (1 << 4)
+#घोषणा RMI_F11_HAS_BENDING_CORRECTION  (1 << 5)
+#घोषणा RMI_F11_HAS_LARGE_OBJECT_SUPPRESSION    (1 << 6)
+#घोषणा RMI_F11_HAS_JITTER_FILTER       (1 << 7)
 
-/** Defs for Query 7 */
-#define RMI_F11_HAS_SINGLE_TAP                  (1 << 0)
-#define RMI_F11_HAS_TAP_AND_HOLD                (1 << 1)
-#define RMI_F11_HAS_DOUBLE_TAP                  (1 << 2)
-#define RMI_F11_HAS_EARLY_TAP                   (1 << 3)
-#define RMI_F11_HAS_FLICK                       (1 << 4)
-#define RMI_F11_HAS_PRESS                       (1 << 5)
-#define RMI_F11_HAS_PINCH                       (1 << 6)
-#define RMI_F11_HAS_CHIRAL                      (1 << 7)
+/** Defs क्रम Query 7 */
+#घोषणा RMI_F11_HAS_SINGLE_TAP                  (1 << 0)
+#घोषणा RMI_F11_HAS_TAP_AND_HOLD                (1 << 1)
+#घोषणा RMI_F11_HAS_DOUBLE_TAP                  (1 << 2)
+#घोषणा RMI_F11_HAS_EARLY_TAP                   (1 << 3)
+#घोषणा RMI_F11_HAS_FLICK                       (1 << 4)
+#घोषणा RMI_F11_HAS_PRESS                       (1 << 5)
+#घोषणा RMI_F11_HAS_PINCH                       (1 << 6)
+#घोषणा RMI_F11_HAS_CHIRAL                      (1 << 7)
 
-/** Defs for Query 8 */
-#define RMI_F11_HAS_PALM_DET                    (1 << 0)
-#define RMI_F11_HAS_ROTATE                      (1 << 1)
-#define RMI_F11_HAS_TOUCH_SHAPES                (1 << 2)
-#define RMI_F11_HAS_SCROLL_ZONES                (1 << 3)
-#define RMI_F11_HAS_INDIVIDUAL_SCROLL_ZONES     (1 << 4)
-#define RMI_F11_HAS_MF_SCROLL                   (1 << 5)
-#define RMI_F11_HAS_MF_EDGE_MOTION              (1 << 6)
-#define RMI_F11_HAS_MF_SCROLL_INERTIA           (1 << 7)
+/** Defs क्रम Query 8 */
+#घोषणा RMI_F11_HAS_PALM_DET                    (1 << 0)
+#घोषणा RMI_F11_HAS_ROTATE                      (1 << 1)
+#घोषणा RMI_F11_HAS_TOUCH_SHAPES                (1 << 2)
+#घोषणा RMI_F11_HAS_SCROLL_ZONES                (1 << 3)
+#घोषणा RMI_F11_HAS_INDIVIDUAL_SCROLL_ZONES     (1 << 4)
+#घोषणा RMI_F11_HAS_MF_SCROLL                   (1 << 5)
+#घोषणा RMI_F11_HAS_MF_EDGE_MOTION              (1 << 6)
+#घोषणा RMI_F11_HAS_MF_SCROLL_INERTIA           (1 << 7)
 
-/** Defs for Query 9. */
-#define RMI_F11_HAS_PEN                         (1 << 0)
-#define RMI_F11_HAS_PROXIMITY                   (1 << 1)
-#define RMI_F11_HAS_PALM_DET_SENSITIVITY        (1 << 2)
-#define RMI_F11_HAS_SUPPRESS_ON_PALM_DETECT     (1 << 3)
-#define RMI_F11_HAS_TWO_PEN_THRESHOLDS          (1 << 4)
-#define RMI_F11_HAS_CONTACT_GEOMETRY            (1 << 5)
-#define RMI_F11_HAS_PEN_HOVER_DISCRIMINATION    (1 << 6)
-#define RMI_F11_HAS_PEN_FILTERS                 (1 << 7)
+/** Defs क्रम Query 9. */
+#घोषणा RMI_F11_HAS_PEN                         (1 << 0)
+#घोषणा RMI_F11_HAS_PROXIMITY                   (1 << 1)
+#घोषणा RMI_F11_HAS_PALM_DET_SENSITIVITY        (1 << 2)
+#घोषणा RMI_F11_HAS_SUPPRESS_ON_PALM_DETECT     (1 << 3)
+#घोषणा RMI_F11_HAS_TWO_PEN_THRESHOLDS          (1 << 4)
+#घोषणा RMI_F11_HAS_CONTACT_GEOMETRY            (1 << 5)
+#घोषणा RMI_F11_HAS_PEN_HOVER_DISCRIMINATION    (1 << 6)
+#घोषणा RMI_F11_HAS_PEN_FILTERS                 (1 << 7)
 
-/** Defs for Query 10. */
-#define RMI_F11_NR_TOUCH_SHAPES_MASK            0x1F
+/** Defs क्रम Query 10. */
+#घोषणा RMI_F11_NR_TOUCH_SHAPES_MASK            0x1F
 
-/** Defs for Query 11 */
+/** Defs क्रम Query 11 */
 
-#define RMI_F11_HAS_Z_TUNING                    (1 << 0)
-#define RMI_F11_HAS_ALGORITHM_SELECTION         (1 << 1)
-#define RMI_F11_HAS_W_TUNING                    (1 << 2)
-#define RMI_F11_HAS_PITCH_INFO                  (1 << 3)
-#define RMI_F11_HAS_FINGER_SIZE                 (1 << 4)
-#define RMI_F11_HAS_SEGMENTATION_AGGRESSIVENESS (1 << 5)
-#define RMI_F11_HAS_XY_CLIP                     (1 << 6)
-#define RMI_F11_HAS_DRUMMING_FILTER             (1 << 7)
+#घोषणा RMI_F11_HAS_Z_TUNING                    (1 << 0)
+#घोषणा RMI_F11_HAS_ALGORITHM_SELECTION         (1 << 1)
+#घोषणा RMI_F11_HAS_W_TUNING                    (1 << 2)
+#घोषणा RMI_F11_HAS_PITCH_INFO                  (1 << 3)
+#घोषणा RMI_F11_HAS_FINGER_SIZE                 (1 << 4)
+#घोषणा RMI_F11_HAS_SEGMENTATION_AGGRESSIVENESS (1 << 5)
+#घोषणा RMI_F11_HAS_XY_CLIP                     (1 << 6)
+#घोषणा RMI_F11_HAS_DRUMMING_FILTER             (1 << 7)
 
-/** Defs for Query 12. */
+/** Defs क्रम Query 12. */
 
-#define RMI_F11_HAS_GAPLESS_FINGER              (1 << 0)
-#define RMI_F11_HAS_GAPLESS_FINGER_TUNING       (1 << 1)
-#define RMI_F11_HAS_8BIT_W                      (1 << 2)
-#define RMI_F11_HAS_ADJUSTABLE_MAPPING          (1 << 3)
-#define RMI_F11_HAS_INFO2                       (1 << 4)
-#define RMI_F11_HAS_PHYSICAL_PROPS              (1 << 5)
-#define RMI_F11_HAS_FINGER_LIMIT                (1 << 6)
-#define RMI_F11_HAS_LINEAR_COEFF                (1 << 7)
+#घोषणा RMI_F11_HAS_GAPLESS_FINGER              (1 << 0)
+#घोषणा RMI_F11_HAS_GAPLESS_FINGER_TUNING       (1 << 1)
+#घोषणा RMI_F11_HAS_8BIT_W                      (1 << 2)
+#घोषणा RMI_F11_HAS_ADJUSTABLE_MAPPING          (1 << 3)
+#घोषणा RMI_F11_HAS_INFO2                       (1 << 4)
+#घोषणा RMI_F11_HAS_PHYSICAL_PROPS              (1 << 5)
+#घोषणा RMI_F11_HAS_FINGER_LIMIT                (1 << 6)
+#घोषणा RMI_F11_HAS_LINEAR_COEFF                (1 << 7)
 
-/** Defs for Query 13. */
+/** Defs क्रम Query 13. */
 
-#define RMI_F11_JITTER_WINDOW_MASK              0x1F
-#define RMI_F11_JITTER_FILTER_MASK              0x60
-#define RMI_F11_JITTER_FILTER_SHIFT             5
+#घोषणा RMI_F11_JITTER_WINDOW_MASK              0x1F
+#घोषणा RMI_F11_JITTER_FILTER_MASK              0x60
+#घोषणा RMI_F11_JITTER_FILTER_SHIFT             5
 
-/** Defs for Query 14. */
-#define RMI_F11_LIGHT_CONTROL_MASK              0x03
-#define RMI_F11_IS_CLEAR                        (1 << 2)
-#define RMI_F11_CLICKPAD_PROPS_MASK             0x18
-#define RMI_F11_CLICKPAD_PROPS_SHIFT            3
-#define RMI_F11_MOUSE_BUTTONS_MASK              0x60
-#define RMI_F11_MOUSE_BUTTONS_SHIFT             5
-#define RMI_F11_HAS_ADVANCED_GESTURES           (1 << 7)
+/** Defs क्रम Query 14. */
+#घोषणा RMI_F11_LIGHT_CONTROL_MASK              0x03
+#घोषणा RMI_F11_IS_CLEAR                        (1 << 2)
+#घोषणा RMI_F11_CLICKPAD_PROPS_MASK             0x18
+#घोषणा RMI_F11_CLICKPAD_PROPS_SHIFT            3
+#घोषणा RMI_F11_MOUSE_BUTTONS_MASK              0x60
+#घोषणा RMI_F11_MOUSE_BUTTONS_SHIFT             5
+#घोषणा RMI_F11_HAS_ADVANCED_GESTURES           (1 << 7)
 
-#define RMI_F11_QUERY_SIZE                      4
-#define RMI_F11_QUERY_GESTURE_SIZE              2
+#घोषणा RMI_F11_QUERY_SIZE                      4
+#घोषणा RMI_F11_QUERY_GESTURE_SIZE              2
 
-#define F11_LIGHT_CTL_NONE 0x00
-#define F11_LUXPAD	   0x01
-#define F11_DUAL_MODE      0x02
+#घोषणा F11_LIGHT_CTL_NONE 0x00
+#घोषणा F11_LUXPAD	   0x01
+#घोषणा F11_DUAL_MODE      0x02
 
-#define F11_NOT_CLICKPAD     0x00
-#define F11_HINGED_CLICKPAD  0x01
-#define F11_UNIFORM_CLICKPAD 0x02
+#घोषणा F11_NOT_CLICKPAD     0x00
+#घोषणा F11_HINGED_CLICKPAD  0x01
+#घोषणा F11_UNIFORM_CLICKPAD 0x02
 
 /**
- * struct f11_2d_sensor_queries - describes sensor capabilities
+ * काष्ठा f11_2d_sensor_queries - describes sensor capabilities
  *
- * Query registers 1 through 4 are always present.
+ * Query रेजिस्टरs 1 through 4 are always present.
  *
  * @nr_fingers: describes the maximum number of fingers the 2-D sensor
  *	supports.
  * @has_rel: the sensor supports relative motion reporting.
- * @has_abs: the sensor supports absolute poition reporting.
+ * @has_असल: the sensor supports असलolute poition reporting.
  * @has_gestures: the sensor supports gesture reporting.
  * @has_sensitivity_adjust: the sensor supports a global sensitivity
- *	adjustment.
+ *	adjusपंचांगent.
  * @configurable: the sensor supports various configuration options.
  * @nr_x_electrodes:  the maximum number of electrodes the 2-D sensor
  *	supports on the X axis.
@@ -197,111 +198,111 @@
  * @max_electrodes: the total number of X and Y electrodes that may be
  *	configured.
  *
- * Query 5 is present if the has_abs bit is set.
+ * Query 5 is present अगर the has_असल bit is set.
  *
- * @abs_data_size: describes the format of data reported by the absolute
- *	data source.  Only one format (the kind used here) is supported at this
- *	time.
+ * @असल_data_size: describes the क्रमmat of data reported by the असलolute
+ *	data source.  Only one क्रमmat (the kind used here) is supported at this
+ *	समय.
  * @has_anchored_finger: then the sensor supports the high-precision second
  *	finger tracking provided by the manual tracking and motion sensitivity
  *	options.
- * @has_adj_hyst: the difference between the finger release threshold and
+ * @has_adj_hyst: the dअगरference between the finger release threshold and
  *	the touch threshold.
- * @has_dribble: the sensor supports the generation of dribble interrupts,
+ * @has_dribble: the sensor supports the generation of dribble पूर्णांकerrupts,
  *	which may be enabled or disabled with the dribble control bit.
- * @has_bending_correction: Bending related data registers 28 and 36, and
- *	control register 52..57 are present.
- * @has_large_object_suppression: control register 58 and data register 28
+ * @has_bending_correction: Bending related data रेजिस्टरs 28 and 36, and
+ *	control रेजिस्टर 52..57 are present.
+ * @has_large_object_suppression: control रेजिस्टर 58 and data रेजिस्टर 28
  *	exist.
  * @has_jitter_filter: query 13 and control 73..76 exist.
  *
- * Query 6 is present if the has_rel it is set.
+ * Query 6 is present अगर the has_rel it is set.
  *
- * @f11_2d_query6: this register is reserved.
+ * @f11_2d_query6: this रेजिस्टर is reserved.
  *
- * Gesture information queries 7 and 8 are present if has_gestures bit is set.
+ * Gesture inक्रमmation queries 7 and 8 are present अगर has_gestures bit is set.
  *
  * @has_single_tap: a basic single-tap gesture is supported.
  * @has_tap_n_hold: tap-and-hold gesture is supported.
- * @has_double_tap: double-tap gesture is supported.
+ * @has_द्विगुन_tap: द्विगुन-tap gesture is supported.
  * @has_early_tap: early tap is supported and reported as soon as the finger
- *	lifts for any tap event that could be interpreted as either a single
- *	tap or as the first tap of a double-tap or tap-and-hold gesture.
+ *	lअगरts क्रम any tap event that could be पूर्णांकerpreted as either a single
+ *	tap or as the first tap of a द्विगुन-tap or tap-and-hold gesture.
  * @has_flick: flick detection is supported.
  * @has_press: press gesture reporting is supported.
  * @has_pinch: pinch gesture detection is supported.
  * @has_chiral: chiral (circular) scrolling  gesture detection is supported.
- * @has_palm_det: the 2-D sensor notifies the host whenever a large conductive
+ * @has_palm_det: the 2-D sensor notअगरies the host whenever a large conductive
  *	object such as a palm or a cheek touches the 2-D sensor.
  * @has_rotate: rotation gesture detection is supported.
  * @has_touch_shapes: TouchShapes are supported.  A TouchShape is a fixed
  *	rectangular area on the sensor that behaves like a capacitive button.
  * @has_scroll_zones: scrolling areas near the sensor edges are supported.
- * @has_individual_scroll_zones: if 1, then 4 scroll zones are supported;
- *	if 0, then only two are supported.
- * @has_mf_scroll: the multifinger_scrolling bit will be set when
+ * @has_inभागidual_scroll_zones: अगर 1, then 4 scroll zones are supported;
+ *	अगर 0, then only two are supported.
+ * @has_mf_scroll: the multअगरinger_scrolling bit will be set when
  *	more than one finger is involved in a scrolling action.
  * @has_mf_edge_motion: indicates whether multi-finger edge motion gesture
  *	is supported.
  * @has_mf_scroll_inertia: indicates whether multi-finger scroll inertia
  *	feature is supported.
  *
- * Convenience for checking bytes in the gesture info registers.  This is done
+ * Convenience क्रम checking bytes in the gesture info रेजिस्टरs.  This is करोne
  * often enough that we put it here to declutter the conditionals
  *
- * @query7_nonzero: true if none of the query 7 bits are set
- * @query8_nonzero: true if none of the query 8 bits are set
+ * @query7_nonzero: true अगर none of the query 7 bits are set
+ * @query8_nonzero: true अगर none of the query 8 bits are set
  *
- * Query 9 is present if the has_query9 is set.
+ * Query 9 is present अगर the has_query9 is set.
  *
- * @has_pen: detection of a stylus is supported and registers F11_2D_Ctrl20
+ * @has_pen: detection of a stylus is supported and रेजिस्टरs F11_2D_Ctrl20
  *	and F11_2D_Ctrl21 exist.
  * @has_proximity: detection of fingers near the sensor is supported and
- *	registers F11_2D_Ctrl22 through F11_2D_Ctrl26 exist.
+ *	रेजिस्टरs F11_2D_Ctrl22 through F11_2D_Ctrl26 exist.
  * @has_palm_det_sensitivity:  the sensor supports the palm detect sensitivity
- *	feature and register F11_2D_Ctrl27 exists.
+ *	feature and रेजिस्टर F11_2D_Ctrl27 exists.
  * @has_suppress_on_palm_detect: the device supports the large object detect
- *	suppression feature and register F11_2D_Ctrl27 exists.
- * @has_two_pen_thresholds: if has_pen is also set, then F11_2D_Ctrl35 exists.
+ *	suppression feature and रेजिस्टर F11_2D_Ctrl27 exists.
+ * @has_two_pen_thresholds: अगर has_pen is also set, then F11_2D_Ctrl35 exists.
  * @has_contact_geometry: the sensor supports the use of contact geometry to
- *	map absolute X and Y target positions and registers F11_2D_Data18
+ *	map असलolute X and Y target positions and रेजिस्टरs F11_2D_Data18
  *	through F11_2D_Data27 exist.
- * @has_pen_hover_discrimination: if has_pen is also set, then registers
+ * @has_pen_hover_discrimination: अगर has_pen is also set, then रेजिस्टरs
  *	F11_2D_Data29 through F11_2D_Data31, F11_2D_Ctrl68.*, F11_2D_Ctrl69
  *	and F11_2D_Ctrl72 exist.
- * @has_pen_filters: if has_pen is also set, then registers F11_2D_Ctrl70 and
+ * @has_pen_filters: अगर has_pen is also set, then रेजिस्टरs F11_2D_Ctrl70 and
  *	F11_2D_Ctrl71 exist.
  *
- * Touch shape info (query 10) is present if has_touch_shapes is set.
+ * Touch shape info (query 10) is present अगर has_touch_shapes is set.
  *
  * @nr_touch_shapes: the total number of touch shapes supported.
  *
- * Query 11 is present if the has_query11 bit is set in query 0.
+ * Query 11 is present अगर the has_query11 bit is set in query 0.
  *
- * @has_z_tuning: if set, the sensor supports Z tuning and registers
+ * @has_z_tuning: अगर set, the sensor supports Z tuning and रेजिस्टरs
  *	F11_2D_Ctrl29 through F11_2D_Ctrl33 exist.
  * @has_algorithm_selection: controls choice of noise suppression algorithm
- * @has_w_tuning: the sensor supports Wx and Wy scaling and registers
+ * @has_w_tuning: the sensor supports Wx and Wy scaling and रेजिस्टरs
  *	F11_2D_Ctrl36 through F11_2D_Ctrl39 exist.
  * @has_pitch_info: the X and Y pitches of the sensor electrodes can be
- *	configured and registers F11_2D_Ctrl40 and F11_2D_Ctrl41 exist.
- * @has_finger_size: the default finger width settings for the sensor
- *	can be configured and registers F11_2D_Ctrl42 through F11_2D_Ctrl44
+ *	configured and रेजिस्टरs F11_2D_Ctrl40 and F11_2D_Ctrl41 exist.
+ * @has_finger_size: the शेष finger width settings क्रम the sensor
+ *	can be configured and रेजिस्टरs F11_2D_Ctrl42 through F11_2D_Ctrl44
  *	exist.
- * @has_segmentation_aggressiveness: the sensor’s ability to distinguish
- *	multiple objects close together can be configured and register
+ * @has_segmentation_aggressiveness: the sensorै s ability to distinguish
+ *	multiple objects बंद together can be configured and रेजिस्टर
  *	F11_2D_Ctrl45 exists.
  * @has_XY_clip: the inactive outside borders of the sensor can be
- *	configured and registers F11_2D_Ctrl46 through F11_2D_Ctrl49 exist.
+ *	configured and रेजिस्टरs F11_2D_Ctrl46 through F11_2D_Ctrl49 exist.
  * @has_drumming_filter: the sensor can be configured to distinguish
- *	between a fast flick and a quick drumming movement and registers
+ *	between a fast flick and a quick drumming movement and रेजिस्टरs
  *	F11_2D_Ctrl50 and F11_2D_Ctrl51 exist.
  *
- * Query 12 is present if hasQuery12 bit is set.
+ * Query 12 is present अगर hasQuery12 bit is set.
  *
- * @has_gapless_finger: control registers relating to gapless finger are
+ * @has_gapless_finger: control रेजिस्टरs relating to gapless finger are
  *	present.
- * @has_gapless_finger_tuning: additional control and data registers relating
+ * @has_gapless_finger_tuning: additional control and data रेजिस्टरs relating
  *	to gapless finger are present.
  * @has_8bit_w: larger W value reporting is supported.
  * @has_adjustable_mapping: TBD
@@ -311,30 +312,30 @@
  * @has_finger_limit: indicates that F11 Ctrl 80 exists.
  * @has_linear_coeff_2: indicates that F11 Ctrl 81 exists.
  *
- * Query 13 is present if Query 5's has_jitter_filter bit is set.
+ * Query 13 is present अगर Query 5's has_jitter_filter bit is set.
  *
- * @jitter_window_size: used by Design Studio 4.
+ * @jitter_winकरोw_size: used by Design Studio 4.
  * @jitter_filter_type: used by Design Studio 4.
  *
- * Query 14 is present if query 12's has_general_info2 flag is set.
+ * Query 14 is present अगर query 12's has_general_info2 flag is set.
  *
  * @light_control: Indicates what light/led control features are present,
- *	if any.
- * @is_clear: if set, this is a clear sensor (indicating direct pointing
- *	application), otherwise it's opaque (indicating indirect pointing).
- * @clickpad_props: specifies if this is a clickpad, and if so what sort of
+ *	अगर any.
+ * @is_clear: अगर set, this is a clear sensor (indicating direct poपूर्णांकing
+ *	application), otherwise it's opaque (indicating indirect poपूर्णांकing).
+ * @clickpad_props: specअगरies अगर this is a clickpad, and अगर so what sort of
  *	mechanism it uses
- * @mouse_buttons: specifies the number of mouse buttons present (if any).
+ * @mouse_buttons: specअगरies the number of mouse buttons present (अगर any).
  * @has_advanced_gestures: advanced driver gestures are supported.
  *
  * @x_sensor_size_mm: size of the sensor in millimeters on the X axis.
  * @y_sensor_size_mm: size of the sensor in millimeters on the Y axis.
  */
-struct f11_2d_sensor_queries {
+काष्ठा f11_2d_sensor_queries अणु
 	/* query1 */
 	u8 nr_fingers;
 	bool has_rel;
-	bool has_abs;
+	bool has_असल;
 	bool has_gestures;
 	bool has_sensitivity_adjust;
 	bool configurable;
@@ -349,7 +350,7 @@ struct f11_2d_sensor_queries {
 	u8 max_electrodes;
 
 	/* query5 */
-	u8 abs_data_size;
+	u8 असल_data_size;
 	bool has_anchored_finger;
 	bool has_adj_hyst;
 	bool has_dribble;
@@ -362,7 +363,7 @@ struct f11_2d_sensor_queries {
 	/* query 7 */
 	bool has_single_tap;
 	bool has_tap_n_hold;
-	bool has_double_tap;
+	bool has_द्विगुन_tap;
 	bool has_early_tap;
 	bool has_flick;
 	bool has_press;
@@ -376,7 +377,7 @@ struct f11_2d_sensor_queries {
 	bool has_rotate;
 	bool has_touch_shapes;
 	bool has_scroll_zones;
-	bool has_individual_scroll_zones;
+	bool has_inभागidual_scroll_zones;
 	bool has_mf_scroll;
 	bool has_mf_edge_motion;
 	bool has_mf_scroll_inertia;
@@ -417,7 +418,7 @@ struct f11_2d_sensor_queries {
 	bool has_linear_coeff_2;
 
 	/* Query 13 */
-	u8 jitter_window_size;
+	u8 jitter_winकरोw_size;
 	u8 jitter_filter_type;
 
 	/* Query 14 */
@@ -430,73 +431,73 @@ struct f11_2d_sensor_queries {
 	/* Query 15 - 18 */
 	u16 x_sensor_size_mm;
 	u16 y_sensor_size_mm;
-};
+पूर्ण;
 
-/* Defs for Ctrl0. */
-#define RMI_F11_REPORT_MODE_MASK        0x07
-#define RMI_F11_REPORT_MODE_CONTINUOUS  (0 << 0)
-#define RMI_F11_REPORT_MODE_REDUCED     (1 << 0)
-#define RMI_F11_REPORT_MODE_FS_CHANGE   (2 << 0)
-#define RMI_F11_REPORT_MODE_FP_CHANGE   (3 << 0)
-#define RMI_F11_ABS_POS_FILT            (1 << 3)
-#define RMI_F11_REL_POS_FILT            (1 << 4)
-#define RMI_F11_REL_BALLISTICS          (1 << 5)
-#define RMI_F11_DRIBBLE                 (1 << 6)
-#define RMI_F11_REPORT_BEYOND_CLIP      (1 << 7)
+/* Defs क्रम Ctrl0. */
+#घोषणा RMI_F11_REPORT_MODE_MASK        0x07
+#घोषणा RMI_F11_REPORT_MODE_CONTINUOUS  (0 << 0)
+#घोषणा RMI_F11_REPORT_MODE_REDUCED     (1 << 0)
+#घोषणा RMI_F11_REPORT_MODE_FS_CHANGE   (2 << 0)
+#घोषणा RMI_F11_REPORT_MODE_FP_CHANGE   (3 << 0)
+#घोषणा RMI_F11_ABS_POS_FILT            (1 << 3)
+#घोषणा RMI_F11_REL_POS_FILT            (1 << 4)
+#घोषणा RMI_F11_REL_BALLISTICS          (1 << 5)
+#घोषणा RMI_F11_DRIBBLE                 (1 << 6)
+#घोषणा RMI_F11_REPORT_BEYOND_CLIP      (1 << 7)
 
-/* Defs for Ctrl1. */
-#define RMI_F11_PALM_DETECT_THRESH_MASK 0x0F
-#define RMI_F11_MOTION_SENSITIVITY_MASK 0x30
-#define RMI_F11_MANUAL_TRACKING         (1 << 6)
-#define RMI_F11_MANUAL_TRACKED_FINGER   (1 << 7)
+/* Defs क्रम Ctrl1. */
+#घोषणा RMI_F11_PALM_DETECT_THRESH_MASK 0x0F
+#घोषणा RMI_F11_MOTION_SENSITIVITY_MASK 0x30
+#घोषणा RMI_F11_MANUAL_TRACKING         (1 << 6)
+#घोषणा RMI_F11_MANUAL_TRACKED_FINGER   (1 << 7)
 
-#define RMI_F11_DELTA_X_THRESHOLD       2
-#define RMI_F11_DELTA_Y_THRESHOLD       3
+#घोषणा RMI_F11_DELTA_X_THRESHOLD       2
+#घोषणा RMI_F11_DELTA_Y_THRESHOLD       3
 
-#define RMI_F11_CTRL_REG_COUNT          12
+#घोषणा RMI_F11_CTRL_REG_COUNT          12
 
-struct f11_2d_ctrl {
+काष्ठा f11_2d_ctrl अणु
 	u8              ctrl0_11[RMI_F11_CTRL_REG_COUNT];
 	u16             ctrl0_11_address;
-};
+पूर्ण;
 
-#define RMI_F11_ABS_BYTES 5
-#define RMI_F11_REL_BYTES 2
+#घोषणा RMI_F11_ABS_BYTES 5
+#घोषणा RMI_F11_REL_BYTES 2
 
-/* Defs for Data 8 */
+/* Defs क्रम Data 8 */
 
-#define RMI_F11_SINGLE_TAP              (1 << 0)
-#define RMI_F11_TAP_AND_HOLD            (1 << 1)
-#define RMI_F11_DOUBLE_TAP              (1 << 2)
-#define RMI_F11_EARLY_TAP               (1 << 3)
-#define RMI_F11_FLICK                   (1 << 4)
-#define RMI_F11_PRESS                   (1 << 5)
-#define RMI_F11_PINCH                   (1 << 6)
+#घोषणा RMI_F11_SINGLE_TAP              (1 << 0)
+#घोषणा RMI_F11_TAP_AND_HOLD            (1 << 1)
+#घोषणा RMI_F11_DOUBLE_TAP              (1 << 2)
+#घोषणा RMI_F11_EARLY_TAP               (1 << 3)
+#घोषणा RMI_F11_FLICK                   (1 << 4)
+#घोषणा RMI_F11_PRESS                   (1 << 5)
+#घोषणा RMI_F11_PINCH                   (1 << 6)
 
-/* Defs for Data 9 */
+/* Defs क्रम Data 9 */
 
-#define RMI_F11_PALM_DETECT                     (1 << 0)
-#define RMI_F11_ROTATE                          (1 << 1)
-#define RMI_F11_SHAPE                           (1 << 2)
-#define RMI_F11_SCROLLZONE                      (1 << 3)
-#define RMI_F11_GESTURE_FINGER_COUNT_MASK       0x70
+#घोषणा RMI_F11_PALM_DETECT                     (1 << 0)
+#घोषणा RMI_F11_ROTATE                          (1 << 1)
+#घोषणा RMI_F11_SHAPE                           (1 << 2)
+#घोषणा RMI_F11_SCROLLZONE                      (1 << 3)
+#घोषणा RMI_F11_GESTURE_FINGER_COUNT_MASK       0x70
 
-/** Handy pointers into our data buffer.
+/** Handy poपूर्णांकers पूर्णांकo our data buffer.
  *
- * @f_state - start of finger state registers.
- * @abs_pos - start of absolute position registers (if present).
- * @rel_pos - start of relative data registers (if present).
- * @gest_1  - gesture flags (if present).
- * @gest_2  - gesture flags & finger count (if present).
- * @pinch   - pinch motion register (if present).
- * @flick   - flick distance X & Y, flick time (if present).
+ * @f_state - start of finger state रेजिस्टरs.
+ * @असल_pos - start of असलolute position रेजिस्टरs (अगर present).
+ * @rel_pos - start of relative data रेजिस्टरs (अगर present).
+ * @gest_1  - gesture flags (अगर present).
+ * @gest_2  - gesture flags & finger count (अगर present).
+ * @pinch   - pinch motion रेजिस्टर (अगर present).
+ * @flick   - flick distance X & Y, flick समय (अगर present).
  * @rotate  - rotate motion and finger separation.
- * @multi_scroll - chiral deltas for X and Y (if present).
- * @scroll_zones - scroll deltas for 4 regions (if present).
+ * @multi_scroll - chiral deltas क्रम X and Y (अगर present).
+ * @scroll_zones - scroll deltas क्रम 4 regions (अगर present).
  */
-struct f11_2d_data {
+काष्ठा f11_2d_data अणु
 	u8	*f_state;
-	u8	*abs_pos;
+	u8	*असल_pos;
 	s8	*rel_pos;
 	u8	*gest_1;
 	u8	*gest_2;
@@ -506,74 +507,74 @@ struct f11_2d_data {
 	u8	*shapes;
 	s8	*multi_scroll;
 	s8	*scroll_zones;
-};
+पूर्ण;
 
-/** Data pertaining to F11 in general.  For per-sensor data, see struct
+/** Data pertaining to F11 in general.  For per-sensor data, see काष्ठा
  * f11_2d_sensor.
  *
- * @dev_query - F11 device specific query registers.
- * @dev_controls - F11 device specific control registers.
- * @dev_controls_mutex - lock for the control registers.
- * @rezero_wait_ms - if nonzero, upon resume we will wait this many
- * milliseconds before rezeroing the sensor(s).  This is useful in systems with
+ * @dev_query - F11 device specअगरic query रेजिस्टरs.
+ * @dev_controls - F11 device specअगरic control रेजिस्टरs.
+ * @dev_controls_mutex - lock क्रम the control रेजिस्टरs.
+ * @rezero_रुको_ms - अगर nonzero, upon resume we will रुको this many
+ * milliseconds beक्रमe rezeroing the sensor(s).  This is useful in प्रणालीs with
  * poor electrical behavior on resume, where the initial calibration of the
  * sensor(s) coming out of sleep state may be bogus.
- * @sensors - per sensor data structures.
+ * @sensors - per sensor data काष्ठाures.
  */
-struct f11_data {
+काष्ठा f11_data अणु
 	bool has_query9;
 	bool has_query11;
 	bool has_query12;
 	bool has_query27;
 	bool has_query28;
 	bool has_acm;
-	struct f11_2d_ctrl dev_controls;
-	struct mutex dev_controls_mutex;
-	u16 rezero_wait_ms;
-	struct rmi_2d_sensor sensor;
-	struct f11_2d_sensor_queries sens_query;
-	struct f11_2d_data data;
-	struct rmi_2d_sensor_platform_data sensor_pdata;
-	unsigned long *abs_mask;
-	unsigned long *rel_mask;
-};
+	काष्ठा f11_2d_ctrl dev_controls;
+	काष्ठा mutex dev_controls_mutex;
+	u16 rezero_रुको_ms;
+	काष्ठा rmi_2d_sensor sensor;
+	काष्ठा f11_2d_sensor_queries sens_query;
+	काष्ठा f11_2d_data data;
+	काष्ठा rmi_2d_sensor_platक्रमm_data sensor_pdata;
+	अचिन्हित दीर्घ *असल_mask;
+	अचिन्हित दीर्घ *rel_mask;
+पूर्ण;
 
-enum f11_finger_state {
+क्रमागत f11_finger_state अणु
 	F11_NO_FINGER	= 0x00,
 	F11_PRESENT	= 0x01,
 	F11_INACCURATE	= 0x02,
 	F11_RESERVED	= 0x03
-};
+पूर्ण;
 
-static void rmi_f11_rel_pos_report(struct f11_data *f11, u8 n_finger)
-{
-	struct rmi_2d_sensor *sensor = &f11->sensor;
-	struct f11_2d_data *data = &f11->data;
+अटल व्योम rmi_f11_rel_pos_report(काष्ठा f11_data *f11, u8 n_finger)
+अणु
+	काष्ठा rmi_2d_sensor *sensor = &f11->sensor;
+	काष्ठा f11_2d_data *data = &f11->data;
 	s8 x, y;
 
 	x = data->rel_pos[n_finger * RMI_F11_REL_BYTES];
 	y = data->rel_pos[n_finger * RMI_F11_REL_BYTES + 1];
 
 	rmi_2d_sensor_rel_report(sensor, x, y);
-}
+पूर्ण
 
-static void rmi_f11_abs_pos_process(struct f11_data *f11,
-				   struct rmi_2d_sensor *sensor,
-				   struct rmi_2d_sensor_abs_object *obj,
-				   enum f11_finger_state finger_state,
+अटल व्योम rmi_f11_असल_pos_process(काष्ठा f11_data *f11,
+				   काष्ठा rmi_2d_sensor *sensor,
+				   काष्ठा rmi_2d_sensor_असल_object *obj,
+				   क्रमागत f11_finger_state finger_state,
 				   u8 n_finger)
-{
-	struct f11_2d_data *data = &f11->data;
-	u8 *pos_data = &data->abs_pos[n_finger * RMI_F11_ABS_BYTES];
-	int tool_type = MT_TOOL_FINGER;
+अणु
+	काष्ठा f11_2d_data *data = &f11->data;
+	u8 *pos_data = &data->असल_pos[n_finger * RMI_F11_ABS_BYTES];
+	पूर्णांक tool_type = MT_TOOL_FINGER;
 
-	switch (finger_state) {
-	case F11_PRESENT:
+	चयन (finger_state) अणु
+	हाल F11_PRESENT:
 		obj->type = RMI_2D_OBJECT_FINGER;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		obj->type = RMI_2D_OBJECT_NONE;
-	}
+	पूर्ण
 
 	obj->mt_tool = tool_type;
 	obj->x = (pos_data[0] << 4) | (pos_data[2] & 0x0F);
@@ -582,225 +583,225 @@ static void rmi_f11_abs_pos_process(struct f11_data *f11,
 	obj->wx = pos_data[3] & 0x0f;
 	obj->wy = pos_data[3] >> 4;
 
-	rmi_2d_sensor_abs_process(sensor, obj, n_finger);
-}
+	rmi_2d_sensor_असल_process(sensor, obj, n_finger);
+पूर्ण
 
-static inline u8 rmi_f11_parse_finger_state(const u8 *f_state, u8 n_finger)
-{
-	return (f_state[n_finger / 4] >> (2 * (n_finger % 4))) &
+अटल अंतरभूत u8 rmi_f11_parse_finger_state(स्थिर u8 *f_state, u8 n_finger)
+अणु
+	वापस (f_state[n_finger / 4] >> (2 * (n_finger % 4))) &
 							FINGER_STATE_MASK;
-}
+पूर्ण
 
-static void rmi_f11_finger_handler(struct f11_data *f11,
-				   struct rmi_2d_sensor *sensor, int size)
-{
-	const u8 *f_state = f11->data.f_state;
+अटल व्योम rmi_f11_finger_handler(काष्ठा f11_data *f11,
+				   काष्ठा rmi_2d_sensor *sensor, पूर्णांक size)
+अणु
+	स्थिर u8 *f_state = f11->data.f_state;
 	u8 finger_state;
 	u8 i;
-	int abs_fingers;
-	int rel_fingers;
-	int abs_size = sensor->nbr_fingers * RMI_F11_ABS_BYTES;
+	पूर्णांक असल_fingers;
+	पूर्णांक rel_fingers;
+	पूर्णांक असल_size = sensor->nbr_fingers * RMI_F11_ABS_BYTES;
 
-	if (sensor->report_abs) {
-		if (abs_size > size)
-			abs_fingers = size / RMI_F11_ABS_BYTES;
-		else
-			abs_fingers = sensor->nbr_fingers;
+	अगर (sensor->report_असल) अणु
+		अगर (असल_size > size)
+			असल_fingers = size / RMI_F11_ABS_BYTES;
+		अन्यथा
+			असल_fingers = sensor->nbr_fingers;
 
-		for (i = 0; i < abs_fingers; i++) {
-			/* Possible of having 4 fingers per f_state register */
+		क्रम (i = 0; i < असल_fingers; i++) अणु
+			/* Possible of having 4 fingers per f_state रेजिस्टर */
 			finger_state = rmi_f11_parse_finger_state(f_state, i);
-			if (finger_state == F11_RESERVED) {
+			अगर (finger_state == F11_RESERVED) अणु
 				pr_err("Invalid finger state[%d]: 0x%02x", i,
 					finger_state);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			rmi_f11_abs_pos_process(f11, sensor, &sensor->objs[i],
+			rmi_f11_असल_pos_process(f11, sensor, &sensor->objs[i],
 							finger_state, i);
-		}
+		पूर्ण
 
 		/*
-		 * the absolute part is made in 2 parts to allow the kernel
+		 * the असलolute part is made in 2 parts to allow the kernel
 		 * tracking to take place.
 		 */
-		if (sensor->kernel_tracking)
+		अगर (sensor->kernel_tracking)
 			input_mt_assign_slots(sensor->input,
 					      sensor->tracking_slots,
 					      sensor->tracking_pos,
 					      sensor->nbr_fingers,
 					      sensor->dmax);
 
-		for (i = 0; i < abs_fingers; i++) {
+		क्रम (i = 0; i < असल_fingers; i++) अणु
 			finger_state = rmi_f11_parse_finger_state(f_state, i);
-			if (finger_state == F11_RESERVED)
+			अगर (finger_state == F11_RESERVED)
 				/* no need to send twice the error */
-				continue;
+				जारी;
 
-			rmi_2d_sensor_abs_report(sensor, &sensor->objs[i], i);
-		}
+			rmi_2d_sensor_असल_report(sensor, &sensor->objs[i], i);
+		पूर्ण
 
 		input_mt_sync_frame(sensor->input);
-	} else if (sensor->report_rel) {
-		if ((abs_size + sensor->nbr_fingers * RMI_F11_REL_BYTES) > size)
-			rel_fingers = (size - abs_size) / RMI_F11_REL_BYTES;
-		else
+	पूर्ण अन्यथा अगर (sensor->report_rel) अणु
+		अगर ((असल_size + sensor->nbr_fingers * RMI_F11_REL_BYTES) > size)
+			rel_fingers = (size - असल_size) / RMI_F11_REL_BYTES;
+		अन्यथा
 			rel_fingers = sensor->nbr_fingers;
 
-		for (i = 0; i < rel_fingers; i++)
+		क्रम (i = 0; i < rel_fingers; i++)
 			rmi_f11_rel_pos_report(f11, i);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-static int f11_2d_construct_data(struct f11_data *f11)
-{
-	struct rmi_2d_sensor *sensor = &f11->sensor;
-	struct f11_2d_sensor_queries *query = &f11->sens_query;
-	struct f11_2d_data *data = &f11->data;
-	int i;
+अटल पूर्णांक f11_2d_स्थिरruct_data(काष्ठा f11_data *f11)
+अणु
+	काष्ठा rmi_2d_sensor *sensor = &f11->sensor;
+	काष्ठा f11_2d_sensor_queries *query = &f11->sens_query;
+	काष्ठा f11_2d_data *data = &f11->data;
+	पूर्णांक i;
 
 	sensor->nbr_fingers = (query->nr_fingers == 5 ? 10 :
 				query->nr_fingers + 1);
 
 	sensor->pkt_size = DIV_ROUND_UP(sensor->nbr_fingers, 4);
 
-	if (query->has_abs) {
+	अगर (query->has_असल) अणु
 		sensor->pkt_size += (sensor->nbr_fingers * 5);
 		sensor->attn_size = sensor->pkt_size;
-	}
+	पूर्ण
 
-	if (query->has_rel)
+	अगर (query->has_rel)
 		sensor->pkt_size +=  (sensor->nbr_fingers * 2);
 
-	/* Check if F11_2D_Query7 is non-zero */
-	if (query->query7_nonzero)
-		sensor->pkt_size += sizeof(u8);
+	/* Check अगर F11_2D_Query7 is non-zero */
+	अगर (query->query7_nonzero)
+		sensor->pkt_size += माप(u8);
 
-	/* Check if F11_2D_Query7 or F11_2D_Query8 is non-zero */
-	if (query->query7_nonzero || query->query8_nonzero)
-		sensor->pkt_size += sizeof(u8);
+	/* Check अगर F11_2D_Query7 or F11_2D_Query8 is non-zero */
+	अगर (query->query7_nonzero || query->query8_nonzero)
+		sensor->pkt_size += माप(u8);
 
-	if (query->has_pinch || query->has_flick || query->has_rotate) {
+	अगर (query->has_pinch || query->has_flick || query->has_rotate) अणु
 		sensor->pkt_size += 3;
-		if (!query->has_flick)
+		अगर (!query->has_flick)
 			sensor->pkt_size--;
-		if (!query->has_rotate)
+		अगर (!query->has_rotate)
 			sensor->pkt_size--;
-	}
+	पूर्ण
 
-	if (query->has_touch_shapes)
+	अगर (query->has_touch_shapes)
 		sensor->pkt_size +=
 			DIV_ROUND_UP(query->nr_touch_shapes + 1, 8);
 
 	sensor->data_pkt = devm_kzalloc(&sensor->fn->dev, sensor->pkt_size,
 					GFP_KERNEL);
-	if (!sensor->data_pkt)
-		return -ENOMEM;
+	अगर (!sensor->data_pkt)
+		वापस -ENOMEM;
 
 	data->f_state = sensor->data_pkt;
 	i = DIV_ROUND_UP(sensor->nbr_fingers, 4);
 
-	if (query->has_abs) {
-		data->abs_pos = &sensor->data_pkt[i];
+	अगर (query->has_असल) अणु
+		data->असल_pos = &sensor->data_pkt[i];
 		i += (sensor->nbr_fingers * RMI_F11_ABS_BYTES);
-	}
+	पूर्ण
 
-	if (query->has_rel) {
+	अगर (query->has_rel) अणु
 		data->rel_pos = &sensor->data_pkt[i];
 		i += (sensor->nbr_fingers * RMI_F11_REL_BYTES);
-	}
+	पूर्ण
 
-	if (query->query7_nonzero) {
+	अगर (query->query7_nonzero) अणु
 		data->gest_1 = &sensor->data_pkt[i];
 		i++;
-	}
+	पूर्ण
 
-	if (query->query7_nonzero || query->query8_nonzero) {
+	अगर (query->query7_nonzero || query->query8_nonzero) अणु
 		data->gest_2 = &sensor->data_pkt[i];
 		i++;
-	}
+	पूर्ण
 
-	if (query->has_pinch) {
+	अगर (query->has_pinch) अणु
 		data->pinch = &sensor->data_pkt[i];
 		i++;
-	}
+	पूर्ण
 
-	if (query->has_flick) {
-		if (query->has_pinch) {
+	अगर (query->has_flick) अणु
+		अगर (query->has_pinch) अणु
 			data->flick = data->pinch;
 			i += 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			data->flick = &sensor->data_pkt[i];
 			i += 3;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (query->has_rotate) {
-		if (query->has_flick) {
+	अगर (query->has_rotate) अणु
+		अगर (query->has_flick) अणु
 			data->rotate = data->flick + 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			data->rotate = &sensor->data_pkt[i];
 			i += 2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (query->has_touch_shapes)
+	अगर (query->has_touch_shapes)
 		data->shapes = &sensor->data_pkt[i];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int f11_read_control_regs(struct rmi_function *fn,
-				struct f11_2d_ctrl *ctrl, u16 ctrl_base_addr) {
-	struct rmi_device *rmi_dev = fn->rmi_dev;
-	int error = 0;
+अटल पूर्णांक f11_पढ़ो_control_regs(काष्ठा rmi_function *fn,
+				काष्ठा f11_2d_ctrl *ctrl, u16 ctrl_base_addr) अणु
+	काष्ठा rmi_device *rmi_dev = fn->rmi_dev;
+	पूर्णांक error = 0;
 
 	ctrl->ctrl0_11_address = ctrl_base_addr;
-	error = rmi_read_block(rmi_dev, ctrl_base_addr, ctrl->ctrl0_11,
+	error = rmi_पढ़ो_block(rmi_dev, ctrl_base_addr, ctrl->ctrl0_11,
 				RMI_F11_CTRL_REG_COUNT);
-	if (error < 0) {
+	अगर (error < 0) अणु
 		dev_err(&fn->dev, "Failed to read ctrl0, code: %d.\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int f11_write_control_regs(struct rmi_function *fn,
-					struct f11_2d_sensor_queries *query,
-					struct f11_2d_ctrl *ctrl,
+अटल पूर्णांक f11_ग_लिखो_control_regs(काष्ठा rmi_function *fn,
+					काष्ठा f11_2d_sensor_queries *query,
+					काष्ठा f11_2d_ctrl *ctrl,
 					u16 ctrl_base_addr)
-{
-	struct rmi_device *rmi_dev = fn->rmi_dev;
-	int error;
+अणु
+	काष्ठा rmi_device *rmi_dev = fn->rmi_dev;
+	पूर्णांक error;
 
-	error = rmi_write_block(rmi_dev, ctrl_base_addr, ctrl->ctrl0_11,
+	error = rmi_ग_लिखो_block(rmi_dev, ctrl_base_addr, ctrl->ctrl0_11,
 				RMI_F11_CTRL_REG_COUNT);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmi_f11_get_query_parameters(struct rmi_device *rmi_dev,
-			struct f11_data *f11,
-			struct f11_2d_sensor_queries *sensor_query,
+अटल पूर्णांक rmi_f11_get_query_parameters(काष्ठा rmi_device *rmi_dev,
+			काष्ठा f11_data *f11,
+			काष्ठा f11_2d_sensor_queries *sensor_query,
 			u16 query_base_addr)
-{
-	int query_size;
-	int rc;
+अणु
+	पूर्णांक query_size;
+	पूर्णांक rc;
 	u8 query_buf[RMI_F11_QUERY_SIZE];
 	bool has_query36 = false;
 
-	rc = rmi_read_block(rmi_dev, query_base_addr, query_buf,
+	rc = rmi_पढ़ो_block(rmi_dev, query_base_addr, query_buf,
 				RMI_F11_QUERY_SIZE);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	sensor_query->nr_fingers = query_buf[0] & RMI_F11_NR_FINGERS_MASK;
 	sensor_query->has_rel = !!(query_buf[0] & RMI_F11_HAS_REL);
-	sensor_query->has_abs = !!(query_buf[0] & RMI_F11_HAS_ABS);
+	sensor_query->has_असल = !!(query_buf[0] & RMI_F11_HAS_ABS);
 	sensor_query->has_gestures = !!(query_buf[0] & RMI_F11_HAS_GESTURES);
 	sensor_query->has_sensitivity_adjust =
 		!!(query_buf[0] & RMI_F11_HAS_SENSITIVITY_ADJ);
@@ -815,12 +816,12 @@ static int rmi_f11_get_query_parameters(struct rmi_device *rmi_dev,
 
 	query_size = RMI_F11_QUERY_SIZE;
 
-	if (sensor_query->has_abs) {
-		rc = rmi_read(rmi_dev, query_base_addr + query_size, query_buf);
-		if (rc < 0)
-			return rc;
+	अगर (sensor_query->has_असल) अणु
+		rc = rmi_पढ़ो(rmi_dev, query_base_addr + query_size, query_buf);
+		अगर (rc < 0)
+			वापस rc;
 
-		sensor_query->abs_data_size =
+		sensor_query->असल_data_size =
 			query_buf[0] & RMI_F11_ABS_DATA_SIZE_MASK;
 		sensor_query->has_anchored_finger =
 			!!(query_buf[0] & RMI_F11_HAS_ANCHORED_FINGER);
@@ -835,27 +836,27 @@ static int rmi_f11_get_query_parameters(struct rmi_device *rmi_dev,
 		sensor_query->has_jitter_filter =
 			!!(query_buf[0] & RMI_F11_HAS_JITTER_FILTER);
 		query_size++;
-	}
+	पूर्ण
 
-	if (sensor_query->has_rel) {
-		rc = rmi_read(rmi_dev, query_base_addr + query_size,
+	अगर (sensor_query->has_rel) अणु
+		rc = rmi_पढ़ो(rmi_dev, query_base_addr + query_size,
 					&sensor_query->f11_2d_query6);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 		query_size++;
-	}
+	पूर्ण
 
-	if (sensor_query->has_gestures) {
-		rc = rmi_read_block(rmi_dev, query_base_addr + query_size,
+	अगर (sensor_query->has_gestures) अणु
+		rc = rmi_पढ़ो_block(rmi_dev, query_base_addr + query_size,
 					query_buf, RMI_F11_QUERY_GESTURE_SIZE);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 
 		sensor_query->has_single_tap =
 			!!(query_buf[0] & RMI_F11_HAS_SINGLE_TAP);
 		sensor_query->has_tap_n_hold =
 			!!(query_buf[0] & RMI_F11_HAS_TAP_AND_HOLD);
-		sensor_query->has_double_tap =
+		sensor_query->has_द्विगुन_tap =
 			!!(query_buf[0] & RMI_F11_HAS_DOUBLE_TAP);
 		sensor_query->has_early_tap =
 			!!(query_buf[0] & RMI_F11_HAS_EARLY_TAP);
@@ -877,7 +878,7 @@ static int rmi_f11_get_query_parameters(struct rmi_device *rmi_dev,
 			!!(query_buf[1] & RMI_F11_HAS_TOUCH_SHAPES);
 		sensor_query->has_scroll_zones =
 			!!(query_buf[1] & RMI_F11_HAS_SCROLL_ZONES);
-		sensor_query->has_individual_scroll_zones =
+		sensor_query->has_inभागidual_scroll_zones =
 			!!(query_buf[1] & RMI_F11_HAS_INDIVIDUAL_SCROLL_ZONES);
 		sensor_query->has_mf_scroll =
 			!!(query_buf[1] & RMI_F11_HAS_MF_SCROLL);
@@ -890,12 +891,12 @@ static int rmi_f11_get_query_parameters(struct rmi_device *rmi_dev,
 		sensor_query->query8_nonzero = !!(query_buf[1]);
 
 		query_size += 2;
-	}
+	पूर्ण
 
-	if (f11->has_query9) {
-		rc = rmi_read(rmi_dev, query_base_addr + query_size, query_buf);
-		if (rc < 0)
-			return rc;
+	अगर (f11->has_query9) अणु
+		rc = rmi_पढ़ो(rmi_dev, query_base_addr + query_size, query_buf);
+		अगर (rc < 0)
+			वापस rc;
 
 		sensor_query->has_pen =
 			!!(query_buf[0] & RMI_F11_HAS_PEN);
@@ -915,23 +916,23 @@ static int rmi_f11_get_query_parameters(struct rmi_device *rmi_dev,
 			!!(query_buf[0] & RMI_F11_HAS_PEN_FILTERS);
 
 		query_size++;
-	}
+	पूर्ण
 
-	if (sensor_query->has_touch_shapes) {
-		rc = rmi_read(rmi_dev, query_base_addr + query_size, query_buf);
-		if (rc < 0)
-			return rc;
+	अगर (sensor_query->has_touch_shapes) अणु
+		rc = rmi_पढ़ो(rmi_dev, query_base_addr + query_size, query_buf);
+		अगर (rc < 0)
+			वापस rc;
 
 		sensor_query->nr_touch_shapes = query_buf[0] &
 				RMI_F11_NR_TOUCH_SHAPES_MASK;
 
 		query_size++;
-	}
+	पूर्ण
 
-	if (f11->has_query11) {
-		rc = rmi_read(rmi_dev, query_base_addr + query_size, query_buf);
-		if (rc < 0)
-			return rc;
+	अगर (f11->has_query11) अणु
+		rc = rmi_पढ़ो(rmi_dev, query_base_addr + query_size, query_buf);
+		अगर (rc < 0)
+			वापस rc;
 
 		sensor_query->has_z_tuning =
 			!!(query_buf[0] & RMI_F11_HAS_Z_TUNING);
@@ -952,12 +953,12 @@ static int rmi_f11_get_query_parameters(struct rmi_device *rmi_dev,
 			!!(query_buf[0] & RMI_F11_HAS_DRUMMING_FILTER);
 
 		query_size++;
-	}
+	पूर्ण
 
-	if (f11->has_query12) {
-		rc = rmi_read(rmi_dev, query_base_addr + query_size, query_buf);
-		if (rc < 0)
-			return rc;
+	अगर (f11->has_query12) अणु
+		rc = rmi_पढ़ो(rmi_dev, query_base_addr + query_size, query_buf);
+		अगर (rc < 0)
+			वापस rc;
 
 		sensor_query->has_gapless_finger =
 			!!(query_buf[0] & RMI_F11_HAS_GAPLESS_FINGER);
@@ -977,26 +978,26 @@ static int rmi_f11_get_query_parameters(struct rmi_device *rmi_dev,
 			!!(query_buf[0] & RMI_F11_HAS_LINEAR_COEFF);
 
 		query_size++;
-	}
+	पूर्ण
 
-	if (sensor_query->has_jitter_filter) {
-		rc = rmi_read(rmi_dev, query_base_addr + query_size, query_buf);
-		if (rc < 0)
-			return rc;
+	अगर (sensor_query->has_jitter_filter) अणु
+		rc = rmi_पढ़ो(rmi_dev, query_base_addr + query_size, query_buf);
+		अगर (rc < 0)
+			वापस rc;
 
-		sensor_query->jitter_window_size = query_buf[0] &
+		sensor_query->jitter_winकरोw_size = query_buf[0] &
 			RMI_F11_JITTER_WINDOW_MASK;
 		sensor_query->jitter_filter_type = (query_buf[0] &
 			RMI_F11_JITTER_FILTER_MASK) >>
 			RMI_F11_JITTER_FILTER_SHIFT;
 
 		query_size++;
-	}
+	पूर्ण
 
-	if (sensor_query->has_info2) {
-		rc = rmi_read(rmi_dev, query_base_addr + query_size, query_buf);
-		if (rc < 0)
-			return rc;
+	अगर (sensor_query->has_info2) अणु
+		rc = rmi_पढ़ो(rmi_dev, query_base_addr + query_size, query_buf);
+		अगर (rc < 0)
+			वापस rc;
 
 		sensor_query->light_control =
 			query_buf[0] & RMI_F11_LIGHT_CONTROL_MASK;
@@ -1012,13 +1013,13 @@ static int rmi_f11_get_query_parameters(struct rmi_device *rmi_dev,
 			!!(query_buf[0] & RMI_F11_HAS_ADVANCED_GESTURES);
 
 		query_size++;
-	}
+	पूर्ण
 
-	if (sensor_query->has_physical_props) {
-		rc = rmi_read_block(rmi_dev, query_base_addr
+	अगर (sensor_query->has_physical_props) अणु
+		rc = rmi_पढ़ो_block(rmi_dev, query_base_addr
 			+ query_size, query_buf, 4);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 
 		sensor_query->x_sensor_size_mm =
 			(query_buf[0] | (query_buf[1] << 8)) / 10;
@@ -1030,87 +1031,87 @@ static int rmi_f11_get_query_parameters(struct rmi_device *rmi_dev,
 		 * and query 19 - 26 contain bezel dimensions
 		 */
 		query_size += 12;
-	}
+	पूर्ण
 
-	if (f11->has_query27)
+	अगर (f11->has_query27)
 		++query_size;
 
-	if (f11->has_query28) {
-		rc = rmi_read(rmi_dev, query_base_addr + query_size,
+	अगर (f11->has_query28) अणु
+		rc = rmi_पढ़ो(rmi_dev, query_base_addr + query_size,
 				query_buf);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 
 		has_query36 = !!(query_buf[0] & BIT(6));
-	}
+	पूर्ण
 
-	if (has_query36) {
+	अगर (has_query36) अणु
 		query_size += 2;
-		rc = rmi_read(rmi_dev, query_base_addr + query_size,
+		rc = rmi_पढ़ो(rmi_dev, query_base_addr + query_size,
 				query_buf);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 
-		if (!!(query_buf[0] & BIT(5)))
+		अगर (!!(query_buf[0] & BIT(5)))
 			f11->has_acm = true;
-	}
+	पूर्ण
 
-	return query_size;
-}
+	वापस query_size;
+पूर्ण
 
-static int rmi_f11_initialize(struct rmi_function *fn)
-{
-	struct rmi_device *rmi_dev = fn->rmi_dev;
-	struct f11_data *f11;
-	struct f11_2d_ctrl *ctrl;
+अटल पूर्णांक rmi_f11_initialize(काष्ठा rmi_function *fn)
+अणु
+	काष्ठा rmi_device *rmi_dev = fn->rmi_dev;
+	काष्ठा f11_data *f11;
+	काष्ठा f11_2d_ctrl *ctrl;
 	u8 query_offset;
 	u16 query_base_addr;
 	u16 control_base_addr;
 	u16 max_x_pos, max_y_pos;
-	int rc;
-	const struct rmi_device_platform_data *pdata =
-				rmi_get_platform_data(rmi_dev);
-	struct rmi_driver_data *drvdata = dev_get_drvdata(&rmi_dev->dev);
-	struct rmi_2d_sensor *sensor;
+	पूर्णांक rc;
+	स्थिर काष्ठा rmi_device_platक्रमm_data *pdata =
+				rmi_get_platक्रमm_data(rmi_dev);
+	काष्ठा rmi_driver_data *drvdata = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा rmi_2d_sensor *sensor;
 	u8 buf;
-	int mask_size;
+	पूर्णांक mask_size;
 
 	rmi_dbg(RMI_DEBUG_FN, &fn->dev, "Initializing F11 values.\n");
 
-	mask_size = BITS_TO_LONGS(drvdata->irq_count) * sizeof(unsigned long);
+	mask_size = BITS_TO_LONGS(drvdata->irq_count) * माप(अचिन्हित दीर्घ);
 
 	/*
 	** init instance data, fill in values and create any sysfs files
 	*/
-	f11 = devm_kzalloc(&fn->dev, sizeof(struct f11_data) + mask_size * 2,
+	f11 = devm_kzalloc(&fn->dev, माप(काष्ठा f11_data) + mask_size * 2,
 			GFP_KERNEL);
-	if (!f11)
-		return -ENOMEM;
+	अगर (!f11)
+		वापस -ENOMEM;
 
-	if (fn->dev.of_node) {
+	अगर (fn->dev.of_node) अणु
 		rc = rmi_2d_sensor_of_probe(&fn->dev, &f11->sensor_pdata);
-		if (rc)
-			return rc;
-	} else {
+		अगर (rc)
+			वापस rc;
+	पूर्ण अन्यथा अणु
 		f11->sensor_pdata = pdata->sensor_pdata;
-	}
+	पूर्ण
 
-	f11->rezero_wait_ms = f11->sensor_pdata.rezero_wait;
+	f11->rezero_रुको_ms = f11->sensor_pdata.rezero_रुको;
 
-	f11->abs_mask = (unsigned long *)((char *)f11
-			+ sizeof(struct f11_data));
-	f11->rel_mask = (unsigned long *)((char *)f11
-			+ sizeof(struct f11_data) + mask_size);
+	f11->असल_mask = (अचिन्हित दीर्घ *)((अक्षर *)f11
+			+ माप(काष्ठा f11_data));
+	f11->rel_mask = (अचिन्हित दीर्घ *)((अक्षर *)f11
+			+ माप(काष्ठा f11_data) + mask_size);
 
-	set_bit(fn->irq_pos, f11->abs_mask);
+	set_bit(fn->irq_pos, f11->असल_mask);
 	set_bit(fn->irq_pos + 1, f11->rel_mask);
 
 	query_base_addr = fn->fd.query_base_addr;
 	control_base_addr = fn->fd.control_base_addr;
 
-	rc = rmi_read(rmi_dev, query_base_addr, &buf);
-	if (rc < 0)
-		return rc;
+	rc = rmi_पढ़ो(rmi_dev, query_base_addr, &buf);
+	अगर (rc < 0)
+		वापस rc;
 
 	f11->has_query9 = !!(buf & RMI_F11_HAS_QUERY9);
 	f11->has_query11 = !!(buf & RMI_F11_HAS_QUERY11);
@@ -1124,26 +1125,26 @@ static int rmi_f11_initialize(struct rmi_function *fn)
 
 	rc = rmi_f11_get_query_parameters(rmi_dev, f11,
 			&f11->sens_query, query_offset);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 	query_offset += rc;
 
-	rc = f11_read_control_regs(fn, &f11->dev_controls,
+	rc = f11_पढ़ो_control_regs(fn, &f11->dev_controls,
 			control_base_addr);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(&fn->dev,
 			"Failed to read F11 control params.\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (f11->sens_query.has_info2) {
-		if (f11->sens_query.is_clear)
+	अगर (f11->sens_query.has_info2) अणु
+		अगर (f11->sens_query.is_clear)
 			f11->sensor.sensor_type = rmi_sensor_touchscreen;
-		else
+		अन्यथा
 			f11->sensor.sensor_type = rmi_sensor_touchpad;
-	}
+	पूर्ण
 
-	sensor->report_abs = f11->sens_query.has_abs;
+	sensor->report_असल = f11->sens_query.has_असल;
 
 	sensor->axis_align =
 		f11->sensor_pdata.axis_align;
@@ -1154,231 +1155,231 @@ static int rmi_f11_initialize(struct rmi_function *fn)
 	sensor->dribble = f11->sensor_pdata.dribble;
 	sensor->palm_detect = f11->sensor_pdata.palm_detect;
 
-	if (f11->sens_query.has_physical_props) {
+	अगर (f11->sens_query.has_physical_props) अणु
 		sensor->x_mm = f11->sens_query.x_sensor_size_mm;
 		sensor->y_mm = f11->sens_query.y_sensor_size_mm;
-	} else {
+	पूर्ण अन्यथा अणु
 		sensor->x_mm = f11->sensor_pdata.x_mm;
 		sensor->y_mm = f11->sensor_pdata.y_mm;
-	}
+	पूर्ण
 
-	if (sensor->sensor_type == rmi_sensor_default)
+	अगर (sensor->sensor_type == rmi_sensor_शेष)
 		sensor->sensor_type =
 			f11->sensor_pdata.sensor_type;
 
-	sensor->report_abs = sensor->report_abs
+	sensor->report_असल = sensor->report_असल
 		&& !(f11->sensor_pdata.disable_report_mask
 			& RMI_F11_DISABLE_ABS_REPORT);
 
-	if (!sensor->report_abs)
+	अगर (!sensor->report_असल)
 		/*
-		 * If device doesn't have abs or if it has been disables
+		 * If device करोesn't have असल or अगर it has been disables
 		 * fallback to reporting rel data.
 		 */
 		sensor->report_rel = f11->sens_query.has_rel;
 
-	rc = rmi_read_block(rmi_dev,
+	rc = rmi_पढ़ो_block(rmi_dev,
 		control_base_addr + F11_CTRL_SENSOR_MAX_X_POS_OFFSET,
-		(u8 *)&max_x_pos, sizeof(max_x_pos));
-	if (rc < 0)
-		return rc;
+		(u8 *)&max_x_pos, माप(max_x_pos));
+	अगर (rc < 0)
+		वापस rc;
 
-	rc = rmi_read_block(rmi_dev,
+	rc = rmi_पढ़ो_block(rmi_dev,
 		control_base_addr + F11_CTRL_SENSOR_MAX_Y_POS_OFFSET,
-		(u8 *)&max_y_pos, sizeof(max_y_pos));
-	if (rc < 0)
-		return rc;
+		(u8 *)&max_y_pos, माप(max_y_pos));
+	अगर (rc < 0)
+		वापस rc;
 
 	sensor->max_x = max_x_pos;
 	sensor->max_y = max_y_pos;
 
-	rc = f11_2d_construct_data(f11);
-	if (rc < 0)
-		return rc;
+	rc = f11_2d_स्थिरruct_data(f11);
+	अगर (rc < 0)
+		वापस rc;
 
-	if (f11->has_acm)
+	अगर (f11->has_acm)
 		f11->sensor.attn_size += f11->sensor.nbr_fingers * 2;
 
 	/* allocate the in-kernel tracking buffers */
-	sensor->tracking_pos = devm_kcalloc(&fn->dev,
-			sensor->nbr_fingers, sizeof(struct input_mt_pos),
+	sensor->tracking_pos = devm_kसुस्मृति(&fn->dev,
+			sensor->nbr_fingers, माप(काष्ठा input_mt_pos),
 			GFP_KERNEL);
-	sensor->tracking_slots = devm_kcalloc(&fn->dev,
-			sensor->nbr_fingers, sizeof(int), GFP_KERNEL);
-	sensor->objs = devm_kcalloc(&fn->dev,
+	sensor->tracking_slots = devm_kसुस्मृति(&fn->dev,
+			sensor->nbr_fingers, माप(पूर्णांक), GFP_KERNEL);
+	sensor->objs = devm_kसुस्मृति(&fn->dev,
 			sensor->nbr_fingers,
-			sizeof(struct rmi_2d_sensor_abs_object),
+			माप(काष्ठा rmi_2d_sensor_असल_object),
 			GFP_KERNEL);
-	if (!sensor->tracking_pos || !sensor->tracking_slots || !sensor->objs)
-		return -ENOMEM;
+	अगर (!sensor->tracking_pos || !sensor->tracking_slots || !sensor->objs)
+		वापस -ENOMEM;
 
 	ctrl = &f11->dev_controls;
-	if (sensor->axis_align.delta_x_threshold)
+	अगर (sensor->axis_align.delta_x_threshold)
 		ctrl->ctrl0_11[RMI_F11_DELTA_X_THRESHOLD] =
 			sensor->axis_align.delta_x_threshold;
 
-	if (sensor->axis_align.delta_y_threshold)
+	अगर (sensor->axis_align.delta_y_threshold)
 		ctrl->ctrl0_11[RMI_F11_DELTA_Y_THRESHOLD] =
 			sensor->axis_align.delta_y_threshold;
 
 	/*
-	 * If distance threshold values are set, switch to reduced reporting
+	 * If distance threshold values are set, चयन to reduced reporting
 	 * mode so they actually get used by the controller.
 	 */
-	if (sensor->axis_align.delta_x_threshold ||
-	    sensor->axis_align.delta_y_threshold) {
+	अगर (sensor->axis_align.delta_x_threshold ||
+	    sensor->axis_align.delta_y_threshold) अणु
 		ctrl->ctrl0_11[0] &= ~RMI_F11_REPORT_MODE_MASK;
 		ctrl->ctrl0_11[0] |= RMI_F11_REPORT_MODE_REDUCED;
-	}
+	पूर्ण
 
-	if (f11->sens_query.has_dribble) {
-		switch (sensor->dribble) {
-		case RMI_REG_STATE_OFF:
+	अगर (f11->sens_query.has_dribble) अणु
+		चयन (sensor->dribble) अणु
+		हाल RMI_REG_STATE_OFF:
 			ctrl->ctrl0_11[0] &= ~BIT(6);
-			break;
-		case RMI_REG_STATE_ON:
+			अवरोध;
+		हाल RMI_REG_STATE_ON:
 			ctrl->ctrl0_11[0] |= BIT(6);
-			break;
-		case RMI_REG_STATE_DEFAULT:
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		हाल RMI_REG_STATE_DEFAULT:
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (f11->sens_query.has_palm_det) {
-		switch (sensor->palm_detect) {
-		case RMI_REG_STATE_OFF:
+	अगर (f11->sens_query.has_palm_det) अणु
+		चयन (sensor->palm_detect) अणु
+		हाल RMI_REG_STATE_OFF:
 			ctrl->ctrl0_11[11] &= ~BIT(0);
-			break;
-		case RMI_REG_STATE_ON:
+			अवरोध;
+		हाल RMI_REG_STATE_ON:
 			ctrl->ctrl0_11[11] |= BIT(0);
-			break;
-		case RMI_REG_STATE_DEFAULT:
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		हाल RMI_REG_STATE_DEFAULT:
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	rc = f11_write_control_regs(fn, &f11->sens_query,
+	rc = f11_ग_लिखो_control_regs(fn, &f11->sens_query,
 			   &f11->dev_controls, fn->fd.control_base_addr);
-	if (rc)
+	अगर (rc)
 		dev_warn(&fn->dev, "Failed to write control registers\n");
 
 	mutex_init(&f11->dev_controls_mutex);
 
 	dev_set_drvdata(&fn->dev, f11);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmi_f11_config(struct rmi_function *fn)
-{
-	struct f11_data *f11 = dev_get_drvdata(&fn->dev);
-	struct rmi_driver *drv = fn->rmi_dev->driver;
-	struct rmi_2d_sensor *sensor = &f11->sensor;
-	int rc;
+अटल पूर्णांक rmi_f11_config(काष्ठा rmi_function *fn)
+अणु
+	काष्ठा f11_data *f11 = dev_get_drvdata(&fn->dev);
+	काष्ठा rmi_driver *drv = fn->rmi_dev->driver;
+	काष्ठा rmi_2d_sensor *sensor = &f11->sensor;
+	पूर्णांक rc;
 
-	if (!sensor->report_abs)
-		drv->clear_irq_bits(fn->rmi_dev, f11->abs_mask);
-	else
-		drv->set_irq_bits(fn->rmi_dev, f11->abs_mask);
+	अगर (!sensor->report_असल)
+		drv->clear_irq_bits(fn->rmi_dev, f11->असल_mask);
+	अन्यथा
+		drv->set_irq_bits(fn->rmi_dev, f11->असल_mask);
 
-	if (!sensor->report_rel)
+	अगर (!sensor->report_rel)
 		drv->clear_irq_bits(fn->rmi_dev, f11->rel_mask);
-	else
+	अन्यथा
 		drv->set_irq_bits(fn->rmi_dev, f11->rel_mask);
 
-	rc = f11_write_control_regs(fn, &f11->sens_query,
+	rc = f11_ग_लिखो_control_regs(fn, &f11->sens_query,
 			   &f11->dev_controls, fn->fd.query_base_addr);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t rmi_f11_attention(int irq, void *ctx)
-{
-	struct rmi_function *fn = ctx;
-	struct rmi_device *rmi_dev = fn->rmi_dev;
-	struct rmi_driver_data *drvdata = dev_get_drvdata(&rmi_dev->dev);
-	struct f11_data *f11 = dev_get_drvdata(&fn->dev);
+अटल irqवापस_t rmi_f11_attention(पूर्णांक irq, व्योम *ctx)
+अणु
+	काष्ठा rmi_function *fn = ctx;
+	काष्ठा rmi_device *rmi_dev = fn->rmi_dev;
+	काष्ठा rmi_driver_data *drvdata = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा f11_data *f11 = dev_get_drvdata(&fn->dev);
 	u16 data_base_addr = fn->fd.data_base_addr;
-	int error;
-	int valid_bytes = f11->sensor.pkt_size;
+	पूर्णांक error;
+	पूर्णांक valid_bytes = f11->sensor.pkt_size;
 
-	if (drvdata->attn_data.data) {
+	अगर (drvdata->attn_data.data) अणु
 		/*
 		 * The valid data in the attention report is less then
 		 * expected. Only process the complete fingers.
 		 */
-		if (f11->sensor.attn_size > drvdata->attn_data.size)
+		अगर (f11->sensor.attn_size > drvdata->attn_data.size)
 			valid_bytes = drvdata->attn_data.size;
-		else
+		अन्यथा
 			valid_bytes = f11->sensor.attn_size;
-		memcpy(f11->sensor.data_pkt, drvdata->attn_data.data,
+		स_नकल(f11->sensor.data_pkt, drvdata->attn_data.data,
 			valid_bytes);
 		drvdata->attn_data.data += valid_bytes;
 		drvdata->attn_data.size -= valid_bytes;
-	} else {
-		error = rmi_read_block(rmi_dev,
+	पूर्ण अन्यथा अणु
+		error = rmi_पढ़ो_block(rmi_dev,
 				data_base_addr, f11->sensor.data_pkt,
 				f11->sensor.pkt_size);
-		if (error < 0)
-			return IRQ_RETVAL(error);
-	}
+		अगर (error < 0)
+			वापस IRQ_RETVAL(error);
+	पूर्ण
 
 	rmi_f11_finger_handler(f11, &f11->sensor, valid_bytes);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rmi_f11_resume(struct rmi_function *fn)
-{
-	struct f11_data *f11 = dev_get_drvdata(&fn->dev);
-	int error;
+अटल पूर्णांक rmi_f11_resume(काष्ठा rmi_function *fn)
+अणु
+	काष्ठा f11_data *f11 = dev_get_drvdata(&fn->dev);
+	पूर्णांक error;
 
 	rmi_dbg(RMI_DEBUG_FN, &fn->dev, "Resuming...\n");
-	if (!f11->rezero_wait_ms)
-		return 0;
+	अगर (!f11->rezero_रुको_ms)
+		वापस 0;
 
-	mdelay(f11->rezero_wait_ms);
+	mdelay(f11->rezero_रुको_ms);
 
-	error = rmi_write(fn->rmi_dev, fn->fd.command_base_addr,
+	error = rmi_ग_लिखो(fn->rmi_dev, fn->fd.command_base_addr,
 				RMI_F11_REZERO);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&fn->dev,
 			"%s: failed to issue rezero command, error = %d.",
 			__func__, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmi_f11_probe(struct rmi_function *fn)
-{
-	int error;
-	struct f11_data *f11;
+अटल पूर्णांक rmi_f11_probe(काष्ठा rmi_function *fn)
+अणु
+	पूर्णांक error;
+	काष्ठा f11_data *f11;
 
 	error = rmi_f11_initialize(fn);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	f11 = dev_get_drvdata(&fn->dev);
 	error = rmi_2d_sensor_configure_input(fn, &f11->sensor);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct rmi_function_handler rmi_f11_handler = {
-	.driver = {
+काष्ठा rmi_function_handler rmi_f11_handler = अणु
+	.driver = अणु
 		.name	= "rmi4_f11",
-	},
+	पूर्ण,
 	.func		= 0x11,
 	.probe		= rmi_f11_probe,
 	.config		= rmi_f11_config,
 	.attention	= rmi_f11_attention,
 	.resume		= rmi_f11_resume,
-};
+पूर्ण;

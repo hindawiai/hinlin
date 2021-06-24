@@ -1,226 +1,227 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
-/* ethtool support for iavf */
-#include "iavf.h"
+/* ethtool support क्रम iavf */
+#समावेश "iavf.h"
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
 /* ethtool statistics helpers */
 
 /**
- * struct iavf_stats - definition for an ethtool statistic
+ * काष्ठा iavf_stats - definition क्रम an ethtool statistic
  * @stat_string: statistic name to display in ethtool -S output
- * @sizeof_stat: the sizeof() the stat, must be no greater than sizeof(u64)
- * @stat_offset: offsetof() the stat from a base pointer
+ * @माप_stat: the माप() the stat, must be no greater than माप(u64)
+ * @stat_offset: दुरत्व() the stat from a base poपूर्णांकer
  *
- * This structure defines a statistic to be added to the ethtool stats buffer.
- * It defines a statistic as offset from a common base pointer. Stats should
- * be defined in constant arrays using the IAVF_STAT macro, with every element
- * of the array using the same _type for calculating the sizeof_stat and
+ * This काष्ठाure defines a statistic to be added to the ethtool stats buffer.
+ * It defines a statistic as offset from a common base poपूर्णांकer. Stats should
+ * be defined in स्थिरant arrays using the IAVF_STAT macro, with every element
+ * of the array using the same _type क्रम calculating the माप_stat and
  * stat_offset.
  *
- * The @sizeof_stat is expected to be sizeof(u8), sizeof(u16), sizeof(u32) or
- * sizeof(u64). Other sizes are not expected and will produce a WARN_ONCE from
+ * The @माप_stat is expected to be माप(u8), माप(u16), माप(u32) or
+ * माप(u64). Other sizes are not expected and will produce a WARN_ONCE from
  * the iavf_add_ethtool_stat() helper function.
  *
- * The @stat_string is interpreted as a format string, allowing formatted
- * values to be inserted while looping over multiple structures for a given
+ * The @stat_string is पूर्णांकerpreted as a क्रमmat string, allowing क्रमmatted
+ * values to be inserted जबतक looping over multiple काष्ठाures क्रम a given
  * statistics array. Thus, every statistic string in an array should have the
- * same type and number of format specifiers, to be formatted by variadic
+ * same type and number of क्रमmat specअगरiers, to be क्रमmatted by variadic
  * arguments to the iavf_add_stat_string() helper function.
  **/
-struct iavf_stats {
-	char stat_string[ETH_GSTRING_LEN];
-	int sizeof_stat;
-	int stat_offset;
-};
+काष्ठा iavf_stats अणु
+	अक्षर stat_string[ETH_GSTRING_LEN];
+	पूर्णांक माप_stat;
+	पूर्णांक stat_offset;
+पूर्ण;
 
-/* Helper macro to define an iavf_stat structure with proper size and type.
- * Use this when defining constant statistics arrays. Note that @_type expects
- * only a type name and is used multiple times.
+/* Helper macro to define an iavf_stat काष्ठाure with proper size and type.
+ * Use this when defining स्थिरant statistics arrays. Note that @_type expects
+ * only a type name and is used multiple बार.
  */
-#define IAVF_STAT(_type, _name, _stat) { \
+#घोषणा IAVF_STAT(_type, _name, _stat) अणु \
 	.stat_string = _name, \
-	.sizeof_stat = sizeof_field(_type, _stat), \
-	.stat_offset = offsetof(_type, _stat) \
-}
+	.माप_stat = माप_field(_type, _stat), \
+	.stat_offset = दुरत्व(_type, _stat) \
+पूर्ण
 
-/* Helper macro for defining some statistics related to queues */
-#define IAVF_QUEUE_STAT(_name, _stat) \
-	IAVF_STAT(struct iavf_ring, _name, _stat)
+/* Helper macro क्रम defining some statistics related to queues */
+#घोषणा IAVF_QUEUE_STAT(_name, _stat) \
+	IAVF_STAT(काष्ठा iavf_ring, _name, _stat)
 
 /* Stats associated with a Tx or Rx ring */
-static const struct iavf_stats iavf_gstrings_queue_stats[] = {
+अटल स्थिर काष्ठा iavf_stats iavf_gstrings_queue_stats[] = अणु
 	IAVF_QUEUE_STAT("%s-%u.packets", stats.packets),
 	IAVF_QUEUE_STAT("%s-%u.bytes", stats.bytes),
-};
+पूर्ण;
 
 /**
- * iavf_add_one_ethtool_stat - copy the stat into the supplied buffer
+ * iavf_add_one_ethtool_stat - copy the stat पूर्णांकo the supplied buffer
  * @data: location to store the stat value
- * @pointer: basis for where to copy from
+ * @poपूर्णांकer: basis क्रम where to copy from
  * @stat: the stat definition
  *
- * Copies the stat data defined by the pointer and stat structure pair into
+ * Copies the stat data defined by the poपूर्णांकer and stat काष्ठाure pair पूर्णांकo
  * the memory supplied as data. Used to implement iavf_add_ethtool_stats and
- * iavf_add_queue_stats. If the pointer is null, data will be zero'd.
+ * iavf_add_queue_stats. If the poपूर्णांकer is null, data will be zero'd.
  */
-static void
-iavf_add_one_ethtool_stat(u64 *data, void *pointer,
-			  const struct iavf_stats *stat)
-{
-	char *p;
+अटल व्योम
+iavf_add_one_ethtool_stat(u64 *data, व्योम *poपूर्णांकer,
+			  स्थिर काष्ठा iavf_stats *stat)
+अणु
+	अक्षर *p;
 
-	if (!pointer) {
-		/* ensure that the ethtool data buffer is zero'd for any stats
-		 * which don't have a valid pointer.
+	अगर (!poपूर्णांकer) अणु
+		/* ensure that the ethtool data buffer is zero'd क्रम any stats
+		 * which करोn't have a valid poपूर्णांकer.
 		 */
 		*data = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	p = (char *)pointer + stat->stat_offset;
-	switch (stat->sizeof_stat) {
-	case sizeof(u64):
+	p = (अक्षर *)poपूर्णांकer + stat->stat_offset;
+	चयन (stat->माप_stat) अणु
+	हाल माप(u64):
 		*data = *((u64 *)p);
-		break;
-	case sizeof(u32):
+		अवरोध;
+	हाल माप(u32):
 		*data = *((u32 *)p);
-		break;
-	case sizeof(u16):
+		अवरोध;
+	हाल माप(u16):
 		*data = *((u16 *)p);
-		break;
-	case sizeof(u8):
+		अवरोध;
+	हाल माप(u8):
 		*data = *((u8 *)p);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ONCE(1, "unexpected stat size for %s",
 			  stat->stat_string);
 		*data = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * __iavf_add_ethtool_stats - copy stats into the ethtool supplied buffer
+ * __iavf_add_ethtool_stats - copy stats पूर्णांकo the ethtool supplied buffer
  * @data: ethtool stats buffer
- * @pointer: location to copy stats from
+ * @poपूर्णांकer: location to copy stats from
  * @stats: array of stats to copy
  * @size: the size of the stats definition
  *
- * Copy the stats defined by the stats array using the pointer as a base into
- * the data buffer supplied by ethtool. Updates the data pointer to point to
- * the next empty location for successive calls to __iavf_add_ethtool_stats.
- * If pointer is null, set the data values to zero and update the pointer to
+ * Copy the stats defined by the stats array using the poपूर्णांकer as a base पूर्णांकo
+ * the data buffer supplied by ethtool. Updates the data poपूर्णांकer to poपूर्णांक to
+ * the next empty location क्रम successive calls to __iavf_add_ethtool_stats.
+ * If poपूर्णांकer is null, set the data values to zero and update the poपूर्णांकer to
  * skip these stats.
  **/
-static void
-__iavf_add_ethtool_stats(u64 **data, void *pointer,
-			 const struct iavf_stats stats[],
-			 const unsigned int size)
-{
-	unsigned int i;
+अटल व्योम
+__iavf_add_ethtool_stats(u64 **data, व्योम *poपूर्णांकer,
+			 स्थिर काष्ठा iavf_stats stats[],
+			 स्थिर अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < size; i++)
-		iavf_add_one_ethtool_stat((*data)++, pointer, &stats[i]);
-}
+	क्रम (i = 0; i < size; i++)
+		iavf_add_one_ethtool_stat((*data)++, poपूर्णांकer, &stats[i]);
+पूर्ण
 
 /**
- * iavf_add_ethtool_stats - copy stats into ethtool supplied buffer
+ * iavf_add_ethtool_stats - copy stats पूर्णांकo ethtool supplied buffer
  * @data: ethtool stats buffer
- * @pointer: location where stats are stored
- * @stats: static const array of stat definitions
+ * @poपूर्णांकer: location where stats are stored
+ * @stats: अटल स्थिर array of stat definitions
  *
- * Macro to ease the use of __iavf_add_ethtool_stats by taking a static
- * constant stats array and passing the ARRAY_SIZE(). This avoids typos by
+ * Macro to ease the use of __iavf_add_ethtool_stats by taking a अटल
+ * स्थिरant stats array and passing the ARRAY_SIZE(). This aव्योमs typos by
  * ensuring that we pass the size associated with the given stats array.
  *
  * The parameter @stats is evaluated twice, so parameters with side effects
- * should be avoided.
+ * should be aव्योमed.
  **/
-#define iavf_add_ethtool_stats(data, pointer, stats) \
-	__iavf_add_ethtool_stats(data, pointer, stats, ARRAY_SIZE(stats))
+#घोषणा iavf_add_ethtool_stats(data, poपूर्णांकer, stats) \
+	__iavf_add_ethtool_stats(data, poपूर्णांकer, stats, ARRAY_SIZE(stats))
 
 /**
- * iavf_add_queue_stats - copy queue statistics into supplied buffer
+ * iavf_add_queue_stats - copy queue statistics पूर्णांकo supplied buffer
  * @data: ethtool stats buffer
  * @ring: the ring to copy
  *
- * Queue statistics must be copied while protected by
+ * Queue statistics must be copied जबतक रक्षित by
  * u64_stats_fetch_begin_irq, so we can't directly use iavf_add_ethtool_stats.
  * Assumes that queue stats are defined in iavf_gstrings_queue_stats. If the
- * ring pointer is null, zero out the queue stat values and update the data
- * pointer. Otherwise safely copy the stats from the ring into the supplied
- * buffer and update the data pointer when finished.
+ * ring poपूर्णांकer is null, zero out the queue stat values and update the data
+ * poपूर्णांकer. Otherwise safely copy the stats from the ring पूर्णांकo the supplied
+ * buffer and update the data poपूर्णांकer when finished.
  *
- * This function expects to be called while under rcu_read_lock().
+ * This function expects to be called जबतक under rcu_पढ़ो_lock().
  **/
-static void
-iavf_add_queue_stats(u64 **data, struct iavf_ring *ring)
-{
-	const unsigned int size = ARRAY_SIZE(iavf_gstrings_queue_stats);
-	const struct iavf_stats *stats = iavf_gstrings_queue_stats;
-	unsigned int start;
-	unsigned int i;
+अटल व्योम
+iavf_add_queue_stats(u64 **data, काष्ठा iavf_ring *ring)
+अणु
+	स्थिर अचिन्हित पूर्णांक size = ARRAY_SIZE(iavf_gstrings_queue_stats);
+	स्थिर काष्ठा iavf_stats *stats = iavf_gstrings_queue_stats;
+	अचिन्हित पूर्णांक start;
+	अचिन्हित पूर्णांक i;
 
-	/* To avoid invalid statistics values, ensure that we keep retrying
+	/* To aव्योम invalid statistics values, ensure that we keep retrying
 	 * the copy until we get a consistent value according to
 	 * u64_stats_fetch_retry_irq. But first, make sure our ring is
-	 * non-null before attempting to access its syncp.
+	 * non-null beक्रमe attempting to access its syncp.
 	 */
-	do {
+	करो अणु
 		start = !ring ? 0 : u64_stats_fetch_begin_irq(&ring->syncp);
-		for (i = 0; i < size; i++)
+		क्रम (i = 0; i < size; i++)
 			iavf_add_one_ethtool_stat(&(*data)[i], ring, &stats[i]);
-	} while (ring && u64_stats_fetch_retry_irq(&ring->syncp, start));
+	पूर्ण जबतक (ring && u64_stats_fetch_retry_irq(&ring->syncp, start));
 
-	/* Once we successfully copy the stats in, update the data pointer */
+	/* Once we successfully copy the stats in, update the data poपूर्णांकer */
 	*data += size;
-}
+पूर्ण
 
 /**
- * __iavf_add_stat_strings - copy stat strings into ethtool buffer
+ * __iavf_add_stat_strings - copy stat strings पूर्णांकo ethtool buffer
  * @p: ethtool supplied buffer
  * @stats: stat definitions array
  * @size: size of the stats array
  *
- * Format and copy the strings described by stats into the buffer pointed at
+ * Format and copy the strings described by stats पूर्णांकo the buffer poपूर्णांकed at
  * by p.
  **/
-static void __iavf_add_stat_strings(u8 **p, const struct iavf_stats stats[],
-				    const unsigned int size, ...)
-{
-	unsigned int i;
+अटल व्योम __iavf_add_stat_strings(u8 **p, स्थिर काष्ठा iavf_stats stats[],
+				    स्थिर अचिन्हित पूर्णांक size, ...)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < size; i++) {
-		va_list args;
+	क्रम (i = 0; i < size; i++) अणु
+		बहु_सूची args;
 
-		va_start(args, size);
-		vsnprintf(*p, ETH_GSTRING_LEN, stats[i].stat_string, args);
+		बहु_शुरू(args, size);
+		vsnम_लिखो(*p, ETH_GSTRING_LEN, stats[i].stat_string, args);
 		*p += ETH_GSTRING_LEN;
-		va_end(args);
-	}
-}
+		बहु_पूर्ण(args);
+	पूर्ण
+पूर्ण
 
 /**
- * iavf_add_stat_strings - copy stat strings into ethtool buffer
+ * iavf_add_stat_strings - copy stat strings पूर्णांकo ethtool buffer
  * @p: ethtool supplied buffer
  * @stats: stat definitions array
  *
- * Format and copy the strings described by the const static stats value into
- * the buffer pointed at by p.
+ * Format and copy the strings described by the स्थिर अटल stats value पूर्णांकo
+ * the buffer poपूर्णांकed at by p.
  *
  * The parameter @stats is evaluated twice, so parameters with side effects
- * should be avoided. Additionally, stats must be an array such that
+ * should be aव्योमed. Additionally, stats must be an array such that
  * ARRAY_SIZE can be called on it.
  **/
-#define iavf_add_stat_strings(p, stats, ...) \
+#घोषणा iavf_add_stat_strings(p, stats, ...) \
 	__iavf_add_stat_strings(p, stats, ARRAY_SIZE(stats), ## __VA_ARGS__)
 
-#define VF_STAT(_name, _stat) \
-	IAVF_STAT(struct iavf_adapter, _name, _stat)
+#घोषणा VF_STAT(_name, _stat) \
+	IAVF_STAT(काष्ठा iavf_adapter, _name, _stat)
 
-static const struct iavf_stats iavf_gstrings_stats[] = {
+अटल स्थिर काष्ठा iavf_stats iavf_gstrings_stats[] = अणु
 	VF_STAT("rx_bytes", current_stats.rx_bytes),
 	VF_STAT("rx_unicast", current_stats.rx_unicast),
 	VF_STAT("rx_multicast", current_stats.rx_multicast),
@@ -233,282 +234,282 @@ static const struct iavf_stats iavf_gstrings_stats[] = {
 	VF_STAT("tx_broadcast", current_stats.tx_broadcast),
 	VF_STAT("tx_discards", current_stats.tx_discards),
 	VF_STAT("tx_errors", current_stats.tx_errors),
-};
+पूर्ण;
 
-#define IAVF_STATS_LEN	ARRAY_SIZE(iavf_gstrings_stats)
+#घोषणा IAVF_STATS_LEN	ARRAY_SIZE(iavf_gstrings_stats)
 
-#define IAVF_QUEUE_STATS_LEN	ARRAY_SIZE(iavf_gstrings_queue_stats)
+#घोषणा IAVF_QUEUE_STATS_LEN	ARRAY_SIZE(iavf_gstrings_queue_stats)
 
-/* For now we have one and only one private flag and it is only defined
- * when we have support for the SKIP_CPU_SYNC DMA attribute.  Instead
+/* For now we have one and only one निजी flag and it is only defined
+ * when we have support क्रम the SKIP_CPU_SYNC DMA attribute.  Instead
  * of leaving all this code sitting around empty we will strip it unless
- * our one private flag is actually available.
+ * our one निजी flag is actually available.
  */
-struct iavf_priv_flags {
-	char flag_string[ETH_GSTRING_LEN];
+काष्ठा iavf_priv_flags अणु
+	अक्षर flag_string[ETH_GSTRING_LEN];
 	u32 flag;
-	bool read_only;
-};
+	bool पढ़ो_only;
+पूर्ण;
 
-#define IAVF_PRIV_FLAG(_name, _flag, _read_only) { \
+#घोषणा IAVF_PRIV_FLAG(_name, _flag, _पढ़ो_only) अणु \
 	.flag_string = _name, \
 	.flag = _flag, \
-	.read_only = _read_only, \
-}
+	.पढ़ो_only = _पढ़ो_only, \
+पूर्ण
 
-static const struct iavf_priv_flags iavf_gstrings_priv_flags[] = {
+अटल स्थिर काष्ठा iavf_priv_flags iavf_gstrings_priv_flags[] = अणु
 	IAVF_PRIV_FLAG("legacy-rx", IAVF_FLAG_LEGACY_RX, 0),
-};
+पूर्ण;
 
-#define IAVF_PRIV_FLAGS_STR_LEN ARRAY_SIZE(iavf_gstrings_priv_flags)
+#घोषणा IAVF_PRIV_FLAGS_STR_LEN ARRAY_SIZE(iavf_gstrings_priv_flags)
 
 /**
  * iavf_get_link_ksettings - Get Link Speed and Duplex settings
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @cmd: ethtool command
  *
- * Reports speed/duplex settings. Because this is a VF, we don't know what
+ * Reports speed/duplex settings. Because this is a VF, we करोn't know what
  * kind of link we really have, so we fake it.
  **/
-static int iavf_get_link_ksettings(struct net_device *netdev,
-				   struct ethtool_link_ksettings *cmd)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक iavf_get_link_ksettings(काष्ठा net_device *netdev,
+				   काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 
 	ethtool_link_ksettings_zero_link_mode(cmd, supported);
-	cmd->base.autoneg = AUTONEG_DISABLE;
+	cmd->base.स्वतःneg = AUTONEG_DISABLE;
 	cmd->base.port = PORT_NONE;
 	cmd->base.duplex = DUPLEX_FULL;
 
-	if (ADV_LINK_SUPPORT(adapter)) {
-		if (adapter->link_speed_mbps &&
+	अगर (ADV_LINK_SUPPORT(adapter)) अणु
+		अगर (adapter->link_speed_mbps &&
 		    adapter->link_speed_mbps < U32_MAX)
 			cmd->base.speed = adapter->link_speed_mbps;
-		else
+		अन्यथा
 			cmd->base.speed = SPEED_UNKNOWN;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (adapter->link_speed) {
-	case VIRTCHNL_LINK_SPEED_40GB:
+	चयन (adapter->link_speed) अणु
+	हाल VIRTCHNL_LINK_SPEED_40GB:
 		cmd->base.speed = SPEED_40000;
-		break;
-	case VIRTCHNL_LINK_SPEED_25GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_25GB:
 		cmd->base.speed = SPEED_25000;
-		break;
-	case VIRTCHNL_LINK_SPEED_20GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_20GB:
 		cmd->base.speed = SPEED_20000;
-		break;
-	case VIRTCHNL_LINK_SPEED_10GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_10GB:
 		cmd->base.speed = SPEED_10000;
-		break;
-	case VIRTCHNL_LINK_SPEED_5GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_5GB:
 		cmd->base.speed = SPEED_5000;
-		break;
-	case VIRTCHNL_LINK_SPEED_2_5GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_2_5GB:
 		cmd->base.speed = SPEED_2500;
-		break;
-	case VIRTCHNL_LINK_SPEED_1GB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_1GB:
 		cmd->base.speed = SPEED_1000;
-		break;
-	case VIRTCHNL_LINK_SPEED_100MB:
+		अवरोध;
+	हाल VIRTCHNL_LINK_SPEED_100MB:
 		cmd->base.speed = SPEED_100;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * iavf_get_sset_count - Get length of string set
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @sset: id of string set
  *
  * Reports size of various string tables.
  **/
-static int iavf_get_sset_count(struct net_device *netdev, int sset)
-{
-	if (sset == ETH_SS_STATS)
-		return IAVF_STATS_LEN +
+अटल पूर्णांक iavf_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
+अणु
+	अगर (sset == ETH_SS_STATS)
+		वापस IAVF_STATS_LEN +
 			(IAVF_QUEUE_STATS_LEN * 2 * IAVF_MAX_REQ_QUEUES);
-	else if (sset == ETH_SS_PRIV_FLAGS)
-		return IAVF_PRIV_FLAGS_STR_LEN;
-	else
-		return -EINVAL;
-}
+	अन्यथा अगर (sset == ETH_SS_PRIV_FLAGS)
+		वापस IAVF_PRIV_FLAGS_STR_LEN;
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
 /**
  * iavf_get_ethtool_stats - report device statistics
- * @netdev: network interface device structure
- * @stats: ethtool statistics structure
- * @data: pointer to data buffer
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @stats: ethtool statistics काष्ठाure
+ * @data: poपूर्णांकer to data buffer
  *
  * All statistics are added to the data buffer as an array of u64.
  **/
-static void iavf_get_ethtool_stats(struct net_device *netdev,
-				   struct ethtool_stats *stats, u64 *data)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
-	unsigned int i;
+अटल व्योम iavf_get_ethtool_stats(काष्ठा net_device *netdev,
+				   काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
+	अचिन्हित पूर्णांक i;
 
 	iavf_add_ethtool_stats(&data, adapter, iavf_gstrings_stats);
 
-	rcu_read_lock();
-	for (i = 0; i < IAVF_MAX_REQ_QUEUES; i++) {
-		struct iavf_ring *ring;
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < IAVF_MAX_REQ_QUEUES; i++) अणु
+		काष्ठा iavf_ring *ring;
 
-		/* Avoid accessing un-allocated queues */
+		/* Aव्योम accessing un-allocated queues */
 		ring = (i < adapter->num_active_queues ?
-			&adapter->tx_rings[i] : NULL);
+			&adapter->tx_rings[i] : शून्य);
 		iavf_add_queue_stats(&data, ring);
 
-		/* Avoid accessing un-allocated queues */
+		/* Aव्योम accessing un-allocated queues */
 		ring = (i < adapter->num_active_queues ?
-			&adapter->rx_rings[i] : NULL);
+			&adapter->rx_rings[i] : शून्य);
 		iavf_add_queue_stats(&data, ring);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
- * iavf_get_priv_flag_strings - Get private flag strings
- * @netdev: network interface device structure
- * @data: buffer for string data
+ * iavf_get_priv_flag_strings - Get निजी flag strings
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @data: buffer क्रम string data
  *
- * Builds the private flags string table
+ * Builds the निजी flags string table
  **/
-static void iavf_get_priv_flag_strings(struct net_device *netdev, u8 *data)
-{
-	unsigned int i;
+अटल व्योम iavf_get_priv_flag_strings(काष्ठा net_device *netdev, u8 *data)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < IAVF_PRIV_FLAGS_STR_LEN; i++) {
-		snprintf(data, ETH_GSTRING_LEN, "%s",
+	क्रम (i = 0; i < IAVF_PRIV_FLAGS_STR_LEN; i++) अणु
+		snम_लिखो(data, ETH_GSTRING_LEN, "%s",
 			 iavf_gstrings_priv_flags[i].flag_string);
 		data += ETH_GSTRING_LEN;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * iavf_get_stat_strings - Get stat strings
- * @netdev: network interface device structure
- * @data: buffer for string data
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @data: buffer क्रम string data
  *
  * Builds the statistics string table
  **/
-static void iavf_get_stat_strings(struct net_device *netdev, u8 *data)
-{
-	unsigned int i;
+अटल व्योम iavf_get_stat_strings(काष्ठा net_device *netdev, u8 *data)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	iavf_add_stat_strings(&data, iavf_gstrings_stats);
 
 	/* Queues are always allocated in pairs, so we just use num_tx_queues
-	 * for both Tx and Rx queues.
+	 * क्रम both Tx and Rx queues.
 	 */
-	for (i = 0; i < netdev->num_tx_queues; i++) {
+	क्रम (i = 0; i < netdev->num_tx_queues; i++) अणु
 		iavf_add_stat_strings(&data, iavf_gstrings_queue_stats,
 				      "tx", i);
 		iavf_add_stat_strings(&data, iavf_gstrings_queue_stats,
 				      "rx", i);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * iavf_get_strings - Get string set
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @sset: id of string set
- * @data: buffer for string data
+ * @data: buffer क्रम string data
  *
- * Builds string tables for various string sets
+ * Builds string tables क्रम various string sets
  **/
-static void iavf_get_strings(struct net_device *netdev, u32 sset, u8 *data)
-{
-	switch (sset) {
-	case ETH_SS_STATS:
+अटल व्योम iavf_get_strings(काष्ठा net_device *netdev, u32 sset, u8 *data)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
 		iavf_get_stat_strings(netdev, data);
-		break;
-	case ETH_SS_PRIV_FLAGS:
+		अवरोध;
+	हाल ETH_SS_PRIV_FLAGS:
 		iavf_get_priv_flag_strings(netdev, data);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * iavf_get_priv_flags - report device private flags
- * @netdev: network interface device structure
+ * iavf_get_priv_flags - report device निजी flags
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
- * The get string set count and the string set should be matched for each
- * flag returned.  Add new strings for each flag to the iavf_gstrings_priv_flags
+ * The get string set count and the string set should be matched क्रम each
+ * flag वापसed.  Add new strings क्रम each flag to the iavf_gstrings_priv_flags
  * array.
  *
- * Returns a u32 bitmap of flags.
+ * Returns a u32 biपंचांगap of flags.
  **/
-static u32 iavf_get_priv_flags(struct net_device *netdev)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल u32 iavf_get_priv_flags(काष्ठा net_device *netdev)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 	u32 i, ret_flags = 0;
 
-	for (i = 0; i < IAVF_PRIV_FLAGS_STR_LEN; i++) {
-		const struct iavf_priv_flags *priv_flags;
+	क्रम (i = 0; i < IAVF_PRIV_FLAGS_STR_LEN; i++) अणु
+		स्थिर काष्ठा iavf_priv_flags *priv_flags;
 
 		priv_flags = &iavf_gstrings_priv_flags[i];
 
-		if (priv_flags->flag & adapter->flags)
+		अगर (priv_flags->flag & adapter->flags)
 			ret_flags |= BIT(i);
-	}
+	पूर्ण
 
-	return ret_flags;
-}
+	वापस ret_flags;
+पूर्ण
 
 /**
- * iavf_set_priv_flags - set private flags
- * @netdev: network interface device structure
+ * iavf_set_priv_flags - set निजी flags
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @flags: bit flags to be set
  **/
-static int iavf_set_priv_flags(struct net_device *netdev, u32 flags)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक iavf_set_priv_flags(काष्ठा net_device *netdev, u32 flags)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 	u32 orig_flags, new_flags, changed_flags;
 	u32 i;
 
 	orig_flags = READ_ONCE(adapter->flags);
 	new_flags = orig_flags;
 
-	for (i = 0; i < IAVF_PRIV_FLAGS_STR_LEN; i++) {
-		const struct iavf_priv_flags *priv_flags;
+	क्रम (i = 0; i < IAVF_PRIV_FLAGS_STR_LEN; i++) अणु
+		स्थिर काष्ठा iavf_priv_flags *priv_flags;
 
 		priv_flags = &iavf_gstrings_priv_flags[i];
 
-		if (flags & BIT(i))
+		अगर (flags & BIT(i))
 			new_flags |= priv_flags->flag;
-		else
+		अन्यथा
 			new_flags &= ~(priv_flags->flag);
 
-		if (priv_flags->read_only &&
+		अगर (priv_flags->पढ़ो_only &&
 		    ((orig_flags ^ new_flags) & ~BIT(i)))
-			return -EOPNOTSUPP;
-	}
+			वापस -EOPNOTSUPP;
+	पूर्ण
 
-	/* Before we finalize any flag changes, any checks which we need to
-	 * perform to determine if the new flags will be supported should go
+	/* Beक्रमe we finalize any flag changes, any checks which we need to
+	 * perक्रमm to determine अगर the new flags will be supported should go
 	 * here...
 	 */
 
-	/* Compare and exchange the new flags into place. If we failed, that
-	 * is if cmpxchg returns anything but the old value, this means
-	 * something else must have modified the flags variable since we
+	/* Compare and exchange the new flags पूर्णांकo place. If we failed, that
+	 * is अगर cmpxchg वापसs anything but the old value, this means
+	 * something अन्यथा must have modअगरied the flags variable since we
 	 * copied it. We'll just punt with an error and log something in the
 	 * message buffer.
 	 */
-	if (cmpxchg(&adapter->flags, orig_flags, new_flags) != orig_flags) {
+	अगर (cmpxchg(&adapter->flags, orig_flags, new_flags) != orig_flags) अणु
 		dev_warn(&adapter->pdev->dev,
 			 "Unable to update adapter->flags as it was modified by another thread...\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	changed_flags = orig_flags ^ new_flags;
 
@@ -517,100 +518,100 @@ static int iavf_set_priv_flags(struct net_device *netdev, u32 flags)
 	 * in the code above.
 	 */
 
-	/* issue a reset to force legacy-rx change to take effect */
-	if (changed_flags & IAVF_FLAG_LEGACY_RX) {
-		if (netif_running(netdev)) {
+	/* issue a reset to क्रमce legacy-rx change to take effect */
+	अगर (changed_flags & IAVF_FLAG_LEGACY_RX) अणु
+		अगर (netअगर_running(netdev)) अणु
 			adapter->flags |= IAVF_FLAG_RESET_NEEDED;
 			queue_work(iavf_wq, &adapter->reset_task);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * iavf_get_msglevel - Get debug message level
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
  * Returns current debug message level.
  **/
-static u32 iavf_get_msglevel(struct net_device *netdev)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल u32 iavf_get_msglevel(काष्ठा net_device *netdev)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 
-	return adapter->msg_enable;
-}
+	वापस adapter->msg_enable;
+पूर्ण
 
 /**
  * iavf_set_msglevel - Set debug message level
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @data: message level
  *
  * Set current debug message level. Higher values cause the driver to
  * be noisier.
  **/
-static void iavf_set_msglevel(struct net_device *netdev, u32 data)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम iavf_set_msglevel(काष्ठा net_device *netdev, u32 data)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 
-	if (IAVF_DEBUG_USER & data)
+	अगर (IAVF_DEBUG_USER & data)
 		adapter->hw.debug_mask = data;
 	adapter->msg_enable = data;
-}
+पूर्ण
 
 /**
  * iavf_get_drvinfo - Get driver info
- * @netdev: network interface device structure
- * @drvinfo: ethool driver info structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @drvinfo: ethool driver info काष्ठाure
  *
- * Returns information about the driver and device for display to the user.
+ * Returns inक्रमmation about the driver and device क्रम display to the user.
  **/
-static void iavf_get_drvinfo(struct net_device *netdev,
-			     struct ethtool_drvinfo *drvinfo)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम iavf_get_drvinfo(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 
 	strlcpy(drvinfo->driver, iavf_driver_name, 32);
 	strlcpy(drvinfo->fw_version, "N/A", 4);
 	strlcpy(drvinfo->bus_info, pci_name(adapter->pdev), 32);
 	drvinfo->n_priv_flags = IAVF_PRIV_FLAGS_STR_LEN;
-}
+पूर्ण
 
 /**
  * iavf_get_ringparam - Get ring parameters
- * @netdev: network interface device structure
- * @ring: ethtool ringparam structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @ring: ethtool ringparam काष्ठाure
  *
  * Returns current ring parameters. TX and RX rings are reported separately,
  * but the number of rings is not reported.
  **/
-static void iavf_get_ringparam(struct net_device *netdev,
-			       struct ethtool_ringparam *ring)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम iavf_get_ringparam(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 
 	ring->rx_max_pending = IAVF_MAX_RXD;
 	ring->tx_max_pending = IAVF_MAX_TXD;
 	ring->rx_pending = adapter->rx_desc_count;
 	ring->tx_pending = adapter->tx_desc_count;
-}
+पूर्ण
 
 /**
  * iavf_set_ringparam - Set ring parameters
- * @netdev: network interface device structure
- * @ring: ethtool ringparam structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @ring: ethtool ringparam काष्ठाure
  *
  * Sets ring parameters. TX and RX rings are controlled separately, but the
- * number of rings is not specified, so all rings get the same settings.
+ * number of rings is not specअगरied, so all rings get the same settings.
  **/
-static int iavf_set_ringparam(struct net_device *netdev,
-			      struct ethtool_ringparam *ring)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक iavf_set_ringparam(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 	u32 new_rx_count, new_tx_count;
 
-	if ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
-		return -EINVAL;
+	अगर ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
+		वापस -EINVAL;
 
 	new_tx_count = clamp_t(u32, ring->tx_pending,
 			       IAVF_MIN_TXD,
@@ -622,119 +623,119 @@ static int iavf_set_ringparam(struct net_device *netdev,
 			       IAVF_MAX_RXD);
 	new_rx_count = ALIGN(new_rx_count, IAVF_REQ_DESCRIPTOR_MULTIPLE);
 
-	/* if nothing to do return success */
-	if ((new_tx_count == adapter->tx_desc_count) &&
+	/* अगर nothing to करो वापस success */
+	अगर ((new_tx_count == adapter->tx_desc_count) &&
 	    (new_rx_count == adapter->rx_desc_count))
-		return 0;
+		वापस 0;
 
 	adapter->tx_desc_count = new_tx_count;
 	adapter->rx_desc_count = new_rx_count;
 
-	if (netif_running(netdev)) {
+	अगर (netअगर_running(netdev)) अणु
 		adapter->flags |= IAVF_FLAG_RESET_NEEDED;
 		queue_work(iavf_wq, &adapter->reset_task);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * __iavf_get_coalesce - get per-queue coalesce settings
  * @netdev: the netdev to check
- * @ec: ethtool coalesce data structure
+ * @ec: ethtool coalesce data काष्ठाure
  * @queue: which queue to pick
  *
- * Gets the per-queue settings for coalescence. Specifically Rx and Tx usecs
- * are per queue. If queue is <0 then we default to queue 0 as the
+ * Gets the per-queue settings क्रम coalescence. Specअगरically Rx and Tx usecs
+ * are per queue. If queue is <0 then we शेष to queue 0 as the
  * representative value.
  **/
-static int __iavf_get_coalesce(struct net_device *netdev,
-			       struct ethtool_coalesce *ec, int queue)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
-	struct iavf_vsi *vsi = &adapter->vsi;
-	struct iavf_ring *rx_ring, *tx_ring;
+अटल पूर्णांक __iavf_get_coalesce(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_coalesce *ec, पूर्णांक queue)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा iavf_vsi *vsi = &adapter->vsi;
+	काष्ठा iavf_ring *rx_ring, *tx_ring;
 
 	ec->tx_max_coalesced_frames = vsi->work_limit;
 	ec->rx_max_coalesced_frames = vsi->work_limit;
 
-	/* Rx and Tx usecs per queue value. If user doesn't specify the
-	 * queue, return queue 0's value to represent.
+	/* Rx and Tx usecs per queue value. If user करोesn't specअगरy the
+	 * queue, वापस queue 0's value to represent.
 	 */
-	if (queue < 0)
+	अगर (queue < 0)
 		queue = 0;
-	else if (queue >= adapter->num_active_queues)
-		return -EINVAL;
+	अन्यथा अगर (queue >= adapter->num_active_queues)
+		वापस -EINVAL;
 
 	rx_ring = &adapter->rx_rings[queue];
 	tx_ring = &adapter->tx_rings[queue];
 
-	if (ITR_IS_DYNAMIC(rx_ring->itr_setting))
+	अगर (ITR_IS_DYNAMIC(rx_ring->itr_setting))
 		ec->use_adaptive_rx_coalesce = 1;
 
-	if (ITR_IS_DYNAMIC(tx_ring->itr_setting))
+	अगर (ITR_IS_DYNAMIC(tx_ring->itr_setting))
 		ec->use_adaptive_tx_coalesce = 1;
 
 	ec->rx_coalesce_usecs = rx_ring->itr_setting & ~IAVF_ITR_DYNAMIC;
 	ec->tx_coalesce_usecs = tx_ring->itr_setting & ~IAVF_ITR_DYNAMIC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * iavf_get_coalesce - Get interrupt coalescing settings
- * @netdev: network interface device structure
- * @ec: ethtool coalesce structure
+ * iavf_get_coalesce - Get पूर्णांकerrupt coalescing settings
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @ec: ethtool coalesce काष्ठाure
  *
- * Returns current coalescing settings. This is referred to elsewhere in the
+ * Returns current coalescing settings. This is referred to अन्यथाwhere in the
  * driver as Interrupt Throttle Rate, as this is how the hardware describes
- * this functionality. Note that if per-queue settings have been modified this
+ * this functionality. Note that अगर per-queue settings have been modअगरied this
  * only represents the settings of queue 0.
  **/
-static int iavf_get_coalesce(struct net_device *netdev,
-			     struct ethtool_coalesce *ec)
-{
-	return __iavf_get_coalesce(netdev, ec, -1);
-}
+अटल पूर्णांक iavf_get_coalesce(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_coalesce *ec)
+अणु
+	वापस __iavf_get_coalesce(netdev, ec, -1);
+पूर्ण
 
 /**
- * iavf_get_per_queue_coalesce - get coalesce values for specific queue
- * @netdev: netdev to read
+ * iavf_get_per_queue_coalesce - get coalesce values क्रम specअगरic queue
+ * @netdev: netdev to पढ़ो
  * @ec: coalesce settings from ethtool
- * @queue: the queue to read
+ * @queue: the queue to पढ़ो
  *
- * Read specific queue's coalesce settings.
+ * Read specअगरic queue's coalesce settings.
  **/
-static int iavf_get_per_queue_coalesce(struct net_device *netdev, u32 queue,
-				       struct ethtool_coalesce *ec)
-{
-	return __iavf_get_coalesce(netdev, ec, queue);
-}
+अटल पूर्णांक iavf_get_per_queue_coalesce(काष्ठा net_device *netdev, u32 queue,
+				       काष्ठा ethtool_coalesce *ec)
+अणु
+	वापस __iavf_get_coalesce(netdev, ec, queue);
+पूर्ण
 
 /**
- * iavf_set_itr_per_queue - set ITR values for specific queue
- * @adapter: the VF adapter struct to set values for
+ * iavf_set_itr_per_queue - set ITR values क्रम specअगरic queue
+ * @adapter: the VF adapter काष्ठा to set values क्रम
  * @ec: coalesce settings from ethtool
- * @queue: the queue to modify
+ * @queue: the queue to modअगरy
  *
- * Change the ITR settings for a specific queue.
+ * Change the ITR settings क्रम a specअगरic queue.
  **/
-static void iavf_set_itr_per_queue(struct iavf_adapter *adapter,
-				   struct ethtool_coalesce *ec, int queue)
-{
-	struct iavf_ring *rx_ring = &adapter->rx_rings[queue];
-	struct iavf_ring *tx_ring = &adapter->tx_rings[queue];
-	struct iavf_q_vector *q_vector;
+अटल व्योम iavf_set_itr_per_queue(काष्ठा iavf_adapter *adapter,
+				   काष्ठा ethtool_coalesce *ec, पूर्णांक queue)
+अणु
+	काष्ठा iavf_ring *rx_ring = &adapter->rx_rings[queue];
+	काष्ठा iavf_ring *tx_ring = &adapter->tx_rings[queue];
+	काष्ठा iavf_q_vector *q_vector;
 
 	rx_ring->itr_setting = ITR_REG_ALIGN(ec->rx_coalesce_usecs);
 	tx_ring->itr_setting = ITR_REG_ALIGN(ec->tx_coalesce_usecs);
 
 	rx_ring->itr_setting |= IAVF_ITR_DYNAMIC;
-	if (!ec->use_adaptive_rx_coalesce)
+	अगर (!ec->use_adaptive_rx_coalesce)
 		rx_ring->itr_setting ^= IAVF_ITR_DYNAMIC;
 
 	tx_ring->itr_setting |= IAVF_ITR_DYNAMIC;
-	if (!ec->use_adaptive_tx_coalesce)
+	अगर (!ec->use_adaptive_tx_coalesce)
 		tx_ring->itr_setting ^= IAVF_ITR_DYNAMIC;
 
 	q_vector = rx_ring->q_vector;
@@ -743,89 +744,89 @@ static void iavf_set_itr_per_queue(struct iavf_adapter *adapter,
 	q_vector = tx_ring->q_vector;
 	q_vector->tx.target_itr = ITR_TO_REG(tx_ring->itr_setting);
 
-	/* The interrupt handler itself will take care of programming
+	/* The पूर्णांकerrupt handler itself will take care of programming
 	 * the Tx and Rx ITR values based on the values we have entered
-	 * into the q_vector, no need to write the values now.
+	 * पूर्णांकo the q_vector, no need to ग_लिखो the values now.
 	 */
-}
+पूर्ण
 
 /**
- * __iavf_set_coalesce - set coalesce settings for particular queue
+ * __iavf_set_coalesce - set coalesce settings क्रम particular queue
  * @netdev: the netdev to change
  * @ec: ethtool coalesce settings
  * @queue: the queue to change
  *
- * Sets the coalesce settings for a particular queue.
+ * Sets the coalesce settings क्रम a particular queue.
  **/
-static int __iavf_set_coalesce(struct net_device *netdev,
-			       struct ethtool_coalesce *ec, int queue)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
-	struct iavf_vsi *vsi = &adapter->vsi;
-	int i;
+अटल पूर्णांक __iavf_set_coalesce(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_coalesce *ec, पूर्णांक queue)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा iavf_vsi *vsi = &adapter->vsi;
+	पूर्णांक i;
 
-	if (ec->tx_max_coalesced_frames_irq || ec->rx_max_coalesced_frames_irq)
+	अगर (ec->tx_max_coalesced_frames_irq || ec->rx_max_coalesced_frames_irq)
 		vsi->work_limit = ec->tx_max_coalesced_frames_irq;
 
-	if (ec->rx_coalesce_usecs == 0) {
-		if (ec->use_adaptive_rx_coalesce)
-			netif_info(adapter, drv, netdev, "rx-usecs=0, need to disable adaptive-rx for a complete disable\n");
-	} else if ((ec->rx_coalesce_usecs < IAVF_MIN_ITR) ||
-		   (ec->rx_coalesce_usecs > IAVF_MAX_ITR)) {
-		netif_info(adapter, drv, netdev, "Invalid value, rx-usecs range is 0-8160\n");
-		return -EINVAL;
-	} else if (ec->tx_coalesce_usecs == 0) {
-		if (ec->use_adaptive_tx_coalesce)
-			netif_info(adapter, drv, netdev, "tx-usecs=0, need to disable adaptive-tx for a complete disable\n");
-	} else if ((ec->tx_coalesce_usecs < IAVF_MIN_ITR) ||
-		   (ec->tx_coalesce_usecs > IAVF_MAX_ITR)) {
-		netif_info(adapter, drv, netdev, "Invalid value, tx-usecs range is 0-8160\n");
-		return -EINVAL;
-	}
+	अगर (ec->rx_coalesce_usecs == 0) अणु
+		अगर (ec->use_adaptive_rx_coalesce)
+			netअगर_info(adapter, drv, netdev, "rx-usecs=0, need to disable adaptive-rx for a complete disable\n");
+	पूर्ण अन्यथा अगर ((ec->rx_coalesce_usecs < IAVF_MIN_ITR) ||
+		   (ec->rx_coalesce_usecs > IAVF_MAX_ITR)) अणु
+		netअगर_info(adapter, drv, netdev, "Invalid value, rx-usecs range is 0-8160\n");
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (ec->tx_coalesce_usecs == 0) अणु
+		अगर (ec->use_adaptive_tx_coalesce)
+			netअगर_info(adapter, drv, netdev, "tx-usecs=0, need to disable adaptive-tx for a complete disable\n");
+	पूर्ण अन्यथा अगर ((ec->tx_coalesce_usecs < IAVF_MIN_ITR) ||
+		   (ec->tx_coalesce_usecs > IAVF_MAX_ITR)) अणु
+		netअगर_info(adapter, drv, netdev, "Invalid value, tx-usecs range is 0-8160\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Rx and Tx usecs has per queue value. If user doesn't specify the
+	/* Rx and Tx usecs has per queue value. If user करोesn't specअगरy the
 	 * queue, apply to all queues.
 	 */
-	if (queue < 0) {
-		for (i = 0; i < adapter->num_active_queues; i++)
+	अगर (queue < 0) अणु
+		क्रम (i = 0; i < adapter->num_active_queues; i++)
 			iavf_set_itr_per_queue(adapter, ec, i);
-	} else if (queue < adapter->num_active_queues) {
+	पूर्ण अन्यथा अगर (queue < adapter->num_active_queues) अणु
 		iavf_set_itr_per_queue(adapter, ec, queue);
-	} else {
-		netif_info(adapter, drv, netdev, "Invalid queue value, queue range is 0 - %d\n",
+	पूर्ण अन्यथा अणु
+		netअगर_info(adapter, drv, netdev, "Invalid queue value, queue range is 0 - %d\n",
 			   adapter->num_active_queues - 1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * iavf_set_coalesce - Set interrupt coalescing settings
- * @netdev: network interface device structure
- * @ec: ethtool coalesce structure
+ * iavf_set_coalesce - Set पूर्णांकerrupt coalescing settings
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @ec: ethtool coalesce काष्ठाure
  *
- * Change current coalescing settings for every queue.
+ * Change current coalescing settings क्रम every queue.
  **/
-static int iavf_set_coalesce(struct net_device *netdev,
-			     struct ethtool_coalesce *ec)
-{
-	return __iavf_set_coalesce(netdev, ec, -1);
-}
+अटल पूर्णांक iavf_set_coalesce(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_coalesce *ec)
+अणु
+	वापस __iavf_set_coalesce(netdev, ec, -1);
+पूर्ण
 
 /**
- * iavf_set_per_queue_coalesce - set specific queue's coalesce settings
+ * iavf_set_per_queue_coalesce - set specअगरic queue's coalesce settings
  * @netdev: the netdev to change
  * @ec: ethtool's coalesce settings
- * @queue: the queue to modify
+ * @queue: the queue to modअगरy
  *
- * Modifies a specific queue's coalesce settings.
+ * Modअगरies a specअगरic queue's coalesce settings.
  */
-static int iavf_set_per_queue_coalesce(struct net_device *netdev, u32 queue,
-				       struct ethtool_coalesce *ec)
-{
-	return __iavf_set_coalesce(netdev, ec, queue);
-}
+अटल पूर्णांक iavf_set_per_queue_coalesce(काष्ठा net_device *netdev, u32 queue,
+				       काष्ठा ethtool_coalesce *ec)
+अणु
+	वापस __iavf_set_coalesce(netdev, ec, queue);
+पूर्ण
 
 /**
  * iavf_fltr_to_ethtool_flow - convert filter type values to ethtool
@@ -834,195 +835,195 @@ static int iavf_set_per_queue_coalesce(struct net_device *netdev, u32 queue,
  *
  * Returns the corresponding ethtool flow type.
  */
-static int iavf_fltr_to_ethtool_flow(enum iavf_fdir_flow_type flow)
-{
-	switch (flow) {
-	case IAVF_FDIR_FLOW_IPV4_TCP:
-		return TCP_V4_FLOW;
-	case IAVF_FDIR_FLOW_IPV4_UDP:
-		return UDP_V4_FLOW;
-	case IAVF_FDIR_FLOW_IPV4_SCTP:
-		return SCTP_V4_FLOW;
-	case IAVF_FDIR_FLOW_IPV4_AH:
-		return AH_V4_FLOW;
-	case IAVF_FDIR_FLOW_IPV4_ESP:
-		return ESP_V4_FLOW;
-	case IAVF_FDIR_FLOW_IPV4_OTHER:
-		return IPV4_USER_FLOW;
-	case IAVF_FDIR_FLOW_IPV6_TCP:
-		return TCP_V6_FLOW;
-	case IAVF_FDIR_FLOW_IPV6_UDP:
-		return UDP_V6_FLOW;
-	case IAVF_FDIR_FLOW_IPV6_SCTP:
-		return SCTP_V6_FLOW;
-	case IAVF_FDIR_FLOW_IPV6_AH:
-		return AH_V6_FLOW;
-	case IAVF_FDIR_FLOW_IPV6_ESP:
-		return ESP_V6_FLOW;
-	case IAVF_FDIR_FLOW_IPV6_OTHER:
-		return IPV6_USER_FLOW;
-	case IAVF_FDIR_FLOW_NON_IP_L2:
-		return ETHER_FLOW;
-	default:
+अटल पूर्णांक iavf_fltr_to_ethtool_flow(क्रमागत iavf_fdir_flow_type flow)
+अणु
+	चयन (flow) अणु
+	हाल IAVF_Fसूची_FLOW_IPV4_TCP:
+		वापस TCP_V4_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV4_UDP:
+		वापस UDP_V4_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV4_SCTP:
+		वापस SCTP_V4_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV4_AH:
+		वापस AH_V4_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV4_ESP:
+		वापस ESP_V4_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV4_OTHER:
+		वापस IPV4_USER_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV6_TCP:
+		वापस TCP_V6_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV6_UDP:
+		वापस UDP_V6_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV6_SCTP:
+		वापस SCTP_V6_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV6_AH:
+		वापस AH_V6_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV6_ESP:
+		वापस ESP_V6_FLOW;
+	हाल IAVF_Fसूची_FLOW_IPV6_OTHER:
+		वापस IPV6_USER_FLOW;
+	हाल IAVF_Fसूची_FLOW_NON_IP_L2:
+		वापस ETHER_FLOW;
+	शेष:
 		/* 0 is undefined ethtool flow */
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /**
- * iavf_ethtool_flow_to_fltr - convert ethtool flow type to filter enum
+ * iavf_ethtool_flow_to_fltr - convert ethtool flow type to filter क्रमागत
  * @eth: Ethtool flow type to be converted
  *
- * Returns flow enum
+ * Returns flow क्रमागत
  */
-static enum iavf_fdir_flow_type iavf_ethtool_flow_to_fltr(int eth)
-{
-	switch (eth) {
-	case TCP_V4_FLOW:
-		return IAVF_FDIR_FLOW_IPV4_TCP;
-	case UDP_V4_FLOW:
-		return IAVF_FDIR_FLOW_IPV4_UDP;
-	case SCTP_V4_FLOW:
-		return IAVF_FDIR_FLOW_IPV4_SCTP;
-	case AH_V4_FLOW:
-		return IAVF_FDIR_FLOW_IPV4_AH;
-	case ESP_V4_FLOW:
-		return IAVF_FDIR_FLOW_IPV4_ESP;
-	case IPV4_USER_FLOW:
-		return IAVF_FDIR_FLOW_IPV4_OTHER;
-	case TCP_V6_FLOW:
-		return IAVF_FDIR_FLOW_IPV6_TCP;
-	case UDP_V6_FLOW:
-		return IAVF_FDIR_FLOW_IPV6_UDP;
-	case SCTP_V6_FLOW:
-		return IAVF_FDIR_FLOW_IPV6_SCTP;
-	case AH_V6_FLOW:
-		return IAVF_FDIR_FLOW_IPV6_AH;
-	case ESP_V6_FLOW:
-		return IAVF_FDIR_FLOW_IPV6_ESP;
-	case IPV6_USER_FLOW:
-		return IAVF_FDIR_FLOW_IPV6_OTHER;
-	case ETHER_FLOW:
-		return IAVF_FDIR_FLOW_NON_IP_L2;
-	default:
-		return IAVF_FDIR_FLOW_NONE;
-	}
-}
+अटल क्रमागत iavf_fdir_flow_type iavf_ethtool_flow_to_fltr(पूर्णांक eth)
+अणु
+	चयन (eth) अणु
+	हाल TCP_V4_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV4_TCP;
+	हाल UDP_V4_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV4_UDP;
+	हाल SCTP_V4_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV4_SCTP;
+	हाल AH_V4_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV4_AH;
+	हाल ESP_V4_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV4_ESP;
+	हाल IPV4_USER_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV4_OTHER;
+	हाल TCP_V6_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV6_TCP;
+	हाल UDP_V6_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV6_UDP;
+	हाल SCTP_V6_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV6_SCTP;
+	हाल AH_V6_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV6_AH;
+	हाल ESP_V6_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV6_ESP;
+	हाल IPV6_USER_FLOW:
+		वापस IAVF_Fसूची_FLOW_IPV6_OTHER;
+	हाल ETHER_FLOW:
+		वापस IAVF_Fसूची_FLOW_NON_IP_L2;
+	शेष:
+		वापस IAVF_Fसूची_FLOW_NONE;
+	पूर्ण
+पूर्ण
 
 /**
  * iavf_is_mask_valid - check mask field set
  * @mask: full mask to check
- * @field: field for which mask should be valid
+ * @field: field क्रम which mask should be valid
  *
- * If the mask is fully set return true. If it is not valid for field return
+ * If the mask is fully set वापस true. If it is not valid क्रम field वापस
  * false.
  */
-static bool iavf_is_mask_valid(u64 mask, u64 field)
-{
-	return (mask & field) == field;
-}
+अटल bool iavf_is_mask_valid(u64 mask, u64 field)
+अणु
+	वापस (mask & field) == field;
+पूर्ण
 
 /**
- * iavf_parse_rx_flow_user_data - deconstruct user-defined data
- * @fsp: pointer to ethtool Rx flow specification
- * @fltr: pointer to Flow Director filter for userdef data storage
+ * iavf_parse_rx_flow_user_data - deस्थिरruct user-defined data
+ * @fsp: poपूर्णांकer to ethtool Rx flow specअगरication
+ * @fltr: poपूर्णांकer to Flow Director filter क्रम userdef data storage
  *
  * Returns 0 on success, negative error value on failure
  */
-static int
-iavf_parse_rx_flow_user_data(struct ethtool_rx_flow_spec *fsp,
-			     struct iavf_fdir_fltr *fltr)
-{
-	struct iavf_flex_word *flex;
-	int i, cnt = 0;
+अटल पूर्णांक
+iavf_parse_rx_flow_user_data(काष्ठा ethtool_rx_flow_spec *fsp,
+			     काष्ठा iavf_fdir_fltr *fltr)
+अणु
+	काष्ठा iavf_flex_word *flex;
+	पूर्णांक i, cnt = 0;
 
-	if (!(fsp->flow_type & FLOW_EXT))
-		return 0;
+	अगर (!(fsp->flow_type & FLOW_EXT))
+		वापस 0;
 
-	for (i = 0; i < IAVF_FLEX_WORD_NUM; i++) {
-#define IAVF_USERDEF_FLEX_WORD_M	GENMASK(15, 0)
-#define IAVF_USERDEF_FLEX_OFFS_S	16
-#define IAVF_USERDEF_FLEX_OFFS_M	GENMASK(31, IAVF_USERDEF_FLEX_OFFS_S)
-#define IAVF_USERDEF_FLEX_FLTR_M	GENMASK(31, 0)
+	क्रम (i = 0; i < IAVF_FLEX_WORD_NUM; i++) अणु
+#घोषणा IAVF_USERDEF_FLEX_WORD_M	GENMASK(15, 0)
+#घोषणा IAVF_USERDEF_FLEX_OFFS_S	16
+#घोषणा IAVF_USERDEF_FLEX_OFFS_M	GENMASK(31, IAVF_USERDEF_FLEX_OFFS_S)
+#घोषणा IAVF_USERDEF_FLEX_FLTR_M	GENMASK(31, 0)
 		u32 value = be32_to_cpu(fsp->h_ext.data[i]);
 		u32 mask = be32_to_cpu(fsp->m_ext.data[i]);
 
-		if (!value || !mask)
-			continue;
+		अगर (!value || !mask)
+			जारी;
 
-		if (!iavf_is_mask_valid(mask, IAVF_USERDEF_FLEX_FLTR_M))
-			return -EINVAL;
+		अगर (!iavf_is_mask_valid(mask, IAVF_USERDEF_FLEX_FLTR_M))
+			वापस -EINVAL;
 
-		/* 504 is the maximum value for offsets, and offset is measured
+		/* 504 is the maximum value क्रम offsets, and offset is measured
 		 * from the start of the MAC address.
 		 */
-#define IAVF_USERDEF_FLEX_MAX_OFFS_VAL 504
+#घोषणा IAVF_USERDEF_FLEX_MAX_OFFS_VAL 504
 		flex = &fltr->flex_words[cnt++];
 		flex->word = value & IAVF_USERDEF_FLEX_WORD_M;
 		flex->offset = (value & IAVF_USERDEF_FLEX_OFFS_M) >>
 			     IAVF_USERDEF_FLEX_OFFS_S;
-		if (flex->offset > IAVF_USERDEF_FLEX_MAX_OFFS_VAL)
-			return -EINVAL;
-	}
+		अगर (flex->offset > IAVF_USERDEF_FLEX_MAX_OFFS_VAL)
+			वापस -EINVAL;
+	पूर्ण
 
 	fltr->flex_cnt = cnt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * iavf_fill_rx_flow_ext_data - fill the additional data
- * @fsp: pointer to ethtool Rx flow specification
- * @fltr: pointer to Flow Director filter to get additional data
+ * @fsp: poपूर्णांकer to ethtool Rx flow specअगरication
+ * @fltr: poपूर्णांकer to Flow Director filter to get additional data
  */
-static void
-iavf_fill_rx_flow_ext_data(struct ethtool_rx_flow_spec *fsp,
-			   struct iavf_fdir_fltr *fltr)
-{
-	if (!fltr->ext_mask.usr_def[0] && !fltr->ext_mask.usr_def[1])
-		return;
+अटल व्योम
+iavf_fill_rx_flow_ext_data(काष्ठा ethtool_rx_flow_spec *fsp,
+			   काष्ठा iavf_fdir_fltr *fltr)
+अणु
+	अगर (!fltr->ext_mask.usr_def[0] && !fltr->ext_mask.usr_def[1])
+		वापस;
 
 	fsp->flow_type |= FLOW_EXT;
 
-	memcpy(fsp->h_ext.data, fltr->ext_data.usr_def, sizeof(fsp->h_ext.data));
-	memcpy(fsp->m_ext.data, fltr->ext_mask.usr_def, sizeof(fsp->m_ext.data));
-}
+	स_नकल(fsp->h_ext.data, fltr->ext_data.usr_def, माप(fsp->h_ext.data));
+	स_नकल(fsp->m_ext.data, fltr->ext_mask.usr_def, माप(fsp->m_ext.data));
+पूर्ण
 
 /**
- * iavf_get_ethtool_fdir_entry - fill ethtool structure with Flow Director filter data
- * @adapter: the VF adapter structure that contains filter list
- * @cmd: ethtool command data structure to receive the filter data
+ * iavf_get_ethtool_fdir_entry - fill ethtool काष्ठाure with Flow Director filter data
+ * @adapter: the VF adapter काष्ठाure that contains filter list
+ * @cmd: ethtool command data काष्ठाure to receive the filter data
  *
- * Returns 0 as expected for success by ethtool
+ * Returns 0 as expected क्रम success by ethtool
  */
-static int
-iavf_get_ethtool_fdir_entry(struct iavf_adapter *adapter,
-			    struct ethtool_rxnfc *cmd)
-{
-	struct ethtool_rx_flow_spec *fsp = (struct ethtool_rx_flow_spec *)&cmd->fs;
-	struct iavf_fdir_fltr *rule = NULL;
-	int ret = 0;
+अटल पूर्णांक
+iavf_get_ethtool_fdir_entry(काष्ठा iavf_adapter *adapter,
+			    काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा ethtool_rx_flow_spec *fsp = (काष्ठा ethtool_rx_flow_spec *)&cmd->fs;
+	काष्ठा iavf_fdir_fltr *rule = शून्य;
+	पूर्णांक ret = 0;
 
-	if (!FDIR_FLTR_SUPPORT(adapter))
-		return -EOPNOTSUPP;
+	अगर (!Fसूची_FLTR_SUPPORT(adapter))
+		वापस -EOPNOTSUPP;
 
 	spin_lock_bh(&adapter->fdir_fltr_lock);
 
 	rule = iavf_find_fdir_fltr_by_loc(adapter, fsp->location);
-	if (!rule) {
+	अगर (!rule) अणु
 		ret = -EINVAL;
-		goto release_lock;
-	}
+		जाओ release_lock;
+	पूर्ण
 
 	fsp->flow_type = iavf_fltr_to_ethtool_flow(rule->flow_type);
 
-	memset(&fsp->m_u, 0, sizeof(fsp->m_u));
-	memset(&fsp->m_ext, 0, sizeof(fsp->m_ext));
+	स_रखो(&fsp->m_u, 0, माप(fsp->m_u));
+	स_रखो(&fsp->m_ext, 0, माप(fsp->m_ext));
 
-	switch (fsp->flow_type) {
-	case TCP_V4_FLOW:
-	case UDP_V4_FLOW:
-	case SCTP_V4_FLOW:
+	चयन (fsp->flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल UDP_V4_FLOW:
+	हाल SCTP_V4_FLOW:
 		fsp->h_u.tcp_ip4_spec.ip4src = rule->ip_data.v4_addrs.src_ip;
 		fsp->h_u.tcp_ip4_spec.ip4dst = rule->ip_data.v4_addrs.dst_ip;
 		fsp->h_u.tcp_ip4_spec.psrc = rule->ip_data.src_port;
@@ -1033,9 +1034,9 @@ iavf_get_ethtool_fdir_entry(struct iavf_adapter *adapter,
 		fsp->m_u.tcp_ip4_spec.psrc = rule->ip_mask.src_port;
 		fsp->m_u.tcp_ip4_spec.pdst = rule->ip_mask.dst_port;
 		fsp->m_u.tcp_ip4_spec.tos = rule->ip_mask.tos;
-		break;
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
+		अवरोध;
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
 		fsp->h_u.ah_ip4_spec.ip4src = rule->ip_data.v4_addrs.src_ip;
 		fsp->h_u.ah_ip4_spec.ip4dst = rule->ip_data.v4_addrs.dst_ip;
 		fsp->h_u.ah_ip4_spec.spi = rule->ip_data.spi;
@@ -1044,8 +1045,8 @@ iavf_get_ethtool_fdir_entry(struct iavf_adapter *adapter,
 		fsp->m_u.ah_ip4_spec.ip4dst = rule->ip_mask.v4_addrs.dst_ip;
 		fsp->m_u.ah_ip4_spec.spi = rule->ip_mask.spi;
 		fsp->m_u.ah_ip4_spec.tos = rule->ip_mask.tos;
-		break;
-	case IPV4_USER_FLOW:
+		अवरोध;
+	हाल IPV4_USER_FLOW:
 		fsp->h_u.usr_ip4_spec.ip4src = rule->ip_data.v4_addrs.src_ip;
 		fsp->h_u.usr_ip4_spec.ip4dst = rule->ip_data.v4_addrs.dst_ip;
 		fsp->h_u.usr_ip4_spec.l4_4_bytes = rule->ip_data.l4_header;
@@ -1058,159 +1059,159 @@ iavf_get_ethtool_fdir_entry(struct iavf_adapter *adapter,
 		fsp->m_u.usr_ip4_spec.tos = rule->ip_mask.tos;
 		fsp->m_u.usr_ip4_spec.ip_ver = 0xFF;
 		fsp->m_u.usr_ip4_spec.proto = rule->ip_mask.proto;
-		break;
-	case TCP_V6_FLOW:
-	case UDP_V6_FLOW:
-	case SCTP_V6_FLOW:
-		memcpy(fsp->h_u.usr_ip6_spec.ip6src, &rule->ip_data.v6_addrs.src_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->h_u.usr_ip6_spec.ip6dst, &rule->ip_data.v6_addrs.dst_ip,
-		       sizeof(struct in6_addr));
+		अवरोध;
+	हाल TCP_V6_FLOW:
+	हाल UDP_V6_FLOW:
+	हाल SCTP_V6_FLOW:
+		स_नकल(fsp->h_u.usr_ip6_spec.ip6src, &rule->ip_data.v6_addrs.src_ip,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->h_u.usr_ip6_spec.ip6dst, &rule->ip_data.v6_addrs.dst_ip,
+		       माप(काष्ठा in6_addr));
 		fsp->h_u.tcp_ip6_spec.psrc = rule->ip_data.src_port;
 		fsp->h_u.tcp_ip6_spec.pdst = rule->ip_data.dst_port;
 		fsp->h_u.tcp_ip6_spec.tclass = rule->ip_data.tclass;
-		memcpy(fsp->m_u.usr_ip6_spec.ip6src, &rule->ip_mask.v6_addrs.src_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->m_u.usr_ip6_spec.ip6dst, &rule->ip_mask.v6_addrs.dst_ip,
-		       sizeof(struct in6_addr));
+		स_नकल(fsp->m_u.usr_ip6_spec.ip6src, &rule->ip_mask.v6_addrs.src_ip,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->m_u.usr_ip6_spec.ip6dst, &rule->ip_mask.v6_addrs.dst_ip,
+		       माप(काष्ठा in6_addr));
 		fsp->m_u.tcp_ip6_spec.psrc = rule->ip_mask.src_port;
 		fsp->m_u.tcp_ip6_spec.pdst = rule->ip_mask.dst_port;
 		fsp->m_u.tcp_ip6_spec.tclass = rule->ip_mask.tclass;
-		break;
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-		memcpy(fsp->h_u.ah_ip6_spec.ip6src, &rule->ip_data.v6_addrs.src_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->h_u.ah_ip6_spec.ip6dst, &rule->ip_data.v6_addrs.dst_ip,
-		       sizeof(struct in6_addr));
+		अवरोध;
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+		स_नकल(fsp->h_u.ah_ip6_spec.ip6src, &rule->ip_data.v6_addrs.src_ip,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->h_u.ah_ip6_spec.ip6dst, &rule->ip_data.v6_addrs.dst_ip,
+		       माप(काष्ठा in6_addr));
 		fsp->h_u.ah_ip6_spec.spi = rule->ip_data.spi;
 		fsp->h_u.ah_ip6_spec.tclass = rule->ip_data.tclass;
-		memcpy(fsp->m_u.ah_ip6_spec.ip6src, &rule->ip_mask.v6_addrs.src_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->m_u.ah_ip6_spec.ip6dst, &rule->ip_mask.v6_addrs.dst_ip,
-		       sizeof(struct in6_addr));
+		स_नकल(fsp->m_u.ah_ip6_spec.ip6src, &rule->ip_mask.v6_addrs.src_ip,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->m_u.ah_ip6_spec.ip6dst, &rule->ip_mask.v6_addrs.dst_ip,
+		       माप(काष्ठा in6_addr));
 		fsp->m_u.ah_ip6_spec.spi = rule->ip_mask.spi;
 		fsp->m_u.ah_ip6_spec.tclass = rule->ip_mask.tclass;
-		break;
-	case IPV6_USER_FLOW:
-		memcpy(fsp->h_u.usr_ip6_spec.ip6src, &rule->ip_data.v6_addrs.src_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->h_u.usr_ip6_spec.ip6dst, &rule->ip_data.v6_addrs.dst_ip,
-		       sizeof(struct in6_addr));
+		अवरोध;
+	हाल IPV6_USER_FLOW:
+		स_नकल(fsp->h_u.usr_ip6_spec.ip6src, &rule->ip_data.v6_addrs.src_ip,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->h_u.usr_ip6_spec.ip6dst, &rule->ip_data.v6_addrs.dst_ip,
+		       माप(काष्ठा in6_addr));
 		fsp->h_u.usr_ip6_spec.l4_4_bytes = rule->ip_data.l4_header;
 		fsp->h_u.usr_ip6_spec.tclass = rule->ip_data.tclass;
 		fsp->h_u.usr_ip6_spec.l4_proto = rule->ip_data.proto;
-		memcpy(fsp->m_u.usr_ip6_spec.ip6src, &rule->ip_mask.v6_addrs.src_ip,
-		       sizeof(struct in6_addr));
-		memcpy(fsp->m_u.usr_ip6_spec.ip6dst, &rule->ip_mask.v6_addrs.dst_ip,
-		       sizeof(struct in6_addr));
+		स_नकल(fsp->m_u.usr_ip6_spec.ip6src, &rule->ip_mask.v6_addrs.src_ip,
+		       माप(काष्ठा in6_addr));
+		स_नकल(fsp->m_u.usr_ip6_spec.ip6dst, &rule->ip_mask.v6_addrs.dst_ip,
+		       माप(काष्ठा in6_addr));
 		fsp->m_u.usr_ip6_spec.l4_4_bytes = rule->ip_mask.l4_header;
 		fsp->m_u.usr_ip6_spec.tclass = rule->ip_mask.tclass;
 		fsp->m_u.usr_ip6_spec.l4_proto = rule->ip_mask.proto;
-		break;
-	case ETHER_FLOW:
+		अवरोध;
+	हाल ETHER_FLOW:
 		fsp->h_u.ether_spec.h_proto = rule->eth_data.etype;
 		fsp->m_u.ether_spec.h_proto = rule->eth_mask.etype;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	iavf_fill_rx_flow_ext_data(fsp, rule);
 
-	if (rule->action == VIRTCHNL_ACTION_DROP)
+	अगर (rule->action == VIRTCHNL_ACTION_DROP)
 		fsp->ring_cookie = RX_CLS_FLOW_DISC;
-	else
+	अन्यथा
 		fsp->ring_cookie = rule->q_index;
 
 release_lock:
 	spin_unlock_bh(&adapter->fdir_fltr_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * iavf_get_fdir_fltr_ids - fill buffer with filter IDs of active filters
- * @adapter: the VF adapter structure containing the filter list
- * @cmd: ethtool command data structure
+ * @adapter: the VF adapter काष्ठाure containing the filter list
+ * @cmd: ethtool command data काष्ठाure
  * @rule_locs: ethtool array passed in from OS to receive filter IDs
  *
- * Returns 0 as expected for success by ethtool
+ * Returns 0 as expected क्रम success by ethtool
  */
-static int
-iavf_get_fdir_fltr_ids(struct iavf_adapter *adapter, struct ethtool_rxnfc *cmd,
+अटल पूर्णांक
+iavf_get_fdir_fltr_ids(काष्ठा iavf_adapter *adapter, काष्ठा ethtool_rxnfc *cmd,
 		       u32 *rule_locs)
-{
-	struct iavf_fdir_fltr *fltr;
-	unsigned int cnt = 0;
-	int val = 0;
+अणु
+	काष्ठा iavf_fdir_fltr *fltr;
+	अचिन्हित पूर्णांक cnt = 0;
+	पूर्णांक val = 0;
 
-	if (!FDIR_FLTR_SUPPORT(adapter))
-		return -EOPNOTSUPP;
+	अगर (!Fसूची_FLTR_SUPPORT(adapter))
+		वापस -EOPNOTSUPP;
 
-	cmd->data = IAVF_MAX_FDIR_FILTERS;
+	cmd->data = IAVF_MAX_Fसूची_FILTERS;
 
 	spin_lock_bh(&adapter->fdir_fltr_lock);
 
-	list_for_each_entry(fltr, &adapter->fdir_list_head, list) {
-		if (cnt == cmd->rule_cnt) {
+	list_क्रम_each_entry(fltr, &adapter->fdir_list_head, list) अणु
+		अगर (cnt == cmd->rule_cnt) अणु
 			val = -EMSGSIZE;
-			goto release_lock;
-		}
+			जाओ release_lock;
+		पूर्ण
 		rule_locs[cnt] = fltr->loc;
 		cnt++;
-	}
+	पूर्ण
 
 release_lock:
 	spin_unlock_bh(&adapter->fdir_fltr_lock);
-	if (!val)
+	अगर (!val)
 		cmd->rule_cnt = cnt;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /**
- * iavf_add_fdir_fltr_info - Set the input set for Flow Director filter
- * @adapter: pointer to the VF adapter structure
- * @fsp: pointer to ethtool Rx flow specification
- * @fltr: filter structure
+ * iavf_add_fdir_fltr_info - Set the input set क्रम Flow Director filter
+ * @adapter: poपूर्णांकer to the VF adapter काष्ठाure
+ * @fsp: poपूर्णांकer to ethtool Rx flow specअगरication
+ * @fltr: filter काष्ठाure
  */
-static int
-iavf_add_fdir_fltr_info(struct iavf_adapter *adapter, struct ethtool_rx_flow_spec *fsp,
-			struct iavf_fdir_fltr *fltr)
-{
+अटल पूर्णांक
+iavf_add_fdir_fltr_info(काष्ठा iavf_adapter *adapter, काष्ठा ethtool_rx_flow_spec *fsp,
+			काष्ठा iavf_fdir_fltr *fltr)
+अणु
 	u32 flow_type, q_index = 0;
-	enum virtchnl_action act;
-	int err;
+	क्रमागत virtchnl_action act;
+	पूर्णांक err;
 
-	if (fsp->ring_cookie == RX_CLS_FLOW_DISC) {
+	अगर (fsp->ring_cookie == RX_CLS_FLOW_DISC) अणु
 		act = VIRTCHNL_ACTION_DROP;
-	} else {
+	पूर्ण अन्यथा अणु
 		q_index = fsp->ring_cookie;
-		if (q_index >= adapter->num_active_queues)
-			return -EINVAL;
+		अगर (q_index >= adapter->num_active_queues)
+			वापस -EINVAL;
 
 		act = VIRTCHNL_ACTION_QUEUE;
-	}
+	पूर्ण
 
 	fltr->action = act;
 	fltr->loc = fsp->location;
 	fltr->q_index = q_index;
 
-	if (fsp->flow_type & FLOW_EXT) {
-		memcpy(fltr->ext_data.usr_def, fsp->h_ext.data,
-		       sizeof(fltr->ext_data.usr_def));
-		memcpy(fltr->ext_mask.usr_def, fsp->m_ext.data,
-		       sizeof(fltr->ext_mask.usr_def));
-	}
+	अगर (fsp->flow_type & FLOW_EXT) अणु
+		स_नकल(fltr->ext_data.usr_def, fsp->h_ext.data,
+		       माप(fltr->ext_data.usr_def));
+		स_नकल(fltr->ext_mask.usr_def, fsp->m_ext.data,
+		       माप(fltr->ext_mask.usr_def));
+	पूर्ण
 
 	flow_type = fsp->flow_type & ~(FLOW_EXT | FLOW_MAC_EXT | FLOW_RSS);
 	fltr->flow_type = iavf_ethtool_flow_to_fltr(flow_type);
 
-	switch (flow_type) {
-	case TCP_V4_FLOW:
-	case UDP_V4_FLOW:
-	case SCTP_V4_FLOW:
+	चयन (flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल UDP_V4_FLOW:
+	हाल SCTP_V4_FLOW:
 		fltr->ip_data.v4_addrs.src_ip = fsp->h_u.tcp_ip4_spec.ip4src;
 		fltr->ip_data.v4_addrs.dst_ip = fsp->h_u.tcp_ip4_spec.ip4dst;
 		fltr->ip_data.src_port = fsp->h_u.tcp_ip4_spec.psrc;
@@ -1221,9 +1222,9 @@ iavf_add_fdir_fltr_info(struct iavf_adapter *adapter, struct ethtool_rx_flow_spe
 		fltr->ip_mask.src_port = fsp->m_u.tcp_ip4_spec.psrc;
 		fltr->ip_mask.dst_port = fsp->m_u.tcp_ip4_spec.pdst;
 		fltr->ip_mask.tos = fsp->m_u.tcp_ip4_spec.tos;
-		break;
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
+		अवरोध;
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
 		fltr->ip_data.v4_addrs.src_ip = fsp->h_u.ah_ip4_spec.ip4src;
 		fltr->ip_data.v4_addrs.dst_ip = fsp->h_u.ah_ip4_spec.ip4dst;
 		fltr->ip_data.spi = fsp->h_u.ah_ip4_spec.spi;
@@ -1232,8 +1233,8 @@ iavf_add_fdir_fltr_info(struct iavf_adapter *adapter, struct ethtool_rx_flow_spe
 		fltr->ip_mask.v4_addrs.dst_ip = fsp->m_u.ah_ip4_spec.ip4dst;
 		fltr->ip_mask.spi = fsp->m_u.ah_ip4_spec.spi;
 		fltr->ip_mask.tos = fsp->m_u.ah_ip4_spec.tos;
-		break;
-	case IPV4_USER_FLOW:
+		अवरोध;
+	हाल IPV4_USER_FLOW:
 		fltr->ip_data.v4_addrs.src_ip = fsp->h_u.usr_ip4_spec.ip4src;
 		fltr->ip_data.v4_addrs.dst_ip = fsp->h_u.usr_ip4_spec.ip4dst;
 		fltr->ip_data.l4_header = fsp->h_u.usr_ip4_spec.l4_4_bytes;
@@ -1244,508 +1245,508 @@ iavf_add_fdir_fltr_info(struct iavf_adapter *adapter, struct ethtool_rx_flow_spe
 		fltr->ip_mask.l4_header = fsp->m_u.usr_ip4_spec.l4_4_bytes;
 		fltr->ip_mask.tos = fsp->m_u.usr_ip4_spec.tos;
 		fltr->ip_mask.proto = fsp->m_u.usr_ip4_spec.proto;
-		break;
-	case TCP_V6_FLOW:
-	case UDP_V6_FLOW:
-	case SCTP_V6_FLOW:
-		memcpy(&fltr->ip_data.v6_addrs.src_ip, fsp->h_u.usr_ip6_spec.ip6src,
-		       sizeof(struct in6_addr));
-		memcpy(&fltr->ip_data.v6_addrs.dst_ip, fsp->h_u.usr_ip6_spec.ip6dst,
-		       sizeof(struct in6_addr));
+		अवरोध;
+	हाल TCP_V6_FLOW:
+	हाल UDP_V6_FLOW:
+	हाल SCTP_V6_FLOW:
+		स_नकल(&fltr->ip_data.v6_addrs.src_ip, fsp->h_u.usr_ip6_spec.ip6src,
+		       माप(काष्ठा in6_addr));
+		स_नकल(&fltr->ip_data.v6_addrs.dst_ip, fsp->h_u.usr_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
 		fltr->ip_data.src_port = fsp->h_u.tcp_ip6_spec.psrc;
 		fltr->ip_data.dst_port = fsp->h_u.tcp_ip6_spec.pdst;
 		fltr->ip_data.tclass = fsp->h_u.tcp_ip6_spec.tclass;
-		memcpy(&fltr->ip_mask.v6_addrs.src_ip, fsp->m_u.usr_ip6_spec.ip6src,
-		       sizeof(struct in6_addr));
-		memcpy(&fltr->ip_mask.v6_addrs.dst_ip, fsp->m_u.usr_ip6_spec.ip6dst,
-		       sizeof(struct in6_addr));
+		स_नकल(&fltr->ip_mask.v6_addrs.src_ip, fsp->m_u.usr_ip6_spec.ip6src,
+		       माप(काष्ठा in6_addr));
+		स_नकल(&fltr->ip_mask.v6_addrs.dst_ip, fsp->m_u.usr_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
 		fltr->ip_mask.src_port = fsp->m_u.tcp_ip6_spec.psrc;
 		fltr->ip_mask.dst_port = fsp->m_u.tcp_ip6_spec.pdst;
 		fltr->ip_mask.tclass = fsp->m_u.tcp_ip6_spec.tclass;
-		break;
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-		memcpy(&fltr->ip_data.v6_addrs.src_ip, fsp->h_u.ah_ip6_spec.ip6src,
-		       sizeof(struct in6_addr));
-		memcpy(&fltr->ip_data.v6_addrs.dst_ip, fsp->h_u.ah_ip6_spec.ip6dst,
-		       sizeof(struct in6_addr));
+		अवरोध;
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+		स_नकल(&fltr->ip_data.v6_addrs.src_ip, fsp->h_u.ah_ip6_spec.ip6src,
+		       माप(काष्ठा in6_addr));
+		स_नकल(&fltr->ip_data.v6_addrs.dst_ip, fsp->h_u.ah_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
 		fltr->ip_data.spi = fsp->h_u.ah_ip6_spec.spi;
 		fltr->ip_data.tclass = fsp->h_u.ah_ip6_spec.tclass;
-		memcpy(&fltr->ip_mask.v6_addrs.src_ip, fsp->m_u.ah_ip6_spec.ip6src,
-		       sizeof(struct in6_addr));
-		memcpy(&fltr->ip_mask.v6_addrs.dst_ip, fsp->m_u.ah_ip6_spec.ip6dst,
-		       sizeof(struct in6_addr));
+		स_नकल(&fltr->ip_mask.v6_addrs.src_ip, fsp->m_u.ah_ip6_spec.ip6src,
+		       माप(काष्ठा in6_addr));
+		स_नकल(&fltr->ip_mask.v6_addrs.dst_ip, fsp->m_u.ah_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
 		fltr->ip_mask.spi = fsp->m_u.ah_ip6_spec.spi;
 		fltr->ip_mask.tclass = fsp->m_u.ah_ip6_spec.tclass;
-		break;
-	case IPV6_USER_FLOW:
-		memcpy(&fltr->ip_data.v6_addrs.src_ip, fsp->h_u.usr_ip6_spec.ip6src,
-		       sizeof(struct in6_addr));
-		memcpy(&fltr->ip_data.v6_addrs.dst_ip, fsp->h_u.usr_ip6_spec.ip6dst,
-		       sizeof(struct in6_addr));
+		अवरोध;
+	हाल IPV6_USER_FLOW:
+		स_नकल(&fltr->ip_data.v6_addrs.src_ip, fsp->h_u.usr_ip6_spec.ip6src,
+		       माप(काष्ठा in6_addr));
+		स_नकल(&fltr->ip_data.v6_addrs.dst_ip, fsp->h_u.usr_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
 		fltr->ip_data.l4_header = fsp->h_u.usr_ip6_spec.l4_4_bytes;
 		fltr->ip_data.tclass = fsp->h_u.usr_ip6_spec.tclass;
 		fltr->ip_data.proto = fsp->h_u.usr_ip6_spec.l4_proto;
-		memcpy(&fltr->ip_mask.v6_addrs.src_ip, fsp->m_u.usr_ip6_spec.ip6src,
-		       sizeof(struct in6_addr));
-		memcpy(&fltr->ip_mask.v6_addrs.dst_ip, fsp->m_u.usr_ip6_spec.ip6dst,
-		       sizeof(struct in6_addr));
+		स_नकल(&fltr->ip_mask.v6_addrs.src_ip, fsp->m_u.usr_ip6_spec.ip6src,
+		       माप(काष्ठा in6_addr));
+		स_नकल(&fltr->ip_mask.v6_addrs.dst_ip, fsp->m_u.usr_ip6_spec.ip6dst,
+		       माप(काष्ठा in6_addr));
 		fltr->ip_mask.l4_header = fsp->m_u.usr_ip6_spec.l4_4_bytes;
 		fltr->ip_mask.tclass = fsp->m_u.usr_ip6_spec.tclass;
 		fltr->ip_mask.proto = fsp->m_u.usr_ip6_spec.l4_proto;
-		break;
-	case ETHER_FLOW:
+		अवरोध;
+	हाल ETHER_FLOW:
 		fltr->eth_data.etype = fsp->h_u.ether_spec.h_proto;
 		fltr->eth_mask.etype = fsp->m_u.ether_spec.h_proto;
-		break;
-	default:
-		/* not doing un-parsed flow types */
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		/* not करोing un-parsed flow types */
+		वापस -EINVAL;
+	पूर्ण
 
-	if (iavf_fdir_is_dup_fltr(adapter, fltr))
-		return -EEXIST;
+	अगर (iavf_fdir_is_dup_fltr(adapter, fltr))
+		वापस -EEXIST;
 
 	err = iavf_parse_rx_flow_user_data(fsp, fltr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return iavf_fill_fdir_add_msg(adapter, fltr);
-}
+	वापस iavf_fill_fdir_add_msg(adapter, fltr);
+पूर्ण
 
 /**
  * iavf_add_fdir_ethtool - add Flow Director filter
- * @adapter: pointer to the VF adapter structure
+ * @adapter: poपूर्णांकer to the VF adapter काष्ठाure
  * @cmd: command to add Flow Director filter
  *
- * Returns 0 on success and negative values for failure
+ * Returns 0 on success and negative values क्रम failure
  */
-static int iavf_add_fdir_ethtool(struct iavf_adapter *adapter, struct ethtool_rxnfc *cmd)
-{
-	struct ethtool_rx_flow_spec *fsp = &cmd->fs;
-	struct iavf_fdir_fltr *fltr;
-	int count = 50;
-	int err;
+अटल पूर्णांक iavf_add_fdir_ethtool(काष्ठा iavf_adapter *adapter, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा ethtool_rx_flow_spec *fsp = &cmd->fs;
+	काष्ठा iavf_fdir_fltr *fltr;
+	पूर्णांक count = 50;
+	पूर्णांक err;
 
-	if (!FDIR_FLTR_SUPPORT(adapter))
-		return -EOPNOTSUPP;
+	अगर (!Fसूची_FLTR_SUPPORT(adapter))
+		वापस -EOPNOTSUPP;
 
-	if (fsp->flow_type & FLOW_MAC_EXT)
-		return -EINVAL;
+	अगर (fsp->flow_type & FLOW_MAC_EXT)
+		वापस -EINVAL;
 
-	if (adapter->fdir_active_fltr >= IAVF_MAX_FDIR_FILTERS) {
+	अगर (adapter->fdir_active_fltr >= IAVF_MAX_Fसूची_FILTERS) अणु
 		dev_err(&adapter->pdev->dev,
 			"Unable to add Flow Director filter because VF reached the limit of max allowed filters (%u)\n",
-			IAVF_MAX_FDIR_FILTERS);
-		return -ENOSPC;
-	}
+			IAVF_MAX_Fसूची_FILTERS);
+		वापस -ENOSPC;
+	पूर्ण
 
 	spin_lock_bh(&adapter->fdir_fltr_lock);
-	if (iavf_find_fdir_fltr_by_loc(adapter, fsp->location)) {
+	अगर (iavf_find_fdir_fltr_by_loc(adapter, fsp->location)) अणु
 		dev_err(&adapter->pdev->dev, "Failed to add Flow Director filter, it already exists\n");
 		spin_unlock_bh(&adapter->fdir_fltr_lock);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 	spin_unlock_bh(&adapter->fdir_fltr_lock);
 
-	fltr = kzalloc(sizeof(*fltr), GFP_KERNEL);
-	if (!fltr)
-		return -ENOMEM;
+	fltr = kzalloc(माप(*fltr), GFP_KERNEL);
+	अगर (!fltr)
+		वापस -ENOMEM;
 
-	while (test_and_set_bit(__IAVF_IN_CRITICAL_TASK,
-				&adapter->crit_section)) {
-		if (--count == 0) {
-			kfree(fltr);
-			return -EINVAL;
-		}
+	जबतक (test_and_set_bit(__IAVF_IN_CRITICAL_TASK,
+				&adapter->crit_section)) अणु
+		अगर (--count == 0) अणु
+			kमुक्त(fltr);
+			वापस -EINVAL;
+		पूर्ण
 		udelay(1);
-	}
+	पूर्ण
 
 	err = iavf_add_fdir_fltr_info(adapter, fsp, fltr);
-	if (err)
-		goto ret;
+	अगर (err)
+		जाओ ret;
 
 	spin_lock_bh(&adapter->fdir_fltr_lock);
 	iavf_fdir_list_add_fltr(adapter, fltr);
 	adapter->fdir_active_fltr++;
-	fltr->state = IAVF_FDIR_FLTR_ADD_REQUEST;
-	adapter->aq_required |= IAVF_FLAG_AQ_ADD_FDIR_FILTER;
+	fltr->state = IAVF_Fसूची_FLTR_ADD_REQUEST;
+	adapter->aq_required |= IAVF_FLAG_AQ_ADD_Fसूची_FILTER;
 	spin_unlock_bh(&adapter->fdir_fltr_lock);
 
-	mod_delayed_work(iavf_wq, &adapter->watchdog_task, 0);
+	mod_delayed_work(iavf_wq, &adapter->watchकरोg_task, 0);
 
 ret:
-	if (err && fltr)
-		kfree(fltr);
+	अगर (err && fltr)
+		kमुक्त(fltr);
 
 	clear_bit(__IAVF_IN_CRITICAL_TASK, &adapter->crit_section);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * iavf_del_fdir_ethtool - delete Flow Director filter
- * @adapter: pointer to the VF adapter structure
+ * @adapter: poपूर्णांकer to the VF adapter काष्ठाure
  * @cmd: command to delete Flow Director filter
  *
- * Returns 0 on success and negative values for failure
+ * Returns 0 on success and negative values क्रम failure
  */
-static int iavf_del_fdir_ethtool(struct iavf_adapter *adapter, struct ethtool_rxnfc *cmd)
-{
-	struct ethtool_rx_flow_spec *fsp = (struct ethtool_rx_flow_spec *)&cmd->fs;
-	struct iavf_fdir_fltr *fltr = NULL;
-	int err = 0;
+अटल पूर्णांक iavf_del_fdir_ethtool(काष्ठा iavf_adapter *adapter, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा ethtool_rx_flow_spec *fsp = (काष्ठा ethtool_rx_flow_spec *)&cmd->fs;
+	काष्ठा iavf_fdir_fltr *fltr = शून्य;
+	पूर्णांक err = 0;
 
-	if (!FDIR_FLTR_SUPPORT(adapter))
-		return -EOPNOTSUPP;
+	अगर (!Fसूची_FLTR_SUPPORT(adapter))
+		वापस -EOPNOTSUPP;
 
 	spin_lock_bh(&adapter->fdir_fltr_lock);
 	fltr = iavf_find_fdir_fltr_by_loc(adapter, fsp->location);
-	if (fltr) {
-		if (fltr->state == IAVF_FDIR_FLTR_ACTIVE) {
-			fltr->state = IAVF_FDIR_FLTR_DEL_REQUEST;
-			adapter->aq_required |= IAVF_FLAG_AQ_DEL_FDIR_FILTER;
-		} else {
+	अगर (fltr) अणु
+		अगर (fltr->state == IAVF_Fसूची_FLTR_ACTIVE) अणु
+			fltr->state = IAVF_Fसूची_FLTR_DEL_REQUEST;
+			adapter->aq_required |= IAVF_FLAG_AQ_DEL_Fसूची_FILTER;
+		पूर्ण अन्यथा अणु
 			err = -EBUSY;
-		}
-	} else if (adapter->fdir_active_fltr) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (adapter->fdir_active_fltr) अणु
 		err = -EINVAL;
-	}
+	पूर्ण
 	spin_unlock_bh(&adapter->fdir_fltr_lock);
 
-	if (fltr && fltr->state == IAVF_FDIR_FLTR_DEL_REQUEST)
-		mod_delayed_work(iavf_wq, &adapter->watchdog_task, 0);
+	अगर (fltr && fltr->state == IAVF_Fसूची_FLTR_DEL_REQUEST)
+		mod_delayed_work(iavf_wq, &adapter->watchकरोg_task, 0);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * iavf_adv_rss_parse_hdrs - parses headers from RSS hash input
  * @cmd: ethtool rxnfc command
  *
- * This function parses the rxnfc command and returns intended
- * header types for RSS configuration
+ * This function parses the rxnfc command and वापसs पूर्णांकended
+ * header types क्रम RSS configuration
  */
-static u32 iavf_adv_rss_parse_hdrs(struct ethtool_rxnfc *cmd)
-{
+अटल u32 iavf_adv_rss_parse_hdrs(काष्ठा ethtool_rxnfc *cmd)
+अणु
 	u32 hdrs = IAVF_ADV_RSS_FLOW_SEG_HDR_NONE;
 
-	switch (cmd->flow_type) {
-	case TCP_V4_FLOW:
+	चयन (cmd->flow_type) अणु
+	हाल TCP_V4_FLOW:
 		hdrs |= IAVF_ADV_RSS_FLOW_SEG_HDR_TCP |
 			IAVF_ADV_RSS_FLOW_SEG_HDR_IPV4;
-		break;
-	case UDP_V4_FLOW:
+		अवरोध;
+	हाल UDP_V4_FLOW:
 		hdrs |= IAVF_ADV_RSS_FLOW_SEG_HDR_UDP |
 			IAVF_ADV_RSS_FLOW_SEG_HDR_IPV4;
-		break;
-	case SCTP_V4_FLOW:
+		अवरोध;
+	हाल SCTP_V4_FLOW:
 		hdrs |= IAVF_ADV_RSS_FLOW_SEG_HDR_SCTP |
 			IAVF_ADV_RSS_FLOW_SEG_HDR_IPV4;
-		break;
-	case TCP_V6_FLOW:
+		अवरोध;
+	हाल TCP_V6_FLOW:
 		hdrs |= IAVF_ADV_RSS_FLOW_SEG_HDR_TCP |
 			IAVF_ADV_RSS_FLOW_SEG_HDR_IPV6;
-		break;
-	case UDP_V6_FLOW:
+		अवरोध;
+	हाल UDP_V6_FLOW:
 		hdrs |= IAVF_ADV_RSS_FLOW_SEG_HDR_UDP |
 			IAVF_ADV_RSS_FLOW_SEG_HDR_IPV6;
-		break;
-	case SCTP_V6_FLOW:
+		अवरोध;
+	हाल SCTP_V6_FLOW:
 		hdrs |= IAVF_ADV_RSS_FLOW_SEG_HDR_SCTP |
 			IAVF_ADV_RSS_FLOW_SEG_HDR_IPV6;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return hdrs;
-}
+	वापस hdrs;
+पूर्ण
 
 /**
  * iavf_adv_rss_parse_hash_flds - parses hash fields from RSS hash input
  * @cmd: ethtool rxnfc command
  *
- * This function parses the rxnfc command and returns intended hash fields for
+ * This function parses the rxnfc command and वापसs पूर्णांकended hash fields क्रम
  * RSS configuration
  */
-static u64 iavf_adv_rss_parse_hash_flds(struct ethtool_rxnfc *cmd)
-{
+अटल u64 iavf_adv_rss_parse_hash_flds(काष्ठा ethtool_rxnfc *cmd)
+अणु
 	u64 hfld = IAVF_ADV_RSS_HASH_INVALID;
 
-	if (cmd->data & RXH_IP_SRC || cmd->data & RXH_IP_DST) {
-		switch (cmd->flow_type) {
-		case TCP_V4_FLOW:
-		case UDP_V4_FLOW:
-		case SCTP_V4_FLOW:
-			if (cmd->data & RXH_IP_SRC)
+	अगर (cmd->data & RXH_IP_SRC || cmd->data & RXH_IP_DST) अणु
+		चयन (cmd->flow_type) अणु
+		हाल TCP_V4_FLOW:
+		हाल UDP_V4_FLOW:
+		हाल SCTP_V4_FLOW:
+			अगर (cmd->data & RXH_IP_SRC)
 				hfld |= IAVF_ADV_RSS_HASH_FLD_IPV4_SA;
-			if (cmd->data & RXH_IP_DST)
+			अगर (cmd->data & RXH_IP_DST)
 				hfld |= IAVF_ADV_RSS_HASH_FLD_IPV4_DA;
-			break;
-		case TCP_V6_FLOW:
-		case UDP_V6_FLOW:
-		case SCTP_V6_FLOW:
-			if (cmd->data & RXH_IP_SRC)
+			अवरोध;
+		हाल TCP_V6_FLOW:
+		हाल UDP_V6_FLOW:
+		हाल SCTP_V6_FLOW:
+			अगर (cmd->data & RXH_IP_SRC)
 				hfld |= IAVF_ADV_RSS_HASH_FLD_IPV6_SA;
-			if (cmd->data & RXH_IP_DST)
+			अगर (cmd->data & RXH_IP_DST)
 				hfld |= IAVF_ADV_RSS_HASH_FLD_IPV6_DA;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (cmd->data & RXH_L4_B_0_1 || cmd->data & RXH_L4_B_2_3) {
-		switch (cmd->flow_type) {
-		case TCP_V4_FLOW:
-		case TCP_V6_FLOW:
-			if (cmd->data & RXH_L4_B_0_1)
+	अगर (cmd->data & RXH_L4_B_0_1 || cmd->data & RXH_L4_B_2_3) अणु
+		चयन (cmd->flow_type) अणु
+		हाल TCP_V4_FLOW:
+		हाल TCP_V6_FLOW:
+			अगर (cmd->data & RXH_L4_B_0_1)
 				hfld |= IAVF_ADV_RSS_HASH_FLD_TCP_SRC_PORT;
-			if (cmd->data & RXH_L4_B_2_3)
+			अगर (cmd->data & RXH_L4_B_2_3)
 				hfld |= IAVF_ADV_RSS_HASH_FLD_TCP_DST_PORT;
-			break;
-		case UDP_V4_FLOW:
-		case UDP_V6_FLOW:
-			if (cmd->data & RXH_L4_B_0_1)
+			अवरोध;
+		हाल UDP_V4_FLOW:
+		हाल UDP_V6_FLOW:
+			अगर (cmd->data & RXH_L4_B_0_1)
 				hfld |= IAVF_ADV_RSS_HASH_FLD_UDP_SRC_PORT;
-			if (cmd->data & RXH_L4_B_2_3)
+			अगर (cmd->data & RXH_L4_B_2_3)
 				hfld |= IAVF_ADV_RSS_HASH_FLD_UDP_DST_PORT;
-			break;
-		case SCTP_V4_FLOW:
-		case SCTP_V6_FLOW:
-			if (cmd->data & RXH_L4_B_0_1)
+			अवरोध;
+		हाल SCTP_V4_FLOW:
+		हाल SCTP_V6_FLOW:
+			अगर (cmd->data & RXH_L4_B_0_1)
 				hfld |= IAVF_ADV_RSS_HASH_FLD_SCTP_SRC_PORT;
-			if (cmd->data & RXH_L4_B_2_3)
+			अगर (cmd->data & RXH_L4_B_2_3)
 				hfld |= IAVF_ADV_RSS_HASH_FLD_SCTP_DST_PORT;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return hfld;
-}
+	वापस hfld;
+पूर्ण
 
 /**
- * iavf_set_adv_rss_hash_opt - Enable/Disable flow types for RSS hash
- * @adapter: pointer to the VF adapter structure
+ * iavf_set_adv_rss_hash_opt - Enable/Disable flow types क्रम RSS hash
+ * @adapter: poपूर्णांकer to the VF adapter काष्ठाure
  * @cmd: ethtool rxnfc command
  *
- * Returns Success if the flow input set is supported.
+ * Returns Success अगर the flow input set is supported.
  */
-static int
-iavf_set_adv_rss_hash_opt(struct iavf_adapter *adapter,
-			  struct ethtool_rxnfc *cmd)
-{
-	struct iavf_adv_rss *rss_old, *rss_new;
+अटल पूर्णांक
+iavf_set_adv_rss_hash_opt(काष्ठा iavf_adapter *adapter,
+			  काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा iavf_adv_rss *rss_old, *rss_new;
 	bool rss_new_add = false;
-	int count = 50, err = 0;
+	पूर्णांक count = 50, err = 0;
 	u64 hash_flds;
 	u32 hdrs;
 
-	if (!ADV_RSS_SUPPORT(adapter))
-		return -EOPNOTSUPP;
+	अगर (!ADV_RSS_SUPPORT(adapter))
+		वापस -EOPNOTSUPP;
 
 	hdrs = iavf_adv_rss_parse_hdrs(cmd);
-	if (hdrs == IAVF_ADV_RSS_FLOW_SEG_HDR_NONE)
-		return -EINVAL;
+	अगर (hdrs == IAVF_ADV_RSS_FLOW_SEG_HDR_NONE)
+		वापस -EINVAL;
 
 	hash_flds = iavf_adv_rss_parse_hash_flds(cmd);
-	if (hash_flds == IAVF_ADV_RSS_HASH_INVALID)
-		return -EINVAL;
+	अगर (hash_flds == IAVF_ADV_RSS_HASH_INVALID)
+		वापस -EINVAL;
 
-	rss_new = kzalloc(sizeof(*rss_new), GFP_KERNEL);
-	if (!rss_new)
-		return -ENOMEM;
+	rss_new = kzalloc(माप(*rss_new), GFP_KERNEL);
+	अगर (!rss_new)
+		वापस -ENOMEM;
 
-	if (iavf_fill_adv_rss_cfg_msg(&rss_new->cfg_msg, hdrs, hash_flds)) {
-		kfree(rss_new);
-		return -EINVAL;
-	}
+	अगर (iavf_fill_adv_rss_cfg_msg(&rss_new->cfg_msg, hdrs, hash_flds)) अणु
+		kमुक्त(rss_new);
+		वापस -EINVAL;
+	पूर्ण
 
-	while (test_and_set_bit(__IAVF_IN_CRITICAL_TASK,
-				&adapter->crit_section)) {
-		if (--count == 0) {
-			kfree(rss_new);
-			return -EINVAL;
-		}
+	जबतक (test_and_set_bit(__IAVF_IN_CRITICAL_TASK,
+				&adapter->crit_section)) अणु
+		अगर (--count == 0) अणु
+			kमुक्त(rss_new);
+			वापस -EINVAL;
+		पूर्ण
 
 		udelay(1);
-	}
+	पूर्ण
 
 	spin_lock_bh(&adapter->adv_rss_lock);
 	rss_old = iavf_find_adv_rss_cfg_by_hdrs(adapter, hdrs);
-	if (rss_old) {
-		if (rss_old->state != IAVF_ADV_RSS_ACTIVE) {
+	अगर (rss_old) अणु
+		अगर (rss_old->state != IAVF_ADV_RSS_ACTIVE) अणु
 			err = -EBUSY;
-		} else if (rss_old->hash_flds != hash_flds) {
+		पूर्ण अन्यथा अगर (rss_old->hash_flds != hash_flds) अणु
 			rss_old->state = IAVF_ADV_RSS_ADD_REQUEST;
 			rss_old->hash_flds = hash_flds;
-			memcpy(&rss_old->cfg_msg, &rss_new->cfg_msg,
-			       sizeof(rss_new->cfg_msg));
+			स_नकल(&rss_old->cfg_msg, &rss_new->cfg_msg,
+			       माप(rss_new->cfg_msg));
 			adapter->aq_required |= IAVF_FLAG_AQ_ADD_ADV_RSS_CFG;
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -EEXIST;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rss_new_add = true;
 		rss_new->state = IAVF_ADV_RSS_ADD_REQUEST;
 		rss_new->packet_hdrs = hdrs;
 		rss_new->hash_flds = hash_flds;
 		list_add_tail(&rss_new->list, &adapter->adv_rss_list_head);
 		adapter->aq_required |= IAVF_FLAG_AQ_ADD_ADV_RSS_CFG;
-	}
+	पूर्ण
 	spin_unlock_bh(&adapter->adv_rss_lock);
 
-	if (!err)
-		mod_delayed_work(iavf_wq, &adapter->watchdog_task, 0);
+	अगर (!err)
+		mod_delayed_work(iavf_wq, &adapter->watchकरोg_task, 0);
 
 	clear_bit(__IAVF_IN_CRITICAL_TASK, &adapter->crit_section);
 
-	if (!rss_new_add)
-		kfree(rss_new);
+	अगर (!rss_new_add)
+		kमुक्त(rss_new);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * iavf_get_adv_rss_hash_opt - Retrieve hash fields for a given flow-type
- * @adapter: pointer to the VF adapter structure
+ * iavf_get_adv_rss_hash_opt - Retrieve hash fields क्रम a given flow-type
+ * @adapter: poपूर्णांकer to the VF adapter काष्ठाure
  * @cmd: ethtool rxnfc command
  *
- * Returns Success if the flow input set is supported.
+ * Returns Success अगर the flow input set is supported.
  */
-static int
-iavf_get_adv_rss_hash_opt(struct iavf_adapter *adapter,
-			  struct ethtool_rxnfc *cmd)
-{
-	struct iavf_adv_rss *rss;
+अटल पूर्णांक
+iavf_get_adv_rss_hash_opt(काष्ठा iavf_adapter *adapter,
+			  काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा iavf_adv_rss *rss;
 	u64 hash_flds;
 	u32 hdrs;
 
-	if (!ADV_RSS_SUPPORT(adapter))
-		return -EOPNOTSUPP;
+	अगर (!ADV_RSS_SUPPORT(adapter))
+		वापस -EOPNOTSUPP;
 
 	cmd->data = 0;
 
 	hdrs = iavf_adv_rss_parse_hdrs(cmd);
-	if (hdrs == IAVF_ADV_RSS_FLOW_SEG_HDR_NONE)
-		return -EINVAL;
+	अगर (hdrs == IAVF_ADV_RSS_FLOW_SEG_HDR_NONE)
+		वापस -EINVAL;
 
 	spin_lock_bh(&adapter->adv_rss_lock);
 	rss = iavf_find_adv_rss_cfg_by_hdrs(adapter, hdrs);
-	if (rss)
+	अगर (rss)
 		hash_flds = rss->hash_flds;
-	else
+	अन्यथा
 		hash_flds = IAVF_ADV_RSS_HASH_INVALID;
 	spin_unlock_bh(&adapter->adv_rss_lock);
 
-	if (hash_flds == IAVF_ADV_RSS_HASH_INVALID)
-		return -EINVAL;
+	अगर (hash_flds == IAVF_ADV_RSS_HASH_INVALID)
+		वापस -EINVAL;
 
-	if (hash_flds & (IAVF_ADV_RSS_HASH_FLD_IPV4_SA |
+	अगर (hash_flds & (IAVF_ADV_RSS_HASH_FLD_IPV4_SA |
 			 IAVF_ADV_RSS_HASH_FLD_IPV6_SA))
 		cmd->data |= (u64)RXH_IP_SRC;
 
-	if (hash_flds & (IAVF_ADV_RSS_HASH_FLD_IPV4_DA |
+	अगर (hash_flds & (IAVF_ADV_RSS_HASH_FLD_IPV4_DA |
 			 IAVF_ADV_RSS_HASH_FLD_IPV6_DA))
 		cmd->data |= (u64)RXH_IP_DST;
 
-	if (hash_flds & (IAVF_ADV_RSS_HASH_FLD_TCP_SRC_PORT |
+	अगर (hash_flds & (IAVF_ADV_RSS_HASH_FLD_TCP_SRC_PORT |
 			 IAVF_ADV_RSS_HASH_FLD_UDP_SRC_PORT |
 			 IAVF_ADV_RSS_HASH_FLD_SCTP_SRC_PORT))
 		cmd->data |= (u64)RXH_L4_B_0_1;
 
-	if (hash_flds & (IAVF_ADV_RSS_HASH_FLD_TCP_DST_PORT |
+	अगर (hash_flds & (IAVF_ADV_RSS_HASH_FLD_TCP_DST_PORT |
 			 IAVF_ADV_RSS_HASH_FLD_UDP_DST_PORT |
 			 IAVF_ADV_RSS_HASH_FLD_SCTP_DST_PORT))
 		cmd->data |= (u64)RXH_L4_B_2_3;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * iavf_set_rxnfc - command to set Rx flow rules.
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @cmd: ethtool rxnfc command
  *
- * Returns 0 for success and negative values for errors
+ * Returns 0 क्रम success and negative values क्रम errors
  */
-static int iavf_set_rxnfc(struct net_device *netdev, struct ethtool_rxnfc *cmd)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
-	int ret = -EOPNOTSUPP;
+अटल पूर्णांक iavf_set_rxnfc(काष्ठा net_device *netdev, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	switch (cmd->cmd) {
-	case ETHTOOL_SRXCLSRLINS:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_SRXCLSRLINS:
 		ret = iavf_add_fdir_ethtool(adapter, cmd);
-		break;
-	case ETHTOOL_SRXCLSRLDEL:
+		अवरोध;
+	हाल ETHTOOL_SRXCLSRLDEL:
 		ret = iavf_del_fdir_ethtool(adapter, cmd);
-		break;
-	case ETHTOOL_SRXFH:
+		अवरोध;
+	हाल ETHTOOL_SRXFH:
 		ret = iavf_set_adv_rss_hash_opt(adapter, cmd);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * iavf_get_rxnfc - command to get RX flow classification rules
- * @netdev: network interface device structure
+ * iavf_get_rxnfc - command to get RX flow classअगरication rules
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @cmd: ethtool rxnfc command
- * @rule_locs: pointer to store rule locations
+ * @rule_locs: poपूर्णांकer to store rule locations
  *
- * Returns Success if the command is supported.
+ * Returns Success अगर the command is supported.
  **/
-static int iavf_get_rxnfc(struct net_device *netdev, struct ethtool_rxnfc *cmd,
+अटल पूर्णांक iavf_get_rxnfc(काष्ठा net_device *netdev, काष्ठा ethtool_rxnfc *cmd,
 			  u32 *rule_locs)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
-	int ret = -EOPNOTSUPP;
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	switch (cmd->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		cmd->data = adapter->num_active_queues;
 		ret = 0;
-		break;
-	case ETHTOOL_GRXCLSRLCNT:
-		if (!FDIR_FLTR_SUPPORT(adapter))
-			break;
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRLCNT:
+		अगर (!Fसूची_FLTR_SUPPORT(adapter))
+			अवरोध;
 		cmd->rule_cnt = adapter->fdir_active_fltr;
-		cmd->data = IAVF_MAX_FDIR_FILTERS;
+		cmd->data = IAVF_MAX_Fसूची_FILTERS;
 		ret = 0;
-		break;
-	case ETHTOOL_GRXCLSRULE:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRULE:
 		ret = iavf_get_ethtool_fdir_entry(adapter, cmd);
-		break;
-	case ETHTOOL_GRXCLSRLALL:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRLALL:
 		ret = iavf_get_fdir_fltr_ids(adapter, cmd, (u32 *)rule_locs);
-		break;
-	case ETHTOOL_GRXFH:
+		अवरोध;
+	हाल ETHTOOL_GRXFH:
 		ret = iavf_get_adv_rss_hash_opt(adapter, cmd);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 /**
  * iavf_get_channels: get the number of channels supported by the device
- * @netdev: network interface device structure
- * @ch: channel information structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @ch: channel inक्रमmation काष्ठाure
  *
  * For the purposes of our device, we only use combined channels, i.e. a tx/rx
  * queue pair. Report one extra channel to match our "other" MSI-X vector.
  **/
-static void iavf_get_channels(struct net_device *netdev,
-			      struct ethtool_channels *ch)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम iavf_get_channels(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_channels *ch)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 
 	/* Report maximum channels */
 	ch->max_combined = adapter->vsi_res->num_queue_pairs;
@@ -1754,136 +1755,136 @@ static void iavf_get_channels(struct net_device *netdev,
 	ch->other_count = NONQ_VECS;
 
 	ch->combined_count = adapter->num_active_queues;
-}
+पूर्ण
 
 /**
  * iavf_set_channels: set the new channel count
- * @netdev: network interface device structure
- * @ch: channel information structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @ch: channel inक्रमmation काष्ठाure
  *
- * Negotiate a new number of channels with the PF then do a reset.  During
- * reset we'll realloc queues and fix the RSS table.  Returns 0 on success,
+ * Negotiate a new number of channels with the PF then करो a reset.  During
+ * reset we'll पुनः_स्मृति queues and fix the RSS table.  Returns 0 on success,
  * negative on failure.
  **/
-static int iavf_set_channels(struct net_device *netdev,
-			     struct ethtool_channels *ch)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक iavf_set_channels(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_channels *ch)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 	u32 num_req = ch->combined_count;
 
-	if ((adapter->vf_res->vf_cap_flags & VIRTCHNL_VF_OFFLOAD_ADQ) &&
-	    adapter->num_tc) {
+	अगर ((adapter->vf_res->vf_cap_flags & VIRTCHNL_VF_OFFLOAD_ADQ) &&
+	    adapter->num_tc) अणु
 		dev_info(&adapter->pdev->dev, "Cannot set channels since ADq is enabled.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* All of these should have already been checked by ethtool before this
-	 * even gets to us, but just to be sure.
+	/* All of these should have alपढ़ोy been checked by ethtool beक्रमe this
+	 * even माला_लो to us, but just to be sure.
 	 */
-	if (num_req > adapter->vsi_res->num_queue_pairs)
-		return -EINVAL;
+	अगर (num_req > adapter->vsi_res->num_queue_pairs)
+		वापस -EINVAL;
 
-	if (num_req == adapter->num_active_queues)
-		return 0;
+	अगर (num_req == adapter->num_active_queues)
+		वापस 0;
 
-	if (ch->rx_count || ch->tx_count || ch->other_count != NONQ_VECS)
-		return -EINVAL;
+	अगर (ch->rx_count || ch->tx_count || ch->other_count != NONQ_VECS)
+		वापस -EINVAL;
 
 	adapter->num_req_queues = num_req;
 	adapter->flags |= IAVF_FLAG_REINIT_ITR_NEEDED;
 	iavf_schedule_reset(adapter);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * iavf_get_rxfh_key_size - get the RSS hash key size
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
  * Returns the table size.
  **/
-static u32 iavf_get_rxfh_key_size(struct net_device *netdev)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल u32 iavf_get_rxfh_key_size(काष्ठा net_device *netdev)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 
-	return adapter->rss_key_size;
-}
+	वापस adapter->rss_key_size;
+पूर्ण
 
 /**
  * iavf_get_rxfh_indir_size - get the rx flow hash indirection table size
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
  * Returns the table size.
  **/
-static u32 iavf_get_rxfh_indir_size(struct net_device *netdev)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल u32 iavf_get_rxfh_indir_size(काष्ठा net_device *netdev)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 
-	return adapter->rss_lut_size;
-}
+	वापस adapter->rss_lut_size;
+पूर्ण
 
 /**
  * iavf_get_rxfh - get the rx flow hash indirection table
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @indir: indirection table
  * @key: hash key
  * @hfunc: hash function in use
  *
- * Reads the indirection table directly from the hardware. Always returns 0.
+ * Reads the indirection table directly from the hardware. Always वापसs 0.
  **/
-static int iavf_get_rxfh(struct net_device *netdev, u32 *indir, u8 *key,
+अटल पूर्णांक iavf_get_rxfh(काष्ठा net_device *netdev, u32 *indir, u8 *key,
 			 u8 *hfunc)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 	u16 i;
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
-	if (!indir)
-		return 0;
+	अगर (!indir)
+		वापस 0;
 
-	memcpy(key, adapter->rss_key, adapter->rss_key_size);
+	स_नकल(key, adapter->rss_key, adapter->rss_key_size);
 
-	/* Each 32 bits pointed by 'indir' is stored with a lut entry */
-	for (i = 0; i < adapter->rss_lut_size; i++)
+	/* Each 32 bits poपूर्णांकed by 'indir' is stored with a lut entry */
+	क्रम (i = 0; i < adapter->rss_lut_size; i++)
 		indir[i] = (u32)adapter->rss_lut[i];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * iavf_set_rxfh - set the rx flow hash indirection table
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @indir: indirection table
  * @key: hash key
  * @hfunc: hash function to use
  *
- * Returns -EINVAL if the table specifies an inavlid queue id, otherwise
- * returns 0 after programming the table.
+ * Returns -EINVAL अगर the table specअगरies an inavlid queue id, otherwise
+ * वापसs 0 after programming the table.
  **/
-static int iavf_set_rxfh(struct net_device *netdev, const u32 *indir,
-			 const u8 *key, const u8 hfunc)
-{
-	struct iavf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक iavf_set_rxfh(काष्ठा net_device *netdev, स्थिर u32 *indir,
+			 स्थिर u8 *key, स्थिर u8 hfunc)
+अणु
+	काष्ठा iavf_adapter *adapter = netdev_priv(netdev);
 	u16 i;
 
-	/* We do not allow change in unsupported parameters */
-	if (key ||
+	/* We करो not allow change in unsupported parameters */
+	अगर (key ||
 	    (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP))
-		return -EOPNOTSUPP;
-	if (!indir)
-		return 0;
+		वापस -EOPNOTSUPP;
+	अगर (!indir)
+		वापस 0;
 
-	if (key)
-		memcpy(adapter->rss_key, key, adapter->rss_key_size);
+	अगर (key)
+		स_नकल(adapter->rss_key, key, adapter->rss_key_size);
 
-	/* Each 32 bits pointed by 'indir' is stored with a lut entry */
-	for (i = 0; i < adapter->rss_lut_size; i++)
+	/* Each 32 bits poपूर्णांकed by 'indir' is stored with a lut entry */
+	क्रम (i = 0; i < adapter->rss_lut_size; i++)
 		adapter->rss_lut[i] = (u8)(indir[i]);
 
-	return iavf_config_rss(adapter);
-}
+	वापस iavf_config_rss(adapter);
+पूर्ण
 
-static const struct ethtool_ops iavf_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops iavf_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES |
 				     ETHTOOL_COALESCE_MAX_FRAMES_IRQ |
@@ -1912,16 +1913,16 @@ static const struct ethtool_ops iavf_ethtool_ops = {
 	.set_channels		= iavf_set_channels,
 	.get_rxfh_key_size	= iavf_get_rxfh_key_size,
 	.get_link_ksettings	= iavf_get_link_ksettings,
-};
+पूर्ण;
 
 /**
- * iavf_set_ethtool_ops - Initialize ethtool ops struct
- * @netdev: network interface device structure
+ * iavf_set_ethtool_ops - Initialize ethtool ops काष्ठा
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
- * Sets ethtool ops struct in our netdev so that ethtool can call
+ * Sets ethtool ops काष्ठा in our netdev so that ethtool can call
  * our functions.
  **/
-void iavf_set_ethtool_ops(struct net_device *netdev)
-{
+व्योम iavf_set_ethtool_ops(काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = &iavf_ethtool_ops;
-}
+पूर्ण

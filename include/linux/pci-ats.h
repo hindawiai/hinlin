@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_PCI_ATS_H
-#define LINUX_PCI_ATS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_PCI_ATS_H
+#घोषणा LINUX_PCI_ATS_H
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#ifdef CONFIG_PCI_ATS
+#अगर_घोषित CONFIG_PCI_ATS
 /* Address Translation Service */
-bool pci_ats_supported(struct pci_dev *dev);
-int pci_enable_ats(struct pci_dev *dev, int ps);
-void pci_disable_ats(struct pci_dev *dev);
-int pci_ats_queue_depth(struct pci_dev *dev);
-int pci_ats_page_aligned(struct pci_dev *dev);
-#else /* CONFIG_PCI_ATS */
-static inline bool pci_ats_supported(struct pci_dev *d)
-{ return false; }
-static inline int pci_enable_ats(struct pci_dev *d, int ps)
-{ return -ENODEV; }
-static inline void pci_disable_ats(struct pci_dev *d) { }
-static inline int pci_ats_queue_depth(struct pci_dev *d)
-{ return -ENODEV; }
-static inline int pci_ats_page_aligned(struct pci_dev *dev)
-{ return 0; }
-#endif /* CONFIG_PCI_ATS */
+bool pci_ats_supported(काष्ठा pci_dev *dev);
+पूर्णांक pci_enable_ats(काष्ठा pci_dev *dev, पूर्णांक ps);
+व्योम pci_disable_ats(काष्ठा pci_dev *dev);
+पूर्णांक pci_ats_queue_depth(काष्ठा pci_dev *dev);
+पूर्णांक pci_ats_page_aligned(काष्ठा pci_dev *dev);
+#अन्यथा /* CONFIG_PCI_ATS */
+अटल अंतरभूत bool pci_ats_supported(काष्ठा pci_dev *d)
+अणु वापस false; पूर्ण
+अटल अंतरभूत पूर्णांक pci_enable_ats(काष्ठा pci_dev *d, पूर्णांक ps)
+अणु वापस -ENODEV; पूर्ण
+अटल अंतरभूत व्योम pci_disable_ats(काष्ठा pci_dev *d) अणु पूर्ण
+अटल अंतरभूत पूर्णांक pci_ats_queue_depth(काष्ठा pci_dev *d)
+अणु वापस -ENODEV; पूर्ण
+अटल अंतरभूत पूर्णांक pci_ats_page_aligned(काष्ठा pci_dev *dev)
+अणु वापस 0; पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_ATS */
 
-#ifdef CONFIG_PCI_PRI
-int pci_enable_pri(struct pci_dev *pdev, u32 reqs);
-void pci_disable_pri(struct pci_dev *pdev);
-int pci_reset_pri(struct pci_dev *pdev);
-int pci_prg_resp_pasid_required(struct pci_dev *pdev);
-bool pci_pri_supported(struct pci_dev *pdev);
-#else
-static inline bool pci_pri_supported(struct pci_dev *pdev)
-{ return false; }
-#endif /* CONFIG_PCI_PRI */
+#अगर_घोषित CONFIG_PCI_PRI
+पूर्णांक pci_enable_pri(काष्ठा pci_dev *pdev, u32 reqs);
+व्योम pci_disable_pri(काष्ठा pci_dev *pdev);
+पूर्णांक pci_reset_pri(काष्ठा pci_dev *pdev);
+पूर्णांक pci_prg_resp_pasid_required(काष्ठा pci_dev *pdev);
+bool pci_pri_supported(काष्ठा pci_dev *pdev);
+#अन्यथा
+अटल अंतरभूत bool pci_pri_supported(काष्ठा pci_dev *pdev)
+अणु वापस false; पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_PRI */
 
-#ifdef CONFIG_PCI_PASID
-int pci_enable_pasid(struct pci_dev *pdev, int features);
-void pci_disable_pasid(struct pci_dev *pdev);
-int pci_pasid_features(struct pci_dev *pdev);
-int pci_max_pasids(struct pci_dev *pdev);
-#else /* CONFIG_PCI_PASID */
-static inline int pci_enable_pasid(struct pci_dev *pdev, int features)
-{ return -EINVAL; }
-static inline void pci_disable_pasid(struct pci_dev *pdev) { }
-static inline int pci_pasid_features(struct pci_dev *pdev)
-{ return -EINVAL; }
-static inline int pci_max_pasids(struct pci_dev *pdev)
-{ return -EINVAL; }
-#endif /* CONFIG_PCI_PASID */
+#अगर_घोषित CONFIG_PCI_PASID
+पूर्णांक pci_enable_pasid(काष्ठा pci_dev *pdev, पूर्णांक features);
+व्योम pci_disable_pasid(काष्ठा pci_dev *pdev);
+पूर्णांक pci_pasid_features(काष्ठा pci_dev *pdev);
+पूर्णांक pci_max_pasids(काष्ठा pci_dev *pdev);
+#अन्यथा /* CONFIG_PCI_PASID */
+अटल अंतरभूत पूर्णांक pci_enable_pasid(काष्ठा pci_dev *pdev, पूर्णांक features)
+अणु वापस -EINVAL; पूर्ण
+अटल अंतरभूत व्योम pci_disable_pasid(काष्ठा pci_dev *pdev) अणु पूर्ण
+अटल अंतरभूत पूर्णांक pci_pasid_features(काष्ठा pci_dev *pdev)
+अणु वापस -EINVAL; पूर्ण
+अटल अंतरभूत पूर्णांक pci_max_pasids(काष्ठा pci_dev *pdev)
+अणु वापस -EINVAL; पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_PASID */
 
-#endif /* LINUX_PCI_ATS_H */
+#पूर्ण_अगर /* LINUX_PCI_ATS_H */

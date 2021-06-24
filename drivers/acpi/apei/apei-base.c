@@ -1,576 +1,577 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * apei-base.c - ACPI Platform Error Interface (APEI) supporting
- * infrastructure
+ * apei-base.c - ACPI Platक्रमm Error Interface (APEI) supporting
+ * infraकाष्ठाure
  *
- * APEI allows to report errors (for example from the chipset) to the
- * the operating system. This improves NMI handling especially. In
+ * APEI allows to report errors (क्रम example from the chipset) to the
+ * the operating प्रणाली. This improves NMI handling especially. In
  * addition it supports error serialization and error injection.
  *
- * For more information about APEI, please refer to ACPI Specification
+ * For more inक्रमmation about APEI, please refer to ACPI Specअगरication
  * version 4.0, chapter 17.
  *
  * This file has Common functions used by more than one APEI table,
- * including framework of interpreter for ERST and EINJ; resource
- * management for APEI registers.
+ * including framework of पूर्णांकerpreter क्रम ERST and EINJ; resource
+ * management क्रम APEI रेजिस्टरs.
  *
  * Copyright (C) 2009, Intel Corp.
- *	Author: Huang Ying <ying.huang@intel.com>
+ *	Author: Huang Ying <ying.huang@पूर्णांकel.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/acpi.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/kref.h>
-#include <linux/rculist.h>
-#include <linux/interrupt.h>
-#include <linux/debugfs.h>
-#include <asm/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kref.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/debugfs.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "apei-internal.h"
+#समावेश "apei-internal.h"
 
-#define APEI_PFX "APEI: "
+#घोषणा APEI_PFX "APEI: "
 
 /*
  * APEI ERST (Error Record Serialization Table) and EINJ (Error
- * INJection) interpreter framework.
+ * INJection) पूर्णांकerpreter framework.
  */
 
-#define APEI_EXEC_PRESERVE_REGISTER	0x1
+#घोषणा APEI_EXEC_PRESERVE_REGISTER	0x1
 
-void apei_exec_ctx_init(struct apei_exec_context *ctx,
-			struct apei_exec_ins_type *ins_table,
-			u32 instructions,
-			struct acpi_whea_header *action_table,
+व्योम apei_exec_ctx_init(काष्ठा apei_exec_context *ctx,
+			काष्ठा apei_exec_ins_type *ins_table,
+			u32 inकाष्ठाions,
+			काष्ठा acpi_whea_header *action_table,
 			u32 entries)
-{
+अणु
 	ctx->ins_table = ins_table;
-	ctx->instructions = instructions;
+	ctx->inकाष्ठाions = inकाष्ठाions;
 	ctx->action_table = action_table;
 	ctx->entries = entries;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_exec_ctx_init);
 
-int __apei_exec_read_register(struct acpi_whea_header *entry, u64 *val)
-{
-	int rc;
+पूर्णांक __apei_exec_पढ़ो_रेजिस्टर(काष्ठा acpi_whea_header *entry, u64 *val)
+अणु
+	पूर्णांक rc;
 
-	rc = apei_read(val, &entry->register_region);
-	if (rc)
-		return rc;
-	*val >>= entry->register_region.bit_offset;
+	rc = apei_पढ़ो(val, &entry->रेजिस्टर_region);
+	अगर (rc)
+		वापस rc;
+	*val >>= entry->रेजिस्टर_region.bit_offset;
 	*val &= entry->mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int apei_exec_read_register(struct apei_exec_context *ctx,
-			    struct acpi_whea_header *entry)
-{
-	int rc;
+पूर्णांक apei_exec_पढ़ो_रेजिस्टर(काष्ठा apei_exec_context *ctx,
+			    काष्ठा acpi_whea_header *entry)
+अणु
+	पूर्णांक rc;
 	u64 val = 0;
 
-	rc = __apei_exec_read_register(entry, &val);
-	if (rc)
-		return rc;
+	rc = __apei_exec_पढ़ो_रेजिस्टर(entry, &val);
+	अगर (rc)
+		वापस rc;
 	ctx->value = val;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(apei_exec_read_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(apei_exec_पढ़ो_रेजिस्टर);
 
-int apei_exec_read_register_value(struct apei_exec_context *ctx,
-				  struct acpi_whea_header *entry)
-{
-	int rc;
+पूर्णांक apei_exec_पढ़ो_रेजिस्टर_value(काष्ठा apei_exec_context *ctx,
+				  काष्ठा acpi_whea_header *entry)
+अणु
+	पूर्णांक rc;
 
-	rc = apei_exec_read_register(ctx, entry);
-	if (rc)
-		return rc;
+	rc = apei_exec_पढ़ो_रेजिस्टर(ctx, entry);
+	अगर (rc)
+		वापस rc;
 	ctx->value = (ctx->value == entry->value);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(apei_exec_read_register_value);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(apei_exec_पढ़ो_रेजिस्टर_value);
 
-int __apei_exec_write_register(struct acpi_whea_header *entry, u64 val)
-{
-	int rc;
+पूर्णांक __apei_exec_ग_लिखो_रेजिस्टर(काष्ठा acpi_whea_header *entry, u64 val)
+अणु
+	पूर्णांक rc;
 
 	val &= entry->mask;
-	val <<= entry->register_region.bit_offset;
-	if (entry->flags & APEI_EXEC_PRESERVE_REGISTER) {
+	val <<= entry->रेजिस्टर_region.bit_offset;
+	अगर (entry->flags & APEI_EXEC_PRESERVE_REGISTER) अणु
 		u64 valr = 0;
-		rc = apei_read(&valr, &entry->register_region);
-		if (rc)
-			return rc;
-		valr &= ~(entry->mask << entry->register_region.bit_offset);
+		rc = apei_पढ़ो(&valr, &entry->रेजिस्टर_region);
+		अगर (rc)
+			वापस rc;
+		valr &= ~(entry->mask << entry->रेजिस्टर_region.bit_offset);
 		val |= valr;
-	}
-	rc = apei_write(val, &entry->register_region);
+	पूर्ण
+	rc = apei_ग_लिखो(val, &entry->रेजिस्टर_region);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int apei_exec_write_register(struct apei_exec_context *ctx,
-			     struct acpi_whea_header *entry)
-{
-	return __apei_exec_write_register(entry, ctx->value);
-}
-EXPORT_SYMBOL_GPL(apei_exec_write_register);
+पूर्णांक apei_exec_ग_लिखो_रेजिस्टर(काष्ठा apei_exec_context *ctx,
+			     काष्ठा acpi_whea_header *entry)
+अणु
+	वापस __apei_exec_ग_लिखो_रेजिस्टर(entry, ctx->value);
+पूर्ण
+EXPORT_SYMBOL_GPL(apei_exec_ग_लिखो_रेजिस्टर);
 
-int apei_exec_write_register_value(struct apei_exec_context *ctx,
-				   struct acpi_whea_header *entry)
-{
-	int rc;
+पूर्णांक apei_exec_ग_लिखो_रेजिस्टर_value(काष्ठा apei_exec_context *ctx,
+				   काष्ठा acpi_whea_header *entry)
+अणु
+	पूर्णांक rc;
 
 	ctx->value = entry->value;
-	rc = apei_exec_write_register(ctx, entry);
+	rc = apei_exec_ग_लिखो_रेजिस्टर(ctx, entry);
 
-	return rc;
-}
-EXPORT_SYMBOL_GPL(apei_exec_write_register_value);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(apei_exec_ग_लिखो_रेजिस्टर_value);
 
-int apei_exec_noop(struct apei_exec_context *ctx,
-		   struct acpi_whea_header *entry)
-{
-	return 0;
-}
+पूर्णांक apei_exec_noop(काष्ठा apei_exec_context *ctx,
+		   काष्ठा acpi_whea_header *entry)
+अणु
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_exec_noop);
 
 /*
- * Interpret the specified action. Go through whole action table,
- * execute all instructions belong to the action.
+ * Interpret the specअगरied action. Go through whole action table,
+ * execute all inकाष्ठाions beदीर्घ to the action.
  */
-int __apei_exec_run(struct apei_exec_context *ctx, u8 action,
+पूर्णांक __apei_exec_run(काष्ठा apei_exec_context *ctx, u8 action,
 		    bool optional)
-{
-	int rc = -ENOENT;
+अणु
+	पूर्णांक rc = -ENOENT;
 	u32 i, ip;
-	struct acpi_whea_header *entry;
+	काष्ठा acpi_whea_header *entry;
 	apei_exec_ins_func_t run;
 
 	ctx->ip = 0;
 
 	/*
-	 * "ip" is the instruction pointer of current instruction,
-	 * "ctx->ip" specifies the next instruction to executed,
-	 * instruction "run" function may change the "ctx->ip" to
+	 * "ip" is the inकाष्ठाion poपूर्णांकer of current inकाष्ठाion,
+	 * "ctx->ip" specअगरies the next inकाष्ठाion to executed,
+	 * inकाष्ठाion "run" function may change the "ctx->ip" to
 	 * implement "goto" semantics.
 	 */
-rewind:
+शुरुआत:
 	ip = 0;
-	for (i = 0; i < ctx->entries; i++) {
+	क्रम (i = 0; i < ctx->entries; i++) अणु
 		entry = &ctx->action_table[i];
-		if (entry->action != action)
-			continue;
-		if (ip == ctx->ip) {
-			if (entry->instruction >= ctx->instructions ||
-			    !ctx->ins_table[entry->instruction].run) {
+		अगर (entry->action != action)
+			जारी;
+		अगर (ip == ctx->ip) अणु
+			अगर (entry->inकाष्ठाion >= ctx->inकाष्ठाions ||
+			    !ctx->ins_table[entry->inकाष्ठाion].run) अणु
 				pr_warn(FW_WARN APEI_PFX
 					"Invalid action table, unknown instruction type: %d\n",
-					entry->instruction);
-				return -EINVAL;
-			}
-			run = ctx->ins_table[entry->instruction].run;
+					entry->inकाष्ठाion);
+				वापस -EINVAL;
+			पूर्ण
+			run = ctx->ins_table[entry->inकाष्ठाion].run;
 			rc = run(ctx, entry);
-			if (rc < 0)
-				return rc;
-			else if (rc != APEI_EXEC_SET_IP)
+			अगर (rc < 0)
+				वापस rc;
+			अन्यथा अगर (rc != APEI_EXEC_SET_IP)
 				ctx->ip++;
-		}
+		पूर्ण
 		ip++;
-		if (ctx->ip < ip)
-			goto rewind;
-	}
+		अगर (ctx->ip < ip)
+			जाओ शुरुआत;
+	पूर्ण
 
-	return !optional && rc < 0 ? rc : 0;
-}
+	वापस !optional && rc < 0 ? rc : 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(__apei_exec_run);
 
-typedef int (*apei_exec_entry_func_t)(struct apei_exec_context *ctx,
-				      struct acpi_whea_header *entry,
-				      void *data);
+प्रकार पूर्णांक (*apei_exec_entry_func_t)(काष्ठा apei_exec_context *ctx,
+				      काष्ठा acpi_whea_header *entry,
+				      व्योम *data);
 
-static int apei_exec_for_each_entry(struct apei_exec_context *ctx,
+अटल पूर्णांक apei_exec_क्रम_each_entry(काष्ठा apei_exec_context *ctx,
 				    apei_exec_entry_func_t func,
-				    void *data,
-				    int *end)
-{
+				    व्योम *data,
+				    पूर्णांक *end)
+अणु
 	u8 ins;
-	int i, rc;
-	struct acpi_whea_header *entry;
-	struct apei_exec_ins_type *ins_table = ctx->ins_table;
+	पूर्णांक i, rc;
+	काष्ठा acpi_whea_header *entry;
+	काष्ठा apei_exec_ins_type *ins_table = ctx->ins_table;
 
-	for (i = 0; i < ctx->entries; i++) {
+	क्रम (i = 0; i < ctx->entries; i++) अणु
 		entry = ctx->action_table + i;
-		ins = entry->instruction;
-		if (end)
+		ins = entry->inकाष्ठाion;
+		अगर (end)
 			*end = i;
-		if (ins >= ctx->instructions || !ins_table[ins].run) {
+		अगर (ins >= ctx->inकाष्ठाions || !ins_table[ins].run) अणु
 			pr_warn(FW_WARN APEI_PFX
 				"Invalid action table, unknown instruction type: %d\n",
 				ins);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		rc = func(ctx, entry, data);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pre_map_gar_callback(struct apei_exec_context *ctx,
-				struct acpi_whea_header *entry,
-				void *data)
-{
-	u8 ins = entry->instruction;
+अटल पूर्णांक pre_map_gar_callback(काष्ठा apei_exec_context *ctx,
+				काष्ठा acpi_whea_header *entry,
+				व्योम *data)
+अणु
+	u8 ins = entry->inकाष्ठाion;
 
-	if (ctx->ins_table[ins].flags & APEI_EXEC_INS_ACCESS_REGISTER)
-		return apei_map_generic_address(&entry->register_region);
+	अगर (ctx->ins_table[ins].flags & APEI_EXEC_INS_ACCESS_REGISTER)
+		वापस apei_map_generic_address(&entry->रेजिस्टर_region);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Pre-map all GARs in action table to make it possible to access them
  * in NMI handler.
  */
-int apei_exec_pre_map_gars(struct apei_exec_context *ctx)
-{
-	int rc, end;
+पूर्णांक apei_exec_pre_map_gars(काष्ठा apei_exec_context *ctx)
+अणु
+	पूर्णांक rc, end;
 
-	rc = apei_exec_for_each_entry(ctx, pre_map_gar_callback,
-				      NULL, &end);
-	if (rc) {
-		struct apei_exec_context ctx_unmap;
-		memcpy(&ctx_unmap, ctx, sizeof(*ctx));
+	rc = apei_exec_क्रम_each_entry(ctx, pre_map_gar_callback,
+				      शून्य, &end);
+	अगर (rc) अणु
+		काष्ठा apei_exec_context ctx_unmap;
+		स_नकल(&ctx_unmap, ctx, माप(*ctx));
 		ctx_unmap.entries = end;
 		apei_exec_post_unmap_gars(&ctx_unmap);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_exec_pre_map_gars);
 
-static int post_unmap_gar_callback(struct apei_exec_context *ctx,
-				   struct acpi_whea_header *entry,
-				   void *data)
-{
-	u8 ins = entry->instruction;
+अटल पूर्णांक post_unmap_gar_callback(काष्ठा apei_exec_context *ctx,
+				   काष्ठा acpi_whea_header *entry,
+				   व्योम *data)
+अणु
+	u8 ins = entry->inकाष्ठाion;
 
-	if (ctx->ins_table[ins].flags & APEI_EXEC_INS_ACCESS_REGISTER)
-		apei_unmap_generic_address(&entry->register_region);
+	अगर (ctx->ins_table[ins].flags & APEI_EXEC_INS_ACCESS_REGISTER)
+		apei_unmap_generic_address(&entry->रेजिस्टर_region);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Post-unmap all GAR in action table. */
-int apei_exec_post_unmap_gars(struct apei_exec_context *ctx)
-{
-	return apei_exec_for_each_entry(ctx, post_unmap_gar_callback,
-					NULL, NULL);
-}
+पूर्णांक apei_exec_post_unmap_gars(काष्ठा apei_exec_context *ctx)
+अणु
+	वापस apei_exec_क्रम_each_entry(ctx, post_unmap_gar_callback,
+					शून्य, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_exec_post_unmap_gars);
 
 /*
- * Resource management for GARs in APEI
+ * Resource management क्रम GARs in APEI
  */
-struct apei_res {
-	struct list_head list;
-	unsigned long start;
-	unsigned long end;
-};
+काष्ठा apei_res अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ start;
+	अचिन्हित दीर्घ end;
+पूर्ण;
 
-/* Collect all resources requested, to avoid conflict */
-static struct apei_resources apei_resources_all = {
+/* Collect all resources requested, to aव्योम conflict */
+अटल काष्ठा apei_resources apei_resources_all = अणु
 	.iomem = LIST_HEAD_INIT(apei_resources_all.iomem),
 	.ioport = LIST_HEAD_INIT(apei_resources_all.ioport),
-};
+पूर्ण;
 
-static int apei_res_add(struct list_head *res_list,
-			unsigned long start, unsigned long size)
-{
-	struct apei_res *res, *resn, *res_ins = NULL;
-	unsigned long end = start + size;
+अटल पूर्णांक apei_res_add(काष्ठा list_head *res_list,
+			अचिन्हित दीर्घ start, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा apei_res *res, *resn, *res_ins = शून्य;
+	अचिन्हित दीर्घ end = start + size;
 
-	if (end <= start)
-		return 0;
+	अगर (end <= start)
+		वापस 0;
 repeat:
-	list_for_each_entry_safe(res, resn, res_list, list) {
-		if (res->start > end || res->end < start)
-			continue;
-		else if (end <= res->end && start >= res->start) {
-			kfree(res_ins);
-			return 0;
-		}
+	list_क्रम_each_entry_safe(res, resn, res_list, list) अणु
+		अगर (res->start > end || res->end < start)
+			जारी;
+		अन्यथा अगर (end <= res->end && start >= res->start) अणु
+			kमुक्त(res_ins);
+			वापस 0;
+		पूर्ण
 		list_del(&res->list);
 		res->start = start = min(res->start, start);
 		res->end = end = max(res->end, end);
-		kfree(res_ins);
+		kमुक्त(res_ins);
 		res_ins = res;
-		goto repeat;
-	}
+		जाओ repeat;
+	पूर्ण
 
-	if (res_ins)
+	अगर (res_ins)
 		list_add(&res_ins->list, res_list);
-	else {
-		res_ins = kmalloc(sizeof(*res), GFP_KERNEL);
-		if (!res_ins)
-			return -ENOMEM;
+	अन्यथा अणु
+		res_ins = kदो_स्मृति(माप(*res), GFP_KERNEL);
+		अगर (!res_ins)
+			वापस -ENOMEM;
 		res_ins->start = start;
 		res_ins->end = end;
 		list_add(&res_ins->list, res_list);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apei_res_sub(struct list_head *res_list1,
-			struct list_head *res_list2)
-{
-	struct apei_res *res1, *resn1, *res2, *res;
-	res1 = list_entry(res_list1->next, struct apei_res, list);
-	resn1 = list_entry(res1->list.next, struct apei_res, list);
-	while (&res1->list != res_list1) {
-		list_for_each_entry(res2, res_list2, list) {
-			if (res1->start >= res2->end ||
+अटल पूर्णांक apei_res_sub(काष्ठा list_head *res_list1,
+			काष्ठा list_head *res_list2)
+अणु
+	काष्ठा apei_res *res1, *resn1, *res2, *res;
+	res1 = list_entry(res_list1->next, काष्ठा apei_res, list);
+	resn1 = list_entry(res1->list.next, काष्ठा apei_res, list);
+	जबतक (&res1->list != res_list1) अणु
+		list_क्रम_each_entry(res2, res_list2, list) अणु
+			अगर (res1->start >= res2->end ||
 			    res1->end <= res2->start)
-				continue;
-			else if (res1->end <= res2->end &&
-				 res1->start >= res2->start) {
+				जारी;
+			अन्यथा अगर (res1->end <= res2->end &&
+				 res1->start >= res2->start) अणु
 				list_del(&res1->list);
-				kfree(res1);
-				break;
-			} else if (res1->end > res2->end &&
-				   res1->start < res2->start) {
-				res = kmalloc(sizeof(*res), GFP_KERNEL);
-				if (!res)
-					return -ENOMEM;
+				kमुक्त(res1);
+				अवरोध;
+			पूर्ण अन्यथा अगर (res1->end > res2->end &&
+				   res1->start < res2->start) अणु
+				res = kदो_स्मृति(माप(*res), GFP_KERNEL);
+				अगर (!res)
+					वापस -ENOMEM;
 				res->start = res2->end;
 				res->end = res1->end;
 				res1->end = res2->start;
 				list_add(&res->list, &res1->list);
 				resn1 = res;
-			} else {
-				if (res1->start < res2->start)
+			पूर्ण अन्यथा अणु
+				अगर (res1->start < res2->start)
 					res1->end = res2->start;
-				else
+				अन्यथा
 					res1->start = res2->end;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		res1 = resn1;
-		resn1 = list_entry(resn1->list.next, struct apei_res, list);
-	}
+		resn1 = list_entry(resn1->list.next, काष्ठा apei_res, list);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void apei_res_clean(struct list_head *res_list)
-{
-	struct apei_res *res, *resn;
+अटल व्योम apei_res_clean(काष्ठा list_head *res_list)
+अणु
+	काष्ठा apei_res *res, *resn;
 
-	list_for_each_entry_safe(res, resn, res_list, list) {
+	list_क्रम_each_entry_safe(res, resn, res_list, list) अणु
 		list_del(&res->list);
-		kfree(res);
-	}
-}
+		kमुक्त(res);
+	पूर्ण
+पूर्ण
 
-void apei_resources_fini(struct apei_resources *resources)
-{
+व्योम apei_resources_fini(काष्ठा apei_resources *resources)
+अणु
 	apei_res_clean(&resources->iomem);
 	apei_res_clean(&resources->ioport);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_resources_fini);
 
-static int apei_resources_merge(struct apei_resources *resources1,
-				struct apei_resources *resources2)
-{
-	int rc;
-	struct apei_res *res;
+अटल पूर्णांक apei_resources_merge(काष्ठा apei_resources *resources1,
+				काष्ठा apei_resources *resources2)
+अणु
+	पूर्णांक rc;
+	काष्ठा apei_res *res;
 
-	list_for_each_entry(res, &resources2->iomem, list) {
+	list_क्रम_each_entry(res, &resources2->iomem, list) अणु
 		rc = apei_res_add(&resources1->iomem, res->start,
 				  res->end - res->start);
-		if (rc)
-			return rc;
-	}
-	list_for_each_entry(res, &resources2->ioport, list) {
+		अगर (rc)
+			वापस rc;
+	पूर्ण
+	list_क्रम_each_entry(res, &resources2->ioport, list) अणु
 		rc = apei_res_add(&resources1->ioport, res->start,
 				  res->end - res->start);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int apei_resources_add(struct apei_resources *resources,
-		       unsigned long start, unsigned long size,
+पूर्णांक apei_resources_add(काष्ठा apei_resources *resources,
+		       अचिन्हित दीर्घ start, अचिन्हित दीर्घ size,
 		       bool iomem)
-{
-	if (iomem)
-		return apei_res_add(&resources->iomem, start, size);
-	else
-		return apei_res_add(&resources->ioport, start, size);
-}
+अणु
+	अगर (iomem)
+		वापस apei_res_add(&resources->iomem, start, size);
+	अन्यथा
+		वापस apei_res_add(&resources->ioport, start, size);
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_resources_add);
 
 /*
  * EINJ has two groups of GARs (EINJ table entry and trigger table
  * entry), so common resources are subtracted from the trigger table
- * resources before the second requesting.
+ * resources beक्रमe the second requesting.
  */
-int apei_resources_sub(struct apei_resources *resources1,
-		       struct apei_resources *resources2)
-{
-	int rc;
+पूर्णांक apei_resources_sub(काष्ठा apei_resources *resources1,
+		       काष्ठा apei_resources *resources2)
+अणु
+	पूर्णांक rc;
 
 	rc = apei_res_sub(&resources1->iomem, &resources2->iomem);
-	if (rc)
-		return rc;
-	return apei_res_sub(&resources1->ioport, &resources2->ioport);
-}
+	अगर (rc)
+		वापस rc;
+	वापस apei_res_sub(&resources1->ioport, &resources2->ioport);
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_resources_sub);
 
-static int apei_get_res_callback(__u64 start, __u64 size, void *data)
-{
-	struct apei_resources *resources = data;
-	return apei_res_add(&resources->iomem, start, size);
-}
+अटल पूर्णांक apei_get_res_callback(__u64 start, __u64 size, व्योम *data)
+अणु
+	काष्ठा apei_resources *resources = data;
+	वापस apei_res_add(&resources->iomem, start, size);
+पूर्ण
 
-static int apei_get_nvs_resources(struct apei_resources *resources)
-{
-	return acpi_nvs_for_each_region(apei_get_res_callback, resources);
-}
+अटल पूर्णांक apei_get_nvs_resources(काष्ठा apei_resources *resources)
+अणु
+	वापस acpi_nvs_क्रम_each_region(apei_get_res_callback, resources);
+पूर्ण
 
-int (*arch_apei_filter_addr)(int (*func)(__u64 start, __u64 size,
-				     void *data), void *data);
-static int apei_get_arch_resources(struct apei_resources *resources)
+पूर्णांक (*arch_apei_filter_addr)(पूर्णांक (*func)(__u64 start, __u64 size,
+				     व्योम *data), व्योम *data);
+अटल पूर्णांक apei_get_arch_resources(काष्ठा apei_resources *resources)
 
-{
-	return arch_apei_filter_addr(apei_get_res_callback, resources);
-}
+अणु
+	वापस arch_apei_filter_addr(apei_get_res_callback, resources);
+पूर्ण
 
 /*
  * IO memory/port resource management mechanism is used to check
  * whether memory/port area used by GARs conflicts with normal memory
  * or IO memory/port of devices.
  */
-int apei_resources_request(struct apei_resources *resources,
-			   const char *desc)
-{
-	struct apei_res *res, *res_bak = NULL;
-	struct resource *r;
-	struct apei_resources nvs_resources, arch_res;
-	int rc;
+पूर्णांक apei_resources_request(काष्ठा apei_resources *resources,
+			   स्थिर अक्षर *desc)
+अणु
+	काष्ठा apei_res *res, *res_bak = शून्य;
+	काष्ठा resource *r;
+	काष्ठा apei_resources nvs_resources, arch_res;
+	पूर्णांक rc;
 
 	rc = apei_resources_sub(resources, &apei_resources_all);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/*
 	 * Some firmware uses ACPI NVS region, that has been marked as
-	 * busy, so exclude it from APEI resources to avoid false
+	 * busy, so exclude it from APEI resources to aव्योम false
 	 * conflict.
 	 */
 	apei_resources_init(&nvs_resources);
 	rc = apei_get_nvs_resources(&nvs_resources);
-	if (rc)
-		goto nvs_res_fini;
+	अगर (rc)
+		जाओ nvs_res_fini;
 	rc = apei_resources_sub(resources, &nvs_resources);
-	if (rc)
-		goto nvs_res_fini;
+	अगर (rc)
+		जाओ nvs_res_fini;
 
-	if (arch_apei_filter_addr) {
+	अगर (arch_apei_filter_addr) अणु
 		apei_resources_init(&arch_res);
 		rc = apei_get_arch_resources(&arch_res);
-		if (rc)
-			goto arch_res_fini;
+		अगर (rc)
+			जाओ arch_res_fini;
 		rc = apei_resources_sub(resources, &arch_res);
-		if (rc)
-			goto arch_res_fini;
-	}
+		अगर (rc)
+			जाओ arch_res_fini;
+	पूर्ण
 
 	rc = -EINVAL;
-	list_for_each_entry(res, &resources->iomem, list) {
+	list_क्रम_each_entry(res, &resources->iomem, list) अणु
 		r = request_mem_region(res->start, res->end - res->start,
 				       desc);
-		if (!r) {
+		अगर (!r) अणु
 			pr_err(APEI_PFX
 		"Can not request [mem %#010llx-%#010llx] for %s registers\n",
-			       (unsigned long long)res->start,
-			       (unsigned long long)res->end - 1, desc);
+			       (अचिन्हित दीर्घ दीर्घ)res->start,
+			       (अचिन्हित दीर्घ दीर्घ)res->end - 1, desc);
 			res_bak = res;
-			goto err_unmap_iomem;
-		}
-	}
+			जाओ err_unmap_iomem;
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(res, &resources->ioport, list) {
+	list_क्रम_each_entry(res, &resources->ioport, list) अणु
 		r = request_region(res->start, res->end - res->start, desc);
-		if (!r) {
+		अगर (!r) अणु
 			pr_err(APEI_PFX
 		"Can not request [io  %#06llx-%#06llx] for %s registers\n",
-			       (unsigned long long)res->start,
-			       (unsigned long long)res->end - 1, desc);
+			       (अचिन्हित दीर्घ दीर्घ)res->start,
+			       (अचिन्हित दीर्घ दीर्घ)res->end - 1, desc);
 			res_bak = res;
-			goto err_unmap_ioport;
-		}
-	}
+			जाओ err_unmap_ioport;
+		पूर्ण
+	पूर्ण
 
 	rc = apei_resources_merge(&apei_resources_all, resources);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err(APEI_PFX "Fail to merge resources!\n");
-		goto err_unmap_ioport;
-	}
+		जाओ err_unmap_ioport;
+	पूर्ण
 
-	goto arch_res_fini;
+	जाओ arch_res_fini;
 
 err_unmap_ioport:
-	list_for_each_entry(res, &resources->ioport, list) {
-		if (res == res_bak)
-			break;
+	list_क्रम_each_entry(res, &resources->ioport, list) अणु
+		अगर (res == res_bak)
+			अवरोध;
 		release_region(res->start, res->end - res->start);
-	}
-	res_bak = NULL;
+	पूर्ण
+	res_bak = शून्य;
 err_unmap_iomem:
-	list_for_each_entry(res, &resources->iomem, list) {
-		if (res == res_bak)
-			break;
+	list_क्रम_each_entry(res, &resources->iomem, list) अणु
+		अगर (res == res_bak)
+			अवरोध;
 		release_mem_region(res->start, res->end - res->start);
-	}
+	पूर्ण
 arch_res_fini:
-	if (arch_apei_filter_addr)
+	अगर (arch_apei_filter_addr)
 		apei_resources_fini(&arch_res);
 nvs_res_fini:
 	apei_resources_fini(&nvs_resources);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_resources_request);
 
-void apei_resources_release(struct apei_resources *resources)
-{
-	int rc;
-	struct apei_res *res;
+व्योम apei_resources_release(काष्ठा apei_resources *resources)
+अणु
+	पूर्णांक rc;
+	काष्ठा apei_res *res;
 
-	list_for_each_entry(res, &resources->iomem, list)
+	list_क्रम_each_entry(res, &resources->iomem, list)
 		release_mem_region(res->start, res->end - res->start);
-	list_for_each_entry(res, &resources->ioport, list)
+	list_क्रम_each_entry(res, &resources->ioport, list)
 		release_region(res->start, res->end - res->start);
 
 	rc = apei_resources_sub(&apei_resources_all, resources);
-	if (rc)
+	अगर (rc)
 		pr_err(APEI_PFX "Fail to sub resources!\n");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_resources_release);
 
-static int apei_check_gar(struct acpi_generic_address *reg, u64 *paddr,
+अटल पूर्णांक apei_check_gar(काष्ठा acpi_generic_address *reg, u64 *paddr,
 				u32 *access_bit_width)
-{
+अणु
 	u32 bit_width, bit_offset, access_size_code, space_id;
 
 	bit_width = reg->bit_width;
@@ -578,226 +579,226 @@ static int apei_check_gar(struct acpi_generic_address *reg, u64 *paddr,
 	access_size_code = reg->access_width;
 	space_id = reg->space_id;
 	*paddr = get_unaligned(&reg->address);
-	if (!*paddr) {
+	अगर (!*paddr) अणु
 		pr_warn(FW_BUG APEI_PFX
 			"Invalid physical address in GAR [0x%llx/%u/%u/%u/%u]\n",
 			*paddr, bit_width, bit_offset, access_size_code,
 			space_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (access_size_code < 1 || access_size_code > 4) {
+	अगर (access_size_code < 1 || access_size_code > 4) अणु
 		pr_warn(FW_BUG APEI_PFX
 			"Invalid access size code in GAR [0x%llx/%u/%u/%u/%u]\n",
 			*paddr, bit_width, bit_offset, access_size_code,
 			space_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	*access_bit_width = 1UL << (access_size_code + 2);
 
 	/* Fixup common BIOS bug */
-	if (bit_width == 32 && bit_offset == 0 && (*paddr & 0x03) == 0 &&
+	अगर (bit_width == 32 && bit_offset == 0 && (*paddr & 0x03) == 0 &&
 	    *access_bit_width < 32)
 		*access_bit_width = 32;
-	else if (bit_width == 64 && bit_offset == 0 && (*paddr & 0x07) == 0 &&
+	अन्यथा अगर (bit_width == 64 && bit_offset == 0 && (*paddr & 0x07) == 0 &&
 	    *access_bit_width < 64)
 		*access_bit_width = 64;
 
-	if ((bit_width + bit_offset) > *access_bit_width) {
+	अगर ((bit_width + bit_offset) > *access_bit_width) अणु
 		pr_warn(FW_BUG APEI_PFX
 			"Invalid bit width + offset in GAR [0x%llx/%u/%u/%u/%u]\n",
 			*paddr, bit_width, bit_offset, access_size_code,
 			space_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY &&
-	    space_id != ACPI_ADR_SPACE_SYSTEM_IO) {
+	अगर (space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY &&
+	    space_id != ACPI_ADR_SPACE_SYSTEM_IO) अणु
 		pr_warn(FW_BUG APEI_PFX
 			"Invalid address space type in GAR [0x%llx/%u/%u/%u/%u]\n",
 			*paddr, bit_width, bit_offset, access_size_code,
 			space_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int apei_map_generic_address(struct acpi_generic_address *reg)
-{
-	int rc;
+पूर्णांक apei_map_generic_address(काष्ठा acpi_generic_address *reg)
+अणु
+	पूर्णांक rc;
 	u32 access_bit_width;
 	u64 address;
 
 	rc = apei_check_gar(reg, &address, &access_bit_width);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* IO space doesn't need mapping */
-	if (reg->space_id == ACPI_ADR_SPACE_SYSTEM_IO)
-		return 0;
+	/* IO space करोesn't need mapping */
+	अगर (reg->space_id == ACPI_ADR_SPACE_SYSTEM_IO)
+		वापस 0;
 
-	if (!acpi_os_map_generic_address(reg))
-		return -ENXIO;
+	अगर (!acpi_os_map_generic_address(reg))
+		वापस -ENXIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_map_generic_address);
 
-/* read GAR in interrupt (including NMI) or process context */
-int apei_read(u64 *val, struct acpi_generic_address *reg)
-{
-	int rc;
+/* पढ़ो GAR in पूर्णांकerrupt (including NMI) or process context */
+पूर्णांक apei_पढ़ो(u64 *val, काष्ठा acpi_generic_address *reg)
+अणु
+	पूर्णांक rc;
 	u32 access_bit_width;
 	u64 address;
 	acpi_status status;
 
 	rc = apei_check_gar(reg, &address, &access_bit_width);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	*val = 0;
-	switch(reg->space_id) {
-	case ACPI_ADR_SPACE_SYSTEM_MEMORY:
-		status = acpi_os_read_memory((acpi_physical_address) address,
+	चयन(reg->space_id) अणु
+	हाल ACPI_ADR_SPACE_SYSTEM_MEMORY:
+		status = acpi_os_पढ़ो_memory((acpi_physical_address) address,
 					       val, access_bit_width);
-		if (ACPI_FAILURE(status))
-			return -EIO;
-		break;
-	case ACPI_ADR_SPACE_SYSTEM_IO:
-		status = acpi_os_read_port(address, (u32 *)val,
+		अगर (ACPI_FAILURE(status))
+			वापस -EIO;
+		अवरोध;
+	हाल ACPI_ADR_SPACE_SYSTEM_IO:
+		status = acpi_os_पढ़ो_port(address, (u32 *)val,
 					   access_bit_width);
-		if (ACPI_FAILURE(status))
-			return -EIO;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अगर (ACPI_FAILURE(status))
+			वापस -EIO;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(apei_read);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(apei_पढ़ो);
 
-/* write GAR in interrupt (including NMI) or process context */
-int apei_write(u64 val, struct acpi_generic_address *reg)
-{
-	int rc;
+/* ग_लिखो GAR in पूर्णांकerrupt (including NMI) or process context */
+पूर्णांक apei_ग_लिखो(u64 val, काष्ठा acpi_generic_address *reg)
+अणु
+	पूर्णांक rc;
 	u32 access_bit_width;
 	u64 address;
 	acpi_status status;
 
 	rc = apei_check_gar(reg, &address, &access_bit_width);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	switch (reg->space_id) {
-	case ACPI_ADR_SPACE_SYSTEM_MEMORY:
-		status = acpi_os_write_memory((acpi_physical_address) address,
+	चयन (reg->space_id) अणु
+	हाल ACPI_ADR_SPACE_SYSTEM_MEMORY:
+		status = acpi_os_ग_लिखो_memory((acpi_physical_address) address,
 						val, access_bit_width);
-		if (ACPI_FAILURE(status))
-			return -EIO;
-		break;
-	case ACPI_ADR_SPACE_SYSTEM_IO:
-		status = acpi_os_write_port(address, val, access_bit_width);
-		if (ACPI_FAILURE(status))
-			return -EIO;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अगर (ACPI_FAILURE(status))
+			वापस -EIO;
+		अवरोध;
+	हाल ACPI_ADR_SPACE_SYSTEM_IO:
+		status = acpi_os_ग_लिखो_port(address, val, access_bit_width);
+		अगर (ACPI_FAILURE(status))
+			वापस -EIO;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(apei_write);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(apei_ग_लिखो);
 
-static int collect_res_callback(struct apei_exec_context *ctx,
-				struct acpi_whea_header *entry,
-				void *data)
-{
-	struct apei_resources *resources = data;
-	struct acpi_generic_address *reg = &entry->register_region;
-	u8 ins = entry->instruction;
+अटल पूर्णांक collect_res_callback(काष्ठा apei_exec_context *ctx,
+				काष्ठा acpi_whea_header *entry,
+				व्योम *data)
+अणु
+	काष्ठा apei_resources *resources = data;
+	काष्ठा acpi_generic_address *reg = &entry->रेजिस्टर_region;
+	u8 ins = entry->inकाष्ठाion;
 	u32 access_bit_width;
 	u64 paddr;
-	int rc;
+	पूर्णांक rc;
 
-	if (!(ctx->ins_table[ins].flags & APEI_EXEC_INS_ACCESS_REGISTER))
-		return 0;
+	अगर (!(ctx->ins_table[ins].flags & APEI_EXEC_INS_ACCESS_REGISTER))
+		वापस 0;
 
 	rc = apei_check_gar(reg, &paddr, &access_bit_width);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	switch (reg->space_id) {
-	case ACPI_ADR_SPACE_SYSTEM_MEMORY:
-		return apei_res_add(&resources->iomem, paddr,
+	चयन (reg->space_id) अणु
+	हाल ACPI_ADR_SPACE_SYSTEM_MEMORY:
+		वापस apei_res_add(&resources->iomem, paddr,
 				    access_bit_width / 8);
-	case ACPI_ADR_SPACE_SYSTEM_IO:
-		return apei_res_add(&resources->ioport, paddr,
+	हाल ACPI_ADR_SPACE_SYSTEM_IO:
+		वापस apei_res_add(&resources->ioport, paddr,
 				    access_bit_width / 8);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /*
- * Same register may be used by multiple instructions in GARs, so
- * resources are collected before requesting.
+ * Same रेजिस्टर may be used by multiple inकाष्ठाions in GARs, so
+ * resources are collected beक्रमe requesting.
  */
-int apei_exec_collect_resources(struct apei_exec_context *ctx,
-				struct apei_resources *resources)
-{
-	return apei_exec_for_each_entry(ctx, collect_res_callback,
-					resources, NULL);
-}
+पूर्णांक apei_exec_collect_resources(काष्ठा apei_exec_context *ctx,
+				काष्ठा apei_resources *resources)
+अणु
+	वापस apei_exec_क्रम_each_entry(ctx, collect_res_callback,
+					resources, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_exec_collect_resources);
 
-struct dentry *apei_get_debugfs_dir(void)
-{
-	static struct dentry *dapei;
+काष्ठा dentry *apei_get_debugfs_dir(व्योम)
+अणु
+	अटल काष्ठा dentry *dapei;
 
-	if (!dapei)
-		dapei = debugfs_create_dir("apei", NULL);
+	अगर (!dapei)
+		dapei = debugfs_create_dir("apei", शून्य);
 
-	return dapei;
-}
+	वापस dapei;
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_get_debugfs_dir);
 
-int __weak arch_apei_enable_cmcff(struct acpi_hest_header *hest_hdr,
-				  void *data)
-{
-	return 1;
-}
+पूर्णांक __weak arch_apei_enable_cmcff(काष्ठा acpi_hest_header *hest_hdr,
+				  व्योम *data)
+अणु
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(arch_apei_enable_cmcff);
 
-void __weak arch_apei_report_mem_error(int sev,
-				       struct cper_sec_mem_err *mem_err)
-{
-}
+व्योम __weak arch_apei_report_mem_error(पूर्णांक sev,
+				       काष्ठा cper_sec_mem_err *mem_err)
+अणु
+पूर्ण
 EXPORT_SYMBOL_GPL(arch_apei_report_mem_error);
 
-int apei_osc_setup(void)
-{
-	static u8 whea_uuid_str[] = "ed855e0c-6c90-47bf-a62a-26de0fc5ad5c";
+पूर्णांक apei_osc_setup(व्योम)
+अणु
+	अटल u8 whea_uuid_str[] = "ed855e0c-6c90-47bf-a62a-26de0fc5ad5c";
 	acpi_handle handle;
 	u32 capbuf[3];
-	struct acpi_osc_context context = {
+	काष्ठा acpi_osc_context context = अणु
 		.uuid_str	= whea_uuid_str,
 		.rev		= 1,
-		.cap.length	= sizeof(capbuf),
-		.cap.pointer	= capbuf,
-	};
+		.cap.length	= माप(capbuf),
+		.cap.poपूर्णांकer	= capbuf,
+	पूर्ण;
 
 	capbuf[OSC_QUERY_DWORD] = OSC_QUERY_ENABLE;
 	capbuf[OSC_SUPPORT_DWORD] = 1;
 	capbuf[OSC_CONTROL_DWORD] = 0;
 
-	if (ACPI_FAILURE(acpi_get_handle(NULL, "\\_SB", &handle))
+	अगर (ACPI_FAILURE(acpi_get_handle(शून्य, "\\_SB", &handle))
 	    || ACPI_FAILURE(acpi_run_osc(handle, &context)))
-		return -EIO;
-	else {
-		kfree(context.ret.pointer);
-		return 0;
-	}
-}
+		वापस -EIO;
+	अन्यथा अणु
+		kमुक्त(context.ret.poपूर्णांकer);
+		वापस 0;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(apei_osc_setup);

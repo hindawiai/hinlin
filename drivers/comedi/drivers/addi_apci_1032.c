@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * addi_apci_1032.c
- * Copyright (C) 2004,2005  ADDI-DATA GmbH for the source code of this module.
+ * Copyright (C) 2004,2005  ADDI-DATA GmbH क्रम the source code of this module.
  * Project manager: Eric Stolz
  *
  *	ADDI-DATA GmbH
@@ -22,177 +23,177 @@
  * Devices: [ADDI-DATA] APCI-1032 (addi_apci_1032)
  *
  * Configuration options:
- *   None; devices are configured automatically.
+ *   None; devices are configured स्वतःmatically.
  *
  * This driver models the APCI-1032 as a 32-channel, digital input subdevice
  * plus an additional digital input subdevice to handle change-of-state (COS)
- * interrupts (if an interrupt handler can be set up successfully).
+ * पूर्णांकerrupts (अगर an पूर्णांकerrupt handler can be set up successfully).
  *
- * The COS subdevice supports comedi asynchronous read commands.
+ * The COS subdevice supports comedi asynchronous पढ़ो commands.
  *
- * Change-Of-State (COS) interrupt configuration:
+ * Change-Of-State (COS) पूर्णांकerrupt configuration:
  *
- * Channels 0 to 15 are interruptible. These channels can be configured
- * to generate interrupts based on AND/OR logic for the desired channels.
+ * Channels 0 to 15 are पूर्णांकerruptible. These channels can be configured
+ * to generate पूर्णांकerrupts based on AND/OR logic क्रम the desired channels.
  *
  *   OR logic:
  *   - reacts to rising or falling edges
- *   - interrupt is generated when any enabled channel meets the desired
- *     interrupt condition
+ *   - पूर्णांकerrupt is generated when any enabled channel meets the desired
+ *     पूर्णांकerrupt condition
  *
  *   AND logic:
- *   - reacts to changes in level of the selected inputs
- *   - interrupt is generated when all enabled channels meet the desired
- *     interrupt condition
- *   - after an interrupt, a change in level must occur on the selected
- *     inputs to release the IRQ logic
+ *   - reacts to changes in level of the selected inमाला_दो
+ *   - पूर्णांकerrupt is generated when all enabled channels meet the desired
+ *     पूर्णांकerrupt condition
+ *   - after an पूर्णांकerrupt, a change in level must occur on the selected
+ *     inमाला_दो to release the IRQ logic
  *
- * The COS subdevice must be configured before setting up a comedi
+ * The COS subdevice must be configured beक्रमe setting up a comedi
  * asynchronous command:
  *
  *   data[0] : INSN_CONFIG_DIGITAL_TRIG
  *   data[1] : trigger number (= 0)
  *   data[2] : configuration operation:
- *             - COMEDI_DIGITAL_TRIG_DISABLE = no interrupts
- *             - COMEDI_DIGITAL_TRIG_ENABLE_EDGES = OR (edge) interrupts
- *             - COMEDI_DIGITAL_TRIG_ENABLE_LEVELS = AND (level) interrupts
- *   data[3] : left-shift for data[4] and data[5]
+ *             - COMEDI_DIGITAL_TRIG_DISABLE = no पूर्णांकerrupts
+ *             - COMEDI_DIGITAL_TRIG_ENABLE_EDGES = OR (edge) पूर्णांकerrupts
+ *             - COMEDI_DIGITAL_TRIG_ENABLE_LEVELS = AND (level) पूर्णांकerrupts
+ *   data[3] : left-shअगरt क्रम data[4] and data[5]
  *   data[4] : rising-edge/high level channels
  *   data[5] : falling-edge/low level channels
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "../comedi_pci.h"
-#include "amcc_s5933.h"
+#समावेश "../comedi_pci.h"
+#समावेश "amcc_s5933.h"
 
 /*
  * I/O Register Map
  */
-#define APCI1032_DI_REG			0x00
-#define APCI1032_MODE1_REG		0x04
-#define APCI1032_MODE2_REG		0x08
-#define APCI1032_STATUS_REG		0x0c
-#define APCI1032_CTRL_REG		0x10
-#define APCI1032_CTRL_INT_MODE(x)	(((x) & 0x1) << 1)
-#define APCI1032_CTRL_INT_OR		APCI1032_CTRL_INT_MODE(0)
-#define APCI1032_CTRL_INT_AND		APCI1032_CTRL_INT_MODE(1)
-#define APCI1032_CTRL_INT_ENA		BIT(2)
+#घोषणा APCI1032_DI_REG			0x00
+#घोषणा APCI1032_MODE1_REG		0x04
+#घोषणा APCI1032_MODE2_REG		0x08
+#घोषणा APCI1032_STATUS_REG		0x0c
+#घोषणा APCI1032_CTRL_REG		0x10
+#घोषणा APCI1032_CTRL_INT_MODE(x)	(((x) & 0x1) << 1)
+#घोषणा APCI1032_CTRL_INT_OR		APCI1032_CTRL_INT_MODE(0)
+#घोषणा APCI1032_CTRL_INT_AND		APCI1032_CTRL_INT_MODE(1)
+#घोषणा APCI1032_CTRL_INT_ENA		BIT(2)
 
-struct apci1032_private {
-	unsigned long amcc_iobase;	/* base of AMCC I/O registers */
-	unsigned int mode1;	/* rising-edge/high level channels */
-	unsigned int mode2;	/* falling-edge/low level channels */
-	unsigned int ctrl;	/* interrupt mode OR (edge) . AND (level) */
-};
+काष्ठा apci1032_निजी अणु
+	अचिन्हित दीर्घ amcc_iobase;	/* base of AMCC I/O रेजिस्टरs */
+	अचिन्हित पूर्णांक mode1;	/* rising-edge/high level channels */
+	अचिन्हित पूर्णांक mode2;	/* falling-edge/low level channels */
+	अचिन्हित पूर्णांक ctrl;	/* पूर्णांकerrupt mode OR (edge) . AND (level) */
+पूर्ण;
 
-static int apci1032_reset(struct comedi_device *dev)
-{
-	/* disable the interrupts */
+अटल पूर्णांक apci1032_reset(काष्ठा comedi_device *dev)
+अणु
+	/* disable the पूर्णांकerrupts */
 	outl(0x0, dev->iobase + APCI1032_CTRL_REG);
-	/* Reset the interrupt status register */
+	/* Reset the पूर्णांकerrupt status रेजिस्टर */
 	inl(dev->iobase + APCI1032_STATUS_REG);
-	/* Disable the and/or interrupt */
+	/* Disable the and/or पूर्णांकerrupt */
 	outl(0x0, dev->iobase + APCI1032_MODE1_REG);
 	outl(0x0, dev->iobase + APCI1032_MODE2_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apci1032_cos_insn_config(struct comedi_device *dev,
-				    struct comedi_subdevice *s,
-				    struct comedi_insn *insn,
-				    unsigned int *data)
-{
-	struct apci1032_private *devpriv = dev->private;
-	unsigned int shift, oldmask, himask, lomask;
+अटल पूर्णांक apci1032_cos_insn_config(काष्ठा comedi_device *dev,
+				    काष्ठा comedi_subdevice *s,
+				    काष्ठा comedi_insn *insn,
+				    अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा apci1032_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक shअगरt, oldmask, himask, lomask;
 
-	switch (data[0]) {
-	case INSN_CONFIG_DIGITAL_TRIG:
-		if (data[1] != 0)
-			return -EINVAL;
-		shift = data[3];
-		if (shift < 32) {
-			oldmask = (1U << shift) - 1;
-			himask = data[4] << shift;
-			lomask = data[5] << shift;
-		} else {
+	चयन (data[0]) अणु
+	हाल INSN_CONFIG_DIGITAL_TRIG:
+		अगर (data[1] != 0)
+			वापस -EINVAL;
+		shअगरt = data[3];
+		अगर (shअगरt < 32) अणु
+			oldmask = (1U << shअगरt) - 1;
+			himask = data[4] << shअगरt;
+			lomask = data[5] << shअगरt;
+		पूर्ण अन्यथा अणु
 			oldmask = 0xffffffffu;
 			himask = 0;
 			lomask = 0;
-		}
-		switch (data[2]) {
-		case COMEDI_DIGITAL_TRIG_DISABLE:
+		पूर्ण
+		चयन (data[2]) अणु
+		हाल COMEDI_DIGITAL_TRIG_DISABLE:
 			devpriv->ctrl = 0;
 			devpriv->mode1 = 0;
 			devpriv->mode2 = 0;
 			apci1032_reset(dev);
-			break;
-		case COMEDI_DIGITAL_TRIG_ENABLE_EDGES:
-			if (devpriv->ctrl != (APCI1032_CTRL_INT_ENA |
-					      APCI1032_CTRL_INT_OR)) {
-				/* switching to 'OR' mode */
+			अवरोध;
+		हाल COMEDI_DIGITAL_TRIG_ENABLE_EDGES:
+			अगर (devpriv->ctrl != (APCI1032_CTRL_INT_ENA |
+					      APCI1032_CTRL_INT_OR)) अणु
+				/* चयनing to 'OR' mode */
 				devpriv->ctrl = APCI1032_CTRL_INT_ENA |
 						APCI1032_CTRL_INT_OR;
 				/* wipe old channels */
 				devpriv->mode1 = 0;
 				devpriv->mode2 = 0;
-			} else {
-				/* preserve unspecified channels */
+			पूर्ण अन्यथा अणु
+				/* preserve unspecअगरied channels */
 				devpriv->mode1 &= oldmask;
 				devpriv->mode2 &= oldmask;
-			}
-			/* configure specified channels */
+			पूर्ण
+			/* configure specअगरied channels */
 			devpriv->mode1 |= himask;
 			devpriv->mode2 |= lomask;
-			break;
-		case COMEDI_DIGITAL_TRIG_ENABLE_LEVELS:
-			if (devpriv->ctrl != (APCI1032_CTRL_INT_ENA |
-					      APCI1032_CTRL_INT_AND)) {
-				/* switching to 'AND' mode */
+			अवरोध;
+		हाल COMEDI_DIGITAL_TRIG_ENABLE_LEVELS:
+			अगर (devpriv->ctrl != (APCI1032_CTRL_INT_ENA |
+					      APCI1032_CTRL_INT_AND)) अणु
+				/* चयनing to 'AND' mode */
 				devpriv->ctrl = APCI1032_CTRL_INT_ENA |
 						APCI1032_CTRL_INT_AND;
 				/* wipe old channels */
 				devpriv->mode1 = 0;
 				devpriv->mode2 = 0;
-			} else {
-				/* preserve unspecified channels */
+			पूर्ण अन्यथा अणु
+				/* preserve unspecअगरied channels */
 				devpriv->mode1 &= oldmask;
 				devpriv->mode2 &= oldmask;
-			}
-			/* configure specified channels */
+			पूर्ण
+			/* configure specअगरied channels */
 			devpriv->mode1 |= himask;
 			devpriv->mode2 |= lomask;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int apci1032_cos_insn_bits(struct comedi_device *dev,
-				  struct comedi_subdevice *s,
-				  struct comedi_insn *insn,
-				  unsigned int *data)
-{
+अटल पूर्णांक apci1032_cos_insn_bits(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s,
+				  काष्ठा comedi_insn *insn,
+				  अचिन्हित पूर्णांक *data)
+अणु
 	data[1] = s->state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apci1032_cos_cmdtest(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_cmd *cmd)
-{
-	int err = 0;
+अटल पूर्णांक apci1032_cos_cmdtest(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_cmd *cmd)
+अणु
+	पूर्णांक err = 0;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, TRIG_EXT);
@@ -200,13 +201,13 @@ static int apci1032_cos_cmdtest(struct comedi_device *dev,
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 	/* Step 2b : and mutually compatible */
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
@@ -215,116 +216,116 @@ static int apci1032_cos_cmdtest(struct comedi_device *dev,
 					   cmd->chanlist_len);
 	err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
 	/* Step 4: fix up any arguments */
 
-	/* Step 5: check channel list if it exists */
+	/* Step 5: check channel list अगर it exists */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Change-Of-State (COS) 'do_cmd' operation
  *
- * Enable the COS interrupt as configured by apci1032_cos_insn_config().
+ * Enable the COS पूर्णांकerrupt as configured by apci1032_cos_insn_config().
  */
-static int apci1032_cos_cmd(struct comedi_device *dev,
-			    struct comedi_subdevice *s)
-{
-	struct apci1032_private *devpriv = dev->private;
+अटल पूर्णांक apci1032_cos_cmd(काष्ठा comedi_device *dev,
+			    काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा apci1032_निजी *devpriv = dev->निजी;
 
-	if (!devpriv->ctrl) {
+	अगर (!devpriv->ctrl) अणु
 		dev_warn(dev->class_dev,
 			 "Interrupts disabled due to mode configuration!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	outl(devpriv->mode1, dev->iobase + APCI1032_MODE1_REG);
 	outl(devpriv->mode2, dev->iobase + APCI1032_MODE2_REG);
 	outl(devpriv->ctrl, dev->iobase + APCI1032_CTRL_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apci1032_cos_cancel(struct comedi_device *dev,
-			       struct comedi_subdevice *s)
-{
-	return apci1032_reset(dev);
-}
+अटल पूर्णांक apci1032_cos_cancel(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s)
+अणु
+	वापस apci1032_reset(dev);
+पूर्ण
 
-static irqreturn_t apci1032_interrupt(int irq, void *d)
-{
-	struct comedi_device *dev = d;
-	struct apci1032_private *devpriv = dev->private;
-	struct comedi_subdevice *s = dev->read_subdev;
-	unsigned int ctrl;
-	unsigned short val;
+अटल irqवापस_t apci1032_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा comedi_device *dev = d;
+	काष्ठा apci1032_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
+	अचिन्हित पूर्णांक ctrl;
+	अचिन्हित लघु val;
 
-	/* check interrupt is from this device */
-	if ((inl(devpriv->amcc_iobase + AMCC_OP_REG_INTCSR) &
+	/* check पूर्णांकerrupt is from this device */
+	अगर ((inl(devpriv->amcc_iobase + AMCC_OP_REG_INTCSR) &
 	     INTCSR_INTR_ASSERTED) == 0)
-		return IRQ_NONE;
+		वापस IRQ_NONE;
 
-	/* check interrupt is enabled */
+	/* check पूर्णांकerrupt is enabled */
 	ctrl = inl(dev->iobase + APCI1032_CTRL_REG);
-	if ((ctrl & APCI1032_CTRL_INT_ENA) == 0)
-		return IRQ_HANDLED;
+	अगर ((ctrl & APCI1032_CTRL_INT_ENA) == 0)
+		वापस IRQ_HANDLED;
 
-	/* disable the interrupt */
+	/* disable the पूर्णांकerrupt */
 	outl(ctrl & ~APCI1032_CTRL_INT_ENA, dev->iobase + APCI1032_CTRL_REG);
 
 	s->state = inl(dev->iobase + APCI1032_STATUS_REG) & 0xffff;
 	val = s->state;
-	comedi_buf_write_samples(s, &val, 1);
+	comedi_buf_ग_लिखो_samples(s, &val, 1);
 	comedi_handle_events(dev, s);
 
-	/* enable the interrupt */
+	/* enable the पूर्णांकerrupt */
 	outl(ctrl, dev->iobase + APCI1032_CTRL_REG);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int apci1032_di_insn_bits(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn,
-				 unsigned int *data)
-{
+अटल पूर्णांक apci1032_di_insn_bits(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn,
+				 अचिन्हित पूर्णांक *data)
+अणु
 	data[1] = inl(dev->iobase + APCI1032_DI_REG);
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int apci1032_auto_attach(struct comedi_device *dev,
-				unsigned long context_unused)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	struct apci1032_private *devpriv;
-	struct comedi_subdevice *s;
-	int ret;
+अटल पूर्णांक apci1032_स्वतः_attach(काष्ठा comedi_device *dev,
+				अचिन्हित दीर्घ context_unused)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	काष्ठा apci1032_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	ret = comedi_pci_enable(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	devpriv->amcc_iobase = pci_resource_start(pcidev, 0);
 	dev->iobase = pci_resource_start(pcidev, 1);
 	apci1032_reset(dev);
-	if (pcidev->irq > 0) {
-		ret = request_irq(pcidev->irq, apci1032_interrupt, IRQF_SHARED,
+	अगर (pcidev->irq > 0) अणु
+		ret = request_irq(pcidev->irq, apci1032_पूर्णांकerrupt, IRQF_SHARED,
 				  dev->board_name, dev);
-		if (ret == 0)
+		अगर (ret == 0)
 			dev->irq = pcidev->irq;
-	}
+	पूर्ण
 
 	ret = comedi_alloc_subdevices(dev, 2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*  Allocate and Initialise DI Subdevice Structures */
 	s = &dev->subdevices[0];
@@ -335,10 +336,10 @@ static int apci1032_auto_attach(struct comedi_device *dev,
 	s->range_table	= &range_digital;
 	s->insn_bits	= apci1032_di_insn_bits;
 
-	/* Change-Of-State (COS) interrupt subdevice */
+	/* Change-Of-State (COS) पूर्णांकerrupt subdevice */
 	s = &dev->subdevices[1];
-	if (dev->irq) {
-		dev->read_subdev = s;
+	अगर (dev->irq) अणु
+		dev->पढ़ो_subdev = s;
 		s->type		= COMEDI_SUBD_DI;
 		s->subdev_flags	= SDF_READABLE | SDF_CMD_READ;
 		s->n_chan	= 1;
@@ -347,48 +348,48 @@ static int apci1032_auto_attach(struct comedi_device *dev,
 		s->insn_config	= apci1032_cos_insn_config;
 		s->insn_bits	= apci1032_cos_insn_bits;
 		s->len_chanlist	= 1;
-		s->do_cmdtest	= apci1032_cos_cmdtest;
-		s->do_cmd	= apci1032_cos_cmd;
+		s->करो_cmdtest	= apci1032_cos_cmdtest;
+		s->करो_cmd	= apci1032_cos_cmd;
 		s->cancel	= apci1032_cos_cancel;
-	} else {
+	पूर्ण अन्यथा अणु
 		s->type		= COMEDI_SUBD_UNUSED;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void apci1032_detach(struct comedi_device *dev)
-{
-	if (dev->iobase)
+अटल व्योम apci1032_detach(काष्ठा comedi_device *dev)
+अणु
+	अगर (dev->iobase)
 		apci1032_reset(dev);
 	comedi_pci_detach(dev);
-}
+पूर्ण
 
-static struct comedi_driver apci1032_driver = {
+अटल काष्ठा comedi_driver apci1032_driver = अणु
 	.driver_name	= "addi_apci_1032",
 	.module		= THIS_MODULE,
-	.auto_attach	= apci1032_auto_attach,
+	.स्वतः_attach	= apci1032_स्वतः_attach,
 	.detach		= apci1032_detach,
-};
+पूर्ण;
 
-static int apci1032_pci_probe(struct pci_dev *dev,
-			      const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &apci1032_driver, id->driver_data);
-}
+अटल पूर्णांक apci1032_pci_probe(काष्ठा pci_dev *dev,
+			      स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &apci1032_driver, id->driver_data);
+पूर्ण
 
-static const struct pci_device_id apci1032_pci_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_ADDIDATA, 0x1003) },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id apci1032_pci_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ADDIDATA, 0x1003) पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, apci1032_pci_table);
 
-static struct pci_driver apci1032_pci_driver = {
+अटल काष्ठा pci_driver apci1032_pci_driver = अणु
 	.name		= "addi_apci_1032",
 	.id_table	= apci1032_pci_table,
 	.probe		= apci1032_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(apci1032_driver, apci1032_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

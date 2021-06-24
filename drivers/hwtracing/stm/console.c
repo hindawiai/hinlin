@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Simple kernel console driver for STM devices
+ * Simple kernel console driver क्रम STM devices
  * Copyright (c) 2014, Intel Corporation.
  *
  * STM console will send kernel messages over STM devices to a trace host.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/console.h>
-#include <linux/slab.h>
-#include <linux/stm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/console.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sपंचांग.h>
 
-static int stm_console_link(struct stm_source_data *data);
-static void stm_console_unlink(struct stm_source_data *data);
+अटल पूर्णांक sपंचांग_console_link(काष्ठा sपंचांग_source_data *data);
+अटल व्योम sपंचांग_console_unlink(काष्ठा sपंचांग_source_data *data);
 
-static struct stm_console {
-	struct stm_source_data	data;
-	struct console		console;
-} stm_console = {
-	.data	= {
+अटल काष्ठा sपंचांग_console अणु
+	काष्ठा sपंचांग_source_data	data;
+	काष्ठा console		console;
+पूर्ण sपंचांग_console = अणु
+	.data	= अणु
 		.name		= "console",
 		.nr_chans	= 1,
-		.link		= stm_console_link,
-		.unlink		= stm_console_unlink,
-	},
-};
+		.link		= sपंचांग_console_link,
+		.unlink		= sपंचांग_console_unlink,
+	पूर्ण,
+पूर्ण;
 
-static void
-stm_console_write(struct console *con, const char *buf, unsigned len)
-{
-	struct stm_console *sc = container_of(con, struct stm_console, console);
+अटल व्योम
+sपंचांग_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *buf, अचिन्हित len)
+अणु
+	काष्ठा sपंचांग_console *sc = container_of(con, काष्ठा sपंचांग_console, console);
 
-	stm_source_write(&sc->data, 0, buf, len);
-}
+	sपंचांग_source_ग_लिखो(&sc->data, 0, buf, len);
+पूर्ण
 
-static int stm_console_link(struct stm_source_data *data)
-{
-	struct stm_console *sc = container_of(data, struct stm_console, data);
+अटल पूर्णांक sपंचांग_console_link(काष्ठा sपंचांग_source_data *data)
+अणु
+	काष्ठा sपंचांग_console *sc = container_of(data, काष्ठा sपंचांग_console, data);
 
-	strcpy(sc->console.name, "stm_console");
-	sc->console.write = stm_console_write;
+	म_नकल(sc->console.name, "stm_console");
+	sc->console.ग_लिखो = sपंचांग_console_ग_लिखो;
 	sc->console.flags = CON_ENABLED | CON_PRINTBUFFER;
-	register_console(&sc->console);
+	रेजिस्टर_console(&sc->console);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stm_console_unlink(struct stm_source_data *data)
-{
-	struct stm_console *sc = container_of(data, struct stm_console, data);
+अटल व्योम sपंचांग_console_unlink(काष्ठा sपंचांग_source_data *data)
+अणु
+	काष्ठा sपंचांग_console *sc = container_of(data, काष्ठा sपंचांग_console, data);
 
-	unregister_console(&sc->console);
-}
+	unरेजिस्टर_console(&sc->console);
+पूर्ण
 
-static int stm_console_init(void)
-{
-	return stm_source_register_device(NULL, &stm_console.data);
-}
+अटल पूर्णांक sपंचांग_console_init(व्योम)
+अणु
+	वापस sपंचांग_source_रेजिस्टर_device(शून्य, &sपंचांग_console.data);
+पूर्ण
 
-static void stm_console_exit(void)
-{
-	stm_source_unregister_device(&stm_console.data);
-}
+अटल व्योम sपंचांग_console_निकास(व्योम)
+अणु
+	sपंचांग_source_unरेजिस्टर_device(&sपंचांग_console.data);
+पूर्ण
 
-module_init(stm_console_init);
-module_exit(stm_console_exit);
+module_init(sपंचांग_console_init);
+module_निकास(sपंचांग_console_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("stm_console driver");

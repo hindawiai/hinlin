@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ARCH_X86_EVENTS_PROBE_H__
-#define __ARCH_X86_EVENTS_PROBE_H__
-#include <linux/sysfs.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ARCH_X86_EVENTS_PROBE_H__
+#घोषणा __ARCH_X86_EVENTS_PROBE_H__
+#समावेश <linux/sysfs.h>
 
-struct perf_msr {
+काष्ठा perf_msr अणु
 	u64			msr;
-	struct attribute_group	*grp;
-	bool			(*test)(int idx, void *data);
+	काष्ठा attribute_group	*grp;
+	bool			(*test)(पूर्णांक idx, व्योम *data);
 	bool			no_check;
 	u64			mask;
-};
+पूर्ण;
 
-unsigned long
-perf_msr_probe(struct perf_msr *msr, int cnt, bool no_zero, void *data);
+अचिन्हित दीर्घ
+perf_msr_probe(काष्ठा perf_msr *msr, पूर्णांक cnt, bool no_zero, व्योम *data);
 
-#define __PMU_EVENT_GROUP(_name)			\
-static struct attribute *attrs_##_name[] = {		\
+#घोषणा __PMU_EVENT_GROUP(_name)			\
+अटल काष्ठा attribute *attrs_##_name[] = अणु		\
 	&attr_##_name.attr.attr,			\
-	NULL,						\
-}
+	शून्य,						\
+पूर्ण
 
-#define PMU_EVENT_GROUP(_grp, _name)			\
+#घोषणा PMU_EVENT_GROUP(_grp, _name)			\
 __PMU_EVENT_GROUP(_name);				\
-static struct attribute_group group_##_name = {		\
+अटल काष्ठा attribute_group group_##_name = अणु		\
 	.name  = #_grp,					\
 	.attrs = attrs_##_name,				\
-}
+पूर्ण
 
-#endif /* __ARCH_X86_EVENTS_PROBE_H__ */
+#पूर्ण_अगर /* __ARCH_X86_EVENTS_PROBE_H__ */

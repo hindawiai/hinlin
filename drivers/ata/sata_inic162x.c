@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * sata_inic162x.c - Driver for Initio 162x SATA controllers
+ * sata_inic162x.c - Driver क्रम Initio 162x SATA controllers
  *
  * Copyright 2006  SUSE Linux Products GmbH
  * Copyright 2006  Tejun Heo <teheo@novell.com>
  *
  * **** WARNING ****
  *
- * This driver never worked properly and unfortunately data corruption is
+ * This driver never worked properly and unक्रमtunately data corruption is
  * relatively common.  There isn't anyone working on the driver and there's
- * no support from the vendor.  Do not use this driver in any production
+ * no support from the venकरोr.  Do not use this driver in any production
  * environment.
  *
- * http://thread.gmane.org/gmane.linux.debian.devel.bugs.rc/378525/focus=54491
+ * http://thपढ़ो.gmane.org/gmane.linux.debian.devel.bugs.rc/378525/focus=54491
  * https://bugzilla.kernel.org/show_bug.cgi?id=60565
  *
  * *****************
  *
- * This controller is eccentric and easily locks up if something isn't
+ * This controller is eccentric and easily locks up अगर something isn't
  * right.  Documentation is available at initio's website but it only
- * documents registers (not programming model).
+ * करोcuments रेजिस्टरs (not programming model).
  *
- * This driver has interesting history.  The first version was written
- * from the documentation and a 2.4 IDE driver posted on a Taiwan
+ * This driver has पूर्णांकeresting history.  The first version was written
+ * from the करोcumentation and a 2.4 IDE driver posted on a Taiwan
  * company, which didn't use any IDMA features and couldn't handle
  * LBA48.  The resulting driver couldn't handle LBA48 devices either
  * making it pretty useless.
  *
- * After a while, initio picked the driver up, renamed it to
- * sata_initio162x, updated it to use IDMA for ATA DMA commands and
- * posted it on their website.  It only used ATA_PROT_DMA for IDMA and
+ * After a जबतक, initio picked the driver up, नामd it to
+ * sata_initio162x, updated it to use IDMA क्रम ATA DMA commands and
+ * posted it on their website.  It only used ATA_PROT_DMA क्रम IDMA and
  * attaching both devices and issuing IDMA and !IDMA commands
- * simultaneously broke it due to PIRQ masking interaction but it did
- * show how to use the IDMA (ADMA + some initio specific twists)
+ * simultaneously broke it due to PIRQ masking पूर्णांकeraction but it did
+ * show how to use the IDMA (ADMA + some initio specअगरic twists)
  * engine.
  *
  * Then, I picked up their changes again and here's the usable driver
- * which uses IDMA for everything.  Everything works now including
+ * which uses IDMA क्रम everything.  Everything works now including
  * LBA48, CD/DVD burning, suspend/resume and hotplug.  There are some
  * issues tho.  Result Tf is not resported properly, NCQ isn't
  * supported yet and CD/DVD writing works with DMA assisted PIO
- * protocol (which, for native SATA devices, shouldn't cause any
- * noticeable difference).
+ * protocol (which, क्रम native SATA devices, shouldn't cause any
+ * noticeable dअगरference).
  *
- * Anyways, so, here's finally a working driver for inic162x.  Enjoy!
+ * Anyways, so, here's finally a working driver क्रम inic162x.  Enjoy!
  *
  * initio: If you guys wanna improve the driver regarding result TF
- * access and other stuff, please feel free to contact me.  I'll be
+ * access and other stuff, please feel मुक्त to contact me.  I'll be
  * happy to assist.
  */
 
-#include <linux/gfp.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <scsi/scsi_host.h>
-#include <linux/libata.h>
-#include <linux/blkdev.h>
-#include <scsi/scsi_device.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <linux/libata.h>
+#समावेश <linux/blkdev.h>
+#समावेश <scsi/scsi_device.h>
 
-#define DRV_NAME	"sata_inic162x"
-#define DRV_VERSION	"0.4"
+#घोषणा DRV_NAME	"sata_inic162x"
+#घोषणा DRV_VERSION	"0.4"
 
-enum {
+क्रमागत अणु
 	MMIO_BAR_PCI		= 5,
 	MMIO_BAR_CARDBUS	= 1,
 
@@ -80,7 +81,7 @@ enum {
 
 	PORT_SIZE		= 0x40,
 
-	/* registers for ATA TF operation */
+	/* रेजिस्टरs क्रम ATA TF operation */
 	PORT_TF_DATA		= 0x00,
 	PORT_TF_FEATURE		= 0x01,
 	PORT_TF_NSECT		= 0x02,
@@ -98,7 +99,7 @@ enum {
 	PORT_CPB_CPBLAR		= 0x18,
 	PORT_CPB_PTQFIFO	= 0x1c,
 
-	/* IDMA register */
+	/* IDMA रेजिस्टर */
 	PORT_IDMA_CTL		= 0x14,
 	PORT_IDMA_STAT		= 0x16,
 
@@ -110,11 +111,11 @@ enum {
 	/* HOST_CTL bits */
 	HCTL_LEDEN		= (1 << 3),  /* enable LED operation */
 	HCTL_IRQOFF		= (1 << 8),  /* global IRQ off */
-	HCTL_FTHD0		= (1 << 10), /* fifo threshold 0 */
-	HCTL_FTHD1		= (1 << 11), /* fifo threshold 1*/
-	HCTL_PWRDWN		= (1 << 12), /* power down PHYs */
+	HCTL_FTHD0		= (1 << 10), /* fअगरo threshold 0 */
+	HCTL_FTHD1		= (1 << 11), /* fअगरo threshold 1*/
+	HCTL_PWRDWN		= (1 << 12), /* घातer करोwn PHYs */
 	HCTL_SOFTRST		= (1 << 13), /* global reset (no phy reset) */
-	HCTL_RPGSEL		= (1 << 15), /* register page select */
+	HCTL_RPGSEL		= (1 << 15), /* रेजिस्टर page select */
 
 	HCTL_KNOWN_BITS		= HCTL_IRQOFF | HCTL_PWRDWN | HCTL_SOFTRST |
 				  HCTL_RPGSEL,
@@ -128,9 +129,9 @@ enum {
 	/* PORT_IRQ_(STAT|MASK) bits */
 	PIRQ_OFFLINE		= (1 << 0),  /* device unplugged */
 	PIRQ_ONLINE		= (1 << 1),  /* device plugged */
-	PIRQ_COMPLETE		= (1 << 2),  /* completion interrupt */
+	PIRQ_COMPLETE		= (1 << 2),  /* completion पूर्णांकerrupt */
 	PIRQ_FATAL		= (1 << 3),  /* fatal error */
-	PIRQ_ATA		= (1 << 4),  /* ATA interrupt */
+	PIRQ_ATA		= (1 << 4),  /* ATA पूर्णांकerrupt */
 	PIRQ_REPLY		= (1 << 5),  /* reply FIFO not empty */
 	PIRQ_PENDING		= (1 << 7),  /* port IRQ pending (STAT only) */
 
@@ -155,8 +156,8 @@ enum {
 	IDMA_STAT_LGCY		= (1 << 3),  /* ADMA legacy */
 	IDMA_STAT_UIRQ		= (1 << 4),  /* ADMA unsolicited irq */
 	IDMA_STAT_STPD		= (1 << 5),  /* ADMA stopped */
-	IDMA_STAT_PSD		= (1 << 6),  /* ADMA pause */
-	IDMA_STAT_DONE		= (1 << 7),  /* ADMA done */
+	IDMA_STAT_PSD		= (1 << 6),  /* ADMA छोड़ो */
+	IDMA_STAT_DONE		= (1 << 7),  /* ADMA करोne */
 
 	IDMA_STAT_ERR		= IDMA_STAT_PERR | IDMA_STAT_CPBERR,
 
@@ -164,37 +165,37 @@ enum {
 	CPB_CTL_VALID		= (1 << 0),  /* CPB valid */
 	CPB_CTL_QUEUED		= (1 << 1),  /* queued command */
 	CPB_CTL_DATA		= (1 << 2),  /* data, rsvd in datasheet */
-	CPB_CTL_IEN		= (1 << 3),  /* PCI interrupt enable */
-	CPB_CTL_DEVDIR		= (1 << 4),  /* device direction control */
+	CPB_CTL_IEN		= (1 << 3),  /* PCI पूर्णांकerrupt enable */
+	CPB_CTL_DEVसूची		= (1 << 4),  /* device direction control */
 
 	/* CPB Response Flags */
 	CPB_RESP_DONE		= (1 << 0),  /* ATA command complete */
 	CPB_RESP_REL		= (1 << 1),  /* ATA release */
 	CPB_RESP_IGNORED	= (1 << 2),  /* CPB ignored */
 	CPB_RESP_ATA_ERR	= (1 << 3),  /* ATA command error */
-	CPB_RESP_SPURIOUS	= (1 << 4),  /* ATA spurious interrupt error */
+	CPB_RESP_SPURIOUS	= (1 << 4),  /* ATA spurious पूर्णांकerrupt error */
 	CPB_RESP_UNDERFLOW	= (1 << 5),  /* APRD deficiency length error */
 	CPB_RESP_OVERFLOW	= (1 << 6),  /* APRD exccess length error */
 	CPB_RESP_CPB_ERR	= (1 << 7),  /* CPB error flag */
 
 	/* PRD Control Flags */
 	PRD_DRAIN		= (1 << 1),  /* ignore data excess */
-	PRD_CDB			= (1 << 2),  /* atapi packet command pointer */
-	PRD_DIRECT_INTR		= (1 << 3),  /* direct interrupt */
+	PRD_CDB			= (1 << 2),  /* atapi packet command poपूर्णांकer */
+	PRD_सूचीECT_INTR		= (1 << 3),  /* direct पूर्णांकerrupt */
 	PRD_DMA			= (1 << 4),  /* data transfer method */
 	PRD_WRITE		= (1 << 5),  /* data dir, rsvd in datasheet */
 	PRD_IOM			= (1 << 6),  /* io/memory transfer */
 	PRD_END			= (1 << 7),  /* APRD chain end */
-};
+पूर्ण;
 
 /* Comman Parameter Block */
-struct inic_cpb {
+काष्ठा inic_cpb अणु
 	u8		resp_flags;	/* Response Flags */
 	u8		error;		/* ATA Error */
 	u8		status;		/* ATA Status */
 	u8		ctl_flags;	/* Control Flags */
 	__le32		len;		/* Total Transfer Length */
-	__le32		prd;		/* First PRD pointer */
+	__le32		prd;		/* First PRD poपूर्णांकer */
 	u8		rsvd[4];
 	/* 16 bytes */
 	u8		feature;	/* ATA Feature */
@@ -214,121 +215,121 @@ struct inic_cpb {
 	u8		slave_error;	/* Slave ATA Error */
 	u8		slave_status;	/* Slave ATA Status */
 	/* 32 bytes */
-} __packed;
+पूर्ण __packed;
 
 /* Physical Region Descriptor */
-struct inic_prd {
+काष्ठा inic_prd अणु
 	__le32		mad;		/* Physical Memory Address */
 	__le16		len;		/* Transfer Length */
 	u8		rsvd;
 	u8		flags;		/* Control Flags */
-} __packed;
+पूर्ण __packed;
 
-struct inic_pkt {
-	struct inic_cpb	cpb;
-	struct inic_prd	prd[LIBATA_MAX_PRD + 1];	/* + 1 for cdb */
+काष्ठा inic_pkt अणु
+	काष्ठा inic_cpb	cpb;
+	काष्ठा inic_prd	prd[LIBATA_MAX_PRD + 1];	/* + 1 क्रम cdb */
 	u8		cdb[ATAPI_CDB_LEN];
-} __packed;
+पूर्ण __packed;
 
-struct inic_host_priv {
-	void __iomem	*mmio_base;
+काष्ठा inic_host_priv अणु
+	व्योम __iomem	*mmio_base;
 	u16		cached_hctl;
-};
+पूर्ण;
 
-struct inic_port_priv {
-	struct inic_pkt	*pkt;
+काष्ठा inic_port_priv अणु
+	काष्ठा inic_pkt	*pkt;
 	dma_addr_t	pkt_dma;
 	u32		*cpb_tbl;
 	dma_addr_t	cpb_tbl_dma;
-};
+पूर्ण;
 
-static struct scsi_host_template inic_sht = {
+अटल काष्ठा scsi_host_ढाँचा inic_sht = अणु
 	ATA_BASE_SHT(DRV_NAME),
 	.sg_tablesize		= LIBATA_MAX_PRD, /* maybe it can be larger? */
 
 	/*
 	 * This controller is braindamaged.  dma_boundary is 0xffff like others
-	 * but it will lock up the whole machine HARD if 65536 byte PRD entry
+	 * but it will lock up the whole machine HARD अगर 65536 byte PRD entry
 	 * is fed.  Reduce maximum segment size.
 	 */
 	.dma_boundary		= INIC_DMA_BOUNDARY,
 	.max_segment_size	= 65536 - 512,
-};
+पूर्ण;
 
-static const int scr_map[] = {
+अटल स्थिर पूर्णांक scr_map[] = अणु
 	[SCR_STATUS]	= 0,
 	[SCR_ERROR]	= 1,
 	[SCR_CONTROL]	= 2,
-};
+पूर्ण;
 
-static void __iomem *inic_port_base(struct ata_port *ap)
-{
-	struct inic_host_priv *hpriv = ap->host->private_data;
+अटल व्योम __iomem *inic_port_base(काष्ठा ata_port *ap)
+अणु
+	काष्ठा inic_host_priv *hpriv = ap->host->निजी_data;
 
-	return hpriv->mmio_base + ap->port_no * PORT_SIZE;
-}
+	वापस hpriv->mmio_base + ap->port_no * PORT_SIZE;
+पूर्ण
 
-static void inic_reset_port(void __iomem *port_base)
-{
-	void __iomem *idma_ctl = port_base + PORT_IDMA_CTL;
+अटल व्योम inic_reset_port(व्योम __iomem *port_base)
+अणु
+	व्योम __iomem *idma_ctl = port_base + PORT_IDMA_CTL;
 
 	/* stop IDMA engine */
-	readw(idma_ctl); /* flush */
+	पढ़ोw(idma_ctl); /* flush */
 	msleep(1);
 
-	/* mask IRQ and assert reset */
-	writew(IDMA_CTL_RST_IDMA, idma_ctl);
-	readw(idma_ctl); /* flush */
+	/* mask IRQ and निश्चित reset */
+	ग_लिखोw(IDMA_CTL_RST_IDMA, idma_ctl);
+	पढ़ोw(idma_ctl); /* flush */
 	msleep(1);
 
 	/* release reset */
-	writew(0, idma_ctl);
+	ग_लिखोw(0, idma_ctl);
 
 	/* clear irq */
-	writeb(0xff, port_base + PORT_IRQ_STAT);
-}
+	ग_लिखोb(0xff, port_base + PORT_IRQ_STAT);
+पूर्ण
 
-static int inic_scr_read(struct ata_link *link, unsigned sc_reg, u32 *val)
-{
-	void __iomem *scr_addr = inic_port_base(link->ap) + PORT_SCR;
+अटल पूर्णांक inic_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित sc_reg, u32 *val)
+अणु
+	व्योम __iomem *scr_addr = inic_port_base(link->ap) + PORT_SCR;
 
-	if (unlikely(sc_reg >= ARRAY_SIZE(scr_map)))
-		return -EINVAL;
+	अगर (unlikely(sc_reg >= ARRAY_SIZE(scr_map)))
+		वापस -EINVAL;
 
-	*val = readl(scr_addr + scr_map[sc_reg] * 4);
+	*val = पढ़ोl(scr_addr + scr_map[sc_reg] * 4);
 
 	/* this controller has stuck DIAG.N, ignore it */
-	if (sc_reg == SCR_ERROR)
+	अगर (sc_reg == SCR_ERROR)
 		*val &= ~SERR_PHYRDY_CHG;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int inic_scr_write(struct ata_link *link, unsigned sc_reg, u32 val)
-{
-	void __iomem *scr_addr = inic_port_base(link->ap) + PORT_SCR;
+अटल पूर्णांक inic_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित sc_reg, u32 val)
+अणु
+	व्योम __iomem *scr_addr = inic_port_base(link->ap) + PORT_SCR;
 
-	if (unlikely(sc_reg >= ARRAY_SIZE(scr_map)))
-		return -EINVAL;
+	अगर (unlikely(sc_reg >= ARRAY_SIZE(scr_map)))
+		वापस -EINVAL;
 
-	writel(val, scr_addr + scr_map[sc_reg] * 4);
-	return 0;
-}
+	ग_लिखोl(val, scr_addr + scr_map[sc_reg] * 4);
+	वापस 0;
+पूर्ण
 
-static void inic_stop_idma(struct ata_port *ap)
-{
-	void __iomem *port_base = inic_port_base(ap);
+अटल व्योम inic_stop_idma(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_base = inic_port_base(ap);
 
-	readb(port_base + PORT_RPQ_FIFO);
-	readb(port_base + PORT_RPQ_CNT);
-	writew(0, port_base + PORT_IDMA_CTL);
-}
+	पढ़ोb(port_base + PORT_RPQ_FIFO);
+	पढ़ोb(port_base + PORT_RPQ_CNT);
+	ग_लिखोw(0, port_base + PORT_IDMA_CTL);
+पूर्ण
 
-static void inic_host_err_intr(struct ata_port *ap, u8 irq_stat, u16 idma_stat)
-{
-	struct ata_eh_info *ehi = &ap->link.eh_info;
-	struct inic_port_priv *pp = ap->private_data;
-	struct inic_cpb *cpb = &pp->pkt->cpb;
-	bool freeze = false;
+अटल व्योम inic_host_err_पूर्णांकr(काष्ठा ata_port *ap, u8 irq_stat, u16 idma_stat)
+अणु
+	काष्ठा ata_eh_info *ehi = &ap->link.eh_info;
+	काष्ठा inic_port_priv *pp = ap->निजी_data;
+	काष्ठा inic_cpb *cpb = &pp->pkt->cpb;
+	bool मुक्तze = false;
 
 	ata_ehi_clear_desc(ehi);
 	ata_ehi_push_desc(ehi, "irq_stat=0x%x idma_stat=0x%x",
@@ -336,172 +337,172 @@ static void inic_host_err_intr(struct ata_port *ap, u8 irq_stat, u16 idma_stat)
 
 	inic_stop_idma(ap);
 
-	if (irq_stat & (PIRQ_OFFLINE | PIRQ_ONLINE)) {
+	अगर (irq_stat & (PIRQ_OFFLINE | PIRQ_ONLINE)) अणु
 		ata_ehi_push_desc(ehi, "hotplug");
 		ata_ehi_hotplugged(ehi);
-		freeze = true;
-	}
+		मुक्तze = true;
+	पूर्ण
 
-	if (idma_stat & IDMA_STAT_PERR) {
+	अगर (idma_stat & IDMA_STAT_PERR) अणु
 		ata_ehi_push_desc(ehi, "PCI error");
-		freeze = true;
-	}
+		मुक्तze = true;
+	पूर्ण
 
-	if (idma_stat & IDMA_STAT_CPBERR) {
+	अगर (idma_stat & IDMA_STAT_CPBERR) अणु
 		ata_ehi_push_desc(ehi, "CPB error");
 
-		if (cpb->resp_flags & CPB_RESP_IGNORED) {
+		अगर (cpb->resp_flags & CPB_RESP_IGNORED) अणु
 			__ata_ehi_push_desc(ehi, " ignored");
 			ehi->err_mask |= AC_ERR_INVALID;
-			freeze = true;
-		}
+			मुक्तze = true;
+		पूर्ण
 
-		if (cpb->resp_flags & CPB_RESP_ATA_ERR)
+		अगर (cpb->resp_flags & CPB_RESP_ATA_ERR)
 			ehi->err_mask |= AC_ERR_DEV;
 
-		if (cpb->resp_flags & CPB_RESP_SPURIOUS) {
+		अगर (cpb->resp_flags & CPB_RESP_SPURIOUS) अणु
 			__ata_ehi_push_desc(ehi, " spurious-intr");
 			ehi->err_mask |= AC_ERR_HSM;
-			freeze = true;
-		}
+			मुक्तze = true;
+		पूर्ण
 
-		if (cpb->resp_flags &
-		    (CPB_RESP_UNDERFLOW | CPB_RESP_OVERFLOW)) {
+		अगर (cpb->resp_flags &
+		    (CPB_RESP_UNDERFLOW | CPB_RESP_OVERFLOW)) अणु
 			__ata_ehi_push_desc(ehi, " data-over/underflow");
 			ehi->err_mask |= AC_ERR_HSM;
-			freeze = true;
-		}
-	}
+			मुक्तze = true;
+		पूर्ण
+	पूर्ण
 
-	if (freeze)
-		ata_port_freeze(ap);
-	else
-		ata_port_abort(ap);
-}
+	अगर (मुक्तze)
+		ata_port_मुक्तze(ap);
+	अन्यथा
+		ata_port_पात(ap);
+पूर्ण
 
-static void inic_host_intr(struct ata_port *ap)
-{
-	void __iomem *port_base = inic_port_base(ap);
-	struct ata_queued_cmd *qc = ata_qc_from_tag(ap, ap->link.active_tag);
+अटल व्योम inic_host_पूर्णांकr(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_base = inic_port_base(ap);
+	काष्ठा ata_queued_cmd *qc = ata_qc_from_tag(ap, ap->link.active_tag);
 	u8 irq_stat;
 	u16 idma_stat;
 
-	/* read and clear IRQ status */
-	irq_stat = readb(port_base + PORT_IRQ_STAT);
-	writeb(irq_stat, port_base + PORT_IRQ_STAT);
-	idma_stat = readw(port_base + PORT_IDMA_STAT);
+	/* पढ़ो and clear IRQ status */
+	irq_stat = पढ़ोb(port_base + PORT_IRQ_STAT);
+	ग_लिखोb(irq_stat, port_base + PORT_IRQ_STAT);
+	idma_stat = पढ़ोw(port_base + PORT_IDMA_STAT);
 
-	if (unlikely((irq_stat & PIRQ_ERR) || (idma_stat & IDMA_STAT_ERR)))
-		inic_host_err_intr(ap, irq_stat, idma_stat);
+	अगर (unlikely((irq_stat & PIRQ_ERR) || (idma_stat & IDMA_STAT_ERR)))
+		inic_host_err_पूर्णांकr(ap, irq_stat, idma_stat);
 
-	if (unlikely(!qc))
-		goto spurious;
+	अगर (unlikely(!qc))
+		जाओ spurious;
 
-	if (likely(idma_stat & IDMA_STAT_DONE)) {
+	अगर (likely(idma_stat & IDMA_STAT_DONE)) अणु
 		inic_stop_idma(ap);
 
 		/* Depending on circumstances, device error
 		 * isn't reported by IDMA, check it explicitly.
 		 */
-		if (unlikely(readb(port_base + PORT_TF_COMMAND) &
+		अगर (unlikely(पढ़ोb(port_base + PORT_TF_COMMAND) &
 			     (ATA_DF | ATA_ERR)))
 			qc->err_mask |= AC_ERR_DEV;
 
 		ata_qc_complete(qc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
  spurious:
 	ata_port_warn(ap, "unhandled interrupt: cmd=0x%x irq_stat=0x%x idma_stat=0x%x\n",
 		      qc ? qc->tf.command : 0xff, irq_stat, idma_stat);
-}
+पूर्ण
 
-static irqreturn_t inic_interrupt(int irq, void *dev_instance)
-{
-	struct ata_host *host = dev_instance;
-	struct inic_host_priv *hpriv = host->private_data;
+अटल irqवापस_t inic_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	काष्ठा ata_host *host = dev_instance;
+	काष्ठा inic_host_priv *hpriv = host->निजी_data;
 	u16 host_irq_stat;
-	int i, handled = 0;
+	पूर्णांक i, handled = 0;
 
-	host_irq_stat = readw(hpriv->mmio_base + HOST_IRQ_STAT);
+	host_irq_stat = पढ़ोw(hpriv->mmio_base + HOST_IRQ_STAT);
 
-	if (unlikely(!(host_irq_stat & HIRQ_GLOBAL)))
-		goto out;
+	अगर (unlikely(!(host_irq_stat & HIRQ_GLOBAL)))
+		जाओ out;
 
 	spin_lock(&host->lock);
 
-	for (i = 0; i < NR_PORTS; i++)
-		if (host_irq_stat & (HIRQ_PORT0 << i)) {
-			inic_host_intr(host->ports[i]);
+	क्रम (i = 0; i < NR_PORTS; i++)
+		अगर (host_irq_stat & (HIRQ_PORT0 << i)) अणु
+			inic_host_पूर्णांकr(host->ports[i]);
 			handled++;
-		}
+		पूर्ण
 
 	spin_unlock(&host->lock);
 
  out:
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static int inic_check_atapi_dma(struct ata_queued_cmd *qc)
-{
-	/* For some reason ATAPI_PROT_DMA doesn't work for some
-	 * commands including writes and other misc ops.  Use PIO
+अटल पूर्णांक inic_check_atapi_dma(काष्ठा ata_queued_cmd *qc)
+अणु
+	/* For some reason ATAPI_PROT_DMA करोesn't work क्रम some
+	 * commands including ग_लिखोs and other misc ops.  Use PIO
 	 * protocol instead, which BTW is driven by the DMA engine
-	 * anyway, so it shouldn't make much difference for native
+	 * anyway, so it shouldn't make much dअगरference क्रम native
 	 * SATA devices.
 	 */
-	if (atapi_cmd_type(qc->cdb[0]) == READ)
-		return 0;
-	return 1;
-}
+	अगर (atapi_cmd_type(qc->cdb[0]) == READ)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-static void inic_fill_sg(struct inic_prd *prd, struct ata_queued_cmd *qc)
-{
-	struct scatterlist *sg;
-	unsigned int si;
+अटल व्योम inic_fill_sg(काष्ठा inic_prd *prd, काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा scatterlist *sg;
+	अचिन्हित पूर्णांक si;
 	u8 flags = 0;
 
-	if (qc->tf.flags & ATA_TFLAG_WRITE)
+	अगर (qc->tf.flags & ATA_TFLAG_WRITE)
 		flags |= PRD_WRITE;
 
-	if (ata_is_dma(qc->tf.protocol))
+	अगर (ata_is_dma(qc->tf.protocol))
 		flags |= PRD_DMA;
 
-	for_each_sg(qc->sg, sg, qc->n_elem, si) {
+	क्रम_each_sg(qc->sg, sg, qc->n_elem, si) अणु
 		prd->mad = cpu_to_le32(sg_dma_address(sg));
 		prd->len = cpu_to_le16(sg_dma_len(sg));
 		prd->flags = flags;
 		prd++;
-	}
+	पूर्ण
 
 	WARN_ON(!si);
 	prd[-1].flags |= PRD_END;
-}
+पूर्ण
 
-static enum ata_completion_errors inic_qc_prep(struct ata_queued_cmd *qc)
-{
-	struct inic_port_priv *pp = qc->ap->private_data;
-	struct inic_pkt *pkt = pp->pkt;
-	struct inic_cpb *cpb = &pkt->cpb;
-	struct inic_prd *prd = pkt->prd;
+अटल क्रमागत ata_completion_errors inic_qc_prep(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा inic_port_priv *pp = qc->ap->निजी_data;
+	काष्ठा inic_pkt *pkt = pp->pkt;
+	काष्ठा inic_cpb *cpb = &pkt->cpb;
+	काष्ठा inic_prd *prd = pkt->prd;
 	bool is_atapi = ata_is_atapi(qc->tf.protocol);
 	bool is_data = ata_is_data(qc->tf.protocol);
-	unsigned int cdb_len = 0;
+	अचिन्हित पूर्णांक cdb_len = 0;
 
 	VPRINTK("ENTER\n");
 
-	if (is_atapi)
+	अगर (is_atapi)
 		cdb_len = qc->dev->cdb_len;
 
 	/* prepare packet, based on initio driver */
-	memset(pkt, 0, sizeof(struct inic_pkt));
+	स_रखो(pkt, 0, माप(काष्ठा inic_pkt));
 
 	cpb->ctl_flags = CPB_CTL_VALID | CPB_CTL_IEN;
-	if (is_atapi || is_data)
+	अगर (is_atapi || is_data)
 		cpb->ctl_flags |= CPB_CTL_DATA;
 
 	cpb->len = cpu_to_le32(qc->nbytes + cdb_len);
-	cpb->prd = cpu_to_le32(pp->pkt_dma + offsetof(struct inic_pkt, prd));
+	cpb->prd = cpu_to_le32(pp->pkt_dma + दुरत्व(काष्ठा inic_pkt, prd));
 
 	cpb->device = qc->tf.device;
 	cpb->feature = qc->tf.feature;
@@ -510,221 +511,221 @@ static enum ata_completion_errors inic_qc_prep(struct ata_queued_cmd *qc)
 	cpb->lbam = qc->tf.lbam;
 	cpb->lbah = qc->tf.lbah;
 
-	if (qc->tf.flags & ATA_TFLAG_LBA48) {
+	अगर (qc->tf.flags & ATA_TFLAG_LBA48) अणु
 		cpb->hob_feature = qc->tf.hob_feature;
 		cpb->hob_nsect = qc->tf.hob_nsect;
 		cpb->hob_lbal = qc->tf.hob_lbal;
 		cpb->hob_lbam = qc->tf.hob_lbam;
 		cpb->hob_lbah = qc->tf.hob_lbah;
-	}
+	पूर्ण
 
 	cpb->command = qc->tf.command;
-	/* don't load ctl - dunno why.  it's like that in the initio driver */
+	/* करोn't load ctl - dunno why.  it's like that in the initio driver */
 
-	/* setup PRD for CDB */
-	if (is_atapi) {
-		memcpy(pkt->cdb, qc->cdb, ATAPI_CDB_LEN);
+	/* setup PRD क्रम CDB */
+	अगर (is_atapi) अणु
+		स_नकल(pkt->cdb, qc->cdb, ATAPI_CDB_LEN);
 		prd->mad = cpu_to_le32(pp->pkt_dma +
-				       offsetof(struct inic_pkt, cdb));
+				       दुरत्व(काष्ठा inic_pkt, cdb));
 		prd->len = cpu_to_le16(cdb_len);
 		prd->flags = PRD_CDB | PRD_WRITE;
-		if (!is_data)
+		अगर (!is_data)
 			prd->flags |= PRD_END;
 		prd++;
-	}
+	पूर्ण
 
 	/* setup sg table */
-	if (is_data)
+	अगर (is_data)
 		inic_fill_sg(prd, qc);
 
 	pp->cpb_tbl[0] = pp->pkt_dma;
 
-	return AC_ERR_OK;
-}
+	वापस AC_ERR_OK;
+पूर्ण
 
-static unsigned int inic_qc_issue(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
-	void __iomem *port_base = inic_port_base(ap);
+अटल अचिन्हित पूर्णांक inic_qc_issue(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
+	व्योम __iomem *port_base = inic_port_base(ap);
 
 	/* fire up the ADMA engine */
-	writew(HCTL_FTHD0 | HCTL_LEDEN, port_base + HOST_CTL);
-	writew(IDMA_CTL_GO, port_base + PORT_IDMA_CTL);
-	writeb(0, port_base + PORT_CPB_PTQFIFO);
+	ग_लिखोw(HCTL_FTHD0 | HCTL_LEDEN, port_base + HOST_CTL);
+	ग_लिखोw(IDMA_CTL_GO, port_base + PORT_IDMA_CTL);
+	ग_लिखोb(0, port_base + PORT_CPB_PTQFIFO);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void inic_tf_read(struct ata_port *ap, struct ata_taskfile *tf)
-{
-	void __iomem *port_base = inic_port_base(ap);
+अटल व्योम inic_tf_पढ़ो(काष्ठा ata_port *ap, काष्ठा ata_taskfile *tf)
+अणु
+	व्योम __iomem *port_base = inic_port_base(ap);
 
-	tf->feature	= readb(port_base + PORT_TF_FEATURE);
-	tf->nsect	= readb(port_base + PORT_TF_NSECT);
-	tf->lbal	= readb(port_base + PORT_TF_LBAL);
-	tf->lbam	= readb(port_base + PORT_TF_LBAM);
-	tf->lbah	= readb(port_base + PORT_TF_LBAH);
-	tf->device	= readb(port_base + PORT_TF_DEVICE);
-	tf->command	= readb(port_base + PORT_TF_COMMAND);
-}
+	tf->feature	= पढ़ोb(port_base + PORT_TF_FEATURE);
+	tf->nsect	= पढ़ोb(port_base + PORT_TF_NSECT);
+	tf->lbal	= पढ़ोb(port_base + PORT_TF_LBAL);
+	tf->lbam	= पढ़ोb(port_base + PORT_TF_LBAM);
+	tf->lbah	= पढ़ोb(port_base + PORT_TF_LBAH);
+	tf->device	= पढ़ोb(port_base + PORT_TF_DEVICE);
+	tf->command	= पढ़ोb(port_base + PORT_TF_COMMAND);
+पूर्ण
 
-static bool inic_qc_fill_rtf(struct ata_queued_cmd *qc)
-{
-	struct ata_taskfile *rtf = &qc->result_tf;
-	struct ata_taskfile tf;
+अटल bool inic_qc_fill_rtf(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_taskfile *rtf = &qc->result_tf;
+	काष्ठा ata_taskfile tf;
 
-	/* FIXME: Except for status and error, result TF access
-	 * doesn't work.  I tried reading from BAR0/2, CPB and BAR5.
-	 * None works regardless of which command interface is used.
-	 * For now return true iff status indicates device error.
-	 * This means that we're reporting bogus sector for RW
+	/* FIXME: Except क्रम status and error, result TF access
+	 * करोesn't work.  I tried पढ़ोing from BAR0/2, CPB and BAR5.
+	 * None works regardless of which command पूर्णांकerface is used.
+	 * For now वापस true अगरf status indicates device error.
+	 * This means that we're reporting bogus sector क्रम RW
 	 * failures.  Eeekk....
 	 */
-	inic_tf_read(qc->ap, &tf);
+	inic_tf_पढ़ो(qc->ap, &tf);
 
-	if (!(tf.command & ATA_ERR))
-		return false;
+	अगर (!(tf.command & ATA_ERR))
+		वापस false;
 
 	rtf->command = tf.command;
 	rtf->feature = tf.feature;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void inic_freeze(struct ata_port *ap)
-{
-	void __iomem *port_base = inic_port_base(ap);
+अटल व्योम inic_मुक्तze(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_base = inic_port_base(ap);
 
-	writeb(PIRQ_MASK_FREEZE, port_base + PORT_IRQ_MASK);
-	writeb(0xff, port_base + PORT_IRQ_STAT);
-}
+	ग_लिखोb(PIRQ_MASK_FREEZE, port_base + PORT_IRQ_MASK);
+	ग_लिखोb(0xff, port_base + PORT_IRQ_STAT);
+पूर्ण
 
-static void inic_thaw(struct ata_port *ap)
-{
-	void __iomem *port_base = inic_port_base(ap);
+अटल व्योम inic_thaw(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_base = inic_port_base(ap);
 
-	writeb(0xff, port_base + PORT_IRQ_STAT);
-	writeb(PIRQ_MASK_DEFAULT, port_base + PORT_IRQ_MASK);
-}
+	ग_लिखोb(0xff, port_base + PORT_IRQ_STAT);
+	ग_लिखोb(PIRQ_MASK_DEFAULT, port_base + PORT_IRQ_MASK);
+पूर्ण
 
-static int inic_check_ready(struct ata_link *link)
-{
-	void __iomem *port_base = inic_port_base(link->ap);
+अटल पूर्णांक inic_check_पढ़ोy(काष्ठा ata_link *link)
+अणु
+	व्योम __iomem *port_base = inic_port_base(link->ap);
 
-	return ata_check_ready(readb(port_base + PORT_TF_COMMAND));
-}
+	वापस ata_check_पढ़ोy(पढ़ोb(port_base + PORT_TF_COMMAND));
+पूर्ण
 
 /*
- * SRST and SControl hardreset don't give valid signature on this
- * controller.  Only controller specific hardreset mechanism works.
+ * SRST and SControl hardreset करोn't give valid signature on this
+ * controller.  Only controller specअगरic hardreset mechanism works.
  */
-static int inic_hardreset(struct ata_link *link, unsigned int *class,
-			  unsigned long deadline)
-{
-	struct ata_port *ap = link->ap;
-	void __iomem *port_base = inic_port_base(ap);
-	void __iomem *idma_ctl = port_base + PORT_IDMA_CTL;
-	const unsigned long *timing = sata_ehc_deb_timing(&link->eh_context);
-	int rc;
+अटल पूर्णांक inic_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+			  अचिन्हित दीर्घ deadline)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	व्योम __iomem *port_base = inic_port_base(ap);
+	व्योम __iomem *idma_ctl = port_base + PORT_IDMA_CTL;
+	स्थिर अचिन्हित दीर्घ *timing = sata_ehc_deb_timing(&link->eh_context);
+	पूर्णांक rc;
 
-	/* hammer it into sane state */
+	/* hammer it पूर्णांकo sane state */
 	inic_reset_port(port_base);
 
-	writew(IDMA_CTL_RST_ATA, idma_ctl);
-	readw(idma_ctl);	/* flush */
+	ग_लिखोw(IDMA_CTL_RST_ATA, idma_ctl);
+	पढ़ोw(idma_ctl);	/* flush */
 	ata_msleep(ap, 1);
-	writew(0, idma_ctl);
+	ग_लिखोw(0, idma_ctl);
 
 	rc = sata_link_resume(link, timing, deadline);
-	if (rc) {
+	अगर (rc) अणु
 		ata_link_warn(link,
 			      "failed to resume link after reset (errno=%d)\n",
 			      rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	*class = ATA_DEV_NONE;
-	if (ata_link_online(link)) {
-		struct ata_taskfile tf;
+	अगर (ata_link_online(link)) अणु
+		काष्ठा ata_taskfile tf;
 
-		/* wait for link to become ready */
-		rc = ata_wait_after_reset(link, deadline, inic_check_ready);
+		/* रुको क्रम link to become पढ़ोy */
+		rc = ata_रुको_after_reset(link, deadline, inic_check_पढ़ोy);
 		/* link occupied, -ENODEV too is an error */
-		if (rc) {
+		अगर (rc) अणु
 			ata_link_warn(link,
 				      "device not ready after hardreset (errno=%d)\n",
 				      rc);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
-		inic_tf_read(ap, &tf);
-		*class = ata_dev_classify(&tf);
-	}
+		inic_tf_पढ़ो(ap, &tf);
+		*class = ata_dev_classअगरy(&tf);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void inic_error_handler(struct ata_port *ap)
-{
-	void __iomem *port_base = inic_port_base(ap);
+अटल व्योम inic_error_handler(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_base = inic_port_base(ap);
 
 	inic_reset_port(port_base);
 	ata_std_error_handler(ap);
-}
+पूर्ण
 
-static void inic_post_internal_cmd(struct ata_queued_cmd *qc)
-{
-	/* make DMA engine forget about the failed command */
-	if (qc->flags & ATA_QCFLAG_FAILED)
+अटल व्योम inic_post_पूर्णांकernal_cmd(काष्ठा ata_queued_cmd *qc)
+अणु
+	/* make DMA engine क्रमget about the failed command */
+	अगर (qc->flags & ATA_QCFLAG_FAILED)
 		inic_reset_port(inic_port_base(qc->ap));
-}
+पूर्ण
 
-static void init_port(struct ata_port *ap)
-{
-	void __iomem *port_base = inic_port_base(ap);
-	struct inic_port_priv *pp = ap->private_data;
+अटल व्योम init_port(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_base = inic_port_base(ap);
+	काष्ठा inic_port_priv *pp = ap->निजी_data;
 
 	/* clear packet and CPB table */
-	memset(pp->pkt, 0, sizeof(struct inic_pkt));
-	memset(pp->cpb_tbl, 0, IDMA_CPB_TBL_SIZE);
+	स_रखो(pp->pkt, 0, माप(काष्ठा inic_pkt));
+	स_रखो(pp->cpb_tbl, 0, IDMA_CPB_TBL_SIZE);
 
 	/* setup CPB lookup table addresses */
-	writel(pp->cpb_tbl_dma, port_base + PORT_CPB_CPBLAR);
-}
+	ग_लिखोl(pp->cpb_tbl_dma, port_base + PORT_CPB_CPBLAR);
+पूर्ण
 
-static int inic_port_resume(struct ata_port *ap)
-{
+अटल पूर्णांक inic_port_resume(काष्ठा ata_port *ap)
+अणु
 	init_port(ap);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int inic_port_start(struct ata_port *ap)
-{
-	struct device *dev = ap->host->dev;
-	struct inic_port_priv *pp;
+अटल पूर्णांक inic_port_start(काष्ठा ata_port *ap)
+अणु
+	काष्ठा device *dev = ap->host->dev;
+	काष्ठा inic_port_priv *pp;
 
-	/* alloc and initialize private data */
-	pp = devm_kzalloc(dev, sizeof(*pp), GFP_KERNEL);
-	if (!pp)
-		return -ENOMEM;
-	ap->private_data = pp;
+	/* alloc and initialize निजी data */
+	pp = devm_kzalloc(dev, माप(*pp), GFP_KERNEL);
+	अगर (!pp)
+		वापस -ENOMEM;
+	ap->निजी_data = pp;
 
 	/* Alloc resources */
-	pp->pkt = dmam_alloc_coherent(dev, sizeof(struct inic_pkt),
+	pp->pkt = dmam_alloc_coherent(dev, माप(काष्ठा inic_pkt),
 				      &pp->pkt_dma, GFP_KERNEL);
-	if (!pp->pkt)
-		return -ENOMEM;
+	अगर (!pp->pkt)
+		वापस -ENOMEM;
 
 	pp->cpb_tbl = dmam_alloc_coherent(dev, IDMA_CPB_TBL_SIZE,
 					  &pp->cpb_tbl_dma, GFP_KERNEL);
-	if (!pp->cpb_tbl)
-		return -ENOMEM;
+	अगर (!pp->cpb_tbl)
+		वापस -ENOMEM;
 
 	init_port(ap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct ata_port_operations inic_port_ops = {
+अटल काष्ठा ata_port_operations inic_port_ops = अणु
 	.inherits		= &sata_port_ops,
 
 	.check_atapi_dma	= inic_check_atapi_dma,
@@ -732,170 +733,170 @@ static struct ata_port_operations inic_port_ops = {
 	.qc_issue		= inic_qc_issue,
 	.qc_fill_rtf		= inic_qc_fill_rtf,
 
-	.freeze			= inic_freeze,
+	.मुक्तze			= inic_मुक्तze,
 	.thaw			= inic_thaw,
 	.hardreset		= inic_hardreset,
 	.error_handler		= inic_error_handler,
-	.post_internal_cmd	= inic_post_internal_cmd,
+	.post_पूर्णांकernal_cmd	= inic_post_पूर्णांकernal_cmd,
 
-	.scr_read		= inic_scr_read,
-	.scr_write		= inic_scr_write,
+	.scr_पढ़ो		= inic_scr_पढ़ो,
+	.scr_ग_लिखो		= inic_scr_ग_लिखो,
 
 	.port_resume		= inic_port_resume,
 	.port_start		= inic_port_start,
-};
+पूर्ण;
 
-static const struct ata_port_info inic_port_info = {
+अटल स्थिर काष्ठा ata_port_info inic_port_info = अणु
 	.flags			= ATA_FLAG_SATA | ATA_FLAG_PIO_DMA,
 	.pio_mask		= ATA_PIO4,
 	.mwdma_mask		= ATA_MWDMA2,
 	.udma_mask		= ATA_UDMA6,
 	.port_ops		= &inic_port_ops
-};
+पूर्ण;
 
-static int init_controller(void __iomem *mmio_base, u16 hctl)
-{
-	int i;
+अटल पूर्णांक init_controller(व्योम __iomem *mmio_base, u16 hctl)
+अणु
+	पूर्णांक i;
 	u16 val;
 
 	hctl &= ~HCTL_KNOWN_BITS;
 
 	/* Soft reset whole controller.  Spec says reset duration is 3
-	 * PCI clocks, be generous and give it 10ms.
+	 * PCI घड़ीs, be generous and give it 10ms.
 	 */
-	writew(hctl | HCTL_SOFTRST, mmio_base + HOST_CTL);
-	readw(mmio_base + HOST_CTL); /* flush */
+	ग_लिखोw(hctl | HCTL_SOFTRST, mmio_base + HOST_CTL);
+	पढ़ोw(mmio_base + HOST_CTL); /* flush */
 
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 		msleep(1);
-		val = readw(mmio_base + HOST_CTL);
-		if (!(val & HCTL_SOFTRST))
-			break;
-	}
+		val = पढ़ोw(mmio_base + HOST_CTL);
+		अगर (!(val & HCTL_SOFTRST))
+			अवरोध;
+	पूर्ण
 
-	if (val & HCTL_SOFTRST)
-		return -EIO;
+	अगर (val & HCTL_SOFTRST)
+		वापस -EIO;
 
-	/* mask all interrupts and reset ports */
-	for (i = 0; i < NR_PORTS; i++) {
-		void __iomem *port_base = mmio_base + i * PORT_SIZE;
+	/* mask all पूर्णांकerrupts and reset ports */
+	क्रम (i = 0; i < NR_PORTS; i++) अणु
+		व्योम __iomem *port_base = mmio_base + i * PORT_SIZE;
 
-		writeb(0xff, port_base + PORT_IRQ_MASK);
+		ग_लिखोb(0xff, port_base + PORT_IRQ_MASK);
 		inic_reset_port(port_base);
-	}
+	पूर्ण
 
 	/* port IRQ is masked now, unmask global IRQ */
-	writew(hctl & ~HCTL_IRQOFF, mmio_base + HOST_CTL);
-	val = readw(mmio_base + HOST_IRQ_MASK);
+	ग_लिखोw(hctl & ~HCTL_IRQOFF, mmio_base + HOST_CTL);
+	val = पढ़ोw(mmio_base + HOST_IRQ_MASK);
 	val &= ~(HIRQ_PORT0 | HIRQ_PORT1);
-	writew(val, mmio_base + HOST_IRQ_MASK);
+	ग_लिखोw(val, mmio_base + HOST_IRQ_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int inic_pci_device_resume(struct pci_dev *pdev)
-{
-	struct ata_host *host = pci_get_drvdata(pdev);
-	struct inic_host_priv *hpriv = host->private_data;
-	int rc;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक inic_pci_device_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ata_host *host = pci_get_drvdata(pdev);
+	काष्ठा inic_host_priv *hpriv = host->निजी_data;
+	पूर्णांक rc;
 
-	rc = ata_pci_device_do_resume(pdev);
-	if (rc)
-		return rc;
+	rc = ata_pci_device_करो_resume(pdev);
+	अगर (rc)
+		वापस rc;
 
-	if (pdev->dev.power.power_state.event == PM_EVENT_SUSPEND) {
+	अगर (pdev->dev.घातer.घातer_state.event == PM_EVENT_SUSPEND) अणु
 		rc = init_controller(hpriv->mmio_base, hpriv->cached_hctl);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	ata_host_resume(host);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int inic_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	const struct ata_port_info *ppi[] = { &inic_port_info, NULL };
-	struct ata_host *host;
-	struct inic_host_priv *hpriv;
-	void __iomem * const *iomap;
-	int mmio_bar;
-	int i, rc;
+अटल पूर्णांक inic_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	स्थिर काष्ठा ata_port_info *ppi[] = अणु &inic_port_info, शून्य पूर्ण;
+	काष्ठा ata_host *host;
+	काष्ठा inic_host_priv *hpriv;
+	व्योम __iomem * स्थिर *iomap;
+	पूर्णांक mmio_bar;
+	पूर्णांक i, rc;
 
-	ata_print_version_once(&pdev->dev, DRV_VERSION);
+	ata_prपूर्णांक_version_once(&pdev->dev, DRV_VERSION);
 
 	dev_alert(&pdev->dev, "inic162x support is broken with common data corruption issues and will be disabled by default, contact linux-ide@vger.kernel.org if in production use\n");
 
 	/* alloc host */
 	host = ata_host_alloc_pinfo(&pdev->dev, ppi, NR_PORTS);
-	hpriv = devm_kzalloc(&pdev->dev, sizeof(*hpriv), GFP_KERNEL);
-	if (!host || !hpriv)
-		return -ENOMEM;
+	hpriv = devm_kzalloc(&pdev->dev, माप(*hpriv), GFP_KERNEL);
+	अगर (!host || !hpriv)
+		वापस -ENOMEM;
 
-	host->private_data = hpriv;
+	host->निजी_data = hpriv;
 
 	/* Acquire resources and fill host.  Note that PCI and cardbus
-	 * use different BARs.
+	 * use dअगरferent BARs.
 	 */
 	rc = pcim_enable_device(pdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (pci_resource_flags(pdev, MMIO_BAR_PCI) & IORESOURCE_MEM)
+	अगर (pci_resource_flags(pdev, MMIO_BAR_PCI) & IORESOURCE_MEM)
 		mmio_bar = MMIO_BAR_PCI;
-	else
+	अन्यथा
 		mmio_bar = MMIO_BAR_CARDBUS;
 
 	rc = pcim_iomap_regions(pdev, 1 << mmio_bar, DRV_NAME);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	host->iomap = iomap = pcim_iomap_table(pdev);
 	hpriv->mmio_base = iomap[mmio_bar];
-	hpriv->cached_hctl = readw(hpriv->mmio_base + HOST_CTL);
+	hpriv->cached_hctl = पढ़ोw(hpriv->mmio_base + HOST_CTL);
 
-	for (i = 0; i < NR_PORTS; i++) {
-		struct ata_port *ap = host->ports[i];
+	क्रम (i = 0; i < NR_PORTS; i++) अणु
+		काष्ठा ata_port *ap = host->ports[i];
 
 		ata_port_pbar_desc(ap, mmio_bar, -1, "mmio");
 		ata_port_pbar_desc(ap, mmio_bar, i * PORT_SIZE, "port");
-	}
+	पूर्ण
 
-	/* Set dma_mask.  This devices doesn't support 64bit addressing. */
+	/* Set dma_mask.  This devices करोesn't support 64bit addressing. */
 	rc = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "32-bit DMA enable failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = init_controller(hpriv->mmio_base, hpriv->cached_hctl);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "failed to initialize controller\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	pci_set_master(pdev);
-	return ata_host_activate(host, pdev->irq, inic_interrupt, IRQF_SHARED,
+	वापस ata_host_activate(host, pdev->irq, inic_पूर्णांकerrupt, IRQF_SHARED,
 				 &inic_sht);
-}
+पूर्ण
 
-static const struct pci_device_id inic_pci_tbl[] = {
-	{ PCI_VDEVICE(INIT, 0x1622), },
-	{ },
-};
+अटल स्थिर काष्ठा pci_device_id inic_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(INIT, 0x1622), पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct pci_driver inic_pci_driver = {
+अटल काष्ठा pci_driver inic_pci_driver = अणु
 	.name 		= DRV_NAME,
 	.id_table	= inic_pci_tbl,
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend	= ata_pci_device_suspend,
 	.resume		= inic_pci_device_resume,
-#endif
+#पूर्ण_अगर
 	.probe 		= inic_init_one,
-	.remove		= ata_pci_remove_one,
-};
+	.हटाओ		= ata_pci_हटाओ_one,
+पूर्ण;
 
 module_pci_driver(inic_pci_driver);
 

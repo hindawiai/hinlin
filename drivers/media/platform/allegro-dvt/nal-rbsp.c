@@ -1,310 +1,311 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2019-2020 Pengutronix, Michael Tretter <kernel@pengutronix.de>
  *
  * Helper functions to generate a raw byte sequence payload from values.
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/v4l2-controls.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/v4l2-controls.h>
 
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/log2.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/log2.h>
 
-#include "nal-rbsp.h"
+#समावेश "nal-rbsp.h"
 
-void rbsp_init(struct rbsp *rbsp, void *addr, size_t size,
-	       struct nal_rbsp_ops *ops)
-{
-	if (!rbsp)
-		return;
+व्योम rbsp_init(काष्ठा rbsp *rbsp, व्योम *addr, माप_प्रकार size,
+	       काष्ठा nal_rbsp_ops *ops)
+अणु
+	अगर (!rbsp)
+		वापस;
 
 	rbsp->data = addr;
 	rbsp->size = size;
 	rbsp->pos = 0;
 	rbsp->ops = ops;
 	rbsp->error = 0;
-}
+पूर्ण
 
-void rbsp_unsupported(struct rbsp *rbsp)
-{
+व्योम rbsp_unsupported(काष्ठा rbsp *rbsp)
+अणु
 	rbsp->error = -EINVAL;
-}
+पूर्ण
 
-static int rbsp_read_bits(struct rbsp *rbsp, int n, unsigned int *value);
-static int rbsp_write_bits(struct rbsp *rbsp, int n, unsigned int value);
+अटल पूर्णांक rbsp_पढ़ो_bits(काष्ठा rbsp *rbsp, पूर्णांक n, अचिन्हित पूर्णांक *value);
+अटल पूर्णांक rbsp_ग_लिखो_bits(काष्ठा rbsp *rbsp, पूर्णांक n, अचिन्हित पूर्णांक value);
 
 /*
- * When reading or writing, the emulation_prevention_three_byte is detected
- * only when the 2 one bits need to be inserted. Therefore, we are not
+ * When पढ़ोing or writing, the emulation_prevention_three_byte is detected
+ * only when the 2 one bits need to be inserted. Thereक्रमe, we are not
  * actually adding the 0x3 byte, but the 2 one bits and the six 0 bits of the
  * next byte.
  */
-#define EMULATION_PREVENTION_THREE_BYTE (0x3 << 6)
+#घोषणा EMULATION_PREVENTION_THREE_BYTE (0x3 << 6)
 
-static int add_emulation_prevention_three_byte(struct rbsp *rbsp)
-{
+अटल पूर्णांक add_emulation_prevention_three_byte(काष्ठा rbsp *rbsp)
+अणु
 	rbsp->num_consecutive_zeros = 0;
-	rbsp_write_bits(rbsp, 8, EMULATION_PREVENTION_THREE_BYTE);
+	rbsp_ग_लिखो_bits(rbsp, 8, EMULATION_PREVENTION_THREE_BYTE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int discard_emulation_prevention_three_byte(struct rbsp *rbsp)
-{
-	unsigned int tmp = 0;
+अटल पूर्णांक discard_emulation_prevention_three_byte(काष्ठा rbsp *rbsp)
+अणु
+	अचिन्हित पूर्णांक पंचांगp = 0;
 
 	rbsp->num_consecutive_zeros = 0;
-	rbsp_read_bits(rbsp, 8, &tmp);
-	if (tmp != EMULATION_PREVENTION_THREE_BYTE)
-		return -EINVAL;
+	rbsp_पढ़ो_bits(rbsp, 8, &पंचांगp);
+	अगर (पंचांगp != EMULATION_PREVENTION_THREE_BYTE)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int rbsp_read_bit(struct rbsp *rbsp)
-{
-	int shift;
-	int ofs;
-	int bit;
-	int err;
+अटल अंतरभूत पूर्णांक rbsp_पढ़ो_bit(काष्ठा rbsp *rbsp)
+अणु
+	पूर्णांक shअगरt;
+	पूर्णांक ofs;
+	पूर्णांक bit;
+	पूर्णांक err;
 
-	if (rbsp->num_consecutive_zeros == 22) {
+	अगर (rbsp->num_consecutive_zeros == 22) अणु
 		err = discard_emulation_prevention_three_byte(rbsp);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	shift = 7 - (rbsp->pos % 8);
+	shअगरt = 7 - (rbsp->pos % 8);
 	ofs = rbsp->pos / 8;
-	if (ofs >= rbsp->size)
-		return -EINVAL;
+	अगर (ofs >= rbsp->size)
+		वापस -EINVAL;
 
-	bit = (rbsp->data[ofs] >> shift) & 1;
+	bit = (rbsp->data[ofs] >> shअगरt) & 1;
 
 	rbsp->pos++;
 
-	if (bit == 1 ||
+	अगर (bit == 1 ||
 	    (rbsp->num_consecutive_zeros < 7 && (rbsp->pos % 8 == 0)))
 		rbsp->num_consecutive_zeros = 0;
-	else
+	अन्यथा
 		rbsp->num_consecutive_zeros++;
 
-	return bit;
-}
+	वापस bit;
+पूर्ण
 
-static inline int rbsp_write_bit(struct rbsp *rbsp, bool value)
-{
-	int shift;
-	int ofs;
+अटल अंतरभूत पूर्णांक rbsp_ग_लिखो_bit(काष्ठा rbsp *rbsp, bool value)
+अणु
+	पूर्णांक shअगरt;
+	पूर्णांक ofs;
 
-	if (rbsp->num_consecutive_zeros == 22)
+	अगर (rbsp->num_consecutive_zeros == 22)
 		add_emulation_prevention_three_byte(rbsp);
 
-	shift = 7 - (rbsp->pos % 8);
+	shअगरt = 7 - (rbsp->pos % 8);
 	ofs = rbsp->pos / 8;
-	if (ofs >= rbsp->size)
-		return -EINVAL;
+	अगर (ofs >= rbsp->size)
+		वापस -EINVAL;
 
-	rbsp->data[ofs] &= ~(1 << shift);
-	rbsp->data[ofs] |= value << shift;
+	rbsp->data[ofs] &= ~(1 << shअगरt);
+	rbsp->data[ofs] |= value << shअगरt;
 
 	rbsp->pos++;
 
-	if (value ||
-	    (rbsp->num_consecutive_zeros < 7 && (rbsp->pos % 8 == 0))) {
+	अगर (value ||
+	    (rbsp->num_consecutive_zeros < 7 && (rbsp->pos % 8 == 0))) अणु
 		rbsp->num_consecutive_zeros = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		rbsp->num_consecutive_zeros++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int rbsp_read_bits(struct rbsp *rbsp, int n, unsigned int *value)
-{
-	int i;
-	int bit;
-	unsigned int tmp = 0;
+अटल अंतरभूत पूर्णांक rbsp_पढ़ो_bits(काष्ठा rbsp *rbsp, पूर्णांक n, अचिन्हित पूर्णांक *value)
+अणु
+	पूर्णांक i;
+	पूर्णांक bit;
+	अचिन्हित पूर्णांक पंचांगp = 0;
 
-	if (n > 8 * sizeof(*value))
-		return -EINVAL;
+	अगर (n > 8 * माप(*value))
+		वापस -EINVAL;
 
-	for (i = n; i > 0; i--) {
-		bit = rbsp_read_bit(rbsp);
-		if (bit < 0)
-			return bit;
-		tmp |= bit << (i - 1);
-	}
+	क्रम (i = n; i > 0; i--) अणु
+		bit = rbsp_पढ़ो_bit(rbsp);
+		अगर (bit < 0)
+			वापस bit;
+		पंचांगp |= bit << (i - 1);
+	पूर्ण
 
-	if (value)
-		*value = tmp;
+	अगर (value)
+		*value = पंचांगp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rbsp_write_bits(struct rbsp *rbsp, int n, unsigned int value)
-{
-	int ret;
+अटल पूर्णांक rbsp_ग_लिखो_bits(काष्ठा rbsp *rbsp, पूर्णांक n, अचिन्हित पूर्णांक value)
+अणु
+	पूर्णांक ret;
 
-	if (n > 8 * sizeof(value))
-		return -EINVAL;
+	अगर (n > 8 * माप(value))
+		वापस -EINVAL;
 
-	while (n--) {
-		ret = rbsp_write_bit(rbsp, (value >> n) & 1);
-		if (ret)
-			return ret;
-	}
+	जबतक (n--) अणु
+		ret = rbsp_ग_लिखो_bit(rbsp, (value >> n) & 1);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rbsp_read_uev(struct rbsp *rbsp, unsigned int *value)
-{
-	int leading_zero_bits = 0;
-	unsigned int tmp = 0;
-	int ret;
+अटल पूर्णांक rbsp_पढ़ो_uev(काष्ठा rbsp *rbsp, अचिन्हित पूर्णांक *value)
+अणु
+	पूर्णांक leading_zero_bits = 0;
+	अचिन्हित पूर्णांक पंचांगp = 0;
+	पूर्णांक ret;
 
-	while ((ret = rbsp_read_bit(rbsp)) == 0)
+	जबतक ((ret = rbsp_पढ़ो_bit(rbsp)) == 0)
 		leading_zero_bits++;
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (leading_zero_bits > 0) {
-		ret = rbsp_read_bits(rbsp, leading_zero_bits, &tmp);
-		if (ret)
-			return ret;
-	}
+	अगर (leading_zero_bits > 0) अणु
+		ret = rbsp_पढ़ो_bits(rbsp, leading_zero_bits, &पंचांगp);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (value)
-		*value = (1 << leading_zero_bits) - 1 + tmp;
+	अगर (value)
+		*value = (1 << leading_zero_bits) - 1 + पंचांगp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rbsp_write_uev(struct rbsp *rbsp, unsigned int *value)
-{
-	int ret;
-	int leading_zero_bits;
+अटल पूर्णांक rbsp_ग_लिखो_uev(काष्ठा rbsp *rbsp, अचिन्हित पूर्णांक *value)
+अणु
+	पूर्णांक ret;
+	पूर्णांक leading_zero_bits;
 
-	if (!value)
-		return -EINVAL;
+	अगर (!value)
+		वापस -EINVAL;
 
 	leading_zero_bits = ilog2(*value + 1);
 
-	ret = rbsp_write_bits(rbsp, leading_zero_bits, 0);
-	if (ret)
-		return ret;
+	ret = rbsp_ग_लिखो_bits(rbsp, leading_zero_bits, 0);
+	अगर (ret)
+		वापस ret;
 
-	return rbsp_write_bits(rbsp, leading_zero_bits + 1, *value + 1);
-}
+	वापस rbsp_ग_लिखो_bits(rbsp, leading_zero_bits + 1, *value + 1);
+पूर्ण
 
-static int rbsp_read_sev(struct rbsp *rbsp, int *value)
-{
-	int ret;
-	unsigned int tmp;
+अटल पूर्णांक rbsp_पढ़ो_sev(काष्ठा rbsp *rbsp, पूर्णांक *value)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक पंचांगp;
 
-	ret = rbsp_read_uev(rbsp, &tmp);
-	if (ret)
-		return ret;
+	ret = rbsp_पढ़ो_uev(rbsp, &पंचांगp);
+	अगर (ret)
+		वापस ret;
 
-	if (value) {
-		if (tmp & 1)
-			*value = (tmp + 1) / 2;
-		else
-			*value = -(tmp / 2);
-	}
+	अगर (value) अणु
+		अगर (पंचांगp & 1)
+			*value = (पंचांगp + 1) / 2;
+		अन्यथा
+			*value = -(पंचांगp / 2);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rbsp_write_sev(struct rbsp *rbsp, int *value)
-{
-	unsigned int tmp;
+अटल पूर्णांक rbsp_ग_लिखो_sev(काष्ठा rbsp *rbsp, पूर्णांक *value)
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
 
-	if (!value)
-		return -EINVAL;
+	अगर (!value)
+		वापस -EINVAL;
 
-	if (*value > 0)
-		tmp = (2 * (*value)) | 1;
-	else
-		tmp = -2 * (*value);
+	अगर (*value > 0)
+		पंचांगp = (2 * (*value)) | 1;
+	अन्यथा
+		पंचांगp = -2 * (*value);
 
-	return rbsp_write_uev(rbsp, &tmp);
-}
+	वापस rbsp_ग_लिखो_uev(rbsp, &पंचांगp);
+पूर्ण
 
-static int __rbsp_write_bit(struct rbsp *rbsp, int *value)
-{
-	return rbsp_write_bit(rbsp, *value);
-}
+अटल पूर्णांक __rbsp_ग_लिखो_bit(काष्ठा rbsp *rbsp, पूर्णांक *value)
+अणु
+	वापस rbsp_ग_लिखो_bit(rbsp, *value);
+पूर्ण
 
-static int __rbsp_write_bits(struct rbsp *rbsp, int n, unsigned int *value)
-{
-	return rbsp_write_bits(rbsp, n, *value);
-}
+अटल पूर्णांक __rbsp_ग_लिखो_bits(काष्ठा rbsp *rbsp, पूर्णांक n, अचिन्हित पूर्णांक *value)
+अणु
+	वापस rbsp_ग_लिखो_bits(rbsp, n, *value);
+पूर्ण
 
-struct nal_rbsp_ops write = {
-	.rbsp_bit = __rbsp_write_bit,
-	.rbsp_bits = __rbsp_write_bits,
-	.rbsp_uev = rbsp_write_uev,
-	.rbsp_sev = rbsp_write_sev,
-};
+काष्ठा nal_rbsp_ops ग_लिखो = अणु
+	.rbsp_bit = __rbsp_ग_लिखो_bit,
+	.rbsp_bits = __rbsp_ग_लिखो_bits,
+	.rbsp_uev = rbsp_ग_लिखो_uev,
+	.rbsp_sev = rbsp_ग_लिखो_sev,
+पूर्ण;
 
-static int __rbsp_read_bit(struct rbsp *rbsp, int *value)
-{
-	int tmp = rbsp_read_bit(rbsp);
+अटल पूर्णांक __rbsp_पढ़ो_bit(काष्ठा rbsp *rbsp, पूर्णांक *value)
+अणु
+	पूर्णांक पंचांगp = rbsp_पढ़ो_bit(rbsp);
 
-	if (tmp < 0)
-		return tmp;
-	*value = tmp;
+	अगर (पंचांगp < 0)
+		वापस पंचांगp;
+	*value = पंचांगp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct nal_rbsp_ops read = {
-	.rbsp_bit = __rbsp_read_bit,
-	.rbsp_bits = rbsp_read_bits,
-	.rbsp_uev = rbsp_read_uev,
-	.rbsp_sev = rbsp_read_sev,
-};
+काष्ठा nal_rbsp_ops पढ़ो = अणु
+	.rbsp_bit = __rbsp_पढ़ो_bit,
+	.rbsp_bits = rbsp_पढ़ो_bits,
+	.rbsp_uev = rbsp_पढ़ो_uev,
+	.rbsp_sev = rbsp_पढ़ो_sev,
+पूर्ण;
 
-void rbsp_bit(struct rbsp *rbsp, int *value)
-{
-	if (rbsp->error)
-		return;
+व्योम rbsp_bit(काष्ठा rbsp *rbsp, पूर्णांक *value)
+अणु
+	अगर (rbsp->error)
+		वापस;
 	rbsp->error = rbsp->ops->rbsp_bit(rbsp, value);
-}
+पूर्ण
 
-void rbsp_bits(struct rbsp *rbsp, int n, int *value)
-{
-	if (rbsp->error)
-		return;
+व्योम rbsp_bits(काष्ठा rbsp *rbsp, पूर्णांक n, पूर्णांक *value)
+अणु
+	अगर (rbsp->error)
+		वापस;
 	rbsp->error = rbsp->ops->rbsp_bits(rbsp, n, value);
-}
+पूर्ण
 
-void rbsp_uev(struct rbsp *rbsp, unsigned int *value)
-{
-	if (rbsp->error)
-		return;
+व्योम rbsp_uev(काष्ठा rbsp *rbsp, अचिन्हित पूर्णांक *value)
+अणु
+	अगर (rbsp->error)
+		वापस;
 	rbsp->error = rbsp->ops->rbsp_uev(rbsp, value);
-}
+पूर्ण
 
-void rbsp_sev(struct rbsp *rbsp, int *value)
-{
-	if (rbsp->error)
-		return;
+व्योम rbsp_sev(काष्ठा rbsp *rbsp, पूर्णांक *value)
+अणु
+	अगर (rbsp->error)
+		वापस;
 	rbsp->error = rbsp->ops->rbsp_sev(rbsp, value);
-}
+पूर्ण
 
-void rbsp_trailing_bits(struct rbsp *rbsp)
-{
-	unsigned int rbsp_stop_one_bit = 1;
-	unsigned int rbsp_alignment_zero_bit = 0;
+व्योम rbsp_trailing_bits(काष्ठा rbsp *rbsp)
+अणु
+	अचिन्हित पूर्णांक rbsp_stop_one_bit = 1;
+	अचिन्हित पूर्णांक rbsp_alignment_zero_bit = 0;
 
 	rbsp_bit(rbsp, &rbsp_stop_one_bit);
 	rbsp_bits(rbsp, round_up(rbsp->pos, 8) - rbsp->pos,
 		  &rbsp_alignment_zero_bit);
-}
+पूर्ण

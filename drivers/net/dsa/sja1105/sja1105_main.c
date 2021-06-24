@@ -1,90 +1,91 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2018, Sensor-Technik Wiedemann GmbH
  * Copyright (c) 2018-2019, Vladimir Oltean <olteanv@gmail.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/printk.h>
-#include <linux/spi/spi.h>
-#include <linux/errno.h>
-#include <linux/gpio/consumer.h>
-#include <linux/phylink.h>
-#include <linux/of.h>
-#include <linux/of_net.h>
-#include <linux/of_mdio.h>
-#include <linux/of_device.h>
-#include <linux/netdev_features.h>
-#include <linux/netdevice.h>
-#include <linux/if_bridge.h>
-#include <linux/if_ether.h>
-#include <linux/dsa/8021q.h>
-#include "sja1105.h"
-#include "sja1105_sgmii.h"
-#include "sja1105_tas.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/phylink.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_device.h>
+#समावेश <linux/netdev_features.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/dsa/8021q.h>
+#समावेश "sja1105.h"
+#समावेश "sja1105_sgmii.h"
+#समावेश "sja1105_tas.h"
 
-#define SJA1105_UNKNOWN_MULTICAST	0x010000000000ull
-#define SJA1105_DEFAULT_VLAN		(VLAN_N_VID - 1)
+#घोषणा SJA1105_UNKNOWN_MULTICAST	0x010000000000ull
+#घोषणा SJA1105_DEFAULT_VLAN		(VLAN_N_VID - 1)
 
-static const struct dsa_switch_ops sja1105_switch_ops;
+अटल स्थिर काष्ठा dsa_चयन_ops sja1105_चयन_ops;
 
-static void sja1105_hw_reset(struct gpio_desc *gpio, unsigned int pulse_len,
-			     unsigned int startup_delay)
-{
+अटल व्योम sja1105_hw_reset(काष्ठा gpio_desc *gpio, अचिन्हित पूर्णांक pulse_len,
+			     अचिन्हित पूर्णांक startup_delay)
+अणु
 	gpiod_set_value_cansleep(gpio, 1);
-	/* Wait for minimum reset pulse length */
+	/* Wait क्रम minimum reset pulse length */
 	msleep(pulse_len);
 	gpiod_set_value_cansleep(gpio, 0);
-	/* Wait until chip is ready after reset */
+	/* Wait until chip is पढ़ोy after reset */
 	msleep(startup_delay);
-}
+पूर्ण
 
-static void
-sja1105_port_allow_traffic(struct sja1105_l2_forwarding_entry *l2_fwd,
-			   int from, int to, bool allow)
-{
-	if (allow)
+अटल व्योम
+sja1105_port_allow_traffic(काष्ठा sja1105_l2_क्रमwarding_entry *l2_fwd,
+			   पूर्णांक from, पूर्णांक to, bool allow)
+अणु
+	अगर (allow)
 		l2_fwd[from].reach_port |= BIT(to);
-	else
+	अन्यथा
 		l2_fwd[from].reach_port &= ~BIT(to);
-}
+पूर्ण
 
-static bool sja1105_can_forward(struct sja1105_l2_forwarding_entry *l2_fwd,
-				int from, int to)
-{
-	return !!(l2_fwd[from].reach_port & BIT(to));
-}
+अटल bool sja1105_can_क्रमward(काष्ठा sja1105_l2_क्रमwarding_entry *l2_fwd,
+				पूर्णांक from, पूर्णांक to)
+अणु
+	वापस !!(l2_fwd[from].reach_port & BIT(to));
+पूर्ण
 
 /* Structure used to temporarily transport device tree
- * settings into sja1105_setup
+ * settings पूर्णांकo sja1105_setup
  */
-struct sja1105_dt_port {
-	phy_interface_t phy_mode;
+काष्ठा sja1105_dt_port अणु
+	phy_पूर्णांकerface_t phy_mode;
 	sja1105_mii_role_t role;
-};
+पूर्ण;
 
-static int sja1105_init_mac_settings(struct sja1105_private *priv)
-{
-	struct sja1105_mac_config_entry default_mac = {
+अटल पूर्णांक sja1105_init_mac_settings(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_mac_config_entry शेष_mac = अणु
 		/* Enable all 8 priority queues on egress.
 		 * Every queue i holds top[i] - base[i] frames.
 		 * Sum of top[i] - base[i] is 511 (max hardware limit).
 		 */
-		.top  = {0x3F, 0x7F, 0xBF, 0xFF, 0x13F, 0x17F, 0x1BF, 0x1FF},
-		.base = {0x0, 0x40, 0x80, 0xC0, 0x100, 0x140, 0x180, 0x1C0},
-		.enabled = {true, true, true, true, true, true, true, true},
+		.top  = अणु0x3F, 0x7F, 0xBF, 0xFF, 0x13F, 0x17F, 0x1BF, 0x1FFपूर्ण,
+		.base = अणु0x0, 0x40, 0x80, 0xC0, 0x100, 0x140, 0x180, 0x1C0पूर्ण,
+		.enabled = अणुtrue, true, true, true, true, true, true, trueपूर्ण,
 		/* Keep standard IFG of 12 bytes on egress. */
-		.ifg = 0,
-		/* Always put the MAC speed in automatic mode, where it can be
-		 * adjusted at runtime by PHYLINK.
+		.अगरg = 0,
+		/* Always put the MAC speed in स्वतःmatic mode, where it can be
+		 * adjusted at runसमय by PHYLINK.
 		 */
 		.speed = SJA1105_SPEED_AUTO,
-		/* No static correction for 1-step 1588 events */
+		/* No अटल correction क्रम 1-step 1588 events */
 		.tp_delin = 0,
 		.tp_delout = 0,
-		/* Disable aging for critical TTEthernet traffic */
+		/* Disable aging क्रम critical TTEthernet traffic */
 		.maxage = 0xFF,
 		/* Internal VLAN (pvid) to apply to untagged ingress */
 		.vlanprio = 0,
@@ -93,160 +94,160 @@ static int sja1105_init_mac_settings(struct sja1105_private *priv)
 		.egr_mirr = false,
 		/* Don't drop traffic with other EtherType than ETH_P_IP */
 		.drpnona664 = false,
-		/* Don't drop double-tagged traffic */
+		/* Don't drop द्विगुन-tagged traffic */
 		.drpdtag = false,
 		/* Don't drop untagged traffic */
 		.drpuntag = false,
 		/* Don't retag 802.1p (VID 0) traffic with the pvid */
 		.retag = false,
-		/* Disable learning and I/O on user ports by default -
+		/* Disable learning and I/O on user ports by शेष -
 		 * STP will enable it.
 		 */
 		.dyn_learn = false,
 		.egress = false,
 		.ingress = false,
-	};
-	struct sja1105_mac_config_entry *mac;
-	struct sja1105_table *table;
-	int i;
+	पूर्ण;
+	काष्ठा sja1105_mac_config_entry *mac;
+	काष्ठा sja1105_table *table;
+	पूर्णांक i;
 
-	table = &priv->static_config.tables[BLK_IDX_MAC_CONFIG];
+	table = &priv->अटल_config.tables[BLK_IDX_MAC_CONFIG];
 
 	/* Discard previous MAC Configuration Table */
-	if (table->entry_count) {
-		kfree(table->entries);
+	अगर (table->entry_count) अणु
+		kमुक्त(table->entries);
 		table->entry_count = 0;
-	}
+	पूर्ण
 
-	table->entries = kcalloc(SJA1105_NUM_PORTS,
+	table->entries = kसुस्मृति(SJA1105_NUM_PORTS,
 				 table->ops->unpacked_entry_size, GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = SJA1105_NUM_PORTS;
 
 	mac = table->entries;
 
-	for (i = 0; i < SJA1105_NUM_PORTS; i++) {
-		mac[i] = default_mac;
-		if (i == dsa_upstream_port(priv->ds, i)) {
-			/* STP doesn't get called for CPU port, so we need to
-			 * set the I/O parameters statically.
+	क्रम (i = 0; i < SJA1105_NUM_PORTS; i++) अणु
+		mac[i] = शेष_mac;
+		अगर (i == dsa_upstream_port(priv->ds, i)) अणु
+			/* STP करोesn't get called क्रम CPU port, so we need to
+			 * set the I/O parameters अटलally.
 			 */
 			mac[i].dyn_learn = true;
 			mac[i].ingress = true;
 			mac[i].egress = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool sja1105_supports_sgmii(struct sja1105_private *priv, int port)
-{
-	if (priv->info->part_no != SJA1105R_PART_NO &&
+अटल bool sja1105_supports_sgmii(काष्ठा sja1105_निजी *priv, पूर्णांक port)
+अणु
+	अगर (priv->info->part_no != SJA1105R_PART_NO &&
 	    priv->info->part_no != SJA1105S_PART_NO)
-		return false;
+		वापस false;
 
-	if (port != SJA1105_SGMII_PORT)
-		return false;
+	अगर (port != SJA1105_SGMII_PORT)
+		वापस false;
 
-	if (dsa_is_unused_port(priv->ds, port))
-		return false;
+	अगर (dsa_is_unused_port(priv->ds, port))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int sja1105_init_mii_settings(struct sja1105_private *priv,
-				     struct sja1105_dt_port *ports)
-{
-	struct device *dev = &priv->spidev->dev;
-	struct sja1105_xmii_params_entry *mii;
-	struct sja1105_table *table;
-	int i;
+अटल पूर्णांक sja1105_init_mii_settings(काष्ठा sja1105_निजी *priv,
+				     काष्ठा sja1105_dt_port *ports)
+अणु
+	काष्ठा device *dev = &priv->spidev->dev;
+	काष्ठा sja1105_xmii_params_entry *mii;
+	काष्ठा sja1105_table *table;
+	पूर्णांक i;
 
-	table = &priv->static_config.tables[BLK_IDX_XMII_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_XMII_PARAMS];
 
 	/* Discard previous xMII Mode Parameters Table */
-	if (table->entry_count) {
-		kfree(table->entries);
+	अगर (table->entry_count) अणु
+		kमुक्त(table->entries);
 		table->entry_count = 0;
-	}
+	पूर्ण
 
-	table->entries = kcalloc(SJA1105_MAX_XMII_PARAMS_COUNT,
+	table->entries = kसुस्मृति(SJA1105_MAX_XMII_PARAMS_COUNT,
 				 table->ops->unpacked_entry_size, GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	/* Override table based on PHYLINK DT bindings */
 	table->entry_count = SJA1105_MAX_XMII_PARAMS_COUNT;
 
 	mii = table->entries;
 
-	for (i = 0; i < SJA1105_NUM_PORTS; i++) {
-		if (dsa_is_unused_port(priv->ds, i))
-			continue;
+	क्रम (i = 0; i < SJA1105_NUM_PORTS; i++) अणु
+		अगर (dsa_is_unused_port(priv->ds, i))
+			जारी;
 
-		switch (ports[i].phy_mode) {
-		case PHY_INTERFACE_MODE_MII:
+		चयन (ports[i].phy_mode) अणु
+		हाल PHY_INTERFACE_MODE_MII:
 			mii->xmii_mode[i] = XMII_MODE_MII;
-			break;
-		case PHY_INTERFACE_MODE_RMII:
+			अवरोध;
+		हाल PHY_INTERFACE_MODE_RMII:
 			mii->xmii_mode[i] = XMII_MODE_RMII;
-			break;
-		case PHY_INTERFACE_MODE_RGMII:
-		case PHY_INTERFACE_MODE_RGMII_ID:
-		case PHY_INTERFACE_MODE_RGMII_RXID:
-		case PHY_INTERFACE_MODE_RGMII_TXID:
+			अवरोध;
+		हाल PHY_INTERFACE_MODE_RGMII:
+		हाल PHY_INTERFACE_MODE_RGMII_ID:
+		हाल PHY_INTERFACE_MODE_RGMII_RXID:
+		हाल PHY_INTERFACE_MODE_RGMII_TXID:
 			mii->xmii_mode[i] = XMII_MODE_RGMII;
-			break;
-		case PHY_INTERFACE_MODE_SGMII:
-			if (!sja1105_supports_sgmii(priv, i))
-				return -EINVAL;
+			अवरोध;
+		हाल PHY_INTERFACE_MODE_SGMII:
+			अगर (!sja1105_supports_sgmii(priv, i))
+				वापस -EINVAL;
 			mii->xmii_mode[i] = XMII_MODE_SGMII;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(dev, "Unsupported PHY mode %s!\n",
 				phy_modes(ports[i].phy_mode));
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* Even though the SerDes port is able to drive SGMII autoneg
+		/* Even though the SerDes port is able to drive SGMII स्वतःneg
 		 * like a PHY would, from the perspective of the XMII tables,
 		 * the SGMII port should always be put in MAC mode.
 		 */
-		if (ports[i].phy_mode == PHY_INTERFACE_MODE_SGMII)
+		अगर (ports[i].phy_mode == PHY_INTERFACE_MODE_SGMII)
 			mii->phy_mac[i] = XMII_MAC;
-		else
+		अन्यथा
 			mii->phy_mac[i] = ports[i].role;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int sja1105_init_static_fdb(struct sja1105_private *priv)
-{
-	struct sja1105_l2_lookup_entry *l2_lookup;
-	struct sja1105_table *table;
-	int port;
+अटल पूर्णांक sja1105_init_अटल_fdb(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_l2_lookup_entry *l2_lookup;
+	काष्ठा sja1105_table *table;
+	पूर्णांक port;
 
-	table = &priv->static_config.tables[BLK_IDX_L2_LOOKUP];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_LOOKUP];
 
 	/* We only populate the FDB table through dynamic L2 Address Lookup
-	 * entries, except for a special entry at the end which is a catch-all
-	 * for unknown multicast and will be used to control flooding domain.
+	 * entries, except क्रम a special entry at the end which is a catch-all
+	 * क्रम unknown multicast and will be used to control flooding करोमुख्य.
 	 */
-	if (table->entry_count) {
-		kfree(table->entries);
+	अगर (table->entry_count) अणु
+		kमुक्त(table->entries);
 		table->entry_count = 0;
-	}
+	पूर्ण
 
-	if (!priv->info->can_limit_mcast_flood)
-		return 0;
+	अगर (!priv->info->can_limit_mcast_flood)
+		वापस 0;
 
-	table->entries = kcalloc(1, table->ops->unpacked_entry_size,
+	table->entries = kसुस्मृति(1, table->ops->unpacked_entry_size,
 				 GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = 1;
 	l2_lookup = table->entries;
@@ -257,27 +258,27 @@ static int sja1105_init_static_fdb(struct sja1105_private *priv)
 	l2_lookup[0].lockeds = true;
 	l2_lookup[0].index = SJA1105_MAX_L2_LOOKUP_COUNT - 1;
 
-	/* Flood multicast to every port by default */
-	for (port = 0; port < priv->ds->num_ports; port++)
-		if (!dsa_is_unused_port(priv->ds, port))
+	/* Flood multicast to every port by शेष */
+	क्रम (port = 0; port < priv->ds->num_ports; port++)
+		अगर (!dsa_is_unused_port(priv->ds, port))
 			l2_lookup[0].destports |= BIT(port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_init_l2_lookup_params(struct sja1105_private *priv)
-{
-	struct sja1105_table *table;
+अटल पूर्णांक sja1105_init_l2_lookup_params(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_table *table;
 	u64 max_fdb_entries = SJA1105_MAX_L2_LOOKUP_COUNT / SJA1105_NUM_PORTS;
-	struct sja1105_l2_lookup_params_entry default_l2_lookup_params = {
-		/* Learned FDB entries are forgotten after 300 seconds */
+	काष्ठा sja1105_l2_lookup_params_entry शेष_l2_lookup_params = अणु
+		/* Learned FDB entries are क्रमgotten after 300 seconds */
 		.maxage = SJA1105_AGEING_TIME_MS(300000),
-		/* All entries within a FDB bin are available for learning */
+		/* All entries within a FDB bin are available क्रम learning */
 		.dyn_tbsz = SJA1105ET_FDB_BIN_SIZE,
 		/* And the P/Q/R/S equivalent setting: */
 		.start_dynspc = 0,
-		.maxaddrp = {max_fdb_entries, max_fdb_entries, max_fdb_entries,
-			     max_fdb_entries, max_fdb_entries, },
+		.maxaddrp = अणुmax_fdb_entries, max_fdb_entries, max_fdb_entries,
+			     max_fdb_entries, max_fdb_entries, पूर्ण,
 		/* 2^8 + 2^5 + 2^3 + 2^2 + 2^1 + 1 in Koopman notation */
 		.poly = 0x97,
 		/* This selects between Independent VLAN Learning (IVL) and
@@ -285,132 +286,132 @@ static int sja1105_init_l2_lookup_params(struct sja1105_private *priv)
 		 */
 		.shared_learn = true,
 		/* Don't discard management traffic based on ENFPORT -
-		 * we don't perform SMAC port enforcement anyway, so
-		 * what we are setting here doesn't matter.
+		 * we करोn't perक्रमm SMAC port enक्रमcement anyway, so
+		 * what we are setting here करोesn't matter.
 		 */
 		.no_enf_hostprt = false,
-		/* Don't learn SMAC for mac_fltres1 and mac_fltres0.
+		/* Don't learn SMAC क्रम mac_fltres1 and mac_fltres0.
 		 * Maybe correlate with no_linklocal_learn from bridge driver?
 		 */
 		.no_mgmt_learn = true,
 		/* P/Q/R/S only */
-		.use_static = true,
-		/* Dynamically learned FDB entries can overwrite other (older)
+		.use_अटल = true,
+		/* Dynamically learned FDB entries can overग_लिखो other (older)
 		 * dynamic FDB entries
 		 */
 		.owr_dyn = true,
 		.drpnolearn = true,
-	};
+	पूर्ण;
 
-	table = &priv->static_config.tables[BLK_IDX_L2_LOOKUP_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_LOOKUP_PARAMS];
 
-	if (table->entry_count) {
-		kfree(table->entries);
+	अगर (table->entry_count) अणु
+		kमुक्त(table->entries);
 		table->entry_count = 0;
-	}
+	पूर्ण
 
-	table->entries = kcalloc(SJA1105_MAX_L2_LOOKUP_PARAMS_COUNT,
+	table->entries = kसुस्मृति(SJA1105_MAX_L2_LOOKUP_PARAMS_COUNT,
 				 table->ops->unpacked_entry_size, GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = SJA1105_MAX_L2_LOOKUP_PARAMS_COUNT;
 
 	/* This table only has a single entry */
-	((struct sja1105_l2_lookup_params_entry *)table->entries)[0] =
-				default_l2_lookup_params;
+	((काष्ठा sja1105_l2_lookup_params_entry *)table->entries)[0] =
+				शेष_l2_lookup_params;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Set up a default VLAN for untagged traffic injected from the CPU
+/* Set up a शेष VLAN क्रम untagged traffic injected from the CPU
  * using management routes (e.g. STP, PTP) as opposed to tag_8021q.
  * All DT-defined ports are members of this VLAN, and there are no
- * restrictions on forwarding (since the CPU selects the destination).
+ * restrictions on क्रमwarding (since the CPU selects the destination).
  * Frames from this VLAN will always be transmitted as untagged, and
  * neither the bridge nor the 8021q module cannot create this VLAN ID.
  */
-static int sja1105_init_static_vlan(struct sja1105_private *priv)
-{
-	struct sja1105_table *table;
-	struct sja1105_vlan_lookup_entry pvid = {
+अटल पूर्णांक sja1105_init_अटल_vlan(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_table *table;
+	काष्ठा sja1105_vlan_lookup_entry pvid = अणु
 		.ving_mirr = 0,
 		.vegr_mirr = 0,
 		.vmemb_port = 0,
 		.vlan_bc = 0,
 		.tag_port = 0,
 		.vlanid = SJA1105_DEFAULT_VLAN,
-	};
-	struct dsa_switch *ds = priv->ds;
-	int port;
+	पूर्ण;
+	काष्ठा dsa_चयन *ds = priv->ds;
+	पूर्णांक port;
 
-	table = &priv->static_config.tables[BLK_IDX_VLAN_LOOKUP];
+	table = &priv->अटल_config.tables[BLK_IDX_VLAN_LOOKUP];
 
-	if (table->entry_count) {
-		kfree(table->entries);
+	अगर (table->entry_count) अणु
+		kमुक्त(table->entries);
 		table->entry_count = 0;
-	}
+	पूर्ण
 
 	table->entries = kzalloc(table->ops->unpacked_entry_size,
 				 GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = 1;
 
-	for (port = 0; port < ds->num_ports; port++) {
-		struct sja1105_bridge_vlan *v;
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		काष्ठा sja1105_bridge_vlan *v;
 
-		if (dsa_is_unused_port(ds, port))
-			continue;
+		अगर (dsa_is_unused_port(ds, port))
+			जारी;
 
 		pvid.vmemb_port |= BIT(port);
 		pvid.vlan_bc |= BIT(port);
 		pvid.tag_port &= ~BIT(port);
 
-		v = kzalloc(sizeof(*v), GFP_KERNEL);
-		if (!v)
-			return -ENOMEM;
+		v = kzalloc(माप(*v), GFP_KERNEL);
+		अगर (!v)
+			वापस -ENOMEM;
 
 		v->port = port;
 		v->vid = SJA1105_DEFAULT_VLAN;
 		v->untagged = true;
-		if (dsa_is_cpu_port(ds, port))
+		अगर (dsa_is_cpu_port(ds, port))
 			v->pvid = true;
 		list_add(&v->list, &priv->dsa_8021q_vlans);
-	}
+	पूर्ण
 
-	((struct sja1105_vlan_lookup_entry *)table->entries)[0] = pvid;
-	return 0;
-}
+	((काष्ठा sja1105_vlan_lookup_entry *)table->entries)[0] = pvid;
+	वापस 0;
+पूर्ण
 
-static int sja1105_init_l2_forwarding(struct sja1105_private *priv)
-{
-	struct sja1105_l2_forwarding_entry *l2fwd;
-	struct sja1105_table *table;
-	int i, j;
+अटल पूर्णांक sja1105_init_l2_क्रमwarding(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_l2_क्रमwarding_entry *l2fwd;
+	काष्ठा sja1105_table *table;
+	पूर्णांक i, j;
 
-	table = &priv->static_config.tables[BLK_IDX_L2_FORWARDING];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_FORWARDING];
 
-	if (table->entry_count) {
-		kfree(table->entries);
+	अगर (table->entry_count) अणु
+		kमुक्त(table->entries);
 		table->entry_count = 0;
-	}
+	पूर्ण
 
-	table->entries = kcalloc(SJA1105_MAX_L2_FORWARDING_COUNT,
+	table->entries = kसुस्मृति(SJA1105_MAX_L2_FORWARDING_COUNT,
 				 table->ops->unpacked_entry_size, GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = SJA1105_MAX_L2_FORWARDING_COUNT;
 
 	l2fwd = table->entries;
 
-	/* First 5 entries define the forwarding rules */
-	for (i = 0; i < SJA1105_NUM_PORTS; i++) {
-		unsigned int upstream = dsa_upstream_port(priv->ds, i);
+	/* First 5 entries define the क्रमwarding rules */
+	क्रम (i = 0; i < SJA1105_NUM_PORTS; i++) अणु
+		अचिन्हित पूर्णांक upstream = dsa_upstream_port(priv->ds, i);
 
-		for (j = 0; j < SJA1105_NUM_TC; j++)
+		क्रम (j = 0; j < SJA1105_NUM_TC; j++)
 			l2fwd[i].vlan_pmap[j] = j;
 
 		/* All ports start up with egress flooding enabled,
@@ -419,101 +420,101 @@ static int sja1105_init_l2_forwarding(struct sja1105_private *priv)
 		priv->ucast_egress_floods |= BIT(i);
 		priv->bcast_egress_floods |= BIT(i);
 
-		if (i == upstream)
-			continue;
+		अगर (i == upstream)
+			जारी;
 
 		sja1105_port_allow_traffic(l2fwd, i, upstream, true);
 		sja1105_port_allow_traffic(l2fwd, upstream, i, true);
 
-		l2fwd[i].bc_domain = BIT(upstream);
-		l2fwd[i].fl_domain = BIT(upstream);
+		l2fwd[i].bc_करोमुख्य = BIT(upstream);
+		l2fwd[i].fl_करोमुख्य = BIT(upstream);
 
-		l2fwd[upstream].bc_domain |= BIT(i);
-		l2fwd[upstream].fl_domain |= BIT(i);
-	}
+		l2fwd[upstream].bc_करोमुख्य |= BIT(i);
+		l2fwd[upstream].fl_करोमुख्य |= BIT(i);
+	पूर्ण
 	/* Next 8 entries define VLAN PCP mapping from ingress to egress.
 	 * Create a one-to-one mapping.
 	 */
-	for (i = 0; i < SJA1105_NUM_TC; i++)
-		for (j = 0; j < SJA1105_NUM_PORTS; j++)
+	क्रम (i = 0; i < SJA1105_NUM_TC; i++)
+		क्रम (j = 0; j < SJA1105_NUM_PORTS; j++)
 			l2fwd[SJA1105_NUM_PORTS + i].vlan_pmap[j] = i;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_init_l2_forwarding_params(struct sja1105_private *priv)
-{
-	struct sja1105_l2_forwarding_params_entry default_l2fwd_params = {
+अटल पूर्णांक sja1105_init_l2_क्रमwarding_params(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_l2_क्रमwarding_params_entry शेष_l2fwd_params = अणु
 		/* Disallow dynamic reconfiguration of vlan_pmap */
 		.max_dynp = 0,
-		/* Use a single memory partition for all ingress queues */
-		.part_spc = { SJA1105_MAX_FRAME_MEMORY, 0, 0, 0, 0, 0, 0, 0 },
-	};
-	struct sja1105_table *table;
+		/* Use a single memory partition क्रम all ingress queues */
+		.part_spc = अणु SJA1105_MAX_FRAME_MEMORY, 0, 0, 0, 0, 0, 0, 0 पूर्ण,
+	पूर्ण;
+	काष्ठा sja1105_table *table;
 
-	table = &priv->static_config.tables[BLK_IDX_L2_FORWARDING_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_FORWARDING_PARAMS];
 
-	if (table->entry_count) {
-		kfree(table->entries);
+	अगर (table->entry_count) अणु
+		kमुक्त(table->entries);
 		table->entry_count = 0;
-	}
+	पूर्ण
 
-	table->entries = kcalloc(SJA1105_MAX_L2_FORWARDING_PARAMS_COUNT,
+	table->entries = kसुस्मृति(SJA1105_MAX_L2_FORWARDING_PARAMS_COUNT,
 				 table->ops->unpacked_entry_size, GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = SJA1105_MAX_L2_FORWARDING_PARAMS_COUNT;
 
 	/* This table only has a single entry */
-	((struct sja1105_l2_forwarding_params_entry *)table->entries)[0] =
-				default_l2fwd_params;
+	((काष्ठा sja1105_l2_क्रमwarding_params_entry *)table->entries)[0] =
+				शेष_l2fwd_params;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void sja1105_frame_memory_partitioning(struct sja1105_private *priv)
-{
-	struct sja1105_l2_forwarding_params_entry *l2_fwd_params;
-	struct sja1105_vl_forwarding_params_entry *vl_fwd_params;
-	struct sja1105_table *table;
-	int max_mem;
+व्योम sja1105_frame_memory_partitioning(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_l2_क्रमwarding_params_entry *l2_fwd_params;
+	काष्ठा sja1105_vl_क्रमwarding_params_entry *vl_fwd_params;
+	काष्ठा sja1105_table *table;
+	पूर्णांक max_mem;
 
 	/* VLAN retagging is implemented using a loopback port that consumes
-	 * frame buffers. That leaves less for us.
+	 * frame buffers. That leaves less क्रम us.
 	 */
-	if (priv->vlan_state == SJA1105_VLAN_BEST_EFFORT)
+	अगर (priv->vlan_state == SJA1105_VLAN_BEST_EFFORT)
 		max_mem = SJA1105_MAX_FRAME_MEMORY_RETAGGING;
-	else
+	अन्यथा
 		max_mem = SJA1105_MAX_FRAME_MEMORY;
 
-	table = &priv->static_config.tables[BLK_IDX_L2_FORWARDING_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_FORWARDING_PARAMS];
 	l2_fwd_params = table->entries;
 	l2_fwd_params->part_spc[0] = max_mem;
 
-	/* If we have any critical-traffic virtual links, we need to reserve
-	 * some frame buffer memory for them. At the moment, hardcode the value
+	/* If we have any critical-traffic भव links, we need to reserve
+	 * some frame buffer memory क्रम them. At the moment, hardcode the value
 	 * at 100 blocks of 128 bytes of memory each. This leaves 829 blocks
-	 * remaining for best-effort traffic. TODO: figure out a more flexible
-	 * way to perform the frame buffer partitioning.
+	 * reमुख्यing क्रम best-efक्रमt traffic. TODO: figure out a more flexible
+	 * way to perक्रमm the frame buffer partitioning.
 	 */
-	if (!priv->static_config.tables[BLK_IDX_VL_FORWARDING].entry_count)
-		return;
+	अगर (!priv->अटल_config.tables[BLK_IDX_VL_FORWARDING].entry_count)
+		वापस;
 
-	table = &priv->static_config.tables[BLK_IDX_VL_FORWARDING_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_VL_FORWARDING_PARAMS];
 	vl_fwd_params = table->entries;
 
 	l2_fwd_params->part_spc[0] -= SJA1105_VL_FRAME_MEMORY;
 	vl_fwd_params->partspc[0] = SJA1105_VL_FRAME_MEMORY;
-}
+पूर्ण
 
-static int sja1105_init_general_params(struct sja1105_private *priv)
-{
-	struct sja1105_general_params_entry default_general_params = {
+अटल पूर्णांक sja1105_init_general_params(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_general_params_entry शेष_general_params = अणु
 		/* Allow dynamic changing of the mirror port */
 		.mirr_ptacu = true,
-		.switchid = priv->ds->index,
-		/* Priority queue for link-local management frames
+		.चयनid = priv->ds->index,
+		/* Priority queue क्रम link-local management frames
 		 * (both ingress to and egress from CPU - PTP, STP etc)
 		 */
 		.hostprio = 7,
@@ -525,7 +526,7 @@ static int sja1105_init_general_params(struct sja1105_private *priv)
 		.mac_flt0    = SJA1105_LINKLOCAL_FILTER_B_MASK,
 		.incl_srcpt0 = false,
 		.send_meta0  = false,
-		/* The destination for traffic matching mac_fltres1 and
+		/* The destination क्रम traffic matching mac_fltres1 and
 		 * mac_fltres0 on all ports except host_port. Such traffic
 		 * receieved on host_port itself would be dropped, except
 		 * by installing a temporary 'management route'
@@ -533,92 +534,92 @@ static int sja1105_init_general_params(struct sja1105_private *priv)
 		.host_port = dsa_upstream_port(priv->ds, 0),
 		/* Default to an invalid value */
 		.mirr_port = SJA1105_NUM_PORTS,
-		/* Link-local traffic received on casc_port will be forwarded
+		/* Link-local traffic received on casc_port will be क्रमwarded
 		 * to host_port without embedding the source port and device ID
 		 * info in the destination MAC address (presumably because it
-		 * is a cascaded port and a downstream SJA switch already did
+		 * is a cascaded port and a करोwnstream SJA चयन alपढ़ोy did
 		 * that). Default to an invalid port (to disable the feature)
-		 * and overwrite this if we find any DSA (cascaded) ports.
+		 * and overग_लिखो this अगर we find any DSA (cascaded) ports.
 		 */
 		.casc_port = SJA1105_NUM_PORTS,
 		/* No TTEthernet */
-		.vllupformat = SJA1105_VL_FORMAT_PSFP,
+		.vllupक्रमmat = SJA1105_VL_FORMAT_PSFP,
 		.vlmarker = 0,
 		.vlmask = 0,
-		/* Only update correctionField for 1-step PTP (L2 transport) */
+		/* Only update correctionField क्रम 1-step PTP (L2 transport) */
 		.ignore2stf = 0,
 		/* Forcefully disable VLAN filtering by telling
-		 * the switch that VLAN has a different EtherType.
+		 * the चयन that VLAN has a dअगरferent EtherType.
 		 */
 		.tpid = ETH_P_SJA1105,
 		.tpid2 = ETH_P_SJA1105,
-	};
-	struct sja1105_table *table;
+	पूर्ण;
+	काष्ठा sja1105_table *table;
 
-	table = &priv->static_config.tables[BLK_IDX_GENERAL_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_GENERAL_PARAMS];
 
-	if (table->entry_count) {
-		kfree(table->entries);
+	अगर (table->entry_count) अणु
+		kमुक्त(table->entries);
 		table->entry_count = 0;
-	}
+	पूर्ण
 
-	table->entries = kcalloc(SJA1105_MAX_GENERAL_PARAMS_COUNT,
+	table->entries = kसुस्मृति(SJA1105_MAX_GENERAL_PARAMS_COUNT,
 				 table->ops->unpacked_entry_size, GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = SJA1105_MAX_GENERAL_PARAMS_COUNT;
 
 	/* This table only has a single entry */
-	((struct sja1105_general_params_entry *)table->entries)[0] =
-				default_general_params;
+	((काष्ठा sja1105_general_params_entry *)table->entries)[0] =
+				शेष_general_params;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_init_avb_params(struct sja1105_private *priv)
-{
-	struct sja1105_avb_params_entry *avb;
-	struct sja1105_table *table;
+अटल पूर्णांक sja1105_init_avb_params(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_avb_params_entry *avb;
+	काष्ठा sja1105_table *table;
 
-	table = &priv->static_config.tables[BLK_IDX_AVB_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_AVB_PARAMS];
 
 	/* Discard previous AVB Parameters Table */
-	if (table->entry_count) {
-		kfree(table->entries);
+	अगर (table->entry_count) अणु
+		kमुक्त(table->entries);
 		table->entry_count = 0;
-	}
+	पूर्ण
 
-	table->entries = kcalloc(SJA1105_MAX_AVB_PARAMS_COUNT,
+	table->entries = kसुस्मृति(SJA1105_MAX_AVB_PARAMS_COUNT,
 				 table->ops->unpacked_entry_size, GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = SJA1105_MAX_AVB_PARAMS_COUNT;
 
 	avb = table->entries;
 
-	/* Configure the MAC addresses for meta frames */
-	avb->destmeta = SJA1105_META_DMAC;
+	/* Configure the MAC addresses क्रम meta frames */
+	avb->desपंचांगeta = SJA1105_META_DMAC;
 	avb->srcmeta  = SJA1105_META_SMAC;
 	/* On P/Q/R/S, configure the direction of the PTP_CLK pin as input by
-	 * default. This is because there might be boards with a hardware
+	 * शेष. This is because there might be boards with a hardware
 	 * layout where enabling the pin as output might cause an electrical
 	 * clash. On E/T the pin is always an output, which the board designers
-	 * probably already knew, so even if there are going to be electrical
-	 * issues, there's nothing we can do.
+	 * probably alपढ़ोy knew, so even अगर there are going to be electrical
+	 * issues, there's nothing we can करो.
 	 */
 	avb->cas_master = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* The L2 policing table is 2-stage. The table is looked up for each frame
+/* The L2 policing table is 2-stage. The table is looked up क्रम each frame
  * according to the ingress port, whether it was broadcast or not, and the
- * classified traffic class (given by VLAN PCP). This portion of the lookup is
- * fixed, and gives access to the SHARINDX, an indirection register pointing
+ * classअगरied traffic class (given by VLAN PCP). This portion of the lookup is
+ * fixed, and gives access to the SHARINDX, an indirection रेजिस्टर poपूर्णांकing
  * within the policing table itself, which is used to resolve the policer that
- * will be used for this frame.
+ * will be used क्रम this frame.
  *
  *  Stage 1                              Stage 2
  * +------------+--------+              +---------------------------------+
@@ -649,486 +650,486 @@ static int sja1105_init_avb_params(struct sja1105_private *priv)
  * |Port 4 BCAST|SHARINDX|              | Policer 44: Rate, Burst, MTU    |
  * +------------+--------+              +---------------------------------+
  *
- * In this driver, we shall use policers 0-4 as statically alocated port
- * (matchall) policers. So we need to make the SHARINDX for all lookups
+ * In this driver, we shall use policers 0-4 as अटलally alocated port
+ * (matchall) policers. So we need to make the SHARINDX क्रम all lookups
  * corresponding to this ingress port (8 VLAN PCP lookups and 1 broadcast
  * lookup) equal.
- * The remaining policers (40) shall be dynamically allocated for flower
+ * The reमुख्यing policers (40) shall be dynamically allocated क्रम flower
  * policers, where the key is either vlan_prio or dst_mac ff:ff:ff:ff:ff:ff.
  */
-#define SJA1105_RATE_MBPS(speed) (((speed) * 64000) / 1000)
+#घोषणा SJA1105_RATE_MBPS(speed) (((speed) * 64000) / 1000)
 
-static int sja1105_init_l2_policing(struct sja1105_private *priv)
-{
-	struct sja1105_l2_policing_entry *policing;
-	struct sja1105_table *table;
-	int port, tc;
+अटल पूर्णांक sja1105_init_l2_policing(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_l2_policing_entry *policing;
+	काष्ठा sja1105_table *table;
+	पूर्णांक port, tc;
 
-	table = &priv->static_config.tables[BLK_IDX_L2_POLICING];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_POLICING];
 
 	/* Discard previous L2 Policing Table */
-	if (table->entry_count) {
-		kfree(table->entries);
+	अगर (table->entry_count) अणु
+		kमुक्त(table->entries);
 		table->entry_count = 0;
-	}
+	पूर्ण
 
-	table->entries = kcalloc(SJA1105_MAX_L2_POLICING_COUNT,
+	table->entries = kसुस्मृति(SJA1105_MAX_L2_POLICING_COUNT,
 				 table->ops->unpacked_entry_size, GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = SJA1105_MAX_L2_POLICING_COUNT;
 
 	policing = table->entries;
 
-	/* Setup shared indices for the matchall policers */
-	for (port = 0; port < SJA1105_NUM_PORTS; port++) {
-		int bcast = (SJA1105_NUM_PORTS * SJA1105_NUM_TC) + port;
+	/* Setup shared indices क्रम the matchall policers */
+	क्रम (port = 0; port < SJA1105_NUM_PORTS; port++) अणु
+		पूर्णांक bcast = (SJA1105_NUM_PORTS * SJA1105_NUM_TC) + port;
 
-		for (tc = 0; tc < SJA1105_NUM_TC; tc++)
+		क्रम (tc = 0; tc < SJA1105_NUM_TC; tc++)
 			policing[port * SJA1105_NUM_TC + tc].sharindx = port;
 
 		policing[bcast].sharindx = port;
-	}
+	पूर्ण
 
 	/* Setup the matchall policer parameters */
-	for (port = 0; port < SJA1105_NUM_PORTS; port++) {
-		int mtu = VLAN_ETH_FRAME_LEN + ETH_FCS_LEN;
+	क्रम (port = 0; port < SJA1105_NUM_PORTS; port++) अणु
+		पूर्णांक mtu = VLAN_ETH_FRAME_LEN + ETH_FCS_LEN;
 
-		if (dsa_is_cpu_port(priv->ds, port))
+		अगर (dsa_is_cpu_port(priv->ds, port))
 			mtu += VLAN_HLEN;
 
 		policing[port].smax = 65535; /* Burst size in bytes */
 		policing[port].rate = SJA1105_RATE_MBPS(1000);
 		policing[port].maxlen = mtu;
 		policing[port].partition = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_static_config_load(struct sja1105_private *priv,
-				      struct sja1105_dt_port *ports)
-{
-	int rc;
+अटल पूर्णांक sja1105_अटल_config_load(काष्ठा sja1105_निजी *priv,
+				      काष्ठा sja1105_dt_port *ports)
+अणु
+	पूर्णांक rc;
 
-	sja1105_static_config_free(&priv->static_config);
-	rc = sja1105_static_config_init(&priv->static_config,
-					priv->info->static_ops,
+	sja1105_अटल_config_मुक्त(&priv->अटल_config);
+	rc = sja1105_अटल_config_init(&priv->अटल_config,
+					priv->info->अटल_ops,
 					priv->info->device_id);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Build static configuration */
+	/* Build अटल configuration */
 	rc = sja1105_init_mac_settings(priv);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 	rc = sja1105_init_mii_settings(priv, ports);
-	if (rc < 0)
-		return rc;
-	rc = sja1105_init_static_fdb(priv);
-	if (rc < 0)
-		return rc;
-	rc = sja1105_init_static_vlan(priv);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
+	rc = sja1105_init_अटल_fdb(priv);
+	अगर (rc < 0)
+		वापस rc;
+	rc = sja1105_init_अटल_vlan(priv);
+	अगर (rc < 0)
+		वापस rc;
 	rc = sja1105_init_l2_lookup_params(priv);
-	if (rc < 0)
-		return rc;
-	rc = sja1105_init_l2_forwarding(priv);
-	if (rc < 0)
-		return rc;
-	rc = sja1105_init_l2_forwarding_params(priv);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
+	rc = sja1105_init_l2_क्रमwarding(priv);
+	अगर (rc < 0)
+		वापस rc;
+	rc = sja1105_init_l2_क्रमwarding_params(priv);
+	अगर (rc < 0)
+		वापस rc;
 	rc = sja1105_init_l2_policing(priv);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 	rc = sja1105_init_general_params(priv);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 	rc = sja1105_init_avb_params(priv);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	/* Send initial configuration to hardware via SPI */
-	return sja1105_static_config_upload(priv);
-}
+	वापस sja1105_अटल_config_upload(priv);
+पूर्ण
 
-static int sja1105_parse_rgmii_delays(struct sja1105_private *priv,
-				      const struct sja1105_dt_port *ports)
-{
-	int i;
+अटल पूर्णांक sja1105_parse_rgmii_delays(काष्ठा sja1105_निजी *priv,
+				      स्थिर काष्ठा sja1105_dt_port *ports)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SJA1105_NUM_PORTS; i++) {
-		if (ports[i].role == XMII_MAC)
-			continue;
+	क्रम (i = 0; i < SJA1105_NUM_PORTS; i++) अणु
+		अगर (ports[i].role == XMII_MAC)
+			जारी;
 
-		if (ports[i].phy_mode == PHY_INTERFACE_MODE_RGMII_RXID ||
+		अगर (ports[i].phy_mode == PHY_INTERFACE_MODE_RGMII_RXID ||
 		    ports[i].phy_mode == PHY_INTERFACE_MODE_RGMII_ID)
 			priv->rgmii_rx_delay[i] = true;
 
-		if (ports[i].phy_mode == PHY_INTERFACE_MODE_RGMII_TXID ||
+		अगर (ports[i].phy_mode == PHY_INTERFACE_MODE_RGMII_TXID ||
 		    ports[i].phy_mode == PHY_INTERFACE_MODE_RGMII_ID)
 			priv->rgmii_tx_delay[i] = true;
 
-		if ((priv->rgmii_rx_delay[i] || priv->rgmii_tx_delay[i]) &&
+		अगर ((priv->rgmii_rx_delay[i] || priv->rgmii_tx_delay[i]) &&
 		     !priv->info->setup_rgmii_delay)
-			return -EINVAL;
-	}
-	return 0;
-}
+			वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int sja1105_parse_ports_node(struct sja1105_private *priv,
-				    struct sja1105_dt_port *ports,
-				    struct device_node *ports_node)
-{
-	struct device *dev = &priv->spidev->dev;
-	struct device_node *child;
+अटल पूर्णांक sja1105_parse_ports_node(काष्ठा sja1105_निजी *priv,
+				    काष्ठा sja1105_dt_port *ports,
+				    काष्ठा device_node *ports_node)
+अणु
+	काष्ठा device *dev = &priv->spidev->dev;
+	काष्ठा device_node *child;
 
-	for_each_available_child_of_node(ports_node, child) {
-		struct device_node *phy_node;
-		phy_interface_t phy_mode;
+	क्रम_each_available_child_of_node(ports_node, child) अणु
+		काष्ठा device_node *phy_node;
+		phy_पूर्णांकerface_t phy_mode;
 		u32 index;
-		int err;
+		पूर्णांक err;
 
-		/* Get switch port number from DT */
-		if (of_property_read_u32(child, "reg", &index) < 0) {
+		/* Get चयन port number from DT */
+		अगर (of_property_पढ़ो_u32(child, "reg", &index) < 0) अणु
 			dev_err(dev, "Port number not defined in device tree "
 				"(property \"reg\")\n");
 			of_node_put(child);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		/* Get PHY mode from DT */
 		err = of_get_phy_mode(child, &phy_mode);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "Failed to read phy-mode or "
 				"phy-interface-type property for port %d\n",
 				index);
 			of_node_put(child);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 		ports[index].phy_mode = phy_mode;
 
 		phy_node = of_parse_phandle(child, "phy-handle", 0);
-		if (!phy_node) {
-			if (!of_phy_is_fixed_link(child)) {
+		अगर (!phy_node) अणु
+			अगर (!of_phy_is_fixed_link(child)) अणु
 				dev_err(dev, "phy-handle or fixed-link "
 					"properties missing!\n");
 				of_node_put(child);
-				return -ENODEV;
-			}
+				वापस -ENODEV;
+			पूर्ण
 			/* phy-handle is missing, but fixed-link isn't.
 			 * So it's a fixed link. Default to PHY role.
 			 */
 			ports[index].role = XMII_PHY;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* phy-handle present => put port in MAC role */
 			ports[index].role = XMII_MAC;
 			of_node_put(phy_node);
-		}
+		पूर्ण
 
 		/* The MAC/PHY role can be overridden with explicit bindings */
-		if (of_property_read_bool(child, "sja1105,role-mac"))
+		अगर (of_property_पढ़ो_bool(child, "sja1105,role-mac"))
 			ports[index].role = XMII_MAC;
-		else if (of_property_read_bool(child, "sja1105,role-phy"))
+		अन्यथा अगर (of_property_पढ़ो_bool(child, "sja1105,role-phy"))
 			ports[index].role = XMII_PHY;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_parse_dt(struct sja1105_private *priv,
-			    struct sja1105_dt_port *ports)
-{
-	struct device *dev = &priv->spidev->dev;
-	struct device_node *switch_node = dev->of_node;
-	struct device_node *ports_node;
-	int rc;
+अटल पूर्णांक sja1105_parse_dt(काष्ठा sja1105_निजी *priv,
+			    काष्ठा sja1105_dt_port *ports)
+अणु
+	काष्ठा device *dev = &priv->spidev->dev;
+	काष्ठा device_node *चयन_node = dev->of_node;
+	काष्ठा device_node *ports_node;
+	पूर्णांक rc;
 
-	ports_node = of_get_child_by_name(switch_node, "ports");
-	if (!ports_node) {
+	ports_node = of_get_child_by_name(चयन_node, "ports");
+	अगर (!ports_node) अणु
 		dev_err(dev, "Incorrect bindings: absent \"ports\" node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	rc = sja1105_parse_ports_node(priv, ports, ports_node);
 	of_node_put(ports_node);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int sja1105_sgmii_read(struct sja1105_private *priv, int pcs_reg)
-{
-	const struct sja1105_regs *regs = priv->info->regs;
+अटल पूर्णांक sja1105_sgmii_पढ़ो(काष्ठा sja1105_निजी *priv, पूर्णांक pcs_reg)
+अणु
+	स्थिर काष्ठा sja1105_regs *regs = priv->info->regs;
 	u32 val;
-	int rc;
+	पूर्णांक rc;
 
 	rc = sja1105_xfer_u32(priv, SPI_READ, regs->sgmii + pcs_reg, &val,
-			      NULL);
-	if (rc < 0)
-		return rc;
+			      शून्य);
+	अगर (rc < 0)
+		वापस rc;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int sja1105_sgmii_write(struct sja1105_private *priv, int pcs_reg,
+अटल पूर्णांक sja1105_sgmii_ग_लिखो(काष्ठा sja1105_निजी *priv, पूर्णांक pcs_reg,
 			       u16 pcs_val)
-{
-	const struct sja1105_regs *regs = priv->info->regs;
+अणु
+	स्थिर काष्ठा sja1105_regs *regs = priv->info->regs;
 	u32 val = pcs_val;
-	int rc;
+	पूर्णांक rc;
 
 	rc = sja1105_xfer_u32(priv, SPI_WRITE, regs->sgmii + pcs_reg, &val,
-			      NULL);
-	if (rc < 0)
-		return rc;
+			      शून्य);
+	अगर (rc < 0)
+		वापस rc;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void sja1105_sgmii_pcs_config(struct sja1105_private *priv,
+अटल व्योम sja1105_sgmii_pcs_config(काष्ठा sja1105_निजी *priv,
 				     bool an_enabled, bool an_master)
-{
+अणु
 	u16 ac = SJA1105_AC_AUTONEG_MODE_SGMII;
 
-	/* DIGITAL_CONTROL_1: Enable vendor-specific MMD1, allow the PHY to
-	 * stop the clock during LPI mode, make the MAC reconfigure
-	 * autonomously after PCS autoneg is done, flush the internal FIFOs.
+	/* DIGITAL_CONTROL_1: Enable venकरोr-specअगरic MMD1, allow the PHY to
+	 * stop the घड़ी during LPI mode, make the MAC reconfigure
+	 * स्वतःnomously after PCS स्वतःneg is करोne, flush the पूर्णांकernal FIFOs.
 	 */
-	sja1105_sgmii_write(priv, SJA1105_DC1, SJA1105_DC1_EN_VSMMD1 |
+	sja1105_sgmii_ग_लिखो(priv, SJA1105_DC1, SJA1105_DC1_EN_VSMMD1 |
 					       SJA1105_DC1_CLOCK_STOP_EN |
 					       SJA1105_DC1_MAC_AUTO_SW |
 					       SJA1105_DC1_INIT);
-	/* DIGITAL_CONTROL_2: No polarity inversion for TX and RX lanes */
-	sja1105_sgmii_write(priv, SJA1105_DC2, SJA1105_DC2_TX_POL_INV_DISABLE);
-	/* AUTONEG_CONTROL: Use SGMII autoneg */
-	if (an_master)
+	/* DIGITAL_CONTROL_2: No polarity inversion क्रम TX and RX lanes */
+	sja1105_sgmii_ग_लिखो(priv, SJA1105_DC2, SJA1105_DC2_TX_POL_INV_DISABLE);
+	/* AUTONEG_CONTROL: Use SGMII स्वतःneg */
+	अगर (an_master)
 		ac |= SJA1105_AC_PHY_MODE | SJA1105_AC_SGMII_LINK;
-	sja1105_sgmii_write(priv, SJA1105_AC, ac);
-	/* BASIC_CONTROL: enable in-band AN now, if requested. Otherwise,
-	 * sja1105_sgmii_pcs_force_speed must be called later for the link
+	sja1105_sgmii_ग_लिखो(priv, SJA1105_AC, ac);
+	/* BASIC_CONTROL: enable in-band AN now, अगर requested. Otherwise,
+	 * sja1105_sgmii_pcs_क्रमce_speed must be called later क्रम the link
 	 * to become operational.
 	 */
-	if (an_enabled)
-		sja1105_sgmii_write(priv, MII_BMCR,
+	अगर (an_enabled)
+		sja1105_sgmii_ग_लिखो(priv, MII_BMCR,
 				    BMCR_ANENABLE | BMCR_ANRESTART);
-}
+पूर्ण
 
-static void sja1105_sgmii_pcs_force_speed(struct sja1105_private *priv,
-					  int speed)
-{
-	int pcs_speed;
+अटल व्योम sja1105_sgmii_pcs_क्रमce_speed(काष्ठा sja1105_निजी *priv,
+					  पूर्णांक speed)
+अणु
+	पूर्णांक pcs_speed;
 
-	switch (speed) {
-	case SPEED_1000:
+	चयन (speed) अणु
+	हाल SPEED_1000:
 		pcs_speed = BMCR_SPEED1000;
-		break;
-	case SPEED_100:
+		अवरोध;
+	हाल SPEED_100:
 		pcs_speed = BMCR_SPEED100;
-		break;
-	case SPEED_10:
+		अवरोध;
+	हाल SPEED_10:
 		pcs_speed = BMCR_SPEED10;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(priv->ds->dev, "Invalid speed %d\n", speed);
-		return;
-	}
-	sja1105_sgmii_write(priv, MII_BMCR, pcs_speed | BMCR_FULLDPLX);
-}
+		वापस;
+	पूर्ण
+	sja1105_sgmii_ग_लिखो(priv, MII_BMCR, pcs_speed | BMCR_FULLDPLX);
+पूर्ण
 
 /* Convert link speed from SJA1105 to ethtool encoding */
-static int sja1105_speed[] = {
+अटल पूर्णांक sja1105_speed[] = अणु
 	[SJA1105_SPEED_AUTO]		= SPEED_UNKNOWN,
 	[SJA1105_SPEED_10MBPS]		= SPEED_10,
 	[SJA1105_SPEED_100MBPS]		= SPEED_100,
 	[SJA1105_SPEED_1000MBPS]	= SPEED_1000,
-};
+पूर्ण;
 
-/* Set link speed in the MAC configuration for a specific port. */
-static int sja1105_adjust_port_config(struct sja1105_private *priv, int port,
-				      int speed_mbps)
-{
-	struct sja1105_xmii_params_entry *mii;
-	struct sja1105_mac_config_entry *mac;
-	struct device *dev = priv->ds->dev;
-	sja1105_phy_interface_t phy_mode;
+/* Set link speed in the MAC configuration क्रम a specअगरic port. */
+अटल पूर्णांक sja1105_adjust_port_config(काष्ठा sja1105_निजी *priv, पूर्णांक port,
+				      पूर्णांक speed_mbps)
+अणु
+	काष्ठा sja1105_xmii_params_entry *mii;
+	काष्ठा sja1105_mac_config_entry *mac;
+	काष्ठा device *dev = priv->ds->dev;
+	sja1105_phy_पूर्णांकerface_t phy_mode;
 	sja1105_speed_t speed;
-	int rc;
+	पूर्णांक rc;
 
-	/* On P/Q/R/S, one can read from the device via the MAC reconfiguration
-	 * tables. On E/T, MAC reconfig tables are not readable, only writable.
+	/* On P/Q/R/S, one can पढ़ो from the device via the MAC reconfiguration
+	 * tables. On E/T, MAC reconfig tables are not पढ़ोable, only writable.
 	 * We have to *know* what the MAC looks like.  For the sake of keeping
-	 * the code common, we'll use the static configuration tables as a
-	 * reasonable approximation for both E/T and P/Q/R/S.
+	 * the code common, we'll use the अटल configuration tables as a
+	 * reasonable approximation क्रम both E/T and P/Q/R/S.
 	 */
-	mac = priv->static_config.tables[BLK_IDX_MAC_CONFIG].entries;
-	mii = priv->static_config.tables[BLK_IDX_XMII_PARAMS].entries;
+	mac = priv->अटल_config.tables[BLK_IDX_MAC_CONFIG].entries;
+	mii = priv->अटल_config.tables[BLK_IDX_XMII_PARAMS].entries;
 
-	switch (speed_mbps) {
-	case SPEED_UNKNOWN:
-		/* PHYLINK called sja1105_mac_config() to inform us about
-		 * the state->interface, but AN has not completed and the
+	चयन (speed_mbps) अणु
+	हाल SPEED_UNKNOWN:
+		/* PHYLINK called sja1105_mac_config() to inक्रमm us about
+		 * the state->पूर्णांकerface, but AN has not completed and the
 		 * speed is not yet valid. UM10944.pdf says that setting
-		 * SJA1105_SPEED_AUTO at runtime disables the port, so that is
-		 * ok for power consumption in case AN will never complete -
+		 * SJA1105_SPEED_AUTO at runसमय disables the port, so that is
+		 * ok क्रम घातer consumption in हाल AN will never complete -
 		 * otherwise PHYLINK should come back with a new update.
 		 */
 		speed = SJA1105_SPEED_AUTO;
-		break;
-	case SPEED_10:
+		अवरोध;
+	हाल SPEED_10:
 		speed = SJA1105_SPEED_10MBPS;
-		break;
-	case SPEED_100:
+		अवरोध;
+	हाल SPEED_100:
 		speed = SJA1105_SPEED_100MBPS;
-		break;
-	case SPEED_1000:
+		अवरोध;
+	हाल SPEED_1000:
 		speed = SJA1105_SPEED_1000MBPS;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "Invalid speed %iMbps\n", speed_mbps);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Overwrite SJA1105_SPEED_AUTO from the static MAC configuration
-	 * table, since this will be used for the clocking setup, and we no
-	 * longer need to store it in the static config (already told hardware
-	 * we want auto during upload phase).
-	 * Actually for the SGMII port, the MAC is fixed at 1 Gbps and
-	 * we need to configure the PCS only (if even that).
+	/* Overग_लिखो SJA1105_SPEED_AUTO from the अटल MAC configuration
+	 * table, since this will be used क्रम the घड़ीing setup, and we no
+	 * दीर्घer need to store it in the अटल config (alपढ़ोy told hardware
+	 * we want स्वतः during upload phase).
+	 * Actually क्रम the SGMII port, the MAC is fixed at 1 Gbps and
+	 * we need to configure the PCS only (अगर even that).
 	 */
-	if (sja1105_supports_sgmii(priv, port))
+	अगर (sja1105_supports_sgmii(priv, port))
 		mac[port].speed = SJA1105_SPEED_1000MBPS;
-	else
+	अन्यथा
 		mac[port].speed = speed;
 
 	/* Write to the dynamic reconfiguration tables */
-	rc = sja1105_dynamic_config_write(priv, BLK_IDX_MAC_CONFIG, port,
+	rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_MAC_CONFIG, port,
 					  &mac[port], true);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(dev, "Failed to write MAC config: %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Reconfigure the PLLs for the RGMII interfaces (required 125 MHz at
+	/* Reconfigure the PLLs क्रम the RGMII पूर्णांकerfaces (required 125 MHz at
 	 * gigabit, 25 MHz at 100 Mbps and 2.5 MHz at 10 Mbps). For MII and
-	 * RMII no change of the clock setup is required. Actually, changing
-	 * the clock setup does interrupt the clock signal for a certain time
-	 * which causes trouble for all PHYs relying on this signal.
+	 * RMII no change of the घड़ी setup is required. Actually, changing
+	 * the घड़ी setup करोes पूर्णांकerrupt the घड़ी संकेत क्रम a certain समय
+	 * which causes trouble क्रम all PHYs relying on this संकेत.
 	 */
 	phy_mode = mii->xmii_mode[port];
-	if (phy_mode != XMII_MODE_RGMII)
-		return 0;
+	अगर (phy_mode != XMII_MODE_RGMII)
+		वापस 0;
 
-	return sja1105_clocking_setup_port(priv, port);
-}
+	वापस sja1105_घड़ीing_setup_port(priv, port);
+पूर्ण
 
-/* The SJA1105 MAC programming model is through the static config (the xMII
+/* The SJA1105 MAC programming model is through the अटल config (the xMII
  * Mode table cannot be dynamically reconfigured), and we have to program
  * that early (earlier than PHYLINK calls us, anyway).
- * So just error out in case the connected PHY attempts to change the initial
- * system interface MII protocol from what is defined in the DT, at least for
+ * So just error out in हाल the connected PHY attempts to change the initial
+ * प्रणाली पूर्णांकerface MII protocol from what is defined in the DT, at least क्रम
  * now.
  */
-static bool sja1105_phy_mode_mismatch(struct sja1105_private *priv, int port,
-				      phy_interface_t interface)
-{
-	struct sja1105_xmii_params_entry *mii;
-	sja1105_phy_interface_t phy_mode;
+अटल bool sja1105_phy_mode_mismatch(काष्ठा sja1105_निजी *priv, पूर्णांक port,
+				      phy_पूर्णांकerface_t पूर्णांकerface)
+अणु
+	काष्ठा sja1105_xmii_params_entry *mii;
+	sja1105_phy_पूर्णांकerface_t phy_mode;
 
-	mii = priv->static_config.tables[BLK_IDX_XMII_PARAMS].entries;
+	mii = priv->अटल_config.tables[BLK_IDX_XMII_PARAMS].entries;
 	phy_mode = mii->xmii_mode[port];
 
-	switch (interface) {
-	case PHY_INTERFACE_MODE_MII:
-		return (phy_mode != XMII_MODE_MII);
-	case PHY_INTERFACE_MODE_RMII:
-		return (phy_mode != XMII_MODE_RMII);
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
-		return (phy_mode != XMII_MODE_RGMII);
-	case PHY_INTERFACE_MODE_SGMII:
-		return (phy_mode != XMII_MODE_SGMII);
-	default:
-		return true;
-	}
-}
+	चयन (पूर्णांकerface) अणु
+	हाल PHY_INTERFACE_MODE_MII:
+		वापस (phy_mode != XMII_MODE_MII);
+	हाल PHY_INTERFACE_MODE_RMII:
+		वापस (phy_mode != XMII_MODE_RMII);
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
+		वापस (phy_mode != XMII_MODE_RGMII);
+	हाल PHY_INTERFACE_MODE_SGMII:
+		वापस (phy_mode != XMII_MODE_SGMII);
+	शेष:
+		वापस true;
+	पूर्ण
+पूर्ण
 
-static void sja1105_mac_config(struct dsa_switch *ds, int port,
-			       unsigned int mode,
-			       const struct phylink_link_state *state)
-{
-	struct sja1105_private *priv = ds->priv;
+अटल व्योम sja1105_mac_config(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			       अचिन्हित पूर्णांक mode,
+			       स्थिर काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
 	bool is_sgmii = sja1105_supports_sgmii(priv, port);
 
-	if (sja1105_phy_mode_mismatch(priv, port, state->interface)) {
+	अगर (sja1105_phy_mode_mismatch(priv, port, state->पूर्णांकerface)) अणु
 		dev_err(ds->dev, "Changing PHY mode to %s not supported!\n",
-			phy_modes(state->interface));
-		return;
-	}
+			phy_modes(state->पूर्णांकerface));
+		वापस;
+	पूर्ण
 
-	if (phylink_autoneg_inband(mode) && !is_sgmii) {
+	अगर (phylink_स्वतःneg_inband(mode) && !is_sgmii) अणु
 		dev_err(ds->dev, "In-band AN not supported!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (is_sgmii)
-		sja1105_sgmii_pcs_config(priv, phylink_autoneg_inband(mode),
+	अगर (is_sgmii)
+		sja1105_sgmii_pcs_config(priv, phylink_स्वतःneg_inband(mode),
 					 false);
-}
+पूर्ण
 
-static void sja1105_mac_link_down(struct dsa_switch *ds, int port,
-				  unsigned int mode,
-				  phy_interface_t interface)
-{
+अटल व्योम sja1105_mac_link_करोwn(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				  अचिन्हित पूर्णांक mode,
+				  phy_पूर्णांकerface_t पूर्णांकerface)
+अणु
 	sja1105_inhibit_tx(ds->priv, BIT(port), true);
-}
+पूर्ण
 
-static void sja1105_mac_link_up(struct dsa_switch *ds, int port,
-				unsigned int mode,
-				phy_interface_t interface,
-				struct phy_device *phydev,
-				int speed, int duplex,
-				bool tx_pause, bool rx_pause)
-{
-	struct sja1105_private *priv = ds->priv;
+अटल व्योम sja1105_mac_link_up(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				अचिन्हित पूर्णांक mode,
+				phy_पूर्णांकerface_t पूर्णांकerface,
+				काष्ठा phy_device *phydev,
+				पूर्णांक speed, पूर्णांक duplex,
+				bool tx_छोड़ो, bool rx_छोड़ो)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
 
 	sja1105_adjust_port_config(priv, port, speed);
 
-	if (sja1105_supports_sgmii(priv, port) && !phylink_autoneg_inband(mode))
-		sja1105_sgmii_pcs_force_speed(priv, speed);
+	अगर (sja1105_supports_sgmii(priv, port) && !phylink_स्वतःneg_inband(mode))
+		sja1105_sgmii_pcs_क्रमce_speed(priv, speed);
 
 	sja1105_inhibit_tx(priv, BIT(port), false);
-}
+पूर्ण
 
-static void sja1105_phylink_validate(struct dsa_switch *ds, int port,
-				     unsigned long *supported,
-				     struct phylink_link_state *state)
-{
-	/* Construct a new mask which exhaustively contains all link features
+अटल व्योम sja1105_phylink_validate(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				     अचिन्हित दीर्घ *supported,
+				     काष्ठा phylink_link_state *state)
+अणु
+	/* Conकाष्ठा a new mask which exhaustively contains all link features
 	 * supported by the MAC, and then apply that (logical AND) to what will
-	 * be sent to the PHY for "marketing".
+	 * be sent to the PHY क्रम "marketing".
 	 */
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
-	struct sja1105_private *priv = ds->priv;
-	struct sja1105_xmii_params_entry *mii;
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	काष्ठा sja1105_xmii_params_entry *mii;
 
-	mii = priv->static_config.tables[BLK_IDX_XMII_PARAMS].entries;
+	mii = priv->अटल_config.tables[BLK_IDX_XMII_PARAMS].entries;
 
 	/* include/linux/phylink.h says:
-	 *     When @state->interface is %PHY_INTERFACE_MODE_NA, phylink
-	 *     expects the MAC driver to return all supported link modes.
+	 *     When @state->पूर्णांकerface is %PHY_INTERFACE_MODE_NA, phylink
+	 *     expects the MAC driver to वापस all supported link modes.
 	 */
-	if (state->interface != PHY_INTERFACE_MODE_NA &&
-	    sja1105_phy_mode_mismatch(priv, port, state->interface)) {
-		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		return;
-	}
+	अगर (state->पूर्णांकerface != PHY_INTERFACE_MODE_NA &&
+	    sja1105_phy_mode_mismatch(priv, port, state->पूर्णांकerface)) अणु
+		biपंचांगap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
+		वापस;
+	पूर्ण
 
-	/* The MAC does not support pause frames, and also doesn't
+	/* The MAC करोes not support छोड़ो frames, and also करोesn't
 	 * support half-duplex traffic modes.
 	 */
 	phylink_set(mask, Autoneg);
@@ -1136,641 +1137,641 @@ static void sja1105_phylink_validate(struct dsa_switch *ds, int port,
 	phylink_set(mask, 10baseT_Full);
 	phylink_set(mask, 100baseT_Full);
 	phylink_set(mask, 100baseT1_Full);
-	if (mii->xmii_mode[port] == XMII_MODE_RGMII ||
+	अगर (mii->xmii_mode[port] == XMII_MODE_RGMII ||
 	    mii->xmii_mode[port] == XMII_MODE_SGMII)
 		phylink_set(mask, 1000baseT_Full);
 
-	bitmap_and(supported, supported, mask, __ETHTOOL_LINK_MODE_MASK_NBITS);
-	bitmap_and(state->advertising, state->advertising, mask,
+	biपंचांगap_and(supported, supported, mask, __ETHTOOL_LINK_MODE_MASK_NBITS);
+	biपंचांगap_and(state->advertising, state->advertising, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-}
+पूर्ण
 
-static int sja1105_mac_pcs_get_state(struct dsa_switch *ds, int port,
-				     struct phylink_link_state *state)
-{
-	struct sja1105_private *priv = ds->priv;
-	int ais;
+अटल पूर्णांक sja1105_mac_pcs_get_state(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				     काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक ais;
 
-	/* Read the vendor-specific AUTONEG_INTR_STATUS register */
-	ais = sja1105_sgmii_read(priv, SJA1105_AIS);
-	if (ais < 0)
-		return ais;
+	/* Read the venकरोr-specअगरic AUTONEG_INTR_STATUS रेजिस्टर */
+	ais = sja1105_sgmii_पढ़ो(priv, SJA1105_AIS);
+	अगर (ais < 0)
+		वापस ais;
 
-	switch (SJA1105_AIS_SPEED(ais)) {
-	case 0:
+	चयन (SJA1105_AIS_SPEED(ais)) अणु
+	हाल 0:
 		state->speed = SPEED_10;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		state->speed = SPEED_100;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		state->speed = SPEED_1000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(ds->dev, "Invalid SGMII PCS speed %lu\n",
 			SJA1105_AIS_SPEED(ais));
-	}
+	पूर्ण
 	state->duplex = SJA1105_AIS_DUPLEX_MODE(ais);
 	state->an_complete = SJA1105_AIS_COMPLETE(ais);
 	state->link = SJA1105_AIS_LINK_STATUS(ais);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-sja1105_find_static_fdb_entry(struct sja1105_private *priv, int port,
-			      const struct sja1105_l2_lookup_entry *requested)
-{
-	struct sja1105_l2_lookup_entry *l2_lookup;
-	struct sja1105_table *table;
-	int i;
+अटल पूर्णांक
+sja1105_find_अटल_fdb_entry(काष्ठा sja1105_निजी *priv, पूर्णांक port,
+			      स्थिर काष्ठा sja1105_l2_lookup_entry *requested)
+अणु
+	काष्ठा sja1105_l2_lookup_entry *l2_lookup;
+	काष्ठा sja1105_table *table;
+	पूर्णांक i;
 
-	table = &priv->static_config.tables[BLK_IDX_L2_LOOKUP];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_LOOKUP];
 	l2_lookup = table->entries;
 
-	for (i = 0; i < table->entry_count; i++)
-		if (l2_lookup[i].macaddr == requested->macaddr &&
+	क्रम (i = 0; i < table->entry_count; i++)
+		अगर (l2_lookup[i].macaddr == requested->macaddr &&
 		    l2_lookup[i].vlanid == requested->vlanid &&
 		    l2_lookup[i].destports & BIT(port))
-			return i;
+			वापस i;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-/* We want FDB entries added statically through the bridge command to persist
- * across switch resets, which are a common thing during normal SJA1105
- * operation. So we have to back them up in the static configuration tables
- * and hence apply them on next static config upload... yay!
+/* We want FDB entries added अटलally through the bridge command to persist
+ * across चयन resets, which are a common thing during normal SJA1105
+ * operation. So we have to back them up in the अटल configuration tables
+ * and hence apply them on next अटल config upload... yay!
  */
-static int
-sja1105_static_fdb_change(struct sja1105_private *priv, int port,
-			  const struct sja1105_l2_lookup_entry *requested,
+अटल पूर्णांक
+sja1105_अटल_fdb_change(काष्ठा sja1105_निजी *priv, पूर्णांक port,
+			  स्थिर काष्ठा sja1105_l2_lookup_entry *requested,
 			  bool keep)
-{
-	struct sja1105_l2_lookup_entry *l2_lookup;
-	struct sja1105_table *table;
-	int rc, match;
+अणु
+	काष्ठा sja1105_l2_lookup_entry *l2_lookup;
+	काष्ठा sja1105_table *table;
+	पूर्णांक rc, match;
 
-	table = &priv->static_config.tables[BLK_IDX_L2_LOOKUP];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_LOOKUP];
 
-	match = sja1105_find_static_fdb_entry(priv, port, requested);
-	if (match < 0) {
+	match = sja1105_find_अटल_fdb_entry(priv, port, requested);
+	अगर (match < 0) अणु
 		/* Can't delete a missing entry. */
-		if (!keep)
-			return 0;
+		अगर (!keep)
+			वापस 0;
 
 		/* No match => new entry */
 		rc = sja1105_table_resize(table, table->entry_count + 1);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		match = table->entry_count - 1;
-	}
+	पूर्ण
 
-	/* Assign pointer after the resize (it may be new memory) */
+	/* Assign poपूर्णांकer after the resize (it may be new memory) */
 	l2_lookup = table->entries;
 
 	/* We have a match.
-	 * If the job was to add this FDB entry, it's already done (mostly
-	 * anyway, since the port forwarding mask may have changed, case in
+	 * If the job was to add this FDB entry, it's alपढ़ोy करोne (mostly
+	 * anyway, since the port क्रमwarding mask may have changed, हाल in
 	 * which we update it).
 	 * Otherwise we have to delete it.
 	 */
-	if (keep) {
+	अगर (keep) अणु
 		l2_lookup[match] = *requested;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* To remove, the strategy is to overwrite the element with
+	/* To हटाओ, the strategy is to overग_लिखो the element with
 	 * the last one, and then reduce the array size by 1
 	 */
 	l2_lookup[match] = l2_lookup[table->entry_count - 1];
-	return sja1105_table_resize(table, table->entry_count - 1);
-}
+	वापस sja1105_table_resize(table, table->entry_count - 1);
+पूर्ण
 
-/* First-generation switches have a 4-way set associative TCAM that
+/* First-generation चयनes have a 4-way set associative TCAM that
  * holds the FDB entries. An FDB index spans from 0 to 1023 and is comprised of
  * a "bin" (grouping of 4 entries) and a "way" (an entry within a bin).
- * For the placement of a newly learnt FDB entry, the switch selects the bin
+ * For the placement of a newly learnt FDB entry, the चयन selects the bin
  * based on a hash function, and the way within that bin incrementally.
  */
-static int sja1105et_fdb_index(int bin, int way)
-{
-	return bin * SJA1105ET_FDB_BIN_SIZE + way;
-}
+अटल पूर्णांक sja1105et_fdb_index(पूर्णांक bin, पूर्णांक way)
+अणु
+	वापस bin * SJA1105ET_FDB_BIN_SIZE + way;
+पूर्ण
 
-static int sja1105et_is_fdb_entry_in_bin(struct sja1105_private *priv, int bin,
-					 const u8 *addr, u16 vid,
-					 struct sja1105_l2_lookup_entry *match,
-					 int *last_unused)
-{
-	int way;
+अटल पूर्णांक sja1105et_is_fdb_entry_in_bin(काष्ठा sja1105_निजी *priv, पूर्णांक bin,
+					 स्थिर u8 *addr, u16 vid,
+					 काष्ठा sja1105_l2_lookup_entry *match,
+					 पूर्णांक *last_unused)
+अणु
+	पूर्णांक way;
 
-	for (way = 0; way < SJA1105ET_FDB_BIN_SIZE; way++) {
-		struct sja1105_l2_lookup_entry l2_lookup = {0};
-		int index = sja1105et_fdb_index(bin, way);
+	क्रम (way = 0; way < SJA1105ET_FDB_BIN_SIZE; way++) अणु
+		काष्ठा sja1105_l2_lookup_entry l2_lookup = अणु0पूर्ण;
+		पूर्णांक index = sja1105et_fdb_index(bin, way);
 
 		/* Skip unused entries, optionally marking them
-		 * into the return value
+		 * पूर्णांकo the वापस value
 		 */
-		if (sja1105_dynamic_config_read(priv, BLK_IDX_L2_LOOKUP,
-						index, &l2_lookup)) {
-			if (last_unused)
+		अगर (sja1105_dynamic_config_पढ़ो(priv, BLK_IDX_L2_LOOKUP,
+						index, &l2_lookup)) अणु
+			अगर (last_unused)
 				*last_unused = way;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (l2_lookup.macaddr == ether_addr_to_u64(addr) &&
-		    l2_lookup.vlanid == vid) {
-			if (match)
+		अगर (l2_lookup.macaddr == ether_addr_to_u64(addr) &&
+		    l2_lookup.vlanid == vid) अणु
+			अगर (match)
 				*match = l2_lookup;
-			return way;
-		}
-	}
-	/* Return an invalid entry index if not found */
-	return -1;
-}
+			वापस way;
+		पूर्ण
+	पूर्ण
+	/* Return an invalid entry index अगर not found */
+	वापस -1;
+पूर्ण
 
-int sja1105et_fdb_add(struct dsa_switch *ds, int port,
-		      const unsigned char *addr, u16 vid)
-{
-	struct sja1105_l2_lookup_entry l2_lookup = {0};
-	struct sja1105_private *priv = ds->priv;
-	struct device *dev = ds->dev;
-	int last_unused = -1;
-	int bin, way, rc;
+पूर्णांक sja1105et_fdb_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+		      स्थिर अचिन्हित अक्षर *addr, u16 vid)
+अणु
+	काष्ठा sja1105_l2_lookup_entry l2_lookup = अणु0पूर्ण;
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	काष्ठा device *dev = ds->dev;
+	पूर्णांक last_unused = -1;
+	पूर्णांक bin, way, rc;
 
 	bin = sja1105et_fdb_hash(priv, addr, vid);
 
 	way = sja1105et_is_fdb_entry_in_bin(priv, bin, addr, vid,
 					    &l2_lookup, &last_unused);
-	if (way >= 0) {
+	अगर (way >= 0) अणु
 		/* We have an FDB entry. Is our port in the destination
-		 * mask? If yes, we need to do nothing. If not, we need
-		 * to rewrite the entry by adding this port to it.
+		 * mask? If yes, we need to करो nothing. If not, we need
+		 * to reग_लिखो the entry by adding this port to it.
 		 */
-		if (l2_lookup.destports & BIT(port))
-			return 0;
+		अगर (l2_lookup.destports & BIT(port))
+			वापस 0;
 		l2_lookup.destports |= BIT(port);
-	} else {
-		int index = sja1105et_fdb_index(bin, way);
+	पूर्ण अन्यथा अणु
+		पूर्णांक index = sja1105et_fdb_index(bin, way);
 
-		/* We don't have an FDB entry. We construct a new one and
-		 * try to find a place for it within the FDB table.
+		/* We करोn't have an FDB entry. We स्थिरruct a new one and
+		 * try to find a place क्रम it within the FDB table.
 		 */
 		l2_lookup.macaddr = ether_addr_to_u64(addr);
 		l2_lookup.destports = BIT(port);
 		l2_lookup.vlanid = vid;
 
-		if (last_unused >= 0) {
+		अगर (last_unused >= 0) अणु
 			way = last_unused;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Bin is full, need to evict somebody.
-			 * Choose victim at random. If you get these messages
+			 * Choose victim at अक्रमom. If you get these messages
 			 * often, you may need to consider changing the
 			 * distribution function:
-			 * static_config[BLK_IDX_L2_LOOKUP_PARAMS].entries->poly
+			 * अटल_config[BLK_IDX_L2_LOOKUP_PARAMS].entries->poly
 			 */
-			get_random_bytes(&way, sizeof(u8));
+			get_अक्रमom_bytes(&way, माप(u8));
 			way %= SJA1105ET_FDB_BIN_SIZE;
 			dev_warn(dev, "Warning, FDB bin %d full while adding entry for %pM. Evicting entry %u.\n",
 				 bin, addr, way);
 			/* Evict entry */
-			sja1105_dynamic_config_write(priv, BLK_IDX_L2_LOOKUP,
-						     index, NULL, false);
-		}
-	}
+			sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_L2_LOOKUP,
+						     index, शून्य, false);
+		पूर्ण
+	पूर्ण
 	l2_lookup.index = sja1105et_fdb_index(bin, way);
 
-	rc = sja1105_dynamic_config_write(priv, BLK_IDX_L2_LOOKUP,
+	rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_L2_LOOKUP,
 					  l2_lookup.index, &l2_lookup,
 					  true);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return sja1105_static_fdb_change(priv, port, &l2_lookup, true);
-}
+	वापस sja1105_अटल_fdb_change(priv, port, &l2_lookup, true);
+पूर्ण
 
-int sja1105et_fdb_del(struct dsa_switch *ds, int port,
-		      const unsigned char *addr, u16 vid)
-{
-	struct sja1105_l2_lookup_entry l2_lookup = {0};
-	struct sja1105_private *priv = ds->priv;
-	int index, bin, way, rc;
+पूर्णांक sja1105et_fdb_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+		      स्थिर अचिन्हित अक्षर *addr, u16 vid)
+अणु
+	काष्ठा sja1105_l2_lookup_entry l2_lookup = अणु0पूर्ण;
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक index, bin, way, rc;
 	bool keep;
 
 	bin = sja1105et_fdb_hash(priv, addr, vid);
 	way = sja1105et_is_fdb_entry_in_bin(priv, bin, addr, vid,
-					    &l2_lookup, NULL);
-	if (way < 0)
-		return 0;
+					    &l2_lookup, शून्य);
+	अगर (way < 0)
+		वापस 0;
 	index = sja1105et_fdb_index(bin, way);
 
 	/* We have an FDB entry. Is our port in the destination mask? If yes,
-	 * we need to remove it. If the resulting port mask becomes empty, we
+	 * we need to हटाओ it. If the resulting port mask becomes empty, we
 	 * need to completely evict the FDB entry.
-	 * Otherwise we just write it back.
+	 * Otherwise we just ग_लिखो it back.
 	 */
 	l2_lookup.destports &= ~BIT(port);
 
-	if (l2_lookup.destports)
+	अगर (l2_lookup.destports)
 		keep = true;
-	else
+	अन्यथा
 		keep = false;
 
-	rc = sja1105_dynamic_config_write(priv, BLK_IDX_L2_LOOKUP,
+	rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_L2_LOOKUP,
 					  index, &l2_lookup, keep);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return sja1105_static_fdb_change(priv, port, &l2_lookup, keep);
-}
+	वापस sja1105_अटल_fdb_change(priv, port, &l2_lookup, keep);
+पूर्ण
 
-int sja1105pqrs_fdb_add(struct dsa_switch *ds, int port,
-			const unsigned char *addr, u16 vid)
-{
-	struct sja1105_l2_lookup_entry l2_lookup = {0};
-	struct sja1105_private *priv = ds->priv;
-	int rc, i;
+पूर्णांक sja1105pqrs_fdb_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			स्थिर अचिन्हित अक्षर *addr, u16 vid)
+अणु
+	काष्ठा sja1105_l2_lookup_entry l2_lookup = अणु0पूर्ण;
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक rc, i;
 
-	/* Search for an existing entry in the FDB table */
+	/* Search क्रम an existing entry in the FDB table */
 	l2_lookup.macaddr = ether_addr_to_u64(addr);
 	l2_lookup.vlanid = vid;
 	l2_lookup.iotag = SJA1105_S_TAG;
 	l2_lookup.mask_macaddr = GENMASK_ULL(ETH_ALEN * 8 - 1, 0);
-	if (priv->vlan_state != SJA1105_VLAN_UNAWARE) {
+	अगर (priv->vlan_state != SJA1105_VLAN_UNAWARE) अणु
 		l2_lookup.mask_vlanid = VLAN_VID_MASK;
 		l2_lookup.mask_iotag = BIT(0);
-	} else {
+	पूर्ण अन्यथा अणु
 		l2_lookup.mask_vlanid = 0;
 		l2_lookup.mask_iotag = 0;
-	}
+	पूर्ण
 	l2_lookup.destports = BIT(port);
 
-	rc = sja1105_dynamic_config_read(priv, BLK_IDX_L2_LOOKUP,
+	rc = sja1105_dynamic_config_पढ़ो(priv, BLK_IDX_L2_LOOKUP,
 					 SJA1105_SEARCH, &l2_lookup);
-	if (rc == 0) {
-		/* Found and this port is already in the entry's
-		 * port mask => job done
+	अगर (rc == 0) अणु
+		/* Found and this port is alपढ़ोy in the entry's
+		 * port mask => job करोne
 		 */
-		if (l2_lookup.destports & BIT(port))
-			return 0;
-		/* l2_lookup.index is populated by the switch in case it
+		अगर (l2_lookup.destports & BIT(port))
+			वापस 0;
+		/* l2_lookup.index is populated by the चयन in हाल it
 		 * found something.
 		 */
 		l2_lookup.destports |= BIT(port);
-		goto skip_finding_an_index;
-	}
+		जाओ skip_finding_an_index;
+	पूर्ण
 
 	/* Not found, so try to find an unused spot in the FDB.
 	 * This is slightly inefficient because the strategy is knock-knock at
 	 * every possible position from 0 to 1023.
 	 */
-	for (i = 0; i < SJA1105_MAX_L2_LOOKUP_COUNT; i++) {
-		rc = sja1105_dynamic_config_read(priv, BLK_IDX_L2_LOOKUP,
-						 i, NULL);
-		if (rc < 0)
-			break;
-	}
-	if (i == SJA1105_MAX_L2_LOOKUP_COUNT) {
+	क्रम (i = 0; i < SJA1105_MAX_L2_LOOKUP_COUNT; i++) अणु
+		rc = sja1105_dynamic_config_पढ़ो(priv, BLK_IDX_L2_LOOKUP,
+						 i, शून्य);
+		अगर (rc < 0)
+			अवरोध;
+	पूर्ण
+	अगर (i == SJA1105_MAX_L2_LOOKUP_COUNT) अणु
 		dev_err(ds->dev, "FDB is full, cannot add entry.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	l2_lookup.lockeds = true;
 	l2_lookup.index = i;
 
 skip_finding_an_index:
-	rc = sja1105_dynamic_config_write(priv, BLK_IDX_L2_LOOKUP,
+	rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_L2_LOOKUP,
 					  l2_lookup.index, &l2_lookup,
 					  true);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return sja1105_static_fdb_change(priv, port, &l2_lookup, true);
-}
+	वापस sja1105_अटल_fdb_change(priv, port, &l2_lookup, true);
+पूर्ण
 
-int sja1105pqrs_fdb_del(struct dsa_switch *ds, int port,
-			const unsigned char *addr, u16 vid)
-{
-	struct sja1105_l2_lookup_entry l2_lookup = {0};
-	struct sja1105_private *priv = ds->priv;
+पूर्णांक sja1105pqrs_fdb_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			स्थिर अचिन्हित अक्षर *addr, u16 vid)
+अणु
+	काष्ठा sja1105_l2_lookup_entry l2_lookup = अणु0पूर्ण;
+	काष्ठा sja1105_निजी *priv = ds->priv;
 	bool keep;
-	int rc;
+	पूर्णांक rc;
 
 	l2_lookup.macaddr = ether_addr_to_u64(addr);
 	l2_lookup.vlanid = vid;
 	l2_lookup.iotag = SJA1105_S_TAG;
 	l2_lookup.mask_macaddr = GENMASK_ULL(ETH_ALEN * 8 - 1, 0);
-	if (priv->vlan_state != SJA1105_VLAN_UNAWARE) {
+	अगर (priv->vlan_state != SJA1105_VLAN_UNAWARE) अणु
 		l2_lookup.mask_vlanid = VLAN_VID_MASK;
 		l2_lookup.mask_iotag = BIT(0);
-	} else {
+	पूर्ण अन्यथा अणु
 		l2_lookup.mask_vlanid = 0;
 		l2_lookup.mask_iotag = 0;
-	}
+	पूर्ण
 	l2_lookup.destports = BIT(port);
 
-	rc = sja1105_dynamic_config_read(priv, BLK_IDX_L2_LOOKUP,
+	rc = sja1105_dynamic_config_पढ़ो(priv, BLK_IDX_L2_LOOKUP,
 					 SJA1105_SEARCH, &l2_lookup);
-	if (rc < 0)
-		return 0;
+	अगर (rc < 0)
+		वापस 0;
 
 	l2_lookup.destports &= ~BIT(port);
 
-	/* Decide whether we remove just this port from the FDB entry,
-	 * or if we remove it completely.
+	/* Decide whether we हटाओ just this port from the FDB entry,
+	 * or अगर we हटाओ it completely.
 	 */
-	if (l2_lookup.destports)
+	अगर (l2_lookup.destports)
 		keep = true;
-	else
+	अन्यथा
 		keep = false;
 
-	rc = sja1105_dynamic_config_write(priv, BLK_IDX_L2_LOOKUP,
+	rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_L2_LOOKUP,
 					  l2_lookup.index, &l2_lookup, keep);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return sja1105_static_fdb_change(priv, port, &l2_lookup, keep);
-}
+	वापस sja1105_अटल_fdb_change(priv, port, &l2_lookup, keep);
+पूर्ण
 
-static int sja1105_fdb_add(struct dsa_switch *ds, int port,
-			   const unsigned char *addr, u16 vid)
-{
-	struct sja1105_private *priv = ds->priv;
+अटल पूर्णांक sja1105_fdb_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   स्थिर अचिन्हित अक्षर *addr, u16 vid)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
 
 	/* dsa_8021q is in effect when the bridge's vlan_filtering isn't,
-	 * so the switch still does some VLAN processing internally.
+	 * so the चयन still करोes some VLAN processing पूर्णांकernally.
 	 * But Shared VLAN Learning (SVL) is also active, and it will take
-	 * care of autonomous forwarding between the unique pvid's of each
+	 * care of स्वतःnomous क्रमwarding between the unique pvid's of each
 	 * port.  Here we just make sure that users can't add duplicate FDB
-	 * entries when in this mode - the actual VID doesn't matter except
-	 * for what gets printed in 'bridge fdb show'.  In the case of zero,
-	 * no VID gets printed at all.
+	 * entries when in this mode - the actual VID करोesn't matter except
+	 * क्रम what माला_लो prपूर्णांकed in 'bridge fdb show'.  In the हाल of zero,
+	 * no VID माला_लो prपूर्णांकed at all.
 	 */
-	if (priv->vlan_state != SJA1105_VLAN_FILTERING_FULL)
+	अगर (priv->vlan_state != SJA1105_VLAN_FILTERING_FULL)
 		vid = 0;
 
-	return priv->info->fdb_add_cmd(ds, port, addr, vid);
-}
+	वापस priv->info->fdb_add_cmd(ds, port, addr, vid);
+पूर्ण
 
-static int sja1105_fdb_del(struct dsa_switch *ds, int port,
-			   const unsigned char *addr, u16 vid)
-{
-	struct sja1105_private *priv = ds->priv;
+अटल पूर्णांक sja1105_fdb_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   स्थिर अचिन्हित अक्षर *addr, u16 vid)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
 
-	if (priv->vlan_state != SJA1105_VLAN_FILTERING_FULL)
+	अगर (priv->vlan_state != SJA1105_VLAN_FILTERING_FULL)
 		vid = 0;
 
-	return priv->info->fdb_del_cmd(ds, port, addr, vid);
-}
+	वापस priv->info->fdb_del_cmd(ds, port, addr, vid);
+पूर्ण
 
-static int sja1105_fdb_dump(struct dsa_switch *ds, int port,
-			    dsa_fdb_dump_cb_t *cb, void *data)
-{
-	struct sja1105_private *priv = ds->priv;
-	struct device *dev = ds->dev;
-	int i;
+अटल पूर्णांक sja1105_fdb_dump(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			    dsa_fdb_dump_cb_t *cb, व्योम *data)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	काष्ठा device *dev = ds->dev;
+	पूर्णांक i;
 
-	for (i = 0; i < SJA1105_MAX_L2_LOOKUP_COUNT; i++) {
-		struct sja1105_l2_lookup_entry l2_lookup = {0};
+	क्रम (i = 0; i < SJA1105_MAX_L2_LOOKUP_COUNT; i++) अणु
+		काष्ठा sja1105_l2_lookup_entry l2_lookup = अणु0पूर्ण;
 		u8 macaddr[ETH_ALEN];
-		int rc;
+		पूर्णांक rc;
 
-		rc = sja1105_dynamic_config_read(priv, BLK_IDX_L2_LOOKUP,
+		rc = sja1105_dynamic_config_पढ़ो(priv, BLK_IDX_L2_LOOKUP,
 						 i, &l2_lookup);
 		/* No fdb entry at i, not an issue */
-		if (rc == -ENOENT)
-			continue;
-		if (rc) {
+		अगर (rc == -ENOENT)
+			जारी;
+		अगर (rc) अणु
 			dev_err(dev, "Failed to dump FDB: %d\n", rc);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
 		/* FDB dump callback is per port. This means we have to
-		 * disregard a valid entry if it's not for this port, even if
+		 * disregard a valid entry अगर it's not क्रम this port, even अगर
 		 * only to revisit it later. This is inefficient because the
-		 * 1024-sized FDB table needs to be traversed 4 times through
+		 * 1024-sized FDB table needs to be traversed 4 बार through
 		 * SPI during a 'bridge fdb show' command.
 		 */
-		if (!(l2_lookup.destports & BIT(port)))
-			continue;
+		अगर (!(l2_lookup.destports & BIT(port)))
+			जारी;
 
-		/* We need to hide the FDB entry for unknown multicast */
-		if (l2_lookup.macaddr == SJA1105_UNKNOWN_MULTICAST &&
+		/* We need to hide the FDB entry क्रम unknown multicast */
+		अगर (l2_lookup.macaddr == SJA1105_UNKNOWN_MULTICAST &&
 		    l2_lookup.mask_macaddr == SJA1105_UNKNOWN_MULTICAST)
-			continue;
+			जारी;
 
 		u64_to_ether_addr(l2_lookup.macaddr, macaddr);
 
 		/* We need to hide the dsa_8021q VLANs from the user. */
-		if (priv->vlan_state == SJA1105_VLAN_UNAWARE)
+		अगर (priv->vlan_state == SJA1105_VLAN_UNAWARE)
 			l2_lookup.vlanid = 0;
 		cb(macaddr, l2_lookup.vlanid, l2_lookup.lockeds, data);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int sja1105_mdb_add(struct dsa_switch *ds, int port,
-			   const struct switchdev_obj_port_mdb *mdb)
-{
-	return sja1105_fdb_add(ds, port, mdb->addr, mdb->vid);
-}
+अटल पूर्णांक sja1105_mdb_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   स्थिर काष्ठा चयनdev_obj_port_mdb *mdb)
+अणु
+	वापस sja1105_fdb_add(ds, port, mdb->addr, mdb->vid);
+पूर्ण
 
-static int sja1105_mdb_del(struct dsa_switch *ds, int port,
-			   const struct switchdev_obj_port_mdb *mdb)
-{
-	return sja1105_fdb_del(ds, port, mdb->addr, mdb->vid);
-}
+अटल पूर्णांक sja1105_mdb_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   स्थिर काष्ठा चयनdev_obj_port_mdb *mdb)
+अणु
+	वापस sja1105_fdb_del(ds, port, mdb->addr, mdb->vid);
+पूर्ण
 
-/* Common function for unicast and broadcast flood configuration.
- * Flooding is configured between each {ingress, egress} port pair, and since
+/* Common function क्रम unicast and broadcast flood configuration.
+ * Flooding is configured between each अणुingress, egressपूर्ण port pair, and since
  * the bridge's semantics are those of "egress flooding", it means we must
  * enable flooding towards this port from all ingress ports that are in the
- * same forwarding domain.
+ * same क्रमwarding करोमुख्य.
  */
-static int sja1105_manage_flood_domains(struct sja1105_private *priv)
-{
-	struct sja1105_l2_forwarding_entry *l2_fwd;
-	struct dsa_switch *ds = priv->ds;
-	int from, to, rc;
+अटल पूर्णांक sja1105_manage_flood_करोमुख्यs(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_l2_क्रमwarding_entry *l2_fwd;
+	काष्ठा dsa_चयन *ds = priv->ds;
+	पूर्णांक from, to, rc;
 
-	l2_fwd = priv->static_config.tables[BLK_IDX_L2_FORWARDING].entries;
+	l2_fwd = priv->अटल_config.tables[BLK_IDX_L2_FORWARDING].entries;
 
-	for (from = 0; from < ds->num_ports; from++) {
-		u64 fl_domain = 0, bc_domain = 0;
+	क्रम (from = 0; from < ds->num_ports; from++) अणु
+		u64 fl_करोमुख्य = 0, bc_करोमुख्य = 0;
 
-		for (to = 0; to < priv->ds->num_ports; to++) {
-			if (!sja1105_can_forward(l2_fwd, from, to))
-				continue;
+		क्रम (to = 0; to < priv->ds->num_ports; to++) अणु
+			अगर (!sja1105_can_क्रमward(l2_fwd, from, to))
+				जारी;
 
-			if (priv->ucast_egress_floods & BIT(to))
-				fl_domain |= BIT(to);
-			if (priv->bcast_egress_floods & BIT(to))
-				bc_domain |= BIT(to);
-		}
+			अगर (priv->ucast_egress_floods & BIT(to))
+				fl_करोमुख्य |= BIT(to);
+			अगर (priv->bcast_egress_floods & BIT(to))
+				bc_करोमुख्य |= BIT(to);
+		पूर्ण
 
-		/* Nothing changed, nothing to do */
-		if (l2_fwd[from].fl_domain == fl_domain &&
-		    l2_fwd[from].bc_domain == bc_domain)
-			continue;
+		/* Nothing changed, nothing to करो */
+		अगर (l2_fwd[from].fl_करोमुख्य == fl_करोमुख्य &&
+		    l2_fwd[from].bc_करोमुख्य == bc_करोमुख्य)
+			जारी;
 
-		l2_fwd[from].fl_domain = fl_domain;
-		l2_fwd[from].bc_domain = bc_domain;
+		l2_fwd[from].fl_करोमुख्य = fl_करोमुख्य;
+		l2_fwd[from].bc_करोमुख्य = bc_करोमुख्य;
 
-		rc = sja1105_dynamic_config_write(priv, BLK_IDX_L2_FORWARDING,
+		rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_L2_FORWARDING,
 						  from, &l2_fwd[from], true);
-		if (rc < 0)
-			return rc;
-	}
+		अगर (rc < 0)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_bridge_member(struct dsa_switch *ds, int port,
-				 struct net_device *br, bool member)
-{
-	struct sja1105_l2_forwarding_entry *l2_fwd;
-	struct sja1105_private *priv = ds->priv;
-	int i, rc;
+अटल पूर्णांक sja1105_bridge_member(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				 काष्ठा net_device *br, bool member)
+अणु
+	काष्ठा sja1105_l2_क्रमwarding_entry *l2_fwd;
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक i, rc;
 
-	l2_fwd = priv->static_config.tables[BLK_IDX_L2_FORWARDING].entries;
+	l2_fwd = priv->अटल_config.tables[BLK_IDX_L2_FORWARDING].entries;
 
-	for (i = 0; i < SJA1105_NUM_PORTS; i++) {
-		/* Add this port to the forwarding matrix of the
+	क्रम (i = 0; i < SJA1105_NUM_PORTS; i++) अणु
+		/* Add this port to the क्रमwarding matrix of the
 		 * other ports in the same bridge, and viceversa.
 		 */
-		if (!dsa_is_user_port(ds, i))
-			continue;
-		/* For the ports already under the bridge, only one thing needs
-		 * to be done, and that is to add this port to their
-		 * reachability domain. So we can perform the SPI write for
-		 * them immediately. However, for this port itself (the one
+		अगर (!dsa_is_user_port(ds, i))
+			जारी;
+		/* For the ports alपढ़ोy under the bridge, only one thing needs
+		 * to be करोne, and that is to add this port to their
+		 * reachability करोमुख्य. So we can perक्रमm the SPI ग_लिखो क्रम
+		 * them immediately. However, क्रम this port itself (the one
 		 * that is new to the bridge), we need to add all other ports
-		 * to its reachability domain. So we do that incrementally in
-		 * this loop, and perform the SPI write only at the end, once
-		 * the domain contains all other bridge ports.
+		 * to its reachability करोमुख्य. So we करो that incrementally in
+		 * this loop, and perक्रमm the SPI ग_लिखो only at the end, once
+		 * the करोमुख्य contains all other bridge ports.
 		 */
-		if (i == port)
-			continue;
-		if (dsa_to_port(ds, i)->bridge_dev != br)
-			continue;
+		अगर (i == port)
+			जारी;
+		अगर (dsa_to_port(ds, i)->bridge_dev != br)
+			जारी;
 		sja1105_port_allow_traffic(l2_fwd, i, port, member);
 		sja1105_port_allow_traffic(l2_fwd, port, i, member);
 
-		rc = sja1105_dynamic_config_write(priv, BLK_IDX_L2_FORWARDING,
+		rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_L2_FORWARDING,
 						  i, &l2_fwd[i], true);
-		if (rc < 0)
-			return rc;
-	}
+		अगर (rc < 0)
+			वापस rc;
+	पूर्ण
 
-	rc = sja1105_dynamic_config_write(priv, BLK_IDX_L2_FORWARDING,
+	rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_L2_FORWARDING,
 					  port, &l2_fwd[port], true);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return sja1105_manage_flood_domains(priv);
-}
+	वापस sja1105_manage_flood_करोमुख्यs(priv);
+पूर्ण
 
-static void sja1105_bridge_stp_state_set(struct dsa_switch *ds, int port,
+अटल व्योम sja1105_bridge_stp_state_set(काष्ठा dsa_चयन *ds, पूर्णांक port,
 					 u8 state)
-{
-	struct sja1105_private *priv = ds->priv;
-	struct sja1105_mac_config_entry *mac;
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	काष्ठा sja1105_mac_config_entry *mac;
 
-	mac = priv->static_config.tables[BLK_IDX_MAC_CONFIG].entries;
+	mac = priv->अटल_config.tables[BLK_IDX_MAC_CONFIG].entries;
 
-	switch (state) {
-	case BR_STATE_DISABLED:
-	case BR_STATE_BLOCKING:
+	चयन (state) अणु
+	हाल BR_STATE_DISABLED:
+	हाल BR_STATE_BLOCKING:
 		/* From UM10944 description of DRPDTAG (why put this there?):
 		 * "Management traffic flows to the port regardless of the state
 		 * of the INGRESS flag". So BPDUs are still be allowed to pass.
-		 * At the moment no difference between DISABLED and BLOCKING.
+		 * At the moment no dअगरference between DISABLED and BLOCKING.
 		 */
 		mac[port].ingress   = false;
 		mac[port].egress    = false;
 		mac[port].dyn_learn = false;
-		break;
-	case BR_STATE_LISTENING:
+		अवरोध;
+	हाल BR_STATE_LISTENING:
 		mac[port].ingress   = true;
 		mac[port].egress    = false;
 		mac[port].dyn_learn = false;
-		break;
-	case BR_STATE_LEARNING:
+		अवरोध;
+	हाल BR_STATE_LEARNING:
 		mac[port].ingress   = true;
 		mac[port].egress    = false;
 		mac[port].dyn_learn = !!(priv->learn_ena & BIT(port));
-		break;
-	case BR_STATE_FORWARDING:
+		अवरोध;
+	हाल BR_STATE_FORWARDING:
 		mac[port].ingress   = true;
 		mac[port].egress    = true;
 		mac[port].dyn_learn = !!(priv->learn_ena & BIT(port));
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(ds->dev, "invalid STP state: %d\n", state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	sja1105_dynamic_config_write(priv, BLK_IDX_MAC_CONFIG, port,
+	sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_MAC_CONFIG, port,
 				     &mac[port], true);
-}
+पूर्ण
 
-static int sja1105_bridge_join(struct dsa_switch *ds, int port,
-			       struct net_device *br)
-{
-	return sja1105_bridge_member(ds, port, br, true);
-}
+अटल पूर्णांक sja1105_bridge_join(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			       काष्ठा net_device *br)
+अणु
+	वापस sja1105_bridge_member(ds, port, br, true);
+पूर्ण
 
-static void sja1105_bridge_leave(struct dsa_switch *ds, int port,
-				 struct net_device *br)
-{
+अटल व्योम sja1105_bridge_leave(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				 काष्ठा net_device *br)
+अणु
 	sja1105_bridge_member(ds, port, br, false);
-}
+पूर्ण
 
-#define BYTES_PER_KBIT (1000LL / 8)
+#घोषणा BYTES_PER_KBIT (1000LL / 8)
 
-static int sja1105_find_unused_cbs_shaper(struct sja1105_private *priv)
-{
-	int i;
+अटल पूर्णांक sja1105_find_unused_cbs_shaper(काष्ठा sja1105_निजी *priv)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < priv->info->num_cbs_shapers; i++)
-		if (!priv->cbs[i].idle_slope && !priv->cbs[i].send_slope)
-			return i;
+	क्रम (i = 0; i < priv->info->num_cbs_shapers; i++)
+		अगर (!priv->cbs[i].idle_slope && !priv->cbs[i].send_slope)
+			वापस i;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int sja1105_delete_cbs_shaper(struct sja1105_private *priv, int port,
-				     int prio)
-{
-	int i;
+अटल पूर्णांक sja1105_delete_cbs_shaper(काष्ठा sja1105_निजी *priv, पूर्णांक port,
+				     पूर्णांक prio)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < priv->info->num_cbs_shapers; i++) {
-		struct sja1105_cbs_entry *cbs = &priv->cbs[i];
+	क्रम (i = 0; i < priv->info->num_cbs_shapers; i++) अणु
+		काष्ठा sja1105_cbs_entry *cbs = &priv->cbs[i];
 
-		if (cbs->port == port && cbs->prio == prio) {
-			memset(cbs, 0, sizeof(*cbs));
-			return sja1105_dynamic_config_write(priv, BLK_IDX_CBS,
+		अगर (cbs->port == port && cbs->prio == prio) अणु
+			स_रखो(cbs, 0, माप(*cbs));
+			वापस sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_CBS,
 							    i, cbs, true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_setup_tc_cbs(struct dsa_switch *ds, int port,
-				struct tc_cbs_qopt_offload *offload)
-{
-	struct sja1105_private *priv = ds->priv;
-	struct sja1105_cbs_entry *cbs;
-	int index;
+अटल पूर्णांक sja1105_setup_tc_cbs(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				काष्ठा tc_cbs_qopt_offload *offload)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	काष्ठा sja1105_cbs_entry *cbs;
+	पूर्णांक index;
 
-	if (!offload->enable)
-		return sja1105_delete_cbs_shaper(priv, port, offload->queue);
+	अगर (!offload->enable)
+		वापस sja1105_delete_cbs_shaper(priv, port, offload->queue);
 
 	index = sja1105_find_unused_cbs_shaper(priv);
-	if (index < 0)
-		return -ENOSPC;
+	अगर (index < 0)
+		वापस -ENOSPC;
 
 	cbs = &priv->cbs[index];
 	cbs->port = port;
@@ -1779,114 +1780,114 @@ static int sja1105_setup_tc_cbs(struct dsa_switch *ds, int port,
 	 * positive values must be provided, and the negative sign is implicit.
 	 */
 	cbs->credit_hi = offload->hicredit;
-	cbs->credit_lo = abs(offload->locredit);
+	cbs->credit_lo = असल(offload->locredit);
 	/* User space is in kbits/sec, hardware in bytes/sec */
 	cbs->idle_slope = offload->idleslope * BYTES_PER_KBIT;
-	cbs->send_slope = abs(offload->sendslope * BYTES_PER_KBIT);
+	cbs->send_slope = असल(offload->sendslope * BYTES_PER_KBIT);
 	/* Convert the negative values from 64-bit 2's complement
-	 * to 32-bit 2's complement (for the case of 0x80000000 whose
+	 * to 32-bit 2's complement (क्रम the हाल of 0x80000000 whose
 	 * negative is still negative).
 	 */
 	cbs->credit_lo &= GENMASK_ULL(31, 0);
 	cbs->send_slope &= GENMASK_ULL(31, 0);
 
-	return sja1105_dynamic_config_write(priv, BLK_IDX_CBS, index, cbs,
+	वापस sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_CBS, index, cbs,
 					    true);
-}
+पूर्ण
 
-static int sja1105_reload_cbs(struct sja1105_private *priv)
-{
-	int rc = 0, i;
+अटल पूर्णांक sja1105_reload_cbs(काष्ठा sja1105_निजी *priv)
+अणु
+	पूर्णांक rc = 0, i;
 
-	for (i = 0; i < priv->info->num_cbs_shapers; i++) {
-		struct sja1105_cbs_entry *cbs = &priv->cbs[i];
+	क्रम (i = 0; i < priv->info->num_cbs_shapers; i++) अणु
+		काष्ठा sja1105_cbs_entry *cbs = &priv->cbs[i];
 
-		if (!cbs->idle_slope && !cbs->send_slope)
-			continue;
+		अगर (!cbs->idle_slope && !cbs->send_slope)
+			जारी;
 
-		rc = sja1105_dynamic_config_write(priv, BLK_IDX_CBS, i, cbs,
+		rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_CBS, i, cbs,
 						  true);
-		if (rc)
-			break;
-	}
+		अगर (rc)
+			अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const char * const sja1105_reset_reasons[] = {
+अटल स्थिर अक्षर * स्थिर sja1105_reset_reasons[] = अणु
 	[SJA1105_VLAN_FILTERING] = "VLAN filtering",
 	[SJA1105_RX_HWTSTAMPING] = "RX timestamping",
 	[SJA1105_AGEING_TIME] = "Ageing time",
 	[SJA1105_SCHEDULING] = "Time-aware scheduling",
 	[SJA1105_BEST_EFFORT_POLICING] = "Best-effort policing",
 	[SJA1105_VIRTUAL_LINKS] = "Virtual links",
-};
+पूर्ण;
 
-/* For situations where we need to change a setting at runtime that is only
- * available through the static configuration, resetting the switch in order
- * to upload the new static config is unavoidable. Back up the settings we
- * modify at runtime (currently only MAC) and restore them after uploading,
+/* For situations where we need to change a setting at runसमय that is only
+ * available through the अटल configuration, resetting the चयन in order
+ * to upload the new अटल config is unaव्योमable. Back up the settings we
+ * modअगरy at runसमय (currently only MAC) and restore them after uploading,
  * such that this operation is relatively seamless.
  */
-int sja1105_static_config_reload(struct sja1105_private *priv,
-				 enum sja1105_reset_reason reason)
-{
-	struct ptp_system_timestamp ptp_sts_before;
-	struct ptp_system_timestamp ptp_sts_after;
-	struct sja1105_mac_config_entry *mac;
-	int speed_mbps[SJA1105_NUM_PORTS];
-	struct dsa_switch *ds = priv->ds;
+पूर्णांक sja1105_अटल_config_reload(काष्ठा sja1105_निजी *priv,
+				 क्रमागत sja1105_reset_reason reason)
+अणु
+	काष्ठा ptp_प्रणाली_बारtamp ptp_sts_beक्रमe;
+	काष्ठा ptp_प्रणाली_बारtamp ptp_sts_after;
+	काष्ठा sja1105_mac_config_entry *mac;
+	पूर्णांक speed_mbps[SJA1105_NUM_PORTS];
+	काष्ठा dsa_चयन *ds = priv->ds;
 	s64 t1, t2, t3, t4;
 	s64 t12, t34;
 	u16 bmcr = 0;
-	int rc, i;
+	पूर्णांक rc, i;
 	s64 now;
 
 	mutex_lock(&priv->mgmt_lock);
 
-	mac = priv->static_config.tables[BLK_IDX_MAC_CONFIG].entries;
+	mac = priv->अटल_config.tables[BLK_IDX_MAC_CONFIG].entries;
 
 	/* Back up the dynamic link speed changed by sja1105_adjust_port_config
 	 * in order to temporarily restore it to SJA1105_SPEED_AUTO - which the
-	 * switch wants to see in the static config in order to allow us to
-	 * change it through the dynamic interface later.
+	 * चयन wants to see in the अटल config in order to allow us to
+	 * change it through the dynamic पूर्णांकerface later.
 	 */
-	for (i = 0; i < SJA1105_NUM_PORTS; i++) {
+	क्रम (i = 0; i < SJA1105_NUM_PORTS; i++) अणु
 		speed_mbps[i] = sja1105_speed[mac[i].speed];
 		mac[i].speed = SJA1105_SPEED_AUTO;
-	}
+	पूर्ण
 
-	if (sja1105_supports_sgmii(priv, SJA1105_SGMII_PORT))
-		bmcr = sja1105_sgmii_read(priv, MII_BMCR);
+	अगर (sja1105_supports_sgmii(priv, SJA1105_SGMII_PORT))
+		bmcr = sja1105_sgmii_पढ़ो(priv, MII_BMCR);
 
 	/* No PTP operations can run right now */
 	mutex_lock(&priv->ptp_data.lock);
 
-	rc = __sja1105_ptp_gettimex(ds, &now, &ptp_sts_before);
-	if (rc < 0)
-		goto out_unlock_ptp;
+	rc = __sja1105_ptp_समय_लोx(ds, &now, &ptp_sts_beक्रमe);
+	अगर (rc < 0)
+		जाओ out_unlock_ptp;
 
-	/* Reset switch and send updated static configuration */
-	rc = sja1105_static_config_upload(priv);
-	if (rc < 0)
-		goto out_unlock_ptp;
+	/* Reset चयन and send updated अटल configuration */
+	rc = sja1105_अटल_config_upload(priv);
+	अगर (rc < 0)
+		जाओ out_unlock_ptp;
 
-	rc = __sja1105_ptp_settime(ds, 0, &ptp_sts_after);
-	if (rc < 0)
-		goto out_unlock_ptp;
+	rc = __sja1105_ptp_समय_रखो(ds, 0, &ptp_sts_after);
+	अगर (rc < 0)
+		जाओ out_unlock_ptp;
 
-	t1 = timespec64_to_ns(&ptp_sts_before.pre_ts);
-	t2 = timespec64_to_ns(&ptp_sts_before.post_ts);
-	t3 = timespec64_to_ns(&ptp_sts_after.pre_ts);
-	t4 = timespec64_to_ns(&ptp_sts_after.post_ts);
-	/* Mid point, corresponds to pre-reset PTPCLKVAL */
+	t1 = बारpec64_to_ns(&ptp_sts_beक्रमe.pre_ts);
+	t2 = बारpec64_to_ns(&ptp_sts_beक्रमe.post_ts);
+	t3 = बारpec64_to_ns(&ptp_sts_after.pre_ts);
+	t4 = बारpec64_to_ns(&ptp_sts_after.post_ts);
+	/* Mid poपूर्णांक, corresponds to pre-reset PTPCLKVAL */
 	t12 = t1 + (t2 - t1) / 2;
-	/* Mid point, corresponds to post-reset PTPCLKVAL, aka 0 */
+	/* Mid poपूर्णांक, corresponds to post-reset PTPCLKVAL, aka 0 */
 	t34 = t3 + (t4 - t3) / 2;
-	/* Advance PTPCLKVAL by the time it took since its readout */
+	/* Advance PTPCLKVAL by the समय it took since its पढ़ोout */
 	now += (t34 - t12);
 
-	__sja1105_ptp_adjtime(ds, now);
+	__sja1105_ptp_adjसमय(ds, now);
 
 out_unlock_ptp:
 	mutex_unlock(&priv->ptp_data.lock);
@@ -1895,114 +1896,114 @@ out_unlock_ptp:
 		 "Reset switch and programmed static config. Reason: %s\n",
 		 sja1105_reset_reasons[reason]);
 
-	/* Configure the CGU (PLLs) for MII and RMII PHYs.
-	 * For these interfaces there is no dynamic configuration
+	/* Configure the CGU (PLLs) क्रम MII and RMII PHYs.
+	 * For these पूर्णांकerfaces there is no dynamic configuration
 	 * needed, since PLLs have same settings at all speeds.
 	 */
-	rc = sja1105_clocking_setup(priv);
-	if (rc < 0)
-		goto out;
+	rc = sja1105_घड़ीing_setup(priv);
+	अगर (rc < 0)
+		जाओ out;
 
-	for (i = 0; i < SJA1105_NUM_PORTS; i++) {
+	क्रम (i = 0; i < SJA1105_NUM_PORTS; i++) अणु
 		rc = sja1105_adjust_port_config(priv, i, speed_mbps[i]);
-		if (rc < 0)
-			goto out;
-	}
+		अगर (rc < 0)
+			जाओ out;
+	पूर्ण
 
-	if (sja1105_supports_sgmii(priv, SJA1105_SGMII_PORT)) {
+	अगर (sja1105_supports_sgmii(priv, SJA1105_SGMII_PORT)) अणु
 		bool an_enabled = !!(bmcr & BMCR_ANENABLE);
 
 		sja1105_sgmii_pcs_config(priv, an_enabled, false);
 
-		if (!an_enabled) {
-			int speed = SPEED_UNKNOWN;
+		अगर (!an_enabled) अणु
+			पूर्णांक speed = SPEED_UNKNOWN;
 
-			if (bmcr & BMCR_SPEED1000)
+			अगर (bmcr & BMCR_SPEED1000)
 				speed = SPEED_1000;
-			else if (bmcr & BMCR_SPEED100)
+			अन्यथा अगर (bmcr & BMCR_SPEED100)
 				speed = SPEED_100;
-			else
+			अन्यथा
 				speed = SPEED_10;
 
-			sja1105_sgmii_pcs_force_speed(priv, speed);
-		}
-	}
+			sja1105_sgmii_pcs_क्रमce_speed(priv, speed);
+		पूर्ण
+	पूर्ण
 
 	rc = sja1105_reload_cbs(priv);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 out:
 	mutex_unlock(&priv->mgmt_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int sja1105_pvid_apply(struct sja1105_private *priv, int port, u16 pvid)
-{
-	struct sja1105_mac_config_entry *mac;
+अटल पूर्णांक sja1105_pvid_apply(काष्ठा sja1105_निजी *priv, पूर्णांक port, u16 pvid)
+अणु
+	काष्ठा sja1105_mac_config_entry *mac;
 
-	mac = priv->static_config.tables[BLK_IDX_MAC_CONFIG].entries;
+	mac = priv->अटल_config.tables[BLK_IDX_MAC_CONFIG].entries;
 
 	mac[port].vlanid = pvid;
 
-	return sja1105_dynamic_config_write(priv, BLK_IDX_MAC_CONFIG, port,
+	वापस sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_MAC_CONFIG, port,
 					   &mac[port], true);
-}
+पूर्ण
 
-static int sja1105_crosschip_bridge_join(struct dsa_switch *ds,
-					 int tree_index, int sw_index,
-					 int other_port, struct net_device *br)
-{
-	struct dsa_switch *other_ds = dsa_switch_find(tree_index, sw_index);
-	struct sja1105_private *other_priv = other_ds->priv;
-	struct sja1105_private *priv = ds->priv;
-	int port, rc;
+अटल पूर्णांक sja1105_crosschip_bridge_join(काष्ठा dsa_चयन *ds,
+					 पूर्णांक tree_index, पूर्णांक sw_index,
+					 पूर्णांक other_port, काष्ठा net_device *br)
+अणु
+	काष्ठा dsa_चयन *other_ds = dsa_चयन_find(tree_index, sw_index);
+	काष्ठा sja1105_निजी *other_priv = other_ds->priv;
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक port, rc;
 
-	if (other_ds->ops != &sja1105_switch_ops)
-		return 0;
+	अगर (other_ds->ops != &sja1105_चयन_ops)
+		वापस 0;
 
-	for (port = 0; port < ds->num_ports; port++) {
-		if (!dsa_is_user_port(ds, port))
-			continue;
-		if (dsa_to_port(ds, port)->bridge_dev != br)
-			continue;
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		अगर (!dsa_is_user_port(ds, port))
+			जारी;
+		अगर (dsa_to_port(ds, port)->bridge_dev != br)
+			जारी;
 
 		rc = dsa_8021q_crosschip_bridge_join(priv->dsa_8021q_ctx,
 						     port,
 						     other_priv->dsa_8021q_ctx,
 						     other_port);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		rc = dsa_8021q_crosschip_bridge_join(other_priv->dsa_8021q_ctx,
 						     other_port,
 						     priv->dsa_8021q_ctx,
 						     port);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sja1105_crosschip_bridge_leave(struct dsa_switch *ds,
-					   int tree_index, int sw_index,
-					   int other_port,
-					   struct net_device *br)
-{
-	struct dsa_switch *other_ds = dsa_switch_find(tree_index, sw_index);
-	struct sja1105_private *other_priv = other_ds->priv;
-	struct sja1105_private *priv = ds->priv;
-	int port;
+अटल व्योम sja1105_crosschip_bridge_leave(काष्ठा dsa_चयन *ds,
+					   पूर्णांक tree_index, पूर्णांक sw_index,
+					   पूर्णांक other_port,
+					   काष्ठा net_device *br)
+अणु
+	काष्ठा dsa_चयन *other_ds = dsa_चयन_find(tree_index, sw_index);
+	काष्ठा sja1105_निजी *other_priv = other_ds->priv;
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक port;
 
-	if (other_ds->ops != &sja1105_switch_ops)
-		return;
+	अगर (other_ds->ops != &sja1105_चयन_ops)
+		वापस;
 
-	for (port = 0; port < ds->num_ports; port++) {
-		if (!dsa_is_user_port(ds, port))
-			continue;
-		if (dsa_to_port(ds, port)->bridge_dev != br)
-			continue;
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		अगर (!dsa_is_user_port(ds, port))
+			जारी;
+		अगर (dsa_to_port(ds, port)->bridge_dev != br)
+			जारी;
 
 		dsa_8021q_crosschip_bridge_leave(priv->dsa_8021q_ctx, port,
 						 other_priv->dsa_8021q_ctx,
@@ -2011,334 +2012,334 @@ static void sja1105_crosschip_bridge_leave(struct dsa_switch *ds,
 		dsa_8021q_crosschip_bridge_leave(other_priv->dsa_8021q_ctx,
 						 other_port,
 						 priv->dsa_8021q_ctx, port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sja1105_setup_8021q_tagging(struct dsa_switch *ds, bool enabled)
-{
-	struct sja1105_private *priv = ds->priv;
-	int rc;
+अटल पूर्णांक sja1105_setup_8021q_tagging(काष्ठा dsa_चयन *ds, bool enabled)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक rc;
 
 	rc = dsa_8021q_setup(priv->dsa_8021q_ctx, enabled);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	dev_info(ds->dev, "%s switch tagging\n",
 		 enabled ? "Enabled" : "Disabled");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum dsa_tag_protocol
-sja1105_get_tag_protocol(struct dsa_switch *ds, int port,
-			 enum dsa_tag_protocol mp)
-{
-	return DSA_TAG_PROTO_SJA1105;
-}
+अटल क्रमागत dsa_tag_protocol
+sja1105_get_tag_protocol(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			 क्रमागत dsa_tag_protocol mp)
+अणु
+	वापस DSA_TAG_PROTO_SJA1105;
+पूर्ण
 
-static int sja1105_find_free_subvlan(u16 *subvlan_map, bool pvid)
-{
-	int subvlan;
+अटल पूर्णांक sja1105_find_मुक्त_subvlan(u16 *subvlan_map, bool pvid)
+अणु
+	पूर्णांक subvlan;
 
-	if (pvid)
-		return 0;
+	अगर (pvid)
+		वापस 0;
 
-	for (subvlan = 1; subvlan < DSA_8021Q_N_SUBVLAN; subvlan++)
-		if (subvlan_map[subvlan] == VLAN_N_VID)
-			return subvlan;
+	क्रम (subvlan = 1; subvlan < DSA_8021Q_N_SUBVLAN; subvlan++)
+		अगर (subvlan_map[subvlan] == VLAN_N_VID)
+			वापस subvlan;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int sja1105_find_subvlan(u16 *subvlan_map, u16 vid)
-{
-	int subvlan;
+अटल पूर्णांक sja1105_find_subvlan(u16 *subvlan_map, u16 vid)
+अणु
+	पूर्णांक subvlan;
 
-	for (subvlan = 0; subvlan < DSA_8021Q_N_SUBVLAN; subvlan++)
-		if (subvlan_map[subvlan] == vid)
-			return subvlan;
+	क्रम (subvlan = 0; subvlan < DSA_8021Q_N_SUBVLAN; subvlan++)
+		अगर (subvlan_map[subvlan] == vid)
+			वापस subvlan;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int sja1105_find_committed_subvlan(struct sja1105_private *priv,
-					  int port, u16 vid)
-{
-	struct sja1105_port *sp = &priv->ports[port];
+अटल पूर्णांक sja1105_find_committed_subvlan(काष्ठा sja1105_निजी *priv,
+					  पूर्णांक port, u16 vid)
+अणु
+	काष्ठा sja1105_port *sp = &priv->ports[port];
 
-	return sja1105_find_subvlan(sp->subvlan_map, vid);
-}
+	वापस sja1105_find_subvlan(sp->subvlan_map, vid);
+पूर्ण
 
-static void sja1105_init_subvlan_map(u16 *subvlan_map)
-{
-	int subvlan;
+अटल व्योम sja1105_init_subvlan_map(u16 *subvlan_map)
+अणु
+	पूर्णांक subvlan;
 
-	for (subvlan = 0; subvlan < DSA_8021Q_N_SUBVLAN; subvlan++)
+	क्रम (subvlan = 0; subvlan < DSA_8021Q_N_SUBVLAN; subvlan++)
 		subvlan_map[subvlan] = VLAN_N_VID;
-}
+पूर्ण
 
-static void sja1105_commit_subvlan_map(struct sja1105_private *priv, int port,
+अटल व्योम sja1105_commit_subvlan_map(काष्ठा sja1105_निजी *priv, पूर्णांक port,
 				       u16 *subvlan_map)
-{
-	struct sja1105_port *sp = &priv->ports[port];
-	int subvlan;
+अणु
+	काष्ठा sja1105_port *sp = &priv->ports[port];
+	पूर्णांक subvlan;
 
-	for (subvlan = 0; subvlan < DSA_8021Q_N_SUBVLAN; subvlan++)
+	क्रम (subvlan = 0; subvlan < DSA_8021Q_N_SUBVLAN; subvlan++)
 		sp->subvlan_map[subvlan] = subvlan_map[subvlan];
-}
+पूर्ण
 
-static int sja1105_is_vlan_configured(struct sja1105_private *priv, u16 vid)
-{
-	struct sja1105_vlan_lookup_entry *vlan;
-	int count, i;
+अटल पूर्णांक sja1105_is_vlan_configured(काष्ठा sja1105_निजी *priv, u16 vid)
+अणु
+	काष्ठा sja1105_vlan_lookup_entry *vlan;
+	पूर्णांक count, i;
 
-	vlan = priv->static_config.tables[BLK_IDX_VLAN_LOOKUP].entries;
-	count = priv->static_config.tables[BLK_IDX_VLAN_LOOKUP].entry_count;
+	vlan = priv->अटल_config.tables[BLK_IDX_VLAN_LOOKUP].entries;
+	count = priv->अटल_config.tables[BLK_IDX_VLAN_LOOKUP].entry_count;
 
-	for (i = 0; i < count; i++)
-		if (vlan[i].vlanid == vid)
-			return i;
+	क्रम (i = 0; i < count; i++)
+		अगर (vlan[i].vlanid == vid)
+			वापस i;
 
-	/* Return an invalid entry index if not found */
-	return -1;
-}
+	/* Return an invalid entry index अगर not found */
+	वापस -1;
+पूर्ण
 
-static int
-sja1105_find_retagging_entry(struct sja1105_retagging_entry *retagging,
-			     int count, int from_port, u16 from_vid,
+अटल पूर्णांक
+sja1105_find_retagging_entry(काष्ठा sja1105_retagging_entry *retagging,
+			     पूर्णांक count, पूर्णांक from_port, u16 from_vid,
 			     u16 to_vid)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++)
-		if (retagging[i].ing_port == BIT(from_port) &&
+	क्रम (i = 0; i < count; i++)
+		अगर (retagging[i].ing_port == BIT(from_port) &&
 		    retagging[i].vlan_ing == from_vid &&
 		    retagging[i].vlan_egr == to_vid)
-			return i;
+			वापस i;
 
-	/* Return an invalid entry index if not found */
-	return -1;
-}
+	/* Return an invalid entry index अगर not found */
+	वापस -1;
+पूर्ण
 
-static int sja1105_commit_vlans(struct sja1105_private *priv,
-				struct sja1105_vlan_lookup_entry *new_vlan,
-				struct sja1105_retagging_entry *new_retagging,
-				int num_retagging)
-{
-	struct sja1105_retagging_entry *retagging;
-	struct sja1105_vlan_lookup_entry *vlan;
-	struct sja1105_table *table;
-	int num_vlans = 0;
-	int rc, i, k = 0;
+अटल पूर्णांक sja1105_commit_vlans(काष्ठा sja1105_निजी *priv,
+				काष्ठा sja1105_vlan_lookup_entry *new_vlan,
+				काष्ठा sja1105_retagging_entry *new_retagging,
+				पूर्णांक num_retagging)
+अणु
+	काष्ठा sja1105_retagging_entry *retagging;
+	काष्ठा sja1105_vlan_lookup_entry *vlan;
+	काष्ठा sja1105_table *table;
+	पूर्णांक num_vlans = 0;
+	पूर्णांक rc, i, k = 0;
 
 	/* VLAN table */
-	table = &priv->static_config.tables[BLK_IDX_VLAN_LOOKUP];
+	table = &priv->अटल_config.tables[BLK_IDX_VLAN_LOOKUP];
 	vlan = table->entries;
 
-	for (i = 0; i < VLAN_N_VID; i++) {
-		int match = sja1105_is_vlan_configured(priv, i);
+	क्रम (i = 0; i < VLAN_N_VID; i++) अणु
+		पूर्णांक match = sja1105_is_vlan_configured(priv, i);
 
-		if (new_vlan[i].vlanid != VLAN_N_VID)
+		अगर (new_vlan[i].vlanid != VLAN_N_VID)
 			num_vlans++;
 
-		if (new_vlan[i].vlanid == VLAN_N_VID && match >= 0) {
-			/* Was there before, no longer is. Delete */
+		अगर (new_vlan[i].vlanid == VLAN_N_VID && match >= 0) अणु
+			/* Was there beक्रमe, no दीर्घer is. Delete */
 			dev_dbg(priv->ds->dev, "Deleting VLAN %d\n", i);
-			rc = sja1105_dynamic_config_write(priv,
+			rc = sja1105_dynamic_config_ग_लिखो(priv,
 							  BLK_IDX_VLAN_LOOKUP,
 							  i, &vlan[match], false);
-			if (rc < 0)
-				return rc;
-		} else if (new_vlan[i].vlanid != VLAN_N_VID) {
-			/* Nothing changed, don't do anything */
-			if (match >= 0 &&
+			अगर (rc < 0)
+				वापस rc;
+		पूर्ण अन्यथा अगर (new_vlan[i].vlanid != VLAN_N_VID) अणु
+			/* Nothing changed, करोn't करो anything */
+			अगर (match >= 0 &&
 			    vlan[match].vlanid == new_vlan[i].vlanid &&
 			    vlan[match].tag_port == new_vlan[i].tag_port &&
 			    vlan[match].vlan_bc == new_vlan[i].vlan_bc &&
 			    vlan[match].vmemb_port == new_vlan[i].vmemb_port)
-				continue;
+				जारी;
 			/* Update entry */
 			dev_dbg(priv->ds->dev, "Updating VLAN %d\n", i);
-			rc = sja1105_dynamic_config_write(priv,
+			rc = sja1105_dynamic_config_ग_लिखो(priv,
 							  BLK_IDX_VLAN_LOOKUP,
 							  i, &new_vlan[i],
 							  true);
-			if (rc < 0)
-				return rc;
-		}
-	}
+			अगर (rc < 0)
+				वापस rc;
+		पूर्ण
+	पूर्ण
 
-	if (table->entry_count)
-		kfree(table->entries);
+	अगर (table->entry_count)
+		kमुक्त(table->entries);
 
-	table->entries = kcalloc(num_vlans, table->ops->unpacked_entry_size,
+	table->entries = kसुस्मृति(num_vlans, table->ops->unpacked_entry_size,
 				 GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = num_vlans;
 	vlan = table->entries;
 
-	for (i = 0; i < VLAN_N_VID; i++) {
-		if (new_vlan[i].vlanid == VLAN_N_VID)
-			continue;
+	क्रम (i = 0; i < VLAN_N_VID; i++) अणु
+		अगर (new_vlan[i].vlanid == VLAN_N_VID)
+			जारी;
 		vlan[k++] = new_vlan[i];
-	}
+	पूर्ण
 
 	/* VLAN Retagging Table */
-	table = &priv->static_config.tables[BLK_IDX_RETAGGING];
+	table = &priv->अटल_config.tables[BLK_IDX_RETAGGING];
 	retagging = table->entries;
 
-	for (i = 0; i < table->entry_count; i++) {
-		rc = sja1105_dynamic_config_write(priv, BLK_IDX_RETAGGING,
+	क्रम (i = 0; i < table->entry_count; i++) अणु
+		rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_RETAGGING,
 						  i, &retagging[i], false);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (table->entry_count)
-		kfree(table->entries);
+	अगर (table->entry_count)
+		kमुक्त(table->entries);
 
-	table->entries = kcalloc(num_retagging, table->ops->unpacked_entry_size,
+	table->entries = kसुस्मृति(num_retagging, table->ops->unpacked_entry_size,
 				 GFP_KERNEL);
-	if (!table->entries)
-		return -ENOMEM;
+	अगर (!table->entries)
+		वापस -ENOMEM;
 
 	table->entry_count = num_retagging;
 	retagging = table->entries;
 
-	for (i = 0; i < num_retagging; i++) {
+	क्रम (i = 0; i < num_retagging; i++) अणु
 		retagging[i] = new_retagging[i];
 
 		/* Update entry */
-		rc = sja1105_dynamic_config_write(priv, BLK_IDX_RETAGGING,
+		rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_RETAGGING,
 						  i, &retagging[i], true);
-		if (rc < 0)
-			return rc;
-	}
+		अगर (rc < 0)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct sja1105_crosschip_vlan {
-	struct list_head list;
+काष्ठा sja1105_crosschip_vlan अणु
+	काष्ठा list_head list;
 	u16 vid;
 	bool untagged;
-	int port;
-	int other_port;
-	struct dsa_8021q_context *other_ctx;
-};
+	पूर्णांक port;
+	पूर्णांक other_port;
+	काष्ठा dsa_8021q_context *other_ctx;
+पूर्ण;
 
-struct sja1105_crosschip_switch {
-	struct list_head list;
-	struct dsa_8021q_context *other_ctx;
-};
+काष्ठा sja1105_crosschip_चयन अणु
+	काष्ठा list_head list;
+	काष्ठा dsa_8021q_context *other_ctx;
+पूर्ण;
 
-static int sja1105_commit_pvid(struct sja1105_private *priv)
-{
-	struct sja1105_bridge_vlan *v;
-	struct list_head *vlan_list;
-	int rc = 0;
+अटल पूर्णांक sja1105_commit_pvid(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_bridge_vlan *v;
+	काष्ठा list_head *vlan_list;
+	पूर्णांक rc = 0;
 
-	if (priv->vlan_state == SJA1105_VLAN_FILTERING_FULL)
+	अगर (priv->vlan_state == SJA1105_VLAN_FILTERING_FULL)
 		vlan_list = &priv->bridge_vlans;
-	else
+	अन्यथा
 		vlan_list = &priv->dsa_8021q_vlans;
 
-	list_for_each_entry(v, vlan_list, list) {
-		if (v->pvid) {
+	list_क्रम_each_entry(v, vlan_list, list) अणु
+		अगर (v->pvid) अणु
 			rc = sja1105_pvid_apply(priv, v->port, v->vid);
-			if (rc)
-				break;
-		}
-	}
+			अगर (rc)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-sja1105_build_bridge_vlans(struct sja1105_private *priv,
-			   struct sja1105_vlan_lookup_entry *new_vlan)
-{
-	struct sja1105_bridge_vlan *v;
+अटल पूर्णांक
+sja1105_build_bridge_vlans(काष्ठा sja1105_निजी *priv,
+			   काष्ठा sja1105_vlan_lookup_entry *new_vlan)
+अणु
+	काष्ठा sja1105_bridge_vlan *v;
 
-	if (priv->vlan_state == SJA1105_VLAN_UNAWARE)
-		return 0;
+	अगर (priv->vlan_state == SJA1105_VLAN_UNAWARE)
+		वापस 0;
 
-	list_for_each_entry(v, &priv->bridge_vlans, list) {
-		int match = v->vid;
-
-		new_vlan[match].vlanid = v->vid;
-		new_vlan[match].vmemb_port |= BIT(v->port);
-		new_vlan[match].vlan_bc |= BIT(v->port);
-		if (!v->untagged)
-			new_vlan[match].tag_port |= BIT(v->port);
-	}
-
-	return 0;
-}
-
-static int
-sja1105_build_dsa_8021q_vlans(struct sja1105_private *priv,
-			      struct sja1105_vlan_lookup_entry *new_vlan)
-{
-	struct sja1105_bridge_vlan *v;
-
-	if (priv->vlan_state == SJA1105_VLAN_FILTERING_FULL)
-		return 0;
-
-	list_for_each_entry(v, &priv->dsa_8021q_vlans, list) {
-		int match = v->vid;
+	list_क्रम_each_entry(v, &priv->bridge_vlans, list) अणु
+		पूर्णांक match = v->vid;
 
 		new_vlan[match].vlanid = v->vid;
 		new_vlan[match].vmemb_port |= BIT(v->port);
 		new_vlan[match].vlan_bc |= BIT(v->port);
-		if (!v->untagged)
+		अगर (!v->untagged)
 			new_vlan[match].tag_port |= BIT(v->port);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_build_subvlans(struct sja1105_private *priv,
+अटल पूर्णांक
+sja1105_build_dsa_8021q_vlans(काष्ठा sja1105_निजी *priv,
+			      काष्ठा sja1105_vlan_lookup_entry *new_vlan)
+अणु
+	काष्ठा sja1105_bridge_vlan *v;
+
+	अगर (priv->vlan_state == SJA1105_VLAN_FILTERING_FULL)
+		वापस 0;
+
+	list_क्रम_each_entry(v, &priv->dsa_8021q_vlans, list) अणु
+		पूर्णांक match = v->vid;
+
+		new_vlan[match].vlanid = v->vid;
+		new_vlan[match].vmemb_port |= BIT(v->port);
+		new_vlan[match].vlan_bc |= BIT(v->port);
+		अगर (!v->untagged)
+			new_vlan[match].tag_port |= BIT(v->port);
+	पूर्ण
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक sja1105_build_subvlans(काष्ठा sja1105_निजी *priv,
 				  u16 subvlan_map[][DSA_8021Q_N_SUBVLAN],
-				  struct sja1105_vlan_lookup_entry *new_vlan,
-				  struct sja1105_retagging_entry *new_retagging,
-				  int *num_retagging)
-{
-	struct sja1105_bridge_vlan *v;
-	int k = *num_retagging;
+				  काष्ठा sja1105_vlan_lookup_entry *new_vlan,
+				  काष्ठा sja1105_retagging_entry *new_retagging,
+				  पूर्णांक *num_retagging)
+अणु
+	काष्ठा sja1105_bridge_vlan *v;
+	पूर्णांक k = *num_retagging;
 
-	if (priv->vlan_state != SJA1105_VLAN_BEST_EFFORT)
-		return 0;
+	अगर (priv->vlan_state != SJA1105_VLAN_BEST_EFFORT)
+		वापस 0;
 
-	list_for_each_entry(v, &priv->bridge_vlans, list) {
-		int upstream = dsa_upstream_port(priv->ds, v->port);
-		int match, subvlan;
+	list_क्रम_each_entry(v, &priv->bridge_vlans, list) अणु
+		पूर्णांक upstream = dsa_upstream_port(priv->ds, v->port);
+		पूर्णांक match, subvlan;
 		u16 rx_vid;
 
 		/* Only sub-VLANs on user ports need to be applied.
-		 * Bridge VLANs also include VLANs added automatically
+		 * Bridge VLANs also include VLANs added स्वतःmatically
 		 * by DSA on the CPU port.
 		 */
-		if (!dsa_is_user_port(priv->ds, v->port))
-			continue;
+		अगर (!dsa_is_user_port(priv->ds, v->port))
+			जारी;
 
 		subvlan = sja1105_find_subvlan(subvlan_map[v->port],
 					       v->vid);
-		if (subvlan < 0) {
-			subvlan = sja1105_find_free_subvlan(subvlan_map[v->port],
+		अगर (subvlan < 0) अणु
+			subvlan = sja1105_find_मुक्त_subvlan(subvlan_map[v->port],
 							    v->pvid);
-			if (subvlan < 0) {
+			अगर (subvlan < 0) अणु
 				dev_err(priv->ds->dev, "No more free subvlans\n");
-				return -ENOSPC;
-			}
-		}
+				वापस -ENOSPC;
+			पूर्ण
+		पूर्ण
 
 		rx_vid = dsa_8021q_rx_vid_subvlan(priv->ds, v->port, subvlan);
 
 		/* @v->vid on @v->port needs to be retagged to @rx_vid
 		 * on @upstream. Assume @v->vid on @v->port and on
-		 * @upstream was already configured by the previous
+		 * @upstream was alपढ़ोy configured by the previous
 		 * iteration over bridge_vlans.
 		 */
 		match = rx_vid;
@@ -2347,10 +2348,10 @@ static int sja1105_build_subvlans(struct sja1105_private *priv,
 		new_vlan[match].vmemb_port |= BIT(upstream);
 		new_vlan[match].vlan_bc |= BIT(v->port);
 		new_vlan[match].vlan_bc |= BIT(upstream);
-		/* The "untagged" flag is set the same as for the
+		/* The "untagged" flag is set the same as क्रम the
 		 * original VLAN
 		 */
-		if (!v->untagged)
+		अगर (!v->untagged)
 			new_vlan[match].tag_port |= BIT(v->port);
 		/* But it's always tagged towards the CPU */
 		new_vlan[match].tag_port |= BIT(upstream);
@@ -2360,7 +2361,7 @@ static int sja1105_build_subvlans(struct sja1105_private *priv,
 		 * which we need to suppress by dropping the original
 		 * packet.
 		 * Deny egress of the original VLAN towards the CPU
-		 * port. This will force the switch to drop it, and
+		 * port. This will क्रमce the चयन to drop it, and
 		 * we'll see only the retagged packets.
 		 */
 		match = v->vid;
@@ -2371,392 +2372,392 @@ static int sja1105_build_subvlans(struct sja1105_private *priv,
 		new_retagging[k].vlan_egr = rx_vid;
 		new_retagging[k].ing_port = BIT(v->port);
 		new_retagging[k].egr_port = BIT(upstream);
-		if (k++ == SJA1105_MAX_RETAGGING_COUNT) {
+		अगर (k++ == SJA1105_MAX_RETAGGING_COUNT) अणु
 			dev_err(priv->ds->dev, "No more retagging rules\n");
-			return -ENOSPC;
-		}
+			वापस -ENOSPC;
+		पूर्ण
 
 		subvlan_map[v->port][subvlan] = v->vid;
-	}
+	पूर्ण
 
 	*num_retagging = k;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Sadly, in crosschip scenarios where the CPU port is also the link to another
- * switch, we should retag backwards (the dsa_8021q vid to the original vid) on
- * the CPU port of neighbour switches.
+ * चयन, we should retag backwards (the dsa_8021q vid to the original vid) on
+ * the CPU port of neighbour चयनes.
  */
-static int
-sja1105_build_crosschip_subvlans(struct sja1105_private *priv,
-				 struct sja1105_vlan_lookup_entry *new_vlan,
-				 struct sja1105_retagging_entry *new_retagging,
-				 int *num_retagging)
-{
-	struct sja1105_crosschip_vlan *tmp, *pos;
-	struct dsa_8021q_crosschip_link *c;
-	struct sja1105_bridge_vlan *v, *w;
-	struct list_head crosschip_vlans;
-	int k = *num_retagging;
-	int rc = 0;
+अटल पूर्णांक
+sja1105_build_crosschip_subvlans(काष्ठा sja1105_निजी *priv,
+				 काष्ठा sja1105_vlan_lookup_entry *new_vlan,
+				 काष्ठा sja1105_retagging_entry *new_retagging,
+				 पूर्णांक *num_retagging)
+अणु
+	काष्ठा sja1105_crosschip_vlan *पंचांगp, *pos;
+	काष्ठा dsa_8021q_crosschip_link *c;
+	काष्ठा sja1105_bridge_vlan *v, *w;
+	काष्ठा list_head crosschip_vlans;
+	पूर्णांक k = *num_retagging;
+	पूर्णांक rc = 0;
 
-	if (priv->vlan_state != SJA1105_VLAN_BEST_EFFORT)
-		return 0;
+	अगर (priv->vlan_state != SJA1105_VLAN_BEST_EFFORT)
+		वापस 0;
 
 	INIT_LIST_HEAD(&crosschip_vlans);
 
-	list_for_each_entry(c, &priv->dsa_8021q_ctx->crosschip_links, list) {
-		struct sja1105_private *other_priv = c->other_ctx->ds->priv;
+	list_क्रम_each_entry(c, &priv->dsa_8021q_ctx->crosschip_links, list) अणु
+		काष्ठा sja1105_निजी *other_priv = c->other_ctx->ds->priv;
 
-		if (other_priv->vlan_state == SJA1105_VLAN_FILTERING_FULL)
-			continue;
+		अगर (other_priv->vlan_state == SJA1105_VLAN_FILTERING_FULL)
+			जारी;
 
 		/* Crosschip links are also added to the CPU ports.
 		 * Ignore those.
 		 */
-		if (!dsa_is_user_port(priv->ds, c->port))
-			continue;
-		if (!dsa_is_user_port(c->other_ctx->ds, c->other_port))
-			continue;
+		अगर (!dsa_is_user_port(priv->ds, c->port))
+			जारी;
+		अगर (!dsa_is_user_port(c->other_ctx->ds, c->other_port))
+			जारी;
 
-		/* Search for VLANs on the remote port */
-		list_for_each_entry(v, &other_priv->bridge_vlans, list) {
-			bool already_added = false;
+		/* Search क्रम VLANs on the remote port */
+		list_क्रम_each_entry(v, &other_priv->bridge_vlans, list) अणु
+			bool alपढ़ोy_added = false;
 			bool we_have_it = false;
 
-			if (v->port != c->other_port)
-				continue;
+			अगर (v->port != c->other_port)
+				जारी;
 
-			/* If @v is a pvid on @other_ds, it does not need
+			/* If @v is a pvid on @other_ds, it करोes not need
 			 * re-retagging, because its SVL field is 0 and we
-			 * already allow that, via the dsa_8021q crosschip
+			 * alपढ़ोy allow that, via the dsa_8021q crosschip
 			 * links.
 			 */
-			if (v->pvid)
-				continue;
+			अगर (v->pvid)
+				जारी;
 
-			/* Search for the VLAN on our local port */
-			list_for_each_entry(w, &priv->bridge_vlans, list) {
-				if (w->port == c->port && w->vid == v->vid) {
+			/* Search क्रम the VLAN on our local port */
+			list_क्रम_each_entry(w, &priv->bridge_vlans, list) अणु
+				अगर (w->port == c->port && w->vid == v->vid) अणु
 					we_have_it = true;
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
-			if (!we_have_it)
-				continue;
+			अगर (!we_have_it)
+				जारी;
 
-			list_for_each_entry(tmp, &crosschip_vlans, list) {
-				if (tmp->vid == v->vid &&
-				    tmp->untagged == v->untagged &&
-				    tmp->port == c->port &&
-				    tmp->other_port == v->port &&
-				    tmp->other_ctx == c->other_ctx) {
-					already_added = true;
-					break;
-				}
-			}
+			list_क्रम_each_entry(पंचांगp, &crosschip_vlans, list) अणु
+				अगर (पंचांगp->vid == v->vid &&
+				    पंचांगp->untagged == v->untagged &&
+				    पंचांगp->port == c->port &&
+				    पंचांगp->other_port == v->port &&
+				    पंचांगp->other_ctx == c->other_ctx) अणु
+					alपढ़ोy_added = true;
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
-			if (already_added)
-				continue;
+			अगर (alपढ़ोy_added)
+				जारी;
 
-			tmp = kzalloc(sizeof(*tmp), GFP_KERNEL);
-			if (!tmp) {
+			पंचांगp = kzalloc(माप(*पंचांगp), GFP_KERNEL);
+			अगर (!पंचांगp) अणु
 				dev_err(priv->ds->dev, "Failed to allocate memory\n");
 				rc = -ENOMEM;
-				goto out;
-			}
-			tmp->vid = v->vid;
-			tmp->port = c->port;
-			tmp->other_port = v->port;
-			tmp->other_ctx = c->other_ctx;
-			tmp->untagged = v->untagged;
-			list_add(&tmp->list, &crosschip_vlans);
-		}
-	}
+				जाओ out;
+			पूर्ण
+			पंचांगp->vid = v->vid;
+			पंचांगp->port = c->port;
+			पंचांगp->other_port = v->port;
+			पंचांगp->other_ctx = c->other_ctx;
+			पंचांगp->untagged = v->untagged;
+			list_add(&पंचांगp->list, &crosschip_vlans);
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(tmp, &crosschip_vlans, list) {
-		struct sja1105_private *other_priv = tmp->other_ctx->ds->priv;
-		int upstream = dsa_upstream_port(priv->ds, tmp->port);
-		int match, subvlan;
+	list_क्रम_each_entry(पंचांगp, &crosschip_vlans, list) अणु
+		काष्ठा sja1105_निजी *other_priv = पंचांगp->other_ctx->ds->priv;
+		पूर्णांक upstream = dsa_upstream_port(priv->ds, पंचांगp->port);
+		पूर्णांक match, subvlan;
 		u16 rx_vid;
 
 		subvlan = sja1105_find_committed_subvlan(other_priv,
-							 tmp->other_port,
-							 tmp->vid);
-		/* If this happens, it's a bug. The neighbour switch does not
-		 * have a subvlan for tmp->vid on tmp->other_port, but it
-		 * should, since we already checked for its vlan_state.
+							 पंचांगp->other_port,
+							 पंचांगp->vid);
+		/* If this happens, it's a bug. The neighbour चयन करोes not
+		 * have a subvlan क्रम पंचांगp->vid on पंचांगp->other_port, but it
+		 * should, since we alपढ़ोy checked क्रम its vlan_state.
 		 */
-		if (WARN_ON(subvlan < 0)) {
+		अगर (WARN_ON(subvlan < 0)) अणु
 			rc = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		rx_vid = dsa_8021q_rx_vid_subvlan(tmp->other_ctx->ds,
-						  tmp->other_port,
+		rx_vid = dsa_8021q_rx_vid_subvlan(पंचांगp->other_ctx->ds,
+						  पंचांगp->other_port,
 						  subvlan);
 
-		/* The @rx_vid retagged from @tmp->vid on
-		 * {@tmp->other_ds, @tmp->other_port} needs to be
-		 * re-retagged to @tmp->vid on the way back to us.
+		/* The @rx_vid retagged from @पंचांगp->vid on
+		 * अणु@पंचांगp->other_ds, @पंचांगp->other_portपूर्ण needs to be
+		 * re-retagged to @पंचांगp->vid on the way back to us.
 		 *
-		 * Assume the original @tmp->vid is already configured
-		 * on this local switch, otherwise we wouldn't be
-		 * retagging its subvlan on the other switch in the
+		 * Assume the original @पंचांगp->vid is alपढ़ोy configured
+		 * on this local चयन, otherwise we wouldn't be
+		 * retagging its subvlan on the other चयन in the
 		 * first place. We just need to add a reverse retagging
-		 * rule for @rx_vid and install @rx_vid on our ports.
+		 * rule क्रम @rx_vid and install @rx_vid on our ports.
 		 */
 		match = rx_vid;
 		new_vlan[match].vlanid = rx_vid;
-		new_vlan[match].vmemb_port |= BIT(tmp->port);
+		new_vlan[match].vmemb_port |= BIT(पंचांगp->port);
 		new_vlan[match].vmemb_port |= BIT(upstream);
-		/* The "untagged" flag is set the same as for the
-		 * original VLAN. And towards the CPU, it doesn't
+		/* The "untagged" flag is set the same as क्रम the
+		 * original VLAN. And towards the CPU, it करोesn't
 		 * really matter, because @rx_vid will only receive
 		 * traffic on that port. For consistency with other dsa_8021q
 		 * VLANs, we'll keep the CPU port tagged.
 		 */
-		if (!tmp->untagged)
-			new_vlan[match].tag_port |= BIT(tmp->port);
+		अगर (!पंचांगp->untagged)
+			new_vlan[match].tag_port |= BIT(पंचांगp->port);
 		new_vlan[match].tag_port |= BIT(upstream);
 		/* Deny egress of @rx_vid towards our front-panel port.
-		 * This will force the switch to drop it, and we'll see
+		 * This will क्रमce the चयन to drop it, and we'll see
 		 * only the re-retagged packets (having the original,
-		 * pre-initial-retagging, VLAN @tmp->vid).
+		 * pre-initial-retagging, VLAN @पंचांगp->vid).
 		 */
-		new_vlan[match].vlan_bc &= ~BIT(tmp->port);
+		new_vlan[match].vlan_bc &= ~BIT(पंचांगp->port);
 
 		/* On reverse retagging, the same ingress VLAN goes to multiple
 		 * ports. So we have an opportunity to create composite rules
 		 * to not waste the limited space in the retagging table.
 		 */
 		k = sja1105_find_retagging_entry(new_retagging, *num_retagging,
-						 upstream, rx_vid, tmp->vid);
-		if (k < 0) {
-			if (*num_retagging == SJA1105_MAX_RETAGGING_COUNT) {
+						 upstream, rx_vid, पंचांगp->vid);
+		अगर (k < 0) अणु
+			अगर (*num_retagging == SJA1105_MAX_RETAGGING_COUNT) अणु
 				dev_err(priv->ds->dev, "No more retagging rules\n");
 				rc = -ENOSPC;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			k = (*num_retagging)++;
-		}
+		पूर्ण
 		/* And the retagging itself */
 		new_retagging[k].vlan_ing = rx_vid;
-		new_retagging[k].vlan_egr = tmp->vid;
+		new_retagging[k].vlan_egr = पंचांगp->vid;
 		new_retagging[k].ing_port = BIT(upstream);
-		new_retagging[k].egr_port |= BIT(tmp->port);
-	}
+		new_retagging[k].egr_port |= BIT(पंचांगp->port);
+	पूर्ण
 
 out:
-	list_for_each_entry_safe(tmp, pos, &crosschip_vlans, list) {
-		list_del(&tmp->list);
-		kfree(tmp);
-	}
+	list_क्रम_each_entry_safe(पंचांगp, pos, &crosschip_vlans, list) अणु
+		list_del(&पंचांगp->list);
+		kमुक्त(पंचांगp);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int sja1105_build_vlan_table(struct sja1105_private *priv, bool notify);
+अटल पूर्णांक sja1105_build_vlan_table(काष्ठा sja1105_निजी *priv, bool notअगरy);
 
-static int sja1105_notify_crosschip_switches(struct sja1105_private *priv)
-{
-	struct sja1105_crosschip_switch *s, *pos;
-	struct list_head crosschip_switches;
-	struct dsa_8021q_crosschip_link *c;
-	int rc = 0;
+अटल पूर्णांक sja1105_notअगरy_crosschip_चयनes(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_crosschip_चयन *s, *pos;
+	काष्ठा list_head crosschip_चयनes;
+	काष्ठा dsa_8021q_crosschip_link *c;
+	पूर्णांक rc = 0;
 
-	INIT_LIST_HEAD(&crosschip_switches);
+	INIT_LIST_HEAD(&crosschip_चयनes);
 
-	list_for_each_entry(c, &priv->dsa_8021q_ctx->crosschip_links, list) {
-		bool already_added = false;
+	list_क्रम_each_entry(c, &priv->dsa_8021q_ctx->crosschip_links, list) अणु
+		bool alपढ़ोy_added = false;
 
-		list_for_each_entry(s, &crosschip_switches, list) {
-			if (s->other_ctx == c->other_ctx) {
-				already_added = true;
-				break;
-			}
-		}
+		list_क्रम_each_entry(s, &crosschip_चयनes, list) अणु
+			अगर (s->other_ctx == c->other_ctx) अणु
+				alपढ़ोy_added = true;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (already_added)
-			continue;
+		अगर (alपढ़ोy_added)
+			जारी;
 
-		s = kzalloc(sizeof(*s), GFP_KERNEL);
-		if (!s) {
+		s = kzalloc(माप(*s), GFP_KERNEL);
+		अगर (!s) अणु
 			dev_err(priv->ds->dev, "Failed to allocate memory\n");
 			rc = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		s->other_ctx = c->other_ctx;
-		list_add(&s->list, &crosschip_switches);
-	}
+		list_add(&s->list, &crosschip_चयनes);
+	पूर्ण
 
-	list_for_each_entry(s, &crosschip_switches, list) {
-		struct sja1105_private *other_priv = s->other_ctx->ds->priv;
+	list_क्रम_each_entry(s, &crosschip_चयनes, list) अणु
+		काष्ठा sja1105_निजी *other_priv = s->other_ctx->ds->priv;
 
 		rc = sja1105_build_vlan_table(other_priv, false);
-		if (rc)
-			goto out;
-	}
+		अगर (rc)
+			जाओ out;
+	पूर्ण
 
 out:
-	list_for_each_entry_safe(s, pos, &crosschip_switches, list) {
+	list_क्रम_each_entry_safe(s, pos, &crosschip_चयनes, list) अणु
 		list_del(&s->list);
-		kfree(s);
-	}
+		kमुक्त(s);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int sja1105_build_vlan_table(struct sja1105_private *priv, bool notify)
-{
+अटल पूर्णांक sja1105_build_vlan_table(काष्ठा sja1105_निजी *priv, bool notअगरy)
+अणु
 	u16 subvlan_map[SJA1105_NUM_PORTS][DSA_8021Q_N_SUBVLAN];
-	struct sja1105_retagging_entry *new_retagging;
-	struct sja1105_vlan_lookup_entry *new_vlan;
-	struct sja1105_table *table;
-	int i, num_retagging = 0;
-	int rc;
+	काष्ठा sja1105_retagging_entry *new_retagging;
+	काष्ठा sja1105_vlan_lookup_entry *new_vlan;
+	काष्ठा sja1105_table *table;
+	पूर्णांक i, num_retagging = 0;
+	पूर्णांक rc;
 
-	table = &priv->static_config.tables[BLK_IDX_VLAN_LOOKUP];
-	new_vlan = kcalloc(VLAN_N_VID,
+	table = &priv->अटल_config.tables[BLK_IDX_VLAN_LOOKUP];
+	new_vlan = kसुस्मृति(VLAN_N_VID,
 			   table->ops->unpacked_entry_size, GFP_KERNEL);
-	if (!new_vlan)
-		return -ENOMEM;
+	अगर (!new_vlan)
+		वापस -ENOMEM;
 
-	table = &priv->static_config.tables[BLK_IDX_VLAN_LOOKUP];
-	new_retagging = kcalloc(SJA1105_MAX_RETAGGING_COUNT,
+	table = &priv->अटल_config.tables[BLK_IDX_VLAN_LOOKUP];
+	new_retagging = kसुस्मृति(SJA1105_MAX_RETAGGING_COUNT,
 				table->ops->unpacked_entry_size, GFP_KERNEL);
-	if (!new_retagging) {
-		kfree(new_vlan);
-		return -ENOMEM;
-	}
+	अगर (!new_retagging) अणु
+		kमुक्त(new_vlan);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < VLAN_N_VID; i++)
+	क्रम (i = 0; i < VLAN_N_VID; i++)
 		new_vlan[i].vlanid = VLAN_N_VID;
 
-	for (i = 0; i < SJA1105_MAX_RETAGGING_COUNT; i++)
+	क्रम (i = 0; i < SJA1105_MAX_RETAGGING_COUNT; i++)
 		new_retagging[i].vlan_ing = VLAN_N_VID;
 
-	for (i = 0; i < priv->ds->num_ports; i++)
+	क्रम (i = 0; i < priv->ds->num_ports; i++)
 		sja1105_init_subvlan_map(subvlan_map[i]);
 
 	/* Bridge VLANs */
 	rc = sja1105_build_bridge_vlans(priv, new_vlan);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	/* VLANs necessary for dsa_8021q operation, given to us by tag_8021q.c:
+	/* VLANs necessary क्रम dsa_8021q operation, given to us by tag_8021q.c:
 	 * - RX VLANs
 	 * - TX VLANs
 	 * - Crosschip links
 	 */
 	rc = sja1105_build_dsa_8021q_vlans(priv, new_vlan);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	/* Private VLANs necessary for dsa_8021q operation, which we need to
+	/* Private VLANs necessary क्रम dsa_8021q operation, which we need to
 	 * determine on our own:
 	 * - Sub-VLANs
-	 * - Sub-VLANs of crosschip switches
+	 * - Sub-VLANs of crosschip चयनes
 	 */
 	rc = sja1105_build_subvlans(priv, subvlan_map, new_vlan, new_retagging,
 				    &num_retagging);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	rc = sja1105_build_crosschip_subvlans(priv, new_vlan, new_retagging,
 					      &num_retagging);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	rc = sja1105_commit_vlans(priv, new_vlan, new_retagging, num_retagging);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	rc = sja1105_commit_pvid(priv);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	for (i = 0; i < priv->ds->num_ports; i++)
+	क्रम (i = 0; i < priv->ds->num_ports; i++)
 		sja1105_commit_subvlan_map(priv, i, subvlan_map[i]);
 
-	if (notify) {
-		rc = sja1105_notify_crosschip_switches(priv);
-		if (rc)
-			goto out;
-	}
+	अगर (notअगरy) अणु
+		rc = sja1105_notअगरy_crosschip_चयनes(priv);
+		अगर (rc)
+			जाओ out;
+	पूर्ण
 
 out:
-	kfree(new_vlan);
-	kfree(new_retagging);
+	kमुक्त(new_vlan);
+	kमुक्त(new_retagging);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* The TPID setting belongs to the General Parameters table,
- * which can only be partially reconfigured at runtime (and not the TPID).
- * So a switch reset is required.
+/* The TPID setting beदीर्घs to the General Parameters table,
+ * which can only be partially reconfigured at runसमय (and not the TPID).
+ * So a चयन reset is required.
  */
-int sja1105_vlan_filtering(struct dsa_switch *ds, int port, bool enabled,
-			   struct netlink_ext_ack *extack)
-{
-	struct sja1105_l2_lookup_params_entry *l2_lookup_params;
-	struct sja1105_general_params_entry *general_params;
-	struct sja1105_private *priv = ds->priv;
-	enum sja1105_vlan_state state;
-	struct sja1105_table *table;
-	struct sja1105_rule *rule;
+पूर्णांक sja1105_vlan_filtering(काष्ठा dsa_चयन *ds, पूर्णांक port, bool enabled,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा sja1105_l2_lookup_params_entry *l2_lookup_params;
+	काष्ठा sja1105_general_params_entry *general_params;
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	क्रमागत sja1105_vlan_state state;
+	काष्ठा sja1105_table *table;
+	काष्ठा sja1105_rule *rule;
 	bool want_tagging;
 	u16 tpid, tpid2;
-	int rc;
+	पूर्णांक rc;
 
-	list_for_each_entry(rule, &priv->flow_block.rules, list) {
-		if (rule->type == SJA1105_RULE_VL) {
+	list_क्रम_each_entry(rule, &priv->flow_block.rules, list) अणु
+		अगर (rule->type == SJA1105_RULE_VL) अणु
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Cannot change VLAN filtering with active VL rules");
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	if (enabled) {
+	अगर (enabled) अणु
 		/* Enable VLAN filtering. */
 		tpid  = ETH_P_8021Q;
 		tpid2 = ETH_P_8021AD;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Disable VLAN filtering. */
 		tpid  = ETH_P_SJA1105;
 		tpid2 = ETH_P_SJA1105;
-	}
+	पूर्ण
 
-	for (port = 0; port < ds->num_ports; port++) {
-		struct sja1105_port *sp = &priv->ports[port];
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		काष्ठा sja1105_port *sp = &priv->ports[port];
 
-		if (enabled)
+		अगर (enabled)
 			sp->xmit_tpid = priv->info->qinq_tpid;
-		else
+		अन्यथा
 			sp->xmit_tpid = ETH_P_SJA1105;
-	}
+	पूर्ण
 
-	if (!enabled)
+	अगर (!enabled)
 		state = SJA1105_VLAN_UNAWARE;
-	else if (priv->best_effort_vlan_filtering)
+	अन्यथा अगर (priv->best_efक्रमt_vlan_filtering)
 		state = SJA1105_VLAN_BEST_EFFORT;
-	else
+	अन्यथा
 		state = SJA1105_VLAN_FILTERING_FULL;
 
-	if (priv->vlan_state == state)
-		return 0;
+	अगर (priv->vlan_state == state)
+		वापस 0;
 
 	priv->vlan_state = state;
 	want_tagging = (state == SJA1105_VLAN_UNAWARE ||
 			state == SJA1105_VLAN_BEST_EFFORT);
 
-	table = &priv->static_config.tables[BLK_IDX_GENERAL_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_GENERAL_PARAMS];
 	general_params = table->entries;
-	/* EtherType used to identify inner tagged (C-tag) VLAN traffic */
+	/* EtherType used to identअगरy inner tagged (C-tag) VLAN traffic */
 	general_params->tpid = tpid;
-	/* EtherType used to identify outer tagged (S-tag) VLAN traffic */
+	/* EtherType used to identअगरy outer tagged (S-tag) VLAN traffic */
 	general_params->tpid2 = tpid2;
 	/* When VLAN filtering is on, we need to at least be able to
 	 * decode management traffic through the "backup plan".
@@ -2764,64 +2765,64 @@ int sja1105_vlan_filtering(struct dsa_switch *ds, int port, bool enabled,
 	general_params->incl_srcpt1 = enabled;
 	general_params->incl_srcpt0 = enabled;
 
-	want_tagging = priv->best_effort_vlan_filtering || !enabled;
+	want_tagging = priv->best_efक्रमt_vlan_filtering || !enabled;
 
 	/* VLAN filtering => independent VLAN learning.
-	 * No VLAN filtering (or best effort) => shared VLAN learning.
+	 * No VLAN filtering (or best efक्रमt) => shared VLAN learning.
 	 *
-	 * In shared VLAN learning mode, untagged traffic still gets
-	 * pvid-tagged, and the FDB table gets populated with entries
+	 * In shared VLAN learning mode, untagged traffic still माला_लो
+	 * pvid-tagged, and the FDB table माला_लो populated with entries
 	 * containing the "real" (pvid or from VLAN tag) VLAN ID.
-	 * However the switch performs a masked L2 lookup in the FDB,
-	 * effectively only looking up a frame's DMAC (and not VID) for the
-	 * forwarding decision.
+	 * However the चयन perक्रमms a masked L2 lookup in the FDB,
+	 * effectively only looking up a frame's DMAC (and not VID) क्रम the
+	 * क्रमwarding decision.
 	 *
-	 * This is extremely convenient for us, because in modes with
-	 * vlan_filtering=0, dsa_8021q actually installs unique pvid's into
-	 * each front panel port. This is good for identification but breaks
+	 * This is extremely convenient क्रम us, because in modes with
+	 * vlan_filtering=0, dsa_8021q actually installs unique pvid's पूर्णांकo
+	 * each front panel port. This is good क्रम identअगरication but अवरोधs
 	 * learning badly - the VID of the learnt FDB entry is unique, aka
 	 * no frames coming from any other port are going to have it. So
-	 * for forwarding purposes, this is as though learning was broken
+	 * क्रम क्रमwarding purposes, this is as though learning was broken
 	 * (all frames get flooded).
 	 */
-	table = &priv->static_config.tables[BLK_IDX_L2_LOOKUP_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_LOOKUP_PARAMS];
 	l2_lookup_params = table->entries;
 	l2_lookup_params->shared_learn = want_tagging;
 
 	sja1105_frame_memory_partitioning(priv);
 
 	rc = sja1105_build_vlan_table(priv, false);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	rc = sja1105_static_config_reload(priv, SJA1105_VLAN_FILTERING);
-	if (rc)
+	rc = sja1105_अटल_config_reload(priv, SJA1105_VLAN_FILTERING);
+	अगर (rc)
 		NL_SET_ERR_MSG_MOD(extack, "Failed to change VLAN Ethertype");
 
-	/* Switch port identification based on 802.1Q is only passable
-	 * if we are not under a vlan_filtering bridge. So make sure
+	/* Switch port identअगरication based on 802.1Q is only passable
+	 * अगर we are not under a vlan_filtering bridge. So make sure
 	 * the two configurations are mutually exclusive (of course, the
-	 * user may know better, i.e. best_effort_vlan_filtering).
+	 * user may know better, i.e. best_efक्रमt_vlan_filtering).
 	 */
-	return sja1105_setup_8021q_tagging(ds, want_tagging);
-}
+	वापस sja1105_setup_8021q_tagging(ds, want_tagging);
+पूर्ण
 
 /* Returns number of VLANs added (0 or 1) on success,
  * or a negative error code.
  */
-static int sja1105_vlan_add_one(struct dsa_switch *ds, int port, u16 vid,
-				u16 flags, struct list_head *vlan_list)
-{
+अटल पूर्णांक sja1105_vlan_add_one(काष्ठा dsa_चयन *ds, पूर्णांक port, u16 vid,
+				u16 flags, काष्ठा list_head *vlan_list)
+अणु
 	bool untagged = flags & BRIDGE_VLAN_INFO_UNTAGGED;
 	bool pvid = flags & BRIDGE_VLAN_INFO_PVID;
-	struct sja1105_bridge_vlan *v;
+	काष्ठा sja1105_bridge_vlan *v;
 
-	list_for_each_entry(v, vlan_list, list) {
-		if (v->port == port && v->vid == vid) {
-			/* Already added */
-			if (v->untagged == untagged && v->pvid == pvid)
+	list_क्रम_each_entry(v, vlan_list, list) अणु
+		अगर (v->port == port && v->vid == vid) अणु
+			/* Alपढ़ोy added */
+			अगर (v->untagged == untagged && v->pvid == pvid)
 				/* Nothing changed */
-				return 0;
+				वापस 0;
 
 			/* It's the same VLAN, but some of the flags changed
 			 * and the user did not bother to delete it first.
@@ -2829,15 +2830,15 @@ static int sja1105_vlan_add_one(struct dsa_switch *ds, int port, u16 vid,
 			 */
 			v->untagged = untagged;
 			v->pvid = pvid;
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	v = kzalloc(sizeof(*v), GFP_KERNEL);
-	if (!v) {
+	v = kzalloc(माप(*v), GFP_KERNEL);
+	अगर (!v) अणु
 		dev_err(ds->dev, "Out of memory while storing VLAN\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	v->port = port;
 	v->vid = vid;
@@ -2845,161 +2846,161 @@ static int sja1105_vlan_add_one(struct dsa_switch *ds, int port, u16 vid,
 	v->pvid = pvid;
 	list_add(&v->list, vlan_list);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Returns number of VLANs deleted (0 or 1) */
-static int sja1105_vlan_del_one(struct dsa_switch *ds, int port, u16 vid,
-				struct list_head *vlan_list)
-{
-	struct sja1105_bridge_vlan *v, *n;
+अटल पूर्णांक sja1105_vlan_del_one(काष्ठा dsa_चयन *ds, पूर्णांक port, u16 vid,
+				काष्ठा list_head *vlan_list)
+अणु
+	काष्ठा sja1105_bridge_vlan *v, *n;
 
-	list_for_each_entry_safe(v, n, vlan_list, list) {
-		if (v->port == port && v->vid == vid) {
+	list_क्रम_each_entry_safe(v, n, vlan_list, list) अणु
+		अगर (v->port == port && v->vid == vid) अणु
 			list_del(&v->list);
-			kfree(v);
-			return 1;
-		}
-	}
+			kमुक्त(v);
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_vlan_add(struct dsa_switch *ds, int port,
-			    const struct switchdev_obj_port_vlan *vlan,
-			    struct netlink_ext_ack *extack)
-{
-	struct sja1105_private *priv = ds->priv;
+अटल पूर्णांक sja1105_vlan_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			    स्थिर काष्ठा चयनdev_obj_port_vlan *vlan,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
 	bool vlan_table_changed = false;
-	int rc;
+	पूर्णांक rc;
 
-	/* If the user wants best-effort VLAN filtering (aka vlan_filtering
+	/* If the user wants best-efक्रमt VLAN filtering (aka vlan_filtering
 	 * bridge plus tagging), be sure to at least deny alterations to the
-	 * configuration done by dsa_8021q.
+	 * configuration करोne by dsa_8021q.
 	 */
-	if (priv->vlan_state != SJA1105_VLAN_FILTERING_FULL &&
-	    vid_is_dsa_8021q(vlan->vid)) {
+	अगर (priv->vlan_state != SJA1105_VLAN_FILTERING_FULL &&
+	    vid_is_dsa_8021q(vlan->vid)) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Range 1024-3071 reserved for dsa_8021q operation");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	rc = sja1105_vlan_add_one(ds, port, vlan->vid, vlan->flags,
 				  &priv->bridge_vlans);
-	if (rc < 0)
-		return rc;
-	if (rc > 0)
+	अगर (rc < 0)
+		वापस rc;
+	अगर (rc > 0)
 		vlan_table_changed = true;
 
-	if (!vlan_table_changed)
-		return 0;
+	अगर (!vlan_table_changed)
+		वापस 0;
 
-	return sja1105_build_vlan_table(priv, true);
-}
+	वापस sja1105_build_vlan_table(priv, true);
+पूर्ण
 
-static int sja1105_vlan_del(struct dsa_switch *ds, int port,
-			    const struct switchdev_obj_port_vlan *vlan)
-{
-	struct sja1105_private *priv = ds->priv;
+अटल पूर्णांक sja1105_vlan_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			    स्थिर काष्ठा चयनdev_obj_port_vlan *vlan)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
 	bool vlan_table_changed = false;
-	int rc;
+	पूर्णांक rc;
 
 	rc = sja1105_vlan_del_one(ds, port, vlan->vid, &priv->bridge_vlans);
-	if (rc > 0)
+	अगर (rc > 0)
 		vlan_table_changed = true;
 
-	if (!vlan_table_changed)
-		return 0;
+	अगर (!vlan_table_changed)
+		वापस 0;
 
-	return sja1105_build_vlan_table(priv, true);
-}
+	वापस sja1105_build_vlan_table(priv, true);
+पूर्ण
 
-static int sja1105_dsa_8021q_vlan_add(struct dsa_switch *ds, int port, u16 vid,
+अटल पूर्णांक sja1105_dsa_8021q_vlan_add(काष्ठा dsa_चयन *ds, पूर्णांक port, u16 vid,
 				      u16 flags)
-{
-	struct sja1105_private *priv = ds->priv;
-	int rc;
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक rc;
 
 	rc = sja1105_vlan_add_one(ds, port, vid, flags, &priv->dsa_8021q_vlans);
-	if (rc <= 0)
-		return rc;
+	अगर (rc <= 0)
+		वापस rc;
 
-	return sja1105_build_vlan_table(priv, true);
-}
+	वापस sja1105_build_vlan_table(priv, true);
+पूर्ण
 
-static int sja1105_dsa_8021q_vlan_del(struct dsa_switch *ds, int port, u16 vid)
-{
-	struct sja1105_private *priv = ds->priv;
-	int rc;
+अटल पूर्णांक sja1105_dsa_8021q_vlan_del(काष्ठा dsa_चयन *ds, पूर्णांक port, u16 vid)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक rc;
 
 	rc = sja1105_vlan_del_one(ds, port, vid, &priv->dsa_8021q_vlans);
-	if (!rc)
-		return 0;
+	अगर (!rc)
+		वापस 0;
 
-	return sja1105_build_vlan_table(priv, true);
-}
+	वापस sja1105_build_vlan_table(priv, true);
+पूर्ण
 
-static const struct dsa_8021q_ops sja1105_dsa_8021q_ops = {
+अटल स्थिर काष्ठा dsa_8021q_ops sja1105_dsa_8021q_ops = अणु
 	.vlan_add	= sja1105_dsa_8021q_vlan_add,
 	.vlan_del	= sja1105_dsa_8021q_vlan_del,
-};
+पूर्ण;
 
-/* The programming model for the SJA1105 switch is "all-at-once" via static
- * configuration tables. Some of these can be dynamically modified at runtime,
+/* The programming model क्रम the SJA1105 चयन is "all-at-once" via अटल
+ * configuration tables. Some of these can be dynamically modअगरied at runसमय,
  * but not the xMII mode parameters table.
- * Furthermode, some PHYs may not have crystals for generating their clocks
- * (e.g. RMII). Instead, their 50MHz clock is supplied via the SJA1105 port's
- * ref_clk pin. So port clocking needs to be initialized early, before
+ * Furthermode, some PHYs may not have crystals क्रम generating their घड़ीs
+ * (e.g. RMII). Instead, their 50MHz घड़ी is supplied via the SJA1105 port's
+ * ref_clk pin. So port घड़ीing needs to be initialized early, beक्रमe
  * connecting to PHYs is attempted, otherwise they won't respond through MDIO.
- * Setting correct PHY link speed does not matter now.
+ * Setting correct PHY link speed करोes not matter now.
  * But dsa_slave_phy_setup is called later than sja1105_setup, so the PHY
  * bindings are not yet parsed by DSA core. We need to parse early so that we
  * can populate the xMII mode parameters table.
  */
-static int sja1105_setup(struct dsa_switch *ds)
-{
-	struct sja1105_dt_port ports[SJA1105_NUM_PORTS];
-	struct sja1105_private *priv = ds->priv;
-	int rc;
+अटल पूर्णांक sja1105_setup(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा sja1105_dt_port ports[SJA1105_NUM_PORTS];
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक rc;
 
 	rc = sja1105_parse_dt(priv, ports);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(ds->dev, "Failed to parse DT: %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Error out early if internal delays are required through DT
+	/* Error out early अगर पूर्णांकernal delays are required through DT
 	 * and we can't apply them.
 	 */
 	rc = sja1105_parse_rgmii_delays(priv, ports);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(ds->dev, "RGMII delay not supported\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	rc = sja1105_ptp_clock_register(ds);
-	if (rc < 0) {
+	rc = sja1105_ptp_घड़ी_रेजिस्टर(ds);
+	अगर (rc < 0) अणु
 		dev_err(ds->dev, "Failed to register PTP clock: %d\n", rc);
-		return rc;
-	}
-	/* Create and send configuration down to device */
-	rc = sja1105_static_config_load(priv, ports);
-	if (rc < 0) {
+		वापस rc;
+	पूर्ण
+	/* Create and send configuration करोwn to device */
+	rc = sja1105_अटल_config_load(priv, ports);
+	अगर (rc < 0) अणु
 		dev_err(ds->dev, "Failed to load static config: %d\n", rc);
-		goto out_ptp_clock_unregister;
-	}
+		जाओ out_ptp_घड़ी_unरेजिस्टर;
+	पूर्ण
 	/* Configure the CGU (PHY link modes and speeds) */
-	rc = sja1105_clocking_setup(priv);
-	if (rc < 0) {
+	rc = sja1105_घड़ीing_setup(priv);
+	अगर (rc < 0) अणु
 		dev_err(ds->dev, "Failed to configure MII clocking: %d\n", rc);
-		goto out_static_config_free;
-	}
+		जाओ out_अटल_config_मुक्त;
+	पूर्ण
 	/* On SJA1105, VLAN filtering per se is always enabled in hardware.
-	 * The only thing we can do to disable it is lie about what the 802.1Q
+	 * The only thing we can करो to disable it is lie about what the 802.1Q
 	 * EtherType is.
 	 * So it will still try to apply VLAN filtering, but all ingress
 	 * traffic (except frames received with EtherType of ETH_P_SJA1105)
-	 * will be internally tagged with a distorted VLAN header where the
+	 * will be पूर्णांकernally tagged with a distorted VLAN header where the
 	 * TPID is ETH_P_SJA1105, and the VLAN ID is the port pvid.
 	 */
 	ds->vlan_filtering_is_global = true;
@@ -3007,89 +3008,89 @@ static int sja1105_setup(struct dsa_switch *ds)
 	/* Advertise the 8 egress queues */
 	ds->num_tx_queues = SJA1105_NUM_TC;
 
-	ds->mtu_enforcement_ingress = true;
+	ds->mtu_enक्रमcement_ingress = true;
 
-	priv->best_effort_vlan_filtering = true;
+	priv->best_efक्रमt_vlan_filtering = true;
 
 	rc = sja1105_devlink_setup(ds);
-	if (rc < 0)
-		goto out_static_config_free;
+	अगर (rc < 0)
+		जाओ out_अटल_config_मुक्त;
 
-	/* The DSA/switchdev model brings up switch ports in standalone mode by
-	 * default, and that means vlan_filtering is 0 since they're not under
-	 * a bridge, so it's safe to set up switch tagging at this time.
+	/* The DSA/चयनdev model brings up चयन ports in standalone mode by
+	 * शेष, and that means vlan_filtering is 0 since they're not under
+	 * a bridge, so it's safe to set up चयन tagging at this समय.
 	 */
 	rtnl_lock();
 	rc = sja1105_setup_8021q_tagging(ds, true);
 	rtnl_unlock();
-	if (rc)
-		goto out_devlink_teardown;
+	अगर (rc)
+		जाओ out_devlink_tearकरोwn;
 
-	return 0;
+	वापस 0;
 
-out_devlink_teardown:
-	sja1105_devlink_teardown(ds);
-out_ptp_clock_unregister:
-	sja1105_ptp_clock_unregister(ds);
-out_static_config_free:
-	sja1105_static_config_free(&priv->static_config);
+out_devlink_tearकरोwn:
+	sja1105_devlink_tearकरोwn(ds);
+out_ptp_घड़ी_unरेजिस्टर:
+	sja1105_ptp_घड़ी_unरेजिस्टर(ds);
+out_अटल_config_मुक्त:
+	sja1105_अटल_config_मुक्त(&priv->अटल_config);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void sja1105_teardown(struct dsa_switch *ds)
-{
-	struct sja1105_private *priv = ds->priv;
-	struct sja1105_bridge_vlan *v, *n;
-	int port;
+अटल व्योम sja1105_tearकरोwn(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	काष्ठा sja1105_bridge_vlan *v, *n;
+	पूर्णांक port;
 
-	for (port = 0; port < SJA1105_NUM_PORTS; port++) {
-		struct sja1105_port *sp = &priv->ports[port];
+	क्रम (port = 0; port < SJA1105_NUM_PORTS; port++) अणु
+		काष्ठा sja1105_port *sp = &priv->ports[port];
 
-		if (!dsa_is_user_port(ds, port))
-			continue;
+		अगर (!dsa_is_user_port(ds, port))
+			जारी;
 
-		if (sp->xmit_worker)
-			kthread_destroy_worker(sp->xmit_worker);
-	}
+		अगर (sp->xmit_worker)
+			kthपढ़ो_destroy_worker(sp->xmit_worker);
+	पूर्ण
 
-	sja1105_devlink_teardown(ds);
-	sja1105_flower_teardown(ds);
-	sja1105_tas_teardown(ds);
-	sja1105_ptp_clock_unregister(ds);
-	sja1105_static_config_free(&priv->static_config);
+	sja1105_devlink_tearकरोwn(ds);
+	sja1105_flower_tearकरोwn(ds);
+	sja1105_tas_tearकरोwn(ds);
+	sja1105_ptp_घड़ी_unरेजिस्टर(ds);
+	sja1105_अटल_config_मुक्त(&priv->अटल_config);
 
-	list_for_each_entry_safe(v, n, &priv->dsa_8021q_vlans, list) {
+	list_क्रम_each_entry_safe(v, n, &priv->dsa_8021q_vlans, list) अणु
 		list_del(&v->list);
-		kfree(v);
-	}
+		kमुक्त(v);
+	पूर्ण
 
-	list_for_each_entry_safe(v, n, &priv->bridge_vlans, list) {
+	list_क्रम_each_entry_safe(v, n, &priv->bridge_vlans, list) अणु
 		list_del(&v->list);
-		kfree(v);
-	}
-}
+		kमुक्त(v);
+	पूर्ण
+पूर्ण
 
-static void sja1105_port_disable(struct dsa_switch *ds, int port)
-{
-	struct sja1105_private *priv = ds->priv;
-	struct sja1105_port *sp = &priv->ports[port];
+अटल व्योम sja1105_port_disable(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	काष्ठा sja1105_port *sp = &priv->ports[port];
 
-	if (!dsa_is_user_port(ds, port))
-		return;
+	अगर (!dsa_is_user_port(ds, port))
+		वापस;
 
-	kthread_cancel_work_sync(&sp->xmit_work);
+	kthपढ़ो_cancel_work_sync(&sp->xmit_work);
 	skb_queue_purge(&sp->xmit_queue);
-}
+पूर्ण
 
-static int sja1105_mgmt_xmit(struct dsa_switch *ds, int port, int slot,
-			     struct sk_buff *skb, bool takets)
-{
-	struct sja1105_mgmt_entry mgmt_route = {0};
-	struct sja1105_private *priv = ds->priv;
-	struct ethhdr *hdr;
-	int timeout = 10;
-	int rc;
+अटल पूर्णांक sja1105_mgmt_xmit(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक slot,
+			     काष्ठा sk_buff *skb, bool takets)
+अणु
+	काष्ठा sja1105_mgmt_entry mgmt_route = अणु0पूर्ण;
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	काष्ठा ethhdr *hdr;
+	पूर्णांक समयout = 10;
+	पूर्णांक rc;
 
 	hdr = eth_hdr(skb);
 
@@ -3099,400 +3100,400 @@ static int sja1105_mgmt_xmit(struct dsa_switch *ds, int port, int slot,
 	mgmt_route.tsreg = 0;
 	mgmt_route.takets = takets;
 
-	rc = sja1105_dynamic_config_write(priv, BLK_IDX_MGMT_ROUTE,
+	rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_MGMT_ROUTE,
 					  slot, &mgmt_route, true);
-	if (rc < 0) {
-		kfree_skb(skb);
-		return rc;
-	}
+	अगर (rc < 0) अणु
+		kमुक्त_skb(skb);
+		वापस rc;
+	पूर्ण
 
 	/* Transfer skb to the host port. */
 	dsa_enqueue_skb(skb, dsa_to_port(ds, port)->slave);
 
-	/* Wait until the switch has processed the frame */
-	do {
-		rc = sja1105_dynamic_config_read(priv, BLK_IDX_MGMT_ROUTE,
+	/* Wait until the चयन has processed the frame */
+	करो अणु
+		rc = sja1105_dynamic_config_पढ़ो(priv, BLK_IDX_MGMT_ROUTE,
 						 slot, &mgmt_route);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			dev_err_ratelimited(priv->ds->dev,
 					    "failed to poll for mgmt route\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* UM10944: The ENFPORT flag of the respective entry is
 		 * cleared when a match is found. The host can use this
 		 * flag as an acknowledgment.
 		 */
 		cpu_relax();
-	} while (mgmt_route.enfport && --timeout);
+	पूर्ण जबतक (mgmt_route.enfport && --समयout);
 
-	if (!timeout) {
+	अगर (!समयout) अणु
 		/* Clean up the management route so that a follow-up
 		 * frame may not match on it by mistake.
 		 * This is only hardware supported on P/Q/R/S - on E/T it is
 		 * a no-op and we are silently discarding the -EOPNOTSUPP.
 		 */
-		sja1105_dynamic_config_write(priv, BLK_IDX_MGMT_ROUTE,
+		sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_MGMT_ROUTE,
 					     slot, &mgmt_route, false);
 		dev_err_ratelimited(priv->ds->dev, "xmit timed out\n");
-	}
+	पूर्ण
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-#define work_to_port(work) \
-		container_of((work), struct sja1105_port, xmit_work)
-#define tagger_to_sja1105(t) \
-		container_of((t), struct sja1105_private, tagger_data)
+#घोषणा work_to_port(work) \
+		container_of((work), काष्ठा sja1105_port, xmit_work)
+#घोषणा tagger_to_sja1105(t) \
+		container_of((t), काष्ठा sja1105_निजी, tagger_data)
 
-/* Deferred work is unfortunately necessary because setting up the management
- * route cannot be done from atomit context (SPI transfer takes a sleepable
+/* Deferred work is unक्रमtunately necessary because setting up the management
+ * route cannot be करोne from atomit context (SPI transfer takes a sleepable
  * lock on the bus)
  */
-static void sja1105_port_deferred_xmit(struct kthread_work *work)
-{
-	struct sja1105_port *sp = work_to_port(work);
-	struct sja1105_tagger_data *tagger_data = sp->data;
-	struct sja1105_private *priv = tagger_to_sja1105(tagger_data);
-	int port = sp - priv->ports;
-	struct sk_buff *skb;
+अटल व्योम sja1105_port_deferred_xmit(काष्ठा kthपढ़ो_work *work)
+अणु
+	काष्ठा sja1105_port *sp = work_to_port(work);
+	काष्ठा sja1105_tagger_data *tagger_data = sp->data;
+	काष्ठा sja1105_निजी *priv = tagger_to_sja1105(tagger_data);
+	पूर्णांक port = sp - priv->ports;
+	काष्ठा sk_buff *skb;
 
-	while ((skb = skb_dequeue(&sp->xmit_queue)) != NULL) {
-		struct sk_buff *clone = SJA1105_SKB_CB(skb)->clone;
+	जबतक ((skb = skb_dequeue(&sp->xmit_queue)) != शून्य) अणु
+		काष्ठा sk_buff *clone = SJA1105_SKB_CB(skb)->clone;
 
 		mutex_lock(&priv->mgmt_lock);
 
 		sja1105_mgmt_xmit(priv->ds, port, 0, skb, !!clone);
 
-		/* The clone, if there, was made by dsa_skb_tx_timestamp */
-		if (clone)
+		/* The clone, अगर there, was made by dsa_skb_tx_बारtamp */
+		अगर (clone)
 			sja1105_ptp_txtstamp_skb(priv->ds, port, clone);
 
 		mutex_unlock(&priv->mgmt_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* The MAXAGE setting belongs to the L2 Forwarding Parameters table,
- * which cannot be reconfigured at runtime. So a switch reset is required.
+/* The MAXAGE setting beदीर्घs to the L2 Forwarding Parameters table,
+ * which cannot be reconfigured at runसमय. So a चयन reset is required.
  */
-static int sja1105_set_ageing_time(struct dsa_switch *ds,
-				   unsigned int ageing_time)
-{
-	struct sja1105_l2_lookup_params_entry *l2_lookup_params;
-	struct sja1105_private *priv = ds->priv;
-	struct sja1105_table *table;
-	unsigned int maxage;
+अटल पूर्णांक sja1105_set_ageing_समय(काष्ठा dsa_चयन *ds,
+				   अचिन्हित पूर्णांक ageing_समय)
+अणु
+	काष्ठा sja1105_l2_lookup_params_entry *l2_lookup_params;
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	काष्ठा sja1105_table *table;
+	अचिन्हित पूर्णांक maxage;
 
-	table = &priv->static_config.tables[BLK_IDX_L2_LOOKUP_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_LOOKUP_PARAMS];
 	l2_lookup_params = table->entries;
 
-	maxage = SJA1105_AGEING_TIME_MS(ageing_time);
+	maxage = SJA1105_AGEING_TIME_MS(ageing_समय);
 
-	if (l2_lookup_params->maxage == maxage)
-		return 0;
+	अगर (l2_lookup_params->maxage == maxage)
+		वापस 0;
 
 	l2_lookup_params->maxage = maxage;
 
-	return sja1105_static_config_reload(priv, SJA1105_AGEING_TIME);
-}
+	वापस sja1105_अटल_config_reload(priv, SJA1105_AGEING_TIME);
+पूर्ण
 
-static int sja1105_change_mtu(struct dsa_switch *ds, int port, int new_mtu)
-{
-	struct sja1105_l2_policing_entry *policing;
-	struct sja1105_private *priv = ds->priv;
+अटल पूर्णांक sja1105_change_mtu(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक new_mtu)
+अणु
+	काष्ठा sja1105_l2_policing_entry *policing;
+	काष्ठा sja1105_निजी *priv = ds->priv;
 
 	new_mtu += VLAN_ETH_HLEN + ETH_FCS_LEN;
 
-	if (dsa_is_cpu_port(ds, port))
+	अगर (dsa_is_cpu_port(ds, port))
 		new_mtu += VLAN_HLEN;
 
-	policing = priv->static_config.tables[BLK_IDX_L2_POLICING].entries;
+	policing = priv->अटल_config.tables[BLK_IDX_L2_POLICING].entries;
 
-	if (policing[port].maxlen == new_mtu)
-		return 0;
+	अगर (policing[port].maxlen == new_mtu)
+		वापस 0;
 
 	policing[port].maxlen = new_mtu;
 
-	return sja1105_static_config_reload(priv, SJA1105_BEST_EFFORT_POLICING);
-}
+	वापस sja1105_अटल_config_reload(priv, SJA1105_BEST_EFFORT_POLICING);
+पूर्ण
 
-static int sja1105_get_max_mtu(struct dsa_switch *ds, int port)
-{
-	return 2043 - VLAN_ETH_HLEN - ETH_FCS_LEN;
-}
+अटल पूर्णांक sja1105_get_max_mtu(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	वापस 2043 - VLAN_ETH_HLEN - ETH_FCS_LEN;
+पूर्ण
 
-static int sja1105_port_setup_tc(struct dsa_switch *ds, int port,
-				 enum tc_setup_type type,
-				 void *type_data)
-{
-	switch (type) {
-	case TC_SETUP_QDISC_TAPRIO:
-		return sja1105_setup_tc_taprio(ds, port, type_data);
-	case TC_SETUP_QDISC_CBS:
-		return sja1105_setup_tc_cbs(ds, port, type_data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक sja1105_port_setup_tc(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				 क्रमागत tc_setup_type type,
+				 व्योम *type_data)
+अणु
+	चयन (type) अणु
+	हाल TC_SETUP_QDISC_TAPRIO:
+		वापस sja1105_setup_tc_taprio(ds, port, type_data);
+	हाल TC_SETUP_QDISC_CBS:
+		वापस sja1105_setup_tc_cbs(ds, port, type_data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
 /* We have a single mirror (@to) port, but can configure ingress and egress
  * mirroring on all other (@from) ports.
- * We need to allow mirroring rules only as long as the @to port is always the
+ * We need to allow mirroring rules only as दीर्घ as the @to port is always the
  * same, and we need to unset the @to port from mirr_port only when there is no
  * mirroring rule that references it.
  */
-static int sja1105_mirror_apply(struct sja1105_private *priv, int from, int to,
+अटल पूर्णांक sja1105_mirror_apply(काष्ठा sja1105_निजी *priv, पूर्णांक from, पूर्णांक to,
 				bool ingress, bool enabled)
-{
-	struct sja1105_general_params_entry *general_params;
-	struct sja1105_mac_config_entry *mac;
-	struct sja1105_table *table;
-	bool already_enabled;
+अणु
+	काष्ठा sja1105_general_params_entry *general_params;
+	काष्ठा sja1105_mac_config_entry *mac;
+	काष्ठा sja1105_table *table;
+	bool alपढ़ोy_enabled;
 	u64 new_mirr_port;
-	int rc;
+	पूर्णांक rc;
 
-	table = &priv->static_config.tables[BLK_IDX_GENERAL_PARAMS];
+	table = &priv->अटल_config.tables[BLK_IDX_GENERAL_PARAMS];
 	general_params = table->entries;
 
-	mac = priv->static_config.tables[BLK_IDX_MAC_CONFIG].entries;
+	mac = priv->अटल_config.tables[BLK_IDX_MAC_CONFIG].entries;
 
-	already_enabled = (general_params->mirr_port != SJA1105_NUM_PORTS);
-	if (already_enabled && enabled && general_params->mirr_port != to) {
+	alपढ़ोy_enabled = (general_params->mirr_port != SJA1105_NUM_PORTS);
+	अगर (alपढ़ोy_enabled && enabled && general_params->mirr_port != to) अणु
 		dev_err(priv->ds->dev,
 			"Delete mirroring rules towards port %llu first\n",
 			general_params->mirr_port);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	new_mirr_port = to;
-	if (!enabled) {
+	अगर (!enabled) अणु
 		bool keep = false;
-		int port;
+		पूर्णांक port;
 
 		/* Anybody still referencing mirr_port? */
-		for (port = 0; port < SJA1105_NUM_PORTS; port++) {
-			if (mac[port].ing_mirr || mac[port].egr_mirr) {
+		क्रम (port = 0; port < SJA1105_NUM_PORTS; port++) अणु
+			अगर (mac[port].ing_mirr || mac[port].egr_mirr) अणु
 				keep = true;
-				break;
-			}
-		}
-		/* Unset already_enabled for next time */
-		if (!keep)
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		/* Unset alपढ़ोy_enabled क्रम next समय */
+		अगर (!keep)
 			new_mirr_port = SJA1105_NUM_PORTS;
-	}
-	if (new_mirr_port != general_params->mirr_port) {
+	पूर्ण
+	अगर (new_mirr_port != general_params->mirr_port) अणु
 		general_params->mirr_port = new_mirr_port;
 
-		rc = sja1105_dynamic_config_write(priv, BLK_IDX_GENERAL_PARAMS,
+		rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_GENERAL_PARAMS,
 						  0, general_params, true);
-		if (rc < 0)
-			return rc;
-	}
+		अगर (rc < 0)
+			वापस rc;
+	पूर्ण
 
-	if (ingress)
+	अगर (ingress)
 		mac[from].ing_mirr = enabled;
-	else
+	अन्यथा
 		mac[from].egr_mirr = enabled;
 
-	return sja1105_dynamic_config_write(priv, BLK_IDX_MAC_CONFIG, from,
+	वापस sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_MAC_CONFIG, from,
 					    &mac[from], true);
-}
+पूर्ण
 
-static int sja1105_mirror_add(struct dsa_switch *ds, int port,
-			      struct dsa_mall_mirror_tc_entry *mirror,
+अटल पूर्णांक sja1105_mirror_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			      काष्ठा dsa_mall_mirror_tc_entry *mirror,
 			      bool ingress)
-{
-	return sja1105_mirror_apply(ds->priv, port, mirror->to_local_port,
+अणु
+	वापस sja1105_mirror_apply(ds->priv, port, mirror->to_local_port,
 				    ingress, true);
-}
+पूर्ण
 
-static void sja1105_mirror_del(struct dsa_switch *ds, int port,
-			       struct dsa_mall_mirror_tc_entry *mirror)
-{
+अटल व्योम sja1105_mirror_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			       काष्ठा dsa_mall_mirror_tc_entry *mirror)
+अणु
 	sja1105_mirror_apply(ds->priv, port, mirror->to_local_port,
 			     mirror->ingress, false);
-}
+पूर्ण
 
-static int sja1105_port_policer_add(struct dsa_switch *ds, int port,
-				    struct dsa_mall_policer_tc_entry *policer)
-{
-	struct sja1105_l2_policing_entry *policing;
-	struct sja1105_private *priv = ds->priv;
+अटल पूर्णांक sja1105_port_policer_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				    काष्ठा dsa_mall_policer_tc_entry *policer)
+अणु
+	काष्ठा sja1105_l2_policing_entry *policing;
+	काष्ठा sja1105_निजी *priv = ds->priv;
 
-	policing = priv->static_config.tables[BLK_IDX_L2_POLICING].entries;
+	policing = priv->अटल_config.tables[BLK_IDX_L2_POLICING].entries;
 
 	/* In hardware, every 8 microseconds the credit level is incremented by
-	 * the value of RATE bytes divided by 64, up to a maximum of SMAX
+	 * the value of RATE bytes भागided by 64, up to a maximum of SMAX
 	 * bytes.
 	 */
-	policing[port].rate = div_u64(512 * policer->rate_bytes_per_sec,
+	policing[port].rate = भाग_u64(512 * policer->rate_bytes_per_sec,
 				      1000000);
 	policing[port].smax = policer->burst;
 
-	return sja1105_static_config_reload(priv, SJA1105_BEST_EFFORT_POLICING);
-}
+	वापस sja1105_अटल_config_reload(priv, SJA1105_BEST_EFFORT_POLICING);
+पूर्ण
 
-static void sja1105_port_policer_del(struct dsa_switch *ds, int port)
-{
-	struct sja1105_l2_policing_entry *policing;
-	struct sja1105_private *priv = ds->priv;
+अटल व्योम sja1105_port_policer_del(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	काष्ठा sja1105_l2_policing_entry *policing;
+	काष्ठा sja1105_निजी *priv = ds->priv;
 
-	policing = priv->static_config.tables[BLK_IDX_L2_POLICING].entries;
+	policing = priv->अटल_config.tables[BLK_IDX_L2_POLICING].entries;
 
 	policing[port].rate = SJA1105_RATE_MBPS(1000);
 	policing[port].smax = 65535;
 
-	sja1105_static_config_reload(priv, SJA1105_BEST_EFFORT_POLICING);
-}
+	sja1105_अटल_config_reload(priv, SJA1105_BEST_EFFORT_POLICING);
+पूर्ण
 
-static int sja1105_port_set_learning(struct sja1105_private *priv, int port,
+अटल पूर्णांक sja1105_port_set_learning(काष्ठा sja1105_निजी *priv, पूर्णांक port,
 				     bool enabled)
-{
-	struct sja1105_mac_config_entry *mac;
-	int rc;
+अणु
+	काष्ठा sja1105_mac_config_entry *mac;
+	पूर्णांक rc;
 
-	mac = priv->static_config.tables[BLK_IDX_MAC_CONFIG].entries;
+	mac = priv->अटल_config.tables[BLK_IDX_MAC_CONFIG].entries;
 
 	mac[port].dyn_learn = enabled;
 
-	rc = sja1105_dynamic_config_write(priv, BLK_IDX_MAC_CONFIG, port,
+	rc = sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_MAC_CONFIG, port,
 					  &mac[port], true);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (enabled)
+	अगर (enabled)
 		priv->learn_ena |= BIT(port);
-	else
+	अन्यथा
 		priv->learn_ena &= ~BIT(port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_port_ucast_bcast_flood(struct sja1105_private *priv, int to,
-					  struct switchdev_brport_flags flags)
-{
-	if (flags.mask & BR_FLOOD) {
-		if (flags.val & BR_FLOOD)
+अटल पूर्णांक sja1105_port_ucast_bcast_flood(काष्ठा sja1105_निजी *priv, पूर्णांक to,
+					  काष्ठा चयनdev_brport_flags flags)
+अणु
+	अगर (flags.mask & BR_FLOOD) अणु
+		अगर (flags.val & BR_FLOOD)
 			priv->ucast_egress_floods |= BIT(to);
-		else
+		अन्यथा
 			priv->ucast_egress_floods &= ~BIT(to);
-	}
+	पूर्ण
 
-	if (flags.mask & BR_BCAST_FLOOD) {
-		if (flags.val & BR_BCAST_FLOOD)
+	अगर (flags.mask & BR_BCAST_FLOOD) अणु
+		अगर (flags.val & BR_BCAST_FLOOD)
 			priv->bcast_egress_floods |= BIT(to);
-		else
+		अन्यथा
 			priv->bcast_egress_floods &= ~BIT(to);
-	}
+	पूर्ण
 
-	return sja1105_manage_flood_domains(priv);
-}
+	वापस sja1105_manage_flood_करोमुख्यs(priv);
+पूर्ण
 
-static int sja1105_port_mcast_flood(struct sja1105_private *priv, int to,
-				    struct switchdev_brport_flags flags,
-				    struct netlink_ext_ack *extack)
-{
-	struct sja1105_l2_lookup_entry *l2_lookup;
-	struct sja1105_table *table;
-	int match;
+अटल पूर्णांक sja1105_port_mcast_flood(काष्ठा sja1105_निजी *priv, पूर्णांक to,
+				    काष्ठा चयनdev_brport_flags flags,
+				    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा sja1105_l2_lookup_entry *l2_lookup;
+	काष्ठा sja1105_table *table;
+	पूर्णांक match;
 
-	table = &priv->static_config.tables[BLK_IDX_L2_LOOKUP];
+	table = &priv->अटल_config.tables[BLK_IDX_L2_LOOKUP];
 	l2_lookup = table->entries;
 
-	for (match = 0; match < table->entry_count; match++)
-		if (l2_lookup[match].macaddr == SJA1105_UNKNOWN_MULTICAST &&
+	क्रम (match = 0; match < table->entry_count; match++)
+		अगर (l2_lookup[match].macaddr == SJA1105_UNKNOWN_MULTICAST &&
 		    l2_lookup[match].mask_macaddr == SJA1105_UNKNOWN_MULTICAST)
-			break;
+			अवरोध;
 
-	if (match == table->entry_count) {
+	अगर (match == table->entry_count) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Could not find FDB entry for unknown multicast");
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	if (flags.val & BR_MCAST_FLOOD)
+	अगर (flags.val & BR_MCAST_FLOOD)
 		l2_lookup[match].destports |= BIT(to);
-	else
+	अन्यथा
 		l2_lookup[match].destports &= ~BIT(to);
 
-	return sja1105_dynamic_config_write(priv, BLK_IDX_L2_LOOKUP,
+	वापस sja1105_dynamic_config_ग_लिखो(priv, BLK_IDX_L2_LOOKUP,
 					    l2_lookup[match].index,
 					    &l2_lookup[match],
 					    true);
-}
+पूर्ण
 
-static int sja1105_port_pre_bridge_flags(struct dsa_switch *ds, int port,
-					 struct switchdev_brport_flags flags,
-					 struct netlink_ext_ack *extack)
-{
-	struct sja1105_private *priv = ds->priv;
+अटल पूर्णांक sja1105_port_pre_bridge_flags(काष्ठा dsa_चयन *ds, पूर्णांक port,
+					 काष्ठा चयनdev_brport_flags flags,
+					 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
 
-	if (flags.mask & ~(BR_LEARNING | BR_FLOOD | BR_MCAST_FLOOD |
+	अगर (flags.mask & ~(BR_LEARNING | BR_FLOOD | BR_MCAST_FLOOD |
 			   BR_BCAST_FLOOD))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (flags.mask & (BR_FLOOD | BR_MCAST_FLOOD) &&
-	    !priv->info->can_limit_mcast_flood) {
+	अगर (flags.mask & (BR_FLOOD | BR_MCAST_FLOOD) &&
+	    !priv->info->can_limit_mcast_flood) अणु
 		bool multicast = !!(flags.val & BR_MCAST_FLOOD);
 		bool unicast = !!(flags.val & BR_FLOOD);
 
-		if (unicast != multicast) {
+		अगर (unicast != multicast) अणु
 			NL_SET_ERR_MSG_MOD(extack,
 					   "This chip cannot configure multicast flooding independently of unicast");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_port_bridge_flags(struct dsa_switch *ds, int port,
-				     struct switchdev_brport_flags flags,
-				     struct netlink_ext_ack *extack)
-{
-	struct sja1105_private *priv = ds->priv;
-	int rc;
+अटल पूर्णांक sja1105_port_bridge_flags(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				     काष्ठा चयनdev_brport_flags flags,
+				     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक rc;
 
-	if (flags.mask & BR_LEARNING) {
+	अगर (flags.mask & BR_LEARNING) अणु
 		bool learn_ena = !!(flags.val & BR_LEARNING);
 
 		rc = sja1105_port_set_learning(priv, port, learn_ena);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (flags.mask & (BR_FLOOD | BR_BCAST_FLOOD)) {
+	अगर (flags.mask & (BR_FLOOD | BR_BCAST_FLOOD)) अणु
 		rc = sja1105_port_ucast_bcast_flood(priv, port, flags);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	/* For chips that can't offload BR_MCAST_FLOOD independently, there
-	 * is nothing to do here, we ensured the configuration is in sync by
+	 * is nothing to करो here, we ensured the configuration is in sync by
 	 * offloading BR_FLOOD.
 	 */
-	if (flags.mask & BR_MCAST_FLOOD && priv->info->can_limit_mcast_flood) {
+	अगर (flags.mask & BR_MCAST_FLOOD && priv->info->can_limit_mcast_flood) अणु
 		rc = sja1105_port_mcast_flood(priv, port, flags,
 					      extack);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dsa_switch_ops sja1105_switch_ops = {
+अटल स्थिर काष्ठा dsa_चयन_ops sja1105_चयन_ops = अणु
 	.get_tag_protocol	= sja1105_get_tag_protocol,
 	.setup			= sja1105_setup,
-	.teardown		= sja1105_teardown,
-	.set_ageing_time	= sja1105_set_ageing_time,
+	.tearकरोwn		= sja1105_tearकरोwn,
+	.set_ageing_समय	= sja1105_set_ageing_समय,
 	.port_change_mtu	= sja1105_change_mtu,
 	.port_max_mtu		= sja1105_get_max_mtu,
 	.phylink_validate	= sja1105_phylink_validate,
 	.phylink_mac_link_state	= sja1105_mac_pcs_get_state,
 	.phylink_mac_config	= sja1105_mac_config,
 	.phylink_mac_link_up	= sja1105_mac_link_up,
-	.phylink_mac_link_down	= sja1105_mac_link_down,
+	.phylink_mac_link_करोwn	= sja1105_mac_link_करोwn,
 	.get_strings		= sja1105_get_strings,
 	.get_ethtool_stats	= sja1105_get_ethtool_stats,
 	.get_sset_count		= sja1105_get_sset_count,
@@ -3528,82 +3529,82 @@ static const struct dsa_switch_ops sja1105_switch_ops = {
 	.devlink_param_get	= sja1105_devlink_param_get,
 	.devlink_param_set	= sja1105_devlink_param_set,
 	.devlink_info_get	= sja1105_devlink_info_get,
-};
+पूर्ण;
 
-static const struct of_device_id sja1105_dt_ids[];
+अटल स्थिर काष्ठा of_device_id sja1105_dt_ids[];
 
-static int sja1105_check_device_id(struct sja1105_private *priv)
-{
-	const struct sja1105_regs *regs = priv->info->regs;
-	u8 prod_id[SJA1105_SIZE_DEVICE_ID] = {0};
-	struct device *dev = &priv->spidev->dev;
-	const struct of_device_id *match;
+अटल पूर्णांक sja1105_check_device_id(काष्ठा sja1105_निजी *priv)
+अणु
+	स्थिर काष्ठा sja1105_regs *regs = priv->info->regs;
+	u8 prod_id[SJA1105_SIZE_DEVICE_ID] = अणु0पूर्ण;
+	काष्ठा device *dev = &priv->spidev->dev;
+	स्थिर काष्ठा of_device_id *match;
 	u32 device_id;
 	u64 part_no;
-	int rc;
+	पूर्णांक rc;
 
 	rc = sja1105_xfer_u32(priv, SPI_READ, regs->device_id, &device_id,
-			      NULL);
-	if (rc < 0)
-		return rc;
+			      शून्य);
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = sja1105_xfer_buf(priv, SPI_READ, regs->prod_id, prod_id,
 			      SJA1105_SIZE_DEVICE_ID);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	sja1105_unpack(prod_id, &part_no, 19, 4, SJA1105_SIZE_DEVICE_ID);
 
-	for (match = sja1105_dt_ids; match->compatible[0]; match++) {
-		const struct sja1105_info *info = match->data;
+	क्रम (match = sja1105_dt_ids; match->compatible[0]; match++) अणु
+		स्थिर काष्ठा sja1105_info *info = match->data;
 
 		/* Is what's been probed in our match table at all? */
-		if (info->device_id != device_id || info->part_no != part_no)
-			continue;
+		अगर (info->device_id != device_id || info->part_no != part_no)
+			जारी;
 
 		/* But is it what's in the device tree? */
-		if (priv->info->device_id != device_id ||
-		    priv->info->part_no != part_no) {
+		अगर (priv->info->device_id != device_id ||
+		    priv->info->part_no != part_no) अणु
 			dev_warn(dev, "Device tree specifies chip %s but found %s, please fix it!\n",
 				 priv->info->name, info->name);
 			/* It isn't. No problem, pick that up. */
 			priv->info = info;
-		}
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_err(dev, "Unexpected {device ID, part number}: 0x%x 0x%llx\n",
 		device_id, part_no);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int sja1105_probe(struct spi_device *spi)
-{
-	struct sja1105_tagger_data *tagger_data;
-	struct device *dev = &spi->dev;
-	struct sja1105_private *priv;
-	struct dsa_switch *ds;
-	int rc, port;
+अटल पूर्णांक sja1105_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा sja1105_tagger_data *tagger_data;
+	काष्ठा device *dev = &spi->dev;
+	काष्ठा sja1105_निजी *priv;
+	काष्ठा dsa_चयन *ds;
+	पूर्णांक rc, port;
 
-	if (!dev->of_node) {
+	अगर (!dev->of_node) अणु
 		dev_err(dev, "No DTS bindings for SJA1105 driver\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	priv = devm_kzalloc(dev, sizeof(struct sja1105_private), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(काष्ठा sja1105_निजी), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	/* Configure the optional reset pin and bring up switch */
+	/* Configure the optional reset pin and bring up चयन */
 	priv->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(priv->reset_gpio))
+	अगर (IS_ERR(priv->reset_gpio))
 		dev_dbg(dev, "reset-gpios not defined, ignoring\n");
-	else
+	अन्यथा
 		sja1105_hw_reset(priv->reset_gpio, 1, 1);
 
-	/* Populate our driver private structure (priv) based on
+	/* Populate our driver निजी काष्ठाure (priv) based on
 	 * the device tree node that was probed (spi)
 	 */
 	priv->spidev = spi;
@@ -3612,29 +3613,29 @@ static int sja1105_probe(struct spi_device *spi)
 	/* Configure the SPI bus */
 	spi->bits_per_word = 8;
 	rc = spi_setup(spi);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(dev, "Could not init SPI\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	priv->info = of_device_get_match_data(dev);
 
 	/* Detect hardware device */
 	rc = sja1105_check_device_id(priv);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(dev, "Device ID check failed: %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	dev_info(dev, "Probed switch chip: %s\n", priv->info->name);
 
-	ds = devm_kzalloc(dev, sizeof(*ds), GFP_KERNEL);
-	if (!ds)
-		return -ENOMEM;
+	ds = devm_kzalloc(dev, माप(*ds), GFP_KERNEL);
+	अगर (!ds)
+		वापस -ENOMEM;
 
 	ds->dev = dev;
 	ds->num_ports = SJA1105_NUM_PORTS;
-	ds->ops = &sja1105_switch_ops;
+	ds->ops = &sja1105_चयन_ops;
 	ds->priv = priv;
 	priv->ds = ds;
 
@@ -3643,10 +3644,10 @@ static int sja1105_probe(struct spi_device *spi)
 	mutex_init(&priv->ptp_data.lock);
 	mutex_init(&priv->mgmt_lock);
 
-	priv->dsa_8021q_ctx = devm_kzalloc(dev, sizeof(*priv->dsa_8021q_ctx),
+	priv->dsa_8021q_ctx = devm_kzalloc(dev, माप(*priv->dsa_8021q_ctx),
 					   GFP_KERNEL);
-	if (!priv->dsa_8021q_ctx)
-		return -ENOMEM;
+	अगर (!priv->dsa_8021q_ctx)
+		वापस -ENOMEM;
 
 	priv->dsa_8021q_ctx->ops = &sja1105_dsa_8021q_ops;
 	priv->dsa_8021q_ctx->proto = htons(ETH_P_8021Q);
@@ -3659,97 +3660,97 @@ static int sja1105_probe(struct spi_device *spi)
 	sja1105_tas_setup(ds);
 	sja1105_flower_setup(ds);
 
-	rc = dsa_register_switch(priv->ds);
-	if (rc)
-		return rc;
+	rc = dsa_रेजिस्टर_चयन(priv->ds);
+	अगर (rc)
+		वापस rc;
 
-	if (IS_ENABLED(CONFIG_NET_SCH_CBS)) {
-		priv->cbs = devm_kcalloc(dev, priv->info->num_cbs_shapers,
-					 sizeof(struct sja1105_cbs_entry),
+	अगर (IS_ENABLED(CONFIG_NET_SCH_CBS)) अणु
+		priv->cbs = devm_kसुस्मृति(dev, priv->info->num_cbs_shapers,
+					 माप(काष्ठा sja1105_cbs_entry),
 					 GFP_KERNEL);
-		if (!priv->cbs) {
+		अगर (!priv->cbs) अणु
 			rc = -ENOMEM;
-			goto out_unregister_switch;
-		}
-	}
+			जाओ out_unरेजिस्टर_चयन;
+		पूर्ण
+	पूर्ण
 
 	/* Connections between dsa_port and sja1105_port */
-	for (port = 0; port < SJA1105_NUM_PORTS; port++) {
-		struct sja1105_port *sp = &priv->ports[port];
-		struct dsa_port *dp = dsa_to_port(ds, port);
-		struct net_device *slave;
-		int subvlan;
+	क्रम (port = 0; port < SJA1105_NUM_PORTS; port++) अणु
+		काष्ठा sja1105_port *sp = &priv->ports[port];
+		काष्ठा dsa_port *dp = dsa_to_port(ds, port);
+		काष्ठा net_device *slave;
+		पूर्णांक subvlan;
 
-		if (!dsa_is_user_port(ds, port))
-			continue;
+		अगर (!dsa_is_user_port(ds, port))
+			जारी;
 
 		dp->priv = sp;
 		sp->dp = dp;
 		sp->data = tagger_data;
 		slave = dp->slave;
-		kthread_init_work(&sp->xmit_work, sja1105_port_deferred_xmit);
-		sp->xmit_worker = kthread_create_worker(0, "%s_xmit",
+		kthपढ़ो_init_work(&sp->xmit_work, sja1105_port_deferred_xmit);
+		sp->xmit_worker = kthपढ़ो_create_worker(0, "%s_xmit",
 							slave->name);
-		if (IS_ERR(sp->xmit_worker)) {
+		अगर (IS_ERR(sp->xmit_worker)) अणु
 			rc = PTR_ERR(sp->xmit_worker);
 			dev_err(ds->dev,
 				"failed to create deferred xmit thread: %d\n",
 				rc);
-			goto out_destroy_workers;
-		}
+			जाओ out_destroy_workers;
+		पूर्ण
 		skb_queue_head_init(&sp->xmit_queue);
 		sp->xmit_tpid = ETH_P_SJA1105;
 
-		for (subvlan = 0; subvlan < DSA_8021Q_N_SUBVLAN; subvlan++)
+		क्रम (subvlan = 0; subvlan < DSA_8021Q_N_SUBVLAN; subvlan++)
 			sp->subvlan_map[subvlan] = VLAN_N_VID;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_destroy_workers:
-	while (port-- > 0) {
-		struct sja1105_port *sp = &priv->ports[port];
+	जबतक (port-- > 0) अणु
+		काष्ठा sja1105_port *sp = &priv->ports[port];
 
-		if (!dsa_is_user_port(ds, port))
-			continue;
+		अगर (!dsa_is_user_port(ds, port))
+			जारी;
 
-		kthread_destroy_worker(sp->xmit_worker);
-	}
+		kthपढ़ो_destroy_worker(sp->xmit_worker);
+	पूर्ण
 
-out_unregister_switch:
-	dsa_unregister_switch(ds);
+out_unरेजिस्टर_चयन:
+	dsa_unरेजिस्टर_चयन(ds);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int sja1105_remove(struct spi_device *spi)
-{
-	struct sja1105_private *priv = spi_get_drvdata(spi);
+अटल पूर्णांक sja1105_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा sja1105_निजी *priv = spi_get_drvdata(spi);
 
-	dsa_unregister_switch(priv->ds);
-	return 0;
-}
+	dsa_unरेजिस्टर_चयन(priv->ds);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id sja1105_dt_ids[] = {
-	{ .compatible = "nxp,sja1105e", .data = &sja1105e_info },
-	{ .compatible = "nxp,sja1105t", .data = &sja1105t_info },
-	{ .compatible = "nxp,sja1105p", .data = &sja1105p_info },
-	{ .compatible = "nxp,sja1105q", .data = &sja1105q_info },
-	{ .compatible = "nxp,sja1105r", .data = &sja1105r_info },
-	{ .compatible = "nxp,sja1105s", .data = &sja1105s_info },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id sja1105_dt_ids[] = अणु
+	अणु .compatible = "nxp,sja1105e", .data = &sja1105e_info पूर्ण,
+	अणु .compatible = "nxp,sja1105t", .data = &sja1105t_info पूर्ण,
+	अणु .compatible = "nxp,sja1105p", .data = &sja1105p_info पूर्ण,
+	अणु .compatible = "nxp,sja1105q", .data = &sja1105q_info पूर्ण,
+	अणु .compatible = "nxp,sja1105r", .data = &sja1105r_info पूर्ण,
+	अणु .compatible = "nxp,sja1105s", .data = &sja1105s_info पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sja1105_dt_ids);
 
-static struct spi_driver sja1105_driver = {
-	.driver = {
+अटल काष्ठा spi_driver sja1105_driver = अणु
+	.driver = अणु
 		.name  = "sja1105",
 		.owner = THIS_MODULE,
 		.of_match_table = of_match_ptr(sja1105_dt_ids),
-	},
+	पूर्ण,
 	.probe  = sja1105_probe,
-	.remove = sja1105_remove,
-};
+	.हटाओ = sja1105_हटाओ,
+पूर्ण;
 
 module_spi_driver(sja1105_driver);
 

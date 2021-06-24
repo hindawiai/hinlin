@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *   (Tentative) USB Audio Driver for ALSA
+ *   (Tentative) USB Audio Driver क्रम ALSA
  *
  *   Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  *
  *   Many codes borrowed from audio.c by
  *	    Alan Cox (alan@lxorguk.ukuu.org.uk)
- *	    Thomas Sailer (sailer@ife.ee.ethz.ch)
+ *	    Thomas Sailer (sailer@अगरe.ee.ethz.ch)
  *
  *   Audio Class 3.0 support by Ruslan Bilovol <ruslan.bilovol@gmail.com>
  *
@@ -15,380 +16,380 @@
  *   - the linked URBs would be preferred but not used so far because of
  *     the instability of unlinking.
  *   - type II is not supported properly.  there is no device which supports
- *     this type *correctly*.  SB extigy looks as if it supports, but it's
+ *     this type *correctly*.  SB extigy looks as अगर it supports, but it's
  *     indeed an AC3 stream packed in SPDIF frames (i.e. no real AC3 stream).
  */
 
 
-#include <linux/bitops.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <linux/usb.h>
-#include <linux/moduleparam.h>
-#include <linux/mutex.h>
-#include <linux/usb/audio.h>
-#include <linux/usb/audio-v2.h>
-#include <linux/usb/audio-v3.h>
-#include <linux/module.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/usb.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/usb/audपन.स>
+#समावेश <linux/usb/audio-v2.h>
+#समावेश <linux/usb/audio-v3.h>
+#समावेश <linux/module.h>
 
-#include <sound/control.h>
-#include <sound/core.h>
-#include <sound/info.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/initval.h>
+#समावेश <sound/control.h>
+#समावेश <sound/core.h>
+#समावेश <sound/info.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/initval.h>
 
-#include "usbaudio.h"
-#include "card.h"
-#include "midi.h"
-#include "mixer.h"
-#include "proc.h"
-#include "quirks.h"
-#include "endpoint.h"
-#include "helper.h"
-#include "pcm.h"
-#include "format.h"
-#include "power.h"
-#include "stream.h"
-#include "media.h"
+#समावेश "usbaudio.h"
+#समावेश "card.h"
+#समावेश "midi.h"
+#समावेश "mixer.h"
+#समावेश "proc.h"
+#समावेश "quirks.h"
+#समावेश "endpoint.h"
+#समावेश "helper.h"
+#समावेश "pcm.h"
+#समावेश "format.h"
+#समावेश "power.h"
+#समावेश "stream.h"
+#समावेश "media.h"
 
 MODULE_AUTHOR("Takashi Iwai <tiwai@suse.de>");
 MODULE_DESCRIPTION("USB Audio");
 MODULE_LICENSE("GPL");
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;/* Enable this card */
-/* Vendor/product IDs for this card */
-static int vid[SNDRV_CARDS] = { [0 ... (SNDRV_CARDS-1)] = -1 };
-static int pid[SNDRV_CARDS] = { [0 ... (SNDRV_CARDS-1)] = -1 };
-static int device_setup[SNDRV_CARDS]; /* device parameter for this card */
-static bool ignore_ctl_error;
-static bool autoclock = true;
-static char *quirk_alias[SNDRV_CARDS];
-static char *delayed_register[SNDRV_CARDS];
-static bool implicit_fb[SNDRV_CARDS];
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;/* Enable this card */
+/* Venकरोr/product IDs क्रम this card */
+अटल पूर्णांक vid[SNDRV_CARDS] = अणु [0 ... (SNDRV_CARDS-1)] = -1 पूर्ण;
+अटल पूर्णांक pid[SNDRV_CARDS] = अणु [0 ... (SNDRV_CARDS-1)] = -1 पूर्ण;
+अटल पूर्णांक device_setup[SNDRV_CARDS]; /* device parameter क्रम this card */
+अटल bool ignore_ctl_error;
+अटल bool स्वतःघड़ी = true;
+अटल अक्षर *quirk_alias[SNDRV_CARDS];
+अटल अक्षर *delayed_रेजिस्टर[SNDRV_CARDS];
+अटल bool implicit_fb[SNDRV_CARDS];
 
-bool snd_usb_use_vmalloc = true;
+bool snd_usb_use_vदो_स्मृति = true;
 bool snd_usb_skip_validation;
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for the USB audio adapter.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for the USB audio adapter.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable USB audio adapter.");
-module_param_array(vid, int, NULL, 0444);
+module_param_array(vid, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(vid, "Vendor ID for the USB audio device.");
-module_param_array(pid, int, NULL, 0444);
+module_param_array(pid, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(pid, "Product ID for the USB audio device.");
-module_param_array(device_setup, int, NULL, 0444);
+module_param_array(device_setup, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(device_setup, "Specific device setup (if needed).");
 module_param(ignore_ctl_error, bool, 0444);
 MODULE_PARM_DESC(ignore_ctl_error,
 		 "Ignore errors from USB controller for mixer interfaces.");
-module_param(autoclock, bool, 0444);
-MODULE_PARM_DESC(autoclock, "Enable auto-clock selection for UAC2 devices (default: yes).");
-module_param_array(quirk_alias, charp, NULL, 0444);
+module_param(स्वतःघड़ी, bool, 0444);
+MODULE_PARM_DESC(स्वतःघड़ी, "Enable auto-clock selection for UAC2 devices (default: yes).");
+module_param_array(quirk_alias, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(quirk_alias, "Quirk aliases, e.g. 0123abcd:5678beef.");
-module_param_array(delayed_register, charp, NULL, 0444);
-MODULE_PARM_DESC(delayed_register, "Quirk for delayed registration, given by id:iface, e.g. 0123abcd:4.");
-module_param_array(implicit_fb, bool, NULL, 0444);
+module_param_array(delayed_रेजिस्टर, अक्षरp, शून्य, 0444);
+MODULE_PARM_DESC(delayed_रेजिस्टर, "Quirk for delayed registration, given by id:iface, e.g. 0123abcd:4.");
+module_param_array(implicit_fb, bool, शून्य, 0444);
 MODULE_PARM_DESC(implicit_fb, "Apply generic implicit feedback sync mode.");
-module_param_named(use_vmalloc, snd_usb_use_vmalloc, bool, 0444);
-MODULE_PARM_DESC(use_vmalloc, "Use vmalloc for PCM intermediate buffers (default: yes).");
+module_param_named(use_vदो_स्मृति, snd_usb_use_vदो_स्मृति, bool, 0444);
+MODULE_PARM_DESC(use_vदो_स्मृति, "Use vmalloc for PCM intermediate buffers (default: yes).");
 module_param_named(skip_validation, snd_usb_skip_validation, bool, 0444);
 MODULE_PARM_DESC(skip_validation, "Skip unit descriptor validation (default: no).");
 
 /*
- * we keep the snd_usb_audio_t instances by ourselves for merging
- * the all interfaces on the same card as one sound device.
+ * we keep the snd_usb_audio_t instances by ourselves क्रम merging
+ * the all पूर्णांकerfaces on the same card as one sound device.
  */
 
-static DEFINE_MUTEX(register_mutex);
-static struct snd_usb_audio *usb_chip[SNDRV_CARDS];
-static struct usb_driver usb_audio_driver;
+अटल DEFINE_MUTEX(रेजिस्टर_mutex);
+अटल काष्ठा snd_usb_audio *usb_chip[SNDRV_CARDS];
+अटल काष्ठा usb_driver usb_audio_driver;
 
 /*
  * disconnect streams
  * called from usb_audio_disconnect()
  */
-static void snd_usb_stream_disconnect(struct snd_usb_stream *as)
-{
-	int idx;
-	struct snd_usb_substream *subs;
+अटल व्योम snd_usb_stream_disconnect(काष्ठा snd_usb_stream *as)
+अणु
+	पूर्णांक idx;
+	काष्ठा snd_usb_substream *subs;
 
-	for (idx = 0; idx < 2; idx++) {
+	क्रम (idx = 0; idx < 2; idx++) अणु
 		subs = &as->substream[idx];
-		if (!subs->num_formats)
-			continue;
-		subs->data_endpoint = NULL;
-		subs->sync_endpoint = NULL;
-	}
-}
+		अगर (!subs->num_क्रमmats)
+			जारी;
+		subs->data_endpoपूर्णांक = शून्य;
+		subs->sync_endpoपूर्णांक = शून्य;
+	पूर्ण
+पूर्ण
 
-static int snd_usb_create_stream(struct snd_usb_audio *chip, int ctrlif, int interface)
-{
-	struct usb_device *dev = chip->dev;
-	struct usb_host_interface *alts;
-	struct usb_interface_descriptor *altsd;
-	struct usb_interface *iface = usb_ifnum_to_if(dev, interface);
+अटल पूर्णांक snd_usb_create_stream(काष्ठा snd_usb_audio *chip, पूर्णांक ctrlअगर, पूर्णांक पूर्णांकerface)
+अणु
+	काष्ठा usb_device *dev = chip->dev;
+	काष्ठा usb_host_पूर्णांकerface *alts;
+	काष्ठा usb_पूर्णांकerface_descriptor *altsd;
+	काष्ठा usb_पूर्णांकerface *अगरace = usb_अगरnum_to_अगर(dev, पूर्णांकerface);
 
-	if (!iface) {
+	अगर (!अगरace) अणु
 		dev_err(&dev->dev, "%u:%d : does not exist\n",
-			ctrlif, interface);
-		return -EINVAL;
-	}
+			ctrlअगर, पूर्णांकerface);
+		वापस -EINVAL;
+	पूर्ण
 
-	alts = &iface->altsetting[0];
-	altsd = get_iface_desc(alts);
+	alts = &अगरace->altsetting[0];
+	altsd = get_अगरace_desc(alts);
 
 	/*
-	 * Android with both accessory and audio interfaces enabled gets the
-	 * interface numbers wrong.
+	 * Android with both accessory and audio पूर्णांकerfaces enabled माला_लो the
+	 * पूर्णांकerface numbers wrong.
 	 */
-	if ((chip->usb_id == USB_ID(0x18d1, 0x2d04) ||
+	अगर ((chip->usb_id == USB_ID(0x18d1, 0x2d04) ||
 	     chip->usb_id == USB_ID(0x18d1, 0x2d05)) &&
-	    interface == 0 &&
+	    पूर्णांकerface == 0 &&
 	    altsd->bInterfaceClass == USB_CLASS_VENDOR_SPEC &&
-	    altsd->bInterfaceSubClass == USB_SUBCLASS_VENDOR_SPEC) {
-		interface = 2;
-		iface = usb_ifnum_to_if(dev, interface);
-		if (!iface)
-			return -EINVAL;
-		alts = &iface->altsetting[0];
-		altsd = get_iface_desc(alts);
-	}
+	    altsd->bInterfaceSubClass == USB_SUBCLASS_VENDOR_SPEC) अणु
+		पूर्णांकerface = 2;
+		अगरace = usb_अगरnum_to_अगर(dev, पूर्णांकerface);
+		अगर (!अगरace)
+			वापस -EINVAL;
+		alts = &अगरace->altsetting[0];
+		altsd = get_अगरace_desc(alts);
+	पूर्ण
 
-	if (usb_interface_claimed(iface)) {
+	अगर (usb_पूर्णांकerface_claimed(अगरace)) अणु
 		dev_dbg(&dev->dev, "%d:%d: skipping, already claimed\n",
-			ctrlif, interface);
-		return -EINVAL;
-	}
+			ctrlअगर, पूर्णांकerface);
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((altsd->bInterfaceClass == USB_CLASS_AUDIO ||
+	अगर ((altsd->bInterfaceClass == USB_CLASS_AUDIO ||
 	     altsd->bInterfaceClass == USB_CLASS_VENDOR_SPEC) &&
-	    altsd->bInterfaceSubClass == USB_SUBCLASS_MIDISTREAMING) {
-		int err = __snd_usbmidi_create(chip->card, iface,
-					     &chip->midi_list, NULL,
+	    altsd->bInterfaceSubClass == USB_SUBCLASS_MIDISTREAMING) अणु
+		पूर्णांक err = __snd_usbmidi_create(chip->card, अगरace,
+					     &chip->midi_list, शून्य,
 					     chip->usb_id);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&dev->dev,
 				"%u:%d: cannot create sequencer device\n",
-				ctrlif, interface);
-			return -EINVAL;
-		}
-		return usb_driver_claim_interface(&usb_audio_driver, iface,
+				ctrlअगर, पूर्णांकerface);
+			वापस -EINVAL;
+		पूर्ण
+		वापस usb_driver_claim_पूर्णांकerface(&usb_audio_driver, अगरace,
 						  USB_AUDIO_IFACE_UNUSED);
-	}
+	पूर्ण
 
-	if ((altsd->bInterfaceClass != USB_CLASS_AUDIO &&
+	अगर ((altsd->bInterfaceClass != USB_CLASS_AUDIO &&
 	     altsd->bInterfaceClass != USB_CLASS_VENDOR_SPEC) ||
-	    altsd->bInterfaceSubClass != USB_SUBCLASS_AUDIOSTREAMING) {
+	    altsd->bInterfaceSubClass != USB_SUBCLASS_AUDIOSTREAMING) अणु
 		dev_dbg(&dev->dev,
 			"%u:%d: skipping non-supported interface %d\n",
-			ctrlif, interface, altsd->bInterfaceClass);
+			ctrlअगर, पूर्णांकerface, altsd->bInterfaceClass);
 		/* skip non-supported classes */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (snd_usb_get_speed(dev) == USB_SPEED_LOW) {
+	अगर (snd_usb_get_speed(dev) == USB_SPEED_LOW) अणु
 		dev_err(&dev->dev, "low speed audio streaming not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (! snd_usb_parse_audio_interface(chip, interface)) {
-		usb_set_interface(dev, interface, 0); /* reset the current interface */
-		return usb_driver_claim_interface(&usb_audio_driver, iface,
+	अगर (! snd_usb_parse_audio_पूर्णांकerface(chip, पूर्णांकerface)) अणु
+		usb_set_पूर्णांकerface(dev, पूर्णांकerface, 0); /* reset the current पूर्णांकerface */
+		वापस usb_driver_claim_पूर्णांकerface(&usb_audio_driver, अगरace,
 						  USB_AUDIO_IFACE_UNUSED);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * parse audio control descriptor and create pcm/midi streams
  */
-static int snd_usb_create_streams(struct snd_usb_audio *chip, int ctrlif)
-{
-	struct usb_device *dev = chip->dev;
-	struct usb_host_interface *host_iface;
-	struct usb_interface_descriptor *altsd;
-	int i, protocol;
+अटल पूर्णांक snd_usb_create_streams(काष्ठा snd_usb_audio *chip, पूर्णांक ctrlअगर)
+अणु
+	काष्ठा usb_device *dev = chip->dev;
+	काष्ठा usb_host_पूर्णांकerface *host_अगरace;
+	काष्ठा usb_पूर्णांकerface_descriptor *altsd;
+	पूर्णांक i, protocol;
 
-	/* find audiocontrol interface */
-	host_iface = &usb_ifnum_to_if(dev, ctrlif)->altsetting[0];
-	altsd = get_iface_desc(host_iface);
+	/* find audiocontrol पूर्णांकerface */
+	host_अगरace = &usb_अगरnum_to_अगर(dev, ctrlअगर)->altsetting[0];
+	altsd = get_अगरace_desc(host_अगरace);
 	protocol = altsd->bInterfaceProtocol;
 
-	switch (protocol) {
-	default:
+	चयन (protocol) अणु
+	शेष:
 		dev_warn(&dev->dev,
 			 "unknown interface protocol %#02x, assuming v1\n",
 			 protocol);
 		fallthrough;
 
-	case UAC_VERSION_1: {
-		struct uac1_ac_header_descriptor *h1;
-		int rest_bytes;
+	हाल UAC_VERSION_1: अणु
+		काष्ठा uac1_ac_header_descriptor *h1;
+		पूर्णांक rest_bytes;
 
-		h1 = snd_usb_find_csint_desc(host_iface->extra,
-							 host_iface->extralen,
-							 NULL, UAC_HEADER);
-		if (!h1 || h1->bLength < sizeof(*h1)) {
+		h1 = snd_usb_find_csपूर्णांक_desc(host_अगरace->extra,
+							 host_अगरace->extralen,
+							 शून्य, UAC_HEADER);
+		अगर (!h1 || h1->bLength < माप(*h1)) अणु
 			dev_err(&dev->dev, "cannot find UAC_HEADER\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		rest_bytes = (void *)(host_iface->extra +
-				host_iface->extralen) - (void *)h1;
+		rest_bytes = (व्योम *)(host_अगरace->extra +
+				host_अगरace->extralen) - (व्योम *)h1;
 
 		/* just to be sure -- this shouldn't hit at all */
-		if (rest_bytes <= 0) {
+		अगर (rest_bytes <= 0) अणु
 			dev_err(&dev->dev, "invalid control header\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (rest_bytes < sizeof(*h1)) {
+		अगर (rest_bytes < माप(*h1)) अणु
 			dev_err(&dev->dev, "too short v1 buffer descriptor\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!h1->bInCollection) {
+		अगर (!h1->bInCollection) अणु
 			dev_info(&dev->dev, "skipping empty audio interface (v1)\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (rest_bytes < h1->bLength) {
+		अगर (rest_bytes < h1->bLength) अणु
 			dev_err(&dev->dev, "invalid buffer length (v1)\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (h1->bLength < sizeof(*h1) + h1->bInCollection) {
+		अगर (h1->bLength < माप(*h1) + h1->bInCollection) अणु
 			dev_err(&dev->dev, "invalid UAC_HEADER (v1)\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		for (i = 0; i < h1->bInCollection; i++)
-			snd_usb_create_stream(chip, ctrlif, h1->baInterfaceNr[i]);
+		क्रम (i = 0; i < h1->bInCollection; i++)
+			snd_usb_create_stream(chip, ctrlअगर, h1->baInterfaceNr[i]);
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case UAC_VERSION_2:
-	case UAC_VERSION_3: {
-		struct usb_interface_assoc_descriptor *assoc =
-			usb_ifnum_to_if(dev, ctrlif)->intf_assoc;
+	हाल UAC_VERSION_2:
+	हाल UAC_VERSION_3: अणु
+		काष्ठा usb_पूर्णांकerface_assoc_descriptor *assoc =
+			usb_अगरnum_to_अगर(dev, ctrlअगर)->पूर्णांकf_assoc;
 
-		if (!assoc) {
+		अगर (!assoc) अणु
 			/*
-			 * Firmware writers cannot count to three.  So to find
+			 * Firmware ग_लिखोrs cannot count to three.  So to find
 			 * the IAD on the NuForce UDH-100, also check the next
-			 * interface.
+			 * पूर्णांकerface.
 			 */
-			struct usb_interface *iface =
-				usb_ifnum_to_if(dev, ctrlif + 1);
-			if (iface &&
-			    iface->intf_assoc &&
-			    iface->intf_assoc->bFunctionClass == USB_CLASS_AUDIO &&
-			    iface->intf_assoc->bFunctionProtocol == UAC_VERSION_2)
-				assoc = iface->intf_assoc;
-		}
+			काष्ठा usb_पूर्णांकerface *अगरace =
+				usb_अगरnum_to_अगर(dev, ctrlअगर + 1);
+			अगर (अगरace &&
+			    अगरace->पूर्णांकf_assoc &&
+			    अगरace->पूर्णांकf_assoc->bFunctionClass == USB_CLASS_AUDIO &&
+			    अगरace->पूर्णांकf_assoc->bFunctionProtocol == UAC_VERSION_2)
+				assoc = अगरace->पूर्णांकf_assoc;
+		पूर्ण
 
-		if (!assoc) {
+		अगर (!assoc) अणु
 			dev_err(&dev->dev, "Audio class v2/v3 interfaces need an interface association\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (protocol == UAC_VERSION_3) {
-			int badd = assoc->bFunctionSubClass;
+		अगर (protocol == UAC_VERSION_3) अणु
+			पूर्णांक badd = assoc->bFunctionSubClass;
 
-			if (badd != UAC3_FUNCTION_SUBCLASS_FULL_ADC_3_0 &&
+			अगर (badd != UAC3_FUNCTION_SUBCLASS_FULL_ADC_3_0 &&
 			    (badd < UAC3_FUNCTION_SUBCLASS_GENERIC_IO ||
-			     badd > UAC3_FUNCTION_SUBCLASS_SPEAKERPHONE)) {
+			     badd > UAC3_FUNCTION_SUBCLASS_SPEAKERPHONE)) अणु
 				dev_err(&dev->dev,
 					"Unsupported UAC3 BADD profile\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			chip->badd_profile = badd;
-		}
+		पूर्ण
 
-		for (i = 0; i < assoc->bInterfaceCount; i++) {
-			int intf = assoc->bFirstInterface + i;
+		क्रम (i = 0; i < assoc->bInterfaceCount; i++) अणु
+			पूर्णांक पूर्णांकf = assoc->bFirstInterface + i;
 
-			if (intf != ctrlif)
-				snd_usb_create_stream(chip, ctrlif, intf);
-		}
+			अगर (पूर्णांकf != ctrlअगर)
+				snd_usb_create_stream(chip, ctrlअगर, पूर्णांकf);
+		पूर्ण
 
-		break;
-	}
-	}
+		अवरोध;
+	पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Profile name preset table
  */
-struct usb_audio_device_name {
+काष्ठा usb_audio_device_name अणु
 	u32 id;
-	const char *vendor_name;
-	const char *product_name;
-	const char *profile_name;	/* override card->longname */
-};
+	स्थिर अक्षर *venकरोr_name;
+	स्थिर अक्षर *product_name;
+	स्थिर अक्षर *profile_name;	/* override card->दीर्घname */
+पूर्ण;
 
-#define PROFILE_NAME(vid, pid, vendor, product, profile)	 \
-	{ .id = USB_ID(vid, pid), .vendor_name = (vendor),	 \
-	  .product_name = (product), .profile_name = (profile) }
-#define DEVICE_NAME(vid, pid, vendor, product) \
-	PROFILE_NAME(vid, pid, vendor, product, NULL)
+#घोषणा PROखाता_NAME(vid, pid, venकरोr, product, profile)	 \
+	अणु .id = USB_ID(vid, pid), .venकरोr_name = (venकरोr),	 \
+	  .product_name = (product), .profile_name = (profile) पूर्ण
+#घोषणा DEVICE_NAME(vid, pid, venकरोr, product) \
+	PROखाता_NAME(vid, pid, venकरोr, product, शून्य)
 
-/* vendor/product and profile name presets, sorted in device id order */
-static const struct usb_audio_device_name usb_audio_names[] = {
+/* venकरोr/product and profile name presets, sorted in device id order */
+अटल स्थिर काष्ठा usb_audio_device_name usb_audio_names[] = अणु
 	/* HP Thunderbolt Dock Audio Headset */
-	PROFILE_NAME(0x03f0, 0x0269, "HP", "Thunderbolt Dock Audio Headset",
+	PROखाता_NAME(0x03f0, 0x0269, "HP", "Thunderbolt Dock Audio Headset",
 		     "HP-Thunderbolt-Dock-Audio-Headset"),
 	/* HP Thunderbolt Dock Audio Module */
-	PROFILE_NAME(0x03f0, 0x0567, "HP", "Thunderbolt Dock Audio Module",
+	PROखाता_NAME(0x03f0, 0x0567, "HP", "Thunderbolt Dock Audio Module",
 		     "HP-Thunderbolt-Dock-Audio-Module"),
 
-	/* Two entries for Gigabyte TRX40 Aorus Master:
-	 * TRX40 Aorus Master has two USB-audio devices, one for the front
-	 * headphone with ESS SABRE9218 DAC chip, while another for the rest
+	/* Two entries क्रम Gigabyte TRX40 Aorus Master:
+	 * TRX40 Aorus Master has two USB-audio devices, one क्रम the front
+	 * headphone with ESS SABRE9218 DAC chip, जबतक another क्रम the rest
 	 * I/O (the rear panel and the front mic) with Realtek ALC1220-VB.
-	 * Here we provide two distinct names for making UCM profiles easier.
+	 * Here we provide two distinct names क्रम making UCM profiles easier.
 	 */
-	PROFILE_NAME(0x0414, 0xa000, "Gigabyte", "Aorus Master Front Headphone",
+	PROखाता_NAME(0x0414, 0xa000, "Gigabyte", "Aorus Master Front Headphone",
 		     "Gigabyte-Aorus-Master-Front-Headphone"),
-	PROFILE_NAME(0x0414, 0xa001, "Gigabyte", "Aorus Master Main Audio",
+	PROखाता_NAME(0x0414, 0xa001, "Gigabyte", "Aorus Master Main Audio",
 		     "Gigabyte-Aorus-Master-Main-Audio"),
 
 	/* Gigabyte TRX40 Aorus Pro WiFi */
-	PROFILE_NAME(0x0414, 0xa002,
+	PROखाता_NAME(0x0414, 0xa002,
 		     "Realtek", "ALC1220-VB-DT", "Realtek-ALC1220-VB-Desktop"),
 
 	/* Creative/E-Mu devices */
 	DEVICE_NAME(0x041e, 0x3010, "Creative Labs", "Sound Blaster MP3+"),
-	/* Creative/Toshiba Multimedia Center SB-0500 */
+	/* Creative/Toshiba Mulसमयdia Center SB-0500 */
 	DEVICE_NAME(0x041e, 0x3048, "Toshiba", "SB-0500"),
 
 	DEVICE_NAME(0x046d, 0x0990, "Logitech, Inc.", "QuickCam Pro 9000"),
 
 	/* ASUS ROG Strix */
-	PROFILE_NAME(0x0b05, 0x1917,
+	PROखाता_NAME(0x0b05, 0x1917,
 		     "Realtek", "ALC1220-VB-DT", "Realtek-ALC1220-VB-Desktop"),
 	/* ASUS PRIME TRX40 PRO-S */
-	PROFILE_NAME(0x0b05, 0x1918,
+	PROखाता_NAME(0x0b05, 0x1918,
 		     "Realtek", "ALC1220-VB-DT", "Realtek-ALC1220-VB-Desktop"),
 
 	/* Dell WD15 Dock */
-	PROFILE_NAME(0x0bda, 0x4014, "Dell", "WD15 Dock", "Dell-WD15-Dock"),
+	PROखाता_NAME(0x0bda, 0x4014, "Dell", "WD15 Dock", "Dell-WD15-Dock"),
 	/* Dell WD19 Dock */
-	PROFILE_NAME(0x0bda, 0x402e, "Dell", "WD19 Dock", "Dell-WD15-Dock"),
+	PROखाता_NAME(0x0bda, 0x402e, "Dell", "WD19 Dock", "Dell-WD15-Dock"),
 
 	DEVICE_NAME(0x0ccd, 0x0028, "TerraTec", "Aureon5.1MkII"),
 
@@ -396,14 +397,14 @@ static const struct usb_audio_device_name usb_audio_names[] = {
 	 * The original product_name is "USB Sound Device", however this name
 	 * is also used by the CM106 based cards, so make it unique.
 	 */
-	DEVICE_NAME(0x0d8c, 0x0102, NULL, "ICUSBAUDIO7D"),
-	DEVICE_NAME(0x0d8c, 0x0103, NULL, "Audio Advantage MicroII"),
+	DEVICE_NAME(0x0d8c, 0x0102, शून्य, "ICUSBAUDIO7D"),
+	DEVICE_NAME(0x0d8c, 0x0103, शून्य, "Audio Advantage MicroII"),
 
 	/* MSI TRX40 Creator */
-	PROFILE_NAME(0x0db0, 0x0d64,
+	PROखाता_NAME(0x0db0, 0x0d64,
 		     "Realtek", "ALC1220-VB-DT", "Realtek-ALC1220-VB-Desktop"),
 	/* MSI TRX40 */
-	PROFILE_NAME(0x0db0, 0x543d,
+	PROखाता_NAME(0x0db0, 0x543d,
 		     "Realtek", "ALC1220-VB-DT", "Realtek-ALC1220-VB-Desktop"),
 
 	/* Stanton/N2IT Final Scratch v1 device ('Scratchamp') */
@@ -414,485 +415,485 @@ static const struct usb_audio_device_name usb_audio_names[] = {
 	DEVICE_NAME(0x13e5, 0x0001, "Rane", "SL-1"),
 
 	/* Lenovo ThinkStation P620 Rear Line-in, Line-out and Microphone */
-	PROFILE_NAME(0x17aa, 0x1046, "Lenovo", "ThinkStation P620 Rear",
+	PROखाता_NAME(0x17aa, 0x1046, "Lenovo", "ThinkStation P620 Rear",
 		     "Lenovo-ThinkStation-P620-Rear"),
 	/* Lenovo ThinkStation P620 Internal Speaker + Front Headset */
-	PROFILE_NAME(0x17aa, 0x104d, "Lenovo", "ThinkStation P620 Main",
+	PROखाता_NAME(0x17aa, 0x104d, "Lenovo", "ThinkStation P620 Main",
 		     "Lenovo-ThinkStation-P620-Main"),
 
 	/* Asrock TRX40 Creator */
-	PROFILE_NAME(0x26ce, 0x0a01,
+	PROखाता_NAME(0x26ce, 0x0a01,
 		     "Realtek", "ALC1220-VB-DT", "Realtek-ALC1220-VB-Desktop"),
 
-	{ } /* terminator */
-};
+	अणु पूर्ण /* terminator */
+पूर्ण;
 
-static const struct usb_audio_device_name *
+अटल स्थिर काष्ठा usb_audio_device_name *
 lookup_device_name(u32 id)
-{
-	static const struct usb_audio_device_name *p;
+अणु
+	अटल स्थिर काष्ठा usb_audio_device_name *p;
 
-	for (p = usb_audio_names; p->id; p++)
-		if (p->id == id)
-			return p;
-	return NULL;
-}
+	क्रम (p = usb_audio_names; p->id; p++)
+		अगर (p->id == id)
+			वापस p;
+	वापस शून्य;
+पूर्ण
 
 /*
- * free the chip instance
+ * मुक्त the chip instance
  *
- * here we have to do not much, since pcm and controls are already freed
+ * here we have to करो not much, since pcm and controls are alपढ़ोy मुक्तd
  *
  */
 
-static void snd_usb_audio_free(struct snd_card *card)
-{
-	struct snd_usb_audio *chip = card->private_data;
+अटल व्योम snd_usb_audio_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_usb_audio *chip = card->निजी_data;
 
-	snd_usb_endpoint_free_all(chip);
+	snd_usb_endpoपूर्णांक_मुक्त_all(chip);
 
 	mutex_destroy(&chip->mutex);
-	if (!atomic_read(&chip->shutdown))
-		dev_set_drvdata(&chip->dev->dev, NULL);
-}
+	अगर (!atomic_पढ़ो(&chip->shutकरोwn))
+		dev_set_drvdata(&chip->dev->dev, शून्य);
+पूर्ण
 
-static void usb_audio_make_shortname(struct usb_device *dev,
-				     struct snd_usb_audio *chip,
-				     const struct snd_usb_audio_quirk *quirk)
-{
-	struct snd_card *card = chip->card;
-	const struct usb_audio_device_name *preset;
-	const char *s = NULL;
+अटल व्योम usb_audio_make_लघुname(काष्ठा usb_device *dev,
+				     काष्ठा snd_usb_audio *chip,
+				     स्थिर काष्ठा snd_usb_audio_quirk *quirk)
+अणु
+	काष्ठा snd_card *card = chip->card;
+	स्थिर काष्ठा usb_audio_device_name *preset;
+	स्थिर अक्षर *s = शून्य;
 
 	preset = lookup_device_name(chip->usb_id);
-	if (preset && preset->product_name)
+	अगर (preset && preset->product_name)
 		s = preset->product_name;
-	else if (quirk && quirk->product_name)
+	अन्यथा अगर (quirk && quirk->product_name)
 		s = quirk->product_name;
-	if (s && *s) {
-		strscpy(card->shortname, s, sizeof(card->shortname));
-		return;
-	}
+	अगर (s && *s) अणु
+		strscpy(card->लघुname, s, माप(card->लघुname));
+		वापस;
+	पूर्ण
 
-	/* retrieve the device string as shortname */
-	if (!dev->descriptor.iProduct ||
+	/* retrieve the device string as लघुname */
+	अगर (!dev->descriptor.iProduct ||
 	    usb_string(dev, dev->descriptor.iProduct,
-		       card->shortname, sizeof(card->shortname)) <= 0) {
+		       card->लघुname, माप(card->लघुname)) <= 0) अणु
 		/* no name available from anywhere, so use ID */
-		sprintf(card->shortname, "USB Device %#04x:%#04x",
+		प्र_लिखो(card->लघुname, "USB Device %#04x:%#04x",
 			USB_ID_VENDOR(chip->usb_id),
 			USB_ID_PRODUCT(chip->usb_id));
-	}
+	पूर्ण
 
-	strim(card->shortname);
-}
+	strim(card->लघुname);
+पूर्ण
 
-static void usb_audio_make_longname(struct usb_device *dev,
-				    struct snd_usb_audio *chip,
-				    const struct snd_usb_audio_quirk *quirk)
-{
-	struct snd_card *card = chip->card;
-	const struct usb_audio_device_name *preset;
-	const char *s = NULL;
-	int len;
+अटल व्योम usb_audio_make_दीर्घname(काष्ठा usb_device *dev,
+				    काष्ठा snd_usb_audio *chip,
+				    स्थिर काष्ठा snd_usb_audio_quirk *quirk)
+अणु
+	काष्ठा snd_card *card = chip->card;
+	स्थिर काष्ठा usb_audio_device_name *preset;
+	स्थिर अक्षर *s = शून्य;
+	पूर्णांक len;
 
 	preset = lookup_device_name(chip->usb_id);
 
-	/* shortcut - if any pre-defined string is given, use it */
-	if (preset && preset->profile_name)
+	/* लघुcut - अगर any pre-defined string is given, use it */
+	अगर (preset && preset->profile_name)
 		s = preset->profile_name;
-	if (s && *s) {
-		strscpy(card->longname, s, sizeof(card->longname));
-		return;
-	}
+	अगर (s && *s) अणु
+		strscpy(card->दीर्घname, s, माप(card->दीर्घname));
+		वापस;
+	पूर्ण
 
-	if (preset && preset->vendor_name)
-		s = preset->vendor_name;
-	else if (quirk && quirk->vendor_name)
-		s = quirk->vendor_name;
-	*card->longname = 0;
-	if (s && *s) {
-		strscpy(card->longname, s, sizeof(card->longname));
-	} else {
-		/* retrieve the vendor and device strings as longname */
-		if (dev->descriptor.iManufacturer)
+	अगर (preset && preset->venकरोr_name)
+		s = preset->venकरोr_name;
+	अन्यथा अगर (quirk && quirk->venकरोr_name)
+		s = quirk->venकरोr_name;
+	*card->दीर्घname = 0;
+	अगर (s && *s) अणु
+		strscpy(card->दीर्घname, s, माप(card->दीर्घname));
+	पूर्ण अन्यथा अणु
+		/* retrieve the venकरोr and device strings as दीर्घname */
+		अगर (dev->descriptor.iManufacturer)
 			usb_string(dev, dev->descriptor.iManufacturer,
-				   card->longname, sizeof(card->longname));
-		/* we don't really care if there isn't any vendor string */
-	}
-	if (*card->longname) {
-		strim(card->longname);
-		if (*card->longname)
-			strlcat(card->longname, " ", sizeof(card->longname));
-	}
+				   card->दीर्घname, माप(card->दीर्घname));
+		/* we करोn't really care if there isn't any venकरोr string */
+	पूर्ण
+	अगर (*card->दीर्घname) अणु
+		strim(card->दीर्घname);
+		अगर (*card->दीर्घname)
+			strlcat(card->दीर्घname, " ", माप(card->दीर्घname));
+	पूर्ण
 
-	strlcat(card->longname, card->shortname, sizeof(card->longname));
+	strlcat(card->दीर्घname, card->लघुname, माप(card->दीर्घname));
 
-	len = strlcat(card->longname, " at ", sizeof(card->longname));
+	len = strlcat(card->दीर्घname, " at ", माप(card->दीर्घname));
 
-	if (len < sizeof(card->longname))
-		usb_make_path(dev, card->longname + len, sizeof(card->longname) - len);
+	अगर (len < माप(card->दीर्घname))
+		usb_make_path(dev, card->दीर्घname + len, माप(card->दीर्घname) - len);
 
-	switch (snd_usb_get_speed(dev)) {
-	case USB_SPEED_LOW:
-		strlcat(card->longname, ", low speed", sizeof(card->longname));
-		break;
-	case USB_SPEED_FULL:
-		strlcat(card->longname, ", full speed", sizeof(card->longname));
-		break;
-	case USB_SPEED_HIGH:
-		strlcat(card->longname, ", high speed", sizeof(card->longname));
-		break;
-	case USB_SPEED_SUPER:
-		strlcat(card->longname, ", super speed", sizeof(card->longname));
-		break;
-	case USB_SPEED_SUPER_PLUS:
-		strlcat(card->longname, ", super speed plus", sizeof(card->longname));
-		break;
-	default:
-		break;
-	}
-}
+	चयन (snd_usb_get_speed(dev)) अणु
+	हाल USB_SPEED_LOW:
+		strlcat(card->दीर्घname, ", low speed", माप(card->दीर्घname));
+		अवरोध;
+	हाल USB_SPEED_FULL:
+		strlcat(card->दीर्घname, ", full speed", माप(card->दीर्घname));
+		अवरोध;
+	हाल USB_SPEED_HIGH:
+		strlcat(card->दीर्घname, ", high speed", माप(card->दीर्घname));
+		अवरोध;
+	हाल USB_SPEED_SUPER:
+		strlcat(card->दीर्घname, ", super speed", माप(card->दीर्घname));
+		अवरोध;
+	हाल USB_SPEED_SUPER_PLUS:
+		strlcat(card->दीर्घname, ", super speed plus", माप(card->दीर्घname));
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * create a chip instance and set its names.
  */
-static int snd_usb_audio_create(struct usb_interface *intf,
-				struct usb_device *dev, int idx,
-				const struct snd_usb_audio_quirk *quirk,
-				unsigned int usb_id,
-				struct snd_usb_audio **rchip)
-{
-	struct snd_card *card;
-	struct snd_usb_audio *chip;
-	int err;
-	char component[14];
+अटल पूर्णांक snd_usb_audio_create(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+				काष्ठा usb_device *dev, पूर्णांक idx,
+				स्थिर काष्ठा snd_usb_audio_quirk *quirk,
+				अचिन्हित पूर्णांक usb_id,
+				काष्ठा snd_usb_audio **rchip)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_usb_audio *chip;
+	पूर्णांक err;
+	अक्षर component[14];
 
-	*rchip = NULL;
+	*rchip = शून्य;
 
-	switch (snd_usb_get_speed(dev)) {
-	case USB_SPEED_LOW:
-	case USB_SPEED_FULL:
-	case USB_SPEED_HIGH:
-	case USB_SPEED_WIRELESS:
-	case USB_SPEED_SUPER:
-	case USB_SPEED_SUPER_PLUS:
-		break;
-	default:
+	चयन (snd_usb_get_speed(dev)) अणु
+	हाल USB_SPEED_LOW:
+	हाल USB_SPEED_FULL:
+	हाल USB_SPEED_HIGH:
+	हाल USB_SPEED_WIRELESS:
+	हाल USB_SPEED_SUPER:
+	हाल USB_SPEED_SUPER_PLUS:
+		अवरोध;
+	शेष:
 		dev_err(&dev->dev, "unknown device speed %d\n", snd_usb_get_speed(dev));
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	err = snd_card_new(&intf->dev, index[idx], id[idx], THIS_MODULE,
-			   sizeof(*chip), &card);
-	if (err < 0) {
+	err = snd_card_new(&पूर्णांकf->dev, index[idx], id[idx], THIS_MODULE,
+			   माप(*chip), &card);
+	अगर (err < 0) अणु
 		dev_err(&dev->dev, "cannot create card instance %d\n", idx);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	chip = card->private_data;
+	chip = card->निजी_data;
 	mutex_init(&chip->mutex);
-	init_waitqueue_head(&chip->shutdown_wait);
+	init_रुकोqueue_head(&chip->shutकरोwn_रुको);
 	chip->index = idx;
 	chip->dev = dev;
 	chip->card = card;
 	chip->setup = device_setup[idx];
 	chip->generic_implicit_fb = implicit_fb[idx];
-	chip->autoclock = autoclock;
-	atomic_set(&chip->active, 1); /* avoid autopm during probing */
+	chip->स्वतःघड़ी = स्वतःघड़ी;
+	atomic_set(&chip->active, 1); /* aव्योम स्वतःpm during probing */
 	atomic_set(&chip->usage_count, 0);
-	atomic_set(&chip->shutdown, 0);
+	atomic_set(&chip->shutकरोwn, 0);
 
 	chip->usb_id = usb_id;
 	INIT_LIST_HEAD(&chip->pcm_list);
 	INIT_LIST_HEAD(&chip->ep_list);
-	INIT_LIST_HEAD(&chip->iface_ref_list);
+	INIT_LIST_HEAD(&chip->अगरace_ref_list);
 	INIT_LIST_HEAD(&chip->midi_list);
 	INIT_LIST_HEAD(&chip->mixer_list);
 
-	card->private_free = snd_usb_audio_free;
+	card->निजी_मुक्त = snd_usb_audio_मुक्त;
 
-	strcpy(card->driver, "USB-Audio");
-	sprintf(component, "USB%04x:%04x",
+	म_नकल(card->driver, "USB-Audio");
+	प्र_लिखो(component, "USB%04x:%04x",
 		USB_ID_VENDOR(chip->usb_id), USB_ID_PRODUCT(chip->usb_id));
 	snd_component_add(card, component);
 
-	usb_audio_make_shortname(dev, chip, quirk);
-	usb_audio_make_longname(dev, chip, quirk);
+	usb_audio_make_लघुname(dev, chip, quirk);
+	usb_audio_make_दीर्घname(dev, chip, quirk);
 
 	snd_usb_audio_create_proc(chip);
 
 	*rchip = chip;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* look for a matching quirk alias id */
-static bool get_alias_id(struct usb_device *dev, unsigned int *id)
-{
-	int i;
-	unsigned int src, dst;
+/* look क्रम a matching quirk alias id */
+अटल bool get_alias_id(काष्ठा usb_device *dev, अचिन्हित पूर्णांक *id)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक src, dst;
 
-	for (i = 0; i < ARRAY_SIZE(quirk_alias); i++) {
-		if (!quirk_alias[i] ||
-		    sscanf(quirk_alias[i], "%x:%x", &src, &dst) != 2 ||
+	क्रम (i = 0; i < ARRAY_SIZE(quirk_alias); i++) अणु
+		अगर (!quirk_alias[i] ||
+		    माला_पूछो(quirk_alias[i], "%x:%x", &src, &dst) != 2 ||
 		    src != *id)
-			continue;
+			जारी;
 		dev_info(&dev->dev,
 			 "device (%04x:%04x): applying quirk alias %04x:%04x\n",
 			 USB_ID_VENDOR(*id), USB_ID_PRODUCT(*id),
 			 USB_ID_VENDOR(dst), USB_ID_PRODUCT(dst));
 		*id = dst;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool check_delayed_register_option(struct snd_usb_audio *chip, int iface)
-{
-	int i;
-	unsigned int id, inum;
+अटल bool check_delayed_रेजिस्टर_option(काष्ठा snd_usb_audio *chip, पूर्णांक अगरace)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक id, inum;
 
-	for (i = 0; i < ARRAY_SIZE(delayed_register); i++) {
-		if (delayed_register[i] &&
-		    sscanf(delayed_register[i], "%x:%x", &id, &inum) == 2 &&
+	क्रम (i = 0; i < ARRAY_SIZE(delayed_रेजिस्टर); i++) अणु
+		अगर (delayed_रेजिस्टर[i] &&
+		    माला_पूछो(delayed_रेजिस्टर[i], "%x:%x", &id, &inum) == 2 &&
 		    id == chip->usb_id)
-			return inum != iface;
-	}
+			वापस inum != अगरace;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static const struct usb_device_id usb_audio_ids[]; /* defined below */
+अटल स्थिर काष्ठा usb_device_id usb_audio_ids[]; /* defined below */
 
-/* look for the corresponding quirk */
-static const struct snd_usb_audio_quirk *
-get_alias_quirk(struct usb_device *dev, unsigned int id)
-{
-	const struct usb_device_id *p;
+/* look क्रम the corresponding quirk */
+अटल स्थिर काष्ठा snd_usb_audio_quirk *
+get_alias_quirk(काष्ठा usb_device *dev, अचिन्हित पूर्णांक id)
+अणु
+	स्थिर काष्ठा usb_device_id *p;
 
-	for (p = usb_audio_ids; p->match_flags; p++) {
-		/* FIXME: this checks only vendor:product pair in the list */
-		if ((p->match_flags & USB_DEVICE_ID_MATCH_DEVICE) ==
+	क्रम (p = usb_audio_ids; p->match_flags; p++) अणु
+		/* FIXME: this checks only venकरोr:product pair in the list */
+		अगर ((p->match_flags & USB_DEVICE_ID_MATCH_DEVICE) ==
 		    USB_DEVICE_ID_MATCH_DEVICE &&
-		    p->idVendor == USB_ID_VENDOR(id) &&
+		    p->idVenकरोr == USB_ID_VENDOR(id) &&
 		    p->idProduct == USB_ID_PRODUCT(id))
-			return (const struct snd_usb_audio_quirk *)p->driver_info;
-	}
+			वापस (स्थिर काष्ठा snd_usb_audio_quirk *)p->driver_info;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * probe the active usb device
  *
- * note that this can be called multiple times per a device, when it
- * includes multiple audio control interfaces.
+ * note that this can be called multiple बार per a device, when it
+ * includes multiple audio control पूर्णांकerfaces.
  *
- * thus we check the usb device pointer and creates the card instance
- * only at the first time.  the successive calls of this function will
- * append the pcm interface to the corresponding card.
+ * thus we check the usb device poपूर्णांकer and creates the card instance
+ * only at the first समय.  the successive calls of this function will
+ * append the pcm पूर्णांकerface to the corresponding card.
  */
-static int usb_audio_probe(struct usb_interface *intf,
-			   const struct usb_device_id *usb_id)
-{
-	struct usb_device *dev = interface_to_usbdev(intf);
-	const struct snd_usb_audio_quirk *quirk =
-		(const struct snd_usb_audio_quirk *)usb_id->driver_info;
-	struct snd_usb_audio *chip;
-	int i, err;
-	struct usb_host_interface *alts;
-	int ifnum;
+अटल पूर्णांक usb_audio_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			   स्थिर काष्ठा usb_device_id *usb_id)
+अणु
+	काष्ठा usb_device *dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	स्थिर काष्ठा snd_usb_audio_quirk *quirk =
+		(स्थिर काष्ठा snd_usb_audio_quirk *)usb_id->driver_info;
+	काष्ठा snd_usb_audio *chip;
+	पूर्णांक i, err;
+	काष्ठा usb_host_पूर्णांकerface *alts;
+	पूर्णांक अगरnum;
 	u32 id;
 
-	alts = &intf->altsetting[0];
-	ifnum = get_iface_desc(alts)->bInterfaceNumber;
-	id = USB_ID(le16_to_cpu(dev->descriptor.idVendor),
+	alts = &पूर्णांकf->altsetting[0];
+	अगरnum = get_अगरace_desc(alts)->bInterfaceNumber;
+	id = USB_ID(le16_to_cpu(dev->descriptor.idVenकरोr),
 		    le16_to_cpu(dev->descriptor.idProduct));
-	if (get_alias_id(dev, &id))
+	अगर (get_alias_id(dev, &id))
 		quirk = get_alias_quirk(dev, id);
-	if (quirk && quirk->ifnum >= 0 && ifnum != quirk->ifnum)
-		return -ENXIO;
-	if (quirk && quirk->ifnum == QUIRK_NODEV_INTERFACE)
-		return -ENODEV;
+	अगर (quirk && quirk->अगरnum >= 0 && अगरnum != quirk->अगरnum)
+		वापस -ENXIO;
+	अगर (quirk && quirk->अगरnum == QUIRK_NODEV_INTERFACE)
+		वापस -ENODEV;
 
-	err = snd_usb_apply_boot_quirk(dev, intf, quirk, id);
-	if (err < 0)
-		return err;
+	err = snd_usb_apply_boot_quirk(dev, पूर्णांकf, quirk, id);
+	अगर (err < 0)
+		वापस err;
 
 	/*
-	 * found a config.  now register to ALSA
+	 * found a config.  now रेजिस्टर to ALSA
 	 */
 
-	/* check whether it's already registered */
-	chip = NULL;
-	mutex_lock(&register_mutex);
-	for (i = 0; i < SNDRV_CARDS; i++) {
-		if (usb_chip[i] && usb_chip[i]->dev == dev) {
-			if (atomic_read(&usb_chip[i]->shutdown)) {
+	/* check whether it's alपढ़ोy रेजिस्टरed */
+	chip = शून्य;
+	mutex_lock(&रेजिस्टर_mutex);
+	क्रम (i = 0; i < SNDRV_CARDS; i++) अणु
+		अगर (usb_chip[i] && usb_chip[i]->dev == dev) अणु
+			अगर (atomic_पढ़ो(&usb_chip[i]->shutकरोwn)) अणु
 				dev_err(&dev->dev, "USB device is in the shutdown state, cannot create a card instance\n");
 				err = -EIO;
-				goto __error;
-			}
+				जाओ __error;
+			पूर्ण
 			chip = usb_chip[i];
-			atomic_inc(&chip->active); /* avoid autopm */
-			break;
-		}
-	}
-	if (! chip) {
-		err = snd_usb_apply_boot_quirk_once(dev, intf, quirk, id);
-		if (err < 0)
-			goto __error;
+			atomic_inc(&chip->active); /* aव्योम स्वतःpm */
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (! chip) अणु
+		err = snd_usb_apply_boot_quirk_once(dev, पूर्णांकf, quirk, id);
+		अगर (err < 0)
+			जाओ __error;
 
 		/* it's a fresh one.
-		 * now look for an empty slot and create a new card instance
+		 * now look क्रम an empty slot and create a new card instance
 		 */
-		for (i = 0; i < SNDRV_CARDS; i++)
-			if (!usb_chip[i] &&
+		क्रम (i = 0; i < SNDRV_CARDS; i++)
+			अगर (!usb_chip[i] &&
 			    (vid[i] == -1 || vid[i] == USB_ID_VENDOR(id)) &&
-			    (pid[i] == -1 || pid[i] == USB_ID_PRODUCT(id))) {
-				if (enable[i]) {
-					err = snd_usb_audio_create(intf, dev, i, quirk,
+			    (pid[i] == -1 || pid[i] == USB_ID_PRODUCT(id))) अणु
+				अगर (enable[i]) अणु
+					err = snd_usb_audio_create(पूर्णांकf, dev, i, quirk,
 								   id, &chip);
-					if (err < 0)
-						goto __error;
-					break;
-				} else if (vid[i] != -1 || pid[i] != -1) {
+					अगर (err < 0)
+						जाओ __error;
+					अवरोध;
+				पूर्ण अन्यथा अगर (vid[i] != -1 || pid[i] != -1) अणु
 					dev_info(&dev->dev,
 						 "device (%04x:%04x) is disabled\n",
 						 USB_ID_VENDOR(id),
 						 USB_ID_PRODUCT(id));
 					err = -ENOENT;
-					goto __error;
-				}
-			}
-		if (!chip) {
+					जाओ __error;
+				पूर्ण
+			पूर्ण
+		अगर (!chip) अणु
 			dev_err(&dev->dev, "no available usb audio device\n");
 			err = -ENODEV;
-			goto __error;
-		}
-	}
+			जाओ __error;
+		पूर्ण
+	पूर्ण
 
-	if (chip->num_interfaces >= MAX_CARD_INTERFACES) {
+	अगर (chip->num_पूर्णांकerfaces >= MAX_CARD_INTERFACES) अणु
 		dev_info(&dev->dev, "Too many interfaces assigned to the single USB-audio card\n");
 		err = -EINVAL;
-		goto __error;
-	}
+		जाओ __error;
+	पूर्ण
 
 	dev_set_drvdata(&dev->dev, chip);
 
 	/*
-	 * For devices with more than one control interface, we assume the
-	 * first contains the audio controls. We might need a more specific
+	 * For devices with more than one control पूर्णांकerface, we assume the
+	 * first contains the audio controls. We might need a more specअगरic
 	 * check here in the future.
 	 */
-	if (!chip->ctrl_intf)
-		chip->ctrl_intf = alts;
+	अगर (!chip->ctrl_पूर्णांकf)
+		chip->ctrl_पूर्णांकf = alts;
 
 	chip->txfr_quirk = 0;
-	err = 1; /* continue */
-	if (quirk && quirk->ifnum != QUIRK_NO_INTERFACE) {
+	err = 1; /* जारी */
+	अगर (quirk && quirk->अगरnum != QUIRK_NO_INTERFACE) अणु
 		/* need some special handlings */
-		err = snd_usb_create_quirk(chip, intf, &usb_audio_driver, quirk);
-		if (err < 0)
-			goto __error;
-	}
+		err = snd_usb_create_quirk(chip, पूर्णांकf, &usb_audio_driver, quirk);
+		अगर (err < 0)
+			जाओ __error;
+	पूर्ण
 
-	if (err > 0) {
-		/* create normal USB audio interfaces */
-		err = snd_usb_create_streams(chip, ifnum);
-		if (err < 0)
-			goto __error;
-		err = snd_usb_create_mixer(chip, ifnum, ignore_ctl_error);
-		if (err < 0)
-			goto __error;
-	}
+	अगर (err > 0) अणु
+		/* create normal USB audio पूर्णांकerfaces */
+		err = snd_usb_create_streams(chip, अगरnum);
+		अगर (err < 0)
+			जाओ __error;
+		err = snd_usb_create_mixer(chip, अगरnum, ignore_ctl_error);
+		अगर (err < 0)
+			जाओ __error;
+	पूर्ण
 
-	if (chip->need_delayed_register) {
+	अगर (chip->need_delayed_रेजिस्टर) अणु
 		dev_info(&dev->dev,
 			 "Found post-registration device assignment: %08x:%02x\n",
-			 chip->usb_id, ifnum);
-		chip->need_delayed_register = false; /* clear again */
-	}
+			 chip->usb_id, अगरnum);
+		chip->need_delayed_रेजिस्टर = false; /* clear again */
+	पूर्ण
 
-	/* we are allowed to call snd_card_register() many times, but first
-	 * check to see if a device needs to skip it or do anything special
+	/* we are allowed to call snd_card_रेजिस्टर() many बार, but first
+	 * check to see अगर a device needs to skip it or करो anything special
 	 */
-	if (!snd_usb_registration_quirk(chip, ifnum) &&
-	    !check_delayed_register_option(chip, ifnum)) {
-		err = snd_card_register(chip->card);
-		if (err < 0)
-			goto __error;
-	}
+	अगर (!snd_usb_registration_quirk(chip, अगरnum) &&
+	    !check_delayed_रेजिस्टर_option(chip, अगरnum)) अणु
+		err = snd_card_रेजिस्टर(chip->card);
+		अगर (err < 0)
+			जाओ __error;
+	पूर्ण
 
-	if (quirk && quirk->shares_media_device) {
-		/* don't want to fail when snd_media_device_create() fails */
-		snd_media_device_create(chip, intf);
-	}
+	अगर (quirk && quirk->shares_media_device) अणु
+		/* करोn't want to fail when snd_media_device_create() fails */
+		snd_media_device_create(chip, पूर्णांकf);
+	पूर्ण
 
-	if (quirk)
+	अगर (quirk)
 		chip->quirk_type = quirk->type;
 
 	usb_chip[chip->index] = chip;
-	chip->intf[chip->num_interfaces] = intf;
-	chip->num_interfaces++;
-	usb_set_intfdata(intf, chip);
+	chip->पूर्णांकf[chip->num_पूर्णांकerfaces] = पूर्णांकf;
+	chip->num_पूर्णांकerfaces++;
+	usb_set_पूर्णांकfdata(पूर्णांकf, chip);
 	atomic_dec(&chip->active);
-	mutex_unlock(&register_mutex);
-	return 0;
+	mutex_unlock(&रेजिस्टर_mutex);
+	वापस 0;
 
  __error:
-	if (chip) {
+	अगर (chip) अणु
 		/* chip->active is inside the chip->card object,
-		 * decrement before memory is possibly returned.
+		 * decrement beक्रमe memory is possibly वापसed.
 		 */
 		atomic_dec(&chip->active);
-		if (!chip->num_interfaces)
-			snd_card_free(chip->card);
-	}
-	mutex_unlock(&register_mutex);
-	return err;
-}
+		अगर (!chip->num_पूर्णांकerfaces)
+			snd_card_मुक्त(chip->card);
+	पूर्ण
+	mutex_unlock(&रेजिस्टर_mutex);
+	वापस err;
+पूर्ण
 
 /*
  * we need to take care of counter, since disconnection can be called also
- * many times as well as usb_audio_probe().
+ * many बार as well as usb_audio_probe().
  */
-static void usb_audio_disconnect(struct usb_interface *intf)
-{
-	struct snd_usb_audio *chip = usb_get_intfdata(intf);
-	struct snd_card *card;
-	struct list_head *p;
+अटल व्योम usb_audio_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा snd_usb_audio *chip = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा snd_card *card;
+	काष्ठा list_head *p;
 
-	if (chip == USB_AUDIO_IFACE_UNUSED)
-		return;
+	अगर (chip == USB_AUDIO_IFACE_UNUSED)
+		वापस;
 
 	card = chip->card;
 
-	mutex_lock(&register_mutex);
-	if (atomic_inc_return(&chip->shutdown) == 1) {
-		struct snd_usb_stream *as;
-		struct snd_usb_endpoint *ep;
-		struct usb_mixer_interface *mixer;
+	mutex_lock(&रेजिस्टर_mutex);
+	अगर (atomic_inc_वापस(&chip->shutकरोwn) == 1) अणु
+		काष्ठा snd_usb_stream *as;
+		काष्ठा snd_usb_endpoपूर्णांक *ep;
+		काष्ठा usb_mixer_पूर्णांकerface *mixer;
 
-		/* wait until all pending tasks done;
-		 * they are protected by snd_usb_lock_shutdown()
+		/* रुको until all pending tasks करोne;
+		 * they are रक्षित by snd_usb_lock_shutकरोwn()
 		 */
-		wait_event(chip->shutdown_wait,
-			   !atomic_read(&chip->usage_count));
+		रुको_event(chip->shutकरोwn_रुको,
+			   !atomic_पढ़ो(&chip->usage_count));
 		snd_card_disconnect(card);
 		/* release the pcm resources */
-		list_for_each_entry(as, &chip->pcm_list, list) {
+		list_क्रम_each_entry(as, &chip->pcm_list, list) अणु
 			snd_usb_stream_disconnect(as);
-		}
-		/* release the endpoint resources */
-		list_for_each_entry(ep, &chip->ep_list, list) {
-			snd_usb_endpoint_release(ep);
-		}
+		पूर्ण
+		/* release the endpoपूर्णांक resources */
+		list_क्रम_each_entry(ep, &chip->ep_list, list) अणु
+			snd_usb_endpoपूर्णांक_release(ep);
+		पूर्ण
 		/* release the midi resources */
-		list_for_each(p, &chip->midi_list) {
+		list_क्रम_each(p, &chip->midi_list) अणु
 			snd_usbmidi_disconnect(p);
-		}
+		पूर्ण
 		/*
 		 * Nice to check quirk && quirk->shares_media_device and
 		 * then call the snd_media_device_delete(). Don't have
@@ -902,196 +903,196 @@ static void usb_audio_disconnect(struct usb_interface *intf)
 		snd_media_device_delete(chip);
 
 		/* release mixer resources */
-		list_for_each_entry(mixer, &chip->mixer_list, list) {
+		list_क्रम_each_entry(mixer, &chip->mixer_list, list) अणु
 			snd_usb_mixer_disconnect(mixer);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (chip->quirk_type & QUIRK_SETUP_DISABLE_AUTOSUSPEND)
-		usb_enable_autosuspend(interface_to_usbdev(intf));
+	अगर (chip->quirk_type & QUIRK_SETUP_DISABLE_AUTOSUSPEND)
+		usb_enable_स्वतःsuspend(पूर्णांकerface_to_usbdev(पूर्णांकf));
 
-	chip->num_interfaces--;
-	if (chip->num_interfaces <= 0) {
-		usb_chip[chip->index] = NULL;
-		mutex_unlock(&register_mutex);
-		snd_card_free_when_closed(card);
-	} else {
-		mutex_unlock(&register_mutex);
-	}
-}
+	chip->num_पूर्णांकerfaces--;
+	अगर (chip->num_पूर्णांकerfaces <= 0) अणु
+		usb_chip[chip->index] = शून्य;
+		mutex_unlock(&रेजिस्टर_mutex);
+		snd_card_मुक्त_when_बंदd(card);
+	पूर्ण अन्यथा अणु
+		mutex_unlock(&रेजिस्टर_mutex);
+	पूर्ण
+पूर्ण
 
-/* lock the shutdown (disconnect) task and autoresume */
-int snd_usb_lock_shutdown(struct snd_usb_audio *chip)
-{
-	int err;
+/* lock the shutकरोwn (disconnect) task and स्वतःresume */
+पूर्णांक snd_usb_lock_shutकरोwn(काष्ठा snd_usb_audio *chip)
+अणु
+	पूर्णांक err;
 
 	atomic_inc(&chip->usage_count);
-	if (atomic_read(&chip->shutdown)) {
+	अगर (atomic_पढ़ो(&chip->shutकरोwn)) अणु
 		err = -EIO;
-		goto error;
-	}
-	err = snd_usb_autoresume(chip);
-	if (err < 0)
-		goto error;
-	return 0;
+		जाओ error;
+	पूर्ण
+	err = snd_usb_स्वतःresume(chip);
+	अगर (err < 0)
+		जाओ error;
+	वापस 0;
 
  error:
-	if (atomic_dec_and_test(&chip->usage_count))
-		wake_up(&chip->shutdown_wait);
-	return err;
-}
+	अगर (atomic_dec_and_test(&chip->usage_count))
+		wake_up(&chip->shutकरोwn_रुको);
+	वापस err;
+पूर्ण
 
-/* autosuspend and unlock the shutdown */
-void snd_usb_unlock_shutdown(struct snd_usb_audio *chip)
-{
-	snd_usb_autosuspend(chip);
-	if (atomic_dec_and_test(&chip->usage_count))
-		wake_up(&chip->shutdown_wait);
-}
+/* स्वतःsuspend and unlock the shutकरोwn */
+व्योम snd_usb_unlock_shutकरोwn(काष्ठा snd_usb_audio *chip)
+अणु
+	snd_usb_स्वतःsuspend(chip);
+	अगर (atomic_dec_and_test(&chip->usage_count))
+		wake_up(&chip->shutकरोwn_रुको);
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-int snd_usb_autoresume(struct snd_usb_audio *chip)
-{
-	int i, err;
+पूर्णांक snd_usb_स्वतःresume(काष्ठा snd_usb_audio *chip)
+अणु
+	पूर्णांक i, err;
 
-	if (atomic_read(&chip->shutdown))
-		return -EIO;
-	if (atomic_inc_return(&chip->active) != 1)
-		return 0;
+	अगर (atomic_पढ़ो(&chip->shutकरोwn))
+		वापस -EIO;
+	अगर (atomic_inc_वापस(&chip->active) != 1)
+		वापस 0;
 
-	for (i = 0; i < chip->num_interfaces; i++) {
-		err = usb_autopm_get_interface(chip->intf[i]);
-		if (err < 0) {
+	क्रम (i = 0; i < chip->num_पूर्णांकerfaces; i++) अणु
+		err = usb_स्वतःpm_get_पूर्णांकerface(chip->पूर्णांकf[i]);
+		अगर (err < 0) अणु
 			/* rollback */
-			while (--i >= 0)
-				usb_autopm_put_interface(chip->intf[i]);
+			जबतक (--i >= 0)
+				usb_स्वतःpm_put_पूर्णांकerface(chip->पूर्णांकf[i]);
 			atomic_dec(&chip->active);
-			return err;
-		}
-	}
-	return 0;
-}
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void snd_usb_autosuspend(struct snd_usb_audio *chip)
-{
-	int i;
+व्योम snd_usb_स्वतःsuspend(काष्ठा snd_usb_audio *chip)
+अणु
+	पूर्णांक i;
 
-	if (atomic_read(&chip->shutdown))
-		return;
-	if (!atomic_dec_and_test(&chip->active))
-		return;
+	अगर (atomic_पढ़ो(&chip->shutकरोwn))
+		वापस;
+	अगर (!atomic_dec_and_test(&chip->active))
+		वापस;
 
-	for (i = 0; i < chip->num_interfaces; i++)
-		usb_autopm_put_interface(chip->intf[i]);
-}
+	क्रम (i = 0; i < chip->num_पूर्णांकerfaces; i++)
+		usb_स्वतःpm_put_पूर्णांकerface(chip->पूर्णांकf[i]);
+पूर्ण
 
-static int usb_audio_suspend(struct usb_interface *intf, pm_message_t message)
-{
-	struct snd_usb_audio *chip = usb_get_intfdata(intf);
-	struct snd_usb_stream *as;
-	struct snd_usb_endpoint *ep;
-	struct usb_mixer_interface *mixer;
-	struct list_head *p;
+अटल पूर्णांक usb_audio_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
+अणु
+	काष्ठा snd_usb_audio *chip = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा snd_usb_stream *as;
+	काष्ठा snd_usb_endpoपूर्णांक *ep;
+	काष्ठा usb_mixer_पूर्णांकerface *mixer;
+	काष्ठा list_head *p;
 
-	if (chip == USB_AUDIO_IFACE_UNUSED)
-		return 0;
+	अगर (chip == USB_AUDIO_IFACE_UNUSED)
+		वापस 0;
 
-	if (!chip->num_suspended_intf++) {
-		list_for_each_entry(as, &chip->pcm_list, list)
+	अगर (!chip->num_suspended_पूर्णांकf++) अणु
+		list_क्रम_each_entry(as, &chip->pcm_list, list)
 			snd_usb_pcm_suspend(as);
-		list_for_each_entry(ep, &chip->ep_list, list)
-			snd_usb_endpoint_suspend(ep);
-		list_for_each(p, &chip->midi_list)
+		list_क्रम_each_entry(ep, &chip->ep_list, list)
+			snd_usb_endpoपूर्णांक_suspend(ep);
+		list_क्रम_each(p, &chip->midi_list)
 			snd_usbmidi_suspend(p);
-		list_for_each_entry(mixer, &chip->mixer_list, list)
+		list_क्रम_each_entry(mixer, &chip->mixer_list, list)
 			snd_usb_mixer_suspend(mixer);
-	}
+	पूर्ण
 
-	if (!PMSG_IS_AUTO(message) && !chip->system_suspend) {
-		snd_power_change_state(chip->card, SNDRV_CTL_POWER_D3hot);
-		chip->system_suspend = chip->num_suspended_intf;
-	}
+	अगर (!PMSG_IS_AUTO(message) && !chip->प्रणाली_suspend) अणु
+		snd_घातer_change_state(chip->card, SNDRV_CTL_POWER_D3hot);
+		chip->प्रणाली_suspend = chip->num_suspended_पूर्णांकf;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __usb_audio_resume(struct usb_interface *intf, bool reset_resume)
-{
-	struct snd_usb_audio *chip = usb_get_intfdata(intf);
-	struct snd_usb_stream *as;
-	struct usb_mixer_interface *mixer;
-	struct list_head *p;
-	int err = 0;
+अटल पूर्णांक __usb_audio_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf, bool reset_resume)
+अणु
+	काष्ठा snd_usb_audio *chip = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा snd_usb_stream *as;
+	काष्ठा usb_mixer_पूर्णांकerface *mixer;
+	काष्ठा list_head *p;
+	पूर्णांक err = 0;
 
-	if (chip == USB_AUDIO_IFACE_UNUSED)
-		return 0;
+	अगर (chip == USB_AUDIO_IFACE_UNUSED)
+		वापस 0;
 
-	atomic_inc(&chip->active); /* avoid autopm */
-	if (chip->num_suspended_intf > 1)
-		goto out;
+	atomic_inc(&chip->active); /* aव्योम स्वतःpm */
+	अगर (chip->num_suspended_पूर्णांकf > 1)
+		जाओ out;
 
-	list_for_each_entry(as, &chip->pcm_list, list) {
+	list_क्रम_each_entry(as, &chip->pcm_list, list) अणु
 		err = snd_usb_pcm_resume(as);
-		if (err < 0)
-			goto err_out;
-	}
+		अगर (err < 0)
+			जाओ err_out;
+	पूर्ण
 
 	/*
 	 * ALSA leaves material resumption to user space
-	 * we just notify and restart the mixers
+	 * we just notअगरy and restart the mixers
 	 */
-	list_for_each_entry(mixer, &chip->mixer_list, list) {
+	list_क्रम_each_entry(mixer, &chip->mixer_list, list) अणु
 		err = snd_usb_mixer_resume(mixer, reset_resume);
-		if (err < 0)
-			goto err_out;
-	}
+		अगर (err < 0)
+			जाओ err_out;
+	पूर्ण
 
-	list_for_each(p, &chip->midi_list) {
+	list_क्रम_each(p, &chip->midi_list) अणु
 		snd_usbmidi_resume(p);
-	}
+	पूर्ण
 
  out:
-	if (chip->num_suspended_intf == chip->system_suspend) {
-		snd_power_change_state(chip->card, SNDRV_CTL_POWER_D0);
-		chip->system_suspend = 0;
-	}
-	chip->num_suspended_intf--;
+	अगर (chip->num_suspended_पूर्णांकf == chip->प्रणाली_suspend) अणु
+		snd_घातer_change_state(chip->card, SNDRV_CTL_POWER_D0);
+		chip->प्रणाली_suspend = 0;
+	पूर्ण
+	chip->num_suspended_पूर्णांकf--;
 
 err_out:
-	atomic_dec(&chip->active); /* allow autopm after this point */
-	return err;
-}
+	atomic_dec(&chip->active); /* allow स्वतःpm after this poपूर्णांक */
+	वापस err;
+पूर्ण
 
-static int usb_audio_resume(struct usb_interface *intf)
-{
-	return __usb_audio_resume(intf, false);
-}
+अटल पूर्णांक usb_audio_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	वापस __usb_audio_resume(पूर्णांकf, false);
+पूर्ण
 
-static int usb_audio_reset_resume(struct usb_interface *intf)
-{
-	return __usb_audio_resume(intf, true);
-}
-#else
-#define usb_audio_suspend	NULL
-#define usb_audio_resume	NULL
-#define usb_audio_reset_resume	NULL
-#endif		/* CONFIG_PM */
+अटल पूर्णांक usb_audio_reset_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	वापस __usb_audio_resume(पूर्णांकf, true);
+पूर्ण
+#अन्यथा
+#घोषणा usb_audio_suspend	शून्य
+#घोषणा usb_audio_resume	शून्य
+#घोषणा usb_audio_reset_resume	शून्य
+#पूर्ण_अगर		/* CONFIG_PM */
 
-static const struct usb_device_id usb_audio_ids [] = {
-#include "quirks-table.h"
-    { .match_flags = (USB_DEVICE_ID_MATCH_INT_CLASS | USB_DEVICE_ID_MATCH_INT_SUBCLASS),
+अटल स्थिर काष्ठा usb_device_id usb_audio_ids [] = अणु
+#समावेश "quirks-table.h"
+    अणु .match_flags = (USB_DEVICE_ID_MATCH_INT_CLASS | USB_DEVICE_ID_MATCH_INT_SUBCLASS),
       .bInterfaceClass = USB_CLASS_AUDIO,
-      .bInterfaceSubClass = USB_SUBCLASS_AUDIOCONTROL },
-    { }						/* Terminating entry */
-};
+      .bInterfaceSubClass = USB_SUBCLASS_AUDIOCONTROL पूर्ण,
+    अणु पूर्ण						/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, usb_audio_ids);
 
 /*
- * entry point for linux usb interface
+ * entry poपूर्णांक क्रम linux usb पूर्णांकerface
  */
 
-static struct usb_driver usb_audio_driver = {
+अटल काष्ठा usb_driver usb_audio_driver = अणु
 	.name =		"snd-usb-audio",
 	.probe =	usb_audio_probe,
 	.disconnect =	usb_audio_disconnect,
@@ -1099,7 +1100,7 @@ static struct usb_driver usb_audio_driver = {
 	.resume =	usb_audio_resume,
 	.reset_resume =	usb_audio_reset_resume,
 	.id_table =	usb_audio_ids,
-	.supports_autosuspend = 1,
-};
+	.supports_स्वतःsuspend = 1,
+पूर्ण;
 
 module_usb_driver(usb_audio_driver);

@@ -1,35 +1,36 @@
+<शैली गुरु>
 /* Broadcom NetXtreme-C/E network driver.
  *
  * Copyright (c) 2017-2018 Broadcom Limited
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#include <linux/debugfs.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include "bnxt_hsi.h"
-#include <linux/dim.h>
-#include "bnxt.h"
-#include "bnxt_debugfs.h"
+#समावेश <linux/debugfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश "bnxt_hsi.h"
+#समावेश <linux/dim.h>
+#समावेश "bnxt.h"
+#समावेश "bnxt_debugfs.h"
 
-static struct dentry *bnxt_debug_mnt;
+अटल काष्ठा dentry *bnxt_debug_mnt;
 
-static ssize_t debugfs_dim_read(struct file *filep,
-				char __user *buffer,
-				size_t count, loff_t *ppos)
-{
-	struct dim *dim = filep->private_data;
-	int len;
-	char *buf;
+अटल sमाप_प्रकार debugfs_dim_पढ़ो(काष्ठा file *filep,
+				अक्षर __user *buffer,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा dim *dim = filep->निजी_data;
+	पूर्णांक len;
+	अक्षर *buf;
 
-	if (*ppos)
-		return 0;
-	if (!dim)
-		return -ENODEV;
-	buf = kasprintf(GFP_KERNEL,
+	अगर (*ppos)
+		वापस 0;
+	अगर (!dim)
+		वापस -ENODEV;
+	buf = kaप्र_लिखो(GFP_KERNEL,
 			"state = %d\n" \
 			"profile_ix = %d\n" \
 			"mode = %d\n" \
@@ -44,64 +45,64 @@ static ssize_t debugfs_dim_read(struct file *filep,
 			dim->steps_right,
 			dim->steps_left,
 			dim->tired);
-	if (!buf)
-		return -ENOMEM;
-	if (count < strlen(buf)) {
-		kfree(buf);
-		return -ENOSPC;
-	}
-	len = simple_read_from_buffer(buffer, count, ppos, buf, strlen(buf));
-	kfree(buf);
-	return len;
-}
+	अगर (!buf)
+		वापस -ENOMEM;
+	अगर (count < म_माप(buf)) अणु
+		kमुक्त(buf);
+		वापस -ENOSPC;
+	पूर्ण
+	len = simple_पढ़ो_from_buffer(buffer, count, ppos, buf, म_माप(buf));
+	kमुक्त(buf);
+	वापस len;
+पूर्ण
 
-static const struct file_operations debugfs_dim_fops = {
+अटल स्थिर काष्ठा file_operations debugfs_dim_fops = अणु
 	.owner = THIS_MODULE,
-	.open = simple_open,
-	.read = debugfs_dim_read,
-};
+	.खोलो = simple_खोलो,
+	.पढ़ो = debugfs_dim_पढ़ो,
+पूर्ण;
 
-static void debugfs_dim_ring_init(struct dim *dim, int ring_idx,
-				  struct dentry *dd)
-{
-	static char qname[16];
+अटल व्योम debugfs_dim_ring_init(काष्ठा dim *dim, पूर्णांक ring_idx,
+				  काष्ठा dentry *dd)
+अणु
+	अटल अक्षर qname[16];
 
-	snprintf(qname, 10, "%d", ring_idx);
+	snम_लिखो(qname, 10, "%d", ring_idx);
 	debugfs_create_file(qname, 0600, dd, dim, &debugfs_dim_fops);
-}
+पूर्ण
 
-void bnxt_debug_dev_init(struct bnxt *bp)
-{
-	const char *pname = pci_name(bp->pdev);
-	struct dentry *dir;
-	int i;
+व्योम bnxt_debug_dev_init(काष्ठा bnxt *bp)
+अणु
+	स्थिर अक्षर *pname = pci_name(bp->pdev);
+	काष्ठा dentry *dir;
+	पूर्णांक i;
 
 	bp->debugfs_pdev = debugfs_create_dir(pname, bnxt_debug_mnt);
 	dir = debugfs_create_dir("dim", bp->debugfs_pdev);
 
-	/* create files for each rx ring */
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_cp_ring_info *cpr = &bp->bnapi[i]->cp_ring;
+	/* create files क्रम each rx ring */
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_cp_ring_info *cpr = &bp->bnapi[i]->cp_ring;
 
-		if (cpr && bp->bnapi[i]->rx_ring)
+		अगर (cpr && bp->bnapi[i]->rx_ring)
 			debugfs_dim_ring_init(&cpr->dim, i, dir);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void bnxt_debug_dev_exit(struct bnxt *bp)
-{
-	if (bp) {
-		debugfs_remove_recursive(bp->debugfs_pdev);
-		bp->debugfs_pdev = NULL;
-	}
-}
+व्योम bnxt_debug_dev_निकास(काष्ठा bnxt *bp)
+अणु
+	अगर (bp) अणु
+		debugfs_हटाओ_recursive(bp->debugfs_pdev);
+		bp->debugfs_pdev = शून्य;
+	पूर्ण
+पूर्ण
 
-void bnxt_debug_init(void)
-{
-	bnxt_debug_mnt = debugfs_create_dir("bnxt_en", NULL);
-}
+व्योम bnxt_debug_init(व्योम)
+अणु
+	bnxt_debug_mnt = debugfs_create_dir("bnxt_en", शून्य);
+पूर्ण
 
-void bnxt_debug_exit(void)
-{
-	debugfs_remove_recursive(bnxt_debug_mnt);
-}
+व्योम bnxt_debug_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(bnxt_debug_mnt);
+पूर्ण

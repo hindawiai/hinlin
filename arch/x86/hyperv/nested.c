@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Hyper-V nested virtualization code.
+ * Hyper-V nested भवization code.
  *
  * Copyright (C) 2018, Microsoft, Inc.
  *
  * Author : Lan Tianyu <Tianyu.Lan@microsoft.com>
  */
-#define pr_fmt(fmt)  "Hyper-V: " fmt
+#घोषणा pr_fmt(fmt)  "Hyper-V: " fmt
 
 
-#include <linux/types.h>
-#include <asm/hyperv-tlfs.h>
-#include <asm/mshyperv.h>
-#include <asm/tlbflush.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/hyperv-tlfs.h>
+#समावेश <यंत्र/mshyperv.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#include <asm/trace/hyperv.h>
+#समावेश <यंत्र/trace/hyperv.h>
 
-int hyperv_flush_guest_mapping(u64 as)
-{
-	struct hv_guest_mapping_flush **flush_pcpu;
-	struct hv_guest_mapping_flush *flush;
+पूर्णांक hyperv_flush_guest_mapping(u64 as)
+अणु
+	काष्ठा hv_guest_mapping_flush **flush_pcpu;
+	काष्ठा hv_guest_mapping_flush *flush;
 	u64 status;
-	unsigned long flags;
-	int ret = -ENOTSUPP;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = -ENOTSUPP;
 
-	if (!hv_hypercall_pg)
-		goto fault;
+	अगर (!hv_hypercall_pg)
+		जाओ fault;
 
 	local_irq_save(flags);
 
-	flush_pcpu = (struct hv_guest_mapping_flush **)
+	flush_pcpu = (काष्ठा hv_guest_mapping_flush **)
 		this_cpu_ptr(hyperv_pcpu_input_arg);
 
 	flush = *flush_pcpu;
 
-	if (unlikely(!flush)) {
+	अगर (unlikely(!flush)) अणु
 		local_irq_restore(flags);
-		goto fault;
-	}
+		जाओ fault;
+	पूर्ण
 
 	flush->address_space = as;
 	flush->flags = 0;
 
-	status = hv_do_hypercall(HVCALL_FLUSH_GUEST_PHYSICAL_ADDRESS_SPACE,
-				 flush, NULL);
+	status = hv_करो_hypercall(HVCALL_FLUSH_GUEST_PHYSICAL_ADDRESS_SPACE,
+				 flush, शून्य);
 	local_irq_restore(flags);
 
-	if (hv_result_success(status))
+	अगर (hv_result_success(status))
 		ret = 0;
 
 fault:
 	trace_hyperv_nested_flush_guest_mapping(as, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(hyperv_flush_guest_mapping);
 
-int hyperv_fill_flush_guest_mapping_list(
-		struct hv_guest_mapping_flush_list *flush,
+पूर्णांक hyperv_fill_flush_guest_mapping_list(
+		काष्ठा hv_guest_mapping_flush_list *flush,
 		u64 start_gfn, u64 pages)
-{
+अणु
 	u64 cur = start_gfn;
 	u64 additional_pages;
-	int gpa_n = 0;
+	पूर्णांक gpa_n = 0;
 
-	do {
+	करो अणु
 		/*
 		 * If flush requests exceed max flush count, go back to
 		 * flush tlbs without range.
 		 */
-		if (gpa_n >= HV_MAX_FLUSH_REP_COUNT)
-			return -ENOSPC;
+		अगर (gpa_n >= HV_MAX_FLUSH_REP_COUNT)
+			वापस -ENOSPC;
 
 		additional_pages = min_t(u64, pages, HV_MAX_FLUSH_PAGES) - 1;
 
@@ -81,56 +82,56 @@ int hyperv_fill_flush_guest_mapping_list(
 		pages -= additional_pages + 1;
 		cur += additional_pages + 1;
 		gpa_n++;
-	} while (pages > 0);
+	पूर्ण जबतक (pages > 0);
 
-	return gpa_n;
-}
+	वापस gpa_n;
+पूर्ण
 EXPORT_SYMBOL_GPL(hyperv_fill_flush_guest_mapping_list);
 
-int hyperv_flush_guest_mapping_range(u64 as,
-		hyperv_fill_flush_list_func fill_flush_list_func, void *data)
-{
-	struct hv_guest_mapping_flush_list **flush_pcpu;
-	struct hv_guest_mapping_flush_list *flush;
+पूर्णांक hyperv_flush_guest_mapping_range(u64 as,
+		hyperv_fill_flush_list_func fill_flush_list_func, व्योम *data)
+अणु
+	काष्ठा hv_guest_mapping_flush_list **flush_pcpu;
+	काष्ठा hv_guest_mapping_flush_list *flush;
 	u64 status;
-	unsigned long flags;
-	int ret = -ENOTSUPP;
-	int gpa_n = 0;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = -ENOTSUPP;
+	पूर्णांक gpa_n = 0;
 
-	if (!hv_hypercall_pg || !fill_flush_list_func)
-		goto fault;
+	अगर (!hv_hypercall_pg || !fill_flush_list_func)
+		जाओ fault;
 
 	local_irq_save(flags);
 
-	flush_pcpu = (struct hv_guest_mapping_flush_list **)
+	flush_pcpu = (काष्ठा hv_guest_mapping_flush_list **)
 		this_cpu_ptr(hyperv_pcpu_input_arg);
 
 	flush = *flush_pcpu;
-	if (unlikely(!flush)) {
+	अगर (unlikely(!flush)) अणु
 		local_irq_restore(flags);
-		goto fault;
-	}
+		जाओ fault;
+	पूर्ण
 
 	flush->address_space = as;
 	flush->flags = 0;
 
 	gpa_n = fill_flush_list_func(flush, data);
-	if (gpa_n < 0) {
+	अगर (gpa_n < 0) अणु
 		local_irq_restore(flags);
-		goto fault;
-	}
+		जाओ fault;
+	पूर्ण
 
-	status = hv_do_rep_hypercall(HVCALL_FLUSH_GUEST_PHYSICAL_ADDRESS_LIST,
-				     gpa_n, 0, flush, NULL);
+	status = hv_करो_rep_hypercall(HVCALL_FLUSH_GUEST_PHYSICAL_ADDRESS_LIST,
+				     gpa_n, 0, flush, शून्य);
 
 	local_irq_restore(flags);
 
-	if (hv_result_success(status))
+	अगर (hv_result_success(status))
 		ret = 0;
-	else
+	अन्यथा
 		ret = hv_result(status);
 fault:
 	trace_hyperv_nested_flush_guest_mapping_range(as, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(hyperv_flush_guest_mapping_range);

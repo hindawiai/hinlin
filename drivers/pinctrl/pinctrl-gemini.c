@@ -1,98 +1,99 @@
+<शैली गुरु>
 /*
- * Driver for the Gemini pin controller
+ * Driver क्रम the Gemini pin controller
  *
  * Copyright (C) 2017 Linus Walleij <linus.walleij@linaro.org>
  *
  * This is a group-only pin controller.
  */
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of.h>
-#include <linux/pinctrl/machine.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/regmap.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pinctrl/machine.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/regmap.h>
 
-#include "pinctrl-utils.h"
+#समावेश "pinctrl-utils.h"
 
-#define DRIVER_NAME "pinctrl-gemini"
+#घोषणा DRIVER_NAME "pinctrl-gemini"
 
 /**
- * struct gemini_pin_conf - information about configuring a pin
+ * काष्ठा gemini_pin_conf - inक्रमmation about configuring a pin
  * @pin: the pin number
- * @reg: config register
+ * @reg: config रेजिस्टर
  * @mask: the bits affecting the configuration of the pin
  */
-struct gemini_pin_conf {
-	unsigned int pin;
+काष्ठा gemini_pin_conf अणु
+	अचिन्हित पूर्णांक pin;
 	u32 reg;
 	u32 mask;
-};
+पूर्ण;
 
 /**
- * struct gemini_pmx - state holder for the gemini pin controller
- * @dev: a pointer back to containing device
- * @virtbase: the offset to the controller in virtual memory
- * @map: regmap to access registers
+ * काष्ठा gemini_pmx - state holder क्रम the gemini pin controller
+ * @dev: a poपूर्णांकer back to containing device
+ * @virtbase: the offset to the controller in भव memory
+ * @map: regmap to access रेजिस्टरs
  * @is_3512: whether the SoC/package is the 3512 variant
  * @is_3516: whether the SoC/package is the 3516 variant
- * @flash_pin: whether the flash pin (extended pins for parallel
+ * @flash_pin: whether the flash pin (extended pins क्रम parallel
  * flash) is set
- * @confs: pin config information
- * @nconfs: number of pin config information items
+ * @confs: pin config inक्रमmation
+ * @nconfs: number of pin config inक्रमmation items
  */
-struct gemini_pmx {
-	struct device *dev;
-	struct pinctrl_dev *pctl;
-	struct regmap *map;
+काष्ठा gemini_pmx अणु
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctl;
+	काष्ठा regmap *map;
 	bool is_3512;
 	bool is_3516;
 	bool flash_pin;
-	const struct gemini_pin_conf *confs;
-	unsigned int nconfs;
-};
+	स्थिर काष्ठा gemini_pin_conf *confs;
+	अचिन्हित पूर्णांक nconfs;
+पूर्ण;
 
 /**
- * struct gemini_pin_group - describes a Gemini pin group
- * @name: the name of this specific pin group
+ * काष्ठा gemini_pin_group - describes a Gemini pin group
+ * @name: the name of this specअगरic pin group
  * @pins: an array of discrete physical pins used in this group, taken
- *	from the driver-local pin enumeration space
+ *	from the driver-local pin क्रमागतeration space
  * @num_pins: the number of pins in this group array, i.e. the number of
  *	elements in .pins so we can iterate over that array
- * @mask: bits to clear to enable this when doing pin muxing
- * @value: bits to set to enable this when doing pin muxing
- * @driving_mask: bitmask for the IO Pad driving register for this
- *	group, if it supports altering the driving strength of
+ * @mask: bits to clear to enable this when करोing pin muxing
+ * @value: bits to set to enable this when करोing pin muxing
+ * @driving_mask: biपंचांगask क्रम the IO Pad driving रेजिस्टर क्रम this
+ *	group, अगर it supports altering the driving strength of
  *	its lines.
  */
-struct gemini_pin_group {
-	const char *name;
-	const unsigned int *pins;
-	const unsigned int num_pins;
+काष्ठा gemini_pin_group अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित पूर्णांक *pins;
+	स्थिर अचिन्हित पूर्णांक num_pins;
 	u32 mask;
 	u32 value;
 	u32 driving_mask;
-};
+पूर्ण;
 
-/* Some straight-forward control registers */
-#define GLOBAL_WORD_ID		0x00
-#define GLOBAL_STATUS		0x04
-#define GLOBAL_STATUS_FLPIN	BIT(20)
-#define GLOBAL_IODRIVE		0x10
-#define GLOBAL_GMAC_CTRL_SKEW	0x1c
-#define GLOBAL_GMAC0_DATA_SKEW	0x20
-#define GLOBAL_GMAC1_DATA_SKEW	0x24
+/* Some straight-क्रमward control रेजिस्टरs */
+#घोषणा GLOBAL_WORD_ID		0x00
+#घोषणा GLOBAL_STATUS		0x04
+#घोषणा GLOBAL_STATUS_FLPIN	BIT(20)
+#घोषणा GLOBAL_IODRIVE		0x10
+#घोषणा GLOBAL_GMAC_CTRL_SKEW	0x1c
+#घोषणा GLOBAL_GMAC0_DATA_SKEW	0x20
+#घोषणा GLOBAL_GMAC1_DATA_SKEW	0x24
 /*
  * Global Miscellaneous Control Register
- * This register controls all Gemini pad/pin multiplexing
+ * This रेजिस्टर controls all Gemini pad/pin multiplexing
  *
- * It is a tricky register though:
+ * It is a tricky रेजिस्टर though:
  * - For the bits named *_ENABLE, once you DISABLE something, it simply cannot
  *   be brought back online, so it means permanent disablement of the
  *   corresponding pads.
@@ -100,32 +101,32 @@ struct gemini_pin_group {
  *   DISABLED again. So you select a flash configuration once, and then
  *   you are stuck with it.
  */
-#define GLOBAL_MISC_CTRL	0x30
-#define GEMINI_GMAC_IOSEL_MASK	GENMASK(28, 27)
+#घोषणा GLOBAL_MISC_CTRL	0x30
+#घोषणा GEMINI_GMAC_IOSEL_MASK	GENMASK(28, 27)
 /* Not really used */
-#define GEMINI_GMAC_IOSEL_GMAC0_GMII	BIT(28)
+#घोषणा GEMINI_GMAC_IOSEL_GMAC0_GMII	BIT(28)
 /* Activated with GMAC1 */
-#define GEMINI_GMAC_IOSEL_GMAC0_GMAC1_RGMII BIT(27)
-/* This will be the default */
-#define GEMINI_GMAC_IOSEL_GMAC0_RGMII_GMAC1_GPIO2 0
-#define TVC_CLK_PAD_ENABLE	BIT(20)
-#define PCI_CLK_PAD_ENABLE	BIT(17)
-#define LPC_CLK_PAD_ENABLE	BIT(16)
-#define TVC_PADS_ENABLE		BIT(9)
-#define SSP_PADS_ENABLE		BIT(8)
-#define LCD_PADS_ENABLE		BIT(7)
-#define LPC_PADS_ENABLE		BIT(6)
-#define PCI_PADS_ENABLE		BIT(5)
-#define IDE_PADS_ENABLE		BIT(4)
-#define DRAM_PADS_POWERDOWN	BIT(3)
-#define NAND_PADS_DISABLE	BIT(2)
-#define PFLASH_PADS_DISABLE	BIT(1)
-#define SFLASH_PADS_DISABLE	BIT(0)
-#define PADS_MASK		(GENMASK(9, 0) | BIT(16) | BIT(17) | BIT(20) | BIT(27))
-#define PADS_MAXBIT		27
+#घोषणा GEMINI_GMAC_IOSEL_GMAC0_GMAC1_RGMII BIT(27)
+/* This will be the शेष */
+#घोषणा GEMINI_GMAC_IOSEL_GMAC0_RGMII_GMAC1_GPIO2 0
+#घोषणा TVC_CLK_PAD_ENABLE	BIT(20)
+#घोषणा PCI_CLK_PAD_ENABLE	BIT(17)
+#घोषणा LPC_CLK_PAD_ENABLE	BIT(16)
+#घोषणा TVC_PADS_ENABLE		BIT(9)
+#घोषणा SSP_PADS_ENABLE		BIT(8)
+#घोषणा LCD_PADS_ENABLE		BIT(7)
+#घोषणा LPC_PADS_ENABLE		BIT(6)
+#घोषणा PCI_PADS_ENABLE		BIT(5)
+#घोषणा IDE_PADS_ENABLE		BIT(4)
+#घोषणा DRAM_PADS_POWERDOWN	BIT(3)
+#घोषणा न_अंकD_PADS_DISABLE	BIT(2)
+#घोषणा PFLASH_PADS_DISABLE	BIT(1)
+#घोषणा SFLASH_PADS_DISABLE	BIT(0)
+#घोषणा PADS_MASK		(GENMASK(9, 0) | BIT(16) | BIT(17) | BIT(20) | BIT(27))
+#घोषणा PADS_MAXBIT		27
 
 /* Ordered by bit index */
-static const char * const gemini_padgroups[] = {
+अटल स्थिर अक्षर * स्थिर gemini_padgroups[] = अणु
 	"serial flash",
 	"parallel flash",
 	"NAND flash",
@@ -136,16 +137,16 @@ static const char * const gemini_padgroups[] = {
 	"LCD",
 	"SSP",
 	"TVC",
-	NULL, NULL, NULL, NULL, NULL, NULL,
+	शून्य, शून्य, शून्य, शून्य, शून्य, शून्य,
 	"LPC CLK",
 	"PCI CLK",
-	NULL, NULL,
+	शून्य, शून्य,
 	"TVC CLK",
-	NULL, NULL, NULL, NULL, NULL,
+	शून्य, शून्य, शून्य, शून्य, शून्य,
 	"GMAC1",
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc gemini_3512_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc gemini_3512_pins[] = अणु
 	/* Row A */
 	PINCTRL_PIN(0, "A1 VREF CTRL"),
 	PINCTRL_PIN(1, "A2 VCC2IO CTRL"),
@@ -298,7 +299,7 @@ static const struct pinctrl_pin_desc gemini_3512_pins[] = {
 	PINCTRL_PIN(141, "H16 PCI AD14"),
 	PINCTRL_PIN(142, "H17 PCI AD13"),
 	PINCTRL_PIN(143, "H18 PCI AD12"),
-	/* Row J (for some reason I is skipped) */
+	/* Row J (क्रम some reason I is skipped) */
 	PINCTRL_PIN(144, "J1 SATA1 RXDP"),
 	PINCTRL_PIN(145, "J2 SATA1 RXDN"),
 	PINCTRL_PIN(146, "J3 AGNDK 3"),
@@ -393,7 +394,7 @@ static const struct pinctrl_pin_desc gemini_3512_pins[] = {
 	PINCTRL_PIN(231, "N16 GPIO0 22"),
 	PINCTRL_PIN(232, "N17 GPIO0 23"),
 	PINCTRL_PIN(233, "N18 GPIO0 24"),
-	/* Row P (for some reason O is skipped) */
+	/* Row P (क्रम some reason O is skipped) */
 	PINCTRL_PIN(234, "P1 IDE DD4"),
 	PINCTRL_PIN(235, "P2 IDE DD10"),
 	PINCTRL_PIN(236, "P3 IDE DD5"),
@@ -412,7 +413,7 @@ static const struct pinctrl_pin_desc gemini_3512_pins[] = {
 	PINCTRL_PIN(249, "P16 GPIO0 17"),
 	PINCTRL_PIN(250, "P17 GPIO0 18"),
 	PINCTRL_PIN(251, "P18 GPIO0 19"),
-	/* Row R (for some reason Q us skipped) */
+	/* Row R (क्रम some reason Q us skipped) */
 	PINCTRL_PIN(252, "R1 IDE DD6"),
 	PINCTRL_PIN(253, "R2 IDE DD8"),
 	PINCTRL_PIN(254, "R3 IDE DD7"),
@@ -431,7 +432,7 @@ static const struct pinctrl_pin_desc gemini_3512_pins[] = {
 	PINCTRL_PIN(267, "R16 GPIO0 9"),
 	PINCTRL_PIN(268, "R17 GPIO0 15"),
 	PINCTRL_PIN(269, "R18 GPIO0 16"),
-	/* Row T (for some reason S is skipped) */
+	/* Row T (क्रम some reason S is skipped) */
 	PINCTRL_PIN(270, "T1 ICE0 DBGRQ"),
 	PINCTRL_PIN(271, "T2 ICE0 IDO"),
 	PINCTRL_PIN(272, "T3 ICE0 ICK"),
@@ -488,105 +489,105 @@ static const struct pinctrl_pin_desc gemini_3512_pins[] = {
 	PINCTRL_PIN(321, "V16 GPIO0 6"),
 	PINCTRL_PIN(322, "V17 GPIO0 10"),
 	PINCTRL_PIN(323, "V18 SYS RESET N"),
-};
+पूर्ण;
 
 
 /* Digital ground */
-static const unsigned int gnd_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक gnd_3512_pins[] = अणु
 	76, 85, 95, 102, 114, 119, 133, 134, 135, 136, 151, 152, 153, 154, 169,
 	170, 171, 172, 187, 188, 189, 190, 204, 209, 221, 228, 238, 247
-};
+पूर्ण;
 
-static const unsigned int dram_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक dram_3512_pins[] = अणु
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 21, 22, 23, 24, 25, 26, 27, 28, 29,
 	30, 40, 41, 42, 43, 44, 45, 46, 47, 58, 59, 60, 61, 62, 63, 64, 65, 77,
 	78, 79, 80, 81, 82
-};
+पूर्ण;
 
-static const unsigned int rtc_3512_pins[] = { 57, 20, 39 };
+अटल स्थिर अचिन्हित पूर्णांक rtc_3512_pins[] = अणु 57, 20, 39 पूर्ण;
 
-static const unsigned int power_3512_pins[] = { 19, 38, 36, 55, 37, 56, 54, 72 };
+अटल स्थिर अचिन्हित पूर्णांक घातer_3512_pins[] = अणु 19, 38, 36, 55, 37, 56, 54, 72 पूर्ण;
 
-static const unsigned int system_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक प्रणाली_3512_pins[] = अणु
 	318, 264, 300, 245, 263, 282, 314, 323, 49,
-};
+पूर्ण;
 
-static const unsigned int vcontrol_3512_pins[] = { 18, 0, 1 };
+अटल स्थिर अचिन्हित पूर्णांक vcontrol_3512_pins[] = अणु 18, 0, 1 पूर्ण;
 
-static const unsigned int ice_3512_pins[] = { 256, 270, 271, 272, 273, 274, 288 };
+अटल स्थिर अचिन्हित पूर्णांक ice_3512_pins[] = अणु 256, 270, 271, 272, 273, 274, 288 पूर्ण;
 
-static const unsigned int ide_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक ide_3512_pins[] = अणु
 	162, 163, 165, 166, 148, 180, 181, 182, 183, 184, 198, 199, 200, 201, 202,
 	216, 217, 218, 219, 220, 234, 235, 236, 237, 252, 253, 254, 255
-};
+पूर्ण;
 
-static const unsigned int sata_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक sata_3512_pins[] = अणु
 	75, 74, 73, 93, 94, 131, 112, 130, 92, 91, 90, 111, 110, 109, 108, 129,
 	128, 127, 126, 147, 146, 145, 144, 164
-};
+पूर्ण;
 
-static const unsigned int usb_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक usb_3512_pins[] = अणु
 	306, 289, 307, 290, 239, 257, 275, 308, 291, 309, 292, 310, 293
-};
+पूर्ण;
 
 /* GMII, ethernet pins */
-static const unsigned int gmii_gmac0_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक gmii_gmac0_3512_pins[] = अणु
 	240, 241, 242, 258, 259, 260, 276, 277, 278, 294, 295, 311, 312, 313
-};
+पूर्ण;
 
-static const unsigned int gmii_gmac1_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक gmii_gmac1_3512_pins[] = अणु
 	243, 244, 261, 262, 279, 280, 281, 296, 297, 298, 299, 315, 316, 317
-};
+पूर्ण;
 
-static const unsigned int pci_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pci_3512_pins[] = अणु
 	13, 14, 15, 16, 17, 31, 32, 33, 34, 35, 48, 50, 51, 52, 53, 66, 67, 68, 69,
 	70, 71, 83, 84, 86, 87, 88, 89, 103, 104, 105, 106, 107, 121, 122, 123,
 	124, 125, 139, 140, 141, 142, 143, 157, 158, 159, 160, 161, 175, 176, 177,
 	178, 179, 195, 196, 197
-};
+पूर्ण;
 
 /*
- * Apparently the LPC interface is using the PCICLK for the clocking so
- * PCI needs to be active at the same time.
+ * Apparently the LPC पूर्णांकerface is using the PCICLK क्रम the घड़ीing so
+ * PCI needs to be active at the same समय.
  */
-static const unsigned int lpc_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक lpc_3512_pins[] = अणु
 	285, /* LPC_LAD[0] */
 	304, /* LPC_SERIRQ */
 	286, /* LPC_LAD[2] */
 	305, /* LPC_LFRAME# */
 	287, /* LPC_LAD[3] */
 	268, /* LPC_LAD[1] */
-};
+पूर्ण;
 
 /* Character LCD */
-static const unsigned int lcd_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक lcd_3512_pins[] = अणु
 	262, 244, 317, 299, 246, 319, 301, 283, 269, 233, 211
-};
+पूर्ण;
 
-static const unsigned int ssp_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक ssp_3512_pins[] = अणु
 	285, /* SSP_97RST# SSP AC97 Reset, active low */
 	304, /* SSP_FSC */
 	286, /* SSP_ECLK */
 	305, /* SSP_TXD */
 	287, /* SSP_RXD */
 	268, /* SSP_SCLK */
-};
+पूर्ण;
 
-static const unsigned int uart_rxtx_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक uart_rxtx_3512_pins[] = अणु
 	267, /* UART_SIN serial input, RX */
 	322, /* UART_SOUT serial output, TX */
-};
+पूर्ण;
 
-static const unsigned int uart_modem_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक uart_modem_3512_pins[] = अणु
 	285, /* UART_NDCD DCD carrier detect */
-	304, /* UART_NDTR DTR data terminal ready */
-	286, /* UART_NDSR DSR data set ready */
+	304, /* UART_NDTR DTR data terminal पढ़ोy */
+	286, /* UART_NDSR DSR data set पढ़ोy */
 	305, /* UART_NRTS RTS request to send */
 	287, /* UART_NCTS CTS clear to send */
 	268, /* UART_NRI RI ring indicator */
-};
+पूर्ण;
 
-static const unsigned int tvc_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक tvc_3512_pins[] = अणु
 	246, /* TVC_DATA[0] */
 	319, /* TVC_DATA[1] */
 	301, /* TVC_DATA[2] */
@@ -595,222 +596,222 @@ static const unsigned int tvc_3512_pins[] = {
 	302, /* TVC_DATA[5] */
 	284, /* TVC_DATA[6] */
 	266, /* TVC_DATA[7] */
-};
+पूर्ण;
 
-static const unsigned int tvc_clk_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक tvc_clk_3512_pins[] = अणु
 	265, /* TVC_CLK */
-};
+पूर्ण;
 
-/* NAND flash pins */
-static const unsigned int nflash_3512_pins[] = {
+/* न_अंकD flash pins */
+अटल स्थिर अचिन्हित पूर्णांक nflash_3512_pins[] = अणु
 	199, 200, 201, 202, 216, 217, 218, 219, 220, 234, 235, 236, 237, 252,
 	253, 254, 249, 250, 232, 233, 211, 193, 194
-};
+पूर्ण;
 
 /* Parallel (NOR) flash pins, D[0-15], A[16-25], CE0, CE1, RB, WE, OE, ALE */
-static const unsigned int pflash_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pflash_3512_pins[] = अणु
 	162, 163, 165, 166, 148, 199, 200, 201, 202, 216, 217, 218, 219, 220,
 	234, 235, 236, 237, 252, 253, 254, 251, 229, 232, 233, 211, 212, 213,
 	214, 215, 193, 194
-};
+पूर्ण;
 
 /*
  * The parallel flash can be set up in a 26-bit address bus mode exposing
  * A[0-15] (A[15] takes the place of ALE), but it has the
  * side effect of stealing pins from GMAC1 and TVC so these blocks cannot be
- * used at the same time.
+ * used at the same समय.
  */
-static const unsigned int pflash_3512_pins_extended[] = {
+अटल स्थिर अचिन्हित पूर्णांक pflash_3512_pins_extended[] = अणु
 	162, 163, 165, 166, 148, 199, 200, 201, 202, 216, 217, 218, 219, 220,
 	234, 235, 236, 237, 252, 253, 254, 251, 229, 232, 233, 211, 212, 213,
 	214, 215, 193, 194,
 	/* The extra pins */
 	296, 315, 297, 279, 261, 243, 316, 298, 280, 262, 244, 317, 299, 281,
 	265,
-};
+पूर्ण;
 
 /* Serial flash pins CE0, CE1, DI, DO, CK */
-static const unsigned int sflash_3512_pins[] = { 230, 231, 232, 233, 211 };
+अटल स्थिर अचिन्हित पूर्णांक sflash_3512_pins[] = अणु 230, 231, 232, 233, 211 पूर्ण;
 
 /* The GPIO0A (0) pin overlap with TVC CLK and extended parallel flash */
-static const unsigned int gpio0a_3512_pins[] = { 265 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0a_3512_pins[] = अणु 265 पूर्ण;
 
 /* The GPIO0B (1-4) pins overlap with TVC and ICE */
-static const unsigned int gpio0b_3512_pins[] = { 320, 302, 284, 266 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0b_3512_pins[] = अणु 320, 302, 284, 266 पूर्ण;
 
 /* The GPIO0C (5-7) pins overlap with ICE */
-static const unsigned int gpio0c_3512_pins[] = { 248, 321, 303 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0c_3512_pins[] = अणु 248, 321, 303 पूर्ण;
 
 /* The GPIO0D (9,10) pins overlap with UART RX/TX */
-static const unsigned int gpio0d_3512_pins[] = { 267, 322 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0d_3512_pins[] = अणु 267, 322 पूर्ण;
 
 /* The GPIO0E (8,11-15) pins overlap with LPC, UART modem pins, SSP */
-static const unsigned int gpio0e_3512_pins[] = { 285, 304, 286, 305, 287, 268 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0e_3512_pins[] = अणु 285, 304, 286, 305, 287, 268 पूर्ण;
 
 /* The GPIO0F (16) pins overlap with LCD */
-static const unsigned int gpio0f_3512_pins[] = { 269 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0f_3512_pins[] = अणु 269 पूर्ण;
 
-/* The GPIO0G (17,18) pins overlap with NAND flash CE0, CE1 */
-static const unsigned int gpio0g_3512_pins[] = { 249, 250 };
+/* The GPIO0G (17,18) pins overlap with न_अंकD flash CE0, CE1 */
+अटल स्थिर अचिन्हित पूर्णांक gpio0g_3512_pins[] = अणु 249, 250 पूर्ण;
 
 /* The GPIO0H (19,20) pins overlap with parallel flash CE0, CE1 */
-static const unsigned int gpio0h_3512_pins[] = { 251, 229 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0h_3512_pins[] = अणु 251, 229 पूर्ण;
 
 /* The GPIO0I (21,22) pins overlap with serial flash CE0, CE1 */
-static const unsigned int gpio0i_3512_pins[] = { 230, 231 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0i_3512_pins[] = अणु 230, 231 पूर्ण;
 
 /* The GPIO0J (23) pins overlap with all flash */
-static const unsigned int gpio0j_3512_pins[] = { 232 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0j_3512_pins[] = अणु 232 पूर्ण;
 
 /* The GPIO0K (24,25) pins overlap with all flash and LCD */
-static const unsigned int gpio0k_3512_pins[] = { 233, 211 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0k_3512_pins[] = अणु 233, 211 पूर्ण;
 
 /* The GPIO0L (26-29) pins overlap with parallel flash */
-static const unsigned int gpio0l_3512_pins[] = { 212, 213, 214, 215 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0l_3512_pins[] = अणु 212, 213, 214, 215 पूर्ण;
 
-/* The GPIO0M (30,31) pins overlap with parallel flash and NAND flash */
-static const unsigned int gpio0m_3512_pins[] = { 193, 194 };
+/* The GPIO0M (30,31) pins overlap with parallel flash and न_अंकD flash */
+अटल स्थिर अचिन्हित पूर्णांक gpio0m_3512_pins[] = अणु 193, 194 पूर्ण;
 
 /* The GPIO1A (0-4) pins that overlap with IDE and parallel flash */
-static const unsigned int gpio1a_3512_pins[] = { 162, 163, 165, 166, 148 };
+अटल स्थिर अचिन्हित पूर्णांक gpio1a_3512_pins[] = अणु 162, 163, 165, 166, 148 पूर्ण;
 
 /* The GPIO1B (5-10, 27) pins overlap with just IDE */
-static const unsigned int gpio1b_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक gpio1b_3512_pins[] = अणु
 	180, 181, 182, 183, 184, 198, 255
-};
+पूर्ण;
 
-/* The GPIO1C (11-26) pins overlap with IDE, parallel flash and NAND flash */
-static const unsigned int gpio1c_3512_pins[] = {
+/* The GPIO1C (11-26) pins overlap with IDE, parallel flash and न_अंकD flash */
+अटल स्थिर अचिन्हित पूर्णांक gpio1c_3512_pins[] = अणु
 	199, 200, 201, 202, 216, 217, 218, 219, 220, 234, 235, 236, 237,
 	252, 253, 254
-};
+पूर्ण;
 
 /* The GPIO1D (28-31) pins overlap with LCD and TVC */
-static const unsigned int gpio1d_3512_pins[] = { 246, 319, 301, 283 };
+अटल स्थिर अचिन्हित पूर्णांक gpio1d_3512_pins[] = अणु 246, 319, 301, 283 पूर्ण;
 
 /* The GPIO2A (0-3) pins overlap with GMII GMAC1 and extended parallel flash */
-static const unsigned int gpio2a_3512_pins[] = { 315, 297, 279, 261 };
+अटल स्थिर अचिन्हित पूर्णांक gpio2a_3512_pins[] = अणु 315, 297, 279, 261 पूर्ण;
 
 /* The GPIO2B (4-7) pins overlap with GMII GMAC1, extended parallel flash and LCD */
-static const unsigned int gpio2b_3512_pins[] = { 262, 244, 317, 299 };
+अटल स्थिर अचिन्हित पूर्णांक gpio2b_3512_pins[] = अणु 262, 244, 317, 299 पूर्ण;
 
 /* The GPIO2C (8-31) pins overlap with PCI */
-static const unsigned int gpio2c_3512_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक gpio2c_3512_pins[] = अणु
 	17, 34, 35, 51, 52, 53, 68, 69, 71, 86, 87, 88, 89, 103, 104, 105,
 	140, 141, 142, 143, 157, 158, 159, 160
-};
+पूर्ण;
 
-/* Groups for the 3512 SoC/package */
-static const struct gemini_pin_group gemini_3512_pin_groups[] = {
-	{
+/* Groups क्रम the 3512 SoC/package */
+अटल स्थिर काष्ठा gemini_pin_group gemini_3512_pin_groups[] = अणु
+	अणु
 		.name = "gndgrp",
 		.pins = gnd_3512_pins,
 		.num_pins = ARRAY_SIZE(gnd_3512_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "dramgrp",
 		.pins = dram_3512_pins,
 		.num_pins = ARRAY_SIZE(dram_3512_pins),
 		.mask = DRAM_PADS_POWERDOWN,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "rtcgrp",
 		.pins = rtc_3512_pins,
 		.num_pins = ARRAY_SIZE(rtc_3512_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "powergrp",
-		.pins = power_3512_pins,
-		.num_pins = ARRAY_SIZE(power_3512_pins),
-	},
-	{
+		.pins = घातer_3512_pins,
+		.num_pins = ARRAY_SIZE(घातer_3512_pins),
+	पूर्ण,
+	अणु
 		.name = "systemgrp",
-		.pins = system_3512_pins,
-		.num_pins = ARRAY_SIZE(system_3512_pins),
-	},
-	{
+		.pins = प्रणाली_3512_pins,
+		.num_pins = ARRAY_SIZE(प्रणाली_3512_pins),
+	पूर्ण,
+	अणु
 		.name = "vcontrolgrp",
 		.pins = vcontrol_3512_pins,
 		.num_pins = ARRAY_SIZE(vcontrol_3512_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "icegrp",
 		.pins = ice_3512_pins,
 		.num_pins = ARRAY_SIZE(ice_3512_pins),
 		/* Conflict with some GPIO groups */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "idegrp",
 		.pins = ide_3512_pins,
 		.num_pins = ARRAY_SIZE(ide_3512_pins),
 		/* Conflict with all flash usage */
-		.value = IDE_PADS_ENABLE | NAND_PADS_DISABLE |
+		.value = IDE_PADS_ENABLE | न_अंकD_PADS_DISABLE |
 			PFLASH_PADS_DISABLE | SFLASH_PADS_DISABLE,
 		.driving_mask = GENMASK(21, 20),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "satagrp",
 		.pins = sata_3512_pins,
 		.num_pins = ARRAY_SIZE(sata_3512_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "usbgrp",
 		.pins = usb_3512_pins,
 		.num_pins = ARRAY_SIZE(usb_3512_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gmii_gmac0_grp",
 		.pins = gmii_gmac0_3512_pins,
 		.num_pins = ARRAY_SIZE(gmii_gmac0_3512_pins),
 		.driving_mask = GENMASK(17, 16),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gmii_gmac1_grp",
 		.pins = gmii_gmac1_3512_pins,
 		.num_pins = ARRAY_SIZE(gmii_gmac1_3512_pins),
 		/* Bring out RGMII on the GMAC1 pins */
 		.value = GEMINI_GMAC_IOSEL_GMAC0_GMAC1_RGMII,
 		.driving_mask = GENMASK(19, 18),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "pcigrp",
 		.pins = pci_3512_pins,
 		.num_pins = ARRAY_SIZE(pci_3512_pins),
 		/* Conflict only with GPIO2 */
 		.value = PCI_PADS_ENABLE | PCI_CLK_PAD_ENABLE,
 		.driving_mask = GENMASK(23, 22),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "lpcgrp",
 		.pins = lpc_3512_pins,
 		.num_pins = ARRAY_SIZE(lpc_3512_pins),
 		/* Conflict with SSP and UART modem pins */
 		.mask = SSP_PADS_ENABLE,
 		.value = LPC_PADS_ENABLE | LPC_CLK_PAD_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "lcdgrp",
 		.pins = lcd_3512_pins,
 		.num_pins = ARRAY_SIZE(lcd_3512_pins),
 		/* Conflict with TVC and ICE */
 		.mask = TVC_PADS_ENABLE,
 		.value = LCD_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "sspgrp",
 		.pins = ssp_3512_pins,
 		.num_pins = ARRAY_SIZE(ssp_3512_pins),
 		/* Conflict with LPC and UART modem pins */
 		.mask = LPC_PADS_ENABLE,
 		.value = SSP_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "uartrxtxgrp",
 		.pins = uart_rxtx_3512_pins,
 		.num_pins = ARRAY_SIZE(uart_rxtx_3512_pins),
 		/* No conflicts except GPIO */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "uartmodemgrp",
 		.pins = uart_modem_3512_pins,
 		.num_pins = ARRAY_SIZE(uart_modem_3512_pins),
@@ -819,199 +820,199 @@ static const struct gemini_pin_group gemini_3512_pin_groups[] = {
 		 * so when those are both disabled, modem UART can thrive.
 		 */
 		.mask = LPC_PADS_ENABLE | SSP_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "tvcgrp",
 		.pins = tvc_3512_pins,
 		.num_pins = ARRAY_SIZE(tvc_3512_pins),
-		/* Conflict with character LCD and ICE */
+		/* Conflict with अक्षरacter LCD and ICE */
 		.mask = LCD_PADS_ENABLE,
 		.value = TVC_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "tvcclkgrp",
 		.pins = tvc_clk_3512_pins,
 		.num_pins = ARRAY_SIZE(tvc_clk_3512_pins),
 		.value = TVC_CLK_PAD_ENABLE,
-	},
+	पूर्ण,
 	/*
-	 * The construction is done such that it is possible to use a serial
-	 * flash together with a NAND or parallel (NOR) flash, but it is not
-	 * possible to use NAND and parallel flash together. To use serial
+	 * The स्थिरruction is करोne such that it is possible to use a serial
+	 * flash together with a न_अंकD or parallel (NOR) flash, but it is not
+	 * possible to use न_अंकD and parallel flash together. To use serial
 	 * flash with one of the two others, the muxbits need to be flipped
-	 * around before any access.
+	 * around beक्रमe any access.
 	 */
-	{
+	अणु
 		.name = "nflashgrp",
 		.pins = nflash_3512_pins,
 		.num_pins = ARRAY_SIZE(nflash_3512_pins),
 		/* Conflict with IDE, parallel and serial flash */
-		.mask = NAND_PADS_DISABLE | IDE_PADS_ENABLE,
+		.mask = न_अंकD_PADS_DISABLE | IDE_PADS_ENABLE,
 		.value = PFLASH_PADS_DISABLE | SFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "pflashgrp",
 		.pins = pflash_3512_pins,
 		.num_pins = ARRAY_SIZE(pflash_3512_pins),
-		/* Conflict with IDE, NAND and serial flash */
+		/* Conflict with IDE, न_अंकD and serial flash */
 		.mask = PFLASH_PADS_DISABLE | IDE_PADS_ENABLE,
-		.value = NAND_PADS_DISABLE | SFLASH_PADS_DISABLE,
-	},
-	{
+		.value = न_अंकD_PADS_DISABLE | SFLASH_PADS_DISABLE,
+	पूर्ण,
+	अणु
 		.name = "sflashgrp",
 		.pins = sflash_3512_pins,
 		.num_pins = ARRAY_SIZE(sflash_3512_pins),
-		/* Conflict with IDE, NAND and parallel flash */
+		/* Conflict with IDE, न_अंकD and parallel flash */
 		.mask = SFLASH_PADS_DISABLE | IDE_PADS_ENABLE,
-		.value = NAND_PADS_DISABLE | PFLASH_PADS_DISABLE,
-	},
-	{
+		.value = न_अंकD_PADS_DISABLE | PFLASH_PADS_DISABLE,
+	पूर्ण,
+	अणु
 		.name = "gpio0agrp",
 		.pins = gpio0a_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0a_3512_pins),
 		/* Conflict with TVC CLK */
 		.mask = TVC_CLK_PAD_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0bgrp",
 		.pins = gpio0b_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0b_3512_pins),
 		/* Conflict with TVC and ICE */
 		.mask = TVC_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0cgrp",
 		.pins = gpio0c_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0c_3512_pins),
 		/* Conflict with ICE */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0dgrp",
 		.pins = gpio0d_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0d_3512_pins),
 		/* Conflict with UART RX/TX */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0egrp",
 		.pins = gpio0e_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0e_3512_pins),
 		/* Conflict with LPC, UART modem pins, SSP */
 		.mask = LPC_PADS_ENABLE | SSP_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0fgrp",
 		.pins = gpio0f_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0f_3512_pins),
 		/* Conflict with LCD */
 		.mask = LCD_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0ggrp",
 		.pins = gpio0g_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0g_3512_pins),
-		/* Conflict with NAND flash */
-		.value = NAND_PADS_DISABLE,
-	},
-	{
+		/* Conflict with न_अंकD flash */
+		.value = न_अंकD_PADS_DISABLE,
+	पूर्ण,
+	अणु
 		.name = "gpio0hgrp",
 		.pins = gpio0h_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0h_3512_pins),
 		/* Conflict with parallel flash */
 		.value = PFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0igrp",
 		.pins = gpio0i_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0i_3512_pins),
 		/* Conflict with serial flash */
 		.value = SFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0jgrp",
 		.pins = gpio0j_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0j_3512_pins),
 		/* Conflict with all flash */
-		.value = PFLASH_PADS_DISABLE | NAND_PADS_DISABLE |
+		.value = PFLASH_PADS_DISABLE | न_अंकD_PADS_DISABLE |
 			SFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0kgrp",
 		.pins = gpio0k_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0k_3512_pins),
 		/* Conflict with all flash and LCD */
 		.mask = LCD_PADS_ENABLE,
-		.value = PFLASH_PADS_DISABLE | NAND_PADS_DISABLE |
+		.value = PFLASH_PADS_DISABLE | न_अंकD_PADS_DISABLE |
 			SFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0lgrp",
 		.pins = gpio0l_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0l_3512_pins),
 		/* Conflict with parallel flash */
 		.value = PFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0mgrp",
 		.pins = gpio0m_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio0m_3512_pins),
-		/* Conflict with parallel and NAND flash */
-		.value = PFLASH_PADS_DISABLE | NAND_PADS_DISABLE,
-	},
-	{
+		/* Conflict with parallel and न_अंकD flash */
+		.value = PFLASH_PADS_DISABLE | न_अंकD_PADS_DISABLE,
+	पूर्ण,
+	अणु
 		.name = "gpio1agrp",
 		.pins = gpio1a_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio1a_3512_pins),
 		/* Conflict with IDE and parallel flash */
 		.mask = IDE_PADS_ENABLE,
 		.value = PFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio1bgrp",
 		.pins = gpio1b_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio1b_3512_pins),
 		/* Conflict with IDE only */
 		.mask = IDE_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio1cgrp",
 		.pins = gpio1c_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio1c_3512_pins),
-		/* Conflict with IDE, parallel and NAND flash */
+		/* Conflict with IDE, parallel and न_अंकD flash */
 		.mask = IDE_PADS_ENABLE,
-		.value = NAND_PADS_DISABLE | PFLASH_PADS_DISABLE,
-	},
-	{
+		.value = न_अंकD_PADS_DISABLE | PFLASH_PADS_DISABLE,
+	पूर्ण,
+	अणु
 		.name = "gpio1dgrp",
 		.pins = gpio1d_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio1d_3512_pins),
 		/* Conflict with LCD and TVC */
 		.mask = LCD_PADS_ENABLE | TVC_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio2agrp",
 		.pins = gpio2a_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio2a_3512_pins),
 		.mask = GEMINI_GMAC_IOSEL_GMAC0_GMAC1_RGMII,
 		/* Conflict with GMII GMAC1 and extended parallel flash */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio2bgrp",
 		.pins = gpio2b_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio2b_3512_pins),
 		/* Conflict with GMII GMAC1, extended parallel flash and LCD */
 		.mask = LCD_PADS_ENABLE | GEMINI_GMAC_IOSEL_GMAC0_GMAC1_RGMII,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio2cgrp",
 		.pins = gpio2c_3512_pins,
 		.num_pins = ARRAY_SIZE(gpio2c_3512_pins),
 		/* Conflict with PCI */
 		.mask = PCI_PADS_ENABLE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* Pin names for the pinmux subsystem, 3516 variant */
-static const struct pinctrl_pin_desc gemini_3516_pins[] = {
+/* Pin names क्रम the pinmux subप्रणाली, 3516 variant */
+अटल स्थिर काष्ठा pinctrl_pin_desc gemini_3516_pins[] = अणु
 	/* Row A */
 	PINCTRL_PIN(0, "A1 AVCC3IOHA"),
 	PINCTRL_PIN(1, "A2 DRAM CK N"),
@@ -1180,7 +1181,7 @@ static const struct pinctrl_pin_desc gemini_3516_pins[] = {
 	PINCTRL_PIN(157, "H18 PCI AD22"),
 	PINCTRL_PIN(158, "H19 PCI AD18"),
 	PINCTRL_PIN(159, "H20 PCI AD17"),
-	/* Row J (for some reason I is skipped) */
+	/* Row J (क्रम some reason I is skipped) */
 	PINCTRL_PIN(160, "J1 SATA1 TXDP"),
 	PINCTRL_PIN(161, "J2 SATA1 TXDN"),
 	PINCTRL_PIN(162, "J3 AGNDK 2"),
@@ -1285,7 +1286,7 @@ static const struct pinctrl_pin_desc gemini_3516_pins[] = {
 	PINCTRL_PIN(257, "N18 PCI AD4"),
 	PINCTRL_PIN(258, "N19 PCI CBE0 N"),
 	PINCTRL_PIN(259, "N20 PCI AD8"),
-	/* Row P (for some reason O is skipped) */
+	/* Row P (क्रम some reason O is skipped) */
 	PINCTRL_PIN(260, "P1 IDE DD0"),
 	PINCTRL_PIN(261, "P2 IDE DD14"),
 	PINCTRL_PIN(262, "P3 IDE DD2"),
@@ -1306,7 +1307,7 @@ static const struct pinctrl_pin_desc gemini_3516_pins[] = {
 	PINCTRL_PIN(277, "P18 PCI AD1"),
 	PINCTRL_PIN(278, "P19 PCI AD3"),
 	PINCTRL_PIN(279, "P20 PCI AD5"),
-	/* Row R (for some reason Q us skipped) */
+	/* Row R (क्रम some reason Q us skipped) */
 	PINCTRL_PIN(280, "R1 IDE DD13"),
 	PINCTRL_PIN(281, "R2 IDE DD12"),
 	PINCTRL_PIN(282, "R3 IDE DD10"),
@@ -1327,7 +1328,7 @@ static const struct pinctrl_pin_desc gemini_3516_pins[] = {
 	PINCTRL_PIN(297, "R18 GPIO0 26"),
 	PINCTRL_PIN(298, "R19 GPIO0 31"),
 	PINCTRL_PIN(299, "R20 PCI AD2"),
-	/* Row T (for some reason S is skipped) */
+	/* Row T (क्रम some reason S is skipped) */
 	PINCTRL_PIN(300, "T1 IDE DD11"),
 	PINCTRL_PIN(301, "T2 IDE DD5"),
 	PINCTRL_PIN(302, "T3 IDE DD8"),
@@ -1432,110 +1433,110 @@ static const struct pinctrl_pin_desc gemini_3516_pins[] = {
 	PINCTRL_PIN(397, "Y18 SYS RESET N"),
 	PINCTRL_PIN(398, "Y19 GPIO0 13"),
 	PINCTRL_PIN(399, "Y20 GPIO0 15"),
-};
+पूर्ण;
 
 /* Digital ground */
-static const unsigned int gnd_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक gnd_3516_pins[] = अणु
 	21, 38, 42, 57, 63, 76, 84, 95, 105, 114, 126, 133, 147, 148, 149, 150,
 	151, 152, 167, 168, 169, 170, 171, 172, 187, 188, 189, 190, 191, 192,
 	207, 208, 209, 210, 211, 212, 227, 228, 229, 230, 231, 232, 247, 248,
 	249, 250, 251, 252, 266, 273, 285, 294, 304, 315, 323, 336, 342, 357,
 	361, 378
-};
+पूर्ण;
 
-static const unsigned int dram_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक dram_3516_pins[] = अणु
 	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26,
 	27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 44, 45, 46, 47, 48, 49, 50,
 	51, 52, 53, 54, 55, 56, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
 	87, 88, 89, 90, 91, 92, 93, 94
-};
+पूर्ण;
 
-static const unsigned int rtc_3516_pins[] = { 0, 43, 22 };
+अटल स्थिर अचिन्हित पूर्णांक rtc_3516_pins[] = अणु 0, 43, 22 पूर्ण;
 
-static const unsigned int power_3516_pins[] = { 20, 83, 40, 41, 60, 61, 62 };
+अटल स्थिर अचिन्हित पूर्णांक घातer_3516_pins[] = अणु 20, 83, 40, 41, 60, 61, 62 पूर्ण;
 
-static const unsigned int cir_3516_pins[] = { 85, 64, 82 };
+अटल स्थिर अचिन्हित पूर्णांक cir_3516_pins[] = अणु 85, 64, 82 पूर्ण;
 
-static const unsigned int system_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक प्रणाली_3516_pins[] = अणु
 	332, 392, 372, 373, 393, 352, 331, 388, 397, 77
-};
+पूर्ण;
 
-static const unsigned int vcontrol_3516_pins[] = { 86, 81, 80 };
+अटल स्थिर अचिन्हित पूर्णांक vcontrol_3516_pins[] = अणु 86, 81, 80 पूर्ण;
 
-static const unsigned int ice_3516_pins[] = { 340, 341, 303, 322, 380, 284, 343 };
+अटल स्थिर अचिन्हित पूर्णांक ice_3516_pins[] = अणु 340, 341, 303, 322, 380, 284, 343 पूर्ण;
 
-static const unsigned int ide_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक ide_3516_pins[] = अणु
 	200, 201, 204, 220, 221, 222, 223, 224, 240, 241, 242, 243, 244, 260,
 	261, 262, 263, 264, 280, 281, 282, 283, 300, 301, 302, 320, 321, 360
-};
+पूर्ण;
 
-static const unsigned int sata_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक sata_3516_pins[] = अणु
 	100, 101, 102, 103, 104, 120, 121, 122, 123, 124, 140, 141, 142, 143,
 	144, 160, 161, 162, 163, 180, 181, 182, 183, 202
-};
+पूर्ण;
 
-static const unsigned int usb_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक usb_3516_pins[] = अणु
 	305, 324, 344, 362, 363, 364, 365, 366, 381, 382, 383, 384, 385
-};
+पूर्ण;
 
 /* GMII, ethernet pins */
-static const unsigned int gmii_gmac0_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक gmii_gmac0_3516_pins[] = अणु
 	306, 307, 325, 326, 327, 328, 345, 346, 347, 348, 367, 368, 386, 387
-};
+पूर्ण;
 
-static const unsigned int gmii_gmac1_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक gmii_gmac1_3516_pins[] = अणु
 	308, 309, 310, 329, 330, 349, 350, 351, 369, 370, 371, 389, 390, 391
-};
+पूर्ण;
 
-static const unsigned int pci_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pci_3516_pins[] = अणु
 	17, 18, 19, 39, 58, 59, 78, 79, 96, 97, 98, 99, 115, 116, 117, 118,
 	119, 135, 136, 137, 138, 139, 155, 156, 157, 158, 159, 175, 176, 177,
 	178, 179, 195, 196, 197, 198, 199, 215, 216, 217, 218, 219, 235, 236,
 	237, 238, 239, 255, 256, 257, 258, 259, 277, 278, 279, 299
-};
+पूर्ण;
 
 /*
- * Apparently the LPC interface is using the PCICLK for the clocking so
- * PCI needs to be active at the same time.
+ * Apparently the LPC पूर्णांकerface is using the PCICLK क्रम the घड़ीing so
+ * PCI needs to be active at the same समय.
  */
-static const unsigned int lpc_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक lpc_3516_pins[] = अणु
 	355, /* LPC_LAD[0] */
 	356, /* LPC_SERIRQ */
 	377, /* LPC_LAD[2] */
 	398, /* LPC_LFRAME# */
 	316, /* LPC_LAD[3] */
 	399, /* LPC_LAD[1] */
-};
+पूर्ण;
 
 /* Character LCD */
-static const unsigned int lcd_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक lcd_3516_pins[] = अणु
 	391, 351, 310, 371, 353, 311, 394, 374, 314, 359, 339
-};
+पूर्ण;
 
-static const unsigned int ssp_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक ssp_3516_pins[] = अणु
 	355, /* SSP_97RST# SSP AC97 Reset, active low */
 	356, /* SSP_FSC */
 	377, /* SSP_ECLK */
 	398, /* SSP_TXD */
 	316, /* SSP_RXD */
 	399, /* SSP_SCLK */
-};
+पूर्ण;
 
-static const unsigned int uart_rxtx_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक uart_rxtx_3516_pins[] = अणु
 	313, /* UART_SIN serial input, RX */
 	335, /* UART_SOUT serial output, TX */
-};
+पूर्ण;
 
-static const unsigned int uart_modem_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक uart_modem_3516_pins[] = अणु
 	355, /* UART_NDCD DCD carrier detect */
-	356, /* UART_NDTR DTR data terminal ready */
-	377, /* UART_NDSR DSR data set ready */
+	356, /* UART_NDTR DTR data terminal पढ़ोy */
+	377, /* UART_NDSR DSR data set पढ़ोy */
 	398, /* UART_NRTS RTS request to send */
 	316, /* UART_NCTS CTS clear to send */
 	399, /* UART_NRI RI ring indicator */
-};
+पूर्ण;
 
-static const unsigned int tvc_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक tvc_3516_pins[] = अणु
 	353, /* TVC_DATA[0] */
 	311, /* TVC_DATA[1] */
 	394, /* TVC_DATA[2] */
@@ -1544,177 +1545,177 @@ static const unsigned int tvc_3516_pins[] = {
 	395, /* TVC_DATA[5] */
 	312, /* TVC_DATA[6] */
 	334, /* TVC_DATA[7] */
-};
+पूर्ण;
 
-static const unsigned int tvc_clk_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक tvc_clk_3516_pins[] = अणु
 	333, /* TVC_CLK */
-};
+पूर्ण;
 
-/* NAND flash pins */
-static const unsigned int nflash_3516_pins[] = {
+/* न_अंकD flash pins */
+अटल स्थिर अचिन्हित पूर्णांक nflash_3516_pins[] = अणु
 	243, 260, 261, 224, 280, 262, 281, 264, 300, 263, 282, 301, 320, 283,
 	302, 321, 337, 358, 295, 359, 339, 275, 298
-};
+पूर्ण;
 
 /* Parallel (NOR) flash pins, D[0-15], A[16-25], CE0, CE1, RB, WE, OE, ALE */
-static const unsigned int pflash_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pflash_3516_pins[] = अणु
 	221, 200, 222, 201, 220, 243, 260, 261, 224, 280, 262, 281, 264, 300,
 	263, 282, 301, 320, 283, 302, 321, 317, 379, 295, 359, 339, 297, 318,
 	276, 319, 275, 298
-};
+पूर्ण;
 
 /*
  * The parallel flash can be set up in a 26-bit address bus mode exposing
  * A[0-15] (A[15] takes the place of ALE), but it has the
  * side effect of stealing pins from GMAC1 and TVC so these blocks cannot be
- * used at the same time.
+ * used at the same समय.
  */
-static const unsigned int pflash_3516_pins_extended[] = {
+अटल स्थिर अचिन्हित पूर्णांक pflash_3516_pins_extended[] = अणु
 	221, 200, 222, 201, 220, 243, 260, 261, 224, 280, 262, 281, 264, 300,
 	263, 282, 301, 320, 283, 302, 321, 317, 379, 295, 359, 339, 297, 318,
 	276, 319, 275, 298,
 	/* The extra pins */
 	349, 308, 369, 389, 329, 350, 370, 309, 390, 391, 351, 310, 371, 330,
 	333
-};
+पूर्ण;
 
 /* Serial flash pins CE0, CE1, DI, DO, CK */
-static const unsigned int sflash_3516_pins[] = { 296, 338, 295, 359, 339 };
+अटल स्थिर अचिन्हित पूर्णांक sflash_3516_pins[] = अणु 296, 338, 295, 359, 339 पूर्ण;
 
 /* The GPIO0A (0-4) pins overlap with TVC and extended parallel flash */
-static const unsigned int gpio0a_3516_pins[] = { 354, 395, 312, 334 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0a_3516_pins[] = अणु 354, 395, 312, 334 पूर्ण;
 
 /* The GPIO0B (5-7) pins overlap with ICE */
-static const unsigned int gpio0b_3516_pins[] = { 375, 396, 376 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0b_3516_pins[] = अणु 375, 396, 376 पूर्ण;
 
 /* The GPIO0C (8,11-15) pins overlap with LPC, UART and SSP */
-static const unsigned int gpio0c_3516_pins[] = { 355, 356, 377, 398, 316, 399 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0c_3516_pins[] = अणु 355, 356, 377, 398, 316, 399 पूर्ण;
 
 /* The GPIO0D (9,10) pins overlap with UART RX/TX */
-static const unsigned int gpio0d_3516_pins[] = { 313, 335 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0d_3516_pins[] = अणु 313, 335 पूर्ण;
 
 /* The GPIO0E (16) pins overlap with LCD */
-static const unsigned int gpio0e_3516_pins[] = { 314 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0e_3516_pins[] = अणु 314 पूर्ण;
 
-/* The GPIO0F (17,18) pins overlap with NAND flash CE0, CE1 */
-static const unsigned int gpio0f_3516_pins[] = { 337, 358 };
+/* The GPIO0F (17,18) pins overlap with न_अंकD flash CE0, CE1 */
+अटल स्थिर अचिन्हित पूर्णांक gpio0f_3516_pins[] = अणु 337, 358 पूर्ण;
 
 /* The GPIO0G (19,20,26-29) pins overlap with parallel flash */
-static const unsigned int gpio0g_3516_pins[] = { 317, 379, 297, 318, 276, 319 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0g_3516_pins[] = अणु 317, 379, 297, 318, 276, 319 पूर्ण;
 
 /* The GPIO0H (21,22) pins overlap with serial flash CE0, CE1 */
-static const unsigned int gpio0h_3516_pins[] = { 296, 338 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0h_3516_pins[] = अणु 296, 338 पूर्ण;
 
 /* The GPIO0I (23) pins overlap with all flash */
-static const unsigned int gpio0i_3516_pins[] = { 295 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0i_3516_pins[] = अणु 295 पूर्ण;
 
 /* The GPIO0J (24,25) pins overlap with all flash and LCD */
-static const unsigned int gpio0j_3516_pins[] = { 359, 339 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0j_3516_pins[] = अणु 359, 339 पूर्ण;
 
-/* The GPIO0K (30,31) pins overlap with NAND flash */
-static const unsigned int gpio0k_3516_pins[] = { 275, 298 };
+/* The GPIO0K (30,31) pins overlap with न_अंकD flash */
+अटल स्थिर अचिन्हित पूर्णांक gpio0k_3516_pins[] = अणु 275, 298 पूर्ण;
 
 /* The GPIO0L (0) pins overlap with TVC_CLK */
-static const unsigned int gpio0l_3516_pins[] = { 333 };
+अटल स्थिर अचिन्हित पूर्णांक gpio0l_3516_pins[] = अणु 333 पूर्ण;
 
 /* The GPIO1A (0-4) pins that overlap with IDE and parallel flash */
-static const unsigned int gpio1a_3516_pins[] = { 221, 200, 222, 201, 220 };
+अटल स्थिर अचिन्हित पूर्णांक gpio1a_3516_pins[] = अणु 221, 200, 222, 201, 220 पूर्ण;
 
 /* The GPIO1B (5-10,27) pins overlap with just IDE */
-static const unsigned int gpio1b_3516_pins[] = { 241, 223, 240, 204, 242, 244, 360 };
+अटल स्थिर अचिन्हित पूर्णांक gpio1b_3516_pins[] = अणु 241, 223, 240, 204, 242, 244, 360 पूर्ण;
 
-/* The GPIO1C (11-26) pins overlap with IDE, parallel flash and NAND flash */
-static const unsigned int gpio1c_3516_pins[] = {
+/* The GPIO1C (11-26) pins overlap with IDE, parallel flash and न_अंकD flash */
+अटल स्थिर अचिन्हित पूर्णांक gpio1c_3516_pins[] = अणु
 	243, 260, 261, 224, 280, 262, 281, 264, 300, 263, 282, 301, 320, 283,
 	302, 321
-};
+पूर्ण;
 
 /* The GPIO1D (28-31) pins overlap with TVC */
-static const unsigned int gpio1d_3516_pins[] = { 353, 311, 394, 374 };
+अटल स्थिर अचिन्हित पूर्णांक gpio1d_3516_pins[] = अणु 353, 311, 394, 374 पूर्ण;
 
 /* The GPIO2A (0-3) pins overlap with GMII GMAC1 and extended parallel flash */
-static const unsigned int gpio2a_3516_pins[] = { 308, 369, 389, 329 };
+अटल स्थिर अचिन्हित पूर्णांक gpio2a_3516_pins[] = अणु 308, 369, 389, 329 पूर्ण;
 
 /* The GPIO2B (4-7) pins overlap with GMII GMAC1, extended parallel flash and LCD */
-static const unsigned int gpio2b_3516_pins[] = { 391, 351, 310, 371 };
+अटल स्थिर अचिन्हित पूर्णांक gpio2b_3516_pins[] = अणु 391, 351, 310, 371 पूर्ण;
 
 /* The GPIO2C (8-31) pins overlap with PCI */
-static const unsigned int gpio2c_3516_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक gpio2c_3516_pins[] = अणु
 	259, 237, 238, 239, 215, 216, 217, 218, 177, 159, 158, 175, 176, 139,
 	157, 138, 137, 156, 118, 155, 99, 98, 136, 117
-};
+पूर्ण;
 
-/* Groups for the 3516 SoC/package */
-static const struct gemini_pin_group gemini_3516_pin_groups[] = {
-	{
+/* Groups क्रम the 3516 SoC/package */
+अटल स्थिर काष्ठा gemini_pin_group gemini_3516_pin_groups[] = अणु
+	अणु
 		.name = "gndgrp",
 		.pins = gnd_3516_pins,
 		.num_pins = ARRAY_SIZE(gnd_3516_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "dramgrp",
 		.pins = dram_3516_pins,
 		.num_pins = ARRAY_SIZE(dram_3516_pins),
 		.mask = DRAM_PADS_POWERDOWN,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "rtcgrp",
 		.pins = rtc_3516_pins,
 		.num_pins = ARRAY_SIZE(rtc_3516_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "powergrp",
-		.pins = power_3516_pins,
-		.num_pins = ARRAY_SIZE(power_3516_pins),
-	},
-	{
+		.pins = घातer_3516_pins,
+		.num_pins = ARRAY_SIZE(घातer_3516_pins),
+	पूर्ण,
+	अणु
 		.name = "cirgrp",
 		.pins = cir_3516_pins,
 		.num_pins = ARRAY_SIZE(cir_3516_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "systemgrp",
-		.pins = system_3516_pins,
-		.num_pins = ARRAY_SIZE(system_3516_pins),
-	},
-	{
+		.pins = प्रणाली_3516_pins,
+		.num_pins = ARRAY_SIZE(प्रणाली_3516_pins),
+	पूर्ण,
+	अणु
 		.name = "vcontrolgrp",
 		.pins = vcontrol_3516_pins,
 		.num_pins = ARRAY_SIZE(vcontrol_3516_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "icegrp",
 		.pins = ice_3516_pins,
 		.num_pins = ARRAY_SIZE(ice_3516_pins),
 		/* Conflict with some GPIO groups */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "idegrp",
 		.pins = ide_3516_pins,
 		.num_pins = ARRAY_SIZE(ide_3516_pins),
 		/* Conflict with all flash usage */
-		.value = IDE_PADS_ENABLE | NAND_PADS_DISABLE |
+		.value = IDE_PADS_ENABLE | न_अंकD_PADS_DISABLE |
 			PFLASH_PADS_DISABLE | SFLASH_PADS_DISABLE,
 		.driving_mask = GENMASK(21, 20),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "satagrp",
 		.pins = sata_3516_pins,
 		.num_pins = ARRAY_SIZE(sata_3516_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "usbgrp",
 		.pins = usb_3516_pins,
 		.num_pins = ARRAY_SIZE(usb_3516_pins),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gmii_gmac0_grp",
 		.pins = gmii_gmac0_3516_pins,
 		.num_pins = ARRAY_SIZE(gmii_gmac0_3516_pins),
 		.mask = GEMINI_GMAC_IOSEL_MASK,
 		.driving_mask = GENMASK(17, 16),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gmii_gmac1_grp",
 		.pins = gmii_gmac1_3516_pins,
 		.num_pins = ARRAY_SIZE(gmii_gmac1_3516_pins),
@@ -1722,45 +1723,45 @@ static const struct gemini_pin_group gemini_3516_pin_groups[] = {
 		.mask = GEMINI_GMAC_IOSEL_MASK,
 		.value = GEMINI_GMAC_IOSEL_GMAC0_GMAC1_RGMII,
 		.driving_mask = GENMASK(19, 18),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "pcigrp",
 		.pins = pci_3516_pins,
 		.num_pins = ARRAY_SIZE(pci_3516_pins),
 		/* Conflict only with GPIO2 */
 		.value = PCI_PADS_ENABLE | PCI_CLK_PAD_ENABLE,
 		.driving_mask = GENMASK(23, 22),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "lpcgrp",
 		.pins = lpc_3516_pins,
 		.num_pins = ARRAY_SIZE(lpc_3516_pins),
 		/* Conflict with SSP */
 		.mask = SSP_PADS_ENABLE,
 		.value = LPC_PADS_ENABLE | LPC_CLK_PAD_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "lcdgrp",
 		.pins = lcd_3516_pins,
 		.num_pins = ARRAY_SIZE(lcd_3516_pins),
 		.mask = TVC_PADS_ENABLE,
 		.value = LCD_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "sspgrp",
 		.pins = ssp_3516_pins,
 		.num_pins = ARRAY_SIZE(ssp_3516_pins),
 		/* Conflict with LPC */
 		.mask = LPC_PADS_ENABLE,
 		.value = SSP_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "uartrxtxgrp",
 		.pins = uart_rxtx_3516_pins,
 		.num_pins = ARRAY_SIZE(uart_rxtx_3516_pins),
 		/* No conflicts except GPIO */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "uartmodemgrp",
 		.pins = uart_modem_3516_pins,
 		.num_pins = ARRAY_SIZE(uart_modem_3516_pins),
@@ -1769,468 +1770,468 @@ static const struct gemini_pin_group gemini_3516_pin_groups[] = {
 		 * so when those are both disabled, modem UART can thrive.
 		 */
 		.mask = LPC_PADS_ENABLE | SSP_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "tvcgrp",
 		.pins = tvc_3516_pins,
 		.num_pins = ARRAY_SIZE(tvc_3516_pins),
-		/* Conflict with character LCD */
+		/* Conflict with अक्षरacter LCD */
 		.mask = LCD_PADS_ENABLE,
 		.value = TVC_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "tvcclkgrp",
 		.pins = tvc_clk_3516_pins,
 		.num_pins = ARRAY_SIZE(tvc_clk_3516_pins),
 		.value = TVC_CLK_PAD_ENABLE,
-	},
+	पूर्ण,
 	/*
-	 * The construction is done such that it is possible to use a serial
-	 * flash together with a NAND or parallel (NOR) flash, but it is not
-	 * possible to use NAND and parallel flash together. To use serial
+	 * The स्थिरruction is करोne such that it is possible to use a serial
+	 * flash together with a न_अंकD or parallel (NOR) flash, but it is not
+	 * possible to use न_अंकD and parallel flash together. To use serial
 	 * flash with one of the two others, the muxbits need to be flipped
-	 * around before any access.
+	 * around beक्रमe any access.
 	 */
-	{
+	अणु
 		.name = "nflashgrp",
 		.pins = nflash_3516_pins,
 		.num_pins = ARRAY_SIZE(nflash_3516_pins),
 		/* Conflict with IDE, parallel and serial flash */
-		.mask = NAND_PADS_DISABLE | IDE_PADS_ENABLE,
+		.mask = न_अंकD_PADS_DISABLE | IDE_PADS_ENABLE,
 		.value = PFLASH_PADS_DISABLE | SFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "pflashgrp",
 		.pins = pflash_3516_pins,
 		.num_pins = ARRAY_SIZE(pflash_3516_pins),
-		/* Conflict with IDE, NAND and serial flash */
+		/* Conflict with IDE, न_अंकD and serial flash */
 		.mask = PFLASH_PADS_DISABLE | IDE_PADS_ENABLE,
-		.value = NAND_PADS_DISABLE | SFLASH_PADS_DISABLE,
-	},
-	{
+		.value = न_अंकD_PADS_DISABLE | SFLASH_PADS_DISABLE,
+	पूर्ण,
+	अणु
 		.name = "sflashgrp",
 		.pins = sflash_3516_pins,
 		.num_pins = ARRAY_SIZE(sflash_3516_pins),
-		/* Conflict with IDE, NAND and parallel flash */
+		/* Conflict with IDE, न_अंकD and parallel flash */
 		.mask = SFLASH_PADS_DISABLE | IDE_PADS_ENABLE,
-		.value = NAND_PADS_DISABLE | PFLASH_PADS_DISABLE,
-	},
-	{
+		.value = न_अंकD_PADS_DISABLE | PFLASH_PADS_DISABLE,
+	पूर्ण,
+	अणु
 		.name = "gpio0agrp",
 		.pins = gpio0a_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0a_3516_pins),
 		/* Conflict with TVC and ICE */
 		.mask = TVC_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0bgrp",
 		.pins = gpio0b_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0b_3516_pins),
 		/* Conflict with ICE */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0cgrp",
 		.pins = gpio0c_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0c_3516_pins),
 		/* Conflict with LPC, UART and SSP */
 		.mask = LPC_PADS_ENABLE | SSP_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0dgrp",
 		.pins = gpio0d_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0d_3516_pins),
 		/* Conflict with UART */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0egrp",
 		.pins = gpio0e_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0e_3516_pins),
 		/* Conflict with LCD */
 		.mask = LCD_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0fgrp",
 		.pins = gpio0f_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0f_3516_pins),
-		/* Conflict with NAND flash */
-		.value = NAND_PADS_DISABLE,
-	},
-	{
+		/* Conflict with न_अंकD flash */
+		.value = न_अंकD_PADS_DISABLE,
+	पूर्ण,
+	अणु
 		.name = "gpio0ggrp",
 		.pins = gpio0g_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0g_3516_pins),
 		/* Conflict with parallel flash */
 		.value = PFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0hgrp",
 		.pins = gpio0h_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0h_3516_pins),
 		/* Conflict with serial flash */
 		.value = SFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0igrp",
 		.pins = gpio0i_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0i_3516_pins),
 		/* Conflict with all flash */
-		.value = PFLASH_PADS_DISABLE | NAND_PADS_DISABLE |
+		.value = PFLASH_PADS_DISABLE | न_अंकD_PADS_DISABLE |
 			SFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0jgrp",
 		.pins = gpio0j_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0j_3516_pins),
 		/* Conflict with all flash and LCD */
 		.mask = LCD_PADS_ENABLE,
-		.value = PFLASH_PADS_DISABLE | NAND_PADS_DISABLE |
+		.value = PFLASH_PADS_DISABLE | न_अंकD_PADS_DISABLE |
 			SFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0kgrp",
 		.pins = gpio0k_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0k_3516_pins),
-		/* Conflict with parallel and NAND flash */
-		.value = PFLASH_PADS_DISABLE | NAND_PADS_DISABLE,
-	},
-	{
+		/* Conflict with parallel and न_अंकD flash */
+		.value = PFLASH_PADS_DISABLE | न_अंकD_PADS_DISABLE,
+	पूर्ण,
+	अणु
 		.name = "gpio0lgrp",
 		.pins = gpio0l_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio0l_3516_pins),
 		/* Conflict with TVE CLK */
 		.mask = TVC_CLK_PAD_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio1agrp",
 		.pins = gpio1a_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio1a_3516_pins),
 		/* Conflict with IDE and parallel flash */
 		.mask = IDE_PADS_ENABLE,
 		.value = PFLASH_PADS_DISABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio1bgrp",
 		.pins = gpio1b_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio1b_3516_pins),
 		/* Conflict with IDE only */
 		.mask = IDE_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio1cgrp",
 		.pins = gpio1c_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio1c_3516_pins),
-		/* Conflict with IDE, parallel and NAND flash */
+		/* Conflict with IDE, parallel and न_अंकD flash */
 		.mask = IDE_PADS_ENABLE,
-		.value = NAND_PADS_DISABLE | PFLASH_PADS_DISABLE,
-	},
-	{
+		.value = न_अंकD_PADS_DISABLE | PFLASH_PADS_DISABLE,
+	पूर्ण,
+	अणु
 		.name = "gpio1dgrp",
 		.pins = gpio1d_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio1d_3516_pins),
 		/* Conflict with TVC */
 		.mask = TVC_PADS_ENABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio2agrp",
 		.pins = gpio2a_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio2a_3516_pins),
 		.mask = GEMINI_GMAC_IOSEL_GMAC0_GMAC1_RGMII,
 		/* Conflict with GMII GMAC1 and extended parallel flash */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio2bgrp",
 		.pins = gpio2b_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio2b_3516_pins),
 		/* Conflict with GMII GMAC1, extended parallel flash and LCD */
 		.mask = LCD_PADS_ENABLE | GEMINI_GMAC_IOSEL_GMAC0_GMAC1_RGMII,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio2cgrp",
 		.pins = gpio2c_3516_pins,
 		.num_pins = ARRAY_SIZE(gpio2c_3516_pins),
 		/* Conflict with PCI */
 		.mask = PCI_PADS_ENABLE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int gemini_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक gemini_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
 
-	if (pmx->is_3512)
-		return ARRAY_SIZE(gemini_3512_pin_groups);
-	if (pmx->is_3516)
-		return ARRAY_SIZE(gemini_3516_pin_groups);
-	return 0;
-}
+	अगर (pmx->is_3512)
+		वापस ARRAY_SIZE(gemini_3512_pin_groups);
+	अगर (pmx->is_3516)
+		वापस ARRAY_SIZE(gemini_3516_pin_groups);
+	वापस 0;
+पूर्ण
 
-static const char *gemini_get_group_name(struct pinctrl_dev *pctldev,
-					 unsigned int selector)
-{
-	struct gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *gemini_get_group_name(काष्ठा pinctrl_dev *pctldev,
+					 अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
 
-	if (pmx->is_3512)
-		return gemini_3512_pin_groups[selector].name;
-	if (pmx->is_3516)
-		return gemini_3516_pin_groups[selector].name;
-	return NULL;
-}
+	अगर (pmx->is_3512)
+		वापस gemini_3512_pin_groups[selector].name;
+	अगर (pmx->is_3516)
+		वापस gemini_3516_pin_groups[selector].name;
+	वापस शून्य;
+पूर्ण
 
-static int gemini_get_group_pins(struct pinctrl_dev *pctldev,
-				 unsigned int selector,
-				 const unsigned int **pins,
-				 unsigned int *num_pins)
-{
-	struct gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक gemini_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+				 अचिन्हित पूर्णांक selector,
+				 स्थिर अचिन्हित पूर्णांक **pins,
+				 अचिन्हित पूर्णांक *num_pins)
+अणु
+	काष्ठा gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
 
-	/* The special case with the 3516 flash pin */
-	if (pmx->flash_pin &&
+	/* The special हाल with the 3516 flash pin */
+	अगर (pmx->flash_pin &&
 	    pmx->is_3512 &&
-	    !strcmp(gemini_3512_pin_groups[selector].name, "pflashgrp")) {
+	    !म_भेद(gemini_3512_pin_groups[selector].name, "pflashgrp")) अणु
 		*pins = pflash_3512_pins_extended;
 		*num_pins = ARRAY_SIZE(pflash_3512_pins_extended);
-		return 0;
-	}
-	if (pmx->flash_pin &&
+		वापस 0;
+	पूर्ण
+	अगर (pmx->flash_pin &&
 	    pmx->is_3516 &&
-	    !strcmp(gemini_3516_pin_groups[selector].name, "pflashgrp")) {
+	    !म_भेद(gemini_3516_pin_groups[selector].name, "pflashgrp")) अणु
 		*pins = pflash_3516_pins_extended;
 		*num_pins = ARRAY_SIZE(pflash_3516_pins_extended);
-		return 0;
-	}
-	if (pmx->is_3512) {
+		वापस 0;
+	पूर्ण
+	अगर (pmx->is_3512) अणु
 		*pins = gemini_3512_pin_groups[selector].pins;
 		*num_pins = gemini_3512_pin_groups[selector].num_pins;
-	}
-	if (pmx->is_3516) {
+	पूर्ण
+	अगर (pmx->is_3516) अणु
 		*pins = gemini_3516_pin_groups[selector].pins;
 		*num_pins = gemini_3516_pin_groups[selector].num_pins;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void gemini_pin_dbg_show(struct pinctrl_dev *pctldev, struct seq_file *s,
-				unsigned int offset)
-{
-	seq_printf(s, " " DRIVER_NAME);
-}
+अटल व्योम gemini_pin_dbg_show(काष्ठा pinctrl_dev *pctldev, काष्ठा seq_file *s,
+				अचिन्हित पूर्णांक offset)
+अणु
+	seq_म_लिखो(s, " " DRIVER_NAME);
+पूर्ण
 
-static const struct pinctrl_ops gemini_pctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops gemini_pctrl_ops = अणु
 	.get_groups_count = gemini_get_groups_count,
 	.get_group_name = gemini_get_group_name,
 	.get_group_pins = gemini_get_group_pins,
 	.pin_dbg_show = gemini_pin_dbg_show,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_all,
-	.dt_free_map = pinconf_generic_dt_free_map,
-};
+	.dt_मुक्त_map = pinconf_generic_dt_मुक्त_map,
+पूर्ण;
 
 /**
- * struct gemini_pmx_func - describes Gemini pinmux functions
- * @name: the name of this specific function
+ * काष्ठा gemini_pmx_func - describes Gemini pinmux functions
+ * @name: the name of this specअगरic function
  * @groups: corresponding pin groups
  */
-struct gemini_pmx_func {
-	const char *name;
-	const char * const *groups;
-	const unsigned int num_groups;
-};
+काष्ठा gemini_pmx_func अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *groups;
+	स्थिर अचिन्हित पूर्णांक num_groups;
+पूर्ण;
 
-static const char * const dramgrps[] = { "dramgrp" };
-static const char * const rtcgrps[] = { "rtcgrp" };
-static const char * const powergrps[] = { "powergrp" };
-static const char * const cirgrps[] = { "cirgrp" };
-static const char * const systemgrps[] = { "systemgrp" };
-static const char * const vcontrolgrps[] = { "vcontrolgrp" };
-static const char * const icegrps[] = { "icegrp" };
-static const char * const idegrps[] = { "idegrp" };
-static const char * const satagrps[] = { "satagrp" };
-static const char * const usbgrps[] = { "usbgrp" };
-static const char * const gmiigrps[] = { "gmii_gmac0_grp", "gmii_gmac1_grp" };
-static const char * const pcigrps[] = { "pcigrp" };
-static const char * const lpcgrps[] = { "lpcgrp" };
-static const char * const lcdgrps[] = { "lcdgrp" };
-static const char * const sspgrps[] = { "sspgrp" };
-static const char * const uartgrps[] = { "uartrxtxgrp", "uartmodemgrp" };
-static const char * const tvcgrps[] = { "tvcgrp" };
-static const char * const nflashgrps[] = { "nflashgrp" };
-static const char * const pflashgrps[] = { "pflashgrp", "pflashextgrp" };
-static const char * const sflashgrps[] = { "sflashgrp" };
-static const char * const gpio0grps[] = { "gpio0agrp", "gpio0bgrp", "gpio0cgrp",
+अटल स्थिर अक्षर * स्थिर dramgrps[] = अणु "dramgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर rtcgrps[] = अणु "rtcgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर घातergrps[] = अणु "powergrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर cirgrps[] = अणु "cirgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर प्रणालीgrps[] = अणु "systemgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर vcontrolgrps[] = अणु "vcontrolgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर icegrps[] = अणु "icegrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर idegrps[] = अणु "idegrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर satagrps[] = अणु "satagrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर usbgrps[] = अणु "usbgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर gmiigrps[] = अणु "gmii_gmac0_grp", "gmii_gmac1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर pcigrps[] = अणु "pcigrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर lpcgrps[] = अणु "lpcgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर lcdgrps[] = अणु "lcdgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर sspgrps[] = अणु "sspgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर uartgrps[] = अणु "uartrxtxgrp", "uartmodemgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर tvcgrps[] = अणु "tvcgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर nflashgrps[] = अणु "nflashgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर pflashgrps[] = अणु "pflashgrp", "pflashextgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर sflashgrps[] = अणु "sflashgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर gpio0grps[] = अणु "gpio0agrp", "gpio0bgrp", "gpio0cgrp",
 					  "gpio0dgrp", "gpio0egrp", "gpio0fgrp",
 					  "gpio0ggrp", "gpio0hgrp", "gpio0igrp",
 					  "gpio0jgrp", "gpio0kgrp", "gpio0lgrp",
-					  "gpio0mgrp" };
-static const char * const gpio1grps[] = { "gpio1agrp", "gpio1bgrp", "gpio1cgrp",
-					  "gpio1dgrp" };
-static const char * const gpio2grps[] = { "gpio2agrp", "gpio2bgrp", "gpio2cgrp" };
+					  "gpio0mgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर gpio1grps[] = अणु "gpio1agrp", "gpio1bgrp", "gpio1cgrp",
+					  "gpio1dgrp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर gpio2grps[] = अणु "gpio2agrp", "gpio2bgrp", "gpio2cgrp" पूर्ण;
 
-static const struct gemini_pmx_func gemini_pmx_functions[] = {
-	{
+अटल स्थिर काष्ठा gemini_pmx_func gemini_pmx_functions[] = अणु
+	अणु
 		.name = "dram",
 		.groups = dramgrps,
 		.num_groups = ARRAY_SIZE(idegrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "rtc",
 		.groups = rtcgrps,
 		.num_groups = ARRAY_SIZE(rtcgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "power",
-		.groups = powergrps,
-		.num_groups = ARRAY_SIZE(powergrps),
-	},
-	{
+		.groups = घातergrps,
+		.num_groups = ARRAY_SIZE(घातergrps),
+	पूर्ण,
+	अणु
 		/* This function is strictly unavailable on 3512 */
 		.name = "cir",
 		.groups = cirgrps,
 		.num_groups = ARRAY_SIZE(cirgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "system",
-		.groups = systemgrps,
-		.num_groups = ARRAY_SIZE(systemgrps),
-	},
-	{
+		.groups = प्रणालीgrps,
+		.num_groups = ARRAY_SIZE(प्रणालीgrps),
+	पूर्ण,
+	अणु
 		.name = "vcontrol",
 		.groups = vcontrolgrps,
 		.num_groups = ARRAY_SIZE(vcontrolgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ice",
 		.groups = icegrps,
 		.num_groups = ARRAY_SIZE(icegrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ide",
 		.groups = idegrps,
 		.num_groups = ARRAY_SIZE(idegrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "sata",
 		.groups = satagrps,
 		.num_groups = ARRAY_SIZE(satagrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "usb",
 		.groups = usbgrps,
 		.num_groups = ARRAY_SIZE(usbgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gmii",
 		.groups = gmiigrps,
 		.num_groups = ARRAY_SIZE(gmiigrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "pci",
 		.groups = pcigrps,
 		.num_groups = ARRAY_SIZE(pcigrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "lpc",
 		.groups = lpcgrps,
 		.num_groups = ARRAY_SIZE(lpcgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "lcd",
 		.groups = lcdgrps,
 		.num_groups = ARRAY_SIZE(lcdgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ssp",
 		.groups = sspgrps,
 		.num_groups = ARRAY_SIZE(sspgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "uart",
 		.groups = uartgrps,
 		.num_groups = ARRAY_SIZE(uartgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "tvc",
 		.groups = tvcgrps,
 		.num_groups = ARRAY_SIZE(tvcgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "nflash",
 		.groups = nflashgrps,
 		.num_groups = ARRAY_SIZE(nflashgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "pflash",
 		.groups = pflashgrps,
 		.num_groups = ARRAY_SIZE(pflashgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "sflash",
 		.groups = sflashgrps,
 		.num_groups = ARRAY_SIZE(sflashgrps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio0",
 		.groups = gpio0grps,
 		.num_groups = ARRAY_SIZE(gpio0grps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio1",
 		.groups = gpio1grps,
 		.num_groups = ARRAY_SIZE(gpio1grps),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "gpio2",
 		.groups = gpio2grps,
 		.num_groups = ARRAY_SIZE(gpio2grps),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 
-static int gemini_pmx_set_mux(struct pinctrl_dev *pctldev,
-			      unsigned int selector,
-			      unsigned int group)
-{
-	struct gemini_pmx *pmx;
-	const struct gemini_pmx_func *func;
-	const struct gemini_pin_group *grp;
-	u32 before, after, expected;
-	unsigned long tmp;
-	int i;
+अटल पूर्णांक gemini_pmx_set_mux(काष्ठा pinctrl_dev *pctldev,
+			      अचिन्हित पूर्णांक selector,
+			      अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा gemini_pmx *pmx;
+	स्थिर काष्ठा gemini_pmx_func *func;
+	स्थिर काष्ठा gemini_pin_group *grp;
+	u32 beक्रमe, after, expected;
+	अचिन्हित दीर्घ पंचांगp;
+	पूर्णांक i;
 
 	pmx = pinctrl_dev_get_drvdata(pctldev);
 
 	func = &gemini_pmx_functions[selector];
-	if (pmx->is_3512)
+	अगर (pmx->is_3512)
 		grp = &gemini_3512_pin_groups[group];
-	else if (pmx->is_3516)
+	अन्यथा अगर (pmx->is_3516)
 		grp = &gemini_3516_pin_groups[group];
-	else {
+	अन्यथा अणु
 		dev_err(pmx->dev, "invalid SoC type\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dev_dbg(pmx->dev,
 		"ACTIVATE function \"%s\" with group \"%s\"\n",
 		func->name, grp->name);
 
-	regmap_read(pmx->map, GLOBAL_MISC_CTRL, &before);
+	regmap_पढ़ो(pmx->map, GLOBAL_MISC_CTRL, &beक्रमe);
 	regmap_update_bits(pmx->map, GLOBAL_MISC_CTRL,
 			   grp->mask | grp->value,
 			   grp->value);
-	regmap_read(pmx->map, GLOBAL_MISC_CTRL, &after);
+	regmap_पढ़ो(pmx->map, GLOBAL_MISC_CTRL, &after);
 
 	/* Which bits changed */
-	before &= PADS_MASK;
+	beक्रमe &= PADS_MASK;
 	after &= PADS_MASK;
-	expected = before &= ~grp->mask;
+	expected = beक्रमe &= ~grp->mask;
 	expected |= grp->value;
 	expected &= PADS_MASK;
 
-	/* Print changed states */
-	tmp = grp->mask;
-	for_each_set_bit(i, &tmp, PADS_MAXBIT) {
+	/* Prपूर्णांक changed states */
+	पंचांगp = grp->mask;
+	क्रम_each_set_bit(i, &पंचांगp, PADS_MAXBIT) अणु
 		bool enabled = !(i > 3);
 
 		/* Did not go low though it should */
-		if (after & BIT(i)) {
+		अगर (after & BIT(i)) अणु
 			dev_err(pmx->dev,
 				"pin group %s could not be %s: "
 				"probably a hardware limitation\n",
@@ -2238,21 +2239,21 @@ static int gemini_pmx_set_mux(struct pinctrl_dev *pctldev,
 				enabled ? "enabled" : "disabled");
 			dev_err(pmx->dev,
 				"GLOBAL MISC CTRL before: %08x, after %08x, expected %08x\n",
-				before, after, expected);
-		} else {
+				beक्रमe, after, expected);
+		पूर्ण अन्यथा अणु
 			dev_dbg(pmx->dev,
 				"padgroup %s %s\n",
 				gemini_padgroups[i],
 				enabled ? "enabled" : "disabled");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	tmp = grp->value;
-	for_each_set_bit(i, &tmp, PADS_MAXBIT) {
+	पंचांगp = grp->value;
+	क्रम_each_set_bit(i, &पंचांगp, PADS_MAXBIT) अणु
 		bool enabled = (i > 3);
 
 		/* Did not go high though it should */
-		if (!(after & BIT(i))) {
+		अगर (!(after & BIT(i))) अणु
 			dev_err(pmx->dev,
 				"pin group %s could not be %s: "
 				"probably a hardware limitation\n",
@@ -2260,53 +2261,53 @@ static int gemini_pmx_set_mux(struct pinctrl_dev *pctldev,
 				enabled ? "enabled" : "disabled");
 			dev_err(pmx->dev,
 				"GLOBAL MISC CTRL before: %08x, after %08x, expected %08x\n",
-				before, after, expected);
-		} else {
+				beक्रमe, after, expected);
+		पूर्ण अन्यथा अणु
 			dev_dbg(pmx->dev,
 				"padgroup %s %s\n",
 				gemini_padgroups[i],
 				enabled ? "enabled" : "disabled");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gemini_pmx_get_funcs_count(struct pinctrl_dev *pctldev)
-{
-	return ARRAY_SIZE(gemini_pmx_functions);
-}
+अटल पूर्णांक gemini_pmx_get_funcs_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस ARRAY_SIZE(gemini_pmx_functions);
+पूर्ण
 
-static const char *gemini_pmx_get_func_name(struct pinctrl_dev *pctldev,
-					    unsigned int selector)
-{
-	return gemini_pmx_functions[selector].name;
-}
+अटल स्थिर अक्षर *gemini_pmx_get_func_name(काष्ठा pinctrl_dev *pctldev,
+					    अचिन्हित पूर्णांक selector)
+अणु
+	वापस gemini_pmx_functions[selector].name;
+पूर्ण
 
-static int gemini_pmx_get_groups(struct pinctrl_dev *pctldev,
-				 unsigned int selector,
-				 const char * const **groups,
-				 unsigned int * const num_groups)
-{
+अटल पूर्णांक gemini_pmx_get_groups(काष्ठा pinctrl_dev *pctldev,
+				 अचिन्हित पूर्णांक selector,
+				 स्थिर अक्षर * स्थिर **groups,
+				 अचिन्हित पूर्णांक * स्थिर num_groups)
+अणु
 	*groups = gemini_pmx_functions[selector].groups;
 	*num_groups = gemini_pmx_functions[selector].num_groups;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops gemini_pmx_ops = {
+अटल स्थिर काष्ठा pinmux_ops gemini_pmx_ops = अणु
 	.get_functions_count = gemini_pmx_get_funcs_count,
 	.get_function_name = gemini_pmx_get_func_name,
 	.get_function_groups = gemini_pmx_get_groups,
 	.set_mux = gemini_pmx_set_mux,
-};
+पूर्ण;
 
-#define GEMINI_CFGPIN(_n, _r, _lb, _hb) {	\
+#घोषणा GEMINI_CFGPIN(_n, _r, _lb, _hb) अणु	\
 	.pin = _n,				\
 	.reg = _r,				\
 	.mask = GENMASK(_hb, _lb)		\
-}
+पूर्ण
 
-static const struct gemini_pin_conf gemini_confs_3512[] = {
+अटल स्थिर काष्ठा gemini_pin_conf gemini_confs_3512[] = अणु
 	GEMINI_CFGPIN(259, GLOBAL_GMAC_CTRL_SKEW, 0, 3), /* GMAC0 RXDV */
 	GEMINI_CFGPIN(277, GLOBAL_GMAC_CTRL_SKEW, 4, 7), /* GMAC0 RXC */
 	GEMINI_CFGPIN(241, GLOBAL_GMAC_CTRL_SKEW, 8, 11), /* GMAC0 TXEN */
@@ -2331,9 +2332,9 @@ static const struct gemini_pin_conf gemini_confs_3512[] = {
 	GEMINI_CFGPIN(279, GLOBAL_GMAC1_DATA_SKEW, 20, 23), /* GMAC1 TXD1 */
 	GEMINI_CFGPIN(297, GLOBAL_GMAC1_DATA_SKEW, 24, 27), /* GMAC1 TXD2 */
 	GEMINI_CFGPIN(315, GLOBAL_GMAC1_DATA_SKEW, 28, 31), /* GMAC1 TXD3 */
-};
+पूर्ण;
 
-static const struct gemini_pin_conf gemini_confs_3516[] = {
+अटल स्थिर काष्ठा gemini_pin_conf gemini_confs_3516[] = अणु
 	GEMINI_CFGPIN(347, GLOBAL_GMAC_CTRL_SKEW, 0, 3), /* GMAC0 RXDV */
 	GEMINI_CFGPIN(386, GLOBAL_GMAC_CTRL_SKEW, 4, 7), /* GMAC0 RXC */
 	GEMINI_CFGPIN(307, GLOBAL_GMAC_CTRL_SKEW, 8, 11), /* GMAC0 TXEN */
@@ -2358,136 +2359,136 @@ static const struct gemini_pin_conf gemini_confs_3516[] = {
 	GEMINI_CFGPIN(389, GLOBAL_GMAC1_DATA_SKEW, 20, 23), /* GMAC1 TXD1 */
 	GEMINI_CFGPIN(369, GLOBAL_GMAC1_DATA_SKEW, 24, 27), /* GMAC1 TXD2 */
 	GEMINI_CFGPIN(308, GLOBAL_GMAC1_DATA_SKEW, 28, 31), /* GMAC1 TXD3 */
-};
+पूर्ण;
 
-static const struct gemini_pin_conf *gemini_get_pin_conf(struct gemini_pmx *pmx,
-							 unsigned int pin)
-{
-	const struct gemini_pin_conf *retconf;
-	int i;
+अटल स्थिर काष्ठा gemini_pin_conf *gemini_get_pin_conf(काष्ठा gemini_pmx *pmx,
+							 अचिन्हित पूर्णांक pin)
+अणु
+	स्थिर काष्ठा gemini_pin_conf *retconf;
+	पूर्णांक i;
 
-	for (i = 0; i < pmx->nconfs; i++) {
+	क्रम (i = 0; i < pmx->nconfs; i++) अणु
 		retconf = &pmx->confs[i];
-		if (retconf->pin == pin)
-			return retconf;
-	}
-	return NULL;
-}
+		अगर (retconf->pin == pin)
+			वापस retconf;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int gemini_pinconf_get(struct pinctrl_dev *pctldev, unsigned int pin,
-			      unsigned long *config)
-{
-	struct gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param = pinconf_to_config_param(*config);
-	const struct gemini_pin_conf *conf;
+अटल पूर्णांक gemini_pinconf_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			      अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+	स्थिर काष्ठा gemini_pin_conf *conf;
 	u32 val;
 
-	switch (param) {
-	case PIN_CONFIG_SKEW_DELAY:
+	चयन (param) अणु
+	हाल PIN_CONFIG_SKEW_DELAY:
 		conf = gemini_get_pin_conf(pmx, pin);
-		if (!conf)
-			return -ENOTSUPP;
-		regmap_read(pmx->map, conf->reg, &val);
+		अगर (!conf)
+			वापस -ENOTSUPP;
+		regmap_पढ़ो(pmx->map, conf->reg, &val);
 		val &= conf->mask;
 		val >>= (ffs(conf->mask) - 1);
 		*config = pinconf_to_config_packed(PIN_CONFIG_SKEW_DELAY, val);
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gemini_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
-			      unsigned long *configs, unsigned int num_configs)
-{
-	struct gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
-	const struct gemini_pin_conf *conf;
-	enum pin_config_param param;
+अटल पूर्णांक gemini_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			      अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा gemini_pin_conf *conf;
+	क्रमागत pin_config_param param;
 	u32 arg;
-	int ret = 0;
-	int i;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_SKEW_DELAY:
-			if (arg > 0xf)
-				return -EINVAL;
+		चयन (param) अणु
+		हाल PIN_CONFIG_SKEW_DELAY:
+			अगर (arg > 0xf)
+				वापस -EINVAL;
 			conf = gemini_get_pin_conf(pmx, pin);
-			if (!conf) {
+			अगर (!conf) अणु
 				dev_err(pmx->dev,
 					"invalid pin for skew delay %d\n", pin);
-				return -ENOTSUPP;
-			}
+				वापस -ENOTSUPP;
+			पूर्ण
 			arg <<= (ffs(conf->mask) - 1);
 			dev_dbg(pmx->dev,
 				"set pin %d to skew delay mask %08x, val %08x\n",
 				pin, conf->mask, arg);
 			regmap_update_bits(pmx->map, conf->reg, conf->mask, arg);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(pmx->dev, "Invalid config param %04x\n", param);
-			return -ENOTSUPP;
-		}
-	}
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gemini_pinconf_group_set(struct pinctrl_dev *pctldev,
-				    unsigned selector,
-				    unsigned long *configs,
-				    unsigned num_configs)
-{
-	struct gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
-	const struct gemini_pin_group *grp = NULL;
-	enum pin_config_param param;
+अटल पूर्णांक gemini_pinconf_group_set(काष्ठा pinctrl_dev *pctldev,
+				    अचिन्हित selector,
+				    अचिन्हित दीर्घ *configs,
+				    अचिन्हित num_configs)
+अणु
+	काष्ठा gemini_pmx *pmx = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा gemini_pin_group *grp = शून्य;
+	क्रमागत pin_config_param param;
 	u32 arg;
 	u32 val;
-	int i;
+	पूर्णांक i;
 
-	if (pmx->is_3512)
+	अगर (pmx->is_3512)
 		grp = &gemini_3512_pin_groups[selector];
-	if (pmx->is_3516)
+	अगर (pmx->is_3516)
 		grp = &gemini_3516_pin_groups[selector];
 
-	/* First figure out if this group supports configs */
-	if (!grp->driving_mask) {
+	/* First figure out अगर this group supports configs */
+	अगर (!grp->driving_mask) अणु
 		dev_err(pmx->dev, "pin config group \"%s\" does "
 			"not support drive strength setting\n",
 			grp->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_DRIVE_STRENGTH:
-			switch (arg) {
-			case 4:
+		चयन (param) अणु
+		हाल PIN_CONFIG_DRIVE_STRENGTH:
+			चयन (arg) अणु
+			हाल 4:
 				val = 0;
-				break;
-			case 8:
+				अवरोध;
+			हाल 8:
 				val = 1;
-				break;
-			case 12:
+				अवरोध;
+			हाल 12:
 				val = 2;
-				break;
-			case 16:
+				अवरोध;
+			हाल 16:
 				val = 3;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				dev_err(pmx->dev,
 					"invalid drive strength %d mA\n",
 					arg);
-				return -ENOTSUPP;
-			}
+				वापस -ENOTSUPP;
+			पूर्ण
 			val <<= (ffs(grp->driving_mask) - 1);
 			regmap_update_bits(pmx->map, GLOBAL_IODRIVE,
 					   grp->driving_mask,
@@ -2495,131 +2496,131 @@ static int gemini_pinconf_group_set(struct pinctrl_dev *pctldev,
 			dev_dbg(pmx->dev,
 				"set group %s to %d mA drive strength mask %08x val %08x\n",
 				grp->name, arg, grp->driving_mask, val);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(pmx->dev, "invalid config param %04x\n", param);
-			return -ENOTSUPP;
-		}
-	}
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops gemini_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops gemini_pinconf_ops = अणु
 	.pin_config_get = gemini_pinconf_get,
 	.pin_config_set = gemini_pinconf_set,
 	.pin_config_group_set = gemini_pinconf_group_set,
 	.is_generic = true,
-};
+पूर्ण;
 
-static struct pinctrl_desc gemini_pmx_desc = {
+अटल काष्ठा pinctrl_desc gemini_pmx_desc = अणु
 	.name = DRIVER_NAME,
 	.pctlops = &gemini_pctrl_ops,
 	.pmxops = &gemini_pmx_ops,
 	.confops = &gemini_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int gemini_pmx_probe(struct platform_device *pdev)
-{
-	struct gemini_pmx *pmx;
-	struct regmap *map;
-	struct device *dev = &pdev->dev;
-	struct device *parent;
-	unsigned long tmp;
+अटल पूर्णांक gemini_pmx_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gemini_pmx *pmx;
+	काष्ठा regmap *map;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device *parent;
+	अचिन्हित दीर्घ पंचांगp;
 	u32 val;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	/* Create state holders etc for this driver */
-	pmx = devm_kzalloc(&pdev->dev, sizeof(*pmx), GFP_KERNEL);
-	if (!pmx)
-		return -ENOMEM;
+	/* Create state holders etc क्रम this driver */
+	pmx = devm_kzalloc(&pdev->dev, माप(*pmx), GFP_KERNEL);
+	अगर (!pmx)
+		वापस -ENOMEM;
 
 	pmx->dev = &pdev->dev;
 	parent = dev->parent;
-	if (!parent) {
+	अगर (!parent) अणु
 		dev_err(dev, "no parent to pin controller\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	map = syscon_node_to_regmap(parent->of_node);
-	if (IS_ERR(map)) {
+	अगर (IS_ERR(map)) अणु
 		dev_err(dev, "no syscon regmap\n");
-		return PTR_ERR(map);
-	}
+		वापस PTR_ERR(map);
+	पूर्ण
 	pmx->map = map;
 
 	/* Check that regmap works at first call, then no more */
-	ret = regmap_read(map, GLOBAL_WORD_ID, &val);
-	if (ret) {
+	ret = regmap_पढ़ो(map, GLOBAL_WORD_ID, &val);
+	अगर (ret) अणु
 		dev_err(dev, "cannot access regmap\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	val >>= 8;
 	val &= 0xffff;
-	if (val == 0x3512) {
+	अगर (val == 0x3512) अणु
 		pmx->is_3512 = true;
 		pmx->confs = gemini_confs_3512;
 		pmx->nconfs = ARRAY_SIZE(gemini_confs_3512);
 		gemini_pmx_desc.pins = gemini_3512_pins;
 		gemini_pmx_desc.npins = ARRAY_SIZE(gemini_3512_pins);
 		dev_info(dev, "detected 3512 chip variant\n");
-	} else if (val == 0x3516) {
+	पूर्ण अन्यथा अगर (val == 0x3516) अणु
 		pmx->is_3516 = true;
 		pmx->confs = gemini_confs_3516;
 		pmx->nconfs = ARRAY_SIZE(gemini_confs_3516);
 		gemini_pmx_desc.pins = gemini_3516_pins;
 		gemini_pmx_desc.npins = ARRAY_SIZE(gemini_3516_pins);
 		dev_info(dev, "detected 3516 chip variant\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "unknown chip ID: %04x\n", val);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = regmap_read(map, GLOBAL_MISC_CTRL, &val);
+	ret = regmap_पढ़ो(map, GLOBAL_MISC_CTRL, &val);
 	dev_info(dev, "GLOBAL MISC CTRL at boot: 0x%08x\n", val);
 	/* Mask off relevant pads */
 	val &= PADS_MASK;
 	/* Invert the meaning of the DRAM+flash pads */
 	val ^= 0x0f;
-	/* Print initial state */
-	tmp = val;
-	for_each_set_bit(i, &tmp, PADS_MAXBIT) {
+	/* Prपूर्णांक initial state */
+	पंचांगp = val;
+	क्रम_each_set_bit(i, &पंचांगp, PADS_MAXBIT) अणु
 		dev_dbg(dev, "pad group %s %s\n", gemini_padgroups[i],
 			(val & BIT(i)) ? "enabled" : "disabled");
-	}
+	पूर्ण
 
-	/* Check if flash pin is set */
-	regmap_read(map, GLOBAL_STATUS, &val);
+	/* Check अगर flash pin is set */
+	regmap_पढ़ो(map, GLOBAL_STATUS, &val);
 	pmx->flash_pin = !!(val & GLOBAL_STATUS_FLPIN);
 	dev_info(dev, "flash pin is %s\n", pmx->flash_pin ? "set" : "not set");
 
-	pmx->pctl = devm_pinctrl_register(dev, &gemini_pmx_desc, pmx);
-	if (IS_ERR(pmx->pctl)) {
+	pmx->pctl = devm_pinctrl_रेजिस्टर(dev, &gemini_pmx_desc, pmx);
+	अगर (IS_ERR(pmx->pctl)) अणु
 		dev_err(dev, "could not register pinmux driver\n");
-		return PTR_ERR(pmx->pctl);
-	}
+		वापस PTR_ERR(pmx->pctl);
+	पूर्ण
 
 	dev_info(dev, "initialized Gemini pin control driver\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id gemini_pinctrl_match[] = {
-	{ .compatible = "cortina,gemini-pinctrl" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id gemini_pinctrl_match[] = अणु
+	अणु .compatible = "cortina,gemini-pinctrl" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver gemini_pmx_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver gemini_pmx_driver = अणु
+	.driver = अणु
 		.name = DRIVER_NAME,
 		.of_match_table = gemini_pinctrl_match,
-	},
+	पूर्ण,
 	.probe = gemini_pmx_probe,
-};
+पूर्ण;
 
-static int __init gemini_pmx_init(void)
-{
-	return platform_driver_register(&gemini_pmx_driver);
-}
+अटल पूर्णांक __init gemini_pmx_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&gemini_pmx_driver);
+पूर्ण
 arch_initcall(gemini_pmx_init);

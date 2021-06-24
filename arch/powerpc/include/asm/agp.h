@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_AGP_H
-#define _ASM_POWERPC_AGP_H
-#ifdef __KERNEL__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_AGP_H
+#घोषणा _ASM_POWERPC_AGP_H
+#अगर_घोषित __KERNEL__
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#define map_page_into_agp(page)
-#define unmap_page_from_agp(page)
-#define flush_agp_cache() mb()
+#घोषणा map_page_पूर्णांकo_agp(page)
+#घोषणा unmap_page_from_agp(page)
+#घोषणा flush_agp_cache() mb()
 
-/* GATT allocation. Returns/accepts GATT kernel virtual address. */
-#define alloc_gatt_pages(order)		\
-	((char *)__get_free_pages(GFP_KERNEL, (order)))
-#define free_gatt_pages(table, order)	\
-	free_pages((unsigned long)(table), (order))
+/* GATT allocation. Returns/accepts GATT kernel भव address. */
+#घोषणा alloc_gatt_pages(order)		\
+	((अक्षर *)__get_मुक्त_pages(GFP_KERNEL, (order)))
+#घोषणा मुक्त_gatt_pages(table, order)	\
+	मुक्त_pages((अचिन्हित दीर्घ)(table), (order))
 
-#endif /* __KERNEL__ */
-#endif	/* _ASM_POWERPC_AGP_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर	/* _ASM_POWERPC_AGP_H */

@@ -1,214 +1,215 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * net/sched/cls_flower.c		Flower classifier
+ * net/sched/cls_flower.c		Flower classअगरier
  *
  * Copyright (c) 2015 Jiri Pirko <jiri@resnulli.us>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/rhashtable.h>
-#include <linux/workqueue.h>
-#include <linux/refcount.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/refcount.h>
 
-#include <linux/if_ether.h>
-#include <linux/in6.h>
-#include <linux/ip.h>
-#include <linux/mpls.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/mpls.h>
 
-#include <net/sch_generic.h>
-#include <net/pkt_cls.h>
-#include <net/ip.h>
-#include <net/flow_dissector.h>
-#include <net/geneve.h>
-#include <net/vxlan.h>
-#include <net/erspan.h>
+#समावेश <net/sch_generic.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <net/ip.h>
+#समावेश <net/flow_dissector.h>
+#समावेश <net/geneve.h>
+#समावेश <net/vxlan.h>
+#समावेश <net/erspan.h>
 
-#include <net/dst.h>
-#include <net/dst_metadata.h>
+#समावेश <net/dst.h>
+#समावेश <net/dst_metadata.h>
 
-#include <uapi/linux/netfilter/nf_conntrack_common.h>
+#समावेश <uapi/linux/netfilter/nf_conntrack_common.h>
 
-#define TCA_FLOWER_KEY_CT_FLAGS_MAX \
+#घोषणा TCA_FLOWER_KEY_CT_FLAGS_MAX \
 		((__TCA_FLOWER_KEY_CT_FLAGS_MAX - 1) << 1)
-#define TCA_FLOWER_KEY_CT_FLAGS_MASK \
+#घोषणा TCA_FLOWER_KEY_CT_FLAGS_MASK \
 		(TCA_FLOWER_KEY_CT_FLAGS_MAX - 1)
 
-struct fl_flow_key {
-	struct flow_dissector_key_meta meta;
-	struct flow_dissector_key_control control;
-	struct flow_dissector_key_control enc_control;
-	struct flow_dissector_key_basic basic;
-	struct flow_dissector_key_eth_addrs eth;
-	struct flow_dissector_key_vlan vlan;
-	struct flow_dissector_key_vlan cvlan;
-	union {
-		struct flow_dissector_key_ipv4_addrs ipv4;
-		struct flow_dissector_key_ipv6_addrs ipv6;
-	};
-	struct flow_dissector_key_ports tp;
-	struct flow_dissector_key_icmp icmp;
-	struct flow_dissector_key_arp arp;
-	struct flow_dissector_key_keyid enc_key_id;
-	union {
-		struct flow_dissector_key_ipv4_addrs enc_ipv4;
-		struct flow_dissector_key_ipv6_addrs enc_ipv6;
-	};
-	struct flow_dissector_key_ports enc_tp;
-	struct flow_dissector_key_mpls mpls;
-	struct flow_dissector_key_tcp tcp;
-	struct flow_dissector_key_ip ip;
-	struct flow_dissector_key_ip enc_ip;
-	struct flow_dissector_key_enc_opts enc_opts;
-	union {
-		struct flow_dissector_key_ports tp;
-		struct {
-			struct flow_dissector_key_ports tp_min;
-			struct flow_dissector_key_ports tp_max;
-		};
-	} tp_range;
-	struct flow_dissector_key_ct ct;
-	struct flow_dissector_key_hash hash;
-} __aligned(BITS_PER_LONG / 8); /* Ensure that we can do comparisons as longs. */
+काष्ठा fl_flow_key अणु
+	काष्ठा flow_dissector_key_meta meta;
+	काष्ठा flow_dissector_key_control control;
+	काष्ठा flow_dissector_key_control enc_control;
+	काष्ठा flow_dissector_key_basic basic;
+	काष्ठा flow_dissector_key_eth_addrs eth;
+	काष्ठा flow_dissector_key_vlan vlan;
+	काष्ठा flow_dissector_key_vlan cvlan;
+	जोड़ अणु
+		काष्ठा flow_dissector_key_ipv4_addrs ipv4;
+		काष्ठा flow_dissector_key_ipv6_addrs ipv6;
+	पूर्ण;
+	काष्ठा flow_dissector_key_ports tp;
+	काष्ठा flow_dissector_key_icmp icmp;
+	काष्ठा flow_dissector_key_arp arp;
+	काष्ठा flow_dissector_key_keyid enc_key_id;
+	जोड़ अणु
+		काष्ठा flow_dissector_key_ipv4_addrs enc_ipv4;
+		काष्ठा flow_dissector_key_ipv6_addrs enc_ipv6;
+	पूर्ण;
+	काष्ठा flow_dissector_key_ports enc_tp;
+	काष्ठा flow_dissector_key_mpls mpls;
+	काष्ठा flow_dissector_key_tcp tcp;
+	काष्ठा flow_dissector_key_ip ip;
+	काष्ठा flow_dissector_key_ip enc_ip;
+	काष्ठा flow_dissector_key_enc_opts enc_opts;
+	जोड़ अणु
+		काष्ठा flow_dissector_key_ports tp;
+		काष्ठा अणु
+			काष्ठा flow_dissector_key_ports tp_min;
+			काष्ठा flow_dissector_key_ports tp_max;
+		पूर्ण;
+	पूर्ण tp_range;
+	काष्ठा flow_dissector_key_ct ct;
+	काष्ठा flow_dissector_key_hash hash;
+पूर्ण __aligned(BITS_PER_LONG / 8); /* Ensure that we can करो comparisons as दीर्घs. */
 
-struct fl_flow_mask_range {
-	unsigned short int start;
-	unsigned short int end;
-};
+काष्ठा fl_flow_mask_range अणु
+	अचिन्हित लघु पूर्णांक start;
+	अचिन्हित लघु पूर्णांक end;
+पूर्ण;
 
-struct fl_flow_mask {
-	struct fl_flow_key key;
-	struct fl_flow_mask_range range;
+काष्ठा fl_flow_mask अणु
+	काष्ठा fl_flow_key key;
+	काष्ठा fl_flow_mask_range range;
 	u32 flags;
-	struct rhash_head ht_node;
-	struct rhashtable ht;
-	struct rhashtable_params filter_ht_params;
-	struct flow_dissector dissector;
-	struct list_head filters;
-	struct rcu_work rwork;
-	struct list_head list;
+	काष्ठा rhash_head ht_node;
+	काष्ठा rhashtable ht;
+	काष्ठा rhashtable_params filter_ht_params;
+	काष्ठा flow_dissector dissector;
+	काष्ठा list_head filters;
+	काष्ठा rcu_work rwork;
+	काष्ठा list_head list;
 	refcount_t refcnt;
-};
+पूर्ण;
 
-struct fl_flow_tmplt {
-	struct fl_flow_key dummy_key;
-	struct fl_flow_key mask;
-	struct flow_dissector dissector;
-	struct tcf_chain *chain;
-};
+काष्ठा fl_flow_पंचांगplt अणु
+	काष्ठा fl_flow_key dummy_key;
+	काष्ठा fl_flow_key mask;
+	काष्ठा flow_dissector dissector;
+	काष्ठा tcf_chain *chain;
+पूर्ण;
 
-struct cls_fl_head {
-	struct rhashtable ht;
+काष्ठा cls_fl_head अणु
+	काष्ठा rhashtable ht;
 	spinlock_t masks_lock; /* Protect masks list */
-	struct list_head masks;
-	struct list_head hw_filters;
-	struct rcu_work rwork;
-	struct idr handle_idr;
-};
+	काष्ठा list_head masks;
+	काष्ठा list_head hw_filters;
+	काष्ठा rcu_work rwork;
+	काष्ठा idr handle_idr;
+पूर्ण;
 
-struct cls_fl_filter {
-	struct fl_flow_mask *mask;
-	struct rhash_head ht_node;
-	struct fl_flow_key mkey;
-	struct tcf_exts exts;
-	struct tcf_result res;
-	struct fl_flow_key key;
-	struct list_head list;
-	struct list_head hw_list;
+काष्ठा cls_fl_filter अणु
+	काष्ठा fl_flow_mask *mask;
+	काष्ठा rhash_head ht_node;
+	काष्ठा fl_flow_key mkey;
+	काष्ठा tcf_exts exts;
+	काष्ठा tcf_result res;
+	काष्ठा fl_flow_key key;
+	काष्ठा list_head list;
+	काष्ठा list_head hw_list;
 	u32 handle;
 	u32 flags;
 	u32 in_hw_count;
-	struct rcu_work rwork;
-	struct net_device *hw_dev;
-	/* Flower classifier is unlocked, which means that its reference counter
-	 * can be changed concurrently without any kind of external
+	काष्ठा rcu_work rwork;
+	काष्ठा net_device *hw_dev;
+	/* Flower classअगरier is unlocked, which means that its reference counter
+	 * can be changed concurrently without any kind of बाह्यal
 	 * synchronization. Use atomic reference counter to be concurrency-safe.
 	 */
 	refcount_t refcnt;
 	bool deleted;
-};
+पूर्ण;
 
-static const struct rhashtable_params mask_ht_params = {
-	.key_offset = offsetof(struct fl_flow_mask, key),
-	.key_len = sizeof(struct fl_flow_key),
-	.head_offset = offsetof(struct fl_flow_mask, ht_node),
-	.automatic_shrinking = true,
-};
+अटल स्थिर काष्ठा rhashtable_params mask_ht_params = अणु
+	.key_offset = दुरत्व(काष्ठा fl_flow_mask, key),
+	.key_len = माप(काष्ठा fl_flow_key),
+	.head_offset = दुरत्व(काष्ठा fl_flow_mask, ht_node),
+	.स्वतःmatic_shrinking = true,
+पूर्ण;
 
-static unsigned short int fl_mask_range(const struct fl_flow_mask *mask)
-{
-	return mask->range.end - mask->range.start;
-}
+अटल अचिन्हित लघु पूर्णांक fl_mask_range(स्थिर काष्ठा fl_flow_mask *mask)
+अणु
+	वापस mask->range.end - mask->range.start;
+पूर्ण
 
-static void fl_mask_update_range(struct fl_flow_mask *mask)
-{
-	const u8 *bytes = (const u8 *) &mask->key;
-	size_t size = sizeof(mask->key);
-	size_t i, first = 0, last;
+अटल व्योम fl_mask_update_range(काष्ठा fl_flow_mask *mask)
+अणु
+	स्थिर u8 *bytes = (स्थिर u8 *) &mask->key;
+	माप_प्रकार size = माप(mask->key);
+	माप_प्रकार i, first = 0, last;
 
-	for (i = 0; i < size; i++) {
-		if (bytes[i]) {
+	क्रम (i = 0; i < size; i++) अणु
+		अगर (bytes[i]) अणु
 			first = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	last = first;
-	for (i = size - 1; i != first; i--) {
-		if (bytes[i]) {
+	क्रम (i = size - 1; i != first; i--) अणु
+		अगर (bytes[i]) अणु
 			last = i;
-			break;
-		}
-	}
-	mask->range.start = rounddown(first, sizeof(long));
-	mask->range.end = roundup(last + 1, sizeof(long));
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	mask->range.start = roundकरोwn(first, माप(दीर्घ));
+	mask->range.end = roundup(last + 1, माप(दीर्घ));
+पूर्ण
 
-static void *fl_key_get_start(struct fl_flow_key *key,
-			      const struct fl_flow_mask *mask)
-{
-	return (u8 *) key + mask->range.start;
-}
+अटल व्योम *fl_key_get_start(काष्ठा fl_flow_key *key,
+			      स्थिर काष्ठा fl_flow_mask *mask)
+अणु
+	वापस (u8 *) key + mask->range.start;
+पूर्ण
 
-static void fl_set_masked_key(struct fl_flow_key *mkey, struct fl_flow_key *key,
-			      struct fl_flow_mask *mask)
-{
-	const long *lkey = fl_key_get_start(key, mask);
-	const long *lmask = fl_key_get_start(&mask->key, mask);
-	long *lmkey = fl_key_get_start(mkey, mask);
-	int i;
+अटल व्योम fl_set_masked_key(काष्ठा fl_flow_key *mkey, काष्ठा fl_flow_key *key,
+			      काष्ठा fl_flow_mask *mask)
+अणु
+	स्थिर दीर्घ *lkey = fl_key_get_start(key, mask);
+	स्थिर दीर्घ *lmask = fl_key_get_start(&mask->key, mask);
+	दीर्घ *lmkey = fl_key_get_start(mkey, mask);
+	पूर्णांक i;
 
-	for (i = 0; i < fl_mask_range(mask); i += sizeof(long))
+	क्रम (i = 0; i < fl_mask_range(mask); i += माप(दीर्घ))
 		*lmkey++ = *lkey++ & *lmask++;
-}
+पूर्ण
 
-static bool fl_mask_fits_tmplt(struct fl_flow_tmplt *tmplt,
-			       struct fl_flow_mask *mask)
-{
-	const long *lmask = fl_key_get_start(&mask->key, mask);
-	const long *ltmplt;
-	int i;
+अटल bool fl_mask_fits_पंचांगplt(काष्ठा fl_flow_पंचांगplt *पंचांगplt,
+			       काष्ठा fl_flow_mask *mask)
+अणु
+	स्थिर दीर्घ *lmask = fl_key_get_start(&mask->key, mask);
+	स्थिर दीर्घ *lपंचांगplt;
+	पूर्णांक i;
 
-	if (!tmplt)
-		return true;
-	ltmplt = fl_key_get_start(&tmplt->mask, mask);
-	for (i = 0; i < fl_mask_range(mask); i += sizeof(long)) {
-		if (~*ltmplt++ & *lmask++)
-			return false;
-	}
-	return true;
-}
+	अगर (!पंचांगplt)
+		वापस true;
+	lपंचांगplt = fl_key_get_start(&पंचांगplt->mask, mask);
+	क्रम (i = 0; i < fl_mask_range(mask); i += माप(दीर्घ)) अणु
+		अगर (~*lपंचांगplt++ & *lmask++)
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void fl_clear_masked_range(struct fl_flow_key *key,
-				  struct fl_flow_mask *mask)
-{
-	memset(fl_key_get_start(key, mask), 0, fl_mask_range(mask));
-}
+अटल व्योम fl_clear_masked_range(काष्ठा fl_flow_key *key,
+				  काष्ठा fl_flow_mask *mask)
+अणु
+	स_रखो(fl_key_get_start(key, mask), 0, fl_mask_range(mask));
+पूर्ण
 
-static bool fl_range_port_dst_cmp(struct cls_fl_filter *filter,
-				  struct fl_flow_key *key,
-				  struct fl_flow_key *mkey)
-{
+अटल bool fl_range_port_dst_cmp(काष्ठा cls_fl_filter *filter,
+				  काष्ठा fl_flow_key *key,
+				  काष्ठा fl_flow_key *mkey)
+अणु
 	u16 min_mask, max_mask, min_val, max_val;
 
 	min_mask = ntohs(filter->mask->key.tp_range.tp_min.dst);
@@ -216,22 +217,22 @@ static bool fl_range_port_dst_cmp(struct cls_fl_filter *filter,
 	min_val = ntohs(filter->key.tp_range.tp_min.dst);
 	max_val = ntohs(filter->key.tp_range.tp_max.dst);
 
-	if (min_mask && max_mask) {
-		if (ntohs(key->tp_range.tp.dst) < min_val ||
+	अगर (min_mask && max_mask) अणु
+		अगर (ntohs(key->tp_range.tp.dst) < min_val ||
 		    ntohs(key->tp_range.tp.dst) > max_val)
-			return false;
+			वापस false;
 
-		/* skb does not have min and max values */
+		/* skb करोes not have min and max values */
 		mkey->tp_range.tp_min.dst = filter->mkey.tp_range.tp_min.dst;
 		mkey->tp_range.tp_max.dst = filter->mkey.tp_range.tp_max.dst;
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static bool fl_range_port_src_cmp(struct cls_fl_filter *filter,
-				  struct fl_flow_key *key,
-				  struct fl_flow_key *mkey)
-{
+अटल bool fl_range_port_src_cmp(काष्ठा cls_fl_filter *filter,
+				  काष्ठा fl_flow_key *key,
+				  काष्ठा fl_flow_key *mkey)
+अणु
 	u16 min_mask, max_mask, min_val, max_val;
 
 	min_mask = ntohs(filter->mask->key.tp_range.tp_min.src);
@@ -239,58 +240,58 @@ static bool fl_range_port_src_cmp(struct cls_fl_filter *filter,
 	min_val = ntohs(filter->key.tp_range.tp_min.src);
 	max_val = ntohs(filter->key.tp_range.tp_max.src);
 
-	if (min_mask && max_mask) {
-		if (ntohs(key->tp_range.tp.src) < min_val ||
+	अगर (min_mask && max_mask) अणु
+		अगर (ntohs(key->tp_range.tp.src) < min_val ||
 		    ntohs(key->tp_range.tp.src) > max_val)
-			return false;
+			वापस false;
 
-		/* skb does not have min and max values */
+		/* skb करोes not have min and max values */
 		mkey->tp_range.tp_min.src = filter->mkey.tp_range.tp_min.src;
 		mkey->tp_range.tp_max.src = filter->mkey.tp_range.tp_max.src;
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static struct cls_fl_filter *__fl_lookup(struct fl_flow_mask *mask,
-					 struct fl_flow_key *mkey)
-{
-	return rhashtable_lookup_fast(&mask->ht, fl_key_get_start(mkey, mask),
+अटल काष्ठा cls_fl_filter *__fl_lookup(काष्ठा fl_flow_mask *mask,
+					 काष्ठा fl_flow_key *mkey)
+अणु
+	वापस rhashtable_lookup_fast(&mask->ht, fl_key_get_start(mkey, mask),
 				      mask->filter_ht_params);
-}
+पूर्ण
 
-static struct cls_fl_filter *fl_lookup_range(struct fl_flow_mask *mask,
-					     struct fl_flow_key *mkey,
-					     struct fl_flow_key *key)
-{
-	struct cls_fl_filter *filter, *f;
+अटल काष्ठा cls_fl_filter *fl_lookup_range(काष्ठा fl_flow_mask *mask,
+					     काष्ठा fl_flow_key *mkey,
+					     काष्ठा fl_flow_key *key)
+अणु
+	काष्ठा cls_fl_filter *filter, *f;
 
-	list_for_each_entry_rcu(filter, &mask->filters, list) {
-		if (!fl_range_port_dst_cmp(filter, key, mkey))
-			continue;
+	list_क्रम_each_entry_rcu(filter, &mask->filters, list) अणु
+		अगर (!fl_range_port_dst_cmp(filter, key, mkey))
+			जारी;
 
-		if (!fl_range_port_src_cmp(filter, key, mkey))
-			continue;
+		अगर (!fl_range_port_src_cmp(filter, key, mkey))
+			जारी;
 
 		f = __fl_lookup(mask, mkey);
-		if (f)
-			return f;
-	}
-	return NULL;
-}
+		अगर (f)
+			वापस f;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static noinline_for_stack
-struct cls_fl_filter *fl_mask_lookup(struct fl_flow_mask *mask, struct fl_flow_key *key)
-{
-	struct fl_flow_key mkey;
+अटल noअंतरभूत_क्रम_stack
+काष्ठा cls_fl_filter *fl_mask_lookup(काष्ठा fl_flow_mask *mask, काष्ठा fl_flow_key *key)
+अणु
+	काष्ठा fl_flow_key mkey;
 
 	fl_set_masked_key(&mkey, key, mask);
-	if ((mask->flags & TCA_FLOWER_MASK_FLAGS_RANGE))
-		return fl_lookup_range(mask, &mkey, key);
+	अगर ((mask->flags & TCA_FLOWER_MASK_FLAGS_RANGE))
+		वापस fl_lookup_range(mask, &mkey, key);
 
-	return __fl_lookup(mask, &mkey);
-}
+	वापस __fl_lookup(mask, &mkey);
+पूर्ण
 
-static u16 fl_ct_info_to_flower_map[] = {
+अटल u16 fl_ct_info_to_flower_map[] = अणु
 	[IP_CT_ESTABLISHED] =		TCA_FLOWER_KEY_CT_FLAGS_TRACKED |
 					TCA_FLOWER_KEY_CT_FLAGS_ESTABLISHED,
 	[IP_CT_RELATED] =		TCA_FLOWER_KEY_CT_FLAGS_TRACKED |
@@ -303,24 +304,24 @@ static u16 fl_ct_info_to_flower_map[] = {
 					TCA_FLOWER_KEY_CT_FLAGS_REPLY,
 	[IP_CT_NEW] =			TCA_FLOWER_KEY_CT_FLAGS_TRACKED |
 					TCA_FLOWER_KEY_CT_FLAGS_NEW,
-};
+पूर्ण;
 
-static int fl_classify(struct sk_buff *skb, const struct tcf_proto *tp,
-		       struct tcf_result *res)
-{
-	struct cls_fl_head *head = rcu_dereference_bh(tp->root);
+अटल पूर्णांक fl_classअगरy(काष्ठा sk_buff *skb, स्थिर काष्ठा tcf_proto *tp,
+		       काष्ठा tcf_result *res)
+अणु
+	काष्ठा cls_fl_head *head = rcu_dereference_bh(tp->root);
 	bool post_ct = qdisc_skb_cb(skb)->post_ct;
-	struct fl_flow_key skb_key;
-	struct fl_flow_mask *mask;
-	struct cls_fl_filter *f;
+	काष्ठा fl_flow_key skb_key;
+	काष्ठा fl_flow_mask *mask;
+	काष्ठा cls_fl_filter *f;
 
-	list_for_each_entry_rcu(mask, &head->masks, list) {
+	list_क्रम_each_entry_rcu(mask, &head->masks, list) अणु
 		flow_dissector_init_keys(&skb_key.control, &skb_key.basic);
 		fl_clear_masked_range(&skb_key, mask);
 
 		skb_flow_dissect_meta(skb, &mask->dissector, &skb_key);
-		/* skb_flow_dissect() does not set n_proto in case an unknown
-		 * protocol, so do it rather here.
+		/* skb_flow_dissect() करोes not set n_proto in हाल an unknown
+		 * protocol, so करो it rather here.
 		 */
 		skb_key.basic.n_proto = skb_protocol(skb, false);
 		skb_flow_dissect_tunnel_info(skb, &mask->dissector, &skb_key);
@@ -332,169 +333,169 @@ static int fl_classify(struct sk_buff *skb, const struct tcf_proto *tp,
 		skb_flow_dissect(skb, &mask->dissector, &skb_key, 0);
 
 		f = fl_mask_lookup(mask, &skb_key);
-		if (f && !tc_skip_sw(f->flags)) {
+		अगर (f && !tc_skip_sw(f->flags)) अणु
 			*res = f->res;
-			return tcf_exts_exec(skb, &f->exts, res);
-		}
-	}
-	return -1;
-}
+			वापस tcf_exts_exec(skb, &f->exts, res);
+		पूर्ण
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int fl_init(struct tcf_proto *tp)
-{
-	struct cls_fl_head *head;
+अटल पूर्णांक fl_init(काष्ठा tcf_proto *tp)
+अणु
+	काष्ठा cls_fl_head *head;
 
-	head = kzalloc(sizeof(*head), GFP_KERNEL);
-	if (!head)
-		return -ENOBUFS;
+	head = kzalloc(माप(*head), GFP_KERNEL);
+	अगर (!head)
+		वापस -ENOBUFS;
 
 	spin_lock_init(&head->masks_lock);
 	INIT_LIST_HEAD_RCU(&head->masks);
 	INIT_LIST_HEAD(&head->hw_filters);
-	rcu_assign_pointer(tp->root, head);
+	rcu_assign_poपूर्णांकer(tp->root, head);
 	idr_init(&head->handle_idr);
 
-	return rhashtable_init(&head->ht, &mask_ht_params);
-}
+	वापस rhashtable_init(&head->ht, &mask_ht_params);
+पूर्ण
 
-static void fl_mask_free(struct fl_flow_mask *mask, bool mask_init_done)
-{
-	/* temporary masks don't have their filters list and ht initialized */
-	if (mask_init_done) {
+अटल व्योम fl_mask_मुक्त(काष्ठा fl_flow_mask *mask, bool mask_init_करोne)
+अणु
+	/* temporary masks करोn't have their filters list and ht initialized */
+	अगर (mask_init_करोne) अणु
 		WARN_ON(!list_empty(&mask->filters));
 		rhashtable_destroy(&mask->ht);
-	}
-	kfree(mask);
-}
+	पूर्ण
+	kमुक्त(mask);
+पूर्ण
 
-static void fl_mask_free_work(struct work_struct *work)
-{
-	struct fl_flow_mask *mask = container_of(to_rcu_work(work),
-						 struct fl_flow_mask, rwork);
+अटल व्योम fl_mask_मुक्त_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fl_flow_mask *mask = container_of(to_rcu_work(work),
+						 काष्ठा fl_flow_mask, rwork);
 
-	fl_mask_free(mask, true);
-}
+	fl_mask_मुक्त(mask, true);
+पूर्ण
 
-static void fl_uninit_mask_free_work(struct work_struct *work)
-{
-	struct fl_flow_mask *mask = container_of(to_rcu_work(work),
-						 struct fl_flow_mask, rwork);
+अटल व्योम fl_uninit_mask_मुक्त_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fl_flow_mask *mask = container_of(to_rcu_work(work),
+						 काष्ठा fl_flow_mask, rwork);
 
-	fl_mask_free(mask, false);
-}
+	fl_mask_मुक्त(mask, false);
+पूर्ण
 
-static bool fl_mask_put(struct cls_fl_head *head, struct fl_flow_mask *mask)
-{
-	if (!refcount_dec_and_test(&mask->refcnt))
-		return false;
+अटल bool fl_mask_put(काष्ठा cls_fl_head *head, काष्ठा fl_flow_mask *mask)
+अणु
+	अगर (!refcount_dec_and_test(&mask->refcnt))
+		वापस false;
 
-	rhashtable_remove_fast(&head->ht, &mask->ht_node, mask_ht_params);
+	rhashtable_हटाओ_fast(&head->ht, &mask->ht_node, mask_ht_params);
 
 	spin_lock(&head->masks_lock);
 	list_del_rcu(&mask->list);
 	spin_unlock(&head->masks_lock);
 
-	tcf_queue_work(&mask->rwork, fl_mask_free_work);
+	tcf_queue_work(&mask->rwork, fl_mask_मुक्त_work);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct cls_fl_head *fl_head_dereference(struct tcf_proto *tp)
-{
-	/* Flower classifier only changes root pointer during init and destroy.
-	 * Users must obtain reference to tcf_proto instance before calling its
-	 * API, so tp->root pointer is protected from concurrent call to
+अटल काष्ठा cls_fl_head *fl_head_dereference(काष्ठा tcf_proto *tp)
+अणु
+	/* Flower classअगरier only changes root poपूर्णांकer during init and destroy.
+	 * Users must obtain reference to tcf_proto instance beक्रमe calling its
+	 * API, so tp->root poपूर्णांकer is रक्षित from concurrent call to
 	 * fl_destroy() by reference counting.
 	 */
-	return rcu_dereference_raw(tp->root);
-}
+	वापस rcu_dereference_raw(tp->root);
+पूर्ण
 
-static void __fl_destroy_filter(struct cls_fl_filter *f)
-{
+अटल व्योम __fl_destroy_filter(काष्ठा cls_fl_filter *f)
+अणु
 	tcf_exts_destroy(&f->exts);
 	tcf_exts_put_net(&f->exts);
-	kfree(f);
-}
+	kमुक्त(f);
+पूर्ण
 
-static void fl_destroy_filter_work(struct work_struct *work)
-{
-	struct cls_fl_filter *f = container_of(to_rcu_work(work),
-					struct cls_fl_filter, rwork);
+अटल व्योम fl_destroy_filter_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cls_fl_filter *f = container_of(to_rcu_work(work),
+					काष्ठा cls_fl_filter, rwork);
 
 	__fl_destroy_filter(f);
-}
+पूर्ण
 
-static void fl_hw_destroy_filter(struct tcf_proto *tp, struct cls_fl_filter *f,
-				 bool rtnl_held, struct netlink_ext_ack *extack)
-{
-	struct tcf_block *block = tp->chain->block;
-	struct flow_cls_offload cls_flower = {};
+अटल व्योम fl_hw_destroy_filter(काष्ठा tcf_proto *tp, काष्ठा cls_fl_filter *f,
+				 bool rtnl_held, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tcf_block *block = tp->chain->block;
+	काष्ठा flow_cls_offload cls_flower = अणुपूर्ण;
 
 	tc_cls_common_offload_init(&cls_flower.common, tp, f->flags, extack);
 	cls_flower.command = FLOW_CLS_DESTROY;
-	cls_flower.cookie = (unsigned long) f;
+	cls_flower.cookie = (अचिन्हित दीर्घ) f;
 
 	tc_setup_cb_destroy(block, tp, TC_SETUP_CLSFLOWER, &cls_flower, false,
 			    &f->flags, &f->in_hw_count, rtnl_held);
 
-}
+पूर्ण
 
-static int fl_hw_replace_filter(struct tcf_proto *tp,
-				struct cls_fl_filter *f, bool rtnl_held,
-				struct netlink_ext_ack *extack)
-{
-	struct tcf_block *block = tp->chain->block;
-	struct flow_cls_offload cls_flower = {};
+अटल पूर्णांक fl_hw_replace_filter(काष्ठा tcf_proto *tp,
+				काष्ठा cls_fl_filter *f, bool rtnl_held,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tcf_block *block = tp->chain->block;
+	काष्ठा flow_cls_offload cls_flower = अणुपूर्ण;
 	bool skip_sw = tc_skip_sw(f->flags);
-	int err = 0;
+	पूर्णांक err = 0;
 
 	cls_flower.rule = flow_rule_alloc(tcf_exts_num_actions(&f->exts));
-	if (!cls_flower.rule)
-		return -ENOMEM;
+	अगर (!cls_flower.rule)
+		वापस -ENOMEM;
 
 	tc_cls_common_offload_init(&cls_flower.common, tp, f->flags, extack);
 	cls_flower.command = FLOW_CLS_REPLACE;
-	cls_flower.cookie = (unsigned long) f;
+	cls_flower.cookie = (अचिन्हित दीर्घ) f;
 	cls_flower.rule->match.dissector = &f->mask->dissector;
 	cls_flower.rule->match.mask = &f->mask->key;
 	cls_flower.rule->match.key = &f->mkey;
 	cls_flower.classid = f->res.classid;
 
 	err = tc_setup_flow_action(&cls_flower.rule->action, &f->exts);
-	if (err) {
-		kfree(cls_flower.rule);
-		if (skip_sw) {
+	अगर (err) अणु
+		kमुक्त(cls_flower.rule);
+		अगर (skip_sw) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Failed to setup flow action");
-			return err;
-		}
-		return 0;
-	}
+			वापस err;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	err = tc_setup_cb_add(block, tp, TC_SETUP_CLSFLOWER, &cls_flower,
 			      skip_sw, &f->flags, &f->in_hw_count, rtnl_held);
 	tc_cleanup_flow_action(&cls_flower.rule->action);
-	kfree(cls_flower.rule);
+	kमुक्त(cls_flower.rule);
 
-	if (err) {
-		fl_hw_destroy_filter(tp, f, rtnl_held, NULL);
-		return err;
-	}
+	अगर (err) अणु
+		fl_hw_destroy_filter(tp, f, rtnl_held, शून्य);
+		वापस err;
+	पूर्ण
 
-	if (skip_sw && !(f->flags & TCA_CLS_FLAGS_IN_HW))
-		return -EINVAL;
+	अगर (skip_sw && !(f->flags & TCA_CLS_FLAGS_IN_HW))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fl_hw_update_stats(struct tcf_proto *tp, struct cls_fl_filter *f,
+अटल व्योम fl_hw_update_stats(काष्ठा tcf_proto *tp, काष्ठा cls_fl_filter *f,
 			       bool rtnl_held)
-{
-	struct tcf_block *block = tp->chain->block;
-	struct flow_cls_offload cls_flower = {};
+अणु
+	काष्ठा tcf_block *block = tp->chain->block;
+	काष्ठा flow_cls_offload cls_flower = अणुपूर्ण;
 
-	tc_cls_common_offload_init(&cls_flower.common, tp, f->flags, NULL);
+	tc_cls_common_offload_init(&cls_flower.common, tp, f->flags, शून्य);
 	cls_flower.command = FLOW_CLS_STATS;
-	cls_flower.cookie = (unsigned long) f;
+	cls_flower.cookie = (अचिन्हित दीर्घ) f;
 	cls_flower.classid = f->res.classid;
 
 	tc_setup_cb_call(block, TC_SETUP_CLSFLOWER, &cls_flower, false,
@@ -506,335 +507,335 @@ static void fl_hw_update_stats(struct tcf_proto *tp, struct cls_fl_filter *f,
 			      cls_flower.stats.lastused,
 			      cls_flower.stats.used_hw_stats,
 			      cls_flower.stats.used_hw_stats_valid);
-}
+पूर्ण
 
-static void __fl_put(struct cls_fl_filter *f)
-{
-	if (!refcount_dec_and_test(&f->refcnt))
-		return;
+अटल व्योम __fl_put(काष्ठा cls_fl_filter *f)
+अणु
+	अगर (!refcount_dec_and_test(&f->refcnt))
+		वापस;
 
-	if (tcf_exts_get_net(&f->exts))
+	अगर (tcf_exts_get_net(&f->exts))
 		tcf_queue_work(&f->rwork, fl_destroy_filter_work);
-	else
+	अन्यथा
 		__fl_destroy_filter(f);
-}
+पूर्ण
 
-static struct cls_fl_filter *__fl_get(struct cls_fl_head *head, u32 handle)
-{
-	struct cls_fl_filter *f;
+अटल काष्ठा cls_fl_filter *__fl_get(काष्ठा cls_fl_head *head, u32 handle)
+अणु
+	काष्ठा cls_fl_filter *f;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	f = idr_find(&head->handle_idr, handle);
-	if (f && !refcount_inc_not_zero(&f->refcnt))
-		f = NULL;
-	rcu_read_unlock();
+	अगर (f && !refcount_inc_not_zero(&f->refcnt))
+		f = शून्य;
+	rcu_पढ़ो_unlock();
 
-	return f;
-}
+	वापस f;
+पूर्ण
 
-static int __fl_delete(struct tcf_proto *tp, struct cls_fl_filter *f,
+अटल पूर्णांक __fl_delete(काष्ठा tcf_proto *tp, काष्ठा cls_fl_filter *f,
 		       bool *last, bool rtnl_held,
-		       struct netlink_ext_ack *extack)
-{
-	struct cls_fl_head *head = fl_head_dereference(tp);
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा cls_fl_head *head = fl_head_dereference(tp);
 
 	*last = false;
 
 	spin_lock(&tp->lock);
-	if (f->deleted) {
+	अगर (f->deleted) अणु
 		spin_unlock(&tp->lock);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	f->deleted = true;
-	rhashtable_remove_fast(&f->mask->ht, &f->ht_node,
+	rhashtable_हटाओ_fast(&f->mask->ht, &f->ht_node,
 			       f->mask->filter_ht_params);
-	idr_remove(&head->handle_idr, f->handle);
+	idr_हटाओ(&head->handle_idr, f->handle);
 	list_del_rcu(&f->list);
 	spin_unlock(&tp->lock);
 
 	*last = fl_mask_put(head, f->mask);
-	if (!tc_skip_hw(f->flags))
+	अगर (!tc_skip_hw(f->flags))
 		fl_hw_destroy_filter(tp, f, rtnl_held, extack);
 	tcf_unbind_filter(tp, &f->res);
 	__fl_put(f);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fl_destroy_sleepable(struct work_struct *work)
-{
-	struct cls_fl_head *head = container_of(to_rcu_work(work),
-						struct cls_fl_head,
+अटल व्योम fl_destroy_sleepable(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cls_fl_head *head = container_of(to_rcu_work(work),
+						काष्ठा cls_fl_head,
 						rwork);
 
 	rhashtable_destroy(&head->ht);
-	kfree(head);
+	kमुक्त(head);
 	module_put(THIS_MODULE);
-}
+पूर्ण
 
-static void fl_destroy(struct tcf_proto *tp, bool rtnl_held,
-		       struct netlink_ext_ack *extack)
-{
-	struct cls_fl_head *head = fl_head_dereference(tp);
-	struct fl_flow_mask *mask, *next_mask;
-	struct cls_fl_filter *f, *next;
+अटल व्योम fl_destroy(काष्ठा tcf_proto *tp, bool rtnl_held,
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा cls_fl_head *head = fl_head_dereference(tp);
+	काष्ठा fl_flow_mask *mask, *next_mask;
+	काष्ठा cls_fl_filter *f, *next;
 	bool last;
 
-	list_for_each_entry_safe(mask, next_mask, &head->masks, list) {
-		list_for_each_entry_safe(f, next, &mask->filters, list) {
+	list_क्रम_each_entry_safe(mask, next_mask, &head->masks, list) अणु
+		list_क्रम_each_entry_safe(f, next, &mask->filters, list) अणु
 			__fl_delete(tp, f, &last, rtnl_held, extack);
-			if (last)
-				break;
-		}
-	}
+			अगर (last)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	idr_destroy(&head->handle_idr);
 
 	__module_get(THIS_MODULE);
 	tcf_queue_work(&head->rwork, fl_destroy_sleepable);
-}
+पूर्ण
 
-static void fl_put(struct tcf_proto *tp, void *arg)
-{
-	struct cls_fl_filter *f = arg;
+अटल व्योम fl_put(काष्ठा tcf_proto *tp, व्योम *arg)
+अणु
+	काष्ठा cls_fl_filter *f = arg;
 
 	__fl_put(f);
-}
+पूर्ण
 
-static void *fl_get(struct tcf_proto *tp, u32 handle)
-{
-	struct cls_fl_head *head = fl_head_dereference(tp);
+अटल व्योम *fl_get(काष्ठा tcf_proto *tp, u32 handle)
+अणु
+	काष्ठा cls_fl_head *head = fl_head_dereference(tp);
 
-	return __fl_get(head, handle);
-}
+	वापस __fl_get(head, handle);
+पूर्ण
 
-static const struct nla_policy fl_policy[TCA_FLOWER_MAX + 1] = {
-	[TCA_FLOWER_UNSPEC]		= { .type = NLA_UNSPEC },
-	[TCA_FLOWER_CLASSID]		= { .type = NLA_U32 },
-	[TCA_FLOWER_INDEV]		= { .type = NLA_STRING,
-					    .len = IFNAMSIZ },
-	[TCA_FLOWER_KEY_ETH_DST]	= { .len = ETH_ALEN },
-	[TCA_FLOWER_KEY_ETH_DST_MASK]	= { .len = ETH_ALEN },
-	[TCA_FLOWER_KEY_ETH_SRC]	= { .len = ETH_ALEN },
-	[TCA_FLOWER_KEY_ETH_SRC_MASK]	= { .len = ETH_ALEN },
-	[TCA_FLOWER_KEY_ETH_TYPE]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_IP_PROTO]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_IPV4_SRC]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_IPV4_SRC_MASK]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_IPV4_DST]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_IPV4_DST_MASK]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_IPV6_SRC]	= { .len = sizeof(struct in6_addr) },
-	[TCA_FLOWER_KEY_IPV6_SRC_MASK]	= { .len = sizeof(struct in6_addr) },
-	[TCA_FLOWER_KEY_IPV6_DST]	= { .len = sizeof(struct in6_addr) },
-	[TCA_FLOWER_KEY_IPV6_DST_MASK]	= { .len = sizeof(struct in6_addr) },
-	[TCA_FLOWER_KEY_TCP_SRC]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_TCP_DST]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_UDP_SRC]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_UDP_DST]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_VLAN_ID]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_VLAN_PRIO]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_VLAN_ETH_TYPE]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_ENC_KEY_ID]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ENC_IPV4_SRC]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ENC_IPV4_SRC_MASK] = { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ENC_IPV4_DST]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ENC_IPV4_DST_MASK] = { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ENC_IPV6_SRC]	= { .len = sizeof(struct in6_addr) },
-	[TCA_FLOWER_KEY_ENC_IPV6_SRC_MASK] = { .len = sizeof(struct in6_addr) },
-	[TCA_FLOWER_KEY_ENC_IPV6_DST]	= { .len = sizeof(struct in6_addr) },
-	[TCA_FLOWER_KEY_ENC_IPV6_DST_MASK] = { .len = sizeof(struct in6_addr) },
-	[TCA_FLOWER_KEY_TCP_SRC_MASK]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_TCP_DST_MASK]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_UDP_SRC_MASK]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_UDP_DST_MASK]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_SCTP_SRC_MASK]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_SCTP_DST_MASK]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_SCTP_SRC]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_SCTP_DST]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_ENC_UDP_SRC_PORT]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_ENC_UDP_SRC_PORT_MASK]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_ENC_UDP_DST_PORT]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_ENC_UDP_DST_PORT_MASK]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_FLAGS]		= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_FLAGS_MASK]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ICMPV4_TYPE]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ICMPV4_TYPE_MASK] = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ICMPV4_CODE]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ICMPV4_CODE_MASK] = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ICMPV6_TYPE]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ICMPV6_TYPE_MASK] = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ICMPV6_CODE]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ICMPV6_CODE_MASK] = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ARP_SIP]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ARP_SIP_MASK]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ARP_TIP]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ARP_TIP_MASK]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ARP_OP]		= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ARP_OP_MASK]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ARP_SHA]	= { .len = ETH_ALEN },
-	[TCA_FLOWER_KEY_ARP_SHA_MASK]	= { .len = ETH_ALEN },
-	[TCA_FLOWER_KEY_ARP_THA]	= { .len = ETH_ALEN },
-	[TCA_FLOWER_KEY_ARP_THA_MASK]	= { .len = ETH_ALEN },
-	[TCA_FLOWER_KEY_MPLS_TTL]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_MPLS_BOS]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_MPLS_TC]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_MPLS_LABEL]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_MPLS_OPTS]	= { .type = NLA_NESTED },
-	[TCA_FLOWER_KEY_TCP_FLAGS]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_TCP_FLAGS_MASK]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_IP_TOS]		= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_IP_TOS_MASK]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_IP_TTL]		= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_IP_TTL_MASK]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_CVLAN_ID]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_CVLAN_PRIO]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_CVLAN_ETH_TYPE]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_ENC_IP_TOS]	= { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ENC_IP_TOS_MASK] = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ENC_IP_TTL]	 = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ENC_IP_TTL_MASK] = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ENC_OPTS]	= { .type = NLA_NESTED },
-	[TCA_FLOWER_KEY_ENC_OPTS_MASK]	= { .type = NLA_NESTED },
+अटल स्थिर काष्ठा nla_policy fl_policy[TCA_FLOWER_MAX + 1] = अणु
+	[TCA_FLOWER_UNSPEC]		= अणु .type = NLA_UNSPEC पूर्ण,
+	[TCA_FLOWER_CLASSID]		= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_INDEV]		= अणु .type = NLA_STRING,
+					    .len = IFNAMSIZ पूर्ण,
+	[TCA_FLOWER_KEY_ETH_DST]	= अणु .len = ETH_ALEN पूर्ण,
+	[TCA_FLOWER_KEY_ETH_DST_MASK]	= अणु .len = ETH_ALEN पूर्ण,
+	[TCA_FLOWER_KEY_ETH_SRC]	= अणु .len = ETH_ALEN पूर्ण,
+	[TCA_FLOWER_KEY_ETH_SRC_MASK]	= अणु .len = ETH_ALEN पूर्ण,
+	[TCA_FLOWER_KEY_ETH_TYPE]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_IP_PROTO]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_IPV4_SRC]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_IPV4_SRC_MASK]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_IPV4_DST]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_IPV4_DST_MASK]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_IPV6_SRC]	= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[TCA_FLOWER_KEY_IPV6_SRC_MASK]	= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[TCA_FLOWER_KEY_IPV6_DST]	= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[TCA_FLOWER_KEY_IPV6_DST_MASK]	= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[TCA_FLOWER_KEY_TCP_SRC]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_TCP_DST]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_UDP_SRC]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_UDP_DST]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_VLAN_ID]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_VLAN_PRIO]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_VLAN_ETH_TYPE]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_KEY_ID]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IPV4_SRC]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IPV4_SRC_MASK] = अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IPV4_DST]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IPV4_DST_MASK] = अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IPV6_SRC]	= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IPV6_SRC_MASK] = अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IPV6_DST]	= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IPV6_DST_MASK] = अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[TCA_FLOWER_KEY_TCP_SRC_MASK]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_TCP_DST_MASK]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_UDP_SRC_MASK]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_UDP_DST_MASK]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_SCTP_SRC_MASK]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_SCTP_DST_MASK]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_SCTP_SRC]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_SCTP_DST]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_UDP_SRC_PORT]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_UDP_SRC_PORT_MASK]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_UDP_DST_PORT]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_UDP_DST_PORT_MASK]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_FLAGS]		= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_FLAGS_MASK]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ICMPV4_TYPE]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ICMPV4_TYPE_MASK] = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ICMPV4_CODE]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ICMPV4_CODE_MASK] = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ICMPV6_TYPE]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ICMPV6_TYPE_MASK] = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ICMPV6_CODE]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ICMPV6_CODE_MASK] = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ARP_SIP]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ARP_SIP_MASK]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ARP_TIP]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ARP_TIP_MASK]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ARP_OP]		= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ARP_OP_MASK]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ARP_SHA]	= अणु .len = ETH_ALEN पूर्ण,
+	[TCA_FLOWER_KEY_ARP_SHA_MASK]	= अणु .len = ETH_ALEN पूर्ण,
+	[TCA_FLOWER_KEY_ARP_THA]	= अणु .len = ETH_ALEN पूर्ण,
+	[TCA_FLOWER_KEY_ARP_THA_MASK]	= अणु .len = ETH_ALEN पूर्ण,
+	[TCA_FLOWER_KEY_MPLS_TTL]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_MPLS_BOS]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_MPLS_TC]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_MPLS_LABEL]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_MPLS_OPTS]	= अणु .type = NLA_NESTED पूर्ण,
+	[TCA_FLOWER_KEY_TCP_FLAGS]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_TCP_FLAGS_MASK]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_IP_TOS]		= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_IP_TOS_MASK]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_IP_TTL]		= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_IP_TTL_MASK]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_CVLAN_ID]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_CVLAN_PRIO]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_CVLAN_ETH_TYPE]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IP_TOS]	= अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IP_TOS_MASK] = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IP_TTL]	 = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_IP_TTL_MASK] = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_OPTS]	= अणु .type = NLA_NESTED पूर्ण,
+	[TCA_FLOWER_KEY_ENC_OPTS_MASK]	= अणु .type = NLA_NESTED पूर्ण,
 	[TCA_FLOWER_KEY_CT_STATE]	=
 		NLA_POLICY_MASK(NLA_U16, TCA_FLOWER_KEY_CT_FLAGS_MASK),
 	[TCA_FLOWER_KEY_CT_STATE_MASK]	=
 		NLA_POLICY_MASK(NLA_U16, TCA_FLOWER_KEY_CT_FLAGS_MASK),
-	[TCA_FLOWER_KEY_CT_ZONE]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_CT_ZONE_MASK]	= { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_CT_MARK]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_CT_MARK_MASK]	= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_CT_LABELS]	= { .type = NLA_BINARY,
-					    .len = 128 / BITS_PER_BYTE },
-	[TCA_FLOWER_KEY_CT_LABELS_MASK]	= { .type = NLA_BINARY,
-					    .len = 128 / BITS_PER_BYTE },
-	[TCA_FLOWER_FLAGS]		= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_HASH]		= { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_HASH_MASK]	= { .type = NLA_U32 },
+	[TCA_FLOWER_KEY_CT_ZONE]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_CT_ZONE_MASK]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_CT_MARK]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_CT_MARK_MASK]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_CT_LABELS]	= अणु .type = NLA_BINARY,
+					    .len = 128 / BITS_PER_BYTE पूर्ण,
+	[TCA_FLOWER_KEY_CT_LABELS_MASK]	= अणु .type = NLA_BINARY,
+					    .len = 128 / BITS_PER_BYTE पूर्ण,
+	[TCA_FLOWER_FLAGS]		= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_HASH]		= अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_HASH_MASK]	= अणु .type = NLA_U32 पूर्ण,
 
-};
+पूर्ण;
 
-static const struct nla_policy
-enc_opts_policy[TCA_FLOWER_KEY_ENC_OPTS_MAX + 1] = {
-	[TCA_FLOWER_KEY_ENC_OPTS_UNSPEC]        = {
-		.strict_start_type = TCA_FLOWER_KEY_ENC_OPTS_VXLAN },
-	[TCA_FLOWER_KEY_ENC_OPTS_GENEVE]        = { .type = NLA_NESTED },
-	[TCA_FLOWER_KEY_ENC_OPTS_VXLAN]         = { .type = NLA_NESTED },
-	[TCA_FLOWER_KEY_ENC_OPTS_ERSPAN]        = { .type = NLA_NESTED },
-};
+अटल स्थिर काष्ठा nla_policy
+enc_opts_policy[TCA_FLOWER_KEY_ENC_OPTS_MAX + 1] = अणु
+	[TCA_FLOWER_KEY_ENC_OPTS_UNSPEC]        = अणु
+		.strict_start_type = TCA_FLOWER_KEY_ENC_OPTS_VXLAN पूर्ण,
+	[TCA_FLOWER_KEY_ENC_OPTS_GENEVE]        = अणु .type = NLA_NESTED पूर्ण,
+	[TCA_FLOWER_KEY_ENC_OPTS_VXLAN]         = अणु .type = NLA_NESTED पूर्ण,
+	[TCA_FLOWER_KEY_ENC_OPTS_ERSPAN]        = अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
-static const struct nla_policy
-geneve_opt_policy[TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX + 1] = {
-	[TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS]      = { .type = NLA_U16 },
-	[TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE]       = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA]       = { .type = NLA_BINARY,
-						       .len = 128 },
-};
+अटल स्थिर काष्ठा nla_policy
+geneve_opt_policy[TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX + 1] = अणु
+	[TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS]      = अणु .type = NLA_U16 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE]       = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA]       = अणु .type = NLA_BINARY,
+						       .len = 128 पूर्ण,
+पूर्ण;
 
-static const struct nla_policy
-vxlan_opt_policy[TCA_FLOWER_KEY_ENC_OPT_VXLAN_MAX + 1] = {
-	[TCA_FLOWER_KEY_ENC_OPT_VXLAN_GBP]         = { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+vxlan_opt_policy[TCA_FLOWER_KEY_ENC_OPT_VXLAN_MAX + 1] = अणु
+	[TCA_FLOWER_KEY_ENC_OPT_VXLAN_GBP]         = अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static const struct nla_policy
-erspan_opt_policy[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_MAX + 1] = {
-	[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_VER]        = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_INDEX]      = { .type = NLA_U32 },
-	[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_DIR]        = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_HWID]       = { .type = NLA_U8 },
-};
+अटल स्थिर काष्ठा nla_policy
+erspan_opt_policy[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_MAX + 1] = अणु
+	[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_VER]        = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_INDEX]      = अणु .type = NLA_U32 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_सूची]        = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_HWID]       = अणु .type = NLA_U8 पूर्ण,
+पूर्ण;
 
-static const struct nla_policy
-mpls_stack_entry_policy[TCA_FLOWER_KEY_MPLS_OPT_LSE_MAX + 1] = {
-	[TCA_FLOWER_KEY_MPLS_OPT_LSE_DEPTH]    = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_MPLS_OPT_LSE_TTL]      = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_MPLS_OPT_LSE_BOS]      = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_MPLS_OPT_LSE_TC]       = { .type = NLA_U8 },
-	[TCA_FLOWER_KEY_MPLS_OPT_LSE_LABEL]    = { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+mpls_stack_entry_policy[TCA_FLOWER_KEY_MPLS_OPT_LSE_MAX + 1] = अणु
+	[TCA_FLOWER_KEY_MPLS_OPT_LSE_DEPTH]    = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_MPLS_OPT_LSE_TTL]      = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_MPLS_OPT_LSE_BOS]      = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_MPLS_OPT_LSE_TC]       = अणु .type = NLA_U8 पूर्ण,
+	[TCA_FLOWER_KEY_MPLS_OPT_LSE_LABEL]    = अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static void fl_set_key_val(struct nlattr **tb,
-			   void *val, int val_type,
-			   void *mask, int mask_type, int len)
-{
-	if (!tb[val_type])
-		return;
-	nla_memcpy(val, tb[val_type], len);
-	if (mask_type == TCA_FLOWER_UNSPEC || !tb[mask_type])
-		memset(mask, 0xff, len);
-	else
-		nla_memcpy(mask, tb[mask_type], len);
-}
+अटल व्योम fl_set_key_val(काष्ठा nlattr **tb,
+			   व्योम *val, पूर्णांक val_type,
+			   व्योम *mask, पूर्णांक mask_type, पूर्णांक len)
+अणु
+	अगर (!tb[val_type])
+		वापस;
+	nla_स_नकल(val, tb[val_type], len);
+	अगर (mask_type == TCA_FLOWER_UNSPEC || !tb[mask_type])
+		स_रखो(mask, 0xff, len);
+	अन्यथा
+		nla_स_नकल(mask, tb[mask_type], len);
+पूर्ण
 
-static int fl_set_key_port_range(struct nlattr **tb, struct fl_flow_key *key,
-				 struct fl_flow_key *mask,
-				 struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक fl_set_key_port_range(काष्ठा nlattr **tb, काष्ठा fl_flow_key *key,
+				 काष्ठा fl_flow_key *mask,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
 	fl_set_key_val(tb, &key->tp_range.tp_min.dst,
 		       TCA_FLOWER_KEY_PORT_DST_MIN, &mask->tp_range.tp_min.dst,
-		       TCA_FLOWER_UNSPEC, sizeof(key->tp_range.tp_min.dst));
+		       TCA_FLOWER_UNSPEC, माप(key->tp_range.tp_min.dst));
 	fl_set_key_val(tb, &key->tp_range.tp_max.dst,
 		       TCA_FLOWER_KEY_PORT_DST_MAX, &mask->tp_range.tp_max.dst,
-		       TCA_FLOWER_UNSPEC, sizeof(key->tp_range.tp_max.dst));
+		       TCA_FLOWER_UNSPEC, माप(key->tp_range.tp_max.dst));
 	fl_set_key_val(tb, &key->tp_range.tp_min.src,
 		       TCA_FLOWER_KEY_PORT_SRC_MIN, &mask->tp_range.tp_min.src,
-		       TCA_FLOWER_UNSPEC, sizeof(key->tp_range.tp_min.src));
+		       TCA_FLOWER_UNSPEC, माप(key->tp_range.tp_min.src));
 	fl_set_key_val(tb, &key->tp_range.tp_max.src,
 		       TCA_FLOWER_KEY_PORT_SRC_MAX, &mask->tp_range.tp_max.src,
-		       TCA_FLOWER_UNSPEC, sizeof(key->tp_range.tp_max.src));
+		       TCA_FLOWER_UNSPEC, माप(key->tp_range.tp_max.src));
 
-	if (mask->tp_range.tp_min.dst && mask->tp_range.tp_max.dst &&
+	अगर (mask->tp_range.tp_min.dst && mask->tp_range.tp_max.dst &&
 	    ntohs(key->tp_range.tp_max.dst) <=
-	    ntohs(key->tp_range.tp_min.dst)) {
+	    ntohs(key->tp_range.tp_min.dst)) अणु
 		NL_SET_ERR_MSG_ATTR(extack,
 				    tb[TCA_FLOWER_KEY_PORT_DST_MIN],
 				    "Invalid destination port range (min must be strictly smaller than max)");
-		return -EINVAL;
-	}
-	if (mask->tp_range.tp_min.src && mask->tp_range.tp_max.src &&
+		वापस -EINVAL;
+	पूर्ण
+	अगर (mask->tp_range.tp_min.src && mask->tp_range.tp_max.src &&
 	    ntohs(key->tp_range.tp_max.src) <=
-	    ntohs(key->tp_range.tp_min.src)) {
+	    ntohs(key->tp_range.tp_min.src)) अणु
 		NL_SET_ERR_MSG_ATTR(extack,
 				    tb[TCA_FLOWER_KEY_PORT_SRC_MIN],
 				    "Invalid source port range (min must be strictly smaller than max)");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_set_key_mpls_lse(const struct nlattr *nla_lse,
-			       struct flow_dissector_key_mpls *key_val,
-			       struct flow_dissector_key_mpls *key_mask,
-			       struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_MAX + 1];
-	struct flow_dissector_mpls_lse *lse_mask;
-	struct flow_dissector_mpls_lse *lse_val;
+अटल पूर्णांक fl_set_key_mpls_lse(स्थिर काष्ठा nlattr *nla_lse,
+			       काष्ठा flow_dissector_key_mpls *key_val,
+			       काष्ठा flow_dissector_key_mpls *key_mask,
+			       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_MAX + 1];
+	काष्ठा flow_dissector_mpls_lse *lse_mask;
+	काष्ठा flow_dissector_mpls_lse *lse_val;
 	u8 lse_index;
 	u8 depth;
-	int err;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, TCA_FLOWER_KEY_MPLS_OPT_LSE_MAX, nla_lse,
 			       mpls_stack_entry_policy, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_DEPTH]) {
+	अगर (!tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_DEPTH]) अणु
 		NL_SET_ERR_MSG(extack, "Missing MPLS option \"depth\"");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	depth = nla_get_u8(tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_DEPTH]);
 
-	/* LSE depth starts at 1, for consistency with terminology used by
+	/* LSE depth starts at 1, क्रम consistency with terminology used by
 	 * RFC 3031 (section 3.9), where depth 0 refers to unlabeled packets.
 	 */
-	if (depth < 1 || depth > FLOW_DIS_MPLS_MAX) {
+	अगर (depth < 1 || depth > FLOW_DIS_MPLS_MAX) अणु
 		NL_SET_ERR_MSG_ATTR(extack,
 				    tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_DEPTH],
 				    "Invalid MPLS depth");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	lse_index = depth - 1;
 
 	dissector_set_mpls_lse(key_val, lse_index);
@@ -843,206 +844,206 @@ static int fl_set_key_mpls_lse(const struct nlattr *nla_lse,
 	lse_val = &key_val->ls[lse_index];
 	lse_mask = &key_mask->ls[lse_index];
 
-	if (tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_TTL]) {
+	अगर (tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_TTL]) अणु
 		lse_val->mpls_ttl = nla_get_u8(tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_TTL]);
 		lse_mask->mpls_ttl = MPLS_TTL_MASK;
-	}
-	if (tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_BOS]) {
+	पूर्ण
+	अगर (tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_BOS]) अणु
 		u8 bos = nla_get_u8(tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_BOS]);
 
-		if (bos & ~MPLS_BOS_MASK) {
+		अगर (bos & ~MPLS_BOS_MASK) अणु
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_BOS],
 					    "Bottom Of Stack (BOS) must be 0 or 1");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		lse_val->mpls_bos = bos;
 		lse_mask->mpls_bos = MPLS_BOS_MASK;
-	}
-	if (tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_TC]) {
+	पूर्ण
+	अगर (tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_TC]) अणु
 		u8 tc = nla_get_u8(tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_TC]);
 
-		if (tc & ~MPLS_TC_MASK) {
+		अगर (tc & ~MPLS_TC_MASK) अणु
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_TC],
 					    "Traffic Class (TC) must be between 0 and 7");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		lse_val->mpls_tc = tc;
 		lse_mask->mpls_tc = MPLS_TC_MASK;
-	}
-	if (tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_LABEL]) {
+	पूर्ण
+	अगर (tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_LABEL]) अणु
 		u32 label = nla_get_u32(tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_LABEL]);
 
-		if (label & ~MPLS_LABEL_MASK) {
+		अगर (label & ~MPLS_LABEL_MASK) अणु
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[TCA_FLOWER_KEY_MPLS_OPT_LSE_LABEL],
 					    "Label must be between 0 and 1048575");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		lse_val->mpls_label = label;
 		lse_mask->mpls_label = MPLS_LABEL_MASK;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_set_key_mpls_opts(const struct nlattr *nla_mpls_opts,
-				struct flow_dissector_key_mpls *key_val,
-				struct flow_dissector_key_mpls *key_mask,
-				struct netlink_ext_ack *extack)
-{
-	struct nlattr *nla_lse;
-	int rem;
-	int err;
+अटल पूर्णांक fl_set_key_mpls_opts(स्थिर काष्ठा nlattr *nla_mpls_opts,
+				काष्ठा flow_dissector_key_mpls *key_val,
+				काष्ठा flow_dissector_key_mpls *key_mask,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *nla_lse;
+	पूर्णांक rem;
+	पूर्णांक err;
 
-	if (!(nla_mpls_opts->nla_type & NLA_F_NESTED)) {
+	अगर (!(nla_mpls_opts->nla_type & NLA_F_NESTED)) अणु
 		NL_SET_ERR_MSG_ATTR(extack, nla_mpls_opts,
 				    "NLA_F_NESTED is missing");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	nla_for_each_nested(nla_lse, nla_mpls_opts, rem) {
-		if (nla_type(nla_lse) != TCA_FLOWER_KEY_MPLS_OPTS_LSE) {
+	nla_क्रम_each_nested(nla_lse, nla_mpls_opts, rem) अणु
+		अगर (nla_type(nla_lse) != TCA_FLOWER_KEY_MPLS_OPTS_LSE) अणु
 			NL_SET_ERR_MSG_ATTR(extack, nla_lse,
 					    "Invalid MPLS option type");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		err = fl_set_key_mpls_lse(nla_lse, key_val, key_mask, extack);
-		if (err < 0)
-			return err;
-	}
-	if (rem) {
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	अगर (rem) अणु
 		NL_SET_ERR_MSG(extack,
 			       "Bytes leftover after parsing MPLS options");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_set_key_mpls(struct nlattr **tb,
-			   struct flow_dissector_key_mpls *key_val,
-			   struct flow_dissector_key_mpls *key_mask,
-			   struct netlink_ext_ack *extack)
-{
-	struct flow_dissector_mpls_lse *lse_mask;
-	struct flow_dissector_mpls_lse *lse_val;
+अटल पूर्णांक fl_set_key_mpls(काष्ठा nlattr **tb,
+			   काष्ठा flow_dissector_key_mpls *key_val,
+			   काष्ठा flow_dissector_key_mpls *key_mask,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा flow_dissector_mpls_lse *lse_mask;
+	काष्ठा flow_dissector_mpls_lse *lse_val;
 
-	if (tb[TCA_FLOWER_KEY_MPLS_OPTS]) {
-		if (tb[TCA_FLOWER_KEY_MPLS_TTL] ||
+	अगर (tb[TCA_FLOWER_KEY_MPLS_OPTS]) अणु
+		अगर (tb[TCA_FLOWER_KEY_MPLS_TTL] ||
 		    tb[TCA_FLOWER_KEY_MPLS_BOS] ||
 		    tb[TCA_FLOWER_KEY_MPLS_TC] ||
-		    tb[TCA_FLOWER_KEY_MPLS_LABEL]) {
+		    tb[TCA_FLOWER_KEY_MPLS_LABEL]) अणु
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[TCA_FLOWER_KEY_MPLS_OPTS],
 					    "MPLS label, Traffic Class, Bottom Of Stack and Time To Live must be encapsulated in the MPLS options attribute");
-			return -EBADMSG;
-		}
+			वापस -EBADMSG;
+		पूर्ण
 
-		return fl_set_key_mpls_opts(tb[TCA_FLOWER_KEY_MPLS_OPTS],
+		वापस fl_set_key_mpls_opts(tb[TCA_FLOWER_KEY_MPLS_OPTS],
 					    key_val, key_mask, extack);
-	}
+	पूर्ण
 
 	lse_val = &key_val->ls[0];
 	lse_mask = &key_mask->ls[0];
 
-	if (tb[TCA_FLOWER_KEY_MPLS_TTL]) {
+	अगर (tb[TCA_FLOWER_KEY_MPLS_TTL]) अणु
 		lse_val->mpls_ttl = nla_get_u8(tb[TCA_FLOWER_KEY_MPLS_TTL]);
 		lse_mask->mpls_ttl = MPLS_TTL_MASK;
 		dissector_set_mpls_lse(key_val, 0);
 		dissector_set_mpls_lse(key_mask, 0);
-	}
-	if (tb[TCA_FLOWER_KEY_MPLS_BOS]) {
+	पूर्ण
+	अगर (tb[TCA_FLOWER_KEY_MPLS_BOS]) अणु
 		u8 bos = nla_get_u8(tb[TCA_FLOWER_KEY_MPLS_BOS]);
 
-		if (bos & ~MPLS_BOS_MASK) {
+		अगर (bos & ~MPLS_BOS_MASK) अणु
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[TCA_FLOWER_KEY_MPLS_BOS],
 					    "Bottom Of Stack (BOS) must be 0 or 1");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		lse_val->mpls_bos = bos;
 		lse_mask->mpls_bos = MPLS_BOS_MASK;
 		dissector_set_mpls_lse(key_val, 0);
 		dissector_set_mpls_lse(key_mask, 0);
-	}
-	if (tb[TCA_FLOWER_KEY_MPLS_TC]) {
+	पूर्ण
+	अगर (tb[TCA_FLOWER_KEY_MPLS_TC]) अणु
 		u8 tc = nla_get_u8(tb[TCA_FLOWER_KEY_MPLS_TC]);
 
-		if (tc & ~MPLS_TC_MASK) {
+		अगर (tc & ~MPLS_TC_MASK) अणु
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[TCA_FLOWER_KEY_MPLS_TC],
 					    "Traffic Class (TC) must be between 0 and 7");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		lse_val->mpls_tc = tc;
 		lse_mask->mpls_tc = MPLS_TC_MASK;
 		dissector_set_mpls_lse(key_val, 0);
 		dissector_set_mpls_lse(key_mask, 0);
-	}
-	if (tb[TCA_FLOWER_KEY_MPLS_LABEL]) {
+	पूर्ण
+	अगर (tb[TCA_FLOWER_KEY_MPLS_LABEL]) अणु
 		u32 label = nla_get_u32(tb[TCA_FLOWER_KEY_MPLS_LABEL]);
 
-		if (label & ~MPLS_LABEL_MASK) {
+		अगर (label & ~MPLS_LABEL_MASK) अणु
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[TCA_FLOWER_KEY_MPLS_LABEL],
 					    "Label must be between 0 and 1048575");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		lse_val->mpls_label = label;
 		lse_mask->mpls_label = MPLS_LABEL_MASK;
 		dissector_set_mpls_lse(key_val, 0);
 		dissector_set_mpls_lse(key_mask, 0);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void fl_set_key_vlan(struct nlattr **tb,
+अटल व्योम fl_set_key_vlan(काष्ठा nlattr **tb,
 			    __be16 ethertype,
-			    int vlan_id_key, int vlan_prio_key,
-			    struct flow_dissector_key_vlan *key_val,
-			    struct flow_dissector_key_vlan *key_mask)
-{
-#define VLAN_PRIORITY_MASK	0x7
+			    पूर्णांक vlan_id_key, पूर्णांक vlan_prio_key,
+			    काष्ठा flow_dissector_key_vlan *key_val,
+			    काष्ठा flow_dissector_key_vlan *key_mask)
+अणु
+#घोषणा VLAN_PRIORITY_MASK	0x7
 
-	if (tb[vlan_id_key]) {
+	अगर (tb[vlan_id_key]) अणु
 		key_val->vlan_id =
 			nla_get_u16(tb[vlan_id_key]) & VLAN_VID_MASK;
 		key_mask->vlan_id = VLAN_VID_MASK;
-	}
-	if (tb[vlan_prio_key]) {
+	पूर्ण
+	अगर (tb[vlan_prio_key]) अणु
 		key_val->vlan_priority =
 			nla_get_u8(tb[vlan_prio_key]) &
 			VLAN_PRIORITY_MASK;
 		key_mask->vlan_priority = VLAN_PRIORITY_MASK;
-	}
+	पूर्ण
 	key_val->vlan_tpid = ethertype;
 	key_mask->vlan_tpid = cpu_to_be16(~0);
-}
+पूर्ण
 
-static void fl_set_key_flag(u32 flower_key, u32 flower_mask,
+अटल व्योम fl_set_key_flag(u32 flower_key, u32 flower_mask,
 			    u32 *dissector_key, u32 *dissector_mask,
 			    u32 flower_flag_bit, u32 dissector_flag_bit)
-{
-	if (flower_mask & flower_flag_bit) {
+अणु
+	अगर (flower_mask & flower_flag_bit) अणु
 		*dissector_mask |= dissector_flag_bit;
-		if (flower_key & flower_flag_bit)
+		अगर (flower_key & flower_flag_bit)
 			*dissector_key |= dissector_flag_bit;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int fl_set_key_flags(struct nlattr **tb, u32 *flags_key,
-			    u32 *flags_mask, struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक fl_set_key_flags(काष्ठा nlattr **tb, u32 *flags_key,
+			    u32 *flags_mask, काष्ठा netlink_ext_ack *extack)
+अणु
 	u32 key, mask;
 
-	/* mask is mandatory for flags */
-	if (!tb[TCA_FLOWER_KEY_FLAGS_MASK]) {
+	/* mask is mandatory क्रम flags */
+	अगर (!tb[TCA_FLOWER_KEY_FLAGS_MASK]) अणु
 		NL_SET_ERR_MSG(extack, "Missing flags mask");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	key = be32_to_cpu(nla_get_be32(tb[TCA_FLOWER_KEY_FLAGS]));
 	mask = be32_to_cpu(nla_get_be32(tb[TCA_FLOWER_KEY_FLAGS_MASK]));
@@ -1056,472 +1057,472 @@ static int fl_set_key_flags(struct nlattr **tb, u32 *flags_key,
 			TCA_FLOWER_KEY_FLAGS_FRAG_IS_FIRST,
 			FLOW_DIS_FIRST_FRAG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fl_set_key_ip(struct nlattr **tb, bool encap,
-			  struct flow_dissector_key_ip *key,
-			  struct flow_dissector_key_ip *mask)
-{
-	int tos_key = encap ? TCA_FLOWER_KEY_ENC_IP_TOS : TCA_FLOWER_KEY_IP_TOS;
-	int ttl_key = encap ? TCA_FLOWER_KEY_ENC_IP_TTL : TCA_FLOWER_KEY_IP_TTL;
-	int tos_mask = encap ? TCA_FLOWER_KEY_ENC_IP_TOS_MASK : TCA_FLOWER_KEY_IP_TOS_MASK;
-	int ttl_mask = encap ? TCA_FLOWER_KEY_ENC_IP_TTL_MASK : TCA_FLOWER_KEY_IP_TTL_MASK;
+अटल व्योम fl_set_key_ip(काष्ठा nlattr **tb, bool encap,
+			  काष्ठा flow_dissector_key_ip *key,
+			  काष्ठा flow_dissector_key_ip *mask)
+अणु
+	पूर्णांक tos_key = encap ? TCA_FLOWER_KEY_ENC_IP_TOS : TCA_FLOWER_KEY_IP_TOS;
+	पूर्णांक ttl_key = encap ? TCA_FLOWER_KEY_ENC_IP_TTL : TCA_FLOWER_KEY_IP_TTL;
+	पूर्णांक tos_mask = encap ? TCA_FLOWER_KEY_ENC_IP_TOS_MASK : TCA_FLOWER_KEY_IP_TOS_MASK;
+	पूर्णांक ttl_mask = encap ? TCA_FLOWER_KEY_ENC_IP_TTL_MASK : TCA_FLOWER_KEY_IP_TTL_MASK;
 
-	fl_set_key_val(tb, &key->tos, tos_key, &mask->tos, tos_mask, sizeof(key->tos));
-	fl_set_key_val(tb, &key->ttl, ttl_key, &mask->ttl, ttl_mask, sizeof(key->ttl));
-}
+	fl_set_key_val(tb, &key->tos, tos_key, &mask->tos, tos_mask, माप(key->tos));
+	fl_set_key_val(tb, &key->ttl, ttl_key, &mask->ttl, ttl_mask, माप(key->ttl));
+पूर्ण
 
-static int fl_set_geneve_opt(const struct nlattr *nla, struct fl_flow_key *key,
-			     int depth, int option_len,
-			     struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX + 1];
-	struct nlattr *class = NULL, *type = NULL, *data = NULL;
-	struct geneve_opt *opt;
-	int err, data_len = 0;
+अटल पूर्णांक fl_set_geneve_opt(स्थिर काष्ठा nlattr *nla, काष्ठा fl_flow_key *key,
+			     पूर्णांक depth, पूर्णांक option_len,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX + 1];
+	काष्ठा nlattr *class = शून्य, *type = शून्य, *data = शून्य;
+	काष्ठा geneve_opt *opt;
+	पूर्णांक err, data_len = 0;
 
-	if (option_len > sizeof(struct geneve_opt))
-		data_len = option_len - sizeof(struct geneve_opt);
+	अगर (option_len > माप(काष्ठा geneve_opt))
+		data_len = option_len - माप(काष्ठा geneve_opt);
 
-	opt = (struct geneve_opt *)&key->enc_opts.data[key->enc_opts.len];
-	memset(opt, 0xff, option_len);
+	opt = (काष्ठा geneve_opt *)&key->enc_opts.data[key->enc_opts.len];
+	स_रखो(opt, 0xff, option_len);
 	opt->length = data_len / 4;
 	opt->r1 = 0;
 	opt->r2 = 0;
 	opt->r3 = 0;
 
-	/* If no mask has been prodived we assume an exact match. */
-	if (!depth)
-		return sizeof(struct geneve_opt) + data_len;
+	/* If no mask has been proभागed we assume an exact match. */
+	अगर (!depth)
+		वापस माप(काष्ठा geneve_opt) + data_len;
 
-	if (nla_type(nla) != TCA_FLOWER_KEY_ENC_OPTS_GENEVE) {
+	अगर (nla_type(nla) != TCA_FLOWER_KEY_ENC_OPTS_GENEVE) अणु
 		NL_SET_ERR_MSG(extack, "Non-geneve option type for mask");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = nla_parse_nested_deprecated(tb,
 					  TCA_FLOWER_KEY_ENC_OPT_GENEVE_MAX,
 					  nla, geneve_opt_policy, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* We are not allowed to omit any of CLASS, TYPE or DATA
 	 * fields from the key.
 	 */
-	if (!option_len &&
+	अगर (!option_len &&
 	    (!tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS] ||
 	     !tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE] ||
-	     !tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA])) {
+	     !tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA])) अणु
 		NL_SET_ERR_MSG(extack, "Missing tunnel key geneve option class, type or data");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Omitting any of CLASS, TYPE or DATA fields is allowed
-	 * for the mask.
+	 * क्रम the mask.
 	 */
-	if (tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA]) {
-		int new_len = key->enc_opts.len;
+	अगर (tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA]) अणु
+		पूर्णांक new_len = key->enc_opts.len;
 
 		data = tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA];
 		data_len = nla_len(data);
-		if (data_len < 4) {
+		अगर (data_len < 4) अणु
 			NL_SET_ERR_MSG(extack, "Tunnel key geneve option data is less than 4 bytes long");
-			return -ERANGE;
-		}
-		if (data_len % 4) {
+			वापस -दुस्फल;
+		पूर्ण
+		अगर (data_len % 4) अणु
 			NL_SET_ERR_MSG(extack, "Tunnel key geneve option data is not a multiple of 4 bytes long");
-			return -ERANGE;
-		}
+			वापस -दुस्फल;
+		पूर्ण
 
-		new_len += sizeof(struct geneve_opt) + data_len;
+		new_len += माप(काष्ठा geneve_opt) + data_len;
 		BUILD_BUG_ON(FLOW_DIS_TUN_OPTS_MAX != IP_TUNNEL_OPTS_MAX);
-		if (new_len > FLOW_DIS_TUN_OPTS_MAX) {
+		अगर (new_len > FLOW_DIS_TUN_OPTS_MAX) अणु
 			NL_SET_ERR_MSG(extack, "Tunnel options exceeds max size");
-			return -ERANGE;
-		}
+			वापस -दुस्फल;
+		पूर्ण
 		opt->length = data_len / 4;
-		memcpy(opt->opt_data, nla_data(data), data_len);
-	}
+		स_नकल(opt->opt_data, nla_data(data), data_len);
+	पूर्ण
 
-	if (tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS]) {
+	अगर (tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS]) अणु
 		class = tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS];
 		opt->opt_class = nla_get_be16(class);
-	}
+	पूर्ण
 
-	if (tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE]) {
+	अगर (tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE]) अणु
 		type = tb[TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE];
 		opt->type = nla_get_u8(type);
-	}
+	पूर्ण
 
-	return sizeof(struct geneve_opt) + data_len;
-}
+	वापस माप(काष्ठा geneve_opt) + data_len;
+पूर्ण
 
-static int fl_set_vxlan_opt(const struct nlattr *nla, struct fl_flow_key *key,
-			    int depth, int option_len,
-			    struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[TCA_FLOWER_KEY_ENC_OPT_VXLAN_MAX + 1];
-	struct vxlan_metadata *md;
-	int err;
+अटल पूर्णांक fl_set_vxlan_opt(स्थिर काष्ठा nlattr *nla, काष्ठा fl_flow_key *key,
+			    पूर्णांक depth, पूर्णांक option_len,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[TCA_FLOWER_KEY_ENC_OPT_VXLAN_MAX + 1];
+	काष्ठा vxlan_metadata *md;
+	पूर्णांक err;
 
-	md = (struct vxlan_metadata *)&key->enc_opts.data[key->enc_opts.len];
-	memset(md, 0xff, sizeof(*md));
+	md = (काष्ठा vxlan_metadata *)&key->enc_opts.data[key->enc_opts.len];
+	स_रखो(md, 0xff, माप(*md));
 
-	if (!depth)
-		return sizeof(*md);
+	अगर (!depth)
+		वापस माप(*md);
 
-	if (nla_type(nla) != TCA_FLOWER_KEY_ENC_OPTS_VXLAN) {
+	अगर (nla_type(nla) != TCA_FLOWER_KEY_ENC_OPTS_VXLAN) अणु
 		NL_SET_ERR_MSG(extack, "Non-vxlan option type for mask");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = nla_parse_nested(tb, TCA_FLOWER_KEY_ENC_OPT_VXLAN_MAX, nla,
 			       vxlan_opt_policy, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!option_len && !tb[TCA_FLOWER_KEY_ENC_OPT_VXLAN_GBP]) {
+	अगर (!option_len && !tb[TCA_FLOWER_KEY_ENC_OPT_VXLAN_GBP]) अणु
 		NL_SET_ERR_MSG(extack, "Missing tunnel key vxlan option gbp");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (tb[TCA_FLOWER_KEY_ENC_OPT_VXLAN_GBP]) {
+	अगर (tb[TCA_FLOWER_KEY_ENC_OPT_VXLAN_GBP]) अणु
 		md->gbp = nla_get_u32(tb[TCA_FLOWER_KEY_ENC_OPT_VXLAN_GBP]);
 		md->gbp &= VXLAN_GBP_MASK;
-	}
+	पूर्ण
 
-	return sizeof(*md);
-}
+	वापस माप(*md);
+पूर्ण
 
-static int fl_set_erspan_opt(const struct nlattr *nla, struct fl_flow_key *key,
-			     int depth, int option_len,
-			     struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_MAX + 1];
-	struct erspan_metadata *md;
-	int err;
+अटल पूर्णांक fl_set_erspan_opt(स्थिर काष्ठा nlattr *nla, काष्ठा fl_flow_key *key,
+			     पूर्णांक depth, पूर्णांक option_len,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_MAX + 1];
+	काष्ठा erspan_metadata *md;
+	पूर्णांक err;
 
-	md = (struct erspan_metadata *)&key->enc_opts.data[key->enc_opts.len];
-	memset(md, 0xff, sizeof(*md));
+	md = (काष्ठा erspan_metadata *)&key->enc_opts.data[key->enc_opts.len];
+	स_रखो(md, 0xff, माप(*md));
 	md->version = 1;
 
-	if (!depth)
-		return sizeof(*md);
+	अगर (!depth)
+		वापस माप(*md);
 
-	if (nla_type(nla) != TCA_FLOWER_KEY_ENC_OPTS_ERSPAN) {
+	अगर (nla_type(nla) != TCA_FLOWER_KEY_ENC_OPTS_ERSPAN) अणु
 		NL_SET_ERR_MSG(extack, "Non-erspan option type for mask");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = nla_parse_nested(tb, TCA_FLOWER_KEY_ENC_OPT_ERSPAN_MAX, nla,
 			       erspan_opt_policy, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!option_len && !tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_VER]) {
+	अगर (!option_len && !tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_VER]) अणु
 		NL_SET_ERR_MSG(extack, "Missing tunnel key erspan option ver");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_VER])
+	अगर (tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_VER])
 		md->version = nla_get_u8(tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_VER]);
 
-	if (md->version == 1) {
-		if (!option_len && !tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_INDEX]) {
+	अगर (md->version == 1) अणु
+		अगर (!option_len && !tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_INDEX]) अणु
 			NL_SET_ERR_MSG(extack, "Missing tunnel key erspan option index");
-			return -EINVAL;
-		}
-		if (tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_INDEX]) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_INDEX]) अणु
 			nla = tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_INDEX];
-			memset(&md->u, 0x00, sizeof(md->u));
+			स_रखो(&md->u, 0x00, माप(md->u));
 			md->u.index = nla_get_be32(nla);
-		}
-	} else if (md->version == 2) {
-		if (!option_len && (!tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_DIR] ||
-				    !tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_HWID])) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (md->version == 2) अणु
+		अगर (!option_len && (!tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_सूची] ||
+				    !tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_HWID])) अणु
 			NL_SET_ERR_MSG(extack, "Missing tunnel key erspan option dir or hwid");
-			return -EINVAL;
-		}
-		if (tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_DIR]) {
-			nla = tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_DIR];
+			वापस -EINVAL;
+		पूर्ण
+		अगर (tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_सूची]) अणु
+			nla = tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_सूची];
 			md->u.md2.dir = nla_get_u8(nla);
-		}
-		if (tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_HWID]) {
+		पूर्ण
+		अगर (tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_HWID]) अणु
 			nla = tb[TCA_FLOWER_KEY_ENC_OPT_ERSPAN_HWID];
 			set_hwid(&md->u.md2, nla_get_u8(nla));
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		NL_SET_ERR_MSG(extack, "Tunnel key erspan option ver is incorrect");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return sizeof(*md);
-}
+	वापस माप(*md);
+पूर्ण
 
-static int fl_set_enc_opt(struct nlattr **tb, struct fl_flow_key *key,
-			  struct fl_flow_key *mask,
-			  struct netlink_ext_ack *extack)
-{
-	const struct nlattr *nla_enc_key, *nla_opt_key, *nla_opt_msk = NULL;
-	int err, option_len, key_depth, msk_depth = 0;
+अटल पूर्णांक fl_set_enc_opt(काष्ठा nlattr **tb, काष्ठा fl_flow_key *key,
+			  काष्ठा fl_flow_key *mask,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	स्थिर काष्ठा nlattr *nla_enc_key, *nla_opt_key, *nla_opt_msk = शून्य;
+	पूर्णांक err, option_len, key_depth, msk_depth = 0;
 
 	err = nla_validate_nested_deprecated(tb[TCA_FLOWER_KEY_ENC_OPTS],
 					     TCA_FLOWER_KEY_ENC_OPTS_MAX,
 					     enc_opts_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	nla_enc_key = nla_data(tb[TCA_FLOWER_KEY_ENC_OPTS]);
 
-	if (tb[TCA_FLOWER_KEY_ENC_OPTS_MASK]) {
+	अगर (tb[TCA_FLOWER_KEY_ENC_OPTS_MASK]) अणु
 		err = nla_validate_nested_deprecated(tb[TCA_FLOWER_KEY_ENC_OPTS_MASK],
 						     TCA_FLOWER_KEY_ENC_OPTS_MAX,
 						     enc_opts_policy, extack);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		nla_opt_msk = nla_data(tb[TCA_FLOWER_KEY_ENC_OPTS_MASK]);
 		msk_depth = nla_len(tb[TCA_FLOWER_KEY_ENC_OPTS_MASK]);
-		if (!nla_ok(nla_opt_msk, msk_depth)) {
+		अगर (!nla_ok(nla_opt_msk, msk_depth)) अणु
 			NL_SET_ERR_MSG(extack, "Invalid nested attribute for masks");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	nla_for_each_attr(nla_opt_key, nla_enc_key,
-			  nla_len(tb[TCA_FLOWER_KEY_ENC_OPTS]), key_depth) {
-		switch (nla_type(nla_opt_key)) {
-		case TCA_FLOWER_KEY_ENC_OPTS_GENEVE:
-			if (key->enc_opts.dst_opt_type &&
-			    key->enc_opts.dst_opt_type != TUNNEL_GENEVE_OPT) {
+	nla_क्रम_each_attr(nla_opt_key, nla_enc_key,
+			  nla_len(tb[TCA_FLOWER_KEY_ENC_OPTS]), key_depth) अणु
+		चयन (nla_type(nla_opt_key)) अणु
+		हाल TCA_FLOWER_KEY_ENC_OPTS_GENEVE:
+			अगर (key->enc_opts.dst_opt_type &&
+			    key->enc_opts.dst_opt_type != TUNNEL_GENEVE_OPT) अणु
 				NL_SET_ERR_MSG(extack, "Duplicate type for geneve options");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			option_len = 0;
 			key->enc_opts.dst_opt_type = TUNNEL_GENEVE_OPT;
 			option_len = fl_set_geneve_opt(nla_opt_key, key,
 						       key_depth, option_len,
 						       extack);
-			if (option_len < 0)
-				return option_len;
+			अगर (option_len < 0)
+				वापस option_len;
 
 			key->enc_opts.len += option_len;
-			/* At the same time we need to parse through the mask
-			 * in order to verify exact and mask attribute lengths.
+			/* At the same समय we need to parse through the mask
+			 * in order to verअगरy exact and mask attribute lengths.
 			 */
 			mask->enc_opts.dst_opt_type = TUNNEL_GENEVE_OPT;
 			option_len = fl_set_geneve_opt(nla_opt_msk, mask,
 						       msk_depth, option_len,
 						       extack);
-			if (option_len < 0)
-				return option_len;
+			अगर (option_len < 0)
+				वापस option_len;
 
 			mask->enc_opts.len += option_len;
-			if (key->enc_opts.len != mask->enc_opts.len) {
+			अगर (key->enc_opts.len != mask->enc_opts.len) अणु
 				NL_SET_ERR_MSG(extack, "Key and mask miss aligned");
-				return -EINVAL;
-			}
-			break;
-		case TCA_FLOWER_KEY_ENC_OPTS_VXLAN:
-			if (key->enc_opts.dst_opt_type) {
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		हाल TCA_FLOWER_KEY_ENC_OPTS_VXLAN:
+			अगर (key->enc_opts.dst_opt_type) अणु
 				NL_SET_ERR_MSG(extack, "Duplicate type for vxlan options");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			option_len = 0;
 			key->enc_opts.dst_opt_type = TUNNEL_VXLAN_OPT;
 			option_len = fl_set_vxlan_opt(nla_opt_key, key,
 						      key_depth, option_len,
 						      extack);
-			if (option_len < 0)
-				return option_len;
+			अगर (option_len < 0)
+				वापस option_len;
 
 			key->enc_opts.len += option_len;
-			/* At the same time we need to parse through the mask
-			 * in order to verify exact and mask attribute lengths.
+			/* At the same समय we need to parse through the mask
+			 * in order to verअगरy exact and mask attribute lengths.
 			 */
 			mask->enc_opts.dst_opt_type = TUNNEL_VXLAN_OPT;
 			option_len = fl_set_vxlan_opt(nla_opt_msk, mask,
 						      msk_depth, option_len,
 						      extack);
-			if (option_len < 0)
-				return option_len;
+			अगर (option_len < 0)
+				वापस option_len;
 
 			mask->enc_opts.len += option_len;
-			if (key->enc_opts.len != mask->enc_opts.len) {
+			अगर (key->enc_opts.len != mask->enc_opts.len) अणु
 				NL_SET_ERR_MSG(extack, "Key and mask miss aligned");
-				return -EINVAL;
-			}
-			break;
-		case TCA_FLOWER_KEY_ENC_OPTS_ERSPAN:
-			if (key->enc_opts.dst_opt_type) {
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		हाल TCA_FLOWER_KEY_ENC_OPTS_ERSPAN:
+			अगर (key->enc_opts.dst_opt_type) अणु
 				NL_SET_ERR_MSG(extack, "Duplicate type for erspan options");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			option_len = 0;
 			key->enc_opts.dst_opt_type = TUNNEL_ERSPAN_OPT;
 			option_len = fl_set_erspan_opt(nla_opt_key, key,
 						       key_depth, option_len,
 						       extack);
-			if (option_len < 0)
-				return option_len;
+			अगर (option_len < 0)
+				वापस option_len;
 
 			key->enc_opts.len += option_len;
-			/* At the same time we need to parse through the mask
-			 * in order to verify exact and mask attribute lengths.
+			/* At the same समय we need to parse through the mask
+			 * in order to verअगरy exact and mask attribute lengths.
 			 */
 			mask->enc_opts.dst_opt_type = TUNNEL_ERSPAN_OPT;
 			option_len = fl_set_erspan_opt(nla_opt_msk, mask,
 						       msk_depth, option_len,
 						       extack);
-			if (option_len < 0)
-				return option_len;
+			अगर (option_len < 0)
+				वापस option_len;
 
 			mask->enc_opts.len += option_len;
-			if (key->enc_opts.len != mask->enc_opts.len) {
+			अगर (key->enc_opts.len != mask->enc_opts.len) अणु
 				NL_SET_ERR_MSG(extack, "Key and mask miss aligned");
-				return -EINVAL;
-			}
-			break;
-		default:
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		शेष:
 			NL_SET_ERR_MSG(extack, "Unknown tunnel option type");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!msk_depth)
-			continue;
+		अगर (!msk_depth)
+			जारी;
 
-		if (!nla_ok(nla_opt_msk, msk_depth)) {
+		अगर (!nla_ok(nla_opt_msk, msk_depth)) अणु
 			NL_SET_ERR_MSG(extack, "A mask attribute is invalid");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		nla_opt_msk = nla_next(nla_opt_msk, &msk_depth);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_validate_ct_state(u16 state, struct nlattr *tb,
-				struct netlink_ext_ack *extack)
-{
-	if (state && !(state & TCA_FLOWER_KEY_CT_FLAGS_TRACKED)) {
+अटल पूर्णांक fl_validate_ct_state(u16 state, काष्ठा nlattr *tb,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (state && !(state & TCA_FLOWER_KEY_CT_FLAGS_TRACKED)) अणु
 		NL_SET_ERR_MSG_ATTR(extack, tb,
 				    "no trk, so no other flag can be set");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (state & TCA_FLOWER_KEY_CT_FLAGS_NEW &&
-	    state & TCA_FLOWER_KEY_CT_FLAGS_ESTABLISHED) {
+	अगर (state & TCA_FLOWER_KEY_CT_FLAGS_NEW &&
+	    state & TCA_FLOWER_KEY_CT_FLAGS_ESTABLISHED) अणु
 		NL_SET_ERR_MSG_ATTR(extack, tb,
 				    "new and est are mutually exclusive");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (state & TCA_FLOWER_KEY_CT_FLAGS_INVALID &&
+	अगर (state & TCA_FLOWER_KEY_CT_FLAGS_INVALID &&
 	    state & ~(TCA_FLOWER_KEY_CT_FLAGS_TRACKED |
-		      TCA_FLOWER_KEY_CT_FLAGS_INVALID)) {
+		      TCA_FLOWER_KEY_CT_FLAGS_INVALID)) अणु
 		NL_SET_ERR_MSG_ATTR(extack, tb,
 				    "when inv is set, only trk may be set");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (state & TCA_FLOWER_KEY_CT_FLAGS_NEW &&
-	    state & TCA_FLOWER_KEY_CT_FLAGS_REPLY) {
+	अगर (state & TCA_FLOWER_KEY_CT_FLAGS_NEW &&
+	    state & TCA_FLOWER_KEY_CT_FLAGS_REPLY) अणु
 		NL_SET_ERR_MSG_ATTR(extack, tb,
 				    "new and rpl are mutually exclusive");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_set_key_ct(struct nlattr **tb,
-			 struct flow_dissector_key_ct *key,
-			 struct flow_dissector_key_ct *mask,
-			 struct netlink_ext_ack *extack)
-{
-	if (tb[TCA_FLOWER_KEY_CT_STATE]) {
-		int err;
+अटल पूर्णांक fl_set_key_ct(काष्ठा nlattr **tb,
+			 काष्ठा flow_dissector_key_ct *key,
+			 काष्ठा flow_dissector_key_ct *mask,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (tb[TCA_FLOWER_KEY_CT_STATE]) अणु
+		पूर्णांक err;
 
-		if (!IS_ENABLED(CONFIG_NF_CONNTRACK)) {
+		अगर (!IS_ENABLED(CONFIG_NF_CONNTRACK)) अणु
 			NL_SET_ERR_MSG(extack, "Conntrack isn't enabled");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 		fl_set_key_val(tb, &key->ct_state, TCA_FLOWER_KEY_CT_STATE,
 			       &mask->ct_state, TCA_FLOWER_KEY_CT_STATE_MASK,
-			       sizeof(key->ct_state));
+			       माप(key->ct_state));
 
 		err = fl_validate_ct_state(key->ct_state & mask->ct_state,
 					   tb[TCA_FLOWER_KEY_CT_STATE_MASK],
 					   extack);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-	}
-	if (tb[TCA_FLOWER_KEY_CT_ZONE]) {
-		if (!IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES)) {
+	पूर्ण
+	अगर (tb[TCA_FLOWER_KEY_CT_ZONE]) अणु
+		अगर (!IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES)) अणु
 			NL_SET_ERR_MSG(extack, "Conntrack zones isn't enabled");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 		fl_set_key_val(tb, &key->ct_zone, TCA_FLOWER_KEY_CT_ZONE,
 			       &mask->ct_zone, TCA_FLOWER_KEY_CT_ZONE_MASK,
-			       sizeof(key->ct_zone));
-	}
-	if (tb[TCA_FLOWER_KEY_CT_MARK]) {
-		if (!IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)) {
+			       माप(key->ct_zone));
+	पूर्ण
+	अगर (tb[TCA_FLOWER_KEY_CT_MARK]) अणु
+		अगर (!IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)) अणु
 			NL_SET_ERR_MSG(extack, "Conntrack mark isn't enabled");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 		fl_set_key_val(tb, &key->ct_mark, TCA_FLOWER_KEY_CT_MARK,
 			       &mask->ct_mark, TCA_FLOWER_KEY_CT_MARK_MASK,
-			       sizeof(key->ct_mark));
-	}
-	if (tb[TCA_FLOWER_KEY_CT_LABELS]) {
-		if (!IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS)) {
+			       माप(key->ct_mark));
+	पूर्ण
+	अगर (tb[TCA_FLOWER_KEY_CT_LABELS]) अणु
+		अगर (!IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS)) अणु
 			NL_SET_ERR_MSG(extack, "Conntrack labels aren't enabled");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 		fl_set_key_val(tb, key->ct_labels, TCA_FLOWER_KEY_CT_LABELS,
 			       mask->ct_labels, TCA_FLOWER_KEY_CT_LABELS_MASK,
-			       sizeof(key->ct_labels));
-	}
+			       माप(key->ct_labels));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_set_key(struct net *net, struct nlattr **tb,
-		      struct fl_flow_key *key, struct fl_flow_key *mask,
-		      struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक fl_set_key(काष्ठा net *net, काष्ठा nlattr **tb,
+		      काष्ठा fl_flow_key *key, काष्ठा fl_flow_key *mask,
+		      काष्ठा netlink_ext_ack *extack)
+अणु
 	__be16 ethertype;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (tb[TCA_FLOWER_INDEV]) {
-		int err = tcf_change_indev(net, tb[TCA_FLOWER_INDEV], extack);
-		if (err < 0)
-			return err;
-		key->meta.ingress_ifindex = err;
-		mask->meta.ingress_ifindex = 0xffffffff;
-	}
+	अगर (tb[TCA_FLOWER_INDEV]) अणु
+		पूर्णांक err = tcf_change_indev(net, tb[TCA_FLOWER_INDEV], extack);
+		अगर (err < 0)
+			वापस err;
+		key->meta.ingress_अगरindex = err;
+		mask->meta.ingress_अगरindex = 0xffffffff;
+	पूर्ण
 
 	fl_set_key_val(tb, key->eth.dst, TCA_FLOWER_KEY_ETH_DST,
 		       mask->eth.dst, TCA_FLOWER_KEY_ETH_DST_MASK,
-		       sizeof(key->eth.dst));
+		       माप(key->eth.dst));
 	fl_set_key_val(tb, key->eth.src, TCA_FLOWER_KEY_ETH_SRC,
 		       mask->eth.src, TCA_FLOWER_KEY_ETH_SRC_MASK,
-		       sizeof(key->eth.src));
+		       माप(key->eth.src));
 
-	if (tb[TCA_FLOWER_KEY_ETH_TYPE]) {
+	अगर (tb[TCA_FLOWER_KEY_ETH_TYPE]) अणु
 		ethertype = nla_get_be16(tb[TCA_FLOWER_KEY_ETH_TYPE]);
 
-		if (eth_type_vlan(ethertype)) {
+		अगर (eth_type_vlan(ethertype)) अणु
 			fl_set_key_vlan(tb, ethertype, TCA_FLOWER_KEY_VLAN_ID,
 					TCA_FLOWER_KEY_VLAN_PRIO, &key->vlan,
 					&mask->vlan);
 
-			if (tb[TCA_FLOWER_KEY_VLAN_ETH_TYPE]) {
+			अगर (tb[TCA_FLOWER_KEY_VLAN_ETH_TYPE]) अणु
 				ethertype = nla_get_be16(tb[TCA_FLOWER_KEY_VLAN_ETH_TYPE]);
-				if (eth_type_vlan(ethertype)) {
+				अगर (eth_type_vlan(ethertype)) अणु
 					fl_set_key_vlan(tb, ethertype,
 							TCA_FLOWER_KEY_CVLAN_ID,
 							TCA_FLOWER_KEY_CVLAN_PRIO,
@@ -1530,239 +1531,239 @@ static int fl_set_key(struct net *net, struct nlattr **tb,
 						       TCA_FLOWER_KEY_CVLAN_ETH_TYPE,
 						       &mask->basic.n_proto,
 						       TCA_FLOWER_UNSPEC,
-						       sizeof(key->basic.n_proto));
-				} else {
+						       माप(key->basic.n_proto));
+				पूर्ण अन्यथा अणु
 					key->basic.n_proto = ethertype;
 					mask->basic.n_proto = cpu_to_be16(~0);
-				}
-			}
-		} else {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			key->basic.n_proto = ethertype;
 			mask->basic.n_proto = cpu_to_be16(~0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (key->basic.n_proto == htons(ETH_P_IP) ||
-	    key->basic.n_proto == htons(ETH_P_IPV6)) {
+	अगर (key->basic.n_proto == htons(ETH_P_IP) ||
+	    key->basic.n_proto == htons(ETH_P_IPV6)) अणु
 		fl_set_key_val(tb, &key->basic.ip_proto, TCA_FLOWER_KEY_IP_PROTO,
 			       &mask->basic.ip_proto, TCA_FLOWER_UNSPEC,
-			       sizeof(key->basic.ip_proto));
+			       माप(key->basic.ip_proto));
 		fl_set_key_ip(tb, false, &key->ip, &mask->ip);
-	}
+	पूर्ण
 
-	if (tb[TCA_FLOWER_KEY_IPV4_SRC] || tb[TCA_FLOWER_KEY_IPV4_DST]) {
+	अगर (tb[TCA_FLOWER_KEY_IPV4_SRC] || tb[TCA_FLOWER_KEY_IPV4_DST]) अणु
 		key->control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
 		mask->control.addr_type = ~0;
 		fl_set_key_val(tb, &key->ipv4.src, TCA_FLOWER_KEY_IPV4_SRC,
 			       &mask->ipv4.src, TCA_FLOWER_KEY_IPV4_SRC_MASK,
-			       sizeof(key->ipv4.src));
+			       माप(key->ipv4.src));
 		fl_set_key_val(tb, &key->ipv4.dst, TCA_FLOWER_KEY_IPV4_DST,
 			       &mask->ipv4.dst, TCA_FLOWER_KEY_IPV4_DST_MASK,
-			       sizeof(key->ipv4.dst));
-	} else if (tb[TCA_FLOWER_KEY_IPV6_SRC] || tb[TCA_FLOWER_KEY_IPV6_DST]) {
+			       माप(key->ipv4.dst));
+	पूर्ण अन्यथा अगर (tb[TCA_FLOWER_KEY_IPV6_SRC] || tb[TCA_FLOWER_KEY_IPV6_DST]) अणु
 		key->control.addr_type = FLOW_DISSECTOR_KEY_IPV6_ADDRS;
 		mask->control.addr_type = ~0;
 		fl_set_key_val(tb, &key->ipv6.src, TCA_FLOWER_KEY_IPV6_SRC,
 			       &mask->ipv6.src, TCA_FLOWER_KEY_IPV6_SRC_MASK,
-			       sizeof(key->ipv6.src));
+			       माप(key->ipv6.src));
 		fl_set_key_val(tb, &key->ipv6.dst, TCA_FLOWER_KEY_IPV6_DST,
 			       &mask->ipv6.dst, TCA_FLOWER_KEY_IPV6_DST_MASK,
-			       sizeof(key->ipv6.dst));
-	}
+			       माप(key->ipv6.dst));
+	पूर्ण
 
-	if (key->basic.ip_proto == IPPROTO_TCP) {
+	अगर (key->basic.ip_proto == IPPROTO_TCP) अणु
 		fl_set_key_val(tb, &key->tp.src, TCA_FLOWER_KEY_TCP_SRC,
 			       &mask->tp.src, TCA_FLOWER_KEY_TCP_SRC_MASK,
-			       sizeof(key->tp.src));
+			       माप(key->tp.src));
 		fl_set_key_val(tb, &key->tp.dst, TCA_FLOWER_KEY_TCP_DST,
 			       &mask->tp.dst, TCA_FLOWER_KEY_TCP_DST_MASK,
-			       sizeof(key->tp.dst));
+			       माप(key->tp.dst));
 		fl_set_key_val(tb, &key->tcp.flags, TCA_FLOWER_KEY_TCP_FLAGS,
 			       &mask->tcp.flags, TCA_FLOWER_KEY_TCP_FLAGS_MASK,
-			       sizeof(key->tcp.flags));
-	} else if (key->basic.ip_proto == IPPROTO_UDP) {
+			       माप(key->tcp.flags));
+	पूर्ण अन्यथा अगर (key->basic.ip_proto == IPPROTO_UDP) अणु
 		fl_set_key_val(tb, &key->tp.src, TCA_FLOWER_KEY_UDP_SRC,
 			       &mask->tp.src, TCA_FLOWER_KEY_UDP_SRC_MASK,
-			       sizeof(key->tp.src));
+			       माप(key->tp.src));
 		fl_set_key_val(tb, &key->tp.dst, TCA_FLOWER_KEY_UDP_DST,
 			       &mask->tp.dst, TCA_FLOWER_KEY_UDP_DST_MASK,
-			       sizeof(key->tp.dst));
-	} else if (key->basic.ip_proto == IPPROTO_SCTP) {
+			       माप(key->tp.dst));
+	पूर्ण अन्यथा अगर (key->basic.ip_proto == IPPROTO_SCTP) अणु
 		fl_set_key_val(tb, &key->tp.src, TCA_FLOWER_KEY_SCTP_SRC,
 			       &mask->tp.src, TCA_FLOWER_KEY_SCTP_SRC_MASK,
-			       sizeof(key->tp.src));
+			       माप(key->tp.src));
 		fl_set_key_val(tb, &key->tp.dst, TCA_FLOWER_KEY_SCTP_DST,
 			       &mask->tp.dst, TCA_FLOWER_KEY_SCTP_DST_MASK,
-			       sizeof(key->tp.dst));
-	} else if (key->basic.n_proto == htons(ETH_P_IP) &&
-		   key->basic.ip_proto == IPPROTO_ICMP) {
+			       माप(key->tp.dst));
+	पूर्ण अन्यथा अगर (key->basic.n_proto == htons(ETH_P_IP) &&
+		   key->basic.ip_proto == IPPROTO_ICMP) अणु
 		fl_set_key_val(tb, &key->icmp.type, TCA_FLOWER_KEY_ICMPV4_TYPE,
 			       &mask->icmp.type,
 			       TCA_FLOWER_KEY_ICMPV4_TYPE_MASK,
-			       sizeof(key->icmp.type));
+			       माप(key->icmp.type));
 		fl_set_key_val(tb, &key->icmp.code, TCA_FLOWER_KEY_ICMPV4_CODE,
 			       &mask->icmp.code,
 			       TCA_FLOWER_KEY_ICMPV4_CODE_MASK,
-			       sizeof(key->icmp.code));
-	} else if (key->basic.n_proto == htons(ETH_P_IPV6) &&
-		   key->basic.ip_proto == IPPROTO_ICMPV6) {
+			       माप(key->icmp.code));
+	पूर्ण अन्यथा अगर (key->basic.n_proto == htons(ETH_P_IPV6) &&
+		   key->basic.ip_proto == IPPROTO_ICMPV6) अणु
 		fl_set_key_val(tb, &key->icmp.type, TCA_FLOWER_KEY_ICMPV6_TYPE,
 			       &mask->icmp.type,
 			       TCA_FLOWER_KEY_ICMPV6_TYPE_MASK,
-			       sizeof(key->icmp.type));
+			       माप(key->icmp.type));
 		fl_set_key_val(tb, &key->icmp.code, TCA_FLOWER_KEY_ICMPV6_CODE,
 			       &mask->icmp.code,
 			       TCA_FLOWER_KEY_ICMPV6_CODE_MASK,
-			       sizeof(key->icmp.code));
-	} else if (key->basic.n_proto == htons(ETH_P_MPLS_UC) ||
-		   key->basic.n_proto == htons(ETH_P_MPLS_MC)) {
+			       माप(key->icmp.code));
+	पूर्ण अन्यथा अगर (key->basic.n_proto == htons(ETH_P_MPLS_UC) ||
+		   key->basic.n_proto == htons(ETH_P_MPLS_MC)) अणु
 		ret = fl_set_key_mpls(tb, &key->mpls, &mask->mpls, extack);
-		if (ret)
-			return ret;
-	} else if (key->basic.n_proto == htons(ETH_P_ARP) ||
-		   key->basic.n_proto == htons(ETH_P_RARP)) {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अगर (key->basic.n_proto == htons(ETH_P_ARP) ||
+		   key->basic.n_proto == htons(ETH_P_RARP)) अणु
 		fl_set_key_val(tb, &key->arp.sip, TCA_FLOWER_KEY_ARP_SIP,
 			       &mask->arp.sip, TCA_FLOWER_KEY_ARP_SIP_MASK,
-			       sizeof(key->arp.sip));
+			       माप(key->arp.sip));
 		fl_set_key_val(tb, &key->arp.tip, TCA_FLOWER_KEY_ARP_TIP,
 			       &mask->arp.tip, TCA_FLOWER_KEY_ARP_TIP_MASK,
-			       sizeof(key->arp.tip));
+			       माप(key->arp.tip));
 		fl_set_key_val(tb, &key->arp.op, TCA_FLOWER_KEY_ARP_OP,
 			       &mask->arp.op, TCA_FLOWER_KEY_ARP_OP_MASK,
-			       sizeof(key->arp.op));
+			       माप(key->arp.op));
 		fl_set_key_val(tb, key->arp.sha, TCA_FLOWER_KEY_ARP_SHA,
 			       mask->arp.sha, TCA_FLOWER_KEY_ARP_SHA_MASK,
-			       sizeof(key->arp.sha));
+			       माप(key->arp.sha));
 		fl_set_key_val(tb, key->arp.tha, TCA_FLOWER_KEY_ARP_THA,
 			       mask->arp.tha, TCA_FLOWER_KEY_ARP_THA_MASK,
-			       sizeof(key->arp.tha));
-	}
+			       माप(key->arp.tha));
+	पूर्ण
 
-	if (key->basic.ip_proto == IPPROTO_TCP ||
+	अगर (key->basic.ip_proto == IPPROTO_TCP ||
 	    key->basic.ip_proto == IPPROTO_UDP ||
-	    key->basic.ip_proto == IPPROTO_SCTP) {
+	    key->basic.ip_proto == IPPROTO_SCTP) अणु
 		ret = fl_set_key_port_range(tb, key, mask, extack);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (tb[TCA_FLOWER_KEY_ENC_IPV4_SRC] ||
-	    tb[TCA_FLOWER_KEY_ENC_IPV4_DST]) {
+	अगर (tb[TCA_FLOWER_KEY_ENC_IPV4_SRC] ||
+	    tb[TCA_FLOWER_KEY_ENC_IPV4_DST]) अणु
 		key->enc_control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
 		mask->enc_control.addr_type = ~0;
 		fl_set_key_val(tb, &key->enc_ipv4.src,
 			       TCA_FLOWER_KEY_ENC_IPV4_SRC,
 			       &mask->enc_ipv4.src,
 			       TCA_FLOWER_KEY_ENC_IPV4_SRC_MASK,
-			       sizeof(key->enc_ipv4.src));
+			       माप(key->enc_ipv4.src));
 		fl_set_key_val(tb, &key->enc_ipv4.dst,
 			       TCA_FLOWER_KEY_ENC_IPV4_DST,
 			       &mask->enc_ipv4.dst,
 			       TCA_FLOWER_KEY_ENC_IPV4_DST_MASK,
-			       sizeof(key->enc_ipv4.dst));
-	}
+			       माप(key->enc_ipv4.dst));
+	पूर्ण
 
-	if (tb[TCA_FLOWER_KEY_ENC_IPV6_SRC] ||
-	    tb[TCA_FLOWER_KEY_ENC_IPV6_DST]) {
+	अगर (tb[TCA_FLOWER_KEY_ENC_IPV6_SRC] ||
+	    tb[TCA_FLOWER_KEY_ENC_IPV6_DST]) अणु
 		key->enc_control.addr_type = FLOW_DISSECTOR_KEY_IPV6_ADDRS;
 		mask->enc_control.addr_type = ~0;
 		fl_set_key_val(tb, &key->enc_ipv6.src,
 			       TCA_FLOWER_KEY_ENC_IPV6_SRC,
 			       &mask->enc_ipv6.src,
 			       TCA_FLOWER_KEY_ENC_IPV6_SRC_MASK,
-			       sizeof(key->enc_ipv6.src));
+			       माप(key->enc_ipv6.src));
 		fl_set_key_val(tb, &key->enc_ipv6.dst,
 			       TCA_FLOWER_KEY_ENC_IPV6_DST,
 			       &mask->enc_ipv6.dst,
 			       TCA_FLOWER_KEY_ENC_IPV6_DST_MASK,
-			       sizeof(key->enc_ipv6.dst));
-	}
+			       माप(key->enc_ipv6.dst));
+	पूर्ण
 
 	fl_set_key_val(tb, &key->enc_key_id.keyid, TCA_FLOWER_KEY_ENC_KEY_ID,
 		       &mask->enc_key_id.keyid, TCA_FLOWER_UNSPEC,
-		       sizeof(key->enc_key_id.keyid));
+		       माप(key->enc_key_id.keyid));
 
 	fl_set_key_val(tb, &key->enc_tp.src, TCA_FLOWER_KEY_ENC_UDP_SRC_PORT,
 		       &mask->enc_tp.src, TCA_FLOWER_KEY_ENC_UDP_SRC_PORT_MASK,
-		       sizeof(key->enc_tp.src));
+		       माप(key->enc_tp.src));
 
 	fl_set_key_val(tb, &key->enc_tp.dst, TCA_FLOWER_KEY_ENC_UDP_DST_PORT,
 		       &mask->enc_tp.dst, TCA_FLOWER_KEY_ENC_UDP_DST_PORT_MASK,
-		       sizeof(key->enc_tp.dst));
+		       माप(key->enc_tp.dst));
 
 	fl_set_key_ip(tb, true, &key->enc_ip, &mask->enc_ip);
 
 	fl_set_key_val(tb, &key->hash.hash, TCA_FLOWER_KEY_HASH,
 		       &mask->hash.hash, TCA_FLOWER_KEY_HASH_MASK,
-		       sizeof(key->hash.hash));
+		       माप(key->hash.hash));
 
-	if (tb[TCA_FLOWER_KEY_ENC_OPTS]) {
+	अगर (tb[TCA_FLOWER_KEY_ENC_OPTS]) अणु
 		ret = fl_set_enc_opt(tb, key, mask, extack);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = fl_set_key_ct(tb, &key->ct, &mask->ct, extack);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (tb[TCA_FLOWER_KEY_FLAGS])
+	अगर (tb[TCA_FLOWER_KEY_FLAGS])
 		ret = fl_set_key_flags(tb, &key->control.flags,
 				       &mask->control.flags, extack);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void fl_mask_copy(struct fl_flow_mask *dst,
-			 struct fl_flow_mask *src)
-{
-	const void *psrc = fl_key_get_start(&src->key, src);
-	void *pdst = fl_key_get_start(&dst->key, src);
+अटल व्योम fl_mask_copy(काष्ठा fl_flow_mask *dst,
+			 काष्ठा fl_flow_mask *src)
+अणु
+	स्थिर व्योम *psrc = fl_key_get_start(&src->key, src);
+	व्योम *pdst = fl_key_get_start(&dst->key, src);
 
-	memcpy(pdst, psrc, fl_mask_range(src));
+	स_नकल(pdst, psrc, fl_mask_range(src));
 	dst->range = src->range;
-}
+पूर्ण
 
-static const struct rhashtable_params fl_ht_params = {
-	.key_offset = offsetof(struct cls_fl_filter, mkey), /* base offset */
-	.head_offset = offsetof(struct cls_fl_filter, ht_node),
-	.automatic_shrinking = true,
-};
+अटल स्थिर काष्ठा rhashtable_params fl_ht_params = अणु
+	.key_offset = दुरत्व(काष्ठा cls_fl_filter, mkey), /* base offset */
+	.head_offset = दुरत्व(काष्ठा cls_fl_filter, ht_node),
+	.स्वतःmatic_shrinking = true,
+पूर्ण;
 
-static int fl_init_mask_hashtable(struct fl_flow_mask *mask)
-{
+अटल पूर्णांक fl_init_mask_hashtable(काष्ठा fl_flow_mask *mask)
+अणु
 	mask->filter_ht_params = fl_ht_params;
 	mask->filter_ht_params.key_len = fl_mask_range(mask);
 	mask->filter_ht_params.key_offset += mask->range.start;
 
-	return rhashtable_init(&mask->ht, &mask->filter_ht_params);
-}
+	वापस rhashtable_init(&mask->ht, &mask->filter_ht_params);
+पूर्ण
 
-#define FL_KEY_MEMBER_OFFSET(member) offsetof(struct fl_flow_key, member)
-#define FL_KEY_MEMBER_SIZE(member) sizeof_field(struct fl_flow_key, member)
+#घोषणा FL_KEY_MEMBER_OFFSET(member) दुरत्व(काष्ठा fl_flow_key, member)
+#घोषणा FL_KEY_MEMBER_SIZE(member) माप_field(काष्ठा fl_flow_key, member)
 
-#define FL_KEY_IS_MASKED(mask, member)						\
-	memchr_inv(((char *)mask) + FL_KEY_MEMBER_OFFSET(member),		\
+#घोषणा FL_KEY_IS_MASKED(mask, member)						\
+	स_प्रथम_inv(((अक्षर *)mask) + FL_KEY_MEMBER_OFFSET(member),		\
 		   0, FL_KEY_MEMBER_SIZE(member))				\
 
-#define FL_KEY_SET(keys, cnt, id, member)					\
-	do {									\
+#घोषणा FL_KEY_SET(keys, cnt, id, member)					\
+	करो अणु									\
 		keys[cnt].key_id = id;						\
 		keys[cnt].offset = FL_KEY_MEMBER_OFFSET(member);		\
 		cnt++;								\
-	} while(0);
+	पूर्ण जबतक(0);
 
-#define FL_KEY_SET_IF_MASKED(mask, keys, cnt, id, member)			\
-	do {									\
-		if (FL_KEY_IS_MASKED(mask, member))				\
+#घोषणा FL_KEY_SET_IF_MASKED(mask, keys, cnt, id, member)			\
+	करो अणु									\
+		अगर (FL_KEY_IS_MASKED(mask, member))				\
 			FL_KEY_SET(keys, cnt, id, member);			\
-	} while(0);
+	पूर्ण जबतक(0);
 
-static void fl_init_dissector(struct flow_dissector *dissector,
-			      struct fl_flow_key *mask)
-{
-	struct flow_dissector_key keys[FLOW_DISSECTOR_KEY_MAX];
-	size_t cnt = 0;
+अटल व्योम fl_init_dissector(काष्ठा flow_dissector *dissector,
+			      काष्ठा fl_flow_key *mask)
+अणु
+	काष्ठा flow_dissector_key keys[FLOW_DISSECTOR_KEY_MAX];
+	माप_प्रकार cnt = 0;
 
 	FL_KEY_SET_IF_MASKED(mask, keys, cnt,
 			     FLOW_DISSECTOR_KEY_META, meta);
@@ -1798,7 +1799,7 @@ static void fl_init_dissector(struct flow_dissector *dissector,
 			     FLOW_DISSECTOR_KEY_ENC_IPV4_ADDRS, enc_ipv4);
 	FL_KEY_SET_IF_MASKED(mask, keys, cnt,
 			     FLOW_DISSECTOR_KEY_ENC_IPV6_ADDRS, enc_ipv6);
-	if (FL_KEY_IS_MASKED(mask, enc_ipv4) ||
+	अगर (FL_KEY_IS_MASKED(mask, enc_ipv4) ||
 	    FL_KEY_IS_MASKED(mask, enc_ipv6))
 		FL_KEY_SET(keys, cnt, FLOW_DISSECTOR_KEY_ENC_CONTROL,
 			   enc_control);
@@ -1814,29 +1815,29 @@ static void fl_init_dissector(struct flow_dissector *dissector,
 			     FLOW_DISSECTOR_KEY_HASH, hash);
 
 	skb_flow_dissector_init(dissector, keys, cnt);
-}
+पूर्ण
 
-static struct fl_flow_mask *fl_create_new_mask(struct cls_fl_head *head,
-					       struct fl_flow_mask *mask)
-{
-	struct fl_flow_mask *newmask;
-	int err;
+अटल काष्ठा fl_flow_mask *fl_create_new_mask(काष्ठा cls_fl_head *head,
+					       काष्ठा fl_flow_mask *mask)
+अणु
+	काष्ठा fl_flow_mask *newmask;
+	पूर्णांक err;
 
-	newmask = kzalloc(sizeof(*newmask), GFP_KERNEL);
-	if (!newmask)
-		return ERR_PTR(-ENOMEM);
+	newmask = kzalloc(माप(*newmask), GFP_KERNEL);
+	अगर (!newmask)
+		वापस ERR_PTR(-ENOMEM);
 
 	fl_mask_copy(newmask, mask);
 
-	if ((newmask->key.tp_range.tp_min.dst &&
+	अगर ((newmask->key.tp_range.tp_min.dst &&
 	     newmask->key.tp_range.tp_max.dst) ||
 	    (newmask->key.tp_range.tp_min.src &&
 	     newmask->key.tp_range.tp_max.src))
 		newmask->flags |= TCA_FLOWER_MASK_FLAGS_RANGE;
 
 	err = fl_init_mask_hashtable(newmask);
-	if (err)
-		goto errout_free;
+	अगर (err)
+		जाओ errout_मुक्त;
 
 	fl_init_dissector(&newmask->dissector, &newmask->key);
 
@@ -1845,250 +1846,250 @@ static struct fl_flow_mask *fl_create_new_mask(struct cls_fl_head *head,
 	refcount_set(&newmask->refcnt, 1);
 	err = rhashtable_replace_fast(&head->ht, &mask->ht_node,
 				      &newmask->ht_node, mask_ht_params);
-	if (err)
-		goto errout_destroy;
+	अगर (err)
+		जाओ errout_destroy;
 
 	spin_lock(&head->masks_lock);
 	list_add_tail_rcu(&newmask->list, &head->masks);
 	spin_unlock(&head->masks_lock);
 
-	return newmask;
+	वापस newmask;
 
 errout_destroy:
 	rhashtable_destroy(&newmask->ht);
-errout_free:
-	kfree(newmask);
+errout_मुक्त:
+	kमुक्त(newmask);
 
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static int fl_check_assign_mask(struct cls_fl_head *head,
-				struct cls_fl_filter *fnew,
-				struct cls_fl_filter *fold,
-				struct fl_flow_mask *mask)
-{
-	struct fl_flow_mask *newmask;
-	int ret = 0;
+अटल पूर्णांक fl_check_assign_mask(काष्ठा cls_fl_head *head,
+				काष्ठा cls_fl_filter *fnew,
+				काष्ठा cls_fl_filter *fold,
+				काष्ठा fl_flow_mask *mask)
+अणु
+	काष्ठा fl_flow_mask *newmask;
+	पूर्णांक ret = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	/* Insert mask as temporary node to prevent concurrent creation of mask
-	 * with same key. Any concurrent lookups with same key will return
+	 * with same key. Any concurrent lookups with same key will वापस
 	 * -EAGAIN because mask's refcnt is zero.
 	 */
 	fnew->mask = rhashtable_lookup_get_insert_fast(&head->ht,
 						       &mask->ht_node,
 						       mask_ht_params);
-	if (!fnew->mask) {
-		rcu_read_unlock();
+	अगर (!fnew->mask) अणु
+		rcu_पढ़ो_unlock();
 
-		if (fold) {
+		अगर (fold) अणु
 			ret = -EINVAL;
-			goto errout_cleanup;
-		}
+			जाओ errout_cleanup;
+		पूर्ण
 
 		newmask = fl_create_new_mask(head, mask);
-		if (IS_ERR(newmask)) {
+		अगर (IS_ERR(newmask)) अणु
 			ret = PTR_ERR(newmask);
-			goto errout_cleanup;
-		}
+			जाओ errout_cleanup;
+		पूर्ण
 
 		fnew->mask = newmask;
-		return 0;
-	} else if (IS_ERR(fnew->mask)) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (IS_ERR(fnew->mask)) अणु
 		ret = PTR_ERR(fnew->mask);
-	} else if (fold && fold->mask != fnew->mask) {
+	पूर्ण अन्यथा अगर (fold && fold->mask != fnew->mask) अणु
 		ret = -EINVAL;
-	} else if (!refcount_inc_not_zero(&fnew->mask->refcnt)) {
+	पूर्ण अन्यथा अगर (!refcount_inc_not_zero(&fnew->mask->refcnt)) अणु
 		/* Mask was deleted concurrently, try again */
 		ret = -EAGAIN;
-	}
-	rcu_read_unlock();
-	return ret;
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस ret;
 
 errout_cleanup:
-	rhashtable_remove_fast(&head->ht, &mask->ht_node,
+	rhashtable_हटाओ_fast(&head->ht, &mask->ht_node,
 			       mask_ht_params);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fl_set_parms(struct net *net, struct tcf_proto *tp,
-			struct cls_fl_filter *f, struct fl_flow_mask *mask,
-			unsigned long base, struct nlattr **tb,
-			struct nlattr *est, bool ovr,
-			struct fl_flow_tmplt *tmplt, bool rtnl_held,
-			struct netlink_ext_ack *extack)
-{
-	int err;
+अटल पूर्णांक fl_set_parms(काष्ठा net *net, काष्ठा tcf_proto *tp,
+			काष्ठा cls_fl_filter *f, काष्ठा fl_flow_mask *mask,
+			अचिन्हित दीर्घ base, काष्ठा nlattr **tb,
+			काष्ठा nlattr *est, bool ovr,
+			काष्ठा fl_flow_पंचांगplt *पंचांगplt, bool rtnl_held,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err;
 
 	err = tcf_exts_validate(net, tp, tb, est, &f->exts, ovr, rtnl_held,
 				extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (tb[TCA_FLOWER_CLASSID]) {
+	अगर (tb[TCA_FLOWER_CLASSID]) अणु
 		f->res.classid = nla_get_u32(tb[TCA_FLOWER_CLASSID]);
-		if (!rtnl_held)
+		अगर (!rtnl_held)
 			rtnl_lock();
 		tcf_bind_filter(tp, &f->res, base);
-		if (!rtnl_held)
+		अगर (!rtnl_held)
 			rtnl_unlock();
-	}
+	पूर्ण
 
 	err = fl_set_key(net, tb, &f->key, &mask->key, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	fl_mask_update_range(mask);
 	fl_set_masked_key(&f->mkey, &f->key, mask);
 
-	if (!fl_mask_fits_tmplt(tmplt, mask)) {
+	अगर (!fl_mask_fits_पंचांगplt(पंचांगplt, mask)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Mask does not fit the template");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_ht_insert_unique(struct cls_fl_filter *fnew,
-			       struct cls_fl_filter *fold,
+अटल पूर्णांक fl_ht_insert_unique(काष्ठा cls_fl_filter *fnew,
+			       काष्ठा cls_fl_filter *fold,
 			       bool *in_ht)
-{
-	struct fl_flow_mask *mask = fnew->mask;
-	int err;
+अणु
+	काष्ठा fl_flow_mask *mask = fnew->mask;
+	पूर्णांक err;
 
 	err = rhashtable_lookup_insert_fast(&mask->ht,
 					    &fnew->ht_node,
 					    mask->filter_ht_params);
-	if (err) {
+	अगर (err) अणु
 		*in_ht = false;
-		/* It is okay if filter with same key exists when
+		/* It is okay अगर filter with same key exists when
 		 * overwriting.
 		 */
-		return fold && err == -EEXIST ? 0 : err;
-	}
+		वापस fold && err == -EEXIST ? 0 : err;
+	पूर्ण
 
 	*in_ht = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_change(struct net *net, struct sk_buff *in_skb,
-		     struct tcf_proto *tp, unsigned long base,
-		     u32 handle, struct nlattr **tca,
-		     void **arg, bool ovr, bool rtnl_held,
-		     struct netlink_ext_ack *extack)
-{
-	struct cls_fl_head *head = fl_head_dereference(tp);
-	struct cls_fl_filter *fold = *arg;
-	struct cls_fl_filter *fnew;
-	struct fl_flow_mask *mask;
-	struct nlattr **tb;
+अटल पूर्णांक fl_change(काष्ठा net *net, काष्ठा sk_buff *in_skb,
+		     काष्ठा tcf_proto *tp, अचिन्हित दीर्घ base,
+		     u32 handle, काष्ठा nlattr **tca,
+		     व्योम **arg, bool ovr, bool rtnl_held,
+		     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा cls_fl_head *head = fl_head_dereference(tp);
+	काष्ठा cls_fl_filter *fold = *arg;
+	काष्ठा cls_fl_filter *fnew;
+	काष्ठा fl_flow_mask *mask;
+	काष्ठा nlattr **tb;
 	bool in_ht;
-	int err;
+	पूर्णांक err;
 
-	if (!tca[TCA_OPTIONS]) {
+	अगर (!tca[TCA_OPTIONS]) अणु
 		err = -EINVAL;
-		goto errout_fold;
-	}
+		जाओ errout_fold;
+	पूर्ण
 
-	mask = kzalloc(sizeof(struct fl_flow_mask), GFP_KERNEL);
-	if (!mask) {
+	mask = kzalloc(माप(काष्ठा fl_flow_mask), GFP_KERNEL);
+	अगर (!mask) अणु
 		err = -ENOBUFS;
-		goto errout_fold;
-	}
+		जाओ errout_fold;
+	पूर्ण
 
-	tb = kcalloc(TCA_FLOWER_MAX + 1, sizeof(struct nlattr *), GFP_KERNEL);
-	if (!tb) {
+	tb = kसुस्मृति(TCA_FLOWER_MAX + 1, माप(काष्ठा nlattr *), GFP_KERNEL);
+	अगर (!tb) अणु
 		err = -ENOBUFS;
-		goto errout_mask_alloc;
-	}
+		जाओ errout_mask_alloc;
+	पूर्ण
 
 	err = nla_parse_nested_deprecated(tb, TCA_FLOWER_MAX,
-					  tca[TCA_OPTIONS], fl_policy, NULL);
-	if (err < 0)
-		goto errout_tb;
+					  tca[TCA_OPTIONS], fl_policy, शून्य);
+	अगर (err < 0)
+		जाओ errout_tb;
 
-	if (fold && handle && fold->handle != handle) {
+	अगर (fold && handle && fold->handle != handle) अणु
 		err = -EINVAL;
-		goto errout_tb;
-	}
+		जाओ errout_tb;
+	पूर्ण
 
-	fnew = kzalloc(sizeof(*fnew), GFP_KERNEL);
-	if (!fnew) {
+	fnew = kzalloc(माप(*fnew), GFP_KERNEL);
+	अगर (!fnew) अणु
 		err = -ENOBUFS;
-		goto errout_tb;
-	}
+		जाओ errout_tb;
+	पूर्ण
 	INIT_LIST_HEAD(&fnew->hw_list);
 	refcount_set(&fnew->refcnt, 1);
 
 	err = tcf_exts_init(&fnew->exts, net, TCA_FLOWER_ACT, 0);
-	if (err < 0)
-		goto errout;
+	अगर (err < 0)
+		जाओ errout;
 
-	if (tb[TCA_FLOWER_FLAGS]) {
+	अगर (tb[TCA_FLOWER_FLAGS]) अणु
 		fnew->flags = nla_get_u32(tb[TCA_FLOWER_FLAGS]);
 
-		if (!tc_flags_valid(fnew->flags)) {
+		अगर (!tc_flags_valid(fnew->flags)) अणु
 			err = -EINVAL;
-			goto errout;
-		}
-	}
+			जाओ errout;
+		पूर्ण
+	पूर्ण
 
 	err = fl_set_parms(net, tp, fnew, mask, base, tb, tca[TCA_RATE], ovr,
-			   tp->chain->tmplt_priv, rtnl_held, extack);
-	if (err)
-		goto errout;
+			   tp->chain->पंचांगplt_priv, rtnl_held, extack);
+	अगर (err)
+		जाओ errout;
 
 	err = fl_check_assign_mask(head, fnew, fold, mask);
-	if (err)
-		goto errout;
+	अगर (err)
+		जाओ errout;
 
 	err = fl_ht_insert_unique(fnew, fold, &in_ht);
-	if (err)
-		goto errout_mask;
+	अगर (err)
+		जाओ errout_mask;
 
-	if (!tc_skip_hw(fnew->flags)) {
+	अगर (!tc_skip_hw(fnew->flags)) अणु
 		err = fl_hw_replace_filter(tp, fnew, rtnl_held, extack);
-		if (err)
-			goto errout_ht;
-	}
+		अगर (err)
+			जाओ errout_ht;
+	पूर्ण
 
-	if (!tc_in_hw(fnew->flags))
+	अगर (!tc_in_hw(fnew->flags))
 		fnew->flags |= TCA_CLS_FLAGS_NOT_IN_HW;
 
 	spin_lock(&tp->lock);
 
 	/* tp was deleted concurrently. -EAGAIN will cause caller to lookup
-	 * proto again or create new one, if necessary.
+	 * proto again or create new one, अगर necessary.
 	 */
-	if (tp->deleting) {
+	अगर (tp->deleting) अणु
 		err = -EAGAIN;
-		goto errout_hw;
-	}
+		जाओ errout_hw;
+	पूर्ण
 
-	if (fold) {
+	अगर (fold) अणु
 		/* Fold filter was deleted concurrently. Retry lookup. */
-		if (fold->deleted) {
+		अगर (fold->deleted) अणु
 			err = -EAGAIN;
-			goto errout_hw;
-		}
+			जाओ errout_hw;
+		पूर्ण
 
 		fnew->handle = handle;
 
-		if (!in_ht) {
-			struct rhashtable_params params =
+		अगर (!in_ht) अणु
+			काष्ठा rhashtable_params params =
 				fnew->mask->filter_ht_params;
 
 			err = rhashtable_insert_fast(&fnew->mask->ht,
 						     &fnew->ht_node,
 						     params);
-			if (err)
-				goto errout_hw;
+			अगर (err)
+				जाओ errout_hw;
 			in_ht = true;
-		}
+		पूर्ण
 
 		refcount_inc(&fnew->refcnt);
-		rhashtable_remove_fast(&fold->mask->ht,
+		rhashtable_हटाओ_fast(&fold->mask->ht,
 				       &fold->ht_node,
 				       fold->mask->filter_ht_params);
 		idr_replace(&head->handle_idr, fnew, fnew->handle);
@@ -2098,177 +2099,177 @@ static int fl_change(struct net *net, struct sk_buff *in_skb,
 		spin_unlock(&tp->lock);
 
 		fl_mask_put(head, fold->mask);
-		if (!tc_skip_hw(fold->flags))
-			fl_hw_destroy_filter(tp, fold, rtnl_held, NULL);
+		अगर (!tc_skip_hw(fold->flags))
+			fl_hw_destroy_filter(tp, fold, rtnl_held, शून्य);
 		tcf_unbind_filter(tp, &fold->res);
 		/* Caller holds reference to fold, so refcnt is always > 0
 		 * after this.
 		 */
 		refcount_dec(&fold->refcnt);
 		__fl_put(fold);
-	} else {
-		if (handle) {
-			/* user specifies a handle and it doesn't exist */
+	पूर्ण अन्यथा अणु
+		अगर (handle) अणु
+			/* user specअगरies a handle and it करोesn't exist */
 			err = idr_alloc_u32(&head->handle_idr, fnew, &handle,
 					    handle, GFP_ATOMIC);
 
-			/* Filter with specified handle was concurrently
+			/* Filter with specअगरied handle was concurrently
 			 * inserted after initial check in cls_api. This is not
-			 * necessarily an error if NLM_F_EXCL is not set in
+			 * necessarily an error अगर NLM_F_EXCL is not set in
 			 * message flags. Returning EAGAIN will cause cls_api to
 			 * try to update concurrently inserted rule.
 			 */
-			if (err == -ENOSPC)
+			अगर (err == -ENOSPC)
 				err = -EAGAIN;
-		} else {
+		पूर्ण अन्यथा अणु
 			handle = 1;
 			err = idr_alloc_u32(&head->handle_idr, fnew, &handle,
-					    INT_MAX, GFP_ATOMIC);
-		}
-		if (err)
-			goto errout_hw;
+					    पूर्णांक_उच्च, GFP_ATOMIC);
+		पूर्ण
+		अगर (err)
+			जाओ errout_hw;
 
 		refcount_inc(&fnew->refcnt);
 		fnew->handle = handle;
 		list_add_tail_rcu(&fnew->list, &fnew->mask->filters);
 		spin_unlock(&tp->lock);
-	}
+	पूर्ण
 
 	*arg = fnew;
 
-	kfree(tb);
-	tcf_queue_work(&mask->rwork, fl_uninit_mask_free_work);
-	return 0;
+	kमुक्त(tb);
+	tcf_queue_work(&mask->rwork, fl_uninit_mask_मुक्त_work);
+	वापस 0;
 
 errout_ht:
 	spin_lock(&tp->lock);
 errout_hw:
 	fnew->deleted = true;
 	spin_unlock(&tp->lock);
-	if (!tc_skip_hw(fnew->flags))
-		fl_hw_destroy_filter(tp, fnew, rtnl_held, NULL);
-	if (in_ht)
-		rhashtable_remove_fast(&fnew->mask->ht, &fnew->ht_node,
+	अगर (!tc_skip_hw(fnew->flags))
+		fl_hw_destroy_filter(tp, fnew, rtnl_held, शून्य);
+	अगर (in_ht)
+		rhashtable_हटाओ_fast(&fnew->mask->ht, &fnew->ht_node,
 				       fnew->mask->filter_ht_params);
 errout_mask:
 	fl_mask_put(head, fnew->mask);
 errout:
 	__fl_put(fnew);
 errout_tb:
-	kfree(tb);
+	kमुक्त(tb);
 errout_mask_alloc:
-	tcf_queue_work(&mask->rwork, fl_uninit_mask_free_work);
+	tcf_queue_work(&mask->rwork, fl_uninit_mask_मुक्त_work);
 errout_fold:
-	if (fold)
+	अगर (fold)
 		__fl_put(fold);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int fl_delete(struct tcf_proto *tp, void *arg, bool *last,
-		     bool rtnl_held, struct netlink_ext_ack *extack)
-{
-	struct cls_fl_head *head = fl_head_dereference(tp);
-	struct cls_fl_filter *f = arg;
+अटल पूर्णांक fl_delete(काष्ठा tcf_proto *tp, व्योम *arg, bool *last,
+		     bool rtnl_held, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा cls_fl_head *head = fl_head_dereference(tp);
+	काष्ठा cls_fl_filter *f = arg;
 	bool last_on_mask;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	err = __fl_delete(tp, f, &last_on_mask, rtnl_held, extack);
 	*last = list_empty(&head->masks);
 	__fl_put(f);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void fl_walk(struct tcf_proto *tp, struct tcf_walker *arg,
+अटल व्योम fl_walk(काष्ठा tcf_proto *tp, काष्ठा tcf_walker *arg,
 		    bool rtnl_held)
-{
-	struct cls_fl_head *head = fl_head_dereference(tp);
-	unsigned long id = arg->cookie, tmp;
-	struct cls_fl_filter *f;
+अणु
+	काष्ठा cls_fl_head *head = fl_head_dereference(tp);
+	अचिन्हित दीर्घ id = arg->cookie, पंचांगp;
+	काष्ठा cls_fl_filter *f;
 
 	arg->count = arg->skip;
 
-	idr_for_each_entry_continue_ul(&head->handle_idr, f, tmp, id) {
-		/* don't return filters that are being deleted */
-		if (!refcount_inc_not_zero(&f->refcnt))
-			continue;
-		if (arg->fn(tp, f, arg) < 0) {
+	idr_क्रम_each_entry_जारी_ul(&head->handle_idr, f, पंचांगp, id) अणु
+		/* करोn't वापस filters that are being deleted */
+		अगर (!refcount_inc_not_zero(&f->refcnt))
+			जारी;
+		अगर (arg->fn(tp, f, arg) < 0) अणु
 			__fl_put(f);
 			arg->stop = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		__fl_put(f);
 		arg->count++;
-	}
+	पूर्ण
 	arg->cookie = id;
-}
+पूर्ण
 
-static struct cls_fl_filter *
-fl_get_next_hw_filter(struct tcf_proto *tp, struct cls_fl_filter *f, bool add)
-{
-	struct cls_fl_head *head = fl_head_dereference(tp);
+अटल काष्ठा cls_fl_filter *
+fl_get_next_hw_filter(काष्ठा tcf_proto *tp, काष्ठा cls_fl_filter *f, bool add)
+अणु
+	काष्ठा cls_fl_head *head = fl_head_dereference(tp);
 
 	spin_lock(&tp->lock);
-	if (list_empty(&head->hw_filters)) {
+	अगर (list_empty(&head->hw_filters)) अणु
 		spin_unlock(&tp->lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!f)
-		f = list_entry(&head->hw_filters, struct cls_fl_filter,
+	अगर (!f)
+		f = list_entry(&head->hw_filters, काष्ठा cls_fl_filter,
 			       hw_list);
-	list_for_each_entry_continue(f, &head->hw_filters, hw_list) {
-		if (!(add && f->deleted) && refcount_inc_not_zero(&f->refcnt)) {
+	list_क्रम_each_entry_जारी(f, &head->hw_filters, hw_list) अणु
+		अगर (!(add && f->deleted) && refcount_inc_not_zero(&f->refcnt)) अणु
 			spin_unlock(&tp->lock);
-			return f;
-		}
-	}
+			वापस f;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&tp->lock);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int fl_reoffload(struct tcf_proto *tp, bool add, flow_setup_cb_t *cb,
-			void *cb_priv, struct netlink_ext_ack *extack)
-{
-	struct tcf_block *block = tp->chain->block;
-	struct flow_cls_offload cls_flower = {};
-	struct cls_fl_filter *f = NULL;
-	int err;
+अटल पूर्णांक fl_reoffload(काष्ठा tcf_proto *tp, bool add, flow_setup_cb_t *cb,
+			व्योम *cb_priv, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tcf_block *block = tp->chain->block;
+	काष्ठा flow_cls_offload cls_flower = अणुपूर्ण;
+	काष्ठा cls_fl_filter *f = शून्य;
+	पूर्णांक err;
 
 	/* hw_filters list can only be changed by hw offload functions after
-	 * obtaining rtnl lock. Make sure it is not changed while reoffload is
+	 * obtaining rtnl lock. Make sure it is not changed जबतक reoffload is
 	 * iterating it.
 	 */
 	ASSERT_RTNL();
 
-	while ((f = fl_get_next_hw_filter(tp, f, add))) {
+	जबतक ((f = fl_get_next_hw_filter(tp, f, add))) अणु
 		cls_flower.rule =
 			flow_rule_alloc(tcf_exts_num_actions(&f->exts));
-		if (!cls_flower.rule) {
+		अगर (!cls_flower.rule) अणु
 			__fl_put(f);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		tc_cls_common_offload_init(&cls_flower.common, tp, f->flags,
 					   extack);
 		cls_flower.command = add ?
 			FLOW_CLS_REPLACE : FLOW_CLS_DESTROY;
-		cls_flower.cookie = (unsigned long)f;
+		cls_flower.cookie = (अचिन्हित दीर्घ)f;
 		cls_flower.rule->match.dissector = &f->mask->dissector;
 		cls_flower.rule->match.mask = &f->mask->key;
 		cls_flower.rule->match.key = &f->mkey;
 
 		err = tc_setup_flow_action(&cls_flower.rule->action, &f->exts);
-		if (err) {
-			kfree(cls_flower.rule);
-			if (tc_skip_sw(f->flags)) {
+		अगर (err) अणु
+			kमुक्त(cls_flower.rule);
+			अगर (tc_skip_sw(f->flags)) अणु
 				NL_SET_ERR_MSG_MOD(extack, "Failed to setup flow action");
 				__fl_put(f);
-				return err;
-			}
-			goto next_flow;
-		}
+				वापस err;
+			पूर्ण
+			जाओ next_flow;
+		पूर्ण
 
 		cls_flower.classid = f->res.classid;
 
@@ -2277,369 +2278,369 @@ static int fl_reoffload(struct tcf_proto *tp, bool add, flow_setup_cb_t *cb,
 					    cb_priv, &f->flags,
 					    &f->in_hw_count);
 		tc_cleanup_flow_action(&cls_flower.rule->action);
-		kfree(cls_flower.rule);
+		kमुक्त(cls_flower.rule);
 
-		if (err) {
+		अगर (err) अणु
 			__fl_put(f);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 next_flow:
 		__fl_put(f);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fl_hw_add(struct tcf_proto *tp, void *type_data)
-{
-	struct flow_cls_offload *cls_flower = type_data;
-	struct cls_fl_filter *f =
-		(struct cls_fl_filter *) cls_flower->cookie;
-	struct cls_fl_head *head = fl_head_dereference(tp);
+अटल व्योम fl_hw_add(काष्ठा tcf_proto *tp, व्योम *type_data)
+अणु
+	काष्ठा flow_cls_offload *cls_flower = type_data;
+	काष्ठा cls_fl_filter *f =
+		(काष्ठा cls_fl_filter *) cls_flower->cookie;
+	काष्ठा cls_fl_head *head = fl_head_dereference(tp);
 
 	spin_lock(&tp->lock);
 	list_add(&f->hw_list, &head->hw_filters);
 	spin_unlock(&tp->lock);
-}
+पूर्ण
 
-static void fl_hw_del(struct tcf_proto *tp, void *type_data)
-{
-	struct flow_cls_offload *cls_flower = type_data;
-	struct cls_fl_filter *f =
-		(struct cls_fl_filter *) cls_flower->cookie;
+अटल व्योम fl_hw_del(काष्ठा tcf_proto *tp, व्योम *type_data)
+अणु
+	काष्ठा flow_cls_offload *cls_flower = type_data;
+	काष्ठा cls_fl_filter *f =
+		(काष्ठा cls_fl_filter *) cls_flower->cookie;
 
 	spin_lock(&tp->lock);
-	if (!list_empty(&f->hw_list))
+	अगर (!list_empty(&f->hw_list))
 		list_del_init(&f->hw_list);
 	spin_unlock(&tp->lock);
-}
+पूर्ण
 
-static int fl_hw_create_tmplt(struct tcf_chain *chain,
-			      struct fl_flow_tmplt *tmplt)
-{
-	struct flow_cls_offload cls_flower = {};
-	struct tcf_block *block = chain->block;
+अटल पूर्णांक fl_hw_create_पंचांगplt(काष्ठा tcf_chain *chain,
+			      काष्ठा fl_flow_पंचांगplt *पंचांगplt)
+अणु
+	काष्ठा flow_cls_offload cls_flower = अणुपूर्ण;
+	काष्ठा tcf_block *block = chain->block;
 
 	cls_flower.rule = flow_rule_alloc(0);
-	if (!cls_flower.rule)
-		return -ENOMEM;
+	अगर (!cls_flower.rule)
+		वापस -ENOMEM;
 
 	cls_flower.common.chain_index = chain->index;
 	cls_flower.command = FLOW_CLS_TMPLT_CREATE;
-	cls_flower.cookie = (unsigned long) tmplt;
-	cls_flower.rule->match.dissector = &tmplt->dissector;
-	cls_flower.rule->match.mask = &tmplt->mask;
-	cls_flower.rule->match.key = &tmplt->dummy_key;
+	cls_flower.cookie = (अचिन्हित दीर्घ) पंचांगplt;
+	cls_flower.rule->match.dissector = &पंचांगplt->dissector;
+	cls_flower.rule->match.mask = &पंचांगplt->mask;
+	cls_flower.rule->match.key = &पंचांगplt->dummy_key;
 
-	/* We don't care if driver (any of them) fails to handle this
-	 * call. It serves just as a hint for it.
+	/* We करोn't care अगर driver (any of them) fails to handle this
+	 * call. It serves just as a hपूर्णांक क्रम it.
 	 */
 	tc_setup_cb_call(block, TC_SETUP_CLSFLOWER, &cls_flower, false, true);
-	kfree(cls_flower.rule);
+	kमुक्त(cls_flower.rule);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fl_hw_destroy_tmplt(struct tcf_chain *chain,
-				struct fl_flow_tmplt *tmplt)
-{
-	struct flow_cls_offload cls_flower = {};
-	struct tcf_block *block = chain->block;
+अटल व्योम fl_hw_destroy_पंचांगplt(काष्ठा tcf_chain *chain,
+				काष्ठा fl_flow_पंचांगplt *पंचांगplt)
+अणु
+	काष्ठा flow_cls_offload cls_flower = अणुपूर्ण;
+	काष्ठा tcf_block *block = chain->block;
 
 	cls_flower.common.chain_index = chain->index;
 	cls_flower.command = FLOW_CLS_TMPLT_DESTROY;
-	cls_flower.cookie = (unsigned long) tmplt;
+	cls_flower.cookie = (अचिन्हित दीर्घ) पंचांगplt;
 
 	tc_setup_cb_call(block, TC_SETUP_CLSFLOWER, &cls_flower, false, true);
-}
+पूर्ण
 
-static void *fl_tmplt_create(struct net *net, struct tcf_chain *chain,
-			     struct nlattr **tca,
-			     struct netlink_ext_ack *extack)
-{
-	struct fl_flow_tmplt *tmplt;
-	struct nlattr **tb;
-	int err;
+अटल व्योम *fl_पंचांगplt_create(काष्ठा net *net, काष्ठा tcf_chain *chain,
+			     काष्ठा nlattr **tca,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा fl_flow_पंचांगplt *पंचांगplt;
+	काष्ठा nlattr **tb;
+	पूर्णांक err;
 
-	if (!tca[TCA_OPTIONS])
-		return ERR_PTR(-EINVAL);
+	अगर (!tca[TCA_OPTIONS])
+		वापस ERR_PTR(-EINVAL);
 
-	tb = kcalloc(TCA_FLOWER_MAX + 1, sizeof(struct nlattr *), GFP_KERNEL);
-	if (!tb)
-		return ERR_PTR(-ENOBUFS);
+	tb = kसुस्मृति(TCA_FLOWER_MAX + 1, माप(काष्ठा nlattr *), GFP_KERNEL);
+	अगर (!tb)
+		वापस ERR_PTR(-ENOBUFS);
 	err = nla_parse_nested_deprecated(tb, TCA_FLOWER_MAX,
-					  tca[TCA_OPTIONS], fl_policy, NULL);
-	if (err)
-		goto errout_tb;
+					  tca[TCA_OPTIONS], fl_policy, शून्य);
+	अगर (err)
+		जाओ errout_tb;
 
-	tmplt = kzalloc(sizeof(*tmplt), GFP_KERNEL);
-	if (!tmplt) {
+	पंचांगplt = kzalloc(माप(*पंचांगplt), GFP_KERNEL);
+	अगर (!पंचांगplt) अणु
 		err = -ENOMEM;
-		goto errout_tb;
-	}
-	tmplt->chain = chain;
-	err = fl_set_key(net, tb, &tmplt->dummy_key, &tmplt->mask, extack);
-	if (err)
-		goto errout_tmplt;
+		जाओ errout_tb;
+	पूर्ण
+	पंचांगplt->chain = chain;
+	err = fl_set_key(net, tb, &पंचांगplt->dummy_key, &पंचांगplt->mask, extack);
+	अगर (err)
+		जाओ errout_पंचांगplt;
 
-	fl_init_dissector(&tmplt->dissector, &tmplt->mask);
+	fl_init_dissector(&पंचांगplt->dissector, &पंचांगplt->mask);
 
-	err = fl_hw_create_tmplt(chain, tmplt);
-	if (err)
-		goto errout_tmplt;
+	err = fl_hw_create_पंचांगplt(chain, पंचांगplt);
+	अगर (err)
+		जाओ errout_पंचांगplt;
 
-	kfree(tb);
-	return tmplt;
+	kमुक्त(tb);
+	वापस पंचांगplt;
 
-errout_tmplt:
-	kfree(tmplt);
+errout_पंचांगplt:
+	kमुक्त(पंचांगplt);
 errout_tb:
-	kfree(tb);
-	return ERR_PTR(err);
-}
+	kमुक्त(tb);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void fl_tmplt_destroy(void *tmplt_priv)
-{
-	struct fl_flow_tmplt *tmplt = tmplt_priv;
+अटल व्योम fl_पंचांगplt_destroy(व्योम *पंचांगplt_priv)
+अणु
+	काष्ठा fl_flow_पंचांगplt *पंचांगplt = पंचांगplt_priv;
 
-	fl_hw_destroy_tmplt(tmplt->chain, tmplt);
-	kfree(tmplt);
-}
+	fl_hw_destroy_पंचांगplt(पंचांगplt->chain, पंचांगplt);
+	kमुक्त(पंचांगplt);
+पूर्ण
 
-static int fl_dump_key_val(struct sk_buff *skb,
-			   void *val, int val_type,
-			   void *mask, int mask_type, int len)
-{
-	int err;
+अटल पूर्णांक fl_dump_key_val(काष्ठा sk_buff *skb,
+			   व्योम *val, पूर्णांक val_type,
+			   व्योम *mask, पूर्णांक mask_type, पूर्णांक len)
+अणु
+	पूर्णांक err;
 
-	if (!memchr_inv(mask, 0, len))
-		return 0;
+	अगर (!स_प्रथम_inv(mask, 0, len))
+		वापस 0;
 	err = nla_put(skb, val_type, len, val);
-	if (err)
-		return err;
-	if (mask_type != TCA_FLOWER_UNSPEC) {
+	अगर (err)
+		वापस err;
+	अगर (mask_type != TCA_FLOWER_UNSPEC) अणु
 		err = nla_put(skb, mask_type, len, mask);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int fl_dump_key_port_range(struct sk_buff *skb, struct fl_flow_key *key,
-				  struct fl_flow_key *mask)
-{
-	if (fl_dump_key_val(skb, &key->tp_range.tp_min.dst,
+अटल पूर्णांक fl_dump_key_port_range(काष्ठा sk_buff *skb, काष्ठा fl_flow_key *key,
+				  काष्ठा fl_flow_key *mask)
+अणु
+	अगर (fl_dump_key_val(skb, &key->tp_range.tp_min.dst,
 			    TCA_FLOWER_KEY_PORT_DST_MIN,
 			    &mask->tp_range.tp_min.dst, TCA_FLOWER_UNSPEC,
-			    sizeof(key->tp_range.tp_min.dst)) ||
+			    माप(key->tp_range.tp_min.dst)) ||
 	    fl_dump_key_val(skb, &key->tp_range.tp_max.dst,
 			    TCA_FLOWER_KEY_PORT_DST_MAX,
 			    &mask->tp_range.tp_max.dst, TCA_FLOWER_UNSPEC,
-			    sizeof(key->tp_range.tp_max.dst)) ||
+			    माप(key->tp_range.tp_max.dst)) ||
 	    fl_dump_key_val(skb, &key->tp_range.tp_min.src,
 			    TCA_FLOWER_KEY_PORT_SRC_MIN,
 			    &mask->tp_range.tp_min.src, TCA_FLOWER_UNSPEC,
-			    sizeof(key->tp_range.tp_min.src)) ||
+			    माप(key->tp_range.tp_min.src)) ||
 	    fl_dump_key_val(skb, &key->tp_range.tp_max.src,
 			    TCA_FLOWER_KEY_PORT_SRC_MAX,
 			    &mask->tp_range.tp_max.src, TCA_FLOWER_UNSPEC,
-			    sizeof(key->tp_range.tp_max.src)))
-		return -1;
+			    माप(key->tp_range.tp_max.src)))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_dump_key_mpls_opt_lse(struct sk_buff *skb,
-				    struct flow_dissector_key_mpls *mpls_key,
-				    struct flow_dissector_key_mpls *mpls_mask,
+अटल पूर्णांक fl_dump_key_mpls_opt_lse(काष्ठा sk_buff *skb,
+				    काष्ठा flow_dissector_key_mpls *mpls_key,
+				    काष्ठा flow_dissector_key_mpls *mpls_mask,
 				    u8 lse_index)
-{
-	struct flow_dissector_mpls_lse *lse_mask = &mpls_mask->ls[lse_index];
-	struct flow_dissector_mpls_lse *lse_key = &mpls_key->ls[lse_index];
-	int err;
+अणु
+	काष्ठा flow_dissector_mpls_lse *lse_mask = &mpls_mask->ls[lse_index];
+	काष्ठा flow_dissector_mpls_lse *lse_key = &mpls_key->ls[lse_index];
+	पूर्णांक err;
 
 	err = nla_put_u8(skb, TCA_FLOWER_KEY_MPLS_OPT_LSE_DEPTH,
 			 lse_index + 1);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (lse_mask->mpls_ttl) {
+	अगर (lse_mask->mpls_ttl) अणु
 		err = nla_put_u8(skb, TCA_FLOWER_KEY_MPLS_OPT_LSE_TTL,
 				 lse_key->mpls_ttl);
-		if (err)
-			return err;
-	}
-	if (lse_mask->mpls_bos) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (lse_mask->mpls_bos) अणु
 		err = nla_put_u8(skb, TCA_FLOWER_KEY_MPLS_OPT_LSE_BOS,
 				 lse_key->mpls_bos);
-		if (err)
-			return err;
-	}
-	if (lse_mask->mpls_tc) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (lse_mask->mpls_tc) अणु
 		err = nla_put_u8(skb, TCA_FLOWER_KEY_MPLS_OPT_LSE_TC,
 				 lse_key->mpls_tc);
-		if (err)
-			return err;
-	}
-	if (lse_mask->mpls_label) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (lse_mask->mpls_label) अणु
 		err = nla_put_u32(skb, TCA_FLOWER_KEY_MPLS_OPT_LSE_LABEL,
 				  lse_key->mpls_label);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_dump_key_mpls_opts(struct sk_buff *skb,
-				 struct flow_dissector_key_mpls *mpls_key,
-				 struct flow_dissector_key_mpls *mpls_mask)
-{
-	struct nlattr *opts;
-	struct nlattr *lse;
+अटल पूर्णांक fl_dump_key_mpls_opts(काष्ठा sk_buff *skb,
+				 काष्ठा flow_dissector_key_mpls *mpls_key,
+				 काष्ठा flow_dissector_key_mpls *mpls_mask)
+अणु
+	काष्ठा nlattr *opts;
+	काष्ठा nlattr *lse;
 	u8 lse_index;
-	int err;
+	पूर्णांक err;
 
 	opts = nla_nest_start(skb, TCA_FLOWER_KEY_MPLS_OPTS);
-	if (!opts)
-		return -EMSGSIZE;
+	अगर (!opts)
+		वापस -EMSGSIZE;
 
-	for (lse_index = 0; lse_index < FLOW_DIS_MPLS_MAX; lse_index++) {
-		if (!(mpls_mask->used_lses & 1 << lse_index))
-			continue;
+	क्रम (lse_index = 0; lse_index < FLOW_DIS_MPLS_MAX; lse_index++) अणु
+		अगर (!(mpls_mask->used_lses & 1 << lse_index))
+			जारी;
 
 		lse = nla_nest_start(skb, TCA_FLOWER_KEY_MPLS_OPTS_LSE);
-		if (!lse) {
+		अगर (!lse) अणु
 			err = -EMSGSIZE;
-			goto err_opts;
-		}
+			जाओ err_opts;
+		पूर्ण
 
 		err = fl_dump_key_mpls_opt_lse(skb, mpls_key, mpls_mask,
 					       lse_index);
-		if (err)
-			goto err_opts_lse;
+		अगर (err)
+			जाओ err_opts_lse;
 		nla_nest_end(skb, lse);
-	}
+	पूर्ण
 	nla_nest_end(skb, opts);
 
-	return 0;
+	वापस 0;
 
 err_opts_lse:
 	nla_nest_cancel(skb, lse);
 err_opts:
 	nla_nest_cancel(skb, opts);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int fl_dump_key_mpls(struct sk_buff *skb,
-			    struct flow_dissector_key_mpls *mpls_key,
-			    struct flow_dissector_key_mpls *mpls_mask)
-{
-	struct flow_dissector_mpls_lse *lse_mask;
-	struct flow_dissector_mpls_lse *lse_key;
-	int err;
+अटल पूर्णांक fl_dump_key_mpls(काष्ठा sk_buff *skb,
+			    काष्ठा flow_dissector_key_mpls *mpls_key,
+			    काष्ठा flow_dissector_key_mpls *mpls_mask)
+अणु
+	काष्ठा flow_dissector_mpls_lse *lse_mask;
+	काष्ठा flow_dissector_mpls_lse *lse_key;
+	पूर्णांक err;
 
-	if (!mpls_mask->used_lses)
-		return 0;
+	अगर (!mpls_mask->used_lses)
+		वापस 0;
 
 	lse_mask = &mpls_mask->ls[0];
 	lse_key = &mpls_key->ls[0];
 
-	/* For backward compatibility, don't use the MPLS nested attributes if
+	/* For backward compatibility, करोn't use the MPLS nested attributes अगर
 	 * the rule can be expressed using the old attributes.
 	 */
-	if (mpls_mask->used_lses & ~1 ||
+	अगर (mpls_mask->used_lses & ~1 ||
 	    (!lse_mask->mpls_ttl && !lse_mask->mpls_bos &&
 	     !lse_mask->mpls_tc && !lse_mask->mpls_label))
-		return fl_dump_key_mpls_opts(skb, mpls_key, mpls_mask);
+		वापस fl_dump_key_mpls_opts(skb, mpls_key, mpls_mask);
 
-	if (lse_mask->mpls_ttl) {
+	अगर (lse_mask->mpls_ttl) अणु
 		err = nla_put_u8(skb, TCA_FLOWER_KEY_MPLS_TTL,
 				 lse_key->mpls_ttl);
-		if (err)
-			return err;
-	}
-	if (lse_mask->mpls_tc) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (lse_mask->mpls_tc) अणु
 		err = nla_put_u8(skb, TCA_FLOWER_KEY_MPLS_TC,
 				 lse_key->mpls_tc);
-		if (err)
-			return err;
-	}
-	if (lse_mask->mpls_label) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (lse_mask->mpls_label) अणु
 		err = nla_put_u32(skb, TCA_FLOWER_KEY_MPLS_LABEL,
 				  lse_key->mpls_label);
-		if (err)
-			return err;
-	}
-	if (lse_mask->mpls_bos) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (lse_mask->mpls_bos) अणु
 		err = nla_put_u8(skb, TCA_FLOWER_KEY_MPLS_BOS,
 				 lse_key->mpls_bos);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int fl_dump_key_ip(struct sk_buff *skb, bool encap,
-			  struct flow_dissector_key_ip *key,
-			  struct flow_dissector_key_ip *mask)
-{
-	int tos_key = encap ? TCA_FLOWER_KEY_ENC_IP_TOS : TCA_FLOWER_KEY_IP_TOS;
-	int ttl_key = encap ? TCA_FLOWER_KEY_ENC_IP_TTL : TCA_FLOWER_KEY_IP_TTL;
-	int tos_mask = encap ? TCA_FLOWER_KEY_ENC_IP_TOS_MASK : TCA_FLOWER_KEY_IP_TOS_MASK;
-	int ttl_mask = encap ? TCA_FLOWER_KEY_ENC_IP_TTL_MASK : TCA_FLOWER_KEY_IP_TTL_MASK;
+अटल पूर्णांक fl_dump_key_ip(काष्ठा sk_buff *skb, bool encap,
+			  काष्ठा flow_dissector_key_ip *key,
+			  काष्ठा flow_dissector_key_ip *mask)
+अणु
+	पूर्णांक tos_key = encap ? TCA_FLOWER_KEY_ENC_IP_TOS : TCA_FLOWER_KEY_IP_TOS;
+	पूर्णांक ttl_key = encap ? TCA_FLOWER_KEY_ENC_IP_TTL : TCA_FLOWER_KEY_IP_TTL;
+	पूर्णांक tos_mask = encap ? TCA_FLOWER_KEY_ENC_IP_TOS_MASK : TCA_FLOWER_KEY_IP_TOS_MASK;
+	पूर्णांक ttl_mask = encap ? TCA_FLOWER_KEY_ENC_IP_TTL_MASK : TCA_FLOWER_KEY_IP_TTL_MASK;
 
-	if (fl_dump_key_val(skb, &key->tos, tos_key, &mask->tos, tos_mask, sizeof(key->tos)) ||
-	    fl_dump_key_val(skb, &key->ttl, ttl_key, &mask->ttl, ttl_mask, sizeof(key->ttl)))
-		return -1;
+	अगर (fl_dump_key_val(skb, &key->tos, tos_key, &mask->tos, tos_mask, माप(key->tos)) ||
+	    fl_dump_key_val(skb, &key->ttl, ttl_key, &mask->ttl, ttl_mask, माप(key->ttl)))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fl_dump_key_vlan(struct sk_buff *skb,
-			    int vlan_id_key, int vlan_prio_key,
-			    struct flow_dissector_key_vlan *vlan_key,
-			    struct flow_dissector_key_vlan *vlan_mask)
-{
-	int err;
+अटल पूर्णांक fl_dump_key_vlan(काष्ठा sk_buff *skb,
+			    पूर्णांक vlan_id_key, पूर्णांक vlan_prio_key,
+			    काष्ठा flow_dissector_key_vlan *vlan_key,
+			    काष्ठा flow_dissector_key_vlan *vlan_mask)
+अणु
+	पूर्णांक err;
 
-	if (!memchr_inv(vlan_mask, 0, sizeof(*vlan_mask)))
-		return 0;
-	if (vlan_mask->vlan_id) {
+	अगर (!स_प्रथम_inv(vlan_mask, 0, माप(*vlan_mask)))
+		वापस 0;
+	अगर (vlan_mask->vlan_id) अणु
 		err = nla_put_u16(skb, vlan_id_key,
 				  vlan_key->vlan_id);
-		if (err)
-			return err;
-	}
-	if (vlan_mask->vlan_priority) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (vlan_mask->vlan_priority) अणु
 		err = nla_put_u8(skb, vlan_prio_key,
 				 vlan_key->vlan_priority);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void fl_get_key_flag(u32 dissector_key, u32 dissector_mask,
+अटल व्योम fl_get_key_flag(u32 dissector_key, u32 dissector_mask,
 			    u32 *flower_key, u32 *flower_mask,
 			    u32 flower_flag_bit, u32 dissector_flag_bit)
-{
-	if (dissector_mask & dissector_flag_bit) {
+अणु
+	अगर (dissector_mask & dissector_flag_bit) अणु
 		*flower_mask |= flower_flag_bit;
-		if (dissector_key & dissector_flag_bit)
+		अगर (dissector_key & dissector_flag_bit)
 			*flower_key |= flower_flag_bit;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int fl_dump_key_flags(struct sk_buff *skb, u32 flags_key, u32 flags_mask)
-{
+अटल पूर्णांक fl_dump_key_flags(काष्ठा sk_buff *skb, u32 flags_key, u32 flags_mask)
+अणु
 	u32 key, mask;
 	__be32 _key, _mask;
-	int err;
+	पूर्णांक err;
 
-	if (!memchr_inv(&flags_mask, 0, sizeof(flags_mask)))
-		return 0;
+	अगर (!स_प्रथम_inv(&flags_mask, 0, माप(flags_mask)))
+		वापस 0;
 
 	key = 0;
 	mask = 0;
@@ -2654,547 +2655,547 @@ static int fl_dump_key_flags(struct sk_buff *skb, u32 flags_key, u32 flags_mask)
 	_mask = cpu_to_be32(mask);
 
 	err = nla_put(skb, TCA_FLOWER_KEY_FLAGS, 4, &_key);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return nla_put(skb, TCA_FLOWER_KEY_FLAGS_MASK, 4, &_mask);
-}
+	वापस nla_put(skb, TCA_FLOWER_KEY_FLAGS_MASK, 4, &_mask);
+पूर्ण
 
-static int fl_dump_key_geneve_opt(struct sk_buff *skb,
-				  struct flow_dissector_key_enc_opts *enc_opts)
-{
-	struct geneve_opt *opt;
-	struct nlattr *nest;
-	int opt_off = 0;
+अटल पूर्णांक fl_dump_key_geneve_opt(काष्ठा sk_buff *skb,
+				  काष्ठा flow_dissector_key_enc_opts *enc_opts)
+अणु
+	काष्ठा geneve_opt *opt;
+	काष्ठा nlattr *nest;
+	पूर्णांक opt_off = 0;
 
 	nest = nla_nest_start_noflag(skb, TCA_FLOWER_KEY_ENC_OPTS_GENEVE);
-	if (!nest)
-		goto nla_put_failure;
+	अगर (!nest)
+		जाओ nla_put_failure;
 
-	while (enc_opts->len > opt_off) {
-		opt = (struct geneve_opt *)&enc_opts->data[opt_off];
+	जबतक (enc_opts->len > opt_off) अणु
+		opt = (काष्ठा geneve_opt *)&enc_opts->data[opt_off];
 
-		if (nla_put_be16(skb, TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS,
+		अगर (nla_put_be16(skb, TCA_FLOWER_KEY_ENC_OPT_GENEVE_CLASS,
 				 opt->opt_class))
-			goto nla_put_failure;
-		if (nla_put_u8(skb, TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE,
+			जाओ nla_put_failure;
+		अगर (nla_put_u8(skb, TCA_FLOWER_KEY_ENC_OPT_GENEVE_TYPE,
 			       opt->type))
-			goto nla_put_failure;
-		if (nla_put(skb, TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA,
+			जाओ nla_put_failure;
+		अगर (nla_put(skb, TCA_FLOWER_KEY_ENC_OPT_GENEVE_DATA,
 			    opt->length * 4, opt->opt_data))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		opt_off += sizeof(struct geneve_opt) + opt->length * 4;
-	}
+		opt_off += माप(काष्ठा geneve_opt) + opt->length * 4;
+	पूर्ण
 	nla_nest_end(skb, nest);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int fl_dump_key_vxlan_opt(struct sk_buff *skb,
-				 struct flow_dissector_key_enc_opts *enc_opts)
-{
-	struct vxlan_metadata *md;
-	struct nlattr *nest;
+अटल पूर्णांक fl_dump_key_vxlan_opt(काष्ठा sk_buff *skb,
+				 काष्ठा flow_dissector_key_enc_opts *enc_opts)
+अणु
+	काष्ठा vxlan_metadata *md;
+	काष्ठा nlattr *nest;
 
 	nest = nla_nest_start_noflag(skb, TCA_FLOWER_KEY_ENC_OPTS_VXLAN);
-	if (!nest)
-		goto nla_put_failure;
+	अगर (!nest)
+		जाओ nla_put_failure;
 
-	md = (struct vxlan_metadata *)&enc_opts->data[0];
-	if (nla_put_u32(skb, TCA_FLOWER_KEY_ENC_OPT_VXLAN_GBP, md->gbp))
-		goto nla_put_failure;
+	md = (काष्ठा vxlan_metadata *)&enc_opts->data[0];
+	अगर (nla_put_u32(skb, TCA_FLOWER_KEY_ENC_OPT_VXLAN_GBP, md->gbp))
+		जाओ nla_put_failure;
 
 	nla_nest_end(skb, nest);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int fl_dump_key_erspan_opt(struct sk_buff *skb,
-				  struct flow_dissector_key_enc_opts *enc_opts)
-{
-	struct erspan_metadata *md;
-	struct nlattr *nest;
+अटल पूर्णांक fl_dump_key_erspan_opt(काष्ठा sk_buff *skb,
+				  काष्ठा flow_dissector_key_enc_opts *enc_opts)
+अणु
+	काष्ठा erspan_metadata *md;
+	काष्ठा nlattr *nest;
 
 	nest = nla_nest_start_noflag(skb, TCA_FLOWER_KEY_ENC_OPTS_ERSPAN);
-	if (!nest)
-		goto nla_put_failure;
+	अगर (!nest)
+		जाओ nla_put_failure;
 
-	md = (struct erspan_metadata *)&enc_opts->data[0];
-	if (nla_put_u8(skb, TCA_FLOWER_KEY_ENC_OPT_ERSPAN_VER, md->version))
-		goto nla_put_failure;
+	md = (काष्ठा erspan_metadata *)&enc_opts->data[0];
+	अगर (nla_put_u8(skb, TCA_FLOWER_KEY_ENC_OPT_ERSPAN_VER, md->version))
+		जाओ nla_put_failure;
 
-	if (md->version == 1 &&
+	अगर (md->version == 1 &&
 	    nla_put_be32(skb, TCA_FLOWER_KEY_ENC_OPT_ERSPAN_INDEX, md->u.index))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (md->version == 2 &&
-	    (nla_put_u8(skb, TCA_FLOWER_KEY_ENC_OPT_ERSPAN_DIR,
+	अगर (md->version == 2 &&
+	    (nla_put_u8(skb, TCA_FLOWER_KEY_ENC_OPT_ERSPAN_सूची,
 			md->u.md2.dir) ||
 	     nla_put_u8(skb, TCA_FLOWER_KEY_ENC_OPT_ERSPAN_HWID,
 			get_hwid(&md->u.md2))))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	nla_nest_end(skb, nest);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int fl_dump_key_ct(struct sk_buff *skb,
-			  struct flow_dissector_key_ct *key,
-			  struct flow_dissector_key_ct *mask)
-{
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK) &&
+अटल पूर्णांक fl_dump_key_ct(काष्ठा sk_buff *skb,
+			  काष्ठा flow_dissector_key_ct *key,
+			  काष्ठा flow_dissector_key_ct *mask)
+अणु
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK) &&
 	    fl_dump_key_val(skb, &key->ct_state, TCA_FLOWER_KEY_CT_STATE,
 			    &mask->ct_state, TCA_FLOWER_KEY_CT_STATE_MASK,
-			    sizeof(key->ct_state)))
-		goto nla_put_failure;
+			    माप(key->ct_state)))
+		जाओ nla_put_failure;
 
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
 	    fl_dump_key_val(skb, &key->ct_zone, TCA_FLOWER_KEY_CT_ZONE,
 			    &mask->ct_zone, TCA_FLOWER_KEY_CT_ZONE_MASK,
-			    sizeof(key->ct_zone)))
-		goto nla_put_failure;
+			    माप(key->ct_zone)))
+		जाओ nla_put_failure;
 
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) &&
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) &&
 	    fl_dump_key_val(skb, &key->ct_mark, TCA_FLOWER_KEY_CT_MARK,
 			    &mask->ct_mark, TCA_FLOWER_KEY_CT_MARK_MASK,
-			    sizeof(key->ct_mark)))
-		goto nla_put_failure;
+			    माप(key->ct_mark)))
+		जाओ nla_put_failure;
 
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
 	    fl_dump_key_val(skb, &key->ct_labels, TCA_FLOWER_KEY_CT_LABELS,
 			    &mask->ct_labels, TCA_FLOWER_KEY_CT_LABELS_MASK,
-			    sizeof(key->ct_labels)))
-		goto nla_put_failure;
+			    माप(key->ct_labels)))
+		जाओ nla_put_failure;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int fl_dump_key_options(struct sk_buff *skb, int enc_opt_type,
-			       struct flow_dissector_key_enc_opts *enc_opts)
-{
-	struct nlattr *nest;
-	int err;
+अटल पूर्णांक fl_dump_key_options(काष्ठा sk_buff *skb, पूर्णांक enc_opt_type,
+			       काष्ठा flow_dissector_key_enc_opts *enc_opts)
+अणु
+	काष्ठा nlattr *nest;
+	पूर्णांक err;
 
-	if (!enc_opts->len)
-		return 0;
+	अगर (!enc_opts->len)
+		वापस 0;
 
 	nest = nla_nest_start_noflag(skb, enc_opt_type);
-	if (!nest)
-		goto nla_put_failure;
+	अगर (!nest)
+		जाओ nla_put_failure;
 
-	switch (enc_opts->dst_opt_type) {
-	case TUNNEL_GENEVE_OPT:
+	चयन (enc_opts->dst_opt_type) अणु
+	हाल TUNNEL_GENEVE_OPT:
 		err = fl_dump_key_geneve_opt(skb, enc_opts);
-		if (err)
-			goto nla_put_failure;
-		break;
-	case TUNNEL_VXLAN_OPT:
+		अगर (err)
+			जाओ nla_put_failure;
+		अवरोध;
+	हाल TUNNEL_VXLAN_OPT:
 		err = fl_dump_key_vxlan_opt(skb, enc_opts);
-		if (err)
-			goto nla_put_failure;
-		break;
-	case TUNNEL_ERSPAN_OPT:
+		अगर (err)
+			जाओ nla_put_failure;
+		अवरोध;
+	हाल TUNNEL_ERSPAN_OPT:
 		err = fl_dump_key_erspan_opt(skb, enc_opts);
-		if (err)
-			goto nla_put_failure;
-		break;
-	default:
-		goto nla_put_failure;
-	}
+		अगर (err)
+			जाओ nla_put_failure;
+		अवरोध;
+	शेष:
+		जाओ nla_put_failure;
+	पूर्ण
 	nla_nest_end(skb, nest);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int fl_dump_key_enc_opt(struct sk_buff *skb,
-			       struct flow_dissector_key_enc_opts *key_opts,
-			       struct flow_dissector_key_enc_opts *msk_opts)
-{
-	int err;
+अटल पूर्णांक fl_dump_key_enc_opt(काष्ठा sk_buff *skb,
+			       काष्ठा flow_dissector_key_enc_opts *key_opts,
+			       काष्ठा flow_dissector_key_enc_opts *msk_opts)
+अणु
+	पूर्णांक err;
 
 	err = fl_dump_key_options(skb, TCA_FLOWER_KEY_ENC_OPTS, key_opts);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return fl_dump_key_options(skb, TCA_FLOWER_KEY_ENC_OPTS_MASK, msk_opts);
-}
+	वापस fl_dump_key_options(skb, TCA_FLOWER_KEY_ENC_OPTS_MASK, msk_opts);
+पूर्ण
 
-static int fl_dump_key(struct sk_buff *skb, struct net *net,
-		       struct fl_flow_key *key, struct fl_flow_key *mask)
-{
-	if (mask->meta.ingress_ifindex) {
-		struct net_device *dev;
+अटल पूर्णांक fl_dump_key(काष्ठा sk_buff *skb, काष्ठा net *net,
+		       काष्ठा fl_flow_key *key, काष्ठा fl_flow_key *mask)
+अणु
+	अगर (mask->meta.ingress_अगरindex) अणु
+		काष्ठा net_device *dev;
 
-		dev = __dev_get_by_index(net, key->meta.ingress_ifindex);
-		if (dev && nla_put_string(skb, TCA_FLOWER_INDEV, dev->name))
-			goto nla_put_failure;
-	}
+		dev = __dev_get_by_index(net, key->meta.ingress_अगरindex);
+		अगर (dev && nla_put_string(skb, TCA_FLOWER_INDEV, dev->name))
+			जाओ nla_put_failure;
+	पूर्ण
 
-	if (fl_dump_key_val(skb, key->eth.dst, TCA_FLOWER_KEY_ETH_DST,
+	अगर (fl_dump_key_val(skb, key->eth.dst, TCA_FLOWER_KEY_ETH_DST,
 			    mask->eth.dst, TCA_FLOWER_KEY_ETH_DST_MASK,
-			    sizeof(key->eth.dst)) ||
+			    माप(key->eth.dst)) ||
 	    fl_dump_key_val(skb, key->eth.src, TCA_FLOWER_KEY_ETH_SRC,
 			    mask->eth.src, TCA_FLOWER_KEY_ETH_SRC_MASK,
-			    sizeof(key->eth.src)) ||
+			    माप(key->eth.src)) ||
 	    fl_dump_key_val(skb, &key->basic.n_proto, TCA_FLOWER_KEY_ETH_TYPE,
 			    &mask->basic.n_proto, TCA_FLOWER_UNSPEC,
-			    sizeof(key->basic.n_proto)))
-		goto nla_put_failure;
+			    माप(key->basic.n_proto)))
+		जाओ nla_put_failure;
 
-	if (fl_dump_key_mpls(skb, &key->mpls, &mask->mpls))
-		goto nla_put_failure;
+	अगर (fl_dump_key_mpls(skb, &key->mpls, &mask->mpls))
+		जाओ nla_put_failure;
 
-	if (fl_dump_key_vlan(skb, TCA_FLOWER_KEY_VLAN_ID,
+	अगर (fl_dump_key_vlan(skb, TCA_FLOWER_KEY_VLAN_ID,
 			     TCA_FLOWER_KEY_VLAN_PRIO, &key->vlan, &mask->vlan))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (fl_dump_key_vlan(skb, TCA_FLOWER_KEY_CVLAN_ID,
+	अगर (fl_dump_key_vlan(skb, TCA_FLOWER_KEY_CVLAN_ID,
 			     TCA_FLOWER_KEY_CVLAN_PRIO,
 			     &key->cvlan, &mask->cvlan) ||
 	    (mask->cvlan.vlan_tpid &&
 	     nla_put_be16(skb, TCA_FLOWER_KEY_VLAN_ETH_TYPE,
 			  key->cvlan.vlan_tpid)))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (mask->basic.n_proto) {
-		if (mask->cvlan.vlan_tpid) {
-			if (nla_put_be16(skb, TCA_FLOWER_KEY_CVLAN_ETH_TYPE,
+	अगर (mask->basic.n_proto) अणु
+		अगर (mask->cvlan.vlan_tpid) अणु
+			अगर (nla_put_be16(skb, TCA_FLOWER_KEY_CVLAN_ETH_TYPE,
 					 key->basic.n_proto))
-				goto nla_put_failure;
-		} else if (mask->vlan.vlan_tpid) {
-			if (nla_put_be16(skb, TCA_FLOWER_KEY_VLAN_ETH_TYPE,
+				जाओ nla_put_failure;
+		पूर्ण अन्यथा अगर (mask->vlan.vlan_tpid) अणु
+			अगर (nla_put_be16(skb, TCA_FLOWER_KEY_VLAN_ETH_TYPE,
 					 key->basic.n_proto))
-				goto nla_put_failure;
-		}
-	}
+				जाओ nla_put_failure;
+		पूर्ण
+	पूर्ण
 
-	if ((key->basic.n_proto == htons(ETH_P_IP) ||
+	अगर ((key->basic.n_proto == htons(ETH_P_IP) ||
 	     key->basic.n_proto == htons(ETH_P_IPV6)) &&
 	    (fl_dump_key_val(skb, &key->basic.ip_proto, TCA_FLOWER_KEY_IP_PROTO,
 			    &mask->basic.ip_proto, TCA_FLOWER_UNSPEC,
-			    sizeof(key->basic.ip_proto)) ||
+			    माप(key->basic.ip_proto)) ||
 	    fl_dump_key_ip(skb, false, &key->ip, &mask->ip)))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (key->control.addr_type == FLOW_DISSECTOR_KEY_IPV4_ADDRS &&
+	अगर (key->control.addr_type == FLOW_DISSECTOR_KEY_IPV4_ADDRS &&
 	    (fl_dump_key_val(skb, &key->ipv4.src, TCA_FLOWER_KEY_IPV4_SRC,
 			     &mask->ipv4.src, TCA_FLOWER_KEY_IPV4_SRC_MASK,
-			     sizeof(key->ipv4.src)) ||
+			     माप(key->ipv4.src)) ||
 	     fl_dump_key_val(skb, &key->ipv4.dst, TCA_FLOWER_KEY_IPV4_DST,
 			     &mask->ipv4.dst, TCA_FLOWER_KEY_IPV4_DST_MASK,
-			     sizeof(key->ipv4.dst))))
-		goto nla_put_failure;
-	else if (key->control.addr_type == FLOW_DISSECTOR_KEY_IPV6_ADDRS &&
+			     माप(key->ipv4.dst))))
+		जाओ nla_put_failure;
+	अन्यथा अगर (key->control.addr_type == FLOW_DISSECTOR_KEY_IPV6_ADDRS &&
 		 (fl_dump_key_val(skb, &key->ipv6.src, TCA_FLOWER_KEY_IPV6_SRC,
 				  &mask->ipv6.src, TCA_FLOWER_KEY_IPV6_SRC_MASK,
-				  sizeof(key->ipv6.src)) ||
+				  माप(key->ipv6.src)) ||
 		  fl_dump_key_val(skb, &key->ipv6.dst, TCA_FLOWER_KEY_IPV6_DST,
 				  &mask->ipv6.dst, TCA_FLOWER_KEY_IPV6_DST_MASK,
-				  sizeof(key->ipv6.dst))))
-		goto nla_put_failure;
+				  माप(key->ipv6.dst))))
+		जाओ nla_put_failure;
 
-	if (key->basic.ip_proto == IPPROTO_TCP &&
+	अगर (key->basic.ip_proto == IPPROTO_TCP &&
 	    (fl_dump_key_val(skb, &key->tp.src, TCA_FLOWER_KEY_TCP_SRC,
 			     &mask->tp.src, TCA_FLOWER_KEY_TCP_SRC_MASK,
-			     sizeof(key->tp.src)) ||
+			     माप(key->tp.src)) ||
 	     fl_dump_key_val(skb, &key->tp.dst, TCA_FLOWER_KEY_TCP_DST,
 			     &mask->tp.dst, TCA_FLOWER_KEY_TCP_DST_MASK,
-			     sizeof(key->tp.dst)) ||
+			     माप(key->tp.dst)) ||
 	     fl_dump_key_val(skb, &key->tcp.flags, TCA_FLOWER_KEY_TCP_FLAGS,
 			     &mask->tcp.flags, TCA_FLOWER_KEY_TCP_FLAGS_MASK,
-			     sizeof(key->tcp.flags))))
-		goto nla_put_failure;
-	else if (key->basic.ip_proto == IPPROTO_UDP &&
+			     माप(key->tcp.flags))))
+		जाओ nla_put_failure;
+	अन्यथा अगर (key->basic.ip_proto == IPPROTO_UDP &&
 		 (fl_dump_key_val(skb, &key->tp.src, TCA_FLOWER_KEY_UDP_SRC,
 				  &mask->tp.src, TCA_FLOWER_KEY_UDP_SRC_MASK,
-				  sizeof(key->tp.src)) ||
+				  माप(key->tp.src)) ||
 		  fl_dump_key_val(skb, &key->tp.dst, TCA_FLOWER_KEY_UDP_DST,
 				  &mask->tp.dst, TCA_FLOWER_KEY_UDP_DST_MASK,
-				  sizeof(key->tp.dst))))
-		goto nla_put_failure;
-	else if (key->basic.ip_proto == IPPROTO_SCTP &&
+				  माप(key->tp.dst))))
+		जाओ nla_put_failure;
+	अन्यथा अगर (key->basic.ip_proto == IPPROTO_SCTP &&
 		 (fl_dump_key_val(skb, &key->tp.src, TCA_FLOWER_KEY_SCTP_SRC,
 				  &mask->tp.src, TCA_FLOWER_KEY_SCTP_SRC_MASK,
-				  sizeof(key->tp.src)) ||
+				  माप(key->tp.src)) ||
 		  fl_dump_key_val(skb, &key->tp.dst, TCA_FLOWER_KEY_SCTP_DST,
 				  &mask->tp.dst, TCA_FLOWER_KEY_SCTP_DST_MASK,
-				  sizeof(key->tp.dst))))
-		goto nla_put_failure;
-	else if (key->basic.n_proto == htons(ETH_P_IP) &&
+				  माप(key->tp.dst))))
+		जाओ nla_put_failure;
+	अन्यथा अगर (key->basic.n_proto == htons(ETH_P_IP) &&
 		 key->basic.ip_proto == IPPROTO_ICMP &&
 		 (fl_dump_key_val(skb, &key->icmp.type,
 				  TCA_FLOWER_KEY_ICMPV4_TYPE, &mask->icmp.type,
 				  TCA_FLOWER_KEY_ICMPV4_TYPE_MASK,
-				  sizeof(key->icmp.type)) ||
+				  माप(key->icmp.type)) ||
 		  fl_dump_key_val(skb, &key->icmp.code,
 				  TCA_FLOWER_KEY_ICMPV4_CODE, &mask->icmp.code,
 				  TCA_FLOWER_KEY_ICMPV4_CODE_MASK,
-				  sizeof(key->icmp.code))))
-		goto nla_put_failure;
-	else if (key->basic.n_proto == htons(ETH_P_IPV6) &&
+				  माप(key->icmp.code))))
+		जाओ nla_put_failure;
+	अन्यथा अगर (key->basic.n_proto == htons(ETH_P_IPV6) &&
 		 key->basic.ip_proto == IPPROTO_ICMPV6 &&
 		 (fl_dump_key_val(skb, &key->icmp.type,
 				  TCA_FLOWER_KEY_ICMPV6_TYPE, &mask->icmp.type,
 				  TCA_FLOWER_KEY_ICMPV6_TYPE_MASK,
-				  sizeof(key->icmp.type)) ||
+				  माप(key->icmp.type)) ||
 		  fl_dump_key_val(skb, &key->icmp.code,
 				  TCA_FLOWER_KEY_ICMPV6_CODE, &mask->icmp.code,
 				  TCA_FLOWER_KEY_ICMPV6_CODE_MASK,
-				  sizeof(key->icmp.code))))
-		goto nla_put_failure;
-	else if ((key->basic.n_proto == htons(ETH_P_ARP) ||
+				  माप(key->icmp.code))))
+		जाओ nla_put_failure;
+	अन्यथा अगर ((key->basic.n_proto == htons(ETH_P_ARP) ||
 		  key->basic.n_proto == htons(ETH_P_RARP)) &&
 		 (fl_dump_key_val(skb, &key->arp.sip,
 				  TCA_FLOWER_KEY_ARP_SIP, &mask->arp.sip,
 				  TCA_FLOWER_KEY_ARP_SIP_MASK,
-				  sizeof(key->arp.sip)) ||
+				  माप(key->arp.sip)) ||
 		  fl_dump_key_val(skb, &key->arp.tip,
 				  TCA_FLOWER_KEY_ARP_TIP, &mask->arp.tip,
 				  TCA_FLOWER_KEY_ARP_TIP_MASK,
-				  sizeof(key->arp.tip)) ||
+				  माप(key->arp.tip)) ||
 		  fl_dump_key_val(skb, &key->arp.op,
 				  TCA_FLOWER_KEY_ARP_OP, &mask->arp.op,
 				  TCA_FLOWER_KEY_ARP_OP_MASK,
-				  sizeof(key->arp.op)) ||
+				  माप(key->arp.op)) ||
 		  fl_dump_key_val(skb, key->arp.sha, TCA_FLOWER_KEY_ARP_SHA,
 				  mask->arp.sha, TCA_FLOWER_KEY_ARP_SHA_MASK,
-				  sizeof(key->arp.sha)) ||
+				  माप(key->arp.sha)) ||
 		  fl_dump_key_val(skb, key->arp.tha, TCA_FLOWER_KEY_ARP_THA,
 				  mask->arp.tha, TCA_FLOWER_KEY_ARP_THA_MASK,
-				  sizeof(key->arp.tha))))
-		goto nla_put_failure;
+				  माप(key->arp.tha))))
+		जाओ nla_put_failure;
 
-	if ((key->basic.ip_proto == IPPROTO_TCP ||
+	अगर ((key->basic.ip_proto == IPPROTO_TCP ||
 	     key->basic.ip_proto == IPPROTO_UDP ||
 	     key->basic.ip_proto == IPPROTO_SCTP) &&
 	     fl_dump_key_port_range(skb, key, mask))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (key->enc_control.addr_type == FLOW_DISSECTOR_KEY_IPV4_ADDRS &&
+	अगर (key->enc_control.addr_type == FLOW_DISSECTOR_KEY_IPV4_ADDRS &&
 	    (fl_dump_key_val(skb, &key->enc_ipv4.src,
 			    TCA_FLOWER_KEY_ENC_IPV4_SRC, &mask->enc_ipv4.src,
 			    TCA_FLOWER_KEY_ENC_IPV4_SRC_MASK,
-			    sizeof(key->enc_ipv4.src)) ||
+			    माप(key->enc_ipv4.src)) ||
 	     fl_dump_key_val(skb, &key->enc_ipv4.dst,
 			     TCA_FLOWER_KEY_ENC_IPV4_DST, &mask->enc_ipv4.dst,
 			     TCA_FLOWER_KEY_ENC_IPV4_DST_MASK,
-			     sizeof(key->enc_ipv4.dst))))
-		goto nla_put_failure;
-	else if (key->enc_control.addr_type == FLOW_DISSECTOR_KEY_IPV6_ADDRS &&
+			     माप(key->enc_ipv4.dst))))
+		जाओ nla_put_failure;
+	अन्यथा अगर (key->enc_control.addr_type == FLOW_DISSECTOR_KEY_IPV6_ADDRS &&
 		 (fl_dump_key_val(skb, &key->enc_ipv6.src,
 			    TCA_FLOWER_KEY_ENC_IPV6_SRC, &mask->enc_ipv6.src,
 			    TCA_FLOWER_KEY_ENC_IPV6_SRC_MASK,
-			    sizeof(key->enc_ipv6.src)) ||
+			    माप(key->enc_ipv6.src)) ||
 		 fl_dump_key_val(skb, &key->enc_ipv6.dst,
 				 TCA_FLOWER_KEY_ENC_IPV6_DST,
 				 &mask->enc_ipv6.dst,
 				 TCA_FLOWER_KEY_ENC_IPV6_DST_MASK,
-			    sizeof(key->enc_ipv6.dst))))
-		goto nla_put_failure;
+			    माप(key->enc_ipv6.dst))))
+		जाओ nla_put_failure;
 
-	if (fl_dump_key_val(skb, &key->enc_key_id, TCA_FLOWER_KEY_ENC_KEY_ID,
+	अगर (fl_dump_key_val(skb, &key->enc_key_id, TCA_FLOWER_KEY_ENC_KEY_ID,
 			    &mask->enc_key_id, TCA_FLOWER_UNSPEC,
-			    sizeof(key->enc_key_id)) ||
+			    माप(key->enc_key_id)) ||
 	    fl_dump_key_val(skb, &key->enc_tp.src,
 			    TCA_FLOWER_KEY_ENC_UDP_SRC_PORT,
 			    &mask->enc_tp.src,
 			    TCA_FLOWER_KEY_ENC_UDP_SRC_PORT_MASK,
-			    sizeof(key->enc_tp.src)) ||
+			    माप(key->enc_tp.src)) ||
 	    fl_dump_key_val(skb, &key->enc_tp.dst,
 			    TCA_FLOWER_KEY_ENC_UDP_DST_PORT,
 			    &mask->enc_tp.dst,
 			    TCA_FLOWER_KEY_ENC_UDP_DST_PORT_MASK,
-			    sizeof(key->enc_tp.dst)) ||
+			    माप(key->enc_tp.dst)) ||
 	    fl_dump_key_ip(skb, true, &key->enc_ip, &mask->enc_ip) ||
 	    fl_dump_key_enc_opt(skb, &key->enc_opts, &mask->enc_opts))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (fl_dump_key_ct(skb, &key->ct, &mask->ct))
-		goto nla_put_failure;
+	अगर (fl_dump_key_ct(skb, &key->ct, &mask->ct))
+		जाओ nla_put_failure;
 
-	if (fl_dump_key_flags(skb, key->control.flags, mask->control.flags))
-		goto nla_put_failure;
+	अगर (fl_dump_key_flags(skb, key->control.flags, mask->control.flags))
+		जाओ nla_put_failure;
 
-	if (fl_dump_key_val(skb, &key->hash.hash, TCA_FLOWER_KEY_HASH,
+	अगर (fl_dump_key_val(skb, &key->hash.hash, TCA_FLOWER_KEY_HASH,
 			     &mask->hash.hash, TCA_FLOWER_KEY_HASH_MASK,
-			     sizeof(key->hash.hash)))
-		goto nla_put_failure;
+			     माप(key->hash.hash)))
+		जाओ nla_put_failure;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int fl_dump(struct net *net, struct tcf_proto *tp, void *fh,
-		   struct sk_buff *skb, struct tcmsg *t, bool rtnl_held)
-{
-	struct cls_fl_filter *f = fh;
-	struct nlattr *nest;
-	struct fl_flow_key *key, *mask;
+अटल पूर्णांक fl_dump(काष्ठा net *net, काष्ठा tcf_proto *tp, व्योम *fh,
+		   काष्ठा sk_buff *skb, काष्ठा tcmsg *t, bool rtnl_held)
+अणु
+	काष्ठा cls_fl_filter *f = fh;
+	काष्ठा nlattr *nest;
+	काष्ठा fl_flow_key *key, *mask;
 	bool skip_hw;
 
-	if (!f)
-		return skb->len;
+	अगर (!f)
+		वापस skb->len;
 
 	t->tcm_handle = f->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (!nest)
-		goto nla_put_failure;
+	अगर (!nest)
+		जाओ nla_put_failure;
 
 	spin_lock(&tp->lock);
 
-	if (f->res.classid &&
+	अगर (f->res.classid &&
 	    nla_put_u32(skb, TCA_FLOWER_CLASSID, f->res.classid))
-		goto nla_put_failure_locked;
+		जाओ nla_put_failure_locked;
 
 	key = &f->key;
 	mask = &f->mask->key;
 	skip_hw = tc_skip_hw(f->flags);
 
-	if (fl_dump_key(skb, net, key, mask))
-		goto nla_put_failure_locked;
+	अगर (fl_dump_key(skb, net, key, mask))
+		जाओ nla_put_failure_locked;
 
-	if (f->flags && nla_put_u32(skb, TCA_FLOWER_FLAGS, f->flags))
-		goto nla_put_failure_locked;
+	अगर (f->flags && nla_put_u32(skb, TCA_FLOWER_FLAGS, f->flags))
+		जाओ nla_put_failure_locked;
 
 	spin_unlock(&tp->lock);
 
-	if (!skip_hw)
+	अगर (!skip_hw)
 		fl_hw_update_stats(tp, f, rtnl_held);
 
-	if (nla_put_u32(skb, TCA_FLOWER_IN_HW_COUNT, f->in_hw_count))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, TCA_FLOWER_IN_HW_COUNT, f->in_hw_count))
+		जाओ nla_put_failure;
 
-	if (tcf_exts_dump(skb, &f->exts))
-		goto nla_put_failure;
+	अगर (tcf_exts_dump(skb, &f->exts))
+		जाओ nla_put_failure;
 
 	nla_nest_end(skb, nest);
 
-	if (tcf_exts_dump_stats(skb, &f->exts) < 0)
-		goto nla_put_failure;
+	अगर (tcf_exts_dump_stats(skb, &f->exts) < 0)
+		जाओ nla_put_failure;
 
-	return skb->len;
+	वापस skb->len;
 
 nla_put_failure_locked:
 	spin_unlock(&tp->lock);
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int fl_terse_dump(struct net *net, struct tcf_proto *tp, void *fh,
-			 struct sk_buff *skb, struct tcmsg *t, bool rtnl_held)
-{
-	struct cls_fl_filter *f = fh;
-	struct nlattr *nest;
+अटल पूर्णांक fl_terse_dump(काष्ठा net *net, काष्ठा tcf_proto *tp, व्योम *fh,
+			 काष्ठा sk_buff *skb, काष्ठा tcmsg *t, bool rtnl_held)
+अणु
+	काष्ठा cls_fl_filter *f = fh;
+	काष्ठा nlattr *nest;
 	bool skip_hw;
 
-	if (!f)
-		return skb->len;
+	अगर (!f)
+		वापस skb->len;
 
 	t->tcm_handle = f->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (!nest)
-		goto nla_put_failure;
+	अगर (!nest)
+		जाओ nla_put_failure;
 
 	spin_lock(&tp->lock);
 
 	skip_hw = tc_skip_hw(f->flags);
 
-	if (f->flags && nla_put_u32(skb, TCA_FLOWER_FLAGS, f->flags))
-		goto nla_put_failure_locked;
+	अगर (f->flags && nla_put_u32(skb, TCA_FLOWER_FLAGS, f->flags))
+		जाओ nla_put_failure_locked;
 
 	spin_unlock(&tp->lock);
 
-	if (!skip_hw)
+	अगर (!skip_hw)
 		fl_hw_update_stats(tp, f, rtnl_held);
 
-	if (tcf_exts_terse_dump(skb, &f->exts))
-		goto nla_put_failure;
+	अगर (tcf_exts_terse_dump(skb, &f->exts))
+		जाओ nla_put_failure;
 
 	nla_nest_end(skb, nest);
 
-	return skb->len;
+	वापस skb->len;
 
 nla_put_failure_locked:
 	spin_unlock(&tp->lock);
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int fl_tmplt_dump(struct sk_buff *skb, struct net *net, void *tmplt_priv)
-{
-	struct fl_flow_tmplt *tmplt = tmplt_priv;
-	struct fl_flow_key *key, *mask;
-	struct nlattr *nest;
+अटल पूर्णांक fl_पंचांगplt_dump(काष्ठा sk_buff *skb, काष्ठा net *net, व्योम *पंचांगplt_priv)
+अणु
+	काष्ठा fl_flow_पंचांगplt *पंचांगplt = पंचांगplt_priv;
+	काष्ठा fl_flow_key *key, *mask;
+	काष्ठा nlattr *nest;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (!nest)
-		goto nla_put_failure;
+	अगर (!nest)
+		जाओ nla_put_failure;
 
-	key = &tmplt->dummy_key;
-	mask = &tmplt->mask;
+	key = &पंचांगplt->dummy_key;
+	mask = &पंचांगplt->mask;
 
-	if (fl_dump_key(skb, net, key, mask))
-		goto nla_put_failure;
+	अगर (fl_dump_key(skb, net, key, mask))
+		जाओ nla_put_failure;
 
 	nla_nest_end(skb, nest);
 
-	return skb->len;
+	वापस skb->len;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static void fl_bind_class(void *fh, u32 classid, unsigned long cl, void *q,
-			  unsigned long base)
-{
-	struct cls_fl_filter *f = fh;
+अटल व्योम fl_bind_class(व्योम *fh, u32 classid, अचिन्हित दीर्घ cl, व्योम *q,
+			  अचिन्हित दीर्घ base)
+अणु
+	काष्ठा cls_fl_filter *f = fh;
 
-	if (f && f->res.classid == classid) {
-		if (cl)
+	अगर (f && f->res.classid == classid) अणु
+		अगर (cl)
 			__tcf_bind_filter(q, &f->res, base);
-		else
+		अन्यथा
 			__tcf_unbind_filter(q, &f->res);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool fl_delete_empty(struct tcf_proto *tp)
-{
-	struct cls_fl_head *head = fl_head_dereference(tp);
+अटल bool fl_delete_empty(काष्ठा tcf_proto *tp)
+अणु
+	काष्ठा cls_fl_head *head = fl_head_dereference(tp);
 
 	spin_lock(&tp->lock);
 	tp->deleting = idr_is_empty(&head->handle_idr);
 	spin_unlock(&tp->lock);
 
-	return tp->deleting;
-}
+	वापस tp->deleting;
+पूर्ण
 
-static struct tcf_proto_ops cls_fl_ops __read_mostly = {
+अटल काष्ठा tcf_proto_ops cls_fl_ops __पढ़ो_mostly = अणु
 	.kind		= "flower",
-	.classify	= fl_classify,
+	.classअगरy	= fl_classअगरy,
 	.init		= fl_init,
 	.destroy	= fl_destroy,
 	.get		= fl_get,
@@ -3209,25 +3210,25 @@ static struct tcf_proto_ops cls_fl_ops __read_mostly = {
 	.dump		= fl_dump,
 	.terse_dump	= fl_terse_dump,
 	.bind_class	= fl_bind_class,
-	.tmplt_create	= fl_tmplt_create,
-	.tmplt_destroy	= fl_tmplt_destroy,
-	.tmplt_dump	= fl_tmplt_dump,
+	.पंचांगplt_create	= fl_पंचांगplt_create,
+	.पंचांगplt_destroy	= fl_पंचांगplt_destroy,
+	.पंचांगplt_dump	= fl_पंचांगplt_dump,
 	.owner		= THIS_MODULE,
 	.flags		= TCF_PROTO_OPS_DOIT_UNLOCKED,
-};
+पूर्ण;
 
-static int __init cls_fl_init(void)
-{
-	return register_tcf_proto_ops(&cls_fl_ops);
-}
+अटल पूर्णांक __init cls_fl_init(व्योम)
+अणु
+	वापस रेजिस्टर_tcf_proto_ops(&cls_fl_ops);
+पूर्ण
 
-static void __exit cls_fl_exit(void)
-{
-	unregister_tcf_proto_ops(&cls_fl_ops);
-}
+अटल व्योम __निकास cls_fl_निकास(व्योम)
+अणु
+	unरेजिस्टर_tcf_proto_ops(&cls_fl_ops);
+पूर्ण
 
 module_init(cls_fl_init);
-module_exit(cls_fl_exit);
+module_निकास(cls_fl_निकास);
 
 MODULE_AUTHOR("Jiri Pirko <jiri@resnulli.us>");
 MODULE_DESCRIPTION("Flower classifier");

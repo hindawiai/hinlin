@@ -1,692 +1,693 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2007,2008 Freescale semiconductor, Inc.
  *
- * Author: Li Yang <LeoLi@freescale.com>
- *         Jerry Huang <Chang-Ming.Huang@freescale.com>
+ * Author: Li Yang <LeoLi@मुक्तscale.com>
+ *         Jerry Huang <Chang-Ming.Huang@मुक्तscale.com>
  *
  * Initialization based on code from Shlomi Gridish.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/proc_fs.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/timer.h>
-#include <linux/usb.h>
-#include <linux/device.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
-#include <linux/workqueue.h>
-#include <linux/time.h>
-#include <linux/fsl_devices.h>
-#include <linux/platform_device.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/device.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/fsl_devices.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "phy-fsl-usb.h"
+#समावेश "phy-fsl-usb.h"
 
-#ifdef VERBOSE
-#define VDBG(fmt, args...) pr_debug("[%s]  " fmt, \
+#अगर_घोषित VERBOSE
+#घोषणा VDBG(fmt, args...) pr_debug("[%s]  " fmt, \
 				 __func__, ## args)
-#else
-#define VDBG(stuff...)	do {} while (0)
-#endif
+#अन्यथा
+#घोषणा VDBG(stuff...)	करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#define DRIVER_VERSION "Rev. 1.55"
-#define DRIVER_AUTHOR "Jerry Huang/Li Yang"
-#define DRIVER_DESC "Freescale USB OTG Transceiver Driver"
-#define DRIVER_INFO DRIVER_DESC " " DRIVER_VERSION
+#घोषणा DRIVER_VERSION "Rev. 1.55"
+#घोषणा DRIVER_AUTHOR "Jerry Huang/Li Yang"
+#घोषणा DRIVER_DESC "Freescale USB OTG Transceiver Driver"
+#घोषणा DRIVER_INFO DRIVER_DESC " " DRIVER_VERSION
 
-static const char driver_name[] = "fsl-usb2-otg";
+अटल स्थिर अक्षर driver_name[] = "fsl-usb2-otg";
 
-const pm_message_t otg_suspend_state = {
+स्थिर pm_message_t otg_suspend_state = अणु
 	.event = 1,
-};
+पूर्ण;
 
-#define HA_DATA_PULSE
+#घोषणा HA_DATA_PULSE
 
-static struct usb_dr_mmap *usb_dr_regs;
-static struct fsl_otg *fsl_otg_dev;
-static int srp_wait_done;
+अटल काष्ठा usb_dr_mmap *usb_dr_regs;
+अटल काष्ठा fsl_otg *fsl_otg_dev;
+अटल पूर्णांक srp_रुको_करोne;
 
-/* FSM timers */
-struct fsl_otg_timer *a_wait_vrise_tmr, *a_wait_bcon_tmr, *a_aidl_bdis_tmr,
-	*b_ase0_brst_tmr, *b_se0_srp_tmr;
+/* FSM समयrs */
+काष्ठा fsl_otg_समयr *a_रुको_vrise_पंचांगr, *a_रुको_bcon_पंचांगr, *a_aidl_bdis_पंचांगr,
+	*b_ase0_brst_पंचांगr, *b_se0_srp_पंचांगr;
 
-/* Driver specific timers */
-struct fsl_otg_timer *b_data_pulse_tmr, *b_vbus_pulse_tmr, *b_srp_fail_tmr,
-	*b_srp_wait_tmr, *a_wait_enum_tmr;
+/* Driver specअगरic समयrs */
+काष्ठा fsl_otg_समयr *b_data_pulse_पंचांगr, *b_vbus_pulse_पंचांगr, *b_srp_fail_पंचांगr,
+	*b_srp_रुको_पंचांगr, *a_रुको_क्रमागत_पंचांगr;
 
-static struct list_head active_timers;
+अटल काष्ठा list_head active_समयrs;
 
-static const struct fsl_otg_config fsl_otg_initdata = {
+अटल स्थिर काष्ठा fsl_otg_config fsl_otg_initdata = अणु
 	.otg_port = 1,
-};
+पूर्ण;
 
-#ifdef CONFIG_PPC32
-static u32 _fsl_readl_be(const unsigned __iomem *p)
-{
-	return in_be32(p);
-}
+#अगर_घोषित CONFIG_PPC32
+अटल u32 _fsl_पढ़ोl_be(स्थिर अचिन्हित __iomem *p)
+अणु
+	वापस in_be32(p);
+पूर्ण
 
-static u32 _fsl_readl_le(const unsigned __iomem *p)
-{
-	return in_le32(p);
-}
+अटल u32 _fsl_पढ़ोl_le(स्थिर अचिन्हित __iomem *p)
+अणु
+	वापस in_le32(p);
+पूर्ण
 
-static void _fsl_writel_be(u32 v, unsigned __iomem *p)
-{
+अटल व्योम _fsl_ग_लिखोl_be(u32 v, अचिन्हित __iomem *p)
+अणु
 	out_be32(p, v);
-}
+पूर्ण
 
-static void _fsl_writel_le(u32 v, unsigned __iomem *p)
-{
+अटल व्योम _fsl_ग_लिखोl_le(u32 v, अचिन्हित __iomem *p)
+अणु
 	out_le32(p, v);
-}
+पूर्ण
 
-static u32 (*_fsl_readl)(const unsigned __iomem *p);
-static void (*_fsl_writel)(u32 v, unsigned __iomem *p);
+अटल u32 (*_fsl_पढ़ोl)(स्थिर अचिन्हित __iomem *p);
+अटल व्योम (*_fsl_ग_लिखोl)(u32 v, अचिन्हित __iomem *p);
 
-#define fsl_readl(p)		(*_fsl_readl)((p))
-#define fsl_writel(v, p)	(*_fsl_writel)((v), (p))
+#घोषणा fsl_पढ़ोl(p)		(*_fsl_पढ़ोl)((p))
+#घोषणा fsl_ग_लिखोl(v, p)	(*_fsl_ग_लिखोl)((v), (p))
 
-#else
-#define fsl_readl(addr)		readl(addr)
-#define fsl_writel(val, addr)	writel(val, addr)
-#endif /* CONFIG_PPC32 */
+#अन्यथा
+#घोषणा fsl_पढ़ोl(addr)		पढ़ोl(addr)
+#घोषणा fsl_ग_लिखोl(val, addr)	ग_लिखोl(val, addr)
+#पूर्ण_अगर /* CONFIG_PPC32 */
 
-int write_ulpi(u8 addr, u8 data)
-{
+पूर्णांक ग_लिखो_ulpi(u8 addr, u8 data)
+अणु
 	u32 temp;
 
 	temp = 0x60000000 | (addr << 16) | data;
-	fsl_writel(temp, &usb_dr_regs->ulpiview);
-	return 0;
-}
+	fsl_ग_लिखोl(temp, &usb_dr_regs->ulpiview);
+	वापस 0;
+पूर्ण
 
 /* -------------------------------------------------------------*/
 /* Operations that will be called from OTG Finite State Machine */
 
-/* Charge vbus for vbus pulsing in SRP */
-void fsl_otg_chrg_vbus(struct otg_fsm *fsm, int on)
-{
-	u32 tmp;
+/* Charge vbus क्रम vbus pulsing in SRP */
+व्योम fsl_otg_chrg_vbus(काष्ठा otg_fsm *fsm, पूर्णांक on)
+अणु
+	u32 पंचांगp;
 
-	tmp = fsl_readl(&usb_dr_regs->otgsc) & ~OTGSC_INTSTS_MASK;
+	पंचांगp = fsl_पढ़ोl(&usb_dr_regs->otgsc) & ~OTGSC_INTSTS_MASK;
 
-	if (on)
-		/* stop discharging, start charging */
-		tmp = (tmp & ~OTGSC_CTRL_VBUS_DISCHARGE) |
+	अगर (on)
+		/* stop disअक्षरging, start अक्षरging */
+		पंचांगp = (पंचांगp & ~OTGSC_CTRL_VBUS_DISCHARGE) |
 			OTGSC_CTRL_VBUS_CHARGE;
-	else
-		/* stop charging */
-		tmp &= ~OTGSC_CTRL_VBUS_CHARGE;
+	अन्यथा
+		/* stop अक्षरging */
+		पंचांगp &= ~OTGSC_CTRL_VBUS_CHARGE;
 
-	fsl_writel(tmp, &usb_dr_regs->otgsc);
-}
+	fsl_ग_लिखोl(पंचांगp, &usb_dr_regs->otgsc);
+पूर्ण
 
-/* Discharge vbus through a resistor to ground */
-void fsl_otg_dischrg_vbus(int on)
-{
-	u32 tmp;
+/* Disअक्षरge vbus through a resistor to ground */
+व्योम fsl_otg_dischrg_vbus(पूर्णांक on)
+अणु
+	u32 पंचांगp;
 
-	tmp = fsl_readl(&usb_dr_regs->otgsc) & ~OTGSC_INTSTS_MASK;
+	पंचांगp = fsl_पढ़ोl(&usb_dr_regs->otgsc) & ~OTGSC_INTSTS_MASK;
 
-	if (on)
-		/* stop charging, start discharging */
-		tmp = (tmp & ~OTGSC_CTRL_VBUS_CHARGE) |
+	अगर (on)
+		/* stop अक्षरging, start disअक्षरging */
+		पंचांगp = (पंचांगp & ~OTGSC_CTRL_VBUS_CHARGE) |
 			OTGSC_CTRL_VBUS_DISCHARGE;
-	else
-		/* stop discharging */
-		tmp &= ~OTGSC_CTRL_VBUS_DISCHARGE;
+	अन्यथा
+		/* stop disअक्षरging */
+		पंचांगp &= ~OTGSC_CTRL_VBUS_DISCHARGE;
 
-	fsl_writel(tmp, &usb_dr_regs->otgsc);
-}
+	fsl_ग_लिखोl(पंचांगp, &usb_dr_regs->otgsc);
+पूर्ण
 
 /* A-device driver vbus, controlled through PP bit in PORTSC */
-void fsl_otg_drv_vbus(struct otg_fsm *fsm, int on)
-{
-	u32 tmp;
+व्योम fsl_otg_drv_vbus(काष्ठा otg_fsm *fsm, पूर्णांक on)
+अणु
+	u32 पंचांगp;
 
-	if (on) {
-		tmp = fsl_readl(&usb_dr_regs->portsc) & ~PORTSC_W1C_BITS;
-		fsl_writel(tmp | PORTSC_PORT_POWER, &usb_dr_regs->portsc);
-	} else {
-		tmp = fsl_readl(&usb_dr_regs->portsc) &
+	अगर (on) अणु
+		पंचांगp = fsl_पढ़ोl(&usb_dr_regs->portsc) & ~PORTSC_W1C_BITS;
+		fsl_ग_लिखोl(पंचांगp | PORTSC_PORT_POWER, &usb_dr_regs->portsc);
+	पूर्ण अन्यथा अणु
+		पंचांगp = fsl_पढ़ोl(&usb_dr_regs->portsc) &
 		      ~PORTSC_W1C_BITS & ~PORTSC_PORT_POWER;
-		fsl_writel(tmp, &usb_dr_regs->portsc);
-	}
-}
+		fsl_ग_लिखोl(पंचांगp, &usb_dr_regs->portsc);
+	पूर्ण
+पूर्ण
 
 /*
- * Pull-up D+, signalling connect by periperal. Also used in
+ * Pull-up D+, संकेतling connect by periperal. Also used in
  * data-line pulsing in SRP
  */
-void fsl_otg_loc_conn(struct otg_fsm *fsm, int on)
-{
-	u32 tmp;
+व्योम fsl_otg_loc_conn(काष्ठा otg_fsm *fsm, पूर्णांक on)
+अणु
+	u32 पंचांगp;
 
-	tmp = fsl_readl(&usb_dr_regs->otgsc) & ~OTGSC_INTSTS_MASK;
+	पंचांगp = fsl_पढ़ोl(&usb_dr_regs->otgsc) & ~OTGSC_INTSTS_MASK;
 
-	if (on)
-		tmp |= OTGSC_CTRL_DATA_PULSING;
-	else
-		tmp &= ~OTGSC_CTRL_DATA_PULSING;
+	अगर (on)
+		पंचांगp |= OTGSC_CTRL_DATA_PULSING;
+	अन्यथा
+		पंचांगp &= ~OTGSC_CTRL_DATA_PULSING;
 
-	fsl_writel(tmp, &usb_dr_regs->otgsc);
-}
+	fsl_ग_लिखोl(पंचांगp, &usb_dr_regs->otgsc);
+पूर्ण
 
 /*
  * Generate SOF by host.  This is controlled through suspend/resume the
- * port.  In host mode, controller will automatically send SOF.
+ * port.  In host mode, controller will स्वतःmatically send SOF.
  * Suspend will block the data on the port.
  */
-void fsl_otg_loc_sof(struct otg_fsm *fsm, int on)
-{
-	u32 tmp;
+व्योम fsl_otg_loc_sof(काष्ठा otg_fsm *fsm, पूर्णांक on)
+अणु
+	u32 पंचांगp;
 
-	tmp = fsl_readl(&fsl_otg_dev->dr_mem_map->portsc) & ~PORTSC_W1C_BITS;
-	if (on)
-		tmp |= PORTSC_PORT_FORCE_RESUME;
-	else
-		tmp |= PORTSC_PORT_SUSPEND;
+	पंचांगp = fsl_पढ़ोl(&fsl_otg_dev->dr_mem_map->portsc) & ~PORTSC_W1C_BITS;
+	अगर (on)
+		पंचांगp |= PORTSC_PORT_FORCE_RESUME;
+	अन्यथा
+		पंचांगp |= PORTSC_PORT_SUSPEND;
 
-	fsl_writel(tmp, &fsl_otg_dev->dr_mem_map->portsc);
+	fsl_ग_लिखोl(पंचांगp, &fsl_otg_dev->dr_mem_map->portsc);
 
-}
+पूर्ण
 
 /* Start SRP pulsing by data-line pulsing, followed with v-bus pulsing. */
-void fsl_otg_start_pulse(struct otg_fsm *fsm)
-{
-	u32 tmp;
+व्योम fsl_otg_start_pulse(काष्ठा otg_fsm *fsm)
+अणु
+	u32 पंचांगp;
 
-	srp_wait_done = 0;
-#ifdef HA_DATA_PULSE
-	tmp = fsl_readl(&usb_dr_regs->otgsc) & ~OTGSC_INTSTS_MASK;
-	tmp |= OTGSC_HA_DATA_PULSE;
-	fsl_writel(tmp, &usb_dr_regs->otgsc);
-#else
+	srp_रुको_करोne = 0;
+#अगर_घोषित HA_DATA_PULSE
+	पंचांगp = fsl_पढ़ोl(&usb_dr_regs->otgsc) & ~OTGSC_INTSTS_MASK;
+	पंचांगp |= OTGSC_HA_DATA_PULSE;
+	fsl_ग_लिखोl(पंचांगp, &usb_dr_regs->otgsc);
+#अन्यथा
 	fsl_otg_loc_conn(1);
-#endif
+#पूर्ण_अगर
 
-	fsl_otg_add_timer(fsm, b_data_pulse_tmr);
-}
+	fsl_otg_add_समयr(fsm, b_data_pulse_पंचांगr);
+पूर्ण
 
-void b_data_pulse_end(unsigned long foo)
-{
-#ifdef HA_DATA_PULSE
-#else
+व्योम b_data_pulse_end(अचिन्हित दीर्घ foo)
+अणु
+#अगर_घोषित HA_DATA_PULSE
+#अन्यथा
 	fsl_otg_loc_conn(0);
-#endif
+#पूर्ण_अगर
 
 	/* Do VBUS pulse after data pulse */
 	fsl_otg_pulse_vbus();
-}
+पूर्ण
 
-void fsl_otg_pulse_vbus(void)
-{
-	srp_wait_done = 0;
+व्योम fsl_otg_pulse_vbus(व्योम)
+अणु
+	srp_रुको_करोne = 0;
 	fsl_otg_chrg_vbus(&fsl_otg_dev->fsm, 1);
-	/* start the timer to end vbus charge */
-	fsl_otg_add_timer(&fsl_otg_dev->fsm, b_vbus_pulse_tmr);
-}
+	/* start the समयr to end vbus अक्षरge */
+	fsl_otg_add_समयr(&fsl_otg_dev->fsm, b_vbus_pulse_पंचांगr);
+पूर्ण
 
-void b_vbus_pulse_end(unsigned long foo)
-{
+व्योम b_vbus_pulse_end(अचिन्हित दीर्घ foo)
+अणु
 	fsl_otg_chrg_vbus(&fsl_otg_dev->fsm, 0);
 
 	/*
 	 * As USB3300 using the same a_sess_vld and b_sess_vld voltage
-	 * we need to discharge the bus for a while to distinguish
+	 * we need to disअक्षरge the bus क्रम a जबतक to distinguish
 	 * residual voltage of vbus pulsing and A device pull up
 	 */
 	fsl_otg_dischrg_vbus(1);
-	fsl_otg_add_timer(&fsl_otg_dev->fsm, b_srp_wait_tmr);
-}
+	fsl_otg_add_समयr(&fsl_otg_dev->fsm, b_srp_रुको_पंचांगr);
+पूर्ण
 
-void b_srp_end(unsigned long foo)
-{
+व्योम b_srp_end(अचिन्हित दीर्घ foo)
+अणु
 	fsl_otg_dischrg_vbus(0);
-	srp_wait_done = 1;
+	srp_रुको_करोne = 1;
 
-	if ((fsl_otg_dev->phy.otg->state == OTG_STATE_B_SRP_INIT) &&
+	अगर ((fsl_otg_dev->phy.otg->state == OTG_STATE_B_SRP_INIT) &&
 	    fsl_otg_dev->fsm.b_sess_vld)
-		fsl_otg_dev->fsm.b_srp_done = 1;
-}
+		fsl_otg_dev->fsm.b_srp_करोne = 1;
+पूर्ण
 
 /*
- * Workaround for a_host suspending too fast.  When a_bus_req=0,
- * a_host will start by SRP.  It needs to set b_hnp_enable before
+ * Workaround क्रम a_host suspending too fast.  When a_bus_req=0,
+ * a_host will start by SRP.  It needs to set b_hnp_enable beक्रमe
  * actually suspending to start HNP
  */
-void a_wait_enum(unsigned long foo)
-{
+व्योम a_रुको_क्रमागत(अचिन्हित दीर्घ foo)
+अणु
 	VDBG("a_wait_enum timeout\n");
-	if (!fsl_otg_dev->phy.otg->host->b_hnp_enable)
-		fsl_otg_add_timer(&fsl_otg_dev->fsm, a_wait_enum_tmr);
-	else
+	अगर (!fsl_otg_dev->phy.otg->host->b_hnp_enable)
+		fsl_otg_add_समयr(&fsl_otg_dev->fsm, a_रुको_क्रमागत_पंचांगr);
+	अन्यथा
 		otg_statemachine(&fsl_otg_dev->fsm);
-}
+पूर्ण
 
-/* The timeout callback function to set time out bit */
-void set_tmout(unsigned long indicator)
-{
-	*(int *)indicator = 1;
-}
+/* The समयout callback function to set समय out bit */
+व्योम set_पंचांगout(अचिन्हित दीर्घ indicator)
+अणु
+	*(पूर्णांक *)indicator = 1;
+पूर्ण
 
-/* Initialize timers */
-int fsl_otg_init_timers(struct otg_fsm *fsm)
-{
-	/* FSM used timers */
-	a_wait_vrise_tmr = otg_timer_initializer(&set_tmout, TA_WAIT_VRISE,
-				(unsigned long)&fsm->a_wait_vrise_tmout);
-	if (!a_wait_vrise_tmr)
-		return -ENOMEM;
+/* Initialize समयrs */
+पूर्णांक fsl_otg_init_समयrs(काष्ठा otg_fsm *fsm)
+अणु
+	/* FSM used समयrs */
+	a_रुको_vrise_पंचांगr = otg_समयr_initializer(&set_पंचांगout, TA_WAIT_VRISE,
+				(अचिन्हित दीर्घ)&fsm->a_रुको_vrise_पंचांगout);
+	अगर (!a_रुको_vrise_पंचांगr)
+		वापस -ENOMEM;
 
-	a_wait_bcon_tmr = otg_timer_initializer(&set_tmout, TA_WAIT_BCON,
-				(unsigned long)&fsm->a_wait_bcon_tmout);
-	if (!a_wait_bcon_tmr)
-		return -ENOMEM;
+	a_रुको_bcon_पंचांगr = otg_समयr_initializer(&set_पंचांगout, TA_WAIT_BCON,
+				(अचिन्हित दीर्घ)&fsm->a_रुको_bcon_पंचांगout);
+	अगर (!a_रुको_bcon_पंचांगr)
+		वापस -ENOMEM;
 
-	a_aidl_bdis_tmr = otg_timer_initializer(&set_tmout, TA_AIDL_BDIS,
-				(unsigned long)&fsm->a_aidl_bdis_tmout);
-	if (!a_aidl_bdis_tmr)
-		return -ENOMEM;
+	a_aidl_bdis_पंचांगr = otg_समयr_initializer(&set_पंचांगout, TA_AIDL_BDIS,
+				(अचिन्हित दीर्घ)&fsm->a_aidl_bdis_पंचांगout);
+	अगर (!a_aidl_bdis_पंचांगr)
+		वापस -ENOMEM;
 
-	b_ase0_brst_tmr = otg_timer_initializer(&set_tmout, TB_ASE0_BRST,
-				(unsigned long)&fsm->b_ase0_brst_tmout);
-	if (!b_ase0_brst_tmr)
-		return -ENOMEM;
+	b_ase0_brst_पंचांगr = otg_समयr_initializer(&set_पंचांगout, TB_ASE0_BRST,
+				(अचिन्हित दीर्घ)&fsm->b_ase0_brst_पंचांगout);
+	अगर (!b_ase0_brst_पंचांगr)
+		वापस -ENOMEM;
 
-	b_se0_srp_tmr = otg_timer_initializer(&set_tmout, TB_SE0_SRP,
-				(unsigned long)&fsm->b_se0_srp);
-	if (!b_se0_srp_tmr)
-		return -ENOMEM;
+	b_se0_srp_पंचांगr = otg_समयr_initializer(&set_पंचांगout, TB_SE0_SRP,
+				(अचिन्हित दीर्घ)&fsm->b_se0_srp);
+	अगर (!b_se0_srp_पंचांगr)
+		वापस -ENOMEM;
 
-	b_srp_fail_tmr = otg_timer_initializer(&set_tmout, TB_SRP_FAIL,
-				(unsigned long)&fsm->b_srp_done);
-	if (!b_srp_fail_tmr)
-		return -ENOMEM;
+	b_srp_fail_पंचांगr = otg_समयr_initializer(&set_पंचांगout, TB_SRP_FAIL,
+				(अचिन्हित दीर्घ)&fsm->b_srp_करोne);
+	अगर (!b_srp_fail_पंचांगr)
+		वापस -ENOMEM;
 
-	a_wait_enum_tmr = otg_timer_initializer(&a_wait_enum, 10,
-				(unsigned long)&fsm);
-	if (!a_wait_enum_tmr)
-		return -ENOMEM;
+	a_रुको_क्रमागत_पंचांगr = otg_समयr_initializer(&a_रुको_क्रमागत, 10,
+				(अचिन्हित दीर्घ)&fsm);
+	अगर (!a_रुको_क्रमागत_पंचांगr)
+		वापस -ENOMEM;
 
-	/* device driver used timers */
-	b_srp_wait_tmr = otg_timer_initializer(&b_srp_end, TB_SRP_WAIT, 0);
-	if (!b_srp_wait_tmr)
-		return -ENOMEM;
+	/* device driver used समयrs */
+	b_srp_रुको_पंचांगr = otg_समयr_initializer(&b_srp_end, TB_SRP_WAIT, 0);
+	अगर (!b_srp_रुको_पंचांगr)
+		वापस -ENOMEM;
 
-	b_data_pulse_tmr = otg_timer_initializer(&b_data_pulse_end,
+	b_data_pulse_पंचांगr = otg_समयr_initializer(&b_data_pulse_end,
 				TB_DATA_PLS, 0);
-	if (!b_data_pulse_tmr)
-		return -ENOMEM;
+	अगर (!b_data_pulse_पंचांगr)
+		वापस -ENOMEM;
 
-	b_vbus_pulse_tmr = otg_timer_initializer(&b_vbus_pulse_end,
+	b_vbus_pulse_पंचांगr = otg_समयr_initializer(&b_vbus_pulse_end,
 				TB_VBUS_PLS, 0);
-	if (!b_vbus_pulse_tmr)
-		return -ENOMEM;
+	अगर (!b_vbus_pulse_पंचांगr)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Uninitialize timers */
-void fsl_otg_uninit_timers(void)
-{
-	/* FSM used timers */
-	kfree(a_wait_vrise_tmr);
-	kfree(a_wait_bcon_tmr);
-	kfree(a_aidl_bdis_tmr);
-	kfree(b_ase0_brst_tmr);
-	kfree(b_se0_srp_tmr);
-	kfree(b_srp_fail_tmr);
-	kfree(a_wait_enum_tmr);
+/* Uninitialize समयrs */
+व्योम fsl_otg_uninit_समयrs(व्योम)
+अणु
+	/* FSM used समयrs */
+	kमुक्त(a_रुको_vrise_पंचांगr);
+	kमुक्त(a_रुको_bcon_पंचांगr);
+	kमुक्त(a_aidl_bdis_पंचांगr);
+	kमुक्त(b_ase0_brst_पंचांगr);
+	kमुक्त(b_se0_srp_पंचांगr);
+	kमुक्त(b_srp_fail_पंचांगr);
+	kमुक्त(a_रुको_क्रमागत_पंचांगr);
 
-	/* device driver used timers */
-	kfree(b_srp_wait_tmr);
-	kfree(b_data_pulse_tmr);
-	kfree(b_vbus_pulse_tmr);
-}
+	/* device driver used समयrs */
+	kमुक्त(b_srp_रुको_पंचांगr);
+	kमुक्त(b_data_pulse_पंचांगr);
+	kमुक्त(b_vbus_pulse_पंचांगr);
+पूर्ण
 
-static struct fsl_otg_timer *fsl_otg_get_timer(enum otg_fsm_timer t)
-{
-	struct fsl_otg_timer *timer;
+अटल काष्ठा fsl_otg_समयr *fsl_otg_get_समयr(क्रमागत otg_fsm_समयr t)
+अणु
+	काष्ठा fsl_otg_समयr *समयr;
 
-	/* REVISIT: use array of pointers to timers instead */
-	switch (t) {
-	case A_WAIT_VRISE:
-		timer = a_wait_vrise_tmr;
-		break;
-	case A_WAIT_BCON:
-		timer = a_wait_vrise_tmr;
-		break;
-	case A_AIDL_BDIS:
-		timer = a_wait_vrise_tmr;
-		break;
-	case B_ASE0_BRST:
-		timer = a_wait_vrise_tmr;
-		break;
-	case B_SE0_SRP:
-		timer = a_wait_vrise_tmr;
-		break;
-	case B_SRP_FAIL:
-		timer = a_wait_vrise_tmr;
-		break;
-	case A_WAIT_ENUM:
-		timer = a_wait_vrise_tmr;
-		break;
-	default:
-		timer = NULL;
-	}
+	/* REVISIT: use array of poपूर्णांकers to समयrs instead */
+	चयन (t) अणु
+	हाल A_WAIT_VRISE:
+		समयr = a_रुको_vrise_पंचांगr;
+		अवरोध;
+	हाल A_WAIT_BCON:
+		समयr = a_रुको_vrise_पंचांगr;
+		अवरोध;
+	हाल A_AIDL_BDIS:
+		समयr = a_रुको_vrise_पंचांगr;
+		अवरोध;
+	हाल B_ASE0_BRST:
+		समयr = a_रुको_vrise_पंचांगr;
+		अवरोध;
+	हाल B_SE0_SRP:
+		समयr = a_रुको_vrise_पंचांगr;
+		अवरोध;
+	हाल B_SRP_FAIL:
+		समयr = a_रुको_vrise_पंचांगr;
+		अवरोध;
+	हाल A_WAIT_ENUM:
+		समयr = a_रुको_vrise_पंचांगr;
+		अवरोध;
+	शेष:
+		समयr = शून्य;
+	पूर्ण
 
-	return timer;
-}
+	वापस समयr;
+पूर्ण
 
-/* Add timer to timer list */
-void fsl_otg_add_timer(struct otg_fsm *fsm, void *gtimer)
-{
-	struct fsl_otg_timer *timer = gtimer;
-	struct fsl_otg_timer *tmp_timer;
+/* Add समयr to समयr list */
+व्योम fsl_otg_add_समयr(काष्ठा otg_fsm *fsm, व्योम *gसमयr)
+अणु
+	काष्ठा fsl_otg_समयr *समयr = gसमयr;
+	काष्ठा fsl_otg_समयr *पंचांगp_समयr;
 
 	/*
-	 * Check if the timer is already in the active list,
-	 * if so update timer count
+	 * Check अगर the समयr is alपढ़ोy in the active list,
+	 * अगर so update समयr count
 	 */
-	list_for_each_entry(tmp_timer, &active_timers, list)
-	    if (tmp_timer == timer) {
-		timer->count = timer->expires;
-		return;
-	}
-	timer->count = timer->expires;
-	list_add_tail(&timer->list, &active_timers);
-}
+	list_क्रम_each_entry(पंचांगp_समयr, &active_समयrs, list)
+	    अगर (पंचांगp_समयr == समयr) अणु
+		समयr->count = समयr->expires;
+		वापस;
+	पूर्ण
+	समयr->count = समयr->expires;
+	list_add_tail(&समयr->list, &active_समयrs);
+पूर्ण
 
-static void fsl_otg_fsm_add_timer(struct otg_fsm *fsm, enum otg_fsm_timer t)
-{
-	struct fsl_otg_timer *timer;
+अटल व्योम fsl_otg_fsm_add_समयr(काष्ठा otg_fsm *fsm, क्रमागत otg_fsm_समयr t)
+अणु
+	काष्ठा fsl_otg_समयr *समयr;
 
-	timer = fsl_otg_get_timer(t);
-	if (!timer)
-		return;
+	समयr = fsl_otg_get_समयr(t);
+	अगर (!समयr)
+		वापस;
 
-	fsl_otg_add_timer(fsm, timer);
-}
+	fsl_otg_add_समयr(fsm, समयr);
+पूर्ण
 
-/* Remove timer from the timer list; clear timeout status */
-void fsl_otg_del_timer(struct otg_fsm *fsm, void *gtimer)
-{
-	struct fsl_otg_timer *timer = gtimer;
-	struct fsl_otg_timer *tmp_timer, *del_tmp;
+/* Remove समयr from the समयr list; clear समयout status */
+व्योम fsl_otg_del_समयr(काष्ठा otg_fsm *fsm, व्योम *gसमयr)
+अणु
+	काष्ठा fsl_otg_समयr *समयr = gसमयr;
+	काष्ठा fsl_otg_समयr *पंचांगp_समयr, *del_पंचांगp;
 
-	list_for_each_entry_safe(tmp_timer, del_tmp, &active_timers, list)
-		if (tmp_timer == timer)
-			list_del(&timer->list);
-}
+	list_क्रम_each_entry_safe(पंचांगp_समयr, del_पंचांगp, &active_समयrs, list)
+		अगर (पंचांगp_समयr == समयr)
+			list_del(&समयr->list);
+पूर्ण
 
-static void fsl_otg_fsm_del_timer(struct otg_fsm *fsm, enum otg_fsm_timer t)
-{
-	struct fsl_otg_timer *timer;
+अटल व्योम fsl_otg_fsm_del_समयr(काष्ठा otg_fsm *fsm, क्रमागत otg_fsm_समयr t)
+अणु
+	काष्ठा fsl_otg_समयr *समयr;
 
-	timer = fsl_otg_get_timer(t);
-	if (!timer)
-		return;
+	समयr = fsl_otg_get_समयr(t);
+	अगर (!समयr)
+		वापस;
 
-	fsl_otg_del_timer(fsm, timer);
-}
+	fsl_otg_del_समयr(fsm, समयr);
+पूर्ण
 
 /* Reset controller, not reset the bus */
-void otg_reset_controller(void)
-{
+व्योम otg_reset_controller(व्योम)
+अणु
 	u32 command;
 
-	command = fsl_readl(&usb_dr_regs->usbcmd);
+	command = fsl_पढ़ोl(&usb_dr_regs->usbcmd);
 	command |= (1 << 1);
-	fsl_writel(command, &usb_dr_regs->usbcmd);
-	while (fsl_readl(&usb_dr_regs->usbcmd) & (1 << 1))
+	fsl_ग_लिखोl(command, &usb_dr_regs->usbcmd);
+	जबतक (fsl_पढ़ोl(&usb_dr_regs->usbcmd) & (1 << 1))
 		;
-}
+पूर्ण
 
 /* Call suspend/resume routines in host driver */
-int fsl_otg_start_host(struct otg_fsm *fsm, int on)
-{
-	struct usb_otg *otg = fsm->otg;
-	struct device *dev;
-	struct fsl_otg *otg_dev =
-		container_of(otg->usb_phy, struct fsl_otg, phy);
+पूर्णांक fsl_otg_start_host(काष्ठा otg_fsm *fsm, पूर्णांक on)
+अणु
+	काष्ठा usb_otg *otg = fsm->otg;
+	काष्ठा device *dev;
+	काष्ठा fsl_otg *otg_dev =
+		container_of(otg->usb_phy, काष्ठा fsl_otg, phy);
 	u32 retval = 0;
 
-	if (!otg->host)
-		return -ENODEV;
+	अगर (!otg->host)
+		वापस -ENODEV;
 	dev = otg->host->controller;
 
 	/*
-	 * Update a_vbus_vld state as a_vbus_vld int is disabled
+	 * Update a_vbus_vld state as a_vbus_vld पूर्णांक is disabled
 	 * in device mode
 	 */
 	fsm->a_vbus_vld =
-		!!(fsl_readl(&usb_dr_regs->otgsc) & OTGSC_STS_A_VBUS_VALID);
-	if (on) {
+		!!(fsl_पढ़ोl(&usb_dr_regs->otgsc) & OTGSC_STS_A_VBUS_VALID);
+	अगर (on) अणु
 		/* start fsl usb host controller */
-		if (otg_dev->host_working)
-			goto end;
-		else {
+		अगर (otg_dev->host_working)
+			जाओ end;
+		अन्यथा अणु
 			otg_reset_controller();
 			VDBG("host on......\n");
-			if (dev->driver->pm && dev->driver->pm->resume) {
+			अगर (dev->driver->pm && dev->driver->pm->resume) अणु
 				retval = dev->driver->pm->resume(dev);
-				if (fsm->id) {
-					/* default-b */
+				अगर (fsm->id) अणु
+					/* शेष-b */
 					fsl_otg_drv_vbus(fsm, 1);
 					/*
 					 * Workaround: b_host can't driver
 					 * vbus, but PP in PORTSC needs to
-					 * be 1 for host to work.
+					 * be 1 क्रम host to work.
 					 * So we set drv_vbus bit in
 					 * transceiver to 0 thru ULPI.
 					 */
-					write_ulpi(0x0c, 0x20);
-				}
-			}
+					ग_लिखो_ulpi(0x0c, 0x20);
+				पूर्ण
+			पूर्ण
 
 			otg_dev->host_working = 1;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* stop fsl usb host controller */
-		if (!otg_dev->host_working)
-			goto end;
-		else {
+		अगर (!otg_dev->host_working)
+			जाओ end;
+		अन्यथा अणु
 			VDBG("host off......\n");
-			if (dev && dev->driver) {
-				if (dev->driver->pm && dev->driver->pm->suspend)
+			अगर (dev && dev->driver) अणु
+				अगर (dev->driver->pm && dev->driver->pm->suspend)
 					retval = dev->driver->pm->suspend(dev);
-				if (fsm->id)
-					/* default-b */
+				अगर (fsm->id)
+					/* शेष-b */
 					fsl_otg_drv_vbus(fsm, 0);
-			}
+			पूर्ण
 			otg_dev->host_working = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 end:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
  * Call suspend and resume function in udc driver
  * to stop and start udc driver.
  */
-int fsl_otg_start_gadget(struct otg_fsm *fsm, int on)
-{
-	struct usb_otg *otg = fsm->otg;
-	struct device *dev;
+पूर्णांक fsl_otg_start_gadget(काष्ठा otg_fsm *fsm, पूर्णांक on)
+अणु
+	काष्ठा usb_otg *otg = fsm->otg;
+	काष्ठा device *dev;
 
-	if (!otg->gadget || !otg->gadget->dev.parent)
-		return -ENODEV;
+	अगर (!otg->gadget || !otg->gadget->dev.parent)
+		वापस -ENODEV;
 
 	VDBG("gadget %s\n", on ? "on" : "off");
 	dev = otg->gadget->dev.parent;
 
-	if (on) {
-		if (dev->driver->resume)
+	अगर (on) अणु
+		अगर (dev->driver->resume)
 			dev->driver->resume(dev);
-	} else {
-		if (dev->driver->suspend)
+	पूर्ण अन्यथा अणु
+		अगर (dev->driver->suspend)
 			dev->driver->suspend(dev, otg_suspend_state);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Called by initialization code of host driver.  Register host controller
- * to the OTG.  Suspend host for OTG role detection.
+ * to the OTG.  Suspend host क्रम OTG role detection.
  */
-static int fsl_otg_set_host(struct usb_otg *otg, struct usb_bus *host)
-{
-	struct fsl_otg *otg_dev;
+अटल पूर्णांक fsl_otg_set_host(काष्ठा usb_otg *otg, काष्ठा usb_bus *host)
+अणु
+	काष्ठा fsl_otg *otg_dev;
 
-	if (!otg)
-		return -ENODEV;
+	अगर (!otg)
+		वापस -ENODEV;
 
-	otg_dev = container_of(otg->usb_phy, struct fsl_otg, phy);
-	if (otg_dev != fsl_otg_dev)
-		return -ENODEV;
+	otg_dev = container_of(otg->usb_phy, काष्ठा fsl_otg, phy);
+	अगर (otg_dev != fsl_otg_dev)
+		वापस -ENODEV;
 
 	otg->host = host;
 
 	otg_dev->fsm.a_bus_drop = 0;
 	otg_dev->fsm.a_bus_req = 1;
 
-	if (host) {
+	अगर (host) अणु
 		VDBG("host off......\n");
 
 		otg->host->otg_port = fsl_otg_initdata.otg_port;
 		otg->host->is_b_host = otg_dev->fsm.id;
 		/*
-		 * must leave time for hub_wq to finish its thing
-		 * before yanking the host driver out from under it,
-		 * so suspend the host after a short delay.
+		 * must leave समय क्रम hub_wq to finish its thing
+		 * beक्रमe yanking the host driver out from under it,
+		 * so suspend the host after a लघु delay.
 		 */
 		otg_dev->host_working = 1;
 		schedule_delayed_work(&otg_dev->otg_event, 100);
-		return 0;
-	} else {
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		/* host driver going away */
-		if (!(fsl_readl(&otg_dev->dr_mem_map->otgsc) &
-		      OTGSC_STS_USB_ID)) {
+		अगर (!(fsl_पढ़ोl(&otg_dev->dr_mem_map->otgsc) &
+		      OTGSC_STS_USB_ID)) अणु
 			/* Mini-A cable connected */
-			struct otg_fsm *fsm = &otg_dev->fsm;
+			काष्ठा otg_fsm *fsm = &otg_dev->fsm;
 
 			otg->state = OTG_STATE_UNDEFINED;
 			fsm->protocol = PROTO_UNDEF;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	otg_dev->host_working = 0;
 
 	otg_statemachine(&otg_dev->fsm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Called by initialization code of udc.  Register udc to OTG. */
-static int fsl_otg_set_peripheral(struct usb_otg *otg,
-					struct usb_gadget *gadget)
-{
-	struct fsl_otg *otg_dev;
+अटल पूर्णांक fsl_otg_set_peripheral(काष्ठा usb_otg *otg,
+					काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा fsl_otg *otg_dev;
 
-	if (!otg)
-		return -ENODEV;
+	अगर (!otg)
+		वापस -ENODEV;
 
-	otg_dev = container_of(otg->usb_phy, struct fsl_otg, phy);
-	VDBG("otg_dev 0x%x\n", (int)otg_dev);
-	VDBG("fsl_otg_dev 0x%x\n", (int)fsl_otg_dev);
-	if (otg_dev != fsl_otg_dev)
-		return -ENODEV;
+	otg_dev = container_of(otg->usb_phy, काष्ठा fsl_otg, phy);
+	VDBG("otg_dev 0x%x\n", (पूर्णांक)otg_dev);
+	VDBG("fsl_otg_dev 0x%x\n", (पूर्णांक)fsl_otg_dev);
+	अगर (otg_dev != fsl_otg_dev)
+		वापस -ENODEV;
 
-	if (!gadget) {
-		if (!otg->default_a)
+	अगर (!gadget) अणु
+		अगर (!otg->शेष_a)
 			otg->gadget->ops->vbus_draw(otg->gadget, 0);
 		usb_gadget_vbus_disconnect(otg->gadget);
 		otg->gadget = 0;
 		otg_dev->fsm.b_bus_req = 0;
 		otg_statemachine(&otg_dev->fsm);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	otg->gadget = gadget;
 	otg->gadget->is_a_peripheral = !otg_dev->fsm.id;
 
 	otg_dev->fsm.b_bus_req = 1;
 
-	/* start the gadget right away if the ID pin says Mini-B */
+	/* start the gadget right away अगर the ID pin says Mini-B */
 	pr_debug("ID pin=%d\n", otg_dev->fsm.id);
-	if (otg_dev->fsm.id == 1) {
+	अगर (otg_dev->fsm.id == 1) अणु
 		fsl_otg_start_host(&otg_dev->fsm, 0);
 		otg_drv_vbus(&otg_dev->fsm, 0);
 		fsl_otg_start_gadget(&otg_dev->fsm, 1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Delayed pin detect interrupt processing.
+ * Delayed pin detect पूर्णांकerrupt processing.
  *
  * When the Mini-A cable is disconnected from the board,
- * the pin-detect interrupt happens before the disconnect
- * interrupts for the connected device(s).  In order to
- * process the disconnect interrupt(s) prior to switching
- * roles, the pin-detect interrupts are delayed, and handled
+ * the pin-detect पूर्णांकerrupt happens beक्रमe the disconnect
+ * पूर्णांकerrupts क्रम the connected device(s).  In order to
+ * process the disconnect पूर्णांकerrupt(s) prior to चयनing
+ * roles, the pin-detect पूर्णांकerrupts are delayed, and handled
  * by this routine.
  */
-static void fsl_otg_event(struct work_struct *work)
-{
-	struct fsl_otg *og = container_of(work, struct fsl_otg, otg_event.work);
-	struct otg_fsm *fsm = &og->fsm;
+अटल व्योम fsl_otg_event(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fsl_otg *og = container_of(work, काष्ठा fsl_otg, otg_event.work);
+	काष्ठा otg_fsm *fsm = &og->fsm;
 
-	if (fsm->id) {		/* switch to gadget */
+	अगर (fsm->id) अणु		/* चयन to gadget */
 		fsl_otg_start_host(fsm, 0);
 		otg_drv_vbus(fsm, 0);
 		fsl_otg_start_gadget(fsm, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* B-device start SRP */
-static int fsl_otg_start_srp(struct usb_otg *otg)
-{
-	struct fsl_otg *otg_dev;
+अटल पूर्णांक fsl_otg_start_srp(काष्ठा usb_otg *otg)
+अणु
+	काष्ठा fsl_otg *otg_dev;
 
-	if (!otg || otg->state != OTG_STATE_B_IDLE)
-		return -ENODEV;
+	अगर (!otg || otg->state != OTG_STATE_B_IDLE)
+		वापस -ENODEV;
 
-	otg_dev = container_of(otg->usb_phy, struct fsl_otg, phy);
-	if (otg_dev != fsl_otg_dev)
-		return -ENODEV;
+	otg_dev = container_of(otg->usb_phy, काष्ठा fsl_otg, phy);
+	अगर (otg_dev != fsl_otg_dev)
+		वापस -ENODEV;
 
 	otg_dev->fsm.b_bus_req = 1;
 	otg_statemachine(&otg_dev->fsm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* A_host suspend will call this function to start hnp */
-static int fsl_otg_start_hnp(struct usb_otg *otg)
-{
-	struct fsl_otg *otg_dev;
+अटल पूर्णांक fsl_otg_start_hnp(काष्ठा usb_otg *otg)
+अणु
+	काष्ठा fsl_otg *otg_dev;
 
-	if (!otg)
-		return -ENODEV;
+	अगर (!otg)
+		वापस -ENODEV;
 
-	otg_dev = container_of(otg->usb_phy, struct fsl_otg, phy);
-	if (otg_dev != fsl_otg_dev)
-		return -ENODEV;
+	otg_dev = container_of(otg->usb_phy, काष्ठा fsl_otg, phy);
+	अगर (otg_dev != fsl_otg_dev)
+		वापस -ENODEV;
 
 	pr_debug("start_hnp...\n");
 
@@ -694,114 +695,114 @@ static int fsl_otg_start_hnp(struct usb_otg *otg)
 	otg_dev->fsm.a_bus_req = 0;
 	otg_statemachine(&otg_dev->fsm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Interrupt handler.  OTG/host/peripheral share the same int line.
- * OTG driver clears OTGSC interrupts and leaves USB interrupts
- * intact.  It needs to have knowledge of some USB interrupts
+ * Interrupt handler.  OTG/host/peripheral share the same पूर्णांक line.
+ * OTG driver clears OTGSC पूर्णांकerrupts and leaves USB पूर्णांकerrupts
+ * पूर्णांकact.  It needs to have knowledge of some USB पूर्णांकerrupts
  * such as port change.
  */
-irqreturn_t fsl_otg_isr(int irq, void *dev_id)
-{
-	struct otg_fsm *fsm = &((struct fsl_otg *)dev_id)->fsm;
-	struct usb_otg *otg = ((struct fsl_otg *)dev_id)->phy.otg;
-	u32 otg_int_src, otg_sc;
+irqवापस_t fsl_otg_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा otg_fsm *fsm = &((काष्ठा fsl_otg *)dev_id)->fsm;
+	काष्ठा usb_otg *otg = ((काष्ठा fsl_otg *)dev_id)->phy.otg;
+	u32 otg_पूर्णांक_src, otg_sc;
 
-	otg_sc = fsl_readl(&usb_dr_regs->otgsc);
-	otg_int_src = otg_sc & OTGSC_INTSTS_MASK & (otg_sc >> 8);
+	otg_sc = fsl_पढ़ोl(&usb_dr_regs->otgsc);
+	otg_पूर्णांक_src = otg_sc & OTGSC_INTSTS_MASK & (otg_sc >> 8);
 
-	/* Only clear otg interrupts */
-	fsl_writel(otg_sc, &usb_dr_regs->otgsc);
+	/* Only clear otg पूर्णांकerrupts */
+	fsl_ग_लिखोl(otg_sc, &usb_dr_regs->otgsc);
 
 	/*FIXME: ID change not generate when init to 0 */
 	fsm->id = (otg_sc & OTGSC_STS_USB_ID) ? 1 : 0;
-	otg->default_a = (fsm->id == 0);
+	otg->शेष_a = (fsm->id == 0);
 
-	/* process OTG interrupts */
-	if (otg_int_src) {
-		if (otg_int_src & OTGSC_INTSTS_USB_ID) {
+	/* process OTG पूर्णांकerrupts */
+	अगर (otg_पूर्णांक_src) अणु
+		अगर (otg_पूर्णांक_src & OTGSC_INTSTS_USB_ID) अणु
 			fsm->id = (otg_sc & OTGSC_STS_USB_ID) ? 1 : 0;
-			otg->default_a = (fsm->id == 0);
-			/* clear conn information */
-			if (fsm->id)
+			otg->शेष_a = (fsm->id == 0);
+			/* clear conn inक्रमmation */
+			अगर (fsm->id)
 				fsm->b_conn = 0;
-			else
+			अन्यथा
 				fsm->a_conn = 0;
 
-			if (otg->host)
+			अगर (otg->host)
 				otg->host->is_b_host = fsm->id;
-			if (otg->gadget)
+			अगर (otg->gadget)
 				otg->gadget->is_a_peripheral = !fsm->id;
 			VDBG("ID int (ID is %d)\n", fsm->id);
 
-			if (fsm->id) {	/* switch to gadget */
+			अगर (fsm->id) अणु	/* चयन to gadget */
 				schedule_delayed_work(
-					&((struct fsl_otg *)dev_id)->otg_event,
+					&((काष्ठा fsl_otg *)dev_id)->otg_event,
 					100);
-			} else {	/* switch to host */
+			पूर्ण अन्यथा अणु	/* चयन to host */
 				cancel_delayed_work(&
-						    ((struct fsl_otg *)dev_id)->
+						    ((काष्ठा fsl_otg *)dev_id)->
 						    otg_event);
 				fsl_otg_start_gadget(fsm, 0);
 				otg_drv_vbus(fsm, 1);
 				fsl_otg_start_host(fsm, 1);
-			}
-			return IRQ_HANDLED;
-		}
-	}
-	return IRQ_NONE;
-}
+			पूर्ण
+			वापस IRQ_HANDLED;
+		पूर्ण
+	पूर्ण
+	वापस IRQ_NONE;
+पूर्ण
 
-static struct otg_fsm_ops fsl_otg_ops = {
+अटल काष्ठा otg_fsm_ops fsl_otg_ops = अणु
 	.chrg_vbus = fsl_otg_chrg_vbus,
 	.drv_vbus = fsl_otg_drv_vbus,
 	.loc_conn = fsl_otg_loc_conn,
 	.loc_sof = fsl_otg_loc_sof,
 	.start_pulse = fsl_otg_start_pulse,
 
-	.add_timer = fsl_otg_fsm_add_timer,
-	.del_timer = fsl_otg_fsm_del_timer,
+	.add_समयr = fsl_otg_fsm_add_समयr,
+	.del_समयr = fsl_otg_fsm_del_समयr,
 
 	.start_host = fsl_otg_start_host,
 	.start_gadget = fsl_otg_start_gadget,
-};
+पूर्ण;
 
-/* Initialize the global variable fsl_otg_dev and request IRQ for OTG */
-static int fsl_otg_conf(struct platform_device *pdev)
-{
-	struct fsl_otg *fsl_otg_tc;
-	int status;
+/* Initialize the global variable fsl_otg_dev and request IRQ क्रम OTG */
+अटल पूर्णांक fsl_otg_conf(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fsl_otg *fsl_otg_tc;
+	पूर्णांक status;
 
-	if (fsl_otg_dev)
-		return 0;
+	अगर (fsl_otg_dev)
+		वापस 0;
 
 	/* allocate space to fsl otg device */
-	fsl_otg_tc = kzalloc(sizeof(struct fsl_otg), GFP_KERNEL);
-	if (!fsl_otg_tc)
-		return -ENOMEM;
+	fsl_otg_tc = kzalloc(माप(काष्ठा fsl_otg), GFP_KERNEL);
+	अगर (!fsl_otg_tc)
+		वापस -ENOMEM;
 
-	fsl_otg_tc->phy.otg = kzalloc(sizeof(struct usb_otg), GFP_KERNEL);
-	if (!fsl_otg_tc->phy.otg) {
-		kfree(fsl_otg_tc);
-		return -ENOMEM;
-	}
+	fsl_otg_tc->phy.otg = kzalloc(माप(काष्ठा usb_otg), GFP_KERNEL);
+	अगर (!fsl_otg_tc->phy.otg) अणु
+		kमुक्त(fsl_otg_tc);
+		वापस -ENOMEM;
+	पूर्ण
 
 	INIT_DELAYED_WORK(&fsl_otg_tc->otg_event, fsl_otg_event);
 
-	INIT_LIST_HEAD(&active_timers);
-	status = fsl_otg_init_timers(&fsl_otg_tc->fsm);
-	if (status) {
+	INIT_LIST_HEAD(&active_समयrs);
+	status = fsl_otg_init_समयrs(&fsl_otg_tc->fsm);
+	अगर (status) अणु
 		pr_info("Couldn't init OTG timers\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	mutex_init(&fsl_otg_tc->fsm.lock);
 
 	/* Set OTG state machine operations */
 	fsl_otg_tc->fsm.ops = &fsl_otg_ops;
 
-	/* initialize the otg structure */
+	/* initialize the otg काष्ठाure */
 	fsl_otg_tc->phy.label = DRIVER_DESC;
 	fsl_otg_tc->phy.dev = &pdev->dev;
 
@@ -815,201 +816,201 @@ static int fsl_otg_conf(struct platform_device *pdev)
 
 	/* Store the otg transceiver */
 	status = usb_add_phy(&fsl_otg_tc->phy, USB_PHY_TYPE_USB2);
-	if (status) {
+	अगर (status) अणु
 		pr_warn(FSL_OTG_NAME ": unable to register OTG transceiver.\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	fsl_otg_uninit_timers();
-	kfree(fsl_otg_tc->phy.otg);
-	kfree(fsl_otg_tc);
-	return status;
-}
+	fsl_otg_uninit_समयrs();
+	kमुक्त(fsl_otg_tc->phy.otg);
+	kमुक्त(fsl_otg_tc);
+	वापस status;
+पूर्ण
 
 /* OTG Initialization */
-int usb_otg_start(struct platform_device *pdev)
-{
-	struct fsl_otg *p_otg;
-	struct usb_phy *otg_trans = usb_get_phy(USB_PHY_TYPE_USB2);
-	struct otg_fsm *fsm;
-	int status;
-	struct resource *res;
+पूर्णांक usb_otg_start(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fsl_otg *p_otg;
+	काष्ठा usb_phy *otg_trans = usb_get_phy(USB_PHY_TYPE_USB2);
+	काष्ठा otg_fsm *fsm;
+	पूर्णांक status;
+	काष्ठा resource *res;
 	u32 temp;
-	struct fsl_usb2_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा fsl_usb2_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
 
-	p_otg = container_of(otg_trans, struct fsl_otg, phy);
+	p_otg = container_of(otg_trans, काष्ठा fsl_otg, phy);
 	fsm = &p_otg->fsm;
 
-	/* Initialize the state machine structure with default values */
+	/* Initialize the state machine काष्ठाure with शेष values */
 	SET_OTG_STATE(otg_trans, OTG_STATE_UNDEFINED);
 	fsm->otg = p_otg->phy.otg;
 
-	/* We don't require predefined MEM/IRQ resource index */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENXIO;
+	/* We करोn't require predefined MEM/IRQ resource index */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENXIO;
 
-	/* We don't request_mem_region here to enable resource sharing
+	/* We करोn't request_mem_region here to enable resource sharing
 	 * with host/device */
 
-	usb_dr_regs = ioremap(res->start, sizeof(struct usb_dr_mmap));
-	p_otg->dr_mem_map = (struct usb_dr_mmap *)usb_dr_regs;
-	pdata->regs = (void *)usb_dr_regs;
+	usb_dr_regs = ioremap(res->start, माप(काष्ठा usb_dr_mmap));
+	p_otg->dr_mem_map = (काष्ठा usb_dr_mmap *)usb_dr_regs;
+	pdata->regs = (व्योम *)usb_dr_regs;
 
-	if (pdata->init && pdata->init(pdev) != 0)
-		return -EINVAL;
+	अगर (pdata->init && pdata->init(pdev) != 0)
+		वापस -EINVAL;
 
-#ifdef CONFIG_PPC32
-	if (pdata->big_endian_mmio) {
-		_fsl_readl = _fsl_readl_be;
-		_fsl_writel = _fsl_writel_be;
-	} else {
-		_fsl_readl = _fsl_readl_le;
-		_fsl_writel = _fsl_writel_le;
-	}
-#endif
+#अगर_घोषित CONFIG_PPC32
+	अगर (pdata->big_endian_mmio) अणु
+		_fsl_पढ़ोl = _fsl_पढ़ोl_be;
+		_fsl_ग_लिखोl = _fsl_ग_लिखोl_be;
+	पूर्ण अन्यथा अणु
+		_fsl_पढ़ोl = _fsl_पढ़ोl_le;
+		_fsl_ग_लिखोl = _fsl_ग_लिखोl_le;
+	पूर्ण
+#पूर्ण_अगर
 
 	/* request irq */
-	p_otg->irq = platform_get_irq(pdev, 0);
+	p_otg->irq = platक्रमm_get_irq(pdev, 0);
 	status = request_irq(p_otg->irq, fsl_otg_isr,
 				IRQF_SHARED, driver_name, p_otg);
-	if (status) {
+	अगर (status) अणु
 		dev_dbg(p_otg->phy.dev, "can't get IRQ %d, error %d\n",
 			p_otg->irq, status);
 		iounmap(p_otg->dr_mem_map);
-		kfree(p_otg->phy.otg);
-		kfree(p_otg);
-		return status;
-	}
+		kमुक्त(p_otg->phy.otg);
+		kमुक्त(p_otg);
+		वापस status;
+	पूर्ण
 
 	/* stop the controller */
-	temp = fsl_readl(&p_otg->dr_mem_map->usbcmd);
+	temp = fsl_पढ़ोl(&p_otg->dr_mem_map->usbcmd);
 	temp &= ~USB_CMD_RUN_STOP;
-	fsl_writel(temp, &p_otg->dr_mem_map->usbcmd);
+	fsl_ग_लिखोl(temp, &p_otg->dr_mem_map->usbcmd);
 
 	/* reset the controller */
-	temp = fsl_readl(&p_otg->dr_mem_map->usbcmd);
+	temp = fsl_पढ़ोl(&p_otg->dr_mem_map->usbcmd);
 	temp |= USB_CMD_CTRL_RESET;
-	fsl_writel(temp, &p_otg->dr_mem_map->usbcmd);
+	fsl_ग_लिखोl(temp, &p_otg->dr_mem_map->usbcmd);
 
-	/* wait reset completed */
-	while (fsl_readl(&p_otg->dr_mem_map->usbcmd) & USB_CMD_CTRL_RESET)
+	/* रुको reset completed */
+	जबतक (fsl_पढ़ोl(&p_otg->dr_mem_map->usbcmd) & USB_CMD_CTRL_RESET)
 		;
 
 	/* configure the VBUSHS as IDLE(both host and device) */
 	temp = USB_MODE_STREAM_DISABLE | (pdata->es ? USB_MODE_ES : 0);
-	fsl_writel(temp, &p_otg->dr_mem_map->usbmode);
+	fsl_ग_लिखोl(temp, &p_otg->dr_mem_map->usbmode);
 
-	/* configure PHY interface */
-	temp = fsl_readl(&p_otg->dr_mem_map->portsc);
+	/* configure PHY पूर्णांकerface */
+	temp = fsl_पढ़ोl(&p_otg->dr_mem_map->portsc);
 	temp &= ~(PORTSC_PHY_TYPE_SEL | PORTSC_PTW);
-	switch (pdata->phy_mode) {
-	case FSL_USB2_PHY_ULPI:
+	चयन (pdata->phy_mode) अणु
+	हाल FSL_USB2_PHY_ULPI:
 		temp |= PORTSC_PTS_ULPI;
-		break;
-	case FSL_USB2_PHY_UTMI_WIDE:
+		अवरोध;
+	हाल FSL_USB2_PHY_UTMI_WIDE:
 		temp |= PORTSC_PTW_16BIT;
 		fallthrough;
-	case FSL_USB2_PHY_UTMI:
+	हाल FSL_USB2_PHY_UTMI:
 		temp |= PORTSC_PTS_UTMI;
 		fallthrough;
-	default:
-		break;
-	}
-	fsl_writel(temp, &p_otg->dr_mem_map->portsc);
+	शेष:
+		अवरोध;
+	पूर्ण
+	fsl_ग_लिखोl(temp, &p_otg->dr_mem_map->portsc);
 
-	if (pdata->have_sysif_regs) {
-		/* configure control enable IO output, big endian register */
-		temp = __raw_readl(&p_otg->dr_mem_map->control);
+	अगर (pdata->have_sysअगर_regs) अणु
+		/* configure control enable IO output, big endian रेजिस्टर */
+		temp = __raw_पढ़ोl(&p_otg->dr_mem_map->control);
 		temp |= USB_CTRL_IOENB;
-		__raw_writel(temp, &p_otg->dr_mem_map->control);
-	}
+		__raw_ग_लिखोl(temp, &p_otg->dr_mem_map->control);
+	पूर्ण
 
-	/* disable all interrupt and clear all OTGSC status */
-	temp = fsl_readl(&p_otg->dr_mem_map->otgsc);
+	/* disable all पूर्णांकerrupt and clear all OTGSC status */
+	temp = fsl_पढ़ोl(&p_otg->dr_mem_map->otgsc);
 	temp &= ~OTGSC_INTERRUPT_ENABLE_BITS_MASK;
 	temp |= OTGSC_INTERRUPT_STATUS_BITS_MASK | OTGSC_CTRL_VBUS_DISCHARGE;
-	fsl_writel(temp, &p_otg->dr_mem_map->otgsc);
+	fsl_ग_लिखोl(temp, &p_otg->dr_mem_map->otgsc);
 
 	/*
-	 * The identification (id) input is FALSE when a Mini-A plug is inserted
+	 * The identअगरication (id) input is FALSE when a Mini-A plug is inserted
 	 * in the devices Mini-AB receptacle. Otherwise, this input is TRUE.
 	 * Also: record initial state of ID pin
 	 */
-	if (fsl_readl(&p_otg->dr_mem_map->otgsc) & OTGSC_STS_USB_ID) {
+	अगर (fsl_पढ़ोl(&p_otg->dr_mem_map->otgsc) & OTGSC_STS_USB_ID) अणु
 		p_otg->phy.otg->state = OTG_STATE_UNDEFINED;
 		p_otg->fsm.id = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		p_otg->phy.otg->state = OTG_STATE_A_IDLE;
 		p_otg->fsm.id = 0;
-	}
+	पूर्ण
 
 	pr_debug("initial ID pin=%d\n", p_otg->fsm.id);
 
-	/* enable OTG ID pin interrupt */
-	temp = fsl_readl(&p_otg->dr_mem_map->otgsc);
+	/* enable OTG ID pin पूर्णांकerrupt */
+	temp = fsl_पढ़ोl(&p_otg->dr_mem_map->otgsc);
 	temp |= OTGSC_INTR_USB_ID_EN;
 	temp &= ~(OTGSC_CTRL_VBUS_DISCHARGE | OTGSC_INTR_1MS_TIMER_EN);
-	fsl_writel(temp, &p_otg->dr_mem_map->otgsc);
+	fsl_ग_लिखोl(temp, &p_otg->dr_mem_map->otgsc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsl_otg_probe(struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक fsl_otg_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 
-	if (!dev_get_platdata(&pdev->dev))
-		return -ENODEV;
+	अगर (!dev_get_platdata(&pdev->dev))
+		वापस -ENODEV;
 
 	/* configure the OTG */
 	ret = fsl_otg_conf(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Couldn't configure OTG module\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* start OTG */
 	ret = usb_otg_start(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Can't init FSL OTG device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fsl_otg_remove(struct platform_device *pdev)
-{
-	struct fsl_usb2_platform_data *pdata = dev_get_platdata(&pdev->dev);
+अटल पूर्णांक fsl_otg_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fsl_usb2_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
 
-	usb_remove_phy(&fsl_otg_dev->phy);
-	free_irq(fsl_otg_dev->irq, fsl_otg_dev);
+	usb_हटाओ_phy(&fsl_otg_dev->phy);
+	मुक्त_irq(fsl_otg_dev->irq, fsl_otg_dev);
 
-	iounmap((void *)usb_dr_regs);
+	iounmap((व्योम *)usb_dr_regs);
 
-	fsl_otg_uninit_timers();
-	kfree(fsl_otg_dev->phy.otg);
-	kfree(fsl_otg_dev);
+	fsl_otg_uninit_समयrs();
+	kमुक्त(fsl_otg_dev->phy.otg);
+	kमुक्त(fsl_otg_dev);
 
-	if (pdata->exit)
-		pdata->exit(pdev);
+	अगर (pdata->निकास)
+		pdata->निकास(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct platform_driver fsl_otg_driver = {
+काष्ठा platक्रमm_driver fsl_otg_driver = अणु
 	.probe = fsl_otg_probe,
-	.remove = fsl_otg_remove,
-	.driver = {
+	.हटाओ = fsl_otg_हटाओ,
+	.driver = अणु
 		.name = driver_name,
 		.owner = THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(fsl_otg_driver);
+module_platक्रमm_driver(fsl_otg_driver);
 
 MODULE_DESCRIPTION(DRIVER_INFO);
 MODULE_AUTHOR(DRIVER_AUTHOR);

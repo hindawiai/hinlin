@@ -1,546 +1,547 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  STM32 ALSA SoC Digital Audio Interface (I2S) driver.
  *
  * Copyright (C) 2017, STMicroelectronics - All Rights Reserved
- * Author(s): Olivier Moysan <olivier.moysan@st.com> for STMicroelectronics.
+ * Author(s): Olivier Moysan <olivier.moysan@st.com> क्रम STMicroelectronics.
  */
 
-#include <linux/bitfield.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/regmap.h>
-#include <linux/reset.h>
-#include <linux/spinlock.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/spinlock.h>
 
-#include <sound/dmaengine_pcm.h>
-#include <sound/pcm_params.h>
+#समावेश <sound/dmaengine_pcm.h>
+#समावेश <sound/pcm_params.h>
 
-#define STM32_I2S_CR1_REG	0x0
-#define STM32_I2S_CFG1_REG	0x08
-#define STM32_I2S_CFG2_REG	0x0C
-#define STM32_I2S_IER_REG	0x10
-#define STM32_I2S_SR_REG	0x14
-#define STM32_I2S_IFCR_REG	0x18
-#define STM32_I2S_TXDR_REG	0X20
-#define STM32_I2S_RXDR_REG	0x30
-#define STM32_I2S_CGFR_REG	0X50
-#define STM32_I2S_HWCFGR_REG	0x3F0
-#define STM32_I2S_VERR_REG	0x3F4
-#define STM32_I2S_IPIDR_REG	0x3F8
-#define STM32_I2S_SIDR_REG	0x3FC
+#घोषणा STM32_I2S_CR1_REG	0x0
+#घोषणा STM32_I2S_CFG1_REG	0x08
+#घोषणा STM32_I2S_CFG2_REG	0x0C
+#घोषणा STM32_I2S_IER_REG	0x10
+#घोषणा STM32_I2S_SR_REG	0x14
+#घोषणा STM32_I2S_IFCR_REG	0x18
+#घोषणा STM32_I2S_TXDR_REG	0X20
+#घोषणा STM32_I2S_RXDR_REG	0x30
+#घोषणा STM32_I2S_CGFR_REG	0X50
+#घोषणा STM32_I2S_HWCFGR_REG	0x3F0
+#घोषणा STM32_I2S_VERR_REG	0x3F4
+#घोषणा STM32_I2S_IPIDR_REG	0x3F8
+#घोषणा STM32_I2S_SIDR_REG	0x3FC
 
-/* Bit definition for SPI2S_CR1 register */
-#define I2S_CR1_SPE		BIT(0)
-#define I2S_CR1_CSTART		BIT(9)
-#define I2S_CR1_CSUSP		BIT(10)
-#define I2S_CR1_HDDIR		BIT(11)
-#define I2S_CR1_SSI		BIT(12)
-#define I2S_CR1_CRC33_17	BIT(13)
-#define I2S_CR1_RCRCI		BIT(14)
-#define I2S_CR1_TCRCI		BIT(15)
+/* Bit definition क्रम SPI2S_CR1 रेजिस्टर */
+#घोषणा I2S_CR1_SPE		BIT(0)
+#घोषणा I2S_CR1_CSTART		BIT(9)
+#घोषणा I2S_CR1_CSUSP		BIT(10)
+#घोषणा I2S_CR1_HDसूची		BIT(11)
+#घोषणा I2S_CR1_SSI		BIT(12)
+#घोषणा I2S_CR1_CRC33_17	BIT(13)
+#घोषणा I2S_CR1_RCRCI		BIT(14)
+#घोषणा I2S_CR1_TCRCI		BIT(15)
 
-/* Bit definition for SPI_CFG2 register */
-#define I2S_CFG2_IOSWP_SHIFT	15
-#define I2S_CFG2_IOSWP		BIT(I2S_CFG2_IOSWP_SHIFT)
-#define I2S_CFG2_LSBFRST	BIT(23)
-#define I2S_CFG2_AFCNTR		BIT(31)
+/* Bit definition क्रम SPI_CFG2 रेजिस्टर */
+#घोषणा I2S_CFG2_IOSWP_SHIFT	15
+#घोषणा I2S_CFG2_IOSWP		BIT(I2S_CFG2_IOSWP_SHIFT)
+#घोषणा I2S_CFG2_LSBFRST	BIT(23)
+#घोषणा I2S_CFG2_AFCNTR		BIT(31)
 
-/* Bit definition for SPI_CFG1 register */
-#define I2S_CFG1_FTHVL_SHIFT	5
-#define I2S_CFG1_FTHVL_MASK	GENMASK(8, I2S_CFG1_FTHVL_SHIFT)
-#define I2S_CFG1_FTHVL_SET(x)	((x) << I2S_CFG1_FTHVL_SHIFT)
+/* Bit definition क्रम SPI_CFG1 रेजिस्टर */
+#घोषणा I2S_CFG1_FTHVL_SHIFT	5
+#घोषणा I2S_CFG1_FTHVL_MASK	GENMASK(8, I2S_CFG1_FTHVL_SHIFT)
+#घोषणा I2S_CFG1_FTHVL_SET(x)	((x) << I2S_CFG1_FTHVL_SHIFT)
 
-#define I2S_CFG1_TXDMAEN	BIT(15)
-#define I2S_CFG1_RXDMAEN	BIT(14)
+#घोषणा I2S_CFG1_TXDMAEN	BIT(15)
+#घोषणा I2S_CFG1_RXDMAEN	BIT(14)
 
-/* Bit definition for SPI2S_IER register */
-#define I2S_IER_RXPIE		BIT(0)
-#define I2S_IER_TXPIE		BIT(1)
-#define I2S_IER_DPXPIE		BIT(2)
-#define I2S_IER_EOTIE		BIT(3)
-#define I2S_IER_TXTFIE		BIT(4)
-#define I2S_IER_UDRIE		BIT(5)
-#define I2S_IER_OVRIE		BIT(6)
-#define I2S_IER_CRCEIE		BIT(7)
-#define I2S_IER_TIFREIE		BIT(8)
-#define I2S_IER_MODFIE		BIT(9)
-#define I2S_IER_TSERFIE		BIT(10)
+/* Bit definition क्रम SPI2S_IER रेजिस्टर */
+#घोषणा I2S_IER_RXPIE		BIT(0)
+#घोषणा I2S_IER_TXPIE		BIT(1)
+#घोषणा I2S_IER_DPXPIE		BIT(2)
+#घोषणा I2S_IER_EOTIE		BIT(3)
+#घोषणा I2S_IER_TXTFIE		BIT(4)
+#घोषणा I2S_IER_UDRIE		BIT(5)
+#घोषणा I2S_IER_OVRIE		BIT(6)
+#घोषणा I2S_IER_CRCEIE		BIT(7)
+#घोषणा I2S_IER_TIFREIE		BIT(8)
+#घोषणा I2S_IER_MODFIE		BIT(9)
+#घोषणा I2S_IER_TSERFIE		BIT(10)
 
-/* Bit definition for SPI2S_SR register */
-#define I2S_SR_RXP		BIT(0)
-#define I2S_SR_TXP		BIT(1)
-#define I2S_SR_DPXP		BIT(2)
-#define I2S_SR_EOT		BIT(3)
-#define I2S_SR_TXTF		BIT(4)
-#define I2S_SR_UDR		BIT(5)
-#define I2S_SR_OVR		BIT(6)
-#define I2S_SR_CRCERR		BIT(7)
-#define I2S_SR_TIFRE		BIT(8)
-#define I2S_SR_MODF		BIT(9)
-#define I2S_SR_TSERF		BIT(10)
-#define I2S_SR_SUSP		BIT(11)
-#define I2S_SR_TXC		BIT(12)
-#define I2S_SR_RXPLVL		GENMASK(14, 13)
-#define I2S_SR_RXWNE		BIT(15)
+/* Bit definition क्रम SPI2S_SR रेजिस्टर */
+#घोषणा I2S_SR_RXP		BIT(0)
+#घोषणा I2S_SR_TXP		BIT(1)
+#घोषणा I2S_SR_DPXP		BIT(2)
+#घोषणा I2S_SR_EOT		BIT(3)
+#घोषणा I2S_SR_TXTF		BIT(4)
+#घोषणा I2S_SR_UDR		BIT(5)
+#घोषणा I2S_SR_OVR		BIT(6)
+#घोषणा I2S_SR_CRCERR		BIT(7)
+#घोषणा I2S_SR_TIFRE		BIT(8)
+#घोषणा I2S_SR_MODF		BIT(9)
+#घोषणा I2S_SR_TSERF		BIT(10)
+#घोषणा I2S_SR_SUSP		BIT(11)
+#घोषणा I2S_SR_TXC		BIT(12)
+#घोषणा I2S_SR_RXPLVL		GENMASK(14, 13)
+#घोषणा I2S_SR_RXWNE		BIT(15)
 
-#define I2S_SR_MASK		GENMASK(15, 0)
+#घोषणा I2S_SR_MASK		GENMASK(15, 0)
 
-/* Bit definition for SPI_IFCR register */
-#define I2S_IFCR_EOTC		BIT(3)
-#define I2S_IFCR_TXTFC		BIT(4)
-#define I2S_IFCR_UDRC		BIT(5)
-#define I2S_IFCR_OVRC		BIT(6)
-#define I2S_IFCR_CRCEC		BIT(7)
-#define I2S_IFCR_TIFREC		BIT(8)
-#define I2S_IFCR_MODFC		BIT(9)
-#define I2S_IFCR_TSERFC		BIT(10)
-#define I2S_IFCR_SUSPC		BIT(11)
+/* Bit definition क्रम SPI_IFCR रेजिस्टर */
+#घोषणा I2S_IFCR_EOTC		BIT(3)
+#घोषणा I2S_IFCR_TXTFC		BIT(4)
+#घोषणा I2S_IFCR_UDRC		BIT(5)
+#घोषणा I2S_IFCR_OVRC		BIT(6)
+#घोषणा I2S_IFCR_CRCEC		BIT(7)
+#घोषणा I2S_IFCR_TIFREC		BIT(8)
+#घोषणा I2S_IFCR_MODFC		BIT(9)
+#घोषणा I2S_IFCR_TSERFC		BIT(10)
+#घोषणा I2S_IFCR_SUSPC		BIT(11)
 
-#define I2S_IFCR_MASK		GENMASK(11, 3)
+#घोषणा I2S_IFCR_MASK		GENMASK(11, 3)
 
-/* Bit definition for SPI_I2SCGFR register */
-#define I2S_CGFR_I2SMOD		BIT(0)
+/* Bit definition क्रम SPI_I2SCGFR रेजिस्टर */
+#घोषणा I2S_CGFR_I2SMOD		BIT(0)
 
-#define I2S_CGFR_I2SCFG_SHIFT	1
-#define I2S_CGFR_I2SCFG_MASK	GENMASK(3, I2S_CGFR_I2SCFG_SHIFT)
-#define I2S_CGFR_I2SCFG_SET(x)	((x) << I2S_CGFR_I2SCFG_SHIFT)
+#घोषणा I2S_CGFR_I2SCFG_SHIFT	1
+#घोषणा I2S_CGFR_I2SCFG_MASK	GENMASK(3, I2S_CGFR_I2SCFG_SHIFT)
+#घोषणा I2S_CGFR_I2SCFG_SET(x)	((x) << I2S_CGFR_I2SCFG_SHIFT)
 
-#define I2S_CGFR_I2SSTD_SHIFT	4
-#define I2S_CGFR_I2SSTD_MASK	GENMASK(5, I2S_CGFR_I2SSTD_SHIFT)
-#define I2S_CGFR_I2SSTD_SET(x)	((x) << I2S_CGFR_I2SSTD_SHIFT)
+#घोषणा I2S_CGFR_I2SSTD_SHIFT	4
+#घोषणा I2S_CGFR_I2SSTD_MASK	GENMASK(5, I2S_CGFR_I2SSTD_SHIFT)
+#घोषणा I2S_CGFR_I2SSTD_SET(x)	((x) << I2S_CGFR_I2SSTD_SHIFT)
 
-#define I2S_CGFR_PCMSYNC	BIT(7)
+#घोषणा I2S_CGFR_PCMSYNC	BIT(7)
 
-#define I2S_CGFR_DATLEN_SHIFT	8
-#define I2S_CGFR_DATLEN_MASK	GENMASK(9, I2S_CGFR_DATLEN_SHIFT)
-#define I2S_CGFR_DATLEN_SET(x)	((x) << I2S_CGFR_DATLEN_SHIFT)
+#घोषणा I2S_CGFR_DATLEN_SHIFT	8
+#घोषणा I2S_CGFR_DATLEN_MASK	GENMASK(9, I2S_CGFR_DATLEN_SHIFT)
+#घोषणा I2S_CGFR_DATLEN_SET(x)	((x) << I2S_CGFR_DATLEN_SHIFT)
 
-#define I2S_CGFR_CHLEN_SHIFT	10
-#define I2S_CGFR_CHLEN		BIT(I2S_CGFR_CHLEN_SHIFT)
-#define I2S_CGFR_CKPOL		BIT(11)
-#define I2S_CGFR_FIXCH		BIT(12)
-#define I2S_CGFR_WSINV		BIT(13)
-#define I2S_CGFR_DATFMT		BIT(14)
+#घोषणा I2S_CGFR_CHLEN_SHIFT	10
+#घोषणा I2S_CGFR_CHLEN		BIT(I2S_CGFR_CHLEN_SHIFT)
+#घोषणा I2S_CGFR_CKPOL		BIT(11)
+#घोषणा I2S_CGFR_FIXCH		BIT(12)
+#घोषणा I2S_CGFR_WSINV		BIT(13)
+#घोषणा I2S_CGFR_DATFMT		BIT(14)
 
-#define I2S_CGFR_I2SDIV_SHIFT	16
-#define I2S_CGFR_I2SDIV_BIT_H	23
-#define I2S_CGFR_I2SDIV_MASK	GENMASK(I2S_CGFR_I2SDIV_BIT_H,\
+#घोषणा I2S_CGFR_I2SDIV_SHIFT	16
+#घोषणा I2S_CGFR_I2SDIV_BIT_H	23
+#घोषणा I2S_CGFR_I2SDIV_MASK	GENMASK(I2S_CGFR_I2SDIV_BIT_H,\
 				I2S_CGFR_I2SDIV_SHIFT)
-#define I2S_CGFR_I2SDIV_SET(x)	((x) << I2S_CGFR_I2SDIV_SHIFT)
-#define	I2S_CGFR_I2SDIV_MAX	((1 << (I2S_CGFR_I2SDIV_BIT_H -\
+#घोषणा I2S_CGFR_I2SDIV_SET(x)	((x) << I2S_CGFR_I2SDIV_SHIFT)
+#घोषणा	I2S_CGFR_I2SDIV_MAX	((1 << (I2S_CGFR_I2SDIV_BIT_H -\
 				I2S_CGFR_I2SDIV_SHIFT)) - 1)
 
-#define I2S_CGFR_ODD_SHIFT	24
-#define I2S_CGFR_ODD		BIT(I2S_CGFR_ODD_SHIFT)
-#define I2S_CGFR_MCKOE		BIT(25)
+#घोषणा I2S_CGFR_ODD_SHIFT	24
+#घोषणा I2S_CGFR_ODD		BIT(I2S_CGFR_ODD_SHIFT)
+#घोषणा I2S_CGFR_MCKOE		BIT(25)
 
 /* Registers below apply to I2S version 1.1 and more */
 
-/* Bit definition for SPI_HWCFGR register */
-#define I2S_HWCFGR_I2S_SUPPORT_MASK	GENMASK(15, 12)
+/* Bit definition क्रम SPI_HWCFGR रेजिस्टर */
+#घोषणा I2S_HWCFGR_I2S_SUPPORT_MASK	GENMASK(15, 12)
 
-/* Bit definition for SPI_VERR register */
-#define I2S_VERR_MIN_MASK	GENMASK(3, 0)
-#define I2S_VERR_MAJ_MASK	GENMASK(7, 4)
+/* Bit definition क्रम SPI_VERR रेजिस्टर */
+#घोषणा I2S_VERR_MIN_MASK	GENMASK(3, 0)
+#घोषणा I2S_VERR_MAJ_MASK	GENMASK(7, 4)
 
-/* Bit definition for SPI_IPIDR register */
-#define I2S_IPIDR_ID_MASK	GENMASK(31, 0)
+/* Bit definition क्रम SPI_IPIDR रेजिस्टर */
+#घोषणा I2S_IPIDR_ID_MASK	GENMASK(31, 0)
 
-/* Bit definition for SPI_SIDR register */
-#define I2S_SIDR_ID_MASK	GENMASK(31, 0)
+/* Bit definition क्रम SPI_SIDR रेजिस्टर */
+#घोषणा I2S_SIDR_ID_MASK	GENMASK(31, 0)
 
-#define I2S_IPIDR_NUMBER	0x00130022
+#घोषणा I2S_IPIDR_NUMBER	0x00130022
 
-enum i2s_master_mode {
+क्रमागत i2s_master_mode अणु
 	I2S_MS_NOT_SET,
 	I2S_MS_MASTER,
 	I2S_MS_SLAVE,
-};
+पूर्ण;
 
-enum i2s_mode {
+क्रमागत i2s_mode अणु
 	I2S_I2SMOD_TX_SLAVE,
 	I2S_I2SMOD_RX_SLAVE,
 	I2S_I2SMOD_TX_MASTER,
 	I2S_I2SMOD_RX_MASTER,
 	I2S_I2SMOD_FD_SLAVE,
 	I2S_I2SMOD_FD_MASTER,
-};
+पूर्ण;
 
-enum i2s_fifo_th {
+क्रमागत i2s_fअगरo_th अणु
 	I2S_FIFO_TH_NONE,
 	I2S_FIFO_TH_ONE_QUARTER,
 	I2S_FIFO_TH_HALF,
 	I2S_FIFO_TH_THREE_QUARTER,
 	I2S_FIFO_TH_FULL,
-};
+पूर्ण;
 
-enum i2s_std {
+क्रमागत i2s_std अणु
 	I2S_STD_I2S,
 	I2S_STD_LEFT_J,
 	I2S_STD_RIGHT_J,
 	I2S_STD_DSP,
-};
+पूर्ण;
 
-enum i2s_datlen {
+क्रमागत i2s_datlen अणु
 	I2S_I2SMOD_DATLEN_16,
 	I2S_I2SMOD_DATLEN_24,
 	I2S_I2SMOD_DATLEN_32,
-};
+पूर्ण;
 
-#define STM32_I2S_FIFO_SIZE		16
+#घोषणा STM32_I2S_FIFO_SIZE		16
 
-#define STM32_I2S_IS_MASTER(x)		((x)->ms_flg == I2S_MS_MASTER)
-#define STM32_I2S_IS_SLAVE(x)		((x)->ms_flg == I2S_MS_SLAVE)
+#घोषणा STM32_I2S_IS_MASTER(x)		((x)->ms_flg == I2S_MS_MASTER)
+#घोषणा STM32_I2S_IS_SLAVE(x)		((x)->ms_flg == I2S_MS_SLAVE)
 
-#define STM32_I2S_NAME_LEN		32
-#define STM32_I2S_RATE_11K		11025
+#घोषणा STM32_I2S_NAME_LEN		32
+#घोषणा STM32_I2S_RATE_11K		11025
 
 /**
- * struct stm32_i2s_data - private data of I2S
- * @regmap_conf: I2S register map configuration pointer
- * @regmap: I2S register map pointer
- * @pdev: device data pointer
- * @dai_drv: DAI driver pointer
- * @dma_data_tx: dma configuration data for tx channel
- * @dma_data_rx: dma configuration data for tx channel
- * @substream: PCM substream data pointer
- * @i2sclk: kernel clock feeding the I2S clock generator
- * @i2smclk: master clock from I2S mclk provider
- * @pclk: peripheral clock driving bus interface
- * @x8kclk: I2S parent clock for sampling frequencies multiple of 8kHz
- * @x11kclk: I2S parent clock for sampling frequencies multiple of 11kHz
- * @base:  mmio register base virtual address
- * @phys_addr: I2S registers physical base address
+ * काष्ठा sपंचांग32_i2s_data - निजी data of I2S
+ * @regmap_conf: I2S रेजिस्टर map configuration poपूर्णांकer
+ * @regmap: I2S रेजिस्टर map poपूर्णांकer
+ * @pdev: device data poपूर्णांकer
+ * @dai_drv: DAI driver poपूर्णांकer
+ * @dma_data_tx: dma configuration data क्रम tx channel
+ * @dma_data_rx: dma configuration data क्रम tx channel
+ * @substream: PCM substream data poपूर्णांकer
+ * @i2sclk: kernel घड़ी feeding the I2S घड़ी generator
+ * @i2smclk: master घड़ी from I2S mclk provider
+ * @pclk: peripheral घड़ी driving bus पूर्णांकerface
+ * @x8kclk: I2S parent घड़ी क्रम sampling frequencies multiple of 8kHz
+ * @x11kclk: I2S parent घड़ी क्रम sampling frequencies multiple of 11kHz
+ * @base:  mmio रेजिस्टर base भव address
+ * @phys_addr: I2S रेजिस्टरs physical base address
  * @lock_fd: lock to manage race conditions in full duplex mode
  * @irq_lock: prevent race condition with IRQ
- * @mclk_rate: master clock frequency (Hz)
+ * @mclk_rate: master घड़ी frequency (Hz)
  * @fmt: DAI protocol
- * @divider: prescaler division ratio
- * @div: prescaler div field
+ * @भागider: prescaler भागision ratio
+ * @भाग: prescaler भाग field
  * @odd: prescaler odd field
- * @refcount: keep count of opened streams on I2S
+ * @refcount: keep count of खोलोed streams on I2S
  * @ms_flg: master mode flag.
  */
-struct stm32_i2s_data {
-	const struct regmap_config *regmap_conf;
-	struct regmap *regmap;
-	struct platform_device *pdev;
-	struct snd_soc_dai_driver *dai_drv;
-	struct snd_dmaengine_dai_dma_data dma_data_tx;
-	struct snd_dmaengine_dai_dma_data dma_data_rx;
-	struct snd_pcm_substream *substream;
-	struct clk *i2sclk;
-	struct clk *i2smclk;
-	struct clk *pclk;
-	struct clk *x8kclk;
-	struct clk *x11kclk;
-	void __iomem *base;
+काष्ठा sपंचांग32_i2s_data अणु
+	स्थिर काष्ठा regmap_config *regmap_conf;
+	काष्ठा regmap *regmap;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा snd_soc_dai_driver *dai_drv;
+	काष्ठा snd_dmaengine_dai_dma_data dma_data_tx;
+	काष्ठा snd_dmaengine_dai_dma_data dma_data_rx;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा clk *i2sclk;
+	काष्ठा clk *i2smclk;
+	काष्ठा clk *pclk;
+	काष्ठा clk *x8kclk;
+	काष्ठा clk *x11kclk;
+	व्योम __iomem *base;
 	dma_addr_t phys_addr;
-	spinlock_t lock_fd; /* Manage race conditions for full duplex */
+	spinlock_t lock_fd; /* Manage race conditions क्रम full duplex */
 	spinlock_t irq_lock; /* used to prevent race condition with IRQ */
-	unsigned int mclk_rate;
-	unsigned int fmt;
-	unsigned int divider;
-	unsigned int div;
+	अचिन्हित पूर्णांक mclk_rate;
+	अचिन्हित पूर्णांक fmt;
+	अचिन्हित पूर्णांक भागider;
+	अचिन्हित पूर्णांक भाग;
 	bool odd;
-	int refcount;
-	int ms_flg;
-};
+	पूर्णांक refcount;
+	पूर्णांक ms_flg;
+पूर्ण;
 
-struct stm32_i2smclk_data {
-	struct clk_hw hw;
-	unsigned long freq;
-	struct stm32_i2s_data *i2s_data;
-};
+काष्ठा sपंचांग32_i2smclk_data अणु
+	काष्ठा clk_hw hw;
+	अचिन्हित दीर्घ freq;
+	काष्ठा sपंचांग32_i2s_data *i2s_data;
+पूर्ण;
 
-#define to_mclk_data(_hw) container_of(_hw, struct stm32_i2smclk_data, hw)
+#घोषणा to_mclk_data(_hw) container_of(_hw, काष्ठा sपंचांग32_i2smclk_data, hw)
 
-static int stm32_i2s_calc_clk_div(struct stm32_i2s_data *i2s,
-				  unsigned long input_rate,
-				  unsigned long output_rate)
-{
-	unsigned int ratio, div, divider = 1;
+अटल पूर्णांक sपंचांग32_i2s_calc_clk_भाग(काष्ठा sपंचांग32_i2s_data *i2s,
+				  अचिन्हित दीर्घ input_rate,
+				  अचिन्हित दीर्घ output_rate)
+अणु
+	अचिन्हित पूर्णांक ratio, भाग, भागider = 1;
 	bool odd;
 
 	ratio = DIV_ROUND_CLOSEST(input_rate, output_rate);
 
-	/* Check the parity of the divider */
+	/* Check the parity of the भागider */
 	odd = ratio & 0x1;
 
-	/* Compute the div prescaler */
-	div = ratio >> 1;
+	/* Compute the भाग prescaler */
+	भाग = ratio >> 1;
 
-	/* If div is 0 actual divider is 1 */
-	if (div) {
-		divider = ((2 * div) + odd);
+	/* If भाग is 0 actual भागider is 1 */
+	अगर (भाग) अणु
+		भागider = ((2 * भाग) + odd);
 		dev_dbg(&i2s->pdev->dev, "Divider: 2*%d(div)+%d(odd) = %d\n",
-			div, odd, divider);
-	}
+			भाग, odd, भागider);
+	पूर्ण
 
 	/* Division by three is not allowed by I2S prescaler */
-	if ((div == 1 && odd) || div > I2S_CGFR_I2SDIV_MAX) {
+	अगर ((भाग == 1 && odd) || भाग > I2S_CGFR_I2SDIV_MAX) अणु
 		dev_err(&i2s->pdev->dev, "Wrong divider setting\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (input_rate % divider)
+	अगर (input_rate % भागider)
 		dev_dbg(&i2s->pdev->dev,
 			"Rate not accurate. requested (%ld), actual (%ld)\n",
-			output_rate, input_rate / divider);
+			output_rate, input_rate / भागider);
 
-	i2s->div = div;
+	i2s->भाग = भाग;
 	i2s->odd = odd;
-	i2s->divider = divider;
+	i2s->भागider = भागider;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_i2s_set_clk_div(struct stm32_i2s_data *i2s)
-{
+अटल पूर्णांक sपंचांग32_i2s_set_clk_भाग(काष्ठा sपंचांग32_i2s_data *i2s)
+अणु
 	u32 cgfr, cgfr_mask;
 
-	cgfr = I2S_CGFR_I2SDIV_SET(i2s->div) | (i2s->odd << I2S_CGFR_ODD_SHIFT);
+	cgfr = I2S_CGFR_I2SDIV_SET(i2s->भाग) | (i2s->odd << I2S_CGFR_ODD_SHIFT);
 	cgfr_mask = I2S_CGFR_I2SDIV_MASK | I2S_CGFR_ODD;
 
-	return regmap_update_bits(i2s->regmap, STM32_I2S_CGFR_REG,
+	वापस regmap_update_bits(i2s->regmap, STM32_I2S_CGFR_REG,
 				  cgfr_mask, cgfr);
-}
+पूर्ण
 
-static int stm32_i2s_set_parent_clock(struct stm32_i2s_data *i2s,
-				      unsigned int rate)
-{
-	struct platform_device *pdev = i2s->pdev;
-	struct clk *parent_clk;
-	int ret;
+अटल पूर्णांक sपंचांग32_i2s_set_parent_घड़ी(काष्ठा sपंचांग32_i2s_data *i2s,
+				      अचिन्हित पूर्णांक rate)
+अणु
+	काष्ठा platक्रमm_device *pdev = i2s->pdev;
+	काष्ठा clk *parent_clk;
+	पूर्णांक ret;
 
-	if (!(rate % STM32_I2S_RATE_11K))
+	अगर (!(rate % STM32_I2S_RATE_11K))
 		parent_clk = i2s->x11kclk;
-	else
+	अन्यथा
 		parent_clk = i2s->x8kclk;
 
 	ret = clk_set_parent(i2s->i2sclk, parent_clk);
-	if (ret)
+	अगर (ret)
 		dev_err(&pdev->dev,
 			"Error %d setting i2sclk parent clock\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long stm32_i2smclk_round_rate(struct clk_hw *hw, unsigned long rate,
-				     unsigned long *prate)
-{
-	struct stm32_i2smclk_data *mclk = to_mclk_data(hw);
-	struct stm32_i2s_data *i2s = mclk->i2s_data;
-	int ret;
+अटल दीर्घ sपंचांग32_i2smclk_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				     अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा sपंचांग32_i2smclk_data *mclk = to_mclk_data(hw);
+	काष्ठा sपंचांग32_i2s_data *i2s = mclk->i2s_data;
+	पूर्णांक ret;
 
-	ret = stm32_i2s_calc_clk_div(i2s, *prate, rate);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_i2s_calc_clk_भाग(i2s, *prate, rate);
+	अगर (ret)
+		वापस ret;
 
-	mclk->freq = *prate / i2s->divider;
+	mclk->freq = *prate / i2s->भागider;
 
-	return mclk->freq;
-}
+	वापस mclk->freq;
+पूर्ण
 
-static unsigned long stm32_i2smclk_recalc_rate(struct clk_hw *hw,
-					       unsigned long parent_rate)
-{
-	struct stm32_i2smclk_data *mclk = to_mclk_data(hw);
+अटल अचिन्हित दीर्घ sपंचांग32_i2smclk_recalc_rate(काष्ठा clk_hw *hw,
+					       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा sपंचांग32_i2smclk_data *mclk = to_mclk_data(hw);
 
-	return mclk->freq;
-}
+	वापस mclk->freq;
+पूर्ण
 
-static int stm32_i2smclk_set_rate(struct clk_hw *hw, unsigned long rate,
-				  unsigned long parent_rate)
-{
-	struct stm32_i2smclk_data *mclk = to_mclk_data(hw);
-	struct stm32_i2s_data *i2s = mclk->i2s_data;
-	int ret;
+अटल पूर्णांक sपंचांग32_i2smclk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा sपंचांग32_i2smclk_data *mclk = to_mclk_data(hw);
+	काष्ठा sपंचांग32_i2s_data *i2s = mclk->i2s_data;
+	पूर्णांक ret;
 
-	ret = stm32_i2s_calc_clk_div(i2s, parent_rate, rate);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_i2s_calc_clk_भाग(i2s, parent_rate, rate);
+	अगर (ret)
+		वापस ret;
 
-	ret = stm32_i2s_set_clk_div(i2s);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_i2s_set_clk_भाग(i2s);
+	अगर (ret)
+		वापस ret;
 
 	mclk->freq = rate;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_i2smclk_enable(struct clk_hw *hw)
-{
-	struct stm32_i2smclk_data *mclk = to_mclk_data(hw);
-	struct stm32_i2s_data *i2s = mclk->i2s_data;
+अटल पूर्णांक sपंचांग32_i2smclk_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा sपंचांग32_i2smclk_data *mclk = to_mclk_data(hw);
+	काष्ठा sपंचांग32_i2s_data *i2s = mclk->i2s_data;
 
 	dev_dbg(&i2s->pdev->dev, "Enable master clock\n");
 
-	return regmap_update_bits(i2s->regmap, STM32_I2S_CGFR_REG,
+	वापस regmap_update_bits(i2s->regmap, STM32_I2S_CGFR_REG,
 				    I2S_CGFR_MCKOE, I2S_CGFR_MCKOE);
-}
+पूर्ण
 
-static void stm32_i2smclk_disable(struct clk_hw *hw)
-{
-	struct stm32_i2smclk_data *mclk = to_mclk_data(hw);
-	struct stm32_i2s_data *i2s = mclk->i2s_data;
+अटल व्योम sपंचांग32_i2smclk_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा sपंचांग32_i2smclk_data *mclk = to_mclk_data(hw);
+	काष्ठा sपंचांग32_i2s_data *i2s = mclk->i2s_data;
 
 	dev_dbg(&i2s->pdev->dev, "Disable master clock\n");
 
 	regmap_update_bits(i2s->regmap, STM32_I2S_CGFR_REG, I2S_CGFR_MCKOE, 0);
-}
+पूर्ण
 
-static const struct clk_ops mclk_ops = {
-	.enable = stm32_i2smclk_enable,
-	.disable = stm32_i2smclk_disable,
-	.recalc_rate = stm32_i2smclk_recalc_rate,
-	.round_rate = stm32_i2smclk_round_rate,
-	.set_rate = stm32_i2smclk_set_rate,
-};
+अटल स्थिर काष्ठा clk_ops mclk_ops = अणु
+	.enable = sपंचांग32_i2smclk_enable,
+	.disable = sपंचांग32_i2smclk_disable,
+	.recalc_rate = sपंचांग32_i2smclk_recalc_rate,
+	.round_rate = sपंचांग32_i2smclk_round_rate,
+	.set_rate = sपंचांग32_i2smclk_set_rate,
+पूर्ण;
 
-static int stm32_i2s_add_mclk_provider(struct stm32_i2s_data *i2s)
-{
-	struct clk_hw *hw;
-	struct stm32_i2smclk_data *mclk;
-	struct device *dev = &i2s->pdev->dev;
-	const char *pname = __clk_get_name(i2s->i2sclk);
-	char *mclk_name, *p, *s = (char *)pname;
-	int ret, i = 0;
+अटल पूर्णांक sपंचांग32_i2s_add_mclk_provider(काष्ठा sपंचांग32_i2s_data *i2s)
+अणु
+	काष्ठा clk_hw *hw;
+	काष्ठा sपंचांग32_i2smclk_data *mclk;
+	काष्ठा device *dev = &i2s->pdev->dev;
+	स्थिर अक्षर *pname = __clk_get_name(i2s->i2sclk);
+	अक्षर *mclk_name, *p, *s = (अक्षर *)pname;
+	पूर्णांक ret, i = 0;
 
-	mclk = devm_kzalloc(dev, sizeof(*mclk), GFP_KERNEL);
-	if (!mclk)
-		return -ENOMEM;
+	mclk = devm_kzalloc(dev, माप(*mclk), GFP_KERNEL);
+	अगर (!mclk)
+		वापस -ENOMEM;
 
-	mclk_name = devm_kcalloc(dev, sizeof(char),
+	mclk_name = devm_kसुस्मृति(dev, माप(अक्षर),
 				 STM32_I2S_NAME_LEN, GFP_KERNEL);
-	if (!mclk_name)
-		return -ENOMEM;
+	अगर (!mclk_name)
+		वापस -ENOMEM;
 
 	/*
-	 * Forge mclk clock name from parent clock name and suffix.
-	 * String after "_" char is stripped in parent name.
+	 * Forge mclk घड़ी name from parent घड़ी name and suffix.
+	 * String after "_" अक्षर is stripped in parent name.
 	 */
 	p = mclk_name;
-	while (*s && *s != '_' && (i < (STM32_I2S_NAME_LEN - 7))) {
+	जबतक (*s && *s != '_' && (i < (STM32_I2S_NAME_LEN - 7))) अणु
 		*p++ = *s++;
 		i++;
-	}
-	strcat(p, "_mclk");
+	पूर्ण
+	म_जोड़ो(p, "_mclk");
 
 	mclk->hw.init = CLK_HW_INIT(mclk_name, pname, &mclk_ops, 0);
 	mclk->i2s_data = i2s;
 	hw = &mclk->hw;
 
 	dev_dbg(dev, "Register master clock %s\n", mclk_name);
-	ret = devm_clk_hw_register(&i2s->pdev->dev, hw);
-	if (ret) {
+	ret = devm_clk_hw_रेजिस्टर(&i2s->pdev->dev, hw);
+	अगर (ret) अणु
 		dev_err(dev, "mclk register fails with error %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	i2s->i2smclk = hw->clk;
 
-	/* register mclk provider */
-	return devm_of_clk_add_hw_provider(dev, of_clk_hw_simple_get, hw);
-}
+	/* रेजिस्टर mclk provider */
+	वापस devm_of_clk_add_hw_provider(dev, of_clk_hw_simple_get, hw);
+पूर्ण
 
-static irqreturn_t stm32_i2s_isr(int irq, void *devid)
-{
-	struct stm32_i2s_data *i2s = (struct stm32_i2s_data *)devid;
-	struct platform_device *pdev = i2s->pdev;
+अटल irqवापस_t sपंचांग32_i2s_isr(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = (काष्ठा sपंचांग32_i2s_data *)devid;
+	काष्ठा platक्रमm_device *pdev = i2s->pdev;
 	u32 sr, ier;
-	unsigned long flags;
-	int err = 0;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
 
-	regmap_read(i2s->regmap, STM32_I2S_SR_REG, &sr);
-	regmap_read(i2s->regmap, STM32_I2S_IER_REG, &ier);
+	regmap_पढ़ो(i2s->regmap, STM32_I2S_SR_REG, &sr);
+	regmap_पढ़ो(i2s->regmap, STM32_I2S_IER_REG, &ier);
 
 	flags = sr & ier;
-	if (!flags) {
+	अगर (!flags) अणु
 		dev_dbg(&pdev->dev, "Spurious IRQ sr=0x%08x, ier=0x%08x\n",
 			sr, ier);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	regmap_write_bits(i2s->regmap, STM32_I2S_IFCR_REG,
+	regmap_ग_लिखो_bits(i2s->regmap, STM32_I2S_IFCR_REG,
 			  I2S_IFCR_MASK, flags);
 
-	if (flags & I2S_SR_OVR) {
+	अगर (flags & I2S_SR_OVR) अणु
 		dev_dbg(&pdev->dev, "Overrun\n");
 		err = 1;
-	}
+	पूर्ण
 
-	if (flags & I2S_SR_UDR) {
+	अगर (flags & I2S_SR_UDR) अणु
 		dev_dbg(&pdev->dev, "Underrun\n");
 		err = 1;
-	}
+	पूर्ण
 
-	if (flags & I2S_SR_TIFRE)
+	अगर (flags & I2S_SR_TIFRE)
 		dev_dbg(&pdev->dev, "Frame error\n");
 
 	spin_lock(&i2s->irq_lock);
-	if (err && i2s->substream)
+	अगर (err && i2s->substream)
 		snd_pcm_stop_xrun(i2s->substream);
 	spin_unlock(&i2s->irq_lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static bool stm32_i2s_readable_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case STM32_I2S_CR1_REG:
-	case STM32_I2S_CFG1_REG:
-	case STM32_I2S_CFG2_REG:
-	case STM32_I2S_IER_REG:
-	case STM32_I2S_SR_REG:
-	case STM32_I2S_RXDR_REG:
-	case STM32_I2S_CGFR_REG:
-	case STM32_I2S_HWCFGR_REG:
-	case STM32_I2S_VERR_REG:
-	case STM32_I2S_IPIDR_REG:
-	case STM32_I2S_SIDR_REG:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool sपंचांग32_i2s_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल STM32_I2S_CR1_REG:
+	हाल STM32_I2S_CFG1_REG:
+	हाल STM32_I2S_CFG2_REG:
+	हाल STM32_I2S_IER_REG:
+	हाल STM32_I2S_SR_REG:
+	हाल STM32_I2S_RXDR_REG:
+	हाल STM32_I2S_CGFR_REG:
+	हाल STM32_I2S_HWCFGR_REG:
+	हाल STM32_I2S_VERR_REG:
+	हाल STM32_I2S_IPIDR_REG:
+	हाल STM32_I2S_SIDR_REG:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool stm32_i2s_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case STM32_I2S_SR_REG:
-	case STM32_I2S_RXDR_REG:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool sपंचांग32_i2s_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल STM32_I2S_SR_REG:
+	हाल STM32_I2S_RXDR_REG:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool stm32_i2s_writeable_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case STM32_I2S_CR1_REG:
-	case STM32_I2S_CFG1_REG:
-	case STM32_I2S_CFG2_REG:
-	case STM32_I2S_IER_REG:
-	case STM32_I2S_IFCR_REG:
-	case STM32_I2S_TXDR_REG:
-	case STM32_I2S_CGFR_REG:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool sपंचांग32_i2s_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल STM32_I2S_CR1_REG:
+	हाल STM32_I2S_CFG1_REG:
+	हाल STM32_I2S_CFG2_REG:
+	हाल STM32_I2S_IER_REG:
+	हाल STM32_I2S_IFCR_REG:
+	हाल STM32_I2S_TXDR_REG:
+	हाल STM32_I2S_CGFR_REG:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int stm32_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
-{
-	struct stm32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
+अटल पूर्णांक sपंचांग32_i2s_set_dai_fmt(काष्ठा snd_soc_dai *cpu_dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
 	u32 cgfr;
 	u32 cgfr_mask =  I2S_CGFR_I2SSTD_MASK | I2S_CGFR_CKPOL |
 			 I2S_CGFR_WSINV | I2S_CGFR_I2SCFG_MASK;
@@ -548,129 +549,129 @@ static int stm32_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	dev_dbg(cpu_dai->dev, "fmt %x\n", fmt);
 
 	/*
-	 * winv = 0 : default behavior (high/low) for all standards
-	 * ckpol = 0 for all standards.
+	 * winv = 0 : शेष behavior (high/low) क्रम all standards
+	 * ckpol = 0 क्रम all standards.
 	 */
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		cgfr = I2S_CGFR_I2SSTD_SET(I2S_STD_I2S);
-		break;
-	case SND_SOC_DAIFMT_MSB:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_MSB:
 		cgfr = I2S_CGFR_I2SSTD_SET(I2S_STD_LEFT_J);
-		break;
-	case SND_SOC_DAIFMT_LSB:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LSB:
 		cgfr = I2S_CGFR_I2SSTD_SET(I2S_STD_RIGHT_J);
-		break;
-	case SND_SOC_DAIFMT_DSP_A:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_A:
 		cgfr = I2S_CGFR_I2SSTD_SET(I2S_STD_DSP);
-		break;
-	/* DSP_B not mapped on I2S PCM long format. 1 bit offset does not fit */
-	default:
+		अवरोध;
+	/* DSP_B not mapped on I2S PCM दीर्घ क्रमmat. 1 bit offset करोes not fit */
+	शेष:
 		dev_err(cpu_dai->dev, "Unsupported protocol %#x\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* DAI clock strobing */
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
+	/* DAI घड़ी strobing */
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
 		cgfr |= I2S_CGFR_CKPOL;
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF:
 		cgfr |= I2S_CGFR_WSINV;
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
 		cgfr |= I2S_CGFR_CKPOL;
 		cgfr |= I2S_CGFR_WSINV;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(cpu_dai->dev, "Unsupported strobing %#x\n",
 			fmt & SND_SOC_DAIFMT_INV_MASK);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* DAI clock master masks */
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
+	/* DAI घड़ी master masks */
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
 		i2s->ms_flg = I2S_MS_SLAVE;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
 		i2s->ms_flg = I2S_MS_MASTER;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(cpu_dai->dev, "Unsupported mode %#x\n",
 			fmt & SND_SOC_DAIFMT_MASTER_MASK);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	i2s->fmt = fmt;
-	return regmap_update_bits(i2s->regmap, STM32_I2S_CGFR_REG,
+	वापस regmap_update_bits(i2s->regmap, STM32_I2S_CGFR_REG,
 				  cgfr_mask, cgfr);
-}
+पूर्ण
 
-static int stm32_i2s_set_sysclk(struct snd_soc_dai *cpu_dai,
-				int clk_id, unsigned int freq, int dir)
-{
-	struct stm32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
-	int ret = 0;
+अटल पूर्णांक sपंचांग32_i2s_set_sysclk(काष्ठा snd_soc_dai *cpu_dai,
+				पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
+	पूर्णांक ret = 0;
 
 	dev_dbg(cpu_dai->dev, "I2S MCLK frequency is %uHz. mode: %s, dir: %s\n",
 		freq, STM32_I2S_IS_MASTER(i2s) ? "master" : "slave",
 		dir ? "output" : "input");
 
 	/* MCLK generation is available only in master mode */
-	if (dir == SND_SOC_CLOCK_OUT && STM32_I2S_IS_MASTER(i2s)) {
-		if (!i2s->i2smclk) {
+	अगर (dir == SND_SOC_CLOCK_OUT && STM32_I2S_IS_MASTER(i2s)) अणु
+		अगर (!i2s->i2smclk) अणु
 			dev_dbg(cpu_dai->dev, "No MCLK registered\n");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		/* Assume shutdown if requested frequency is 0Hz */
-		if (!freq) {
-			/* Release mclk rate only if rate was actually set */
-			if (i2s->mclk_rate) {
+		/* Assume shutकरोwn अगर requested frequency is 0Hz */
+		अगर (!freq) अणु
+			/* Release mclk rate only अगर rate was actually set */
+			अगर (i2s->mclk_rate) अणु
 				clk_rate_exclusive_put(i2s->i2smclk);
 				i2s->mclk_rate = 0;
-			}
-			return regmap_update_bits(i2s->regmap,
+			पूर्ण
+			वापस regmap_update_bits(i2s->regmap,
 						  STM32_I2S_CGFR_REG,
 						  I2S_CGFR_MCKOE, 0);
-		}
-		/* If master clock is used, set parent clock now */
-		ret = stm32_i2s_set_parent_clock(i2s, freq);
-		if (ret)
-			return ret;
+		पूर्ण
+		/* If master घड़ी is used, set parent घड़ी now */
+		ret = sपंचांग32_i2s_set_parent_घड़ी(i2s, freq);
+		अगर (ret)
+			वापस ret;
 		ret = clk_set_rate_exclusive(i2s->i2smclk, freq);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cpu_dai->dev, "Could not set mclk rate\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		ret = regmap_update_bits(i2s->regmap, STM32_I2S_CGFR_REG,
 					 I2S_CGFR_MCKOE, I2S_CGFR_MCKOE);
-		if (!ret)
+		अगर (!ret)
 			i2s->mclk_rate = freq;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stm32_i2s_configure_clock(struct snd_soc_dai *cpu_dai,
-				     struct snd_pcm_hw_params *params)
-{
-	struct stm32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
-	unsigned long i2s_clock_rate;
-	unsigned int nb_bits, frame_len;
-	unsigned int rate = params_rate(params);
+अटल पूर्णांक sपंचांग32_i2s_configure_घड़ी(काष्ठा snd_soc_dai *cpu_dai,
+				     काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
+	अचिन्हित दीर्घ i2s_घड़ी_rate;
+	अचिन्हित पूर्णांक nb_bits, frame_len;
+	अचिन्हित पूर्णांक rate = params_rate(params);
 	u32 cgfr;
-	int ret;
+	पूर्णांक ret;
 
-	if (!(rate % 11025))
+	अगर (!(rate % 11025))
 		clk_set_parent(i2s->i2sclk, i2s->x11kclk);
-	else
+	अन्यथा
 		clk_set_parent(i2s->i2sclk, i2s->x8kclk);
-	i2s_clock_rate = clk_get_rate(i2s->i2sclk);
+	i2s_घड़ी_rate = clk_get_rate(i2s->i2sclk);
 
 	/*
 	 * mckl = mclk_ratio x ws
@@ -678,148 +679,148 @@ static int stm32_i2s_configure_clock(struct snd_soc_dai *cpu_dai,
 	 *   dsp mode : mclk_ratio = 128
 	 *
 	 * mclk on
-	 *   i2s mode : div = i2s_clk / (mclk_ratio * ws)
-	 *   dsp mode : div = i2s_clk / (mclk_ratio * ws)
+	 *   i2s mode : भाग = i2s_clk / (mclk_ratio * ws)
+	 *   dsp mode : भाग = i2s_clk / (mclk_ratio * ws)
 	 * mclk off
-	 *   i2s mode : div = i2s_clk / (nb_bits x ws)
-	 *   dsp mode : div = i2s_clk / (nb_bits x ws)
+	 *   i2s mode : भाग = i2s_clk / (nb_bits x ws)
+	 *   dsp mode : भाग = i2s_clk / (nb_bits x ws)
 	 */
-	if (i2s->mclk_rate) {
-		ret = stm32_i2s_calc_clk_div(i2s, i2s_clock_rate,
+	अगर (i2s->mclk_rate) अणु
+		ret = sपंचांग32_i2s_calc_clk_भाग(i2s, i2s_घड़ी_rate,
 					     i2s->mclk_rate);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		frame_len = 32;
-		if ((i2s->fmt & SND_SOC_DAIFMT_FORMAT_MASK) ==
+		अगर ((i2s->fmt & SND_SOC_DAIFMT_FORMAT_MASK) ==
 		    SND_SOC_DAIFMT_DSP_A)
 			frame_len = 16;
 
-		/* master clock not enabled */
-		ret = regmap_read(i2s->regmap, STM32_I2S_CGFR_REG, &cgfr);
-		if (ret < 0)
-			return ret;
+		/* master घड़ी not enabled */
+		ret = regmap_पढ़ो(i2s->regmap, STM32_I2S_CGFR_REG, &cgfr);
+		अगर (ret < 0)
+			वापस ret;
 
 		nb_bits = frame_len * ((cgfr & I2S_CGFR_CHLEN) + 1);
-		ret = stm32_i2s_calc_clk_div(i2s, i2s_clock_rate,
+		ret = sपंचांग32_i2s_calc_clk_भाग(i2s, i2s_घड़ी_rate,
 					     (nb_bits * rate));
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = stm32_i2s_set_clk_div(i2s);
-	if (ret < 0)
-		return ret;
+	ret = sपंचांग32_i2s_set_clk_भाग(i2s);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Set bitclock and frameclock to their inactive state */
-	return regmap_update_bits(i2s->regmap, STM32_I2S_CFG2_REG,
+	/* Set bitघड़ी and frameघड़ी to their inactive state */
+	वापस regmap_update_bits(i2s->regmap, STM32_I2S_CFG2_REG,
 				  I2S_CFG2_AFCNTR, I2S_CFG2_AFCNTR);
-}
+पूर्ण
 
-static int stm32_i2s_configure(struct snd_soc_dai *cpu_dai,
-			       struct snd_pcm_hw_params *params,
-			       struct snd_pcm_substream *substream)
-{
-	struct stm32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
-	int format = params_width(params);
+अटल पूर्णांक sपंचांग32_i2s_configure(काष्ठा snd_soc_dai *cpu_dai,
+			       काष्ठा snd_pcm_hw_params *params,
+			       काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
+	पूर्णांक क्रमmat = params_width(params);
 	u32 cfgr, cfgr_mask, cfg1;
-	unsigned int fthlv;
-	int ret;
+	अचिन्हित पूर्णांक fthlv;
+	पूर्णांक ret;
 
-	switch (format) {
-	case 16:
+	चयन (क्रमmat) अणु
+	हाल 16:
 		cfgr = I2S_CGFR_DATLEN_SET(I2S_I2SMOD_DATLEN_16);
 		cfgr_mask = I2S_CGFR_DATLEN_MASK | I2S_CGFR_CHLEN;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		cfgr = I2S_CGFR_DATLEN_SET(I2S_I2SMOD_DATLEN_32) |
 					   I2S_CGFR_CHLEN;
 		cfgr_mask = I2S_CGFR_DATLEN_MASK | I2S_CGFR_CHLEN;
-		break;
-	default:
-		dev_err(cpu_dai->dev, "Unexpected format %d", format);
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		dev_err(cpu_dai->dev, "Unexpected format %d", क्रमmat);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (STM32_I2S_IS_SLAVE(i2s)) {
+	अगर (STM32_I2S_IS_SLAVE(i2s)) अणु
 		cfgr |= I2S_CGFR_I2SCFG_SET(I2S_I2SMOD_FD_SLAVE);
 
 		/* As data length is either 16 or 32 bits, fixch always set */
 		cfgr |= I2S_CGFR_FIXCH;
 		cfgr_mask |= I2S_CGFR_FIXCH;
-	} else {
+	पूर्ण अन्यथा अणु
 		cfgr |= I2S_CGFR_I2SCFG_SET(I2S_I2SMOD_FD_MASTER);
-	}
+	पूर्ण
 	cfgr_mask |= I2S_CGFR_I2SCFG_MASK;
 
 	ret = regmap_update_bits(i2s->regmap, STM32_I2S_CGFR_REG,
 				 cfgr_mask, cfgr);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	fthlv = STM32_I2S_FIFO_SIZE * I2S_FIFO_TH_ONE_QUARTER / 4;
 	cfg1 = I2S_CFG1_FTHVL_SET(fthlv - 1);
 
-	return regmap_update_bits(i2s->regmap, STM32_I2S_CFG1_REG,
+	वापस regmap_update_bits(i2s->regmap, STM32_I2S_CFG1_REG,
 				  I2S_CFG1_FTHVL_MASK, cfg1);
-}
+पूर्ण
 
-static int stm32_i2s_startup(struct snd_pcm_substream *substream,
-			     struct snd_soc_dai *cpu_dai)
-{
-	struct stm32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक sपंचांग32_i2s_startup(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&i2s->irq_lock, flags);
 	i2s->substream = substream;
 	spin_unlock_irqrestore(&i2s->irq_lock, flags);
 
-	if ((i2s->fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_DSP_A)
-		snd_pcm_hw_constraint_single(substream->runtime,
+	अगर ((i2s->fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_DSP_A)
+		snd_pcm_hw_स्थिरraपूर्णांक_single(substream->runसमय,
 					     SNDRV_PCM_HW_PARAM_CHANNELS, 2);
 
 	ret = clk_prepare_enable(i2s->i2sclk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(cpu_dai->dev, "Failed to enable clock: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return regmap_write_bits(i2s->regmap, STM32_I2S_IFCR_REG,
+	वापस regmap_ग_लिखो_bits(i2s->regmap, STM32_I2S_IFCR_REG,
 				 I2S_IFCR_MASK, I2S_IFCR_MASK);
-}
+पूर्ण
 
-static int stm32_i2s_hw_params(struct snd_pcm_substream *substream,
-			       struct snd_pcm_hw_params *params,
-			       struct snd_soc_dai *cpu_dai)
-{
-	struct stm32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
-	int ret;
+अटल पूर्णांक sपंचांग32_i2s_hw_params(काष्ठा snd_pcm_substream *substream,
+			       काष्ठा snd_pcm_hw_params *params,
+			       काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
+	पूर्णांक ret;
 
-	ret = stm32_i2s_configure(cpu_dai, params, substream);
-	if (ret < 0) {
+	ret = sपंचांग32_i2s_configure(cpu_dai, params, substream);
+	अगर (ret < 0) अणु
 		dev_err(cpu_dai->dev, "Configuration returned error %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (STM32_I2S_IS_MASTER(i2s))
-		ret = stm32_i2s_configure_clock(cpu_dai, params);
+	अगर (STM32_I2S_IS_MASTER(i2s))
+		ret = sपंचांग32_i2s_configure_घड़ी(cpu_dai, params);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stm32_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
-			     struct snd_soc_dai *cpu_dai)
-{
-	struct stm32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
+अटल पूर्णांक sपंचांग32_i2s_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+			     काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
 	bool playback_flg = (substream->stream == SNDRV_PCM_STREAM_PLAYBACK);
 	u32 cfg1_mask, ier;
-	int ret;
+	पूर्णांक ret;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		/* Enable i2s */
 		dev_dbg(cpu_dai->dev, "start I2S %s\n",
 			playback_flg ? "playback" : "capture");
@@ -830,100 +831,100 @@ static int stm32_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 
 		ret = regmap_update_bits(i2s->regmap, STM32_I2S_CR1_REG,
 					 I2S_CR1_SPE, I2S_CR1_SPE);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(cpu_dai->dev, "Error %d enabling I2S\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = regmap_write_bits(i2s->regmap, STM32_I2S_CR1_REG,
+		ret = regmap_ग_लिखो_bits(i2s->regmap, STM32_I2S_CR1_REG,
 					I2S_CR1_CSTART, I2S_CR1_CSTART);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(cpu_dai->dev, "Error %d starting I2S\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		regmap_write_bits(i2s->regmap, STM32_I2S_IFCR_REG,
+		regmap_ग_लिखो_bits(i2s->regmap, STM32_I2S_IFCR_REG,
 				  I2S_IFCR_MASK, I2S_IFCR_MASK);
 
 		spin_lock(&i2s->lock_fd);
 		i2s->refcount++;
-		if (playback_flg) {
+		अगर (playback_flg) अणु
 			ier = I2S_IER_UDRIE;
-		} else {
+		पूर्ण अन्यथा अणु
 			ier = I2S_IER_OVRIE;
 
-			if (STM32_I2S_IS_MASTER(i2s) && i2s->refcount == 1)
-				/* dummy write to gate bus clocks */
-				regmap_write(i2s->regmap,
+			अगर (STM32_I2S_IS_MASTER(i2s) && i2s->refcount == 1)
+				/* dummy ग_लिखो to gate bus घड़ीs */
+				regmap_ग_लिखो(i2s->regmap,
 					     STM32_I2S_TXDR_REG, 0);
-		}
+		पूर्ण
 		spin_unlock(&i2s->lock_fd);
 
-		if (STM32_I2S_IS_SLAVE(i2s))
+		अगर (STM32_I2S_IS_SLAVE(i2s))
 			ier |= I2S_IER_TIFREIE;
 
 		regmap_update_bits(i2s->regmap, STM32_I2S_IER_REG, ier, ier);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		dev_dbg(cpu_dai->dev, "stop I2S %s\n",
 			playback_flg ? "playback" : "capture");
 
-		if (playback_flg)
+		अगर (playback_flg)
 			regmap_update_bits(i2s->regmap, STM32_I2S_IER_REG,
 					   I2S_IER_UDRIE,
-					   (unsigned int)~I2S_IER_UDRIE);
-		else
+					   (अचिन्हित पूर्णांक)~I2S_IER_UDRIE);
+		अन्यथा
 			regmap_update_bits(i2s->regmap, STM32_I2S_IER_REG,
 					   I2S_IER_OVRIE,
-					   (unsigned int)~I2S_IER_OVRIE);
+					   (अचिन्हित पूर्णांक)~I2S_IER_OVRIE);
 
 		spin_lock(&i2s->lock_fd);
 		i2s->refcount--;
-		if (i2s->refcount) {
+		अगर (i2s->refcount) अणु
 			spin_unlock(&i2s->lock_fd);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = regmap_update_bits(i2s->regmap, STM32_I2S_CR1_REG,
 					 I2S_CR1_SPE, 0);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(cpu_dai->dev, "Error %d disabling I2S\n", ret);
 			spin_unlock(&i2s->lock_fd);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		spin_unlock(&i2s->lock_fd);
 
 		cfg1_mask = I2S_CFG1_RXDMAEN | I2S_CFG1_TXDMAEN;
 		regmap_update_bits(i2s->regmap, STM32_I2S_CFG1_REG,
 				   cfg1_mask, 0);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stm32_i2s_shutdown(struct snd_pcm_substream *substream,
-			       struct snd_soc_dai *cpu_dai)
-{
-	struct stm32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
-	unsigned long flags;
+अटल व्योम sपंचांग32_i2s_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+			       काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = snd_soc_dai_get_drvdata(cpu_dai);
+	अचिन्हित दीर्घ flags;
 
 	clk_disable_unprepare(i2s->i2sclk);
 
 	spin_lock_irqsave(&i2s->irq_lock, flags);
-	i2s->substream = NULL;
+	i2s->substream = शून्य;
 	spin_unlock_irqrestore(&i2s->irq_lock, flags);
-}
+पूर्ण
 
-static int stm32_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
-{
-	struct stm32_i2s_data *i2s = dev_get_drvdata(cpu_dai->dev);
-	struct snd_dmaengine_dai_dma_data *dma_data_tx = &i2s->dma_data_tx;
-	struct snd_dmaengine_dai_dma_data *dma_data_rx = &i2s->dma_data_rx;
+अटल पूर्णांक sपंचांग32_i2s_dai_probe(काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = dev_get_drvdata(cpu_dai->dev);
+	काष्ठा snd_dmaengine_dai_dma_data *dma_data_tx = &i2s->dma_data_tx;
+	काष्ठा snd_dmaengine_dai_dma_data *dma_data_rx = &i2s->dma_data_rx;
 
 	/* Buswidth will be set by framework */
 	dma_data_tx->addr_width = DMA_SLAVE_BUSWIDTH_UNDEFINED;
@@ -935,312 +936,312 @@ static int stm32_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 
 	snd_soc_dai_init_dma_data(cpu_dai, dma_data_tx, dma_data_rx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regmap_config stm32_h7_i2s_regmap_conf = {
+अटल स्थिर काष्ठा regmap_config sपंचांग32_h7_i2s_regmap_conf = अणु
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_register = STM32_I2S_SIDR_REG,
-	.readable_reg = stm32_i2s_readable_reg,
-	.volatile_reg = stm32_i2s_volatile_reg,
-	.writeable_reg = stm32_i2s_writeable_reg,
-	.num_reg_defaults_raw = STM32_I2S_SIDR_REG / sizeof(u32) + 1,
+	.max_रेजिस्टर = STM32_I2S_SIDR_REG,
+	.पढ़ोable_reg = sपंचांग32_i2s_पढ़ोable_reg,
+	.अस्थिर_reg = sपंचांग32_i2s_अस्थिर_reg,
+	.ग_लिखोable_reg = sपंचांग32_i2s_ग_लिखोable_reg,
+	.num_reg_शेषs_raw = STM32_I2S_SIDR_REG / माप(u32) + 1,
 	.fast_io = true,
 	.cache_type = REGCACHE_FLAT,
-};
+पूर्ण;
 
-static const struct snd_soc_dai_ops stm32_i2s_pcm_dai_ops = {
-	.set_sysclk	= stm32_i2s_set_sysclk,
-	.set_fmt	= stm32_i2s_set_dai_fmt,
-	.startup	= stm32_i2s_startup,
-	.hw_params	= stm32_i2s_hw_params,
-	.trigger	= stm32_i2s_trigger,
-	.shutdown	= stm32_i2s_shutdown,
-};
+अटल स्थिर काष्ठा snd_soc_dai_ops sपंचांग32_i2s_pcm_dai_ops = अणु
+	.set_sysclk	= sपंचांग32_i2s_set_sysclk,
+	.set_fmt	= sपंचांग32_i2s_set_dai_fmt,
+	.startup	= sपंचांग32_i2s_startup,
+	.hw_params	= sपंचांग32_i2s_hw_params,
+	.trigger	= sपंचांग32_i2s_trigger,
+	.shutकरोwn	= sपंचांग32_i2s_shutकरोwn,
+पूर्ण;
 
-static const struct snd_pcm_hardware stm32_i2s_pcm_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware sपंचांग32_i2s_pcm_hw = अणु
 	.info = SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_MMAP,
 	.buffer_bytes_max = 8 * PAGE_SIZE,
 	.period_bytes_min = 1024,
 	.period_bytes_max = 4 * PAGE_SIZE,
 	.periods_min = 2,
 	.periods_max = 8,
-};
+पूर्ण;
 
-static const struct snd_dmaengine_pcm_config stm32_i2s_pcm_config = {
-	.pcm_hardware	= &stm32_i2s_pcm_hw,
+अटल स्थिर काष्ठा snd_dmaengine_pcm_config sपंचांग32_i2s_pcm_config = अणु
+	.pcm_hardware	= &sपंचांग32_i2s_pcm_hw,
 	.prepare_slave_config = snd_dmaengine_pcm_prepare_slave_config,
-	.prealloc_buffer_size = PAGE_SIZE * 8,
-};
+	.pपुनः_स्मृति_buffer_size = PAGE_SIZE * 8,
+पूर्ण;
 
-static const struct snd_soc_component_driver stm32_i2s_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver sपंचांग32_i2s_component = अणु
 	.name = "stm32-i2s",
-};
+पूर्ण;
 
-static void stm32_i2s_dai_init(struct snd_soc_pcm_stream *stream,
-			       char *stream_name)
-{
+अटल व्योम sपंचांग32_i2s_dai_init(काष्ठा snd_soc_pcm_stream *stream,
+			       अक्षर *stream_name)
+अणु
 	stream->stream_name = stream_name;
 	stream->channels_min = 1;
 	stream->channels_max = 2;
 	stream->rates = SNDRV_PCM_RATE_8000_192000;
-	stream->formats = SNDRV_PCM_FMTBIT_S16_LE |
+	stream->क्रमmats = SNDRV_PCM_FMTBIT_S16_LE |
 				   SNDRV_PCM_FMTBIT_S32_LE;
-}
+पूर्ण
 
-static int stm32_i2s_dais_init(struct platform_device *pdev,
-			       struct stm32_i2s_data *i2s)
-{
-	struct snd_soc_dai_driver *dai_ptr;
+अटल पूर्णांक sपंचांग32_i2s_dais_init(काष्ठा platक्रमm_device *pdev,
+			       काष्ठा sपंचांग32_i2s_data *i2s)
+अणु
+	काष्ठा snd_soc_dai_driver *dai_ptr;
 
-	dai_ptr = devm_kzalloc(&pdev->dev, sizeof(struct snd_soc_dai_driver),
+	dai_ptr = devm_kzalloc(&pdev->dev, माप(काष्ठा snd_soc_dai_driver),
 			       GFP_KERNEL);
-	if (!dai_ptr)
-		return -ENOMEM;
+	अगर (!dai_ptr)
+		वापस -ENOMEM;
 
-	dai_ptr->probe = stm32_i2s_dai_probe;
-	dai_ptr->ops = &stm32_i2s_pcm_dai_ops;
+	dai_ptr->probe = sपंचांग32_i2s_dai_probe;
+	dai_ptr->ops = &sपंचांग32_i2s_pcm_dai_ops;
 	dai_ptr->id = 1;
-	stm32_i2s_dai_init(&dai_ptr->playback, "playback");
-	stm32_i2s_dai_init(&dai_ptr->capture, "capture");
+	sपंचांग32_i2s_dai_init(&dai_ptr->playback, "playback");
+	sपंचांग32_i2s_dai_init(&dai_ptr->capture, "capture");
 	i2s->dai_drv = dai_ptr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id stm32_i2s_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sपंचांग32_i2s_ids[] = अणु
+	अणु
 		.compatible = "st,stm32h7-i2s",
-		.data = &stm32_h7_i2s_regmap_conf
-	},
-	{},
-};
+		.data = &sपंचांग32_h7_i2s_regmap_conf
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int stm32_i2s_parse_dt(struct platform_device *pdev,
-			      struct stm32_i2s_data *i2s)
-{
-	struct device_node *np = pdev->dev.of_node;
-	const struct of_device_id *of_id;
-	struct reset_control *rst;
-	struct resource *res;
-	int irq, ret;
+अटल पूर्णांक sपंचांग32_i2s_parse_dt(काष्ठा platक्रमm_device *pdev,
+			      काष्ठा sपंचांग32_i2s_data *i2s)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	स्थिर काष्ठा of_device_id *of_id;
+	काष्ठा reset_control *rst;
+	काष्ठा resource *res;
+	पूर्णांक irq, ret;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
-	of_id = of_match_device(stm32_i2s_ids, &pdev->dev);
-	if (of_id)
-		i2s->regmap_conf = (const struct regmap_config *)of_id->data;
-	else
-		return -EINVAL;
+	of_id = of_match_device(sपंचांग32_i2s_ids, &pdev->dev);
+	अगर (of_id)
+		i2s->regmap_conf = (स्थिर काष्ठा regmap_config *)of_id->data;
+	अन्यथा
+		वापस -EINVAL;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	i2s->base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(i2s->base))
-		return PTR_ERR(i2s->base);
+	अगर (IS_ERR(i2s->base))
+		वापस PTR_ERR(i2s->base);
 
 	i2s->phys_addr = res->start;
 
-	/* Get clocks */
+	/* Get घड़ीs */
 	i2s->pclk = devm_clk_get(&pdev->dev, "pclk");
-	if (IS_ERR(i2s->pclk)) {
-		if (PTR_ERR(i2s->pclk) != -EPROBE_DEFER)
+	अगर (IS_ERR(i2s->pclk)) अणु
+		अगर (PTR_ERR(i2s->pclk) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Could not get pclk: %ld\n",
 				PTR_ERR(i2s->pclk));
-		return PTR_ERR(i2s->pclk);
-	}
+		वापस PTR_ERR(i2s->pclk);
+	पूर्ण
 
 	i2s->i2sclk = devm_clk_get(&pdev->dev, "i2sclk");
-	if (IS_ERR(i2s->i2sclk)) {
-		if (PTR_ERR(i2s->i2sclk) != -EPROBE_DEFER)
+	अगर (IS_ERR(i2s->i2sclk)) अणु
+		अगर (PTR_ERR(i2s->i2sclk) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Could not get i2sclk: %ld\n",
 				PTR_ERR(i2s->i2sclk));
-		return PTR_ERR(i2s->i2sclk);
-	}
+		वापस PTR_ERR(i2s->i2sclk);
+	पूर्ण
 
 	i2s->x8kclk = devm_clk_get(&pdev->dev, "x8k");
-	if (IS_ERR(i2s->x8kclk)) {
-		if (PTR_ERR(i2s->x8kclk) != -EPROBE_DEFER)
+	अगर (IS_ERR(i2s->x8kclk)) अणु
+		अगर (PTR_ERR(i2s->x8kclk) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Could not get x8k parent clock: %ld\n",
 				PTR_ERR(i2s->x8kclk));
-		return PTR_ERR(i2s->x8kclk);
-	}
+		वापस PTR_ERR(i2s->x8kclk);
+	पूर्ण
 
 	i2s->x11kclk = devm_clk_get(&pdev->dev, "x11k");
-	if (IS_ERR(i2s->x11kclk)) {
-		if (PTR_ERR(i2s->x11kclk) != -EPROBE_DEFER)
+	अगर (IS_ERR(i2s->x11kclk)) अणु
+		अगर (PTR_ERR(i2s->x11kclk) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Could not get x11k parent clock: %ld\n",
 				PTR_ERR(i2s->x11kclk));
-		return PTR_ERR(i2s->x11kclk);
-	}
+		वापस PTR_ERR(i2s->x11kclk);
+	पूर्ण
 
-	/* Register mclk provider if requested */
-	if (of_find_property(np, "#clock-cells", NULL)) {
-		ret = stm32_i2s_add_mclk_provider(i2s);
-		if (ret < 0)
-			return ret;
-	}
+	/* Register mclk provider अगर requested */
+	अगर (of_find_property(np, "#clock-cells", शून्य)) अणु
+		ret = sपंचांग32_i2s_add_mclk_provider(i2s);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	/* Get irqs */
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	ret = devm_request_irq(&pdev->dev, irq, stm32_i2s_isr, IRQF_ONESHOT,
+	ret = devm_request_irq(&pdev->dev, irq, sपंचांग32_i2s_isr, IRQF_ONESHOT,
 			       dev_name(&pdev->dev), i2s);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "irq request returned %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Reset */
-	rst = devm_reset_control_get_optional_exclusive(&pdev->dev, NULL);
-	if (IS_ERR(rst)) {
-		if (PTR_ERR(rst) != -EPROBE_DEFER)
+	rst = devm_reset_control_get_optional_exclusive(&pdev->dev, शून्य);
+	अगर (IS_ERR(rst)) अणु
+		अगर (PTR_ERR(rst) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Reset controller error %ld\n",
 				PTR_ERR(rst));
-		return PTR_ERR(rst);
-	}
-	reset_control_assert(rst);
+		वापस PTR_ERR(rst);
+	पूर्ण
+	reset_control_निश्चित(rst);
 	udelay(2);
-	reset_control_deassert(rst);
+	reset_control_deनिश्चित(rst);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_i2s_remove(struct platform_device *pdev)
-{
-	snd_dmaengine_pcm_unregister(&pdev->dev);
-	snd_soc_unregister_component(&pdev->dev);
+अटल पूर्णांक sपंचांग32_i2s_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	snd_dmaengine_pcm_unरेजिस्टर(&pdev->dev);
+	snd_soc_unरेजिस्टर_component(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_i2s_probe(struct platform_device *pdev)
-{
-	struct stm32_i2s_data *i2s;
+अटल पूर्णांक sपंचांग32_i2s_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	i2s = devm_kzalloc(&pdev->dev, sizeof(*i2s), GFP_KERNEL);
-	if (!i2s)
-		return -ENOMEM;
+	i2s = devm_kzalloc(&pdev->dev, माप(*i2s), GFP_KERNEL);
+	अगर (!i2s)
+		वापस -ENOMEM;
 
 	i2s->pdev = pdev;
 	i2s->ms_flg = I2S_MS_NOT_SET;
 	spin_lock_init(&i2s->lock_fd);
 	spin_lock_init(&i2s->irq_lock);
-	platform_set_drvdata(pdev, i2s);
+	platक्रमm_set_drvdata(pdev, i2s);
 
-	ret = stm32_i2s_parse_dt(pdev, i2s);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_i2s_parse_dt(pdev, i2s);
+	अगर (ret)
+		वापस ret;
 
-	ret = stm32_i2s_dais_init(pdev, i2s);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_i2s_dais_init(pdev, i2s);
+	अगर (ret)
+		वापस ret;
 
 	i2s->regmap = devm_regmap_init_mmio_clk(&pdev->dev, "pclk",
 						i2s->base, i2s->regmap_conf);
-	if (IS_ERR(i2s->regmap)) {
-		if (PTR_ERR(i2s->regmap) != -EPROBE_DEFER)
+	अगर (IS_ERR(i2s->regmap)) अणु
+		अगर (PTR_ERR(i2s->regmap) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Regmap init error %ld\n",
 				PTR_ERR(i2s->regmap));
-		return PTR_ERR(i2s->regmap);
-	}
+		वापस PTR_ERR(i2s->regmap);
+	पूर्ण
 
-	ret = snd_dmaengine_pcm_register(&pdev->dev, &stm32_i2s_pcm_config, 0);
-	if (ret) {
-		if (ret != -EPROBE_DEFER)
+	ret = snd_dmaengine_pcm_रेजिस्टर(&pdev->dev, &sपंचांग32_i2s_pcm_config, 0);
+	अगर (ret) अणु
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "PCM DMA register error %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = snd_soc_register_component(&pdev->dev, &stm32_i2s_component,
+	ret = snd_soc_रेजिस्टर_component(&pdev->dev, &sपंचांग32_i2s_component,
 					 i2s->dai_drv, 1);
-	if (ret) {
-		snd_dmaengine_pcm_unregister(&pdev->dev);
-		return ret;
-	}
+	अगर (ret) अणु
+		snd_dmaengine_pcm_unरेजिस्टर(&pdev->dev);
+		वापस ret;
+	पूर्ण
 
 	/* Set SPI/I2S in i2s mode */
 	ret = regmap_update_bits(i2s->regmap, STM32_I2S_CGFR_REG,
 				 I2S_CGFR_I2SMOD, I2S_CGFR_I2SMOD);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	ret = regmap_read(i2s->regmap, STM32_I2S_IPIDR_REG, &val);
-	if (ret)
-		goto error;
+	ret = regmap_पढ़ो(i2s->regmap, STM32_I2S_IPIDR_REG, &val);
+	अगर (ret)
+		जाओ error;
 
-	if (val == I2S_IPIDR_NUMBER) {
-		ret = regmap_read(i2s->regmap, STM32_I2S_HWCFGR_REG, &val);
-		if (ret)
-			goto error;
+	अगर (val == I2S_IPIDR_NUMBER) अणु
+		ret = regmap_पढ़ो(i2s->regmap, STM32_I2S_HWCFGR_REG, &val);
+		अगर (ret)
+			जाओ error;
 
-		if (!FIELD_GET(I2S_HWCFGR_I2S_SUPPORT_MASK, val)) {
+		अगर (!FIELD_GET(I2S_HWCFGR_I2S_SUPPORT_MASK, val)) अणु
 			dev_err(&pdev->dev,
 				"Device does not support i2s mode\n");
 			ret = -EPERM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		ret = regmap_read(i2s->regmap, STM32_I2S_VERR_REG, &val);
-		if (ret)
-			goto error;
+		ret = regmap_पढ़ो(i2s->regmap, STM32_I2S_VERR_REG, &val);
+		अगर (ret)
+			जाओ error;
 
 		dev_dbg(&pdev->dev, "I2S version: %lu.%lu registered\n",
 			FIELD_GET(I2S_VERR_MAJ_MASK, val),
 			FIELD_GET(I2S_VERR_MIN_MASK, val));
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 error:
-	stm32_i2s_remove(pdev);
+	sपंचांग32_i2s_हटाओ(pdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-MODULE_DEVICE_TABLE(of, stm32_i2s_ids);
+MODULE_DEVICE_TABLE(of, sपंचांग32_i2s_ids);
 
-#ifdef CONFIG_PM_SLEEP
-static int stm32_i2s_suspend(struct device *dev)
-{
-	struct stm32_i2s_data *i2s = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक sपंचांग32_i2s_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = dev_get_drvdata(dev);
 
 	regcache_cache_only(i2s->regmap, true);
 	regcache_mark_dirty(i2s->regmap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_i2s_resume(struct device *dev)
-{
-	struct stm32_i2s_data *i2s = dev_get_drvdata(dev);
+अटल पूर्णांक sपंचांग32_i2s_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांग32_i2s_data *i2s = dev_get_drvdata(dev);
 
 	regcache_cache_only(i2s->regmap, false);
-	return regcache_sync(i2s->regmap);
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस regcache_sync(i2s->regmap);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static const struct dev_pm_ops stm32_i2s_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(stm32_i2s_suspend, stm32_i2s_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops sपंचांग32_i2s_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(sपंचांग32_i2s_suspend, sपंचांग32_i2s_resume)
+पूर्ण;
 
-static struct platform_driver stm32_i2s_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sपंचांग32_i2s_driver = अणु
+	.driver = अणु
 		.name = "st,stm32-i2s",
-		.of_match_table = stm32_i2s_ids,
-		.pm = &stm32_i2s_pm_ops,
-	},
-	.probe = stm32_i2s_probe,
-	.remove = stm32_i2s_remove,
-};
+		.of_match_table = sपंचांग32_i2s_ids,
+		.pm = &sपंचांग32_i2s_pm_ops,
+	पूर्ण,
+	.probe = sपंचांग32_i2s_probe,
+	.हटाओ = sपंचांग32_i2s_हटाओ,
+पूर्ण;
 
-module_platform_driver(stm32_i2s_driver);
+module_platक्रमm_driver(sपंचांग32_i2s_driver);
 
 MODULE_DESCRIPTION("STM32 Soc i2s Interface");
 MODULE_AUTHOR("Olivier Moysan, <olivier.moysan@st.com>");

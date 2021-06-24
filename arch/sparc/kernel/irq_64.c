@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* irq.c: UltraSparc IRQ handling/init/registry.
  *
  * Copyright (C) 1997, 2007, 2008 David S. Miller (davem@davemloft.net)
@@ -6,377 +7,377 @@
  * Copyright (C) 1998  Jakub Jelinek    (jj@ultra.linux.cz)
  */
 
-#include <linux/sched.h>
-#include <linux/linkage.h>
-#include <linux/ptrace.h>
-#include <linux/errno.h>
-#include <linux/kernel_stat.h>
-#include <linux/signal.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/random.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/ftrace.h>
-#include <linux/irq.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/irq.h>
 
-#include <asm/ptrace.h>
-#include <asm/processor.h>
-#include <linux/atomic.h>
-#include <asm/irq.h>
-#include <asm/io.h>
-#include <asm/iommu.h>
-#include <asm/upa.h>
-#include <asm/oplib.h>
-#include <asm/prom.h>
-#include <asm/timer.h>
-#include <asm/smp.h>
-#include <asm/starfire.h>
-#include <linux/uaccess.h>
-#include <asm/cache.h>
-#include <asm/cpudata.h>
-#include <asm/auxio.h>
-#include <asm/head.h>
-#include <asm/hypervisor.h>
-#include <asm/cacheflush.h>
-#include <asm/softirq_stack.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/upa.h>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/समयr.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/starfire.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/cache.h>
+#समावेश <यंत्र/cpudata.h>
+#समावेश <यंत्र/auxपन.स>
+#समावेश <यंत्र/head.h>
+#समावेश <यंत्र/hypervisor.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/softirq_stack.h>
 
-#include "entry.h"
-#include "cpumap.h"
-#include "kstack.h"
+#समावेश "entry.h"
+#समावेश "cpumap.h"
+#समावेश "kstack.h"
 
-struct ino_bucket *ivector_table;
-unsigned long ivector_table_pa;
+काष्ठा ino_bucket *ivector_table;
+अचिन्हित दीर्घ ivector_table_pa;
 
 /* On several sun4u processors, it is illegal to mix bypass and
- * non-bypass accesses.  Therefore we access all INO buckets
+ * non-bypass accesses.  Thereक्रमe we access all INO buckets
  * using bypass accesses only.
  */
-static unsigned long bucket_get_chain_pa(unsigned long bucket_pa)
-{
-	unsigned long ret;
+अटल अचिन्हित दीर्घ bucket_get_chain_pa(अचिन्हित दीर्घ bucket_pa)
+अणु
+	अचिन्हित दीर्घ ret;
 
-	__asm__ __volatile__("ldxa	[%1] %2, %0"
+	__यंत्र__ __अस्थिर__("ldxa	[%1] %2, %0"
 			     : "=&r" (ret)
 			     : "r" (bucket_pa +
-				    offsetof(struct ino_bucket,
+				    दुरत्व(काष्ठा ino_bucket,
 					     __irq_chain_pa)),
 			       "i" (ASI_PHYS_USE_EC));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void bucket_clear_chain_pa(unsigned long bucket_pa)
-{
-	__asm__ __volatile__("stxa	%%g0, [%0] %1"
-			     : /* no outputs */
+अटल व्योम bucket_clear_chain_pa(अचिन्हित दीर्घ bucket_pa)
+अणु
+	__यंत्र__ __अस्थिर__("stxa	%%g0, [%0] %1"
+			     : /* no outमाला_दो */
 			     : "r" (bucket_pa +
-				    offsetof(struct ino_bucket,
+				    दुरत्व(काष्ठा ino_bucket,
 					     __irq_chain_pa)),
 			       "i" (ASI_PHYS_USE_EC));
-}
+पूर्ण
 
-static unsigned int bucket_get_irq(unsigned long bucket_pa)
-{
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक bucket_get_irq(अचिन्हित दीर्घ bucket_pa)
+अणु
+	अचिन्हित पूर्णांक ret;
 
-	__asm__ __volatile__("lduwa	[%1] %2, %0"
+	__यंत्र__ __अस्थिर__("lduwa	[%1] %2, %0"
 			     : "=&r" (ret)
 			     : "r" (bucket_pa +
-				    offsetof(struct ino_bucket,
+				    दुरत्व(काष्ठा ino_bucket,
 					     __irq)),
 			       "i" (ASI_PHYS_USE_EC));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void bucket_set_irq(unsigned long bucket_pa, unsigned int irq)
-{
-	__asm__ __volatile__("stwa	%0, [%1] %2"
-			     : /* no outputs */
+अटल व्योम bucket_set_irq(अचिन्हित दीर्घ bucket_pa, अचिन्हित पूर्णांक irq)
+अणु
+	__यंत्र__ __अस्थिर__("stwa	%0, [%1] %2"
+			     : /* no outमाला_दो */
 			     : "r" (irq),
 			       "r" (bucket_pa +
-				    offsetof(struct ino_bucket,
+				    दुरत्व(काष्ठा ino_bucket,
 					     __irq)),
 			       "i" (ASI_PHYS_USE_EC));
-}
+पूर्ण
 
-#define irq_work_pa(__cpu)	&(trap_block[(__cpu)].irq_worklist_pa)
+#घोषणा irq_work_pa(__cpu)	&(trap_block[(__cpu)].irq_worklist_pa)
 
-static unsigned long hvirq_major __initdata;
-static int __init early_hvirq_major(char *p)
-{
-	int rc = kstrtoul(p, 10, &hvirq_major);
+अटल अचिन्हित दीर्घ hvirq_major __initdata;
+अटल पूर्णांक __init early_hvirq_major(अक्षर *p)
+अणु
+	पूर्णांक rc = kम_से_अदीर्घ(p, 10, &hvirq_major);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 early_param("hvirq", early_hvirq_major);
 
-static int hv_irq_version;
+अटल पूर्णांक hv_irq_version;
 
-/* Major version 2.0 of HV_GRP_INTR added support for the VIRQ cookie
- * based interfaces, but:
+/* Major version 2.0 of HV_GRP_INTR added support क्रम the VIRQ cookie
+ * based पूर्णांकerfaces, but:
  *
  * 1) Several OSs, Solaris and Linux included, use them even when only
  *    negotiating version 1.0 (or failing to negotiate at all).  So the
- *    hypervisor has a workaround that provides the VIRQ interfaces even
+ *    hypervisor has a workaround that provides the VIRQ पूर्णांकerfaces even
  *    when only verion 1.0 of the API is in use.
  *
  * 2) Second, and more importantly, with major version 2.0 these VIRQ
- *    interfaces only were actually hooked up for LDC interrupts, even
- *    though the Hypervisor specification clearly stated:
+ *    पूर्णांकerfaces only were actually hooked up क्रम LDC पूर्णांकerrupts, even
+ *    though the Hypervisor specअगरication clearly stated:
  *
- *	The new interrupt API functions will be available to a guest
- *	when it negotiates version 2.0 in the interrupt API group 0x2. When
- *	a guest negotiates version 2.0, all interrupt sources will only
- *	support using the cookie interface, and any attempt to use the
- *	version 1.0 interrupt APIs numbered 0xa0 to 0xa6 will result in the
- *	ENOTSUPPORTED error being returned.
+ *	The new पूर्णांकerrupt API functions will be available to a guest
+ *	when it negotiates version 2.0 in the पूर्णांकerrupt API group 0x2. When
+ *	a guest negotiates version 2.0, all पूर्णांकerrupt sources will only
+ *	support using the cookie पूर्णांकerface, and any attempt to use the
+ *	version 1.0 पूर्णांकerrupt APIs numbered 0xa0 to 0xa6 will result in the
+ *	ENOTSUPPORTED error being वापसed.
  *
  *   with an emphasis on "all interrupt sources".
  *
- * To correct this, major version 3.0 was created which does actually
- * support VIRQs for all interrupt sources (not just LDC devices).  So
- * if we want to move completely over the cookie based VIRQs we must
+ * To correct this, major version 3.0 was created which करोes actually
+ * support VIRQs क्रम all पूर्णांकerrupt sources (not just LDC devices).  So
+ * अगर we want to move completely over the cookie based VIRQs we must
  * negotiate major version 3.0 or later of HV_GRP_INTR.
  */
-static bool sun4v_cookie_only_virqs(void)
-{
-	if (hv_irq_version >= 3)
-		return true;
-	return false;
-}
+अटल bool sun4v_cookie_only_virqs(व्योम)
+अणु
+	अगर (hv_irq_version >= 3)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static void __init irq_init_hv(void)
-{
-	unsigned long hv_error, major, minor = 0;
+अटल व्योम __init irq_init_hv(व्योम)
+अणु
+	अचिन्हित दीर्घ hv_error, major, minor = 0;
 
-	if (tlb_type != hypervisor)
-		return;
+	अगर (tlb_type != hypervisor)
+		वापस;
 
-	if (hvirq_major)
+	अगर (hvirq_major)
 		major = hvirq_major;
-	else
+	अन्यथा
 		major = 3;
 
-	hv_error = sun4v_hvapi_register(HV_GRP_INTR, major, &minor);
-	if (!hv_error)
+	hv_error = sun4v_hvapi_रेजिस्टर(HV_GRP_INTR, major, &minor);
+	अगर (!hv_error)
 		hv_irq_version = major;
-	else
+	अन्यथा
 		hv_irq_version = 1;
 
 	pr_info("SUN4V: Using IRQ API major %d, cookie only virqs %s\n",
 		hv_irq_version,
 		sun4v_cookie_only_virqs() ? "enabled" : "disabled");
-}
+पूर्ण
 
-/* This function is for the timer interrupt.*/
-int __init arch_probe_nr_irqs(void)
-{
-	return 1;
-}
+/* This function is क्रम the समयr पूर्णांकerrupt.*/
+पूर्णांक __init arch_probe_nr_irqs(व्योम)
+अणु
+	वापस 1;
+पूर्ण
 
-#define DEFAULT_NUM_IVECS	(0xfffU)
-static unsigned int nr_ivec = DEFAULT_NUM_IVECS;
-#define NUM_IVECS (nr_ivec)
+#घोषणा DEFAULT_NUM_IVECS	(0xfffU)
+अटल अचिन्हित पूर्णांक nr_ivec = DEFAULT_NUM_IVECS;
+#घोषणा NUM_IVECS (nr_ivec)
 
-static unsigned int __init size_nr_ivec(void)
-{
-	if (tlb_type == hypervisor) {
-		switch (sun4v_chip_type) {
+अटल अचिन्हित पूर्णांक __init size_nr_ivec(व्योम)
+अणु
+	अगर (tlb_type == hypervisor) अणु
+		चयन (sun4v_chip_type) अणु
 		/* Athena's devhandle|devino is large.*/
-		case SUN4V_CHIP_SPARC64X:
+		हाल SUN4V_CHIP_SPARC64X:
 			nr_ivec = 0xffff;
-			break;
-		}
-	}
-	return nr_ivec;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस nr_ivec;
+पूर्ण
 
-struct irq_handler_data {
-	union {
-		struct {
-			unsigned int dev_handle;
-			unsigned int dev_ino;
-		};
-		unsigned long sysino;
-	};
-	struct ino_bucket bucket;
-	unsigned long	iclr;
-	unsigned long	imap;
-};
+काष्ठा irq_handler_data अणु
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित पूर्णांक dev_handle;
+			अचिन्हित पूर्णांक dev_ino;
+		पूर्ण;
+		अचिन्हित दीर्घ sysino;
+	पूर्ण;
+	काष्ठा ino_bucket bucket;
+	अचिन्हित दीर्घ	iclr;
+	अचिन्हित दीर्घ	imap;
+पूर्ण;
 
-static inline unsigned int irq_data_to_handle(struct irq_data *data)
-{
-	struct irq_handler_data *ihd = irq_data_get_irq_handler_data(data);
+अटल अंतरभूत अचिन्हित पूर्णांक irq_data_to_handle(काष्ठा irq_data *data)
+अणु
+	काष्ठा irq_handler_data *ihd = irq_data_get_irq_handler_data(data);
 
-	return ihd->dev_handle;
-}
+	वापस ihd->dev_handle;
+पूर्ण
 
-static inline unsigned int irq_data_to_ino(struct irq_data *data)
-{
-	struct irq_handler_data *ihd = irq_data_get_irq_handler_data(data);
+अटल अंतरभूत अचिन्हित पूर्णांक irq_data_to_ino(काष्ठा irq_data *data)
+अणु
+	काष्ठा irq_handler_data *ihd = irq_data_get_irq_handler_data(data);
 
-	return ihd->dev_ino;
-}
+	वापस ihd->dev_ino;
+पूर्ण
 
-static inline unsigned long irq_data_to_sysino(struct irq_data *data)
-{
-	struct irq_handler_data *ihd = irq_data_get_irq_handler_data(data);
+अटल अंतरभूत अचिन्हित दीर्घ irq_data_to_sysino(काष्ठा irq_data *data)
+अणु
+	काष्ठा irq_handler_data *ihd = irq_data_get_irq_handler_data(data);
 
-	return ihd->sysino;
-}
+	वापस ihd->sysino;
+पूर्ण
 
-void irq_free(unsigned int irq)
-{
-	void *data = irq_get_handler_data(irq);
+व्योम irq_मुक्त(अचिन्हित पूर्णांक irq)
+अणु
+	व्योम *data = irq_get_handler_data(irq);
 
-	kfree(data);
-	irq_set_handler_data(irq, NULL);
-	irq_free_descs(irq, 1);
-}
+	kमुक्त(data);
+	irq_set_handler_data(irq, शून्य);
+	irq_मुक्त_descs(irq, 1);
+पूर्ण
 
-unsigned int irq_alloc(unsigned int dev_handle, unsigned int dev_ino)
-{
-	int irq;
+अचिन्हित पूर्णांक irq_alloc(अचिन्हित पूर्णांक dev_handle, अचिन्हित पूर्णांक dev_ino)
+अणु
+	पूर्णांक irq;
 
-	irq = __irq_alloc_descs(-1, 1, 1, numa_node_id(), NULL, NULL);
-	if (irq <= 0)
-		goto out;
+	irq = __irq_alloc_descs(-1, 1, 1, numa_node_id(), शून्य, शून्य);
+	अगर (irq <= 0)
+		जाओ out;
 
-	return irq;
+	वापस irq;
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int cookie_exists(u32 devhandle, unsigned int devino)
-{
-	unsigned long hv_err, cookie;
-	struct ino_bucket *bucket;
-	unsigned int irq = 0U;
+अटल अचिन्हित पूर्णांक cookie_exists(u32 devhandle, अचिन्हित पूर्णांक devino)
+अणु
+	अचिन्हित दीर्घ hv_err, cookie;
+	काष्ठा ino_bucket *bucket;
+	अचिन्हित पूर्णांक irq = 0U;
 
-	hv_err = sun4v_vintr_get_cookie(devhandle, devino, &cookie);
-	if (hv_err) {
+	hv_err = sun4v_vपूर्णांकr_get_cookie(devhandle, devino, &cookie);
+	अगर (hv_err) अणु
 		pr_err("HV get cookie failed hv_err = %ld\n", hv_err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (cookie & ((1UL << 63UL))) {
+	अगर (cookie & ((1UL << 63UL))) अणु
 		cookie = ~cookie;
-		bucket = (struct ino_bucket *) __va(cookie);
+		bucket = (काष्ठा ino_bucket *) __va(cookie);
 		irq = bucket->__irq;
-	}
+	पूर्ण
 out:
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static unsigned int sysino_exists(u32 devhandle, unsigned int devino)
-{
-	unsigned long sysino = sun4v_devino_to_sysino(devhandle, devino);
-	struct ino_bucket *bucket;
-	unsigned int irq;
+अटल अचिन्हित पूर्णांक sysino_exists(u32 devhandle, अचिन्हित पूर्णांक devino)
+अणु
+	अचिन्हित दीर्घ sysino = sun4v_devino_to_sysino(devhandle, devino);
+	काष्ठा ino_bucket *bucket;
+	अचिन्हित पूर्णांक irq;
 
 	bucket = &ivector_table[sysino];
 	irq = bucket_get_irq(__pa(bucket));
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-void ack_bad_irq(unsigned int irq)
-{
+व्योम ack_bad_irq(अचिन्हित पूर्णांक irq)
+अणु
 	pr_crit("BAD IRQ ack %d\n", irq);
-}
+पूर्ण
 
-void irq_install_pre_handler(int irq,
-			     void (*func)(unsigned int, void *, void *),
-			     void *arg1, void *arg2)
-{
+व्योम irq_install_pre_handler(पूर्णांक irq,
+			     व्योम (*func)(अचिन्हित पूर्णांक, व्योम *, व्योम *),
+			     व्योम *arg1, व्योम *arg2)
+अणु
 	pr_warn("IRQ pre handler NOT supported.\n");
-}
+पूर्ण
 
 /*
- * /proc/interrupts printing:
+ * /proc/पूर्णांकerrupts prपूर्णांकing:
  */
-int arch_show_interrupts(struct seq_file *p, int prec)
-{
-	int j;
+पूर्णांक arch_show_पूर्णांकerrupts(काष्ठा seq_file *p, पूर्णांक prec)
+अणु
+	पूर्णांक j;
 
-	seq_printf(p, "NMI: ");
-	for_each_online_cpu(j)
-		seq_printf(p, "%10u ", cpu_data(j).__nmi_count);
-	seq_printf(p, "     Non-maskable interrupts\n");
-	return 0;
-}
+	seq_म_लिखो(p, "NMI: ");
+	क्रम_each_online_cpu(j)
+		seq_म_लिखो(p, "%10u ", cpu_data(j).__nmi_count);
+	seq_म_लिखो(p, "     Non-maskable interrupts\n");
+	वापस 0;
+पूर्ण
 
-static unsigned int sun4u_compute_tid(unsigned long imap, unsigned long cpuid)
-{
-	unsigned int tid;
+अटल अचिन्हित पूर्णांक sun4u_compute_tid(अचिन्हित दीर्घ imap, अचिन्हित दीर्घ cpuid)
+अणु
+	अचिन्हित पूर्णांक tid;
 
-	if (this_is_starfire) {
+	अगर (this_is_starfire) अणु
 		tid = starfire_translate(imap, cpuid);
 		tid <<= IMAP_TID_SHIFT;
 		tid &= IMAP_TID_UPA;
-	} else {
-		if (tlb_type == cheetah || tlb_type == cheetah_plus) {
-			unsigned long ver;
+	पूर्ण अन्यथा अणु
+		अगर (tlb_type == cheetah || tlb_type == cheetah_plus) अणु
+			अचिन्हित दीर्घ ver;
 
-			__asm__ ("rdpr %%ver, %0" : "=r" (ver));
-			if ((ver >> 32UL) == __JALAPENO_ID ||
-			    (ver >> 32UL) == __SERRANO_ID) {
+			__यंत्र__ ("rdpr %%ver, %0" : "=r" (ver));
+			अगर ((ver >> 32UL) == __JALAPENO_ID ||
+			    (ver >> 32UL) == __SERRANO_ID) अणु
 				tid = cpuid << IMAP_TID_SHIFT;
 				tid &= IMAP_TID_JBUS;
-			} else {
-				unsigned int a = cpuid & 0x1f;
-				unsigned int n = (cpuid >> 5) & 0x1f;
+			पूर्ण अन्यथा अणु
+				अचिन्हित पूर्णांक a = cpuid & 0x1f;
+				अचिन्हित पूर्णांक n = (cpuid >> 5) & 0x1f;
 
 				tid = ((a << IMAP_AID_SHIFT) |
 				       (n << IMAP_NID_SHIFT));
 				tid &= (IMAP_AID_SAFARI |
 					IMAP_NID_SAFARI);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			tid = cpuid << IMAP_TID_SHIFT;
 			tid &= IMAP_TID_UPA;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return tid;
-}
+	वापस tid;
+पूर्ण
 
-#ifdef CONFIG_SMP
-static int irq_choose_cpu(unsigned int irq, const struct cpumask *affinity)
-{
+#अगर_घोषित CONFIG_SMP
+अटल पूर्णांक irq_choose_cpu(अचिन्हित पूर्णांक irq, स्थिर काष्ठा cpumask *affinity)
+अणु
 	cpumask_t mask;
-	int cpuid;
+	पूर्णांक cpuid;
 
 	cpumask_copy(&mask, affinity);
-	if (cpumask_equal(&mask, cpu_online_mask)) {
+	अगर (cpumask_equal(&mask, cpu_online_mask)) अणु
 		cpuid = map_to_cpu(irq);
-	} else {
-		cpumask_t tmp;
+	पूर्ण अन्यथा अणु
+		cpumask_t पंचांगp;
 
-		cpumask_and(&tmp, cpu_online_mask, &mask);
-		cpuid = cpumask_empty(&tmp) ? map_to_cpu(irq) : cpumask_first(&tmp);
-	}
+		cpumask_and(&पंचांगp, cpu_online_mask, &mask);
+		cpuid = cpumask_empty(&पंचांगp) ? map_to_cpu(irq) : cpumask_first(&पंचांगp);
+	पूर्ण
 
-	return cpuid;
-}
-#else
-#define irq_choose_cpu(irq, affinity)	\
+	वापस cpuid;
+पूर्ण
+#अन्यथा
+#घोषणा irq_choose_cpu(irq, affinity)	\
 	real_hard_smp_processor_id()
-#endif
+#पूर्ण_अगर
 
-static void sun4u_irq_enable(struct irq_data *data)
-{
-	struct irq_handler_data *handler_data;
+अटल व्योम sun4u_irq_enable(काष्ठा irq_data *data)
+अणु
+	काष्ठा irq_handler_data *handler_data;
 
 	handler_data = irq_data_get_irq_handler_data(data);
-	if (likely(handler_data)) {
-		unsigned long cpuid, imap, val;
-		unsigned int tid;
+	अगर (likely(handler_data)) अणु
+		अचिन्हित दीर्घ cpuid, imap, val;
+		अचिन्हित पूर्णांक tid;
 
 		cpuid = irq_choose_cpu(data->irq,
 				       irq_data_get_affinity_mask(data));
@@ -384,288 +385,288 @@ static void sun4u_irq_enable(struct irq_data *data)
 
 		tid = sun4u_compute_tid(imap, cpuid);
 
-		val = upa_readq(imap);
+		val = upa_पढ़ोq(imap);
 		val &= ~(IMAP_TID_UPA | IMAP_TID_JBUS |
 			 IMAP_AID_SAFARI | IMAP_NID_SAFARI);
 		val |= tid | IMAP_VALID;
-		upa_writeq(val, imap);
-		upa_writeq(ICLR_IDLE, handler_data->iclr);
-	}
-}
+		upa_ग_लिखोq(val, imap);
+		upa_ग_लिखोq(ICLR_IDLE, handler_data->iclr);
+	पूर्ण
+पूर्ण
 
-static int sun4u_set_affinity(struct irq_data *data,
-			       const struct cpumask *mask, bool force)
-{
-	struct irq_handler_data *handler_data;
+अटल पूर्णांक sun4u_set_affinity(काष्ठा irq_data *data,
+			       स्थिर काष्ठा cpumask *mask, bool क्रमce)
+अणु
+	काष्ठा irq_handler_data *handler_data;
 
 	handler_data = irq_data_get_irq_handler_data(data);
-	if (likely(handler_data)) {
-		unsigned long cpuid, imap, val;
-		unsigned int tid;
+	अगर (likely(handler_data)) अणु
+		अचिन्हित दीर्घ cpuid, imap, val;
+		अचिन्हित पूर्णांक tid;
 
 		cpuid = irq_choose_cpu(data->irq, mask);
 		imap = handler_data->imap;
 
 		tid = sun4u_compute_tid(imap, cpuid);
 
-		val = upa_readq(imap);
+		val = upa_पढ़ोq(imap);
 		val &= ~(IMAP_TID_UPA | IMAP_TID_JBUS |
 			 IMAP_AID_SAFARI | IMAP_NID_SAFARI);
 		val |= tid | IMAP_VALID;
-		upa_writeq(val, imap);
-		upa_writeq(ICLR_IDLE, handler_data->iclr);
-	}
+		upa_ग_लिखोq(val, imap);
+		upa_ग_लिखोq(ICLR_IDLE, handler_data->iclr);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Don't do anything.  The desc->status check for IRQ_DISABLED in
+/* Don't करो anything.  The desc->status check क्रम IRQ_DISABLED in
  * handler_irq() will skip the handler call and that will leave the
- * interrupt in the sent state.  The next ->enable() call will hit the
- * ICLR register to reset the state machine.
+ * पूर्णांकerrupt in the sent state.  The next ->enable() call will hit the
+ * ICLR रेजिस्टर to reset the state machine.
  *
  * This scheme is necessary, instead of clearing the Valid bit in the
- * IMAP register, to handle the case of IMAP registers being shared by
- * multiple INOs (and thus ICLR registers).  Since we use a different
- * virtual IRQ for each shared IMAP instance, the generic code thinks
+ * IMAP रेजिस्टर, to handle the हाल of IMAP रेजिस्टरs being shared by
+ * multiple INOs (and thus ICLR रेजिस्टरs).  Since we use a dअगरferent
+ * भव IRQ क्रम each shared IMAP instance, the generic code thinks
  * there is only one user so it prematurely calls ->disable() on
- * free_irq().
+ * मुक्त_irq().
  *
  * We have to provide an explicit ->disable() method instead of using
- * NULL to get the default.  The reason is that if the generic code
- * sees that, it also hooks up a default ->shutdown method which
- * invokes ->mask() which we do not want.  See irq_chip_set_defaults().
+ * शून्य to get the शेष.  The reason is that अगर the generic code
+ * sees that, it also hooks up a शेष ->shutकरोwn method which
+ * invokes ->mask() which we करो not want.  See irq_chip_set_शेषs().
  */
-static void sun4u_irq_disable(struct irq_data *data)
-{
-}
+अटल व्योम sun4u_irq_disable(काष्ठा irq_data *data)
+अणु
+पूर्ण
 
-static void sun4u_irq_eoi(struct irq_data *data)
-{
-	struct irq_handler_data *handler_data;
+अटल व्योम sun4u_irq_eoi(काष्ठा irq_data *data)
+अणु
+	काष्ठा irq_handler_data *handler_data;
 
 	handler_data = irq_data_get_irq_handler_data(data);
-	if (likely(handler_data))
-		upa_writeq(ICLR_IDLE, handler_data->iclr);
-}
+	अगर (likely(handler_data))
+		upa_ग_लिखोq(ICLR_IDLE, handler_data->iclr);
+पूर्ण
 
-static void sun4v_irq_enable(struct irq_data *data)
-{
-	unsigned long cpuid = irq_choose_cpu(data->irq,
+अटल व्योम sun4v_irq_enable(काष्ठा irq_data *data)
+अणु
+	अचिन्हित दीर्घ cpuid = irq_choose_cpu(data->irq,
 					     irq_data_get_affinity_mask(data));
-	unsigned int ino = irq_data_to_sysino(data);
-	int err;
+	अचिन्हित पूर्णांक ino = irq_data_to_sysino(data);
+	पूर्णांक err;
 
-	err = sun4v_intr_settarget(ino, cpuid);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_intr_settarget(%x,%lu): "
+	err = sun4v_पूर्णांकr_settarget(ino, cpuid);
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_intr_settarget(%x,%lu): "
 		       "err(%d)\n", ino, cpuid, err);
-	err = sun4v_intr_setstate(ino, HV_INTR_STATE_IDLE);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_intr_setstate(%x): "
+	err = sun4v_पूर्णांकr_setstate(ino, HV_INTR_STATE_IDLE);
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_intr_setstate(%x): "
 		       "err(%d)\n", ino, err);
-	err = sun4v_intr_setenabled(ino, HV_INTR_ENABLED);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_intr_setenabled(%x): err(%d)\n",
+	err = sun4v_पूर्णांकr_setenabled(ino, HV_INTR_ENABLED);
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_intr_setenabled(%x): err(%d)\n",
 		       ino, err);
-}
+पूर्ण
 
-static int sun4v_set_affinity(struct irq_data *data,
-			       const struct cpumask *mask, bool force)
-{
-	unsigned long cpuid = irq_choose_cpu(data->irq, mask);
-	unsigned int ino = irq_data_to_sysino(data);
-	int err;
+अटल पूर्णांक sun4v_set_affinity(काष्ठा irq_data *data,
+			       स्थिर काष्ठा cpumask *mask, bool क्रमce)
+अणु
+	अचिन्हित दीर्घ cpuid = irq_choose_cpu(data->irq, mask);
+	अचिन्हित पूर्णांक ino = irq_data_to_sysino(data);
+	पूर्णांक err;
 
-	err = sun4v_intr_settarget(ino, cpuid);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_intr_settarget(%x,%lu): "
+	err = sun4v_पूर्णांकr_settarget(ino, cpuid);
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_intr_settarget(%x,%lu): "
 		       "err(%d)\n", ino, cpuid, err);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sun4v_irq_disable(struct irq_data *data)
-{
-	unsigned int ino = irq_data_to_sysino(data);
-	int err;
+अटल व्योम sun4v_irq_disable(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक ino = irq_data_to_sysino(data);
+	पूर्णांक err;
 
-	err = sun4v_intr_setenabled(ino, HV_INTR_DISABLED);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_intr_setenabled(%x): "
+	err = sun4v_पूर्णांकr_setenabled(ino, HV_INTR_DISABLED);
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_intr_setenabled(%x): "
 		       "err(%d)\n", ino, err);
-}
+पूर्ण
 
-static void sun4v_irq_eoi(struct irq_data *data)
-{
-	unsigned int ino = irq_data_to_sysino(data);
-	int err;
+अटल व्योम sun4v_irq_eoi(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक ino = irq_data_to_sysino(data);
+	पूर्णांक err;
 
-	err = sun4v_intr_setstate(ino, HV_INTR_STATE_IDLE);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_intr_setstate(%x): "
+	err = sun4v_पूर्णांकr_setstate(ino, HV_INTR_STATE_IDLE);
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_intr_setstate(%x): "
 		       "err(%d)\n", ino, err);
-}
+पूर्ण
 
-static void sun4v_virq_enable(struct irq_data *data)
-{
-	unsigned long dev_handle = irq_data_to_handle(data);
-	unsigned long dev_ino = irq_data_to_ino(data);
-	unsigned long cpuid;
-	int err;
+अटल व्योम sun4v_virq_enable(काष्ठा irq_data *data)
+अणु
+	अचिन्हित दीर्घ dev_handle = irq_data_to_handle(data);
+	अचिन्हित दीर्घ dev_ino = irq_data_to_ino(data);
+	अचिन्हित दीर्घ cpuid;
+	पूर्णांक err;
 
 	cpuid = irq_choose_cpu(data->irq, irq_data_get_affinity_mask(data));
 
-	err = sun4v_vintr_set_target(dev_handle, dev_ino, cpuid);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_vintr_set_target(%lx,%lx,%lu): "
+	err = sun4v_vपूर्णांकr_set_target(dev_handle, dev_ino, cpuid);
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_vintr_set_target(%lx,%lx,%lu): "
 		       "err(%d)\n",
 		       dev_handle, dev_ino, cpuid, err);
-	err = sun4v_vintr_set_state(dev_handle, dev_ino,
+	err = sun4v_vपूर्णांकr_set_state(dev_handle, dev_ino,
 				    HV_INTR_STATE_IDLE);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_vintr_set_state(%lx,%lx,"
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_vintr_set_state(%lx,%lx,"
 		       "HV_INTR_STATE_IDLE): err(%d)\n",
 		       dev_handle, dev_ino, err);
-	err = sun4v_vintr_set_valid(dev_handle, dev_ino,
+	err = sun4v_vपूर्णांकr_set_valid(dev_handle, dev_ino,
 				    HV_INTR_ENABLED);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_vintr_set_state(%lx,%lx,"
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_vintr_set_state(%lx,%lx,"
 		       "HV_INTR_ENABLED): err(%d)\n",
 		       dev_handle, dev_ino, err);
-}
+पूर्ण
 
-static int sun4v_virt_set_affinity(struct irq_data *data,
-				    const struct cpumask *mask, bool force)
-{
-	unsigned long dev_handle = irq_data_to_handle(data);
-	unsigned long dev_ino = irq_data_to_ino(data);
-	unsigned long cpuid;
-	int err;
+अटल पूर्णांक sun4v_virt_set_affinity(काष्ठा irq_data *data,
+				    स्थिर काष्ठा cpumask *mask, bool क्रमce)
+अणु
+	अचिन्हित दीर्घ dev_handle = irq_data_to_handle(data);
+	अचिन्हित दीर्घ dev_ino = irq_data_to_ino(data);
+	अचिन्हित दीर्घ cpuid;
+	पूर्णांक err;
 
 	cpuid = irq_choose_cpu(data->irq, mask);
 
-	err = sun4v_vintr_set_target(dev_handle, dev_ino, cpuid);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_vintr_set_target(%lx,%lx,%lu): "
+	err = sun4v_vपूर्णांकr_set_target(dev_handle, dev_ino, cpuid);
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_vintr_set_target(%lx,%lx,%lu): "
 		       "err(%d)\n",
 		       dev_handle, dev_ino, cpuid, err);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sun4v_virq_disable(struct irq_data *data)
-{
-	unsigned long dev_handle = irq_data_to_handle(data);
-	unsigned long dev_ino = irq_data_to_ino(data);
-	int err;
+अटल व्योम sun4v_virq_disable(काष्ठा irq_data *data)
+अणु
+	अचिन्हित दीर्घ dev_handle = irq_data_to_handle(data);
+	अचिन्हित दीर्घ dev_ino = irq_data_to_ino(data);
+	पूर्णांक err;
 
 
-	err = sun4v_vintr_set_valid(dev_handle, dev_ino,
+	err = sun4v_vपूर्णांकr_set_valid(dev_handle, dev_ino,
 				    HV_INTR_DISABLED);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_vintr_set_state(%lx,%lx,"
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_vintr_set_state(%lx,%lx,"
 		       "HV_INTR_DISABLED): err(%d)\n",
 		       dev_handle, dev_ino, err);
-}
+पूर्ण
 
-static void sun4v_virq_eoi(struct irq_data *data)
-{
-	unsigned long dev_handle = irq_data_to_handle(data);
-	unsigned long dev_ino = irq_data_to_ino(data);
-	int err;
+अटल व्योम sun4v_virq_eoi(काष्ठा irq_data *data)
+अणु
+	अचिन्हित दीर्घ dev_handle = irq_data_to_handle(data);
+	अचिन्हित दीर्घ dev_ino = irq_data_to_ino(data);
+	पूर्णांक err;
 
-	err = sun4v_vintr_set_state(dev_handle, dev_ino,
+	err = sun4v_vपूर्णांकr_set_state(dev_handle, dev_ino,
 				    HV_INTR_STATE_IDLE);
-	if (err != HV_EOK)
-		printk(KERN_ERR "sun4v_vintr_set_state(%lx,%lx,"
+	अगर (err != HV_EOK)
+		prपूर्णांकk(KERN_ERR "sun4v_vintr_set_state(%lx,%lx,"
 		       "HV_INTR_STATE_IDLE): err(%d)\n",
 		       dev_handle, dev_ino, err);
-}
+पूर्ण
 
-static struct irq_chip sun4u_irq = {
+अटल काष्ठा irq_chip sun4u_irq = अणु
 	.name			= "sun4u",
 	.irq_enable		= sun4u_irq_enable,
 	.irq_disable		= sun4u_irq_disable,
 	.irq_eoi		= sun4u_irq_eoi,
 	.irq_set_affinity	= sun4u_set_affinity,
 	.flags			= IRQCHIP_EOI_IF_HANDLED,
-};
+पूर्ण;
 
-static struct irq_chip sun4v_irq = {
+अटल काष्ठा irq_chip sun4v_irq = अणु
 	.name			= "sun4v",
 	.irq_enable		= sun4v_irq_enable,
 	.irq_disable		= sun4v_irq_disable,
 	.irq_eoi		= sun4v_irq_eoi,
 	.irq_set_affinity	= sun4v_set_affinity,
 	.flags			= IRQCHIP_EOI_IF_HANDLED,
-};
+पूर्ण;
 
-static struct irq_chip sun4v_virq = {
+अटल काष्ठा irq_chip sun4v_virq = अणु
 	.name			= "vsun4v",
 	.irq_enable		= sun4v_virq_enable,
 	.irq_disable		= sun4v_virq_disable,
 	.irq_eoi		= sun4v_virq_eoi,
 	.irq_set_affinity	= sun4v_virt_set_affinity,
 	.flags			= IRQCHIP_EOI_IF_HANDLED,
-};
+पूर्ण;
 
-unsigned int build_irq(int inofixup, unsigned long iclr, unsigned long imap)
-{
-	struct irq_handler_data *handler_data;
-	struct ino_bucket *bucket;
-	unsigned int irq;
-	int ino;
+अचिन्हित पूर्णांक build_irq(पूर्णांक inofixup, अचिन्हित दीर्घ iclr, अचिन्हित दीर्घ imap)
+अणु
+	काष्ठा irq_handler_data *handler_data;
+	काष्ठा ino_bucket *bucket;
+	अचिन्हित पूर्णांक irq;
+	पूर्णांक ino;
 
 	BUG_ON(tlb_type == hypervisor);
 
-	ino = (upa_readq(imap) & (IMAP_IGN | IMAP_INO)) + inofixup;
+	ino = (upa_पढ़ोq(imap) & (IMAP_IGN | IMAP_INO)) + inofixup;
 	bucket = &ivector_table[ino];
 	irq = bucket_get_irq(__pa(bucket));
-	if (!irq) {
+	अगर (!irq) अणु
 		irq = irq_alloc(0, ino);
 		bucket_set_irq(__pa(bucket), irq);
 		irq_set_chip_and_handler_name(irq, &sun4u_irq,
 					      handle_fasteoi_irq, "IVEC");
-	}
+	पूर्ण
 
 	handler_data = irq_get_handler_data(irq);
-	if (unlikely(handler_data))
-		goto out;
+	अगर (unlikely(handler_data))
+		जाओ out;
 
-	handler_data = kzalloc(sizeof(struct irq_handler_data), GFP_ATOMIC);
-	if (unlikely(!handler_data)) {
-		prom_printf("IRQ: kzalloc(irq_handler_data) failed.\n");
+	handler_data = kzalloc(माप(काष्ठा irq_handler_data), GFP_ATOMIC);
+	अगर (unlikely(!handler_data)) अणु
+		prom_म_लिखो("IRQ: kzalloc(irq_handler_data) failed.\n");
 		prom_halt();
-	}
+	पूर्ण
 	irq_set_handler_data(irq, handler_data);
 
 	handler_data->imap  = imap;
 	handler_data->iclr  = iclr;
 
 out:
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static unsigned int sun4v_build_common(u32 devhandle, unsigned int devino,
-		void (*handler_data_init)(struct irq_handler_data *data,
-		u32 devhandle, unsigned int devino),
-		struct irq_chip *chip)
-{
-	struct irq_handler_data *data;
-	unsigned int irq;
+अटल अचिन्हित पूर्णांक sun4v_build_common(u32 devhandle, अचिन्हित पूर्णांक devino,
+		व्योम (*handler_data_init)(काष्ठा irq_handler_data *data,
+		u32 devhandle, अचिन्हित पूर्णांक devino),
+		काष्ठा irq_chip *chip)
+अणु
+	काष्ठा irq_handler_data *data;
+	अचिन्हित पूर्णांक irq;
 
 	irq = irq_alloc(devhandle, devino);
-	if (!irq)
-		goto out;
+	अगर (!irq)
+		जाओ out;
 
-	data = kzalloc(sizeof(struct irq_handler_data), GFP_ATOMIC);
-	if (unlikely(!data)) {
+	data = kzalloc(माप(काष्ठा irq_handler_data), GFP_ATOMIC);
+	अगर (unlikely(!data)) अणु
 		pr_err("IRQ handler data allocation failed.\n");
-		irq_free(irq);
+		irq_मुक्त(irq);
 		irq = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	irq_set_handler_data(irq, data);
 	handler_data_init(data, devhandle, devino);
@@ -673,158 +674,158 @@ static unsigned int sun4v_build_common(u32 devhandle, unsigned int devino,
 	data->imap = ~0UL;
 	data->iclr = ~0UL;
 out:
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static unsigned long cookie_assign(unsigned int irq, u32 devhandle,
-		unsigned int devino)
-{
-	struct irq_handler_data *ihd = irq_get_handler_data(irq);
-	unsigned long hv_error, cookie;
+अटल अचिन्हित दीर्घ cookie_assign(अचिन्हित पूर्णांक irq, u32 devhandle,
+		अचिन्हित पूर्णांक devino)
+अणु
+	काष्ठा irq_handler_data *ihd = irq_get_handler_data(irq);
+	अचिन्हित दीर्घ hv_error, cookie;
 
-	/* handler_irq needs to find the irq. cookie is seen signed in
-	 * sun4v_dev_mondo and treated as a non ivector_table delivery.
+	/* handler_irq needs to find the irq. cookie is seen चिन्हित in
+	 * sun4v_dev_monकरो and treated as a non ivector_table delivery.
 	 */
 	ihd->bucket.__irq = irq;
 	cookie = ~__pa(&ihd->bucket);
 
-	hv_error = sun4v_vintr_set_cookie(devhandle, devino, cookie);
-	if (hv_error)
+	hv_error = sun4v_vपूर्णांकr_set_cookie(devhandle, devino, cookie);
+	अगर (hv_error)
 		pr_err("HV vintr set cookie failed = %ld\n", hv_error);
 
-	return hv_error;
-}
+	वापस hv_error;
+पूर्ण
 
-static void cookie_handler_data(struct irq_handler_data *data,
-				u32 devhandle, unsigned int devino)
-{
+अटल व्योम cookie_handler_data(काष्ठा irq_handler_data *data,
+				u32 devhandle, अचिन्हित पूर्णांक devino)
+अणु
 	data->dev_handle = devhandle;
 	data->dev_ino = devino;
-}
+पूर्ण
 
-static unsigned int cookie_build_irq(u32 devhandle, unsigned int devino,
-				     struct irq_chip *chip)
-{
-	unsigned long hv_error;
-	unsigned int irq;
+अटल अचिन्हित पूर्णांक cookie_build_irq(u32 devhandle, अचिन्हित पूर्णांक devino,
+				     काष्ठा irq_chip *chip)
+अणु
+	अचिन्हित दीर्घ hv_error;
+	अचिन्हित पूर्णांक irq;
 
 	irq = sun4v_build_common(devhandle, devino, cookie_handler_data, chip);
 
 	hv_error = cookie_assign(irq, devhandle, devino);
-	if (hv_error) {
-		irq_free(irq);
+	अगर (hv_error) अणु
+		irq_मुक्त(irq);
 		irq = 0;
-	}
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static unsigned int sun4v_build_cookie(u32 devhandle, unsigned int devino)
-{
-	unsigned int irq;
+अटल अचिन्हित पूर्णांक sun4v_build_cookie(u32 devhandle, अचिन्हित पूर्णांक devino)
+अणु
+	अचिन्हित पूर्णांक irq;
 
 	irq = cookie_exists(devhandle, devino);
-	if (irq)
-		goto out;
+	अगर (irq)
+		जाओ out;
 
 	irq = cookie_build_irq(devhandle, devino, &sun4v_virq);
 
 out:
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static void sysino_set_bucket(unsigned int irq)
-{
-	struct irq_handler_data *ihd = irq_get_handler_data(irq);
-	struct ino_bucket *bucket;
-	unsigned long sysino;
+अटल व्योम sysino_set_bucket(अचिन्हित पूर्णांक irq)
+अणु
+	काष्ठा irq_handler_data *ihd = irq_get_handler_data(irq);
+	काष्ठा ino_bucket *bucket;
+	अचिन्हित दीर्घ sysino;
 
 	sysino = sun4v_devino_to_sysino(ihd->dev_handle, ihd->dev_ino);
 	BUG_ON(sysino >= nr_ivec);
 	bucket = &ivector_table[sysino];
 	bucket_set_irq(__pa(bucket), irq);
-}
+पूर्ण
 
-static void sysino_handler_data(struct irq_handler_data *data,
-				u32 devhandle, unsigned int devino)
-{
-	unsigned long sysino;
+अटल व्योम sysino_handler_data(काष्ठा irq_handler_data *data,
+				u32 devhandle, अचिन्हित पूर्णांक devino)
+अणु
+	अचिन्हित दीर्घ sysino;
 
 	sysino = sun4v_devino_to_sysino(devhandle, devino);
 	data->sysino = sysino;
-}
+पूर्ण
 
-static unsigned int sysino_build_irq(u32 devhandle, unsigned int devino,
-				     struct irq_chip *chip)
-{
-	unsigned int irq;
+अटल अचिन्हित पूर्णांक sysino_build_irq(u32 devhandle, अचिन्हित पूर्णांक devino,
+				     काष्ठा irq_chip *chip)
+अणु
+	अचिन्हित पूर्णांक irq;
 
 	irq = sun4v_build_common(devhandle, devino, sysino_handler_data, chip);
-	if (!irq)
-		goto out;
+	अगर (!irq)
+		जाओ out;
 
 	sysino_set_bucket(irq);
 out:
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static int sun4v_build_sysino(u32 devhandle, unsigned int devino)
-{
-	int irq;
+अटल पूर्णांक sun4v_build_sysino(u32 devhandle, अचिन्हित पूर्णांक devino)
+अणु
+	पूर्णांक irq;
 
 	irq = sysino_exists(devhandle, devino);
-	if (irq)
-		goto out;
+	अगर (irq)
+		जाओ out;
 
 	irq = sysino_build_irq(devhandle, devino, &sun4v_irq);
 out:
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-unsigned int sun4v_build_irq(u32 devhandle, unsigned int devino)
-{
-	unsigned int irq;
+अचिन्हित पूर्णांक sun4v_build_irq(u32 devhandle, अचिन्हित पूर्णांक devino)
+अणु
+	अचिन्हित पूर्णांक irq;
 
-	if (sun4v_cookie_only_virqs())
+	अगर (sun4v_cookie_only_virqs())
 		irq = sun4v_build_cookie(devhandle, devino);
-	else
+	अन्यथा
 		irq = sun4v_build_sysino(devhandle, devino);
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-unsigned int sun4v_build_virq(u32 devhandle, unsigned int devino)
-{
-	int irq;
+अचिन्हित पूर्णांक sun4v_build_virq(u32 devhandle, अचिन्हित पूर्णांक devino)
+अणु
+	पूर्णांक irq;
 
 	irq = cookie_build_irq(devhandle, devino, &sun4v_virq);
-	if (!irq)
-		goto out;
+	अगर (!irq)
+		जाओ out;
 
 	/* This is borrowed from the original function.
 	 */
 	irq_set_status_flags(irq, IRQ_NOAUTOEN);
 
 out:
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-void *hardirq_stack[NR_CPUS];
-void *softirq_stack[NR_CPUS];
+व्योम *hardirq_stack[NR_CPUS];
+व्योम *softirq_stack[NR_CPUS];
 
-void __irq_entry handler_irq(int pil, struct pt_regs *regs)
-{
-	unsigned long pstate, bucket_pa;
-	struct pt_regs *old_regs;
-	void *orig_sp;
+व्योम __irq_entry handler_irq(पूर्णांक pil, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pstate, bucket_pa;
+	काष्ठा pt_regs *old_regs;
+	व्योम *orig_sp;
 
-	clear_softint(1 << pil);
+	clear_softपूर्णांक(1 << pil);
 
 	old_regs = set_irq_regs(regs);
 	irq_enter();
 
 	/* Grab an atomic snapshot of the pending IVECs.  */
-	__asm__ __volatile__("rdpr	%%pstate, %0\n\t"
+	__यंत्र__ __अस्थिर__("rdpr	%%pstate, %0\n\t"
 			     "wrpr	%0, %3, %%pstate\n\t"
 			     "ldx	[%2], %1\n\t"
 			     "stx	%%g0, [%2]\n\t"
@@ -836,9 +837,9 @@ void __irq_entry handler_irq(int pil, struct pt_regs *regs)
 
 	orig_sp = set_hardirq_stack();
 
-	while (bucket_pa) {
-		unsigned long next_pa;
-		unsigned int irq;
+	जबतक (bucket_pa) अणु
+		अचिन्हित दीर्घ next_pa;
+		अचिन्हित पूर्णांक irq;
 
 		next_pa = bucket_get_chain_pa(bucket_pa);
 		irq = bucket_get_irq(bucket_pa);
@@ -847,311 +848,311 @@ void __irq_entry handler_irq(int pil, struct pt_regs *regs)
 		generic_handle_irq(irq);
 
 		bucket_pa = next_pa;
-	}
+	पूर्ण
 
 	restore_hardirq_stack(orig_sp);
 
-	irq_exit();
+	irq_निकास();
 	set_irq_regs(old_regs);
-}
+पूर्ण
 
-void do_softirq_own_stack(void)
-{
-	void *orig_sp, *sp = softirq_stack[smp_processor_id()];
+व्योम करो_softirq_own_stack(व्योम)
+अणु
+	व्योम *orig_sp, *sp = softirq_stack[smp_processor_id()];
 
 	sp += THREAD_SIZE - 192 - STACK_BIAS;
 
-	__asm__ __volatile__("mov %%sp, %0\n\t"
+	__यंत्र__ __अस्थिर__("mov %%sp, %0\n\t"
 			     "mov %1, %%sp"
 			     : "=&r" (orig_sp)
 			     : "r" (sp));
-	__do_softirq();
-	__asm__ __volatile__("mov %0, %%sp"
+	__करो_softirq();
+	__यंत्र__ __अस्थिर__("mov %0, %%sp"
 			     : : "r" (orig_sp));
-}
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-void fixup_irqs(void)
-{
-	unsigned int irq;
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+व्योम fixup_irqs(व्योम)
+अणु
+	अचिन्हित पूर्णांक irq;
 
-	for (irq = 0; irq < NR_IRQS; irq++) {
-		struct irq_desc *desc = irq_to_desc(irq);
-		struct irq_data *data;
-		unsigned long flags;
+	क्रम (irq = 0; irq < NR_IRQS; irq++) अणु
+		काष्ठा irq_desc *desc = irq_to_desc(irq);
+		काष्ठा irq_data *data;
+		अचिन्हित दीर्घ flags;
 
-		if (!desc)
-			continue;
+		अगर (!desc)
+			जारी;
 		data = irq_desc_get_irq_data(desc);
 		raw_spin_lock_irqsave(&desc->lock, flags);
-		if (desc->action && !irqd_is_per_cpu(data)) {
-			if (data->chip->irq_set_affinity)
+		अगर (desc->action && !irqd_is_per_cpu(data)) अणु
+			अगर (data->chip->irq_set_affinity)
 				data->chip->irq_set_affinity(data,
 					irq_data_get_affinity_mask(data),
 					false);
-		}
+		पूर्ण
 		raw_spin_unlock_irqrestore(&desc->lock, flags);
-	}
+	पूर्ण
 
 	tick_ops->disable_irq();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-struct sun5_timer {
+काष्ठा sun5_समयr अणु
 	u64	count0;
 	u64	limit0;
 	u64	count1;
 	u64	limit1;
-};
+पूर्ण;
 
-static struct sun5_timer *prom_timers;
-static u64 prom_limit0, prom_limit1;
+अटल काष्ठा sun5_समयr *prom_समयrs;
+अटल u64 prom_limit0, prom_limit1;
 
-static void map_prom_timers(void)
-{
-	struct device_node *dp;
-	const unsigned int *addr;
+अटल व्योम map_prom_समयrs(व्योम)
+अणु
+	काष्ठा device_node *dp;
+	स्थिर अचिन्हित पूर्णांक *addr;
 
-	/* PROM timer node hangs out in the top level of device siblings... */
+	/* PROM समयr node hangs out in the top level of device siblings... */
 	dp = of_find_node_by_path("/");
 	dp = dp->child;
-	while (dp) {
-		if (of_node_name_eq(dp, "counter-timer"))
-			break;
+	जबतक (dp) अणु
+		अगर (of_node_name_eq(dp, "counter-timer"))
+			अवरोध;
 		dp = dp->sibling;
-	}
+	पूर्ण
 
-	/* Assume if node is not present, PROM uses different tick mechanism
+	/* Assume अगर node is not present, PROM uses dअगरferent tick mechanism
 	 * which we should not care about.
 	 */
-	if (!dp) {
-		prom_timers = (struct sun5_timer *) 0;
-		return;
-	}
+	अगर (!dp) अणु
+		prom_समयrs = (काष्ठा sun5_समयr *) 0;
+		वापस;
+	पूर्ण
 
 	/* If PROM is really using this, it must be mapped by him. */
-	addr = of_get_property(dp, "address", NULL);
-	if (!addr) {
-		prom_printf("PROM does not have timer mapped, trying to continue.\n");
-		prom_timers = (struct sun5_timer *) 0;
-		return;
-	}
-	prom_timers = (struct sun5_timer *) ((unsigned long)addr[0]);
-}
+	addr = of_get_property(dp, "address", शून्य);
+	अगर (!addr) अणु
+		prom_म_लिखो("PROM does not have timer mapped, trying to continue.\n");
+		prom_समयrs = (काष्ठा sun5_समयr *) 0;
+		वापस;
+	पूर्ण
+	prom_समयrs = (काष्ठा sun5_समयr *) ((अचिन्हित दीर्घ)addr[0]);
+पूर्ण
 
-static void kill_prom_timer(void)
-{
-	if (!prom_timers)
-		return;
+अटल व्योम समाप्त_prom_समयr(व्योम)
+अणु
+	अगर (!prom_समयrs)
+		वापस;
 
-	/* Save them away for later. */
-	prom_limit0 = prom_timers->limit0;
-	prom_limit1 = prom_timers->limit1;
+	/* Save them away क्रम later. */
+	prom_limit0 = prom_समयrs->limit0;
+	prom_limit1 = prom_समयrs->limit1;
 
-	/* Just as in sun4c PROM uses timer which ticks at IRQ 14.
+	/* Just as in sun4c PROM uses समयr which ticks at IRQ 14.
 	 * We turn both off here just to be paranoid.
 	 */
-	prom_timers->limit0 = 0;
-	prom_timers->limit1 = 0;
+	prom_समयrs->limit0 = 0;
+	prom_समयrs->limit1 = 0;
 
-	/* Wheee, eat the interrupt packet too... */
-	__asm__ __volatile__(
+	/* Wheee, eat the पूर्णांकerrupt packet too... */
+	__यंत्र__ __अस्थिर__(
 "	mov	0x40, %%g2\n"
 "	ldxa	[%%g0] %0, %%g1\n"
 "	ldxa	[%%g2] %1, %%g1\n"
 "	stxa	%%g0, [%%g0] %0\n"
 "	membar	#Sync\n"
-	: /* no outputs */
+	: /* no outमाला_दो */
 	: "i" (ASI_INTR_RECEIVE), "i" (ASI_INTR_R)
 	: "g1", "g2");
-}
+पूर्ण
 
-void notrace init_irqwork_curcpu(void)
-{
-	int cpu = hard_smp_processor_id();
+व्योम notrace init_irqwork_curcpu(व्योम)
+अणु
+	पूर्णांक cpu = hard_smp_processor_id();
 
 	trap_block[cpu].irq_worklist_pa = 0UL;
-}
+पूर्ण
 
-/* Please be very careful with register_one_mondo() and
- * sun4v_register_mondo_queues().
+/* Please be very careful with रेजिस्टर_one_monकरो() and
+ * sun4v_रेजिस्टर_monकरो_queues().
  *
- * On SMP this gets invoked from the CPU trampoline before
+ * On SMP this माला_लो invoked from the CPU trampoline beक्रमe
  * the cpu has fully taken over the trap table from OBP,
- * and it's kernel stack + %g6 thread register state is
+ * and it's kernel stack + %g6 thपढ़ो रेजिस्टर state is
  * not fully cooked yet.
  *
- * Therefore you cannot make any OBP calls, not even prom_printf,
+ * Thereक्रमe you cannot make any OBP calls, not even prom_म_लिखो,
  * from these two routines.
  */
-static void notrace register_one_mondo(unsigned long paddr, unsigned long type,
-				       unsigned long qmask)
-{
-	unsigned long num_entries = (qmask + 1) / 64;
-	unsigned long status;
+अटल व्योम notrace रेजिस्टर_one_monकरो(अचिन्हित दीर्घ paddr, अचिन्हित दीर्घ type,
+				       अचिन्हित दीर्घ qmask)
+अणु
+	अचिन्हित दीर्घ num_entries = (qmask + 1) / 64;
+	अचिन्हित दीर्घ status;
 
 	status = sun4v_cpu_qconf(type, paddr, num_entries);
-	if (status != HV_EOK) {
-		prom_printf("SUN4V: sun4v_cpu_qconf(%lu:%lx:%lu) failed, "
+	अगर (status != HV_EOK) अणु
+		prom_म_लिखो("SUN4V: sun4v_cpu_qconf(%lu:%lx:%lu) failed, "
 			    "err %lu\n", type, paddr, num_entries, status);
 		prom_halt();
-	}
-}
+	पूर्ण
+पूर्ण
 
-void notrace sun4v_register_mondo_queues(int this_cpu)
-{
-	struct trap_per_cpu *tb = &trap_block[this_cpu];
+व्योम notrace sun4v_रेजिस्टर_monकरो_queues(पूर्णांक this_cpu)
+अणु
+	काष्ठा trap_per_cpu *tb = &trap_block[this_cpu];
 
-	register_one_mondo(tb->cpu_mondo_pa, HV_CPU_QUEUE_CPU_MONDO,
-			   tb->cpu_mondo_qmask);
-	register_one_mondo(tb->dev_mondo_pa, HV_CPU_QUEUE_DEVICE_MONDO,
-			   tb->dev_mondo_qmask);
-	register_one_mondo(tb->resum_mondo_pa, HV_CPU_QUEUE_RES_ERROR,
+	रेजिस्टर_one_monकरो(tb->cpu_monकरो_pa, HV_CPU_QUEUE_CPU_MONDO,
+			   tb->cpu_monकरो_qmask);
+	रेजिस्टर_one_monकरो(tb->dev_monकरो_pa, HV_CPU_QUEUE_DEVICE_MONDO,
+			   tb->dev_monकरो_qmask);
+	रेजिस्टर_one_monकरो(tb->resum_monकरो_pa, HV_CPU_QUEUE_RES_ERROR,
 			   tb->resum_qmask);
-	register_one_mondo(tb->nonresum_mondo_pa, HV_CPU_QUEUE_NONRES_ERROR,
+	रेजिस्टर_one_monकरो(tb->nonresum_monकरो_pa, HV_CPU_QUEUE_NONRES_ERROR,
 			   tb->nonresum_qmask);
-}
+पूर्ण
 
-/* Each queue region must be a power of 2 multiple of 64 bytes in
+/* Each queue region must be a घातer of 2 multiple of 64 bytes in
  * size.  The base real address must be aligned to the size of the
- * region.  Thus, an 8KB queue must be 8KB aligned, for example.
+ * region.  Thus, an 8KB queue must be 8KB aligned, क्रम example.
  */
-static void __init alloc_one_queue(unsigned long *pa_ptr, unsigned long qmask)
-{
-	unsigned long size = PAGE_ALIGN(qmask + 1);
-	unsigned long order = get_order(size);
-	unsigned long p;
+अटल व्योम __init alloc_one_queue(अचिन्हित दीर्घ *pa_ptr, अचिन्हित दीर्घ qmask)
+अणु
+	अचिन्हित दीर्घ size = PAGE_ALIGN(qmask + 1);
+	अचिन्हित दीर्घ order = get_order(size);
+	अचिन्हित दीर्घ p;
 
-	p = __get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
-	if (!p) {
-		prom_printf("SUN4V: Error, cannot allocate queue.\n");
+	p = __get_मुक्त_pages(GFP_KERNEL | __GFP_ZERO, order);
+	अगर (!p) अणु
+		prom_म_लिखो("SUN4V: Error, cannot allocate queue.\n");
 		prom_halt();
-	}
+	पूर्ण
 
 	*pa_ptr = __pa(p);
-}
+पूर्ण
 
-static void __init init_cpu_send_mondo_info(struct trap_per_cpu *tb)
-{
-#ifdef CONFIG_SMP
-	unsigned long page;
-	void *mondo, *p;
+अटल व्योम __init init_cpu_send_monकरो_info(काष्ठा trap_per_cpu *tb)
+अणु
+#अगर_घोषित CONFIG_SMP
+	अचिन्हित दीर्घ page;
+	व्योम *monकरो, *p;
 
-	BUILD_BUG_ON((NR_CPUS * sizeof(u16)) > PAGE_SIZE);
+	BUILD_BUG_ON((NR_CPUS * माप(u16)) > PAGE_SIZE);
 
-	/* Make sure mondo block is 64byte aligned */
+	/* Make sure monकरो block is 64byte aligned */
 	p = kzalloc(127, GFP_KERNEL);
-	if (!p) {
-		prom_printf("SUN4V: Error, cannot allocate mondo block.\n");
+	अगर (!p) अणु
+		prom_म_लिखो("SUN4V: Error, cannot allocate mondo block.\n");
 		prom_halt();
-	}
-	mondo = (void *)(((unsigned long)p + 63) & ~0x3f);
-	tb->cpu_mondo_block_pa = __pa(mondo);
+	पूर्ण
+	monकरो = (व्योम *)(((अचिन्हित दीर्घ)p + 63) & ~0x3f);
+	tb->cpu_monकरो_block_pa = __pa(monकरो);
 
 	page = get_zeroed_page(GFP_KERNEL);
-	if (!page) {
-		prom_printf("SUN4V: Error, cannot allocate cpu list page.\n");
+	अगर (!page) अणु
+		prom_म_लिखो("SUN4V: Error, cannot allocate cpu list page.\n");
 		prom_halt();
-	}
+	पूर्ण
 
 	tb->cpu_list_pa = __pa(page);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-/* Allocate mondo and error queues for all possible cpus.  */
-static void __init sun4v_init_mondo_queues(void)
-{
-	int cpu;
+/* Allocate monकरो and error queues क्रम all possible cpus.  */
+अटल व्योम __init sun4v_init_monकरो_queues(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
-		struct trap_per_cpu *tb = &trap_block[cpu];
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा trap_per_cpu *tb = &trap_block[cpu];
 
-		alloc_one_queue(&tb->cpu_mondo_pa, tb->cpu_mondo_qmask);
-		alloc_one_queue(&tb->dev_mondo_pa, tb->dev_mondo_qmask);
-		alloc_one_queue(&tb->resum_mondo_pa, tb->resum_qmask);
+		alloc_one_queue(&tb->cpu_monकरो_pa, tb->cpu_monकरो_qmask);
+		alloc_one_queue(&tb->dev_monकरो_pa, tb->dev_monकरो_qmask);
+		alloc_one_queue(&tb->resum_monकरो_pa, tb->resum_qmask);
 		alloc_one_queue(&tb->resum_kernel_buf_pa, tb->resum_qmask);
-		alloc_one_queue(&tb->nonresum_mondo_pa, tb->nonresum_qmask);
+		alloc_one_queue(&tb->nonresum_monकरो_pa, tb->nonresum_qmask);
 		alloc_one_queue(&tb->nonresum_kernel_buf_pa,
 				tb->nonresum_qmask);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init init_send_mondo_info(void)
-{
-	int cpu;
+अटल व्योम __init init_send_monकरो_info(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
-		struct trap_per_cpu *tb = &trap_block[cpu];
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा trap_per_cpu *tb = &trap_block[cpu];
 
-		init_cpu_send_mondo_info(tb);
-	}
-}
+		init_cpu_send_monकरो_info(tb);
+	पूर्ण
+पूर्ण
 
-static struct irqaction timer_irq_action = {
+अटल काष्ठा irqaction समयr_irq_action = अणु
 	.name = "timer",
-};
+पूर्ण;
 
-static void __init irq_ivector_init(void)
-{
-	unsigned long size, order;
-	unsigned int ivecs;
+अटल व्योम __init irq_ivector_init(व्योम)
+अणु
+	अचिन्हित दीर्घ size, order;
+	अचिन्हित पूर्णांक ivecs;
 
-	/* If we are doing cookie only VIRQs then we do not need the ivector
-	 * table to process interrupts.
+	/* If we are करोing cookie only VIRQs then we करो not need the ivector
+	 * table to process पूर्णांकerrupts.
 	 */
-	if (sun4v_cookie_only_virqs())
-		return;
+	अगर (sun4v_cookie_only_virqs())
+		वापस;
 
 	ivecs = size_nr_ivec();
-	size = sizeof(struct ino_bucket) * ivecs;
+	size = माप(काष्ठा ino_bucket) * ivecs;
 	order = get_order(size);
-	ivector_table = (struct ino_bucket *)
-		__get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
-	if (!ivector_table) {
-		prom_printf("Fatal error, cannot allocate ivector_table\n");
+	ivector_table = (काष्ठा ino_bucket *)
+		__get_मुक्त_pages(GFP_KERNEL | __GFP_ZERO, order);
+	अगर (!ivector_table) अणु
+		prom_म_लिखो("Fatal error, cannot allocate ivector_table\n");
 		prom_halt();
-	}
-	__flush_dcache_range((unsigned long) ivector_table,
-			     ((unsigned long) ivector_table) + size);
+	पूर्ण
+	__flush_dcache_range((अचिन्हित दीर्घ) ivector_table,
+			     ((अचिन्हित दीर्घ) ivector_table) + size);
 
 	ivector_table_pa = __pa(ivector_table);
-}
+पूर्ण
 
 /* Only invoked on boot processor.*/
-void __init init_IRQ(void)
-{
+व्योम __init init_IRQ(व्योम)
+अणु
 	irq_init_hv();
 	irq_ivector_init();
-	map_prom_timers();
-	kill_prom_timer();
+	map_prom_समयrs();
+	समाप्त_prom_समयr();
 
-	if (tlb_type == hypervisor)
-		sun4v_init_mondo_queues();
+	अगर (tlb_type == hypervisor)
+		sun4v_init_monकरो_queues();
 
-	init_send_mondo_info();
+	init_send_monकरो_info();
 
-	if (tlb_type == hypervisor) {
+	अगर (tlb_type == hypervisor) अणु
 		/* Load up the boot cpu's entries.  */
-		sun4v_register_mondo_queues(hard_smp_processor_id());
-	}
+		sun4v_रेजिस्टर_monकरो_queues(hard_smp_processor_id());
+	पूर्ण
 
-	/* We need to clear any IRQ's pending in the soft interrupt
-	 * registers, a spurious one could be left around from the
-	 * PROM timer which we just disabled.
+	/* We need to clear any IRQ's pending in the soft पूर्णांकerrupt
+	 * रेजिस्टरs, a spurious one could be left around from the
+	 * PROM समयr which we just disabled.
 	 */
-	clear_softint(get_softint());
+	clear_softपूर्णांक(get_softपूर्णांक());
 
 	/* Now that ivector table is initialized, it is safe
 	 * to receive IRQ vector traps.  We will normally take
-	 * one or two right now, in case some device PROM used
+	 * one or two right now, in हाल some device PROM used
 	 * to boot us wants to speak to us.  We just ignore them.
 	 */
-	__asm__ __volatile__("rdpr	%%pstate, %%g1\n\t"
+	__यंत्र__ __अस्थिर__("rdpr	%%pstate, %%g1\n\t"
 			     "or	%%g1, %0, %%g1\n\t"
 			     "wrpr	%%g1, 0x0, %%pstate"
-			     : /* No outputs */
+			     : /* No outमाला_दो */
 			     : "i" (PSTATE_IE)
 			     : "g1");
 
-	irq_to_desc(0)->action = &timer_irq_action;
-}
+	irq_to_desc(0)->action = &समयr_irq_action;
+पूर्ण

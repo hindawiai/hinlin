@@ -1,621 +1,622 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "builtin.h"
-#include "perf.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "builtin.h"
+#समावेश "perf.h"
 
-#include "util/build-id.h"
-#include "util/evsel.h"
-#include "util/evlist.h"
-#include "util/mmap.h"
-#include "util/term.h"
-#include "util/symbol.h"
-#include "util/thread.h"
-#include "util/header.h"
-#include "util/session.h"
-#include "util/intlist.h"
-#include <subcmd/pager.h>
-#include <subcmd/parse-options.h>
-#include "util/trace-event.h"
-#include "util/debug.h"
-#include "util/tool.h"
-#include "util/stat.h"
-#include "util/synthetic-events.h"
-#include "util/top.h"
-#include "util/data.h"
-#include "util/ordered-events.h"
-#include "util/kvm-stat.h"
-#include "ui/ui.h"
+#समावेश "util/build-id.h"
+#समावेश "util/evsel.h"
+#समावेश "util/evlist.h"
+#समावेश "util/mmap.h"
+#समावेश "util/term.h"
+#समावेश "util/symbol.h"
+#समावेश "util/thread.h"
+#समावेश "util/header.h"
+#समावेश "util/session.h"
+#समावेश "util/intlist.h"
+#समावेश <subcmd/pager.h>
+#समावेश <subcmd/parse-options.h>
+#समावेश "util/trace-event.h"
+#समावेश "util/debug.h"
+#समावेश "util/tool.h"
+#समावेश "util/stat.h"
+#समावेश "util/synthetic-events.h"
+#समावेश "util/top.h"
+#समावेश "util/data.h"
+#समावेश "util/ordered-events.h"
+#समावेश "util/kvm-stat.h"
+#समावेश "ui/ui.h"
 
-#include <sys/prctl.h>
-#ifdef HAVE_TIMERFD_SUPPORT
-#include <sys/timerfd.h>
-#endif
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#समावेश <sys/prctl.h>
+#अगर_घोषित HAVE_TIMERFD_SUPPORT
+#समावेश <sys/समयrfd.h>
+#पूर्ण_अगर
+#समावेश <sys/समय.स>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
 
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/time64.h>
-#include <linux/zalloc.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <poll.h>
-#include <termios.h>
-#include <semaphore.h>
-#include <signal.h>
-#include <math.h>
-#include <perf/mmap.h>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समय64.h>
+#समावेश <linux/zभाग.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <poll.h>
+#समावेश <termios.h>
+#समावेश <semaphore.h>
+#समावेश <संकेत.स>
+#समावेश <गणित.स>
+#समावेश <perf/mmap.h>
 
-static const char *get_filename_for_perf_kvm(void)
-{
-	const char *filename;
+अटल स्थिर अक्षर *get_filename_क्रम_perf_kvm(व्योम)
+अणु
+	स्थिर अक्षर *filename;
 
-	if (perf_host && !perf_guest)
+	अगर (perf_host && !perf_guest)
 		filename = strdup("perf.data.host");
-	else if (!perf_host && perf_guest)
+	अन्यथा अगर (!perf_host && perf_guest)
 		filename = strdup("perf.data.guest");
-	else
+	अन्यथा
 		filename = strdup("perf.data.kvm");
 
-	return filename;
-}
+	वापस filename;
+पूर्ण
 
-#ifdef HAVE_KVM_STAT_SUPPORT
+#अगर_घोषित HAVE_KVM_STAT_SUPPORT
 
-void exit_event_get_key(struct evsel *evsel,
-			struct perf_sample *sample,
-			struct event_key *key)
-{
+व्योम निकास_event_get_key(काष्ठा evsel *evsel,
+			काष्ठा perf_sample *sample,
+			काष्ठा event_key *key)
+अणु
 	key->info = 0;
-	key->key  = evsel__intval(evsel, sample, kvm_exit_reason);
-}
+	key->key  = evsel__पूर्णांकval(evsel, sample, kvm_निकास_reason);
+पूर्ण
 
-bool kvm_exit_event(struct evsel *evsel)
-{
-	return !strcmp(evsel->name, kvm_exit_trace);
-}
+bool kvm_निकास_event(काष्ठा evsel *evsel)
+अणु
+	वापस !म_भेद(evsel->name, kvm_निकास_trace);
+पूर्ण
 
-bool exit_event_begin(struct evsel *evsel,
-		      struct perf_sample *sample, struct event_key *key)
-{
-	if (kvm_exit_event(evsel)) {
-		exit_event_get_key(evsel, sample, key);
-		return true;
-	}
+bool निकास_event_begin(काष्ठा evsel *evsel,
+		      काष्ठा perf_sample *sample, काष्ठा event_key *key)
+अणु
+	अगर (kvm_निकास_event(evsel)) अणु
+		निकास_event_get_key(evsel, sample, key);
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool kvm_entry_event(struct evsel *evsel)
-{
-	return !strcmp(evsel->name, kvm_entry_trace);
-}
+bool kvm_entry_event(काष्ठा evsel *evsel)
+अणु
+	वापस !म_भेद(evsel->name, kvm_entry_trace);
+पूर्ण
 
-bool exit_event_end(struct evsel *evsel,
-		    struct perf_sample *sample __maybe_unused,
-		    struct event_key *key __maybe_unused)
-{
-	return kvm_entry_event(evsel);
-}
+bool निकास_event_end(काष्ठा evsel *evsel,
+		    काष्ठा perf_sample *sample __maybe_unused,
+		    काष्ठा event_key *key __maybe_unused)
+अणु
+	वापस kvm_entry_event(evsel);
+पूर्ण
 
-static const char *get_exit_reason(struct perf_kvm_stat *kvm,
-				   struct exit_reasons_table *tbl,
-				   u64 exit_code)
-{
-	while (tbl->reason != NULL) {
-		if (tbl->exit_code == exit_code)
-			return tbl->reason;
+अटल स्थिर अक्षर *get_निकास_reason(काष्ठा perf_kvm_stat *kvm,
+				   काष्ठा निकास_reasons_table *tbl,
+				   u64 निकास_code)
+अणु
+	जबतक (tbl->reason != शून्य) अणु
+		अगर (tbl->निकास_code == निकास_code)
+			वापस tbl->reason;
 		tbl++;
-	}
+	पूर्ण
 
 	pr_err("unknown kvm exit code:%lld on %s\n",
-		(unsigned long long)exit_code, kvm->exit_reasons_isa);
-	return "UNKNOWN";
-}
+		(अचिन्हित दीर्घ दीर्घ)निकास_code, kvm->निकास_reasons_isa);
+	वापस "UNKNOWN";
+पूर्ण
 
-void exit_event_decode_key(struct perf_kvm_stat *kvm,
-			   struct event_key *key,
-			   char *decode)
-{
-	const char *exit_reason = get_exit_reason(kvm, key->exit_reasons,
+व्योम निकास_event_decode_key(काष्ठा perf_kvm_stat *kvm,
+			   काष्ठा event_key *key,
+			   अक्षर *decode)
+अणु
+	स्थिर अक्षर *निकास_reason = get_निकास_reason(kvm, key->निकास_reasons,
 						  key->key);
 
-	scnprintf(decode, decode_str_len, "%s", exit_reason);
-}
+	scnम_लिखो(decode, decode_str_len, "%s", निकास_reason);
+पूर्ण
 
-static bool register_kvm_events_ops(struct perf_kvm_stat *kvm)
-{
-	struct kvm_reg_events_ops *events_ops = kvm_reg_events_ops;
+अटल bool रेजिस्टर_kvm_events_ops(काष्ठा perf_kvm_stat *kvm)
+अणु
+	काष्ठा kvm_reg_events_ops *events_ops = kvm_reg_events_ops;
 
-	for (events_ops = kvm_reg_events_ops; events_ops->name; events_ops++) {
-		if (!strcmp(events_ops->name, kvm->report_event)) {
+	क्रम (events_ops = kvm_reg_events_ops; events_ops->name; events_ops++) अणु
+		अगर (!म_भेद(events_ops->name, kvm->report_event)) अणु
 			kvm->events_ops = events_ops->ops;
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-struct vcpu_event_record {
-	int vcpu_id;
-	u64 start_time;
-	struct kvm_event *last_event;
-};
+काष्ठा vcpu_event_record अणु
+	पूर्णांक vcpu_id;
+	u64 start_समय;
+	काष्ठा kvm_event *last_event;
+पूर्ण;
 
 
-static void init_kvm_event_record(struct perf_kvm_stat *kvm)
-{
-	unsigned int i;
+अटल व्योम init_kvm_event_record(काष्ठा perf_kvm_stat *kvm)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < EVENTS_CACHE_SIZE; i++)
+	क्रम (i = 0; i < EVENTS_CACHE_SIZE; i++)
 		INIT_LIST_HEAD(&kvm->kvm_events_cache[i]);
-}
+पूर्ण
 
-#ifdef HAVE_TIMERFD_SUPPORT
-static void clear_events_cache_stats(struct list_head *kvm_events_cache)
-{
-	struct list_head *head;
-	struct kvm_event *event;
-	unsigned int i;
-	int j;
+#अगर_घोषित HAVE_TIMERFD_SUPPORT
+अटल व्योम clear_events_cache_stats(काष्ठा list_head *kvm_events_cache)
+अणु
+	काष्ठा list_head *head;
+	काष्ठा kvm_event *event;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक j;
 
-	for (i = 0; i < EVENTS_CACHE_SIZE; i++) {
+	क्रम (i = 0; i < EVENTS_CACHE_SIZE; i++) अणु
 		head = &kvm_events_cache[i];
-		list_for_each_entry(event, head, hash_entry) {
-			/* reset stats for event */
-			event->total.time = 0;
+		list_क्रम_each_entry(event, head, hash_entry) अणु
+			/* reset stats क्रम event */
+			event->total.समय = 0;
 			init_stats(&event->total.stats);
 
-			for (j = 0; j < event->max_vcpu; ++j) {
-				event->vcpu[j].time = 0;
+			क्रम (j = 0; j < event->max_vcpu; ++j) अणु
+				event->vcpu[j].समय = 0;
 				init_stats(&event->vcpu[j].stats);
-			}
-		}
-	}
-}
-#endif
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static int kvm_events_hash_fn(u64 key)
-{
-	return key & (EVENTS_CACHE_SIZE - 1);
-}
+अटल पूर्णांक kvm_events_hash_fn(u64 key)
+अणु
+	वापस key & (EVENTS_CACHE_SIZE - 1);
+पूर्ण
 
-static bool kvm_event_expand(struct kvm_event *event, int vcpu_id)
-{
-	int old_max_vcpu = event->max_vcpu;
-	void *prev;
+अटल bool kvm_event_expand(काष्ठा kvm_event *event, पूर्णांक vcpu_id)
+अणु
+	पूर्णांक old_max_vcpu = event->max_vcpu;
+	व्योम *prev;
 
-	if (vcpu_id < event->max_vcpu)
-		return true;
+	अगर (vcpu_id < event->max_vcpu)
+		वापस true;
 
-	while (event->max_vcpu <= vcpu_id)
+	जबतक (event->max_vcpu <= vcpu_id)
 		event->max_vcpu += DEFAULT_VCPU_NUM;
 
 	prev = event->vcpu;
-	event->vcpu = realloc(event->vcpu,
-			      event->max_vcpu * sizeof(*event->vcpu));
-	if (!event->vcpu) {
-		free(prev);
+	event->vcpu = पुनः_स्मृति(event->vcpu,
+			      event->max_vcpu * माप(*event->vcpu));
+	अगर (!event->vcpu) अणु
+		मुक्त(prev);
 		pr_err("Not enough memory\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	memset(event->vcpu + old_max_vcpu, 0,
-	       (event->max_vcpu - old_max_vcpu) * sizeof(*event->vcpu));
-	return true;
-}
+	स_रखो(event->vcpu + old_max_vcpu, 0,
+	       (event->max_vcpu - old_max_vcpu) * माप(*event->vcpu));
+	वापस true;
+पूर्ण
 
-static struct kvm_event *kvm_alloc_init_event(struct event_key *key)
-{
-	struct kvm_event *event;
+अटल काष्ठा kvm_event *kvm_alloc_init_event(काष्ठा event_key *key)
+अणु
+	काष्ठा kvm_event *event;
 
-	event = zalloc(sizeof(*event));
-	if (!event) {
+	event = zalloc(माप(*event));
+	अगर (!event) अणु
 		pr_err("Not enough memory\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	event->key = *key;
 	init_stats(&event->total.stats);
-	return event;
-}
+	वापस event;
+पूर्ण
 
-static struct kvm_event *find_create_kvm_event(struct perf_kvm_stat *kvm,
-					       struct event_key *key)
-{
-	struct kvm_event *event;
-	struct list_head *head;
+अटल काष्ठा kvm_event *find_create_kvm_event(काष्ठा perf_kvm_stat *kvm,
+					       काष्ठा event_key *key)
+अणु
+	काष्ठा kvm_event *event;
+	काष्ठा list_head *head;
 
 	BUG_ON(key->key == INVALID_KEY);
 
 	head = &kvm->kvm_events_cache[kvm_events_hash_fn(key->key)];
-	list_for_each_entry(event, head, hash_entry) {
-		if (event->key.key == key->key && event->key.info == key->info)
-			return event;
-	}
+	list_क्रम_each_entry(event, head, hash_entry) अणु
+		अगर (event->key.key == key->key && event->key.info == key->info)
+			वापस event;
+	पूर्ण
 
 	event = kvm_alloc_init_event(key);
-	if (!event)
-		return NULL;
+	अगर (!event)
+		वापस शून्य;
 
 	list_add(&event->hash_entry, head);
-	return event;
-}
+	वापस event;
+पूर्ण
 
-static bool handle_begin_event(struct perf_kvm_stat *kvm,
-			       struct vcpu_event_record *vcpu_record,
-			       struct event_key *key, u64 timestamp)
-{
-	struct kvm_event *event = NULL;
+अटल bool handle_begin_event(काष्ठा perf_kvm_stat *kvm,
+			       काष्ठा vcpu_event_record *vcpu_record,
+			       काष्ठा event_key *key, u64 बारtamp)
+अणु
+	काष्ठा kvm_event *event = शून्य;
 
-	if (key->key != INVALID_KEY)
+	अगर (key->key != INVALID_KEY)
 		event = find_create_kvm_event(kvm, key);
 
 	vcpu_record->last_event = event;
-	vcpu_record->start_time = timestamp;
-	return true;
-}
+	vcpu_record->start_समय = बारtamp;
+	वापस true;
+पूर्ण
 
-static void
-kvm_update_event_stats(struct kvm_event_stats *kvm_stats, u64 time_diff)
-{
-	kvm_stats->time += time_diff;
-	update_stats(&kvm_stats->stats, time_diff);
-}
+अटल व्योम
+kvm_update_event_stats(काष्ठा kvm_event_stats *kvm_stats, u64 समय_dअगरf)
+अणु
+	kvm_stats->समय += समय_dअगरf;
+	update_stats(&kvm_stats->stats, समय_dअगरf);
+पूर्ण
 
-static double kvm_event_rel_stddev(int vcpu_id, struct kvm_event *event)
-{
-	struct kvm_event_stats *kvm_stats = &event->total;
+अटल द्विगुन kvm_event_rel_stddev(पूर्णांक vcpu_id, काष्ठा kvm_event *event)
+अणु
+	काष्ठा kvm_event_stats *kvm_stats = &event->total;
 
-	if (vcpu_id != -1)
+	अगर (vcpu_id != -1)
 		kvm_stats = &event->vcpu[vcpu_id];
 
-	return rel_stddev_stats(stddev_stats(&kvm_stats->stats),
+	वापस rel_stddev_stats(stddev_stats(&kvm_stats->stats),
 				avg_stats(&kvm_stats->stats));
-}
+पूर्ण
 
-static bool update_kvm_event(struct kvm_event *event, int vcpu_id,
-			     u64 time_diff)
-{
-	if (vcpu_id == -1) {
-		kvm_update_event_stats(&event->total, time_diff);
-		return true;
-	}
+अटल bool update_kvm_event(काष्ठा kvm_event *event, पूर्णांक vcpu_id,
+			     u64 समय_dअगरf)
+अणु
+	अगर (vcpu_id == -1) अणु
+		kvm_update_event_stats(&event->total, समय_dअगरf);
+		वापस true;
+	पूर्ण
 
-	if (!kvm_event_expand(event, vcpu_id))
-		return false;
+	अगर (!kvm_event_expand(event, vcpu_id))
+		वापस false;
 
-	kvm_update_event_stats(&event->vcpu[vcpu_id], time_diff);
-	return true;
-}
+	kvm_update_event_stats(&event->vcpu[vcpu_id], समय_dअगरf);
+	वापस true;
+पूर्ण
 
-static bool is_child_event(struct perf_kvm_stat *kvm,
-			   struct evsel *evsel,
-			   struct perf_sample *sample,
-			   struct event_key *key)
-{
-	struct child_event_ops *child_ops;
+अटल bool is_child_event(काष्ठा perf_kvm_stat *kvm,
+			   काष्ठा evsel *evsel,
+			   काष्ठा perf_sample *sample,
+			   काष्ठा event_key *key)
+अणु
+	काष्ठा child_event_ops *child_ops;
 
 	child_ops = kvm->events_ops->child_ops;
 
-	if (!child_ops)
-		return false;
+	अगर (!child_ops)
+		वापस false;
 
-	for (; child_ops->name; child_ops++) {
-		if (!strcmp(evsel->name, child_ops->name)) {
+	क्रम (; child_ops->name; child_ops++) अणु
+		अगर (!म_भेद(evsel->name, child_ops->name)) अणु
 			child_ops->get_key(evsel, sample, key);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool handle_child_event(struct perf_kvm_stat *kvm,
-			       struct vcpu_event_record *vcpu_record,
-			       struct event_key *key,
-			       struct perf_sample *sample __maybe_unused)
-{
-	struct kvm_event *event = NULL;
+अटल bool handle_child_event(काष्ठा perf_kvm_stat *kvm,
+			       काष्ठा vcpu_event_record *vcpu_record,
+			       काष्ठा event_key *key,
+			       काष्ठा perf_sample *sample __maybe_unused)
+अणु
+	काष्ठा kvm_event *event = शून्य;
 
-	if (key->key != INVALID_KEY)
+	अगर (key->key != INVALID_KEY)
 		event = find_create_kvm_event(kvm, key);
 
 	vcpu_record->last_event = event;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool skip_event(const char *event)
-{
-	const char * const *skip_events;
+अटल bool skip_event(स्थिर अक्षर *event)
+अणु
+	स्थिर अक्षर * स्थिर *skip_events;
 
-	for (skip_events = kvm_skip_events; *skip_events; skip_events++)
-		if (!strcmp(event, *skip_events))
-			return true;
+	क्रम (skip_events = kvm_skip_events; *skip_events; skip_events++)
+		अगर (!म_भेद(event, *skip_events))
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool handle_end_event(struct perf_kvm_stat *kvm,
-			     struct vcpu_event_record *vcpu_record,
-			     struct event_key *key,
-			     struct perf_sample *sample)
-{
-	struct kvm_event *event;
-	u64 time_begin, time_diff;
-	int vcpu;
+अटल bool handle_end_event(काष्ठा perf_kvm_stat *kvm,
+			     काष्ठा vcpu_event_record *vcpu_record,
+			     काष्ठा event_key *key,
+			     काष्ठा perf_sample *sample)
+अणु
+	काष्ठा kvm_event *event;
+	u64 समय_begin, समय_dअगरf;
+	पूर्णांक vcpu;
 
-	if (kvm->trace_vcpu == -1)
+	अगर (kvm->trace_vcpu == -1)
 		vcpu = -1;
-	else
+	अन्यथा
 		vcpu = vcpu_record->vcpu_id;
 
 	event = vcpu_record->last_event;
-	time_begin = vcpu_record->start_time;
+	समय_begin = vcpu_record->start_समय;
 
 	/* The begin event is not caught. */
-	if (!time_begin)
-		return true;
+	अगर (!समय_begin)
+		वापस true;
 
 	/*
-	 * In some case, the 'begin event' only records the start timestamp,
+	 * In some हाल, the 'begin event' only records the start बारtamp,
 	 * the actual event is recognized in the 'end event' (e.g. mmio-event).
 	 */
 
 	/* Both begin and end events did not get the key. */
-	if (!event && key->key == INVALID_KEY)
-		return true;
+	अगर (!event && key->key == INVALID_KEY)
+		वापस true;
 
-	if (!event)
+	अगर (!event)
 		event = find_create_kvm_event(kvm, key);
 
-	if (!event)
-		return false;
+	अगर (!event)
+		वापस false;
 
-	vcpu_record->last_event = NULL;
-	vcpu_record->start_time = 0;
+	vcpu_record->last_event = शून्य;
+	vcpu_record->start_समय = 0;
 
-	/* seems to happen once in a while during live mode */
-	if (sample->time < time_begin) {
+	/* seems to happen once in a जबतक during live mode */
+	अगर (sample->समय < समय_begin) अणु
 		pr_debug("End time before begin time; skipping event.\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	time_diff = sample->time - time_begin;
+	समय_dअगरf = sample->समय - समय_begin;
 
-	if (kvm->duration && time_diff > kvm->duration) {
-		char decode[decode_str_len];
+	अगर (kvm->duration && समय_dअगरf > kvm->duration) अणु
+		अक्षर decode[decode_str_len];
 
 		kvm->events_ops->decode_key(kvm, &event->key, decode);
-		if (!skip_event(decode)) {
+		अगर (!skip_event(decode)) अणु
 			pr_info("%" PRIu64 " VM %d, vcpu %d: %s event took %" PRIu64 "usec\n",
-				 sample->time, sample->pid, vcpu_record->vcpu_id,
-				 decode, time_diff / NSEC_PER_USEC);
-		}
-	}
+				 sample->समय, sample->pid, vcpu_record->vcpu_id,
+				 decode, समय_dअगरf / NSEC_PER_USEC);
+		पूर्ण
+	पूर्ण
 
-	return update_kvm_event(event, vcpu, time_diff);
-}
+	वापस update_kvm_event(event, vcpu, समय_dअगरf);
+पूर्ण
 
-static
-struct vcpu_event_record *per_vcpu_record(struct thread *thread,
-					  struct evsel *evsel,
-					  struct perf_sample *sample)
-{
+अटल
+काष्ठा vcpu_event_record *per_vcpu_record(काष्ठा thपढ़ो *thपढ़ो,
+					  काष्ठा evsel *evsel,
+					  काष्ठा perf_sample *sample)
+अणु
 	/* Only kvm_entry records vcpu id. */
-	if (!thread__priv(thread) && kvm_entry_event(evsel)) {
-		struct vcpu_event_record *vcpu_record;
+	अगर (!thपढ़ो__priv(thपढ़ो) && kvm_entry_event(evsel)) अणु
+		काष्ठा vcpu_event_record *vcpu_record;
 
-		vcpu_record = zalloc(sizeof(*vcpu_record));
-		if (!vcpu_record) {
+		vcpu_record = zalloc(माप(*vcpu_record));
+		अगर (!vcpu_record) अणु
 			pr_err("%s: Not enough memory\n", __func__);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		vcpu_record->vcpu_id = evsel__intval(evsel, sample, vcpu_id_str);
-		thread__set_priv(thread, vcpu_record);
-	}
+		vcpu_record->vcpu_id = evsel__पूर्णांकval(evsel, sample, vcpu_id_str);
+		thपढ़ो__set_priv(thपढ़ो, vcpu_record);
+	पूर्ण
 
-	return thread__priv(thread);
-}
+	वापस thपढ़ो__priv(thपढ़ो);
+पूर्ण
 
-static bool handle_kvm_event(struct perf_kvm_stat *kvm,
-			     struct thread *thread,
-			     struct evsel *evsel,
-			     struct perf_sample *sample)
-{
-	struct vcpu_event_record *vcpu_record;
-	struct event_key key = { .key = INVALID_KEY,
-				 .exit_reasons = kvm->exit_reasons };
+अटल bool handle_kvm_event(काष्ठा perf_kvm_stat *kvm,
+			     काष्ठा thपढ़ो *thपढ़ो,
+			     काष्ठा evsel *evsel,
+			     काष्ठा perf_sample *sample)
+अणु
+	काष्ठा vcpu_event_record *vcpu_record;
+	काष्ठा event_key key = अणु .key = INVALID_KEY,
+				 .निकास_reasons = kvm->निकास_reasons पूर्ण;
 
-	vcpu_record = per_vcpu_record(thread, evsel, sample);
-	if (!vcpu_record)
-		return true;
+	vcpu_record = per_vcpu_record(thपढ़ो, evsel, sample);
+	अगर (!vcpu_record)
+		वापस true;
 
-	/* only process events for vcpus user cares about */
-	if ((kvm->trace_vcpu != -1) &&
+	/* only process events क्रम vcpus user cares about */
+	अगर ((kvm->trace_vcpu != -1) &&
 	    (kvm->trace_vcpu != vcpu_record->vcpu_id))
-		return true;
+		वापस true;
 
-	if (kvm->events_ops->is_begin_event(evsel, sample, &key))
-		return handle_begin_event(kvm, vcpu_record, &key, sample->time);
+	अगर (kvm->events_ops->is_begin_event(evsel, sample, &key))
+		वापस handle_begin_event(kvm, vcpu_record, &key, sample->समय);
 
-	if (is_child_event(kvm, evsel, sample, &key))
-		return handle_child_event(kvm, vcpu_record, &key, sample);
+	अगर (is_child_event(kvm, evsel, sample, &key))
+		वापस handle_child_event(kvm, vcpu_record, &key, sample);
 
-	if (kvm->events_ops->is_end_event(evsel, sample, &key))
-		return handle_end_event(kvm, vcpu_record, &key, sample);
+	अगर (kvm->events_ops->is_end_event(evsel, sample, &key))
+		वापस handle_end_event(kvm, vcpu_record, &key, sample);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#define GET_EVENT_KEY(func, field)					\
-static u64 get_event_ ##func(struct kvm_event *event, int vcpu)		\
-{									\
-	if (vcpu == -1)							\
-		return event->total.field;				\
+#घोषणा GET_EVENT_KEY(func, field)					\
+अटल u64 get_event_ ##func(काष्ठा kvm_event *event, पूर्णांक vcpu)		\
+अणु									\
+	अगर (vcpu == -1)							\
+		वापस event->total.field;				\
 									\
-	if (vcpu >= event->max_vcpu)					\
-		return 0;						\
+	अगर (vcpu >= event->max_vcpu)					\
+		वापस 0;						\
 									\
-	return event->vcpu[vcpu].field;					\
-}
+	वापस event->vcpu[vcpu].field;					\
+पूर्ण
 
-#define COMPARE_EVENT_KEY(func, field)					\
+#घोषणा COMPARE_EVENT_KEY(func, field)					\
 GET_EVENT_KEY(func, field)						\
-static int compare_kvm_event_ ## func(struct kvm_event *one,		\
-					struct kvm_event *two, int vcpu)\
-{									\
-	return get_event_ ##func(one, vcpu) >				\
+अटल पूर्णांक compare_kvm_event_ ## func(काष्ठा kvm_event *one,		\
+					काष्ठा kvm_event *two, पूर्णांक vcpu)\
+अणु									\
+	वापस get_event_ ##func(one, vcpu) >				\
 				get_event_ ##func(two, vcpu);		\
-}
+पूर्ण
 
-GET_EVENT_KEY(time, time);
+GET_EVENT_KEY(समय, समय);
 COMPARE_EVENT_KEY(count, stats.n);
 COMPARE_EVENT_KEY(mean, stats.mean);
 GET_EVENT_KEY(max, stats.max);
 GET_EVENT_KEY(min, stats.min);
 
-#define DEF_SORT_NAME_KEY(name, compare_key)				\
-	{ #name, compare_kvm_event_ ## compare_key }
+#घोषणा DEF_SORT_NAME_KEY(name, compare_key)				\
+	अणु #name, compare_kvm_event_ ## compare_key पूर्ण
 
-static struct kvm_event_key keys[] = {
+अटल काष्ठा kvm_event_key keys[] = अणु
 	DEF_SORT_NAME_KEY(sample, count),
-	DEF_SORT_NAME_KEY(time, mean),
-	{ NULL, NULL }
-};
+	DEF_SORT_NAME_KEY(समय, mean),
+	अणु शून्य, शून्य पूर्ण
+पूर्ण;
 
-static bool select_key(struct perf_kvm_stat *kvm)
-{
-	int i;
+अटल bool select_key(काष्ठा perf_kvm_stat *kvm)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; keys[i].name; i++) {
-		if (!strcmp(keys[i].name, kvm->sort_key)) {
+	क्रम (i = 0; keys[i].name; i++) अणु
+		अगर (!म_भेद(keys[i].name, kvm->sort_key)) अणु
 			kvm->compare = keys[i].key;
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
 	pr_err("Unknown compare key:%s\n", kvm->sort_key);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void insert_to_result(struct rb_root *result, struct kvm_event *event,
-			     key_cmp_fun bigger, int vcpu)
-{
-	struct rb_node **rb = &result->rb_node;
-	struct rb_node *parent = NULL;
-	struct kvm_event *p;
+अटल व्योम insert_to_result(काष्ठा rb_root *result, काष्ठा kvm_event *event,
+			     key_cmp_fun bigger, पूर्णांक vcpu)
+अणु
+	काष्ठा rb_node **rb = &result->rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा kvm_event *p;
 
-	while (*rb) {
-		p = container_of(*rb, struct kvm_event, rb);
+	जबतक (*rb) अणु
+		p = container_of(*rb, काष्ठा kvm_event, rb);
 		parent = *rb;
 
-		if (bigger(event, p, vcpu))
+		अगर (bigger(event, p, vcpu))
 			rb = &(*rb)->rb_left;
-		else
+		अन्यथा
 			rb = &(*rb)->rb_right;
-	}
+	पूर्ण
 
 	rb_link_node(&event->rb, parent, rb);
 	rb_insert_color(&event->rb, result);
-}
+पूर्ण
 
-static void
-update_total_count(struct perf_kvm_stat *kvm, struct kvm_event *event)
-{
-	int vcpu = kvm->trace_vcpu;
+अटल व्योम
+update_total_count(काष्ठा perf_kvm_stat *kvm, काष्ठा kvm_event *event)
+अणु
+	पूर्णांक vcpu = kvm->trace_vcpu;
 
 	kvm->total_count += get_event_count(event, vcpu);
-	kvm->total_time += get_event_time(event, vcpu);
-}
+	kvm->total_समय += get_event_समय(event, vcpu);
+पूर्ण
 
-static bool event_is_valid(struct kvm_event *event, int vcpu)
-{
-	return !!get_event_count(event, vcpu);
-}
+अटल bool event_is_valid(काष्ठा kvm_event *event, पूर्णांक vcpu)
+अणु
+	वापस !!get_event_count(event, vcpu);
+पूर्ण
 
-static void sort_result(struct perf_kvm_stat *kvm)
-{
-	unsigned int i;
-	int vcpu = kvm->trace_vcpu;
-	struct kvm_event *event;
+अटल व्योम sort_result(काष्ठा perf_kvm_stat *kvm)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक vcpu = kvm->trace_vcpu;
+	काष्ठा kvm_event *event;
 
-	for (i = 0; i < EVENTS_CACHE_SIZE; i++) {
-		list_for_each_entry(event, &kvm->kvm_events_cache[i], hash_entry) {
-			if (event_is_valid(event, vcpu)) {
+	क्रम (i = 0; i < EVENTS_CACHE_SIZE; i++) अणु
+		list_क्रम_each_entry(event, &kvm->kvm_events_cache[i], hash_entry) अणु
+			अगर (event_is_valid(event, vcpu)) अणु
 				update_total_count(kvm, event);
 				insert_to_result(&kvm->result, event,
 						 kvm->compare, vcpu);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* returns left most element of result, and erase it */
-static struct kvm_event *pop_from_result(struct rb_root *result)
-{
-	struct rb_node *node = rb_first(result);
+/* वापसs left most element of result, and erase it */
+अटल काष्ठा kvm_event *pop_from_result(काष्ठा rb_root *result)
+अणु
+	काष्ठा rb_node *node = rb_first(result);
 
-	if (!node)
-		return NULL;
+	अगर (!node)
+		वापस शून्य;
 
 	rb_erase(node, result);
-	return container_of(node, struct kvm_event, rb);
-}
+	वापस container_of(node, काष्ठा kvm_event, rb);
+पूर्ण
 
-static void print_vcpu_info(struct perf_kvm_stat *kvm)
-{
-	int vcpu = kvm->trace_vcpu;
+अटल व्योम prपूर्णांक_vcpu_info(काष्ठा perf_kvm_stat *kvm)
+अणु
+	पूर्णांक vcpu = kvm->trace_vcpu;
 
 	pr_info("Analyze events for ");
 
-	if (kvm->opts.target.system_wide)
+	अगर (kvm->opts.target.प्रणाली_wide)
 		pr_info("all VMs, ");
-	else if (kvm->opts.target.pid)
+	अन्यथा अगर (kvm->opts.target.pid)
 		pr_info("pid(s) %s, ", kvm->opts.target.pid);
-	else
+	अन्यथा
 		pr_info("dazed and confused on what is monitored, ");
 
-	if (vcpu == -1)
+	अगर (vcpu == -1)
 		pr_info("all VCPUs:\n\n");
-	else
+	अन्यथा
 		pr_info("VCPU %d:\n\n", vcpu);
-}
+पूर्ण
 
-static void show_timeofday(void)
-{
-	char date[64];
-	struct timeval tv;
-	struct tm ltime;
+अटल व्योम show_समयofday(व्योम)
+अणु
+	अक्षर date[64];
+	काष्ठा समयval tv;
+	काष्ठा पंचांग lसमय;
 
-	gettimeofday(&tv, NULL);
-	if (localtime_r(&tv.tv_sec, &ltime)) {
-		strftime(date, sizeof(date), "%H:%M:%S", &ltime);
+	समय_लोofday(&tv, शून्य);
+	अगर (स_स्थानीय_r(&tv.tv_sec, &lसमय)) अणु
+		स_माला(date, माप(date), "%H:%M:%S", &lसमय);
 		pr_info("%s.%06ld", date, tv.tv_usec);
-	} else
+	पूर्ण अन्यथा
 		pr_info("00:00:00.000000");
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static void print_result(struct perf_kvm_stat *kvm)
-{
-	char decode[decode_str_len];
-	struct kvm_event *event;
-	int vcpu = kvm->trace_vcpu;
+अटल व्योम prपूर्णांक_result(काष्ठा perf_kvm_stat *kvm)
+अणु
+	अक्षर decode[decode_str_len];
+	काष्ठा kvm_event *event;
+	पूर्णांक vcpu = kvm->trace_vcpu;
 
-	if (kvm->live) {
-		puts(CONSOLE_CLEAR);
-		show_timeofday();
-	}
+	अगर (kvm->live) अणु
+		माला_दो(CONSOLE_CLEAR);
+		show_समयofday();
+	पूर्ण
 
 	pr_info("\n\n");
-	print_vcpu_info(kvm);
+	prपूर्णांक_vcpu_info(kvm);
 	pr_info("%*s ", decode_str_len, kvm->events_ops->name);
 	pr_info("%10s ", "Samples");
 	pr_info("%9s ", "Samples%");
@@ -626,410 +627,410 @@ static void print_result(struct perf_kvm_stat *kvm)
 	pr_info("%16s ", "Avg time");
 	pr_info("\n\n");
 
-	while ((event = pop_from_result(&kvm->result))) {
-		u64 ecount, etime, max, min;
+	जबतक ((event = pop_from_result(&kvm->result))) अणु
+		u64 ecount, eसमय, max, min;
 
 		ecount = get_event_count(event, vcpu);
-		etime = get_event_time(event, vcpu);
+		eसमय = get_event_समय(event, vcpu);
 		max = get_event_max(event, vcpu);
 		min = get_event_min(event, vcpu);
 
 		kvm->events_ops->decode_key(kvm, &event->key, decode);
 		pr_info("%*s ", decode_str_len, decode);
-		pr_info("%10llu ", (unsigned long long)ecount);
-		pr_info("%8.2f%% ", (double)ecount / kvm->total_count * 100);
-		pr_info("%8.2f%% ", (double)etime / kvm->total_time * 100);
-		pr_info("%9.2fus ", (double)min / NSEC_PER_USEC);
-		pr_info("%9.2fus ", (double)max / NSEC_PER_USEC);
-		pr_info("%9.2fus ( +-%7.2f%% )", (double)etime / ecount / NSEC_PER_USEC,
+		pr_info("%10llu ", (अचिन्हित दीर्घ दीर्घ)ecount);
+		pr_info("%8.2f%% ", (द्विगुन)ecount / kvm->total_count * 100);
+		pr_info("%8.2f%% ", (द्विगुन)eसमय / kvm->total_समय * 100);
+		pr_info("%9.2fus ", (द्विगुन)min / NSEC_PER_USEC);
+		pr_info("%9.2fus ", (द्विगुन)max / NSEC_PER_USEC);
+		pr_info("%9.2fus ( +-%7.2f%% )", (द्विगुन)eसमय / ecount / NSEC_PER_USEC,
 			kvm_event_rel_stddev(vcpu, event));
 		pr_info("\n");
-	}
+	पूर्ण
 
 	pr_info("\nTotal Samples:%" PRIu64 ", Total events handled time:%.2fus.\n\n",
-		kvm->total_count, kvm->total_time / (double)NSEC_PER_USEC);
+		kvm->total_count, kvm->total_समय / (द्विगुन)NSEC_PER_USEC);
 
-	if (kvm->lost_events)
+	अगर (kvm->lost_events)
 		pr_info("\nLost events: %" PRIu64 "\n\n", kvm->lost_events);
-}
+पूर्ण
 
-#ifdef HAVE_TIMERFD_SUPPORT
-static int process_lost_event(struct perf_tool *tool,
-			      union perf_event *event __maybe_unused,
-			      struct perf_sample *sample __maybe_unused,
-			      struct machine *machine __maybe_unused)
-{
-	struct perf_kvm_stat *kvm = container_of(tool, struct perf_kvm_stat, tool);
+#अगर_घोषित HAVE_TIMERFD_SUPPORT
+अटल पूर्णांक process_lost_event(काष्ठा perf_tool *tool,
+			      जोड़ perf_event *event __maybe_unused,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा perf_kvm_stat *kvm = container_of(tool, काष्ठा perf_kvm_stat, tool);
 
 	kvm->lost_events++;
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static bool skip_sample(struct perf_kvm_stat *kvm,
-			struct perf_sample *sample)
-{
-	if (kvm->pid_list && intlist__find(kvm->pid_list, sample->pid) == NULL)
-		return true;
+अटल bool skip_sample(काष्ठा perf_kvm_stat *kvm,
+			काष्ठा perf_sample *sample)
+अणु
+	अगर (kvm->pid_list && पूर्णांकlist__find(kvm->pid_list, sample->pid) == शून्य)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int process_sample_event(struct perf_tool *tool,
-				union perf_event *event,
-				struct perf_sample *sample,
-				struct evsel *evsel,
-				struct machine *machine)
-{
-	int err = 0;
-	struct thread *thread;
-	struct perf_kvm_stat *kvm = container_of(tool, struct perf_kvm_stat,
+अटल पूर्णांक process_sample_event(काष्ठा perf_tool *tool,
+				जोड़ perf_event *event,
+				काष्ठा perf_sample *sample,
+				काष्ठा evsel *evsel,
+				काष्ठा machine *machine)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा perf_kvm_stat *kvm = container_of(tool, काष्ठा perf_kvm_stat,
 						 tool);
 
-	if (skip_sample(kvm, sample))
-		return 0;
+	अगर (skip_sample(kvm, sample))
+		वापस 0;
 
-	thread = machine__findnew_thread(machine, sample->pid, sample->tid);
-	if (thread == NULL) {
+	thपढ़ो = machine__findnew_thपढ़ो(machine, sample->pid, sample->tid);
+	अगर (thपढ़ो == शून्य) अणु
 		pr_debug("problem processing %d event, skipping it.\n",
 			event->header.type);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (!handle_kvm_event(kvm, thread, evsel, sample))
+	अगर (!handle_kvm_event(kvm, thपढ़ो, evsel, sample))
 		err = -1;
 
-	thread__put(thread);
-	return err;
-}
+	thपढ़ो__put(thपढ़ो);
+	वापस err;
+पूर्ण
 
-static int cpu_isa_config(struct perf_kvm_stat *kvm)
-{
-	char buf[128], *cpuid;
-	int err;
+अटल पूर्णांक cpu_isa_config(काष्ठा perf_kvm_stat *kvm)
+अणु
+	अक्षर buf[128], *cpuid;
+	पूर्णांक err;
 
-	if (kvm->live) {
-		err = get_cpuid(buf, sizeof(buf));
-		if (err != 0) {
+	अगर (kvm->live) अणु
+		err = get_cpuid(buf, माप(buf));
+		अगर (err != 0) अणु
 			pr_err("Failed to look up CPU type: %s\n",
-			       str_error_r(err, buf, sizeof(buf)));
-			return -err;
-		}
+			       str_error_r(err, buf, माप(buf)));
+			वापस -err;
+		पूर्ण
 		cpuid = buf;
-	} else
+	पूर्ण अन्यथा
 		cpuid = kvm->session->header.env.cpuid;
 
-	if (!cpuid) {
+	अगर (!cpuid) अणु
 		pr_err("Failed to look up CPU type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = cpu_isa_init(kvm, cpuid);
-	if (err == -ENOTSUP)
+	अगर (err == -ENOTSUP)
 		pr_err("CPU %s is not supported.\n", cpuid);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool verify_vcpu(int vcpu)
-{
-	if (vcpu != -1 && vcpu < 0) {
+अटल bool verअगरy_vcpu(पूर्णांक vcpu)
+अणु
+	अगर (vcpu != -1 && vcpu < 0) अणु
 		pr_err("Invalid vcpu:%d.\n", vcpu);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#ifdef HAVE_TIMERFD_SUPPORT
+#अगर_घोषित HAVE_TIMERFD_SUPPORT
 /* keeping the max events to a modest level to keep
  * the processing of samples per mmap smooth.
  */
-#define PERF_KVM__MAX_EVENTS_PER_MMAP  25
+#घोषणा PERF_KVM__MAX_EVENTS_PER_MMAP  25
 
-static s64 perf_kvm__mmap_read_idx(struct perf_kvm_stat *kvm, int idx,
-				   u64 *mmap_time)
-{
-	struct evlist *evlist = kvm->evlist;
-	union perf_event *event;
-	struct mmap *md;
-	u64 timestamp;
+अटल s64 perf_kvm__mmap_पढ़ो_idx(काष्ठा perf_kvm_stat *kvm, पूर्णांक idx,
+				   u64 *mmap_समय)
+अणु
+	काष्ठा evlist *evlist = kvm->evlist;
+	जोड़ perf_event *event;
+	काष्ठा mmap *md;
+	u64 बारtamp;
 	s64 n = 0;
-	int err;
+	पूर्णांक err;
 
-	*mmap_time = ULLONG_MAX;
+	*mmap_समय = ULदीर्घ_उच्च;
 	md = &evlist->mmap[idx];
-	err = perf_mmap__read_init(&md->core);
-	if (err < 0)
-		return (err == -EAGAIN) ? 0 : -1;
+	err = perf_mmap__पढ़ो_init(&md->core);
+	अगर (err < 0)
+		वापस (err == -EAGAIN) ? 0 : -1;
 
-	while ((event = perf_mmap__read_event(&md->core)) != NULL) {
-		err = evlist__parse_sample_timestamp(evlist, event, &timestamp);
-		if (err) {
+	जबतक ((event = perf_mmap__पढ़ो_event(&md->core)) != शून्य) अणु
+		err = evlist__parse_sample_बारtamp(evlist, event, &बारtamp);
+		अगर (err) अणु
 			perf_mmap__consume(&md->core);
 			pr_err("Failed to parse sample\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		err = perf_session__queue_event(kvm->session, event, timestamp, 0);
+		err = perf_session__queue_event(kvm->session, event, बारtamp, 0);
 		/*
 		 * FIXME: Here we can't consume the event, as perf_session__queue_event will
-		 *        point to it, and it'll get possibly overwritten by the kernel.
+		 *        poपूर्णांक to it, and it'll get possibly overwritten by the kernel.
 		 */
 		perf_mmap__consume(&md->core);
 
-		if (err) {
+		अगर (err) अणु
 			pr_err("Failed to enqueue sample: %d\n", err);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		/* save time stamp of our first sample for this mmap */
-		if (n == 0)
-			*mmap_time = timestamp;
+		/* save समय stamp of our first sample क्रम this mmap */
+		अगर (n == 0)
+			*mmap_समय = बारtamp;
 
 		/* limit events per mmap handled all at once */
 		n++;
-		if (n == PERF_KVM__MAX_EVENTS_PER_MMAP)
-			break;
-	}
+		अगर (n == PERF_KVM__MAX_EVENTS_PER_MMAP)
+			अवरोध;
+	पूर्ण
 
-	perf_mmap__read_done(&md->core);
-	return n;
-}
+	perf_mmap__पढ़ो_करोne(&md->core);
+	वापस n;
+पूर्ण
 
-static int perf_kvm__mmap_read(struct perf_kvm_stat *kvm)
-{
-	int i, err, throttled = 0;
+अटल पूर्णांक perf_kvm__mmap_पढ़ो(काष्ठा perf_kvm_stat *kvm)
+अणु
+	पूर्णांक i, err, throttled = 0;
 	s64 n, ntotal = 0;
-	u64 flush_time = ULLONG_MAX, mmap_time;
+	u64 flush_समय = ULदीर्घ_उच्च, mmap_समय;
 
-	for (i = 0; i < kvm->evlist->core.nr_mmaps; i++) {
-		n = perf_kvm__mmap_read_idx(kvm, i, &mmap_time);
-		if (n < 0)
-			return -1;
+	क्रम (i = 0; i < kvm->evlist->core.nr_mmaps; i++) अणु
+		n = perf_kvm__mmap_पढ़ो_idx(kvm, i, &mmap_समय);
+		अगर (n < 0)
+			वापस -1;
 
-		/* flush time is going to be the minimum of all the individual
-		 * mmap times. Essentially, we flush all the samples queued up
-		 * from the last pass under our minimal start time -- that leaves
-		 * a very small race for samples to come in with a lower timestamp.
-		 * The ioctl to return the perf_clock timestamp should close the
+		/* flush समय is going to be the minimum of all the inभागidual
+		 * mmap बार. Essentially, we flush all the samples queued up
+		 * from the last pass under our minimal start समय -- that leaves
+		 * a very small race क्रम samples to come in with a lower बारtamp.
+		 * The ioctl to वापस the perf_घड़ी बारtamp should बंद the
 		 * race entirely.
 		 */
-		if (mmap_time < flush_time)
-			flush_time = mmap_time;
+		अगर (mmap_समय < flush_समय)
+			flush_समय = mmap_समय;
 
 		ntotal += n;
-		if (n == PERF_KVM__MAX_EVENTS_PER_MMAP)
+		अगर (n == PERF_KVM__MAX_EVENTS_PER_MMAP)
 			throttled = 1;
-	}
+	पूर्ण
 
 	/* flush queue after each round in which we processed events */
-	if (ntotal) {
-		struct ordered_events *oe = &kvm->session->ordered_events;
+	अगर (ntotal) अणु
+		काष्ठा ordered_events *oe = &kvm->session->ordered_events;
 
-		oe->next_flush = flush_time;
+		oe->next_flush = flush_समय;
 		err = ordered_events__flush(oe, OE_FLUSH__ROUND);
-		if (err) {
-			if (kvm->lost_events)
+		अगर (err) अणु
+			अगर (kvm->lost_events)
 				pr_info("\nLost events: %" PRIu64 "\n\n",
 					kvm->lost_events);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return throttled;
-}
+	वापस throttled;
+पूर्ण
 
-static volatile int done;
+अटल अस्थिर पूर्णांक करोne;
 
-static void sig_handler(int sig __maybe_unused)
-{
-	done = 1;
-}
+अटल व्योम sig_handler(पूर्णांक sig __maybe_unused)
+अणु
+	करोne = 1;
+पूर्ण
 
-static int perf_kvm__timerfd_create(struct perf_kvm_stat *kvm)
-{
-	struct itimerspec new_value;
-	int rc = -1;
+अटल पूर्णांक perf_kvm__समयrfd_create(काष्ठा perf_kvm_stat *kvm)
+अणु
+	काष्ठा iसमयrspec new_value;
+	पूर्णांक rc = -1;
 
-	kvm->timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
-	if (kvm->timerfd < 0) {
+	kvm->समयrfd = समयrfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+	अगर (kvm->समयrfd < 0) अणु
 		pr_err("timerfd_create failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	new_value.it_value.tv_sec = kvm->display_time;
+	new_value.it_value.tv_sec = kvm->display_समय;
 	new_value.it_value.tv_nsec = 0;
-	new_value.it_interval.tv_sec = kvm->display_time;
-	new_value.it_interval.tv_nsec = 0;
+	new_value.it_पूर्णांकerval.tv_sec = kvm->display_समय;
+	new_value.it_पूर्णांकerval.tv_nsec = 0;
 
-	if (timerfd_settime(kvm->timerfd, 0, &new_value, NULL) != 0) {
-		pr_err("timerfd_settime failed: %d\n", errno);
-		close(kvm->timerfd);
-		goto out;
-	}
+	अगर (समयrfd_समय_रखो(kvm->समयrfd, 0, &new_value, शून्य) != 0) अणु
+		pr_err("timerfd_settime failed: %d\n", त्रुटि_सं);
+		बंद(kvm->समयrfd);
+		जाओ out;
+	पूर्ण
 
 	rc = 0;
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int perf_kvm__handle_timerfd(struct perf_kvm_stat *kvm)
-{
-	uint64_t c;
-	int rc;
+अटल पूर्णांक perf_kvm__handle_समयrfd(काष्ठा perf_kvm_stat *kvm)
+अणु
+	uपूर्णांक64_t c;
+	पूर्णांक rc;
 
-	rc = read(kvm->timerfd, &c, sizeof(uint64_t));
-	if (rc < 0) {
-		if (errno == EAGAIN)
-			return 0;
+	rc = पढ़ो(kvm->समयrfd, &c, माप(uपूर्णांक64_t));
+	अगर (rc < 0) अणु
+		अगर (त्रुटि_सं == EAGAIN)
+			वापस 0;
 
-		pr_err("Failed to read timer fd: %d\n", errno);
-		return -1;
-	}
+		pr_err("Failed to read timer fd: %d\n", त्रुटि_सं);
+		वापस -1;
+	पूर्ण
 
-	if (rc != sizeof(uint64_t)) {
+	अगर (rc != माप(uपूर्णांक64_t)) अणु
 		pr_err("Error reading timer fd - invalid size returned\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (c != 1)
+	अगर (c != 1)
 		pr_debug("Missed timer beats: %" PRIu64 "\n", c-1);
 
 	/* update display */
 	sort_result(kvm);
-	print_result(kvm);
+	prपूर्णांक_result(kvm);
 
 	/* reset counts */
 	clear_events_cache_stats(kvm->kvm_events_cache);
 	kvm->total_count = 0;
-	kvm->total_time = 0;
+	kvm->total_समय = 0;
 	kvm->lost_events = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fd_set_nonblock(int fd)
-{
-	long arg = 0;
+अटल पूर्णांक fd_set_nonblock(पूर्णांक fd)
+अणु
+	दीर्घ arg = 0;
 
 	arg = fcntl(fd, F_GETFL);
-	if (arg < 0) {
+	अगर (arg < 0) अणु
 		pr_err("Failed to get current flags for fd %d\n", fd);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (fcntl(fd, F_SETFL, arg | O_NONBLOCK) < 0) {
+	अगर (fcntl(fd, F_SETFL, arg | O_NONBLOCK) < 0) अणु
 		pr_err("Failed to set non-block option on fd %d\n", fd);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_kvm__handle_stdin(void)
-{
-	int c;
+अटल पूर्णांक perf_kvm__handle_मानक_निवेश(व्योम)
+अणु
+	पूर्णांक c;
 
-	c = getc(stdin);
-	if (c == 'q')
-		return 1;
+	c = अ_लो(मानक_निवेश);
+	अगर (c == 'q')
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kvm_events_live_report(struct perf_kvm_stat *kvm)
-{
-	int nr_stdin, ret, err = -EINVAL;
-	struct termios save;
+अटल पूर्णांक kvm_events_live_report(काष्ठा perf_kvm_stat *kvm)
+अणु
+	पूर्णांक nr_मानक_निवेश, ret, err = -EINVAL;
+	काष्ठा termios save;
 
 	/* live flag must be set first */
 	kvm->live = true;
 
 	ret = cpu_isa_config(kvm);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!verify_vcpu(kvm->trace_vcpu) ||
+	अगर (!verअगरy_vcpu(kvm->trace_vcpu) ||
 	    !select_key(kvm) ||
-	    !register_kvm_events_ops(kvm)) {
-		goto out;
-	}
+	    !रेजिस्टर_kvm_events_ops(kvm)) अणु
+		जाओ out;
+	पूर्ण
 
 	set_term_quiet_input(&save);
 	init_kvm_event_record(kvm);
 
-	signal(SIGINT, sig_handler);
-	signal(SIGTERM, sig_handler);
+	संकेत(संक_विघ्न, sig_handler);
+	संकेत(संक_इति, sig_handler);
 
-	/* add timer fd */
-	if (perf_kvm__timerfd_create(kvm) < 0) {
+	/* add समयr fd */
+	अगर (perf_kvm__समयrfd_create(kvm) < 0) अणु
 		err = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (evlist__add_pollfd(kvm->evlist, kvm->timerfd) < 0)
-		goto out;
+	अगर (evlist__add_pollfd(kvm->evlist, kvm->समयrfd) < 0)
+		जाओ out;
 
-	nr_stdin = evlist__add_pollfd(kvm->evlist, fileno(stdin));
-	if (nr_stdin < 0)
-		goto out;
+	nr_मानक_निवेश = evlist__add_pollfd(kvm->evlist, fileno(मानक_निवेश));
+	अगर (nr_मानक_निवेश < 0)
+		जाओ out;
 
-	if (fd_set_nonblock(fileno(stdin)) != 0)
-		goto out;
+	अगर (fd_set_nonblock(fileno(मानक_निवेश)) != 0)
+		जाओ out;
 
 	/* everything is good - enable the events and process */
 	evlist__enable(kvm->evlist);
 
-	while (!done) {
-		struct fdarray *fda = &kvm->evlist->core.pollfd;
-		int rc;
+	जबतक (!करोne) अणु
+		काष्ठा fdarray *fda = &kvm->evlist->core.pollfd;
+		पूर्णांक rc;
 
-		rc = perf_kvm__mmap_read(kvm);
-		if (rc < 0)
-			break;
+		rc = perf_kvm__mmap_पढ़ो(kvm);
+		अगर (rc < 0)
+			अवरोध;
 
-		err = perf_kvm__handle_timerfd(kvm);
-		if (err)
-			goto out;
+		err = perf_kvm__handle_समयrfd(kvm);
+		अगर (err)
+			जाओ out;
 
-		if (fda->entries[nr_stdin].revents & POLLIN)
-			done = perf_kvm__handle_stdin();
+		अगर (fda->entries[nr_मानक_निवेश].revents & POLLIN)
+			करोne = perf_kvm__handle_मानक_निवेश();
 
-		if (!rc && !done)
+		अगर (!rc && !करोne)
 			err = evlist__poll(kvm->evlist, 100);
-	}
+	पूर्ण
 
 	evlist__disable(kvm->evlist);
 
-	if (err == 0) {
+	अगर (err == 0) अणु
 		sort_result(kvm);
-		print_result(kvm);
-	}
+		prपूर्णांक_result(kvm);
+	पूर्ण
 
 out:
-	if (kvm->timerfd >= 0)
-		close(kvm->timerfd);
+	अगर (kvm->समयrfd >= 0)
+		बंद(kvm->समयrfd);
 
 	tcsetattr(0, TCSAFLUSH, &save);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int kvm_live_open_events(struct perf_kvm_stat *kvm)
-{
-	int err, rc = -1;
-	struct evsel *pos;
-	struct evlist *evlist = kvm->evlist;
-	char sbuf[STRERR_BUFSIZE];
+अटल पूर्णांक kvm_live_खोलो_events(काष्ठा perf_kvm_stat *kvm)
+अणु
+	पूर्णांक err, rc = -1;
+	काष्ठा evsel *pos;
+	काष्ठा evlist *evlist = kvm->evlist;
+	अक्षर sbuf[STRERR_बफ_मानE];
 
-	evlist__config(evlist, &kvm->opts, NULL);
+	evlist__config(evlist, &kvm->opts, शून्य);
 
 	/*
-	 * Note: exclude_{guest,host} do not apply here.
-	 *       This command processes KVM tracepoints from host only
+	 * Note: exclude_अणुguest,hostपूर्ण करो not apply here.
+	 *       This command processes KVM tracepoपूर्णांकs from host only
 	 */
-	evlist__for_each_entry(evlist, pos) {
-		struct perf_event_attr *attr = &pos->core.attr;
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		काष्ठा perf_event_attr *attr = &pos->core.attr;
 
 		/* make sure these *are* set */
 		evsel__set_sample_bit(pos, TID);
@@ -1051,180 +1052,180 @@ static int kvm_live_open_events(struct perf_kvm_stat *kvm)
 		attr->watermark = 0;
 		attr->wakeup_events = 1000;
 
-		/* will enable all once we are ready */
+		/* will enable all once we are पढ़ोy */
 		attr->disabled = 1;
-	}
+	पूर्ण
 
-	err = evlist__open(evlist);
-	if (err < 0) {
-		printf("Couldn't create the events: %s\n",
-		       str_error_r(errno, sbuf, sizeof(sbuf)));
-		goto out;
-	}
+	err = evlist__खोलो(evlist);
+	अगर (err < 0) अणु
+		म_लिखो("Couldn't create the events: %s\n",
+		       str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		जाओ out;
+	पूर्ण
 
-	if (evlist__mmap(evlist, kvm->opts.mmap_pages) < 0) {
+	अगर (evlist__mmap(evlist, kvm->opts.mmap_pages) < 0) अणु
 		ui__error("Failed to mmap the events: %s\n",
-			  str_error_r(errno, sbuf, sizeof(sbuf)));
-		evlist__close(evlist);
-		goto out;
-	}
+			  str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		evlist__बंद(evlist);
+		जाओ out;
+	पूर्ण
 
 	rc = 0;
 
 out:
-	return rc;
-}
-#endif
+	वापस rc;
+पूर्ण
+#पूर्ण_अगर
 
-static int read_events(struct perf_kvm_stat *kvm)
-{
-	int ret;
+अटल पूर्णांक पढ़ो_events(काष्ठा perf_kvm_stat *kvm)
+अणु
+	पूर्णांक ret;
 
-	struct perf_tool eops = {
+	काष्ठा perf_tool eops = अणु
 		.sample			= process_sample_event,
 		.comm			= perf_event__process_comm,
 		.namespaces		= perf_event__process_namespaces,
 		.ordered_events		= true,
-	};
-	struct perf_data file = {
+	पूर्ण;
+	काष्ठा perf_data file = अणु
 		.path  = kvm->file_name,
 		.mode  = PERF_DATA_MODE_READ,
-		.force = kvm->force,
-	};
+		.क्रमce = kvm->क्रमce,
+	पूर्ण;
 
 	kvm->tool = eops;
 	kvm->session = perf_session__new(&file, false, &kvm->tool);
-	if (IS_ERR(kvm->session)) {
+	अगर (IS_ERR(kvm->session)) अणु
 		pr_err("Initializing perf session failed\n");
-		return PTR_ERR(kvm->session);
-	}
+		वापस PTR_ERR(kvm->session);
+	पूर्ण
 
 	symbol__init(&kvm->session->header.env);
 
-	if (!perf_session__has_traces(kvm->session, "kvm record")) {
+	अगर (!perf_session__has_traces(kvm->session, "kvm record")) अणु
 		ret = -EINVAL;
-		goto out_delete;
-	}
+		जाओ out_delete;
+	पूर्ण
 
 	/*
-	 * Do not use 'isa' recorded in kvm_exit tracepoint since it is not
+	 * Do not use 'isa' recorded in kvm_निकास tracepoपूर्णांक since it is not
 	 * traced in the old kernel.
 	 */
 	ret = cpu_isa_config(kvm);
-	if (ret < 0)
-		goto out_delete;
+	अगर (ret < 0)
+		जाओ out_delete;
 
 	ret = perf_session__process_events(kvm->session);
 
 out_delete:
 	perf_session__delete(kvm->session);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int parse_target_str(struct perf_kvm_stat *kvm)
-{
-	if (kvm->opts.target.pid) {
-		kvm->pid_list = intlist__new(kvm->opts.target.pid);
-		if (kvm->pid_list == NULL) {
+अटल पूर्णांक parse_target_str(काष्ठा perf_kvm_stat *kvm)
+अणु
+	अगर (kvm->opts.target.pid) अणु
+		kvm->pid_list = पूर्णांकlist__new(kvm->opts.target.pid);
+		अगर (kvm->pid_list == शून्य) अणु
 			pr_err("Error parsing process id string\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kvm_events_report_vcpu(struct perf_kvm_stat *kvm)
-{
-	int ret = -EINVAL;
-	int vcpu = kvm->trace_vcpu;
+अटल पूर्णांक kvm_events_report_vcpu(काष्ठा perf_kvm_stat *kvm)
+अणु
+	पूर्णांक ret = -EINVAL;
+	पूर्णांक vcpu = kvm->trace_vcpu;
 
-	if (parse_target_str(kvm) != 0)
-		goto exit;
+	अगर (parse_target_str(kvm) != 0)
+		जाओ निकास;
 
-	if (!verify_vcpu(vcpu))
-		goto exit;
+	अगर (!verअगरy_vcpu(vcpu))
+		जाओ निकास;
 
-	if (!select_key(kvm))
-		goto exit;
+	अगर (!select_key(kvm))
+		जाओ निकास;
 
-	if (!register_kvm_events_ops(kvm))
-		goto exit;
+	अगर (!रेजिस्टर_kvm_events_ops(kvm))
+		जाओ निकास;
 
 	init_kvm_event_record(kvm);
 	setup_pager();
 
-	ret = read_events(kvm);
-	if (ret)
-		goto exit;
+	ret = पढ़ो_events(kvm);
+	अगर (ret)
+		जाओ निकास;
 
 	sort_result(kvm);
-	print_result(kvm);
+	prपूर्णांक_result(kvm);
 
-exit:
-	return ret;
-}
+निकास:
+	वापस ret;
+पूर्ण
 
-#define STRDUP_FAIL_EXIT(s)		\
-	({	char *_p;		\
+#घोषणा STRDUP_FAIL_EXIT(s)		\
+	(अणु	अक्षर *_p;		\
 	_p = strdup(s);		\
-		if (!_p)		\
-			return -ENOMEM;	\
+		अगर (!_p)		\
+			वापस -ENOMEM;	\
 		_p;			\
-	})
+	पूर्ण)
 
-int __weak setup_kvm_events_tp(struct perf_kvm_stat *kvm __maybe_unused)
-{
-	return 0;
-}
+पूर्णांक __weak setup_kvm_events_tp(काष्ठा perf_kvm_stat *kvm __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static int
-kvm_events_record(struct perf_kvm_stat *kvm, int argc, const char **argv)
-{
-	unsigned int rec_argc, i, j, events_tp_size;
-	const char **rec_argv;
-	const char * const record_args[] = {
+अटल पूर्णांक
+kvm_events_record(काष्ठा perf_kvm_stat *kvm, पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अचिन्हित पूर्णांक rec_argc, i, j, events_tp_size;
+	स्थिर अक्षर **rec_argv;
+	स्थिर अक्षर * स्थिर record_args[] = अणु
 		"record",
 		"-R",
 		"-m", "1024",
 		"-c", "1",
-	};
-	const char * const kvm_stat_record_usage[] = {
+	पूर्ण;
+	स्थिर अक्षर * स्थिर kvm_stat_record_usage[] = अणु
 		"perf kvm stat record [<options>]",
-		NULL
-	};
-	const char * const *events_tp;
-	int ret;
+		शून्य
+	पूर्ण;
+	स्थिर अक्षर * स्थिर *events_tp;
+	पूर्णांक ret;
 
 	events_tp_size = 0;
 	ret = setup_kvm_events_tp(kvm);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("Unable to setup the kvm tracepoints\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (events_tp = kvm_events_tp; *events_tp; events_tp++)
+	क्रम (events_tp = kvm_events_tp; *events_tp; events_tp++)
 		events_tp_size++;
 
 	rec_argc = ARRAY_SIZE(record_args) + argc + 2 +
 		   2 * events_tp_size;
-	rec_argv = calloc(rec_argc + 1, sizeof(char *));
+	rec_argv = सुस्मृति(rec_argc + 1, माप(अक्षर *));
 
-	if (rec_argv == NULL)
-		return -ENOMEM;
+	अगर (rec_argv == शून्य)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ARRAY_SIZE(record_args); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(record_args); i++)
 		rec_argv[i] = STRDUP_FAIL_EXIT(record_args[i]);
 
-	for (j = 0; j < events_tp_size; j++) {
+	क्रम (j = 0; j < events_tp_size; j++) अणु
 		rec_argv[i++] = "-e";
 		rec_argv[i++] = STRDUP_FAIL_EXIT(kvm_events_tp[j]);
-	}
+	पूर्ण
 
 	rec_argv[i++] = STRDUP_FAIL_EXIT("-o");
 	rec_argv[i++] = STRDUP_FAIL_EXIT(kvm->file_name);
 
-	for (j = 1; j < (unsigned int)argc; j++, i++)
+	क्रम (j = 1; j < (अचिन्हित पूर्णांक)argc; j++, i++)
 		rec_argv[i] = argv[j];
 
 	set_option_flag(record_options, 'e', "event", PARSE_OPT_HIDDEN);
@@ -1233,7 +1234,7 @@ kvm_events_record(struct perf_kvm_stat *kvm, int argc, const char **argv)
 
 	set_option_flag(record_options, 'F', "freq", PARSE_OPT_DISABLED);
 	set_option_flag(record_options, 0, "group", PARSE_OPT_DISABLED);
-	set_option_flag(record_options, 'g', NULL, PARSE_OPT_DISABLED);
+	set_option_flag(record_options, 'g', शून्य, PARSE_OPT_DISABLED);
 	set_option_flag(record_options, 0, "call-graph", PARSE_OPT_DISABLED);
 	set_option_flag(record_options, 'd', "data", PARSE_OPT_DISABLED);
 	set_option_flag(record_options, 'T', "timestamp", PARSE_OPT_DISABLED);
@@ -1248,13 +1249,13 @@ kvm_events_record(struct perf_kvm_stat *kvm, int argc, const char **argv)
 	set_option_flag(record_options, 0, "transaction", PARSE_OPT_DISABLED);
 
 	record_usage = kvm_stat_record_usage;
-	return cmd_record(i, rec_argv);
-}
+	वापस cmd_record(i, rec_argv);
+पूर्ण
 
-static int
-kvm_events_report(struct perf_kvm_stat *kvm, int argc, const char **argv)
-{
-	const struct option kvm_events_report_options[] = {
+अटल पूर्णांक
+kvm_events_report(काष्ठा perf_kvm_stat *kvm, पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	स्थिर काष्ठा option kvm_events_report_options[] = अणु
 		OPT_STRING(0, "event", &kvm->report_event, "report event",
 			   "event for reporting: vmexit, "
 			   "mmio (x86 only), ioport (x86 only)"),
@@ -1265,96 +1266,96 @@ kvm_events_report(struct perf_kvm_stat *kvm, int argc, const char **argv)
 			    " time (sort by avg time)"),
 		OPT_STRING('p', "pid", &kvm->opts.target.pid, "pid",
 			   "analyze events only for given process id(s)"),
-		OPT_BOOLEAN('f', "force", &kvm->force, "don't complain, do it"),
+		OPT_BOOLEAN('f', "force", &kvm->force, "don't complain, करो it"),
 		OPT_END()
-	};
+	पूर्ण;
 
-	const char * const kvm_events_report_usage[] = {
+	स्थिर अक्षर * स्थिर kvm_events_report_usage[] = अणु
 		"perf kvm stat report [<options>]",
-		NULL
-	};
+		शून्य
+	पूर्ण;
 
-	if (argc) {
+	अगर (argc) अणु
 		argc = parse_options(argc, argv,
 				     kvm_events_report_options,
 				     kvm_events_report_usage, 0);
-		if (argc)
+		अगर (argc)
 			usage_with_options(kvm_events_report_usage,
 					   kvm_events_report_options);
-	}
+	पूर्ण
 
-	if (!kvm->opts.target.pid)
-		kvm->opts.target.system_wide = true;
+	अगर (!kvm->opts.target.pid)
+		kvm->opts.target.प्रणाली_wide = true;
 
-	return kvm_events_report_vcpu(kvm);
-}
+	वापस kvm_events_report_vcpu(kvm);
+पूर्ण
 
-#ifdef HAVE_TIMERFD_SUPPORT
-static struct evlist *kvm_live_event_list(void)
-{
-	struct evlist *evlist;
-	char *tp, *name, *sys;
-	int err = -1;
-	const char * const *events_tp;
+#अगर_घोषित HAVE_TIMERFD_SUPPORT
+अटल काष्ठा evlist *kvm_live_event_list(व्योम)
+अणु
+	काष्ठा evlist *evlist;
+	अक्षर *tp, *name, *sys;
+	पूर्णांक err = -1;
+	स्थिर अक्षर * स्थिर *events_tp;
 
 	evlist = evlist__new();
-	if (evlist == NULL)
-		return NULL;
+	अगर (evlist == शून्य)
+		वापस शून्य;
 
-	for (events_tp = kvm_events_tp; *events_tp; events_tp++) {
+	क्रम (events_tp = kvm_events_tp; *events_tp; events_tp++) अणु
 
 		tp = strdup(*events_tp);
-		if (tp == NULL)
-			goto out;
+		अगर (tp == शून्य)
+			जाओ out;
 
-		/* split tracepoint into subsystem and name */
+		/* split tracepoपूर्णांक पूर्णांकo subप्रणाली and name */
 		sys = tp;
-		name = strchr(tp, ':');
-		if (name == NULL) {
+		name = म_अक्षर(tp, ':');
+		अगर (name == शून्य) अणु
 			pr_err("Error parsing %s tracepoint: subsystem delimiter not found\n",
 			       *events_tp);
-			free(tp);
-			goto out;
-		}
+			मुक्त(tp);
+			जाओ out;
+		पूर्ण
 		*name = '\0';
 		name++;
 
-		if (evlist__add_newtp(evlist, sys, name, NULL)) {
+		अगर (evlist__add_newtp(evlist, sys, name, शून्य)) अणु
 			pr_err("Failed to add %s tracepoint to the list\n", *events_tp);
-			free(tp);
-			goto out;
-		}
+			मुक्त(tp);
+			जाओ out;
+		पूर्ण
 
-		free(tp);
-	}
+		मुक्त(tp);
+	पूर्ण
 
 	err = 0;
 
 out:
-	if (err) {
+	अगर (err) अणु
 		evlist__delete(evlist);
-		evlist = NULL;
-	}
+		evlist = शून्य;
+	पूर्ण
 
-	return evlist;
-}
+	वापस evlist;
+पूर्ण
 
-static int kvm_events_live(struct perf_kvm_stat *kvm,
-			   int argc, const char **argv)
-{
-	char errbuf[BUFSIZ];
-	int err;
+अटल पूर्णांक kvm_events_live(काष्ठा perf_kvm_stat *kvm,
+			   पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अक्षर errbuf[बफ_मान];
+	पूर्णांक err;
 
-	const struct option live_options[] = {
+	स्थिर काष्ठा option live_options[] = अणु
 		OPT_STRING('p', "pid", &kvm->opts.target.pid, "pid",
 			"record events on existing process id"),
 		OPT_CALLBACK('m', "mmap-pages", &kvm->opts.mmap_pages, "pages",
 			"number of mmap data pages", evlist__parse_mmap_pages),
 		OPT_INCR('v', "verbose", &verbose,
 			"be more verbose (show counter open errors, etc)"),
-		OPT_BOOLEAN('a', "all-cpus", &kvm->opts.target.system_wide,
+		OPT_BOOLEAN('a', "all-cpus", &kvm->opts.target.प्रणाली_wide,
 			"system-wide collection from all CPUs"),
-		OPT_UINTEGER('d', "display", &kvm->display_time,
+		OPT_UINTEGER('d', "display", &kvm->display_समय,
 			"time in seconds between display updates"),
 		OPT_STRING(0, "event", &kvm->report_event, "report event",
 			"event for reporting: "
@@ -1368,48 +1369,48 @@ static int kvm_events_live(struct perf_kvm_stat *kvm,
 			"show events other than"
 			" HLT (x86 only) or Wait state (s390 only)"
 			" that take longer than duration usecs"),
-		OPT_UINTEGER(0, "proc-map-timeout", &proc_map_timeout,
+		OPT_UINTEGER(0, "proc-map-timeout", &proc_map_समयout,
 				"per thread proc mmap processing timeout in ms"),
 		OPT_END()
-	};
-	const char * const live_usage[] = {
+	पूर्ण;
+	स्थिर अक्षर * स्थिर live_usage[] = अणु
 		"perf kvm stat live [<options>]",
-		NULL
-	};
-	struct perf_data data = {
+		शून्य
+	पूर्ण;
+	काष्ठा perf_data data = अणु
 		.mode = PERF_DATA_MODE_WRITE,
-	};
+	पूर्ण;
 
 
 	/* event handling */
 	kvm->tool.sample = process_sample_event;
 	kvm->tool.comm   = perf_event__process_comm;
-	kvm->tool.exit   = perf_event__process_exit;
-	kvm->tool.fork   = perf_event__process_fork;
+	kvm->tool.निकास   = perf_event__process_निकास;
+	kvm->tool.विभाजन   = perf_event__process_विभाजन;
 	kvm->tool.lost   = process_lost_event;
 	kvm->tool.namespaces  = perf_event__process_namespaces;
 	kvm->tool.ordered_events = true;
-	perf_tool__fill_defaults(&kvm->tool);
+	perf_tool__fill_शेषs(&kvm->tool);
 
-	/* set defaults */
-	kvm->display_time = 1;
-	kvm->opts.user_interval = 1;
+	/* set शेषs */
+	kvm->display_समय = 1;
+	kvm->opts.user_पूर्णांकerval = 1;
 	kvm->opts.mmap_pages = 512;
 	kvm->opts.target.uses_mmap = false;
-	kvm->opts.target.uid_str = NULL;
-	kvm->opts.target.uid = UINT_MAX;
+	kvm->opts.target.uid_str = शून्य;
+	kvm->opts.target.uid = अच_पूर्णांक_उच्च;
 
-	symbol__init(NULL);
+	symbol__init(शून्य);
 	disable_buildid_cache();
 
 	use_browser = 0;
 
-	if (argc) {
+	अगर (argc) अणु
 		argc = parse_options(argc, argv, live_options,
 				     live_usage, 0);
-		if (argc)
+		अगर (argc)
 			usage_with_options(live_usage, live_options);
-	}
+	पूर्ण
 
 	kvm->duration *= NSEC_PER_USEC;   /* convert usec to nsec */
 
@@ -1417,174 +1418,174 @@ static int kvm_events_live(struct perf_kvm_stat *kvm,
 	 * target related setups
 	 */
 	err = target__validate(&kvm->opts.target);
-	if (err) {
-		target__strerror(&kvm->opts.target, err, errbuf, BUFSIZ);
+	अगर (err) अणु
+		target__म_त्रुटि(&kvm->opts.target, err, errbuf, बफ_मान);
 		ui__warning("%s", errbuf);
-	}
+	पूर्ण
 
-	if (target__none(&kvm->opts.target))
-		kvm->opts.target.system_wide = true;
+	अगर (target__none(&kvm->opts.target))
+		kvm->opts.target.प्रणाली_wide = true;
 
 
 	/*
 	 * generate the event list
 	 */
 	err = setup_kvm_events_tp(kvm);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_err("Unable to setup the kvm tracepoints\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	kvm->evlist = kvm_live_event_list();
-	if (kvm->evlist == NULL) {
+	अगर (kvm->evlist == शून्य) अणु
 		err = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (evlist__create_maps(kvm->evlist, &kvm->opts.target) < 0)
+	अगर (evlist__create_maps(kvm->evlist, &kvm->opts.target) < 0)
 		usage_with_options(live_usage, live_options);
 
 	/*
 	 * perf session
 	 */
 	kvm->session = perf_session__new(&data, false, &kvm->tool);
-	if (IS_ERR(kvm->session)) {
+	अगर (IS_ERR(kvm->session)) अणु
 		err = PTR_ERR(kvm->session);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	kvm->session->evlist = kvm->evlist;
 	perf_session__set_id_hdr_size(kvm->session);
 	ordered_events__set_copy_on_queue(&kvm->session->ordered_events, true);
-	machine__synthesize_threads(&kvm->session->machines.host, &kvm->opts.target,
-				    kvm->evlist->core.threads, false, 1);
-	err = kvm_live_open_events(kvm);
-	if (err)
-		goto out;
+	machine__syntheमाप_प्रकारhपढ़ोs(&kvm->session->machines.host, &kvm->opts.target,
+				    kvm->evlist->core.thपढ़ोs, false, 1);
+	err = kvm_live_खोलो_events(kvm);
+	अगर (err)
+		जाओ out;
 
 	err = kvm_events_live_report(kvm);
 
 out:
 	perf_session__delete(kvm->session);
-	kvm->session = NULL;
+	kvm->session = शून्य;
 	evlist__delete(kvm->evlist);
 
-	return err;
-}
-#endif
+	वापस err;
+पूर्ण
+#पूर्ण_अगर
 
-static void print_kvm_stat_usage(void)
-{
-	printf("Usage: perf kvm stat <command>\n\n");
+अटल व्योम prपूर्णांक_kvm_stat_usage(व्योम)
+अणु
+	म_लिखो("Usage: perf kvm stat <command>\n\n");
 
-	printf("# Available commands:\n");
-	printf("\trecord: record kvm events\n");
-	printf("\treport: report statistical data of kvm events\n");
-	printf("\tlive:   live reporting of statistical data of kvm events\n");
+	म_लिखो("# Available commands:\n");
+	म_लिखो("\trecord: record kvm events\n");
+	म_लिखो("\treport: report statistical data of kvm events\n");
+	म_लिखो("\tlive:   live reporting of statistical data of kvm events\n");
 
-	printf("\nOtherwise, it is the alias of 'perf stat':\n");
-}
+	म_लिखो("\nOtherwise, it is the alias of 'perf stat':\n");
+पूर्ण
 
-static int kvm_cmd_stat(const char *file_name, int argc, const char **argv)
-{
-	struct perf_kvm_stat kvm = {
+अटल पूर्णांक kvm_cmd_stat(स्थिर अक्षर *file_name, पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा perf_kvm_stat kvm = अणु
 		.file_name = file_name,
 
 		.trace_vcpu	= -1,
 		.report_event	= "vmexit",
 		.sort_key	= "sample",
 
-	};
+	पूर्ण;
 
-	if (argc == 1) {
-		print_kvm_stat_usage();
-		goto perf_stat;
-	}
+	अगर (argc == 1) अणु
+		prपूर्णांक_kvm_stat_usage();
+		जाओ perf_stat;
+	पूर्ण
 
-	if (!strncmp(argv[1], "rec", 3))
-		return kvm_events_record(&kvm, argc - 1, argv + 1);
+	अगर (!म_भेदन(argv[1], "rec", 3))
+		वापस kvm_events_record(&kvm, argc - 1, argv + 1);
 
-	if (!strncmp(argv[1], "rep", 3))
-		return kvm_events_report(&kvm, argc - 1 , argv + 1);
+	अगर (!म_भेदन(argv[1], "rep", 3))
+		वापस kvm_events_report(&kvm, argc - 1 , argv + 1);
 
-#ifdef HAVE_TIMERFD_SUPPORT
-	if (!strncmp(argv[1], "live", 4))
-		return kvm_events_live(&kvm, argc - 1 , argv + 1);
-#endif
+#अगर_घोषित HAVE_TIMERFD_SUPPORT
+	अगर (!म_भेदन(argv[1], "live", 4))
+		वापस kvm_events_live(&kvm, argc - 1 , argv + 1);
+#पूर्ण_अगर
 
 perf_stat:
-	return cmd_stat(argc, argv);
-}
-#endif /* HAVE_KVM_STAT_SUPPORT */
+	वापस cmd_stat(argc, argv);
+पूर्ण
+#पूर्ण_अगर /* HAVE_KVM_STAT_SUPPORT */
 
-int __weak kvm_add_default_arch_event(int *argc __maybe_unused,
-					const char **argv __maybe_unused)
-{
-	return 0;
-}
+पूर्णांक __weak kvm_add_शेष_arch_event(पूर्णांक *argc __maybe_unused,
+					स्थिर अक्षर **argv __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static int __cmd_record(const char *file_name, int argc, const char **argv)
-{
-	int rec_argc, i = 0, j, ret;
-	const char **rec_argv;
+अटल पूर्णांक __cmd_record(स्थिर अक्षर *file_name, पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक rec_argc, i = 0, j, ret;
+	स्थिर अक्षर **rec_argv;
 
-	ret = kvm_add_default_arch_event(&argc, argv);
-	if (ret)
-		return -EINVAL;
+	ret = kvm_add_शेष_arch_event(&argc, argv);
+	अगर (ret)
+		वापस -EINVAL;
 
 	rec_argc = argc + 2;
-	rec_argv = calloc(rec_argc + 1, sizeof(char *));
+	rec_argv = सुस्मृति(rec_argc + 1, माप(अक्षर *));
 	rec_argv[i++] = strdup("record");
 	rec_argv[i++] = strdup("-o");
 	rec_argv[i++] = strdup(file_name);
-	for (j = 1; j < argc; j++, i++)
+	क्रम (j = 1; j < argc; j++, i++)
 		rec_argv[i] = argv[j];
 
 	BUG_ON(i != rec_argc);
 
-	return cmd_record(i, rec_argv);
-}
+	वापस cmd_record(i, rec_argv);
+पूर्ण
 
-static int __cmd_report(const char *file_name, int argc, const char **argv)
-{
-	int rec_argc, i = 0, j;
-	const char **rec_argv;
+अटल पूर्णांक __cmd_report(स्थिर अक्षर *file_name, पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक rec_argc, i = 0, j;
+	स्थिर अक्षर **rec_argv;
 
 	rec_argc = argc + 2;
-	rec_argv = calloc(rec_argc + 1, sizeof(char *));
+	rec_argv = सुस्मृति(rec_argc + 1, माप(अक्षर *));
 	rec_argv[i++] = strdup("report");
 	rec_argv[i++] = strdup("-i");
 	rec_argv[i++] = strdup(file_name);
-	for (j = 1; j < argc; j++, i++)
+	क्रम (j = 1; j < argc; j++, i++)
 		rec_argv[i] = argv[j];
 
 	BUG_ON(i != rec_argc);
 
-	return cmd_report(i, rec_argv);
-}
+	वापस cmd_report(i, rec_argv);
+पूर्ण
 
-static int
-__cmd_buildid_list(const char *file_name, int argc, const char **argv)
-{
-	int rec_argc, i = 0, j;
-	const char **rec_argv;
+अटल पूर्णांक
+__cmd_buildid_list(स्थिर अक्षर *file_name, पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक rec_argc, i = 0, j;
+	स्थिर अक्षर **rec_argv;
 
 	rec_argc = argc + 2;
-	rec_argv = calloc(rec_argc + 1, sizeof(char *));
+	rec_argv = सुस्मृति(rec_argc + 1, माप(अक्षर *));
 	rec_argv[i++] = strdup("buildid-list");
 	rec_argv[i++] = strdup("-i");
 	rec_argv[i++] = strdup(file_name);
-	for (j = 1; j < argc; j++, i++)
+	क्रम (j = 1; j < argc; j++, i++)
 		rec_argv[i] = argv[j];
 
 	BUG_ON(i != rec_argc);
 
-	return cmd_buildid_list(i, rec_argv);
-}
+	वापस cmd_buildid_list(i, rec_argv);
+पूर्ण
 
-int cmd_kvm(int argc, const char **argv)
-{
-	const char *file_name = NULL;
-	const struct option kvm_options[] = {
+पूर्णांक cmd_kvm(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	स्थिर अक्षर *file_name = शून्य;
+	स्थिर काष्ठा option kvm_options[] = अणु
 		OPT_STRING('i', "input", &file_name, "file",
 			   "Input file name"),
 		OPT_STRING('o', "output", &file_name, "file",
@@ -1593,60 +1594,60 @@ int cmd_kvm(int argc, const char **argv)
 			    "Collect guest os data"),
 		OPT_BOOLEAN(0, "host", &perf_host,
 			    "Collect host os data"),
-		OPT_STRING(0, "guestmount", &symbol_conf.guestmount, "directory",
+		OPT_STRING(0, "guestmount", &symbol_conf.guesपंचांगount, "directory",
 			   "guest mount directory under which every guest os"
 			   " instance has a subdir"),
-		OPT_STRING(0, "guestvmlinux", &symbol_conf.default_guest_vmlinux_name,
+		OPT_STRING(0, "guestvmlinux", &symbol_conf.शेष_guest_vmlinux_name,
 			   "file", "file saving guest os vmlinux"),
-		OPT_STRING(0, "guestkallsyms", &symbol_conf.default_guest_kallsyms,
+		OPT_STRING(0, "guestkallsyms", &symbol_conf.शेष_guest_kallsyms,
 			   "file", "file saving guest os /proc/kallsyms"),
-		OPT_STRING(0, "guestmodules", &symbol_conf.default_guest_modules,
+		OPT_STRING(0, "guestmodules", &symbol_conf.शेष_guest_modules,
 			   "file", "file saving guest os /proc/modules"),
 		OPT_INCR('v', "verbose", &verbose,
 			    "be more verbose (show counter open errors, etc)"),
 		OPT_END()
-	};
+	पूर्ण;
 
-	const char *const kvm_subcommands[] = { "top", "record", "report", "diff",
-						"buildid-list", "stat", NULL };
-	const char *kvm_usage[] = { NULL, NULL };
+	स्थिर अक्षर *स्थिर kvm_subcommands[] = अणु "top", "record", "report", "diff",
+						"buildid-list", "stat", शून्य पूर्ण;
+	स्थिर अक्षर *kvm_usage[] = अणु शून्य, शून्य पूर्ण;
 
 	perf_host  = 0;
 	perf_guest = 1;
 
 	argc = parse_options_subcommand(argc, argv, kvm_options, kvm_subcommands, kvm_usage,
 					PARSE_OPT_STOP_AT_NON_OPTION);
-	if (!argc)
+	अगर (!argc)
 		usage_with_options(kvm_usage, kvm_options);
 
-	if (!perf_host)
+	अगर (!perf_host)
 		perf_guest = 1;
 
-	if (!file_name) {
-		file_name = get_filename_for_perf_kvm();
+	अगर (!file_name) अणु
+		file_name = get_filename_क्रम_perf_kvm();
 
-		if (!file_name) {
+		अगर (!file_name) अणु
 			pr_err("Failed to allocate memory for filename\n");
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	if (!strncmp(argv[0], "rec", 3))
-		return __cmd_record(file_name, argc, argv);
-	else if (!strncmp(argv[0], "rep", 3))
-		return __cmd_report(file_name, argc, argv);
-	else if (!strncmp(argv[0], "diff", 4))
-		return cmd_diff(argc, argv);
-	else if (!strncmp(argv[0], "top", 3))
-		return cmd_top(argc, argv);
-	else if (!strncmp(argv[0], "buildid-list", 12))
-		return __cmd_buildid_list(file_name, argc, argv);
-#ifdef HAVE_KVM_STAT_SUPPORT
-	else if (!strncmp(argv[0], "stat", 4))
-		return kvm_cmd_stat(file_name, argc, argv);
-#endif
-	else
+	अगर (!म_भेदन(argv[0], "rec", 3))
+		वापस __cmd_record(file_name, argc, argv);
+	अन्यथा अगर (!म_भेदन(argv[0], "rep", 3))
+		वापस __cmd_report(file_name, argc, argv);
+	अन्यथा अगर (!म_भेदन(argv[0], "diff", 4))
+		वापस cmd_dअगरf(argc, argv);
+	अन्यथा अगर (!म_भेदन(argv[0], "top", 3))
+		वापस cmd_top(argc, argv);
+	अन्यथा अगर (!म_भेदन(argv[0], "buildid-list", 12))
+		वापस __cmd_buildid_list(file_name, argc, argv);
+#अगर_घोषित HAVE_KVM_STAT_SUPPORT
+	अन्यथा अगर (!म_भेदन(argv[0], "stat", 4))
+		वापस kvm_cmd_stat(file_name, argc, argv);
+#पूर्ण_अगर
+	अन्यथा
 		usage_with_options(kvm_usage, kvm_options);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

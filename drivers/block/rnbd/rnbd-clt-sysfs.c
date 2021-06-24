@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * RDMA Network Block Driver
  *
@@ -7,27 +8,27 @@
  * Copyright (c) 2019 - 2020 1&1 IONOS SE. All rights reserved.
  */
 
-#undef pr_fmt
-#define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME " L" __stringअगरy(__LINE__) ": " fmt
 
-#include <linux/types.h>
-#include <linux/ctype.h>
-#include <linux/parser.h>
-#include <linux/module.h>
-#include <linux/in6.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h>
-#include <linux/device.h>
-#include <rdma/ib.h>
-#include <rdma/rdma_cm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/parser.h>
+#समावेश <linux/module.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/device.h>
+#समावेश <rdma/ib.h>
+#समावेश <rdma/rdma_cm.h>
 
-#include "rnbd-clt.h"
+#समावेश "rnbd-clt.h"
 
-static struct device *rnbd_dev;
-static struct class *rnbd_dev_class;
-static struct kobject *rnbd_devs_kobj;
+अटल काष्ठा device *rnbd_dev;
+अटल काष्ठा class *rnbd_dev_class;
+अटल काष्ठा kobject *rnbd_devs_kobj;
 
-enum {
+क्रमागत अणु
 	RNBD_OPT_ERR		= 0,
 	RNBD_OPT_DEST_PORT	= 1 << 0,
 	RNBD_OPT_PATH		= 1 << 1,
@@ -35,305 +36,305 @@ enum {
 	RNBD_OPT_ACCESS_MODE	= 1 << 3,
 	RNBD_OPT_SESSNAME	= 1 << 6,
 	RNBD_OPT_NR_POLL_QUEUES	= 1 << 7,
-};
+पूर्ण;
 
-static const unsigned int rnbd_opt_mandatory[] = {
+अटल स्थिर अचिन्हित पूर्णांक rnbd_opt_mandatory[] = अणु
 	RNBD_OPT_DEV_PATH,
 	RNBD_OPT_SESSNAME,
-};
+पूर्ण;
 
-static const match_table_t rnbd_opt_tokens = {
-	{RNBD_OPT_PATH,			"path=%s"		},
-	{RNBD_OPT_DEV_PATH,		"device_path=%s"	},
-	{RNBD_OPT_DEST_PORT,		"dest_port=%d"		},
-	{RNBD_OPT_ACCESS_MODE,		"access_mode=%s"	},
-	{RNBD_OPT_SESSNAME,		"sessname=%s"		},
-	{RNBD_OPT_NR_POLL_QUEUES,	"nr_poll_queues=%d"	},
-	{RNBD_OPT_ERR,			NULL			},
-};
+अटल स्थिर match_table_t rnbd_opt_tokens = अणु
+	अणुRNBD_OPT_PATH,			"path=%s"		पूर्ण,
+	अणुRNBD_OPT_DEV_PATH,		"device_path=%s"	पूर्ण,
+	अणुRNBD_OPT_DEST_PORT,		"dest_port=%d"		पूर्ण,
+	अणुRNBD_OPT_ACCESS_MODE,		"access_mode=%s"	पूर्ण,
+	अणुRNBD_OPT_SESSNAME,		"sessname=%s"		पूर्ण,
+	अणुRNBD_OPT_NR_POLL_QUEUES,	"nr_poll_queues=%d"	पूर्ण,
+	अणुRNBD_OPT_ERR,			शून्य			पूर्ण,
+पूर्ण;
 
-struct rnbd_map_options {
-	char *sessname;
-	struct rtrs_addr *paths;
-	size_t *path_cnt;
-	char *pathname;
+काष्ठा rnbd_map_options अणु
+	अक्षर *sessname;
+	काष्ठा rtrs_addr *paths;
+	माप_प्रकार *path_cnt;
+	अक्षर *pathname;
 	u16 *dest_port;
-	enum rnbd_access_mode *access_mode;
+	क्रमागत rnbd_access_mode *access_mode;
 	u32 *nr_poll_queues;
-};
+पूर्ण;
 
-static int rnbd_clt_parse_map_options(const char *buf, size_t max_path_cnt,
-				       struct rnbd_map_options *opt)
-{
-	char *options, *sep_opt;
-	char *p;
+अटल पूर्णांक rnbd_clt_parse_map_options(स्थिर अक्षर *buf, माप_प्रकार max_path_cnt,
+				       काष्ठा rnbd_map_options *opt)
+अणु
+	अक्षर *options, *sep_opt;
+	अक्षर *p;
 	substring_t args[MAX_OPT_ARGS];
-	int opt_mask = 0;
-	int token;
-	int ret = -EINVAL;
-	int i, dest_port, nr_poll_queues;
-	int p_cnt = 0;
+	पूर्णांक opt_mask = 0;
+	पूर्णांक token;
+	पूर्णांक ret = -EINVAL;
+	पूर्णांक i, dest_port, nr_poll_queues;
+	पूर्णांक p_cnt = 0;
 
 	options = kstrdup(buf, GFP_KERNEL);
-	if (!options)
-		return -ENOMEM;
+	अगर (!options)
+		वापस -ENOMEM;
 
-	sep_opt = strstrip(options);
-	while ((p = strsep(&sep_opt, " ")) != NULL) {
-		if (!*p)
-			continue;
+	sep_opt = म_मालाip(options);
+	जबतक ((p = strsep(&sep_opt, " ")) != शून्य) अणु
+		अगर (!*p)
+			जारी;
 
 		token = match_token(p, rnbd_opt_tokens, args);
 		opt_mask |= token;
 
-		switch (token) {
-		case RNBD_OPT_SESSNAME:
+		चयन (token) अणु
+		हाल RNBD_OPT_SESSNAME:
 			p = match_strdup(args);
-			if (!p) {
+			अगर (!p) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
-			if (strlen(p) > NAME_MAX) {
+				जाओ out;
+			पूर्ण
+			अगर (म_माप(p) > NAME_MAX) अणु
 				pr_err("map_device: sessname too long\n");
 				ret = -EINVAL;
-				kfree(p);
-				goto out;
-			}
+				kमुक्त(p);
+				जाओ out;
+			पूर्ण
 			strscpy(opt->sessname, p, NAME_MAX);
-			kfree(p);
-			break;
+			kमुक्त(p);
+			अवरोध;
 
-		case RNBD_OPT_PATH:
-			if (p_cnt >= max_path_cnt) {
+		हाल RNBD_OPT_PATH:
+			अगर (p_cnt >= max_path_cnt) अणु
 				pr_err("map_device: too many (> %zu) paths provided\n",
 				       max_path_cnt);
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			p = match_strdup(args);
-			if (!p) {
+			अगर (!p) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			ret = rtrs_addr_to_sockaddr(p, strlen(p),
+			ret = rtrs_addr_to_sockaddr(p, म_माप(p),
 						    *opt->dest_port,
 						    &opt->paths[p_cnt]);
-			if (ret) {
+			अगर (ret) अणु
 				pr_err("Can't parse path %s: %d\n", p, ret);
-				kfree(p);
-				goto out;
-			}
+				kमुक्त(p);
+				जाओ out;
+			पूर्ण
 
 			p_cnt++;
 
-			kfree(p);
-			break;
+			kमुक्त(p);
+			अवरोध;
 
-		case RNBD_OPT_DEV_PATH:
+		हाल RNBD_OPT_DEV_PATH:
 			p = match_strdup(args);
-			if (!p) {
+			अगर (!p) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
-			if (strlen(p) > NAME_MAX) {
+				जाओ out;
+			पूर्ण
+			अगर (म_माप(p) > NAME_MAX) अणु
 				pr_err("map_device: Device path too long\n");
 				ret = -EINVAL;
-				kfree(p);
-				goto out;
-			}
+				kमुक्त(p);
+				जाओ out;
+			पूर्ण
 			strscpy(opt->pathname, p, NAME_MAX);
-			kfree(p);
-			break;
+			kमुक्त(p);
+			अवरोध;
 
-		case RNBD_OPT_DEST_PORT:
-			if (match_int(args, &dest_port) || dest_port < 0 ||
-			    dest_port > 65535) {
+		हाल RNBD_OPT_DEST_PORT:
+			अगर (match_पूर्णांक(args, &dest_port) || dest_port < 0 ||
+			    dest_port > 65535) अणु
 				pr_err("bad destination port number parameter '%d'\n",
 				       dest_port);
 				ret = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			*opt->dest_port = dest_port;
-			break;
+			अवरोध;
 
-		case RNBD_OPT_ACCESS_MODE:
+		हाल RNBD_OPT_ACCESS_MODE:
 			p = match_strdup(args);
-			if (!p) {
+			अगर (!p) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (!strcmp(p, "ro")) {
+			अगर (!म_भेद(p, "ro")) अणु
 				*opt->access_mode = RNBD_ACCESS_RO;
-			} else if (!strcmp(p, "rw")) {
+			पूर्ण अन्यथा अगर (!म_भेद(p, "rw")) अणु
 				*opt->access_mode = RNBD_ACCESS_RW;
-			} else if (!strcmp(p, "migration")) {
+			पूर्ण अन्यथा अगर (!म_भेद(p, "migration")) अणु
 				*opt->access_mode = RNBD_ACCESS_MIGRATION;
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_err("map_device: Invalid access_mode: '%s'\n",
 				       p);
 				ret = -EINVAL;
-				kfree(p);
-				goto out;
-			}
+				kमुक्त(p);
+				जाओ out;
+			पूर्ण
 
-			kfree(p);
-			break;
+			kमुक्त(p);
+			अवरोध;
 
-		case RNBD_OPT_NR_POLL_QUEUES:
-			if (match_int(args, &nr_poll_queues) || nr_poll_queues < -1 ||
-			    nr_poll_queues > (int)nr_cpu_ids) {
+		हाल RNBD_OPT_NR_POLL_QUEUES:
+			अगर (match_पूर्णांक(args, &nr_poll_queues) || nr_poll_queues < -1 ||
+			    nr_poll_queues > (पूर्णांक)nr_cpu_ids) अणु
 				pr_err("bad nr_poll_queues parameter '%d'\n",
 				       nr_poll_queues);
 				ret = -EINVAL;
-				goto out;
-			}
-			if (nr_poll_queues == -1)
+				जाओ out;
+			पूर्ण
+			अगर (nr_poll_queues == -1)
 				nr_poll_queues = nr_cpu_ids;
 			*opt->nr_poll_queues = nr_poll_queues;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			pr_err("map_device: Unknown parameter or missing value '%s'\n",
 			       p);
 			ret = -EINVAL;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(rnbd_opt_mandatory); i++) {
-		if ((opt_mask & rnbd_opt_mandatory[i])) {
+	क्रम (i = 0; i < ARRAY_SIZE(rnbd_opt_mandatory); i++) अणु
+		अगर ((opt_mask & rnbd_opt_mandatory[i])) अणु
 			ret = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err("map_device: Parameters missing\n");
 			ret = -EINVAL;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
 	*opt->path_cnt = p_cnt;
-	kfree(options);
-	return ret;
-}
+	kमुक्त(options);
+	वापस ret;
+पूर्ण
 
-static ssize_t state_show(struct kobject *kobj,
-			  struct kobj_attribute *attr, char *page)
-{
-	struct rnbd_clt_dev *dev;
+अटल sमाप_प्रकार state_show(काष्ठा kobject *kobj,
+			  काष्ठा kobj_attribute *attr, अक्षर *page)
+अणु
+	काष्ठा rnbd_clt_dev *dev;
 
-	dev = container_of(kobj, struct rnbd_clt_dev, kobj);
+	dev = container_of(kobj, काष्ठा rnbd_clt_dev, kobj);
 
-	switch (dev->dev_state) {
-	case DEV_STATE_INIT:
-		return snprintf(page, PAGE_SIZE, "init\n");
-	case DEV_STATE_MAPPED:
-		/* TODO fix cli tool before changing to proper state */
-		return snprintf(page, PAGE_SIZE, "open\n");
-	case DEV_STATE_MAPPED_DISCONNECTED:
-		/* TODO fix cli tool before changing to proper state */
-		return snprintf(page, PAGE_SIZE, "closed\n");
-	case DEV_STATE_UNMAPPED:
-		return snprintf(page, PAGE_SIZE, "unmapped\n");
-	default:
-		return snprintf(page, PAGE_SIZE, "unknown\n");
-	}
-}
+	चयन (dev->dev_state) अणु
+	हाल DEV_STATE_INIT:
+		वापस snम_लिखो(page, PAGE_SIZE, "init\n");
+	हाल DEV_STATE_MAPPED:
+		/* TODO fix cli tool beक्रमe changing to proper state */
+		वापस snम_लिखो(page, PAGE_SIZE, "open\n");
+	हाल DEV_STATE_MAPPED_DISCONNECTED:
+		/* TODO fix cli tool beक्रमe changing to proper state */
+		वापस snम_लिखो(page, PAGE_SIZE, "closed\n");
+	हाल DEV_STATE_UNMAPPED:
+		वापस snम_लिखो(page, PAGE_SIZE, "unmapped\n");
+	शेष:
+		वापस snम_लिखो(page, PAGE_SIZE, "unknown\n");
+	पूर्ण
+पूर्ण
 
-static struct kobj_attribute rnbd_clt_state_attr = __ATTR_RO(state);
+अटल काष्ठा kobj_attribute rnbd_clt_state_attr = __ATTR_RO(state);
 
-static ssize_t nr_poll_queues_show(struct kobject *kobj,
-				   struct kobj_attribute *attr, char *page)
-{
-	struct rnbd_clt_dev *dev;
+अटल sमाप_प्रकार nr_poll_queues_show(काष्ठा kobject *kobj,
+				   काष्ठा kobj_attribute *attr, अक्षर *page)
+अणु
+	काष्ठा rnbd_clt_dev *dev;
 
-	dev = container_of(kobj, struct rnbd_clt_dev, kobj);
+	dev = container_of(kobj, काष्ठा rnbd_clt_dev, kobj);
 
-	return sysfs_emit(page, "%d\n", dev->nr_poll_queues);
-}
+	वापस sysfs_emit(page, "%d\n", dev->nr_poll_queues);
+पूर्ण
 
-static struct kobj_attribute rnbd_clt_nr_poll_queues =
+अटल काष्ठा kobj_attribute rnbd_clt_nr_poll_queues =
 	__ATTR_RO(nr_poll_queues);
 
-static ssize_t mapping_path_show(struct kobject *kobj,
-				 struct kobj_attribute *attr, char *page)
-{
-	struct rnbd_clt_dev *dev;
+अटल sमाप_प्रकार mapping_path_show(काष्ठा kobject *kobj,
+				 काष्ठा kobj_attribute *attr, अक्षर *page)
+अणु
+	काष्ठा rnbd_clt_dev *dev;
 
-	dev = container_of(kobj, struct rnbd_clt_dev, kobj);
+	dev = container_of(kobj, काष्ठा rnbd_clt_dev, kobj);
 
-	return scnprintf(page, PAGE_SIZE, "%s\n", dev->pathname);
-}
+	वापस scnम_लिखो(page, PAGE_SIZE, "%s\n", dev->pathname);
+पूर्ण
 
-static struct kobj_attribute rnbd_clt_mapping_path_attr =
+अटल काष्ठा kobj_attribute rnbd_clt_mapping_path_attr =
 	__ATTR_RO(mapping_path);
 
-static ssize_t access_mode_show(struct kobject *kobj,
-				struct kobj_attribute *attr, char *page)
-{
-	struct rnbd_clt_dev *dev;
+अटल sमाप_प्रकार access_mode_show(काष्ठा kobject *kobj,
+				काष्ठा kobj_attribute *attr, अक्षर *page)
+अणु
+	काष्ठा rnbd_clt_dev *dev;
 
-	dev = container_of(kobj, struct rnbd_clt_dev, kobj);
+	dev = container_of(kobj, काष्ठा rnbd_clt_dev, kobj);
 
-	return snprintf(page, PAGE_SIZE, "%s\n",
+	वापस snम_लिखो(page, PAGE_SIZE, "%s\n",
 			rnbd_access_mode_str(dev->access_mode));
-}
+पूर्ण
 
-static struct kobj_attribute rnbd_clt_access_mode =
+अटल काष्ठा kobj_attribute rnbd_clt_access_mode =
 	__ATTR_RO(access_mode);
 
-static ssize_t rnbd_clt_unmap_dev_show(struct kobject *kobj,
-					struct kobj_attribute *attr, char *page)
-{
-	return scnprintf(page, PAGE_SIZE, "Usage: echo <normal|force> > %s\n",
+अटल sमाप_प्रकार rnbd_clt_unmap_dev_show(काष्ठा kobject *kobj,
+					काष्ठा kobj_attribute *attr, अक्षर *page)
+अणु
+	वापस scnम_लिखो(page, PAGE_SIZE, "Usage: echo <normal|force> > %s\n",
 			 attr->attr.name);
-}
+पूर्ण
 
-static ssize_t rnbd_clt_unmap_dev_store(struct kobject *kobj,
-					 struct kobj_attribute *attr,
-					 const char *buf, size_t count)
-{
-	struct rnbd_clt_dev *dev;
-	char *opt, *options;
-	bool force;
-	int err;
+अटल sमाप_प्रकार rnbd_clt_unmap_dev_store(काष्ठा kobject *kobj,
+					 काष्ठा kobj_attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा rnbd_clt_dev *dev;
+	अक्षर *opt, *options;
+	bool क्रमce;
+	पूर्णांक err;
 
 	opt = kstrdup(buf, GFP_KERNEL);
-	if (!opt)
-		return -ENOMEM;
+	अगर (!opt)
+		वापस -ENOMEM;
 
-	options = strstrip(opt);
-	dev = container_of(kobj, struct rnbd_clt_dev, kobj);
-	if (sysfs_streq(options, "normal")) {
-		force = false;
-	} else if (sysfs_streq(options, "force")) {
-		force = true;
-	} else {
+	options = म_मालाip(opt);
+	dev = container_of(kobj, काष्ठा rnbd_clt_dev, kobj);
+	अगर (sysfs_streq(options, "normal")) अणु
+		क्रमce = false;
+	पूर्ण अन्यथा अगर (sysfs_streq(options, "force")) अणु
+		क्रमce = true;
+	पूर्ण अन्यथा अणु
 		rnbd_clt_err(dev,
 			      "unmap_device: Invalid value: %s\n",
 			      options);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rnbd_clt_info(dev, "Unmapping device, option: %s.\n",
-		       force ? "force" : "normal");
+		       क्रमce ? "force" : "normal");
 
 	/*
-	 * We take explicit module reference only for one reason: do not
+	 * We take explicit module reference only क्रम one reason: करो not
 	 * race with lockless rnbd_destroy_sessions().
 	 */
-	if (!try_module_get(THIS_MODULE)) {
+	अगर (!try_module_get(THIS_MODULE)) अणु
 		err = -ENODEV;
-		goto out;
-	}
-	err = rnbd_clt_unmap_device(dev, force, &attr->attr);
-	if (err) {
-		if (err != -EALREADY)
+		जाओ out;
+	पूर्ण
+	err = rnbd_clt_unmap_device(dev, क्रमce, &attr->attr);
+	अगर (err) अणु
+		अगर (err != -EALREADY)
 			rnbd_clt_err(dev, "unmap_device: %d\n",  err);
-		goto module_put;
-	}
+		जाओ module_put;
+	पूर्ण
 
 	/*
 	 * Here device can be vanished!
@@ -344,105 +345,105 @@ static ssize_t rnbd_clt_unmap_dev_store(struct kobject *kobj,
 module_put:
 	module_put(THIS_MODULE);
 out:
-	kfree(opt);
+	kमुक्त(opt);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct kobj_attribute rnbd_clt_unmap_device_attr =
+अटल काष्ठा kobj_attribute rnbd_clt_unmap_device_attr =
 	__ATTR(unmap_device, 0644, rnbd_clt_unmap_dev_show,
 	       rnbd_clt_unmap_dev_store);
 
-static ssize_t rnbd_clt_resize_dev_show(struct kobject *kobj,
-					 struct kobj_attribute *attr,
-					 char *page)
-{
-	return scnprintf(page, PAGE_SIZE,
+अटल sमाप_प्रकार rnbd_clt_resize_dev_show(काष्ठा kobject *kobj,
+					 काष्ठा kobj_attribute *attr,
+					 अक्षर *page)
+अणु
+	वापस scnम_लिखो(page, PAGE_SIZE,
 			 "Usage: echo <new size in sectors> > %s\n",
 			 attr->attr.name);
-}
+पूर्ण
 
-static ssize_t rnbd_clt_resize_dev_store(struct kobject *kobj,
-					  struct kobj_attribute *attr,
-					  const char *buf, size_t count)
-{
-	int ret;
-	unsigned long sectors;
-	struct rnbd_clt_dev *dev;
+अटल sमाप_प्रकार rnbd_clt_resize_dev_store(काष्ठा kobject *kobj,
+					  काष्ठा kobj_attribute *attr,
+					  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ sectors;
+	काष्ठा rnbd_clt_dev *dev;
 
-	dev = container_of(kobj, struct rnbd_clt_dev, kobj);
+	dev = container_of(kobj, काष्ठा rnbd_clt_dev, kobj);
 
-	ret = kstrtoul(buf, 0, &sectors);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 0, &sectors);
+	अगर (ret)
+		वापस ret;
 
-	ret = rnbd_clt_resize_disk(dev, (size_t)sectors);
-	if (ret)
-		return ret;
+	ret = rnbd_clt_resize_disk(dev, (माप_प्रकार)sectors);
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct kobj_attribute rnbd_clt_resize_dev_attr =
+अटल काष्ठा kobj_attribute rnbd_clt_resize_dev_attr =
 	__ATTR(resize, 0644, rnbd_clt_resize_dev_show,
 	       rnbd_clt_resize_dev_store);
 
-static ssize_t rnbd_clt_remap_dev_show(struct kobject *kobj,
-					struct kobj_attribute *attr, char *page)
-{
-	return scnprintf(page, PAGE_SIZE, "Usage: echo <1> > %s\n",
+अटल sमाप_प्रकार rnbd_clt_remap_dev_show(काष्ठा kobject *kobj,
+					काष्ठा kobj_attribute *attr, अक्षर *page)
+अणु
+	वापस scnम_लिखो(page, PAGE_SIZE, "Usage: echo <1> > %s\n",
 			 attr->attr.name);
-}
+पूर्ण
 
-static ssize_t rnbd_clt_remap_dev_store(struct kobject *kobj,
-					 struct kobj_attribute *attr,
-					 const char *buf, size_t count)
-{
-	struct rnbd_clt_dev *dev;
-	char *opt, *options;
-	int err;
+अटल sमाप_प्रकार rnbd_clt_remap_dev_store(काष्ठा kobject *kobj,
+					 काष्ठा kobj_attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा rnbd_clt_dev *dev;
+	अक्षर *opt, *options;
+	पूर्णांक err;
 
 	opt = kstrdup(buf, GFP_KERNEL);
-	if (!opt)
-		return -ENOMEM;
+	अगर (!opt)
+		वापस -ENOMEM;
 
-	options = strstrip(opt);
-	dev = container_of(kobj, struct rnbd_clt_dev, kobj);
-	if (!sysfs_streq(options, "1")) {
+	options = म_मालाip(opt);
+	dev = container_of(kobj, काष्ठा rnbd_clt_dev, kobj);
+	अगर (!sysfs_streq(options, "1")) अणु
 		rnbd_clt_err(dev,
 			      "remap_device: Invalid value: %s\n",
 			      options);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	err = rnbd_clt_remap_device(dev);
-	if (likely(!err))
+	अगर (likely(!err))
 		err = count;
 
 out:
-	kfree(opt);
+	kमुक्त(opt);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct kobj_attribute rnbd_clt_remap_device_attr =
+अटल काष्ठा kobj_attribute rnbd_clt_remap_device_attr =
 	__ATTR(remap_device, 0644, rnbd_clt_remap_dev_show,
 	       rnbd_clt_remap_dev_store);
 
-static ssize_t session_show(struct kobject *kobj, struct kobj_attribute *attr,
-			    char *page)
-{
-	struct rnbd_clt_dev *dev;
+अटल sमाप_प्रकार session_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			    अक्षर *page)
+अणु
+	काष्ठा rnbd_clt_dev *dev;
 
-	dev = container_of(kobj, struct rnbd_clt_dev, kobj);
+	dev = container_of(kobj, काष्ठा rnbd_clt_dev, kobj);
 
-	return scnprintf(page, PAGE_SIZE, "%s\n", dev->sess->sessname);
-}
+	वापस scnम_लिखो(page, PAGE_SIZE, "%s\n", dev->sess->sessname);
+पूर्ण
 
-static struct kobj_attribute rnbd_clt_session_attr =
+अटल काष्ठा kobj_attribute rnbd_clt_session_attr =
 	__ATTR_RO(session);
 
-static struct attribute *rnbd_dev_attrs[] = {
+अटल काष्ठा attribute *rnbd_dev_attrs[] = अणु
 	&rnbd_clt_unmap_device_attr.attr,
 	&rnbd_clt_resize_dev_attr.attr,
 	&rnbd_clt_remap_device_attr.attr,
@@ -451,128 +452,128 @@ static struct attribute *rnbd_dev_attrs[] = {
 	&rnbd_clt_session_attr.attr,
 	&rnbd_clt_access_mode.attr,
 	&rnbd_clt_nr_poll_queues.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-void rnbd_clt_remove_dev_symlink(struct rnbd_clt_dev *dev)
-{
+व्योम rnbd_clt_हटाओ_dev_symlink(काष्ठा rnbd_clt_dev *dev)
+अणु
 	/*
-	 * The module unload rnbd_client_exit path is racing with unmapping of
+	 * The module unload rnbd_client_निकास path is racing with unmapping of
 	 * the last single device from the sysfs manually
 	 * i.e. rnbd_clt_unmap_dev_store() leading to a sysfs warning because
-	 * of sysfs link already was removed already.
+	 * of sysfs link alपढ़ोy was हटाओd alपढ़ोy.
 	 */
-	if (dev->blk_symlink_name) {
-		if (try_module_get(THIS_MODULE)) {
-			sysfs_remove_link(rnbd_devs_kobj, dev->blk_symlink_name);
+	अगर (dev->blk_symlink_name) अणु
+		अगर (try_module_get(THIS_MODULE)) अणु
+			sysfs_हटाओ_link(rnbd_devs_kobj, dev->blk_symlink_name);
 			module_put(THIS_MODULE);
-		}
-		/* It should be freed always. */
-		kfree(dev->blk_symlink_name);
-		dev->blk_symlink_name = NULL;
-	}
-}
+		पूर्ण
+		/* It should be मुक्तd always. */
+		kमुक्त(dev->blk_symlink_name);
+		dev->blk_symlink_name = शून्य;
+	पूर्ण
+पूर्ण
 
-static struct kobj_type rnbd_dev_ktype = {
+अटल काष्ठा kobj_type rnbd_dev_ktype = अणु
 	.sysfs_ops      = &kobj_sysfs_ops,
-	.default_attrs  = rnbd_dev_attrs,
-};
+	.शेष_attrs  = rnbd_dev_attrs,
+पूर्ण;
 
-static int rnbd_clt_add_dev_kobj(struct rnbd_clt_dev *dev)
-{
-	int ret;
-	struct kobject *gd_kobj = &disk_to_dev(dev->gd)->kobj;
+अटल पूर्णांक rnbd_clt_add_dev_kobj(काष्ठा rnbd_clt_dev *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा kobject *gd_kobj = &disk_to_dev(dev->gd)->kobj;
 
 	ret = kobject_init_and_add(&dev->kobj, &rnbd_dev_ktype, gd_kobj, "%s",
 				   "rnbd");
-	if (ret) {
+	अगर (ret) अणु
 		rnbd_clt_err(dev, "Failed to create device sysfs dir, err: %d\n",
 			      ret);
 		kobject_put(&dev->kobj);
-	}
+	पूर्ण
 	kobject_uevent(gd_kobj, KOBJ_ONLINE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t rnbd_clt_map_device_show(struct kobject *kobj,
-					 struct kobj_attribute *attr,
-					 char *page)
-{
-	return scnprintf(page, PAGE_SIZE,
+अटल sमाप_प्रकार rnbd_clt_map_device_show(काष्ठा kobject *kobj,
+					 काष्ठा kobj_attribute *attr,
+					 अक्षर *page)
+अणु
+	वापस scnम_लिखो(page, PAGE_SIZE,
 			 "Usage: echo \"[dest_port=server port number] sessname=<name of the rtrs session> path=<[srcaddr@]dstaddr> [path=<[srcaddr@]dstaddr>] device_path=<full path on remote side> [access_mode=<ro|rw|migration>] [nr_poll_queues=<number of queues>]\" > %s\n\naddr ::= [ ip:<ipv4> | ip:<ipv6> | gid:<gid> ]\n",
 			 attr->attr.name);
-}
+पूर्ण
 
-static int rnbd_clt_get_path_name(struct rnbd_clt_dev *dev, char *buf,
-				   size_t len)
-{
-	int ret;
-	char pathname[NAME_MAX], *s;
+अटल पूर्णांक rnbd_clt_get_path_name(काष्ठा rnbd_clt_dev *dev, अक्षर *buf,
+				   माप_प्रकार len)
+अणु
+	पूर्णांक ret;
+	अक्षर pathname[NAME_MAX], *s;
 
-	strscpy(pathname, dev->pathname, sizeof(pathname));
-	while ((s = strchr(pathname, '/')))
+	strscpy(pathname, dev->pathname, माप(pathname));
+	जबतक ((s = म_अक्षर(pathname, '/')))
 		s[0] = '!';
 
-	ret = snprintf(buf, len, "%s@%s", pathname, dev->sess->sessname);
-	if (ret >= len)
-		return -ENAMETOOLONG;
+	ret = snम_लिखो(buf, len, "%s@%s", pathname, dev->sess->sessname);
+	अगर (ret >= len)
+		वापस -ENAMETOOLONG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rnbd_clt_add_dev_symlink(struct rnbd_clt_dev *dev)
-{
-	struct kobject *gd_kobj = &disk_to_dev(dev->gd)->kobj;
-	int ret, len;
+अटल पूर्णांक rnbd_clt_add_dev_symlink(काष्ठा rnbd_clt_dev *dev)
+अणु
+	काष्ठा kobject *gd_kobj = &disk_to_dev(dev->gd)->kobj;
+	पूर्णांक ret, len;
 
-	len = strlen(dev->pathname) + strlen(dev->sess->sessname) + 2;
+	len = म_माप(dev->pathname) + म_माप(dev->sess->sessname) + 2;
 	dev->blk_symlink_name = kzalloc(len, GFP_KERNEL);
-	if (!dev->blk_symlink_name) {
+	अगर (!dev->blk_symlink_name) अणु
 		rnbd_clt_err(dev, "Failed to allocate memory for blk_symlink_name\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = rnbd_clt_get_path_name(dev, dev->blk_symlink_name,
 				      len);
-	if (ret) {
+	अगर (ret) अणु
 		rnbd_clt_err(dev, "Failed to get /sys/block symlink path, err: %d\n",
 			      ret);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	ret = sysfs_create_link(rnbd_devs_kobj, gd_kobj,
 				dev->blk_symlink_name);
-	if (ret) {
+	अगर (ret) अणु
 		rnbd_clt_err(dev, "Creating /sys/block symlink failed, err: %d\n",
 			      ret);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_err:
-	kfree(dev->blk_symlink_name);
-	dev->blk_symlink_name = NULL ;
-	return ret;
-}
+	kमुक्त(dev->blk_symlink_name);
+	dev->blk_symlink_name = शून्य ;
+	वापस ret;
+पूर्ण
 
-static ssize_t rnbd_clt_map_device_store(struct kobject *kobj,
-					  struct kobj_attribute *attr,
-					  const char *buf, size_t count)
-{
-	struct rnbd_clt_dev *dev;
-	struct rnbd_map_options opt;
-	int ret;
-	char pathname[NAME_MAX];
-	char sessname[NAME_MAX];
-	enum rnbd_access_mode access_mode = RNBD_ACCESS_RW;
+अटल sमाप_प्रकार rnbd_clt_map_device_store(काष्ठा kobject *kobj,
+					  काष्ठा kobj_attribute *attr,
+					  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा rnbd_clt_dev *dev;
+	काष्ठा rnbd_map_options opt;
+	पूर्णांक ret;
+	अक्षर pathname[NAME_MAX];
+	अक्षर sessname[NAME_MAX];
+	क्रमागत rnbd_access_mode access_mode = RNBD_ACCESS_RW;
 	u16 port_nr = RTRS_PORT;
 	u32 nr_poll_queues = 0;
 
-	struct sockaddr_storage *addrs;
-	struct rtrs_addr paths[6];
-	size_t path_cnt;
+	काष्ठा sockaddr_storage *addrs;
+	काष्ठा rtrs_addr paths[6];
+	माप_प्रकार path_cnt;
 
 	opt.sessname = sessname;
 	opt.paths = paths;
@@ -581,18 +582,18 @@ static ssize_t rnbd_clt_map_device_store(struct kobject *kobj,
 	opt.dest_port = &port_nr;
 	opt.access_mode = &access_mode;
 	opt.nr_poll_queues = &nr_poll_queues;
-	addrs = kcalloc(ARRAY_SIZE(paths) * 2, sizeof(*addrs), GFP_KERNEL);
-	if (!addrs)
-		return -ENOMEM;
+	addrs = kसुस्मृति(ARRAY_SIZE(paths) * 2, माप(*addrs), GFP_KERNEL);
+	अगर (!addrs)
+		वापस -ENOMEM;
 
-	for (path_cnt = 0; path_cnt < ARRAY_SIZE(paths); path_cnt++) {
+	क्रम (path_cnt = 0; path_cnt < ARRAY_SIZE(paths); path_cnt++) अणु
 		paths[path_cnt].src = &addrs[path_cnt * 2];
 		paths[path_cnt].dst = &addrs[path_cnt * 2 + 1];
-	}
+	पूर्ण
 
 	ret = rnbd_clt_parse_map_options(buf, ARRAY_SIZE(paths), &opt);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	pr_info("Mapping device %s on session %s, (access_mode: %s, nr_poll_queues: %d)\n",
 		pathname, sessname,
@@ -601,83 +602,83 @@ static ssize_t rnbd_clt_map_device_store(struct kobject *kobj,
 
 	dev = rnbd_clt_map_device(sessname, paths, path_cnt, port_nr, pathname,
 				  access_mode, nr_poll_queues);
-	if (IS_ERR(dev)) {
+	अगर (IS_ERR(dev)) अणु
 		ret = PTR_ERR(dev);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = rnbd_clt_add_dev_kobj(dev);
-	if (ret)
-		goto unmap_dev;
+	अगर (ret)
+		जाओ unmap_dev;
 
 	ret = rnbd_clt_add_dev_symlink(dev);
-	if (ret)
-		goto unmap_dev;
+	अगर (ret)
+		जाओ unmap_dev;
 
-	kfree(addrs);
-	return count;
+	kमुक्त(addrs);
+	वापस count;
 
 unmap_dev:
-	rnbd_clt_unmap_device(dev, true, NULL);
+	rnbd_clt_unmap_device(dev, true, शून्य);
 out:
-	kfree(addrs);
-	return ret;
-}
+	kमुक्त(addrs);
+	वापस ret;
+पूर्ण
 
-static struct kobj_attribute rnbd_clt_map_device_attr =
+अटल काष्ठा kobj_attribute rnbd_clt_map_device_attr =
 	__ATTR(map_device, 0644,
 	       rnbd_clt_map_device_show, rnbd_clt_map_device_store);
 
-static struct attribute *default_attrs[] = {
+अटल काष्ठा attribute *शेष_attrs[] = अणु
 	&rnbd_clt_map_device_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group default_attr_group = {
-	.attrs = default_attrs,
-};
+अटल काष्ठा attribute_group शेष_attr_group = अणु
+	.attrs = शेष_attrs,
+पूर्ण;
 
-static const struct attribute_group *default_attr_groups[] = {
-	&default_attr_group,
-	NULL,
-};
+अटल स्थिर काष्ठा attribute_group *शेष_attr_groups[] = अणु
+	&शेष_attr_group,
+	शून्य,
+पूर्ण;
 
-int rnbd_clt_create_sysfs_files(void)
-{
-	int err;
+पूर्णांक rnbd_clt_create_sysfs_files(व्योम)
+अणु
+	पूर्णांक err;
 
 	rnbd_dev_class = class_create(THIS_MODULE, "rnbd-client");
-	if (IS_ERR(rnbd_dev_class))
-		return PTR_ERR(rnbd_dev_class);
+	अगर (IS_ERR(rnbd_dev_class))
+		वापस PTR_ERR(rnbd_dev_class);
 
-	rnbd_dev = device_create_with_groups(rnbd_dev_class, NULL,
-					      MKDEV(0, 0), NULL,
-					      default_attr_groups, "ctl");
-	if (IS_ERR(rnbd_dev)) {
+	rnbd_dev = device_create_with_groups(rnbd_dev_class, शून्य,
+					      MKDEV(0, 0), शून्य,
+					      शेष_attr_groups, "ctl");
+	अगर (IS_ERR(rnbd_dev)) अणु
 		err = PTR_ERR(rnbd_dev);
-		goto cls_destroy;
-	}
+		जाओ cls_destroy;
+	पूर्ण
 	rnbd_devs_kobj = kobject_create_and_add("devices", &rnbd_dev->kobj);
-	if (!rnbd_devs_kobj) {
+	अगर (!rnbd_devs_kobj) अणु
 		err = -ENOMEM;
-		goto dev_destroy;
-	}
+		जाओ dev_destroy;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 dev_destroy:
 	device_destroy(rnbd_dev_class, MKDEV(0, 0));
 cls_destroy:
 	class_destroy(rnbd_dev_class);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void rnbd_clt_destroy_sysfs_files(void)
-{
-	sysfs_remove_group(&rnbd_dev->kobj, &default_attr_group);
+व्योम rnbd_clt_destroy_sysfs_files(व्योम)
+अणु
+	sysfs_हटाओ_group(&rnbd_dev->kobj, &शेष_attr_group);
 	kobject_del(rnbd_devs_kobj);
 	kobject_put(rnbd_devs_kobj);
 	device_destroy(rnbd_dev_class, MKDEV(0, 0));
 	class_destroy(rnbd_dev_class);
-}
+पूर्ण

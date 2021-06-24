@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,66 +21,66 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef KFD_EVENTS_H_INCLUDED
-#define KFD_EVENTS_H_INCLUDED
+#अगर_अघोषित KFD_EVENTS_H_INCLUDED
+#घोषणा KFD_EVENTS_H_INCLUDED
 
-#include <linux/kernel.h>
-#include <linux/hashtable.h>
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/wait.h>
-#include "kfd_priv.h"
-#include <uapi/linux/kfd_ioctl.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/hashtable.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/रुको.h>
+#समावेश "kfd_priv.h"
+#समावेश <uapi/linux/kfd_ioctl.h>
 
 /*
- * IDR supports non-negative integer IDs. Small IDs are used for
- * signal events to match their signal slot. Use the upper half of the
- * ID space for non-signal events.
+ * IDR supports non-negative पूर्णांकeger IDs. Small IDs are used क्रम
+ * संकेत events to match their संकेत slot. Use the upper half of the
+ * ID space क्रम non-संकेत events.
  */
-#define KFD_FIRST_NONSIGNAL_EVENT_ID ((INT_MAX >> 1) + 1)
-#define KFD_LAST_NONSIGNAL_EVENT_ID INT_MAX
+#घोषणा KFD_FIRST_NONSIGNAL_EVENT_ID ((पूर्णांक_उच्च >> 1) + 1)
+#घोषणा KFD_LAST_NONSIGNAL_EVENT_ID पूर्णांक_उच्च
 
 /*
- * Written into kfd_signal_slot_t to indicate that the event is not signaled.
- * Since the event protocol may need to write the event ID into memory, this
+ * Written पूर्णांकo kfd_संकेत_slot_t to indicate that the event is not संकेतed.
+ * Since the event protocol may need to ग_लिखो the event ID पूर्णांकo memory, this
  * must not be a valid event ID.
- * For the sake of easy memset-ing, this must be a byte pattern.
+ * For the sake of easy स_रखो-ing, this must be a byte pattern.
  */
-#define UNSIGNALED_EVENT_SLOT ((uint64_t)-1)
+#घोषणा UNSIGNALED_EVENT_SLOT ((uपूर्णांक64_t)-1)
 
-struct kfd_event_waiter;
-struct signal_page;
+काष्ठा kfd_event_रुकोer;
+काष्ठा संकेत_page;
 
-struct kfd_event {
+काष्ठा kfd_event अणु
 	u32 event_id;
 
-	bool signaled;
-	bool auto_reset;
+	bool संकेतed;
+	bool स्वतः_reset;
 
-	int type;
+	पूर्णांक type;
 
-	wait_queue_head_t wq; /* List of event waiters. */
+	रुको_queue_head_t wq; /* List of event रुकोers. */
 
-	/* Only for signal events. */
-	uint64_t __user *user_signal_address;
+	/* Only क्रम संकेत events. */
+	uपूर्णांक64_t __user *user_संकेत_address;
 
-	/* type specific data */
-	union {
-		struct kfd_hsa_memory_exception_data memory_exception_data;
-		struct kfd_hsa_hw_exception_data hw_exception_data;
-	};
-};
+	/* type specअगरic data */
+	जोड़ अणु
+		काष्ठा kfd_hsa_memory_exception_data memory_exception_data;
+		काष्ठा kfd_hsa_hw_exception_data hw_exception_data;
+	पूर्ण;
+पूर्ण;
 
-#define KFD_EVENT_TIMEOUT_IMMEDIATE 0
-#define KFD_EVENT_TIMEOUT_INFINITE 0xFFFFFFFFu
+#घोषणा KFD_EVENT_TIMEOUT_IMMEDIATE 0
+#घोषणा KFD_EVENT_TIMEOUT_INFINITE 0xFFFFFFFFu
 
 /* Matching HSA_EVENTTYPE */
-#define KFD_EVENT_TYPE_SIGNAL 0
-#define KFD_EVENT_TYPE_HW_EXCEPTION 3
-#define KFD_EVENT_TYPE_DEBUG 5
-#define KFD_EVENT_TYPE_MEMORY 8
+#घोषणा KFD_EVENT_TYPE_SIGNAL 0
+#घोषणा KFD_EVENT_TYPE_HW_EXCEPTION 3
+#घोषणा KFD_EVENT_TYPE_DEBUG 5
+#घोषणा KFD_EVENT_TYPE_MEMORY 8
 
-extern void kfd_signal_event_interrupt(u32 pasid, uint32_t partial_id,
-				       uint32_t valid_id_bits);
+बाह्य व्योम kfd_संकेत_event_पूर्णांकerrupt(u32 pasid, uपूर्णांक32_t partial_id,
+				       uपूर्णांक32_t valid_id_bits);
 
-#endif
+#पूर्ण_अगर

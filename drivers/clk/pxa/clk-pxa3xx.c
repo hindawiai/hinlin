@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Marvell PXA3xxx family clocks
+ * Marvell PXA3xxx family घड़ीs
  *
  * Copyright (C) 2014 Robert Jarzmik
  *
- * Heavily inspired from former arch/arm/mach-pxa/pxa3xx.c
+ * Heavily inspired from क्रमmer arch/arm/mach-pxa/pxa3xx.c
  *
- * For non-devicetree platforms. Once pxa is fully converted to devicetree, this
+ * For non-devicetree platक्रमms. Once pxa is fully converted to devicetree, this
  * should go away.
  */
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/of.h>
-#include <mach/smemc.h>
-#include <mach/pxa3xx-regs.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/of.h>
+#समावेश <mach/smemc.h>
+#समावेश <mach/pxa3xx-regs.h>
 
-#include <dt-bindings/clock/pxa-clock.h>
-#include "clk-pxa.h"
+#समावेश <dt-bindings/घड़ी/pxa-घड़ी.h>
+#समावेश "clk-pxa.h"
 
-#define KHz 1000
-#define MHz (1000 * 1000)
+#घोषणा KHz 1000
+#घोषणा MHz (1000 * 1000)
 
-enum {
+क्रमागत अणु
 	PXA_CORE_60Mhz = 0,
 	PXA_CORE_RUN,
 	PXA_CORE_TURBO,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PXA_BUS_60Mhz = 0,
 	PXA_BUS_HSS,
-};
+पूर्ण;
 
 /* crystal frequency to HSIO bus frequency multiplier (HSS) */
-static unsigned char hss_mult[4] = { 8, 12, 16, 24 };
+अटल अचिन्हित अक्षर hss_mult[4] = अणु 8, 12, 16, 24 पूर्ण;
 
-/* crystal frequency to static memory controller multiplier (SMCFS) */
-static unsigned int smcfs_mult[8] = { 6, 0, 8, 0, 0, 16, };
-static unsigned int df_clkdiv[4] = { 1, 2, 4, 1 };
+/* crystal frequency to अटल memory controller multiplier (SMCFS) */
+अटल अचिन्हित पूर्णांक smcfs_mult[8] = अणु 6, 0, 8, 0, 0, 16, पूर्ण;
+अटल अचिन्हित पूर्णांक df_clkभाग[4] = अणु 1, 2, 4, 1 पूर्ण;
 
-static const char * const get_freq_khz[] = {
+अटल स्थिर अक्षर * स्थिर get_freq_khz[] = अणु
 	"core", "ring_osc_60mhz", "run", "cpll", "system_bus"
-};
+पूर्ण;
 
 /*
- * Get the clock frequency as reflected by ACSR and the turbo flag.
+ * Get the घड़ी frequency as reflected by ACSR and the turbo flag.
  * We assume these values have been applied via a fcs.
  * If info is not 0 we also display the current settings.
  */
-unsigned int pxa3xx_get_clk_frequency_khz(int info)
-{
-	struct clk *clk;
-	unsigned long clks[5];
-	int i;
+अचिन्हित पूर्णांक pxa3xx_get_clk_frequency_khz(पूर्णांक info)
+अणु
+	काष्ठा clk *clk;
+	अचिन्हित दीर्घ clks[5];
+	पूर्णांक i;
 
-	for (i = 0; i < 5; i++) {
-		clk = clk_get(NULL, get_freq_khz[i]);
-		if (IS_ERR(clk)) {
+	क्रम (i = 0; i < 5; i++) अणु
+		clk = clk_get(शून्य, get_freq_khz[i]);
+		अगर (IS_ERR(clk)) अणु
 			clks[i] = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			clks[i] = clk_get_rate(clk);
 			clk_put(clk);
-		}
-	}
-	if (info) {
+		पूर्ण
+	पूर्ण
+	अगर (info) अणु
 		pr_info("RO Mode clock: %ld.%02ldMHz\n",
 			clks[1] / 1000000, (clks[0] % 1000000) / 10000);
 		pr_info("Run Mode clock: %ld.%02ldMHz\n",
@@ -74,295 +75,295 @@ unsigned int pxa3xx_get_clk_frequency_khz(int info)
 			clks[3] / 1000000, (clks[2] % 1000000) / 10000);
 		pr_info("System bus clock: %ld.%02ldMHz\n",
 			clks[4] / 1000000, (clks[4] % 1000000) / 10000);
-	}
-	return (unsigned int)clks[0] / KHz;
-}
+	पूर्ण
+	वापस (अचिन्हित पूर्णांक)clks[0] / KHz;
+पूर्ण
 
-static unsigned long clk_pxa3xx_ac97_get_rate(struct clk_hw *hw,
-					     unsigned long parent_rate)
-{
-	unsigned long ac97_div, rate;
+अटल अचिन्हित दीर्घ clk_pxa3xx_ac97_get_rate(काष्ठा clk_hw *hw,
+					     अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित दीर्घ ac97_भाग, rate;
 
-	ac97_div = AC97_DIV;
+	ac97_भाग = AC97_DIV;
 
-	/* This may loose precision for some rates but won't for the
+	/* This may loose precision क्रम some rates but won't क्रम the
 	 * standard 24.576MHz.
 	 */
 	rate = parent_rate / 2;
-	rate /= ((ac97_div >> 12) & 0x7fff);
-	rate *= (ac97_div & 0xfff);
+	rate /= ((ac97_भाग >> 12) & 0x7fff);
+	rate *= (ac97_भाग & 0xfff);
 
-	return rate;
-}
-PARENTS(clk_pxa3xx_ac97) = { "spll_624mhz" };
+	वापस rate;
+पूर्ण
+PARENTS(clk_pxa3xx_ac97) = अणु "spll_624mhz" पूर्ण;
 RATE_RO_OPS(clk_pxa3xx_ac97, "ac97");
 
-static unsigned long clk_pxa3xx_smemc_get_rate(struct clk_hw *hw,
-					      unsigned long parent_rate)
-{
-	unsigned long acsr = ACSR;
-	unsigned long memclkcfg = __raw_readl(MEMCLKCFG);
+अटल अचिन्हित दीर्घ clk_pxa3xx_smemc_get_rate(काष्ठा clk_hw *hw,
+					      अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित दीर्घ acsr = ACSR;
+	अचिन्हित दीर्घ memclkcfg = __raw_पढ़ोl(MEMCLKCFG);
 
-	return (parent_rate / 48)  * smcfs_mult[(acsr >> 23) & 0x7] /
-		df_clkdiv[(memclkcfg >> 16) & 0x3];
-}
-PARENTS(clk_pxa3xx_smemc) = { "spll_624mhz" };
+	वापस (parent_rate / 48)  * smcfs_mult[(acsr >> 23) & 0x7] /
+		df_clkभाग[(memclkcfg >> 16) & 0x3];
+पूर्ण
+PARENTS(clk_pxa3xx_smemc) = अणु "spll_624mhz" पूर्ण;
 RATE_RO_OPS(clk_pxa3xx_smemc, "smemc");
 
-static bool pxa3xx_is_ring_osc_forced(void)
-{
-	unsigned long acsr = ACSR;
+अटल bool pxa3xx_is_ring_osc_क्रमced(व्योम)
+अणु
+	अचिन्हित दीर्घ acsr = ACSR;
 
-	return acsr & ACCR_D0CS;
-}
+	वापस acsr & ACCR_D0CS;
+पूर्ण
 
-PARENTS(pxa3xx_pbus) = { "ring_osc_60mhz", "spll_624mhz" };
-PARENTS(pxa3xx_32Khz_bus) = { "osc_32_768khz", "osc_32_768khz" };
-PARENTS(pxa3xx_13MHz_bus) = { "osc_13mhz", "osc_13mhz" };
-PARENTS(pxa3xx_ac97_bus) = { "ring_osc_60mhz", "ac97" };
-PARENTS(pxa3xx_sbus) = { "ring_osc_60mhz", "system_bus" };
-PARENTS(pxa3xx_smemcbus) = { "ring_osc_60mhz", "smemc" };
+PARENTS(pxa3xx_pbus) = अणु "ring_osc_60mhz", "spll_624mhz" पूर्ण;
+PARENTS(pxa3xx_32Khz_bus) = अणु "osc_32_768khz", "osc_32_768khz" पूर्ण;
+PARENTS(pxa3xx_13MHz_bus) = अणु "osc_13mhz", "osc_13mhz" पूर्ण;
+PARENTS(pxa3xx_ac97_bus) = अणु "ring_osc_60mhz", "ac97" पूर्ण;
+PARENTS(pxa3xx_sbus) = अणु "ring_osc_60mhz", "system_bus" पूर्ण;
+PARENTS(pxa3xx_smemcbus) = अणु "ring_osc_60mhz", "smemc" पूर्ण;
 
-#define CKEN_AB(bit) ((CKEN_ ## bit > 31) ? &CKENB : &CKENA)
-#define PXA3XX_CKEN(dev_id, con_id, parents, mult_lp, div_lp, mult_hp,	\
-		    div_hp, bit, is_lp, flags)				\
-	PXA_CKEN(dev_id, con_id, bit, parents, mult_lp, div_lp,		\
-		 mult_hp, div_hp, is_lp,  CKEN_AB(bit),			\
+#घोषणा CKEN_AB(bit) ((CKEN_ ## bit > 31) ? &CKENB : &CKENA)
+#घोषणा PXA3XX_CKEN(dev_id, con_id, parents, mult_lp, भाग_lp, mult_hp,	\
+		    भाग_hp, bit, is_lp, flags)				\
+	PXA_CKEN(dev_id, con_id, bit, parents, mult_lp, भाग_lp,		\
+		 mult_hp, भाग_hp, is_lp,  CKEN_AB(bit),			\
 		 (CKEN_ ## bit % 32), flags)
-#define PXA3XX_PBUS_CKEN(dev_id, con_id, bit, mult_lp, div_lp,		\
-			 mult_hp, div_hp, delay)			\
+#घोषणा PXA3XX_PBUS_CKEN(dev_id, con_id, bit, mult_lp, भाग_lp,		\
+			 mult_hp, भाग_hp, delay)			\
 	PXA3XX_CKEN(dev_id, con_id, pxa3xx_pbus_parents, mult_lp,	\
-		    div_lp, mult_hp, div_hp, bit, pxa3xx_is_ring_osc_forced, 0)
-#define PXA3XX_CKEN_1RATE(dev_id, con_id, bit, parents)			\
+		    भाग_lp, mult_hp, भाग_hp, bit, pxa3xx_is_ring_osc_क्रमced, 0)
+#घोषणा PXA3XX_CKEN_1RATE(dev_id, con_id, bit, parents)			\
 	PXA_CKEN_1RATE(dev_id, con_id, bit, parents,			\
 		       CKEN_AB(bit), (CKEN_ ## bit % 32), 0)
 
-static struct desc_clk_cken pxa3xx_clocks[] __initdata = {
-	PXA3XX_PBUS_CKEN("pxa2xx-uart.0", NULL, FFUART, 1, 4, 1, 42, 1),
-	PXA3XX_PBUS_CKEN("pxa2xx-uart.1", NULL, BTUART, 1, 4, 1, 42, 1),
-	PXA3XX_PBUS_CKEN("pxa2xx-uart.2", NULL, STUART, 1, 4, 1, 42, 1),
-	PXA3XX_PBUS_CKEN("pxa2xx-i2c.0", NULL, I2C, 2, 5, 1, 19, 0),
-	PXA3XX_PBUS_CKEN("pxa27x-udc", NULL, UDC, 1, 4, 1, 13, 5),
-	PXA3XX_PBUS_CKEN("pxa27x-ohci", NULL, USBH, 1, 4, 1, 13, 0),
-	PXA3XX_PBUS_CKEN("pxa3xx-u2d", NULL, USB2, 1, 4, 1, 13, 0),
-	PXA3XX_PBUS_CKEN("pxa27x-pwm.0", NULL, PWM0, 1, 6, 1, 48, 0),
-	PXA3XX_PBUS_CKEN("pxa27x-pwm.1", NULL, PWM1, 1, 6, 1, 48, 0),
-	PXA3XX_PBUS_CKEN("pxa2xx-mci.0", NULL, MMC1, 1, 4, 1, 24, 0),
-	PXA3XX_PBUS_CKEN("pxa2xx-mci.1", NULL, MMC2, 1, 4, 1, 24, 0),
-	PXA3XX_PBUS_CKEN("pxa2xx-mci.2", NULL, MMC3, 1, 4, 1, 24, 0),
+अटल काष्ठा desc_clk_cken pxa3xx_घड़ीs[] __initdata = अणु
+	PXA3XX_PBUS_CKEN("pxa2xx-uart.0", शून्य, FFUART, 1, 4, 1, 42, 1),
+	PXA3XX_PBUS_CKEN("pxa2xx-uart.1", शून्य, BTUART, 1, 4, 1, 42, 1),
+	PXA3XX_PBUS_CKEN("pxa2xx-uart.2", शून्य, STUART, 1, 4, 1, 42, 1),
+	PXA3XX_PBUS_CKEN("pxa2xx-i2c.0", शून्य, I2C, 2, 5, 1, 19, 0),
+	PXA3XX_PBUS_CKEN("pxa27x-udc", शून्य, UDC, 1, 4, 1, 13, 5),
+	PXA3XX_PBUS_CKEN("pxa27x-ohci", शून्य, USBH, 1, 4, 1, 13, 0),
+	PXA3XX_PBUS_CKEN("pxa3xx-u2d", शून्य, USB2, 1, 4, 1, 13, 0),
+	PXA3XX_PBUS_CKEN("pxa27x-pwm.0", शून्य, PWM0, 1, 6, 1, 48, 0),
+	PXA3XX_PBUS_CKEN("pxa27x-pwm.1", शून्य, PWM1, 1, 6, 1, 48, 0),
+	PXA3XX_PBUS_CKEN("pxa2xx-mci.0", शून्य, MMC1, 1, 4, 1, 24, 0),
+	PXA3XX_PBUS_CKEN("pxa2xx-mci.1", शून्य, MMC2, 1, 4, 1, 24, 0),
+	PXA3XX_PBUS_CKEN("pxa2xx-mci.2", शून्य, MMC3, 1, 4, 1, 24, 0),
 
-	PXA3XX_CKEN_1RATE("pxa27x-keypad", NULL, KEYPAD,
+	PXA3XX_CKEN_1RATE("pxa27x-keypad", शून्य, KEYPAD,
 			  pxa3xx_32Khz_bus_parents),
-	PXA3XX_CKEN_1RATE("pxa3xx-ssp.0", NULL, SSP1, pxa3xx_13MHz_bus_parents),
-	PXA3XX_CKEN_1RATE("pxa3xx-ssp.1", NULL, SSP2, pxa3xx_13MHz_bus_parents),
-	PXA3XX_CKEN_1RATE("pxa3xx-ssp.2", NULL, SSP3, pxa3xx_13MHz_bus_parents),
-	PXA3XX_CKEN_1RATE("pxa3xx-ssp.3", NULL, SSP4, pxa3xx_13MHz_bus_parents),
+	PXA3XX_CKEN_1RATE("pxa3xx-ssp.0", शून्य, SSP1, pxa3xx_13MHz_bus_parents),
+	PXA3XX_CKEN_1RATE("pxa3xx-ssp.1", शून्य, SSP2, pxa3xx_13MHz_bus_parents),
+	PXA3XX_CKEN_1RATE("pxa3xx-ssp.2", शून्य, SSP3, pxa3xx_13MHz_bus_parents),
+	PXA3XX_CKEN_1RATE("pxa3xx-ssp.3", शून्य, SSP4, pxa3xx_13MHz_bus_parents),
 
-	PXA3XX_CKEN(NULL, "AC97CLK", pxa3xx_ac97_bus_parents, 1, 4, 1, 1, AC97,
-		    pxa3xx_is_ring_osc_forced, 0),
-	PXA3XX_CKEN(NULL, "CAMCLK", pxa3xx_sbus_parents, 1, 2, 1, 1, CAMERA,
-		    pxa3xx_is_ring_osc_forced, 0),
-	PXA3XX_CKEN("pxa2xx-fb", NULL, pxa3xx_sbus_parents, 1, 1, 1, 1, LCD,
-		    pxa3xx_is_ring_osc_forced, 0),
-	PXA3XX_CKEN("pxa2xx-pcmcia", NULL, pxa3xx_smemcbus_parents, 1, 4,
-		    1, 1, SMC, pxa3xx_is_ring_osc_forced, CLK_IGNORE_UNUSED),
-};
+	PXA3XX_CKEN(शून्य, "AC97CLK", pxa3xx_ac97_bus_parents, 1, 4, 1, 1, AC97,
+		    pxa3xx_is_ring_osc_क्रमced, 0),
+	PXA3XX_CKEN(शून्य, "CAMCLK", pxa3xx_sbus_parents, 1, 2, 1, 1, CAMERA,
+		    pxa3xx_is_ring_osc_क्रमced, 0),
+	PXA3XX_CKEN("pxa2xx-fb", शून्य, pxa3xx_sbus_parents, 1, 1, 1, 1, LCD,
+		    pxa3xx_is_ring_osc_क्रमced, 0),
+	PXA3XX_CKEN("pxa2xx-pcmcia", शून्य, pxa3xx_smemcbus_parents, 1, 4,
+		    1, 1, SMC, pxa3xx_is_ring_osc_क्रमced, CLK_IGNORE_UNUSED),
+पूर्ण;
 
-static struct desc_clk_cken pxa300_310_clocks[] __initdata = {
+अटल काष्ठा desc_clk_cken pxa300_310_घड़ीs[] __initdata = अणु
 
-	PXA3XX_PBUS_CKEN("pxa3xx-gcu", NULL, PXA300_GCU, 1, 1, 1, 1, 0),
-	PXA3XX_PBUS_CKEN("pxa3xx-nand", NULL, NAND, 1, 2, 1, 4, 0),
-	PXA3XX_CKEN_1RATE("pxa3xx-gpio", NULL, GPIO, pxa3xx_13MHz_bus_parents),
-};
+	PXA3XX_PBUS_CKEN("pxa3xx-gcu", शून्य, PXA300_GCU, 1, 1, 1, 1, 0),
+	PXA3XX_PBUS_CKEN("pxa3xx-nand", शून्य, न_अंकD, 1, 2, 1, 4, 0),
+	PXA3XX_CKEN_1RATE("pxa3xx-gpio", शून्य, GPIO, pxa3xx_13MHz_bus_parents),
+पूर्ण;
 
-static struct desc_clk_cken pxa320_clocks[] __initdata = {
-	PXA3XX_PBUS_CKEN("pxa3xx-nand", NULL, NAND, 1, 2, 1, 6, 0),
-	PXA3XX_PBUS_CKEN("pxa3xx-gcu", NULL, PXA320_GCU, 1, 1, 1, 1, 0),
-	PXA3XX_CKEN_1RATE("pxa3xx-gpio", NULL, GPIO, pxa3xx_13MHz_bus_parents),
-};
+अटल काष्ठा desc_clk_cken pxa320_घड़ीs[] __initdata = अणु
+	PXA3XX_PBUS_CKEN("pxa3xx-nand", शून्य, न_अंकD, 1, 2, 1, 6, 0),
+	PXA3XX_PBUS_CKEN("pxa3xx-gcu", शून्य, PXA320_GCU, 1, 1, 1, 1, 0),
+	PXA3XX_CKEN_1RATE("pxa3xx-gpio", शून्य, GPIO, pxa3xx_13MHz_bus_parents),
+पूर्ण;
 
-static struct desc_clk_cken pxa93x_clocks[] __initdata = {
+अटल काष्ठा desc_clk_cken pxa93x_घड़ीs[] __initdata = अणु
 
-	PXA3XX_PBUS_CKEN("pxa3xx-gcu", NULL, PXA300_GCU, 1, 1, 1, 1, 0),
-	PXA3XX_PBUS_CKEN("pxa3xx-nand", NULL, NAND, 1, 2, 1, 4, 0),
-	PXA3XX_CKEN_1RATE("pxa93x-gpio", NULL, GPIO, pxa3xx_13MHz_bus_parents),
-};
+	PXA3XX_PBUS_CKEN("pxa3xx-gcu", शून्य, PXA300_GCU, 1, 1, 1, 1, 0),
+	PXA3XX_PBUS_CKEN("pxa3xx-nand", शून्य, न_अंकD, 1, 2, 1, 4, 0),
+	PXA3XX_CKEN_1RATE("pxa93x-gpio", शून्य, GPIO, pxa3xx_13MHz_bus_parents),
+पूर्ण;
 
-static unsigned long clk_pxa3xx_system_bus_get_rate(struct clk_hw *hw,
-					    unsigned long parent_rate)
-{
-	unsigned long acsr = ACSR;
-	unsigned int hss = (acsr >> 14) & 0x3;
+अटल अचिन्हित दीर्घ clk_pxa3xx_प्रणाली_bus_get_rate(काष्ठा clk_hw *hw,
+					    अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित दीर्घ acsr = ACSR;
+	अचिन्हित पूर्णांक hss = (acsr >> 14) & 0x3;
 
-	if (pxa3xx_is_ring_osc_forced())
-		return parent_rate;
-	return parent_rate / 48 * hss_mult[hss];
-}
+	अगर (pxa3xx_is_ring_osc_क्रमced())
+		वापस parent_rate;
+	वापस parent_rate / 48 * hss_mult[hss];
+पूर्ण
 
-static u8 clk_pxa3xx_system_bus_get_parent(struct clk_hw *hw)
-{
-	if (pxa3xx_is_ring_osc_forced())
-		return PXA_BUS_60Mhz;
-	else
-		return PXA_BUS_HSS;
-}
+अटल u8 clk_pxa3xx_प्रणाली_bus_get_parent(काष्ठा clk_hw *hw)
+अणु
+	अगर (pxa3xx_is_ring_osc_क्रमced())
+		वापस PXA_BUS_60Mhz;
+	अन्यथा
+		वापस PXA_BUS_HSS;
+पूर्ण
 
-PARENTS(clk_pxa3xx_system_bus) = { "ring_osc_60mhz", "spll_624mhz" };
-MUX_RO_RATE_RO_OPS(clk_pxa3xx_system_bus, "system_bus");
+PARENTS(clk_pxa3xx_प्रणाली_bus) = अणु "ring_osc_60mhz", "spll_624mhz" पूर्ण;
+MUX_RO_RATE_RO_OPS(clk_pxa3xx_प्रणाली_bus, "system_bus");
 
-static unsigned long clk_pxa3xx_core_get_rate(struct clk_hw *hw,
-					      unsigned long parent_rate)
-{
-	return parent_rate;
-}
+अटल अचिन्हित दीर्घ clk_pxa3xx_core_get_rate(काष्ठा clk_hw *hw,
+					      अचिन्हित दीर्घ parent_rate)
+अणु
+	वापस parent_rate;
+पूर्ण
 
-static u8 clk_pxa3xx_core_get_parent(struct clk_hw *hw)
-{
-	unsigned long xclkcfg;
-	unsigned int t;
+अटल u8 clk_pxa3xx_core_get_parent(काष्ठा clk_hw *hw)
+अणु
+	अचिन्हित दीर्घ xclkcfg;
+	अचिन्हित पूर्णांक t;
 
-	if (pxa3xx_is_ring_osc_forced())
-		return PXA_CORE_60Mhz;
+	अगर (pxa3xx_is_ring_osc_क्रमced())
+		वापस PXA_CORE_60Mhz;
 
-	/* Read XCLKCFG register turbo bit */
-	__asm__ __volatile__("mrc\tp14, 0, %0, c6, c0, 0" : "=r"(xclkcfg));
+	/* Read XCLKCFG रेजिस्टर turbo bit */
+	__यंत्र__ __अस्थिर__("mrc\tp14, 0, %0, c6, c0, 0" : "=r"(xclkcfg));
 	t = xclkcfg & 0x1;
 
-	if (t)
-		return PXA_CORE_TURBO;
-	return PXA_CORE_RUN;
-}
-PARENTS(clk_pxa3xx_core) = { "ring_osc_60mhz", "run", "cpll" };
+	अगर (t)
+		वापस PXA_CORE_TURBO;
+	वापस PXA_CORE_RUN;
+पूर्ण
+PARENTS(clk_pxa3xx_core) = अणु "ring_osc_60mhz", "run", "cpll" पूर्ण;
 MUX_RO_RATE_RO_OPS(clk_pxa3xx_core, "core");
 
-static unsigned long clk_pxa3xx_run_get_rate(struct clk_hw *hw,
-					     unsigned long parent_rate)
-{
-	unsigned long acsr = ACSR;
-	unsigned int xn = (acsr & ACCR_XN_MASK) >> 8;
-	unsigned int t, xclkcfg;
+अटल अचिन्हित दीर्घ clk_pxa3xx_run_get_rate(काष्ठा clk_hw *hw,
+					     अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित दीर्घ acsr = ACSR;
+	अचिन्हित पूर्णांक xn = (acsr & ACCR_XN_MASK) >> 8;
+	अचिन्हित पूर्णांक t, xclkcfg;
 
-	/* Read XCLKCFG register turbo bit */
-	__asm__ __volatile__("mrc\tp14, 0, %0, c6, c0, 0" : "=r"(xclkcfg));
+	/* Read XCLKCFG रेजिस्टर turbo bit */
+	__यंत्र__ __अस्थिर__("mrc\tp14, 0, %0, c6, c0, 0" : "=r"(xclkcfg));
 	t = xclkcfg & 0x1;
 
-	return t ? (parent_rate / xn) * 2 : parent_rate;
-}
-PARENTS(clk_pxa3xx_run) = { "cpll" };
+	वापस t ? (parent_rate / xn) * 2 : parent_rate;
+पूर्ण
+PARENTS(clk_pxa3xx_run) = अणु "cpll" पूर्ण;
 RATE_RO_OPS(clk_pxa3xx_run, "run");
 
-static unsigned long clk_pxa3xx_cpll_get_rate(struct clk_hw *hw,
-	unsigned long parent_rate)
-{
-	unsigned long acsr = ACSR;
-	unsigned int xn = (acsr & ACCR_XN_MASK) >> 8;
-	unsigned int xl = acsr & ACCR_XL_MASK;
-	unsigned int t, xclkcfg;
+अटल अचिन्हित दीर्घ clk_pxa3xx_cpll_get_rate(काष्ठा clk_hw *hw,
+	अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित दीर्घ acsr = ACSR;
+	अचिन्हित पूर्णांक xn = (acsr & ACCR_XN_MASK) >> 8;
+	अचिन्हित पूर्णांक xl = acsr & ACCR_XL_MASK;
+	अचिन्हित पूर्णांक t, xclkcfg;
 
-	/* Read XCLKCFG register turbo bit */
-	__asm__ __volatile__("mrc\tp14, 0, %0, c6, c0, 0" : "=r"(xclkcfg));
+	/* Read XCLKCFG रेजिस्टर turbo bit */
+	__यंत्र__ __अस्थिर__("mrc\tp14, 0, %0, c6, c0, 0" : "=r"(xclkcfg));
 	t = xclkcfg & 0x1;
 
 	pr_info("RJK: parent_rate=%lu, xl=%u, xn=%u\n", parent_rate, xl, xn);
-	return t ? parent_rate * xl * xn : parent_rate * xl;
-}
-PARENTS(clk_pxa3xx_cpll) = { "osc_13mhz" };
+	वापस t ? parent_rate * xl * xn : parent_rate * xl;
+पूर्ण
+PARENTS(clk_pxa3xx_cpll) = अणु "osc_13mhz" पूर्ण;
 RATE_RO_OPS(clk_pxa3xx_cpll, "cpll");
 
-static void __init pxa3xx_register_core(void)
-{
-	clk_register_clk_pxa3xx_cpll();
-	clk_register_clk_pxa3xx_run();
+अटल व्योम __init pxa3xx_रेजिस्टर_core(व्योम)
+अणु
+	clk_रेजिस्टर_clk_pxa3xx_cpll();
+	clk_रेजिस्टर_clk_pxa3xx_run();
 
-	clkdev_pxa_register(CLK_CORE, "core", NULL,
-			    clk_register_clk_pxa3xx_core());
-}
+	clkdev_pxa_रेजिस्टर(CLK_CORE, "core", शून्य,
+			    clk_रेजिस्टर_clk_pxa3xx_core());
+पूर्ण
 
-static void __init pxa3xx_register_plls(void)
-{
-	clk_register_fixed_rate(NULL, "osc_13mhz", NULL,
+अटल व्योम __init pxa3xx_रेजिस्टर_plls(व्योम)
+अणु
+	clk_रेजिस्टर_fixed_rate(शून्य, "osc_13mhz", शून्य,
 				CLK_GET_RATE_NOCACHE,
 				13 * MHz);
-	clkdev_pxa_register(CLK_OSC32k768, "osc_32_768khz", NULL,
-			    clk_register_fixed_rate(NULL, "osc_32_768khz", NULL,
+	clkdev_pxa_रेजिस्टर(CLK_OSC32k768, "osc_32_768khz", शून्य,
+			    clk_रेजिस्टर_fixed_rate(शून्य, "osc_32_768khz", शून्य,
 						    CLK_GET_RATE_NOCACHE,
 						    32768));
-	clk_register_fixed_rate(NULL, "ring_osc_120mhz", NULL,
+	clk_रेजिस्टर_fixed_rate(शून्य, "ring_osc_120mhz", शून्य,
 				CLK_GET_RATE_NOCACHE,
 				120 * MHz);
-	clk_register_fixed_rate(NULL, "clk_dummy", NULL, 0, 0);
-	clk_register_fixed_factor(NULL, "spll_624mhz", "osc_13mhz", 0, 48, 1);
-	clk_register_fixed_factor(NULL, "ring_osc_60mhz", "ring_osc_120mhz",
+	clk_रेजिस्टर_fixed_rate(शून्य, "clk_dummy", शून्य, 0, 0);
+	clk_रेजिस्टर_fixed_factor(शून्य, "spll_624mhz", "osc_13mhz", 0, 48, 1);
+	clk_रेजिस्टर_fixed_factor(शून्य, "ring_osc_60mhz", "ring_osc_120mhz",
 				  0, 1, 2);
-}
+पूर्ण
 
-#define DUMMY_CLK(_con_id, _dev_id, _parent) \
-	{ .con_id = _con_id, .dev_id = _dev_id, .parent = _parent }
-struct dummy_clk {
-	const char *con_id;
-	const char *dev_id;
-	const char *parent;
-};
-static struct dummy_clk dummy_clks[] __initdata = {
-	DUMMY_CLK(NULL, "pxa93x-gpio", "osc_13mhz"),
-	DUMMY_CLK(NULL, "sa1100-rtc", "osc_32_768khz"),
+#घोषणा DUMMY_CLK(_con_id, _dev_id, _parent) \
+	अणु .con_id = _con_id, .dev_id = _dev_id, .parent = _parent पूर्ण
+काष्ठा dummy_clk अणु
+	स्थिर अक्षर *con_id;
+	स्थिर अक्षर *dev_id;
+	स्थिर अक्षर *parent;
+पूर्ण;
+अटल काष्ठा dummy_clk dummy_clks[] __initdata = अणु
+	DUMMY_CLK(शून्य, "pxa93x-gpio", "osc_13mhz"),
+	DUMMY_CLK(शून्य, "sa1100-rtc", "osc_32_768khz"),
 	DUMMY_CLK("UARTCLK", "pxa2xx-ir", "STUART"),
-	DUMMY_CLK(NULL, "pxa3xx-pwri2c.1", "osc_13mhz"),
-};
+	DUMMY_CLK(शून्य, "pxa3xx-pwri2c.1", "osc_13mhz"),
+पूर्ण;
 
-static void __init pxa3xx_dummy_clocks_init(void)
-{
-	struct clk *clk;
-	struct dummy_clk *d;
-	const char *name;
-	int i;
+अटल व्योम __init pxa3xx_dummy_घड़ीs_init(व्योम)
+अणु
+	काष्ठा clk *clk;
+	काष्ठा dummy_clk *d;
+	स्थिर अक्षर *name;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(dummy_clks); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(dummy_clks); i++) अणु
 		d = &dummy_clks[i];
 		name = d->dev_id ? d->dev_id : d->con_id;
-		clk = clk_register_fixed_factor(NULL, name, d->parent, 0, 1, 1);
-		clk_register_clkdev(clk, d->con_id, d->dev_id);
-	}
-}
+		clk = clk_रेजिस्टर_fixed_factor(शून्य, name, d->parent, 0, 1, 1);
+		clk_रेजिस्टर_clkdev(clk, d->con_id, d->dev_id);
+	पूर्ण
+पूर्ण
 
-static void __init pxa3xx_base_clocks_init(void)
-{
-	struct clk *clk;
+अटल व्योम __init pxa3xx_base_घड़ीs_init(व्योम)
+अणु
+	काष्ठा clk *clk;
 
-	pxa3xx_register_plls();
-	pxa3xx_register_core();
-	clk_register_clk_pxa3xx_system_bus();
-	clk_register_clk_pxa3xx_ac97();
-	clk_register_clk_pxa3xx_smemc();
-	clk = clk_register_gate(NULL, "CLK_POUT",
-				"osc_13mhz", 0, OSCC, 11, 0, NULL);
-	clk_register_clkdev(clk, "CLK_POUT", NULL);
-	clkdev_pxa_register(CLK_OSTIMER, "OSTIMER0", NULL,
-			    clk_register_fixed_factor(NULL, "os-timer0",
+	pxa3xx_रेजिस्टर_plls();
+	pxa3xx_रेजिस्टर_core();
+	clk_रेजिस्टर_clk_pxa3xx_प्रणाली_bus();
+	clk_रेजिस्टर_clk_pxa3xx_ac97();
+	clk_रेजिस्टर_clk_pxa3xx_smemc();
+	clk = clk_रेजिस्टर_gate(शून्य, "CLK_POUT",
+				"osc_13mhz", 0, OSCC, 11, 0, शून्य);
+	clk_रेजिस्टर_clkdev(clk, "CLK_POUT", शून्य);
+	clkdev_pxa_रेजिस्टर(CLK_OSTIMER, "OSTIMER0", शून्य,
+			    clk_रेजिस्टर_fixed_factor(शून्य, "os-timer0",
 						      "osc_13mhz", 0, 1, 4));
-}
+पूर्ण
 
-int __init pxa3xx_clocks_init(void)
-{
-	int ret;
+पूर्णांक __init pxa3xx_घड़ीs_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	pxa3xx_base_clocks_init();
-	pxa3xx_dummy_clocks_init();
-	ret = clk_pxa_cken_init(pxa3xx_clocks, ARRAY_SIZE(pxa3xx_clocks));
-	if (ret)
-		return ret;
-	if (cpu_is_pxa320())
-		return clk_pxa_cken_init(pxa320_clocks,
-					 ARRAY_SIZE(pxa320_clocks));
-	if (cpu_is_pxa300() || cpu_is_pxa310())
-		return clk_pxa_cken_init(pxa300_310_clocks,
-					 ARRAY_SIZE(pxa300_310_clocks));
-	return clk_pxa_cken_init(pxa93x_clocks, ARRAY_SIZE(pxa93x_clocks));
-}
+	pxa3xx_base_घड़ीs_init();
+	pxa3xx_dummy_घड़ीs_init();
+	ret = clk_pxa_cken_init(pxa3xx_घड़ीs, ARRAY_SIZE(pxa3xx_घड़ीs));
+	अगर (ret)
+		वापस ret;
+	अगर (cpu_is_pxa320())
+		वापस clk_pxa_cken_init(pxa320_घड़ीs,
+					 ARRAY_SIZE(pxa320_घड़ीs));
+	अगर (cpu_is_pxa300() || cpu_is_pxa310())
+		वापस clk_pxa_cken_init(pxa300_310_घड़ीs,
+					 ARRAY_SIZE(pxa300_310_घड़ीs));
+	वापस clk_pxa_cken_init(pxa93x_घड़ीs, ARRAY_SIZE(pxa93x_घड़ीs));
+पूर्ण
 
-static void __init pxa3xx_dt_clocks_init(struct device_node *np)
-{
-	pxa3xx_clocks_init();
+अटल व्योम __init pxa3xx_dt_घड़ीs_init(काष्ठा device_node *np)
+अणु
+	pxa3xx_घड़ीs_init();
 	clk_pxa_dt_common_init(np);
-}
-CLK_OF_DECLARE(pxa_clks, "marvell,pxa300-clocks", pxa3xx_dt_clocks_init);
+पूर्ण
+CLK_OF_DECLARE(pxa_clks, "marvell,pxa300-clocks", pxa3xx_dt_घड़ीs_init);

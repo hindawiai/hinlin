@@ -1,742 +1,743 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2017-2018 Intel Corporation
+ * Copyright तऊ 2017-2018 Intel Corporation
  */
 
-#include <linux/prime_numbers.h>
+#समावेश <linux/prime_numbers.h>
 
-#include "intel_context.h"
-#include "intel_engine_heartbeat.h"
-#include "intel_engine_pm.h"
-#include "intel_gpu_commands.h"
-#include "intel_gt.h"
-#include "intel_gt_requests.h"
-#include "intel_ring.h"
-#include "selftest_engine_heartbeat.h"
+#समावेश "intel_context.h"
+#समावेश "intel_engine_heartbeat.h"
+#समावेश "intel_engine_pm.h"
+#समावेश "intel_gpu_commands.h"
+#समावेश "intel_gt.h"
+#समावेश "intel_gt_requests.h"
+#समावेश "intel_ring.h"
+#समावेश "selftest_engine_heartbeat.h"
 
-#include "../selftests/i915_random.h"
-#include "../i915_selftest.h"
+#समावेश "../selftests/i915_random.h"
+#समावेश "../i915_selftest.h"
 
-#include "selftests/igt_flush_test.h"
-#include "selftests/lib_sw_fence.h"
-#include "selftests/mock_gem_device.h"
-#include "selftests/mock_timeline.h"
+#समावेश "selftests/igt_flush_test.h"
+#समावेश "selftests/lib_sw_fence.h"
+#समावेश "selftests/mock_gem_device.h"
+#समावेश "selftests/mock_timeline.h"
 
-static struct page *hwsp_page(struct intel_timeline *tl)
-{
-	struct drm_i915_gem_object *obj = tl->hwsp_ggtt->obj;
+अटल काष्ठा page *hwsp_page(काष्ठा पूर्णांकel_समयline *tl)
+अणु
+	काष्ठा drm_i915_gem_object *obj = tl->hwsp_ggtt->obj;
 
 	GEM_BUG_ON(!i915_gem_object_has_pinned_pages(obj));
-	return sg_page(obj->mm.pages->sgl);
-}
+	वापस sg_page(obj->mm.pages->sgl);
+पूर्ण
 
-static unsigned long hwsp_cacheline(struct intel_timeline *tl)
-{
-	unsigned long address = (unsigned long)page_address(hwsp_page(tl));
+अटल अचिन्हित दीर्घ hwsp_cacheline(काष्ठा पूर्णांकel_समयline *tl)
+अणु
+	अचिन्हित दीर्घ address = (अचिन्हित दीर्घ)page_address(hwsp_page(tl));
 
-	return (address + offset_in_page(tl->hwsp_offset)) / TIMELINE_SEQNO_BYTES;
-}
+	वापस (address + offset_in_page(tl->hwsp_offset)) / TIMELINE_SEQNO_BYTES;
+पूर्ण
 
-static int selftest_tl_pin(struct intel_timeline *tl)
-{
-	struct i915_gem_ww_ctx ww;
-	int err;
+अटल पूर्णांक selftest_tl_pin(काष्ठा पूर्णांकel_समयline *tl)
+अणु
+	काष्ठा i915_gem_ww_ctx ww;
+	पूर्णांक err;
 
 	i915_gem_ww_ctx_init(&ww, false);
 retry:
 	err = i915_gem_object_lock(tl->hwsp_ggtt->obj, &ww);
-	if (!err)
-		err = intel_timeline_pin(tl, &ww);
+	अगर (!err)
+		err = पूर्णांकel_समयline_pin(tl, &ww);
 
-	if (err == -EDEADLK) {
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Only half of seqno's are usable, see __intel_timeline_get_seqno() */
-#define CACHELINES_PER_PAGE (PAGE_SIZE / TIMELINE_SEQNO_BYTES / 2)
+/* Only half of seqno's are usable, see __पूर्णांकel_समयline_get_seqno() */
+#घोषणा CACHELINES_PER_PAGE (PAGE_SIZE / TIMELINE_SEQNO_BYTES / 2)
 
-struct mock_hwsp_freelist {
-	struct intel_gt *gt;
-	struct radix_tree_root cachelines;
-	struct intel_timeline **history;
-	unsigned long count, max;
-	struct rnd_state prng;
-};
+काष्ठा mock_hwsp_मुक्तlist अणु
+	काष्ठा पूर्णांकel_gt *gt;
+	काष्ठा radix_tree_root cachelines;
+	काष्ठा पूर्णांकel_समयline **history;
+	अचिन्हित दीर्घ count, max;
+	काष्ठा rnd_state prng;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SHUFFLE = BIT(0),
-};
+पूर्ण;
 
-static void __mock_hwsp_record(struct mock_hwsp_freelist *state,
-			       unsigned int idx,
-			       struct intel_timeline *tl)
-{
+अटल व्योम __mock_hwsp_record(काष्ठा mock_hwsp_मुक्तlist *state,
+			       अचिन्हित पूर्णांक idx,
+			       काष्ठा पूर्णांकel_समयline *tl)
+अणु
 	tl = xchg(&state->history[idx], tl);
-	if (tl) {
+	अगर (tl) अणु
 		radix_tree_delete(&state->cachelines, hwsp_cacheline(tl));
-		intel_timeline_unpin(tl);
-		intel_timeline_put(tl);
-	}
-}
+		पूर्णांकel_समयline_unpin(tl);
+		पूर्णांकel_समयline_put(tl);
+	पूर्ण
+पूर्ण
 
-static int __mock_hwsp_timeline(struct mock_hwsp_freelist *state,
-				unsigned int count,
-				unsigned int flags)
-{
-	struct intel_timeline *tl;
-	unsigned int idx;
+अटल पूर्णांक __mock_hwsp_समयline(काष्ठा mock_hwsp_मुक्तlist *state,
+				अचिन्हित पूर्णांक count,
+				अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा पूर्णांकel_समयline *tl;
+	अचिन्हित पूर्णांक idx;
 
-	while (count--) {
-		unsigned long cacheline;
-		int err;
+	जबतक (count--) अणु
+		अचिन्हित दीर्घ cacheline;
+		पूर्णांक err;
 
-		tl = intel_timeline_create(state->gt);
-		if (IS_ERR(tl))
-			return PTR_ERR(tl);
+		tl = पूर्णांकel_समयline_create(state->gt);
+		अगर (IS_ERR(tl))
+			वापस PTR_ERR(tl);
 
 		err = selftest_tl_pin(tl);
-		if (err) {
-			intel_timeline_put(tl);
-			return err;
-		}
+		अगर (err) अणु
+			पूर्णांकel_समयline_put(tl);
+			वापस err;
+		पूर्ण
 
 		cacheline = hwsp_cacheline(tl);
 		err = radix_tree_insert(&state->cachelines, cacheline, tl);
-		if (err) {
-			if (err == -EEXIST) {
+		अगर (err) अणु
+			अगर (err == -EEXIST) अणु
 				pr_err("HWSP cacheline %lu already used; duplicate allocation!\n",
 				       cacheline);
-			}
-			intel_timeline_unpin(tl);
-			intel_timeline_put(tl);
-			return err;
-		}
+			पूर्ण
+			पूर्णांकel_समयline_unpin(tl);
+			पूर्णांकel_समयline_put(tl);
+			वापस err;
+		पूर्ण
 
 		idx = state->count++ % state->max;
 		__mock_hwsp_record(state, idx, tl);
-	}
+	पूर्ण
 
-	if (flags & SHUFFLE)
-		i915_prandom_shuffle(state->history,
-				     sizeof(*state->history),
+	अगर (flags & SHUFFLE)
+		i915_pअक्रमom_shuffle(state->history,
+				     माप(*state->history),
 				     min(state->count, state->max),
 				     &state->prng);
 
-	count = i915_prandom_u32_max_state(min(state->count, state->max),
+	count = i915_pअक्रमom_u32_max_state(min(state->count, state->max),
 					   &state->prng);
-	while (count--) {
+	जबतक (count--) अणु
 		idx = --state->count % state->max;
-		__mock_hwsp_record(state, idx, NULL);
-	}
+		__mock_hwsp_record(state, idx, शून्य);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mock_hwsp_freelist(void *arg)
-{
-	struct mock_hwsp_freelist state;
-	struct drm_i915_private *i915;
-	const struct {
-		const char *name;
-		unsigned int flags;
-	} phases[] = {
-		{ "linear", 0 },
-		{ "shuffled", SHUFFLE },
-		{ },
-	}, *p;
-	unsigned int na;
-	int err = 0;
+अटल पूर्णांक mock_hwsp_मुक्तlist(व्योम *arg)
+अणु
+	काष्ठा mock_hwsp_मुक्तlist state;
+	काष्ठा drm_i915_निजी *i915;
+	स्थिर काष्ठा अणु
+		स्थिर अक्षर *name;
+		अचिन्हित पूर्णांक flags;
+	पूर्ण phases[] = अणु
+		अणु "linear", 0 पूर्ण,
+		अणु "shuffled", SHUFFLE पूर्ण,
+		अणु पूर्ण,
+	पूर्ण, *p;
+	अचिन्हित पूर्णांक na;
+	पूर्णांक err = 0;
 
 	i915 = mock_gem_device();
-	if (!i915)
-		return -ENOMEM;
+	अगर (!i915)
+		वापस -ENOMEM;
 
 	INIT_RADIX_TREE(&state.cachelines, GFP_KERNEL);
-	state.prng = I915_RND_STATE_INITIALIZER(i915_selftest.random_seed);
+	state.prng = I915_RND_STATE_INITIALIZER(i915_selftest.अक्रमom_seed);
 
 	state.gt = &i915->gt;
 
 	/*
-	 * Create a bunch of timelines and check that their HWSP do not overlap.
+	 * Create a bunch of समयlines and check that their HWSP करो not overlap.
 	 * Free some, and try again.
 	 */
 
-	state.max = PAGE_SIZE / sizeof(*state.history);
+	state.max = PAGE_SIZE / माप(*state.history);
 	state.count = 0;
-	state.history = kcalloc(state.max, sizeof(*state.history), GFP_KERNEL);
-	if (!state.history) {
+	state.history = kसुस्मृति(state.max, माप(*state.history), GFP_KERNEL);
+	अगर (!state.history) अणु
 		err = -ENOMEM;
-		goto err_put;
-	}
+		जाओ err_put;
+	पूर्ण
 
-	for (p = phases; p->name; p++) {
+	क्रम (p = phases; p->name; p++) अणु
 		pr_debug("%s(%s)\n", __func__, p->name);
-		for_each_prime_number_from(na, 1, 2 * CACHELINES_PER_PAGE) {
-			err = __mock_hwsp_timeline(&state, na, p->flags);
-			if (err)
-				goto out;
-		}
-	}
+		क्रम_each_prime_number_from(na, 1, 2 * CACHELINES_PER_PAGE) अणु
+			err = __mock_hwsp_समयline(&state, na, p->flags);
+			अगर (err)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	for (na = 0; na < state.max; na++)
-		__mock_hwsp_record(&state, na, NULL);
-	kfree(state.history);
+	क्रम (na = 0; na < state.max; na++)
+		__mock_hwsp_record(&state, na, शून्य);
+	kमुक्त(state.history);
 err_put:
 	mock_destroy_device(i915);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct __igt_sync {
-	const char *name;
+काष्ठा __igt_sync अणु
+	स्थिर अक्षर *name;
 	u32 seqno;
 	bool expected;
 	bool set;
-};
+पूर्ण;
 
-static int __igt_sync(struct intel_timeline *tl,
+अटल पूर्णांक __igt_sync(काष्ठा पूर्णांकel_समयline *tl,
 		      u64 ctx,
-		      const struct __igt_sync *p,
-		      const char *name)
-{
-	int ret;
+		      स्थिर काष्ठा __igt_sync *p,
+		      स्थिर अक्षर *name)
+अणु
+	पूर्णांक ret;
 
-	if (__intel_timeline_sync_is_later(tl, ctx, p->seqno) != p->expected) {
+	अगर (__पूर्णांकel_समयline_sync_is_later(tl, ctx, p->seqno) != p->expected) अणु
 		pr_err("%s: %s(ctx=%llu, seqno=%u) expected passed %s but failed\n",
 		       name, p->name, ctx, p->seqno, yesno(p->expected));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (p->set) {
-		ret = __intel_timeline_sync_set(tl, ctx, p->seqno);
-		if (ret)
-			return ret;
-	}
+	अगर (p->set) अणु
+		ret = __पूर्णांकel_समयline_sync_set(tl, ctx, p->seqno);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igt_sync(void *arg)
-{
-	const struct __igt_sync pass[] = {
-		{ "unset", 0, false, false },
-		{ "new", 0, false, true },
-		{ "0a", 0, true, true },
-		{ "1a", 1, false, true },
-		{ "1b", 1, true, true },
-		{ "0b", 0, true, false },
-		{ "2a", 2, false, true },
-		{ "4", 4, false, true },
-		{ "INT_MAX", INT_MAX, false, true },
-		{ "INT_MAX-1", INT_MAX-1, true, false },
-		{ "INT_MAX+1", (u32)INT_MAX+1, false, true },
-		{ "INT_MAX", INT_MAX, true, false },
-		{ "UINT_MAX", UINT_MAX, false, true },
-		{ "wrap", 0, false, true },
-		{ "unwrap", UINT_MAX, true, false },
-		{},
-	}, *p;
-	struct intel_timeline tl;
-	int order, offset;
-	int ret = -ENODEV;
+अटल पूर्णांक igt_sync(व्योम *arg)
+अणु
+	स्थिर काष्ठा __igt_sync pass[] = अणु
+		अणु "unset", 0, false, false पूर्ण,
+		अणु "new", 0, false, true पूर्ण,
+		अणु "0a", 0, true, true पूर्ण,
+		अणु "1a", 1, false, true पूर्ण,
+		अणु "1b", 1, true, true पूर्ण,
+		अणु "0b", 0, true, false पूर्ण,
+		अणु "2a", 2, false, true पूर्ण,
+		अणु "4", 4, false, true पूर्ण,
+		अणु "INT_MAX", पूर्णांक_उच्च, false, true पूर्ण,
+		अणु "INT_MAX-1", पूर्णांक_उच्च-1, true, false पूर्ण,
+		अणु "INT_MAX+1", (u32)पूर्णांक_उच्च+1, false, true पूर्ण,
+		अणु "INT_MAX", पूर्णांक_उच्च, true, false पूर्ण,
+		अणु "UINT_MAX", अच_पूर्णांक_उच्च, false, true पूर्ण,
+		अणु "wrap", 0, false, true पूर्ण,
+		अणु "unwrap", अच_पूर्णांक_उच्च, true, false पूर्ण,
+		अणुपूर्ण,
+	पूर्ण, *p;
+	काष्ठा पूर्णांकel_समयline tl;
+	पूर्णांक order, offset;
+	पूर्णांक ret = -ENODEV;
 
-	mock_timeline_init(&tl, 0);
-	for (p = pass; p->name; p++) {
-		for (order = 1; order < 64; order++) {
-			for (offset = -1; offset <= (order > 1); offset++) {
+	mock_समयline_init(&tl, 0);
+	क्रम (p = pass; p->name; p++) अणु
+		क्रम (order = 1; order < 64; order++) अणु
+			क्रम (offset = -1; offset <= (order > 1); offset++) अणु
 				u64 ctx = BIT_ULL(order) + offset;
 
 				ret = __igt_sync(&tl, ctx, p, "1");
-				if (ret)
-					goto out;
-			}
-		}
-	}
-	mock_timeline_fini(&tl);
+				अगर (ret)
+					जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	mock_समयline_fini(&tl);
 
-	mock_timeline_init(&tl, 0);
-	for (order = 1; order < 64; order++) {
-		for (offset = -1; offset <= (order > 1); offset++) {
+	mock_समयline_init(&tl, 0);
+	क्रम (order = 1; order < 64; order++) अणु
+		क्रम (offset = -1; offset <= (order > 1); offset++) अणु
 			u64 ctx = BIT_ULL(order) + offset;
 
-			for (p = pass; p->name; p++) {
+			क्रम (p = pass; p->name; p++) अणु
 				ret = __igt_sync(&tl, ctx, p, "2");
-				if (ret)
-					goto out;
-			}
-		}
-	}
+				अगर (ret)
+					जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out:
-	mock_timeline_fini(&tl);
-	return ret;
-}
+	mock_समयline_fini(&tl);
+	वापस ret;
+पूर्ण
 
-static unsigned int random_engine(struct rnd_state *rnd)
-{
-	return i915_prandom_u32_max_state(I915_NUM_ENGINES, rnd);
-}
+अटल अचिन्हित पूर्णांक अक्रमom_engine(काष्ठा rnd_state *rnd)
+अणु
+	वापस i915_pअक्रमom_u32_max_state(I915_NUM_ENGINES, rnd);
+पूर्ण
 
-static int bench_sync(void *arg)
-{
-	struct rnd_state prng;
-	struct intel_timeline tl;
-	unsigned long end_time, count;
+अटल पूर्णांक bench_sync(व्योम *arg)
+अणु
+	काष्ठा rnd_state prng;
+	काष्ठा पूर्णांकel_समयline tl;
+	अचिन्हित दीर्घ end_समय, count;
 	u64 prng32_1M;
-	ktime_t kt;
-	int order, last_order;
+	kसमय_प्रकार kt;
+	पूर्णांक order, last_order;
 
-	mock_timeline_init(&tl, 0);
+	mock_समयline_init(&tl, 0);
 
-	/* Lookups from cache are very fast and so the random number generation
-	 * and the loop itself becomes a significant factor in the per-iteration
+	/* Lookups from cache are very fast and so the अक्रमom number generation
+	 * and the loop itself becomes a signअगरicant factor in the per-iteration
 	 * timings. We try to compensate the results by measuring the overhead
 	 * of the prng and subtract it from the reported results.
 	 */
-	prandom_seed_state(&prng, i915_selftest.random_seed);
+	pअक्रमom_seed_state(&prng, i915_selftest.अक्रमom_seed);
 	count = 0;
-	kt = ktime_get();
-	end_time = jiffies + HZ/10;
-	do {
+	kt = kसमय_get();
+	end_समय = jअगरfies + HZ/10;
+	करो अणु
 		u32 x;
 
-		/* Make sure the compiler doesn't optimise away the prng call */
-		WRITE_ONCE(x, prandom_u32_state(&prng));
+		/* Make sure the compiler करोesn't optimise away the prng call */
+		WRITE_ONCE(x, pअक्रमom_u32_state(&prng));
 
 		count++;
-	} while (!time_after(jiffies, end_time));
-	kt = ktime_sub(ktime_get(), kt);
+	पूर्ण जबतक (!समय_after(jअगरfies, end_समय));
+	kt = kसमय_sub(kसमय_get(), kt);
 	pr_debug("%s: %lu random evaluations, %lluns/prng\n",
-		 __func__, count, (long long)div64_ul(ktime_to_ns(kt), count));
-	prng32_1M = div64_ul(ktime_to_ns(kt) << 20, count);
+		 __func__, count, (दीर्घ दीर्घ)भाग64_ul(kसमय_प्रकारo_ns(kt), count));
+	prng32_1M = भाग64_ul(kसमय_प्रकारo_ns(kt) << 20, count);
 
-	/* Benchmark (only) setting random context ids */
-	prandom_seed_state(&prng, i915_selftest.random_seed);
+	/* Benchmark (only) setting अक्रमom context ids */
+	pअक्रमom_seed_state(&prng, i915_selftest.अक्रमom_seed);
 	count = 0;
-	kt = ktime_get();
-	end_time = jiffies + HZ/10;
-	do {
-		u64 id = i915_prandom_u64_state(&prng);
+	kt = kसमय_get();
+	end_समय = jअगरfies + HZ/10;
+	करो अणु
+		u64 id = i915_pअक्रमom_u64_state(&prng);
 
-		__intel_timeline_sync_set(&tl, id, 0);
+		__पूर्णांकel_समयline_sync_set(&tl, id, 0);
 		count++;
-	} while (!time_after(jiffies, end_time));
-	kt = ktime_sub(ktime_get(), kt);
-	kt = ktime_sub_ns(kt, (count * prng32_1M * 2) >> 20);
+	पूर्ण जबतक (!समय_after(jअगरfies, end_समय));
+	kt = kसमय_sub(kसमय_get(), kt);
+	kt = kसमय_sub_ns(kt, (count * prng32_1M * 2) >> 20);
 	pr_info("%s: %lu random insertions, %lluns/insert\n",
-		__func__, count, (long long)div64_ul(ktime_to_ns(kt), count));
+		__func__, count, (दीर्घ दीर्घ)भाग64_ul(kसमय_प्रकारo_ns(kt), count));
 
 	/* Benchmark looking up the exact same context ids as we just set */
-	prandom_seed_state(&prng, i915_selftest.random_seed);
-	end_time = count;
-	kt = ktime_get();
-	while (end_time--) {
-		u64 id = i915_prandom_u64_state(&prng);
+	pअक्रमom_seed_state(&prng, i915_selftest.अक्रमom_seed);
+	end_समय = count;
+	kt = kसमय_get();
+	जबतक (end_समय--) अणु
+		u64 id = i915_pअक्रमom_u64_state(&prng);
 
-		if (!__intel_timeline_sync_is_later(&tl, id, 0)) {
-			mock_timeline_fini(&tl);
+		अगर (!__पूर्णांकel_समयline_sync_is_later(&tl, id, 0)) अणु
+			mock_समयline_fini(&tl);
 			pr_err("Lookup of %llu failed\n", id);
-			return -EINVAL;
-		}
-	}
-	kt = ktime_sub(ktime_get(), kt);
-	kt = ktime_sub_ns(kt, (count * prng32_1M * 2) >> 20);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	kt = kसमय_sub(kसमय_get(), kt);
+	kt = kसमय_sub_ns(kt, (count * prng32_1M * 2) >> 20);
 	pr_info("%s: %lu random lookups, %lluns/lookup\n",
-		__func__, count, (long long)div64_ul(ktime_to_ns(kt), count));
+		__func__, count, (दीर्घ दीर्घ)भाग64_ul(kसमय_प्रकारo_ns(kt), count));
 
-	mock_timeline_fini(&tl);
+	mock_समयline_fini(&tl);
 	cond_resched();
 
-	mock_timeline_init(&tl, 0);
+	mock_समयline_init(&tl, 0);
 
 	/* Benchmark setting the first N (in order) contexts */
 	count = 0;
-	kt = ktime_get();
-	end_time = jiffies + HZ/10;
-	do {
-		__intel_timeline_sync_set(&tl, count++, 0);
-	} while (!time_after(jiffies, end_time));
-	kt = ktime_sub(ktime_get(), kt);
+	kt = kसमय_get();
+	end_समय = jअगरfies + HZ/10;
+	करो अणु
+		__पूर्णांकel_समयline_sync_set(&tl, count++, 0);
+	पूर्ण जबतक (!समय_after(jअगरfies, end_समय));
+	kt = kसमय_sub(kसमय_get(), kt);
 	pr_info("%s: %lu in-order insertions, %lluns/insert\n",
-		__func__, count, (long long)div64_ul(ktime_to_ns(kt), count));
+		__func__, count, (दीर्घ दीर्घ)भाग64_ul(kसमय_प्रकारo_ns(kt), count));
 
 	/* Benchmark looking up the exact same context ids as we just set */
-	end_time = count;
-	kt = ktime_get();
-	while (end_time--) {
-		if (!__intel_timeline_sync_is_later(&tl, end_time, 0)) {
-			pr_err("Lookup of %lu failed\n", end_time);
-			mock_timeline_fini(&tl);
-			return -EINVAL;
-		}
-	}
-	kt = ktime_sub(ktime_get(), kt);
+	end_समय = count;
+	kt = kसमय_get();
+	जबतक (end_समय--) अणु
+		अगर (!__पूर्णांकel_समयline_sync_is_later(&tl, end_समय, 0)) अणु
+			pr_err("Lookup of %lu failed\n", end_समय);
+			mock_समयline_fini(&tl);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	kt = kसमय_sub(kसमय_get(), kt);
 	pr_info("%s: %lu in-order lookups, %lluns/lookup\n",
-		__func__, count, (long long)div64_ul(ktime_to_ns(kt), count));
+		__func__, count, (दीर्घ दीर्घ)भाग64_ul(kसमय_प्रकारo_ns(kt), count));
 
-	mock_timeline_fini(&tl);
+	mock_समयline_fini(&tl);
 	cond_resched();
 
-	mock_timeline_init(&tl, 0);
+	mock_समयline_init(&tl, 0);
 
-	/* Benchmark searching for a random context id and maybe changing it */
-	prandom_seed_state(&prng, i915_selftest.random_seed);
+	/* Benchmark searching क्रम a अक्रमom context id and maybe changing it */
+	pअक्रमom_seed_state(&prng, i915_selftest.अक्रमom_seed);
 	count = 0;
-	kt = ktime_get();
-	end_time = jiffies + HZ/10;
-	do {
-		u32 id = random_engine(&prng);
-		u32 seqno = prandom_u32_state(&prng);
+	kt = kसमय_get();
+	end_समय = jअगरfies + HZ/10;
+	करो अणु
+		u32 id = अक्रमom_engine(&prng);
+		u32 seqno = pअक्रमom_u32_state(&prng);
 
-		if (!__intel_timeline_sync_is_later(&tl, id, seqno))
-			__intel_timeline_sync_set(&tl, id, seqno);
+		अगर (!__पूर्णांकel_समयline_sync_is_later(&tl, id, seqno))
+			__पूर्णांकel_समयline_sync_set(&tl, id, seqno);
 
 		count++;
-	} while (!time_after(jiffies, end_time));
-	kt = ktime_sub(ktime_get(), kt);
-	kt = ktime_sub_ns(kt, (count * prng32_1M * 2) >> 20);
+	पूर्ण जबतक (!समय_after(jअगरfies, end_समय));
+	kt = kसमय_sub(kसमय_get(), kt);
+	kt = kसमय_sub_ns(kt, (count * prng32_1M * 2) >> 20);
 	pr_info("%s: %lu repeated insert/lookups, %lluns/op\n",
-		__func__, count, (long long)div64_ul(ktime_to_ns(kt), count));
-	mock_timeline_fini(&tl);
+		__func__, count, (दीर्घ दीर्घ)भाग64_ul(kसमय_प्रकारo_ns(kt), count));
+	mock_समयline_fini(&tl);
 	cond_resched();
 
-	/* Benchmark searching for a known context id and changing the seqno */
-	for (last_order = 1, order = 1; order < 32;
-	     ({ int tmp = last_order; last_order = order; order += tmp; })) {
-		unsigned int mask = BIT(order) - 1;
+	/* Benchmark searching क्रम a known context id and changing the seqno */
+	क्रम (last_order = 1, order = 1; order < 32;
+	     (अणु पूर्णांक पंचांगp = last_order; last_order = order; order += पंचांगp; पूर्ण)) अणु
+		अचिन्हित पूर्णांक mask = BIT(order) - 1;
 
-		mock_timeline_init(&tl, 0);
+		mock_समयline_init(&tl, 0);
 
 		count = 0;
-		kt = ktime_get();
-		end_time = jiffies + HZ/10;
-		do {
+		kt = kसमय_get();
+		end_समय = jअगरfies + HZ/10;
+		करो अणु
 			/* Without assuming too many details of the underlying
-			 * implementation, try to identify its phase-changes
-			 * (if any)!
+			 * implementation, try to identअगरy its phase-changes
+			 * (अगर any)!
 			 */
 			u64 id = (u64)(count & mask) << order;
 
-			__intel_timeline_sync_is_later(&tl, id, 0);
-			__intel_timeline_sync_set(&tl, id, 0);
+			__पूर्णांकel_समयline_sync_is_later(&tl, id, 0);
+			__पूर्णांकel_समयline_sync_set(&tl, id, 0);
 
 			count++;
-		} while (!time_after(jiffies, end_time));
-		kt = ktime_sub(ktime_get(), kt);
+		पूर्ण जबतक (!समय_after(jअगरfies, end_समय));
+		kt = kसमय_sub(kसमय_get(), kt);
 		pr_info("%s: %lu cyclic/%d insert/lookups, %lluns/op\n",
 			__func__, count, order,
-			(long long)div64_ul(ktime_to_ns(kt), count));
-		mock_timeline_fini(&tl);
+			(दीर्घ दीर्घ)भाग64_ul(kसमय_प्रकारo_ns(kt), count));
+		mock_समयline_fini(&tl);
 		cond_resched();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int intel_timeline_mock_selftests(void)
-{
-	static const struct i915_subtest tests[] = {
-		SUBTEST(mock_hwsp_freelist),
+पूर्णांक पूर्णांकel_समयline_mock_selftests(व्योम)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+		SUBTEST(mock_hwsp_मुक्तlist),
 		SUBTEST(igt_sync),
 		SUBTEST(bench_sync),
-	};
+	पूर्ण;
 
-	return i915_subtests(tests, NULL);
-}
+	वापस i915_subtests(tests, शून्य);
+पूर्ण
 
-static int emit_ggtt_store_dw(struct i915_request *rq, u32 addr, u32 value)
-{
+अटल पूर्णांक emit_ggtt_store_dw(काष्ठा i915_request *rq, u32 addr, u32 value)
+अणु
 	u32 *cs;
 
-	cs = intel_ring_begin(rq, 4);
-	if (IS_ERR(cs))
-		return PTR_ERR(cs);
+	cs = पूर्णांकel_ring_begin(rq, 4);
+	अगर (IS_ERR(cs))
+		वापस PTR_ERR(cs);
 
-	if (INTEL_GEN(rq->engine->i915) >= 8) {
+	अगर (INTEL_GEN(rq->engine->i915) >= 8) अणु
 		*cs++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 		*cs++ = addr;
 		*cs++ = 0;
 		*cs++ = value;
-	} else if (INTEL_GEN(rq->engine->i915) >= 4) {
+	पूर्ण अन्यथा अगर (INTEL_GEN(rq->engine->i915) >= 4) अणु
 		*cs++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 		*cs++ = 0;
 		*cs++ = addr;
 		*cs++ = value;
-	} else {
+	पूर्ण अन्यथा अणु
 		*cs++ = MI_STORE_DWORD_IMM | MI_MEM_VIRTUAL;
 		*cs++ = addr;
 		*cs++ = value;
 		*cs++ = MI_NOOP;
-	}
+	पूर्ण
 
-	intel_ring_advance(rq, cs);
+	पूर्णांकel_ring_advance(rq, cs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct i915_request *
-checked_tl_write(struct intel_timeline *tl, struct intel_engine_cs *engine, u32 value)
-{
-	struct i915_request *rq;
-	int err;
+अटल काष्ठा i915_request *
+checked_tl_ग_लिखो(काष्ठा पूर्णांकel_समयline *tl, काष्ठा पूर्णांकel_engine_cs *engine, u32 value)
+अणु
+	काष्ठा i915_request *rq;
+	पूर्णांक err;
 
 	err = selftest_tl_pin(tl);
-	if (err) {
+	अगर (err) अणु
 		rq = ERR_PTR(err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (READ_ONCE(*tl->hwsp_seqno) != tl->seqno) {
+	अगर (READ_ONCE(*tl->hwsp_seqno) != tl->seqno) अणु
 		pr_err("Timeline created with incorrect breadcrumb, found %x, expected %x\n",
 		       *tl->hwsp_seqno, tl->seqno);
-		intel_timeline_unpin(tl);
-		return ERR_PTR(-EINVAL);
-	}
+		पूर्णांकel_समयline_unpin(tl);
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	rq = intel_engine_create_kernel_request(engine);
-	if (IS_ERR(rq))
-		goto out_unpin;
+	rq = पूर्णांकel_engine_create_kernel_request(engine);
+	अगर (IS_ERR(rq))
+		जाओ out_unpin;
 
 	i915_request_get(rq);
 
 	err = emit_ggtt_store_dw(rq, tl->hwsp_offset, value);
 	i915_request_add(rq);
-	if (err) {
+	अगर (err) अणु
 		i915_request_put(rq);
 		rq = ERR_PTR(err);
-	}
+	पूर्ण
 
 out_unpin:
-	intel_timeline_unpin(tl);
+	पूर्णांकel_समयline_unpin(tl);
 out:
-	if (IS_ERR(rq))
+	अगर (IS_ERR(rq))
 		pr_err("Failed to write to timeline!\n");
-	return rq;
-}
+	वापस rq;
+पूर्ण
 
-static int live_hwsp_engine(void *arg)
-{
-#define NUM_TIMELINES 4096
-	struct intel_gt *gt = arg;
-	struct intel_timeline **timelines;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	unsigned long count, n;
-	int err = 0;
+अटल पूर्णांक live_hwsp_engine(व्योम *arg)
+अणु
+#घोषणा NUM_TIMELINES 4096
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_समयline **समयlines;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	अचिन्हित दीर्घ count, n;
+	पूर्णांक err = 0;
 
 	/*
-	 * Create a bunch of timelines and check we can write
-	 * independently to each of their breadcrumb slots.
+	 * Create a bunch of समयlines and check we can ग_लिखो
+	 * independently to each of their bपढ़ोcrumb slots.
 	 */
 
-	timelines = kvmalloc_array(NUM_TIMELINES * I915_NUM_ENGINES,
-				   sizeof(*timelines),
+	समयlines = kvदो_स्मृति_array(NUM_TIMELINES * I915_NUM_ENGINES,
+				   माप(*समयlines),
 				   GFP_KERNEL);
-	if (!timelines)
-		return -ENOMEM;
+	अगर (!समयlines)
+		वापस -ENOMEM;
 
 	count = 0;
-	for_each_engine(engine, gt, id) {
-		if (!intel_engine_can_store_dword(engine))
-			continue;
+	क्रम_each_engine(engine, gt, id) अणु
+		अगर (!पूर्णांकel_engine_can_store_dword(engine))
+			जारी;
 
-		intel_engine_pm_get(engine);
+		पूर्णांकel_engine_pm_get(engine);
 
-		for (n = 0; n < NUM_TIMELINES; n++) {
-			struct intel_timeline *tl;
-			struct i915_request *rq;
+		क्रम (n = 0; n < NUM_TIMELINES; n++) अणु
+			काष्ठा पूर्णांकel_समयline *tl;
+			काष्ठा i915_request *rq;
 
-			tl = intel_timeline_create(gt);
-			if (IS_ERR(tl)) {
+			tl = पूर्णांकel_समयline_create(gt);
+			अगर (IS_ERR(tl)) अणु
 				err = PTR_ERR(tl);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			rq = checked_tl_write(tl, engine, count);
-			if (IS_ERR(rq)) {
-				intel_timeline_put(tl);
+			rq = checked_tl_ग_लिखो(tl, engine, count);
+			अगर (IS_ERR(rq)) अणु
+				पूर्णांकel_समयline_put(tl);
 				err = PTR_ERR(rq);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			timelines[count++] = tl;
+			समयlines[count++] = tl;
 			i915_request_put(rq);
-		}
+		पूर्ण
 
-		intel_engine_pm_put(engine);
-		if (err)
-			break;
-	}
+		पूर्णांकel_engine_pm_put(engine);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	if (igt_flush_test(gt->i915))
+	अगर (igt_flush_test(gt->i915))
 		err = -EIO;
 
-	for (n = 0; n < count; n++) {
-		struct intel_timeline *tl = timelines[n];
+	क्रम (n = 0; n < count; n++) अणु
+		काष्ठा पूर्णांकel_समयline *tl = समयlines[n];
 
-		if (!err && READ_ONCE(*tl->hwsp_seqno) != n) {
+		अगर (!err && READ_ONCE(*tl->hwsp_seqno) != n) अणु
 			GEM_TRACE_ERR("Invalid seqno:%lu stored in timeline %llu @ %x, found 0x%x\n",
 				      n, tl->fence_context, tl->hwsp_offset, *tl->hwsp_seqno);
 			GEM_TRACE_DUMP();
 			err = -EINVAL;
-		}
-		intel_timeline_put(tl);
-	}
+		पूर्ण
+		पूर्णांकel_समयline_put(tl);
+	पूर्ण
 
-	kvfree(timelines);
-	return err;
-#undef NUM_TIMELINES
-}
+	kvमुक्त(समयlines);
+	वापस err;
+#अघोषित NUM_TIMELINES
+पूर्ण
 
-static int live_hwsp_alternate(void *arg)
-{
-#define NUM_TIMELINES 4096
-	struct intel_gt *gt = arg;
-	struct intel_timeline **timelines;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	unsigned long count, n;
-	int err = 0;
+अटल पूर्णांक live_hwsp_alternate(व्योम *arg)
+अणु
+#घोषणा NUM_TIMELINES 4096
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_समयline **समयlines;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	अचिन्हित दीर्घ count, n;
+	पूर्णांक err = 0;
 
 	/*
-	 * Create a bunch of timelines and check we can write
-	 * independently to each of their breadcrumb slots with adjacent
+	 * Create a bunch of समयlines and check we can ग_लिखो
+	 * independently to each of their bपढ़ोcrumb slots with adjacent
 	 * engines.
 	 */
 
-	timelines = kvmalloc_array(NUM_TIMELINES * I915_NUM_ENGINES,
-				   sizeof(*timelines),
+	समयlines = kvदो_स्मृति_array(NUM_TIMELINES * I915_NUM_ENGINES,
+				   माप(*समयlines),
 				   GFP_KERNEL);
-	if (!timelines)
-		return -ENOMEM;
+	अगर (!समयlines)
+		वापस -ENOMEM;
 
 	count = 0;
-	for (n = 0; n < NUM_TIMELINES; n++) {
-		for_each_engine(engine, gt, id) {
-			struct intel_timeline *tl;
-			struct i915_request *rq;
+	क्रम (n = 0; n < NUM_TIMELINES; n++) अणु
+		क्रम_each_engine(engine, gt, id) अणु
+			काष्ठा पूर्णांकel_समयline *tl;
+			काष्ठा i915_request *rq;
 
-			if (!intel_engine_can_store_dword(engine))
-				continue;
+			अगर (!पूर्णांकel_engine_can_store_dword(engine))
+				जारी;
 
-			tl = intel_timeline_create(gt);
-			if (IS_ERR(tl)) {
+			tl = पूर्णांकel_समयline_create(gt);
+			अगर (IS_ERR(tl)) अणु
 				err = PTR_ERR(tl);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			intel_engine_pm_get(engine);
-			rq = checked_tl_write(tl, engine, count);
-			intel_engine_pm_put(engine);
-			if (IS_ERR(rq)) {
-				intel_timeline_put(tl);
+			पूर्णांकel_engine_pm_get(engine);
+			rq = checked_tl_ग_लिखो(tl, engine, count);
+			पूर्णांकel_engine_pm_put(engine);
+			अगर (IS_ERR(rq)) अणु
+				पूर्णांकel_समयline_put(tl);
 				err = PTR_ERR(rq);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			timelines[count++] = tl;
+			समयlines[count++] = tl;
 			i915_request_put(rq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	if (igt_flush_test(gt->i915))
+	अगर (igt_flush_test(gt->i915))
 		err = -EIO;
 
-	for (n = 0; n < count; n++) {
-		struct intel_timeline *tl = timelines[n];
+	क्रम (n = 0; n < count; n++) अणु
+		काष्ठा पूर्णांकel_समयline *tl = समयlines[n];
 
-		if (!err && READ_ONCE(*tl->hwsp_seqno) != n) {
+		अगर (!err && READ_ONCE(*tl->hwsp_seqno) != n) अणु
 			GEM_TRACE_ERR("Invalid seqno:%lu stored in timeline %llu @ %x, found 0x%x\n",
 				      n, tl->fence_context, tl->hwsp_offset, *tl->hwsp_seqno);
 			GEM_TRACE_DUMP();
 			err = -EINVAL;
-		}
-		intel_timeline_put(tl);
-	}
+		पूर्ण
+		पूर्णांकel_समयline_put(tl);
+	पूर्ण
 
-	kvfree(timelines);
-	return err;
-#undef NUM_TIMELINES
-}
+	kvमुक्त(समयlines);
+	वापस err;
+#अघोषित NUM_TIMELINES
+पूर्ण
 
-static int live_hwsp_wrap(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_engine_cs *engine;
-	struct intel_timeline *tl;
-	enum intel_engine_id id;
-	int err = 0;
+अटल पूर्णांक live_hwsp_wrap(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	काष्ठा पूर्णांकel_समयline *tl;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err = 0;
 
 	/*
-	 * Across a seqno wrap, we need to keep the old cacheline alive for
-	 * foreign GPU references.
+	 * Across a seqno wrap, we need to keep the old cacheline alive क्रम
+	 * क्रमeign GPU references.
 	 */
 
-	tl = intel_timeline_create(gt);
-	if (IS_ERR(tl))
-		return PTR_ERR(tl);
+	tl = पूर्णांकel_समयline_create(gt);
+	अगर (IS_ERR(tl))
+		वापस PTR_ERR(tl);
 
-	if (!tl->has_initial_breadcrumb)
-		goto out_free;
+	अगर (!tl->has_initial_bपढ़ोcrumb)
+		जाओ out_मुक्त;
 
 	err = selftest_tl_pin(tl);
-	if (err)
-		goto out_free;
+	अगर (err)
+		जाओ out_मुक्त;
 
-	for_each_engine(engine, gt, id) {
-		const u32 *hwsp_seqno[2];
-		struct i915_request *rq;
+	क्रम_each_engine(engine, gt, id) अणु
+		स्थिर u32 *hwsp_seqno[2];
+		काष्ठा i915_request *rq;
 		u32 seqno[2];
 
-		if (!intel_engine_can_store_dword(engine))
-			continue;
+		अगर (!पूर्णांकel_engine_can_store_dword(engine))
+			जारी;
 
-		rq = intel_engine_create_kernel_request(engine);
-		if (IS_ERR(rq)) {
+		rq = पूर्णांकel_engine_create_kernel_request(engine);
+		अगर (IS_ERR(rq)) अणु
 			err = PTR_ERR(rq);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		tl->seqno = -4u;
 
 		mutex_lock_nested(&tl->mutex, SINGLE_DEPTH_NESTING);
-		err = intel_timeline_get_seqno(tl, rq, &seqno[0]);
+		err = पूर्णांकel_समयline_get_seqno(tl, rq, &seqno[0]);
 		mutex_unlock(&tl->mutex);
-		if (err) {
+		अगर (err) अणु
 			i915_request_add(rq);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		pr_debug("seqno[0]:%08x, hwsp_offset:%08x\n",
 			 seqno[0], tl->hwsp_offset);
 
 		err = emit_ggtt_store_dw(rq, tl->hwsp_offset, seqno[0]);
-		if (err) {
+		अगर (err) अणु
 			i915_request_add(rq);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		hwsp_seqno[0] = tl->hwsp_seqno;
 
 		mutex_lock_nested(&tl->mutex, SINGLE_DEPTH_NESTING);
-		err = intel_timeline_get_seqno(tl, rq, &seqno[1]);
+		err = पूर्णांकel_समयline_get_seqno(tl, rq, &seqno[1]);
 		mutex_unlock(&tl->mutex);
-		if (err) {
+		अगर (err) अणु
 			i915_request_add(rq);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		pr_debug("seqno[1]:%08x, hwsp_offset:%08x\n",
 			 seqno[1], tl->hwsp_offset);
 
 		err = emit_ggtt_store_dw(rq, tl->hwsp_offset, seqno[1]);
-		if (err) {
+		अगर (err) अणु
 			i915_request_add(rq);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		hwsp_seqno[1] = tl->hwsp_seqno;
 
 		/* With wrap should come a new hwsp */
@@ -745,44 +746,44 @@ static int live_hwsp_wrap(void *arg)
 
 		i915_request_add(rq);
 
-		if (i915_request_wait(rq, 0, HZ / 5) < 0) {
+		अगर (i915_request_रुको(rq, 0, HZ / 5) < 0) अणु
 			pr_err("Wait for timeline writes timed out!\n");
 			err = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (READ_ONCE(*hwsp_seqno[0]) != seqno[0] ||
-		    READ_ONCE(*hwsp_seqno[1]) != seqno[1]) {
+		अगर (READ_ONCE(*hwsp_seqno[0]) != seqno[0] ||
+		    READ_ONCE(*hwsp_seqno[1]) != seqno[1]) अणु
 			pr_err("Bad timeline values: found (%x, %x), expected (%x, %x)\n",
 			       *hwsp_seqno[0], *hwsp_seqno[1],
 			       seqno[0], seqno[1]);
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		intel_gt_retire_requests(gt); /* recycle HWSP */
-	}
+		पूर्णांकel_gt_retire_requests(gt); /* recycle HWSP */
+	पूर्ण
 
 out:
-	if (igt_flush_test(gt->i915))
+	अगर (igt_flush_test(gt->i915))
 		err = -EIO;
 
-	intel_timeline_unpin(tl);
-out_free:
-	intel_timeline_put(tl);
-	return err;
-}
+	पूर्णांकel_समयline_unpin(tl);
+out_मुक्त:
+	पूर्णांकel_समयline_put(tl);
+	वापस err;
+पूर्ण
 
-static int emit_read_hwsp(struct i915_request *rq,
+अटल पूर्णांक emit_पढ़ो_hwsp(काष्ठा i915_request *rq,
 			  u32 seqno, u32 hwsp,
 			  u32 *addr)
-{
-	const u32 gpr = i915_mmio_reg_offset(GEN8_RING_CS_GPR(rq->engine->mmio_base, 0));
+अणु
+	स्थिर u32 gpr = i915_mmio_reg_offset(GEN8_RING_CS_GPR(rq->engine->mmio_base, 0));
 	u32 *cs;
 
-	cs = intel_ring_begin(rq, 12);
-	if (IS_ERR(cs))
-		return PTR_ERR(cs);
+	cs = पूर्णांकel_ring_begin(rq, 12);
+	अगर (IS_ERR(cs))
+		वापस PTR_ERR(cs);
 
 	*cs++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 	*cs++ = *addr;
@@ -801,623 +802,623 @@ static int emit_read_hwsp(struct i915_request *rq,
 	*cs++ = 0;
 	*addr += 4;
 
-	intel_ring_advance(rq, cs);
+	पूर्णांकel_ring_advance(rq, cs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct hwsp_watcher {
-	struct i915_vma *vma;
-	struct i915_request *rq;
+काष्ठा hwsp_watcher अणु
+	काष्ठा i915_vma *vma;
+	काष्ठा i915_request *rq;
 	u32 addr;
 	u32 *map;
-};
+पूर्ण;
 
-static bool cmp_lt(u32 a, u32 b)
-{
-	return a < b;
-}
+अटल bool cmp_lt(u32 a, u32 b)
+अणु
+	वापस a < b;
+पूर्ण
 
-static bool cmp_gte(u32 a, u32 b)
-{
-	return a >= b;
-}
+अटल bool cmp_gte(u32 a, u32 b)
+अणु
+	वापस a >= b;
+पूर्ण
 
-static int setup_watcher(struct hwsp_watcher *w, struct intel_gt *gt)
-{
-	struct drm_i915_gem_object *obj;
-	struct i915_vma *vma;
+अटल पूर्णांक setup_watcher(काष्ठा hwsp_watcher *w, काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_vma *vma;
 
-	obj = i915_gem_object_create_internal(gt->i915, SZ_2M);
-	if (IS_ERR(obj))
-		return PTR_ERR(obj);
+	obj = i915_gem_object_create_पूर्णांकernal(gt->i915, SZ_2M);
+	अगर (IS_ERR(obj))
+		वापस PTR_ERR(obj);
 
 	w->map = i915_gem_object_pin_map_unlocked(obj, I915_MAP_WB);
-	if (IS_ERR(w->map)) {
+	अगर (IS_ERR(w->map)) अणु
 		i915_gem_object_put(obj);
-		return PTR_ERR(w->map);
-	}
+		वापस PTR_ERR(w->map);
+	पूर्ण
 
-	vma = i915_gem_object_ggtt_pin(obj, NULL, 0, 0, 0);
-	if (IS_ERR(vma)) {
+	vma = i915_gem_object_ggtt_pin(obj, शून्य, 0, 0, 0);
+	अगर (IS_ERR(vma)) अणु
 		i915_gem_object_put(obj);
-		return PTR_ERR(vma);
-	}
+		वापस PTR_ERR(vma);
+	पूर्ण
 
 	w->vma = vma;
 	w->addr = i915_ggtt_offset(vma);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void switch_tl_lock(struct i915_request *from, struct i915_request *to)
-{
+अटल व्योम चयन_tl_lock(काष्ठा i915_request *from, काष्ठा i915_request *to)
+अणु
 	/* some light mutex juggling required; think co-routines */
 
-	if (from) {
-		lockdep_unpin_lock(&from->context->timeline->mutex, from->cookie);
-		mutex_unlock(&from->context->timeline->mutex);
-	}
+	अगर (from) अणु
+		lockdep_unpin_lock(&from->context->समयline->mutex, from->cookie);
+		mutex_unlock(&from->context->समयline->mutex);
+	पूर्ण
 
-	if (to) {
-		mutex_lock(&to->context->timeline->mutex);
-		to->cookie = lockdep_pin_lock(&to->context->timeline->mutex);
-	}
-}
+	अगर (to) अणु
+		mutex_lock(&to->context->समयline->mutex);
+		to->cookie = lockdep_pin_lock(&to->context->समयline->mutex);
+	पूर्ण
+पूर्ण
 
-static int create_watcher(struct hwsp_watcher *w,
-			  struct intel_engine_cs *engine,
-			  int ringsz)
-{
-	struct intel_context *ce;
+अटल पूर्णांक create_watcher(काष्ठा hwsp_watcher *w,
+			  काष्ठा पूर्णांकel_engine_cs *engine,
+			  पूर्णांक ringsz)
+अणु
+	काष्ठा पूर्णांकel_context *ce;
 
-	ce = intel_context_create(engine);
-	if (IS_ERR(ce))
-		return PTR_ERR(ce);
+	ce = पूर्णांकel_context_create(engine);
+	अगर (IS_ERR(ce))
+		वापस PTR_ERR(ce);
 
-	ce->ring = __intel_context_ring_size(ringsz);
-	w->rq = intel_context_create_request(ce);
-	intel_context_put(ce);
-	if (IS_ERR(w->rq))
-		return PTR_ERR(w->rq);
+	ce->ring = __पूर्णांकel_context_ring_size(ringsz);
+	w->rq = पूर्णांकel_context_create_request(ce);
+	पूर्णांकel_context_put(ce);
+	अगर (IS_ERR(w->rq))
+		वापस PTR_ERR(w->rq);
 
 	w->addr = i915_ggtt_offset(w->vma);
 
-	switch_tl_lock(w->rq, NULL);
+	चयन_tl_lock(w->rq, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_watcher(struct hwsp_watcher *w, const char *name,
+अटल पूर्णांक check_watcher(काष्ठा hwsp_watcher *w, स्थिर अक्षर *name,
 			 bool (*op)(u32 hwsp, u32 seqno))
-{
-	struct i915_request *rq = fetch_and_zero(&w->rq);
+अणु
+	काष्ठा i915_request *rq = fetch_and_zero(&w->rq);
 	u32 offset, end;
-	int err;
+	पूर्णांक err;
 
 	GEM_BUG_ON(w->addr - i915_ggtt_offset(w->vma) > w->vma->size);
 
 	i915_request_get(rq);
-	switch_tl_lock(NULL, rq);
+	चयन_tl_lock(शून्य, rq);
 	i915_request_add(rq);
 
-	if (i915_request_wait(rq, 0, HZ) < 0) {
+	अगर (i915_request_रुको(rq, 0, HZ) < 0) अणु
 		err = -ETIME;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = 0;
 	offset = 0;
-	end = (w->addr - i915_ggtt_offset(w->vma)) / sizeof(*w->map);
-	while (offset < end) {
-		if (!op(w->map[offset + 1], w->map[offset])) {
+	end = (w->addr - i915_ggtt_offset(w->vma)) / माप(*w->map);
+	जबतक (offset < end) अणु
+		अगर (!op(w->map[offset + 1], w->map[offset])) अणु
 			pr_err("Watcher '%s' found HWSP value %x for seqno %x\n",
 			       name, w->map[offset + 1], w->map[offset]);
 			err = -EINVAL;
-		}
+		पूर्ण
 
 		offset += 2;
-	}
+	पूर्ण
 
 out:
 	i915_request_put(rq);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void cleanup_watcher(struct hwsp_watcher *w)
-{
-	if (w->rq) {
-		switch_tl_lock(NULL, w->rq);
+अटल व्योम cleanup_watcher(काष्ठा hwsp_watcher *w)
+अणु
+	अगर (w->rq) अणु
+		चयन_tl_lock(शून्य, w->rq);
 
 		i915_request_add(w->rq);
-	}
+	पूर्ण
 
 	i915_vma_unpin_and_release(&w->vma, I915_VMA_RELEASE_MAP);
-}
+पूर्ण
 
-static bool retire_requests(struct intel_timeline *tl)
-{
-	struct i915_request *rq, *rn;
+अटल bool retire_requests(काष्ठा पूर्णांकel_समयline *tl)
+अणु
+	काष्ठा i915_request *rq, *rn;
 
 	mutex_lock(&tl->mutex);
-	list_for_each_entry_safe(rq, rn, &tl->requests, link)
-		if (!i915_request_retire(rq))
-			break;
+	list_क्रम_each_entry_safe(rq, rn, &tl->requests, link)
+		अगर (!i915_request_retire(rq))
+			अवरोध;
 	mutex_unlock(&tl->mutex);
 
-	return !i915_active_fence_isset(&tl->last_request);
-}
+	वापस !i915_active_fence_isset(&tl->last_request);
+पूर्ण
 
-static struct i915_request *wrap_timeline(struct i915_request *rq)
-{
-	struct intel_context *ce = rq->context;
-	struct intel_timeline *tl = ce->timeline;
+अटल काष्ठा i915_request *wrap_समयline(काष्ठा i915_request *rq)
+अणु
+	काष्ठा पूर्णांकel_context *ce = rq->context;
+	काष्ठा पूर्णांकel_समयline *tl = ce->समयline;
 	u32 seqno = rq->fence.seqno;
 
-	while (tl->seqno >= seqno) { /* Cause a wrap */
+	जबतक (tl->seqno >= seqno) अणु /* Cause a wrap */
 		i915_request_put(rq);
-		rq = intel_context_create_request(ce);
-		if (IS_ERR(rq))
-			return rq;
+		rq = पूर्णांकel_context_create_request(ce);
+		अगर (IS_ERR(rq))
+			वापस rq;
 
 		i915_request_get(rq);
 		i915_request_add(rq);
-	}
+	पूर्ण
 
 	i915_request_put(rq);
 	rq = i915_request_create(ce);
-	if (IS_ERR(rq))
-		return rq;
+	अगर (IS_ERR(rq))
+		वापस rq;
 
 	i915_request_get(rq);
 	i915_request_add(rq);
 
-	return rq;
-}
+	वापस rq;
+पूर्ण
 
-static int live_hwsp_read(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct hwsp_watcher watcher[2] = {};
-	struct intel_engine_cs *engine;
-	struct intel_timeline *tl;
-	enum intel_engine_id id;
-	int err = 0;
-	int i;
+अटल पूर्णांक live_hwsp_पढ़ो(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा hwsp_watcher watcher[2] = अणुपूर्ण;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	काष्ठा पूर्णांकel_समयline *tl;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err = 0;
+	पूर्णांक i;
 
 	/*
-	 * If we take a reference to the HWSP for reading on the GPU, that
-	 * read may be arbitrarily delayed (either by foreign fence or
+	 * If we take a reference to the HWSP क्रम पढ़ोing on the GPU, that
+	 * पढ़ो may be arbitrarily delayed (either by क्रमeign fence or
 	 * priority saturation) and a wrap can happen within 30 minutes.
-	 * When the GPU read is finally submitted it should be correct,
+	 * When the GPU पढ़ो is finally submitted it should be correct,
 	 * even across multiple wraps.
 	 */
 
-	if (INTEL_GEN(gt->i915) < 8) /* CS convenience [SRM/LRM] */
-		return 0;
+	अगर (INTEL_GEN(gt->i915) < 8) /* CS convenience [SRM/LRM] */
+		वापस 0;
 
-	tl = intel_timeline_create(gt);
-	if (IS_ERR(tl))
-		return PTR_ERR(tl);
+	tl = पूर्णांकel_समयline_create(gt);
+	अगर (IS_ERR(tl))
+		वापस PTR_ERR(tl);
 
-	if (!tl->has_initial_breadcrumb)
-		goto out_free;
+	अगर (!tl->has_initial_bपढ़ोcrumb)
+		जाओ out_मुक्त;
 
-	for (i = 0; i < ARRAY_SIZE(watcher); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(watcher); i++) अणु
 		err = setup_watcher(&watcher[i], gt);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
-	for_each_engine(engine, gt, id) {
-		struct intel_context *ce;
-		unsigned long count = 0;
-		IGT_TIMEOUT(end_time);
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा पूर्णांकel_context *ce;
+		अचिन्हित दीर्घ count = 0;
+		IGT_TIMEOUT(end_समय);
 
-		/* Create a request we can use for remote reading of the HWSP */
+		/* Create a request we can use क्रम remote पढ़ोing of the HWSP */
 		err = create_watcher(&watcher[1], engine, SZ_512K);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
-		do {
-			struct i915_sw_fence *submit;
-			struct i915_request *rq;
+		करो अणु
+			काष्ठा i915_sw_fence *submit;
+			काष्ठा i915_request *rq;
 			u32 hwsp, dummy;
 
 			submit = heap_fence_create(GFP_KERNEL);
-			if (!submit) {
+			अगर (!submit) अणु
 				err = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			err = create_watcher(&watcher[0], engine, SZ_4K);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
-			ce = intel_context_create(engine);
-			if (IS_ERR(ce)) {
+			ce = पूर्णांकel_context_create(engine);
+			अगर (IS_ERR(ce)) अणु
 				err = PTR_ERR(ce);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			ce->timeline = intel_timeline_get(tl);
+			ce->समयline = पूर्णांकel_समयline_get(tl);
 
-			/* Ensure timeline is mapped, done during first pin */
-			err = intel_context_pin(ce);
-			if (err) {
-				intel_context_put(ce);
-				goto out;
-			}
+			/* Ensure समयline is mapped, करोne during first pin */
+			err = पूर्णांकel_context_pin(ce);
+			अगर (err) अणु
+				पूर्णांकel_context_put(ce);
+				जाओ out;
+			पूर्ण
 
 			/*
-			 * Start at a new wrap, and set seqno right before another wrap,
+			 * Start at a new wrap, and set seqno right beक्रमe another wrap,
 			 * saving 30 minutes of nops
 			 */
 			tl->seqno = -12u + 2 * (count & 3);
-			__intel_timeline_get_seqno(tl, &dummy);
+			__पूर्णांकel_समयline_get_seqno(tl, &dummy);
 
 			rq = i915_request_create(ce);
-			if (IS_ERR(rq)) {
+			अगर (IS_ERR(rq)) अणु
 				err = PTR_ERR(rq);
-				intel_context_unpin(ce);
-				intel_context_put(ce);
-				goto out;
-			}
+				पूर्णांकel_context_unpin(ce);
+				पूर्णांकel_context_put(ce);
+				जाओ out;
+			पूर्ण
 
-			err = i915_sw_fence_await_dma_fence(&rq->submit,
+			err = i915_sw_fence_aरुको_dma_fence(&rq->submit,
 							    &watcher[0].rq->fence, 0,
 							    GFP_KERNEL);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				i915_request_add(rq);
-				intel_context_unpin(ce);
-				intel_context_put(ce);
-				goto out;
-			}
+				पूर्णांकel_context_unpin(ce);
+				पूर्णांकel_context_put(ce);
+				जाओ out;
+			पूर्ण
 
-			switch_tl_lock(rq, watcher[0].rq);
-			err = intel_timeline_read_hwsp(rq, watcher[0].rq, &hwsp);
-			if (err == 0)
-				err = emit_read_hwsp(watcher[0].rq, /* before */
+			चयन_tl_lock(rq, watcher[0].rq);
+			err = पूर्णांकel_समयline_पढ़ो_hwsp(rq, watcher[0].rq, &hwsp);
+			अगर (err == 0)
+				err = emit_पढ़ो_hwsp(watcher[0].rq, /* beक्रमe */
 						     rq->fence.seqno, hwsp,
 						     &watcher[0].addr);
-			switch_tl_lock(watcher[0].rq, rq);
-			if (err) {
+			चयन_tl_lock(watcher[0].rq, rq);
+			अगर (err) अणु
 				i915_request_add(rq);
-				intel_context_unpin(ce);
-				intel_context_put(ce);
-				goto out;
-			}
+				पूर्णांकel_context_unpin(ce);
+				पूर्णांकel_context_put(ce);
+				जाओ out;
+			पूर्ण
 
-			switch_tl_lock(rq, watcher[1].rq);
-			err = intel_timeline_read_hwsp(rq, watcher[1].rq, &hwsp);
-			if (err == 0)
-				err = emit_read_hwsp(watcher[1].rq, /* after */
+			चयन_tl_lock(rq, watcher[1].rq);
+			err = पूर्णांकel_समयline_पढ़ो_hwsp(rq, watcher[1].rq, &hwsp);
+			अगर (err == 0)
+				err = emit_पढ़ो_hwsp(watcher[1].rq, /* after */
 						     rq->fence.seqno, hwsp,
 						     &watcher[1].addr);
-			switch_tl_lock(watcher[1].rq, rq);
-			if (err) {
+			चयन_tl_lock(watcher[1].rq, rq);
+			अगर (err) अणु
 				i915_request_add(rq);
-				intel_context_unpin(ce);
-				intel_context_put(ce);
-				goto out;
-			}
+				पूर्णांकel_context_unpin(ce);
+				पूर्णांकel_context_put(ce);
+				जाओ out;
+			पूर्ण
 
 			i915_request_get(rq);
 			i915_request_add(rq);
 
-			rq = wrap_timeline(rq);
-			intel_context_unpin(ce);
-			intel_context_put(ce);
-			if (IS_ERR(rq)) {
+			rq = wrap_समयline(rq);
+			पूर्णांकel_context_unpin(ce);
+			पूर्णांकel_context_put(ce);
+			अगर (IS_ERR(rq)) अणु
 				err = PTR_ERR(rq);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			err = i915_sw_fence_await_dma_fence(&watcher[1].rq->submit,
+			err = i915_sw_fence_aरुको_dma_fence(&watcher[1].rq->submit,
 							    &rq->fence, 0,
 							    GFP_KERNEL);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				i915_request_put(rq);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			err = check_watcher(&watcher[0], "before", cmp_lt);
 			i915_sw_fence_commit(submit);
 			heap_fence_put(submit);
-			if (err) {
+			अगर (err) अणु
 				i915_request_put(rq);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			count++;
 
-			/* Flush the timeline before manually wrapping again */
-			if (i915_request_wait(rq,
+			/* Flush the समयline beक्रमe manually wrapping again */
+			अगर (i915_request_रुको(rq,
 					      I915_WAIT_INTERRUPTIBLE,
-					      HZ) < 0) {
+					      HZ) < 0) अणु
 				err = -ETIME;
 				i915_request_put(rq);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			retire_requests(tl);
 			i915_request_put(rq);
 
 			/* Single requests are limited to half a ring at most */
-			if (8 * watcher[1].rq->ring->emit >
+			अगर (8 * watcher[1].rq->ring->emit >
 			    3 * watcher[1].rq->ring->size)
-				break;
+				अवरोध;
 
-		} while (!__igt_timeout(end_time, NULL) &&
+		पूर्ण जबतक (!__igt_समयout(end_समय, शून्य) &&
 			 count < (PAGE_SIZE / TIMELINE_SEQNO_BYTES - 1) / 2);
 
 		pr_info("%s: simulated %lu wraps\n", engine->name, count);
 		err = check_watcher(&watcher[1], "after", cmp_gte);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 out:
-	for (i = 0; i < ARRAY_SIZE(watcher); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(watcher); i++)
 		cleanup_watcher(&watcher[i]);
 
-	if (igt_flush_test(gt->i915))
+	अगर (igt_flush_test(gt->i915))
 		err = -EIO;
 
-out_free:
-	intel_timeline_put(tl);
-	return err;
-}
+out_मुक्त:
+	पूर्णांकel_समयline_put(tl);
+	वापस err;
+पूर्ण
 
-static int live_hwsp_rollover_kernel(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	int err = 0;
+अटल पूर्णांक live_hwsp_rollover_kernel(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err = 0;
 
 	/*
-	 * Run the host for long enough, and even the kernel context will
+	 * Run the host क्रम दीर्घ enough, and even the kernel context will
 	 * see a seqno rollover.
 	 */
 
-	for_each_engine(engine, gt, id) {
-		struct intel_context *ce = engine->kernel_context;
-		struct intel_timeline *tl = ce->timeline;
-		struct i915_request *rq[3] = {};
-		int i;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा पूर्णांकel_context *ce = engine->kernel_context;
+		काष्ठा पूर्णांकel_समयline *tl = ce->समयline;
+		काष्ठा i915_request *rq[3] = अणुपूर्ण;
+		पूर्णांक i;
 
 		st_engine_heartbeat_disable(engine);
-		if (intel_gt_wait_for_idle(gt, HZ / 2)) {
+		अगर (पूर्णांकel_gt_रुको_क्रम_idle(gt, HZ / 2)) अणु
 			err = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		GEM_BUG_ON(i915_active_fence_isset(&tl->last_request));
 		tl->seqno = -2u;
 		WRITE_ONCE(*(u32 *)tl->hwsp_seqno, tl->seqno);
 
-		for (i = 0; i < ARRAY_SIZE(rq); i++) {
-			struct i915_request *this;
+		क्रम (i = 0; i < ARRAY_SIZE(rq); i++) अणु
+			काष्ठा i915_request *this;
 
 			this = i915_request_create(ce);
-			if (IS_ERR(this)) {
+			अगर (IS_ERR(this)) अणु
 				err = PTR_ERR(this);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			pr_debug("%s: create fence.seqnp:%d\n",
 				 engine->name,
 				 lower_32_bits(this->fence.seqno));
 
-			GEM_BUG_ON(rcu_access_pointer(this->timeline) != tl);
+			GEM_BUG_ON(rcu_access_poपूर्णांकer(this->समयline) != tl);
 
 			rq[i] = i915_request_get(this);
 			i915_request_add(this);
-		}
+		पूर्ण
 
 		/* We expected a wrap! */
 		GEM_BUG_ON(rq[2]->fence.seqno > rq[0]->fence.seqno);
 
-		if (i915_request_wait(rq[2], 0, HZ / 5) < 0) {
+		अगर (i915_request_रुको(rq[2], 0, HZ / 5) < 0) अणु
 			pr_err("Wait for timeline wrap timed out!\n");
 			err = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (i = 0; i < ARRAY_SIZE(rq); i++) {
-			if (!i915_request_completed(rq[i])) {
+		क्रम (i = 0; i < ARRAY_SIZE(rq); i++) अणु
+			अगर (!i915_request_completed(rq[i])) अणु
 				pr_err("Pre-wrap request not completed!\n");
 				err = -EINVAL;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 out:
-		for (i = 0; i < ARRAY_SIZE(rq); i++)
+		क्रम (i = 0; i < ARRAY_SIZE(rq); i++)
 			i915_request_put(rq[i]);
 		st_engine_heartbeat_enable(engine);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	if (igt_flush_test(gt->i915))
+	अगर (igt_flush_test(gt->i915))
 		err = -EIO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int live_hwsp_rollover_user(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	int err = 0;
+अटल पूर्णांक live_hwsp_rollover_user(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err = 0;
 
 	/*
-	 * Simulate a long running user context, and force the seqno wrap
-	 * on the user's timeline.
+	 * Simulate a दीर्घ running user context, and क्रमce the seqno wrap
+	 * on the user's समयline.
 	 */
 
-	for_each_engine(engine, gt, id) {
-		struct i915_request *rq[3] = {};
-		struct intel_timeline *tl;
-		struct intel_context *ce;
-		int i;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा i915_request *rq[3] = अणुपूर्ण;
+		काष्ठा पूर्णांकel_समयline *tl;
+		काष्ठा पूर्णांकel_context *ce;
+		पूर्णांक i;
 
-		ce = intel_context_create(engine);
-		if (IS_ERR(ce))
-			return PTR_ERR(ce);
+		ce = पूर्णांकel_context_create(engine);
+		अगर (IS_ERR(ce))
+			वापस PTR_ERR(ce);
 
-		err = intel_context_alloc_state(ce);
-		if (err)
-			goto out;
+		err = पूर्णांकel_context_alloc_state(ce);
+		अगर (err)
+			जाओ out;
 
-		tl = ce->timeline;
-		if (!tl->has_initial_breadcrumb)
-			goto out;
+		tl = ce->समयline;
+		अगर (!tl->has_initial_bपढ़ोcrumb)
+			जाओ out;
 
-		err = intel_context_pin(ce);
-		if (err)
-			goto out;
+		err = पूर्णांकel_context_pin(ce);
+		अगर (err)
+			जाओ out;
 
 		tl->seqno = -4u;
 		WRITE_ONCE(*(u32 *)tl->hwsp_seqno, tl->seqno);
 
-		for (i = 0; i < ARRAY_SIZE(rq); i++) {
-			struct i915_request *this;
+		क्रम (i = 0; i < ARRAY_SIZE(rq); i++) अणु
+			काष्ठा i915_request *this;
 
-			this = intel_context_create_request(ce);
-			if (IS_ERR(this)) {
+			this = पूर्णांकel_context_create_request(ce);
+			अगर (IS_ERR(this)) अणु
 				err = PTR_ERR(this);
-				goto out_unpin;
-			}
+				जाओ out_unpin;
+			पूर्ण
 
 			pr_debug("%s: create fence.seqnp:%d\n",
 				 engine->name,
 				 lower_32_bits(this->fence.seqno));
 
-			GEM_BUG_ON(rcu_access_pointer(this->timeline) != tl);
+			GEM_BUG_ON(rcu_access_poपूर्णांकer(this->समयline) != tl);
 
 			rq[i] = i915_request_get(this);
 			i915_request_add(this);
-		}
+		पूर्ण
 
 		/* We expected a wrap! */
 		GEM_BUG_ON(rq[2]->fence.seqno > rq[0]->fence.seqno);
 
-		if (i915_request_wait(rq[2], 0, HZ / 5) < 0) {
+		अगर (i915_request_रुको(rq[2], 0, HZ / 5) < 0) अणु
 			pr_err("Wait for timeline wrap timed out!\n");
 			err = -EIO;
-			goto out_unpin;
-		}
+			जाओ out_unpin;
+		पूर्ण
 
-		for (i = 0; i < ARRAY_SIZE(rq); i++) {
-			if (!i915_request_completed(rq[i])) {
+		क्रम (i = 0; i < ARRAY_SIZE(rq); i++) अणु
+			अगर (!i915_request_completed(rq[i])) अणु
 				pr_err("Pre-wrap request not completed!\n");
 				err = -EINVAL;
-				goto out_unpin;
-			}
-		}
+				जाओ out_unpin;
+			पूर्ण
+		पूर्ण
 out_unpin:
-		intel_context_unpin(ce);
+		पूर्णांकel_context_unpin(ce);
 out:
-		for (i = 0; i < ARRAY_SIZE(rq); i++)
+		क्रम (i = 0; i < ARRAY_SIZE(rq); i++)
 			i915_request_put(rq[i]);
-		intel_context_put(ce);
-		if (err)
-			break;
-	}
+		पूर्णांकel_context_put(ce);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	if (igt_flush_test(gt->i915))
+	अगर (igt_flush_test(gt->i915))
 		err = -EIO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int live_hwsp_recycle(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	unsigned long count;
-	int err = 0;
+अटल पूर्णांक live_hwsp_recycle(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	अचिन्हित दीर्घ count;
+	पूर्णांक err = 0;
 
 	/*
-	 * Check seqno writes into one timeline at a time. We expect to
-	 * recycle the breadcrumb slot between iterations and neither
+	 * Check seqno ग_लिखोs पूर्णांकo one समयline at a समय. We expect to
+	 * recycle the bपढ़ोcrumb slot between iterations and neither
 	 * want to confuse ourselves or the GPU.
 	 */
 
 	count = 0;
-	for_each_engine(engine, gt, id) {
-		IGT_TIMEOUT(end_time);
+	क्रम_each_engine(engine, gt, id) अणु
+		IGT_TIMEOUT(end_समय);
 
-		if (!intel_engine_can_store_dword(engine))
-			continue;
+		अगर (!पूर्णांकel_engine_can_store_dword(engine))
+			जारी;
 
-		intel_engine_pm_get(engine);
+		पूर्णांकel_engine_pm_get(engine);
 
-		do {
-			struct intel_timeline *tl;
-			struct i915_request *rq;
+		करो अणु
+			काष्ठा पूर्णांकel_समयline *tl;
+			काष्ठा i915_request *rq;
 
-			tl = intel_timeline_create(gt);
-			if (IS_ERR(tl)) {
+			tl = पूर्णांकel_समयline_create(gt);
+			अगर (IS_ERR(tl)) अणु
 				err = PTR_ERR(tl);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			rq = checked_tl_write(tl, engine, count);
-			if (IS_ERR(rq)) {
-				intel_timeline_put(tl);
+			rq = checked_tl_ग_लिखो(tl, engine, count);
+			अगर (IS_ERR(rq)) अणु
+				पूर्णांकel_समयline_put(tl);
 				err = PTR_ERR(rq);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (i915_request_wait(rq, 0, HZ / 5) < 0) {
+			अगर (i915_request_रुको(rq, 0, HZ / 5) < 0) अणु
 				pr_err("Wait for timeline writes timed out!\n");
 				i915_request_put(rq);
-				intel_timeline_put(tl);
+				पूर्णांकel_समयline_put(tl);
 				err = -EIO;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (READ_ONCE(*tl->hwsp_seqno) != count) {
+			अगर (READ_ONCE(*tl->hwsp_seqno) != count) अणु
 				GEM_TRACE_ERR("Invalid seqno:%lu stored in timeline %llu @ %x found 0x%x\n",
 					      count, tl->fence_context,
 					      tl->hwsp_offset, *tl->hwsp_seqno);
 				GEM_TRACE_DUMP();
 				err = -EINVAL;
-			}
+			पूर्ण
 
 			i915_request_put(rq);
-			intel_timeline_put(tl);
+			पूर्णांकel_समयline_put(tl);
 			count++;
 
-			if (err)
-				break;
-		} while (!__igt_timeout(end_time, NULL));
+			अगर (err)
+				अवरोध;
+		पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
 
-		intel_engine_pm_put(engine);
-		if (err)
-			break;
-	}
+		पूर्णांकel_engine_pm_put(engine);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int intel_timeline_live_selftests(struct drm_i915_private *i915)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक पूर्णांकel_समयline_live_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(live_hwsp_recycle),
 		SUBTEST(live_hwsp_engine),
 		SUBTEST(live_hwsp_alternate),
 		SUBTEST(live_hwsp_wrap),
-		SUBTEST(live_hwsp_read),
+		SUBTEST(live_hwsp_पढ़ो),
 		SUBTEST(live_hwsp_rollover_kernel),
 		SUBTEST(live_hwsp_rollover_user),
-	};
+	पूर्ण;
 
-	if (intel_gt_is_wedged(&i915->gt))
-		return 0;
+	अगर (पूर्णांकel_gt_is_wedged(&i915->gt))
+		वापस 0;
 
-	return intel_gt_live_subtests(tests, &i915->gt);
-}
+	वापस पूर्णांकel_gt_live_subtests(tests, &i915->gt);
+पूर्ण

@@ -1,148 +1,149 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Routines for control of the CS8427 via i2c bus
+ *  Routines क्रम control of the CS8427 via i2c bus
  *  IEC958 (S/PDIF) receiver & transmitter by Cirrus Logic
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/bitrev.h>
-#include <linux/module.h>
-#include <asm/unaligned.h>
-#include <sound/core.h>
-#include <sound/control.h>
-#include <sound/pcm.h>
-#include <sound/cs8427.h>
-#include <sound/asoundef.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitrev.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <sound/core.h>
+#समावेश <sound/control.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/cs8427.h>
+#समावेश <sound/asoundef.h>
 
-static void snd_cs8427_reset(struct snd_i2c_device *cs8427);
+अटल व्योम snd_cs8427_reset(काष्ठा snd_i2c_device *cs8427);
 
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("IEC958 (S/PDIF) receiver & transmitter by Cirrus Logic");
 MODULE_LICENSE("GPL");
 
-#define CS8427_ADDR			(0x20>>1) /* fixed address */
+#घोषणा CS8427_ADDR			(0x20>>1) /* fixed address */
 
-struct cs8427_stream {
-	struct snd_pcm_substream *substream;
-	char hw_status[24];		/* hardware status */
-	char def_status[24];		/* default status */
-	char pcm_status[24];		/* PCM private status */
-	char hw_udata[32];
-	struct snd_kcontrol *pcm_ctl;
-};
+काष्ठा cs8427_stream अणु
+	काष्ठा snd_pcm_substream *substream;
+	अक्षर hw_status[24];		/* hardware status */
+	अक्षर def_status[24];		/* शेष status */
+	अक्षर pcm_status[24];		/* PCM निजी status */
+	अक्षर hw_udata[32];
+	काष्ठा snd_kcontrol *pcm_ctl;
+पूर्ण;
 
-struct cs8427 {
-	unsigned char regmap[0x14];	/* map of first 1 + 13 registers */
-	unsigned int rate;
-	unsigned int reset_timeout;
-	struct cs8427_stream playback;
-	struct cs8427_stream capture;
-};
+काष्ठा cs8427 अणु
+	अचिन्हित अक्षर regmap[0x14];	/* map of first 1 + 13 रेजिस्टरs */
+	अचिन्हित पूर्णांक rate;
+	अचिन्हित पूर्णांक reset_समयout;
+	काष्ठा cs8427_stream playback;
+	काष्ठा cs8427_stream capture;
+पूर्ण;
 
-int snd_cs8427_reg_write(struct snd_i2c_device *device, unsigned char reg,
-			 unsigned char val)
-{
-	int err;
-	unsigned char buf[2];
+पूर्णांक snd_cs8427_reg_ग_लिखो(काष्ठा snd_i2c_device *device, अचिन्हित अक्षर reg,
+			 अचिन्हित अक्षर val)
+अणु
+	पूर्णांक err;
+	अचिन्हित अक्षर buf[2];
 
 	buf[0] = reg & 0x7f;
 	buf[1] = val;
-	if ((err = snd_i2c_sendbytes(device, buf, 2)) != 2) {
-		snd_printk(KERN_ERR "unable to send bytes 0x%02x:0x%02x "
+	अगर ((err = snd_i2c_sendbytes(device, buf, 2)) != 2) अणु
+		snd_prपूर्णांकk(KERN_ERR "unable to send bytes 0x%02x:0x%02x "
 			   "to CS8427 (%i)\n", buf[0], buf[1], err);
-		return err < 0 ? err : -EIO;
-	}
-	return 0;
-}
+		वापस err < 0 ? err : -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(snd_cs8427_reg_write);
+EXPORT_SYMBOL(snd_cs8427_reg_ग_लिखो);
 
-static int snd_cs8427_reg_read(struct snd_i2c_device *device, unsigned char reg)
-{
-	int err;
-	unsigned char buf;
+अटल पूर्णांक snd_cs8427_reg_पढ़ो(काष्ठा snd_i2c_device *device, अचिन्हित अक्षर reg)
+अणु
+	पूर्णांक err;
+	अचिन्हित अक्षर buf;
 
-	if ((err = snd_i2c_sendbytes(device, &reg, 1)) != 1) {
-		snd_printk(KERN_ERR "unable to send register 0x%x byte "
+	अगर ((err = snd_i2c_sendbytes(device, &reg, 1)) != 1) अणु
+		snd_prपूर्णांकk(KERN_ERR "unable to send register 0x%x byte "
 			   "to CS8427\n", reg);
-		return err < 0 ? err : -EIO;
-	}
-	if ((err = snd_i2c_readbytes(device, &buf, 1)) != 1) {
-		snd_printk(KERN_ERR "unable to read register 0x%x byte "
+		वापस err < 0 ? err : -EIO;
+	पूर्ण
+	अगर ((err = snd_i2c_पढ़ोbytes(device, &buf, 1)) != 1) अणु
+		snd_prपूर्णांकk(KERN_ERR "unable to read register 0x%x byte "
 			   "from CS8427\n", reg);
-		return err < 0 ? err : -EIO;
-	}
-	return buf;
-}
+		वापस err < 0 ? err : -EIO;
+	पूर्ण
+	वापस buf;
+पूर्ण
 
-static int snd_cs8427_select_corudata(struct snd_i2c_device *device, int udata)
-{
-	struct cs8427 *chip = device->private_data;
-	int err;
+अटल पूर्णांक snd_cs8427_select_corudata(काष्ठा snd_i2c_device *device, पूर्णांक udata)
+अणु
+	काष्ठा cs8427 *chip = device->निजी_data;
+	पूर्णांक err;
 
 	udata = udata ? CS8427_BSEL : 0;
-	if (udata != (chip->regmap[CS8427_REG_CSDATABUF] & udata)) {
+	अगर (udata != (chip->regmap[CS8427_REG_CSDATABUF] & udata)) अणु
 		chip->regmap[CS8427_REG_CSDATABUF] &= ~CS8427_BSEL;
 		chip->regmap[CS8427_REG_CSDATABUF] |= udata;
-		err = snd_cs8427_reg_write(device, CS8427_REG_CSDATABUF,
+		err = snd_cs8427_reg_ग_लिखो(device, CS8427_REG_CSDATABUF,
 					   chip->regmap[CS8427_REG_CSDATABUF]);
-		if (err < 0)
-			return err;
-	}
-	return 0;
-}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_cs8427_send_corudata(struct snd_i2c_device *device,
-				    int udata,
-				    unsigned char *ndata,
-				    int count)
-{
-	struct cs8427 *chip = device->private_data;
-	char *hw_data = udata ?
+अटल पूर्णांक snd_cs8427_send_corudata(काष्ठा snd_i2c_device *device,
+				    पूर्णांक udata,
+				    अचिन्हित अक्षर *ndata,
+				    पूर्णांक count)
+अणु
+	काष्ठा cs8427 *chip = device->निजी_data;
+	अक्षर *hw_data = udata ?
 		chip->playback.hw_udata : chip->playback.hw_status;
-	unsigned char data[32];
-	int err, idx;
+	अचिन्हित अक्षर data[32];
+	पूर्णांक err, idx;
 
-	if (!memcmp(hw_data, ndata, count))
-		return 0;
-	if ((err = snd_cs8427_select_corudata(device, udata)) < 0)
-		return err;
-	memcpy(hw_data, ndata, count);
-	if (udata) {
-		memset(data, 0, sizeof(data));
-		if (memcmp(hw_data, data, count) == 0) {
+	अगर (!स_भेद(hw_data, ndata, count))
+		वापस 0;
+	अगर ((err = snd_cs8427_select_corudata(device, udata)) < 0)
+		वापस err;
+	स_नकल(hw_data, ndata, count);
+	अगर (udata) अणु
+		स_रखो(data, 0, माप(data));
+		अगर (स_भेद(hw_data, data, count) == 0) अणु
 			chip->regmap[CS8427_REG_UDATABUF] &= ~CS8427_UBMMASK;
 			chip->regmap[CS8427_REG_UDATABUF] |= CS8427_UBMZEROS |
 				CS8427_EFTUI;
-			err = snd_cs8427_reg_write(device, CS8427_REG_UDATABUF,
+			err = snd_cs8427_reg_ग_लिखो(device, CS8427_REG_UDATABUF,
 						   chip->regmap[CS8427_REG_UDATABUF]);
-			return err < 0 ? err : 0;
-		}
-	}
+			वापस err < 0 ? err : 0;
+		पूर्ण
+	पूर्ण
 	data[0] = CS8427_REG_AUTOINC | CS8427_REG_CORU_DATABUF;
-	for (idx = 0; idx < count; idx++)
+	क्रम (idx = 0; idx < count; idx++)
 		data[idx + 1] = bitrev8(ndata[idx]);
-	if (snd_i2c_sendbytes(device, data, count + 1) != count + 1)
-		return -EIO;
-	return 1;
-}
+	अगर (snd_i2c_sendbytes(device, data, count + 1) != count + 1)
+		वापस -EIO;
+	वापस 1;
+पूर्ण
 
-static void snd_cs8427_free(struct snd_i2c_device *device)
-{
-	kfree(device->private_data);
-}
+अटल व्योम snd_cs8427_मुक्त(काष्ठा snd_i2c_device *device)
+अणु
+	kमुक्त(device->निजी_data);
+पूर्ण
 
-int snd_cs8427_init(struct snd_i2c_bus *bus,
-		    struct snd_i2c_device *device)
-{
-	static unsigned char initvals1[] = {
+पूर्णांक snd_cs8427_init(काष्ठा snd_i2c_bus *bus,
+		    काष्ठा snd_i2c_device *device)
+अणु
+	अटल अचिन्हित अक्षर initvals1[] = अणु
 	  CS8427_REG_CONTROL1 | CS8427_REG_AUTOINC,
 	  /* CS8427_REG_CONTROL1: RMCK to OMCK, valid PCM audio, disable mutes,
 	     TCBL=output */
-	  CS8427_SWCLK | CS8427_TCBLDIR,
+	  CS8427_SWCLK | CS8427_TCBLसूची,
 	  /* CS8427_REG_CONTROL2: hold last valid audio sample, RMCK=256*Fs,
 	     normal stereo operation */
 	  0x00,
@@ -150,25 +151,25 @@ int snd_cs8427_init(struct snd_i2c_bus *bus,
 	     Rx=>serial */
 	  CS8427_TXDSERIAL | CS8427_SPDAES3RECEIVER,
 	  /* CS8427_REG_CLOCKSOURCE: Run off, CMCK=256*Fs,
-	     output time base = OMCK, input time base = recovered input clock,
-	     recovered input clock source is ILRCK changed to AES3INPUT
+	     output समय base = OMCK, input समय base = recovered input घड़ी,
+	     recovered input घड़ी source is ILRCK changed to AES3INPUT
 	     (workaround, see snd_cs8427_reset) */
 	  CS8427_RXDILRCK,
-	  /* CS8427_REG_SERIALINPUT: Serial audio input port data format = I2S,
+	  /* CS8427_REG_SERIALINPUT: Serial audio input port data क्रमmat = I2S,
 	     24-bit, 64*Fsi */
 	  CS8427_SIDEL | CS8427_SILRPOL,
-	  /* CS8427_REG_SERIALOUTPUT: Serial audio output port data format
+	  /* CS8427_REG_SERIALOUTPUT: Serial audio output port data क्रमmat
 	     = I2S, 24-bit, 64*Fsi */
 	  CS8427_SODEL | CS8427_SOLRPOL,
-	};
-	static unsigned char initvals2[] = {
+	पूर्ण;
+	अटल अचिन्हित अक्षर initvals2[] = अणु
 	  CS8427_REG_RECVERRMASK | CS8427_REG_AUTOINC,
-	  /* CS8427_REG_RECVERRMASK: unmask the input PLL clock, V, confidence,
+	  /* CS8427_REG_RECVERRMASK: unmask the input PLL घड़ी, V, confidence,
 	     biphase, parity status bits */
 	  /* CS8427_UNLOCK | CS8427_V | CS8427_CONF | CS8427_BIP | CS8427_PAR,*/
 	  0xff, /* set everything */
 	  /* CS8427_REG_CSDATABUF:
-	     Registers 32-55 window to CS buffer
+	     Registers 32-55 winकरोw to CS buffer
 	     Inhibit D->E transfers from overwriting first 5 bytes of CS data.
 	     Inhibit D->E transfers (all) of CS data.
 	     Allow E->F transfer of CS data.
@@ -176,124 +177,124 @@ int snd_cs8427_init(struct snd_i2c_bus *bus,
 	     A channel info is output to chip's EMPH* pin. */
 	  CS8427_CBMR | CS8427_DETCI,
 	  /* CS8427_REG_UDATABUF:
-	     Use internal buffer to transmit User (U) data.
+	     Use पूर्णांकernal buffer to transmit User (U) data.
 	     Chip's U pin is an output.
-	     Transmit all O's for user data.
+	     Transmit all O's क्रम user data.
 	     Inhibit D->E transfers.
 	     Inhibit E->F transfers. */
 	  CS8427_UD | CS8427_EFTUI | CS8427_DETUI,
-	};
-	struct cs8427 *chip = device->private_data;
-	int err;
-	unsigned char buf[24];
+	पूर्ण;
+	काष्ठा cs8427 *chip = device->निजी_data;
+	पूर्णांक err;
+	अचिन्हित अक्षर buf[24];
 
 	snd_i2c_lock(bus);
-	err = snd_cs8427_reg_read(device, CS8427_REG_ID_AND_VER);
-	if (err != CS8427_VER8427A) {
+	err = snd_cs8427_reg_पढ़ो(device, CS8427_REG_ID_AND_VER);
+	अगर (err != CS8427_VER8427A) अणु
 		/* give second chance */
-		snd_printk(KERN_WARNING "invalid CS8427 signature 0x%x: "
+		snd_prपूर्णांकk(KERN_WARNING "invalid CS8427 signature 0x%x: "
 			   "let me try again...\n", err);
-		err = snd_cs8427_reg_read(device, CS8427_REG_ID_AND_VER);
-	}
-	if (err != CS8427_VER8427A) {
+		err = snd_cs8427_reg_पढ़ो(device, CS8427_REG_ID_AND_VER);
+	पूर्ण
+	अगर (err != CS8427_VER8427A) अणु
 		snd_i2c_unlock(bus);
-		snd_printk(KERN_ERR "unable to find CS8427 signature "
+		snd_prपूर्णांकk(KERN_ERR "unable to find CS8427 signature "
 			   "(expected 0x%x, read 0x%x),\n",
 			   CS8427_VER8427A, err);
-		snd_printk(KERN_ERR "   initialization is not completed\n");
-		return -EFAULT;
-	}
-	/* turn off run bit while making changes to configuration */
-	err = snd_cs8427_reg_write(device, CS8427_REG_CLOCKSOURCE, 0x00);
-	if (err < 0)
-		goto __fail;
+		snd_prपूर्णांकk(KERN_ERR "   initialization is not completed\n");
+		वापस -EFAULT;
+	पूर्ण
+	/* turn off run bit जबतक making changes to configuration */
+	err = snd_cs8427_reg_ग_लिखो(device, CS8427_REG_CLOCKSOURCE, 0x00);
+	अगर (err < 0)
+		जाओ __fail;
 	/* send initial values */
-	memcpy(chip->regmap + (initvals1[0] & 0x7f), initvals1 + 1, 6);
-	if ((err = snd_i2c_sendbytes(device, initvals1, 7)) != 7) {
+	स_नकल(chip->regmap + (initvals1[0] & 0x7f), initvals1 + 1, 6);
+	अगर ((err = snd_i2c_sendbytes(device, initvals1, 7)) != 7) अणु
 		err = err < 0 ? err : -EIO;
-		goto __fail;
-	}
-	/* Turn off CS8427 interrupt stuff that is not used in hardware */
-	memset(buf, 0, 7);
+		जाओ __fail;
+	पूर्ण
+	/* Turn off CS8427 पूर्णांकerrupt stuff that is not used in hardware */
+	स_रखो(buf, 0, 7);
 	/* from address 9 to 15 */
-	buf[0] = 9;	/* register */
-	if ((err = snd_i2c_sendbytes(device, buf, 7)) != 7)
-		goto __fail;
+	buf[0] = 9;	/* रेजिस्टर */
+	अगर ((err = snd_i2c_sendbytes(device, buf, 7)) != 7)
+		जाओ __fail;
 	/* send transfer initialization sequence */
-	memcpy(chip->regmap + (initvals2[0] & 0x7f), initvals2 + 1, 3);
-	if ((err = snd_i2c_sendbytes(device, initvals2, 4)) != 4) {
+	स_नकल(chip->regmap + (initvals2[0] & 0x7f), initvals2 + 1, 3);
+	अगर ((err = snd_i2c_sendbytes(device, initvals2, 4)) != 4) अणु
 		err = err < 0 ? err : -EIO;
-		goto __fail;
-	}
-	/* write default channel status bytes */
+		जाओ __fail;
+	पूर्ण
+	/* ग_लिखो शेष channel status bytes */
 	put_unaligned_le32(SNDRV_PCM_DEFAULT_CON_SPDIF, buf);
-	memset(buf + 4, 0, 24 - 4);
-	if (snd_cs8427_send_corudata(device, 0, buf, 24) < 0)
-		goto __fail;
-	memcpy(chip->playback.def_status, buf, 24);
-	memcpy(chip->playback.pcm_status, buf, 24);
+	स_रखो(buf + 4, 0, 24 - 4);
+	अगर (snd_cs8427_send_corudata(device, 0, buf, 24) < 0)
+		जाओ __fail;
+	स_नकल(chip->playback.def_status, buf, 24);
+	स_नकल(chip->playback.pcm_status, buf, 24);
 	snd_i2c_unlock(bus);
 
 	/* turn on run bit and rock'n'roll */
 	snd_cs8427_reset(device);
 
-	return 0;
+	वापस 0;
 
 __fail:
 	snd_i2c_unlock(bus);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(snd_cs8427_init);
 
-int snd_cs8427_create(struct snd_i2c_bus *bus,
-		      unsigned char addr,
-		      unsigned int reset_timeout,
-		      struct snd_i2c_device **r_cs8427)
-{
-	int err;
-	struct cs8427 *chip;
-	struct snd_i2c_device *device;
+पूर्णांक snd_cs8427_create(काष्ठा snd_i2c_bus *bus,
+		      अचिन्हित अक्षर addr,
+		      अचिन्हित पूर्णांक reset_समयout,
+		      काष्ठा snd_i2c_device **r_cs8427)
+अणु
+	पूर्णांक err;
+	काष्ठा cs8427 *chip;
+	काष्ठा snd_i2c_device *device;
 
 	err = snd_i2c_device_create(bus, "CS8427", CS8427_ADDR | (addr & 7),
 				    &device);
-	if (err < 0)
-		return err;
-	chip = device->private_data = kzalloc(sizeof(*chip), GFP_KERNEL);
-	if (chip == NULL) {
-		snd_i2c_device_free(device);
-		return -ENOMEM;
-	}
-	device->private_free = snd_cs8427_free;
+	अगर (err < 0)
+		वापस err;
+	chip = device->निजी_data = kzalloc(माप(*chip), GFP_KERNEL);
+	अगर (chip == शून्य) अणु
+		snd_i2c_device_मुक्त(device);
+		वापस -ENOMEM;
+	पूर्ण
+	device->निजी_मुक्त = snd_cs8427_मुक्त;
 
-	if (reset_timeout < 1)
-		reset_timeout = 1;
-	chip->reset_timeout = reset_timeout;
+	अगर (reset_समयout < 1)
+		reset_समयout = 1;
+	chip->reset_समयout = reset_समयout;
 
 	err = snd_cs8427_init(bus, device);
-	if (err)
-		goto __fail;
+	अगर (err)
+		जाओ __fail;
 
-#if 0	// it's nice for read tests
-	{
-	char buf[128];
-	int xx;
+#अगर 0	// it's nice क्रम पढ़ो tests
+	अणु
+	अक्षर buf[128];
+	पूर्णांक xx;
 	buf[0] = 0x81;
 	snd_i2c_sendbytes(device, buf, 1);
-	snd_i2c_readbytes(device, buf, 127);
-	for (xx = 0; xx < 127; xx++)
-		printk(KERN_DEBUG "reg[0x%x] = 0x%x\n", xx+1, buf[xx]);
-	}
-#endif
+	snd_i2c_पढ़ोbytes(device, buf, 127);
+	क्रम (xx = 0; xx < 127; xx++)
+		prपूर्णांकk(KERN_DEBUG "reg[0x%x] = 0x%x\n", xx+1, buf[xx]);
+	पूर्ण
+#पूर्ण_अगर
 	
-	if (r_cs8427)
+	अगर (r_cs8427)
 		*r_cs8427 = device;
-	return 0;
+	वापस 0;
 
       __fail:
-      	snd_i2c_device_free(device);
-      	return err < 0 ? err : -EIO;
-}
+      	snd_i2c_device_मुक्त(device);
+      	वापस err < 0 ? err : -EIO;
+पूर्ण
 
 EXPORT_SYMBOL(snd_cs8427_create);
 
@@ -302,307 +303,307 @@ EXPORT_SYMBOL(snd_cs8427_create);
  * put back AES3INPUT. This workaround is described in latest
  * CS8427 datasheet, otherwise TXDSERIAL will not work.
  */
-static void snd_cs8427_reset(struct snd_i2c_device *cs8427)
-{
-	struct cs8427 *chip;
-	unsigned long end_time;
-	int data, aes3input = 0;
+अटल व्योम snd_cs8427_reset(काष्ठा snd_i2c_device *cs8427)
+अणु
+	काष्ठा cs8427 *chip;
+	अचिन्हित दीर्घ end_समय;
+	पूर्णांक data, aes3input = 0;
 
-	if (snd_BUG_ON(!cs8427))
-		return;
-	chip = cs8427->private_data;
+	अगर (snd_BUG_ON(!cs8427))
+		वापस;
+	chip = cs8427->निजी_data;
 	snd_i2c_lock(cs8427->bus);
-	if ((chip->regmap[CS8427_REG_CLOCKSOURCE] & CS8427_RXDAES3INPUT) ==
+	अगर ((chip->regmap[CS8427_REG_CLOCKSOURCE] & CS8427_RXDAES3INPUT) ==
 	    CS8427_RXDAES3INPUT)  /* AES3 bit is set */
 		aes3input = 1;
 	chip->regmap[CS8427_REG_CLOCKSOURCE] &= ~(CS8427_RUN | CS8427_RXDMASK);
-	snd_cs8427_reg_write(cs8427, CS8427_REG_CLOCKSOURCE,
+	snd_cs8427_reg_ग_लिखो(cs8427, CS8427_REG_CLOCKSOURCE,
 			     chip->regmap[CS8427_REG_CLOCKSOURCE]);
 	udelay(200);
 	chip->regmap[CS8427_REG_CLOCKSOURCE] |= CS8427_RUN | CS8427_RXDILRCK;
-	snd_cs8427_reg_write(cs8427, CS8427_REG_CLOCKSOURCE,
+	snd_cs8427_reg_ग_लिखो(cs8427, CS8427_REG_CLOCKSOURCE,
 			     chip->regmap[CS8427_REG_CLOCKSOURCE]);
 	udelay(200);
 	snd_i2c_unlock(cs8427->bus);
-	end_time = jiffies + chip->reset_timeout;
-	while (time_after_eq(end_time, jiffies)) {
+	end_समय = jअगरfies + chip->reset_समयout;
+	जबतक (समय_after_eq(end_समय, jअगरfies)) अणु
 		snd_i2c_lock(cs8427->bus);
-		data = snd_cs8427_reg_read(cs8427, CS8427_REG_RECVERRORS);
+		data = snd_cs8427_reg_पढ़ो(cs8427, CS8427_REG_RECVERRORS);
 		snd_i2c_unlock(cs8427->bus);
-		if (!(data & CS8427_UNLOCK))
-			break;
-		schedule_timeout_uninterruptible(1);
-	}
+		अगर (!(data & CS8427_UNLOCK))
+			अवरोध;
+		schedule_समयout_unपूर्णांकerruptible(1);
+	पूर्ण
 	snd_i2c_lock(cs8427->bus);
 	chip->regmap[CS8427_REG_CLOCKSOURCE] &= ~CS8427_RXDMASK;
-	if (aes3input)
+	अगर (aes3input)
 		chip->regmap[CS8427_REG_CLOCKSOURCE] |= CS8427_RXDAES3INPUT;
-	snd_cs8427_reg_write(cs8427, CS8427_REG_CLOCKSOURCE,
+	snd_cs8427_reg_ग_लिखो(cs8427, CS8427_REG_CLOCKSOURCE,
 			     chip->regmap[CS8427_REG_CLOCKSOURCE]);
 	snd_i2c_unlock(cs8427->bus);
-}
+पूर्ण
 
-static int snd_cs8427_in_status_info(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_cs8427_in_status_info(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 255;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = 255;
+	वापस 0;
+पूर्ण
 
-static int snd_cs8427_in_status_get(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_i2c_device *device = snd_kcontrol_chip(kcontrol);
-	int data;
+अटल पूर्णांक snd_cs8427_in_status_get(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_i2c_device *device = snd_kcontrol_chip(kcontrol);
+	पूर्णांक data;
 
 	snd_i2c_lock(device->bus);
-	data = snd_cs8427_reg_read(device, kcontrol->private_value);
+	data = snd_cs8427_reg_पढ़ो(device, kcontrol->निजी_value);
 	snd_i2c_unlock(device->bus);
-	if (data < 0)
-		return data;
-	ucontrol->value.integer.value[0] = data;
-	return 0;
-}
+	अगर (data < 0)
+		वापस data;
+	ucontrol->value.पूर्णांकeger.value[0] = data;
+	वापस 0;
+पूर्ण
 
-static int snd_cs8427_qsubcode_info(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_cs8427_qsubcode_info(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
 	uinfo->count = 10;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs8427_qsubcode_get(struct snd_kcontrol *kcontrol,
-				   struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_i2c_device *device = snd_kcontrol_chip(kcontrol);
-	unsigned char reg = CS8427_REG_QSUBCODE;
-	int err;
+अटल पूर्णांक snd_cs8427_qsubcode_get(काष्ठा snd_kcontrol *kcontrol,
+				   काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_i2c_device *device = snd_kcontrol_chip(kcontrol);
+	अचिन्हित अक्षर reg = CS8427_REG_QSUBCODE;
+	पूर्णांक err;
 
 	snd_i2c_lock(device->bus);
-	if ((err = snd_i2c_sendbytes(device, &reg, 1)) != 1) {
-		snd_printk(KERN_ERR "unable to send register 0x%x byte "
+	अगर ((err = snd_i2c_sendbytes(device, &reg, 1)) != 1) अणु
+		snd_prपूर्णांकk(KERN_ERR "unable to send register 0x%x byte "
 			   "to CS8427\n", reg);
 		snd_i2c_unlock(device->bus);
-		return err < 0 ? err : -EIO;
-	}
-	err = snd_i2c_readbytes(device, ucontrol->value.bytes.data, 10);
-	if (err != 10) {
-		snd_printk(KERN_ERR "unable to read Q-subcode bytes "
+		वापस err < 0 ? err : -EIO;
+	पूर्ण
+	err = snd_i2c_पढ़ोbytes(device, ucontrol->value.bytes.data, 10);
+	अगर (err != 10) अणु
+		snd_prपूर्णांकk(KERN_ERR "unable to read Q-subcode bytes "
 			   "from CS8427\n");
 		snd_i2c_unlock(device->bus);
-		return err < 0 ? err : -EIO;
-	}
+		वापस err < 0 ? err : -EIO;
+	पूर्ण
 	snd_i2c_unlock(device->bus);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs8427_spdif_info(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_cs8427_spdअगर_info(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs8427_spdif_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_i2c_device *device = snd_kcontrol_chip(kcontrol);
-	struct cs8427 *chip = device->private_data;
+अटल पूर्णांक snd_cs8427_spdअगर_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_i2c_device *device = snd_kcontrol_chip(kcontrol);
+	काष्ठा cs8427 *chip = device->निजी_data;
 	
 	snd_i2c_lock(device->bus);
-	memcpy(ucontrol->value.iec958.status, chip->playback.def_status, 24);
+	स_नकल(ucontrol->value.iec958.status, chip->playback.def_status, 24);
 	snd_i2c_unlock(device->bus);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs8427_spdif_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_i2c_device *device = snd_kcontrol_chip(kcontrol);
-	struct cs8427 *chip = device->private_data;
-	unsigned char *status = kcontrol->private_value ?
+अटल पूर्णांक snd_cs8427_spdअगर_put(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_i2c_device *device = snd_kcontrol_chip(kcontrol);
+	काष्ठा cs8427 *chip = device->निजी_data;
+	अचिन्हित अक्षर *status = kcontrol->निजी_value ?
 		chip->playback.pcm_status : chip->playback.def_status;
-	struct snd_pcm_runtime *runtime = chip->playback.substream ?
-		chip->playback.substream->runtime : NULL;
-	int err, change;
+	काष्ठा snd_pcm_runसमय *runसमय = chip->playback.substream ?
+		chip->playback.substream->runसमय : शून्य;
+	पूर्णांक err, change;
 
 	snd_i2c_lock(device->bus);
-	change = memcmp(ucontrol->value.iec958.status, status, 24) != 0;
-	memcpy(status, ucontrol->value.iec958.status, 24);
-	if (change && (kcontrol->private_value ?
-		       runtime != NULL : runtime == NULL)) {
+	change = स_भेद(ucontrol->value.iec958.status, status, 24) != 0;
+	स_नकल(status, ucontrol->value.iec958.status, 24);
+	अगर (change && (kcontrol->निजी_value ?
+		       runसमय != शून्य : runसमय == शून्य)) अणु
 		err = snd_cs8427_send_corudata(device, 0, status, 24);
-		if (err < 0)
+		अगर (err < 0)
 			change = err;
-	}
+	पूर्ण
 	snd_i2c_unlock(device->bus);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int snd_cs8427_spdif_mask_info(struct snd_kcontrol *kcontrol,
-				      struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_cs8427_spdअगर_mask_info(काष्ठा snd_kcontrol *kcontrol,
+				      काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs8427_spdif_mask_get(struct snd_kcontrol *kcontrol,
-				      struct snd_ctl_elem_value *ucontrol)
-{
-	memset(ucontrol->value.iec958.status, 0xff, 24);
-	return 0;
-}
+अटल पूर्णांक snd_cs8427_spdअगर_mask_get(काष्ठा snd_kcontrol *kcontrol,
+				      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	स_रखो(ucontrol->value.iec958.status, 0xff, 24);
+	वापस 0;
+पूर्ण
 
-static const struct snd_kcontrol_new snd_cs8427_iec958_controls[] = {
-{
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+अटल स्थिर काष्ठा snd_kcontrol_new snd_cs8427_iec958_controls[] = अणु
+अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.info =		snd_cs8427_in_status_info,
 	.name =		"IEC958 CS8427 Input Status",
 	.access =	(SNDRV_CTL_ELEM_ACCESS_READ |
 			 SNDRV_CTL_ELEM_ACCESS_VOLATILE),
 	.get =		snd_cs8427_in_status_get,
-	.private_value = 15,
-},
-{
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.निजी_value = 15,
+पूर्ण,
+अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.info =		snd_cs8427_in_status_info,
 	.name =		"IEC958 CS8427 Error Status",
 	.access =	(SNDRV_CTL_ELEM_ACCESS_READ |
 			 SNDRV_CTL_ELEM_ACCESS_VOLATILE),
 	.get =		snd_cs8427_in_status_get,
-	.private_value = 16,
-},
-{
+	.निजी_value = 16,
+पूर्ण,
+अणु
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,MASK),
-	.info =		snd_cs8427_spdif_mask_info,
-	.get =		snd_cs8427_spdif_mask_get,
-},
-{
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.info =		snd_cs8427_spdअगर_mask_info,
+	.get =		snd_cs8427_spdअगर_mask_get,
+पूर्ण,
+अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,DEFAULT),
-	.info =		snd_cs8427_spdif_info,
-	.get =		snd_cs8427_spdif_get,
-	.put =		snd_cs8427_spdif_put,
-	.private_value = 0
-},
-{
+	.info =		snd_cs8427_spdअगर_info,
+	.get =		snd_cs8427_spdअगर_get,
+	.put =		snd_cs8427_spdअगर_put,
+	.निजी_value = 0
+पूर्ण,
+अणु
 	.access =	(SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			 SNDRV_CTL_ELEM_ACCESS_INACTIVE),
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("",PLAYBACK,PCM_STREAM),
-	.info =		snd_cs8427_spdif_info,
-	.get =		snd_cs8427_spdif_get,
-	.put =		snd_cs8427_spdif_put,
-	.private_value = 1
-},
-{
-	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.info =		snd_cs8427_spdअगर_info,
+	.get =		snd_cs8427_spdअगर_get,
+	.put =		snd_cs8427_spdअगर_put,
+	.निजी_value = 1
+पूर्ण,
+अणु
+	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.info =		snd_cs8427_qsubcode_info,
 	.name =		"IEC958 Q-subcode Capture Default",
 	.access =	(SNDRV_CTL_ELEM_ACCESS_READ |
 			 SNDRV_CTL_ELEM_ACCESS_VOLATILE),
 	.get =		snd_cs8427_qsubcode_get
-}};
+पूर्णपूर्ण;
 
-int snd_cs8427_iec958_build(struct snd_i2c_device *cs8427,
-			    struct snd_pcm_substream *play_substream,
-			    struct snd_pcm_substream *cap_substream)
-{
-	struct cs8427 *chip = cs8427->private_data;
-	struct snd_kcontrol *kctl;
-	unsigned int idx;
-	int err;
+पूर्णांक snd_cs8427_iec958_build(काष्ठा snd_i2c_device *cs8427,
+			    काष्ठा snd_pcm_substream *play_substream,
+			    काष्ठा snd_pcm_substream *cap_substream)
+अणु
+	काष्ठा cs8427 *chip = cs8427->निजी_data;
+	काष्ठा snd_kcontrol *kctl;
+	अचिन्हित पूर्णांक idx;
+	पूर्णांक err;
 
-	if (snd_BUG_ON(!play_substream || !cap_substream))
-		return -EINVAL;
-	for (idx = 0; idx < ARRAY_SIZE(snd_cs8427_iec958_controls); idx++) {
+	अगर (snd_BUG_ON(!play_substream || !cap_substream))
+		वापस -EINVAL;
+	क्रम (idx = 0; idx < ARRAY_SIZE(snd_cs8427_iec958_controls); idx++) अणु
 		kctl = snd_ctl_new1(&snd_cs8427_iec958_controls[idx], cs8427);
-		if (kctl == NULL)
-			return -ENOMEM;
+		अगर (kctl == शून्य)
+			वापस -ENOMEM;
 		kctl->id.device = play_substream->pcm->device;
 		kctl->id.subdevice = play_substream->number;
 		err = snd_ctl_add(cs8427->bus->card, kctl);
-		if (err < 0)
-			return err;
-		if (! strcmp(kctl->id.name,
+		अगर (err < 0)
+			वापस err;
+		अगर (! म_भेद(kctl->id.name,
 			     SNDRV_CTL_NAME_IEC958("",PLAYBACK,PCM_STREAM)))
 			chip->playback.pcm_ctl = kctl;
-	}
+	पूर्ण
 
 	chip->playback.substream = play_substream;
 	chip->capture.substream = cap_substream;
-	if (snd_BUG_ON(!chip->playback.pcm_ctl))
-		return -EIO;
-	return 0;
-}
+	अगर (snd_BUG_ON(!chip->playback.pcm_ctl))
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(snd_cs8427_iec958_build);
 
-int snd_cs8427_iec958_active(struct snd_i2c_device *cs8427, int active)
-{
-	struct cs8427 *chip;
+पूर्णांक snd_cs8427_iec958_active(काष्ठा snd_i2c_device *cs8427, पूर्णांक active)
+अणु
+	काष्ठा cs8427 *chip;
 
-	if (snd_BUG_ON(!cs8427))
-		return -ENXIO;
-	chip = cs8427->private_data;
-	if (active)
-		memcpy(chip->playback.pcm_status,
+	अगर (snd_BUG_ON(!cs8427))
+		वापस -ENXIO;
+	chip = cs8427->निजी_data;
+	अगर (active)
+		स_नकल(chip->playback.pcm_status,
 		       chip->playback.def_status, 24);
 	chip->playback.pcm_ctl->vd[0].access &= ~SNDRV_CTL_ELEM_ACCESS_INACTIVE;
-	snd_ctl_notify(cs8427->bus->card,
+	snd_ctl_notअगरy(cs8427->bus->card,
 		       SNDRV_CTL_EVENT_MASK_VALUE | SNDRV_CTL_EVENT_MASK_INFO,
 		       &chip->playback.pcm_ctl->id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(snd_cs8427_iec958_active);
 
-int snd_cs8427_iec958_pcm(struct snd_i2c_device *cs8427, unsigned int rate)
-{
-	struct cs8427 *chip;
-	char *status;
-	int err, reset;
+पूर्णांक snd_cs8427_iec958_pcm(काष्ठा snd_i2c_device *cs8427, अचिन्हित पूर्णांक rate)
+अणु
+	काष्ठा cs8427 *chip;
+	अक्षर *status;
+	पूर्णांक err, reset;
 
-	if (snd_BUG_ON(!cs8427))
-		return -ENXIO;
-	chip = cs8427->private_data;
+	अगर (snd_BUG_ON(!cs8427))
+		वापस -ENXIO;
+	chip = cs8427->निजी_data;
 	status = chip->playback.pcm_status;
 	snd_i2c_lock(cs8427->bus);
-	if (status[0] & IEC958_AES0_PROFESSIONAL) {
+	अगर (status[0] & IEC958_AES0_PROFESSIONAL) अणु
 		status[0] &= ~IEC958_AES0_PRO_FS;
-		switch (rate) {
-		case 32000: status[0] |= IEC958_AES0_PRO_FS_32000; break;
-		case 44100: status[0] |= IEC958_AES0_PRO_FS_44100; break;
-		case 48000: status[0] |= IEC958_AES0_PRO_FS_48000; break;
-		default: status[0] |= IEC958_AES0_PRO_FS_NOTID; break;
-		}
-	} else {
+		चयन (rate) अणु
+		हाल 32000: status[0] |= IEC958_AES0_PRO_FS_32000; अवरोध;
+		हाल 44100: status[0] |= IEC958_AES0_PRO_FS_44100; अवरोध;
+		हाल 48000: status[0] |= IEC958_AES0_PRO_FS_48000; अवरोध;
+		शेष: status[0] |= IEC958_AES0_PRO_FS_NOTID; अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		status[3] &= ~IEC958_AES3_CON_FS;
-		switch (rate) {
-		case 32000: status[3] |= IEC958_AES3_CON_FS_32000; break;
-		case 44100: status[3] |= IEC958_AES3_CON_FS_44100; break;
-		case 48000: status[3] |= IEC958_AES3_CON_FS_48000; break;
-		}
-	}
+		चयन (rate) अणु
+		हाल 32000: status[3] |= IEC958_AES3_CON_FS_32000; अवरोध;
+		हाल 44100: status[3] |= IEC958_AES3_CON_FS_44100; अवरोध;
+		हाल 48000: status[3] |= IEC958_AES3_CON_FS_48000; अवरोध;
+		पूर्ण
+	पूर्ण
 	err = snd_cs8427_send_corudata(cs8427, 0, status, 24);
-	if (err > 0)
-		snd_ctl_notify(cs8427->bus->card,
+	अगर (err > 0)
+		snd_ctl_notअगरy(cs8427->bus->card,
 			       SNDRV_CTL_EVENT_MASK_VALUE,
 			       &chip->playback.pcm_ctl->id);
 	reset = chip->rate != rate;
 	chip->rate = rate;
 	snd_i2c_unlock(cs8427->bus);
-	if (reset)
+	अगर (reset)
 		snd_cs8427_reset(cs8427);
-	return err < 0 ? err : 0;
-}
+	वापस err < 0 ? err : 0;
+पूर्ण
 
 EXPORT_SYMBOL(snd_cs8427_iec958_pcm);

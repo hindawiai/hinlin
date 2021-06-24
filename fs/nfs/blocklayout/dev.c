@@ -1,221 +1,222 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2014-2016 Christoph Hellwig.
  */
-#include <linux/sunrpc/svc.h>
-#include <linux/blkdev.h>
-#include <linux/nfs4.h>
-#include <linux/nfs_fs.h>
-#include <linux/nfs_xdr.h>
-#include <linux/pr.h>
+#समावेश <linux/sunrpc/svc.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/nfs4.h>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/nfs_xdr.h>
+#समावेश <linux/pr.h>
 
-#include "blocklayout.h"
+#समावेश "blocklayout.h"
 
-#define NFSDBG_FACILITY		NFSDBG_PNFS_LD
+#घोषणा NFSDBG_FACILITY		NFSDBG_PNFS_LD
 
-static void
-bl_free_device(struct pnfs_block_dev *dev)
-{
-	if (dev->nr_children) {
-		int i;
+अटल व्योम
+bl_मुक्त_device(काष्ठा pnfs_block_dev *dev)
+अणु
+	अगर (dev->nr_children) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < dev->nr_children; i++)
-			bl_free_device(&dev->children[i]);
-		kfree(dev->children);
-	} else {
-		if (dev->pr_registered) {
-			const struct pr_ops *ops =
+		क्रम (i = 0; i < dev->nr_children; i++)
+			bl_मुक्त_device(&dev->children[i]);
+		kमुक्त(dev->children);
+	पूर्ण अन्यथा अणु
+		अगर (dev->pr_रेजिस्टरed) अणु
+			स्थिर काष्ठा pr_ops *ops =
 				dev->bdev->bd_disk->fops->pr_ops;
-			int error;
+			पूर्णांक error;
 
-			error = ops->pr_register(dev->bdev, dev->pr_key, 0,
+			error = ops->pr_रेजिस्टर(dev->bdev, dev->pr_key, 0,
 				false);
-			if (error)
+			अगर (error)
 				pr_err("failed to unregister PR key.\n");
-		}
+		पूर्ण
 
-		if (dev->bdev)
+		अगर (dev->bdev)
 			blkdev_put(dev->bdev, FMODE_READ | FMODE_WRITE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bl_free_deviceid_node(struct nfs4_deviceid_node *d)
-{
-	struct pnfs_block_dev *dev =
-		container_of(d, struct pnfs_block_dev, node);
+व्योम
+bl_मुक्त_deviceid_node(काष्ठा nfs4_deviceid_node *d)
+अणु
+	काष्ठा pnfs_block_dev *dev =
+		container_of(d, काष्ठा pnfs_block_dev, node);
 
-	bl_free_device(dev);
-	kfree_rcu(dev, node.rcu);
-}
+	bl_मुक्त_device(dev);
+	kमुक्त_rcu(dev, node.rcu);
+पूर्ण
 
-static int
-nfs4_block_decode_volume(struct xdr_stream *xdr, struct pnfs_block_volume *b)
-{
+अटल पूर्णांक
+nfs4_block_decode_volume(काष्ठा xdr_stream *xdr, काष्ठा pnfs_block_volume *b)
+अणु
 	__be32 *p;
-	int i;
+	पूर्णांक i;
 
-	p = xdr_inline_decode(xdr, 4);
-	if (!p)
-		return -EIO;
+	p = xdr_अंतरभूत_decode(xdr, 4);
+	अगर (!p)
+		वापस -EIO;
 	b->type = be32_to_cpup(p++);
 
-	switch (b->type) {
-	case PNFS_BLOCK_VOLUME_SIMPLE:
-		p = xdr_inline_decode(xdr, 4);
-		if (!p)
-			return -EIO;
+	चयन (b->type) अणु
+	हाल PNFS_BLOCK_VOLUME_SIMPLE:
+		p = xdr_अंतरभूत_decode(xdr, 4);
+		अगर (!p)
+			वापस -EIO;
 		b->simple.nr_sigs = be32_to_cpup(p++);
-		if (!b->simple.nr_sigs || b->simple.nr_sigs > PNFS_BLOCK_MAX_UUIDS) {
-			dprintk("Bad signature count: %d\n", b->simple.nr_sigs);
-			return -EIO;
-		}
+		अगर (!b->simple.nr_sigs || b->simple.nr_sigs > PNFS_BLOCK_MAX_UUIDS) अणु
+			dprपूर्णांकk("Bad signature count: %d\n", b->simple.nr_sigs);
+			वापस -EIO;
+		पूर्ण
 
 		b->simple.len = 4 + 4;
-		for (i = 0; i < b->simple.nr_sigs; i++) {
-			p = xdr_inline_decode(xdr, 8 + 4);
-			if (!p)
-				return -EIO;
+		क्रम (i = 0; i < b->simple.nr_sigs; i++) अणु
+			p = xdr_अंतरभूत_decode(xdr, 8 + 4);
+			अगर (!p)
+				वापस -EIO;
 			p = xdr_decode_hyper(p, &b->simple.sigs[i].offset);
 			b->simple.sigs[i].sig_len = be32_to_cpup(p++);
-			if (b->simple.sigs[i].sig_len > PNFS_BLOCK_UUID_LEN) {
+			अगर (b->simple.sigs[i].sig_len > PNFS_BLOCK_UUID_LEN) अणु
 				pr_info("signature too long: %d\n",
 					b->simple.sigs[i].sig_len);
-				return -EIO;
-			}
+				वापस -EIO;
+			पूर्ण
 
-			p = xdr_inline_decode(xdr, b->simple.sigs[i].sig_len);
-			if (!p)
-				return -EIO;
-			memcpy(&b->simple.sigs[i].sig, p,
+			p = xdr_अंतरभूत_decode(xdr, b->simple.sigs[i].sig_len);
+			अगर (!p)
+				वापस -EIO;
+			स_नकल(&b->simple.sigs[i].sig, p,
 				b->simple.sigs[i].sig_len);
 
 			b->simple.len += 8 + 4 + \
 				(XDR_QUADLEN(b->simple.sigs[i].sig_len) << 2);
-		}
-		break;
-	case PNFS_BLOCK_VOLUME_SLICE:
-		p = xdr_inline_decode(xdr, 8 + 8 + 4);
-		if (!p)
-			return -EIO;
+		पूर्ण
+		अवरोध;
+	हाल PNFS_BLOCK_VOLUME_SLICE:
+		p = xdr_अंतरभूत_decode(xdr, 8 + 8 + 4);
+		अगर (!p)
+			वापस -EIO;
 		p = xdr_decode_hyper(p, &b->slice.start);
 		p = xdr_decode_hyper(p, &b->slice.len);
 		b->slice.volume = be32_to_cpup(p++);
-		break;
-	case PNFS_BLOCK_VOLUME_CONCAT:
-		p = xdr_inline_decode(xdr, 4);
-		if (!p)
-			return -EIO;
+		अवरोध;
+	हाल PNFS_BLOCK_VOLUME_CONCAT:
+		p = xdr_अंतरभूत_decode(xdr, 4);
+		अगर (!p)
+			वापस -EIO;
 
 		b->concat.volumes_count = be32_to_cpup(p++);
-		if (b->concat.volumes_count > PNFS_BLOCK_MAX_DEVICES) {
-			dprintk("Too many volumes: %d\n", b->concat.volumes_count);
-			return -EIO;
-		}
+		अगर (b->concat.volumes_count > PNFS_BLOCK_MAX_DEVICES) अणु
+			dprपूर्णांकk("Too many volumes: %d\n", b->concat.volumes_count);
+			वापस -EIO;
+		पूर्ण
 
-		p = xdr_inline_decode(xdr, b->concat.volumes_count * 4);
-		if (!p)
-			return -EIO;
-		for (i = 0; i < b->concat.volumes_count; i++)
+		p = xdr_अंतरभूत_decode(xdr, b->concat.volumes_count * 4);
+		अगर (!p)
+			वापस -EIO;
+		क्रम (i = 0; i < b->concat.volumes_count; i++)
 			b->concat.volumes[i] = be32_to_cpup(p++);
-		break;
-	case PNFS_BLOCK_VOLUME_STRIPE:
-		p = xdr_inline_decode(xdr, 8 + 4);
-		if (!p)
-			return -EIO;
+		अवरोध;
+	हाल PNFS_BLOCK_VOLUME_STRIPE:
+		p = xdr_अंतरभूत_decode(xdr, 8 + 4);
+		अगर (!p)
+			वापस -EIO;
 
 		p = xdr_decode_hyper(p, &b->stripe.chunk_size);
 		b->stripe.volumes_count = be32_to_cpup(p++);
-		if (b->stripe.volumes_count > PNFS_BLOCK_MAX_DEVICES) {
-			dprintk("Too many volumes: %d\n", b->stripe.volumes_count);
-			return -EIO;
-		}
+		अगर (b->stripe.volumes_count > PNFS_BLOCK_MAX_DEVICES) अणु
+			dprपूर्णांकk("Too many volumes: %d\n", b->stripe.volumes_count);
+			वापस -EIO;
+		पूर्ण
 
-		p = xdr_inline_decode(xdr, b->stripe.volumes_count * 4);
-		if (!p)
-			return -EIO;
-		for (i = 0; i < b->stripe.volumes_count; i++)
+		p = xdr_अंतरभूत_decode(xdr, b->stripe.volumes_count * 4);
+		अगर (!p)
+			वापस -EIO;
+		क्रम (i = 0; i < b->stripe.volumes_count; i++)
 			b->stripe.volumes[i] = be32_to_cpup(p++);
-		break;
-	case PNFS_BLOCK_VOLUME_SCSI:
-		p = xdr_inline_decode(xdr, 4 + 4 + 4);
-		if (!p)
-			return -EIO;
+		अवरोध;
+	हाल PNFS_BLOCK_VOLUME_SCSI:
+		p = xdr_अंतरभूत_decode(xdr, 4 + 4 + 4);
+		अगर (!p)
+			वापस -EIO;
 		b->scsi.code_set = be32_to_cpup(p++);
 		b->scsi.designator_type = be32_to_cpup(p++);
 		b->scsi.designator_len = be32_to_cpup(p++);
-		p = xdr_inline_decode(xdr, b->scsi.designator_len);
-		if (!p)
-			return -EIO;
-		if (b->scsi.designator_len > 256)
-			return -EIO;
-		memcpy(&b->scsi.designator, p, b->scsi.designator_len);
-		p = xdr_inline_decode(xdr, 8);
-		if (!p)
-			return -EIO;
+		p = xdr_अंतरभूत_decode(xdr, b->scsi.designator_len);
+		अगर (!p)
+			वापस -EIO;
+		अगर (b->scsi.designator_len > 256)
+			वापस -EIO;
+		स_नकल(&b->scsi.designator, p, b->scsi.designator_len);
+		p = xdr_अंतरभूत_decode(xdr, 8);
+		अगर (!p)
+			वापस -EIO;
 		p = xdr_decode_hyper(p, &b->scsi.pr_key);
-		break;
-	default:
-		dprintk("unknown volume type!\n");
-		return -EIO;
-	}
+		अवरोध;
+	शेष:
+		dprपूर्णांकk("unknown volume type!\n");
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool bl_map_simple(struct pnfs_block_dev *dev, u64 offset,
-		struct pnfs_block_dev_map *map)
-{
+अटल bool bl_map_simple(काष्ठा pnfs_block_dev *dev, u64 offset,
+		काष्ठा pnfs_block_dev_map *map)
+अणु
 	map->start = dev->start;
 	map->len = dev->len;
 	map->disk_offset = dev->disk_offset;
 	map->bdev = dev->bdev;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool bl_map_concat(struct pnfs_block_dev *dev, u64 offset,
-		struct pnfs_block_dev_map *map)
-{
-	int i;
+अटल bool bl_map_concat(काष्ठा pnfs_block_dev *dev, u64 offset,
+		काष्ठा pnfs_block_dev_map *map)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < dev->nr_children; i++) {
-		struct pnfs_block_dev *child = &dev->children[i];
+	क्रम (i = 0; i < dev->nr_children; i++) अणु
+		काष्ठा pnfs_block_dev *child = &dev->children[i];
 
-		if (child->start > offset ||
+		अगर (child->start > offset ||
 		    child->start + child->len <= offset)
-			continue;
+			जारी;
 
 		child->map(child, offset - child->start, map);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	dprintk("%s: ran off loop!\n", __func__);
-	return false;
-}
+	dprपूर्णांकk("%s: ran off loop!\n", __func__);
+	वापस false;
+पूर्ण
 
-static bool bl_map_stripe(struct pnfs_block_dev *dev, u64 offset,
-		struct pnfs_block_dev_map *map)
-{
-	struct pnfs_block_dev *child;
+अटल bool bl_map_stripe(काष्ठा pnfs_block_dev *dev, u64 offset,
+		काष्ठा pnfs_block_dev_map *map)
+अणु
+	काष्ठा pnfs_block_dev *child;
 	u64 chunk;
 	u32 chunk_idx;
 	u64 disk_offset;
 
-	chunk = div_u64(offset, dev->chunk_size);
-	div_u64_rem(chunk, dev->nr_children, &chunk_idx);
+	chunk = भाग_u64(offset, dev->chunk_size);
+	भाग_u64_rem(chunk, dev->nr_children, &chunk_idx);
 
-	if (chunk_idx >= dev->nr_children) {
-		dprintk("%s: invalid chunk idx %d (%lld/%lld)\n",
+	अगर (chunk_idx >= dev->nr_children) अणु
+		dprपूर्णांकk("%s: invalid chunk idx %d (%lld/%lld)\n",
 			__func__, chunk_idx, offset, dev->chunk_size);
 		/* error, should not happen */
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* truncate offset to the beginning of the stripe */
 	offset = chunk * dev->chunk_size;
 
 	/* disk offset of the stripe */
-	disk_offset = div_u64(offset, dev->nr_children);
+	disk_offset = भाग_u64(offset, dev->nr_children);
 
 	child = &dev->children[chunk_idx];
 	child->map(child, disk_offset, map);
@@ -223,151 +224,151 @@ static bool bl_map_stripe(struct pnfs_block_dev *dev, u64 offset,
 	map->start += offset;
 	map->disk_offset += disk_offset;
 	map->len = dev->chunk_size;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int
-bl_parse_deviceid(struct nfs_server *server, struct pnfs_block_dev *d,
-		struct pnfs_block_volume *volumes, int idx, gfp_t gfp_mask);
+अटल पूर्णांक
+bl_parse_deviceid(काष्ठा nfs_server *server, काष्ठा pnfs_block_dev *d,
+		काष्ठा pnfs_block_volume *volumes, पूर्णांक idx, gfp_t gfp_mask);
 
 
-static int
-bl_parse_simple(struct nfs_server *server, struct pnfs_block_dev *d,
-		struct pnfs_block_volume *volumes, int idx, gfp_t gfp_mask)
-{
-	struct pnfs_block_volume *v = &volumes[idx];
-	struct block_device *bdev;
+अटल पूर्णांक
+bl_parse_simple(काष्ठा nfs_server *server, काष्ठा pnfs_block_dev *d,
+		काष्ठा pnfs_block_volume *volumes, पूर्णांक idx, gfp_t gfp_mask)
+अणु
+	काष्ठा pnfs_block_volume *v = &volumes[idx];
+	काष्ठा block_device *bdev;
 	dev_t dev;
 
 	dev = bl_resolve_deviceid(server, v, gfp_mask);
-	if (!dev)
-		return -EIO;
+	अगर (!dev)
+		वापस -EIO;
 
-	bdev = blkdev_get_by_dev(dev, FMODE_READ | FMODE_WRITE, NULL);
-	if (IS_ERR(bdev)) {
-		printk(KERN_WARNING "pNFS: failed to open device %d:%d (%ld)\n",
+	bdev = blkdev_get_by_dev(dev, FMODE_READ | FMODE_WRITE, शून्य);
+	अगर (IS_ERR(bdev)) अणु
+		prपूर्णांकk(KERN_WARNING "pNFS: failed to open device %d:%d (%ld)\n",
 			MAJOR(dev), MINOR(dev), PTR_ERR(bdev));
-		return PTR_ERR(bdev);
-	}
+		वापस PTR_ERR(bdev);
+	पूर्ण
 	d->bdev = bdev;
 
 
-	d->len = i_size_read(d->bdev->bd_inode);
+	d->len = i_size_पढ़ो(d->bdev->bd_inode);
 	d->map = bl_map_simple;
 
-	printk(KERN_INFO "pNFS: using block device %s\n",
+	prपूर्णांकk(KERN_INFO "pNFS: using block device %s\n",
 		d->bdev->bd_disk->disk_name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool
-bl_validate_designator(struct pnfs_block_volume *v)
-{
-	switch (v->scsi.designator_type) {
-	case PS_DESIGNATOR_EUI64:
-		if (v->scsi.code_set != PS_CODE_SET_BINARY)
-			return false;
+अटल bool
+bl_validate_designator(काष्ठा pnfs_block_volume *v)
+अणु
+	चयन (v->scsi.designator_type) अणु
+	हाल PS_DESIGNATOR_EUI64:
+		अगर (v->scsi.code_set != PS_CODE_SET_BINARY)
+			वापस false;
 
-		if (v->scsi.designator_len != 8 &&
+		अगर (v->scsi.designator_len != 8 &&
 		    v->scsi.designator_len != 10 &&
 		    v->scsi.designator_len != 16)
-			return false;
+			वापस false;
 
-		return true;
-	case PS_DESIGNATOR_NAA:
-		if (v->scsi.code_set != PS_CODE_SET_BINARY)
-			return false;
+		वापस true;
+	हाल PS_DESIGNATOR_NAA:
+		अगर (v->scsi.code_set != PS_CODE_SET_BINARY)
+			वापस false;
 
-		if (v->scsi.designator_len != 8 &&
+		अगर (v->scsi.designator_len != 8 &&
 		    v->scsi.designator_len != 16)
-			return false;
+			वापस false;
 
-		return true;
-	case PS_DESIGNATOR_T10:
-	case PS_DESIGNATOR_NAME:
+		वापस true;
+	हाल PS_DESIGNATOR_T10:
+	हाल PS_DESIGNATOR_NAME:
 		pr_err("pNFS: unsupported designator "
 			"(code set %d, type %d, len %d.\n",
 			v->scsi.code_set,
 			v->scsi.designator_type,
 			v->scsi.designator_len);
-		return false;
-	default:
+		वापस false;
+	शेष:
 		pr_err("pNFS: invalid designator "
 			"(code set %d, type %d, len %d.\n",
 			v->scsi.code_set,
 			v->scsi.designator_type,
 			v->scsi.designator_len);
-		return false;
-	}
-}
+		वापस false;
+	पूर्ण
+पूर्ण
 
 /*
- * Try to open the udev path for the WWN.  At least on Debian the udev
- * by-id path will always point to the dm-multipath device if one exists.
+ * Try to खोलो the udev path क्रम the WWN.  At least on Debian the udev
+ * by-id path will always poपूर्णांक to the dm-multipath device अगर one exists.
  */
-static struct block_device *
-bl_open_udev_path(struct pnfs_block_volume *v)
-{
-	struct block_device *bdev;
-	const char *devname;
+अटल काष्ठा block_device *
+bl_खोलो_udev_path(काष्ठा pnfs_block_volume *v)
+अणु
+	काष्ठा block_device *bdev;
+	स्थिर अक्षर *devname;
 
-	devname = kasprintf(GFP_KERNEL, "/dev/disk/by-id/wwn-0x%*phN",
+	devname = kaप्र_लिखो(GFP_KERNEL, "/dev/disk/by-id/wwn-0x%*phN",
 				v->scsi.designator_len, v->scsi.designator);
-	if (!devname)
-		return ERR_PTR(-ENOMEM);
+	अगर (!devname)
+		वापस ERR_PTR(-ENOMEM);
 
-	bdev = blkdev_get_by_path(devname, FMODE_READ | FMODE_WRITE, NULL);
-	if (IS_ERR(bdev)) {
+	bdev = blkdev_get_by_path(devname, FMODE_READ | FMODE_WRITE, शून्य);
+	अगर (IS_ERR(bdev)) अणु
 		pr_warn("pNFS: failed to open device %s (%ld)\n",
 			devname, PTR_ERR(bdev));
-	}
+	पूर्ण
 
-	kfree(devname);
-	return bdev;
-}
+	kमुक्त(devname);
+	वापस bdev;
+पूर्ण
 
 /*
- * Try to open the RH/Fedora specific dm-mpath udev path for this WWN, as the
- * wwn- links will only point to the first discovered SCSI device there.
+ * Try to खोलो the RH/Feकरोra specअगरic dm-mpath udev path क्रम this WWN, as the
+ * wwn- links will only poपूर्णांक to the first discovered SCSI device there.
  */
-static struct block_device *
-bl_open_dm_mpath_udev_path(struct pnfs_block_volume *v)
-{
-	struct block_device *bdev;
-	const char *devname;
+अटल काष्ठा block_device *
+bl_खोलो_dm_mpath_udev_path(काष्ठा pnfs_block_volume *v)
+अणु
+	काष्ठा block_device *bdev;
+	स्थिर अक्षर *devname;
 
-	devname = kasprintf(GFP_KERNEL,
+	devname = kaप्र_लिखो(GFP_KERNEL,
 			"/dev/disk/by-id/dm-uuid-mpath-%d%*phN",
 			v->scsi.designator_type,
 			v->scsi.designator_len, v->scsi.designator);
-	if (!devname)
-		return ERR_PTR(-ENOMEM);
+	अगर (!devname)
+		वापस ERR_PTR(-ENOMEM);
 
-	bdev = blkdev_get_by_path(devname, FMODE_READ | FMODE_WRITE, NULL);
-	kfree(devname);
-	return bdev;
-}
+	bdev = blkdev_get_by_path(devname, FMODE_READ | FMODE_WRITE, शून्य);
+	kमुक्त(devname);
+	वापस bdev;
+पूर्ण
 
-static int
-bl_parse_scsi(struct nfs_server *server, struct pnfs_block_dev *d,
-		struct pnfs_block_volume *volumes, int idx, gfp_t gfp_mask)
-{
-	struct pnfs_block_volume *v = &volumes[idx];
-	struct block_device *bdev;
-	const struct pr_ops *ops;
-	int error;
+अटल पूर्णांक
+bl_parse_scsi(काष्ठा nfs_server *server, काष्ठा pnfs_block_dev *d,
+		काष्ठा pnfs_block_volume *volumes, पूर्णांक idx, gfp_t gfp_mask)
+अणु
+	काष्ठा pnfs_block_volume *v = &volumes[idx];
+	काष्ठा block_device *bdev;
+	स्थिर काष्ठा pr_ops *ops;
+	पूर्णांक error;
 
-	if (!bl_validate_designator(v))
-		return -EINVAL;
+	अगर (!bl_validate_designator(v))
+		वापस -EINVAL;
 
-	bdev = bl_open_dm_mpath_udev_path(v);
-	if (IS_ERR(bdev))
-		bdev = bl_open_udev_path(v);
-	if (IS_ERR(bdev))
-		return PTR_ERR(bdev);
+	bdev = bl_खोलो_dm_mpath_udev_path(v);
+	अगर (IS_ERR(bdev))
+		bdev = bl_खोलो_udev_path(v);
+	अगर (IS_ERR(bdev))
+		वापस PTR_ERR(bdev);
 	d->bdev = bdev;
 
-	d->len = i_size_read(d->bdev->bd_inode);
+	d->len = i_size_पढ़ो(d->bdev->bd_inode);
 	d->map = bl_map_simple;
 	d->pr_key = v->scsi.pr_key;
 
@@ -375,174 +376,174 @@ bl_parse_scsi(struct nfs_server *server, struct pnfs_block_dev *d,
 		d->bdev->bd_disk->disk_name, d->pr_key);
 
 	ops = d->bdev->bd_disk->fops->pr_ops;
-	if (!ops) {
+	अगर (!ops) अणु
 		pr_err("pNFS: block device %s does not support reservations.",
 				d->bdev->bd_disk->disk_name);
 		error = -EINVAL;
-		goto out_blkdev_put;
-	}
+		जाओ out_blkdev_put;
+	पूर्ण
 
-	error = ops->pr_register(d->bdev, 0, d->pr_key, true);
-	if (error) {
+	error = ops->pr_रेजिस्टर(d->bdev, 0, d->pr_key, true);
+	अगर (error) अणु
 		pr_err("pNFS: failed to register key for block device %s.",
 				d->bdev->bd_disk->disk_name);
-		goto out_blkdev_put;
-	}
+		जाओ out_blkdev_put;
+	पूर्ण
 
-	d->pr_registered = true;
-	return 0;
+	d->pr_रेजिस्टरed = true;
+	वापस 0;
 
 out_blkdev_put:
 	blkdev_put(d->bdev, FMODE_READ | FMODE_WRITE);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int
-bl_parse_slice(struct nfs_server *server, struct pnfs_block_dev *d,
-		struct pnfs_block_volume *volumes, int idx, gfp_t gfp_mask)
-{
-	struct pnfs_block_volume *v = &volumes[idx];
-	int ret;
+अटल पूर्णांक
+bl_parse_slice(काष्ठा nfs_server *server, काष्ठा pnfs_block_dev *d,
+		काष्ठा pnfs_block_volume *volumes, पूर्णांक idx, gfp_t gfp_mask)
+अणु
+	काष्ठा pnfs_block_volume *v = &volumes[idx];
+	पूर्णांक ret;
 
 	ret = bl_parse_deviceid(server, d, volumes, v->slice.volume, gfp_mask);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	d->disk_offset = v->slice.start;
 	d->len = v->slice.len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bl_parse_concat(struct nfs_server *server, struct pnfs_block_dev *d,
-		struct pnfs_block_volume *volumes, int idx, gfp_t gfp_mask)
-{
-	struct pnfs_block_volume *v = &volumes[idx];
+अटल पूर्णांक
+bl_parse_concat(काष्ठा nfs_server *server, काष्ठा pnfs_block_dev *d,
+		काष्ठा pnfs_block_volume *volumes, पूर्णांक idx, gfp_t gfp_mask)
+अणु
+	काष्ठा pnfs_block_volume *v = &volumes[idx];
 	u64 len = 0;
-	int ret, i;
+	पूर्णांक ret, i;
 
-	d->children = kcalloc(v->concat.volumes_count,
-			sizeof(struct pnfs_block_dev), GFP_KERNEL);
-	if (!d->children)
-		return -ENOMEM;
+	d->children = kसुस्मृति(v->concat.volumes_count,
+			माप(काष्ठा pnfs_block_dev), GFP_KERNEL);
+	अगर (!d->children)
+		वापस -ENOMEM;
 
-	for (i = 0; i < v->concat.volumes_count; i++) {
+	क्रम (i = 0; i < v->concat.volumes_count; i++) अणु
 		ret = bl_parse_deviceid(server, &d->children[i],
 				volumes, v->concat.volumes[i], gfp_mask);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		d->nr_children++;
 		d->children[i].start += len;
 		len += d->children[i].len;
-	}
+	पूर्ण
 
 	d->len = len;
 	d->map = bl_map_concat;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bl_parse_stripe(struct nfs_server *server, struct pnfs_block_dev *d,
-		struct pnfs_block_volume *volumes, int idx, gfp_t gfp_mask)
-{
-	struct pnfs_block_volume *v = &volumes[idx];
+अटल पूर्णांक
+bl_parse_stripe(काष्ठा nfs_server *server, काष्ठा pnfs_block_dev *d,
+		काष्ठा pnfs_block_volume *volumes, पूर्णांक idx, gfp_t gfp_mask)
+अणु
+	काष्ठा pnfs_block_volume *v = &volumes[idx];
 	u64 len = 0;
-	int ret, i;
+	पूर्णांक ret, i;
 
-	d->children = kcalloc(v->stripe.volumes_count,
-			sizeof(struct pnfs_block_dev), GFP_KERNEL);
-	if (!d->children)
-		return -ENOMEM;
+	d->children = kसुस्मृति(v->stripe.volumes_count,
+			माप(काष्ठा pnfs_block_dev), GFP_KERNEL);
+	अगर (!d->children)
+		वापस -ENOMEM;
 
-	for (i = 0; i < v->stripe.volumes_count; i++) {
+	क्रम (i = 0; i < v->stripe.volumes_count; i++) अणु
 		ret = bl_parse_deviceid(server, &d->children[i],
 				volumes, v->stripe.volumes[i], gfp_mask);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		d->nr_children++;
 		len += d->children[i].len;
-	}
+	पूर्ण
 
 	d->len = len;
 	d->chunk_size = v->stripe.chunk_size;
 	d->map = bl_map_stripe;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bl_parse_deviceid(struct nfs_server *server, struct pnfs_block_dev *d,
-		struct pnfs_block_volume *volumes, int idx, gfp_t gfp_mask)
-{
-	switch (volumes[idx].type) {
-	case PNFS_BLOCK_VOLUME_SIMPLE:
-		return bl_parse_simple(server, d, volumes, idx, gfp_mask);
-	case PNFS_BLOCK_VOLUME_SLICE:
-		return bl_parse_slice(server, d, volumes, idx, gfp_mask);
-	case PNFS_BLOCK_VOLUME_CONCAT:
-		return bl_parse_concat(server, d, volumes, idx, gfp_mask);
-	case PNFS_BLOCK_VOLUME_STRIPE:
-		return bl_parse_stripe(server, d, volumes, idx, gfp_mask);
-	case PNFS_BLOCK_VOLUME_SCSI:
-		return bl_parse_scsi(server, d, volumes, idx, gfp_mask);
-	default:
-		dprintk("unsupported volume type: %d\n", volumes[idx].type);
-		return -EIO;
-	}
-}
+अटल पूर्णांक
+bl_parse_deviceid(काष्ठा nfs_server *server, काष्ठा pnfs_block_dev *d,
+		काष्ठा pnfs_block_volume *volumes, पूर्णांक idx, gfp_t gfp_mask)
+अणु
+	चयन (volumes[idx].type) अणु
+	हाल PNFS_BLOCK_VOLUME_SIMPLE:
+		वापस bl_parse_simple(server, d, volumes, idx, gfp_mask);
+	हाल PNFS_BLOCK_VOLUME_SLICE:
+		वापस bl_parse_slice(server, d, volumes, idx, gfp_mask);
+	हाल PNFS_BLOCK_VOLUME_CONCAT:
+		वापस bl_parse_concat(server, d, volumes, idx, gfp_mask);
+	हाल PNFS_BLOCK_VOLUME_STRIPE:
+		वापस bl_parse_stripe(server, d, volumes, idx, gfp_mask);
+	हाल PNFS_BLOCK_VOLUME_SCSI:
+		वापस bl_parse_scsi(server, d, volumes, idx, gfp_mask);
+	शेष:
+		dprपूर्णांकk("unsupported volume type: %d\n", volumes[idx].type);
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
-struct nfs4_deviceid_node *
-bl_alloc_deviceid_node(struct nfs_server *server, struct pnfs_device *pdev,
+काष्ठा nfs4_deviceid_node *
+bl_alloc_deviceid_node(काष्ठा nfs_server *server, काष्ठा pnfs_device *pdev,
 		gfp_t gfp_mask)
-{
-	struct nfs4_deviceid_node *node = NULL;
-	struct pnfs_block_volume *volumes;
-	struct pnfs_block_dev *top;
-	struct xdr_stream xdr;
-	struct xdr_buf buf;
-	struct page *scratch;
-	int nr_volumes, ret, i;
+अणु
+	काष्ठा nfs4_deviceid_node *node = शून्य;
+	काष्ठा pnfs_block_volume *volumes;
+	काष्ठा pnfs_block_dev *top;
+	काष्ठा xdr_stream xdr;
+	काष्ठा xdr_buf buf;
+	काष्ठा page *scratch;
+	पूर्णांक nr_volumes, ret, i;
 	__be32 *p;
 
 	scratch = alloc_page(gfp_mask);
-	if (!scratch)
-		goto out;
+	अगर (!scratch)
+		जाओ out;
 
 	xdr_init_decode_pages(&xdr, &buf, pdev->pages, pdev->pglen);
 	xdr_set_scratch_page(&xdr, scratch);
 
-	p = xdr_inline_decode(&xdr, sizeof(__be32));
-	if (!p)
-		goto out_free_scratch;
+	p = xdr_अंतरभूत_decode(&xdr, माप(__be32));
+	अगर (!p)
+		जाओ out_मुक्त_scratch;
 	nr_volumes = be32_to_cpup(p++);
 
-	volumes = kcalloc(nr_volumes, sizeof(struct pnfs_block_volume),
+	volumes = kसुस्मृति(nr_volumes, माप(काष्ठा pnfs_block_volume),
 			  gfp_mask);
-	if (!volumes)
-		goto out_free_scratch;
+	अगर (!volumes)
+		जाओ out_मुक्त_scratch;
 
-	for (i = 0; i < nr_volumes; i++) {
+	क्रम (i = 0; i < nr_volumes; i++) अणु
 		ret = nfs4_block_decode_volume(&xdr, &volumes[i]);
-		if (ret < 0)
-			goto out_free_volumes;
-	}
+		अगर (ret < 0)
+			जाओ out_मुक्त_volumes;
+	पूर्ण
 
-	top = kzalloc(sizeof(*top), gfp_mask);
-	if (!top)
-		goto out_free_volumes;
+	top = kzalloc(माप(*top), gfp_mask);
+	अगर (!top)
+		जाओ out_मुक्त_volumes;
 
 	ret = bl_parse_deviceid(server, top, volumes, nr_volumes - 1, gfp_mask);
 
 	node = &top->node;
 	nfs4_init_deviceid_node(node, server, &pdev->dev_id);
-	if (ret)
+	अगर (ret)
 		nfs4_mark_deviceid_unavailable(node);
 
-out_free_volumes:
-	kfree(volumes);
-out_free_scratch:
-	__free_page(scratch);
+out_मुक्त_volumes:
+	kमुक्त(volumes);
+out_मुक्त_scratch:
+	__मुक्त_page(scratch);
 out:
-	return node;
-}
+	वापस node;
+पूर्ण

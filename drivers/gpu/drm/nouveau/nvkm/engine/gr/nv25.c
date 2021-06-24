@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: MIT
-#include "nv20.h"
-#include "regs.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
+#समावेश "nv20.h"
+#समावेश "regs.h"
 
-#include <core/gpuobj.h>
-#include <engine/fifo.h>
-#include <engine/fifo/chan.h>
+#समावेश <core/gpuobj.h>
+#समावेश <engine/fअगरo.h>
+#समावेश <engine/fअगरo/chan.h>
 
 /*******************************************************************************
  * PGRAPH context
  ******************************************************************************/
 
-static const struct nvkm_object_func
-nv25_gr_chan = {
+अटल स्थिर काष्ठा nvkm_object_func
+nv25_gr_chan = अणु
 	.dtor = nv20_gr_chan_dtor,
 	.init = nv20_gr_chan_init,
 	.fini = nv20_gr_chan_fini,
-};
+पूर्ण;
 
-static int
-nv25_gr_chan_new(struct nvkm_gr *base, struct nvkm_fifo_chan *fifoch,
-		 const struct nvkm_oclass *oclass, struct nvkm_object **pobject)
-{
-	struct nv20_gr *gr = nv20_gr(base);
-	struct nv20_gr_chan *chan;
-	int ret, i;
+अटल पूर्णांक
+nv25_gr_chan_new(काष्ठा nvkm_gr *base, काष्ठा nvkm_fअगरo_chan *fअगरoch,
+		 स्थिर काष्ठा nvkm_oclass *oclass, काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nv20_gr *gr = nv20_gr(base);
+	काष्ठा nv20_gr_chan *chan;
+	पूर्णांक ret, i;
 
-	if (!(chan = kzalloc(sizeof(*chan), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(chan = kzalloc(माप(*chan), GFP_KERNEL)))
+		वापस -ENOMEM;
 	nvkm_object_ctor(&nv25_gr_chan, oclass, &chan->object);
 	chan->gr = gr;
-	chan->chid = fifoch->chid;
+	chan->chid = fअगरoch->chid;
 	*pobject = &chan->object;
 
 	ret = nvkm_memory_new(gr->base.engine.subdev.device,
 			      NVKM_MEM_TARGET_INST, 0x3724, 16, true,
 			      &chan->inst);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	nvkm_kmap(chan->inst);
 	nvkm_wo32(chan->inst, 0x0028, 0x00000001 | (chan->chid << 24));
@@ -50,17 +51,17 @@ nv25_gr_chan_new(struct nvkm_gr *base, struct nvkm_fifo_chan *fifoch,
 	nvkm_wo32(chan->inst, 0x04d0, 0x00000001);
 	nvkm_wo32(chan->inst, 0x04e4, 0x44400000);
 	nvkm_wo32(chan->inst, 0x04fc, 0x4b800000);
-	for (i = 0x0510; i <= 0x051c; i += 4)
+	क्रम (i = 0x0510; i <= 0x051c; i += 4)
 		nvkm_wo32(chan->inst, i, 0x00030303);
-	for (i = 0x0530; i <= 0x053c; i += 4)
+	क्रम (i = 0x0530; i <= 0x053c; i += 4)
 		nvkm_wo32(chan->inst, i, 0x00080000);
-	for (i = 0x0548; i <= 0x0554; i += 4)
+	क्रम (i = 0x0548; i <= 0x0554; i += 4)
 		nvkm_wo32(chan->inst, i, 0x01012000);
-	for (i = 0x0558; i <= 0x0564; i += 4)
+	क्रम (i = 0x0558; i <= 0x0564; i += 4)
 		nvkm_wo32(chan->inst, i, 0x000105b8);
-	for (i = 0x0568; i <= 0x0574; i += 4)
+	क्रम (i = 0x0568; i <= 0x0574; i += 4)
 		nvkm_wo32(chan->inst, i, 0x00080008);
-	for (i = 0x0598; i <= 0x05d4; i += 4)
+	क्रम (i = 0x0598; i <= 0x05d4; i += 4)
 		nvkm_wo32(chan->inst, i, 0x07ff0000);
 	nvkm_wo32(chan->inst, 0x05e0, 0x4b7fffff);
 	nvkm_wo32(chan->inst, 0x0620, 0x00000080);
@@ -73,11 +74,11 @@ nv25_gr_chan_new(struct nvkm_gr *base, struct nvkm_fifo_chan *fifoch,
 	nvkm_wo32(chan->inst, 0x0678, 0x00000001);
 	nvkm_wo32(chan->inst, 0x0680, 0x00040000);
 	nvkm_wo32(chan->inst, 0x0684, 0x00010000);
-	for (i = 0x1b04; i <= 0x2374; i += 16) {
+	क्रम (i = 0x1b04; i <= 0x2374; i += 16) अणु
 		nvkm_wo32(chan->inst, (i + 0), 0x10700ff9);
 		nvkm_wo32(chan->inst, (i + 4), 0x0436086c);
 		nvkm_wo32(chan->inst, (i + 8), 0x000c001b);
-	}
+	पूर्ण
 	nvkm_wo32(chan->inst, 0x2704, 0x3f800000);
 	nvkm_wo32(chan->inst, 0x2718, 0x3f800000);
 	nvkm_wo32(chan->inst, 0x2744, 0x40000000);
@@ -90,46 +91,46 @@ nv25_gr_chan_new(struct nvkm_gr *base, struct nvkm_fifo_chan *fifoch,
 	nvkm_wo32(chan->inst, 0x308c, 0x000fe000);
 	nvkm_wo32(chan->inst, 0x3108, 0x000003f8);
 	nvkm_wo32(chan->inst, 0x3468, 0x002fe000);
-	for (i = 0x3484; i <= 0x34a0; i += 4)
+	क्रम (i = 0x3484; i <= 0x34a0; i += 4)
 		nvkm_wo32(chan->inst, i, 0x001c527c);
-	nvkm_done(chan->inst);
-	return 0;
-}
+	nvkm_करोne(chan->inst);
+	वापस 0;
+पूर्ण
 
 /*******************************************************************************
  * PGRAPH engine/subdev functions
  ******************************************************************************/
 
-static const struct nvkm_gr_func
-nv25_gr = {
+अटल स्थिर काष्ठा nvkm_gr_func
+nv25_gr = अणु
 	.dtor = nv20_gr_dtor,
 	.oneinit = nv20_gr_oneinit,
 	.init = nv20_gr_init,
-	.intr = nv20_gr_intr,
+	.पूर्णांकr = nv20_gr_पूर्णांकr,
 	.tile = nv20_gr_tile,
 	.chan_new = nv25_gr_chan_new,
-	.sclass = {
-		{ -1, -1, 0x0012, &nv04_gr_object }, /* beta1 */
-		{ -1, -1, 0x0019, &nv04_gr_object }, /* clip */
-		{ -1, -1, 0x0030, &nv04_gr_object }, /* null */
-		{ -1, -1, 0x0039, &nv04_gr_object }, /* m2mf */
-		{ -1, -1, 0x0043, &nv04_gr_object }, /* rop */
-		{ -1, -1, 0x0044, &nv04_gr_object }, /* patt */
-		{ -1, -1, 0x004a, &nv04_gr_object }, /* gdi */
-		{ -1, -1, 0x0062, &nv04_gr_object }, /* surf2d */
-		{ -1, -1, 0x0072, &nv04_gr_object }, /* beta4 */
-		{ -1, -1, 0x0089, &nv04_gr_object }, /* sifm */
-		{ -1, -1, 0x008a, &nv04_gr_object }, /* ifc */
-		{ -1, -1, 0x0096, &nv04_gr_object }, /* celcius */
-		{ -1, -1, 0x009e, &nv04_gr_object }, /* swzsurf */
-		{ -1, -1, 0x009f, &nv04_gr_object }, /* imageblit */
-		{ -1, -1, 0x0597, &nv04_gr_object }, /* kelvin */
-		{}
-	}
-};
+	.sclass = अणु
+		अणु -1, -1, 0x0012, &nv04_gr_object पूर्ण, /* beta1 */
+		अणु -1, -1, 0x0019, &nv04_gr_object पूर्ण, /* clip */
+		अणु -1, -1, 0x0030, &nv04_gr_object पूर्ण, /* null */
+		अणु -1, -1, 0x0039, &nv04_gr_object पूर्ण, /* m2mf */
+		अणु -1, -1, 0x0043, &nv04_gr_object पूर्ण, /* rop */
+		अणु -1, -1, 0x0044, &nv04_gr_object पूर्ण, /* patt */
+		अणु -1, -1, 0x004a, &nv04_gr_object पूर्ण, /* gdi */
+		अणु -1, -1, 0x0062, &nv04_gr_object पूर्ण, /* surf2d */
+		अणु -1, -1, 0x0072, &nv04_gr_object पूर्ण, /* beta4 */
+		अणु -1, -1, 0x0089, &nv04_gr_object पूर्ण, /* sअगरm */
+		अणु -1, -1, 0x008a, &nv04_gr_object पूर्ण, /* अगरc */
+		अणु -1, -1, 0x0096, &nv04_gr_object पूर्ण, /* celcius */
+		अणु -1, -1, 0x009e, &nv04_gr_object पूर्ण, /* swzsurf */
+		अणु -1, -1, 0x009f, &nv04_gr_object पूर्ण, /* imageblit */
+		अणु -1, -1, 0x0597, &nv04_gr_object पूर्ण, /* kelvin */
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-nv25_gr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_gr **pgr)
-{
-	return nv20_gr_new_(&nv25_gr, device, type, inst, pgr);
-}
+पूर्णांक
+nv25_gr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gr **pgr)
+अणु
+	वापस nv20_gr_new_(&nv25_gr, device, type, inst, pgr);
+पूर्ण

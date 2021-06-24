@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __I915_DEBUGFS_PARAMS__
-#define __I915_DEBUGFS_PARAMS__
+#अगर_अघोषित __I915_DEBUGFS_PARAMS__
+#घोषणा __I915_DEBUGFS_PARAMS__
 
-struct dentry;
-struct drm_i915_private;
+काष्ठा dentry;
+काष्ठा drm_i915_निजी;
 
-struct dentry *i915_debugfs_params(struct drm_i915_private *i915);
+काष्ठा dentry *i915_debugfs_params(काष्ठा drm_i915_निजी *i915);
 
-#endif /* __I915_DEBUGFS_PARAMS__ */
+#पूर्ण_अगर /* __I915_DEBUGFS_PARAMS__ */

@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
  * Copyright (C) 2020 Google LLC.
  */
 
-#include <linux/filter.h>
-#include <linux/bpf.h>
-#include <linux/btf.h>
-#include <linux/binfmts.h>
-#include <linux/lsm_hooks.h>
-#include <linux/bpf_lsm.h>
-#include <linux/kallsyms.h>
-#include <linux/bpf_verifier.h>
-#include <net/bpf_sk_storage.h>
-#include <linux/bpf_local_storage.h>
-#include <linux/btf_ids.h>
-#include <linux/ima.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/btf.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/lsm_hooks.h>
+#समावेश <linux/bpf_lsm.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/bpf_verअगरier.h>
+#समावेश <net/bpf_sk_storage.h>
+#समावेश <linux/bpf_local_storage.h>
+#समावेश <linux/btf_ids.h>
+#समावेश <linux/ima.h>
 
 /* For every LSM hook that allows attachment of BPF programs, declare a nop
  * function where a BPF program can be attached.
  */
-#define LSM_HOOK(RET, DEFAULT, NAME, ...)	\
-noinline RET bpf_lsm_##NAME(__VA_ARGS__)	\
-{						\
-	return DEFAULT;				\
-}
+#घोषणा LSM_HOOK(RET, DEFAULT, NAME, ...)	\
+noअंतरभूत RET bpf_lsm_##NAME(__VA_ARGS__)	\
+अणु						\
+	वापस DEFAULT;				\
+पूर्ण
 
-#include <linux/lsm_hook_defs.h>
-#undef LSM_HOOK
+#समावेश <linux/lsm_hook_defs.h>
+#अघोषित LSM_HOOK
 
-#define LSM_HOOK(RET, DEFAULT, NAME, ...) BTF_ID(func, bpf_lsm_##NAME)
+#घोषणा LSM_HOOK(RET, DEFAULT, NAME, ...) BTF_ID(func, bpf_lsm_##NAME)
 BTF_SET_START(bpf_lsm_hooks)
-#include <linux/lsm_hook_defs.h>
-#undef LSM_HOOK
+#समावेश <linux/lsm_hook_defs.h>
+#अघोषित LSM_HOOK
 BTF_SET_END(bpf_lsm_hooks)
 
-int bpf_lsm_verify_prog(struct bpf_verifier_log *vlog,
-			const struct bpf_prog *prog)
-{
-	if (!prog->gpl_compatible) {
+पूर्णांक bpf_lsm_verअगरy_prog(काष्ठा bpf_verअगरier_log *vlog,
+			स्थिर काष्ठा bpf_prog *prog)
+अणु
+	अगर (!prog->gpl_compatible) अणु
 		bpf_log(vlog,
 			"LSM programs must have a GPL compatible license\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!btf_id_set_contains(&bpf_lsm_hooks, prog->aux->attach_btf_id)) {
+	अगर (!btf_id_set_contains(&bpf_lsm_hooks, prog->aux->attach_btf_id)) अणु
 		bpf_log(vlog, "attach_btf_id %u points to wrong type name %s\n",
 			prog->aux->attach_btf_id, prog->aux->attach_func_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Mask for all the currently supported BPRM option flags */
-#define BPF_F_BRPM_OPTS_MASK	BPF_F_BPRM_SECUREEXEC
+/* Mask क्रम all the currently supported BPRM option flags */
+#घोषणा BPF_F_BRPM_OPTS_MASK	BPF_F_BPRM_SECUREEXEC
 
-BPF_CALL_2(bpf_bprm_opts_set, struct linux_binprm *, bprm, u64, flags)
-{
-	if (flags & ~BPF_F_BRPM_OPTS_MASK)
-		return -EINVAL;
+BPF_CALL_2(bpf_bprm_opts_set, काष्ठा linux_binprm *, bprm, u64, flags)
+अणु
+	अगर (flags & ~BPF_F_BRPM_OPTS_MASK)
+		वापस -EINVAL;
 
 	bprm->secureexec = (flags & BPF_F_BPRM_SECUREEXEC);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-BTF_ID_LIST_SINGLE(bpf_bprm_opts_set_btf_ids, struct, linux_binprm)
+BTF_ID_LIST_SINGLE(bpf_bprm_opts_set_btf_ids, काष्ठा, linux_binprm)
 
-static const struct bpf_func_proto bpf_bprm_opts_set_proto = {
+अटल स्थिर काष्ठा bpf_func_proto bpf_bprm_opts_set_proto = अणु
 	.func		= bpf_bprm_opts_set,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_PTR_TO_BTF_ID,
 	.arg1_btf_id	= &bpf_bprm_opts_set_btf_ids[0],
 	.arg2_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_3(bpf_ima_inode_hash, struct inode *, inode, void *, dst, u32, size)
-{
-	return ima_inode_hash(inode, dst, size);
-}
+BPF_CALL_3(bpf_ima_inode_hash, काष्ठा inode *, inode, व्योम *, dst, u32, size)
+अणु
+	वापस ima_inode_hash(inode, dst, size);
+पूर्ण
 
-static bool bpf_ima_inode_hash_allowed(const struct bpf_prog *prog)
-{
-	return bpf_lsm_is_sleepable_hook(prog->aux->attach_btf_id);
-}
+अटल bool bpf_ima_inode_hash_allowed(स्थिर काष्ठा bpf_prog *prog)
+अणु
+	वापस bpf_lsm_is_sleepable_hook(prog->aux->attach_btf_id);
+पूर्ण
 
-BTF_ID_LIST_SINGLE(bpf_ima_inode_hash_btf_ids, struct, inode)
+BTF_ID_LIST_SINGLE(bpf_ima_inode_hash_btf_ids, काष्ठा, inode)
 
-static const struct bpf_func_proto bpf_ima_inode_hash_proto = {
+अटल स्थिर काष्ठा bpf_func_proto bpf_ima_inode_hash_proto = अणु
 	.func		= bpf_ima_inode_hash,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
@@ -97,71 +98,71 @@ static const struct bpf_func_proto bpf_ima_inode_hash_proto = {
 	.arg2_type	= ARG_PTR_TO_UNINIT_MEM,
 	.arg3_type	= ARG_CONST_SIZE,
 	.allowed	= bpf_ima_inode_hash_allowed,
-};
+पूर्ण;
 
-static const struct bpf_func_proto *
-bpf_lsm_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
-{
-	switch (func_id) {
-	case BPF_FUNC_inode_storage_get:
-		return &bpf_inode_storage_get_proto;
-	case BPF_FUNC_inode_storage_delete:
-		return &bpf_inode_storage_delete_proto;
-#ifdef CONFIG_NET
-	case BPF_FUNC_sk_storage_get:
-		return &bpf_sk_storage_get_proto;
-	case BPF_FUNC_sk_storage_delete:
-		return &bpf_sk_storage_delete_proto;
-#endif /* CONFIG_NET */
-	case BPF_FUNC_spin_lock:
-		return &bpf_spin_lock_proto;
-	case BPF_FUNC_spin_unlock:
-		return &bpf_spin_unlock_proto;
-	case BPF_FUNC_bprm_opts_set:
-		return &bpf_bprm_opts_set_proto;
-	case BPF_FUNC_ima_inode_hash:
-		return prog->aux->sleepable ? &bpf_ima_inode_hash_proto : NULL;
-	default:
-		return tracing_prog_func_proto(func_id, prog);
-	}
-}
+अटल स्थिर काष्ठा bpf_func_proto *
+bpf_lsm_func_proto(क्रमागत bpf_func_id func_id, स्थिर काष्ठा bpf_prog *prog)
+अणु
+	चयन (func_id) अणु
+	हाल BPF_FUNC_inode_storage_get:
+		वापस &bpf_inode_storage_get_proto;
+	हाल BPF_FUNC_inode_storage_delete:
+		वापस &bpf_inode_storage_delete_proto;
+#अगर_घोषित CONFIG_NET
+	हाल BPF_FUNC_sk_storage_get:
+		वापस &bpf_sk_storage_get_proto;
+	हाल BPF_FUNC_sk_storage_delete:
+		वापस &bpf_sk_storage_delete_proto;
+#पूर्ण_अगर /* CONFIG_NET */
+	हाल BPF_FUNC_spin_lock:
+		वापस &bpf_spin_lock_proto;
+	हाल BPF_FUNC_spin_unlock:
+		वापस &bpf_spin_unlock_proto;
+	हाल BPF_FUNC_bprm_opts_set:
+		वापस &bpf_bprm_opts_set_proto;
+	हाल BPF_FUNC_ima_inode_hash:
+		वापस prog->aux->sleepable ? &bpf_ima_inode_hash_proto : शून्य;
+	शेष:
+		वापस tracing_prog_func_proto(func_id, prog);
+	पूर्ण
+पूर्ण
 
 /* The set of hooks which are called without pagefaults disabled and are allowed
- * to "sleep" and thus can be used for sleeable BPF programs.
+ * to "sleep" and thus can be used क्रम sleeable BPF programs.
  */
 BTF_SET_START(sleepable_lsm_hooks)
 BTF_ID(func, bpf_lsm_bpf)
 BTF_ID(func, bpf_lsm_bpf_map)
 BTF_ID(func, bpf_lsm_bpf_map_alloc_security)
-BTF_ID(func, bpf_lsm_bpf_map_free_security)
+BTF_ID(func, bpf_lsm_bpf_map_मुक्त_security)
 BTF_ID(func, bpf_lsm_bpf_prog)
 BTF_ID(func, bpf_lsm_bprm_check_security)
 BTF_ID(func, bpf_lsm_bprm_committed_creds)
 BTF_ID(func, bpf_lsm_bprm_committing_creds)
-BTF_ID(func, bpf_lsm_bprm_creds_for_exec)
+BTF_ID(func, bpf_lsm_bprm_creds_क्रम_exec)
 BTF_ID(func, bpf_lsm_bprm_creds_from_file)
 BTF_ID(func, bpf_lsm_capget)
 BTF_ID(func, bpf_lsm_capset)
 BTF_ID(func, bpf_lsm_cred_prepare)
 BTF_ID(func, bpf_lsm_file_ioctl)
 BTF_ID(func, bpf_lsm_file_lock)
-BTF_ID(func, bpf_lsm_file_open)
+BTF_ID(func, bpf_lsm_file_खोलो)
 BTF_ID(func, bpf_lsm_file_receive)
 
-#ifdef CONFIG_SECURITY_NETWORK
+#अगर_घोषित CONFIG_SECURITY_NETWORK
 BTF_ID(func, bpf_lsm_inet_conn_established)
-#endif /* CONFIG_SECURITY_NETWORK */
+#पूर्ण_अगर /* CONFIG_SECURITY_NETWORK */
 
 BTF_ID(func, bpf_lsm_inode_create)
-BTF_ID(func, bpf_lsm_inode_free_security)
+BTF_ID(func, bpf_lsm_inode_मुक्त_security)
 BTF_ID(func, bpf_lsm_inode_getattr)
 BTF_ID(func, bpf_lsm_inode_getxattr)
 BTF_ID(func, bpf_lsm_inode_mknod)
-BTF_ID(func, bpf_lsm_inode_need_killpriv)
+BTF_ID(func, bpf_lsm_inode_need_समाप्तpriv)
 BTF_ID(func, bpf_lsm_inode_post_setxattr)
-BTF_ID(func, bpf_lsm_inode_readlink)
-BTF_ID(func, bpf_lsm_inode_rename)
-BTF_ID(func, bpf_lsm_inode_rmdir)
+BTF_ID(func, bpf_lsm_inode_पढ़ोlink)
+BTF_ID(func, bpf_lsm_inode_नाम)
+BTF_ID(func, bpf_lsm_inode_सूची_हटाओ)
 BTF_ID(func, bpf_lsm_inode_setattr)
 BTF_ID(func, bpf_lsm_inode_setxattr)
 BTF_ID(func, bpf_lsm_inode_symlink)
@@ -169,13 +170,13 @@ BTF_ID(func, bpf_lsm_inode_unlink)
 BTF_ID(func, bpf_lsm_kernel_module_request)
 BTF_ID(func, bpf_lsm_kernfs_init_security)
 
-#ifdef CONFIG_KEYS
-BTF_ID(func, bpf_lsm_key_free)
-#endif /* CONFIG_KEYS */
+#अगर_घोषित CONFIG_KEYS
+BTF_ID(func, bpf_lsm_key_मुक्त)
+#पूर्ण_अगर /* CONFIG_KEYS */
 
 BTF_ID(func, bpf_lsm_mmap_file)
 BTF_ID(func, bpf_lsm_netlink_send)
-BTF_ID(func, bpf_lsm_path_notify)
+BTF_ID(func, bpf_lsm_path_notअगरy)
 BTF_ID(func, bpf_lsm_release_secctx)
 BTF_ID(func, bpf_lsm_sb_alloc_security)
 BTF_ID(func, bpf_lsm_sb_eat_lsm_opts)
@@ -186,43 +187,43 @@ BTF_ID(func, bpf_lsm_sb_set_mnt_opts)
 BTF_ID(func, bpf_lsm_sb_show_options)
 BTF_ID(func, bpf_lsm_sb_statfs)
 BTF_ID(func, bpf_lsm_sb_umount)
-BTF_ID(func, bpf_lsm_settime)
+BTF_ID(func, bpf_lsm_समय_रखो)
 
-#ifdef CONFIG_SECURITY_NETWORK
+#अगर_घोषित CONFIG_SECURITY_NETWORK
 BTF_ID(func, bpf_lsm_socket_accept)
 BTF_ID(func, bpf_lsm_socket_bind)
 BTF_ID(func, bpf_lsm_socket_connect)
 BTF_ID(func, bpf_lsm_socket_create)
 BTF_ID(func, bpf_lsm_socket_getpeername)
 BTF_ID(func, bpf_lsm_socket_getpeersec_dgram)
-BTF_ID(func, bpf_lsm_socket_getsockname)
-BTF_ID(func, bpf_lsm_socket_getsockopt)
+BTF_ID(func, bpf_lsm_socket_माला_लोockname)
+BTF_ID(func, bpf_lsm_socket_माला_लोockopt)
 BTF_ID(func, bpf_lsm_socket_listen)
 BTF_ID(func, bpf_lsm_socket_post_create)
 BTF_ID(func, bpf_lsm_socket_recvmsg)
 BTF_ID(func, bpf_lsm_socket_sendmsg)
-BTF_ID(func, bpf_lsm_socket_shutdown)
+BTF_ID(func, bpf_lsm_socket_shutकरोwn)
 BTF_ID(func, bpf_lsm_socket_socketpair)
-#endif /* CONFIG_SECURITY_NETWORK */
+#पूर्ण_अगर /* CONFIG_SECURITY_NETWORK */
 
 BTF_ID(func, bpf_lsm_syslog)
 BTF_ID(func, bpf_lsm_task_alloc)
-BTF_ID(func, bpf_lsm_task_getsecid_subj)
-BTF_ID(func, bpf_lsm_task_getsecid_obj)
+BTF_ID(func, bpf_lsm_task_माला_लोecid_subj)
+BTF_ID(func, bpf_lsm_task_माला_लोecid_obj)
 BTF_ID(func, bpf_lsm_task_prctl)
 BTF_ID(func, bpf_lsm_task_setscheduler)
 BTF_ID(func, bpf_lsm_task_to_inode)
 BTF_SET_END(sleepable_lsm_hooks)
 
 bool bpf_lsm_is_sleepable_hook(u32 btf_id)
-{
-	return btf_id_set_contains(&sleepable_lsm_hooks, btf_id);
-}
+अणु
+	वापस btf_id_set_contains(&sleepable_lsm_hooks, btf_id);
+पूर्ण
 
-const struct bpf_prog_ops lsm_prog_ops = {
-};
+स्थिर काष्ठा bpf_prog_ops lsm_prog_ops = अणु
+पूर्ण;
 
-const struct bpf_verifier_ops lsm_verifier_ops = {
+स्थिर काष्ठा bpf_verअगरier_ops lsm_verअगरier_ops = अणु
 	.get_func_proto = bpf_lsm_func_proto,
 	.is_valid_access = btf_ctx_access,
-};
+पूर्ण;

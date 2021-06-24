@@ -1,1144 +1,1145 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Analogix DP (Display port) core register interface driver.
+ * Analogix DP (Display port) core रेजिस्टर पूर्णांकerface driver.
  *
  * Copyright (C) 2012 Samsung Electronics Co., Ltd.
  * Author: Jingoo Han <jg1.han@samsung.com>
  */
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/gpio/consumer.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
 
-#include <drm/bridge/analogix_dp.h>
+#समावेश <drm/bridge/analogix_dp.h>
 
-#include "analogix_dp_core.h"
-#include "analogix_dp_reg.h"
+#समावेश "analogix_dp_core.h"
+#समावेश "analogix_dp_reg.h"
 
-#define COMMON_INT_MASK_1	0
-#define COMMON_INT_MASK_2	0
-#define COMMON_INT_MASK_3	0
-#define COMMON_INT_MASK_4	(HOTPLUG_CHG | HPD_LOST | PLUG)
-#define INT_STA_MASK		INT_HPD
+#घोषणा COMMON_INT_MASK_1	0
+#घोषणा COMMON_INT_MASK_2	0
+#घोषणा COMMON_INT_MASK_3	0
+#घोषणा COMMON_INT_MASK_4	(HOTPLUG_CHG | HPD_LOST | PLUG)
+#घोषणा INT_STA_MASK		INT_HPD
 
-void analogix_dp_enable_video_mute(struct analogix_dp_device *dp, bool enable)
-{
+व्योम analogix_dp_enable_video_mute(काष्ठा analogix_dp_device *dp, bool enable)
+अणु
 	u32 reg;
 
-	if (enable) {
-		reg = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
+	अगर (enable) अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
 		reg |= HDCP_VIDEO_MUTE;
-		writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
-	} else {
-		reg = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
+	पूर्ण अन्यथा अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
 		reg &= ~HDCP_VIDEO_MUTE;
-		writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
-	}
-}
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
+	पूर्ण
+पूर्ण
 
-void analogix_dp_stop_video(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_stop_video(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
 	reg &= ~VIDEO_EN;
-	writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
+पूर्ण
 
-void analogix_dp_lane_swap(struct analogix_dp_device *dp, bool enable)
-{
+व्योम analogix_dp_lane_swap(काष्ठा analogix_dp_device *dp, bool enable)
+अणु
 	u32 reg;
 
-	if (enable)
+	अगर (enable)
 		reg = LANE3_MAP_LOGIC_LANE_0 | LANE2_MAP_LOGIC_LANE_1 |
 		      LANE1_MAP_LOGIC_LANE_2 | LANE0_MAP_LOGIC_LANE_3;
-	else
+	अन्यथा
 		reg = LANE3_MAP_LOGIC_LANE_3 | LANE2_MAP_LOGIC_LANE_2 |
 		      LANE1_MAP_LOGIC_LANE_1 | LANE0_MAP_LOGIC_LANE_0;
 
-	writel(reg, dp->reg_base + ANALOGIX_DP_LANE_MAP);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LANE_MAP);
+पूर्ण
 
-void analogix_dp_init_analog_param(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_init_analog_param(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
 	reg = TX_TERMINAL_CTRL_50_OHM;
-	writel(reg, dp->reg_base + ANALOGIX_DP_ANALOG_CTL_1);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_ANALOG_CTL_1);
 
 	reg = SEL_24M | TX_DVDD_BIT_1_0625V;
-	writel(reg, dp->reg_base + ANALOGIX_DP_ANALOG_CTL_2);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_ANALOG_CTL_2);
 
-	if (dp->plat_data && is_rockchip(dp->plat_data->dev_type)) {
+	अगर (dp->plat_data && is_rockchip(dp->plat_data->dev_type)) अणु
 		reg = REF_CLK_24M;
-		if (dp->plat_data->dev_type == RK3288_DP)
+		अगर (dp->plat_data->dev_type == RK3288_DP)
 			reg ^= REF_CLK_MASK;
 
-		writel(reg, dp->reg_base + ANALOGIX_DP_PLL_REG_1);
-		writel(0x95, dp->reg_base + ANALOGIX_DP_PLL_REG_2);
-		writel(0x40, dp->reg_base + ANALOGIX_DP_PLL_REG_3);
-		writel(0x58, dp->reg_base + ANALOGIX_DP_PLL_REG_4);
-		writel(0x22, dp->reg_base + ANALOGIX_DP_PLL_REG_5);
-	}
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_PLL_REG_1);
+		ग_लिखोl(0x95, dp->reg_base + ANALOGIX_DP_PLL_REG_2);
+		ग_लिखोl(0x40, dp->reg_base + ANALOGIX_DP_PLL_REG_3);
+		ग_लिखोl(0x58, dp->reg_base + ANALOGIX_DP_PLL_REG_4);
+		ग_लिखोl(0x22, dp->reg_base + ANALOGIX_DP_PLL_REG_5);
+	पूर्ण
 
 	reg = DRIVE_DVDD_BIT_1_0625V | VCO_BIT_600_MICRO;
-	writel(reg, dp->reg_base + ANALOGIX_DP_ANALOG_CTL_3);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_ANALOG_CTL_3);
 
 	reg = PD_RING_OSC | AUX_TERMINAL_CTRL_50_OHM |
 		TX_CUR1_2X | TX_CUR_16_MA;
-	writel(reg, dp->reg_base + ANALOGIX_DP_PLL_FILTER_CTL_1);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_PLL_FILTER_CTL_1);
 
 	reg = CH3_AMP_400_MV | CH2_AMP_400_MV |
 		CH1_AMP_400_MV | CH0_AMP_400_MV;
-	writel(reg, dp->reg_base + ANALOGIX_DP_TX_AMP_TUNING_CTL);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_TX_AMP_TUNING_CTL);
+पूर्ण
 
-void analogix_dp_init_interrupt(struct analogix_dp_device *dp)
-{
-	/* Set interrupt pin assertion polarity as high */
-	writel(INT_POL1 | INT_POL0, dp->reg_base + ANALOGIX_DP_INT_CTL);
+व्योम analogix_dp_init_पूर्णांकerrupt(काष्ठा analogix_dp_device *dp)
+अणु
+	/* Set पूर्णांकerrupt pin निश्चितion polarity as high */
+	ग_लिखोl(INT_POL1 | INT_POL0, dp->reg_base + ANALOGIX_DP_INT_CTL);
 
 	/* Clear pending regisers */
-	writel(0xff, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_1);
-	writel(0x4f, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_2);
-	writel(0xe0, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_3);
-	writel(0xe7, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_4);
-	writel(0x63, dp->reg_base + ANALOGIX_DP_INT_STA);
+	ग_लिखोl(0xff, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_1);
+	ग_लिखोl(0x4f, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_2);
+	ग_लिखोl(0xe0, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_3);
+	ग_लिखोl(0xe7, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_4);
+	ग_लिखोl(0x63, dp->reg_base + ANALOGIX_DP_INT_STA);
 
 	/* 0:mask,1: unmask */
-	writel(0x00, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_1);
-	writel(0x00, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_2);
-	writel(0x00, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_3);
-	writel(0x00, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_4);
-	writel(0x00, dp->reg_base + ANALOGIX_DP_INT_STA_MASK);
-}
+	ग_लिखोl(0x00, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_1);
+	ग_लिखोl(0x00, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_2);
+	ग_लिखोl(0x00, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_3);
+	ग_लिखोl(0x00, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_4);
+	ग_लिखोl(0x00, dp->reg_base + ANALOGIX_DP_INT_STA_MASK);
+पूर्ण
 
-void analogix_dp_reset(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_reset(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
 	analogix_dp_stop_video(dp);
 	analogix_dp_enable_video_mute(dp, 0);
 
-	if (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
+	अगर (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
 		reg = RK_VID_CAP_FUNC_EN_N | RK_VID_FIFO_FUNC_EN_N |
 			SW_FUNC_EN_N;
-	else
+	अन्यथा
 		reg = MASTER_VID_FUNC_EN_N | SLAVE_VID_FUNC_EN_N |
 			AUD_FIFO_FUNC_EN_N | AUD_FUNC_EN_N |
 			HDCP_FUNC_EN_N | SW_FUNC_EN_N;
 
-	writel(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_1);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_1);
 
 	reg = SSC_FUNC_EN_N | AUX_FUNC_EN_N |
 		SERDES_FIFO_FUNC_EN_N |
 		LS_CLK_DOMAIN_FUNC_EN_N;
-	writel(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
 
 	usleep_range(20, 30);
 
 	analogix_dp_lane_swap(dp, 0);
 
-	writel(0x0, dp->reg_base + ANALOGIX_DP_SYS_CTL_1);
-	writel(0x40, dp->reg_base + ANALOGIX_DP_SYS_CTL_2);
-	writel(0x0, dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
-	writel(0x0, dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
+	ग_लिखोl(0x0, dp->reg_base + ANALOGIX_DP_SYS_CTL_1);
+	ग_लिखोl(0x40, dp->reg_base + ANALOGIX_DP_SYS_CTL_2);
+	ग_लिखोl(0x0, dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
+	ग_लिखोl(0x0, dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
 
-	writel(0x0, dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
-	writel(0x0, dp->reg_base + ANALOGIX_DP_HDCP_CTL);
+	ग_लिखोl(0x0, dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
+	ग_लिखोl(0x0, dp->reg_base + ANALOGIX_DP_HDCP_CTL);
 
-	writel(0x5e, dp->reg_base + ANALOGIX_DP_HPD_DEGLITCH_L);
-	writel(0x1a, dp->reg_base + ANALOGIX_DP_HPD_DEGLITCH_H);
+	ग_लिखोl(0x5e, dp->reg_base + ANALOGIX_DP_HPD_DEGLITCH_L);
+	ग_लिखोl(0x1a, dp->reg_base + ANALOGIX_DP_HPD_DEGLITCH_H);
 
-	writel(0x10, dp->reg_base + ANALOGIX_DP_LINK_DEBUG_CTL);
+	ग_लिखोl(0x10, dp->reg_base + ANALOGIX_DP_LINK_DEBUG_CTL);
 
-	writel(0x0, dp->reg_base + ANALOGIX_DP_PHY_TEST);
+	ग_लिखोl(0x0, dp->reg_base + ANALOGIX_DP_PHY_TEST);
 
-	writel(0x0, dp->reg_base + ANALOGIX_DP_VIDEO_FIFO_THRD);
-	writel(0x20, dp->reg_base + ANALOGIX_DP_AUDIO_MARGIN);
+	ग_लिखोl(0x0, dp->reg_base + ANALOGIX_DP_VIDEO_FIFO_THRD);
+	ग_लिखोl(0x20, dp->reg_base + ANALOGIX_DP_AUDIO_MARGIN);
 
-	writel(0x4, dp->reg_base + ANALOGIX_DP_M_VID_GEN_FILTER_TH);
-	writel(0x2, dp->reg_base + ANALOGIX_DP_M_AUD_GEN_FILTER_TH);
+	ग_लिखोl(0x4, dp->reg_base + ANALOGIX_DP_M_VID_GEN_FILTER_TH);
+	ग_लिखोl(0x2, dp->reg_base + ANALOGIX_DP_M_AUD_GEN_FILTER_TH);
 
-	writel(0x00000101, dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
-}
+	ग_लिखोl(0x00000101, dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
+पूर्ण
 
-void analogix_dp_swreset(struct analogix_dp_device *dp)
-{
-	writel(RESET_DP_TX, dp->reg_base + ANALOGIX_DP_TX_SW_RESET);
-}
+व्योम analogix_dp_swreset(काष्ठा analogix_dp_device *dp)
+अणु
+	ग_लिखोl(RESET_DP_TX, dp->reg_base + ANALOGIX_DP_TX_SW_RESET);
+पूर्ण
 
-void analogix_dp_config_interrupt(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_config_पूर्णांकerrupt(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
 	/* 0: mask, 1: unmask */
 	reg = COMMON_INT_MASK_1;
-	writel(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_1);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_1);
 
 	reg = COMMON_INT_MASK_2;
-	writel(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_2);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_2);
 
 	reg = COMMON_INT_MASK_3;
-	writel(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_3);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_3);
 
 	reg = COMMON_INT_MASK_4;
-	writel(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_4);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_4);
 
 	reg = INT_STA_MASK;
-	writel(reg, dp->reg_base + ANALOGIX_DP_INT_STA_MASK);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_INT_STA_MASK);
+पूर्ण
 
-void analogix_dp_mute_hpd_interrupt(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_mute_hpd_पूर्णांकerrupt(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
 	/* 0: mask, 1: unmask */
-	reg = readl(dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_4);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_4);
 	reg &= ~COMMON_INT_MASK_4;
-	writel(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_4);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_4);
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_INT_STA_MASK);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_INT_STA_MASK);
 	reg &= ~INT_STA_MASK;
-	writel(reg, dp->reg_base + ANALOGIX_DP_INT_STA_MASK);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_INT_STA_MASK);
+पूर्ण
 
-void analogix_dp_unmute_hpd_interrupt(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_unmute_hpd_पूर्णांकerrupt(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
 	/* 0: mask, 1: unmask */
 	reg = COMMON_INT_MASK_4;
-	writel(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_4);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_MASK_4);
 
 	reg = INT_STA_MASK;
-	writel(reg, dp->reg_base + ANALOGIX_DP_INT_STA_MASK);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_INT_STA_MASK);
+पूर्ण
 
-enum pll_status analogix_dp_get_pll_lock_status(struct analogix_dp_device *dp)
-{
+क्रमागत pll_status analogix_dp_get_pll_lock_status(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_DEBUG_CTL);
-	if (reg & PLL_LOCK)
-		return PLL_LOCKED;
-	else
-		return PLL_UNLOCKED;
-}
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_DEBUG_CTL);
+	अगर (reg & PLL_LOCK)
+		वापस PLL_LOCKED;
+	अन्यथा
+		वापस PLL_UNLOCKED;
+पूर्ण
 
-void analogix_dp_set_pll_power_down(struct analogix_dp_device *dp, bool enable)
-{
+व्योम analogix_dp_set_pll_घातer_करोwn(काष्ठा analogix_dp_device *dp, bool enable)
+अणु
 	u32 reg;
 	u32 mask = DP_PLL_PD;
 	u32 pd_addr = ANALOGIX_DP_PLL_CTL;
 
-	if (dp->plat_data && is_rockchip(dp->plat_data->dev_type)) {
+	अगर (dp->plat_data && is_rockchip(dp->plat_data->dev_type)) अणु
 		pd_addr = ANALOGIX_DP_PD;
 		mask = RK_PLL_PD;
-	}
+	पूर्ण
 
-	reg = readl(dp->reg_base + pd_addr);
-	if (enable)
+	reg = पढ़ोl(dp->reg_base + pd_addr);
+	अगर (enable)
 		reg |= mask;
-	else
+	अन्यथा
 		reg &= ~mask;
-	writel(reg, dp->reg_base + pd_addr);
-}
+	ग_लिखोl(reg, dp->reg_base + pd_addr);
+पूर्ण
 
-void analogix_dp_set_analog_power_down(struct analogix_dp_device *dp,
-				       enum analog_power_block block,
+व्योम analogix_dp_set_analog_घातer_करोwn(काष्ठा analogix_dp_device *dp,
+				       क्रमागत analog_घातer_block block,
 				       bool enable)
-{
+अणु
 	u32 reg;
 	u32 phy_pd_addr = ANALOGIX_DP_PHY_PD;
 	u32 mask;
 
-	if (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
+	अगर (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
 		phy_pd_addr = ANALOGIX_DP_PD;
 
-	switch (block) {
-	case AUX_BLOCK:
-		if (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
+	चयन (block) अणु
+	हाल AUX_BLOCK:
+		अगर (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
 			mask = RK_AUX_PD;
-		else
+		अन्यथा
 			mask = AUX_PD;
 
-		reg = readl(dp->reg_base + phy_pd_addr);
-		if (enable)
+		reg = पढ़ोl(dp->reg_base + phy_pd_addr);
+		अगर (enable)
 			reg |= mask;
-		else
+		अन्यथा
 			reg &= ~mask;
-		writel(reg, dp->reg_base + phy_pd_addr);
-		break;
-	case CH0_BLOCK:
+		ग_लिखोl(reg, dp->reg_base + phy_pd_addr);
+		अवरोध;
+	हाल CH0_BLOCK:
 		mask = CH0_PD;
-		reg = readl(dp->reg_base + phy_pd_addr);
+		reg = पढ़ोl(dp->reg_base + phy_pd_addr);
 
-		if (enable)
+		अगर (enable)
 			reg |= mask;
-		else
+		अन्यथा
 			reg &= ~mask;
-		writel(reg, dp->reg_base + phy_pd_addr);
-		break;
-	case CH1_BLOCK:
+		ग_लिखोl(reg, dp->reg_base + phy_pd_addr);
+		अवरोध;
+	हाल CH1_BLOCK:
 		mask = CH1_PD;
-		reg = readl(dp->reg_base + phy_pd_addr);
+		reg = पढ़ोl(dp->reg_base + phy_pd_addr);
 
-		if (enable)
+		अगर (enable)
 			reg |= mask;
-		else
+		अन्यथा
 			reg &= ~mask;
-		writel(reg, dp->reg_base + phy_pd_addr);
-		break;
-	case CH2_BLOCK:
+		ग_लिखोl(reg, dp->reg_base + phy_pd_addr);
+		अवरोध;
+	हाल CH2_BLOCK:
 		mask = CH2_PD;
-		reg = readl(dp->reg_base + phy_pd_addr);
+		reg = पढ़ोl(dp->reg_base + phy_pd_addr);
 
-		if (enable)
+		अगर (enable)
 			reg |= mask;
-		else
+		अन्यथा
 			reg &= ~mask;
-		writel(reg, dp->reg_base + phy_pd_addr);
-		break;
-	case CH3_BLOCK:
+		ग_लिखोl(reg, dp->reg_base + phy_pd_addr);
+		अवरोध;
+	हाल CH3_BLOCK:
 		mask = CH3_PD;
-		reg = readl(dp->reg_base + phy_pd_addr);
+		reg = पढ़ोl(dp->reg_base + phy_pd_addr);
 
-		if (enable)
+		अगर (enable)
 			reg |= mask;
-		else
+		अन्यथा
 			reg &= ~mask;
-		writel(reg, dp->reg_base + phy_pd_addr);
-		break;
-	case ANALOG_TOTAL:
+		ग_लिखोl(reg, dp->reg_base + phy_pd_addr);
+		अवरोध;
+	हाल ANALOG_TOTAL:
 		/*
 		 * There is no bit named DP_PHY_PD, so We used DP_INC_BG
-		 * to power off everything instead of DP_PHY_PD in
+		 * to घातer off everything instead of DP_PHY_PD in
 		 * Rockchip
 		 */
-		if (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
+		अगर (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
 			mask = DP_INC_BG;
-		else
+		अन्यथा
 			mask = DP_PHY_PD;
 
-		reg = readl(dp->reg_base + phy_pd_addr);
-		if (enable)
+		reg = पढ़ोl(dp->reg_base + phy_pd_addr);
+		अगर (enable)
 			reg |= mask;
-		else
+		अन्यथा
 			reg &= ~mask;
 
-		writel(reg, dp->reg_base + phy_pd_addr);
-		if (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
+		ग_लिखोl(reg, dp->reg_base + phy_pd_addr);
+		अगर (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
 			usleep_range(10, 15);
-		break;
-	case POWER_ALL:
-		if (enable) {
+		अवरोध;
+	हाल POWER_ALL:
+		अगर (enable) अणु
 			reg = DP_ALL_PD;
-			writel(reg, dp->reg_base + phy_pd_addr);
-		} else {
+			ग_लिखोl(reg, dp->reg_base + phy_pd_addr);
+		पूर्ण अन्यथा अणु
 			reg = DP_ALL_PD;
-			writel(reg, dp->reg_base + phy_pd_addr);
+			ग_लिखोl(reg, dp->reg_base + phy_pd_addr);
 			usleep_range(10, 15);
 			reg &= ~DP_INC_BG;
-			writel(reg, dp->reg_base + phy_pd_addr);
+			ग_लिखोl(reg, dp->reg_base + phy_pd_addr);
 			usleep_range(10, 15);
 
-			writel(0x00, dp->reg_base + phy_pd_addr);
-		}
-		break;
-	default:
-		break;
-	}
-}
+			ग_लिखोl(0x00, dp->reg_base + phy_pd_addr);
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-int analogix_dp_init_analog_func(struct analogix_dp_device *dp)
-{
+पूर्णांक analogix_dp_init_analog_func(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
-	int timeout_loop = 0;
+	पूर्णांक समयout_loop = 0;
 
-	analogix_dp_set_analog_power_down(dp, POWER_ALL, 0);
+	analogix_dp_set_analog_घातer_करोwn(dp, POWER_ALL, 0);
 
 	reg = PLL_LOCK_CHG;
-	writel(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_1);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_1);
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_DEBUG_CTL);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_DEBUG_CTL);
 	reg &= ~(F_PLL_LOCK | PLL_LOCK_CTRL);
-	writel(reg, dp->reg_base + ANALOGIX_DP_DEBUG_CTL);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_DEBUG_CTL);
 
 	/* Power up PLL */
-	if (analogix_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) {
-		analogix_dp_set_pll_power_down(dp, 0);
+	अगर (analogix_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) अणु
+		analogix_dp_set_pll_घातer_करोwn(dp, 0);
 
-		while (analogix_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) {
-			timeout_loop++;
-			if (DP_TIMEOUT_LOOP_COUNT < timeout_loop) {
+		जबतक (analogix_dp_get_pll_lock_status(dp) == PLL_UNLOCKED) अणु
+			समयout_loop++;
+			अगर (DP_TIMEOUT_LOOP_COUNT < समयout_loop) अणु
 				dev_err(dp->dev, "failed to get pll lock status\n");
-				return -ETIMEDOUT;
-			}
+				वापस -ETIMEDOUT;
+			पूर्ण
 			usleep_range(10, 20);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Enable Serdes FIFO function and Link symbol clock domain module */
-	reg = readl(dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
+	/* Enable Serdes FIFO function and Link symbol घड़ी करोमुख्य module */
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
 	reg &= ~(SERDES_FIFO_FUNC_EN_N | LS_CLK_DOMAIN_FUNC_EN_N
 		| AUX_FUNC_EN_N);
-	writel(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
-	return 0;
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
+	वापस 0;
+पूर्ण
 
-void analogix_dp_clear_hotplug_interrupts(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_clear_hotplug_पूर्णांकerrupts(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	if (dp->hpd_gpiod)
-		return;
+	अगर (dp->hpd_gpiod)
+		वापस;
 
 	reg = HOTPLUG_CHG | HPD_LOST | PLUG;
-	writel(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_4);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_4);
 
 	reg = INT_HPD;
-	writel(reg, dp->reg_base + ANALOGIX_DP_INT_STA);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_INT_STA);
+पूर्ण
 
-void analogix_dp_init_hpd(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_init_hpd(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	if (dp->hpd_gpiod)
-		return;
+	अगर (dp->hpd_gpiod)
+		वापस;
 
-	analogix_dp_clear_hotplug_interrupts(dp);
+	analogix_dp_clear_hotplug_पूर्णांकerrupts(dp);
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
 	reg &= ~(F_HPD | HPD_CTRL);
-	writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
+पूर्ण
 
-void analogix_dp_force_hpd(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_क्रमce_hpd(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
 	reg = (F_HPD | HPD_CTRL);
-	writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
+पूर्ण
 
-enum dp_irq_type analogix_dp_get_irq_type(struct analogix_dp_device *dp)
-{
+क्रमागत dp_irq_type analogix_dp_get_irq_type(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	if (dp->hpd_gpiod) {
+	अगर (dp->hpd_gpiod) अणु
 		reg = gpiod_get_value(dp->hpd_gpiod);
-		if (reg)
-			return DP_IRQ_TYPE_HP_CABLE_IN;
-		else
-			return DP_IRQ_TYPE_HP_CABLE_OUT;
-	} else {
-		/* Parse hotplug interrupt status register */
-		reg = readl(dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_4);
+		अगर (reg)
+			वापस DP_IRQ_TYPE_HP_CABLE_IN;
+		अन्यथा
+			वापस DP_IRQ_TYPE_HP_CABLE_OUT;
+	पूर्ण अन्यथा अणु
+		/* Parse hotplug पूर्णांकerrupt status रेजिस्टर */
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_4);
 
-		if (reg & PLUG)
-			return DP_IRQ_TYPE_HP_CABLE_IN;
+		अगर (reg & PLUG)
+			वापस DP_IRQ_TYPE_HP_CABLE_IN;
 
-		if (reg & HPD_LOST)
-			return DP_IRQ_TYPE_HP_CABLE_OUT;
+		अगर (reg & HPD_LOST)
+			वापस DP_IRQ_TYPE_HP_CABLE_OUT;
 
-		if (reg & HOTPLUG_CHG)
-			return DP_IRQ_TYPE_HP_CHANGE;
+		अगर (reg & HOTPLUG_CHG)
+			वापस DP_IRQ_TYPE_HP_CHANGE;
 
-		return DP_IRQ_TYPE_UNKNOWN;
-	}
-}
+		वापस DP_IRQ_TYPE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-void analogix_dp_reset_aux(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_reset_aux(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
 	/* Disable AUX channel module */
-	reg = readl(dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
 	reg |= AUX_FUNC_EN_N;
-	writel(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
+पूर्ण
 
-void analogix_dp_init_aux(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_init_aux(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
 	/* Clear inerrupts related to AUX channel */
 	reg = RPLY_RECEIV | AUX_ERR;
-	writel(reg, dp->reg_base + ANALOGIX_DP_INT_STA);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_INT_STA);
 
-	analogix_dp_set_analog_power_down(dp, AUX_BLOCK, true);
+	analogix_dp_set_analog_घातer_करोwn(dp, AUX_BLOCK, true);
 	usleep_range(10, 11);
-	analogix_dp_set_analog_power_down(dp, AUX_BLOCK, false);
+	analogix_dp_set_analog_घातer_करोwn(dp, AUX_BLOCK, false);
 
 	analogix_dp_reset_aux(dp);
 
-	/* AUX_BIT_PERIOD_EXPECTED_DELAY doesn't apply to Rockchip IP */
-	if (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
+	/* AUX_BIT_PERIOD_EXPECTED_DELAY करोesn't apply to Rockchip IP */
+	अगर (dp->plat_data && is_rockchip(dp->plat_data->dev_type))
 		reg = 0;
-	else
+	अन्यथा
 		reg = AUX_BIT_PERIOD_EXPECTED_DELAY(3);
 
 	/* Disable AUX transaction H/W retry */
 	reg |= AUX_HW_RETRY_COUNT_SEL(0) |
 	       AUX_HW_RETRY_INTERVAL_600_MICROSECONDS;
 
-	writel(reg, dp->reg_base + ANALOGIX_DP_AUX_HW_RETRY_CTL);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_AUX_HW_RETRY_CTL);
 
 	/* Receive AUX Channel DEFER commands equal to DEFFER_COUNT*64 */
 	reg = DEFER_CTRL_EN | DEFER_COUNT(1);
-	writel(reg, dp->reg_base + ANALOGIX_DP_AUX_CH_DEFER_CTL);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_AUX_CH_DEFER_CTL);
 
 	/* Enable AUX channel module */
-	reg = readl(dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
 	reg &= ~AUX_FUNC_EN_N;
-	writel(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_2);
+पूर्ण
 
-int analogix_dp_get_plug_in_status(struct analogix_dp_device *dp)
-{
+पूर्णांक analogix_dp_get_plug_in_status(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	if (dp->hpd_gpiod) {
-		if (gpiod_get_value(dp->hpd_gpiod))
-			return 0;
-	} else {
-		reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
-		if (reg & HPD_STATUS)
-			return 0;
-	}
+	अगर (dp->hpd_gpiod) अणु
+		अगर (gpiod_get_value(dp->hpd_gpiod))
+			वापस 0;
+	पूर्ण अन्यथा अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
+		अगर (reg & HPD_STATUS)
+			वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-void analogix_dp_enable_sw_function(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_enable_sw_function(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_FUNC_EN_1);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_FUNC_EN_1);
 	reg &= ~SW_FUNC_EN_N;
-	writel(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_1);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_1);
+पूर्ण
 
-void analogix_dp_set_link_bandwidth(struct analogix_dp_device *dp, u32 bwtype)
-{
+व्योम analogix_dp_set_link_bandwidth(काष्ठा analogix_dp_device *dp, u32 bwtype)
+अणु
 	u32 reg;
 
 	reg = bwtype;
-	if ((bwtype == DP_LINK_BW_2_7) || (bwtype == DP_LINK_BW_1_62))
-		writel(reg, dp->reg_base + ANALOGIX_DP_LINK_BW_SET);
-}
+	अगर ((bwtype == DP_LINK_BW_2_7) || (bwtype == DP_LINK_BW_1_62))
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LINK_BW_SET);
+पूर्ण
 
-void analogix_dp_get_link_bandwidth(struct analogix_dp_device *dp, u32 *bwtype)
-{
+व्योम analogix_dp_get_link_bandwidth(काष्ठा analogix_dp_device *dp, u32 *bwtype)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_LINK_BW_SET);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_LINK_BW_SET);
 	*bwtype = reg;
-}
+पूर्ण
 
-void analogix_dp_set_lane_count(struct analogix_dp_device *dp, u32 count)
-{
+व्योम analogix_dp_set_lane_count(काष्ठा analogix_dp_device *dp, u32 count)
+अणु
 	u32 reg;
 
 	reg = count;
-	writel(reg, dp->reg_base + ANALOGIX_DP_LANE_COUNT_SET);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LANE_COUNT_SET);
+पूर्ण
 
-void analogix_dp_get_lane_count(struct analogix_dp_device *dp, u32 *count)
-{
+व्योम analogix_dp_get_lane_count(काष्ठा analogix_dp_device *dp, u32 *count)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_LANE_COUNT_SET);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_LANE_COUNT_SET);
 	*count = reg;
-}
+पूर्ण
 
-void analogix_dp_enable_enhanced_mode(struct analogix_dp_device *dp,
+व्योम analogix_dp_enable_enhanced_mode(काष्ठा analogix_dp_device *dp,
 				      bool enable)
-{
+अणु
 	u32 reg;
 
-	if (enable) {
-		reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
+	अगर (enable) अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
 		reg |= ENHANCED;
-		writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
-	} else {
-		reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
+	पूर्ण अन्यथा अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
 		reg &= ~ENHANCED;
-		writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
-	}
-}
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
+	पूर्ण
+पूर्ण
 
-void analogix_dp_set_training_pattern(struct analogix_dp_device *dp,
-				      enum pattern_set pattern)
-{
+व्योम analogix_dp_set_training_pattern(काष्ठा analogix_dp_device *dp,
+				      क्रमागत pattern_set pattern)
+अणु
 	u32 reg;
 
-	switch (pattern) {
-	case PRBS7:
+	चयन (pattern) अणु
+	हाल PRBS7:
 		reg = SCRAMBLING_ENABLE | LINK_QUAL_PATTERN_SET_PRBS7;
-		writel(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
-		break;
-	case D10_2:
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
+		अवरोध;
+	हाल D10_2:
 		reg = SCRAMBLING_ENABLE | LINK_QUAL_PATTERN_SET_D10_2;
-		writel(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
-		break;
-	case TRAINING_PTN1:
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
+		अवरोध;
+	हाल TRAINING_PTN1:
 		reg = SCRAMBLING_DISABLE | SW_TRAINING_PATTERN_SET_PTN1;
-		writel(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
-		break;
-	case TRAINING_PTN2:
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
+		अवरोध;
+	हाल TRAINING_PTN2:
 		reg = SCRAMBLING_DISABLE | SW_TRAINING_PATTERN_SET_PTN2;
-		writel(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
-		break;
-	case DP_NONE:
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
+		अवरोध;
+	हाल DP_NONE:
 		reg = SCRAMBLING_ENABLE |
 			LINK_QUAL_PATTERN_SET_DISABLE |
 			SW_TRAINING_PATTERN_SET_NORMAL;
-		writel(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
-		break;
-	default:
-		break;
-	}
-}
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void analogix_dp_set_lane0_pre_emphasis(struct analogix_dp_device *dp,
+व्योम analogix_dp_set_lane0_pre_emphasis(काष्ठा analogix_dp_device *dp,
 					u32 level)
-{
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_LN0_LINK_TRAINING_CTL);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_LN0_LINK_TRAINING_CTL);
 	reg &= ~PRE_EMPHASIS_SET_MASK;
 	reg |= level << PRE_EMPHASIS_SET_SHIFT;
-	writel(reg, dp->reg_base + ANALOGIX_DP_LN0_LINK_TRAINING_CTL);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LN0_LINK_TRAINING_CTL);
+पूर्ण
 
-void analogix_dp_set_lane1_pre_emphasis(struct analogix_dp_device *dp,
+व्योम analogix_dp_set_lane1_pre_emphasis(काष्ठा analogix_dp_device *dp,
 					u32 level)
-{
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_LN1_LINK_TRAINING_CTL);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_LN1_LINK_TRAINING_CTL);
 	reg &= ~PRE_EMPHASIS_SET_MASK;
 	reg |= level << PRE_EMPHASIS_SET_SHIFT;
-	writel(reg, dp->reg_base + ANALOGIX_DP_LN1_LINK_TRAINING_CTL);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LN1_LINK_TRAINING_CTL);
+पूर्ण
 
-void analogix_dp_set_lane2_pre_emphasis(struct analogix_dp_device *dp,
+व्योम analogix_dp_set_lane2_pre_emphasis(काष्ठा analogix_dp_device *dp,
 					u32 level)
-{
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_LN2_LINK_TRAINING_CTL);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_LN2_LINK_TRAINING_CTL);
 	reg &= ~PRE_EMPHASIS_SET_MASK;
 	reg |= level << PRE_EMPHASIS_SET_SHIFT;
-	writel(reg, dp->reg_base + ANALOGIX_DP_LN2_LINK_TRAINING_CTL);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LN2_LINK_TRAINING_CTL);
+पूर्ण
 
-void analogix_dp_set_lane3_pre_emphasis(struct analogix_dp_device *dp,
+व्योम analogix_dp_set_lane3_pre_emphasis(काष्ठा analogix_dp_device *dp,
 					u32 level)
-{
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_LN3_LINK_TRAINING_CTL);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_LN3_LINK_TRAINING_CTL);
 	reg &= ~PRE_EMPHASIS_SET_MASK;
 	reg |= level << PRE_EMPHASIS_SET_SHIFT;
-	writel(reg, dp->reg_base + ANALOGIX_DP_LN3_LINK_TRAINING_CTL);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LN3_LINK_TRAINING_CTL);
+पूर्ण
 
-void analogix_dp_set_lane0_link_training(struct analogix_dp_device *dp,
+व्योम analogix_dp_set_lane0_link_training(काष्ठा analogix_dp_device *dp,
 					 u32 training_lane)
-{
+अणु
 	u32 reg;
 
 	reg = training_lane;
-	writel(reg, dp->reg_base + ANALOGIX_DP_LN0_LINK_TRAINING_CTL);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LN0_LINK_TRAINING_CTL);
+पूर्ण
 
-void analogix_dp_set_lane1_link_training(struct analogix_dp_device *dp,
+व्योम analogix_dp_set_lane1_link_training(काष्ठा analogix_dp_device *dp,
 					 u32 training_lane)
-{
+अणु
 	u32 reg;
 
 	reg = training_lane;
-	writel(reg, dp->reg_base + ANALOGIX_DP_LN1_LINK_TRAINING_CTL);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LN1_LINK_TRAINING_CTL);
+पूर्ण
 
-void analogix_dp_set_lane2_link_training(struct analogix_dp_device *dp,
+व्योम analogix_dp_set_lane2_link_training(काष्ठा analogix_dp_device *dp,
 					 u32 training_lane)
-{
+अणु
 	u32 reg;
 
 	reg = training_lane;
-	writel(reg, dp->reg_base + ANALOGIX_DP_LN2_LINK_TRAINING_CTL);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LN2_LINK_TRAINING_CTL);
+पूर्ण
 
-void analogix_dp_set_lane3_link_training(struct analogix_dp_device *dp,
+व्योम analogix_dp_set_lane3_link_training(काष्ठा analogix_dp_device *dp,
 					 u32 training_lane)
-{
+अणु
 	u32 reg;
 
 	reg = training_lane;
-	writel(reg, dp->reg_base + ANALOGIX_DP_LN3_LINK_TRAINING_CTL);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_LN3_LINK_TRAINING_CTL);
+पूर्ण
 
-u32 analogix_dp_get_lane0_link_training(struct analogix_dp_device *dp)
-{
-	return readl(dp->reg_base + ANALOGIX_DP_LN0_LINK_TRAINING_CTL);
-}
+u32 analogix_dp_get_lane0_link_training(काष्ठा analogix_dp_device *dp)
+अणु
+	वापस पढ़ोl(dp->reg_base + ANALOGIX_DP_LN0_LINK_TRAINING_CTL);
+पूर्ण
 
-u32 analogix_dp_get_lane1_link_training(struct analogix_dp_device *dp)
-{
-	return readl(dp->reg_base + ANALOGIX_DP_LN1_LINK_TRAINING_CTL);
-}
+u32 analogix_dp_get_lane1_link_training(काष्ठा analogix_dp_device *dp)
+अणु
+	वापस पढ़ोl(dp->reg_base + ANALOGIX_DP_LN1_LINK_TRAINING_CTL);
+पूर्ण
 
-u32 analogix_dp_get_lane2_link_training(struct analogix_dp_device *dp)
-{
-	return readl(dp->reg_base + ANALOGIX_DP_LN2_LINK_TRAINING_CTL);
-}
+u32 analogix_dp_get_lane2_link_training(काष्ठा analogix_dp_device *dp)
+अणु
+	वापस पढ़ोl(dp->reg_base + ANALOGIX_DP_LN2_LINK_TRAINING_CTL);
+पूर्ण
 
-u32 analogix_dp_get_lane3_link_training(struct analogix_dp_device *dp)
-{
-	return readl(dp->reg_base + ANALOGIX_DP_LN3_LINK_TRAINING_CTL);
-}
+u32 analogix_dp_get_lane3_link_training(काष्ठा analogix_dp_device *dp)
+अणु
+	वापस पढ़ोl(dp->reg_base + ANALOGIX_DP_LN3_LINK_TRAINING_CTL);
+पूर्ण
 
-void analogix_dp_reset_macro(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_reset_macro(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_PHY_TEST);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_PHY_TEST);
 	reg |= MACRO_RST;
-	writel(reg, dp->reg_base + ANALOGIX_DP_PHY_TEST);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_PHY_TEST);
 
-	/* 10 us is the minimum reset time. */
+	/* 10 us is the minimum reset समय. */
 	usleep_range(10, 20);
 
 	reg &= ~MACRO_RST;
-	writel(reg, dp->reg_base + ANALOGIX_DP_PHY_TEST);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_PHY_TEST);
+पूर्ण
 
-void analogix_dp_init_video(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_init_video(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
 	reg = VSYNC_DET | VID_FORMAT_CHG | VID_CLK_CHG;
-	writel(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_1);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_COMMON_INT_STA_1);
 
 	reg = 0x0;
-	writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_1);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_1);
 
 	reg = CHA_CRI(4) | CHA_CTRL;
-	writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_2);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_2);
 
 	reg = 0x0;
-	writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
 
 	reg = VID_HRES_TH(2) | VID_VRES_TH(0);
-	writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_8);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_8);
+पूर्ण
 
-void analogix_dp_set_video_color_format(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_set_video_color_क्रमmat(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
 	/* Configure the input color depth, color space, dynamic range */
 	reg = (dp->video_info.dynamic_range << IN_D_RANGE_SHIFT) |
 		(dp->video_info.color_depth << IN_BPC_SHIFT) |
 		(dp->video_info.color_space << IN_COLOR_F_SHIFT);
-	writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_2);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_2);
 
 	/* Set Input Color YCbCr Coefficients to ITU601 or ITU709 */
-	reg = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_3);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_3);
 	reg &= ~IN_YC_COEFFI_MASK;
-	if (dp->video_info.ycbcr_coeff)
+	अगर (dp->video_info.ycbcr_coeff)
 		reg |= IN_YC_COEFFI_ITU709;
-	else
+	अन्यथा
 		reg |= IN_YC_COEFFI_ITU601;
-	writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_3);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_3);
+पूर्ण
 
-int analogix_dp_is_slave_video_stream_clock_on(struct analogix_dp_device *dp)
-{
+पूर्णांक analogix_dp_is_slave_video_stream_घड़ी_on(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_1);
-	writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_1);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_1);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_1);
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_1);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_1);
 
-	if (!(reg & DET_STA)) {
+	अगर (!(reg & DET_STA)) अणु
 		dev_dbg(dp->dev, "Input stream clock not detected.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_2);
-	writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_2);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_2);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_2);
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_2);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_2);
 	dev_dbg(dp->dev, "wait SYS_CTL_2.\n");
 
-	if (reg & CHA_STA) {
+	अगर (reg & CHA_STA) अणु
 		dev_dbg(dp->dev, "Input stream clk is changing\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void analogix_dp_set_video_cr_mn(struct analogix_dp_device *dp,
-				 enum clock_recovery_m_value_type type,
+व्योम analogix_dp_set_video_cr_mn(काष्ठा analogix_dp_device *dp,
+				 क्रमागत घड़ी_recovery_m_value_type type,
 				 u32 m_value, u32 n_value)
-{
+अणु
 	u32 reg;
 
-	if (type == REGISTER_M) {
-		reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
+	अगर (type == REGISTER_M) अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
 		reg |= FIX_M_VID;
-		writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
 		reg = m_value & 0xff;
-		writel(reg, dp->reg_base + ANALOGIX_DP_M_VID_0);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_M_VID_0);
 		reg = (m_value >> 8) & 0xff;
-		writel(reg, dp->reg_base + ANALOGIX_DP_M_VID_1);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_M_VID_1);
 		reg = (m_value >> 16) & 0xff;
-		writel(reg, dp->reg_base + ANALOGIX_DP_M_VID_2);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_M_VID_2);
 
 		reg = n_value & 0xff;
-		writel(reg, dp->reg_base + ANALOGIX_DP_N_VID_0);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_N_VID_0);
 		reg = (n_value >> 8) & 0xff;
-		writel(reg, dp->reg_base + ANALOGIX_DP_N_VID_1);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_N_VID_1);
 		reg = (n_value >> 16) & 0xff;
-		writel(reg, dp->reg_base + ANALOGIX_DP_N_VID_2);
-	} else  {
-		reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_N_VID_2);
+	पूर्ण अन्यथा  अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
 		reg &= ~FIX_M_VID;
-		writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_4);
 
-		writel(0x00, dp->reg_base + ANALOGIX_DP_N_VID_0);
-		writel(0x80, dp->reg_base + ANALOGIX_DP_N_VID_1);
-		writel(0x00, dp->reg_base + ANALOGIX_DP_N_VID_2);
-	}
-}
+		ग_लिखोl(0x00, dp->reg_base + ANALOGIX_DP_N_VID_0);
+		ग_लिखोl(0x80, dp->reg_base + ANALOGIX_DP_N_VID_1);
+		ग_लिखोl(0x00, dp->reg_base + ANALOGIX_DP_N_VID_2);
+	पूर्ण
+पूर्ण
 
-void analogix_dp_set_video_timing_mode(struct analogix_dp_device *dp, u32 type)
-{
+व्योम analogix_dp_set_video_timing_mode(काष्ठा analogix_dp_device *dp, u32 type)
+अणु
 	u32 reg;
 
-	if (type == VIDEO_TIMING_FROM_CAPTURE) {
-		reg = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
+	अगर (type == VIDEO_TIMING_FROM_CAPTURE) अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
 		reg &= ~FORMAT_SEL;
-		writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
-	} else {
-		reg = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
+	पूर्ण अन्यथा अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
 		reg |= FORMAT_SEL;
-		writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
-	}
-}
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
+	पूर्ण
+पूर्ण
 
-void analogix_dp_enable_video_master(struct analogix_dp_device *dp, bool enable)
-{
+व्योम analogix_dp_enable_video_master(काष्ठा analogix_dp_device *dp, bool enable)
+अणु
 	u32 reg;
 
-	if (enable) {
-		reg = readl(dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
+	अगर (enable) अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
 		reg &= ~VIDEO_MODE_MASK;
 		reg |= VIDEO_MASTER_MODE_EN | VIDEO_MODE_MASTER_MODE;
-		writel(reg, dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
-	} else {
-		reg = readl(dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
+	पूर्ण अन्यथा अणु
+		reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
 		reg &= ~VIDEO_MODE_MASK;
 		reg |= VIDEO_MODE_SLAVE_MODE;
-		writel(reg, dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
-	}
-}
+		ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
+	पूर्ण
+पूर्ण
 
-void analogix_dp_start_video(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_start_video(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
 	reg |= VIDEO_EN;
-	writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_1);
+पूर्ण
 
-int analogix_dp_is_video_stream_on(struct analogix_dp_device *dp)
-{
+पूर्णांक analogix_dp_is_video_stream_on(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
-	writel(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
-	if (!(reg & STRM_VALID)) {
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_SYS_CTL_3);
+	अगर (!(reg & STRM_VALID)) अणु
 		dev_dbg(dp->dev, "Input video stream is not detected.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void analogix_dp_config_video_slave_mode(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_config_video_slave_mode(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_FUNC_EN_1);
-	if (dp->plat_data && is_rockchip(dp->plat_data->dev_type)) {
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_FUNC_EN_1);
+	अगर (dp->plat_data && is_rockchip(dp->plat_data->dev_type)) अणु
 		reg &= ~(RK_VID_CAP_FUNC_EN_N | RK_VID_FIFO_FUNC_EN_N);
-	} else {
+	पूर्ण अन्यथा अणु
 		reg &= ~(MASTER_VID_FUNC_EN_N | SLAVE_VID_FUNC_EN_N);
 		reg |= MASTER_VID_FUNC_EN_N;
-	}
-	writel(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_1);
+	पूर्ण
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_FUNC_EN_1);
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
 	reg &= ~INTERACE_SCAN_CFG;
-	reg |= (dp->video_info.interlaced << 2);
-	writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
+	reg |= (dp->video_info.पूर्णांकerlaced << 2);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
 	reg &= ~VSYNC_POLARITY_CFG;
 	reg |= (dp->video_info.v_sync_polarity << 1);
-	writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
 	reg &= ~HSYNC_POLARITY_CFG;
 	reg |= (dp->video_info.h_sync_polarity << 0);
-	writel(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_10);
 
 	reg = AUDIO_MODE_SPDIF_MODE | VIDEO_MODE_SLAVE_MODE;
-	writel(reg, dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_SOC_GENERAL_CTL);
+पूर्ण
 
-void analogix_dp_enable_scrambling(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_enable_scrambling(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
 	reg &= ~SCRAMBLING_DISABLE;
-	writel(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
+पूर्ण
 
-void analogix_dp_disable_scrambling(struct analogix_dp_device *dp)
-{
+व्योम analogix_dp_disable_scrambling(काष्ठा analogix_dp_device *dp)
+अणु
 	u32 reg;
 
-	reg = readl(dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
 	reg |= SCRAMBLING_DISABLE;
-	writel(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
-}
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_TRAINING_PTN_SET);
+पूर्ण
 
-void analogix_dp_enable_psr_crc(struct analogix_dp_device *dp)
-{
-	writel(PSR_VID_CRC_ENABLE, dp->reg_base + ANALOGIX_DP_CRC_CON);
-}
+व्योम analogix_dp_enable_psr_crc(काष्ठा analogix_dp_device *dp)
+अणु
+	ग_लिखोl(PSR_VID_CRC_ENABLE, dp->reg_base + ANALOGIX_DP_CRC_CON);
+पूर्ण
 
-static ssize_t analogix_dp_get_psr_status(struct analogix_dp_device *dp)
-{
-	ssize_t val;
+अटल sमाप_प्रकार analogix_dp_get_psr_status(काष्ठा analogix_dp_device *dp)
+अणु
+	sमाप_प्रकार val;
 	u8 status;
 
-	val = drm_dp_dpcd_readb(&dp->aux, DP_PSR_STATUS, &status);
-	if (val < 0) {
+	val = drm_dp_dpcd_पढ़ोb(&dp->aux, DP_PSR_STATUS, &status);
+	अगर (val < 0) अणु
 		dev_err(dp->dev, "PSR_STATUS read failed ret=%zd", val);
-		return val;
-	}
-	return status;
-}
+		वापस val;
+	पूर्ण
+	वापस status;
+पूर्ण
 
-int analogix_dp_send_psr_spd(struct analogix_dp_device *dp,
-			     struct dp_sdp *vsc, bool blocking)
-{
-	unsigned int val;
-	int ret;
-	ssize_t psr_status;
+पूर्णांक analogix_dp_send_psr_spd(काष्ठा analogix_dp_device *dp,
+			     काष्ठा dp_sdp *vsc, bool blocking)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
+	sमाप_प्रकार psr_status;
 
-	/* don't send info frame */
-	val = readl(dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
+	/* करोn't send info frame */
+	val = पढ़ोl(dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
 	val &= ~IF_EN;
-	writel(val, dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
+	ग_लिखोl(val, dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
 
 	/* configure single frame update mode */
-	writel(PSR_FRAME_UP_TYPE_BURST | PSR_CRC_SEL_HARDWARE,
+	ग_लिखोl(PSR_FRAME_UP_TYPE_BURST | PSR_CRC_SEL_HARDWARE,
 	       dp->reg_base + ANALOGIX_DP_PSR_FRAME_UPDATE_CTRL);
 
 	/* configure VSC HB0~HB3 */
-	writel(vsc->sdp_header.HB0, dp->reg_base + ANALOGIX_DP_SPD_HB0);
-	writel(vsc->sdp_header.HB1, dp->reg_base + ANALOGIX_DP_SPD_HB1);
-	writel(vsc->sdp_header.HB2, dp->reg_base + ANALOGIX_DP_SPD_HB2);
-	writel(vsc->sdp_header.HB3, dp->reg_base + ANALOGIX_DP_SPD_HB3);
+	ग_लिखोl(vsc->sdp_header.HB0, dp->reg_base + ANALOGIX_DP_SPD_HB0);
+	ग_लिखोl(vsc->sdp_header.HB1, dp->reg_base + ANALOGIX_DP_SPD_HB1);
+	ग_लिखोl(vsc->sdp_header.HB2, dp->reg_base + ANALOGIX_DP_SPD_HB2);
+	ग_लिखोl(vsc->sdp_header.HB3, dp->reg_base + ANALOGIX_DP_SPD_HB3);
 
-	/* configure reused VSC PB0~PB3, magic number from vendor */
-	writel(0x00, dp->reg_base + ANALOGIX_DP_SPD_PB0);
-	writel(0x16, dp->reg_base + ANALOGIX_DP_SPD_PB1);
-	writel(0xCE, dp->reg_base + ANALOGIX_DP_SPD_PB2);
-	writel(0x5D, dp->reg_base + ANALOGIX_DP_SPD_PB3);
+	/* configure reused VSC PB0~PB3, magic number from venकरोr */
+	ग_लिखोl(0x00, dp->reg_base + ANALOGIX_DP_SPD_PB0);
+	ग_लिखोl(0x16, dp->reg_base + ANALOGIX_DP_SPD_PB1);
+	ग_लिखोl(0xCE, dp->reg_base + ANALOGIX_DP_SPD_PB2);
+	ग_लिखोl(0x5D, dp->reg_base + ANALOGIX_DP_SPD_PB3);
 
 	/* configure DB0 / DB1 values */
-	writel(vsc->db[0], dp->reg_base + ANALOGIX_DP_VSC_SHADOW_DB0);
-	writel(vsc->db[1], dp->reg_base + ANALOGIX_DP_VSC_SHADOW_DB1);
+	ग_लिखोl(vsc->db[0], dp->reg_base + ANALOGIX_DP_VSC_SHADOW_DB0);
+	ग_लिखोl(vsc->db[1], dp->reg_base + ANALOGIX_DP_VSC_SHADOW_DB1);
 
-	/* set reuse spd inforframe */
-	val = readl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_3);
+	/* set reuse spd inक्रमframe */
+	val = पढ़ोl(dp->reg_base + ANALOGIX_DP_VIDEO_CTL_3);
 	val |= REUSE_SPD_EN;
-	writel(val, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_3);
+	ग_लिखोl(val, dp->reg_base + ANALOGIX_DP_VIDEO_CTL_3);
 
 	/* mark info frame update */
-	val = readl(dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
+	val = पढ़ोl(dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
 	val = (val | IF_UP) & ~IF_EN;
-	writel(val, dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
+	ग_लिखोl(val, dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
 
 	/* send info frame */
-	val = readl(dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
+	val = पढ़ोl(dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
 	val |= IF_EN;
-	writel(val, dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
+	ग_लिखोl(val, dp->reg_base + ANALOGIX_DP_PKT_SEND_CTL);
 
-	if (!blocking)
-		return 0;
+	अगर (!blocking)
+		वापस 0;
 
-	ret = readx_poll_timeout(analogix_dp_get_psr_status, dp, psr_status,
+	ret = पढ़ोx_poll_समयout(analogix_dp_get_psr_status, dp, psr_status,
 		psr_status >= 0 &&
 		((vsc->db[1] && psr_status == DP_PSR_SINK_ACTIVE_RFB) ||
 		(!vsc->db[1] && psr_status == DP_PSR_SINK_INACTIVE)), 1500,
 		DP_TIMEOUT_PSR_LOOP_MS * 1000);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(dp->dev, "Failed to apply PSR %d\n", ret);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-ssize_t analogix_dp_transfer(struct analogix_dp_device *dp,
-			     struct drm_dp_aux_msg *msg)
-{
+sमाप_प्रकार analogix_dp_transfer(काष्ठा analogix_dp_device *dp,
+			     काष्ठा drm_dp_aux_msg *msg)
+अणु
 	u32 reg;
 	u32 status_reg;
 	u8 *buffer = msg->buffer;
-	unsigned int i;
-	int num_transferred = 0;
-	int ret;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक num_transferred = 0;
+	पूर्णांक ret;
 
 	/* Buffer size of AUX CH is 16 bytes */
-	if (WARN_ON(msg->size > 16))
-		return -E2BIG;
+	अगर (WARN_ON(msg->size > 16))
+		वापस -E2BIG;
 
 	/* Clear AUX CH data buffer */
 	reg = BUF_CLR;
-	writel(reg, dp->reg_base + ANALOGIX_DP_BUFFER_DATA_CTL);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_BUFFER_DATA_CTL);
 
-	switch (msg->request & ~DP_AUX_I2C_MOT) {
-	case DP_AUX_I2C_WRITE:
+	चयन (msg->request & ~DP_AUX_I2C_MOT) अणु
+	हाल DP_AUX_I2C_WRITE:
 		reg = AUX_TX_COMM_WRITE | AUX_TX_COMM_I2C_TRANSACTION;
-		if (msg->request & DP_AUX_I2C_MOT)
+		अगर (msg->request & DP_AUX_I2C_MOT)
 			reg |= AUX_TX_COMM_MOT;
-		break;
+		अवरोध;
 
-	case DP_AUX_I2C_READ:
+	हाल DP_AUX_I2C_READ:
 		reg = AUX_TX_COMM_READ | AUX_TX_COMM_I2C_TRANSACTION;
-		if (msg->request & DP_AUX_I2C_MOT)
+		अगर (msg->request & DP_AUX_I2C_MOT)
 			reg |= AUX_TX_COMM_MOT;
-		break;
+		अवरोध;
 
-	case DP_AUX_NATIVE_WRITE:
+	हाल DP_AUX_NATIVE_WRITE:
 		reg = AUX_TX_COMM_WRITE | AUX_TX_COMM_DP_TRANSACTION;
-		break;
+		अवरोध;
 
-	case DP_AUX_NATIVE_READ:
+	हाल DP_AUX_NATIVE_READ:
 		reg = AUX_TX_COMM_READ | AUX_TX_COMM_DP_TRANSACTION;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	reg |= AUX_LENGTH(msg->size);
-	writel(reg, dp->reg_base + ANALOGIX_DP_AUX_CH_CTL_1);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_AUX_CH_CTL_1);
 
 	/* Select DPCD device address */
 	reg = AUX_ADDR_7_0(msg->address);
-	writel(reg, dp->reg_base + ANALOGIX_DP_AUX_ADDR_7_0);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_AUX_ADDR_7_0);
 	reg = AUX_ADDR_15_8(msg->address);
-	writel(reg, dp->reg_base + ANALOGIX_DP_AUX_ADDR_15_8);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_AUX_ADDR_15_8);
 	reg = AUX_ADDR_19_16(msg->address);
-	writel(reg, dp->reg_base + ANALOGIX_DP_AUX_ADDR_19_16);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_AUX_ADDR_19_16);
 
-	if (!(msg->request & DP_AUX_I2C_READ)) {
-		for (i = 0; i < msg->size; i++) {
+	अगर (!(msg->request & DP_AUX_I2C_READ)) अणु
+		क्रम (i = 0; i < msg->size; i++) अणु
 			reg = buffer[i];
-			writel(reg, dp->reg_base + ANALOGIX_DP_BUF_DATA_0 +
+			ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_BUF_DATA_0 +
 			       4 * i);
 			num_transferred++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Enable AUX CH operation */
 	reg = AUX_EN;
 
-	/* Zero-sized messages specify address-only transactions. */
-	if (msg->size < 1)
+	/* Zero-sized messages specअगरy address-only transactions. */
+	अगर (msg->size < 1)
 		reg |= ADDR_ONLY;
 
-	writel(reg, dp->reg_base + ANALOGIX_DP_AUX_CH_CTL_2);
+	ग_लिखोl(reg, dp->reg_base + ANALOGIX_DP_AUX_CH_CTL_2);
 
-	ret = readx_poll_timeout(readl, dp->reg_base + ANALOGIX_DP_AUX_CH_CTL_2,
+	ret = पढ़ोx_poll_समयout(पढ़ोl, dp->reg_base + ANALOGIX_DP_AUX_CH_CTL_2,
 				 reg, !(reg & AUX_EN), 25, 500 * 1000);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dp->dev, "AUX CH enable timeout!\n");
-		goto aux_error;
-	}
+		जाओ aux_error;
+	पूर्ण
 
-	/* TODO: Wait for an interrupt instead of looping? */
+	/* TODO: Wait क्रम an पूर्णांकerrupt instead of looping? */
 	/* Is AUX CH command reply received? */
-	ret = readx_poll_timeout(readl, dp->reg_base + ANALOGIX_DP_INT_STA,
+	ret = पढ़ोx_poll_समयout(पढ़ोl, dp->reg_base + ANALOGIX_DP_INT_STA,
 				 reg, reg & RPLY_RECEIV, 10, 20 * 1000);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dp->dev, "AUX CH cmd reply timeout!\n");
-		goto aux_error;
-	}
+		जाओ aux_error;
+	पूर्ण
 
-	/* Clear interrupt source for AUX CH command reply */
-	writel(RPLY_RECEIV, dp->reg_base + ANALOGIX_DP_INT_STA);
+	/* Clear पूर्णांकerrupt source क्रम AUX CH command reply */
+	ग_लिखोl(RPLY_RECEIV, dp->reg_base + ANALOGIX_DP_INT_STA);
 
-	/* Clear interrupt source for AUX CH access error */
-	reg = readl(dp->reg_base + ANALOGIX_DP_INT_STA);
-	status_reg = readl(dp->reg_base + ANALOGIX_DP_AUX_CH_STA);
-	if ((reg & AUX_ERR) || (status_reg & AUX_STATUS_MASK)) {
-		writel(AUX_ERR, dp->reg_base + ANALOGIX_DP_INT_STA);
+	/* Clear पूर्णांकerrupt source क्रम AUX CH access error */
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_INT_STA);
+	status_reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_AUX_CH_STA);
+	अगर ((reg & AUX_ERR) || (status_reg & AUX_STATUS_MASK)) अणु
+		ग_लिखोl(AUX_ERR, dp->reg_base + ANALOGIX_DP_INT_STA);
 
 		dev_warn(dp->dev, "AUX CH error happened: %#x (%d)\n",
 			 status_reg & AUX_STATUS_MASK, !!(reg & AUX_ERR));
-		goto aux_error;
-	}
+		जाओ aux_error;
+	पूर्ण
 
-	if (msg->request & DP_AUX_I2C_READ) {
-		for (i = 0; i < msg->size; i++) {
-			reg = readl(dp->reg_base + ANALOGIX_DP_BUF_DATA_0 +
+	अगर (msg->request & DP_AUX_I2C_READ) अणु
+		क्रम (i = 0; i < msg->size; i++) अणु
+			reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_BUF_DATA_0 +
 				    4 * i);
-			buffer[i] = (unsigned char)reg;
+			buffer[i] = (अचिन्हित अक्षर)reg;
 			num_transferred++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Check if Rx sends defer */
-	reg = readl(dp->reg_base + ANALOGIX_DP_AUX_RX_COMM);
-	if (reg == AUX_RX_COMM_AUX_DEFER)
+	/* Check अगर Rx sends defer */
+	reg = पढ़ोl(dp->reg_base + ANALOGIX_DP_AUX_RX_COMM);
+	अगर (reg == AUX_RX_COMM_AUX_DEFER)
 		msg->reply = DP_AUX_NATIVE_REPLY_DEFER;
-	else if (reg == AUX_RX_COMM_I2C_DEFER)
+	अन्यथा अगर (reg == AUX_RX_COMM_I2C_DEFER)
 		msg->reply = DP_AUX_I2C_REPLY_DEFER;
-	else if ((msg->request & ~DP_AUX_I2C_MOT) == DP_AUX_I2C_WRITE ||
+	अन्यथा अगर ((msg->request & ~DP_AUX_I2C_MOT) == DP_AUX_I2C_WRITE ||
 		 (msg->request & ~DP_AUX_I2C_MOT) == DP_AUX_I2C_READ)
 		msg->reply = DP_AUX_I2C_REPLY_ACK;
-	else if ((msg->request & ~DP_AUX_I2C_MOT) == DP_AUX_NATIVE_WRITE ||
+	अन्यथा अगर ((msg->request & ~DP_AUX_I2C_MOT) == DP_AUX_NATIVE_WRITE ||
 		 (msg->request & ~DP_AUX_I2C_MOT) == DP_AUX_NATIVE_READ)
 		msg->reply = DP_AUX_NATIVE_REPLY_ACK;
 
-	return num_transferred > 0 ? num_transferred : -EBUSY;
+	वापस num_transferred > 0 ? num_transferred : -EBUSY;
 
 aux_error:
-	/* if aux err happen, reset aux */
+	/* अगर aux err happen, reset aux */
 	analogix_dp_init_aux(dp);
 
-	return -EREMOTEIO;
-}
+	वापस -EREMOTEIO;
+पूर्ण

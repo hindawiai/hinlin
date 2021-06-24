@@ -1,123 +1,124 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wlcore
  *
  * Copyright (C) 2011 Texas Instruments Inc.
  */
 
-#ifndef __WLCORE_H__
-#define __WLCORE_H__
+#अगर_अघोषित __WLCORE_H__
+#घोषणा __WLCORE_H__
 
-#include <linux/platform_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "wlcore_i.h"
-#include "event.h"
-#include "boot.h"
+#समावेश "wlcore_i.h"
+#समावेश "event.h"
+#समावेश "boot.h"
 
 /* The maximum number of Tx descriptors in all chip families */
-#define WLCORE_MAX_TX_DESCRIPTORS 32
+#घोषणा WLCORE_MAX_TX_DESCRIPTORS 32
 
 /*
- * We always allocate this number of mac addresses. If we don't
+ * We always allocate this number of mac addresses. If we करोn't
  * have enough allocated addresses, the LAA bit is used
  */
-#define WLCORE_NUM_MAC_ADDRESSES 3
+#घोषणा WLCORE_NUM_MAC_ADDRESSES 3
 
-/* wl12xx/wl18xx maximum transmission power (in dBm) */
-#define WLCORE_MAX_TXPWR        25
+/* wl12xx/wl18xx maximum transmission घातer (in dBm) */
+#घोषणा WLCORE_MAX_TXPWR        25
 
-/* Texas Instruments pre assigned OUI */
-#define WLCORE_TI_OUI_ADDRESS 0x080028
+/* Texas Instruments pre asचिन्हित OUI */
+#घोषणा WLCORE_TI_OUI_ADDRESS 0x080028
 
-/* forward declaration */
-struct wl1271_tx_hw_descr;
-enum wl_rx_buf_align;
-struct wl1271_rx_descriptor;
+/* क्रमward declaration */
+काष्ठा wl1271_tx_hw_descr;
+क्रमागत wl_rx_buf_align;
+काष्ठा wl1271_rx_descriptor;
 
-struct wlcore_ops {
-	int (*setup)(struct wl1271 *wl);
-	int (*identify_chip)(struct wl1271 *wl);
-	int (*identify_fw)(struct wl1271 *wl);
-	int (*boot)(struct wl1271 *wl);
-	int (*plt_init)(struct wl1271 *wl);
-	int (*trigger_cmd)(struct wl1271 *wl, int cmd_box_addr,
-			   void *buf, size_t len);
-	int (*ack_event)(struct wl1271 *wl);
-	int (*wait_for_event)(struct wl1271 *wl, enum wlcore_wait_event event,
-			      bool *timeout);
-	int (*process_mailbox_events)(struct wl1271 *wl);
-	u32 (*calc_tx_blocks)(struct wl1271 *wl, u32 len, u32 spare_blks);
-	void (*set_tx_desc_blocks)(struct wl1271 *wl,
-				   struct wl1271_tx_hw_descr *desc,
+काष्ठा wlcore_ops अणु
+	पूर्णांक (*setup)(काष्ठा wl1271 *wl);
+	पूर्णांक (*identअगरy_chip)(काष्ठा wl1271 *wl);
+	पूर्णांक (*identअगरy_fw)(काष्ठा wl1271 *wl);
+	पूर्णांक (*boot)(काष्ठा wl1271 *wl);
+	पूर्णांक (*plt_init)(काष्ठा wl1271 *wl);
+	पूर्णांक (*trigger_cmd)(काष्ठा wl1271 *wl, पूर्णांक cmd_box_addr,
+			   व्योम *buf, माप_प्रकार len);
+	पूर्णांक (*ack_event)(काष्ठा wl1271 *wl);
+	पूर्णांक (*रुको_क्रम_event)(काष्ठा wl1271 *wl, क्रमागत wlcore_रुको_event event,
+			      bool *समयout);
+	पूर्णांक (*process_mailbox_events)(काष्ठा wl1271 *wl);
+	u32 (*calc_tx_blocks)(काष्ठा wl1271 *wl, u32 len, u32 spare_blks);
+	व्योम (*set_tx_desc_blocks)(काष्ठा wl1271 *wl,
+				   काष्ठा wl1271_tx_hw_descr *desc,
 				   u32 blks, u32 spare_blks);
-	void (*set_tx_desc_data_len)(struct wl1271 *wl,
-				     struct wl1271_tx_hw_descr *desc,
-				     struct sk_buff *skb);
-	enum wl_rx_buf_align (*get_rx_buf_align)(struct wl1271 *wl,
+	व्योम (*set_tx_desc_data_len)(काष्ठा wl1271 *wl,
+				     काष्ठा wl1271_tx_hw_descr *desc,
+				     काष्ठा sk_buff *skb);
+	क्रमागत wl_rx_buf_align (*get_rx_buf_align)(काष्ठा wl1271 *wl,
 						 u32 rx_desc);
-	int (*prepare_read)(struct wl1271 *wl, u32 rx_desc, u32 len);
-	u32 (*get_rx_packet_len)(struct wl1271 *wl, void *rx_data,
+	पूर्णांक (*prepare_पढ़ो)(काष्ठा wl1271 *wl, u32 rx_desc, u32 len);
+	u32 (*get_rx_packet_len)(काष्ठा wl1271 *wl, व्योम *rx_data,
 				 u32 data_len);
-	int (*tx_delayed_compl)(struct wl1271 *wl);
-	void (*tx_immediate_compl)(struct wl1271 *wl);
-	int (*hw_init)(struct wl1271 *wl);
-	int (*init_vif)(struct wl1271 *wl, struct wl12xx_vif *wlvif);
-	void (*convert_fw_status)(struct wl1271 *wl, void *raw_fw_status,
-				  struct wl_fw_status *fw_status);
-	u32 (*sta_get_ap_rate_mask)(struct wl1271 *wl,
-				    struct wl12xx_vif *wlvif);
-	int (*get_pg_ver)(struct wl1271 *wl, s8 *ver);
-	int (*get_mac)(struct wl1271 *wl);
-	void (*set_tx_desc_csum)(struct wl1271 *wl,
-				 struct wl1271_tx_hw_descr *desc,
-				 struct sk_buff *skb);
-	void (*set_rx_csum)(struct wl1271 *wl,
-			    struct wl1271_rx_descriptor *desc,
-			    struct sk_buff *skb);
-	u32 (*ap_get_mimo_wide_rate_mask)(struct wl1271 *wl,
-					  struct wl12xx_vif *wlvif);
-	int (*debugfs_init)(struct wl1271 *wl, struct dentry *rootdir);
-	int (*handle_static_data)(struct wl1271 *wl,
-				  struct wl1271_static_data *static_data);
-	int (*scan_start)(struct wl1271 *wl, struct wl12xx_vif *wlvif,
-			  struct cfg80211_scan_request *req);
-	int (*scan_stop)(struct wl1271 *wl, struct wl12xx_vif *wlvif);
-	int (*sched_scan_start)(struct wl1271 *wl, struct wl12xx_vif *wlvif,
-				struct cfg80211_sched_scan_request *req,
-				struct ieee80211_scan_ies *ies);
-	void (*sched_scan_stop)(struct wl1271 *wl, struct wl12xx_vif *wlvif);
-	int (*get_spare_blocks)(struct wl1271 *wl, bool is_gem);
-	int (*set_key)(struct wl1271 *wl, enum set_key_cmd cmd,
-		       struct ieee80211_vif *vif,
-		       struct ieee80211_sta *sta,
-		       struct ieee80211_key_conf *key_conf);
-	int (*channel_switch)(struct wl1271 *wl,
-			      struct wl12xx_vif *wlvif,
-			      struct ieee80211_channel_switch *ch_switch);
-	u32 (*pre_pkt_send)(struct wl1271 *wl, u32 buf_offset, u32 last_len);
-	void (*sta_rc_update)(struct wl1271 *wl, struct wl12xx_vif *wlvif);
-	int (*set_peer_cap)(struct wl1271 *wl,
-			    struct ieee80211_sta_ht_cap *ht_cap,
+	पूर्णांक (*tx_delayed_compl)(काष्ठा wl1271 *wl);
+	व्योम (*tx_immediate_compl)(काष्ठा wl1271 *wl);
+	पूर्णांक (*hw_init)(काष्ठा wl1271 *wl);
+	पूर्णांक (*init_vअगर)(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
+	व्योम (*convert_fw_status)(काष्ठा wl1271 *wl, व्योम *raw_fw_status,
+				  काष्ठा wl_fw_status *fw_status);
+	u32 (*sta_get_ap_rate_mask)(काष्ठा wl1271 *wl,
+				    काष्ठा wl12xx_vअगर *wlvअगर);
+	पूर्णांक (*get_pg_ver)(काष्ठा wl1271 *wl, s8 *ver);
+	पूर्णांक (*get_mac)(काष्ठा wl1271 *wl);
+	व्योम (*set_tx_desc_csum)(काष्ठा wl1271 *wl,
+				 काष्ठा wl1271_tx_hw_descr *desc,
+				 काष्ठा sk_buff *skb);
+	व्योम (*set_rx_csum)(काष्ठा wl1271 *wl,
+			    काष्ठा wl1271_rx_descriptor *desc,
+			    काष्ठा sk_buff *skb);
+	u32 (*ap_get_mimo_wide_rate_mask)(काष्ठा wl1271 *wl,
+					  काष्ठा wl12xx_vअगर *wlvअगर);
+	पूर्णांक (*debugfs_init)(काष्ठा wl1271 *wl, काष्ठा dentry *rootdir);
+	पूर्णांक (*handle_अटल_data)(काष्ठा wl1271 *wl,
+				  काष्ठा wl1271_अटल_data *अटल_data);
+	पूर्णांक (*scan_start)(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+			  काष्ठा cfg80211_scan_request *req);
+	पूर्णांक (*scan_stop)(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
+	पूर्णांक (*sched_scan_start)(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+				काष्ठा cfg80211_sched_scan_request *req,
+				काष्ठा ieee80211_scan_ies *ies);
+	व्योम (*sched_scan_stop)(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
+	पूर्णांक (*get_spare_blocks)(काष्ठा wl1271 *wl, bool is_gem);
+	पूर्णांक (*set_key)(काष्ठा wl1271 *wl, क्रमागत set_key_cmd cmd,
+		       काष्ठा ieee80211_vअगर *vअगर,
+		       काष्ठा ieee80211_sta *sta,
+		       काष्ठा ieee80211_key_conf *key_conf);
+	पूर्णांक (*channel_चयन)(काष्ठा wl1271 *wl,
+			      काष्ठा wl12xx_vअगर *wlvअगर,
+			      काष्ठा ieee80211_channel_चयन *ch_चयन);
+	u32 (*pre_pkt_send)(काष्ठा wl1271 *wl, u32 buf_offset, u32 last_len);
+	व्योम (*sta_rc_update)(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
+	पूर्णांक (*set_peer_cap)(काष्ठा wl1271 *wl,
+			    काष्ठा ieee80211_sta_ht_cap *ht_cap,
 			    bool allow_ht_operation,
 			    u32 rate_set, u8 hlid);
-	u32 (*convert_hwaddr)(struct wl1271 *wl, u32 hwaddr);
-	bool (*lnk_high_prio)(struct wl1271 *wl, u8 hlid,
-			      struct wl1271_link *lnk);
-	bool (*lnk_low_prio)(struct wl1271 *wl, u8 hlid,
-			     struct wl1271_link *lnk);
-	int (*interrupt_notify)(struct wl1271 *wl, bool action);
-	int (*rx_ba_filter)(struct wl1271 *wl, bool action);
-	int (*ap_sleep)(struct wl1271 *wl);
-	int (*smart_config_start)(struct wl1271 *wl, u32 group_bitmap);
-	int (*smart_config_stop)(struct wl1271 *wl);
-	int (*smart_config_set_group_key)(struct wl1271 *wl, u16 group_id,
+	u32 (*convert_hwaddr)(काष्ठा wl1271 *wl, u32 hwaddr);
+	bool (*lnk_high_prio)(काष्ठा wl1271 *wl, u8 hlid,
+			      काष्ठा wl1271_link *lnk);
+	bool (*lnk_low_prio)(काष्ठा wl1271 *wl, u8 hlid,
+			     काष्ठा wl1271_link *lnk);
+	पूर्णांक (*पूर्णांकerrupt_notअगरy)(काष्ठा wl1271 *wl, bool action);
+	पूर्णांक (*rx_ba_filter)(काष्ठा wl1271 *wl, bool action);
+	पूर्णांक (*ap_sleep)(काष्ठा wl1271 *wl);
+	पूर्णांक (*smart_config_start)(काष्ठा wl1271 *wl, u32 group_biपंचांगap);
+	पूर्णांक (*smart_config_stop)(काष्ठा wl1271 *wl);
+	पूर्णांक (*smart_config_set_group_key)(काष्ठा wl1271 *wl, u16 group_id,
 					  u8 key_len, u8 *key);
-	int (*set_cac)(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+	पूर्णांक (*set_cac)(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
 		       bool start);
-	int (*dfs_master_restart)(struct wl1271 *wl, struct wl12xx_vif *wlvif);
-};
+	पूर्णांक (*dfs_master_restart)(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
+पूर्ण;
 
-enum wlcore_partitions {
+क्रमागत wlcore_partitions अणु
 	PART_DOWN,
 	PART_WORK,
 	PART_BOOT,
@@ -126,22 +127,22 @@ enum wlcore_partitions {
 	PART_PHY_INIT,
 
 	PART_TABLE_LEN,
-};
+पूर्ण;
 
-struct wlcore_partition {
+काष्ठा wlcore_partition अणु
 	u32 size;
 	u32 start;
-};
+पूर्ण;
 
-struct wlcore_partition_set {
-	struct wlcore_partition mem;
-	struct wlcore_partition reg;
-	struct wlcore_partition mem2;
-	struct wlcore_partition mem3;
-};
+काष्ठा wlcore_partition_set अणु
+	काष्ठा wlcore_partition mem;
+	काष्ठा wlcore_partition reg;
+	काष्ठा wlcore_partition mem2;
+	काष्ठा wlcore_partition mem3;
+पूर्ण;
 
-enum wlcore_registers {
-	/* register addresses, used with partition translation */
+क्रमागत wlcore_रेजिस्टरs अणु
+	/* रेजिस्टर addresses, used with partition translation */
 	REG_ECPU_CONTROL,
 	REG_INTERRUPT_NO_CLEAR,
 	REG_INTERRUPT_ACK,
@@ -161,139 +162,139 @@ enum wlcore_registers {
 	REG_RAW_FW_STATUS_ADDR,
 
 	REG_TABLE_LEN,
-};
+पूर्ण;
 
-struct wl1271_stats {
-	void *fw_stats;
-	unsigned long fw_stats_update;
-	size_t fw_stats_len;
+काष्ठा wl1271_stats अणु
+	व्योम *fw_stats;
+	अचिन्हित दीर्घ fw_stats_update;
+	माप_प्रकार fw_stats_len;
 
-	unsigned int retry_count;
-	unsigned int excessive_retries;
-};
+	अचिन्हित पूर्णांक retry_count;
+	अचिन्हित पूर्णांक excessive_retries;
+पूर्ण;
 
-struct wl1271 {
+काष्ठा wl1271 अणु
 	bool initialized;
-	struct ieee80211_hw *hw;
-	bool mac80211_registered;
+	काष्ठा ieee80211_hw *hw;
+	bool mac80211_रेजिस्टरed;
 
-	struct device *dev;
-	struct platform_device *pdev;
+	काष्ठा device *dev;
+	काष्ठा platक्रमm_device *pdev;
 
-	void *if_priv;
+	व्योम *अगर_priv;
 
-	struct wl1271_if_operations *if_ops;
+	काष्ठा wl1271_अगर_operations *अगर_ops;
 
-	int irq;
-	int wakeirq;
+	पूर्णांक irq;
+	पूर्णांक wakeirq;
 
-	int irq_flags;
-	int wakeirq_flags;
+	पूर्णांक irq_flags;
+	पूर्णांक wakeirq_flags;
 
 	spinlock_t wl_lock;
 
-	enum wlcore_state state;
-	enum wl12xx_fw_type fw_type;
+	क्रमागत wlcore_state state;
+	क्रमागत wl12xx_fw_type fw_type;
 	bool plt;
-	enum plt_mode plt_mode;
+	क्रमागत plt_mode plt_mode;
 	u8 fem_manuf;
-	u8 last_vif_count;
-	struct mutex mutex;
+	u8 last_vअगर_count;
+	काष्ठा mutex mutex;
 
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	struct wlcore_partition_set curr_part;
+	काष्ठा wlcore_partition_set curr_part;
 
-	struct wl1271_chip chip;
+	काष्ठा wl1271_chip chip;
 
-	int cmd_box_addr;
+	पूर्णांक cmd_box_addr;
 
 	u8 *fw;
-	size_t fw_len;
-	void *nvs;
-	size_t nvs_len;
+	माप_प्रकार fw_len;
+	व्योम *nvs;
+	माप_प्रकार nvs_len;
 
 	s8 hw_pg_ver;
 
-	/* address read from the fuse ROM */
+	/* address पढ़ो from the fuse ROM */
 	u32 fuse_oui_addr;
 	u32 fuse_nic_addr;
 
 	/* we have up to 2 MAC addresses */
-	struct mac_address addresses[WLCORE_NUM_MAC_ADDRESSES];
-	int channel;
-	u8 system_hlid;
+	काष्ठा mac_address addresses[WLCORE_NUM_MAC_ADDRESSES];
+	पूर्णांक channel;
+	u8 प्रणाली_hlid;
 
-	unsigned long links_map[BITS_TO_LONGS(WLCORE_MAX_LINKS)];
-	unsigned long roles_map[BITS_TO_LONGS(WL12XX_MAX_ROLES)];
-	unsigned long roc_map[BITS_TO_LONGS(WL12XX_MAX_ROLES)];
-	unsigned long rate_policies_map[
+	अचिन्हित दीर्घ links_map[BITS_TO_LONGS(WLCORE_MAX_LINKS)];
+	अचिन्हित दीर्घ roles_map[BITS_TO_LONGS(WL12XX_MAX_ROLES)];
+	अचिन्हित दीर्घ roc_map[BITS_TO_LONGS(WL12XX_MAX_ROLES)];
+	अचिन्हित दीर्घ rate_policies_map[
 			BITS_TO_LONGS(WL12XX_MAX_RATE_POLICIES)];
-	unsigned long klv_templates_map[
+	अचिन्हित दीर्घ klv_ढाँचाs_map[
 			BITS_TO_LONGS(WLCORE_MAX_KLV_TEMPLATES)];
 
 	u8 session_ids[WLCORE_MAX_LINKS];
 
-	struct list_head wlvif_list;
+	काष्ठा list_head wlvअगर_list;
 
 	u8 sta_count;
 	u8 ap_count;
 
-	struct wl1271_acx_mem_map *target_mem_map;
+	काष्ठा wl1271_acx_mem_map *target_mem_map;
 
-	/* Accounting for allocated / available TX blocks on HW */
-	u32 tx_blocks_freed;
+	/* Accounting क्रम allocated / available TX blocks on HW */
+	u32 tx_blocks_मुक्तd;
 	u32 tx_blocks_available;
 	u32 tx_allocated_blocks;
 	u32 tx_results_count;
 
-	/* Accounting for allocated / available Tx packets in HW */
-	u32 tx_pkts_freed[NUM_TX_QUEUES];
+	/* Accounting क्रम allocated / available Tx packets in HW */
+	u32 tx_pkts_मुक्तd[NUM_TX_QUEUES];
 	u32 tx_allocated_pkts[NUM_TX_QUEUES];
 
-	/* Transmitted TX packets counter for chipset interface */
+	/* Transmitted TX packets counter क्रम chipset पूर्णांकerface */
 	u32 tx_packets_count;
 
-	/* Time-offset between host and chipset clocks */
-	s64 time_offset;
+	/* Time-offset between host and chipset घड़ीs */
+	s64 समय_offset;
 
-	/* Frames scheduled for transmission, not handled yet */
-	int tx_queue_count[NUM_TX_QUEUES];
-	unsigned long queue_stop_reasons[
+	/* Frames scheduled क्रम transmission, not handled yet */
+	पूर्णांक tx_queue_count[NUM_TX_QUEUES];
+	अचिन्हित दीर्घ queue_stop_reasons[
 				NUM_TX_QUEUES * WLCORE_NUM_MAC_ADDRESSES];
 
 	/* Frames received, not handled yet by mac80211 */
-	struct sk_buff_head deferred_rx_queue;
+	काष्ठा sk_buff_head deferred_rx_queue;
 
-	/* Frames sent, not returned yet to mac80211 */
-	struct sk_buff_head deferred_tx_queue;
+	/* Frames sent, not वापसed yet to mac80211 */
+	काष्ठा sk_buff_head deferred_tx_queue;
 
-	struct work_struct tx_work;
-	struct workqueue_struct *freezable_wq;
+	काष्ठा work_काष्ठा tx_work;
+	काष्ठा workqueue_काष्ठा *मुक्तzable_wq;
 
 	/* Pending TX frames */
-	unsigned long tx_frames_map[BITS_TO_LONGS(WLCORE_MAX_TX_DESCRIPTORS)];
-	struct sk_buff *tx_frames[WLCORE_MAX_TX_DESCRIPTORS];
-	int tx_frames_cnt;
+	अचिन्हित दीर्घ tx_frames_map[BITS_TO_LONGS(WLCORE_MAX_TX_DESCRIPTORS)];
+	काष्ठा sk_buff *tx_frames[WLCORE_MAX_TX_DESCRIPTORS];
+	पूर्णांक tx_frames_cnt;
 
 	/* FW Rx counter */
 	u32 rx_counter;
 
-	/* Intermediate buffer, used for packet aggregation */
+	/* Intermediate buffer, used क्रम packet aggregation */
 	u8 *aggr_buf;
 	u32 aggr_buf_size;
 
-	/* Reusable dummy packet template */
-	struct sk_buff *dummy_packet;
+	/* Reusable dummy packet ढाँचा */
+	काष्ठा sk_buff *dummy_packet;
 
 	/* Network stack work  */
-	struct work_struct netstack_work;
+	काष्ठा work_काष्ठा netstack_work;
 
 	/* FW log buffer */
 	u8 *fwlog;
 
 	/* Number of valid bytes in the FW log buffer */
-	ssize_t fwlog_size;
+	sमाप_प्रकार fwlog_size;
 
 	/* FW log end marker */
 	u32 fwlog_end;
@@ -302,68 +303,68 @@ struct wl1271 {
 	u32 fw_mem_block_size;
 
 	/* Hardware recovery work */
-	struct work_struct recovery_work;
-	bool watchdog_recovery;
+	काष्ठा work_काष्ठा recovery_work;
+	bool watchकरोg_recovery;
 
-	/* Reg domain last configuration */
+	/* Reg करोमुख्य last configuration */
 	DECLARE_BITMAP(reg_ch_conf_last, 64);
-	/* Reg domain pending configuration */
+	/* Reg करोमुख्य pending configuration */
 	DECLARE_BITMAP(reg_ch_conf_pending, 64);
 
-	/* Pointer that holds DMA-friendly block for the mailbox */
-	void *mbox;
+	/* Poपूर्णांकer that holds DMA-मित्रly block क्रम the mailbox */
+	व्योम *mbox;
 
 	/* The mbox event mask */
 	u32 event_mask;
-	/* events to unmask only when ap interface is up */
+	/* events to unmask only when ap पूर्णांकerface is up */
 	u32 ap_event_mask;
 
-	/* Mailbox pointers */
+	/* Mailbox poपूर्णांकers */
 	u32 mbox_size;
 	u32 mbox_ptr[2];
 
 	/* Are we currently scanning */
-	struct wl12xx_vif *scan_wlvif;
-	struct wl1271_scan scan;
-	struct delayed_work scan_complete_work;
+	काष्ठा wl12xx_vअगर *scan_wlvअगर;
+	काष्ठा wl1271_scan scan;
+	काष्ठा delayed_work scan_complete_work;
 
-	struct ieee80211_vif *roc_vif;
-	struct delayed_work roc_complete_work;
+	काष्ठा ieee80211_vअगर *roc_vअगर;
+	काष्ठा delayed_work roc_complete_work;
 
-	struct wl12xx_vif *sched_vif;
+	काष्ठा wl12xx_vअगर *sched_vअगर;
 
 	/* The current band */
-	enum nl80211_band band;
+	क्रमागत nl80211_band band;
 
-	struct completion *elp_compl;
+	काष्ठा completion *elp_compl;
 
 	/* in dBm */
-	int power_level;
+	पूर्णांक घातer_level;
 
-	struct wl1271_stats stats;
+	काष्ठा wl1271_stats stats;
 
 	__le32 *buffer_32;
 	u32 buffer_cmd;
 	u32 buffer_busyword[WL1271_BUSY_WORD_CNT];
 
-	void *raw_fw_status;
-	struct wl_fw_status *fw_status;
-	struct wl1271_tx_hw_res_if *tx_res_if;
+	व्योम *raw_fw_status;
+	काष्ठा wl_fw_status *fw_status;
+	काष्ठा wl1271_tx_hw_res_अगर *tx_res_अगर;
 
 	/* Current chipset configuration */
-	struct wlcore_conf conf;
+	काष्ठा wlcore_conf conf;
 
 	bool sg_enabled;
 
 	bool enable_11a;
 
-	int recovery_count;
+	पूर्णांक recovery_count;
 
 	/* Most recently reported noise in dBm */
 	s8 noise;
 
 	/* bands supported by this instance of wl12xx */
-	struct ieee80211_supported_band bands[WLCORE_NUM_BANDS];
+	काष्ठा ieee80211_supported_band bands[WLCORE_NUM_BANDS];
 
 	/*
 	 * wowlan trigger was configured during suspend.
@@ -376,50 +377,50 @@ struct wl1271 {
 	 * AP-mode - links indexed by HLID. The global and broadcast links
 	 * are always active.
 	 */
-	struct wl1271_link links[WLCORE_MAX_LINKS];
+	काष्ठा wl1271_link links[WLCORE_MAX_LINKS];
 
 	/* number of currently active links */
-	int active_link_count;
+	पूर्णांक active_link_count;
 
-	/* Fast/slow links bitmap according to FW */
-	unsigned long fw_fast_lnk_map;
+	/* Fast/slow links biपंचांगap according to FW */
+	अचिन्हित दीर्घ fw_fast_lnk_map;
 
-	/* AP-mode - a bitmap of links currently in PS mode according to FW */
-	unsigned long ap_fw_ps_map;
+	/* AP-mode - a biपंचांगap of links currently in PS mode according to FW */
+	अचिन्हित दीर्घ ap_fw_ps_map;
 
-	/* AP-mode - a bitmap of links currently in PS mode in mac80211 */
-	unsigned long ap_ps_map;
+	/* AP-mode - a biपंचांगap of links currently in PS mode in mac80211 */
+	अचिन्हित दीर्घ ap_ps_map;
 
-	/* Quirks of specific hardware revisions */
-	unsigned int quirks;
+	/* Quirks of specअगरic hardware revisions */
+	अचिन्हित पूर्णांक quirks;
 
 	/* number of currently active RX BA sessions */
-	int ba_rx_session_count;
+	पूर्णांक ba_rx_session_count;
 
 	/* Maximum number of supported RX BA sessions */
-	int ba_rx_session_count_max;
+	पूर्णांक ba_rx_session_count_max;
 
 	/* AP-mode - number of currently connected stations */
-	int active_sta_count;
+	पूर्णांक active_sta_count;
 
 	/* Flag determining whether AP should broadcast OFDM-only rates */
 	bool ofdm_only_ap;
 
-	/* last wlvif we transmitted from */
-	struct wl12xx_vif *last_wlvif;
+	/* last wlvअगर we transmitted from */
+	काष्ठा wl12xx_vअगर *last_wlvअगर;
 
 	/* work to fire when Tx is stuck */
-	struct delayed_work tx_watchdog_work;
+	काष्ठा delayed_work tx_watchकरोg_work;
 
-	struct wlcore_ops *ops;
-	/* pointer to the lower driver partition table */
-	const struct wlcore_partition_set *ptable;
-	/* pointer to the lower driver register table */
-	const int *rtable;
-	/* name of the firmwares to load - for PLT, single role, multi-role */
-	const char *plt_fw_name;
-	const char *sr_fw_name;
-	const char *mr_fw_name;
+	काष्ठा wlcore_ops *ops;
+	/* poपूर्णांकer to the lower driver partition table */
+	स्थिर काष्ठा wlcore_partition_set *ptable;
+	/* poपूर्णांकer to the lower driver रेजिस्टर table */
+	स्थिर पूर्णांक *rtable;
+	/* name of the firmwares to load - क्रम PLT, single role, multi-role */
+	स्थिर अक्षर *plt_fw_name;
+	स्थिर अक्षर *sr_fw_name;
+	स्थिर अक्षर *mr_fw_name;
 
 	u8 scan_templ_id_2_4;
 	u8 scan_templ_id_5;
@@ -427,8 +428,8 @@ struct wl1271 {
 	u8 sched_scan_templ_id_5;
 	u8 max_channels_5;
 
-	/* per-chip-family private structure */
-	void *priv;
+	/* per-chip-family निजी काष्ठाure */
+	व्योम *priv;
 
 	/* number of TX descriptors the HW supports. */
 	u32 num_tx_desc;
@@ -440,152 +441,152 @@ struct wl1271 {
 	u8 max_ap_stations;
 
 	/* translate HW Tx rates to standard rate-indices */
-	const u8 **band_rate_to_idx;
+	स्थिर u8 **band_rate_to_idx;
 
-	/* size of table for HW rates that can be received from chip */
+	/* size of table क्रम HW rates that can be received from chip */
 	u8 hw_tx_rate_tbl_size;
 
-	/* this HW rate and below are considered HT rates for this chip */
+	/* this HW rate and below are considered HT rates क्रम this chip */
 	u8 hw_min_ht_rate;
 
 	/* HW HT (11n) capabilities */
-	struct ieee80211_sta_ht_cap ht_cap[WLCORE_NUM_BANDS];
+	काष्ठा ieee80211_sta_ht_cap ht_cap[WLCORE_NUM_BANDS];
 
 	/* the current dfs region */
-	enum nl80211_dfs_regions dfs_region;
+	क्रमागत nl80211_dfs_regions dfs_region;
 	bool radar_debug_mode;
 
-	/* size of the private FW status data */
-	size_t fw_status_len;
-	size_t fw_status_priv_len;
+	/* size of the निजी FW status data */
+	माप_प्रकार fw_status_len;
+	माप_प्रकार fw_status_priv_len;
 
 	/* RX Data filter rule state - enabled/disabled */
-	unsigned long rx_filter_enabled[BITS_TO_LONGS(WL1271_MAX_RX_FILTERS)];
+	अचिन्हित दीर्घ rx_filter_enabled[BITS_TO_LONGS(WL1271_MAX_RX_FILTERS)];
 
-	/* size of the private static data */
-	size_t static_data_priv_len;
+	/* size of the निजी अटल data */
+	माप_प्रकार अटल_data_priv_len;
 
 	/* the current channel type */
-	enum nl80211_channel_type channel_type;
+	क्रमागत nl80211_channel_type channel_type;
 
-	/* mutex for protecting the tx_flush function */
-	struct mutex flush_mutex;
+	/* mutex क्रम protecting the tx_flush function */
+	काष्ठा mutex flush_mutex;
 
 	/* sleep auth value currently configured to FW */
-	int sleep_auth;
+	पूर्णांक sleep_auth;
 
 	/* the number of allocated MAC addresses in this chip */
-	int num_mac_addr;
+	पूर्णांक num_mac_addr;
 
-	/* minimum FW version required for the driver to work in single-role */
-	unsigned int min_sr_fw_ver[NUM_FW_VER];
+	/* minimum FW version required क्रम the driver to work in single-role */
+	अचिन्हित पूर्णांक min_sr_fw_ver[NUM_FW_VER];
 
-	/* minimum FW version required for the driver to work in multi-role */
-	unsigned int min_mr_fw_ver[NUM_FW_VER];
+	/* minimum FW version required क्रम the driver to work in multi-role */
+	अचिन्हित पूर्णांक min_mr_fw_ver[NUM_FW_VER];
 
-	struct completion nvs_loading_complete;
+	काष्ठा completion nvs_loading_complete;
 
-	/* interface combinations supported by the hw */
-	const struct ieee80211_iface_combination *iface_combinations;
-	u8 n_iface_combinations;
+	/* पूर्णांकerface combinations supported by the hw */
+	स्थिर काष्ठा ieee80211_अगरace_combination *अगरace_combinations;
+	u8 n_अगरace_combinations;
 
 	/* dynamic fw traces */
 	u32 dynamic_fw_traces;
 
-	/* time sync zone master */
+	/* समय sync zone master */
 	u8 zone_master_mac_addr[ETH_ALEN];
-};
+पूर्ण;
 
-int wlcore_probe(struct wl1271 *wl, struct platform_device *pdev);
-int wlcore_remove(struct platform_device *pdev);
-struct ieee80211_hw *wlcore_alloc_hw(size_t priv_size, u32 aggr_buf_size,
+पूर्णांक wlcore_probe(काष्ठा wl1271 *wl, काष्ठा platक्रमm_device *pdev);
+पूर्णांक wlcore_हटाओ(काष्ठा platक्रमm_device *pdev);
+काष्ठा ieee80211_hw *wlcore_alloc_hw(माप_प्रकार priv_size, u32 aggr_buf_size,
 				     u32 mbox_size);
-int wlcore_free_hw(struct wl1271 *wl);
-int wlcore_set_key(struct wl1271 *wl, enum set_key_cmd cmd,
-		   struct ieee80211_vif *vif,
-		   struct ieee80211_sta *sta,
-		   struct ieee80211_key_conf *key_conf);
-void wlcore_regdomain_config(struct wl1271 *wl);
-void wlcore_update_inconn_sta(struct wl1271 *wl, struct wl12xx_vif *wlvif,
-			      struct wl1271_station *wl_sta, bool in_conn);
+पूर्णांक wlcore_मुक्त_hw(काष्ठा wl1271 *wl);
+पूर्णांक wlcore_set_key(काष्ठा wl1271 *wl, क्रमागत set_key_cmd cmd,
+		   काष्ठा ieee80211_vअगर *vअगर,
+		   काष्ठा ieee80211_sta *sta,
+		   काष्ठा ieee80211_key_conf *key_conf);
+व्योम wlcore_regकरोमुख्य_config(काष्ठा wl1271 *wl);
+व्योम wlcore_update_inconn_sta(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+			      काष्ठा wl1271_station *wl_sta, bool in_conn);
 
-static inline void
-wlcore_set_ht_cap(struct wl1271 *wl, enum nl80211_band band,
-		  struct ieee80211_sta_ht_cap *ht_cap)
-{
-	memcpy(&wl->ht_cap[band], ht_cap, sizeof(*ht_cap));
-}
+अटल अंतरभूत व्योम
+wlcore_set_ht_cap(काष्ठा wl1271 *wl, क्रमागत nl80211_band band,
+		  काष्ठा ieee80211_sta_ht_cap *ht_cap)
+अणु
+	स_नकल(&wl->ht_cap[band], ht_cap, माप(*ht_cap));
+पूर्ण
 
 /* Tell wlcore not to care about this element when checking the version */
-#define WLCORE_FW_VER_IGNORE	-1
+#घोषणा WLCORE_FW_VER_IGNORE	-1
 
-static inline void
-wlcore_set_min_fw_ver(struct wl1271 *wl, unsigned int chip,
-		      unsigned int iftype_sr, unsigned int major_sr,
-		      unsigned int subtype_sr, unsigned int minor_sr,
-		      unsigned int iftype_mr, unsigned int major_mr,
-		      unsigned int subtype_mr, unsigned int minor_mr)
-{
+अटल अंतरभूत व्योम
+wlcore_set_min_fw_ver(काष्ठा wl1271 *wl, अचिन्हित पूर्णांक chip,
+		      अचिन्हित पूर्णांक अगरtype_sr, अचिन्हित पूर्णांक major_sr,
+		      अचिन्हित पूर्णांक subtype_sr, अचिन्हित पूर्णांक minor_sr,
+		      अचिन्हित पूर्णांक अगरtype_mr, अचिन्हित पूर्णांक major_mr,
+		      अचिन्हित पूर्णांक subtype_mr, अचिन्हित पूर्णांक minor_mr)
+अणु
 	wl->min_sr_fw_ver[FW_VER_CHIP] = chip;
-	wl->min_sr_fw_ver[FW_VER_IF_TYPE] = iftype_sr;
+	wl->min_sr_fw_ver[FW_VER_IF_TYPE] = अगरtype_sr;
 	wl->min_sr_fw_ver[FW_VER_MAJOR] = major_sr;
 	wl->min_sr_fw_ver[FW_VER_SUBTYPE] = subtype_sr;
 	wl->min_sr_fw_ver[FW_VER_MINOR] = minor_sr;
 
 	wl->min_mr_fw_ver[FW_VER_CHIP] = chip;
-	wl->min_mr_fw_ver[FW_VER_IF_TYPE] = iftype_mr;
+	wl->min_mr_fw_ver[FW_VER_IF_TYPE] = अगरtype_mr;
 	wl->min_mr_fw_ver[FW_VER_MAJOR] = major_mr;
 	wl->min_mr_fw_ver[FW_VER_SUBTYPE] = subtype_mr;
 	wl->min_mr_fw_ver[FW_VER_MINOR] = minor_mr;
-}
+पूर्ण
 
 /* Firmware image load chunk size */
-#define CHUNK_SIZE	16384
+#घोषणा CHUNK_SIZE	16384
 
 /* Quirks */
 
 /* Each RX/TX transaction requires an end-of-transaction transfer */
-#define WLCORE_QUIRK_END_OF_TRANSACTION		BIT(0)
+#घोषणा WLCORE_QUIRK_END_OF_TRANSACTION		BIT(0)
 
-/* wl127x and SPI don't support SDIO block size alignment */
-#define WLCORE_QUIRK_TX_BLOCKSIZE_ALIGN		BIT(2)
+/* wl127x and SPI करोn't support SDIO block size alignment */
+#घोषणा WLCORE_QUIRK_TX_BLOCKSIZE_ALIGN		BIT(2)
 
 /* means aggregated Rx packets are aligned to a SDIO block */
-#define WLCORE_QUIRK_RX_BLOCKSIZE_ALIGN		BIT(3)
+#घोषणा WLCORE_QUIRK_RX_BLOCKSIZE_ALIGN		BIT(3)
 
 /* Older firmwares did not implement the FW logger over bus feature */
-#define WLCORE_QUIRK_FWLOG_NOT_IMPLEMENTED	BIT(4)
+#घोषणा WLCORE_QUIRK_FWLOG_NOT_IMPLEMENTED	BIT(4)
 
-/* Older firmwares use an old NVS format */
-#define WLCORE_QUIRK_LEGACY_NVS			BIT(5)
+/* Older firmwares use an old NVS क्रमmat */
+#घोषणा WLCORE_QUIRK_LEGACY_NVS			BIT(5)
 
 /* pad only the last frame in the aggregate buffer */
-#define WLCORE_QUIRK_TX_PAD_LAST_FRAME		BIT(7)
+#घोषणा WLCORE_QUIRK_TX_PAD_LAST_FRAME		BIT(7)
 
-/* extra header space is required for TKIP */
-#define WLCORE_QUIRK_TKIP_HEADER_SPACE		BIT(8)
+/* extra header space is required क्रम TKIP */
+#घोषणा WLCORE_QUIRK_TKIP_HEADER_SPACE		BIT(8)
 
-/* Some firmwares not support sched scans while connected */
-#define WLCORE_QUIRK_NO_SCHED_SCAN_WHILE_CONN	BIT(9)
+/* Some firmwares not support sched scans जबतक connected */
+#घोषणा WLCORE_QUIRK_NO_SCHED_SCAN_WHILE_CONN	BIT(9)
 
-/* separate probe response templates for one-shot and sched scans */
-#define WLCORE_QUIRK_DUAL_PROBE_TMPL		BIT(10)
+/* separate probe response ढाँचाs क्रम one-shot and sched scans */
+#घोषणा WLCORE_QUIRK_DUAL_PROBE_TMPL		BIT(10)
 
-/* Firmware requires reg domain configuration for active calibration */
-#define WLCORE_QUIRK_REGDOMAIN_CONF		BIT(11)
+/* Firmware requires reg करोमुख्य configuration क्रम active calibration */
+#घोषणा WLCORE_QUIRK_REGDOMAIN_CONF		BIT(11)
 
-/* The FW only support a zero session id for AP */
-#define WLCORE_QUIRK_AP_ZERO_SESSION_ID		BIT(12)
+/* The FW only support a zero session id क्रम AP */
+#घोषणा WLCORE_QUIRK_AP_ZERO_SESSION_ID		BIT(12)
 
-/* TODO: move all these common registers and values elsewhere */
-#define HW_ACCESS_ELP_CTRL_REG		0x1FFFC
+/* TODO: move all these common रेजिस्टरs and values अन्यथाwhere */
+#घोषणा HW_ACCESS_ELP_CTRL_REG		0x1FFFC
 
-/* ELP register commands */
-#define ELPCTRL_WAKE_UP             0x1
-#define ELPCTRL_WAKE_UP_WLAN_READY  0x5
-#define ELPCTRL_SLEEP               0x0
+/* ELP रेजिस्टर commands */
+#घोषणा ELPCTRL_WAKE_UP             0x1
+#घोषणा ELPCTRL_WAKE_UP_WLAN_READY  0x5
+#घोषणा ELPCTRL_SLEEP               0x0
 /* ELP WLAN_READY bit */
-#define ELPCTRL_WLAN_READY          0x2
+#घोषणा ELPCTRL_WLAN_READY          0x2
 
 /*************************************************************************
 
@@ -593,48 +594,48 @@ wlcore_set_min_fw_ver(struct wl1271 *wl, unsigned int chip,
 
 **************************************************************************/
 
-/* Hardware to Embedded CPU Interrupts - first 32-bit register set */
+/* Hardware to Embedded CPU Interrupts - first 32-bit रेजिस्टर set */
 
 /*
- * The host sets this bit to inform the Wlan
+ * The host sets this bit to inक्रमm the Wlan
  * FW that a TX packet is in the XFER
  * Buffer #0.
  */
-#define INTR_TRIG_TX_PROC0 BIT(2)
+#घोषणा INTR_TRIG_TX_PROC0 BIT(2)
 
 /*
- * The host sets this bit to inform the FW
- * that it read a packet from RX XFER
+ * The host sets this bit to inक्रमm the FW
+ * that it पढ़ो a packet from RX XFER
  * Buffer #0.
  */
-#define INTR_TRIG_RX_PROC0 BIT(3)
+#घोषणा INTR_TRIG_RX_PROC0 BIT(3)
 
-#define INTR_TRIG_DEBUG_ACK BIT(4)
+#घोषणा INTR_TRIG_DEBUG_ACK BIT(4)
 
-#define INTR_TRIG_STATE_CHANGED BIT(5)
+#घोषणा INTR_TRIG_STATE_CHANGED BIT(5)
 
-/* Hardware to Embedded CPU Interrupts - second 32-bit register set */
+/* Hardware to Embedded CPU Interrupts - second 32-bit रेजिस्टर set */
 
 /*
- * The host sets this bit to inform the FW
- * that it read a packet from RX XFER
+ * The host sets this bit to inक्रमm the FW
+ * that it पढ़ो a packet from RX XFER
  * Buffer #1.
  */
-#define INTR_TRIG_RX_PROC1 BIT(17)
+#घोषणा INTR_TRIG_RX_PROC1 BIT(17)
 
 /*
- * The host sets this bit to inform the Wlan
+ * The host sets this bit to inक्रमm the Wlan
  * hardware that a TX packet is in the XFER
  * Buffer #1.
  */
-#define INTR_TRIG_TX_PROC1 BIT(18)
+#घोषणा INTR_TRIG_TX_PROC1 BIT(18)
 
-#define ACX_SLV_SOFT_RESET_BIT	BIT(1)
-#define SOFT_RESET_MAX_TIME	1000000
-#define SOFT_RESET_STALL_TIME	1000
+#घोषणा ACX_SLV_SOFT_RESET_BIT	BIT(1)
+#घोषणा SOFT_RESET_MAX_TIME	1000000
+#घोषणा SOFT_RESET_STALL_TIME	1000
 
-#define ECPU_CONTROL_HALT	0x00000101
+#घोषणा ECPU_CONTROL_HALT	0x00000101
 
-#define WELP_ARM_COMMAND_VAL	0x4
+#घोषणा WELP_ARM_COMMAND_VAL	0x4
 
-#endif /* __WLCORE_H__ */
+#पूर्ण_अगर /* __WLCORE_H__ */

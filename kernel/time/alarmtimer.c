@@ -1,939 +1,940 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Alarmtimer interface
+ * Alarmसमयr पूर्णांकerface
  *
- * This interface provides a timer which is similar to hrtimers,
- * but triggers a RTC alarm if the box is suspend.
+ * This पूर्णांकerface provides a समयr which is similar to hrसमयrs,
+ * but triggers a RTC alarm अगर the box is suspend.
  *
- * This interface is influenced by the Android RTC Alarm timer
- * interface.
+ * This पूर्णांकerface is influenced by the Android RTC Alarm समयr
+ * पूर्णांकerface.
  *
  * Copyright (C) 2010 IBM Corporation
  *
  * Author: John Stultz <john.stultz@linaro.org>
  */
-#include <linux/time.h>
-#include <linux/hrtimer.h>
-#include <linux/timerqueue.h>
-#include <linux/rtc.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/debug.h>
-#include <linux/alarmtimer.h>
-#include <linux/mutex.h>
-#include <linux/platform_device.h>
-#include <linux/posix-timers.h>
-#include <linux/workqueue.h>
-#include <linux/freezer.h>
-#include <linux/compat.h>
-#include <linux/module.h>
-#include <linux/time_namespace.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/समयrqueue.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/alarmसमयr.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/posix-समयrs.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/module.h>
+#समावेश <linux/समय_namespace.h>
 
-#include "posix-timers.h"
+#समावेश "posix-timers.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/alarmtimer.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/alarmसमयr.h>
 
 /**
- * struct alarm_base - Alarm timer bases
- * @lock:		Lock for syncrhonized access to the base
- * @timerqueue:		Timerqueue head managing the list of events
- * @get_ktime:		Function to read the time correlating to the base
- * @get_timespec:	Function to read the namespace time correlating to the base
- * @base_clockid:	clockid for the base
+ * काष्ठा alarm_base - Alarm समयr bases
+ * @lock:		Lock क्रम syncrhonized access to the base
+ * @समयrqueue:		Timerqueue head managing the list of events
+ * @get_kसमय:		Function to पढ़ो the समय correlating to the base
+ * @get_बारpec:	Function to पढ़ो the namespace समय correlating to the base
+ * @base_घड़ीid:	घड़ीid क्रम the base
  */
-static struct alarm_base {
+अटल काष्ठा alarm_base अणु
 	spinlock_t		lock;
-	struct timerqueue_head	timerqueue;
-	ktime_t			(*get_ktime)(void);
-	void			(*get_timespec)(struct timespec64 *tp);
-	clockid_t		base_clockid;
-} alarm_bases[ALARM_NUMTYPE];
+	काष्ठा समयrqueue_head	समयrqueue;
+	kसमय_प्रकार			(*get_kसमय)(व्योम);
+	व्योम			(*get_बारpec)(काष्ठा बारpec64 *tp);
+	घड़ीid_t		base_घड़ीid;
+पूर्ण alarm_bases[ALARM_NUMTYPE];
 
-#if defined(CONFIG_POSIX_TIMERS) || defined(CONFIG_RTC_CLASS)
-/* freezer information to handle clock_nanosleep triggered wakeups */
-static enum alarmtimer_type freezer_alarmtype;
-static ktime_t freezer_expires;
-static ktime_t freezer_delta;
-static DEFINE_SPINLOCK(freezer_delta_lock);
-#endif
+#अगर defined(CONFIG_POSIX_TIMERS) || defined(CONFIG_RTC_CLASS)
+/* मुक्तzer inक्रमmation to handle घड़ी_nanosleep triggered wakeups */
+अटल क्रमागत alarmसमयr_type मुक्तzer_alarmtype;
+अटल kसमय_प्रकार मुक्तzer_expires;
+अटल kसमय_प्रकार मुक्तzer_delta;
+अटल DEFINE_SPINLOCK(मुक्तzer_delta_lock);
+#पूर्ण_अगर
 
-#ifdef CONFIG_RTC_CLASS
-/* rtc timer and device for setting alarm wakeups at suspend */
-static struct rtc_timer		rtctimer;
-static struct rtc_device	*rtcdev;
-static DEFINE_SPINLOCK(rtcdev_lock);
+#अगर_घोषित CONFIG_RTC_CLASS
+/* rtc समयr and device क्रम setting alarm wakeups at suspend */
+अटल काष्ठा rtc_समयr		rtस_समयr;
+अटल काष्ठा rtc_device	*rtcdev;
+अटल DEFINE_SPINLOCK(rtcdev_lock);
 
 /**
- * alarmtimer_get_rtcdev - Return selected rtcdevice
+ * alarmसमयr_get_rtcdev - Return selected rtcdevice
  *
- * This function returns the rtc device to use for wakealarms.
+ * This function वापसs the rtc device to use क्रम wakealarms.
  */
-struct rtc_device *alarmtimer_get_rtcdev(void)
-{
-	unsigned long flags;
-	struct rtc_device *ret;
+काष्ठा rtc_device *alarmसमयr_get_rtcdev(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा rtc_device *ret;
 
 	spin_lock_irqsave(&rtcdev_lock, flags);
 	ret = rtcdev;
 	spin_unlock_irqrestore(&rtcdev_lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(alarmtimer_get_rtcdev);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(alarmसमयr_get_rtcdev);
 
-static int alarmtimer_rtc_add_device(struct device *dev,
-				struct class_interface *class_intf)
-{
-	unsigned long flags;
-	struct rtc_device *rtc = to_rtc_device(dev);
-	struct platform_device *pdev;
-	int ret = 0;
+अटल पूर्णांक alarmसमयr_rtc_add_device(काष्ठा device *dev,
+				काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा rtc_device *rtc = to_rtc_device(dev);
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक ret = 0;
 
-	if (rtcdev)
-		return -EBUSY;
+	अगर (rtcdev)
+		वापस -EBUSY;
 
-	if (!test_bit(RTC_FEATURE_ALARM, rtc->features))
-		return -1;
-	if (!device_may_wakeup(rtc->dev.parent))
-		return -1;
+	अगर (!test_bit(RTC_FEATURE_ALARM, rtc->features))
+		वापस -1;
+	अगर (!device_may_wakeup(rtc->dev.parent))
+		वापस -1;
 
-	pdev = platform_device_register_data(dev, "alarmtimer",
-					     PLATFORM_DEVID_AUTO, NULL, 0);
-	if (!IS_ERR(pdev))
+	pdev = platक्रमm_device_रेजिस्टर_data(dev, "alarmtimer",
+					     PLATFORM_DEVID_AUTO, शून्य, 0);
+	अगर (!IS_ERR(pdev))
 		device_init_wakeup(&pdev->dev, true);
 
 	spin_lock_irqsave(&rtcdev_lock, flags);
-	if (!IS_ERR(pdev) && !rtcdev) {
-		if (!try_module_get(rtc->owner)) {
+	अगर (!IS_ERR(pdev) && !rtcdev) अणु
+		अगर (!try_module_get(rtc->owner)) अणु
 			ret = -1;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
 		rtcdev = rtc;
-		/* hold a reference so it doesn't go away */
+		/* hold a reference so it करोesn't go away */
 		get_device(dev);
-		pdev = NULL;
-	} else {
+		pdev = शून्य;
+	पूर्ण अन्यथा अणु
 		ret = -1;
-	}
+	पूर्ण
 unlock:
 	spin_unlock_irqrestore(&rtcdev_lock, flags);
 
-	platform_device_unregister(pdev);
+	platक्रमm_device_unरेजिस्टर(pdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void alarmtimer_rtc_timer_init(void)
-{
-	rtc_timer_init(&rtctimer, NULL, NULL);
-}
+अटल अंतरभूत व्योम alarmसमयr_rtc_समयr_init(व्योम)
+अणु
+	rtc_समयr_init(&rtस_समयr, शून्य, शून्य);
+पूर्ण
 
-static struct class_interface alarmtimer_rtc_interface = {
-	.add_dev = &alarmtimer_rtc_add_device,
-};
+अटल काष्ठा class_पूर्णांकerface alarmसमयr_rtc_पूर्णांकerface = अणु
+	.add_dev = &alarmसमयr_rtc_add_device,
+पूर्ण;
 
-static int alarmtimer_rtc_interface_setup(void)
-{
-	alarmtimer_rtc_interface.class = rtc_class;
-	return class_interface_register(&alarmtimer_rtc_interface);
-}
-static void alarmtimer_rtc_interface_remove(void)
-{
-	class_interface_unregister(&alarmtimer_rtc_interface);
-}
-#else
-static inline int alarmtimer_rtc_interface_setup(void) { return 0; }
-static inline void alarmtimer_rtc_interface_remove(void) { }
-static inline void alarmtimer_rtc_timer_init(void) { }
-#endif
+अटल पूर्णांक alarmसमयr_rtc_पूर्णांकerface_setup(व्योम)
+अणु
+	alarmसमयr_rtc_पूर्णांकerface.class = rtc_class;
+	वापस class_पूर्णांकerface_रेजिस्टर(&alarmसमयr_rtc_पूर्णांकerface);
+पूर्ण
+अटल व्योम alarmसमयr_rtc_पूर्णांकerface_हटाओ(व्योम)
+अणु
+	class_पूर्णांकerface_unरेजिस्टर(&alarmसमयr_rtc_पूर्णांकerface);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक alarmसमयr_rtc_पूर्णांकerface_setup(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम alarmसमयr_rtc_पूर्णांकerface_हटाओ(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम alarmसमयr_rtc_समयr_init(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
 /**
- * alarmtimer_enqueue - Adds an alarm timer to an alarm_base timerqueue
- * @base: pointer to the base where the timer is being run
- * @alarm: pointer to alarm being enqueued.
+ * alarmसमयr_enqueue - Adds an alarm समयr to an alarm_base समयrqueue
+ * @base: poपूर्णांकer to the base where the समयr is being run
+ * @alarm: poपूर्णांकer to alarm being enqueued.
  *
- * Adds alarm to a alarm_base timerqueue
+ * Adds alarm to a alarm_base समयrqueue
  *
  * Must hold base->lock when calling.
  */
-static void alarmtimer_enqueue(struct alarm_base *base, struct alarm *alarm)
-{
-	if (alarm->state & ALARMTIMER_STATE_ENQUEUED)
-		timerqueue_del(&base->timerqueue, &alarm->node);
+अटल व्योम alarmसमयr_enqueue(काष्ठा alarm_base *base, काष्ठा alarm *alarm)
+अणु
+	अगर (alarm->state & ALARMTIMER_STATE_ENQUEUED)
+		समयrqueue_del(&base->समयrqueue, &alarm->node);
 
-	timerqueue_add(&base->timerqueue, &alarm->node);
+	समयrqueue_add(&base->समयrqueue, &alarm->node);
 	alarm->state |= ALARMTIMER_STATE_ENQUEUED;
-}
+पूर्ण
 
 /**
- * alarmtimer_dequeue - Removes an alarm timer from an alarm_base timerqueue
- * @base: pointer to the base where the timer is running
- * @alarm: pointer to alarm being removed
+ * alarmसमयr_dequeue - Removes an alarm समयr from an alarm_base समयrqueue
+ * @base: poपूर्णांकer to the base where the समयr is running
+ * @alarm: poपूर्णांकer to alarm being हटाओd
  *
- * Removes alarm to a alarm_base timerqueue
+ * Removes alarm to a alarm_base समयrqueue
  *
  * Must hold base->lock when calling.
  */
-static void alarmtimer_dequeue(struct alarm_base *base, struct alarm *alarm)
-{
-	if (!(alarm->state & ALARMTIMER_STATE_ENQUEUED))
-		return;
+अटल व्योम alarmसमयr_dequeue(काष्ठा alarm_base *base, काष्ठा alarm *alarm)
+अणु
+	अगर (!(alarm->state & ALARMTIMER_STATE_ENQUEUED))
+		वापस;
 
-	timerqueue_del(&base->timerqueue, &alarm->node);
+	समयrqueue_del(&base->समयrqueue, &alarm->node);
 	alarm->state &= ~ALARMTIMER_STATE_ENQUEUED;
-}
+पूर्ण
 
 
 /**
- * alarmtimer_fired - Handles alarm hrtimer being fired.
- * @timer: pointer to hrtimer being run
+ * alarmसमयr_fired - Handles alarm hrसमयr being fired.
+ * @समयr: poपूर्णांकer to hrसमयr being run
  *
- * When a alarm timer fires, this runs through the timerqueue to
+ * When a alarm समयr fires, this runs through the समयrqueue to
  * see which alarms expired, and runs those. If there are more alarm
- * timers queued for the future, we set the hrtimer to fire when
- * the next future alarm timer expires.
+ * समयrs queued क्रम the future, we set the hrसमयr to fire when
+ * the next future alarm समयr expires.
  */
-static enum hrtimer_restart alarmtimer_fired(struct hrtimer *timer)
-{
-	struct alarm *alarm = container_of(timer, struct alarm, timer);
-	struct alarm_base *base = &alarm_bases[alarm->type];
-	unsigned long flags;
-	int ret = HRTIMER_NORESTART;
-	int restart = ALARMTIMER_NORESTART;
+अटल क्रमागत hrसमयr_restart alarmसमयr_fired(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा alarm *alarm = container_of(समयr, काष्ठा alarm, समयr);
+	काष्ठा alarm_base *base = &alarm_bases[alarm->type];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = HRTIMER_NORESTART;
+	पूर्णांक restart = ALARMTIMER_NORESTART;
 
 	spin_lock_irqsave(&base->lock, flags);
-	alarmtimer_dequeue(base, alarm);
+	alarmसमयr_dequeue(base, alarm);
 	spin_unlock_irqrestore(&base->lock, flags);
 
-	if (alarm->function)
-		restart = alarm->function(alarm, base->get_ktime());
+	अगर (alarm->function)
+		restart = alarm->function(alarm, base->get_kसमय());
 
 	spin_lock_irqsave(&base->lock, flags);
-	if (restart != ALARMTIMER_NORESTART) {
-		hrtimer_set_expires(&alarm->timer, alarm->node.expires);
-		alarmtimer_enqueue(base, alarm);
+	अगर (restart != ALARMTIMER_NORESTART) अणु
+		hrसमयr_set_expires(&alarm->समयr, alarm->node.expires);
+		alarmसमयr_enqueue(base, alarm);
 		ret = HRTIMER_RESTART;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&base->lock, flags);
 
-	trace_alarmtimer_fired(alarm, base->get_ktime());
-	return ret;
+	trace_alarmसमयr_fired(alarm, base->get_kसमय());
+	वापस ret;
 
-}
+पूर्ण
 
-ktime_t alarm_expires_remaining(const struct alarm *alarm)
-{
-	struct alarm_base *base = &alarm_bases[alarm->type];
-	return ktime_sub(alarm->node.expires, base->get_ktime());
-}
-EXPORT_SYMBOL_GPL(alarm_expires_remaining);
+kसमय_प्रकार alarm_expires_reमुख्यing(स्थिर काष्ठा alarm *alarm)
+अणु
+	काष्ठा alarm_base *base = &alarm_bases[alarm->type];
+	वापस kसमय_sub(alarm->node.expires, base->get_kसमय());
+पूर्ण
+EXPORT_SYMBOL_GPL(alarm_expires_reमुख्यing);
 
-#ifdef CONFIG_RTC_CLASS
+#अगर_घोषित CONFIG_RTC_CLASS
 /**
- * alarmtimer_suspend - Suspend time callback
+ * alarmसमयr_suspend - Suspend समय callback
  * @dev: unused
  *
- * When we are going into suspend, we look through the bases
- * to see which is the soonest timer to expire. We then
- * set an rtc timer to fire that far into the future, which
+ * When we are going पूर्णांकo suspend, we look through the bases
+ * to see which is the soonest समयr to expire. We then
+ * set an rtc समयr to fire that far पूर्णांकo the future, which
  * will wake us from suspend.
  */
-static int alarmtimer_suspend(struct device *dev)
-{
-	ktime_t min, now, expires;
-	int i, ret, type;
-	struct rtc_device *rtc;
-	unsigned long flags;
-	struct rtc_time tm;
+अटल पूर्णांक alarmसमयr_suspend(काष्ठा device *dev)
+अणु
+	kसमय_प्रकार min, now, expires;
+	पूर्णांक i, ret, type;
+	काष्ठा rtc_device *rtc;
+	अचिन्हित दीर्घ flags;
+	काष्ठा rtc_समय पंचांग;
 
-	spin_lock_irqsave(&freezer_delta_lock, flags);
-	min = freezer_delta;
-	expires = freezer_expires;
-	type = freezer_alarmtype;
-	freezer_delta = 0;
-	spin_unlock_irqrestore(&freezer_delta_lock, flags);
+	spin_lock_irqsave(&मुक्तzer_delta_lock, flags);
+	min = मुक्तzer_delta;
+	expires = मुक्तzer_expires;
+	type = मुक्तzer_alarmtype;
+	मुक्तzer_delta = 0;
+	spin_unlock_irqrestore(&मुक्तzer_delta_lock, flags);
 
-	rtc = alarmtimer_get_rtcdev();
-	/* If we have no rtcdev, just return */
-	if (!rtc)
-		return 0;
+	rtc = alarmसमयr_get_rtcdev();
+	/* If we have no rtcdev, just वापस */
+	अगर (!rtc)
+		वापस 0;
 
-	/* Find the soonest timer to expire*/
-	for (i = 0; i < ALARM_NUMTYPE; i++) {
-		struct alarm_base *base = &alarm_bases[i];
-		struct timerqueue_node *next;
-		ktime_t delta;
+	/* Find the soonest समयr to expire*/
+	क्रम (i = 0; i < ALARM_NUMTYPE; i++) अणु
+		काष्ठा alarm_base *base = &alarm_bases[i];
+		काष्ठा समयrqueue_node *next;
+		kसमय_प्रकार delta;
 
 		spin_lock_irqsave(&base->lock, flags);
-		next = timerqueue_getnext(&base->timerqueue);
+		next = समयrqueue_getnext(&base->समयrqueue);
 		spin_unlock_irqrestore(&base->lock, flags);
-		if (!next)
-			continue;
-		delta = ktime_sub(next->expires, base->get_ktime());
-		if (!min || (delta < min)) {
+		अगर (!next)
+			जारी;
+		delta = kसमय_sub(next->expires, base->get_kसमय());
+		अगर (!min || (delta < min)) अणु
 			expires = next->expires;
 			min = delta;
 			type = i;
-		}
-	}
-	if (min == 0)
-		return 0;
+		पूर्ण
+	पूर्ण
+	अगर (min == 0)
+		वापस 0;
 
-	if (ktime_to_ns(min) < 2 * NSEC_PER_SEC) {
+	अगर (kसमय_प्रकारo_ns(min) < 2 * NSEC_PER_SEC) अणु
 		pm_wakeup_event(dev, 2 * MSEC_PER_SEC);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	trace_alarmtimer_suspend(expires, type);
+	trace_alarmसमयr_suspend(expires, type);
 
-	/* Setup an rtc timer to fire that far in the future */
-	rtc_timer_cancel(rtc, &rtctimer);
-	rtc_read_time(rtc, &tm);
-	now = rtc_tm_to_ktime(tm);
-	now = ktime_add(now, min);
+	/* Setup an rtc समयr to fire that far in the future */
+	rtc_समयr_cancel(rtc, &rtस_समयr);
+	rtc_पढ़ो_समय(rtc, &पंचांग);
+	now = rtc_पंचांग_to_kसमय(पंचांग);
+	now = kसमय_add(now, min);
 
-	/* Set alarm, if in the past reject suspend briefly to handle */
-	ret = rtc_timer_start(rtc, &rtctimer, now, 0);
-	if (ret < 0)
+	/* Set alarm, अगर in the past reject suspend briefly to handle */
+	ret = rtc_समयr_start(rtc, &rtस_समयr, now, 0);
+	अगर (ret < 0)
 		pm_wakeup_event(dev, MSEC_PER_SEC);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int alarmtimer_resume(struct device *dev)
-{
-	struct rtc_device *rtc;
+अटल पूर्णांक alarmसमयr_resume(काष्ठा device *dev)
+अणु
+	काष्ठा rtc_device *rtc;
 
-	rtc = alarmtimer_get_rtcdev();
-	if (rtc)
-		rtc_timer_cancel(rtc, &rtctimer);
-	return 0;
-}
+	rtc = alarmसमयr_get_rtcdev();
+	अगर (rtc)
+		rtc_समयr_cancel(rtc, &rtस_समयr);
+	वापस 0;
+पूर्ण
 
-#else
-static int alarmtimer_suspend(struct device *dev)
-{
-	return 0;
-}
+#अन्यथा
+अटल पूर्णांक alarmसमयr_suspend(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int alarmtimer_resume(struct device *dev)
-{
-	return 0;
-}
-#endif
+अटल पूर्णांक alarmसमयr_resume(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static void
-__alarm_init(struct alarm *alarm, enum alarmtimer_type type,
-	     enum alarmtimer_restart (*function)(struct alarm *, ktime_t))
-{
-	timerqueue_init(&alarm->node);
-	alarm->timer.function = alarmtimer_fired;
+अटल व्योम
+__alarm_init(काष्ठा alarm *alarm, क्रमागत alarmसमयr_type type,
+	     क्रमागत alarmसमयr_restart (*function)(काष्ठा alarm *, kसमय_प्रकार))
+अणु
+	समयrqueue_init(&alarm->node);
+	alarm->समयr.function = alarmसमयr_fired;
 	alarm->function = function;
 	alarm->type = type;
 	alarm->state = ALARMTIMER_STATE_INACTIVE;
-}
+पूर्ण
 
 /**
- * alarm_init - Initialize an alarm structure
+ * alarm_init - Initialize an alarm काष्ठाure
  * @alarm: ptr to alarm to be initialized
  * @type: the type of the alarm
  * @function: callback that is run when the alarm fires
  */
-void alarm_init(struct alarm *alarm, enum alarmtimer_type type,
-		enum alarmtimer_restart (*function)(struct alarm *, ktime_t))
-{
-	hrtimer_init(&alarm->timer, alarm_bases[type].base_clockid,
+व्योम alarm_init(काष्ठा alarm *alarm, क्रमागत alarmसमयr_type type,
+		क्रमागत alarmसमयr_restart (*function)(काष्ठा alarm *, kसमय_प्रकार))
+अणु
+	hrसमयr_init(&alarm->समयr, alarm_bases[type].base_घड़ीid,
 		     HRTIMER_MODE_ABS);
 	__alarm_init(alarm, type, function);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(alarm_init);
 
 /**
- * alarm_start - Sets an absolute alarm to fire
+ * alarm_start - Sets an असलolute alarm to fire
  * @alarm: ptr to alarm to set
- * @start: time to run the alarm
+ * @start: समय to run the alarm
  */
-void alarm_start(struct alarm *alarm, ktime_t start)
-{
-	struct alarm_base *base = &alarm_bases[alarm->type];
-	unsigned long flags;
+व्योम alarm_start(काष्ठा alarm *alarm, kसमय_प्रकार start)
+अणु
+	काष्ठा alarm_base *base = &alarm_bases[alarm->type];
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&base->lock, flags);
 	alarm->node.expires = start;
-	alarmtimer_enqueue(base, alarm);
-	hrtimer_start(&alarm->timer, alarm->node.expires, HRTIMER_MODE_ABS);
+	alarmसमयr_enqueue(base, alarm);
+	hrसमयr_start(&alarm->समयr, alarm->node.expires, HRTIMER_MODE_ABS);
 	spin_unlock_irqrestore(&base->lock, flags);
 
-	trace_alarmtimer_start(alarm, base->get_ktime());
-}
+	trace_alarmसमयr_start(alarm, base->get_kसमय());
+पूर्ण
 EXPORT_SYMBOL_GPL(alarm_start);
 
 /**
  * alarm_start_relative - Sets a relative alarm to fire
  * @alarm: ptr to alarm to set
- * @start: time relative to now to run the alarm
+ * @start: समय relative to now to run the alarm
  */
-void alarm_start_relative(struct alarm *alarm, ktime_t start)
-{
-	struct alarm_base *base = &alarm_bases[alarm->type];
+व्योम alarm_start_relative(काष्ठा alarm *alarm, kसमय_प्रकार start)
+अणु
+	काष्ठा alarm_base *base = &alarm_bases[alarm->type];
 
-	start = ktime_add_safe(start, base->get_ktime());
+	start = kसमय_add_safe(start, base->get_kसमय());
 	alarm_start(alarm, start);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(alarm_start_relative);
 
-void alarm_restart(struct alarm *alarm)
-{
-	struct alarm_base *base = &alarm_bases[alarm->type];
-	unsigned long flags;
+व्योम alarm_restart(काष्ठा alarm *alarm)
+अणु
+	काष्ठा alarm_base *base = &alarm_bases[alarm->type];
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&base->lock, flags);
-	hrtimer_set_expires(&alarm->timer, alarm->node.expires);
-	hrtimer_restart(&alarm->timer);
-	alarmtimer_enqueue(base, alarm);
+	hrसमयr_set_expires(&alarm->समयr, alarm->node.expires);
+	hrसमयr_restart(&alarm->समयr);
+	alarmसमयr_enqueue(base, alarm);
 	spin_unlock_irqrestore(&base->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(alarm_restart);
 
 /**
- * alarm_try_to_cancel - Tries to cancel an alarm timer
+ * alarm_try_to_cancel - Tries to cancel an alarm समयr
  * @alarm: ptr to alarm to be canceled
  *
- * Returns 1 if the timer was canceled, 0 if it was not running,
- * and -1 if the callback was running
+ * Returns 1 अगर the समयr was canceled, 0 अगर it was not running,
+ * and -1 अगर the callback was running
  */
-int alarm_try_to_cancel(struct alarm *alarm)
-{
-	struct alarm_base *base = &alarm_bases[alarm->type];
-	unsigned long flags;
-	int ret;
+पूर्णांक alarm_try_to_cancel(काष्ठा alarm *alarm)
+अणु
+	काष्ठा alarm_base *base = &alarm_bases[alarm->type];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&base->lock, flags);
-	ret = hrtimer_try_to_cancel(&alarm->timer);
-	if (ret >= 0)
-		alarmtimer_dequeue(base, alarm);
+	ret = hrसमयr_try_to_cancel(&alarm->समयr);
+	अगर (ret >= 0)
+		alarmसमयr_dequeue(base, alarm);
 	spin_unlock_irqrestore(&base->lock, flags);
 
-	trace_alarmtimer_cancel(alarm, base->get_ktime());
-	return ret;
-}
+	trace_alarmसमयr_cancel(alarm, base->get_kसमय());
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(alarm_try_to_cancel);
 
 
 /**
- * alarm_cancel - Spins trying to cancel an alarm timer until it is done
+ * alarm_cancel - Spins trying to cancel an alarm समयr until it is करोne
  * @alarm: ptr to alarm to be canceled
  *
- * Returns 1 if the timer was canceled, 0 if it was not active.
+ * Returns 1 अगर the समयr was canceled, 0 अगर it was not active.
  */
-int alarm_cancel(struct alarm *alarm)
-{
-	for (;;) {
-		int ret = alarm_try_to_cancel(alarm);
-		if (ret >= 0)
-			return ret;
-		hrtimer_cancel_wait_running(&alarm->timer);
-	}
-}
+पूर्णांक alarm_cancel(काष्ठा alarm *alarm)
+अणु
+	क्रम (;;) अणु
+		पूर्णांक ret = alarm_try_to_cancel(alarm);
+		अगर (ret >= 0)
+			वापस ret;
+		hrसमयr_cancel_रुको_running(&alarm->समयr);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(alarm_cancel);
 
 
-u64 alarm_forward(struct alarm *alarm, ktime_t now, ktime_t interval)
-{
+u64 alarm_क्रमward(काष्ठा alarm *alarm, kसमय_प्रकार now, kसमय_प्रकार पूर्णांकerval)
+अणु
 	u64 overrun = 1;
-	ktime_t delta;
+	kसमय_प्रकार delta;
 
-	delta = ktime_sub(now, alarm->node.expires);
+	delta = kसमय_sub(now, alarm->node.expires);
 
-	if (delta < 0)
-		return 0;
+	अगर (delta < 0)
+		वापस 0;
 
-	if (unlikely(delta >= interval)) {
-		s64 incr = ktime_to_ns(interval);
+	अगर (unlikely(delta >= पूर्णांकerval)) अणु
+		s64 incr = kसमय_प्रकारo_ns(पूर्णांकerval);
 
-		overrun = ktime_divns(delta, incr);
+		overrun = kसमय_भागns(delta, incr);
 
-		alarm->node.expires = ktime_add_ns(alarm->node.expires,
+		alarm->node.expires = kसमय_add_ns(alarm->node.expires,
 							incr*overrun);
 
-		if (alarm->node.expires > now)
-			return overrun;
+		अगर (alarm->node.expires > now)
+			वापस overrun;
 		/*
-		 * This (and the ktime_add() below) is the
-		 * correction for exact:
+		 * This (and the kसमय_add() below) is the
+		 * correction क्रम exact:
 		 */
 		overrun++;
-	}
+	पूर्ण
 
-	alarm->node.expires = ktime_add_safe(alarm->node.expires, interval);
-	return overrun;
-}
-EXPORT_SYMBOL_GPL(alarm_forward);
+	alarm->node.expires = kसमय_add_safe(alarm->node.expires, पूर्णांकerval);
+	वापस overrun;
+पूर्ण
+EXPORT_SYMBOL_GPL(alarm_क्रमward);
 
-u64 alarm_forward_now(struct alarm *alarm, ktime_t interval)
-{
-	struct alarm_base *base = &alarm_bases[alarm->type];
+u64 alarm_क्रमward_now(काष्ठा alarm *alarm, kसमय_प्रकार पूर्णांकerval)
+अणु
+	काष्ठा alarm_base *base = &alarm_bases[alarm->type];
 
-	return alarm_forward(alarm, base->get_ktime(), interval);
-}
-EXPORT_SYMBOL_GPL(alarm_forward_now);
+	वापस alarm_क्रमward(alarm, base->get_kसमय(), पूर्णांकerval);
+पूर्ण
+EXPORT_SYMBOL_GPL(alarm_क्रमward_now);
 
-#ifdef CONFIG_POSIX_TIMERS
+#अगर_घोषित CONFIG_POSIX_TIMERS
 
-static void alarmtimer_freezerset(ktime_t absexp, enum alarmtimer_type type)
-{
-	struct alarm_base *base;
-	unsigned long flags;
-	ktime_t delta;
+अटल व्योम alarmसमयr_मुक्तzerset(kसमय_प्रकार असलexp, क्रमागत alarmसमयr_type type)
+अणु
+	काष्ठा alarm_base *base;
+	अचिन्हित दीर्घ flags;
+	kसमय_प्रकार delta;
 
-	switch(type) {
-	case ALARM_REALTIME:
+	चयन(type) अणु
+	हाल ALARM_REALTIME:
 		base = &alarm_bases[ALARM_REALTIME];
 		type = ALARM_REALTIME_FREEZER;
-		break;
-	case ALARM_BOOTTIME:
+		अवरोध;
+	हाल ALARM_BOOTTIME:
 		base = &alarm_bases[ALARM_BOOTTIME];
 		type = ALARM_BOOTTIME_FREEZER;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ONCE(1, "Invalid alarm type: %d\n", type);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	delta = ktime_sub(absexp, base->get_ktime());
+	delta = kसमय_sub(असलexp, base->get_kसमय());
 
-	spin_lock_irqsave(&freezer_delta_lock, flags);
-	if (!freezer_delta || (delta < freezer_delta)) {
-		freezer_delta = delta;
-		freezer_expires = absexp;
-		freezer_alarmtype = type;
-	}
-	spin_unlock_irqrestore(&freezer_delta_lock, flags);
-}
+	spin_lock_irqsave(&मुक्तzer_delta_lock, flags);
+	अगर (!मुक्तzer_delta || (delta < मुक्तzer_delta)) अणु
+		मुक्तzer_delta = delta;
+		मुक्तzer_expires = असलexp;
+		मुक्तzer_alarmtype = type;
+	पूर्ण
+	spin_unlock_irqrestore(&मुक्तzer_delta_lock, flags);
+पूर्ण
 
 /**
- * clock2alarm - helper that converts from clockid to alarmtypes
- * @clockid: clockid.
+ * घड़ी2alarm - helper that converts from घड़ीid to alarmtypes
+ * @घड़ीid: घड़ीid.
  */
-static enum alarmtimer_type clock2alarm(clockid_t clockid)
-{
-	if (clockid == CLOCK_REALTIME_ALARM)
-		return ALARM_REALTIME;
-	if (clockid == CLOCK_BOOTTIME_ALARM)
-		return ALARM_BOOTTIME;
-	return -1;
-}
+अटल क्रमागत alarmसमयr_type घड़ी2alarm(घड़ीid_t घड़ीid)
+अणु
+	अगर (घड़ीid == CLOCK_REALTIME_ALARM)
+		वापस ALARM_REALTIME;
+	अगर (घड़ीid == CLOCK_BOOTTIME_ALARM)
+		वापस ALARM_BOOTTIME;
+	वापस -1;
+पूर्ण
 
 /**
- * alarm_handle_timer - Callback for posix timers
+ * alarm_handle_समयr - Callback क्रम posix समयrs
  * @alarm: alarm that fired
- * @now: time at the timer expiration
+ * @now: समय at the समयr expiration
  *
- * Posix timer callback for expired alarm timers.
+ * Posix समयr callback क्रम expired alarm समयrs.
  *
- * Return: whether the timer is to be restarted
+ * Return: whether the समयr is to be restarted
  */
-static enum alarmtimer_restart alarm_handle_timer(struct alarm *alarm,
-							ktime_t now)
-{
-	struct k_itimer *ptr = container_of(alarm, struct k_itimer,
-					    it.alarm.alarmtimer);
-	enum alarmtimer_restart result = ALARMTIMER_NORESTART;
-	unsigned long flags;
-	int si_private = 0;
+अटल क्रमागत alarmसमयr_restart alarm_handle_समयr(काष्ठा alarm *alarm,
+							kसमय_प्रकार now)
+अणु
+	काष्ठा k_iसमयr *ptr = container_of(alarm, काष्ठा k_iसमयr,
+					    it.alarm.alarmसमयr);
+	क्रमागत alarmसमयr_restart result = ALARMTIMER_NORESTART;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक si_निजी = 0;
 
 	spin_lock_irqsave(&ptr->it_lock, flags);
 
 	ptr->it_active = 0;
-	if (ptr->it_interval)
-		si_private = ++ptr->it_requeue_pending;
+	अगर (ptr->it_पूर्णांकerval)
+		si_निजी = ++ptr->it_requeue_pending;
 
-	if (posix_timer_event(ptr, si_private) && ptr->it_interval) {
+	अगर (posix_समयr_event(ptr, si_निजी) && ptr->it_पूर्णांकerval) अणु
 		/*
-		 * Handle ignored signals and rearm the timer. This will go
-		 * away once we handle ignored signals proper.
+		 * Handle ignored संकेतs and rearm the समयr. This will go
+		 * away once we handle ignored संकेतs proper.
 		 */
-		ptr->it_overrun += alarm_forward_now(alarm, ptr->it_interval);
+		ptr->it_overrun += alarm_क्रमward_now(alarm, ptr->it_पूर्णांकerval);
 		++ptr->it_requeue_pending;
 		ptr->it_active = 1;
 		result = ALARMTIMER_RESTART;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&ptr->it_lock, flags);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * alarm_timer_rearm - Posix timer callback for rearming timer
- * @timr:	Pointer to the posixtimer data struct
+ * alarm_समयr_rearm - Posix समयr callback क्रम rearming समयr
+ * @timr:	Poपूर्णांकer to the posixसमयr data काष्ठा
  */
-static void alarm_timer_rearm(struct k_itimer *timr)
-{
-	struct alarm *alarm = &timr->it.alarm.alarmtimer;
+अटल व्योम alarm_समयr_rearm(काष्ठा k_iसमयr *timr)
+अणु
+	काष्ठा alarm *alarm = &timr->it.alarm.alarmसमयr;
 
-	timr->it_overrun += alarm_forward_now(alarm, timr->it_interval);
+	timr->it_overrun += alarm_क्रमward_now(alarm, timr->it_पूर्णांकerval);
 	alarm_start(alarm, alarm->node.expires);
-}
+पूर्ण
 
 /**
- * alarm_timer_forward - Posix timer callback for forwarding timer
- * @timr:	Pointer to the posixtimer data struct
- * @now:	Current time to forward the timer against
+ * alarm_समयr_क्रमward - Posix समयr callback क्रम क्रमwarding समयr
+ * @timr:	Poपूर्णांकer to the posixसमयr data काष्ठा
+ * @now:	Current समय to क्रमward the समयr against
  */
-static s64 alarm_timer_forward(struct k_itimer *timr, ktime_t now)
-{
-	struct alarm *alarm = &timr->it.alarm.alarmtimer;
+अटल s64 alarm_समयr_क्रमward(काष्ठा k_iसमयr *timr, kसमय_प्रकार now)
+अणु
+	काष्ठा alarm *alarm = &timr->it.alarm.alarmसमयr;
 
-	return alarm_forward(alarm, timr->it_interval, now);
-}
+	वापस alarm_क्रमward(alarm, timr->it_पूर्णांकerval, now);
+पूर्ण
 
 /**
- * alarm_timer_remaining - Posix timer callback to retrieve remaining time
- * @timr:	Pointer to the posixtimer data struct
- * @now:	Current time to calculate against
+ * alarm_समयr_reमुख्यing - Posix समयr callback to retrieve reमुख्यing समय
+ * @timr:	Poपूर्णांकer to the posixसमयr data काष्ठा
+ * @now:	Current समय to calculate against
  */
-static ktime_t alarm_timer_remaining(struct k_itimer *timr, ktime_t now)
-{
-	struct alarm *alarm = &timr->it.alarm.alarmtimer;
+अटल kसमय_प्रकार alarm_समयr_reमुख्यing(काष्ठा k_iसमयr *timr, kसमय_प्रकार now)
+अणु
+	काष्ठा alarm *alarm = &timr->it.alarm.alarmसमयr;
 
-	return ktime_sub(alarm->node.expires, now);
-}
+	वापस kसमय_sub(alarm->node.expires, now);
+पूर्ण
 
 /**
- * alarm_timer_try_to_cancel - Posix timer callback to cancel a timer
- * @timr:	Pointer to the posixtimer data struct
+ * alarm_समयr_try_to_cancel - Posix समयr callback to cancel a समयr
+ * @timr:	Poपूर्णांकer to the posixसमयr data काष्ठा
  */
-static int alarm_timer_try_to_cancel(struct k_itimer *timr)
-{
-	return alarm_try_to_cancel(&timr->it.alarm.alarmtimer);
-}
+अटल पूर्णांक alarm_समयr_try_to_cancel(काष्ठा k_iसमयr *timr)
+अणु
+	वापस alarm_try_to_cancel(&timr->it.alarm.alarmसमयr);
+पूर्ण
 
 /**
- * alarm_timer_wait_running - Posix timer callback to wait for a timer
- * @timr:	Pointer to the posixtimer data struct
+ * alarm_समयr_रुको_running - Posix समयr callback to रुको क्रम a समयr
+ * @timr:	Poपूर्णांकer to the posixसमयr data काष्ठा
  *
- * Called from the core code when timer cancel detected that the callback
- * is running. @timr is unlocked and rcu read lock is held to prevent it
- * from being freed.
+ * Called from the core code when समयr cancel detected that the callback
+ * is running. @timr is unlocked and rcu पढ़ो lock is held to prevent it
+ * from being मुक्तd.
  */
-static void alarm_timer_wait_running(struct k_itimer *timr)
-{
-	hrtimer_cancel_wait_running(&timr->it.alarm.alarmtimer.timer);
-}
+अटल व्योम alarm_समयr_रुको_running(काष्ठा k_iसमयr *timr)
+अणु
+	hrसमयr_cancel_रुको_running(&timr->it.alarm.alarmसमयr.समयr);
+पूर्ण
 
 /**
- * alarm_timer_arm - Posix timer callback to arm a timer
- * @timr:	Pointer to the posixtimer data struct
- * @expires:	The new expiry time
- * @absolute:	Expiry value is absolute time
- * @sigev_none:	Posix timer does not deliver signals
+ * alarm_समयr_arm - Posix समयr callback to arm a समयr
+ * @timr:	Poपूर्णांकer to the posixसमयr data काष्ठा
+ * @expires:	The new expiry समय
+ * @असलolute:	Expiry value is असलolute समय
+ * @sigev_none:	Posix समयr करोes not deliver संकेतs
  */
-static void alarm_timer_arm(struct k_itimer *timr, ktime_t expires,
-			    bool absolute, bool sigev_none)
-{
-	struct alarm *alarm = &timr->it.alarm.alarmtimer;
-	struct alarm_base *base = &alarm_bases[alarm->type];
+अटल व्योम alarm_समयr_arm(काष्ठा k_iसमयr *timr, kसमय_प्रकार expires,
+			    bool असलolute, bool sigev_none)
+अणु
+	काष्ठा alarm *alarm = &timr->it.alarm.alarmसमयr;
+	काष्ठा alarm_base *base = &alarm_bases[alarm->type];
 
-	if (!absolute)
-		expires = ktime_add_safe(expires, base->get_ktime());
-	if (sigev_none)
+	अगर (!असलolute)
+		expires = kसमय_add_safe(expires, base->get_kसमय());
+	अगर (sigev_none)
 		alarm->node.expires = expires;
-	else
-		alarm_start(&timr->it.alarm.alarmtimer, expires);
-}
+	अन्यथा
+		alarm_start(&timr->it.alarm.alarmसमयr, expires);
+पूर्ण
 
 /**
- * alarm_clock_getres - posix getres interface
- * @which_clock: clockid
- * @tp: timespec to fill
+ * alarm_घड़ी_getres - posix getres पूर्णांकerface
+ * @which_घड़ी: घड़ीid
+ * @tp: बारpec to fill
  *
- * Returns the granularity of underlying alarm base clock
+ * Returns the granularity of underlying alarm base घड़ी
  */
-static int alarm_clock_getres(const clockid_t which_clock, struct timespec64 *tp)
-{
-	if (!alarmtimer_get_rtcdev())
-		return -EINVAL;
+अटल पूर्णांक alarm_घड़ी_getres(स्थिर घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
+अणु
+	अगर (!alarmसमयr_get_rtcdev())
+		वापस -EINVAL;
 
 	tp->tv_sec = 0;
-	tp->tv_nsec = hrtimer_resolution;
-	return 0;
-}
+	tp->tv_nsec = hrसमयr_resolution;
+	वापस 0;
+पूर्ण
 
 /**
- * alarm_clock_get_timespec - posix clock_get_timespec interface
- * @which_clock: clockid
- * @tp: timespec to fill.
+ * alarm_घड़ी_get_बारpec - posix घड़ी_get_बारpec पूर्णांकerface
+ * @which_घड़ी: घड़ीid
+ * @tp: बारpec to fill.
  *
- * Provides the underlying alarm base time in a tasks time namespace.
+ * Provides the underlying alarm base समय in a tasks समय namespace.
  */
-static int alarm_clock_get_timespec(clockid_t which_clock, struct timespec64 *tp)
-{
-	struct alarm_base *base = &alarm_bases[clock2alarm(which_clock)];
+अटल पूर्णांक alarm_घड़ी_get_बारpec(घड़ीid_t which_घड़ी, काष्ठा बारpec64 *tp)
+अणु
+	काष्ठा alarm_base *base = &alarm_bases[घड़ी2alarm(which_घड़ी)];
 
-	if (!alarmtimer_get_rtcdev())
-		return -EINVAL;
+	अगर (!alarmसमयr_get_rtcdev())
+		वापस -EINVAL;
 
-	base->get_timespec(tp);
+	base->get_बारpec(tp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * alarm_clock_get_ktime - posix clock_get_ktime interface
- * @which_clock: clockid
+ * alarm_घड़ी_get_kसमय - posix घड़ी_get_kसमय पूर्णांकerface
+ * @which_घड़ी: घड़ीid
  *
- * Provides the underlying alarm base time in the root namespace.
+ * Provides the underlying alarm base समय in the root namespace.
  */
-static ktime_t alarm_clock_get_ktime(clockid_t which_clock)
-{
-	struct alarm_base *base = &alarm_bases[clock2alarm(which_clock)];
+अटल kसमय_प्रकार alarm_घड़ी_get_kसमय(घड़ीid_t which_घड़ी)
+अणु
+	काष्ठा alarm_base *base = &alarm_bases[घड़ी2alarm(which_घड़ी)];
 
-	if (!alarmtimer_get_rtcdev())
-		return -EINVAL;
+	अगर (!alarmसमयr_get_rtcdev())
+		वापस -EINVAL;
 
-	return base->get_ktime();
-}
+	वापस base->get_kसमय();
+पूर्ण
 
 /**
- * alarm_timer_create - posix timer_create interface
- * @new_timer: k_itimer pointer to manage
+ * alarm_समयr_create - posix समयr_create पूर्णांकerface
+ * @new_समयr: k_iसमयr poपूर्णांकer to manage
  *
- * Initializes the k_itimer structure.
+ * Initializes the k_iसमयr काष्ठाure.
  */
-static int alarm_timer_create(struct k_itimer *new_timer)
-{
-	enum  alarmtimer_type type;
+अटल पूर्णांक alarm_समयr_create(काष्ठा k_iसमयr *new_समयr)
+अणु
+	क्रमागत  alarmसमयr_type type;
 
-	if (!alarmtimer_get_rtcdev())
-		return -EOPNOTSUPP;
+	अगर (!alarmसमयr_get_rtcdev())
+		वापस -EOPNOTSUPP;
 
-	if (!capable(CAP_WAKE_ALARM))
-		return -EPERM;
+	अगर (!capable(CAP_WAKE_ALARM))
+		वापस -EPERM;
 
-	type = clock2alarm(new_timer->it_clock);
-	alarm_init(&new_timer->it.alarm.alarmtimer, type, alarm_handle_timer);
-	return 0;
-}
+	type = घड़ी2alarm(new_समयr->it_घड़ी);
+	alarm_init(&new_समयr->it.alarm.alarmसमयr, type, alarm_handle_समयr);
+	वापस 0;
+पूर्ण
 
 /**
- * alarmtimer_nsleep_wakeup - Wakeup function for alarm_timer_nsleep
+ * alarmसमयr_nsleep_wakeup - Wakeup function क्रम alarm_समयr_nsleep
  * @alarm: ptr to alarm that fired
- * @now: time at the timer expiration
+ * @now: समय at the समयr expiration
  *
- * Wakes up the task that set the alarmtimer
+ * Wakes up the task that set the alarmसमयr
  *
  * Return: ALARMTIMER_NORESTART
  */
-static enum alarmtimer_restart alarmtimer_nsleep_wakeup(struct alarm *alarm,
-								ktime_t now)
-{
-	struct task_struct *task = (struct task_struct *)alarm->data;
+अटल क्रमागत alarmसमयr_restart alarmसमयr_nsleep_wakeup(काष्ठा alarm *alarm,
+								kसमय_प्रकार now)
+अणु
+	काष्ठा task_काष्ठा *task = (काष्ठा task_काष्ठा *)alarm->data;
 
-	alarm->data = NULL;
-	if (task)
+	alarm->data = शून्य;
+	अगर (task)
 		wake_up_process(task);
-	return ALARMTIMER_NORESTART;
-}
+	वापस ALARMTIMER_NORESTART;
+पूर्ण
 
 /**
- * alarmtimer_do_nsleep - Internal alarmtimer nsleep implementation
- * @alarm: ptr to alarmtimer
- * @absexp: absolute expiration time
+ * alarmसमयr_करो_nsleep - Internal alarmसमयr nsleep implementation
+ * @alarm: ptr to alarmसमयr
+ * @असलexp: असलolute expiration समय
  * @type: alarm type (BOOTTIME/REALTIME).
  *
- * Sets the alarm timer and sleeps until it is fired or interrupted.
+ * Sets the alarm समयr and sleeps until it is fired or पूर्णांकerrupted.
  */
-static int alarmtimer_do_nsleep(struct alarm *alarm, ktime_t absexp,
-				enum alarmtimer_type type)
-{
-	struct restart_block *restart;
-	alarm->data = (void *)current;
-	do {
+अटल पूर्णांक alarmसमयr_करो_nsleep(काष्ठा alarm *alarm, kसमय_प्रकार असलexp,
+				क्रमागत alarmसमयr_type type)
+अणु
+	काष्ठा restart_block *restart;
+	alarm->data = (व्योम *)current;
+	करो अणु
 		set_current_state(TASK_INTERRUPTIBLE);
-		alarm_start(alarm, absexp);
-		if (likely(alarm->data))
+		alarm_start(alarm, असलexp);
+		अगर (likely(alarm->data))
 			schedule();
 
 		alarm_cancel(alarm);
-	} while (alarm->data && !signal_pending(current));
+	पूर्ण जबतक (alarm->data && !संकेत_pending(current));
 
 	__set_current_state(TASK_RUNNING);
 
-	destroy_hrtimer_on_stack(&alarm->timer);
+	destroy_hrसमयr_on_stack(&alarm->समयr);
 
-	if (!alarm->data)
-		return 0;
+	अगर (!alarm->data)
+		वापस 0;
 
-	if (freezing(current))
-		alarmtimer_freezerset(absexp, type);
+	अगर (मुक्तzing(current))
+		alarmसमयr_मुक्तzerset(असलexp, type);
 	restart = &current->restart_block;
-	if (restart->nanosleep.type != TT_NONE) {
-		struct timespec64 rmt;
-		ktime_t rem;
+	अगर (restart->nanosleep.type != TT_NONE) अणु
+		काष्ठा बारpec64 rmt;
+		kसमय_प्रकार rem;
 
-		rem = ktime_sub(absexp, alarm_bases[type].get_ktime());
+		rem = kसमय_sub(असलexp, alarm_bases[type].get_kसमय());
 
-		if (rem <= 0)
-			return 0;
-		rmt = ktime_to_timespec64(rem);
+		अगर (rem <= 0)
+			वापस 0;
+		rmt = kसमय_प्रकारo_बारpec64(rem);
 
-		return nanosleep_copyout(restart, &rmt);
-	}
-	return -ERESTART_RESTARTBLOCK;
-}
+		वापस nanosleep_copyout(restart, &rmt);
+	पूर्ण
+	वापस -ERESTART_RESTARTBLOCK;
+पूर्ण
 
-static void
-alarm_init_on_stack(struct alarm *alarm, enum alarmtimer_type type,
-		    enum alarmtimer_restart (*function)(struct alarm *, ktime_t))
-{
-	hrtimer_init_on_stack(&alarm->timer, alarm_bases[type].base_clockid,
+अटल व्योम
+alarm_init_on_stack(काष्ठा alarm *alarm, क्रमागत alarmसमयr_type type,
+		    क्रमागत alarmसमयr_restart (*function)(काष्ठा alarm *, kसमय_प्रकार))
+अणु
+	hrसमयr_init_on_stack(&alarm->समयr, alarm_bases[type].base_घड़ीid,
 			      HRTIMER_MODE_ABS);
 	__alarm_init(alarm, type, function);
-}
+पूर्ण
 
 /**
- * alarm_timer_nsleep_restart - restartblock alarmtimer nsleep
+ * alarm_समयr_nsleep_restart - restartblock alarmसमयr nsleep
  * @restart: ptr to restart block
  *
- * Handles restarted clock_nanosleep calls
+ * Handles restarted घड़ी_nanosleep calls
  */
-static long __sched alarm_timer_nsleep_restart(struct restart_block *restart)
-{
-	enum  alarmtimer_type type = restart->nanosleep.clockid;
-	ktime_t exp = restart->nanosleep.expires;
-	struct alarm alarm;
+अटल दीर्घ __sched alarm_समयr_nsleep_restart(काष्ठा restart_block *restart)
+अणु
+	क्रमागत  alarmसमयr_type type = restart->nanosleep.घड़ीid;
+	kसमय_प्रकार exp = restart->nanosleep.expires;
+	काष्ठा alarm alarm;
 
-	alarm_init_on_stack(&alarm, type, alarmtimer_nsleep_wakeup);
+	alarm_init_on_stack(&alarm, type, alarmसमयr_nsleep_wakeup);
 
-	return alarmtimer_do_nsleep(&alarm, exp, type);
-}
+	वापस alarmसमयr_करो_nsleep(&alarm, exp, type);
+पूर्ण
 
 /**
- * alarm_timer_nsleep - alarmtimer nanosleep
- * @which_clock: clockid
- * @flags: determines abstime or relative
- * @tsreq: requested sleep time (abs or rel)
+ * alarm_समयr_nsleep - alarmसमयr nanosleep
+ * @which_घड़ी: घड़ीid
+ * @flags: determines असलसमय or relative
+ * @tsreq: requested sleep समय (असल or rel)
  *
- * Handles clock_nanosleep calls against _ALARM clockids
+ * Handles घड़ी_nanosleep calls against _ALARM घड़ीids
  */
-static int alarm_timer_nsleep(const clockid_t which_clock, int flags,
-			      const struct timespec64 *tsreq)
-{
-	enum  alarmtimer_type type = clock2alarm(which_clock);
-	struct restart_block *restart = &current->restart_block;
-	struct alarm alarm;
-	ktime_t exp;
-	int ret = 0;
+अटल पूर्णांक alarm_समयr_nsleep(स्थिर घड़ीid_t which_घड़ी, पूर्णांक flags,
+			      स्थिर काष्ठा बारpec64 *tsreq)
+अणु
+	क्रमागत  alarmसमयr_type type = घड़ी2alarm(which_घड़ी);
+	काष्ठा restart_block *restart = &current->restart_block;
+	काष्ठा alarm alarm;
+	kसमय_प्रकार exp;
+	पूर्णांक ret = 0;
 
-	if (!alarmtimer_get_rtcdev())
-		return -EOPNOTSUPP;
+	अगर (!alarmसमयr_get_rtcdev())
+		वापस -EOPNOTSUPP;
 
-	if (flags & ~TIMER_ABSTIME)
-		return -EINVAL;
+	अगर (flags & ~TIMER_ABSTIME)
+		वापस -EINVAL;
 
-	if (!capable(CAP_WAKE_ALARM))
-		return -EPERM;
+	अगर (!capable(CAP_WAKE_ALARM))
+		वापस -EPERM;
 
-	alarm_init_on_stack(&alarm, type, alarmtimer_nsleep_wakeup);
+	alarm_init_on_stack(&alarm, type, alarmसमयr_nsleep_wakeup);
 
-	exp = timespec64_to_ktime(*tsreq);
-	/* Convert (if necessary) to absolute time */
-	if (flags != TIMER_ABSTIME) {
-		ktime_t now = alarm_bases[type].get_ktime();
+	exp = बारpec64_to_kसमय(*tsreq);
+	/* Convert (अगर necessary) to असलolute समय */
+	अगर (flags != TIMER_ABSTIME) अणु
+		kसमय_प्रकार now = alarm_bases[type].get_kसमय();
 
-		exp = ktime_add_safe(now, exp);
-	} else {
-		exp = timens_ktime_to_host(which_clock, exp);
-	}
+		exp = kसमय_add_safe(now, exp);
+	पूर्ण अन्यथा अणु
+		exp = समयns_kसमय_प्रकारo_host(which_घड़ी, exp);
+	पूर्ण
 
-	ret = alarmtimer_do_nsleep(&alarm, exp, type);
-	if (ret != -ERESTART_RESTARTBLOCK)
-		return ret;
+	ret = alarmसमयr_करो_nsleep(&alarm, exp, type);
+	अगर (ret != -ERESTART_RESTARTBLOCK)
+		वापस ret;
 
-	/* abs timers don't set remaining time or restart */
-	if (flags == TIMER_ABSTIME)
-		return -ERESTARTNOHAND;
+	/* असल समयrs करोn't set reमुख्यing समय or restart */
+	अगर (flags == TIMER_ABSTIME)
+		वापस -ERESTARTNOHAND;
 
-	restart->nanosleep.clockid = type;
+	restart->nanosleep.घड़ीid = type;
 	restart->nanosleep.expires = exp;
-	set_restart_fn(restart, alarm_timer_nsleep_restart);
-	return ret;
-}
+	set_restart_fn(restart, alarm_समयr_nsleep_restart);
+	वापस ret;
+पूर्ण
 
-const struct k_clock alarm_clock = {
-	.clock_getres		= alarm_clock_getres,
-	.clock_get_ktime	= alarm_clock_get_ktime,
-	.clock_get_timespec	= alarm_clock_get_timespec,
-	.timer_create		= alarm_timer_create,
-	.timer_set		= common_timer_set,
-	.timer_del		= common_timer_del,
-	.timer_get		= common_timer_get,
-	.timer_arm		= alarm_timer_arm,
-	.timer_rearm		= alarm_timer_rearm,
-	.timer_forward		= alarm_timer_forward,
-	.timer_remaining	= alarm_timer_remaining,
-	.timer_try_to_cancel	= alarm_timer_try_to_cancel,
-	.timer_wait_running	= alarm_timer_wait_running,
-	.nsleep			= alarm_timer_nsleep,
-};
-#endif /* CONFIG_POSIX_TIMERS */
+स्थिर काष्ठा k_घड़ी alarm_घड़ी = अणु
+	.घड़ी_getres		= alarm_घड़ी_getres,
+	.घड़ी_get_kसमय	= alarm_घड़ी_get_kसमय,
+	.घड़ी_get_बारpec	= alarm_घड़ी_get_बारpec,
+	.समयr_create		= alarm_समयr_create,
+	.समयr_set		= common_समयr_set,
+	.समयr_del		= common_समयr_del,
+	.समयr_get		= common_समयr_get,
+	.समयr_arm		= alarm_समयr_arm,
+	.समयr_rearm		= alarm_समयr_rearm,
+	.समयr_क्रमward		= alarm_समयr_क्रमward,
+	.समयr_reमुख्यing	= alarm_समयr_reमुख्यing,
+	.समयr_try_to_cancel	= alarm_समयr_try_to_cancel,
+	.समयr_रुको_running	= alarm_समयr_रुको_running,
+	.nsleep			= alarm_समयr_nsleep,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_POSIX_TIMERS */
 
 
-/* Suspend hook structures */
-static const struct dev_pm_ops alarmtimer_pm_ops = {
-	.suspend = alarmtimer_suspend,
-	.resume = alarmtimer_resume,
-};
+/* Suspend hook काष्ठाures */
+अटल स्थिर काष्ठा dev_pm_ops alarmसमयr_pm_ops = अणु
+	.suspend = alarmसमयr_suspend,
+	.resume = alarmसमयr_resume,
+पूर्ण;
 
-static struct platform_driver alarmtimer_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver alarmसमयr_driver = अणु
+	.driver = अणु
 		.name = "alarmtimer",
-		.pm = &alarmtimer_pm_ops,
-	}
-};
+		.pm = &alarmसमयr_pm_ops,
+	पूर्ण
+पूर्ण;
 
-static void get_boottime_timespec(struct timespec64 *tp)
-{
-	ktime_get_boottime_ts64(tp);
-	timens_add_boottime(tp);
-}
+अटल व्योम get_bootसमय_प्रकारimespec(काष्ठा बारpec64 *tp)
+अणु
+	kसमय_get_bootसमय_प्रकारs64(tp);
+	समयns_add_bootसमय(tp);
+पूर्ण
 
 /**
- * alarmtimer_init - Initialize alarm timer code
+ * alarmसमयr_init - Initialize alarm समयr code
  *
- * This function initializes the alarm bases and registers
- * the posix clock ids.
+ * This function initializes the alarm bases and रेजिस्टरs
+ * the posix घड़ी ids.
  */
-static int __init alarmtimer_init(void)
-{
-	int error;
-	int i;
+अटल पूर्णांक __init alarmसमयr_init(व्योम)
+अणु
+	पूर्णांक error;
+	पूर्णांक i;
 
-	alarmtimer_rtc_timer_init();
+	alarmसमयr_rtc_समयr_init();
 
 	/* Initialize alarm bases */
-	alarm_bases[ALARM_REALTIME].base_clockid = CLOCK_REALTIME;
-	alarm_bases[ALARM_REALTIME].get_ktime = &ktime_get_real;
-	alarm_bases[ALARM_REALTIME].get_timespec = ktime_get_real_ts64;
-	alarm_bases[ALARM_BOOTTIME].base_clockid = CLOCK_BOOTTIME;
-	alarm_bases[ALARM_BOOTTIME].get_ktime = &ktime_get_boottime;
-	alarm_bases[ALARM_BOOTTIME].get_timespec = get_boottime_timespec;
-	for (i = 0; i < ALARM_NUMTYPE; i++) {
-		timerqueue_init_head(&alarm_bases[i].timerqueue);
+	alarm_bases[ALARM_REALTIME].base_घड़ीid = CLOCK_REALTIME;
+	alarm_bases[ALARM_REALTIME].get_kसमय = &kसमय_get_real;
+	alarm_bases[ALARM_REALTIME].get_बारpec = kसमय_get_real_ts64;
+	alarm_bases[ALARM_BOOTTIME].base_घड़ीid = CLOCK_BOOTTIME;
+	alarm_bases[ALARM_BOOTTIME].get_kसमय = &kसमय_get_bootसमय;
+	alarm_bases[ALARM_BOOTTIME].get_बारpec = get_bootसमय_प्रकारimespec;
+	क्रम (i = 0; i < ALARM_NUMTYPE; i++) अणु
+		समयrqueue_init_head(&alarm_bases[i].समयrqueue);
 		spin_lock_init(&alarm_bases[i].lock);
-	}
+	पूर्ण
 
-	error = alarmtimer_rtc_interface_setup();
-	if (error)
-		return error;
+	error = alarmसमयr_rtc_पूर्णांकerface_setup();
+	अगर (error)
+		वापस error;
 
-	error = platform_driver_register(&alarmtimer_driver);
-	if (error)
-		goto out_if;
+	error = platक्रमm_driver_रेजिस्टर(&alarmसमयr_driver);
+	अगर (error)
+		जाओ out_अगर;
 
-	return 0;
-out_if:
-	alarmtimer_rtc_interface_remove();
-	return error;
-}
-device_initcall(alarmtimer_init);
+	वापस 0;
+out_अगर:
+	alarmसमयr_rtc_पूर्णांकerface_हटाओ();
+	वापस error;
+पूर्ण
+device_initcall(alarmसमयr_init);

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	STB6100 Silicon Tuner
 	Copyright (C) Manu Abraham (abraham.manu@gmail.com)
@@ -7,81 +8,81 @@
 
 */
 
-#include <linux/dvb/frontend.h>
-#include <media/dvb_frontend.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <media/dvb_frontend.h>
 
-static int stb6100_get_frequency(struct dvb_frontend *fe, u32 *frequency)
-{
-	struct dvb_frontend_ops	*frontend_ops = &fe->ops;
-	struct dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
-	int err = 0;
+अटल पूर्णांक stb6100_get_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
+अणु
+	काष्ठा dvb_frontend_ops	*frontend_ops = &fe->ops;
+	काष्ठा dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
+	पूर्णांक err = 0;
 
-	if (tuner_ops->get_frequency) {
+	अगर (tuner_ops->get_frequency) अणु
 		err = tuner_ops->get_frequency(fe, frequency);
-		if (err < 0) {
-			printk("%s: Invalid parameter\n", __func__);
-			return err;
-		}
-	}
-	return 0;
-}
+		अगर (err < 0) अणु
+			prपूर्णांकk("%s: Invalid parameter\n", __func__);
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int stb6100_set_frequency(struct dvb_frontend *fe, u32 frequency)
-{
-	struct dvb_frontend_ops	*frontend_ops = &fe->ops;
-	struct dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक stb6100_set_frequency(काष्ठा dvb_frontend *fe, u32 frequency)
+अणु
+	काष्ठा dvb_frontend_ops	*frontend_ops = &fe->ops;
+	काष्ठा dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u32 bw = c->bandwidth_hz;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	c->frequency = frequency;
 	c->bandwidth_hz = 0;		/* Don't adjust the bandwidth */
 
-	if (tuner_ops->set_params) {
+	अगर (tuner_ops->set_params) अणु
 		err = tuner_ops->set_params(fe);
 		c->bandwidth_hz = bw;
-		if (err < 0) {
-			printk("%s: Invalid parameter\n", __func__);
-			return err;
-		}
-	}
-	return 0;
-}
+		अगर (err < 0) अणु
+			prपूर्णांकk("%s: Invalid parameter\n", __func__);
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int stb6100_get_bandwidth(struct dvb_frontend *fe, u32 *bandwidth)
-{
-	struct dvb_frontend_ops	*frontend_ops = &fe->ops;
-	struct dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
-	int err = 0;
+अटल पूर्णांक stb6100_get_bandwidth(काष्ठा dvb_frontend *fe, u32 *bandwidth)
+अणु
+	काष्ठा dvb_frontend_ops	*frontend_ops = &fe->ops;
+	काष्ठा dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
+	पूर्णांक err = 0;
 
-	if (tuner_ops->get_bandwidth) {
+	अगर (tuner_ops->get_bandwidth) अणु
 		err = tuner_ops->get_bandwidth(fe, bandwidth);
-		if (err < 0) {
-			printk("%s: Invalid parameter\n", __func__);
-			return err;
-		}
-	}
-	return 0;
-}
+		अगर (err < 0) अणु
+			prपूर्णांकk("%s: Invalid parameter\n", __func__);
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int stb6100_set_bandwidth(struct dvb_frontend *fe, u32 bandwidth)
-{
-	struct dvb_frontend_ops	*frontend_ops = &fe->ops;
-	struct dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक stb6100_set_bandwidth(काष्ठा dvb_frontend *fe, u32 bandwidth)
+अणु
+	काष्ठा dvb_frontend_ops	*frontend_ops = &fe->ops;
+	काष्ठा dvb_tuner_ops	*tuner_ops = &frontend_ops->tuner_ops;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u32 freq = c->frequency;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	c->bandwidth_hz = bandwidth;
 	c->frequency = 0;		/* Don't adjust the frequency */
 
-	if (tuner_ops->set_params) {
+	अगर (tuner_ops->set_params) अणु
 		err = tuner_ops->set_params(fe);
 		c->frequency = freq;
-		if (err < 0) {
-			printk("%s: Invalid parameter\n", __func__);
-			return err;
-		}
-	}
-	return 0;
-}
+		अगर (err < 0) अणु
+			prपूर्णांकk("%s: Invalid parameter\n", __func__);
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण

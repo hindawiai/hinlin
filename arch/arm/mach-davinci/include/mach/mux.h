@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
- * Table of the DAVINCI register configurations for the PINMUX combinations
+ * Table of the DAVINCI रेजिस्टर configurations क्रम the PINMUX combinations
  *
  * Author: Vladimir Barinov, MontaVista Software, Inc. <source@mvista.com>
  *
- * Based on linux/include/asm-arm/arch-omap/mux.h:
+ * Based on linux/include/यंत्र-arm/arch-omap/mux.h:
  * Copyright (C) 2003 - 2005 Nokia Corporation
  *
  * Written by Tony Lindgren
@@ -16,22 +17,22 @@
  * Copyright (C) 2008 Texas Instruments.
  */
 
-#ifndef __INC_MACH_MUX_H
-#define __INC_MACH_MUX_H
+#अगर_अघोषित __INC_MACH_MUX_H
+#घोषणा __INC_MACH_MUX_H
 
-struct mux_config {
-	const char *name;
-	const char *mux_reg_name;
-	const unsigned char mux_reg;
-	const unsigned char mask_offset;
-	const unsigned char mask;
-	const unsigned char mode;
+काष्ठा mux_config अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *mux_reg_name;
+	स्थिर अचिन्हित अक्षर mux_reg;
+	स्थिर अचिन्हित अक्षर mask_offset;
+	स्थिर अचिन्हित अक्षर mask;
+	स्थिर अचिन्हित अक्षर mode;
 	bool debug;
-};
+पूर्ण;
 
-enum davinci_dm644x_index {
-	/* ATA and HDDIR functions */
-	DM644X_HDIREN,
+क्रमागत davinci_dm644x_index अणु
+	/* ATA and HDसूची functions */
+	DM644X_HसूचीEN,
 	DM644X_ATAEN,
 	DM644X_ATAEN_DISABLE,
 
@@ -93,9 +94,9 @@ enum davinci_dm644x_index {
 	/* LCD */
 	DM644X_LOEEN,
 	DM644X_LFLDEN,
-};
+पूर्ण;
 
-enum davinci_dm646x_index {
+क्रमागत davinci_dm646x_index अणु
 	/* ATA function */
 	DM646X_ATAEN,
 
@@ -119,9 +120,9 @@ enum davinci_dm646x_index {
 	DM646X_PTSIMUX_PARALLEL,
 	DM646X_PTSOMUX_SERIAL,
 	DM646X_PTSIMUX_SERIAL,
-};
+पूर्ण;
 
-enum davinci_dm355_index {
+क्रमागत davinci_dm355_index अणु
 	/* MMC/SD 0 */
 	DM355_MMCSD0,
 
@@ -175,9 +176,9 @@ enum davinci_dm355_index {
 	DM355_VIN_YIN_EN,
 	DM355_VIN_CINL_EN,
 	DM355_VIN_CINH_EN,
-};
+पूर्ण;
 
-enum davinci_dm365_index {
+क्रमागत davinci_dm365_index अणु
 	/* MMC/SD 0 */
 	DM365_MMCSD0,
 
@@ -342,9 +343,9 @@ enum davinci_dm365_index {
 	DM365_EVT2_VC_TX,
 	DM365_EVT3_VC_RX,
 	DM365_EVT26_MMC0_RX,
-};
+पूर्ण;
 
-enum da830_index {
+क्रमागत da830_index अणु
 	DA830_GPIO7_14,
 	DA830_RTCK,
 	DA830_GPIO7_15,
@@ -746,9 +747,9 @@ enum da830_index {
 	DA830_EMA_WAIT_0,
 	DA830_NUHPI_HRDY,
 	DA830_GPIO2_10,
-};
+पूर्ण;
 
-enum davinci_da850_index {
+क्रमागत davinci_da850_index अणु
 	/* UART0 function */
 	DA850_NUART0_CTS,
 	DA850_NUART0_RTS,
@@ -970,21 +971,21 @@ enum davinci_da850_index {
 	DA850_VPIF_DOUT15,
 	DA850_VPIF_CLKO2,
 	DA850_VPIF_CLKO3,
-};
+पूर्ण;
 
-#define PINMUX(x)		(4 * (x))
+#घोषणा PINMUX(x)		(4 * (x))
 
-#ifdef CONFIG_DAVINCI_MUX
+#अगर_घोषित CONFIG_DAVINCI_MUX
 /* setup pin muxing */
-extern int davinci_cfg_reg(unsigned long reg_cfg);
-extern int davinci_cfg_reg_list(const short pins[]);
-#else
-/* boot loader does it all (no warnings from CONFIG_DAVINCI_MUX_WARNINGS) */
-static inline int davinci_cfg_reg(unsigned long reg_cfg) { return 0; }
-static inline int davinci_cfg_reg_list(const short pins[])
-{
-	return 0;
-}
-#endif
+बाह्य पूर्णांक davinci_cfg_reg(अचिन्हित दीर्घ reg_cfg);
+बाह्य पूर्णांक davinci_cfg_reg_list(स्थिर लघु pins[]);
+#अन्यथा
+/* boot loader करोes it all (no warnings from CONFIG_DAVINCI_MUX_WARNINGS) */
+अटल अंतरभूत पूर्णांक davinci_cfg_reg(अचिन्हित दीर्घ reg_cfg) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक davinci_cfg_reg_list(स्थिर लघु pins[])
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __INC_MACH_MUX_H */
+#पूर्ण_अगर /* __INC_MACH_MUX_H */

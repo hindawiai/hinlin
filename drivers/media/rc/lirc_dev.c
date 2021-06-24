@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * LIRC base driver
  *
- * by Artur Lipowski <alipowski@interia.pl>
+ * by Artur Liघातski <aliघातski@पूर्णांकeria.pl>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/device.h>
-#include <linux/file.h>
-#include <linux/idr.h>
-#include <linux/poll.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/device.h>
+#समावेश <linux/file.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/रुको.h>
 
-#include "rc-core-priv.h"
-#include <uapi/linux/lirc.h>
+#समावेश "rc-core-priv.h"
+#समावेश <uapi/linux/lirc.h>
 
-#define LIRCBUF_SIZE	1024
+#घोषणा LIRCBUF_SIZE	1024
 
-static dev_t lirc_base_dev;
+अटल dev_t lirc_base_dev;
 
 /* Used to keep track of allocated lirc devices */
-static DEFINE_IDA(lirc_ida);
+अटल DEFINE_IDA(lirc_ida);
 
-/* Only used for sysfs but defined to void otherwise */
-static struct class *lirc_class;
+/* Only used क्रम sysfs but defined to व्योम otherwise */
+अटल काष्ठा class *lirc_class;
 
 /**
  * lirc_raw_event() - Send raw IR data to lirc to be relayed to userspace
  *
- * @dev:	the struct rc_dev descriptor of the device
- * @ev:		the struct ir_raw_event descriptor of the pulse/space
+ * @dev:	the काष्ठा rc_dev descriptor of the device
+ * @ev:		the काष्ठा ir_raw_event descriptor of the pulse/space
  */
-void lirc_raw_event(struct rc_dev *dev, struct ir_raw_event ev)
-{
-	unsigned long flags;
-	struct lirc_fh *fh;
-	int sample;
+व्योम lirc_raw_event(काष्ठा rc_dev *dev, काष्ठा ir_raw_event ev)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा lirc_fh *fh;
+	पूर्णांक sample;
 
 	/* Packet start */
-	if (ev.reset) {
+	अगर (ev.reset) अणु
 		/*
-		 * Userspace expects a long space event before the start of
-		 * the signal to use as a sync.  This may be done with repeat
-		 * packets and normal samples.  But if a reset has been sent
-		 * then we assume that a long time has passed, so we send a
-		 * space with the maximum time value.
+		 * Userspace expects a दीर्घ space event beक्रमe the start of
+		 * the संकेत to use as a sync.  This may be करोne with repeat
+		 * packets and normal samples.  But अगर a reset has been sent
+		 * then we assume that a दीर्घ समय has passed, so we send a
+		 * space with the maximum समय value.
 		 */
 		sample = LIRC_SPACE(LIRC_VALUE_MASK);
 		dev_dbg(&dev->dev, "delivering reset sync space to lirc_dev\n");
 
 	/* Carrier reports */
-	} else if (ev.carrier_report) {
+	पूर्ण अन्यथा अगर (ev.carrier_report) अणु
 		sample = LIRC_FREQUENCY(ev.carrier);
 		dev_dbg(&dev->dev, "carrier report (freq: %d)\n", sample);
 
 	/* Packet end */
-	} else if (ev.timeout) {
-		if (dev->gap)
-			return;
+	पूर्ण अन्यथा अगर (ev.समयout) अणु
+		अगर (dev->gap)
+			वापस;
 
-		dev->gap_start = ktime_get();
+		dev->gap_start = kसमय_get();
 		dev->gap = true;
 		dev->gap_duration = ev.duration;
 
@@ -71,9 +72,9 @@ void lirc_raw_event(struct rc_dev *dev, struct ir_raw_event ev)
 		dev_dbg(&dev->dev, "timeout report (duration: %d)\n", sample);
 
 	/* Normal sample */
-	} else {
-		if (dev->gap) {
-			dev->gap_duration += ktime_to_us(ktime_sub(ktime_get(),
+	पूर्ण अन्यथा अणु
+		अगर (dev->gap) अणु
+			dev->gap_duration += kसमय_प्रकारo_us(kसमय_sub(kसमय_get(),
 							 dev->gap_start));
 
 			/* Cap by LIRC_VALUE_MASK */
@@ -81,656 +82,656 @@ void lirc_raw_event(struct rc_dev *dev, struct ir_raw_event ev)
 						  LIRC_VALUE_MASK);
 
 			spin_lock_irqsave(&dev->lirc_fh_lock, flags);
-			list_for_each_entry(fh, &dev->lirc_fh, list)
-				kfifo_put(&fh->rawir,
+			list_क्रम_each_entry(fh, &dev->lirc_fh, list)
+				kfअगरo_put(&fh->rawir,
 					  LIRC_SPACE(dev->gap_duration));
 			spin_unlock_irqrestore(&dev->lirc_fh_lock, flags);
 			dev->gap = false;
-		}
+		पूर्ण
 
 		sample = ev.pulse ? LIRC_PULSE(ev.duration) :
 					LIRC_SPACE(ev.duration);
 		dev_dbg(&dev->dev, "delivering %uus %s to lirc_dev\n",
 			ev.duration, TO_STR(ev.pulse));
-	}
+	पूर्ण
 
 	/*
-	 * bpf does not care about the gap generated above; that exists
-	 * for backwards compatibility
+	 * bpf करोes not care about the gap generated above; that exists
+	 * क्रम backwards compatibility
 	 */
 	lirc_bpf_run(dev, sample);
 
 	spin_lock_irqsave(&dev->lirc_fh_lock, flags);
-	list_for_each_entry(fh, &dev->lirc_fh, list) {
-		if (LIRC_IS_TIMEOUT(sample) && !fh->send_timeout_reports)
-			continue;
-		if (kfifo_put(&fh->rawir, sample))
-			wake_up_poll(&fh->wait_poll, EPOLLIN | EPOLLRDNORM);
-	}
+	list_क्रम_each_entry(fh, &dev->lirc_fh, list) अणु
+		अगर (LIRC_IS_TIMEOUT(sample) && !fh->send_समयout_reports)
+			जारी;
+		अगर (kfअगरo_put(&fh->rawir, sample))
+			wake_up_poll(&fh->रुको_poll, EPOLLIN | EPOLLRDNORM);
+	पूर्ण
 	spin_unlock_irqrestore(&dev->lirc_fh_lock, flags);
-}
+पूर्ण
 
 /**
  * lirc_scancode_event() - Send scancode data to lirc to be relayed to
  *		userspace. This can be called in atomic context.
- * @dev:	the struct rc_dev descriptor of the device
- * @lsc:	the struct lirc_scancode describing the decoded scancode
+ * @dev:	the काष्ठा rc_dev descriptor of the device
+ * @lsc:	the काष्ठा lirc_scancode describing the decoded scancode
  */
-void lirc_scancode_event(struct rc_dev *dev, struct lirc_scancode *lsc)
-{
-	unsigned long flags;
-	struct lirc_fh *fh;
+व्योम lirc_scancode_event(काष्ठा rc_dev *dev, काष्ठा lirc_scancode *lsc)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा lirc_fh *fh;
 
-	lsc->timestamp = ktime_get_ns();
+	lsc->बारtamp = kसमय_get_ns();
 
 	spin_lock_irqsave(&dev->lirc_fh_lock, flags);
-	list_for_each_entry(fh, &dev->lirc_fh, list) {
-		if (kfifo_put(&fh->scancodes, *lsc))
-			wake_up_poll(&fh->wait_poll, EPOLLIN | EPOLLRDNORM);
-	}
+	list_क्रम_each_entry(fh, &dev->lirc_fh, list) अणु
+		अगर (kfअगरo_put(&fh->scancodes, *lsc))
+			wake_up_poll(&fh->रुको_poll, EPOLLIN | EPOLLRDNORM);
+	पूर्ण
 	spin_unlock_irqrestore(&dev->lirc_fh_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lirc_scancode_event);
 
-static int lirc_open(struct inode *inode, struct file *file)
-{
-	struct rc_dev *dev = container_of(inode->i_cdev, struct rc_dev,
+अटल पूर्णांक lirc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा rc_dev *dev = container_of(inode->i_cdev, काष्ठा rc_dev,
 					  lirc_cdev);
-	struct lirc_fh *fh = kzalloc(sizeof(*fh), GFP_KERNEL);
-	unsigned long flags;
-	int retval;
+	काष्ठा lirc_fh *fh = kzalloc(माप(*fh), GFP_KERNEL);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक retval;
 
-	if (!fh)
-		return -ENOMEM;
+	अगर (!fh)
+		वापस -ENOMEM;
 
 	get_device(&dev->dev);
 
-	if (!dev->registered) {
+	अगर (!dev->रेजिस्टरed) अणु
 		retval = -ENODEV;
-		goto out_fh;
-	}
+		जाओ out_fh;
+	पूर्ण
 
-	if (dev->driver_type == RC_DRIVER_IR_RAW) {
-		if (kfifo_alloc(&fh->rawir, MAX_IR_EVENT_SIZE, GFP_KERNEL)) {
+	अगर (dev->driver_type == RC_DRIVER_IR_RAW) अणु
+		अगर (kfअगरo_alloc(&fh->rawir, MAX_IR_EVENT_SIZE, GFP_KERNEL)) अणु
 			retval = -ENOMEM;
-			goto out_fh;
-		}
-	}
+			जाओ out_fh;
+		पूर्ण
+	पूर्ण
 
-	if (dev->driver_type != RC_DRIVER_IR_RAW_TX) {
-		if (kfifo_alloc(&fh->scancodes, 32, GFP_KERNEL)) {
+	अगर (dev->driver_type != RC_DRIVER_IR_RAW_TX) अणु
+		अगर (kfअगरo_alloc(&fh->scancodes, 32, GFP_KERNEL)) अणु
 			retval = -ENOMEM;
-			goto out_rawir;
-		}
-	}
+			जाओ out_rawir;
+		पूर्ण
+	पूर्ण
 
 	fh->send_mode = LIRC_MODE_PULSE;
 	fh->rc = dev;
-	fh->send_timeout_reports = true;
+	fh->send_समयout_reports = true;
 
-	if (dev->driver_type == RC_DRIVER_SCANCODE)
+	अगर (dev->driver_type == RC_DRIVER_SCANCODE)
 		fh->rec_mode = LIRC_MODE_SCANCODE;
-	else
+	अन्यथा
 		fh->rec_mode = LIRC_MODE_MODE2;
 
-	retval = rc_open(dev);
-	if (retval)
-		goto out_kfifo;
+	retval = rc_खोलो(dev);
+	अगर (retval)
+		जाओ out_kfअगरo;
 
-	init_waitqueue_head(&fh->wait_poll);
+	init_रुकोqueue_head(&fh->रुको_poll);
 
-	file->private_data = fh;
+	file->निजी_data = fh;
 	spin_lock_irqsave(&dev->lirc_fh_lock, flags);
 	list_add(&fh->list, &dev->lirc_fh);
 	spin_unlock_irqrestore(&dev->lirc_fh_lock, flags);
 
-	stream_open(inode, file);
+	stream_खोलो(inode, file);
 
-	return 0;
-out_kfifo:
-	if (dev->driver_type != RC_DRIVER_IR_RAW_TX)
-		kfifo_free(&fh->scancodes);
+	वापस 0;
+out_kfअगरo:
+	अगर (dev->driver_type != RC_DRIVER_IR_RAW_TX)
+		kfअगरo_मुक्त(&fh->scancodes);
 out_rawir:
-	if (dev->driver_type == RC_DRIVER_IR_RAW)
-		kfifo_free(&fh->rawir);
+	अगर (dev->driver_type == RC_DRIVER_IR_RAW)
+		kfअगरo_मुक्त(&fh->rawir);
 out_fh:
-	kfree(fh);
+	kमुक्त(fh);
 	put_device(&dev->dev);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int lirc_close(struct inode *inode, struct file *file)
-{
-	struct lirc_fh *fh = file->private_data;
-	struct rc_dev *dev = fh->rc;
-	unsigned long flags;
+अटल पूर्णांक lirc_बंद(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा lirc_fh *fh = file->निजी_data;
+	काष्ठा rc_dev *dev = fh->rc;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->lirc_fh_lock, flags);
 	list_del(&fh->list);
 	spin_unlock_irqrestore(&dev->lirc_fh_lock, flags);
 
-	if (dev->driver_type == RC_DRIVER_IR_RAW)
-		kfifo_free(&fh->rawir);
-	if (dev->driver_type != RC_DRIVER_IR_RAW_TX)
-		kfifo_free(&fh->scancodes);
-	kfree(fh);
+	अगर (dev->driver_type == RC_DRIVER_IR_RAW)
+		kfअगरo_मुक्त(&fh->rawir);
+	अगर (dev->driver_type != RC_DRIVER_IR_RAW_TX)
+		kfअगरo_मुक्त(&fh->scancodes);
+	kमुक्त(fh);
 
-	rc_close(dev);
+	rc_बंद(dev);
 	put_device(&dev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t lirc_transmit(struct file *file, const char __user *buf,
-			     size_t n, loff_t *ppos)
-{
-	struct lirc_fh *fh = file->private_data;
-	struct rc_dev *dev = fh->rc;
-	unsigned int *txbuf;
-	struct ir_raw_event *raw = NULL;
-	ssize_t ret;
-	size_t count;
-	ktime_t start;
-	s64 towait;
-	unsigned int duration = 0; /* signal duration in us */
-	int i;
+अटल sमाप_प्रकार lirc_transmit(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			     माप_प्रकार n, loff_t *ppos)
+अणु
+	काष्ठा lirc_fh *fh = file->निजी_data;
+	काष्ठा rc_dev *dev = fh->rc;
+	अचिन्हित पूर्णांक *txbuf;
+	काष्ठा ir_raw_event *raw = शून्य;
+	sमाप_प्रकार ret;
+	माप_प्रकार count;
+	kसमय_प्रकार start;
+	s64 toरुको;
+	अचिन्हित पूर्णांक duration = 0; /* संकेत duration in us */
+	पूर्णांक i;
 
-	ret = mutex_lock_interruptible(&dev->lock);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&dev->lock);
+	अगर (ret)
+		वापस ret;
 
-	if (!dev->registered) {
+	अगर (!dev->रेजिस्टरed) अणु
 		ret = -ENODEV;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (!dev->tx_ir) {
+	अगर (!dev->tx_ir) अणु
 		ret = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (fh->send_mode == LIRC_MODE_SCANCODE) {
-		struct lirc_scancode scan;
+	अगर (fh->send_mode == LIRC_MODE_SCANCODE) अणु
+		काष्ठा lirc_scancode scan;
 
-		if (n != sizeof(scan)) {
+		अगर (n != माप(scan)) अणु
 			ret = -EINVAL;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
-		if (copy_from_user(&scan, buf, sizeof(scan))) {
+		अगर (copy_from_user(&scan, buf, माप(scan))) अणु
 			ret = -EFAULT;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
-		if (scan.flags || scan.keycode || scan.timestamp ||
-		    scan.rc_proto > RC_PROTO_MAX) {
+		अगर (scan.flags || scan.keycode || scan.बारtamp ||
+		    scan.rc_proto > RC_PROTO_MAX) अणु
 			ret = -EINVAL;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
-		/* We only have encoders for 32-bit protocols. */
-		if (scan.scancode > U32_MAX ||
-		    !rc_validate_scancode(scan.rc_proto, scan.scancode)) {
+		/* We only have encoders क्रम 32-bit protocols. */
+		अगर (scan.scancode > U32_MAX ||
+		    !rc_validate_scancode(scan.rc_proto, scan.scancode)) अणु
 			ret = -EINVAL;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
-		raw = kmalloc_array(LIRCBUF_SIZE, sizeof(*raw), GFP_KERNEL);
-		if (!raw) {
+		raw = kदो_स्मृति_array(LIRCBUF_SIZE, माप(*raw), GFP_KERNEL);
+		अगर (!raw) अणु
 			ret = -ENOMEM;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		ret = ir_raw_encode_scancode(scan.rc_proto, scan.scancode,
 					     raw, LIRCBUF_SIZE);
-		if (ret < 0)
-			goto out_kfree_raw;
+		अगर (ret < 0)
+			जाओ out_kमुक्त_raw;
 
 		count = ret;
 
-		txbuf = kmalloc_array(count, sizeof(unsigned int), GFP_KERNEL);
-		if (!txbuf) {
+		txbuf = kदो_स्मृति_array(count, माप(अचिन्हित पूर्णांक), GFP_KERNEL);
+		अगर (!txbuf) अणु
 			ret = -ENOMEM;
-			goto out_kfree_raw;
-		}
+			जाओ out_kमुक्त_raw;
+		पूर्ण
 
-		for (i = 0; i < count; i++)
+		क्रम (i = 0; i < count; i++)
 			txbuf[i] = raw[i].duration;
 
-		if (dev->s_tx_carrier) {
-			int carrier = ir_raw_encode_carrier(scan.rc_proto);
+		अगर (dev->s_tx_carrier) अणु
+			पूर्णांक carrier = ir_raw_encode_carrier(scan.rc_proto);
 
-			if (carrier > 0)
+			अगर (carrier > 0)
 				dev->s_tx_carrier(dev, carrier);
-		}
-	} else {
-		if (n < sizeof(unsigned int) || n % sizeof(unsigned int)) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (n < माप(अचिन्हित पूर्णांक) || n % माप(अचिन्हित पूर्णांक)) अणु
 			ret = -EINVAL;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
-		count = n / sizeof(unsigned int);
-		if (count > LIRCBUF_SIZE || count % 2 == 0) {
+		count = n / माप(अचिन्हित पूर्णांक);
+		अगर (count > LIRCBUF_SIZE || count % 2 == 0) अणु
 			ret = -EINVAL;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		txbuf = memdup_user(buf, n);
-		if (IS_ERR(txbuf)) {
+		अगर (IS_ERR(txbuf)) अणु
 			ret = PTR_ERR(txbuf);
-			goto out_unlock;
-		}
-	}
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
-		if (txbuf[i] > IR_MAX_DURATION - duration || !txbuf[i]) {
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (txbuf[i] > IR_MAX_DURATION - duration || !txbuf[i]) अणु
 			ret = -EINVAL;
-			goto out_kfree;
-		}
+			जाओ out_kमुक्त;
+		पूर्ण
 
 		duration += txbuf[i];
-	}
+	पूर्ण
 
-	start = ktime_get();
+	start = kसमय_get();
 
 	ret = dev->tx_ir(dev, txbuf, count);
-	if (ret < 0)
-		goto out_kfree;
+	अगर (ret < 0)
+		जाओ out_kमुक्त;
 
-	kfree(txbuf);
-	kfree(raw);
+	kमुक्त(txbuf);
+	kमुक्त(raw);
 	mutex_unlock(&dev->lock);
 
 	/*
-	 * The lircd gap calculation expects the write function to
-	 * wait for the actual IR signal to be transmitted before
-	 * returning.
+	 * The lircd gap calculation expects the ग_लिखो function to
+	 * रुको क्रम the actual IR संकेत to be transmitted beक्रमe
+	 * वापसing.
 	 */
-	towait = ktime_us_delta(ktime_add_us(start, duration),
-				ktime_get());
-	if (towait > 0) {
+	toरुको = kसमय_us_delta(kसमय_add_us(start, duration),
+				kसमय_get());
+	अगर (toरुको > 0) अणु
 		set_current_state(TASK_INTERRUPTIBLE);
-		schedule_timeout(usecs_to_jiffies(towait));
-	}
+		schedule_समयout(usecs_to_jअगरfies(toरुको));
+	पूर्ण
 
-	return n;
-out_kfree:
-	kfree(txbuf);
-out_kfree_raw:
-	kfree(raw);
+	वापस n;
+out_kमुक्त:
+	kमुक्त(txbuf);
+out_kमुक्त_raw:
+	kमुक्त(raw);
 out_unlock:
 	mutex_unlock(&dev->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long lirc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct lirc_fh *fh = file->private_data;
-	struct rc_dev *dev = fh->rc;
+अटल दीर्घ lirc_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा lirc_fh *fh = file->निजी_data;
+	काष्ठा rc_dev *dev = fh->rc;
 	u32 __user *argp = (u32 __user *)(arg);
 	u32 val = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (_IOC_DIR(cmd) & _IOC_WRITE) {
+	अगर (_IOC_सूची(cmd) & _IOC_WRITE) अणु
 		ret = get_user(val, argp);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = mutex_lock_interruptible(&dev->lock);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&dev->lock);
+	अगर (ret)
+		वापस ret;
 
-	if (!dev->registered) {
+	अगर (!dev->रेजिस्टरed) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (cmd) {
-	case LIRC_GET_FEATURES:
-		if (dev->driver_type == RC_DRIVER_SCANCODE)
+	चयन (cmd) अणु
+	हाल LIRC_GET_FEATURES:
+		अगर (dev->driver_type == RC_DRIVER_SCANCODE)
 			val |= LIRC_CAN_REC_SCANCODE;
 
-		if (dev->driver_type == RC_DRIVER_IR_RAW) {
+		अगर (dev->driver_type == RC_DRIVER_IR_RAW) अणु
 			val |= LIRC_CAN_REC_MODE2;
-			if (dev->rx_resolution)
+			अगर (dev->rx_resolution)
 				val |= LIRC_CAN_GET_REC_RESOLUTION;
-		}
+		पूर्ण
 
-		if (dev->tx_ir) {
+		अगर (dev->tx_ir) अणु
 			val |= LIRC_CAN_SEND_PULSE;
-			if (dev->s_tx_mask)
+			अगर (dev->s_tx_mask)
 				val |= LIRC_CAN_SET_TRANSMITTER_MASK;
-			if (dev->s_tx_carrier)
+			अगर (dev->s_tx_carrier)
 				val |= LIRC_CAN_SET_SEND_CARRIER;
-			if (dev->s_tx_duty_cycle)
+			अगर (dev->s_tx_duty_cycle)
 				val |= LIRC_CAN_SET_SEND_DUTY_CYCLE;
-		}
+		पूर्ण
 
-		if (dev->s_rx_carrier_range)
+		अगर (dev->s_rx_carrier_range)
 			val |= LIRC_CAN_SET_REC_CARRIER |
 				LIRC_CAN_SET_REC_CARRIER_RANGE;
 
-		if (dev->s_learning_mode)
+		अगर (dev->s_learning_mode)
 			val |= LIRC_CAN_USE_WIDEBAND_RECEIVER;
 
-		if (dev->s_carrier_report)
+		अगर (dev->s_carrier_report)
 			val |= LIRC_CAN_MEASURE_CARRIER;
 
-		if (dev->max_timeout)
+		अगर (dev->max_समयout)
 			val |= LIRC_CAN_SET_REC_TIMEOUT;
 
-		break;
+		अवरोध;
 
 	/* mode support */
-	case LIRC_GET_REC_MODE:
-		if (dev->driver_type == RC_DRIVER_IR_RAW_TX)
+	हाल LIRC_GET_REC_MODE:
+		अगर (dev->driver_type == RC_DRIVER_IR_RAW_TX)
 			ret = -ENOTTY;
-		else
+		अन्यथा
 			val = fh->rec_mode;
-		break;
+		अवरोध;
 
-	case LIRC_SET_REC_MODE:
-		switch (dev->driver_type) {
-		case RC_DRIVER_IR_RAW_TX:
+	हाल LIRC_SET_REC_MODE:
+		चयन (dev->driver_type) अणु
+		हाल RC_DRIVER_IR_RAW_TX:
 			ret = -ENOTTY;
-			break;
-		case RC_DRIVER_SCANCODE:
-			if (val != LIRC_MODE_SCANCODE)
+			अवरोध;
+		हाल RC_DRIVER_SCANCODE:
+			अगर (val != LIRC_MODE_SCANCODE)
 				ret = -EINVAL;
-			break;
-		case RC_DRIVER_IR_RAW:
-			if (!(val == LIRC_MODE_MODE2 ||
+			अवरोध;
+		हाल RC_DRIVER_IR_RAW:
+			अगर (!(val == LIRC_MODE_MODE2 ||
 			      val == LIRC_MODE_SCANCODE))
 				ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!ret)
+		अगर (!ret)
 			fh->rec_mode = val;
-		break;
+		अवरोध;
 
-	case LIRC_GET_SEND_MODE:
-		if (!dev->tx_ir)
+	हाल LIRC_GET_SEND_MODE:
+		अगर (!dev->tx_ir)
 			ret = -ENOTTY;
-		else
+		अन्यथा
 			val = fh->send_mode;
-		break;
+		अवरोध;
 
-	case LIRC_SET_SEND_MODE:
-		if (!dev->tx_ir)
+	हाल LIRC_SET_SEND_MODE:
+		अगर (!dev->tx_ir)
 			ret = -ENOTTY;
-		else if (!(val == LIRC_MODE_PULSE || val == LIRC_MODE_SCANCODE))
+		अन्यथा अगर (!(val == LIRC_MODE_PULSE || val == LIRC_MODE_SCANCODE))
 			ret = -EINVAL;
-		else
+		अन्यथा
 			fh->send_mode = val;
-		break;
+		अवरोध;
 
 	/* TX settings */
-	case LIRC_SET_TRANSMITTER_MASK:
-		if (!dev->s_tx_mask)
+	हाल LIRC_SET_TRANSMITTER_MASK:
+		अगर (!dev->s_tx_mask)
 			ret = -ENOTTY;
-		else
+		अन्यथा
 			ret = dev->s_tx_mask(dev, val);
-		break;
+		अवरोध;
 
-	case LIRC_SET_SEND_CARRIER:
-		if (!dev->s_tx_carrier)
+	हाल LIRC_SET_SEND_CARRIER:
+		अगर (!dev->s_tx_carrier)
 			ret = -ENOTTY;
-		else
+		अन्यथा
 			ret = dev->s_tx_carrier(dev, val);
-		break;
+		अवरोध;
 
-	case LIRC_SET_SEND_DUTY_CYCLE:
-		if (!dev->s_tx_duty_cycle)
+	हाल LIRC_SET_SEND_DUTY_CYCLE:
+		अगर (!dev->s_tx_duty_cycle)
 			ret = -ENOTTY;
-		else if (val <= 0 || val >= 100)
+		अन्यथा अगर (val <= 0 || val >= 100)
 			ret = -EINVAL;
-		else
+		अन्यथा
 			ret = dev->s_tx_duty_cycle(dev, val);
-		break;
+		अवरोध;
 
 	/* RX settings */
-	case LIRC_SET_REC_CARRIER:
-		if (!dev->s_rx_carrier_range)
+	हाल LIRC_SET_REC_CARRIER:
+		अगर (!dev->s_rx_carrier_range)
 			ret = -ENOTTY;
-		else if (val <= 0)
+		अन्यथा अगर (val <= 0)
 			ret = -EINVAL;
-		else
+		अन्यथा
 			ret = dev->s_rx_carrier_range(dev, fh->carrier_low,
 						      val);
-		break;
+		अवरोध;
 
-	case LIRC_SET_REC_CARRIER_RANGE:
-		if (!dev->s_rx_carrier_range)
+	हाल LIRC_SET_REC_CARRIER_RANGE:
+		अगर (!dev->s_rx_carrier_range)
 			ret = -ENOTTY;
-		else if (val <= 0)
+		अन्यथा अगर (val <= 0)
 			ret = -EINVAL;
-		else
+		अन्यथा
 			fh->carrier_low = val;
-		break;
+		अवरोध;
 
-	case LIRC_GET_REC_RESOLUTION:
-		if (!dev->rx_resolution)
+	हाल LIRC_GET_REC_RESOLUTION:
+		अगर (!dev->rx_resolution)
 			ret = -ENOTTY;
-		else
+		अन्यथा
 			val = dev->rx_resolution;
-		break;
+		अवरोध;
 
-	case LIRC_SET_WIDEBAND_RECEIVER:
-		if (!dev->s_learning_mode)
+	हाल LIRC_SET_WIDEBAND_RECEIVER:
+		अगर (!dev->s_learning_mode)
 			ret = -ENOTTY;
-		else
+		अन्यथा
 			ret = dev->s_learning_mode(dev, !!val);
-		break;
+		अवरोध;
 
-	case LIRC_SET_MEASURE_CARRIER_MODE:
-		if (!dev->s_carrier_report)
+	हाल LIRC_SET_MEASURE_CARRIER_MODE:
+		अगर (!dev->s_carrier_report)
 			ret = -ENOTTY;
-		else
+		अन्यथा
 			ret = dev->s_carrier_report(dev, !!val);
-		break;
+		अवरोध;
 
-	/* Generic timeout support */
-	case LIRC_GET_MIN_TIMEOUT:
-		if (!dev->max_timeout)
+	/* Generic समयout support */
+	हाल LIRC_GET_MIN_TIMEOUT:
+		अगर (!dev->max_समयout)
 			ret = -ENOTTY;
-		else
-			val = dev->min_timeout;
-		break;
+		अन्यथा
+			val = dev->min_समयout;
+		अवरोध;
 
-	case LIRC_GET_MAX_TIMEOUT:
-		if (!dev->max_timeout)
+	हाल LIRC_GET_MAX_TIMEOUT:
+		अगर (!dev->max_समयout)
 			ret = -ENOTTY;
-		else
-			val = dev->max_timeout;
-		break;
+		अन्यथा
+			val = dev->max_समयout;
+		अवरोध;
 
-	case LIRC_SET_REC_TIMEOUT:
-		if (!dev->max_timeout) {
+	हाल LIRC_SET_REC_TIMEOUT:
+		अगर (!dev->max_समयout) अणु
 			ret = -ENOTTY;
-		} else {
-			if (val < dev->min_timeout || val > dev->max_timeout)
+		पूर्ण अन्यथा अणु
+			अगर (val < dev->min_समयout || val > dev->max_समयout)
 				ret = -EINVAL;
-			else if (dev->s_timeout)
-				ret = dev->s_timeout(dev, val);
-			else
-				dev->timeout = val;
-		}
-		break;
+			अन्यथा अगर (dev->s_समयout)
+				ret = dev->s_समयout(dev, val);
+			अन्यथा
+				dev->समयout = val;
+		पूर्ण
+		अवरोध;
 
-	case LIRC_GET_REC_TIMEOUT:
-		if (!dev->timeout)
+	हाल LIRC_GET_REC_TIMEOUT:
+		अगर (!dev->समयout)
 			ret = -ENOTTY;
-		else
-			val = dev->timeout;
-		break;
+		अन्यथा
+			val = dev->समयout;
+		अवरोध;
 
-	case LIRC_SET_REC_TIMEOUT_REPORTS:
-		if (dev->driver_type != RC_DRIVER_IR_RAW)
+	हाल LIRC_SET_REC_TIMEOUT_REPORTS:
+		अगर (dev->driver_type != RC_DRIVER_IR_RAW)
 			ret = -ENOTTY;
-		else
-			fh->send_timeout_reports = !!val;
-		break;
+		अन्यथा
+			fh->send_समयout_reports = !!val;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -ENOTTY;
-	}
+	पूर्ण
 
-	if (!ret && _IOC_DIR(cmd) & _IOC_READ)
+	अगर (!ret && _IOC_सूची(cmd) & _IOC_READ)
 		ret = put_user(val, argp);
 
 out:
 	mutex_unlock(&dev->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __poll_t lirc_poll(struct file *file, struct poll_table_struct *wait)
-{
-	struct lirc_fh *fh = file->private_data;
-	struct rc_dev *rcdev = fh->rc;
+अटल __poll_t lirc_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *रुको)
+अणु
+	काष्ठा lirc_fh *fh = file->निजी_data;
+	काष्ठा rc_dev *rcdev = fh->rc;
 	__poll_t events = 0;
 
-	poll_wait(file, &fh->wait_poll, wait);
+	poll_रुको(file, &fh->रुको_poll, रुको);
 
-	if (!rcdev->registered) {
+	अगर (!rcdev->रेजिस्टरed) अणु
 		events = EPOLLHUP | EPOLLERR;
-	} else if (rcdev->driver_type != RC_DRIVER_IR_RAW_TX) {
-		if (fh->rec_mode == LIRC_MODE_SCANCODE &&
-		    !kfifo_is_empty(&fh->scancodes))
+	पूर्ण अन्यथा अगर (rcdev->driver_type != RC_DRIVER_IR_RAW_TX) अणु
+		अगर (fh->rec_mode == LIRC_MODE_SCANCODE &&
+		    !kfअगरo_is_empty(&fh->scancodes))
 			events = EPOLLIN | EPOLLRDNORM;
 
-		if (fh->rec_mode == LIRC_MODE_MODE2 &&
-		    !kfifo_is_empty(&fh->rawir))
+		अगर (fh->rec_mode == LIRC_MODE_MODE2 &&
+		    !kfअगरo_is_empty(&fh->rawir))
 			events = EPOLLIN | EPOLLRDNORM;
-	}
+	पूर्ण
 
-	return events;
-}
+	वापस events;
+पूर्ण
 
-static ssize_t lirc_read_mode2(struct file *file, char __user *buffer,
-			       size_t length)
-{
-	struct lirc_fh *fh = file->private_data;
-	struct rc_dev *rcdev = fh->rc;
-	unsigned int copied;
-	int ret;
+अटल sमाप_प्रकार lirc_पढ़ो_mode2(काष्ठा file *file, अक्षर __user *buffer,
+			       माप_प्रकार length)
+अणु
+	काष्ठा lirc_fh *fh = file->निजी_data;
+	काष्ठा rc_dev *rcdev = fh->rc;
+	अचिन्हित पूर्णांक copied;
+	पूर्णांक ret;
 
-	if (length < sizeof(unsigned int) || length % sizeof(unsigned int))
-		return -EINVAL;
+	अगर (length < माप(अचिन्हित पूर्णांक) || length % माप(अचिन्हित पूर्णांक))
+		वापस -EINVAL;
 
-	do {
-		if (kfifo_is_empty(&fh->rawir)) {
-			if (file->f_flags & O_NONBLOCK)
-				return -EAGAIN;
+	करो अणु
+		अगर (kfअगरo_is_empty(&fh->rawir)) अणु
+			अगर (file->f_flags & O_NONBLOCK)
+				वापस -EAGAIN;
 
-			ret = wait_event_interruptible(fh->wait_poll,
-					!kfifo_is_empty(&fh->rawir) ||
-					!rcdev->registered);
-			if (ret)
-				return ret;
-		}
+			ret = रुको_event_पूर्णांकerruptible(fh->रुको_poll,
+					!kfअगरo_is_empty(&fh->rawir) ||
+					!rcdev->रेजिस्टरed);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
-		if (!rcdev->registered)
-			return -ENODEV;
+		अगर (!rcdev->रेजिस्टरed)
+			वापस -ENODEV;
 
-		ret = mutex_lock_interruptible(&rcdev->lock);
-		if (ret)
-			return ret;
-		ret = kfifo_to_user(&fh->rawir, buffer, length, &copied);
+		ret = mutex_lock_पूर्णांकerruptible(&rcdev->lock);
+		अगर (ret)
+			वापस ret;
+		ret = kfअगरo_to_user(&fh->rawir, buffer, length, &copied);
 		mutex_unlock(&rcdev->lock);
-		if (ret)
-			return ret;
-	} while (copied == 0);
+		अगर (ret)
+			वापस ret;
+	पूर्ण जबतक (copied == 0);
 
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
-static ssize_t lirc_read_scancode(struct file *file, char __user *buffer,
-				  size_t length)
-{
-	struct lirc_fh *fh = file->private_data;
-	struct rc_dev *rcdev = fh->rc;
-	unsigned int copied;
-	int ret;
+अटल sमाप_प्रकार lirc_पढ़ो_scancode(काष्ठा file *file, अक्षर __user *buffer,
+				  माप_प्रकार length)
+अणु
+	काष्ठा lirc_fh *fh = file->निजी_data;
+	काष्ठा rc_dev *rcdev = fh->rc;
+	अचिन्हित पूर्णांक copied;
+	पूर्णांक ret;
 
-	if (length < sizeof(struct lirc_scancode) ||
-	    length % sizeof(struct lirc_scancode))
-		return -EINVAL;
+	अगर (length < माप(काष्ठा lirc_scancode) ||
+	    length % माप(काष्ठा lirc_scancode))
+		वापस -EINVAL;
 
-	do {
-		if (kfifo_is_empty(&fh->scancodes)) {
-			if (file->f_flags & O_NONBLOCK)
-				return -EAGAIN;
+	करो अणु
+		अगर (kfअगरo_is_empty(&fh->scancodes)) अणु
+			अगर (file->f_flags & O_NONBLOCK)
+				वापस -EAGAIN;
 
-			ret = wait_event_interruptible(fh->wait_poll,
-					!kfifo_is_empty(&fh->scancodes) ||
-					!rcdev->registered);
-			if (ret)
-				return ret;
-		}
+			ret = रुको_event_पूर्णांकerruptible(fh->रुको_poll,
+					!kfअगरo_is_empty(&fh->scancodes) ||
+					!rcdev->रेजिस्टरed);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
-		if (!rcdev->registered)
-			return -ENODEV;
+		अगर (!rcdev->रेजिस्टरed)
+			वापस -ENODEV;
 
-		ret = mutex_lock_interruptible(&rcdev->lock);
-		if (ret)
-			return ret;
-		ret = kfifo_to_user(&fh->scancodes, buffer, length, &copied);
+		ret = mutex_lock_पूर्णांकerruptible(&rcdev->lock);
+		अगर (ret)
+			वापस ret;
+		ret = kfअगरo_to_user(&fh->scancodes, buffer, length, &copied);
 		mutex_unlock(&rcdev->lock);
-		if (ret)
-			return ret;
-	} while (copied == 0);
+		अगर (ret)
+			वापस ret;
+	पूर्ण जबतक (copied == 0);
 
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
-static ssize_t lirc_read(struct file *file, char __user *buffer, size_t length,
+अटल sमाप_प्रकार lirc_पढ़ो(काष्ठा file *file, अक्षर __user *buffer, माप_प्रकार length,
 			 loff_t *ppos)
-{
-	struct lirc_fh *fh = file->private_data;
-	struct rc_dev *rcdev = fh->rc;
+अणु
+	काष्ठा lirc_fh *fh = file->निजी_data;
+	काष्ठा rc_dev *rcdev = fh->rc;
 
-	if (rcdev->driver_type == RC_DRIVER_IR_RAW_TX)
-		return -EINVAL;
+	अगर (rcdev->driver_type == RC_DRIVER_IR_RAW_TX)
+		वापस -EINVAL;
 
-	if (!rcdev->registered)
-		return -ENODEV;
+	अगर (!rcdev->रेजिस्टरed)
+		वापस -ENODEV;
 
-	if (fh->rec_mode == LIRC_MODE_MODE2)
-		return lirc_read_mode2(file, buffer, length);
-	else /* LIRC_MODE_SCANCODE */
-		return lirc_read_scancode(file, buffer, length);
-}
+	अगर (fh->rec_mode == LIRC_MODE_MODE2)
+		वापस lirc_पढ़ो_mode2(file, buffer, length);
+	अन्यथा /* LIRC_MODE_SCANCODE */
+		वापस lirc_पढ़ो_scancode(file, buffer, length);
+पूर्ण
 
-static const struct file_operations lirc_fops = {
+अटल स्थिर काष्ठा file_operations lirc_fops = अणु
 	.owner		= THIS_MODULE,
-	.write		= lirc_transmit,
+	.ग_लिखो		= lirc_transmit,
 	.unlocked_ioctl	= lirc_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.read		= lirc_read,
+	.पढ़ो		= lirc_पढ़ो,
 	.poll		= lirc_poll,
-	.open		= lirc_open,
-	.release	= lirc_close,
+	.खोलो		= lirc_खोलो,
+	.release	= lirc_बंद,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static void lirc_release_device(struct device *ld)
-{
-	struct rc_dev *rcdev = container_of(ld, struct rc_dev, lirc_dev);
+अटल व्योम lirc_release_device(काष्ठा device *ld)
+अणु
+	काष्ठा rc_dev *rcdev = container_of(ld, काष्ठा rc_dev, lirc_dev);
 
 	put_device(&rcdev->dev);
-}
+पूर्ण
 
-int lirc_register(struct rc_dev *dev)
-{
-	const char *rx_type, *tx_type;
-	int err, minor;
+पूर्णांक lirc_रेजिस्टर(काष्ठा rc_dev *dev)
+अणु
+	स्थिर अक्षर *rx_type, *tx_type;
+	पूर्णांक err, minor;
 
 	minor = ida_simple_get(&lirc_ida, 0, RC_DEV_MAX, GFP_KERNEL);
-	if (minor < 0)
-		return minor;
+	अगर (minor < 0)
+		वापस minor;
 
 	device_initialize(&dev->lirc_dev);
 	dev->lirc_dev.class = lirc_class;
@@ -745,105 +746,105 @@ int lirc_register(struct rc_dev *dev)
 	cdev_init(&dev->lirc_cdev, &lirc_fops);
 
 	err = cdev_device_add(&dev->lirc_cdev, &dev->lirc_dev);
-	if (err)
-		goto out_ida;
+	अगर (err)
+		जाओ out_ida;
 
 	get_device(&dev->dev);
 
-	switch (dev->driver_type) {
-	case RC_DRIVER_SCANCODE:
+	चयन (dev->driver_type) अणु
+	हाल RC_DRIVER_SCANCODE:
 		rx_type = "scancode";
-		break;
-	case RC_DRIVER_IR_RAW:
+		अवरोध;
+	हाल RC_DRIVER_IR_RAW:
 		rx_type = "raw IR";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rx_type = "no";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (dev->tx_ir)
+	अगर (dev->tx_ir)
 		tx_type = "raw IR";
-	else
+	अन्यथा
 		tx_type = "no";
 
 	dev_info(&dev->dev, "lirc_dev: driver %s registered at minor = %d, %s receiver, %s transmitter",
 		 dev->driver_name, minor, rx_type, tx_type);
 
-	return 0;
+	वापस 0;
 
 out_ida:
-	ida_simple_remove(&lirc_ida, minor);
-	return err;
-}
+	ida_simple_हटाओ(&lirc_ida, minor);
+	वापस err;
+पूर्ण
 
-void lirc_unregister(struct rc_dev *dev)
-{
-	unsigned long flags;
-	struct lirc_fh *fh;
+व्योम lirc_unरेजिस्टर(काष्ठा rc_dev *dev)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा lirc_fh *fh;
 
 	dev_dbg(&dev->dev, "lirc_dev: driver %s unregistered from minor = %d\n",
 		dev->driver_name, MINOR(dev->lirc_dev.devt));
 
 	spin_lock_irqsave(&dev->lirc_fh_lock, flags);
-	list_for_each_entry(fh, &dev->lirc_fh, list)
-		wake_up_poll(&fh->wait_poll, EPOLLHUP | EPOLLERR);
+	list_क्रम_each_entry(fh, &dev->lirc_fh, list)
+		wake_up_poll(&fh->रुको_poll, EPOLLHUP | EPOLLERR);
 	spin_unlock_irqrestore(&dev->lirc_fh_lock, flags);
 
 	cdev_device_del(&dev->lirc_cdev, &dev->lirc_dev);
-	ida_simple_remove(&lirc_ida, MINOR(dev->lirc_dev.devt));
-}
+	ida_simple_हटाओ(&lirc_ida, MINOR(dev->lirc_dev.devt));
+पूर्ण
 
-int __init lirc_dev_init(void)
-{
-	int retval;
+पूर्णांक __init lirc_dev_init(व्योम)
+अणु
+	पूर्णांक retval;
 
 	lirc_class = class_create(THIS_MODULE, "lirc");
-	if (IS_ERR(lirc_class)) {
+	अगर (IS_ERR(lirc_class)) अणु
 		pr_err("class_create failed\n");
-		return PTR_ERR(lirc_class);
-	}
+		वापस PTR_ERR(lirc_class);
+	पूर्ण
 
 	retval = alloc_chrdev_region(&lirc_base_dev, 0, RC_DEV_MAX, "lirc");
-	if (retval) {
+	अगर (retval) अणु
 		class_destroy(lirc_class);
 		pr_err("alloc_chrdev_region failed\n");
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	pr_debug("IR Remote Control driver registered, major %d\n",
 		 MAJOR(lirc_base_dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __exit lirc_dev_exit(void)
-{
+व्योम __निकास lirc_dev_निकास(व्योम)
+अणु
 	class_destroy(lirc_class);
-	unregister_chrdev_region(lirc_base_dev, RC_DEV_MAX);
-}
+	unरेजिस्टर_chrdev_region(lirc_base_dev, RC_DEV_MAX);
+पूर्ण
 
-struct rc_dev *rc_dev_get_from_fd(int fd)
-{
-	struct fd f = fdget(fd);
-	struct lirc_fh *fh;
-	struct rc_dev *dev;
+काष्ठा rc_dev *rc_dev_get_from_fd(पूर्णांक fd)
+अणु
+	काष्ठा fd f = fdget(fd);
+	काष्ठा lirc_fh *fh;
+	काष्ठा rc_dev *dev;
 
-	if (!f.file)
-		return ERR_PTR(-EBADF);
+	अगर (!f.file)
+		वापस ERR_PTR(-EBADF);
 
-	if (f.file->f_op != &lirc_fops) {
+	अगर (f.file->f_op != &lirc_fops) अणु
 		fdput(f);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	fh = f.file->private_data;
+	fh = f.file->निजी_data;
 	dev = fh->rc;
 
 	get_device(&dev->dev);
 	fdput(f);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
 MODULE_ALIAS("lirc_dev");

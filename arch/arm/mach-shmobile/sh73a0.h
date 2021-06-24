@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH73A0_H__
-#define __ASM_SH73A0_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH73A0_H__
+#घोषणा __ASM_SH73A0_H__
 
-extern const struct smp_operations sh73a0_smp_ops;
+बाह्य स्थिर काष्ठा smp_operations sh73a0_smp_ops;
 
-#endif /* __ASM_SH73A0_H__ */
+#पूर्ण_अगर /* __ASM_SH73A0_H__ */

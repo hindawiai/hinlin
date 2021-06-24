@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * SPU core dump code
  *
@@ -7,176 +8,176 @@
  * Author: Dwayne Grant McConnell <decimal@us.ibm.com>
  */
 
-#include <linux/elf.h>
-#include <linux/file.h>
-#include <linux/fdtable.h>
-#include <linux/fs.h>
-#include <linux/gfp.h>
-#include <linux/list.h>
-#include <linux/syscalls.h>
-#include <linux/coredump.h>
-#include <linux/binfmts.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fdtable.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/list.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/coredump.h>
+#समावेश <linux/binfmts.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "spufs.h"
+#समावेश "spufs.h"
 
-static int spufs_ctx_note_size(struct spu_context *ctx, int dfd)
-{
-	int i, sz, total = 0;
-	char *name;
-	char fullname[80];
+अटल पूर्णांक spufs_ctx_note_size(काष्ठा spu_context *ctx, पूर्णांक dfd)
+अणु
+	पूर्णांक i, sz, total = 0;
+	अक्षर *name;
+	अक्षर fullname[80];
 
-	for (i = 0; spufs_coredump_read[i].name != NULL; i++) {
-		name = spufs_coredump_read[i].name;
-		sz = spufs_coredump_read[i].size;
+	क्रम (i = 0; spufs_coredump_पढ़ो[i].name != शून्य; i++) अणु
+		name = spufs_coredump_पढ़ो[i].name;
+		sz = spufs_coredump_पढ़ो[i].size;
 
-		sprintf(fullname, "SPU/%d/%s", dfd, name);
+		प्र_लिखो(fullname, "SPU/%d/%s", dfd, name);
 
-		total += sizeof(struct elf_note);
-		total += roundup(strlen(fullname) + 1, 4);
+		total += माप(काष्ठा elf_note);
+		total += roundup(म_माप(fullname) + 1, 4);
 		total += roundup(sz, 4);
-	}
+	पूर्ण
 
-	return total;
-}
+	वापस total;
+पूर्ण
 
-static int match_context(const void *v, struct file *file, unsigned fd)
-{
-	struct spu_context *ctx;
-	if (file->f_op != &spufs_context_fops)
-		return 0;
+अटल पूर्णांक match_context(स्थिर व्योम *v, काष्ठा file *file, अचिन्हित fd)
+अणु
+	काष्ठा spu_context *ctx;
+	अगर (file->f_op != &spufs_context_fops)
+		वापस 0;
 	ctx = SPUFS_I(file_inode(file))->i_ctx;
-	if (ctx->flags & SPU_CREATE_NOSCHED)
-		return 0;
-	return fd + 1;
-}
+	अगर (ctx->flags & SPU_CREATE_NOSCHED)
+		वापस 0;
+	वापस fd + 1;
+पूर्ण
 
 /*
- * The additional architecture-specific notes for Cell are various
+ * The additional architecture-specअगरic notes क्रम Cell are various
  * context files in the spu context.
  *
- * This function iterates over all open file descriptors and sees
- * if they are a directory in spufs.  In that case we use spufs
- * internal functionality to dump them without needing to actually
- * open the files.
+ * This function iterates over all खोलो file descriptors and sees
+ * अगर they are a directory in spufs.  In that हाल we use spufs
+ * पूर्णांकernal functionality to dump them without needing to actually
+ * खोलो the files.
  */
 /*
  * descriptor table is not shared, so files can't change or go away.
  */
-static struct spu_context *coredump_next_context(int *fd)
-{
-	struct spu_context *ctx;
-	struct file *file;
-	int n = iterate_fd(current->files, *fd, match_context, NULL);
-	if (!n)
-		return NULL;
+अटल काष्ठा spu_context *coredump_next_context(पूर्णांक *fd)
+अणु
+	काष्ठा spu_context *ctx;
+	काष्ठा file *file;
+	पूर्णांक n = iterate_fd(current->files, *fd, match_context, शून्य);
+	अगर (!n)
+		वापस शून्य;
 	*fd = n - 1;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	file = lookup_fd_rcu(*fd);
 	ctx = SPUFS_I(file_inode(file))->i_ctx;
 	get_spu_context(ctx);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-int spufs_coredump_extra_notes_size(void)
-{
-	struct spu_context *ctx;
-	int size = 0, rc, fd;
+पूर्णांक spufs_coredump_extra_notes_size(व्योम)
+अणु
+	काष्ठा spu_context *ctx;
+	पूर्णांक size = 0, rc, fd;
 
 	fd = 0;
-	while ((ctx = coredump_next_context(&fd)) != NULL) {
+	जबतक ((ctx = coredump_next_context(&fd)) != शून्य) अणु
 		rc = spu_acquire_saved(ctx);
-		if (rc) {
+		अगर (rc) अणु
 			put_spu_context(ctx);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rc = spufs_ctx_note_size(ctx, fd);
 		spu_release_saved(ctx);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			put_spu_context(ctx);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		size += rc;
 
-		/* start searching the next fd next time */
+		/* start searching the next fd next समय */
 		fd++;
 		put_spu_context(ctx);
-	}
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int spufs_arch_write_note(struct spu_context *ctx, int i,
-				  struct coredump_params *cprm, int dfd)
-{
-	size_t sz = spufs_coredump_read[i].size;
-	char fullname[80];
-	struct elf_note en;
-	int ret;
+अटल पूर्णांक spufs_arch_ग_लिखो_note(काष्ठा spu_context *ctx, पूर्णांक i,
+				  काष्ठा coredump_params *cprm, पूर्णांक dfd)
+अणु
+	माप_प्रकार sz = spufs_coredump_पढ़ो[i].size;
+	अक्षर fullname[80];
+	काष्ठा elf_note en;
+	पूर्णांक ret;
 
-	sprintf(fullname, "SPU/%d/%s", dfd, spufs_coredump_read[i].name);
-	en.n_namesz = strlen(fullname) + 1;
+	प्र_लिखो(fullname, "SPU/%d/%s", dfd, spufs_coredump_पढ़ो[i].name);
+	en.n_namesz = म_माप(fullname) + 1;
 	en.n_descsz = sz;
 	en.n_type = NT_SPU;
 
-	if (!dump_emit(cprm, &en, sizeof(en)))
-		return -EIO;
-	if (!dump_emit(cprm, fullname, en.n_namesz))
-		return -EIO;
-	if (!dump_align(cprm, 4))
-		return -EIO;
+	अगर (!dump_emit(cprm, &en, माप(en)))
+		वापस -EIO;
+	अगर (!dump_emit(cprm, fullname, en.n_namesz))
+		वापस -EIO;
+	अगर (!dump_align(cprm, 4))
+		वापस -EIO;
 
-	if (spufs_coredump_read[i].dump) {
-		ret = spufs_coredump_read[i].dump(ctx, cprm);
-		if (ret < 0)
-			return ret;
-	} else {
-		char buf[32];
+	अगर (spufs_coredump_पढ़ो[i].dump) अणु
+		ret = spufs_coredump_पढ़ो[i].dump(ctx, cprm);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		अक्षर buf[32];
 
-		ret = snprintf(buf, sizeof(buf), "0x%.16llx",
-			       spufs_coredump_read[i].get(ctx));
-		if (ret >= sizeof(buf))
-			return sizeof(buf);
+		ret = snम_लिखो(buf, माप(buf), "0x%.16llx",
+			       spufs_coredump_पढ़ो[i].get(ctx));
+		अगर (ret >= माप(buf))
+			वापस माप(buf);
 
-		/* count trailing the NULL: */
-		if (!dump_emit(cprm, buf, ret + 1))
-			return -EIO;
-	}
+		/* count trailing the शून्य: */
+		अगर (!dump_emit(cprm, buf, ret + 1))
+			वापस -EIO;
+	पूर्ण
 
 	dump_skip_to(cprm, roundup(cprm->pos - ret + sz, 4));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int spufs_coredump_extra_notes_write(struct coredump_params *cprm)
-{
-	struct spu_context *ctx;
-	int fd, j, rc;
+पूर्णांक spufs_coredump_extra_notes_ग_लिखो(काष्ठा coredump_params *cprm)
+अणु
+	काष्ठा spu_context *ctx;
+	पूर्णांक fd, j, rc;
 
 	fd = 0;
-	while ((ctx = coredump_next_context(&fd)) != NULL) {
+	जबतक ((ctx = coredump_next_context(&fd)) != शून्य) अणु
 		rc = spu_acquire_saved(ctx);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
-		for (j = 0; spufs_coredump_read[j].name != NULL; j++) {
-			rc = spufs_arch_write_note(ctx, j, cprm, fd);
-			if (rc) {
+		क्रम (j = 0; spufs_coredump_पढ़ो[j].name != शून्य; j++) अणु
+			rc = spufs_arch_ग_लिखो_note(ctx, j, cprm, fd);
+			अगर (rc) अणु
 				spu_release_saved(ctx);
-				return rc;
-			}
-		}
+				वापस rc;
+			पूर्ण
+		पूर्ण
 
 		spu_release_saved(ctx);
 
-		/* start searching the next fd next time */
+		/* start searching the next fd next समय */
 		fd++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

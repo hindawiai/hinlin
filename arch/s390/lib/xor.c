@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Optimized xor_block operation for RAID4/5
+ * Optimized xor_block operation क्रम RAID4/5
  *
  * Copyright IBM Corp. 2016
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#include <linux/types.h>
-#include <linux/export.h>
-#include <linux/raid/xor.h>
-#include <asm/xor.h>
+#समावेश <linux/types.h>
+#समावेश <linux/export.h>
+#समावेश <linux/raid/xor.h>
+#समावेश <यंत्र/xor.h>
 
-static void xor_xc_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
-{
-	asm volatile(
+अटल व्योम xor_xc_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
+अणु
+	यंत्र अस्थिर(
 		"	larl	1,2f\n"
 		"	aghi	%0,-1\n"
 		"	jm	3f\n"
@@ -30,12 +31,12 @@ static void xor_xc_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 		"3:\n"
 		: : "d" (bytes), "a" (p1), "a" (p2)
 		: "0", "1", "cc", "memory");
-}
+पूर्ण
 
-static void xor_xc_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-		     unsigned long *p3)
-{
-	asm volatile(
+अटल व्योम xor_xc_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+		     अचिन्हित दीर्घ *p3)
+अणु
+	यंत्र अस्थिर(
 		"	larl	1,2f\n"
 		"	aghi	%0,-1\n"
 		"	jm	3f\n"
@@ -56,12 +57,12 @@ static void xor_xc_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		"3:\n"
 		: "+d" (bytes), "+a" (p1), "+a" (p2), "+a" (p3)
 		: : "0", "1", "cc", "memory");
-}
+पूर्ण
 
-static void xor_xc_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-		     unsigned long *p3, unsigned long *p4)
-{
-	asm volatile(
+अटल व्योम xor_xc_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+		     अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	यंत्र अस्थिर(
 		"	larl	1,2f\n"
 		"	aghi	%0,-1\n"
 		"	jm	3f\n"
@@ -86,15 +87,15 @@ static void xor_xc_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		"3:\n"
 		: "+d" (bytes), "+a" (p1), "+a" (p2), "+a" (p3), "+a" (p4)
 		: : "0", "1", "cc", "memory");
-}
+पूर्ण
 
-static void xor_xc_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-		     unsigned long *p3, unsigned long *p4, unsigned long *p5)
-{
+अटल व्योम xor_xc_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+		     अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
 	/* Get around a gcc oddity */
-	register unsigned long *reg7 asm ("7") = p5;
+	रेजिस्टर अचिन्हित दीर्घ *reg7 यंत्र ("7") = p5;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"	larl	1,2f\n"
 		"	aghi	%0,-1\n"
 		"	jm	3f\n"
@@ -124,13 +125,13 @@ static void xor_xc_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		: "+d" (bytes), "+a" (p1), "+a" (p2), "+a" (p3), "+a" (p4),
 		  "+a" (reg7)
 		: : "0", "1", "cc", "memory");
-}
+पूर्ण
 
-struct xor_block_template xor_block_xc = {
+काष्ठा xor_block_ढाँचा xor_block_xc = अणु
 	.name = "xc",
-	.do_2 = xor_xc_2,
-	.do_3 = xor_xc_3,
-	.do_4 = xor_xc_4,
-	.do_5 = xor_xc_5,
-};
+	.करो_2 = xor_xc_2,
+	.करो_3 = xor_xc_3,
+	.करो_4 = xor_xc_4,
+	.करो_5 = xor_xc_5,
+पूर्ण;
 EXPORT_SYMBOL(xor_block_xc);

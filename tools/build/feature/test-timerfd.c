@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * test for timerfd functions used by perf-kvm-stat-live
+ * test क्रम समयrfd functions used by perf-kvm-stat-live
  */
-#include <sys/timerfd.h>
+#समावेश <sys/समयrfd.h>
 
-int main(void)
-{
-	struct itimerspec new_value;
+पूर्णांक मुख्य(व्योम)
+अणु
+	काष्ठा iसमयrspec new_value;
 
-	int fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
-	if (fd < 0)
-		return 1;
+	पूर्णांक fd = समयrfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+	अगर (fd < 0)
+		वापस 1;
 
-	if (timerfd_settime(fd, 0, &new_value, NULL) != 0)
-		return 1;
+	अगर (समयrfd_समय_रखो(fd, 0, &new_value, शून्य) != 0)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,98 +1,99 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
-#include <crypto/hash.h>
-#include <linux/kernel.h>
-#include <linux/bio.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/pagemap.h>
-#include <linux/highmem.h>
-#include <linux/time.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/backing-dev.h>
-#include <linux/writeback.h>
-#include <linux/compat.h>
-#include <linux/xattr.h>
-#include <linux/posix_acl.h>
-#include <linux/falloc.h>
-#include <linux/slab.h>
-#include <linux/ratelimit.h>
-#include <linux/btrfs.h>
-#include <linux/blkdev.h>
-#include <linux/posix_acl_xattr.h>
-#include <linux/uio.h>
-#include <linux/magic.h>
-#include <linux/iversion.h>
-#include <linux/swap.h>
-#include <linux/migrate.h>
-#include <linux/sched/mm.h>
-#include <linux/iomap.h>
-#include <asm/unaligned.h>
-#include "misc.h"
-#include "ctree.h"
-#include "disk-io.h"
-#include "transaction.h"
-#include "btrfs_inode.h"
-#include "print-tree.h"
-#include "ordered-data.h"
-#include "xattr.h"
-#include "tree-log.h"
-#include "volumes.h"
-#include "compression.h"
-#include "locking.h"
-#include "free-space-cache.h"
-#include "props.h"
-#include "qgroup.h"
-#include "delalloc-space.h"
-#include "block-group.h"
-#include "space-info.h"
-#include "zoned.h"
+#समावेश <crypto/hash.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/fभाग.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/btrfs.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/posix_acl_xattr.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/magic.h>
+#समावेश <linux/iversion.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/migrate.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/iomap.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश "misc.h"
+#समावेश "ctree.h"
+#समावेश "disk-io.h"
+#समावेश "transaction.h"
+#समावेश "btrfs_inode.h"
+#समावेश "print-tree.h"
+#समावेश "ordered-data.h"
+#समावेश "xattr.h"
+#समावेश "tree-log.h"
+#समावेश "volumes.h"
+#समावेश "compression.h"
+#समावेश "locking.h"
+#समावेश "free-space-cache.h"
+#समावेश "props.h"
+#समावेश "qgroup.h"
+#समावेश "delalloc-space.h"
+#समावेश "block-group.h"
+#समावेश "space-info.h"
+#समावेश "zoned.h"
 
-struct btrfs_iget_args {
+काष्ठा btrfs_iget_args अणु
 	u64 ino;
-	struct btrfs_root *root;
-};
+	काष्ठा btrfs_root *root;
+पूर्ण;
 
-struct btrfs_dio_data {
+काष्ठा btrfs_dio_data अणु
 	u64 reserve;
 	loff_t length;
-	ssize_t submitted;
-	struct extent_changeset *data_reserved;
-};
+	sमाप_प्रकार submitted;
+	काष्ठा extent_changeset *data_reserved;
+पूर्ण;
 
-static const struct inode_operations btrfs_dir_inode_operations;
-static const struct inode_operations btrfs_symlink_inode_operations;
-static const struct inode_operations btrfs_special_inode_operations;
-static const struct inode_operations btrfs_file_inode_operations;
-static const struct address_space_operations btrfs_aops;
-static const struct file_operations btrfs_dir_file_operations;
+अटल स्थिर काष्ठा inode_operations btrfs_dir_inode_operations;
+अटल स्थिर काष्ठा inode_operations btrfs_symlink_inode_operations;
+अटल स्थिर काष्ठा inode_operations btrfs_special_inode_operations;
+अटल स्थिर काष्ठा inode_operations btrfs_file_inode_operations;
+अटल स्थिर काष्ठा address_space_operations btrfs_aops;
+अटल स्थिर काष्ठा file_operations btrfs_dir_file_operations;
 
-static struct kmem_cache *btrfs_inode_cachep;
-struct kmem_cache *btrfs_trans_handle_cachep;
-struct kmem_cache *btrfs_path_cachep;
-struct kmem_cache *btrfs_free_space_cachep;
-struct kmem_cache *btrfs_free_space_bitmap_cachep;
+अटल काष्ठा kmem_cache *btrfs_inode_cachep;
+काष्ठा kmem_cache *btrfs_trans_handle_cachep;
+काष्ठा kmem_cache *btrfs_path_cachep;
+काष्ठा kmem_cache *btrfs_मुक्त_space_cachep;
+काष्ठा kmem_cache *btrfs_मुक्त_space_biपंचांगap_cachep;
 
-static int btrfs_setsize(struct inode *inode, struct iattr *attr);
-static int btrfs_truncate(struct inode *inode, bool skip_writeback);
-static int btrfs_finish_ordered_io(struct btrfs_ordered_extent *ordered_extent);
-static noinline int cow_file_range(struct btrfs_inode *inode,
-				   struct page *locked_page,
-				   u64 start, u64 end, int *page_started,
-				   unsigned long *nr_written, int unlock);
-static struct extent_map *create_io_em(struct btrfs_inode *inode, u64 start,
+अटल पूर्णांक btrfs_setsize(काष्ठा inode *inode, काष्ठा iattr *attr);
+अटल पूर्णांक btrfs_truncate(काष्ठा inode *inode, bool skip_ग_लिखोback);
+अटल पूर्णांक btrfs_finish_ordered_io(काष्ठा btrfs_ordered_extent *ordered_extent);
+अटल noअंतरभूत पूर्णांक cow_file_range(काष्ठा btrfs_inode *inode,
+				   काष्ठा page *locked_page,
+				   u64 start, u64 end, पूर्णांक *page_started,
+				   अचिन्हित दीर्घ *nr_written, पूर्णांक unlock);
+अटल काष्ठा extent_map *create_io_em(काष्ठा btrfs_inode *inode, u64 start,
 				       u64 len, u64 orig_start, u64 block_start,
 				       u64 block_len, u64 orig_block_len,
-				       u64 ram_bytes, int compress_type,
-				       int type);
+				       u64 ram_bytes, पूर्णांक compress_type,
+				       पूर्णांक type);
 
-static void __endio_write_update_ordered(struct btrfs_inode *inode,
-					 const u64 offset, const u64 bytes,
-					 const bool uptodate);
+अटल व्योम __endio_ग_लिखो_update_ordered(काष्ठा btrfs_inode *inode,
+					 स्थिर u64 offset, स्थिर u64 bytes,
+					 स्थिर bool uptodate);
 
 /*
  * btrfs_inode_lock - lock inode i_rwsem based on arguments passed
@@ -100,33 +101,33 @@ static void __endio_write_update_ordered(struct btrfs_inode *inode,
  * ilock_flags can have the following bit set:
  *
  * BTRFS_ILOCK_SHARED - acquire a shared lock on the inode
- * BTRFS_ILOCK_TRY - try to acquire the lock, if fails on first attempt
- *		     return -EAGAIN
- * BTRFS_ILOCK_MMAP - acquire a write lock on the i_mmap_lock
+ * BTRFS_ILOCK_TRY - try to acquire the lock, अगर fails on first attempt
+ *		     वापस -EAGAIN
+ * BTRFS_ILOCK_MMAP - acquire a ग_लिखो lock on the i_mmap_lock
  */
-int btrfs_inode_lock(struct inode *inode, unsigned int ilock_flags)
-{
-	if (ilock_flags & BTRFS_ILOCK_SHARED) {
-		if (ilock_flags & BTRFS_ILOCK_TRY) {
-			if (!inode_trylock_shared(inode))
-				return -EAGAIN;
-			else
-				return 0;
-		}
+पूर्णांक btrfs_inode_lock(काष्ठा inode *inode, अचिन्हित पूर्णांक ilock_flags)
+अणु
+	अगर (ilock_flags & BTRFS_ILOCK_SHARED) अणु
+		अगर (ilock_flags & BTRFS_ILOCK_TRY) अणु
+			अगर (!inode_trylock_shared(inode))
+				वापस -EAGAIN;
+			अन्यथा
+				वापस 0;
+		पूर्ण
 		inode_lock_shared(inode);
-	} else {
-		if (ilock_flags & BTRFS_ILOCK_TRY) {
-			if (!inode_trylock(inode))
-				return -EAGAIN;
-			else
-				return 0;
-		}
+	पूर्ण अन्यथा अणु
+		अगर (ilock_flags & BTRFS_ILOCK_TRY) अणु
+			अगर (!inode_trylock(inode))
+				वापस -EAGAIN;
+			अन्यथा
+				वापस 0;
+		पूर्ण
 		inode_lock(inode);
-	}
-	if (ilock_flags & BTRFS_ILOCK_MMAP)
-		down_write(&BTRFS_I(inode)->i_mmap_lock);
-	return 0;
-}
+	पूर्ण
+	अगर (ilock_flags & BTRFS_ILOCK_MMAP)
+		करोwn_ग_लिखो(&BTRFS_I(inode)->i_mmap_lock);
+	वापस 0;
+पूर्ण
 
 /*
  * btrfs_inode_unlock - unock inode i_rwsem
@@ -134,18 +135,18 @@ int btrfs_inode_lock(struct inode *inode, unsigned int ilock_flags)
  * ilock_flags should contain the same bits set as passed to btrfs_inode_lock()
  * to decide whether the lock acquired is shared or exclusive.
  */
-void btrfs_inode_unlock(struct inode *inode, unsigned int ilock_flags)
-{
-	if (ilock_flags & BTRFS_ILOCK_MMAP)
-		up_write(&BTRFS_I(inode)->i_mmap_lock);
-	if (ilock_flags & BTRFS_ILOCK_SHARED)
+व्योम btrfs_inode_unlock(काष्ठा inode *inode, अचिन्हित पूर्णांक ilock_flags)
+अणु
+	अगर (ilock_flags & BTRFS_ILOCK_MMAP)
+		up_ग_लिखो(&BTRFS_I(inode)->i_mmap_lock);
+	अगर (ilock_flags & BTRFS_ILOCK_SHARED)
 		inode_unlock_shared(inode);
-	else
+	अन्यथा
 		inode_unlock(inode);
-}
+पूर्ण
 
 /*
- * Cleanup all submitted ordered extents in specified range to handle errors
+ * Cleanup all submitted ordered extents in specअगरied range to handle errors
  * from the btrfs_run_delalloc_range() callback.
  *
  * NOTE: caller must ensure that when an error happens, it can not call
@@ -154,203 +155,203 @@ void btrfs_inode_unlock(struct inode *inode, unsigned int ilock_flags)
  * to be released, which we want to happen only when finishing the ordered
  * extent (btrfs_finish_ordered_io()).
  */
-static inline void btrfs_cleanup_ordered_extents(struct btrfs_inode *inode,
-						 struct page *locked_page,
+अटल अंतरभूत व्योम btrfs_cleanup_ordered_extents(काष्ठा btrfs_inode *inode,
+						 काष्ठा page *locked_page,
 						 u64 offset, u64 bytes)
-{
-	unsigned long index = offset >> PAGE_SHIFT;
-	unsigned long end_index = (offset + bytes - 1) >> PAGE_SHIFT;
+अणु
+	अचिन्हित दीर्घ index = offset >> PAGE_SHIFT;
+	अचिन्हित दीर्घ end_index = (offset + bytes - 1) >> PAGE_SHIFT;
 	u64 page_start = page_offset(locked_page);
 	u64 page_end = page_start + PAGE_SIZE - 1;
 
-	struct page *page;
+	काष्ठा page *page;
 
-	while (index <= end_index) {
+	जबतक (index <= end_index) अणु
 		page = find_get_page(inode->vfs_inode.i_mapping, index);
 		index++;
-		if (!page)
-			continue;
+		अगर (!page)
+			जारी;
 		ClearPagePrivate2(page);
 		put_page(page);
-	}
+	पूर्ण
 
 	/*
-	 * In case this page belongs to the delalloc range being instantiated
+	 * In हाल this page beदीर्घs to the delalloc range being instantiated
 	 * then skip it, since the first page of a range is going to be
 	 * properly cleaned up by the caller of run_delalloc_range
 	 */
-	if (page_start >= offset && page_end <= (offset + bytes - 1)) {
+	अगर (page_start >= offset && page_end <= (offset + bytes - 1)) अणु
 		offset += PAGE_SIZE;
 		bytes -= PAGE_SIZE;
-	}
+	पूर्ण
 
-	return __endio_write_update_ordered(inode, offset, bytes, false);
-}
+	वापस __endio_ग_लिखो_update_ordered(inode, offset, bytes, false);
+पूर्ण
 
-static int btrfs_dirty_inode(struct inode *inode);
+अटल पूर्णांक btrfs_dirty_inode(काष्ठा inode *inode);
 
-static int btrfs_init_inode_security(struct btrfs_trans_handle *trans,
-				     struct inode *inode,  struct inode *dir,
-				     const struct qstr *qstr)
-{
-	int err;
+अटल पूर्णांक btrfs_init_inode_security(काष्ठा btrfs_trans_handle *trans,
+				     काष्ठा inode *inode,  काष्ठा inode *dir,
+				     स्थिर काष्ठा qstr *qstr)
+अणु
+	पूर्णांक err;
 
 	err = btrfs_init_acl(trans, inode, dir);
-	if (!err)
+	अगर (!err)
 		err = btrfs_xattr_security_init(trans, inode, dir, qstr);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * this does all the hard work for inserting an inline extent into
- * the btree.  The caller should have done a btrfs_drop_extents so that
- * no overlapping inline items exist in the btree
+ * this करोes all the hard work क्रम inserting an अंतरभूत extent पूर्णांकo
+ * the btree.  The caller should have करोne a btrfs_drop_extents so that
+ * no overlapping अंतरभूत items exist in the btree
  */
-static int insert_inline_extent(struct btrfs_trans_handle *trans,
-				struct btrfs_path *path, bool extent_inserted,
-				struct btrfs_root *root, struct inode *inode,
-				u64 start, size_t size, size_t compressed_size,
-				int compress_type,
-				struct page **compressed_pages)
-{
-	struct extent_buffer *leaf;
-	struct page *page = NULL;
-	char *kaddr;
-	unsigned long ptr;
-	struct btrfs_file_extent_item *ei;
-	int ret;
-	size_t cur_size = size;
-	unsigned long offset;
+अटल पूर्णांक insert_अंतरभूत_extent(काष्ठा btrfs_trans_handle *trans,
+				काष्ठा btrfs_path *path, bool extent_inserted,
+				काष्ठा btrfs_root *root, काष्ठा inode *inode,
+				u64 start, माप_प्रकार size, माप_प्रकार compressed_size,
+				पूर्णांक compress_type,
+				काष्ठा page **compressed_pages)
+अणु
+	काष्ठा extent_buffer *leaf;
+	काष्ठा page *page = शून्य;
+	अक्षर *kaddr;
+	अचिन्हित दीर्घ ptr;
+	काष्ठा btrfs_file_extent_item *ei;
+	पूर्णांक ret;
+	माप_प्रकार cur_size = size;
+	अचिन्हित दीर्घ offset;
 
 	ASSERT((compressed_size > 0 && compressed_pages) ||
 	       (compressed_size == 0 && !compressed_pages));
 
-	if (compressed_size && compressed_pages)
+	अगर (compressed_size && compressed_pages)
 		cur_size = compressed_size;
 
-	if (!extent_inserted) {
-		struct btrfs_key key;
-		size_t datasize;
+	अगर (!extent_inserted) अणु
+		काष्ठा btrfs_key key;
+		माप_प्रकार datasize;
 
 		key.objectid = btrfs_ino(BTRFS_I(inode));
 		key.offset = start;
 		key.type = BTRFS_EXTENT_DATA_KEY;
 
-		datasize = btrfs_file_extent_calc_inline_size(cur_size);
+		datasize = btrfs_file_extent_calc_अंतरभूत_size(cur_size);
 		ret = btrfs_insert_empty_item(trans, root, path, &key,
 					      datasize);
-		if (ret)
-			goto fail;
-	}
+		अगर (ret)
+			जाओ fail;
+	पूर्ण
 	leaf = path->nodes[0];
 	ei = btrfs_item_ptr(leaf, path->slots[0],
-			    struct btrfs_file_extent_item);
+			    काष्ठा btrfs_file_extent_item);
 	btrfs_set_file_extent_generation(leaf, ei, trans->transid);
-	btrfs_set_file_extent_type(leaf, ei, BTRFS_FILE_EXTENT_INLINE);
+	btrfs_set_file_extent_type(leaf, ei, BTRFS_खाता_EXTENT_INLINE);
 	btrfs_set_file_extent_encryption(leaf, ei, 0);
 	btrfs_set_file_extent_other_encoding(leaf, ei, 0);
 	btrfs_set_file_extent_ram_bytes(leaf, ei, size);
-	ptr = btrfs_file_extent_inline_start(ei);
+	ptr = btrfs_file_extent_अंतरभूत_start(ei);
 
-	if (compress_type != BTRFS_COMPRESS_NONE) {
-		struct page *cpage;
-		int i = 0;
-		while (compressed_size > 0) {
+	अगर (compress_type != BTRFS_COMPRESS_NONE) अणु
+		काष्ठा page *cpage;
+		पूर्णांक i = 0;
+		जबतक (compressed_size > 0) अणु
 			cpage = compressed_pages[i];
-			cur_size = min_t(unsigned long, compressed_size,
+			cur_size = min_t(अचिन्हित दीर्घ, compressed_size,
 				       PAGE_SIZE);
 
 			kaddr = kmap_atomic(cpage);
-			write_extent_buffer(leaf, kaddr, ptr, cur_size);
+			ग_लिखो_extent_buffer(leaf, kaddr, ptr, cur_size);
 			kunmap_atomic(kaddr);
 
 			i++;
 			ptr += cur_size;
 			compressed_size -= cur_size;
-		}
+		पूर्ण
 		btrfs_set_file_extent_compression(leaf, ei,
 						  compress_type);
-	} else {
+	पूर्ण अन्यथा अणु
 		page = find_get_page(inode->i_mapping,
 				     start >> PAGE_SHIFT);
 		btrfs_set_file_extent_compression(leaf, ei, 0);
 		kaddr = kmap_atomic(page);
 		offset = offset_in_page(start);
-		write_extent_buffer(leaf, kaddr + offset, ptr, size);
+		ग_लिखो_extent_buffer(leaf, kaddr + offset, ptr, size);
 		kunmap_atomic(kaddr);
 		put_page(page);
-	}
+	पूर्ण
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_release_path(path);
 
 	/*
-	 * We align size to sectorsize for inline extents just for simplicity
+	 * We align size to sectorsize क्रम अंतरभूत extents just क्रम simplicity
 	 * sake.
 	 */
 	size = ALIGN(size, root->fs_info->sectorsize);
 	ret = btrfs_inode_set_file_extent_range(BTRFS_I(inode), start, size);
-	if (ret)
-		goto fail;
+	अगर (ret)
+		जाओ fail;
 
 	/*
-	 * we're an inline extent, so nobody can
+	 * we're an अंतरभूत extent, so nobody can
 	 * extend the file past i_size without locking
-	 * a page we already have locked.
+	 * a page we alपढ़ोy have locked.
 	 *
-	 * We must do any isize and inode updates
-	 * before we unlock the pages.  Otherwise we
+	 * We must करो any isize and inode updates
+	 * beक्रमe we unlock the pages.  Otherwise we
 	 * could end up racing with unlink.
 	 */
 	BTRFS_I(inode)->disk_i_size = inode->i_size;
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /*
- * conditionally insert an inline extent into the file.  This
- * does the checks required to make sure the data is small enough
- * to fit as an inline extent.
+ * conditionally insert an अंतरभूत extent पूर्णांकo the file.  This
+ * करोes the checks required to make sure the data is small enough
+ * to fit as an अंतरभूत extent.
  */
-static noinline int cow_file_range_inline(struct btrfs_inode *inode, u64 start,
-					  u64 end, size_t compressed_size,
-					  int compress_type,
-					  struct page **compressed_pages)
-{
-	struct btrfs_drop_extents_args drop_args = { 0 };
-	struct btrfs_root *root = inode->root;
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_trans_handle *trans;
-	u64 isize = i_size_read(&inode->vfs_inode);
+अटल noअंतरभूत पूर्णांक cow_file_range_अंतरभूत(काष्ठा btrfs_inode *inode, u64 start,
+					  u64 end, माप_प्रकार compressed_size,
+					  पूर्णांक compress_type,
+					  काष्ठा page **compressed_pages)
+अणु
+	काष्ठा btrfs_drop_extents_args drop_args = अणु 0 पूर्ण;
+	काष्ठा btrfs_root *root = inode->root;
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा btrfs_trans_handle *trans;
+	u64 isize = i_size_पढ़ो(&inode->vfs_inode);
 	u64 actual_end = min(end + 1, isize);
-	u64 inline_len = actual_end - start;
+	u64 अंतरभूत_len = actual_end - start;
 	u64 aligned_end = ALIGN(end, fs_info->sectorsize);
-	u64 data_len = inline_len;
-	int ret;
-	struct btrfs_path *path;
+	u64 data_len = अंतरभूत_len;
+	पूर्णांक ret;
+	काष्ठा btrfs_path *path;
 
-	if (compressed_size)
+	अगर (compressed_size)
 		data_len = compressed_size;
 
-	if (start > 0 ||
+	अगर (start > 0 ||
 	    actual_end > fs_info->sectorsize ||
 	    data_len > BTRFS_MAX_INLINE_DATA_SIZE(fs_info) ||
 	    (!compressed_size &&
 	    (actual_end & (fs_info->sectorsize - 1)) == 0) ||
 	    end + 1 < isize ||
-	    data_len > fs_info->max_inline) {
-		return 1;
-	}
+	    data_len > fs_info->max_अंतरभूत) अणु
+		वापस 1;
+	पूर्ण
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
 	trans = btrfs_join_transaction(root);
-	if (IS_ERR(trans)) {
-		btrfs_free_path(path);
-		return PTR_ERR(trans);
-	}
+	अगर (IS_ERR(trans)) अणु
+		btrfs_मुक्त_path(path);
+		वापस PTR_ERR(trans);
+	पूर्ण
 	trans->block_rsv = &inode->block_rsv;
 
 	drop_args.path = path;
@@ -359,95 +360,95 @@ static noinline int cow_file_range_inline(struct btrfs_inode *inode, u64 start,
 	drop_args.drop_cache = true;
 	drop_args.replace_extent = true;
 
-	if (compressed_size && compressed_pages)
-		drop_args.extent_item_size = btrfs_file_extent_calc_inline_size(
+	अगर (compressed_size && compressed_pages)
+		drop_args.extent_item_size = btrfs_file_extent_calc_अंतरभूत_size(
 		   compressed_size);
-	else
-		drop_args.extent_item_size = btrfs_file_extent_calc_inline_size(
-		    inline_len);
+	अन्यथा
+		drop_args.extent_item_size = btrfs_file_extent_calc_अंतरभूत_size(
+		    अंतरभूत_len);
 
 	ret = btrfs_drop_extents(trans, root, inode, &drop_args);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out;
+	पूर्ण
 
-	if (isize > actual_end)
-		inline_len = min_t(u64, isize, actual_end);
-	ret = insert_inline_extent(trans, path, drop_args.extent_inserted,
+	अगर (isize > actual_end)
+		अंतरभूत_len = min_t(u64, isize, actual_end);
+	ret = insert_अंतरभूत_extent(trans, path, drop_args.extent_inserted,
 				   root, &inode->vfs_inode, start,
-				   inline_len, compressed_size,
+				   अंतरभूत_len, compressed_size,
 				   compress_type, compressed_pages);
-	if (ret && ret != -ENOSPC) {
-		btrfs_abort_transaction(trans, ret);
-		goto out;
-	} else if (ret == -ENOSPC) {
+	अगर (ret && ret != -ENOSPC) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out;
+	पूर्ण अन्यथा अगर (ret == -ENOSPC) अणु
 		ret = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	btrfs_update_inode_bytes(inode, inline_len, drop_args.bytes_found);
+	btrfs_update_inode_bytes(inode, अंतरभूत_len, drop_args.bytes_found);
 	ret = btrfs_update_inode(trans, root, inode);
-	if (ret && ret != -ENOSPC) {
-		btrfs_abort_transaction(trans, ret);
-		goto out;
-	} else if (ret == -ENOSPC) {
+	अगर (ret && ret != -ENOSPC) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out;
+	पूर्ण अन्यथा अगर (ret == -ENOSPC) अणु
 		ret = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	set_bit(BTRFS_INODE_NEEDS_FULL_SYNC, &inode->runtime_flags);
+	set_bit(BTRFS_INODE_NEEDS_FULL_SYNC, &inode->runसमय_flags);
 out:
 	/*
-	 * Don't forget to free the reserved space, as for inlined extent
-	 * it won't count as data extent, free them directly here.
-	 * And at reserve time, it's always aligned to page size, so
-	 * just free one page here.
+	 * Don't क्रमget to मुक्त the reserved space, as क्रम अंतरभूतd extent
+	 * it won't count as data extent, मुक्त them directly here.
+	 * And at reserve समय, it's always aligned to page size, so
+	 * just मुक्त one page here.
 	 */
-	btrfs_qgroup_free_data(inode, NULL, 0, PAGE_SIZE);
-	btrfs_free_path(path);
+	btrfs_qgroup_मुक्त_data(inode, शून्य, 0, PAGE_SIZE);
+	btrfs_मुक्त_path(path);
 	btrfs_end_transaction(trans);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct async_extent {
+काष्ठा async_extent अणु
 	u64 start;
 	u64 ram_size;
 	u64 compressed_size;
-	struct page **pages;
-	unsigned long nr_pages;
-	int compress_type;
-	struct list_head list;
-};
+	काष्ठा page **pages;
+	अचिन्हित दीर्घ nr_pages;
+	पूर्णांक compress_type;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct async_chunk {
-	struct inode *inode;
-	struct page *locked_page;
+काष्ठा async_chunk अणु
+	काष्ठा inode *inode;
+	काष्ठा page *locked_page;
 	u64 start;
 	u64 end;
-	unsigned int write_flags;
-	struct list_head extents;
-	struct cgroup_subsys_state *blkcg_css;
-	struct btrfs_work work;
+	अचिन्हित पूर्णांक ग_लिखो_flags;
+	काष्ठा list_head extents;
+	काष्ठा cgroup_subsys_state *blkcg_css;
+	काष्ठा btrfs_work work;
 	atomic_t *pending;
-};
+पूर्ण;
 
-struct async_cow {
-	/* Number of chunks in flight; must be first in the structure */
+काष्ठा async_cow अणु
+	/* Number of chunks in flight; must be first in the काष्ठाure */
 	atomic_t num_chunks;
-	struct async_chunk chunks[];
-};
+	काष्ठा async_chunk chunks[];
+पूर्ण;
 
-static noinline int add_async_extent(struct async_chunk *cow,
+अटल noअंतरभूत पूर्णांक add_async_extent(काष्ठा async_chunk *cow,
 				     u64 start, u64 ram_size,
 				     u64 compressed_size,
-				     struct page **pages,
-				     unsigned long nr_pages,
-				     int compress_type)
-{
-	struct async_extent *async_extent;
+				     काष्ठा page **pages,
+				     अचिन्हित दीर्घ nr_pages,
+				     पूर्णांक compress_type)
+अणु
+	काष्ठा async_extent *async_extent;
 
-	async_extent = kmalloc(sizeof(*async_extent), GFP_NOFS);
+	async_extent = kदो_स्मृति(माप(*async_extent), GFP_NOFS);
 	BUG_ON(!async_extent); /* -ENOMEM */
 	async_extent->start = start;
 	async_extent->ram_size = ram_size;
@@ -456,183 +457,183 @@ static noinline int add_async_extent(struct async_chunk *cow,
 	async_extent->nr_pages = nr_pages;
 	async_extent->compress_type = compress_type;
 	list_add_tail(&async_extent->list, &cow->extents);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Check if the inode has flags compatible with compression
+ * Check अगर the inode has flags compatible with compression
  */
-static inline bool inode_can_compress(struct btrfs_inode *inode)
-{
-	if (inode->flags & BTRFS_INODE_NODATACOW ||
+अटल अंतरभूत bool inode_can_compress(काष्ठा btrfs_inode *inode)
+अणु
+	अगर (inode->flags & BTRFS_INODE_NODATACOW ||
 	    inode->flags & BTRFS_INODE_NODATASUM)
-		return false;
-	return true;
-}
+		वापस false;
+	वापस true;
+पूर्ण
 
 /*
- * Check if the inode needs to be submitted to compression, based on mount
+ * Check अगर the inode needs to be submitted to compression, based on mount
  * options, defragmentation, properties or heuristics.
  */
-static inline int inode_need_compress(struct btrfs_inode *inode, u64 start,
+अटल अंतरभूत पूर्णांक inode_need_compress(काष्ठा btrfs_inode *inode, u64 start,
 				      u64 end)
-{
-	struct btrfs_fs_info *fs_info = inode->root->fs_info;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = inode->root->fs_info;
 
-	if (!inode_can_compress(inode)) {
+	अगर (!inode_can_compress(inode)) अणु
 		WARN(IS_ENABLED(CONFIG_BTRFS_DEBUG),
 			KERN_ERR "BTRFS: unexpected compression for ino %llu\n",
 			btrfs_ino(inode));
-		return 0;
-	}
-	/* force compress */
-	if (btrfs_test_opt(fs_info, FORCE_COMPRESS))
-		return 1;
+		वापस 0;
+	पूर्ण
+	/* क्रमce compress */
+	अगर (btrfs_test_opt(fs_info, FORCE_COMPRESS))
+		वापस 1;
 	/* defrag ioctl */
-	if (inode->defrag_compress)
-		return 1;
+	अगर (inode->defrag_compress)
+		वापस 1;
 	/* bad compression ratios */
-	if (inode->flags & BTRFS_INODE_NOCOMPRESS)
-		return 0;
-	if (btrfs_test_opt(fs_info, COMPRESS) ||
+	अगर (inode->flags & BTRFS_INODE_NOCOMPRESS)
+		वापस 0;
+	अगर (btrfs_test_opt(fs_info, COMPRESS) ||
 	    inode->flags & BTRFS_INODE_COMPRESS ||
 	    inode->prop_compress)
-		return btrfs_compress_heuristic(&inode->vfs_inode, start, end);
-	return 0;
-}
+		वापस btrfs_compress_heuristic(&inode->vfs_inode, start, end);
+	वापस 0;
+पूर्ण
 
-static inline void inode_should_defrag(struct btrfs_inode *inode,
-		u64 start, u64 end, u64 num_bytes, u64 small_write)
-{
-	/* If this is a small write inside eof, kick off a defrag */
-	if (num_bytes < small_write &&
+अटल अंतरभूत व्योम inode_should_defrag(काष्ठा btrfs_inode *inode,
+		u64 start, u64 end, u64 num_bytes, u64 small_ग_लिखो)
+अणु
+	/* If this is a small ग_लिखो inside eof, kick off a defrag */
+	अगर (num_bytes < small_ग_लिखो &&
 	    (start > 0 || end + 1 < inode->disk_i_size))
-		btrfs_add_inode_defrag(NULL, inode);
-}
+		btrfs_add_inode_defrag(शून्य, inode);
+पूर्ण
 
 /*
  * we create compressed extents in two phases.  The first
- * phase compresses a range of pages that have already been
+ * phase compresses a range of pages that have alपढ़ोy been
  * locked (both pages and state bits are locked).
  *
- * This is done inside an ordered work queue, and the compression
- * is spread across many cpus.  The actual IO submission is step
+ * This is करोne inside an ordered work queue, and the compression
+ * is spपढ़ो across many cpus.  The actual IO submission is step
  * two, and the ordered work queue takes care of making sure that
  * happens in the same order things were put onto the queue by
- * writepages and friends.
+ * ग_लिखोpages and मित्रs.
  *
- * If this code finds it can't get good compression, it puts an
- * entry onto the work queue to write the uncompressed bytes.  This
+ * If this code finds it can't get good compression, it माला_दो an
+ * entry onto the work queue to ग_लिखो the uncompressed bytes.  This
  * makes sure that both compressed inodes and uncompressed inodes
- * are written in the same order that the flusher thread sent them
- * down.
+ * are written in the same order that the flusher thपढ़ो sent them
+ * करोwn.
  */
-static noinline int compress_file_range(struct async_chunk *async_chunk)
-{
-	struct inode *inode = async_chunk->inode;
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+अटल noअंतरभूत पूर्णांक compress_file_range(काष्ठा async_chunk *async_chunk)
+अणु
+	काष्ठा inode *inode = async_chunk->inode;
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 	u64 blocksize = fs_info->sectorsize;
 	u64 start = async_chunk->start;
 	u64 end = async_chunk->end;
 	u64 actual_end;
 	u64 i_size;
-	int ret = 0;
-	struct page **pages = NULL;
-	unsigned long nr_pages;
-	unsigned long total_compressed = 0;
-	unsigned long total_in = 0;
-	int i;
-	int will_compress;
-	int compress_type = fs_info->compress_type;
-	int compressed_extents = 0;
-	int redirty = 0;
+	पूर्णांक ret = 0;
+	काष्ठा page **pages = शून्य;
+	अचिन्हित दीर्घ nr_pages;
+	अचिन्हित दीर्घ total_compressed = 0;
+	अचिन्हित दीर्घ total_in = 0;
+	पूर्णांक i;
+	पूर्णांक will_compress;
+	पूर्णांक compress_type = fs_info->compress_type;
+	पूर्णांक compressed_extents = 0;
+	पूर्णांक redirty = 0;
 
 	inode_should_defrag(BTRFS_I(inode), start, end, end - start + 1,
 			SZ_16K);
 
 	/*
-	 * We need to save i_size before now because it could change in between
+	 * We need to save i_size beक्रमe now because it could change in between
 	 * us evaluating the size and assigning it.  This is because we lock and
-	 * unlock the page in truncate and fallocate, and then modify the i_size
+	 * unlock the page in truncate and fallocate, and then modअगरy the i_size
 	 * later on.
 	 *
-	 * The barriers are to emulate READ_ONCE, remove that once i_size_read
-	 * does that for us.
+	 * The barriers are to emulate READ_ONCE, हटाओ that once i_size_पढ़ो
+	 * करोes that क्रम us.
 	 */
 	barrier();
-	i_size = i_size_read(inode);
+	i_size = i_size_पढ़ो(inode);
 	barrier();
 	actual_end = min_t(u64, i_size, end + 1);
 again:
 	will_compress = 0;
 	nr_pages = (end >> PAGE_SHIFT) - (start >> PAGE_SHIFT) + 1;
 	BUILD_BUG_ON((BTRFS_MAX_COMPRESSED % PAGE_SIZE) != 0);
-	nr_pages = min_t(unsigned long, nr_pages,
+	nr_pages = min_t(अचिन्हित दीर्घ, nr_pages,
 			BTRFS_MAX_COMPRESSED / PAGE_SIZE);
 
 	/*
-	 * we don't want to send crud past the end of i_size through
-	 * compression, that's just a waste of CPU time.  So, if the
-	 * end of the file is before the start of our current
+	 * we करोn't want to send crud past the end of i_size through
+	 * compression, that's just a waste of CPU समय.  So, अगर the
+	 * end of the file is beक्रमe the start of our current
 	 * requested range of bytes, we bail out to the uncompressed
 	 * cleanup code that can deal with all of this.
 	 *
 	 * It isn't really the fastest way to fix things, but this is a
 	 * very uncommon corner.
 	 */
-	if (actual_end <= start)
-		goto cleanup_and_bail_uncompressed;
+	अगर (actual_end <= start)
+		जाओ cleanup_and_bail_uncompressed;
 
 	total_compressed = actual_end - start;
 
 	/*
-	 * skip compression for a small file range(<=blocksize) that
+	 * skip compression क्रम a small file range(<=blocksize) that
 	 * isn't an inline extent, since it doesn't save disk space at all.
 	 */
-	if (total_compressed <= blocksize &&
+	अगर (total_compressed <= blocksize &&
 	   (start > 0 || end + 1 < BTRFS_I(inode)->disk_i_size))
-		goto cleanup_and_bail_uncompressed;
+		जाओ cleanup_and_bail_uncompressed;
 
-	total_compressed = min_t(unsigned long, total_compressed,
+	total_compressed = min_t(अचिन्हित दीर्घ, total_compressed,
 			BTRFS_MAX_UNCOMPRESSED);
 	total_in = 0;
 	ret = 0;
 
 	/*
-	 * we do compression for mount -o compress and when the
+	 * we करो compression क्रम mount -o compress and when the
 	 * inode has not been flagged as nocompress.  This flag can
-	 * change at any time if we discover bad compression ratios.
+	 * change at any समय अगर we discover bad compression ratios.
 	 */
-	if (inode_need_compress(BTRFS_I(inode), start, end)) {
+	अगर (inode_need_compress(BTRFS_I(inode), start, end)) अणु
 		WARN_ON(pages);
-		pages = kcalloc(nr_pages, sizeof(struct page *), GFP_NOFS);
-		if (!pages) {
+		pages = kसुस्मृति(nr_pages, माप(काष्ठा page *), GFP_NOFS);
+		अगर (!pages) अणु
 			/* just bail out to the uncompressed code */
 			nr_pages = 0;
-			goto cont;
-		}
+			जाओ cont;
+		पूर्ण
 
-		if (BTRFS_I(inode)->defrag_compress)
+		अगर (BTRFS_I(inode)->defrag_compress)
 			compress_type = BTRFS_I(inode)->defrag_compress;
-		else if (BTRFS_I(inode)->prop_compress)
+		अन्यथा अगर (BTRFS_I(inode)->prop_compress)
 			compress_type = BTRFS_I(inode)->prop_compress;
 
 		/*
-		 * we need to call clear_page_dirty_for_io on each
+		 * we need to call clear_page_dirty_क्रम_io on each
 		 * page in the range.  Otherwise applications with the file
-		 * mmap'd can wander in and change the page contents while
+		 * mmap'd can wander in and change the page contents जबतक
 		 * we are compressing them.
 		 *
-		 * If the compression fails for any reason, we set the pages
+		 * If the compression fails क्रम any reason, we set the pages
 		 * dirty again later on.
 		 *
-		 * Note that the remaining part is redirtied, the start pointer
+		 * Note that the reमुख्यing part is redirtied, the start poपूर्णांकer
 		 * has moved, the end is the original one.
 		 */
-		if (!redirty) {
-			extent_range_clear_dirty_for_io(inode, start, end);
+		अगर (!redirty) अणु
+			extent_range_clear_dirty_क्रम_io(inode, start, end);
 			redirty = 1;
-		}
+		पूर्ण
 
 		/* Compression level is applied here and only here */
 		ret = btrfs_compress_pages(
@@ -643,54 +644,54 @@ again:
 					   &total_in,
 					   &total_compressed);
 
-		if (!ret) {
-			unsigned long offset = offset_in_page(total_compressed);
-			struct page *page = pages[nr_pages - 1];
+		अगर (!ret) अणु
+			अचिन्हित दीर्घ offset = offset_in_page(total_compressed);
+			काष्ठा page *page = pages[nr_pages - 1];
 
 			/* zero the tail end of the last page, we might be
-			 * sending it down to disk
+			 * sending it करोwn to disk
 			 */
-			if (offset)
+			अगर (offset)
 				memzero_page(page, offset, PAGE_SIZE - offset);
 			will_compress = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 cont:
-	if (start == 0) {
-		/* lets try to make an inline extent */
-		if (ret || total_in < actual_end) {
+	अगर (start == 0) अणु
+		/* lets try to make an अंतरभूत extent */
+		अगर (ret || total_in < actual_end) अणु
 			/* we didn't compress the entire range, try
-			 * to make an uncompressed inline extent.
+			 * to make an uncompressed अंतरभूत extent.
 			 */
-			ret = cow_file_range_inline(BTRFS_I(inode), start, end,
+			ret = cow_file_range_अंतरभूत(BTRFS_I(inode), start, end,
 						    0, BTRFS_COMPRESS_NONE,
-						    NULL);
-		} else {
-			/* try making a compressed inline extent */
-			ret = cow_file_range_inline(BTRFS_I(inode), start, end,
+						    शून्य);
+		पूर्ण अन्यथा अणु
+			/* try making a compressed अंतरभूत extent */
+			ret = cow_file_range_अंतरभूत(BTRFS_I(inode), start, end,
 						    total_compressed,
 						    compress_type, pages);
-		}
-		if (ret <= 0) {
-			unsigned long clear_flags = EXTENT_DELALLOC |
+		पूर्ण
+		अगर (ret <= 0) अणु
+			अचिन्हित दीर्घ clear_flags = EXTENT_DELALLOC |
 				EXTENT_DELALLOC_NEW | EXTENT_DEFRAG |
 				EXTENT_DO_ACCOUNTING;
-			unsigned long page_error_op;
+			अचिन्हित दीर्घ page_error_op;
 
 			page_error_op = ret < 0 ? PAGE_SET_ERROR : 0;
 
 			/*
-			 * inline extent creation worked or returned error,
-			 * we don't need to create any more async work items.
-			 * Unlock and free up our temp pages.
+			 * अंतरभूत extent creation worked or वापसed error,
+			 * we करोn't need to create any more async work items.
+			 * Unlock and मुक्त up our temp pages.
 			 *
 			 * We use DO_ACCOUNTING here because we need the
-			 * delalloc_release_metadata to be done _after_ we drop
-			 * our outstanding extent for clearing delalloc for this
+			 * delalloc_release_metadata to be करोne _after_ we drop
+			 * our outstanding extent क्रम clearing delalloc क्रम this
 			 * range.
 			 */
 			extent_clear_unlock_delalloc(BTRFS_I(inode), start, end,
-						     NULL,
+						     शून्य,
 						     clear_flags,
 						     PAGE_UNLOCK |
 						     PAGE_START_WRITEBACK |
@@ -698,146 +699,146 @@ cont:
 						     PAGE_END_WRITEBACK);
 
 			/*
-			 * Ensure we only free the compressed pages if we have
+			 * Ensure we only मुक्त the compressed pages अगर we have
 			 * them allocated, as we can still reach here with
 			 * inode_need_compress() == false.
 			 */
-			if (pages) {
-				for (i = 0; i < nr_pages; i++) {
+			अगर (pages) अणु
+				क्रम (i = 0; i < nr_pages; i++) अणु
 					WARN_ON(pages[i]->mapping);
 					put_page(pages[i]);
-				}
-				kfree(pages);
-			}
-			return 0;
-		}
-	}
+				पूर्ण
+				kमुक्त(pages);
+			पूर्ण
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (will_compress) {
+	अगर (will_compress) अणु
 		/*
-		 * we aren't doing an inline extent round the compressed size
-		 * up to a block size boundary so the allocator does sane
+		 * we aren't करोing an अंतरभूत extent round the compressed size
+		 * up to a block size boundary so the allocator करोes sane
 		 * things
 		 */
 		total_compressed = ALIGN(total_compressed, blocksize);
 
 		/*
 		 * one last check to make sure the compression is really a
-		 * win, compare the page count read with the blocks on disk,
-		 * compression must free at least one sector size
+		 * win, compare the page count पढ़ो with the blocks on disk,
+		 * compression must मुक्त at least one sector size
 		 */
 		total_in = ALIGN(total_in, PAGE_SIZE);
-		if (total_compressed + blocksize <= total_in) {
+		अगर (total_compressed + blocksize <= total_in) अणु
 			compressed_extents++;
 
 			/*
-			 * The async work queues will take care of doing actual
-			 * allocation on disk for these compressed pages, and
+			 * The async work queues will take care of करोing actual
+			 * allocation on disk क्रम these compressed pages, and
 			 * will submit them to the elevator.
 			 */
 			add_async_extent(async_chunk, start, total_in,
 					total_compressed, pages, nr_pages,
 					compress_type);
 
-			if (start + total_in < end) {
+			अगर (start + total_in < end) अणु
 				start += total_in;
-				pages = NULL;
+				pages = शून्य;
 				cond_resched();
-				goto again;
-			}
-			return compressed_extents;
-		}
-	}
-	if (pages) {
+				जाओ again;
+			पूर्ण
+			वापस compressed_extents;
+		पूर्ण
+	पूर्ण
+	अगर (pages) अणु
 		/*
 		 * the compression code ran but failed to make things smaller,
-		 * free any pages it allocated and our page pointer array
+		 * मुक्त any pages it allocated and our page poपूर्णांकer array
 		 */
-		for (i = 0; i < nr_pages; i++) {
+		क्रम (i = 0; i < nr_pages; i++) अणु
 			WARN_ON(pages[i]->mapping);
 			put_page(pages[i]);
-		}
-		kfree(pages);
-		pages = NULL;
+		पूर्ण
+		kमुक्त(pages);
+		pages = शून्य;
 		total_compressed = 0;
 		nr_pages = 0;
 
-		/* flag the file so we don't compress in the future */
-		if (!btrfs_test_opt(fs_info, FORCE_COMPRESS) &&
-		    !(BTRFS_I(inode)->prop_compress)) {
+		/* flag the file so we करोn't compress in the future */
+		अगर (!btrfs_test_opt(fs_info, FORCE_COMPRESS) &&
+		    !(BTRFS_I(inode)->prop_compress)) अणु
 			BTRFS_I(inode)->flags |= BTRFS_INODE_NOCOMPRESS;
-		}
-	}
+		पूर्ण
+	पूर्ण
 cleanup_and_bail_uncompressed:
 	/*
-	 * No compression, but we still need to write the pages in the file
-	 * we've been given so far.  redirty the locked page if it corresponds
-	 * to our extent and set things up for the async work queue to run
-	 * cow_file_range to do the normal delalloc dance.
+	 * No compression, but we still need to ग_लिखो the pages in the file
+	 * we've been given so far.  redirty the locked page अगर it corresponds
+	 * to our extent and set things up क्रम the async work queue to run
+	 * cow_file_range to करो the normal delalloc dance.
 	 */
-	if (async_chunk->locked_page &&
+	अगर (async_chunk->locked_page &&
 	    (page_offset(async_chunk->locked_page) >= start &&
-	     page_offset(async_chunk->locked_page)) <= end) {
+	     page_offset(async_chunk->locked_page)) <= end) अणु
 		__set_page_dirty_nobuffers(async_chunk->locked_page);
 		/* unlocked later on in the async handlers */
-	}
+	पूर्ण
 
-	if (redirty)
-		extent_range_redirty_for_io(inode, start, end);
-	add_async_extent(async_chunk, start, end - start + 1, 0, NULL, 0,
+	अगर (redirty)
+		extent_range_redirty_क्रम_io(inode, start, end);
+	add_async_extent(async_chunk, start, end - start + 1, 0, शून्य, 0,
 			 BTRFS_COMPRESS_NONE);
 	compressed_extents++;
 
-	return compressed_extents;
-}
+	वापस compressed_extents;
+पूर्ण
 
-static void free_async_extent_pages(struct async_extent *async_extent)
-{
-	int i;
+अटल व्योम मुक्त_async_extent_pages(काष्ठा async_extent *async_extent)
+अणु
+	पूर्णांक i;
 
-	if (!async_extent->pages)
-		return;
+	अगर (!async_extent->pages)
+		वापस;
 
-	for (i = 0; i < async_extent->nr_pages; i++) {
+	क्रम (i = 0; i < async_extent->nr_pages; i++) अणु
 		WARN_ON(async_extent->pages[i]->mapping);
 		put_page(async_extent->pages[i]);
-	}
-	kfree(async_extent->pages);
+	पूर्ण
+	kमुक्त(async_extent->pages);
 	async_extent->nr_pages = 0;
-	async_extent->pages = NULL;
-}
+	async_extent->pages = शून्य;
+पूर्ण
 
 /*
- * phase two of compressed writeback.  This is the ordered portion
- * of the code, which only gets called in the order the work was
+ * phase two of compressed ग_लिखोback.  This is the ordered portion
+ * of the code, which only माला_लो called in the order the work was
  * queued.  We walk all the async extents created by compress_file_range
- * and send them down to the disk.
+ * and send them करोwn to the disk.
  */
-static noinline void submit_compressed_extents(struct async_chunk *async_chunk)
-{
-	struct btrfs_inode *inode = BTRFS_I(async_chunk->inode);
-	struct btrfs_fs_info *fs_info = inode->root->fs_info;
-	struct async_extent *async_extent;
-	u64 alloc_hint = 0;
-	struct btrfs_key ins;
-	struct extent_map *em;
-	struct btrfs_root *root = inode->root;
-	struct extent_io_tree *io_tree = &inode->io_tree;
-	int ret = 0;
+अटल noअंतरभूत व्योम submit_compressed_extents(काष्ठा async_chunk *async_chunk)
+अणु
+	काष्ठा btrfs_inode *inode = BTRFS_I(async_chunk->inode);
+	काष्ठा btrfs_fs_info *fs_info = inode->root->fs_info;
+	काष्ठा async_extent *async_extent;
+	u64 alloc_hपूर्णांक = 0;
+	काष्ठा btrfs_key ins;
+	काष्ठा extent_map *em;
+	काष्ठा btrfs_root *root = inode->root;
+	काष्ठा extent_io_tree *io_tree = &inode->io_tree;
+	पूर्णांक ret = 0;
 
 again:
-	while (!list_empty(&async_chunk->extents)) {
+	जबतक (!list_empty(&async_chunk->extents)) अणु
 		async_extent = list_entry(async_chunk->extents.next,
-					  struct async_extent, list);
+					  काष्ठा async_extent, list);
 		list_del(&async_extent->list);
 
 retry:
 		lock_extent(io_tree, async_extent->start,
 			    async_extent->start + async_extent->ram_size - 1);
 		/* did the compression code fall back to uncompressed IO? */
-		if (!async_extent->pages) {
-			int page_started = 0;
-			unsigned long nr_written = 0;
+		अगर (!async_extent->pages) अणु
+			पूर्णांक page_started = 0;
+			अचिन्हित दीर्घ nr_written = 0;
 
 			/* allocate blocks */
 			ret = cow_file_range(inode, async_chunk->locked_page,
@@ -849,53 +850,53 @@ retry:
 			/* JDM XXX */
 
 			/*
-			 * if page_started, cow_file_range inserted an
-			 * inline extent and took care of all the unlocking
-			 * and IO for us.  Otherwise, we need to submit
-			 * all those pages down to the drive.
+			 * अगर page_started, cow_file_range inserted an
+			 * अंतरभूत extent and took care of all the unlocking
+			 * and IO क्रम us.  Otherwise, we need to submit
+			 * all those pages करोwn to the drive.
 			 */
-			if (!page_started && !ret)
-				extent_write_locked_range(&inode->vfs_inode,
+			अगर (!page_started && !ret)
+				extent_ग_लिखो_locked_range(&inode->vfs_inode,
 						  async_extent->start,
 						  async_extent->start +
 						  async_extent->ram_size - 1,
 						  WB_SYNC_ALL);
-			else if (ret && async_chunk->locked_page)
+			अन्यथा अगर (ret && async_chunk->locked_page)
 				unlock_page(async_chunk->locked_page);
-			kfree(async_extent);
+			kमुक्त(async_extent);
 			cond_resched();
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ret = btrfs_reserve_extent(root, async_extent->ram_size,
 					   async_extent->compressed_size,
 					   async_extent->compressed_size,
-					   0, alloc_hint, &ins, 1, 1);
-		if (ret) {
-			free_async_extent_pages(async_extent);
+					   0, alloc_hपूर्णांक, &ins, 1, 1);
+		अगर (ret) अणु
+			मुक्त_async_extent_pages(async_extent);
 
-			if (ret == -ENOSPC) {
+			अगर (ret == -ENOSPC) अणु
 				unlock_extent(io_tree, async_extent->start,
 					      async_extent->start +
 					      async_extent->ram_size - 1);
 
 				/*
-				 * we need to redirty the pages if we decide to
+				 * we need to redirty the pages अगर we decide to
 				 * fallback to uncompressed IO, otherwise we
-				 * will not submit these pages down to lower
+				 * will not submit these pages करोwn to lower
 				 * layers.
 				 */
-				extent_range_redirty_for_io(&inode->vfs_inode,
+				extent_range_redirty_क्रम_io(&inode->vfs_inode,
 						async_extent->start,
 						async_extent->start +
 						async_extent->ram_size - 1);
 
-				goto retry;
-			}
-			goto out_free;
-		}
+				जाओ retry;
+			पूर्ण
+			जाओ out_मुक्त;
+		पूर्ण
 		/*
-		 * here we're doing allocation and writeback of the
+		 * here we're करोing allocation and ग_लिखोback of the
 		 * compressed pages
 		 */
 		em = create_io_em(inode, async_extent->start,
@@ -907,10 +908,10 @@ retry:
 				  async_extent->ram_size, /* ram_bytes */
 				  async_extent->compress_type,
 				  BTRFS_ORDERED_COMPRESSED);
-		if (IS_ERR(em))
-			/* ret value is not necessary due to void function */
-			goto out_free_reserve;
-		free_extent_map(em);
+		अगर (IS_ERR(em))
+			/* ret value is not necessary due to व्योम function */
+			जाओ out_मुक्त_reserve;
+		मुक्त_extent_map(em);
 
 		ret = btrfs_add_ordered_extent_compress(inode,
 						async_extent->start,
@@ -918,134 +919,134 @@ retry:
 						async_extent->ram_size,
 						ins.offset,
 						async_extent->compress_type);
-		if (ret) {
+		अगर (ret) अणु
 			btrfs_drop_extent_cache(inode, async_extent->start,
 						async_extent->start +
 						async_extent->ram_size - 1, 0);
-			goto out_free_reserve;
-		}
+			जाओ out_मुक्त_reserve;
+		पूर्ण
 		btrfs_dec_block_group_reservations(fs_info, ins.objectid);
 
 		/*
-		 * clear dirty, set writeback and unlock the pages.
+		 * clear dirty, set ग_लिखोback and unlock the pages.
 		 */
 		extent_clear_unlock_delalloc(inode, async_extent->start,
 				async_extent->start +
 				async_extent->ram_size - 1,
-				NULL, EXTENT_LOCKED | EXTENT_DELALLOC,
+				शून्य, EXTENT_LOCKED | EXTENT_DELALLOC,
 				PAGE_UNLOCK | PAGE_START_WRITEBACK);
-		if (btrfs_submit_compressed_write(inode, async_extent->start,
+		अगर (btrfs_submit_compressed_ग_लिखो(inode, async_extent->start,
 				    async_extent->ram_size,
 				    ins.objectid,
 				    ins.offset, async_extent->pages,
 				    async_extent->nr_pages,
-				    async_chunk->write_flags,
-				    async_chunk->blkcg_css)) {
-			struct page *p = async_extent->pages[0];
-			const u64 start = async_extent->start;
-			const u64 end = start + async_extent->ram_size - 1;
+				    async_chunk->ग_लिखो_flags,
+				    async_chunk->blkcg_css)) अणु
+			काष्ठा page *p = async_extent->pages[0];
+			स्थिर u64 start = async_extent->start;
+			स्थिर u64 end = start + async_extent->ram_size - 1;
 
 			p->mapping = inode->vfs_inode.i_mapping;
-			btrfs_writepage_endio_finish_ordered(p, start, end, 0);
+			btrfs_ग_लिखोpage_endio_finish_ordered(p, start, end, 0);
 
-			p->mapping = NULL;
-			extent_clear_unlock_delalloc(inode, start, end, NULL, 0,
+			p->mapping = शून्य;
+			extent_clear_unlock_delalloc(inode, start, end, शून्य, 0,
 						     PAGE_END_WRITEBACK |
 						     PAGE_SET_ERROR);
-			free_async_extent_pages(async_extent);
-		}
-		alloc_hint = ins.objectid + ins.offset;
-		kfree(async_extent);
+			मुक्त_async_extent_pages(async_extent);
+		पूर्ण
+		alloc_hपूर्णांक = ins.objectid + ins.offset;
+		kमुक्त(async_extent);
 		cond_resched();
-	}
-	return;
-out_free_reserve:
+	पूर्ण
+	वापस;
+out_मुक्त_reserve:
 	btrfs_dec_block_group_reservations(fs_info, ins.objectid);
-	btrfs_free_reserved_extent(fs_info, ins.objectid, ins.offset, 1);
-out_free:
+	btrfs_मुक्त_reserved_extent(fs_info, ins.objectid, ins.offset, 1);
+out_मुक्त:
 	extent_clear_unlock_delalloc(inode, async_extent->start,
 				     async_extent->start +
 				     async_extent->ram_size - 1,
-				     NULL, EXTENT_LOCKED | EXTENT_DELALLOC |
+				     शून्य, EXTENT_LOCKED | EXTENT_DELALLOC |
 				     EXTENT_DELALLOC_NEW |
 				     EXTENT_DEFRAG | EXTENT_DO_ACCOUNTING,
 				     PAGE_UNLOCK | PAGE_START_WRITEBACK |
 				     PAGE_END_WRITEBACK | PAGE_SET_ERROR);
-	free_async_extent_pages(async_extent);
-	kfree(async_extent);
-	goto again;
-}
+	मुक्त_async_extent_pages(async_extent);
+	kमुक्त(async_extent);
+	जाओ again;
+पूर्ण
 
-static u64 get_extent_allocation_hint(struct btrfs_inode *inode, u64 start,
+अटल u64 get_extent_allocation_hपूर्णांक(काष्ठा btrfs_inode *inode, u64 start,
 				      u64 num_bytes)
-{
-	struct extent_map_tree *em_tree = &inode->extent_tree;
-	struct extent_map *em;
-	u64 alloc_hint = 0;
+अणु
+	काष्ठा extent_map_tree *em_tree = &inode->extent_tree;
+	काष्ठा extent_map *em;
+	u64 alloc_hपूर्णांक = 0;
 
-	read_lock(&em_tree->lock);
+	पढ़ो_lock(&em_tree->lock);
 	em = search_extent_mapping(em_tree, start, num_bytes);
-	if (em) {
+	अगर (em) अणु
 		/*
-		 * if block start isn't an actual block number then find the
-		 * first block in this inode and use that as a hint.  If that
-		 * block is also bogus then just don't worry about it.
+		 * अगर block start isn't an actual block number then find the
+		 * first block in this inode and use that as a hपूर्णांक.  If that
+		 * block is also bogus then just करोn't worry about it.
 		 */
-		if (em->block_start >= EXTENT_MAP_LAST_BYTE) {
-			free_extent_map(em);
+		अगर (em->block_start >= EXTENT_MAP_LAST_BYTE) अणु
+			मुक्त_extent_map(em);
 			em = search_extent_mapping(em_tree, 0, 0);
-			if (em && em->block_start < EXTENT_MAP_LAST_BYTE)
-				alloc_hint = em->block_start;
-			if (em)
-				free_extent_map(em);
-		} else {
-			alloc_hint = em->block_start;
-			free_extent_map(em);
-		}
-	}
-	read_unlock(&em_tree->lock);
+			अगर (em && em->block_start < EXTENT_MAP_LAST_BYTE)
+				alloc_hपूर्णांक = em->block_start;
+			अगर (em)
+				मुक्त_extent_map(em);
+		पूर्ण अन्यथा अणु
+			alloc_hपूर्णांक = em->block_start;
+			मुक्त_extent_map(em);
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&em_tree->lock);
 
-	return alloc_hint;
-}
+	वापस alloc_hपूर्णांक;
+पूर्ण
 
 /*
  * when extent_io.c finds a delayed allocation range in the file,
  * the call backs end up in this code.  The basic idea is to
- * allocate extents on disk for the range, and create ordered data structs
+ * allocate extents on disk क्रम the range, and create ordered data काष्ठाs
  * in ram to track those extents.
  *
- * locked_page is the page that writepage had locked already.  We use
- * it to make sure we don't do extra locks or unlocks.
+ * locked_page is the page that ग_लिखोpage had locked alपढ़ोy.  We use
+ * it to make sure we करोn't करो extra locks or unlocks.
  *
- * *page_started is set to one if we unlock locked_page and do everything
- * required to start IO on it.  It may be clean and already done with
- * IO when we return.
+ * *page_started is set to one अगर we unlock locked_page and करो everything
+ * required to start IO on it.  It may be clean and alपढ़ोy करोne with
+ * IO when we वापस.
  */
-static noinline int cow_file_range(struct btrfs_inode *inode,
-				   struct page *locked_page,
-				   u64 start, u64 end, int *page_started,
-				   unsigned long *nr_written, int unlock)
-{
-	struct btrfs_root *root = inode->root;
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	u64 alloc_hint = 0;
+अटल noअंतरभूत पूर्णांक cow_file_range(काष्ठा btrfs_inode *inode,
+				   काष्ठा page *locked_page,
+				   u64 start, u64 end, पूर्णांक *page_started,
+				   अचिन्हित दीर्घ *nr_written, पूर्णांक unlock)
+अणु
+	काष्ठा btrfs_root *root = inode->root;
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	u64 alloc_hपूर्णांक = 0;
 	u64 num_bytes;
-	unsigned long ram_size;
+	अचिन्हित दीर्घ ram_size;
 	u64 cur_alloc_size = 0;
 	u64 min_alloc_size;
 	u64 blocksize = fs_info->sectorsize;
-	struct btrfs_key ins;
-	struct extent_map *em;
-	unsigned clear_bits;
-	unsigned long page_ops;
+	काष्ठा btrfs_key ins;
+	काष्ठा extent_map *em;
+	अचिन्हित clear_bits;
+	अचिन्हित दीर्घ page_ops;
 	bool extent_reserved = false;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (btrfs_is_free_space_inode(inode)) {
+	अगर (btrfs_is_मुक्त_space_inode(inode)) अणु
 		WARN_ON_ONCE(1);
 		ret = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	num_bytes = ALIGN(end - start + 1, blocksize);
 	num_bytes = max(blocksize,  num_bytes);
@@ -1053,18 +1054,18 @@ static noinline int cow_file_range(struct btrfs_inode *inode,
 
 	inode_should_defrag(inode, start, end, num_bytes, SZ_64K);
 
-	if (start == 0) {
-		/* lets try to make an inline extent */
-		ret = cow_file_range_inline(inode, start, end, 0,
-					    BTRFS_COMPRESS_NONE, NULL);
-		if (ret == 0) {
+	अगर (start == 0) अणु
+		/* lets try to make an अंतरभूत extent */
+		ret = cow_file_range_अंतरभूत(inode, start, end, 0,
+					    BTRFS_COMPRESS_NONE, शून्य);
+		अगर (ret == 0) अणु
 			/*
 			 * We use DO_ACCOUNTING here because we need the
 			 * delalloc_release_metadata to be run _after_ we drop
-			 * our outstanding extent for clearing delalloc for this
+			 * our outstanding extent क्रम clearing delalloc क्रम this
 			 * range.
 			 */
-			extent_clear_unlock_delalloc(inode, start, end, NULL,
+			extent_clear_unlock_delalloc(inode, start, end, शून्य,
 				     EXTENT_LOCKED | EXTENT_DELALLOC |
 				     EXTENT_DELALLOC_NEW | EXTENT_DEFRAG |
 				     EXTENT_DO_ACCOUNTING, PAGE_UNLOCK |
@@ -1072,38 +1073,38 @@ static noinline int cow_file_range(struct btrfs_inode *inode,
 			*nr_written = *nr_written +
 			     (end - start + PAGE_SIZE) / PAGE_SIZE;
 			*page_started = 1;
-			goto out;
-		} else if (ret < 0) {
-			goto out_unlock;
-		}
-	}
+			जाओ out;
+		पूर्ण अन्यथा अगर (ret < 0) अणु
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
 
-	alloc_hint = get_extent_allocation_hint(inode, start, num_bytes);
+	alloc_hपूर्णांक = get_extent_allocation_hपूर्णांक(inode, start, num_bytes);
 	btrfs_drop_extent_cache(inode, start, start + num_bytes - 1, 0);
 
 	/*
 	 * Relocation relies on the relocated extents to have exactly the same
-	 * size as the original extents. Normally writeback for relocation data
-	 * extents follows a NOCOW path because relocation preallocates the
+	 * size as the original extents. Normally ग_लिखोback क्रम relocation data
+	 * extents follows a NOCOW path because relocation pपुनः_स्मृतिates the
 	 * extents. However, due to an operation such as scrub turning a block
 	 * group to RO mode, it may fallback to COW mode, so we must make sure
 	 * an extent allocated during COW has exactly the requested size and can
-	 * not be split into smaller extents, otherwise relocation breaks and
+	 * not be split पूर्णांकo smaller extents, otherwise relocation अवरोधs and
 	 * fails during the stage where it updates the bytenr of file extent
 	 * items.
 	 */
-	if (root->root_key.objectid == BTRFS_DATA_RELOC_TREE_OBJECTID)
+	अगर (root->root_key.objectid == BTRFS_DATA_RELOC_TREE_OBJECTID)
 		min_alloc_size = num_bytes;
-	else
+	अन्यथा
 		min_alloc_size = fs_info->sectorsize;
 
-	while (num_bytes > 0) {
+	जबतक (num_bytes > 0) अणु
 		cur_alloc_size = num_bytes;
 		ret = btrfs_reserve_extent(root, cur_alloc_size, cur_alloc_size,
-					   min_alloc_size, 0, alloc_hint,
+					   min_alloc_size, 0, alloc_hपूर्णांक,
 					   &ins, 1, 1);
-		if (ret < 0)
-			goto out_unlock;
+		अगर (ret < 0)
+			जाओ out_unlock;
 		cur_alloc_size = ins.offset;
 		extent_reserved = true;
 
@@ -1116,46 +1117,46 @@ static noinline int cow_file_range(struct btrfs_inode *inode,
 				  ram_size, /* ram_bytes */
 				  BTRFS_COMPRESS_NONE, /* compress_type */
 				  BTRFS_ORDERED_REGULAR /* type */);
-		if (IS_ERR(em)) {
+		अगर (IS_ERR(em)) अणु
 			ret = PTR_ERR(em);
-			goto out_reserve;
-		}
-		free_extent_map(em);
+			जाओ out_reserve;
+		पूर्ण
+		मुक्त_extent_map(em);
 
 		ret = btrfs_add_ordered_extent(inode, start, ins.objectid,
 					       ram_size, cur_alloc_size,
 					       BTRFS_ORDERED_REGULAR);
-		if (ret)
-			goto out_drop_extent_cache;
+		अगर (ret)
+			जाओ out_drop_extent_cache;
 
-		if (root->root_key.objectid ==
-		    BTRFS_DATA_RELOC_TREE_OBJECTID) {
+		अगर (root->root_key.objectid ==
+		    BTRFS_DATA_RELOC_TREE_OBJECTID) अणु
 			ret = btrfs_reloc_clone_csums(inode, start,
 						      cur_alloc_size);
 			/*
 			 * Only drop cache here, and process as normal.
 			 *
 			 * We must not allow extent_clear_unlock_delalloc()
-			 * at out_unlock label to free meta of this ordered
-			 * extent, as its meta should be freed by
+			 * at out_unlock label to मुक्त meta of this ordered
+			 * extent, as its meta should be मुक्तd by
 			 * btrfs_finish_ordered_io().
 			 *
-			 * So we must continue until @start is increased to
+			 * So we must जारी until @start is increased to
 			 * skip current ordered extent.
 			 */
-			if (ret)
+			अगर (ret)
 				btrfs_drop_extent_cache(inode, start,
 						start + ram_size - 1, 0);
-		}
+		पूर्ण
 
 		btrfs_dec_block_group_reservations(fs_info, ins.objectid);
 
 		/* we're not doing compressed IO, don't unlock the first
-		 * page (which the caller expects to stay locked), don't
-		 * clear any dirty bits and don't set any writeback bits
+		 * page (which the caller expects to stay locked), करोn't
+		 * clear any dirty bits and करोn't set any ग_लिखोback bits
 		 *
 		 * Do set the Private2 bit so we know this page was properly
-		 * setup for writepage
+		 * setup क्रम ग_लिखोpage
 		 */
 		page_ops = unlock ? PAGE_UNLOCK : 0;
 		page_ops |= PAGE_SET_PRIVATE2;
@@ -1164,223 +1165,223 @@ static noinline int cow_file_range(struct btrfs_inode *inode,
 					     locked_page,
 					     EXTENT_LOCKED | EXTENT_DELALLOC,
 					     page_ops);
-		if (num_bytes < cur_alloc_size)
+		अगर (num_bytes < cur_alloc_size)
 			num_bytes = 0;
-		else
+		अन्यथा
 			num_bytes -= cur_alloc_size;
-		alloc_hint = ins.objectid + ins.offset;
+		alloc_hपूर्णांक = ins.objectid + ins.offset;
 		start += cur_alloc_size;
 		extent_reserved = false;
 
 		/*
 		 * btrfs_reloc_clone_csums() error, since start is increased
 		 * extent_clear_unlock_delalloc() at out_unlock label won't
-		 * free metadata of current ordered extent, we're OK to exit.
+		 * मुक्त metadata of current ordered extent, we're OK to निकास.
 		 */
-		if (ret)
-			goto out_unlock;
-	}
+		अगर (ret)
+			जाओ out_unlock;
+	पूर्ण
 out:
-	return ret;
+	वापस ret;
 
 out_drop_extent_cache:
 	btrfs_drop_extent_cache(inode, start, start + ram_size - 1, 0);
 out_reserve:
 	btrfs_dec_block_group_reservations(fs_info, ins.objectid);
-	btrfs_free_reserved_extent(fs_info, ins.objectid, ins.offset, 1);
+	btrfs_मुक्त_reserved_extent(fs_info, ins.objectid, ins.offset, 1);
 out_unlock:
 	clear_bits = EXTENT_LOCKED | EXTENT_DELALLOC | EXTENT_DELALLOC_NEW |
 		EXTENT_DEFRAG | EXTENT_CLEAR_META_RESV;
 	page_ops = PAGE_UNLOCK | PAGE_START_WRITEBACK | PAGE_END_WRITEBACK;
 	/*
-	 * If we reserved an extent for our delalloc range (or a subrange) and
+	 * If we reserved an extent क्रम our delalloc range (or a subrange) and
 	 * failed to create the respective ordered extent, then it means that
 	 * when we reserved the extent we decremented the extent's size from
 	 * the data space_info's bytes_may_use counter and incremented the
 	 * space_info's bytes_reserved counter by the same amount. We must make
-	 * sure extent_clear_unlock_delalloc() does not try to decrement again
-	 * the data space_info's bytes_may_use counter, therefore we do not pass
+	 * sure extent_clear_unlock_delalloc() करोes not try to decrement again
+	 * the data space_info's bytes_may_use counter, thereक्रमe we करो not pass
 	 * it the flag EXTENT_CLEAR_DATA_RESV.
 	 */
-	if (extent_reserved) {
+	अगर (extent_reserved) अणु
 		extent_clear_unlock_delalloc(inode, start,
 					     start + cur_alloc_size - 1,
 					     locked_page,
 					     clear_bits,
 					     page_ops);
 		start += cur_alloc_size;
-		if (start >= end)
-			goto out;
-	}
+		अगर (start >= end)
+			जाओ out;
+	पूर्ण
 	extent_clear_unlock_delalloc(inode, start, end, locked_page,
 				     clear_bits | EXTENT_CLEAR_DATA_RESV,
 				     page_ops);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
 /*
  * work queue call back to started compression on a file and pages
  */
-static noinline void async_cow_start(struct btrfs_work *work)
-{
-	struct async_chunk *async_chunk;
-	int compressed_extents;
+अटल noअंतरभूत व्योम async_cow_start(काष्ठा btrfs_work *work)
+अणु
+	काष्ठा async_chunk *async_chunk;
+	पूर्णांक compressed_extents;
 
-	async_chunk = container_of(work, struct async_chunk, work);
+	async_chunk = container_of(work, काष्ठा async_chunk, work);
 
 	compressed_extents = compress_file_range(async_chunk);
-	if (compressed_extents == 0) {
+	अगर (compressed_extents == 0) अणु
 		btrfs_add_delayed_iput(async_chunk->inode);
-		async_chunk->inode = NULL;
-	}
-}
+		async_chunk->inode = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * work queue call back to submit previously compressed pages
  */
-static noinline void async_cow_submit(struct btrfs_work *work)
-{
-	struct async_chunk *async_chunk = container_of(work, struct async_chunk,
+अटल noअंतरभूत व्योम async_cow_submit(काष्ठा btrfs_work *work)
+अणु
+	काष्ठा async_chunk *async_chunk = container_of(work, काष्ठा async_chunk,
 						     work);
-	struct btrfs_fs_info *fs_info = btrfs_work_owner(work);
-	unsigned long nr_pages;
+	काष्ठा btrfs_fs_info *fs_info = btrfs_work_owner(work);
+	अचिन्हित दीर्घ nr_pages;
 
 	nr_pages = (async_chunk->end - async_chunk->start + PAGE_SIZE) >>
 		PAGE_SHIFT;
 
-	/* atomic_sub_return implies a barrier */
-	if (atomic_sub_return(nr_pages, &fs_info->async_delalloc_pages) <
+	/* atomic_sub_वापस implies a barrier */
+	अगर (atomic_sub_वापस(nr_pages, &fs_info->async_delalloc_pages) <
 	    5 * SZ_1M)
-		cond_wake_up_nomb(&fs_info->async_submit_wait);
+		cond_wake_up_nomb(&fs_info->async_submit_रुको);
 
 	/*
-	 * ->inode could be NULL if async_chunk_start has failed to compress,
-	 * in which case we don't have anything to submit, yet we need to
+	 * ->inode could be शून्य अगर async_chunk_start has failed to compress,
+	 * in which हाल we करोn't have anything to submit, yet we need to
 	 * always adjust ->async_delalloc_pages as its paired with the init
 	 * happening in cow_file_range_async
 	 */
-	if (async_chunk->inode)
+	अगर (async_chunk->inode)
 		submit_compressed_extents(async_chunk);
-}
+पूर्ण
 
-static noinline void async_cow_free(struct btrfs_work *work)
-{
-	struct async_chunk *async_chunk;
+अटल noअंतरभूत व्योम async_cow_मुक्त(काष्ठा btrfs_work *work)
+अणु
+	काष्ठा async_chunk *async_chunk;
 
-	async_chunk = container_of(work, struct async_chunk, work);
-	if (async_chunk->inode)
+	async_chunk = container_of(work, काष्ठा async_chunk, work);
+	अगर (async_chunk->inode)
 		btrfs_add_delayed_iput(async_chunk->inode);
-	if (async_chunk->blkcg_css)
+	अगर (async_chunk->blkcg_css)
 		css_put(async_chunk->blkcg_css);
 	/*
-	 * Since the pointer to 'pending' is at the beginning of the array of
-	 * async_chunk's, freeing it ensures the whole array has been freed.
+	 * Since the poपूर्णांकer to 'pending' is at the beginning of the array of
+	 * async_chunk's, मुक्तing it ensures the whole array has been मुक्तd.
 	 */
-	if (atomic_dec_and_test(async_chunk->pending))
-		kvfree(async_chunk->pending);
-}
+	अगर (atomic_dec_and_test(async_chunk->pending))
+		kvमुक्त(async_chunk->pending);
+पूर्ण
 
-static int cow_file_range_async(struct btrfs_inode *inode,
-				struct writeback_control *wbc,
-				struct page *locked_page,
-				u64 start, u64 end, int *page_started,
-				unsigned long *nr_written)
-{
-	struct btrfs_fs_info *fs_info = inode->root->fs_info;
-	struct cgroup_subsys_state *blkcg_css = wbc_blkcg_css(wbc);
-	struct async_cow *ctx;
-	struct async_chunk *async_chunk;
-	unsigned long nr_pages;
+अटल पूर्णांक cow_file_range_async(काष्ठा btrfs_inode *inode,
+				काष्ठा ग_लिखोback_control *wbc,
+				काष्ठा page *locked_page,
+				u64 start, u64 end, पूर्णांक *page_started,
+				अचिन्हित दीर्घ *nr_written)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = inode->root->fs_info;
+	काष्ठा cgroup_subsys_state *blkcg_css = wbc_blkcg_css(wbc);
+	काष्ठा async_cow *ctx;
+	काष्ठा async_chunk *async_chunk;
+	अचिन्हित दीर्घ nr_pages;
 	u64 cur_end;
 	u64 num_chunks = DIV_ROUND_UP(end - start, SZ_512K);
-	int i;
+	पूर्णांक i;
 	bool should_compress;
-	unsigned nofs_flag;
-	const unsigned int write_flags = wbc_to_write_flags(wbc);
+	अचिन्हित nofs_flag;
+	स्थिर अचिन्हित पूर्णांक ग_लिखो_flags = wbc_to_ग_लिखो_flags(wbc);
 
 	unlock_extent(&inode->io_tree, start, end);
 
-	if (inode->flags & BTRFS_INODE_NOCOMPRESS &&
-	    !btrfs_test_opt(fs_info, FORCE_COMPRESS)) {
+	अगर (inode->flags & BTRFS_INODE_NOCOMPRESS &&
+	    !btrfs_test_opt(fs_info, FORCE_COMPRESS)) अणु
 		num_chunks = 1;
 		should_compress = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		should_compress = true;
-	}
+	पूर्ण
 
-	nofs_flag = memalloc_nofs_save();
-	ctx = kvmalloc(struct_size(ctx, chunks, num_chunks), GFP_KERNEL);
-	memalloc_nofs_restore(nofs_flag);
+	nofs_flag = meदो_स्मृति_nofs_save();
+	ctx = kvदो_स्मृति(काष्ठा_size(ctx, chunks, num_chunks), GFP_KERNEL);
+	meदो_स्मृति_nofs_restore(nofs_flag);
 
-	if (!ctx) {
-		unsigned clear_bits = EXTENT_LOCKED | EXTENT_DELALLOC |
+	अगर (!ctx) अणु
+		अचिन्हित clear_bits = EXTENT_LOCKED | EXTENT_DELALLOC |
 			EXTENT_DELALLOC_NEW | EXTENT_DEFRAG |
 			EXTENT_DO_ACCOUNTING;
-		unsigned long page_ops = PAGE_UNLOCK | PAGE_START_WRITEBACK |
+		अचिन्हित दीर्घ page_ops = PAGE_UNLOCK | PAGE_START_WRITEBACK |
 					 PAGE_END_WRITEBACK | PAGE_SET_ERROR;
 
 		extent_clear_unlock_delalloc(inode, start, end, locked_page,
 					     clear_bits, page_ops);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	async_chunk = ctx->chunks;
 	atomic_set(&ctx->num_chunks, num_chunks);
 
-	for (i = 0; i < num_chunks; i++) {
-		if (should_compress)
+	क्रम (i = 0; i < num_chunks; i++) अणु
+		अगर (should_compress)
 			cur_end = min(end, start + SZ_512K - 1);
-		else
+		अन्यथा
 			cur_end = end;
 
 		/*
 		 * igrab is called higher up in the call chain, take only the
-		 * lightweight reference for the callback lifetime
+		 * lightweight reference क्रम the callback lअगरeसमय
 		 */
 		ihold(&inode->vfs_inode);
 		async_chunk[i].pending = &ctx->num_chunks;
 		async_chunk[i].inode = &inode->vfs_inode;
 		async_chunk[i].start = start;
 		async_chunk[i].end = cur_end;
-		async_chunk[i].write_flags = write_flags;
+		async_chunk[i].ग_लिखो_flags = ग_लिखो_flags;
 		INIT_LIST_HEAD(&async_chunk[i].extents);
 
 		/*
-		 * The locked_page comes all the way from writepage and its
-		 * the original page we were actually given.  As we spread
+		 * The locked_page comes all the way from ग_लिखोpage and its
+		 * the original page we were actually given.  As we spपढ़ो
 		 * this large delalloc region across multiple async_chunk
-		 * structs, only the first struct needs a pointer to locked_page
+		 * काष्ठाs, only the first काष्ठा needs a poपूर्णांकer to locked_page
 		 *
-		 * This way we don't need racey decisions about who is supposed
+		 * This way we करोn't need racey decisions about who is supposed
 		 * to unlock it.
 		 */
-		if (locked_page) {
+		अगर (locked_page) अणु
 			/*
 			 * Depending on the compressibility, the pages might or
 			 * might not go through async.  We want all of them to
-			 * be accounted against wbc once.  Let's do it here
-			 * before the paths diverge.  wbc accounting is used
-			 * only for foreign writeback detection and doesn't
+			 * be accounted against wbc once.  Let's करो it here
+			 * beक्रमe the paths भागerge.  wbc accounting is used
+			 * only क्रम क्रमeign ग_लिखोback detection and करोesn't
 			 * need full accuracy.  Just account the whole thing
 			 * against the first page.
 			 */
 			wbc_account_cgroup_owner(wbc, locked_page,
 						 cur_end - start);
 			async_chunk[i].locked_page = locked_page;
-			locked_page = NULL;
-		} else {
-			async_chunk[i].locked_page = NULL;
-		}
+			locked_page = शून्य;
+		पूर्ण अन्यथा अणु
+			async_chunk[i].locked_page = शून्य;
+		पूर्ण
 
-		if (blkcg_css != blkcg_root_css) {
+		अगर (blkcg_css != blkcg_root_css) अणु
 			css_get(blkcg_css);
 			async_chunk[i].blkcg_css = blkcg_css;
-		} else {
-			async_chunk[i].blkcg_css = NULL;
-		}
+		पूर्ण अन्यथा अणु
+			async_chunk[i].blkcg_css = शून्य;
+		पूर्ण
 
 		btrfs_init_work(&async_chunk[i].work, async_cow_start,
-				async_cow_submit, async_cow_free);
+				async_cow_submit, async_cow_मुक्त);
 
 		nr_pages = DIV_ROUND_UP(cur_end - start, PAGE_SIZE);
 		atomic_add(nr_pages, &fs_info->async_delalloc_pages);
@@ -1389,248 +1390,248 @@ static int cow_file_range_async(struct btrfs_inode *inode,
 
 		*nr_written += nr_pages;
 		start = cur_end + 1;
-	}
+	पूर्ण
 	*page_started = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static noinline int run_delalloc_zoned(struct btrfs_inode *inode,
-				       struct page *locked_page, u64 start,
-				       u64 end, int *page_started,
-				       unsigned long *nr_written)
-{
-	int ret;
+अटल noअंतरभूत पूर्णांक run_delalloc_zoned(काष्ठा btrfs_inode *inode,
+				       काष्ठा page *locked_page, u64 start,
+				       u64 end, पूर्णांक *page_started,
+				       अचिन्हित दीर्घ *nr_written)
+अणु
+	पूर्णांक ret;
 
 	ret = cow_file_range(inode, locked_page, start, end, page_started,
 			     nr_written, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (*page_started)
-		return 0;
+	अगर (*page_started)
+		वापस 0;
 
 	__set_page_dirty_nobuffers(locked_page);
 	account_page_redirty(locked_page);
-	extent_write_locked_range(&inode->vfs_inode, start, end, WB_SYNC_ALL);
+	extent_ग_लिखो_locked_range(&inode->vfs_inode, start, end, WB_SYNC_ALL);
 	*page_started = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static noinline int csum_exist_in_range(struct btrfs_fs_info *fs_info,
+अटल noअंतरभूत पूर्णांक csum_exist_in_range(काष्ठा btrfs_fs_info *fs_info,
 					u64 bytenr, u64 num_bytes)
-{
-	int ret;
-	struct btrfs_ordered_sum *sums;
+अणु
+	पूर्णांक ret;
+	काष्ठा btrfs_ordered_sum *sums;
 	LIST_HEAD(list);
 
 	ret = btrfs_lookup_csums_range(fs_info->csum_root, bytenr,
 				       bytenr + num_bytes - 1, &list, 0);
-	if (ret == 0 && list_empty(&list))
-		return 0;
+	अगर (ret == 0 && list_empty(&list))
+		वापस 0;
 
-	while (!list_empty(&list)) {
-		sums = list_entry(list.next, struct btrfs_ordered_sum, list);
+	जबतक (!list_empty(&list)) अणु
+		sums = list_entry(list.next, काष्ठा btrfs_ordered_sum, list);
 		list_del(&sums->list);
-		kfree(sums);
-	}
-	if (ret < 0)
-		return ret;
-	return 1;
-}
+		kमुक्त(sums);
+	पूर्ण
+	अगर (ret < 0)
+		वापस ret;
+	वापस 1;
+पूर्ण
 
-static int fallback_to_cow(struct btrfs_inode *inode, struct page *locked_page,
-			   const u64 start, const u64 end,
-			   int *page_started, unsigned long *nr_written)
-{
-	const bool is_space_ino = btrfs_is_free_space_inode(inode);
-	const bool is_reloc_ino = (inode->root->root_key.objectid ==
+अटल पूर्णांक fallback_to_cow(काष्ठा btrfs_inode *inode, काष्ठा page *locked_page,
+			   स्थिर u64 start, स्थिर u64 end,
+			   पूर्णांक *page_started, अचिन्हित दीर्घ *nr_written)
+अणु
+	स्थिर bool is_space_ino = btrfs_is_मुक्त_space_inode(inode);
+	स्थिर bool is_reloc_ino = (inode->root->root_key.objectid ==
 				   BTRFS_DATA_RELOC_TREE_OBJECTID);
-	const u64 range_bytes = end + 1 - start;
-	struct extent_io_tree *io_tree = &inode->io_tree;
+	स्थिर u64 range_bytes = end + 1 - start;
+	काष्ठा extent_io_tree *io_tree = &inode->io_tree;
 	u64 range_start = start;
 	u64 count;
 
 	/*
-	 * If EXTENT_NORESERVE is set it means that when the buffered write was
-	 * made we had not enough available data space and therefore we did not
-	 * reserve data space for it, since we though we could do NOCOW for the
-	 * respective file range (either there is prealloc extent or the inode
+	 * If EXTENT_NORESERVE is set it means that when the buffered ग_लिखो was
+	 * made we had not enough available data space and thereक्रमe we did not
+	 * reserve data space क्रम it, since we though we could करो NOCOW क्रम the
+	 * respective file range (either there is pपुनः_स्मृति extent or the inode
 	 * has the NOCOW bit set).
 	 *
-	 * However when we need to fallback to COW mode (because for example the
-	 * block group for the corresponding extent was turned to RO mode by a
-	 * scrub or relocation) we need to do the following:
+	 * However when we need to fallback to COW mode (because क्रम example the
+	 * block group क्रम the corresponding extent was turned to RO mode by a
+	 * scrub or relocation) we need to करो the following:
 	 *
 	 * 1) We increment the bytes_may_use counter of the data space info.
-	 *    If COW succeeds, it allocates a new data extent and after doing
+	 *    If COW succeeds, it allocates a new data extent and after करोing
 	 *    that it decrements the space info's bytes_may_use counter and
-	 *    increments its bytes_reserved counter by the same amount (we do
+	 *    increments its bytes_reserved counter by the same amount (we करो
 	 *    this at btrfs_add_reserved_bytes()). So we need to increment the
 	 *    bytes_may_use counter to compensate (when space is reserved at
-	 *    buffered write time, the bytes_may_use counter is incremented);
+	 *    buffered ग_लिखो समय, the bytes_may_use counter is incremented);
 	 *
-	 * 2) We clear the EXTENT_NORESERVE bit from the range. We do this so
-	 *    that if the COW path fails for any reason, it decrements (through
+	 * 2) We clear the EXTENT_NORESERVE bit from the range. We करो this so
+	 *    that अगर the COW path fails क्रम any reason, it decrements (through
 	 *    extent_clear_unlock_delalloc()) the bytes_may_use counter of the
 	 *    data space info, which we incremented in the step above.
 	 *
-	 * If we need to fallback to cow and the inode corresponds to a free
+	 * If we need to fallback to cow and the inode corresponds to a मुक्त
 	 * space cache inode or an inode of the data relocation tree, we must
-	 * also increment bytes_may_use of the data space_info for the same
-	 * reason. Space caches and relocated data extents always get a prealloc
-	 * extent for them, however scrub or balance may have set the block
-	 * group that contains that extent to RO mode and therefore force COW
-	 * when starting writeback.
+	 * also increment bytes_may_use of the data space_info क्रम the same
+	 * reason. Space caches and relocated data extents always get a pपुनः_स्मृति
+	 * extent क्रम them, however scrub or balance may have set the block
+	 * group that contains that extent to RO mode and thereक्रमe क्रमce COW
+	 * when starting ग_लिखोback.
 	 */
 	count = count_range_bits(io_tree, &range_start, end, range_bytes,
 				 EXTENT_NORESERVE, 0);
-	if (count > 0 || is_space_ino || is_reloc_ino) {
+	अगर (count > 0 || is_space_ino || is_reloc_ino) अणु
 		u64 bytes = count;
-		struct btrfs_fs_info *fs_info = inode->root->fs_info;
-		struct btrfs_space_info *sinfo = fs_info->data_sinfo;
+		काष्ठा btrfs_fs_info *fs_info = inode->root->fs_info;
+		काष्ठा btrfs_space_info *sinfo = fs_info->data_sinfo;
 
-		if (is_space_ino || is_reloc_ino)
+		अगर (is_space_ino || is_reloc_ino)
 			bytes = range_bytes;
 
 		spin_lock(&sinfo->lock);
 		btrfs_space_info_update_bytes_may_use(fs_info, sinfo, bytes);
 		spin_unlock(&sinfo->lock);
 
-		if (count > 0)
+		अगर (count > 0)
 			clear_extent_bit(io_tree, start, end, EXTENT_NORESERVE,
-					 0, 0, NULL);
-	}
+					 0, 0, शून्य);
+	पूर्ण
 
-	return cow_file_range(inode, locked_page, start, end, page_started,
+	वापस cow_file_range(inode, locked_page, start, end, page_started,
 			      nr_written, 1);
-}
+पूर्ण
 
 /*
- * when nowcow writeback call back.  This checks for snapshots or COW copies
+ * when nowcow ग_लिखोback call back.  This checks क्रम snapshots or COW copies
  * of the extents that exist in the file, and COWs the file as required.
  *
- * If no cow copies or snapshots exist, we write directly to the existing
+ * If no cow copies or snapshots exist, we ग_लिखो directly to the existing
  * blocks on disk
  */
-static noinline int run_delalloc_nocow(struct btrfs_inode *inode,
-				       struct page *locked_page,
-				       const u64 start, const u64 end,
-				       int *page_started,
-				       unsigned long *nr_written)
-{
-	struct btrfs_fs_info *fs_info = inode->root->fs_info;
-	struct btrfs_root *root = inode->root;
-	struct btrfs_path *path;
+अटल noअंतरभूत पूर्णांक run_delalloc_nocow(काष्ठा btrfs_inode *inode,
+				       काष्ठा page *locked_page,
+				       स्थिर u64 start, स्थिर u64 end,
+				       पूर्णांक *page_started,
+				       अचिन्हित दीर्घ *nr_written)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = inode->root->fs_info;
+	काष्ठा btrfs_root *root = inode->root;
+	काष्ठा btrfs_path *path;
 	u64 cow_start = (u64)-1;
 	u64 cur_offset = start;
-	int ret;
+	पूर्णांक ret;
 	bool check_prev = true;
-	const bool freespace_inode = btrfs_is_free_space_inode(inode);
+	स्थिर bool मुक्तspace_inode = btrfs_is_मुक्त_space_inode(inode);
 	u64 ino = btrfs_ino(inode);
 	bool nocow = false;
 	u64 disk_bytenr = 0;
-	const bool force = inode->flags & BTRFS_INODE_NODATACOW;
+	स्थिर bool क्रमce = inode->flags & BTRFS_INODE_NODATACOW;
 
 	path = btrfs_alloc_path();
-	if (!path) {
+	अगर (!path) अणु
 		extent_clear_unlock_delalloc(inode, start, end, locked_page,
 					     EXTENT_LOCKED | EXTENT_DELALLOC |
 					     EXTENT_DO_ACCOUNTING |
 					     EXTENT_DEFRAG, PAGE_UNLOCK |
 					     PAGE_START_WRITEBACK |
 					     PAGE_END_WRITEBACK);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	while (1) {
-		struct btrfs_key found_key;
-		struct btrfs_file_extent_item *fi;
-		struct extent_buffer *leaf;
+	जबतक (1) अणु
+		काष्ठा btrfs_key found_key;
+		काष्ठा btrfs_file_extent_item *fi;
+		काष्ठा extent_buffer *leaf;
 		u64 extent_end;
 		u64 extent_offset;
 		u64 num_bytes = 0;
 		u64 disk_num_bytes;
 		u64 ram_bytes;
-		int extent_type;
+		पूर्णांक extent_type;
 
 		nocow = false;
 
-		ret = btrfs_lookup_file_extent(NULL, root, path, ino,
+		ret = btrfs_lookup_file_extent(शून्य, root, path, ino,
 					       cur_offset, 0);
-		if (ret < 0)
-			goto error;
+		अगर (ret < 0)
+			जाओ error;
 
 		/*
-		 * If there is no extent for our range when doing the initial
+		 * If there is no extent क्रम our range when करोing the initial
 		 * search, then go back to the previous slot as it will be the
 		 * one containing the search offset
 		 */
-		if (ret > 0 && path->slots[0] > 0 && check_prev) {
+		अगर (ret > 0 && path->slots[0] > 0 && check_prev) अणु
 			leaf = path->nodes[0];
 			btrfs_item_key_to_cpu(leaf, &found_key,
 					      path->slots[0] - 1);
-			if (found_key.objectid == ino &&
+			अगर (found_key.objectid == ino &&
 			    found_key.type == BTRFS_EXTENT_DATA_KEY)
 				path->slots[0]--;
-		}
+		पूर्ण
 		check_prev = false;
 next_slot:
-		/* Go to next leaf if we have exhausted the current one */
+		/* Go to next leaf अगर we have exhausted the current one */
 		leaf = path->nodes[0];
-		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
+		अगर (path->slots[0] >= btrfs_header_nritems(leaf)) अणु
 			ret = btrfs_next_leaf(root, path);
-			if (ret < 0) {
-				if (cow_start != (u64)-1)
+			अगर (ret < 0) अणु
+				अगर (cow_start != (u64)-1)
 					cur_offset = cow_start;
-				goto error;
-			}
-			if (ret > 0)
-				break;
+				जाओ error;
+			पूर्ण
+			अगर (ret > 0)
+				अवरोध;
 			leaf = path->nodes[0];
-		}
+		पूर्ण
 
 		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
 
-		/* Didn't find anything for our INO */
-		if (found_key.objectid > ino)
-			break;
+		/* Didn't find anything क्रम our INO */
+		अगर (found_key.objectid > ino)
+			अवरोध;
 		/*
 		 * Keep searching until we find an EXTENT_ITEM or there are no
-		 * more extents for this inode
+		 * more extents क्रम this inode
 		 */
-		if (WARN_ON_ONCE(found_key.objectid < ino) ||
-		    found_key.type < BTRFS_EXTENT_DATA_KEY) {
+		अगर (WARN_ON_ONCE(found_key.objectid < ino) ||
+		    found_key.type < BTRFS_EXTENT_DATA_KEY) अणु
 			path->slots[0]++;
-			goto next_slot;
-		}
+			जाओ next_slot;
+		पूर्ण
 
 		/* Found key is not EXTENT_DATA_KEY or starts after req range */
-		if (found_key.type > BTRFS_EXTENT_DATA_KEY ||
+		अगर (found_key.type > BTRFS_EXTENT_DATA_KEY ||
 		    found_key.offset > end)
-			break;
+			अवरोध;
 
 		/*
 		 * If the found extent starts after requested offset, then
-		 * adjust extent_end to be right before this extent begins
+		 * adjust extent_end to be right beक्रमe this extent begins
 		 */
-		if (found_key.offset > cur_offset) {
+		अगर (found_key.offset > cur_offset) अणु
 			extent_end = found_key.offset;
 			extent_type = 0;
-			goto out_check;
-		}
+			जाओ out_check;
+		पूर्ण
 
 		/*
-		 * Found extent which begins before our range and potentially
-		 * intersect it
+		 * Found extent which begins beक्रमe our range and potentially
+		 * पूर्णांकersect it
 		 */
 		fi = btrfs_item_ptr(leaf, path->slots[0],
-				    struct btrfs_file_extent_item);
+				    काष्ठा btrfs_file_extent_item);
 		extent_type = btrfs_file_extent_type(leaf, fi);
 
 		ram_bytes = btrfs_file_extent_ram_bytes(leaf, fi);
-		if (extent_type == BTRFS_FILE_EXTENT_REG ||
-		    extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
+		अगर (extent_type == BTRFS_खाता_EXTENT_REG ||
+		    extent_type == BTRFS_खाता_EXTENT_PREALLOC) अणु
 			disk_bytenr = btrfs_file_extent_disk_bytenr(leaf, fi);
 			extent_offset = btrfs_file_extent_offset(leaf, fi);
 			extent_end = found_key.offset +
@@ -1638,139 +1639,139 @@ next_slot:
 			disk_num_bytes =
 				btrfs_file_extent_disk_num_bytes(leaf, fi);
 			/*
-			 * If the extent we got ends before our current offset,
+			 * If the extent we got ends beक्रमe our current offset,
 			 * skip to the next extent.
 			 */
-			if (extent_end <= cur_offset) {
+			अगर (extent_end <= cur_offset) अणु
 				path->slots[0]++;
-				goto next_slot;
-			}
+				जाओ next_slot;
+			पूर्ण
 			/* Skip holes */
-			if (disk_bytenr == 0)
-				goto out_check;
+			अगर (disk_bytenr == 0)
+				जाओ out_check;
 			/* Skip compressed/encrypted/encoded extents */
-			if (btrfs_file_extent_compression(leaf, fi) ||
+			अगर (btrfs_file_extent_compression(leaf, fi) ||
 			    btrfs_file_extent_encryption(leaf, fi) ||
 			    btrfs_file_extent_other_encoding(leaf, fi))
-				goto out_check;
+				जाओ out_check;
 			/*
-			 * If extent is created before the last volume's snapshot
-			 * this implies the extent is shared, hence we can't do
+			 * If extent is created beक्रमe the last volume's snapshot
+			 * this implies the extent is shared, hence we can't करो
 			 * nocow. This is the same check as in
 			 * btrfs_cross_ref_exist but without calling
 			 * btrfs_search_slot.
 			 */
-			if (!freespace_inode &&
+			अगर (!मुक्तspace_inode &&
 			    btrfs_file_extent_generation(leaf, fi) <=
 			    btrfs_root_last_snapshot(&root->root_item))
-				goto out_check;
-			if (extent_type == BTRFS_FILE_EXTENT_REG && !force)
-				goto out_check;
+				जाओ out_check;
+			अगर (extent_type == BTRFS_खाता_EXTENT_REG && !क्रमce)
+				जाओ out_check;
 
 			/*
 			 * The following checks can be expensive, as they need to
-			 * take other locks and do btree or rbtree searches, so
-			 * release the path to avoid blocking other tasks for too
-			 * long.
+			 * take other locks and करो btree or rbtree searches, so
+			 * release the path to aव्योम blocking other tasks क्रम too
+			 * दीर्घ.
 			 */
 			btrfs_release_path(path);
 
 			ret = btrfs_cross_ref_exist(root, ino,
 						    found_key.offset -
 						    extent_offset, disk_bytenr, false);
-			if (ret) {
+			अगर (ret) अणु
 				/*
-				 * ret could be -EIO if the above fails to read
+				 * ret could be -EIO अगर the above fails to पढ़ो
 				 * metadata.
 				 */
-				if (ret < 0) {
-					if (cow_start != (u64)-1)
+				अगर (ret < 0) अणु
+					अगर (cow_start != (u64)-1)
 						cur_offset = cow_start;
-					goto error;
-				}
+					जाओ error;
+				पूर्ण
 
-				WARN_ON_ONCE(freespace_inode);
-				goto out_check;
-			}
+				WARN_ON_ONCE(मुक्तspace_inode);
+				जाओ out_check;
+			पूर्ण
 			disk_bytenr += extent_offset;
 			disk_bytenr += cur_offset - found_key.offset;
 			num_bytes = min(end + 1, extent_end) - cur_offset;
 			/*
-			 * If there are pending snapshots for this root, we
-			 * fall into common COW way
+			 * If there are pending snapshots क्रम this root, we
+			 * fall पूर्णांकo common COW way
 			 */
-			if (!freespace_inode && atomic_read(&root->snapshot_force_cow))
-				goto out_check;
+			अगर (!मुक्तspace_inode && atomic_पढ़ो(&root->snapshot_क्रमce_cow))
+				जाओ out_check;
 			/*
-			 * force cow if csum exists in the range.
-			 * this ensure that csum for a given extent are
-			 * either valid or do not exist.
+			 * क्रमce cow अगर csum exists in the range.
+			 * this ensure that csum क्रम a given extent are
+			 * either valid or करो not exist.
 			 */
 			ret = csum_exist_in_range(fs_info, disk_bytenr,
 						  num_bytes);
-			if (ret) {
+			अगर (ret) अणु
 				/*
-				 * ret could be -EIO if the above fails to read
+				 * ret could be -EIO अगर the above fails to पढ़ो
 				 * metadata.
 				 */
-				if (ret < 0) {
-					if (cow_start != (u64)-1)
+				अगर (ret < 0) अणु
+					अगर (cow_start != (u64)-1)
 						cur_offset = cow_start;
-					goto error;
-				}
-				WARN_ON_ONCE(freespace_inode);
-				goto out_check;
-			}
+					जाओ error;
+				पूर्ण
+				WARN_ON_ONCE(मुक्तspace_inode);
+				जाओ out_check;
+			पूर्ण
 			/* If the extent's block group is RO, we must COW */
-			if (!btrfs_inc_nocow_writers(fs_info, disk_bytenr))
-				goto out_check;
+			अगर (!btrfs_inc_nocow_ग_लिखोrs(fs_info, disk_bytenr))
+				जाओ out_check;
 			nocow = true;
-		} else if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
+		पूर्ण अन्यथा अगर (extent_type == BTRFS_खाता_EXTENT_INLINE) अणु
 			extent_end = found_key.offset + ram_bytes;
 			extent_end = ALIGN(extent_end, fs_info->sectorsize);
 			/* Skip extents outside of our requested range */
-			if (extent_end <= start) {
+			अगर (extent_end <= start) अणु
 				path->slots[0]++;
-				goto next_slot;
-			}
-		} else {
+				जाओ next_slot;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* If this triggers then we have a memory corruption */
 			BUG();
-		}
+		पूर्ण
 out_check:
 		/*
 		 * If nocow is false then record the beginning of the range
 		 * that needs to be COWed
 		 */
-		if (!nocow) {
-			if (cow_start == (u64)-1)
+		अगर (!nocow) अणु
+			अगर (cow_start == (u64)-1)
 				cow_start = cur_offset;
 			cur_offset = extent_end;
-			if (cur_offset > end)
-				break;
-			if (!path->nodes[0])
-				continue;
+			अगर (cur_offset > end)
+				अवरोध;
+			अगर (!path->nodes[0])
+				जारी;
 			path->slots[0]++;
-			goto next_slot;
-		}
+			जाओ next_slot;
+		पूर्ण
 
 		/*
 		 * COW range from cow_start to found_key.offset - 1. As the key
 		 * will contain the beginning of the first extent that can be
 		 * NOCOW, following one which needs to be COW'ed
 		 */
-		if (cow_start != (u64)-1) {
+		अगर (cow_start != (u64)-1) अणु
 			ret = fallback_to_cow(inode, locked_page,
 					      cow_start, found_key.offset - 1,
 					      page_started, nr_written);
-			if (ret)
-				goto error;
+			अगर (ret)
+				जाओ error;
 			cow_start = (u64)-1;
-		}
+		पूर्ण
 
-		if (extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
+		अगर (extent_type == BTRFS_खाता_EXTENT_PREALLOC) अणु
 			u64 orig_start = found_key.offset - extent_offset;
-			struct extent_map *em;
+			काष्ठा extent_map *em;
 
 			em = create_io_em(inode, cur_offset, num_bytes,
 					  orig_start,
@@ -1779,40 +1780,40 @@ out_check:
 					  disk_num_bytes, /* orig_block_len */
 					  ram_bytes, BTRFS_COMPRESS_NONE,
 					  BTRFS_ORDERED_PREALLOC);
-			if (IS_ERR(em)) {
+			अगर (IS_ERR(em)) अणु
 				ret = PTR_ERR(em);
-				goto error;
-			}
-			free_extent_map(em);
+				जाओ error;
+			पूर्ण
+			मुक्त_extent_map(em);
 			ret = btrfs_add_ordered_extent(inode, cur_offset,
 						       disk_bytenr, num_bytes,
 						       num_bytes,
 						       BTRFS_ORDERED_PREALLOC);
-			if (ret) {
+			अगर (ret) अणु
 				btrfs_drop_extent_cache(inode, cur_offset,
 							cur_offset + num_bytes - 1,
 							0);
-				goto error;
-			}
-		} else {
+				जाओ error;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ret = btrfs_add_ordered_extent(inode, cur_offset,
 						       disk_bytenr, num_bytes,
 						       num_bytes,
 						       BTRFS_ORDERED_NOCOW);
-			if (ret)
-				goto error;
-		}
+			अगर (ret)
+				जाओ error;
+		पूर्ण
 
-		if (nocow)
-			btrfs_dec_nocow_writers(fs_info, disk_bytenr);
+		अगर (nocow)
+			btrfs_dec_nocow_ग_लिखोrs(fs_info, disk_bytenr);
 		nocow = false;
 
-		if (root->root_key.objectid ==
+		अगर (root->root_key.objectid ==
 		    BTRFS_DATA_RELOC_TREE_OBJECTID)
 			/*
 			 * Error handled later, as we must prevent
 			 * extent_clear_unlock_delalloc() in error handler
-			 * from freeing metadata of created ordered extent.
+			 * from मुक्तing metadata of created ordered extent.
 			 */
 			ret = btrfs_reloc_clone_csums(inode, cur_offset,
 						      num_bytes);
@@ -1828,99 +1829,99 @@ out_check:
 
 		/*
 		 * btrfs_reloc_clone_csums() error, now we're OK to call error
-		 * handler, as metadata for created ordered extent will only
-		 * be freed by btrfs_finish_ordered_io().
+		 * handler, as metadata क्रम created ordered extent will only
+		 * be मुक्तd by btrfs_finish_ordered_io().
 		 */
-		if (ret)
-			goto error;
-		if (cur_offset > end)
-			break;
-	}
+		अगर (ret)
+			जाओ error;
+		अगर (cur_offset > end)
+			अवरोध;
+	पूर्ण
 	btrfs_release_path(path);
 
-	if (cur_offset <= end && cow_start == (u64)-1)
+	अगर (cur_offset <= end && cow_start == (u64)-1)
 		cow_start = cur_offset;
 
-	if (cow_start != (u64)-1) {
+	अगर (cow_start != (u64)-1) अणु
 		cur_offset = end;
 		ret = fallback_to_cow(inode, locked_page, cow_start, end,
 				      page_started, nr_written);
-		if (ret)
-			goto error;
-	}
+		अगर (ret)
+			जाओ error;
+	पूर्ण
 
 error:
-	if (nocow)
-		btrfs_dec_nocow_writers(fs_info, disk_bytenr);
+	अगर (nocow)
+		btrfs_dec_nocow_ग_लिखोrs(fs_info, disk_bytenr);
 
-	if (ret && cur_offset < end)
+	अगर (ret && cur_offset < end)
 		extent_clear_unlock_delalloc(inode, cur_offset, end,
 					     locked_page, EXTENT_LOCKED |
 					     EXTENT_DELALLOC | EXTENT_DEFRAG |
 					     EXTENT_DO_ACCOUNTING, PAGE_UNLOCK |
 					     PAGE_START_WRITEBACK |
 					     PAGE_END_WRITEBACK);
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
-static bool should_nocow(struct btrfs_inode *inode, u64 start, u64 end)
-{
-	if (inode->flags & (BTRFS_INODE_NODATACOW | BTRFS_INODE_PREALLOC)) {
-		if (inode->defrag_bytes &&
+अटल bool should_nocow(काष्ठा btrfs_inode *inode, u64 start, u64 end)
+अणु
+	अगर (inode->flags & (BTRFS_INODE_NODATACOW | BTRFS_INODE_PREALLOC)) अणु
+		अगर (inode->defrag_bytes &&
 		    test_range_bit(&inode->io_tree, start, end, EXTENT_DEFRAG,
-				   0, NULL))
-			return false;
-		return true;
-	}
-	return false;
-}
+				   0, शून्य))
+			वापस false;
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
- * Function to process delayed allocation (create CoW) for ranges which are
- * being touched for the first time.
+ * Function to process delayed allocation (create CoW) क्रम ranges which are
+ * being touched क्रम the first समय.
  */
-int btrfs_run_delalloc_range(struct btrfs_inode *inode, struct page *locked_page,
-		u64 start, u64 end, int *page_started, unsigned long *nr_written,
-		struct writeback_control *wbc)
-{
-	int ret;
-	const bool zoned = btrfs_is_zoned(inode->root->fs_info);
+पूर्णांक btrfs_run_delalloc_range(काष्ठा btrfs_inode *inode, काष्ठा page *locked_page,
+		u64 start, u64 end, पूर्णांक *page_started, अचिन्हित दीर्घ *nr_written,
+		काष्ठा ग_लिखोback_control *wbc)
+अणु
+	पूर्णांक ret;
+	स्थिर bool zoned = btrfs_is_zoned(inode->root->fs_info);
 
-	if (should_nocow(inode, start, end)) {
+	अगर (should_nocow(inode, start, end)) अणु
 		ASSERT(!zoned);
 		ret = run_delalloc_nocow(inode, locked_page, start, end,
 					 page_started, nr_written);
-	} else if (!inode_can_compress(inode) ||
-		   !inode_need_compress(inode, start, end)) {
-		if (zoned)
+	पूर्ण अन्यथा अगर (!inode_can_compress(inode) ||
+		   !inode_need_compress(inode, start, end)) अणु
+		अगर (zoned)
 			ret = run_delalloc_zoned(inode, locked_page, start, end,
 						 page_started, nr_written);
-		else
+		अन्यथा
 			ret = cow_file_range(inode, locked_page, start, end,
 					     page_started, nr_written, 1);
-	} else {
-		set_bit(BTRFS_INODE_HAS_ASYNC_EXTENT, &inode->runtime_flags);
+	पूर्ण अन्यथा अणु
+		set_bit(BTRFS_INODE_HAS_ASYNC_EXTENT, &inode->runसमय_flags);
 		ret = cow_file_range_async(inode, wbc, locked_page, start, end,
 					   page_started, nr_written);
-	}
-	if (ret)
+	पूर्ण
+	अगर (ret)
 		btrfs_cleanup_ordered_extents(inode, locked_page, start,
 					      end - start + 1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void btrfs_split_delalloc_extent(struct inode *inode,
-				 struct extent_state *orig, u64 split)
-{
+व्योम btrfs_split_delalloc_extent(काष्ठा inode *inode,
+				 काष्ठा extent_state *orig, u64 split)
+अणु
 	u64 size;
 
 	/* not delalloc, ignore it */
-	if (!(orig->state & EXTENT_DELALLOC))
-		return;
+	अगर (!(orig->state & EXTENT_DELALLOC))
+		वापस;
 
 	size = orig->end - orig->start + 1;
-	if (size > BTRFS_MAX_EXTENT_SIZE) {
+	अगर (size > BTRFS_MAX_EXTENT_SIZE) अणु
 		u32 num_extents;
 		u64 new_size;
 
@@ -1932,250 +1933,250 @@ void btrfs_split_delalloc_extent(struct inode *inode,
 		num_extents = count_max_extents(new_size);
 		new_size = split - orig->start;
 		num_extents += count_max_extents(new_size);
-		if (count_max_extents(size) >= num_extents)
-			return;
-	}
+		अगर (count_max_extents(size) >= num_extents)
+			वापस;
+	पूर्ण
 
 	spin_lock(&BTRFS_I(inode)->lock);
 	btrfs_mod_outstanding_extents(BTRFS_I(inode), 1);
 	spin_unlock(&BTRFS_I(inode)->lock);
-}
+पूर्ण
 
 /*
  * Handle merged delayed allocation extents so we can keep track of new extents
- * that are just merged onto old extents, such as when we are doing sequential
- * writes, so we can properly account for the metadata space we'll need.
+ * that are just merged onto old extents, such as when we are करोing sequential
+ * ग_लिखोs, so we can properly account क्रम the metadata space we'll need.
  */
-void btrfs_merge_delalloc_extent(struct inode *inode, struct extent_state *new,
-				 struct extent_state *other)
-{
+व्योम btrfs_merge_delalloc_extent(काष्ठा inode *inode, काष्ठा extent_state *new,
+				 काष्ठा extent_state *other)
+अणु
 	u64 new_size, old_size;
 	u32 num_extents;
 
 	/* not delalloc, ignore it */
-	if (!(other->state & EXTENT_DELALLOC))
-		return;
+	अगर (!(other->state & EXTENT_DELALLOC))
+		वापस;
 
-	if (new->start > other->start)
+	अगर (new->start > other->start)
 		new_size = new->end - other->start + 1;
-	else
+	अन्यथा
 		new_size = other->end - new->start + 1;
 
 	/* we're not bigger than the max, unreserve the space and go */
-	if (new_size <= BTRFS_MAX_EXTENT_SIZE) {
+	अगर (new_size <= BTRFS_MAX_EXTENT_SIZE) अणु
 		spin_lock(&BTRFS_I(inode)->lock);
 		btrfs_mod_outstanding_extents(BTRFS_I(inode), -1);
 		spin_unlock(&BTRFS_I(inode)->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * We have to add up either side to figure out how many extents were
-	 * accounted for before we merged into one big extent.  If the number of
-	 * extents we accounted for is <= the amount we need for the new range
-	 * then we can return, otherwise drop.  Think of it like this
+	 * accounted क्रम beक्रमe we merged पूर्णांकo one big extent.  If the number of
+	 * extents we accounted क्रम is <= the amount we need क्रम the new range
+	 * then we can वापस, otherwise drop.  Think of it like this
 	 *
 	 * [ 4k][MAX_SIZE]
 	 *
 	 * So we've grown the extent by a MAX_SIZE extent, this would mean we
 	 * need 2 outstanding extents, on one side we have 1 and the other side
-	 * we have 1 so they are == and we can return.  But in this case
+	 * we have 1 so they are == and we can वापस.  But in this हाल
 	 *
 	 * [MAX_SIZE+4k][MAX_SIZE+4k]
 	 *
-	 * Each range on their own accounts for 2 extents, but merged together
+	 * Each range on their own accounts क्रम 2 extents, but merged together
 	 * they are only 3 extents worth of accounting, so we need to drop in
-	 * this case.
+	 * this हाल.
 	 */
 	old_size = other->end - other->start + 1;
 	num_extents = count_max_extents(old_size);
 	old_size = new->end - new->start + 1;
 	num_extents += count_max_extents(old_size);
-	if (count_max_extents(new_size) >= num_extents)
-		return;
+	अगर (count_max_extents(new_size) >= num_extents)
+		वापस;
 
 	spin_lock(&BTRFS_I(inode)->lock);
 	btrfs_mod_outstanding_extents(BTRFS_I(inode), -1);
 	spin_unlock(&BTRFS_I(inode)->lock);
-}
+पूर्ण
 
-static void btrfs_add_delalloc_inodes(struct btrfs_root *root,
-				      struct inode *inode)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+अटल व्योम btrfs_add_delalloc_inodes(काष्ठा btrfs_root *root,
+				      काष्ठा inode *inode)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 
 	spin_lock(&root->delalloc_lock);
-	if (list_empty(&BTRFS_I(inode)->delalloc_inodes)) {
+	अगर (list_empty(&BTRFS_I(inode)->delalloc_inodes)) अणु
 		list_add_tail(&BTRFS_I(inode)->delalloc_inodes,
 			      &root->delalloc_inodes);
 		set_bit(BTRFS_INODE_IN_DELALLOC_LIST,
-			&BTRFS_I(inode)->runtime_flags);
+			&BTRFS_I(inode)->runसमय_flags);
 		root->nr_delalloc_inodes++;
-		if (root->nr_delalloc_inodes == 1) {
+		अगर (root->nr_delalloc_inodes == 1) अणु
 			spin_lock(&fs_info->delalloc_root_lock);
 			BUG_ON(!list_empty(&root->delalloc_root));
 			list_add_tail(&root->delalloc_root,
 				      &fs_info->delalloc_roots);
 			spin_unlock(&fs_info->delalloc_root_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&root->delalloc_lock);
-}
+पूर्ण
 
 
-void __btrfs_del_delalloc_inode(struct btrfs_root *root,
-				struct btrfs_inode *inode)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
+व्योम __btrfs_del_delalloc_inode(काष्ठा btrfs_root *root,
+				काष्ठा btrfs_inode *inode)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
 
-	if (!list_empty(&inode->delalloc_inodes)) {
+	अगर (!list_empty(&inode->delalloc_inodes)) अणु
 		list_del_init(&inode->delalloc_inodes);
 		clear_bit(BTRFS_INODE_IN_DELALLOC_LIST,
-			  &inode->runtime_flags);
+			  &inode->runसमय_flags);
 		root->nr_delalloc_inodes--;
-		if (!root->nr_delalloc_inodes) {
+		अगर (!root->nr_delalloc_inodes) अणु
 			ASSERT(list_empty(&root->delalloc_inodes));
 			spin_lock(&fs_info->delalloc_root_lock);
 			BUG_ON(list_empty(&root->delalloc_root));
 			list_del_init(&root->delalloc_root);
 			spin_unlock(&fs_info->delalloc_root_lock);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void btrfs_del_delalloc_inode(struct btrfs_root *root,
-				     struct btrfs_inode *inode)
-{
+अटल व्योम btrfs_del_delalloc_inode(काष्ठा btrfs_root *root,
+				     काष्ठा btrfs_inode *inode)
+अणु
 	spin_lock(&root->delalloc_lock);
 	__btrfs_del_delalloc_inode(root, inode);
 	spin_unlock(&root->delalloc_lock);
-}
+पूर्ण
 
 /*
- * Properly track delayed allocation bytes in the inode and to maintain the
- * list of inodes that have pending delalloc work to be done.
+ * Properly track delayed allocation bytes in the inode and to मुख्यtain the
+ * list of inodes that have pending delalloc work to be करोne.
  */
-void btrfs_set_delalloc_extent(struct inode *inode, struct extent_state *state,
-			       unsigned *bits)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+व्योम btrfs_set_delalloc_extent(काष्ठा inode *inode, काष्ठा extent_state *state,
+			       अचिन्हित *bits)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 
-	if ((*bits & EXTENT_DEFRAG) && !(*bits & EXTENT_DELALLOC))
+	अगर ((*bits & EXTENT_DEFRAG) && !(*bits & EXTENT_DELALLOC))
 		WARN_ON(1);
 	/*
 	 * set_bit and clear bit hooks normally require _irqsave/restore
-	 * but in this case, we are only testing for the DELALLOC
+	 * but in this हाल, we are only testing क्रम the DELALLOC
 	 * bit, which is only set or cleared with irqs on
 	 */
-	if (!(state->state & EXTENT_DELALLOC) && (*bits & EXTENT_DELALLOC)) {
-		struct btrfs_root *root = BTRFS_I(inode)->root;
+	अगर (!(state->state & EXTENT_DELALLOC) && (*bits & EXTENT_DELALLOC)) अणु
+		काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
 		u64 len = state->end + 1 - state->start;
 		u32 num_extents = count_max_extents(len);
-		bool do_list = !btrfs_is_free_space_inode(BTRFS_I(inode));
+		bool करो_list = !btrfs_is_मुक्त_space_inode(BTRFS_I(inode));
 
 		spin_lock(&BTRFS_I(inode)->lock);
 		btrfs_mod_outstanding_extents(BTRFS_I(inode), num_extents);
 		spin_unlock(&BTRFS_I(inode)->lock);
 
 		/* For sanity tests */
-		if (btrfs_is_testing(fs_info))
-			return;
+		अगर (btrfs_is_testing(fs_info))
+			वापस;
 
 		percpu_counter_add_batch(&fs_info->delalloc_bytes, len,
 					 fs_info->delalloc_batch);
 		spin_lock(&BTRFS_I(inode)->lock);
 		BTRFS_I(inode)->delalloc_bytes += len;
-		if (*bits & EXTENT_DEFRAG)
+		अगर (*bits & EXTENT_DEFRAG)
 			BTRFS_I(inode)->defrag_bytes += len;
-		if (do_list && !test_bit(BTRFS_INODE_IN_DELALLOC_LIST,
-					 &BTRFS_I(inode)->runtime_flags))
+		अगर (करो_list && !test_bit(BTRFS_INODE_IN_DELALLOC_LIST,
+					 &BTRFS_I(inode)->runसमय_flags))
 			btrfs_add_delalloc_inodes(root, inode);
 		spin_unlock(&BTRFS_I(inode)->lock);
-	}
+	पूर्ण
 
-	if (!(state->state & EXTENT_DELALLOC_NEW) &&
-	    (*bits & EXTENT_DELALLOC_NEW)) {
+	अगर (!(state->state & EXTENT_DELALLOC_NEW) &&
+	    (*bits & EXTENT_DELALLOC_NEW)) अणु
 		spin_lock(&BTRFS_I(inode)->lock);
 		BTRFS_I(inode)->new_delalloc_bytes += state->end + 1 -
 			state->start;
 		spin_unlock(&BTRFS_I(inode)->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Once a range is no longer delalloc this function ensures that proper
+ * Once a range is no दीर्घer delalloc this function ensures that proper
  * accounting happens.
  */
-void btrfs_clear_delalloc_extent(struct inode *vfs_inode,
-				 struct extent_state *state, unsigned *bits)
-{
-	struct btrfs_inode *inode = BTRFS_I(vfs_inode);
-	struct btrfs_fs_info *fs_info = btrfs_sb(vfs_inode->i_sb);
+व्योम btrfs_clear_delalloc_extent(काष्ठा inode *vfs_inode,
+				 काष्ठा extent_state *state, अचिन्हित *bits)
+अणु
+	काष्ठा btrfs_inode *inode = BTRFS_I(vfs_inode);
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(vfs_inode->i_sb);
 	u64 len = state->end + 1 - state->start;
 	u32 num_extents = count_max_extents(len);
 
-	if ((state->state & EXTENT_DEFRAG) && (*bits & EXTENT_DEFRAG)) {
+	अगर ((state->state & EXTENT_DEFRAG) && (*bits & EXTENT_DEFRAG)) अणु
 		spin_lock(&inode->lock);
 		inode->defrag_bytes -= len;
 		spin_unlock(&inode->lock);
-	}
+	पूर्ण
 
 	/*
 	 * set_bit and clear bit hooks normally require _irqsave/restore
-	 * but in this case, we are only testing for the DELALLOC
+	 * but in this हाल, we are only testing क्रम the DELALLOC
 	 * bit, which is only set or cleared with irqs on
 	 */
-	if ((state->state & EXTENT_DELALLOC) && (*bits & EXTENT_DELALLOC)) {
-		struct btrfs_root *root = inode->root;
-		bool do_list = !btrfs_is_free_space_inode(inode);
+	अगर ((state->state & EXTENT_DELALLOC) && (*bits & EXTENT_DELALLOC)) अणु
+		काष्ठा btrfs_root *root = inode->root;
+		bool करो_list = !btrfs_is_मुक्त_space_inode(inode);
 
 		spin_lock(&inode->lock);
 		btrfs_mod_outstanding_extents(inode, -num_extents);
 		spin_unlock(&inode->lock);
 
 		/*
-		 * We don't reserve metadata space for space cache inodes so we
-		 * don't need to call delalloc_release_metadata if there is an
+		 * We करोn't reserve metadata space क्रम space cache inodes so we
+		 * करोn't need to call delalloc_release_metadata अगर there is an
 		 * error.
 		 */
-		if (*bits & EXTENT_CLEAR_META_RESV &&
+		अगर (*bits & EXTENT_CLEAR_META_RESV &&
 		    root != fs_info->tree_root)
 			btrfs_delalloc_release_metadata(inode, len, false);
 
 		/* For sanity tests. */
-		if (btrfs_is_testing(fs_info))
-			return;
+		अगर (btrfs_is_testing(fs_info))
+			वापस;
 
-		if (root->root_key.objectid != BTRFS_DATA_RELOC_TREE_OBJECTID &&
-		    do_list && !(state->state & EXTENT_NORESERVE) &&
+		अगर (root->root_key.objectid != BTRFS_DATA_RELOC_TREE_OBJECTID &&
+		    करो_list && !(state->state & EXTENT_NORESERVE) &&
 		    (*bits & EXTENT_CLEAR_DATA_RESV))
-			btrfs_free_reserved_data_space_noquota(fs_info, len);
+			btrfs_मुक्त_reserved_data_space_noquota(fs_info, len);
 
 		percpu_counter_add_batch(&fs_info->delalloc_bytes, -len,
 					 fs_info->delalloc_batch);
 		spin_lock(&inode->lock);
 		inode->delalloc_bytes -= len;
-		if (do_list && inode->delalloc_bytes == 0 &&
+		अगर (करो_list && inode->delalloc_bytes == 0 &&
 		    test_bit(BTRFS_INODE_IN_DELALLOC_LIST,
-					&inode->runtime_flags))
+					&inode->runसमय_flags))
 			btrfs_del_delalloc_inode(root, inode);
 		spin_unlock(&inode->lock);
-	}
+	पूर्ण
 
-	if ((state->state & EXTENT_DELALLOC_NEW) &&
-	    (*bits & EXTENT_DELALLOC_NEW)) {
+	अगर ((state->state & EXTENT_DELALLOC_NEW) &&
+	    (*bits & EXTENT_DELALLOC_NEW)) अणु
 		spin_lock(&inode->lock);
 		ASSERT(inode->new_delalloc_bytes >= len);
 		inode->new_delalloc_bytes -= len;
-		if (*bits & EXTENT_ADD_INODE_BYTES)
+		अगर (*bits & EXTENT_ADD_INODE_BYTES)
 			inode_add_bytes(&inode->vfs_inode, len);
 		spin_unlock(&inode->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * btrfs_bio_fits_in_stripe - Checks whether the size of the given bio will fit
- * in a chunk's stripe. This function ensures that bios do not span a
+ * in a chunk's stripe. This function ensures that bios करो not span a
  * stripe/chunk
  *
  * @page - The page we are about to add to the bio
@@ -2183,62 +2184,62 @@ void btrfs_clear_delalloc_extent(struct inode *vfs_inode,
  * @bio - bio we want to ensure is smaller than a stripe
  * @bio_flags - flags of the bio
  *
- * return 1 if page cannot be added to the bio
- * return 0 if page can be added to the bio
- * return error otherwise
+ * वापस 1 अगर page cannot be added to the bio
+ * वापस 0 अगर page can be added to the bio
+ * वापस error otherwise
  */
-int btrfs_bio_fits_in_stripe(struct page *page, size_t size, struct bio *bio,
-			     unsigned long bio_flags)
-{
-	struct inode *inode = page->mapping->host;
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+पूर्णांक btrfs_bio_fits_in_stripe(काष्ठा page *page, माप_प्रकार size, काष्ठा bio *bio,
+			     अचिन्हित दीर्घ bio_flags)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 	u64 logical = bio->bi_iter.bi_sector << 9;
-	struct extent_map *em;
+	काष्ठा extent_map *em;
 	u64 length = 0;
 	u64 map_length;
-	int ret = 0;
-	struct btrfs_io_geometry geom;
+	पूर्णांक ret = 0;
+	काष्ठा btrfs_io_geometry geom;
 
-	if (bio_flags & EXTENT_BIO_COMPRESSED)
-		return 0;
+	अगर (bio_flags & EXTENT_BIO_COMPRESSED)
+		वापस 0;
 
 	length = bio->bi_iter.bi_size;
 	map_length = length;
 	em = btrfs_get_chunk_map(fs_info, logical, map_length);
-	if (IS_ERR(em))
-		return PTR_ERR(em);
+	अगर (IS_ERR(em))
+		वापस PTR_ERR(em);
 	ret = btrfs_get_io_geometry(fs_info, em, btrfs_op(bio), logical,
 				    map_length, &geom);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (geom.len < length + size)
+	अगर (geom.len < length + size)
 		ret = 1;
 out:
-	free_extent_map(em);
-	return ret;
-}
+	मुक्त_extent_map(em);
+	वापस ret;
+पूर्ण
 
 /*
- * in order to insert checksums into the metadata in large chunks,
- * we wait until bio submission time.   All the pages in the bio are
+ * in order to insert checksums पूर्णांकo the metadata in large chunks,
+ * we रुको until bio submission समय.   All the pages in the bio are
  * checksummed and sums are attached onto the ordered extent record.
  *
- * At IO completion time the cums attached on the ordered extent record
- * are inserted into the btree
+ * At IO completion समय the cums attached on the ordered extent record
+ * are inserted पूर्णांकo the btree
  */
-static blk_status_t btrfs_submit_bio_start(struct inode *inode, struct bio *bio,
+अटल blk_status_t btrfs_submit_bio_start(काष्ठा inode *inode, काष्ठा bio *bio,
 					   u64 dio_file_offset)
-{
-	return btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
-}
+अणु
+	वापस btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
+पूर्ण
 
-bool btrfs_bio_fits_in_ordered_extent(struct page *page, struct bio *bio,
-				      unsigned int size)
-{
-	struct btrfs_inode *inode = BTRFS_I(page->mapping->host);
-	struct btrfs_fs_info *fs_info = inode->root->fs_info;
-	struct btrfs_ordered_extent *ordered;
+bool btrfs_bio_fits_in_ordered_extent(काष्ठा page *page, काष्ठा bio *bio,
+				      अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा btrfs_inode *inode = BTRFS_I(page->mapping->host);
+	काष्ठा btrfs_fs_info *fs_info = inode->root->fs_info;
+	काष्ठा btrfs_ordered_extent *ordered;
 	u64 len = bio->bi_iter.bi_size + size;
 	bool ret = true;
 
@@ -2248,309 +2249,309 @@ bool btrfs_bio_fits_in_ordered_extent(struct page *page, struct bio *bio,
 
 	/* Ordered extent not yet created, so we're good */
 	ordered = btrfs_lookup_ordered_extent(inode, page_offset(page));
-	if (!ordered)
-		return ret;
+	अगर (!ordered)
+		वापस ret;
 
-	if ((bio->bi_iter.bi_sector << SECTOR_SHIFT) + len >
+	अगर ((bio->bi_iter.bi_sector << SECTOR_SHIFT) + len >
 	    ordered->disk_bytenr + ordered->disk_num_bytes)
 		ret = false;
 
 	btrfs_put_ordered_extent(ordered);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static blk_status_t extract_ordered_extent(struct btrfs_inode *inode,
-					   struct bio *bio, loff_t file_offset)
-{
-	struct btrfs_ordered_extent *ordered;
-	struct extent_map *em = NULL, *em_new = NULL;
-	struct extent_map_tree *em_tree = &inode->extent_tree;
+अटल blk_status_t extract_ordered_extent(काष्ठा btrfs_inode *inode,
+					   काष्ठा bio *bio, loff_t file_offset)
+अणु
+	काष्ठा btrfs_ordered_extent *ordered;
+	काष्ठा extent_map *em = शून्य, *em_new = शून्य;
+	काष्ठा extent_map_tree *em_tree = &inode->extent_tree;
 	u64 start = (u64)bio->bi_iter.bi_sector << SECTOR_SHIFT;
 	u64 len = bio->bi_iter.bi_size;
 	u64 end = start + len;
 	u64 ordered_end;
 	u64 pre, post;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	ordered = btrfs_lookup_ordered_extent(inode, file_offset);
-	if (WARN_ON_ONCE(!ordered))
-		return BLK_STS_IOERR;
+	अगर (WARN_ON_ONCE(!ordered))
+		वापस BLK_STS_IOERR;
 
 	/* No need to split */
-	if (ordered->disk_num_bytes == len)
-		goto out;
+	अगर (ordered->disk_num_bytes == len)
+		जाओ out;
 
 	/* We cannot split once end_bio'd ordered extent */
-	if (WARN_ON_ONCE(ordered->bytes_left != ordered->disk_num_bytes)) {
+	अगर (WARN_ON_ONCE(ordered->bytes_left != ordered->disk_num_bytes)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* We cannot split a compressed ordered extent */
-	if (WARN_ON_ONCE(ordered->disk_num_bytes != ordered->num_bytes)) {
+	अगर (WARN_ON_ONCE(ordered->disk_num_bytes != ordered->num_bytes)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ordered_end = ordered->disk_bytenr + ordered->disk_num_bytes;
 	/* bio must be in one ordered extent */
-	if (WARN_ON_ONCE(start < ordered->disk_bytenr || end > ordered_end)) {
+	अगर (WARN_ON_ONCE(start < ordered->disk_bytenr || end > ordered_end)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Checksum list should be empty */
-	if (WARN_ON_ONCE(!list_empty(&ordered->list))) {
+	अगर (WARN_ON_ONCE(!list_empty(&ordered->list))) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pre = start - ordered->disk_bytenr;
 	post = ordered_end - end;
 
 	ret = btrfs_split_ordered_extent(ordered, pre, post);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	read_lock(&em_tree->lock);
+	पढ़ो_lock(&em_tree->lock);
 	em = lookup_extent_mapping(em_tree, ordered->file_offset, len);
-	if (!em) {
-		read_unlock(&em_tree->lock);
+	अगर (!em) अणु
+		पढ़ो_unlock(&em_tree->lock);
 		ret = -EIO;
-		goto out;
-	}
-	read_unlock(&em_tree->lock);
+		जाओ out;
+	पूर्ण
+	पढ़ो_unlock(&em_tree->lock);
 
 	ASSERT(!test_bit(EXTENT_FLAG_COMPRESSED, &em->flags));
 	/*
 	 * We cannot reuse em_new here but have to create a new one, as
 	 * unpin_extent_cache() expects the start of the extent map to be the
-	 * logical offset of the file, which does not hold true anymore after
+	 * logical offset of the file, which करोes not hold true anymore after
 	 * splitting.
 	 */
 	em_new = create_io_em(inode, em->start + pre, len,
 			      em->start + pre, em->block_start + pre, len,
 			      len, len, BTRFS_COMPRESS_NONE,
 			      BTRFS_ORDERED_REGULAR);
-	if (IS_ERR(em_new)) {
+	अगर (IS_ERR(em_new)) अणु
 		ret = PTR_ERR(em_new);
-		goto out;
-	}
-	free_extent_map(em_new);
+		जाओ out;
+	पूर्ण
+	मुक्त_extent_map(em_new);
 
 out:
-	free_extent_map(em);
+	मुक्त_extent_map(em);
 	btrfs_put_ordered_extent(ordered);
 
-	return errno_to_blk_status(ret);
-}
+	वापस त्रुटि_सं_to_blk_status(ret);
+पूर्ण
 
 /*
- * extent_io.c submission hook. This does the right thing for csum calculation
- * on write, or reading the csums from the tree before a read.
+ * extent_io.c submission hook. This करोes the right thing क्रम csum calculation
+ * on ग_लिखो, or पढ़ोing the csums from the tree beक्रमe a पढ़ो.
  *
  * Rules about async/sync submit,
- * a) read:				sync submit
+ * a) पढ़ो:				sync submit
  *
- * b) write without checksum:		sync submit
+ * b) ग_लिखो without checksum:		sync submit
  *
- * c) write with checksum:
- *    c-1) if bio is issued by fsync:	sync submit
- *         (sync_writers != 0)
+ * c) ग_लिखो with checksum:
+ *    c-1) अगर bio is issued by fsync:	sync submit
+ *         (sync_ग_लिखोrs != 0)
  *
- *    c-2) if root is reloc root:	sync submit
- *         (only in case of buffered IO)
+ *    c-2) अगर root is reloc root:	sync submit
+ *         (only in हाल of buffered IO)
  *
  *    c-3) otherwise:			async submit
  */
-blk_status_t btrfs_submit_data_bio(struct inode *inode, struct bio *bio,
-				   int mirror_num, unsigned long bio_flags)
+blk_status_t btrfs_submit_data_bio(काष्ठा inode *inode, काष्ठा bio *bio,
+				   पूर्णांक mirror_num, अचिन्हित दीर्घ bio_flags)
 
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	enum btrfs_wq_endio_type metadata = BTRFS_WQ_ENDIO_DATA;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	क्रमागत btrfs_wq_endio_type metadata = BTRFS_WQ_ENDIO_DATA;
 	blk_status_t ret = 0;
-	int skip_sum;
-	int async = !atomic_read(&BTRFS_I(inode)->sync_writers);
+	पूर्णांक skip_sum;
+	पूर्णांक async = !atomic_पढ़ो(&BTRFS_I(inode)->sync_ग_लिखोrs);
 
 	skip_sum = (BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM) ||
 		   !fs_info->csum_root;
 
-	if (btrfs_is_free_space_inode(BTRFS_I(inode)))
+	अगर (btrfs_is_मुक्त_space_inode(BTRFS_I(inode)))
 		metadata = BTRFS_WQ_ENDIO_FREE_SPACE;
 
-	if (bio_op(bio) == REQ_OP_ZONE_APPEND) {
-		struct page *page = bio_first_bvec_all(bio)->bv_page;
+	अगर (bio_op(bio) == REQ_OP_ZONE_APPEND) अणु
+		काष्ठा page *page = bio_first_bvec_all(bio)->bv_page;
 		loff_t file_offset = page_offset(page);
 
 		ret = extract_ordered_extent(BTRFS_I(inode), bio, file_offset);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	if (btrfs_op(bio) != BTRFS_MAP_WRITE) {
+	अगर (btrfs_op(bio) != BTRFS_MAP_WRITE) अणु
 		ret = btrfs_bio_wq_end_io(fs_info, bio, metadata);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
-		if (bio_flags & EXTENT_BIO_COMPRESSED) {
-			ret = btrfs_submit_compressed_read(inode, bio,
+		अगर (bio_flags & EXTENT_BIO_COMPRESSED) अणु
+			ret = btrfs_submit_compressed_पढ़ो(inode, bio,
 							   mirror_num,
 							   bio_flags);
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			/*
-			 * Lookup bio sums does extra checks around whether we
+			 * Lookup bio sums करोes extra checks around whether we
 			 * need to csum or not, which is why we ignore skip_sum
 			 * here.
 			 */
-			ret = btrfs_lookup_bio_sums(inode, bio, NULL);
-			if (ret)
-				goto out;
-		}
-		goto mapit;
-	} else if (async && !skip_sum) {
-		/* csum items have already been cloned */
-		if (root->root_key.objectid == BTRFS_DATA_RELOC_TREE_OBJECTID)
-			goto mapit;
-		/* we're doing a write, do the async checksumming */
+			ret = btrfs_lookup_bio_sums(inode, bio, शून्य);
+			अगर (ret)
+				जाओ out;
+		पूर्ण
+		जाओ mapit;
+	पूर्ण अन्यथा अगर (async && !skip_sum) अणु
+		/* csum items have alपढ़ोy been cloned */
+		अगर (root->root_key.objectid == BTRFS_DATA_RELOC_TREE_OBJECTID)
+			जाओ mapit;
+		/* we're करोing a ग_लिखो, करो the async checksumming */
 		ret = btrfs_wq_submit_bio(inode, bio, mirror_num, bio_flags,
 					  0, btrfs_submit_bio_start);
-		goto out;
-	} else if (!skip_sum) {
+		जाओ out;
+	पूर्ण अन्यथा अगर (!skip_sum) अणु
 		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, 0, 0);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 mapit:
 	ret = btrfs_map_bio(fs_info, bio, mirror_num);
 
 out:
-	if (ret) {
+	अगर (ret) अणु
 		bio->bi_status = ret;
 		bio_endio(bio);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  * given a list of ordered sums record them in the inode.  This happens
- * at IO completion time based on sums calculated at bio submission time.
+ * at IO completion समय based on sums calculated at bio submission समय.
  */
-static int add_pending_csums(struct btrfs_trans_handle *trans,
-			     struct list_head *list)
-{
-	struct btrfs_ordered_sum *sum;
-	int ret;
+अटल पूर्णांक add_pending_csums(काष्ठा btrfs_trans_handle *trans,
+			     काष्ठा list_head *list)
+अणु
+	काष्ठा btrfs_ordered_sum *sum;
+	पूर्णांक ret;
 
-	list_for_each_entry(sum, list, list) {
+	list_क्रम_each_entry(sum, list, list) अणु
 		trans->adding_csums = true;
 		ret = btrfs_csum_file_blocks(trans, trans->fs_info->csum_root, sum);
 		trans->adding_csums = false;
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int btrfs_find_new_delalloc_bytes(struct btrfs_inode *inode,
-					 const u64 start,
-					 const u64 len,
-					 struct extent_state **cached_state)
-{
+अटल पूर्णांक btrfs_find_new_delalloc_bytes(काष्ठा btrfs_inode *inode,
+					 स्थिर u64 start,
+					 स्थिर u64 len,
+					 काष्ठा extent_state **cached_state)
+अणु
 	u64 search_start = start;
-	const u64 end = start + len - 1;
+	स्थिर u64 end = start + len - 1;
 
-	while (search_start < end) {
-		const u64 search_len = end - search_start + 1;
-		struct extent_map *em;
+	जबतक (search_start < end) अणु
+		स्थिर u64 search_len = end - search_start + 1;
+		काष्ठा extent_map *em;
 		u64 em_len;
-		int ret = 0;
+		पूर्णांक ret = 0;
 
-		em = btrfs_get_extent(inode, NULL, 0, search_start, search_len);
-		if (IS_ERR(em))
-			return PTR_ERR(em);
+		em = btrfs_get_extent(inode, शून्य, 0, search_start, search_len);
+		अगर (IS_ERR(em))
+			वापस PTR_ERR(em);
 
-		if (em->block_start != EXTENT_MAP_HOLE)
-			goto next;
+		अगर (em->block_start != EXTENT_MAP_HOLE)
+			जाओ next;
 
 		em_len = em->len;
-		if (em->start < search_start)
+		अगर (em->start < search_start)
 			em_len -= search_start - em->start;
-		if (em_len > search_len)
+		अगर (em_len > search_len)
 			em_len = search_len;
 
 		ret = set_extent_bit(&inode->io_tree, search_start,
 				     search_start + em_len - 1,
-				     EXTENT_DELALLOC_NEW, 0, NULL, cached_state,
-				     GFP_NOFS, NULL);
+				     EXTENT_DELALLOC_NEW, 0, शून्य, cached_state,
+				     GFP_NOFS, शून्य);
 next:
 		search_start = extent_map_end(em);
-		free_extent_map(em);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		मुक्त_extent_map(em);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int btrfs_set_extent_delalloc(struct btrfs_inode *inode, u64 start, u64 end,
-			      unsigned int extra_bits,
-			      struct extent_state **cached_state)
-{
+पूर्णांक btrfs_set_extent_delalloc(काष्ठा btrfs_inode *inode, u64 start, u64 end,
+			      अचिन्हित पूर्णांक extra_bits,
+			      काष्ठा extent_state **cached_state)
+अणु
 	WARN_ON(PAGE_ALIGNED(end));
 
-	if (start >= i_size_read(&inode->vfs_inode) &&
-	    !(inode->flags & BTRFS_INODE_PREALLOC)) {
+	अगर (start >= i_size_पढ़ो(&inode->vfs_inode) &&
+	    !(inode->flags & BTRFS_INODE_PREALLOC)) अणु
 		/*
-		 * There can't be any extents following eof in this case so just
-		 * set the delalloc new bit for the range directly.
+		 * There can't be any extents following eof in this हाल so just
+		 * set the delalloc new bit क्रम the range directly.
 		 */
 		extra_bits |= EXTENT_DELALLOC_NEW;
-	} else {
-		int ret;
+	पूर्ण अन्यथा अणु
+		पूर्णांक ret;
 
 		ret = btrfs_find_new_delalloc_bytes(inode, start,
 						    end + 1 - start,
 						    cached_state);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return set_extent_delalloc(&inode->io_tree, start, end, extra_bits,
+	वापस set_extent_delalloc(&inode->io_tree, start, end, extra_bits,
 				   cached_state);
-}
+पूर्ण
 
-/* see btrfs_writepage_start_hook for details on why this is required */
-struct btrfs_writepage_fixup {
-	struct page *page;
-	struct inode *inode;
-	struct btrfs_work work;
-};
+/* see btrfs_ग_लिखोpage_start_hook क्रम details on why this is required */
+काष्ठा btrfs_ग_लिखोpage_fixup अणु
+	काष्ठा page *page;
+	काष्ठा inode *inode;
+	काष्ठा btrfs_work work;
+पूर्ण;
 
-static void btrfs_writepage_fixup_worker(struct btrfs_work *work)
-{
-	struct btrfs_writepage_fixup *fixup;
-	struct btrfs_ordered_extent *ordered;
-	struct extent_state *cached_state = NULL;
-	struct extent_changeset *data_reserved = NULL;
-	struct page *page;
-	struct btrfs_inode *inode;
+अटल व्योम btrfs_ग_लिखोpage_fixup_worker(काष्ठा btrfs_work *work)
+अणु
+	काष्ठा btrfs_ग_लिखोpage_fixup *fixup;
+	काष्ठा btrfs_ordered_extent *ordered;
+	काष्ठा extent_state *cached_state = शून्य;
+	काष्ठा extent_changeset *data_reserved = शून्य;
+	काष्ठा page *page;
+	काष्ठा btrfs_inode *inode;
 	u64 page_start;
 	u64 page_end;
-	int ret = 0;
-	bool free_delalloc_space = true;
+	पूर्णांक ret = 0;
+	bool मुक्त_delalloc_space = true;
 
-	fixup = container_of(work, struct btrfs_writepage_fixup, work);
+	fixup = container_of(work, काष्ठा btrfs_ग_लिखोpage_fixup, work);
 	page = fixup->page;
 	inode = BTRFS_I(fixup->inode);
 	page_start = page_offset(page);
 	page_end = page_offset(page) + PAGE_SIZE - 1;
 
 	/*
-	 * This is similar to page_mkwrite, we need to reserve the space before
+	 * This is similar to page_mkग_लिखो, we need to reserve the space beक्रमe
 	 * we take the page lock.
 	 */
 	ret = btrfs_delalloc_reserve_space(inode, &data_reserved, page_start,
@@ -2559,183 +2560,183 @@ again:
 	lock_page(page);
 
 	/*
-	 * Before we queued this fixup, we took a reference on the page.
-	 * page->mapping may go NULL, but it shouldn't be moved to a different
+	 * Beक्रमe we queued this fixup, we took a reference on the page.
+	 * page->mapping may go शून्य, but it shouldn't be moved to a dअगरferent
 	 * address space.
 	 */
-	if (!page->mapping || !PageDirty(page) || !PageChecked(page)) {
+	अगर (!page->mapping || !PageDirty(page) || !PageChecked(page)) अणु
 		/*
-		 * Unfortunately this is a little tricky, either
+		 * Unक्रमtunately this is a little tricky, either
 		 *
-		 * 1) We got here and our page had already been dealt with and
+		 * 1) We got here and our page had alपढ़ोy been dealt with and
 		 *    we reserved our space, thus ret == 0, so we need to just
 		 *    drop our space reservation and bail.  This can happen the
-		 *    first time we come into the fixup worker, or could happen
-		 *    while waiting for the ordered extent.
-		 * 2) Our page was already dealt with, but we happened to get an
+		 *    first समय we come पूर्णांकo the fixup worker, or could happen
+		 *    जबतक रुकोing क्रम the ordered extent.
+		 * 2) Our page was alपढ़ोy dealt with, but we happened to get an
 		 *    ENOSPC above from the btrfs_delalloc_reserve_space.  In
-		 *    this case we obviously don't have anything to release, but
-		 *    because the page was already dealt with we don't want to
+		 *    this हाल we obviously करोn't have anything to release, but
+		 *    because the page was alपढ़ोy dealt with we करोn't want to
 		 *    mark the page with an error, so make sure we're resetting
-		 *    ret to 0.  This is why we have this check _before_ the ret
-		 *    check, because we do not want to have a surprise ENOSPC
-		 *    when the page was already properly dealt with.
+		 *    ret to 0.  This is why we have this check _beक्रमe_ the ret
+		 *    check, because we करो not want to have a surprise ENOSPC
+		 *    when the page was alपढ़ोy properly dealt with.
 		 */
-		if (!ret) {
+		अगर (!ret) अणु
 			btrfs_delalloc_release_extents(inode, PAGE_SIZE);
 			btrfs_delalloc_release_space(inode, data_reserved,
 						     page_start, PAGE_SIZE,
 						     true);
-		}
+		पूर्ण
 		ret = 0;
-		goto out_page;
-	}
+		जाओ out_page;
+	पूर्ण
 
 	/*
 	 * We can't mess with the page state unless it is locked, so now that
-	 * it is locked bail if we failed to make our space reservation.
+	 * it is locked bail अगर we failed to make our space reservation.
 	 */
-	if (ret)
-		goto out_page;
+	अगर (ret)
+		जाओ out_page;
 
 	lock_extent_bits(&inode->io_tree, page_start, page_end, &cached_state);
 
-	/* already ordered? We're done */
-	if (PagePrivate2(page))
-		goto out_reserved;
+	/* alपढ़ोy ordered? We're करोne */
+	अगर (PagePrivate2(page))
+		जाओ out_reserved;
 
 	ordered = btrfs_lookup_ordered_range(inode, page_start, PAGE_SIZE);
-	if (ordered) {
+	अगर (ordered) अणु
 		unlock_extent_cached(&inode->io_tree, page_start, page_end,
 				     &cached_state);
 		unlock_page(page);
 		btrfs_start_ordered_extent(ordered, 1);
 		btrfs_put_ordered_extent(ordered);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
 	ret = btrfs_set_extent_delalloc(inode, page_start, page_end, 0,
 					&cached_state);
-	if (ret)
-		goto out_reserved;
+	अगर (ret)
+		जाओ out_reserved;
 
 	/*
 	 * Everything went as planned, we're now the owner of a dirty page with
-	 * delayed allocation bits set and space reserved for our COW
+	 * delayed allocation bits set and space reserved क्रम our COW
 	 * destination.
 	 *
 	 * The page was dirty when we started, nothing should have cleaned it.
 	 */
 	BUG_ON(!PageDirty(page));
-	free_delalloc_space = false;
+	मुक्त_delalloc_space = false;
 out_reserved:
 	btrfs_delalloc_release_extents(inode, PAGE_SIZE);
-	if (free_delalloc_space)
+	अगर (मुक्त_delalloc_space)
 		btrfs_delalloc_release_space(inode, data_reserved, page_start,
 					     PAGE_SIZE, true);
 	unlock_extent_cached(&inode->io_tree, page_start, page_end,
 			     &cached_state);
 out_page:
-	if (ret) {
+	अगर (ret) अणु
 		/*
 		 * We hit ENOSPC or other errors.  Update the mapping and page
 		 * to reflect the errors and clean the page.
 		 */
 		mapping_set_error(page->mapping, ret);
-		end_extent_writepage(page, ret, page_start, page_end);
-		clear_page_dirty_for_io(page);
+		end_extent_ग_लिखोpage(page, ret, page_start, page_end);
+		clear_page_dirty_क्रम_io(page);
 		SetPageError(page);
-	}
+	पूर्ण
 	ClearPageChecked(page);
 	unlock_page(page);
 	put_page(page);
-	kfree(fixup);
-	extent_changeset_free(data_reserved);
+	kमुक्त(fixup);
+	extent_changeset_मुक्त(data_reserved);
 	/*
-	 * As a precaution, do a delayed iput in case it would be the last iput
+	 * As a precaution, करो a delayed iput in हाल it would be the last iput
 	 * that could need flushing space. Recursing back to fixup worker would
 	 * deadlock.
 	 */
 	btrfs_add_delayed_iput(&inode->vfs_inode);
-}
+पूर्ण
 
 /*
  * There are a few paths in the higher layers of the kernel that directly
- * set the page dirty bit without asking the filesystem if it is a
+ * set the page dirty bit without asking the fileप्रणाली अगर it is a
  * good idea.  This causes problems because we want to make sure COW
  * properly happens and the data=ordered rules are followed.
  *
- * In our case any range that doesn't have the ORDERED bit set
- * hasn't been properly setup for IO.  We kick off an async process
- * to fix it up.  The async helper will wait for ordered extents, set
- * the delalloc bit and make it safe to write the page.
+ * In our हाल any range that करोesn't have the ORDERED bit set
+ * hasn't been properly setup क्रम IO.  We kick off an async process
+ * to fix it up.  The async helper will रुको क्रम ordered extents, set
+ * the delalloc bit and make it safe to ग_लिखो the page.
  */
-int btrfs_writepage_cow_fixup(struct page *page, u64 start, u64 end)
-{
-	struct inode *inode = page->mapping->host;
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct btrfs_writepage_fixup *fixup;
+पूर्णांक btrfs_ग_लिखोpage_cow_fixup(काष्ठा page *page, u64 start, u64 end)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा btrfs_ग_लिखोpage_fixup *fixup;
 
 	/* this page is properly in the ordered list */
-	if (TestClearPagePrivate2(page))
-		return 0;
+	अगर (TestClearPagePrivate2(page))
+		वापस 0;
 
 	/*
-	 * PageChecked is set below when we create a fixup worker for this page,
-	 * don't try to create another one if we're already PageChecked()
+	 * PageChecked is set below when we create a fixup worker क्रम this page,
+	 * करोn't try to create another one if we're alपढ़ोy PageChecked()
 	 *
-	 * The extent_io writepage code will redirty the page if we send back
+	 * The extent_io ग_लिखोpage code will redirty the page अगर we send back
 	 * EAGAIN.
 	 */
-	if (PageChecked(page))
-		return -EAGAIN;
+	अगर (PageChecked(page))
+		वापस -EAGAIN;
 
-	fixup = kzalloc(sizeof(*fixup), GFP_NOFS);
-	if (!fixup)
-		return -EAGAIN;
+	fixup = kzalloc(माप(*fixup), GFP_NOFS);
+	अगर (!fixup)
+		वापस -EAGAIN;
 
 	/*
-	 * We are already holding a reference to this inode from
-	 * write_cache_pages.  We need to hold it because the space reservation
+	 * We are alपढ़ोy holding a reference to this inode from
+	 * ग_लिखो_cache_pages.  We need to hold it because the space reservation
 	 * takes place outside of the page lock, and we can't trust
 	 * page->mapping outside of the page lock.
 	 */
 	ihold(inode);
 	SetPageChecked(page);
 	get_page(page);
-	btrfs_init_work(&fixup->work, btrfs_writepage_fixup_worker, NULL, NULL);
+	btrfs_init_work(&fixup->work, btrfs_ग_लिखोpage_fixup_worker, शून्य, शून्य);
 	fixup->page = page;
 	fixup->inode = inode;
 	btrfs_queue_work(fs_info->fixup_workers, &fixup->work);
 
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
-				       struct btrfs_inode *inode, u64 file_pos,
-				       struct btrfs_file_extent_item *stack_fi,
-				       const bool update_inode_bytes,
+अटल पूर्णांक insert_reserved_file_extent(काष्ठा btrfs_trans_handle *trans,
+				       काष्ठा btrfs_inode *inode, u64 file_pos,
+				       काष्ठा btrfs_file_extent_item *stack_fi,
+				       स्थिर bool update_inode_bytes,
 				       u64 qgroup_reserved)
-{
-	struct btrfs_root *root = inode->root;
-	const u64 sectorsize = root->fs_info->sectorsize;
-	struct btrfs_path *path;
-	struct extent_buffer *leaf;
-	struct btrfs_key ins;
+अणु
+	काष्ठा btrfs_root *root = inode->root;
+	स्थिर u64 sectorsize = root->fs_info->sectorsize;
+	काष्ठा btrfs_path *path;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_key ins;
 	u64 disk_num_bytes = btrfs_stack_file_extent_disk_num_bytes(stack_fi);
 	u64 disk_bytenr = btrfs_stack_file_extent_disk_bytenr(stack_fi);
 	u64 num_bytes = btrfs_stack_file_extent_num_bytes(stack_fi);
 	u64 ram_bytes = btrfs_stack_file_extent_ram_bytes(stack_fi);
-	struct btrfs_drop_extents_args drop_args = { 0 };
-	int ret;
+	काष्ठा btrfs_drop_extents_args drop_args = अणु 0 पूर्ण;
+	पूर्णांक ret;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
 	/*
 	 * we may be replacing one extent in the tree with another.
-	 * The new extent is pinned in the extent map, and we don't want
+	 * The new extent is pinned in the extent map, and we करोn't want
 	 * to drop it from the cache until it is completely in the btree.
 	 *
 	 * So, tell btrfs_drop_extents to leave this extent in the cache.
@@ -2746,47 +2747,47 @@ static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
 	drop_args.start = file_pos;
 	drop_args.end = file_pos + num_bytes;
 	drop_args.replace_extent = true;
-	drop_args.extent_item_size = sizeof(*stack_fi);
+	drop_args.extent_item_size = माप(*stack_fi);
 	ret = btrfs_drop_extents(trans, root, inode, &drop_args);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (!drop_args.extent_inserted) {
+	अगर (!drop_args.extent_inserted) अणु
 		ins.objectid = btrfs_ino(inode);
 		ins.offset = file_pos;
 		ins.type = BTRFS_EXTENT_DATA_KEY;
 
 		ret = btrfs_insert_empty_item(trans, root, path, &ins,
-					      sizeof(*stack_fi));
-		if (ret)
-			goto out;
-	}
+					      माप(*stack_fi));
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 	leaf = path->nodes[0];
 	btrfs_set_stack_file_extent_generation(stack_fi, trans->transid);
-	write_extent_buffer(leaf, stack_fi,
+	ग_लिखो_extent_buffer(leaf, stack_fi,
 			btrfs_item_ptr_offset(leaf, path->slots[0]),
-			sizeof(struct btrfs_file_extent_item));
+			माप(काष्ठा btrfs_file_extent_item));
 
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_release_path(path);
 
 	/*
-	 * If we dropped an inline extent here, we know the range where it is
+	 * If we dropped an अंतरभूत extent here, we know the range where it is
 	 * was not marked with the EXTENT_DELALLOC_NEW bit, so we update the
-	 * number of bytes only for that range contaning the inline extent.
-	 * The remaining of the range will be processed when clearning the
+	 * number of bytes only क्रम that range contaning the अंतरभूत extent.
+	 * The reमुख्यing of the range will be processed when clearning the
 	 * EXTENT_DELALLOC_BIT bit through the ordered extent completion.
 	 */
-	if (file_pos == 0 && !IS_ALIGNED(drop_args.bytes_found, sectorsize)) {
-		u64 inline_size = round_down(drop_args.bytes_found, sectorsize);
+	अगर (file_pos == 0 && !IS_ALIGNED(drop_args.bytes_found, sectorsize)) अणु
+		u64 अंतरभूत_size = round_करोwn(drop_args.bytes_found, sectorsize);
 
-		inline_size = drop_args.bytes_found - inline_size;
-		btrfs_update_inode_bytes(inode, sectorsize, inline_size);
-		drop_args.bytes_found -= inline_size;
+		अंतरभूत_size = drop_args.bytes_found - अंतरभूत_size;
+		btrfs_update_inode_bytes(inode, sectorsize, अंतरभूत_size);
+		drop_args.bytes_found -= अंतरभूत_size;
 		num_bytes -= sectorsize;
-	}
+	पूर्ण
 
-	if (update_inode_bytes)
+	अगर (update_inode_bytes)
 		btrfs_update_inode_bytes(inode, num_bytes, drop_args.bytes_found);
 
 	ins.objectid = disk_bytenr;
@@ -2794,21 +2795,21 @@ static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
 	ins.type = BTRFS_EXTENT_ITEM_KEY;
 
 	ret = btrfs_inode_set_file_extent_range(inode, file_pos, ram_bytes);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = btrfs_alloc_reserved_file_extent(trans, root, btrfs_ino(inode),
 					       file_pos, qgroup_reserved, &ins);
 out:
-	btrfs_free_path(path);
+	btrfs_मुक्त_path(path);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void btrfs_release_delalloc_bytes(struct btrfs_fs_info *fs_info,
+अटल व्योम btrfs_release_delalloc_bytes(काष्ठा btrfs_fs_info *fs_info,
 					 u64 start, u64 len)
-{
-	struct btrfs_block_group *cache;
+अणु
+	काष्ठा btrfs_block_group *cache;
 
 	cache = btrfs_lookup_block_group(fs_info, start);
 	ASSERT(cache);
@@ -2818,23 +2819,23 @@ static void btrfs_release_delalloc_bytes(struct btrfs_fs_info *fs_info,
 	spin_unlock(&cache->lock);
 
 	btrfs_put_block_group(cache);
-}
+पूर्ण
 
-static int insert_ordered_extent_file_extent(struct btrfs_trans_handle *trans,
-					     struct btrfs_ordered_extent *oe)
-{
-	struct btrfs_file_extent_item stack_fi;
+अटल पूर्णांक insert_ordered_extent_file_extent(काष्ठा btrfs_trans_handle *trans,
+					     काष्ठा btrfs_ordered_extent *oe)
+अणु
+	काष्ठा btrfs_file_extent_item stack_fi;
 	u64 logical_len;
 	bool update_inode_bytes;
 
-	memset(&stack_fi, 0, sizeof(stack_fi));
-	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_REG);
+	स_रखो(&stack_fi, 0, माप(stack_fi));
+	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_खाता_EXTENT_REG);
 	btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, oe->disk_bytenr);
 	btrfs_set_stack_file_extent_disk_num_bytes(&stack_fi,
 						   oe->disk_num_bytes);
-	if (test_bit(BTRFS_ORDERED_TRUNCATED, &oe->flags))
+	अगर (test_bit(BTRFS_ORDERED_TRUNCATED, &oe->flags))
 		logical_len = oe->truncated_len;
-	else
+	अन्यथा
 		logical_len = oe->num_bytes;
 	btrfs_set_stack_file_extent_num_bytes(&stack_fi, logical_len);
 	btrfs_set_stack_file_extent_ram_bytes(&stack_fi, logical_len);
@@ -2845,275 +2846,275 @@ static int insert_ordered_extent_file_extent(struct btrfs_trans_handle *trans,
 	 * For delalloc, when completing an ordered extent we update the inode's
 	 * bytes when clearing the range in the inode's io tree, so pass false
 	 * as the argument 'update_inode_bytes' to insert_reserved_file_extent(),
-	 * except if the ordered extent was truncated.
+	 * except अगर the ordered extent was truncated.
 	 */
-	update_inode_bytes = test_bit(BTRFS_ORDERED_DIRECT, &oe->flags) ||
+	update_inode_bytes = test_bit(BTRFS_ORDERED_सूचीECT, &oe->flags) ||
 			     test_bit(BTRFS_ORDERED_TRUNCATED, &oe->flags);
 
-	return insert_reserved_file_extent(trans, BTRFS_I(oe->inode),
+	वापस insert_reserved_file_extent(trans, BTRFS_I(oe->inode),
 					   oe->file_offset, &stack_fi,
 					   update_inode_bytes, oe->qgroup_rsv);
-}
+पूर्ण
 
 /*
- * As ordered data IO finishes, this gets called so we can finish
- * an ordered extent if the range of bytes in the file it covers are
+ * As ordered data IO finishes, this माला_लो called so we can finish
+ * an ordered extent अगर the range of bytes in the file it covers are
  * fully written.
  */
-static int btrfs_finish_ordered_io(struct btrfs_ordered_extent *ordered_extent)
-{
-	struct btrfs_inode *inode = BTRFS_I(ordered_extent->inode);
-	struct btrfs_root *root = inode->root;
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_trans_handle *trans = NULL;
-	struct extent_io_tree *io_tree = &inode->io_tree;
-	struct extent_state *cached_state = NULL;
+अटल पूर्णांक btrfs_finish_ordered_io(काष्ठा btrfs_ordered_extent *ordered_extent)
+अणु
+	काष्ठा btrfs_inode *inode = BTRFS_I(ordered_extent->inode);
+	काष्ठा btrfs_root *root = inode->root;
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा btrfs_trans_handle *trans = शून्य;
+	काष्ठा extent_io_tree *io_tree = &inode->io_tree;
+	काष्ठा extent_state *cached_state = शून्य;
 	u64 start, end;
-	int compress_type = 0;
-	int ret = 0;
+	पूर्णांक compress_type = 0;
+	पूर्णांक ret = 0;
 	u64 logical_len = ordered_extent->num_bytes;
-	bool freespace_inode;
+	bool मुक्तspace_inode;
 	bool truncated = false;
 	bool clear_reserved_extent = true;
-	unsigned int clear_bits = EXTENT_DEFRAG;
+	अचिन्हित पूर्णांक clear_bits = EXTENT_DEFRAG;
 
 	start = ordered_extent->file_offset;
 	end = start + ordered_extent->num_bytes - 1;
 
-	if (!test_bit(BTRFS_ORDERED_NOCOW, &ordered_extent->flags) &&
+	अगर (!test_bit(BTRFS_ORDERED_NOCOW, &ordered_extent->flags) &&
 	    !test_bit(BTRFS_ORDERED_PREALLOC, &ordered_extent->flags) &&
-	    !test_bit(BTRFS_ORDERED_DIRECT, &ordered_extent->flags))
+	    !test_bit(BTRFS_ORDERED_सूचीECT, &ordered_extent->flags))
 		clear_bits |= EXTENT_DELALLOC_NEW;
 
-	freespace_inode = btrfs_is_free_space_inode(inode);
+	मुक्तspace_inode = btrfs_is_मुक्त_space_inode(inode);
 
-	if (test_bit(BTRFS_ORDERED_IOERR, &ordered_extent->flags)) {
+	अगर (test_bit(BTRFS_ORDERED_IOERR, &ordered_extent->flags)) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ordered_extent->disk)
-		btrfs_rewrite_logical_zoned(ordered_extent);
+	अगर (ordered_extent->disk)
+		btrfs_reग_लिखो_logical_zoned(ordered_extent);
 
-	btrfs_free_io_failure_record(inode, start, end);
+	btrfs_मुक्त_io_failure_record(inode, start, end);
 
-	if (test_bit(BTRFS_ORDERED_TRUNCATED, &ordered_extent->flags)) {
+	अगर (test_bit(BTRFS_ORDERED_TRUNCATED, &ordered_extent->flags)) अणु
 		truncated = true;
 		logical_len = ordered_extent->truncated_len;
-		/* Truncated the entire extent, don't bother adding */
-		if (!logical_len)
-			goto out;
-	}
+		/* Truncated the entire extent, करोn't bother adding */
+		अगर (!logical_len)
+			जाओ out;
+	पूर्ण
 
-	if (test_bit(BTRFS_ORDERED_NOCOW, &ordered_extent->flags)) {
+	अगर (test_bit(BTRFS_ORDERED_NOCOW, &ordered_extent->flags)) अणु
 		BUG_ON(!list_empty(&ordered_extent->list)); /* Logic error */
 
-		btrfs_inode_safe_disk_i_size_write(inode, 0);
-		if (freespace_inode)
+		btrfs_inode_safe_disk_i_size_ग_लिखो(inode, 0);
+		अगर (मुक्तspace_inode)
 			trans = btrfs_join_transaction_spacecache(root);
-		else
+		अन्यथा
 			trans = btrfs_join_transaction(root);
-		if (IS_ERR(trans)) {
+		अगर (IS_ERR(trans)) अणु
 			ret = PTR_ERR(trans);
-			trans = NULL;
-			goto out;
-		}
+			trans = शून्य;
+			जाओ out;
+		पूर्ण
 		trans->block_rsv = &inode->block_rsv;
 		ret = btrfs_update_inode_fallback(trans, root, inode);
-		if (ret) /* -ENOMEM or corruption */
-			btrfs_abort_transaction(trans, ret);
-		goto out;
-	}
+		अगर (ret) /* -ENOMEM or corruption */
+			btrfs_पात_transaction(trans, ret);
+		जाओ out;
+	पूर्ण
 
 	clear_bits |= EXTENT_LOCKED;
 	lock_extent_bits(io_tree, start, end, &cached_state);
 
-	if (freespace_inode)
+	अगर (मुक्तspace_inode)
 		trans = btrfs_join_transaction_spacecache(root);
-	else
+	अन्यथा
 		trans = btrfs_join_transaction(root);
-	if (IS_ERR(trans)) {
+	अगर (IS_ERR(trans)) अणु
 		ret = PTR_ERR(trans);
-		trans = NULL;
-		goto out;
-	}
+		trans = शून्य;
+		जाओ out;
+	पूर्ण
 
 	trans->block_rsv = &inode->block_rsv;
 
-	if (test_bit(BTRFS_ORDERED_COMPRESSED, &ordered_extent->flags))
+	अगर (test_bit(BTRFS_ORDERED_COMPRESSED, &ordered_extent->flags))
 		compress_type = ordered_extent->compress_type;
-	if (test_bit(BTRFS_ORDERED_PREALLOC, &ordered_extent->flags)) {
+	अगर (test_bit(BTRFS_ORDERED_PREALLOC, &ordered_extent->flags)) अणु
 		BUG_ON(compress_type);
 		ret = btrfs_mark_extent_written(trans, inode,
 						ordered_extent->file_offset,
 						ordered_extent->file_offset +
 						logical_len);
-	} else {
+	पूर्ण अन्यथा अणु
 		BUG_ON(root == fs_info->tree_root);
 		ret = insert_ordered_extent_file_extent(trans, ordered_extent);
-		if (!ret) {
+		अगर (!ret) अणु
 			clear_reserved_extent = false;
 			btrfs_release_delalloc_bytes(fs_info,
 						ordered_extent->disk_bytenr,
 						ordered_extent->disk_num_bytes);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	unpin_extent_cache(&inode->extent_tree, ordered_extent->file_offset,
 			   ordered_extent->num_bytes, trans->transid);
-	if (ret < 0) {
-		btrfs_abort_transaction(trans, ret);
-		goto out;
-	}
+	अगर (ret < 0) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out;
+	पूर्ण
 
 	ret = add_pending_csums(trans, &ordered_extent->list);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * If this is a new delalloc range, clear its new delalloc flag to
-	 * update the inode's number of bytes. This needs to be done first
-	 * before updating the inode item.
+	 * update the inode's number of bytes. This needs to be करोne first
+	 * beक्रमe updating the inode item.
 	 */
-	if ((clear_bits & EXTENT_DELALLOC_NEW) &&
+	अगर ((clear_bits & EXTENT_DELALLOC_NEW) &&
 	    !test_bit(BTRFS_ORDERED_TRUNCATED, &ordered_extent->flags))
 		clear_extent_bit(&inode->io_tree, start, end,
 				 EXTENT_DELALLOC_NEW | EXTENT_ADD_INODE_BYTES,
 				 0, 0, &cached_state);
 
-	btrfs_inode_safe_disk_i_size_write(inode, 0);
+	btrfs_inode_safe_disk_i_size_ग_लिखो(inode, 0);
 	ret = btrfs_update_inode_fallback(trans, root, inode);
-	if (ret) { /* -ENOMEM or corruption */
-		btrfs_abort_transaction(trans, ret);
-		goto out;
-	}
+	अगर (ret) अणु /* -ENOMEM or corruption */
+		btrfs_पात_transaction(trans, ret);
+		जाओ out;
+	पूर्ण
 	ret = 0;
 out:
 	clear_extent_bit(&inode->io_tree, start, end, clear_bits,
 			 (clear_bits & EXTENT_LOCKED) ? 1 : 0, 0,
 			 &cached_state);
 
-	if (trans)
+	अगर (trans)
 		btrfs_end_transaction(trans);
 
-	if (ret || truncated) {
+	अगर (ret || truncated) अणु
 		u64 unwritten_start = start;
 
 		/*
-		 * If we failed to finish this ordered extent for any reason we
+		 * If we failed to finish this ordered extent क्रम any reason we
 		 * need to make sure BTRFS_ORDERED_IOERR is set on the ordered
-		 * extent, and mark the inode with the error if it wasn't
-		 * already set.  Any error during writeback would have already
-		 * set the mapping error, so we need to set it if we're the ones
+		 * extent, and mark the inode with the error अगर it wasn't
+		 * alपढ़ोy set.  Any error during ग_लिखोback would have alपढ़ोy
+		 * set the mapping error, so we need to set it अगर we're the ones
 		 * marking this ordered extent as failed.
 		 */
-		if (ret && !test_and_set_bit(BTRFS_ORDERED_IOERR,
+		अगर (ret && !test_and_set_bit(BTRFS_ORDERED_IOERR,
 					     &ordered_extent->flags))
 			mapping_set_error(ordered_extent->inode->i_mapping, -EIO);
 
-		if (truncated)
+		अगर (truncated)
 			unwritten_start += logical_len;
-		clear_extent_uptodate(io_tree, unwritten_start, end, NULL);
+		clear_extent_uptodate(io_tree, unwritten_start, end, शून्य);
 
-		/* Drop the cache for the part of the extent we didn't write. */
+		/* Drop the cache क्रम the part of the extent we didn't ग_लिखो. */
 		btrfs_drop_extent_cache(inode, unwritten_start, end, 0);
 
 		/*
-		 * If the ordered extent had an IOERR or something else went
-		 * wrong we need to return the space for this ordered extent
-		 * back to the allocator.  We only free the extent in the
-		 * truncated case if we didn't write out the extent at all.
+		 * If the ordered extent had an IOERR or something अन्यथा went
+		 * wrong we need to वापस the space क्रम this ordered extent
+		 * back to the allocator.  We only मुक्त the extent in the
+		 * truncated हाल अगर we didn't ग_लिखो out the extent at all.
 		 *
-		 * If we made it past insert_reserved_file_extent before we
-		 * errored out then we don't need to do this as the accounting
-		 * has already been done.
+		 * If we made it past insert_reserved_file_extent beक्रमe we
+		 * errored out then we करोn't need to करो this as the accounting
+		 * has alपढ़ोy been करोne.
 		 */
-		if ((ret || !logical_len) &&
+		अगर ((ret || !logical_len) &&
 		    clear_reserved_extent &&
 		    !test_bit(BTRFS_ORDERED_NOCOW, &ordered_extent->flags) &&
-		    !test_bit(BTRFS_ORDERED_PREALLOC, &ordered_extent->flags)) {
+		    !test_bit(BTRFS_ORDERED_PREALLOC, &ordered_extent->flags)) अणु
 			/*
-			 * Discard the range before returning it back to the
-			 * free space pool
+			 * Discard the range beक्रमe वापसing it back to the
+			 * मुक्त space pool
 			 */
-			if (ret && btrfs_test_opt(fs_info, DISCARD_SYNC))
+			अगर (ret && btrfs_test_opt(fs_info, DISCARD_SYNC))
 				btrfs_discard_extent(fs_info,
 						ordered_extent->disk_bytenr,
 						ordered_extent->disk_num_bytes,
-						NULL);
-			btrfs_free_reserved_extent(fs_info,
+						शून्य);
+			btrfs_मुक्त_reserved_extent(fs_info,
 					ordered_extent->disk_bytenr,
 					ordered_extent->disk_num_bytes, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * This needs to be done to make sure anybody waiting knows we are done
-	 * updating everything for this ordered extent.
+	 * This needs to be करोne to make sure anybody रुकोing knows we are करोne
+	 * updating everything क्रम this ordered extent.
 	 */
-	btrfs_remove_ordered_extent(inode, ordered_extent);
+	btrfs_हटाओ_ordered_extent(inode, ordered_extent);
 
-	/* once for us */
+	/* once क्रम us */
 	btrfs_put_ordered_extent(ordered_extent);
-	/* once for the tree */
+	/* once क्रम the tree */
 	btrfs_put_ordered_extent(ordered_extent);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void finish_ordered_fn(struct btrfs_work *work)
-{
-	struct btrfs_ordered_extent *ordered_extent;
-	ordered_extent = container_of(work, struct btrfs_ordered_extent, work);
+अटल व्योम finish_ordered_fn(काष्ठा btrfs_work *work)
+अणु
+	काष्ठा btrfs_ordered_extent *ordered_extent;
+	ordered_extent = container_of(work, काष्ठा btrfs_ordered_extent, work);
 	btrfs_finish_ordered_io(ordered_extent);
-}
+पूर्ण
 
-void btrfs_writepage_endio_finish_ordered(struct page *page, u64 start,
-					  u64 end, int uptodate)
-{
-	struct btrfs_inode *inode = BTRFS_I(page->mapping->host);
-	struct btrfs_fs_info *fs_info = inode->root->fs_info;
-	struct btrfs_ordered_extent *ordered_extent = NULL;
-	struct btrfs_workqueue *wq;
+व्योम btrfs_ग_लिखोpage_endio_finish_ordered(काष्ठा page *page, u64 start,
+					  u64 end, पूर्णांक uptodate)
+अणु
+	काष्ठा btrfs_inode *inode = BTRFS_I(page->mapping->host);
+	काष्ठा btrfs_fs_info *fs_info = inode->root->fs_info;
+	काष्ठा btrfs_ordered_extent *ordered_extent = शून्य;
+	काष्ठा btrfs_workqueue *wq;
 
-	trace_btrfs_writepage_end_io_hook(page, start, end, uptodate);
+	trace_btrfs_ग_लिखोpage_end_io_hook(page, start, end, uptodate);
 
 	ClearPagePrivate2(page);
-	if (!btrfs_dec_test_ordered_pending(inode, &ordered_extent, start,
+	अगर (!btrfs_dec_test_ordered_pending(inode, &ordered_extent, start,
 					    end - start + 1, uptodate))
-		return;
+		वापस;
 
-	if (btrfs_is_free_space_inode(inode))
-		wq = fs_info->endio_freespace_worker;
-	else
-		wq = fs_info->endio_write_workers;
+	अगर (btrfs_is_मुक्त_space_inode(inode))
+		wq = fs_info->endio_मुक्तspace_worker;
+	अन्यथा
+		wq = fs_info->endio_ग_लिखो_workers;
 
-	btrfs_init_work(&ordered_extent->work, finish_ordered_fn, NULL, NULL);
+	btrfs_init_work(&ordered_extent->work, finish_ordered_fn, शून्य, शून्य);
 	btrfs_queue_work(wq, &ordered_extent->work);
-}
+पूर्ण
 
 /*
- * check_data_csum - verify checksum of one sector of uncompressed data
+ * check_data_csum - verअगरy checksum of one sector of uncompressed data
  * @inode:	inode
  * @io_bio:	btrfs_io_bio which contains the csum
  * @bio_offset:	offset to the beginning of the bio (in bytes)
- * @page:	page where is the data to be verified
+ * @page:	page where is the data to be verअगरied
  * @pgoff:	offset inside the page
  * @start:	logical offset in the file
  *
  * The length of such check is always one sector size.
  */
-static int check_data_csum(struct inode *inode, struct btrfs_io_bio *io_bio,
-			   u32 bio_offset, struct page *page, u32 pgoff,
+अटल पूर्णांक check_data_csum(काष्ठा inode *inode, काष्ठा btrfs_io_bio *io_bio,
+			   u32 bio_offset, काष्ठा page *page, u32 pgoff,
 			   u64 start)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
-	char *kaddr;
+	अक्षर *kaddr;
 	u32 len = fs_info->sectorsize;
-	const u32 csum_size = fs_info->csum_size;
-	unsigned int offset_sectors;
+	स्थिर u32 csum_size = fs_info->csum_size;
+	अचिन्हित पूर्णांक offset_sectors;
 	u8 *csum_expected;
 	u8 csum[BTRFS_CSUM_SIZE];
 
@@ -3127,243 +3128,243 @@ static int check_data_csum(struct inode *inode, struct btrfs_io_bio *io_bio,
 
 	crypto_shash_digest(shash, kaddr + pgoff, len, csum);
 
-	if (memcmp(csum, csum_expected, csum_size))
-		goto zeroit;
+	अगर (स_भेद(csum, csum_expected, csum_size))
+		जाओ zeroit;
 
 	kunmap_atomic(kaddr);
-	return 0;
+	वापस 0;
 zeroit:
-	btrfs_print_data_csum_error(BTRFS_I(inode), start, csum, csum_expected,
+	btrfs_prपूर्णांक_data_csum_error(BTRFS_I(inode), start, csum, csum_expected,
 				    io_bio->mirror_num);
-	if (io_bio->device)
-		btrfs_dev_stat_inc_and_print(io_bio->device,
+	अगर (io_bio->device)
+		btrfs_dev_stat_inc_and_prपूर्णांक(io_bio->device,
 					     BTRFS_DEV_STAT_CORRUPTION_ERRS);
-	memset(kaddr + pgoff, 1, len);
+	स_रखो(kaddr + pgoff, 1, len);
 	flush_dcache_page(page);
 	kunmap_atomic(kaddr);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /*
- * When reads are done, we need to check csums to verify the data is correct.
- * if there's a match, we allow the bio to finish.  If not, the code in
- * extent_io.c will try to find good copies for us.
+ * When पढ़ोs are करोne, we need to check csums to verअगरy the data is correct.
+ * अगर there's a match, we allow the bio to finish.  If not, the code in
+ * extent_io.c will try to find good copies क्रम us.
  *
  * @bio_offset:	offset to the beginning of the bio (in bytes)
  * @start:	file offset of the range start
  * @end:	file offset of the range end (inclusive)
  */
-int btrfs_verify_data_csum(struct btrfs_io_bio *io_bio, u32 bio_offset,
-			   struct page *page, u64 start, u64 end)
-{
-	struct inode *inode = page->mapping->host;
-	struct extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	const u32 sectorsize = root->fs_info->sectorsize;
+पूर्णांक btrfs_verअगरy_data_csum(काष्ठा btrfs_io_bio *io_bio, u32 bio_offset,
+			   काष्ठा page *page, u64 start, u64 end)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	स्थिर u32 sectorsize = root->fs_info->sectorsize;
 	u32 pg_off;
 
-	if (PageChecked(page)) {
+	अगर (PageChecked(page)) अणु
 		ClearPageChecked(page);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM)
-		return 0;
+	अगर (BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM)
+		वापस 0;
 
-	if (!root->fs_info->csum_root)
-		return 0;
+	अगर (!root->fs_info->csum_root)
+		वापस 0;
 
-	if (root->root_key.objectid == BTRFS_DATA_RELOC_TREE_OBJECTID &&
-	    test_range_bit(io_tree, start, end, EXTENT_NODATASUM, 1, NULL)) {
+	अगर (root->root_key.objectid == BTRFS_DATA_RELOC_TREE_OBJECTID &&
+	    test_range_bit(io_tree, start, end, EXTENT_NODATASUM, 1, शून्य)) अणु
 		clear_extent_bits(io_tree, start, end, EXTENT_NODATASUM);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ASSERT(page_offset(page) <= start &&
 	       end <= page_offset(page) + PAGE_SIZE - 1);
-	for (pg_off = offset_in_page(start);
+	क्रम (pg_off = offset_in_page(start);
 	     pg_off < offset_in_page(end);
-	     pg_off += sectorsize, bio_offset += sectorsize) {
-		int ret;
+	     pg_off += sectorsize, bio_offset += sectorsize) अणु
+		पूर्णांक ret;
 
 		ret = check_data_csum(inode, io_bio, bio_offset, page, pg_off,
 				      page_offset(page) + pg_off);
-		if (ret < 0)
-			return -EIO;
-	}
-	return 0;
-}
+		अगर (ret < 0)
+			वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * btrfs_add_delayed_iput - perform a delayed iput on @inode
+ * btrfs_add_delayed_iput - perक्रमm a delayed iput on @inode
  *
- * @inode: The inode we want to perform iput on
+ * @inode: The inode we want to perक्रमm iput on
  *
  * This function uses the generic vfs_inode::i_count to track whether we should
- * just decrement it (in case it's > 1) or if this is the last iput then link
- * the inode to the delayed iput machinery. Delayed iputs are processed at
- * transaction commit time/superblock commit/cleaner kthread.
+ * just decrement it (in हाल it's > 1) or अगर this is the last iput then link
+ * the inode to the delayed iput machinery. Delayed iमाला_दो are processed at
+ * transaction commit समय/superblock commit/cleaner kthपढ़ो.
  */
-void btrfs_add_delayed_iput(struct inode *inode)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct btrfs_inode *binode = BTRFS_I(inode);
+व्योम btrfs_add_delayed_iput(काष्ठा inode *inode)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा btrfs_inode *binode = BTRFS_I(inode);
 
-	if (atomic_add_unless(&inode->i_count, -1, 1))
-		return;
+	अगर (atomic_add_unless(&inode->i_count, -1, 1))
+		वापस;
 
-	atomic_inc(&fs_info->nr_delayed_iputs);
+	atomic_inc(&fs_info->nr_delayed_iमाला_दो);
 	spin_lock(&fs_info->delayed_iput_lock);
 	ASSERT(list_empty(&binode->delayed_iput));
-	list_add_tail(&binode->delayed_iput, &fs_info->delayed_iputs);
+	list_add_tail(&binode->delayed_iput, &fs_info->delayed_iमाला_दो);
 	spin_unlock(&fs_info->delayed_iput_lock);
-	if (!test_bit(BTRFS_FS_CLEANER_RUNNING, &fs_info->flags))
-		wake_up_process(fs_info->cleaner_kthread);
-}
+	अगर (!test_bit(BTRFS_FS_CLEANER_RUNNING, &fs_info->flags))
+		wake_up_process(fs_info->cleaner_kthपढ़ो);
+पूर्ण
 
-static void run_delayed_iput_locked(struct btrfs_fs_info *fs_info,
-				    struct btrfs_inode *inode)
-{
+अटल व्योम run_delayed_iput_locked(काष्ठा btrfs_fs_info *fs_info,
+				    काष्ठा btrfs_inode *inode)
+अणु
 	list_del_init(&inode->delayed_iput);
 	spin_unlock(&fs_info->delayed_iput_lock);
 	iput(&inode->vfs_inode);
-	if (atomic_dec_and_test(&fs_info->nr_delayed_iputs))
-		wake_up(&fs_info->delayed_iputs_wait);
+	अगर (atomic_dec_and_test(&fs_info->nr_delayed_iमाला_दो))
+		wake_up(&fs_info->delayed_iमाला_दो_रुको);
 	spin_lock(&fs_info->delayed_iput_lock);
-}
+पूर्ण
 
-static void btrfs_run_delayed_iput(struct btrfs_fs_info *fs_info,
-				   struct btrfs_inode *inode)
-{
-	if (!list_empty(&inode->delayed_iput)) {
+अटल व्योम btrfs_run_delayed_iput(काष्ठा btrfs_fs_info *fs_info,
+				   काष्ठा btrfs_inode *inode)
+अणु
+	अगर (!list_empty(&inode->delayed_iput)) अणु
 		spin_lock(&fs_info->delayed_iput_lock);
-		if (!list_empty(&inode->delayed_iput))
+		अगर (!list_empty(&inode->delayed_iput))
 			run_delayed_iput_locked(fs_info, inode);
 		spin_unlock(&fs_info->delayed_iput_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void btrfs_run_delayed_iputs(struct btrfs_fs_info *fs_info)
-{
+व्योम btrfs_run_delayed_iमाला_दो(काष्ठा btrfs_fs_info *fs_info)
+अणु
 
 	spin_lock(&fs_info->delayed_iput_lock);
-	while (!list_empty(&fs_info->delayed_iputs)) {
-		struct btrfs_inode *inode;
+	जबतक (!list_empty(&fs_info->delayed_iमाला_दो)) अणु
+		काष्ठा btrfs_inode *inode;
 
-		inode = list_first_entry(&fs_info->delayed_iputs,
-				struct btrfs_inode, delayed_iput);
+		inode = list_first_entry(&fs_info->delayed_iमाला_दो,
+				काष्ठा btrfs_inode, delayed_iput);
 		run_delayed_iput_locked(fs_info, inode);
 		cond_resched_lock(&fs_info->delayed_iput_lock);
-	}
+	पूर्ण
 	spin_unlock(&fs_info->delayed_iput_lock);
-}
+पूर्ण
 
 /**
- * Wait for flushing all delayed iputs
+ * Wait क्रम flushing all delayed iमाला_दो
  *
- * @fs_info:  the filesystem
+ * @fs_info:  the fileप्रणाली
  *
- * This will wait on any delayed iputs that are currently running with KILLABLE
- * set.  Once they are all done running we will return, unless we are killed in
- * which case we return EINTR. This helps in user operations like fallocate etc
- * that might get blocked on the iputs.
+ * This will रुको on any delayed iमाला_दो that are currently running with KILLABLE
+ * set.  Once they are all करोne running we will वापस, unless we are समाप्तed in
+ * which हाल we वापस EINTR. This helps in user operations like fallocate etc
+ * that might get blocked on the iमाला_दो.
  *
- * Return EINTR if we were killed, 0 if nothing's pending
+ * Return EINTR अगर we were समाप्तed, 0 अगर nothing's pending
  */
-int btrfs_wait_on_delayed_iputs(struct btrfs_fs_info *fs_info)
-{
-	int ret = wait_event_killable(fs_info->delayed_iputs_wait,
-			atomic_read(&fs_info->nr_delayed_iputs) == 0);
-	if (ret)
-		return -EINTR;
-	return 0;
-}
+पूर्णांक btrfs_रुको_on_delayed_iमाला_दो(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	पूर्णांक ret = रुको_event_समाप्तable(fs_info->delayed_iमाला_दो_रुको,
+			atomic_पढ़ो(&fs_info->nr_delayed_iमाला_दो) == 0);
+	अगर (ret)
+		वापस -EINTR;
+	वापस 0;
+पूर्ण
 
 /*
- * This creates an orphan entry for the given inode in case something goes wrong
+ * This creates an orphan entry क्रम the given inode in हाल something goes wrong
  * in the middle of an unlink.
  */
-int btrfs_orphan_add(struct btrfs_trans_handle *trans,
-		     struct btrfs_inode *inode)
-{
-	int ret;
+पूर्णांक btrfs_orphan_add(काष्ठा btrfs_trans_handle *trans,
+		     काष्ठा btrfs_inode *inode)
+अणु
+	पूर्णांक ret;
 
 	ret = btrfs_insert_orphan_item(trans, inode->root, btrfs_ino(inode));
-	if (ret && ret != -EEXIST) {
-		btrfs_abort_transaction(trans, ret);
-		return ret;
-	}
+	अगर (ret && ret != -EEXIST) अणु
+		btrfs_पात_transaction(trans, ret);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * We have done the delete so we can go ahead and remove the orphan item for
+ * We have करोne the delete so we can go ahead and हटाओ the orphan item क्रम
  * this particular inode.
  */
-static int btrfs_orphan_del(struct btrfs_trans_handle *trans,
-			    struct btrfs_inode *inode)
-{
-	return btrfs_del_orphan_item(trans, inode->root, btrfs_ino(inode));
-}
+अटल पूर्णांक btrfs_orphan_del(काष्ठा btrfs_trans_handle *trans,
+			    काष्ठा btrfs_inode *inode)
+अणु
+	वापस btrfs_del_orphan_item(trans, inode->root, btrfs_ino(inode));
+पूर्ण
 
 /*
  * this cleans up any orphans that may be left on the list from the last use
  * of this root.
  */
-int btrfs_orphan_cleanup(struct btrfs_root *root)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_path *path;
-	struct extent_buffer *leaf;
-	struct btrfs_key key, found_key;
-	struct btrfs_trans_handle *trans;
-	struct inode *inode;
+पूर्णांक btrfs_orphan_cleanup(काष्ठा btrfs_root *root)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा btrfs_path *path;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_key key, found_key;
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा inode *inode;
 	u64 last_objectid = 0;
-	int ret = 0, nr_unlink = 0;
+	पूर्णांक ret = 0, nr_unlink = 0;
 
-	if (cmpxchg(&root->orphan_cleanup_state, 0, ORPHAN_CLEANUP_STARTED))
-		return 0;
+	अगर (cmpxchg(&root->orphan_cleanup_state, 0, ORPHAN_CLEANUP_STARTED))
+		वापस 0;
 
 	path = btrfs_alloc_path();
-	if (!path) {
+	अगर (!path) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
-	path->reada = READA_BACK;
+		जाओ out;
+	पूर्ण
+	path->पढ़ोa = READA_BACK;
 
 	key.objectid = BTRFS_ORPHAN_OBJECTID;
 	key.type = BTRFS_ORPHAN_ITEM_KEY;
 	key.offset = (u64)-1;
 
-	while (1) {
-		ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-		if (ret < 0)
-			goto out;
+	जबतक (1) अणु
+		ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
+		अगर (ret < 0)
+			जाओ out;
 
 		/*
-		 * if ret == 0 means we found what we were searching for, which
-		 * is weird, but possible, so only screw with path if we didn't
-		 * find the key and see if we have stuff that matches
+		 * अगर ret == 0 means we found what we were searching क्रम, which
+		 * is weird, but possible, so only screw with path अगर we didn't
+		 * find the key and see अगर we have stuff that matches
 		 */
-		if (ret > 0) {
+		अगर (ret > 0) अणु
 			ret = 0;
-			if (path->slots[0] == 0)
-				break;
+			अगर (path->slots[0] == 0)
+				अवरोध;
 			path->slots[0]--;
-		}
+		पूर्ण
 
 		/* pull out the item */
 		leaf = path->nodes[0];
 		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
 
 		/* make sure the item matches what we want */
-		if (found_key.objectid != BTRFS_ORPHAN_OBJECTID)
-			break;
-		if (found_key.type != BTRFS_ORPHAN_ITEM_KEY)
-			break;
+		अगर (found_key.objectid != BTRFS_ORPHAN_OBJECTID)
+			अवरोध;
+		अगर (found_key.type != BTRFS_ORPHAN_ITEM_KEY)
+			अवरोध;
 
-		/* release the path since we're done with it */
+		/* release the path since we're करोne with it */
 		btrfs_release_path(path);
 
 		/*
@@ -3372,12 +3373,12 @@ int btrfs_orphan_cleanup(struct btrfs_root *root)
 		 * offset of the orphan item.
 		 */
 
-		if (found_key.offset == last_objectid) {
+		अगर (found_key.offset == last_objectid) अणु
 			btrfs_err(fs_info,
 				  "Error removing orphan entry, stopping orphan cleanup");
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		last_objectid = found_key.offset;
 
@@ -3386,242 +3387,242 @@ int btrfs_orphan_cleanup(struct btrfs_root *root)
 		found_key.offset = 0;
 		inode = btrfs_iget(fs_info->sb, last_objectid, root);
 		ret = PTR_ERR_OR_ZERO(inode);
-		if (ret && ret != -ENOENT)
-			goto out;
+		अगर (ret && ret != -ENOENT)
+			जाओ out;
 
-		if (ret == -ENOENT && root == fs_info->tree_root) {
-			struct btrfs_root *dead_root;
-			int is_dead_root = 0;
+		अगर (ret == -ENOENT && root == fs_info->tree_root) अणु
+			काष्ठा btrfs_root *dead_root;
+			पूर्णांक is_dead_root = 0;
 
 			/*
 			 * This is an orphan in the tree root. Currently these
 			 * could come from 2 sources:
 			 *  a) a root (snapshot/subvolume) deletion in progress
-			 *  b) a free space cache inode
+			 *  b) a मुक्त space cache inode
 			 * We need to distinguish those two, as the orphan item
-			 * for a root must not get deleted before the deletion
+			 * क्रम a root must not get deleted beक्रमe the deletion
 			 * of the snapshot/subvolume's tree completes.
 			 *
-			 * btrfs_find_orphan_roots() ran before us, which has
-			 * found all deleted roots and loaded them into
-			 * fs_info->fs_roots_radix. So here we can find if an
+			 * btrfs_find_orphan_roots() ran beक्रमe us, which has
+			 * found all deleted roots and loaded them पूर्णांकo
+			 * fs_info->fs_roots_radix. So here we can find अगर an
 			 * orphan item corresponds to a deleted root by looking
 			 * up the root from that radix tree.
 			 */
 
 			spin_lock(&fs_info->fs_roots_radix_lock);
 			dead_root = radix_tree_lookup(&fs_info->fs_roots_radix,
-							 (unsigned long)found_key.objectid);
-			if (dead_root && btrfs_root_refs(&dead_root->root_item) == 0)
+							 (अचिन्हित दीर्घ)found_key.objectid);
+			अगर (dead_root && btrfs_root_refs(&dead_root->root_item) == 0)
 				is_dead_root = 1;
 			spin_unlock(&fs_info->fs_roots_radix_lock);
 
-			if (is_dead_root) {
+			अगर (is_dead_root) अणु
 				/* prevent this orphan from being found again */
 				key.offset = found_key.objectid - 1;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-		}
+		पूर्ण
 
 		/*
 		 * If we have an inode with links, there are a couple of
-		 * possibilities. Old kernels (before v3.12) used to create an
-		 * orphan item for truncate indicating that there were possibly
+		 * possibilities. Old kernels (beक्रमe v3.12) used to create an
+		 * orphan item क्रम truncate indicating that there were possibly
 		 * extent items past i_size that needed to be deleted. In v3.12,
 		 * truncate was changed to update i_size in sync with the extent
 		 * items, but the (useless) orphan item was still created. Since
-		 * v4.18, we don't create the orphan item for truncate at all.
+		 * v4.18, we करोn't create the orphan item क्रम truncate at all.
 		 *
-		 * So, this item could mean that we need to do a truncate, but
-		 * only if this filesystem was last used on a pre-v3.12 kernel
+		 * So, this item could mean that we need to करो a truncate, but
+		 * only अगर this fileप्रणाली was last used on a pre-v3.12 kernel
 		 * and was not cleanly unmounted. The odds of that are quite
-		 * slim, and it's a pain to do the truncate now, so just delete
+		 * slim, and it's a pain to करो the truncate now, so just delete
 		 * the orphan item.
 		 *
 		 * It's also possible that this orphan item was supposed to be
 		 * deleted but wasn't. The inode number may have been reused,
 		 * but either way, we can delete the orphan item.
 		 */
-		if (ret == -ENOENT || inode->i_nlink) {
-			if (!ret)
+		अगर (ret == -ENOENT || inode->i_nlink) अणु
+			अगर (!ret)
 				iput(inode);
 			trans = btrfs_start_transaction(root, 1);
-			if (IS_ERR(trans)) {
+			अगर (IS_ERR(trans)) अणु
 				ret = PTR_ERR(trans);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			btrfs_debug(fs_info, "auto deleting %Lu",
 				    found_key.objectid);
 			ret = btrfs_del_orphan_item(trans, root,
 						    found_key.objectid);
 			btrfs_end_transaction(trans);
-			if (ret)
-				goto out;
-			continue;
-		}
+			अगर (ret)
+				जाओ out;
+			जारी;
+		पूर्ण
 
 		nr_unlink++;
 
-		/* this will do delete_inode and everything for us */
+		/* this will करो delete_inode and everything क्रम us */
 		iput(inode);
-	}
-	/* release the path since we're done with it */
+	पूर्ण
+	/* release the path since we're करोne with it */
 	btrfs_release_path(path);
 
 	root->orphan_cleanup_state = ORPHAN_CLEANUP_DONE;
 
-	if (test_bit(BTRFS_ROOT_ORPHAN_ITEM_INSERTED, &root->state)) {
+	अगर (test_bit(BTRFS_ROOT_ORPHAN_ITEM_INSERTED, &root->state)) अणु
 		trans = btrfs_join_transaction(root);
-		if (!IS_ERR(trans))
+		अगर (!IS_ERR(trans))
 			btrfs_end_transaction(trans);
-	}
+	पूर्ण
 
-	if (nr_unlink)
+	अगर (nr_unlink)
 		btrfs_debug(fs_info, "unlinked %d orphans", nr_unlink);
 
 out:
-	if (ret)
+	अगर (ret)
 		btrfs_err(fs_info, "could not do orphan cleanup %d", ret);
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
 /*
- * very simple check to peek ahead in the leaf looking for xattrs.  If we
- * don't find any xattrs, we know there can't be any acls.
+ * very simple check to peek ahead in the leaf looking क्रम xattrs.  If we
+ * करोn't find any xattrs, we know there can't be any acls.
  *
  * slot is the slot the inode is in, objectid is the objectid of the inode
  */
-static noinline int acls_after_inode_item(struct extent_buffer *leaf,
-					  int slot, u64 objectid,
-					  int *first_xattr_slot)
-{
+अटल noअंतरभूत पूर्णांक acls_after_inode_item(काष्ठा extent_buffer *leaf,
+					  पूर्णांक slot, u64 objectid,
+					  पूर्णांक *first_xattr_slot)
+अणु
 	u32 nritems = btrfs_header_nritems(leaf);
-	struct btrfs_key found_key;
-	static u64 xattr_access = 0;
-	static u64 xattr_default = 0;
-	int scanned = 0;
+	काष्ठा btrfs_key found_key;
+	अटल u64 xattr_access = 0;
+	अटल u64 xattr_शेष = 0;
+	पूर्णांक scanned = 0;
 
-	if (!xattr_access) {
+	अगर (!xattr_access) अणु
 		xattr_access = btrfs_name_hash(XATTR_NAME_POSIX_ACL_ACCESS,
-					strlen(XATTR_NAME_POSIX_ACL_ACCESS));
-		xattr_default = btrfs_name_hash(XATTR_NAME_POSIX_ACL_DEFAULT,
-					strlen(XATTR_NAME_POSIX_ACL_DEFAULT));
-	}
+					म_माप(XATTR_NAME_POSIX_ACL_ACCESS));
+		xattr_शेष = btrfs_name_hash(XATTR_NAME_POSIX_ACL_DEFAULT,
+					म_माप(XATTR_NAME_POSIX_ACL_DEFAULT));
+	पूर्ण
 
 	slot++;
 	*first_xattr_slot = -1;
-	while (slot < nritems) {
+	जबतक (slot < nritems) अणु
 		btrfs_item_key_to_cpu(leaf, &found_key, slot);
 
-		/* we found a different objectid, there must not be acls */
-		if (found_key.objectid != objectid)
-			return 0;
+		/* we found a dअगरferent objectid, there must not be acls */
+		अगर (found_key.objectid != objectid)
+			वापस 0;
 
 		/* we found an xattr, assume we've got an acl */
-		if (found_key.type == BTRFS_XATTR_ITEM_KEY) {
-			if (*first_xattr_slot == -1)
+		अगर (found_key.type == BTRFS_XATTR_ITEM_KEY) अणु
+			अगर (*first_xattr_slot == -1)
 				*first_xattr_slot = slot;
-			if (found_key.offset == xattr_access ||
-			    found_key.offset == xattr_default)
-				return 1;
-		}
+			अगर (found_key.offset == xattr_access ||
+			    found_key.offset == xattr_शेष)
+				वापस 1;
+		पूर्ण
 
 		/*
 		 * we found a key greater than an xattr key, there can't
 		 * be any acls later on
 		 */
-		if (found_key.type > BTRFS_XATTR_ITEM_KEY)
-			return 0;
+		अगर (found_key.type > BTRFS_XATTR_ITEM_KEY)
+			वापस 0;
 
 		slot++;
 		scanned++;
 
 		/*
 		 * it goes inode, inode backrefs, xattrs, extents,
-		 * so if there are a ton of hard links to an inode there can
-		 * be a lot of backrefs.  Don't waste time searching too hard,
+		 * so अगर there are a ton of hard links to an inode there can
+		 * be a lot of backrefs.  Don't waste समय searching too hard,
 		 * this is just an optimization
 		 */
-		if (scanned >= 8)
-			break;
-	}
-	/* we hit the end of the leaf before we found an xattr or
+		अगर (scanned >= 8)
+			अवरोध;
+	पूर्ण
+	/* we hit the end of the leaf beक्रमe we found an xattr or
 	 * something larger than an xattr.  We have to assume the inode
 	 * has acls
 	 */
-	if (*first_xattr_slot == -1)
+	अगर (*first_xattr_slot == -1)
 		*first_xattr_slot = slot;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * read an inode from the btree into the in-memory inode
+ * पढ़ो an inode from the btree पूर्णांकo the in-memory inode
  */
-static int btrfs_read_locked_inode(struct inode *inode,
-				   struct btrfs_path *in_path)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct btrfs_path *path = in_path;
-	struct extent_buffer *leaf;
-	struct btrfs_inode_item *inode_item;
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	struct btrfs_key location;
-	unsigned long ptr;
-	int maybe_acls;
+अटल पूर्णांक btrfs_पढ़ो_locked_inode(काष्ठा inode *inode,
+				   काष्ठा btrfs_path *in_path)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा btrfs_path *path = in_path;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_inode_item *inode_item;
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	काष्ठा btrfs_key location;
+	अचिन्हित दीर्घ ptr;
+	पूर्णांक maybe_acls;
 	u32 rdev;
-	int ret;
+	पूर्णांक ret;
 	bool filled = false;
-	int first_xattr_slot;
+	पूर्णांक first_xattr_slot;
 
 	ret = btrfs_fill_inode(inode, &rdev);
-	if (!ret)
+	अगर (!ret)
 		filled = true;
 
-	if (!path) {
+	अगर (!path) अणु
 		path = btrfs_alloc_path();
-		if (!path)
-			return -ENOMEM;
-	}
+		अगर (!path)
+			वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(&location, &BTRFS_I(inode)->location, sizeof(location));
+	स_नकल(&location, &BTRFS_I(inode)->location, माप(location));
 
-	ret = btrfs_lookup_inode(NULL, root, path, &location, 0);
-	if (ret) {
-		if (path != in_path)
-			btrfs_free_path(path);
-		return ret;
-	}
+	ret = btrfs_lookup_inode(शून्य, root, path, &location, 0);
+	अगर (ret) अणु
+		अगर (path != in_path)
+			btrfs_मुक्त_path(path);
+		वापस ret;
+	पूर्ण
 
 	leaf = path->nodes[0];
 
-	if (filled)
-		goto cache_index;
+	अगर (filled)
+		जाओ cache_index;
 
 	inode_item = btrfs_item_ptr(leaf, path->slots[0],
-				    struct btrfs_inode_item);
+				    काष्ठा btrfs_inode_item);
 	inode->i_mode = btrfs_inode_mode(leaf, inode_item);
 	set_nlink(inode, btrfs_inode_nlink(leaf, inode_item));
-	i_uid_write(inode, btrfs_inode_uid(leaf, inode_item));
-	i_gid_write(inode, btrfs_inode_gid(leaf, inode_item));
-	btrfs_i_size_write(BTRFS_I(inode), btrfs_inode_size(leaf, inode_item));
+	i_uid_ग_लिखो(inode, btrfs_inode_uid(leaf, inode_item));
+	i_gid_ग_लिखो(inode, btrfs_inode_gid(leaf, inode_item));
+	btrfs_i_size_ग_लिखो(BTRFS_I(inode), btrfs_inode_size(leaf, inode_item));
 	btrfs_inode_set_file_extent_range(BTRFS_I(inode), 0,
-			round_up(i_size_read(inode), fs_info->sectorsize));
+			round_up(i_size_पढ़ो(inode), fs_info->sectorsize));
 
-	inode->i_atime.tv_sec = btrfs_timespec_sec(leaf, &inode_item->atime);
-	inode->i_atime.tv_nsec = btrfs_timespec_nsec(leaf, &inode_item->atime);
+	inode->i_aसमय.tv_sec = btrfs_बारpec_sec(leaf, &inode_item->aसमय);
+	inode->i_aसमय.tv_nsec = btrfs_बारpec_nsec(leaf, &inode_item->aसमय);
 
-	inode->i_mtime.tv_sec = btrfs_timespec_sec(leaf, &inode_item->mtime);
-	inode->i_mtime.tv_nsec = btrfs_timespec_nsec(leaf, &inode_item->mtime);
+	inode->i_mसमय.tv_sec = btrfs_बारpec_sec(leaf, &inode_item->mसमय);
+	inode->i_mसमय.tv_nsec = btrfs_बारpec_nsec(leaf, &inode_item->mसमय);
 
-	inode->i_ctime.tv_sec = btrfs_timespec_sec(leaf, &inode_item->ctime);
-	inode->i_ctime.tv_nsec = btrfs_timespec_nsec(leaf, &inode_item->ctime);
+	inode->i_स_समय.tv_sec = btrfs_बारpec_sec(leaf, &inode_item->स_समय);
+	inode->i_स_समय.tv_nsec = btrfs_बारpec_nsec(leaf, &inode_item->स_समय);
 
-	BTRFS_I(inode)->i_otime.tv_sec =
-		btrfs_timespec_sec(leaf, &inode_item->otime);
-	BTRFS_I(inode)->i_otime.tv_nsec =
-		btrfs_timespec_nsec(leaf, &inode_item->otime);
+	BTRFS_I(inode)->i_oसमय.tv_sec =
+		btrfs_बारpec_sec(leaf, &inode_item->oसमय);
+	BTRFS_I(inode)->i_oसमय.tv_nsec =
+		btrfs_बारpec_nsec(leaf, &inode_item->oसमय);
 
 	inode_set_bytes(inode, btrfs_inode_nbytes(leaf, inode_item));
 	BTRFS_I(inode)->generation = btrfs_inode_generation(leaf, inode_item);
@@ -3638,24 +3639,24 @@ static int btrfs_read_locked_inode(struct inode *inode,
 
 cache_index:
 	/*
-	 * If we were modified in the current generation and evicted from memory
-	 * and then re-read we need to do a full sync since we don't have any
-	 * idea about which extents were modified before we were evicted from
+	 * If we were modअगरied in the current generation and evicted from memory
+	 * and then re-पढ़ो we need to करो a full sync since we करोn't have any
+	 * idea about which extents were modअगरied beक्रमe we were evicted from
 	 * cache.
 	 *
-	 * This is required for both inode re-read from disk and delayed inode
+	 * This is required क्रम both inode re-पढ़ो from disk and delayed inode
 	 * in delayed_nodes_tree.
 	 */
-	if (BTRFS_I(inode)->last_trans == fs_info->generation)
+	अगर (BTRFS_I(inode)->last_trans == fs_info->generation)
 		set_bit(BTRFS_INODE_NEEDS_FULL_SYNC,
-			&BTRFS_I(inode)->runtime_flags);
+			&BTRFS_I(inode)->runसमय_flags);
 
 	/*
-	 * We don't persist the id of the transaction where an unlink operation
+	 * We करोn't persist the id of the transaction where an unlink operation
 	 * against the inode was last made. So here we assume the inode might
-	 * have been evicted, and therefore the exact value of last_unlink_trans
-	 * lost, and set it to last_trans to avoid metadata inconsistencies
-	 * between the inode and its parent if the inode is fsync'ed and the log
+	 * have been evicted, and thereक्रमe the exact value of last_unlink_trans
+	 * lost, and set it to last_trans to aव्योम metadata inconsistencies
+	 * between the inode and its parent अगर the inode is fsync'ed and the log
 	 * replayed. For example, in the scenario:
 	 *
 	 * touch mydir/foo
@@ -3664,135 +3665,135 @@ cache_index:
 	 * unlink mydir/bar
 	 * echo 2 > /proc/sys/vm/drop_caches   # evicts inode
 	 * xfs_io -c fsync mydir/foo
-	 * <power failure>
+	 * <घातer failure>
 	 * mount fs, triggers fsync log replay
 	 *
 	 * We must make sure that when we fsync our inode foo we also log its
 	 * parent inode, otherwise after log replay the parent still has the
 	 * dentry with the "bar" name but our inode foo has a link count of 1
-	 * and doesn't have an inode ref with the name "bar" anymore.
+	 * and करोesn't have an inode ref with the name "bar" anymore.
 	 *
 	 * Setting last_unlink_trans to last_trans is a pessimistic approach,
 	 * but it guarantees correctness at the expense of occasional full
-	 * transaction commits on fsync if our inode is a directory, or if our
+	 * transaction commits on fsync अगर our inode is a directory, or अगर our
 	 * inode is not a directory, logging its parent unnecessarily.
 	 */
 	BTRFS_I(inode)->last_unlink_trans = BTRFS_I(inode)->last_trans;
 
 	/*
-	 * Same logic as for last_unlink_trans. We don't persist the generation
-	 * of the last transaction where this inode was used for a reflink
+	 * Same logic as क्रम last_unlink_trans. We करोn't persist the generation
+	 * of the last transaction where this inode was used क्रम a reflink
 	 * operation, so after eviction and reloading the inode we must be
-	 * pessimistic and assume the last transaction that modified the inode.
+	 * pessimistic and assume the last transaction that modअगरied the inode.
 	 */
 	BTRFS_I(inode)->last_reflink_trans = BTRFS_I(inode)->last_trans;
 
 	path->slots[0]++;
-	if (inode->i_nlink != 1 ||
+	अगर (inode->i_nlink != 1 ||
 	    path->slots[0] >= btrfs_header_nritems(leaf))
-		goto cache_acl;
+		जाओ cache_acl;
 
 	btrfs_item_key_to_cpu(leaf, &location, path->slots[0]);
-	if (location.objectid != btrfs_ino(BTRFS_I(inode)))
-		goto cache_acl;
+	अगर (location.objectid != btrfs_ino(BTRFS_I(inode)))
+		जाओ cache_acl;
 
 	ptr = btrfs_item_ptr_offset(leaf, path->slots[0]);
-	if (location.type == BTRFS_INODE_REF_KEY) {
-		struct btrfs_inode_ref *ref;
+	अगर (location.type == BTRFS_INODE_REF_KEY) अणु
+		काष्ठा btrfs_inode_ref *ref;
 
-		ref = (struct btrfs_inode_ref *)ptr;
+		ref = (काष्ठा btrfs_inode_ref *)ptr;
 		BTRFS_I(inode)->dir_index = btrfs_inode_ref_index(leaf, ref);
-	} else if (location.type == BTRFS_INODE_EXTREF_KEY) {
-		struct btrfs_inode_extref *extref;
+	पूर्ण अन्यथा अगर (location.type == BTRFS_INODE_EXTREF_KEY) अणु
+		काष्ठा btrfs_inode_extref *extref;
 
-		extref = (struct btrfs_inode_extref *)ptr;
+		extref = (काष्ठा btrfs_inode_extref *)ptr;
 		BTRFS_I(inode)->dir_index = btrfs_inode_extref_index(leaf,
 								     extref);
-	}
+	पूर्ण
 cache_acl:
 	/*
-	 * try to precache a NULL acl entry for files that don't have
+	 * try to precache a शून्य acl entry क्रम files that करोn't have
 	 * any xattrs or acls
 	 */
 	maybe_acls = acls_after_inode_item(leaf, path->slots[0],
 			btrfs_ino(BTRFS_I(inode)), &first_xattr_slot);
-	if (first_xattr_slot != -1) {
+	अगर (first_xattr_slot != -1) अणु
 		path->slots[0] = first_xattr_slot;
 		ret = btrfs_load_inode_props(inode, path);
-		if (ret)
+		अगर (ret)
 			btrfs_err(fs_info,
 				  "error loading props for ino %llu (root %llu): %d",
 				  btrfs_ino(BTRFS_I(inode)),
 				  root->root_key.objectid, ret);
-	}
-	if (path != in_path)
-		btrfs_free_path(path);
+	पूर्ण
+	अगर (path != in_path)
+		btrfs_मुक्त_path(path);
 
-	if (!maybe_acls)
+	अगर (!maybe_acls)
 		cache_no_acl(inode);
 
-	switch (inode->i_mode & S_IFMT) {
-	case S_IFREG:
+	चयन (inode->i_mode & S_IFMT) अणु
+	हाल S_IFREG:
 		inode->i_mapping->a_ops = &btrfs_aops;
 		inode->i_fop = &btrfs_file_operations;
 		inode->i_op = &btrfs_file_inode_operations;
-		break;
-	case S_IFDIR:
+		अवरोध;
+	हाल S_IFसूची:
 		inode->i_fop = &btrfs_dir_file_operations;
 		inode->i_op = &btrfs_dir_inode_operations;
-		break;
-	case S_IFLNK:
+		अवरोध;
+	हाल S_IFLNK:
 		inode->i_op = &btrfs_symlink_inode_operations;
 		inode_nohighmem(inode);
 		inode->i_mapping->a_ops = &btrfs_aops;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		inode->i_op = &btrfs_special_inode_operations;
 		init_special_inode(inode, inode->i_mode, rdev);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	btrfs_sync_inode_flags_to_i_flags(inode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * given a leaf and an inode, copy the inode fields into the leaf
+ * given a leaf and an inode, copy the inode fields पूर्णांकo the leaf
  */
-static void fill_inode_item(struct btrfs_trans_handle *trans,
-			    struct extent_buffer *leaf,
-			    struct btrfs_inode_item *item,
-			    struct inode *inode)
-{
-	struct btrfs_map_token token;
+अटल व्योम fill_inode_item(काष्ठा btrfs_trans_handle *trans,
+			    काष्ठा extent_buffer *leaf,
+			    काष्ठा btrfs_inode_item *item,
+			    काष्ठा inode *inode)
+अणु
+	काष्ठा btrfs_map_token token;
 
 	btrfs_init_map_token(&token, leaf);
 
-	btrfs_set_token_inode_uid(&token, item, i_uid_read(inode));
-	btrfs_set_token_inode_gid(&token, item, i_gid_read(inode));
+	btrfs_set_token_inode_uid(&token, item, i_uid_पढ़ो(inode));
+	btrfs_set_token_inode_gid(&token, item, i_gid_पढ़ो(inode));
 	btrfs_set_token_inode_size(&token, item, BTRFS_I(inode)->disk_i_size);
 	btrfs_set_token_inode_mode(&token, item, inode->i_mode);
 	btrfs_set_token_inode_nlink(&token, item, inode->i_nlink);
 
-	btrfs_set_token_timespec_sec(&token, &item->atime,
-				     inode->i_atime.tv_sec);
-	btrfs_set_token_timespec_nsec(&token, &item->atime,
-				      inode->i_atime.tv_nsec);
+	btrfs_set_token_बारpec_sec(&token, &item->aसमय,
+				     inode->i_aसमय.tv_sec);
+	btrfs_set_token_बारpec_nsec(&token, &item->aसमय,
+				      inode->i_aसमय.tv_nsec);
 
-	btrfs_set_token_timespec_sec(&token, &item->mtime,
-				     inode->i_mtime.tv_sec);
-	btrfs_set_token_timespec_nsec(&token, &item->mtime,
-				      inode->i_mtime.tv_nsec);
+	btrfs_set_token_बारpec_sec(&token, &item->mसमय,
+				     inode->i_mसमय.tv_sec);
+	btrfs_set_token_बारpec_nsec(&token, &item->mसमय,
+				      inode->i_mसमय.tv_nsec);
 
-	btrfs_set_token_timespec_sec(&token, &item->ctime,
-				     inode->i_ctime.tv_sec);
-	btrfs_set_token_timespec_nsec(&token, &item->ctime,
-				      inode->i_ctime.tv_nsec);
+	btrfs_set_token_बारpec_sec(&token, &item->स_समय,
+				     inode->i_स_समय.tv_sec);
+	btrfs_set_token_बारpec_nsec(&token, &item->स_समय,
+				      inode->i_स_समय.tv_nsec);
 
-	btrfs_set_token_timespec_sec(&token, &item->otime,
-				     BTRFS_I(inode)->i_otime.tv_sec);
-	btrfs_set_token_timespec_nsec(&token, &item->otime,
-				      BTRFS_I(inode)->i_otime.tv_nsec);
+	btrfs_set_token_बारpec_sec(&token, &item->oसमय,
+				     BTRFS_I(inode)->i_oसमय.tv_sec);
+	btrfs_set_token_बारpec_nsec(&token, &item->oसमय,
+				      BTRFS_I(inode)->i_oसमय.tv_nsec);
 
 	btrfs_set_token_inode_nbytes(&token, item, inode_get_bytes(inode));
 	btrfs_set_token_inode_generation(&token, item,
@@ -3802,174 +3803,174 @@ static void fill_inode_item(struct btrfs_trans_handle *trans,
 	btrfs_set_token_inode_rdev(&token, item, inode->i_rdev);
 	btrfs_set_token_inode_flags(&token, item, BTRFS_I(inode)->flags);
 	btrfs_set_token_inode_block_group(&token, item, 0);
-}
+पूर्ण
 
 /*
- * copy everything in the in-memory inode into the btree.
+ * copy everything in the in-memory inode पूर्णांकo the btree.
  */
-static noinline int btrfs_update_inode_item(struct btrfs_trans_handle *trans,
-				struct btrfs_root *root,
-				struct btrfs_inode *inode)
-{
-	struct btrfs_inode_item *inode_item;
-	struct btrfs_path *path;
-	struct extent_buffer *leaf;
-	int ret;
+अटल noअंतरभूत पूर्णांक btrfs_update_inode_item(काष्ठा btrfs_trans_handle *trans,
+				काष्ठा btrfs_root *root,
+				काष्ठा btrfs_inode *inode)
+अणु
+	काष्ठा btrfs_inode_item *inode_item;
+	काष्ठा btrfs_path *path;
+	काष्ठा extent_buffer *leaf;
+	पूर्णांक ret;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
 	ret = btrfs_lookup_inode(trans, root, path, &inode->location, 1);
-	if (ret) {
-		if (ret > 0)
+	अगर (ret) अणु
+		अगर (ret > 0)
 			ret = -ENOENT;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	leaf = path->nodes[0];
 	inode_item = btrfs_item_ptr(leaf, path->slots[0],
-				    struct btrfs_inode_item);
+				    काष्ठा btrfs_inode_item);
 
 	fill_inode_item(trans, leaf, inode_item, &inode->vfs_inode);
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_set_inode_last_trans(trans, inode);
 	ret = 0;
 failed:
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
 /*
- * copy everything in the in-memory inode into the btree.
+ * copy everything in the in-memory inode पूर्णांकo the btree.
  */
-noinline int btrfs_update_inode(struct btrfs_trans_handle *trans,
-				struct btrfs_root *root,
-				struct btrfs_inode *inode)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	int ret;
+noअंतरभूत पूर्णांक btrfs_update_inode(काष्ठा btrfs_trans_handle *trans,
+				काष्ठा btrfs_root *root,
+				काष्ठा btrfs_inode *inode)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	पूर्णांक ret;
 
 	/*
-	 * If the inode is a free space inode, we can deadlock during commit
-	 * if we put it into the delayed code.
+	 * If the inode is a मुक्त space inode, we can deadlock during commit
+	 * अगर we put it पूर्णांकo the delayed code.
 	 *
 	 * The data relocation inode should also be directly updated
 	 * without delay
 	 */
-	if (!btrfs_is_free_space_inode(inode)
+	अगर (!btrfs_is_मुक्त_space_inode(inode)
 	    && root->root_key.objectid != BTRFS_DATA_RELOC_TREE_OBJECTID
-	    && !test_bit(BTRFS_FS_LOG_RECOVERING, &fs_info->flags)) {
-		btrfs_update_root_times(trans, root);
+	    && !test_bit(BTRFS_FS_LOG_RECOVERING, &fs_info->flags)) अणु
+		btrfs_update_root_बार(trans, root);
 
 		ret = btrfs_delayed_update_inode(trans, root, inode);
-		if (!ret)
+		अगर (!ret)
 			btrfs_set_inode_last_trans(trans, inode);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return btrfs_update_inode_item(trans, root, inode);
-}
+	वापस btrfs_update_inode_item(trans, root, inode);
+पूर्ण
 
-int btrfs_update_inode_fallback(struct btrfs_trans_handle *trans,
-				struct btrfs_root *root, struct btrfs_inode *inode)
-{
-	int ret;
+पूर्णांक btrfs_update_inode_fallback(काष्ठा btrfs_trans_handle *trans,
+				काष्ठा btrfs_root *root, काष्ठा btrfs_inode *inode)
+अणु
+	पूर्णांक ret;
 
 	ret = btrfs_update_inode(trans, root, inode);
-	if (ret == -ENOSPC)
-		return btrfs_update_inode_item(trans, root, inode);
-	return ret;
-}
+	अगर (ret == -ENOSPC)
+		वापस btrfs_update_inode_item(trans, root, inode);
+	वापस ret;
+पूर्ण
 
 /*
- * unlink helper that gets used here in inode.c and in the tree logging
- * recovery code.  It remove a link in a directory with a given name, and
+ * unlink helper that माला_लो used here in inode.c and in the tree logging
+ * recovery code.  It हटाओ a link in a directory with a given name, and
  * also drops the back refs in the inode to the directory
  */
-static int __btrfs_unlink_inode(struct btrfs_trans_handle *trans,
-				struct btrfs_root *root,
-				struct btrfs_inode *dir,
-				struct btrfs_inode *inode,
-				const char *name, int name_len)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_path *path;
-	int ret = 0;
-	struct btrfs_dir_item *di;
+अटल पूर्णांक __btrfs_unlink_inode(काष्ठा btrfs_trans_handle *trans,
+				काष्ठा btrfs_root *root,
+				काष्ठा btrfs_inode *dir,
+				काष्ठा btrfs_inode *inode,
+				स्थिर अक्षर *name, पूर्णांक name_len)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा btrfs_path *path;
+	पूर्णांक ret = 0;
+	काष्ठा btrfs_dir_item *di;
 	u64 index;
 	u64 ino = btrfs_ino(inode);
 	u64 dir_ino = btrfs_ino(dir);
 
 	path = btrfs_alloc_path();
-	if (!path) {
+	अगर (!path) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	di = btrfs_lookup_dir_item(trans, root, path, dir_ino,
 				    name, name_len, -1);
-	if (IS_ERR_OR_NULL(di)) {
+	अगर (IS_ERR_OR_शून्य(di)) अणु
 		ret = di ? PTR_ERR(di) : -ENOENT;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	ret = btrfs_delete_one_dir_name(trans, root, path, di);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 	btrfs_release_path(path);
 
 	/*
-	 * If we don't have dir index, we have to get it by looking up
-	 * the inode ref, since we get the inode ref, remove it directly,
-	 * it is unnecessary to do delayed deletion.
+	 * If we करोn't have dir index, we have to get it by looking up
+	 * the inode ref, since we get the inode ref, हटाओ it directly,
+	 * it is unnecessary to करो delayed deletion.
 	 *
-	 * But if we have dir index, needn't search inode ref to get it.
-	 * Since the inode ref is close to the inode item, it is better
-	 * that we delay to delete it, and just do this deletion when
+	 * But अगर we have dir index, needn't search inode ref to get it.
+	 * Since the inode ref is बंद to the inode item, it is better
+	 * that we delay to delete it, and just करो this deletion when
 	 * we update the inode item.
 	 */
-	if (inode->dir_index) {
+	अगर (inode->dir_index) अणु
 		ret = btrfs_delayed_delete_inode_ref(inode);
-		if (!ret) {
+		अगर (!ret) अणु
 			index = inode->dir_index;
-			goto skip_backref;
-		}
-	}
+			जाओ skip_backref;
+		पूर्ण
+	पूर्ण
 
 	ret = btrfs_del_inode_ref(trans, root, name, name_len, ino,
 				  dir_ino, &index);
-	if (ret) {
+	अगर (ret) अणु
 		btrfs_info(fs_info,
 			"failed to delete reference to %.*s, inode %llu parent %llu",
 			name_len, name, ino, dir_ino);
-		btrfs_abort_transaction(trans, ret);
-		goto err;
-	}
+		btrfs_पात_transaction(trans, ret);
+		जाओ err;
+	पूर्ण
 skip_backref:
 	ret = btrfs_delete_delayed_dir_index(trans, dir, index);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto err;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ err;
+	पूर्ण
 
 	ret = btrfs_del_inode_ref_in_log(trans, root, name, name_len, inode,
 			dir_ino);
-	if (ret != 0 && ret != -ENOENT) {
-		btrfs_abort_transaction(trans, ret);
-		goto err;
-	}
+	अगर (ret != 0 && ret != -ENOENT) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ err;
+	पूर्ण
 
 	ret = btrfs_del_dir_entries_in_log(trans, root, name, name_len, dir,
 			index);
-	if (ret == -ENOENT)
+	अगर (ret == -ENOENT)
 		ret = 0;
-	else if (ret)
-		btrfs_abort_transaction(trans, ret);
+	अन्यथा अगर (ret)
+		btrfs_पात_transaction(trans, ret);
 
 	/*
 	 * If we have a pending delayed iput we could end up with the final iput
 	 * being run in btrfs-cleaner context.  If we have enough of these built
-	 * up we can end up burning a lot of time in btrfs-cleaner without any
+	 * up we can end up burning a lot of समय in btrfs-cleaner without any
 	 * way to throttle the unlinks.  Since we're currently holding a ref on
 	 * the inode we can run the delayed iput here without any issues as the
 	 * final iput won't be done until after we drop the ref we're currently
@@ -3977,66 +3978,66 @@ skip_backref:
 	 */
 	btrfs_run_delayed_iput(fs_info, inode);
 err:
-	btrfs_free_path(path);
-	if (ret)
-		goto out;
+	btrfs_मुक्त_path(path);
+	अगर (ret)
+		जाओ out;
 
-	btrfs_i_size_write(dir, dir->vfs_inode.i_size - name_len * 2);
+	btrfs_i_size_ग_लिखो(dir, dir->vfs_inode.i_size - name_len * 2);
 	inode_inc_iversion(&inode->vfs_inode);
 	inode_inc_iversion(&dir->vfs_inode);
-	inode->vfs_inode.i_ctime = dir->vfs_inode.i_mtime =
-		dir->vfs_inode.i_ctime = current_time(&inode->vfs_inode);
+	inode->vfs_inode.i_स_समय = dir->vfs_inode.i_mसमय =
+		dir->vfs_inode.i_स_समय = current_समय(&inode->vfs_inode);
 	ret = btrfs_update_inode(trans, root, dir);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int btrfs_unlink_inode(struct btrfs_trans_handle *trans,
-		       struct btrfs_root *root,
-		       struct btrfs_inode *dir, struct btrfs_inode *inode,
-		       const char *name, int name_len)
-{
-	int ret;
+पूर्णांक btrfs_unlink_inode(काष्ठा btrfs_trans_handle *trans,
+		       काष्ठा btrfs_root *root,
+		       काष्ठा btrfs_inode *dir, काष्ठा btrfs_inode *inode,
+		       स्थिर अक्षर *name, पूर्णांक name_len)
+अणु
+	पूर्णांक ret;
 	ret = __btrfs_unlink_inode(trans, root, dir, inode, name, name_len);
-	if (!ret) {
+	अगर (!ret) अणु
 		drop_nlink(&inode->vfs_inode);
 		ret = btrfs_update_inode(trans, root, inode);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
- * helper to start transaction for unlink and rmdir.
+ * helper to start transaction क्रम unlink and सूची_हटाओ.
  *
- * unlink and rmdir are special in btrfs, they do not always free space, so
- * if we cannot make our reservations the normal way try and see if there is
+ * unlink and सूची_हटाओ are special in btrfs, they करो not always मुक्त space, so
+ * अगर we cannot make our reservations the normal way try and see अगर there is
  * plenty of slack room in the global reserve to migrate, otherwise we cannot
  * allow the unlink to occur.
  */
-static struct btrfs_trans_handle *__unlink_start_trans(struct inode *dir)
-{
-	struct btrfs_root *root = BTRFS_I(dir)->root;
+अटल काष्ठा btrfs_trans_handle *__unlink_start_trans(काष्ठा inode *dir)
+अणु
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
 
 	/*
-	 * 1 for the possible orphan item
-	 * 1 for the dir item
-	 * 1 for the dir index
-	 * 1 for the inode ref
-	 * 1 for the inode
+	 * 1 क्रम the possible orphan item
+	 * 1 क्रम the dir item
+	 * 1 क्रम the dir index
+	 * 1 क्रम the inode ref
+	 * 1 क्रम the inode
 	 */
-	return btrfs_start_transaction_fallback_global_rsv(root, 5);
-}
+	वापस btrfs_start_transaction_fallback_global_rsv(root, 5);
+पूर्ण
 
-static int btrfs_unlink(struct inode *dir, struct dentry *dentry)
-{
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	struct btrfs_trans_handle *trans;
-	struct inode *inode = d_inode(dentry);
-	int ret;
+अटल पूर्णांक btrfs_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक ret;
 
 	trans = __unlink_start_trans(dir);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	अगर (IS_ERR(trans))
+		वापस PTR_ERR(trans);
 
 	btrfs_record_unlink_dir(trans, BTRFS_I(dir), BTRFS_I(d_inode(dentry)),
 			0);
@@ -4044,248 +4045,248 @@ static int btrfs_unlink(struct inode *dir, struct dentry *dentry)
 	ret = btrfs_unlink_inode(trans, root, BTRFS_I(dir),
 			BTRFS_I(d_inode(dentry)), dentry->d_name.name,
 			dentry->d_name.len);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (inode->i_nlink == 0) {
+	अगर (inode->i_nlink == 0) अणु
 		ret = btrfs_orphan_add(trans, BTRFS_I(inode));
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 out:
 	btrfs_end_transaction(trans);
 	btrfs_btree_balance_dirty(root->fs_info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_unlink_subvol(struct btrfs_trans_handle *trans,
-			       struct inode *dir, struct dentry *dentry)
-{
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	struct btrfs_inode *inode = BTRFS_I(d_inode(dentry));
-	struct btrfs_path *path;
-	struct extent_buffer *leaf;
-	struct btrfs_dir_item *di;
-	struct btrfs_key key;
-	const char *name = dentry->d_name.name;
-	int name_len = dentry->d_name.len;
+अटल पूर्णांक btrfs_unlink_subvol(काष्ठा btrfs_trans_handle *trans,
+			       काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	काष्ठा btrfs_inode *inode = BTRFS_I(d_inode(dentry));
+	काष्ठा btrfs_path *path;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_dir_item *di;
+	काष्ठा btrfs_key key;
+	स्थिर अक्षर *name = dentry->d_name.name;
+	पूर्णांक name_len = dentry->d_name.len;
 	u64 index;
-	int ret;
+	पूर्णांक ret;
 	u64 objectid;
 	u64 dir_ino = btrfs_ino(BTRFS_I(dir));
 
-	if (btrfs_ino(inode) == BTRFS_FIRST_FREE_OBJECTID) {
+	अगर (btrfs_ino(inode) == BTRFS_FIRST_FREE_OBJECTID) अणु
 		objectid = inode->root->root_key.objectid;
-	} else if (btrfs_ino(inode) == BTRFS_EMPTY_SUBVOL_DIR_OBJECTID) {
+	पूर्ण अन्यथा अगर (btrfs_ino(inode) == BTRFS_EMPTY_SUBVOL_सूची_OBJECTID) अणु
 		objectid = inode->location.objectid;
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
 	di = btrfs_lookup_dir_item(trans, root, path, dir_ino,
 				   name, name_len, -1);
-	if (IS_ERR_OR_NULL(di)) {
+	अगर (IS_ERR_OR_शून्य(di)) अणु
 		ret = di ? PTR_ERR(di) : -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	leaf = path->nodes[0];
 	btrfs_dir_item_key_to_cpu(leaf, di, &key);
 	WARN_ON(key.type != BTRFS_ROOT_ITEM_KEY || key.objectid != objectid);
 	ret = btrfs_delete_one_dir_name(trans, root, path, di);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out;
+	पूर्ण
 	btrfs_release_path(path);
 
 	/*
-	 * This is a placeholder inode for a subvolume we didn't have a
-	 * reference to at the time of the snapshot creation.  In the meantime
-	 * we could have renamed the real subvol link into our snapshot, so
-	 * depending on btrfs_del_root_ref to return -ENOENT here is incorret.
-	 * Instead simply lookup the dir_index_item for this entry so we can
-	 * remove it.  Otherwise we know we have a ref to the root and we can
+	 * This is a placeholder inode क्रम a subvolume we didn't have a
+	 * reference to at the समय of the snapshot creation.  In the meanसमय
+	 * we could have नामd the real subvol link पूर्णांकo our snapshot, so
+	 * depending on btrfs_del_root_ref to वापस -ENOENT here is incorret.
+	 * Instead simply lookup the dir_index_item क्रम this entry so we can
+	 * हटाओ it.  Otherwise we know we have a ref to the root and we can
 	 * call btrfs_del_root_ref, and it _shouldn't_ fail.
 	 */
-	if (btrfs_ino(inode) == BTRFS_EMPTY_SUBVOL_DIR_OBJECTID) {
+	अगर (btrfs_ino(inode) == BTRFS_EMPTY_SUBVOL_सूची_OBJECTID) अणु
 		di = btrfs_search_dir_index_item(root, path, dir_ino,
 						 name, name_len);
-		if (IS_ERR_OR_NULL(di)) {
-			if (!di)
+		अगर (IS_ERR_OR_शून्य(di)) अणु
+			अगर (!di)
 				ret = -ENOENT;
-			else
+			अन्यथा
 				ret = PTR_ERR(di);
-			btrfs_abort_transaction(trans, ret);
-			goto out;
-		}
+			btrfs_पात_transaction(trans, ret);
+			जाओ out;
+		पूर्ण
 
 		leaf = path->nodes[0];
 		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
 		index = key.offset;
 		btrfs_release_path(path);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = btrfs_del_root_ref(trans, objectid,
 					 root->root_key.objectid, dir_ino,
 					 &index, name, name_len);
-		if (ret) {
-			btrfs_abort_transaction(trans, ret);
-			goto out;
-		}
-	}
+		अगर (ret) अणु
+			btrfs_पात_transaction(trans, ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	ret = btrfs_delete_delayed_dir_index(trans, BTRFS_I(dir), index);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out;
+	पूर्ण
 
-	btrfs_i_size_write(BTRFS_I(dir), dir->i_size - name_len * 2);
+	btrfs_i_size_ग_लिखो(BTRFS_I(dir), dir->i_size - name_len * 2);
 	inode_inc_iversion(dir);
-	dir->i_mtime = dir->i_ctime = current_time(dir);
+	dir->i_mसमय = dir->i_स_समय = current_समय(dir);
 	ret = btrfs_update_inode_fallback(trans, root, BTRFS_I(dir));
-	if (ret)
-		btrfs_abort_transaction(trans, ret);
+	अगर (ret)
+		btrfs_पात_transaction(trans, ret);
 out:
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
 /*
- * Helper to check if the subvolume references other subvolumes or if it's
- * default.
+ * Helper to check अगर the subvolume references other subvolumes or अगर it's
+ * शेष.
  */
-static noinline int may_destroy_subvol(struct btrfs_root *root)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_path *path;
-	struct btrfs_dir_item *di;
-	struct btrfs_key key;
+अटल noअंतरभूत पूर्णांक may_destroy_subvol(काष्ठा btrfs_root *root)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा btrfs_path *path;
+	काष्ठा btrfs_dir_item *di;
+	काष्ठा btrfs_key key;
 	u64 dir_id;
-	int ret;
+	पूर्णांक ret;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
-	/* Make sure this root isn't set as the default subvol */
+	/* Make sure this root isn't set as the शेष subvol */
 	dir_id = btrfs_super_root_dir(fs_info->super_copy);
-	di = btrfs_lookup_dir_item(NULL, fs_info->tree_root, path,
+	di = btrfs_lookup_dir_item(शून्य, fs_info->tree_root, path,
 				   dir_id, "default", 7, 0);
-	if (di && !IS_ERR(di)) {
+	अगर (di && !IS_ERR(di)) अणु
 		btrfs_dir_item_key_to_cpu(path->nodes[0], di, &key);
-		if (key.objectid == root->root_key.objectid) {
+		अगर (key.objectid == root->root_key.objectid) अणु
 			ret = -EPERM;
 			btrfs_err(fs_info,
 				  "deleting default subvolume %llu is not allowed",
 				  key.objectid);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		btrfs_release_path(path);
-	}
+	पूर्ण
 
 	key.objectid = root->root_key.objectid;
 	key.type = BTRFS_ROOT_REF_KEY;
 	key.offset = (u64)-1;
 
-	ret = btrfs_search_slot(NULL, fs_info->tree_root, &key, path, 0, 0);
-	if (ret < 0)
-		goto out;
+	ret = btrfs_search_slot(शून्य, fs_info->tree_root, &key, path, 0, 0);
+	अगर (ret < 0)
+		जाओ out;
 	BUG_ON(ret == 0);
 
 	ret = 0;
-	if (path->slots[0] > 0) {
+	अगर (path->slots[0] > 0) अणु
 		path->slots[0]--;
 		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
-		if (key.objectid == root->root_key.objectid &&
+		अगर (key.objectid == root->root_key.objectid &&
 		    key.type == BTRFS_ROOT_REF_KEY)
 			ret = -ENOTEMPTY;
-	}
+	पूर्ण
 out:
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
-/* Delete all dentries for inodes belonging to the root */
-static void btrfs_prune_dentries(struct btrfs_root *root)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct rb_node *node;
-	struct rb_node *prev;
-	struct btrfs_inode *entry;
-	struct inode *inode;
+/* Delete all dentries क्रम inodes beदीर्घing to the root */
+अटल व्योम btrfs_prune_dentries(काष्ठा btrfs_root *root)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा rb_node *node;
+	काष्ठा rb_node *prev;
+	काष्ठा btrfs_inode *entry;
+	काष्ठा inode *inode;
 	u64 objectid = 0;
 
-	if (!test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
+	अगर (!test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
 		WARN_ON(btrfs_root_refs(&root->root_item) != 0);
 
 	spin_lock(&root->inode_lock);
 again:
 	node = root->inode_tree.rb_node;
-	prev = NULL;
-	while (node) {
+	prev = शून्य;
+	जबतक (node) अणु
 		prev = node;
-		entry = rb_entry(node, struct btrfs_inode, rb_node);
+		entry = rb_entry(node, काष्ठा btrfs_inode, rb_node);
 
-		if (objectid < btrfs_ino(entry))
+		अगर (objectid < btrfs_ino(entry))
 			node = node->rb_left;
-		else if (objectid > btrfs_ino(entry))
+		अन्यथा अगर (objectid > btrfs_ino(entry))
 			node = node->rb_right;
-		else
-			break;
-	}
-	if (!node) {
-		while (prev) {
-			entry = rb_entry(prev, struct btrfs_inode, rb_node);
-			if (objectid <= btrfs_ino(entry)) {
+		अन्यथा
+			अवरोध;
+	पूर्ण
+	अगर (!node) अणु
+		जबतक (prev) अणु
+			entry = rb_entry(prev, काष्ठा btrfs_inode, rb_node);
+			अगर (objectid <= btrfs_ino(entry)) अणु
 				node = prev;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			prev = rb_next(prev);
-		}
-	}
-	while (node) {
-		entry = rb_entry(node, struct btrfs_inode, rb_node);
+		पूर्ण
+	पूर्ण
+	जबतक (node) अणु
+		entry = rb_entry(node, काष्ठा btrfs_inode, rb_node);
 		objectid = btrfs_ino(entry) + 1;
 		inode = igrab(&entry->vfs_inode);
-		if (inode) {
+		अगर (inode) अणु
 			spin_unlock(&root->inode_lock);
-			if (atomic_read(&inode->i_count) > 1)
+			अगर (atomic_पढ़ो(&inode->i_count) > 1)
 				d_prune_aliases(inode);
 			/*
-			 * btrfs_drop_inode will have it removed from the inode
+			 * btrfs_drop_inode will have it हटाओd from the inode
 			 * cache when its usage count hits zero.
 			 */
 			iput(inode);
 			cond_resched();
 			spin_lock(&root->inode_lock);
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 
-		if (cond_resched_lock(&root->inode_lock))
-			goto again;
+		अगर (cond_resched_lock(&root->inode_lock))
+			जाओ again;
 
 		node = rb_next(node);
-	}
+	पूर्ण
 	spin_unlock(&root->inode_lock);
-}
+पूर्ण
 
-int btrfs_delete_subvolume(struct inode *dir, struct dentry *dentry)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(dentry->d_sb);
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	struct inode *inode = d_inode(dentry);
-	struct btrfs_root *dest = BTRFS_I(inode)->root;
-	struct btrfs_trans_handle *trans;
-	struct btrfs_block_rsv block_rsv;
+पूर्णांक btrfs_delete_subvolume(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(dentry->d_sb);
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा btrfs_root *dest = BTRFS_I(inode)->root;
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा btrfs_block_rsv block_rsv;
 	u64 root_flags;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * Don't allow to delete a subvolume with send in progress. This is
@@ -4293,140 +4294,140 @@ int btrfs_delete_subvolume(struct inode *dir, struct dentry *dentry)
 	 * again is not run concurrently.
 	 */
 	spin_lock(&dest->root_item_lock);
-	if (dest->send_in_progress) {
+	अगर (dest->send_in_progress) अणु
 		spin_unlock(&dest->root_item_lock);
 		btrfs_warn(fs_info,
 			   "attempt to delete subvolume %llu during send",
 			   dest->root_key.objectid);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 	root_flags = btrfs_root_flags(&dest->root_item);
 	btrfs_set_root_flags(&dest->root_item,
 			     root_flags | BTRFS_ROOT_SUBVOL_DEAD);
 	spin_unlock(&dest->root_item_lock);
 
-	down_write(&fs_info->subvol_sem);
+	करोwn_ग_लिखो(&fs_info->subvol_sem);
 
 	ret = may_destroy_subvol(dest);
-	if (ret)
-		goto out_up_write;
+	अगर (ret)
+		जाओ out_up_ग_लिखो;
 
 	btrfs_init_block_rsv(&block_rsv, BTRFS_BLOCK_RSV_TEMP);
 	/*
-	 * One for dir inode,
-	 * two for dir entries,
-	 * two for root ref/backref.
+	 * One क्रम dir inode,
+	 * two क्रम dir entries,
+	 * two क्रम root ref/backref.
 	 */
 	ret = btrfs_subvolume_reserve_metadata(root, &block_rsv, 5, true);
-	if (ret)
-		goto out_up_write;
+	अगर (ret)
+		जाओ out_up_ग_लिखो;
 
 	trans = btrfs_start_transaction(root, 0);
-	if (IS_ERR(trans)) {
+	अगर (IS_ERR(trans)) अणु
 		ret = PTR_ERR(trans);
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 	trans->block_rsv = &block_rsv;
 	trans->bytes_reserved = block_rsv.size;
 
 	btrfs_record_snapshot_destroy(trans, BTRFS_I(dir));
 
 	ret = btrfs_unlink_subvol(trans, dir, dentry);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out_end_trans;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out_end_trans;
+	पूर्ण
 
 	ret = btrfs_record_root_in_trans(trans, dest);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out_end_trans;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out_end_trans;
+	पूर्ण
 
-	memset(&dest->root_item.drop_progress, 0,
-		sizeof(dest->root_item.drop_progress));
+	स_रखो(&dest->root_item.drop_progress, 0,
+		माप(dest->root_item.drop_progress));
 	btrfs_set_root_drop_level(&dest->root_item, 0);
 	btrfs_set_root_refs(&dest->root_item, 0);
 
-	if (!test_and_set_bit(BTRFS_ROOT_ORPHAN_ITEM_INSERTED, &dest->state)) {
+	अगर (!test_and_set_bit(BTRFS_ROOT_ORPHAN_ITEM_INSERTED, &dest->state)) अणु
 		ret = btrfs_insert_orphan_item(trans,
 					fs_info->tree_root,
 					dest->root_key.objectid);
-		if (ret) {
-			btrfs_abort_transaction(trans, ret);
-			goto out_end_trans;
-		}
-	}
+		अगर (ret) अणु
+			btrfs_पात_transaction(trans, ret);
+			जाओ out_end_trans;
+		पूर्ण
+	पूर्ण
 
-	ret = btrfs_uuid_tree_remove(trans, dest->root_item.uuid,
+	ret = btrfs_uuid_tree_हटाओ(trans, dest->root_item.uuid,
 				  BTRFS_UUID_KEY_SUBVOL,
 				  dest->root_key.objectid);
-	if (ret && ret != -ENOENT) {
-		btrfs_abort_transaction(trans, ret);
-		goto out_end_trans;
-	}
-	if (!btrfs_is_empty_uuid(dest->root_item.received_uuid)) {
-		ret = btrfs_uuid_tree_remove(trans,
+	अगर (ret && ret != -ENOENT) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out_end_trans;
+	पूर्ण
+	अगर (!btrfs_is_empty_uuid(dest->root_item.received_uuid)) अणु
+		ret = btrfs_uuid_tree_हटाओ(trans,
 					  dest->root_item.received_uuid,
 					  BTRFS_UUID_KEY_RECEIVED_SUBVOL,
 					  dest->root_key.objectid);
-		if (ret && ret != -ENOENT) {
-			btrfs_abort_transaction(trans, ret);
-			goto out_end_trans;
-		}
-	}
+		अगर (ret && ret != -ENOENT) अणु
+			btrfs_पात_transaction(trans, ret);
+			जाओ out_end_trans;
+		पूर्ण
+	पूर्ण
 
-	free_anon_bdev(dest->anon_dev);
+	मुक्त_anon_bdev(dest->anon_dev);
 	dest->anon_dev = 0;
 out_end_trans:
-	trans->block_rsv = NULL;
+	trans->block_rsv = शून्य;
 	trans->bytes_reserved = 0;
 	ret = btrfs_end_transaction(trans);
 	inode->i_flags |= S_DEAD;
 out_release:
 	btrfs_subvolume_release_metadata(root, &block_rsv);
-out_up_write:
-	up_write(&fs_info->subvol_sem);
-	if (ret) {
+out_up_ग_लिखो:
+	up_ग_लिखो(&fs_info->subvol_sem);
+	अगर (ret) अणु
 		spin_lock(&dest->root_item_lock);
 		root_flags = btrfs_root_flags(&dest->root_item);
 		btrfs_set_root_flags(&dest->root_item,
 				root_flags & ~BTRFS_ROOT_SUBVOL_DEAD);
 		spin_unlock(&dest->root_item_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		d_invalidate(dentry);
 		btrfs_prune_dentries(dest);
 		ASSERT(dest->send_in_progress == 0);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_rmdir(struct inode *dir, struct dentry *dentry)
-{
-	struct inode *inode = d_inode(dentry);
-	int err = 0;
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	struct btrfs_trans_handle *trans;
+अटल पूर्णांक btrfs_सूची_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक err = 0;
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	काष्ठा btrfs_trans_handle *trans;
 	u64 last_unlink_trans;
 
-	if (inode->i_size > BTRFS_EMPTY_DIR_SIZE)
-		return -ENOTEMPTY;
-	if (btrfs_ino(BTRFS_I(inode)) == BTRFS_FIRST_FREE_OBJECTID)
-		return btrfs_delete_subvolume(dir, dentry);
+	अगर (inode->i_size > BTRFS_EMPTY_सूची_SIZE)
+		वापस -ENOTEMPTY;
+	अगर (btrfs_ino(BTRFS_I(inode)) == BTRFS_FIRST_FREE_OBJECTID)
+		वापस btrfs_delete_subvolume(dir, dentry);
 
 	trans = __unlink_start_trans(dir);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	अगर (IS_ERR(trans))
+		वापस PTR_ERR(trans);
 
-	if (unlikely(btrfs_ino(BTRFS_I(inode)) == BTRFS_EMPTY_SUBVOL_DIR_OBJECTID)) {
+	अगर (unlikely(btrfs_ino(BTRFS_I(inode)) == BTRFS_EMPTY_SUBVOL_सूची_OBJECTID)) अणु
 		err = btrfs_unlink_subvol(trans, dir, dentry);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = btrfs_orphan_add(trans, BTRFS_I(inode));
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	last_unlink_trans = BTRFS_I(inode)->last_unlink_trans;
 
@@ -4434,114 +4435,114 @@ static int btrfs_rmdir(struct inode *dir, struct dentry *dentry)
 	err = btrfs_unlink_inode(trans, root, BTRFS_I(dir),
 			BTRFS_I(d_inode(dentry)), dentry->d_name.name,
 			dentry->d_name.len);
-	if (!err) {
-		btrfs_i_size_write(BTRFS_I(inode), 0);
+	अगर (!err) अणु
+		btrfs_i_size_ग_लिखो(BTRFS_I(inode), 0);
 		/*
 		 * Propagate the last_unlink_trans value of the deleted dir to
 		 * its parent directory. This is to prevent an unrecoverable
-		 * log tree in the case we do something like this:
+		 * log tree in the हाल we करो something like this:
 		 * 1) create dir foo
 		 * 2) create snapshot under dir foo
 		 * 3) delete the snapshot
-		 * 4) rmdir foo
-		 * 5) mkdir foo
+		 * 4) सूची_हटाओ foo
+		 * 5) सूची_गढ़ो foo
 		 * 6) fsync foo or some file inside foo
 		 */
-		if (last_unlink_trans >= trans->transid)
+		अगर (last_unlink_trans >= trans->transid)
 			BTRFS_I(dir)->last_unlink_trans = last_unlink_trans;
-	}
+	पूर्ण
 out:
 	btrfs_end_transaction(trans);
 	btrfs_btree_balance_dirty(root->fs_info);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Return this if we need to call truncate_block for the last bit of the
+ * Return this अगर we need to call truncate_block क्रम the last bit of the
  * truncate.
  */
-#define NEED_TRUNCATE_BLOCK 1
+#घोषणा NEED_TRUNCATE_BLOCK 1
 
 /*
  * this can truncate away extent items, csum items and directory items.
- * It starts at a high offset and removes keys until it can't find
+ * It starts at a high offset and हटाओs keys until it can't find
  * any higher than new_size
  *
  * csum items that cross the new i_size are truncated to the new size
  * as well.
  *
- * min_type is the minimum key type to truncate down to.  If set to 0, this
- * will kill all the items on this inode, including the INODE_ITEM_KEY.
+ * min_type is the minimum key type to truncate करोwn to.  If set to 0, this
+ * will समाप्त all the items on this inode, including the INODE_ITEM_KEY.
  */
-int btrfs_truncate_inode_items(struct btrfs_trans_handle *trans,
-			       struct btrfs_root *root,
-			       struct btrfs_inode *inode,
+पूर्णांक btrfs_truncate_inode_items(काष्ठा btrfs_trans_handle *trans,
+			       काष्ठा btrfs_root *root,
+			       काष्ठा btrfs_inode *inode,
 			       u64 new_size, u32 min_type)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_path *path;
-	struct extent_buffer *leaf;
-	struct btrfs_file_extent_item *fi;
-	struct btrfs_key key;
-	struct btrfs_key found_key;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा btrfs_path *path;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_file_extent_item *fi;
+	काष्ठा btrfs_key key;
+	काष्ठा btrfs_key found_key;
 	u64 extent_start = 0;
 	u64 extent_num_bytes = 0;
 	u64 extent_offset = 0;
 	u64 item_end = 0;
 	u64 last_size = new_size;
 	u32 found_type = (u8)-1;
-	int found_extent;
-	int del_item;
-	int pending_del_nr = 0;
-	int pending_del_slot = 0;
-	int extent_type = -1;
-	int ret;
+	पूर्णांक found_extent;
+	पूर्णांक del_item;
+	पूर्णांक pending_del_nr = 0;
+	पूर्णांक pending_del_slot = 0;
+	पूर्णांक extent_type = -1;
+	पूर्णांक ret;
 	u64 ino = btrfs_ino(inode);
 	u64 bytes_deleted = 0;
 	bool be_nice = false;
 	bool should_throttle = false;
-	const u64 lock_start = ALIGN_DOWN(new_size, fs_info->sectorsize);
-	struct extent_state *cached_state = NULL;
+	स्थिर u64 lock_start = ALIGN_DOWN(new_size, fs_info->sectorsize);
+	काष्ठा extent_state *cached_state = शून्य;
 
 	BUG_ON(new_size > 0 && min_type != BTRFS_EXTENT_DATA_KEY);
 
 	/*
-	 * For non-free space inodes and non-shareable roots, we want to back
-	 * off from time to time.  This means all inodes in subvolume roots,
+	 * For non-मुक्त space inodes and non-shareable roots, we want to back
+	 * off from समय to समय.  This means all inodes in subvolume roots,
 	 * reloc roots, and data reloc roots.
 	 */
-	if (!btrfs_is_free_space_inode(inode) &&
+	अगर (!btrfs_is_मुक्त_space_inode(inode) &&
 	    test_bit(BTRFS_ROOT_SHAREABLE, &root->state))
 		be_nice = true;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-	path->reada = READA_BACK;
+	अगर (!path)
+		वापस -ENOMEM;
+	path->पढ़ोa = READA_BACK;
 
-	if (root->root_key.objectid != BTRFS_TREE_LOG_OBJECTID) {
+	अगर (root->root_key.objectid != BTRFS_TREE_LOG_OBJECTID) अणु
 		lock_extent_bits(&inode->io_tree, lock_start, (u64)-1,
 				 &cached_state);
 
 		/*
-		 * We want to drop from the next block forward in case this
+		 * We want to drop from the next block क्रमward in हाल this
 		 * new size is not block aligned since we will be keeping the
 		 * last block of the extent just the way it is.
 		 */
 		btrfs_drop_extent_cache(inode, ALIGN(new_size,
 					fs_info->sectorsize),
 					(u64)-1, 0);
-	}
+	पूर्ण
 
 	/*
-	 * This function is also used to drop the items in the log tree before
-	 * we relog the inode, so if root != BTRFS_I(inode)->root, it means
-	 * it is used to drop the logged items. So we shouldn't kill the delayed
+	 * This function is also used to drop the items in the log tree beक्रमe
+	 * we relog the inode, so अगर root != BTRFS_I(inode)->root, it means
+	 * it is used to drop the logged items. So we shouldn't समाप्त the delayed
 	 * items.
 	 */
-	if (min_type == 0 && root == inode->root)
-		btrfs_kill_delayed_inode_items(inode);
+	अगर (min_type == 0 && root == inode->root)
+		btrfs_समाप्त_delayed_inode_items(inode);
 
 	key.objectid = ino;
 	key.offset = (u64)-1;
@@ -4550,85 +4551,85 @@ int btrfs_truncate_inode_items(struct btrfs_trans_handle *trans,
 search_again:
 	/*
 	 * with a 16K leaf size and 128MB extents, you can actually queue
-	 * up a huge file in a single leaf.  Most of the time that
-	 * bytes_deleted is > 0, it will be huge by the time we get here
+	 * up a huge file in a single leaf.  Most of the समय that
+	 * bytes_deleted is > 0, it will be huge by the समय we get here
 	 */
-	if (be_nice && bytes_deleted > SZ_32M &&
-	    btrfs_should_end_transaction(trans)) {
+	अगर (be_nice && bytes_deleted > SZ_32M &&
+	    btrfs_should_end_transaction(trans)) अणु
 		ret = -EAGAIN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		ret = 0;
-		/* there are no items in the tree for us to truncate, we're
-		 * done
+		/* there are no items in the tree क्रम us to truncate, we're
+		 * करोne
 		 */
-		if (path->slots[0] == 0)
-			goto out;
+		अगर (path->slots[0] == 0)
+			जाओ out;
 		path->slots[0]--;
-	}
+	पूर्ण
 
-	while (1) {
+	जबतक (1) अणु
 		u64 clear_start = 0, clear_len = 0;
 
-		fi = NULL;
+		fi = शून्य;
 		leaf = path->nodes[0];
 		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
 		found_type = found_key.type;
 
-		if (found_key.objectid != ino)
-			break;
+		अगर (found_key.objectid != ino)
+			अवरोध;
 
-		if (found_type < min_type)
-			break;
+		अगर (found_type < min_type)
+			अवरोध;
 
 		item_end = found_key.offset;
-		if (found_type == BTRFS_EXTENT_DATA_KEY) {
+		अगर (found_type == BTRFS_EXTENT_DATA_KEY) अणु
 			fi = btrfs_item_ptr(leaf, path->slots[0],
-					    struct btrfs_file_extent_item);
+					    काष्ठा btrfs_file_extent_item);
 			extent_type = btrfs_file_extent_type(leaf, fi);
-			if (extent_type != BTRFS_FILE_EXTENT_INLINE) {
+			अगर (extent_type != BTRFS_खाता_EXTENT_INLINE) अणु
 				item_end +=
 				    btrfs_file_extent_num_bytes(leaf, fi);
 
 				trace_btrfs_truncate_show_fi_regular(
 					inode, leaf, fi, found_key.offset);
-			} else if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
+			पूर्ण अन्यथा अगर (extent_type == BTRFS_खाता_EXTENT_INLINE) अणु
 				item_end += btrfs_file_extent_ram_bytes(leaf,
 									fi);
 
-				trace_btrfs_truncate_show_fi_inline(
+				trace_btrfs_truncate_show_fi_अंतरभूत(
 					inode, leaf, fi, path->slots[0],
 					found_key.offset);
-			}
+			पूर्ण
 			item_end--;
-		}
-		if (found_type > min_type) {
+		पूर्ण
+		अगर (found_type > min_type) अणु
 			del_item = 1;
-		} else {
-			if (item_end < new_size)
-				break;
-			if (found_key.offset >= new_size)
+		पूर्ण अन्यथा अणु
+			अगर (item_end < new_size)
+				अवरोध;
+			अगर (found_key.offset >= new_size)
 				del_item = 1;
-			else
+			अन्यथा
 				del_item = 0;
-		}
+		पूर्ण
 		found_extent = 0;
-		/* FIXME, shrink the extent if the ref count is only 1 */
-		if (found_type != BTRFS_EXTENT_DATA_KEY)
-			goto delete;
+		/* FIXME, shrink the extent अगर the ref count is only 1 */
+		अगर (found_type != BTRFS_EXTENT_DATA_KEY)
+			जाओ delete;
 
-		if (extent_type != BTRFS_FILE_EXTENT_INLINE) {
+		अगर (extent_type != BTRFS_खाता_EXTENT_INLINE) अणु
 			u64 num_dec;
 
 			clear_start = found_key.offset;
 			extent_start = btrfs_file_extent_disk_bytenr(leaf, fi);
-			if (!del_item) {
+			अगर (!del_item) अणु
 				u64 orig_num_bytes =
 					btrfs_file_extent_num_bytes(leaf, fi);
 				extent_num_bytes = ALIGN(new_size -
@@ -4639,13 +4640,13 @@ search_again:
 							 extent_num_bytes);
 				num_dec = (orig_num_bytes -
 					   extent_num_bytes);
-				if (test_bit(BTRFS_ROOT_SHAREABLE,
+				अगर (test_bit(BTRFS_ROOT_SHAREABLE,
 					     &root->state) &&
 				    extent_start != 0)
 					inode_sub_bytes(&inode->vfs_inode,
 							num_dec);
 				btrfs_mark_buffer_dirty(leaf);
-			} else {
+			पूर्ण अन्यथा अणु
 				extent_num_bytes =
 					btrfs_file_extent_disk_num_bytes(leaf,
 									 fi);
@@ -4654,89 +4655,89 @@ search_again:
 
 				/* FIXME blocksize != 4096 */
 				num_dec = btrfs_file_extent_num_bytes(leaf, fi);
-				if (extent_start != 0) {
+				अगर (extent_start != 0) अणु
 					found_extent = 1;
-					if (test_bit(BTRFS_ROOT_SHAREABLE,
+					अगर (test_bit(BTRFS_ROOT_SHAREABLE,
 						     &root->state))
 						inode_sub_bytes(&inode->vfs_inode,
 								num_dec);
-				}
-			}
+				पूर्ण
+			पूर्ण
 			clear_len = num_dec;
-		} else if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
+		पूर्ण अन्यथा अगर (extent_type == BTRFS_खाता_EXTENT_INLINE) अणु
 			/*
-			 * we can't truncate inline items that have had
+			 * we can't truncate अंतरभूत items that have had
 			 * special encodings
 			 */
-			if (!del_item &&
+			अगर (!del_item &&
 			    btrfs_file_extent_encryption(leaf, fi) == 0 &&
 			    btrfs_file_extent_other_encoding(leaf, fi) == 0 &&
-			    btrfs_file_extent_compression(leaf, fi) == 0) {
+			    btrfs_file_extent_compression(leaf, fi) == 0) अणु
 				u32 size = (u32)(new_size - found_key.offset);
 
 				btrfs_set_file_extent_ram_bytes(leaf, fi, size);
-				size = btrfs_file_extent_calc_inline_size(size);
+				size = btrfs_file_extent_calc_अंतरभूत_size(size);
 				btrfs_truncate_item(path, size, 1);
-			} else if (!del_item) {
+			पूर्ण अन्यथा अगर (!del_item) अणु
 				/*
 				 * We have to bail so the last_size is set to
-				 * just before this extent.
+				 * just beक्रमe this extent.
 				 */
 				ret = NEED_TRUNCATE_BLOCK;
-				break;
-			} else {
+				अवरोध;
+			पूर्ण अन्यथा अणु
 				/*
 				 * Inline extents are special, we just treat
 				 * them as a full sector worth in the file
-				 * extent tree just for simplicity sake.
+				 * extent tree just क्रम simplicity sake.
 				 */
 				clear_len = fs_info->sectorsize;
-			}
+			पूर्ण
 
-			if (test_bit(BTRFS_ROOT_SHAREABLE, &root->state))
+			अगर (test_bit(BTRFS_ROOT_SHAREABLE, &root->state))
 				inode_sub_bytes(&inode->vfs_inode,
 						item_end + 1 - new_size);
-		}
+		पूर्ण
 delete:
 		/*
-		 * We use btrfs_truncate_inode_items() to clean up log trees for
-		 * multiple fsyncs, and in this case we don't want to clear the
+		 * We use btrfs_truncate_inode_items() to clean up log trees क्रम
+		 * multiple fsyncs, and in this हाल we करोn't want to clear the
 		 * file extent range because it's just the log.
 		 */
-		if (root == inode->root) {
+		अगर (root == inode->root) अणु
 			ret = btrfs_inode_clear_file_extent_range(inode,
 						  clear_start, clear_len);
-			if (ret) {
-				btrfs_abort_transaction(trans, ret);
-				break;
-			}
-		}
+			अगर (ret) अणु
+				btrfs_पात_transaction(trans, ret);
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (del_item)
+		अगर (del_item)
 			last_size = found_key.offset;
-		else
+		अन्यथा
 			last_size = new_size;
-		if (del_item) {
-			if (!pending_del_nr) {
+		अगर (del_item) अणु
+			अगर (!pending_del_nr) अणु
 				/* no pending yet, add ourselves */
 				pending_del_slot = path->slots[0];
 				pending_del_nr = 1;
-			} else if (pending_del_nr &&
-				   path->slots[0] + 1 == pending_del_slot) {
+			पूर्ण अन्यथा अगर (pending_del_nr &&
+				   path->slots[0] + 1 == pending_del_slot) अणु
 				/* hop on the pending chunk */
 				pending_del_nr++;
 				pending_del_slot = path->slots[0];
-			} else {
+			पूर्ण अन्यथा अणु
 				BUG();
-			}
-		} else {
-			break;
-		}
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
 		should_throttle = false;
 
-		if (found_extent &&
-		    root->root_key.objectid != BTRFS_TREE_LOG_OBJECTID) {
-			struct btrfs_ref ref = { 0 };
+		अगर (found_extent &&
+		    root->root_key.objectid != BTRFS_TREE_LOG_OBJECTID) अणु
+			काष्ठा btrfs_ref ref = अणु 0 पूर्ण;
 
 			bytes_deleted += extent_num_bytes;
 
@@ -4745,177 +4746,177 @@ delete:
 			ref.real_root = root->root_key.objectid;
 			btrfs_init_data_ref(&ref, btrfs_header_owner(leaf),
 					ino, extent_offset);
-			ret = btrfs_free_extent(trans, &ref);
-			if (ret) {
-				btrfs_abort_transaction(trans, ret);
-				break;
-			}
-			if (be_nice) {
-				if (btrfs_should_throttle_delayed_refs(trans))
+			ret = btrfs_मुक्त_extent(trans, &ref);
+			अगर (ret) अणु
+				btrfs_पात_transaction(trans, ret);
+				अवरोध;
+			पूर्ण
+			अगर (be_nice) अणु
+				अगर (btrfs_should_throttle_delayed_refs(trans))
 					should_throttle = true;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (found_type == BTRFS_INODE_ITEM_KEY)
-			break;
+		अगर (found_type == BTRFS_INODE_ITEM_KEY)
+			अवरोध;
 
-		if (path->slots[0] == 0 ||
+		अगर (path->slots[0] == 0 ||
 		    path->slots[0] != pending_del_slot ||
-		    should_throttle) {
-			if (pending_del_nr) {
+		    should_throttle) अणु
+			अगर (pending_del_nr) अणु
 				ret = btrfs_del_items(trans, root, path,
 						pending_del_slot,
 						pending_del_nr);
-				if (ret) {
-					btrfs_abort_transaction(trans, ret);
-					break;
-				}
+				अगर (ret) अणु
+					btrfs_पात_transaction(trans, ret);
+					अवरोध;
+				पूर्ण
 				pending_del_nr = 0;
-			}
+			पूर्ण
 			btrfs_release_path(path);
 
 			/*
 			 * We can generate a lot of delayed refs, so we need to
-			 * throttle every once and a while and make sure we're
+			 * throttle every once and a जबतक and make sure we're
 			 * adding enough space to keep up with the work we are
 			 * generating.  Since we hold a transaction here we
 			 * can't flush, and we don't want to FLUSH_LIMIT because
 			 * we could have generated too many delayed refs to
-			 * actually allocate, so just bail if we're short and
+			 * actually allocate, so just bail अगर we're लघु and
 			 * let the normal reservation dance happen higher up.
 			 */
-			if (should_throttle) {
+			अगर (should_throttle) अणु
 				ret = btrfs_delayed_refs_rsv_refill(fs_info,
 							BTRFS_RESERVE_NO_FLUSH);
-				if (ret) {
+				अगर (ret) अणु
 					ret = -EAGAIN;
-					break;
-				}
-			}
-			goto search_again;
-		} else {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			जाओ search_again;
+		पूर्ण अन्यथा अणु
 			path->slots[0]--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	if (ret >= 0 && pending_del_nr) {
-		int err;
+	अगर (ret >= 0 && pending_del_nr) अणु
+		पूर्णांक err;
 
 		err = btrfs_del_items(trans, root, path, pending_del_slot,
 				      pending_del_nr);
-		if (err) {
-			btrfs_abort_transaction(trans, err);
+		अगर (err) अणु
+			btrfs_पात_transaction(trans, err);
 			ret = err;
-		}
-	}
-	if (root->root_key.objectid != BTRFS_TREE_LOG_OBJECTID) {
+		पूर्ण
+	पूर्ण
+	अगर (root->root_key.objectid != BTRFS_TREE_LOG_OBJECTID) अणु
 		ASSERT(last_size >= new_size);
-		if (!ret && last_size > new_size)
+		अगर (!ret && last_size > new_size)
 			last_size = new_size;
-		btrfs_inode_safe_disk_i_size_write(inode, last_size);
+		btrfs_inode_safe_disk_i_size_ग_लिखो(inode, last_size);
 		unlock_extent_cached(&inode->io_tree, lock_start, (u64)-1,
 				     &cached_state);
-	}
+	पूर्ण
 
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
 /*
- * btrfs_truncate_block - read, zero a chunk and write a block
+ * btrfs_truncate_block - पढ़ो, zero a chunk and ग_लिखो a block
  * @inode - inode that we're zeroing
  * @from - the offset to start zeroing
  * @len - the length to zero, 0 to zero the entire range respective to the
  *	offset
  * @front - zero up to the offset instead of from the offset on
  *
- * This will find the block for the "from" offset and cow the block and zero the
+ * This will find the block क्रम the "from" offset and cow the block and zero the
  * part we want to zero.  This is used with truncate and hole punching.
  */
-int btrfs_truncate_block(struct btrfs_inode *inode, loff_t from, loff_t len,
-			 int front)
-{
-	struct btrfs_fs_info *fs_info = inode->root->fs_info;
-	struct address_space *mapping = inode->vfs_inode.i_mapping;
-	struct extent_io_tree *io_tree = &inode->io_tree;
-	struct btrfs_ordered_extent *ordered;
-	struct extent_state *cached_state = NULL;
-	struct extent_changeset *data_reserved = NULL;
+पूर्णांक btrfs_truncate_block(काष्ठा btrfs_inode *inode, loff_t from, loff_t len,
+			 पूर्णांक front)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = inode->root->fs_info;
+	काष्ठा address_space *mapping = inode->vfs_inode.i_mapping;
+	काष्ठा extent_io_tree *io_tree = &inode->io_tree;
+	काष्ठा btrfs_ordered_extent *ordered;
+	काष्ठा extent_state *cached_state = शून्य;
+	काष्ठा extent_changeset *data_reserved = शून्य;
 	bool only_release_metadata = false;
 	u32 blocksize = fs_info->sectorsize;
 	pgoff_t index = from >> PAGE_SHIFT;
-	unsigned offset = from & (blocksize - 1);
-	struct page *page;
-	gfp_t mask = btrfs_alloc_write_mask(mapping);
-	size_t write_bytes = blocksize;
-	int ret = 0;
+	अचिन्हित offset = from & (blocksize - 1);
+	काष्ठा page *page;
+	gfp_t mask = btrfs_alloc_ग_लिखो_mask(mapping);
+	माप_प्रकार ग_लिखो_bytes = blocksize;
+	पूर्णांक ret = 0;
 	u64 block_start;
 	u64 block_end;
 
-	if (IS_ALIGNED(offset, blocksize) &&
+	अगर (IS_ALIGNED(offset, blocksize) &&
 	    (!len || IS_ALIGNED(len, blocksize)))
-		goto out;
+		जाओ out;
 
-	block_start = round_down(from, blocksize);
+	block_start = round_करोwn(from, blocksize);
 	block_end = block_start + blocksize - 1;
 
-	ret = btrfs_check_data_free_space(inode, &data_reserved, block_start,
+	ret = btrfs_check_data_मुक्त_space(inode, &data_reserved, block_start,
 					  blocksize);
-	if (ret < 0) {
-		if (btrfs_check_nocow_lock(inode, block_start, &write_bytes) > 0) {
-			/* For nocow case, no need to reserve data space */
+	अगर (ret < 0) अणु
+		अगर (btrfs_check_nocow_lock(inode, block_start, &ग_लिखो_bytes) > 0) अणु
+			/* For nocow हाल, no need to reserve data space */
 			only_release_metadata = true;
-		} else {
-			goto out;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	ret = btrfs_delalloc_reserve_metadata(inode, blocksize);
-	if (ret < 0) {
-		if (!only_release_metadata)
-			btrfs_free_reserved_data_space(inode, data_reserved,
+	अगर (ret < 0) अणु
+		अगर (!only_release_metadata)
+			btrfs_मुक्त_reserved_data_space(inode, data_reserved,
 						       block_start, blocksize);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 again:
 	page = find_or_create_page(mapping, index, mask);
-	if (!page) {
+	अगर (!page) अणु
 		btrfs_delalloc_release_space(inode, data_reserved, block_start,
 					     blocksize, true);
 		btrfs_delalloc_release_extents(inode, blocksize);
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ret = set_page_extent_mapped(page);
-	if (ret < 0)
-		goto out_unlock;
+	अगर (ret < 0)
+		जाओ out_unlock;
 
-	if (!PageUptodate(page)) {
-		ret = btrfs_readpage(NULL, page);
+	अगर (!PageUptodate(page)) अणु
+		ret = btrfs_पढ़ोpage(शून्य, page);
 		lock_page(page);
-		if (page->mapping != mapping) {
+		अगर (page->mapping != mapping) अणु
 			unlock_page(page);
 			put_page(page);
-			goto again;
-		}
-		if (!PageUptodate(page)) {
+			जाओ again;
+		पूर्ण
+		अगर (!PageUptodate(page)) अणु
 			ret = -EIO;
-			goto out_unlock;
-		}
-	}
-	wait_on_page_writeback(page);
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
+	रुको_on_page_ग_लिखोback(page);
 
 	lock_extent_bits(io_tree, block_start, block_end, &cached_state);
 
 	ordered = btrfs_lookup_ordered_extent(inode, block_start);
-	if (ordered) {
+	अगर (ordered) अणु
 		unlock_extent_cached(io_tree, block_start, block_end,
 				     &cached_state);
 		unlock_page(page);
 		put_page(page);
 		btrfs_start_ordered_extent(ordered, 1);
 		btrfs_put_ordered_extent(ordered);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
 	clear_extent_bit(&inode->io_tree, block_start, block_end,
 			 EXTENT_DELALLOC | EXTENT_DO_ACCOUNTING | EXTENT_DEFRAG,
@@ -4923,169 +4924,169 @@ again:
 
 	ret = btrfs_set_extent_delalloc(inode, block_start, block_end, 0,
 					&cached_state);
-	if (ret) {
+	अगर (ret) अणु
 		unlock_extent_cached(io_tree, block_start, block_end,
 				     &cached_state);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (offset != blocksize) {
-		if (!len)
+	अगर (offset != blocksize) अणु
+		अगर (!len)
 			len = blocksize - offset;
-		if (front)
+		अगर (front)
 			memzero_page(page, (block_start - page_offset(page)),
 				     offset);
-		else
+		अन्यथा
 			memzero_page(page, (block_start - page_offset(page)) + offset,
 				     len);
 		flush_dcache_page(page);
-	}
+	पूर्ण
 	ClearPageChecked(page);
 	set_page_dirty(page);
 	unlock_extent_cached(io_tree, block_start, block_end, &cached_state);
 
-	if (only_release_metadata)
+	अगर (only_release_metadata)
 		set_extent_bit(&inode->io_tree, block_start, block_end,
-			       EXTENT_NORESERVE, 0, NULL, NULL, GFP_NOFS, NULL);
+			       EXTENT_NORESERVE, 0, शून्य, शून्य, GFP_NOFS, शून्य);
 
 out_unlock:
-	if (ret) {
-		if (only_release_metadata)
+	अगर (ret) अणु
+		अगर (only_release_metadata)
 			btrfs_delalloc_release_metadata(inode, blocksize, true);
-		else
+		अन्यथा
 			btrfs_delalloc_release_space(inode, data_reserved,
 					block_start, blocksize, true);
-	}
+	पूर्ण
 	btrfs_delalloc_release_extents(inode, blocksize);
 	unlock_page(page);
 	put_page(page);
 out:
-	if (only_release_metadata)
+	अगर (only_release_metadata)
 		btrfs_check_nocow_unlock(inode);
-	extent_changeset_free(data_reserved);
-	return ret;
-}
+	extent_changeset_मुक्त(data_reserved);
+	वापस ret;
+पूर्ण
 
-static int maybe_insert_hole(struct btrfs_root *root, struct btrfs_inode *inode,
+अटल पूर्णांक maybe_insert_hole(काष्ठा btrfs_root *root, काष्ठा btrfs_inode *inode,
 			     u64 offset, u64 len)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_trans_handle *trans;
-	struct btrfs_drop_extents_args drop_args = { 0 };
-	int ret;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा btrfs_drop_extents_args drop_args = अणु 0 पूर्ण;
+	पूर्णांक ret;
 
 	/*
 	 * Still need to make sure the inode looks like it's been updated so
-	 * that any holes get logged if we fsync.
+	 * that any holes get logged अगर we fsync.
 	 */
-	if (btrfs_fs_incompat(fs_info, NO_HOLES)) {
+	अगर (btrfs_fs_incompat(fs_info, NO_HOLES)) अणु
 		inode->last_trans = fs_info->generation;
 		inode->last_sub_trans = root->log_transid;
 		inode->last_log_commit = root->last_log_commit;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * 1 - for the one we're dropping
-	 * 1 - for the one we're adding
-	 * 1 - for updating the inode.
+	 * 1 - क्रम the one we're dropping
+	 * 1 - क्रम the one we're adding
+	 * 1 - क्रम updating the inode.
 	 */
 	trans = btrfs_start_transaction(root, 3);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	अगर (IS_ERR(trans))
+		वापस PTR_ERR(trans);
 
 	drop_args.start = offset;
 	drop_args.end = offset + len;
 	drop_args.drop_cache = true;
 
 	ret = btrfs_drop_extents(trans, root, inode, &drop_args);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
 		btrfs_end_transaction(trans);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = btrfs_insert_file_extent(trans, root, btrfs_ino(inode),
 			offset, 0, 0, len, 0, len, 0, 0, 0);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-	} else {
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+	पूर्ण अन्यथा अणु
 		btrfs_update_inode_bytes(inode, 0, drop_args.bytes_found);
 		btrfs_update_inode(trans, root, inode);
-	}
+	पूर्ण
 	btrfs_end_transaction(trans);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This function puts in dummy file extents for the area we're creating a hole
- * for.  So if we are truncating this file to a larger size we need to insert
- * these file extents so that btrfs_get_extent will return a EXTENT_MAP_HOLE for
+ * This function माला_दो in dummy file extents क्रम the area we're creating a hole
+ * क्रम.  So अगर we are truncating this file to a larger size we need to insert
+ * these file extents so that btrfs_get_extent will वापस a EXTENT_MAP_HOLE क्रम
  * the range between oldsize and size
  */
-int btrfs_cont_expand(struct btrfs_inode *inode, loff_t oldsize, loff_t size)
-{
-	struct btrfs_root *root = inode->root;
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_io_tree *io_tree = &inode->io_tree;
-	struct extent_map *em = NULL;
-	struct extent_state *cached_state = NULL;
-	struct extent_map_tree *em_tree = &inode->extent_tree;
+पूर्णांक btrfs_cont_expand(काष्ठा btrfs_inode *inode, loff_t oldsize, loff_t size)
+अणु
+	काष्ठा btrfs_root *root = inode->root;
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_io_tree *io_tree = &inode->io_tree;
+	काष्ठा extent_map *em = शून्य;
+	काष्ठा extent_state *cached_state = शून्य;
+	काष्ठा extent_map_tree *em_tree = &inode->extent_tree;
 	u64 hole_start = ALIGN(oldsize, fs_info->sectorsize);
 	u64 block_end = ALIGN(size, fs_info->sectorsize);
 	u64 last_byte;
 	u64 cur_offset;
 	u64 hole_size;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	/*
 	 * If our size started in the middle of a block we need to zero out the
-	 * rest of the block before we expand the i_size, otherwise we could
+	 * rest of the block beक्रमe we expand the i_size, otherwise we could
 	 * expose stale data.
 	 */
 	err = btrfs_truncate_block(inode, oldsize, 0, 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (size <= hole_start)
-		return 0;
+	अगर (size <= hole_start)
+		वापस 0;
 
 	btrfs_lock_and_flush_ordered_range(inode, hole_start, block_end - 1,
 					   &cached_state);
 	cur_offset = hole_start;
-	while (1) {
-		em = btrfs_get_extent(inode, NULL, 0, cur_offset,
+	जबतक (1) अणु
+		em = btrfs_get_extent(inode, शून्य, 0, cur_offset,
 				      block_end - cur_offset);
-		if (IS_ERR(em)) {
+		अगर (IS_ERR(em)) अणु
 			err = PTR_ERR(em);
-			em = NULL;
-			break;
-		}
+			em = शून्य;
+			अवरोध;
+		पूर्ण
 		last_byte = min(extent_map_end(em), block_end);
 		last_byte = ALIGN(last_byte, fs_info->sectorsize);
 		hole_size = last_byte - cur_offset;
 
-		if (!test_bit(EXTENT_FLAG_PREALLOC, &em->flags)) {
-			struct extent_map *hole_em;
+		अगर (!test_bit(EXTENT_FLAG_PREALLOC, &em->flags)) अणु
+			काष्ठा extent_map *hole_em;
 
 			err = maybe_insert_hole(root, inode, cur_offset,
 						hole_size);
-			if (err)
-				break;
+			अगर (err)
+				अवरोध;
 
 			err = btrfs_inode_set_file_extent_range(inode,
 							cur_offset, hole_size);
-			if (err)
-				break;
+			अगर (err)
+				अवरोध;
 
 			btrfs_drop_extent_cache(inode, cur_offset,
 						cur_offset + hole_size - 1, 0);
 			hole_em = alloc_extent_map();
-			if (!hole_em) {
+			अगर (!hole_em) अणु
 				set_bit(BTRFS_INODE_NEEDS_FULL_SYNC,
-					&inode->runtime_flags);
-				goto next;
-			}
+					&inode->runसमय_flags);
+				जाओ next;
+			पूर्ण
 			hole_em->start = cur_offset;
 			hole_em->len = hole_size;
 			hole_em->orig_start = cur_offset;
@@ -5097,226 +5098,226 @@ int btrfs_cont_expand(struct btrfs_inode *inode, loff_t oldsize, loff_t size)
 			hole_em->compress_type = BTRFS_COMPRESS_NONE;
 			hole_em->generation = fs_info->generation;
 
-			while (1) {
-				write_lock(&em_tree->lock);
+			जबतक (1) अणु
+				ग_लिखो_lock(&em_tree->lock);
 				err = add_extent_mapping(em_tree, hole_em, 1);
-				write_unlock(&em_tree->lock);
-				if (err != -EEXIST)
-					break;
+				ग_लिखो_unlock(&em_tree->lock);
+				अगर (err != -EEXIST)
+					अवरोध;
 				btrfs_drop_extent_cache(inode, cur_offset,
 							cur_offset +
 							hole_size - 1, 0);
-			}
-			free_extent_map(hole_em);
-		} else {
+			पूर्ण
+			मुक्त_extent_map(hole_em);
+		पूर्ण अन्यथा अणु
 			err = btrfs_inode_set_file_extent_range(inode,
 							cur_offset, hole_size);
-			if (err)
-				break;
-		}
+			अगर (err)
+				अवरोध;
+		पूर्ण
 next:
-		free_extent_map(em);
-		em = NULL;
+		मुक्त_extent_map(em);
+		em = शून्य;
 		cur_offset = last_byte;
-		if (cur_offset >= block_end)
-			break;
-	}
-	free_extent_map(em);
+		अगर (cur_offset >= block_end)
+			अवरोध;
+	पूर्ण
+	मुक्त_extent_map(em);
 	unlock_extent_cached(io_tree, hole_start, block_end - 1, &cached_state);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int btrfs_setsize(struct inode *inode, struct iattr *attr)
-{
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	struct btrfs_trans_handle *trans;
-	loff_t oldsize = i_size_read(inode);
+अटल पूर्णांक btrfs_setsize(काष्ठा inode *inode, काष्ठा iattr *attr)
+अणु
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	काष्ठा btrfs_trans_handle *trans;
+	loff_t oldsize = i_size_पढ़ो(inode);
 	loff_t newsize = attr->ia_size;
-	int mask = attr->ia_valid;
-	int ret;
+	पूर्णांक mask = attr->ia_valid;
+	पूर्णांक ret;
 
 	/*
-	 * The regular truncate() case without ATTR_CTIME and ATTR_MTIME is a
-	 * special case where we need to update the times despite not having
+	 * The regular truncate() हाल without ATTR_CTIME and ATTR_MTIME is a
+	 * special हाल where we need to update the बार despite not having
 	 * these flags set.  For all other operations the VFS set these flags
-	 * explicitly if it wants a timestamp update.
+	 * explicitly अगर it wants a बारtamp update.
 	 */
-	if (newsize != oldsize) {
+	अगर (newsize != oldsize) अणु
 		inode_inc_iversion(inode);
-		if (!(mask & (ATTR_CTIME | ATTR_MTIME)))
-			inode->i_ctime = inode->i_mtime =
-				current_time(inode);
-	}
+		अगर (!(mask & (ATTR_CTIME | ATTR_MTIME)))
+			inode->i_स_समय = inode->i_mसमय =
+				current_समय(inode);
+	पूर्ण
 
-	if (newsize > oldsize) {
+	अगर (newsize > oldsize) अणु
 		/*
-		 * Don't do an expanding truncate while snapshotting is ongoing.
+		 * Don't करो an expanding truncate जबतक snapshotting is ongoing.
 		 * This is to ensure the snapshot captures a fully consistent
-		 * state of this file - if the snapshot captures this expanding
-		 * truncation, it must capture all writes that happened before
+		 * state of this file - अगर the snapshot captures this expanding
+		 * truncation, it must capture all ग_लिखोs that happened beक्रमe
 		 * this truncation.
 		 */
-		btrfs_drew_write_lock(&root->snapshot_lock);
+		btrfs_drew_ग_लिखो_lock(&root->snapshot_lock);
 		ret = btrfs_cont_expand(BTRFS_I(inode), oldsize, newsize);
-		if (ret) {
-			btrfs_drew_write_unlock(&root->snapshot_lock);
-			return ret;
-		}
+		अगर (ret) अणु
+			btrfs_drew_ग_लिखो_unlock(&root->snapshot_lock);
+			वापस ret;
+		पूर्ण
 
 		trans = btrfs_start_transaction(root, 1);
-		if (IS_ERR(trans)) {
-			btrfs_drew_write_unlock(&root->snapshot_lock);
-			return PTR_ERR(trans);
-		}
+		अगर (IS_ERR(trans)) अणु
+			btrfs_drew_ग_लिखो_unlock(&root->snapshot_lock);
+			वापस PTR_ERR(trans);
+		पूर्ण
 
-		i_size_write(inode, newsize);
-		btrfs_inode_safe_disk_i_size_write(BTRFS_I(inode), 0);
+		i_size_ग_लिखो(inode, newsize);
+		btrfs_inode_safe_disk_i_size_ग_लिखो(BTRFS_I(inode), 0);
 		pagecache_isize_extended(inode, oldsize, newsize);
 		ret = btrfs_update_inode(trans, root, BTRFS_I(inode));
-		btrfs_drew_write_unlock(&root->snapshot_lock);
+		btrfs_drew_ग_लिखो_unlock(&root->snapshot_lock);
 		btrfs_end_transaction(trans);
-	} else {
-		struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	पूर्ण अन्यथा अणु
+		काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 
-		if (btrfs_is_zoned(fs_info)) {
-			ret = btrfs_wait_ordered_range(inode,
+		अगर (btrfs_is_zoned(fs_info)) अणु
+			ret = btrfs_रुको_ordered_range(inode,
 					ALIGN(newsize, fs_info->sectorsize),
 					(u64)-1);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
 		/*
-		 * We're truncating a file that used to have good data down to
-		 * zero. Make sure any new writes to the file get on disk
-		 * on close.
+		 * We're truncating a file that used to have good data करोwn to
+		 * zero. Make sure any new ग_लिखोs to the file get on disk
+		 * on बंद.
 		 */
-		if (newsize == 0)
+		अगर (newsize == 0)
 			set_bit(BTRFS_INODE_FLUSH_ON_CLOSE,
-				&BTRFS_I(inode)->runtime_flags);
+				&BTRFS_I(inode)->runसमय_flags);
 
 		truncate_setsize(inode, newsize);
 
-		inode_dio_wait(inode);
+		inode_dio_रुको(inode);
 
 		ret = btrfs_truncate(inode, newsize == oldsize);
-		if (ret && inode->i_nlink) {
-			int err;
+		अगर (ret && inode->i_nlink) अणु
+			पूर्णांक err;
 
 			/*
 			 * Truncate failed, so fix up the in-memory size. We
-			 * adjusted disk_i_size down as we removed extents, so
-			 * wait for disk_i_size to be stable and then update the
+			 * adjusted disk_i_size करोwn as we हटाओd extents, so
+			 * रुको क्रम disk_i_size to be stable and then update the
 			 * in-memory size to match.
 			 */
-			err = btrfs_wait_ordered_range(inode, 0, (u64)-1);
-			if (err)
-				return err;
-			i_size_write(inode, BTRFS_I(inode)->disk_i_size);
-		}
-	}
+			err = btrfs_रुको_ordered_range(inode, 0, (u64)-1);
+			अगर (err)
+				वापस err;
+			i_size_ग_लिखो(inode, BTRFS_I(inode)->disk_i_size);
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-			 struct iattr *attr)
-{
-	struct inode *inode = d_inode(dentry);
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	int err;
+अटल पूर्णांक btrfs_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+			 काष्ठा iattr *attr)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	पूर्णांक err;
 
-	if (btrfs_root_readonly(root))
-		return -EROFS;
+	अगर (btrfs_root_पढ़ोonly(root))
+		वापस -EROFS;
 
 	err = setattr_prepare(&init_user_ns, dentry, attr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (S_ISREG(inode->i_mode) && (attr->ia_valid & ATTR_SIZE)) {
+	अगर (S_ISREG(inode->i_mode) && (attr->ia_valid & ATTR_SIZE)) अणु
 		err = btrfs_setsize(inode, attr);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (attr->ia_valid) {
+	अगर (attr->ia_valid) अणु
 		setattr_copy(&init_user_ns, inode, attr);
 		inode_inc_iversion(inode);
 		err = btrfs_dirty_inode(inode);
 
-		if (!err && attr->ia_valid & ATTR_MODE)
+		अगर (!err && attr->ia_valid & ATTR_MODE)
 			err = posix_acl_chmod(&init_user_ns, inode,
 					      inode->i_mode);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * While truncating the inode pages during eviction, we get the VFS calling
  * btrfs_invalidatepage() against each page of the inode. This is slow because
  * the calls to btrfs_invalidatepage() result in a huge amount of calls to
  * lock_extent_bits() and clear_extent_bit(), which keep merging and splitting
- * extent_state structures over and over, wasting lots of time.
+ * extent_state काष्ठाures over and over, wasting lots of समय.
  *
- * Therefore if the inode is being evicted, let btrfs_invalidatepage() skip all
- * those expensive operations on a per page basis and do only the ordered io
- * finishing, while we release here the extent_map and extent_state structures,
+ * Thereक्रमe अगर the inode is being evicted, let btrfs_invalidatepage() skip all
+ * those expensive operations on a per page basis and करो only the ordered io
+ * finishing, जबतक we release here the extent_map and extent_state काष्ठाures,
  * without the excessive merging and splitting.
  */
-static void evict_inode_truncate_pages(struct inode *inode)
-{
-	struct extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
-	struct extent_map_tree *map_tree = &BTRFS_I(inode)->extent_tree;
-	struct rb_node *node;
+अटल व्योम evict_inode_truncate_pages(काष्ठा inode *inode)
+अणु
+	काष्ठा extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
+	काष्ठा extent_map_tree *map_tree = &BTRFS_I(inode)->extent_tree;
+	काष्ठा rb_node *node;
 
 	ASSERT(inode->i_state & I_FREEING);
 	truncate_inode_pages_final(&inode->i_data);
 
-	write_lock(&map_tree->lock);
-	while (!RB_EMPTY_ROOT(&map_tree->map.rb_root)) {
-		struct extent_map *em;
+	ग_लिखो_lock(&map_tree->lock);
+	जबतक (!RB_EMPTY_ROOT(&map_tree->map.rb_root)) अणु
+		काष्ठा extent_map *em;
 
 		node = rb_first_cached(&map_tree->map);
-		em = rb_entry(node, struct extent_map, rb_node);
+		em = rb_entry(node, काष्ठा extent_map, rb_node);
 		clear_bit(EXTENT_FLAG_PINNED, &em->flags);
 		clear_bit(EXTENT_FLAG_LOGGING, &em->flags);
-		remove_extent_mapping(map_tree, em);
-		free_extent_map(em);
-		if (need_resched()) {
-			write_unlock(&map_tree->lock);
+		हटाओ_extent_mapping(map_tree, em);
+		मुक्त_extent_map(em);
+		अगर (need_resched()) अणु
+			ग_लिखो_unlock(&map_tree->lock);
 			cond_resched();
-			write_lock(&map_tree->lock);
-		}
-	}
-	write_unlock(&map_tree->lock);
+			ग_लिखो_lock(&map_tree->lock);
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock(&map_tree->lock);
 
 	/*
 	 * Keep looping until we have no more ranges in the io tree.
-	 * We can have ongoing bios started by readahead that have
-	 * their endio callback (extent_io.c:end_bio_extent_readpage)
+	 * We can have ongoing bios started by पढ़ोahead that have
+	 * their endio callback (extent_io.c:end_bio_extent_पढ़ोpage)
 	 * still in progress (unlocked the pages in the bio but did not yet
-	 * unlocked the ranges in the io tree). Therefore this means some
-	 * ranges can still be locked and eviction started because before
+	 * unlocked the ranges in the io tree). Thereक्रमe this means some
+	 * ranges can still be locked and eviction started because beक्रमe
 	 * submitting those bios, which are executed by a separate task (work
-	 * queue kthread), inode references (inode->i_count) were not taken
+	 * queue kthपढ़ो), inode references (inode->i_count) were not taken
 	 * (which would be dropped in the end io callback of each bio).
-	 * Therefore here we effectively end up waiting for those bios and
-	 * anyone else holding locked ranges without having bumped the inode's
-	 * reference count - if we don't do it, when they access the inode's
+	 * Thereक्रमe here we effectively end up रुकोing क्रम those bios and
+	 * anyone अन्यथा holding locked ranges without having bumped the inode's
+	 * reference count - अगर we करोn't do it, when they access the inode's
 	 * io_tree to unlock a range it may be too late, leading to an
-	 * use-after-free issue.
+	 * use-after-मुक्त issue.
 	 */
 	spin_lock(&io_tree->lock);
-	while (!RB_EMPTY_ROOT(&io_tree->state)) {
-		struct extent_state *state;
-		struct extent_state *cached_state = NULL;
+	जबतक (!RB_EMPTY_ROOT(&io_tree->state)) अणु
+		काष्ठा extent_state *state;
+		काष्ठा extent_state *cached_state = शून्य;
 		u64 start;
 		u64 end;
-		unsigned state_flags;
+		अचिन्हित state_flags;
 
 		node = rb_first(&io_tree->state);
-		state = rb_entry(node, struct extent_state, rb_node);
+		state = rb_entry(node, काष्ठा extent_state, rb_node);
 		start = state->start;
 		end = state->end;
 		state_flags = state->state;
@@ -5326,14 +5327,14 @@ static void evict_inode_truncate_pages(struct inode *inode)
 
 		/*
 		 * If still has DELALLOC flag, the extent didn't reach disk,
-		 * and its reserved space won't be freed by delayed_ref.
-		 * So we need to free its reserved space here.
-		 * (Refer to comment in btrfs_invalidatepage, case 2)
+		 * and its reserved space won't be मुक्तd by delayed_ref.
+		 * So we need to मुक्त its reserved space here.
+		 * (Refer to comment in btrfs_invalidatepage, हाल 2)
 		 *
 		 * Note, end is the bytenr of last byte, so we need + 1 here.
 		 */
-		if (state_flags & EXTENT_DELALLOC)
-			btrfs_qgroup_free_data(BTRFS_I(inode), NULL, start,
+		अगर (state_flags & EXTENT_DELALLOC)
+			btrfs_qgroup_मुक्त_data(BTRFS_I(inode), शून्य, start,
 					       end - start + 1);
 
 		clear_extent_bit(io_tree, start, end,
@@ -5343,114 +5344,114 @@ static void evict_inode_truncate_pages(struct inode *inode)
 
 		cond_resched();
 		spin_lock(&io_tree->lock);
-	}
+	पूर्ण
 	spin_unlock(&io_tree->lock);
-}
+पूर्ण
 
-static struct btrfs_trans_handle *evict_refill_and_join(struct btrfs_root *root,
-							struct btrfs_block_rsv *rsv)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_block_rsv *global_rsv = &fs_info->global_block_rsv;
-	struct btrfs_trans_handle *trans;
+अटल काष्ठा btrfs_trans_handle *evict_refill_and_join(काष्ठा btrfs_root *root,
+							काष्ठा btrfs_block_rsv *rsv)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा btrfs_block_rsv *global_rsv = &fs_info->global_block_rsv;
+	काष्ठा btrfs_trans_handle *trans;
 	u64 delayed_refs_extra = btrfs_calc_insert_metadata_size(fs_info, 1);
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * Eviction should be taking place at some place safe because of our
-	 * delayed iputs.  However the normal flushing code will run delayed
-	 * iputs, so we cannot use FLUSH_ALL otherwise we'll deadlock.
+	 * delayed iमाला_दो.  However the normal flushing code will run delayed
+	 * iमाला_दो, so we cannot use FLUSH_ALL otherwise we'll deadlock.
 	 *
 	 * We reserve the delayed_refs_extra here again because we can't use
-	 * btrfs_start_transaction(root, 0) for the same deadlocky reason as
+	 * btrfs_start_transaction(root, 0) क्रम the same deadlocky reason as
 	 * above.  We reserve our extra bit here because we generate a ton of
 	 * delayed refs activity by truncating.
 	 *
 	 * If we cannot make our reservation we'll attempt to steal from the
-	 * global reserve, because we really want to be able to free up space.
+	 * global reserve, because we really want to be able to मुक्त up space.
 	 */
 	ret = btrfs_block_rsv_refill(root, rsv, rsv->size + delayed_refs_extra,
 				     BTRFS_RESERVE_FLUSH_EVICT);
-	if (ret) {
+	अगर (ret) अणु
 		/*
-		 * Try to steal from the global reserve if there is space for
+		 * Try to steal from the global reserve अगर there is space क्रम
 		 * it.
 		 */
-		if (btrfs_check_space_for_delayed_refs(fs_info) ||
-		    btrfs_block_rsv_migrate(global_rsv, rsv, rsv->size, 0)) {
+		अगर (btrfs_check_space_क्रम_delayed_refs(fs_info) ||
+		    btrfs_block_rsv_migrate(global_rsv, rsv, rsv->size, 0)) अणु
 			btrfs_warn(fs_info,
 				   "could not allocate space for delete; will truncate on mount");
-			return ERR_PTR(-ENOSPC);
-		}
+			वापस ERR_PTR(-ENOSPC);
+		पूर्ण
 		delayed_refs_extra = 0;
-	}
+	पूर्ण
 
 	trans = btrfs_join_transaction(root);
-	if (IS_ERR(trans))
-		return trans;
+	अगर (IS_ERR(trans))
+		वापस trans;
 
-	if (delayed_refs_extra) {
+	अगर (delayed_refs_extra) अणु
 		trans->block_rsv = &fs_info->trans_block_rsv;
 		trans->bytes_reserved = delayed_refs_extra;
 		btrfs_block_rsv_migrate(rsv, trans->block_rsv,
 					delayed_refs_extra, 1);
-	}
-	return trans;
-}
+	पूर्ण
+	वापस trans;
+पूर्ण
 
-void btrfs_evict_inode(struct inode *inode)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	struct btrfs_block_rsv *rsv;
-	int ret;
+व्योम btrfs_evict_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	काष्ठा btrfs_block_rsv *rsv;
+	पूर्णांक ret;
 
 	trace_btrfs_inode_evict(inode);
 
-	if (!root) {
+	अगर (!root) अणु
 		clear_inode(inode);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	evict_inode_truncate_pages(inode);
 
-	if (inode->i_nlink &&
+	अगर (inode->i_nlink &&
 	    ((btrfs_root_refs(&root->root_item) != 0 &&
 	      root->root_key.objectid != BTRFS_ROOT_TREE_OBJECTID) ||
-	     btrfs_is_free_space_inode(BTRFS_I(inode))))
-		goto no_delete;
+	     btrfs_is_मुक्त_space_inode(BTRFS_I(inode))))
+		जाओ no_delete;
 
-	if (is_bad_inode(inode))
-		goto no_delete;
+	अगर (is_bad_inode(inode))
+		जाओ no_delete;
 
-	btrfs_free_io_failure_record(BTRFS_I(inode), 0, (u64)-1);
+	btrfs_मुक्त_io_failure_record(BTRFS_I(inode), 0, (u64)-1);
 
-	if (test_bit(BTRFS_FS_LOG_RECOVERING, &fs_info->flags))
-		goto no_delete;
+	अगर (test_bit(BTRFS_FS_LOG_RECOVERING, &fs_info->flags))
+		जाओ no_delete;
 
-	if (inode->i_nlink > 0) {
+	अगर (inode->i_nlink > 0) अणु
 		BUG_ON(btrfs_root_refs(&root->root_item) != 0 &&
 		       root->root_key.objectid != BTRFS_ROOT_TREE_OBJECTID);
-		goto no_delete;
-	}
+		जाओ no_delete;
+	पूर्ण
 
 	ret = btrfs_commit_inode_delayed_inode(BTRFS_I(inode));
-	if (ret)
-		goto no_delete;
+	अगर (ret)
+		जाओ no_delete;
 
 	rsv = btrfs_alloc_block_rsv(fs_info, BTRFS_BLOCK_RSV_TEMP);
-	if (!rsv)
-		goto no_delete;
+	अगर (!rsv)
+		जाओ no_delete;
 	rsv->size = btrfs_calc_metadata_size(fs_info, 1);
 	rsv->failfast = 1;
 
-	btrfs_i_size_write(BTRFS_I(inode), 0);
+	btrfs_i_size_ग_लिखो(BTRFS_I(inode), 0);
 
-	while (1) {
+	जबतक (1) अणु
 		trans = evict_refill_and_join(root, rsv);
-		if (IS_ERR(trans))
-			goto free_rsv;
+		अगर (IS_ERR(trans))
+			जाओ मुक्त_rsv;
 
 		trans->block_rsv = rsv;
 
@@ -5459,141 +5460,141 @@ void btrfs_evict_inode(struct inode *inode)
 		trans->block_rsv = &fs_info->trans_block_rsv;
 		btrfs_end_transaction(trans);
 		btrfs_btree_balance_dirty(fs_info);
-		if (ret && ret != -ENOSPC && ret != -EAGAIN)
-			goto free_rsv;
-		else if (!ret)
-			break;
-	}
+		अगर (ret && ret != -ENOSPC && ret != -EAGAIN)
+			जाओ मुक्त_rsv;
+		अन्यथा अगर (!ret)
+			अवरोध;
+	पूर्ण
 
 	/*
 	 * Errors here aren't a big deal, it just means we leave orphan items in
 	 * the tree. They will be cleaned up on the next mount. If the inode
-	 * number gets reused, cleanup deletes the orphan item without doing
+	 * number माला_लो reused, cleanup deletes the orphan item without करोing
 	 * anything, and unlink reuses the existing orphan item.
 	 *
 	 * If it turns out that we are dropping too many of these, we might want
-	 * to add a mechanism for retrying these after a commit.
+	 * to add a mechanism क्रम retrying these after a commit.
 	 */
 	trans = evict_refill_and_join(root, rsv);
-	if (!IS_ERR(trans)) {
+	अगर (!IS_ERR(trans)) अणु
 		trans->block_rsv = rsv;
 		btrfs_orphan_del(trans, BTRFS_I(inode));
 		trans->block_rsv = &fs_info->trans_block_rsv;
 		btrfs_end_transaction(trans);
-	}
+	पूर्ण
 
-free_rsv:
-	btrfs_free_block_rsv(fs_info, rsv);
+मुक्त_rsv:
+	btrfs_मुक्त_block_rsv(fs_info, rsv);
 no_delete:
 	/*
 	 * If we didn't successfully delete, the orphan item will still be in
 	 * the tree and we'll retry on the next mount. Again, we might also want
 	 * to retry these periodically in the future.
 	 */
-	btrfs_remove_delayed_node(BTRFS_I(inode));
+	btrfs_हटाओ_delayed_node(BTRFS_I(inode));
 	clear_inode(inode);
-}
+पूर्ण
 
 /*
- * Return the key found in the dir entry in the location pointer, fill @type
- * with BTRFS_FT_*, and return 0.
+ * Return the key found in the dir entry in the location poपूर्णांकer, fill @type
+ * with BTRFS_FT_*, and वापस 0.
  *
- * If no dir entries were found, returns -ENOENT.
- * If found a corrupted location in dir entry, returns -EUCLEAN.
+ * If no dir entries were found, वापसs -ENOENT.
+ * If found a corrupted location in dir entry, वापसs -EUCLEAN.
  */
-static int btrfs_inode_by_name(struct inode *dir, struct dentry *dentry,
-			       struct btrfs_key *location, u8 *type)
-{
-	const char *name = dentry->d_name.name;
-	int namelen = dentry->d_name.len;
-	struct btrfs_dir_item *di;
-	struct btrfs_path *path;
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	int ret = 0;
+अटल पूर्णांक btrfs_inode_by_name(काष्ठा inode *dir, काष्ठा dentry *dentry,
+			       काष्ठा btrfs_key *location, u8 *type)
+अणु
+	स्थिर अक्षर *name = dentry->d_name.name;
+	पूर्णांक namelen = dentry->d_name.len;
+	काष्ठा btrfs_dir_item *di;
+	काष्ठा btrfs_path *path;
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	पूर्णांक ret = 0;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
-	di = btrfs_lookup_dir_item(NULL, root, path, btrfs_ino(BTRFS_I(dir)),
+	di = btrfs_lookup_dir_item(शून्य, root, path, btrfs_ino(BTRFS_I(dir)),
 			name, namelen, 0);
-	if (IS_ERR_OR_NULL(di)) {
+	अगर (IS_ERR_OR_शून्य(di)) अणु
 		ret = di ? PTR_ERR(di) : -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	btrfs_dir_item_key_to_cpu(path->nodes[0], di, location);
-	if (location->type != BTRFS_INODE_ITEM_KEY &&
-	    location->type != BTRFS_ROOT_ITEM_KEY) {
+	अगर (location->type != BTRFS_INODE_ITEM_KEY &&
+	    location->type != BTRFS_ROOT_ITEM_KEY) अणु
 		ret = -EUCLEAN;
 		btrfs_warn(root->fs_info,
 "%s gets something invalid in DIR_ITEM (name %s, directory ino %llu, location(%llu %u %llu))",
 			   __func__, name, btrfs_ino(BTRFS_I(dir)),
 			   location->objectid, location->type, location->offset);
-	}
-	if (!ret)
+	पूर्ण
+	अगर (!ret)
 		*type = btrfs_dir_type(path->nodes[0], di);
 out:
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
 /*
  * when we hit a tree root in a directory, the btrfs part of the inode
  * needs to be changed to reflect the root directory of the tree root.  This
- * is kind of like crossing a mount point.
+ * is kind of like crossing a mount poपूर्णांक.
  */
-static int fixup_tree_root_location(struct btrfs_fs_info *fs_info,
-				    struct inode *dir,
-				    struct dentry *dentry,
-				    struct btrfs_key *location,
-				    struct btrfs_root **sub_root)
-{
-	struct btrfs_path *path;
-	struct btrfs_root *new_root;
-	struct btrfs_root_ref *ref;
-	struct extent_buffer *leaf;
-	struct btrfs_key key;
-	int ret;
-	int err = 0;
+अटल पूर्णांक fixup_tree_root_location(काष्ठा btrfs_fs_info *fs_info,
+				    काष्ठा inode *dir,
+				    काष्ठा dentry *dentry,
+				    काष्ठा btrfs_key *location,
+				    काष्ठा btrfs_root **sub_root)
+अणु
+	काष्ठा btrfs_path *path;
+	काष्ठा btrfs_root *new_root;
+	काष्ठा btrfs_root_ref *ref;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_key key;
+	पूर्णांक ret;
+	पूर्णांक err = 0;
 
 	path = btrfs_alloc_path();
-	if (!path) {
+	अगर (!path) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = -ENOENT;
 	key.objectid = BTRFS_I(dir)->root->root_key.objectid;
 	key.type = BTRFS_ROOT_REF_KEY;
 	key.offset = location->objectid;
 
-	ret = btrfs_search_slot(NULL, fs_info->tree_root, &key, path, 0, 0);
-	if (ret) {
-		if (ret < 0)
+	ret = btrfs_search_slot(शून्य, fs_info->tree_root, &key, path, 0, 0);
+	अगर (ret) अणु
+		अगर (ret < 0)
 			err = ret;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	leaf = path->nodes[0];
-	ref = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_root_ref);
-	if (btrfs_root_ref_dirid(leaf, ref) != btrfs_ino(BTRFS_I(dir)) ||
+	ref = btrfs_item_ptr(leaf, path->slots[0], काष्ठा btrfs_root_ref);
+	अगर (btrfs_root_ref_dirid(leaf, ref) != btrfs_ino(BTRFS_I(dir)) ||
 	    btrfs_root_ref_name_len(leaf, ref) != dentry->d_name.len)
-		goto out;
+		जाओ out;
 
-	ret = memcmp_extent_buffer(leaf, dentry->d_name.name,
-				   (unsigned long)(ref + 1),
+	ret = स_भेद_extent_buffer(leaf, dentry->d_name.name,
+				   (अचिन्हित दीर्घ)(ref + 1),
 				   dentry->d_name.len);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	btrfs_release_path(path);
 
 	new_root = btrfs_get_fs_root(fs_info, location->objectid, true);
-	if (IS_ERR(new_root)) {
+	अगर (IS_ERR(new_root)) अणु
 		err = PTR_ERR(new_root);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	*sub_root = new_root;
 	location->objectid = btrfs_root_dirid(&new_root->root_item);
@@ -5601,72 +5602,72 @@ static int fixup_tree_root_location(struct btrfs_fs_info *fs_info,
 	location->offset = 0;
 	err = 0;
 out:
-	btrfs_free_path(path);
-	return err;
-}
+	btrfs_मुक्त_path(path);
+	वापस err;
+पूर्ण
 
-static void inode_tree_add(struct inode *inode)
-{
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	struct btrfs_inode *entry;
-	struct rb_node **p;
-	struct rb_node *parent;
-	struct rb_node *new = &BTRFS_I(inode)->rb_node;
+अटल व्योम inode_tree_add(काष्ठा inode *inode)
+अणु
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	काष्ठा btrfs_inode *entry;
+	काष्ठा rb_node **p;
+	काष्ठा rb_node *parent;
+	काष्ठा rb_node *new = &BTRFS_I(inode)->rb_node;
 	u64 ino = btrfs_ino(BTRFS_I(inode));
 
-	if (inode_unhashed(inode))
-		return;
-	parent = NULL;
+	अगर (inode_unhashed(inode))
+		वापस;
+	parent = शून्य;
 	spin_lock(&root->inode_lock);
 	p = &root->inode_tree.rb_node;
-	while (*p) {
+	जबतक (*p) अणु
 		parent = *p;
-		entry = rb_entry(parent, struct btrfs_inode, rb_node);
+		entry = rb_entry(parent, काष्ठा btrfs_inode, rb_node);
 
-		if (ino < btrfs_ino(entry))
+		अगर (ino < btrfs_ino(entry))
 			p = &parent->rb_left;
-		else if (ino > btrfs_ino(entry))
+		अन्यथा अगर (ino > btrfs_ino(entry))
 			p = &parent->rb_right;
-		else {
+		अन्यथा अणु
 			WARN_ON(!(entry->vfs_inode.i_state &
 				  (I_WILL_FREE | I_FREEING)));
 			rb_replace_node(parent, new, &root->inode_tree);
 			RB_CLEAR_NODE(parent);
 			spin_unlock(&root->inode_lock);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	rb_link_node(new, parent, p);
 	rb_insert_color(new, &root->inode_tree);
 	spin_unlock(&root->inode_lock);
-}
+पूर्ण
 
-static void inode_tree_del(struct btrfs_inode *inode)
-{
-	struct btrfs_root *root = inode->root;
-	int empty = 0;
+अटल व्योम inode_tree_del(काष्ठा btrfs_inode *inode)
+अणु
+	काष्ठा btrfs_root *root = inode->root;
+	पूर्णांक empty = 0;
 
 	spin_lock(&root->inode_lock);
-	if (!RB_EMPTY_NODE(&inode->rb_node)) {
+	अगर (!RB_EMPTY_NODE(&inode->rb_node)) अणु
 		rb_erase(&inode->rb_node, &root->inode_tree);
 		RB_CLEAR_NODE(&inode->rb_node);
 		empty = RB_EMPTY_ROOT(&root->inode_tree);
-	}
+	पूर्ण
 	spin_unlock(&root->inode_lock);
 
-	if (empty && btrfs_root_refs(&root->root_item) == 0) {
+	अगर (empty && btrfs_root_refs(&root->root_item) == 0) अणु
 		spin_lock(&root->inode_lock);
 		empty = RB_EMPTY_ROOT(&root->inode_tree);
 		spin_unlock(&root->inode_lock);
-		if (empty)
+		अगर (empty)
 			btrfs_add_dead_root(root);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static int btrfs_init_locked_inode(struct inode *inode, void *p)
-{
-	struct btrfs_iget_args *args = p;
+अटल पूर्णांक btrfs_init_locked_inode(काष्ठा inode *inode, व्योम *p)
+अणु
+	काष्ठा btrfs_iget_args *args = p;
 
 	inode->i_ino = args->ino;
 	BTRFS_I(inode)->location.objectid = args->ino;
@@ -5674,351 +5675,351 @@ static int btrfs_init_locked_inode(struct inode *inode, void *p)
 	BTRFS_I(inode)->location.offset = 0;
 	BTRFS_I(inode)->root = btrfs_grab_root(args->root);
 	BUG_ON(args->root && !BTRFS_I(inode)->root);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btrfs_find_actor(struct inode *inode, void *opaque)
-{
-	struct btrfs_iget_args *args = opaque;
+अटल पूर्णांक btrfs_find_actor(काष्ठा inode *inode, व्योम *opaque)
+अणु
+	काष्ठा btrfs_iget_args *args = opaque;
 
-	return args->ino == BTRFS_I(inode)->location.objectid &&
+	वापस args->ino == BTRFS_I(inode)->location.objectid &&
 		args->root == BTRFS_I(inode)->root;
-}
+पूर्ण
 
-static struct inode *btrfs_iget_locked(struct super_block *s, u64 ino,
-				       struct btrfs_root *root)
-{
-	struct inode *inode;
-	struct btrfs_iget_args args;
-	unsigned long hashval = btrfs_inode_hash(ino, root);
+अटल काष्ठा inode *btrfs_iget_locked(काष्ठा super_block *s, u64 ino,
+				       काष्ठा btrfs_root *root)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा btrfs_iget_args args;
+	अचिन्हित दीर्घ hashval = btrfs_inode_hash(ino, root);
 
 	args.ino = ino;
 	args.root = root;
 
 	inode = iget5_locked(s, hashval, btrfs_find_actor,
 			     btrfs_init_locked_inode,
-			     (void *)&args);
-	return inode;
-}
+			     (व्योम *)&args);
+	वापस inode;
+पूर्ण
 
 /*
  * Get an inode object given its inode number and corresponding root.
- * Path can be preallocated to prevent recursing back to iget through
- * allocator. NULL is also valid but may require an additional allocation
+ * Path can be pपुनः_स्मृतिated to prevent recursing back to iget through
+ * allocator. शून्य is also valid but may require an additional allocation
  * later.
  */
-struct inode *btrfs_iget_path(struct super_block *s, u64 ino,
-			      struct btrfs_root *root, struct btrfs_path *path)
-{
-	struct inode *inode;
+काष्ठा inode *btrfs_iget_path(काष्ठा super_block *s, u64 ino,
+			      काष्ठा btrfs_root *root, काष्ठा btrfs_path *path)
+अणु
+	काष्ठा inode *inode;
 
 	inode = btrfs_iget_locked(s, ino, root);
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (inode->i_state & I_NEW) {
-		int ret;
+	अगर (inode->i_state & I_NEW) अणु
+		पूर्णांक ret;
 
-		ret = btrfs_read_locked_inode(inode, path);
-		if (!ret) {
+		ret = btrfs_पढ़ो_locked_inode(inode, path);
+		अगर (!ret) अणु
 			inode_tree_add(inode);
 			unlock_new_inode(inode);
-		} else {
+		पूर्ण अन्यथा अणु
 			iget_failed(inode);
 			/*
 			 * ret > 0 can come from btrfs_search_slot called by
-			 * btrfs_read_locked_inode, this means the inode item
+			 * btrfs_पढ़ो_locked_inode, this means the inode item
 			 * was not found.
 			 */
-			if (ret > 0)
+			अगर (ret > 0)
 				ret = -ENOENT;
 			inode = ERR_PTR(ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-struct inode *btrfs_iget(struct super_block *s, u64 ino, struct btrfs_root *root)
-{
-	return btrfs_iget_path(s, ino, root, NULL);
-}
+काष्ठा inode *btrfs_iget(काष्ठा super_block *s, u64 ino, काष्ठा btrfs_root *root)
+अणु
+	वापस btrfs_iget_path(s, ino, root, शून्य);
+पूर्ण
 
-static struct inode *new_simple_dir(struct super_block *s,
-				    struct btrfs_key *key,
-				    struct btrfs_root *root)
-{
-	struct inode *inode = new_inode(s);
+अटल काष्ठा inode *new_simple_dir(काष्ठा super_block *s,
+				    काष्ठा btrfs_key *key,
+				    काष्ठा btrfs_root *root)
+अणु
+	काष्ठा inode *inode = new_inode(s);
 
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
 
 	BTRFS_I(inode)->root = btrfs_grab_root(root);
-	memcpy(&BTRFS_I(inode)->location, key, sizeof(*key));
-	set_bit(BTRFS_INODE_DUMMY, &BTRFS_I(inode)->runtime_flags);
+	स_नकल(&BTRFS_I(inode)->location, key, माप(*key));
+	set_bit(BTRFS_INODE_DUMMY, &BTRFS_I(inode)->runसमय_flags);
 
-	inode->i_ino = BTRFS_EMPTY_SUBVOL_DIR_OBJECTID;
+	inode->i_ino = BTRFS_EMPTY_SUBVOL_सूची_OBJECTID;
 	/*
-	 * We only need lookup, the rest is read-only and there's no inode
+	 * We only need lookup, the rest is पढ़ो-only and there's no inode
 	 * associated with the dentry
 	 */
 	inode->i_op = &simple_dir_inode_operations;
 	inode->i_opflags &= ~IOP_XATTR;
 	inode->i_fop = &simple_dir_operations;
-	inode->i_mode = S_IFDIR | S_IRUGO | S_IWUSR | S_IXUGO;
-	inode->i_mtime = current_time(inode);
-	inode->i_atime = inode->i_mtime;
-	inode->i_ctime = inode->i_mtime;
-	BTRFS_I(inode)->i_otime = inode->i_mtime;
+	inode->i_mode = S_IFसूची | S_IRUGO | S_IWUSR | S_IXUGO;
+	inode->i_mसमय = current_समय(inode);
+	inode->i_aसमय = inode->i_mसमय;
+	inode->i_स_समय = inode->i_mसमय;
+	BTRFS_I(inode)->i_oसमय = inode->i_mसमय;
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-static inline u8 btrfs_inode_type(struct inode *inode)
-{
+अटल अंतरभूत u8 btrfs_inode_type(काष्ठा inode *inode)
+अणु
 	/*
-	 * Compile-time asserts that generic FT_* types still match
+	 * Compile-समय निश्चितs that generic FT_* types still match
 	 * BTRFS_FT_* types
 	 */
 	BUILD_BUG_ON(BTRFS_FT_UNKNOWN != FT_UNKNOWN);
-	BUILD_BUG_ON(BTRFS_FT_REG_FILE != FT_REG_FILE);
-	BUILD_BUG_ON(BTRFS_FT_DIR != FT_DIR);
+	BUILD_BUG_ON(BTRFS_FT_REG_खाता != FT_REG_खाता);
+	BUILD_BUG_ON(BTRFS_FT_सूची != FT_सूची);
 	BUILD_BUG_ON(BTRFS_FT_CHRDEV != FT_CHRDEV);
 	BUILD_BUG_ON(BTRFS_FT_BLKDEV != FT_BLKDEV);
 	BUILD_BUG_ON(BTRFS_FT_FIFO != FT_FIFO);
 	BUILD_BUG_ON(BTRFS_FT_SOCK != FT_SOCK);
 	BUILD_BUG_ON(BTRFS_FT_SYMLINK != FT_SYMLINK);
 
-	return fs_umode_to_ftype(inode->i_mode);
-}
+	वापस fs_umode_to_ftype(inode->i_mode);
+पूर्ण
 
-struct inode *btrfs_lookup_dentry(struct inode *dir, struct dentry *dentry)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
-	struct inode *inode;
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	struct btrfs_root *sub_root = root;
-	struct btrfs_key location;
+काष्ठा inode *btrfs_lookup_dentry(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
+	काष्ठा inode *inode;
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	काष्ठा btrfs_root *sub_root = root;
+	काष्ठा btrfs_key location;
 	u8 di_type = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (dentry->d_name.len > BTRFS_NAME_LEN)
-		return ERR_PTR(-ENAMETOOLONG);
+	अगर (dentry->d_name.len > BTRFS_NAME_LEN)
+		वापस ERR_PTR(-ENAMETOOLONG);
 
 	ret = btrfs_inode_by_name(dir, dentry, &location, &di_type);
-	if (ret < 0)
-		return ERR_PTR(ret);
+	अगर (ret < 0)
+		वापस ERR_PTR(ret);
 
-	if (location.type == BTRFS_INODE_ITEM_KEY) {
+	अगर (location.type == BTRFS_INODE_ITEM_KEY) अणु
 		inode = btrfs_iget(dir->i_sb, location.objectid, root);
-		if (IS_ERR(inode))
-			return inode;
+		अगर (IS_ERR(inode))
+			वापस inode;
 
 		/* Do extra check against inode mode with di_type */
-		if (btrfs_inode_type(inode) != di_type) {
+		अगर (btrfs_inode_type(inode) != di_type) अणु
 			btrfs_crit(fs_info,
 "inode mode mismatch with dir: inode mode=0%o btrfs type=%u dir type=%u",
 				  inode->i_mode, btrfs_inode_type(inode),
 				  di_type);
 			iput(inode);
-			return ERR_PTR(-EUCLEAN);
-		}
-		return inode;
-	}
+			वापस ERR_PTR(-EUCLEAN);
+		पूर्ण
+		वापस inode;
+	पूर्ण
 
 	ret = fixup_tree_root_location(fs_info, dir, dentry,
 				       &location, &sub_root);
-	if (ret < 0) {
-		if (ret != -ENOENT)
+	अगर (ret < 0) अणु
+		अगर (ret != -ENOENT)
 			inode = ERR_PTR(ret);
-		else
+		अन्यथा
 			inode = new_simple_dir(dir->i_sb, &location, sub_root);
-	} else {
+	पूर्ण अन्यथा अणु
 		inode = btrfs_iget(dir->i_sb, location.objectid, sub_root);
-	}
-	if (root != sub_root)
+	पूर्ण
+	अगर (root != sub_root)
 		btrfs_put_root(sub_root);
 
-	if (!IS_ERR(inode) && root != sub_root) {
-		down_read(&fs_info->cleanup_work_sem);
-		if (!sb_rdonly(inode->i_sb))
+	अगर (!IS_ERR(inode) && root != sub_root) अणु
+		करोwn_पढ़ो(&fs_info->cleanup_work_sem);
+		अगर (!sb_rकरोnly(inode->i_sb))
 			ret = btrfs_orphan_cleanup(sub_root);
-		up_read(&fs_info->cleanup_work_sem);
-		if (ret) {
+		up_पढ़ो(&fs_info->cleanup_work_sem);
+		अगर (ret) अणु
 			iput(inode);
 			inode = ERR_PTR(ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-static int btrfs_dentry_delete(const struct dentry *dentry)
-{
-	struct btrfs_root *root;
-	struct inode *inode = d_inode(dentry);
+अटल पूर्णांक btrfs_dentry_delete(स्थिर काष्ठा dentry *dentry)
+अणु
+	काष्ठा btrfs_root *root;
+	काष्ठा inode *inode = d_inode(dentry);
 
-	if (!inode && !IS_ROOT(dentry))
+	अगर (!inode && !IS_ROOT(dentry))
 		inode = d_inode(dentry->d_parent);
 
-	if (inode) {
+	अगर (inode) अणु
 		root = BTRFS_I(inode)->root;
-		if (btrfs_root_refs(&root->root_item) == 0)
-			return 1;
+		अगर (btrfs_root_refs(&root->root_item) == 0)
+			वापस 1;
 
-		if (btrfs_ino(BTRFS_I(inode)) == BTRFS_EMPTY_SUBVOL_DIR_OBJECTID)
-			return 1;
-	}
-	return 0;
-}
+		अगर (btrfs_ino(BTRFS_I(inode)) == BTRFS_EMPTY_SUBVOL_सूची_OBJECTID)
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct dentry *btrfs_lookup(struct inode *dir, struct dentry *dentry,
-				   unsigned int flags)
-{
-	struct inode *inode = btrfs_lookup_dentry(dir, dentry);
+अटल काष्ठा dentry *btrfs_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
+				   अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode *inode = btrfs_lookup_dentry(dir, dentry);
 
-	if (inode == ERR_PTR(-ENOENT))
-		inode = NULL;
-	return d_splice_alias(inode, dentry);
-}
+	अगर (inode == ERR_PTR(-ENOENT))
+		inode = शून्य;
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
 /*
- * All this infrastructure exists because dir_emit can fault, and we are holding
- * the tree lock when doing readdir.  For now just allocate a buffer and copy
- * our information into that, and then dir_emit from the buffer.  This is
- * similar to what NFS does, only we don't keep the buffer around in pagecache
- * because I'm afraid I'll mess that up.  Long term we need to make filldir do
- * copy_to_user_inatomic so we don't have to worry about page faulting under the
+ * All this infraकाष्ठाure exists because dir_emit can fault, and we are holding
+ * the tree lock when करोing सूची_पढ़ो.  For now just allocate a buffer and copy
+ * our inक्रमmation पूर्णांकo that, and then dir_emit from the buffer.  This is
+ * similar to what NFS करोes, only we करोn't keep the buffer around in pagecache
+ * because I'm afraid I'll mess that up.  Long term we need to make filldir करो
+ * copy_to_user_inatomic so we करोn't have to worry about page faulting under the
  * tree lock.
  */
-static int btrfs_opendir(struct inode *inode, struct file *file)
-{
-	struct btrfs_file_private *private;
+अटल पूर्णांक btrfs_सूची_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा btrfs_file_निजी *निजी;
 
-	private = kzalloc(sizeof(struct btrfs_file_private), GFP_KERNEL);
-	if (!private)
-		return -ENOMEM;
-	private->filldir_buf = kzalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!private->filldir_buf) {
-		kfree(private);
-		return -ENOMEM;
-	}
-	file->private_data = private;
-	return 0;
-}
+	निजी = kzalloc(माप(काष्ठा btrfs_file_निजी), GFP_KERNEL);
+	अगर (!निजी)
+		वापस -ENOMEM;
+	निजी->filldir_buf = kzalloc(PAGE_SIZE, GFP_KERNEL);
+	अगर (!निजी->filldir_buf) अणु
+		kमुक्त(निजी);
+		वापस -ENOMEM;
+	पूर्ण
+	file->निजी_data = निजी;
+	वापस 0;
+पूर्ण
 
-struct dir_entry {
+काष्ठा dir_entry अणु
 	u64 ino;
 	u64 offset;
-	unsigned type;
-	int name_len;
-};
+	अचिन्हित type;
+	पूर्णांक name_len;
+पूर्ण;
 
-static int btrfs_filldir(void *addr, int entries, struct dir_context *ctx)
-{
-	while (entries--) {
-		struct dir_entry *entry = addr;
-		char *name = (char *)(entry + 1);
+अटल पूर्णांक btrfs_filldir(व्योम *addr, पूर्णांक entries, काष्ठा dir_context *ctx)
+अणु
+	जबतक (entries--) अणु
+		काष्ठा dir_entry *entry = addr;
+		अक्षर *name = (अक्षर *)(entry + 1);
 
 		ctx->pos = get_unaligned(&entry->offset);
-		if (!dir_emit(ctx, name, get_unaligned(&entry->name_len),
+		अगर (!dir_emit(ctx, name, get_unaligned(&entry->name_len),
 					 get_unaligned(&entry->ino),
 					 get_unaligned(&entry->type)))
-			return 1;
-		addr += sizeof(struct dir_entry) +
+			वापस 1;
+		addr += माप(काष्ठा dir_entry) +
 			get_unaligned(&entry->name_len);
 		ctx->pos++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int btrfs_real_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct inode *inode = file_inode(file);
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	struct btrfs_file_private *private = file->private_data;
-	struct btrfs_dir_item *di;
-	struct btrfs_key key;
-	struct btrfs_key found_key;
-	struct btrfs_path *path;
-	void *addr;
-	struct list_head ins_list;
-	struct list_head del_list;
-	int ret;
-	struct extent_buffer *leaf;
-	int slot;
-	char *name_ptr;
-	int name_len;
-	int entries = 0;
-	int total_len = 0;
+अटल पूर्णांक btrfs_real_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	काष्ठा btrfs_file_निजी *निजी = file->निजी_data;
+	काष्ठा btrfs_dir_item *di;
+	काष्ठा btrfs_key key;
+	काष्ठा btrfs_key found_key;
+	काष्ठा btrfs_path *path;
+	व्योम *addr;
+	काष्ठा list_head ins_list;
+	काष्ठा list_head del_list;
+	पूर्णांक ret;
+	काष्ठा extent_buffer *leaf;
+	पूर्णांक slot;
+	अक्षर *name_ptr;
+	पूर्णांक name_len;
+	पूर्णांक entries = 0;
+	पूर्णांक total_len = 0;
 	bool put = false;
-	struct btrfs_key location;
+	काष्ठा btrfs_key location;
 
-	if (!dir_emit_dots(file, ctx))
-		return 0;
+	अगर (!dir_emit_करोts(file, ctx))
+		वापस 0;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
-	addr = private->filldir_buf;
-	path->reada = READA_FORWARD;
+	addr = निजी->filldir_buf;
+	path->पढ़ोa = READA_FORWARD;
 
 	INIT_LIST_HEAD(&ins_list);
 	INIT_LIST_HEAD(&del_list);
-	put = btrfs_readdir_get_delayed_items(inode, &ins_list, &del_list);
+	put = btrfs_सूची_पढ़ो_get_delayed_items(inode, &ins_list, &del_list);
 
 again:
-	key.type = BTRFS_DIR_INDEX_KEY;
+	key.type = BTRFS_सूची_INDEX_KEY;
 	key.offset = ctx->pos;
 	key.objectid = btrfs_ino(BTRFS_I(inode));
 
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-	if (ret < 0)
-		goto err;
+	ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
+	अगर (ret < 0)
+		जाओ err;
 
-	while (1) {
-		struct dir_entry *entry;
+	जबतक (1) अणु
+		काष्ठा dir_entry *entry;
 
 		leaf = path->nodes[0];
 		slot = path->slots[0];
-		if (slot >= btrfs_header_nritems(leaf)) {
+		अगर (slot >= btrfs_header_nritems(leaf)) अणु
 			ret = btrfs_next_leaf(root, path);
-			if (ret < 0)
-				goto err;
-			else if (ret > 0)
-				break;
-			continue;
-		}
+			अगर (ret < 0)
+				जाओ err;
+			अन्यथा अगर (ret > 0)
+				अवरोध;
+			जारी;
+		पूर्ण
 
 		btrfs_item_key_to_cpu(leaf, &found_key, slot);
 
-		if (found_key.objectid != key.objectid)
-			break;
-		if (found_key.type != BTRFS_DIR_INDEX_KEY)
-			break;
-		if (found_key.offset < ctx->pos)
-			goto next;
-		if (btrfs_should_delete_dir_index(&del_list, found_key.offset))
-			goto next;
-		di = btrfs_item_ptr(leaf, slot, struct btrfs_dir_item);
+		अगर (found_key.objectid != key.objectid)
+			अवरोध;
+		अगर (found_key.type != BTRFS_सूची_INDEX_KEY)
+			अवरोध;
+		अगर (found_key.offset < ctx->pos)
+			जाओ next;
+		अगर (btrfs_should_delete_dir_index(&del_list, found_key.offset))
+			जाओ next;
+		di = btrfs_item_ptr(leaf, slot, काष्ठा btrfs_dir_item);
 		name_len = btrfs_dir_name_len(leaf, di);
-		if ((total_len + sizeof(struct dir_entry) + name_len) >=
-		    PAGE_SIZE) {
+		अगर ((total_len + माप(काष्ठा dir_entry) + name_len) >=
+		    PAGE_SIZE) अणु
 			btrfs_release_path(path);
-			ret = btrfs_filldir(private->filldir_buf, entries, ctx);
-			if (ret)
-				goto nopos;
-			addr = private->filldir_buf;
+			ret = btrfs_filldir(निजी->filldir_buf, entries, ctx);
+			अगर (ret)
+				जाओ nopos;
+			addr = निजी->filldir_buf;
 			entries = 0;
 			total_len = 0;
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 
 		entry = addr;
 		put_unaligned(name_len, &entry->name_len);
-		name_ptr = (char *)(entry + 1);
-		read_extent_buffer(leaf, name_ptr, (unsigned long)(di + 1),
+		name_ptr = (अक्षर *)(entry + 1);
+		पढ़ो_extent_buffer(leaf, name_ptr, (अचिन्हित दीर्घ)(di + 1),
 				   name_len);
 		put_unaligned(fs_ftype_to_dtype(btrfs_dir_type(leaf, di)),
 				&entry->type);
@@ -6026,295 +6027,295 @@ again:
 		put_unaligned(location.objectid, &entry->ino);
 		put_unaligned(found_key.offset, &entry->offset);
 		entries++;
-		addr += sizeof(struct dir_entry) + name_len;
-		total_len += sizeof(struct dir_entry) + name_len;
+		addr += माप(काष्ठा dir_entry) + name_len;
+		total_len += माप(काष्ठा dir_entry) + name_len;
 next:
 		path->slots[0]++;
-	}
+	पूर्ण
 	btrfs_release_path(path);
 
-	ret = btrfs_filldir(private->filldir_buf, entries, ctx);
-	if (ret)
-		goto nopos;
+	ret = btrfs_filldir(निजी->filldir_buf, entries, ctx);
+	अगर (ret)
+		जाओ nopos;
 
-	ret = btrfs_readdir_delayed_dir_index(ctx, &ins_list);
-	if (ret)
-		goto nopos;
+	ret = btrfs_सूची_पढ़ो_delayed_dir_index(ctx, &ins_list);
+	अगर (ret)
+		जाओ nopos;
 
 	/*
-	 * Stop new entries from being returned after we return the last
+	 * Stop new entries from being वापसed after we वापस the last
 	 * entry.
 	 *
-	 * New directory entries are assigned a strictly increasing
-	 * offset.  This means that new entries created during readdir
-	 * are *guaranteed* to be seen in the future by that readdir.
+	 * New directory entries are asचिन्हित a strictly increasing
+	 * offset.  This means that new entries created during सूची_पढ़ो
+	 * are *guaranteed* to be seen in the future by that सूची_पढ़ो.
 	 * This has broken buggy programs which operate on names as
-	 * they're returned by readdir.  Until we re-use freed offsets
-	 * we have this hack to stop new entries from being returned
+	 * they're वापसed by सूची_पढ़ो.  Until we re-use मुक्तd offsets
+	 * we have this hack to stop new entries from being वापसed
 	 * under the assumption that they'll never reach this huge
 	 * offset.
 	 *
 	 * This is being careful not to overflow 32bit loff_t unless the
-	 * last entry requires it because doing so has broken 32bit apps
+	 * last entry requires it because करोing so has broken 32bit apps
 	 * in the past.
 	 */
-	if (ctx->pos >= INT_MAX)
-		ctx->pos = LLONG_MAX;
-	else
-		ctx->pos = INT_MAX;
+	अगर (ctx->pos >= पूर्णांक_उच्च)
+		ctx->pos = Lदीर्घ_उच्च;
+	अन्यथा
+		ctx->pos = पूर्णांक_उच्च;
 nopos:
 	ret = 0;
 err:
-	if (put)
-		btrfs_readdir_put_delayed_items(inode, &ins_list, &del_list);
-	btrfs_free_path(path);
-	return ret;
-}
+	अगर (put)
+		btrfs_सूची_पढ़ो_put_delayed_items(inode, &ins_list, &del_list);
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
 /*
- * This is somewhat expensive, updating the tree every time the
+ * This is somewhat expensive, updating the tree every समय the
  * inode changes.  But, it is most likely to find the inode in cache.
- * FIXME, needs more benchmarking...there are no reasons other than performance
+ * FIXME, needs more benchmarking...there are no reasons other than perक्रमmance
  * to keep or drop this code.
  */
-static int btrfs_dirty_inode(struct inode *inode)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	struct btrfs_trans_handle *trans;
-	int ret;
+अटल पूर्णांक btrfs_dirty_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	काष्ठा btrfs_trans_handle *trans;
+	पूर्णांक ret;
 
-	if (test_bit(BTRFS_INODE_DUMMY, &BTRFS_I(inode)->runtime_flags))
-		return 0;
+	अगर (test_bit(BTRFS_INODE_DUMMY, &BTRFS_I(inode)->runसमय_flags))
+		वापस 0;
 
 	trans = btrfs_join_transaction(root);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	अगर (IS_ERR(trans))
+		वापस PTR_ERR(trans);
 
 	ret = btrfs_update_inode(trans, root, BTRFS_I(inode));
-	if (ret && (ret == -ENOSPC || ret == -EDQUOT)) {
+	अगर (ret && (ret == -ENOSPC || ret == -EDQUOT)) अणु
 		/* whoops, lets try again with the full transaction */
 		btrfs_end_transaction(trans);
 		trans = btrfs_start_transaction(root, 1);
-		if (IS_ERR(trans))
-			return PTR_ERR(trans);
+		अगर (IS_ERR(trans))
+			वापस PTR_ERR(trans);
 
 		ret = btrfs_update_inode(trans, root, BTRFS_I(inode));
-	}
+	पूर्ण
 	btrfs_end_transaction(trans);
-	if (BTRFS_I(inode)->delayed_node)
+	अगर (BTRFS_I(inode)->delayed_node)
 		btrfs_balance_delayed_items(fs_info);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This is a copy of file_update_time.  We need this so we can return error on
- * ENOSPC for updating the inode in the case of file write and mmap writes.
+ * This is a copy of file_update_समय.  We need this so we can वापस error on
+ * ENOSPC क्रम updating the inode in the हाल of file ग_लिखो and mmap ग_लिखोs.
  */
-static int btrfs_update_time(struct inode *inode, struct timespec64 *now,
-			     int flags)
-{
-	struct btrfs_root *root = BTRFS_I(inode)->root;
+अटल पूर्णांक btrfs_update_समय(काष्ठा inode *inode, काष्ठा बारpec64 *now,
+			     पूर्णांक flags)
+अणु
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
 	bool dirty = flags & ~S_VERSION;
 
-	if (btrfs_root_readonly(root))
-		return -EROFS;
+	अगर (btrfs_root_पढ़ोonly(root))
+		वापस -EROFS;
 
-	if (flags & S_VERSION)
+	अगर (flags & S_VERSION)
 		dirty |= inode_maybe_inc_iversion(inode, dirty);
-	if (flags & S_CTIME)
-		inode->i_ctime = *now;
-	if (flags & S_MTIME)
-		inode->i_mtime = *now;
-	if (flags & S_ATIME)
-		inode->i_atime = *now;
-	return dirty ? btrfs_dirty_inode(inode) : 0;
-}
+	अगर (flags & S_CTIME)
+		inode->i_स_समय = *now;
+	अगर (flags & S_MTIME)
+		inode->i_mसमय = *now;
+	अगर (flags & S_ATIME)
+		inode->i_aसमय = *now;
+	वापस dirty ? btrfs_dirty_inode(inode) : 0;
+पूर्ण
 
 /*
  * find the highest existing sequence number in a directory
  * and then set the in-memory index_cnt variable to reflect
- * free sequence numbers
+ * मुक्त sequence numbers
  */
-static int btrfs_set_inode_index_count(struct btrfs_inode *inode)
-{
-	struct btrfs_root *root = inode->root;
-	struct btrfs_key key, found_key;
-	struct btrfs_path *path;
-	struct extent_buffer *leaf;
-	int ret;
+अटल पूर्णांक btrfs_set_inode_index_count(काष्ठा btrfs_inode *inode)
+अणु
+	काष्ठा btrfs_root *root = inode->root;
+	काष्ठा btrfs_key key, found_key;
+	काष्ठा btrfs_path *path;
+	काष्ठा extent_buffer *leaf;
+	पूर्णांक ret;
 
 	key.objectid = btrfs_ino(inode);
-	key.type = BTRFS_DIR_INDEX_KEY;
+	key.type = BTRFS_सूची_INDEX_KEY;
 	key.offset = (u64)-1;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-	if (ret < 0)
-		goto out;
+	ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
+	अगर (ret < 0)
+		जाओ out;
 	/* FIXME: we should be able to handle this */
-	if (ret == 0)
-		goto out;
+	अगर (ret == 0)
+		जाओ out;
 	ret = 0;
 
 	/*
 	 * MAGIC NUMBER EXPLANATION:
 	 * since we search a directory based on f_pos we have to start at 2
 	 * since '.' and '..' have f_pos of 0 and 1 respectively, so everybody
-	 * else has to start at 2
+	 * अन्यथा has to start at 2
 	 */
-	if (path->slots[0] == 0) {
+	अगर (path->slots[0] == 0) अणु
 		inode->index_cnt = 2;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	path->slots[0]--;
 
 	leaf = path->nodes[0];
 	btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
 
-	if (found_key.objectid != btrfs_ino(inode) ||
-	    found_key.type != BTRFS_DIR_INDEX_KEY) {
+	अगर (found_key.objectid != btrfs_ino(inode) ||
+	    found_key.type != BTRFS_सूची_INDEX_KEY) अणु
 		inode->index_cnt = 2;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	inode->index_cnt = found_key.offset + 1;
 out:
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
 /*
- * helper to find a free sequence number in a given directory.  This current
- * code is very simple, later versions will do smarter things in the btree
+ * helper to find a मुक्त sequence number in a given directory.  This current
+ * code is very simple, later versions will करो smarter things in the btree
  */
-int btrfs_set_inode_index(struct btrfs_inode *dir, u64 *index)
-{
-	int ret = 0;
+पूर्णांक btrfs_set_inode_index(काष्ठा btrfs_inode *dir, u64 *index)
+अणु
+	पूर्णांक ret = 0;
 
-	if (dir->index_cnt == (u64)-1) {
+	अगर (dir->index_cnt == (u64)-1) अणु
 		ret = btrfs_inode_delayed_dir_index_count(dir);
-		if (ret) {
+		अगर (ret) अणु
 			ret = btrfs_set_inode_index_count(dir);
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
 	*index = dir->index_cnt;
 	dir->index_cnt++;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_insert_inode_locked(struct inode *inode)
-{
-	struct btrfs_iget_args args;
+अटल पूर्णांक btrfs_insert_inode_locked(काष्ठा inode *inode)
+अणु
+	काष्ठा btrfs_iget_args args;
 
 	args.ino = BTRFS_I(inode)->location.objectid;
 	args.root = BTRFS_I(inode)->root;
 
-	return insert_inode_locked4(inode,
+	वापस insert_inode_locked4(inode,
 		   btrfs_inode_hash(inode->i_ino, BTRFS_I(inode)->root),
 		   btrfs_find_actor, &args);
-}
+पूर्ण
 
 /*
  * Inherit flags from the parent inode.
  *
  * Currently only the compression flags and the cow flags are inherited.
  */
-static void btrfs_inherit_iflags(struct inode *inode, struct inode *dir)
-{
-	unsigned int flags;
+अटल व्योम btrfs_inherit_अगरlags(काष्ठा inode *inode, काष्ठा inode *dir)
+अणु
+	अचिन्हित पूर्णांक flags;
 
-	if (!dir)
-		return;
+	अगर (!dir)
+		वापस;
 
 	flags = BTRFS_I(dir)->flags;
 
-	if (flags & BTRFS_INODE_NOCOMPRESS) {
+	अगर (flags & BTRFS_INODE_NOCOMPRESS) अणु
 		BTRFS_I(inode)->flags &= ~BTRFS_INODE_COMPRESS;
 		BTRFS_I(inode)->flags |= BTRFS_INODE_NOCOMPRESS;
-	} else if (flags & BTRFS_INODE_COMPRESS) {
+	पूर्ण अन्यथा अगर (flags & BTRFS_INODE_COMPRESS) अणु
 		BTRFS_I(inode)->flags &= ~BTRFS_INODE_NOCOMPRESS;
 		BTRFS_I(inode)->flags |= BTRFS_INODE_COMPRESS;
-	}
+	पूर्ण
 
-	if (flags & BTRFS_INODE_NODATACOW) {
+	अगर (flags & BTRFS_INODE_NODATACOW) अणु
 		BTRFS_I(inode)->flags |= BTRFS_INODE_NODATACOW;
-		if (S_ISREG(inode->i_mode))
+		अगर (S_ISREG(inode->i_mode))
 			BTRFS_I(inode)->flags |= BTRFS_INODE_NODATASUM;
-	}
+	पूर्ण
 
 	btrfs_sync_inode_flags_to_i_flags(inode);
-}
+पूर्ण
 
-static struct inode *btrfs_new_inode(struct btrfs_trans_handle *trans,
-				     struct btrfs_root *root,
-				     struct inode *dir,
-				     const char *name, int name_len,
+अटल काष्ठा inode *btrfs_new_inode(काष्ठा btrfs_trans_handle *trans,
+				     काष्ठा btrfs_root *root,
+				     काष्ठा inode *dir,
+				     स्थिर अक्षर *name, पूर्णांक name_len,
 				     u64 ref_objectid, u64 objectid,
 				     umode_t mode, u64 *index)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct inode *inode;
-	struct btrfs_inode_item *inode_item;
-	struct btrfs_key *location;
-	struct btrfs_path *path;
-	struct btrfs_inode_ref *ref;
-	struct btrfs_key key[2];
+अणु
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा inode *inode;
+	काष्ठा btrfs_inode_item *inode_item;
+	काष्ठा btrfs_key *location;
+	काष्ठा btrfs_path *path;
+	काष्ठा btrfs_inode_ref *ref;
+	काष्ठा btrfs_key key[2];
 	u32 sizes[2];
-	int nitems = name ? 2 : 1;
-	unsigned long ptr;
-	unsigned int nofs_flag;
-	int ret;
+	पूर्णांक nitems = name ? 2 : 1;
+	अचिन्हित दीर्घ ptr;
+	अचिन्हित पूर्णांक nofs_flag;
+	पूर्णांक ret;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return ERR_PTR(-ENOMEM);
+	अगर (!path)
+		वापस ERR_PTR(-ENOMEM);
 
-	nofs_flag = memalloc_nofs_save();
+	nofs_flag = meदो_स्मृति_nofs_save();
 	inode = new_inode(fs_info->sb);
-	memalloc_nofs_restore(nofs_flag);
-	if (!inode) {
-		btrfs_free_path(path);
-		return ERR_PTR(-ENOMEM);
-	}
+	meदो_स्मृति_nofs_restore(nofs_flag);
+	अगर (!inode) अणु
+		btrfs_मुक्त_path(path);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	/*
-	 * O_TMPFILE, set link count to 0, so that after this point,
+	 * O_TMPखाता, set link count to 0, so that after this poपूर्णांक,
 	 * we fill in an inode item with the correct link count.
 	 */
-	if (!name)
+	अगर (!name)
 		set_nlink(inode, 0);
 
 	/*
 	 * we have to initialize this early, so we can reclaim the inode
-	 * number if we fail afterwards in this function.
+	 * number अगर we fail afterwards in this function.
 	 */
 	inode->i_ino = objectid;
 
-	if (dir && name) {
+	अगर (dir && name) अणु
 		trace_btrfs_inode_request(dir);
 
 		ret = btrfs_set_inode_index(BTRFS_I(dir), index);
-		if (ret) {
-			btrfs_free_path(path);
+		अगर (ret) अणु
+			btrfs_मुक्त_path(path);
 			iput(inode);
-			return ERR_PTR(ret);
-		}
-	} else if (dir) {
+			वापस ERR_PTR(ret);
+		पूर्ण
+	पूर्ण अन्यथा अगर (dir) अणु
 		*index = 0;
-	}
+	पूर्ण
 	/*
-	 * index_cnt is ignored for everything but a dir,
-	 * btrfs_set_inode_index_count has an explanation for the magic
+	 * index_cnt is ignored क्रम everything but a dir,
+	 * btrfs_set_inode_index_count has an explanation क्रम the magic
 	 * number
 	 */
 	BTRFS_I(inode)->index_cnt = 2;
@@ -6325,31 +6326,31 @@ static struct inode *btrfs_new_inode(struct btrfs_trans_handle *trans,
 
 	/*
 	 * We could have gotten an inode number from somebody who was fsynced
-	 * and then removed in this same transaction, so let's just set full
+	 * and then हटाओd in this same transaction, so let's just set full
 	 * sync since it will be a full sync anyway and this will blow away the
 	 * old info in the log.
 	 */
-	set_bit(BTRFS_INODE_NEEDS_FULL_SYNC, &BTRFS_I(inode)->runtime_flags);
+	set_bit(BTRFS_INODE_NEEDS_FULL_SYNC, &BTRFS_I(inode)->runसमय_flags);
 
 	key[0].objectid = objectid;
 	key[0].type = BTRFS_INODE_ITEM_KEY;
 	key[0].offset = 0;
 
-	sizes[0] = sizeof(struct btrfs_inode_item);
+	sizes[0] = माप(काष्ठा btrfs_inode_item);
 
-	if (name) {
+	अगर (name) अणु
 		/*
 		 * Start new inodes with an inode_ref. This is slightly more
-		 * efficient for small numbers of hard links since they will
-		 * be packed into one item. Extended refs will kick in if we
+		 * efficient क्रम small numbers of hard links since they will
+		 * be packed पूर्णांकo one item. Extended refs will kick in अगर we
 		 * add more hard links than can fit in the ref item.
 		 */
 		key[1].objectid = objectid;
 		key[1].type = BTRFS_INODE_REF_KEY;
 		key[1].offset = ref_objectid;
 
-		sizes[1] = name_len + sizeof(*ref);
-	}
+		sizes[1] = name_len + माप(*ref);
+	पूर्ण
 
 	location = &BTRFS_I(inode)->location;
 	location->objectid = objectid;
@@ -6357,226 +6358,226 @@ static struct inode *btrfs_new_inode(struct btrfs_trans_handle *trans,
 	location->type = BTRFS_INODE_ITEM_KEY;
 
 	ret = btrfs_insert_inode_locked(inode);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		iput(inode);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	ret = btrfs_insert_empty_items(trans, root, path, key, sizes, nitems);
-	if (ret != 0)
-		goto fail_unlock;
+	अगर (ret != 0)
+		जाओ fail_unlock;
 
 	inode_init_owner(&init_user_ns, inode, dir, mode);
 	inode_set_bytes(inode, 0);
 
-	inode->i_mtime = current_time(inode);
-	inode->i_atime = inode->i_mtime;
-	inode->i_ctime = inode->i_mtime;
-	BTRFS_I(inode)->i_otime = inode->i_mtime;
+	inode->i_mसमय = current_समय(inode);
+	inode->i_aसमय = inode->i_mसमय;
+	inode->i_स_समय = inode->i_mसमय;
+	BTRFS_I(inode)->i_oसमय = inode->i_mसमय;
 
 	inode_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
-				  struct btrfs_inode_item);
-	memzero_extent_buffer(path->nodes[0], (unsigned long)inode_item,
-			     sizeof(*inode_item));
+				  काष्ठा btrfs_inode_item);
+	memzero_extent_buffer(path->nodes[0], (अचिन्हित दीर्घ)inode_item,
+			     माप(*inode_item));
 	fill_inode_item(trans, path->nodes[0], inode_item, inode);
 
-	if (name) {
+	अगर (name) अणु
 		ref = btrfs_item_ptr(path->nodes[0], path->slots[0] + 1,
-				     struct btrfs_inode_ref);
+				     काष्ठा btrfs_inode_ref);
 		btrfs_set_inode_ref_name_len(path->nodes[0], ref, name_len);
 		btrfs_set_inode_ref_index(path->nodes[0], ref, *index);
-		ptr = (unsigned long)(ref + 1);
-		write_extent_buffer(path->nodes[0], name, ptr, name_len);
-	}
+		ptr = (अचिन्हित दीर्घ)(ref + 1);
+		ग_लिखो_extent_buffer(path->nodes[0], name, ptr, name_len);
+	पूर्ण
 
 	btrfs_mark_buffer_dirty(path->nodes[0]);
-	btrfs_free_path(path);
+	btrfs_मुक्त_path(path);
 
-	btrfs_inherit_iflags(inode, dir);
+	btrfs_inherit_अगरlags(inode, dir);
 
-	if (S_ISREG(mode)) {
-		if (btrfs_test_opt(fs_info, NODATASUM))
+	अगर (S_ISREG(mode)) अणु
+		अगर (btrfs_test_opt(fs_info, NODATASUM))
 			BTRFS_I(inode)->flags |= BTRFS_INODE_NODATASUM;
-		if (btrfs_test_opt(fs_info, NODATACOW))
+		अगर (btrfs_test_opt(fs_info, NODATACOW))
 			BTRFS_I(inode)->flags |= BTRFS_INODE_NODATACOW |
 				BTRFS_INODE_NODATASUM;
-	}
+	पूर्ण
 
 	inode_tree_add(inode);
 
 	trace_btrfs_inode_new(inode);
 	btrfs_set_inode_last_trans(trans, BTRFS_I(inode));
 
-	btrfs_update_root_times(trans, root);
+	btrfs_update_root_बार(trans, root);
 
 	ret = btrfs_inode_inherit_props(trans, inode, dir);
-	if (ret)
+	अगर (ret)
 		btrfs_err(fs_info,
 			  "error inheriting props for ino %llu (root %llu): %d",
 			btrfs_ino(BTRFS_I(inode)), root->root_key.objectid, ret);
 
-	return inode;
+	वापस inode;
 
 fail_unlock:
 	discard_new_inode(inode);
 fail:
-	if (dir && name)
+	अगर (dir && name)
 		BTRFS_I(dir)->index_cnt--;
-	btrfs_free_path(path);
-	return ERR_PTR(ret);
-}
+	btrfs_मुक्त_path(path);
+	वापस ERR_PTR(ret);
+पूर्ण
 
 /*
  * utility function to add 'inode' into 'parent_inode' with
  * a give name and a given sequence number.
- * if 'add_backref' is true, also insert a backref from the
+ * अगर 'add_backref' is true, also insert a backref from the
  * inode to the parent directory.
  */
-int btrfs_add_link(struct btrfs_trans_handle *trans,
-		   struct btrfs_inode *parent_inode, struct btrfs_inode *inode,
-		   const char *name, int name_len, int add_backref, u64 index)
-{
-	int ret = 0;
-	struct btrfs_key key;
-	struct btrfs_root *root = parent_inode->root;
+पूर्णांक btrfs_add_link(काष्ठा btrfs_trans_handle *trans,
+		   काष्ठा btrfs_inode *parent_inode, काष्ठा btrfs_inode *inode,
+		   स्थिर अक्षर *name, पूर्णांक name_len, पूर्णांक add_backref, u64 index)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा btrfs_key key;
+	काष्ठा btrfs_root *root = parent_inode->root;
 	u64 ino = btrfs_ino(inode);
 	u64 parent_ino = btrfs_ino(parent_inode);
 
-	if (unlikely(ino == BTRFS_FIRST_FREE_OBJECTID)) {
-		memcpy(&key, &inode->root->root_key, sizeof(key));
-	} else {
+	अगर (unlikely(ino == BTRFS_FIRST_FREE_OBJECTID)) अणु
+		स_नकल(&key, &inode->root->root_key, माप(key));
+	पूर्ण अन्यथा अणु
 		key.objectid = ino;
 		key.type = BTRFS_INODE_ITEM_KEY;
 		key.offset = 0;
-	}
+	पूर्ण
 
-	if (unlikely(ino == BTRFS_FIRST_FREE_OBJECTID)) {
+	अगर (unlikely(ino == BTRFS_FIRST_FREE_OBJECTID)) अणु
 		ret = btrfs_add_root_ref(trans, key.objectid,
 					 root->root_key.objectid, parent_ino,
 					 index, name, name_len);
-	} else if (add_backref) {
+	पूर्ण अन्यथा अगर (add_backref) अणु
 		ret = btrfs_insert_inode_ref(trans, root, name, name_len, ino,
 					     parent_ino, index);
-	}
+	पूर्ण
 
 	/* Nothing to clean up yet */
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = btrfs_insert_dir_item(trans, name, name_len, parent_inode, &key,
 				    btrfs_inode_type(&inode->vfs_inode), index);
-	if (ret == -EEXIST || ret == -EOVERFLOW)
-		goto fail_dir_item;
-	else if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		return ret;
-	}
+	अगर (ret == -EEXIST || ret == -EOVERFLOW)
+		जाओ fail_dir_item;
+	अन्यथा अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		वापस ret;
+	पूर्ण
 
-	btrfs_i_size_write(parent_inode, parent_inode->vfs_inode.i_size +
+	btrfs_i_size_ग_लिखो(parent_inode, parent_inode->vfs_inode.i_size +
 			   name_len * 2);
 	inode_inc_iversion(&parent_inode->vfs_inode);
 	/*
-	 * If we are replaying a log tree, we do not want to update the mtime
-	 * and ctime of the parent directory with the current time, since the
-	 * log replay procedure is responsible for setting them to their correct
-	 * values (the ones it had when the fsync was done).
+	 * If we are replaying a log tree, we करो not want to update the mसमय
+	 * and स_समय of the parent directory with the current समय, since the
+	 * log replay procedure is responsible क्रम setting them to their correct
+	 * values (the ones it had when the fsync was करोne).
 	 */
-	if (!test_bit(BTRFS_FS_LOG_RECOVERING, &root->fs_info->flags)) {
-		struct timespec64 now = current_time(&parent_inode->vfs_inode);
+	अगर (!test_bit(BTRFS_FS_LOG_RECOVERING, &root->fs_info->flags)) अणु
+		काष्ठा बारpec64 now = current_समय(&parent_inode->vfs_inode);
 
-		parent_inode->vfs_inode.i_mtime = now;
-		parent_inode->vfs_inode.i_ctime = now;
-	}
+		parent_inode->vfs_inode.i_mसमय = now;
+		parent_inode->vfs_inode.i_स_समय = now;
+	पूर्ण
 	ret = btrfs_update_inode(trans, root, parent_inode);
-	if (ret)
-		btrfs_abort_transaction(trans, ret);
-	return ret;
+	अगर (ret)
+		btrfs_पात_transaction(trans, ret);
+	वापस ret;
 
 fail_dir_item:
-	if (unlikely(ino == BTRFS_FIRST_FREE_OBJECTID)) {
+	अगर (unlikely(ino == BTRFS_FIRST_FREE_OBJECTID)) अणु
 		u64 local_index;
-		int err;
+		पूर्णांक err;
 		err = btrfs_del_root_ref(trans, key.objectid,
 					 root->root_key.objectid, parent_ino,
 					 &local_index, name, name_len);
-		if (err)
-			btrfs_abort_transaction(trans, err);
-	} else if (add_backref) {
+		अगर (err)
+			btrfs_पात_transaction(trans, err);
+	पूर्ण अन्यथा अगर (add_backref) अणु
 		u64 local_index;
-		int err;
+		पूर्णांक err;
 
 		err = btrfs_del_inode_ref(trans, root, name, name_len,
 					  ino, parent_ino, &local_index);
-		if (err)
-			btrfs_abort_transaction(trans, err);
-	}
+		अगर (err)
+			btrfs_पात_transaction(trans, err);
+	पूर्ण
 
 	/* Return the original error code */
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_add_nondir(struct btrfs_trans_handle *trans,
-			    struct btrfs_inode *dir, struct dentry *dentry,
-			    struct btrfs_inode *inode, int backref, u64 index)
-{
-	int err = btrfs_add_link(trans, dir, inode,
+अटल पूर्णांक btrfs_add_nondir(काष्ठा btrfs_trans_handle *trans,
+			    काष्ठा btrfs_inode *dir, काष्ठा dentry *dentry,
+			    काष्ठा btrfs_inode *inode, पूर्णांक backref, u64 index)
+अणु
+	पूर्णांक err = btrfs_add_link(trans, dir, inode,
 				 dentry->d_name.name, dentry->d_name.len,
 				 backref, index);
-	if (err > 0)
+	अगर (err > 0)
 		err = -EEXIST;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int btrfs_mknod(struct user_namespace *mnt_userns, struct inode *dir,
-		       struct dentry *dentry, umode_t mode, dev_t rdev)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
-	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	struct inode *inode = NULL;
-	int err;
+अटल पूर्णांक btrfs_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		       काष्ठा dentry *dentry, umode_t mode, dev_t rdev)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	काष्ठा inode *inode = शून्य;
+	पूर्णांक err;
 	u64 objectid;
 	u64 index = 0;
 
 	/*
-	 * 2 for inode item and ref
-	 * 2 for dir items
-	 * 1 for xattr if selinux is on
+	 * 2 क्रम inode item and ref
+	 * 2 क्रम dir items
+	 * 1 क्रम xattr अगर selinux is on
 	 */
 	trans = btrfs_start_transaction(root, 5);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	अगर (IS_ERR(trans))
+		वापस PTR_ERR(trans);
 
-	err = btrfs_get_free_objectid(root, &objectid);
-	if (err)
-		goto out_unlock;
+	err = btrfs_get_मुक्त_objectid(root, &objectid);
+	अगर (err)
+		जाओ out_unlock;
 
 	inode = btrfs_new_inode(trans, root, dir, dentry->d_name.name,
 			dentry->d_name.len, btrfs_ino(BTRFS_I(dir)), objectid,
 			mode, &index);
-	if (IS_ERR(inode)) {
+	अगर (IS_ERR(inode)) अणु
 		err = PTR_ERR(inode);
-		inode = NULL;
-		goto out_unlock;
-	}
+		inode = शून्य;
+		जाओ out_unlock;
+	पूर्ण
 
 	/*
 	* If the active LSM wants to access the inode during
 	* d_instantiate it needs these. Smack checks to see
-	* if the filesystem supports xattrs by looking at the
+	* अगर the fileप्रणाली supports xattrs by looking at the
 	* ops vector.
 	*/
 	inode->i_op = &btrfs_special_inode_operations;
 	init_special_inode(inode, inode->i_mode, rdev);
 
 	err = btrfs_init_inode_security(trans, inode, dir, &dentry->d_name);
-	if (err)
-		goto out_unlock;
+	अगर (err)
+		जाओ out_unlock;
 
 	err = btrfs_add_nondir(trans, BTRFS_I(dir), dentry, BTRFS_I(inode),
 			0, index);
-	if (err)
-		goto out_unlock;
+	अगर (err)
+		जाओ out_unlock;
 
 	btrfs_update_inode(trans, root, BTRFS_I(inode));
 	d_instantiate_new(dentry, inode);
@@ -6584,49 +6585,49 @@ static int btrfs_mknod(struct user_namespace *mnt_userns, struct inode *dir,
 out_unlock:
 	btrfs_end_transaction(trans);
 	btrfs_btree_balance_dirty(fs_info);
-	if (err && inode) {
+	अगर (err && inode) अणु
 		inode_dec_link_count(inode);
 		discard_new_inode(inode);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int btrfs_create(struct user_namespace *mnt_userns, struct inode *dir,
-			struct dentry *dentry, umode_t mode, bool excl)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
-	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	struct inode *inode = NULL;
-	int err;
+अटल पूर्णांक btrfs_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+			काष्ठा dentry *dentry, umode_t mode, bool excl)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	काष्ठा inode *inode = शून्य;
+	पूर्णांक err;
 	u64 objectid;
 	u64 index = 0;
 
 	/*
-	 * 2 for inode item and ref
-	 * 2 for dir items
-	 * 1 for xattr if selinux is on
+	 * 2 क्रम inode item and ref
+	 * 2 क्रम dir items
+	 * 1 क्रम xattr अगर selinux is on
 	 */
 	trans = btrfs_start_transaction(root, 5);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	अगर (IS_ERR(trans))
+		वापस PTR_ERR(trans);
 
-	err = btrfs_get_free_objectid(root, &objectid);
-	if (err)
-		goto out_unlock;
+	err = btrfs_get_मुक्त_objectid(root, &objectid);
+	अगर (err)
+		जाओ out_unlock;
 
 	inode = btrfs_new_inode(trans, root, dir, dentry->d_name.name,
 			dentry->d_name.len, btrfs_ino(BTRFS_I(dir)), objectid,
 			mode, &index);
-	if (IS_ERR(inode)) {
+	अगर (IS_ERR(inode)) अणु
 		err = PTR_ERR(inode);
-		inode = NULL;
-		goto out_unlock;
-	}
+		inode = शून्य;
+		जाओ out_unlock;
+	पूर्ण
 	/*
 	* If the active LSM wants to access the inode during
 	* d_instantiate it needs these. Smack checks to see
-	* if the filesystem supports xattrs by looking at the
+	* अगर the fileप्रणाली supports xattrs by looking at the
 	* ops vector.
 	*/
 	inode->i_fop = &btrfs_file_operations;
@@ -6634,383 +6635,383 @@ static int btrfs_create(struct user_namespace *mnt_userns, struct inode *dir,
 	inode->i_mapping->a_ops = &btrfs_aops;
 
 	err = btrfs_init_inode_security(trans, inode, dir, &dentry->d_name);
-	if (err)
-		goto out_unlock;
+	अगर (err)
+		जाओ out_unlock;
 
 	err = btrfs_update_inode(trans, root, BTRFS_I(inode));
-	if (err)
-		goto out_unlock;
+	अगर (err)
+		जाओ out_unlock;
 
 	err = btrfs_add_nondir(trans, BTRFS_I(dir), dentry, BTRFS_I(inode),
 			0, index);
-	if (err)
-		goto out_unlock;
+	अगर (err)
+		जाओ out_unlock;
 
 	d_instantiate_new(dentry, inode);
 
 out_unlock:
 	btrfs_end_transaction(trans);
-	if (err && inode) {
+	अगर (err && inode) अणु
 		inode_dec_link_count(inode);
 		discard_new_inode(inode);
-	}
+	पूर्ण
 	btrfs_btree_balance_dirty(fs_info);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int btrfs_link(struct dentry *old_dentry, struct inode *dir,
-		      struct dentry *dentry)
-{
-	struct btrfs_trans_handle *trans = NULL;
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	struct inode *inode = d_inode(old_dentry);
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+अटल पूर्णांक btrfs_link(काष्ठा dentry *old_dentry, काष्ठा inode *dir,
+		      काष्ठा dentry *dentry)
+अणु
+	काष्ठा btrfs_trans_handle *trans = शून्य;
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	काष्ठा inode *inode = d_inode(old_dentry);
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 	u64 index;
-	int err;
-	int drop_inode = 0;
+	पूर्णांक err;
+	पूर्णांक drop_inode = 0;
 
-	/* do not allow sys_link's with other subvols of the same device */
-	if (root->root_key.objectid != BTRFS_I(inode)->root->root_key.objectid)
-		return -EXDEV;
+	/* करो not allow sys_link's with other subvols of the same device */
+	अगर (root->root_key.objectid != BTRFS_I(inode)->root->root_key.objectid)
+		वापस -EXDEV;
 
-	if (inode->i_nlink >= BTRFS_LINK_MAX)
-		return -EMLINK;
+	अगर (inode->i_nlink >= BTRFS_LINK_MAX)
+		वापस -EMLINK;
 
 	err = btrfs_set_inode_index(BTRFS_I(dir), &index);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
 	/*
-	 * 2 items for inode and inode ref
-	 * 2 items for dir items
-	 * 1 item for parent inode
-	 * 1 item for orphan item deletion if O_TMPFILE
+	 * 2 items क्रम inode and inode ref
+	 * 2 items क्रम dir items
+	 * 1 item क्रम parent inode
+	 * 1 item क्रम orphan item deletion अगर O_TMPखाता
 	 */
 	trans = btrfs_start_transaction(root, inode->i_nlink ? 5 : 6);
-	if (IS_ERR(trans)) {
+	अगर (IS_ERR(trans)) अणु
 		err = PTR_ERR(trans);
-		trans = NULL;
-		goto fail;
-	}
+		trans = शून्य;
+		जाओ fail;
+	पूर्ण
 
-	/* There are several dir indexes for this inode, clear the cache. */
+	/* There are several dir indexes क्रम this inode, clear the cache. */
 	BTRFS_I(inode)->dir_index = 0ULL;
 	inc_nlink(inode);
 	inode_inc_iversion(inode);
-	inode->i_ctime = current_time(inode);
+	inode->i_स_समय = current_समय(inode);
 	ihold(inode);
-	set_bit(BTRFS_INODE_COPY_EVERYTHING, &BTRFS_I(inode)->runtime_flags);
+	set_bit(BTRFS_INODE_COPY_EVERYTHING, &BTRFS_I(inode)->runसमय_flags);
 
 	err = btrfs_add_nondir(trans, BTRFS_I(dir), dentry, BTRFS_I(inode),
 			1, index);
 
-	if (err) {
+	अगर (err) अणु
 		drop_inode = 1;
-	} else {
-		struct dentry *parent = dentry->d_parent;
+	पूर्ण अन्यथा अणु
+		काष्ठा dentry *parent = dentry->d_parent;
 
 		err = btrfs_update_inode(trans, root, BTRFS_I(inode));
-		if (err)
-			goto fail;
-		if (inode->i_nlink == 1) {
+		अगर (err)
+			जाओ fail;
+		अगर (inode->i_nlink == 1) अणु
 			/*
 			 * If new hard link count is 1, it's a file created
-			 * with open(2) O_TMPFILE flag.
+			 * with खोलो(2) O_TMPखाता flag.
 			 */
 			err = btrfs_orphan_del(trans, BTRFS_I(inode));
-			if (err)
-				goto fail;
-		}
+			अगर (err)
+				जाओ fail;
+		पूर्ण
 		d_instantiate(dentry, inode);
-		btrfs_log_new_name(trans, BTRFS_I(inode), NULL, parent);
-	}
+		btrfs_log_new_name(trans, BTRFS_I(inode), शून्य, parent);
+	पूर्ण
 
 fail:
-	if (trans)
+	अगर (trans)
 		btrfs_end_transaction(trans);
-	if (drop_inode) {
+	अगर (drop_inode) अणु
 		inode_dec_link_count(inode);
 		iput(inode);
-	}
+	पूर्ण
 	btrfs_btree_balance_dirty(fs_info);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int btrfs_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
-		       struct dentry *dentry, umode_t mode)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
-	struct inode *inode = NULL;
-	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	int err = 0;
+अटल पूर्णांक btrfs_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		       काष्ठा dentry *dentry, umode_t mode)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
+	काष्ठा inode *inode = शून्य;
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	पूर्णांक err = 0;
 	u64 objectid = 0;
 	u64 index = 0;
 
 	/*
-	 * 2 items for inode and ref
-	 * 2 items for dir items
-	 * 1 for xattr if selinux is on
+	 * 2 items क्रम inode and ref
+	 * 2 items क्रम dir items
+	 * 1 क्रम xattr अगर selinux is on
 	 */
 	trans = btrfs_start_transaction(root, 5);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	अगर (IS_ERR(trans))
+		वापस PTR_ERR(trans);
 
-	err = btrfs_get_free_objectid(root, &objectid);
-	if (err)
-		goto out_fail;
+	err = btrfs_get_मुक्त_objectid(root, &objectid);
+	अगर (err)
+		जाओ out_fail;
 
 	inode = btrfs_new_inode(trans, root, dir, dentry->d_name.name,
 			dentry->d_name.len, btrfs_ino(BTRFS_I(dir)), objectid,
-			S_IFDIR | mode, &index);
-	if (IS_ERR(inode)) {
+			S_IFसूची | mode, &index);
+	अगर (IS_ERR(inode)) अणु
 		err = PTR_ERR(inode);
-		inode = NULL;
-		goto out_fail;
-	}
+		inode = शून्य;
+		जाओ out_fail;
+	पूर्ण
 
-	/* these must be set before we unlock the inode */
+	/* these must be set beक्रमe we unlock the inode */
 	inode->i_op = &btrfs_dir_inode_operations;
 	inode->i_fop = &btrfs_dir_file_operations;
 
 	err = btrfs_init_inode_security(trans, inode, dir, &dentry->d_name);
-	if (err)
-		goto out_fail;
+	अगर (err)
+		जाओ out_fail;
 
-	btrfs_i_size_write(BTRFS_I(inode), 0);
+	btrfs_i_size_ग_लिखो(BTRFS_I(inode), 0);
 	err = btrfs_update_inode(trans, root, BTRFS_I(inode));
-	if (err)
-		goto out_fail;
+	अगर (err)
+		जाओ out_fail;
 
 	err = btrfs_add_link(trans, BTRFS_I(dir), BTRFS_I(inode),
 			dentry->d_name.name,
 			dentry->d_name.len, 0, index);
-	if (err)
-		goto out_fail;
+	अगर (err)
+		जाओ out_fail;
 
 	d_instantiate_new(dentry, inode);
 
 out_fail:
 	btrfs_end_transaction(trans);
-	if (err && inode) {
+	अगर (err && inode) अणु
 		inode_dec_link_count(inode);
 		discard_new_inode(inode);
-	}
+	पूर्ण
 	btrfs_btree_balance_dirty(fs_info);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static noinline int uncompress_inline(struct btrfs_path *path,
-				      struct page *page,
-				      size_t pg_offset, u64 extent_offset,
-				      struct btrfs_file_extent_item *item)
-{
-	int ret;
-	struct extent_buffer *leaf = path->nodes[0];
-	char *tmp;
-	size_t max_size;
-	unsigned long inline_size;
-	unsigned long ptr;
-	int compress_type;
+अटल noअंतरभूत पूर्णांक uncompress_अंतरभूत(काष्ठा btrfs_path *path,
+				      काष्ठा page *page,
+				      माप_प्रकार pg_offset, u64 extent_offset,
+				      काष्ठा btrfs_file_extent_item *item)
+अणु
+	पूर्णांक ret;
+	काष्ठा extent_buffer *leaf = path->nodes[0];
+	अक्षर *पंचांगp;
+	माप_प्रकार max_size;
+	अचिन्हित दीर्घ अंतरभूत_size;
+	अचिन्हित दीर्घ ptr;
+	पूर्णांक compress_type;
 
 	WARN_ON(pg_offset != 0);
 	compress_type = btrfs_file_extent_compression(leaf, item);
 	max_size = btrfs_file_extent_ram_bytes(leaf, item);
-	inline_size = btrfs_file_extent_inline_item_len(leaf,
+	अंतरभूत_size = btrfs_file_extent_अंतरभूत_item_len(leaf,
 					btrfs_item_nr(path->slots[0]));
-	tmp = kmalloc(inline_size, GFP_NOFS);
-	if (!tmp)
-		return -ENOMEM;
-	ptr = btrfs_file_extent_inline_start(item);
+	पंचांगp = kदो_स्मृति(अंतरभूत_size, GFP_NOFS);
+	अगर (!पंचांगp)
+		वापस -ENOMEM;
+	ptr = btrfs_file_extent_अंतरभूत_start(item);
 
-	read_extent_buffer(leaf, tmp, ptr, inline_size);
+	पढ़ो_extent_buffer(leaf, पंचांगp, ptr, अंतरभूत_size);
 
-	max_size = min_t(unsigned long, PAGE_SIZE, max_size);
-	ret = btrfs_decompress(compress_type, tmp, page,
-			       extent_offset, inline_size, max_size);
+	max_size = min_t(अचिन्हित दीर्घ, PAGE_SIZE, max_size);
+	ret = btrfs_decompress(compress_type, पंचांगp, page,
+			       extent_offset, अंतरभूत_size, max_size);
 
 	/*
-	 * decompression code contains a memset to fill in any space between the end
-	 * of the uncompressed data and the end of max_size in case the decompressed
-	 * data ends up shorter than ram_bytes.  That doesn't cover the hole between
-	 * the end of an inline extent and the beginning of the next block, so we
+	 * decompression code contains a स_रखो to fill in any space between the end
+	 * of the uncompressed data and the end of max_size in हाल the decompressed
+	 * data ends up लघुer than ram_bytes.  That करोesn't cover the hole between
+	 * the end of an अंतरभूत extent and the beginning of the next block, so we
 	 * cover that region here.
 	 */
 
-	if (max_size + pg_offset < PAGE_SIZE)
+	अगर (max_size + pg_offset < PAGE_SIZE)
 		memzero_page(page,  pg_offset + max_size,
 			     PAGE_SIZE - max_size - pg_offset);
-	kfree(tmp);
-	return ret;
-}
+	kमुक्त(पंचांगp);
+	वापस ret;
+पूर्ण
 
 /**
  * btrfs_get_extent - Lookup the first extent overlapping a range in a file.
  * @inode:	file to search in
- * @page:	page to read extent data into if the extent is inline
- * @pg_offset:	offset into @page to copy to
+ * @page:	page to पढ़ो extent data पूर्णांकo अगर the extent is अंतरभूत
+ * @pg_offset:	offset पूर्णांकo @page to copy to
  * @start:	file offset
  * @len:	length of range starting at @start
  *
- * This returns the first &struct extent_map which overlaps with the given
- * range, reading it from the B-tree and caching it if necessary. Note that
- * there may be more extents which overlap the given range after the returned
+ * This वापसs the first &काष्ठा extent_map which overlaps with the given
+ * range, पढ़ोing it from the B-tree and caching it अगर necessary. Note that
+ * there may be more extents which overlap the given range after the वापसed
  * extent_map.
  *
- * If @page is not NULL and the extent is inline, this also reads the extent
- * data directly into the page and marks the extent up to date in the io_tree.
+ * If @page is not शून्य and the extent is अंतरभूत, this also पढ़ोs the extent
+ * data directly पूर्णांकo the page and marks the extent up to date in the io_tree.
  *
- * Return: ERR_PTR on error, non-NULL extent_map on success.
+ * Return: ERR_PTR on error, non-शून्य extent_map on success.
  */
-struct extent_map *btrfs_get_extent(struct btrfs_inode *inode,
-				    struct page *page, size_t pg_offset,
+काष्ठा extent_map *btrfs_get_extent(काष्ठा btrfs_inode *inode,
+				    काष्ठा page *page, माप_प्रकार pg_offset,
 				    u64 start, u64 len)
-{
-	struct btrfs_fs_info *fs_info = inode->root->fs_info;
-	int ret = 0;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = inode->root->fs_info;
+	पूर्णांक ret = 0;
 	u64 extent_start = 0;
 	u64 extent_end = 0;
 	u64 objectid = btrfs_ino(inode);
-	int extent_type = -1;
-	struct btrfs_path *path = NULL;
-	struct btrfs_root *root = inode->root;
-	struct btrfs_file_extent_item *item;
-	struct extent_buffer *leaf;
-	struct btrfs_key found_key;
-	struct extent_map *em = NULL;
-	struct extent_map_tree *em_tree = &inode->extent_tree;
-	struct extent_io_tree *io_tree = &inode->io_tree;
+	पूर्णांक extent_type = -1;
+	काष्ठा btrfs_path *path = शून्य;
+	काष्ठा btrfs_root *root = inode->root;
+	काष्ठा btrfs_file_extent_item *item;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_key found_key;
+	काष्ठा extent_map *em = शून्य;
+	काष्ठा extent_map_tree *em_tree = &inode->extent_tree;
+	काष्ठा extent_io_tree *io_tree = &inode->io_tree;
 
-	read_lock(&em_tree->lock);
+	पढ़ो_lock(&em_tree->lock);
 	em = lookup_extent_mapping(em_tree, start, len);
-	read_unlock(&em_tree->lock);
+	पढ़ो_unlock(&em_tree->lock);
 
-	if (em) {
-		if (em->start > start || em->start + em->len <= start)
-			free_extent_map(em);
-		else if (em->block_start == EXTENT_MAP_INLINE && page)
-			free_extent_map(em);
-		else
-			goto out;
-	}
+	अगर (em) अणु
+		अगर (em->start > start || em->start + em->len <= start)
+			मुक्त_extent_map(em);
+		अन्यथा अगर (em->block_start == EXTENT_MAP_INLINE && page)
+			मुक्त_extent_map(em);
+		अन्यथा
+			जाओ out;
+	पूर्ण
 	em = alloc_extent_map();
-	if (!em) {
+	अगर (!em) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	em->start = EXTENT_MAP_HOLE;
 	em->orig_start = EXTENT_MAP_HOLE;
 	em->len = (u64)-1;
 	em->block_len = (u64)-1;
 
 	path = btrfs_alloc_path();
-	if (!path) {
+	अगर (!path) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Chances are we'll be called again, so go ahead and do readahead */
-	path->reada = READA_FORWARD;
+	/* Chances are we'll be called again, so go ahead and करो पढ़ोahead */
+	path->पढ़ोa = READA_FORWARD;
 
 	/*
-	 * The same explanation in load_free_space_cache applies here as well,
-	 * we only read when we're loading the free space cache, and at that
-	 * point the commit_root has everything we need.
+	 * The same explanation in load_मुक्त_space_cache applies here as well,
+	 * we only पढ़ो when we're loading the मुक्त space cache, and at that
+	 * poपूर्णांक the commit_root has everything we need.
 	 */
-	if (btrfs_is_free_space_inode(inode)) {
+	अगर (btrfs_is_मुक्त_space_inode(inode)) अणु
 		path->search_commit_root = 1;
 		path->skip_locking = 1;
-	}
+	पूर्ण
 
-	ret = btrfs_lookup_file_extent(NULL, root, path, objectid, start, 0);
-	if (ret < 0) {
-		goto out;
-	} else if (ret > 0) {
-		if (path->slots[0] == 0)
-			goto not_found;
+	ret = btrfs_lookup_file_extent(शून्य, root, path, objectid, start, 0);
+	अगर (ret < 0) अणु
+		जाओ out;
+	पूर्ण अन्यथा अगर (ret > 0) अणु
+		अगर (path->slots[0] == 0)
+			जाओ not_found;
 		path->slots[0]--;
 		ret = 0;
-	}
+	पूर्ण
 
 	leaf = path->nodes[0];
 	item = btrfs_item_ptr(leaf, path->slots[0],
-			      struct btrfs_file_extent_item);
+			      काष्ठा btrfs_file_extent_item);
 	btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
-	if (found_key.objectid != objectid ||
-	    found_key.type != BTRFS_EXTENT_DATA_KEY) {
+	अगर (found_key.objectid != objectid ||
+	    found_key.type != BTRFS_EXTENT_DATA_KEY) अणु
 		/*
-		 * If we backup past the first extent we want to move forward
-		 * and see if there is an extent in front of us, otherwise we'll
-		 * say there is a hole for our whole search range which can
+		 * If we backup past the first extent we want to move क्रमward
+		 * and see अगर there is an extent in front of us, otherwise we'll
+		 * say there is a hole क्रम our whole search range which can
 		 * cause problems.
 		 */
 		extent_end = start;
-		goto next;
-	}
+		जाओ next;
+	पूर्ण
 
 	extent_type = btrfs_file_extent_type(leaf, item);
 	extent_start = found_key.offset;
 	extent_end = btrfs_file_extent_end(path);
-	if (extent_type == BTRFS_FILE_EXTENT_REG ||
-	    extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
-		/* Only regular file could have regular/prealloc extent */
-		if (!S_ISREG(inode->vfs_inode.i_mode)) {
+	अगर (extent_type == BTRFS_खाता_EXTENT_REG ||
+	    extent_type == BTRFS_खाता_EXTENT_PREALLOC) अणु
+		/* Only regular file could have regular/pपुनः_स्मृति extent */
+		अगर (!S_ISREG(inode->vfs_inode.i_mode)) अणु
 			ret = -EUCLEAN;
 			btrfs_crit(fs_info,
 		"regular/prealloc extent found for non-regular inode %llu",
 				   btrfs_ino(inode));
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		trace_btrfs_get_extent_show_fi_regular(inode, leaf, item,
 						       extent_start);
-	} else if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-		trace_btrfs_get_extent_show_fi_inline(inode, leaf, item,
+	पूर्ण अन्यथा अगर (extent_type == BTRFS_खाता_EXTENT_INLINE) अणु
+		trace_btrfs_get_extent_show_fi_अंतरभूत(inode, leaf, item,
 						      path->slots[0],
 						      extent_start);
-	}
+	पूर्ण
 next:
-	if (start >= extent_end) {
+	अगर (start >= extent_end) अणु
 		path->slots[0]++;
-		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
+		अगर (path->slots[0] >= btrfs_header_nritems(leaf)) अणु
 			ret = btrfs_next_leaf(root, path);
-			if (ret < 0)
-				goto out;
-			else if (ret > 0)
-				goto not_found;
+			अगर (ret < 0)
+				जाओ out;
+			अन्यथा अगर (ret > 0)
+				जाओ not_found;
 
 			leaf = path->nodes[0];
-		}
+		पूर्ण
 		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
-		if (found_key.objectid != objectid ||
+		अगर (found_key.objectid != objectid ||
 		    found_key.type != BTRFS_EXTENT_DATA_KEY)
-			goto not_found;
-		if (start + len <= found_key.offset)
-			goto not_found;
-		if (start > found_key.offset)
-			goto next;
+			जाओ not_found;
+		अगर (start + len <= found_key.offset)
+			जाओ not_found;
+		अगर (start > found_key.offset)
+			जाओ next;
 
 		/* New extent overlaps with existing one */
 		em->start = start;
 		em->orig_start = start;
 		em->len = found_key.offset - start;
 		em->block_start = EXTENT_MAP_HOLE;
-		goto insert;
-	}
+		जाओ insert;
+	पूर्ण
 
 	btrfs_extent_item_to_extent_map(inode, path, item, !page, em);
 
-	if (extent_type == BTRFS_FILE_EXTENT_REG ||
-	    extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
-		goto insert;
-	} else if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-		unsigned long ptr;
-		char *map;
-		size_t size;
-		size_t extent_offset;
-		size_t copy_size;
+	अगर (extent_type == BTRFS_खाता_EXTENT_REG ||
+	    extent_type == BTRFS_खाता_EXTENT_PREALLOC) अणु
+		जाओ insert;
+	पूर्ण अन्यथा अगर (extent_type == BTRFS_खाता_EXTENT_INLINE) अणु
+		अचिन्हित दीर्घ ptr;
+		अक्षर *map;
+		माप_प्रकार size;
+		माप_प्रकार extent_offset;
+		माप_प्रकार copy_size;
 
-		if (!page)
-			goto out;
+		अगर (!page)
+			जाओ out;
 
 		size = btrfs_file_extent_ram_bytes(leaf, item);
 		extent_offset = page_offset(page) + pg_offset - extent_start;
@@ -7020,32 +7021,32 @@ next:
 		em->len = ALIGN(copy_size, fs_info->sectorsize);
 		em->orig_block_len = em->len;
 		em->orig_start = em->start;
-		ptr = btrfs_file_extent_inline_start(item) + extent_offset;
+		ptr = btrfs_file_extent_अंतरभूत_start(item) + extent_offset;
 
-		if (!PageUptodate(page)) {
-			if (btrfs_file_extent_compression(leaf, item) !=
-			    BTRFS_COMPRESS_NONE) {
-				ret = uncompress_inline(path, page, pg_offset,
+		अगर (!PageUptodate(page)) अणु
+			अगर (btrfs_file_extent_compression(leaf, item) !=
+			    BTRFS_COMPRESS_NONE) अणु
+				ret = uncompress_अंतरभूत(path, page, pg_offset,
 							extent_offset, item);
-				if (ret)
-					goto out;
-			} else {
+				अगर (ret)
+					जाओ out;
+			पूर्ण अन्यथा अणु
 				map = kmap_local_page(page);
-				read_extent_buffer(leaf, map + pg_offset, ptr,
+				पढ़ो_extent_buffer(leaf, map + pg_offset, ptr,
 						   copy_size);
-				if (pg_offset + copy_size < PAGE_SIZE) {
-					memset(map + pg_offset + copy_size, 0,
+				अगर (pg_offset + copy_size < PAGE_SIZE) अणु
+					स_रखो(map + pg_offset + copy_size, 0,
 					       PAGE_SIZE - pg_offset -
 					       copy_size);
-				}
+				पूर्ण
 				kunmap_local(map);
-			}
+			पूर्ण
 			flush_dcache_page(page);
-		}
+		पूर्ण
 		set_extent_uptodate(io_tree, em->start,
-				    extent_map_end(em) - 1, NULL, GFP_NOFS);
-		goto insert;
-	}
+				    extent_map_end(em) - 1, शून्य, GFP_NOFS);
+		जाओ insert;
+	पूर्ण
 not_found:
 	em->start = start;
 	em->orig_start = start;
@@ -7054,119 +7055,119 @@ not_found:
 insert:
 	ret = 0;
 	btrfs_release_path(path);
-	if (em->start > start || extent_map_end(em) <= start) {
+	अगर (em->start > start || extent_map_end(em) <= start) अणु
 		btrfs_err(fs_info,
 			  "bad extent! em: [%llu %llu] passed [%llu %llu]",
 			  em->start, em->len, start, len);
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	write_lock(&em_tree->lock);
+	ग_लिखो_lock(&em_tree->lock);
 	ret = btrfs_add_extent_mapping(fs_info, em_tree, &em, start, len);
-	write_unlock(&em_tree->lock);
+	ग_लिखो_unlock(&em_tree->lock);
 out:
-	btrfs_free_path(path);
+	btrfs_मुक्त_path(path);
 
 	trace_btrfs_get_extent(root, inode, em);
 
-	if (ret) {
-		free_extent_map(em);
-		return ERR_PTR(ret);
-	}
-	return em;
-}
+	अगर (ret) अणु
+		मुक्त_extent_map(em);
+		वापस ERR_PTR(ret);
+	पूर्ण
+	वापस em;
+पूर्ण
 
-struct extent_map *btrfs_get_extent_fiemap(struct btrfs_inode *inode,
+काष्ठा extent_map *btrfs_get_extent_fiemap(काष्ठा btrfs_inode *inode,
 					   u64 start, u64 len)
-{
-	struct extent_map *em;
-	struct extent_map *hole_em = NULL;
+अणु
+	काष्ठा extent_map *em;
+	काष्ठा extent_map *hole_em = शून्य;
 	u64 delalloc_start = start;
 	u64 end;
 	u64 delalloc_len;
 	u64 delalloc_end;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	em = btrfs_get_extent(inode, NULL, 0, start, len);
-	if (IS_ERR(em))
-		return em;
+	em = btrfs_get_extent(inode, शून्य, 0, start, len);
+	अगर (IS_ERR(em))
+		वापस em;
 	/*
 	 * If our em maps to:
 	 * - a hole or
 	 * - a pre-alloc extent,
 	 * there might actually be delalloc bytes behind it.
 	 */
-	if (em->block_start != EXTENT_MAP_HOLE &&
+	अगर (em->block_start != EXTENT_MAP_HOLE &&
 	    !test_bit(EXTENT_FLAG_PREALLOC, &em->flags))
-		return em;
-	else
+		वापस em;
+	अन्यथा
 		hole_em = em;
 
-	/* check to see if we've wrapped (len == -1 or similar) */
+	/* check to see अगर we've wrapped (len == -1 or similar) */
 	end = start + len;
-	if (end < start)
+	अगर (end < start)
 		end = (u64)-1;
-	else
+	अन्यथा
 		end -= 1;
 
-	em = NULL;
+	em = शून्य;
 
-	/* ok, we didn't find anything, lets look for delalloc */
+	/* ok, we didn't find anything, lets look क्रम delalloc */
 	delalloc_len = count_range_bits(&inode->io_tree, &delalloc_start,
 				 end, len, EXTENT_DELALLOC, 1);
 	delalloc_end = delalloc_start + delalloc_len;
-	if (delalloc_end < delalloc_start)
+	अगर (delalloc_end < delalloc_start)
 		delalloc_end = (u64)-1;
 
 	/*
-	 * We didn't find anything useful, return the original results from
+	 * We didn't find anything useful, वापस the original results from
 	 * get_extent()
 	 */
-	if (delalloc_start > end || delalloc_end <= start) {
+	अगर (delalloc_start > end || delalloc_end <= start) अणु
 		em = hole_em;
-		hole_em = NULL;
-		goto out;
-	}
+		hole_em = शून्य;
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Adjust the delalloc_start to make sure it doesn't go backwards from
+	 * Adjust the delalloc_start to make sure it करोesn't go backwards from
 	 * the start they passed in
 	 */
 	delalloc_start = max(start, delalloc_start);
 	delalloc_len = delalloc_end - delalloc_start;
 
-	if (delalloc_len > 0) {
+	अगर (delalloc_len > 0) अणु
 		u64 hole_start;
 		u64 hole_len;
-		const u64 hole_end = extent_map_end(hole_em);
+		स्थिर u64 hole_end = extent_map_end(hole_em);
 
 		em = alloc_extent_map();
-		if (!em) {
+		अगर (!em) अणु
 			err = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ASSERT(hole_em);
 		/*
-		 * When btrfs_get_extent can't find anything it returns one
+		 * When btrfs_get_extent can't find anything it वापसs one
 		 * huge hole
 		 *
 		 * Make sure what it found really fits our range, and adjust to
 		 * make sure it is based on the start from the caller
 		 */
-		if (hole_end <= start || hole_em->start > end) {
-		       free_extent_map(hole_em);
-		       hole_em = NULL;
-		} else {
+		अगर (hole_end <= start || hole_em->start > end) अणु
+		       मुक्त_extent_map(hole_em);
+		       hole_em = शून्य;
+		पूर्ण अन्यथा अणु
 		       hole_start = max(hole_em->start, start);
 		       hole_len = hole_end - hole_start;
-		}
+		पूर्ण
 
-		if (hole_em && delalloc_start > hole_start) {
+		अगर (hole_em && delalloc_start > hole_start) अणु
 			/*
-			 * Our hole starts before our delalloc, so we have to
-			 * return just the parts of the hole that go until the
+			 * Our hole starts beक्रमe our delalloc, so we have to
+			 * वापस just the parts of the hole that go until the
 			 * delalloc starts
 			 */
 			em->len = min(hole_len, delalloc_start - hole_start);
@@ -7178,9 +7179,9 @@ struct extent_map *btrfs_get_extent_fiemap(struct btrfs_inode *inode,
 			 */
 			em->block_start = hole_em->block_start;
 			em->block_len = hole_len;
-			if (test_bit(EXTENT_FLAG_PREALLOC, &hole_em->flags))
+			अगर (test_bit(EXTENT_FLAG_PREALLOC, &hole_em->flags))
 				set_bit(EXTENT_FLAG_PREALLOC, &em->flags);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Hole is out of passed range or it starts after
 			 * delalloc range
@@ -7190,273 +7191,273 @@ struct extent_map *btrfs_get_extent_fiemap(struct btrfs_inode *inode,
 			em->orig_start = delalloc_start;
 			em->block_start = EXTENT_MAP_DELALLOC;
 			em->block_len = delalloc_len;
-		}
-	} else {
-		return hole_em;
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		वापस hole_em;
+	पूर्ण
 out:
 
-	free_extent_map(hole_em);
-	if (err) {
-		free_extent_map(em);
-		return ERR_PTR(err);
-	}
-	return em;
-}
+	मुक्त_extent_map(hole_em);
+	अगर (err) अणु
+		मुक्त_extent_map(em);
+		वापस ERR_PTR(err);
+	पूर्ण
+	वापस em;
+पूर्ण
 
-static struct extent_map *btrfs_create_dio_extent(struct btrfs_inode *inode,
-						  const u64 start,
-						  const u64 len,
-						  const u64 orig_start,
-						  const u64 block_start,
-						  const u64 block_len,
-						  const u64 orig_block_len,
-						  const u64 ram_bytes,
-						  const int type)
-{
-	struct extent_map *em = NULL;
-	int ret;
+अटल काष्ठा extent_map *btrfs_create_dio_extent(काष्ठा btrfs_inode *inode,
+						  स्थिर u64 start,
+						  स्थिर u64 len,
+						  स्थिर u64 orig_start,
+						  स्थिर u64 block_start,
+						  स्थिर u64 block_len,
+						  स्थिर u64 orig_block_len,
+						  स्थिर u64 ram_bytes,
+						  स्थिर पूर्णांक type)
+अणु
+	काष्ठा extent_map *em = शून्य;
+	पूर्णांक ret;
 
-	if (type != BTRFS_ORDERED_NOCOW) {
+	अगर (type != BTRFS_ORDERED_NOCOW) अणु
 		em = create_io_em(inode, start, len, orig_start, block_start,
 				  block_len, orig_block_len, ram_bytes,
 				  BTRFS_COMPRESS_NONE, /* compress_type */
 				  type);
-		if (IS_ERR(em))
-			goto out;
-	}
+		अगर (IS_ERR(em))
+			जाओ out;
+	पूर्ण
 	ret = btrfs_add_ordered_extent_dio(inode, start, block_start, len,
 					   block_len, type);
-	if (ret) {
-		if (em) {
-			free_extent_map(em);
+	अगर (ret) अणु
+		अगर (em) अणु
+			मुक्त_extent_map(em);
 			btrfs_drop_extent_cache(inode, start, start + len - 1, 0);
-		}
+		पूर्ण
 		em = ERR_PTR(ret);
-	}
+	पूर्ण
  out:
 
-	return em;
-}
+	वापस em;
+पूर्ण
 
-static struct extent_map *btrfs_new_extent_direct(struct btrfs_inode *inode,
+अटल काष्ठा extent_map *btrfs_new_extent_direct(काष्ठा btrfs_inode *inode,
 						  u64 start, u64 len)
-{
-	struct btrfs_root *root = inode->root;
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_map *em;
-	struct btrfs_key ins;
-	u64 alloc_hint;
-	int ret;
+अणु
+	काष्ठा btrfs_root *root = inode->root;
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_map *em;
+	काष्ठा btrfs_key ins;
+	u64 alloc_hपूर्णांक;
+	पूर्णांक ret;
 
-	alloc_hint = get_extent_allocation_hint(inode, start, len);
+	alloc_hपूर्णांक = get_extent_allocation_hपूर्णांक(inode, start, len);
 	ret = btrfs_reserve_extent(root, len, len, fs_info->sectorsize,
-				   0, alloc_hint, &ins, 1, 1);
-	if (ret)
-		return ERR_PTR(ret);
+				   0, alloc_hपूर्णांक, &ins, 1, 1);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	em = btrfs_create_dio_extent(inode, start, ins.offset, start,
 				     ins.objectid, ins.offset, ins.offset,
 				     ins.offset, BTRFS_ORDERED_REGULAR);
 	btrfs_dec_block_group_reservations(fs_info, ins.objectid);
-	if (IS_ERR(em))
-		btrfs_free_reserved_extent(fs_info, ins.objectid, ins.offset,
+	अगर (IS_ERR(em))
+		btrfs_मुक्त_reserved_extent(fs_info, ins.objectid, ins.offset,
 					   1);
 
-	return em;
-}
+	वापस em;
+पूर्ण
 
-static bool btrfs_extent_readonly(struct btrfs_fs_info *fs_info, u64 bytenr)
-{
-	struct btrfs_block_group *block_group;
-	bool readonly = false;
+अटल bool btrfs_extent_पढ़ोonly(काष्ठा btrfs_fs_info *fs_info, u64 bytenr)
+अणु
+	काष्ठा btrfs_block_group *block_group;
+	bool पढ़ोonly = false;
 
 	block_group = btrfs_lookup_block_group(fs_info, bytenr);
-	if (!block_group || block_group->ro)
-		readonly = true;
-	if (block_group)
+	अगर (!block_group || block_group->ro)
+		पढ़ोonly = true;
+	अगर (block_group)
 		btrfs_put_block_group(block_group);
-	return readonly;
-}
+	वापस पढ़ोonly;
+पूर्ण
 
 /*
- * Check if we can do nocow write into the range [@offset, @offset + @len)
+ * Check अगर we can करो nocow ग_लिखो पूर्णांकo the range [@offset, @offset + @len)
  *
  * @offset:	File offset
- * @len:	The length to write, will be updated to the nocow writeable
+ * @len:	The length to ग_लिखो, will be updated to the nocow ग_लिखोable
  *		range
  * @orig_start:	(optional) Return the original file offset of the file extent
  * @orig_len:	(optional) Return the original on-disk length of the file extent
  * @ram_bytes:	(optional) Return the ram_bytes of the file extent
- * @strict:	if true, omit optimizations that might force us into unnecessary
- *		cow. e.g., don't trust generation number.
+ * @strict:	अगर true, omit optimizations that might क्रमce us पूर्णांकo unnecessary
+ *		cow. e.g., करोn't trust generation number.
  *
  * Return:
- * >0	and update @len if we can do nocow write
- *  0	if we can't do nocow write
- * <0	if error happened
+ * >0	and update @len अगर we can करो nocow ग_लिखो
+ *  0	अगर we can't करो nocow ग_लिखो
+ * <0	अगर error happened
  *
- * NOTE: This only checks the file extents, caller is responsible to wait for
+ * NOTE: This only checks the file extents, caller is responsible to रुको क्रम
  *	 any ordered extents.
  */
-noinline int can_nocow_extent(struct inode *inode, u64 offset, u64 *len,
+noअंतरभूत पूर्णांक can_nocow_extent(काष्ठा inode *inode, u64 offset, u64 *len,
 			      u64 *orig_start, u64 *orig_block_len,
 			      u64 *ram_bytes, bool strict)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct btrfs_path *path;
-	int ret;
-	struct extent_buffer *leaf;
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	struct extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
-	struct btrfs_file_extent_item *fi;
-	struct btrfs_key key;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा btrfs_path *path;
+	पूर्णांक ret;
+	काष्ठा extent_buffer *leaf;
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	काष्ठा extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
+	काष्ठा btrfs_file_extent_item *fi;
+	काष्ठा btrfs_key key;
 	u64 disk_bytenr;
 	u64 backref_offset;
 	u64 extent_end;
 	u64 num_bytes;
-	int slot;
-	int found_type;
+	पूर्णांक slot;
+	पूर्णांक found_type;
 	bool nocow = (BTRFS_I(inode)->flags & BTRFS_INODE_NODATACOW);
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
-	ret = btrfs_lookup_file_extent(NULL, root, path,
+	ret = btrfs_lookup_file_extent(शून्य, root, path,
 			btrfs_ino(BTRFS_I(inode)), offset, 0);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	slot = path->slots[0];
-	if (ret == 1) {
-		if (slot == 0) {
+	अगर (ret == 1) अणु
+		अगर (slot == 0) अणु
 			/* can't find the item, must cow */
 			ret = 0;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		slot--;
-	}
+	पूर्ण
 	ret = 0;
 	leaf = path->nodes[0];
 	btrfs_item_key_to_cpu(leaf, &key, slot);
-	if (key.objectid != btrfs_ino(BTRFS_I(inode)) ||
-	    key.type != BTRFS_EXTENT_DATA_KEY) {
+	अगर (key.objectid != btrfs_ino(BTRFS_I(inode)) ||
+	    key.type != BTRFS_EXTENT_DATA_KEY) अणु
 		/* not our file or wrong item type, must cow */
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (key.offset > offset) {
+	अगर (key.offset > offset) अणु
 		/* Wrong offset, must cow */
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	fi = btrfs_item_ptr(leaf, slot, struct btrfs_file_extent_item);
+	fi = btrfs_item_ptr(leaf, slot, काष्ठा btrfs_file_extent_item);
 	found_type = btrfs_file_extent_type(leaf, fi);
-	if (found_type != BTRFS_FILE_EXTENT_REG &&
-	    found_type != BTRFS_FILE_EXTENT_PREALLOC) {
+	अगर (found_type != BTRFS_खाता_EXTENT_REG &&
+	    found_type != BTRFS_खाता_EXTENT_PREALLOC) अणु
 		/* not a regular extent, must cow */
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!nocow && found_type == BTRFS_FILE_EXTENT_REG)
-		goto out;
+	अगर (!nocow && found_type == BTRFS_खाता_EXTENT_REG)
+		जाओ out;
 
 	extent_end = key.offset + btrfs_file_extent_num_bytes(leaf, fi);
-	if (extent_end <= offset)
-		goto out;
+	अगर (extent_end <= offset)
+		जाओ out;
 
 	disk_bytenr = btrfs_file_extent_disk_bytenr(leaf, fi);
-	if (disk_bytenr == 0)
-		goto out;
+	अगर (disk_bytenr == 0)
+		जाओ out;
 
-	if (btrfs_file_extent_compression(leaf, fi) ||
+	अगर (btrfs_file_extent_compression(leaf, fi) ||
 	    btrfs_file_extent_encryption(leaf, fi) ||
 	    btrfs_file_extent_other_encoding(leaf, fi))
-		goto out;
+		जाओ out;
 
 	/*
 	 * Do the same check as in btrfs_cross_ref_exist but without the
 	 * unnecessary search.
 	 */
-	if (!strict &&
+	अगर (!strict &&
 	    (btrfs_file_extent_generation(leaf, fi) <=
 	     btrfs_root_last_snapshot(&root->root_item)))
-		goto out;
+		जाओ out;
 
 	backref_offset = btrfs_file_extent_offset(leaf, fi);
 
-	if (orig_start) {
+	अगर (orig_start) अणु
 		*orig_start = key.offset - backref_offset;
 		*orig_block_len = btrfs_file_extent_disk_num_bytes(leaf, fi);
 		*ram_bytes = btrfs_file_extent_ram_bytes(leaf, fi);
-	}
+	पूर्ण
 
-	if (btrfs_extent_readonly(fs_info, disk_bytenr))
-		goto out;
+	अगर (btrfs_extent_पढ़ोonly(fs_info, disk_bytenr))
+		जाओ out;
 
 	num_bytes = min(offset + *len, extent_end) - offset;
-	if (!nocow && found_type == BTRFS_FILE_EXTENT_PREALLOC) {
+	अगर (!nocow && found_type == BTRFS_खाता_EXTENT_PREALLOC) अणु
 		u64 range_end;
 
 		range_end = round_up(offset + num_bytes,
 				     root->fs_info->sectorsize) - 1;
 		ret = test_range_bit(io_tree, offset, range_end,
-				     EXTENT_DELALLOC, 0, NULL);
-		if (ret) {
+				     EXTENT_DELALLOC, 0, शून्य);
+		अगर (ret) अणु
 			ret = -EAGAIN;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	btrfs_release_path(path);
 
 	/*
-	 * look for other files referencing this extent, if we
+	 * look क्रम other files referencing this extent, अगर we
 	 * find any we must cow
 	 */
 
 	ret = btrfs_cross_ref_exist(root, btrfs_ino(BTRFS_I(inode)),
 				    key.offset - backref_offset, disk_bytenr,
 				    strict);
-	if (ret) {
+	अगर (ret) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * adjust disk_bytenr and num_bytes to cover just the bytes
-	 * in this extent we are about to write.  If there
+	 * in this extent we are about to ग_लिखो.  If there
 	 * are any csums in that range we have to cow in order
 	 * to keep the csums correct
 	 */
 	disk_bytenr += backref_offset;
 	disk_bytenr += offset - key.offset;
-	if (csum_exist_in_range(fs_info, disk_bytenr, num_bytes))
-		goto out;
+	अगर (csum_exist_in_range(fs_info, disk_bytenr, num_bytes))
+		जाओ out;
 	/*
-	 * all of the above have passed, it is safe to overwrite this extent
+	 * all of the above have passed, it is safe to overग_लिखो this extent
 	 * without cow
 	 */
 	*len = num_bytes;
 	ret = 1;
 out:
-	btrfs_free_path(path);
-	return ret;
-}
+	btrfs_मुक्त_path(path);
+	वापस ret;
+पूर्ण
 
-static int lock_extent_direct(struct inode *inode, u64 lockstart, u64 lockend,
-			      struct extent_state **cached_state, bool writing)
-{
-	struct btrfs_ordered_extent *ordered;
-	int ret = 0;
+अटल पूर्णांक lock_extent_direct(काष्ठा inode *inode, u64 lockstart, u64 lockend,
+			      काष्ठा extent_state **cached_state, bool writing)
+अणु
+	काष्ठा btrfs_ordered_extent *ordered;
+	पूर्णांक ret = 0;
 
-	while (1) {
+	जबतक (1) अणु
 		lock_extent_bits(&BTRFS_I(inode)->io_tree, lockstart, lockend,
 				 cached_state);
 		/*
 		 * We're concerned with the entire range that we're going to be
-		 * doing DIO to, so we need to make sure there's no ordered
+		 * करोing DIO to, so we need to make sure there's no ordered
 		 * extents in this range.
 		 */
 		ordered = btrfs_lookup_ordered_range(BTRFS_I(inode), lockstart,
@@ -7465,76 +7466,76 @@ static int lock_extent_direct(struct inode *inode, u64 lockstart, u64 lockend,
 		/*
 		 * We need to make sure there are no buffered pages in this
 		 * range either, we could have raced between the invalidate in
-		 * generic_file_direct_write and locking the extent.  The
-		 * invalidate needs to happen so that reads after a write do not
+		 * generic_file_direct_ग_लिखो and locking the extent.  The
+		 * invalidate needs to happen so that पढ़ोs after a ग_लिखो करो not
 		 * get stale data.
 		 */
-		if (!ordered &&
+		अगर (!ordered &&
 		    (!writing || !filemap_range_has_page(inode->i_mapping,
 							 lockstart, lockend)))
-			break;
+			अवरोध;
 
 		unlock_extent_cached(&BTRFS_I(inode)->io_tree, lockstart, lockend,
 				     cached_state);
 
-		if (ordered) {
+		अगर (ordered) अणु
 			/*
-			 * If we are doing a DIO read and the ordered extent we
-			 * found is for a buffered write, we can not wait for it
-			 * to complete and retry, because if we do so we can
-			 * deadlock with concurrent buffered writes on page
-			 * locks. This happens only if our DIO read covers more
-			 * than one extent map, if at this point has already
-			 * created an ordered extent for a previous extent map
+			 * If we are करोing a DIO पढ़ो and the ordered extent we
+			 * found is क्रम a buffered ग_लिखो, we can not रुको क्रम it
+			 * to complete and retry, because अगर we करो so we can
+			 * deadlock with concurrent buffered ग_लिखोs on page
+			 * locks. This happens only अगर our DIO पढ़ो covers more
+			 * than one extent map, अगर at this poपूर्णांक has alपढ़ोy
+			 * created an ordered extent क्रम a previous extent map
 			 * and locked its range in the inode's io tree, and a
-			 * concurrent write against that previous extent map's
+			 * concurrent ग_लिखो against that previous extent map's
 			 * range and this range started (we unlock the ranges
 			 * in the io tree only when the bios complete and
-			 * buffered writes always lock pages before attempting
+			 * buffered ग_लिखोs always lock pages beक्रमe attempting
 			 * to lock range in the io tree).
 			 */
-			if (writing ||
-			    test_bit(BTRFS_ORDERED_DIRECT, &ordered->flags))
+			अगर (writing ||
+			    test_bit(BTRFS_ORDERED_सूचीECT, &ordered->flags))
 				btrfs_start_ordered_extent(ordered, 1);
-			else
+			अन्यथा
 				ret = -ENOTBLK;
 			btrfs_put_ordered_extent(ordered);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * We could trigger writeback for this range (and wait
-			 * for it to complete) and then invalidate the pages for
+			 * We could trigger ग_लिखोback क्रम this range (and रुको
+			 * क्रम it to complete) and then invalidate the pages क्रम
 			 * this range (through invalidate_inode_pages2_range()),
 			 * but that can lead us to a deadlock with a concurrent
-			 * call to readahead (a buffered read or a defrag call
-			 * triggered a readahead) on a page lock due to an
-			 * ordered dio extent we created before but did not have
+			 * call to पढ़ोahead (a buffered पढ़ो or a defrag call
+			 * triggered a पढ़ोahead) on a page lock due to an
+			 * ordered dio extent we created beक्रमe but did not have
 			 * yet a corresponding bio submitted (whence it can not
-			 * complete), which makes readahead wait for that
-			 * ordered extent to complete while holding a lock on
+			 * complete), which makes पढ़ोahead रुको क्रम that
+			 * ordered extent to complete जबतक holding a lock on
 			 * that page.
 			 */
 			ret = -ENOTBLK;
-		}
+		पूर्ण
 
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		cond_resched();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* The callers of this must take lock_extent() */
-static struct extent_map *create_io_em(struct btrfs_inode *inode, u64 start,
+अटल काष्ठा extent_map *create_io_em(काष्ठा btrfs_inode *inode, u64 start,
 				       u64 len, u64 orig_start, u64 block_start,
 				       u64 block_len, u64 orig_block_len,
-				       u64 ram_bytes, int compress_type,
-				       int type)
-{
-	struct extent_map_tree *em_tree;
-	struct extent_map *em;
-	int ret;
+				       u64 ram_bytes, पूर्णांक compress_type,
+				       पूर्णांक type)
+अणु
+	काष्ठा extent_map_tree *em_tree;
+	काष्ठा extent_map *em;
+	पूर्णांक ret;
 
 	ASSERT(type == BTRFS_ORDERED_PREALLOC ||
 	       type == BTRFS_ORDERED_COMPRESSED ||
@@ -7543,8 +7544,8 @@ static struct extent_map *create_io_em(struct btrfs_inode *inode, u64 start,
 
 	em_tree = &inode->extent_tree;
 	em = alloc_extent_map();
-	if (!em)
-		return ERR_PTR(-ENOMEM);
+	अगर (!em)
+		वापस ERR_PTR(-ENOMEM);
 
 	em->start = start;
 	em->orig_start = orig_start;
@@ -7555,392 +7556,392 @@ static struct extent_map *create_io_em(struct btrfs_inode *inode, u64 start,
 	em->ram_bytes = ram_bytes;
 	em->generation = -1;
 	set_bit(EXTENT_FLAG_PINNED, &em->flags);
-	if (type == BTRFS_ORDERED_PREALLOC) {
+	अगर (type == BTRFS_ORDERED_PREALLOC) अणु
 		set_bit(EXTENT_FLAG_FILLING, &em->flags);
-	} else if (type == BTRFS_ORDERED_COMPRESSED) {
+	पूर्ण अन्यथा अगर (type == BTRFS_ORDERED_COMPRESSED) अणु
 		set_bit(EXTENT_FLAG_COMPRESSED, &em->flags);
 		em->compress_type = compress_type;
-	}
+	पूर्ण
 
-	do {
+	करो अणु
 		btrfs_drop_extent_cache(inode, em->start,
 					em->start + em->len - 1, 0);
-		write_lock(&em_tree->lock);
+		ग_लिखो_lock(&em_tree->lock);
 		ret = add_extent_mapping(em_tree, em, 1);
-		write_unlock(&em_tree->lock);
+		ग_लिखो_unlock(&em_tree->lock);
 		/*
 		 * The caller has taken lock_extent(), who could race with us
 		 * to add em?
 		 */
-	} while (ret == -EEXIST);
+	पूर्ण जबतक (ret == -EEXIST);
 
-	if (ret) {
-		free_extent_map(em);
-		return ERR_PTR(ret);
-	}
+	अगर (ret) अणु
+		मुक्त_extent_map(em);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	/* em got 2 refs now, callers needs to do free_extent_map once. */
-	return em;
-}
+	/* em got 2 refs now, callers needs to करो मुक्त_extent_map once. */
+	वापस em;
+पूर्ण
 
 
-static int btrfs_get_blocks_direct_write(struct extent_map **map,
-					 struct inode *inode,
-					 struct btrfs_dio_data *dio_data,
+अटल पूर्णांक btrfs_get_blocks_direct_ग_लिखो(काष्ठा extent_map **map,
+					 काष्ठा inode *inode,
+					 काष्ठा btrfs_dio_data *dio_data,
 					 u64 start, u64 len)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct extent_map *em = *map;
-	int ret = 0;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा extent_map *em = *map;
+	पूर्णांक ret = 0;
 
 	/*
-	 * We don't allocate a new extent in the following cases
+	 * We करोn't allocate a new extent in the following हालs
 	 *
-	 * 1) The inode is marked as NODATACOW. In this case we'll just use the
+	 * 1) The inode is marked as NODATACOW. In this हाल we'll just use the
 	 * existing extent.
 	 * 2) The extent is marked as PREALLOC. We're good to go here and can
 	 * just use the extent.
 	 *
 	 */
-	if (test_bit(EXTENT_FLAG_PREALLOC, &em->flags) ||
+	अगर (test_bit(EXTENT_FLAG_PREALLOC, &em->flags) ||
 	    ((BTRFS_I(inode)->flags & BTRFS_INODE_NODATACOW) &&
-	     em->block_start != EXTENT_MAP_HOLE)) {
-		int type;
+	     em->block_start != EXTENT_MAP_HOLE)) अणु
+		पूर्णांक type;
 		u64 block_start, orig_start, orig_block_len, ram_bytes;
 
-		if (test_bit(EXTENT_FLAG_PREALLOC, &em->flags))
+		अगर (test_bit(EXTENT_FLAG_PREALLOC, &em->flags))
 			type = BTRFS_ORDERED_PREALLOC;
-		else
+		अन्यथा
 			type = BTRFS_ORDERED_NOCOW;
 		len = min(len, em->len - (start - em->start));
 		block_start = em->block_start + (start - em->start);
 
-		if (can_nocow_extent(inode, start, &len, &orig_start,
+		अगर (can_nocow_extent(inode, start, &len, &orig_start,
 				     &orig_block_len, &ram_bytes, false) == 1 &&
-		    btrfs_inc_nocow_writers(fs_info, block_start)) {
-			struct extent_map *em2;
+		    btrfs_inc_nocow_ग_लिखोrs(fs_info, block_start)) अणु
+			काष्ठा extent_map *em2;
 
 			em2 = btrfs_create_dio_extent(BTRFS_I(inode), start, len,
 						      orig_start, block_start,
 						      len, orig_block_len,
 						      ram_bytes, type);
-			btrfs_dec_nocow_writers(fs_info, block_start);
-			if (type == BTRFS_ORDERED_PREALLOC) {
-				free_extent_map(em);
+			btrfs_dec_nocow_ग_लिखोrs(fs_info, block_start);
+			अगर (type == BTRFS_ORDERED_PREALLOC) अणु
+				मुक्त_extent_map(em);
 				*map = em = em2;
-			}
+			पूर्ण
 
-			if (em2 && IS_ERR(em2)) {
+			अगर (em2 && IS_ERR(em2)) अणु
 				ret = PTR_ERR(em2);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			/*
 			 * For inode marked NODATACOW or extent marked PREALLOC,
-			 * use the existing or preallocated extent, so does not
+			 * use the existing or pपुनः_स्मृतिated extent, so करोes not
 			 * need to adjust btrfs_space_info's bytes_may_use.
 			 */
-			btrfs_free_reserved_data_space_noquota(fs_info, len);
-			goto skip_cow;
-		}
-	}
+			btrfs_मुक्त_reserved_data_space_noquota(fs_info, len);
+			जाओ skip_cow;
+		पूर्ण
+	पूर्ण
 
 	/* this will cow the extent */
-	free_extent_map(em);
+	मुक्त_extent_map(em);
 	*map = em = btrfs_new_extent_direct(BTRFS_I(inode), start, len);
-	if (IS_ERR(em)) {
+	अगर (IS_ERR(em)) अणु
 		ret = PTR_ERR(em);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	len = min(len, em->len - (start - em->start));
 
 skip_cow:
 	/*
 	 * Need to update the i_size under the extent lock so buffered
-	 * readers will get the updated i_size when we unlock.
+	 * पढ़ोers will get the updated i_size when we unlock.
 	 */
-	if (start + len > i_size_read(inode))
-		i_size_write(inode, start + len);
+	अगर (start + len > i_size_पढ़ो(inode))
+		i_size_ग_लिखो(inode, start + len);
 
 	dio_data->reserve -= len;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_dio_iomap_begin(struct inode *inode, loff_t start,
-		loff_t length, unsigned int flags, struct iomap *iomap,
-		struct iomap *srcmap)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct extent_map *em;
-	struct extent_state *cached_state = NULL;
-	struct btrfs_dio_data *dio_data = NULL;
+अटल पूर्णांक btrfs_dio_iomap_begin(काष्ठा inode *inode, loff_t start,
+		loff_t length, अचिन्हित पूर्णांक flags, काष्ठा iomap *iomap,
+		काष्ठा iomap *srcmap)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा extent_map *em;
+	काष्ठा extent_state *cached_state = शून्य;
+	काष्ठा btrfs_dio_data *dio_data = शून्य;
 	u64 lockstart, lockend;
-	const bool write = !!(flags & IOMAP_WRITE);
-	int ret = 0;
+	स्थिर bool ग_लिखो = !!(flags & IOMAP_WRITE);
+	पूर्णांक ret = 0;
 	u64 len = length;
 	bool unlock_extents = false;
 
-	if (!write)
+	अगर (!ग_लिखो)
 		len = min_t(u64, len, fs_info->sectorsize);
 
 	lockstart = start;
 	lockend = start + len - 1;
 
 	/*
-	 * The generic stuff only does filemap_write_and_wait_range, which
+	 * The generic stuff only करोes filemap_ग_लिखो_and_रुको_range, which
 	 * isn't enough if we've written compressed pages to this area, so we
-	 * need to flush the dirty pages again to make absolutely sure that any
+	 * need to flush the dirty pages again to make असलolutely sure that any
 	 * outstanding dirty pages are on disk.
 	 */
-	if (test_bit(BTRFS_INODE_HAS_ASYNC_EXTENT,
-		     &BTRFS_I(inode)->runtime_flags)) {
-		ret = filemap_fdatawrite_range(inode->i_mapping, start,
+	अगर (test_bit(BTRFS_INODE_HAS_ASYNC_EXTENT,
+		     &BTRFS_I(inode)->runसमय_flags)) अणु
+		ret = filemap_fdataग_लिखो_range(inode->i_mapping, start,
 					       start + length - 1);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	dio_data = kzalloc(sizeof(*dio_data), GFP_NOFS);
-	if (!dio_data)
-		return -ENOMEM;
+	dio_data = kzalloc(माप(*dio_data), GFP_NOFS);
+	अगर (!dio_data)
+		वापस -ENOMEM;
 
 	dio_data->length = length;
-	if (write) {
+	अगर (ग_लिखो) अणु
 		dio_data->reserve = round_up(length, fs_info->sectorsize);
 		ret = btrfs_delalloc_reserve_space(BTRFS_I(inode),
 				&dio_data->data_reserved,
 				start, dio_data->reserve);
-		if (ret) {
-			extent_changeset_free(dio_data->data_reserved);
-			kfree(dio_data);
-			return ret;
-		}
-	}
-	iomap->private = dio_data;
+		अगर (ret) अणु
+			extent_changeset_मुक्त(dio_data->data_reserved);
+			kमुक्त(dio_data);
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	iomap->निजी = dio_data;
 
 
 	/*
-	 * If this errors out it's because we couldn't invalidate pagecache for
+	 * If this errors out it's because we couldn't invalidate pagecache क्रम
 	 * this range and we need to fallback to buffered.
 	 */
-	if (lock_extent_direct(inode, lockstart, lockend, &cached_state, write)) {
+	अगर (lock_extent_direct(inode, lockstart, lockend, &cached_state, ग_लिखो)) अणु
 		ret = -ENOTBLK;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	em = btrfs_get_extent(BTRFS_I(inode), NULL, 0, start, len);
-	if (IS_ERR(em)) {
+	em = btrfs_get_extent(BTRFS_I(inode), शून्य, 0, start, len);
+	अगर (IS_ERR(em)) अणु
 		ret = PTR_ERR(em);
-		goto unlock_err;
-	}
+		जाओ unlock_err;
+	पूर्ण
 
 	/*
-	 * Ok for INLINE and COMPRESSED extents we need to fallback on buffered
+	 * Ok क्रम INLINE and COMPRESSED extents we need to fallback on buffered
 	 * io.  INLINE is special, and we could probably kludge it in here, but
-	 * it's still buffered so for safety lets just fall back to the generic
+	 * it's still buffered so क्रम safety lets just fall back to the generic
 	 * buffered path.
 	 *
-	 * For COMPRESSED we _have_ to read the entire extent in so we can
+	 * For COMPRESSED we _have_ to पढ़ो the entire extent in so we can
 	 * decompress it, so there will be buffering required no matter what we
-	 * do, so go ahead and fallback to buffered.
+	 * करो, so go ahead and fallback to buffered.
 	 *
-	 * We return -ENOTBLK because that's what makes DIO go ahead and go back
-	 * to buffered IO.  Don't blame me, this is the price we pay for using
+	 * We वापस -ENOTBLK because that's what makes DIO go ahead and go back
+	 * to buffered IO.  Don't blame me, this is the price we pay क्रम using
 	 * the generic code.
 	 */
-	if (test_bit(EXTENT_FLAG_COMPRESSED, &em->flags) ||
-	    em->block_start == EXTENT_MAP_INLINE) {
-		free_extent_map(em);
+	अगर (test_bit(EXTENT_FLAG_COMPRESSED, &em->flags) ||
+	    em->block_start == EXTENT_MAP_INLINE) अणु
+		मुक्त_extent_map(em);
 		ret = -ENOTBLK;
-		goto unlock_err;
-	}
+		जाओ unlock_err;
+	पूर्ण
 
 	len = min(len, em->len - (start - em->start));
-	if (write) {
-		ret = btrfs_get_blocks_direct_write(&em, inode, dio_data,
+	अगर (ग_लिखो) अणु
+		ret = btrfs_get_blocks_direct_ग_लिखो(&em, inode, dio_data,
 						    start, len);
-		if (ret < 0)
-			goto unlock_err;
+		अगर (ret < 0)
+			जाओ unlock_err;
 		unlock_extents = true;
-		/* Recalc len in case the new em is smaller than requested */
+		/* Recalc len in हाल the new em is smaller than requested */
 		len = min(len, em->len - (start - em->start));
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * We need to unlock only the end area that we aren't using.
 		 * The rest is going to be unlocked by the endio routine.
 		 */
 		lockstart = start + len;
-		if (lockstart < lockend)
+		अगर (lockstart < lockend)
 			unlock_extents = true;
-	}
+	पूर्ण
 
-	if (unlock_extents)
+	अगर (unlock_extents)
 		unlock_extent_cached(&BTRFS_I(inode)->io_tree,
 				     lockstart, lockend, &cached_state);
-	else
-		free_extent_state(cached_state);
+	अन्यथा
+		मुक्त_extent_state(cached_state);
 
 	/*
-	 * Translate extent map information to iomap.
-	 * We trim the extents (and move the addr) even though iomap code does
-	 * that, since we have locked only the parts we are performing I/O in.
+	 * Translate extent map inक्रमmation to iomap.
+	 * We trim the extents (and move the addr) even though iomap code करोes
+	 * that, since we have locked only the parts we are perक्रमming I/O in.
 	 */
-	if ((em->block_start == EXTENT_MAP_HOLE) ||
-	    (test_bit(EXTENT_FLAG_PREALLOC, &em->flags) && !write)) {
-		iomap->addr = IOMAP_NULL_ADDR;
+	अगर ((em->block_start == EXTENT_MAP_HOLE) ||
+	    (test_bit(EXTENT_FLAG_PREALLOC, &em->flags) && !ग_लिखो)) अणु
+		iomap->addr = IOMAP_शून्य_ADDR;
 		iomap->type = IOMAP_HOLE;
-	} else {
+	पूर्ण अन्यथा अणु
 		iomap->addr = em->block_start + (start - em->start);
 		iomap->type = IOMAP_MAPPED;
-	}
+	पूर्ण
 	iomap->offset = start;
 	iomap->bdev = fs_info->fs_devices->latest_bdev;
 	iomap->length = len;
 
-	if (write && btrfs_use_zone_append(BTRFS_I(inode), em->block_start))
+	अगर (ग_लिखो && btrfs_use_zone_append(BTRFS_I(inode), em->block_start))
 		iomap->flags |= IOMAP_F_ZONE_APPEND;
 
-	free_extent_map(em);
+	मुक्त_extent_map(em);
 
-	return 0;
+	वापस 0;
 
 unlock_err:
 	unlock_extent_cached(&BTRFS_I(inode)->io_tree, lockstart, lockend,
 			     &cached_state);
 err:
-	if (dio_data) {
+	अगर (dio_data) अणु
 		btrfs_delalloc_release_space(BTRFS_I(inode),
 				dio_data->data_reserved, start,
 				dio_data->reserve, true);
 		btrfs_delalloc_release_extents(BTRFS_I(inode), dio_data->reserve);
-		extent_changeset_free(dio_data->data_reserved);
-		kfree(dio_data);
-	}
-	return ret;
-}
+		extent_changeset_मुक्त(dio_data->data_reserved);
+		kमुक्त(dio_data);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int btrfs_dio_iomap_end(struct inode *inode, loff_t pos, loff_t length,
-		ssize_t written, unsigned int flags, struct iomap *iomap)
-{
-	int ret = 0;
-	struct btrfs_dio_data *dio_data = iomap->private;
-	size_t submitted = dio_data->submitted;
-	const bool write = !!(flags & IOMAP_WRITE);
+अटल पूर्णांक btrfs_dio_iomap_end(काष्ठा inode *inode, loff_t pos, loff_t length,
+		sमाप_प्रकार written, अचिन्हित पूर्णांक flags, काष्ठा iomap *iomap)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा btrfs_dio_data *dio_data = iomap->निजी;
+	माप_प्रकार submitted = dio_data->submitted;
+	स्थिर bool ग_लिखो = !!(flags & IOMAP_WRITE);
 
-	if (!write && (iomap->type == IOMAP_HOLE)) {
-		/* If reading from a hole, unlock and return */
+	अगर (!ग_लिखो && (iomap->type == IOMAP_HOLE)) अणु
+		/* If पढ़ोing from a hole, unlock and वापस */
 		unlock_extent(&BTRFS_I(inode)->io_tree, pos, pos + length - 1);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (submitted < length) {
+	अगर (submitted < length) अणु
 		pos += submitted;
 		length -= submitted;
-		if (write)
-			__endio_write_update_ordered(BTRFS_I(inode), pos,
+		अगर (ग_लिखो)
+			__endio_ग_लिखो_update_ordered(BTRFS_I(inode), pos,
 					length, false);
-		else
+		अन्यथा
 			unlock_extent(&BTRFS_I(inode)->io_tree, pos,
 				      pos + length - 1);
 		ret = -ENOTBLK;
-	}
+	पूर्ण
 
-	if (write) {
-		if (dio_data->reserve)
+	अगर (ग_लिखो) अणु
+		अगर (dio_data->reserve)
 			btrfs_delalloc_release_space(BTRFS_I(inode),
 					dio_data->data_reserved, pos,
 					dio_data->reserve, true);
 		btrfs_delalloc_release_extents(BTRFS_I(inode), dio_data->length);
-		extent_changeset_free(dio_data->data_reserved);
-	}
+		extent_changeset_मुक्त(dio_data->data_reserved);
+	पूर्ण
 out:
-	kfree(dio_data);
-	iomap->private = NULL;
+	kमुक्त(dio_data);
+	iomap->निजी = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void btrfs_dio_private_put(struct btrfs_dio_private *dip)
-{
+अटल व्योम btrfs_dio_निजी_put(काष्ठा btrfs_dio_निजी *dip)
+अणु
 	/*
-	 * This implies a barrier so that stores to dio_bio->bi_status before
+	 * This implies a barrier so that stores to dio_bio->bi_status beक्रमe
 	 * this and loads of dio_bio->bi_status after this are fully ordered.
 	 */
-	if (!refcount_dec_and_test(&dip->refs))
-		return;
+	अगर (!refcount_dec_and_test(&dip->refs))
+		वापस;
 
-	if (btrfs_op(dip->dio_bio) == BTRFS_MAP_WRITE) {
-		__endio_write_update_ordered(BTRFS_I(dip->inode),
+	अगर (btrfs_op(dip->dio_bio) == BTRFS_MAP_WRITE) अणु
+		__endio_ग_लिखो_update_ordered(BTRFS_I(dip->inode),
 					     dip->logical_offset,
 					     dip->bytes,
 					     !dip->dio_bio->bi_status);
-	} else {
+	पूर्ण अन्यथा अणु
 		unlock_extent(&BTRFS_I(dip->inode)->io_tree,
 			      dip->logical_offset,
 			      dip->logical_offset + dip->bytes - 1);
-	}
+	पूर्ण
 
 	bio_endio(dip->dio_bio);
-	kfree(dip);
-}
+	kमुक्त(dip);
+पूर्ण
 
-static blk_status_t submit_dio_repair_bio(struct inode *inode, struct bio *bio,
-					  int mirror_num,
-					  unsigned long bio_flags)
-{
-	struct btrfs_dio_private *dip = bio->bi_private;
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+अटल blk_status_t submit_dio_repair_bio(काष्ठा inode *inode, काष्ठा bio *bio,
+					  पूर्णांक mirror_num,
+					  अचिन्हित दीर्घ bio_flags)
+अणु
+	काष्ठा btrfs_dio_निजी *dip = bio->bi_निजी;
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 	blk_status_t ret;
 
 	BUG_ON(bio_op(bio) == REQ_OP_WRITE);
 
 	ret = btrfs_bio_wq_end_io(fs_info, bio, BTRFS_WQ_ENDIO_DATA);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	refcount_inc(&dip->refs);
 	ret = btrfs_map_bio(fs_info, bio, mirror_num);
-	if (ret)
+	अगर (ret)
 		refcount_dec(&dip->refs);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static blk_status_t btrfs_check_read_dio_bio(struct inode *inode,
-					     struct btrfs_io_bio *io_bio,
-					     const bool uptodate)
-{
-	struct btrfs_fs_info *fs_info = BTRFS_I(inode)->root->fs_info;
-	const u32 sectorsize = fs_info->sectorsize;
-	struct extent_io_tree *failure_tree = &BTRFS_I(inode)->io_failure_tree;
-	struct extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
-	const bool csum = !(BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM);
-	struct bio_vec bvec;
-	struct bvec_iter iter;
+अटल blk_status_t btrfs_check_पढ़ो_dio_bio(काष्ठा inode *inode,
+					     काष्ठा btrfs_io_bio *io_bio,
+					     स्थिर bool uptodate)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = BTRFS_I(inode)->root->fs_info;
+	स्थिर u32 sectorsize = fs_info->sectorsize;
+	काष्ठा extent_io_tree *failure_tree = &BTRFS_I(inode)->io_failure_tree;
+	काष्ठा extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
+	स्थिर bool csum = !(BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM);
+	काष्ठा bio_vec bvec;
+	काष्ठा bvec_iter iter;
 	u64 start = io_bio->logical;
 	u32 bio_offset = 0;
 	blk_status_t err = BLK_STS_OK;
 
-	__bio_for_each_segment(bvec, &io_bio->bio, iter, io_bio->iter) {
-		unsigned int i, nr_sectors, pgoff;
+	__bio_क्रम_each_segment(bvec, &io_bio->bio, iter, io_bio->iter) अणु
+		अचिन्हित पूर्णांक i, nr_sectors, pgoff;
 
 		nr_sectors = BTRFS_BYTES_TO_BLKS(fs_info, bvec.bv_len);
 		pgoff = bvec.bv_offset;
-		for (i = 0; i < nr_sectors; i++) {
+		क्रम (i = 0; i < nr_sectors; i++) अणु
 			ASSERT(pgoff < PAGE_SIZE);
-			if (uptodate &&
+			अगर (uptodate &&
 			    (!csum || !check_data_csum(inode, io_bio,
 						       bio_offset, bvec.bv_page,
-						       pgoff, start))) {
+						       pgoff, start))) अणु
 				clean_io_failure(fs_info, failure_tree, io_tree,
 						 start, bvec.bv_page,
 						 btrfs_ino(BTRFS_I(inode)),
 						 pgoff);
-			} else {
+			पूर्ण अन्यथा अणु
 				blk_status_t status;
 
-				ASSERT((start - io_bio->logical) < UINT_MAX);
-				status = btrfs_submit_read_repair(inode,
+				ASSERT((start - io_bio->logical) < अच_पूर्णांक_उच्च);
+				status = btrfs_submit_पढ़ो_repair(inode,
 							&io_bio->bio,
 							start - io_bio->logical,
 							bvec.bv_page, pgoff,
@@ -7948,164 +7949,164 @@ static blk_status_t btrfs_check_read_dio_bio(struct inode *inode,
 							start + sectorsize - 1,
 							io_bio->mirror_num,
 							submit_dio_repair_bio);
-				if (status)
+				अगर (status)
 					err = status;
-			}
+			पूर्ण
 			start += sectorsize;
 			ASSERT(bio_offset + sectorsize > bio_offset);
 			bio_offset += sectorsize;
 			pgoff += sectorsize;
-		}
-	}
-	return err;
-}
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void __endio_write_update_ordered(struct btrfs_inode *inode,
-					 const u64 offset, const u64 bytes,
-					 const bool uptodate)
-{
-	struct btrfs_fs_info *fs_info = inode->root->fs_info;
-	struct btrfs_ordered_extent *ordered = NULL;
-	struct btrfs_workqueue *wq;
+अटल व्योम __endio_ग_लिखो_update_ordered(काष्ठा btrfs_inode *inode,
+					 स्थिर u64 offset, स्थिर u64 bytes,
+					 स्थिर bool uptodate)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = inode->root->fs_info;
+	काष्ठा btrfs_ordered_extent *ordered = शून्य;
+	काष्ठा btrfs_workqueue *wq;
 	u64 ordered_offset = offset;
 	u64 ordered_bytes = bytes;
 	u64 last_offset;
 
-	if (btrfs_is_free_space_inode(inode))
-		wq = fs_info->endio_freespace_worker;
-	else
-		wq = fs_info->endio_write_workers;
+	अगर (btrfs_is_मुक्त_space_inode(inode))
+		wq = fs_info->endio_मुक्तspace_worker;
+	अन्यथा
+		wq = fs_info->endio_ग_लिखो_workers;
 
-	while (ordered_offset < offset + bytes) {
+	जबतक (ordered_offset < offset + bytes) अणु
 		last_offset = ordered_offset;
-		if (btrfs_dec_test_first_ordered_pending(inode, &ordered,
+		अगर (btrfs_dec_test_first_ordered_pending(inode, &ordered,
 							 &ordered_offset,
 							 ordered_bytes,
-							 uptodate)) {
-			btrfs_init_work(&ordered->work, finish_ordered_fn, NULL,
-					NULL);
+							 uptodate)) अणु
+			btrfs_init_work(&ordered->work, finish_ordered_fn, शून्य,
+					शून्य);
 			btrfs_queue_work(wq, &ordered->work);
-		}
+		पूर्ण
 
-		/* No ordered extent found in the range, exit */
-		if (ordered_offset == last_offset)
-			return;
+		/* No ordered extent found in the range, निकास */
+		अगर (ordered_offset == last_offset)
+			वापस;
 		/*
-		 * Our bio might span multiple ordered extents. In this case
+		 * Our bio might span multiple ordered extents. In this हाल
 		 * we keep going until we have accounted the whole dio.
 		 */
-		if (ordered_offset < offset + bytes) {
+		अगर (ordered_offset < offset + bytes) अणु
 			ordered_bytes = offset + bytes - ordered_offset;
-			ordered = NULL;
-		}
-	}
-}
+			ordered = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static blk_status_t btrfs_submit_bio_start_direct_io(struct inode *inode,
-						     struct bio *bio,
+अटल blk_status_t btrfs_submit_bio_start_direct_io(काष्ठा inode *inode,
+						     काष्ठा bio *bio,
 						     u64 dio_file_offset)
-{
-	return btrfs_csum_one_bio(BTRFS_I(inode), bio, dio_file_offset, 1);
-}
+अणु
+	वापस btrfs_csum_one_bio(BTRFS_I(inode), bio, dio_file_offset, 1);
+पूर्ण
 
-static void btrfs_end_dio_bio(struct bio *bio)
-{
-	struct btrfs_dio_private *dip = bio->bi_private;
+अटल व्योम btrfs_end_dio_bio(काष्ठा bio *bio)
+अणु
+	काष्ठा btrfs_dio_निजी *dip = bio->bi_निजी;
 	blk_status_t err = bio->bi_status;
 
-	if (err)
+	अगर (err)
 		btrfs_warn(BTRFS_I(dip->inode)->root->fs_info,
 			   "direct IO failed ino %llu rw %d,%u sector %#Lx len %u err no %d",
 			   btrfs_ino(BTRFS_I(dip->inode)), bio_op(bio),
 			   bio->bi_opf, bio->bi_iter.bi_sector,
 			   bio->bi_iter.bi_size, err);
 
-	if (bio_op(bio) == REQ_OP_READ) {
-		err = btrfs_check_read_dio_bio(dip->inode, btrfs_io_bio(bio),
+	अगर (bio_op(bio) == REQ_OP_READ) अणु
+		err = btrfs_check_पढ़ो_dio_bio(dip->inode, btrfs_io_bio(bio),
 					       !err);
-	}
+	पूर्ण
 
-	if (err)
+	अगर (err)
 		dip->dio_bio->bi_status = err;
 
 	btrfs_record_physical_zoned(dip->inode, dip->logical_offset, bio);
 
 	bio_put(bio);
-	btrfs_dio_private_put(dip);
-}
+	btrfs_dio_निजी_put(dip);
+पूर्ण
 
-static inline blk_status_t btrfs_submit_dio_bio(struct bio *bio,
-		struct inode *inode, u64 file_offset, int async_submit)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct btrfs_dio_private *dip = bio->bi_private;
-	bool write = btrfs_op(bio) == BTRFS_MAP_WRITE;
+अटल अंतरभूत blk_status_t btrfs_submit_dio_bio(काष्ठा bio *bio,
+		काष्ठा inode *inode, u64 file_offset, पूर्णांक async_submit)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा btrfs_dio_निजी *dip = bio->bi_निजी;
+	bool ग_लिखो = btrfs_op(bio) == BTRFS_MAP_WRITE;
 	blk_status_t ret;
 
-	/* Check btrfs_submit_bio_hook() for rules about async submit. */
-	if (async_submit)
-		async_submit = !atomic_read(&BTRFS_I(inode)->sync_writers);
+	/* Check btrfs_submit_bio_hook() क्रम rules about async submit. */
+	अगर (async_submit)
+		async_submit = !atomic_पढ़ो(&BTRFS_I(inode)->sync_ग_लिखोrs);
 
-	if (!write) {
+	अगर (!ग_लिखो) अणु
 		ret = btrfs_bio_wq_end_io(fs_info, bio, BTRFS_WQ_ENDIO_DATA);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	if (BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM)
-		goto map;
+	अगर (BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM)
+		जाओ map;
 
-	if (write && async_submit) {
+	अगर (ग_लिखो && async_submit) अणु
 		ret = btrfs_wq_submit_bio(inode, bio, 0, 0, file_offset,
 					  btrfs_submit_bio_start_direct_io);
-		goto err;
-	} else if (write) {
+		जाओ err;
+	पूर्ण अन्यथा अगर (ग_लिखो) अणु
 		/*
-		 * If we aren't doing async submit, calculate the csum of the
+		 * If we aren't करोing async submit, calculate the csum of the
 		 * bio now.
 		 */
 		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, file_offset, 1);
-		if (ret)
-			goto err;
-	} else {
+		अगर (ret)
+			जाओ err;
+	पूर्ण अन्यथा अणु
 		u64 csum_offset;
 
 		csum_offset = file_offset - dip->logical_offset;
 		csum_offset >>= fs_info->sectorsize_bits;
 		csum_offset *= fs_info->csum_size;
 		btrfs_io_bio(bio)->csum = dip->csums + csum_offset;
-	}
+	पूर्ण
 map:
 	ret = btrfs_map_bio(fs_info, bio, 0);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * If this succeeds, the btrfs_dio_private is responsible for cleaning up locked
+ * If this succeeds, the btrfs_dio_निजी is responsible क्रम cleaning up locked
  * or ordered extents whether or not we submit any bios.
  */
-static struct btrfs_dio_private *btrfs_create_dio_private(struct bio *dio_bio,
-							  struct inode *inode,
+अटल काष्ठा btrfs_dio_निजी *btrfs_create_dio_निजी(काष्ठा bio *dio_bio,
+							  काष्ठा inode *inode,
 							  loff_t file_offset)
-{
-	const bool write = (btrfs_op(dio_bio) == BTRFS_MAP_WRITE);
-	const bool csum = !(BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM);
-	size_t dip_size;
-	struct btrfs_dio_private *dip;
+अणु
+	स्थिर bool ग_लिखो = (btrfs_op(dio_bio) == BTRFS_MAP_WRITE);
+	स्थिर bool csum = !(BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM);
+	माप_प्रकार dip_size;
+	काष्ठा btrfs_dio_निजी *dip;
 
-	dip_size = sizeof(*dip);
-	if (!write && csum) {
-		struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-		size_t nblocks;
+	dip_size = माप(*dip);
+	अगर (!ग_लिखो && csum) अणु
+		काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+		माप_प्रकार nblocks;
 
 		nblocks = dio_bio->bi_iter.bi_size >> fs_info->sectorsize_bits;
 		dip_size += fs_info->csum_size * nblocks;
-	}
+	पूर्ण
 
 	dip = kzalloc(dip_size, GFP_NOFS);
-	if (!dip)
-		return NULL;
+	अगर (!dip)
+		वापस शून्य;
 
 	dip->inode = inode;
 	dip->logical_offset = file_offset;
@@ -8113,365 +8114,365 @@ static struct btrfs_dio_private *btrfs_create_dio_private(struct bio *dio_bio,
 	dip->disk_bytenr = dio_bio->bi_iter.bi_sector << 9;
 	dip->dio_bio = dio_bio;
 	refcount_set(&dip->refs, 1);
-	return dip;
-}
+	वापस dip;
+पूर्ण
 
-static blk_qc_t btrfs_submit_direct(struct inode *inode, struct iomap *iomap,
-		struct bio *dio_bio, loff_t file_offset)
-{
-	const bool write = (btrfs_op(dio_bio) == BTRFS_MAP_WRITE);
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	const bool raid56 = (btrfs_data_alloc_profile(fs_info) &
+अटल blk_qc_t btrfs_submit_direct(काष्ठा inode *inode, काष्ठा iomap *iomap,
+		काष्ठा bio *dio_bio, loff_t file_offset)
+अणु
+	स्थिर bool ग_लिखो = (btrfs_op(dio_bio) == BTRFS_MAP_WRITE);
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	स्थिर bool raid56 = (btrfs_data_alloc_profile(fs_info) &
 			     BTRFS_BLOCK_GROUP_RAID56_MASK);
-	struct btrfs_dio_private *dip;
-	struct bio *bio;
+	काष्ठा btrfs_dio_निजी *dip;
+	काष्ठा bio *bio;
 	u64 start_sector;
-	int async_submit = 0;
+	पूर्णांक async_submit = 0;
 	u64 submit_len;
-	int clone_offset = 0;
-	int clone_len;
+	पूर्णांक clone_offset = 0;
+	पूर्णांक clone_len;
 	u64 logical;
-	int ret;
+	पूर्णांक ret;
 	blk_status_t status;
-	struct btrfs_io_geometry geom;
-	struct btrfs_dio_data *dio_data = iomap->private;
-	struct extent_map *em = NULL;
+	काष्ठा btrfs_io_geometry geom;
+	काष्ठा btrfs_dio_data *dio_data = iomap->निजी;
+	काष्ठा extent_map *em = शून्य;
 
-	dip = btrfs_create_dio_private(dio_bio, inode, file_offset);
-	if (!dip) {
-		if (!write) {
+	dip = btrfs_create_dio_निजी(dio_bio, inode, file_offset);
+	अगर (!dip) अणु
+		अगर (!ग_लिखो) अणु
 			unlock_extent(&BTRFS_I(inode)->io_tree, file_offset,
 				file_offset + dio_bio->bi_iter.bi_size - 1);
-		}
+		पूर्ण
 		dio_bio->bi_status = BLK_STS_RESOURCE;
 		bio_endio(dio_bio);
-		return BLK_QC_T_NONE;
-	}
+		वापस BLK_QC_T_NONE;
+	पूर्ण
 
-	if (!write) {
+	अगर (!ग_लिखो) अणु
 		/*
 		 * Load the csums up front to reduce csum tree searches and
 		 * contention when submitting bios.
 		 *
-		 * If we have csums disabled this will do nothing.
+		 * If we have csums disabled this will करो nothing.
 		 */
 		status = btrfs_lookup_bio_sums(inode, dio_bio, dip->csums);
-		if (status != BLK_STS_OK)
-			goto out_err;
-	}
+		अगर (status != BLK_STS_OK)
+			जाओ out_err;
+	पूर्ण
 
 	start_sector = dio_bio->bi_iter.bi_sector;
 	submit_len = dio_bio->bi_iter.bi_size;
 
-	do {
+	करो अणु
 		logical = start_sector << 9;
 		em = btrfs_get_chunk_map(fs_info, logical, submit_len);
-		if (IS_ERR(em)) {
-			status = errno_to_blk_status(PTR_ERR(em));
-			em = NULL;
-			goto out_err_em;
-		}
+		अगर (IS_ERR(em)) अणु
+			status = त्रुटि_सं_to_blk_status(PTR_ERR(em));
+			em = शून्य;
+			जाओ out_err_em;
+		पूर्ण
 		ret = btrfs_get_io_geometry(fs_info, em, btrfs_op(dio_bio),
 					    logical, submit_len, &geom);
-		if (ret) {
-			status = errno_to_blk_status(ret);
-			goto out_err_em;
-		}
-		ASSERT(geom.len <= INT_MAX);
+		अगर (ret) अणु
+			status = त्रुटि_सं_to_blk_status(ret);
+			जाओ out_err_em;
+		पूर्ण
+		ASSERT(geom.len <= पूर्णांक_उच्च);
 
-		clone_len = min_t(int, submit_len, geom.len);
+		clone_len = min_t(पूर्णांक, submit_len, geom.len);
 
 		/*
 		 * This will never fail as it's passing GPF_NOFS and
 		 * the allocation is backed by btrfs_bioset.
 		 */
 		bio = btrfs_bio_clone_partial(dio_bio, clone_offset, clone_len);
-		bio->bi_private = dip;
+		bio->bi_निजी = dip;
 		bio->bi_end_io = btrfs_end_dio_bio;
 		btrfs_io_bio(bio)->logical = file_offset;
 
-		if (bio_op(bio) == REQ_OP_ZONE_APPEND) {
+		अगर (bio_op(bio) == REQ_OP_ZONE_APPEND) अणु
 			status = extract_ordered_extent(BTRFS_I(inode), bio,
 							file_offset);
-			if (status) {
+			अगर (status) अणु
 				bio_put(bio);
-				goto out_err;
-			}
-		}
+				जाओ out_err;
+			पूर्ण
+		पूर्ण
 
 		ASSERT(submit_len >= clone_len);
 		submit_len -= clone_len;
 
 		/*
-		 * Increase the count before we submit the bio so we know
-		 * the end IO handler won't happen before we increase the
-		 * count. Otherwise, the dip might get freed before we're
-		 * done setting it up.
+		 * Increase the count beक्रमe we submit the bio so we know
+		 * the end IO handler won't happen beक्रमe we increase the
+		 * count. Otherwise, the dip might get मुक्तd beक्रमe we're
+		 * करोne setting it up.
 		 *
 		 * We transfer the initial reference to the last bio, so we
-		 * don't need to increment the reference count for the last one.
+		 * करोn't need to increment the reference count क्रम the last one.
 		 */
-		if (submit_len > 0) {
+		अगर (submit_len > 0) अणु
 			refcount_inc(&dip->refs);
 			/*
 			 * If we are submitting more than one bio, submit them
 			 * all asynchronously. The exception is RAID 5 or 6, as
-			 * asynchronous checksums make it difficult to collect
-			 * full stripe writes.
+			 * asynchronous checksums make it dअगरficult to collect
+			 * full stripe ग_लिखोs.
 			 */
-			if (!raid56)
+			अगर (!raid56)
 				async_submit = 1;
-		}
+		पूर्ण
 
 		status = btrfs_submit_dio_bio(bio, inode, file_offset,
 						async_submit);
-		if (status) {
+		अगर (status) अणु
 			bio_put(bio);
-			if (submit_len > 0)
+			अगर (submit_len > 0)
 				refcount_dec(&dip->refs);
-			goto out_err_em;
-		}
+			जाओ out_err_em;
+		पूर्ण
 
 		dio_data->submitted += clone_len;
 		clone_offset += clone_len;
 		start_sector += clone_len >> 9;
 		file_offset += clone_len;
 
-		free_extent_map(em);
-	} while (submit_len > 0);
-	return BLK_QC_T_NONE;
+		मुक्त_extent_map(em);
+	पूर्ण जबतक (submit_len > 0);
+	वापस BLK_QC_T_NONE;
 
 out_err_em:
-	free_extent_map(em);
+	मुक्त_extent_map(em);
 out_err:
 	dip->dio_bio->bi_status = status;
-	btrfs_dio_private_put(dip);
+	btrfs_dio_निजी_put(dip);
 
-	return BLK_QC_T_NONE;
-}
+	वापस BLK_QC_T_NONE;
+पूर्ण
 
-const struct iomap_ops btrfs_dio_iomap_ops = {
+स्थिर काष्ठा iomap_ops btrfs_dio_iomap_ops = अणु
 	.iomap_begin            = btrfs_dio_iomap_begin,
 	.iomap_end              = btrfs_dio_iomap_end,
-};
+पूर्ण;
 
-const struct iomap_dio_ops btrfs_dio_ops = {
+स्थिर काष्ठा iomap_dio_ops btrfs_dio_ops = अणु
 	.submit_io		= btrfs_submit_direct,
-};
+पूर्ण;
 
-static int btrfs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
+अटल पूर्णांक btrfs_fiemap(काष्ठा inode *inode, काष्ठा fiemap_extent_info *fieinfo,
 			u64 start, u64 len)
-{
-	int	ret;
+अणु
+	पूर्णांक	ret;
 
 	ret = fiemap_prep(inode, fieinfo, start, &len, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return extent_fiemap(BTRFS_I(inode), fieinfo, start, len);
-}
+	वापस extent_fiemap(BTRFS_I(inode), fieinfo, start, len);
+पूर्ण
 
-int btrfs_readpage(struct file *file, struct page *page)
-{
-	struct btrfs_inode *inode = BTRFS_I(page->mapping->host);
+पूर्णांक btrfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	काष्ठा btrfs_inode *inode = BTRFS_I(page->mapping->host);
 	u64 start = page_offset(page);
 	u64 end = start + PAGE_SIZE - 1;
-	unsigned long bio_flags = 0;
-	struct bio *bio = NULL;
-	int ret;
+	अचिन्हित दीर्घ bio_flags = 0;
+	काष्ठा bio *bio = शून्य;
+	पूर्णांक ret;
 
-	btrfs_lock_and_flush_ordered_range(inode, start, end, NULL);
+	btrfs_lock_and_flush_ordered_range(inode, start, end, शून्य);
 
-	ret = btrfs_do_readpage(page, NULL, &bio, &bio_flags, 0, NULL);
-	if (bio)
+	ret = btrfs_करो_पढ़ोpage(page, शून्य, &bio, &bio_flags, 0, शून्य);
+	अगर (bio)
 		ret = submit_one_bio(bio, 0, bio_flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_writepage(struct page *page, struct writeback_control *wbc)
-{
-	struct inode *inode = page->mapping->host;
-	int ret;
+अटल पूर्णांक btrfs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	पूर्णांक ret;
 
-	if (current->flags & PF_MEMALLOC) {
-		redirty_page_for_writepage(wbc, page);
+	अगर (current->flags & PF_MEMALLOC) अणु
+		redirty_page_क्रम_ग_लिखोpage(wbc, page);
 		unlock_page(page);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * If we are under memory pressure we will call this directly from the
-	 * VM, we need to make sure we have the inode referenced for the ordered
-	 * extent.  If not just return like we didn't do anything.
+	 * VM, we need to make sure we have the inode referenced क्रम the ordered
+	 * extent.  If not just वापस like we didn't करो anything.
 	 */
-	if (!igrab(inode)) {
-		redirty_page_for_writepage(wbc, page);
-		return AOP_WRITEPAGE_ACTIVATE;
-	}
-	ret = extent_write_full_page(page, wbc);
+	अगर (!igrab(inode)) अणु
+		redirty_page_क्रम_ग_लिखोpage(wbc, page);
+		वापस AOP_WRITEPAGE_ACTIVATE;
+	पूर्ण
+	ret = extent_ग_लिखो_full_page(page, wbc);
 	btrfs_add_delayed_iput(inode);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_writepages(struct address_space *mapping,
-			    struct writeback_control *wbc)
-{
-	return extent_writepages(mapping, wbc);
-}
+अटल पूर्णांक btrfs_ग_लिखोpages(काष्ठा address_space *mapping,
+			    काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस extent_ग_लिखोpages(mapping, wbc);
+पूर्ण
 
-static void btrfs_readahead(struct readahead_control *rac)
-{
-	extent_readahead(rac);
-}
+अटल व्योम btrfs_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
+अणु
+	extent_पढ़ोahead(rac);
+पूर्ण
 
-static int __btrfs_releasepage(struct page *page, gfp_t gfp_flags)
-{
-	int ret = try_release_extent_mapping(page, gfp_flags);
-	if (ret == 1)
+अटल पूर्णांक __btrfs_releasepage(काष्ठा page *page, gfp_t gfp_flags)
+अणु
+	पूर्णांक ret = try_release_extent_mapping(page, gfp_flags);
+	अगर (ret == 1)
 		clear_page_extent_mapped(page);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_releasepage(struct page *page, gfp_t gfp_flags)
-{
-	if (PageWriteback(page) || PageDirty(page))
-		return 0;
-	return __btrfs_releasepage(page, gfp_flags);
-}
+अटल पूर्णांक btrfs_releasepage(काष्ठा page *page, gfp_t gfp_flags)
+अणु
+	अगर (PageWriteback(page) || PageDirty(page))
+		वापस 0;
+	वापस __btrfs_releasepage(page, gfp_flags);
+पूर्ण
 
-#ifdef CONFIG_MIGRATION
-static int btrfs_migratepage(struct address_space *mapping,
-			     struct page *newpage, struct page *page,
-			     enum migrate_mode mode)
-{
-	int ret;
+#अगर_घोषित CONFIG_MIGRATION
+अटल पूर्णांक btrfs_migratepage(काष्ठा address_space *mapping,
+			     काष्ठा page *newpage, काष्ठा page *page,
+			     क्रमागत migrate_mode mode)
+अणु
+	पूर्णांक ret;
 
 	ret = migrate_page_move_mapping(mapping, newpage, page, 0);
-	if (ret != MIGRATEPAGE_SUCCESS)
-		return ret;
+	अगर (ret != MIGRATEPAGE_SUCCESS)
+		वापस ret;
 
-	if (page_has_private(page))
-		attach_page_private(newpage, detach_page_private(page));
+	अगर (page_has_निजी(page))
+		attach_page_निजी(newpage, detach_page_निजी(page));
 
-	if (PagePrivate2(page)) {
+	अगर (PagePrivate2(page)) अणु
 		ClearPagePrivate2(page);
 		SetPagePrivate2(newpage);
-	}
+	पूर्ण
 
-	if (mode != MIGRATE_SYNC_NO_COPY)
+	अगर (mode != MIGRATE_SYNC_NO_COPY)
 		migrate_page_copy(newpage, page);
-	else
+	अन्यथा
 		migrate_page_states(newpage, page);
-	return MIGRATEPAGE_SUCCESS;
-}
-#endif
+	वापस MIGRATEPAGE_SUCCESS;
+पूर्ण
+#पूर्ण_अगर
 
-static void btrfs_invalidatepage(struct page *page, unsigned int offset,
-				 unsigned int length)
-{
-	struct btrfs_inode *inode = BTRFS_I(page->mapping->host);
-	struct extent_io_tree *tree = &inode->io_tree;
-	struct btrfs_ordered_extent *ordered;
-	struct extent_state *cached_state = NULL;
+अटल व्योम btrfs_invalidatepage(काष्ठा page *page, अचिन्हित पूर्णांक offset,
+				 अचिन्हित पूर्णांक length)
+अणु
+	काष्ठा btrfs_inode *inode = BTRFS_I(page->mapping->host);
+	काष्ठा extent_io_tree *tree = &inode->io_tree;
+	काष्ठा btrfs_ordered_extent *ordered;
+	काष्ठा extent_state *cached_state = शून्य;
 	u64 page_start = page_offset(page);
 	u64 page_end = page_start + PAGE_SIZE - 1;
 	u64 start;
 	u64 end;
-	int inode_evicting = inode->vfs_inode.i_state & I_FREEING;
+	पूर्णांक inode_evicting = inode->vfs_inode.i_state & I_FREEING;
 	bool found_ordered = false;
 	bool completed_ordered = false;
 
 	/*
-	 * we have the page locked, so new writeback can't start,
-	 * and the dirty bit won't be cleared while we are here.
+	 * we have the page locked, so new ग_लिखोback can't start,
+	 * and the dirty bit won't be cleared जबतक we are here.
 	 *
-	 * Wait for IO on this page so that we can safely clear
-	 * the PagePrivate2 bit and do ordered accounting
+	 * Wait क्रम IO on this page so that we can safely clear
+	 * the PagePrivate2 bit and करो ordered accounting
 	 */
-	wait_on_page_writeback(page);
+	रुको_on_page_ग_लिखोback(page);
 
-	if (offset) {
+	अगर (offset) अणु
 		btrfs_releasepage(page, GFP_NOFS);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!inode_evicting)
+	अगर (!inode_evicting)
 		lock_extent_bits(tree, page_start, page_end, &cached_state);
 
 	start = page_start;
 again:
 	ordered = btrfs_lookup_ordered_range(inode, start, page_end - start + 1);
-	if (ordered) {
+	अगर (ordered) अणु
 		found_ordered = true;
 		end = min(page_end,
 			  ordered->file_offset + ordered->num_bytes - 1);
 		/*
 		 * IO on this page will never be started, so we need to account
-		 * for any ordered extents now. Don't clear EXTENT_DELALLOC_NEW
-		 * here, must leave that up for the ordered extent completion.
+		 * क्रम any ordered extents now. Don't clear EXTENT_DELALLOC_NEW
+		 * here, must leave that up क्रम the ordered extent completion.
 		 */
-		if (!inode_evicting)
+		अगर (!inode_evicting)
 			clear_extent_bit(tree, start, end,
 					 EXTENT_DELALLOC |
 					 EXTENT_LOCKED | EXTENT_DO_ACCOUNTING |
 					 EXTENT_DEFRAG, 1, 0, &cached_state);
 		/*
-		 * whoever cleared the private bit is responsible
-		 * for the finish_ordered_io
+		 * whoever cleared the निजी bit is responsible
+		 * क्रम the finish_ordered_io
 		 */
-		if (TestClearPagePrivate2(page)) {
+		अगर (TestClearPagePrivate2(page)) अणु
 			spin_lock_irq(&inode->ordered_tree.lock);
 			set_bit(BTRFS_ORDERED_TRUNCATED, &ordered->flags);
 			ordered->truncated_len = min(ordered->truncated_len,
 						     start - ordered->file_offset);
 			spin_unlock_irq(&inode->ordered_tree.lock);
 
-			if (btrfs_dec_test_ordered_pending(inode, &ordered,
+			अगर (btrfs_dec_test_ordered_pending(inode, &ordered,
 							   start,
-							   end - start + 1, 1)) {
+							   end - start + 1, 1)) अणु
 				btrfs_finish_ordered_io(ordered);
 				completed_ordered = true;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		btrfs_put_ordered_extent(ordered);
-		if (!inode_evicting) {
-			cached_state = NULL;
+		अगर (!inode_evicting) अणु
+			cached_state = शून्य;
 			lock_extent_bits(tree, start, end,
 					 &cached_state);
-		}
+		पूर्ण
 
 		start = end + 1;
-		if (start < page_end)
-			goto again;
-	}
+		अगर (start < page_end)
+			जाओ again;
+	पूर्ण
 
 	/*
 	 * Qgroup reserved space handler
 	 * Page here will be either
-	 * 1) Already written to disk or ordered extent already submitted
-	 *    Then its QGROUP_RESERVED bit in io_tree is already cleaned.
+	 * 1) Alपढ़ोy written to disk or ordered extent alपढ़ोy submitted
+	 *    Then its QGROUP_RESERVED bit in io_tree is alपढ़ोy cleaned.
 	 *    Qgroup will be handled by its qgroup_record then.
-	 *    btrfs_qgroup_free_data() call will do nothing here.
+	 *    btrfs_qgroup_मुक्त_data() call will करो nothing here.
 	 *
 	 * 2) Not written to disk yet
-	 *    Then btrfs_qgroup_free_data() call will clear the QGROUP_RESERVED
-	 *    bit of its io_tree, and free the qgroup reserved data space.
-	 *    Since the IO will never happen for this page.
+	 *    Then btrfs_qgroup_मुक्त_data() call will clear the QGROUP_RESERVED
+	 *    bit of its io_tree, and मुक्त the qgroup reserved data space.
+	 *    Since the IO will never happen क्रम this page.
 	 */
-	btrfs_qgroup_free_data(inode, NULL, page_start, PAGE_SIZE);
-	if (!inode_evicting) {
+	btrfs_qgroup_मुक्त_data(inode, शून्य, page_start, PAGE_SIZE);
+	अगर (!inode_evicting) अणु
 		bool delete = true;
 
 		/*
-		 * If there's an ordered extent for this range and we have not
+		 * If there's an ordered extent क्रम this range and we have not
 		 * finished it ourselves, we must leave EXTENT_DELALLOC_NEW set
-		 * in the range for the ordered extent completion. We must also
+		 * in the range क्रम the ordered extent completion. We must also
 		 * not delete the range, otherwise we would lose that bit (and
 		 * any other bits set in the range). Make sure EXTENT_UPTODATE
-		 * is cleared if we don't delete, otherwise it can lead to
-		 * corruptions if the i_size is extented later.
+		 * is cleared अगर we करोn't delete, otherwise it can lead to
+		 * corruptions अगर the i_size is extented later.
 		 */
-		if (found_ordered && !completed_ordered)
+		अगर (found_ordered && !completed_ordered)
 			delete = false;
 		clear_extent_bit(tree, page_start, page_end, EXTENT_LOCKED |
 				 EXTENT_DELALLOC | EXTENT_UPTODATE |
@@ -8479,41 +8480,41 @@ again:
 				 delete, &cached_state);
 
 		__btrfs_releasepage(page, GFP_NOFS);
-	}
+	पूर्ण
 
 	ClearPageChecked(page);
 	clear_page_extent_mapped(page);
-}
+पूर्ण
 
 /*
- * btrfs_page_mkwrite() is not allowed to change the file size as it gets
+ * btrfs_page_mkग_लिखो() is not allowed to change the file size as it माला_लो
  * called from a page fault handler when a page is first dirtied. Hence we must
- * be careful to check for EOF conditions here. We set the page up correctly
- * for a written page which means we get ENOSPC checking when writing into
- * holes and correct delalloc and unwritten extent mapping on filesystems that
+ * be careful to check क्रम खातापूर्ण conditions here. We set the page up correctly
+ * क्रम a written page which means we get ENOSPC checking when writing पूर्णांकo
+ * holes and correct delalloc and unwritten extent mapping on fileप्रणालीs that
  * support these features.
  *
  * We are not allowed to take the i_mutex here so we have to play games to
- * protect against truncate races as the page could now be beyond EOF.  Because
- * truncate_setsize() writes the inode size before removing pages, once we have
- * the page lock we can determine safely if the page is beyond EOF. If it is not
- * beyond EOF, then the page is guaranteed safe against truncation until we
+ * protect against truncate races as the page could now be beyond खातापूर्ण.  Because
+ * truncate_setsize() ग_लिखोs the inode size beक्रमe removing pages, once we have
+ * the page lock we can determine safely अगर the page is beyond खातापूर्ण. If it is not
+ * beyond खातापूर्ण, then the page is guaranteed safe against truncation until we
  * unlock the page.
  */
-vm_fault_t btrfs_page_mkwrite(struct vm_fault *vmf)
-{
-	struct page *page = vmf->page;
-	struct inode *inode = file_inode(vmf->vma->vm_file);
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
-	struct btrfs_ordered_extent *ordered;
-	struct extent_state *cached_state = NULL;
-	struct extent_changeset *data_reserved = NULL;
-	unsigned long zero_start;
+vm_fault_t btrfs_page_mkग_लिखो(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा page *page = vmf->page;
+	काष्ठा inode *inode = file_inode(vmf->vma->vm_file);
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
+	काष्ठा btrfs_ordered_extent *ordered;
+	काष्ठा extent_state *cached_state = शून्य;
+	काष्ठा extent_changeset *data_reserved = शून्य;
+	अचिन्हित दीर्घ zero_start;
 	loff_t size;
 	vm_fault_t ret;
-	int ret2;
-	int reserved = 0;
+	पूर्णांक ret2;
+	पूर्णांक reserved = 0;
 	u64 reserved_space;
 	u64 page_start;
 	u64 page_end;
@@ -8528,79 +8529,79 @@ vm_fault_t btrfs_page_mkwrite(struct vm_fault *vmf)
 
 	/*
 	 * Reserving delalloc space after obtaining the page lock can lead to
-	 * deadlock. For example, if a dirty page is locked by this function
+	 * deadlock. For example, अगर a dirty page is locked by this function
 	 * and the call to btrfs_delalloc_reserve_space() ends up triggering
-	 * dirty page write out, then the btrfs_writepage() function could
-	 * end up waiting indefinitely to get a lock on the page currently
-	 * being processed by btrfs_page_mkwrite() function.
+	 * dirty page ग_लिखो out, then the btrfs_ग_लिखोpage() function could
+	 * end up रुकोing indefinitely to get a lock on the page currently
+	 * being processed by btrfs_page_mkग_लिखो() function.
 	 */
 	ret2 = btrfs_delalloc_reserve_space(BTRFS_I(inode), &data_reserved,
 					    page_start, reserved_space);
-	if (!ret2) {
-		ret2 = file_update_time(vmf->vma->vm_file);
+	अगर (!ret2) अणु
+		ret2 = file_update_समय(vmf->vma->vm_file);
 		reserved = 1;
-	}
-	if (ret2) {
+	पूर्ण
+	अगर (ret2) अणु
 		ret = vmf_error(ret2);
-		if (reserved)
-			goto out;
-		goto out_noreserve;
-	}
+		अगर (reserved)
+			जाओ out;
+		जाओ out_noreserve;
+	पूर्ण
 
 	ret = VM_FAULT_NOPAGE; /* make the VM retry the fault */
 again:
-	down_read(&BTRFS_I(inode)->i_mmap_lock);
+	करोwn_पढ़ो(&BTRFS_I(inode)->i_mmap_lock);
 	lock_page(page);
-	size = i_size_read(inode);
+	size = i_size_पढ़ो(inode);
 
-	if ((page->mapping != inode->i_mapping) ||
-	    (page_start >= size)) {
+	अगर ((page->mapping != inode->i_mapping) ||
+	    (page_start >= size)) अणु
 		/* page got truncated out from underneath us */
-		goto out_unlock;
-	}
-	wait_on_page_writeback(page);
+		जाओ out_unlock;
+	पूर्ण
+	रुको_on_page_ग_लिखोback(page);
 
 	lock_extent_bits(io_tree, page_start, page_end, &cached_state);
 	ret2 = set_page_extent_mapped(page);
-	if (ret2 < 0) {
+	अगर (ret2 < 0) अणु
 		ret = vmf_error(ret2);
 		unlock_extent_cached(io_tree, page_start, page_end, &cached_state);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/*
-	 * we can't set the delalloc bits if there are pending ordered
-	 * extents.  Drop our locks and wait for them to finish
+	 * we can't set the delalloc bits अगर there are pending ordered
+	 * extents.  Drop our locks and रुको क्रम them to finish
 	 */
 	ordered = btrfs_lookup_ordered_range(BTRFS_I(inode), page_start,
 			PAGE_SIZE);
-	if (ordered) {
+	अगर (ordered) अणु
 		unlock_extent_cached(io_tree, page_start, page_end,
 				     &cached_state);
 		unlock_page(page);
-		up_read(&BTRFS_I(inode)->i_mmap_lock);
+		up_पढ़ो(&BTRFS_I(inode)->i_mmap_lock);
 		btrfs_start_ordered_extent(ordered, 1);
 		btrfs_put_ordered_extent(ordered);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
-	if (page->index == ((size - 1) >> PAGE_SHIFT)) {
+	अगर (page->index == ((size - 1) >> PAGE_SHIFT)) अणु
 		reserved_space = round_up(size - page_start,
 					  fs_info->sectorsize);
-		if (reserved_space < PAGE_SIZE) {
+		अगर (reserved_space < PAGE_SIZE) अणु
 			end = page_start + reserved_space - 1;
 			btrfs_delalloc_release_space(BTRFS_I(inode),
 					data_reserved, page_start,
 					PAGE_SIZE - reserved_space, true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * page_mkwrite gets called when the page is firstly dirtied after it's
-	 * faulted in, but write(2) could also dirty a page and set delalloc
-	 * bits, thus in this case for space account reason, we still need to
+	 * page_mkग_लिखो माला_लो called when the page is firstly dirtied after it's
+	 * faulted in, but ग_लिखो(2) could also dirty a page and set delalloc
+	 * bits, thus in this हाल क्रम space account reason, we still need to
 	 * clear any delalloc bits within this page range since we have to
-	 * reserve data&meta space before lock_page() (see above comments).
+	 * reserve data&meta space beक्रमe lock_page() (see above comments).
 	 */
 	clear_extent_bit(&BTRFS_I(inode)->io_tree, page_start, end,
 			  EXTENT_DELALLOC | EXTENT_DO_ACCOUNTING |
@@ -8608,23 +8609,23 @@ again:
 
 	ret2 = btrfs_set_extent_delalloc(BTRFS_I(inode), page_start, end, 0,
 					&cached_state);
-	if (ret2) {
+	अगर (ret2) अणु
 		unlock_extent_cached(io_tree, page_start, page_end,
 				     &cached_state);
 		ret = VM_FAULT_SIGBUS;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	/* page is wholly or partially inside EOF */
-	if (page_start + PAGE_SIZE > size)
+	/* page is wholly or partially inside खातापूर्ण */
+	अगर (page_start + PAGE_SIZE > size)
 		zero_start = offset_in_page(size);
-	else
+	अन्यथा
 		zero_start = PAGE_SIZE;
 
-	if (zero_start != PAGE_SIZE) {
+	अगर (zero_start != PAGE_SIZE) अणु
 		memzero_page(page, zero_start, PAGE_SIZE - zero_start);
 		flush_dcache_page(page);
-	}
+	पूर्ण
 	ClearPageChecked(page);
 	set_page_dirty(page);
 	SetPageUptodate(page);
@@ -8632,42 +8633,42 @@ again:
 	btrfs_set_inode_last_sub_trans(BTRFS_I(inode));
 
 	unlock_extent_cached(io_tree, page_start, page_end, &cached_state);
-	up_read(&BTRFS_I(inode)->i_mmap_lock);
+	up_पढ़ो(&BTRFS_I(inode)->i_mmap_lock);
 
 	btrfs_delalloc_release_extents(BTRFS_I(inode), PAGE_SIZE);
 	sb_end_pagefault(inode->i_sb);
-	extent_changeset_free(data_reserved);
-	return VM_FAULT_LOCKED;
+	extent_changeset_मुक्त(data_reserved);
+	वापस VM_FAULT_LOCKED;
 
 out_unlock:
 	unlock_page(page);
-	up_read(&BTRFS_I(inode)->i_mmap_lock);
+	up_पढ़ो(&BTRFS_I(inode)->i_mmap_lock);
 out:
 	btrfs_delalloc_release_extents(BTRFS_I(inode), PAGE_SIZE);
 	btrfs_delalloc_release_space(BTRFS_I(inode), data_reserved, page_start,
 				     reserved_space, (ret != 0));
 out_noreserve:
 	sb_end_pagefault(inode->i_sb);
-	extent_changeset_free(data_reserved);
-	return ret;
-}
+	extent_changeset_मुक्त(data_reserved);
+	वापस ret;
+पूर्ण
 
-static int btrfs_truncate(struct inode *inode, bool skip_writeback)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	struct btrfs_block_rsv *rsv;
-	int ret;
-	struct btrfs_trans_handle *trans;
+अटल पूर्णांक btrfs_truncate(काष्ठा inode *inode, bool skip_ग_लिखोback)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	काष्ठा btrfs_block_rsv *rsv;
+	पूर्णांक ret;
+	काष्ठा btrfs_trans_handle *trans;
 	u64 mask = fs_info->sectorsize - 1;
 	u64 min_size = btrfs_calc_metadata_size(fs_info, 1);
 
-	if (!skip_writeback) {
-		ret = btrfs_wait_ordered_range(inode, inode->i_size & (~mask),
+	अगर (!skip_ग_लिखोback) अणु
+		ret = btrfs_रुको_ordered_range(inode, inode->i_size & (~mask),
 					       (u64)-1);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/*
 	 * Yes ladies and gentlemen, this is indeed ugly.  We have a couple of
@@ -8676,157 +8677,157 @@ static int btrfs_truncate(struct inode *inode, bool skip_writeback)
 	 * 1) We need to reserve space to update our inode.
 	 *
 	 * 2) We need to have something to cache all the space that is going to
-	 * be free'd up by the truncate operation, but also have some slack
-	 * space reserved in case it uses space during the truncate (thank you
+	 * be मुक्त'd up by the truncate operation, but also have some slack
+	 * space reserved in हाल it uses space during the truncate (thank you
 	 * very much snapshotting).
 	 *
 	 * And we need these to be separate.  The fact is we can use a lot of
-	 * space doing the truncate, and we have no earthly idea how much space
+	 * space करोing the truncate, and we have no earthly idea how much space
 	 * we will use, so we need the truncate reservation to be separate so it
-	 * doesn't end up using space reserved for updating the inode.  We also
+	 * करोesn't end up using space reserved क्रम updating the inode.  We also
 	 * need to be able to stop the transaction and start a new one, which
-	 * means we need to be able to update the inode several times, and we
-	 * have no idea of knowing how many times that will be, so we can't just
-	 * reserve 1 item for the entirety of the operation, so that has to be
-	 * done separately as well.
+	 * means we need to be able to update the inode several बार, and we
+	 * have no idea of knowing how many बार that will be, so we can't just
+	 * reserve 1 item क्रम the entirety of the operation, so that has to be
+	 * करोne separately as well.
 	 *
 	 * So that leaves us with
 	 *
-	 * 1) rsv - for the truncate reservation, which we will steal from the
+	 * 1) rsv - क्रम the truncate reservation, which we will steal from the
 	 * transaction reservation.
-	 * 2) fs_info->trans_block_rsv - this will have 1 items worth left for
+	 * 2) fs_info->trans_block_rsv - this will have 1 items worth left क्रम
 	 * updating the inode.
 	 */
 	rsv = btrfs_alloc_block_rsv(fs_info, BTRFS_BLOCK_RSV_TEMP);
-	if (!rsv)
-		return -ENOMEM;
+	अगर (!rsv)
+		वापस -ENOMEM;
 	rsv->size = min_size;
 	rsv->failfast = 1;
 
 	/*
-	 * 1 for the truncate slack space
-	 * 1 for updating the inode.
+	 * 1 क्रम the truncate slack space
+	 * 1 क्रम updating the inode.
 	 */
 	trans = btrfs_start_transaction(root, 2);
-	if (IS_ERR(trans)) {
+	अगर (IS_ERR(trans)) अणु
 		ret = PTR_ERR(trans);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Migrate the slack space for the truncate to our reserve */
+	/* Migrate the slack space क्रम the truncate to our reserve */
 	ret = btrfs_block_rsv_migrate(&fs_info->trans_block_rsv, rsv,
 				      min_size, false);
 	BUG_ON(ret);
 
 	/*
-	 * So if we truncate and then write and fsync we normally would just
-	 * write the extents that changed, which is a problem if we need to
-	 * first truncate that entire inode.  So set this flag so we write out
+	 * So अगर we truncate and then ग_लिखो and fsync we normally would just
+	 * ग_लिखो the extents that changed, which is a problem अगर we need to
+	 * first truncate that entire inode.  So set this flag so we ग_लिखो out
 	 * all of the extents in the inode to the sync log so we're completely
 	 * safe.
 	 */
-	set_bit(BTRFS_INODE_NEEDS_FULL_SYNC, &BTRFS_I(inode)->runtime_flags);
+	set_bit(BTRFS_INODE_NEEDS_FULL_SYNC, &BTRFS_I(inode)->runसमय_flags);
 	trans->block_rsv = rsv;
 
-	while (1) {
+	जबतक (1) अणु
 		ret = btrfs_truncate_inode_items(trans, root, BTRFS_I(inode),
 						 inode->i_size,
 						 BTRFS_EXTENT_DATA_KEY);
 		trans->block_rsv = &fs_info->trans_block_rsv;
-		if (ret != -ENOSPC && ret != -EAGAIN)
-			break;
+		अगर (ret != -ENOSPC && ret != -EAGAIN)
+			अवरोध;
 
 		ret = btrfs_update_inode(trans, root, BTRFS_I(inode));
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		btrfs_end_transaction(trans);
 		btrfs_btree_balance_dirty(fs_info);
 
 		trans = btrfs_start_transaction(root, 2);
-		if (IS_ERR(trans)) {
+		अगर (IS_ERR(trans)) अणु
 			ret = PTR_ERR(trans);
-			trans = NULL;
-			break;
-		}
+			trans = शून्य;
+			अवरोध;
+		पूर्ण
 
-		btrfs_block_rsv_release(fs_info, rsv, -1, NULL);
+		btrfs_block_rsv_release(fs_info, rsv, -1, शून्य);
 		ret = btrfs_block_rsv_migrate(&fs_info->trans_block_rsv,
 					      rsv, min_size, false);
 		BUG_ON(ret);	/* shouldn't happen */
 		trans->block_rsv = rsv;
-	}
+	पूर्ण
 
 	/*
 	 * We can't call btrfs_truncate_block inside a trans handle as we could
-	 * deadlock with freeze, if we got NEED_TRUNCATE_BLOCK then we know
-	 * we've truncated everything except the last little bit, and can do
+	 * deadlock with मुक्तze, अगर we got NEED_TRUNCATE_BLOCK then we know
+	 * we've truncated everything except the last little bit, and can करो
 	 * btrfs_truncate_block and then update the disk_i_size.
 	 */
-	if (ret == NEED_TRUNCATE_BLOCK) {
+	अगर (ret == NEED_TRUNCATE_BLOCK) अणु
 		btrfs_end_transaction(trans);
 		btrfs_btree_balance_dirty(fs_info);
 
 		ret = btrfs_truncate_block(BTRFS_I(inode), inode->i_size, 0, 0);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 		trans = btrfs_start_transaction(root, 1);
-		if (IS_ERR(trans)) {
+		अगर (IS_ERR(trans)) अणु
 			ret = PTR_ERR(trans);
-			goto out;
-		}
-		btrfs_inode_safe_disk_i_size_write(BTRFS_I(inode), 0);
-	}
+			जाओ out;
+		पूर्ण
+		btrfs_inode_safe_disk_i_size_ग_लिखो(BTRFS_I(inode), 0);
+	पूर्ण
 
-	if (trans) {
-		int ret2;
+	अगर (trans) अणु
+		पूर्णांक ret2;
 
 		trans->block_rsv = &fs_info->trans_block_rsv;
 		ret2 = btrfs_update_inode(trans, root, BTRFS_I(inode));
-		if (ret2 && !ret)
+		अगर (ret2 && !ret)
 			ret = ret2;
 
 		ret2 = btrfs_end_transaction(trans);
-		if (ret2 && !ret)
+		अगर (ret2 && !ret)
 			ret = ret2;
 		btrfs_btree_balance_dirty(fs_info);
-	}
+	पूर्ण
 out:
-	btrfs_free_block_rsv(fs_info, rsv);
+	btrfs_मुक्त_block_rsv(fs_info, rsv);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * create a new subvolume directory/inode (helper for the ioctl).
+ * create a new subvolume directory/inode (helper क्रम the ioctl).
  */
-int btrfs_create_subvol_root(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *new_root,
-			     struct btrfs_root *parent_root)
-{
-	struct inode *inode;
-	int err;
+पूर्णांक btrfs_create_subvol_root(काष्ठा btrfs_trans_handle *trans,
+			     काष्ठा btrfs_root *new_root,
+			     काष्ठा btrfs_root *parent_root)
+अणु
+	काष्ठा inode *inode;
+	पूर्णांक err;
 	u64 index = 0;
 	u64 ino;
 
-	err = btrfs_get_free_objectid(new_root, &ino);
-	if (err < 0)
-		return err;
+	err = btrfs_get_मुक्त_objectid(new_root, &ino);
+	अगर (err < 0)
+		वापस err;
 
-	inode = btrfs_new_inode(trans, new_root, NULL, "..", 2, ino, ino,
-				S_IFDIR | (~current_umask() & S_IRWXUGO),
+	inode = btrfs_new_inode(trans, new_root, शून्य, "..", 2, ino, ino,
+				S_IFसूची | (~current_umask() & S_IRWXUGO),
 				&index);
-	if (IS_ERR(inode))
-		return PTR_ERR(inode);
+	अगर (IS_ERR(inode))
+		वापस PTR_ERR(inode);
 	inode->i_op = &btrfs_dir_inode_operations;
 	inode->i_fop = &btrfs_dir_file_operations;
 
 	set_nlink(inode, 1);
-	btrfs_i_size_write(BTRFS_I(inode), 0);
+	btrfs_i_size_ग_लिखो(BTRFS_I(inode), 0);
 	unlock_new_inode(inode);
 
 	err = btrfs_subvol_inherit_props(trans, new_root, parent_root);
-	if (err)
+	अगर (err)
 		btrfs_err(new_root->fs_info,
 			  "error inheriting subvolume %llu properties: %d",
 			  new_root->root_key.objectid, err);
@@ -8834,20 +8835,20 @@ int btrfs_create_subvol_root(struct btrfs_trans_handle *trans,
 	err = btrfs_update_inode(trans, new_root, BTRFS_I(inode));
 
 	iput(inode);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct inode *btrfs_alloc_inode(struct super_block *sb)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(sb);
-	struct btrfs_inode *ei;
-	struct inode *inode;
+काष्ठा inode *btrfs_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(sb);
+	काष्ठा btrfs_inode *ei;
+	काष्ठा inode *inode;
 
 	ei = kmem_cache_alloc(btrfs_inode_cachep, GFP_KERNEL);
-	if (!ei)
-		return NULL;
+	अगर (!ei)
+		वापस शून्य;
 
-	ei->root = NULL;
+	ei->root = शून्य;
 	ei->generation = 0;
 	ei->last_trans = 0;
 	ei->last_sub_trans = 0;
@@ -8866,17 +8867,17 @@ struct inode *btrfs_alloc_inode(struct super_block *sb)
 
 	spin_lock_init(&ei->lock);
 	ei->outstanding_extents = 0;
-	if (sb->s_magic != BTRFS_TEST_MAGIC)
+	अगर (sb->s_magic != BTRFS_TEST_MAGIC)
 		btrfs_init_metadata_block_rsv(fs_info, &ei->block_rsv,
 					      BTRFS_BLOCK_RSV_DELALLOC);
-	ei->runtime_flags = 0;
+	ei->runसमय_flags = 0;
 	ei->prop_compress = BTRFS_COMPRESS_NONE;
 	ei->defrag_compress = BTRFS_COMPRESS_NONE;
 
-	ei->delayed_node = NULL;
+	ei->delayed_node = शून्य;
 
-	ei->i_otime.tv_sec = 0;
-	ei->i_otime.tv_nsec = 0;
+	ei->i_oसमय.tv_sec = 0;
+	ei->i_oसमय.tv_nsec = 0;
 
 	inode = &ei->vfs_inode;
 	extent_map_tree_init(&ei->extent_tree);
@@ -8884,10 +8885,10 @@ struct inode *btrfs_alloc_inode(struct super_block *sb)
 	extent_io_tree_init(fs_info, &ei->io_failure_tree,
 			    IO_TREE_INODE_IO_FAILURE, inode);
 	extent_io_tree_init(fs_info, &ei->file_extent_tree,
-			    IO_TREE_INODE_FILE_EXTENT, inode);
+			    IO_TREE_INODE_खाता_EXTENT, inode);
 	ei->io_tree.track_uptodate = true;
 	ei->io_failure_tree.track_uptodate = true;
-	atomic_set(&ei->sync_writers, 0);
+	atomic_set(&ei->sync_ग_लिखोrs, 0);
 	mutex_init(&ei->log_mutex);
 	btrfs_ordered_inode_tree_init(&ei->ordered_tree);
 	INIT_LIST_HEAD(&ei->delalloc_inodes);
@@ -8895,27 +8896,27 @@ struct inode *btrfs_alloc_inode(struct super_block *sb)
 	RB_CLEAR_NODE(&ei->rb_node);
 	init_rwsem(&ei->i_mmap_lock);
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-#ifdef CONFIG_BTRFS_FS_RUN_SANITY_TESTS
-void btrfs_test_destroy_inode(struct inode *inode)
-{
+#अगर_घोषित CONFIG_BTRFS_FS_RUN_SANITY_TESTS
+व्योम btrfs_test_destroy_inode(काष्ठा inode *inode)
+अणु
 	btrfs_drop_extent_cache(BTRFS_I(inode), 0, (u64)-1, 0);
-	kmem_cache_free(btrfs_inode_cachep, BTRFS_I(inode));
-}
-#endif
+	kmem_cache_मुक्त(btrfs_inode_cachep, BTRFS_I(inode));
+पूर्ण
+#पूर्ण_अगर
 
-void btrfs_free_inode(struct inode *inode)
-{
-	kmem_cache_free(btrfs_inode_cachep, BTRFS_I(inode));
-}
+व्योम btrfs_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	kmem_cache_मुक्त(btrfs_inode_cachep, BTRFS_I(inode));
+पूर्ण
 
-void btrfs_destroy_inode(struct inode *vfs_inode)
-{
-	struct btrfs_ordered_extent *ordered;
-	struct btrfs_inode *inode = BTRFS_I(vfs_inode);
-	struct btrfs_root *root = inode->root;
+व्योम btrfs_destroy_inode(काष्ठा inode *vfs_inode)
+अणु
+	काष्ठा btrfs_ordered_extent *ordered;
+	काष्ठा btrfs_inode *inode = BTRFS_I(vfs_inode);
+	काष्ठा btrfs_root *root = inode->root;
 
 	WARN_ON(!hlist_empty(&vfs_inode->i_dentry));
 	WARN_ON(vfs_inode->i_data.nrpages);
@@ -8928,127 +8929,127 @@ void btrfs_destroy_inode(struct inode *vfs_inode)
 	WARN_ON(inode->defrag_bytes);
 
 	/*
-	 * This can happen where we create an inode, but somebody else also
-	 * created the same inode and we need to destroy the one we already
+	 * This can happen where we create an inode, but somebody अन्यथा also
+	 * created the same inode and we need to destroy the one we alपढ़ोy
 	 * created.
 	 */
-	if (!root)
-		return;
+	अगर (!root)
+		वापस;
 
-	while (1) {
+	जबतक (1) अणु
 		ordered = btrfs_lookup_first_ordered_extent(inode, (u64)-1);
-		if (!ordered)
-			break;
-		else {
+		अगर (!ordered)
+			अवरोध;
+		अन्यथा अणु
 			btrfs_err(root->fs_info,
 				  "found ordered extent %llu %llu on inode cleanup",
 				  ordered->file_offset, ordered->num_bytes);
-			btrfs_remove_ordered_extent(inode, ordered);
+			btrfs_हटाओ_ordered_extent(inode, ordered);
 			btrfs_put_ordered_extent(ordered);
 			btrfs_put_ordered_extent(ordered);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	btrfs_qgroup_check_reserved_leak(inode);
 	inode_tree_del(inode);
 	btrfs_drop_extent_cache(inode, 0, (u64)-1, 0);
 	btrfs_inode_clear_file_extent_range(inode, 0, (u64)-1);
 	btrfs_put_root(inode->root);
-}
+पूर्ण
 
-int btrfs_drop_inode(struct inode *inode)
-{
-	struct btrfs_root *root = BTRFS_I(inode)->root;
+पूर्णांक btrfs_drop_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
 
-	if (root == NULL)
-		return 1;
+	अगर (root == शून्य)
+		वापस 1;
 
 	/* the snap/subvol tree is on deleting */
-	if (btrfs_root_refs(&root->root_item) == 0)
-		return 1;
-	else
-		return generic_drop_inode(inode);
-}
+	अगर (btrfs_root_refs(&root->root_item) == 0)
+		वापस 1;
+	अन्यथा
+		वापस generic_drop_inode(inode);
+पूर्ण
 
-static void init_once(void *foo)
-{
-	struct btrfs_inode *ei = (struct btrfs_inode *) foo;
+अटल व्योम init_once(व्योम *foo)
+अणु
+	काष्ठा btrfs_inode *ei = (काष्ठा btrfs_inode *) foo;
 
 	inode_init_once(&ei->vfs_inode);
-}
+पूर्ण
 
-void __cold btrfs_destroy_cachep(void)
-{
+व्योम __cold btrfs_destroy_cachep(व्योम)
+अणु
 	/*
-	 * Make sure all delayed rcu free inodes are flushed before we
+	 * Make sure all delayed rcu मुक्त inodes are flushed beक्रमe we
 	 * destroy cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(btrfs_inode_cachep);
 	kmem_cache_destroy(btrfs_trans_handle_cachep);
 	kmem_cache_destroy(btrfs_path_cachep);
-	kmem_cache_destroy(btrfs_free_space_cachep);
-	kmem_cache_destroy(btrfs_free_space_bitmap_cachep);
-}
+	kmem_cache_destroy(btrfs_मुक्त_space_cachep);
+	kmem_cache_destroy(btrfs_मुक्त_space_biपंचांगap_cachep);
+पूर्ण
 
-int __init btrfs_init_cachep(void)
-{
+पूर्णांक __init btrfs_init_cachep(व्योम)
+अणु
 	btrfs_inode_cachep = kmem_cache_create("btrfs_inode",
-			sizeof(struct btrfs_inode), 0,
+			माप(काष्ठा btrfs_inode), 0,
 			SLAB_RECLAIM_ACCOUNT | SLAB_MEM_SPREAD | SLAB_ACCOUNT,
 			init_once);
-	if (!btrfs_inode_cachep)
-		goto fail;
+	अगर (!btrfs_inode_cachep)
+		जाओ fail;
 
 	btrfs_trans_handle_cachep = kmem_cache_create("btrfs_trans_handle",
-			sizeof(struct btrfs_trans_handle), 0,
-			SLAB_TEMPORARY | SLAB_MEM_SPREAD, NULL);
-	if (!btrfs_trans_handle_cachep)
-		goto fail;
+			माप(काष्ठा btrfs_trans_handle), 0,
+			SLAB_TEMPORARY | SLAB_MEM_SPREAD, शून्य);
+	अगर (!btrfs_trans_handle_cachep)
+		जाओ fail;
 
 	btrfs_path_cachep = kmem_cache_create("btrfs_path",
-			sizeof(struct btrfs_path), 0,
-			SLAB_MEM_SPREAD, NULL);
-	if (!btrfs_path_cachep)
-		goto fail;
+			माप(काष्ठा btrfs_path), 0,
+			SLAB_MEM_SPREAD, शून्य);
+	अगर (!btrfs_path_cachep)
+		जाओ fail;
 
-	btrfs_free_space_cachep = kmem_cache_create("btrfs_free_space",
-			sizeof(struct btrfs_free_space), 0,
-			SLAB_MEM_SPREAD, NULL);
-	if (!btrfs_free_space_cachep)
-		goto fail;
+	btrfs_मुक्त_space_cachep = kmem_cache_create("btrfs_free_space",
+			माप(काष्ठा btrfs_मुक्त_space), 0,
+			SLAB_MEM_SPREAD, शून्य);
+	अगर (!btrfs_मुक्त_space_cachep)
+		जाओ fail;
 
-	btrfs_free_space_bitmap_cachep = kmem_cache_create("btrfs_free_space_bitmap",
+	btrfs_मुक्त_space_biपंचांगap_cachep = kmem_cache_create("btrfs_free_space_bitmap",
 							PAGE_SIZE, PAGE_SIZE,
-							SLAB_MEM_SPREAD, NULL);
-	if (!btrfs_free_space_bitmap_cachep)
-		goto fail;
+							SLAB_MEM_SPREAD, शून्य);
+	अगर (!btrfs_मुक्त_space_biपंचांगap_cachep)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 fail:
 	btrfs_destroy_cachep();
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int btrfs_getattr(struct user_namespace *mnt_userns,
-			 const struct path *path, struct kstat *stat,
-			 u32 request_mask, unsigned int flags)
-{
+अटल पूर्णांक btrfs_getattr(काष्ठा user_namespace *mnt_userns,
+			 स्थिर काष्ठा path *path, काष्ठा kstat *stat,
+			 u32 request_mask, अचिन्हित पूर्णांक flags)
+अणु
 	u64 delalloc_bytes;
 	u64 inode_bytes;
-	struct inode *inode = d_inode(path->dentry);
+	काष्ठा inode *inode = d_inode(path->dentry);
 	u32 blocksize = inode->i_sb->s_blocksize;
 	u32 bi_flags = BTRFS_I(inode)->flags;
 
 	stat->result_mask |= STATX_BTIME;
-	stat->btime.tv_sec = BTRFS_I(inode)->i_otime.tv_sec;
-	stat->btime.tv_nsec = BTRFS_I(inode)->i_otime.tv_nsec;
-	if (bi_flags & BTRFS_INODE_APPEND)
+	stat->bसमय.tv_sec = BTRFS_I(inode)->i_oसमय.tv_sec;
+	stat->bसमय.tv_nsec = BTRFS_I(inode)->i_oसमय.tv_nsec;
+	अगर (bi_flags & BTRFS_INODE_APPEND)
 		stat->attributes |= STATX_ATTR_APPEND;
-	if (bi_flags & BTRFS_INODE_COMPRESS)
+	अगर (bi_flags & BTRFS_INODE_COMPRESS)
 		stat->attributes |= STATX_ATTR_COMPRESSED;
-	if (bi_flags & BTRFS_INODE_IMMUTABLE)
+	अगर (bi_flags & BTRFS_INODE_IMMUTABLE)
 		stat->attributes |= STATX_ATTR_IMMUTABLE;
-	if (bi_flags & BTRFS_INODE_NODUMP)
+	अगर (bi_flags & BTRFS_INODE_NODUMP)
 		stat->attributes |= STATX_ATTR_NODUMP;
 
 	stat->attributes_mask |= (STATX_ATTR_APPEND |
@@ -9065,79 +9066,79 @@ static int btrfs_getattr(struct user_namespace *mnt_userns,
 	spin_unlock(&BTRFS_I(inode)->lock);
 	stat->blocks = (ALIGN(inode_bytes, blocksize) +
 			ALIGN(delalloc_bytes, blocksize)) >> 9;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btrfs_rename_exchange(struct inode *old_dir,
-			      struct dentry *old_dentry,
-			      struct inode *new_dir,
-			      struct dentry *new_dentry)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(old_dir->i_sb);
-	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root = BTRFS_I(old_dir)->root;
-	struct btrfs_root *dest = BTRFS_I(new_dir)->root;
-	struct inode *new_inode = new_dentry->d_inode;
-	struct inode *old_inode = old_dentry->d_inode;
-	struct timespec64 ctime = current_time(old_inode);
+अटल पूर्णांक btrfs_नाम_exchange(काष्ठा inode *old_dir,
+			      काष्ठा dentry *old_dentry,
+			      काष्ठा inode *new_dir,
+			      काष्ठा dentry *new_dentry)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(old_dir->i_sb);
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा btrfs_root *root = BTRFS_I(old_dir)->root;
+	काष्ठा btrfs_root *dest = BTRFS_I(new_dir)->root;
+	काष्ठा inode *new_inode = new_dentry->d_inode;
+	काष्ठा inode *old_inode = old_dentry->d_inode;
+	काष्ठा बारpec64 स_समय = current_समय(old_inode);
 	u64 old_ino = btrfs_ino(BTRFS_I(old_inode));
 	u64 new_ino = btrfs_ino(BTRFS_I(new_inode));
 	u64 old_idx = 0;
 	u64 new_idx = 0;
-	int ret;
-	int ret2;
+	पूर्णांक ret;
+	पूर्णांक ret2;
 	bool root_log_pinned = false;
 	bool dest_log_pinned = false;
-	bool need_abort = false;
+	bool need_पात = false;
 
-	/* we only allow rename subvolume link between subvolumes */
-	if (old_ino != BTRFS_FIRST_FREE_OBJECTID && root != dest)
-		return -EXDEV;
+	/* we only allow नाम subvolume link between subvolumes */
+	अगर (old_ino != BTRFS_FIRST_FREE_OBJECTID && root != dest)
+		वापस -EXDEV;
 
-	/* close the race window with snapshot create/destroy ioctl */
-	if (old_ino == BTRFS_FIRST_FREE_OBJECTID ||
+	/* बंद the race winकरोw with snapshot create/destroy ioctl */
+	अगर (old_ino == BTRFS_FIRST_FREE_OBJECTID ||
 	    new_ino == BTRFS_FIRST_FREE_OBJECTID)
-		down_read(&fs_info->subvol_sem);
+		करोwn_पढ़ो(&fs_info->subvol_sem);
 
 	/*
-	 * We want to reserve the absolute worst case amount of items.  So if
+	 * We want to reserve the असलolute worst हाल amount of items.  So अगर
 	 * both inodes are subvols and we need to unlink them then that would
-	 * require 4 item modifications, but if they are both normal inodes it
-	 * would require 5 item modifications, so we'll assume their normal
-	 * inodes.  So 5 * 2 is 10, plus 2 for the new links, so 12 total items
-	 * should cover the worst case number of items we'll modify.
+	 * require 4 item modअगरications, but अगर they are both normal inodes it
+	 * would require 5 item modअगरications, so we'll assume their normal
+	 * inodes.  So 5 * 2 is 10, plus 2 क्रम the new links, so 12 total items
+	 * should cover the worst हाल number of items we'll modअगरy.
 	 */
 	trans = btrfs_start_transaction(root, 12);
-	if (IS_ERR(trans)) {
+	अगर (IS_ERR(trans)) अणु
 		ret = PTR_ERR(trans);
-		goto out_notrans;
-	}
+		जाओ out_notrans;
+	पूर्ण
 
-	if (dest != root) {
+	अगर (dest != root) अणु
 		ret = btrfs_record_root_in_trans(trans, dest);
-		if (ret)
-			goto out_fail;
-	}
+		अगर (ret)
+			जाओ out_fail;
+	पूर्ण
 
 	/*
-	 * We need to find a free sequence number both in the source and
-	 * in the destination directory for the exchange.
+	 * We need to find a मुक्त sequence number both in the source and
+	 * in the destination directory क्रम the exchange.
 	 */
 	ret = btrfs_set_inode_index(BTRFS_I(new_dir), &old_idx);
-	if (ret)
-		goto out_fail;
+	अगर (ret)
+		जाओ out_fail;
 	ret = btrfs_set_inode_index(BTRFS_I(old_dir), &new_idx);
-	if (ret)
-		goto out_fail;
+	अगर (ret)
+		जाओ out_fail;
 
 	BTRFS_I(old_inode)->dir_index = 0ULL;
 	BTRFS_I(new_inode)->dir_index = 0ULL;
 
-	/* Reference for the source. */
-	if (old_ino == BTRFS_FIRST_FREE_OBJECTID) {
-		/* force full log commit if subvolume involved. */
+	/* Reference क्रम the source. */
+	अगर (old_ino == BTRFS_FIRST_FREE_OBJECTID) अणु
+		/* क्रमce full log commit अगर subvolume involved. */
 		btrfs_set_log_full_commit(trans);
-	} else {
+	पूर्ण अन्यथा अणु
 		btrfs_pin_log_trans(root);
 		root_log_pinned = true;
 		ret = btrfs_insert_inode_ref(trans, dest,
@@ -9146,16 +9147,16 @@ static int btrfs_rename_exchange(struct inode *old_dir,
 					     old_ino,
 					     btrfs_ino(BTRFS_I(new_dir)),
 					     old_idx);
-		if (ret)
-			goto out_fail;
-		need_abort = true;
-	}
+		अगर (ret)
+			जाओ out_fail;
+		need_पात = true;
+	पूर्ण
 
-	/* And now for the dest. */
-	if (new_ino == BTRFS_FIRST_FREE_OBJECTID) {
-		/* force full log commit if subvolume involved. */
+	/* And now क्रम the dest. */
+	अगर (new_ino == BTRFS_FIRST_FREE_OBJECTID) अणु
+		/* क्रमce full log commit अगर subvolume involved. */
 		btrfs_set_log_full_commit(trans);
-	} else {
+	पूर्ण अन्यथा अणु
 		btrfs_pin_log_trans(dest);
 		dest_log_pinned = true;
 		ret = btrfs_insert_inode_ref(trans, root,
@@ -9164,147 +9165,147 @@ static int btrfs_rename_exchange(struct inode *old_dir,
 					     new_ino,
 					     btrfs_ino(BTRFS_I(old_dir)),
 					     new_idx);
-		if (ret) {
-			if (need_abort)
-				btrfs_abort_transaction(trans, ret);
-			goto out_fail;
-		}
-	}
+		अगर (ret) अणु
+			अगर (need_पात)
+				btrfs_पात_transaction(trans, ret);
+			जाओ out_fail;
+		पूर्ण
+	पूर्ण
 
-	/* Update inode version and ctime/mtime. */
+	/* Update inode version and स_समय/mसमय. */
 	inode_inc_iversion(old_dir);
 	inode_inc_iversion(new_dir);
 	inode_inc_iversion(old_inode);
 	inode_inc_iversion(new_inode);
-	old_dir->i_ctime = old_dir->i_mtime = ctime;
-	new_dir->i_ctime = new_dir->i_mtime = ctime;
-	old_inode->i_ctime = ctime;
-	new_inode->i_ctime = ctime;
+	old_dir->i_स_समय = old_dir->i_mसमय = स_समय;
+	new_dir->i_स_समय = new_dir->i_mसमय = स_समय;
+	old_inode->i_स_समय = स_समय;
+	new_inode->i_स_समय = स_समय;
 
-	if (old_dentry->d_parent != new_dentry->d_parent) {
+	अगर (old_dentry->d_parent != new_dentry->d_parent) अणु
 		btrfs_record_unlink_dir(trans, BTRFS_I(old_dir),
 				BTRFS_I(old_inode), 1);
 		btrfs_record_unlink_dir(trans, BTRFS_I(new_dir),
 				BTRFS_I(new_inode), 1);
-	}
+	पूर्ण
 
 	/* src is a subvolume */
-	if (old_ino == BTRFS_FIRST_FREE_OBJECTID) {
+	अगर (old_ino == BTRFS_FIRST_FREE_OBJECTID) अणु
 		ret = btrfs_unlink_subvol(trans, old_dir, old_dentry);
-	} else { /* src is an inode */
+	पूर्ण अन्यथा अणु /* src is an inode */
 		ret = __btrfs_unlink_inode(trans, root, BTRFS_I(old_dir),
 					   BTRFS_I(old_dentry->d_inode),
 					   old_dentry->d_name.name,
 					   old_dentry->d_name.len);
-		if (!ret)
+		अगर (!ret)
 			ret = btrfs_update_inode(trans, root, BTRFS_I(old_inode));
-	}
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out_fail;
-	}
+	पूर्ण
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out_fail;
+	पूर्ण
 
 	/* dest is a subvolume */
-	if (new_ino == BTRFS_FIRST_FREE_OBJECTID) {
+	अगर (new_ino == BTRFS_FIRST_FREE_OBJECTID) अणु
 		ret = btrfs_unlink_subvol(trans, new_dir, new_dentry);
-	} else { /* dest is an inode */
+	पूर्ण अन्यथा अणु /* dest is an inode */
 		ret = __btrfs_unlink_inode(trans, dest, BTRFS_I(new_dir),
 					   BTRFS_I(new_dentry->d_inode),
 					   new_dentry->d_name.name,
 					   new_dentry->d_name.len);
-		if (!ret)
+		अगर (!ret)
 			ret = btrfs_update_inode(trans, dest, BTRFS_I(new_inode));
-	}
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out_fail;
-	}
+	पूर्ण
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out_fail;
+	पूर्ण
 
 	ret = btrfs_add_link(trans, BTRFS_I(new_dir), BTRFS_I(old_inode),
 			     new_dentry->d_name.name,
 			     new_dentry->d_name.len, 0, old_idx);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out_fail;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out_fail;
+	पूर्ण
 
 	ret = btrfs_add_link(trans, BTRFS_I(old_dir), BTRFS_I(new_inode),
 			     old_dentry->d_name.name,
 			     old_dentry->d_name.len, 0, new_idx);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out_fail;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out_fail;
+	पूर्ण
 
-	if (old_inode->i_nlink == 1)
+	अगर (old_inode->i_nlink == 1)
 		BTRFS_I(old_inode)->dir_index = old_idx;
-	if (new_inode->i_nlink == 1)
+	अगर (new_inode->i_nlink == 1)
 		BTRFS_I(new_inode)->dir_index = new_idx;
 
-	if (root_log_pinned) {
+	अगर (root_log_pinned) अणु
 		btrfs_log_new_name(trans, BTRFS_I(old_inode), BTRFS_I(old_dir),
 				   new_dentry->d_parent);
 		btrfs_end_log_trans(root);
 		root_log_pinned = false;
-	}
-	if (dest_log_pinned) {
+	पूर्ण
+	अगर (dest_log_pinned) अणु
 		btrfs_log_new_name(trans, BTRFS_I(new_inode), BTRFS_I(new_dir),
 				   old_dentry->d_parent);
 		btrfs_end_log_trans(dest);
 		dest_log_pinned = false;
-	}
+	पूर्ण
 out_fail:
 	/*
 	 * If we have pinned a log and an error happened, we unpin tasks
-	 * trying to sync the log and force them to fallback to a transaction
-	 * commit if the log currently contains any of the inodes involved in
-	 * this rename operation (to ensure we do not persist a log with an
-	 * inconsistent state for any of these inodes or leading to any
-	 * inconsistencies when replayed). If the transaction was aborted, the
-	 * abortion reason is propagated to userspace when attempting to commit
-	 * the transaction. If the log does not contain any of these inodes, we
+	 * trying to sync the log and क्रमce them to fallback to a transaction
+	 * commit अगर the log currently contains any of the inodes involved in
+	 * this नाम operation (to ensure we करो not persist a log with an
+	 * inconsistent state क्रम any of these inodes or leading to any
+	 * inconsistencies when replayed). If the transaction was पातed, the
+	 * पातion reason is propagated to userspace when attempting to commit
+	 * the transaction. If the log करोes not contain any of these inodes, we
 	 * allow the tasks to sync it.
 	 */
-	if (ret && (root_log_pinned || dest_log_pinned)) {
-		if (btrfs_inode_in_log(BTRFS_I(old_dir), fs_info->generation) ||
+	अगर (ret && (root_log_pinned || dest_log_pinned)) अणु
+		अगर (btrfs_inode_in_log(BTRFS_I(old_dir), fs_info->generation) ||
 		    btrfs_inode_in_log(BTRFS_I(new_dir), fs_info->generation) ||
 		    btrfs_inode_in_log(BTRFS_I(old_inode), fs_info->generation) ||
 		    (new_inode &&
 		     btrfs_inode_in_log(BTRFS_I(new_inode), fs_info->generation)))
 			btrfs_set_log_full_commit(trans);
 
-		if (root_log_pinned) {
+		अगर (root_log_pinned) अणु
 			btrfs_end_log_trans(root);
 			root_log_pinned = false;
-		}
-		if (dest_log_pinned) {
+		पूर्ण
+		अगर (dest_log_pinned) अणु
 			btrfs_end_log_trans(dest);
 			dest_log_pinned = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ret2 = btrfs_end_transaction(trans);
 	ret = ret ? ret : ret2;
 out_notrans:
-	if (new_ino == BTRFS_FIRST_FREE_OBJECTID ||
+	अगर (new_ino == BTRFS_FIRST_FREE_OBJECTID ||
 	    old_ino == BTRFS_FIRST_FREE_OBJECTID)
-		up_read(&fs_info->subvol_sem);
+		up_पढ़ो(&fs_info->subvol_sem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_whiteout_for_rename(struct btrfs_trans_handle *trans,
-				     struct btrfs_root *root,
-				     struct inode *dir,
-				     struct dentry *dentry)
-{
-	int ret;
-	struct inode *inode;
+अटल पूर्णांक btrfs_whiteout_क्रम_नाम(काष्ठा btrfs_trans_handle *trans,
+				     काष्ठा btrfs_root *root,
+				     काष्ठा inode *dir,
+				     काष्ठा dentry *dentry)
+अणु
+	पूर्णांक ret;
+	काष्ठा inode *inode;
 	u64 objectid;
 	u64 index;
 
-	ret = btrfs_get_free_objectid(root, &objectid);
-	if (ret)
-		return ret;
+	ret = btrfs_get_मुक्त_objectid(root, &objectid);
+	अगर (ret)
+		वापस ret;
 
 	inode = btrfs_new_inode(trans, root, dir,
 				dentry->d_name.name,
@@ -9314,10 +9315,10 @@ static int btrfs_whiteout_for_rename(struct btrfs_trans_handle *trans,
 				S_IFCHR | WHITEOUT_MODE,
 				&index);
 
-	if (IS_ERR(inode)) {
+	अगर (IS_ERR(inode)) अणु
 		ret = PTR_ERR(inode);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	inode->i_op = &btrfs_special_inode_operations;
 	init_special_inode(inode, inode->i_mode,
@@ -9325,121 +9326,121 @@ static int btrfs_whiteout_for_rename(struct btrfs_trans_handle *trans,
 
 	ret = btrfs_init_inode_security(trans, inode, dir,
 				&dentry->d_name);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = btrfs_add_nondir(trans, BTRFS_I(dir), dentry,
 				BTRFS_I(inode), 0, index);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = btrfs_update_inode(trans, root, BTRFS_I(inode));
 out:
 	unlock_new_inode(inode);
-	if (ret)
+	अगर (ret)
 		inode_dec_link_count(inode);
 	iput(inode);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_rename(struct inode *old_dir, struct dentry *old_dentry,
-			   struct inode *new_dir, struct dentry *new_dentry,
-			   unsigned int flags)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(old_dir->i_sb);
-	struct btrfs_trans_handle *trans;
-	unsigned int trans_num_items;
-	struct btrfs_root *root = BTRFS_I(old_dir)->root;
-	struct btrfs_root *dest = BTRFS_I(new_dir)->root;
-	struct inode *new_inode = d_inode(new_dentry);
-	struct inode *old_inode = d_inode(old_dentry);
+अटल पूर्णांक btrfs_नाम(काष्ठा inode *old_dir, काष्ठा dentry *old_dentry,
+			   काष्ठा inode *new_dir, काष्ठा dentry *new_dentry,
+			   अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(old_dir->i_sb);
+	काष्ठा btrfs_trans_handle *trans;
+	अचिन्हित पूर्णांक trans_num_items;
+	काष्ठा btrfs_root *root = BTRFS_I(old_dir)->root;
+	काष्ठा btrfs_root *dest = BTRFS_I(new_dir)->root;
+	काष्ठा inode *new_inode = d_inode(new_dentry);
+	काष्ठा inode *old_inode = d_inode(old_dentry);
 	u64 index = 0;
-	int ret;
-	int ret2;
+	पूर्णांक ret;
+	पूर्णांक ret2;
 	u64 old_ino = btrfs_ino(BTRFS_I(old_inode));
 	bool log_pinned = false;
 
-	if (btrfs_ino(BTRFS_I(new_dir)) == BTRFS_EMPTY_SUBVOL_DIR_OBJECTID)
-		return -EPERM;
+	अगर (btrfs_ino(BTRFS_I(new_dir)) == BTRFS_EMPTY_SUBVOL_सूची_OBJECTID)
+		वापस -EPERM;
 
-	/* we only allow rename subvolume link between subvolumes */
-	if (old_ino != BTRFS_FIRST_FREE_OBJECTID && root != dest)
-		return -EXDEV;
+	/* we only allow नाम subvolume link between subvolumes */
+	अगर (old_ino != BTRFS_FIRST_FREE_OBJECTID && root != dest)
+		वापस -EXDEV;
 
-	if (old_ino == BTRFS_EMPTY_SUBVOL_DIR_OBJECTID ||
+	अगर (old_ino == BTRFS_EMPTY_SUBVOL_सूची_OBJECTID ||
 	    (new_inode && btrfs_ino(BTRFS_I(new_inode)) == BTRFS_FIRST_FREE_OBJECTID))
-		return -ENOTEMPTY;
+		वापस -ENOTEMPTY;
 
-	if (S_ISDIR(old_inode->i_mode) && new_inode &&
-	    new_inode->i_size > BTRFS_EMPTY_DIR_SIZE)
-		return -ENOTEMPTY;
+	अगर (S_ISसूची(old_inode->i_mode) && new_inode &&
+	    new_inode->i_size > BTRFS_EMPTY_सूची_SIZE)
+		वापस -ENOTEMPTY;
 
 
-	/* check for collisions, even if the  name isn't there */
+	/* check क्रम collisions, even अगर the  name isn't there */
 	ret = btrfs_check_dir_item_collision(dest, new_dir->i_ino,
 			     new_dentry->d_name.name,
 			     new_dentry->d_name.len);
 
-	if (ret) {
-		if (ret == -EEXIST) {
+	अगर (ret) अणु
+		अगर (ret == -EEXIST) अणु
 			/* we shouldn't get
 			 * eexist without a new_inode */
-			if (WARN_ON(!new_inode)) {
-				return ret;
-			}
-		} else {
+			अगर (WARN_ON(!new_inode)) अणु
+				वापस ret;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* maybe -EOVERFLOW */
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	ret = 0;
 
 	/*
-	 * we're using rename to replace one file with another.  Start IO on it
-	 * now so  we don't add too much work to the end of the transaction
+	 * we're using नाम to replace one file with another.  Start IO on it
+	 * now so  we करोn't add too much work to the end of the transaction
 	 */
-	if (new_inode && S_ISREG(old_inode->i_mode) && new_inode->i_size)
+	अगर (new_inode && S_ISREG(old_inode->i_mode) && new_inode->i_size)
 		filemap_flush(old_inode->i_mapping);
 
-	/* close the racy window with snapshot create/destroy ioctl */
-	if (old_ino == BTRFS_FIRST_FREE_OBJECTID)
-		down_read(&fs_info->subvol_sem);
+	/* बंद the racy winकरोw with snapshot create/destroy ioctl */
+	अगर (old_ino == BTRFS_FIRST_FREE_OBJECTID)
+		करोwn_पढ़ो(&fs_info->subvol_sem);
 	/*
-	 * We want to reserve the absolute worst case amount of items.  So if
+	 * We want to reserve the असलolute worst हाल amount of items.  So अगर
 	 * both inodes are subvols and we need to unlink them then that would
-	 * require 4 item modifications, but if they are both normal inodes it
-	 * would require 5 item modifications, so we'll assume they are normal
-	 * inodes.  So 5 * 2 is 10, plus 1 for the new link, so 11 total items
-	 * should cover the worst case number of items we'll modify.
-	 * If our rename has the whiteout flag, we need more 5 units for the
+	 * require 4 item modअगरications, but अगर they are both normal inodes it
+	 * would require 5 item modअगरications, so we'll assume they are normal
+	 * inodes.  So 5 * 2 is 10, plus 1 क्रम the new link, so 11 total items
+	 * should cover the worst हाल number of items we'll modअगरy.
+	 * If our नाम has the whiteout flag, we need more 5 units क्रम the
 	 * new inode (1 inode item, 1 inode ref, 2 dir items and 1 xattr item
 	 * when selinux is enabled).
 	 */
 	trans_num_items = 11;
-	if (flags & RENAME_WHITEOUT)
+	अगर (flags & RENAME_WHITEOUT)
 		trans_num_items += 5;
 	trans = btrfs_start_transaction(root, trans_num_items);
-	if (IS_ERR(trans)) {
+	अगर (IS_ERR(trans)) अणु
 		ret = PTR_ERR(trans);
-		goto out_notrans;
-	}
+		जाओ out_notrans;
+	पूर्ण
 
-	if (dest != root) {
+	अगर (dest != root) अणु
 		ret = btrfs_record_root_in_trans(trans, dest);
-		if (ret)
-			goto out_fail;
-	}
+		अगर (ret)
+			जाओ out_fail;
+	पूर्ण
 
 	ret = btrfs_set_inode_index(BTRFS_I(new_dir), &index);
-	if (ret)
-		goto out_fail;
+	अगर (ret)
+		जाओ out_fail;
 
 	BTRFS_I(old_inode)->dir_index = 0ULL;
-	if (unlikely(old_ino == BTRFS_FIRST_FREE_OBJECTID)) {
-		/* force full log commit if subvolume involved. */
+	अगर (unlikely(old_ino == BTRFS_FIRST_FREE_OBJECTID)) अणु
+		/* क्रमce full log commit अगर subvolume involved. */
 		btrfs_set_log_full_commit(trans);
-	} else {
+	पूर्ण अन्यथा अणु
 		btrfs_pin_log_trans(root);
 		log_pinned = true;
 		ret = btrfs_insert_inode_ref(trans, dest,
@@ -9447,99 +9448,99 @@ static int btrfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 					     new_dentry->d_name.len,
 					     old_ino,
 					     btrfs_ino(BTRFS_I(new_dir)), index);
-		if (ret)
-			goto out_fail;
-	}
+		अगर (ret)
+			जाओ out_fail;
+	पूर्ण
 
 	inode_inc_iversion(old_dir);
 	inode_inc_iversion(new_dir);
 	inode_inc_iversion(old_inode);
-	old_dir->i_ctime = old_dir->i_mtime =
-	new_dir->i_ctime = new_dir->i_mtime =
-	old_inode->i_ctime = current_time(old_dir);
+	old_dir->i_स_समय = old_dir->i_mसमय =
+	new_dir->i_स_समय = new_dir->i_mसमय =
+	old_inode->i_स_समय = current_समय(old_dir);
 
-	if (old_dentry->d_parent != new_dentry->d_parent)
+	अगर (old_dentry->d_parent != new_dentry->d_parent)
 		btrfs_record_unlink_dir(trans, BTRFS_I(old_dir),
 				BTRFS_I(old_inode), 1);
 
-	if (unlikely(old_ino == BTRFS_FIRST_FREE_OBJECTID)) {
+	अगर (unlikely(old_ino == BTRFS_FIRST_FREE_OBJECTID)) अणु
 		ret = btrfs_unlink_subvol(trans, old_dir, old_dentry);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = __btrfs_unlink_inode(trans, root, BTRFS_I(old_dir),
 					BTRFS_I(d_inode(old_dentry)),
 					old_dentry->d_name.name,
 					old_dentry->d_name.len);
-		if (!ret)
+		अगर (!ret)
 			ret = btrfs_update_inode(trans, root, BTRFS_I(old_inode));
-	}
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out_fail;
-	}
+	पूर्ण
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out_fail;
+	पूर्ण
 
-	if (new_inode) {
+	अगर (new_inode) अणु
 		inode_inc_iversion(new_inode);
-		new_inode->i_ctime = current_time(new_inode);
-		if (unlikely(btrfs_ino(BTRFS_I(new_inode)) ==
-			     BTRFS_EMPTY_SUBVOL_DIR_OBJECTID)) {
+		new_inode->i_स_समय = current_समय(new_inode);
+		अगर (unlikely(btrfs_ino(BTRFS_I(new_inode)) ==
+			     BTRFS_EMPTY_SUBVOL_सूची_OBJECTID)) अणु
 			ret = btrfs_unlink_subvol(trans, new_dir, new_dentry);
 			BUG_ON(new_inode->i_nlink == 0);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = btrfs_unlink_inode(trans, dest, BTRFS_I(new_dir),
 						 BTRFS_I(d_inode(new_dentry)),
 						 new_dentry->d_name.name,
 						 new_dentry->d_name.len);
-		}
-		if (!ret && new_inode->i_nlink == 0)
+		पूर्ण
+		अगर (!ret && new_inode->i_nlink == 0)
 			ret = btrfs_orphan_add(trans,
 					BTRFS_I(d_inode(new_dentry)));
-		if (ret) {
-			btrfs_abort_transaction(trans, ret);
-			goto out_fail;
-		}
-	}
+		अगर (ret) अणु
+			btrfs_पात_transaction(trans, ret);
+			जाओ out_fail;
+		पूर्ण
+	पूर्ण
 
 	ret = btrfs_add_link(trans, BTRFS_I(new_dir), BTRFS_I(old_inode),
 			     new_dentry->d_name.name,
 			     new_dentry->d_name.len, 0, index);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto out_fail;
-	}
+	अगर (ret) अणु
+		btrfs_पात_transaction(trans, ret);
+		जाओ out_fail;
+	पूर्ण
 
-	if (old_inode->i_nlink == 1)
+	अगर (old_inode->i_nlink == 1)
 		BTRFS_I(old_inode)->dir_index = index;
 
-	if (log_pinned) {
+	अगर (log_pinned) अणु
 		btrfs_log_new_name(trans, BTRFS_I(old_inode), BTRFS_I(old_dir),
 				   new_dentry->d_parent);
 		btrfs_end_log_trans(root);
 		log_pinned = false;
-	}
+	पूर्ण
 
-	if (flags & RENAME_WHITEOUT) {
-		ret = btrfs_whiteout_for_rename(trans, root, old_dir,
+	अगर (flags & RENAME_WHITEOUT) अणु
+		ret = btrfs_whiteout_क्रम_नाम(trans, root, old_dir,
 						old_dentry);
 
-		if (ret) {
-			btrfs_abort_transaction(trans, ret);
-			goto out_fail;
-		}
-	}
+		अगर (ret) अणु
+			btrfs_पात_transaction(trans, ret);
+			जाओ out_fail;
+		पूर्ण
+	पूर्ण
 out_fail:
 	/*
 	 * If we have pinned the log and an error happened, we unpin tasks
-	 * trying to sync the log and force them to fallback to a transaction
-	 * commit if the log currently contains any of the inodes involved in
-	 * this rename operation (to ensure we do not persist a log with an
-	 * inconsistent state for any of these inodes or leading to any
-	 * inconsistencies when replayed). If the transaction was aborted, the
-	 * abortion reason is propagated to userspace when attempting to commit
-	 * the transaction. If the log does not contain any of these inodes, we
+	 * trying to sync the log and क्रमce them to fallback to a transaction
+	 * commit अगर the log currently contains any of the inodes involved in
+	 * this नाम operation (to ensure we करो not persist a log with an
+	 * inconsistent state क्रम any of these inodes or leading to any
+	 * inconsistencies when replayed). If the transaction was पातed, the
+	 * पातion reason is propagated to userspace when attempting to commit
+	 * the transaction. If the log करोes not contain any of these inodes, we
 	 * allow the tasks to sync it.
 	 */
-	if (ret && log_pinned) {
-		if (btrfs_inode_in_log(BTRFS_I(old_dir), fs_info->generation) ||
+	अगर (ret && log_pinned) अणु
+		अगर (btrfs_inode_in_log(BTRFS_I(old_dir), fs_info->generation) ||
 		    btrfs_inode_in_log(BTRFS_I(new_dir), fs_info->generation) ||
 		    btrfs_inode_in_log(BTRFS_I(old_inode), fs_info->generation) ||
 		    (new_inode &&
@@ -9548,85 +9549,85 @@ out_fail:
 
 		btrfs_end_log_trans(root);
 		log_pinned = false;
-	}
+	पूर्ण
 	ret2 = btrfs_end_transaction(trans);
 	ret = ret ? ret : ret2;
 out_notrans:
-	if (old_ino == BTRFS_FIRST_FREE_OBJECTID)
-		up_read(&fs_info->subvol_sem);
+	अगर (old_ino == BTRFS_FIRST_FREE_OBJECTID)
+		up_पढ़ो(&fs_info->subvol_sem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_rename2(struct user_namespace *mnt_userns, struct inode *old_dir,
-			 struct dentry *old_dentry, struct inode *new_dir,
-			 struct dentry *new_dentry, unsigned int flags)
-{
-	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT))
-		return -EINVAL;
+अटल पूर्णांक btrfs_नाम2(काष्ठा user_namespace *mnt_userns, काष्ठा inode *old_dir,
+			 काष्ठा dentry *old_dentry, काष्ठा inode *new_dir,
+			 काष्ठा dentry *new_dentry, अचिन्हित पूर्णांक flags)
+अणु
+	अगर (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT))
+		वापस -EINVAL;
 
-	if (flags & RENAME_EXCHANGE)
-		return btrfs_rename_exchange(old_dir, old_dentry, new_dir,
+	अगर (flags & RENAME_EXCHANGE)
+		वापस btrfs_नाम_exchange(old_dir, old_dentry, new_dir,
 					  new_dentry);
 
-	return btrfs_rename(old_dir, old_dentry, new_dir, new_dentry, flags);
-}
+	वापस btrfs_नाम(old_dir, old_dentry, new_dir, new_dentry, flags);
+पूर्ण
 
-struct btrfs_delalloc_work {
-	struct inode *inode;
-	struct completion completion;
-	struct list_head list;
-	struct btrfs_work work;
-};
+काष्ठा btrfs_delalloc_work अणु
+	काष्ठा inode *inode;
+	काष्ठा completion completion;
+	काष्ठा list_head list;
+	काष्ठा btrfs_work work;
+पूर्ण;
 
-static void btrfs_run_delalloc_work(struct btrfs_work *work)
-{
-	struct btrfs_delalloc_work *delalloc_work;
-	struct inode *inode;
+अटल व्योम btrfs_run_delalloc_work(काष्ठा btrfs_work *work)
+अणु
+	काष्ठा btrfs_delalloc_work *delalloc_work;
+	काष्ठा inode *inode;
 
-	delalloc_work = container_of(work, struct btrfs_delalloc_work,
+	delalloc_work = container_of(work, काष्ठा btrfs_delalloc_work,
 				     work);
 	inode = delalloc_work->inode;
 	filemap_flush(inode->i_mapping);
-	if (test_bit(BTRFS_INODE_HAS_ASYNC_EXTENT,
-				&BTRFS_I(inode)->runtime_flags))
+	अगर (test_bit(BTRFS_INODE_HAS_ASYNC_EXTENT,
+				&BTRFS_I(inode)->runसमय_flags))
 		filemap_flush(inode->i_mapping);
 
 	iput(inode);
 	complete(&delalloc_work->completion);
-}
+पूर्ण
 
-static struct btrfs_delalloc_work *btrfs_alloc_delalloc_work(struct inode *inode)
-{
-	struct btrfs_delalloc_work *work;
+अटल काष्ठा btrfs_delalloc_work *btrfs_alloc_delalloc_work(काष्ठा inode *inode)
+अणु
+	काष्ठा btrfs_delalloc_work *work;
 
-	work = kmalloc(sizeof(*work), GFP_NOFS);
-	if (!work)
-		return NULL;
+	work = kदो_स्मृति(माप(*work), GFP_NOFS);
+	अगर (!work)
+		वापस शून्य;
 
 	init_completion(&work->completion);
 	INIT_LIST_HEAD(&work->list);
 	work->inode = inode;
-	btrfs_init_work(&work->work, btrfs_run_delalloc_work, NULL, NULL);
+	btrfs_init_work(&work->work, btrfs_run_delalloc_work, शून्य, शून्य);
 
-	return work;
-}
+	वापस work;
+पूर्ण
 
 /*
  * some fairly slow code that needs optimization. This walks the list
- * of all the inodes with pending delalloc and forces them to disk.
+ * of all the inodes with pending delalloc and क्रमces them to disk.
  */
-static int start_delalloc_inodes(struct btrfs_root *root,
-				 struct writeback_control *wbc, bool snapshot,
+अटल पूर्णांक start_delalloc_inodes(काष्ठा btrfs_root *root,
+				 काष्ठा ग_लिखोback_control *wbc, bool snapshot,
 				 bool in_reclaim_context)
-{
-	struct btrfs_inode *binode;
-	struct inode *inode;
-	struct btrfs_delalloc_work *work, *next;
-	struct list_head works;
-	struct list_head splice;
-	int ret = 0;
-	bool full_flush = wbc->nr_to_write == LONG_MAX;
+अणु
+	काष्ठा btrfs_inode *binode;
+	काष्ठा inode *inode;
+	काष्ठा btrfs_delalloc_work *work, *next;
+	काष्ठा list_head works;
+	काष्ठा list_head splice;
+	पूर्णांक ret = 0;
+	bool full_flush = wbc->nr_to_ग_लिखो == दीर्घ_उच्च;
 
 	INIT_LIST_HEAD(&works);
 	INIT_LIST_HEAD(&splice);
@@ -9634,114 +9635,114 @@ static int start_delalloc_inodes(struct btrfs_root *root,
 	mutex_lock(&root->delalloc_mutex);
 	spin_lock(&root->delalloc_lock);
 	list_splice_init(&root->delalloc_inodes, &splice);
-	while (!list_empty(&splice)) {
-		binode = list_entry(splice.next, struct btrfs_inode,
+	जबतक (!list_empty(&splice)) अणु
+		binode = list_entry(splice.next, काष्ठा btrfs_inode,
 				    delalloc_inodes);
 
 		list_move_tail(&binode->delalloc_inodes,
 			       &root->delalloc_inodes);
 
-		if (in_reclaim_context &&
-		    test_bit(BTRFS_INODE_NO_DELALLOC_FLUSH, &binode->runtime_flags))
-			continue;
+		अगर (in_reclaim_context &&
+		    test_bit(BTRFS_INODE_NO_DELALLOC_FLUSH, &binode->runसमय_flags))
+			जारी;
 
 		inode = igrab(&binode->vfs_inode);
-		if (!inode) {
+		अगर (!inode) अणु
 			cond_resched_lock(&root->delalloc_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		spin_unlock(&root->delalloc_lock);
 
-		if (snapshot)
+		अगर (snapshot)
 			set_bit(BTRFS_INODE_SNAPSHOT_FLUSH,
-				&binode->runtime_flags);
-		if (full_flush) {
+				&binode->runसमय_flags);
+		अगर (full_flush) अणु
 			work = btrfs_alloc_delalloc_work(inode);
-			if (!work) {
+			अगर (!work) अणु
 				iput(inode);
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			list_add_tail(&work->list, &works);
 			btrfs_queue_work(root->fs_info->flush_workers,
 					 &work->work);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = sync_inode(inode, wbc);
-			if (!ret &&
+			अगर (!ret &&
 			    test_bit(BTRFS_INODE_HAS_ASYNC_EXTENT,
-				     &BTRFS_I(inode)->runtime_flags))
+				     &BTRFS_I(inode)->runसमय_flags))
 				ret = sync_inode(inode, wbc);
 			btrfs_add_delayed_iput(inode);
-			if (ret || wbc->nr_to_write <= 0)
-				goto out;
-		}
+			अगर (ret || wbc->nr_to_ग_लिखो <= 0)
+				जाओ out;
+		पूर्ण
 		cond_resched();
 		spin_lock(&root->delalloc_lock);
-	}
+	पूर्ण
 	spin_unlock(&root->delalloc_lock);
 
 out:
-	list_for_each_entry_safe(work, next, &works, list) {
+	list_क्रम_each_entry_safe(work, next, &works, list) अणु
 		list_del_init(&work->list);
-		wait_for_completion(&work->completion);
-		kfree(work);
-	}
+		रुको_क्रम_completion(&work->completion);
+		kमुक्त(work);
+	पूर्ण
 
-	if (!list_empty(&splice)) {
+	अगर (!list_empty(&splice)) अणु
 		spin_lock(&root->delalloc_lock);
 		list_splice_tail(&splice, &root->delalloc_inodes);
 		spin_unlock(&root->delalloc_lock);
-	}
+	पूर्ण
 	mutex_unlock(&root->delalloc_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int btrfs_start_delalloc_snapshot(struct btrfs_root *root, bool in_reclaim_context)
-{
-	struct writeback_control wbc = {
-		.nr_to_write = LONG_MAX,
+पूर्णांक btrfs_start_delalloc_snapshot(काष्ठा btrfs_root *root, bool in_reclaim_context)
+अणु
+	काष्ठा ग_लिखोback_control wbc = अणु
+		.nr_to_ग_लिखो = दीर्घ_उच्च,
 		.sync_mode = WB_SYNC_NONE,
 		.range_start = 0,
-		.range_end = LLONG_MAX,
-	};
-	struct btrfs_fs_info *fs_info = root->fs_info;
+		.range_end = Lदीर्घ_उच्च,
+	पूर्ण;
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
 
-	if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
-		return -EROFS;
+	अगर (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
+		वापस -EROFS;
 
-	return start_delalloc_inodes(root, &wbc, true, in_reclaim_context);
-}
+	वापस start_delalloc_inodes(root, &wbc, true, in_reclaim_context);
+पूर्ण
 
-int btrfs_start_delalloc_roots(struct btrfs_fs_info *fs_info, long nr,
+पूर्णांक btrfs_start_delalloc_roots(काष्ठा btrfs_fs_info *fs_info, दीर्घ nr,
 			       bool in_reclaim_context)
-{
-	struct writeback_control wbc = {
-		.nr_to_write = nr,
+अणु
+	काष्ठा ग_लिखोback_control wbc = अणु
+		.nr_to_ग_लिखो = nr,
 		.sync_mode = WB_SYNC_NONE,
 		.range_start = 0,
-		.range_end = LLONG_MAX,
-	};
-	struct btrfs_root *root;
-	struct list_head splice;
-	int ret;
+		.range_end = Lदीर्घ_उच्च,
+	पूर्ण;
+	काष्ठा btrfs_root *root;
+	काष्ठा list_head splice;
+	पूर्णांक ret;
 
-	if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
-		return -EROFS;
+	अगर (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
+		वापस -EROFS;
 
 	INIT_LIST_HEAD(&splice);
 
 	mutex_lock(&fs_info->delalloc_root_mutex);
 	spin_lock(&fs_info->delalloc_root_lock);
 	list_splice_init(&fs_info->delalloc_roots, &splice);
-	while (!list_empty(&splice)) {
+	जबतक (!list_empty(&splice)) अणु
 		/*
-		 * Reset nr_to_write here so we know that we're doing a full
+		 * Reset nr_to_ग_लिखो here so we know that we're करोing a full
 		 * flush.
 		 */
-		if (nr == LONG_MAX)
-			wbc.nr_to_write = LONG_MAX;
+		अगर (nr == दीर्घ_उच्च)
+			wbc.nr_to_ग_लिखो = दीर्घ_उच्च;
 
-		root = list_first_entry(&splice, struct btrfs_root,
+		root = list_first_entry(&splice, काष्ठा btrfs_root,
 					delalloc_root);
 		root = btrfs_grab_root(root);
 		BUG_ON(!root);
@@ -9751,73 +9752,73 @@ int btrfs_start_delalloc_roots(struct btrfs_fs_info *fs_info, long nr,
 
 		ret = start_delalloc_inodes(root, &wbc, false, in_reclaim_context);
 		btrfs_put_root(root);
-		if (ret < 0 || wbc.nr_to_write <= 0)
-			goto out;
+		अगर (ret < 0 || wbc.nr_to_ग_लिखो <= 0)
+			जाओ out;
 		spin_lock(&fs_info->delalloc_root_lock);
-	}
+	पूर्ण
 	spin_unlock(&fs_info->delalloc_root_lock);
 
 	ret = 0;
 out:
-	if (!list_empty(&splice)) {
+	अगर (!list_empty(&splice)) अणु
 		spin_lock(&fs_info->delalloc_root_lock);
 		list_splice_tail(&splice, &fs_info->delalloc_roots);
 		spin_unlock(&fs_info->delalloc_root_lock);
-	}
+	पूर्ण
 	mutex_unlock(&fs_info->delalloc_root_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btrfs_symlink(struct user_namespace *mnt_userns, struct inode *dir,
-			 struct dentry *dentry, const char *symname)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
-	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	struct btrfs_path *path;
-	struct btrfs_key key;
-	struct inode *inode = NULL;
-	int err;
+अटल पूर्णांक btrfs_symlink(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+			 काष्ठा dentry *dentry, स्थिर अक्षर *symname)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	काष्ठा btrfs_path *path;
+	काष्ठा btrfs_key key;
+	काष्ठा inode *inode = शून्य;
+	पूर्णांक err;
 	u64 objectid;
 	u64 index = 0;
-	int name_len;
-	int datasize;
-	unsigned long ptr;
-	struct btrfs_file_extent_item *ei;
-	struct extent_buffer *leaf;
+	पूर्णांक name_len;
+	पूर्णांक datasize;
+	अचिन्हित दीर्घ ptr;
+	काष्ठा btrfs_file_extent_item *ei;
+	काष्ठा extent_buffer *leaf;
 
-	name_len = strlen(symname);
-	if (name_len > BTRFS_MAX_INLINE_DATA_SIZE(fs_info))
-		return -ENAMETOOLONG;
+	name_len = म_माप(symname);
+	अगर (name_len > BTRFS_MAX_INLINE_DATA_SIZE(fs_info))
+		वापस -ENAMETOOLONG;
 
 	/*
-	 * 2 items for inode item and ref
-	 * 2 items for dir items
-	 * 1 item for updating parent inode item
-	 * 1 item for the inline extent item
-	 * 1 item for xattr if selinux is on
+	 * 2 items क्रम inode item and ref
+	 * 2 items क्रम dir items
+	 * 1 item क्रम updating parent inode item
+	 * 1 item क्रम the अंतरभूत extent item
+	 * 1 item क्रम xattr अगर selinux is on
 	 */
 	trans = btrfs_start_transaction(root, 7);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	अगर (IS_ERR(trans))
+		वापस PTR_ERR(trans);
 
-	err = btrfs_get_free_objectid(root, &objectid);
-	if (err)
-		goto out_unlock;
+	err = btrfs_get_मुक्त_objectid(root, &objectid);
+	अगर (err)
+		जाओ out_unlock;
 
 	inode = btrfs_new_inode(trans, root, dir, dentry->d_name.name,
 				dentry->d_name.len, btrfs_ino(BTRFS_I(dir)),
 				objectid, S_IFLNK|S_IRWXUGO, &index);
-	if (IS_ERR(inode)) {
+	अगर (IS_ERR(inode)) अणु
 		err = PTR_ERR(inode);
-		inode = NULL;
-		goto out_unlock;
-	}
+		inode = शून्य;
+		जाओ out_unlock;
+	पूर्ण
 
 	/*
 	* If the active LSM wants to access the inode during
 	* d_instantiate it needs these. Smack checks to see
-	* if the filesystem supports xattrs by looking at the
+	* अगर the fileप्रणाली supports xattrs by looking at the
 	* ops vector.
 	*/
 	inode->i_fop = &btrfs_file_operations;
@@ -9825,86 +9826,86 @@ static int btrfs_symlink(struct user_namespace *mnt_userns, struct inode *dir,
 	inode->i_mapping->a_ops = &btrfs_aops;
 
 	err = btrfs_init_inode_security(trans, inode, dir, &dentry->d_name);
-	if (err)
-		goto out_unlock;
+	अगर (err)
+		जाओ out_unlock;
 
 	path = btrfs_alloc_path();
-	if (!path) {
+	अगर (!path) अणु
 		err = -ENOMEM;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	key.objectid = btrfs_ino(BTRFS_I(inode));
 	key.offset = 0;
 	key.type = BTRFS_EXTENT_DATA_KEY;
-	datasize = btrfs_file_extent_calc_inline_size(name_len);
+	datasize = btrfs_file_extent_calc_अंतरभूत_size(name_len);
 	err = btrfs_insert_empty_item(trans, root, path, &key,
 				      datasize);
-	if (err) {
-		btrfs_free_path(path);
-		goto out_unlock;
-	}
+	अगर (err) अणु
+		btrfs_मुक्त_path(path);
+		जाओ out_unlock;
+	पूर्ण
 	leaf = path->nodes[0];
 	ei = btrfs_item_ptr(leaf, path->slots[0],
-			    struct btrfs_file_extent_item);
+			    काष्ठा btrfs_file_extent_item);
 	btrfs_set_file_extent_generation(leaf, ei, trans->transid);
 	btrfs_set_file_extent_type(leaf, ei,
-				   BTRFS_FILE_EXTENT_INLINE);
+				   BTRFS_खाता_EXTENT_INLINE);
 	btrfs_set_file_extent_encryption(leaf, ei, 0);
 	btrfs_set_file_extent_compression(leaf, ei, 0);
 	btrfs_set_file_extent_other_encoding(leaf, ei, 0);
 	btrfs_set_file_extent_ram_bytes(leaf, ei, name_len);
 
-	ptr = btrfs_file_extent_inline_start(ei);
-	write_extent_buffer(leaf, symname, ptr, name_len);
+	ptr = btrfs_file_extent_अंतरभूत_start(ei);
+	ग_लिखो_extent_buffer(leaf, symname, ptr, name_len);
 	btrfs_mark_buffer_dirty(leaf);
-	btrfs_free_path(path);
+	btrfs_मुक्त_path(path);
 
 	inode->i_op = &btrfs_symlink_inode_operations;
 	inode_nohighmem(inode);
 	inode_set_bytes(inode, name_len);
-	btrfs_i_size_write(BTRFS_I(inode), name_len);
+	btrfs_i_size_ग_लिखो(BTRFS_I(inode), name_len);
 	err = btrfs_update_inode(trans, root, BTRFS_I(inode));
 	/*
-	 * Last step, add directory indexes for our symlink inode. This is the
-	 * last step to avoid extra cleanup of these indexes if an error happens
-	 * elsewhere above.
+	 * Last step, add directory indexes क्रम our symlink inode. This is the
+	 * last step to aव्योम extra cleanup of these indexes अगर an error happens
+	 * अन्यथाwhere above.
 	 */
-	if (!err)
+	अगर (!err)
 		err = btrfs_add_nondir(trans, BTRFS_I(dir), dentry,
 				BTRFS_I(inode), 0, index);
-	if (err)
-		goto out_unlock;
+	अगर (err)
+		जाओ out_unlock;
 
 	d_instantiate_new(dentry, inode);
 
 out_unlock:
 	btrfs_end_transaction(trans);
-	if (err && inode) {
+	अगर (err && inode) अणु
 		inode_dec_link_count(inode);
 		discard_new_inode(inode);
-	}
+	पूर्ण
 	btrfs_btree_balance_dirty(fs_info);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct btrfs_trans_handle *insert_prealloc_file_extent(
-				       struct btrfs_trans_handle *trans_in,
-				       struct btrfs_inode *inode,
-				       struct btrfs_key *ins,
+अटल काष्ठा btrfs_trans_handle *insert_pपुनः_स्मृति_file_extent(
+				       काष्ठा btrfs_trans_handle *trans_in,
+				       काष्ठा btrfs_inode *inode,
+				       काष्ठा btrfs_key *ins,
 				       u64 file_offset)
-{
-	struct btrfs_file_extent_item stack_fi;
-	struct btrfs_replace_extent_info extent_info;
-	struct btrfs_trans_handle *trans = trans_in;
-	struct btrfs_path *path;
+अणु
+	काष्ठा btrfs_file_extent_item stack_fi;
+	काष्ठा btrfs_replace_extent_info extent_info;
+	काष्ठा btrfs_trans_handle *trans = trans_in;
+	काष्ठा btrfs_path *path;
 	u64 start = ins->objectid;
 	u64 len = ins->offset;
-	int qgroup_released;
-	int ret;
+	पूर्णांक qgroup_released;
+	पूर्णांक ret;
 
-	memset(&stack_fi, 0, sizeof(stack_fi));
+	स_रखो(&stack_fi, 0, माप(stack_fi));
 
-	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_FILE_EXTENT_PREALLOC);
+	btrfs_set_stack_file_extent_type(&stack_fi, BTRFS_खाता_EXTENT_PREALLOC);
 	btrfs_set_stack_file_extent_disk_bytenr(&stack_fi, start);
 	btrfs_set_stack_file_extent_disk_num_bytes(&stack_fi, len);
 	btrfs_set_stack_file_extent_num_bytes(&stack_fi, len);
@@ -9913,127 +9914,127 @@ static struct btrfs_trans_handle *insert_prealloc_file_extent(
 	/* Encryption and other encoding is reserved and all 0 */
 
 	qgroup_released = btrfs_qgroup_release_data(inode, file_offset, len);
-	if (qgroup_released < 0)
-		return ERR_PTR(qgroup_released);
+	अगर (qgroup_released < 0)
+		वापस ERR_PTR(qgroup_released);
 
-	if (trans) {
+	अगर (trans) अणु
 		ret = insert_reserved_file_extent(trans, inode,
 						  file_offset, &stack_fi,
 						  true, qgroup_released);
-		if (ret)
-			goto free_qgroup;
-		return trans;
-	}
+		अगर (ret)
+			जाओ मुक्त_qgroup;
+		वापस trans;
+	पूर्ण
 
 	extent_info.disk_offset = start;
 	extent_info.disk_len = len;
 	extent_info.data_offset = 0;
 	extent_info.data_len = len;
 	extent_info.file_offset = file_offset;
-	extent_info.extent_buf = (char *)&stack_fi;
+	extent_info.extent_buf = (अक्षर *)&stack_fi;
 	extent_info.is_new_extent = true;
 	extent_info.qgroup_reserved = qgroup_released;
 	extent_info.insertions = 0;
 
 	path = btrfs_alloc_path();
-	if (!path) {
+	अगर (!path) अणु
 		ret = -ENOMEM;
-		goto free_qgroup;
-	}
+		जाओ मुक्त_qgroup;
+	पूर्ण
 
 	ret = btrfs_replace_file_extents(inode, path, file_offset,
 				     file_offset + len - 1, &extent_info,
 				     &trans);
-	btrfs_free_path(path);
-	if (ret)
-		goto free_qgroup;
-	return trans;
+	btrfs_मुक्त_path(path);
+	अगर (ret)
+		जाओ मुक्त_qgroup;
+	वापस trans;
 
-free_qgroup:
+मुक्त_qgroup:
 	/*
 	 * We have released qgroup data range at the beginning of the function,
-	 * and normally qgroup_released bytes will be freed when committing
+	 * and normally qgroup_released bytes will be मुक्तd when committing
 	 * transaction.
-	 * But if we error out early, we have to free what we have released
+	 * But अगर we error out early, we have to मुक्त what we have released
 	 * or we leak qgroup data reservation.
 	 */
-	btrfs_qgroup_free_refroot(inode->root->fs_info,
+	btrfs_qgroup_मुक्त_refroot(inode->root->fs_info,
 			inode->root->root_key.objectid, qgroup_released,
 			BTRFS_QGROUP_RSV_DATA);
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static int __btrfs_prealloc_file_range(struct inode *inode, int mode,
+अटल पूर्णांक __btrfs_pपुनः_स्मृति_file_range(काष्ठा inode *inode, पूर्णांक mode,
 				       u64 start, u64 num_bytes, u64 min_size,
-				       loff_t actual_len, u64 *alloc_hint,
-				       struct btrfs_trans_handle *trans)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	struct extent_map_tree *em_tree = &BTRFS_I(inode)->extent_tree;
-	struct extent_map *em;
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	struct btrfs_key ins;
+				       loff_t actual_len, u64 *alloc_hपूर्णांक,
+				       काष्ठा btrfs_trans_handle *trans)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	काष्ठा extent_map_tree *em_tree = &BTRFS_I(inode)->extent_tree;
+	काष्ठा extent_map *em;
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	काष्ठा btrfs_key ins;
 	u64 cur_offset = start;
 	u64 clear_offset = start;
 	u64 i_size;
 	u64 cur_bytes;
 	u64 last_alloc = (u64)-1;
-	int ret = 0;
+	पूर्णांक ret = 0;
 	bool own_trans = true;
 	u64 end = start + num_bytes - 1;
 
-	if (trans)
+	अगर (trans)
 		own_trans = false;
-	while (num_bytes > 0) {
+	जबतक (num_bytes > 0) अणु
 		cur_bytes = min_t(u64, num_bytes, SZ_256M);
 		cur_bytes = max(cur_bytes, min_size);
 		/*
 		 * If we are severely fragmented we could end up with really
-		 * small allocations, so if the allocator is returning small
-		 * chunks lets make its job easier by only searching for those
+		 * small allocations, so अगर the allocator is वापसing small
+		 * chunks lets make its job easier by only searching क्रम those
 		 * sized chunks.
 		 */
 		cur_bytes = min(cur_bytes, last_alloc);
 		ret = btrfs_reserve_extent(root, cur_bytes, cur_bytes,
-				min_size, 0, *alloc_hint, &ins, 1, 0);
-		if (ret)
-			break;
+				min_size, 0, *alloc_hपूर्णांक, &ins, 1, 0);
+		अगर (ret)
+			अवरोध;
 
 		/*
 		 * We've reserved this space, and thus converted it from
 		 * ->bytes_may_use to ->bytes_reserved.  Any error that happens
 		 * from here on out we will only need to clear our reservation
-		 * for the remaining unreserved area, so advance our
+		 * क्रम the reमुख्यing unreserved area, so advance our
 		 * clear_offset by our extent size.
 		 */
 		clear_offset += ins.offset;
 
 		last_alloc = ins.offset;
-		trans = insert_prealloc_file_extent(trans, BTRFS_I(inode),
+		trans = insert_pपुनः_स्मृति_file_extent(trans, BTRFS_I(inode),
 						    &ins, cur_offset);
 		/*
-		 * Now that we inserted the prealloc extent we can finally
+		 * Now that we inserted the pपुनः_स्मृति extent we can finally
 		 * decrement the number of reservations in the block group.
-		 * If we did it before, we could race with relocation and have
+		 * If we did it beक्रमe, we could race with relocation and have
 		 * relocation miss the reserved extent, making it fail later.
 		 */
 		btrfs_dec_block_group_reservations(fs_info, ins.objectid);
-		if (IS_ERR(trans)) {
+		अगर (IS_ERR(trans)) अणु
 			ret = PTR_ERR(trans);
-			btrfs_free_reserved_extent(fs_info, ins.objectid,
+			btrfs_मुक्त_reserved_extent(fs_info, ins.objectid,
 						   ins.offset, 0);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		btrfs_drop_extent_cache(BTRFS_I(inode), cur_offset,
 					cur_offset + ins.offset -1, 0);
 
 		em = alloc_extent_map();
-		if (!em) {
+		अगर (!em) अणु
 			set_bit(BTRFS_INODE_NEEDS_FULL_SYNC,
-				&BTRFS_I(inode)->runtime_flags);
-			goto next;
-		}
+				&BTRFS_I(inode)->runसमय_flags);
+			जाओ next;
+		पूर्ण
 
 		em->start = cur_offset;
 		em->orig_start = cur_offset;
@@ -10045,193 +10046,193 @@ static int __btrfs_prealloc_file_range(struct inode *inode, int mode,
 		set_bit(EXTENT_FLAG_PREALLOC, &em->flags);
 		em->generation = trans->transid;
 
-		while (1) {
-			write_lock(&em_tree->lock);
+		जबतक (1) अणु
+			ग_लिखो_lock(&em_tree->lock);
 			ret = add_extent_mapping(em_tree, em, 1);
-			write_unlock(&em_tree->lock);
-			if (ret != -EEXIST)
-				break;
+			ग_लिखो_unlock(&em_tree->lock);
+			अगर (ret != -EEXIST)
+				अवरोध;
 			btrfs_drop_extent_cache(BTRFS_I(inode), cur_offset,
 						cur_offset + ins.offset - 1,
 						0);
-		}
-		free_extent_map(em);
+		पूर्ण
+		मुक्त_extent_map(em);
 next:
 		num_bytes -= ins.offset;
 		cur_offset += ins.offset;
-		*alloc_hint = ins.objectid + ins.offset;
+		*alloc_hपूर्णांक = ins.objectid + ins.offset;
 
 		inode_inc_iversion(inode);
-		inode->i_ctime = current_time(inode);
+		inode->i_स_समय = current_समय(inode);
 		BTRFS_I(inode)->flags |= BTRFS_INODE_PREALLOC;
-		if (!(mode & FALLOC_FL_KEEP_SIZE) &&
+		अगर (!(mode & FALLOC_FL_KEEP_SIZE) &&
 		    (actual_len > inode->i_size) &&
-		    (cur_offset > inode->i_size)) {
-			if (cur_offset > actual_len)
+		    (cur_offset > inode->i_size)) अणु
+			अगर (cur_offset > actual_len)
 				i_size = actual_len;
-			else
+			अन्यथा
 				i_size = cur_offset;
-			i_size_write(inode, i_size);
-			btrfs_inode_safe_disk_i_size_write(BTRFS_I(inode), 0);
-		}
+			i_size_ग_लिखो(inode, i_size);
+			btrfs_inode_safe_disk_i_size_ग_लिखो(BTRFS_I(inode), 0);
+		पूर्ण
 
 		ret = btrfs_update_inode(trans, root, BTRFS_I(inode));
 
-		if (ret) {
-			btrfs_abort_transaction(trans, ret);
-			if (own_trans)
+		अगर (ret) अणु
+			btrfs_पात_transaction(trans, ret);
+			अगर (own_trans)
 				btrfs_end_transaction(trans);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (own_trans) {
+		अगर (own_trans) अणु
 			btrfs_end_transaction(trans);
-			trans = NULL;
-		}
-	}
-	if (clear_offset < end)
-		btrfs_free_reserved_data_space(BTRFS_I(inode), NULL, clear_offset,
+			trans = शून्य;
+		पूर्ण
+	पूर्ण
+	अगर (clear_offset < end)
+		btrfs_मुक्त_reserved_data_space(BTRFS_I(inode), शून्य, clear_offset,
 			end - clear_offset + 1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int btrfs_prealloc_file_range(struct inode *inode, int mode,
+पूर्णांक btrfs_pपुनः_स्मृति_file_range(काष्ठा inode *inode, पूर्णांक mode,
 			      u64 start, u64 num_bytes, u64 min_size,
-			      loff_t actual_len, u64 *alloc_hint)
-{
-	return __btrfs_prealloc_file_range(inode, mode, start, num_bytes,
-					   min_size, actual_len, alloc_hint,
-					   NULL);
-}
+			      loff_t actual_len, u64 *alloc_hपूर्णांक)
+अणु
+	वापस __btrfs_pपुनः_स्मृति_file_range(inode, mode, start, num_bytes,
+					   min_size, actual_len, alloc_hपूर्णांक,
+					   शून्य);
+पूर्ण
 
-int btrfs_prealloc_file_range_trans(struct inode *inode,
-				    struct btrfs_trans_handle *trans, int mode,
+पूर्णांक btrfs_pपुनः_स्मृति_file_range_trans(काष्ठा inode *inode,
+				    काष्ठा btrfs_trans_handle *trans, पूर्णांक mode,
 				    u64 start, u64 num_bytes, u64 min_size,
-				    loff_t actual_len, u64 *alloc_hint)
-{
-	return __btrfs_prealloc_file_range(inode, mode, start, num_bytes,
-					   min_size, actual_len, alloc_hint, trans);
-}
+				    loff_t actual_len, u64 *alloc_hपूर्णांक)
+अणु
+	वापस __btrfs_pपुनः_स्मृति_file_range(inode, mode, start, num_bytes,
+					   min_size, actual_len, alloc_hपूर्णांक, trans);
+पूर्ण
 
-static int btrfs_set_page_dirty(struct page *page)
-{
-	return __set_page_dirty_nobuffers(page);
-}
+अटल पूर्णांक btrfs_set_page_dirty(काष्ठा page *page)
+अणु
+	वापस __set_page_dirty_nobuffers(page);
+पूर्ण
 
-static int btrfs_permission(struct user_namespace *mnt_userns,
-			    struct inode *inode, int mask)
-{
-	struct btrfs_root *root = BTRFS_I(inode)->root;
+अटल पूर्णांक btrfs_permission(काष्ठा user_namespace *mnt_userns,
+			    काष्ठा inode *inode, पूर्णांक mask)
+अणु
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
 	umode_t mode = inode->i_mode;
 
-	if (mask & MAY_WRITE &&
-	    (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode))) {
-		if (btrfs_root_readonly(root))
-			return -EROFS;
-		if (BTRFS_I(inode)->flags & BTRFS_INODE_READONLY)
-			return -EACCES;
-	}
-	return generic_permission(&init_user_ns, inode, mask);
-}
+	अगर (mask & MAY_WRITE &&
+	    (S_ISREG(mode) || S_ISसूची(mode) || S_ISLNK(mode))) अणु
+		अगर (btrfs_root_पढ़ोonly(root))
+			वापस -EROFS;
+		अगर (BTRFS_I(inode)->flags & BTRFS_INODE_READONLY)
+			वापस -EACCES;
+	पूर्ण
+	वापस generic_permission(&init_user_ns, inode, mask);
+पूर्ण
 
-static int btrfs_tmpfile(struct user_namespace *mnt_userns, struct inode *dir,
-			 struct dentry *dentry, umode_t mode)
-{
-	struct btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
-	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root = BTRFS_I(dir)->root;
-	struct inode *inode = NULL;
+अटल पूर्णांक btrfs_क्षणिक_ख(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+			 काष्ठा dentry *dentry, umode_t mode)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
+	काष्ठा btrfs_trans_handle *trans;
+	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
+	काष्ठा inode *inode = शून्य;
 	u64 objectid;
 	u64 index;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/*
-	 * 5 units required for adding orphan entry
+	 * 5 units required क्रम adding orphan entry
 	 */
 	trans = btrfs_start_transaction(root, 5);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
+	अगर (IS_ERR(trans))
+		वापस PTR_ERR(trans);
 
-	ret = btrfs_get_free_objectid(root, &objectid);
-	if (ret)
-		goto out;
+	ret = btrfs_get_मुक्त_objectid(root, &objectid);
+	अगर (ret)
+		जाओ out;
 
-	inode = btrfs_new_inode(trans, root, dir, NULL, 0,
+	inode = btrfs_new_inode(trans, root, dir, शून्य, 0,
 			btrfs_ino(BTRFS_I(dir)), objectid, mode, &index);
-	if (IS_ERR(inode)) {
+	अगर (IS_ERR(inode)) अणु
 		ret = PTR_ERR(inode);
-		inode = NULL;
-		goto out;
-	}
+		inode = शून्य;
+		जाओ out;
+	पूर्ण
 
 	inode->i_fop = &btrfs_file_operations;
 	inode->i_op = &btrfs_file_inode_operations;
 
 	inode->i_mapping->a_ops = &btrfs_aops;
 
-	ret = btrfs_init_inode_security(trans, inode, dir, NULL);
-	if (ret)
-		goto out;
+	ret = btrfs_init_inode_security(trans, inode, dir, शून्य);
+	अगर (ret)
+		जाओ out;
 
 	ret = btrfs_update_inode(trans, root, BTRFS_I(inode));
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 	ret = btrfs_orphan_add(trans, BTRFS_I(inode));
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/*
 	 * We set number of links to 0 in btrfs_new_inode(), and here we set
-	 * it to 1 because d_tmpfile() will issue a warning if the count is 0,
+	 * it to 1 because d_क्षणिक_ख() will issue a warning अगर the count is 0,
 	 * through:
 	 *
-	 *    d_tmpfile() -> inode_dec_link_count() -> drop_nlink()
+	 *    d_क्षणिक_ख() -> inode_dec_link_count() -> drop_nlink()
 	 */
 	set_nlink(inode, 1);
-	d_tmpfile(dentry, inode);
+	d_क्षणिक_ख(dentry, inode);
 	unlock_new_inode(inode);
 	mark_inode_dirty(inode);
 out:
 	btrfs_end_transaction(trans);
-	if (ret && inode)
+	अगर (ret && inode)
 		discard_new_inode(inode);
 	btrfs_btree_balance_dirty(fs_info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void btrfs_set_range_writeback(struct extent_io_tree *tree, u64 start, u64 end)
-{
-	struct inode *inode = tree->private_data;
-	unsigned long index = start >> PAGE_SHIFT;
-	unsigned long end_index = end >> PAGE_SHIFT;
-	struct page *page;
+व्योम btrfs_set_range_ग_लिखोback(काष्ठा extent_io_tree *tree, u64 start, u64 end)
+अणु
+	काष्ठा inode *inode = tree->निजी_data;
+	अचिन्हित दीर्घ index = start >> PAGE_SHIFT;
+	अचिन्हित दीर्घ end_index = end >> PAGE_SHIFT;
+	काष्ठा page *page;
 
-	while (index <= end_index) {
+	जबतक (index <= end_index) अणु
 		page = find_get_page(inode->i_mapping, index);
 		ASSERT(page); /* Pages should be in the extent_io_tree */
-		set_page_writeback(page);
+		set_page_ग_लिखोback(page);
 		put_page(page);
 		index++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_SWAP
+#अगर_घोषित CONFIG_SWAP
 /*
  * Add an entry indicating a block group or device which is pinned by a
- * swapfile. Returns 0 on success, 1 if there is already an entry for it, or a
- * negative errno on failure.
+ * swapfile. Returns 0 on success, 1 अगर there is alपढ़ोy an entry क्रम it, or a
+ * negative त्रुटि_सं on failure.
  */
-static int btrfs_add_swapfile_pin(struct inode *inode, void *ptr,
+अटल पूर्णांक btrfs_add_swapfile_pin(काष्ठा inode *inode, व्योम *ptr,
 				  bool is_block_group)
-{
-	struct btrfs_fs_info *fs_info = BTRFS_I(inode)->root->fs_info;
-	struct btrfs_swapfile_pin *sp, *entry;
-	struct rb_node **p;
-	struct rb_node *parent = NULL;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = BTRFS_I(inode)->root->fs_info;
+	काष्ठा btrfs_swapfile_pin *sp, *entry;
+	काष्ठा rb_node **p;
+	काष्ठा rb_node *parent = शून्य;
 
-	sp = kmalloc(sizeof(*sp), GFP_NOFS);
-	if (!sp)
-		return -ENOMEM;
+	sp = kदो_स्मृति(माप(*sp), GFP_NOFS);
+	अगर (!sp)
+		वापस -ENOMEM;
 	sp->ptr = ptr;
 	sp->inode = inode;
 	sp->is_block_group = is_block_group;
@@ -10239,179 +10240,179 @@ static int btrfs_add_swapfile_pin(struct inode *inode, void *ptr,
 
 	spin_lock(&fs_info->swapfile_pins_lock);
 	p = &fs_info->swapfile_pins.rb_node;
-	while (*p) {
+	जबतक (*p) अणु
 		parent = *p;
-		entry = rb_entry(parent, struct btrfs_swapfile_pin, node);
-		if (sp->ptr < entry->ptr ||
-		    (sp->ptr == entry->ptr && sp->inode < entry->inode)) {
+		entry = rb_entry(parent, काष्ठा btrfs_swapfile_pin, node);
+		अगर (sp->ptr < entry->ptr ||
+		    (sp->ptr == entry->ptr && sp->inode < entry->inode)) अणु
 			p = &(*p)->rb_left;
-		} else if (sp->ptr > entry->ptr ||
-			   (sp->ptr == entry->ptr && sp->inode > entry->inode)) {
+		पूर्ण अन्यथा अगर (sp->ptr > entry->ptr ||
+			   (sp->ptr == entry->ptr && sp->inode > entry->inode)) अणु
 			p = &(*p)->rb_right;
-		} else {
-			if (is_block_group)
+		पूर्ण अन्यथा अणु
+			अगर (is_block_group)
 				entry->bg_extent_count++;
 			spin_unlock(&fs_info->swapfile_pins_lock);
-			kfree(sp);
-			return 1;
-		}
-	}
+			kमुक्त(sp);
+			वापस 1;
+		पूर्ण
+	पूर्ण
 	rb_link_node(&sp->node, parent, p);
 	rb_insert_color(&sp->node, &fs_info->swapfile_pins);
 	spin_unlock(&fs_info->swapfile_pins_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Free all of the entries pinned by this swapfile. */
-static void btrfs_free_swapfile_pins(struct inode *inode)
-{
-	struct btrfs_fs_info *fs_info = BTRFS_I(inode)->root->fs_info;
-	struct btrfs_swapfile_pin *sp;
-	struct rb_node *node, *next;
+अटल व्योम btrfs_मुक्त_swapfile_pins(काष्ठा inode *inode)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = BTRFS_I(inode)->root->fs_info;
+	काष्ठा btrfs_swapfile_pin *sp;
+	काष्ठा rb_node *node, *next;
 
 	spin_lock(&fs_info->swapfile_pins_lock);
 	node = rb_first(&fs_info->swapfile_pins);
-	while (node) {
+	जबतक (node) अणु
 		next = rb_next(node);
-		sp = rb_entry(node, struct btrfs_swapfile_pin, node);
-		if (sp->inode == inode) {
+		sp = rb_entry(node, काष्ठा btrfs_swapfile_pin, node);
+		अगर (sp->inode == inode) अणु
 			rb_erase(&sp->node, &fs_info->swapfile_pins);
-			if (sp->is_block_group) {
+			अगर (sp->is_block_group) अणु
 				btrfs_dec_block_group_swap_extents(sp->ptr,
 							   sp->bg_extent_count);
 				btrfs_put_block_group(sp->ptr);
-			}
-			kfree(sp);
-		}
+			पूर्ण
+			kमुक्त(sp);
+		पूर्ण
 		node = next;
-	}
+	पूर्ण
 	spin_unlock(&fs_info->swapfile_pins_lock);
-}
+पूर्ण
 
-struct btrfs_swap_info {
+काष्ठा btrfs_swap_info अणु
 	u64 start;
 	u64 block_start;
 	u64 block_len;
 	u64 lowest_ppage;
 	u64 highest_ppage;
-	unsigned long nr_pages;
-	int nr_extents;
-};
+	अचिन्हित दीर्घ nr_pages;
+	पूर्णांक nr_extents;
+पूर्ण;
 
-static int btrfs_add_swap_extent(struct swap_info_struct *sis,
-				 struct btrfs_swap_info *bsi)
-{
-	unsigned long nr_pages;
+अटल पूर्णांक btrfs_add_swap_extent(काष्ठा swap_info_काष्ठा *sis,
+				 काष्ठा btrfs_swap_info *bsi)
+अणु
+	अचिन्हित दीर्घ nr_pages;
 	u64 first_ppage, first_ppage_reported, next_ppage;
-	int ret;
+	पूर्णांक ret;
 
 	first_ppage = ALIGN(bsi->block_start, PAGE_SIZE) >> PAGE_SHIFT;
 	next_ppage = ALIGN_DOWN(bsi->block_start + bsi->block_len,
 				PAGE_SIZE) >> PAGE_SHIFT;
 
-	if (first_ppage >= next_ppage)
-		return 0;
+	अगर (first_ppage >= next_ppage)
+		वापस 0;
 	nr_pages = next_ppage - first_ppage;
 
 	first_ppage_reported = first_ppage;
-	if (bsi->start == 0)
+	अगर (bsi->start == 0)
 		first_ppage_reported++;
-	if (bsi->lowest_ppage > first_ppage_reported)
+	अगर (bsi->lowest_ppage > first_ppage_reported)
 		bsi->lowest_ppage = first_ppage_reported;
-	if (bsi->highest_ppage < (next_ppage - 1))
+	अगर (bsi->highest_ppage < (next_ppage - 1))
 		bsi->highest_ppage = next_ppage - 1;
 
 	ret = add_swap_extent(sis, bsi->nr_pages, nr_pages, first_ppage);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	bsi->nr_extents += ret;
 	bsi->nr_pages += nr_pages;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void btrfs_swap_deactivate(struct file *file)
-{
-	struct inode *inode = file_inode(file);
+अटल व्योम btrfs_swap_deactivate(काष्ठा file *file)
+अणु
+	काष्ठा inode *inode = file_inode(file);
 
-	btrfs_free_swapfile_pins(inode);
+	btrfs_मुक्त_swapfile_pins(inode);
 	atomic_dec(&BTRFS_I(inode)->root->nr_swapfiles);
-}
+पूर्ण
 
-static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
+अटल पूर्णांक btrfs_swap_activate(काष्ठा swap_info_काष्ठा *sis, काष्ठा file *file,
 			       sector_t *span)
-{
-	struct inode *inode = file_inode(file);
-	struct btrfs_root *root = BTRFS_I(inode)->root;
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
-	struct extent_state *cached_state = NULL;
-	struct extent_map *em = NULL;
-	struct btrfs_device *device = NULL;
-	struct btrfs_swap_info bsi = {
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा btrfs_root *root = BTRFS_I(inode)->root;
+	काष्ठा btrfs_fs_info *fs_info = root->fs_info;
+	काष्ठा extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
+	काष्ठा extent_state *cached_state = शून्य;
+	काष्ठा extent_map *em = शून्य;
+	काष्ठा btrfs_device *device = शून्य;
+	काष्ठा btrfs_swap_info bsi = अणु
 		.lowest_ppage = (sector_t)-1ULL,
-	};
-	int ret = 0;
+	पूर्ण;
+	पूर्णांक ret = 0;
 	u64 isize;
 	u64 start;
 
 	/*
-	 * If the swap file was just created, make sure delalloc is done. If the
-	 * file changes again after this, the user is doing something stupid and
-	 * we don't really care.
+	 * If the swap file was just created, make sure delalloc is करोne. If the
+	 * file changes again after this, the user is करोing something stupid and
+	 * we करोn't really care.
 	 */
-	ret = btrfs_wait_ordered_range(inode, 0, (u64)-1);
-	if (ret)
-		return ret;
+	ret = btrfs_रुको_ordered_range(inode, 0, (u64)-1);
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * The inode is locked, so these flags won't change after we check them.
 	 */
-	if (BTRFS_I(inode)->flags & BTRFS_INODE_COMPRESS) {
+	अगर (BTRFS_I(inode)->flags & BTRFS_INODE_COMPRESS) अणु
 		btrfs_warn(fs_info, "swapfile must not be compressed");
-		return -EINVAL;
-	}
-	if (!(BTRFS_I(inode)->flags & BTRFS_INODE_NODATACOW)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!(BTRFS_I(inode)->flags & BTRFS_INODE_NODATACOW)) अणु
 		btrfs_warn(fs_info, "swapfile must not be copy-on-write");
-		return -EINVAL;
-	}
-	if (!(BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!(BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM)) अणु
 		btrfs_warn(fs_info, "swapfile must not be checksummed");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Balance or device remove/replace/resize can move stuff around from
+	 * Balance or device हटाओ/replace/resize can move stuff around from
 	 * under us. The exclop protection makes sure they aren't running/won't
-	 * run concurrently while we are mapping the swap extents, and
-	 * fs_info->swapfile_pins prevents them from running while the swap
+	 * run concurrently जबतक we are mapping the swap extents, and
+	 * fs_info->swapfile_pins prevents them from running जबतक the swap
 	 * file is active and moving the extents. Note that this also prevents
 	 * a concurrent device add which isn't actually necessary, but it's not
 	 * really worth the trouble to allow it.
 	 */
-	if (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_SWAP_ACTIVATE)) {
+	अगर (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_SWAP_ACTIVATE)) अणु
 		btrfs_warn(fs_info,
 	   "cannot activate swapfile while exclusive operation is running");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/*
-	 * Prevent snapshot creation while we are activating the swap file.
-	 * We do not want to race with snapshot creation. If snapshot creation
-	 * already started before we bumped nr_swapfiles from 0 to 1 and
-	 * completes before the first write into the swap file after it is
-	 * activated, than that write would fallback to COW.
+	 * Prevent snapshot creation जबतक we are activating the swap file.
+	 * We करो not want to race with snapshot creation. If snapshot creation
+	 * alपढ़ोy started beक्रमe we bumped nr_swapfiles from 0 to 1 and
+	 * completes beक्रमe the first ग_लिखो पूर्णांकo the swap file after it is
+	 * activated, than that ग_लिखो would fallback to COW.
 	 */
-	if (!btrfs_drew_try_write_lock(&root->snapshot_lock)) {
+	अगर (!btrfs_drew_try_ग_लिखो_lock(&root->snapshot_lock)) अणु
 		btrfs_exclop_finish(fs_info);
 		btrfs_warn(fs_info,
 	   "cannot activate swapfile because snapshot creation is in progress");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	/*
-	 * Snapshots can create extents which require COW even if NODATACOW is
+	 * Snapshots can create extents which require COW even अगर NODATACOW is
 	 * set. We use this counter to prevent snapshots. We must increment it
-	 * before walking the extents because we don't want a concurrent
-	 * snapshot to run after we've already checked the extents.
+	 * beक्रमe walking the extents because we करोn't want a concurrent
+	 * snapshot to run after we've alपढ़ोy checked the extents.
 	 */
 	atomic_inc(&root->nr_swapfiles);
 
@@ -10419,172 +10420,172 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 
 	lock_extent_bits(io_tree, 0, isize - 1, &cached_state);
 	start = 0;
-	while (start < isize) {
+	जबतक (start < isize) अणु
 		u64 logical_block_start, physical_block_start;
-		struct btrfs_block_group *bg;
+		काष्ठा btrfs_block_group *bg;
 		u64 len = isize - start;
 
-		em = btrfs_get_extent(BTRFS_I(inode), NULL, 0, start, len);
-		if (IS_ERR(em)) {
+		em = btrfs_get_extent(BTRFS_I(inode), शून्य, 0, start, len);
+		अगर (IS_ERR(em)) अणु
 			ret = PTR_ERR(em);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (em->block_start == EXTENT_MAP_HOLE) {
+		अगर (em->block_start == EXTENT_MAP_HOLE) अणु
 			btrfs_warn(fs_info, "swapfile must not have holes");
 			ret = -EINVAL;
-			goto out;
-		}
-		if (em->block_start == EXTENT_MAP_INLINE) {
+			जाओ out;
+		पूर्ण
+		अगर (em->block_start == EXTENT_MAP_INLINE) अणु
 			/*
 			 * It's unlikely we'll ever actually find ourselves
-			 * here, as a file small enough to fit inline won't be
+			 * here, as a file small enough to fit अंतरभूत won't be
 			 * big enough to store more than the swap header, but in
-			 * case something changes in the future, let's catch it
+			 * हाल something changes in the future, let's catch it
 			 * here rather than later.
 			 */
 			btrfs_warn(fs_info, "swapfile must not be inline");
 			ret = -EINVAL;
-			goto out;
-		}
-		if (test_bit(EXTENT_FLAG_COMPRESSED, &em->flags)) {
+			जाओ out;
+		पूर्ण
+		अगर (test_bit(EXTENT_FLAG_COMPRESSED, &em->flags)) अणु
 			btrfs_warn(fs_info, "swapfile must not be compressed");
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		logical_block_start = em->block_start + (start - em->start);
 		len = min(len, em->len - (start - em->start));
-		free_extent_map(em);
-		em = NULL;
+		मुक्त_extent_map(em);
+		em = शून्य;
 
-		ret = can_nocow_extent(inode, start, &len, NULL, NULL, NULL, true);
-		if (ret < 0) {
-			goto out;
-		} else if (ret) {
+		ret = can_nocow_extent(inode, start, &len, शून्य, शून्य, शून्य, true);
+		अगर (ret < 0) अणु
+			जाओ out;
+		पूर्ण अन्यथा अगर (ret) अणु
 			ret = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			btrfs_warn(fs_info,
 				   "swapfile must not be copy-on-write");
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		em = btrfs_get_chunk_map(fs_info, logical_block_start, len);
-		if (IS_ERR(em)) {
+		अगर (IS_ERR(em)) अणु
 			ret = PTR_ERR(em);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (em->map_lookup->type & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
+		अगर (em->map_lookup->type & BTRFS_BLOCK_GROUP_PROखाता_MASK) अणु
 			btrfs_warn(fs_info,
 				   "swapfile must have single data profile");
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (device == NULL) {
+		अगर (device == शून्य) अणु
 			device = em->map_lookup->stripes[0].dev;
 			ret = btrfs_add_swapfile_pin(inode, device, false);
-			if (ret == 1)
+			अगर (ret == 1)
 				ret = 0;
-			else if (ret)
-				goto out;
-		} else if (device != em->map_lookup->stripes[0].dev) {
+			अन्यथा अगर (ret)
+				जाओ out;
+		पूर्ण अन्यथा अगर (device != em->map_lookup->stripes[0].dev) अणु
 			btrfs_warn(fs_info, "swapfile must be on one device");
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		physical_block_start = (em->map_lookup->stripes[0].physical +
 					(logical_block_start - em->start));
 		len = min(len, em->len - (logical_block_start - em->start));
-		free_extent_map(em);
-		em = NULL;
+		मुक्त_extent_map(em);
+		em = शून्य;
 
 		bg = btrfs_lookup_block_group(fs_info, logical_block_start);
-		if (!bg) {
+		अगर (!bg) अणु
 			btrfs_warn(fs_info,
 			   "could not find block group containing swapfile");
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!btrfs_inc_block_group_swap_extents(bg)) {
+		अगर (!btrfs_inc_block_group_swap_extents(bg)) अणु
 			btrfs_warn(fs_info,
 			   "block group for swapfile at %llu is read-only%s",
 			   bg->start,
-			   atomic_read(&fs_info->scrubs_running) ?
+			   atomic_पढ़ो(&fs_info->scrubs_running) ?
 				       " (scrub running)" : "");
 			btrfs_put_block_group(bg);
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = btrfs_add_swapfile_pin(inode, bg, true);
-		if (ret) {
+		अगर (ret) अणु
 			btrfs_put_block_group(bg);
-			if (ret == 1)
+			अगर (ret == 1)
 				ret = 0;
-			else
-				goto out;
-		}
+			अन्यथा
+				जाओ out;
+		पूर्ण
 
-		if (bsi.block_len &&
-		    bsi.block_start + bsi.block_len == physical_block_start) {
+		अगर (bsi.block_len &&
+		    bsi.block_start + bsi.block_len == physical_block_start) अणु
 			bsi.block_len += len;
-		} else {
-			if (bsi.block_len) {
+		पूर्ण अन्यथा अणु
+			अगर (bsi.block_len) अणु
 				ret = btrfs_add_swap_extent(sis, &bsi);
-				if (ret)
-					goto out;
-			}
+				अगर (ret)
+					जाओ out;
+			पूर्ण
 			bsi.start = start;
 			bsi.block_start = physical_block_start;
 			bsi.block_len = len;
-		}
+		पूर्ण
 
 		start += len;
-	}
+	पूर्ण
 
-	if (bsi.block_len)
+	अगर (bsi.block_len)
 		ret = btrfs_add_swap_extent(sis, &bsi);
 
 out:
-	if (!IS_ERR_OR_NULL(em))
-		free_extent_map(em);
+	अगर (!IS_ERR_OR_शून्य(em))
+		मुक्त_extent_map(em);
 
 	unlock_extent_cached(io_tree, 0, isize - 1, &cached_state);
 
-	if (ret)
+	अगर (ret)
 		btrfs_swap_deactivate(file);
 
-	btrfs_drew_write_unlock(&root->snapshot_lock);
+	btrfs_drew_ग_लिखो_unlock(&root->snapshot_lock);
 
 	btrfs_exclop_finish(fs_info);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (device)
+	अगर (device)
 		sis->bdev = device->bdev;
 	*span = bsi.highest_ppage - bsi.lowest_ppage + 1;
 	sis->max = bsi.nr_pages;
 	sis->pages = bsi.nr_pages - 1;
 	sis->highest_bit = bsi.nr_pages - 1;
-	return bsi.nr_extents;
-}
-#else
-static void btrfs_swap_deactivate(struct file *file)
-{
-}
+	वापस bsi.nr_extents;
+पूर्ण
+#अन्यथा
+अटल व्योम btrfs_swap_deactivate(काष्ठा file *file)
+अणु
+पूर्ण
 
-static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
+अटल पूर्णांक btrfs_swap_activate(काष्ठा swap_info_काष्ठा *sis, काष्ठा file *file,
 			       sector_t *span)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Update the number of bytes used in the VFS' inode. When we replace extents in
@@ -10592,30 +10593,30 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
  * bytes used by the inode in an atomic manner, so that concurrent stat(2) calls
  * always get a correct value.
  */
-void btrfs_update_inode_bytes(struct btrfs_inode *inode,
-			      const u64 add_bytes,
-			      const u64 del_bytes)
-{
-	if (add_bytes == del_bytes)
-		return;
+व्योम btrfs_update_inode_bytes(काष्ठा btrfs_inode *inode,
+			      स्थिर u64 add_bytes,
+			      स्थिर u64 del_bytes)
+अणु
+	अगर (add_bytes == del_bytes)
+		वापस;
 
 	spin_lock(&inode->lock);
-	if (del_bytes > 0)
+	अगर (del_bytes > 0)
 		inode_sub_bytes(&inode->vfs_inode, del_bytes);
-	if (add_bytes > 0)
+	अगर (add_bytes > 0)
 		inode_add_bytes(&inode->vfs_inode, add_bytes);
 	spin_unlock(&inode->lock);
-}
+पूर्ण
 
-static const struct inode_operations btrfs_dir_inode_operations = {
+अटल स्थिर काष्ठा inode_operations btrfs_dir_inode_operations = अणु
 	.getattr	= btrfs_getattr,
 	.lookup		= btrfs_lookup,
 	.create		= btrfs_create,
 	.unlink		= btrfs_unlink,
 	.link		= btrfs_link,
-	.mkdir		= btrfs_mkdir,
-	.rmdir		= btrfs_rmdir,
-	.rename		= btrfs_rename2,
+	.सूची_गढ़ो		= btrfs_सूची_गढ़ो,
+	.सूची_हटाओ		= btrfs_सूची_हटाओ,
+	.नाम		= btrfs_नाम2,
 	.symlink	= btrfs_symlink,
 	.setattr	= btrfs_setattr,
 	.mknod		= btrfs_mknod,
@@ -10623,55 +10624,55 @@ static const struct inode_operations btrfs_dir_inode_operations = {
 	.permission	= btrfs_permission,
 	.get_acl	= btrfs_get_acl,
 	.set_acl	= btrfs_set_acl,
-	.update_time	= btrfs_update_time,
-	.tmpfile        = btrfs_tmpfile,
+	.update_समय	= btrfs_update_समय,
+	.क्षणिक_ख        = btrfs_क्षणिक_ख,
 	.fileattr_get	= btrfs_fileattr_get,
 	.fileattr_set	= btrfs_fileattr_set,
-};
+पूर्ण;
 
-static const struct file_operations btrfs_dir_file_operations = {
+अटल स्थिर काष्ठा file_operations btrfs_dir_file_operations = अणु
 	.llseek		= generic_file_llseek,
-	.read		= generic_read_dir,
-	.iterate_shared	= btrfs_real_readdir,
-	.open		= btrfs_opendir,
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= btrfs_real_सूची_पढ़ो,
+	.खोलो		= btrfs_सूची_खोलो,
 	.unlocked_ioctl	= btrfs_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= btrfs_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.release        = btrfs_release_file,
 	.fsync		= btrfs_sync_file,
-};
+पूर्ण;
 
 /*
- * btrfs doesn't support the bmap operation because swapfiles
+ * btrfs करोesn't support the bmap operation because swapfiles
  * use bmap to make a mapping of extents in the file.  They assume
- * these extents won't change over the life of the file and they
- * use the bmap result to do IO directly to the drive.
+ * these extents won't change over the lअगरe of the file and they
+ * use the bmap result to करो IO directly to the drive.
  *
- * the btrfs bmap call would return logical addresses that aren't
- * suitable for IO and they also will change frequently as COW
+ * the btrfs bmap call would वापस logical addresses that aren't
+ * suitable क्रम IO and they also will change frequently as COW
  * operations happen.  So, swapfile + btrfs == corruption.
  *
- * For now we're avoiding this by dropping bmap.
+ * For now we're aव्योमing this by dropping bmap.
  */
-static const struct address_space_operations btrfs_aops = {
-	.readpage	= btrfs_readpage,
-	.writepage	= btrfs_writepage,
-	.writepages	= btrfs_writepages,
-	.readahead	= btrfs_readahead,
+अटल स्थिर काष्ठा address_space_operations btrfs_aops = अणु
+	.पढ़ोpage	= btrfs_पढ़ोpage,
+	.ग_लिखोpage	= btrfs_ग_लिखोpage,
+	.ग_लिखोpages	= btrfs_ग_लिखोpages,
+	.पढ़ोahead	= btrfs_पढ़ोahead,
 	.direct_IO	= noop_direct_IO,
 	.invalidatepage = btrfs_invalidatepage,
 	.releasepage	= btrfs_releasepage,
-#ifdef CONFIG_MIGRATION
+#अगर_घोषित CONFIG_MIGRATION
 	.migratepage	= btrfs_migratepage,
-#endif
+#पूर्ण_अगर
 	.set_page_dirty	= btrfs_set_page_dirty,
-	.error_remove_page = generic_error_remove_page,
+	.error_हटाओ_page = generic_error_हटाओ_page,
 	.swap_activate	= btrfs_swap_activate,
 	.swap_deactivate = btrfs_swap_deactivate,
-};
+पूर्ण;
 
-static const struct inode_operations btrfs_file_inode_operations = {
+अटल स्थिर काष्ठा inode_operations btrfs_file_inode_operations = अणु
 	.getattr	= btrfs_getattr,
 	.setattr	= btrfs_setattr,
 	.listxattr      = btrfs_listxattr,
@@ -10679,28 +10680,28 @@ static const struct inode_operations btrfs_file_inode_operations = {
 	.fiemap		= btrfs_fiemap,
 	.get_acl	= btrfs_get_acl,
 	.set_acl	= btrfs_set_acl,
-	.update_time	= btrfs_update_time,
+	.update_समय	= btrfs_update_समय,
 	.fileattr_get	= btrfs_fileattr_get,
 	.fileattr_set	= btrfs_fileattr_set,
-};
-static const struct inode_operations btrfs_special_inode_operations = {
+पूर्ण;
+अटल स्थिर काष्ठा inode_operations btrfs_special_inode_operations = अणु
 	.getattr	= btrfs_getattr,
 	.setattr	= btrfs_setattr,
 	.permission	= btrfs_permission,
 	.listxattr	= btrfs_listxattr,
 	.get_acl	= btrfs_get_acl,
 	.set_acl	= btrfs_set_acl,
-	.update_time	= btrfs_update_time,
-};
-static const struct inode_operations btrfs_symlink_inode_operations = {
+	.update_समय	= btrfs_update_समय,
+पूर्ण;
+अटल स्थिर काष्ठा inode_operations btrfs_symlink_inode_operations = अणु
 	.get_link	= page_get_link,
 	.getattr	= btrfs_getattr,
 	.setattr	= btrfs_setattr,
 	.permission	= btrfs_permission,
 	.listxattr	= btrfs_listxattr,
-	.update_time	= btrfs_update_time,
-};
+	.update_समय	= btrfs_update_समय,
+पूर्ण;
 
-const struct dentry_operations btrfs_dentry_operations = {
+स्थिर काष्ठा dentry_operations btrfs_dentry_operations = अणु
 	.d_delete	= btrfs_dentry_delete,
-};
+पूर्ण;

@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Copyright (C) 2013 Regents of the University of California
+ * Copyright (C) 2013 Regents of the University of Calअगरornia
  */
 
-#ifndef _ASM_RISCV_STRING_H
-#define _ASM_RISCV_STRING_H
+#अगर_अघोषित _ASM_RISCV_STRING_H
+#घोषणा _ASM_RISCV_STRING_H
 
-#include <linux/types.h>
-#include <linux/linkage.h>
+#समावेश <linux/types.h>
+#समावेश <linux/linkage.h>
 
-#define __HAVE_ARCH_MEMSET
-extern asmlinkage void *memset(void *, int, size_t);
-extern asmlinkage void *__memset(void *, int, size_t);
-#define __HAVE_ARCH_MEMCPY
-extern asmlinkage void *memcpy(void *, const void *, size_t);
-extern asmlinkage void *__memcpy(void *, const void *, size_t);
-#define __HAVE_ARCH_MEMMOVE
-extern asmlinkage void *memmove(void *, const void *, size_t);
-extern asmlinkage void *__memmove(void *, const void *, size_t);
-/* For those files which don't want to check by kasan. */
-#if defined(CONFIG_KASAN) && !defined(__SANITIZE_ADDRESS__)
-#define memcpy(dst, src, len) __memcpy(dst, src, len)
-#define memset(s, c, n) __memset(s, c, n)
-#define memmove(dst, src, len) __memmove(dst, src, len)
+#घोषणा __HAVE_ARCH_MEMSET
+बाह्य यंत्रlinkage व्योम *स_रखो(व्योम *, पूर्णांक, माप_प्रकार);
+बाह्य यंत्रlinkage व्योम *__स_रखो(व्योम *, पूर्णांक, माप_प्रकार);
+#घोषणा __HAVE_ARCH_MEMCPY
+बाह्य यंत्रlinkage व्योम *स_नकल(व्योम *, स्थिर व्योम *, माप_प्रकार);
+बाह्य यंत्रlinkage व्योम *__स_नकल(व्योम *, स्थिर व्योम *, माप_प्रकार);
+#घोषणा __HAVE_ARCH_MEMMOVE
+बाह्य यंत्रlinkage व्योम *स_हटाओ(व्योम *, स्थिर व्योम *, माप_प्रकार);
+बाह्य यंत्रlinkage व्योम *__स_हटाओ(व्योम *, स्थिर व्योम *, माप_प्रकार);
+/* For those files which करोn't want to check by kasan. */
+#अगर defined(CONFIG_KASAN) && !defined(__SANITIZE_ADDRESS__)
+#घोषणा स_नकल(dst, src, len) __स_नकल(dst, src, len)
+#घोषणा स_रखो(s, c, n) __स_रखो(s, c, n)
+#घोषणा स_हटाओ(dst, src, len) __स_हटाओ(dst, src, len)
 
-#ifndef __NO_FORTIFY
-#define __NO_FORTIFY /* FORTIFY_SOURCE uses __builtin_memcpy, etc. */
-#endif
+#अगर_अघोषित __NO_FORTIFY
+#घोषणा __NO_FORTIFY /* FORTIFY_SOURCE uses __builtin_स_नकल, etc. */
+#पूर्ण_अगर
 
-#endif
-#endif /* _ASM_RISCV_STRING_H */
+#पूर्ण_अगर
+#पूर्ण_अगर /* _ASM_RISCV_STRING_H */

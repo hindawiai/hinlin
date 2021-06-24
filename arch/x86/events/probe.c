@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/export.h>
-#include <linux/types.h>
-#include <linux/bits.h>
-#include "probe.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/export.h>
+#समावेश <linux/types.h>
+#समावेश <linux/bits.h>
+#समावेश "probe.h"
 
-static umode_t
-not_visible(struct kobject *kobj, struct attribute *attr, int i)
-{
-	return 0;
-}
+अटल umode_t
+not_visible(काष्ठा kobject *kobj, काष्ठा attribute *attr, पूर्णांक i)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
- * Accepts msr[] array with non populated entries as long as either
- * msr[i].msr is 0 or msr[i].grp is NULL. Note that the default sysfs
+ * Accepts msr[] array with non populated entries as दीर्घ as either
+ * msr[i].msr is 0 or msr[i].grp is शून्य. Note that the शेष sysfs
  * visibility is visible when group->is_visible callback is set.
  */
-unsigned long
-perf_msr_probe(struct perf_msr *msr, int cnt, bool zero, void *data)
-{
-	unsigned long avail = 0;
-	unsigned int bit;
+अचिन्हित दीर्घ
+perf_msr_probe(काष्ठा perf_msr *msr, पूर्णांक cnt, bool zero, व्योम *data)
+अणु
+	अचिन्हित दीर्घ avail = 0;
+	अचिन्हित पूर्णांक bit;
 	u64 val;
 
-	if (cnt >= BITS_PER_LONG)
-		return 0;
+	अगर (cnt >= BITS_PER_LONG)
+		वापस 0;
 
-	for (bit = 0; bit < cnt; bit++) {
-		if (!msr[bit].no_check) {
-			struct attribute_group *grp = msr[bit].grp;
+	क्रम (bit = 0; bit < cnt; bit++) अणु
+		अगर (!msr[bit].no_check) अणु
+			काष्ठा attribute_group *grp = msr[bit].grp;
 			u64 mask;
 
 			/* skip entry with no group */
-			if (!grp)
-				continue;
+			अगर (!grp)
+				जारी;
 
 			grp->is_visible = not_visible;
 
 			/* skip unpopulated entry */
-			if (!msr[bit].msr)
-				continue;
+			अगर (!msr[bit].msr)
+				जारी;
 
-			if (msr[bit].test && !msr[bit].test(bit, data))
-				continue;
-			/* Virt sucks; you cannot tell if a R/O MSR is present :/ */
-			if (rdmsrl_safe(msr[bit].msr, &val))
-				continue;
+			अगर (msr[bit].test && !msr[bit].test(bit, data))
+				जारी;
+			/* Virt sucks; you cannot tell अगर a R/O MSR is present :/ */
+			अगर (rdmsrl_safe(msr[bit].msr, &val))
+				जारी;
 
 			mask = msr[bit].mask;
-			if (!mask)
+			अगर (!mask)
 				mask = ~0ULL;
-			/* Disable zero counters if requested. */
-			if (!zero && !(val & mask))
-				continue;
+			/* Disable zero counters अगर requested. */
+			अगर (!zero && !(val & mask))
+				जारी;
 
-			grp->is_visible = NULL;
-		}
+			grp->is_visible = शून्य;
+		पूर्ण
 		avail |= BIT(bit);
-	}
+	पूर्ण
 
-	return avail;
-}
+	वापस avail;
+पूर्ण
 EXPORT_SYMBOL_GPL(perf_msr_probe);

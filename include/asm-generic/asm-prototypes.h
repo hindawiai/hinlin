@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/bitops.h>
-#undef __memset
-extern void *__memset(void *, int, __kernel_size_t);
-#undef __memcpy
-extern void *__memcpy(void *, const void *, __kernel_size_t);
-#undef __memmove
-extern void *__memmove(void *, const void *, __kernel_size_t);
-#undef memset
-extern void *memset(void *, int, __kernel_size_t);
-#undef memcpy
-extern void *memcpy(void *, const void *, __kernel_size_t);
-#undef memmove
-extern void *memmove(void *, const void *, __kernel_size_t);
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/bitops.h>
+#अघोषित __स_रखो
+बाह्य व्योम *__स_रखो(व्योम *, पूर्णांक, __kernel_माप_प्रकार);
+#अघोषित __स_नकल
+बाह्य व्योम *__स_नकल(व्योम *, स्थिर व्योम *, __kernel_माप_प्रकार);
+#अघोषित __स_हटाओ
+बाह्य व्योम *__स_हटाओ(व्योम *, स्थिर व्योम *, __kernel_माप_प्रकार);
+#अघोषित स_रखो
+बाह्य व्योम *स_रखो(व्योम *, पूर्णांक, __kernel_माप_प्रकार);
+#अघोषित स_नकल
+बाह्य व्योम *स_नकल(व्योम *, स्थिर व्योम *, __kernel_माप_प्रकार);
+#अघोषित स_हटाओ
+बाह्य व्योम *स_हटाओ(व्योम *, स्थिर व्योम *, __kernel_माप_प्रकार);

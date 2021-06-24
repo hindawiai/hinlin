@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,18 +22,18 @@
  *
  */
 
-#ifndef _SMU7_CLOCK_POWER_GATING_H_
-#define _SMU7_CLOCK_POWER_GATING_H_
+#अगर_अघोषित _SMU7_CLOCK_POWER_GATING_H_
+#घोषणा _SMU7_CLOCK_POWER_GATING_H_
 
-#include "smu7_hwmgr.h"
+#समावेश "smu7_hwmgr.h"
 
-void smu7_powergate_vce(struct pp_hwmgr *hwmgr, bool bgate);
-void smu7_powergate_uvd(struct pp_hwmgr *hwmgr, bool bgate);
-int smu7_powerdown_uvd(struct pp_hwmgr *hwmgr);
-int smu7_powergate_acp(struct pp_hwmgr *hwmgr, bool bgate);
-int smu7_disable_clock_power_gating(struct pp_hwmgr *hwmgr);
-int smu7_update_clock_gatings(struct pp_hwmgr *hwmgr,
-					const uint32_t *msg_id);
-int smu7_powergate_gfx(struct pp_hwmgr *hwmgr, bool enable);
+व्योम smu7_घातergate_vce(काष्ठा pp_hwmgr *hwmgr, bool bgate);
+व्योम smu7_घातergate_uvd(काष्ठा pp_hwmgr *hwmgr, bool bgate);
+पूर्णांक smu7_घातerकरोwn_uvd(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक smu7_घातergate_acp(काष्ठा pp_hwmgr *hwmgr, bool bgate);
+पूर्णांक smu7_disable_घड़ी_घातer_gating(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक smu7_update_घड़ी_gatings(काष्ठा pp_hwmgr *hwmgr,
+					स्थिर uपूर्णांक32_t *msg_id);
+पूर्णांक smu7_घातergate_gfx(काष्ठा pp_hwmgr *hwmgr, bool enable);
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ispcsiphy.c
  *
@@ -7,224 +8,224 @@
  * Copyright (C) 2010 Nokia Corporation
  * Copyright (C) 2009 Texas Instruments, Inc.
  *
- * Contacts: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Contacts: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include "isp.h"
-#include "ispreg.h"
-#include "ispcsiphy.h"
+#समावेश "isp.h"
+#समावेश "ispreg.h"
+#समावेश "ispcsiphy.h"
 
-static void csiphy_routing_cfg_3630(struct isp_csiphy *phy,
-				    enum isp_interface_type iface,
+अटल व्योम csiphy_routing_cfg_3630(काष्ठा isp_csiphy *phy,
+				    क्रमागत isp_पूर्णांकerface_type अगरace,
 				    bool ccp2_strobe)
-{
+अणु
 	u32 reg;
-	u32 shift, mode;
+	u32 shअगरt, mode;
 
-	regmap_read(phy->isp->syscon, phy->isp->syscon_offset, &reg);
+	regmap_पढ़ो(phy->isp->syscon, phy->isp->syscon_offset, &reg);
 
-	switch (iface) {
-	default:
+	चयन (अगरace) अणु
+	शेष:
 	/* Should not happen in practice, but let's keep the compiler happy. */
-	case ISP_INTERFACE_CCP2B_PHY1:
+	हाल ISP_INTERFACE_CCP2B_PHY1:
 		reg &= ~OMAP3630_CONTROL_CAMERA_PHY_CTRL_CSI1_RX_SEL_PHY2;
-		shift = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_PHY1_SHIFT;
-		break;
-	case ISP_INTERFACE_CSI2C_PHY1:
-		shift = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_PHY1_SHIFT;
+		shअगरt = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_PHY1_SHIFT;
+		अवरोध;
+	हाल ISP_INTERFACE_CSI2C_PHY1:
+		shअगरt = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_PHY1_SHIFT;
 		mode = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_DPHY;
-		break;
-	case ISP_INTERFACE_CCP2B_PHY2:
+		अवरोध;
+	हाल ISP_INTERFACE_CCP2B_PHY2:
 		reg |= OMAP3630_CONTROL_CAMERA_PHY_CTRL_CSI1_RX_SEL_PHY2;
-		shift = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_PHY2_SHIFT;
-		break;
-	case ISP_INTERFACE_CSI2A_PHY2:
-		shift = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_PHY2_SHIFT;
+		shअगरt = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_PHY2_SHIFT;
+		अवरोध;
+	हाल ISP_INTERFACE_CSI2A_PHY2:
+		shअगरt = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_PHY2_SHIFT;
 		mode = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_DPHY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Select data/clock or data/strobe mode for CCP2 */
-	if (iface == ISP_INTERFACE_CCP2B_PHY1 ||
-	    iface == ISP_INTERFACE_CCP2B_PHY2) {
-		if (ccp2_strobe)
+	/* Select data/घड़ी or data/strobe mode क्रम CCP2 */
+	अगर (अगरace == ISP_INTERFACE_CCP2B_PHY1 ||
+	    अगरace == ISP_INTERFACE_CCP2B_PHY2) अणु
+		अगर (ccp2_strobe)
 			mode = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_CCP2_DATA_STROBE;
-		else
+		अन्यथा
 			mode = OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_CCP2_DATA_CLOCK;
-	}
+	पूर्ण
 
-	reg &= ~(OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_MASK << shift);
-	reg |= mode << shift;
+	reg &= ~(OMAP3630_CONTROL_CAMERA_PHY_CTRL_CAMMODE_MASK << shअगरt);
+	reg |= mode << shअगरt;
 
-	regmap_write(phy->isp->syscon, phy->isp->syscon_offset, reg);
-}
+	regmap_ग_लिखो(phy->isp->syscon, phy->isp->syscon_offset, reg);
+पूर्ण
 
-static void csiphy_routing_cfg_3430(struct isp_csiphy *phy, u32 iface, bool on,
+अटल व्योम csiphy_routing_cfg_3430(काष्ठा isp_csiphy *phy, u32 अगरace, bool on,
 				    bool ccp2_strobe)
-{
+अणु
 	u32 csirxfe = OMAP343X_CONTROL_CSIRXFE_PWRDNZ
 		| OMAP343X_CONTROL_CSIRXFE_RESET;
 
 	/* Only the CCP2B on PHY1 is configurable. */
-	if (iface != ISP_INTERFACE_CCP2B_PHY1)
-		return;
+	अगर (अगरace != ISP_INTERFACE_CCP2B_PHY1)
+		वापस;
 
-	if (!on) {
-		regmap_write(phy->isp->syscon, phy->isp->syscon_offset, 0);
-		return;
-	}
+	अगर (!on) अणु
+		regmap_ग_लिखो(phy->isp->syscon, phy->isp->syscon_offset, 0);
+		वापस;
+	पूर्ण
 
-	if (ccp2_strobe)
+	अगर (ccp2_strobe)
 		csirxfe |= OMAP343X_CONTROL_CSIRXFE_SELFORM;
 
-	regmap_write(phy->isp->syscon, phy->isp->syscon_offset, csirxfe);
-}
+	regmap_ग_लिखो(phy->isp->syscon, phy->isp->syscon_offset, csirxfe);
+पूर्ण
 
 /*
  * Configure OMAP 3 CSI PHY routing.
  * @phy: relevant phy device
- * @iface: ISP_INTERFACE_*
- * @on: power on or off
- * @ccp2_strobe: false: data/clock, true: data/strobe
+ * @अगरace: ISP_INTERFACE_*
+ * @on: घातer on or off
+ * @ccp2_strobe: false: data/घड़ी, true: data/strobe
  *
- * Note that the underlying routing configuration registers are part of the
- * control (SCM) register space and part of the CORE power domain on both 3430
+ * Note that the underlying routing configuration रेजिस्टरs are part of the
+ * control (SCM) रेजिस्टर space and part of the CORE घातer करोमुख्य on both 3430
  * and 3630, so they will not hold their contents in off-mode. This isn't an
- * issue since the MPU power domain is forced on whilst the ISP is in use.
+ * issue since the MPU घातer करोमुख्य is क्रमced on whilst the ISP is in use.
  */
-static void csiphy_routing_cfg(struct isp_csiphy *phy,
-			       enum isp_interface_type iface, bool on,
+अटल व्योम csiphy_routing_cfg(काष्ठा isp_csiphy *phy,
+			       क्रमागत isp_पूर्णांकerface_type अगरace, bool on,
 			       bool ccp2_strobe)
-{
-	if (phy->isp->phy_type == ISP_PHY_TYPE_3630 && on)
-		return csiphy_routing_cfg_3630(phy, iface, ccp2_strobe);
-	if (phy->isp->phy_type == ISP_PHY_TYPE_3430)
-		return csiphy_routing_cfg_3430(phy, iface, on, ccp2_strobe);
-}
+अणु
+	अगर (phy->isp->phy_type == ISP_PHY_TYPE_3630 && on)
+		वापस csiphy_routing_cfg_3630(phy, अगरace, ccp2_strobe);
+	अगर (phy->isp->phy_type == ISP_PHY_TYPE_3430)
+		वापस csiphy_routing_cfg_3430(phy, अगरace, on, ccp2_strobe);
+पूर्ण
 
 /*
- * csiphy_power_autoswitch_enable
- * @enable: Sets or clears the autoswitch function enable flag.
+ * csiphy_घातer_स्वतःचयन_enable
+ * @enable: Sets or clears the स्वतःचयन function enable flag.
  */
-static void csiphy_power_autoswitch_enable(struct isp_csiphy *phy, bool enable)
-{
+अटल व्योम csiphy_घातer_स्वतःचयन_enable(काष्ठा isp_csiphy *phy, bool enable)
+अणु
 	isp_reg_clr_set(phy->isp, phy->cfg_regs, ISPCSI2_PHY_CFG,
 			ISPCSI2_PHY_CFG_PWR_AUTO,
 			enable ? ISPCSI2_PHY_CFG_PWR_AUTO : 0);
-}
+पूर्ण
 
 /*
- * csiphy_set_power
- * @power: Power state to be set.
+ * csiphy_set_घातer
+ * @घातer: Power state to be set.
  *
- * Returns 0 if successful, or -EBUSY if the retry count is exceeded.
+ * Returns 0 अगर successful, or -EBUSY अगर the retry count is exceeded.
  */
-static int csiphy_set_power(struct isp_csiphy *phy, u32 power)
-{
+अटल पूर्णांक csiphy_set_घातer(काष्ठा isp_csiphy *phy, u32 घातer)
+अणु
 	u32 reg;
 	u8 retry_count;
 
 	isp_reg_clr_set(phy->isp, phy->cfg_regs, ISPCSI2_PHY_CFG,
-			ISPCSI2_PHY_CFG_PWR_CMD_MASK, power);
+			ISPCSI2_PHY_CFG_PWR_CMD_MASK, घातer);
 
 	retry_count = 0;
-	do {
+	करो अणु
 		udelay(50);
-		reg = isp_reg_readl(phy->isp, phy->cfg_regs, ISPCSI2_PHY_CFG) &
+		reg = isp_reg_पढ़ोl(phy->isp, phy->cfg_regs, ISPCSI2_PHY_CFG) &
 				    ISPCSI2_PHY_CFG_PWR_STATUS_MASK;
 
-		if (reg != power >> 2)
+		अगर (reg != घातer >> 2)
 			retry_count++;
 
-	} while ((reg != power >> 2) && (retry_count < 100));
+	पूर्ण जबतक ((reg != घातer >> 2) && (retry_count < 100));
 
-	if (retry_count == 100) {
+	अगर (retry_count == 100) अणु
 		dev_err(phy->isp->dev, "CSI2 CIO set power failed!\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * TCLK values are OK at their reset values
  */
-#define TCLK_TERM	0
-#define TCLK_MISS	1
-#define TCLK_SETTLE	14
+#घोषणा TCLK_TERM	0
+#घोषणा TCLK_MISS	1
+#घोषणा TCLK_SETTLE	14
 
-static int omap3isp_csiphy_config(struct isp_csiphy *phy)
-{
-	struct isp_pipeline *pipe = to_isp_pipeline(phy->entity);
-	struct isp_bus_cfg *buscfg = v4l2_subdev_to_bus_cfg(pipe->external);
-	struct isp_csiphy_lanes_cfg *lanes;
-	int csi2_ddrclk_khz;
-	unsigned int num_data_lanes, used_lanes = 0;
-	unsigned int i;
+अटल पूर्णांक omap3isp_csiphy_config(काष्ठा isp_csiphy *phy)
+अणु
+	काष्ठा isp_pipeline *pipe = to_isp_pipeline(phy->entity);
+	काष्ठा isp_bus_cfg *buscfg = v4l2_subdev_to_bus_cfg(pipe->बाह्यal);
+	काष्ठा isp_csiphy_lanes_cfg *lanes;
+	पूर्णांक csi2_ddrclk_khz;
+	अचिन्हित पूर्णांक num_data_lanes, used_lanes = 0;
+	अचिन्हित पूर्णांक i;
 	u32 reg;
 
-	if (buscfg->interface == ISP_INTERFACE_CCP2B_PHY1
-	    || buscfg->interface == ISP_INTERFACE_CCP2B_PHY2) {
+	अगर (buscfg->पूर्णांकerface == ISP_INTERFACE_CCP2B_PHY1
+	    || buscfg->पूर्णांकerface == ISP_INTERFACE_CCP2B_PHY2) अणु
 		lanes = &buscfg->bus.ccp2.lanecfg;
 		num_data_lanes = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		lanes = &buscfg->bus.csi2.lanecfg;
 		num_data_lanes = buscfg->bus.csi2.num_data_lanes;
-	}
+	पूर्ण
 
-	if (num_data_lanes > phy->num_data_lanes)
-		return -EINVAL;
+	अगर (num_data_lanes > phy->num_data_lanes)
+		वापस -EINVAL;
 
-	/* Clock and data lanes verification */
-	for (i = 0; i < num_data_lanes; i++) {
-		if (lanes->data[i].pol > 1 || lanes->data[i].pos > 3)
-			return -EINVAL;
+	/* Clock and data lanes verअगरication */
+	क्रम (i = 0; i < num_data_lanes; i++) अणु
+		अगर (lanes->data[i].pol > 1 || lanes->data[i].pos > 3)
+			वापस -EINVAL;
 
-		if (used_lanes & (1 << lanes->data[i].pos))
-			return -EINVAL;
+		अगर (used_lanes & (1 << lanes->data[i].pos))
+			वापस -EINVAL;
 
 		used_lanes |= 1 << lanes->data[i].pos;
-	}
+	पूर्ण
 
-	if (lanes->clk.pol > 1 || lanes->clk.pos > 3)
-		return -EINVAL;
+	अगर (lanes->clk.pol > 1 || lanes->clk.pos > 3)
+		वापस -EINVAL;
 
-	if (lanes->clk.pos == 0 || used_lanes & (1 << lanes->clk.pos))
-		return -EINVAL;
+	अगर (lanes->clk.pos == 0 || used_lanes & (1 << lanes->clk.pos))
+		वापस -EINVAL;
 
 	/*
 	 * The PHY configuration is lost in off mode, that's not an
-	 * issue since the MPU power domain is forced on whilst the
+	 * issue since the MPU घातer करोमुख्य is क्रमced on whilst the
 	 * ISP is in use.
 	 */
-	csiphy_routing_cfg(phy, buscfg->interface, true,
+	csiphy_routing_cfg(phy, buscfg->पूर्णांकerface, true,
 			   buscfg->bus.ccp2.phy_layer);
 
 	/* DPHY timing configuration */
 	/* CSI-2 is DDR and we only count used lanes. */
-	csi2_ddrclk_khz = pipe->external_rate / 1000
-		/ (2 * hweight32(used_lanes)) * pipe->external_width;
+	csi2_ddrclk_khz = pipe->बाह्यal_rate / 1000
+		/ (2 * hweight32(used_lanes)) * pipe->बाह्यal_width;
 
-	reg = isp_reg_readl(phy->isp, phy->phy_regs, ISPCSIPHY_REG0);
+	reg = isp_reg_पढ़ोl(phy->isp, phy->phy_regs, ISPCSIPHY_REG0);
 
 	reg &= ~(ISPCSIPHY_REG0_THS_TERM_MASK |
 		 ISPCSIPHY_REG0_THS_SETTLE_MASK);
-	/* THS_TERM: Programmed value = ceil(12.5 ns/DDRClk period) - 1. */
+	/* THS_TERM: Programmed value = उच्चमान(12.5 ns/DDRClk period) - 1. */
 	reg |= (DIV_ROUND_UP(25 * csi2_ddrclk_khz, 2000000) - 1)
 		<< ISPCSIPHY_REG0_THS_TERM_SHIFT;
-	/* THS_SETTLE: Programmed value = ceil(90 ns/DDRClk period) + 3. */
+	/* THS_SETTLE: Programmed value = उच्चमान(90 ns/DDRClk period) + 3. */
 	reg |= (DIV_ROUND_UP(90 * csi2_ddrclk_khz, 1000000) + 3)
 		<< ISPCSIPHY_REG0_THS_SETTLE_SHIFT;
 
-	isp_reg_writel(phy->isp, reg, phy->phy_regs, ISPCSIPHY_REG0);
+	isp_reg_ग_लिखोl(phy->isp, reg, phy->phy_regs, ISPCSIPHY_REG0);
 
-	reg = isp_reg_readl(phy->isp, phy->phy_regs, ISPCSIPHY_REG1);
+	reg = isp_reg_पढ़ोl(phy->isp, phy->phy_regs, ISPCSIPHY_REG1);
 
 	reg &= ~(ISPCSIPHY_REG1_TCLK_TERM_MASK |
 		 ISPCSIPHY_REG1_TCLK_MISS_MASK |
@@ -233,100 +234,100 @@ static int omap3isp_csiphy_config(struct isp_csiphy *phy)
 	reg |= TCLK_MISS << ISPCSIPHY_REG1_TCLK_MISS_SHIFT;
 	reg |= TCLK_SETTLE << ISPCSIPHY_REG1_TCLK_SETTLE_SHIFT;
 
-	isp_reg_writel(phy->isp, reg, phy->phy_regs, ISPCSIPHY_REG1);
+	isp_reg_ग_लिखोl(phy->isp, reg, phy->phy_regs, ISPCSIPHY_REG1);
 
 	/* DPHY lane configuration */
-	reg = isp_reg_readl(phy->isp, phy->cfg_regs, ISPCSI2_PHY_CFG);
+	reg = isp_reg_पढ़ोl(phy->isp, phy->cfg_regs, ISPCSI2_PHY_CFG);
 
-	for (i = 0; i < num_data_lanes; i++) {
+	क्रम (i = 0; i < num_data_lanes; i++) अणु
 		reg &= ~(ISPCSI2_PHY_CFG_DATA_POL_MASK(i + 1) |
 			 ISPCSI2_PHY_CFG_DATA_POSITION_MASK(i + 1));
 		reg |= (lanes->data[i].pol <<
 			ISPCSI2_PHY_CFG_DATA_POL_SHIFT(i + 1));
 		reg |= (lanes->data[i].pos <<
 			ISPCSI2_PHY_CFG_DATA_POSITION_SHIFT(i + 1));
-	}
+	पूर्ण
 
 	reg &= ~(ISPCSI2_PHY_CFG_CLOCK_POL_MASK |
 		 ISPCSI2_PHY_CFG_CLOCK_POSITION_MASK);
 	reg |= lanes->clk.pol << ISPCSI2_PHY_CFG_CLOCK_POL_SHIFT;
 	reg |= lanes->clk.pos << ISPCSI2_PHY_CFG_CLOCK_POSITION_SHIFT;
 
-	isp_reg_writel(phy->isp, reg, phy->cfg_regs, ISPCSI2_PHY_CFG);
+	isp_reg_ग_लिखोl(phy->isp, reg, phy->cfg_regs, ISPCSI2_PHY_CFG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int omap3isp_csiphy_acquire(struct isp_csiphy *phy, struct media_entity *entity)
-{
-	int rval;
+पूर्णांक omap3isp_csiphy_acquire(काष्ठा isp_csiphy *phy, काष्ठा media_entity *entity)
+अणु
+	पूर्णांक rval;
 
-	if (phy->vdd == NULL) {
+	अगर (phy->vdd == शून्य) अणु
 		dev_err(phy->isp->dev,
 			"Power regulator for CSI PHY not available\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	mutex_lock(&phy->mutex);
 
 	rval = regulator_enable(phy->vdd);
-	if (rval < 0)
-		goto done;
+	अगर (rval < 0)
+		जाओ करोne;
 
 	rval = omap3isp_csi2_reset(phy->csi2);
-	if (rval < 0)
-		goto done;
+	अगर (rval < 0)
+		जाओ करोne;
 
 	phy->entity = entity;
 
 	rval = omap3isp_csiphy_config(phy);
-	if (rval < 0)
-		goto done;
+	अगर (rval < 0)
+		जाओ करोne;
 
-	if (phy->isp->revision == ISP_REVISION_15_0) {
-		rval = csiphy_set_power(phy, ISPCSI2_PHY_CFG_PWR_CMD_ON);
-		if (rval) {
+	अगर (phy->isp->revision == ISP_REVISION_15_0) अणु
+		rval = csiphy_set_घातer(phy, ISPCSI2_PHY_CFG_PWR_CMD_ON);
+		अगर (rval) अणु
 			regulator_disable(phy->vdd);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		csiphy_power_autoswitch_enable(phy, true);
-	}
-done:
-	if (rval < 0)
-		phy->entity = NULL;
+		csiphy_घातer_स्वतःचयन_enable(phy, true);
+	पूर्ण
+करोne:
+	अगर (rval < 0)
+		phy->entity = शून्य;
 
 	mutex_unlock(&phy->mutex);
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-void omap3isp_csiphy_release(struct isp_csiphy *phy)
-{
+व्योम omap3isp_csiphy_release(काष्ठा isp_csiphy *phy)
+अणु
 	mutex_lock(&phy->mutex);
-	if (phy->entity) {
-		struct isp_pipeline *pipe = to_isp_pipeline(phy->entity);
-		struct isp_bus_cfg *buscfg =
-			v4l2_subdev_to_bus_cfg(pipe->external);
+	अगर (phy->entity) अणु
+		काष्ठा isp_pipeline *pipe = to_isp_pipeline(phy->entity);
+		काष्ठा isp_bus_cfg *buscfg =
+			v4l2_subdev_to_bus_cfg(pipe->बाह्यal);
 
-		csiphy_routing_cfg(phy, buscfg->interface, false,
+		csiphy_routing_cfg(phy, buscfg->पूर्णांकerface, false,
 				   buscfg->bus.ccp2.phy_layer);
-		if (phy->isp->revision == ISP_REVISION_15_0) {
-			csiphy_power_autoswitch_enable(phy, false);
-			csiphy_set_power(phy, ISPCSI2_PHY_CFG_PWR_CMD_OFF);
-		}
+		अगर (phy->isp->revision == ISP_REVISION_15_0) अणु
+			csiphy_घातer_स्वतःचयन_enable(phy, false);
+			csiphy_set_घातer(phy, ISPCSI2_PHY_CFG_PWR_CMD_OFF);
+		पूर्ण
 		regulator_disable(phy->vdd);
-		phy->entity = NULL;
-	}
+		phy->entity = शून्य;
+	पूर्ण
 	mutex_unlock(&phy->mutex);
-}
+पूर्ण
 
 /*
  * omap3isp_csiphy_init - Initialize the CSI PHY frontends
  */
-int omap3isp_csiphy_init(struct isp_device *isp)
-{
-	struct isp_csiphy *phy1 = &isp->isp_csiphy1;
-	struct isp_csiphy *phy2 = &isp->isp_csiphy2;
+पूर्णांक omap3isp_csiphy_init(काष्ठा isp_device *isp)
+अणु
+	काष्ठा isp_csiphy *phy1 = &isp->isp_csiphy1;
+	काष्ठा isp_csiphy *phy2 = &isp->isp_csiphy2;
 
 	phy2->isp = isp;
 	phy2->csi2 = &isp->isp_csi2a;
@@ -338,18 +339,18 @@ int omap3isp_csiphy_init(struct isp_device *isp)
 	phy1->isp = isp;
 	mutex_init(&phy1->mutex);
 
-	if (isp->revision == ISP_REVISION_15_0) {
+	अगर (isp->revision == ISP_REVISION_15_0) अणु
 		phy1->csi2 = &isp->isp_csi2c;
 		phy1->num_data_lanes = ISP_CSIPHY1_NUM_DATA_LANES;
 		phy1->cfg_regs = OMAP3_ISP_IOMEM_CSI2C_REGS1;
 		phy1->phy_regs = OMAP3_ISP_IOMEM_CSIPHY1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void omap3isp_csiphy_cleanup(struct isp_device *isp)
-{
+व्योम omap3isp_csiphy_cleanup(काष्ठा isp_device *isp)
+अणु
 	mutex_destroy(&isp->isp_csiphy1.mutex);
 	mutex_destroy(&isp->isp_csiphy2.mutex);
-}
+पूर्ण

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Common CPM code
  *
- * Author: Scott Wood <scottwood@freescale.com>
+ * Author: Scott Wood <scottwood@मुक्तscale.com>
  *
  * Copyright 2007-2008,2010 Freescale Semiconductor, Inc.
  *
@@ -13,239 +14,239 @@
  * 2006 (c) MontaVista Software, Inc.
  * Vitaly Bordug <vbordug@ru.mvista.com>
  */
-#include <linux/genalloc.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/of_device.h>
-#include <linux/spinlock.h>
-#include <linux/export.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <soc/fsl/qe/qe.h>
+#समावेश <linux/genभाग.स>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/export.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <soc/fsl/qe/qe.h>
 
-static struct gen_pool *muram_pool;
-static DEFINE_SPINLOCK(cpm_muram_lock);
-static void __iomem *muram_vbase;
-static phys_addr_t muram_pbase;
+अटल काष्ठा gen_pool *muram_pool;
+अटल DEFINE_SPINLOCK(cpm_muram_lock);
+अटल व्योम __iomem *muram_vbase;
+अटल phys_addr_t muram_pbase;
 
-struct muram_block {
-	struct list_head head;
+काष्ठा muram_block अणु
+	काष्ठा list_head head;
 	s32 start;
-	int size;
-};
+	पूर्णांक size;
+पूर्ण;
 
-static LIST_HEAD(muram_block_list);
+अटल LIST_HEAD(muram_block_list);
 
 /* max address size we deal with */
-#define OF_MAX_ADDR_CELLS	4
-#define GENPOOL_OFFSET		(4096 * 8)
+#घोषणा OF_MAX_ADDR_CELLS	4
+#घोषणा GENPOOL_OFFSET		(4096 * 8)
 
-int cpm_muram_init(void)
-{
-	struct device_node *np;
-	struct resource r;
-	__be32 zero[OF_MAX_ADDR_CELLS] = {};
-	resource_size_t max = 0;
-	int i = 0;
-	int ret = 0;
+पूर्णांक cpm_muram_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा resource r;
+	__be32 zero[OF_MAX_ADDR_CELLS] = अणुपूर्ण;
+	resource_माप_प्रकार max = 0;
+	पूर्णांक i = 0;
+	पूर्णांक ret = 0;
 
-	if (muram_pbase)
-		return 0;
+	अगर (muram_pbase)
+		वापस 0;
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,cpm-muram-data");
-	if (!np) {
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,cpm-muram-data");
+	अगर (!np) अणु
 		/* try legacy bindings */
-		np = of_find_node_by_name(NULL, "data-only");
-		if (!np) {
+		np = of_find_node_by_name(शून्य, "data-only");
+		अगर (!np) अणु
 			pr_err("Cannot find CPM muram data node");
 			ret = -ENODEV;
-			goto out_muram;
-		}
-	}
+			जाओ out_muram;
+		पूर्ण
+	पूर्ण
 
 	muram_pool = gen_pool_create(0, -1);
-	if (!muram_pool) {
+	अगर (!muram_pool) अणु
 		pr_err("Cannot allocate memory pool for CPM/QE muram");
 		ret = -ENOMEM;
-		goto out_muram;
-	}
+		जाओ out_muram;
+	पूर्ण
 	muram_pbase = of_translate_address(np, zero);
-	if (muram_pbase == (phys_addr_t)OF_BAD_ADDR) {
+	अगर (muram_pbase == (phys_addr_t)OF_BAD_ADDR) अणु
 		pr_err("Cannot translate zero through CPM muram node");
 		ret = -ENODEV;
-		goto out_pool;
-	}
+		जाओ out_pool;
+	पूर्ण
 
-	while (of_address_to_resource(np, i++, &r) == 0) {
-		if (r.end > max)
+	जबतक (of_address_to_resource(np, i++, &r) == 0) अणु
+		अगर (r.end > max)
 			max = r.end;
 		ret = gen_pool_add(muram_pool, r.start - muram_pbase +
 				   GENPOOL_OFFSET, resource_size(&r), -1);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("QE: couldn't add muram to pool!\n");
-			goto out_pool;
-		}
-	}
+			जाओ out_pool;
+		पूर्ण
+	पूर्ण
 
 	muram_vbase = ioremap(muram_pbase, max - muram_pbase + 1);
-	if (!muram_vbase) {
+	अगर (!muram_vbase) अणु
 		pr_err("Cannot map QE muram");
 		ret = -ENOMEM;
-		goto out_pool;
-	}
-	goto out_muram;
+		जाओ out_pool;
+	पूर्ण
+	जाओ out_muram;
 out_pool:
 	gen_pool_destroy(muram_pool);
 out_muram:
 	of_node_put(np);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * cpm_muram_alloc_common - cpm_muram_alloc common code
  * @size: number of bytes to allocate
- * @algo: algorithm for alloc.
- * @data: data for genalloc's algorithm.
+ * @algo: algorithm क्रम alloc.
+ * @data: data क्रम genalloc's algorithm.
  *
- * This function returns a non-negative offset into the muram area, or
- * a negative errno on failure.
+ * This function वापसs a non-negative offset पूर्णांकo the muram area, or
+ * a negative त्रुटि_सं on failure.
  */
-static s32 cpm_muram_alloc_common(unsigned long size,
-				  genpool_algo_t algo, void *data)
-{
-	struct muram_block *entry;
+अटल s32 cpm_muram_alloc_common(अचिन्हित दीर्घ size,
+				  genpool_algo_t algo, व्योम *data)
+अणु
+	काष्ठा muram_block *entry;
 	s32 start;
 
-	entry = kmalloc(sizeof(*entry), GFP_ATOMIC);
-	if (!entry)
-		return -ENOMEM;
+	entry = kदो_स्मृति(माप(*entry), GFP_ATOMIC);
+	अगर (!entry)
+		वापस -ENOMEM;
 	start = gen_pool_alloc_algo(muram_pool, size, algo, data);
-	if (!start) {
-		kfree(entry);
-		return -ENOMEM;
-	}
+	अगर (!start) अणु
+		kमुक्त(entry);
+		वापस -ENOMEM;
+	पूर्ण
 	start = start - GENPOOL_OFFSET;
-	memset_io(cpm_muram_addr(start), 0, size);
+	स_रखो_io(cpm_muram_addr(start), 0, size);
 	entry->start = start;
 	entry->size = size;
 	list_add(&entry->head, &muram_block_list);
 
-	return start;
-}
+	वापस start;
+पूर्ण
 
 /*
  * cpm_muram_alloc - allocate the requested size worth of multi-user ram
  * @size: number of bytes to allocate
  * @align: requested alignment, in bytes
  *
- * This function returns a non-negative offset into the muram area, or
- * a negative errno on failure.
- * Use cpm_dpram_addr() to get the virtual address of the area.
- * Use cpm_muram_free() to free the allocation.
+ * This function वापसs a non-negative offset पूर्णांकo the muram area, or
+ * a negative त्रुटि_सं on failure.
+ * Use cpm_dpram_addr() to get the भव address of the area.
+ * Use cpm_muram_मुक्त() to मुक्त the allocation.
  */
-s32 cpm_muram_alloc(unsigned long size, unsigned long align)
-{
+s32 cpm_muram_alloc(अचिन्हित दीर्घ size, अचिन्हित दीर्घ align)
+अणु
 	s32 start;
-	unsigned long flags;
-	struct genpool_data_align muram_pool_data;
+	अचिन्हित दीर्घ flags;
+	काष्ठा genpool_data_align muram_pool_data;
 
 	spin_lock_irqsave(&cpm_muram_lock, flags);
 	muram_pool_data.align = align;
 	start = cpm_muram_alloc_common(size, gen_pool_first_fit_align,
 				       &muram_pool_data);
 	spin_unlock_irqrestore(&cpm_muram_lock, flags);
-	return start;
-}
+	वापस start;
+पूर्ण
 EXPORT_SYMBOL(cpm_muram_alloc);
 
 /**
- * cpm_muram_free - free a chunk of multi-user ram
- * @offset: The beginning of the chunk as returned by cpm_muram_alloc().
+ * cpm_muram_मुक्त - मुक्त a chunk of multi-user ram
+ * @offset: The beginning of the chunk as वापसed by cpm_muram_alloc().
  */
-void cpm_muram_free(s32 offset)
-{
-	unsigned long flags;
-	int size;
-	struct muram_block *tmp;
+व्योम cpm_muram_मुक्त(s32 offset)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक size;
+	काष्ठा muram_block *पंचांगp;
 
-	if (offset < 0)
-		return;
+	अगर (offset < 0)
+		वापस;
 
 	size = 0;
 	spin_lock_irqsave(&cpm_muram_lock, flags);
-	list_for_each_entry(tmp, &muram_block_list, head) {
-		if (tmp->start == offset) {
-			size = tmp->size;
-			list_del(&tmp->head);
-			kfree(tmp);
-			break;
-		}
-	}
-	gen_pool_free(muram_pool, offset + GENPOOL_OFFSET, size);
+	list_क्रम_each_entry(पंचांगp, &muram_block_list, head) अणु
+		अगर (पंचांगp->start == offset) अणु
+			size = पंचांगp->size;
+			list_del(&पंचांगp->head);
+			kमुक्त(पंचांगp);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	gen_pool_मुक्त(muram_pool, offset + GENPOOL_OFFSET, size);
 	spin_unlock_irqrestore(&cpm_muram_lock, flags);
-}
-EXPORT_SYMBOL(cpm_muram_free);
+पूर्ण
+EXPORT_SYMBOL(cpm_muram_मुक्त);
 
 /*
- * cpm_muram_alloc_fixed - reserve a specific region of multi-user ram
+ * cpm_muram_alloc_fixed - reserve a specअगरic region of multi-user ram
  * @offset: offset of allocation start address
  * @size: number of bytes to allocate
- * This function returns @offset if the area was available, a negative
- * errno otherwise.
- * Use cpm_dpram_addr() to get the virtual address of the area.
- * Use cpm_muram_free() to free the allocation.
+ * This function वापसs @offset अगर the area was available, a negative
+ * त्रुटि_सं otherwise.
+ * Use cpm_dpram_addr() to get the भव address of the area.
+ * Use cpm_muram_मुक्त() to मुक्त the allocation.
  */
-s32 cpm_muram_alloc_fixed(unsigned long offset, unsigned long size)
-{
+s32 cpm_muram_alloc_fixed(अचिन्हित दीर्घ offset, अचिन्हित दीर्घ size)
+अणु
 	s32 start;
-	unsigned long flags;
-	struct genpool_data_fixed muram_pool_data_fixed;
+	अचिन्हित दीर्घ flags;
+	काष्ठा genpool_data_fixed muram_pool_data_fixed;
 
 	spin_lock_irqsave(&cpm_muram_lock, flags);
 	muram_pool_data_fixed.offset = offset + GENPOOL_OFFSET;
 	start = cpm_muram_alloc_common(size, gen_pool_fixed_alloc,
 				       &muram_pool_data_fixed);
 	spin_unlock_irqrestore(&cpm_muram_lock, flags);
-	return start;
-}
+	वापस start;
+पूर्ण
 EXPORT_SYMBOL(cpm_muram_alloc_fixed);
 
 /**
- * cpm_muram_addr - turn a muram offset into a virtual address
+ * cpm_muram_addr - turn a muram offset पूर्णांकo a भव address
  * @offset: muram offset to convert
  */
-void __iomem *cpm_muram_addr(unsigned long offset)
-{
-	return muram_vbase + offset;
-}
+व्योम __iomem *cpm_muram_addr(अचिन्हित दीर्घ offset)
+अणु
+	वापस muram_vbase + offset;
+पूर्ण
 EXPORT_SYMBOL(cpm_muram_addr);
 
-unsigned long cpm_muram_offset(const void __iomem *addr)
-{
-	return addr - muram_vbase;
-}
+अचिन्हित दीर्घ cpm_muram_offset(स्थिर व्योम __iomem *addr)
+अणु
+	वापस addr - muram_vbase;
+पूर्ण
 EXPORT_SYMBOL(cpm_muram_offset);
 
 /**
- * cpm_muram_dma - turn a muram virtual address into a DMA address
- * @addr: virtual address from cpm_muram_addr() to convert
+ * cpm_muram_dma - turn a muram भव address पूर्णांकo a DMA address
+ * @addr: भव address from cpm_muram_addr() to convert
  */
-dma_addr_t cpm_muram_dma(void __iomem *addr)
-{
-	return muram_pbase + (addr - muram_vbase);
-}
+dma_addr_t cpm_muram_dma(व्योम __iomem *addr)
+अणु
+	वापस muram_pbase + (addr - muram_vbase);
+पूर्ण
 EXPORT_SYMBOL(cpm_muram_dma);
 
 /*
- * As cpm_muram_free, but takes the virtual address rather than the
+ * As cpm_muram_मुक्त, but takes the भव address rather than the
  * muram offset.
  */
-void cpm_muram_free_addr(const void __iomem *addr)
-{
-	if (!addr)
-		return;
-	cpm_muram_free(cpm_muram_offset(addr));
-}
-EXPORT_SYMBOL(cpm_muram_free_addr);
+व्योम cpm_muram_मुक्त_addr(स्थिर व्योम __iomem *addr)
+अणु
+	अगर (!addr)
+		वापस;
+	cpm_muram_मुक्त(cpm_muram_offset(addr));
+पूर्ण
+EXPORT_SYMBOL(cpm_muram_मुक्त_addr);

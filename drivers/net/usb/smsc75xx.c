@@ -1,549 +1,550 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
  /***************************************************************************
  *
  * Copyright (C) 2007-2010 SMSC
  *
  *****************************************************************************/
 
-#include <linux/module.h>
-#include <linux/kmod.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/mii.h>
-#include <linux/usb.h>
-#include <linux/bitrev.h>
-#include <linux/crc16.h>
-#include <linux/crc32.h>
-#include <linux/usb/usbnet.h>
-#include <linux/slab.h>
-#include <linux/of_net.h>
-#include "smsc75xx.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/bitrev.h>
+#समावेश <linux/crc16.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/usb/usbnet.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_net.h>
+#समावेश "smsc75xx.h"
 
-#define SMSC_CHIPNAME			"smsc75xx"
-#define SMSC_DRIVER_VERSION		"1.0.0"
-#define HS_USB_PKT_SIZE			(512)
-#define FS_USB_PKT_SIZE			(64)
-#define DEFAULT_HS_BURST_CAP_SIZE	(16 * 1024 + 5 * HS_USB_PKT_SIZE)
-#define DEFAULT_FS_BURST_CAP_SIZE	(6 * 1024 + 33 * FS_USB_PKT_SIZE)
-#define DEFAULT_BULK_IN_DELAY		(0x00002000)
-#define MAX_SINGLE_PACKET_SIZE		(9000)
-#define LAN75XX_EEPROM_MAGIC		(0x7500)
-#define EEPROM_MAC_OFFSET		(0x01)
-#define DEFAULT_TX_CSUM_ENABLE		(true)
-#define DEFAULT_RX_CSUM_ENABLE		(true)
-#define SMSC75XX_INTERNAL_PHY_ID	(1)
-#define SMSC75XX_TX_OVERHEAD		(8)
-#define MAX_RX_FIFO_SIZE		(20 * 1024)
-#define MAX_TX_FIFO_SIZE		(12 * 1024)
-#define USB_VENDOR_ID_SMSC		(0x0424)
-#define USB_PRODUCT_ID_LAN7500		(0x7500)
-#define USB_PRODUCT_ID_LAN7505		(0x7505)
-#define RXW_PADDING			2
-#define SUPPORTED_WAKE			(WAKE_PHY | WAKE_UCAST | WAKE_BCAST | \
+#घोषणा SMSC_CHIPNAME			"smsc75xx"
+#घोषणा SMSC_DRIVER_VERSION		"1.0.0"
+#घोषणा HS_USB_PKT_SIZE			(512)
+#घोषणा FS_USB_PKT_SIZE			(64)
+#घोषणा DEFAULT_HS_BURST_CAP_SIZE	(16 * 1024 + 5 * HS_USB_PKT_SIZE)
+#घोषणा DEFAULT_FS_BURST_CAP_SIZE	(6 * 1024 + 33 * FS_USB_PKT_SIZE)
+#घोषणा DEFAULT_BULK_IN_DELAY		(0x00002000)
+#घोषणा MAX_SINGLE_PACKET_SIZE		(9000)
+#घोषणा LAN75XX_EEPROM_MAGIC		(0x7500)
+#घोषणा EEPROM_MAC_OFFSET		(0x01)
+#घोषणा DEFAULT_TX_CSUM_ENABLE		(true)
+#घोषणा DEFAULT_RX_CSUM_ENABLE		(true)
+#घोषणा SMSC75XX_INTERNAL_PHY_ID	(1)
+#घोषणा SMSC75XX_TX_OVERHEAD		(8)
+#घोषणा MAX_RX_FIFO_SIZE		(20 * 1024)
+#घोषणा MAX_TX_FIFO_SIZE		(12 * 1024)
+#घोषणा USB_VENDOR_ID_SMSC		(0x0424)
+#घोषणा USB_PRODUCT_ID_LAN7500		(0x7500)
+#घोषणा USB_PRODUCT_ID_LAN7505		(0x7505)
+#घोषणा RXW_PADDING			2
+#घोषणा SUPPORTED_WAKE			(WAKE_PHY | WAKE_UCAST | WAKE_BCAST | \
 					 WAKE_MCAST | WAKE_ARP | WAKE_MAGIC)
 
-#define SUSPEND_SUSPEND0		(0x01)
-#define SUSPEND_SUSPEND1		(0x02)
-#define SUSPEND_SUSPEND2		(0x04)
-#define SUSPEND_SUSPEND3		(0x08)
-#define SUSPEND_ALLMODES		(SUSPEND_SUSPEND0 | SUSPEND_SUSPEND1 | \
+#घोषणा SUSPEND_SUSPEND0		(0x01)
+#घोषणा SUSPEND_SUSPEND1		(0x02)
+#घोषणा SUSPEND_SUSPEND2		(0x04)
+#घोषणा SUSPEND_SUSPEND3		(0x08)
+#घोषणा SUSPEND_ALLMODES		(SUSPEND_SUSPEND0 | SUSPEND_SUSPEND1 | \
 					 SUSPEND_SUSPEND2 | SUSPEND_SUSPEND3)
 
-struct smsc75xx_priv {
-	struct usbnet *dev;
+काष्ठा smsc75xx_priv अणु
+	काष्ठा usbnet *dev;
 	u32 rfe_ctl;
 	u32 wolopts;
 	u32 multicast_hash_table[DP_SEL_VHF_HASH_LEN];
-	struct mutex dataport_mutex;
+	काष्ठा mutex dataport_mutex;
 	spinlock_t rfe_ctl_lock;
-	struct work_struct set_multicast;
+	काष्ठा work_काष्ठा set_multicast;
 	u8 suspend_flags;
-};
+पूर्ण;
 
-struct usb_context {
-	struct usb_ctrlrequest req;
-	struct usbnet *dev;
-};
+काष्ठा usb_context अणु
+	काष्ठा usb_ctrlrequest req;
+	काष्ठा usbnet *dev;
+पूर्ण;
 
-static bool turbo_mode = true;
+अटल bool turbo_mode = true;
 module_param(turbo_mode, bool, 0644);
 MODULE_PARM_DESC(turbo_mode, "Enable multiple frames per Rx transaction");
 
-static int smsc75xx_link_ok_nopm(struct usbnet *dev);
-static int smsc75xx_phy_gig_workaround(struct usbnet *dev);
+अटल पूर्णांक smsc75xx_link_ok_nopm(काष्ठा usbnet *dev);
+अटल पूर्णांक smsc75xx_phy_gig_workaround(काष्ठा usbnet *dev);
 
-static int __must_check __smsc75xx_read_reg(struct usbnet *dev, u32 index,
-					    u32 *data, int in_pm)
-{
+अटल पूर्णांक __must_check __smsc75xx_पढ़ो_reg(काष्ठा usbnet *dev, u32 index,
+					    u32 *data, पूर्णांक in_pm)
+अणु
 	u32 buf;
-	int ret;
-	int (*fn)(struct usbnet *, u8, u8, u16, u16, void *, u16);
+	पूर्णांक ret;
+	पूर्णांक (*fn)(काष्ठा usbnet *, u8, u8, u16, u16, व्योम *, u16);
 
 	BUG_ON(!dev);
 
-	if (!in_pm)
-		fn = usbnet_read_cmd;
-	else
-		fn = usbnet_read_cmd_nopm;
+	अगर (!in_pm)
+		fn = usbnet_पढ़ो_cmd;
+	अन्यथा
+		fn = usbnet_पढ़ो_cmd_nopm;
 
-	ret = fn(dev, USB_VENDOR_REQUEST_READ_REGISTER, USB_DIR_IN
+	ret = fn(dev, USB_VENDOR_REQUEST_READ_REGISTER, USB_सूची_IN
 		 | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 		 0, index, &buf, 4);
-	if (unlikely(ret < 0)) {
+	अगर (unlikely(ret < 0)) अणु
 		netdev_warn(dev->net, "Failed to read reg index 0x%08x: %d\n",
 			    index, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	le32_to_cpus(&buf);
 	*data = buf;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __must_check __smsc75xx_write_reg(struct usbnet *dev, u32 index,
-					     u32 data, int in_pm)
-{
+अटल पूर्णांक __must_check __smsc75xx_ग_लिखो_reg(काष्ठा usbnet *dev, u32 index,
+					     u32 data, पूर्णांक in_pm)
+अणु
 	u32 buf;
-	int ret;
-	int (*fn)(struct usbnet *, u8, u8, u16, u16, const void *, u16);
+	पूर्णांक ret;
+	पूर्णांक (*fn)(काष्ठा usbnet *, u8, u8, u16, u16, स्थिर व्योम *, u16);
 
 	BUG_ON(!dev);
 
-	if (!in_pm)
-		fn = usbnet_write_cmd;
-	else
-		fn = usbnet_write_cmd_nopm;
+	अगर (!in_pm)
+		fn = usbnet_ग_लिखो_cmd;
+	अन्यथा
+		fn = usbnet_ग_लिखो_cmd_nopm;
 
 	buf = data;
 	cpu_to_le32s(&buf);
 
-	ret = fn(dev, USB_VENDOR_REQUEST_WRITE_REGISTER, USB_DIR_OUT
+	ret = fn(dev, USB_VENDOR_REQUEST_WRITE_REGISTER, USB_सूची_OUT
 		 | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 		 0, index, &buf, 4);
-	if (unlikely(ret < 0))
+	अगर (unlikely(ret < 0))
 		netdev_warn(dev->net, "Failed to write reg index 0x%08x: %d\n",
 			    index, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __must_check smsc75xx_read_reg_nopm(struct usbnet *dev, u32 index,
+अटल पूर्णांक __must_check smsc75xx_पढ़ो_reg_nopm(काष्ठा usbnet *dev, u32 index,
 					       u32 *data)
-{
-	return __smsc75xx_read_reg(dev, index, data, 1);
-}
+अणु
+	वापस __smsc75xx_पढ़ो_reg(dev, index, data, 1);
+पूर्ण
 
-static int __must_check smsc75xx_write_reg_nopm(struct usbnet *dev, u32 index,
+अटल पूर्णांक __must_check smsc75xx_ग_लिखो_reg_nopm(काष्ठा usbnet *dev, u32 index,
 						u32 data)
-{
-	return __smsc75xx_write_reg(dev, index, data, 1);
-}
+अणु
+	वापस __smsc75xx_ग_लिखो_reg(dev, index, data, 1);
+पूर्ण
 
-static int __must_check smsc75xx_read_reg(struct usbnet *dev, u32 index,
+अटल पूर्णांक __must_check smsc75xx_पढ़ो_reg(काष्ठा usbnet *dev, u32 index,
 					  u32 *data)
-{
-	return __smsc75xx_read_reg(dev, index, data, 0);
-}
+अणु
+	वापस __smsc75xx_पढ़ो_reg(dev, index, data, 0);
+पूर्ण
 
-static int __must_check smsc75xx_write_reg(struct usbnet *dev, u32 index,
+अटल पूर्णांक __must_check smsc75xx_ग_लिखो_reg(काष्ठा usbnet *dev, u32 index,
 					   u32 data)
-{
-	return __smsc75xx_write_reg(dev, index, data, 0);
-}
+अणु
+	वापस __smsc75xx_ग_लिखो_reg(dev, index, data, 0);
+पूर्ण
 
-/* Loop until the read is completed with timeout
+/* Loop until the पढ़ो is completed with समयout
  * called with phy_mutex held */
-static __must_check int __smsc75xx_phy_wait_not_busy(struct usbnet *dev,
-						     int in_pm)
-{
-	unsigned long start_time = jiffies;
+अटल __must_check पूर्णांक __smsc75xx_phy_रुको_not_busy(काष्ठा usbnet *dev,
+						     पूर्णांक in_pm)
+अणु
+	अचिन्हित दीर्घ start_समय = jअगरfies;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	do {
-		ret = __smsc75xx_read_reg(dev, MII_ACCESS, &val, in_pm);
-		if (ret < 0) {
+	करो अणु
+		ret = __smsc75xx_पढ़ो_reg(dev, MII_ACCESS, &val, in_pm);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading MII_ACCESS\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (!(val & MII_ACCESS_BUSY))
-			return 0;
-	} while (!time_after(jiffies, start_time + HZ));
+		अगर (!(val & MII_ACCESS_BUSY))
+			वापस 0;
+	पूर्ण जबतक (!समय_after(jअगरfies, start_समय + HZ));
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int __smsc75xx_mdio_read(struct net_device *netdev, int phy_id, int idx,
-				int in_pm)
-{
-	struct usbnet *dev = netdev_priv(netdev);
+अटल पूर्णांक __smsc75xx_mdio_पढ़ो(काष्ठा net_device *netdev, पूर्णांक phy_id, पूर्णांक idx,
+				पूर्णांक in_pm)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
 	u32 val, addr;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&dev->phy_mutex);
 
 	/* confirm MII not busy */
-	ret = __smsc75xx_phy_wait_not_busy(dev, in_pm);
-	if (ret < 0) {
+	ret = __smsc75xx_phy_रुको_not_busy(dev, in_pm);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "MII is busy in smsc75xx_mdio_read\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* set the address, index & direction (read from PHY) */
+	/* set the address, index & direction (पढ़ो from PHY) */
 	phy_id &= dev->mii.phy_id_mask;
 	idx &= dev->mii.reg_num_mask;
 	addr = ((phy_id << MII_ACCESS_PHY_ADDR_SHIFT) & MII_ACCESS_PHY_ADDR)
 		| ((idx << MII_ACCESS_REG_ADDR_SHIFT) & MII_ACCESS_REG_ADDR)
 		| MII_ACCESS_READ | MII_ACCESS_BUSY;
-	ret = __smsc75xx_write_reg(dev, MII_ACCESS, addr, in_pm);
-	if (ret < 0) {
+	ret = __smsc75xx_ग_लिखो_reg(dev, MII_ACCESS, addr, in_pm);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing MII_ACCESS\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	ret = __smsc75xx_phy_wait_not_busy(dev, in_pm);
-	if (ret < 0) {
+	ret = __smsc75xx_phy_रुको_not_busy(dev, in_pm);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Timed out reading MII reg %02X\n", idx);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	ret = __smsc75xx_read_reg(dev, MII_DATA, &val, in_pm);
-	if (ret < 0) {
+	ret = __smsc75xx_पढ़ो_reg(dev, MII_DATA, &val, in_pm);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading MII_DATA\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	ret = (u16)(val & 0xFFFF);
 
-done:
+करोne:
 	mutex_unlock(&dev->phy_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __smsc75xx_mdio_write(struct net_device *netdev, int phy_id,
-				  int idx, int regval, int in_pm)
-{
-	struct usbnet *dev = netdev_priv(netdev);
+अटल व्योम __smsc75xx_mdio_ग_लिखो(काष्ठा net_device *netdev, पूर्णांक phy_id,
+				  पूर्णांक idx, पूर्णांक regval, पूर्णांक in_pm)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
 	u32 val, addr;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&dev->phy_mutex);
 
 	/* confirm MII not busy */
-	ret = __smsc75xx_phy_wait_not_busy(dev, in_pm);
-	if (ret < 0) {
+	ret = __smsc75xx_phy_रुको_not_busy(dev, in_pm);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "MII is busy in smsc75xx_mdio_write\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	val = regval;
-	ret = __smsc75xx_write_reg(dev, MII_DATA, val, in_pm);
-	if (ret < 0) {
+	ret = __smsc75xx_ग_लिखो_reg(dev, MII_DATA, val, in_pm);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing MII_DATA\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* set the address, index & direction (write to PHY) */
+	/* set the address, index & direction (ग_लिखो to PHY) */
 	phy_id &= dev->mii.phy_id_mask;
 	idx &= dev->mii.reg_num_mask;
 	addr = ((phy_id << MII_ACCESS_PHY_ADDR_SHIFT) & MII_ACCESS_PHY_ADDR)
 		| ((idx << MII_ACCESS_REG_ADDR_SHIFT) & MII_ACCESS_REG_ADDR)
 		| MII_ACCESS_WRITE | MII_ACCESS_BUSY;
-	ret = __smsc75xx_write_reg(dev, MII_ACCESS, addr, in_pm);
-	if (ret < 0) {
+	ret = __smsc75xx_ग_लिखो_reg(dev, MII_ACCESS, addr, in_pm);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing MII_ACCESS\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	ret = __smsc75xx_phy_wait_not_busy(dev, in_pm);
-	if (ret < 0) {
+	ret = __smsc75xx_phy_रुको_not_busy(dev, in_pm);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Timed out writing MII reg %02X\n", idx);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-done:
+करोne:
 	mutex_unlock(&dev->phy_mutex);
-}
+पूर्ण
 
-static int smsc75xx_mdio_read_nopm(struct net_device *netdev, int phy_id,
-				   int idx)
-{
-	return __smsc75xx_mdio_read(netdev, phy_id, idx, 1);
-}
+अटल पूर्णांक smsc75xx_mdio_पढ़ो_nopm(काष्ठा net_device *netdev, पूर्णांक phy_id,
+				   पूर्णांक idx)
+अणु
+	वापस __smsc75xx_mdio_पढ़ो(netdev, phy_id, idx, 1);
+पूर्ण
 
-static void smsc75xx_mdio_write_nopm(struct net_device *netdev, int phy_id,
-				     int idx, int regval)
-{
-	__smsc75xx_mdio_write(netdev, phy_id, idx, regval, 1);
-}
+अटल व्योम smsc75xx_mdio_ग_लिखो_nopm(काष्ठा net_device *netdev, पूर्णांक phy_id,
+				     पूर्णांक idx, पूर्णांक regval)
+अणु
+	__smsc75xx_mdio_ग_लिखो(netdev, phy_id, idx, regval, 1);
+पूर्ण
 
-static int smsc75xx_mdio_read(struct net_device *netdev, int phy_id, int idx)
-{
-	return __smsc75xx_mdio_read(netdev, phy_id, idx, 0);
-}
+अटल पूर्णांक smsc75xx_mdio_पढ़ो(काष्ठा net_device *netdev, पूर्णांक phy_id, पूर्णांक idx)
+अणु
+	वापस __smsc75xx_mdio_पढ़ो(netdev, phy_id, idx, 0);
+पूर्ण
 
-static void smsc75xx_mdio_write(struct net_device *netdev, int phy_id, int idx,
-				int regval)
-{
-	__smsc75xx_mdio_write(netdev, phy_id, idx, regval, 0);
-}
+अटल व्योम smsc75xx_mdio_ग_लिखो(काष्ठा net_device *netdev, पूर्णांक phy_id, पूर्णांक idx,
+				पूर्णांक regval)
+अणु
+	__smsc75xx_mdio_ग_लिखो(netdev, phy_id, idx, regval, 0);
+पूर्ण
 
-static int smsc75xx_wait_eeprom(struct usbnet *dev)
-{
-	unsigned long start_time = jiffies;
+अटल पूर्णांक smsc75xx_रुको_eeprom(काष्ठा usbnet *dev)
+अणु
+	अचिन्हित दीर्घ start_समय = jअगरfies;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	do {
-		ret = smsc75xx_read_reg(dev, E2P_CMD, &val);
-		if (ret < 0) {
+	करो अणु
+		ret = smsc75xx_पढ़ो_reg(dev, E2P_CMD, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading E2P_CMD\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (!(val & E2P_CMD_BUSY) || (val & E2P_CMD_TIMEOUT))
-			break;
+		अगर (!(val & E2P_CMD_BUSY) || (val & E2P_CMD_TIMEOUT))
+			अवरोध;
 		udelay(40);
-	} while (!time_after(jiffies, start_time + HZ));
+	पूर्ण जबतक (!समय_after(jअगरfies, start_समय + HZ));
 
-	if (val & (E2P_CMD_TIMEOUT | E2P_CMD_BUSY)) {
+	अगर (val & (E2P_CMD_TIMEOUT | E2P_CMD_BUSY)) अणु
 		netdev_warn(dev->net, "EEPROM read operation timeout\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_eeprom_confirm_not_busy(struct usbnet *dev)
-{
-	unsigned long start_time = jiffies;
+अटल पूर्णांक smsc75xx_eeprom_confirm_not_busy(काष्ठा usbnet *dev)
+अणु
+	अचिन्हित दीर्घ start_समय = jअगरfies;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	do {
-		ret = smsc75xx_read_reg(dev, E2P_CMD, &val);
-		if (ret < 0) {
+	करो अणु
+		ret = smsc75xx_पढ़ो_reg(dev, E2P_CMD, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading E2P_CMD\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (!(val & E2P_CMD_BUSY))
-			return 0;
+		अगर (!(val & E2P_CMD_BUSY))
+			वापस 0;
 
 		udelay(40);
-	} while (!time_after(jiffies, start_time + HZ));
+	पूर्ण जबतक (!समय_after(jअगरfies, start_समय + HZ));
 
 	netdev_warn(dev->net, "EEPROM is busy\n");
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int smsc75xx_read_eeprom(struct usbnet *dev, u32 offset, u32 length,
+अटल पूर्णांक smsc75xx_पढ़ो_eeprom(काष्ठा usbnet *dev, u32 offset, u32 length,
 				u8 *data)
-{
+अणु
 	u32 val;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	BUG_ON(!dev);
 	BUG_ON(!data);
 
 	ret = smsc75xx_eeprom_confirm_not_busy(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < length; i++) {
+	क्रम (i = 0; i < length; i++) अणु
 		val = E2P_CMD_BUSY | E2P_CMD_READ | (offset & E2P_CMD_ADDR);
-		ret = smsc75xx_write_reg(dev, E2P_CMD, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg(dev, E2P_CMD, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing E2P_CMD\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = smsc75xx_wait_eeprom(dev);
-		if (ret < 0)
-			return ret;
+		ret = smsc75xx_रुको_eeprom(dev);
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = smsc75xx_read_reg(dev, E2P_DATA, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg(dev, E2P_DATA, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading E2P_DATA\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		data[i] = val & 0xFF;
 		offset++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_write_eeprom(struct usbnet *dev, u32 offset, u32 length,
+अटल पूर्णांक smsc75xx_ग_लिखो_eeprom(काष्ठा usbnet *dev, u32 offset, u32 length,
 				 u8 *data)
-{
+अणु
 	u32 val;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	BUG_ON(!dev);
 	BUG_ON(!data);
 
 	ret = smsc75xx_eeprom_confirm_not_busy(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Issue write/erase enable command */
+	/* Issue ग_लिखो/erase enable command */
 	val = E2P_CMD_BUSY | E2P_CMD_EWEN;
-	ret = smsc75xx_write_reg(dev, E2P_CMD, val);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, E2P_CMD, val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing E2P_CMD\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_wait_eeprom(dev);
-	if (ret < 0)
-		return ret;
+	ret = smsc75xx_रुको_eeprom(dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	for (i = 0; i < length; i++) {
+	क्रम (i = 0; i < length; i++) अणु
 
-		/* Fill data register */
+		/* Fill data रेजिस्टर */
 		val = data[i];
-		ret = smsc75xx_write_reg(dev, E2P_DATA, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg(dev, E2P_DATA, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing E2P_DATA\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/* Send "write" command */
 		val = E2P_CMD_BUSY | E2P_CMD_WRITE | (offset & E2P_CMD_ADDR);
-		ret = smsc75xx_write_reg(dev, E2P_CMD, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg(dev, E2P_CMD, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing E2P_CMD\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = smsc75xx_wait_eeprom(dev);
-		if (ret < 0)
-			return ret;
+		ret = smsc75xx_रुको_eeprom(dev);
+		अगर (ret < 0)
+			वापस ret;
 
 		offset++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_dataport_wait_not_busy(struct usbnet *dev)
-{
-	int i, ret;
+अटल पूर्णांक smsc75xx_dataport_रुको_not_busy(काष्ठा usbnet *dev)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < 100; i++) {
+	क्रम (i = 0; i < 100; i++) अणु
 		u32 dp_sel;
-		ret = smsc75xx_read_reg(dev, DP_SEL, &dp_sel);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg(dev, DP_SEL, &dp_sel);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading DP_SEL\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (dp_sel & DP_SEL_DPRDY)
-			return 0;
+		अगर (dp_sel & DP_SEL_DPRDY)
+			वापस 0;
 
 		udelay(40);
-	}
+	पूर्ण
 
 	netdev_warn(dev->net, "smsc75xx_dataport_wait_not_busy timed out\n");
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int smsc75xx_dataport_write(struct usbnet *dev, u32 ram_select, u32 addr,
+अटल पूर्णांक smsc75xx_dataport_ग_लिखो(काष्ठा usbnet *dev, u32 ram_select, u32 addr,
 				   u32 length, u32 *buf)
-{
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
+अणु
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
 	u32 dp_sel;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	mutex_lock(&pdata->dataport_mutex);
 
-	ret = smsc75xx_dataport_wait_not_busy(dev);
-	if (ret < 0) {
+	ret = smsc75xx_dataport_रुको_not_busy(dev);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "smsc75xx_dataport_write busy on entry\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	ret = smsc75xx_read_reg(dev, DP_SEL, &dp_sel);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, DP_SEL, &dp_sel);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading DP_SEL\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	dp_sel &= ~DP_SEL_RSEL;
 	dp_sel |= ram_select;
-	ret = smsc75xx_write_reg(dev, DP_SEL, dp_sel);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, DP_SEL, dp_sel);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing DP_SEL\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	for (i = 0; i < length; i++) {
-		ret = smsc75xx_write_reg(dev, DP_ADDR, addr + i);
-		if (ret < 0) {
+	क्रम (i = 0; i < length; i++) अणु
+		ret = smsc75xx_ग_लिखो_reg(dev, DP_ADDR, addr + i);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing DP_ADDR\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		ret = smsc75xx_write_reg(dev, DP_DATA, buf[i]);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg(dev, DP_DATA, buf[i]);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing DP_DATA\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		ret = smsc75xx_write_reg(dev, DP_CMD, DP_CMD_WRITE);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg(dev, DP_CMD, DP_CMD_WRITE);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing DP_CMD\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		ret = smsc75xx_dataport_wait_not_busy(dev);
-		if (ret < 0) {
+		ret = smsc75xx_dataport_रुको_not_busy(dev);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "smsc75xx_dataport_write timeout\n");
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-done:
+करोne:
 	mutex_unlock(&pdata->dataport_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* returns hash bit number for given MAC address */
-static u32 smsc75xx_hash(char addr[ETH_ALEN])
-{
-	return (ether_crc(ETH_ALEN, addr) >> 23) & 0x1ff;
-}
+/* वापसs hash bit number क्रम given MAC address */
+अटल u32 smsc75xx_hash(अक्षर addr[ETH_ALEN])
+अणु
+	वापस (ether_crc(ETH_ALEN, addr) >> 23) & 0x1ff;
+पूर्ण
 
-static void smsc75xx_deferred_multicast_write(struct work_struct *param)
-{
-	struct smsc75xx_priv *pdata =
-		container_of(param, struct smsc75xx_priv, set_multicast);
-	struct usbnet *dev = pdata->dev;
-	int ret;
+अटल व्योम smsc75xx_deferred_multicast_ग_लिखो(काष्ठा work_काष्ठा *param)
+अणु
+	काष्ठा smsc75xx_priv *pdata =
+		container_of(param, काष्ठा smsc75xx_priv, set_multicast);
+	काष्ठा usbnet *dev = pdata->dev;
+	पूर्णांक ret;
 
-	netif_dbg(dev, drv, dev->net, "deferred multicast write 0x%08x\n",
+	netअगर_dbg(dev, drv, dev->net, "deferred multicast write 0x%08x\n",
 		  pdata->rfe_ctl);
 
-	smsc75xx_dataport_write(dev, DP_SEL_VHF, DP_SEL_VHF_VLAN_LEN,
+	smsc75xx_dataport_ग_लिखो(dev, DP_SEL_VHF, DP_SEL_VHF_VLAN_LEN,
 		DP_SEL_VHF_HASH_LEN, pdata->multicast_hash_table);
 
-	ret = smsc75xx_write_reg(dev, RFE_CTL, pdata->rfe_ctl);
-	if (ret < 0)
+	ret = smsc75xx_ग_लिखो_reg(dev, RFE_CTL, pdata->rfe_ctl);
+	अगर (ret < 0)
 		netdev_warn(dev->net, "Error writing RFE_CRL\n");
-}
+पूर्ण
 
-static void smsc75xx_set_multicast(struct net_device *netdev)
-{
-	struct usbnet *dev = netdev_priv(netdev);
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
-	unsigned long flags;
-	int i;
+अटल व्योम smsc75xx_set_multicast(काष्ठा net_device *netdev)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	spin_lock_irqsave(&pdata->rfe_ctl_lock, flags);
 
@@ -551,186 +552,186 @@ static void smsc75xx_set_multicast(struct net_device *netdev)
 		~(RFE_CTL_AU | RFE_CTL_AM | RFE_CTL_DPF | RFE_CTL_MHF);
 	pdata->rfe_ctl |= RFE_CTL_AB;
 
-	for (i = 0; i < DP_SEL_VHF_HASH_LEN; i++)
+	क्रम (i = 0; i < DP_SEL_VHF_HASH_LEN; i++)
 		pdata->multicast_hash_table[i] = 0;
 
-	if (dev->net->flags & IFF_PROMISC) {
-		netif_dbg(dev, drv, dev->net, "promiscuous mode enabled\n");
+	अगर (dev->net->flags & IFF_PROMISC) अणु
+		netअगर_dbg(dev, drv, dev->net, "promiscuous mode enabled\n");
 		pdata->rfe_ctl |= RFE_CTL_AM | RFE_CTL_AU;
-	} else if (dev->net->flags & IFF_ALLMULTI) {
-		netif_dbg(dev, drv, dev->net, "receive all multicast enabled\n");
+	पूर्ण अन्यथा अगर (dev->net->flags & IFF_ALLMULTI) अणु
+		netअगर_dbg(dev, drv, dev->net, "receive all multicast enabled\n");
 		pdata->rfe_ctl |= RFE_CTL_AM | RFE_CTL_DPF;
-	} else if (!netdev_mc_empty(dev->net)) {
-		struct netdev_hw_addr *ha;
+	पूर्ण अन्यथा अगर (!netdev_mc_empty(dev->net)) अणु
+		काष्ठा netdev_hw_addr *ha;
 
-		netif_dbg(dev, drv, dev->net, "receive multicast hash filter\n");
+		netअगर_dbg(dev, drv, dev->net, "receive multicast hash filter\n");
 
 		pdata->rfe_ctl |= RFE_CTL_MHF | RFE_CTL_DPF;
 
-		netdev_for_each_mc_addr(ha, netdev) {
+		netdev_क्रम_each_mc_addr(ha, netdev) अणु
 			u32 bitnum = smsc75xx_hash(ha->addr);
 			pdata->multicast_hash_table[bitnum / 32] |=
 				(1 << (bitnum % 32));
-		}
-	} else {
-		netif_dbg(dev, drv, dev->net, "receive own packets only\n");
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		netअगर_dbg(dev, drv, dev->net, "receive own packets only\n");
 		pdata->rfe_ctl |= RFE_CTL_DPF;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&pdata->rfe_ctl_lock, flags);
 
-	/* defer register writes to a sleepable context */
+	/* defer रेजिस्टर ग_लिखोs to a sleepable context */
 	schedule_work(&pdata->set_multicast);
-}
+पूर्ण
 
-static int smsc75xx_update_flowcontrol(struct usbnet *dev, u8 duplex,
+अटल पूर्णांक smsc75xx_update_flowcontrol(काष्ठा usbnet *dev, u8 duplex,
 					    u16 lcladv, u16 rmtadv)
-{
+अणु
 	u32 flow = 0, fct_flow = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (duplex == DUPLEX_FULL) {
+	अगर (duplex == DUPLEX_FULL) अणु
 		u8 cap = mii_resolve_flowctrl_fdx(lcladv, rmtadv);
 
-		if (cap & FLOW_CTRL_TX) {
+		अगर (cap & FLOW_CTRL_TX) अणु
 			flow = (FLOW_TX_FCEN | 0xFFFF);
 			/* set fct_flow thresholds to 20% and 80% */
 			fct_flow = (8 << 8) | 32;
-		}
+		पूर्ण
 
-		if (cap & FLOW_CTRL_RX)
+		अगर (cap & FLOW_CTRL_RX)
 			flow |= FLOW_RX_FCEN;
 
-		netif_dbg(dev, link, dev->net, "rx pause %s, tx pause %s\n",
+		netअगर_dbg(dev, link, dev->net, "rx pause %s, tx pause %s\n",
 			  (cap & FLOW_CTRL_RX ? "enabled" : "disabled"),
 			  (cap & FLOW_CTRL_TX ? "enabled" : "disabled"));
-	} else {
-		netif_dbg(dev, link, dev->net, "half duplex\n");
-	}
+	पूर्ण अन्यथा अणु
+		netअगर_dbg(dev, link, dev->net, "half duplex\n");
+	पूर्ण
 
-	ret = smsc75xx_write_reg(dev, FLOW, flow);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, FLOW, flow);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing FLOW\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_write_reg(dev, FCT_FLOW, fct_flow);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, FCT_FLOW, fct_flow);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing FCT_FLOW\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_link_reset(struct usbnet *dev)
-{
-	struct mii_if_info *mii = &dev->mii;
-	struct ethtool_cmd ecmd = { .cmd = ETHTOOL_GSET };
+अटल पूर्णांक smsc75xx_link_reset(काष्ठा usbnet *dev)
+अणु
+	काष्ठा mii_अगर_info *mii = &dev->mii;
+	काष्ठा ethtool_cmd ecmd = अणु .cmd = ETHTOOL_GSET पूर्ण;
 	u16 lcladv, rmtadv;
-	int ret;
+	पूर्णांक ret;
 
-	/* write to clear phy interrupt status */
-	smsc75xx_mdio_write(dev->net, mii->phy_id, PHY_INT_SRC,
+	/* ग_लिखो to clear phy पूर्णांकerrupt status */
+	smsc75xx_mdio_ग_लिखो(dev->net, mii->phy_id, PHY_INT_SRC,
 		PHY_INT_SRC_CLEAR_ALL);
 
-	ret = smsc75xx_write_reg(dev, INT_STS, INT_STS_CLEAR_ALL);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, INT_STS, INT_STS_CLEAR_ALL);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing INT_STS\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mii_check_media(mii, 1, 1);
 	mii_ethtool_gset(&dev->mii, &ecmd);
-	lcladv = smsc75xx_mdio_read(dev->net, mii->phy_id, MII_ADVERTISE);
-	rmtadv = smsc75xx_mdio_read(dev->net, mii->phy_id, MII_LPA);
+	lcladv = smsc75xx_mdio_पढ़ो(dev->net, mii->phy_id, MII_ADVERTISE);
+	rmtadv = smsc75xx_mdio_पढ़ो(dev->net, mii->phy_id, MII_LPA);
 
-	netif_dbg(dev, link, dev->net, "speed: %u duplex: %d lcladv: %04x rmtadv: %04x\n",
+	netअगर_dbg(dev, link, dev->net, "speed: %u duplex: %d lcladv: %04x rmtadv: %04x\n",
 		  ethtool_cmd_speed(&ecmd), ecmd.duplex, lcladv, rmtadv);
 
-	return smsc75xx_update_flowcontrol(dev, ecmd.duplex, lcladv, rmtadv);
-}
+	वापस smsc75xx_update_flowcontrol(dev, ecmd.duplex, lcladv, rmtadv);
+पूर्ण
 
-static void smsc75xx_status(struct usbnet *dev, struct urb *urb)
-{
-	u32 intdata;
+अटल व्योम smsc75xx_status(काष्ठा usbnet *dev, काष्ठा urb *urb)
+अणु
+	u32 पूर्णांकdata;
 
-	if (urb->actual_length != 4) {
+	अगर (urb->actual_length != 4) अणु
 		netdev_warn(dev->net, "unexpected urb length %d\n",
 			    urb->actual_length);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	intdata = get_unaligned_le32(urb->transfer_buffer);
+	पूर्णांकdata = get_unaligned_le32(urb->transfer_buffer);
 
-	netif_dbg(dev, link, dev->net, "intdata: 0x%08X\n", intdata);
+	netअगर_dbg(dev, link, dev->net, "intdata: 0x%08X\n", पूर्णांकdata);
 
-	if (intdata & INT_ENP_PHY_INT)
+	अगर (पूर्णांकdata & INT_ENP_PHY_INT)
 		usbnet_defer_kevent(dev, EVENT_LINK_RESET);
-	else
+	अन्यथा
 		netdev_warn(dev->net, "unexpected interrupt, intdata=0x%08X\n",
-			    intdata);
-}
+			    पूर्णांकdata);
+पूर्ण
 
-static int smsc75xx_ethtool_get_eeprom_len(struct net_device *net)
-{
-	return MAX_EEPROM_SIZE;
-}
+अटल पूर्णांक smsc75xx_ethtool_get_eeprom_len(काष्ठा net_device *net)
+अणु
+	वापस MAX_EEPROM_SIZE;
+पूर्ण
 
-static int smsc75xx_ethtool_get_eeprom(struct net_device *netdev,
-				       struct ethtool_eeprom *ee, u8 *data)
-{
-	struct usbnet *dev = netdev_priv(netdev);
+अटल पूर्णांक smsc75xx_ethtool_get_eeprom(काष्ठा net_device *netdev,
+				       काष्ठा ethtool_eeprom *ee, u8 *data)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
 
 	ee->magic = LAN75XX_EEPROM_MAGIC;
 
-	return smsc75xx_read_eeprom(dev, ee->offset, ee->len, data);
-}
+	वापस smsc75xx_पढ़ो_eeprom(dev, ee->offset, ee->len, data);
+पूर्ण
 
-static int smsc75xx_ethtool_set_eeprom(struct net_device *netdev,
-				       struct ethtool_eeprom *ee, u8 *data)
-{
-	struct usbnet *dev = netdev_priv(netdev);
+अटल पूर्णांक smsc75xx_ethtool_set_eeprom(काष्ठा net_device *netdev,
+				       काष्ठा ethtool_eeprom *ee, u8 *data)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
 
-	if (ee->magic != LAN75XX_EEPROM_MAGIC) {
+	अगर (ee->magic != LAN75XX_EEPROM_MAGIC) अणु
 		netdev_warn(dev->net, "EEPROM: magic value mismatch: 0x%x\n",
 			    ee->magic);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return smsc75xx_write_eeprom(dev, ee->offset, ee->len, data);
-}
+	वापस smsc75xx_ग_लिखो_eeprom(dev, ee->offset, ee->len, data);
+पूर्ण
 
-static void smsc75xx_ethtool_get_wol(struct net_device *net,
-				     struct ethtool_wolinfo *wolinfo)
-{
-	struct usbnet *dev = netdev_priv(net);
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
+अटल व्योम smsc75xx_ethtool_get_wol(काष्ठा net_device *net,
+				     काष्ठा ethtool_wolinfo *wolinfo)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(net);
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
 
 	wolinfo->supported = SUPPORTED_WAKE;
 	wolinfo->wolopts = pdata->wolopts;
-}
+पूर्ण
 
-static int smsc75xx_ethtool_set_wol(struct net_device *net,
-				    struct ethtool_wolinfo *wolinfo)
-{
-	struct usbnet *dev = netdev_priv(net);
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
-	int ret;
+अटल पूर्णांक smsc75xx_ethtool_set_wol(काष्ठा net_device *net,
+				    काष्ठा ethtool_wolinfo *wolinfo)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(net);
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
+	पूर्णांक ret;
 
-	if (wolinfo->wolopts & ~SUPPORTED_WAKE)
-		return -EINVAL;
+	अगर (wolinfo->wolopts & ~SUPPORTED_WAKE)
+		वापस -EINVAL;
 
 	pdata->wolopts = wolinfo->wolopts & SUPPORTED_WAKE;
 
 	ret = device_set_wakeup_enable(&dev->udev->dev, pdata->wolopts);
-	if (ret < 0)
+	अगर (ret < 0)
 		netdev_warn(dev->net, "device_set_wakeup_enable error %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct ethtool_ops smsc75xx_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops smsc75xx_ethtool_ops = अणु
 	.get_link	= usbnet_get_link,
 	.nway_reset	= usbnet_nway_reset,
 	.get_drvinfo	= usbnet_get_drvinfo,
@@ -743,577 +744,577 @@ static const struct ethtool_ops smsc75xx_ethtool_ops = {
 	.set_wol	= smsc75xx_ethtool_set_wol,
 	.get_link_ksettings	= usbnet_get_link_ksettings_mii,
 	.set_link_ksettings	= usbnet_set_link_ksettings_mii,
-};
+पूर्ण;
 
-static int smsc75xx_ioctl(struct net_device *netdev, struct ifreq *rq, int cmd)
-{
-	struct usbnet *dev = netdev_priv(netdev);
+अटल पूर्णांक smsc75xx_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
 
-	if (!netif_running(netdev))
-		return -EINVAL;
+	अगर (!netअगर_running(netdev))
+		वापस -EINVAL;
 
-	return generic_mii_ioctl(&dev->mii, if_mii(rq), cmd, NULL);
-}
+	वापस generic_mii_ioctl(&dev->mii, अगर_mii(rq), cmd, शून्य);
+पूर्ण
 
-static void smsc75xx_init_mac_address(struct usbnet *dev)
-{
+अटल व्योम smsc75xx_init_mac_address(काष्ठा usbnet *dev)
+अणु
 	/* maybe the boot loader passed the MAC address in devicetree */
-	if (!eth_platform_get_mac_address(&dev->udev->dev,
-			dev->net->dev_addr)) {
-		if (is_valid_ether_addr(dev->net->dev_addr)) {
+	अगर (!eth_platक्रमm_get_mac_address(&dev->udev->dev,
+			dev->net->dev_addr)) अणु
+		अगर (is_valid_ether_addr(dev->net->dev_addr)) अणु
 			/* device tree values are valid so use them */
-			netif_dbg(dev, ifup, dev->net, "MAC address read from the device tree\n");
-			return;
-		}
-	}
+			netअगर_dbg(dev, अगरup, dev->net, "MAC address read from the device tree\n");
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	/* try reading mac address from EEPROM */
-	if (smsc75xx_read_eeprom(dev, EEPROM_MAC_OFFSET, ETH_ALEN,
-			dev->net->dev_addr) == 0) {
-		if (is_valid_ether_addr(dev->net->dev_addr)) {
+	/* try पढ़ोing mac address from EEPROM */
+	अगर (smsc75xx_पढ़ो_eeprom(dev, EEPROM_MAC_OFFSET, ETH_ALEN,
+			dev->net->dev_addr) == 0) अणु
+		अगर (is_valid_ether_addr(dev->net->dev_addr)) अणु
 			/* eeprom values are valid so use them */
-			netif_dbg(dev, ifup, dev->net,
+			netअगर_dbg(dev, अगरup, dev->net,
 				  "MAC address read from EEPROM\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	/* no useful static MAC address found. generate a random one */
-	eth_hw_addr_random(dev->net);
-	netif_dbg(dev, ifup, dev->net, "MAC address set to eth_random_addr\n");
-}
+	/* no useful अटल MAC address found. generate a अक्रमom one */
+	eth_hw_addr_अक्रमom(dev->net);
+	netअगर_dbg(dev, अगरup, dev->net, "MAC address set to eth_random_addr\n");
+पूर्ण
 
-static int smsc75xx_set_mac_address(struct usbnet *dev)
-{
+अटल पूर्णांक smsc75xx_set_mac_address(काष्ठा usbnet *dev)
+अणु
 	u32 addr_lo = dev->net->dev_addr[0] | dev->net->dev_addr[1] << 8 |
 		dev->net->dev_addr[2] << 16 | dev->net->dev_addr[3] << 24;
 	u32 addr_hi = dev->net->dev_addr[4] | dev->net->dev_addr[5] << 8;
 
-	int ret = smsc75xx_write_reg(dev, RX_ADDRH, addr_hi);
-	if (ret < 0) {
+	पूर्णांक ret = smsc75xx_ग_लिखो_reg(dev, RX_ADDRH, addr_hi);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write RX_ADDRH: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_write_reg(dev, RX_ADDRL, addr_lo);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, RX_ADDRL, addr_lo);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write RX_ADDRL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	addr_hi |= ADDR_FILTX_FB_VALID;
-	ret = smsc75xx_write_reg(dev, ADDR_FILTX, addr_hi);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, ADDR_FILTX, addr_hi);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write ADDR_FILTX: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_write_reg(dev, ADDR_FILTX + 4, addr_lo);
-	if (ret < 0)
+	ret = smsc75xx_ग_लिखो_reg(dev, ADDR_FILTX + 4, addr_lo);
+	अगर (ret < 0)
 		netdev_warn(dev->net, "Failed to write ADDR_FILTX+4: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smsc75xx_phy_initialize(struct usbnet *dev)
-{
-	int bmcr, ret, timeout = 0;
+अटल पूर्णांक smsc75xx_phy_initialize(काष्ठा usbnet *dev)
+अणु
+	पूर्णांक bmcr, ret, समयout = 0;
 
-	/* Initialize MII structure */
+	/* Initialize MII काष्ठाure */
 	dev->mii.dev = dev->net;
-	dev->mii.mdio_read = smsc75xx_mdio_read;
-	dev->mii.mdio_write = smsc75xx_mdio_write;
+	dev->mii.mdio_पढ़ो = smsc75xx_mdio_पढ़ो;
+	dev->mii.mdio_ग_लिखो = smsc75xx_mdio_ग_लिखो;
 	dev->mii.phy_id_mask = 0x1f;
 	dev->mii.reg_num_mask = 0x1f;
 	dev->mii.supports_gmii = 1;
 	dev->mii.phy_id = SMSC75XX_INTERNAL_PHY_ID;
 
-	/* reset phy and wait for reset to complete */
-	smsc75xx_mdio_write(dev->net, dev->mii.phy_id, MII_BMCR, BMCR_RESET);
+	/* reset phy and रुको क्रम reset to complete */
+	smsc75xx_mdio_ग_लिखो(dev->net, dev->mii.phy_id, MII_BMCR, BMCR_RESET);
 
-	do {
+	करो अणु
 		msleep(10);
-		bmcr = smsc75xx_mdio_read(dev->net, dev->mii.phy_id, MII_BMCR);
-		if (bmcr < 0) {
+		bmcr = smsc75xx_mdio_पढ़ो(dev->net, dev->mii.phy_id, MII_BMCR);
+		अगर (bmcr < 0) अणु
 			netdev_warn(dev->net, "Error reading MII_BMCR\n");
-			return bmcr;
-		}
-		timeout++;
-	} while ((bmcr & BMCR_RESET) && (timeout < 100));
+			वापस bmcr;
+		पूर्ण
+		समयout++;
+	पूर्ण जबतक ((bmcr & BMCR_RESET) && (समयout < 100));
 
-	if (timeout >= 100) {
+	अगर (समयout >= 100) अणु
 		netdev_warn(dev->net, "timeout on PHY Reset\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	/* phy workaround for gig link */
+	/* phy workaround क्रम gig link */
 	smsc75xx_phy_gig_workaround(dev);
 
-	smsc75xx_mdio_write(dev->net, dev->mii.phy_id, MII_ADVERTISE,
+	smsc75xx_mdio_ग_लिखो(dev->net, dev->mii.phy_id, MII_ADVERTISE,
 		ADVERTISE_ALL | ADVERTISE_CSMA | ADVERTISE_PAUSE_CAP |
 		ADVERTISE_PAUSE_ASYM);
-	smsc75xx_mdio_write(dev->net, dev->mii.phy_id, MII_CTRL1000,
+	smsc75xx_mdio_ग_लिखो(dev->net, dev->mii.phy_id, MII_CTRL1000,
 		ADVERTISE_1000FULL);
 
-	/* read and write to clear phy interrupt status */
-	ret = smsc75xx_mdio_read(dev->net, dev->mii.phy_id, PHY_INT_SRC);
-	if (ret < 0) {
+	/* पढ़ो and ग_लिखो to clear phy पूर्णांकerrupt status */
+	ret = smsc75xx_mdio_पढ़ो(dev->net, dev->mii.phy_id, PHY_INT_SRC);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading PHY_INT_SRC\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	smsc75xx_mdio_write(dev->net, dev->mii.phy_id, PHY_INT_SRC, 0xffff);
+	smsc75xx_mdio_ग_लिखो(dev->net, dev->mii.phy_id, PHY_INT_SRC, 0xffff);
 
-	smsc75xx_mdio_write(dev->net, dev->mii.phy_id, PHY_INT_MASK,
+	smsc75xx_mdio_ग_लिखो(dev->net, dev->mii.phy_id, PHY_INT_MASK,
 		PHY_INT_MASK_DEFAULT);
 	mii_nway_restart(&dev->mii);
 
-	netif_dbg(dev, ifup, dev->net, "phy initialised successfully\n");
-	return 0;
-}
+	netअगर_dbg(dev, अगरup, dev->net, "phy initialised successfully\n");
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_set_rx_max_frame_length(struct usbnet *dev, int size)
-{
-	int ret = 0;
+अटल पूर्णांक smsc75xx_set_rx_max_frame_length(काष्ठा usbnet *dev, पूर्णांक size)
+अणु
+	पूर्णांक ret = 0;
 	u32 buf;
 	bool rxenabled;
 
-	ret = smsc75xx_read_reg(dev, MAC_RX, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, MAC_RX, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read MAC_RX: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	rxenabled = ((buf & MAC_RX_RXEN) != 0);
 
-	if (rxenabled) {
+	अगर (rxenabled) अणु
 		buf &= ~MAC_RX_RXEN;
-		ret = smsc75xx_write_reg(dev, MAC_RX, buf);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg(dev, MAC_RX, buf);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to write MAC_RX: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* add 4 to size for FCS */
+	/* add 4 to size क्रम FCS */
 	buf &= ~MAC_RX_MAX_SIZE;
 	buf |= (((size + 4) << MAC_RX_MAX_SIZE_SHIFT) & MAC_RX_MAX_SIZE);
 
-	ret = smsc75xx_write_reg(dev, MAC_RX, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, MAC_RX, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write MAC_RX: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (rxenabled) {
+	अगर (rxenabled) अणु
 		buf |= MAC_RX_RXEN;
-		ret = smsc75xx_write_reg(dev, MAC_RX, buf);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg(dev, MAC_RX, buf);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to write MAC_RX: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	struct usbnet *dev = netdev_priv(netdev);
-	int ret;
+अटल पूर्णांक smsc75xx_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
+	पूर्णांक ret;
 
 	ret = smsc75xx_set_rx_max_frame_length(dev, new_mtu + ETH_HLEN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to set mac rx frame length\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return usbnet_change_mtu(netdev, new_mtu);
-}
+	वापस usbnet_change_mtu(netdev, new_mtu);
+पूर्ण
 
 /* Enable or disable Rx checksum offload engine */
-static int smsc75xx_set_features(struct net_device *netdev,
+अटल पूर्णांक smsc75xx_set_features(काष्ठा net_device *netdev,
 	netdev_features_t features)
-{
-	struct usbnet *dev = netdev_priv(netdev);
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
-	unsigned long flags;
-	int ret;
+अणु
+	काष्ठा usbnet *dev = netdev_priv(netdev);
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&pdata->rfe_ctl_lock, flags);
 
-	if (features & NETIF_F_RXCSUM)
+	अगर (features & NETIF_F_RXCSUM)
 		pdata->rfe_ctl |= RFE_CTL_TCPUDP_CKM | RFE_CTL_IP_CKM;
-	else
+	अन्यथा
 		pdata->rfe_ctl &= ~(RFE_CTL_TCPUDP_CKM | RFE_CTL_IP_CKM);
 
 	spin_unlock_irqrestore(&pdata->rfe_ctl_lock, flags);
 	/* it's racing here! */
 
-	ret = smsc75xx_write_reg(dev, RFE_CTL, pdata->rfe_ctl);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, RFE_CTL, pdata->rfe_ctl);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing RFE_CTL\n");
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_wait_ready(struct usbnet *dev, int in_pm)
-{
-	int timeout = 0;
+अटल पूर्णांक smsc75xx_रुको_पढ़ोy(काष्ठा usbnet *dev, पूर्णांक in_pm)
+अणु
+	पूर्णांक समयout = 0;
 
-	do {
+	करो अणु
 		u32 buf;
-		int ret;
+		पूर्णांक ret;
 
-		ret = __smsc75xx_read_reg(dev, PMT_CTL, &buf, in_pm);
+		ret = __smsc75xx_पढ़ो_reg(dev, PMT_CTL, &buf, in_pm);
 
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to read PMT_CTL: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (buf & PMT_CTL_DEV_RDY)
-			return 0;
+		अगर (buf & PMT_CTL_DEV_RDY)
+			वापस 0;
 
 		msleep(10);
-		timeout++;
-	} while (timeout < 100);
+		समयout++;
+	पूर्ण जबतक (समयout < 100);
 
 	netdev_warn(dev->net, "timeout waiting for device ready\n");
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int smsc75xx_phy_gig_workaround(struct usbnet *dev)
-{
-	struct mii_if_info *mii = &dev->mii;
-	int ret = 0, timeout = 0;
+अटल पूर्णांक smsc75xx_phy_gig_workaround(काष्ठा usbnet *dev)
+अणु
+	काष्ठा mii_अगर_info *mii = &dev->mii;
+	पूर्णांक ret = 0, समयout = 0;
 	u32 buf, link_up = 0;
 
 	/* Set the phy in Gig loopback */
-	smsc75xx_mdio_write(dev->net, mii->phy_id, MII_BMCR, 0x4040);
+	smsc75xx_mdio_ग_लिखो(dev->net, mii->phy_id, MII_BMCR, 0x4040);
 
-	/* Wait for the link up */
-	do {
+	/* Wait क्रम the link up */
+	करो अणु
 		link_up = smsc75xx_link_ok_nopm(dev);
 		usleep_range(10000, 20000);
-		timeout++;
-	} while ((!link_up) && (timeout < 1000));
+		समयout++;
+	पूर्ण जबतक ((!link_up) && (समयout < 1000));
 
-	if (timeout >= 1000) {
+	अगर (समयout >= 1000) अणु
 		netdev_warn(dev->net, "Timeout waiting for PHY link up\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* phy reset */
-	ret = smsc75xx_read_reg(dev, PMT_CTL, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, PMT_CTL, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read PMT_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	buf |= PMT_CTL_PHY_RST;
 
-	ret = smsc75xx_write_reg(dev, PMT_CTL, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, PMT_CTL, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write PMT_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	timeout = 0;
-	do {
+	समयout = 0;
+	करो अणु
 		usleep_range(10000, 20000);
-		ret = smsc75xx_read_reg(dev, PMT_CTL, &buf);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg(dev, PMT_CTL, &buf);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to read PMT_CTL: %d\n",
 				    ret);
-			return ret;
-		}
-		timeout++;
-	} while ((buf & PMT_CTL_PHY_RST) && (timeout < 100));
+			वापस ret;
+		पूर्ण
+		समयout++;
+	पूर्ण जबतक ((buf & PMT_CTL_PHY_RST) && (समयout < 100));
 
-	if (timeout >= 100) {
+	अगर (समयout >= 100) अणु
 		netdev_warn(dev->net, "timeout waiting for PHY Reset\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_reset(struct usbnet *dev)
-{
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
+अटल पूर्णांक smsc75xx_reset(काष्ठा usbnet *dev)
+अणु
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
 	u32 buf;
-	int ret = 0, timeout;
+	पूर्णांक ret = 0, समयout;
 
-	netif_dbg(dev, ifup, dev->net, "entering smsc75xx_reset\n");
+	netअगर_dbg(dev, अगरup, dev->net, "entering smsc75xx_reset\n");
 
-	ret = smsc75xx_wait_ready(dev, 0);
-	if (ret < 0) {
+	ret = smsc75xx_रुको_पढ़ोy(dev, 0);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "device not ready in smsc75xx_reset\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_read_reg(dev, HW_CFG, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, HW_CFG, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read HW_CFG: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	buf |= HW_CFG_LRST;
 
-	ret = smsc75xx_write_reg(dev, HW_CFG, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, HW_CFG, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write HW_CFG: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	timeout = 0;
-	do {
+	समयout = 0;
+	करो अणु
 		msleep(10);
-		ret = smsc75xx_read_reg(dev, HW_CFG, &buf);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg(dev, HW_CFG, &buf);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to read HW_CFG: %d\n", ret);
-			return ret;
-		}
-		timeout++;
-	} while ((buf & HW_CFG_LRST) && (timeout < 100));
+			वापस ret;
+		पूर्ण
+		समयout++;
+	पूर्ण जबतक ((buf & HW_CFG_LRST) && (समयout < 100));
 
-	if (timeout >= 100) {
+	अगर (समयout >= 100) अणु
 		netdev_warn(dev->net, "timeout on completion of Lite Reset\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "Lite reset complete, resetting PHY\n");
+	netअगर_dbg(dev, अगरup, dev->net, "Lite reset complete, resetting PHY\n");
 
-	ret = smsc75xx_read_reg(dev, PMT_CTL, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, PMT_CTL, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read PMT_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	buf |= PMT_CTL_PHY_RST;
 
-	ret = smsc75xx_write_reg(dev, PMT_CTL, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, PMT_CTL, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write PMT_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	timeout = 0;
-	do {
+	समयout = 0;
+	करो अणु
 		msleep(10);
-		ret = smsc75xx_read_reg(dev, PMT_CTL, &buf);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg(dev, PMT_CTL, &buf);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to read PMT_CTL: %d\n", ret);
-			return ret;
-		}
-		timeout++;
-	} while ((buf & PMT_CTL_PHY_RST) && (timeout < 100));
+			वापस ret;
+		पूर्ण
+		समयout++;
+	पूर्ण जबतक ((buf & PMT_CTL_PHY_RST) && (समयout < 100));
 
-	if (timeout >= 100) {
+	अगर (समयout >= 100) अणु
 		netdev_warn(dev->net, "timeout waiting for PHY Reset\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "PHY reset complete\n");
+	netअगर_dbg(dev, अगरup, dev->net, "PHY reset complete\n");
 
 	ret = smsc75xx_set_mac_address(dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to set mac address\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "MAC Address: %pM\n",
+	netअगर_dbg(dev, अगरup, dev->net, "MAC Address: %pM\n",
 		  dev->net->dev_addr);
 
-	ret = smsc75xx_read_reg(dev, HW_CFG, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, HW_CFG, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read HW_CFG: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "Read Value from HW_CFG : 0x%08x\n",
+	netअगर_dbg(dev, अगरup, dev->net, "Read Value from HW_CFG : 0x%08x\n",
 		  buf);
 
 	buf |= HW_CFG_BIR;
 
-	ret = smsc75xx_write_reg(dev, HW_CFG, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, HW_CFG, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net,  "Failed to write HW_CFG: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_read_reg(dev, HW_CFG, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, HW_CFG, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read HW_CFG: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "Read Value from HW_CFG after writing HW_CFG_BIR: 0x%08x\n",
+	netअगर_dbg(dev, अगरup, dev->net, "Read Value from HW_CFG after writing HW_CFG_BIR: 0x%08x\n",
 		  buf);
 
-	if (!turbo_mode) {
+	अगर (!turbo_mode) अणु
 		buf = 0;
 		dev->rx_urb_size = MAX_SINGLE_PACKET_SIZE;
-	} else if (dev->udev->speed == USB_SPEED_HIGH) {
+	पूर्ण अन्यथा अगर (dev->udev->speed == USB_SPEED_HIGH) अणु
 		buf = DEFAULT_HS_BURST_CAP_SIZE / HS_USB_PKT_SIZE;
 		dev->rx_urb_size = DEFAULT_HS_BURST_CAP_SIZE;
-	} else {
+	पूर्ण अन्यथा अणु
 		buf = DEFAULT_FS_BURST_CAP_SIZE / FS_USB_PKT_SIZE;
 		dev->rx_urb_size = DEFAULT_FS_BURST_CAP_SIZE;
-	}
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "rx_urb_size=%ld\n",
-		  (ulong)dev->rx_urb_size);
+	netअगर_dbg(dev, अगरup, dev->net, "rx_urb_size=%ld\n",
+		  (uदीर्घ)dev->rx_urb_size);
 
-	ret = smsc75xx_write_reg(dev, BURST_CAP, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, BURST_CAP, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write BURST_CAP: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_read_reg(dev, BURST_CAP, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, BURST_CAP, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read BURST_CAP: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net,
+	netअगर_dbg(dev, अगरup, dev->net,
 		  "Read Value from BURST_CAP after writing: 0x%08x\n", buf);
 
-	ret = smsc75xx_write_reg(dev, BULK_IN_DLY, DEFAULT_BULK_IN_DELAY);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, BULK_IN_DLY, DEFAULT_BULK_IN_DELAY);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write BULK_IN_DLY: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_read_reg(dev, BULK_IN_DLY, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, BULK_IN_DLY, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read BULK_IN_DLY: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net,
+	netअगर_dbg(dev, अगरup, dev->net,
 		  "Read Value from BULK_IN_DLY after writing: 0x%08x\n", buf);
 
-	if (turbo_mode) {
-		ret = smsc75xx_read_reg(dev, HW_CFG, &buf);
-		if (ret < 0) {
+	अगर (turbo_mode) अणु
+		ret = smsc75xx_पढ़ो_reg(dev, HW_CFG, &buf);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to read HW_CFG: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		netif_dbg(dev, ifup, dev->net, "HW_CFG: 0x%08x\n", buf);
+		netअगर_dbg(dev, अगरup, dev->net, "HW_CFG: 0x%08x\n", buf);
 
 		buf |= (HW_CFG_MEF | HW_CFG_BCE);
 
-		ret = smsc75xx_write_reg(dev, HW_CFG, buf);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg(dev, HW_CFG, buf);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to write HW_CFG: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = smsc75xx_read_reg(dev, HW_CFG, &buf);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg(dev, HW_CFG, &buf);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to read HW_CFG: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		netif_dbg(dev, ifup, dev->net, "HW_CFG: 0x%08x\n", buf);
-	}
+		netअगर_dbg(dev, अगरup, dev->net, "HW_CFG: 0x%08x\n", buf);
+	पूर्ण
 
 	/* set FIFO sizes */
 	buf = (MAX_RX_FIFO_SIZE - 512) / 512;
-	ret = smsc75xx_write_reg(dev, FCT_RX_FIFO_END, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, FCT_RX_FIFO_END, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write FCT_RX_FIFO_END: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "FCT_RX_FIFO_END set to 0x%08x\n", buf);
+	netअगर_dbg(dev, अगरup, dev->net, "FCT_RX_FIFO_END set to 0x%08x\n", buf);
 
 	buf = (MAX_TX_FIFO_SIZE - 512) / 512;
-	ret = smsc75xx_write_reg(dev, FCT_TX_FIFO_END, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, FCT_TX_FIFO_END, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write FCT_TX_FIFO_END: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "FCT_TX_FIFO_END set to 0x%08x\n", buf);
+	netअगर_dbg(dev, अगरup, dev->net, "FCT_TX_FIFO_END set to 0x%08x\n", buf);
 
-	ret = smsc75xx_write_reg(dev, INT_STS, INT_STS_CLEAR_ALL);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, INT_STS, INT_STS_CLEAR_ALL);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write INT_STS: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_read_reg(dev, ID_REV, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, ID_REV, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read ID_REV: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "ID_REV = 0x%08x\n", buf);
+	netअगर_dbg(dev, अगरup, dev->net, "ID_REV = 0x%08x\n", buf);
 
-	ret = smsc75xx_read_reg(dev, E2P_CMD, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, E2P_CMD, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read E2P_CMD: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* only set default GPIO/LED settings if no EEPROM is detected */
-	if (!(buf & E2P_CMD_LOADED)) {
-		ret = smsc75xx_read_reg(dev, LED_GPIO_CFG, &buf);
-		if (ret < 0) {
+	/* only set शेष GPIO/LED settings अगर no EEPROM is detected */
+	अगर (!(buf & E2P_CMD_LOADED)) अणु
+		ret = smsc75xx_पढ़ो_reg(dev, LED_GPIO_CFG, &buf);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to read LED_GPIO_CFG: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		buf &= ~(LED_GPIO_CFG_LED2_FUN_SEL | LED_GPIO_CFG_LED10_FUN_SEL);
 		buf |= LED_GPIO_CFG_LEDGPIO_EN | LED_GPIO_CFG_LED2_FUN_SEL;
 
-		ret = smsc75xx_write_reg(dev, LED_GPIO_CFG, buf);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg(dev, LED_GPIO_CFG, buf);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Failed to write LED_GPIO_CFG: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	ret = smsc75xx_write_reg(dev, FLOW, 0);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, FLOW, 0);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write FLOW: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_write_reg(dev, FCT_FLOW, 0);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, FCT_FLOW, 0);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write FCT_FLOW: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Don't need rfe_ctl_lock during initialisation */
-	ret = smsc75xx_read_reg(dev, RFE_CTL, &pdata->rfe_ctl);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, RFE_CTL, &pdata->rfe_ctl);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read RFE_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pdata->rfe_ctl |= RFE_CTL_AB | RFE_CTL_DPF;
 
-	ret = smsc75xx_write_reg(dev, RFE_CTL, pdata->rfe_ctl);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, RFE_CTL, pdata->rfe_ctl);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write RFE_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_read_reg(dev, RFE_CTL, &pdata->rfe_ctl);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, RFE_CTL, &pdata->rfe_ctl);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read RFE_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "RFE_CTL set to 0x%08x\n",
+	netअगर_dbg(dev, अगरup, dev->net, "RFE_CTL set to 0x%08x\n",
 		  pdata->rfe_ctl);
 
 	/* Enable or disable checksum offload engines */
@@ -1322,178 +1323,178 @@ static int smsc75xx_reset(struct usbnet *dev)
 	smsc75xx_set_multicast(dev->net);
 
 	ret = smsc75xx_phy_initialize(dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to initialize PHY: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_read_reg(dev, INT_EP_CTL, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, INT_EP_CTL, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read INT_EP_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* enable PHY interrupts */
+	/* enable PHY पूर्णांकerrupts */
 	buf |= INT_ENP_PHY_INT;
 
-	ret = smsc75xx_write_reg(dev, INT_EP_CTL, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, INT_EP_CTL, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write INT_EP_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* allow mac to detect speed and duplex from phy */
-	ret = smsc75xx_read_reg(dev, MAC_CR, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, MAC_CR, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read MAC_CR: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	buf |= (MAC_CR_ADD | MAC_CR_ASD);
-	ret = smsc75xx_write_reg(dev, MAC_CR, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, MAC_CR, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write MAC_CR: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_read_reg(dev, MAC_TX, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, MAC_TX, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read MAC_TX: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	buf |= MAC_TX_TXEN;
 
-	ret = smsc75xx_write_reg(dev, MAC_TX, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, MAC_TX, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write MAC_TX: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "MAC_TX set to 0x%08x\n", buf);
+	netअगर_dbg(dev, अगरup, dev->net, "MAC_TX set to 0x%08x\n", buf);
 
-	ret = smsc75xx_read_reg(dev, FCT_TX_CTL, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, FCT_TX_CTL, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read FCT_TX_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	buf |= FCT_TX_CTL_EN;
 
-	ret = smsc75xx_write_reg(dev, FCT_TX_CTL, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, FCT_TX_CTL, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write FCT_TX_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "FCT_TX_CTL set to 0x%08x\n", buf);
+	netअगर_dbg(dev, अगरup, dev->net, "FCT_TX_CTL set to 0x%08x\n", buf);
 
 	ret = smsc75xx_set_rx_max_frame_length(dev, dev->net->mtu + ETH_HLEN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to set max rx frame length\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_read_reg(dev, MAC_RX, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, MAC_RX, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read MAC_RX: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	buf |= MAC_RX_RXEN;
 
-	ret = smsc75xx_write_reg(dev, MAC_RX, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, MAC_RX, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write MAC_RX: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "MAC_RX set to 0x%08x\n", buf);
+	netअगर_dbg(dev, अगरup, dev->net, "MAC_RX set to 0x%08x\n", buf);
 
-	ret = smsc75xx_read_reg(dev, FCT_RX_CTL, &buf);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg(dev, FCT_RX_CTL, &buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read FCT_RX_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	buf |= FCT_RX_CTL_EN;
 
-	ret = smsc75xx_write_reg(dev, FCT_RX_CTL, buf);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, FCT_RX_CTL, buf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write FCT_RX_CTL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	netif_dbg(dev, ifup, dev->net, "FCT_RX_CTL set to 0x%08x\n", buf);
+	netअगर_dbg(dev, अगरup, dev->net, "FCT_RX_CTL set to 0x%08x\n", buf);
 
-	netif_dbg(dev, ifup, dev->net, "smsc75xx_reset, return 0\n");
-	return 0;
-}
+	netअगर_dbg(dev, अगरup, dev->net, "smsc75xx_reset, return 0\n");
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops smsc75xx_netdev_ops = {
-	.ndo_open		= usbnet_open,
-	.ndo_stop		= usbnet_stop,
-	.ndo_start_xmit		= usbnet_start_xmit,
-	.ndo_tx_timeout		= usbnet_tx_timeout,
-	.ndo_get_stats64	= dev_get_tstats64,
-	.ndo_change_mtu		= smsc75xx_change_mtu,
-	.ndo_set_mac_address 	= eth_mac_addr,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_do_ioctl 		= smsc75xx_ioctl,
-	.ndo_set_rx_mode	= smsc75xx_set_multicast,
-	.ndo_set_features	= smsc75xx_set_features,
-};
+अटल स्थिर काष्ठा net_device_ops smsc75xx_netdev_ops = अणु
+	.nकरो_खोलो		= usbnet_खोलो,
+	.nकरो_stop		= usbnet_stop,
+	.nकरो_start_xmit		= usbnet_start_xmit,
+	.nकरो_tx_समयout		= usbnet_tx_समयout,
+	.nकरो_get_stats64	= dev_get_tstats64,
+	.nकरो_change_mtu		= smsc75xx_change_mtu,
+	.nकरो_set_mac_address 	= eth_mac_addr,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_करो_ioctl 		= smsc75xx_ioctl,
+	.nकरो_set_rx_mode	= smsc75xx_set_multicast,
+	.nकरो_set_features	= smsc75xx_set_features,
+पूर्ण;
 
-static int smsc75xx_bind(struct usbnet *dev, struct usb_interface *intf)
-{
-	struct smsc75xx_priv *pdata = NULL;
-	int ret;
+अटल पूर्णांक smsc75xx_bind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा smsc75xx_priv *pdata = शून्य;
+	पूर्णांक ret;
 
-	printk(KERN_INFO SMSC_CHIPNAME " v" SMSC_DRIVER_VERSION "\n");
+	prपूर्णांकk(KERN_INFO SMSC_CHIPNAME " v" SMSC_DRIVER_VERSION "\n");
 
-	ret = usbnet_get_endpoints(dev, intf);
-	if (ret < 0) {
+	ret = usbnet_get_endpoपूर्णांकs(dev, पूर्णांकf);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "usbnet_get_endpoints failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	dev->data[0] = (unsigned long)kzalloc(sizeof(struct smsc75xx_priv),
+	dev->data[0] = (अचिन्हित दीर्घ)kzalloc(माप(काष्ठा smsc75xx_priv),
 					      GFP_KERNEL);
 
-	pdata = (struct smsc75xx_priv *)(dev->data[0]);
-	if (!pdata)
-		return -ENOMEM;
+	pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
+	अगर (!pdata)
+		वापस -ENOMEM;
 
 	pdata->dev = dev;
 
 	spin_lock_init(&pdata->rfe_ctl_lock);
 	mutex_init(&pdata->dataport_mutex);
 
-	INIT_WORK(&pdata->set_multicast, smsc75xx_deferred_multicast_write);
+	INIT_WORK(&pdata->set_multicast, smsc75xx_deferred_multicast_ग_लिखो);
 
-	if (DEFAULT_TX_CSUM_ENABLE)
+	अगर (DEFAULT_TX_CSUM_ENABLE)
 		dev->net->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
 
-	if (DEFAULT_RX_CSUM_ENABLE)
+	अगर (DEFAULT_RX_CSUM_ENABLE)
 		dev->net->features |= NETIF_F_RXCSUM;
 
 	dev->net->hw_features = NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
 				NETIF_F_RXCSUM;
 
-	ret = smsc75xx_wait_ready(dev, 0);
-	if (ret < 0) {
+	ret = smsc75xx_रुको_पढ़ोy(dev, 0);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "device not ready in smsc75xx_bind\n");
-		goto free_pdata;
-	}
+		जाओ मुक्त_pdata;
+	पूर्ण
 
 	smsc75xx_init_mac_address(dev);
 
-	/* Init all registers */
+	/* Init all रेजिस्टरs */
 	ret = smsc75xx_reset(dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "smsc75xx_reset error %d\n", ret);
-		goto cancel_work;
-	}
+		जाओ cancel_work;
+	पूर्ण
 
 	dev->net->netdev_ops = &smsc75xx_netdev_ops;
 	dev->net->ethtool_ops = &smsc75xx_ethtool_ops;
@@ -1501,691 +1502,691 @@ static int smsc75xx_bind(struct usbnet *dev, struct usb_interface *intf)
 	dev->net->hard_header_len += SMSC75XX_TX_OVERHEAD;
 	dev->hard_mtu = dev->net->mtu + dev->net->hard_header_len;
 	dev->net->max_mtu = MAX_SINGLE_PACKET_SIZE;
-	return 0;
+	वापस 0;
 
 cancel_work:
 	cancel_work_sync(&pdata->set_multicast);
-free_pdata:
-	kfree(pdata);
+मुक्त_pdata:
+	kमुक्त(pdata);
 	dev->data[0] = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void smsc75xx_unbind(struct usbnet *dev, struct usb_interface *intf)
-{
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
-	if (pdata) {
+अटल व्योम smsc75xx_unbind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
+	अगर (pdata) अणु
 		cancel_work_sync(&pdata->set_multicast);
-		netif_dbg(dev, ifdown, dev->net, "free pdata\n");
-		kfree(pdata);
+		netअगर_dbg(dev, अगरकरोwn, dev->net, "free pdata\n");
+		kमुक्त(pdata);
 		dev->data[0] = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u16 smsc_crc(const u8 *buffer, size_t len)
-{
-	return bitrev16(crc16(0xFFFF, buffer, len));
-}
+अटल u16 smsc_crc(स्थिर u8 *buffer, माप_प्रकार len)
+अणु
+	वापस bitrev16(crc16(0xFFFF, buffer, len));
+पूर्ण
 
-static int smsc75xx_write_wuff(struct usbnet *dev, int filter, u32 wuf_cfg,
+अटल पूर्णांक smsc75xx_ग_लिखो_wuff(काष्ठा usbnet *dev, पूर्णांक filter, u32 wuf_cfg,
 			       u32 wuf_mask1)
-{
-	int cfg_base = WUF_CFGX + filter * 4;
-	int mask_base = WUF_MASKX + filter * 16;
-	int ret;
+अणु
+	पूर्णांक cfg_base = WUF_CFGX + filter * 4;
+	पूर्णांक mask_base = WUF_MASKX + filter * 16;
+	पूर्णांक ret;
 
-	ret = smsc75xx_write_reg(dev, cfg_base, wuf_cfg);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, cfg_base, wuf_cfg);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing WUF_CFGX\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_write_reg(dev, mask_base, wuf_mask1);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, mask_base, wuf_mask1);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing WUF_MASKX\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_write_reg(dev, mask_base + 4, 0);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, mask_base + 4, 0);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing WUF_MASKX\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_write_reg(dev, mask_base + 8, 0);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, mask_base + 8, 0);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing WUF_MASKX\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_write_reg(dev, mask_base + 12, 0);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg(dev, mask_base + 12, 0);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing WUF_MASKX\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_enter_suspend0(struct usbnet *dev)
-{
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
+अटल पूर्णांक smsc75xx_enter_suspend0(काष्ठा usbnet *dev)
+अणु
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = smsc75xx_read_reg_nopm(dev, PMT_CTL, &val);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg_nopm(dev, PMT_CTL, &val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading PMT_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	val &= (~(PMT_CTL_SUS_MODE | PMT_CTL_PHY_RST));
 	val |= PMT_CTL_SUS_MODE_0 | PMT_CTL_WOL_EN | PMT_CTL_WUPS;
 
-	ret = smsc75xx_write_reg_nopm(dev, PMT_CTL, val);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg_nopm(dev, PMT_CTL, val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing PMT_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pdata->suspend_flags |= SUSPEND_SUSPEND0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_enter_suspend1(struct usbnet *dev)
-{
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
+अटल पूर्णांक smsc75xx_enter_suspend1(काष्ठा usbnet *dev)
+अणु
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = smsc75xx_read_reg_nopm(dev, PMT_CTL, &val);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg_nopm(dev, PMT_CTL, &val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading PMT_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	val &= ~(PMT_CTL_SUS_MODE | PMT_CTL_WUPS | PMT_CTL_PHY_RST);
 	val |= PMT_CTL_SUS_MODE_1;
 
-	ret = smsc75xx_write_reg_nopm(dev, PMT_CTL, val);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg_nopm(dev, PMT_CTL, val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing PMT_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* clear wol status, enable energy detection */
 	val &= ~PMT_CTL_WUPS;
 	val |= (PMT_CTL_WUPS_ED | PMT_CTL_ED_EN);
 
-	ret = smsc75xx_write_reg_nopm(dev, PMT_CTL, val);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg_nopm(dev, PMT_CTL, val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing PMT_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pdata->suspend_flags |= SUSPEND_SUSPEND1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_enter_suspend2(struct usbnet *dev)
-{
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
+अटल पूर्णांक smsc75xx_enter_suspend2(काष्ठा usbnet *dev)
+अणु
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = smsc75xx_read_reg_nopm(dev, PMT_CTL, &val);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg_nopm(dev, PMT_CTL, &val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading PMT_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	val &= ~(PMT_CTL_SUS_MODE | PMT_CTL_WUPS | PMT_CTL_PHY_RST);
 	val |= PMT_CTL_SUS_MODE_2;
 
-	ret = smsc75xx_write_reg_nopm(dev, PMT_CTL, val);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg_nopm(dev, PMT_CTL, val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing PMT_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pdata->suspend_flags |= SUSPEND_SUSPEND2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_enter_suspend3(struct usbnet *dev)
-{
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
+अटल पूर्णांक smsc75xx_enter_suspend3(काष्ठा usbnet *dev)
+अणु
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = smsc75xx_read_reg_nopm(dev, FCT_RX_CTL, &val);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg_nopm(dev, FCT_RX_CTL, &val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading FCT_RX_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (val & FCT_RX_CTL_RXUSED) {
+	अगर (val & FCT_RX_CTL_RXUSED) अणु
 		netdev_dbg(dev->net, "rx fifo not empty in autosuspend\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	ret = smsc75xx_read_reg_nopm(dev, PMT_CTL, &val);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg_nopm(dev, PMT_CTL, &val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading PMT_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	val &= ~(PMT_CTL_SUS_MODE | PMT_CTL_WUPS | PMT_CTL_PHY_RST);
 	val |= PMT_CTL_SUS_MODE_3 | PMT_CTL_RES_CLR_WKP_EN;
 
-	ret = smsc75xx_write_reg_nopm(dev, PMT_CTL, val);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg_nopm(dev, PMT_CTL, val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing PMT_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* clear wol status */
 	val &= ~PMT_CTL_WUPS;
 	val |= PMT_CTL_WUPS_WOL;
 
-	ret = smsc75xx_write_reg_nopm(dev, PMT_CTL, val);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg_nopm(dev, PMT_CTL, val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing PMT_CTL\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pdata->suspend_flags |= SUSPEND_SUSPEND3;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_enable_phy_wakeup_interrupts(struct usbnet *dev, u16 mask)
-{
-	struct mii_if_info *mii = &dev->mii;
-	int ret;
+अटल पूर्णांक smsc75xx_enable_phy_wakeup_पूर्णांकerrupts(काष्ठा usbnet *dev, u16 mask)
+अणु
+	काष्ठा mii_अगर_info *mii = &dev->mii;
+	पूर्णांक ret;
 
 	netdev_dbg(dev->net, "enabling PHY wakeup interrupts\n");
 
-	/* read to clear */
-	ret = smsc75xx_mdio_read_nopm(dev->net, mii->phy_id, PHY_INT_SRC);
-	if (ret < 0) {
+	/* पढ़ो to clear */
+	ret = smsc75xx_mdio_पढ़ो_nopm(dev->net, mii->phy_id, PHY_INT_SRC);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading PHY_INT_SRC\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* enable interrupt source */
-	ret = smsc75xx_mdio_read_nopm(dev->net, mii->phy_id, PHY_INT_MASK);
-	if (ret < 0) {
+	/* enable पूर्णांकerrupt source */
+	ret = smsc75xx_mdio_पढ़ो_nopm(dev->net, mii->phy_id, PHY_INT_MASK);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading PHY_INT_MASK\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret |= mask;
 
-	smsc75xx_mdio_write_nopm(dev->net, mii->phy_id, PHY_INT_MASK, ret);
+	smsc75xx_mdio_ग_लिखो_nopm(dev->net, mii->phy_id, PHY_INT_MASK, ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smsc75xx_link_ok_nopm(struct usbnet *dev)
-{
-	struct mii_if_info *mii = &dev->mii;
-	int ret;
+अटल पूर्णांक smsc75xx_link_ok_nopm(काष्ठा usbnet *dev)
+अणु
+	काष्ठा mii_अगर_info *mii = &dev->mii;
+	पूर्णांक ret;
 
-	/* first, a dummy read, needed to latch some MII phys */
-	ret = smsc75xx_mdio_read_nopm(dev->net, mii->phy_id, MII_BMSR);
-	if (ret < 0) {
+	/* first, a dummy पढ़ो, needed to latch some MII phys */
+	ret = smsc75xx_mdio_पढ़ो_nopm(dev->net, mii->phy_id, MII_BMSR);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading MII_BMSR\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smsc75xx_mdio_read_nopm(dev->net, mii->phy_id, MII_BMSR);
-	if (ret < 0) {
+	ret = smsc75xx_mdio_पढ़ो_nopm(dev->net, mii->phy_id, MII_BMSR);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading MII_BMSR\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return !!(ret & BMSR_LSTATUS);
-}
+	वापस !!(ret & BMSR_LSTATUS);
+पूर्ण
 
-static int smsc75xx_autosuspend(struct usbnet *dev, u32 link_up)
-{
-	int ret;
+अटल पूर्णांक smsc75xx_स्वतःsuspend(काष्ठा usbnet *dev, u32 link_up)
+अणु
+	पूर्णांक ret;
 
-	if (!netif_running(dev->net)) {
-		/* interface is ifconfig down so fully power down hw */
+	अगर (!netअगर_running(dev->net)) अणु
+		/* पूर्णांकerface is अगरconfig करोwn so fully घातer करोwn hw */
 		netdev_dbg(dev->net, "autosuspend entering SUSPEND2\n");
-		return smsc75xx_enter_suspend2(dev);
-	}
+		वापस smsc75xx_enter_suspend2(dev);
+	पूर्ण
 
-	if (!link_up) {
-		/* link is down so enter EDPD mode */
+	अगर (!link_up) अणु
+		/* link is करोwn so enter EDPD mode */
 		netdev_dbg(dev->net, "autosuspend entering SUSPEND1\n");
 
-		/* enable PHY wakeup events for if cable is attached */
-		ret = smsc75xx_enable_phy_wakeup_interrupts(dev,
+		/* enable PHY wakeup events क्रम अगर cable is attached */
+		ret = smsc75xx_enable_phy_wakeup_पूर्णांकerrupts(dev,
 			PHY_INT_MASK_ANEG_COMP);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "error enabling PHY wakeup ints\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		netdev_info(dev->net, "entering SUSPEND1 mode\n");
-		return smsc75xx_enter_suspend1(dev);
-	}
+		वापस smsc75xx_enter_suspend1(dev);
+	पूर्ण
 
-	/* enable PHY wakeup events so we remote wakeup if cable is pulled */
-	ret = smsc75xx_enable_phy_wakeup_interrupts(dev,
+	/* enable PHY wakeup events so we remote wakeup अगर cable is pulled */
+	ret = smsc75xx_enable_phy_wakeup_पूर्णांकerrupts(dev,
 		PHY_INT_MASK_LINK_DOWN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "error enabling PHY wakeup ints\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	netdev_dbg(dev->net, "autosuspend entering SUSPEND3\n");
-	return smsc75xx_enter_suspend3(dev);
-}
+	वापस smsc75xx_enter_suspend3(dev);
+पूर्ण
 
-static int smsc75xx_suspend(struct usb_interface *intf, pm_message_t message)
-{
-	struct usbnet *dev = usb_get_intfdata(intf);
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
+अटल पूर्णांक smsc75xx_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
+अणु
+	काष्ठा usbnet *dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
 	u32 val, link_up;
-	int ret;
+	पूर्णांक ret;
 
-	ret = usbnet_suspend(intf, message);
-	if (ret < 0) {
+	ret = usbnet_suspend(पूर्णांकf, message);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "usbnet_suspend error\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (pdata->suspend_flags) {
+	अगर (pdata->suspend_flags) अणु
 		netdev_warn(dev->net, "error during last resume\n");
 		pdata->suspend_flags = 0;
-	}
+	पूर्ण
 
-	/* determine if link is up using only _nopm functions */
+	/* determine अगर link is up using only _nopm functions */
 	link_up = smsc75xx_link_ok_nopm(dev);
 
-	if (message.event == PM_EVENT_AUTO_SUSPEND) {
-		ret = smsc75xx_autosuspend(dev, link_up);
-		goto done;
-	}
+	अगर (message.event == PM_EVENT_AUTO_SUSPEND) अणु
+		ret = smsc75xx_स्वतःsuspend(dev, link_up);
+		जाओ करोne;
+	पूर्ण
 
-	/* if we get this far we're not autosuspending */
-	/* if no wol options set, or if link is down and we're not waking on
-	 * PHY activity, enter lowest power SUSPEND2 mode
+	/* अगर we get this far we're not स्वतःsuspending */
+	/* अगर no wol options set, or अगर link is करोwn and we're not waking on
+	 * PHY activity, enter lowest घातer SUSPEND2 mode
 	 */
-	if (!(pdata->wolopts & SUPPORTED_WAKE) ||
-		!(link_up || (pdata->wolopts & WAKE_PHY))) {
+	अगर (!(pdata->wolopts & SUPPORTED_WAKE) ||
+		!(link_up || (pdata->wolopts & WAKE_PHY))) अणु
 		netdev_info(dev->net, "entering SUSPEND2 mode\n");
 
 		/* disable energy detect (link up) & wake up events */
-		ret = smsc75xx_read_reg_nopm(dev, WUCSR, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, WUCSR, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading WUCSR\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		val &= ~(WUCSR_MPEN | WUCSR_WUEN);
 
-		ret = smsc75xx_write_reg_nopm(dev, WUCSR, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, WUCSR, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing WUCSR\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		ret = smsc75xx_read_reg_nopm(dev, PMT_CTL, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, PMT_CTL, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading PMT_CTL\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		val &= ~(PMT_CTL_ED_EN | PMT_CTL_WOL_EN);
 
-		ret = smsc75xx_write_reg_nopm(dev, PMT_CTL, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, PMT_CTL, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing PMT_CTL\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		ret = smsc75xx_enter_suspend2(dev);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (pdata->wolopts & WAKE_PHY) {
-		ret = smsc75xx_enable_phy_wakeup_interrupts(dev,
+	अगर (pdata->wolopts & WAKE_PHY) अणु
+		ret = smsc75xx_enable_phy_wakeup_पूर्णांकerrupts(dev,
 			(PHY_INT_MASK_ANEG_COMP | PHY_INT_MASK_LINK_DOWN));
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "error enabling PHY wakeup ints\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		/* if link is down then configure EDPD and enter SUSPEND1,
+		/* अगर link is करोwn then configure EDPD and enter SUSPEND1,
 		 * otherwise enter SUSPEND0 below
 		 */
-		if (!link_up) {
-			struct mii_if_info *mii = &dev->mii;
+		अगर (!link_up) अणु
+			काष्ठा mii_अगर_info *mii = &dev->mii;
 			netdev_info(dev->net, "entering SUSPEND1 mode\n");
 
-			/* enable energy detect power-down mode */
-			ret = smsc75xx_mdio_read_nopm(dev->net, mii->phy_id,
+			/* enable energy detect घातer-करोwn mode */
+			ret = smsc75xx_mdio_पढ़ो_nopm(dev->net, mii->phy_id,
 				PHY_MODE_CTRL_STS);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				netdev_warn(dev->net, "Error reading PHY_MODE_CTRL_STS\n");
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 
 			ret |= MODE_CTRL_STS_EDPWRDOWN;
 
-			smsc75xx_mdio_write_nopm(dev->net, mii->phy_id,
+			smsc75xx_mdio_ग_लिखो_nopm(dev->net, mii->phy_id,
 				PHY_MODE_CTRL_STS, ret);
 
 			/* enter SUSPEND1 mode */
 			ret = smsc75xx_enter_suspend1(dev);
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-	if (pdata->wolopts & (WAKE_MCAST | WAKE_ARP)) {
-		int i, filter = 0;
+	अगर (pdata->wolopts & (WAKE_MCAST | WAKE_ARP)) अणु
+		पूर्णांक i, filter = 0;
 
 		/* disable all filters */
-		for (i = 0; i < WUF_NUM; i++) {
-			ret = smsc75xx_write_reg_nopm(dev, WUF_CFGX + i * 4, 0);
-			if (ret < 0) {
+		क्रम (i = 0; i < WUF_NUM; i++) अणु
+			ret = smsc75xx_ग_लिखो_reg_nopm(dev, WUF_CFGX + i * 4, 0);
+			अगर (ret < 0) अणु
 				netdev_warn(dev->net, "Error writing WUF_CFGX\n");
-				goto done;
-			}
-		}
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
 
-		if (pdata->wolopts & WAKE_MCAST) {
-			const u8 mcast[] = {0x01, 0x00, 0x5E};
+		अगर (pdata->wolopts & WAKE_MCAST) अणु
+			स्थिर u8 mcast[] = अणु0x01, 0x00, 0x5Eपूर्ण;
 			netdev_info(dev->net, "enabling multicast detection\n");
 
 			val = WUF_CFGX_EN | WUF_CFGX_ATYPE_MULTICAST
 				| smsc_crc(mcast, 3);
-			ret = smsc75xx_write_wuff(dev, filter++, val, 0x0007);
-			if (ret < 0) {
+			ret = smsc75xx_ग_लिखो_wuff(dev, filter++, val, 0x0007);
+			अगर (ret < 0) अणु
 				netdev_warn(dev->net, "Error writing wakeup filter\n");
-				goto done;
-			}
-		}
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
 
-		if (pdata->wolopts & WAKE_ARP) {
-			const u8 arp[] = {0x08, 0x06};
+		अगर (pdata->wolopts & WAKE_ARP) अणु
+			स्थिर u8 arp[] = अणु0x08, 0x06पूर्ण;
 			netdev_info(dev->net, "enabling ARP detection\n");
 
 			val = WUF_CFGX_EN | WUF_CFGX_ATYPE_ALL | (0x0C << 16)
 				| smsc_crc(arp, 2);
-			ret = smsc75xx_write_wuff(dev, filter++, val, 0x0003);
-			if (ret < 0) {
+			ret = smsc75xx_ग_लिखो_wuff(dev, filter++, val, 0x0003);
+			अगर (ret < 0) अणु
 				netdev_warn(dev->net, "Error writing wakeup filter\n");
-				goto done;
-			}
-		}
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
 
 		/* clear any pending pattern match packet status */
-		ret = smsc75xx_read_reg_nopm(dev, WUCSR, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, WUCSR, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading WUCSR\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		val |= WUCSR_WUFR;
 
-		ret = smsc75xx_write_reg_nopm(dev, WUCSR, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, WUCSR, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing WUCSR\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		netdev_info(dev->net, "enabling packet match detection\n");
-		ret = smsc75xx_read_reg_nopm(dev, WUCSR, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, WUCSR, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading WUCSR\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		val |= WUCSR_WUEN;
 
-		ret = smsc75xx_write_reg_nopm(dev, WUCSR, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, WUCSR, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing WUCSR\n");
-			goto done;
-		}
-	} else {
+			जाओ करोne;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		netdev_info(dev->net, "disabling packet match detection\n");
-		ret = smsc75xx_read_reg_nopm(dev, WUCSR, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, WUCSR, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading WUCSR\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		val &= ~WUCSR_WUEN;
 
-		ret = smsc75xx_write_reg_nopm(dev, WUCSR, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, WUCSR, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing WUCSR\n");
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
 	/* disable magic, bcast & unicast wakeup sources */
-	ret = smsc75xx_read_reg_nopm(dev, WUCSR, &val);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg_nopm(dev, WUCSR, &val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error reading WUCSR\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	val &= ~(WUCSR_MPEN | WUCSR_BCST_EN | WUCSR_PFDA_EN);
 
-	ret = smsc75xx_write_reg_nopm(dev, WUCSR, val);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg_nopm(dev, WUCSR, val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Error writing WUCSR\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (pdata->wolopts & WAKE_PHY) {
+	अगर (pdata->wolopts & WAKE_PHY) अणु
 		netdev_info(dev->net, "enabling PHY wakeup\n");
 
-		ret = smsc75xx_read_reg_nopm(dev, PMT_CTL, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, PMT_CTL, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading PMT_CTL\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		/* clear wol status, enable energy detection */
 		val &= ~PMT_CTL_WUPS;
 		val |= (PMT_CTL_WUPS_ED | PMT_CTL_ED_EN);
 
-		ret = smsc75xx_write_reg_nopm(dev, PMT_CTL, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, PMT_CTL, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing PMT_CTL\n");
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-	if (pdata->wolopts & WAKE_MAGIC) {
+	अगर (pdata->wolopts & WAKE_MAGIC) अणु
 		netdev_info(dev->net, "enabling magic packet wakeup\n");
-		ret = smsc75xx_read_reg_nopm(dev, WUCSR, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, WUCSR, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading WUCSR\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		/* clear any pending magic packet status */
 		val |= WUCSR_MPR | WUCSR_MPEN;
 
-		ret = smsc75xx_write_reg_nopm(dev, WUCSR, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, WUCSR, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing WUCSR\n");
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-	if (pdata->wolopts & WAKE_BCAST) {
+	अगर (pdata->wolopts & WAKE_BCAST) अणु
 		netdev_info(dev->net, "enabling broadcast detection\n");
-		ret = smsc75xx_read_reg_nopm(dev, WUCSR, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, WUCSR, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading WUCSR\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		val |= WUCSR_BCAST_FR | WUCSR_BCST_EN;
 
-		ret = smsc75xx_write_reg_nopm(dev, WUCSR, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, WUCSR, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing WUCSR\n");
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-	if (pdata->wolopts & WAKE_UCAST) {
+	अगर (pdata->wolopts & WAKE_UCAST) अणु
 		netdev_info(dev->net, "enabling unicast detection\n");
-		ret = smsc75xx_read_reg_nopm(dev, WUCSR, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, WUCSR, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading WUCSR\n");
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		val |= WUCSR_WUFR | WUCSR_PFDA_EN;
 
-		ret = smsc75xx_write_reg_nopm(dev, WUCSR, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, WUCSR, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing WUCSR\n");
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
 	/* enable receiver to enable frame reception */
-	ret = smsc75xx_read_reg_nopm(dev, MAC_RX, &val);
-	if (ret < 0) {
+	ret = smsc75xx_पढ़ो_reg_nopm(dev, MAC_RX, &val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to read MAC_RX: %d\n", ret);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	val |= MAC_RX_RXEN;
 
-	ret = smsc75xx_write_reg_nopm(dev, MAC_RX, val);
-	if (ret < 0) {
+	ret = smsc75xx_ग_लिखो_reg_nopm(dev, MAC_RX, val);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "Failed to write MAC_RX: %d\n", ret);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* some wol options are enabled, so enter SUSPEND0 */
 	netdev_info(dev->net, "entering SUSPEND0 mode\n");
 	ret = smsc75xx_enter_suspend0(dev);
 
-done:
+करोne:
 	/*
 	 * TODO: resume() might need to handle the suspend failure
-	 * in system sleep
+	 * in प्रणाली sleep
 	 */
-	if (ret && PMSG_IS_AUTO(message))
-		usbnet_resume(intf);
-	return ret;
-}
+	अगर (ret && PMSG_IS_AUTO(message))
+		usbnet_resume(पूर्णांकf);
+	वापस ret;
+पूर्ण
 
-static int smsc75xx_resume(struct usb_interface *intf)
-{
-	struct usbnet *dev = usb_get_intfdata(intf);
-	struct smsc75xx_priv *pdata = (struct smsc75xx_priv *)(dev->data[0]);
+अटल पूर्णांक smsc75xx_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा usbnet *dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा smsc75xx_priv *pdata = (काष्ठा smsc75xx_priv *)(dev->data[0]);
 	u8 suspend_flags = pdata->suspend_flags;
-	int ret;
+	पूर्णांक ret;
 	u32 val;
 
 	netdev_dbg(dev->net, "resume suspend_flags=0x%02x\n", suspend_flags);
 
-	/* do this first to ensure it's cleared even in error case */
+	/* करो this first to ensure it's cleared even in error हाल */
 	pdata->suspend_flags = 0;
 
-	if (suspend_flags & SUSPEND_ALLMODES) {
+	अगर (suspend_flags & SUSPEND_ALLMODES) अणु
 		/* Disable wakeup sources */
-		ret = smsc75xx_read_reg_nopm(dev, WUCSR, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, WUCSR, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading WUCSR\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		val &= ~(WUCSR_WUEN | WUCSR_MPEN | WUCSR_PFDA_EN
 			| WUCSR_BCST_EN);
 
-		ret = smsc75xx_write_reg_nopm(dev, WUCSR, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, WUCSR, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing WUCSR\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/* clear wake-up status */
-		ret = smsc75xx_read_reg_nopm(dev, PMT_CTL, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, PMT_CTL, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading PMT_CTL\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		val &= ~PMT_CTL_WOL_EN;
 		val |= PMT_CTL_WUPS;
 
-		ret = smsc75xx_write_reg_nopm(dev, PMT_CTL, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, PMT_CTL, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing PMT_CTL\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (suspend_flags & SUSPEND_SUSPEND2) {
+	अगर (suspend_flags & SUSPEND_SUSPEND2) अणु
 		netdev_info(dev->net, "resuming from SUSPEND2\n");
 
-		ret = smsc75xx_read_reg_nopm(dev, PMT_CTL, &val);
-		if (ret < 0) {
+		ret = smsc75xx_पढ़ो_reg_nopm(dev, PMT_CTL, &val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error reading PMT_CTL\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		val |= PMT_CTL_PHY_PWRUP;
 
-		ret = smsc75xx_write_reg_nopm(dev, PMT_CTL, val);
-		if (ret < 0) {
+		ret = smsc75xx_ग_लिखो_reg_nopm(dev, PMT_CTL, val);
+		अगर (ret < 0) अणु
 			netdev_warn(dev->net, "Error writing PMT_CTL\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	ret = smsc75xx_wait_ready(dev, 1);
-	if (ret < 0) {
+	ret = smsc75xx_रुको_पढ़ोy(dev, 1);
+	अगर (ret < 0) अणु
 		netdev_warn(dev->net, "device not ready in smsc75xx_resume\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return usbnet_resume(intf);
-}
+	वापस usbnet_resume(पूर्णांकf);
+पूर्ण
 
-static void smsc75xx_rx_csum_offload(struct usbnet *dev, struct sk_buff *skb,
+अटल व्योम smsc75xx_rx_csum_offload(काष्ठा usbnet *dev, काष्ठा sk_buff *skb,
 				     u32 rx_cmd_a, u32 rx_cmd_b)
-{
-	if (!(dev->net->features & NETIF_F_RXCSUM) ||
-	    unlikely(rx_cmd_a & RX_CMD_A_LCSM)) {
+अणु
+	अगर (!(dev->net->features & NETIF_F_RXCSUM) ||
+	    unlikely(rx_cmd_a & RX_CMD_A_LCSM)) अणु
 		skb->ip_summed = CHECKSUM_NONE;
-	} else {
+	पूर्ण अन्यथा अणु
 		skb->csum = ntohs((u16)(rx_cmd_b >> RX_CMD_B_CSUM_SHIFT));
 		skb->ip_summed = CHECKSUM_COMPLETE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int smsc75xx_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
-{
-	/* This check is no longer done by usbnet */
-	if (skb->len < dev->net->hard_header_len)
-		return 0;
+अटल पूर्णांक smsc75xx_rx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb)
+अणु
+	/* This check is no दीर्घer करोne by usbnet */
+	अगर (skb->len < dev->net->hard_header_len)
+		वापस 0;
 
-	while (skb->len > 0) {
+	जबतक (skb->len > 0) अणु
 		u32 rx_cmd_a, rx_cmd_b, align_count, size;
-		struct sk_buff *ax_skb;
-		unsigned char *packet;
+		काष्ठा sk_buff *ax_skb;
+		अचिन्हित अक्षर *packet;
 
 		rx_cmd_a = get_unaligned_le32(skb->data);
 		skb_pull(skb, 4);
@@ -2199,104 +2200,104 @@ static int smsc75xx_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 		size = (rx_cmd_a & RX_CMD_A_LEN) - RXW_PADDING;
 		align_count = (4 - ((size + RXW_PADDING) % 4)) % 4;
 
-		if (unlikely(rx_cmd_a & RX_CMD_A_RED)) {
-			netif_dbg(dev, rx_err, dev->net,
+		अगर (unlikely(rx_cmd_a & RX_CMD_A_RED)) अणु
+			netअगर_dbg(dev, rx_err, dev->net,
 				  "Error rx_cmd_a=0x%08x\n", rx_cmd_a);
 			dev->net->stats.rx_errors++;
 			dev->net->stats.rx_dropped++;
 
-			if (rx_cmd_a & RX_CMD_A_FCS)
+			अगर (rx_cmd_a & RX_CMD_A_FCS)
 				dev->net->stats.rx_crc_errors++;
-			else if (rx_cmd_a & (RX_CMD_A_LONG | RX_CMD_A_RUNT))
+			अन्यथा अगर (rx_cmd_a & (RX_CMD_A_LONG | RX_CMD_A_RUNT))
 				dev->net->stats.rx_frame_errors++;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* MAX_SINGLE_PACKET_SIZE + 4(CRC) + 2(COE) + 4(Vlan) */
-			if (unlikely(size > (MAX_SINGLE_PACKET_SIZE + ETH_HLEN + 12))) {
-				netif_dbg(dev, rx_err, dev->net,
+			अगर (unlikely(size > (MAX_SINGLE_PACKET_SIZE + ETH_HLEN + 12))) अणु
+				netअगर_dbg(dev, rx_err, dev->net,
 					  "size err rx_cmd_a=0x%08x\n",
 					  rx_cmd_a);
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 
 			/* last frame in this batch */
-			if (skb->len == size) {
+			अगर (skb->len == size) अणु
 				smsc75xx_rx_csum_offload(dev, skb, rx_cmd_a,
 					rx_cmd_b);
 
-				skb_trim(skb, skb->len - 4); /* remove fcs */
-				skb->truesize = size + sizeof(struct sk_buff);
+				skb_trim(skb, skb->len - 4); /* हटाओ fcs */
+				skb->truesize = size + माप(काष्ठा sk_buff);
 
-				return 1;
-			}
+				वापस 1;
+			पूर्ण
 
 			ax_skb = skb_clone(skb, GFP_ATOMIC);
-			if (unlikely(!ax_skb)) {
+			अगर (unlikely(!ax_skb)) अणु
 				netdev_warn(dev->net, "Error allocating skb\n");
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 
 			ax_skb->len = size;
 			ax_skb->data = packet;
-			skb_set_tail_pointer(ax_skb, size);
+			skb_set_tail_poपूर्णांकer(ax_skb, size);
 
 			smsc75xx_rx_csum_offload(dev, ax_skb, rx_cmd_a,
 				rx_cmd_b);
 
-			skb_trim(ax_skb, ax_skb->len - 4); /* remove fcs */
-			ax_skb->truesize = size + sizeof(struct sk_buff);
+			skb_trim(ax_skb, ax_skb->len - 4); /* हटाओ fcs */
+			ax_skb->truesize = size + माप(काष्ठा sk_buff);
 
-			usbnet_skb_return(dev, ax_skb);
-		}
+			usbnet_skb_वापस(dev, ax_skb);
+		पूर्ण
 
 		skb_pull(skb, size);
 
-		/* padding bytes before the next frame starts */
-		if (skb->len)
+		/* padding bytes beक्रमe the next frame starts */
+		अगर (skb->len)
 			skb_pull(skb, align_count);
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static struct sk_buff *smsc75xx_tx_fixup(struct usbnet *dev,
-					 struct sk_buff *skb, gfp_t flags)
-{
+अटल काष्ठा sk_buff *smsc75xx_tx_fixup(काष्ठा usbnet *dev,
+					 काष्ठा sk_buff *skb, gfp_t flags)
+अणु
 	u32 tx_cmd_a, tx_cmd_b;
-	void *ptr;
+	व्योम *ptr;
 
-	if (skb_cow_head(skb, SMSC75XX_TX_OVERHEAD)) {
-		dev_kfree_skb_any(skb);
-		return NULL;
-	}
+	अगर (skb_cow_head(skb, SMSC75XX_TX_OVERHEAD)) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस शून्य;
+	पूर्ण
 
 	tx_cmd_a = (u32)(skb->len & TX_CMD_A_LEN) | TX_CMD_A_FCS;
 
-	if (skb->ip_summed == CHECKSUM_PARTIAL)
+	अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 		tx_cmd_a |= TX_CMD_A_IPE | TX_CMD_A_TPE;
 
-	if (skb_is_gso(skb)) {
+	अगर (skb_is_gso(skb)) अणु
 		u16 mss = max(skb_shinfo(skb)->gso_size, TX_MSS_MIN);
 		tx_cmd_b = (mss << TX_CMD_B_MSS_SHIFT) & TX_CMD_B_MSS;
 
 		tx_cmd_a |= TX_CMD_A_LSO;
-	} else {
+	पूर्ण अन्यथा अणु
 		tx_cmd_b = 0;
-	}
+	पूर्ण
 
 	ptr = skb_push(skb, 8);
 	put_unaligned_le32(tx_cmd_a, ptr);
 	put_unaligned_le32(tx_cmd_b, ptr + 4);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int smsc75xx_manage_power(struct usbnet *dev, int on)
-{
-	dev->intf->needs_remote_wakeup = on;
-	return 0;
-}
+अटल पूर्णांक smsc75xx_manage_घातer(काष्ठा usbnet *dev, पूर्णांक on)
+अणु
+	dev->पूर्णांकf->needs_remote_wakeup = on;
+	वापस 0;
+पूर्ण
 
-static const struct driver_info smsc75xx_info = {
+अटल स्थिर काष्ठा driver_info smsc75xx_info = अणु
 	.description	= "smsc75xx USB 2.0 Gigabit Ethernet",
 	.bind		= smsc75xx_bind,
 	.unbind		= smsc75xx_unbind,
@@ -2305,26 +2306,26 @@ static const struct driver_info smsc75xx_info = {
 	.rx_fixup	= smsc75xx_rx_fixup,
 	.tx_fixup	= smsc75xx_tx_fixup,
 	.status		= smsc75xx_status,
-	.manage_power	= smsc75xx_manage_power,
+	.manage_घातer	= smsc75xx_manage_घातer,
 	.flags		= FLAG_ETHER | FLAG_SEND_ZLP | FLAG_LINK_INTR,
-};
+पूर्ण;
 
-static const struct usb_device_id products[] = {
-	{
+अटल स्थिर काष्ठा usb_device_id products[] = अणु
+	अणु
 		/* SMSC7500 USB Gigabit Ethernet Device */
 		USB_DEVICE(USB_VENDOR_ID_SMSC, USB_PRODUCT_ID_LAN7500),
-		.driver_info = (unsigned long) &smsc75xx_info,
-	},
-	{
+		.driver_info = (अचिन्हित दीर्घ) &smsc75xx_info,
+	पूर्ण,
+	अणु
 		/* SMSC7500 USB Gigabit Ethernet Device */
 		USB_DEVICE(USB_VENDOR_ID_SMSC, USB_PRODUCT_ID_LAN7505),
-		.driver_info = (unsigned long) &smsc75xx_info,
-	},
-	{ },		/* END */
-};
+		.driver_info = (अचिन्हित दीर्घ) &smsc75xx_info,
+	पूर्ण,
+	अणु पूर्ण,		/* END */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, products);
 
-static struct usb_driver smsc75xx_driver = {
+अटल काष्ठा usb_driver smsc75xx_driver = अणु
 	.name		= SMSC_CHIPNAME,
 	.id_table	= products,
 	.probe		= usbnet_probe,
@@ -2333,8 +2334,8 @@ static struct usb_driver smsc75xx_driver = {
 	.reset_resume	= smsc75xx_resume,
 	.disconnect	= usbnet_disconnect,
 	.disable_hub_initiated_lpm = 1,
-	.supports_autosuspend = 1,
-};
+	.supports_स्वतःsuspend = 1,
+पूर्ण;
 
 module_usb_driver(smsc75xx_driver);
 

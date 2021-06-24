@@ -1,388 +1,389 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2011, 2012 STRATO.  All rights reserved.
  */
 
-#include <linux/blkdev.h>
-#include <linux/ratelimit.h>
-#include <linux/sched/mm.h>
-#include <crypto/hash.h>
-#include "ctree.h"
-#include "discard.h"
-#include "volumes.h"
-#include "disk-io.h"
-#include "ordered-data.h"
-#include "transaction.h"
-#include "backref.h"
-#include "extent_io.h"
-#include "dev-replace.h"
-#include "check-integrity.h"
-#include "rcu-string.h"
-#include "raid56.h"
-#include "block-group.h"
-#include "zoned.h"
+#समावेश <linux/blkdev.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <crypto/hash.h>
+#समावेश "ctree.h"
+#समावेश "discard.h"
+#समावेश "volumes.h"
+#समावेश "disk-io.h"
+#समावेश "ordered-data.h"
+#समावेश "transaction.h"
+#समावेश "backref.h"
+#समावेश "extent_io.h"
+#समावेश "dev-replace.h"
+#समावेश "check-integrity.h"
+#समावेश "rcu-string.h"
+#समावेश "raid56.h"
+#समावेश "block-group.h"
+#समावेश "zoned.h"
 
 /*
- * This is only the first step towards a full-features scrub. It reads all
- * extent and super block and verifies the checksums. In case a bad checksum
- * is found or the extent cannot be read, good data will be written back if
+ * This is only the first step towards a full-features scrub. It पढ़ोs all
+ * extent and super block and verअगरies the checksums. In हाल a bad checksum
+ * is found or the extent cannot be पढ़ो, good data will be written back अगर
  * any can be found.
  *
  * Future enhancements:
- *  - In case an unrepairable extent is encountered, track which files are
+ *  - In हाल an unrepairable extent is encountered, track which files are
  *    affected and report them
  *  - track and record media errors, throw out bad devices
- *  - add a mode to also read unallocated space
+ *  - add a mode to also पढ़ो unallocated space
  */
 
-struct scrub_block;
-struct scrub_ctx;
+काष्ठा scrub_block;
+काष्ठा scrub_ctx;
 
 /*
- * the following three values only influence the performance.
+ * the following three values only influence the perक्रमmance.
  * The last one configures the number of parallel and outstanding I/O
- * operations. The first two values configure an upper limit for the number
+ * operations. The first two values configure an upper limit क्रम the number
  * of (dynamically allocated) pages that are added to a bio.
  */
-#define SCRUB_PAGES_PER_RD_BIO	32	/* 128k per bio */
-#define SCRUB_PAGES_PER_WR_BIO	32	/* 128k per bio */
-#define SCRUB_BIOS_PER_SCTX	64	/* 8MB per device in flight */
+#घोषणा SCRUB_PAGES_PER_RD_BIO	32	/* 128k per bio */
+#घोषणा SCRUB_PAGES_PER_WR_BIO	32	/* 128k per bio */
+#घोषणा SCRUB_BIOS_PER_SCTX	64	/* 8MB per device in flight */
 
 /*
- * the following value times PAGE_SIZE needs to be large enough to match the
+ * the following value बार PAGE_SIZE needs to be large enough to match the
  * largest node/leaf/sector size that shall be supported.
  * Values larger than BTRFS_STRIPE_LEN are not supported.
  */
-#define SCRUB_MAX_PAGES_PER_BLOCK	16	/* 64k per node/leaf/sector */
+#घोषणा SCRUB_MAX_PAGES_PER_BLOCK	16	/* 64k per node/leaf/sector */
 
-struct scrub_recover {
+काष्ठा scrub_recover अणु
 	refcount_t		refs;
-	struct btrfs_bio	*bbio;
+	काष्ठा btrfs_bio	*bbio;
 	u64			map_length;
-};
+पूर्ण;
 
-struct scrub_page {
-	struct scrub_block	*sblock;
-	struct page		*page;
-	struct btrfs_device	*dev;
-	struct list_head	list;
+काष्ठा scrub_page अणु
+	काष्ठा scrub_block	*sblock;
+	काष्ठा page		*page;
+	काष्ठा btrfs_device	*dev;
+	काष्ठा list_head	list;
 	u64			flags;  /* extent flags */
 	u64			generation;
 	u64			logical;
 	u64			physical;
-	u64			physical_for_dev_replace;
+	u64			physical_क्रम_dev_replace;
 	atomic_t		refs;
 	u8			mirror_num;
-	int			have_csum:1;
-	int			io_error:1;
+	पूर्णांक			have_csum:1;
+	पूर्णांक			io_error:1;
 	u8			csum[BTRFS_CSUM_SIZE];
 
-	struct scrub_recover	*recover;
-};
+	काष्ठा scrub_recover	*recover;
+पूर्ण;
 
-struct scrub_bio {
-	int			index;
-	struct scrub_ctx	*sctx;
-	struct btrfs_device	*dev;
-	struct bio		*bio;
+काष्ठा scrub_bio अणु
+	पूर्णांक			index;
+	काष्ठा scrub_ctx	*sctx;
+	काष्ठा btrfs_device	*dev;
+	काष्ठा bio		*bio;
 	blk_status_t		status;
 	u64			logical;
 	u64			physical;
-#if SCRUB_PAGES_PER_WR_BIO >= SCRUB_PAGES_PER_RD_BIO
-	struct scrub_page	*pagev[SCRUB_PAGES_PER_WR_BIO];
-#else
-	struct scrub_page	*pagev[SCRUB_PAGES_PER_RD_BIO];
-#endif
-	int			page_count;
-	int			next_free;
-	struct btrfs_work	work;
-};
+#अगर SCRUB_PAGES_PER_WR_BIO >= SCRUB_PAGES_PER_RD_BIO
+	काष्ठा scrub_page	*pagev[SCRUB_PAGES_PER_WR_BIO];
+#अन्यथा
+	काष्ठा scrub_page	*pagev[SCRUB_PAGES_PER_RD_BIO];
+#पूर्ण_अगर
+	पूर्णांक			page_count;
+	पूर्णांक			next_मुक्त;
+	काष्ठा btrfs_work	work;
+पूर्ण;
 
-struct scrub_block {
-	struct scrub_page	*pagev[SCRUB_MAX_PAGES_PER_BLOCK];
-	int			page_count;
+काष्ठा scrub_block अणु
+	काष्ठा scrub_page	*pagev[SCRUB_MAX_PAGES_PER_BLOCK];
+	पूर्णांक			page_count;
 	atomic_t		outstanding_pages;
-	refcount_t		refs; /* free mem on transition to zero */
-	struct scrub_ctx	*sctx;
-	struct scrub_parity	*sparity;
-	struct {
-		unsigned int	header_error:1;
-		unsigned int	checksum_error:1;
-		unsigned int	no_io_error_seen:1;
-		unsigned int	generation_error:1; /* also sets header_error */
+	refcount_t		refs; /* मुक्त mem on transition to zero */
+	काष्ठा scrub_ctx	*sctx;
+	काष्ठा scrub_parity	*sparity;
+	काष्ठा अणु
+		अचिन्हित पूर्णांक	header_error:1;
+		अचिन्हित पूर्णांक	checksum_error:1;
+		अचिन्हित पूर्णांक	no_io_error_seen:1;
+		अचिन्हित पूर्णांक	generation_error:1; /* also sets header_error */
 
-		/* The following is for the data used to check parity */
-		/* It is for the data with checksum */
-		unsigned int	data_corrected:1;
-	};
-	struct btrfs_work	work;
-};
+		/* The following is क्रम the data used to check parity */
+		/* It is क्रम the data with checksum */
+		अचिन्हित पूर्णांक	data_corrected:1;
+	पूर्ण;
+	काष्ठा btrfs_work	work;
+पूर्ण;
 
-/* Used for the chunks with parity stripe such RAID5/6 */
-struct scrub_parity {
-	struct scrub_ctx	*sctx;
+/* Used क्रम the chunks with parity stripe such RAID5/6 */
+काष्ठा scrub_parity अणु
+	काष्ठा scrub_ctx	*sctx;
 
-	struct btrfs_device	*scrub_dev;
+	काष्ठा btrfs_device	*scrub_dev;
 
 	u64			logic_start;
 
 	u64			logic_end;
 
-	int			nsectors;
+	पूर्णांक			nsectors;
 
 	u32			stripe_len;
 
 	refcount_t		refs;
 
-	struct list_head	spages;
+	काष्ठा list_head	spages;
 
 	/* Work of parity check and repair */
-	struct btrfs_work	work;
+	काष्ठा btrfs_work	work;
 
 	/* Mark the parity blocks which have data */
-	unsigned long		*dbitmap;
+	अचिन्हित दीर्घ		*dbiपंचांगap;
 
 	/*
 	 * Mark the parity blocks which have data, but errors happen when
-	 * read data or check data
+	 * पढ़ो data or check data
 	 */
-	unsigned long		*ebitmap;
+	अचिन्हित दीर्घ		*ebiपंचांगap;
 
-	unsigned long		bitmap[];
-};
+	अचिन्हित दीर्घ		biपंचांगap[];
+पूर्ण;
 
-struct scrub_ctx {
-	struct scrub_bio	*bios[SCRUB_BIOS_PER_SCTX];
-	struct btrfs_fs_info	*fs_info;
-	int			first_free;
-	int			curr;
+काष्ठा scrub_ctx अणु
+	काष्ठा scrub_bio	*bios[SCRUB_BIOS_PER_SCTX];
+	काष्ठा btrfs_fs_info	*fs_info;
+	पूर्णांक			first_मुक्त;
+	पूर्णांक			curr;
 	atomic_t		bios_in_flight;
 	atomic_t		workers_pending;
 	spinlock_t		list_lock;
-	wait_queue_head_t	list_wait;
-	struct list_head	csum_list;
+	रुको_queue_head_t	list_रुको;
+	काष्ठा list_head	csum_list;
 	atomic_t		cancel_req;
-	int			readonly;
-	int			pages_per_rd_bio;
+	पूर्णांक			पढ़ोonly;
+	पूर्णांक			pages_per_rd_bio;
 
-	int			is_dev_replace;
-	u64			write_pointer;
+	पूर्णांक			is_dev_replace;
+	u64			ग_लिखो_poपूर्णांकer;
 
-	struct scrub_bio        *wr_curr_bio;
-	struct mutex            wr_lock;
-	int                     pages_per_wr_bio; /* <= SCRUB_PAGES_PER_WR_BIO */
-	struct btrfs_device     *wr_tgtdev;
-	bool                    flush_all_writes;
+	काष्ठा scrub_bio        *wr_curr_bio;
+	काष्ठा mutex            wr_lock;
+	पूर्णांक                     pages_per_wr_bio; /* <= SCRUB_PAGES_PER_WR_BIO */
+	काष्ठा btrfs_device     *wr_tgtdev;
+	bool                    flush_all_ग_लिखोs;
 
 	/*
 	 * statistics
 	 */
-	struct btrfs_scrub_progress stat;
+	काष्ठा btrfs_scrub_progress stat;
 	spinlock_t		stat_lock;
 
 	/*
-	 * Use a ref counter to avoid use-after-free issues. Scrub workers
-	 * decrement bios_in_flight and workers_pending and then do a wakeup
-	 * on the list_wait wait queue. We must ensure the main scrub task
-	 * doesn't free the scrub context before or while the workers are
-	 * doing the wakeup() call.
+	 * Use a ref counter to aव्योम use-after-मुक्त issues. Scrub workers
+	 * decrement bios_in_flight and workers_pending and then करो a wakeup
+	 * on the list_रुको रुको queue. We must ensure the मुख्य scrub task
+	 * करोesn't मुक्त the scrub context beक्रमe or जबतक the workers are
+	 * करोing the wakeup() call.
 	 */
 	refcount_t              refs;
-};
+पूर्ण;
 
-struct scrub_warning {
-	struct btrfs_path	*path;
+काष्ठा scrub_warning अणु
+	काष्ठा btrfs_path	*path;
 	u64			extent_item_size;
-	const char		*errstr;
+	स्थिर अक्षर		*errstr;
 	u64			physical;
 	u64			logical;
-	struct btrfs_device	*dev;
-};
+	काष्ठा btrfs_device	*dev;
+पूर्ण;
 
-struct full_stripe_lock {
-	struct rb_node node;
+काष्ठा full_stripe_lock अणु
+	काष्ठा rb_node node;
 	u64 logical;
 	u64 refs;
-	struct mutex mutex;
-};
+	काष्ठा mutex mutex;
+पूर्ण;
 
-static int scrub_setup_recheck_block(struct scrub_block *original_sblock,
-				     struct scrub_block *sblocks_for_recheck);
-static void scrub_recheck_block(struct btrfs_fs_info *fs_info,
-				struct scrub_block *sblock,
-				int retry_failed_mirror);
-static void scrub_recheck_block_checksum(struct scrub_block *sblock);
-static int scrub_repair_block_from_good_copy(struct scrub_block *sblock_bad,
-					     struct scrub_block *sblock_good);
-static int scrub_repair_page_from_good_copy(struct scrub_block *sblock_bad,
-					    struct scrub_block *sblock_good,
-					    int page_num, int force_write);
-static void scrub_write_block_to_dev_replace(struct scrub_block *sblock);
-static int scrub_write_page_to_dev_replace(struct scrub_block *sblock,
-					   int page_num);
-static int scrub_checksum_data(struct scrub_block *sblock);
-static int scrub_checksum_tree_block(struct scrub_block *sblock);
-static int scrub_checksum_super(struct scrub_block *sblock);
-static void scrub_block_put(struct scrub_block *sblock);
-static void scrub_page_get(struct scrub_page *spage);
-static void scrub_page_put(struct scrub_page *spage);
-static void scrub_parity_get(struct scrub_parity *sparity);
-static void scrub_parity_put(struct scrub_parity *sparity);
-static int scrub_pages(struct scrub_ctx *sctx, u64 logical, u32 len,
-		       u64 physical, struct btrfs_device *dev, u64 flags,
-		       u64 gen, int mirror_num, u8 *csum,
-		       u64 physical_for_dev_replace);
-static void scrub_bio_end_io(struct bio *bio);
-static void scrub_bio_end_io_worker(struct btrfs_work *work);
-static void scrub_block_complete(struct scrub_block *sblock);
-static void scrub_remap_extent(struct btrfs_fs_info *fs_info,
+अटल पूर्णांक scrub_setup_recheck_block(काष्ठा scrub_block *original_sblock,
+				     काष्ठा scrub_block *sblocks_क्रम_recheck);
+अटल व्योम scrub_recheck_block(काष्ठा btrfs_fs_info *fs_info,
+				काष्ठा scrub_block *sblock,
+				पूर्णांक retry_failed_mirror);
+अटल व्योम scrub_recheck_block_checksum(काष्ठा scrub_block *sblock);
+अटल पूर्णांक scrub_repair_block_from_good_copy(काष्ठा scrub_block *sblock_bad,
+					     काष्ठा scrub_block *sblock_good);
+अटल पूर्णांक scrub_repair_page_from_good_copy(काष्ठा scrub_block *sblock_bad,
+					    काष्ठा scrub_block *sblock_good,
+					    पूर्णांक page_num, पूर्णांक क्रमce_ग_लिखो);
+अटल व्योम scrub_ग_लिखो_block_to_dev_replace(काष्ठा scrub_block *sblock);
+अटल पूर्णांक scrub_ग_लिखो_page_to_dev_replace(काष्ठा scrub_block *sblock,
+					   पूर्णांक page_num);
+अटल पूर्णांक scrub_checksum_data(काष्ठा scrub_block *sblock);
+अटल पूर्णांक scrub_checksum_tree_block(काष्ठा scrub_block *sblock);
+अटल पूर्णांक scrub_checksum_super(काष्ठा scrub_block *sblock);
+अटल व्योम scrub_block_put(काष्ठा scrub_block *sblock);
+अटल व्योम scrub_page_get(काष्ठा scrub_page *spage);
+अटल व्योम scrub_page_put(काष्ठा scrub_page *spage);
+अटल व्योम scrub_parity_get(काष्ठा scrub_parity *sparity);
+अटल व्योम scrub_parity_put(काष्ठा scrub_parity *sparity);
+अटल पूर्णांक scrub_pages(काष्ठा scrub_ctx *sctx, u64 logical, u32 len,
+		       u64 physical, काष्ठा btrfs_device *dev, u64 flags,
+		       u64 gen, पूर्णांक mirror_num, u8 *csum,
+		       u64 physical_क्रम_dev_replace);
+अटल व्योम scrub_bio_end_io(काष्ठा bio *bio);
+अटल व्योम scrub_bio_end_io_worker(काष्ठा btrfs_work *work);
+अटल व्योम scrub_block_complete(काष्ठा scrub_block *sblock);
+अटल व्योम scrub_remap_extent(काष्ठा btrfs_fs_info *fs_info,
 			       u64 extent_logical, u32 extent_len,
 			       u64 *extent_physical,
-			       struct btrfs_device **extent_dev,
-			       int *extent_mirror_num);
-static int scrub_add_page_to_wr_bio(struct scrub_ctx *sctx,
-				    struct scrub_page *spage);
-static void scrub_wr_submit(struct scrub_ctx *sctx);
-static void scrub_wr_bio_end_io(struct bio *bio);
-static void scrub_wr_bio_end_io_worker(struct btrfs_work *work);
-static void scrub_put_ctx(struct scrub_ctx *sctx);
+			       काष्ठा btrfs_device **extent_dev,
+			       पूर्णांक *extent_mirror_num);
+अटल पूर्णांक scrub_add_page_to_wr_bio(काष्ठा scrub_ctx *sctx,
+				    काष्ठा scrub_page *spage);
+अटल व्योम scrub_wr_submit(काष्ठा scrub_ctx *sctx);
+अटल व्योम scrub_wr_bio_end_io(काष्ठा bio *bio);
+अटल व्योम scrub_wr_bio_end_io_worker(काष्ठा btrfs_work *work);
+अटल व्योम scrub_put_ctx(काष्ठा scrub_ctx *sctx);
 
-static inline int scrub_is_page_on_raid56(struct scrub_page *spage)
-{
-	return spage->recover &&
+अटल अंतरभूत पूर्णांक scrub_is_page_on_raid56(काष्ठा scrub_page *spage)
+अणु
+	वापस spage->recover &&
 	       (spage->recover->bbio->map_type & BTRFS_BLOCK_GROUP_RAID56_MASK);
-}
+पूर्ण
 
-static void scrub_pending_bio_inc(struct scrub_ctx *sctx)
-{
+अटल व्योम scrub_pending_bio_inc(काष्ठा scrub_ctx *sctx)
+अणु
 	refcount_inc(&sctx->refs);
 	atomic_inc(&sctx->bios_in_flight);
-}
+पूर्ण
 
-static void scrub_pending_bio_dec(struct scrub_ctx *sctx)
-{
+अटल व्योम scrub_pending_bio_dec(काष्ठा scrub_ctx *sctx)
+अणु
 	atomic_dec(&sctx->bios_in_flight);
-	wake_up(&sctx->list_wait);
+	wake_up(&sctx->list_रुको);
 	scrub_put_ctx(sctx);
-}
+पूर्ण
 
-static void __scrub_blocked_if_needed(struct btrfs_fs_info *fs_info)
-{
-	while (atomic_read(&fs_info->scrub_pause_req)) {
+अटल व्योम __scrub_blocked_अगर_needed(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	जबतक (atomic_पढ़ो(&fs_info->scrub_छोड़ो_req)) अणु
 		mutex_unlock(&fs_info->scrub_lock);
-		wait_event(fs_info->scrub_pause_wait,
-		   atomic_read(&fs_info->scrub_pause_req) == 0);
+		रुको_event(fs_info->scrub_छोड़ो_रुको,
+		   atomic_पढ़ो(&fs_info->scrub_छोड़ो_req) == 0);
 		mutex_lock(&fs_info->scrub_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void scrub_pause_on(struct btrfs_fs_info *fs_info)
-{
-	atomic_inc(&fs_info->scrubs_paused);
-	wake_up(&fs_info->scrub_pause_wait);
-}
+अटल व्योम scrub_छोड़ो_on(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	atomic_inc(&fs_info->scrubs_छोड़ोd);
+	wake_up(&fs_info->scrub_छोड़ो_रुको);
+पूर्ण
 
-static void scrub_pause_off(struct btrfs_fs_info *fs_info)
-{
+अटल व्योम scrub_छोड़ो_off(काष्ठा btrfs_fs_info *fs_info)
+अणु
 	mutex_lock(&fs_info->scrub_lock);
-	__scrub_blocked_if_needed(fs_info);
-	atomic_dec(&fs_info->scrubs_paused);
+	__scrub_blocked_अगर_needed(fs_info);
+	atomic_dec(&fs_info->scrubs_छोड़ोd);
 	mutex_unlock(&fs_info->scrub_lock);
 
-	wake_up(&fs_info->scrub_pause_wait);
-}
+	wake_up(&fs_info->scrub_छोड़ो_रुको);
+पूर्ण
 
-static void scrub_blocked_if_needed(struct btrfs_fs_info *fs_info)
-{
-	scrub_pause_on(fs_info);
-	scrub_pause_off(fs_info);
-}
+अटल व्योम scrub_blocked_अगर_needed(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	scrub_छोड़ो_on(fs_info);
+	scrub_छोड़ो_off(fs_info);
+पूर्ण
 
 /*
- * Insert new full stripe lock into full stripe locks tree
+ * Insert new full stripe lock पूर्णांकo full stripe locks tree
  *
- * Return pointer to existing or newly inserted full_stripe_lock structure if
+ * Return poपूर्णांकer to existing or newly inserted full_stripe_lock काष्ठाure अगर
  * everything works well.
- * Return ERR_PTR(-ENOMEM) if we failed to allocate memory
+ * Return ERR_PTR(-ENOMEM) अगर we failed to allocate memory
  *
- * NOTE: caller must hold full_stripe_locks_root->lock before calling this
+ * NOTE: caller must hold full_stripe_locks_root->lock beक्रमe calling this
  * function
  */
-static struct full_stripe_lock *insert_full_stripe_lock(
-		struct btrfs_full_stripe_locks_tree *locks_root,
+अटल काष्ठा full_stripe_lock *insert_full_stripe_lock(
+		काष्ठा btrfs_full_stripe_locks_tree *locks_root,
 		u64 fstripe_logical)
-{
-	struct rb_node **p;
-	struct rb_node *parent = NULL;
-	struct full_stripe_lock *entry;
-	struct full_stripe_lock *ret;
+अणु
+	काष्ठा rb_node **p;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा full_stripe_lock *entry;
+	काष्ठा full_stripe_lock *ret;
 
-	lockdep_assert_held(&locks_root->lock);
+	lockdep_निश्चित_held(&locks_root->lock);
 
 	p = &locks_root->root.rb_node;
-	while (*p) {
+	जबतक (*p) अणु
 		parent = *p;
-		entry = rb_entry(parent, struct full_stripe_lock, node);
-		if (fstripe_logical < entry->logical) {
+		entry = rb_entry(parent, काष्ठा full_stripe_lock, node);
+		अगर (fstripe_logical < entry->logical) अणु
 			p = &(*p)->rb_left;
-		} else if (fstripe_logical > entry->logical) {
+		पूर्ण अन्यथा अगर (fstripe_logical > entry->logical) अणु
 			p = &(*p)->rb_right;
-		} else {
+		पूर्ण अन्यथा अणु
 			entry->refs++;
-			return entry;
-		}
-	}
+			वापस entry;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Insert new lock.
 	 */
-	ret = kmalloc(sizeof(*ret), GFP_KERNEL);
-	if (!ret)
-		return ERR_PTR(-ENOMEM);
+	ret = kदो_स्मृति(माप(*ret), GFP_KERNEL);
+	अगर (!ret)
+		वापस ERR_PTR(-ENOMEM);
 	ret->logical = fstripe_logical;
 	ret->refs = 1;
 	mutex_init(&ret->mutex);
 
 	rb_link_node(&ret->node, parent, p);
 	rb_insert_color(&ret->node, &locks_root->root);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Search for a full stripe lock of a block group
+ * Search क्रम a full stripe lock of a block group
  *
- * Return pointer to existing full stripe lock if found
- * Return NULL if not found
+ * Return poपूर्णांकer to existing full stripe lock अगर found
+ * Return शून्य अगर not found
  */
-static struct full_stripe_lock *search_full_stripe_lock(
-		struct btrfs_full_stripe_locks_tree *locks_root,
+अटल काष्ठा full_stripe_lock *search_full_stripe_lock(
+		काष्ठा btrfs_full_stripe_locks_tree *locks_root,
 		u64 fstripe_logical)
-{
-	struct rb_node *node;
-	struct full_stripe_lock *entry;
+अणु
+	काष्ठा rb_node *node;
+	काष्ठा full_stripe_lock *entry;
 
-	lockdep_assert_held(&locks_root->lock);
+	lockdep_निश्चित_held(&locks_root->lock);
 
 	node = locks_root->root.rb_node;
-	while (node) {
-		entry = rb_entry(node, struct full_stripe_lock, node);
-		if (fstripe_logical < entry->logical)
+	जबतक (node) अणु
+		entry = rb_entry(node, काष्ठा full_stripe_lock, node);
+		अगर (fstripe_logical < entry->logical)
 			node = node->rb_left;
-		else if (fstripe_logical > entry->logical)
+		अन्यथा अगर (fstripe_logical > entry->logical)
 			node = node->rb_right;
-		else
-			return entry;
-	}
-	return NULL;
-}
+		अन्यथा
+			वापस entry;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * Helper to get full stripe logical from a normal bytenr.
  *
  * Caller must ensure @cache is a RAID56 block group.
  */
-static u64 get_full_stripe_logical(struct btrfs_block_group *cache, u64 bytenr)
-{
+अटल u64 get_full_stripe_logical(काष्ठा btrfs_block_group *cache, u64 bytenr)
+अणु
 	u64 ret;
 
 	/*
@@ -392,44 +393,44 @@ static u64 get_full_stripe_logical(struct btrfs_block_group *cache, u64 bytenr)
 	WARN_ON_ONCE(cache->full_stripe_len >= U32_MAX);
 
 	/*
-	 * round_down() can only handle power of 2, while RAID56 full
-	 * stripe length can be 64KiB * n, so we need to manually round down.
+	 * round_करोwn() can only handle घातer of 2, जबतक RAID56 full
+	 * stripe length can be 64KiB * n, so we need to manually round करोwn.
 	 */
-	ret = div64_u64(bytenr - cache->start, cache->full_stripe_len) *
+	ret = भाग64_u64(bytenr - cache->start, cache->full_stripe_len) *
 			cache->full_stripe_len + cache->start;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Lock a full stripe to avoid concurrency of recovery and read
+ * Lock a full stripe to aव्योम concurrency of recovery and पढ़ो
  *
- * It's only used for profiles with parities (RAID5/6), for other profiles it
- * does nothing.
+ * It's only used क्रम profiles with parities (RAID5/6), क्रम other profiles it
+ * करोes nothing.
  *
- * Return 0 if we locked full stripe covering @bytenr, with a mutex held.
+ * Return 0 अगर we locked full stripe covering @bytenr, with a mutex held.
  * So caller must call unlock_full_stripe() at the same context.
  *
- * Return <0 if encounters error.
+ * Return <0 अगर encounters error.
  */
-static int lock_full_stripe(struct btrfs_fs_info *fs_info, u64 bytenr,
+अटल पूर्णांक lock_full_stripe(काष्ठा btrfs_fs_info *fs_info, u64 bytenr,
 			    bool *locked_ret)
-{
-	struct btrfs_block_group *bg_cache;
-	struct btrfs_full_stripe_locks_tree *locks_root;
-	struct full_stripe_lock *existing;
+अणु
+	काष्ठा btrfs_block_group *bg_cache;
+	काष्ठा btrfs_full_stripe_locks_tree *locks_root;
+	काष्ठा full_stripe_lock *existing;
 	u64 fstripe_start;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	*locked_ret = false;
 	bg_cache = btrfs_lookup_block_group(fs_info, bytenr);
-	if (!bg_cache) {
+	अगर (!bg_cache) अणु
 		ASSERT(0);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	/* Profiles not based on parity don't need full stripe lock */
-	if (!(bg_cache->flags & BTRFS_BLOCK_GROUP_RAID56_MASK))
-		goto out;
+	/* Profiles not based on parity करोn't need full stripe lock */
+	अगर (!(bg_cache->flags & BTRFS_BLOCK_GROUP_RAID56_MASK))
+		जाओ out;
 	locks_root = &bg_cache->full_stripe_locks_root;
 
 	fstripe_start = get_full_stripe_logical(bg_cache, bytenr);
@@ -438,16 +439,16 @@ static int lock_full_stripe(struct btrfs_fs_info *fs_info, u64 bytenr,
 	mutex_lock(&locks_root->lock);
 	existing = insert_full_stripe_lock(locks_root, fstripe_start);
 	mutex_unlock(&locks_root->lock);
-	if (IS_ERR(existing)) {
+	अगर (IS_ERR(existing)) अणु
 		ret = PTR_ERR(existing);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	mutex_lock(&existing->mutex);
 	*locked_ret = true;
 out:
 	btrfs_put_block_group(bg_cache);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Unlock a full stripe.
@@ -455,30 +456,30 @@ out:
  * NOTE: Caller must ensure it's the same context calling corresponding
  * lock_full_stripe().
  *
- * Return 0 if we unlock full stripe without problem.
- * Return <0 for error
+ * Return 0 अगर we unlock full stripe without problem.
+ * Return <0 क्रम error
  */
-static int unlock_full_stripe(struct btrfs_fs_info *fs_info, u64 bytenr,
+अटल पूर्णांक unlock_full_stripe(काष्ठा btrfs_fs_info *fs_info, u64 bytenr,
 			      bool locked)
-{
-	struct btrfs_block_group *bg_cache;
-	struct btrfs_full_stripe_locks_tree *locks_root;
-	struct full_stripe_lock *fstripe_lock;
+अणु
+	काष्ठा btrfs_block_group *bg_cache;
+	काष्ठा btrfs_full_stripe_locks_tree *locks_root;
+	काष्ठा full_stripe_lock *fstripe_lock;
 	u64 fstripe_start;
-	bool freeit = false;
-	int ret = 0;
+	bool मुक्तit = false;
+	पूर्णांक ret = 0;
 
-	/* If we didn't acquire full stripe lock, no need to continue */
-	if (!locked)
-		return 0;
+	/* If we didn't acquire full stripe lock, no need to जारी */
+	अगर (!locked)
+		वापस 0;
 
 	bg_cache = btrfs_lookup_block_group(fs_info, bytenr);
-	if (!bg_cache) {
+	अगर (!bg_cache) अणु
 		ASSERT(0);
-		return -ENOENT;
-	}
-	if (!(bg_cache->flags & BTRFS_BLOCK_GROUP_RAID56_MASK))
-		goto out;
+		वापस -ENOENT;
+	पूर्ण
+	अगर (!(bg_cache->flags & BTRFS_BLOCK_GROUP_RAID56_MASK))
+		जाओ out;
 
 	locks_root = &bg_cache->full_stripe_locks_root;
 	fstripe_start = get_full_stripe_logical(bg_cache, bytenr);
@@ -486,210 +487,210 @@ static int unlock_full_stripe(struct btrfs_fs_info *fs_info, u64 bytenr,
 	mutex_lock(&locks_root->lock);
 	fstripe_lock = search_full_stripe_lock(locks_root, fstripe_start);
 	/* Unpaired unlock_full_stripe() detected */
-	if (!fstripe_lock) {
+	अगर (!fstripe_lock) अणु
 		WARN_ON(1);
 		ret = -ENOENT;
 		mutex_unlock(&locks_root->lock);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (fstripe_lock->refs == 0) {
+	अगर (fstripe_lock->refs == 0) अणु
 		WARN_ON(1);
 		btrfs_warn(fs_info, "full stripe lock at %llu refcount underflow",
 			fstripe_lock->logical);
-	} else {
+	पूर्ण अन्यथा अणु
 		fstripe_lock->refs--;
-	}
+	पूर्ण
 
-	if (fstripe_lock->refs == 0) {
+	अगर (fstripe_lock->refs == 0) अणु
 		rb_erase(&fstripe_lock->node, &locks_root->root);
-		freeit = true;
-	}
+		मुक्तit = true;
+	पूर्ण
 	mutex_unlock(&locks_root->lock);
 
 	mutex_unlock(&fstripe_lock->mutex);
-	if (freeit)
-		kfree(fstripe_lock);
+	अगर (मुक्तit)
+		kमुक्त(fstripe_lock);
 out:
 	btrfs_put_block_group(bg_cache);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void scrub_free_csums(struct scrub_ctx *sctx)
-{
-	while (!list_empty(&sctx->csum_list)) {
-		struct btrfs_ordered_sum *sum;
+अटल व्योम scrub_मुक्त_csums(काष्ठा scrub_ctx *sctx)
+अणु
+	जबतक (!list_empty(&sctx->csum_list)) अणु
+		काष्ठा btrfs_ordered_sum *sum;
 		sum = list_first_entry(&sctx->csum_list,
-				       struct btrfs_ordered_sum, list);
+				       काष्ठा btrfs_ordered_sum, list);
 		list_del(&sum->list);
-		kfree(sum);
-	}
-}
+		kमुक्त(sum);
+	पूर्ण
+पूर्ण
 
-static noinline_for_stack void scrub_free_ctx(struct scrub_ctx *sctx)
-{
-	int i;
+अटल noअंतरभूत_क्रम_stack व्योम scrub_मुक्त_ctx(काष्ठा scrub_ctx *sctx)
+अणु
+	पूर्णांक i;
 
-	if (!sctx)
-		return;
+	अगर (!sctx)
+		वापस;
 
 	/* this can happen when scrub is cancelled */
-	if (sctx->curr != -1) {
-		struct scrub_bio *sbio = sctx->bios[sctx->curr];
+	अगर (sctx->curr != -1) अणु
+		काष्ठा scrub_bio *sbio = sctx->bios[sctx->curr];
 
-		for (i = 0; i < sbio->page_count; i++) {
+		क्रम (i = 0; i < sbio->page_count; i++) अणु
 			WARN_ON(!sbio->pagev[i]->page);
 			scrub_block_put(sbio->pagev[i]->sblock);
-		}
+		पूर्ण
 		bio_put(sbio->bio);
-	}
+	पूर्ण
 
-	for (i = 0; i < SCRUB_BIOS_PER_SCTX; ++i) {
-		struct scrub_bio *sbio = sctx->bios[i];
+	क्रम (i = 0; i < SCRUB_BIOS_PER_SCTX; ++i) अणु
+		काष्ठा scrub_bio *sbio = sctx->bios[i];
 
-		if (!sbio)
-			break;
-		kfree(sbio);
-	}
+		अगर (!sbio)
+			अवरोध;
+		kमुक्त(sbio);
+	पूर्ण
 
-	kfree(sctx->wr_curr_bio);
-	scrub_free_csums(sctx);
-	kfree(sctx);
-}
+	kमुक्त(sctx->wr_curr_bio);
+	scrub_मुक्त_csums(sctx);
+	kमुक्त(sctx);
+पूर्ण
 
-static void scrub_put_ctx(struct scrub_ctx *sctx)
-{
-	if (refcount_dec_and_test(&sctx->refs))
-		scrub_free_ctx(sctx);
-}
+अटल व्योम scrub_put_ctx(काष्ठा scrub_ctx *sctx)
+अणु
+	अगर (refcount_dec_and_test(&sctx->refs))
+		scrub_मुक्त_ctx(sctx);
+पूर्ण
 
-static noinline_for_stack struct scrub_ctx *scrub_setup_ctx(
-		struct btrfs_fs_info *fs_info, int is_dev_replace)
-{
-	struct scrub_ctx *sctx;
-	int		i;
+अटल noअंतरभूत_क्रम_stack काष्ठा scrub_ctx *scrub_setup_ctx(
+		काष्ठा btrfs_fs_info *fs_info, पूर्णांक is_dev_replace)
+अणु
+	काष्ठा scrub_ctx *sctx;
+	पूर्णांक		i;
 
-	sctx = kzalloc(sizeof(*sctx), GFP_KERNEL);
-	if (!sctx)
-		goto nomem;
+	sctx = kzalloc(माप(*sctx), GFP_KERNEL);
+	अगर (!sctx)
+		जाओ nomem;
 	refcount_set(&sctx->refs, 1);
 	sctx->is_dev_replace = is_dev_replace;
 	sctx->pages_per_rd_bio = SCRUB_PAGES_PER_RD_BIO;
 	sctx->curr = -1;
 	sctx->fs_info = fs_info;
 	INIT_LIST_HEAD(&sctx->csum_list);
-	for (i = 0; i < SCRUB_BIOS_PER_SCTX; ++i) {
-		struct scrub_bio *sbio;
+	क्रम (i = 0; i < SCRUB_BIOS_PER_SCTX; ++i) अणु
+		काष्ठा scrub_bio *sbio;
 
-		sbio = kzalloc(sizeof(*sbio), GFP_KERNEL);
-		if (!sbio)
-			goto nomem;
+		sbio = kzalloc(माप(*sbio), GFP_KERNEL);
+		अगर (!sbio)
+			जाओ nomem;
 		sctx->bios[i] = sbio;
 
 		sbio->index = i;
 		sbio->sctx = sctx;
 		sbio->page_count = 0;
-		btrfs_init_work(&sbio->work, scrub_bio_end_io_worker, NULL,
-				NULL);
+		btrfs_init_work(&sbio->work, scrub_bio_end_io_worker, शून्य,
+				शून्य);
 
-		if (i != SCRUB_BIOS_PER_SCTX - 1)
-			sctx->bios[i]->next_free = i + 1;
-		else
-			sctx->bios[i]->next_free = -1;
-	}
-	sctx->first_free = 0;
+		अगर (i != SCRUB_BIOS_PER_SCTX - 1)
+			sctx->bios[i]->next_मुक्त = i + 1;
+		अन्यथा
+			sctx->bios[i]->next_मुक्त = -1;
+	पूर्ण
+	sctx->first_मुक्त = 0;
 	atomic_set(&sctx->bios_in_flight, 0);
 	atomic_set(&sctx->workers_pending, 0);
 	atomic_set(&sctx->cancel_req, 0);
 
 	spin_lock_init(&sctx->list_lock);
 	spin_lock_init(&sctx->stat_lock);
-	init_waitqueue_head(&sctx->list_wait);
+	init_रुकोqueue_head(&sctx->list_रुको);
 
-	WARN_ON(sctx->wr_curr_bio != NULL);
+	WARN_ON(sctx->wr_curr_bio != शून्य);
 	mutex_init(&sctx->wr_lock);
-	sctx->wr_curr_bio = NULL;
-	if (is_dev_replace) {
+	sctx->wr_curr_bio = शून्य;
+	अगर (is_dev_replace) अणु
 		WARN_ON(!fs_info->dev_replace.tgtdev);
 		sctx->pages_per_wr_bio = SCRUB_PAGES_PER_WR_BIO;
 		sctx->wr_tgtdev = fs_info->dev_replace.tgtdev;
-		sctx->flush_all_writes = false;
-	}
+		sctx->flush_all_ग_लिखोs = false;
+	पूर्ण
 
-	return sctx;
+	वापस sctx;
 
 nomem:
-	scrub_free_ctx(sctx);
-	return ERR_PTR(-ENOMEM);
-}
+	scrub_मुक्त_ctx(sctx);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
-static int scrub_print_warning_inode(u64 inum, u64 offset, u64 root,
-				     void *warn_ctx)
-{
+अटल पूर्णांक scrub_prपूर्णांक_warning_inode(u64 inum, u64 offset, u64 root,
+				     व्योम *warn_ctx)
+अणु
 	u64 isize;
 	u32 nlink;
-	int ret;
-	int i;
-	unsigned nofs_flag;
-	struct extent_buffer *eb;
-	struct btrfs_inode_item *inode_item;
-	struct scrub_warning *swarn = warn_ctx;
-	struct btrfs_fs_info *fs_info = swarn->dev->fs_info;
-	struct inode_fs_paths *ipath = NULL;
-	struct btrfs_root *local_root;
-	struct btrfs_key key;
+	पूर्णांक ret;
+	पूर्णांक i;
+	अचिन्हित nofs_flag;
+	काष्ठा extent_buffer *eb;
+	काष्ठा btrfs_inode_item *inode_item;
+	काष्ठा scrub_warning *swarn = warn_ctx;
+	काष्ठा btrfs_fs_info *fs_info = swarn->dev->fs_info;
+	काष्ठा inode_fs_paths *ipath = शून्य;
+	काष्ठा btrfs_root *local_root;
+	काष्ठा btrfs_key key;
 
 	local_root = btrfs_get_fs_root(fs_info, root, true);
-	if (IS_ERR(local_root)) {
+	अगर (IS_ERR(local_root)) अणु
 		ret = PTR_ERR(local_root);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
-	 * this makes the path point to (inum INODE_ITEM ioff)
+	 * this makes the path poपूर्णांक to (inum INODE_ITEM ioff)
 	 */
 	key.objectid = inum;
 	key.type = BTRFS_INODE_ITEM_KEY;
 	key.offset = 0;
 
-	ret = btrfs_search_slot(NULL, local_root, &key, swarn->path, 0, 0);
-	if (ret) {
+	ret = btrfs_search_slot(शून्य, local_root, &key, swarn->path, 0, 0);
+	अगर (ret) अणु
 		btrfs_put_root(local_root);
 		btrfs_release_path(swarn->path);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	eb = swarn->path->nodes[0];
 	inode_item = btrfs_item_ptr(eb, swarn->path->slots[0],
-					struct btrfs_inode_item);
+					काष्ठा btrfs_inode_item);
 	isize = btrfs_inode_size(eb, inode_item);
 	nlink = btrfs_inode_nlink(eb, inode_item);
 	btrfs_release_path(swarn->path);
 
 	/*
-	 * init_path might indirectly call vmalloc, or use GFP_KERNEL. Scrub
-	 * uses GFP_NOFS in this context, so we keep it consistent but it does
+	 * init_path might indirectly call vदो_स्मृति, or use GFP_KERNEL. Scrub
+	 * uses GFP_NOFS in this context, so we keep it consistent but it करोes
 	 * not seem to be strictly necessary.
 	 */
-	nofs_flag = memalloc_nofs_save();
+	nofs_flag = meदो_स्मृति_nofs_save();
 	ipath = init_ipath(4096, local_root, swarn->path);
-	memalloc_nofs_restore(nofs_flag);
-	if (IS_ERR(ipath)) {
+	meदो_स्मृति_nofs_restore(nofs_flag);
+	अगर (IS_ERR(ipath)) अणु
 		btrfs_put_root(local_root);
 		ret = PTR_ERR(ipath);
-		ipath = NULL;
-		goto err;
-	}
+		ipath = शून्य;
+		जाओ err;
+	पूर्ण
 	ret = paths_from_inode(inum, ipath);
 
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
 	/*
 	 * we deliberately ignore the bit ipath might have been too small to
 	 * hold all of the paths here
 	 */
-	for (i = 0; i < ipath->fspath->elem_cnt; ++i)
+	क्रम (i = 0; i < ipath->fspath->elem_cnt; ++i)
 		btrfs_warn_in_rcu(fs_info,
 "%s at logical %llu on dev %s, physical %llu, root %llu, inode %llu, offset %llu, length %llu, links %u (path: %s)",
 				  swarn->errstr, swarn->logical,
@@ -697,11 +698,11 @@ static int scrub_print_warning_inode(u64 inum, u64 offset, u64 root,
 				  swarn->physical,
 				  root, inum, offset,
 				  min(isize - offset, (u64)PAGE_SIZE), nlink,
-				  (char *)(unsigned long)ipath->fspath->val[i]);
+				  (अक्षर *)(अचिन्हित दीर्घ)ipath->fspath->val[i]);
 
 	btrfs_put_root(local_root);
-	free_ipath(ipath);
-	return 0;
+	मुक्त_ipath(ipath);
+	वापस 0;
 
 err:
 	btrfs_warn_in_rcu(fs_info,
@@ -711,55 +712,55 @@ err:
 			  swarn->physical,
 			  root, inum, offset, ret);
 
-	free_ipath(ipath);
-	return 0;
-}
+	मुक्त_ipath(ipath);
+	वापस 0;
+पूर्ण
 
-static void scrub_print_warning(const char *errstr, struct scrub_block *sblock)
-{
-	struct btrfs_device *dev;
-	struct btrfs_fs_info *fs_info;
-	struct btrfs_path *path;
-	struct btrfs_key found_key;
-	struct extent_buffer *eb;
-	struct btrfs_extent_item *ei;
-	struct scrub_warning swarn;
-	unsigned long ptr = 0;
+अटल व्योम scrub_prपूर्णांक_warning(स्थिर अक्षर *errstr, काष्ठा scrub_block *sblock)
+अणु
+	काष्ठा btrfs_device *dev;
+	काष्ठा btrfs_fs_info *fs_info;
+	काष्ठा btrfs_path *path;
+	काष्ठा btrfs_key found_key;
+	काष्ठा extent_buffer *eb;
+	काष्ठा btrfs_extent_item *ei;
+	काष्ठा scrub_warning swarn;
+	अचिन्हित दीर्घ ptr = 0;
 	u64 extent_item_pos;
 	u64 flags = 0;
 	u64 ref_root;
 	u32 item_size;
 	u8 ref_level = 0;
-	int ret;
+	पूर्णांक ret;
 
 	WARN_ON(sblock->page_count < 1);
 	dev = sblock->pagev[0]->dev;
 	fs_info = sblock->sctx->fs_info;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return;
+	अगर (!path)
+		वापस;
 
 	swarn.physical = sblock->pagev[0]->physical;
 	swarn.logical = sblock->pagev[0]->logical;
 	swarn.errstr = errstr;
-	swarn.dev = NULL;
+	swarn.dev = शून्य;
 
 	ret = extent_from_logical(fs_info, swarn.logical, path, &found_key,
 				  &flags);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	extent_item_pos = swarn.logical - found_key.objectid;
 	swarn.extent_item_size = found_key.offset;
 
 	eb = path->nodes[0];
-	ei = btrfs_item_ptr(eb, path->slots[0], struct btrfs_extent_item);
+	ei = btrfs_item_ptr(eb, path->slots[0], काष्ठा btrfs_extent_item);
 	item_size = btrfs_item_size_nr(eb, path->slots[0]);
 
-	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) {
-		do {
-			ret = tree_backref_for_extent(&ptr, eb, &found_key, ei,
+	अगर (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) अणु
+		करो अणु
+			ret = tree_backref_क्रम_extent(&ptr, eb, &found_key, ei,
 						      item_size, &ref_root,
 						      &ref_level);
 			btrfs_warn_in_rcu(fs_info,
@@ -770,77 +771,77 @@ static void scrub_print_warning(const char *errstr, struct scrub_block *sblock)
 				ref_level ? "node" : "leaf",
 				ret < 0 ? -1 : ref_level,
 				ret < 0 ? -1 : ref_root);
-		} while (ret != 1);
+		पूर्ण जबतक (ret != 1);
 		btrfs_release_path(path);
-	} else {
+	पूर्ण अन्यथा अणु
 		btrfs_release_path(path);
 		swarn.path = path;
 		swarn.dev = dev;
 		iterate_extent_inodes(fs_info, found_key.objectid,
 					extent_item_pos, 1,
-					scrub_print_warning_inode, &swarn, false);
-	}
+					scrub_prपूर्णांक_warning_inode, &swarn, false);
+	पूर्ण
 
 out:
-	btrfs_free_path(path);
-}
+	btrfs_मुक्त_path(path);
+पूर्ण
 
-static inline void scrub_get_recover(struct scrub_recover *recover)
-{
+अटल अंतरभूत व्योम scrub_get_recover(काष्ठा scrub_recover *recover)
+अणु
 	refcount_inc(&recover->refs);
-}
+पूर्ण
 
-static inline void scrub_put_recover(struct btrfs_fs_info *fs_info,
-				     struct scrub_recover *recover)
-{
-	if (refcount_dec_and_test(&recover->refs)) {
+अटल अंतरभूत व्योम scrub_put_recover(काष्ठा btrfs_fs_info *fs_info,
+				     काष्ठा scrub_recover *recover)
+अणु
+	अगर (refcount_dec_and_test(&recover->refs)) अणु
 		btrfs_bio_counter_dec(fs_info);
 		btrfs_put_bbio(recover->bbio);
-		kfree(recover);
-	}
-}
+		kमुक्त(recover);
+	पूर्ण
+पूर्ण
 
 /*
- * scrub_handle_errored_block gets called when either verification of the
- * pages failed or the bio failed to read, e.g. with EIO. In the latter
- * case, this function handles all pages in the bio, even though only one
+ * scrub_handle_errored_block माला_लो called when either verअगरication of the
+ * pages failed or the bio failed to पढ़ो, e.g. with EIO. In the latter
+ * हाल, this function handles all pages in the bio, even though only one
  * may be bad.
  * The goal of this function is to repair the errored block by using the
  * contents of one of the mirrors.
  */
-static int scrub_handle_errored_block(struct scrub_block *sblock_to_check)
-{
-	struct scrub_ctx *sctx = sblock_to_check->sctx;
-	struct btrfs_device *dev;
-	struct btrfs_fs_info *fs_info;
+अटल पूर्णांक scrub_handle_errored_block(काष्ठा scrub_block *sblock_to_check)
+अणु
+	काष्ठा scrub_ctx *sctx = sblock_to_check->sctx;
+	काष्ठा btrfs_device *dev;
+	काष्ठा btrfs_fs_info *fs_info;
 	u64 logical;
-	unsigned int failed_mirror_index;
-	unsigned int is_metadata;
-	unsigned int have_csum;
-	struct scrub_block *sblocks_for_recheck; /* holds one for each mirror */
-	struct scrub_block *sblock_bad;
-	int ret;
-	int mirror_index;
-	int page_num;
-	int success;
+	अचिन्हित पूर्णांक failed_mirror_index;
+	अचिन्हित पूर्णांक is_metadata;
+	अचिन्हित पूर्णांक have_csum;
+	काष्ठा scrub_block *sblocks_क्रम_recheck; /* holds one क्रम each mirror */
+	काष्ठा scrub_block *sblock_bad;
+	पूर्णांक ret;
+	पूर्णांक mirror_index;
+	पूर्णांक page_num;
+	पूर्णांक success;
 	bool full_stripe_locked;
-	unsigned int nofs_flag;
-	static DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL,
+	अचिन्हित पूर्णांक nofs_flag;
+	अटल DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL,
 				      DEFAULT_RATELIMIT_BURST);
 
 	BUG_ON(sblock_to_check->page_count < 1);
 	fs_info = sctx->fs_info;
-	if (sblock_to_check->pagev[0]->flags & BTRFS_EXTENT_FLAG_SUPER) {
+	अगर (sblock_to_check->pagev[0]->flags & BTRFS_EXTENT_FLAG_SUPER) अणु
 		/*
-		 * if we find an error in a super block, we just report it.
+		 * अगर we find an error in a super block, we just report it.
 		 * They will get written with the next transaction commit
 		 * anyway
 		 */
 		spin_lock(&sctx->stat_lock);
 		++sctx->stat.super_errors;
 		spin_unlock(&sctx->stat_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	logical = sblock_to_check->pagev[0]->logical;
 	BUG_ON(sblock_to_check->pagev[0]->mirror_num < 1);
 	failed_mirror_index = sblock_to_check->pagev[0]->mirror_num - 1;
@@ -849,46 +850,46 @@ static int scrub_handle_errored_block(struct scrub_block *sblock_to_check)
 	have_csum = sblock_to_check->pagev[0]->have_csum;
 	dev = sblock_to_check->pagev[0]->dev;
 
-	if (btrfs_is_zoned(fs_info) && !sctx->is_dev_replace)
-		return btrfs_repair_one_zone(fs_info, logical);
+	अगर (btrfs_is_zoned(fs_info) && !sctx->is_dev_replace)
+		वापस btrfs_repair_one_zone(fs_info, logical);
 
 	/*
-	 * We must use GFP_NOFS because the scrub task might be waiting for a
+	 * We must use GFP_NOFS because the scrub task might be रुकोing क्रम a
 	 * worker task executing this function and in turn a transaction commit
-	 * might be waiting the scrub task to pause (which needs to wait for all
-	 * the worker tasks to complete before pausing).
-	 * We do allocations in the workers through insert_full_stripe_lock()
-	 * and scrub_add_page_to_wr_bio(), which happens down the call chain of
+	 * might be रुकोing the scrub task to छोड़ो (which needs to रुको क्रम all
+	 * the worker tasks to complete beक्रमe pausing).
+	 * We करो allocations in the workers through insert_full_stripe_lock()
+	 * and scrub_add_page_to_wr_bio(), which happens करोwn the call chain of
 	 * this function.
 	 */
-	nofs_flag = memalloc_nofs_save();
+	nofs_flag = meदो_स्मृति_nofs_save();
 	/*
-	 * For RAID5/6, race can happen for a different device scrub thread.
-	 * For data corruption, Parity and Data threads will both try
+	 * For RAID5/6, race can happen क्रम a dअगरferent device scrub thपढ़ो.
+	 * For data corruption, Parity and Data thपढ़ोs will both try
 	 * to recovery the data.
-	 * Race can lead to doubly added csum error, or even unrecoverable
+	 * Race can lead to करोubly added csum error, or even unrecoverable
 	 * error.
 	 */
 	ret = lock_full_stripe(fs_info, logical, &full_stripe_locked);
-	if (ret < 0) {
-		memalloc_nofs_restore(nofs_flag);
+	अगर (ret < 0) अणु
+		meदो_स्मृति_nofs_restore(nofs_flag);
 		spin_lock(&sctx->stat_lock);
-		if (ret == -ENOMEM)
-			sctx->stat.malloc_errors++;
-		sctx->stat.read_errors++;
+		अगर (ret == -ENOMEM)
+			sctx->stat.दो_स्मृति_errors++;
+		sctx->stat.पढ़ो_errors++;
 		sctx->stat.uncorrectable_errors++;
 		spin_unlock(&sctx->stat_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * read all mirrors one after the other. This includes to
-	 * re-read the extent or metadata block that failed (that was
-	 * the cause that this fixup code is called) another time,
-	 * page by page this time in order to know which pages
-	 * caused I/O errors and which ones are good (for all mirrors).
+	 * पढ़ो all mirrors one after the other. This includes to
+	 * re-पढ़ो the extent or metadata block that failed (that was
+	 * the cause that this fixup code is called) another समय,
+	 * page by page this समय in order to know which pages
+	 * caused I/O errors and which ones are good (क्रम all mirrors).
 	 * It is the goal to handle the situation when more than one
-	 * mirror contains I/O errors, but the errors do not
+	 * mirror contains I/O errors, but the errors करो not
 	 * overlap, i.e. the data can be repaired by selecting the
 	 * pages from those mirrors without I/O error on the
 	 * particular pages. One example (with blocks >= 2 * PAGE_SIZE)
@@ -899,106 +900,106 @@ static int scrub_handle_errored_block(struct scrub_block *sblock_to_check)
 	 * taking the first page of the second mirror, and the
 	 * second page of the second mirror can be repaired by
 	 * copying the contents of the 2nd page of the 1st mirror.
-	 * One more note: if the pages of one mirror contain I/O
-	 * errors, the checksum cannot be verified. In order to get
-	 * the best data for repairing, the first attempt is to find
+	 * One more note: अगर the pages of one mirror contain I/O
+	 * errors, the checksum cannot be verअगरied. In order to get
+	 * the best data क्रम repairing, the first attempt is to find
 	 * a mirror without I/O errors and with a validated checksum.
-	 * Only if this is not possible, the pages are picked from
+	 * Only अगर this is not possible, the pages are picked from
 	 * mirrors with I/O errors without considering the checksum.
-	 * If the latter is the case, at the end, the checksum of the
-	 * repaired area is verified in order to correctly maintain
+	 * If the latter is the हाल, at the end, the checksum of the
+	 * repaired area is verअगरied in order to correctly मुख्यtain
 	 * the statistics.
 	 */
 
-	sblocks_for_recheck = kcalloc(BTRFS_MAX_MIRRORS,
-				      sizeof(*sblocks_for_recheck), GFP_KERNEL);
-	if (!sblocks_for_recheck) {
+	sblocks_क्रम_recheck = kसुस्मृति(BTRFS_MAX_MIRRORS,
+				      माप(*sblocks_क्रम_recheck), GFP_KERNEL);
+	अगर (!sblocks_क्रम_recheck) अणु
 		spin_lock(&sctx->stat_lock);
-		sctx->stat.malloc_errors++;
-		sctx->stat.read_errors++;
+		sctx->stat.दो_स्मृति_errors++;
+		sctx->stat.पढ़ो_errors++;
 		sctx->stat.uncorrectable_errors++;
 		spin_unlock(&sctx->stat_lock);
-		btrfs_dev_stat_inc_and_print(dev, BTRFS_DEV_STAT_READ_ERRS);
-		goto out;
-	}
+		btrfs_dev_stat_inc_and_prपूर्णांक(dev, BTRFS_DEV_STAT_READ_ERRS);
+		जाओ out;
+	पूर्ण
 
 	/* setup the context, map the logical blocks and alloc the pages */
-	ret = scrub_setup_recheck_block(sblock_to_check, sblocks_for_recheck);
-	if (ret) {
+	ret = scrub_setup_recheck_block(sblock_to_check, sblocks_क्रम_recheck);
+	अगर (ret) अणु
 		spin_lock(&sctx->stat_lock);
-		sctx->stat.read_errors++;
+		sctx->stat.पढ़ो_errors++;
 		sctx->stat.uncorrectable_errors++;
 		spin_unlock(&sctx->stat_lock);
-		btrfs_dev_stat_inc_and_print(dev, BTRFS_DEV_STAT_READ_ERRS);
-		goto out;
-	}
+		btrfs_dev_stat_inc_and_prपूर्णांक(dev, BTRFS_DEV_STAT_READ_ERRS);
+		जाओ out;
+	पूर्ण
 	BUG_ON(failed_mirror_index >= BTRFS_MAX_MIRRORS);
-	sblock_bad = sblocks_for_recheck + failed_mirror_index;
+	sblock_bad = sblocks_क्रम_recheck + failed_mirror_index;
 
-	/* build and submit the bios for the failed mirror, check checksums */
+	/* build and submit the bios क्रम the failed mirror, check checksums */
 	scrub_recheck_block(fs_info, sblock_bad, 1);
 
-	if (!sblock_bad->header_error && !sblock_bad->checksum_error &&
-	    sblock_bad->no_io_error_seen) {
+	अगर (!sblock_bad->header_error && !sblock_bad->checksum_error &&
+	    sblock_bad->no_io_error_seen) अणु
 		/*
-		 * the error disappeared after reading page by page, or
+		 * the error disappeared after पढ़ोing page by page, or
 		 * the area was part of a huge bio and other parts of the
 		 * bio caused I/O errors, or the block layer merged several
-		 * read requests into one and the error is caused by a
-		 * different bio (usually one of the two latter cases is
+		 * पढ़ो requests पूर्णांकo one and the error is caused by a
+		 * dअगरferent bio (usually one of the two latter हालs is
 		 * the cause)
 		 */
 		spin_lock(&sctx->stat_lock);
-		sctx->stat.unverified_errors++;
+		sctx->stat.unverअगरied_errors++;
 		sblock_to_check->data_corrected = 1;
 		spin_unlock(&sctx->stat_lock);
 
-		if (sctx->is_dev_replace)
-			scrub_write_block_to_dev_replace(sblock_bad);
-		goto out;
-	}
+		अगर (sctx->is_dev_replace)
+			scrub_ग_लिखो_block_to_dev_replace(sblock_bad);
+		जाओ out;
+	पूर्ण
 
-	if (!sblock_bad->no_io_error_seen) {
+	अगर (!sblock_bad->no_io_error_seen) अणु
 		spin_lock(&sctx->stat_lock);
-		sctx->stat.read_errors++;
+		sctx->stat.पढ़ो_errors++;
 		spin_unlock(&sctx->stat_lock);
-		if (__ratelimit(&rs))
-			scrub_print_warning("i/o error", sblock_to_check);
-		btrfs_dev_stat_inc_and_print(dev, BTRFS_DEV_STAT_READ_ERRS);
-	} else if (sblock_bad->checksum_error) {
+		अगर (__ratelimit(&rs))
+			scrub_prपूर्णांक_warning("i/o error", sblock_to_check);
+		btrfs_dev_stat_inc_and_prपूर्णांक(dev, BTRFS_DEV_STAT_READ_ERRS);
+	पूर्ण अन्यथा अगर (sblock_bad->checksum_error) अणु
 		spin_lock(&sctx->stat_lock);
 		sctx->stat.csum_errors++;
 		spin_unlock(&sctx->stat_lock);
-		if (__ratelimit(&rs))
-			scrub_print_warning("checksum error", sblock_to_check);
-		btrfs_dev_stat_inc_and_print(dev,
+		अगर (__ratelimit(&rs))
+			scrub_prपूर्णांक_warning("checksum error", sblock_to_check);
+		btrfs_dev_stat_inc_and_prपूर्णांक(dev,
 					     BTRFS_DEV_STAT_CORRUPTION_ERRS);
-	} else if (sblock_bad->header_error) {
+	पूर्ण अन्यथा अगर (sblock_bad->header_error) अणु
 		spin_lock(&sctx->stat_lock);
-		sctx->stat.verify_errors++;
+		sctx->stat.verअगरy_errors++;
 		spin_unlock(&sctx->stat_lock);
-		if (__ratelimit(&rs))
-			scrub_print_warning("checksum/header error",
+		अगर (__ratelimit(&rs))
+			scrub_prपूर्णांक_warning("checksum/header error",
 					    sblock_to_check);
-		if (sblock_bad->generation_error)
-			btrfs_dev_stat_inc_and_print(dev,
+		अगर (sblock_bad->generation_error)
+			btrfs_dev_stat_inc_and_prपूर्णांक(dev,
 				BTRFS_DEV_STAT_GENERATION_ERRS);
-		else
-			btrfs_dev_stat_inc_and_print(dev,
+		अन्यथा
+			btrfs_dev_stat_inc_and_prपूर्णांक(dev,
 				BTRFS_DEV_STAT_CORRUPTION_ERRS);
-	}
+	पूर्ण
 
-	if (sctx->readonly) {
+	अगर (sctx->पढ़ोonly) अणु
 		ASSERT(!sctx->is_dev_replace);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * now build and submit the bios for the other mirrors, check
+	 * now build and submit the bios क्रम the other mirrors, check
 	 * checksums.
 	 * First try to pick the mirror which is completely without I/O
-	 * errors and also does not have a checksum error.
-	 * If one is found, and if a checksum is present, the full block
+	 * errors and also करोes not have a checksum error.
+	 * If one is found, and अगर a checksum is present, the full block
 	 * that is known to contain an error is rewritten. Afterwards
 	 * the block is known to be corrected.
 	 * If a mirror is found which is completely correct, and no
@@ -1008,163 +1009,163 @@ static int scrub_handle_errored_block(struct scrub_block *sblock_to_check)
 	 * could happen otherwise that a correct page would be
 	 * overwritten by a bad one).
 	 */
-	for (mirror_index = 0; ;mirror_index++) {
-		struct scrub_block *sblock_other;
+	क्रम (mirror_index = 0; ;mirror_index++) अणु
+		काष्ठा scrub_block *sblock_other;
 
-		if (mirror_index == failed_mirror_index)
-			continue;
+		अगर (mirror_index == failed_mirror_index)
+			जारी;
 
 		/* raid56's mirror can be more than BTRFS_MAX_MIRRORS */
-		if (!scrub_is_page_on_raid56(sblock_bad->pagev[0])) {
-			if (mirror_index >= BTRFS_MAX_MIRRORS)
-				break;
-			if (!sblocks_for_recheck[mirror_index].page_count)
-				break;
+		अगर (!scrub_is_page_on_raid56(sblock_bad->pagev[0])) अणु
+			अगर (mirror_index >= BTRFS_MAX_MIRRORS)
+				अवरोध;
+			अगर (!sblocks_क्रम_recheck[mirror_index].page_count)
+				अवरोध;
 
-			sblock_other = sblocks_for_recheck + mirror_index;
-		} else {
-			struct scrub_recover *r = sblock_bad->pagev[0]->recover;
-			int max_allowed = r->bbio->num_stripes -
+			sblock_other = sblocks_क्रम_recheck + mirror_index;
+		पूर्ण अन्यथा अणु
+			काष्ठा scrub_recover *r = sblock_bad->pagev[0]->recover;
+			पूर्णांक max_allowed = r->bbio->num_stripes -
 						r->bbio->num_tgtdevs;
 
-			if (mirror_index >= max_allowed)
-				break;
-			if (!sblocks_for_recheck[1].page_count)
-				break;
+			अगर (mirror_index >= max_allowed)
+				अवरोध;
+			अगर (!sblocks_क्रम_recheck[1].page_count)
+				अवरोध;
 
 			ASSERT(failed_mirror_index == 0);
-			sblock_other = sblocks_for_recheck + 1;
+			sblock_other = sblocks_क्रम_recheck + 1;
 			sblock_other->pagev[0]->mirror_num = 1 + mirror_index;
-		}
+		पूर्ण
 
 		/* build and submit the bios, check checksums */
 		scrub_recheck_block(fs_info, sblock_other, 0);
 
-		if (!sblock_other->header_error &&
+		अगर (!sblock_other->header_error &&
 		    !sblock_other->checksum_error &&
-		    sblock_other->no_io_error_seen) {
-			if (sctx->is_dev_replace) {
-				scrub_write_block_to_dev_replace(sblock_other);
-				goto corrected_error;
-			} else {
+		    sblock_other->no_io_error_seen) अणु
+			अगर (sctx->is_dev_replace) अणु
+				scrub_ग_लिखो_block_to_dev_replace(sblock_other);
+				जाओ corrected_error;
+			पूर्ण अन्यथा अणु
 				ret = scrub_repair_block_from_good_copy(
 						sblock_bad, sblock_other);
-				if (!ret)
-					goto corrected_error;
-			}
-		}
-	}
+				अगर (!ret)
+					जाओ corrected_error;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (sblock_bad->no_io_error_seen && !sctx->is_dev_replace)
-		goto did_not_correct_error;
+	अगर (sblock_bad->no_io_error_seen && !sctx->is_dev_replace)
+		जाओ did_not_correct_error;
 
 	/*
-	 * In case of I/O errors in the area that is supposed to be
-	 * repaired, continue by picking good copies of those pages.
-	 * Select the good pages from mirrors to rewrite bad pages from
-	 * the area to fix. Afterwards verify the checksum of the block
-	 * that is supposed to be repaired. This verification step is
-	 * only done for the purpose of statistic counting and for the
-	 * final scrub report, whether errors remain.
+	 * In हाल of I/O errors in the area that is supposed to be
+	 * repaired, जारी by picking good copies of those pages.
+	 * Select the good pages from mirrors to reग_लिखो bad pages from
+	 * the area to fix. Afterwards verअगरy the checksum of the block
+	 * that is supposed to be repaired. This verअगरication step is
+	 * only करोne क्रम the purpose of statistic counting and क्रम the
+	 * final scrub report, whether errors reमुख्य.
 	 * A perfect algorithm could make use of the checksum and try
-	 * all possible combinations of pages from the different mirrors
-	 * until the checksum verification succeeds. For example, when
+	 * all possible combinations of pages from the dअगरferent mirrors
+	 * until the checksum verअगरication succeeds. For example, when
 	 * the 2nd page of mirror #1 faces I/O errors, and the 2nd page
-	 * of mirror #2 is readable but the final checksum test fails,
+	 * of mirror #2 is पढ़ोable but the final checksum test fails,
 	 * then the 2nd page of mirror #3 could be tried, whether now
 	 * the final checksum succeeds. But this would be a rare
-	 * exception and is therefore not implemented. At least it is
-	 * avoided that the good copy is overwritten.
+	 * exception and is thereक्रमe not implemented. At least it is
+	 * aव्योमed that the good copy is overwritten.
 	 * A more useful improvement would be to pick the sectors
 	 * without I/O error based on sector sizes (512 bytes on legacy
 	 * disks) instead of on PAGE_SIZE. Then maybe 512 byte of one
-	 * mirror could be repaired by taking 512 byte of a different
-	 * mirror, even if other 512 byte sectors in the same PAGE_SIZE
-	 * area are unreadable.
+	 * mirror could be repaired by taking 512 byte of a dअगरferent
+	 * mirror, even अगर other 512 byte sectors in the same PAGE_SIZE
+	 * area are unपढ़ोable.
 	 */
 	success = 1;
-	for (page_num = 0; page_num < sblock_bad->page_count;
-	     page_num++) {
-		struct scrub_page *spage_bad = sblock_bad->pagev[page_num];
-		struct scrub_block *sblock_other = NULL;
+	क्रम (page_num = 0; page_num < sblock_bad->page_count;
+	     page_num++) अणु
+		काष्ठा scrub_page *spage_bad = sblock_bad->pagev[page_num];
+		काष्ठा scrub_block *sblock_other = शून्य;
 
 		/* skip no-io-error page in scrub */
-		if (!spage_bad->io_error && !sctx->is_dev_replace)
-			continue;
+		अगर (!spage_bad->io_error && !sctx->is_dev_replace)
+			जारी;
 
-		if (scrub_is_page_on_raid56(sblock_bad->pagev[0])) {
+		अगर (scrub_is_page_on_raid56(sblock_bad->pagev[0])) अणु
 			/*
-			 * In case of dev replace, if raid56 rebuild process
+			 * In हाल of dev replace, अगर raid56 rebuild process
 			 * didn't work out correct data, then copy the content
 			 * in sblock_bad to make sure target device is identical
 			 * to source device, instead of writing garbage data in
-			 * sblock_for_recheck array to target device.
+			 * sblock_क्रम_recheck array to target device.
 			 */
-			sblock_other = NULL;
-		} else if (spage_bad->io_error) {
+			sblock_other = शून्य;
+		पूर्ण अन्यथा अगर (spage_bad->io_error) अणु
 			/* try to find no-io-error page in mirrors */
-			for (mirror_index = 0;
+			क्रम (mirror_index = 0;
 			     mirror_index < BTRFS_MAX_MIRRORS &&
-			     sblocks_for_recheck[mirror_index].page_count > 0;
-			     mirror_index++) {
-				if (!sblocks_for_recheck[mirror_index].
-				    pagev[page_num]->io_error) {
-					sblock_other = sblocks_for_recheck +
+			     sblocks_क्रम_recheck[mirror_index].page_count > 0;
+			     mirror_index++) अणु
+				अगर (!sblocks_क्रम_recheck[mirror_index].
+				    pagev[page_num]->io_error) अणु
+					sblock_other = sblocks_क्रम_recheck +
 						       mirror_index;
-					break;
-				}
-			}
-			if (!sblock_other)
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (!sblock_other)
 				success = 0;
-		}
+		पूर्ण
 
-		if (sctx->is_dev_replace) {
+		अगर (sctx->is_dev_replace) अणु
 			/*
 			 * did not find a mirror to fetch the page
-			 * from. scrub_write_page_to_dev_replace()
-			 * handles this case (page->io_error), by
-			 * filling the block with zeros before
-			 * submitting the write request
+			 * from. scrub_ग_लिखो_page_to_dev_replace()
+			 * handles this हाल (page->io_error), by
+			 * filling the block with zeros beक्रमe
+			 * submitting the ग_लिखो request
 			 */
-			if (!sblock_other)
+			अगर (!sblock_other)
 				sblock_other = sblock_bad;
 
-			if (scrub_write_page_to_dev_replace(sblock_other,
-							    page_num) != 0) {
+			अगर (scrub_ग_लिखो_page_to_dev_replace(sblock_other,
+							    page_num) != 0) अणु
 				atomic64_inc(
-					&fs_info->dev_replace.num_write_errors);
+					&fs_info->dev_replace.num_ग_लिखो_errors);
 				success = 0;
-			}
-		} else if (sblock_other) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (sblock_other) अणु
 			ret = scrub_repair_page_from_good_copy(sblock_bad,
 							       sblock_other,
 							       page_num, 0);
-			if (0 == ret)
+			अगर (0 == ret)
 				spage_bad->io_error = 0;
-			else
+			अन्यथा
 				success = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (success && !sctx->is_dev_replace) {
-		if (is_metadata || have_csum) {
+	अगर (success && !sctx->is_dev_replace) अणु
+		अगर (is_metadata || have_csum) अणु
 			/*
-			 * need to verify the checksum now that all
-			 * sectors on disk are repaired (the write
-			 * request for data to be repaired is on its way).
+			 * need to verअगरy the checksum now that all
+			 * sectors on disk are repaired (the ग_लिखो
+			 * request क्रम data to be repaired is on its way).
 			 * Just be lazy and use scrub_recheck_block()
-			 * which re-reads the data before the checksum
-			 * is verified, but most likely the data comes out
+			 * which re-पढ़ोs the data beक्रमe the checksum
+			 * is verअगरied, but most likely the data comes out
 			 * of the page cache.
 			 */
 			scrub_recheck_block(fs_info, sblock_bad, 1);
-			if (!sblock_bad->header_error &&
+			अगर (!sblock_bad->header_error &&
 			    !sblock_bad->checksum_error &&
 			    sblock_bad->no_io_error_seen)
-				goto corrected_error;
-			else
-				goto did_not_correct_error;
-		} else {
+				जाओ corrected_error;
+			अन्यथा
+				जाओ did_not_correct_error;
+		पूर्ण अन्यथा अणु
 corrected_error:
 			spin_lock(&sctx->stat_lock);
 			sctx->stat.corrected_errors++;
@@ -1173,8 +1174,8 @@ corrected_error:
 			btrfs_err_rl_in_rcu(fs_info,
 				"fixed up error at logical %llu on dev %s",
 				logical, rcu_str_deref(dev->name));
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 did_not_correct_error:
 		spin_lock(&sctx->stat_lock);
 		sctx->stat.uncorrectable_errors++;
@@ -1182,130 +1183,130 @@ did_not_correct_error:
 		btrfs_err_rl_in_rcu(fs_info,
 			"unable to fixup (regular) error at logical %llu on dev %s",
 			logical, rcu_str_deref(dev->name));
-	}
+	पूर्ण
 
 out:
-	if (sblocks_for_recheck) {
-		for (mirror_index = 0; mirror_index < BTRFS_MAX_MIRRORS;
-		     mirror_index++) {
-			struct scrub_block *sblock = sblocks_for_recheck +
+	अगर (sblocks_क्रम_recheck) अणु
+		क्रम (mirror_index = 0; mirror_index < BTRFS_MAX_MIRRORS;
+		     mirror_index++) अणु
+			काष्ठा scrub_block *sblock = sblocks_क्रम_recheck +
 						     mirror_index;
-			struct scrub_recover *recover;
-			int page_index;
+			काष्ठा scrub_recover *recover;
+			पूर्णांक page_index;
 
-			for (page_index = 0; page_index < sblock->page_count;
-			     page_index++) {
-				sblock->pagev[page_index]->sblock = NULL;
+			क्रम (page_index = 0; page_index < sblock->page_count;
+			     page_index++) अणु
+				sblock->pagev[page_index]->sblock = शून्य;
 				recover = sblock->pagev[page_index]->recover;
-				if (recover) {
+				अगर (recover) अणु
 					scrub_put_recover(fs_info, recover);
 					sblock->pagev[page_index]->recover =
-									NULL;
-				}
+									शून्य;
+				पूर्ण
 				scrub_page_put(sblock->pagev[page_index]);
-			}
-		}
-		kfree(sblocks_for_recheck);
-	}
+			पूर्ण
+		पूर्ण
+		kमुक्त(sblocks_क्रम_recheck);
+	पूर्ण
 
 	ret = unlock_full_stripe(fs_info, logical, full_stripe_locked);
-	memalloc_nofs_restore(nofs_flag);
-	if (ret < 0)
-		return ret;
-	return 0;
-}
+	meदो_स्मृति_nofs_restore(nofs_flag);
+	अगर (ret < 0)
+		वापस ret;
+	वापस 0;
+पूर्ण
 
-static inline int scrub_nr_raid_mirrors(struct btrfs_bio *bbio)
-{
-	if (bbio->map_type & BTRFS_BLOCK_GROUP_RAID5)
-		return 2;
-	else if (bbio->map_type & BTRFS_BLOCK_GROUP_RAID6)
-		return 3;
-	else
-		return (int)bbio->num_stripes;
-}
+अटल अंतरभूत पूर्णांक scrub_nr_raid_mirrors(काष्ठा btrfs_bio *bbio)
+अणु
+	अगर (bbio->map_type & BTRFS_BLOCK_GROUP_RAID5)
+		वापस 2;
+	अन्यथा अगर (bbio->map_type & BTRFS_BLOCK_GROUP_RAID6)
+		वापस 3;
+	अन्यथा
+		वापस (पूर्णांक)bbio->num_stripes;
+पूर्ण
 
-static inline void scrub_stripe_index_and_offset(u64 logical, u64 map_type,
+अटल अंतरभूत व्योम scrub_stripe_index_and_offset(u64 logical, u64 map_type,
 						 u64 *raid_map,
 						 u64 mapped_length,
-						 int nstripes, int mirror,
-						 int *stripe_index,
+						 पूर्णांक nstripes, पूर्णांक mirror,
+						 पूर्णांक *stripe_index,
 						 u64 *stripe_offset)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	if (map_type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+	अगर (map_type & BTRFS_BLOCK_GROUP_RAID56_MASK) अणु
 		/* RAID5/6 */
-		for (i = 0; i < nstripes; i++) {
-			if (raid_map[i] == RAID6_Q_STRIPE ||
+		क्रम (i = 0; i < nstripes; i++) अणु
+			अगर (raid_map[i] == RAID6_Q_STRIPE ||
 			    raid_map[i] == RAID5_P_STRIPE)
-				continue;
+				जारी;
 
-			if (logical >= raid_map[i] &&
+			अगर (logical >= raid_map[i] &&
 			    logical < raid_map[i] + mapped_length)
-				break;
-		}
+				अवरोध;
+		पूर्ण
 
 		*stripe_index = i;
 		*stripe_offset = logical - raid_map[i];
-	} else {
+	पूर्ण अन्यथा अणु
 		/* The other RAID type */
 		*stripe_index = mirror;
 		*stripe_offset = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int scrub_setup_recheck_block(struct scrub_block *original_sblock,
-				     struct scrub_block *sblocks_for_recheck)
-{
-	struct scrub_ctx *sctx = original_sblock->sctx;
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
+अटल पूर्णांक scrub_setup_recheck_block(काष्ठा scrub_block *original_sblock,
+				     काष्ठा scrub_block *sblocks_क्रम_recheck)
+अणु
+	काष्ठा scrub_ctx *sctx = original_sblock->sctx;
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
 	u64 length = original_sblock->page_count * PAGE_SIZE;
 	u64 logical = original_sblock->pagev[0]->logical;
 	u64 generation = original_sblock->pagev[0]->generation;
 	u64 flags = original_sblock->pagev[0]->flags;
 	u64 have_csum = original_sblock->pagev[0]->have_csum;
-	struct scrub_recover *recover;
-	struct btrfs_bio *bbio;
+	काष्ठा scrub_recover *recover;
+	काष्ठा btrfs_bio *bbio;
 	u64 sublen;
 	u64 mapped_length;
 	u64 stripe_offset;
-	int stripe_index;
-	int page_index = 0;
-	int mirror_index;
-	int nmirrors;
-	int ret;
+	पूर्णांक stripe_index;
+	पूर्णांक page_index = 0;
+	पूर्णांक mirror_index;
+	पूर्णांक nmirrors;
+	पूर्णांक ret;
 
 	/*
 	 * note: the two members refs and outstanding_pages
-	 * are not used (and not set) in the blocks that are used for
+	 * are not used (and not set) in the blocks that are used क्रम
 	 * the recheck procedure
 	 */
 
-	while (length > 0) {
+	जबतक (length > 0) अणु
 		sublen = min_t(u64, length, PAGE_SIZE);
 		mapped_length = sublen;
-		bbio = NULL;
+		bbio = शून्य;
 
 		/*
-		 * with a length of PAGE_SIZE, each returned stripe
+		 * with a length of PAGE_SIZE, each वापसed stripe
 		 * represents one mirror
 		 */
 		btrfs_bio_counter_inc_blocked(fs_info);
 		ret = btrfs_map_sblock(fs_info, BTRFS_MAP_GET_READ_MIRRORS,
 				logical, &mapped_length, &bbio);
-		if (ret || !bbio || mapped_length < sublen) {
+		अगर (ret || !bbio || mapped_length < sublen) अणु
 			btrfs_put_bbio(bbio);
 			btrfs_bio_counter_dec(fs_info);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		recover = kzalloc(sizeof(struct scrub_recover), GFP_NOFS);
-		if (!recover) {
+		recover = kzalloc(माप(काष्ठा scrub_recover), GFP_NOFS);
+		अगर (!recover) अणु
 			btrfs_put_bbio(bbio);
 			btrfs_bio_counter_dec(fs_info);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		refcount_set(&recover->refs, 1);
 		recover->bbio = bbio;
@@ -1315,23 +1316,23 @@ static int scrub_setup_recheck_block(struct scrub_block *original_sblock,
 
 		nmirrors = min(scrub_nr_raid_mirrors(bbio), BTRFS_MAX_MIRRORS);
 
-		for (mirror_index = 0; mirror_index < nmirrors;
-		     mirror_index++) {
-			struct scrub_block *sblock;
-			struct scrub_page *spage;
+		क्रम (mirror_index = 0; mirror_index < nmirrors;
+		     mirror_index++) अणु
+			काष्ठा scrub_block *sblock;
+			काष्ठा scrub_page *spage;
 
-			sblock = sblocks_for_recheck + mirror_index;
+			sblock = sblocks_क्रम_recheck + mirror_index;
 			sblock->sctx = sctx;
 
-			spage = kzalloc(sizeof(*spage), GFP_NOFS);
-			if (!spage) {
+			spage = kzalloc(माप(*spage), GFP_NOFS);
+			अगर (!spage) अणु
 leave_nomem:
 				spin_lock(&sctx->stat_lock);
-				sctx->stat.malloc_errors++;
+				sctx->stat.दो_स्मृति_errors++;
 				spin_unlock(&sctx->stat_lock);
 				scrub_put_recover(fs_info, recover);
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 			scrub_page_get(spage);
 			sblock->pagev[page_index] = spage;
 			spage->sblock = sblock;
@@ -1339,8 +1340,8 @@ leave_nomem:
 			spage->generation = generation;
 			spage->logical = logical;
 			spage->have_csum = have_csum;
-			if (have_csum)
-				memcpy(spage->csum,
+			अगर (have_csum)
+				स_नकल(spage->csum,
 				       original_sblock->pagev[0]->csum,
 				       sctx->fs_info->csum_size);
 
@@ -1358,123 +1359,123 @@ leave_nomem:
 			spage->dev = bbio->stripes[stripe_index].dev;
 
 			BUG_ON(page_index >= original_sblock->page_count);
-			spage->physical_for_dev_replace =
+			spage->physical_क्रम_dev_replace =
 				original_sblock->pagev[page_index]->
-				physical_for_dev_replace;
-			/* for missing devices, dev->bdev is NULL */
+				physical_क्रम_dev_replace;
+			/* क्रम missing devices, dev->bdev is शून्य */
 			spage->mirror_num = mirror_index + 1;
 			sblock->page_count++;
 			spage->page = alloc_page(GFP_NOFS);
-			if (!spage->page)
-				goto leave_nomem;
+			अगर (!spage->page)
+				जाओ leave_nomem;
 
 			scrub_get_recover(recover);
 			spage->recover = recover;
-		}
+		पूर्ण
 		scrub_put_recover(fs_info, recover);
 		length -= sublen;
 		logical += sublen;
 		page_index++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scrub_bio_wait_endio(struct bio *bio)
-{
-	complete(bio->bi_private);
-}
+अटल व्योम scrub_bio_रुको_endio(काष्ठा bio *bio)
+अणु
+	complete(bio->bi_निजी);
+पूर्ण
 
-static int scrub_submit_raid56_bio_wait(struct btrfs_fs_info *fs_info,
-					struct bio *bio,
-					struct scrub_page *spage)
-{
-	DECLARE_COMPLETION_ONSTACK(done);
-	int ret;
-	int mirror_num;
+अटल पूर्णांक scrub_submit_raid56_bio_रुको(काष्ठा btrfs_fs_info *fs_info,
+					काष्ठा bio *bio,
+					काष्ठा scrub_page *spage)
+अणु
+	DECLARE_COMPLETION_ONSTACK(करोne);
+	पूर्णांक ret;
+	पूर्णांक mirror_num;
 
 	bio->bi_iter.bi_sector = spage->logical >> 9;
-	bio->bi_private = &done;
-	bio->bi_end_io = scrub_bio_wait_endio;
+	bio->bi_निजी = &करोne;
+	bio->bi_end_io = scrub_bio_रुको_endio;
 
 	mirror_num = spage->sblock->pagev[0]->mirror_num;
 	ret = raid56_parity_recover(fs_info, bio, spage->recover->bbio,
 				    spage->recover->map_length,
 				    mirror_num, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	wait_for_completion_io(&done);
-	return blk_status_to_errno(bio->bi_status);
-}
+	रुको_क्रम_completion_io(&करोne);
+	वापस blk_status_to_त्रुटि_सं(bio->bi_status);
+पूर्ण
 
-static void scrub_recheck_block_on_raid56(struct btrfs_fs_info *fs_info,
-					  struct scrub_block *sblock)
-{
-	struct scrub_page *first_page = sblock->pagev[0];
-	struct bio *bio;
-	int page_num;
+अटल व्योम scrub_recheck_block_on_raid56(काष्ठा btrfs_fs_info *fs_info,
+					  काष्ठा scrub_block *sblock)
+अणु
+	काष्ठा scrub_page *first_page = sblock->pagev[0];
+	काष्ठा bio *bio;
+	पूर्णांक page_num;
 
-	/* All pages in sblock belong to the same stripe on the same device. */
+	/* All pages in sblock beदीर्घ to the same stripe on the same device. */
 	ASSERT(first_page->dev);
-	if (!first_page->dev->bdev)
-		goto out;
+	अगर (!first_page->dev->bdev)
+		जाओ out;
 
 	bio = btrfs_io_bio_alloc(BIO_MAX_VECS);
 	bio_set_dev(bio, first_page->dev->bdev);
 
-	for (page_num = 0; page_num < sblock->page_count; page_num++) {
-		struct scrub_page *spage = sblock->pagev[page_num];
+	क्रम (page_num = 0; page_num < sblock->page_count; page_num++) अणु
+		काष्ठा scrub_page *spage = sblock->pagev[page_num];
 
 		WARN_ON(!spage->page);
 		bio_add_page(bio, spage->page, PAGE_SIZE, 0);
-	}
+	पूर्ण
 
-	if (scrub_submit_raid56_bio_wait(fs_info, bio, first_page)) {
+	अगर (scrub_submit_raid56_bio_रुको(fs_info, bio, first_page)) अणु
 		bio_put(bio);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	bio_put(bio);
 
 	scrub_recheck_block_checksum(sblock);
 
-	return;
+	वापस;
 out:
-	for (page_num = 0; page_num < sblock->page_count; page_num++)
+	क्रम (page_num = 0; page_num < sblock->page_count; page_num++)
 		sblock->pagev[page_num]->io_error = 1;
 
 	sblock->no_io_error_seen = 0;
-}
+पूर्ण
 
 /*
- * this function will check the on disk data for checksum errors, header
- * errors and read I/O errors. If any I/O errors happen, the exact pages
+ * this function will check the on disk data क्रम checksum errors, header
+ * errors and पढ़ो I/O errors. If any I/O errors happen, the exact pages
  * which are errored are marked as being bad. The goal is to enable scrub
  * to take those pages that are not errored from all the mirrors so that
  * the pages that are errored in the just handled mirror can be repaired.
  */
-static void scrub_recheck_block(struct btrfs_fs_info *fs_info,
-				struct scrub_block *sblock,
-				int retry_failed_mirror)
-{
-	int page_num;
+अटल व्योम scrub_recheck_block(काष्ठा btrfs_fs_info *fs_info,
+				काष्ठा scrub_block *sblock,
+				पूर्णांक retry_failed_mirror)
+अणु
+	पूर्णांक page_num;
 
 	sblock->no_io_error_seen = 1;
 
-	/* short cut for raid56 */
-	if (!retry_failed_mirror && scrub_is_page_on_raid56(sblock->pagev[0]))
-		return scrub_recheck_block_on_raid56(fs_info, sblock);
+	/* लघु cut क्रम raid56 */
+	अगर (!retry_failed_mirror && scrub_is_page_on_raid56(sblock->pagev[0]))
+		वापस scrub_recheck_block_on_raid56(fs_info, sblock);
 
-	for (page_num = 0; page_num < sblock->page_count; page_num++) {
-		struct bio *bio;
-		struct scrub_page *spage = sblock->pagev[page_num];
+	क्रम (page_num = 0; page_num < sblock->page_count; page_num++) अणु
+		काष्ठा bio *bio;
+		काष्ठा scrub_page *spage = sblock->pagev[page_num];
 
-		if (spage->dev->bdev == NULL) {
+		अगर (spage->dev->bdev == शून्य) अणु
 			spage->io_error = 1;
 			sblock->no_io_error_seen = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		WARN_ON(!spage->page);
 		bio = btrfs_io_bio_alloc(1);
@@ -1484,79 +1485,79 @@ static void scrub_recheck_block(struct btrfs_fs_info *fs_info,
 		bio->bi_iter.bi_sector = spage->physical >> 9;
 		bio->bi_opf = REQ_OP_READ;
 
-		if (btrfsic_submit_bio_wait(bio)) {
+		अगर (btrfsic_submit_bio_रुको(bio)) अणु
 			spage->io_error = 1;
 			sblock->no_io_error_seen = 0;
-		}
+		पूर्ण
 
 		bio_put(bio);
-	}
+	पूर्ण
 
-	if (sblock->no_io_error_seen)
+	अगर (sblock->no_io_error_seen)
 		scrub_recheck_block_checksum(sblock);
-}
+पूर्ण
 
-static inline int scrub_check_fsid(u8 fsid[],
-				   struct scrub_page *spage)
-{
-	struct btrfs_fs_devices *fs_devices = spage->dev->fs_devices;
-	int ret;
+अटल अंतरभूत पूर्णांक scrub_check_fsid(u8 fsid[],
+				   काष्ठा scrub_page *spage)
+अणु
+	काष्ठा btrfs_fs_devices *fs_devices = spage->dev->fs_devices;
+	पूर्णांक ret;
 
-	ret = memcmp(fsid, fs_devices->fsid, BTRFS_FSID_SIZE);
-	return !ret;
-}
+	ret = स_भेद(fsid, fs_devices->fsid, BTRFS_FSID_SIZE);
+	वापस !ret;
+पूर्ण
 
-static void scrub_recheck_block_checksum(struct scrub_block *sblock)
-{
+अटल व्योम scrub_recheck_block_checksum(काष्ठा scrub_block *sblock)
+अणु
 	sblock->header_error = 0;
 	sblock->checksum_error = 0;
 	sblock->generation_error = 0;
 
-	if (sblock->pagev[0]->flags & BTRFS_EXTENT_FLAG_DATA)
+	अगर (sblock->pagev[0]->flags & BTRFS_EXTENT_FLAG_DATA)
 		scrub_checksum_data(sblock);
-	else
+	अन्यथा
 		scrub_checksum_tree_block(sblock);
-}
+पूर्ण
 
-static int scrub_repair_block_from_good_copy(struct scrub_block *sblock_bad,
-					     struct scrub_block *sblock_good)
-{
-	int page_num;
-	int ret = 0;
+अटल पूर्णांक scrub_repair_block_from_good_copy(काष्ठा scrub_block *sblock_bad,
+					     काष्ठा scrub_block *sblock_good)
+अणु
+	पूर्णांक page_num;
+	पूर्णांक ret = 0;
 
-	for (page_num = 0; page_num < sblock_bad->page_count; page_num++) {
-		int ret_sub;
+	क्रम (page_num = 0; page_num < sblock_bad->page_count; page_num++) अणु
+		पूर्णांक ret_sub;
 
 		ret_sub = scrub_repair_page_from_good_copy(sblock_bad,
 							   sblock_good,
 							   page_num, 1);
-		if (ret_sub)
+		अगर (ret_sub)
 			ret = ret_sub;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scrub_repair_page_from_good_copy(struct scrub_block *sblock_bad,
-					    struct scrub_block *sblock_good,
-					    int page_num, int force_write)
-{
-	struct scrub_page *spage_bad = sblock_bad->pagev[page_num];
-	struct scrub_page *spage_good = sblock_good->pagev[page_num];
-	struct btrfs_fs_info *fs_info = sblock_bad->sctx->fs_info;
+अटल पूर्णांक scrub_repair_page_from_good_copy(काष्ठा scrub_block *sblock_bad,
+					    काष्ठा scrub_block *sblock_good,
+					    पूर्णांक page_num, पूर्णांक क्रमce_ग_लिखो)
+अणु
+	काष्ठा scrub_page *spage_bad = sblock_bad->pagev[page_num];
+	काष्ठा scrub_page *spage_good = sblock_good->pagev[page_num];
+	काष्ठा btrfs_fs_info *fs_info = sblock_bad->sctx->fs_info;
 
-	BUG_ON(spage_bad->page == NULL);
-	BUG_ON(spage_good->page == NULL);
-	if (force_write || sblock_bad->header_error ||
-	    sblock_bad->checksum_error || spage_bad->io_error) {
-		struct bio *bio;
-		int ret;
+	BUG_ON(spage_bad->page == शून्य);
+	BUG_ON(spage_good->page == शून्य);
+	अगर (क्रमce_ग_लिखो || sblock_bad->header_error ||
+	    sblock_bad->checksum_error || spage_bad->io_error) अणु
+		काष्ठा bio *bio;
+		पूर्णांक ret;
 
-		if (!spage_bad->dev->bdev) {
+		अगर (!spage_bad->dev->bdev) अणु
 			btrfs_warn_rl(fs_info,
 				"scrub_repair_page_from_good_copy(bdev == NULL) is unexpected");
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		bio = btrfs_io_bio_alloc(1);
 		bio_set_dev(bio, spage_bad->dev->bdev);
@@ -1564,224 +1565,224 @@ static int scrub_repair_page_from_good_copy(struct scrub_block *sblock_bad,
 		bio->bi_opf = REQ_OP_WRITE;
 
 		ret = bio_add_page(bio, spage_good->page, PAGE_SIZE, 0);
-		if (PAGE_SIZE != ret) {
+		अगर (PAGE_SIZE != ret) अणु
 			bio_put(bio);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		if (btrfsic_submit_bio_wait(bio)) {
-			btrfs_dev_stat_inc_and_print(spage_bad->dev,
+		अगर (btrfsic_submit_bio_रुको(bio)) अणु
+			btrfs_dev_stat_inc_and_prपूर्णांक(spage_bad->dev,
 				BTRFS_DEV_STAT_WRITE_ERRS);
-			atomic64_inc(&fs_info->dev_replace.num_write_errors);
+			atomic64_inc(&fs_info->dev_replace.num_ग_लिखो_errors);
 			bio_put(bio);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		bio_put(bio);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scrub_write_block_to_dev_replace(struct scrub_block *sblock)
-{
-	struct btrfs_fs_info *fs_info = sblock->sctx->fs_info;
-	int page_num;
+अटल व्योम scrub_ग_लिखो_block_to_dev_replace(काष्ठा scrub_block *sblock)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = sblock->sctx->fs_info;
+	पूर्णांक page_num;
 
 	/*
-	 * This block is used for the check of the parity on the source device,
-	 * so the data needn't be written into the destination device.
+	 * This block is used क्रम the check of the parity on the source device,
+	 * so the data needn't be written पूर्णांकo the destination device.
 	 */
-	if (sblock->sparity)
-		return;
+	अगर (sblock->sparity)
+		वापस;
 
-	for (page_num = 0; page_num < sblock->page_count; page_num++) {
-		int ret;
+	क्रम (page_num = 0; page_num < sblock->page_count; page_num++) अणु
+		पूर्णांक ret;
 
-		ret = scrub_write_page_to_dev_replace(sblock, page_num);
-		if (ret)
-			atomic64_inc(&fs_info->dev_replace.num_write_errors);
-	}
-}
+		ret = scrub_ग_लिखो_page_to_dev_replace(sblock, page_num);
+		अगर (ret)
+			atomic64_inc(&fs_info->dev_replace.num_ग_लिखो_errors);
+	पूर्ण
+पूर्ण
 
-static int scrub_write_page_to_dev_replace(struct scrub_block *sblock,
-					   int page_num)
-{
-	struct scrub_page *spage = sblock->pagev[page_num];
+अटल पूर्णांक scrub_ग_लिखो_page_to_dev_replace(काष्ठा scrub_block *sblock,
+					   पूर्णांक page_num)
+अणु
+	काष्ठा scrub_page *spage = sblock->pagev[page_num];
 
-	BUG_ON(spage->page == NULL);
-	if (spage->io_error)
+	BUG_ON(spage->page == शून्य);
+	अगर (spage->io_error)
 		clear_page(page_address(spage->page));
 
-	return scrub_add_page_to_wr_bio(sblock->sctx, spage);
-}
+	वापस scrub_add_page_to_wr_bio(sblock->sctx, spage);
+पूर्ण
 
-static int fill_writer_pointer_gap(struct scrub_ctx *sctx, u64 physical)
-{
-	int ret = 0;
+अटल पूर्णांक fill_ग_लिखोr_poपूर्णांकer_gap(काष्ठा scrub_ctx *sctx, u64 physical)
+अणु
+	पूर्णांक ret = 0;
 	u64 length;
 
-	if (!btrfs_is_zoned(sctx->fs_info))
-		return 0;
+	अगर (!btrfs_is_zoned(sctx->fs_info))
+		वापस 0;
 
-	if (!btrfs_dev_is_sequential(sctx->wr_tgtdev, physical))
-		return 0;
+	अगर (!btrfs_dev_is_sequential(sctx->wr_tgtdev, physical))
+		वापस 0;
 
-	if (sctx->write_pointer < physical) {
-		length = physical - sctx->write_pointer;
+	अगर (sctx->ग_लिखो_poपूर्णांकer < physical) अणु
+		length = physical - sctx->ग_लिखो_poपूर्णांकer;
 
 		ret = btrfs_zoned_issue_zeroout(sctx->wr_tgtdev,
-						sctx->write_pointer, length);
-		if (!ret)
-			sctx->write_pointer = physical;
-	}
-	return ret;
-}
+						sctx->ग_लिखो_poपूर्णांकer, length);
+		अगर (!ret)
+			sctx->ग_लिखो_poपूर्णांकer = physical;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int scrub_add_page_to_wr_bio(struct scrub_ctx *sctx,
-				    struct scrub_page *spage)
-{
-	struct scrub_bio *sbio;
-	int ret;
+अटल पूर्णांक scrub_add_page_to_wr_bio(काष्ठा scrub_ctx *sctx,
+				    काष्ठा scrub_page *spage)
+अणु
+	काष्ठा scrub_bio *sbio;
+	पूर्णांक ret;
 
 	mutex_lock(&sctx->wr_lock);
 again:
-	if (!sctx->wr_curr_bio) {
-		sctx->wr_curr_bio = kzalloc(sizeof(*sctx->wr_curr_bio),
+	अगर (!sctx->wr_curr_bio) अणु
+		sctx->wr_curr_bio = kzalloc(माप(*sctx->wr_curr_bio),
 					      GFP_KERNEL);
-		if (!sctx->wr_curr_bio) {
+		अगर (!sctx->wr_curr_bio) अणु
 			mutex_unlock(&sctx->wr_lock);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		sctx->wr_curr_bio->sctx = sctx;
 		sctx->wr_curr_bio->page_count = 0;
-	}
+	पूर्ण
 	sbio = sctx->wr_curr_bio;
-	if (sbio->page_count == 0) {
-		struct bio *bio;
+	अगर (sbio->page_count == 0) अणु
+		काष्ठा bio *bio;
 
-		ret = fill_writer_pointer_gap(sctx,
-					      spage->physical_for_dev_replace);
-		if (ret) {
+		ret = fill_ग_लिखोr_poपूर्णांकer_gap(sctx,
+					      spage->physical_क्रम_dev_replace);
+		अगर (ret) अणु
 			mutex_unlock(&sctx->wr_lock);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		sbio->physical = spage->physical_for_dev_replace;
+		sbio->physical = spage->physical_क्रम_dev_replace;
 		sbio->logical = spage->logical;
 		sbio->dev = sctx->wr_tgtdev;
 		bio = sbio->bio;
-		if (!bio) {
+		अगर (!bio) अणु
 			bio = btrfs_io_bio_alloc(sctx->pages_per_wr_bio);
 			sbio->bio = bio;
-		}
+		पूर्ण
 
-		bio->bi_private = sbio;
+		bio->bi_निजी = sbio;
 		bio->bi_end_io = scrub_wr_bio_end_io;
 		bio_set_dev(bio, sbio->dev->bdev);
 		bio->bi_iter.bi_sector = sbio->physical >> 9;
 		bio->bi_opf = REQ_OP_WRITE;
 		sbio->status = 0;
-	} else if (sbio->physical + sbio->page_count * PAGE_SIZE !=
-		   spage->physical_for_dev_replace ||
+	पूर्ण अन्यथा अगर (sbio->physical + sbio->page_count * PAGE_SIZE !=
+		   spage->physical_क्रम_dev_replace ||
 		   sbio->logical + sbio->page_count * PAGE_SIZE !=
-		   spage->logical) {
+		   spage->logical) अणु
 		scrub_wr_submit(sctx);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
 	ret = bio_add_page(sbio->bio, spage->page, PAGE_SIZE, 0);
-	if (ret != PAGE_SIZE) {
-		if (sbio->page_count < 1) {
+	अगर (ret != PAGE_SIZE) अणु
+		अगर (sbio->page_count < 1) अणु
 			bio_put(sbio->bio);
-			sbio->bio = NULL;
+			sbio->bio = शून्य;
 			mutex_unlock(&sctx->wr_lock);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		scrub_wr_submit(sctx);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
 	sbio->pagev[sbio->page_count] = spage;
 	scrub_page_get(spage);
 	sbio->page_count++;
-	if (sbio->page_count == sctx->pages_per_wr_bio)
+	अगर (sbio->page_count == sctx->pages_per_wr_bio)
 		scrub_wr_submit(sctx);
 	mutex_unlock(&sctx->wr_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scrub_wr_submit(struct scrub_ctx *sctx)
-{
-	struct scrub_bio *sbio;
+अटल व्योम scrub_wr_submit(काष्ठा scrub_ctx *sctx)
+अणु
+	काष्ठा scrub_bio *sbio;
 
-	if (!sctx->wr_curr_bio)
-		return;
+	अगर (!sctx->wr_curr_bio)
+		वापस;
 
 	sbio = sctx->wr_curr_bio;
-	sctx->wr_curr_bio = NULL;
+	sctx->wr_curr_bio = शून्य;
 	WARN_ON(!sbio->bio->bi_bdev);
 	scrub_pending_bio_inc(sctx);
-	/* process all writes in a single worker thread. Then the block layer
-	 * orders the requests before sending them to the driver which
-	 * doubled the write performance on spinning disks when measured
+	/* process all ग_लिखोs in a single worker thपढ़ो. Then the block layer
+	 * orders the requests beक्रमe sending them to the driver which
+	 * द्विगुनd the ग_लिखो perक्रमmance on spinning disks when measured
 	 * with Linux 3.5 */
 	btrfsic_submit_bio(sbio->bio);
 
-	if (btrfs_is_zoned(sctx->fs_info))
-		sctx->write_pointer = sbio->physical + sbio->page_count * PAGE_SIZE;
-}
+	अगर (btrfs_is_zoned(sctx->fs_info))
+		sctx->ग_लिखो_poपूर्णांकer = sbio->physical + sbio->page_count * PAGE_SIZE;
+पूर्ण
 
-static void scrub_wr_bio_end_io(struct bio *bio)
-{
-	struct scrub_bio *sbio = bio->bi_private;
-	struct btrfs_fs_info *fs_info = sbio->dev->fs_info;
+अटल व्योम scrub_wr_bio_end_io(काष्ठा bio *bio)
+अणु
+	काष्ठा scrub_bio *sbio = bio->bi_निजी;
+	काष्ठा btrfs_fs_info *fs_info = sbio->dev->fs_info;
 
 	sbio->status = bio->bi_status;
 	sbio->bio = bio;
 
-	btrfs_init_work(&sbio->work, scrub_wr_bio_end_io_worker, NULL, NULL);
+	btrfs_init_work(&sbio->work, scrub_wr_bio_end_io_worker, शून्य, शून्य);
 	btrfs_queue_work(fs_info->scrub_wr_completion_workers, &sbio->work);
-}
+पूर्ण
 
-static void scrub_wr_bio_end_io_worker(struct btrfs_work *work)
-{
-	struct scrub_bio *sbio = container_of(work, struct scrub_bio, work);
-	struct scrub_ctx *sctx = sbio->sctx;
-	int i;
+अटल व्योम scrub_wr_bio_end_io_worker(काष्ठा btrfs_work *work)
+अणु
+	काष्ठा scrub_bio *sbio = container_of(work, काष्ठा scrub_bio, work);
+	काष्ठा scrub_ctx *sctx = sbio->sctx;
+	पूर्णांक i;
 
 	WARN_ON(sbio->page_count > SCRUB_PAGES_PER_WR_BIO);
-	if (sbio->status) {
-		struct btrfs_dev_replace *dev_replace =
+	अगर (sbio->status) अणु
+		काष्ठा btrfs_dev_replace *dev_replace =
 			&sbio->sctx->fs_info->dev_replace;
 
-		for (i = 0; i < sbio->page_count; i++) {
-			struct scrub_page *spage = sbio->pagev[i];
+		क्रम (i = 0; i < sbio->page_count; i++) अणु
+			काष्ठा scrub_page *spage = sbio->pagev[i];
 
 			spage->io_error = 1;
-			atomic64_inc(&dev_replace->num_write_errors);
-		}
-	}
+			atomic64_inc(&dev_replace->num_ग_लिखो_errors);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < sbio->page_count; i++)
+	क्रम (i = 0; i < sbio->page_count; i++)
 		scrub_page_put(sbio->pagev[i]);
 
 	bio_put(sbio->bio);
-	kfree(sbio);
+	kमुक्त(sbio);
 	scrub_pending_bio_dec(sctx);
-}
+पूर्ण
 
-static int scrub_checksum(struct scrub_block *sblock)
-{
+अटल पूर्णांक scrub_checksum(काष्ठा scrub_block *sblock)
+अणु
 	u64 flags;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * No need to initialize these stats currently,
-	 * because this function only use return value
+	 * because this function only use वापस value
 	 * instead of these stats value.
 	 *
-	 * Todo:
+	 * Toकरो:
 	 * always use stats
 	 */
 	sblock->header_error = 0;
@@ -1791,33 +1792,33 @@ static int scrub_checksum(struct scrub_block *sblock)
 	WARN_ON(sblock->page_count < 1);
 	flags = sblock->pagev[0]->flags;
 	ret = 0;
-	if (flags & BTRFS_EXTENT_FLAG_DATA)
+	अगर (flags & BTRFS_EXTENT_FLAG_DATA)
 		ret = scrub_checksum_data(sblock);
-	else if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)
+	अन्यथा अगर (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)
 		ret = scrub_checksum_tree_block(sblock);
-	else if (flags & BTRFS_EXTENT_FLAG_SUPER)
-		(void)scrub_checksum_super(sblock);
-	else
+	अन्यथा अगर (flags & BTRFS_EXTENT_FLAG_SUPER)
+		(व्योम)scrub_checksum_super(sblock);
+	अन्यथा
 		WARN_ON(1);
-	if (ret)
+	अगर (ret)
 		scrub_handle_errored_block(sblock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scrub_checksum_data(struct scrub_block *sblock)
-{
-	struct scrub_ctx *sctx = sblock->sctx;
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
+अटल पूर्णांक scrub_checksum_data(काष्ठा scrub_block *sblock)
+अणु
+	काष्ठा scrub_ctx *sctx = sblock->sctx;
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
 	u8 csum[BTRFS_CSUM_SIZE];
-	struct scrub_page *spage;
-	char *kaddr;
+	काष्ठा scrub_page *spage;
+	अक्षर *kaddr;
 
 	BUG_ON(sblock->page_count < 1);
 	spage = sblock->pagev[0];
-	if (!spage->have_csum)
-		return 0;
+	अगर (!spage->have_csum)
+		वापस 0;
 
 	kaddr = page_address(spage->page);
 
@@ -1825,34 +1826,34 @@ static int scrub_checksum_data(struct scrub_block *sblock)
 	crypto_shash_init(shash);
 
 	/*
-	 * In scrub_pages() and scrub_pages_for_parity() we ensure each spage
+	 * In scrub_pages() and scrub_pages_क्रम_parity() we ensure each spage
 	 * only contains one sector of data.
 	 */
 	crypto_shash_digest(shash, kaddr, fs_info->sectorsize, csum);
 
-	if (memcmp(csum, spage->csum, fs_info->csum_size))
+	अगर (स_भेद(csum, spage->csum, fs_info->csum_size))
 		sblock->checksum_error = 1;
-	return sblock->checksum_error;
-}
+	वापस sblock->checksum_error;
+पूर्ण
 
-static int scrub_checksum_tree_block(struct scrub_block *sblock)
-{
-	struct scrub_ctx *sctx = sblock->sctx;
-	struct btrfs_header *h;
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
+अटल पूर्णांक scrub_checksum_tree_block(काष्ठा scrub_block *sblock)
+अणु
+	काष्ठा scrub_ctx *sctx = sblock->sctx;
+	काष्ठा btrfs_header *h;
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
 	u8 calculated_csum[BTRFS_CSUM_SIZE];
 	u8 on_disk_csum[BTRFS_CSUM_SIZE];
 	/*
-	 * This is done in sectorsize steps even for metadata as there's a
-	 * constraint for nodesize to be aligned to sectorsize. This will need
-	 * to change so we don't misuse data and metadata units like that.
+	 * This is करोne in sectorsize steps even क्रम metadata as there's a
+	 * स्थिरraपूर्णांक क्रम nodesize to be aligned to sectorsize. This will need
+	 * to change so we करोn't misuse data and metadata units like that.
 	 */
-	const u32 sectorsize = sctx->fs_info->sectorsize;
-	const int num_sectors = fs_info->nodesize >> fs_info->sectorsize_bits;
-	int i;
-	struct scrub_page *spage;
-	char *kaddr;
+	स्थिर u32 sectorsize = sctx->fs_info->sectorsize;
+	स्थिर पूर्णांक num_sectors = fs_info->nodesize >> fs_info->sectorsize_bits;
+	पूर्णांक i;
+	काष्ठा scrub_page *spage;
+	अक्षर *kaddr;
 
 	BUG_ON(sblock->page_count < 1);
 
@@ -1861,26 +1862,26 @@ static int scrub_checksum_tree_block(struct scrub_block *sblock)
 
 	spage = sblock->pagev[0];
 	kaddr = page_address(spage->page);
-	h = (struct btrfs_header *)kaddr;
-	memcpy(on_disk_csum, h->csum, sctx->fs_info->csum_size);
+	h = (काष्ठा btrfs_header *)kaddr;
+	स_नकल(on_disk_csum, h->csum, sctx->fs_info->csum_size);
 
 	/*
-	 * we don't use the getter functions here, as we
-	 * a) don't have an extent buffer and
-	 * b) the page is already kmapped
+	 * we करोn't use the getter functions here, as we
+	 * a) करोn't have an extent buffer and
+	 * b) the page is alपढ़ोy kmapped
 	 */
-	if (spage->logical != btrfs_stack_header_bytenr(h))
+	अगर (spage->logical != btrfs_stack_header_bytenr(h))
 		sblock->header_error = 1;
 
-	if (spage->generation != btrfs_stack_header_generation(h)) {
+	अगर (spage->generation != btrfs_stack_header_generation(h)) अणु
 		sblock->header_error = 1;
 		sblock->generation_error = 1;
-	}
+	पूर्ण
 
-	if (!scrub_check_fsid(h->fsid, spage))
+	अगर (!scrub_check_fsid(h->fsid, spage))
 		sblock->header_error = 1;
 
-	if (memcmp(h->chunk_tree_uuid, fs_info->chunk_tree_uuid,
+	अगर (स_भेद(h->chunk_tree_uuid, fs_info->chunk_tree_uuid,
 		   BTRFS_UUID_SIZE))
 		sblock->header_error = 1;
 
@@ -1889,42 +1890,42 @@ static int scrub_checksum_tree_block(struct scrub_block *sblock)
 	crypto_shash_update(shash, kaddr + BTRFS_CSUM_SIZE,
 			    sectorsize - BTRFS_CSUM_SIZE);
 
-	for (i = 1; i < num_sectors; i++) {
+	क्रम (i = 1; i < num_sectors; i++) अणु
 		kaddr = page_address(sblock->pagev[i]->page);
 		crypto_shash_update(shash, kaddr, sectorsize);
-	}
+	पूर्ण
 
 	crypto_shash_final(shash, calculated_csum);
-	if (memcmp(calculated_csum, on_disk_csum, sctx->fs_info->csum_size))
+	अगर (स_भेद(calculated_csum, on_disk_csum, sctx->fs_info->csum_size))
 		sblock->checksum_error = 1;
 
-	return sblock->header_error || sblock->checksum_error;
-}
+	वापस sblock->header_error || sblock->checksum_error;
+पूर्ण
 
-static int scrub_checksum_super(struct scrub_block *sblock)
-{
-	struct btrfs_super_block *s;
-	struct scrub_ctx *sctx = sblock->sctx;
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
+अटल पूर्णांक scrub_checksum_super(काष्ठा scrub_block *sblock)
+अणु
+	काष्ठा btrfs_super_block *s;
+	काष्ठा scrub_ctx *sctx = sblock->sctx;
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
 	u8 calculated_csum[BTRFS_CSUM_SIZE];
-	struct scrub_page *spage;
-	char *kaddr;
-	int fail_gen = 0;
-	int fail_cor = 0;
+	काष्ठा scrub_page *spage;
+	अक्षर *kaddr;
+	पूर्णांक fail_gen = 0;
+	पूर्णांक fail_cor = 0;
 
 	BUG_ON(sblock->page_count < 1);
 	spage = sblock->pagev[0];
 	kaddr = page_address(spage->page);
-	s = (struct btrfs_super_block *)kaddr;
+	s = (काष्ठा btrfs_super_block *)kaddr;
 
-	if (spage->logical != btrfs_super_bytenr(s))
+	अगर (spage->logical != btrfs_super_bytenr(s))
 		++fail_cor;
 
-	if (spage->generation != btrfs_super_generation(s))
+	अगर (spage->generation != btrfs_super_generation(s))
 		++fail_gen;
 
-	if (!scrub_check_fsid(s->fsid, spage))
+	अगर (!scrub_check_fsid(s->fsid, spage))
 		++fail_cor;
 
 	shash->tfm = fs_info->csum_shash;
@@ -1932,252 +1933,252 @@ static int scrub_checksum_super(struct scrub_block *sblock)
 	crypto_shash_digest(shash, kaddr + BTRFS_CSUM_SIZE,
 			BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE, calculated_csum);
 
-	if (memcmp(calculated_csum, s->csum, sctx->fs_info->csum_size))
+	अगर (स_भेद(calculated_csum, s->csum, sctx->fs_info->csum_size))
 		++fail_cor;
 
-	if (fail_cor + fail_gen) {
+	अगर (fail_cor + fail_gen) अणु
 		/*
-		 * if we find an error in a super block, we just report it.
+		 * अगर we find an error in a super block, we just report it.
 		 * They will get written with the next transaction commit
 		 * anyway
 		 */
 		spin_lock(&sctx->stat_lock);
 		++sctx->stat.super_errors;
 		spin_unlock(&sctx->stat_lock);
-		if (fail_cor)
-			btrfs_dev_stat_inc_and_print(spage->dev,
+		अगर (fail_cor)
+			btrfs_dev_stat_inc_and_prपूर्णांक(spage->dev,
 				BTRFS_DEV_STAT_CORRUPTION_ERRS);
-		else
-			btrfs_dev_stat_inc_and_print(spage->dev,
+		अन्यथा
+			btrfs_dev_stat_inc_and_prपूर्णांक(spage->dev,
 				BTRFS_DEV_STAT_GENERATION_ERRS);
-	}
+	पूर्ण
 
-	return fail_cor + fail_gen;
-}
+	वापस fail_cor + fail_gen;
+पूर्ण
 
-static void scrub_block_get(struct scrub_block *sblock)
-{
+अटल व्योम scrub_block_get(काष्ठा scrub_block *sblock)
+अणु
 	refcount_inc(&sblock->refs);
-}
+पूर्ण
 
-static void scrub_block_put(struct scrub_block *sblock)
-{
-	if (refcount_dec_and_test(&sblock->refs)) {
-		int i;
+अटल व्योम scrub_block_put(काष्ठा scrub_block *sblock)
+अणु
+	अगर (refcount_dec_and_test(&sblock->refs)) अणु
+		पूर्णांक i;
 
-		if (sblock->sparity)
+		अगर (sblock->sparity)
 			scrub_parity_put(sblock->sparity);
 
-		for (i = 0; i < sblock->page_count; i++)
+		क्रम (i = 0; i < sblock->page_count; i++)
 			scrub_page_put(sblock->pagev[i]);
-		kfree(sblock);
-	}
-}
+		kमुक्त(sblock);
+	पूर्ण
+पूर्ण
 
-static void scrub_page_get(struct scrub_page *spage)
-{
+अटल व्योम scrub_page_get(काष्ठा scrub_page *spage)
+अणु
 	atomic_inc(&spage->refs);
-}
+पूर्ण
 
-static void scrub_page_put(struct scrub_page *spage)
-{
-	if (atomic_dec_and_test(&spage->refs)) {
-		if (spage->page)
-			__free_page(spage->page);
-		kfree(spage);
-	}
-}
+अटल व्योम scrub_page_put(काष्ठा scrub_page *spage)
+अणु
+	अगर (atomic_dec_and_test(&spage->refs)) अणु
+		अगर (spage->page)
+			__मुक्त_page(spage->page);
+		kमुक्त(spage);
+	पूर्ण
+पूर्ण
 
-static void scrub_submit(struct scrub_ctx *sctx)
-{
-	struct scrub_bio *sbio;
+अटल व्योम scrub_submit(काष्ठा scrub_ctx *sctx)
+अणु
+	काष्ठा scrub_bio *sbio;
 
-	if (sctx->curr == -1)
-		return;
+	अगर (sctx->curr == -1)
+		वापस;
 
 	sbio = sctx->bios[sctx->curr];
 	sctx->curr = -1;
 	scrub_pending_bio_inc(sctx);
 	btrfsic_submit_bio(sbio->bio);
-}
+पूर्ण
 
-static int scrub_add_page_to_rd_bio(struct scrub_ctx *sctx,
-				    struct scrub_page *spage)
-{
-	struct scrub_block *sblock = spage->sblock;
-	struct scrub_bio *sbio;
-	int ret;
+अटल पूर्णांक scrub_add_page_to_rd_bio(काष्ठा scrub_ctx *sctx,
+				    काष्ठा scrub_page *spage)
+अणु
+	काष्ठा scrub_block *sblock = spage->sblock;
+	काष्ठा scrub_bio *sbio;
+	पूर्णांक ret;
 
 again:
 	/*
-	 * grab a fresh bio or wait for one to become available
+	 * grab a fresh bio or रुको क्रम one to become available
 	 */
-	while (sctx->curr == -1) {
+	जबतक (sctx->curr == -1) अणु
 		spin_lock(&sctx->list_lock);
-		sctx->curr = sctx->first_free;
-		if (sctx->curr != -1) {
-			sctx->first_free = sctx->bios[sctx->curr]->next_free;
-			sctx->bios[sctx->curr]->next_free = -1;
+		sctx->curr = sctx->first_मुक्त;
+		अगर (sctx->curr != -1) अणु
+			sctx->first_मुक्त = sctx->bios[sctx->curr]->next_मुक्त;
+			sctx->bios[sctx->curr]->next_मुक्त = -1;
 			sctx->bios[sctx->curr]->page_count = 0;
 			spin_unlock(&sctx->list_lock);
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_unlock(&sctx->list_lock);
-			wait_event(sctx->list_wait, sctx->first_free != -1);
-		}
-	}
+			रुको_event(sctx->list_रुको, sctx->first_मुक्त != -1);
+		पूर्ण
+	पूर्ण
 	sbio = sctx->bios[sctx->curr];
-	if (sbio->page_count == 0) {
-		struct bio *bio;
+	अगर (sbio->page_count == 0) अणु
+		काष्ठा bio *bio;
 
 		sbio->physical = spage->physical;
 		sbio->logical = spage->logical;
 		sbio->dev = spage->dev;
 		bio = sbio->bio;
-		if (!bio) {
+		अगर (!bio) अणु
 			bio = btrfs_io_bio_alloc(sctx->pages_per_rd_bio);
 			sbio->bio = bio;
-		}
+		पूर्ण
 
-		bio->bi_private = sbio;
+		bio->bi_निजी = sbio;
 		bio->bi_end_io = scrub_bio_end_io;
 		bio_set_dev(bio, sbio->dev->bdev);
 		bio->bi_iter.bi_sector = sbio->physical >> 9;
 		bio->bi_opf = REQ_OP_READ;
 		sbio->status = 0;
-	} else if (sbio->physical + sbio->page_count * PAGE_SIZE !=
+	पूर्ण अन्यथा अगर (sbio->physical + sbio->page_count * PAGE_SIZE !=
 		   spage->physical ||
 		   sbio->logical + sbio->page_count * PAGE_SIZE !=
 		   spage->logical ||
-		   sbio->dev != spage->dev) {
+		   sbio->dev != spage->dev) अणु
 		scrub_submit(sctx);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
 	sbio->pagev[sbio->page_count] = spage;
 	ret = bio_add_page(sbio->bio, spage->page, PAGE_SIZE, 0);
-	if (ret != PAGE_SIZE) {
-		if (sbio->page_count < 1) {
+	अगर (ret != PAGE_SIZE) अणु
+		अगर (sbio->page_count < 1) अणु
 			bio_put(sbio->bio);
-			sbio->bio = NULL;
-			return -EIO;
-		}
+			sbio->bio = शून्य;
+			वापस -EIO;
+		पूर्ण
 		scrub_submit(sctx);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
-	scrub_block_get(sblock); /* one for the page added to the bio */
+	scrub_block_get(sblock); /* one क्रम the page added to the bio */
 	atomic_inc(&sblock->outstanding_pages);
 	sbio->page_count++;
-	if (sbio->page_count == sctx->pages_per_rd_bio)
+	अगर (sbio->page_count == sctx->pages_per_rd_bio)
 		scrub_submit(sctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scrub_missing_raid56_end_io(struct bio *bio)
-{
-	struct scrub_block *sblock = bio->bi_private;
-	struct btrfs_fs_info *fs_info = sblock->sctx->fs_info;
+अटल व्योम scrub_missing_raid56_end_io(काष्ठा bio *bio)
+अणु
+	काष्ठा scrub_block *sblock = bio->bi_निजी;
+	काष्ठा btrfs_fs_info *fs_info = sblock->sctx->fs_info;
 
-	if (bio->bi_status)
+	अगर (bio->bi_status)
 		sblock->no_io_error_seen = 0;
 
 	bio_put(bio);
 
 	btrfs_queue_work(fs_info->scrub_workers, &sblock->work);
-}
+पूर्ण
 
-static void scrub_missing_raid56_worker(struct btrfs_work *work)
-{
-	struct scrub_block *sblock = container_of(work, struct scrub_block, work);
-	struct scrub_ctx *sctx = sblock->sctx;
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
+अटल व्योम scrub_missing_raid56_worker(काष्ठा btrfs_work *work)
+अणु
+	काष्ठा scrub_block *sblock = container_of(work, काष्ठा scrub_block, work);
+	काष्ठा scrub_ctx *sctx = sblock->sctx;
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
 	u64 logical;
-	struct btrfs_device *dev;
+	काष्ठा btrfs_device *dev;
 
 	logical = sblock->pagev[0]->logical;
 	dev = sblock->pagev[0]->dev;
 
-	if (sblock->no_io_error_seen)
+	अगर (sblock->no_io_error_seen)
 		scrub_recheck_block_checksum(sblock);
 
-	if (!sblock->no_io_error_seen) {
+	अगर (!sblock->no_io_error_seen) अणु
 		spin_lock(&sctx->stat_lock);
-		sctx->stat.read_errors++;
+		sctx->stat.पढ़ो_errors++;
 		spin_unlock(&sctx->stat_lock);
 		btrfs_err_rl_in_rcu(fs_info,
 			"IO error rebuilding logical %llu for dev %s",
 			logical, rcu_str_deref(dev->name));
-	} else if (sblock->header_error || sblock->checksum_error) {
+	पूर्ण अन्यथा अगर (sblock->header_error || sblock->checksum_error) अणु
 		spin_lock(&sctx->stat_lock);
 		sctx->stat.uncorrectable_errors++;
 		spin_unlock(&sctx->stat_lock);
 		btrfs_err_rl_in_rcu(fs_info,
 			"failed to rebuild valid logical %llu for dev %s",
 			logical, rcu_str_deref(dev->name));
-	} else {
-		scrub_write_block_to_dev_replace(sblock);
-	}
+	पूर्ण अन्यथा अणु
+		scrub_ग_लिखो_block_to_dev_replace(sblock);
+	पूर्ण
 
-	if (sctx->is_dev_replace && sctx->flush_all_writes) {
+	अगर (sctx->is_dev_replace && sctx->flush_all_ग_लिखोs) अणु
 		mutex_lock(&sctx->wr_lock);
 		scrub_wr_submit(sctx);
 		mutex_unlock(&sctx->wr_lock);
-	}
+	पूर्ण
 
 	scrub_block_put(sblock);
 	scrub_pending_bio_dec(sctx);
-}
+पूर्ण
 
-static void scrub_missing_raid56_pages(struct scrub_block *sblock)
-{
-	struct scrub_ctx *sctx = sblock->sctx;
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
+अटल व्योम scrub_missing_raid56_pages(काष्ठा scrub_block *sblock)
+अणु
+	काष्ठा scrub_ctx *sctx = sblock->sctx;
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
 	u64 length = sblock->page_count * PAGE_SIZE;
 	u64 logical = sblock->pagev[0]->logical;
-	struct btrfs_bio *bbio = NULL;
-	struct bio *bio;
-	struct btrfs_raid_bio *rbio;
-	int ret;
-	int i;
+	काष्ठा btrfs_bio *bbio = शून्य;
+	काष्ठा bio *bio;
+	काष्ठा btrfs_raid_bio *rbio;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	btrfs_bio_counter_inc_blocked(fs_info);
 	ret = btrfs_map_sblock(fs_info, BTRFS_MAP_GET_READ_MIRRORS, logical,
 			&length, &bbio);
-	if (ret || !bbio || !bbio->raid_map)
-		goto bbio_out;
+	अगर (ret || !bbio || !bbio->raid_map)
+		जाओ bbio_out;
 
-	if (WARN_ON(!sctx->is_dev_replace ||
-		    !(bbio->map_type & BTRFS_BLOCK_GROUP_RAID56_MASK))) {
+	अगर (WARN_ON(!sctx->is_dev_replace ||
+		    !(bbio->map_type & BTRFS_BLOCK_GROUP_RAID56_MASK))) अणु
 		/*
-		 * We shouldn't be scrubbing a missing device. Even for dev
-		 * replace, we should only get here for RAID 5/6. We either
-		 * managed to mount something with no mirrors remaining or
+		 * We shouldn't be scrubbing a missing device. Even क्रम dev
+		 * replace, we should only get here क्रम RAID 5/6. We either
+		 * managed to mount something with no mirrors reमुख्यing or
 		 * there's a bug in scrub_remap_extent()/btrfs_map_block().
 		 */
-		goto bbio_out;
-	}
+		जाओ bbio_out;
+	पूर्ण
 
 	bio = btrfs_io_bio_alloc(0);
 	bio->bi_iter.bi_sector = logical >> 9;
-	bio->bi_private = sblock;
+	bio->bi_निजी = sblock;
 	bio->bi_end_io = scrub_missing_raid56_end_io;
 
 	rbio = raid56_alloc_missing_rbio(fs_info, bio, bbio, length);
-	if (!rbio)
-		goto rbio_out;
+	अगर (!rbio)
+		जाओ rbio_out;
 
-	for (i = 0; i < sblock->page_count; i++) {
-		struct scrub_page *spage = sblock->pagev[i];
+	क्रम (i = 0; i < sblock->page_count; i++) अणु
+		काष्ठा scrub_page *spage = sblock->pagev[i];
 
 		raid56_add_scrub_pages(rbio, spage->page, spage->logical);
-	}
+	पूर्ण
 
-	btrfs_init_work(&sblock->work, scrub_missing_raid56_worker, NULL, NULL);
+	btrfs_init_work(&sblock->work, scrub_missing_raid56_worker, शून्य, शून्य);
 	scrub_block_get(sblock);
 	scrub_pending_bio_inc(sctx);
 	raid56_submit_missing_rbio(rbio);
-	return;
+	वापस;
 
 rbio_out:
 	bio_put(bio);
@@ -2185,51 +2186,51 @@ bbio_out:
 	btrfs_bio_counter_dec(fs_info);
 	btrfs_put_bbio(bbio);
 	spin_lock(&sctx->stat_lock);
-	sctx->stat.malloc_errors++;
+	sctx->stat.दो_स्मृति_errors++;
 	spin_unlock(&sctx->stat_lock);
-}
+पूर्ण
 
-static int scrub_pages(struct scrub_ctx *sctx, u64 logical, u32 len,
-		       u64 physical, struct btrfs_device *dev, u64 flags,
-		       u64 gen, int mirror_num, u8 *csum,
-		       u64 physical_for_dev_replace)
-{
-	struct scrub_block *sblock;
-	const u32 sectorsize = sctx->fs_info->sectorsize;
-	int index;
+अटल पूर्णांक scrub_pages(काष्ठा scrub_ctx *sctx, u64 logical, u32 len,
+		       u64 physical, काष्ठा btrfs_device *dev, u64 flags,
+		       u64 gen, पूर्णांक mirror_num, u8 *csum,
+		       u64 physical_क्रम_dev_replace)
+अणु
+	काष्ठा scrub_block *sblock;
+	स्थिर u32 sectorsize = sctx->fs_info->sectorsize;
+	पूर्णांक index;
 
-	sblock = kzalloc(sizeof(*sblock), GFP_KERNEL);
-	if (!sblock) {
+	sblock = kzalloc(माप(*sblock), GFP_KERNEL);
+	अगर (!sblock) अणु
 		spin_lock(&sctx->stat_lock);
-		sctx->stat.malloc_errors++;
+		sctx->stat.दो_स्मृति_errors++;
 		spin_unlock(&sctx->stat_lock);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* one ref inside this function, plus one for each page added to
+	/* one ref inside this function, plus one क्रम each page added to
 	 * a bio later on */
 	refcount_set(&sblock->refs, 1);
 	sblock->sctx = sctx;
 	sblock->no_io_error_seen = 1;
 
-	for (index = 0; len > 0; index++) {
-		struct scrub_page *spage;
+	क्रम (index = 0; len > 0; index++) अणु
+		काष्ठा scrub_page *spage;
 		/*
-		 * Here we will allocate one page for one sector to scrub.
-		 * This is fine if PAGE_SIZE == sectorsize, but will cost
-		 * more memory for PAGE_SIZE > sectorsize case.
+		 * Here we will allocate one page क्रम one sector to scrub.
+		 * This is fine अगर PAGE_SIZE == sectorsize, but will cost
+		 * more memory क्रम PAGE_SIZE > sectorsize हाल.
 		 */
 		u32 l = min(sectorsize, len);
 
-		spage = kzalloc(sizeof(*spage), GFP_KERNEL);
-		if (!spage) {
+		spage = kzalloc(माप(*spage), GFP_KERNEL);
+		अगर (!spage) अणु
 leave_nomem:
 			spin_lock(&sctx->stat_lock);
-			sctx->stat.malloc_errors++;
+			sctx->stat.दो_स्मृति_errors++;
 			spin_unlock(&sctx->stat_lock);
 			scrub_block_put(sblock);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		BUG_ON(index >= SCRUB_MAX_PAGES_PER_BLOCK);
 		scrub_page_get(spage);
 		sblock->pagev[index] = spage;
@@ -2239,163 +2240,163 @@ leave_nomem:
 		spage->generation = gen;
 		spage->logical = logical;
 		spage->physical = physical;
-		spage->physical_for_dev_replace = physical_for_dev_replace;
+		spage->physical_क्रम_dev_replace = physical_क्रम_dev_replace;
 		spage->mirror_num = mirror_num;
-		if (csum) {
+		अगर (csum) अणु
 			spage->have_csum = 1;
-			memcpy(spage->csum, csum, sctx->fs_info->csum_size);
-		} else {
+			स_नकल(spage->csum, csum, sctx->fs_info->csum_size);
+		पूर्ण अन्यथा अणु
 			spage->have_csum = 0;
-		}
+		पूर्ण
 		sblock->page_count++;
 		spage->page = alloc_page(GFP_KERNEL);
-		if (!spage->page)
-			goto leave_nomem;
+		अगर (!spage->page)
+			जाओ leave_nomem;
 		len -= l;
 		logical += l;
 		physical += l;
-		physical_for_dev_replace += l;
-	}
+		physical_क्रम_dev_replace += l;
+	पूर्ण
 
 	WARN_ON(sblock->page_count == 0);
-	if (test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state)) {
+	अगर (test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state)) अणु
 		/*
-		 * This case should only be hit for RAID 5/6 device replace. See
-		 * the comment in scrub_missing_raid56_pages() for details.
+		 * This हाल should only be hit क्रम RAID 5/6 device replace. See
+		 * the comment in scrub_missing_raid56_pages() क्रम details.
 		 */
 		scrub_missing_raid56_pages(sblock);
-	} else {
-		for (index = 0; index < sblock->page_count; index++) {
-			struct scrub_page *spage = sblock->pagev[index];
-			int ret;
+	पूर्ण अन्यथा अणु
+		क्रम (index = 0; index < sblock->page_count; index++) अणु
+			काष्ठा scrub_page *spage = sblock->pagev[index];
+			पूर्णांक ret;
 
 			ret = scrub_add_page_to_rd_bio(sctx, spage);
-			if (ret) {
+			अगर (ret) अणु
 				scrub_block_put(sblock);
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
-		if (flags & BTRFS_EXTENT_FLAG_SUPER)
+		अगर (flags & BTRFS_EXTENT_FLAG_SUPER)
 			scrub_submit(sctx);
-	}
+	पूर्ण
 
-	/* last one frees, either here or in bio completion for last page */
+	/* last one मुक्तs, either here or in bio completion क्रम last page */
 	scrub_block_put(sblock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scrub_bio_end_io(struct bio *bio)
-{
-	struct scrub_bio *sbio = bio->bi_private;
-	struct btrfs_fs_info *fs_info = sbio->dev->fs_info;
+अटल व्योम scrub_bio_end_io(काष्ठा bio *bio)
+अणु
+	काष्ठा scrub_bio *sbio = bio->bi_निजी;
+	काष्ठा btrfs_fs_info *fs_info = sbio->dev->fs_info;
 
 	sbio->status = bio->bi_status;
 	sbio->bio = bio;
 
 	btrfs_queue_work(fs_info->scrub_workers, &sbio->work);
-}
+पूर्ण
 
-static void scrub_bio_end_io_worker(struct btrfs_work *work)
-{
-	struct scrub_bio *sbio = container_of(work, struct scrub_bio, work);
-	struct scrub_ctx *sctx = sbio->sctx;
-	int i;
+अटल व्योम scrub_bio_end_io_worker(काष्ठा btrfs_work *work)
+अणु
+	काष्ठा scrub_bio *sbio = container_of(work, काष्ठा scrub_bio, work);
+	काष्ठा scrub_ctx *sctx = sbio->sctx;
+	पूर्णांक i;
 
 	BUG_ON(sbio->page_count > SCRUB_PAGES_PER_RD_BIO);
-	if (sbio->status) {
-		for (i = 0; i < sbio->page_count; i++) {
-			struct scrub_page *spage = sbio->pagev[i];
+	अगर (sbio->status) अणु
+		क्रम (i = 0; i < sbio->page_count; i++) अणु
+			काष्ठा scrub_page *spage = sbio->pagev[i];
 
 			spage->io_error = 1;
 			spage->sblock->no_io_error_seen = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* now complete the scrub_block items that have all pages completed */
-	for (i = 0; i < sbio->page_count; i++) {
-		struct scrub_page *spage = sbio->pagev[i];
-		struct scrub_block *sblock = spage->sblock;
+	क्रम (i = 0; i < sbio->page_count; i++) अणु
+		काष्ठा scrub_page *spage = sbio->pagev[i];
+		काष्ठा scrub_block *sblock = spage->sblock;
 
-		if (atomic_dec_and_test(&sblock->outstanding_pages))
+		अगर (atomic_dec_and_test(&sblock->outstanding_pages))
 			scrub_block_complete(sblock);
 		scrub_block_put(sblock);
-	}
+	पूर्ण
 
 	bio_put(sbio->bio);
-	sbio->bio = NULL;
+	sbio->bio = शून्य;
 	spin_lock(&sctx->list_lock);
-	sbio->next_free = sctx->first_free;
-	sctx->first_free = sbio->index;
+	sbio->next_मुक्त = sctx->first_मुक्त;
+	sctx->first_मुक्त = sbio->index;
 	spin_unlock(&sctx->list_lock);
 
-	if (sctx->is_dev_replace && sctx->flush_all_writes) {
+	अगर (sctx->is_dev_replace && sctx->flush_all_ग_लिखोs) अणु
 		mutex_lock(&sctx->wr_lock);
 		scrub_wr_submit(sctx);
 		mutex_unlock(&sctx->wr_lock);
-	}
+	पूर्ण
 
 	scrub_pending_bio_dec(sctx);
-}
+पूर्ण
 
-static inline void __scrub_mark_bitmap(struct scrub_parity *sparity,
-				       unsigned long *bitmap,
+अटल अंतरभूत व्योम __scrub_mark_biपंचांगap(काष्ठा scrub_parity *sparity,
+				       अचिन्हित दीर्घ *biपंचांगap,
 				       u64 start, u32 len)
-{
+अणु
 	u64 offset;
 	u32 nsectors;
 	u32 sectorsize_bits = sparity->sctx->fs_info->sectorsize_bits;
 
-	if (len >= sparity->stripe_len) {
-		bitmap_set(bitmap, 0, sparity->nsectors);
-		return;
-	}
+	अगर (len >= sparity->stripe_len) अणु
+		biपंचांगap_set(biपंचांगap, 0, sparity->nsectors);
+		वापस;
+	पूर्ण
 
 	start -= sparity->logic_start;
-	start = div64_u64_rem(start, sparity->stripe_len, &offset);
+	start = भाग64_u64_rem(start, sparity->stripe_len, &offset);
 	offset = offset >> sectorsize_bits;
 	nsectors = len >> sectorsize_bits;
 
-	if (offset + nsectors <= sparity->nsectors) {
-		bitmap_set(bitmap, offset, nsectors);
-		return;
-	}
+	अगर (offset + nsectors <= sparity->nsectors) अणु
+		biपंचांगap_set(biपंचांगap, offset, nsectors);
+		वापस;
+	पूर्ण
 
-	bitmap_set(bitmap, offset, sparity->nsectors - offset);
-	bitmap_set(bitmap, 0, nsectors - (sparity->nsectors - offset));
-}
+	biपंचांगap_set(biपंचांगap, offset, sparity->nsectors - offset);
+	biपंचांगap_set(biपंचांगap, 0, nsectors - (sparity->nsectors - offset));
+पूर्ण
 
-static inline void scrub_parity_mark_sectors_error(struct scrub_parity *sparity,
+अटल अंतरभूत व्योम scrub_parity_mark_sectors_error(काष्ठा scrub_parity *sparity,
 						   u64 start, u32 len)
-{
-	__scrub_mark_bitmap(sparity, sparity->ebitmap, start, len);
-}
+अणु
+	__scrub_mark_biपंचांगap(sparity, sparity->ebiपंचांगap, start, len);
+पूर्ण
 
-static inline void scrub_parity_mark_sectors_data(struct scrub_parity *sparity,
+अटल अंतरभूत व्योम scrub_parity_mark_sectors_data(काष्ठा scrub_parity *sparity,
 						  u64 start, u32 len)
-{
-	__scrub_mark_bitmap(sparity, sparity->dbitmap, start, len);
-}
+अणु
+	__scrub_mark_biपंचांगap(sparity, sparity->dbiपंचांगap, start, len);
+पूर्ण
 
-static void scrub_block_complete(struct scrub_block *sblock)
-{
-	int corrupted = 0;
+अटल व्योम scrub_block_complete(काष्ठा scrub_block *sblock)
+अणु
+	पूर्णांक corrupted = 0;
 
-	if (!sblock->no_io_error_seen) {
+	अगर (!sblock->no_io_error_seen) अणु
 		corrupted = 1;
 		scrub_handle_errored_block(sblock);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * if has checksum error, write via repair mechanism in
-		 * dev replace case, otherwise write here in dev replace
-		 * case.
+		 * अगर has checksum error, ग_लिखो via repair mechanism in
+		 * dev replace हाल, otherwise ग_लिखो here in dev replace
+		 * हाल.
 		 */
 		corrupted = scrub_checksum(sblock);
-		if (!corrupted && sblock->sctx->is_dev_replace)
-			scrub_write_block_to_dev_replace(sblock);
-	}
+		अगर (!corrupted && sblock->sctx->is_dev_replace)
+			scrub_ग_लिखो_block_to_dev_replace(sblock);
+	पूर्ण
 
-	if (sblock->sparity && corrupted && !sblock->data_corrected) {
+	अगर (sblock->sparity && corrupted && !sblock->data_corrected) अणु
 		u64 start = sblock->pagev[0]->logical;
 		u64 end = sblock->pagev[sblock->page_count - 1]->logical +
 			  PAGE_SIZE;
@@ -2403,148 +2404,148 @@ static void scrub_block_complete(struct scrub_block *sblock)
 		ASSERT(end - start <= U32_MAX);
 		scrub_parity_mark_sectors_error(sblock->sparity,
 						start, end - start);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void drop_csum_range(struct scrub_ctx *sctx, struct btrfs_ordered_sum *sum)
-{
+अटल व्योम drop_csum_range(काष्ठा scrub_ctx *sctx, काष्ठा btrfs_ordered_sum *sum)
+अणु
 	sctx->stat.csum_discards += sum->len >> sctx->fs_info->sectorsize_bits;
 	list_del(&sum->list);
-	kfree(sum);
-}
+	kमुक्त(sum);
+पूर्ण
 
 /*
- * Find the desired csum for range [logical, logical + sectorsize), and store
- * the csum into @csum.
+ * Find the desired csum क्रम range [logical, logical + sectorsize), and store
+ * the csum पूर्णांकo @csum.
  *
  * The search source is sctx->csum_list, which is a pre-populated list
  * storing bytenr ordered csum ranges.  We're reponsible to cleanup any range
- * that is before @logical.
+ * that is beक्रमe @logical.
  *
- * Return 0 if there is no csum for the range.
- * Return 1 if there is csum for the range and copied to @csum.
+ * Return 0 अगर there is no csum क्रम the range.
+ * Return 1 अगर there is csum क्रम the range and copied to @csum.
  */
-static int scrub_find_csum(struct scrub_ctx *sctx, u64 logical, u8 *csum)
-{
+अटल पूर्णांक scrub_find_csum(काष्ठा scrub_ctx *sctx, u64 logical, u8 *csum)
+अणु
 	bool found = false;
 
-	while (!list_empty(&sctx->csum_list)) {
-		struct btrfs_ordered_sum *sum = NULL;
-		unsigned long index;
-		unsigned long num_sectors;
+	जबतक (!list_empty(&sctx->csum_list)) अणु
+		काष्ठा btrfs_ordered_sum *sum = शून्य;
+		अचिन्हित दीर्घ index;
+		अचिन्हित दीर्घ num_sectors;
 
 		sum = list_first_entry(&sctx->csum_list,
-				       struct btrfs_ordered_sum, list);
+				       काष्ठा btrfs_ordered_sum, list);
 		/* The current csum range is beyond our range, no csum found */
-		if (sum->bytenr > logical)
-			break;
+		अगर (sum->bytenr > logical)
+			अवरोध;
 
 		/*
-		 * The current sum is before our bytenr, since scrub is always
-		 * done in bytenr order, the csum will never be used anymore,
+		 * The current sum is beक्रमe our bytenr, since scrub is always
+		 * करोne in bytenr order, the csum will never be used anymore,
 		 * clean it up so that later calls won't bother with the range,
-		 * and continue search the next range.
+		 * and जारी search the next range.
 		 */
-		if (sum->bytenr + sum->len <= logical) {
+		अगर (sum->bytenr + sum->len <= logical) अणु
 			drop_csum_range(sctx, sum);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Now the csum range covers our bytenr, copy the csum */
 		found = true;
 		index = (logical - sum->bytenr) >> sctx->fs_info->sectorsize_bits;
 		num_sectors = sum->len >> sctx->fs_info->sectorsize_bits;
 
-		memcpy(csum, sum->sums + index * sctx->fs_info->csum_size,
+		स_नकल(csum, sum->sums + index * sctx->fs_info->csum_size,
 		       sctx->fs_info->csum_size);
 
-		/* Cleanup the range if we're at the end of the csum range */
-		if (index == num_sectors - 1)
+		/* Cleanup the range अगर we're at the end of the csum range */
+		अगर (index == num_sectors - 1)
 			drop_csum_range(sctx, sum);
-		break;
-	}
-	if (!found)
-		return 0;
-	return 1;
-}
+		अवरोध;
+	पूर्ण
+	अगर (!found)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-/* scrub extent tries to collect up to 64 kB for each bio */
-static int scrub_extent(struct scrub_ctx *sctx, struct map_lookup *map,
+/* scrub extent tries to collect up to 64 kB क्रम each bio */
+अटल पूर्णांक scrub_extent(काष्ठा scrub_ctx *sctx, काष्ठा map_lookup *map,
 			u64 logical, u32 len,
-			u64 physical, struct btrfs_device *dev, u64 flags,
-			u64 gen, int mirror_num, u64 physical_for_dev_replace)
-{
-	int ret;
+			u64 physical, काष्ठा btrfs_device *dev, u64 flags,
+			u64 gen, पूर्णांक mirror_num, u64 physical_क्रम_dev_replace)
+अणु
+	पूर्णांक ret;
 	u8 csum[BTRFS_CSUM_SIZE];
 	u32 blocksize;
 
-	if (flags & BTRFS_EXTENT_FLAG_DATA) {
-		if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
+	अगर (flags & BTRFS_EXTENT_FLAG_DATA) अणु
+		अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
 			blocksize = map->stripe_len;
-		else
+		अन्यथा
 			blocksize = sctx->fs_info->sectorsize;
 		spin_lock(&sctx->stat_lock);
 		sctx->stat.data_extents_scrubbed++;
 		sctx->stat.data_bytes_scrubbed += len;
 		spin_unlock(&sctx->stat_lock);
-	} else if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) {
-		if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
+	पूर्ण अन्यथा अगर (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) अणु
+		अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
 			blocksize = map->stripe_len;
-		else
+		अन्यथा
 			blocksize = sctx->fs_info->nodesize;
 		spin_lock(&sctx->stat_lock);
 		sctx->stat.tree_extents_scrubbed++;
 		sctx->stat.tree_bytes_scrubbed += len;
 		spin_unlock(&sctx->stat_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		blocksize = sctx->fs_info->sectorsize;
 		WARN_ON(1);
-	}
+	पूर्ण
 
-	while (len) {
+	जबतक (len) अणु
 		u32 l = min(len, blocksize);
-		int have_csum = 0;
+		पूर्णांक have_csum = 0;
 
-		if (flags & BTRFS_EXTENT_FLAG_DATA) {
+		अगर (flags & BTRFS_EXTENT_FLAG_DATA) अणु
 			/* push csums to sbio */
 			have_csum = scrub_find_csum(sctx, logical, csum);
-			if (have_csum == 0)
+			अगर (have_csum == 0)
 				++sctx->stat.no_csum;
-		}
+		पूर्ण
 		ret = scrub_pages(sctx, logical, l, physical, dev, flags, gen,
-				  mirror_num, have_csum ? csum : NULL,
-				  physical_for_dev_replace);
-		if (ret)
-			return ret;
+				  mirror_num, have_csum ? csum : शून्य,
+				  physical_क्रम_dev_replace);
+		अगर (ret)
+			वापस ret;
 		len -= l;
 		logical += l;
 		physical += l;
-		physical_for_dev_replace += l;
-	}
-	return 0;
-}
+		physical_क्रम_dev_replace += l;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int scrub_pages_for_parity(struct scrub_parity *sparity,
+अटल पूर्णांक scrub_pages_क्रम_parity(काष्ठा scrub_parity *sparity,
 				  u64 logical, u32 len,
-				  u64 physical, struct btrfs_device *dev,
-				  u64 flags, u64 gen, int mirror_num, u8 *csum)
-{
-	struct scrub_ctx *sctx = sparity->sctx;
-	struct scrub_block *sblock;
-	const u32 sectorsize = sctx->fs_info->sectorsize;
-	int index;
+				  u64 physical, काष्ठा btrfs_device *dev,
+				  u64 flags, u64 gen, पूर्णांक mirror_num, u8 *csum)
+अणु
+	काष्ठा scrub_ctx *sctx = sparity->sctx;
+	काष्ठा scrub_block *sblock;
+	स्थिर u32 sectorsize = sctx->fs_info->sectorsize;
+	पूर्णांक index;
 
 	ASSERT(IS_ALIGNED(len, sectorsize));
 
-	sblock = kzalloc(sizeof(*sblock), GFP_KERNEL);
-	if (!sblock) {
+	sblock = kzalloc(माप(*sblock), GFP_KERNEL);
+	अगर (!sblock) अणु
 		spin_lock(&sctx->stat_lock);
-		sctx->stat.malloc_errors++;
+		sctx->stat.दो_स्मृति_errors++;
 		spin_unlock(&sctx->stat_lock);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* one ref inside this function, plus one for each page added to
+	/* one ref inside this function, plus one क्रम each page added to
 	 * a bio later on */
 	refcount_set(&sblock->refs, 1);
 	sblock->sctx = sctx;
@@ -2552,18 +2553,18 @@ static int scrub_pages_for_parity(struct scrub_parity *sparity,
 	sblock->sparity = sparity;
 	scrub_parity_get(sparity);
 
-	for (index = 0; len > 0; index++) {
-		struct scrub_page *spage;
+	क्रम (index = 0; len > 0; index++) अणु
+		काष्ठा scrub_page *spage;
 
-		spage = kzalloc(sizeof(*spage), GFP_KERNEL);
-		if (!spage) {
+		spage = kzalloc(माप(*spage), GFP_KERNEL);
+		अगर (!spage) अणु
 leave_nomem:
 			spin_lock(&sctx->stat_lock);
-			sctx->stat.malloc_errors++;
+			sctx->stat.दो_स्मृति_errors++;
 			spin_unlock(&sctx->stat_lock);
 			scrub_block_put(sblock);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		BUG_ON(index >= SCRUB_MAX_PAGES_PER_BLOCK);
 		/* For scrub block */
 		scrub_page_get(spage);
@@ -2578,291 +2579,291 @@ leave_nomem:
 		spage->logical = logical;
 		spage->physical = physical;
 		spage->mirror_num = mirror_num;
-		if (csum) {
+		अगर (csum) अणु
 			spage->have_csum = 1;
-			memcpy(spage->csum, csum, sctx->fs_info->csum_size);
-		} else {
+			स_नकल(spage->csum, csum, sctx->fs_info->csum_size);
+		पूर्ण अन्यथा अणु
 			spage->have_csum = 0;
-		}
+		पूर्ण
 		sblock->page_count++;
 		spage->page = alloc_page(GFP_KERNEL);
-		if (!spage->page)
-			goto leave_nomem;
+		अगर (!spage->page)
+			जाओ leave_nomem;
 
 
 		/* Iterate over the stripe range in sectorsize steps */
 		len -= sectorsize;
 		logical += sectorsize;
 		physical += sectorsize;
-	}
+	पूर्ण
 
 	WARN_ON(sblock->page_count == 0);
-	for (index = 0; index < sblock->page_count; index++) {
-		struct scrub_page *spage = sblock->pagev[index];
-		int ret;
+	क्रम (index = 0; index < sblock->page_count; index++) अणु
+		काष्ठा scrub_page *spage = sblock->pagev[index];
+		पूर्णांक ret;
 
 		ret = scrub_add_page_to_rd_bio(sctx, spage);
-		if (ret) {
+		अगर (ret) अणु
 			scrub_block_put(sblock);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* last one frees, either here or in bio completion for last page */
+	/* last one मुक्तs, either here or in bio completion क्रम last page */
 	scrub_block_put(sblock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scrub_extent_for_parity(struct scrub_parity *sparity,
+अटल पूर्णांक scrub_extent_क्रम_parity(काष्ठा scrub_parity *sparity,
 				   u64 logical, u32 len,
-				   u64 physical, struct btrfs_device *dev,
-				   u64 flags, u64 gen, int mirror_num)
-{
-	struct scrub_ctx *sctx = sparity->sctx;
-	int ret;
+				   u64 physical, काष्ठा btrfs_device *dev,
+				   u64 flags, u64 gen, पूर्णांक mirror_num)
+अणु
+	काष्ठा scrub_ctx *sctx = sparity->sctx;
+	पूर्णांक ret;
 	u8 csum[BTRFS_CSUM_SIZE];
 	u32 blocksize;
 
-	if (test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state)) {
+	अगर (test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state)) अणु
 		scrub_parity_mark_sectors_error(sparity, logical, len);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (flags & BTRFS_EXTENT_FLAG_DATA) {
+	अगर (flags & BTRFS_EXTENT_FLAG_DATA) अणु
 		blocksize = sparity->stripe_len;
-	} else if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) {
+	पूर्ण अन्यथा अगर (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) अणु
 		blocksize = sparity->stripe_len;
-	} else {
+	पूर्ण अन्यथा अणु
 		blocksize = sctx->fs_info->sectorsize;
 		WARN_ON(1);
-	}
+	पूर्ण
 
-	while (len) {
+	जबतक (len) अणु
 		u32 l = min(len, blocksize);
-		int have_csum = 0;
+		पूर्णांक have_csum = 0;
 
-		if (flags & BTRFS_EXTENT_FLAG_DATA) {
+		अगर (flags & BTRFS_EXTENT_FLAG_DATA) अणु
 			/* push csums to sbio */
 			have_csum = scrub_find_csum(sctx, logical, csum);
-			if (have_csum == 0)
-				goto skip;
-		}
-		ret = scrub_pages_for_parity(sparity, logical, l, physical, dev,
+			अगर (have_csum == 0)
+				जाओ skip;
+		पूर्ण
+		ret = scrub_pages_क्रम_parity(sparity, logical, l, physical, dev,
 					     flags, gen, mirror_num,
-					     have_csum ? csum : NULL);
-		if (ret)
-			return ret;
+					     have_csum ? csum : शून्य);
+		अगर (ret)
+			वापस ret;
 skip:
 		len -= l;
 		logical += l;
 		physical += l;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Given a physical address, this will calculate it's
- * logical offset. if this is a parity stripe, it will return
+ * logical offset. अगर this is a parity stripe, it will वापस
  * the most left data stripe's logical offset.
  *
- * return 0 if it is a data stripe, 1 means parity stripe.
+ * वापस 0 अगर it is a data stripe, 1 means parity stripe.
  */
-static int get_raid56_logic_offset(u64 physical, int num,
-				   struct map_lookup *map, u64 *offset,
+अटल पूर्णांक get_raid56_logic_offset(u64 physical, पूर्णांक num,
+				   काष्ठा map_lookup *map, u64 *offset,
 				   u64 *stripe_start)
-{
-	int i;
-	int j = 0;
+अणु
+	पूर्णांक i;
+	पूर्णांक j = 0;
 	u64 stripe_nr;
 	u64 last_offset;
 	u32 stripe_index;
 	u32 rot;
-	const int data_stripes = nr_data_stripes(map);
+	स्थिर पूर्णांक data_stripes = nr_data_stripes(map);
 
 	last_offset = (physical - map->stripes[num].physical) * data_stripes;
-	if (stripe_start)
+	अगर (stripe_start)
 		*stripe_start = last_offset;
 
 	*offset = last_offset;
-	for (i = 0; i < data_stripes; i++) {
+	क्रम (i = 0; i < data_stripes; i++) अणु
 		*offset = last_offset + i * map->stripe_len;
 
-		stripe_nr = div64_u64(*offset, map->stripe_len);
-		stripe_nr = div_u64(stripe_nr, data_stripes);
+		stripe_nr = भाग64_u64(*offset, map->stripe_len);
+		stripe_nr = भाग_u64(stripe_nr, data_stripes);
 
 		/* Work out the disk rotation on this stripe-set */
-		stripe_nr = div_u64_rem(stripe_nr, map->num_stripes, &rot);
+		stripe_nr = भाग_u64_rem(stripe_nr, map->num_stripes, &rot);
 		/* calculate which stripe this data locates */
 		rot += i;
 		stripe_index = rot % map->num_stripes;
-		if (stripe_index == num)
-			return 0;
-		if (stripe_index < num)
+		अगर (stripe_index == num)
+			वापस 0;
+		अगर (stripe_index < num)
 			j++;
-	}
+	पूर्ण
 	*offset = last_offset + j * map->stripe_len;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void scrub_free_parity(struct scrub_parity *sparity)
-{
-	struct scrub_ctx *sctx = sparity->sctx;
-	struct scrub_page *curr, *next;
-	int nbits;
+अटल व्योम scrub_मुक्त_parity(काष्ठा scrub_parity *sparity)
+अणु
+	काष्ठा scrub_ctx *sctx = sparity->sctx;
+	काष्ठा scrub_page *curr, *next;
+	पूर्णांक nbits;
 
-	nbits = bitmap_weight(sparity->ebitmap, sparity->nsectors);
-	if (nbits) {
+	nbits = biपंचांगap_weight(sparity->ebiपंचांगap, sparity->nsectors);
+	अगर (nbits) अणु
 		spin_lock(&sctx->stat_lock);
-		sctx->stat.read_errors += nbits;
+		sctx->stat.पढ़ो_errors += nbits;
 		sctx->stat.uncorrectable_errors += nbits;
 		spin_unlock(&sctx->stat_lock);
-	}
+	पूर्ण
 
-	list_for_each_entry_safe(curr, next, &sparity->spages, list) {
+	list_क्रम_each_entry_safe(curr, next, &sparity->spages, list) अणु
 		list_del_init(&curr->list);
 		scrub_page_put(curr);
-	}
+	पूर्ण
 
-	kfree(sparity);
-}
+	kमुक्त(sparity);
+पूर्ण
 
-static void scrub_parity_bio_endio_worker(struct btrfs_work *work)
-{
-	struct scrub_parity *sparity = container_of(work, struct scrub_parity,
+अटल व्योम scrub_parity_bio_endio_worker(काष्ठा btrfs_work *work)
+अणु
+	काष्ठा scrub_parity *sparity = container_of(work, काष्ठा scrub_parity,
 						    work);
-	struct scrub_ctx *sctx = sparity->sctx;
+	काष्ठा scrub_ctx *sctx = sparity->sctx;
 
-	scrub_free_parity(sparity);
+	scrub_मुक्त_parity(sparity);
 	scrub_pending_bio_dec(sctx);
-}
+पूर्ण
 
-static void scrub_parity_bio_endio(struct bio *bio)
-{
-	struct scrub_parity *sparity = (struct scrub_parity *)bio->bi_private;
-	struct btrfs_fs_info *fs_info = sparity->sctx->fs_info;
+अटल व्योम scrub_parity_bio_endio(काष्ठा bio *bio)
+अणु
+	काष्ठा scrub_parity *sparity = (काष्ठा scrub_parity *)bio->bi_निजी;
+	काष्ठा btrfs_fs_info *fs_info = sparity->sctx->fs_info;
 
-	if (bio->bi_status)
-		bitmap_or(sparity->ebitmap, sparity->ebitmap, sparity->dbitmap,
+	अगर (bio->bi_status)
+		biपंचांगap_or(sparity->ebiपंचांगap, sparity->ebiपंचांगap, sparity->dbiपंचांगap,
 			  sparity->nsectors);
 
 	bio_put(bio);
 
-	btrfs_init_work(&sparity->work, scrub_parity_bio_endio_worker, NULL,
-			NULL);
+	btrfs_init_work(&sparity->work, scrub_parity_bio_endio_worker, शून्य,
+			शून्य);
 	btrfs_queue_work(fs_info->scrub_parity_workers, &sparity->work);
-}
+पूर्ण
 
-static void scrub_parity_check_and_repair(struct scrub_parity *sparity)
-{
-	struct scrub_ctx *sctx = sparity->sctx;
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
-	struct bio *bio;
-	struct btrfs_raid_bio *rbio;
-	struct btrfs_bio *bbio = NULL;
+अटल व्योम scrub_parity_check_and_repair(काष्ठा scrub_parity *sparity)
+अणु
+	काष्ठा scrub_ctx *sctx = sparity->sctx;
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
+	काष्ठा bio *bio;
+	काष्ठा btrfs_raid_bio *rbio;
+	काष्ठा btrfs_bio *bbio = शून्य;
 	u64 length;
-	int ret;
+	पूर्णांक ret;
 
-	if (!bitmap_andnot(sparity->dbitmap, sparity->dbitmap, sparity->ebitmap,
+	अगर (!biपंचांगap_andnot(sparity->dbiपंचांगap, sparity->dbiपंचांगap, sparity->ebiपंचांगap,
 			   sparity->nsectors))
-		goto out;
+		जाओ out;
 
 	length = sparity->logic_end - sparity->logic_start;
 
 	btrfs_bio_counter_inc_blocked(fs_info);
 	ret = btrfs_map_sblock(fs_info, BTRFS_MAP_WRITE, sparity->logic_start,
 			       &length, &bbio);
-	if (ret || !bbio || !bbio->raid_map)
-		goto bbio_out;
+	अगर (ret || !bbio || !bbio->raid_map)
+		जाओ bbio_out;
 
 	bio = btrfs_io_bio_alloc(0);
 	bio->bi_iter.bi_sector = sparity->logic_start >> 9;
-	bio->bi_private = sparity;
+	bio->bi_निजी = sparity;
 	bio->bi_end_io = scrub_parity_bio_endio;
 
 	rbio = raid56_parity_alloc_scrub_rbio(fs_info, bio, bbio,
 					      length, sparity->scrub_dev,
-					      sparity->dbitmap,
+					      sparity->dbiपंचांगap,
 					      sparity->nsectors);
-	if (!rbio)
-		goto rbio_out;
+	अगर (!rbio)
+		जाओ rbio_out;
 
 	scrub_pending_bio_inc(sctx);
 	raid56_parity_submit_scrub_rbio(rbio);
-	return;
+	वापस;
 
 rbio_out:
 	bio_put(bio);
 bbio_out:
 	btrfs_bio_counter_dec(fs_info);
 	btrfs_put_bbio(bbio);
-	bitmap_or(sparity->ebitmap, sparity->ebitmap, sparity->dbitmap,
+	biपंचांगap_or(sparity->ebiपंचांगap, sparity->ebiपंचांगap, sparity->dbiपंचांगap,
 		  sparity->nsectors);
 	spin_lock(&sctx->stat_lock);
-	sctx->stat.malloc_errors++;
+	sctx->stat.दो_स्मृति_errors++;
 	spin_unlock(&sctx->stat_lock);
 out:
-	scrub_free_parity(sparity);
-}
+	scrub_मुक्त_parity(sparity);
+पूर्ण
 
-static inline int scrub_calc_parity_bitmap_len(int nsectors)
-{
-	return DIV_ROUND_UP(nsectors, BITS_PER_LONG) * sizeof(long);
-}
+अटल अंतरभूत पूर्णांक scrub_calc_parity_biपंचांगap_len(पूर्णांक nsectors)
+अणु
+	वापस DIV_ROUND_UP(nsectors, BITS_PER_LONG) * माप(दीर्घ);
+पूर्ण
 
-static void scrub_parity_get(struct scrub_parity *sparity)
-{
+अटल व्योम scrub_parity_get(काष्ठा scrub_parity *sparity)
+अणु
 	refcount_inc(&sparity->refs);
-}
+पूर्ण
 
-static void scrub_parity_put(struct scrub_parity *sparity)
-{
-	if (!refcount_dec_and_test(&sparity->refs))
-		return;
+अटल व्योम scrub_parity_put(काष्ठा scrub_parity *sparity)
+अणु
+	अगर (!refcount_dec_and_test(&sparity->refs))
+		वापस;
 
 	scrub_parity_check_and_repair(sparity);
-}
+पूर्ण
 
-static noinline_for_stack int scrub_raid56_parity(struct scrub_ctx *sctx,
-						  struct map_lookup *map,
-						  struct btrfs_device *sdev,
-						  struct btrfs_path *path,
+अटल noअंतरभूत_क्रम_stack पूर्णांक scrub_raid56_parity(काष्ठा scrub_ctx *sctx,
+						  काष्ठा map_lookup *map,
+						  काष्ठा btrfs_device *sdev,
+						  काष्ठा btrfs_path *path,
 						  u64 logic_start,
 						  u64 logic_end)
-{
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
-	struct btrfs_root *root = fs_info->extent_root;
-	struct btrfs_root *csum_root = fs_info->csum_root;
-	struct btrfs_extent_item *extent;
-	struct btrfs_bio *bbio = NULL;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
+	काष्ठा btrfs_root *root = fs_info->extent_root;
+	काष्ठा btrfs_root *csum_root = fs_info->csum_root;
+	काष्ठा btrfs_extent_item *extent;
+	काष्ठा btrfs_bio *bbio = शून्य;
 	u64 flags;
-	int ret;
-	int slot;
-	struct extent_buffer *l;
-	struct btrfs_key key;
+	पूर्णांक ret;
+	पूर्णांक slot;
+	काष्ठा extent_buffer *l;
+	काष्ठा btrfs_key key;
 	u64 generation;
 	u64 extent_logical;
 	u64 extent_physical;
-	/* Check the comment in scrub_stripe() for why u32 is enough here */
+	/* Check the comment in scrub_stripe() क्रम why u32 is enough here */
 	u32 extent_len;
 	u64 mapped_length;
-	struct btrfs_device *extent_dev;
-	struct scrub_parity *sparity;
-	int nsectors;
-	int bitmap_len;
-	int extent_mirror_num;
-	int stop_loop = 0;
+	काष्ठा btrfs_device *extent_dev;
+	काष्ठा scrub_parity *sparity;
+	पूर्णांक nsectors;
+	पूर्णांक biपंचांगap_len;
+	पूर्णांक extent_mirror_num;
+	पूर्णांक stop_loop = 0;
 
 	ASSERT(map->stripe_len <= U32_MAX);
 	nsectors = map->stripe_len >> fs_info->sectorsize_bits;
-	bitmap_len = scrub_calc_parity_bitmap_len(nsectors);
-	sparity = kzalloc(sizeof(struct scrub_parity) + 2 * bitmap_len,
+	biपंचांगap_len = scrub_calc_parity_biपंचांगap_len(nsectors);
+	sparity = kzalloc(माप(काष्ठा scrub_parity) + 2 * biपंचांगap_len,
 			  GFP_NOFS);
-	if (!sparity) {
+	अगर (!sparity) अणु
 		spin_lock(&sctx->stat_lock);
-		sctx->stat.malloc_errors++;
+		sctx->stat.दो_स्मृति_errors++;
 		spin_unlock(&sctx->stat_lock);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ASSERT(map->stripe_len <= U32_MAX);
 	sparity->stripe_len = map->stripe_len;
@@ -2873,101 +2874,101 @@ static noinline_for_stack int scrub_raid56_parity(struct scrub_ctx *sctx,
 	sparity->logic_end = logic_end;
 	refcount_set(&sparity->refs, 1);
 	INIT_LIST_HEAD(&sparity->spages);
-	sparity->dbitmap = sparity->bitmap;
-	sparity->ebitmap = (void *)sparity->bitmap + bitmap_len;
+	sparity->dbiपंचांगap = sparity->biपंचांगap;
+	sparity->ebiपंचांगap = (व्योम *)sparity->biपंचांगap + biपंचांगap_len;
 
 	ret = 0;
-	while (logic_start < logic_end) {
-		if (btrfs_fs_incompat(fs_info, SKINNY_METADATA))
+	जबतक (logic_start < logic_end) अणु
+		अगर (btrfs_fs_incompat(fs_info, SKINNY_METADATA))
 			key.type = BTRFS_METADATA_ITEM_KEY;
-		else
+		अन्यथा
 			key.type = BTRFS_EXTENT_ITEM_KEY;
 		key.objectid = logic_start;
 		key.offset = (u64)-1;
 
-		ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-		if (ret < 0)
-			goto out;
+		ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
+		अगर (ret < 0)
+			जाओ out;
 
-		if (ret > 0) {
+		अगर (ret > 0) अणु
 			ret = btrfs_previous_extent_item(root, path, 0);
-			if (ret < 0)
-				goto out;
-			if (ret > 0) {
+			अगर (ret < 0)
+				जाओ out;
+			अगर (ret > 0) अणु
 				btrfs_release_path(path);
-				ret = btrfs_search_slot(NULL, root, &key,
+				ret = btrfs_search_slot(शून्य, root, &key,
 							path, 0, 0);
-				if (ret < 0)
-					goto out;
-			}
-		}
+				अगर (ret < 0)
+					जाओ out;
+			पूर्ण
+		पूर्ण
 
 		stop_loop = 0;
-		while (1) {
+		जबतक (1) अणु
 			u64 bytes;
 
 			l = path->nodes[0];
 			slot = path->slots[0];
-			if (slot >= btrfs_header_nritems(l)) {
+			अगर (slot >= btrfs_header_nritems(l)) अणु
 				ret = btrfs_next_leaf(root, path);
-				if (ret == 0)
-					continue;
-				if (ret < 0)
-					goto out;
+				अगर (ret == 0)
+					जारी;
+				अगर (ret < 0)
+					जाओ out;
 
 				stop_loop = 1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			btrfs_item_key_to_cpu(l, &key, slot);
 
-			if (key.type != BTRFS_EXTENT_ITEM_KEY &&
+			अगर (key.type != BTRFS_EXTENT_ITEM_KEY &&
 			    key.type != BTRFS_METADATA_ITEM_KEY)
-				goto next;
+				जाओ next;
 
-			if (key.type == BTRFS_METADATA_ITEM_KEY)
+			अगर (key.type == BTRFS_METADATA_ITEM_KEY)
 				bytes = fs_info->nodesize;
-			else
+			अन्यथा
 				bytes = key.offset;
 
-			if (key.objectid + bytes <= logic_start)
-				goto next;
+			अगर (key.objectid + bytes <= logic_start)
+				जाओ next;
 
-			if (key.objectid >= logic_end) {
+			अगर (key.objectid >= logic_end) अणु
 				stop_loop = 1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			while (key.objectid >= logic_start + map->stripe_len)
+			जबतक (key.objectid >= logic_start + map->stripe_len)
 				logic_start += map->stripe_len;
 
 			extent = btrfs_item_ptr(l, slot,
-						struct btrfs_extent_item);
+						काष्ठा btrfs_extent_item);
 			flags = btrfs_extent_flags(l, extent);
 			generation = btrfs_extent_generation(l, extent);
 
-			if ((flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) &&
+			अगर ((flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) &&
 			    (key.objectid < logic_start ||
 			     key.objectid + bytes >
-			     logic_start + map->stripe_len)) {
+			     logic_start + map->stripe_len)) अणु
 				btrfs_err(fs_info,
 					  "scrub: tree block %llu spanning stripes, ignored. logical=%llu",
 					  key.objectid, logic_start);
 				spin_lock(&sctx->stat_lock);
 				sctx->stat.uncorrectable_errors++;
 				spin_unlock(&sctx->stat_lock);
-				goto next;
-			}
+				जाओ next;
+			पूर्ण
 again:
 			extent_logical = key.objectid;
 			ASSERT(bytes <= U32_MAX);
 			extent_len = bytes;
 
-			if (extent_logical < logic_start) {
+			अगर (extent_logical < logic_start) अणु
 				extent_len -= logic_start - extent_logical;
 				extent_logical = logic_start;
-			}
+			पूर्ण
 
-			if (extent_logical + extent_len >
+			अगर (extent_logical + extent_len >
 			    logic_start + map->stripe_len)
 				extent_len = logic_start + map->stripe_len -
 					     extent_logical;
@@ -2976,18 +2977,18 @@ again:
 						       extent_len);
 
 			mapped_length = extent_len;
-			bbio = NULL;
+			bbio = शून्य;
 			ret = btrfs_map_block(fs_info, BTRFS_MAP_READ,
 					extent_logical, &mapped_length, &bbio,
 					0);
-			if (!ret) {
-				if (!bbio || mapped_length < extent_len)
+			अगर (!ret) अणु
+				अगर (!bbio || mapped_length < extent_len)
 					ret = -EIO;
-			}
-			if (ret) {
+			पूर्ण
+			अगर (ret) अणु
 				btrfs_put_bbio(bbio);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			extent_physical = bbio->stripes[0].physical;
 			extent_mirror_num = bbio->mirror_num;
 			extent_dev = bbio->stripes[0].dev;
@@ -2997,52 +2998,52 @@ again:
 						extent_logical,
 						extent_logical + extent_len - 1,
 						&sctx->csum_list, 1);
-			if (ret)
-				goto out;
+			अगर (ret)
+				जाओ out;
 
-			ret = scrub_extent_for_parity(sparity, extent_logical,
+			ret = scrub_extent_क्रम_parity(sparity, extent_logical,
 						      extent_len,
 						      extent_physical,
 						      extent_dev, flags,
 						      generation,
 						      extent_mirror_num);
 
-			scrub_free_csums(sctx);
+			scrub_मुक्त_csums(sctx);
 
-			if (ret)
-				goto out;
+			अगर (ret)
+				जाओ out;
 
-			if (extent_logical + extent_len <
-			    key.objectid + bytes) {
+			अगर (extent_logical + extent_len <
+			    key.objectid + bytes) अणु
 				logic_start += map->stripe_len;
 
-				if (logic_start >= logic_end) {
+				अगर (logic_start >= logic_end) अणु
 					stop_loop = 1;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
-				if (logic_start < key.objectid + bytes) {
+				अगर (logic_start < key.objectid + bytes) अणु
 					cond_resched();
-					goto again;
-				}
-			}
+					जाओ again;
+				पूर्ण
+			पूर्ण
 next:
 			path->slots[0]++;
-		}
+		पूर्ण
 
 		btrfs_release_path(path);
 
-		if (stop_loop)
-			break;
+		अगर (stop_loop)
+			अवरोध;
 
 		logic_start += map->stripe_len;
-	}
+	पूर्ण
 out:
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		ASSERT(logic_end - logic_start <= U32_MAX);
 		scrub_parity_mark_sectors_error(sparity, logic_start,
 						logic_end - logic_start);
-	}
+	पूर्ण
 	scrub_parity_put(sparity);
 	scrub_submit(sctx);
 	mutex_lock(&sctx->wr_lock);
@@ -3050,76 +3051,76 @@ out:
 	mutex_unlock(&sctx->wr_lock);
 
 	btrfs_release_path(path);
-	return ret < 0 ? ret : 0;
-}
+	वापस ret < 0 ? ret : 0;
+पूर्ण
 
-static void sync_replace_for_zoned(struct scrub_ctx *sctx)
-{
-	if (!btrfs_is_zoned(sctx->fs_info))
-		return;
+अटल व्योम sync_replace_क्रम_zoned(काष्ठा scrub_ctx *sctx)
+अणु
+	अगर (!btrfs_is_zoned(sctx->fs_info))
+		वापस;
 
-	sctx->flush_all_writes = true;
+	sctx->flush_all_ग_लिखोs = true;
 	scrub_submit(sctx);
 	mutex_lock(&sctx->wr_lock);
 	scrub_wr_submit(sctx);
 	mutex_unlock(&sctx->wr_lock);
 
-	wait_event(sctx->list_wait, atomic_read(&sctx->bios_in_flight) == 0);
-}
+	रुको_event(sctx->list_रुको, atomic_पढ़ो(&sctx->bios_in_flight) == 0);
+पूर्ण
 
-static int sync_write_pointer_for_zoned(struct scrub_ctx *sctx, u64 logical,
+अटल पूर्णांक sync_ग_लिखो_poपूर्णांकer_क्रम_zoned(काष्ठा scrub_ctx *sctx, u64 logical,
 					u64 physical, u64 physical_end)
-{
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
-	int ret = 0;
+अणु
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
+	पूर्णांक ret = 0;
 
-	if (!btrfs_is_zoned(fs_info))
-		return 0;
+	अगर (!btrfs_is_zoned(fs_info))
+		वापस 0;
 
-	wait_event(sctx->list_wait, atomic_read(&sctx->bios_in_flight) == 0);
+	रुको_event(sctx->list_रुको, atomic_पढ़ो(&sctx->bios_in_flight) == 0);
 
 	mutex_lock(&sctx->wr_lock);
-	if (sctx->write_pointer < physical_end) {
-		ret = btrfs_sync_zone_write_pointer(sctx->wr_tgtdev, logical,
+	अगर (sctx->ग_लिखो_poपूर्णांकer < physical_end) अणु
+		ret = btrfs_sync_zone_ग_लिखो_poपूर्णांकer(sctx->wr_tgtdev, logical,
 						    physical,
-						    sctx->write_pointer);
-		if (ret)
+						    sctx->ग_लिखो_poपूर्णांकer);
+		अगर (ret)
 			btrfs_err(fs_info,
 				  "zoned: failed to recover write pointer");
-	}
+	पूर्ण
 	mutex_unlock(&sctx->wr_lock);
 	btrfs_dev_clear_zone_empty(sctx->wr_tgtdev, physical);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static noinline_for_stack int scrub_stripe(struct scrub_ctx *sctx,
-					   struct map_lookup *map,
-					   struct btrfs_device *scrub_dev,
-					   int num, u64 base, u64 length,
-					   struct btrfs_block_group *cache)
-{
-	struct btrfs_path *path, *ppath;
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
-	struct btrfs_root *root = fs_info->extent_root;
-	struct btrfs_root *csum_root = fs_info->csum_root;
-	struct btrfs_extent_item *extent;
-	struct blk_plug plug;
+अटल noअंतरभूत_क्रम_stack पूर्णांक scrub_stripe(काष्ठा scrub_ctx *sctx,
+					   काष्ठा map_lookup *map,
+					   काष्ठा btrfs_device *scrub_dev,
+					   पूर्णांक num, u64 base, u64 length,
+					   काष्ठा btrfs_block_group *cache)
+अणु
+	काष्ठा btrfs_path *path, *ppath;
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
+	काष्ठा btrfs_root *root = fs_info->extent_root;
+	काष्ठा btrfs_root *csum_root = fs_info->csum_root;
+	काष्ठा btrfs_extent_item *extent;
+	काष्ठा blk_plug plug;
 	u64 flags;
-	int ret;
-	int slot;
+	पूर्णांक ret;
+	पूर्णांक slot;
 	u64 nstripes;
-	struct extent_buffer *l;
+	काष्ठा extent_buffer *l;
 	u64 physical;
 	u64 logical;
 	u64 logic_end;
 	u64 physical_end;
 	u64 generation;
-	int mirror_num;
-	struct reada_control *reada1;
-	struct reada_control *reada2;
-	struct btrfs_key key;
-	struct btrfs_key key_end;
+	पूर्णांक mirror_num;
+	काष्ठा पढ़ोa_control *पढ़ोa1;
+	काष्ठा पढ़ोa_control *पढ़ोa2;
+	काष्ठा btrfs_key key;
+	काष्ठा btrfs_key key_end;
 	u64 increment = map->stripe_len;
 	u64 offset;
 	u64 extent_logical;
@@ -3131,50 +3132,50 @@ static noinline_for_stack int scrub_stripe(struct scrub_ctx *sctx,
 	u32 extent_len;
 	u64 stripe_logical;
 	u64 stripe_end;
-	struct btrfs_device *extent_dev;
-	int extent_mirror_num;
-	int stop_loop = 0;
+	काष्ठा btrfs_device *extent_dev;
+	पूर्णांक extent_mirror_num;
+	पूर्णांक stop_loop = 0;
 
 	physical = map->stripes[num].physical;
 	offset = 0;
-	nstripes = div64_u64(length, map->stripe_len);
-	if (map->type & BTRFS_BLOCK_GROUP_RAID0) {
+	nstripes = भाग64_u64(length, map->stripe_len);
+	अगर (map->type & BTRFS_BLOCK_GROUP_RAID0) अणु
 		offset = map->stripe_len * num;
 		increment = map->stripe_len * map->num_stripes;
 		mirror_num = 1;
-	} else if (map->type & BTRFS_BLOCK_GROUP_RAID10) {
-		int factor = map->num_stripes / map->sub_stripes;
+	पूर्ण अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_RAID10) अणु
+		पूर्णांक factor = map->num_stripes / map->sub_stripes;
 		offset = map->stripe_len * (num / map->sub_stripes);
 		increment = map->stripe_len * factor;
 		mirror_num = num % map->sub_stripes + 1;
-	} else if (map->type & BTRFS_BLOCK_GROUP_RAID1_MASK) {
+	पूर्ण अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_RAID1_MASK) अणु
 		increment = map->stripe_len;
 		mirror_num = num % map->num_stripes + 1;
-	} else if (map->type & BTRFS_BLOCK_GROUP_DUP) {
+	पूर्ण अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_DUP) अणु
 		increment = map->stripe_len;
 		mirror_num = num % map->num_stripes + 1;
-	} else if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
-		get_raid56_logic_offset(physical, num, map, &offset, NULL);
+	पूर्ण अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) अणु
+		get_raid56_logic_offset(physical, num, map, &offset, शून्य);
 		increment = map->stripe_len * nr_data_stripes(map);
 		mirror_num = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		increment = map->stripe_len;
 		mirror_num = 1;
-	}
+	पूर्ण
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
 	ppath = btrfs_alloc_path();
-	if (!ppath) {
-		btrfs_free_path(path);
-		return -ENOMEM;
-	}
+	अगर (!ppath) अणु
+		btrfs_मुक्त_path(path);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * work on commit root. The related disk blocks are static as
-	 * long as COW is applied. This means, it is save to rewrite
+	 * work on commit root. The related disk blocks are अटल as
+	 * दीर्घ as COW is applied. This means, it is save to reग_लिखो
 	 * them to repair disk errors without any race conditions
 	 */
 	path->search_commit_root = 1;
@@ -3183,205 +3184,205 @@ static noinline_for_stack int scrub_stripe(struct scrub_ctx *sctx,
 	ppath->search_commit_root = 1;
 	ppath->skip_locking = 1;
 	/*
-	 * trigger the readahead for extent tree csum tree and wait for
-	 * completion. During readahead, the scrub is officially paused
+	 * trigger the पढ़ोahead क्रम extent tree csum tree and रुको क्रम
+	 * completion. During पढ़ोahead, the scrub is officially छोड़ोd
 	 * to not hold off transaction commits
 	 */
 	logical = base + offset;
 	physical_end = physical + nstripes * map->stripe_len;
-	if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+	अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) अणु
 		get_raid56_logic_offset(physical_end, num,
-					map, &logic_end, NULL);
+					map, &logic_end, शून्य);
 		logic_end += base;
-	} else {
+	पूर्ण अन्यथा अणु
 		logic_end = logical + increment * nstripes;
-	}
-	wait_event(sctx->list_wait,
-		   atomic_read(&sctx->bios_in_flight) == 0);
-	scrub_blocked_if_needed(fs_info);
+	पूर्ण
+	रुको_event(sctx->list_रुको,
+		   atomic_पढ़ो(&sctx->bios_in_flight) == 0);
+	scrub_blocked_अगर_needed(fs_info);
 
-	/* FIXME it might be better to start readahead at commit root */
+	/* FIXME it might be better to start पढ़ोahead at commit root */
 	key.objectid = logical;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = (u64)0;
 	key_end.objectid = logic_end;
 	key_end.type = BTRFS_METADATA_ITEM_KEY;
 	key_end.offset = (u64)-1;
-	reada1 = btrfs_reada_add(root, &key, &key_end);
+	पढ़ोa1 = btrfs_पढ़ोa_add(root, &key, &key_end);
 
-	if (cache->flags & BTRFS_BLOCK_GROUP_DATA) {
+	अगर (cache->flags & BTRFS_BLOCK_GROUP_DATA) अणु
 		key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
 		key.type = BTRFS_EXTENT_CSUM_KEY;
 		key.offset = logical;
 		key_end.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
 		key_end.type = BTRFS_EXTENT_CSUM_KEY;
 		key_end.offset = logic_end;
-		reada2 = btrfs_reada_add(csum_root, &key, &key_end);
-	} else {
-		reada2 = NULL;
-	}
+		पढ़ोa2 = btrfs_पढ़ोa_add(csum_root, &key, &key_end);
+	पूर्ण अन्यथा अणु
+		पढ़ोa2 = शून्य;
+	पूर्ण
 
-	if (!IS_ERR(reada1))
-		btrfs_reada_wait(reada1);
-	if (!IS_ERR_OR_NULL(reada2))
-		btrfs_reada_wait(reada2);
+	अगर (!IS_ERR(पढ़ोa1))
+		btrfs_पढ़ोa_रुको(पढ़ोa1);
+	अगर (!IS_ERR_OR_शून्य(पढ़ोa2))
+		btrfs_पढ़ोa_रुको(पढ़ोa2);
 
 
 	/*
-	 * collect all data csums for the stripe to avoid seeking during
+	 * collect all data csums क्रम the stripe to aव्योम seeking during
 	 * the scrub. This might currently (crc32) end up to be about 1MB
 	 */
 	blk_start_plug(&plug);
 
-	if (sctx->is_dev_replace &&
-	    btrfs_dev_is_sequential(sctx->wr_tgtdev, physical)) {
+	अगर (sctx->is_dev_replace &&
+	    btrfs_dev_is_sequential(sctx->wr_tgtdev, physical)) अणु
 		mutex_lock(&sctx->wr_lock);
-		sctx->write_pointer = physical;
+		sctx->ग_लिखो_poपूर्णांकer = physical;
 		mutex_unlock(&sctx->wr_lock);
-		sctx->flush_all_writes = true;
-	}
+		sctx->flush_all_ग_लिखोs = true;
+	पूर्ण
 
 	/*
-	 * now find all extents for each stripe and scrub them
+	 * now find all extents क्रम each stripe and scrub them
 	 */
 	ret = 0;
-	while (physical < physical_end) {
+	जबतक (physical < physical_end) अणु
 		/*
 		 * canceled?
 		 */
-		if (atomic_read(&fs_info->scrub_cancel_req) ||
-		    atomic_read(&sctx->cancel_req)) {
+		अगर (atomic_पढ़ो(&fs_info->scrub_cancel_req) ||
+		    atomic_पढ़ो(&sctx->cancel_req)) अणु
 			ret = -ECANCELED;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		/*
-		 * check to see if we have to pause
+		 * check to see अगर we have to छोड़ो
 		 */
-		if (atomic_read(&fs_info->scrub_pause_req)) {
+		अगर (atomic_पढ़ो(&fs_info->scrub_छोड़ो_req)) अणु
 			/* push queued extents */
-			sctx->flush_all_writes = true;
+			sctx->flush_all_ग_लिखोs = true;
 			scrub_submit(sctx);
 			mutex_lock(&sctx->wr_lock);
 			scrub_wr_submit(sctx);
 			mutex_unlock(&sctx->wr_lock);
-			wait_event(sctx->list_wait,
-				   atomic_read(&sctx->bios_in_flight) == 0);
-			sctx->flush_all_writes = false;
-			scrub_blocked_if_needed(fs_info);
-		}
+			रुको_event(sctx->list_रुको,
+				   atomic_पढ़ो(&sctx->bios_in_flight) == 0);
+			sctx->flush_all_ग_लिखोs = false;
+			scrub_blocked_अगर_needed(fs_info);
+		पूर्ण
 
-		if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+		अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) अणु
 			ret = get_raid56_logic_offset(physical, num, map,
 						      &logical,
 						      &stripe_logical);
 			logical += base;
-			if (ret) {
+			अगर (ret) अणु
 				/* it is parity strip */
 				stripe_logical += base;
 				stripe_end = stripe_logical + increment;
 				ret = scrub_raid56_parity(sctx, map, scrub_dev,
 							  ppath, stripe_logical,
 							  stripe_end);
-				if (ret)
-					goto out;
-				goto skip;
-			}
-		}
+				अगर (ret)
+					जाओ out;
+				जाओ skip;
+			पूर्ण
+		पूर्ण
 
-		if (btrfs_fs_incompat(fs_info, SKINNY_METADATA))
+		अगर (btrfs_fs_incompat(fs_info, SKINNY_METADATA))
 			key.type = BTRFS_METADATA_ITEM_KEY;
-		else
+		अन्यथा
 			key.type = BTRFS_EXTENT_ITEM_KEY;
 		key.objectid = logical;
 		key.offset = (u64)-1;
 
-		ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-		if (ret < 0)
-			goto out;
+		ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
+		अगर (ret < 0)
+			जाओ out;
 
-		if (ret > 0) {
+		अगर (ret > 0) अणु
 			ret = btrfs_previous_extent_item(root, path, 0);
-			if (ret < 0)
-				goto out;
-			if (ret > 0) {
+			अगर (ret < 0)
+				जाओ out;
+			अगर (ret > 0) अणु
 				/* there's no smaller item, so stick with the
 				 * larger one */
 				btrfs_release_path(path);
-				ret = btrfs_search_slot(NULL, root, &key,
+				ret = btrfs_search_slot(शून्य, root, &key,
 							path, 0, 0);
-				if (ret < 0)
-					goto out;
-			}
-		}
+				अगर (ret < 0)
+					जाओ out;
+			पूर्ण
+		पूर्ण
 
 		stop_loop = 0;
-		while (1) {
+		जबतक (1) अणु
 			u64 bytes;
 
 			l = path->nodes[0];
 			slot = path->slots[0];
-			if (slot >= btrfs_header_nritems(l)) {
+			अगर (slot >= btrfs_header_nritems(l)) अणु
 				ret = btrfs_next_leaf(root, path);
-				if (ret == 0)
-					continue;
-				if (ret < 0)
-					goto out;
+				अगर (ret == 0)
+					जारी;
+				अगर (ret < 0)
+					जाओ out;
 
 				stop_loop = 1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			btrfs_item_key_to_cpu(l, &key, slot);
 
-			if (key.type != BTRFS_EXTENT_ITEM_KEY &&
+			अगर (key.type != BTRFS_EXTENT_ITEM_KEY &&
 			    key.type != BTRFS_METADATA_ITEM_KEY)
-				goto next;
+				जाओ next;
 
-			if (key.type == BTRFS_METADATA_ITEM_KEY)
+			अगर (key.type == BTRFS_METADATA_ITEM_KEY)
 				bytes = fs_info->nodesize;
-			else
+			अन्यथा
 				bytes = key.offset;
 
-			if (key.objectid + bytes <= logical)
-				goto next;
+			अगर (key.objectid + bytes <= logical)
+				जाओ next;
 
-			if (key.objectid >= logical + map->stripe_len) {
+			अगर (key.objectid >= logical + map->stripe_len) अणु
 				/* out of this device extent */
-				if (key.objectid >= logic_end)
+				अगर (key.objectid >= logic_end)
 					stop_loop = 1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/*
-			 * If our block group was removed in the meanwhile, just
-			 * stop scrubbing since there is no point in continuing.
+			 * If our block group was हटाओd in the meanजबतक, just
+			 * stop scrubbing since there is no poपूर्णांक in continuing.
 			 * Continuing would prevent reusing its device extents
-			 * for new block groups for a long time.
+			 * क्रम new block groups क्रम a दीर्घ समय.
 			 */
 			spin_lock(&cache->lock);
-			if (cache->removed) {
+			अगर (cache->हटाओd) अणु
 				spin_unlock(&cache->lock);
 				ret = 0;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			spin_unlock(&cache->lock);
 
 			extent = btrfs_item_ptr(l, slot,
-						struct btrfs_extent_item);
+						काष्ठा btrfs_extent_item);
 			flags = btrfs_extent_flags(l, extent);
 			generation = btrfs_extent_generation(l, extent);
 
-			if ((flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) &&
+			अगर ((flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) &&
 			    (key.objectid < logical ||
 			     key.objectid + bytes >
-			     logical + map->stripe_len)) {
+			     logical + map->stripe_len)) अणु
 				btrfs_err(fs_info,
 					   "scrub: tree block %llu spanning stripes, ignored. logical=%llu",
 				       key.objectid, logical);
 				spin_lock(&sctx->stat_lock);
 				sctx->stat.uncorrectable_errors++;
 				spin_unlock(&sctx->stat_lock);
-				goto next;
-			}
+				जाओ next;
+			पूर्ण
 
 again:
 			extent_logical = key.objectid;
@@ -3391,50 +3392,50 @@ again:
 			/*
 			 * trim extent to this stripe
 			 */
-			if (extent_logical < logical) {
+			अगर (extent_logical < logical) अणु
 				extent_len -= logical - extent_logical;
 				extent_logical = logical;
-			}
-			if (extent_logical + extent_len >
-			    logical + map->stripe_len) {
+			पूर्ण
+			अगर (extent_logical + extent_len >
+			    logical + map->stripe_len) अणु
 				extent_len = logical + map->stripe_len -
 					     extent_logical;
-			}
+			पूर्ण
 
 			extent_physical = extent_logical - logical + physical;
 			extent_dev = scrub_dev;
 			extent_mirror_num = mirror_num;
-			if (sctx->is_dev_replace)
+			अगर (sctx->is_dev_replace)
 				scrub_remap_extent(fs_info, extent_logical,
 						   extent_len, &extent_physical,
 						   &extent_dev,
 						   &extent_mirror_num);
 
-			if (flags & BTRFS_EXTENT_FLAG_DATA) {
+			अगर (flags & BTRFS_EXTENT_FLAG_DATA) अणु
 				ret = btrfs_lookup_csums_range(csum_root,
 						extent_logical,
 						extent_logical + extent_len - 1,
 						&sctx->csum_list, 1);
-				if (ret)
-					goto out;
-			}
+				अगर (ret)
+					जाओ out;
+			पूर्ण
 
 			ret = scrub_extent(sctx, map, extent_logical, extent_len,
 					   extent_physical, extent_dev, flags,
 					   generation, extent_mirror_num,
 					   extent_logical - logical + physical);
 
-			scrub_free_csums(sctx);
+			scrub_मुक्त_csums(sctx);
 
-			if (ret)
-				goto out;
+			अगर (ret)
+				जाओ out;
 
-			if (sctx->is_dev_replace)
-				sync_replace_for_zoned(sctx);
+			अगर (sctx->is_dev_replace)
+				sync_replace_क्रम_zoned(sctx);
 
-			if (extent_logical + extent_len <
-			    key.objectid + bytes) {
-				if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+			अगर (extent_logical + extent_len <
+			    key.objectid + bytes) अणु
+				अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) अणु
 					/*
 					 * loop until we find next data stripe
 					 * or we have finished all stripes.
@@ -3446,7 +3447,7 @@ loop:
 							&stripe_logical);
 					logical += base;
 
-					if (ret && physical < physical_end) {
+					अगर (ret && physical < physical_end) अणु
 						stripe_logical += base;
 						stripe_end = stripe_logical +
 								increment;
@@ -3454,41 +3455,41 @@ loop:
 							map, scrub_dev, ppath,
 							stripe_logical,
 							stripe_end);
-						if (ret)
-							goto out;
-						goto loop;
-					}
-				} else {
+						अगर (ret)
+							जाओ out;
+						जाओ loop;
+					पूर्ण
+				पूर्ण अन्यथा अणु
 					physical += map->stripe_len;
 					logical += increment;
-				}
-				if (logical < key.objectid + bytes) {
+				पूर्ण
+				अगर (logical < key.objectid + bytes) अणु
 					cond_resched();
-					goto again;
-				}
+					जाओ again;
+				पूर्ण
 
-				if (physical >= physical_end) {
+				अगर (physical >= physical_end) अणु
 					stop_loop = 1;
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 next:
 			path->slots[0]++;
-		}
+		पूर्ण
 		btrfs_release_path(path);
 skip:
 		logical += increment;
 		physical += map->stripe_len;
 		spin_lock(&sctx->stat_lock);
-		if (stop_loop)
+		अगर (stop_loop)
 			sctx->stat.last_physical = map->stripes[num].physical +
 						   length;
-		else
+		अन्यथा
 			sctx->stat.last_physical = physical;
 		spin_unlock(&sctx->stat_lock);
-		if (stop_loop)
-			break;
-	}
+		अगर (stop_loop)
+			अवरोध;
+	पूर्ण
 out:
 	/* push queued extents */
 	scrub_submit(sctx);
@@ -3497,117 +3498,117 @@ out:
 	mutex_unlock(&sctx->wr_lock);
 
 	blk_finish_plug(&plug);
-	btrfs_free_path(path);
-	btrfs_free_path(ppath);
+	btrfs_मुक्त_path(path);
+	btrfs_मुक्त_path(ppath);
 
-	if (sctx->is_dev_replace && ret >= 0) {
-		int ret2;
+	अगर (sctx->is_dev_replace && ret >= 0) अणु
+		पूर्णांक ret2;
 
-		ret2 = sync_write_pointer_for_zoned(sctx, base + offset,
+		ret2 = sync_ग_लिखो_poपूर्णांकer_क्रम_zoned(sctx, base + offset,
 						    map->stripes[num].physical,
 						    physical_end);
-		if (ret2)
+		अगर (ret2)
 			ret = ret2;
-	}
+	पूर्ण
 
-	return ret < 0 ? ret : 0;
-}
+	वापस ret < 0 ? ret : 0;
+पूर्ण
 
-static noinline_for_stack int scrub_chunk(struct scrub_ctx *sctx,
-					  struct btrfs_device *scrub_dev,
+अटल noअंतरभूत_क्रम_stack पूर्णांक scrub_chunk(काष्ठा scrub_ctx *sctx,
+					  काष्ठा btrfs_device *scrub_dev,
 					  u64 chunk_offset, u64 length,
 					  u64 dev_offset,
-					  struct btrfs_block_group *cache)
-{
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
-	struct extent_map_tree *map_tree = &fs_info->mapping_tree;
-	struct map_lookup *map;
-	struct extent_map *em;
-	int i;
-	int ret = 0;
+					  काष्ठा btrfs_block_group *cache)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
+	काष्ठा extent_map_tree *map_tree = &fs_info->mapping_tree;
+	काष्ठा map_lookup *map;
+	काष्ठा extent_map *em;
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	read_lock(&map_tree->lock);
+	पढ़ो_lock(&map_tree->lock);
 	em = lookup_extent_mapping(map_tree, chunk_offset, 1);
-	read_unlock(&map_tree->lock);
+	पढ़ो_unlock(&map_tree->lock);
 
-	if (!em) {
+	अगर (!em) अणु
 		/*
 		 * Might have been an unused block group deleted by the cleaner
-		 * kthread or relocation.
+		 * kthपढ़ो or relocation.
 		 */
 		spin_lock(&cache->lock);
-		if (!cache->removed)
+		अगर (!cache->हटाओd)
 			ret = -EINVAL;
 		spin_unlock(&cache->lock);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	map = em->map_lookup;
-	if (em->start != chunk_offset)
-		goto out;
+	अगर (em->start != chunk_offset)
+		जाओ out;
 
-	if (em->len < length)
-		goto out;
+	अगर (em->len < length)
+		जाओ out;
 
-	for (i = 0; i < map->num_stripes; ++i) {
-		if (map->stripes[i].dev->bdev == scrub_dev->bdev &&
-		    map->stripes[i].physical == dev_offset) {
+	क्रम (i = 0; i < map->num_stripes; ++i) अणु
+		अगर (map->stripes[i].dev->bdev == scrub_dev->bdev &&
+		    map->stripes[i].physical == dev_offset) अणु
 			ret = scrub_stripe(sctx, map, scrub_dev, i,
 					   chunk_offset, length, cache);
-			if (ret)
-				goto out;
-		}
-	}
+			अगर (ret)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 out:
-	free_extent_map(em);
+	मुक्त_extent_map(em);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int finish_extent_writes_for_zoned(struct btrfs_root *root,
-					  struct btrfs_block_group *cache)
-{
-	struct btrfs_fs_info *fs_info = cache->fs_info;
-	struct btrfs_trans_handle *trans;
+अटल पूर्णांक finish_extent_ग_लिखोs_क्रम_zoned(काष्ठा btrfs_root *root,
+					  काष्ठा btrfs_block_group *cache)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = cache->fs_info;
+	काष्ठा btrfs_trans_handle *trans;
 
-	if (!btrfs_is_zoned(fs_info))
-		return 0;
+	अगर (!btrfs_is_zoned(fs_info))
+		वापस 0;
 
-	btrfs_wait_block_group_reservations(cache);
-	btrfs_wait_nocow_writers(cache);
-	btrfs_wait_ordered_roots(fs_info, U64_MAX, cache->start, cache->length);
+	btrfs_रुको_block_group_reservations(cache);
+	btrfs_रुको_nocow_ग_लिखोrs(cache);
+	btrfs_रुको_ordered_roots(fs_info, U64_MAX, cache->start, cache->length);
 
 	trans = btrfs_join_transaction(root);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
-	return btrfs_commit_transaction(trans);
-}
+	अगर (IS_ERR(trans))
+		वापस PTR_ERR(trans);
+	वापस btrfs_commit_transaction(trans);
+पूर्ण
 
-static noinline_for_stack
-int scrub_enumerate_chunks(struct scrub_ctx *sctx,
-			   struct btrfs_device *scrub_dev, u64 start, u64 end)
-{
-	struct btrfs_dev_extent *dev_extent = NULL;
-	struct btrfs_path *path;
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
-	struct btrfs_root *root = fs_info->dev_root;
+अटल noअंतरभूत_क्रम_stack
+पूर्णांक scrub_क्रमागतerate_chunks(काष्ठा scrub_ctx *sctx,
+			   काष्ठा btrfs_device *scrub_dev, u64 start, u64 end)
+अणु
+	काष्ठा btrfs_dev_extent *dev_extent = शून्य;
+	काष्ठा btrfs_path *path;
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
+	काष्ठा btrfs_root *root = fs_info->dev_root;
 	u64 length;
 	u64 chunk_offset;
-	int ret = 0;
-	int ro_set;
-	int slot;
-	struct extent_buffer *l;
-	struct btrfs_key key;
-	struct btrfs_key found_key;
-	struct btrfs_block_group *cache;
-	struct btrfs_dev_replace *dev_replace = &fs_info->dev_replace;
+	पूर्णांक ret = 0;
+	पूर्णांक ro_set;
+	पूर्णांक slot;
+	काष्ठा extent_buffer *l;
+	काष्ठा btrfs_key key;
+	काष्ठा btrfs_key found_key;
+	काष्ठा btrfs_block_group *cache;
+	काष्ठा btrfs_dev_replace *dev_replace = &fs_info->dev_replace;
 
 	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	अगर (!path)
+		वापस -ENOMEM;
 
-	path->reada = READA_FORWARD;
+	path->पढ़ोa = READA_FORWARD;
 	path->search_commit_root = 1;
 	path->skip_locking = 1;
 
@@ -3615,379 +3616,379 @@ int scrub_enumerate_chunks(struct scrub_ctx *sctx,
 	key.offset = 0ull;
 	key.type = BTRFS_DEV_EXTENT_KEY;
 
-	while (1) {
-		ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-		if (ret < 0)
-			break;
-		if (ret > 0) {
-			if (path->slots[0] >=
-			    btrfs_header_nritems(path->nodes[0])) {
+	जबतक (1) अणु
+		ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
+		अगर (ret < 0)
+			अवरोध;
+		अगर (ret > 0) अणु
+			अगर (path->slots[0] >=
+			    btrfs_header_nritems(path->nodes[0])) अणु
 				ret = btrfs_next_leaf(root, path);
-				if (ret < 0)
-					break;
-				if (ret > 0) {
+				अगर (ret < 0)
+					अवरोध;
+				अगर (ret > 0) अणु
 					ret = 0;
-					break;
-				}
-			} else {
+					अवरोध;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				ret = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		l = path->nodes[0];
 		slot = path->slots[0];
 
 		btrfs_item_key_to_cpu(l, &found_key, slot);
 
-		if (found_key.objectid != scrub_dev->devid)
-			break;
+		अगर (found_key.objectid != scrub_dev->devid)
+			अवरोध;
 
-		if (found_key.type != BTRFS_DEV_EXTENT_KEY)
-			break;
+		अगर (found_key.type != BTRFS_DEV_EXTENT_KEY)
+			अवरोध;
 
-		if (found_key.offset >= end)
-			break;
+		अगर (found_key.offset >= end)
+			अवरोध;
 
-		if (found_key.offset < key.offset)
-			break;
+		अगर (found_key.offset < key.offset)
+			अवरोध;
 
-		dev_extent = btrfs_item_ptr(l, slot, struct btrfs_dev_extent);
+		dev_extent = btrfs_item_ptr(l, slot, काष्ठा btrfs_dev_extent);
 		length = btrfs_dev_extent_length(l, dev_extent);
 
-		if (found_key.offset + length <= start)
-			goto skip;
+		अगर (found_key.offset + length <= start)
+			जाओ skip;
 
 		chunk_offset = btrfs_dev_extent_chunk_offset(l, dev_extent);
 
 		/*
 		 * get a reference on the corresponding block group to prevent
-		 * the chunk from going away while we scrub it
+		 * the chunk from going away जबतक we scrub it
 		 */
 		cache = btrfs_lookup_block_group(fs_info, chunk_offset);
 
-		/* some chunks are removed but not committed to disk yet,
-		 * continue scrubbing */
-		if (!cache)
-			goto skip;
+		/* some chunks are हटाओd but not committed to disk yet,
+		 * जारी scrubbing */
+		अगर (!cache)
+			जाओ skip;
 
-		if (sctx->is_dev_replace && btrfs_is_zoned(fs_info)) {
+		अगर (sctx->is_dev_replace && btrfs_is_zoned(fs_info)) अणु
 			spin_lock(&cache->lock);
-			if (!cache->to_copy) {
+			अगर (!cache->to_copy) अणु
 				spin_unlock(&cache->lock);
 				btrfs_put_block_group(cache);
-				goto skip;
-			}
+				जाओ skip;
+			पूर्ण
 			spin_unlock(&cache->lock);
-		}
+		पूर्ण
 
 		/*
-		 * Make sure that while we are scrubbing the corresponding block
-		 * group doesn't get its logical address and its device extents
-		 * reused for another block group, which can possibly be of a
-		 * different type and different profile. We do this to prevent
+		 * Make sure that जबतक we are scrubbing the corresponding block
+		 * group करोesn't get its logical address and its device extents
+		 * reused क्रम another block group, which can possibly be of a
+		 * dअगरferent type and dअगरferent profile. We करो this to prevent
 		 * false error detections and crashes due to bogus attempts to
 		 * repair extents.
 		 */
 		spin_lock(&cache->lock);
-		if (cache->removed) {
+		अगर (cache->हटाओd) अणु
 			spin_unlock(&cache->lock);
 			btrfs_put_block_group(cache);
-			goto skip;
-		}
-		btrfs_freeze_block_group(cache);
+			जाओ skip;
+		पूर्ण
+		btrfs_मुक्तze_block_group(cache);
 		spin_unlock(&cache->lock);
 
 		/*
-		 * we need call btrfs_inc_block_group_ro() with scrubs_paused,
-		 * to avoid deadlock caused by:
+		 * we need call btrfs_inc_block_group_ro() with scrubs_छोड़ोd,
+		 * to aव्योम deadlock caused by:
 		 * btrfs_inc_block_group_ro()
-		 * -> btrfs_wait_for_commit()
+		 * -> btrfs_रुको_क्रम_commit()
 		 * -> btrfs_commit_transaction()
-		 * -> btrfs_scrub_pause()
+		 * -> btrfs_scrub_छोड़ो()
 		 */
-		scrub_pause_on(fs_info);
+		scrub_छोड़ो_on(fs_info);
 
 		/*
-		 * Don't do chunk preallocation for scrub.
+		 * Don't करो chunk pपुनः_स्मृतिation क्रम scrub.
 		 *
-		 * This is especially important for SYSTEM bgs, or we can hit
+		 * This is especially important क्रम SYSTEM bgs, or we can hit
 		 * -EFBIG from btrfs_finish_chunk_alloc() like:
 		 * 1. The only SYSTEM bg is marked RO.
 		 *    Since SYSTEM bg is small, that's pretty common.
 		 * 2. New SYSTEM bg will be allocated
 		 *    Due to regular version will allocate new chunk.
 		 * 3. New SYSTEM bg is empty and will get cleaned up
-		 *    Before cleanup really happens, it's marked RO again.
+		 *    Beक्रमe cleanup really happens, it's marked RO again.
 		 * 4. Empty SYSTEM bg get scrubbed
 		 *    We go back to 2.
 		 *
-		 * This can easily boost the amount of SYSTEM chunks if cleaner
-		 * thread can't be triggered fast enough, and use up all space
+		 * This can easily boost the amount of SYSTEM chunks अगर cleaner
+		 * thपढ़ो can't be triggered fast enough, and use up all space
 		 * of btrfs_super_block::sys_chunk_array
 		 *
-		 * While for dev replace, we need to try our best to mark block
+		 * While क्रम dev replace, we need to try our best to mark block
 		 * group RO, to prevent race between:
 		 * - Write duplication
 		 *   Contains latest data
 		 * - Scrub copy
 		 *   Contains data from commit tree
 		 *
-		 * If target block group is not marked RO, nocow writes can
+		 * If target block group is not marked RO, nocow ग_लिखोs can
 		 * be overwritten by scrub copy, causing data corruption.
-		 * So for dev-replace, it's not allowed to continue if a block
+		 * So क्रम dev-replace, it's not allowed to जारी अगर a block
 		 * group is not RO.
 		 */
 		ret = btrfs_inc_block_group_ro(cache, sctx->is_dev_replace);
-		if (!ret && sctx->is_dev_replace) {
-			ret = finish_extent_writes_for_zoned(root, cache);
-			if (ret) {
+		अगर (!ret && sctx->is_dev_replace) अणु
+			ret = finish_extent_ग_लिखोs_क्रम_zoned(root, cache);
+			अगर (ret) अणु
 				btrfs_dec_block_group_ro(cache);
-				scrub_pause_off(fs_info);
+				scrub_छोड़ो_off(fs_info);
 				btrfs_put_block_group(cache);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (ret == 0) {
+		अगर (ret == 0) अणु
 			ro_set = 1;
-		} else if (ret == -ENOSPC && !sctx->is_dev_replace) {
+		पूर्ण अन्यथा अगर (ret == -ENOSPC && !sctx->is_dev_replace) अणु
 			/*
-			 * btrfs_inc_block_group_ro return -ENOSPC when it
-			 * failed in creating new chunk for metadata.
-			 * It is not a problem for scrub, because
-			 * metadata are always cowed, and our scrub paused
+			 * btrfs_inc_block_group_ro वापस -ENOSPC when it
+			 * failed in creating new chunk क्रम metadata.
+			 * It is not a problem क्रम scrub, because
+			 * metadata are always cowed, and our scrub छोड़ोd
 			 * commit_transactions.
 			 */
 			ro_set = 0;
-		} else if (ret == -ETXTBSY) {
+		पूर्ण अन्यथा अगर (ret == -ETXTBSY) अणु
 			btrfs_warn(fs_info,
 		   "skipping scrub of block group %llu due to active swapfile",
 				   cache->start);
-			scrub_pause_off(fs_info);
+			scrub_छोड़ो_off(fs_info);
 			ret = 0;
-			goto skip_unfreeze;
-		} else {
+			जाओ skip_unमुक्तze;
+		पूर्ण अन्यथा अणु
 			btrfs_warn(fs_info,
 				   "failed setting block group ro: %d", ret);
-			btrfs_unfreeze_block_group(cache);
+			btrfs_unमुक्तze_block_group(cache);
 			btrfs_put_block_group(cache);
-			scrub_pause_off(fs_info);
-			break;
-		}
+			scrub_छोड़ो_off(fs_info);
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * Now the target block is marked RO, wait for nocow writes to
-		 * finish before dev-replace.
-		 * COW is fine, as COW never overwrites extents in commit tree.
+		 * Now the target block is marked RO, रुको क्रम nocow ग_लिखोs to
+		 * finish beक्रमe dev-replace.
+		 * COW is fine, as COW never overग_लिखोs extents in commit tree.
 		 */
-		if (sctx->is_dev_replace) {
-			btrfs_wait_nocow_writers(cache);
-			btrfs_wait_ordered_roots(fs_info, U64_MAX, cache->start,
+		अगर (sctx->is_dev_replace) अणु
+			btrfs_रुको_nocow_ग_लिखोrs(cache);
+			btrfs_रुको_ordered_roots(fs_info, U64_MAX, cache->start,
 					cache->length);
-		}
+		पूर्ण
 
-		scrub_pause_off(fs_info);
-		down_write(&dev_replace->rwsem);
+		scrub_छोड़ो_off(fs_info);
+		करोwn_ग_लिखो(&dev_replace->rwsem);
 		dev_replace->cursor_right = found_key.offset + length;
 		dev_replace->cursor_left = found_key.offset;
-		dev_replace->item_needs_writeback = 1;
-		up_write(&dev_replace->rwsem);
+		dev_replace->item_needs_ग_लिखोback = 1;
+		up_ग_लिखो(&dev_replace->rwsem);
 
 		ret = scrub_chunk(sctx, scrub_dev, chunk_offset, length,
 				  found_key.offset, cache);
 
 		/*
-		 * flush, submit all pending read and write bios, afterwards
-		 * wait for them.
-		 * Note that in the dev replace case, a read request causes
-		 * write requests that are submitted in the read completion
-		 * worker. Therefore in the current situation, it is required
-		 * that all write requests are flushed, so that all read and
-		 * write requests are really completed when bios_in_flight
+		 * flush, submit all pending पढ़ो and ग_लिखो bios, afterwards
+		 * रुको क्रम them.
+		 * Note that in the dev replace हाल, a पढ़ो request causes
+		 * ग_लिखो requests that are submitted in the पढ़ो completion
+		 * worker. Thereक्रमe in the current situation, it is required
+		 * that all ग_लिखो requests are flushed, so that all पढ़ो and
+		 * ग_लिखो requests are really completed when bios_in_flight
 		 * changes to 0.
 		 */
-		sctx->flush_all_writes = true;
+		sctx->flush_all_ग_लिखोs = true;
 		scrub_submit(sctx);
 		mutex_lock(&sctx->wr_lock);
 		scrub_wr_submit(sctx);
 		mutex_unlock(&sctx->wr_lock);
 
-		wait_event(sctx->list_wait,
-			   atomic_read(&sctx->bios_in_flight) == 0);
+		रुको_event(sctx->list_रुको,
+			   atomic_पढ़ो(&sctx->bios_in_flight) == 0);
 
-		scrub_pause_on(fs_info);
+		scrub_छोड़ो_on(fs_info);
 
 		/*
-		 * must be called before we decrease @scrub_paused.
-		 * make sure we don't block transaction commit while
-		 * we are waiting pending workers finished.
+		 * must be called beक्रमe we decrease @scrub_छोड़ोd.
+		 * make sure we करोn't block transaction commit जबतक
+		 * we are रुकोing pending workers finished.
 		 */
-		wait_event(sctx->list_wait,
-			   atomic_read(&sctx->workers_pending) == 0);
-		sctx->flush_all_writes = false;
+		रुको_event(sctx->list_रुको,
+			   atomic_पढ़ो(&sctx->workers_pending) == 0);
+		sctx->flush_all_ग_लिखोs = false;
 
-		scrub_pause_off(fs_info);
+		scrub_छोड़ो_off(fs_info);
 
-		if (sctx->is_dev_replace &&
+		अगर (sctx->is_dev_replace &&
 		    !btrfs_finish_block_group_to_copy(dev_replace->srcdev,
 						      cache, found_key.offset))
 			ro_set = 0;
 
-		down_write(&dev_replace->rwsem);
+		करोwn_ग_लिखो(&dev_replace->rwsem);
 		dev_replace->cursor_left = dev_replace->cursor_right;
-		dev_replace->item_needs_writeback = 1;
-		up_write(&dev_replace->rwsem);
+		dev_replace->item_needs_ग_लिखोback = 1;
+		up_ग_लिखो(&dev_replace->rwsem);
 
-		if (ro_set)
+		अगर (ro_set)
 			btrfs_dec_block_group_ro(cache);
 
 		/*
-		 * We might have prevented the cleaner kthread from deleting
-		 * this block group if it was already unused because we raced
+		 * We might have prevented the cleaner kthपढ़ो from deleting
+		 * this block group अगर it was alपढ़ोy unused because we raced
 		 * and set it to RO mode first. So add it back to the unused
 		 * list, otherwise it might not ever be deleted unless a manual
 		 * balance is triggered or it becomes used and unused again.
 		 */
 		spin_lock(&cache->lock);
-		if (!cache->removed && !cache->ro && cache->reserved == 0 &&
-		    cache->used == 0) {
+		अगर (!cache->हटाओd && !cache->ro && cache->reserved == 0 &&
+		    cache->used == 0) अणु
 			spin_unlock(&cache->lock);
-			if (btrfs_test_opt(fs_info, DISCARD_ASYNC))
+			अगर (btrfs_test_opt(fs_info, DISCARD_ASYNC))
 				btrfs_discard_queue_work(&fs_info->discard_ctl,
 							 cache);
-			else
+			अन्यथा
 				btrfs_mark_bg_unused(cache);
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_unlock(&cache->lock);
-		}
-skip_unfreeze:
-		btrfs_unfreeze_block_group(cache);
+		पूर्ण
+skip_unमुक्तze:
+		btrfs_unमुक्तze_block_group(cache);
 		btrfs_put_block_group(cache);
-		if (ret)
-			break;
-		if (sctx->is_dev_replace &&
-		    atomic64_read(&dev_replace->num_write_errors) > 0) {
+		अगर (ret)
+			अवरोध;
+		अगर (sctx->is_dev_replace &&
+		    atomic64_पढ़ो(&dev_replace->num_ग_लिखो_errors) > 0) अणु
 			ret = -EIO;
-			break;
-		}
-		if (sctx->stat.malloc_errors > 0) {
+			अवरोध;
+		पूर्ण
+		अगर (sctx->stat.दो_स्मृति_errors > 0) अणु
 			ret = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 skip:
 		key.offset = found_key.offset + length;
 		btrfs_release_path(path);
-	}
+	पूर्ण
 
-	btrfs_free_path(path);
+	btrfs_मुक्त_path(path);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static noinline_for_stack int scrub_supers(struct scrub_ctx *sctx,
-					   struct btrfs_device *scrub_dev)
-{
-	int	i;
+अटल noअंतरभूत_क्रम_stack पूर्णांक scrub_supers(काष्ठा scrub_ctx *sctx,
+					   काष्ठा btrfs_device *scrub_dev)
+अणु
+	पूर्णांक	i;
 	u64	bytenr;
 	u64	gen;
-	int	ret;
-	struct btrfs_fs_info *fs_info = sctx->fs_info;
+	पूर्णांक	ret;
+	काष्ठा btrfs_fs_info *fs_info = sctx->fs_info;
 
-	if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
-		return -EROFS;
+	अगर (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
+		वापस -EROFS;
 
-	/* Seed devices of a new filesystem has their own generation. */
-	if (scrub_dev->fs_devices != fs_info->fs_devices)
+	/* Seed devices of a new fileप्रणाली has their own generation. */
+	अगर (scrub_dev->fs_devices != fs_info->fs_devices)
 		gen = scrub_dev->generation;
-	else
+	अन्यथा
 		gen = fs_info->last_trans_committed;
 
-	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+	क्रम (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) अणु
 		bytenr = btrfs_sb_offset(i);
-		if (bytenr + BTRFS_SUPER_INFO_SIZE >
+		अगर (bytenr + BTRFS_SUPER_INFO_SIZE >
 		    scrub_dev->commit_total_bytes)
-			break;
-		if (!btrfs_check_super_location(scrub_dev, bytenr))
-			continue;
+			अवरोध;
+		अगर (!btrfs_check_super_location(scrub_dev, bytenr))
+			जारी;
 
 		ret = scrub_pages(sctx, bytenr, BTRFS_SUPER_INFO_SIZE, bytenr,
 				  scrub_dev, BTRFS_EXTENT_FLAG_SUPER, gen, i,
-				  NULL, bytenr);
-		if (ret)
-			return ret;
-	}
-	wait_event(sctx->list_wait, atomic_read(&sctx->bios_in_flight) == 0);
+				  शून्य, bytenr);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	रुको_event(sctx->list_रुको, atomic_पढ़ो(&sctx->bios_in_flight) == 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scrub_workers_put(struct btrfs_fs_info *fs_info)
-{
-	if (refcount_dec_and_mutex_lock(&fs_info->scrub_workers_refcnt,
-					&fs_info->scrub_lock)) {
-		struct btrfs_workqueue *scrub_workers = NULL;
-		struct btrfs_workqueue *scrub_wr_comp = NULL;
-		struct btrfs_workqueue *scrub_parity = NULL;
+अटल व्योम scrub_workers_put(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	अगर (refcount_dec_and_mutex_lock(&fs_info->scrub_workers_refcnt,
+					&fs_info->scrub_lock)) अणु
+		काष्ठा btrfs_workqueue *scrub_workers = शून्य;
+		काष्ठा btrfs_workqueue *scrub_wr_comp = शून्य;
+		काष्ठा btrfs_workqueue *scrub_parity = शून्य;
 
 		scrub_workers = fs_info->scrub_workers;
 		scrub_wr_comp = fs_info->scrub_wr_completion_workers;
 		scrub_parity = fs_info->scrub_parity_workers;
 
-		fs_info->scrub_workers = NULL;
-		fs_info->scrub_wr_completion_workers = NULL;
-		fs_info->scrub_parity_workers = NULL;
+		fs_info->scrub_workers = शून्य;
+		fs_info->scrub_wr_completion_workers = शून्य;
+		fs_info->scrub_parity_workers = शून्य;
 		mutex_unlock(&fs_info->scrub_lock);
 
 		btrfs_destroy_workqueue(scrub_workers);
 		btrfs_destroy_workqueue(scrub_wr_comp);
 		btrfs_destroy_workqueue(scrub_parity);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * get a reference count on fs_info->scrub_workers. start worker if necessary
+ * get a reference count on fs_info->scrub_workers. start worker अगर necessary
  */
-static noinline_for_stack int scrub_workers_get(struct btrfs_fs_info *fs_info,
-						int is_dev_replace)
-{
-	struct btrfs_workqueue *scrub_workers = NULL;
-	struct btrfs_workqueue *scrub_wr_comp = NULL;
-	struct btrfs_workqueue *scrub_parity = NULL;
-	unsigned int flags = WQ_FREEZABLE | WQ_UNBOUND;
-	int max_active = fs_info->thread_pool_size;
-	int ret = -ENOMEM;
+अटल noअंतरभूत_क्रम_stack पूर्णांक scrub_workers_get(काष्ठा btrfs_fs_info *fs_info,
+						पूर्णांक is_dev_replace)
+अणु
+	काष्ठा btrfs_workqueue *scrub_workers = शून्य;
+	काष्ठा btrfs_workqueue *scrub_wr_comp = शून्य;
+	काष्ठा btrfs_workqueue *scrub_parity = शून्य;
+	अचिन्हित पूर्णांक flags = WQ_FREEZABLE | WQ_UNBOUND;
+	पूर्णांक max_active = fs_info->thपढ़ो_pool_size;
+	पूर्णांक ret = -ENOMEM;
 
-	if (refcount_inc_not_zero(&fs_info->scrub_workers_refcnt))
-		return 0;
+	अगर (refcount_inc_not_zero(&fs_info->scrub_workers_refcnt))
+		वापस 0;
 
 	scrub_workers = btrfs_alloc_workqueue(fs_info, "scrub", flags,
 					      is_dev_replace ? 1 : max_active, 4);
-	if (!scrub_workers)
-		goto fail_scrub_workers;
+	अगर (!scrub_workers)
+		जाओ fail_scrub_workers;
 
 	scrub_wr_comp = btrfs_alloc_workqueue(fs_info, "scrubwrc", flags,
 					      max_active, 2);
-	if (!scrub_wr_comp)
-		goto fail_scrub_wr_completion_workers;
+	अगर (!scrub_wr_comp)
+		जाओ fail_scrub_wr_completion_workers;
 
 	scrub_parity = btrfs_alloc_workqueue(fs_info, "scrubparity", flags,
 					     max_active, 2);
-	if (!scrub_parity)
-		goto fail_scrub_parity_workers;
+	अगर (!scrub_parity)
+		जाओ fail_scrub_parity_workers;
 
 	mutex_lock(&fs_info->scrub_lock);
-	if (refcount_read(&fs_info->scrub_workers_refcnt) == 0) {
-		ASSERT(fs_info->scrub_workers == NULL &&
-		       fs_info->scrub_wr_completion_workers == NULL &&
-		       fs_info->scrub_parity_workers == NULL);
+	अगर (refcount_पढ़ो(&fs_info->scrub_workers_refcnt) == 0) अणु
+		ASSERT(fs_info->scrub_workers == शून्य &&
+		       fs_info->scrub_wr_completion_workers == शून्य &&
+		       fs_info->scrub_parity_workers == शून्य);
 		fs_info->scrub_workers = scrub_workers;
 		fs_info->scrub_wr_completion_workers = scrub_wr_comp;
 		fs_info->scrub_parity_workers = scrub_parity;
 		refcount_set(&fs_info->scrub_workers_refcnt, 1);
 		mutex_unlock(&fs_info->scrub_lock);
-		return 0;
-	}
-	/* Other thread raced in and created the workers for us */
+		वापस 0;
+	पूर्ण
+	/* Other thपढ़ो raced in and created the workers क्रम us */
 	refcount_inc(&fs_info->scrub_workers_refcnt);
 	mutex_unlock(&fs_info->scrub_lock);
 
@@ -3998,24 +3999,24 @@ fail_scrub_parity_workers:
 fail_scrub_wr_completion_workers:
 	btrfs_destroy_workqueue(scrub_workers);
 fail_scrub_workers:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
-		    u64 end, struct btrfs_scrub_progress *progress,
-		    int readonly, int is_dev_replace)
-{
-	struct scrub_ctx *sctx;
-	int ret;
-	struct btrfs_device *dev;
-	unsigned int nofs_flag;
+पूर्णांक btrfs_scrub_dev(काष्ठा btrfs_fs_info *fs_info, u64 devid, u64 start,
+		    u64 end, काष्ठा btrfs_scrub_progress *progress,
+		    पूर्णांक पढ़ोonly, पूर्णांक is_dev_replace)
+अणु
+	काष्ठा scrub_ctx *sctx;
+	पूर्णांक ret;
+	काष्ठा btrfs_device *dev;
+	अचिन्हित पूर्णांक nofs_flag;
 
-	if (btrfs_fs_closing(fs_info))
-		return -EAGAIN;
+	अगर (btrfs_fs_closing(fs_info))
+		वापस -EAGAIN;
 
-	if (fs_info->nodesize > BTRFS_STRIPE_LEN) {
+	अगर (fs_info->nodesize > BTRFS_STRIPE_LEN) अणु
 		/*
-		 * in this case scrub is unable to calculate the checksum
+		 * in this हाल scrub is unable to calculate the checksum
 		 * the way scrub is implemented. Do not handle this
 		 * situation at all because it won't ever happen.
 		 */
@@ -4023,15 +4024,15 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 			   "scrub: size assumption nodesize <= BTRFS_STRIPE_LEN (%d <= %d) fails",
 		       fs_info->nodesize,
 		       BTRFS_STRIPE_LEN);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (fs_info->nodesize >
+	अगर (fs_info->nodesize >
 	    PAGE_SIZE * SCRUB_MAX_PAGES_PER_BLOCK ||
-	    fs_info->sectorsize > PAGE_SIZE * SCRUB_MAX_PAGES_PER_BLOCK) {
+	    fs_info->sectorsize > PAGE_SIZE * SCRUB_MAX_PAGES_PER_BLOCK) अणु
 		/*
 		 * would exhaust the array bounds of pagev member in
-		 * struct scrub_block
+		 * काष्ठा scrub_block
 		 */
 		btrfs_err(fs_info,
 			  "scrub: size assumption nodesize and sectorsize <= SCRUB_MAX_PAGES_PER_BLOCK (%d <= %d && %d <= %d) fails",
@@ -4039,81 +4040,81 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 		       SCRUB_MAX_PAGES_PER_BLOCK,
 		       fs_info->sectorsize,
 		       SCRUB_MAX_PAGES_PER_BLOCK);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Allocate outside of device_list_mutex */
 	sctx = scrub_setup_ctx(fs_info, is_dev_replace);
-	if (IS_ERR(sctx))
-		return PTR_ERR(sctx);
+	अगर (IS_ERR(sctx))
+		वापस PTR_ERR(sctx);
 
 	ret = scrub_workers_get(fs_info, is_dev_replace);
-	if (ret)
-		goto out_free_ctx;
+	अगर (ret)
+		जाओ out_मुक्त_ctx;
 
 	mutex_lock(&fs_info->fs_devices->device_list_mutex);
-	dev = btrfs_find_device(fs_info->fs_devices, devid, NULL, NULL);
-	if (!dev || (test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state) &&
-		     !is_dev_replace)) {
+	dev = btrfs_find_device(fs_info->fs_devices, devid, शून्य, शून्य);
+	अगर (!dev || (test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state) &&
+		     !is_dev_replace)) अणु
 		mutex_unlock(&fs_info->fs_devices->device_list_mutex);
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!is_dev_replace && !readonly &&
-	    !test_bit(BTRFS_DEV_STATE_WRITEABLE, &dev->dev_state)) {
+	अगर (!is_dev_replace && !पढ़ोonly &&
+	    !test_bit(BTRFS_DEV_STATE_WRITEABLE, &dev->dev_state)) अणु
 		mutex_unlock(&fs_info->fs_devices->device_list_mutex);
 		btrfs_err_in_rcu(fs_info,
 			"scrub on devid %llu: filesystem on %s is not writable",
 				 devid, rcu_str_deref(dev->name));
 		ret = -EROFS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mutex_lock(&fs_info->scrub_lock);
-	if (!test_bit(BTRFS_DEV_STATE_IN_FS_METADATA, &dev->dev_state) ||
-	    test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &dev->dev_state)) {
+	अगर (!test_bit(BTRFS_DEV_STATE_IN_FS_METADATA, &dev->dev_state) ||
+	    test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &dev->dev_state)) अणु
 		mutex_unlock(&fs_info->scrub_lock);
 		mutex_unlock(&fs_info->fs_devices->device_list_mutex);
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	down_read(&fs_info->dev_replace.rwsem);
-	if (dev->scrub_ctx ||
+	करोwn_पढ़ो(&fs_info->dev_replace.rwsem);
+	अगर (dev->scrub_ctx ||
 	    (!is_dev_replace &&
-	     btrfs_dev_replace_is_ongoing(&fs_info->dev_replace))) {
-		up_read(&fs_info->dev_replace.rwsem);
+	     btrfs_dev_replace_is_ongoing(&fs_info->dev_replace))) अणु
+		up_पढ़ो(&fs_info->dev_replace.rwsem);
 		mutex_unlock(&fs_info->scrub_lock);
 		mutex_unlock(&fs_info->fs_devices->device_list_mutex);
 		ret = -EINPROGRESS;
-		goto out;
-	}
-	up_read(&fs_info->dev_replace.rwsem);
+		जाओ out;
+	पूर्ण
+	up_पढ़ो(&fs_info->dev_replace.rwsem);
 
-	sctx->readonly = readonly;
+	sctx->पढ़ोonly = पढ़ोonly;
 	dev->scrub_ctx = sctx;
 	mutex_unlock(&fs_info->fs_devices->device_list_mutex);
 
 	/*
-	 * checking @scrub_pause_req here, we can avoid
+	 * checking @scrub_छोड़ो_req here, we can aव्योम
 	 * race between committing transaction and scrubbing.
 	 */
-	__scrub_blocked_if_needed(fs_info);
+	__scrub_blocked_अगर_needed(fs_info);
 	atomic_inc(&fs_info->scrubs_running);
 	mutex_unlock(&fs_info->scrub_lock);
 
 	/*
-	 * In order to avoid deadlock with reclaim when there is a transaction
-	 * trying to pause scrub, make sure we use GFP_NOFS for all the
-	 * allocations done at btrfs_scrub_pages() and scrub_pages_for_parity()
-	 * invoked by our callees. The pausing request is done when the
+	 * In order to aव्योम deadlock with reclaim when there is a transaction
+	 * trying to छोड़ो scrub, make sure we use GFP_NOFS क्रम all the
+	 * allocations करोne at btrfs_scrub_pages() and scrub_pages_क्रम_parity()
+	 * invoked by our callees. The pausing request is करोne when the
 	 * transaction commit starts, and it blocks the transaction until scrub
-	 * is paused (done at specific points at scrub_stripe() or right above
-	 * before incrementing fs_info->scrubs_running).
+	 * is छोड़ोd (करोne at specअगरic poपूर्णांकs at scrub_stripe() or right above
+	 * beक्रमe incrementing fs_info->scrubs_running).
 	 */
-	nofs_flag = memalloc_nofs_save();
-	if (!is_dev_replace) {
+	nofs_flag = meदो_स्मृति_nofs_save();
+	अगर (!is_dev_replace) अणु
 		btrfs_info(fs_info, "scrub: started on devid %llu", devid);
 		/*
 		 * by holding device list mutex, we can
@@ -4122,144 +4123,144 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 		mutex_lock(&fs_info->fs_devices->device_list_mutex);
 		ret = scrub_supers(sctx, dev);
 		mutex_unlock(&fs_info->fs_devices->device_list_mutex);
-	}
+	पूर्ण
 
-	if (!ret)
-		ret = scrub_enumerate_chunks(sctx, dev, start, end);
-	memalloc_nofs_restore(nofs_flag);
+	अगर (!ret)
+		ret = scrub_क्रमागतerate_chunks(sctx, dev, start, end);
+	meदो_स्मृति_nofs_restore(nofs_flag);
 
-	wait_event(sctx->list_wait, atomic_read(&sctx->bios_in_flight) == 0);
+	रुको_event(sctx->list_रुको, atomic_पढ़ो(&sctx->bios_in_flight) == 0);
 	atomic_dec(&fs_info->scrubs_running);
-	wake_up(&fs_info->scrub_pause_wait);
+	wake_up(&fs_info->scrub_छोड़ो_रुको);
 
-	wait_event(sctx->list_wait, atomic_read(&sctx->workers_pending) == 0);
+	रुको_event(sctx->list_रुको, atomic_पढ़ो(&sctx->workers_pending) == 0);
 
-	if (progress)
-		memcpy(progress, &sctx->stat, sizeof(*progress));
+	अगर (progress)
+		स_नकल(progress, &sctx->stat, माप(*progress));
 
-	if (!is_dev_replace)
+	अगर (!is_dev_replace)
 		btrfs_info(fs_info, "scrub: %s on devid %llu with status: %d",
 			ret ? "not finished" : "finished", devid, ret);
 
 	mutex_lock(&fs_info->scrub_lock);
-	dev->scrub_ctx = NULL;
+	dev->scrub_ctx = शून्य;
 	mutex_unlock(&fs_info->scrub_lock);
 
 	scrub_workers_put(fs_info);
 	scrub_put_ctx(sctx);
 
-	return ret;
+	वापस ret;
 out:
 	scrub_workers_put(fs_info);
-out_free_ctx:
-	scrub_free_ctx(sctx);
+out_मुक्त_ctx:
+	scrub_मुक्त_ctx(sctx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void btrfs_scrub_pause(struct btrfs_fs_info *fs_info)
-{
+व्योम btrfs_scrub_छोड़ो(काष्ठा btrfs_fs_info *fs_info)
+अणु
 	mutex_lock(&fs_info->scrub_lock);
-	atomic_inc(&fs_info->scrub_pause_req);
-	while (atomic_read(&fs_info->scrubs_paused) !=
-	       atomic_read(&fs_info->scrubs_running)) {
+	atomic_inc(&fs_info->scrub_छोड़ो_req);
+	जबतक (atomic_पढ़ो(&fs_info->scrubs_छोड़ोd) !=
+	       atomic_पढ़ो(&fs_info->scrubs_running)) अणु
 		mutex_unlock(&fs_info->scrub_lock);
-		wait_event(fs_info->scrub_pause_wait,
-			   atomic_read(&fs_info->scrubs_paused) ==
-			   atomic_read(&fs_info->scrubs_running));
+		रुको_event(fs_info->scrub_छोड़ो_रुको,
+			   atomic_पढ़ो(&fs_info->scrubs_छोड़ोd) ==
+			   atomic_पढ़ो(&fs_info->scrubs_running));
 		mutex_lock(&fs_info->scrub_lock);
-	}
+	पूर्ण
 	mutex_unlock(&fs_info->scrub_lock);
-}
+पूर्ण
 
-void btrfs_scrub_continue(struct btrfs_fs_info *fs_info)
-{
-	atomic_dec(&fs_info->scrub_pause_req);
-	wake_up(&fs_info->scrub_pause_wait);
-}
+व्योम btrfs_scrub_जारी(काष्ठा btrfs_fs_info *fs_info)
+अणु
+	atomic_dec(&fs_info->scrub_छोड़ो_req);
+	wake_up(&fs_info->scrub_छोड़ो_रुको);
+पूर्ण
 
-int btrfs_scrub_cancel(struct btrfs_fs_info *fs_info)
-{
+पूर्णांक btrfs_scrub_cancel(काष्ठा btrfs_fs_info *fs_info)
+अणु
 	mutex_lock(&fs_info->scrub_lock);
-	if (!atomic_read(&fs_info->scrubs_running)) {
+	अगर (!atomic_पढ़ो(&fs_info->scrubs_running)) अणु
 		mutex_unlock(&fs_info->scrub_lock);
-		return -ENOTCONN;
-	}
+		वापस -ENOTCONN;
+	पूर्ण
 
 	atomic_inc(&fs_info->scrub_cancel_req);
-	while (atomic_read(&fs_info->scrubs_running)) {
+	जबतक (atomic_पढ़ो(&fs_info->scrubs_running)) अणु
 		mutex_unlock(&fs_info->scrub_lock);
-		wait_event(fs_info->scrub_pause_wait,
-			   atomic_read(&fs_info->scrubs_running) == 0);
+		रुको_event(fs_info->scrub_छोड़ो_रुको,
+			   atomic_पढ़ो(&fs_info->scrubs_running) == 0);
 		mutex_lock(&fs_info->scrub_lock);
-	}
+	पूर्ण
 	atomic_dec(&fs_info->scrub_cancel_req);
 	mutex_unlock(&fs_info->scrub_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int btrfs_scrub_cancel_dev(struct btrfs_device *dev)
-{
-	struct btrfs_fs_info *fs_info = dev->fs_info;
-	struct scrub_ctx *sctx;
+पूर्णांक btrfs_scrub_cancel_dev(काष्ठा btrfs_device *dev)
+अणु
+	काष्ठा btrfs_fs_info *fs_info = dev->fs_info;
+	काष्ठा scrub_ctx *sctx;
 
 	mutex_lock(&fs_info->scrub_lock);
 	sctx = dev->scrub_ctx;
-	if (!sctx) {
+	अगर (!sctx) अणु
 		mutex_unlock(&fs_info->scrub_lock);
-		return -ENOTCONN;
-	}
+		वापस -ENOTCONN;
+	पूर्ण
 	atomic_inc(&sctx->cancel_req);
-	while (dev->scrub_ctx) {
+	जबतक (dev->scrub_ctx) अणु
 		mutex_unlock(&fs_info->scrub_lock);
-		wait_event(fs_info->scrub_pause_wait,
-			   dev->scrub_ctx == NULL);
+		रुको_event(fs_info->scrub_छोड़ो_रुको,
+			   dev->scrub_ctx == शून्य);
 		mutex_lock(&fs_info->scrub_lock);
-	}
+	पूर्ण
 	mutex_unlock(&fs_info->scrub_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int btrfs_scrub_progress(struct btrfs_fs_info *fs_info, u64 devid,
-			 struct btrfs_scrub_progress *progress)
-{
-	struct btrfs_device *dev;
-	struct scrub_ctx *sctx = NULL;
+पूर्णांक btrfs_scrub_progress(काष्ठा btrfs_fs_info *fs_info, u64 devid,
+			 काष्ठा btrfs_scrub_progress *progress)
+अणु
+	काष्ठा btrfs_device *dev;
+	काष्ठा scrub_ctx *sctx = शून्य;
 
 	mutex_lock(&fs_info->fs_devices->device_list_mutex);
-	dev = btrfs_find_device(fs_info->fs_devices, devid, NULL, NULL);
-	if (dev)
+	dev = btrfs_find_device(fs_info->fs_devices, devid, शून्य, शून्य);
+	अगर (dev)
 		sctx = dev->scrub_ctx;
-	if (sctx)
-		memcpy(progress, &sctx->stat, sizeof(*progress));
+	अगर (sctx)
+		स_नकल(progress, &sctx->stat, माप(*progress));
 	mutex_unlock(&fs_info->fs_devices->device_list_mutex);
 
-	return dev ? (sctx ? 0 : -ENOTCONN) : -ENODEV;
-}
+	वापस dev ? (sctx ? 0 : -ENOTCONN) : -ENODEV;
+पूर्ण
 
-static void scrub_remap_extent(struct btrfs_fs_info *fs_info,
+अटल व्योम scrub_remap_extent(काष्ठा btrfs_fs_info *fs_info,
 			       u64 extent_logical, u32 extent_len,
 			       u64 *extent_physical,
-			       struct btrfs_device **extent_dev,
-			       int *extent_mirror_num)
-{
+			       काष्ठा btrfs_device **extent_dev,
+			       पूर्णांक *extent_mirror_num)
+अणु
 	u64 mapped_length;
-	struct btrfs_bio *bbio = NULL;
-	int ret;
+	काष्ठा btrfs_bio *bbio = शून्य;
+	पूर्णांक ret;
 
 	mapped_length = extent_len;
 	ret = btrfs_map_block(fs_info, BTRFS_MAP_READ, extent_logical,
 			      &mapped_length, &bbio, 0);
-	if (ret || !bbio || mapped_length < extent_len ||
-	    !bbio->stripes[0].dev->bdev) {
+	अगर (ret || !bbio || mapped_length < extent_len ||
+	    !bbio->stripes[0].dev->bdev) अणु
 		btrfs_put_bbio(bbio);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	*extent_physical = bbio->stripes[0].physical;
 	*extent_mirror_num = bbio->mirror_num;
 	*extent_dev = bbio->stripes[0].dev;
 	btrfs_put_bbio(bbio);
-}
+पूर्ण

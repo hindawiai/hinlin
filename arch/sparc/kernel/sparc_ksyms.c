@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * arch/sparc/kernel/ksyms.c: Sparc specific ksyms support.
+ * arch/sparc/kernel/ksyms.c: Sparc specअगरic ksyms support.
  *
  * Copyright (C) 1996 David S. Miller (davem@caip.rutgers.edu)
  * Copyright (C) 1996 Eddie C. Dost (ecd@skynet.be)
  */
 
-#include <linux/init.h>
-#include <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
 
-/* This is needed only for drivers/sbus/char/openprom.c */
+/* This is needed only क्रम drivers/sbus/अक्षर/खोलोprom.c */
 EXPORT_SYMBOL(saved_command_line);

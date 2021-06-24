@@ -1,229 +1,230 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Register definitions for the Hexagon architecture
+ * Register definitions क्रम the Hexagon architecture
  */
 
 
-#ifndef _ASM_REGISTERS_H
-#define _ASM_REGISTERS_H
+#अगर_अघोषित _ASM_REGISTERS_H
+#घोषणा _ASM_REGISTERS_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-/*  See kernel/entry.S for further documentation.  */
+/*  See kernel/entry.S क्रम further करोcumentation.  */
 
 /*
- * Entry code copies the event record out of guest registers into
- * this structure (which is on the stack).
+ * Entry code copies the event record out of guest रेजिस्टरs पूर्णांकo
+ * this काष्ठाure (which is on the stack).
  */
 
-struct hvm_event_record {
-	unsigned long vmel;     /* Event Linkage (return address) */
-	unsigned long vmest;    /* Event context - pre-event SSR values */
-	unsigned long vmpsp;    /* Previous stack pointer */
-	unsigned long vmbadva;  /* Bad virtual address for addressing events */
-};
+काष्ठा hvm_event_record अणु
+	अचिन्हित दीर्घ vmel;     /* Event Linkage (वापस address) */
+	अचिन्हित दीर्घ vmest;    /* Event context - pre-event SSR values */
+	अचिन्हित दीर्घ vmpsp;    /* Previous stack poपूर्णांकer */
+	अचिन्हित दीर्घ vmbadva;  /* Bad भव address क्रम addressing events */
+पूर्ण;
 
-struct pt_regs {
-	long restart_r0;        /* R0 checkpoint for syscall restart */
-	long syscall_nr;        /* Only used in system calls */
-	union {
-		struct {
-			unsigned long usr;
-			unsigned long preds;
-		};
-		long long int predsusr;
-	};
-	union {
-		struct {
-			unsigned long m0;
-			unsigned long m1;
-		};
-		long long int m1m0;
-	};
-	union {
-		struct {
-			unsigned long sa1;
-			unsigned long lc1;
-		};
-		long long int lc1sa1;
-	};
-	union {
-		struct {
-			unsigned long sa0;
-			unsigned long lc0;
-		};
-		long long int lc0sa0;
-	};
-	union {
-		struct {
-			unsigned long ugp;
-			unsigned long gp;
-		};
-		long long int gpugp;
-	};
-	union {
-		struct {
-			unsigned long cs0;
-			unsigned long cs1;
-		};
-		long long int cs1cs0;
-	};
+काष्ठा pt_regs अणु
+	दीर्घ restart_r0;        /* R0 checkpoपूर्णांक क्रम syscall restart */
+	दीर्घ syscall_nr;        /* Only used in प्रणाली calls */
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ usr;
+			अचिन्हित दीर्घ preds;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक predsusr;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ m0;
+			अचिन्हित दीर्घ m1;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक m1m0;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ sa1;
+			अचिन्हित दीर्घ lc1;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक lc1sa1;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ sa0;
+			अचिन्हित दीर्घ lc0;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक lc0sa0;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ ugp;
+			अचिन्हित दीर्घ gp;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक gpugp;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ cs0;
+			अचिन्हित दीर्घ cs1;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक cs1cs0;
+	पूर्ण;
 	/*
-	* Be extremely careful with rearranging these, if at all.  Some code
-	* assumes the 32 registers exist exactly like this in memory;
+	* Be extremely careful with rearranging these, अगर at all.  Some code
+	* assumes the 32 रेजिस्टरs exist exactly like this in memory;
 	* e.g. kernel/ptrace.c
-	* e.g. kernel/signal.c (restore_sigcontext)
+	* e.g. kernel/संकेत.c (restore_sigcontext)
 	*/
-	union {
-		struct {
-			unsigned long r00;
-			unsigned long r01;
-		};
-		long long int r0100;
-	};
-	union {
-		struct {
-			unsigned long r02;
-			unsigned long r03;
-		};
-		long long int r0302;
-	};
-	union {
-		struct {
-			unsigned long r04;
-			unsigned long r05;
-		};
-		long long int r0504;
-	};
-	union {
-		struct {
-			unsigned long r06;
-			unsigned long r07;
-		};
-		long long int r0706;
-	};
-	union {
-		struct {
-			unsigned long r08;
-			unsigned long r09;
-		};
-		long long int r0908;
-	};
-	union {
-	       struct {
-			unsigned long r10;
-			unsigned long r11;
-	       };
-	       long long int r1110;
-	};
-	union {
-	       struct {
-			unsigned long r12;
-			unsigned long r13;
-	       };
-	       long long int r1312;
-	};
-	union {
-	       struct {
-			unsigned long r14;
-			unsigned long r15;
-	       };
-	       long long int r1514;
-	};
-	union {
-		struct {
-			unsigned long r16;
-			unsigned long r17;
-		};
-		long long int r1716;
-	};
-	union {
-		struct {
-			unsigned long r18;
-			unsigned long r19;
-		};
-		long long int r1918;
-	};
-	union {
-		struct {
-			unsigned long r20;
-			unsigned long r21;
-		};
-		long long int r2120;
-	};
-	union {
-		struct {
-			unsigned long r22;
-			unsigned long r23;
-		};
-		long long int r2322;
-	};
-	union {
-		struct {
-			unsigned long r24;
-			unsigned long r25;
-		};
-		long long int r2524;
-	};
-	union {
-		struct {
-			unsigned long r26;
-			unsigned long r27;
-		};
-		long long int r2726;
-	};
-	union {
-		struct {
-			unsigned long r28;
-			unsigned long r29;
-	       };
-	       long long int r2928;
-	};
-	union {
-		struct {
-			unsigned long r30;
-			unsigned long r31;
-		};
-		long long int r3130;
-	};
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r00;
+			अचिन्हित दीर्घ r01;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r0100;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r02;
+			अचिन्हित दीर्घ r03;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r0302;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r04;
+			अचिन्हित दीर्घ r05;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r0504;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r06;
+			अचिन्हित दीर्घ r07;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r0706;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r08;
+			अचिन्हित दीर्घ r09;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r0908;
+	पूर्ण;
+	जोड़ अणु
+	       काष्ठा अणु
+			अचिन्हित दीर्घ r10;
+			अचिन्हित दीर्घ r11;
+	       पूर्ण;
+	       दीर्घ दीर्घ पूर्णांक r1110;
+	पूर्ण;
+	जोड़ अणु
+	       काष्ठा अणु
+			अचिन्हित दीर्घ r12;
+			अचिन्हित दीर्घ r13;
+	       पूर्ण;
+	       दीर्घ दीर्घ पूर्णांक r1312;
+	पूर्ण;
+	जोड़ अणु
+	       काष्ठा अणु
+			अचिन्हित दीर्घ r14;
+			अचिन्हित दीर्घ r15;
+	       पूर्ण;
+	       दीर्घ दीर्घ पूर्णांक r1514;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r16;
+			अचिन्हित दीर्घ r17;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r1716;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r18;
+			अचिन्हित दीर्घ r19;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r1918;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r20;
+			अचिन्हित दीर्घ r21;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r2120;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r22;
+			अचिन्हित दीर्घ r23;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r2322;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r24;
+			अचिन्हित दीर्घ r25;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r2524;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r26;
+			अचिन्हित दीर्घ r27;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r2726;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r28;
+			अचिन्हित दीर्घ r29;
+	       पूर्ण;
+	       दीर्घ दीर्घ पूर्णांक r2928;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r30;
+			अचिन्हित दीर्घ r31;
+		पूर्ण;
+		दीर्घ दीर्घ पूर्णांक r3130;
+	पूर्ण;
 	/* VM dispatch pushes event record onto stack - we can build on it */
-	struct hvm_event_record hvmer;
-};
+	काष्ठा hvm_event_record hvmer;
+पूर्ण;
 
 /* Defines to conveniently access the values  */
 
 /*
- * As of the VM spec 0.5, these registers are now set/retrieved via a
+ * As of the VM spec 0.5, these रेजिस्टरs are now set/retrieved via a
  * VM call.  On the in-bound side, we just fetch the values
- * at the entry points and stuff them into the old record in pt_regs.
+ * at the entry poपूर्णांकs and stuff them पूर्णांकo the old record in pt_regs.
  * However, on the outbound side, probably at VM rte, we set the
- * registers back.
+ * रेजिस्टरs back.
  */
 
-#define pt_elr(regs) ((regs)->hvmer.vmel)
-#define pt_set_elr(regs, val) ((regs)->hvmer.vmel = (val))
-#define pt_cause(regs) ((regs)->hvmer.vmest & (HVM_VMEST_CAUSE_MSK))
-#define user_mode(regs) \
+#घोषणा pt_elr(regs) ((regs)->hvmer.vmel)
+#घोषणा pt_set_elr(regs, val) ((regs)->hvmer.vmel = (val))
+#घोषणा pt_cause(regs) ((regs)->hvmer.vmest & (HVM_VMEST_CAUSE_MSK))
+#घोषणा user_mode(regs) \
 	(((regs)->hvmer.vmest & (HVM_VMEST_UM_MSK << HVM_VMEST_UM_SFT)) != 0)
-#define ints_enabled(regs) \
+#घोषणा पूर्णांकs_enabled(regs) \
 	(((regs)->hvmer.vmest & (HVM_VMEST_IE_MSK << HVM_VMEST_IE_SFT)) != 0)
-#define pt_psp(regs) ((regs)->hvmer.vmpsp)
-#define pt_badva(regs) ((regs)->hvmer.vmbadva)
+#घोषणा pt_psp(regs) ((regs)->hvmer.vmpsp)
+#घोषणा pt_badva(regs) ((regs)->hvmer.vmbadva)
 
-#define pt_set_singlestep(regs) ((regs)->hvmer.vmest |= (1<<HVM_VMEST_SS_SFT))
-#define pt_clr_singlestep(regs) ((regs)->hvmer.vmest &= ~(1<<HVM_VMEST_SS_SFT))
+#घोषणा pt_set_singlestep(regs) ((regs)->hvmer.vmest |= (1<<HVM_VMEST_SS_SFT))
+#घोषणा pt_clr_singlestep(regs) ((regs)->hvmer.vmest &= ~(1<<HVM_VMEST_SS_SFT))
 
-#define pt_set_rte_sp(regs, sp) do {\
+#घोषणा pt_set_rte_sp(regs, sp) करो अणु\
 	pt_psp(regs) = (regs)->r29 = (sp);\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define pt_set_kmode(regs) \
+#घोषणा pt_set_kmode(regs) \
 	(regs)->hvmer.vmest = (HVM_VMEST_IE_MSK << HVM_VMEST_IE_SFT)
 
-#define pt_set_usermode(regs) \
+#घोषणा pt_set_usermode(regs) \
 	(regs)->hvmer.vmest = (HVM_VMEST_UM_MSK << HVM_VMEST_UM_SFT) \
 			    | (HVM_VMEST_IE_MSK << HVM_VMEST_IE_SFT)
 
-#endif  /*  ifndef __ASSEMBLY  */
+#पूर्ण_अगर  /*  अगरndef __ASSEMBLY  */
 
-#endif
+#पूर्ण_अगर

@@ -1,246 +1,247 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#include <linux/types.h>
-#include <linux/crc32.h>
-#include "dr_ste.h"
+#समावेश <linux/types.h>
+#समावेश <linux/crc32.h>
+#समावेश "dr_ste.h"
 
-struct dr_hw_ste_format {
+काष्ठा dr_hw_ste_क्रमmat अणु
 	u8 ctrl[DR_STE_SIZE_CTRL];
 	u8 tag[DR_STE_SIZE_TAG];
 	u8 mask[DR_STE_SIZE_MASK];
-};
+पूर्ण;
 
-static u32 dr_ste_crc32_calc(const void *input_data, size_t length)
-{
+अटल u32 dr_ste_crc32_calc(स्थिर व्योम *input_data, माप_प्रकार length)
+अणु
 	u32 crc = crc32(0, input_data, length);
 
-	return (__force u32)htonl(crc);
-}
+	वापस (__क्रमce u32)htonl(crc);
+पूर्ण
 
-bool mlx5dr_ste_supp_ttl_cs_recalc(struct mlx5dr_cmd_caps *caps)
-{
-	return caps->sw_format_ver > MLX5_STEERING_FORMAT_CONNECTX_5;
-}
+bool mlx5dr_ste_supp_ttl_cs_recalc(काष्ठा mlx5dr_cmd_caps *caps)
+अणु
+	वापस caps->sw_क्रमmat_ver > MLX5_STEERING_FORMAT_CONNECTX_5;
+पूर्ण
 
-u32 mlx5dr_ste_calc_hash_index(u8 *hw_ste_p, struct mlx5dr_ste_htbl *htbl)
-{
-	struct dr_hw_ste_format *hw_ste = (struct dr_hw_ste_format *)hw_ste_p;
-	u8 masked[DR_STE_SIZE_TAG] = {};
+u32 mlx5dr_ste_calc_hash_index(u8 *hw_ste_p, काष्ठा mlx5dr_ste_htbl *htbl)
+अणु
+	काष्ठा dr_hw_ste_क्रमmat *hw_ste = (काष्ठा dr_hw_ste_क्रमmat *)hw_ste_p;
+	u8 masked[DR_STE_SIZE_TAG] = अणुपूर्ण;
 	u32 crc32, index;
 	u16 bit;
-	int i;
+	पूर्णांक i;
 
-	/* Don't calculate CRC if the result is predicted */
-	if (htbl->chunk->num_of_entries == 1 || htbl->byte_mask == 0)
-		return 0;
+	/* Don't calculate CRC अगर the result is predicted */
+	अगर (htbl->chunk->num_of_entries == 1 || htbl->byte_mask == 0)
+		वापस 0;
 
 	/* Mask tag using byte mask, bit per byte */
 	bit = 1 << (DR_STE_SIZE_TAG - 1);
-	for (i = 0; i < DR_STE_SIZE_TAG; i++) {
-		if (htbl->byte_mask & bit)
+	क्रम (i = 0; i < DR_STE_SIZE_TAG; i++) अणु
+		अगर (htbl->byte_mask & bit)
 			masked[i] = hw_ste->tag[i];
 
 		bit = bit >> 1;
-	}
+	पूर्ण
 
 	crc32 = dr_ste_crc32_calc(masked, DR_STE_SIZE_TAG);
 	index = crc32 & (htbl->chunk->num_of_entries - 1);
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
 u16 mlx5dr_ste_conv_bit_to_byte_mask(u8 *bit_mask)
-{
+अणु
 	u16 byte_mask = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < DR_STE_SIZE_MASK; i++) {
+	क्रम (i = 0; i < DR_STE_SIZE_MASK; i++) अणु
 		byte_mask = byte_mask << 1;
-		if (bit_mask[i] == 0xff)
+		अगर (bit_mask[i] == 0xff)
 			byte_mask |= 1;
-	}
-	return byte_mask;
-}
+	पूर्ण
+	वापस byte_mask;
+पूर्ण
 
-static u8 *dr_ste_get_tag(u8 *hw_ste_p)
-{
-	struct dr_hw_ste_format *hw_ste = (struct dr_hw_ste_format *)hw_ste_p;
+अटल u8 *dr_ste_get_tag(u8 *hw_ste_p)
+अणु
+	काष्ठा dr_hw_ste_क्रमmat *hw_ste = (काष्ठा dr_hw_ste_क्रमmat *)hw_ste_p;
 
-	return hw_ste->tag;
-}
+	वापस hw_ste->tag;
+पूर्ण
 
-void mlx5dr_ste_set_bit_mask(u8 *hw_ste_p, u8 *bit_mask)
-{
-	struct dr_hw_ste_format *hw_ste = (struct dr_hw_ste_format *)hw_ste_p;
+व्योम mlx5dr_ste_set_bit_mask(u8 *hw_ste_p, u8 *bit_mask)
+अणु
+	काष्ठा dr_hw_ste_क्रमmat *hw_ste = (काष्ठा dr_hw_ste_क्रमmat *)hw_ste_p;
 
-	memcpy(hw_ste->mask, bit_mask, DR_STE_SIZE_MASK);
-}
+	स_नकल(hw_ste->mask, bit_mask, DR_STE_SIZE_MASK);
+पूर्ण
 
-static void dr_ste_set_always_hit(struct dr_hw_ste_format *hw_ste)
-{
-	memset(&hw_ste->tag, 0, sizeof(hw_ste->tag));
-	memset(&hw_ste->mask, 0, sizeof(hw_ste->mask));
-}
+अटल व्योम dr_ste_set_always_hit(काष्ठा dr_hw_ste_क्रमmat *hw_ste)
+अणु
+	स_रखो(&hw_ste->tag, 0, माप(hw_ste->tag));
+	स_रखो(&hw_ste->mask, 0, माप(hw_ste->mask));
+पूर्ण
 
-static void dr_ste_set_always_miss(struct dr_hw_ste_format *hw_ste)
-{
+अटल व्योम dr_ste_set_always_miss(काष्ठा dr_hw_ste_क्रमmat *hw_ste)
+अणु
 	hw_ste->tag[0] = 0xdc;
 	hw_ste->mask[0] = 0;
-}
+पूर्ण
 
-void mlx5dr_ste_set_miss_addr(struct mlx5dr_ste_ctx *ste_ctx,
+व्योम mlx5dr_ste_set_miss_addr(काष्ठा mlx5dr_ste_ctx *ste_ctx,
 			      u8 *hw_ste_p, u64 miss_addr)
-{
+अणु
 	ste_ctx->set_miss_addr(hw_ste_p, miss_addr);
-}
+पूर्ण
 
-static void dr_ste_always_miss_addr(struct mlx5dr_ste_ctx *ste_ctx,
-				    struct mlx5dr_ste *ste, u64 miss_addr)
-{
+अटल व्योम dr_ste_always_miss_addr(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				    काष्ठा mlx5dr_ste *ste, u64 miss_addr)
+अणु
 	u8 *hw_ste_p = ste->hw_ste;
 
 	ste_ctx->set_next_lu_type(hw_ste_p, MLX5DR_STE_LU_TYPE_DONT_CARE);
 	ste_ctx->set_miss_addr(hw_ste_p, miss_addr);
-	dr_ste_set_always_miss((struct dr_hw_ste_format *)ste->hw_ste);
-}
+	dr_ste_set_always_miss((काष्ठा dr_hw_ste_क्रमmat *)ste->hw_ste);
+पूर्ण
 
-void mlx5dr_ste_set_hit_addr(struct mlx5dr_ste_ctx *ste_ctx,
+व्योम mlx5dr_ste_set_hit_addr(काष्ठा mlx5dr_ste_ctx *ste_ctx,
 			     u8 *hw_ste, u64 icm_addr, u32 ht_size)
-{
+अणु
 	ste_ctx->set_hit_addr(hw_ste, icm_addr, ht_size);
-}
+पूर्ण
 
-u64 mlx5dr_ste_get_icm_addr(struct mlx5dr_ste *ste)
-{
+u64 mlx5dr_ste_get_icm_addr(काष्ठा mlx5dr_ste *ste)
+अणु
 	u32 index = ste - ste->htbl->ste_arr;
 
-	return ste->htbl->chunk->icm_addr + DR_STE_SIZE * index;
-}
+	वापस ste->htbl->chunk->icm_addr + DR_STE_SIZE * index;
+पूर्ण
 
-u64 mlx5dr_ste_get_mr_addr(struct mlx5dr_ste *ste)
-{
+u64 mlx5dr_ste_get_mr_addr(काष्ठा mlx5dr_ste *ste)
+अणु
 	u32 index = ste - ste->htbl->ste_arr;
 
-	return ste->htbl->chunk->mr_addr + DR_STE_SIZE * index;
-}
+	वापस ste->htbl->chunk->mr_addr + DR_STE_SIZE * index;
+पूर्ण
 
-struct list_head *mlx5dr_ste_get_miss_list(struct mlx5dr_ste *ste)
-{
+काष्ठा list_head *mlx5dr_ste_get_miss_list(काष्ठा mlx5dr_ste *ste)
+अणु
 	u32 index = ste - ste->htbl->ste_arr;
 
-	return &ste->htbl->miss_list[index];
-}
+	वापस &ste->htbl->miss_list[index];
+पूर्ण
 
-static void dr_ste_always_hit_htbl(struct mlx5dr_ste_ctx *ste_ctx,
-				   struct mlx5dr_ste *ste,
-				   struct mlx5dr_ste_htbl *next_htbl)
-{
-	struct mlx5dr_icm_chunk *chunk = next_htbl->chunk;
+अटल व्योम dr_ste_always_hit_htbl(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				   काष्ठा mlx5dr_ste *ste,
+				   काष्ठा mlx5dr_ste_htbl *next_htbl)
+अणु
+	काष्ठा mlx5dr_icm_chunk *chunk = next_htbl->chunk;
 	u8 *hw_ste = ste->hw_ste;
 
 	ste_ctx->set_byte_mask(hw_ste, next_htbl->byte_mask);
 	ste_ctx->set_next_lu_type(hw_ste, next_htbl->lu_type);
 	ste_ctx->set_hit_addr(hw_ste, chunk->icm_addr, chunk->num_of_entries);
 
-	dr_ste_set_always_hit((struct dr_hw_ste_format *)ste->hw_ste);
-}
+	dr_ste_set_always_hit((काष्ठा dr_hw_ste_क्रमmat *)ste->hw_ste);
+पूर्ण
 
-bool mlx5dr_ste_is_last_in_rule(struct mlx5dr_matcher_rx_tx *nic_matcher,
+bool mlx5dr_ste_is_last_in_rule(काष्ठा mlx5dr_matcher_rx_tx *nic_matcher,
 				u8 ste_location)
-{
-	return ste_location == nic_matcher->num_of_builders;
-}
+अणु
+	वापस ste_location == nic_matcher->num_of_builders;
+पूर्ण
 
 /* Replace relevant fields, except of:
  * htbl - keep the origin htbl
- * miss_list + list - already took the src from the list.
+ * miss_list + list - alपढ़ोy took the src from the list.
  * icm_addr/mr_addr - depends on the hosting table.
  *
- * Before:
+ * Beक्रमe:
  * | a | -> | b | -> | c | ->
  *
  * After:
  * | a | -> | c | ->
  * While the data that was in b copied to a.
  */
-static void dr_ste_replace(struct mlx5dr_ste *dst, struct mlx5dr_ste *src)
-{
-	memcpy(dst->hw_ste, src->hw_ste, DR_STE_SIZE_REDUCED);
+अटल व्योम dr_ste_replace(काष्ठा mlx5dr_ste *dst, काष्ठा mlx5dr_ste *src)
+अणु
+	स_नकल(dst->hw_ste, src->hw_ste, DR_STE_SIZE_REDUCED);
 	dst->next_htbl = src->next_htbl;
-	if (dst->next_htbl)
-		dst->next_htbl->pointing_ste = dst;
+	अगर (dst->next_htbl)
+		dst->next_htbl->poपूर्णांकing_ste = dst;
 
 	dst->refcount = src->refcount;
 
 	INIT_LIST_HEAD(&dst->rule_list);
 	list_splice_tail_init(&src->rule_list, &dst->rule_list);
-}
+पूर्ण
 
 /* Free ste which is the head and the only one in miss_list */
-static void
-dr_ste_remove_head_ste(struct mlx5dr_ste_ctx *ste_ctx,
-		       struct mlx5dr_ste *ste,
-		       struct mlx5dr_matcher_rx_tx *nic_matcher,
-		       struct mlx5dr_ste_send_info *ste_info_head,
-		       struct list_head *send_ste_list,
-		       struct mlx5dr_ste_htbl *stats_tbl)
-{
-	u8 tmp_data_ste[DR_STE_SIZE] = {};
-	struct mlx5dr_ste tmp_ste = {};
+अटल व्योम
+dr_ste_हटाओ_head_ste(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+		       काष्ठा mlx5dr_ste *ste,
+		       काष्ठा mlx5dr_matcher_rx_tx *nic_matcher,
+		       काष्ठा mlx5dr_ste_send_info *ste_info_head,
+		       काष्ठा list_head *send_ste_list,
+		       काष्ठा mlx5dr_ste_htbl *stats_tbl)
+अणु
+	u8 पंचांगp_data_ste[DR_STE_SIZE] = अणुपूर्ण;
+	काष्ठा mlx5dr_ste पंचांगp_ste = अणुपूर्ण;
 	u64 miss_addr;
 
-	tmp_ste.hw_ste = tmp_data_ste;
+	पंचांगp_ste.hw_ste = पंचांगp_data_ste;
 
 	/* Use temp ste because dr_ste_always_miss_addr
-	 * touches bit_mask area which doesn't exist at ste->hw_ste.
+	 * touches bit_mask area which करोesn't exist at ste->hw_ste.
 	 */
-	memcpy(tmp_ste.hw_ste, ste->hw_ste, DR_STE_SIZE_REDUCED);
+	स_नकल(पंचांगp_ste.hw_ste, ste->hw_ste, DR_STE_SIZE_REDUCED);
 	miss_addr = nic_matcher->e_anchor->chunk->icm_addr;
-	dr_ste_always_miss_addr(ste_ctx, &tmp_ste, miss_addr);
-	memcpy(ste->hw_ste, tmp_ste.hw_ste, DR_STE_SIZE_REDUCED);
+	dr_ste_always_miss_addr(ste_ctx, &पंचांगp_ste, miss_addr);
+	स_नकल(ste->hw_ste, पंचांगp_ste.hw_ste, DR_STE_SIZE_REDUCED);
 
 	list_del_init(&ste->miss_list_node);
 
 	/* Write full STE size in order to have "always_miss" */
 	mlx5dr_send_fill_and_append_ste_send_info(ste, DR_STE_SIZE,
-						  0, tmp_data_ste,
+						  0, पंचांगp_data_ste,
 						  ste_info_head,
 						  send_ste_list,
 						  true /* Copy data */);
 
 	stats_tbl->ctrl.num_of_valid_entries--;
-}
+पूर्ण
 
 /* Free ste which is the head but NOT the only one in miss_list:
  * |_ste_| --> |_next_ste_| -->|__| -->|__| -->/0
  */
-static void
-dr_ste_replace_head_ste(struct mlx5dr_matcher_rx_tx *nic_matcher,
-			struct mlx5dr_ste *ste,
-			struct mlx5dr_ste *next_ste,
-			struct mlx5dr_ste_send_info *ste_info_head,
-			struct list_head *send_ste_list,
-			struct mlx5dr_ste_htbl *stats_tbl)
+अटल व्योम
+dr_ste_replace_head_ste(काष्ठा mlx5dr_matcher_rx_tx *nic_matcher,
+			काष्ठा mlx5dr_ste *ste,
+			काष्ठा mlx5dr_ste *next_ste,
+			काष्ठा mlx5dr_ste_send_info *ste_info_head,
+			काष्ठा list_head *send_ste_list,
+			काष्ठा mlx5dr_ste_htbl *stats_tbl)
 
-{
-	struct mlx5dr_ste_htbl *next_miss_htbl;
-	u8 hw_ste[DR_STE_SIZE] = {};
-	int sb_idx;
+अणु
+	काष्ठा mlx5dr_ste_htbl *next_miss_htbl;
+	u8 hw_ste[DR_STE_SIZE] = अणुपूर्ण;
+	पूर्णांक sb_idx;
 
 	next_miss_htbl = next_ste->htbl;
 
-	/* Remove from the miss_list the next_ste before copy */
+	/* Remove from the miss_list the next_ste beक्रमe copy */
 	list_del_init(&next_ste->miss_list_node);
 
 	/* All rule-members that use next_ste should know about that */
 	mlx5dr_rule_update_rule_member(next_ste, ste);
 
-	/* Move data from next into ste */
+	/* Move data from next पूर्णांकo ste */
 	dr_ste_replace(ste, next_ste);
 
 	/* Copy all 64 hw_ste bytes */
-	memcpy(hw_ste, ste->hw_ste, DR_STE_SIZE_REDUCED);
+	स_नकल(hw_ste, ste->hw_ste, DR_STE_SIZE_REDUCED);
 	sb_idx = ste->ste_chain_location - 1;
 	mlx5dr_ste_set_bit_mask(hw_ste,
 				nic_matcher->ste_builder[sb_idx].bit_mask);
@@ -258,23 +259,23 @@ dr_ste_replace_head_ste(struct mlx5dr_matcher_rx_tx *nic_matcher,
 
 	stats_tbl->ctrl.num_of_collisions--;
 	stats_tbl->ctrl.num_of_valid_entries--;
-}
+पूर्ण
 
 /* Free ste that is located in the middle of the miss list:
  * |__| -->|_prev_ste_|->|_ste_|-->|_next_ste_|
  */
-static void dr_ste_remove_middle_ste(struct mlx5dr_ste_ctx *ste_ctx,
-				     struct mlx5dr_ste *ste,
-				     struct mlx5dr_ste_send_info *ste_info,
-				     struct list_head *send_ste_list,
-				     struct mlx5dr_ste_htbl *stats_tbl)
-{
-	struct mlx5dr_ste *prev_ste;
+अटल व्योम dr_ste_हटाओ_middle_ste(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				     काष्ठा mlx5dr_ste *ste,
+				     काष्ठा mlx5dr_ste_send_info *ste_info,
+				     काष्ठा list_head *send_ste_list,
+				     काष्ठा mlx5dr_ste_htbl *stats_tbl)
+अणु
+	काष्ठा mlx5dr_ste *prev_ste;
 	u64 miss_addr;
 
 	prev_ste = list_prev_entry(ste, miss_list_node);
-	if (WARN_ON(!prev_ste))
-		return;
+	अगर (WARN_ON(!prev_ste))
+		वापस;
 
 	miss_addr = ste_ctx->get_miss_addr(ste->hw_ste);
 	ste_ctx->set_miss_addr(prev_ste->hw_ste, miss_addr);
@@ -287,23 +288,23 @@ static void dr_ste_remove_middle_ste(struct mlx5dr_ste_ctx *ste_ctx,
 
 	stats_tbl->ctrl.num_of_valid_entries--;
 	stats_tbl->ctrl.num_of_collisions--;
-}
+पूर्ण
 
-void mlx5dr_ste_free(struct mlx5dr_ste *ste,
-		     struct mlx5dr_matcher *matcher,
-		     struct mlx5dr_matcher_rx_tx *nic_matcher)
-{
-	struct mlx5dr_ste_send_info *cur_ste_info, *tmp_ste_info;
-	struct mlx5dr_domain *dmn = matcher->tbl->dmn;
-	struct mlx5dr_ste_ctx *ste_ctx = dmn->ste_ctx;
-	struct mlx5dr_ste_send_info ste_info_head;
-	struct mlx5dr_ste *next_ste, *first_ste;
+व्योम mlx5dr_ste_मुक्त(काष्ठा mlx5dr_ste *ste,
+		     काष्ठा mlx5dr_matcher *matcher,
+		     काष्ठा mlx5dr_matcher_rx_tx *nic_matcher)
+अणु
+	काष्ठा mlx5dr_ste_send_info *cur_ste_info, *पंचांगp_ste_info;
+	काष्ठा mlx5dr_करोमुख्य *dmn = matcher->tbl->dmn;
+	काष्ठा mlx5dr_ste_ctx *ste_ctx = dmn->ste_ctx;
+	काष्ठा mlx5dr_ste_send_info ste_info_head;
+	काष्ठा mlx5dr_ste *next_ste, *first_ste;
 	bool put_on_origin_table = true;
-	struct mlx5dr_ste_htbl *stats_tbl;
+	काष्ठा mlx5dr_ste_htbl *stats_tbl;
 	LIST_HEAD(send_ste_list);
 
 	first_ste = list_first_entry(mlx5dr_ste_get_miss_list(ste),
-				     struct mlx5dr_ste, miss_list_node);
+				     काष्ठा mlx5dr_ste, miss_list_node);
 	stats_tbl = first_ste->htbl;
 
 	/* Two options:
@@ -312,123 +313,123 @@ void mlx5dr_ste_free(struct mlx5dr_ste *ste,
 	 *	b. head ste is not the only ste in the miss-list
 	 * 2. ste is not head
 	 */
-	if (first_ste == ste) { /* Ste is the head */
-		struct mlx5dr_ste *last_ste;
+	अगर (first_ste == ste) अणु /* Ste is the head */
+		काष्ठा mlx5dr_ste *last_ste;
 
 		last_ste = list_last_entry(mlx5dr_ste_get_miss_list(ste),
-					   struct mlx5dr_ste, miss_list_node);
-		if (last_ste == first_ste)
-			next_ste = NULL;
-		else
+					   काष्ठा mlx5dr_ste, miss_list_node);
+		अगर (last_ste == first_ste)
+			next_ste = शून्य;
+		अन्यथा
 			next_ste = list_next_entry(ste, miss_list_node);
 
-		if (!next_ste) {
+		अगर (!next_ste) अणु
 			/* One and only entry in the list */
-			dr_ste_remove_head_ste(ste_ctx, ste,
+			dr_ste_हटाओ_head_ste(ste_ctx, ste,
 					       nic_matcher,
 					       &ste_info_head,
 					       &send_ste_list,
 					       stats_tbl);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* First but not only entry in the list */
 			dr_ste_replace_head_ste(nic_matcher, ste,
 						next_ste, &ste_info_head,
 						&send_ste_list, stats_tbl);
 			put_on_origin_table = false;
-		}
-	} else { /* Ste in the middle of the list */
-		dr_ste_remove_middle_ste(ste_ctx, ste,
+		पूर्ण
+	पूर्ण अन्यथा अणु /* Ste in the middle of the list */
+		dr_ste_हटाओ_middle_ste(ste_ctx, ste,
 					 &ste_info_head, &send_ste_list,
 					 stats_tbl);
-	}
+	पूर्ण
 
 	/* Update HW */
-	list_for_each_entry_safe(cur_ste_info, tmp_ste_info,
-				 &send_ste_list, send_list) {
+	list_क्रम_each_entry_safe(cur_ste_info, पंचांगp_ste_info,
+				 &send_ste_list, send_list) अणु
 		list_del(&cur_ste_info->send_list);
 		mlx5dr_send_postsend_ste(dmn, cur_ste_info->ste,
 					 cur_ste_info->data, cur_ste_info->size,
 					 cur_ste_info->offset);
-	}
+	पूर्ण
 
-	if (put_on_origin_table)
+	अगर (put_on_origin_table)
 		mlx5dr_htbl_put(ste->htbl);
-}
+पूर्ण
 
-bool mlx5dr_ste_equal_tag(void *src, void *dst)
-{
-	struct dr_hw_ste_format *s_hw_ste = (struct dr_hw_ste_format *)src;
-	struct dr_hw_ste_format *d_hw_ste = (struct dr_hw_ste_format *)dst;
+bool mlx5dr_ste_equal_tag(व्योम *src, व्योम *dst)
+अणु
+	काष्ठा dr_hw_ste_क्रमmat *s_hw_ste = (काष्ठा dr_hw_ste_क्रमmat *)src;
+	काष्ठा dr_hw_ste_क्रमmat *d_hw_ste = (काष्ठा dr_hw_ste_क्रमmat *)dst;
 
-	return !memcmp(s_hw_ste->tag, d_hw_ste->tag, DR_STE_SIZE_TAG);
-}
+	वापस !स_भेद(s_hw_ste->tag, d_hw_ste->tag, DR_STE_SIZE_TAG);
+पूर्ण
 
-void mlx5dr_ste_set_hit_addr_by_next_htbl(struct mlx5dr_ste_ctx *ste_ctx,
+व्योम mlx5dr_ste_set_hit_addr_by_next_htbl(काष्ठा mlx5dr_ste_ctx *ste_ctx,
 					  u8 *hw_ste,
-					  struct mlx5dr_ste_htbl *next_htbl)
-{
-	struct mlx5dr_icm_chunk *chunk = next_htbl->chunk;
+					  काष्ठा mlx5dr_ste_htbl *next_htbl)
+अणु
+	काष्ठा mlx5dr_icm_chunk *chunk = next_htbl->chunk;
 
 	ste_ctx->set_hit_addr(hw_ste, chunk->icm_addr, chunk->num_of_entries);
-}
+पूर्ण
 
-void mlx5dr_ste_prepare_for_postsend(struct mlx5dr_ste_ctx *ste_ctx,
+व्योम mlx5dr_ste_prepare_क्रम_postsend(काष्ठा mlx5dr_ste_ctx *ste_ctx,
 				     u8 *hw_ste_p, u32 ste_size)
-{
-	if (ste_ctx->prepare_for_postsend)
-		ste_ctx->prepare_for_postsend(hw_ste_p, ste_size);
-}
+अणु
+	अगर (ste_ctx->prepare_क्रम_postsend)
+		ste_ctx->prepare_क्रम_postsend(hw_ste_p, ste_size);
+पूर्ण
 
-/* Init one ste as a pattern for ste data array */
-void mlx5dr_ste_set_formatted_ste(struct mlx5dr_ste_ctx *ste_ctx,
+/* Init one ste as a pattern क्रम ste data array */
+व्योम mlx5dr_ste_set_क्रमmatted_ste(काष्ठा mlx5dr_ste_ctx *ste_ctx,
 				  u16 gvmi,
-				  struct mlx5dr_domain_rx_tx *nic_dmn,
-				  struct mlx5dr_ste_htbl *htbl,
-				  u8 *formatted_ste,
-				  struct mlx5dr_htbl_connect_info *connect_info)
-{
-	struct mlx5dr_ste ste = {};
+				  काष्ठा mlx5dr_करोमुख्य_rx_tx *nic_dmn,
+				  काष्ठा mlx5dr_ste_htbl *htbl,
+				  u8 *क्रमmatted_ste,
+				  काष्ठा mlx5dr_htbl_connect_info *connect_info)
+अणु
+	काष्ठा mlx5dr_ste ste = अणुपूर्ण;
 
-	ste_ctx->ste_init(formatted_ste, htbl->lu_type, nic_dmn->ste_type, gvmi);
-	ste.hw_ste = formatted_ste;
+	ste_ctx->ste_init(क्रमmatted_ste, htbl->lu_type, nic_dmn->ste_type, gvmi);
+	ste.hw_ste = क्रमmatted_ste;
 
-	if (connect_info->type == CONNECT_HIT)
+	अगर (connect_info->type == CONNECT_HIT)
 		dr_ste_always_hit_htbl(ste_ctx, &ste, connect_info->hit_next_htbl);
-	else
+	अन्यथा
 		dr_ste_always_miss_addr(ste_ctx, &ste, connect_info->miss_icm_addr);
-}
+पूर्ण
 
-int mlx5dr_ste_htbl_init_and_postsend(struct mlx5dr_domain *dmn,
-				      struct mlx5dr_domain_rx_tx *nic_dmn,
-				      struct mlx5dr_ste_htbl *htbl,
-				      struct mlx5dr_htbl_connect_info *connect_info,
+पूर्णांक mlx5dr_ste_htbl_init_and_postsend(काष्ठा mlx5dr_करोमुख्य *dmn,
+				      काष्ठा mlx5dr_करोमुख्य_rx_tx *nic_dmn,
+				      काष्ठा mlx5dr_ste_htbl *htbl,
+				      काष्ठा mlx5dr_htbl_connect_info *connect_info,
 				      bool update_hw_ste)
-{
-	u8 formatted_ste[DR_STE_SIZE] = {};
+अणु
+	u8 क्रमmatted_ste[DR_STE_SIZE] = अणुपूर्ण;
 
-	mlx5dr_ste_set_formatted_ste(dmn->ste_ctx,
+	mlx5dr_ste_set_क्रमmatted_ste(dmn->ste_ctx,
 				     dmn->info.caps.gvmi,
 				     nic_dmn,
 				     htbl,
-				     formatted_ste,
+				     क्रमmatted_ste,
 				     connect_info);
 
-	return mlx5dr_send_postsend_formatted_htbl(dmn, htbl, formatted_ste, update_hw_ste);
-}
+	वापस mlx5dr_send_postsend_क्रमmatted_htbl(dmn, htbl, क्रमmatted_ste, update_hw_ste);
+पूर्ण
 
-int mlx5dr_ste_create_next_htbl(struct mlx5dr_matcher *matcher,
-				struct mlx5dr_matcher_rx_tx *nic_matcher,
-				struct mlx5dr_ste *ste,
+पूर्णांक mlx5dr_ste_create_next_htbl(काष्ठा mlx5dr_matcher *matcher,
+				काष्ठा mlx5dr_matcher_rx_tx *nic_matcher,
+				काष्ठा mlx5dr_ste *ste,
 				u8 *cur_hw_ste,
-				enum mlx5dr_icm_chunk_size log_table_size)
-{
-	struct mlx5dr_domain_rx_tx *nic_dmn = nic_matcher->nic_tbl->nic_dmn;
-	struct mlx5dr_domain *dmn = matcher->tbl->dmn;
-	struct mlx5dr_ste_ctx *ste_ctx = dmn->ste_ctx;
-	struct mlx5dr_htbl_connect_info info;
-	struct mlx5dr_ste_htbl *next_htbl;
+				क्रमागत mlx5dr_icm_chunk_size log_table_size)
+अणु
+	काष्ठा mlx5dr_करोमुख्य_rx_tx *nic_dmn = nic_matcher->nic_tbl->nic_dmn;
+	काष्ठा mlx5dr_करोमुख्य *dmn = matcher->tbl->dmn;
+	काष्ठा mlx5dr_ste_ctx *ste_ctx = dmn->ste_ctx;
+	काष्ठा mlx5dr_htbl_connect_info info;
+	काष्ठा mlx5dr_ste_htbl *next_htbl;
 
-	if (!mlx5dr_ste_is_last_in_rule(nic_matcher, ste->ste_chain_location)) {
+	अगर (!mlx5dr_ste_is_last_in_rule(nic_matcher, ste->ste_chain_location)) अणु
 		u16 next_lu_type;
 		u16 byte_mask;
 
@@ -439,63 +440,63 @@ int mlx5dr_ste_create_next_htbl(struct mlx5dr_matcher *matcher,
 						  log_table_size,
 						  next_lu_type,
 						  byte_mask);
-		if (!next_htbl) {
+		अगर (!next_htbl) अणु
 			mlx5dr_dbg(dmn, "Failed allocating table\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		/* Write new table to HW */
 		info.type = CONNECT_MISS;
 		info.miss_icm_addr = nic_matcher->e_anchor->chunk->icm_addr;
-		if (mlx5dr_ste_htbl_init_and_postsend(dmn, nic_dmn, next_htbl,
-						      &info, false)) {
+		अगर (mlx5dr_ste_htbl_init_and_postsend(dmn, nic_dmn, next_htbl,
+						      &info, false)) अणु
 			mlx5dr_info(dmn, "Failed writing table to HW\n");
-			goto free_table;
-		}
+			जाओ मुक्त_table;
+		पूर्ण
 
 		mlx5dr_ste_set_hit_addr_by_next_htbl(ste_ctx,
 						     cur_hw_ste, next_htbl);
 		ste->next_htbl = next_htbl;
-		next_htbl->pointing_ste = ste;
-	}
+		next_htbl->poपूर्णांकing_ste = ste;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_table:
-	mlx5dr_ste_htbl_free(next_htbl);
-	return -ENOENT;
-}
+मुक्त_table:
+	mlx5dr_ste_htbl_मुक्त(next_htbl);
+	वापस -ENOENT;
+पूर्ण
 
-static void dr_ste_set_ctrl(struct mlx5dr_ste_htbl *htbl)
-{
-	struct mlx5dr_ste_htbl_ctrl *ctrl = &htbl->ctrl;
-	int num_of_entries;
+अटल व्योम dr_ste_set_ctrl(काष्ठा mlx5dr_ste_htbl *htbl)
+अणु
+	काष्ठा mlx5dr_ste_htbl_ctrl *ctrl = &htbl->ctrl;
+	पूर्णांक num_of_entries;
 
 	htbl->ctrl.may_grow = true;
 
-	if (htbl->chunk_size == DR_CHUNK_SIZE_MAX - 1 || !htbl->byte_mask)
+	अगर (htbl->chunk_size == DR_CHUNK_SIZE_MAX - 1 || !htbl->byte_mask)
 		htbl->ctrl.may_grow = false;
 
 	/* Threshold is 50%, one is added to table of size 1 */
-	num_of_entries = mlx5dr_icm_pool_chunk_size_to_entries(htbl->chunk_size);
+	num_of_entries = mlx5dr_icm_pool_chunk_माप_प्रकारo_entries(htbl->chunk_size);
 	ctrl->increase_threshold = (num_of_entries + 1) / 2;
-}
+पूर्ण
 
-struct mlx5dr_ste_htbl *mlx5dr_ste_htbl_alloc(struct mlx5dr_icm_pool *pool,
-					      enum mlx5dr_icm_chunk_size chunk_size,
+काष्ठा mlx5dr_ste_htbl *mlx5dr_ste_htbl_alloc(काष्ठा mlx5dr_icm_pool *pool,
+					      क्रमागत mlx5dr_icm_chunk_size chunk_size,
 					      u16 lu_type, u16 byte_mask)
-{
-	struct mlx5dr_icm_chunk *chunk;
-	struct mlx5dr_ste_htbl *htbl;
-	int i;
+अणु
+	काष्ठा mlx5dr_icm_chunk *chunk;
+	काष्ठा mlx5dr_ste_htbl *htbl;
+	पूर्णांक i;
 
-	htbl = kzalloc(sizeof(*htbl), GFP_KERNEL);
-	if (!htbl)
-		return NULL;
+	htbl = kzalloc(माप(*htbl), GFP_KERNEL);
+	अगर (!htbl)
+		वापस शून्य;
 
 	chunk = mlx5dr_icm_alloc_chunk(pool, chunk_size);
-	if (!chunk)
-		goto out_free_htbl;
+	अगर (!chunk)
+		जाओ out_मुक्त_htbl;
 
 	htbl->chunk = chunk;
 	htbl->lu_type = lu_type;
@@ -505,8 +506,8 @@ struct mlx5dr_ste_htbl *mlx5dr_ste_htbl_alloc(struct mlx5dr_icm_pool *pool,
 	htbl->miss_list = chunk->miss_list;
 	htbl->refcount = 0;
 
-	for (i = 0; i < chunk->num_of_entries; i++) {
-		struct mlx5dr_ste *ste = &htbl->ste_arr[i];
+	क्रम (i = 0; i < chunk->num_of_entries; i++) अणु
+		काष्ठा mlx5dr_ste *ste = &htbl->ste_arr[i];
 
 		ste->hw_ste = htbl->hw_ste_arr + i * DR_STE_SIZE_REDUCED;
 		ste->htbl = htbl;
@@ -514,153 +515,153 @@ struct mlx5dr_ste_htbl *mlx5dr_ste_htbl_alloc(struct mlx5dr_icm_pool *pool,
 		INIT_LIST_HEAD(&ste->miss_list_node);
 		INIT_LIST_HEAD(&htbl->miss_list[i]);
 		INIT_LIST_HEAD(&ste->rule_list);
-	}
+	पूर्ण
 
 	htbl->chunk_size = chunk_size;
 	dr_ste_set_ctrl(htbl);
-	return htbl;
+	वापस htbl;
 
-out_free_htbl:
-	kfree(htbl);
-	return NULL;
-}
+out_मुक्त_htbl:
+	kमुक्त(htbl);
+	वापस शून्य;
+पूर्ण
 
-int mlx5dr_ste_htbl_free(struct mlx5dr_ste_htbl *htbl)
-{
-	if (htbl->refcount)
-		return -EBUSY;
+पूर्णांक mlx5dr_ste_htbl_मुक्त(काष्ठा mlx5dr_ste_htbl *htbl)
+अणु
+	अगर (htbl->refcount)
+		वापस -EBUSY;
 
-	mlx5dr_icm_free_chunk(htbl->chunk);
-	kfree(htbl);
-	return 0;
-}
+	mlx5dr_icm_मुक्त_chunk(htbl->chunk);
+	kमुक्त(htbl);
+	वापस 0;
+पूर्ण
 
-void mlx5dr_ste_set_actions_tx(struct mlx5dr_ste_ctx *ste_ctx,
-			       struct mlx5dr_domain *dmn,
+व्योम mlx5dr_ste_set_actions_tx(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+			       काष्ठा mlx5dr_करोमुख्य *dmn,
 			       u8 *action_type_set,
 			       u8 *hw_ste_arr,
-			       struct mlx5dr_ste_actions_attr *attr,
+			       काष्ठा mlx5dr_ste_actions_attr *attr,
 			       u32 *added_stes)
-{
+अणु
 	ste_ctx->set_actions_tx(dmn, action_type_set, hw_ste_arr,
 				attr, added_stes);
-}
+पूर्ण
 
-void mlx5dr_ste_set_actions_rx(struct mlx5dr_ste_ctx *ste_ctx,
-			       struct mlx5dr_domain *dmn,
+व्योम mlx5dr_ste_set_actions_rx(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+			       काष्ठा mlx5dr_करोमुख्य *dmn,
 			       u8 *action_type_set,
 			       u8 *hw_ste_arr,
-			       struct mlx5dr_ste_actions_attr *attr,
+			       काष्ठा mlx5dr_ste_actions_attr *attr,
 			       u32 *added_stes)
-{
+अणु
 	ste_ctx->set_actions_rx(dmn, action_type_set, hw_ste_arr,
 				attr, added_stes);
-}
+पूर्ण
 
-const struct mlx5dr_ste_action_modify_field *
-mlx5dr_ste_conv_modify_hdr_sw_field(struct mlx5dr_ste_ctx *ste_ctx, u16 sw_field)
-{
-	const struct mlx5dr_ste_action_modify_field *hw_field;
+स्थिर काष्ठा mlx5dr_ste_action_modअगरy_field *
+mlx5dr_ste_conv_modअगरy_hdr_sw_field(काष्ठा mlx5dr_ste_ctx *ste_ctx, u16 sw_field)
+अणु
+	स्थिर काष्ठा mlx5dr_ste_action_modअगरy_field *hw_field;
 
-	if (sw_field >= ste_ctx->modify_field_arr_sz)
-		return NULL;
+	अगर (sw_field >= ste_ctx->modअगरy_field_arr_sz)
+		वापस शून्य;
 
-	hw_field = &ste_ctx->modify_field_arr[sw_field];
-	if (!hw_field->end && !hw_field->start)
-		return NULL;
+	hw_field = &ste_ctx->modअगरy_field_arr[sw_field];
+	अगर (!hw_field->end && !hw_field->start)
+		वापस शून्य;
 
-	return hw_field;
-}
+	वापस hw_field;
+पूर्ण
 
-void mlx5dr_ste_set_action_set(struct mlx5dr_ste_ctx *ste_ctx,
+व्योम mlx5dr_ste_set_action_set(काष्ठा mlx5dr_ste_ctx *ste_ctx,
 			       __be64 *hw_action,
 			       u8 hw_field,
-			       u8 shifter,
+			       u8 shअगरter,
 			       u8 length,
 			       u32 data)
-{
+अणु
 	ste_ctx->set_action_set((u8 *)hw_action,
-				hw_field, shifter, length, data);
-}
+				hw_field, shअगरter, length, data);
+पूर्ण
 
-void mlx5dr_ste_set_action_add(struct mlx5dr_ste_ctx *ste_ctx,
+व्योम mlx5dr_ste_set_action_add(काष्ठा mlx5dr_ste_ctx *ste_ctx,
 			       __be64 *hw_action,
 			       u8 hw_field,
-			       u8 shifter,
+			       u8 shअगरter,
 			       u8 length,
 			       u32 data)
-{
+अणु
 	ste_ctx->set_action_add((u8 *)hw_action,
-				hw_field, shifter, length, data);
-}
+				hw_field, shअगरter, length, data);
+पूर्ण
 
-void mlx5dr_ste_set_action_copy(struct mlx5dr_ste_ctx *ste_ctx,
+व्योम mlx5dr_ste_set_action_copy(काष्ठा mlx5dr_ste_ctx *ste_ctx,
 				__be64 *hw_action,
 				u8 dst_hw_field,
-				u8 dst_shifter,
+				u8 dst_shअगरter,
 				u8 dst_len,
 				u8 src_hw_field,
-				u8 src_shifter)
-{
+				u8 src_shअगरter)
+अणु
 	ste_ctx->set_action_copy((u8 *)hw_action,
-				 dst_hw_field, dst_shifter, dst_len,
-				 src_hw_field, src_shifter);
-}
+				 dst_hw_field, dst_shअगरter, dst_len,
+				 src_hw_field, src_shअगरter);
+पूर्ण
 
-int mlx5dr_ste_set_action_decap_l3_list(struct mlx5dr_ste_ctx *ste_ctx,
-					void *data, u32 data_sz,
+पूर्णांक mlx5dr_ste_set_action_decap_l3_list(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+					व्योम *data, u32 data_sz,
 					u8 *hw_action, u32 hw_action_sz,
 					u16 *used_hw_action_num)
-{
+अणु
 	/* Only Ethernet frame is supported, with VLAN (18) or without (14) */
-	if (data_sz != HDR_LEN_L2 && data_sz != HDR_LEN_L2_W_VLAN)
-		return -EINVAL;
+	अगर (data_sz != HDR_LEN_L2 && data_sz != HDR_LEN_L2_W_VLAN)
+		वापस -EINVAL;
 
-	return ste_ctx->set_action_decap_l3_list(data, data_sz,
+	वापस ste_ctx->set_action_decap_l3_list(data, data_sz,
 						 hw_action, hw_action_sz,
 						 used_hw_action_num);
-}
+पूर्ण
 
-int mlx5dr_ste_build_pre_check(struct mlx5dr_domain *dmn,
+पूर्णांक mlx5dr_ste_build_pre_check(काष्ठा mlx5dr_करोमुख्य *dmn,
 			       u8 match_criteria,
-			       struct mlx5dr_match_param *mask,
-			       struct mlx5dr_match_param *value)
-{
-	if (!value && (match_criteria & DR_MATCHER_CRITERIA_MISC)) {
-		if (mask->misc.source_port && mask->misc.source_port != 0xffff) {
+			       काष्ठा mlx5dr_match_param *mask,
+			       काष्ठा mlx5dr_match_param *value)
+अणु
+	अगर (!value && (match_criteria & DR_MATCHER_CRITERIA_MISC)) अणु
+		अगर (mask->misc.source_port && mask->misc.source_port != 0xffff) अणु
 			mlx5dr_err(dmn,
 				   "Partial mask source_port is not supported\n");
-			return -EINVAL;
-		}
-		if (mask->misc.source_eswitch_owner_vhca_id &&
-		    mask->misc.source_eswitch_owner_vhca_id != 0xffff) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (mask->misc.source_eचयन_owner_vhca_id &&
+		    mask->misc.source_eचयन_owner_vhca_id != 0xffff) अणु
 			mlx5dr_err(dmn,
 				   "Partial mask source_eswitch_owner_vhca_id is not supported\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mlx5dr_ste_build_ste_arr(struct mlx5dr_matcher *matcher,
-			     struct mlx5dr_matcher_rx_tx *nic_matcher,
-			     struct mlx5dr_match_param *value,
+पूर्णांक mlx5dr_ste_build_ste_arr(काष्ठा mlx5dr_matcher *matcher,
+			     काष्ठा mlx5dr_matcher_rx_tx *nic_matcher,
+			     काष्ठा mlx5dr_match_param *value,
 			     u8 *ste_arr)
-{
-	struct mlx5dr_domain_rx_tx *nic_dmn = nic_matcher->nic_tbl->nic_dmn;
-	struct mlx5dr_domain *dmn = matcher->tbl->dmn;
-	struct mlx5dr_ste_ctx *ste_ctx = dmn->ste_ctx;
-	struct mlx5dr_ste_build *sb;
-	int ret, i;
+अणु
+	काष्ठा mlx5dr_करोमुख्य_rx_tx *nic_dmn = nic_matcher->nic_tbl->nic_dmn;
+	काष्ठा mlx5dr_करोमुख्य *dmn = matcher->tbl->dmn;
+	काष्ठा mlx5dr_ste_ctx *ste_ctx = dmn->ste_ctx;
+	काष्ठा mlx5dr_ste_build *sb;
+	पूर्णांक ret, i;
 
 	ret = mlx5dr_ste_build_pre_check(dmn, matcher->match_criteria,
 					 &matcher->mask, value);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	sb = nic_matcher->ste_builder;
-	for (i = 0; i < nic_matcher->num_of_builders; i++) {
+	क्रम (i = 0; i < nic_matcher->num_of_builders; i++) अणु
 		ste_ctx->ste_init(ste_arr,
 				  sb->lu_type,
 				  nic_dmn->ste_type,
@@ -669,25 +670,25 @@ int mlx5dr_ste_build_ste_arr(struct mlx5dr_matcher *matcher,
 		mlx5dr_ste_set_bit_mask(ste_arr, sb->bit_mask);
 
 		ret = sb->ste_build_tag_func(value, sb, dr_ste_get_tag(ste_arr));
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/* Connect the STEs */
-		if (i < (nic_matcher->num_of_builders - 1)) {
-			/* Need the next builder for these fields,
-			 * not relevant for the last ste in the chain.
+		अगर (i < (nic_matcher->num_of_builders - 1)) अणु
+			/* Need the next builder क्रम these fields,
+			 * not relevant क्रम the last ste in the chain.
 			 */
 			sb++;
 			ste_ctx->set_next_lu_type(ste_arr, sb->lu_type);
 			ste_ctx->set_byte_mask(ste_arr, sb->byte_mask);
-		}
+		पूर्ण
 		ste_arr += DR_STE_SIZE;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void dr_ste_copy_mask_misc(char *mask, struct mlx5dr_match_misc *spec)
-{
+अटल व्योम dr_ste_copy_mask_misc(अक्षर *mask, काष्ठा mlx5dr_match_misc *spec)
+अणु
 	spec->gre_c_present = MLX5_GET(fte_match_set_misc, mask, gre_c_present);
 	spec->gre_k_present = MLX5_GET(fte_match_set_misc, mask, gre_k_present);
 	spec->gre_s_present = MLX5_GET(fte_match_set_misc, mask, gre_s_present);
@@ -695,8 +696,8 @@ static void dr_ste_copy_mask_misc(char *mask, struct mlx5dr_match_misc *spec)
 	spec->source_sqn = MLX5_GET(fte_match_set_misc, mask, source_sqn);
 
 	spec->source_port = MLX5_GET(fte_match_set_misc, mask, source_port);
-	spec->source_eswitch_owner_vhca_id = MLX5_GET(fte_match_set_misc, mask,
-						      source_eswitch_owner_vhca_id);
+	spec->source_eचयन_owner_vhca_id = MLX5_GET(fte_match_set_misc, mask,
+						      source_eचयन_owner_vhca_id);
 
 	spec->outer_second_prio = MLX5_GET(fte_match_set_misc, mask, outer_second_prio);
 	spec->outer_second_cfi = MLX5_GET(fte_match_set_misc, mask, outer_second_cfi);
@@ -735,10 +736,10 @@ static void dr_ste_copy_mask_misc(char *mask, struct mlx5dr_match_misc *spec)
 		MLX5_GET(fte_match_set_misc, mask, geneve_protocol_type);
 
 	spec->bth_dst_qp = MLX5_GET(fte_match_set_misc, mask, bth_dst_qp);
-}
+पूर्ण
 
-static void dr_ste_copy_mask_spec(char *mask, struct mlx5dr_match_spec *spec)
-{
+अटल व्योम dr_ste_copy_mask_spec(अक्षर *mask, काष्ठा mlx5dr_match_spec *spec)
+अणु
 	__be32 raw_ip[4];
 
 	spec->smac_47_16 = MLX5_GET(fte_match_set_lyr_2_4, mask, smac_47_16);
@@ -769,27 +770,27 @@ static void dr_ste_copy_mask_spec(char *mask, struct mlx5dr_match_spec *spec)
 	spec->udp_sport = MLX5_GET(fte_match_set_lyr_2_4, mask, udp_sport);
 	spec->udp_dport = MLX5_GET(fte_match_set_lyr_2_4, mask, udp_dport);
 
-	memcpy(raw_ip, MLX5_ADDR_OF(fte_match_set_lyr_2_4, mask,
+	स_नकल(raw_ip, MLX5_ADDR_OF(fte_match_set_lyr_2_4, mask,
 				    src_ipv4_src_ipv6.ipv6_layout.ipv6),
-				    sizeof(raw_ip));
+				    माप(raw_ip));
 
 	spec->src_ip_127_96 = be32_to_cpu(raw_ip[0]);
 	spec->src_ip_95_64 = be32_to_cpu(raw_ip[1]);
 	spec->src_ip_63_32 = be32_to_cpu(raw_ip[2]);
 	spec->src_ip_31_0 = be32_to_cpu(raw_ip[3]);
 
-	memcpy(raw_ip, MLX5_ADDR_OF(fte_match_set_lyr_2_4, mask,
+	स_नकल(raw_ip, MLX5_ADDR_OF(fte_match_set_lyr_2_4, mask,
 				    dst_ipv4_dst_ipv6.ipv6_layout.ipv6),
-				    sizeof(raw_ip));
+				    माप(raw_ip));
 
 	spec->dst_ip_127_96 = be32_to_cpu(raw_ip[0]);
 	spec->dst_ip_95_64 = be32_to_cpu(raw_ip[1]);
 	spec->dst_ip_63_32 = be32_to_cpu(raw_ip[2]);
 	spec->dst_ip_31_0 = be32_to_cpu(raw_ip[3]);
-}
+पूर्ण
 
-static void dr_ste_copy_mask_misc2(char *mask, struct mlx5dr_match_misc2 *spec)
-{
+अटल व्योम dr_ste_copy_mask_misc2(अक्षर *mask, काष्ठा mlx5dr_match_misc2 *spec)
+अणु
 	spec->outer_first_mpls_label =
 		MLX5_GET(fte_match_set_misc2, mask, outer_first_mpls.mpls_label);
 	spec->outer_first_mpls_exp =
@@ -831,10 +832,10 @@ static void dr_ste_copy_mask_misc2(char *mask, struct mlx5dr_match_misc2 *spec)
 	spec->metadata_reg_c_1 = MLX5_GET(fte_match_set_misc2, mask, metadata_reg_c_1);
 	spec->metadata_reg_c_0 = MLX5_GET(fte_match_set_misc2, mask, metadata_reg_c_0);
 	spec->metadata_reg_a = MLX5_GET(fte_match_set_misc2, mask, metadata_reg_a);
-}
+पूर्ण
 
-static void dr_ste_copy_mask_misc3(char *mask, struct mlx5dr_match_misc3 *spec)
-{
+अटल व्योम dr_ste_copy_mask_misc3(अक्षर *mask, काष्ठा mlx5dr_match_misc3 *spec)
+अणु
 	spec->inner_tcp_seq_num = MLX5_GET(fte_match_set_misc3, mask, inner_tcp_seq_num);
 	spec->outer_tcp_seq_num = MLX5_GET(fte_match_set_misc3, mask, outer_tcp_seq_num);
 	spec->inner_tcp_ack_num = MLX5_GET(fte_match_set_misc3, mask, inner_tcp_ack_num);
@@ -861,10 +862,10 @@ static void dr_ste_copy_mask_misc3(char *mask, struct mlx5dr_match_misc3 *spec)
 	spec->gtpu_dw_2 = MLX5_GET(fte_match_set_misc3, mask, gtpu_dw_2);
 	spec->gtpu_first_ext_dw_0 =
 		MLX5_GET(fte_match_set_misc3, mask, gtpu_first_ext_dw_0);
-}
+पूर्ण
 
-static void dr_ste_copy_mask_misc4(char *mask, struct mlx5dr_match_misc4 *spec)
-{
+अटल व्योम dr_ste_copy_mask_misc4(अक्षर *mask, काष्ठा mlx5dr_match_misc4 *spec)
+अणु
 	spec->prog_sample_field_id_0 =
 		MLX5_GET(fte_match_set_misc4, mask, prog_sample_field_id_0);
 	spec->prog_sample_field_value_0 =
@@ -881,405 +882,405 @@ static void dr_ste_copy_mask_misc4(char *mask, struct mlx5dr_match_misc4 *spec)
 		MLX5_GET(fte_match_set_misc4, mask, prog_sample_field_id_3);
 	spec->prog_sample_field_value_3 =
 		MLX5_GET(fte_match_set_misc4, mask, prog_sample_field_value_3);
-}
+पूर्ण
 
-void mlx5dr_ste_copy_param(u8 match_criteria,
-			   struct mlx5dr_match_param *set_param,
-			   struct mlx5dr_match_parameters *mask)
-{
-	u8 tail_param[MLX5_ST_SZ_BYTES(fte_match_set_lyr_2_4)] = {};
+व्योम mlx5dr_ste_copy_param(u8 match_criteria,
+			   काष्ठा mlx5dr_match_param *set_param,
+			   काष्ठा mlx5dr_match_parameters *mask)
+अणु
+	u8 tail_param[MLX5_ST_SZ_BYTES(fte_match_set_lyr_2_4)] = अणुपूर्ण;
 	u8 *data = (u8 *)mask->match_buf;
-	size_t param_location;
-	void *buff;
+	माप_प्रकार param_location;
+	व्योम *buff;
 
-	if (match_criteria & DR_MATCHER_CRITERIA_OUTER) {
-		if (mask->match_sz < sizeof(struct mlx5dr_match_spec)) {
-			memcpy(tail_param, data, mask->match_sz);
+	अगर (match_criteria & DR_MATCHER_CRITERIA_OUTER) अणु
+		अगर (mask->match_sz < माप(काष्ठा mlx5dr_match_spec)) अणु
+			स_नकल(tail_param, data, mask->match_sz);
 			buff = tail_param;
-		} else {
+		पूर्ण अन्यथा अणु
 			buff = mask->match_buf;
-		}
+		पूर्ण
 		dr_ste_copy_mask_spec(buff, &set_param->outer);
-	}
-	param_location = sizeof(struct mlx5dr_match_spec);
+	पूर्ण
+	param_location = माप(काष्ठा mlx5dr_match_spec);
 
-	if (match_criteria & DR_MATCHER_CRITERIA_MISC) {
-		if (mask->match_sz < param_location +
-		    sizeof(struct mlx5dr_match_misc)) {
-			memcpy(tail_param, data + param_location,
+	अगर (match_criteria & DR_MATCHER_CRITERIA_MISC) अणु
+		अगर (mask->match_sz < param_location +
+		    माप(काष्ठा mlx5dr_match_misc)) अणु
+			स_नकल(tail_param, data + param_location,
 			       mask->match_sz - param_location);
 			buff = tail_param;
-		} else {
+		पूर्ण अन्यथा अणु
 			buff = data + param_location;
-		}
+		पूर्ण
 		dr_ste_copy_mask_misc(buff, &set_param->misc);
-	}
-	param_location += sizeof(struct mlx5dr_match_misc);
+	पूर्ण
+	param_location += माप(काष्ठा mlx5dr_match_misc);
 
-	if (match_criteria & DR_MATCHER_CRITERIA_INNER) {
-		if (mask->match_sz < param_location +
-		    sizeof(struct mlx5dr_match_spec)) {
-			memcpy(tail_param, data + param_location,
+	अगर (match_criteria & DR_MATCHER_CRITERIA_INNER) अणु
+		अगर (mask->match_sz < param_location +
+		    माप(काष्ठा mlx5dr_match_spec)) अणु
+			स_नकल(tail_param, data + param_location,
 			       mask->match_sz - param_location);
 			buff = tail_param;
-		} else {
+		पूर्ण अन्यथा अणु
 			buff = data + param_location;
-		}
+		पूर्ण
 		dr_ste_copy_mask_spec(buff, &set_param->inner);
-	}
-	param_location += sizeof(struct mlx5dr_match_spec);
+	पूर्ण
+	param_location += माप(काष्ठा mlx5dr_match_spec);
 
-	if (match_criteria & DR_MATCHER_CRITERIA_MISC2) {
-		if (mask->match_sz < param_location +
-		    sizeof(struct mlx5dr_match_misc2)) {
-			memcpy(tail_param, data + param_location,
+	अगर (match_criteria & DR_MATCHER_CRITERIA_MISC2) अणु
+		अगर (mask->match_sz < param_location +
+		    माप(काष्ठा mlx5dr_match_misc2)) अणु
+			स_नकल(tail_param, data + param_location,
 			       mask->match_sz - param_location);
 			buff = tail_param;
-		} else {
+		पूर्ण अन्यथा अणु
 			buff = data + param_location;
-		}
+		पूर्ण
 		dr_ste_copy_mask_misc2(buff, &set_param->misc2);
-	}
+	पूर्ण
 
-	param_location += sizeof(struct mlx5dr_match_misc2);
+	param_location += माप(काष्ठा mlx5dr_match_misc2);
 
-	if (match_criteria & DR_MATCHER_CRITERIA_MISC3) {
-		if (mask->match_sz < param_location +
-		    sizeof(struct mlx5dr_match_misc3)) {
-			memcpy(tail_param, data + param_location,
+	अगर (match_criteria & DR_MATCHER_CRITERIA_MISC3) अणु
+		अगर (mask->match_sz < param_location +
+		    माप(काष्ठा mlx5dr_match_misc3)) अणु
+			स_नकल(tail_param, data + param_location,
 			       mask->match_sz - param_location);
 			buff = tail_param;
-		} else {
+		पूर्ण अन्यथा अणु
 			buff = data + param_location;
-		}
+		पूर्ण
 		dr_ste_copy_mask_misc3(buff, &set_param->misc3);
-	}
+	पूर्ण
 
-	param_location += sizeof(struct mlx5dr_match_misc3);
+	param_location += माप(काष्ठा mlx5dr_match_misc3);
 
-	if (match_criteria & DR_MATCHER_CRITERIA_MISC4) {
-		if (mask->match_sz < param_location +
-		    sizeof(struct mlx5dr_match_misc4)) {
-			memcpy(tail_param, data + param_location,
+	अगर (match_criteria & DR_MATCHER_CRITERIA_MISC4) अणु
+		अगर (mask->match_sz < param_location +
+		    माप(काष्ठा mlx5dr_match_misc4)) अणु
+			स_नकल(tail_param, data + param_location,
 			       mask->match_sz - param_location);
 			buff = tail_param;
-		} else {
+		पूर्ण अन्यथा अणु
 			buff = data + param_location;
-		}
+		पूर्ण
 		dr_ste_copy_mask_misc4(buff, &set_param->misc4);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void mlx5dr_ste_build_eth_l2_src_dst(struct mlx5dr_ste_ctx *ste_ctx,
-				     struct mlx5dr_ste_build *sb,
-				     struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_eth_l2_src_dst(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				     काष्ठा mlx5dr_ste_build *sb,
+				     काष्ठा mlx5dr_match_param *mask,
 				     bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_eth_l2_src_dst_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_eth_l3_ipv6_dst(struct mlx5dr_ste_ctx *ste_ctx,
-				      struct mlx5dr_ste_build *sb,
-				      struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_eth_l3_ipv6_dst(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				      काष्ठा mlx5dr_ste_build *sb,
+				      काष्ठा mlx5dr_match_param *mask,
 				      bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_eth_l3_ipv6_dst_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_eth_l3_ipv6_src(struct mlx5dr_ste_ctx *ste_ctx,
-				      struct mlx5dr_ste_build *sb,
-				      struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_eth_l3_ipv6_src(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				      काष्ठा mlx5dr_ste_build *sb,
+				      काष्ठा mlx5dr_match_param *mask,
 				      bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_eth_l3_ipv6_src_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_eth_l3_ipv4_5_tuple(struct mlx5dr_ste_ctx *ste_ctx,
-					  struct mlx5dr_ste_build *sb,
-					  struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_eth_l3_ipv4_5_tuple(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+					  काष्ठा mlx5dr_ste_build *sb,
+					  काष्ठा mlx5dr_match_param *mask,
 					  bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_eth_l3_ipv4_5_tuple_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_eth_l2_src(struct mlx5dr_ste_ctx *ste_ctx,
-				 struct mlx5dr_ste_build *sb,
-				 struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_eth_l2_src(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				 काष्ठा mlx5dr_ste_build *sb,
+				 काष्ठा mlx5dr_match_param *mask,
 				 bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_eth_l2_src_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_eth_l2_dst(struct mlx5dr_ste_ctx *ste_ctx,
-				 struct mlx5dr_ste_build *sb,
-				 struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_eth_l2_dst(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				 काष्ठा mlx5dr_ste_build *sb,
+				 काष्ठा mlx5dr_match_param *mask,
 				 bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_eth_l2_dst_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_eth_l2_tnl(struct mlx5dr_ste_ctx *ste_ctx,
-				 struct mlx5dr_ste_build *sb,
-				 struct mlx5dr_match_param *mask, bool inner, bool rx)
-{
+व्योम mlx5dr_ste_build_eth_l2_tnl(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				 काष्ठा mlx5dr_ste_build *sb,
+				 काष्ठा mlx5dr_match_param *mask, bool inner, bool rx)
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_eth_l2_tnl_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_eth_l3_ipv4_misc(struct mlx5dr_ste_ctx *ste_ctx,
-				       struct mlx5dr_ste_build *sb,
-				       struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_eth_l3_ipv4_misc(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				       काष्ठा mlx5dr_ste_build *sb,
+				       काष्ठा mlx5dr_match_param *mask,
 				       bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_eth_l3_ipv4_misc_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_eth_ipv6_l3_l4(struct mlx5dr_ste_ctx *ste_ctx,
-				     struct mlx5dr_ste_build *sb,
-				     struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_eth_ipv6_l3_l4(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				     काष्ठा mlx5dr_ste_build *sb,
+				     काष्ठा mlx5dr_match_param *mask,
 				     bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_eth_ipv6_l3_l4_init(sb, mask);
-}
+पूर्ण
 
-static int dr_ste_build_empty_always_hit_tag(struct mlx5dr_match_param *value,
-					     struct mlx5dr_ste_build *sb,
+अटल पूर्णांक dr_ste_build_empty_always_hit_tag(काष्ठा mlx5dr_match_param *value,
+					     काष्ठा mlx5dr_ste_build *sb,
 					     u8 *tag)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-void mlx5dr_ste_build_empty_always_hit(struct mlx5dr_ste_build *sb, bool rx)
-{
+व्योम mlx5dr_ste_build_empty_always_hit(काष्ठा mlx5dr_ste_build *sb, bool rx)
+अणु
 	sb->rx = rx;
 	sb->lu_type = MLX5DR_STE_LU_TYPE_DONT_CARE;
 	sb->byte_mask = 0;
 	sb->ste_build_tag_func = &dr_ste_build_empty_always_hit_tag;
-}
+पूर्ण
 
-void mlx5dr_ste_build_mpls(struct mlx5dr_ste_ctx *ste_ctx,
-			   struct mlx5dr_ste_build *sb,
-			   struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_mpls(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+			   काष्ठा mlx5dr_ste_build *sb,
+			   काष्ठा mlx5dr_match_param *mask,
 			   bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_mpls_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_tnl_gre(struct mlx5dr_ste_ctx *ste_ctx,
-			      struct mlx5dr_ste_build *sb,
-			      struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_tnl_gre(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+			      काष्ठा mlx5dr_ste_build *sb,
+			      काष्ठा mlx5dr_match_param *mask,
 			      bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_tnl_gre_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_tnl_mpls_over_gre(struct mlx5dr_ste_ctx *ste_ctx,
-					struct mlx5dr_ste_build *sb,
-					struct mlx5dr_match_param *mask,
-					struct mlx5dr_cmd_caps *caps,
+व्योम mlx5dr_ste_build_tnl_mpls_over_gre(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+					काष्ठा mlx5dr_ste_build *sb,
+					काष्ठा mlx5dr_match_param *mask,
+					काष्ठा mlx5dr_cmd_caps *caps,
 					bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	sb->caps = caps;
-	return ste_ctx->build_tnl_mpls_over_gre_init(sb, mask);
-}
+	वापस ste_ctx->build_tnl_mpls_over_gre_init(sb, mask);
+पूर्ण
 
-void mlx5dr_ste_build_tnl_mpls_over_udp(struct mlx5dr_ste_ctx *ste_ctx,
-					struct mlx5dr_ste_build *sb,
-					struct mlx5dr_match_param *mask,
-					struct mlx5dr_cmd_caps *caps,
+व्योम mlx5dr_ste_build_tnl_mpls_over_udp(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+					काष्ठा mlx5dr_ste_build *sb,
+					काष्ठा mlx5dr_match_param *mask,
+					काष्ठा mlx5dr_cmd_caps *caps,
 					bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	sb->caps = caps;
-	return ste_ctx->build_tnl_mpls_over_udp_init(sb, mask);
-}
+	वापस ste_ctx->build_tnl_mpls_over_udp_init(sb, mask);
+पूर्ण
 
-void mlx5dr_ste_build_icmp(struct mlx5dr_ste_ctx *ste_ctx,
-			   struct mlx5dr_ste_build *sb,
-			   struct mlx5dr_match_param *mask,
-			   struct mlx5dr_cmd_caps *caps,
+व्योम mlx5dr_ste_build_icmp(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+			   काष्ठा mlx5dr_ste_build *sb,
+			   काष्ठा mlx5dr_match_param *mask,
+			   काष्ठा mlx5dr_cmd_caps *caps,
 			   bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	sb->caps = caps;
 	ste_ctx->build_icmp_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_general_purpose(struct mlx5dr_ste_ctx *ste_ctx,
-				      struct mlx5dr_ste_build *sb,
-				      struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_general_purpose(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				      काष्ठा mlx5dr_ste_build *sb,
+				      काष्ठा mlx5dr_match_param *mask,
 				      bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_general_purpose_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_eth_l4_misc(struct mlx5dr_ste_ctx *ste_ctx,
-				  struct mlx5dr_ste_build *sb,
-				  struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_eth_l4_misc(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				  काष्ठा mlx5dr_ste_build *sb,
+				  काष्ठा mlx5dr_match_param *mask,
 				  bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_eth_l4_misc_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_tnl_vxlan_gpe(struct mlx5dr_ste_ctx *ste_ctx,
-				    struct mlx5dr_ste_build *sb,
-				    struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_tnl_vxlan_gpe(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				    काष्ठा mlx5dr_ste_build *sb,
+				    काष्ठा mlx5dr_match_param *mask,
 				    bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_tnl_vxlan_gpe_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_tnl_geneve(struct mlx5dr_ste_ctx *ste_ctx,
-				 struct mlx5dr_ste_build *sb,
-				 struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_tnl_geneve(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				 काष्ठा mlx5dr_ste_build *sb,
+				 काष्ठा mlx5dr_match_param *mask,
 				 bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_tnl_geneve_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_tnl_geneve_tlv_opt(struct mlx5dr_ste_ctx *ste_ctx,
-					 struct mlx5dr_ste_build *sb,
-					 struct mlx5dr_match_param *mask,
-					 struct mlx5dr_cmd_caps *caps,
+व्योम mlx5dr_ste_build_tnl_geneve_tlv_opt(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+					 काष्ठा mlx5dr_ste_build *sb,
+					 काष्ठा mlx5dr_match_param *mask,
+					 काष्ठा mlx5dr_cmd_caps *caps,
 					 bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->caps = caps;
 	sb->inner = inner;
 	ste_ctx->build_tnl_geneve_tlv_opt_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_tnl_gtpu(struct mlx5dr_ste_ctx *ste_ctx,
-			       struct mlx5dr_ste_build *sb,
-			       struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_tnl_gtpu(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+			       काष्ठा mlx5dr_ste_build *sb,
+			       काष्ठा mlx5dr_match_param *mask,
 			       bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_tnl_gtpu_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_tnl_gtpu_flex_parser_0(struct mlx5dr_ste_ctx *ste_ctx,
-					     struct mlx5dr_ste_build *sb,
-					     struct mlx5dr_match_param *mask,
-					     struct mlx5dr_cmd_caps *caps,
+व्योम mlx5dr_ste_build_tnl_gtpu_flex_parser_0(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+					     काष्ठा mlx5dr_ste_build *sb,
+					     काष्ठा mlx5dr_match_param *mask,
+					     काष्ठा mlx5dr_cmd_caps *caps,
 					     bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->caps = caps;
 	sb->inner = inner;
 	ste_ctx->build_tnl_gtpu_flex_parser_0_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_tnl_gtpu_flex_parser_1(struct mlx5dr_ste_ctx *ste_ctx,
-					     struct mlx5dr_ste_build *sb,
-					     struct mlx5dr_match_param *mask,
-					     struct mlx5dr_cmd_caps *caps,
+व्योम mlx5dr_ste_build_tnl_gtpu_flex_parser_1(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+					     काष्ठा mlx5dr_ste_build *sb,
+					     काष्ठा mlx5dr_match_param *mask,
+					     काष्ठा mlx5dr_cmd_caps *caps,
 					     bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->caps = caps;
 	sb->inner = inner;
 	ste_ctx->build_tnl_gtpu_flex_parser_1_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_register_0(struct mlx5dr_ste_ctx *ste_ctx,
-				 struct mlx5dr_ste_build *sb,
-				 struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_रेजिस्टर_0(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				 काष्ठा mlx5dr_ste_build *sb,
+				 काष्ठा mlx5dr_match_param *mask,
 				 bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
-	ste_ctx->build_register_0_init(sb, mask);
-}
+	ste_ctx->build_रेजिस्टर_0_init(sb, mask);
+पूर्ण
 
-void mlx5dr_ste_build_register_1(struct mlx5dr_ste_ctx *ste_ctx,
-				 struct mlx5dr_ste_build *sb,
-				 struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_रेजिस्टर_1(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				 काष्ठा mlx5dr_ste_build *sb,
+				 काष्ठा mlx5dr_match_param *mask,
 				 bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
-	ste_ctx->build_register_1_init(sb, mask);
-}
+	ste_ctx->build_रेजिस्टर_1_init(sb, mask);
+पूर्ण
 
-void mlx5dr_ste_build_src_gvmi_qpn(struct mlx5dr_ste_ctx *ste_ctx,
-				   struct mlx5dr_ste_build *sb,
-				   struct mlx5dr_match_param *mask,
-				   struct mlx5dr_domain *dmn,
+व्योम mlx5dr_ste_build_src_gvmi_qpn(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				   काष्ठा mlx5dr_ste_build *sb,
+				   काष्ठा mlx5dr_match_param *mask,
+				   काष्ठा mlx5dr_करोमुख्य *dmn,
 				   bool inner, bool rx)
-{
-	/* Set vhca_id_valid before we reset source_eswitch_owner_vhca_id */
-	sb->vhca_id_valid = mask->misc.source_eswitch_owner_vhca_id;
+अणु
+	/* Set vhca_id_valid beक्रमe we reset source_eचयन_owner_vhca_id */
+	sb->vhca_id_valid = mask->misc.source_eचयन_owner_vhca_id;
 
 	sb->rx = rx;
 	sb->dmn = dmn;
 	sb->inner = inner;
 	ste_ctx->build_src_gvmi_qpn_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_flex_parser_0(struct mlx5dr_ste_ctx *ste_ctx,
-				    struct mlx5dr_ste_build *sb,
-				    struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_flex_parser_0(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				    काष्ठा mlx5dr_ste_build *sb,
+				    काष्ठा mlx5dr_match_param *mask,
 				    bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_flex_parser_0_init(sb, mask);
-}
+पूर्ण
 
-void mlx5dr_ste_build_flex_parser_1(struct mlx5dr_ste_ctx *ste_ctx,
-				    struct mlx5dr_ste_build *sb,
-				    struct mlx5dr_match_param *mask,
+व्योम mlx5dr_ste_build_flex_parser_1(काष्ठा mlx5dr_ste_ctx *ste_ctx,
+				    काष्ठा mlx5dr_ste_build *sb,
+				    काष्ठा mlx5dr_match_param *mask,
 				    bool inner, bool rx)
-{
+अणु
 	sb->rx = rx;
 	sb->inner = inner;
 	ste_ctx->build_flex_parser_1_init(sb, mask);
-}
+पूर्ण
 
-static struct mlx5dr_ste_ctx *mlx5dr_ste_ctx_arr[] = {
+अटल काष्ठा mlx5dr_ste_ctx *mlx5dr_ste_ctx_arr[] = अणु
 	[MLX5_STEERING_FORMAT_CONNECTX_5] = &ste_ctx_v0,
 	[MLX5_STEERING_FORMAT_CONNECTX_6DX] = &ste_ctx_v1,
-};
+पूर्ण;
 
-struct mlx5dr_ste_ctx *mlx5dr_ste_get_ctx(u8 version)
-{
-	if (version > MLX5_STEERING_FORMAT_CONNECTX_6DX)
-		return NULL;
+काष्ठा mlx5dr_ste_ctx *mlx5dr_ste_get_ctx(u8 version)
+अणु
+	अगर (version > MLX5_STEERING_FORMAT_CONNECTX_6DX)
+		वापस शून्य;
 
-	return mlx5dr_ste_ctx_arr[version];
-}
+	वापस mlx5dr_ste_ctx_arr[version];
+पूर्ण

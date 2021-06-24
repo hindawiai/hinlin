@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2006, 2019 Oracle and/or its affiliates. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,122 +31,122 @@
  * SOFTWARE.
  *
  */
-#include <linux/kernel.h>
-#include <linux/in.h>
-#include <linux/if.h>
-#include <linux/netdevice.h>
-#include <linux/inetdevice.h>
-#include <linux/if_arp.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <net/addrconf.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/in.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <net/addrconf.h>
 
-#include "rds_single_path.h"
-#include "rds.h"
-#include "ib.h"
-#include "ib_mr.h"
+#समावेश "rds_single_path.h"
+#समावेश "rds.h"
+#समावेश "ib.h"
+#समावेश "ib_mr.h"
 
-static unsigned int rds_ib_mr_1m_pool_size = RDS_MR_1M_POOL_SIZE;
-static unsigned int rds_ib_mr_8k_pool_size = RDS_MR_8K_POOL_SIZE;
-unsigned int rds_ib_retry_count = RDS_IB_DEFAULT_RETRY_COUNT;
-static atomic_t rds_ib_unloading;
+अटल अचिन्हित पूर्णांक rds_ib_mr_1m_pool_size = RDS_MR_1M_POOL_SIZE;
+अटल अचिन्हित पूर्णांक rds_ib_mr_8k_pool_size = RDS_MR_8K_POOL_SIZE;
+अचिन्हित पूर्णांक rds_ib_retry_count = RDS_IB_DEFAULT_RETRY_COUNT;
+अटल atomic_t rds_ib_unloading;
 
-module_param(rds_ib_mr_1m_pool_size, int, 0444);
+module_param(rds_ib_mr_1m_pool_size, पूर्णांक, 0444);
 MODULE_PARM_DESC(rds_ib_mr_1m_pool_size, " Max number of 1M mr per HCA");
-module_param(rds_ib_mr_8k_pool_size, int, 0444);
+module_param(rds_ib_mr_8k_pool_size, पूर्णांक, 0444);
 MODULE_PARM_DESC(rds_ib_mr_8k_pool_size, " Max number of 8K mr per HCA");
-module_param(rds_ib_retry_count, int, 0444);
+module_param(rds_ib_retry_count, पूर्णांक, 0444);
 MODULE_PARM_DESC(rds_ib_retry_count, " Number of hw retries before reporting an error");
 
 /*
  * we have a clumsy combination of RCU and a rwsem protecting this list
- * because it is used both in the get_mr fast path and while blocking in
+ * because it is used both in the get_mr fast path and जबतक blocking in
  * the FMR flushing path.
  */
 DECLARE_RWSEM(rds_ib_devices_lock);
-struct list_head rds_ib_devices;
+काष्ठा list_head rds_ib_devices;
 
-/* NOTE: if also grabbing ibdev lock, grab this first */
+/* NOTE: अगर also grabbing ibdev lock, grab this first */
 DEFINE_SPINLOCK(ib_nodev_conns_lock);
 LIST_HEAD(ib_nodev_conns);
 
-static void rds_ib_nodev_connect(void)
-{
-	struct rds_ib_connection *ic;
+अटल व्योम rds_ib_nodev_connect(व्योम)
+अणु
+	काष्ठा rds_ib_connection *ic;
 
 	spin_lock(&ib_nodev_conns_lock);
-	list_for_each_entry(ic, &ib_nodev_conns, ib_node)
-		rds_conn_connect_if_down(ic->conn);
+	list_क्रम_each_entry(ic, &ib_nodev_conns, ib_node)
+		rds_conn_connect_अगर_करोwn(ic->conn);
 	spin_unlock(&ib_nodev_conns_lock);
-}
+पूर्ण
 
-static void rds_ib_dev_shutdown(struct rds_ib_device *rds_ibdev)
-{
-	struct rds_ib_connection *ic;
-	unsigned long flags;
+अटल व्योम rds_ib_dev_shutकरोwn(काष्ठा rds_ib_device *rds_ibdev)
+अणु
+	काष्ठा rds_ib_connection *ic;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rds_ibdev->spinlock, flags);
-	list_for_each_entry(ic, &rds_ibdev->conn_list, ib_node)
+	list_क्रम_each_entry(ic, &rds_ibdev->conn_list, ib_node)
 		rds_conn_path_drop(&ic->conn->c_path[0], true);
 	spin_unlock_irqrestore(&rds_ibdev->spinlock, flags);
-}
+पूर्ण
 
 /*
  * rds_ib_destroy_mr_pool() blocks on a few things and mrs drop references
- * from interrupt context so we push freing off into a work struct in krdsd.
+ * from पूर्णांकerrupt context so we push freing off पूर्णांकo a work काष्ठा in krdsd.
  */
-static void rds_ib_dev_free(struct work_struct *work)
-{
-	struct rds_ib_ipaddr *i_ipaddr, *i_next;
-	struct rds_ib_device *rds_ibdev = container_of(work,
-					struct rds_ib_device, free_work);
+अटल व्योम rds_ib_dev_मुक्त(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rds_ib_ipaddr *i_ipaddr, *i_next;
+	काष्ठा rds_ib_device *rds_ibdev = container_of(work,
+					काष्ठा rds_ib_device, मुक्त_work);
 
-	if (rds_ibdev->mr_8k_pool)
+	अगर (rds_ibdev->mr_8k_pool)
 		rds_ib_destroy_mr_pool(rds_ibdev->mr_8k_pool);
-	if (rds_ibdev->mr_1m_pool)
+	अगर (rds_ibdev->mr_1m_pool)
 		rds_ib_destroy_mr_pool(rds_ibdev->mr_1m_pool);
-	if (rds_ibdev->pd)
+	अगर (rds_ibdev->pd)
 		ib_dealloc_pd(rds_ibdev->pd);
 
-	list_for_each_entry_safe(i_ipaddr, i_next, &rds_ibdev->ipaddr_list, list) {
+	list_क्रम_each_entry_safe(i_ipaddr, i_next, &rds_ibdev->ipaddr_list, list) अणु
 		list_del(&i_ipaddr->list);
-		kfree(i_ipaddr);
-	}
+		kमुक्त(i_ipaddr);
+	पूर्ण
 
-	kfree(rds_ibdev->vector_load);
+	kमुक्त(rds_ibdev->vector_load);
 
-	kfree(rds_ibdev);
-}
+	kमुक्त(rds_ibdev);
+पूर्ण
 
-void rds_ib_dev_put(struct rds_ib_device *rds_ibdev)
-{
-	BUG_ON(refcount_read(&rds_ibdev->refcount) == 0);
-	if (refcount_dec_and_test(&rds_ibdev->refcount))
-		queue_work(rds_wq, &rds_ibdev->free_work);
-}
+व्योम rds_ib_dev_put(काष्ठा rds_ib_device *rds_ibdev)
+अणु
+	BUG_ON(refcount_पढ़ो(&rds_ibdev->refcount) == 0);
+	अगर (refcount_dec_and_test(&rds_ibdev->refcount))
+		queue_work(rds_wq, &rds_ibdev->मुक्त_work);
+पूर्ण
 
-static int rds_ib_add_one(struct ib_device *device)
-{
-	struct rds_ib_device *rds_ibdev;
-	int ret;
+अटल पूर्णांक rds_ib_add_one(काष्ठा ib_device *device)
+अणु
+	काष्ठा rds_ib_device *rds_ibdev;
+	पूर्णांक ret;
 
 	/* Only handle IB (no iWARP) devices */
-	if (device->node_type != RDMA_NODE_IB_CA)
-		return -EOPNOTSUPP;
+	अगर (device->node_type != RDMA_NODE_IB_CA)
+		वापस -EOPNOTSUPP;
 
 	/* Device must support FRWR */
-	if (!(device->attrs.device_cap_flags & IB_DEVICE_MEM_MGT_EXTENSIONS))
-		return -EOPNOTSUPP;
+	अगर (!(device->attrs.device_cap_flags & IB_DEVICE_MEM_MGT_EXTENSIONS))
+		वापस -EOPNOTSUPP;
 
-	rds_ibdev = kzalloc_node(sizeof(struct rds_ib_device), GFP_KERNEL,
+	rds_ibdev = kzalloc_node(माप(काष्ठा rds_ib_device), GFP_KERNEL,
 				 ibdev_to_node(device));
-	if (!rds_ibdev)
-		return -ENOMEM;
+	अगर (!rds_ibdev)
+		वापस -ENOMEM;
 
 	spin_lock_init(&rds_ibdev->spinlock);
 	refcount_set(&rds_ibdev->refcount, 1);
-	INIT_WORK(&rds_ibdev->free_work, rds_ib_dev_free);
+	INIT_WORK(&rds_ibdev->मुक्त_work, rds_ib_dev_मुक्त);
 
 	INIT_LIST_HEAD(&rds_ibdev->ipaddr_list);
 	INIT_LIST_HEAD(&rds_ibdev->conn_list);
@@ -162,49 +163,49 @@ static int rds_ib_add_one(struct ib_device *device)
 		   IB_ODP_SUPPORT_READ);
 
 	rds_ibdev->max_1m_mrs = device->attrs.max_mr ?
-		min_t(unsigned int, (device->attrs.max_mr / 2),
+		min_t(अचिन्हित पूर्णांक, (device->attrs.max_mr / 2),
 		      rds_ib_mr_1m_pool_size) : rds_ib_mr_1m_pool_size;
 
 	rds_ibdev->max_8k_mrs = device->attrs.max_mr ?
-		min_t(unsigned int, ((device->attrs.max_mr / 2) * RDS_MR_8K_SCALE),
+		min_t(अचिन्हित पूर्णांक, ((device->attrs.max_mr / 2) * RDS_MR_8K_SCALE),
 		      rds_ib_mr_8k_pool_size) : rds_ib_mr_8k_pool_size;
 
 	rds_ibdev->max_initiator_depth = device->attrs.max_qp_init_rd_atom;
 	rds_ibdev->max_responder_resources = device->attrs.max_qp_rd_atom;
 
-	rds_ibdev->vector_load = kcalloc(device->num_comp_vectors,
-					 sizeof(int),
+	rds_ibdev->vector_load = kसुस्मृति(device->num_comp_vectors,
+					 माप(पूर्णांक),
 					 GFP_KERNEL);
-	if (!rds_ibdev->vector_load) {
+	अगर (!rds_ibdev->vector_load) अणु
 		pr_err("RDS/IB: %s failed to allocate vector memory\n",
 			__func__);
 		ret = -ENOMEM;
-		goto put_dev;
-	}
+		जाओ put_dev;
+	पूर्ण
 
 	rds_ibdev->dev = device;
 	rds_ibdev->pd = ib_alloc_pd(device, 0);
-	if (IS_ERR(rds_ibdev->pd)) {
+	अगर (IS_ERR(rds_ibdev->pd)) अणु
 		ret = PTR_ERR(rds_ibdev->pd);
-		rds_ibdev->pd = NULL;
-		goto put_dev;
-	}
+		rds_ibdev->pd = शून्य;
+		जाओ put_dev;
+	पूर्ण
 
 	rds_ibdev->mr_1m_pool =
 		rds_ib_create_mr_pool(rds_ibdev, RDS_IB_MR_1M_POOL);
-	if (IS_ERR(rds_ibdev->mr_1m_pool)) {
+	अगर (IS_ERR(rds_ibdev->mr_1m_pool)) अणु
 		ret = PTR_ERR(rds_ibdev->mr_1m_pool);
-		rds_ibdev->mr_1m_pool = NULL;
-		goto put_dev;
-	}
+		rds_ibdev->mr_1m_pool = शून्य;
+		जाओ put_dev;
+	पूर्ण
 
 	rds_ibdev->mr_8k_pool =
 		rds_ib_create_mr_pool(rds_ibdev, RDS_IB_MR_8K_POOL);
-	if (IS_ERR(rds_ibdev->mr_8k_pool)) {
+	अगर (IS_ERR(rds_ibdev->mr_8k_pool)) अणु
 		ret = PTR_ERR(rds_ibdev->mr_8k_pool);
-		rds_ibdev->mr_8k_pool = NULL;
-		goto put_dev;
-	}
+		rds_ibdev->mr_8k_pool = शून्य;
+		जाओ put_dev;
+	पूर्ण
 
 	rdsdebug("RDS/IB: max_mr = %d, max_wrs = %d, max_sge = %d, max_1m_mrs = %d, max_8k_mrs = %d\n",
 		 device->attrs.max_mr, rds_ibdev->max_wrs, rds_ibdev->max_sge,
@@ -212,207 +213,207 @@ static int rds_ib_add_one(struct ib_device *device)
 
 	pr_info("RDS/IB: %s: added\n", device->name);
 
-	down_write(&rds_ib_devices_lock);
+	करोwn_ग_लिखो(&rds_ib_devices_lock);
 	list_add_tail_rcu(&rds_ibdev->list, &rds_ib_devices);
-	up_write(&rds_ib_devices_lock);
+	up_ग_लिखो(&rds_ib_devices_lock);
 	refcount_inc(&rds_ibdev->refcount);
 
 	ib_set_client_data(device, &rds_ib_client, rds_ibdev);
 
 	rds_ib_nodev_connect();
-	return 0;
+	वापस 0;
 
 put_dev:
 	rds_ib_dev_put(rds_ibdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * New connections use this to find the device to associate with the
  * connection.  It's not in the fast path so we're not concerned about the
- * performance of the IB call.  (As of this writing, it uses an interrupt
- * blocking spinlock to serialize walking a per-device list of all registered
+ * perक्रमmance of the IB call.  (As of this writing, it uses an पूर्णांकerrupt
+ * blocking spinlock to serialize walking a per-device list of all रेजिस्टरed
  * clients.)
  *
- * RCU is used to handle incoming connections racing with device teardown.
+ * RCU is used to handle incoming connections racing with device tearकरोwn.
  * Rather than use a lock to serialize removal from the client_data and
- * getting a new reference, we use an RCU grace period.  The destruction
- * path removes the device from client_data and then waits for all RCU
- * readers to finish.
+ * getting a new reference, we use an RCU grace period.  The deकाष्ठाion
+ * path हटाओs the device from client_data and then रुकोs क्रम all RCU
+ * पढ़ोers to finish.
  *
- * A new connection can get NULL from this if its arriving on a
- * device that is in the process of being removed.
+ * A new connection can get शून्य from this अगर its arriving on a
+ * device that is in the process of being हटाओd.
  */
-struct rds_ib_device *rds_ib_get_client_data(struct ib_device *device)
-{
-	struct rds_ib_device *rds_ibdev;
+काष्ठा rds_ib_device *rds_ib_get_client_data(काष्ठा ib_device *device)
+अणु
+	काष्ठा rds_ib_device *rds_ibdev;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	rds_ibdev = ib_get_client_data(device, &rds_ib_client);
-	if (rds_ibdev)
+	अगर (rds_ibdev)
 		refcount_inc(&rds_ibdev->refcount);
-	rcu_read_unlock();
-	return rds_ibdev;
-}
+	rcu_पढ़ो_unlock();
+	वापस rds_ibdev;
+पूर्ण
 
 /*
  * The IB stack is letting us know that a device is going away.  This can
- * happen if the underlying HCA driver is removed or if PCI hotplug is removing
- * the pci function, for example.
+ * happen अगर the underlying HCA driver is हटाओd or अगर PCI hotplug is removing
+ * the pci function, क्रम example.
  *
- * This can be called at any time and can be racing with any other RDS path.
+ * This can be called at any समय and can be racing with any other RDS path.
  */
-static void rds_ib_remove_one(struct ib_device *device, void *client_data)
-{
-	struct rds_ib_device *rds_ibdev = client_data;
+अटल व्योम rds_ib_हटाओ_one(काष्ठा ib_device *device, व्योम *client_data)
+अणु
+	काष्ठा rds_ib_device *rds_ibdev = client_data;
 
-	rds_ib_dev_shutdown(rds_ibdev);
+	rds_ib_dev_shutकरोwn(rds_ibdev);
 
 	/* stop connection attempts from getting a reference to this device. */
-	ib_set_client_data(device, &rds_ib_client, NULL);
+	ib_set_client_data(device, &rds_ib_client, शून्य);
 
-	down_write(&rds_ib_devices_lock);
+	करोwn_ग_लिखो(&rds_ib_devices_lock);
 	list_del_rcu(&rds_ibdev->list);
-	up_write(&rds_ib_devices_lock);
+	up_ग_लिखो(&rds_ib_devices_lock);
 
 	/*
-	 * This synchronize rcu is waiting for readers of both the ib
-	 * client data and the devices list to finish before we drop
+	 * This synchronize rcu is रुकोing क्रम पढ़ोers of both the ib
+	 * client data and the devices list to finish beक्रमe we drop
 	 * both of those references.
 	 */
 	synchronize_rcu();
 	rds_ib_dev_put(rds_ibdev);
 	rds_ib_dev_put(rds_ibdev);
-}
+पूर्ण
 
-struct ib_client rds_ib_client = {
+काष्ठा ib_client rds_ib_client = अणु
 	.name   = "rds_ib",
 	.add    = rds_ib_add_one,
-	.remove = rds_ib_remove_one
-};
+	.हटाओ = rds_ib_हटाओ_one
+पूर्ण;
 
-static int rds_ib_conn_info_visitor(struct rds_connection *conn,
-				    void *buffer)
-{
-	struct rds_info_rdma_connection *iinfo = buffer;
-	struct rds_ib_connection *ic = conn->c_transport_data;
+अटल पूर्णांक rds_ib_conn_info_visitor(काष्ठा rds_connection *conn,
+				    व्योम *buffer)
+अणु
+	काष्ठा rds_info_rdma_connection *iinfo = buffer;
+	काष्ठा rds_ib_connection *ic = conn->c_transport_data;
 
 	/* We will only ever look at IB transports */
-	if (conn->c_trans != &rds_ib_transport)
-		return 0;
-	if (conn->c_isv6)
-		return 0;
+	अगर (conn->c_trans != &rds_ib_transport)
+		वापस 0;
+	अगर (conn->c_isv6)
+		वापस 0;
 
 	iinfo->src_addr = conn->c_laddr.s6_addr32[3];
 	iinfo->dst_addr = conn->c_faddr.s6_addr32[3];
-	if (ic) {
+	अगर (ic) अणु
 		iinfo->tos = conn->c_tos;
 		iinfo->sl = ic->i_sl;
-	}
+	पूर्ण
 
-	memset(&iinfo->src_gid, 0, sizeof(iinfo->src_gid));
-	memset(&iinfo->dst_gid, 0, sizeof(iinfo->dst_gid));
-	if (rds_conn_state(conn) == RDS_CONN_UP) {
-		struct rds_ib_device *rds_ibdev;
+	स_रखो(&iinfo->src_gid, 0, माप(iinfo->src_gid));
+	स_रखो(&iinfo->dst_gid, 0, माप(iinfo->dst_gid));
+	अगर (rds_conn_state(conn) == RDS_CONN_UP) अणु
+		काष्ठा rds_ib_device *rds_ibdev;
 
-		rdma_read_gids(ic->i_cm_id, (union ib_gid *)&iinfo->src_gid,
-			       (union ib_gid *)&iinfo->dst_gid);
+		rdma_पढ़ो_gids(ic->i_cm_id, (जोड़ ib_gid *)&iinfo->src_gid,
+			       (जोड़ ib_gid *)&iinfo->dst_gid);
 
 		rds_ibdev = ic->rds_ibdev;
 		iinfo->max_send_wr = ic->i_send_ring.w_nr;
 		iinfo->max_recv_wr = ic->i_recv_ring.w_nr;
 		iinfo->max_send_sge = rds_ibdev->max_sge;
 		rds_ib_get_mr_info(rds_ibdev, iinfo);
-		iinfo->cache_allocs = atomic_read(&ic->i_cache_allocs);
-	}
-	return 1;
-}
+		iinfo->cache_allocs = atomic_पढ़ो(&ic->i_cache_allocs);
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 /* IPv6 version of rds_ib_conn_info_visitor(). */
-static int rds6_ib_conn_info_visitor(struct rds_connection *conn,
-				     void *buffer)
-{
-	struct rds6_info_rdma_connection *iinfo6 = buffer;
-	struct rds_ib_connection *ic = conn->c_transport_data;
+अटल पूर्णांक rds6_ib_conn_info_visitor(काष्ठा rds_connection *conn,
+				     व्योम *buffer)
+अणु
+	काष्ठा rds6_info_rdma_connection *iinfo6 = buffer;
+	काष्ठा rds_ib_connection *ic = conn->c_transport_data;
 
 	/* We will only ever look at IB transports */
-	if (conn->c_trans != &rds_ib_transport)
-		return 0;
+	अगर (conn->c_trans != &rds_ib_transport)
+		वापस 0;
 
 	iinfo6->src_addr = conn->c_laddr;
 	iinfo6->dst_addr = conn->c_faddr;
-	if (ic) {
+	अगर (ic) अणु
 		iinfo6->tos = conn->c_tos;
 		iinfo6->sl = ic->i_sl;
-	}
+	पूर्ण
 
-	memset(&iinfo6->src_gid, 0, sizeof(iinfo6->src_gid));
-	memset(&iinfo6->dst_gid, 0, sizeof(iinfo6->dst_gid));
+	स_रखो(&iinfo6->src_gid, 0, माप(iinfo6->src_gid));
+	स_रखो(&iinfo6->dst_gid, 0, माप(iinfo6->dst_gid));
 
-	if (rds_conn_state(conn) == RDS_CONN_UP) {
-		struct rds_ib_device *rds_ibdev;
+	अगर (rds_conn_state(conn) == RDS_CONN_UP) अणु
+		काष्ठा rds_ib_device *rds_ibdev;
 
-		rdma_read_gids(ic->i_cm_id, (union ib_gid *)&iinfo6->src_gid,
-			       (union ib_gid *)&iinfo6->dst_gid);
+		rdma_पढ़ो_gids(ic->i_cm_id, (जोड़ ib_gid *)&iinfo6->src_gid,
+			       (जोड़ ib_gid *)&iinfo6->dst_gid);
 		rds_ibdev = ic->rds_ibdev;
 		iinfo6->max_send_wr = ic->i_send_ring.w_nr;
 		iinfo6->max_recv_wr = ic->i_recv_ring.w_nr;
 		iinfo6->max_send_sge = rds_ibdev->max_sge;
 		rds6_ib_get_mr_info(rds_ibdev, iinfo6);
-		iinfo6->cache_allocs = atomic_read(&ic->i_cache_allocs);
-	}
-	return 1;
-}
-#endif
+		iinfo6->cache_allocs = atomic_पढ़ो(&ic->i_cache_allocs);
+	पूर्ण
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर
 
-static void rds_ib_ic_info(struct socket *sock, unsigned int len,
-			   struct rds_info_iterator *iter,
-			   struct rds_info_lengths *lens)
-{
-	u64 buffer[(sizeof(struct rds_info_rdma_connection) + 7) / 8];
+अटल व्योम rds_ib_ic_info(काष्ठा socket *sock, अचिन्हित पूर्णांक len,
+			   काष्ठा rds_info_iterator *iter,
+			   काष्ठा rds_info_lengths *lens)
+अणु
+	u64 buffer[(माप(काष्ठा rds_info_rdma_connection) + 7) / 8];
 
-	rds_for_each_conn_info(sock, len, iter, lens,
+	rds_क्रम_each_conn_info(sock, len, iter, lens,
 				rds_ib_conn_info_visitor,
 				buffer,
-				sizeof(struct rds_info_rdma_connection));
-}
+				माप(काष्ठा rds_info_rdma_connection));
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 /* IPv6 version of rds_ib_ic_info(). */
-static void rds6_ib_ic_info(struct socket *sock, unsigned int len,
-			    struct rds_info_iterator *iter,
-			    struct rds_info_lengths *lens)
-{
-	u64 buffer[(sizeof(struct rds6_info_rdma_connection) + 7) / 8];
+अटल व्योम rds6_ib_ic_info(काष्ठा socket *sock, अचिन्हित पूर्णांक len,
+			    काष्ठा rds_info_iterator *iter,
+			    काष्ठा rds_info_lengths *lens)
+अणु
+	u64 buffer[(माप(काष्ठा rds6_info_rdma_connection) + 7) / 8];
 
-	rds_for_each_conn_info(sock, len, iter, lens,
+	rds_क्रम_each_conn_info(sock, len, iter, lens,
 			       rds6_ib_conn_info_visitor,
 			       buffer,
-			       sizeof(struct rds6_info_rdma_connection));
-}
-#endif
+			       माप(काष्ठा rds6_info_rdma_connection));
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Early RDS/IB was built to only bind to an address if there is an IPoIB
+ * Early RDS/IB was built to only bind to an address अगर there is an IPoIB
  * device with that address set.
  *
- * If it were me, I'd advocate for something more flexible.  Sending and
- * receiving should be device-agnostic.  Transports would try and maintain
+ * If it were me, I'd advocate क्रम something more flexible.  Sending and
+ * receiving should be device-agnostic.  Transports would try and मुख्यtain
  * connections between peers who have messages queued.  Userspace would be
  * allowed to influence which paths have priority.  We could call userspace
- * asserting this policy "routing".
+ * निश्चितing this policy "routing".
  */
-static int rds_ib_laddr_check(struct net *net, const struct in6_addr *addr,
+अटल पूर्णांक rds_ib_laddr_check(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
 			      __u32 scope_id)
-{
-	int ret;
-	struct rdma_cm_id *cm_id;
-#if IS_ENABLED(CONFIG_IPV6)
-	struct sockaddr_in6 sin6;
-#endif
-	struct sockaddr_in sin;
-	struct sockaddr *sa;
+अणु
+	पूर्णांक ret;
+	काष्ठा rdma_cm_id *cm_id;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	काष्ठा sockaddr_in6 sin6;
+#पूर्ण_अगर
+	काष्ठा sockaddr_in sin;
+	काष्ठा sockaddr *sa;
 	bool isv4;
 
 	isv4 = ipv6_addr_v4mapped(addr);
@@ -420,62 +421,62 @@ static int rds_ib_laddr_check(struct net *net, const struct in6_addr *addr,
 	 * IB and iWARP capable NICs.
 	 */
 	cm_id = rdma_create_id(&init_net, rds_rdma_cm_event_handler,
-			       NULL, RDMA_PS_TCP, IB_QPT_RC);
-	if (IS_ERR(cm_id))
-		return PTR_ERR(cm_id);
+			       शून्य, RDMA_PS_TCP, IB_QPT_RC);
+	अगर (IS_ERR(cm_id))
+		वापस PTR_ERR(cm_id);
 
-	if (isv4) {
-		memset(&sin, 0, sizeof(sin));
+	अगर (isv4) अणु
+		स_रखो(&sin, 0, माप(sin));
 		sin.sin_family = AF_INET;
 		sin.sin_addr.s_addr = addr->s6_addr32[3];
-		sa = (struct sockaddr *)&sin;
-	} else {
-#if IS_ENABLED(CONFIG_IPV6)
-		memset(&sin6, 0, sizeof(sin6));
+		sa = (काष्ठा sockaddr *)&sin;
+	पूर्ण अन्यथा अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+		स_रखो(&sin6, 0, माप(sin6));
 		sin6.sin6_family = AF_INET6;
 		sin6.sin6_addr = *addr;
 		sin6.sin6_scope_id = scope_id;
-		sa = (struct sockaddr *)&sin6;
+		sa = (काष्ठा sockaddr *)&sin6;
 
 		/* XXX Do a special IPv6 link local address check here.  The
 		 * reason is that rdma_bind_addr() always succeeds with IPv6
 		 * link local address regardless it is indeed configured in a
-		 * system.
+		 * प्रणाली.
 		 */
-		if (ipv6_addr_type(addr) & IPV6_ADDR_LINKLOCAL) {
-			struct net_device *dev;
+		अगर (ipv6_addr_type(addr) & IPV6_ADDR_LINKLOCAL) अणु
+			काष्ठा net_device *dev;
 
-			if (scope_id == 0) {
+			अगर (scope_id == 0) अणु
 				ret = -EADDRNOTAVAIL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			/* Use init_net for now as RDS is not network
+			/* Use init_net क्रम now as RDS is not network
 			 * name space aware.
 			 */
 			dev = dev_get_by_index(&init_net, scope_id);
-			if (!dev) {
+			अगर (!dev) अणु
 				ret = -EADDRNOTAVAIL;
-				goto out;
-			}
-			if (!ipv6_chk_addr(&init_net, addr, dev, 1)) {
+				जाओ out;
+			पूर्ण
+			अगर (!ipv6_chk_addr(&init_net, addr, dev, 1)) अणु
 				dev_put(dev);
 				ret = -EADDRNOTAVAIL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			dev_put(dev);
-		}
-#else
+		पूर्ण
+#अन्यथा
 		ret = -EADDRNOTAVAIL;
-		goto out;
-#endif
-	}
+		जाओ out;
+#पूर्ण_अगर
+	पूर्ण
 
-	/* rdma_bind_addr will only succeed for IB & iWARP devices */
+	/* rdma_bind_addr will only succeed क्रम IB & iWARP devices */
 	ret = rdma_bind_addr(cm_id, sa);
 	/* due to this, we will claim to support iWARP devices unless we
 	   check node_type. */
-	if (ret || !cm_id->device ||
+	अगर (ret || !cm_id->device ||
 	    cm_id->device->node_type != RDMA_NODE_IB_CA)
 		ret = -EADDRNOTAVAIL;
 
@@ -486,55 +487,55 @@ static int rds_ib_laddr_check(struct net *net, const struct in6_addr *addr,
 out:
 	rdma_destroy_id(cm_id);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void rds_ib_unregister_client(void)
-{
-	ib_unregister_client(&rds_ib_client);
-	/* wait for rds_ib_dev_free() to complete */
+अटल व्योम rds_ib_unरेजिस्टर_client(व्योम)
+अणु
+	ib_unरेजिस्टर_client(&rds_ib_client);
+	/* रुको क्रम rds_ib_dev_मुक्त() to complete */
 	flush_workqueue(rds_wq);
-}
+पूर्ण
 
-static void rds_ib_set_unloading(void)
-{
+अटल व्योम rds_ib_set_unloading(व्योम)
+अणु
 	atomic_set(&rds_ib_unloading, 1);
-}
+पूर्ण
 
-static bool rds_ib_is_unloading(struct rds_connection *conn)
-{
-	struct rds_conn_path *cp = &conn->c_path[0];
+अटल bool rds_ib_is_unloading(काष्ठा rds_connection *conn)
+अणु
+	काष्ठा rds_conn_path *cp = &conn->c_path[0];
 
-	return (test_bit(RDS_DESTROY_PENDING, &cp->cp_flags) ||
-		atomic_read(&rds_ib_unloading) != 0);
-}
+	वापस (test_bit(RDS_DESTROY_PENDING, &cp->cp_flags) ||
+		atomic_पढ़ो(&rds_ib_unloading) != 0);
+पूर्ण
 
-void rds_ib_exit(void)
-{
+व्योम rds_ib_निकास(व्योम)
+अणु
 	rds_ib_set_unloading();
 	synchronize_rcu();
-	rds_info_deregister_func(RDS_INFO_IB_CONNECTIONS, rds_ib_ic_info);
-#if IS_ENABLED(CONFIG_IPV6)
-	rds_info_deregister_func(RDS6_INFO_IB_CONNECTIONS, rds6_ib_ic_info);
-#endif
-	rds_ib_unregister_client();
+	rds_info_deरेजिस्टर_func(RDS_INFO_IB_CONNECTIONS, rds_ib_ic_info);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	rds_info_deरेजिस्टर_func(RDS6_INFO_IB_CONNECTIONS, rds6_ib_ic_info);
+#पूर्ण_अगर
+	rds_ib_unरेजिस्टर_client();
 	rds_ib_destroy_nodev_conns();
-	rds_ib_sysctl_exit();
-	rds_ib_recv_exit();
-	rds_trans_unregister(&rds_ib_transport);
-	rds_ib_mr_exit();
-}
+	rds_ib_sysctl_निकास();
+	rds_ib_recv_निकास();
+	rds_trans_unरेजिस्टर(&rds_ib_transport);
+	rds_ib_mr_निकास();
+पूर्ण
 
-static u8 rds_ib_get_tos_map(u8 tos)
-{
-	/* 1:1 user to transport map for RDMA transport.
-	 * In future, if custom map is desired, hook can export
+अटल u8 rds_ib_get_tos_map(u8 tos)
+अणु
+	/* 1:1 user to transport map क्रम RDMA transport.
+	 * In future, अगर custom map is desired, hook can export
 	 * user configurable map.
 	 */
-	return tos;
-}
+	वापस tos;
+पूर्ण
 
-struct rds_transport rds_ib_transport = {
+काष्ठा rds_transport rds_ib_transport = अणु
 	.laddr_check		= rds_ib_laddr_check,
 	.xmit_path_complete	= rds_ib_xmit_path_complete,
 	.xmit			= rds_ib_xmit,
@@ -542,66 +543,66 @@ struct rds_transport rds_ib_transport = {
 	.xmit_atomic		= rds_ib_xmit_atomic,
 	.recv_path		= rds_ib_recv_path,
 	.conn_alloc		= rds_ib_conn_alloc,
-	.conn_free		= rds_ib_conn_free,
+	.conn_मुक्त		= rds_ib_conn_मुक्त,
 	.conn_path_connect	= rds_ib_conn_path_connect,
-	.conn_path_shutdown	= rds_ib_conn_path_shutdown,
+	.conn_path_shutकरोwn	= rds_ib_conn_path_shutकरोwn,
 	.inc_copy_to_user	= rds_ib_inc_copy_to_user,
-	.inc_free		= rds_ib_inc_free,
+	.inc_मुक्त		= rds_ib_inc_मुक्त,
 	.cm_initiate_connect	= rds_ib_cm_initiate_connect,
 	.cm_handle_connect	= rds_ib_cm_handle_connect,
 	.cm_connect_complete	= rds_ib_cm_connect_complete,
 	.stats_info_copy	= rds_ib_stats_info_copy,
-	.exit			= rds_ib_exit,
+	.निकास			= rds_ib_निकास,
 	.get_mr			= rds_ib_get_mr,
 	.sync_mr		= rds_ib_sync_mr,
-	.free_mr		= rds_ib_free_mr,
+	.मुक्त_mr		= rds_ib_मुक्त_mr,
 	.flush_mrs		= rds_ib_flush_mrs,
 	.get_tos_map		= rds_ib_get_tos_map,
 	.t_owner		= THIS_MODULE,
 	.t_name			= "infiniband",
 	.t_unloading		= rds_ib_is_unloading,
 	.t_type			= RDS_TRANS_IB
-};
+पूर्ण;
 
-int rds_ib_init(void)
-{
-	int ret;
+पूर्णांक rds_ib_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	INIT_LIST_HEAD(&rds_ib_devices);
 
 	ret = rds_ib_mr_init();
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	ret = ib_register_client(&rds_ib_client);
-	if (ret)
-		goto out_mr_exit;
+	ret = ib_रेजिस्टर_client(&rds_ib_client);
+	अगर (ret)
+		जाओ out_mr_निकास;
 
 	ret = rds_ib_sysctl_init();
-	if (ret)
-		goto out_ibreg;
+	अगर (ret)
+		जाओ out_ibreg;
 
 	ret = rds_ib_recv_init();
-	if (ret)
-		goto out_sysctl;
+	अगर (ret)
+		जाओ out_sysctl;
 
-	rds_trans_register(&rds_ib_transport);
+	rds_trans_रेजिस्टर(&rds_ib_transport);
 
-	rds_info_register_func(RDS_INFO_IB_CONNECTIONS, rds_ib_ic_info);
-#if IS_ENABLED(CONFIG_IPV6)
-	rds_info_register_func(RDS6_INFO_IB_CONNECTIONS, rds6_ib_ic_info);
-#endif
+	rds_info_रेजिस्टर_func(RDS_INFO_IB_CONNECTIONS, rds_ib_ic_info);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	rds_info_रेजिस्टर_func(RDS6_INFO_IB_CONNECTIONS, rds6_ib_ic_info);
+#पूर्ण_अगर
 
-	goto out;
+	जाओ out;
 
 out_sysctl:
-	rds_ib_sysctl_exit();
+	rds_ib_sysctl_निकास();
 out_ibreg:
-	rds_ib_unregister_client();
-out_mr_exit:
-	rds_ib_mr_exit();
+	rds_ib_unरेजिस्टर_client();
+out_mr_निकास:
+	rds_ib_mr_निकास();
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 MODULE_LICENSE("GPL");

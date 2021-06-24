@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
- * Matthias Schiffer
+ * Matthias Schअगरfer
  */
 
-#ifndef _UAPI_LINUX_BATMAN_ADV_H_
-#define _UAPI_LINUX_BATMAN_ADV_H_
+#अगर_अघोषित _UAPI_LINUX_BATMAN_ADV_H_
+#घोषणा _UAPI_LINUX_BATMAN_ADV_H_
 
-#define BATADV_NL_NAME "batadv"
+#घोषणा BATADV_NL_NAME "batadv"
 
-#define BATADV_NL_MCAST_GROUP_CONFIG	"config"
-#define BATADV_NL_MCAST_GROUP_TPMETER	"tpmeter"
+#घोषणा BATADV_NL_MCAST_GROUP_CONFIG	"config"
+#घोषणा BATADV_NL_MCAST_GROUP_TPMETER	"tpmeter"
 
 /**
- * enum batadv_tt_client_flags - TT client specific flags
+ * क्रमागत batadv_tt_client_flags - TT client specअगरic flags
  *
  * Bits from 0 to 7 are called _remote flags_ because they are sent on the wire.
- * Bits from 8 to 15 are called _local flags_ because they are used for local
+ * Bits from 8 to 15 are called _local flags_ because they are used क्रम local
  * computations only.
  *
  * Bits from 4 to 7 - a subset of remote flags - are ensured to be in sync with
  * the other nodes in the network. To achieve this goal these flags are included
  * in the TT CRC computation.
  */
-enum batadv_tt_client_flags {
+क्रमागत batadv_tt_client_flags अणु
 	/**
 	 * @BATADV_TT_CLIENT_DEL: the client has to be deleted from the table
 	 */
@@ -37,19 +38,19 @@ enum batadv_tt_client_flags {
 	BATADV_TT_CLIENT_ROAM    = (1 << 1),
 
 	/**
-	 * @BATADV_TT_CLIENT_WIFI: this client is connected through a wifi
-	 * interface. This information is used by the "AP Isolation" feature
+	 * @BATADV_TT_CLIENT_WIFI: this client is connected through a wअगरi
+	 * पूर्णांकerface. This inक्रमmation is used by the "AP Isolation" feature
 	 */
 	BATADV_TT_CLIENT_WIFI    = (1 << 4),
 
 	/**
 	 * @BATADV_TT_CLIENT_ISOLA: this client is considered "isolated". This
-	 * information is used by the Extended Isolation feature
+	 * inक्रमmation is used by the Extended Isolation feature
 	 */
 	BATADV_TT_CLIENT_ISOLA	 = (1 << 5),
 
 	/**
-	 * @BATADV_TT_CLIENT_NOPURGE: this client should never be removed from
+	 * @BATADV_TT_CLIENT_NOPURGE: this client should never be हटाओd from
 	 * the table
 	 */
 	BATADV_TT_CLIENT_NOPURGE = (1 << 8),
@@ -61,36 +62,36 @@ enum batadv_tt_client_flags {
 	BATADV_TT_CLIENT_NEW     = (1 << 9),
 
 	/**
-	 * @BATADV_TT_CLIENT_PENDING: this client is marked for removal but it
-	 * is kept in the table for one more originator interval for consistency
+	 * @BATADV_TT_CLIENT_PENDING: this client is marked क्रम removal but it
+	 * is kept in the table क्रम one more originator पूर्णांकerval क्रम consistency
 	 * purposes
 	 */
 	BATADV_TT_CLIENT_PENDING = (1 << 10),
 
 	/**
 	 * @BATADV_TT_CLIENT_TEMP: this global client has been detected to be
-	 * part of the network but no node has already announced it
+	 * part of the network but no node has alपढ़ोy announced it
 	 */
 	BATADV_TT_CLIENT_TEMP	 = (1 << 11),
-};
+पूर्ण;
 
 /**
- * enum batadv_mcast_flags_priv - Private, own multicast flags
+ * क्रमागत batadv_mcast_flags_priv - Private, own multicast flags
  *
- * These are internal, multicast related flags. Currently they describe certain
- * multicast related attributes of the segment this originator bridges into the
+ * These are पूर्णांकernal, multicast related flags. Currently they describe certain
+ * multicast related attributes of the segment this originator bridges पूर्णांकo the
  * mesh.
  *
- * Those attributes are used to determine the public multicast flags this
+ * Those attributes are used to determine the खुला multicast flags this
  * originator is going to announce via TT.
  *
- * For netlink, if BATADV_MCAST_FLAGS_BRIDGED is unset then all querier
+ * For netlink, अगर BATADV_MCAST_FLAGS_BRIDGED is unset then all querier
  * related flags are undefined.
  */
-enum batadv_mcast_flags_priv {
+क्रमागत batadv_mcast_flags_priv अणु
 	/**
 	 * @BATADV_MCAST_FLAGS_BRIDGED: There is a bridge on top of the mesh
-	 * interface.
+	 * पूर्णांकerface.
 	 */
 	BATADV_MCAST_FLAGS_BRIDGED			= (1 << 0),
 
@@ -108,23 +109,23 @@ enum batadv_mcast_flags_priv {
 
 	/**
 	 * @BATADV_MCAST_FLAGS_QUERIER_IPV4_SHADOWING: If an IGMP querier
-	 * exists, whether it is potentially shadowing multicast listeners
+	 * exists, whether it is potentially shaकरोwing multicast listeners
 	 * (i.e. querier is behind our own bridge segment)
 	 */
 	BATADV_MCAST_FLAGS_QUERIER_IPV4_SHADOWING	= (1 << 3),
 
 	/**
 	 * @BATADV_MCAST_FLAGS_QUERIER_IPV6_SHADOWING: If an MLD querier
-	 * exists, whether it is potentially shadowing multicast listeners
+	 * exists, whether it is potentially shaकरोwing multicast listeners
 	 * (i.e. querier is behind our own bridge segment)
 	 */
 	BATADV_MCAST_FLAGS_QUERIER_IPV6_SHADOWING	= (1 << 4),
-};
+पूर्ण;
 
 /**
- * enum batadv_gw_modes - gateway mode of node
+ * क्रमागत batadv_gw_modes - gateway mode of node
  */
-enum batadv_gw_modes {
+क्रमागत batadv_gw_modes अणु
 	/** @BATADV_GW_MODE_OFF: gw mode disabled */
 	BATADV_GW_MODE_OFF,
 
@@ -133,19 +134,19 @@ enum batadv_gw_modes {
 
 	/** @BATADV_GW_MODE_SERVER: announce itself as gateway server */
 	BATADV_GW_MODE_SERVER,
-};
+पूर्ण;
 
 /**
- * enum batadv_nl_attrs - batman-adv netlink attributes
+ * क्रमागत batadv_nl_attrs - baपंचांगan-adv netlink attributes
  */
-enum batadv_nl_attrs {
+क्रमागत batadv_nl_attrs अणु
 	/**
-	 * @BATADV_ATTR_UNSPEC: unspecified attribute to catch errors
+	 * @BATADV_ATTR_UNSPEC: unspecअगरied attribute to catch errors
 	 */
 	BATADV_ATTR_UNSPEC,
 
 	/**
-	 * @BATADV_ATTR_VERSION: batman-adv version string
+	 * @BATADV_ATTR_VERSION: baपंचांगan-adv version string
 	 */
 	BATADV_ATTR_VERSION,
 
@@ -155,33 +156,33 @@ enum batadv_nl_attrs {
 	BATADV_ATTR_ALGO_NAME,
 
 	/**
-	 * @BATADV_ATTR_MESH_IFINDEX: index of the batman-adv interface
+	 * @BATADV_ATTR_MESH_IFINDEX: index of the baपंचांगan-adv पूर्णांकerface
 	 */
 	BATADV_ATTR_MESH_IFINDEX,
 
 	/**
-	 * @BATADV_ATTR_MESH_IFNAME: name of the batman-adv interface
+	 * @BATADV_ATTR_MESH_IFNAME: name of the baपंचांगan-adv पूर्णांकerface
 	 */
 	BATADV_ATTR_MESH_IFNAME,
 
 	/**
-	 * @BATADV_ATTR_MESH_ADDRESS: mac address of the batman-adv interface
+	 * @BATADV_ATTR_MESH_ADDRESS: mac address of the baपंचांगan-adv पूर्णांकerface
 	 */
 	BATADV_ATTR_MESH_ADDRESS,
 
 	/**
-	 * @BATADV_ATTR_HARD_IFINDEX: index of the non-batman-adv interface
+	 * @BATADV_ATTR_HARD_IFINDEX: index of the non-baपंचांगan-adv पूर्णांकerface
 	 */
 	BATADV_ATTR_HARD_IFINDEX,
 
 	/**
-	 * @BATADV_ATTR_HARD_IFNAME: name of the non-batman-adv interface
+	 * @BATADV_ATTR_HARD_IFNAME: name of the non-baपंचांगan-adv पूर्णांकerface
 	 */
 	BATADV_ATTR_HARD_IFNAME,
 
 	/**
-	 * @BATADV_ATTR_HARD_ADDRESS: mac address of the non-batman-adv
-	 * interface
+	 * @BATADV_ATTR_HARD_ADDRESS: mac address of the non-baपंचांगan-adv
+	 * पूर्णांकerface
 	 */
 	BATADV_ATTR_HARD_ADDRESS,
 
@@ -197,7 +198,7 @@ enum batadv_nl_attrs {
 	BATADV_ATTR_TPMETER_RESULT,
 
 	/**
-	 * @BATADV_ATTR_TPMETER_TEST_TIME: time (msec) the run took
+	 * @BATADV_ATTR_TPMETER_TEST_TIME: समय (msec) the run took
 	 */
 	BATADV_ATTR_TPMETER_TEST_TIME,
 
@@ -212,12 +213,12 @@ enum batadv_nl_attrs {
 	BATADV_ATTR_TPMETER_COOKIE,
 
 	/**
-	 * @BATADV_ATTR_PAD: attribute used for padding for 64-bit alignment
+	 * @BATADV_ATTR_PAD: attribute used क्रम padding क्रम 64-bit alignment
 	 */
 	BATADV_ATTR_PAD,
 
 	/**
-	 * @BATADV_ATTR_ACTIVE: Flag indicating if the hard interface is active
+	 * @BATADV_ATTR_ACTIVE: Flag indicating अगर the hard पूर्णांकerface is active
 	 */
 	BATADV_ATTR_ACTIVE,
 
@@ -282,7 +283,7 @@ enum batadv_nl_attrs {
 	BATADV_ATTR_BANDWIDTH_UP,
 
 	/**
-	 * @BATADV_ATTR_BANDWIDTH_DOWN: Reported downlink bandwidth
+	 * @BATADV_ATTR_BANDWIDTH_DOWN: Reported करोwnlink bandwidth
 	 */
 	BATADV_ATTR_BANDWIDTH_DOWN,
 
@@ -297,7 +298,7 @@ enum batadv_nl_attrs {
 	BATADV_ATTR_BLA_OWN,
 
 	/**
-	 * @BATADV_ATTR_BLA_ADDRESS: Bridge loop avoidance claim MAC address
+	 * @BATADV_ATTR_BLA_ADDRESS: Bridge loop aव्योमance claim MAC address
 	 */
 	BATADV_ATTR_BLA_ADDRESS,
 
@@ -342,13 +343,13 @@ enum batadv_nl_attrs {
 	BATADV_ATTR_MCAST_FLAGS_PRIV,
 
 	/**
-	 * @BATADV_ATTR_VLANID: VLAN id on top of soft interface
+	 * @BATADV_ATTR_VLANID: VLAN id on top of soft पूर्णांकerface
 	 */
 	BATADV_ATTR_VLANID,
 
 	/**
-	 * @BATADV_ATTR_AGGREGATED_OGMS_ENABLED: whether the batman protocol
-	 *  messages of the mesh interface shall be aggregated or not.
+	 * @BATADV_ATTR_AGGREGATED_OGMS_ENABLED: whether the baपंचांगan protocol
+	 *  messages of the mesh पूर्णांकerface shall be aggregated or not.
 	 */
 	BATADV_ATTR_AGGREGATED_OGMS_ENABLED,
 
@@ -361,26 +362,26 @@ enum batadv_nl_attrs {
 
 	/**
 	 * @BATADV_ATTR_ISOLATION_MARK: the isolation mark which is used to
-	 *  classify clients as "isolated" by the Extended Isolation feature.
+	 *  classअगरy clients as "isolated" by the Extended Isolation feature.
 	 */
 	BATADV_ATTR_ISOLATION_MARK,
 
 	/**
 	 * @BATADV_ATTR_ISOLATION_MASK: the isolation (bit)mask which is used to
-	 *  classify clients as "isolated" by the Extended Isolation feature.
+	 *  classअगरy clients as "isolated" by the Extended Isolation feature.
 	 */
 	BATADV_ATTR_ISOLATION_MASK,
 
 	/**
 	 * @BATADV_ATTR_BONDING_ENABLED: whether the data traffic going through
-	 *  the mesh will be sent using multiple interfaces at the same time.
+	 *  the mesh will be sent using multiple पूर्णांकerfaces at the same समय.
 	 */
 	BATADV_ATTR_BONDING_ENABLED,
 
 	/**
 	 * @BATADV_ATTR_BRIDGE_LOOP_AVOIDANCE_ENABLED: whether the bridge loop
-	 *  avoidance feature is enabled. This feature detects and avoids loops
-	 *  between the mesh and devices bridged with the soft interface
+	 *  aव्योमance feature is enabled. This feature detects and aव्योमs loops
+	 *  between the mesh and devices bridged with the soft पूर्णांकerface
 	 */
 	BATADV_ATTR_BRIDGE_LOOP_AVOIDANCE_ENABLED,
 
@@ -394,46 +395,46 @@ enum batadv_nl_attrs {
 
 	/**
 	 * @BATADV_ATTR_FRAGMENTATION_ENABLED: whether the data traffic going
-	 *  through the mesh will be fragmented or silently discarded if the
-	 *  packet size exceeds the outgoing interface MTU.
+	 *  through the mesh will be fragmented or silently discarded अगर the
+	 *  packet size exceeds the outgoing पूर्णांकerface MTU.
 	 */
 	BATADV_ATTR_FRAGMENTATION_ENABLED,
 
 	/**
-	 * @BATADV_ATTR_GW_BANDWIDTH_DOWN: defines the download bandwidth which
-	 *  is propagated by this node if %BATADV_ATTR_GW_BANDWIDTH_MODE was set
+	 * @BATADV_ATTR_GW_BANDWIDTH_DOWN: defines the करोwnload bandwidth which
+	 *  is propagated by this node अगर %BATADV_ATTR_GW_BANDWIDTH_MODE was set
 	 *  to 'server'.
 	 */
 	BATADV_ATTR_GW_BANDWIDTH_DOWN,
 
 	/**
 	 * @BATADV_ATTR_GW_BANDWIDTH_UP: defines the upload bandwidth which
-	 *  is propagated by this node if %BATADV_ATTR_GW_BANDWIDTH_MODE was set
+	 *  is propagated by this node अगर %BATADV_ATTR_GW_BANDWIDTH_MODE was set
 	 *  to 'server'.
 	 */
 	BATADV_ATTR_GW_BANDWIDTH_UP,
 
 	/**
 	 * @BATADV_ATTR_GW_MODE: defines the state of the gateway features.
-	 * Possible values are specified in enum batadv_gw_modes
+	 * Possible values are specअगरied in क्रमागत batadv_gw_modes
 	 */
 	BATADV_ATTR_GW_MODE,
 
 	/**
 	 * @BATADV_ATTR_GW_SEL_CLASS: defines the selection criteria this node
-	 *  will use to choose a gateway if gw_mode was set to 'client'.
+	 *  will use to choose a gateway अगर gw_mode was set to 'client'.
 	 */
 	BATADV_ATTR_GW_SEL_CLASS,
 
 	/**
 	 * @BATADV_ATTR_HOP_PENALTY: defines the penalty which will be applied
 	 *  to an originator message's tq-field on every hop and/or per
-	 *  hard interface
+	 *  hard पूर्णांकerface
 	 */
 	BATADV_ATTR_HOP_PENALTY,
 
 	/**
-	 * @BATADV_ATTR_LOG_LEVEL: bitmask with to define which debug messages
+	 * @BATADV_ATTR_LOG_LEVEL: biपंचांगask with to define which debug messages
 	 *  should be send to the debug log/trace ring buffer
 	 */
 	BATADV_ATTR_LOG_LEVEL,
@@ -442,41 +443,41 @@ enum batadv_nl_attrs {
 	 * @BATADV_ATTR_MULTICAST_FORCEFLOOD_ENABLED: whether multicast
 	 *  optimizations should be replaced by simple broadcast-like flooding
 	 *  of multicast packets. If set to non-zero then all nodes in the mesh
-	 *  are going to use classic flooding for any multicast packet with no
+	 *  are going to use classic flooding क्रम any multicast packet with no
 	 *  optimizations.
 	 */
 	BATADV_ATTR_MULTICAST_FORCEFLOOD_ENABLED,
 
 	/**
 	 * @BATADV_ATTR_NETWORK_CODING_ENABLED: whether Network Coding (using
-	 *  some magic to send fewer wifi packets but still the same content) is
+	 *  some magic to send fewer wअगरi packets but still the same content) is
 	 *  enabled or not.
 	 */
 	BATADV_ATTR_NETWORK_CODING_ENABLED,
 
 	/**
-	 * @BATADV_ATTR_ORIG_INTERVAL: defines the interval in milliseconds in
-	 *  which batman sends its protocol messages.
+	 * @BATADV_ATTR_ORIG_INTERVAL: defines the पूर्णांकerval in milliseconds in
+	 *  which baपंचांगan sends its protocol messages.
 	 */
 	BATADV_ATTR_ORIG_INTERVAL,
 
 	/**
-	 * @BATADV_ATTR_ELP_INTERVAL: defines the interval in milliseconds in
-	 *  which batman emits probing packets for neighbor sensing (ELP).
+	 * @BATADV_ATTR_ELP_INTERVAL: defines the पूर्णांकerval in milliseconds in
+	 *  which baपंचांगan emits probing packets क्रम neighbor sensing (ELP).
 	 */
 	BATADV_ATTR_ELP_INTERVAL,
 
 	/**
 	 * @BATADV_ATTR_THROUGHPUT_OVERRIDE: defines the throughput value to be
 	 *  used by B.A.T.M.A.N. V when estimating the link throughput using
-	 *  this interface. If the value is set to 0 then batman-adv will try to
+	 *  this पूर्णांकerface. If the value is set to 0 then baपंचांगan-adv will try to
 	 *  estimate the throughput by itself.
 	 */
 	BATADV_ATTR_THROUGHPUT_OVERRIDE,
 
 	/**
 	 * @BATADV_ATTR_MULTICAST_FANOUT: defines the maximum number of packet
-	 * copies that may be generated for a multicast-to-unicast conversion.
+	 * copies that may be generated क्रम a multicast-to-unicast conversion.
 	 * Once this limit is exceeded distribution will fall back to broadcast.
 	 */
 	BATADV_ATTR_MULTICAST_FANOUT,
@@ -484,7 +485,7 @@ enum batadv_nl_attrs {
 	/* add attributes above here, update the policy in netlink.c */
 
 	/**
-	 * @__BATADV_ATTR_AFTER_LAST: internal use
+	 * @__BATADV_ATTR_AFTER_LAST: पूर्णांकernal use
 	 */
 	__BATADV_ATTR_AFTER_LAST,
 
@@ -497,24 +498,24 @@ enum batadv_nl_attrs {
 	 * @BATADV_ATTR_MAX: highest attribute number currently defined
 	 */
 	BATADV_ATTR_MAX = __BATADV_ATTR_AFTER_LAST - 1
-};
+पूर्ण;
 
 /**
- * enum batadv_nl_commands - supported batman-adv netlink commands
+ * क्रमागत batadv_nl_commands - supported baपंचांगan-adv netlink commands
  */
-enum batadv_nl_commands {
+क्रमागत batadv_nl_commands अणु
 	/**
-	 * @BATADV_CMD_UNSPEC: unspecified command to catch errors
+	 * @BATADV_CMD_UNSPEC: unspecअगरied command to catch errors
 	 */
 	BATADV_CMD_UNSPEC,
 
 	/**
-	 * @BATADV_CMD_GET_MESH: Get attributes from softif/mesh
+	 * @BATADV_CMD_GET_MESH: Get attributes from softअगर/mesh
 	 */
 	BATADV_CMD_GET_MESH,
 
 	/**
-	 * @BATADV_CMD_GET_MESH_INFO: Alias for @BATADV_CMD_GET_MESH
+	 * @BATADV_CMD_GET_MESH_INFO: Alias क्रम @BATADV_CMD_GET_MESH
 	 */
 	BATADV_CMD_GET_MESH_INFO = BATADV_CMD_GET_MESH,
 
@@ -534,13 +535,13 @@ enum batadv_nl_commands {
 	BATADV_CMD_GET_ROUTING_ALGOS,
 
 	/**
-	 * @BATADV_CMD_GET_HARDIF: Get attributes from a hardif of the
-	 *  current softif
+	 * @BATADV_CMD_GET_HARDIF: Get attributes from a hardअगर of the
+	 *  current softअगर
 	 */
 	BATADV_CMD_GET_HARDIF,
 
 	/**
-	 * @BATADV_CMD_GET_HARDIFS: Alias for @BATADV_CMD_GET_HARDIF
+	 * @BATADV_CMD_GET_HARDIFS: Alias क्रम @BATADV_CMD_GET_HARDIF
 	 */
 	BATADV_CMD_GET_HARDIFS = BATADV_CMD_GET_HARDIF,
 
@@ -570,12 +571,12 @@ enum batadv_nl_commands {
 	BATADV_CMD_GET_GATEWAYS,
 
 	/**
-	 * @BATADV_CMD_GET_BLA_CLAIM: Query list of bridge loop avoidance claims
+	 * @BATADV_CMD_GET_BLA_CLAIM: Query list of bridge loop aव्योमance claims
 	 */
 	BATADV_CMD_GET_BLA_CLAIM,
 
 	/**
-	 * @BATADV_CMD_GET_BLA_BACKBONE: Query list of bridge loop avoidance
+	 * @BATADV_CMD_GET_BLA_BACKBONE: Query list of bridge loop aव्योमance
 	 * backbones
 	 */
 	BATADV_CMD_GET_BLA_BACKBONE,
@@ -591,32 +592,32 @@ enum batadv_nl_commands {
 	BATADV_CMD_GET_MCAST_FLAGS,
 
 	/**
-	 * @BATADV_CMD_SET_MESH: Set attributes for softif/mesh
+	 * @BATADV_CMD_SET_MESH: Set attributes क्रम softअगर/mesh
 	 */
 	BATADV_CMD_SET_MESH,
 
 	/**
-	 * @BATADV_CMD_SET_HARDIF: Set attributes for hardif of the
-	 *  current softif
+	 * @BATADV_CMD_SET_HARDIF: Set attributes क्रम hardअगर of the
+	 *  current softअगर
 	 */
 	BATADV_CMD_SET_HARDIF,
 
 	/**
 	 * @BATADV_CMD_GET_VLAN: Get attributes from a VLAN of the
-	 *  current softif
+	 *  current softअगर
 	 */
 	BATADV_CMD_GET_VLAN,
 
 	/**
-	 * @BATADV_CMD_SET_VLAN: Set attributes for VLAN of the
-	 *  current softif
+	 * @BATADV_CMD_SET_VLAN: Set attributes क्रम VLAN of the
+	 *  current softअगर
 	 */
 	BATADV_CMD_SET_VLAN,
 
 	/* add new commands above here */
 
 	/**
-	 * @__BATADV_CMD_AFTER_LAST: internal use
+	 * @__BATADV_CMD_AFTER_LAST: पूर्णांकernal use
 	 */
 	__BATADV_CMD_AFTER_LAST,
 
@@ -624,12 +625,12 @@ enum batadv_nl_commands {
 	 * @BATADV_CMD_MAX: highest used command number
 	 */
 	BATADV_CMD_MAX = __BATADV_CMD_AFTER_LAST - 1
-};
+पूर्ण;
 
 /**
- * enum batadv_tp_meter_reason - reason of a tp meter test run stop
+ * क्रमागत batadv_tp_meter_reason - reason of a tp meter test run stop
  */
-enum batadv_tp_meter_reason {
+क्रमागत batadv_tp_meter_reason अणु
 	/**
 	 * @BATADV_TP_REASON_COMPLETE: sender finished tp run
 	 */
@@ -655,7 +656,7 @@ enum batadv_tp_meter_reason {
 
 	/**
 	 * @BATADV_TP_REASON_ALREADY_ONGOING: test to or from the same node
-	 * already ongoing
+	 * alपढ़ोy ongoing
 	 */
 	BATADV_TP_REASON_ALREADY_ONGOING	= 130,
 
@@ -665,7 +666,7 @@ enum batadv_tp_meter_reason {
 	BATADV_TP_REASON_MEMORY_ERROR		= 131,
 
 	/**
-	 * @BATADV_TP_REASON_CANT_SEND: failed to send via outgoing interface
+	 * @BATADV_TP_REASON_CANT_SEND: failed to send via outgoing पूर्णांकerface
 	 */
 	BATADV_TP_REASON_CANT_SEND		= 132,
 
@@ -673,32 +674,32 @@ enum batadv_tp_meter_reason {
 	 * @BATADV_TP_REASON_TOO_MANY: too many ongoing sessions
 	 */
 	BATADV_TP_REASON_TOO_MANY		= 133,
-};
+पूर्ण;
 
 /**
- * enum batadv_ifla_attrs - batman-adv ifla nested attributes
+ * क्रमागत batadv_अगरla_attrs - baपंचांगan-adv अगरla nested attributes
  */
-enum batadv_ifla_attrs {
+क्रमागत batadv_अगरla_attrs अणु
 	/**
-	 * @IFLA_BATADV_UNSPEC: unspecified attribute which is not parsed by
+	 * @IFLA_BATADV_UNSPEC: unspecअगरied attribute which is not parsed by
 	 *  rtnetlink
 	 */
 	IFLA_BATADV_UNSPEC,
 
 	/**
 	 * @IFLA_BATADV_ALGO_NAME: routing algorithm (name) which should be
-	 *  used by the newly registered batadv net_device.
+	 *  used by the newly रेजिस्टरed batadv net_device.
 	 */
 	IFLA_BATADV_ALGO_NAME,
 
-	/* add attributes above here, update the policy in soft-interface.c */
+	/* add attributes above here, update the policy in soft-पूर्णांकerface.c */
 
 	/**
-	 * @__IFLA_BATADV_MAX: internal use
+	 * @__IFLA_BATADV_MAX: पूर्णांकernal use
 	 */
 	__IFLA_BATADV_MAX,
-};
+पूर्ण;
 
-#define IFLA_BATADV_MAX (__IFLA_BATADV_MAX - 1)
+#घोषणा IFLA_BATADV_MAX (__IFLA_BATADV_MAX - 1)
 
-#endif /* _UAPI_LINUX_BATMAN_ADV_H_ */
+#पूर्ण_अगर /* _UAPI_LINUX_BATMAN_ADV_H_ */

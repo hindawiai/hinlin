@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// mt6797-afe-clk.c  --  Mediatek 6797 afe clock ctrl
+// mt6797-afe-clk.c  --  Mediatek 6797 afe घड़ी ctrl
 //
 // Copyright (c) 2018 MediaTek Inc.
 // Author: KaiChieh Chuang <kaichieh.chuang@mediatek.com>
 
-#include <linux/clk.h>
+#समावेश <linux/clk.h>
 
-#include "mt6797-afe-common.h"
-#include "mt6797-afe-clk.h"
+#समावेश "mt6797-afe-common.h"
+#समावेश "mt6797-afe-clk.h"
 
-enum {
+क्रमागत अणु
 	CLK_INFRA_SYS_AUD,
 	CLK_INFRA_SYS_AUD_26M,
 	CLK_TOP_MUX_AUD,
@@ -19,9 +20,9 @@ enum {
 	CLK_TOP_SYSPLL1_D4,
 	CLK_CLK26M,
 	CLK_NUM
-};
+पूर्ण;
 
-static const char *aud_clks[CLK_NUM] = {
+अटल स्थिर अक्षर *aud_clks[CLK_NUM] = अणु
 	[CLK_INFRA_SYS_AUD] = "infra_sys_audio_clk",
 	[CLK_INFRA_SYS_AUD_26M] = "infra_sys_audio_26m",
 	[CLK_TOP_MUX_AUD] = "top_mux_audio",
@@ -29,74 +30,74 @@ static const char *aud_clks[CLK_NUM] = {
 	[CLK_TOP_SYSPLL3_D4] = "top_sys_pll3_d4",
 	[CLK_TOP_SYSPLL1_D4] = "top_sys_pll1_d4",
 	[CLK_CLK26M] = "top_clk26m_clk",
-};
+पूर्ण;
 
-int mt6797_init_clock(struct mtk_base_afe *afe)
-{
-	struct mt6797_afe_private *afe_priv = afe->platform_priv;
-	int i;
+पूर्णांक mt6797_init_घड़ी(काष्ठा mtk_base_afe *afe)
+अणु
+	काष्ठा mt6797_afe_निजी *afe_priv = afe->platक्रमm_priv;
+	पूर्णांक i;
 
-	afe_priv->clk = devm_kcalloc(afe->dev, CLK_NUM, sizeof(*afe_priv->clk),
+	afe_priv->clk = devm_kसुस्मृति(afe->dev, CLK_NUM, माप(*afe_priv->clk),
 				     GFP_KERNEL);
-	if (!afe_priv->clk)
-		return -ENOMEM;
+	अगर (!afe_priv->clk)
+		वापस -ENOMEM;
 
-	for (i = 0; i < CLK_NUM; i++) {
+	क्रम (i = 0; i < CLK_NUM; i++) अणु
 		afe_priv->clk[i] = devm_clk_get(afe->dev, aud_clks[i]);
-		if (IS_ERR(afe_priv->clk[i])) {
+		अगर (IS_ERR(afe_priv->clk[i])) अणु
 			dev_err(afe->dev, "%s(), devm_clk_get %s fail, ret %ld\n",
 				__func__, aud_clks[i],
 				PTR_ERR(afe_priv->clk[i]));
-			return PTR_ERR(afe_priv->clk[i]);
-		}
-	}
+			वापस PTR_ERR(afe_priv->clk[i]);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mt6797_afe_enable_clock(struct mtk_base_afe *afe)
-{
-	struct mt6797_afe_private *afe_priv = afe->platform_priv;
-	int ret;
+पूर्णांक mt6797_afe_enable_घड़ी(काष्ठा mtk_base_afe *afe)
+अणु
+	काष्ठा mt6797_afe_निजी *afe_priv = afe->platक्रमm_priv;
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(afe_priv->clk[CLK_INFRA_SYS_AUD]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(afe->dev, "%s(), clk_prepare_enable %s fail %d\n",
 			__func__, aud_clks[CLK_INFRA_SYS_AUD], ret);
-		goto CLK_INFRA_SYS_AUDIO_ERR;
-	}
+		जाओ CLK_INFRA_SYS_AUDIO_ERR;
+	पूर्ण
 
 	ret = clk_prepare_enable(afe_priv->clk[CLK_INFRA_SYS_AUD_26M]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(afe->dev, "%s(), clk_prepare_enable %s fail %d\n",
 			__func__, aud_clks[CLK_INFRA_SYS_AUD_26M], ret);
-		goto CLK_INFRA_SYS_AUD_26M_ERR;
-	}
+		जाओ CLK_INFRA_SYS_AUD_26M_ERR;
+	पूर्ण
 
 	ret = clk_prepare_enable(afe_priv->clk[CLK_TOP_MUX_AUD]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(afe->dev, "%s(), clk_prepare_enable %s fail %d\n",
 			__func__, aud_clks[CLK_TOP_MUX_AUD], ret);
-		goto CLK_MUX_AUDIO_ERR;
-	}
+		जाओ CLK_MUX_AUDIO_ERR;
+	पूर्ण
 
 	ret = clk_set_parent(afe_priv->clk[CLK_TOP_MUX_AUD],
 			     afe_priv->clk[CLK_CLK26M]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(afe->dev, "%s(), clk_set_parent %s-%s fail %d\n",
 			__func__, aud_clks[CLK_TOP_MUX_AUD],
 			aud_clks[CLK_CLK26M], ret);
-		goto CLK_MUX_AUDIO_ERR;
-	}
+		जाओ CLK_MUX_AUDIO_ERR;
+	पूर्ण
 
 	ret = clk_prepare_enable(afe_priv->clk[CLK_TOP_MUX_AUD_BUS]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(afe->dev, "%s(), clk_prepare_enable %s fail %d\n",
 			__func__, aud_clks[CLK_TOP_MUX_AUD_BUS], ret);
-		goto CLK_MUX_AUDIO_INTBUS_ERR;
-	}
+		जाओ CLK_MUX_AUDIO_INTBUS_ERR;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 CLK_MUX_AUDIO_INTBUS_ERR:
 	clk_disable_unprepare(afe_priv->clk[CLK_TOP_MUX_AUD_BUS]);
@@ -107,17 +108,17 @@ CLK_INFRA_SYS_AUD_26M_ERR:
 CLK_INFRA_SYS_AUDIO_ERR:
 	clk_disable_unprepare(afe_priv->clk[CLK_INFRA_SYS_AUD]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mt6797_afe_disable_clock(struct mtk_base_afe *afe)
-{
-	struct mt6797_afe_private *afe_priv = afe->platform_priv;
+पूर्णांक mt6797_afe_disable_घड़ी(काष्ठा mtk_base_afe *afe)
+अणु
+	काष्ठा mt6797_afe_निजी *afe_priv = afe->platक्रमm_priv;
 
 	clk_disable_unprepare(afe_priv->clk[CLK_TOP_MUX_AUD_BUS]);
 	clk_disable_unprepare(afe_priv->clk[CLK_TOP_MUX_AUD]);
 	clk_disable_unprepare(afe_priv->clk[CLK_INFRA_SYS_AUD_26M]);
 	clk_disable_unprepare(afe_priv->clk[CLK_INFRA_SYS_AUD]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

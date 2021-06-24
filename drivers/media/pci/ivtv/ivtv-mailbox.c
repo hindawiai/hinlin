@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
     mailbox functions
     Copyright (C) 2003-2004  Kevin Thayer <nufan_wfk at yahoo.com>
@@ -7,35 +8,35 @@
 
  */
 
-#include "ivtv-driver.h"
-#include "ivtv-mailbox.h"
+#समावेश "ivtv-driver.h"
+#समावेश "ivtv-mailbox.h"
 
 /* Firmware mailbox flags*/
-#define IVTV_MBOX_FIRMWARE_DONE 0x00000004
-#define IVTV_MBOX_DRIVER_DONE   0x00000002
-#define IVTV_MBOX_DRIVER_BUSY   0x00000001
-#define IVTV_MBOX_FREE		0x00000000
+#घोषणा IVTV_MBOX_FIRMWARE_DONE 0x00000004
+#घोषणा IVTV_MBOX_DRIVER_DONE   0x00000002
+#घोषणा IVTV_MBOX_DRIVER_BUSY   0x00000001
+#घोषणा IVTV_MBOX_FREE		0x00000000
 
-/* Firmware mailbox standard timeout */
-#define IVTV_API_STD_TIMEOUT	0x02000000
+/* Firmware mailbox standard समयout */
+#घोषणा IVTV_API_STD_TIMEOUT	0x02000000
 
-#define API_CACHE	 (1 << 0)	/* Allow the command to be stored in the cache */
-#define API_RESULT	 (1 << 1)	/* Allow 1 second for this cmd to end */
-#define API_FAST_RESULT	 (3 << 1)	/* Allow 0.1 second for this cmd to end */
-#define API_DMA		 (1 << 3)	/* DMA mailbox, has special handling */
-#define API_HIGH_VOL	 (1 << 5)	/* High volume command (i.e. called during encoding or decoding) */
-#define API_NO_WAIT_MB	 (1 << 4)	/* Command may not wait for a free mailbox */
-#define API_NO_WAIT_RES	 (1 << 5)	/* Command may not wait for the result */
-#define API_NO_POLL	 (1 << 6)	/* Avoid pointless polling */
+#घोषणा API_CACHE	 (1 << 0)	/* Allow the command to be stored in the cache */
+#घोषणा API_RESULT	 (1 << 1)	/* Allow 1 second क्रम this cmd to end */
+#घोषणा API_FAST_RESULT	 (3 << 1)	/* Allow 0.1 second क्रम this cmd to end */
+#घोषणा API_DMA		 (1 << 3)	/* DMA mailbox, has special handling */
+#घोषणा API_HIGH_VOL	 (1 << 5)	/* High volume command (i.e. called during encoding or decoding) */
+#घोषणा API_NO_WAIT_MB	 (1 << 4)	/* Command may not रुको क्रम a मुक्त mailbox */
+#घोषणा API_NO_WAIT_RES	 (1 << 5)	/* Command may not रुको क्रम the result */
+#घोषणा API_NO_POLL	 (1 << 6)	/* Aव्योम poपूर्णांकless polling */
 
-struct ivtv_api_info {
-	int flags;		/* Flags, see above */
-	const char *name;	/* The name of the command */
-};
+काष्ठा ivtv_api_info अणु
+	पूर्णांक flags;		/* Flags, see above */
+	स्थिर अक्षर *name;	/* The name of the command */
+पूर्ण;
 
-#define API_ENTRY(x, f) [x] = { (f), #x }
+#घोषणा API_ENTRY(x, f) [x] = अणु (f), #x पूर्ण
 
-static const struct ivtv_api_info api_info[256] = {
+अटल स्थिर काष्ठा ivtv_api_info api_info[256] = अणु
 	/* MPEG encoder API */
 	API_ENTRY(CX2341X_ENC_PING_FW,			API_FAST_RESULT),
 	API_ENTRY(CX2341X_ENC_START_CAPTURE,		API_RESULT | API_NO_POLL),
@@ -126,248 +127,248 @@ static const struct ivtv_api_info api_info[256] = {
 	API_ENTRY(CX2341X_OSD_SET_CHROMA_KEY,		API_CACHE),
 	API_ENTRY(CX2341X_OSD_GET_ALPHA_CONTENT_INDEX,	API_FAST_RESULT),
 	API_ENTRY(CX2341X_OSD_SET_ALPHA_CONTENT_INDEX,	API_CACHE)
-};
+पूर्ण;
 
-static int try_mailbox(struct ivtv *itv, struct ivtv_mailbox_data *mbdata, int mb)
-{
-	u32 flags = readl(&mbdata->mbox[mb].flags);
-	int is_free = flags == IVTV_MBOX_FREE || (flags & IVTV_MBOX_FIRMWARE_DONE);
+अटल पूर्णांक try_mailbox(काष्ठा ivtv *itv, काष्ठा ivtv_mailbox_data *mbdata, पूर्णांक mb)
+अणु
+	u32 flags = पढ़ोl(&mbdata->mbox[mb].flags);
+	पूर्णांक is_मुक्त = flags == IVTV_MBOX_FREE || (flags & IVTV_MBOX_FIRMWARE_DONE);
 
-	/* if the mailbox is free, then try to claim it */
-	if (is_free && !test_and_set_bit(mb, &mbdata->busy)) {
-		write_sync(IVTV_MBOX_DRIVER_BUSY, &mbdata->mbox[mb].flags);
-		return 1;
-	}
-	return 0;
-}
+	/* अगर the mailbox is मुक्त, then try to claim it */
+	अगर (is_मुक्त && !test_and_set_bit(mb, &mbdata->busy)) अणु
+		ग_लिखो_sync(IVTV_MBOX_DRIVER_BUSY, &mbdata->mbox[mb].flags);
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Try to find a free mailbox. Note mailbox 0 is reserved for DMA and so is not
+/* Try to find a मुक्त mailbox. Note mailbox 0 is reserved क्रम DMA and so is not
    attempted here. */
-static int get_mailbox(struct ivtv *itv, struct ivtv_mailbox_data *mbdata, int flags)
-{
-	unsigned long then = jiffies;
-	int i, mb;
-	int max_mbox = mbdata->max_mbox;
-	int retries = 100;
+अटल पूर्णांक get_mailbox(काष्ठा ivtv *itv, काष्ठा ivtv_mailbox_data *mbdata, पूर्णांक flags)
+अणु
+	अचिन्हित दीर्घ then = jअगरfies;
+	पूर्णांक i, mb;
+	पूर्णांक max_mbox = mbdata->max_mbox;
+	पूर्णांक retries = 100;
 
 	/* All slow commands use the same mailbox, serializing them and also
-	   leaving the other mailbox free for simple fast commands. */
-	if ((flags & API_FAST_RESULT) == API_RESULT)
+	   leaving the other mailbox मुक्त क्रम simple fast commands. */
+	अगर ((flags & API_FAST_RESULT) == API_RESULT)
 		max_mbox = 1;
 
-	/* find free non-DMA mailbox */
-	for (i = 0; i < retries; i++) {
-		for (mb = 1; mb <= max_mbox; mb++)
-			if (try_mailbox(itv, mbdata, mb))
-				return mb;
+	/* find मुक्त non-DMA mailbox */
+	क्रम (i = 0; i < retries; i++) अणु
+		क्रम (mb = 1; mb <= max_mbox; mb++)
+			अगर (try_mailbox(itv, mbdata, mb))
+				वापस mb;
 
-		/* Sleep before a retry, if not atomic */
-		if (!(flags & API_NO_WAIT_MB)) {
-			if (time_after(jiffies,
-				       then + msecs_to_jiffies(10*retries)))
-			       break;
-			ivtv_msleep_timeout(10, 0);
-		}
-	}
-	return -ENODEV;
-}
+		/* Sleep beक्रमe a retry, अगर not atomic */
+		अगर (!(flags & API_NO_WAIT_MB)) अणु
+			अगर (समय_after(jअगरfies,
+				       then + msecs_to_jअगरfies(10*retries)))
+			       अवरोध;
+			ivtv_msleep_समयout(10, 0);
+		पूर्ण
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
 
-static void write_mailbox(volatile struct ivtv_mailbox __iomem *mbox, int cmd, int args, u32 data[])
-{
-	int i;
+अटल व्योम ग_लिखो_mailbox(अस्थिर काष्ठा ivtv_mailbox __iomem *mbox, पूर्णांक cmd, पूर्णांक args, u32 data[])
+अणु
+	पूर्णांक i;
 
-	write_sync(cmd, &mbox->cmd);
-	write_sync(IVTV_API_STD_TIMEOUT, &mbox->timeout);
+	ग_लिखो_sync(cmd, &mbox->cmd);
+	ग_लिखो_sync(IVTV_API_STD_TIMEOUT, &mbox->समयout);
 
-	for (i = 0; i < CX2341X_MBOX_MAX_DATA; i++)
-		write_sync(data[i], &mbox->data[i]);
+	क्रम (i = 0; i < CX2341X_MBOX_MAX_DATA; i++)
+		ग_लिखो_sync(data[i], &mbox->data[i]);
 
-	write_sync(IVTV_MBOX_DRIVER_DONE | IVTV_MBOX_DRIVER_BUSY, &mbox->flags);
-}
+	ग_लिखो_sync(IVTV_MBOX_DRIVER_DONE | IVTV_MBOX_DRIVER_BUSY, &mbox->flags);
+पूर्ण
 
-static void clear_all_mailboxes(struct ivtv *itv, struct ivtv_mailbox_data *mbdata)
-{
-	int i;
+अटल व्योम clear_all_mailboxes(काष्ठा ivtv *itv, काष्ठा ivtv_mailbox_data *mbdata)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i <= mbdata->max_mbox; i++) {
+	क्रम (i = 0; i <= mbdata->max_mbox; i++) अणु
 		IVTV_DEBUG_WARN("Clearing mailbox %d: cmd 0x%08x flags 0x%08x\n",
-			i, readl(&mbdata->mbox[i].cmd), readl(&mbdata->mbox[i].flags));
-		write_sync(0, &mbdata->mbox[i].flags);
+			i, पढ़ोl(&mbdata->mbox[i].cmd), पढ़ोl(&mbdata->mbox[i].flags));
+		ग_लिखो_sync(0, &mbdata->mbox[i].flags);
 		clear_bit(i, &mbdata->busy);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ivtv_api_call(struct ivtv *itv, int cmd, int args, u32 data[])
-{
-	struct ivtv_mailbox_data *mbdata = (cmd >= 128) ? &itv->enc_mbox : &itv->dec_mbox;
-	volatile struct ivtv_mailbox __iomem *mbox;
-	int api_timeout = msecs_to_jiffies(1000);
-	int flags, mb, i;
-	unsigned long then;
+अटल पूर्णांक ivtv_api_call(काष्ठा ivtv *itv, पूर्णांक cmd, पूर्णांक args, u32 data[])
+अणु
+	काष्ठा ivtv_mailbox_data *mbdata = (cmd >= 128) ? &itv->enc_mbox : &itv->dec_mbox;
+	अस्थिर काष्ठा ivtv_mailbox __iomem *mbox;
+	पूर्णांक api_समयout = msecs_to_jअगरfies(1000);
+	पूर्णांक flags, mb, i;
+	अचिन्हित दीर्घ then;
 
 	/* sanity checks */
-	if (NULL == mbdata) {
+	अगर (शून्य == mbdata) अणु
 		IVTV_ERR("No mailbox allocated\n");
-		return -ENODEV;
-	}
-	if (args < 0 || args > CX2341X_MBOX_MAX_DATA ||
-	    cmd < 0 || cmd > 255 || api_info[cmd].name == NULL) {
+		वापस -ENODEV;
+	पूर्ण
+	अगर (args < 0 || args > CX2341X_MBOX_MAX_DATA ||
+	    cmd < 0 || cmd > 255 || api_info[cmd].name == शून्य) अणु
 		IVTV_ERR("Invalid MB call: cmd = 0x%02x, args = %d\n", cmd, args);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (api_info[cmd].flags & API_HIGH_VOL) {
+	अगर (api_info[cmd].flags & API_HIGH_VOL) अणु
 	    IVTV_DEBUG_HI_MB("MB Call: %s\n", api_info[cmd].name);
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 	    IVTV_DEBUG_MB("MB Call: %s\n", api_info[cmd].name);
-	}
+	पूर्ण
 
 	/* clear possibly uninitialized part of data array */
-	for (i = args; i < CX2341X_MBOX_MAX_DATA; i++)
+	क्रम (i = args; i < CX2341X_MBOX_MAX_DATA; i++)
 		data[i] = 0;
 
 	/* If this command was issued within the last 30 minutes and with identical
-	   data, then just return 0 as there is no need to issue this command again.
+	   data, then just वापस 0 as there is no need to issue this command again.
 	   Just an optimization to prevent unnecessary use of mailboxes. */
-	if (itv->api_cache[cmd].last_jiffies &&
-	    time_before(jiffies,
-			itv->api_cache[cmd].last_jiffies +
-			msecs_to_jiffies(1800000)) &&
-	    !memcmp(data, itv->api_cache[cmd].data, sizeof(itv->api_cache[cmd].data))) {
-		itv->api_cache[cmd].last_jiffies = jiffies;
-		return 0;
-	}
+	अगर (itv->api_cache[cmd].last_jअगरfies &&
+	    समय_beक्रमe(jअगरfies,
+			itv->api_cache[cmd].last_jअगरfies +
+			msecs_to_jअगरfies(1800000)) &&
+	    !स_भेद(data, itv->api_cache[cmd].data, माप(itv->api_cache[cmd].data))) अणु
+		itv->api_cache[cmd].last_jअगरfies = jअगरfies;
+		वापस 0;
+	पूर्ण
 
 	flags = api_info[cmd].flags;
 
-	if (flags & API_DMA) {
-		for (i = 0; i < 100; i++) {
+	अगर (flags & API_DMA) अणु
+		क्रम (i = 0; i < 100; i++) अणु
 			mb = i % (mbdata->max_mbox + 1);
-			if (try_mailbox(itv, mbdata, mb)) {
-				write_mailbox(&mbdata->mbox[mb], cmd, args, data);
+			अगर (try_mailbox(itv, mbdata, mb)) अणु
+				ग_लिखो_mailbox(&mbdata->mbox[mb], cmd, args, data);
 				clear_bit(mb, &mbdata->busy);
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 			IVTV_DEBUG_WARN("%s: mailbox %d not free %08x\n",
-					api_info[cmd].name, mb, readl(&mbdata->mbox[mb].flags));
-		}
+					api_info[cmd].name, mb, पढ़ोl(&mbdata->mbox[mb].flags));
+		पूर्ण
 		IVTV_WARN("Could not find free DMA mailbox for %s\n", api_info[cmd].name);
 		clear_all_mailboxes(itv, mbdata);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if ((flags & API_FAST_RESULT) == API_FAST_RESULT)
-		api_timeout = msecs_to_jiffies(100);
+	अगर ((flags & API_FAST_RESULT) == API_FAST_RESULT)
+		api_समयout = msecs_to_jअगरfies(100);
 
 	mb = get_mailbox(itv, mbdata, flags);
-	if (mb < 0) {
+	अगर (mb < 0) अणु
 		IVTV_DEBUG_WARN("No free mailbox found (%s)\n", api_info[cmd].name);
 		clear_all_mailboxes(itv, mbdata);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	mbox = &mbdata->mbox[mb];
-	write_mailbox(mbox, cmd, args, data);
-	if (flags & API_CACHE) {
-		memcpy(itv->api_cache[cmd].data, data, sizeof(itv->api_cache[cmd].data));
-		itv->api_cache[cmd].last_jiffies = jiffies;
-	}
-	if ((flags & API_RESULT) == 0) {
+	ग_लिखो_mailbox(mbox, cmd, args, data);
+	अगर (flags & API_CACHE) अणु
+		स_नकल(itv->api_cache[cmd].data, data, माप(itv->api_cache[cmd].data));
+		itv->api_cache[cmd].last_jअगरfies = jअगरfies;
+	पूर्ण
+	अगर ((flags & API_RESULT) == 0) अणु
 		clear_bit(mb, &mbdata->busy);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Get results */
-	then = jiffies;
+	then = jअगरfies;
 
-	if (!(flags & API_NO_POLL)) {
-		/* First try to poll, then switch to delays */
-		for (i = 0; i < 100; i++) {
-			if (readl(&mbox->flags) & IVTV_MBOX_FIRMWARE_DONE)
-				break;
-		}
-	}
-	while (!(readl(&mbox->flags) & IVTV_MBOX_FIRMWARE_DONE)) {
-		if (time_after(jiffies, then + api_timeout)) {
+	अगर (!(flags & API_NO_POLL)) अणु
+		/* First try to poll, then चयन to delays */
+		क्रम (i = 0; i < 100; i++) अणु
+			अगर (पढ़ोl(&mbox->flags) & IVTV_MBOX_FIRMWARE_DONE)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	जबतक (!(पढ़ोl(&mbox->flags) & IVTV_MBOX_FIRMWARE_DONE)) अणु
+		अगर (समय_after(jअगरfies, then + api_समयout)) अणु
 			IVTV_DEBUG_WARN("Could not get result (%s)\n", api_info[cmd].name);
-			/* reset the mailbox, but it is likely too late already */
-			write_sync(0, &mbox->flags);
+			/* reset the mailbox, but it is likely too late alपढ़ोy */
+			ग_लिखो_sync(0, &mbox->flags);
 			clear_bit(mb, &mbdata->busy);
-			return -EIO;
-		}
-		if (flags & API_NO_WAIT_RES)
+			वापस -EIO;
+		पूर्ण
+		अगर (flags & API_NO_WAIT_RES)
 			mdelay(1);
-		else
-			ivtv_msleep_timeout(1, 0);
-	}
-	if (time_after(jiffies, then + msecs_to_jiffies(100)))
+		अन्यथा
+			ivtv_msleep_समयout(1, 0);
+	पूर्ण
+	अगर (समय_after(jअगरfies, then + msecs_to_jअगरfies(100)))
 		IVTV_DEBUG_WARN("%s took %u jiffies\n",
 				api_info[cmd].name,
-				jiffies_to_msecs(jiffies - then));
+				jअगरfies_to_msecs(jअगरfies - then));
 
-	for (i = 0; i < CX2341X_MBOX_MAX_DATA; i++)
-		data[i] = readl(&mbox->data[i]);
-	write_sync(0, &mbox->flags);
+	क्रम (i = 0; i < CX2341X_MBOX_MAX_DATA; i++)
+		data[i] = पढ़ोl(&mbox->data[i]);
+	ग_लिखो_sync(0, &mbox->flags);
 	clear_bit(mb, &mbdata->busy);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ivtv_api(struct ivtv *itv, int cmd, int args, u32 data[])
-{
-	int res = ivtv_api_call(itv, cmd, args, data);
+पूर्णांक ivtv_api(काष्ठा ivtv *itv, पूर्णांक cmd, पूर्णांक args, u32 data[])
+अणु
+	पूर्णांक res = ivtv_api_call(itv, cmd, args, data);
 
-	/* Allow a single retry, probably already too late though.
-	   If there is no free mailbox then that is usually an indication
+	/* Allow a single retry, probably alपढ़ोy too late though.
+	   If there is no मुक्त mailbox then that is usually an indication
 	   of a more serious problem. */
-	return (res == -EBUSY) ? ivtv_api_call(itv, cmd, args, data) : res;
-}
+	वापस (res == -EBUSY) ? ivtv_api_call(itv, cmd, args, data) : res;
+पूर्ण
 
-int ivtv_api_func(void *priv, u32 cmd, int in, int out, u32 data[CX2341X_MBOX_MAX_DATA])
-{
-	return ivtv_api(priv, cmd, in, data);
-}
+पूर्णांक ivtv_api_func(व्योम *priv, u32 cmd, पूर्णांक in, पूर्णांक out, u32 data[CX2341X_MBOX_MAX_DATA])
+अणु
+	वापस ivtv_api(priv, cmd, in, data);
+पूर्ण
 
-int ivtv_vapi_result(struct ivtv *itv, u32 data[CX2341X_MBOX_MAX_DATA], int cmd, int args, ...)
-{
-	va_list ap;
-	int i;
+पूर्णांक ivtv_vapi_result(काष्ठा ivtv *itv, u32 data[CX2341X_MBOX_MAX_DATA], पूर्णांक cmd, पूर्णांक args, ...)
+अणु
+	बहु_सूची ap;
+	पूर्णांक i;
 
-	va_start(ap, args);
-	for (i = 0; i < args; i++) {
-		data[i] = va_arg(ap, u32);
-	}
-	va_end(ap);
-	return ivtv_api(itv, cmd, args, data);
-}
+	बहु_शुरू(ap, args);
+	क्रम (i = 0; i < args; i++) अणु
+		data[i] = बहु_तर्क(ap, u32);
+	पूर्ण
+	बहु_पूर्ण(ap);
+	वापस ivtv_api(itv, cmd, args, data);
+पूर्ण
 
-int ivtv_vapi(struct ivtv *itv, int cmd, int args, ...)
-{
+पूर्णांक ivtv_vapi(काष्ठा ivtv *itv, पूर्णांक cmd, पूर्णांक args, ...)
+अणु
 	u32 data[CX2341X_MBOX_MAX_DATA];
-	va_list ap;
-	int i;
+	बहु_सूची ap;
+	पूर्णांक i;
 
-	va_start(ap, args);
-	for (i = 0; i < args; i++) {
-		data[i] = va_arg(ap, u32);
-	}
-	va_end(ap);
-	return ivtv_api(itv, cmd, args, data);
-}
+	बहु_शुरू(ap, args);
+	क्रम (i = 0; i < args; i++) अणु
+		data[i] = बहु_तर्क(ap, u32);
+	पूर्ण
+	बहु_पूर्ण(ap);
+	वापस ivtv_api(itv, cmd, args, data);
+पूर्ण
 
-/* This one is for stuff that can't sleep.. irq handlers, etc.. */
-void ivtv_api_get_data(struct ivtv_mailbox_data *mbdata, int mb,
-		       int argc, u32 data[])
-{
-	volatile u32 __iomem *p = mbdata->mbox[mb].data;
-	int i;
-	for (i = 0; i < argc; i++, p++)
-		data[i] = readl(p);
-}
+/* This one is क्रम stuff that can't sleep.. irq handlers, etc.. */
+व्योम ivtv_api_get_data(काष्ठा ivtv_mailbox_data *mbdata, पूर्णांक mb,
+		       पूर्णांक argc, u32 data[])
+अणु
+	अस्थिर u32 __iomem *p = mbdata->mbox[mb].data;
+	पूर्णांक i;
+	क्रम (i = 0; i < argc; i++, p++)
+		data[i] = पढ़ोl(p);
+पूर्ण
 
 /* Wipe api cache */
-void ivtv_mailbox_cache_invalidate(struct ivtv *itv)
-{
-	int i;
-	for (i = 0; i < 256; i++)
-		itv->api_cache[i].last_jiffies = 0;
-}
+व्योम ivtv_mailbox_cache_invalidate(काष्ठा ivtv *itv)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < 256; i++)
+		itv->api_cache[i].last_jअगरfies = 0;
+पूर्ण

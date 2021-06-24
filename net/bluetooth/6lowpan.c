@@ -1,306 +1,307 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
    Copyright (c) 2013-2014 Intel Corp.
 
 */
 
-#include <linux/if_arp.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/module.h>
-#include <linux/debugfs.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/debugfs.h>
 
-#include <net/ipv6.h>
-#include <net/ip6_route.h>
-#include <net/addrconf.h>
-#include <net/pkt_sched.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/pkt_sched.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
-#include <net/bluetooth/l2cap.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/l2cap.h>
 
-#include <net/6lowpan.h> /* for the compression support */
+#समावेश <net/6lowpan.h> /* क्रम the compression support */
 
-#define VERSION "0.1"
+#घोषणा VERSION "0.1"
 
-static struct dentry *lowpan_enable_debugfs;
-static struct dentry *lowpan_control_debugfs;
+अटल काष्ठा dentry *lowpan_enable_debugfs;
+अटल काष्ठा dentry *lowpan_control_debugfs;
 
-#define IFACE_NAME_TEMPLATE "bt%d"
+#घोषणा IFACE_NAME_TEMPLATE "bt%d"
 
-struct skb_cb {
-	struct in6_addr addr;
-	struct in6_addr gw;
-	struct l2cap_chan *chan;
-};
-#define lowpan_cb(skb) ((struct skb_cb *)((skb)->cb))
+काष्ठा skb_cb अणु
+	काष्ठा in6_addr addr;
+	काष्ठा in6_addr gw;
+	काष्ठा l2cap_chan *chan;
+पूर्ण;
+#घोषणा lowpan_cb(skb) ((काष्ठा skb_cb *)((skb)->cb))
 
 /* The devices list contains those devices that we are acting
- * as a proxy. The BT 6LoWPAN device is a virtual device that
+ * as a proxy. The BT 6LoWPAN device is a भव device that
  * connects to the Bluetooth LE device. The real connection to
- * BT device is done via l2cap layer. There exists one
- * virtual device / one BT 6LoWPAN network (=hciX device).
- * The list contains struct lowpan_dev elements.
+ * BT device is करोne via l2cap layer. There exists one
+ * भव device / one BT 6LoWPAN network (=hciX device).
+ * The list contains काष्ठा lowpan_dev elements.
  */
-static LIST_HEAD(bt_6lowpan_devices);
-static DEFINE_SPINLOCK(devices_lock);
+अटल LIST_HEAD(bt_6lowpan_devices);
+अटल DEFINE_SPINLOCK(devices_lock);
 
-static bool enable_6lowpan;
+अटल bool enable_6lowpan;
 
 /* We are listening incoming connections via this channel
  */
-static struct l2cap_chan *listen_chan;
-static DEFINE_MUTEX(set_lock);
+अटल काष्ठा l2cap_chan *listen_chan;
+अटल DEFINE_MUTEX(set_lock);
 
-struct lowpan_peer {
-	struct list_head list;
-	struct rcu_head rcu;
-	struct l2cap_chan *chan;
+काष्ठा lowpan_peer अणु
+	काष्ठा list_head list;
+	काष्ठा rcu_head rcu;
+	काष्ठा l2cap_chan *chan;
 
-	/* peer addresses in various formats */
-	unsigned char lladdr[ETH_ALEN];
-	struct in6_addr peer_addr;
-};
+	/* peer addresses in various क्रमmats */
+	अचिन्हित अक्षर lladdr[ETH_ALEN];
+	काष्ठा in6_addr peer_addr;
+पूर्ण;
 
-struct lowpan_btle_dev {
-	struct list_head list;
+काष्ठा lowpan_btle_dev अणु
+	काष्ठा list_head list;
 
-	struct hci_dev *hdev;
-	struct net_device *netdev;
-	struct list_head peers;
+	काष्ठा hci_dev *hdev;
+	काष्ठा net_device *netdev;
+	काष्ठा list_head peers;
 	atomic_t peer_count; /* number of items in peers list */
 
-	struct work_struct delete_netdev;
-	struct delayed_work notify_peers;
-};
+	काष्ठा work_काष्ठा delete_netdev;
+	काष्ठा delayed_work notअगरy_peers;
+पूर्ण;
 
-static inline struct lowpan_btle_dev *
-lowpan_btle_dev(const struct net_device *netdev)
-{
-	return (struct lowpan_btle_dev *)lowpan_dev(netdev)->priv;
-}
+अटल अंतरभूत काष्ठा lowpan_btle_dev *
+lowpan_btle_dev(स्थिर काष्ठा net_device *netdev)
+अणु
+	वापस (काष्ठा lowpan_btle_dev *)lowpan_dev(netdev)->priv;
+पूर्ण
 
-static inline void peer_add(struct lowpan_btle_dev *dev,
-			    struct lowpan_peer *peer)
-{
+अटल अंतरभूत व्योम peer_add(काष्ठा lowpan_btle_dev *dev,
+			    काष्ठा lowpan_peer *peer)
+अणु
 	list_add_rcu(&peer->list, &dev->peers);
 	atomic_inc(&dev->peer_count);
-}
+पूर्ण
 
-static inline bool peer_del(struct lowpan_btle_dev *dev,
-			    struct lowpan_peer *peer)
-{
+अटल अंतरभूत bool peer_del(काष्ठा lowpan_btle_dev *dev,
+			    काष्ठा lowpan_peer *peer)
+अणु
 	list_del_rcu(&peer->list);
-	kfree_rcu(peer, rcu);
+	kमुक्त_rcu(peer, rcu);
 
 	module_put(THIS_MODULE);
 
-	if (atomic_dec_and_test(&dev->peer_count)) {
+	अगर (atomic_dec_and_test(&dev->peer_count)) अणु
 		BT_DBG("last peer");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline struct lowpan_peer *peer_lookup_ba(struct lowpan_btle_dev *dev,
+अटल अंतरभूत काष्ठा lowpan_peer *peer_lookup_ba(काष्ठा lowpan_btle_dev *dev,
 						 bdaddr_t *ba, __u8 type)
-{
-	struct lowpan_peer *peer;
+अणु
+	काष्ठा lowpan_peer *peer;
 
-	BT_DBG("peers %d addr %pMR type %d", atomic_read(&dev->peer_count),
+	BT_DBG("peers %d addr %pMR type %d", atomic_पढ़ो(&dev->peer_count),
 	       ba, type);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(peer, &dev->peers, list) {
+	list_क्रम_each_entry_rcu(peer, &dev->peers, list) अणु
 		BT_DBG("dst addr %pMR dst type %d",
 		       &peer->chan->dst, peer->chan->dst_type);
 
-		if (bacmp(&peer->chan->dst, ba))
-			continue;
+		अगर (bacmp(&peer->chan->dst, ba))
+			जारी;
 
-		if (type == peer->chan->dst_type) {
-			rcu_read_unlock();
-			return peer;
-		}
-	}
+		अगर (type == peer->chan->dst_type) अणु
+			rcu_पढ़ो_unlock();
+			वापस peer;
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline struct lowpan_peer *
-__peer_lookup_chan(struct lowpan_btle_dev *dev, struct l2cap_chan *chan)
-{
-	struct lowpan_peer *peer;
+अटल अंतरभूत काष्ठा lowpan_peer *
+__peer_lookup_chan(काष्ठा lowpan_btle_dev *dev, काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा lowpan_peer *peer;
 
-	list_for_each_entry_rcu(peer, &dev->peers, list) {
-		if (peer->chan == chan)
-			return peer;
-	}
+	list_क्रम_each_entry_rcu(peer, &dev->peers, list) अणु
+		अगर (peer->chan == chan)
+			वापस peer;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline struct lowpan_peer *
-__peer_lookup_conn(struct lowpan_btle_dev *dev, struct l2cap_conn *conn)
-{
-	struct lowpan_peer *peer;
+अटल अंतरभूत काष्ठा lowpan_peer *
+__peer_lookup_conn(काष्ठा lowpan_btle_dev *dev, काष्ठा l2cap_conn *conn)
+अणु
+	काष्ठा lowpan_peer *peer;
 
-	list_for_each_entry_rcu(peer, &dev->peers, list) {
-		if (peer->chan->conn == conn)
-			return peer;
-	}
+	list_क्रम_each_entry_rcu(peer, &dev->peers, list) अणु
+		अगर (peer->chan->conn == conn)
+			वापस peer;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline struct lowpan_peer *peer_lookup_dst(struct lowpan_btle_dev *dev,
-						  struct in6_addr *daddr,
-						  struct sk_buff *skb)
-{
-	struct rt6_info *rt = (struct rt6_info *)skb_dst(skb);
-	int count = atomic_read(&dev->peer_count);
-	const struct in6_addr *nexthop;
-	struct lowpan_peer *peer;
-	struct neighbour *neigh;
+अटल अंतरभूत काष्ठा lowpan_peer *peer_lookup_dst(काष्ठा lowpan_btle_dev *dev,
+						  काष्ठा in6_addr *daddr,
+						  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rt6_info *rt = (काष्ठा rt6_info *)skb_dst(skb);
+	पूर्णांक count = atomic_पढ़ो(&dev->peer_count);
+	स्थिर काष्ठा in6_addr *nexthop;
+	काष्ठा lowpan_peer *peer;
+	काष्ठा neighbour *neigh;
 
 	BT_DBG("peers %d addr %pI6c rt %p", count, daddr, rt);
 
-	if (!rt) {
-		if (ipv6_addr_any(&lowpan_cb(skb)->gw)) {
+	अगर (!rt) अणु
+		अगर (ipv6_addr_any(&lowpan_cb(skb)->gw)) अणु
 			/* There is neither route nor gateway,
 			 * probably the destination is a direct peer.
 			 */
 			nexthop = daddr;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* There is a known gateway
 			 */
 			nexthop = &lowpan_cb(skb)->gw;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		nexthop = rt6_nexthop(rt, daddr);
 
 		/* We need to remember the address because it is needed
 		 * by bt_xmit() when sending the packet. In bt_xmit(), the
 		 * destination routing info is not set.
 		 */
-		memcpy(&lowpan_cb(skb)->gw, nexthop, sizeof(struct in6_addr));
-	}
+		स_नकल(&lowpan_cb(skb)->gw, nexthop, माप(काष्ठा in6_addr));
+	पूर्ण
 
 	BT_DBG("gw %pI6c", nexthop);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(peer, &dev->peers, list) {
+	list_क्रम_each_entry_rcu(peer, &dev->peers, list) अणु
 		BT_DBG("dst addr %pMR dst type %d ip %pI6c",
 		       &peer->chan->dst, peer->chan->dst_type,
 		       &peer->peer_addr);
 
-		if (!ipv6_addr_cmp(&peer->peer_addr, nexthop)) {
-			rcu_read_unlock();
-			return peer;
-		}
-	}
+		अगर (!ipv6_addr_cmp(&peer->peer_addr, nexthop)) अणु
+			rcu_पढ़ो_unlock();
+			वापस peer;
+		पूर्ण
+	पूर्ण
 
-	/* use the neighbour cache for matching addresses assigned by SLAAC */
+	/* use the neighbour cache क्रम matching addresses asचिन्हित by SLAAC */
 	neigh = __ipv6_neigh_lookup(dev->netdev, nexthop);
-	if (neigh) {
-		list_for_each_entry_rcu(peer, &dev->peers, list) {
-			if (!memcmp(neigh->ha, peer->lladdr, ETH_ALEN)) {
+	अगर (neigh) अणु
+		list_क्रम_each_entry_rcu(peer, &dev->peers, list) अणु
+			अगर (!स_भेद(neigh->ha, peer->lladdr, ETH_ALEN)) अणु
 				neigh_release(neigh);
-				rcu_read_unlock();
-				return peer;
-			}
-		}
+				rcu_पढ़ो_unlock();
+				वापस peer;
+			पूर्ण
+		पूर्ण
 		neigh_release(neigh);
-	}
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct lowpan_peer *lookup_peer(struct l2cap_conn *conn)
-{
-	struct lowpan_btle_dev *entry;
-	struct lowpan_peer *peer = NULL;
+अटल काष्ठा lowpan_peer *lookup_peer(काष्ठा l2cap_conn *conn)
+अणु
+	काष्ठा lowpan_btle_dev *entry;
+	काष्ठा lowpan_peer *peer = शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(entry, &bt_6lowpan_devices, list) {
+	list_क्रम_each_entry_rcu(entry, &bt_6lowpan_devices, list) अणु
 		peer = __peer_lookup_conn(entry, conn);
-		if (peer)
-			break;
-	}
+		अगर (peer)
+			अवरोध;
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return peer;
-}
+	वापस peer;
+पूर्ण
 
-static struct lowpan_btle_dev *lookup_dev(struct l2cap_conn *conn)
-{
-	struct lowpan_btle_dev *entry;
-	struct lowpan_btle_dev *dev = NULL;
+अटल काष्ठा lowpan_btle_dev *lookup_dev(काष्ठा l2cap_conn *conn)
+अणु
+	काष्ठा lowpan_btle_dev *entry;
+	काष्ठा lowpan_btle_dev *dev = शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(entry, &bt_6lowpan_devices, list) {
-		if (conn->hcon->hdev == entry->hdev) {
+	list_क्रम_each_entry_rcu(entry, &bt_6lowpan_devices, list) अणु
+		अगर (conn->hcon->hdev == entry->hdev) अणु
 			dev = entry;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static int give_skb_to_upper(struct sk_buff *skb, struct net_device *dev)
-{
-	struct sk_buff *skb_cp;
+अटल पूर्णांक give_skb_to_upper(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा sk_buff *skb_cp;
 
 	skb_cp = skb_copy(skb, GFP_ATOMIC);
-	if (!skb_cp)
-		return NET_RX_DROP;
+	अगर (!skb_cp)
+		वापस NET_RX_DROP;
 
-	return netif_rx_ni(skb_cp);
-}
+	वापस netअगर_rx_ni(skb_cp);
+पूर्ण
 
-static int iphc_decompress(struct sk_buff *skb, struct net_device *netdev,
-			   struct lowpan_peer *peer)
-{
-	const u8 *saddr;
+अटल पूर्णांक iphc_decompress(काष्ठा sk_buff *skb, काष्ठा net_device *netdev,
+			   काष्ठा lowpan_peer *peer)
+अणु
+	स्थिर u8 *saddr;
 
 	saddr = peer->lladdr;
 
-	return lowpan_header_decompress(skb, netdev, netdev->dev_addr, saddr);
-}
+	वापस lowpan_header_decompress(skb, netdev, netdev->dev_addr, saddr);
+पूर्ण
 
-static int recv_pkt(struct sk_buff *skb, struct net_device *dev,
-		    struct lowpan_peer *peer)
-{
-	struct sk_buff *local_skb;
-	int ret;
+अटल पूर्णांक recv_pkt(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		    काष्ठा lowpan_peer *peer)
+अणु
+	काष्ठा sk_buff *local_skb;
+	पूर्णांक ret;
 
-	if (!netif_running(dev))
-		goto drop;
+	अगर (!netअगर_running(dev))
+		जाओ drop;
 
-	if (dev->type != ARPHRD_6LOWPAN || !skb->len)
-		goto drop;
+	अगर (dev->type != ARPHRD_6LOWPAN || !skb->len)
+		जाओ drop;
 
 	skb_reset_network_header(skb);
 
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	if (!skb)
-		goto drop;
+	अगर (!skb)
+		जाओ drop;
 
 	/* check that it's our buffer */
-	if (lowpan_is_ipv6(*skb_network_header(skb))) {
+	अगर (lowpan_is_ipv6(*skb_network_header(skb))) अणु
 		/* Pull off the 1-byte of 6lowpan header. */
 		skb_pull(skb, 1);
 
@@ -309,121 +310,121 @@ static int recv_pkt(struct sk_buff *skb, struct net_device *dev,
 		 */
 		local_skb = skb_copy_expand(skb, NET_SKB_PAD - 1,
 					    skb_tailroom(skb), GFP_ATOMIC);
-		if (!local_skb)
-			goto drop;
+		अगर (!local_skb)
+			जाओ drop;
 
 		local_skb->protocol = htons(ETH_P_IPV6);
 		local_skb->pkt_type = PACKET_HOST;
 		local_skb->dev = dev;
 
-		skb_set_transport_header(local_skb, sizeof(struct ipv6hdr));
+		skb_set_transport_header(local_skb, माप(काष्ठा ipv6hdr));
 
-		if (give_skb_to_upper(local_skb, dev) != NET_RX_SUCCESS) {
-			kfree_skb(local_skb);
-			goto drop;
-		}
+		अगर (give_skb_to_upper(local_skb, dev) != NET_RX_SUCCESS) अणु
+			kमुक्त_skb(local_skb);
+			जाओ drop;
+		पूर्ण
 
 		dev->stats.rx_bytes += skb->len;
 		dev->stats.rx_packets++;
 
 		consume_skb(local_skb);
 		consume_skb(skb);
-	} else if (lowpan_is_iphc(*skb_network_header(skb))) {
+	पूर्ण अन्यथा अगर (lowpan_is_iphc(*skb_network_header(skb))) अणु
 		local_skb = skb_clone(skb, GFP_ATOMIC);
-		if (!local_skb)
-			goto drop;
+		अगर (!local_skb)
+			जाओ drop;
 
 		local_skb->dev = dev;
 
 		ret = iphc_decompress(local_skb, dev, peer);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			BT_DBG("iphc_decompress failed: %d", ret);
-			kfree_skb(local_skb);
-			goto drop;
-		}
+			kमुक्त_skb(local_skb);
+			जाओ drop;
+		पूर्ण
 
 		local_skb->protocol = htons(ETH_P_IPV6);
 		local_skb->pkt_type = PACKET_HOST;
 
-		if (give_skb_to_upper(local_skb, dev)
-				!= NET_RX_SUCCESS) {
-			kfree_skb(local_skb);
-			goto drop;
-		}
+		अगर (give_skb_to_upper(local_skb, dev)
+				!= NET_RX_SUCCESS) अणु
+			kमुक्त_skb(local_skb);
+			जाओ drop;
+		पूर्ण
 
 		dev->stats.rx_bytes += skb->len;
 		dev->stats.rx_packets++;
 
 		consume_skb(local_skb);
 		consume_skb(skb);
-	} else {
+	पूर्ण अन्यथा अणु
 		BT_DBG("unknown packet type");
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 
-	return NET_RX_SUCCESS;
+	वापस NET_RX_SUCCESS;
 
 drop:
 	dev->stats.rx_dropped++;
-	return NET_RX_DROP;
-}
+	वापस NET_RX_DROP;
+पूर्ण
 
 /* Packet from BT LE device */
-static int chan_recv_cb(struct l2cap_chan *chan, struct sk_buff *skb)
-{
-	struct lowpan_btle_dev *dev;
-	struct lowpan_peer *peer;
-	int err;
+अटल पूर्णांक chan_recv_cb(काष्ठा l2cap_chan *chan, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा lowpan_btle_dev *dev;
+	काष्ठा lowpan_peer *peer;
+	पूर्णांक err;
 
 	peer = lookup_peer(chan->conn);
-	if (!peer)
-		return -ENOENT;
+	अगर (!peer)
+		वापस -ENOENT;
 
 	dev = lookup_dev(chan->conn);
-	if (!dev || !dev->netdev)
-		return -ENOENT;
+	अगर (!dev || !dev->netdev)
+		वापस -ENOENT;
 
 	err = recv_pkt(skb, dev->netdev, peer);
-	if (err) {
+	अगर (err) अणु
 		BT_DBG("recv pkt %d", err);
 		err = -EAGAIN;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int setup_header(struct sk_buff *skb, struct net_device *netdev,
+अटल पूर्णांक setup_header(काष्ठा sk_buff *skb, काष्ठा net_device *netdev,
 			bdaddr_t *peer_addr, u8 *peer_addr_type)
-{
-	struct in6_addr ipv6_daddr;
-	struct ipv6hdr *hdr;
-	struct lowpan_btle_dev *dev;
-	struct lowpan_peer *peer;
+अणु
+	काष्ठा in6_addr ipv6_daddr;
+	काष्ठा ipv6hdr *hdr;
+	काष्ठा lowpan_btle_dev *dev;
+	काष्ठा lowpan_peer *peer;
 	u8 *daddr;
-	int err, status = 0;
+	पूर्णांक err, status = 0;
 
 	hdr = ipv6_hdr(skb);
 
 	dev = lowpan_btle_dev(netdev);
 
-	memcpy(&ipv6_daddr, &hdr->daddr, sizeof(ipv6_daddr));
+	स_नकल(&ipv6_daddr, &hdr->daddr, माप(ipv6_daddr));
 
-	if (ipv6_addr_is_multicast(&ipv6_daddr)) {
-		lowpan_cb(skb)->chan = NULL;
-		daddr = NULL;
-	} else {
+	अगर (ipv6_addr_is_multicast(&ipv6_daddr)) अणु
+		lowpan_cb(skb)->chan = शून्य;
+		daddr = शून्य;
+	पूर्ण अन्यथा अणु
 		BT_DBG("dest IP %pI6c", &ipv6_daddr);
 
-		/* The packet might be sent to 6lowpan interface
-		 * because of routing (either via default route
+		/* The packet might be sent to 6lowpan पूर्णांकerface
+		 * because of routing (either via शेष route
 		 * or user set route) so get peer according to
 		 * the destination address.
 		 */
 		peer = peer_lookup_dst(dev, &ipv6_daddr, skb);
-		if (!peer) {
+		अगर (!peer) अणु
 			BT_DBG("no such peer");
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 
 		daddr = peer->lladdr;
 		*peer_addr = peer->chan->dst;
@@ -431,36 +432,36 @@ static int setup_header(struct sk_buff *skb, struct net_device *netdev,
 		lowpan_cb(skb)->chan = peer->chan;
 
 		status = 1;
-	}
+	पूर्ण
 
 	lowpan_header_compress(skb, netdev, daddr, dev->netdev->dev_addr);
 
-	err = dev_hard_header(skb, netdev, ETH_P_IPV6, NULL, NULL, 0);
-	if (err < 0)
-		return err;
+	err = dev_hard_header(skb, netdev, ETH_P_IPV6, शून्य, शून्य, 0);
+	अगर (err < 0)
+		वापस err;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int header_create(struct sk_buff *skb, struct net_device *netdev,
-			 unsigned short type, const void *_daddr,
-			 const void *_saddr, unsigned int len)
-{
-	if (type != ETH_P_IPV6)
-		return -EINVAL;
+अटल पूर्णांक header_create(काष्ठा sk_buff *skb, काष्ठा net_device *netdev,
+			 अचिन्हित लघु type, स्थिर व्योम *_daddr,
+			 स्थिर व्योम *_saddr, अचिन्हित पूर्णांक len)
+अणु
+	अगर (type != ETH_P_IPV6)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Packet to BT LE device */
-static int send_pkt(struct l2cap_chan *chan, struct sk_buff *skb,
-		    struct net_device *netdev)
-{
-	struct msghdr msg;
-	struct kvec iv;
-	int err;
+अटल पूर्णांक send_pkt(काष्ठा l2cap_chan *chan, काष्ठा sk_buff *skb,
+		    काष्ठा net_device *netdev)
+अणु
+	काष्ठा msghdr msg;
+	काष्ठा kvec iv;
+	पूर्णांक err;
 
-	/* Remember the skb so that we can send EAGAIN to the caller if
+	/* Remember the skb so that we can send EAGAIN to the caller अगर
 	 * we run out of credits.
 	 */
 	chan->data = skb;
@@ -468,41 +469,41 @@ static int send_pkt(struct l2cap_chan *chan, struct sk_buff *skb,
 	iv.iov_base = skb->data;
 	iv.iov_len = skb->len;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	iov_iter_kvec(&msg.msg_iter, WRITE, &iv, 1, skb->len);
 
 	err = l2cap_chan_send(chan, &msg, skb->len);
-	if (err > 0) {
+	अगर (err > 0) अणु
 		netdev->stats.tx_bytes += err;
 		netdev->stats.tx_packets++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (err < 0)
+	अगर (err < 0)
 		netdev->stats.tx_errors++;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int send_mcast_pkt(struct sk_buff *skb, struct net_device *netdev)
-{
-	struct sk_buff *local_skb;
-	struct lowpan_btle_dev *entry;
-	int err = 0;
+अटल पूर्णांक send_mcast_pkt(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
+अणु
+	काष्ठा sk_buff *local_skb;
+	काष्ठा lowpan_btle_dev *entry;
+	पूर्णांक err = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(entry, &bt_6lowpan_devices, list) {
-		struct lowpan_peer *pentry;
-		struct lowpan_btle_dev *dev;
+	list_क्रम_each_entry_rcu(entry, &bt_6lowpan_devices, list) अणु
+		काष्ठा lowpan_peer *pentry;
+		काष्ठा lowpan_btle_dev *dev;
 
-		if (entry->netdev != netdev)
-			continue;
+		अगर (entry->netdev != netdev)
+			जारी;
 
 		dev = lowpan_btle_dev(entry->netdev);
 
-		list_for_each_entry_rcu(pentry, &dev->peers, list) {
-			int ret;
+		list_क्रम_each_entry_rcu(pentry, &dev->peers, list) अणु
+			पूर्णांक ret;
 
 			local_skb = skb_clone(skb, GFP_ATOMIC);
 
@@ -511,30 +512,30 @@ static int send_mcast_pkt(struct sk_buff *skb, struct net_device *netdev)
 			       &pentry->chan->dst, pentry->chan->dst_type,
 			       &pentry->peer_addr, pentry->chan);
 			ret = send_pkt(pentry->chan, local_skb, netdev);
-			if (ret < 0)
+			अगर (ret < 0)
 				err = ret;
 
-			kfree_skb(local_skb);
-		}
-	}
+			kमुक्त_skb(local_skb);
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static netdev_tx_t bt_xmit(struct sk_buff *skb, struct net_device *netdev)
-{
-	int err = 0;
+अटल netdev_tx_t bt_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
+अणु
+	पूर्णांक err = 0;
 	bdaddr_t addr;
 	u8 addr_type;
 
-	/* We must take a copy of the skb before we modify/replace the ipv6
-	 * header as the header could be used elsewhere
+	/* We must take a copy of the skb beक्रमe we modअगरy/replace the ipv6
+	 * header as the header could be used अन्यथाwhere
 	 */
 	skb = skb_unshare(skb, GFP_ATOMIC);
-	if (!skb)
-		return NET_XMIT_DROP;
+	अगर (!skb)
+		वापस NET_XMIT_DROP;
 
 	/* Return values from setup_header()
 	 *  <0 - error, packet is dropped
@@ -542,136 +543,136 @@ static netdev_tx_t bt_xmit(struct sk_buff *skb, struct net_device *netdev)
 	 *   1 - this is unicast packet
 	 */
 	err = setup_header(skb, netdev, &addr, &addr_type);
-	if (err < 0) {
-		kfree_skb(skb);
-		return NET_XMIT_DROP;
-	}
+	अगर (err < 0) अणु
+		kमुक्त_skb(skb);
+		वापस NET_XMIT_DROP;
+	पूर्ण
 
-	if (err) {
-		if (lowpan_cb(skb)->chan) {
+	अगर (err) अणु
+		अगर (lowpan_cb(skb)->chan) अणु
 			BT_DBG("xmit %s to %pMR type %d IP %pI6c chan %p",
 			       netdev->name, &addr, addr_type,
 			       &lowpan_cb(skb)->addr, lowpan_cb(skb)->chan);
 			err = send_pkt(lowpan_cb(skb)->chan, skb, netdev);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -ENOENT;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* We need to send the packet to every device behind this
-		 * interface.
+		 * पूर्णांकerface.
 		 */
 		err = send_mcast_pkt(skb, netdev);
-	}
+	पूर्ण
 
-	dev_kfree_skb(skb);
+	dev_kमुक्त_skb(skb);
 
-	if (err)
+	अगर (err)
 		BT_DBG("ERROR: xmit failed (%d)", err);
 
-	return err < 0 ? NET_XMIT_DROP : err;
-}
+	वापस err < 0 ? NET_XMIT_DROP : err;
+पूर्ण
 
-static int bt_dev_init(struct net_device *dev)
-{
+अटल पूर्णांक bt_dev_init(काष्ठा net_device *dev)
+अणु
 	netdev_lockdep_set_classes(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops netdev_ops = {
-	.ndo_init		= bt_dev_init,
-	.ndo_start_xmit		= bt_xmit,
-};
+अटल स्थिर काष्ठा net_device_ops netdev_ops = अणु
+	.nकरो_init		= bt_dev_init,
+	.nकरो_start_xmit		= bt_xmit,
+पूर्ण;
 
-static const struct header_ops header_ops = {
+अटल स्थिर काष्ठा header_ops header_ops = अणु
 	.create	= header_create,
-};
+पूर्ण;
 
-static void netdev_setup(struct net_device *dev)
-{
+अटल व्योम netdev_setup(काष्ठा net_device *dev)
+अणु
 	dev->hard_header_len	= 0;
 	dev->needed_tailroom	= 0;
 	dev->flags		= IFF_RUNNING | IFF_MULTICAST;
-	dev->watchdog_timeo	= 0;
+	dev->watchकरोg_समयo	= 0;
 	dev->tx_queue_len	= DEFAULT_TX_QUEUE_LEN;
 
 	dev->netdev_ops		= &netdev_ops;
 	dev->header_ops		= &header_ops;
-	dev->needs_free_netdev	= true;
-}
+	dev->needs_मुक्त_netdev	= true;
+पूर्ण
 
-static struct device_type bt_type = {
+अटल काष्ठा device_type bt_type = अणु
 	.name	= "bluetooth",
-};
+पूर्ण;
 
-static void ifup(struct net_device *netdev)
-{
-	int err;
+अटल व्योम अगरup(काष्ठा net_device *netdev)
+अणु
+	पूर्णांक err;
 
 	rtnl_lock();
-	err = dev_open(netdev, NULL);
-	if (err < 0)
+	err = dev_खोलो(netdev, शून्य);
+	अगर (err < 0)
 		BT_INFO("iface %s cannot be opened (%d)", netdev->name, err);
 	rtnl_unlock();
-}
+पूर्ण
 
-static void ifdown(struct net_device *netdev)
-{
+अटल व्योम अगरकरोwn(काष्ठा net_device *netdev)
+अणु
 	rtnl_lock();
-	dev_close(netdev);
+	dev_बंद(netdev);
 	rtnl_unlock();
-}
+पूर्ण
 
-static void do_notify_peers(struct work_struct *work)
-{
-	struct lowpan_btle_dev *dev = container_of(work, struct lowpan_btle_dev,
-						   notify_peers.work);
+अटल व्योम करो_notअगरy_peers(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा lowpan_btle_dev *dev = container_of(work, काष्ठा lowpan_btle_dev,
+						   notअगरy_peers.work);
 
-	netdev_notify_peers(dev->netdev); /* send neighbour adv at startup */
-}
+	netdev_notअगरy_peers(dev->netdev); /* send neighbour adv at startup */
+पूर्ण
 
-static bool is_bt_6lowpan(struct hci_conn *hcon)
-{
-	if (hcon->type != LE_LINK)
-		return false;
+अटल bool is_bt_6lowpan(काष्ठा hci_conn *hcon)
+अणु
+	अगर (hcon->type != LE_LINK)
+		वापस false;
 
-	if (!enable_6lowpan)
-		return false;
+	अगर (!enable_6lowpan)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct l2cap_chan *chan_create(void)
-{
-	struct l2cap_chan *chan;
+अटल काष्ठा l2cap_chan *chan_create(व्योम)
+अणु
+	काष्ठा l2cap_chan *chan;
 
 	chan = l2cap_chan_create();
-	if (!chan)
-		return NULL;
+	अगर (!chan)
+		वापस शून्य;
 
-	l2cap_chan_set_defaults(chan);
+	l2cap_chan_set_शेषs(chan);
 
 	chan->chan_type = L2CAP_CHAN_CONN_ORIENTED;
 	chan->mode = L2CAP_MODE_LE_FLOWCTL;
 	chan->imtu = 1280;
 
-	return chan;
-}
+	वापस chan;
+पूर्ण
 
-static struct l2cap_chan *add_peer_chan(struct l2cap_chan *chan,
-					struct lowpan_btle_dev *dev,
+अटल काष्ठा l2cap_chan *add_peer_chan(काष्ठा l2cap_chan *chan,
+					काष्ठा lowpan_btle_dev *dev,
 					bool new_netdev)
-{
-	struct lowpan_peer *peer;
+अणु
+	काष्ठा lowpan_peer *peer;
 
-	peer = kzalloc(sizeof(*peer), GFP_ATOMIC);
-	if (!peer)
-		return NULL;
+	peer = kzalloc(माप(*peer), GFP_ATOMIC);
+	अगर (!peer)
+		वापस शून्य;
 
 	peer->chan = chan;
-	memset(&peer->peer_addr, 0, sizeof(struct in6_addr));
+	स_रखो(&peer->peer_addr, 0, माप(काष्ठा in6_addr));
 
-	baswap((void *)peer->lladdr, &chan->dst);
+	baswap((व्योम *)peer->lladdr, &chan->dst);
 
 	lowpan_iphc_uncompress_eui48_lladdr(&peer->peer_addr, peer->lladdr);
 
@@ -680,27 +681,27 @@ static struct l2cap_chan *add_peer_chan(struct l2cap_chan *chan,
 	peer_add(dev, peer);
 	spin_unlock(&devices_lock);
 
-	/* Notifying peers about us needs to be done without locks held */
-	if (new_netdev)
-		INIT_DELAYED_WORK(&dev->notify_peers, do_notify_peers);
-	schedule_delayed_work(&dev->notify_peers, msecs_to_jiffies(100));
+	/* Notअगरying peers about us needs to be करोne without locks held */
+	अगर (new_netdev)
+		INIT_DELAYED_WORK(&dev->notअगरy_peers, करो_notअगरy_peers);
+	schedule_delayed_work(&dev->notअगरy_peers, msecs_to_jअगरfies(100));
 
-	return peer->chan;
-}
+	वापस peer->chan;
+पूर्ण
 
-static int setup_netdev(struct l2cap_chan *chan, struct lowpan_btle_dev **dev)
-{
-	struct net_device *netdev;
-	int err = 0;
+अटल पूर्णांक setup_netdev(काष्ठा l2cap_chan *chan, काष्ठा lowpan_btle_dev **dev)
+अणु
+	काष्ठा net_device *netdev;
+	पूर्णांक err = 0;
 
-	netdev = alloc_netdev(LOWPAN_PRIV_SIZE(sizeof(struct lowpan_btle_dev)),
+	netdev = alloc_netdev(LOWPAN_PRIV_SIZE(माप(काष्ठा lowpan_btle_dev)),
 			      IFACE_NAME_TEMPLATE, NET_NAME_UNKNOWN,
 			      netdev_setup);
-	if (!netdev)
-		return -ENOMEM;
+	अगर (!netdev)
+		वापस -ENOMEM;
 
 	netdev->addr_assign_type = NET_ADDR_PERM;
-	baswap((void *)netdev->dev_addr, &chan->src);
+	baswap((व्योम *)netdev->dev_addr, &chan->src);
 
 	netdev->netdev_ops = &netdev_ops;
 	SET_NETDEV_DEV(netdev, &chan->conn->hcon->hdev->dev);
@@ -716,213 +717,213 @@ static int setup_netdev(struct l2cap_chan *chan, struct lowpan_btle_dev **dev)
 	list_add_rcu(&(*dev)->list, &bt_6lowpan_devices);
 	spin_unlock(&devices_lock);
 
-	err = lowpan_register_netdev(netdev, LOWPAN_LLTYPE_BTLE);
-	if (err < 0) {
+	err = lowpan_रेजिस्टर_netdev(netdev, LOWPAN_LLTYPE_BTLE);
+	अगर (err < 0) अणु
 		BT_INFO("register_netdev failed %d", err);
 		spin_lock(&devices_lock);
 		list_del_rcu(&(*dev)->list);
 		spin_unlock(&devices_lock);
-		free_netdev(netdev);
-		goto out;
-	}
+		मुक्त_netdev(netdev);
+		जाओ out;
+	पूर्ण
 
 	BT_DBG("ifindex %d peer bdaddr %pMR type %d my addr %pMR type %d",
-	       netdev->ifindex, &chan->dst, chan->dst_type,
+	       netdev->अगरindex, &chan->dst, chan->dst_type,
 	       &chan->src, chan->src_type);
 	set_bit(__LINK_STATE_PRESENT, &netdev->state);
 
-	return 0;
+	वापस 0;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline void chan_ready_cb(struct l2cap_chan *chan)
-{
-	struct lowpan_btle_dev *dev;
+अटल अंतरभूत व्योम chan_पढ़ोy_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा lowpan_btle_dev *dev;
 	bool new_netdev = false;
 
 	dev = lookup_dev(chan->conn);
 
 	BT_DBG("chan %p conn %p dev %p", chan, chan->conn, dev);
 
-	if (!dev) {
-		if (setup_netdev(chan, &dev) < 0) {
+	अगर (!dev) अणु
+		अगर (setup_netdev(chan, &dev) < 0) अणु
 			l2cap_chan_del(chan, -ENOENT);
-			return;
-		}
+			वापस;
+		पूर्ण
 		new_netdev = true;
-	}
+	पूर्ण
 
-	if (!try_module_get(THIS_MODULE))
-		return;
+	अगर (!try_module_get(THIS_MODULE))
+		वापस;
 
 	add_peer_chan(chan, dev, new_netdev);
-	ifup(dev->netdev);
-}
+	अगरup(dev->netdev);
+पूर्ण
 
-static inline struct l2cap_chan *chan_new_conn_cb(struct l2cap_chan *pchan)
-{
-	struct l2cap_chan *chan;
+अटल अंतरभूत काष्ठा l2cap_chan *chan_new_conn_cb(काष्ठा l2cap_chan *pchan)
+अणु
+	काष्ठा l2cap_chan *chan;
 
 	chan = chan_create();
-	if (!chan)
-		return NULL;
+	अगर (!chan)
+		वापस शून्य;
 
 	chan->ops = pchan->ops;
 
 	BT_DBG("chan %p pchan %p", chan, pchan);
 
-	return chan;
-}
+	वापस chan;
+पूर्ण
 
-static void delete_netdev(struct work_struct *work)
-{
-	struct lowpan_btle_dev *entry = container_of(work,
-						     struct lowpan_btle_dev,
+अटल व्योम delete_netdev(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा lowpan_btle_dev *entry = container_of(work,
+						     काष्ठा lowpan_btle_dev,
 						     delete_netdev);
 
-	lowpan_unregister_netdev(entry->netdev);
+	lowpan_unरेजिस्टर_netdev(entry->netdev);
 
-	/* The entry pointer is deleted by the netdev destructor. */
-}
+	/* The entry poपूर्णांकer is deleted by the netdev deकाष्ठाor. */
+पूर्ण
 
-static void chan_close_cb(struct l2cap_chan *chan)
-{
-	struct lowpan_btle_dev *entry;
-	struct lowpan_btle_dev *dev = NULL;
-	struct lowpan_peer *peer;
-	int err = -ENOENT;
-	bool last = false, remove = true;
+अटल व्योम chan_बंद_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा lowpan_btle_dev *entry;
+	काष्ठा lowpan_btle_dev *dev = शून्य;
+	काष्ठा lowpan_peer *peer;
+	पूर्णांक err = -ENOENT;
+	bool last = false, हटाओ = true;
 
 	BT_DBG("chan %p conn %p", chan, chan->conn);
 
-	if (chan->conn && chan->conn->hcon) {
-		if (!is_bt_6lowpan(chan->conn->hcon))
-			return;
+	अगर (chan->conn && chan->conn->hcon) अणु
+		अगर (!is_bt_6lowpan(chan->conn->hcon))
+			वापस;
 
 		/* If conn is set, then the netdev is also there and we should
-		 * not remove it.
+		 * not हटाओ it.
 		 */
-		remove = false;
-	}
+		हटाओ = false;
+	पूर्ण
 
 	spin_lock(&devices_lock);
 
-	list_for_each_entry_rcu(entry, &bt_6lowpan_devices, list) {
+	list_क्रम_each_entry_rcu(entry, &bt_6lowpan_devices, list) अणु
 		dev = lowpan_btle_dev(entry->netdev);
 		peer = __peer_lookup_chan(dev, chan);
-		if (peer) {
+		अगर (peer) अणु
 			last = peer_del(dev, peer);
 			err = 0;
 
 			BT_DBG("dev %p removing %speer %p", dev,
 			       last ? "last " : "1 ", peer);
 			BT_DBG("chan %p orig refcnt %d", chan,
-			       kref_read(&chan->kref));
+			       kref_पढ़ो(&chan->kref));
 
 			l2cap_chan_put(chan);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!err && last && dev && !atomic_read(&dev->peer_count)) {
+	अगर (!err && last && dev && !atomic_पढ़ो(&dev->peer_count)) अणु
 		spin_unlock(&devices_lock);
 
-		cancel_delayed_work_sync(&dev->notify_peers);
+		cancel_delayed_work_sync(&dev->notअगरy_peers);
 
-		ifdown(dev->netdev);
+		अगरकरोwn(dev->netdev);
 
-		if (remove) {
+		अगर (हटाओ) अणु
 			INIT_WORK(&entry->delete_netdev, delete_netdev);
 			schedule_work(&entry->delete_netdev);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		spin_unlock(&devices_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void chan_state_change_cb(struct l2cap_chan *chan, int state, int err)
-{
+अटल व्योम chan_state_change_cb(काष्ठा l2cap_chan *chan, पूर्णांक state, पूर्णांक err)
+अणु
 	BT_DBG("chan %p conn %p state %s err %d", chan, chan->conn,
 	       state_to_string(state), err);
-}
+पूर्ण
 
-static struct sk_buff *chan_alloc_skb_cb(struct l2cap_chan *chan,
-					 unsigned long hdr_len,
-					 unsigned long len, int nb)
-{
+अटल काष्ठा sk_buff *chan_alloc_skb_cb(काष्ठा l2cap_chan *chan,
+					 अचिन्हित दीर्घ hdr_len,
+					 अचिन्हित दीर्घ len, पूर्णांक nb)
+अणु
 	/* Note that we must allocate using GFP_ATOMIC here as
 	 * this function is called originally from netdev hard xmit
 	 * function in atomic context.
 	 */
-	return bt_skb_alloc(hdr_len + len, GFP_ATOMIC);
-}
+	वापस bt_skb_alloc(hdr_len + len, GFP_ATOMIC);
+पूर्ण
 
-static void chan_suspend_cb(struct l2cap_chan *chan)
-{
-	struct lowpan_btle_dev *dev;
+अटल व्योम chan_suspend_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा lowpan_btle_dev *dev;
 
 	BT_DBG("chan %p suspend", chan);
 
 	dev = lookup_dev(chan->conn);
-	if (!dev || !dev->netdev)
-		return;
+	अगर (!dev || !dev->netdev)
+		वापस;
 
-	netif_stop_queue(dev->netdev);
-}
+	netअगर_stop_queue(dev->netdev);
+पूर्ण
 
-static void chan_resume_cb(struct l2cap_chan *chan)
-{
-	struct lowpan_btle_dev *dev;
+अटल व्योम chan_resume_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा lowpan_btle_dev *dev;
 
 	BT_DBG("chan %p resume", chan);
 
 	dev = lookup_dev(chan->conn);
-	if (!dev || !dev->netdev)
-		return;
+	अगर (!dev || !dev->netdev)
+		वापस;
 
-	netif_wake_queue(dev->netdev);
-}
+	netअगर_wake_queue(dev->netdev);
+पूर्ण
 
-static long chan_get_sndtimeo_cb(struct l2cap_chan *chan)
-{
-	return L2CAP_CONN_TIMEOUT;
-}
+अटल दीर्घ chan_get_sndसमयo_cb(काष्ठा l2cap_chan *chan)
+अणु
+	वापस L2CAP_CONN_TIMEOUT;
+पूर्ण
 
-static const struct l2cap_ops bt_6lowpan_chan_ops = {
+अटल स्थिर काष्ठा l2cap_ops bt_6lowpan_chan_ops = अणु
 	.name			= "L2CAP 6LoWPAN channel",
 	.new_connection		= chan_new_conn_cb,
 	.recv			= chan_recv_cb,
-	.close			= chan_close_cb,
+	.बंद			= chan_बंद_cb,
 	.state_change		= chan_state_change_cb,
-	.ready			= chan_ready_cb,
+	.पढ़ोy			= chan_पढ़ोy_cb,
 	.resume			= chan_resume_cb,
 	.suspend		= chan_suspend_cb,
-	.get_sndtimeo		= chan_get_sndtimeo_cb,
+	.get_sndसमयo		= chan_get_sndसमयo_cb,
 	.alloc_skb		= chan_alloc_skb_cb,
 
-	.teardown		= l2cap_chan_no_teardown,
+	.tearकरोwn		= l2cap_chan_no_tearकरोwn,
 	.defer			= l2cap_chan_no_defer,
-	.set_shutdown		= l2cap_chan_no_set_shutdown,
-};
+	.set_shutकरोwn		= l2cap_chan_no_set_shutकरोwn,
+पूर्ण;
 
-static inline __u8 bdaddr_type(__u8 type)
-{
-	if (type == ADDR_LE_DEV_PUBLIC)
-		return BDADDR_LE_PUBLIC;
-	else
-		return BDADDR_LE_RANDOM;
-}
+अटल अंतरभूत __u8 bdaddr_type(__u8 type)
+अणु
+	अगर (type == ADDR_LE_DEV_PUBLIC)
+		वापस BDADDR_LE_PUBLIC;
+	अन्यथा
+		वापस BDADDR_LE_RANDOM;
+पूर्ण
 
-static int bt_6lowpan_connect(bdaddr_t *addr, u8 dst_type)
-{
-	struct l2cap_chan *chan;
-	int err;
+अटल पूर्णांक bt_6lowpan_connect(bdaddr_t *addr, u8 dst_type)
+अणु
+	काष्ठा l2cap_chan *chan;
+	पूर्णांक err;
 
 	chan = chan_create();
-	if (!chan)
-		return -EINVAL;
+	अगर (!chan)
+		वापस -EINVAL;
 
 	chan->ops = &bt_6lowpan_chan_ops;
 
@@ -930,41 +931,41 @@ static int bt_6lowpan_connect(bdaddr_t *addr, u8 dst_type)
 				 addr, dst_type);
 
 	BT_DBG("chan %p err %d", chan, err);
-	if (err < 0)
+	अगर (err < 0)
 		l2cap_chan_put(chan);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bt_6lowpan_disconnect(struct l2cap_conn *conn, u8 dst_type)
-{
-	struct lowpan_peer *peer;
+अटल पूर्णांक bt_6lowpan_disconnect(काष्ठा l2cap_conn *conn, u8 dst_type)
+अणु
+	काष्ठा lowpan_peer *peer;
 
 	BT_DBG("conn %p dst type %d", conn, dst_type);
 
 	peer = lookup_peer(conn);
-	if (!peer)
-		return -ENOENT;
+	अगर (!peer)
+		वापस -ENOENT;
 
 	BT_DBG("peer %p chan %p", peer, peer->chan);
 
-	l2cap_chan_close(peer->chan, ENOENT);
+	l2cap_chan_बंद(peer->chan, ENOENT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct l2cap_chan *bt_6lowpan_listen(void)
-{
+अटल काष्ठा l2cap_chan *bt_6lowpan_listen(व्योम)
+अणु
 	bdaddr_t *addr = BDADDR_ANY;
-	struct l2cap_chan *chan;
-	int err;
+	काष्ठा l2cap_chan *chan;
+	पूर्णांक err;
 
-	if (!enable_6lowpan)
-		return NULL;
+	अगर (!enable_6lowpan)
+		वापस शून्य;
 
 	chan = chan_create();
-	if (!chan)
-		return NULL;
+	अगर (!chan)
+		वापस शून्य;
 
 	chan->ops = &bt_6lowpan_chan_ops;
 	chan->state = BT_LISTEN;
@@ -975,101 +976,101 @@ static struct l2cap_chan *bt_6lowpan_listen(void)
 	BT_DBG("chan %p src type %d", chan, chan->src_type);
 
 	err = l2cap_add_psm(chan, addr, cpu_to_le16(L2CAP_PSM_IPSP));
-	if (err) {
+	अगर (err) अणु
 		l2cap_chan_put(chan);
 		BT_ERR("psm cannot be added err %d", err);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return chan;
-}
+	वापस chan;
+पूर्ण
 
-static int get_l2cap_conn(char *buf, bdaddr_t *addr, u8 *addr_type,
-			  struct l2cap_conn **conn)
-{
-	struct hci_conn *hcon;
-	struct hci_dev *hdev;
-	int n;
+अटल पूर्णांक get_l2cap_conn(अक्षर *buf, bdaddr_t *addr, u8 *addr_type,
+			  काष्ठा l2cap_conn **conn)
+अणु
+	काष्ठा hci_conn *hcon;
+	काष्ठा hci_dev *hdev;
+	पूर्णांक n;
 
-	n = sscanf(buf, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx %hhu",
+	n = माला_पूछो(buf, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx %hhu",
 		   &addr->b[5], &addr->b[4], &addr->b[3],
 		   &addr->b[2], &addr->b[1], &addr->b[0],
 		   addr_type);
 
-	if (n < 7)
-		return -EINVAL;
+	अगर (n < 7)
+		वापस -EINVAL;
 
 	/* The LE_PUBLIC address type is ignored because of BDADDR_ANY */
 	hdev = hci_get_route(addr, BDADDR_ANY, BDADDR_LE_PUBLIC);
-	if (!hdev)
-		return -ENOENT;
+	अगर (!hdev)
+		वापस -ENOENT;
 
 	hci_dev_lock(hdev);
 	hcon = hci_conn_hash_lookup_le(hdev, addr, *addr_type);
 	hci_dev_unlock(hdev);
 
-	if (!hcon)
-		return -ENOENT;
+	अगर (!hcon)
+		वापस -ENOENT;
 
-	*conn = (struct l2cap_conn *)hcon->l2cap_data;
+	*conn = (काष्ठा l2cap_conn *)hcon->l2cap_data;
 
 	BT_DBG("conn %p dst %pMR type %d", *conn, &hcon->dst, hcon->dst_type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void disconnect_all_peers(void)
-{
-	struct lowpan_btle_dev *entry;
-	struct lowpan_peer *peer, *tmp_peer, *new_peer;
-	struct list_head peers;
+अटल व्योम disconnect_all_peers(व्योम)
+अणु
+	काष्ठा lowpan_btle_dev *entry;
+	काष्ठा lowpan_peer *peer, *पंचांगp_peer, *new_peer;
+	काष्ठा list_head peers;
 
 	INIT_LIST_HEAD(&peers);
 
-	/* We make a separate list of peers as the close_cb() will
-	 * modify the device peers list so it is better not to mess
-	 * with the same list at the same time.
+	/* We make a separate list of peers as the बंद_cb() will
+	 * modअगरy the device peers list so it is better not to mess
+	 * with the same list at the same समय.
 	 */
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(entry, &bt_6lowpan_devices, list) {
-		list_for_each_entry_rcu(peer, &entry->peers, list) {
-			new_peer = kmalloc(sizeof(*new_peer), GFP_ATOMIC);
-			if (!new_peer)
-				break;
+	list_क्रम_each_entry_rcu(entry, &bt_6lowpan_devices, list) अणु
+		list_क्रम_each_entry_rcu(peer, &entry->peers, list) अणु
+			new_peer = kदो_स्मृति(माप(*new_peer), GFP_ATOMIC);
+			अगर (!new_peer)
+				अवरोध;
 
 			new_peer->chan = peer->chan;
 			INIT_LIST_HEAD(&new_peer->list);
 
 			list_add(&new_peer->list, &peers);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	spin_lock(&devices_lock);
-	list_for_each_entry_safe(peer, tmp_peer, &peers, list) {
-		l2cap_chan_close(peer->chan, ENOENT);
+	list_क्रम_each_entry_safe(peer, पंचांगp_peer, &peers, list) अणु
+		l2cap_chan_बंद(peer->chan, ENOENT);
 
 		list_del_rcu(&peer->list);
-		kfree_rcu(peer, rcu);
-	}
+		kमुक्त_rcu(peer, rcu);
+	पूर्ण
 	spin_unlock(&devices_lock);
-}
+पूर्ण
 
-struct set_enable {
-	struct work_struct work;
+काष्ठा set_enable अणु
+	काष्ठा work_काष्ठा work;
 	bool flag;
-};
+पूर्ण;
 
-static void do_enable_set(struct work_struct *work)
-{
-	struct set_enable *set_enable = container_of(work,
-						     struct set_enable, work);
+अटल व्योम करो_enable_set(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा set_enable *set_enable = container_of(work,
+						     काष्ठा set_enable, work);
 
-	if (!set_enable->flag || enable_6lowpan != set_enable->flag)
-		/* Disconnect existing connections if 6lowpan is
+	अगर (!set_enable->flag || enable_6lowpan != set_enable->flag)
+		/* Disconnect existing connections अगर 6lowpan is
 		 * disabled
 		 */
 		disconnect_all_peers();
@@ -1077,239 +1078,239 @@ static void do_enable_set(struct work_struct *work)
 	enable_6lowpan = set_enable->flag;
 
 	mutex_lock(&set_lock);
-	if (listen_chan) {
-		l2cap_chan_close(listen_chan, 0);
+	अगर (listen_chan) अणु
+		l2cap_chan_बंद(listen_chan, 0);
 		l2cap_chan_put(listen_chan);
-	}
+	पूर्ण
 
 	listen_chan = bt_6lowpan_listen();
 	mutex_unlock(&set_lock);
 
-	kfree(set_enable);
-}
+	kमुक्त(set_enable);
+पूर्ण
 
-static int lowpan_enable_set(void *data, u64 val)
-{
-	struct set_enable *set_enable;
+अटल पूर्णांक lowpan_enable_set(व्योम *data, u64 val)
+अणु
+	काष्ठा set_enable *set_enable;
 
-	set_enable = kzalloc(sizeof(*set_enable), GFP_KERNEL);
-	if (!set_enable)
-		return -ENOMEM;
+	set_enable = kzalloc(माप(*set_enable), GFP_KERNEL);
+	अगर (!set_enable)
+		वापस -ENOMEM;
 
 	set_enable->flag = !!val;
-	INIT_WORK(&set_enable->work, do_enable_set);
+	INIT_WORK(&set_enable->work, करो_enable_set);
 
 	schedule_work(&set_enable->work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lowpan_enable_get(void *data, u64 *val)
-{
+अटल पूर्णांक lowpan_enable_get(व्योम *data, u64 *val)
+अणु
 	*val = enable_6lowpan;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_DEBUGFS_ATTRIBUTE(lowpan_enable_fops, lowpan_enable_get,
 			 lowpan_enable_set, "%llu\n");
 
-static ssize_t lowpan_control_write(struct file *fp,
-				    const char __user *user_buffer,
-				    size_t count,
+अटल sमाप_प्रकार lowpan_control_ग_लिखो(काष्ठा file *fp,
+				    स्थिर अक्षर __user *user_buffer,
+				    माप_प्रकार count,
 				    loff_t *position)
-{
-	char buf[32];
-	size_t buf_size = min(count, sizeof(buf) - 1);
-	int ret;
+अणु
+	अक्षर buf[32];
+	माप_प्रकार buf_size = min(count, माप(buf) - 1);
+	पूर्णांक ret;
 	bdaddr_t addr;
 	u8 addr_type;
-	struct l2cap_conn *conn = NULL;
+	काष्ठा l2cap_conn *conn = शून्य;
 
-	if (copy_from_user(buf, user_buffer, buf_size))
-		return -EFAULT;
+	अगर (copy_from_user(buf, user_buffer, buf_size))
+		वापस -EFAULT;
 
 	buf[buf_size] = '\0';
 
-	if (memcmp(buf, "connect ", 8) == 0) {
+	अगर (स_भेद(buf, "connect ", 8) == 0) अणु
 		ret = get_l2cap_conn(&buf[8], &addr, &addr_type, &conn);
-		if (ret == -EINVAL)
-			return ret;
+		अगर (ret == -EINVAL)
+			वापस ret;
 
 		mutex_lock(&set_lock);
-		if (listen_chan) {
-			l2cap_chan_close(listen_chan, 0);
+		अगर (listen_chan) अणु
+			l2cap_chan_बंद(listen_chan, 0);
 			l2cap_chan_put(listen_chan);
-			listen_chan = NULL;
-		}
+			listen_chan = शून्य;
+		पूर्ण
 		mutex_unlock(&set_lock);
 
-		if (conn) {
-			struct lowpan_peer *peer;
+		अगर (conn) अणु
+			काष्ठा lowpan_peer *peer;
 
-			if (!is_bt_6lowpan(conn->hcon))
-				return -EINVAL;
+			अगर (!is_bt_6lowpan(conn->hcon))
+				वापस -EINVAL;
 
 			peer = lookup_peer(conn);
-			if (peer) {
+			अगर (peer) अणु
 				BT_DBG("6LoWPAN connection already exists");
-				return -EALREADY;
-			}
+				वापस -EALREADY;
+			पूर्ण
 
 			BT_DBG("conn %p dst %pMR type %d user %d", conn,
 			       &conn->hcon->dst, conn->hcon->dst_type,
 			       addr_type);
-		}
+		पूर्ण
 
 		ret = bt_6lowpan_connect(&addr, addr_type);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	if (memcmp(buf, "disconnect ", 11) == 0) {
+	अगर (स_भेद(buf, "disconnect ", 11) == 0) अणु
 		ret = get_l2cap_conn(&buf[11], &addr, &addr_type, &conn);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		ret = bt_6lowpan_disconnect(conn, addr_type);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int lowpan_control_show(struct seq_file *f, void *ptr)
-{
-	struct lowpan_btle_dev *entry;
-	struct lowpan_peer *peer;
+अटल पूर्णांक lowpan_control_show(काष्ठा seq_file *f, व्योम *ptr)
+अणु
+	काष्ठा lowpan_btle_dev *entry;
+	काष्ठा lowpan_peer *peer;
 
 	spin_lock(&devices_lock);
 
-	list_for_each_entry(entry, &bt_6lowpan_devices, list) {
-		list_for_each_entry(peer, &entry->peers, list)
-			seq_printf(f, "%pMR (type %u)\n",
+	list_क्रम_each_entry(entry, &bt_6lowpan_devices, list) अणु
+		list_क्रम_each_entry(peer, &entry->peers, list)
+			seq_म_लिखो(f, "%pMR (type %u)\n",
 				   &peer->chan->dst, peer->chan->dst_type);
-	}
+	पूर्ण
 
 	spin_unlock(&devices_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lowpan_control_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, lowpan_control_show, inode->i_private);
-}
+अटल पूर्णांक lowpan_control_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, lowpan_control_show, inode->i_निजी);
+पूर्ण
 
-static const struct file_operations lowpan_control_fops = {
-	.open		= lowpan_control_open,
-	.read		= seq_read,
-	.write		= lowpan_control_write,
+अटल स्थिर काष्ठा file_operations lowpan_control_fops = अणु
+	.खोलो		= lowpan_control_खोलो,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= lowpan_control_ग_लिखो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
-static void disconnect_devices(void)
-{
-	struct lowpan_btle_dev *entry, *tmp, *new_dev;
-	struct list_head devices;
+अटल व्योम disconnect_devices(व्योम)
+अणु
+	काष्ठा lowpan_btle_dev *entry, *पंचांगp, *new_dev;
+	काष्ठा list_head devices;
 
 	INIT_LIST_HEAD(&devices);
 
-	/* We make a separate list of devices because the unregister_netdev()
-	 * will call device_event() which will also want to modify the same
+	/* We make a separate list of devices because the unरेजिस्टर_netdev()
+	 * will call device_event() which will also want to modअगरy the same
 	 * devices list.
 	 */
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(entry, &bt_6lowpan_devices, list) {
-		new_dev = kmalloc(sizeof(*new_dev), GFP_ATOMIC);
-		if (!new_dev)
-			break;
+	list_क्रम_each_entry_rcu(entry, &bt_6lowpan_devices, list) अणु
+		new_dev = kदो_स्मृति(माप(*new_dev), GFP_ATOMIC);
+		अगर (!new_dev)
+			अवरोध;
 
 		new_dev->netdev = entry->netdev;
 		INIT_LIST_HEAD(&new_dev->list);
 
 		list_add_rcu(&new_dev->list, &devices);
-	}
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	list_for_each_entry_safe(entry, tmp, &devices, list) {
-		ifdown(entry->netdev);
+	list_क्रम_each_entry_safe(entry, पंचांगp, &devices, list) अणु
+		अगरकरोwn(entry->netdev);
 		BT_DBG("Unregistering netdev %s %p",
 		       entry->netdev->name, entry->netdev);
-		lowpan_unregister_netdev(entry->netdev);
-		kfree(entry);
-	}
-}
+		lowpan_unरेजिस्टर_netdev(entry->netdev);
+		kमुक्त(entry);
+	पूर्ण
+पूर्ण
 
-static int device_event(struct notifier_block *unused,
-			unsigned long event, void *ptr)
-{
-	struct net_device *netdev = netdev_notifier_info_to_dev(ptr);
-	struct lowpan_btle_dev *entry;
+अटल पूर्णांक device_event(काष्ठा notअगरier_block *unused,
+			अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *netdev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा lowpan_btle_dev *entry;
 
-	if (netdev->type != ARPHRD_6LOWPAN)
-		return NOTIFY_DONE;
+	अगर (netdev->type != ARPHRD_6LOWPAN)
+		वापस NOTIFY_DONE;
 
-	switch (event) {
-	case NETDEV_UNREGISTER:
+	चयन (event) अणु
+	हाल NETDEV_UNREGISTER:
 		spin_lock(&devices_lock);
-		list_for_each_entry(entry, &bt_6lowpan_devices, list) {
-			if (entry->netdev == netdev) {
+		list_क्रम_each_entry(entry, &bt_6lowpan_devices, list) अणु
+			अगर (entry->netdev == netdev) अणु
 				BT_DBG("Unregistered netdev %s %p",
 				       netdev->name, netdev);
 				list_del(&entry->list);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		spin_unlock(&devices_lock);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block bt_6lowpan_dev_notifier = {
-	.notifier_call = device_event,
-};
+अटल काष्ठा notअगरier_block bt_6lowpan_dev_notअगरier = अणु
+	.notअगरier_call = device_event,
+पूर्ण;
 
-static int __init bt_6lowpan_init(void)
-{
+अटल पूर्णांक __init bt_6lowpan_init(व्योम)
+अणु
 	lowpan_enable_debugfs = debugfs_create_file_unsafe("6lowpan_enable",
 							   0644, bt_debugfs,
-							   NULL,
+							   शून्य,
 							   &lowpan_enable_fops);
 	lowpan_control_debugfs = debugfs_create_file("6lowpan_control", 0644,
-						     bt_debugfs, NULL,
+						     bt_debugfs, शून्य,
 						     &lowpan_control_fops);
 
-	return register_netdevice_notifier(&bt_6lowpan_dev_notifier);
-}
+	वापस रेजिस्टर_netdevice_notअगरier(&bt_6lowpan_dev_notअगरier);
+पूर्ण
 
-static void __exit bt_6lowpan_exit(void)
-{
-	debugfs_remove(lowpan_enable_debugfs);
-	debugfs_remove(lowpan_control_debugfs);
+अटल व्योम __निकास bt_6lowpan_निकास(व्योम)
+अणु
+	debugfs_हटाओ(lowpan_enable_debugfs);
+	debugfs_हटाओ(lowpan_control_debugfs);
 
-	if (listen_chan) {
-		l2cap_chan_close(listen_chan, 0);
+	अगर (listen_chan) अणु
+		l2cap_chan_बंद(listen_chan, 0);
 		l2cap_chan_put(listen_chan);
-	}
+	पूर्ण
 
 	disconnect_devices();
 
-	unregister_netdevice_notifier(&bt_6lowpan_dev_notifier);
-}
+	unरेजिस्टर_netdevice_notअगरier(&bt_6lowpan_dev_notअगरier);
+पूर्ण
 
 module_init(bt_6lowpan_init);
-module_exit(bt_6lowpan_exit);
+module_निकास(bt_6lowpan_निकास);
 
 MODULE_AUTHOR("Jukka Rissanen <jukka.rissanen@linux.intel.com>");
 MODULE_DESCRIPTION("Bluetooth 6LoWPAN");

@@ -1,646 +1,647 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright 2018 Noralf Trønnes
+ * Copyright 2018 Noralf Trथचnnes
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
- *   Jesse Barnes <jesse.barnes@intel.com>
+ *   Jesse Barnes <jesse.barnes@पूर्णांकel.com>
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
  */
 
-#include "drm/drm_modeset_lock.h"
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
+#समावेश "drm/drm_modeset_lock.h"
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_client.h>
-#include <drm/drm_connector.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_device.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_encoder.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_client.h>
+#समावेश <drm/drm_connector.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_encoder.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "drm_crtc_internal.h"
-#include "drm_internal.h"
+#समावेश "drm_crtc_internal.h"
+#समावेश "drm_internal.h"
 
-#define DRM_CLIENT_MAX_CLONED_CONNECTORS	8
+#घोषणा DRM_CLIENT_MAX_CLONED_CONNECTORS	8
 
-struct drm_client_offset {
-	int x, y;
-};
+काष्ठा drm_client_offset अणु
+	पूर्णांक x, y;
+पूर्ण;
 
-int drm_client_modeset_create(struct drm_client_dev *client)
-{
-	struct drm_device *dev = client->dev;
-	unsigned int num_crtc = dev->mode_config.num_crtc;
-	unsigned int max_connector_count = 1;
-	struct drm_mode_set *modeset;
-	struct drm_crtc *crtc;
-	unsigned int i = 0;
+पूर्णांक drm_client_modeset_create(काष्ठा drm_client_dev *client)
+अणु
+	काष्ठा drm_device *dev = client->dev;
+	अचिन्हित पूर्णांक num_crtc = dev->mode_config.num_crtc;
+	अचिन्हित पूर्णांक max_connector_count = 1;
+	काष्ठा drm_mode_set *modeset;
+	काष्ठा drm_crtc *crtc;
+	अचिन्हित पूर्णांक i = 0;
 
 	/* Add terminating zero entry to enable index less iteration */
-	client->modesets = kcalloc(num_crtc + 1, sizeof(*client->modesets), GFP_KERNEL);
-	if (!client->modesets)
-		return -ENOMEM;
+	client->modesets = kसुस्मृति(num_crtc + 1, माप(*client->modesets), GFP_KERNEL);
+	अगर (!client->modesets)
+		वापस -ENOMEM;
 
 	mutex_init(&client->modeset_mutex);
 
-	drm_for_each_crtc(crtc, dev)
+	drm_क्रम_each_crtc(crtc, dev)
 		client->modesets[i++].crtc = crtc;
 
-	/* Cloning is only supported in the single crtc case. */
-	if (num_crtc == 1)
+	/* Cloning is only supported in the single crtc हाल. */
+	अगर (num_crtc == 1)
 		max_connector_count = DRM_CLIENT_MAX_CLONED_CONNECTORS;
 
-	for (modeset = client->modesets; modeset->crtc; modeset++) {
-		modeset->connectors = kcalloc(max_connector_count,
-					      sizeof(*modeset->connectors), GFP_KERNEL);
-		if (!modeset->connectors)
-			goto err_free;
-	}
+	क्रम (modeset = client->modesets; modeset->crtc; modeset++) अणु
+		modeset->connectors = kसुस्मृति(max_connector_count,
+					      माप(*modeset->connectors), GFP_KERNEL);
+		अगर (!modeset->connectors)
+			जाओ err_मुक्त;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free:
-	drm_client_modeset_free(client);
+err_मुक्त:
+	drm_client_modeset_मुक्त(client);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void drm_client_modeset_release(struct drm_client_dev *client)
-{
-	struct drm_mode_set *modeset;
-	unsigned int i;
+अटल व्योम drm_client_modeset_release(काष्ठा drm_client_dev *client)
+अणु
+	काष्ठा drm_mode_set *modeset;
+	अचिन्हित पूर्णांक i;
 
-	drm_client_for_each_modeset(modeset, client) {
+	drm_client_क्रम_each_modeset(modeset, client) अणु
 		drm_mode_destroy(client->dev, modeset->mode);
-		modeset->mode = NULL;
-		modeset->fb = NULL;
+		modeset->mode = शून्य;
+		modeset->fb = शून्य;
 
-		for (i = 0; i < modeset->num_connectors; i++) {
+		क्रम (i = 0; i < modeset->num_connectors; i++) अणु
 			drm_connector_put(modeset->connectors[i]);
-			modeset->connectors[i] = NULL;
-		}
+			modeset->connectors[i] = शून्य;
+		पूर्ण
 		modeset->num_connectors = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void drm_client_modeset_free(struct drm_client_dev *client)
-{
-	struct drm_mode_set *modeset;
+व्योम drm_client_modeset_मुक्त(काष्ठा drm_client_dev *client)
+अणु
+	काष्ठा drm_mode_set *modeset;
 
 	mutex_lock(&client->modeset_mutex);
 
 	drm_client_modeset_release(client);
 
-	drm_client_for_each_modeset(modeset, client)
-		kfree(modeset->connectors);
+	drm_client_क्रम_each_modeset(modeset, client)
+		kमुक्त(modeset->connectors);
 
 	mutex_unlock(&client->modeset_mutex);
 
 	mutex_destroy(&client->modeset_mutex);
-	kfree(client->modesets);
-}
+	kमुक्त(client->modesets);
+पूर्ण
 
-static struct drm_mode_set *
-drm_client_find_modeset(struct drm_client_dev *client, struct drm_crtc *crtc)
-{
-	struct drm_mode_set *modeset;
+अटल काष्ठा drm_mode_set *
+drm_client_find_modeset(काष्ठा drm_client_dev *client, काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_mode_set *modeset;
 
-	drm_client_for_each_modeset(modeset, client)
-		if (modeset->crtc == crtc)
-			return modeset;
+	drm_client_क्रम_each_modeset(modeset, client)
+		अगर (modeset->crtc == crtc)
+			वापस modeset;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct drm_display_mode *
-drm_connector_get_tiled_mode(struct drm_connector *connector)
-{
-	struct drm_display_mode *mode;
+अटल काष्ठा drm_display_mode *
+drm_connector_get_tiled_mode(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_display_mode *mode;
 
-	list_for_each_entry(mode, &connector->modes, head) {
-		if (mode->hdisplay == connector->tile_h_size &&
+	list_क्रम_each_entry(mode, &connector->modes, head) अणु
+		अगर (mode->hdisplay == connector->tile_h_size &&
 		    mode->vdisplay == connector->tile_v_size)
-			return mode;
-	}
-	return NULL;
-}
+			वापस mode;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct drm_display_mode *
-drm_connector_fallback_non_tiled_mode(struct drm_connector *connector)
-{
-	struct drm_display_mode *mode;
+अटल काष्ठा drm_display_mode *
+drm_connector_fallback_non_tiled_mode(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_display_mode *mode;
 
-	list_for_each_entry(mode, &connector->modes, head) {
-		if (mode->hdisplay == connector->tile_h_size &&
+	list_क्रम_each_entry(mode, &connector->modes, head) अणु
+		अगर (mode->hdisplay == connector->tile_h_size &&
 		    mode->vdisplay == connector->tile_v_size)
-			continue;
-		return mode;
-	}
-	return NULL;
-}
+			जारी;
+		वापस mode;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct drm_display_mode *
-drm_connector_has_preferred_mode(struct drm_connector *connector, int width, int height)
-{
-	struct drm_display_mode *mode;
+अटल काष्ठा drm_display_mode *
+drm_connector_has_preferred_mode(काष्ठा drm_connector *connector, पूर्णांक width, पूर्णांक height)
+अणु
+	काष्ठा drm_display_mode *mode;
 
-	list_for_each_entry(mode, &connector->modes, head) {
-		if (mode->hdisplay > width ||
+	list_क्रम_each_entry(mode, &connector->modes, head) अणु
+		अगर (mode->hdisplay > width ||
 		    mode->vdisplay > height)
-			continue;
-		if (mode->type & DRM_MODE_TYPE_PREFERRED)
-			return mode;
-	}
-	return NULL;
-}
+			जारी;
+		अगर (mode->type & DRM_MODE_TYPE_PREFERRED)
+			वापस mode;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct drm_display_mode *
-drm_connector_pick_cmdline_mode(struct drm_connector *connector)
-{
-	struct drm_cmdline_mode *cmdline_mode;
-	struct drm_display_mode *mode;
-	bool prefer_non_interlace;
+अटल काष्ठा drm_display_mode *
+drm_connector_pick_cmdline_mode(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_cmdline_mode *cmdline_mode;
+	काष्ठा drm_display_mode *mode;
+	bool prefer_non_पूर्णांकerlace;
 
 	cmdline_mode = &connector->cmdline_mode;
-	if (cmdline_mode->specified == false)
-		return NULL;
+	अगर (cmdline_mode->specअगरied == false)
+		वापस शून्य;
 
 	/* attempt to find a matching mode in the list of modes
-	 *  we have gotten so far, if not add a CVT mode that conforms
+	 *  we have gotten so far, अगर not add a CVT mode that conक्रमms
 	 */
-	if (cmdline_mode->rb || cmdline_mode->margins)
-		goto create_mode;
+	अगर (cmdline_mode->rb || cmdline_mode->margins)
+		जाओ create_mode;
 
-	prefer_non_interlace = !cmdline_mode->interlace;
+	prefer_non_पूर्णांकerlace = !cmdline_mode->पूर्णांकerlace;
 again:
-	list_for_each_entry(mode, &connector->modes, head) {
+	list_क्रम_each_entry(mode, &connector->modes, head) अणु
 		/* Check (optional) mode name first */
-		if (!strcmp(mode->name, cmdline_mode->name))
-			return mode;
+		अगर (!म_भेद(mode->name, cmdline_mode->name))
+			वापस mode;
 
 		/* check width/height */
-		if (mode->hdisplay != cmdline_mode->xres ||
+		अगर (mode->hdisplay != cmdline_mode->xres ||
 		    mode->vdisplay != cmdline_mode->yres)
-			continue;
+			जारी;
 
-		if (cmdline_mode->refresh_specified) {
-			if (drm_mode_vrefresh(mode) != cmdline_mode->refresh)
-				continue;
-		}
+		अगर (cmdline_mode->refresh_specअगरied) अणु
+			अगर (drm_mode_vrefresh(mode) != cmdline_mode->refresh)
+				जारी;
+		पूर्ण
 
-		if (cmdline_mode->interlace) {
-			if (!(mode->flags & DRM_MODE_FLAG_INTERLACE))
-				continue;
-		} else if (prefer_non_interlace) {
-			if (mode->flags & DRM_MODE_FLAG_INTERLACE)
-				continue;
-		}
-		return mode;
-	}
+		अगर (cmdline_mode->पूर्णांकerlace) अणु
+			अगर (!(mode->flags & DRM_MODE_FLAG_INTERLACE))
+				जारी;
+		पूर्ण अन्यथा अगर (prefer_non_पूर्णांकerlace) अणु
+			अगर (mode->flags & DRM_MODE_FLAG_INTERLACE)
+				जारी;
+		पूर्ण
+		वापस mode;
+	पूर्ण
 
-	if (prefer_non_interlace) {
-		prefer_non_interlace = false;
-		goto again;
-	}
+	अगर (prefer_non_पूर्णांकerlace) अणु
+		prefer_non_पूर्णांकerlace = false;
+		जाओ again;
+	पूर्ण
 
 create_mode:
 	mode = drm_mode_create_from_cmdline_mode(connector->dev, cmdline_mode);
-	if (mode)
+	अगर (mode)
 		list_add(&mode->head, &connector->modes);
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static bool drm_connector_enabled(struct drm_connector *connector, bool strict)
-{
+अटल bool drm_connector_enabled(काष्ठा drm_connector *connector, bool strict)
+अणु
 	bool enable;
 
-	if (connector->display_info.non_desktop)
-		return false;
+	अगर (connector->display_info.non_desktop)
+		वापस false;
 
-	if (strict)
+	अगर (strict)
 		enable = connector->status == connector_status_connected;
-	else
+	अन्यथा
 		enable = connector->status != connector_status_disconnected;
 
-	return enable;
-}
+	वापस enable;
+पूर्ण
 
-static void drm_client_connectors_enabled(struct drm_connector **connectors,
-					  unsigned int connector_count,
+अटल व्योम drm_client_connectors_enabled(काष्ठा drm_connector **connectors,
+					  अचिन्हित पूर्णांक connector_count,
 					  bool *enabled)
-{
+अणु
 	bool any_enabled = false;
-	struct drm_connector *connector;
-	int i = 0;
+	काष्ठा drm_connector *connector;
+	पूर्णांक i = 0;
 
-	for (i = 0; i < connector_count; i++) {
+	क्रम (i = 0; i < connector_count; i++) अणु
 		connector = connectors[i];
 		enabled[i] = drm_connector_enabled(connector, true);
 		DRM_DEBUG_KMS("connector %d enabled? %s\n", connector->base.id,
 			      connector->display_info.non_desktop ? "non desktop" : enabled[i] ? "yes" : "no");
 
 		any_enabled |= enabled[i];
-	}
+	पूर्ण
 
-	if (any_enabled)
-		return;
+	अगर (any_enabled)
+		वापस;
 
-	for (i = 0; i < connector_count; i++)
+	क्रम (i = 0; i < connector_count; i++)
 		enabled[i] = drm_connector_enabled(connectors[i], false);
-}
+पूर्ण
 
-static bool drm_client_target_cloned(struct drm_device *dev,
-				     struct drm_connector **connectors,
-				     unsigned int connector_count,
-				     struct drm_display_mode **modes,
-				     struct drm_client_offset *offsets,
-				     bool *enabled, int width, int height)
-{
-	int count, i, j;
+अटल bool drm_client_target_cloned(काष्ठा drm_device *dev,
+				     काष्ठा drm_connector **connectors,
+				     अचिन्हित पूर्णांक connector_count,
+				     काष्ठा drm_display_mode **modes,
+				     काष्ठा drm_client_offset *offsets,
+				     bool *enabled, पूर्णांक width, पूर्णांक height)
+अणु
+	पूर्णांक count, i, j;
 	bool can_clone = false;
-	struct drm_display_mode *dmt_mode, *mode;
+	काष्ठा drm_display_mode *dmt_mode, *mode;
 
-	/* only contemplate cloning in the single crtc case */
-	if (dev->mode_config.num_crtc > 1)
-		return false;
+	/* only conढाँचा cloning in the single crtc हाल */
+	अगर (dev->mode_config.num_crtc > 1)
+		वापस false;
 
 	count = 0;
-	for (i = 0; i < connector_count; i++) {
-		if (enabled[i])
+	क्रम (i = 0; i < connector_count; i++) अणु
+		अगर (enabled[i])
 			count++;
-	}
+	पूर्ण
 
-	/* only contemplate cloning if more than one connector is enabled */
-	if (count <= 1)
-		return false;
+	/* only conढाँचा cloning अगर more than one connector is enabled */
+	अगर (count <= 1)
+		वापस false;
 
-	/* check the command line or if nothing common pick 1024x768 */
+	/* check the command line or अगर nothing common pick 1024x768 */
 	can_clone = true;
-	for (i = 0; i < connector_count; i++) {
-		if (!enabled[i])
-			continue;
+	क्रम (i = 0; i < connector_count; i++) अणु
+		अगर (!enabled[i])
+			जारी;
 		modes[i] = drm_connector_pick_cmdline_mode(connectors[i]);
-		if (!modes[i]) {
+		अगर (!modes[i]) अणु
 			can_clone = false;
-			break;
-		}
-		for (j = 0; j < i; j++) {
-			if (!enabled[j])
-				continue;
-			if (!drm_mode_match(modes[j], modes[i],
+			अवरोध;
+		पूर्ण
+		क्रम (j = 0; j < i; j++) अणु
+			अगर (!enabled[j])
+				जारी;
+			अगर (!drm_mode_match(modes[j], modes[i],
 					    DRM_MODE_MATCH_TIMINGS |
 					    DRM_MODE_MATCH_CLOCK |
 					    DRM_MODE_MATCH_FLAGS |
 					    DRM_MODE_MATCH_3D_FLAGS))
 				can_clone = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (can_clone) {
+	अगर (can_clone) अणु
 		DRM_DEBUG_KMS("can clone using command line\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/* try and find a 1024x768 mode on each connector */
 	can_clone = true;
 	dmt_mode = drm_mode_find_dmt(dev, 1024, 768, 60, false);
 
-	for (i = 0; i < connector_count; i++) {
-		if (!enabled[i])
-			continue;
+	क्रम (i = 0; i < connector_count; i++) अणु
+		अगर (!enabled[i])
+			जारी;
 
-		list_for_each_entry(mode, &connectors[i]->modes, head) {
-			if (drm_mode_match(mode, dmt_mode,
+		list_क्रम_each_entry(mode, &connectors[i]->modes, head) अणु
+			अगर (drm_mode_match(mode, dmt_mode,
 					   DRM_MODE_MATCH_TIMINGS |
 					   DRM_MODE_MATCH_CLOCK |
 					   DRM_MODE_MATCH_FLAGS |
 					   DRM_MODE_MATCH_3D_FLAGS))
 				modes[i] = mode;
-		}
-		if (!modes[i])
+		पूर्ण
+		अगर (!modes[i])
 			can_clone = false;
-	}
+	पूर्ण
 
-	if (can_clone) {
+	अगर (can_clone) अणु
 		DRM_DEBUG_KMS("can clone using 1024x768\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 	DRM_INFO("kms: can't enable cloning when we probably wanted to.\n");
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int drm_client_get_tile_offsets(struct drm_connector **connectors,
-				       unsigned int connector_count,
-				       struct drm_display_mode **modes,
-				       struct drm_client_offset *offsets,
-				       int idx,
-				       int h_idx, int v_idx)
-{
-	struct drm_connector *connector;
-	int i;
-	int hoffset = 0, voffset = 0;
+अटल पूर्णांक drm_client_get_tile_offsets(काष्ठा drm_connector **connectors,
+				       अचिन्हित पूर्णांक connector_count,
+				       काष्ठा drm_display_mode **modes,
+				       काष्ठा drm_client_offset *offsets,
+				       पूर्णांक idx,
+				       पूर्णांक h_idx, पूर्णांक v_idx)
+अणु
+	काष्ठा drm_connector *connector;
+	पूर्णांक i;
+	पूर्णांक hoffset = 0, voffset = 0;
 
-	for (i = 0; i < connector_count; i++) {
+	क्रम (i = 0; i < connector_count; i++) अणु
 		connector = connectors[i];
-		if (!connector->has_tile)
-			continue;
+		अगर (!connector->has_tile)
+			जारी;
 
-		if (!modes[i] && (h_idx || v_idx)) {
+		अगर (!modes[i] && (h_idx || v_idx)) अणु
 			DRM_DEBUG_KMS("no modes for connector tiled %d %d\n", i,
 				      connector->base.id);
-			continue;
-		}
-		if (connector->tile_h_loc < h_idx)
+			जारी;
+		पूर्ण
+		अगर (connector->tile_h_loc < h_idx)
 			hoffset += modes[i]->hdisplay;
 
-		if (connector->tile_v_loc < v_idx)
+		अगर (connector->tile_v_loc < v_idx)
 			voffset += modes[i]->vdisplay;
-	}
+	पूर्ण
 	offsets[idx].x = hoffset;
 	offsets[idx].y = voffset;
 	DRM_DEBUG_KMS("returned %d %d for %d %d\n", hoffset, voffset, h_idx, v_idx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool drm_client_target_preferred(struct drm_connector **connectors,
-					unsigned int connector_count,
-					struct drm_display_mode **modes,
-					struct drm_client_offset *offsets,
-					bool *enabled, int width, int height)
-{
-	const u64 mask = BIT_ULL(connector_count) - 1;
-	struct drm_connector *connector;
+अटल bool drm_client_target_preferred(काष्ठा drm_connector **connectors,
+					अचिन्हित पूर्णांक connector_count,
+					काष्ठा drm_display_mode **modes,
+					काष्ठा drm_client_offset *offsets,
+					bool *enabled, पूर्णांक width, पूर्णांक height)
+अणु
+	स्थिर u64 mask = BIT_ULL(connector_count) - 1;
+	काष्ठा drm_connector *connector;
 	u64 conn_configured = 0;
-	int tile_pass = 0;
-	int num_tiled_conns = 0;
-	int i;
+	पूर्णांक tile_pass = 0;
+	पूर्णांक num_tiled_conns = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < connector_count; i++) {
-		if (connectors[i]->has_tile &&
+	क्रम (i = 0; i < connector_count; i++) अणु
+		अगर (connectors[i]->has_tile &&
 		    connectors[i]->status == connector_status_connected)
 			num_tiled_conns++;
-	}
+	पूर्ण
 
 retry:
-	for (i = 0; i < connector_count; i++) {
+	क्रम (i = 0; i < connector_count; i++) अणु
 		connector = connectors[i];
 
-		if (conn_configured & BIT_ULL(i))
-			continue;
+		अगर (conn_configured & BIT_ULL(i))
+			जारी;
 
-		if (enabled[i] == false) {
+		अगर (enabled[i] == false) अणु
 			conn_configured |= BIT_ULL(i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* first pass over all the untiled connectors */
-		if (tile_pass == 0 && connector->has_tile)
-			continue;
+		अगर (tile_pass == 0 && connector->has_tile)
+			जारी;
 
-		if (tile_pass == 1) {
-			if (connector->tile_h_loc != 0 ||
+		अगर (tile_pass == 1) अणु
+			अगर (connector->tile_h_loc != 0 ||
 			    connector->tile_v_loc != 0)
-				continue;
+				जारी;
 
-		} else {
-			if (connector->tile_h_loc != tile_pass - 1 &&
+		पूर्ण अन्यथा अणु
+			अगर (connector->tile_h_loc != tile_pass - 1 &&
 			    connector->tile_v_loc != tile_pass - 1)
-			/* if this tile_pass doesn't cover any of the tiles - keep going */
-				continue;
+			/* अगर this tile_pass करोesn't cover any of the tiles - keep going */
+				जारी;
 
 			/*
-			 * find the tile offsets for this pass - need to find
+			 * find the tile offsets क्रम this pass - need to find
 			 * all tiles left and above
 			 */
 			drm_client_get_tile_offsets(connectors, connector_count, modes, offsets, i,
 						    connector->tile_h_loc, connector->tile_v_loc);
-		}
+		पूर्ण
 		DRM_DEBUG_KMS("looking for cmdline mode on connector %d\n",
 			      connector->base.id);
 
-		/* got for command line mode first */
+		/* got क्रम command line mode first */
 		modes[i] = drm_connector_pick_cmdline_mode(connector);
-		if (!modes[i]) {
+		अगर (!modes[i]) अणु
 			DRM_DEBUG_KMS("looking for preferred mode on connector %d %d\n",
 				      connector->base.id, connector->tile_group ? connector->tile_group->id : 0);
 			modes[i] = drm_connector_has_preferred_mode(connector, width, height);
-		}
+		पूर्ण
 		/* No preferred modes, pick one off the list */
-		if (!modes[i] && !list_empty(&connector->modes)) {
-			list_for_each_entry(modes[i], &connector->modes, head)
-				break;
-		}
+		अगर (!modes[i] && !list_empty(&connector->modes)) अणु
+			list_क्रम_each_entry(modes[i], &connector->modes, head)
+				अवरोध;
+		पूर्ण
 		/*
-		 * In case of tiled mode if all tiles not present fallback to
+		 * In हाल of tiled mode अगर all tiles not present fallback to
 		 * first available non tiled mode.
 		 * After all tiles are present, try to find the tiled mode
-		 * for all and if tiled mode not present due to fbcon size
-		 * limitations, use first non tiled mode only for
-		 * tile 0,0 and set to no mode for all other tiles.
+		 * क्रम all and अगर tiled mode not present due to fbcon size
+		 * limitations, use first non tiled mode only क्रम
+		 * tile 0,0 and set to no mode क्रम all other tiles.
 		 */
-		if (connector->has_tile) {
-			if (num_tiled_conns <
+		अगर (connector->has_tile) अणु
+			अगर (num_tiled_conns <
 			    connector->num_h_tile * connector->num_v_tile ||
 			    (connector->tile_h_loc == 0 &&
 			     connector->tile_v_loc == 0 &&
-			     !drm_connector_get_tiled_mode(connector))) {
+			     !drm_connector_get_tiled_mode(connector))) अणु
 				DRM_DEBUG_KMS("Falling back to non tiled mode on Connector %d\n",
 					      connector->base.id);
 				modes[i] = drm_connector_fallback_non_tiled_mode(connector);
-			} else {
+			पूर्ण अन्यथा अणु
 				modes[i] = drm_connector_get_tiled_mode(connector);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		DRM_DEBUG_KMS("found mode %s\n", modes[i] ? modes[i]->name :
 			  "none");
 		conn_configured |= BIT_ULL(i);
-	}
+	पूर्ण
 
-	if ((conn_configured & mask) != mask) {
+	अगर ((conn_configured & mask) != mask) अणु
 		tile_pass++;
-		goto retry;
-	}
-	return true;
-}
+		जाओ retry;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static bool connector_has_possible_crtc(struct drm_connector *connector,
-					struct drm_crtc *crtc)
-{
-	struct drm_encoder *encoder;
+अटल bool connector_has_possible_crtc(काष्ठा drm_connector *connector,
+					काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_encoder *encoder;
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
-		if (encoder->possible_crtcs & drm_crtc_mask(crtc))
-			return true;
-	}
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
+		अगर (encoder->possible_crtcs & drm_crtc_mask(crtc))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int drm_client_pick_crtcs(struct drm_client_dev *client,
-				 struct drm_connector **connectors,
-				 unsigned int connector_count,
-				 struct drm_crtc **best_crtcs,
-				 struct drm_display_mode **modes,
-				 int n, int width, int height)
-{
-	struct drm_device *dev = client->dev;
-	struct drm_connector *connector;
-	int my_score, best_score, score;
-	struct drm_crtc **crtcs, *crtc;
-	struct drm_mode_set *modeset;
-	int o;
+अटल पूर्णांक drm_client_pick_crtcs(काष्ठा drm_client_dev *client,
+				 काष्ठा drm_connector **connectors,
+				 अचिन्हित पूर्णांक connector_count,
+				 काष्ठा drm_crtc **best_crtcs,
+				 काष्ठा drm_display_mode **modes,
+				 पूर्णांक n, पूर्णांक width, पूर्णांक height)
+अणु
+	काष्ठा drm_device *dev = client->dev;
+	काष्ठा drm_connector *connector;
+	पूर्णांक my_score, best_score, score;
+	काष्ठा drm_crtc **crtcs, *crtc;
+	काष्ठा drm_mode_set *modeset;
+	पूर्णांक o;
 
-	if (n == connector_count)
-		return 0;
+	अगर (n == connector_count)
+		वापस 0;
 
 	connector = connectors[n];
 
-	best_crtcs[n] = NULL;
+	best_crtcs[n] = शून्य;
 	best_score = drm_client_pick_crtcs(client, connectors, connector_count,
 					   best_crtcs, modes, n + 1, width, height);
-	if (modes[n] == NULL)
-		return best_score;
+	अगर (modes[n] == शून्य)
+		वापस best_score;
 
-	crtcs = kcalloc(connector_count, sizeof(*crtcs), GFP_KERNEL);
-	if (!crtcs)
-		return best_score;
+	crtcs = kसुस्मृति(connector_count, माप(*crtcs), GFP_KERNEL);
+	अगर (!crtcs)
+		वापस best_score;
 
 	my_score = 1;
-	if (connector->status == connector_status_connected)
+	अगर (connector->status == connector_status_connected)
 		my_score++;
-	if (connector->cmdline_mode.specified)
+	अगर (connector->cmdline_mode.specअगरied)
 		my_score++;
-	if (drm_connector_has_preferred_mode(connector, width, height))
+	अगर (drm_connector_has_preferred_mode(connector, width, height))
 		my_score++;
 
 	/*
-	 * select a crtc for this connector and then attempt to configure
-	 * remaining connectors
+	 * select a crtc क्रम this connector and then attempt to configure
+	 * reमुख्यing connectors
 	 */
-	drm_client_for_each_modeset(modeset, client) {
+	drm_client_क्रम_each_modeset(modeset, client) अणु
 		crtc = modeset->crtc;
 
-		if (!connector_has_possible_crtc(connector, crtc))
-			continue;
+		अगर (!connector_has_possible_crtc(connector, crtc))
+			जारी;
 
-		for (o = 0; o < n; o++)
-			if (best_crtcs[o] == crtc)
-				break;
+		क्रम (o = 0; o < n; o++)
+			अगर (best_crtcs[o] == crtc)
+				अवरोध;
 
-		if (o < n) {
+		अगर (o < n) अणु
 			/* ignore cloning unless only a single crtc */
-			if (dev->mode_config.num_crtc > 1)
-				continue;
+			अगर (dev->mode_config.num_crtc > 1)
+				जारी;
 
-			if (!drm_mode_equal(modes[o], modes[n]))
-				continue;
-		}
+			अगर (!drm_mode_equal(modes[o], modes[n]))
+				जारी;
+		पूर्ण
 
 		crtcs[n] = crtc;
-		memcpy(crtcs, best_crtcs, n * sizeof(*crtcs));
+		स_नकल(crtcs, best_crtcs, n * माप(*crtcs));
 		score = my_score + drm_client_pick_crtcs(client, connectors, connector_count,
 							 crtcs, modes, n + 1, width, height);
-		if (score > best_score) {
+		अगर (score > best_score) अणु
 			best_score = score;
-			memcpy(best_crtcs, crtcs, connector_count * sizeof(*crtcs));
-		}
-	}
+			स_नकल(best_crtcs, crtcs, connector_count * माप(*crtcs));
+		पूर्ण
+	पूर्ण
 
-	kfree(crtcs);
-	return best_score;
-}
+	kमुक्त(crtcs);
+	वापस best_score;
+पूर्ण
 
-/* Try to read the BIOS display configuration and use it for the initial config */
-static bool drm_client_firmware_config(struct drm_client_dev *client,
-				       struct drm_connector **connectors,
-				       unsigned int connector_count,
-				       struct drm_crtc **crtcs,
-				       struct drm_display_mode **modes,
-				       struct drm_client_offset *offsets,
-				       bool *enabled, int width, int height)
-{
-	const int count = min_t(unsigned int, connector_count, BITS_PER_LONG);
-	unsigned long conn_configured, conn_seq, mask;
-	struct drm_device *dev = client->dev;
-	int i, j;
+/* Try to पढ़ो the BIOS display configuration and use it क्रम the initial config */
+अटल bool drm_client_firmware_config(काष्ठा drm_client_dev *client,
+				       काष्ठा drm_connector **connectors,
+				       अचिन्हित पूर्णांक connector_count,
+				       काष्ठा drm_crtc **crtcs,
+				       काष्ठा drm_display_mode **modes,
+				       काष्ठा drm_client_offset *offsets,
+				       bool *enabled, पूर्णांक width, पूर्णांक height)
+अणु
+	स्थिर पूर्णांक count = min_t(अचिन्हित पूर्णांक, connector_count, BITS_PER_LONG);
+	अचिन्हित दीर्घ conn_configured, conn_seq, mask;
+	काष्ठा drm_device *dev = client->dev;
+	पूर्णांक i, j;
 	bool *save_enabled;
 	bool fallback = true, ret = true;
-	int num_connectors_enabled = 0;
-	int num_connectors_detected = 0;
-	int num_tiled_conns = 0;
-	struct drm_modeset_acquire_ctx ctx;
+	पूर्णांक num_connectors_enabled = 0;
+	पूर्णांक num_connectors_detected = 0;
+	पूर्णांक num_tiled_conns = 0;
+	काष्ठा drm_modeset_acquire_ctx ctx;
 
-	if (!drm_drv_uses_atomic_modeset(dev))
-		return false;
+	अगर (!drm_drv_uses_atomic_modeset(dev))
+		वापस false;
 
-	if (WARN_ON(count <= 0))
-		return false;
+	अगर (WARN_ON(count <= 0))
+		वापस false;
 
-	save_enabled = kcalloc(count, sizeof(bool), GFP_KERNEL);
-	if (!save_enabled)
-		return false;
+	save_enabled = kसुस्मृति(count, माप(bool), GFP_KERNEL);
+	अगर (!save_enabled)
+		वापस false;
 
 	drm_modeset_acquire_init(&ctx, 0);
 
-	while (drm_modeset_lock_all_ctx(dev, &ctx) != 0)
+	जबतक (drm_modeset_lock_all_ctx(dev, &ctx) != 0)
 		drm_modeset_backoff(&ctx);
 
-	memcpy(save_enabled, enabled, count);
+	स_नकल(save_enabled, enabled, count);
 	mask = GENMASK(count - 1, 0);
 	conn_configured = 0;
-	for (i = 0; i < count; i++) {
-		if (connectors[i]->has_tile &&
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (connectors[i]->has_tile &&
 		    connectors[i]->status == connector_status_connected)
 			num_tiled_conns++;
-	}
+	पूर्ण
 retry:
 	conn_seq = conn_configured;
-	for (i = 0; i < count; i++) {
-		struct drm_connector *connector;
-		struct drm_encoder *encoder;
-		struct drm_crtc *new_crtc;
+	क्रम (i = 0; i < count; i++) अणु
+		काष्ठा drm_connector *connector;
+		काष्ठा drm_encoder *encoder;
+		काष्ठा drm_crtc *new_crtc;
 
 		connector = connectors[i];
 
-		if (conn_configured & BIT(i))
-			continue;
+		अगर (conn_configured & BIT(i))
+			जारी;
 
-		if (conn_seq == 0 && !connector->has_tile)
-			continue;
+		अगर (conn_seq == 0 && !connector->has_tile)
+			जारी;
 
-		if (connector->status == connector_status_connected)
+		अगर (connector->status == connector_status_connected)
 			num_connectors_detected++;
 
-		if (!enabled[i]) {
+		अगर (!enabled[i]) अणु
 			DRM_DEBUG_KMS("connector %s not enabled, skipping\n",
 				      connector->name);
 			conn_configured |= BIT(i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (connector->force == DRM_FORCE_OFF) {
+		अगर (connector->क्रमce == DRM_FORCE_OFF) अणु
 			DRM_DEBUG_KMS("connector %s is disabled by user, skipping\n",
 				      connector->name);
 			enabled[i] = false;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		encoder = connector->state->best_encoder;
-		if (!encoder || WARN_ON(!connector->state->crtc)) {
-			if (connector->force > DRM_FORCE_OFF)
-				goto bail;
+		अगर (!encoder || WARN_ON(!connector->state->crtc)) अणु
+			अगर (connector->क्रमce > DRM_FORCE_OFF)
+				जाओ bail;
 
 			DRM_DEBUG_KMS("connector %s has no encoder or crtc, skipping\n",
 				      connector->name);
 			enabled[i] = false;
 			conn_configured |= BIT(i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		num_connectors_enabled++;
 
@@ -651,62 +652,62 @@ retry:
 		 * with a single CRTC, since our cloning support may not
 		 * match the BIOS.
 		 */
-		for (j = 0; j < count; j++) {
-			if (crtcs[j] == new_crtc) {
+		क्रम (j = 0; j < count; j++) अणु
+			अगर (crtcs[j] == new_crtc) अणु
 				DRM_DEBUG_KMS("fallback: cloned configuration\n");
-				goto bail;
-			}
-		}
+				जाओ bail;
+			पूर्ण
+		पूर्ण
 
 		DRM_DEBUG_KMS("looking for cmdline mode on connector %s\n",
 			      connector->name);
 
-		/* go for command line mode first */
+		/* go क्रम command line mode first */
 		modes[i] = drm_connector_pick_cmdline_mode(connector);
 
-		/* try for preferred next */
-		if (!modes[i]) {
+		/* try क्रम preferred next */
+		अगर (!modes[i]) अणु
 			DRM_DEBUG_KMS("looking for preferred mode on connector %s %d\n",
 				      connector->name, connector->has_tile);
 			modes[i] = drm_connector_has_preferred_mode(connector, width, height);
-		}
+		पूर्ण
 
 		/* No preferred mode marked by the EDID? Are there any modes? */
-		if (!modes[i] && !list_empty(&connector->modes)) {
+		अगर (!modes[i] && !list_empty(&connector->modes)) अणु
 			DRM_DEBUG_KMS("using first mode listed on connector %s\n",
 				      connector->name);
 			modes[i] = list_first_entry(&connector->modes,
-						    struct drm_display_mode,
+						    काष्ठा drm_display_mode,
 						    head);
-		}
+		पूर्ण
 
 		/* last resort: use current mode */
-		if (!modes[i]) {
+		अगर (!modes[i]) अणु
 			/*
 			 * IMPORTANT: We want to use the adjusted mode (i.e.
 			 * after the panel fitter upscaling) as the initial
 			 * config, not the input mode, which is what crtc->mode
 			 * usually contains. But since our current
-			 * code puts a mode derived from the post-pfit timings
-			 * into crtc->mode this works out correctly.
+			 * code माला_दो a mode derived from the post-pfit timings
+			 * पूर्णांकo crtc->mode this works out correctly.
 			 *
-			 * This is crtc->mode and not crtc->state->mode for the
+			 * This is crtc->mode and not crtc->state->mode क्रम the
 			 * fastboot check to work correctly.
 			 */
 			DRM_DEBUG_KMS("looking for current mode on connector %s\n",
 				      connector->name);
 			modes[i] = &connector->state->crtc->mode;
-		}
+		पूर्ण
 		/*
-		 * In case of tiled modes, if all tiles are not present
+		 * In हाल of tiled modes, अगर all tiles are not present
 		 * then fallback to a non tiled mode.
 		 */
-		if (connector->has_tile &&
-		    num_tiled_conns < connector->num_h_tile * connector->num_v_tile) {
+		अगर (connector->has_tile &&
+		    num_tiled_conns < connector->num_h_tile * connector->num_v_tile) अणु
 			DRM_DEBUG_KMS("Falling back to non tiled mode on Connector %d\n",
 				      connector->base.id);
 			modes[i] = drm_connector_fallback_non_tiled_mode(connector);
-		}
+		पूर्ण
 		crtcs[i] = new_crtc;
 
 		DRM_DEBUG_KMS("connector %s on [CRTC:%d:%s]: %dx%d%s\n",
@@ -718,115 +719,115 @@ retry:
 
 		fallback = false;
 		conn_configured |= BIT(i);
-	}
+	पूर्ण
 
-	if ((conn_configured & mask) != mask && conn_configured != conn_seq)
-		goto retry;
+	अगर ((conn_configured & mask) != mask && conn_configured != conn_seq)
+		जाओ retry;
 
 	/*
 	 * If the BIOS didn't enable everything it could, fall back to have the
 	 * same user experiencing of lighting up as much as possible like the
 	 * fbdev helper library.
 	 */
-	if (num_connectors_enabled != num_connectors_detected &&
-	    num_connectors_enabled < dev->mode_config.num_crtc) {
+	अगर (num_connectors_enabled != num_connectors_detected &&
+	    num_connectors_enabled < dev->mode_config.num_crtc) अणु
 		DRM_DEBUG_KMS("fallback: Not all outputs enabled\n");
 		DRM_DEBUG_KMS("Enabled: %i, detected: %i\n", num_connectors_enabled,
 			      num_connectors_detected);
 		fallback = true;
-	}
+	पूर्ण
 
-	if (fallback) {
+	अगर (fallback) अणु
 bail:
 		DRM_DEBUG_KMS("Not using firmware configuration\n");
-		memcpy(enabled, save_enabled, count);
+		स_नकल(enabled, save_enabled, count);
 		ret = false;
-	}
+	पूर्ण
 
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
 
-	kfree(save_enabled);
-	return ret;
-}
+	kमुक्त(save_enabled);
+	वापस ret;
+पूर्ण
 
 /**
- * drm_client_modeset_probe() - Probe for displays
+ * drm_client_modeset_probe() - Probe क्रम displays
  * @client: DRM client
  * @width: Maximum display mode width (optional)
  * @height: Maximum display mode height (optional)
  *
- * This function sets up display pipelines for enabled connectors and stores the
+ * This function sets up display pipelines क्रम enabled connectors and stores the
  * config in the client's modeset array.
  *
  * Returns:
  * Zero on success or negative error code on failure.
  */
-int drm_client_modeset_probe(struct drm_client_dev *client, unsigned int width, unsigned int height)
-{
-	struct drm_connector *connector, **connectors = NULL;
-	struct drm_connector_list_iter conn_iter;
-	struct drm_device *dev = client->dev;
-	unsigned int total_modes_count = 0;
-	struct drm_client_offset *offsets;
-	unsigned int connector_count = 0;
-	struct drm_display_mode **modes;
-	struct drm_crtc **crtcs;
-	int i, ret = 0;
+पूर्णांक drm_client_modeset_probe(काष्ठा drm_client_dev *client, अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height)
+अणु
+	काष्ठा drm_connector *connector, **connectors = शून्य;
+	काष्ठा drm_connector_list_iter conn_iter;
+	काष्ठा drm_device *dev = client->dev;
+	अचिन्हित पूर्णांक total_modes_count = 0;
+	काष्ठा drm_client_offset *offsets;
+	अचिन्हित पूर्णांक connector_count = 0;
+	काष्ठा drm_display_mode **modes;
+	काष्ठा drm_crtc **crtcs;
+	पूर्णांक i, ret = 0;
 	bool *enabled;
 
 	DRM_DEBUG_KMS("\n");
 
-	if (!width)
+	अगर (!width)
 		width = dev->mode_config.max_width;
-	if (!height)
+	अगर (!height)
 		height = dev->mode_config.max_height;
 
 	drm_connector_list_iter_begin(dev, &conn_iter);
-	drm_client_for_each_connector_iter(connector, &conn_iter) {
-		struct drm_connector **tmp;
+	drm_client_क्रम_each_connector_iter(connector, &conn_iter) अणु
+		काष्ठा drm_connector **पंचांगp;
 
-		tmp = krealloc(connectors, (connector_count + 1) * sizeof(*connectors), GFP_KERNEL);
-		if (!tmp) {
+		पंचांगp = kपुनः_स्मृति(connectors, (connector_count + 1) * माप(*connectors), GFP_KERNEL);
+		अगर (!पंचांगp) अणु
 			ret = -ENOMEM;
-			goto free_connectors;
-		}
+			जाओ मुक्त_connectors;
+		पूर्ण
 
-		connectors = tmp;
+		connectors = पंचांगp;
 		drm_connector_get(connector);
 		connectors[connector_count++] = connector;
-	}
+	पूर्ण
 	drm_connector_list_iter_end(&conn_iter);
 
-	if (!connector_count)
-		return 0;
+	अगर (!connector_count)
+		वापस 0;
 
-	crtcs = kcalloc(connector_count, sizeof(*crtcs), GFP_KERNEL);
-	modes = kcalloc(connector_count, sizeof(*modes), GFP_KERNEL);
-	offsets = kcalloc(connector_count, sizeof(*offsets), GFP_KERNEL);
-	enabled = kcalloc(connector_count, sizeof(bool), GFP_KERNEL);
-	if (!crtcs || !modes || !enabled || !offsets) {
+	crtcs = kसुस्मृति(connector_count, माप(*crtcs), GFP_KERNEL);
+	modes = kसुस्मृति(connector_count, माप(*modes), GFP_KERNEL);
+	offsets = kसुस्मृति(connector_count, माप(*offsets), GFP_KERNEL);
+	enabled = kसुस्मृति(connector_count, माप(bool), GFP_KERNEL);
+	अगर (!crtcs || !modes || !enabled || !offsets) अणु
 		DRM_ERROR("Memory allocation failed\n");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mutex_lock(&client->modeset_mutex);
 
 	mutex_lock(&dev->mode_config.mutex);
-	for (i = 0; i < connector_count; i++)
+	क्रम (i = 0; i < connector_count; i++)
 		total_modes_count += connectors[i]->funcs->fill_modes(connectors[i], width, height);
-	if (!total_modes_count)
+	अगर (!total_modes_count)
 		DRM_DEBUG_KMS("No connectors reported connected with modes\n");
 	drm_client_connectors_enabled(connectors, connector_count, enabled);
 
-	if (!drm_client_firmware_config(client, connectors, connector_count, crtcs,
-					modes, offsets, enabled, width, height)) {
-		memset(modes, 0, connector_count * sizeof(*modes));
-		memset(crtcs, 0, connector_count * sizeof(*crtcs));
-		memset(offsets, 0, connector_count * sizeof(*offsets));
+	अगर (!drm_client_firmware_config(client, connectors, connector_count, crtcs,
+					modes, offsets, enabled, width, height)) अणु
+		स_रखो(modes, 0, connector_count * माप(*modes));
+		स_रखो(crtcs, 0, connector_count * माप(*crtcs));
+		स_रखो(offsets, 0, connector_count * माप(*offsets));
 
-		if (!drm_client_target_cloned(dev, connectors, connector_count, modes,
+		अगर (!drm_client_target_cloned(dev, connectors, connector_count, modes,
 					      offsets, enabled, width, height) &&
 		    !drm_client_target_preferred(connectors, connector_count, modes,
 						 offsets, enabled, width, height))
@@ -837,50 +838,50 @@ int drm_client_modeset_probe(struct drm_client_dev *client, unsigned int width, 
 
 		drm_client_pick_crtcs(client, connectors, connector_count,
 				      crtcs, modes, 0, width, height);
-	}
+	पूर्ण
 	mutex_unlock(&dev->mode_config.mutex);
 
 	drm_client_modeset_release(client);
 
-	for (i = 0; i < connector_count; i++) {
-		struct drm_display_mode *mode = modes[i];
-		struct drm_crtc *crtc = crtcs[i];
-		struct drm_client_offset *offset = &offsets[i];
+	क्रम (i = 0; i < connector_count; i++) अणु
+		काष्ठा drm_display_mode *mode = modes[i];
+		काष्ठा drm_crtc *crtc = crtcs[i];
+		काष्ठा drm_client_offset *offset = &offsets[i];
 
-		if (mode && crtc) {
-			struct drm_mode_set *modeset = drm_client_find_modeset(client, crtc);
-			struct drm_connector *connector = connectors[i];
+		अगर (mode && crtc) अणु
+			काष्ठा drm_mode_set *modeset = drm_client_find_modeset(client, crtc);
+			काष्ठा drm_connector *connector = connectors[i];
 
 			DRM_DEBUG_KMS("desired mode %s set on crtc %d (%d,%d)\n",
 				      mode->name, crtc->base.id, offset->x, offset->y);
 
-			if (WARN_ON_ONCE(modeset->num_connectors == DRM_CLIENT_MAX_CLONED_CONNECTORS ||
-					 (dev->mode_config.num_crtc > 1 && modeset->num_connectors == 1))) {
+			अगर (WARN_ON_ONCE(modeset->num_connectors == DRM_CLIENT_MAX_CLONED_CONNECTORS ||
+					 (dev->mode_config.num_crtc > 1 && modeset->num_connectors == 1))) अणु
 				ret = -EINVAL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			modeset->mode = drm_mode_duplicate(dev, mode);
 			drm_connector_get(connector);
 			modeset->connectors[modeset->num_connectors++] = connector;
 			modeset->x = offset->x;
 			modeset->y = offset->y;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&client->modeset_mutex);
 out:
-	kfree(crtcs);
-	kfree(modes);
-	kfree(offsets);
-	kfree(enabled);
-free_connectors:
-	for (i = 0; i < connector_count; i++)
+	kमुक्त(crtcs);
+	kमुक्त(modes);
+	kमुक्त(offsets);
+	kमुक्त(enabled);
+मुक्त_connectors:
+	क्रम (i = 0; i < connector_count; i++)
 		drm_connector_put(connectors[i]);
-	kfree(connectors);
+	kमुक्त(connectors);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(drm_client_modeset_probe);
 
 /**
@@ -888,45 +889,45 @@ EXPORT_SYMBOL(drm_client_modeset_probe);
  * @modeset: DRM modeset
  * @rotation: Returned rotation value
  *
- * This function checks if the primary plane in @modeset can hw rotate
+ * This function checks अगर the primary plane in @modeset can hw rotate
  * to match the rotation needed on its connector.
  *
  * Note: Currently only 0 and 180 degrees are supported.
  *
  * Return:
- * True if the plane can do the rotation, false otherwise.
+ * True अगर the plane can करो the rotation, false otherwise.
  */
-bool drm_client_rotation(struct drm_mode_set *modeset, unsigned int *rotation)
-{
-	struct drm_connector *connector = modeset->connectors[0];
-	struct drm_plane *plane = modeset->crtc->primary;
-	struct drm_cmdline_mode *cmdline;
+bool drm_client_rotation(काष्ठा drm_mode_set *modeset, अचिन्हित पूर्णांक *rotation)
+अणु
+	काष्ठा drm_connector *connector = modeset->connectors[0];
+	काष्ठा drm_plane *plane = modeset->crtc->primary;
+	काष्ठा drm_cmdline_mode *cmdline;
 	u64 valid_mask = 0;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	if (!modeset->num_connectors)
-		return false;
+	अगर (!modeset->num_connectors)
+		वापस false;
 
-	switch (connector->display_info.panel_orientation) {
-	case DRM_MODE_PANEL_ORIENTATION_BOTTOM_UP:
+	चयन (connector->display_info.panel_orientation) अणु
+	हाल DRM_MODE_PANEL_ORIENTATION_BOTTOM_UP:
 		*rotation = DRM_MODE_ROTATE_180;
-		break;
-	case DRM_MODE_PANEL_ORIENTATION_LEFT_UP:
+		अवरोध;
+	हाल DRM_MODE_PANEL_ORIENTATION_LEFT_UP:
 		*rotation = DRM_MODE_ROTATE_90;
-		break;
-	case DRM_MODE_PANEL_ORIENTATION_RIGHT_UP:
+		अवरोध;
+	हाल DRM_MODE_PANEL_ORIENTATION_RIGHT_UP:
 		*rotation = DRM_MODE_ROTATE_270;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*rotation = DRM_MODE_ROTATE_0;
-	}
+	पूर्ण
 
 	/**
-	 * The panel already defined the default rotation
+	 * The panel alपढ़ोy defined the शेष rotation
 	 * through its orientation. Whatever has been provided
 	 * on the command line needs to be added to that.
 	 *
-	 * Unfortunately, the rotations are at different bit
+	 * Unक्रमtunately, the rotations are at dअगरferent bit
 	 * indices, so the math to add them up are not as
 	 * trivial as they could.
 	 *
@@ -934,10 +935,10 @@ bool drm_client_rotation(struct drm_mode_set *modeset, unsigned int *rotation)
 	 * simple XOR between the two handle the addition nicely.
 	 */
 	cmdline = &connector->cmdline_mode;
-	if (cmdline->specified && cmdline->rotation_reflection) {
-		unsigned int cmdline_rest, panel_rest;
-		unsigned int cmdline_rot, panel_rot;
-		unsigned int sum_rot, sum_rest;
+	अगर (cmdline->specअगरied && cmdline->rotation_reflection) अणु
+		अचिन्हित पूर्णांक cmdline_rest, panel_rest;
+		अचिन्हित पूर्णांक cmdline_rot, panel_rot;
+		अचिन्हित पूर्णांक sum_rot, sum_rest;
 
 		panel_rot = ilog2(*rotation & DRM_MODE_ROTATE_MASK);
 		cmdline_rot = ilog2(cmdline->rotation_reflection & DRM_MODE_ROTATE_MASK);
@@ -948,158 +949,158 @@ bool drm_client_rotation(struct drm_mode_set *modeset, unsigned int *rotation)
 		sum_rest = panel_rest ^ cmdline_rest;
 
 		*rotation = (1 << sum_rot) | sum_rest;
-	}
+	पूर्ण
 
 	/*
 	 * TODO: support 90 / 270 degree hardware rotation,
 	 * depending on the hardware this may require the framebuffer
-	 * to be in a specific tiling format.
+	 * to be in a specअगरic tiling क्रमmat.
 	 */
-	if (((*rotation & DRM_MODE_ROTATE_MASK) != DRM_MODE_ROTATE_0 &&
+	अगर (((*rotation & DRM_MODE_ROTATE_MASK) != DRM_MODE_ROTATE_0 &&
 	     (*rotation & DRM_MODE_ROTATE_MASK) != DRM_MODE_ROTATE_180) ||
 	    !plane->rotation_property)
-		return false;
+		वापस false;
 
-	for (i = 0; i < plane->rotation_property->num_values; i++)
+	क्रम (i = 0; i < plane->rotation_property->num_values; i++)
 		valid_mask |= (1ULL << plane->rotation_property->values[i]);
 
-	if (!(*rotation & valid_mask))
-		return false;
+	अगर (!(*rotation & valid_mask))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(drm_client_rotation);
 
-static int drm_client_modeset_commit_atomic(struct drm_client_dev *client, bool active, bool check)
-{
-	struct drm_device *dev = client->dev;
-	struct drm_plane *plane;
-	struct drm_atomic_state *state;
-	struct drm_modeset_acquire_ctx ctx;
-	struct drm_mode_set *mode_set;
-	int ret;
+अटल पूर्णांक drm_client_modeset_commit_atomic(काष्ठा drm_client_dev *client, bool active, bool check)
+अणु
+	काष्ठा drm_device *dev = client->dev;
+	काष्ठा drm_plane *plane;
+	काष्ठा drm_atomic_state *state;
+	काष्ठा drm_modeset_acquire_ctx ctx;
+	काष्ठा drm_mode_set *mode_set;
+	पूर्णांक ret;
 
 	drm_modeset_acquire_init(&ctx, 0);
 
 	state = drm_atomic_state_alloc(dev);
-	if (!state) {
+	अगर (!state) अणु
 		ret = -ENOMEM;
-		goto out_ctx;
-	}
+		जाओ out_ctx;
+	पूर्ण
 
 	state->acquire_ctx = &ctx;
 retry:
-	drm_for_each_plane(plane, dev) {
-		struct drm_plane_state *plane_state;
+	drm_क्रम_each_plane(plane, dev) अणु
+		काष्ठा drm_plane_state *plane_state;
 
 		plane_state = drm_atomic_get_plane_state(state, plane);
-		if (IS_ERR(plane_state)) {
+		अगर (IS_ERR(plane_state)) अणु
 			ret = PTR_ERR(plane_state);
-			goto out_state;
-		}
+			जाओ out_state;
+		पूर्ण
 
 		plane_state->rotation = DRM_MODE_ROTATE_0;
 
 		/* disable non-primary: */
-		if (plane->type == DRM_PLANE_TYPE_PRIMARY)
-			continue;
+		अगर (plane->type == DRM_PLANE_TYPE_PRIMARY)
+			जारी;
 
 		ret = __drm_atomic_helper_disable_plane(plane, plane_state);
-		if (ret != 0)
-			goto out_state;
-	}
+		अगर (ret != 0)
+			जाओ out_state;
+	पूर्ण
 
-	drm_client_for_each_modeset(mode_set, client) {
-		struct drm_plane *primary = mode_set->crtc->primary;
-		unsigned int rotation;
+	drm_client_क्रम_each_modeset(mode_set, client) अणु
+		काष्ठा drm_plane *primary = mode_set->crtc->primary;
+		अचिन्हित पूर्णांक rotation;
 
-		if (drm_client_rotation(mode_set, &rotation)) {
-			struct drm_plane_state *plane_state;
+		अगर (drm_client_rotation(mode_set, &rotation)) अणु
+			काष्ठा drm_plane_state *plane_state;
 
-			/* Cannot fail as we've already gotten the plane state above */
+			/* Cannot fail as we've alपढ़ोy gotten the plane state above */
 			plane_state = drm_atomic_get_new_plane_state(state, primary);
 			plane_state->rotation = rotation;
-		}
+		पूर्ण
 
 		ret = __drm_atomic_helper_set_config(mode_set, state);
-		if (ret != 0)
-			goto out_state;
+		अगर (ret != 0)
+			जाओ out_state;
 
 		/*
 		 * __drm_atomic_helper_set_config() sets active when a
-		 * mode is set, unconditionally clear it if we force DPMS off
+		 * mode is set, unconditionally clear it अगर we क्रमce DPMS off
 		 */
-		if (!active) {
-			struct drm_crtc *crtc = mode_set->crtc;
-			struct drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
+		अगर (!active) अणु
+			काष्ठा drm_crtc *crtc = mode_set->crtc;
+			काष्ठा drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
 
 			crtc_state->active = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (check)
+	अगर (check)
 		ret = drm_atomic_check_only(state);
-	else
+	अन्यथा
 		ret = drm_atomic_commit(state);
 
 out_state:
-	if (ret == -EDEADLK)
-		goto backoff;
+	अगर (ret == -EDEADLK)
+		जाओ backoff;
 
 	drm_atomic_state_put(state);
 out_ctx:
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
 
-	return ret;
+	वापस ret;
 
 backoff:
 	drm_atomic_state_clear(state);
 	drm_modeset_backoff(&ctx);
 
-	goto retry;
-}
+	जाओ retry;
+पूर्ण
 
-static int drm_client_modeset_commit_legacy(struct drm_client_dev *client)
-{
-	struct drm_device *dev = client->dev;
-	struct drm_mode_set *mode_set;
-	struct drm_plane *plane;
-	int ret = 0;
+अटल पूर्णांक drm_client_modeset_commit_legacy(काष्ठा drm_client_dev *client)
+अणु
+	काष्ठा drm_device *dev = client->dev;
+	काष्ठा drm_mode_set *mode_set;
+	काष्ठा drm_plane *plane;
+	पूर्णांक ret = 0;
 
 	drm_modeset_lock_all(dev);
-	drm_for_each_plane(plane, dev) {
-		if (plane->type != DRM_PLANE_TYPE_PRIMARY)
-			drm_plane_force_disable(plane);
+	drm_क्रम_each_plane(plane, dev) अणु
+		अगर (plane->type != DRM_PLANE_TYPE_PRIMARY)
+			drm_plane_क्रमce_disable(plane);
 
-		if (plane->rotation_property)
+		अगर (plane->rotation_property)
 			drm_mode_plane_set_obj_prop(plane,
 						    plane->rotation_property,
 						    DRM_MODE_ROTATE_0);
-	}
+	पूर्ण
 
-	drm_client_for_each_modeset(mode_set, client) {
-		struct drm_crtc *crtc = mode_set->crtc;
+	drm_client_क्रम_each_modeset(mode_set, client) अणु
+		काष्ठा drm_crtc *crtc = mode_set->crtc;
 
-		if (crtc->funcs->cursor_set2) {
-			ret = crtc->funcs->cursor_set2(crtc, NULL, 0, 0, 0, 0, 0);
-			if (ret)
-				goto out;
-		} else if (crtc->funcs->cursor_set) {
-			ret = crtc->funcs->cursor_set(crtc, NULL, 0, 0, 0);
-			if (ret)
-				goto out;
-		}
+		अगर (crtc->funcs->cursor_set2) अणु
+			ret = crtc->funcs->cursor_set2(crtc, शून्य, 0, 0, 0, 0, 0);
+			अगर (ret)
+				जाओ out;
+		पूर्ण अन्यथा अगर (crtc->funcs->cursor_set) अणु
+			ret = crtc->funcs->cursor_set(crtc, शून्य, 0, 0, 0);
+			अगर (ret)
+				जाओ out;
+		पूर्ण
 
-		ret = drm_mode_set_config_internal(mode_set);
-		if (ret)
-			goto out;
-	}
+		ret = drm_mode_set_config_पूर्णांकernal(mode_set);
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 out:
 	drm_modeset_unlock_all(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * drm_client_modeset_check() - Check modeset configuration
@@ -1110,46 +1111,46 @@ out:
  * Returns:
  * Zero on success or negative error code on failure.
  */
-int drm_client_modeset_check(struct drm_client_dev *client)
-{
-	int ret;
+पूर्णांक drm_client_modeset_check(काष्ठा drm_client_dev *client)
+अणु
+	पूर्णांक ret;
 
-	if (!drm_drv_uses_atomic_modeset(client->dev))
-		return 0;
+	अगर (!drm_drv_uses_atomic_modeset(client->dev))
+		वापस 0;
 
 	mutex_lock(&client->modeset_mutex);
 	ret = drm_client_modeset_commit_atomic(client, true, true);
 	mutex_unlock(&client->modeset_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(drm_client_modeset_check);
 
 /**
  * drm_client_modeset_commit_locked() - Force commit CRTC configuration
  * @client: DRM client
  *
- * Commit modeset configuration to crtcs without checking if there is a DRM
- * master. The assumption is that the caller already holds an internal DRM
- * master reference acquired with drm_master_internal_acquire().
+ * Commit modeset configuration to crtcs without checking अगर there is a DRM
+ * master. The assumption is that the caller alपढ़ोy holds an पूर्णांकernal DRM
+ * master reference acquired with drm_master_पूर्णांकernal_acquire().
  *
  * Returns:
  * Zero on success or negative error code on failure.
  */
-int drm_client_modeset_commit_locked(struct drm_client_dev *client)
-{
-	struct drm_device *dev = client->dev;
-	int ret;
+पूर्णांक drm_client_modeset_commit_locked(काष्ठा drm_client_dev *client)
+अणु
+	काष्ठा drm_device *dev = client->dev;
+	पूर्णांक ret;
 
 	mutex_lock(&client->modeset_mutex);
-	if (drm_drv_uses_atomic_modeset(dev))
+	अगर (drm_drv_uses_atomic_modeset(dev))
 		ret = drm_client_modeset_commit_atomic(client, true, false);
-	else
+	अन्यथा
 		ret = drm_client_modeset_commit_legacy(client);
 	mutex_unlock(&client->modeset_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(drm_client_modeset_commit_locked);
 
 /**
@@ -1161,45 +1162,45 @@ EXPORT_SYMBOL(drm_client_modeset_commit_locked);
  * Returns:
  * Zero on success or negative error code on failure.
  */
-int drm_client_modeset_commit(struct drm_client_dev *client)
-{
-	struct drm_device *dev = client->dev;
-	int ret;
+पूर्णांक drm_client_modeset_commit(काष्ठा drm_client_dev *client)
+अणु
+	काष्ठा drm_device *dev = client->dev;
+	पूर्णांक ret;
 
-	if (!drm_master_internal_acquire(dev))
-		return -EBUSY;
+	अगर (!drm_master_पूर्णांकernal_acquire(dev))
+		वापस -EBUSY;
 
 	ret = drm_client_modeset_commit_locked(client);
 
-	drm_master_internal_release(dev);
+	drm_master_पूर्णांकernal_release(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(drm_client_modeset_commit);
 
-static void drm_client_modeset_dpms_legacy(struct drm_client_dev *client, int dpms_mode)
-{
-	struct drm_device *dev = client->dev;
-	struct drm_connector *connector;
-	struct drm_mode_set *modeset;
-	struct drm_modeset_acquire_ctx ctx;
-	int j;
-	int ret;
+अटल व्योम drm_client_modeset_dpms_legacy(काष्ठा drm_client_dev *client, पूर्णांक dpms_mode)
+अणु
+	काष्ठा drm_device *dev = client->dev;
+	काष्ठा drm_connector *connector;
+	काष्ठा drm_mode_set *modeset;
+	काष्ठा drm_modeset_acquire_ctx ctx;
+	पूर्णांक j;
+	पूर्णांक ret;
 
 	DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx, 0, ret);
-	drm_client_for_each_modeset(modeset, client) {
-		if (!modeset->crtc->enabled)
-			continue;
+	drm_client_क्रम_each_modeset(modeset, client) अणु
+		अगर (!modeset->crtc->enabled)
+			जारी;
 
-		for (j = 0; j < modeset->num_connectors; j++) {
+		क्रम (j = 0; j < modeset->num_connectors; j++) अणु
 			connector = modeset->connectors[j];
 			connector->funcs->dpms(connector, dpms_mode);
 			drm_object_property_set_value(&connector->base,
 				dev->mode_config.dpms_property, dpms_mode);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
-}
+पूर्ण
 
 /**
  * drm_client_modeset_dpms() - Set DPMS mode
@@ -1211,23 +1212,23 @@ static void drm_client_modeset_dpms_legacy(struct drm_client_dev *client, int dp
  * Returns:
  * Zero on success or negative error code on failure.
  */
-int drm_client_modeset_dpms(struct drm_client_dev *client, int mode)
-{
-	struct drm_device *dev = client->dev;
-	int ret = 0;
+पूर्णांक drm_client_modeset_dpms(काष्ठा drm_client_dev *client, पूर्णांक mode)
+अणु
+	काष्ठा drm_device *dev = client->dev;
+	पूर्णांक ret = 0;
 
-	if (!drm_master_internal_acquire(dev))
-		return -EBUSY;
+	अगर (!drm_master_पूर्णांकernal_acquire(dev))
+		वापस -EBUSY;
 
 	mutex_lock(&client->modeset_mutex);
-	if (drm_drv_uses_atomic_modeset(dev))
+	अगर (drm_drv_uses_atomic_modeset(dev))
 		ret = drm_client_modeset_commit_atomic(client, mode == DRM_MODE_DPMS_ON, false);
-	else
+	अन्यथा
 		drm_client_modeset_dpms_legacy(client, mode);
 	mutex_unlock(&client->modeset_mutex);
 
-	drm_master_internal_release(dev);
+	drm_master_पूर्णांकernal_release(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(drm_client_modeset_dpms);

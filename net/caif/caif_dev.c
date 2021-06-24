@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * CAIF Interface registration.
  * Copyright (C) ST-Ericsson AB 2010
@@ -8,578 +9,578 @@
  *  and Sakari Ailus <sakari.ailus@nokia.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#include <linux/kernel.h>
-#include <linux/if_arp.h>
-#include <linux/net.h>
-#include <linux/netdevice.h>
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <net/netns/generic.h>
-#include <net/net_namespace.h>
-#include <net/pkt_sched.h>
-#include <net/caif/caif_device.h>
-#include <net/caif/caif_layer.h>
-#include <net/caif/caif_dev.h>
-#include <net/caif/cfpkt.h>
-#include <net/caif/cfcnfg.h>
-#include <net/caif/cfserl.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/net.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/caअगर/caअगर_device.h>
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/caअगर_dev.h>
+#समावेश <net/caअगर/cfpkt.h>
+#समावेश <net/caअगर/cfcnfg.h>
+#समावेश <net/caअगर/cfserl.h>
 
 MODULE_LICENSE("GPL");
 
-/* Used for local tracking of the CAIF net devices */
-struct caif_device_entry {
-	struct cflayer layer;
-	struct list_head list;
-	struct net_device *netdev;
-	int __percpu *pcpu_refcnt;
+/* Used क्रम local tracking of the CAIF net devices */
+काष्ठा caअगर_device_entry अणु
+	काष्ठा cflayer layer;
+	काष्ठा list_head list;
+	काष्ठा net_device *netdev;
+	पूर्णांक __percpu *pcpu_refcnt;
 	spinlock_t flow_lock;
-	struct sk_buff *xoff_skb;
-	void (*xoff_skb_dtor)(struct sk_buff *skb);
+	काष्ठा sk_buff *xoff_skb;
+	व्योम (*xoff_skb_dtor)(काष्ठा sk_buff *skb);
 	bool xoff;
-};
+पूर्ण;
 
-struct caif_device_entry_list {
-	struct list_head list;
+काष्ठा caअगर_device_entry_list अणु
+	काष्ठा list_head list;
 	/* Protects simulanous deletes in list */
-	struct mutex lock;
-};
+	काष्ठा mutex lock;
+पूर्ण;
 
-struct caif_net {
-	struct cfcnfg *cfg;
-	struct caif_device_entry_list caifdevs;
-};
+काष्ठा caअगर_net अणु
+	काष्ठा cfcnfg *cfg;
+	काष्ठा caअगर_device_entry_list caअगरdevs;
+पूर्ण;
 
-static unsigned int caif_net_id;
-static int q_high = 50; /* Percent */
+अटल अचिन्हित पूर्णांक caअगर_net_id;
+अटल पूर्णांक q_high = 50; /* Percent */
 
-struct cfcnfg *get_cfcnfg(struct net *net)
-{
-	struct caif_net *caifn;
-	caifn = net_generic(net, caif_net_id);
-	return caifn->cfg;
-}
+काष्ठा cfcnfg *get_cfcnfg(काष्ठा net *net)
+अणु
+	काष्ठा caअगर_net *caअगरn;
+	caअगरn = net_generic(net, caअगर_net_id);
+	वापस caअगरn->cfg;
+पूर्ण
 EXPORT_SYMBOL(get_cfcnfg);
 
-static struct caif_device_entry_list *caif_device_list(struct net *net)
-{
-	struct caif_net *caifn;
-	caifn = net_generic(net, caif_net_id);
-	return &caifn->caifdevs;
-}
+अटल काष्ठा caअगर_device_entry_list *caअगर_device_list(काष्ठा net *net)
+अणु
+	काष्ठा caअगर_net *caअगरn;
+	caअगरn = net_generic(net, caअगर_net_id);
+	वापस &caअगरn->caअगरdevs;
+पूर्ण
 
-static void caifd_put(struct caif_device_entry *e)
-{
+अटल व्योम caअगरd_put(काष्ठा caअगर_device_entry *e)
+अणु
 	this_cpu_dec(*e->pcpu_refcnt);
-}
+पूर्ण
 
-static void caifd_hold(struct caif_device_entry *e)
-{
+अटल व्योम caअगरd_hold(काष्ठा caअगर_device_entry *e)
+अणु
 	this_cpu_inc(*e->pcpu_refcnt);
-}
+पूर्ण
 
-static int caifd_refcnt_read(struct caif_device_entry *e)
-{
-	int i, refcnt = 0;
-	for_each_possible_cpu(i)
+अटल पूर्णांक caअगरd_refcnt_पढ़ो(काष्ठा caअगर_device_entry *e)
+अणु
+	पूर्णांक i, refcnt = 0;
+	क्रम_each_possible_cpu(i)
 		refcnt += *per_cpu_ptr(e->pcpu_refcnt, i);
-	return refcnt;
-}
+	वापस refcnt;
+पूर्ण
 
 /* Allocate new CAIF device. */
-static struct caif_device_entry *caif_device_alloc(struct net_device *dev)
-{
-	struct caif_device_entry *caifd;
+अटल काष्ठा caअगर_device_entry *caअगर_device_alloc(काष्ठा net_device *dev)
+अणु
+	काष्ठा caअगर_device_entry *caअगरd;
 
-	caifd = kzalloc(sizeof(*caifd), GFP_KERNEL);
-	if (!caifd)
-		return NULL;
-	caifd->pcpu_refcnt = alloc_percpu(int);
-	if (!caifd->pcpu_refcnt) {
-		kfree(caifd);
-		return NULL;
-	}
-	caifd->netdev = dev;
+	caअगरd = kzalloc(माप(*caअगरd), GFP_KERNEL);
+	अगर (!caअगरd)
+		वापस शून्य;
+	caअगरd->pcpu_refcnt = alloc_percpu(पूर्णांक);
+	अगर (!caअगरd->pcpu_refcnt) अणु
+		kमुक्त(caअगरd);
+		वापस शून्य;
+	पूर्ण
+	caअगरd->netdev = dev;
 	dev_hold(dev);
-	return caifd;
-}
+	वापस caअगरd;
+पूर्ण
 
-static struct caif_device_entry *caif_get(struct net_device *dev)
-{
-	struct caif_device_entry_list *caifdevs =
-	    caif_device_list(dev_net(dev));
-	struct caif_device_entry *caifd;
+अटल काष्ठा caअगर_device_entry *caअगर_get(काष्ठा net_device *dev)
+अणु
+	काष्ठा caअगर_device_entry_list *caअगरdevs =
+	    caअगर_device_list(dev_net(dev));
+	काष्ठा caअगर_device_entry *caअगरd;
 
-	list_for_each_entry_rcu(caifd, &caifdevs->list, list,
-				lockdep_rtnl_is_held()) {
-		if (caifd->netdev == dev)
-			return caifd;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry_rcu(caअगरd, &caअगरdevs->list, list,
+				lockdep_rtnl_is_held()) अणु
+		अगर (caअगरd->netdev == dev)
+			वापस caअगरd;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void caif_flow_cb(struct sk_buff *skb)
-{
-	struct caif_device_entry *caifd;
-	void (*dtor)(struct sk_buff *skb) = NULL;
+अटल व्योम caअगर_flow_cb(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा caअगर_device_entry *caअगरd;
+	व्योम (*dtor)(काष्ठा sk_buff *skb) = शून्य;
 	bool send_xoff;
 
-	WARN_ON(skb->dev == NULL);
+	WARN_ON(skb->dev == शून्य);
 
-	rcu_read_lock();
-	caifd = caif_get(skb->dev);
+	rcu_पढ़ो_lock();
+	caअगरd = caअगर_get(skb->dev);
 
-	WARN_ON(caifd == NULL);
-	if (!caifd) {
-		rcu_read_unlock();
-		return;
-	}
+	WARN_ON(caअगरd == शून्य);
+	अगर (!caअगरd) अणु
+		rcu_पढ़ो_unlock();
+		वापस;
+	पूर्ण
 
-	caifd_hold(caifd);
-	rcu_read_unlock();
+	caअगरd_hold(caअगरd);
+	rcu_पढ़ो_unlock();
 
-	spin_lock_bh(&caifd->flow_lock);
-	send_xoff = caifd->xoff;
-	caifd->xoff = false;
-	dtor = caifd->xoff_skb_dtor;
+	spin_lock_bh(&caअगरd->flow_lock);
+	send_xoff = caअगरd->xoff;
+	caअगरd->xoff = false;
+	dtor = caअगरd->xoff_skb_dtor;
 
-	if (WARN_ON(caifd->xoff_skb != skb))
-		skb = NULL;
+	अगर (WARN_ON(caअगरd->xoff_skb != skb))
+		skb = शून्य;
 
-	caifd->xoff_skb = NULL;
-	caifd->xoff_skb_dtor = NULL;
+	caअगरd->xoff_skb = शून्य;
+	caअगरd->xoff_skb_dtor = शून्य;
 
-	spin_unlock_bh(&caifd->flow_lock);
+	spin_unlock_bh(&caअगरd->flow_lock);
 
-	if (dtor && skb)
+	अगर (dtor && skb)
 		dtor(skb);
 
-	if (send_xoff)
-		caifd->layer.up->
-			ctrlcmd(caifd->layer.up,
+	अगर (send_xoff)
+		caअगरd->layer.up->
+			ctrlcmd(caअगरd->layer.up,
 				_CAIF_CTRLCMD_PHYIF_FLOW_ON_IND,
-				caifd->layer.id);
-	caifd_put(caifd);
-}
+				caअगरd->layer.id);
+	caअगरd_put(caअगरd);
+पूर्ण
 
-static int transmit(struct cflayer *layer, struct cfpkt *pkt)
-{
-	int err, high = 0, qlen = 0;
-	struct caif_device_entry *caifd =
-	    container_of(layer, struct caif_device_entry, layer);
-	struct sk_buff *skb;
-	struct netdev_queue *txq;
+अटल पूर्णांक transmit(काष्ठा cflayer *layer, काष्ठा cfpkt *pkt)
+अणु
+	पूर्णांक err, high = 0, qlen = 0;
+	काष्ठा caअगर_device_entry *caअगरd =
+	    container_of(layer, काष्ठा caअगर_device_entry, layer);
+	काष्ठा sk_buff *skb;
+	काष्ठा netdev_queue *txq;
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 
 	skb = cfpkt_tonative(pkt);
-	skb->dev = caifd->netdev;
+	skb->dev = caअगरd->netdev;
 	skb_reset_network_header(skb);
 	skb->protocol = htons(ETH_P_CAIF);
 
-	/* Check if we need to handle xoff */
-	if (likely(caifd->netdev->priv_flags & IFF_NO_QUEUE))
-		goto noxoff;
+	/* Check अगर we need to handle xoff */
+	अगर (likely(caअगरd->netdev->priv_flags & IFF_NO_QUEUE))
+		जाओ noxoff;
 
-	if (unlikely(caifd->xoff))
-		goto noxoff;
+	अगर (unlikely(caअगरd->xoff))
+		जाओ noxoff;
 
-	if (likely(!netif_queue_stopped(caifd->netdev))) {
-		struct Qdisc *sch;
+	अगर (likely(!netअगर_queue_stopped(caअगरd->netdev))) अणु
+		काष्ठा Qdisc *sch;
 
-		/* If we run with a TX queue, check if the queue is too long*/
+		/* If we run with a TX queue, check अगर the queue is too दीर्घ*/
 		txq = netdev_get_tx_queue(skb->dev, 0);
 		sch = rcu_dereference_bh(txq->qdisc);
-		if (likely(qdisc_is_empty(sch)))
-			goto noxoff;
+		अगर (likely(qdisc_is_empty(sch)))
+			जाओ noxoff;
 
-		/* can check for explicit qdisc len value only !NOLOCK,
+		/* can check क्रम explicit qdisc len value only !NOLOCK,
 		 * always set flow off otherwise
 		 */
-		high = (caifd->netdev->tx_queue_len * q_high) / 100;
-		if (!(sch->flags & TCQ_F_NOLOCK) && likely(sch->q.qlen < high))
-			goto noxoff;
-	}
+		high = (caअगरd->netdev->tx_queue_len * q_high) / 100;
+		अगर (!(sch->flags & TCQ_F_NOLOCK) && likely(sch->q.qlen < high))
+			जाओ noxoff;
+	पूर्ण
 
-	/* Hold lock while accessing xoff */
-	spin_lock_bh(&caifd->flow_lock);
-	if (caifd->xoff) {
-		spin_unlock_bh(&caifd->flow_lock);
-		goto noxoff;
-	}
+	/* Hold lock जबतक accessing xoff */
+	spin_lock_bh(&caअगरd->flow_lock);
+	अगर (caअगरd->xoff) अणु
+		spin_unlock_bh(&caअगरd->flow_lock);
+		जाओ noxoff;
+	पूर्ण
 
 	/*
-	 * Handle flow off, we do this by temporary hi-jacking this
-	 * skb's destructor function, and replace it with our own
+	 * Handle flow off, we करो this by temporary hi-jacking this
+	 * skb's deकाष्ठाor function, and replace it with our own
 	 * flow-on callback. The callback will set flow-on and call
-	 * the original destructor.
+	 * the original deकाष्ठाor.
 	 */
 
 	pr_debug("queue has stopped(%d) or is full (%d > %d)\n",
-			netif_queue_stopped(caifd->netdev),
+			netअगर_queue_stopped(caअगरd->netdev),
 			qlen, high);
-	caifd->xoff = true;
-	caifd->xoff_skb = skb;
-	caifd->xoff_skb_dtor = skb->destructor;
-	skb->destructor = caif_flow_cb;
-	spin_unlock_bh(&caifd->flow_lock);
+	caअगरd->xoff = true;
+	caअगरd->xoff_skb = skb;
+	caअगरd->xoff_skb_dtor = skb->deकाष्ठाor;
+	skb->deकाष्ठाor = caअगर_flow_cb;
+	spin_unlock_bh(&caअगरd->flow_lock);
 
-	caifd->layer.up->ctrlcmd(caifd->layer.up,
+	caअगरd->layer.up->ctrlcmd(caअगरd->layer.up,
 					_CAIF_CTRLCMD_PHYIF_FLOW_OFF_IND,
-					caifd->layer.id);
+					caअगरd->layer.id);
 noxoff:
-	rcu_read_unlock_bh();
+	rcu_पढ़ो_unlock_bh();
 
 	err = dev_queue_xmit(skb);
-	if (err > 0)
+	अगर (err > 0)
 		err = -EIO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Stuff received packets into the CAIF stack.
- * On error, returns non-zero and releases the skb.
+ * Stuff received packets पूर्णांकo the CAIF stack.
+ * On error, वापसs non-zero and releases the skb.
  */
-static int receive(struct sk_buff *skb, struct net_device *dev,
-		   struct packet_type *pkttype, struct net_device *orig_dev)
-{
-	struct cfpkt *pkt;
-	struct caif_device_entry *caifd;
-	int err;
+अटल पूर्णांक receive(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		   काष्ठा packet_type *pkttype, काष्ठा net_device *orig_dev)
+अणु
+	काष्ठा cfpkt *pkt;
+	काष्ठा caअगर_device_entry *caअगरd;
+	पूर्णांक err;
 
-	pkt = cfpkt_fromnative(CAIF_DIR_IN, skb);
+	pkt = cfpkt_fromnative(CAIF_सूची_IN, skb);
 
-	rcu_read_lock();
-	caifd = caif_get(dev);
+	rcu_पढ़ो_lock();
+	caअगरd = caअगर_get(dev);
 
-	if (!caifd || !caifd->layer.up || !caifd->layer.up->receive ||
-			!netif_oper_up(caifd->netdev)) {
-		rcu_read_unlock();
-		kfree_skb(skb);
-		return NET_RX_DROP;
-	}
+	अगर (!caअगरd || !caअगरd->layer.up || !caअगरd->layer.up->receive ||
+			!netअगर_oper_up(caअगरd->netdev)) अणु
+		rcu_पढ़ो_unlock();
+		kमुक्त_skb(skb);
+		वापस NET_RX_DROP;
+	पूर्ण
 
-	/* Hold reference to netdevice while using CAIF stack */
-	caifd_hold(caifd);
-	rcu_read_unlock();
+	/* Hold reference to netdevice जबतक using CAIF stack */
+	caअगरd_hold(caअगरd);
+	rcu_पढ़ो_unlock();
 
-	err = caifd->layer.up->receive(caifd->layer.up, pkt);
+	err = caअगरd->layer.up->receive(caअगरd->layer.up, pkt);
 
-	/* For -EILSEQ the packet is not freed so so it now */
-	if (err == -EILSEQ)
+	/* For -EILSEQ the packet is not मुक्तd so so it now */
+	अगर (err == -EILSEQ)
 		cfpkt_destroy(pkt);
 
 	/* Release reference to stack upwards */
-	caifd_put(caifd);
+	caअगरd_put(caअगरd);
 
-	if (err != 0)
+	अगर (err != 0)
 		err = NET_RX_DROP;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct packet_type caif_packet_type __read_mostly = {
+अटल काष्ठा packet_type caअगर_packet_type __पढ़ो_mostly = अणु
 	.type = cpu_to_be16(ETH_P_CAIF),
 	.func = receive,
-};
+पूर्ण;
 
-static void dev_flowctrl(struct net_device *dev, int on)
-{
-	struct caif_device_entry *caifd;
+अटल व्योम dev_flowctrl(काष्ठा net_device *dev, पूर्णांक on)
+अणु
+	काष्ठा caअगर_device_entry *caअगरd;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	caifd = caif_get(dev);
-	if (!caifd || !caifd->layer.up || !caifd->layer.up->ctrlcmd) {
-		rcu_read_unlock();
-		return;
-	}
+	caअगरd = caअगर_get(dev);
+	अगर (!caअगरd || !caअगरd->layer.up || !caअगरd->layer.up->ctrlcmd) अणु
+		rcu_पढ़ो_unlock();
+		वापस;
+	पूर्ण
 
-	caifd_hold(caifd);
-	rcu_read_unlock();
+	caअगरd_hold(caअगरd);
+	rcu_पढ़ो_unlock();
 
-	caifd->layer.up->ctrlcmd(caifd->layer.up,
+	caअगरd->layer.up->ctrlcmd(caअगरd->layer.up,
 				 on ?
 				 _CAIF_CTRLCMD_PHYIF_FLOW_ON_IND :
 				 _CAIF_CTRLCMD_PHYIF_FLOW_OFF_IND,
-				 caifd->layer.id);
-	caifd_put(caifd);
-}
+				 caअगरd->layer.id);
+	caअगरd_put(caअगरd);
+पूर्ण
 
-int caif_enroll_dev(struct net_device *dev, struct caif_dev_common *caifdev,
-		     struct cflayer *link_support, int head_room,
-		     struct cflayer **layer,
-		     int (**rcv_func)(struct sk_buff *, struct net_device *,
-				      struct packet_type *,
-				      struct net_device *))
-{
-	struct caif_device_entry *caifd;
-	enum cfcnfg_phy_preference pref;
-	struct cfcnfg *cfg = get_cfcnfg(dev_net(dev));
-	struct caif_device_entry_list *caifdevs;
-	int res;
+पूर्णांक caअगर_enroll_dev(काष्ठा net_device *dev, काष्ठा caअगर_dev_common *caअगरdev,
+		     काष्ठा cflayer *link_support, पूर्णांक head_room,
+		     काष्ठा cflayer **layer,
+		     पूर्णांक (**rcv_func)(काष्ठा sk_buff *, काष्ठा net_device *,
+				      काष्ठा packet_type *,
+				      काष्ठा net_device *))
+अणु
+	काष्ठा caअगर_device_entry *caअगरd;
+	क्रमागत cfcnfg_phy_preference pref;
+	काष्ठा cfcnfg *cfg = get_cfcnfg(dev_net(dev));
+	काष्ठा caअगर_device_entry_list *caअगरdevs;
+	पूर्णांक res;
 
-	caifdevs = caif_device_list(dev_net(dev));
-	caifd = caif_device_alloc(dev);
-	if (!caifd)
-		return -ENOMEM;
-	*layer = &caifd->layer;
-	spin_lock_init(&caifd->flow_lock);
+	caअगरdevs = caअगर_device_list(dev_net(dev));
+	caअगरd = caअगर_device_alloc(dev);
+	अगर (!caअगरd)
+		वापस -ENOMEM;
+	*layer = &caअगरd->layer;
+	spin_lock_init(&caअगरd->flow_lock);
 
-	switch (caifdev->link_select) {
-	case CAIF_LINK_HIGH_BANDW:
+	चयन (caअगरdev->link_select) अणु
+	हाल CAIF_LINK_HIGH_BANDW:
 		pref = CFPHYPREF_HIGH_BW;
-		break;
-	case CAIF_LINK_LOW_LATENCY:
+		अवरोध;
+	हाल CAIF_LINK_LOW_LATENCY:
 		pref = CFPHYPREF_LOW_LAT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pref = CFPHYPREF_HIGH_BW;
-		break;
-	}
-	mutex_lock(&caifdevs->lock);
-	list_add_rcu(&caifd->list, &caifdevs->list);
+		अवरोध;
+	पूर्ण
+	mutex_lock(&caअगरdevs->lock);
+	list_add_rcu(&caअगरd->list, &caअगरdevs->list);
 
-	strlcpy(caifd->layer.name, dev->name,
-		sizeof(caifd->layer.name));
-	caifd->layer.transmit = transmit;
+	strlcpy(caअगरd->layer.name, dev->name,
+		माप(caअगरd->layer.name));
+	caअगरd->layer.transmit = transmit;
 	res = cfcnfg_add_phy_layer(cfg,
 				dev,
-				&caifd->layer,
+				&caअगरd->layer,
 				pref,
 				link_support,
-				caifdev->use_fcs,
+				caअगरdev->use_fcs,
 				head_room);
-	mutex_unlock(&caifdevs->lock);
-	if (rcv_func)
+	mutex_unlock(&caअगरdevs->lock);
+	अगर (rcv_func)
 		*rcv_func = receive;
-	return res;
-}
-EXPORT_SYMBOL(caif_enroll_dev);
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL(caअगर_enroll_dev);
 
-/* notify Caif of device events */
-static int caif_device_notify(struct notifier_block *me, unsigned long what,
-			      void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct caif_device_entry *caifd = NULL;
-	struct caif_dev_common *caifdev;
-	struct cfcnfg *cfg;
-	struct cflayer *layer, *link_support;
-	int head_room = 0;
-	struct caif_device_entry_list *caifdevs;
-	int res;
+/* notअगरy Caअगर of device events */
+अटल पूर्णांक caअगर_device_notअगरy(काष्ठा notअगरier_block *me, अचिन्हित दीर्घ what,
+			      व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा caअगर_device_entry *caअगरd = शून्य;
+	काष्ठा caअगर_dev_common *caअगरdev;
+	काष्ठा cfcnfg *cfg;
+	काष्ठा cflayer *layer, *link_support;
+	पूर्णांक head_room = 0;
+	काष्ठा caअगर_device_entry_list *caअगरdevs;
+	पूर्णांक res;
 
 	cfg = get_cfcnfg(dev_net(dev));
-	caifdevs = caif_device_list(dev_net(dev));
+	caअगरdevs = caअगर_device_list(dev_net(dev));
 
-	caifd = caif_get(dev);
-	if (caifd == NULL && dev->type != ARPHRD_CAIF)
-		return 0;
+	caअगरd = caअगर_get(dev);
+	अगर (caअगरd == शून्य && dev->type != ARPHRD_CAIF)
+		वापस 0;
 
-	switch (what) {
-	case NETDEV_REGISTER:
-		if (caifd != NULL)
-			break;
+	चयन (what) अणु
+	हाल NETDEV_REGISTER:
+		अगर (caअगरd != शून्य)
+			अवरोध;
 
-		caifdev = netdev_priv(dev);
+		caअगरdev = netdev_priv(dev);
 
-		link_support = NULL;
-		if (caifdev->use_frag) {
+		link_support = शून्य;
+		अगर (caअगरdev->use_frag) अणु
 			head_room = 1;
-			link_support = cfserl_create(dev->ifindex,
-							caifdev->use_stx);
-			if (!link_support) {
+			link_support = cfserl_create(dev->अगरindex,
+							caअगरdev->use_stx);
+			अगर (!link_support) अणु
 				pr_warn("Out of memory\n");
-				break;
-			}
-		}
-		res = caif_enroll_dev(dev, caifdev, link_support, head_room,
-				&layer, NULL);
-		if (res)
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		res = caअगर_enroll_dev(dev, caअगरdev, link_support, head_room,
+				&layer, शून्य);
+		अगर (res)
 			cfserl_release(link_support);
-		caifdev->flowctrl = dev_flowctrl;
-		break;
+		caअगरdev->flowctrl = dev_flowctrl;
+		अवरोध;
 
-	case NETDEV_UP:
-		rcu_read_lock();
+	हाल NETDEV_UP:
+		rcu_पढ़ो_lock();
 
-		caifd = caif_get(dev);
-		if (caifd == NULL) {
-			rcu_read_unlock();
-			break;
-		}
+		caअगरd = caअगर_get(dev);
+		अगर (caअगरd == शून्य) अणु
+			rcu_पढ़ो_unlock();
+			अवरोध;
+		पूर्ण
 
-		caifd->xoff = false;
-		cfcnfg_set_phy_state(cfg, &caifd->layer, true);
-		rcu_read_unlock();
+		caअगरd->xoff = false;
+		cfcnfg_set_phy_state(cfg, &caअगरd->layer, true);
+		rcu_पढ़ो_unlock();
 
-		break;
+		अवरोध;
 
-	case NETDEV_DOWN:
-		rcu_read_lock();
+	हाल NETDEV_DOWN:
+		rcu_पढ़ो_lock();
 
-		caifd = caif_get(dev);
-		if (!caifd || !caifd->layer.up || !caifd->layer.up->ctrlcmd) {
-			rcu_read_unlock();
-			return -EINVAL;
-		}
+		caअगरd = caअगर_get(dev);
+		अगर (!caअगरd || !caअगरd->layer.up || !caअगरd->layer.up->ctrlcmd) अणु
+			rcu_पढ़ो_unlock();
+			वापस -EINVAL;
+		पूर्ण
 
-		cfcnfg_set_phy_state(cfg, &caifd->layer, false);
-		caifd_hold(caifd);
-		rcu_read_unlock();
+		cfcnfg_set_phy_state(cfg, &caअगरd->layer, false);
+		caअगरd_hold(caअगरd);
+		rcu_पढ़ो_unlock();
 
-		caifd->layer.up->ctrlcmd(caifd->layer.up,
+		caअगरd->layer.up->ctrlcmd(caअगरd->layer.up,
 					 _CAIF_CTRLCMD_PHYIF_DOWN_IND,
-					 caifd->layer.id);
+					 caअगरd->layer.id);
 
-		spin_lock_bh(&caifd->flow_lock);
+		spin_lock_bh(&caअगरd->flow_lock);
 
 		/*
-		 * Replace our xoff-destructor with original destructor.
-		 * We trust that skb->destructor *always* is called before
-		 * the skb reference is invalid. The hijacked SKB destructor
-		 * takes the flow_lock so manipulating the skb->destructor here
+		 * Replace our xoff-deकाष्ठाor with original deकाष्ठाor.
+		 * We trust that skb->deकाष्ठाor *always* is called beक्रमe
+		 * the skb reference is invalid. The hijacked SKB deकाष्ठाor
+		 * takes the flow_lock so manipulating the skb->deकाष्ठाor here
 		 * should be safe.
 		*/
-		if (caifd->xoff_skb_dtor != NULL && caifd->xoff_skb != NULL)
-			caifd->xoff_skb->destructor = caifd->xoff_skb_dtor;
+		अगर (caअगरd->xoff_skb_dtor != शून्य && caअगरd->xoff_skb != शून्य)
+			caअगरd->xoff_skb->deकाष्ठाor = caअगरd->xoff_skb_dtor;
 
-		caifd->xoff = false;
-		caifd->xoff_skb_dtor = NULL;
-		caifd->xoff_skb = NULL;
+		caअगरd->xoff = false;
+		caअगरd->xoff_skb_dtor = शून्य;
+		caअगरd->xoff_skb = शून्य;
 
-		spin_unlock_bh(&caifd->flow_lock);
-		caifd_put(caifd);
-		break;
+		spin_unlock_bh(&caअगरd->flow_lock);
+		caअगरd_put(caअगरd);
+		अवरोध;
 
-	case NETDEV_UNREGISTER:
-		mutex_lock(&caifdevs->lock);
+	हाल NETDEV_UNREGISTER:
+		mutex_lock(&caअगरdevs->lock);
 
-		caifd = caif_get(dev);
-		if (caifd == NULL) {
-			mutex_unlock(&caifdevs->lock);
-			break;
-		}
-		list_del_rcu(&caifd->list);
+		caअगरd = caअगर_get(dev);
+		अगर (caअगरd == शून्य) अणु
+			mutex_unlock(&caअगरdevs->lock);
+			अवरोध;
+		पूर्ण
+		list_del_rcu(&caअगरd->list);
 
 		/*
 		 * NETDEV_UNREGISTER is called repeatedly until all reference
-		 * counts for the net-device are released. If references to
-		 * caifd is taken, simply ignore NETDEV_UNREGISTER and wait for
+		 * counts क्रम the net-device are released. If references to
+		 * caअगरd is taken, simply ignore NETDEV_UNREGISTER and रुको क्रम
 		 * the next call to NETDEV_UNREGISTER.
 		 *
-		 * If any packets are in flight down the CAIF Stack,
-		 * cfcnfg_del_phy_layer will return nonzero.
+		 * If any packets are in flight करोwn the CAIF Stack,
+		 * cfcnfg_del_phy_layer will वापस nonzero.
 		 * If no packets are in flight, the CAIF Stack associated
-		 * with the net-device un-registering is freed.
+		 * with the net-device un-रेजिस्टरing is मुक्तd.
 		 */
 
-		if (caifd_refcnt_read(caifd) != 0 ||
-			cfcnfg_del_phy_layer(cfg, &caifd->layer) != 0) {
+		अगर (caअगरd_refcnt_पढ़ो(caअगरd) != 0 ||
+			cfcnfg_del_phy_layer(cfg, &caअगरd->layer) != 0) अणु
 
 			pr_info("Wait for device inuse\n");
-			/* Enrole device if CAIF Stack is still in use */
-			list_add_rcu(&caifd->list, &caifdevs->list);
-			mutex_unlock(&caifdevs->lock);
-			break;
-		}
+			/* Enrole device अगर CAIF Stack is still in use */
+			list_add_rcu(&caअगरd->list, &caअगरdevs->list);
+			mutex_unlock(&caअगरdevs->lock);
+			अवरोध;
+		पूर्ण
 
 		synchronize_rcu();
-		dev_put(caifd->netdev);
-		free_percpu(caifd->pcpu_refcnt);
-		kfree(caifd);
+		dev_put(caअगरd->netdev);
+		मुक्त_percpu(caअगरd->pcpu_refcnt);
+		kमुक्त(caअगरd);
 
-		mutex_unlock(&caifdevs->lock);
-		break;
-	}
-	return 0;
-}
+		mutex_unlock(&caअगरdevs->lock);
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct notifier_block caif_device_notifier = {
-	.notifier_call = caif_device_notify,
+अटल काष्ठा notअगरier_block caअगर_device_notअगरier = अणु
+	.notअगरier_call = caअगर_device_notअगरy,
 	.priority = 0,
-};
+पूर्ण;
 
-/* Per-namespace Caif devices handling */
-static int caif_init_net(struct net *net)
-{
-	struct caif_net *caifn = net_generic(net, caif_net_id);
-	INIT_LIST_HEAD(&caifn->caifdevs.list);
-	mutex_init(&caifn->caifdevs.lock);
+/* Per-namespace Caअगर devices handling */
+अटल पूर्णांक caअगर_init_net(काष्ठा net *net)
+अणु
+	काष्ठा caअगर_net *caअगरn = net_generic(net, caअगर_net_id);
+	INIT_LIST_HEAD(&caअगरn->caअगरdevs.list);
+	mutex_init(&caअगरn->caअगरdevs.lock);
 
-	caifn->cfg = cfcnfg_create();
-	if (!caifn->cfg)
-		return -ENOMEM;
+	caअगरn->cfg = cfcnfg_create();
+	अगर (!caअगरn->cfg)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void caif_exit_net(struct net *net)
-{
-	struct caif_device_entry *caifd, *tmp;
-	struct caif_device_entry_list *caifdevs =
-	    caif_device_list(net);
-	struct cfcnfg *cfg =  get_cfcnfg(net);
+अटल व्योम caअगर_निकास_net(काष्ठा net *net)
+अणु
+	काष्ठा caअगर_device_entry *caअगरd, *पंचांगp;
+	काष्ठा caअगर_device_entry_list *caअगरdevs =
+	    caअगर_device_list(net);
+	काष्ठा cfcnfg *cfg =  get_cfcnfg(net);
 
 	rtnl_lock();
-	mutex_lock(&caifdevs->lock);
+	mutex_lock(&caअगरdevs->lock);
 
-	list_for_each_entry_safe(caifd, tmp, &caifdevs->list, list) {
-		int i = 0;
-		list_del_rcu(&caifd->list);
-		cfcnfg_set_phy_state(cfg, &caifd->layer, false);
+	list_क्रम_each_entry_safe(caअगरd, पंचांगp, &caअगरdevs->list, list) अणु
+		पूर्णांक i = 0;
+		list_del_rcu(&caअगरd->list);
+		cfcnfg_set_phy_state(cfg, &caअगरd->layer, false);
 
-		while (i < 10 &&
-			(caifd_refcnt_read(caifd) != 0 ||
-			cfcnfg_del_phy_layer(cfg, &caifd->layer) != 0)) {
+		जबतक (i < 10 &&
+			(caअगरd_refcnt_पढ़ो(caअगरd) != 0 ||
+			cfcnfg_del_phy_layer(cfg, &caअगरd->layer) != 0)) अणु
 
 			pr_info("Wait for device inuse\n");
 			msleep(250);
 			i++;
-		}
+		पूर्ण
 		synchronize_rcu();
-		dev_put(caifd->netdev);
-		free_percpu(caifd->pcpu_refcnt);
-		kfree(caifd);
-	}
-	cfcnfg_remove(cfg);
+		dev_put(caअगरd->netdev);
+		मुक्त_percpu(caअगरd->pcpu_refcnt);
+		kमुक्त(caअगरd);
+	पूर्ण
+	cfcnfg_हटाओ(cfg);
 
-	mutex_unlock(&caifdevs->lock);
+	mutex_unlock(&caअगरdevs->lock);
 	rtnl_unlock();
-}
+पूर्ण
 
-static struct pernet_operations caif_net_ops = {
-	.init = caif_init_net,
-	.exit = caif_exit_net,
-	.id   = &caif_net_id,
-	.size = sizeof(struct caif_net),
-};
+अटल काष्ठा pernet_operations caअगर_net_ops = अणु
+	.init = caअगर_init_net,
+	.निकास = caअगर_निकास_net,
+	.id   = &caअगर_net_id,
+	.size = माप(काष्ठा caअगर_net),
+पूर्ण;
 
-/* Initialize Caif devices list */
-static int __init caif_device_init(void)
-{
-	int result;
+/* Initialize Caअगर devices list */
+अटल पूर्णांक __init caअगर_device_init(व्योम)
+अणु
+	पूर्णांक result;
 
-	result = register_pernet_subsys(&caif_net_ops);
+	result = रेजिस्टर_pernet_subsys(&caअगर_net_ops);
 
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	register_netdevice_notifier(&caif_device_notifier);
-	dev_add_pack(&caif_packet_type);
+	रेजिस्टर_netdevice_notअगरier(&caअगर_device_notअगरier);
+	dev_add_pack(&caअगर_packet_type);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void __exit caif_device_exit(void)
-{
-	unregister_netdevice_notifier(&caif_device_notifier);
-	dev_remove_pack(&caif_packet_type);
-	unregister_pernet_subsys(&caif_net_ops);
-}
+अटल व्योम __निकास caअगर_device_निकास(व्योम)
+अणु
+	unरेजिस्टर_netdevice_notअगरier(&caअगर_device_notअगरier);
+	dev_हटाओ_pack(&caअगर_packet_type);
+	unरेजिस्टर_pernet_subsys(&caअगर_net_ops);
+पूर्ण
 
-module_init(caif_device_init);
-module_exit(caif_device_exit);
+module_init(caअगर_device_init);
+module_निकास(caअगर_device_निकास);

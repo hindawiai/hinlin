@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Declarations of procedures and variables shared between files
  * in arch/ppc/mm/.
@@ -6,187 +7,187 @@
  *  Derived from arch/ppc/mm/init.c:
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  *
- *  Modifications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
+ *  Modअगरications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
  *  and Cort Dougan (PReP) (cort@cs.nmt.edu)
  *    Copyright (C) 1996 Paul Mackerras
  *
  *  Derived from "arch/i386/mm/init.c"
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  */
-#include <linux/mm.h>
-#include <asm/mmu.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/mmu.h>
 
-#ifdef CONFIG_PPC_MMU_NOHASH
-#include <asm/trace.h>
+#अगर_घोषित CONFIG_PPC_MMU_NOHASH
+#समावेश <यंत्र/trace.h>
 
 /*
- * On 40x and 8xx, we directly inline tlbia and tlbivax
+ * On 40x and 8xx, we directly अंतरभूत tlbia and tlbivax
  */
-#if defined(CONFIG_40x) || defined(CONFIG_PPC_8xx)
-static inline void _tlbil_all(void)
-{
-	asm volatile ("sync; tlbia; isync" : : : "memory");
+#अगर defined(CONFIG_40x) || defined(CONFIG_PPC_8xx)
+अटल अंतरभूत व्योम _tlbil_all(व्योम)
+अणु
+	यंत्र अस्थिर ("sync; tlbia; isync" : : : "memory");
 	trace_tlbia(MMU_NO_CONTEXT);
-}
-static inline void _tlbil_pid(unsigned int pid)
-{
-	asm volatile ("sync; tlbia; isync" : : : "memory");
+पूर्ण
+अटल अंतरभूत व्योम _tlbil_pid(अचिन्हित पूर्णांक pid)
+अणु
+	यंत्र अस्थिर ("sync; tlbia; isync" : : : "memory");
 	trace_tlbia(pid);
-}
-#define _tlbil_pid_noind(pid)	_tlbil_pid(pid)
+पूर्ण
+#घोषणा _tlbil_pid_noind(pid)	_tlbil_pid(pid)
 
-#else /* CONFIG_40x || CONFIG_PPC_8xx */
-extern void _tlbil_all(void);
-extern void _tlbil_pid(unsigned int pid);
-#ifdef CONFIG_PPC_BOOK3E
-extern void _tlbil_pid_noind(unsigned int pid);
-#else
-#define _tlbil_pid_noind(pid)	_tlbil_pid(pid)
-#endif
-#endif /* !(CONFIG_40x || CONFIG_PPC_8xx) */
+#अन्यथा /* CONFIG_40x || CONFIG_PPC_8xx */
+बाह्य व्योम _tlbil_all(व्योम);
+बाह्य व्योम _tlbil_pid(अचिन्हित पूर्णांक pid);
+#अगर_घोषित CONFIG_PPC_BOOK3E
+बाह्य व्योम _tlbil_pid_noind(अचिन्हित पूर्णांक pid);
+#अन्यथा
+#घोषणा _tlbil_pid_noind(pid)	_tlbil_pid(pid)
+#पूर्ण_अगर
+#पूर्ण_अगर /* !(CONFIG_40x || CONFIG_PPC_8xx) */
 
 /*
- * On 8xx, we directly inline tlbie, on others, it's extern
+ * On 8xx, we directly अंतरभूत tlbie, on others, it's बाह्य
  */
-#ifdef CONFIG_PPC_8xx
-static inline void _tlbil_va(unsigned long address, unsigned int pid,
-			     unsigned int tsize, unsigned int ind)
-{
-	asm volatile ("tlbie %0; sync" : : "r" (address) : "memory");
+#अगर_घोषित CONFIG_PPC_8xx
+अटल अंतरभूत व्योम _tlbil_va(अचिन्हित दीर्घ address, अचिन्हित पूर्णांक pid,
+			     अचिन्हित पूर्णांक tsize, अचिन्हित पूर्णांक ind)
+अणु
+	यंत्र अस्थिर ("tlbie %0; sync" : : "r" (address) : "memory");
 	trace_tlbie(0, 0, address, pid, 0, 0, 0);
-}
-#elif defined(CONFIG_PPC_BOOK3E)
-extern void _tlbil_va(unsigned long address, unsigned int pid,
-		      unsigned int tsize, unsigned int ind);
-#else
-extern void __tlbil_va(unsigned long address, unsigned int pid);
-static inline void _tlbil_va(unsigned long address, unsigned int pid,
-			     unsigned int tsize, unsigned int ind)
-{
+पूर्ण
+#या_अगर defined(CONFIG_PPC_BOOK3E)
+बाह्य व्योम _tlbil_va(अचिन्हित दीर्घ address, अचिन्हित पूर्णांक pid,
+		      अचिन्हित पूर्णांक tsize, अचिन्हित पूर्णांक ind);
+#अन्यथा
+बाह्य व्योम __tlbil_va(अचिन्हित दीर्घ address, अचिन्हित पूर्णांक pid);
+अटल अंतरभूत व्योम _tlbil_va(अचिन्हित दीर्घ address, अचिन्हित पूर्णांक pid,
+			     अचिन्हित पूर्णांक tsize, अचिन्हित पूर्णांक ind)
+अणु
 	__tlbil_va(address, pid);
-}
-#endif /* CONFIG_PPC_8xx */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_8xx */
 
-#if defined(CONFIG_PPC_BOOK3E) || defined(CONFIG_PPC_47x)
-extern void _tlbivax_bcast(unsigned long address, unsigned int pid,
-			   unsigned int tsize, unsigned int ind);
-#else
-static inline void _tlbivax_bcast(unsigned long address, unsigned int pid,
-				   unsigned int tsize, unsigned int ind)
-{
+#अगर defined(CONFIG_PPC_BOOK3E) || defined(CONFIG_PPC_47x)
+बाह्य व्योम _tlbivax_bcast(अचिन्हित दीर्घ address, अचिन्हित पूर्णांक pid,
+			   अचिन्हित पूर्णांक tsize, अचिन्हित पूर्णांक ind);
+#अन्यथा
+अटल अंतरभूत व्योम _tlbivax_bcast(अचिन्हित दीर्घ address, अचिन्हित पूर्णांक pid,
+				   अचिन्हित पूर्णांक tsize, अचिन्हित पूर्णांक ind)
+अणु
 	BUG();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static inline void print_system_hash_info(void) {}
+अटल अंतरभूत व्योम prपूर्णांक_प्रणाली_hash_info(व्योम) अणुपूर्ण
 
-#else /* CONFIG_PPC_MMU_NOHASH */
+#अन्यथा /* CONFIG_PPC_MMU_NOHASH */
 
-void print_system_hash_info(void);
+व्योम prपूर्णांक_प्रणाली_hash_info(व्योम);
 
-#endif /* CONFIG_PPC_MMU_NOHASH */
+#पूर्ण_अगर /* CONFIG_PPC_MMU_NOHASH */
 
-#ifdef CONFIG_PPC32
+#अगर_घोषित CONFIG_PPC32
 
-extern void mapin_ram(void);
-extern void setbat(int index, unsigned long virt, phys_addr_t phys,
-		   unsigned int size, pgprot_t prot);
+बाह्य व्योम mapin_ram(व्योम);
+बाह्य व्योम setbat(पूर्णांक index, अचिन्हित दीर्घ virt, phys_addr_t phys,
+		   अचिन्हित पूर्णांक size, pgprot_t prot);
 
-extern int __map_without_bats;
-extern unsigned int rtas_data, rtas_size;
+बाह्य पूर्णांक __map_without_bats;
+बाह्य अचिन्हित पूर्णांक rtas_data, rtas_size;
 
-struct hash_pte;
-extern u8 early_hash[];
+काष्ठा hash_pte;
+बाह्य u8 early_hash[];
 
-#endif /* CONFIG_PPC32 */
+#पूर्ण_अगर /* CONFIG_PPC32 */
 
-extern unsigned long __max_low_memory;
-extern phys_addr_t __initial_memory_limit_addr;
-extern phys_addr_t total_memory;
-extern phys_addr_t total_lowmem;
-extern phys_addr_t memstart_addr;
-extern phys_addr_t lowmem_end_addr;
+बाह्य अचिन्हित दीर्घ __max_low_memory;
+बाह्य phys_addr_t __initial_memory_limit_addr;
+बाह्य phys_addr_t total_memory;
+बाह्य phys_addr_t total_lowmem;
+बाह्य phys_addr_t memstart_addr;
+बाह्य phys_addr_t lowmem_end_addr;
 
-#ifdef CONFIG_WII
-extern unsigned long wii_hole_start;
-extern unsigned long wii_hole_size;
+#अगर_घोषित CONFIG_WII
+बाह्य अचिन्हित दीर्घ wii_hole_start;
+बाह्य अचिन्हित दीर्घ wii_hole_size;
 
-extern unsigned long wii_mmu_mapin_mem2(unsigned long top);
-extern void wii_memory_fixups(void);
-#endif
+बाह्य अचिन्हित दीर्घ wii_mmu_mapin_mem2(अचिन्हित दीर्घ top);
+बाह्य व्योम wii_memory_fixups(व्योम);
+#पूर्ण_अगर
 
-/* ...and now those things that may be slightly different between processor
+/* ...and now those things that may be slightly dअगरferent between processor
  * architectures.  -- Dan
  */
-#ifdef CONFIG_PPC32
-extern void MMU_init_hw(void);
-void MMU_init_hw_patch(void);
-unsigned long mmu_mapin_ram(unsigned long base, unsigned long top);
-#endif
+#अगर_घोषित CONFIG_PPC32
+बाह्य व्योम MMU_init_hw(व्योम);
+व्योम MMU_init_hw_patch(व्योम);
+अचिन्हित दीर्घ mmu_mapin_ram(अचिन्हित दीर्घ base, अचिन्हित दीर्घ top);
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_FSL_BOOK3E
-extern unsigned long map_mem_in_cams(unsigned long ram, int max_cam_idx,
+#अगर_घोषित CONFIG_PPC_FSL_BOOK3E
+बाह्य अचिन्हित दीर्घ map_mem_in_cams(अचिन्हित दीर्घ ram, पूर्णांक max_cam_idx,
 				     bool dryrun);
-extern unsigned long calc_cam_sz(unsigned long ram, unsigned long virt,
+बाह्य अचिन्हित दीर्घ calc_cam_sz(अचिन्हित दीर्घ ram, अचिन्हित दीर्घ virt,
 				 phys_addr_t phys);
-#ifdef CONFIG_PPC32
-extern void adjust_total_lowmem(void);
-extern int switch_to_as1(void);
-extern void restore_to_as0(int esel, int offset, void *dt_ptr, int bootcpu);
-void create_kaslr_tlb_entry(int entry, unsigned long virt, phys_addr_t phys);
-void reloc_kernel_entry(void *fdt, int addr);
-extern int is_second_reloc;
-#endif
-extern void loadcam_entry(unsigned int index);
-extern void loadcam_multi(int first_idx, int num, int tmp_idx);
+#अगर_घोषित CONFIG_PPC32
+बाह्य व्योम adjust_total_lowmem(व्योम);
+बाह्य पूर्णांक चयन_to_as1(व्योम);
+बाह्य व्योम restore_to_as0(पूर्णांक esel, पूर्णांक offset, व्योम *dt_ptr, पूर्णांक bootcpu);
+व्योम create_kaslr_tlb_entry(पूर्णांक entry, अचिन्हित दीर्घ virt, phys_addr_t phys);
+व्योम reloc_kernel_entry(व्योम *fdt, पूर्णांक addr);
+बाह्य पूर्णांक is_second_reloc;
+#पूर्ण_अगर
+बाह्य व्योम loadcam_entry(अचिन्हित पूर्णांक index);
+बाह्य व्योम loadcam_multi(पूर्णांक first_idx, पूर्णांक num, पूर्णांक पंचांगp_idx);
 
-#ifdef CONFIG_RANDOMIZE_BASE
-void kaslr_early_init(void *dt_ptr, phys_addr_t size);
-void kaslr_late_init(void);
-#else
-static inline void kaslr_early_init(void *dt_ptr, phys_addr_t size) {}
-static inline void kaslr_late_init(void) {}
-#endif
+#अगर_घोषित CONFIG_RANDOMIZE_BASE
+व्योम kaslr_early_init(व्योम *dt_ptr, phys_addr_t size);
+व्योम kaslr_late_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम kaslr_early_init(व्योम *dt_ptr, phys_addr_t size) अणुपूर्ण
+अटल अंतरभूत व्योम kaslr_late_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-struct tlbcam {
+काष्ठा tlbcam अणु
 	u32	MAS0;
 	u32	MAS1;
-	unsigned long	MAS2;
+	अचिन्हित दीर्घ	MAS2;
 	u32	MAS3;
 	u32	MAS7;
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#if defined(CONFIG_PPC_BOOK3S_32) || defined(CONFIG_FSL_BOOKE) || defined(CONFIG_PPC_8xx)
+#अगर defined(CONFIG_PPC_BOOK3S_32) || defined(CONFIG_FSL_BOOKE) || defined(CONFIG_PPC_8xx)
 /* 6xx have BATS */
 /* FSL_BOOKE have TLBCAM */
 /* 8xx have LTLB */
-phys_addr_t v_block_mapped(unsigned long va);
-unsigned long p_block_mapped(phys_addr_t pa);
-#else
-static inline phys_addr_t v_block_mapped(unsigned long va) { return 0; }
-static inline unsigned long p_block_mapped(phys_addr_t pa) { return 0; }
-#endif
+phys_addr_t v_block_mapped(अचिन्हित दीर्घ va);
+अचिन्हित दीर्घ p_block_mapped(phys_addr_t pa);
+#अन्यथा
+अटल अंतरभूत phys_addr_t v_block_mapped(अचिन्हित दीर्घ va) अणु वापस 0; पूर्ण
+अटल अंतरभूत अचिन्हित दीर्घ p_block_mapped(phys_addr_t pa) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_PPC_BOOK3S_32) || defined(CONFIG_PPC_8xx)
-void mmu_mark_initmem_nx(void);
-void mmu_mark_rodata_ro(void);
-#else
-static inline void mmu_mark_initmem_nx(void) { }
-static inline void mmu_mark_rodata_ro(void) { }
-#endif
+#अगर defined(CONFIG_PPC_BOOK3S_32) || defined(CONFIG_PPC_8xx)
+व्योम mmu_mark_iniपंचांगem_nx(व्योम);
+व्योम mmu_mark_rodata_ro(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम mmu_mark_iniपंचांगem_nx(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम mmu_mark_rodata_ro(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_8xx
-void __init mmu_mapin_immr(void);
-#endif
+#अगर_घोषित CONFIG_PPC_8xx
+व्योम __init mmu_mapin_immr(व्योम);
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_DEBUG_WX
-void ptdump_check_wx(void);
-#else
-static inline void ptdump_check_wx(void) { }
-#endif
+#अगर_घोषित CONFIG_PPC_DEBUG_WX
+व्योम ptdump_check_wx(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम ptdump_check_wx(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-static inline bool debug_pagealloc_enabled_or_kfence(void)
-{
-	return IS_ENABLED(CONFIG_KFENCE) || debug_pagealloc_enabled();
-}
+अटल अंतरभूत bool debug_pagealloc_enabled_or_kfence(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_KFENCE) || debug_pagealloc_enabled();
+पूर्ण

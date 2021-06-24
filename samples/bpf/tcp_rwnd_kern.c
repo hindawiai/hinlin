@@ -1,64 +1,65 @@
+<शैली गुरु>
 /* Copyright (c) 2017 Facebook
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  *
- * BPF program to set initial receive window to 40 packets when using IPv6
+ * BPF program to set initial receive winकरोw to 40 packets when using IPv6
  * and the first 5.5 bytes of the IPv6 addresses are not the same (in this
  * example that means both hosts are not the same datacenter).
  *
  * Use "bpftool cgroup attach $cg sock_ops $prog" to load this BPF program.
  */
 
-#include <uapi/linux/bpf.h>
-#include <uapi/linux/if_ether.h>
-#include <uapi/linux/if_packet.h>
-#include <uapi/linux/ip.h>
-#include <linux/socket.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <uapi/linux/अगर_ether.h>
+#समावेश <uapi/linux/अगर_packet.h>
+#समावेश <uapi/linux/ip.h>
+#समावेश <linux/socket.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
 
-#define DEBUG 1
+#घोषणा DEBUG 1
 
 SEC("sockops")
-int bpf_rwnd(struct bpf_sock_ops *skops)
-{
-	int rv = -1;
-	int op;
+पूर्णांक bpf_rwnd(काष्ठा bpf_sock_ops *skops)
+अणु
+	पूर्णांक rv = -1;
+	पूर्णांक op;
 
 	/* For testing purposes, only execute rest of BPF program
-	 * if neither port numberis 55601
+	 * अगर neither port numberis 55601
 	 */
-	if (bpf_ntohl(skops->remote_port) !=
-	    55601 && skops->local_port != 55601) {
+	अगर (bpf_ntohl(skops->remote_port) !=
+	    55601 && skops->local_port != 55601) अणु
 		skops->reply = -1;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	op = (int) skops->op;
+	op = (पूर्णांक) skops->op;
 
-#ifdef DEBUG
-	bpf_printk("BPF command: %d\n", op);
-#endif
+#अगर_घोषित DEBUG
+	bpf_prपूर्णांकk("BPF command: %d\n", op);
+#पूर्ण_अगर
 
-	/* Check for RWND_INIT operation and IPv6 addresses */
-	if (op == BPF_SOCK_OPS_RWND_INIT &&
-		skops->family == AF_INET6) {
+	/* Check क्रम RWND_INIT operation and IPv6 addresses */
+	अगर (op == BPF_SOCK_OPS_RWND_INIT &&
+		skops->family == AF_INET6) अणु
 
 		/* If the first 5.5 bytes of the IPv6 address are not the same
 		 * then both hosts are not in the same datacenter
-		 * so use a larger initial advertized window (40 packets)
+		 * so use a larger initial advertized winकरोw (40 packets)
 		 */
-		if (skops->local_ip6[0] != skops->remote_ip6[0] ||
+		अगर (skops->local_ip6[0] != skops->remote_ip6[0] ||
 		    (bpf_ntohl(skops->local_ip6[1]) & 0xfffff000) !=
 		    (bpf_ntohl(skops->remote_ip6[1]) & 0xfffff000))
 			rv = 40;
-	}
-#ifdef DEBUG
-	bpf_printk("Returning %d\n", rv);
-#endif
+	पूर्ण
+#अगर_घोषित DEBUG
+	bpf_prपूर्णांकk("Returning %d\n", rv);
+#पूर्ण_अगर
 	skops->reply = rv;
-	return 1;
-}
-char _license[] SEC("license") = "GPL";
+	वापस 1;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";

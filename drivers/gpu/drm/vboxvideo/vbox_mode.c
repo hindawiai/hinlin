@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
  * Copyright (C) 2013-2017 Oracle Corporation
  * This file is based on ast_mode.c
@@ -10,42 +11,42 @@
  *          Hans de Goede <hdegoede@redhat.com>
  */
 
-#include <linux/dma-buf-map.h>
-#include <linux/export.h>
+#समावेश <linux/dma-buf-map.h>
+#समावेश <linux/export.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_gem_atomic_helper.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_plane_helper.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_gem_atomic_helper.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_plane_helper.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#include "hgsmi_channels.h"
-#include "vbox_drv.h"
-#include "vboxvideo.h"
+#समावेश "hgsmi_channels.h"
+#समावेश "vbox_drv.h"
+#समावेश "vboxvideo.h"
 
 /*
- * Set a graphics mode.  Poke any required values into registers, do an HGSMI
+ * Set a graphics mode.  Poke any required values पूर्णांकo रेजिस्टरs, करो an HGSMI
  * mode set and tell the host we support advanced graphics functions.
  */
-static void vbox_do_modeset(struct drm_crtc *crtc)
-{
-	struct drm_framebuffer *fb = crtc->primary->state->fb;
-	struct vbox_crtc *vbox_crtc = to_vbox_crtc(crtc);
-	struct vbox_private *vbox;
-	int width, height, bpp, pitch;
+अटल व्योम vbox_करो_modeset(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_framebuffer *fb = crtc->primary->state->fb;
+	काष्ठा vbox_crtc *vbox_crtc = to_vbox_crtc(crtc);
+	काष्ठा vbox_निजी *vbox;
+	पूर्णांक width, height, bpp, pitch;
 	u16 flags;
 	s32 x_offset, y_offset;
 
 	vbox = to_vbox_dev(crtc->dev);
 	width = vbox_crtc->width ? vbox_crtc->width : 640;
 	height = vbox_crtc->height ? vbox_crtc->height : 480;
-	bpp = fb ? fb->format->cpp[0] * 8 : 32;
+	bpp = fb ? fb->क्रमmat->cpp[0] * 8 : 32;
 	pitch = fb ? fb->pitches[0] : width * bpp / 8;
-	x_offset = vbox->single_framebuffer ? vbox_crtc->x : vbox_crtc->x_hint;
-	y_offset = vbox->single_framebuffer ? vbox_crtc->y : vbox_crtc->y_hint;
+	x_offset = vbox->single_framebuffer ? vbox_crtc->x : vbox_crtc->x_hपूर्णांक;
+	y_offset = vbox->single_framebuffer ? vbox_crtc->y : vbox_crtc->y_hपूर्णांक;
 
 	/*
 	 * This is the old way of setting graphics modes.  It assumed one screen
@@ -53,19 +54,19 @@ static void vbox_do_modeset(struct drm_crtc *crtc)
 	 * VirtualBox, certain parts of the code still assume that the first
 	 * screen is programmed this way, so try to fake it.
 	 */
-	if (vbox_crtc->crtc_id == 0 && fb &&
+	अगर (vbox_crtc->crtc_id == 0 && fb &&
 	    vbox_crtc->fb_offset / pitch < 0xffff - crtc->y &&
-	    vbox_crtc->fb_offset % (bpp / 8) == 0) {
-		vbox_write_ioport(VBE_DISPI_INDEX_XRES, width);
-		vbox_write_ioport(VBE_DISPI_INDEX_YRES, height);
-		vbox_write_ioport(VBE_DISPI_INDEX_VIRT_WIDTH, pitch * 8 / bpp);
-		vbox_write_ioport(VBE_DISPI_INDEX_BPP, bpp);
-		vbox_write_ioport(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_ENABLED);
-		vbox_write_ioport(VBE_DISPI_INDEX_X_OFFSET,
+	    vbox_crtc->fb_offset % (bpp / 8) == 0) अणु
+		vbox_ग_लिखो_ioport(VBE_DISPI_INDEX_XRES, width);
+		vbox_ग_लिखो_ioport(VBE_DISPI_INDEX_YRES, height);
+		vbox_ग_लिखो_ioport(VBE_DISPI_INDEX_VIRT_WIDTH, pitch * 8 / bpp);
+		vbox_ग_लिखो_ioport(VBE_DISPI_INDEX_BPP, bpp);
+		vbox_ग_लिखो_ioport(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_ENABLED);
+		vbox_ग_लिखो_ioport(VBE_DISPI_INDEX_X_OFFSET,
 			vbox_crtc->fb_offset % pitch / bpp * 8 + vbox_crtc->x);
-		vbox_write_ioport(VBE_DISPI_INDEX_Y_OFFSET,
+		vbox_ग_लिखो_ioport(VBE_DISPI_INDEX_Y_OFFSET,
 				  vbox_crtc->fb_offset / pitch + vbox_crtc->y);
-	}
+	पूर्ण
 
 	flags = VBVA_SCREEN_F_ACTIVE;
 	flags |= (fb && crtc->state->enable) ? 0 : VBVA_SCREEN_F_BLANK;
@@ -75,29 +76,29 @@ static void vbox_do_modeset(struct drm_crtc *crtc)
 				   vbox_crtc->x * bpp / 8 +
 							vbox_crtc->y * pitch,
 				   pitch, width, height, bpp, flags);
-}
+पूर्ण
 
-static int vbox_set_view(struct drm_crtc *crtc)
-{
-	struct vbox_crtc *vbox_crtc = to_vbox_crtc(crtc);
-	struct vbox_private *vbox = to_vbox_dev(crtc->dev);
-	struct vbva_infoview *p;
+अटल पूर्णांक vbox_set_view(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा vbox_crtc *vbox_crtc = to_vbox_crtc(crtc);
+	काष्ठा vbox_निजी *vbox = to_vbox_dev(crtc->dev);
+	काष्ठा vbva_infoview *p;
 
 	/*
 	 * Tell the host about the view.  This design originally targeted the
-	 * Windows XP driver architecture and assumed that each screen would
+	 * Winकरोws XP driver architecture and assumed that each screen would
 	 * have a dedicated frame buffer with the command buffer following it,
 	 * the whole being a "view".  The host works out which screen a command
-	 * buffer belongs to by checking whether it is in the first view, then
+	 * buffer beदीर्घs to by checking whether it is in the first view, then
 	 * whether it is in the second and so on.  The first match wins.  We
 	 * cheat around this by making the first view be the managed memory
 	 * plus the first command buffer, the second the same plus the second
 	 * buffer and so on.
 	 */
-	p = hgsmi_buffer_alloc(vbox->guest_pool, sizeof(*p),
+	p = hgsmi_buffer_alloc(vbox->guest_pool, माप(*p),
 			       HGSMI_CH_VBVA, VBVA_INFO_VIEW);
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
 	p->view_index = vbox_crtc->crtc_id;
 	p->view_offset = vbox_crtc->fb_offset;
@@ -106,143 +107,143 @@ static int vbox_set_view(struct drm_crtc *crtc)
 	p->max_screen_size = vbox->available_vram_size - vbox_crtc->fb_offset;
 
 	hgsmi_buffer_submit(vbox->guest_pool, p);
-	hgsmi_buffer_free(vbox->guest_pool, p);
+	hgsmi_buffer_मुक्त(vbox->guest_pool, p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Try to map the layout of virtual screens to the range of the input device.
- * Return true if we need to re-set the crtc modes due to screen offset
+ * Try to map the layout of भव screens to the range of the input device.
+ * Return true अगर we need to re-set the crtc modes due to screen offset
  * changes.
  */
-static bool vbox_set_up_input_mapping(struct vbox_private *vbox)
-{
-	struct drm_crtc *crtci;
-	struct drm_connector *connectori;
-	struct drm_framebuffer *fb, *fb1 = NULL;
+अटल bool vbox_set_up_input_mapping(काष्ठा vbox_निजी *vbox)
+अणु
+	काष्ठा drm_crtc *crtci;
+	काष्ठा drm_connector *connectori;
+	काष्ठा drm_framebuffer *fb, *fb1 = शून्य;
 	bool single_framebuffer = true;
 	bool old_single_framebuffer = vbox->single_framebuffer;
 	u16 width = 0, height = 0;
 
 	/*
-	 * Are we using an X.Org-style single large frame-buffer for all crtcs?
+	 * Are we using an X.Org-style single large frame-buffer क्रम all crtcs?
 	 * If so then screen layout can be deduced from the crtc offsets.
-	 * Same fall-back if this is the fbdev frame-buffer.
+	 * Same fall-back अगर this is the fbdev frame-buffer.
 	 */
-	list_for_each_entry(crtci, &vbox->ddev.mode_config.crtc_list, head) {
+	list_क्रम_each_entry(crtci, &vbox->ddev.mode_config.crtc_list, head) अणु
 		fb = crtci->primary->state->fb;
-		if (!fb)
-			continue;
+		अगर (!fb)
+			जारी;
 
-		if (!fb1) {
+		अगर (!fb1) अणु
 			fb1 = fb;
-			if (fb1 == vbox->ddev.fb_helper->fb)
-				break;
-		} else if (fb != fb1) {
+			अगर (fb1 == vbox->ddev.fb_helper->fb)
+				अवरोध;
+		पूर्ण अन्यथा अगर (fb != fb1) अणु
 			single_framebuffer = false;
-		}
-	}
-	if (!fb1)
-		return false;
+		पूर्ण
+	पूर्ण
+	अगर (!fb1)
+		वापस false;
 
-	if (single_framebuffer) {
+	अगर (single_framebuffer) अणु
 		vbox->single_framebuffer = true;
 		vbox->input_mapping_width = fb1->width;
 		vbox->input_mapping_height = fb1->height;
-		return old_single_framebuffer != vbox->single_framebuffer;
-	}
+		वापस old_single_framebuffer != vbox->single_framebuffer;
+	पूर्ण
 	/* Otherwise calculate the total span of all screens. */
-	list_for_each_entry(connectori, &vbox->ddev.mode_config.connector_list,
-			    head) {
-		struct vbox_connector *vbox_connector =
+	list_क्रम_each_entry(connectori, &vbox->ddev.mode_config.connector_list,
+			    head) अणु
+		काष्ठा vbox_connector *vbox_connector =
 		    to_vbox_connector(connectori);
-		struct vbox_crtc *vbox_crtc = vbox_connector->vbox_crtc;
+		काष्ठा vbox_crtc *vbox_crtc = vbox_connector->vbox_crtc;
 
-		width = max_t(u16, width, vbox_crtc->x_hint +
-					  vbox_connector->mode_hint.width);
-		height = max_t(u16, height, vbox_crtc->y_hint +
-					    vbox_connector->mode_hint.height);
-	}
+		width = max_t(u16, width, vbox_crtc->x_hपूर्णांक +
+					  vbox_connector->mode_hपूर्णांक.width);
+		height = max_t(u16, height, vbox_crtc->y_hपूर्णांक +
+					    vbox_connector->mode_hपूर्णांक.height);
+	पूर्ण
 
 	vbox->single_framebuffer = false;
 	vbox->input_mapping_width = width;
 	vbox->input_mapping_height = height;
 
-	return old_single_framebuffer != vbox->single_framebuffer;
-}
+	वापस old_single_framebuffer != vbox->single_framebuffer;
+पूर्ण
 
-static void vbox_crtc_set_base_and_mode(struct drm_crtc *crtc,
-					struct drm_framebuffer *fb,
-					int x, int y)
-{
-	struct drm_gem_vram_object *gbo = drm_gem_vram_of_gem(fb->obj[0]);
-	struct vbox_private *vbox = to_vbox_dev(crtc->dev);
-	struct vbox_crtc *vbox_crtc = to_vbox_crtc(crtc);
+अटल व्योम vbox_crtc_set_base_and_mode(काष्ठा drm_crtc *crtc,
+					काष्ठा drm_framebuffer *fb,
+					पूर्णांक x, पूर्णांक y)
+अणु
+	काष्ठा drm_gem_vram_object *gbo = drm_gem_vram_of_gem(fb->obj[0]);
+	काष्ठा vbox_निजी *vbox = to_vbox_dev(crtc->dev);
+	काष्ठा vbox_crtc *vbox_crtc = to_vbox_crtc(crtc);
 	bool needs_modeset = drm_atomic_crtc_needs_modeset(crtc->state);
 
 	mutex_lock(&vbox->hw_mutex);
 
-	if (crtc->state->enable) {
+	अगर (crtc->state->enable) अणु
 		vbox_crtc->width = crtc->state->mode.hdisplay;
 		vbox_crtc->height = crtc->state->mode.vdisplay;
-	}
+	पूर्ण
 
 	vbox_crtc->x = x;
 	vbox_crtc->y = y;
 	vbox_crtc->fb_offset = drm_gem_vram_offset(gbo);
 
-	/* vbox_do_modeset() checks vbox->single_framebuffer so update it now */
-	if (needs_modeset && vbox_set_up_input_mapping(vbox)) {
-		struct drm_crtc *crtci;
+	/* vbox_करो_modeset() checks vbox->single_framebuffer so update it now */
+	अगर (needs_modeset && vbox_set_up_input_mapping(vbox)) अणु
+		काष्ठा drm_crtc *crtci;
 
-		list_for_each_entry(crtci, &vbox->ddev.mode_config.crtc_list,
-				    head) {
-			if (crtci == crtc)
-				continue;
-			vbox_do_modeset(crtci);
-		}
-	}
+		list_क्रम_each_entry(crtci, &vbox->ddev.mode_config.crtc_list,
+				    head) अणु
+			अगर (crtci == crtc)
+				जारी;
+			vbox_करो_modeset(crtci);
+		पूर्ण
+	पूर्ण
 
 	vbox_set_view(crtc);
-	vbox_do_modeset(crtc);
+	vbox_करो_modeset(crtc);
 
-	if (needs_modeset)
+	अगर (needs_modeset)
 		hgsmi_update_input_mapping(vbox->guest_pool, 0, 0,
 					   vbox->input_mapping_width,
 					   vbox->input_mapping_height);
 
 	mutex_unlock(&vbox->hw_mutex);
-}
+पूर्ण
 
-static void vbox_crtc_atomic_enable(struct drm_crtc *crtc,
-				    struct drm_atomic_state *state)
-{
-}
+अटल व्योम vbox_crtc_atomic_enable(काष्ठा drm_crtc *crtc,
+				    काष्ठा drm_atomic_state *state)
+अणु
+पूर्ण
 
-static void vbox_crtc_atomic_disable(struct drm_crtc *crtc,
-				     struct drm_atomic_state *state)
-{
-}
+अटल व्योम vbox_crtc_atomic_disable(काष्ठा drm_crtc *crtc,
+				     काष्ठा drm_atomic_state *state)
+अणु
+पूर्ण
 
-static void vbox_crtc_atomic_flush(struct drm_crtc *crtc,
-				   struct drm_atomic_state *state)
-{
-}
+अटल व्योम vbox_crtc_atomic_flush(काष्ठा drm_crtc *crtc,
+				   काष्ठा drm_atomic_state *state)
+अणु
+पूर्ण
 
-static const struct drm_crtc_helper_funcs vbox_crtc_helper_funcs = {
+अटल स्थिर काष्ठा drm_crtc_helper_funcs vbox_crtc_helper_funcs = अणु
 	.atomic_enable = vbox_crtc_atomic_enable,
 	.atomic_disable = vbox_crtc_atomic_disable,
 	.atomic_flush = vbox_crtc_atomic_flush,
-};
+पूर्ण;
 
-static void vbox_crtc_destroy(struct drm_crtc *crtc)
-{
+अटल व्योम vbox_crtc_destroy(काष्ठा drm_crtc *crtc)
+अणु
 	drm_crtc_cleanup(crtc);
-	kfree(crtc);
-}
+	kमुक्त(crtc);
+पूर्ण
 
-static const struct drm_crtc_funcs vbox_crtc_funcs = {
+अटल स्थिर काष्ठा drm_crtc_funcs vbox_crtc_funcs = अणु
 	.set_config = drm_atomic_helper_set_config,
 	.page_flip = drm_atomic_helper_page_flip,
 	/* .gamma_set = vbox_crtc_gamma_set, */
@@ -250,165 +251,165 @@ static const struct drm_crtc_funcs vbox_crtc_funcs = {
 	.reset = drm_atomic_helper_crtc_reset,
 	.atomic_duplicate_state = drm_atomic_helper_crtc_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_crtc_destroy_state,
-};
+पूर्ण;
 
-static int vbox_primary_atomic_check(struct drm_plane *plane,
-				     struct drm_atomic_state *state)
-{
-	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+अटल पूर्णांक vbox_primary_atomic_check(काष्ठा drm_plane *plane,
+				     काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	struct drm_crtc_state *crtc_state = NULL;
+	काष्ठा drm_crtc_state *crtc_state = शून्य;
 
-	if (new_state->crtc) {
+	अगर (new_state->crtc) अणु
 		crtc_state = drm_atomic_get_existing_crtc_state(state,
 								new_state->crtc);
-		if (WARN_ON(!crtc_state))
-			return -EINVAL;
-	}
+		अगर (WARN_ON(!crtc_state))
+			वापस -EINVAL;
+	पूर्ण
 
-	return drm_atomic_helper_check_plane_state(new_state, crtc_state,
+	वापस drm_atomic_helper_check_plane_state(new_state, crtc_state,
 						   DRM_PLANE_HELPER_NO_SCALING,
 						   DRM_PLANE_HELPER_NO_SCALING,
 						   false, true);
-}
+पूर्ण
 
-static void vbox_primary_atomic_update(struct drm_plane *plane,
-				       struct drm_atomic_state *state)
-{
-	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+अटल व्योम vbox_primary_atomic_update(काष्ठा drm_plane *plane,
+				       काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	struct drm_crtc *crtc = new_state->crtc;
-	struct drm_framebuffer *fb = new_state->fb;
-	struct vbox_private *vbox = to_vbox_dev(fb->dev);
-	struct drm_mode_rect *clips;
-	uint32_t num_clips, i;
+	काष्ठा drm_crtc *crtc = new_state->crtc;
+	काष्ठा drm_framebuffer *fb = new_state->fb;
+	काष्ठा vbox_निजी *vbox = to_vbox_dev(fb->dev);
+	काष्ठा drm_mode_rect *clips;
+	uपूर्णांक32_t num_clips, i;
 
 	vbox_crtc_set_base_and_mode(crtc, fb,
 				    new_state->src_x >> 16,
 				    new_state->src_y >> 16);
 
-	/* Send information about dirty rectangles to VBVA. */
+	/* Send inक्रमmation about dirty rectangles to VBVA. */
 
 	clips = drm_plane_get_damage_clips(new_state);
 	num_clips = drm_plane_get_damage_clips_count(new_state);
 
-	if (!num_clips)
-		return;
+	अगर (!num_clips)
+		वापस;
 
 	mutex_lock(&vbox->hw_mutex);
 
-	for (i = 0; i < num_clips; ++i, ++clips) {
-		struct vbva_cmd_hdr cmd_hdr;
-		unsigned int crtc_id = to_vbox_crtc(crtc)->crtc_id;
+	क्रम (i = 0; i < num_clips; ++i, ++clips) अणु
+		काष्ठा vbva_cmd_hdr cmd_hdr;
+		अचिन्हित पूर्णांक crtc_id = to_vbox_crtc(crtc)->crtc_id;
 
 		cmd_hdr.x = (s16)clips->x1;
 		cmd_hdr.y = (s16)clips->y1;
 		cmd_hdr.w = (u16)clips->x2 - clips->x1;
 		cmd_hdr.h = (u16)clips->y2 - clips->y1;
 
-		if (!vbva_buffer_begin_update(&vbox->vbva_info[crtc_id],
+		अगर (!vbva_buffer_begin_update(&vbox->vbva_info[crtc_id],
 					      vbox->guest_pool))
-			continue;
+			जारी;
 
-		vbva_write(&vbox->vbva_info[crtc_id], vbox->guest_pool,
-			   &cmd_hdr, sizeof(cmd_hdr));
+		vbva_ग_लिखो(&vbox->vbva_info[crtc_id], vbox->guest_pool,
+			   &cmd_hdr, माप(cmd_hdr));
 		vbva_buffer_end_update(&vbox->vbva_info[crtc_id]);
-	}
+	पूर्ण
 
 	mutex_unlock(&vbox->hw_mutex);
-}
+पूर्ण
 
-static void vbox_primary_atomic_disable(struct drm_plane *plane,
-					struct drm_atomic_state *state)
-{
-	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+अटल व्योम vbox_primary_atomic_disable(काष्ठा drm_plane *plane,
+					काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	struct drm_crtc *crtc = old_state->crtc;
+	काष्ठा drm_crtc *crtc = old_state->crtc;
 
-	/* vbox_do_modeset checks plane->state->fb and will disable if NULL */
+	/* vbox_करो_modeset checks plane->state->fb and will disable अगर शून्य */
 	vbox_crtc_set_base_and_mode(crtc, old_state->fb,
 				    old_state->src_x >> 16,
 				    old_state->src_y >> 16);
-}
+पूर्ण
 
-static int vbox_cursor_atomic_check(struct drm_plane *plane,
-				    struct drm_atomic_state *state)
-{
-	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+अटल पूर्णांक vbox_cursor_atomic_check(काष्ठा drm_plane *plane,
+				    काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	struct drm_crtc_state *crtc_state = NULL;
+	काष्ठा drm_crtc_state *crtc_state = शून्य;
 	u32 width = new_state->crtc_w;
 	u32 height = new_state->crtc_h;
-	int ret;
+	पूर्णांक ret;
 
-	if (new_state->crtc) {
+	अगर (new_state->crtc) अणु
 		crtc_state = drm_atomic_get_existing_crtc_state(state,
 								new_state->crtc);
-		if (WARN_ON(!crtc_state))
-			return -EINVAL;
-	}
+		अगर (WARN_ON(!crtc_state))
+			वापस -EINVAL;
+	पूर्ण
 
 	ret = drm_atomic_helper_check_plane_state(new_state, crtc_state,
 						  DRM_PLANE_HELPER_NO_SCALING,
 						  DRM_PLANE_HELPER_NO_SCALING,
 						  true, true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!new_state->fb)
-		return 0;
+	अगर (!new_state->fb)
+		वापस 0;
 
-	if (width > VBOX_MAX_CURSOR_WIDTH || height > VBOX_MAX_CURSOR_HEIGHT ||
+	अगर (width > VBOX_MAX_CURSOR_WIDTH || height > VBOX_MAX_CURSOR_HEIGHT ||
 	    width == 0 || height == 0)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Copy the ARGB image and generate the mask, which is needed in case the host
- * does not support ARGB cursors.  The mask is a 1BPP bitmap with the bit set
- * if the corresponding alpha value in the ARGB image is greater than 0xF0.
+ * Copy the ARGB image and generate the mask, which is needed in हाल the host
+ * करोes not support ARGB cursors.  The mask is a 1BPP biपंचांगap with the bit set
+ * अगर the corresponding alpha value in the ARGB image is greater than 0xF0.
  */
-static void copy_cursor_image(u8 *src, u8 *dst, u32 width, u32 height,
-			      size_t mask_size)
-{
-	size_t line_size = (width + 7) / 8;
+अटल व्योम copy_cursor_image(u8 *src, u8 *dst, u32 width, u32 height,
+			      माप_प्रकार mask_size)
+अणु
+	माप_प्रकार line_size = (width + 7) / 8;
 	u32 i, j;
 
-	memcpy(dst + mask_size, src, width * height * 4);
-	for (i = 0; i < height; ++i)
-		for (j = 0; j < width; ++j)
-			if (((u32 *)src)[i * width + j] > 0xf0000000)
+	स_नकल(dst + mask_size, src, width * height * 4);
+	क्रम (i = 0; i < height; ++i)
+		क्रम (j = 0; j < width; ++j)
+			अगर (((u32 *)src)[i * width + j] > 0xf0000000)
 				dst[i * line_size + j / 8] |= (0x80 >> (j % 8));
-}
+पूर्ण
 
-static void vbox_cursor_atomic_update(struct drm_plane *plane,
-				      struct drm_atomic_state *state)
-{
-	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+अटल व्योम vbox_cursor_atomic_update(काष्ठा drm_plane *plane,
+				      काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	struct vbox_private *vbox =
-		container_of(plane->dev, struct vbox_private, ddev);
-	struct vbox_crtc *vbox_crtc = to_vbox_crtc(new_state->crtc);
-	struct drm_framebuffer *fb = new_state->fb;
+	काष्ठा vbox_निजी *vbox =
+		container_of(plane->dev, काष्ठा vbox_निजी, ddev);
+	काष्ठा vbox_crtc *vbox_crtc = to_vbox_crtc(new_state->crtc);
+	काष्ठा drm_framebuffer *fb = new_state->fb;
 	u32 width = new_state->crtc_w;
 	u32 height = new_state->crtc_h;
-	struct drm_shadow_plane_state *shadow_plane_state =
-		to_drm_shadow_plane_state(new_state);
-	struct dma_buf_map map = shadow_plane_state->map[0];
-	u8 *src = map.vaddr; /* TODO: Use mapping abstraction properly */
-	size_t data_size, mask_size;
+	काष्ठा drm_shaकरोw_plane_state *shaकरोw_plane_state =
+		to_drm_shaकरोw_plane_state(new_state);
+	काष्ठा dma_buf_map map = shaकरोw_plane_state->map[0];
+	u8 *src = map.vaddr; /* TODO: Use mapping असलtraction properly */
+	माप_प्रकार data_size, mask_size;
 	u32 flags;
 
 	/*
-	 * VirtualBox uses the host windowing system to draw the cursor so
+	 * VirtualBox uses the host winकरोwing प्रणाली to draw the cursor so
 	 * moves are a no-op, we only need to upload new cursor sprites.
 	 */
-	if (fb == old_state->fb)
-		return;
+	अगर (fb == old_state->fb)
+		वापस;
 
 	mutex_lock(&vbox->hw_mutex);
 
@@ -426,222 +427,222 @@ static void vbox_cursor_atomic_update(struct drm_plane *plane,
 
 	flags = VBOX_MOUSE_POINTER_VISIBLE | VBOX_MOUSE_POINTER_SHAPE |
 		VBOX_MOUSE_POINTER_ALPHA;
-	hgsmi_update_pointer_shape(vbox->guest_pool, flags,
+	hgsmi_update_poपूर्णांकer_shape(vbox->guest_pool, flags,
 				   min_t(u32, max(fb->hot_x, 0), width),
 				   min_t(u32, max(fb->hot_y, 0), height),
 				   width, height, vbox->cursor_data, data_size);
 
 	mutex_unlock(&vbox->hw_mutex);
-}
+पूर्ण
 
-static void vbox_cursor_atomic_disable(struct drm_plane *plane,
-				       struct drm_atomic_state *state)
-{
-	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+अटल व्योम vbox_cursor_atomic_disable(काष्ठा drm_plane *plane,
+				       काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	struct vbox_private *vbox =
-		container_of(plane->dev, struct vbox_private, ddev);
-	struct vbox_crtc *vbox_crtc = to_vbox_crtc(old_state->crtc);
+	काष्ठा vbox_निजी *vbox =
+		container_of(plane->dev, काष्ठा vbox_निजी, ddev);
+	काष्ठा vbox_crtc *vbox_crtc = to_vbox_crtc(old_state->crtc);
 	bool cursor_enabled = false;
-	struct drm_crtc *crtci;
+	काष्ठा drm_crtc *crtci;
 
 	mutex_lock(&vbox->hw_mutex);
 
 	vbox_crtc->cursor_enabled = false;
 
-	list_for_each_entry(crtci, &vbox->ddev.mode_config.crtc_list, head) {
-		if (to_vbox_crtc(crtci)->cursor_enabled)
+	list_क्रम_each_entry(crtci, &vbox->ddev.mode_config.crtc_list, head) अणु
+		अगर (to_vbox_crtc(crtci)->cursor_enabled)
 			cursor_enabled = true;
-	}
+	पूर्ण
 
-	if (!cursor_enabled)
-		hgsmi_update_pointer_shape(vbox->guest_pool, 0, 0, 0,
-					   0, 0, NULL, 0);
+	अगर (!cursor_enabled)
+		hgsmi_update_poपूर्णांकer_shape(vbox->guest_pool, 0, 0, 0,
+					   0, 0, शून्य, 0);
 
 	mutex_unlock(&vbox->hw_mutex);
-}
+पूर्ण
 
-static const u32 vbox_cursor_plane_formats[] = {
+अटल स्थिर u32 vbox_cursor_plane_क्रमmats[] = अणु
 	DRM_FORMAT_ARGB8888,
-};
+पूर्ण;
 
-static const struct drm_plane_helper_funcs vbox_cursor_helper_funcs = {
+अटल स्थिर काष्ठा drm_plane_helper_funcs vbox_cursor_helper_funcs = अणु
 	.atomic_check	= vbox_cursor_atomic_check,
 	.atomic_update	= vbox_cursor_atomic_update,
 	.atomic_disable	= vbox_cursor_atomic_disable,
 	DRM_GEM_SHADOW_PLANE_HELPER_FUNCS,
-};
+पूर्ण;
 
-static const struct drm_plane_funcs vbox_cursor_plane_funcs = {
+अटल स्थिर काष्ठा drm_plane_funcs vbox_cursor_plane_funcs = अणु
 	.update_plane	= drm_atomic_helper_update_plane,
 	.disable_plane	= drm_atomic_helper_disable_plane,
 	.destroy	= drm_primary_helper_destroy,
 	DRM_GEM_SHADOW_PLANE_FUNCS,
-};
+पूर्ण;
 
-static const u32 vbox_primary_plane_formats[] = {
+अटल स्थिर u32 vbox_primary_plane_क्रमmats[] = अणु
 	DRM_FORMAT_XRGB8888,
 	DRM_FORMAT_ARGB8888,
-};
+पूर्ण;
 
-static const struct drm_plane_helper_funcs vbox_primary_helper_funcs = {
+अटल स्थिर काष्ठा drm_plane_helper_funcs vbox_primary_helper_funcs = अणु
 	.atomic_check = vbox_primary_atomic_check,
 	.atomic_update = vbox_primary_atomic_update,
 	.atomic_disable = vbox_primary_atomic_disable,
 	.prepare_fb	= drm_gem_vram_plane_helper_prepare_fb,
 	.cleanup_fb	= drm_gem_vram_plane_helper_cleanup_fb,
-};
+पूर्ण;
 
-static const struct drm_plane_funcs vbox_primary_plane_funcs = {
+अटल स्थिर काष्ठा drm_plane_funcs vbox_primary_plane_funcs = अणु
 	.update_plane	= drm_atomic_helper_update_plane,
 	.disable_plane	= drm_atomic_helper_disable_plane,
 	.destroy	= drm_primary_helper_destroy,
 	.reset		= drm_atomic_helper_plane_reset,
 	.atomic_duplicate_state = drm_atomic_helper_plane_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_plane_destroy_state,
-};
+पूर्ण;
 
-static struct drm_plane *vbox_create_plane(struct vbox_private *vbox,
-					   unsigned int possible_crtcs,
-					   enum drm_plane_type type)
-{
-	const struct drm_plane_helper_funcs *helper_funcs = NULL;
-	const struct drm_plane_funcs *funcs;
-	struct drm_plane *plane;
-	const u32 *formats;
-	int num_formats;
-	int err;
+अटल काष्ठा drm_plane *vbox_create_plane(काष्ठा vbox_निजी *vbox,
+					   अचिन्हित पूर्णांक possible_crtcs,
+					   क्रमागत drm_plane_type type)
+अणु
+	स्थिर काष्ठा drm_plane_helper_funcs *helper_funcs = शून्य;
+	स्थिर काष्ठा drm_plane_funcs *funcs;
+	काष्ठा drm_plane *plane;
+	स्थिर u32 *क्रमmats;
+	पूर्णांक num_क्रमmats;
+	पूर्णांक err;
 
-	if (type == DRM_PLANE_TYPE_PRIMARY) {
+	अगर (type == DRM_PLANE_TYPE_PRIMARY) अणु
 		funcs = &vbox_primary_plane_funcs;
-		formats = vbox_primary_plane_formats;
+		क्रमmats = vbox_primary_plane_क्रमmats;
 		helper_funcs = &vbox_primary_helper_funcs;
-		num_formats = ARRAY_SIZE(vbox_primary_plane_formats);
-	} else if (type == DRM_PLANE_TYPE_CURSOR) {
+		num_क्रमmats = ARRAY_SIZE(vbox_primary_plane_क्रमmats);
+	पूर्ण अन्यथा अगर (type == DRM_PLANE_TYPE_CURSOR) अणु
 		funcs = &vbox_cursor_plane_funcs;
-		formats = vbox_cursor_plane_formats;
+		क्रमmats = vbox_cursor_plane_क्रमmats;
 		helper_funcs = &vbox_cursor_helper_funcs;
-		num_formats = ARRAY_SIZE(vbox_cursor_plane_formats);
-	} else {
-		return ERR_PTR(-EINVAL);
-	}
+		num_क्रमmats = ARRAY_SIZE(vbox_cursor_plane_क्रमmats);
+	पूर्ण अन्यथा अणु
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	plane = kzalloc(sizeof(*plane), GFP_KERNEL);
-	if (!plane)
-		return ERR_PTR(-ENOMEM);
+	plane = kzalloc(माप(*plane), GFP_KERNEL);
+	अगर (!plane)
+		वापस ERR_PTR(-ENOMEM);
 
 	err = drm_universal_plane_init(&vbox->ddev, plane, possible_crtcs,
-				       funcs, formats, num_formats,
-				       NULL, type, NULL);
-	if (err)
-		goto free_plane;
+				       funcs, क्रमmats, num_क्रमmats,
+				       शून्य, type, शून्य);
+	अगर (err)
+		जाओ मुक्त_plane;
 
 	drm_plane_helper_add(plane, helper_funcs);
 
-	return plane;
+	वापस plane;
 
-free_plane:
-	kfree(plane);
-	return ERR_PTR(-EINVAL);
-}
+मुक्त_plane:
+	kमुक्त(plane);
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static struct vbox_crtc *vbox_crtc_init(struct drm_device *dev, unsigned int i)
-{
-	struct vbox_private *vbox =
-		container_of(dev, struct vbox_private, ddev);
-	struct drm_plane *cursor = NULL;
-	struct vbox_crtc *vbox_crtc;
-	struct drm_plane *primary;
+अटल काष्ठा vbox_crtc *vbox_crtc_init(काष्ठा drm_device *dev, अचिन्हित पूर्णांक i)
+अणु
+	काष्ठा vbox_निजी *vbox =
+		container_of(dev, काष्ठा vbox_निजी, ddev);
+	काष्ठा drm_plane *cursor = शून्य;
+	काष्ठा vbox_crtc *vbox_crtc;
+	काष्ठा drm_plane *primary;
 	u32 caps = 0;
-	int ret;
+	पूर्णांक ret;
 
 	ret = hgsmi_query_conf(vbox->guest_pool,
 			       VBOX_VBVA_CONF32_CURSOR_CAPABILITIES, &caps);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	vbox_crtc = kzalloc(sizeof(*vbox_crtc), GFP_KERNEL);
-	if (!vbox_crtc)
-		return ERR_PTR(-ENOMEM);
+	vbox_crtc = kzalloc(माप(*vbox_crtc), GFP_KERNEL);
+	अगर (!vbox_crtc)
+		वापस ERR_PTR(-ENOMEM);
 
 	primary = vbox_create_plane(vbox, 1 << i, DRM_PLANE_TYPE_PRIMARY);
-	if (IS_ERR(primary)) {
+	अगर (IS_ERR(primary)) अणु
 		ret = PTR_ERR(primary);
-		goto free_mem;
-	}
+		जाओ मुक्त_mem;
+	पूर्ण
 
-	if ((caps & VBOX_VBVA_CURSOR_CAPABILITY_HARDWARE)) {
+	अगर ((caps & VBOX_VBVA_CURSOR_CAPABILITY_HARDWARE)) अणु
 		cursor = vbox_create_plane(vbox, 1 << i, DRM_PLANE_TYPE_CURSOR);
-		if (IS_ERR(cursor)) {
+		अगर (IS_ERR(cursor)) अणु
 			ret = PTR_ERR(cursor);
-			goto clean_primary;
-		}
-	} else {
+			जाओ clean_primary;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		DRM_WARN("VirtualBox host is too old, no cursor support\n");
-	}
+	पूर्ण
 
 	vbox_crtc->crtc_id = i;
 
 	ret = drm_crtc_init_with_planes(dev, &vbox_crtc->base, primary, cursor,
-					&vbox_crtc_funcs, NULL);
-	if (ret)
-		goto clean_cursor;
+					&vbox_crtc_funcs, शून्य);
+	अगर (ret)
+		जाओ clean_cursor;
 
 	drm_mode_crtc_set_gamma_size(&vbox_crtc->base, 256);
 	drm_crtc_helper_add(&vbox_crtc->base, &vbox_crtc_helper_funcs);
 
-	return vbox_crtc;
+	वापस vbox_crtc;
 
 clean_cursor:
-	if (cursor) {
+	अगर (cursor) अणु
 		drm_plane_cleanup(cursor);
-		kfree(cursor);
-	}
+		kमुक्त(cursor);
+	पूर्ण
 clean_primary:
 	drm_plane_cleanup(primary);
-	kfree(primary);
-free_mem:
-	kfree(vbox_crtc);
-	return ERR_PTR(ret);
-}
+	kमुक्त(primary);
+मुक्त_mem:
+	kमुक्त(vbox_crtc);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static void vbox_encoder_destroy(struct drm_encoder *encoder)
-{
+अटल व्योम vbox_encoder_destroy(काष्ठा drm_encoder *encoder)
+अणु
 	drm_encoder_cleanup(encoder);
-	kfree(encoder);
-}
+	kमुक्त(encoder);
+पूर्ण
 
-static const struct drm_encoder_funcs vbox_enc_funcs = {
+अटल स्थिर काष्ठा drm_encoder_funcs vbox_enc_funcs = अणु
 	.destroy = vbox_encoder_destroy,
-};
+पूर्ण;
 
-static struct drm_encoder *vbox_encoder_init(struct drm_device *dev,
-					     unsigned int i)
-{
-	struct vbox_encoder *vbox_encoder;
+अटल काष्ठा drm_encoder *vbox_encoder_init(काष्ठा drm_device *dev,
+					     अचिन्हित पूर्णांक i)
+अणु
+	काष्ठा vbox_encoder *vbox_encoder;
 
-	vbox_encoder = kzalloc(sizeof(*vbox_encoder), GFP_KERNEL);
-	if (!vbox_encoder)
-		return NULL;
+	vbox_encoder = kzalloc(माप(*vbox_encoder), GFP_KERNEL);
+	अगर (!vbox_encoder)
+		वापस शून्य;
 
 	drm_encoder_init(dev, &vbox_encoder->base, &vbox_enc_funcs,
-			 DRM_MODE_ENCODER_DAC, NULL);
+			 DRM_MODE_ENCODER_DAC, शून्य);
 
 	vbox_encoder->base.possible_crtcs = 1 << i;
-	return &vbox_encoder->base;
-}
+	वापस &vbox_encoder->base;
+पूर्ण
 
 /*
- * Generate EDID data with a mode-unique serial number for the virtual
- * monitor to try to persuade Unity that different modes correspond to
- * different monitors and it should not try to force the same resolution on
+ * Generate EDID data with a mode-unique serial number क्रम the भव
+ * monitor to try to persuade Unity that dअगरferent modes correspond to
+ * dअगरferent monitors and it should not try to क्रमce the same resolution on
  * them.
  */
-static void vbox_set_edid(struct drm_connector *connector, int width,
-			  int height)
-{
-	enum { EDID_SIZE = 128 };
-	unsigned char edid[EDID_SIZE] = {
+अटल व्योम vbox_set_edid(काष्ठा drm_connector *connector, पूर्णांक width,
+			  पूर्णांक height)
+अणु
+	क्रमागत अणु EDID_SIZE = 128 पूर्ण;
+	अचिन्हित अक्षर edid[EDID_SIZE] = अणु
 		0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00,	/* header */
 		0x58, 0x58,	/* manufacturer (VBX) */
 		0x00, 0x00,	/* product code */
@@ -650,14 +651,14 @@ static void vbox_set_edid(struct drm_connector *connector, int width,
 		0x00,		/* year of manufacture */
 		0x01, 0x03,	/* EDID version */
 		0x80,		/* capabilities - digital */
-		0x00,		/* horiz. res in cm, zero for projectors */
+		0x00,		/* horiz. res in cm, zero क्रम projectors */
 		0x00,		/* vert. res in cm */
 		0x78,		/* display gamma (120 == 2.2). */
 		0xEE,		/* features (standby, suspend, off, RGB, std */
 				/* colour space, preferred timing mode) */
 		0xEE, 0x91, 0xA3, 0x54, 0x4C, 0x99, 0x26, 0x0F, 0x50, 0x54,
-		/* chromaticity for standard colour space. */
-		0x00, 0x00, 0x00,	/* no default timings */
+		/* chromaticity क्रम standard colour space. */
+		0x00, 0x00, 0x00,	/* no शेष timings */
 		0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
 		    0x01, 0x01,
 		0x01, 0x01, 0x01, 0x01,	/* no standard timings */
@@ -669,7 +670,7 @@ static void vbox_set_edid(struct drm_connector *connector, int width,
 		0x00, 0x00, 0x00, 0xFD, 0x00,
 		0x00, 0xC8, 0x00, 0xC8, 0x64, 0x00, 0x0A, 0x20, 0x20, 0x20,
 		    0x20, 0x20,
-		/* 0-200Hz vertical, 0-200KHz horizontal, 1000MHz pixel clock */
+		/* 0-200Hz vertical, 0-200KHz horizontal, 1000MHz pixel घड़ी */
 		0x20,
 		/* descriptor block 3, monitor name */
 		0x00, 0x00, 0x00, 0xFC, 0x00,
@@ -682,133 +683,133 @@ static void vbox_set_edid(struct drm_connector *connector, int width,
 		0x20,
 		0x00,		/* number of extensions */
 		0x00		/* checksum goes here */
-	};
-	int clock = (width + 6) * (height + 6) * 60 / 10000;
-	unsigned int i, sum = 0;
+	पूर्ण;
+	पूर्णांक घड़ी = (width + 6) * (height + 6) * 60 / 10000;
+	अचिन्हित पूर्णांक i, sum = 0;
 
 	edid[12] = width & 0xff;
 	edid[13] = width >> 8;
 	edid[14] = height & 0xff;
 	edid[15] = height >> 8;
-	edid[54] = clock & 0xff;
-	edid[55] = clock >> 8;
+	edid[54] = घड़ी & 0xff;
+	edid[55] = घड़ी >> 8;
 	edid[56] = width & 0xff;
 	edid[58] = (width >> 4) & 0xf0;
 	edid[59] = height & 0xff;
 	edid[61] = (height >> 4) & 0xf0;
-	for (i = 0; i < EDID_SIZE - 1; ++i)
+	क्रम (i = 0; i < EDID_SIZE - 1; ++i)
 		sum += edid[i];
 	edid[EDID_SIZE - 1] = (0x100 - (sum & 0xFF)) & 0xFF;
-	drm_connector_update_edid_property(connector, (struct edid *)edid);
-}
+	drm_connector_update_edid_property(connector, (काष्ठा edid *)edid);
+पूर्ण
 
-static int vbox_get_modes(struct drm_connector *connector)
-{
-	struct vbox_connector *vbox_connector = NULL;
-	struct drm_display_mode *mode = NULL;
-	struct vbox_private *vbox = NULL;
-	unsigned int num_modes = 0;
-	int preferred_width, preferred_height;
+अटल पूर्णांक vbox_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा vbox_connector *vbox_connector = शून्य;
+	काष्ठा drm_display_mode *mode = शून्य;
+	काष्ठा vbox_निजी *vbox = शून्य;
+	अचिन्हित पूर्णांक num_modes = 0;
+	पूर्णांक preferred_width, preferred_height;
 
 	vbox_connector = to_vbox_connector(connector);
 	vbox = to_vbox_dev(connector->dev);
 
 	hgsmi_report_flags_location(vbox->guest_pool, GUEST_HEAP_OFFSET(vbox) +
 				    HOST_FLAGS_OFFSET);
-	if (vbox_connector->vbox_crtc->crtc_id == 0)
+	अगर (vbox_connector->vbox_crtc->crtc_id == 0)
 		vbox_report_caps(vbox);
 
 	num_modes = drm_add_modes_noedid(connector, 2560, 1600);
-	preferred_width = vbox_connector->mode_hint.width ?
-			  vbox_connector->mode_hint.width : 1024;
-	preferred_height = vbox_connector->mode_hint.height ?
-			   vbox_connector->mode_hint.height : 768;
+	preferred_width = vbox_connector->mode_hपूर्णांक.width ?
+			  vbox_connector->mode_hपूर्णांक.width : 1024;
+	preferred_height = vbox_connector->mode_hपूर्णांक.height ?
+			   vbox_connector->mode_hपूर्णांक.height : 768;
 	mode = drm_cvt_mode(connector->dev, preferred_width, preferred_height,
 			    60, false, false, false);
-	if (mode) {
+	अगर (mode) अणु
 		mode->type |= DRM_MODE_TYPE_PREFERRED;
 		drm_mode_probed_add(connector, mode);
 		++num_modes;
-	}
+	पूर्ण
 	vbox_set_edid(connector, preferred_width, preferred_height);
 
-	if (vbox_connector->vbox_crtc->x_hint != -1)
+	अगर (vbox_connector->vbox_crtc->x_hपूर्णांक != -1)
 		drm_object_property_set_value(&connector->base,
 			vbox->ddev.mode_config.suggested_x_property,
-			vbox_connector->vbox_crtc->x_hint);
-	else
+			vbox_connector->vbox_crtc->x_hपूर्णांक);
+	अन्यथा
 		drm_object_property_set_value(&connector->base,
 			vbox->ddev.mode_config.suggested_x_property, 0);
 
-	if (vbox_connector->vbox_crtc->y_hint != -1)
+	अगर (vbox_connector->vbox_crtc->y_hपूर्णांक != -1)
 		drm_object_property_set_value(&connector->base,
 			vbox->ddev.mode_config.suggested_y_property,
-			vbox_connector->vbox_crtc->y_hint);
-	else
+			vbox_connector->vbox_crtc->y_hपूर्णांक);
+	अन्यथा
 		drm_object_property_set_value(&connector->base,
 			vbox->ddev.mode_config.suggested_y_property, 0);
 
-	return num_modes;
-}
+	वापस num_modes;
+पूर्ण
 
-static void vbox_connector_destroy(struct drm_connector *connector)
-{
-	drm_connector_unregister(connector);
+अटल व्योम vbox_connector_destroy(काष्ठा drm_connector *connector)
+अणु
+	drm_connector_unरेजिस्टर(connector);
 	drm_connector_cleanup(connector);
-	kfree(connector);
-}
+	kमुक्त(connector);
+पूर्ण
 
-static enum drm_connector_status
-vbox_connector_detect(struct drm_connector *connector, bool force)
-{
-	struct vbox_connector *vbox_connector;
+अटल क्रमागत drm_connector_status
+vbox_connector_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा vbox_connector *vbox_connector;
 
 	vbox_connector = to_vbox_connector(connector);
 
-	return vbox_connector->mode_hint.disconnected ?
+	वापस vbox_connector->mode_hपूर्णांक.disconnected ?
 	    connector_status_disconnected : connector_status_connected;
-}
+पूर्ण
 
-static int vbox_fill_modes(struct drm_connector *connector, u32 max_x,
+अटल पूर्णांक vbox_fill_modes(काष्ठा drm_connector *connector, u32 max_x,
 			   u32 max_y)
-{
-	struct vbox_connector *vbox_connector;
-	struct drm_device *dev;
-	struct drm_display_mode *mode, *iterator;
+अणु
+	काष्ठा vbox_connector *vbox_connector;
+	काष्ठा drm_device *dev;
+	काष्ठा drm_display_mode *mode, *iterator;
 
 	vbox_connector = to_vbox_connector(connector);
 	dev = vbox_connector->base.dev;
-	list_for_each_entry_safe(mode, iterator, &connector->modes, head) {
+	list_क्रम_each_entry_safe(mode, iterator, &connector->modes, head) अणु
 		list_del(&mode->head);
 		drm_mode_destroy(dev, mode);
-	}
+	पूर्ण
 
-	return drm_helper_probe_single_connector_modes(connector, max_x, max_y);
-}
+	वापस drm_helper_probe_single_connector_modes(connector, max_x, max_y);
+पूर्ण
 
-static const struct drm_connector_helper_funcs vbox_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs vbox_connector_helper_funcs = अणु
 	.get_modes = vbox_get_modes,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs vbox_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs vbox_connector_funcs = अणु
 	.detect = vbox_connector_detect,
 	.fill_modes = vbox_fill_modes,
 	.destroy = vbox_connector_destroy,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-};
+पूर्ण;
 
-static int vbox_connector_init(struct drm_device *dev,
-			       struct vbox_crtc *vbox_crtc,
-			       struct drm_encoder *encoder)
-{
-	struct vbox_connector *vbox_connector;
-	struct drm_connector *connector;
+अटल पूर्णांक vbox_connector_init(काष्ठा drm_device *dev,
+			       काष्ठा vbox_crtc *vbox_crtc,
+			       काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा vbox_connector *vbox_connector;
+	काष्ठा drm_connector *connector;
 
-	vbox_connector = kzalloc(sizeof(*vbox_connector), GFP_KERNEL);
-	if (!vbox_connector)
-		return -ENOMEM;
+	vbox_connector = kzalloc(माप(*vbox_connector), GFP_KERNEL);
+	अगर (!vbox_connector)
+		वापस -ENOMEM;
 
 	connector = &vbox_connector->base;
 	vbox_connector->vbox_crtc = vbox_crtc;
@@ -817,8 +818,8 @@ static int vbox_connector_init(struct drm_device *dev,
 			   DRM_MODE_CONNECTOR_VGA);
 	drm_connector_helper_add(connector, &vbox_connector_helper_funcs);
 
-	connector->interlace_allowed = 0;
-	connector->doublescan_allowed = 0;
+	connector->पूर्णांकerlace_allowed = 0;
+	connector->द्विगुनscan_allowed = 0;
 
 	drm_mode_create_suggested_offset_properties(dev);
 	drm_object_attach_property(&connector->base,
@@ -828,58 +829,58 @@ static int vbox_connector_init(struct drm_device *dev,
 
 	drm_connector_attach_encoder(connector, encoder);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_mode_config_funcs vbox_mode_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs vbox_mode_funcs = अणु
 	.fb_create = drm_gem_fb_create_with_dirty,
 	.mode_valid = drm_vram_helper_mode_valid,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-};
+पूर्ण;
 
-int vbox_mode_init(struct vbox_private *vbox)
-{
-	struct drm_device *dev = &vbox->ddev;
-	struct drm_encoder *encoder;
-	struct vbox_crtc *vbox_crtc;
-	unsigned int i;
-	int ret;
+पूर्णांक vbox_mode_init(काष्ठा vbox_निजी *vbox)
+अणु
+	काष्ठा drm_device *dev = &vbox->ddev;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा vbox_crtc *vbox_crtc;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	drm_mode_config_init(dev);
 
-	dev->mode_config.funcs = (void *)&vbox_mode_funcs;
+	dev->mode_config.funcs = (व्योम *)&vbox_mode_funcs;
 	dev->mode_config.min_width = 0;
 	dev->mode_config.min_height = 0;
 	dev->mode_config.preferred_depth = 24;
 	dev->mode_config.max_width = VBE_DISPI_MAX_XRES;
 	dev->mode_config.max_height = VBE_DISPI_MAX_YRES;
 
-	for (i = 0; i < vbox->num_crtcs; ++i) {
+	क्रम (i = 0; i < vbox->num_crtcs; ++i) अणु
 		vbox_crtc = vbox_crtc_init(dev, i);
-		if (IS_ERR(vbox_crtc)) {
+		अगर (IS_ERR(vbox_crtc)) अणु
 			ret = PTR_ERR(vbox_crtc);
-			goto err_drm_mode_cleanup;
-		}
+			जाओ err_drm_mode_cleanup;
+		पूर्ण
 		encoder = vbox_encoder_init(dev, i);
-		if (!encoder) {
+		अगर (!encoder) अणु
 			ret = -ENOMEM;
-			goto err_drm_mode_cleanup;
-		}
+			जाओ err_drm_mode_cleanup;
+		पूर्ण
 		ret = vbox_connector_init(dev, vbox_crtc, encoder);
-		if (ret)
-			goto err_drm_mode_cleanup;
-	}
+		अगर (ret)
+			जाओ err_drm_mode_cleanup;
+	पूर्ण
 
 	drm_mode_config_reset(dev);
-	return 0;
+	वापस 0;
 
 err_drm_mode_cleanup:
 	drm_mode_config_cleanup(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void vbox_mode_fini(struct vbox_private *vbox)
-{
+व्योम vbox_mode_fini(काष्ठा vbox_निजी *vbox)
+अणु
 	drm_mode_config_cleanup(&vbox->ddev);
-}
+पूर्ण

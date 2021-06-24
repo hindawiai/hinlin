@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_VDSO_CSKY_VSYSCALL_H
-#define __ASM_VDSO_CSKY_VSYSCALL_H
+#अगर_अघोषित __ASM_VDSO_CSKY_VSYSCALL_H
+#घोषणा __ASM_VDSO_CSKY_VSYSCALL_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <vdso/datapage.h>
+#समावेश <vdso/datapage.h>
 
-extern struct vdso_data *vdso_data;
+बाह्य काष्ठा vdso_data *vdso_data;
 
-static __always_inline struct vdso_data *__csky_get_k_vdso_data(void)
-{
-	return vdso_data;
-}
-#define __arch_get_k_vdso_data __csky_get_k_vdso_data
+अटल __always_अंतरभूत काष्ठा vdso_data *__csky_get_k_vdso_data(व्योम)
+अणु
+	वापस vdso_data;
+पूर्ण
+#घोषणा __arch_get_k_vdso_data __csky_get_k_vdso_data
 
-#include <asm-generic/vdso/vsyscall.h>
+#समावेश <यंत्र-generic/vdso/vsyscall.h>
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif /* __ASM_VDSO_CSKY_VSYSCALL_H */
+#पूर्ण_अगर /* __ASM_VDSO_CSKY_VSYSCALL_H */

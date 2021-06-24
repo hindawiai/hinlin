@@ -1,149 +1,150 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#define DSS_SUBSYS_NAME "HDMI"
+#घोषणा DSS_SUBSYS_NAME "HDMI"
 
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <video/omapfb_dss.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <video/omapfb_dss.h>
 
-#include "hdmi.h"
+#समावेश "hdmi.h"
 
-int hdmi_parse_lanes_of(struct platform_device *pdev, struct device_node *ep,
-	struct hdmi_phy_data *phy)
-{
-	struct property *prop;
-	int r, len;
+पूर्णांक hdmi_parse_lanes_of(काष्ठा platक्रमm_device *pdev, काष्ठा device_node *ep,
+	काष्ठा hdmi_phy_data *phy)
+अणु
+	काष्ठा property *prop;
+	पूर्णांक r, len;
 
 	prop = of_find_property(ep, "lanes", &len);
-	if (prop) {
+	अगर (prop) अणु
 		u32 lanes[8];
 
-		if (len / sizeof(u32) != ARRAY_SIZE(lanes)) {
+		अगर (len / माप(u32) != ARRAY_SIZE(lanes)) अणु
 			dev_err(&pdev->dev, "bad number of lanes\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		r = of_property_read_u32_array(ep, "lanes", lanes,
+		r = of_property_पढ़ो_u32_array(ep, "lanes", lanes,
 			ARRAY_SIZE(lanes));
-		if (r) {
+		अगर (r) अणु
 			dev_err(&pdev->dev, "failed to read lane data\n");
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		r = hdmi_phy_parse_lanes(phy, lanes);
-		if (r) {
+		अगर (r) अणु
 			dev_err(&pdev->dev, "failed to parse lane data\n");
-			return r;
-		}
-	} else {
-		static const u32 default_lanes[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+			वापस r;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अटल स्थिर u32 शेष_lanes[] = अणु 0, 1, 2, 3, 4, 5, 6, 7 पूर्ण;
 
-		r = hdmi_phy_parse_lanes(phy, default_lanes);
-		if (WARN_ON(r)) {
+		r = hdmi_phy_parse_lanes(phy, शेष_lanes);
+		अगर (WARN_ON(r)) अणु
 			dev_err(&pdev->dev, "failed to parse lane data\n");
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hdmi_compute_acr(u32 pclk, u32 sample_freq, u32 *n, u32 *cts)
-{
+पूर्णांक hdmi_compute_acr(u32 pclk, u32 sample_freq, u32 *n, u32 *cts)
+अणु
 	u32 deep_color;
 	bool deep_color_correct = false;
 
-	if (n == NULL || cts == NULL)
-		return -EINVAL;
+	अगर (n == शून्य || cts == शून्य)
+		वापस -EINVAL;
 
 	/* TODO: When implemented, query deep color mode here. */
 	deep_color = 100;
 
 	/*
-	 * When using deep color, the default N value (as in the HDMI
-	 * specification) yields to an non-integer CTS. Hence, we
-	 * modify it while keeping the restrictions described in
-	 * section 7.2.1 of the HDMI 1.4a specification.
+	 * When using deep color, the शेष N value (as in the HDMI
+	 * specअगरication) yields to an non-पूर्णांकeger CTS. Hence, we
+	 * modअगरy it जबतक keeping the restrictions described in
+	 * section 7.2.1 of the HDMI 1.4a specअगरication.
 	 */
-	switch (sample_freq) {
-	case 32000:
-	case 48000:
-	case 96000:
-	case 192000:
-		if (deep_color == 125)
-			if (pclk == 27027000 || pclk == 74250000)
+	चयन (sample_freq) अणु
+	हाल 32000:
+	हाल 48000:
+	हाल 96000:
+	हाल 192000:
+		अगर (deep_color == 125)
+			अगर (pclk == 27027000 || pclk == 74250000)
 				deep_color_correct = true;
-		if (deep_color == 150)
-			if (pclk == 27027000)
+		अगर (deep_color == 150)
+			अगर (pclk == 27027000)
 				deep_color_correct = true;
-		break;
-	case 44100:
-	case 88200:
-	case 176400:
-		if (deep_color == 125)
-			if (pclk == 27027000)
+		अवरोध;
+	हाल 44100:
+	हाल 88200:
+	हाल 176400:
+		अगर (deep_color == 125)
+			अगर (pclk == 27027000)
 				deep_color_correct = true;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (deep_color_correct) {
-		switch (sample_freq) {
-		case 32000:
+	अगर (deep_color_correct) अणु
+		चयन (sample_freq) अणु
+		हाल 32000:
 			*n = 8192;
-			break;
-		case 44100:
+			अवरोध;
+		हाल 44100:
 			*n = 12544;
-			break;
-		case 48000:
+			अवरोध;
+		हाल 48000:
 			*n = 8192;
-			break;
-		case 88200:
+			अवरोध;
+		हाल 88200:
 			*n = 25088;
-			break;
-		case 96000:
+			अवरोध;
+		हाल 96000:
 			*n = 16384;
-			break;
-		case 176400:
+			अवरोध;
+		हाल 176400:
 			*n = 50176;
-			break;
-		case 192000:
+			अवरोध;
+		हाल 192000:
 			*n = 32768;
-			break;
-		default:
-			return -EINVAL;
-		}
-	} else {
-		switch (sample_freq) {
-		case 32000:
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (sample_freq) अणु
+		हाल 32000:
 			*n = 4096;
-			break;
-		case 44100:
+			अवरोध;
+		हाल 44100:
 			*n = 6272;
-			break;
-		case 48000:
+			अवरोध;
+		हाल 48000:
 			*n = 6144;
-			break;
-		case 88200:
+			अवरोध;
+		हाल 88200:
 			*n = 12544;
-			break;
-		case 96000:
+			अवरोध;
+		हाल 96000:
 			*n = 12288;
-			break;
-		case 176400:
+			अवरोध;
+		हाल 176400:
 			*n = 25088;
-			break;
-		case 192000:
+			अवरोध;
+		हाल 192000:
 			*n = 24576;
-			break;
-		default:
-			return -EINVAL;
-		}
-	}
-	/* Calculate CTS. See HDMI 1.3a or 1.4a specifications */
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	/* Calculate CTS. See HDMI 1.3a or 1.4a specअगरications */
 	*cts = (pclk/1000) * (*n / 128) * deep_color / (sample_freq / 10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

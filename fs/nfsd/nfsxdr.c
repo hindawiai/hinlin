@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * XDR support for nfsd
+ * XDR support क्रम nfsd
  *
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#include "vfs.h"
-#include "xdr.h"
-#include "auth.h"
+#समावेश "vfs.h"
+#समावेश "xdr.h"
+#समावेश "auth.h"
 
 /*
  * Mapping of S_IF* types to NFS file types
  */
-static const u32 nfs_ftypes[] = {
+अटल स्थिर u32 nfs_ftypes[] = अणु
 	NFNON,  NFCHR,  NFCHR, NFBAD,
-	NFDIR,  NFBAD,  NFBLK, NFBAD,
+	NFसूची,  NFBAD,  NFBLK, NFBAD,
 	NFREG,  NFBAD,  NFLNK, NFBAD,
 	NFSOCK, NFBAD,  NFLNK, NFBAD,
-};
+पूर्ण;
 
 
 /*
@@ -34,17 +35,17 @@ static const u32 nfs_ftypes[] = {
  *   %true: Success
  */
 bool
-svcxdr_encode_stat(struct xdr_stream *xdr, __be32 status)
-{
+svcxdr_encode_stat(काष्ठा xdr_stream *xdr, __be32 status)
+अणु
 	__be32 *p;
 
-	p = xdr_reserve_space(xdr, sizeof(status));
-	if (!p)
-		return false;
+	p = xdr_reserve_space(xdr, माप(status));
+	अगर (!p)
+		वापस false;
 	*p = status;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * svcxdr_decode_fhandle - Decode an NFSv2 file handle
@@ -56,86 +57,86 @@ svcxdr_encode_stat(struct xdr_stream *xdr, __be32 status)
  *  %true: @fhp has been initialized
  */
 bool
-svcxdr_decode_fhandle(struct xdr_stream *xdr, struct svc_fh *fhp)
-{
+svcxdr_decode_fhandle(काष्ठा xdr_stream *xdr, काष्ठा svc_fh *fhp)
+अणु
 	__be32 *p;
 
-	p = xdr_inline_decode(xdr, NFS_FHSIZE);
-	if (!p)
-		return false;
+	p = xdr_अंतरभूत_decode(xdr, NFS_FHSIZE);
+	अगर (!p)
+		वापस false;
 	fh_init(fhp, NFS_FHSIZE);
-	memcpy(&fhp->fh_handle.fh_base, p, NFS_FHSIZE);
+	स_नकल(&fhp->fh_handle.fh_base, p, NFS_FHSIZE);
 	fhp->fh_handle.fh_size = NFS_FHSIZE;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool
-svcxdr_encode_fhandle(struct xdr_stream *xdr, const struct svc_fh *fhp)
-{
+अटल bool
+svcxdr_encode_fhandle(काष्ठा xdr_stream *xdr, स्थिर काष्ठा svc_fh *fhp)
+अणु
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, NFS_FHSIZE);
-	if (!p)
-		return false;
-	memcpy(p, &fhp->fh_handle.fh_base, NFS_FHSIZE);
+	अगर (!p)
+		वापस false;
+	स_नकल(p, &fhp->fh_handle.fh_base, NFS_FHSIZE);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static __be32 *
-encode_timeval(__be32 *p, const struct timespec64 *time)
-{
-	*p++ = cpu_to_be32((u32)time->tv_sec);
-	if (time->tv_nsec)
-		*p++ = cpu_to_be32(time->tv_nsec / NSEC_PER_USEC);
-	else
+अटल __be32 *
+encode_समयval(__be32 *p, स्थिर काष्ठा बारpec64 *समय)
+अणु
+	*p++ = cpu_to_be32((u32)समय->tv_sec);
+	अगर (समय->tv_nsec)
+		*p++ = cpu_to_be32(समय->tv_nsec / NSEC_PER_USEC);
+	अन्यथा
 		*p++ = xdr_zero;
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static bool
-svcxdr_decode_filename(struct xdr_stream *xdr, char **name, unsigned int *len)
-{
+अटल bool
+svcxdr_decode_filename(काष्ठा xdr_stream *xdr, अक्षर **name, अचिन्हित पूर्णांक *len)
+अणु
 	u32 size, i;
 	__be32 *p;
-	char *c;
+	अक्षर *c;
 
-	if (xdr_stream_decode_u32(xdr, &size) < 0)
-		return false;
-	if (size == 0 || size > NFS_MAXNAMLEN)
-		return false;
-	p = xdr_inline_decode(xdr, size);
-	if (!p)
-		return false;
+	अगर (xdr_stream_decode_u32(xdr, &size) < 0)
+		वापस false;
+	अगर (size == 0 || size > NFS_MAXNAMLEN)
+		वापस false;
+	p = xdr_अंतरभूत_decode(xdr, size);
+	अगर (!p)
+		वापस false;
 
 	*len = size;
-	*name = (char *)p;
-	for (i = 0, c = *name; i < size; i++, c++)
-		if (*c == '\0' || *c == '/')
-			return false;
+	*name = (अक्षर *)p;
+	क्रम (i = 0, c = *name; i < size; i++, c++)
+		अगर (*c == '\0' || *c == '/')
+			वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool
-svcxdr_decode_diropargs(struct xdr_stream *xdr, struct svc_fh *fhp,
-			char **name, unsigned int *len)
-{
-	return svcxdr_decode_fhandle(xdr, fhp) &&
+अटल bool
+svcxdr_decode_diropargs(काष्ठा xdr_stream *xdr, काष्ठा svc_fh *fhp,
+			अक्षर **name, अचिन्हित पूर्णांक *len)
+अणु
+	वापस svcxdr_decode_fhandle(xdr, fhp) &&
 		svcxdr_decode_filename(xdr, name, len);
-}
+पूर्ण
 
-static bool
-svcxdr_decode_sattr(struct svc_rqst *rqstp, struct xdr_stream *xdr,
-		    struct iattr *iap)
-{
-	u32 tmp1, tmp2;
+अटल bool
+svcxdr_decode_sattr(काष्ठा svc_rqst *rqstp, काष्ठा xdr_stream *xdr,
+		    काष्ठा iattr *iap)
+अणु
+	u32 पंचांगp1, पंचांगp2;
 	__be32 *p;
 
-	p = xdr_inline_decode(xdr, XDR_UNIT * 8);
-	if (!p)
-		return false;
+	p = xdr_अंतरभूत_decode(xdr, XDR_UNIT * 8);
+	अगर (!p)
+		वापस false;
 
 	iap->ia_valid = 0;
 
@@ -143,61 +144,61 @@ svcxdr_decode_sattr(struct svc_rqst *rqstp, struct xdr_stream *xdr,
 	 * Some Sun clients put 0xffff in the mode field when they
 	 * mean 0xffffffff.
 	 */
-	tmp1 = be32_to_cpup(p++);
-	if (tmp1 != (u32)-1 && tmp1 != 0xffff) {
+	पंचांगp1 = be32_to_cpup(p++);
+	अगर (पंचांगp1 != (u32)-1 && पंचांगp1 != 0xffff) अणु
 		iap->ia_valid |= ATTR_MODE;
-		iap->ia_mode = tmp1;
-	}
+		iap->ia_mode = पंचांगp1;
+	पूर्ण
 
-	tmp1 = be32_to_cpup(p++);
-	if (tmp1 != (u32)-1) {
-		iap->ia_uid = make_kuid(nfsd_user_namespace(rqstp), tmp1);
-		if (uid_valid(iap->ia_uid))
+	पंचांगp1 = be32_to_cpup(p++);
+	अगर (पंचांगp1 != (u32)-1) अणु
+		iap->ia_uid = make_kuid(nfsd_user_namespace(rqstp), पंचांगp1);
+		अगर (uid_valid(iap->ia_uid))
 			iap->ia_valid |= ATTR_UID;
-	}
+	पूर्ण
 
-	tmp1 = be32_to_cpup(p++);
-	if (tmp1 != (u32)-1) {
-		iap->ia_gid = make_kgid(nfsd_user_namespace(rqstp), tmp1);
-		if (gid_valid(iap->ia_gid))
+	पंचांगp1 = be32_to_cpup(p++);
+	अगर (पंचांगp1 != (u32)-1) अणु
+		iap->ia_gid = make_kgid(nfsd_user_namespace(rqstp), पंचांगp1);
+		अगर (gid_valid(iap->ia_gid))
 			iap->ia_valid |= ATTR_GID;
-	}
+	पूर्ण
 
-	tmp1 = be32_to_cpup(p++);
-	if (tmp1 != (u32)-1) {
+	पंचांगp1 = be32_to_cpup(p++);
+	अगर (पंचांगp1 != (u32)-1) अणु
 		iap->ia_valid |= ATTR_SIZE;
-		iap->ia_size = tmp1;
-	}
+		iap->ia_size = पंचांगp1;
+	पूर्ण
 
-	tmp1 = be32_to_cpup(p++);
-	tmp2 = be32_to_cpup(p++);
-	if (tmp1 != (u32)-1 && tmp2 != (u32)-1) {
+	पंचांगp1 = be32_to_cpup(p++);
+	पंचांगp2 = be32_to_cpup(p++);
+	अगर (पंचांगp1 != (u32)-1 && पंचांगp2 != (u32)-1) अणु
 		iap->ia_valid |= ATTR_ATIME | ATTR_ATIME_SET;
-		iap->ia_atime.tv_sec = tmp1;
-		iap->ia_atime.tv_nsec = tmp2 * NSEC_PER_USEC;
-	}
+		iap->ia_aसमय.tv_sec = पंचांगp1;
+		iap->ia_aसमय.tv_nsec = पंचांगp2 * NSEC_PER_USEC;
+	पूर्ण
 
-	tmp1 = be32_to_cpup(p++);
-	tmp2 = be32_to_cpup(p++);
-	if (tmp1 != (u32)-1 && tmp2 != (u32)-1) {
+	पंचांगp1 = be32_to_cpup(p++);
+	पंचांगp2 = be32_to_cpup(p++);
+	अगर (पंचांगp1 != (u32)-1 && पंचांगp2 != (u32)-1) अणु
 		iap->ia_valid |= ATTR_MTIME | ATTR_MTIME_SET;
-		iap->ia_mtime.tv_sec = tmp1;
-		iap->ia_mtime.tv_nsec = tmp2 * NSEC_PER_USEC;
+		iap->ia_mसमय.tv_sec = पंचांगp1;
+		iap->ia_mसमय.tv_nsec = पंचांगp2 * NSEC_PER_USEC;
 		/*
-		 * Passing the invalid value useconds=1000000 for mtime
-		 * is a Sun convention for "set both mtime and atime to
-		 * current server time".  It's needed to make permissions
-		 * checks for the "touch" program across v2 mounts to
+		 * Passing the invalid value useconds=1000000 क्रम mसमय
+		 * is a Sun convention क्रम "set both mसमय and aसमय to
+		 * current server समय".  It's needed to make permissions
+		 * checks क्रम the "touch" program across v2 mounts to
 		 * Solaris and Irix boxes work correctly. See description of
 		 * sattr in section 6.1 of "NFS Illustrated" by
 		 * Brent Callaghan, Addison-Wesley, ISBN 0-201-32750-5
 		 */
-		if (tmp2 == 1000000)
+		अगर (पंचांगp2 == 1000000)
 			iap->ia_valid &= ~(ATTR_ATIME_SET|ATTR_MTIME_SET);
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * svcxdr_encode_fattr - Encode NFSv2 file attributes
@@ -211,19 +212,19 @@ svcxdr_decode_sattr(struct svc_rqst *rqstp, struct xdr_stream *xdr,
  *   %true: Success
  */
 bool
-svcxdr_encode_fattr(struct svc_rqst *rqstp, struct xdr_stream *xdr,
-		    const struct svc_fh *fhp, const struct kstat *stat)
-{
-	struct user_namespace *userns = nfsd_user_namespace(rqstp);
-	struct dentry *dentry = fhp->fh_dentry;
-	int type = stat->mode & S_IFMT;
-	struct timespec64 time;
+svcxdr_encode_fattr(काष्ठा svc_rqst *rqstp, काष्ठा xdr_stream *xdr,
+		    स्थिर काष्ठा svc_fh *fhp, स्थिर काष्ठा kstat *stat)
+अणु
+	काष्ठा user_namespace *userns = nfsd_user_namespace(rqstp);
+	काष्ठा dentry *dentry = fhp->fh_dentry;
+	पूर्णांक type = stat->mode & S_IFMT;
+	काष्ठा बारpec64 समय;
 	__be32 *p;
 	u32 fsid;
 
 	p = xdr_reserve_space(xdr, XDR_UNIT * 17);
-	if (!p)
-		return false;
+	अगर (!p)
+		वापस false;
 
 	*p++ = cpu_to_be32(nfs_ftypes[type >> 12]);
 	*p++ = cpu_to_be32((u32)stat->mode);
@@ -231,393 +232,393 @@ svcxdr_encode_fattr(struct svc_rqst *rqstp, struct xdr_stream *xdr,
 	*p++ = cpu_to_be32((u32)from_kuid_munged(userns, stat->uid));
 	*p++ = cpu_to_be32((u32)from_kgid_munged(userns, stat->gid));
 
-	if (S_ISLNK(type) && stat->size > NFS_MAXPATHLEN)
+	अगर (S_ISLNK(type) && stat->size > NFS_MAXPATHLEN)
 		*p++ = cpu_to_be32(NFS_MAXPATHLEN);
-	else
+	अन्यथा
 		*p++ = cpu_to_be32((u32) stat->size);
 	*p++ = cpu_to_be32((u32) stat->blksize);
-	if (S_ISCHR(type) || S_ISBLK(type))
+	अगर (S_ISCHR(type) || S_ISBLK(type))
 		*p++ = cpu_to_be32(new_encode_dev(stat->rdev));
-	else
+	अन्यथा
 		*p++ = cpu_to_be32(0xffffffff);
 	*p++ = cpu_to_be32((u32)stat->blocks);
 
-	switch (fsid_source(fhp)) {
-	case FSIDSOURCE_FSID:
+	चयन (fsid_source(fhp)) अणु
+	हाल FSIDSOURCE_FSID:
 		fsid = (u32)fhp->fh_export->ex_fsid;
-		break;
-	case FSIDSOURCE_UUID:
+		अवरोध;
+	हाल FSIDSOURCE_UUID:
 		fsid = ((u32 *)fhp->fh_export->ex_uuid)[0];
 		fsid ^= ((u32 *)fhp->fh_export->ex_uuid)[1];
 		fsid ^= ((u32 *)fhp->fh_export->ex_uuid)[2];
 		fsid ^= ((u32 *)fhp->fh_export->ex_uuid)[3];
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fsid = new_encode_dev(stat->dev);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	*p++ = cpu_to_be32(fsid);
 
 	*p++ = cpu_to_be32((u32)stat->ino);
-	p = encode_timeval(p, &stat->atime);
-	time = stat->mtime;
-	lease_get_mtime(d_inode(dentry), &time);
-	p = encode_timeval(p, &time);
-	encode_timeval(p, &stat->ctime);
+	p = encode_समयval(p, &stat->aसमय);
+	समय = stat->mसमय;
+	lease_get_mसमय(d_inode(dentry), &समय);
+	p = encode_समयval(p, &समय);
+	encode_समयval(p, &stat->स_समय);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * XDR decode functions
  */
 
-int
-nfssvc_decode_fhandleargs(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
-	struct nfsd_fhandle *args = rqstp->rq_argp;
+पूर्णांक
+nfssvc_decode_fhandleargs(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
+	काष्ठा nfsd_fhandle *args = rqstp->rq_argp;
 
-	return svcxdr_decode_fhandle(xdr, &args->fh);
-}
+	वापस svcxdr_decode_fhandle(xdr, &args->fh);
+पूर्ण
 
-int
-nfssvc_decode_sattrargs(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
-	struct nfsd_sattrargs *args = rqstp->rq_argp;
+पूर्णांक
+nfssvc_decode_sattrargs(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
+	काष्ठा nfsd_sattrargs *args = rqstp->rq_argp;
 
-	return svcxdr_decode_fhandle(xdr, &args->fh) &&
+	वापस svcxdr_decode_fhandle(xdr, &args->fh) &&
 		svcxdr_decode_sattr(rqstp, xdr, &args->attrs);
-}
+पूर्ण
 
-int
-nfssvc_decode_diropargs(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
-	struct nfsd_diropargs *args = rqstp->rq_argp;
+पूर्णांक
+nfssvc_decode_diropargs(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
+	काष्ठा nfsd_diropargs *args = rqstp->rq_argp;
 
-	return svcxdr_decode_diropargs(xdr, &args->fh, &args->name, &args->len);
-}
+	वापस svcxdr_decode_diropargs(xdr, &args->fh, &args->name, &args->len);
+पूर्ण
 
-int
-nfssvc_decode_readargs(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
-	struct nfsd_readargs *args = rqstp->rq_argp;
+पूर्णांक
+nfssvc_decode_पढ़ोargs(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
+	काष्ठा nfsd_पढ़ोargs *args = rqstp->rq_argp;
 	u32 totalcount;
 
-	if (!svcxdr_decode_fhandle(xdr, &args->fh))
-		return 0;
-	if (xdr_stream_decode_u32(xdr, &args->offset) < 0)
-		return 0;
-	if (xdr_stream_decode_u32(xdr, &args->count) < 0)
-		return 0;
+	अगर (!svcxdr_decode_fhandle(xdr, &args->fh))
+		वापस 0;
+	अगर (xdr_stream_decode_u32(xdr, &args->offset) < 0)
+		वापस 0;
+	अगर (xdr_stream_decode_u32(xdr, &args->count) < 0)
+		वापस 0;
 	/* totalcount is ignored */
-	if (xdr_stream_decode_u32(xdr, &totalcount) < 0)
-		return 0;
+	अगर (xdr_stream_decode_u32(xdr, &totalcount) < 0)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int
-nfssvc_decode_writeargs(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
-	struct nfsd_writeargs *args = rqstp->rq_argp;
-	struct kvec *head = rqstp->rq_arg.head;
-	struct kvec *tail = rqstp->rq_arg.tail;
+पूर्णांक
+nfssvc_decode_ग_लिखोargs(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
+	काष्ठा nfsd_ग_लिखोargs *args = rqstp->rq_argp;
+	काष्ठा kvec *head = rqstp->rq_arg.head;
+	काष्ठा kvec *tail = rqstp->rq_arg.tail;
 	u32 beginoffset, totalcount;
-	size_t remaining;
+	माप_प्रकार reमुख्यing;
 
-	if (!svcxdr_decode_fhandle(xdr, &args->fh))
-		return 0;
+	अगर (!svcxdr_decode_fhandle(xdr, &args->fh))
+		वापस 0;
 	/* beginoffset is ignored */
-	if (xdr_stream_decode_u32(xdr, &beginoffset) < 0)
-		return 0;
-	if (xdr_stream_decode_u32(xdr, &args->offset) < 0)
-		return 0;
+	अगर (xdr_stream_decode_u32(xdr, &beginoffset) < 0)
+		वापस 0;
+	अगर (xdr_stream_decode_u32(xdr, &args->offset) < 0)
+		वापस 0;
 	/* totalcount is ignored */
-	if (xdr_stream_decode_u32(xdr, &totalcount) < 0)
-		return 0;
+	अगर (xdr_stream_decode_u32(xdr, &totalcount) < 0)
+		वापस 0;
 
 	/* opaque data */
-	if (xdr_stream_decode_u32(xdr, &args->len) < 0)
-		return 0;
-	if (args->len > NFSSVC_MAXBLKSIZE_V2)
-		return 0;
-	remaining = head->iov_len + rqstp->rq_arg.page_len + tail->iov_len;
-	remaining -= xdr_stream_pos(xdr);
-	if (remaining < xdr_align_size(args->len))
-		return 0;
+	अगर (xdr_stream_decode_u32(xdr, &args->len) < 0)
+		वापस 0;
+	अगर (args->len > NFSSVC_MAXBLKSIZE_V2)
+		वापस 0;
+	reमुख्यing = head->iov_len + rqstp->rq_arg.page_len + tail->iov_len;
+	reमुख्यing -= xdr_stream_pos(xdr);
+	अगर (reमुख्यing < xdr_align_size(args->len))
+		वापस 0;
 	args->first.iov_base = xdr->p;
 	args->first.iov_len = head->iov_len - xdr_stream_pos(xdr);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int
-nfssvc_decode_createargs(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
-	struct nfsd_createargs *args = rqstp->rq_argp;
+पूर्णांक
+nfssvc_decode_createargs(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
+	काष्ठा nfsd_createargs *args = rqstp->rq_argp;
 
-	return svcxdr_decode_diropargs(xdr, &args->fh,
+	वापस svcxdr_decode_diropargs(xdr, &args->fh,
 				       &args->name, &args->len) &&
 		svcxdr_decode_sattr(rqstp, xdr, &args->attrs);
-}
+पूर्ण
 
-int
-nfssvc_decode_renameargs(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
-	struct nfsd_renameargs *args = rqstp->rq_argp;
+पूर्णांक
+nfssvc_decode_नामargs(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
+	काष्ठा nfsd_नामargs *args = rqstp->rq_argp;
 
-	return svcxdr_decode_diropargs(xdr, &args->ffh,
+	वापस svcxdr_decode_diropargs(xdr, &args->ffh,
 				       &args->fname, &args->flen) &&
 		svcxdr_decode_diropargs(xdr, &args->tfh,
 					&args->tname, &args->tlen);
-}
+पूर्ण
 
-int
-nfssvc_decode_linkargs(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
-	struct nfsd_linkargs *args = rqstp->rq_argp;
+पूर्णांक
+nfssvc_decode_linkargs(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
+	काष्ठा nfsd_linkargs *args = rqstp->rq_argp;
 
-	return svcxdr_decode_fhandle(xdr, &args->ffh) &&
+	वापस svcxdr_decode_fhandle(xdr, &args->ffh) &&
 		svcxdr_decode_diropargs(xdr, &args->tfh,
 					&args->tname, &args->tlen);
-}
+पूर्ण
 
-int
-nfssvc_decode_symlinkargs(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
-	struct nfsd_symlinkargs *args = rqstp->rq_argp;
-	struct kvec *head = rqstp->rq_arg.head;
+पूर्णांक
+nfssvc_decode_symlinkargs(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
+	काष्ठा nfsd_symlinkargs *args = rqstp->rq_argp;
+	काष्ठा kvec *head = rqstp->rq_arg.head;
 
-	if (!svcxdr_decode_diropargs(xdr, &args->ffh, &args->fname, &args->flen))
-		return 0;
-	if (xdr_stream_decode_u32(xdr, &args->tlen) < 0)
-		return 0;
-	if (args->tlen == 0)
-		return 0;
+	अगर (!svcxdr_decode_diropargs(xdr, &args->ffh, &args->fname, &args->flen))
+		वापस 0;
+	अगर (xdr_stream_decode_u32(xdr, &args->tlen) < 0)
+		वापस 0;
+	अगर (args->tlen == 0)
+		वापस 0;
 
 	args->first.iov_len = head->iov_len - xdr_stream_pos(xdr);
-	args->first.iov_base = xdr_inline_decode(xdr, args->tlen);
-	if (!args->first.iov_base)
-		return 0;
-	return svcxdr_decode_sattr(rqstp, xdr, &args->attrs);
-}
+	args->first.iov_base = xdr_अंतरभूत_decode(xdr, args->tlen);
+	अगर (!args->first.iov_base)
+		वापस 0;
+	वापस svcxdr_decode_sattr(rqstp, xdr, &args->attrs);
+पूर्ण
 
-int
-nfssvc_decode_readdirargs(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_arg_stream;
-	struct nfsd_readdirargs *args = rqstp->rq_argp;
+पूर्णांक
+nfssvc_decode_सूची_पढ़ोargs(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_arg_stream;
+	काष्ठा nfsd_सूची_पढ़ोargs *args = rqstp->rq_argp;
 
-	if (!svcxdr_decode_fhandle(xdr, &args->fh))
-		return 0;
-	if (xdr_stream_decode_u32(xdr, &args->cookie) < 0)
-		return 0;
-	if (xdr_stream_decode_u32(xdr, &args->count) < 0)
-		return 0;
+	अगर (!svcxdr_decode_fhandle(xdr, &args->fh))
+		वापस 0;
+	अगर (xdr_stream_decode_u32(xdr, &args->cookie) < 0)
+		वापस 0;
+	अगर (xdr_stream_decode_u32(xdr, &args->count) < 0)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * XDR encode functions
  */
 
-int
-nfssvc_encode_statres(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_res_stream;
-	struct nfsd_stat *resp = rqstp->rq_resp;
+पूर्णांक
+nfssvc_encode_statres(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_res_stream;
+	काष्ठा nfsd_stat *resp = rqstp->rq_resp;
 
-	return svcxdr_encode_stat(xdr, resp->status);
-}
+	वापस svcxdr_encode_stat(xdr, resp->status);
+पूर्ण
 
-int
-nfssvc_encode_attrstatres(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_res_stream;
-	struct nfsd_attrstat *resp = rqstp->rq_resp;
+पूर्णांक
+nfssvc_encode_attrstatres(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_res_stream;
+	काष्ठा nfsd_attrstat *resp = rqstp->rq_resp;
 
-	if (!svcxdr_encode_stat(xdr, resp->status))
-		return 0;
-	switch (resp->status) {
-	case nfs_ok:
-		if (!svcxdr_encode_fattr(rqstp, xdr, &resp->fh, &resp->stat))
-			return 0;
-		break;
-	}
+	अगर (!svcxdr_encode_stat(xdr, resp->status))
+		वापस 0;
+	चयन (resp->status) अणु
+	हाल nfs_ok:
+		अगर (!svcxdr_encode_fattr(rqstp, xdr, &resp->fh, &resp->stat))
+			वापस 0;
+		अवरोध;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int
-nfssvc_encode_diropres(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_res_stream;
-	struct nfsd_diropres *resp = rqstp->rq_resp;
+पूर्णांक
+nfssvc_encode_diropres(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_res_stream;
+	काष्ठा nfsd_diropres *resp = rqstp->rq_resp;
 
-	if (!svcxdr_encode_stat(xdr, resp->status))
-		return 0;
-	switch (resp->status) {
-	case nfs_ok:
-		if (!svcxdr_encode_fhandle(xdr, &resp->fh))
-			return 0;
-		if (!svcxdr_encode_fattr(rqstp, xdr, &resp->fh, &resp->stat))
-			return 0;
-		break;
-	}
+	अगर (!svcxdr_encode_stat(xdr, resp->status))
+		वापस 0;
+	चयन (resp->status) अणु
+	हाल nfs_ok:
+		अगर (!svcxdr_encode_fhandle(xdr, &resp->fh))
+			वापस 0;
+		अगर (!svcxdr_encode_fattr(rqstp, xdr, &resp->fh, &resp->stat))
+			वापस 0;
+		अवरोध;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int
-nfssvc_encode_readlinkres(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_res_stream;
-	struct nfsd_readlinkres *resp = rqstp->rq_resp;
-	struct kvec *head = rqstp->rq_res.head;
+पूर्णांक
+nfssvc_encode_पढ़ोlinkres(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_res_stream;
+	काष्ठा nfsd_पढ़ोlinkres *resp = rqstp->rq_resp;
+	काष्ठा kvec *head = rqstp->rq_res.head;
 
-	if (!svcxdr_encode_stat(xdr, resp->status))
-		return 0;
-	switch (resp->status) {
-	case nfs_ok:
-		if (xdr_stream_encode_u32(xdr, resp->len) < 0)
-			return 0;
-		xdr_write_pages(xdr, &resp->page, 0, resp->len);
-		if (svc_encode_result_payload(rqstp, head->iov_len, resp->len) < 0)
-			return 0;
-		break;
-	}
+	अगर (!svcxdr_encode_stat(xdr, resp->status))
+		वापस 0;
+	चयन (resp->status) अणु
+	हाल nfs_ok:
+		अगर (xdr_stream_encode_u32(xdr, resp->len) < 0)
+			वापस 0;
+		xdr_ग_लिखो_pages(xdr, &resp->page, 0, resp->len);
+		अगर (svc_encode_result_payload(rqstp, head->iov_len, resp->len) < 0)
+			वापस 0;
+		अवरोध;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int
-nfssvc_encode_readres(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_res_stream;
-	struct nfsd_readres *resp = rqstp->rq_resp;
-	struct kvec *head = rqstp->rq_res.head;
+पूर्णांक
+nfssvc_encode_पढ़ोres(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_res_stream;
+	काष्ठा nfsd_पढ़ोres *resp = rqstp->rq_resp;
+	काष्ठा kvec *head = rqstp->rq_res.head;
 
-	if (!svcxdr_encode_stat(xdr, resp->status))
-		return 0;
-	switch (resp->status) {
-	case nfs_ok:
-		if (!svcxdr_encode_fattr(rqstp, xdr, &resp->fh, &resp->stat))
-			return 0;
-		if (xdr_stream_encode_u32(xdr, resp->count) < 0)
-			return 0;
-		xdr_write_pages(xdr, resp->pages, rqstp->rq_res.page_base,
+	अगर (!svcxdr_encode_stat(xdr, resp->status))
+		वापस 0;
+	चयन (resp->status) अणु
+	हाल nfs_ok:
+		अगर (!svcxdr_encode_fattr(rqstp, xdr, &resp->fh, &resp->stat))
+			वापस 0;
+		अगर (xdr_stream_encode_u32(xdr, resp->count) < 0)
+			वापस 0;
+		xdr_ग_लिखो_pages(xdr, resp->pages, rqstp->rq_res.page_base,
 				resp->count);
-		if (svc_encode_result_payload(rqstp, head->iov_len, resp->count) < 0)
-			return 0;
-		break;
-	}
+		अगर (svc_encode_result_payload(rqstp, head->iov_len, resp->count) < 0)
+			वापस 0;
+		अवरोध;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int
-nfssvc_encode_readdirres(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_res_stream;
-	struct nfsd_readdirres *resp = rqstp->rq_resp;
-	struct xdr_buf *dirlist = &resp->dirlist;
+पूर्णांक
+nfssvc_encode_सूची_पढ़ोres(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_res_stream;
+	काष्ठा nfsd_सूची_पढ़ोres *resp = rqstp->rq_resp;
+	काष्ठा xdr_buf *dirlist = &resp->dirlist;
 
-	if (!svcxdr_encode_stat(xdr, resp->status))
-		return 0;
-	switch (resp->status) {
-	case nfs_ok:
-		xdr_write_pages(xdr, dirlist->pages, 0, dirlist->len);
+	अगर (!svcxdr_encode_stat(xdr, resp->status))
+		वापस 0;
+	चयन (resp->status) अणु
+	हाल nfs_ok:
+		xdr_ग_लिखो_pages(xdr, dirlist->pages, 0, dirlist->len);
 		/* no more entries */
-		if (xdr_stream_encode_item_absent(xdr) < 0)
-			return 0;
-		if (xdr_stream_encode_bool(xdr, resp->common.err == nfserr_eof) < 0)
-			return 0;
-		break;
-	}
+		अगर (xdr_stream_encode_item_असलent(xdr) < 0)
+			वापस 0;
+		अगर (xdr_stream_encode_bool(xdr, resp->common.err == nfserr_eof) < 0)
+			वापस 0;
+		अवरोध;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int
-nfssvc_encode_statfsres(struct svc_rqst *rqstp, __be32 *p)
-{
-	struct xdr_stream *xdr = &rqstp->rq_res_stream;
-	struct nfsd_statfsres *resp = rqstp->rq_resp;
-	struct kstatfs	*stat = &resp->stats;
+पूर्णांक
+nfssvc_encode_statfsres(काष्ठा svc_rqst *rqstp, __be32 *p)
+अणु
+	काष्ठा xdr_stream *xdr = &rqstp->rq_res_stream;
+	काष्ठा nfsd_statfsres *resp = rqstp->rq_resp;
+	काष्ठा kstatfs	*stat = &resp->stats;
 
-	if (!svcxdr_encode_stat(xdr, resp->status))
-		return 0;
-	switch (resp->status) {
-	case nfs_ok:
+	अगर (!svcxdr_encode_stat(xdr, resp->status))
+		वापस 0;
+	चयन (resp->status) अणु
+	हाल nfs_ok:
 		p = xdr_reserve_space(xdr, XDR_UNIT * 5);
-		if (!p)
-			return 0;
+		अगर (!p)
+			वापस 0;
 		*p++ = cpu_to_be32(NFSSVC_MAXBLKSIZE_V2);
 		*p++ = cpu_to_be32(stat->f_bsize);
 		*p++ = cpu_to_be32(stat->f_blocks);
-		*p++ = cpu_to_be32(stat->f_bfree);
+		*p++ = cpu_to_be32(stat->f_bमुक्त);
 		*p = cpu_to_be32(stat->f_bavail);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
  * nfssvc_encode_nfscookie - Encode a directory offset cookie
- * @resp: readdir result context
+ * @resp: सूची_पढ़ो result context
  * @offset: offset cookie to encode
  *
- * The buffer space for the offset cookie has already been reserved
+ * The buffer space क्रम the offset cookie has alपढ़ोy been reserved
  * by svcxdr_encode_entry_common().
  */
-void nfssvc_encode_nfscookie(struct nfsd_readdirres *resp, u32 offset)
-{
+व्योम nfssvc_encode_nfscookie(काष्ठा nfsd_सूची_पढ़ोres *resp, u32 offset)
+अणु
 	__be32 cookie = cpu_to_be32(offset);
 
-	if (!resp->cookie_offset)
-		return;
+	अगर (!resp->cookie_offset)
+		वापस;
 
-	write_bytes_to_xdr_buf(&resp->dirlist, resp->cookie_offset, &cookie,
-			       sizeof(cookie));
+	ग_लिखो_bytes_to_xdr_buf(&resp->dirlist, resp->cookie_offset, &cookie,
+			       माप(cookie));
 	resp->cookie_offset = 0;
-}
+पूर्ण
 
-static bool
-svcxdr_encode_entry_common(struct nfsd_readdirres *resp, const char *name,
-			   int namlen, loff_t offset, u64 ino)
-{
-	struct xdr_buf *dirlist = &resp->dirlist;
-	struct xdr_stream *xdr = &resp->xdr;
+अटल bool
+svcxdr_encode_entry_common(काष्ठा nfsd_सूची_पढ़ोres *resp, स्थिर अक्षर *name,
+			   पूर्णांक namlen, loff_t offset, u64 ino)
+अणु
+	काष्ठा xdr_buf *dirlist = &resp->dirlist;
+	काष्ठा xdr_stream *xdr = &resp->xdr;
 
-	if (xdr_stream_encode_item_present(xdr) < 0)
-		return false;
+	अगर (xdr_stream_encode_item_present(xdr) < 0)
+		वापस false;
 	/* fileid */
-	if (xdr_stream_encode_u32(xdr, (u32)ino) < 0)
-		return false;
+	अगर (xdr_stream_encode_u32(xdr, (u32)ino) < 0)
+		वापस false;
 	/* name */
-	if (xdr_stream_encode_opaque(xdr, name, min(namlen, NFS2_MAXNAMLEN)) < 0)
-		return false;
+	अगर (xdr_stream_encode_opaque(xdr, name, min(namlen, NFS2_MAXNAMLEN)) < 0)
+		वापस false;
 	/* cookie */
 	resp->cookie_offset = dirlist->len;
-	if (xdr_stream_encode_u32(xdr, ~0U) < 0)
-		return false;
+	अगर (xdr_stream_encode_u32(xdr, ~0U) < 0)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * nfssvc_encode_entry - encode one NFSv2 READDIR entry
+ * nfssvc_encode_entry - encode one NFSv2 READसूची entry
  * @data: directory context
  * @name: name of the object to be encoded
  * @namlen: length of that name, in bytes
@@ -629,57 +630,57 @@ svcxdr_encode_entry_common(struct nfsd_readdirres *resp, const char *name,
  *   %0: Entry was successfully encoded.
  *   %-EINVAL: An encoding problem occured, secondary status code in resp->common.err
  *
- * On exit, the following fields are updated:
+ * On निकास, the following fields are updated:
  *   - resp->xdr
  *   - resp->common.err
  *   - resp->cookie_offset
  */
-int nfssvc_encode_entry(void *data, const char *name, int namlen,
-			loff_t offset, u64 ino, unsigned int d_type)
-{
-	struct readdir_cd *ccd = data;
-	struct nfsd_readdirres *resp = container_of(ccd,
-						    struct nfsd_readdirres,
+पूर्णांक nfssvc_encode_entry(व्योम *data, स्थिर अक्षर *name, पूर्णांक namlen,
+			loff_t offset, u64 ino, अचिन्हित पूर्णांक d_type)
+अणु
+	काष्ठा सूची_पढ़ो_cd *ccd = data;
+	काष्ठा nfsd_सूची_पढ़ोres *resp = container_of(ccd,
+						    काष्ठा nfsd_सूची_पढ़ोres,
 						    common);
-	unsigned int starting_length = resp->dirlist.len;
+	अचिन्हित पूर्णांक starting_length = resp->dirlist.len;
 
-	/* The offset cookie for the previous entry */
+	/* The offset cookie क्रम the previous entry */
 	nfssvc_encode_nfscookie(resp, offset);
 
-	if (!svcxdr_encode_entry_common(resp, name, namlen, offset, ino))
-		goto out_toosmall;
+	अगर (!svcxdr_encode_entry_common(resp, name, namlen, offset, ino))
+		जाओ out_toosmall;
 
 	xdr_commit_encode(&resp->xdr);
 	resp->common.err = nfs_ok;
-	return 0;
+	वापस 0;
 
 out_toosmall:
 	resp->cookie_offset = 0;
 	resp->common.err = nfserr_toosmall;
 	resp->dirlist.len = starting_length;
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * XDR release functions
  */
-void nfssvc_release_attrstat(struct svc_rqst *rqstp)
-{
-	struct nfsd_attrstat *resp = rqstp->rq_resp;
+व्योम nfssvc_release_attrstat(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd_attrstat *resp = rqstp->rq_resp;
 
 	fh_put(&resp->fh);
-}
+पूर्ण
 
-void nfssvc_release_diropres(struct svc_rqst *rqstp)
-{
-	struct nfsd_diropres *resp = rqstp->rq_resp;
-
-	fh_put(&resp->fh);
-}
-
-void nfssvc_release_readres(struct svc_rqst *rqstp)
-{
-	struct nfsd_readres *resp = rqstp->rq_resp;
+व्योम nfssvc_release_diropres(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd_diropres *resp = rqstp->rq_resp;
 
 	fh_put(&resp->fh);
-}
+पूर्ण
+
+व्योम nfssvc_release_पढ़ोres(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd_पढ़ोres *resp = rqstp->rq_resp;
+
+	fh_put(&resp->fh);
+पूर्ण

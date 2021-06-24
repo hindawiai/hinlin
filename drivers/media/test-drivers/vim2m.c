@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * A virtual v4l2-mem2mem example device.
+ * A भव v4l2-mem2mem example device.
  *
- * This is a virtual device driver for testing mem-to-mem videobuf framework.
- * It simulates a device that uses memory buffers for both source and
+ * This is a भव device driver क्रम testing mem-to-mem videobuf framework.
+ * It simulates a device that uses memory buffers क्रम both source and
  * destination, processes the data and issues an "irq" (simulated by a delayed
  * workqueue).
  * The device is capable of multi-instance, multi-buffer-per-transaction
@@ -13,24 +14,24 @@
  * Pawel Osciak, <pawel@osciak.com>
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the
  * License, or (at your option) any later version
  */
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/fs.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
-#include <linux/platform_device.h>
-#include <media/v4l2-mem2mem.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-event.h>
-#include <media/videobuf2-vmalloc.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <media/v4l2-mem2स्मृति.स>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/videobuf2-vदो_स्मृति.h>
 
 MODULE_DESCRIPTION("Virtual device for mem2mem framework testing");
 MODULE_AUTHOR("Pawel Osciak, <pawel@osciak.com>");
@@ -38,311 +39,311 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION("0.2");
 MODULE_ALIAS("mem2mem_testdev");
 
-static unsigned int debug;
-module_param(debug, uint, 0644);
+अटल अचिन्हित पूर्णांक debug;
+module_param(debug, uपूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "debug level");
 
-/* Default transaction time in msec */
-static unsigned int default_transtime = 40; /* Max 25 fps */
-module_param(default_transtime, uint, 0644);
-MODULE_PARM_DESC(default_transtime, "default transaction time in ms");
+/* Default transaction समय in msec */
+अटल अचिन्हित पूर्णांक शेष_transसमय = 40; /* Max 25 fps */
+module_param(शेष_transसमय, uपूर्णांक, 0644);
+MODULE_PARM_DESC(शेष_transसमय, "default transaction time in ms");
 
-#define MIN_W 32
-#define MIN_H 32
-#define MAX_W 640
-#define MAX_H 480
+#घोषणा MIN_W 32
+#घोषणा MIN_H 32
+#घोषणा MAX_W 640
+#घोषणा MAX_H 480
 
-/* Pixel alignment for non-bayer formats */
-#define WIDTH_ALIGN 2
-#define HEIGHT_ALIGN 1
+/* Pixel alignment क्रम non-bayer क्रमmats */
+#घोषणा WIDTH_ALIGN 2
+#घोषणा HEIGHT_ALIGN 1
 
-/* Pixel alignment for bayer formats */
-#define BAYER_WIDTH_ALIGN  2
-#define BAYER_HEIGHT_ALIGN 2
+/* Pixel alignment क्रम bayer क्रमmats */
+#घोषणा BAYER_WIDTH_ALIGN  2
+#घोषणा BAYER_HEIGHT_ALIGN 2
 
-/* Flags that indicate a format can be used for capture/output */
-#define MEM2MEM_CAPTURE	BIT(0)
-#define MEM2MEM_OUTPUT	BIT(1)
+/* Flags that indicate a क्रमmat can be used क्रम capture/output */
+#घोषणा MEM2MEM_CAPTURE	BIT(0)
+#घोषणा MEM2MEM_OUTPUT	BIT(1)
 
-#define MEM2MEM_NAME		"vim2m"
+#घोषणा MEM2MEM_NAME		"vim2m"
 
 /* Per queue */
-#define MEM2MEM_DEF_NUM_BUFS	VIDEO_MAX_FRAME
+#घोषणा MEM2MEM_DEF_NUM_BUFS	VIDEO_MAX_FRAME
 /* In bytes, per queue */
-#define MEM2MEM_VID_MEM_LIMIT	(16 * 1024 * 1024)
+#घोषणा MEM2MEM_VID_MEM_LIMIT	(16 * 1024 * 1024)
 
 /* Flags that indicate processing mode */
-#define MEM2MEM_HFLIP	BIT(0)
-#define MEM2MEM_VFLIP	BIT(1)
+#घोषणा MEM2MEM_HFLIP	BIT(0)
+#घोषणा MEM2MEM_VFLIP	BIT(1)
 
-#define dprintk(dev, lvl, fmt, arg...) \
+#घोषणा dprपूर्णांकk(dev, lvl, fmt, arg...) \
 	v4l2_dbg(lvl, debug, &(dev)->v4l2_dev, "%s: " fmt, __func__, ## arg)
 
-static void vim2m_dev_release(struct device *dev)
-{}
+अटल व्योम vim2m_dev_release(काष्ठा device *dev)
+अणुपूर्ण
 
-static struct platform_device vim2m_pdev = {
+अटल काष्ठा platक्रमm_device vim2m_pdev = अणु
 	.name		= MEM2MEM_NAME,
 	.dev.release	= vim2m_dev_release,
-};
+पूर्ण;
 
-struct vim2m_fmt {
+काष्ठा vim2m_fmt अणु
 	u32	fourcc;
-	int	depth;
-	/* Types the format can be used for */
+	पूर्णांक	depth;
+	/* Types the क्रमmat can be used क्रम */
 	u32     types;
-};
+पूर्ण;
 
-static struct vim2m_fmt formats[] = {
-	{
+अटल काष्ठा vim2m_fmt क्रमmats[] = अणु
+	अणु
 		.fourcc	= V4L2_PIX_FMT_RGB565,  /* rrrrrggg gggbbbbb */
 		.depth	= 16,
 		.types  = MEM2MEM_CAPTURE | MEM2MEM_OUTPUT,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_RGB565X, /* gggbbbbb rrrrrggg */
 		.depth	= 16,
 		.types  = MEM2MEM_CAPTURE | MEM2MEM_OUTPUT,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_RGB24,
 		.depth	= 24,
 		.types  = MEM2MEM_CAPTURE | MEM2MEM_OUTPUT,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_BGR24,
 		.depth	= 24,
 		.types  = MEM2MEM_CAPTURE | MEM2MEM_OUTPUT,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_YUYV,
 		.depth	= 16,
 		.types  = MEM2MEM_CAPTURE,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_SBGGR8,
 		.depth	= 8,
 		.types  = MEM2MEM_CAPTURE,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_SGBRG8,
 		.depth	= 8,
 		.types  = MEM2MEM_CAPTURE,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_SGRBG8,
 		.depth	= 8,
 		.types  = MEM2MEM_CAPTURE,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_SRGGB8,
 		.depth	= 8,
 		.types  = MEM2MEM_CAPTURE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#define NUM_FORMATS ARRAY_SIZE(formats)
+#घोषणा NUM_FORMATS ARRAY_SIZE(क्रमmats)
 
-/* Per-queue, driver-specific private data */
-struct vim2m_q_data {
-	unsigned int		width;
-	unsigned int		height;
-	unsigned int		sizeimage;
-	unsigned int		sequence;
-	struct vim2m_fmt	*fmt;
-};
+/* Per-queue, driver-specअगरic निजी data */
+काष्ठा vim2m_q_data अणु
+	अचिन्हित पूर्णांक		width;
+	अचिन्हित पूर्णांक		height;
+	अचिन्हित पूर्णांक		sizeimage;
+	अचिन्हित पूर्णांक		sequence;
+	काष्ठा vim2m_fmt	*fmt;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	V4L2_M2M_SRC = 0,
 	V4L2_M2M_DST = 1,
-};
+पूर्ण;
 
-#define V4L2_CID_TRANS_TIME_MSEC	(V4L2_CID_USER_BASE + 0x1000)
-#define V4L2_CID_TRANS_NUM_BUFS		(V4L2_CID_USER_BASE + 0x1001)
+#घोषणा V4L2_CID_TRANS_TIME_MSEC	(V4L2_CID_USER_BASE + 0x1000)
+#घोषणा V4L2_CID_TRANS_NUM_BUFS		(V4L2_CID_USER_BASE + 0x1001)
 
-static struct vim2m_fmt *find_format(u32 fourcc)
-{
-	struct vim2m_fmt *fmt;
-	unsigned int k;
+अटल काष्ठा vim2m_fmt *find_क्रमmat(u32 fourcc)
+अणु
+	काष्ठा vim2m_fmt *fmt;
+	अचिन्हित पूर्णांक k;
 
-	for (k = 0; k < NUM_FORMATS; k++) {
-		fmt = &formats[k];
-		if (fmt->fourcc == fourcc)
-			break;
-	}
+	क्रम (k = 0; k < NUM_FORMATS; k++) अणु
+		fmt = &क्रमmats[k];
+		अगर (fmt->fourcc == fourcc)
+			अवरोध;
+	पूर्ण
 
-	if (k == NUM_FORMATS)
-		return NULL;
+	अगर (k == NUM_FORMATS)
+		वापस शून्य;
 
-	return &formats[k];
-}
+	वापस &क्रमmats[k];
+पूर्ण
 
-static void get_alignment(u32 fourcc,
-			  unsigned int *walign, unsigned int *halign)
-{
-	switch (fourcc) {
-	case V4L2_PIX_FMT_SBGGR8:
-	case V4L2_PIX_FMT_SGBRG8:
-	case V4L2_PIX_FMT_SGRBG8:
-	case V4L2_PIX_FMT_SRGGB8:
+अटल व्योम get_alignment(u32 fourcc,
+			  अचिन्हित पूर्णांक *walign, अचिन्हित पूर्णांक *halign)
+अणु
+	चयन (fourcc) अणु
+	हाल V4L2_PIX_FMT_SBGGR8:
+	हाल V4L2_PIX_FMT_SGBRG8:
+	हाल V4L2_PIX_FMT_SGRBG8:
+	हाल V4L2_PIX_FMT_SRGGB8:
 		*walign = BAYER_WIDTH_ALIGN;
 		*halign = BAYER_HEIGHT_ALIGN;
-		return;
-	default:
+		वापस;
+	शेष:
 		*walign = WIDTH_ALIGN;
 		*halign = HEIGHT_ALIGN;
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-struct vim2m_dev {
-	struct v4l2_device	v4l2_dev;
-	struct video_device	vfd;
-#ifdef CONFIG_MEDIA_CONTROLLER
-	struct media_device	mdev;
-#endif
+काष्ठा vim2m_dev अणु
+	काष्ठा v4l2_device	v4l2_dev;
+	काष्ठा video_device	vfd;
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
+	काष्ठा media_device	mdev;
+#पूर्ण_अगर
 
 	atomic_t		num_inst;
-	struct mutex		dev_mutex;
+	काष्ठा mutex		dev_mutex;
 
-	struct v4l2_m2m_dev	*m2m_dev;
-};
+	काष्ठा v4l2_m2m_dev	*m2m_dev;
+पूर्ण;
 
-struct vim2m_ctx {
-	struct v4l2_fh		fh;
-	struct vim2m_dev	*dev;
+काष्ठा vim2m_ctx अणु
+	काष्ठा v4l2_fh		fh;
+	काष्ठा vim2m_dev	*dev;
 
-	struct v4l2_ctrl_handler hdl;
+	काष्ठा v4l2_ctrl_handler hdl;
 
 	/* Processed buffers in this transaction */
 	u8			num_processed;
 
 	/* Transaction length (i.e. how many buffers per transaction) */
 	u32			translen;
-	/* Transaction time (i.e. simulated processing time) in milliseconds */
-	u32			transtime;
+	/* Transaction समय (i.e. simulated processing समय) in milliseconds */
+	u32			transसमय;
 
-	struct mutex		vb_mutex;
-	struct delayed_work	work_run;
+	काष्ठा mutex		vb_mutex;
+	काष्ठा delayed_work	work_run;
 
 	/* Abort requested by m2m */
-	int			aborting;
+	पूर्णांक			पातing;
 
 	/* Processing mode */
-	int			mode;
+	पूर्णांक			mode;
 
-	enum v4l2_colorspace	colorspace;
-	enum v4l2_ycbcr_encoding ycbcr_enc;
-	enum v4l2_xfer_func	xfer_func;
-	enum v4l2_quantization	quant;
+	क्रमागत v4l2_colorspace	colorspace;
+	क्रमागत v4l2_ycbcr_encoding ycbcr_enc;
+	क्रमागत v4l2_xfer_func	xfer_func;
+	क्रमागत v4l2_quantization	quant;
 
 	/* Source and destination queue data */
-	struct vim2m_q_data   q_data[2];
-};
+	काष्ठा vim2m_q_data   q_data[2];
+पूर्ण;
 
-static inline struct vim2m_ctx *file2ctx(struct file *file)
-{
-	return container_of(file->private_data, struct vim2m_ctx, fh);
-}
+अटल अंतरभूत काष्ठा vim2m_ctx *file2ctx(काष्ठा file *file)
+अणु
+	वापस container_of(file->निजी_data, काष्ठा vim2m_ctx, fh);
+पूर्ण
 
-static struct vim2m_q_data *get_q_data(struct vim2m_ctx *ctx,
-				       enum v4l2_buf_type type)
-{
-	switch (type) {
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-		return &ctx->q_data[V4L2_M2M_SRC];
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-		return &ctx->q_data[V4L2_M2M_DST];
-	default:
-		return NULL;
-	}
-}
+अटल काष्ठा vim2m_q_data *get_q_data(काष्ठा vim2m_ctx *ctx,
+				       क्रमागत v4l2_buf_type type)
+अणु
+	चयन (type) अणु
+	हाल V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		वापस &ctx->q_data[V4L2_M2M_SRC];
+	हाल V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		वापस &ctx->q_data[V4L2_M2M_DST];
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-static const char *type_name(enum v4l2_buf_type type)
-{
-	switch (type) {
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-		return "Output";
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-		return "Capture";
-	default:
-		return "Invalid";
-	}
-}
+अटल स्थिर अक्षर *type_name(क्रमागत v4l2_buf_type type)
+अणु
+	चयन (type) अणु
+	हाल V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		वापस "Output";
+	हाल V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		वापस "Capture";
+	शेष:
+		वापस "Invalid";
+	पूर्ण
+पूर्ण
 
-#define CLIP(__color) \
+#घोषणा CLIP(__color) \
 	(u8)(((__color) > 0xff) ? 0xff : (((__color) < 0) ? 0 : (__color)))
 
-static void copy_line(struct vim2m_q_data *q_data_out,
+अटल व्योम copy_line(काष्ठा vim2m_q_data *q_data_out,
 		      u8 *src, u8 *dst, bool reverse)
-{
-	int x, depth = q_data_out->fmt->depth >> 3;
+अणु
+	पूर्णांक x, depth = q_data_out->fmt->depth >> 3;
 
-	if (!reverse) {
-		memcpy(dst, src, q_data_out->width * depth);
-	} else {
-		for (x = 0; x < q_data_out->width >> 1; x++) {
-			memcpy(dst, src, depth);
-			memcpy(dst + depth, src - depth, depth);
+	अगर (!reverse) अणु
+		स_नकल(dst, src, q_data_out->width * depth);
+	पूर्ण अन्यथा अणु
+		क्रम (x = 0; x < q_data_out->width >> 1; x++) अणु
+			स_नकल(dst, src, depth);
+			स_नकल(dst + depth, src - depth, depth);
 			src -= depth << 1;
 			dst += depth << 1;
-		}
-		return;
-	}
-}
+		पूर्ण
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void copy_two_pixels(struct vim2m_q_data *q_data_in,
-			    struct vim2m_q_data *q_data_out,
-			    u8 *src[2], u8 **dst, int ypos, bool reverse)
-{
-	struct vim2m_fmt *out = q_data_out->fmt;
-	struct vim2m_fmt *in = q_data_in->fmt;
+अटल व्योम copy_two_pixels(काष्ठा vim2m_q_data *q_data_in,
+			    काष्ठा vim2m_q_data *q_data_out,
+			    u8 *src[2], u8 **dst, पूर्णांक ypos, bool reverse)
+अणु
+	काष्ठा vim2m_fmt *out = q_data_out->fmt;
+	काष्ठा vim2m_fmt *in = q_data_in->fmt;
 	u8 _r[2], _g[2], _b[2], *r, *g, *b;
-	int i;
+	पूर्णांक i;
 
-	/* Step 1: read two consecutive pixels from src pointer */
+	/* Step 1: पढ़ो two consecutive pixels from src poपूर्णांकer */
 
 	r = _r;
 	g = _g;
 	b = _b;
 
-	switch (in->fourcc) {
-	case V4L2_PIX_FMT_RGB565: /* rrrrrggg gggbbbbb */
-		for (i = 0; i < 2; i++) {
+	चयन (in->fourcc) अणु
+	हाल V4L2_PIX_FMT_RGB565: /* rrrrrggg gggbbbbb */
+		क्रम (i = 0; i < 2; i++) अणु
 			u16 pix = le16_to_cpu(*(__le16 *)(src[i]));
 
 			*r++ = (u8)(((pix & 0xf800) >> 11) << 3) | 0x07;
 			*g++ = (u8)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
 			*b++ = (u8)((pix & 0x1f) << 3) | 0x07;
-		}
-		break;
-	case V4L2_PIX_FMT_RGB565X: /* gggbbbbb rrrrrggg */
-		for (i = 0; i < 2; i++) {
+		पूर्ण
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB565X: /* gggbbbbb rrrrrggg */
+		क्रम (i = 0; i < 2; i++) अणु
 			u16 pix = be16_to_cpu(*(__be16 *)(src[i]));
 
 			*r++ = (u8)(((pix & 0xf800) >> 11) << 3) | 0x07;
 			*g++ = (u8)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
 			*b++ = (u8)((pix & 0x1f) << 3) | 0x07;
-		}
-		break;
-	default:
-	case V4L2_PIX_FMT_RGB24:
-		for (i = 0; i < 2; i++) {
+		पूर्ण
+		अवरोध;
+	शेष:
+	हाल V4L2_PIX_FMT_RGB24:
+		क्रम (i = 0; i < 2; i++) अणु
 			*r++ = src[i][0];
 			*g++ = src[i][1];
 			*b++ = src[i][2];
-		}
-		break;
-	case V4L2_PIX_FMT_BGR24:
-		for (i = 0; i < 2; i++) {
+		पूर्ण
+		अवरोध;
+	हाल V4L2_PIX_FMT_BGR24:
+		क्रम (i = 0; i < 2; i++) अणु
 			*b++ = src[i][0];
 			*g++ = src[i][1];
 			*r++ = src[i][2];
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	/* Step 2: store two consecutive points, reversing them if needed */
+	/* Step 2: store two consecutive poपूर्णांकs, reversing them अगर needed */
 
 	r = _r;
 	g = _g;
 	b = _b;
 
-	switch (out->fourcc) {
-	case V4L2_PIX_FMT_RGB565: /* rrrrrggg gggbbbbb */
-		for (i = 0; i < 2; i++) {
+	चयन (out->fourcc) अणु
+	हाल V4L2_PIX_FMT_RGB565: /* rrrrrggg gggbbbbb */
+		क्रम (i = 0; i < 2; i++) अणु
 			u16 pix;
 			__le16 *dst_pix = (__le16 *)*dst;
 
@@ -352,10 +353,10 @@ static void copy_two_pixels(struct vim2m_q_data *q_data_in,
 			*dst_pix = cpu_to_le16(pix);
 
 			*dst += 2;
-		}
-		return;
-	case V4L2_PIX_FMT_RGB565X: /* gggbbbbb rrrrrggg */
-		for (i = 0; i < 2; i++) {
+		पूर्ण
+		वापस;
+	हाल V4L2_PIX_FMT_RGB565X: /* gggbbbbb rrrrrggg */
+		क्रम (i = 0; i < 2; i++) अणु
 			u16 pix;
 			__be16 *dst_pix = (__be16 *)*dst;
 
@@ -365,25 +366,25 @@ static void copy_two_pixels(struct vim2m_q_data *q_data_in,
 			*dst_pix = cpu_to_be16(pix);
 
 			*dst += 2;
-		}
-		return;
-	case V4L2_PIX_FMT_RGB24:
-		for (i = 0; i < 2; i++) {
+		पूर्ण
+		वापस;
+	हाल V4L2_PIX_FMT_RGB24:
+		क्रम (i = 0; i < 2; i++) अणु
 			*(*dst)++ = *r++;
 			*(*dst)++ = *g++;
 			*(*dst)++ = *b++;
-		}
-		return;
-	case V4L2_PIX_FMT_BGR24:
-		for (i = 0; i < 2; i++) {
+		पूर्ण
+		वापस;
+	हाल V4L2_PIX_FMT_BGR24:
+		क्रम (i = 0; i < 2; i++) अणु
 			*(*dst)++ = *b++;
 			*(*dst)++ = *g++;
 			*(*dst)++ = *r++;
-		}
-		return;
-	case V4L2_PIX_FMT_YUYV:
-	default:
-	{
+		पूर्ण
+		वापस;
+	हाल V4L2_PIX_FMT_YUYV:
+	शेष:
+	अणु
 		u8 y, y1, u, v;
 
 		y = ((8453  * (*r) + 16594 * (*g) +  3223 * (*b)
@@ -400,142 +401,142 @@ static void copy_two_pixels(struct vim2m_q_data *q_data_in,
 
 		*(*dst)++ = y1;
 		*(*dst)++ = v;
-		return;
-	}
-	case V4L2_PIX_FMT_SBGGR8:
-		if (!(ypos & 1)) {
+		वापस;
+	पूर्ण
+	हाल V4L2_PIX_FMT_SBGGR8:
+		अगर (!(ypos & 1)) अणु
 			*(*dst)++ = *b;
 			*(*dst)++ = *++g;
-		} else {
+		पूर्ण अन्यथा अणु
 			*(*dst)++ = *g;
 			*(*dst)++ = *++r;
-		}
-		return;
-	case V4L2_PIX_FMT_SGBRG8:
-		if (!(ypos & 1)) {
+		पूर्ण
+		वापस;
+	हाल V4L2_PIX_FMT_SGBRG8:
+		अगर (!(ypos & 1)) अणु
 			*(*dst)++ = *g;
 			*(*dst)++ = *++b;
-		} else {
+		पूर्ण अन्यथा अणु
 			*(*dst)++ = *r;
 			*(*dst)++ = *++g;
-		}
-		return;
-	case V4L2_PIX_FMT_SGRBG8:
-		if (!(ypos & 1)) {
+		पूर्ण
+		वापस;
+	हाल V4L2_PIX_FMT_SGRBG8:
+		अगर (!(ypos & 1)) अणु
 			*(*dst)++ = *g;
 			*(*dst)++ = *++r;
-		} else {
+		पूर्ण अन्यथा अणु
 			*(*dst)++ = *b;
 			*(*dst)++ = *++g;
-		}
-		return;
-	case V4L2_PIX_FMT_SRGGB8:
-		if (!(ypos & 1)) {
+		पूर्ण
+		वापस;
+	हाल V4L2_PIX_FMT_SRGGB8:
+		अगर (!(ypos & 1)) अणु
 			*(*dst)++ = *r;
 			*(*dst)++ = *++g;
-		} else {
+		पूर्ण अन्यथा अणु
 			*(*dst)++ = *g;
 			*(*dst)++ = *++b;
-		}
-		return;
-	}
-}
+		पूर्ण
+		वापस;
+	पूर्ण
+पूर्ण
 
-static int device_process(struct vim2m_ctx *ctx,
-			  struct vb2_v4l2_buffer *in_vb,
-			  struct vb2_v4l2_buffer *out_vb)
-{
-	struct vim2m_dev *dev = ctx->dev;
-	struct vim2m_q_data *q_data_in, *q_data_out;
+अटल पूर्णांक device_process(काष्ठा vim2m_ctx *ctx,
+			  काष्ठा vb2_v4l2_buffer *in_vb,
+			  काष्ठा vb2_v4l2_buffer *out_vb)
+अणु
+	काष्ठा vim2m_dev *dev = ctx->dev;
+	काष्ठा vim2m_q_data *q_data_in, *q_data_out;
 	u8 *p_in, *p_line, *p_in_x[2], *p, *p_out;
-	unsigned int width, height, bytesperline, bytes_per_pixel;
-	unsigned int x, y, y_in, y_out, x_int, x_fract, x_err, x_offset;
-	int start, end, step;
+	अचिन्हित पूर्णांक width, height, bytesperline, bytes_per_pixel;
+	अचिन्हित पूर्णांक x, y, y_in, y_out, x_पूर्णांक, x_fract, x_err, x_offset;
+	पूर्णांक start, end, step;
 
 	q_data_in = get_q_data(ctx, V4L2_BUF_TYPE_VIDEO_OUTPUT);
-	if (!q_data_in)
-		return 0;
+	अगर (!q_data_in)
+		वापस 0;
 	bytesperline = (q_data_in->width * q_data_in->fmt->depth) >> 3;
 	bytes_per_pixel = q_data_in->fmt->depth >> 3;
 
 	q_data_out = get_q_data(ctx, V4L2_BUF_TYPE_VIDEO_CAPTURE);
-	if (!q_data_out)
-		return 0;
+	अगर (!q_data_out)
+		वापस 0;
 
-	/* As we're doing scaling, use the output dimensions here */
+	/* As we're करोing scaling, use the output dimensions here */
 	height = q_data_out->height;
 	width = q_data_out->width;
 
 	p_in = vb2_plane_vaddr(&in_vb->vb2_buf, 0);
 	p_out = vb2_plane_vaddr(&out_vb->vb2_buf, 0);
-	if (!p_in || !p_out) {
+	अगर (!p_in || !p_out) अणु
 		v4l2_err(&dev->v4l2_dev,
 			 "Acquiring kernel pointers to buffers failed\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	out_vb->sequence = q_data_out->sequence++;
 	in_vb->sequence = q_data_in->sequence++;
 	v4l2_m2m_buf_copy_metadata(in_vb, out_vb, true);
 
-	if (ctx->mode & MEM2MEM_VFLIP) {
+	अगर (ctx->mode & MEM2MEM_VFLIP) अणु
 		start = height - 1;
 		end = -1;
 		step = -1;
-	} else {
+	पूर्ण अन्यथा अणु
 		start = 0;
 		end = height;
 		step = 1;
-	}
+	पूर्ण
 	y_out = 0;
 
 	/*
-	 * When format and resolution are identical,
+	 * When क्रमmat and resolution are identical,
 	 * we can use a faster copy logic
 	 */
-	if (q_data_in->fmt->fourcc == q_data_out->fmt->fourcc &&
+	अगर (q_data_in->fmt->fourcc == q_data_out->fmt->fourcc &&
 	    q_data_in->width == q_data_out->width &&
-	    q_data_in->height == q_data_out->height) {
-		for (y = start; y != end; y += step, y_out++) {
+	    q_data_in->height == q_data_out->height) अणु
+		क्रम (y = start; y != end; y += step, y_out++) अणु
 			p = p_in + (y * bytesperline);
-			if (ctx->mode & MEM2MEM_HFLIP)
+			अगर (ctx->mode & MEM2MEM_HFLIP)
 				p += bytesperline - (q_data_in->fmt->depth >> 3);
 
 			copy_line(q_data_out, p, p_out,
 				  ctx->mode & MEM2MEM_HFLIP);
 
 			p_out += bytesperline;
-		}
-		return 0;
-	}
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	/* Slower algorithm with format conversion, hflip, vflip and scaler */
+	/* Slower algorithm with क्रमmat conversion, hflip, vflip and scaler */
 
-	/* To speed scaler up, use Bresenham for X dimension */
-	x_int = q_data_in->width / q_data_out->width;
+	/* To speed scaler up, use Bresenham क्रम X dimension */
+	x_पूर्णांक = q_data_in->width / q_data_out->width;
 	x_fract = q_data_in->width % q_data_out->width;
 
-	for (y = start; y != end; y += step, y_out++) {
+	क्रम (y = start; y != end; y += step, y_out++) अणु
 		y_in = (y * q_data_in->height) / q_data_out->height;
 		x_offset = 0;
 		x_err = 0;
 
 		p_line = p_in + (y_in * bytesperline);
-		if (ctx->mode & MEM2MEM_HFLIP)
+		अगर (ctx->mode & MEM2MEM_HFLIP)
 			p_line += bytesperline - (q_data_in->fmt->depth >> 3);
 		p_in_x[0] = p_line;
 
-		for (x = 0; x < width >> 1; x++) {
-			x_offset += x_int;
+		क्रम (x = 0; x < width >> 1; x++) अणु
+			x_offset += x_पूर्णांक;
 			x_err += x_fract;
-			if (x_err > width) {
+			अगर (x_err > width) अणु
 				x_offset++;
 				x_err -= width;
-			}
+			पूर्ण
 
-			if (ctx->mode & MEM2MEM_HFLIP)
+			अगर (ctx->mode & MEM2MEM_HFLIP)
 				p_in_x[1] = p_line - x_offset * bytes_per_pixel;
-			else
+			अन्यथा
 				p_in_x[1] = p_line + x_offset * bytes_per_pixel;
 
 			copy_two_pixels(q_data_in, q_data_out,
@@ -543,176 +544,176 @@ static int device_process(struct vim2m_ctx *ctx,
 					ctx->mode & MEM2MEM_HFLIP);
 
 			/* Calculate the next p_in_x0 */
-			x_offset += x_int;
+			x_offset += x_पूर्णांक;
 			x_err += x_fract;
-			if (x_err > width) {
+			अगर (x_err > width) अणु
 				x_offset++;
 				x_err -= width;
-			}
+			पूर्ण
 
-			if (ctx->mode & MEM2MEM_HFLIP)
+			अगर (ctx->mode & MEM2MEM_HFLIP)
 				p_in_x[0] = p_line - x_offset * bytes_per_pixel;
-			else
+			अन्यथा
 				p_in_x[0] = p_line + x_offset * bytes_per_pixel;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * mem2mem callbacks
  */
 
 /*
- * job_ready() - check whether an instance is ready to be scheduled to run
+ * job_पढ़ोy() - check whether an instance is पढ़ोy to be scheduled to run
  */
-static int job_ready(void *priv)
-{
-	struct vim2m_ctx *ctx = priv;
+अटल पूर्णांक job_पढ़ोy(व्योम *priv)
+अणु
+	काष्ठा vim2m_ctx *ctx = priv;
 
-	if (v4l2_m2m_num_src_bufs_ready(ctx->fh.m2m_ctx) < ctx->translen
-	    || v4l2_m2m_num_dst_bufs_ready(ctx->fh.m2m_ctx) < ctx->translen) {
-		dprintk(ctx->dev, 1, "Not enough buffers available\n");
-		return 0;
-	}
+	अगर (v4l2_m2m_num_src_bufs_पढ़ोy(ctx->fh.m2m_ctx) < ctx->translen
+	    || v4l2_m2m_num_dst_bufs_पढ़ोy(ctx->fh.m2m_ctx) < ctx->translen) अणु
+		dprपूर्णांकk(ctx->dev, 1, "Not enough buffers available\n");
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void job_abort(void *priv)
-{
-	struct vim2m_ctx *ctx = priv;
+अटल व्योम job_पात(व्योम *priv)
+अणु
+	काष्ठा vim2m_ctx *ctx = priv;
 
-	/* Will cancel the transaction in the next interrupt handler */
-	ctx->aborting = 1;
-}
+	/* Will cancel the transaction in the next पूर्णांकerrupt handler */
+	ctx->पातing = 1;
+पूर्ण
 
 /* device_run() - prepares and starts the device
  *
- * This simulates all the immediate preparations required before starting
+ * This simulates all the immediate preparations required beक्रमe starting
  * a device. This will be called by the framework when it decides to schedule
  * a particular instance.
  */
-static void device_run(void *priv)
-{
-	struct vim2m_ctx *ctx = priv;
-	struct vb2_v4l2_buffer *src_buf, *dst_buf;
+अटल व्योम device_run(व्योम *priv)
+अणु
+	काष्ठा vim2m_ctx *ctx = priv;
+	काष्ठा vb2_v4l2_buffer *src_buf, *dst_buf;
 
 	src_buf = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
 	dst_buf = v4l2_m2m_next_dst_buf(ctx->fh.m2m_ctx);
 
-	/* Apply request controls if any */
+	/* Apply request controls अगर any */
 	v4l2_ctrl_request_setup(src_buf->vb2_buf.req_obj.req,
 				&ctx->hdl);
 
 	device_process(ctx, src_buf, dst_buf);
 
-	/* Complete request controls if any */
+	/* Complete request controls अगर any */
 	v4l2_ctrl_request_complete(src_buf->vb2_buf.req_obj.req,
 				   &ctx->hdl);
 
 	/* Run delayed work, which simulates a hardware irq  */
-	schedule_delayed_work(&ctx->work_run, msecs_to_jiffies(ctx->transtime));
-}
+	schedule_delayed_work(&ctx->work_run, msecs_to_jअगरfies(ctx->transसमय));
+पूर्ण
 
-static void device_work(struct work_struct *w)
-{
-	struct vim2m_ctx *curr_ctx;
-	struct vim2m_dev *vim2m_dev;
-	struct vb2_v4l2_buffer *src_vb, *dst_vb;
+अटल व्योम device_work(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा vim2m_ctx *curr_ctx;
+	काष्ठा vim2m_dev *vim2m_dev;
+	काष्ठा vb2_v4l2_buffer *src_vb, *dst_vb;
 
-	curr_ctx = container_of(w, struct vim2m_ctx, work_run.work);
+	curr_ctx = container_of(w, काष्ठा vim2m_ctx, work_run.work);
 
-	if (!curr_ctx) {
+	अगर (!curr_ctx) अणु
 		pr_err("Instance released before the end of transaction\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	vim2m_dev = curr_ctx->dev;
 
-	src_vb = v4l2_m2m_src_buf_remove(curr_ctx->fh.m2m_ctx);
-	dst_vb = v4l2_m2m_dst_buf_remove(curr_ctx->fh.m2m_ctx);
+	src_vb = v4l2_m2m_src_buf_हटाओ(curr_ctx->fh.m2m_ctx);
+	dst_vb = v4l2_m2m_dst_buf_हटाओ(curr_ctx->fh.m2m_ctx);
 
 	curr_ctx->num_processed++;
 
-	v4l2_m2m_buf_done(src_vb, VB2_BUF_STATE_DONE);
-	v4l2_m2m_buf_done(dst_vb, VB2_BUF_STATE_DONE);
+	v4l2_m2m_buf_करोne(src_vb, VB2_BUF_STATE_DONE);
+	v4l2_m2m_buf_करोne(dst_vb, VB2_BUF_STATE_DONE);
 
-	if (curr_ctx->num_processed == curr_ctx->translen
-	    || curr_ctx->aborting) {
-		dprintk(curr_ctx->dev, 2, "Finishing capture buffer fill\n");
+	अगर (curr_ctx->num_processed == curr_ctx->translen
+	    || curr_ctx->पातing) अणु
+		dprपूर्णांकk(curr_ctx->dev, 2, "Finishing capture buffer fill\n");
 		curr_ctx->num_processed = 0;
 		v4l2_m2m_job_finish(vim2m_dev->m2m_dev, curr_ctx->fh.m2m_ctx);
-	} else {
+	पूर्ण अन्यथा अणु
 		device_run(curr_ctx);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * video ioctls
  */
-static int vidioc_querycap(struct file *file, void *priv,
-			   struct v4l2_capability *cap)
-{
-	strscpy(cap->driver, MEM2MEM_NAME, sizeof(cap->driver));
-	strscpy(cap->card, MEM2MEM_NAME, sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info),
+अटल पूर्णांक vidioc_querycap(काष्ठा file *file, व्योम *priv,
+			   काष्ठा v4l2_capability *cap)
+अणु
+	strscpy(cap->driver, MEM2MEM_NAME, माप(cap->driver));
+	strscpy(cap->card, MEM2MEM_NAME, माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info),
 		 "platform:%s", MEM2MEM_NAME);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enum_fmt(struct v4l2_fmtdesc *f, u32 type)
-{
-	int i, num;
-	struct vim2m_fmt *fmt;
+अटल पूर्णांक क्रमागत_fmt(काष्ठा v4l2_fmtdesc *f, u32 type)
+अणु
+	पूर्णांक i, num;
+	काष्ठा vim2m_fmt *fmt;
 
 	num = 0;
 
-	for (i = 0; i < NUM_FORMATS; ++i) {
-		if (formats[i].types & type) {
-			/* index-th format of type type found ? */
-			if (num == f->index)
-				break;
+	क्रम (i = 0; i < NUM_FORMATS; ++i) अणु
+		अगर (क्रमmats[i].types & type) अणु
+			/* index-th क्रमmat of type type found ? */
+			अगर (num == f->index)
+				अवरोध;
 			/*
 			 * Correct type but haven't reached our index yet,
 			 * just increment per-type index
 			 */
 			++num;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (i < NUM_FORMATS) {
+	अगर (i < NUM_FORMATS) अणु
 		/* Format found */
-		fmt = &formats[i];
-		f->pixelformat = fmt->fourcc;
-		return 0;
-	}
+		fmt = &क्रमmats[i];
+		f->pixelक्रमmat = fmt->fourcc;
+		वापस 0;
+	पूर्ण
 
 	/* Format not found */
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int vidioc_enum_fmt_vid_cap(struct file *file, void *priv,
-				   struct v4l2_fmtdesc *f)
-{
-	return enum_fmt(f, MEM2MEM_CAPTURE);
-}
+अटल पूर्णांक vidioc_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_fmtdesc *f)
+अणु
+	वापस क्रमागत_fmt(f, MEM2MEM_CAPTURE);
+पूर्ण
 
-static int vidioc_enum_fmt_vid_out(struct file *file, void *priv,
-				   struct v4l2_fmtdesc *f)
-{
-	return enum_fmt(f, MEM2MEM_OUTPUT);
-}
+अटल पूर्णांक vidioc_क्रमागत_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_fmtdesc *f)
+अणु
+	वापस क्रमागत_fmt(f, MEM2MEM_OUTPUT);
+पूर्ण
 
-static int vidioc_enum_framesizes(struct file *file, void *priv,
-				  struct v4l2_frmsizeenum *fsize)
-{
-	if (fsize->index != 0)
-		return -EINVAL;
+अटल पूर्णांक vidioc_क्रमागत_framesizes(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_frmsizeक्रमागत *fsize)
+अणु
+	अगर (fsize->index != 0)
+		वापस -EINVAL;
 
-	if (!find_format(fsize->pixel_format))
-		return -EINVAL;
+	अगर (!find_क्रमmat(fsize->pixel_क्रमmat))
+		वापस -EINVAL;
 
 	fsize->type = V4L2_FRMSIZE_TYPE_STEPWISE;
 	fsize->stepwise.min_width = MIN_W;
@@ -720,29 +721,29 @@ static int vidioc_enum_framesizes(struct file *file, void *priv,
 	fsize->stepwise.max_width = MAX_W;
 	fsize->stepwise.max_height = MAX_H;
 
-	get_alignment(fsize->pixel_format,
+	get_alignment(fsize->pixel_क्रमmat,
 		      &fsize->stepwise.step_width,
 		      &fsize->stepwise.step_height);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_fmt(struct vim2m_ctx *ctx, struct v4l2_format *f)
-{
-	struct vb2_queue *vq;
-	struct vim2m_q_data *q_data;
+अटल पूर्णांक vidioc_g_fmt(काष्ठा vim2m_ctx *ctx, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा vb2_queue *vq;
+	काष्ठा vim2m_q_data *q_data;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (!vq)
-		return -EINVAL;
+	अगर (!vq)
+		वापस -EINVAL;
 
 	q_data = get_q_data(ctx, f->type);
-	if (!q_data)
-		return -EINVAL;
+	अगर (!q_data)
+		वापस -EINVAL;
 
 	f->fmt.pix.width	= q_data->width;
 	f->fmt.pix.height	= q_data->height;
 	f->fmt.pix.field	= V4L2_FIELD_NONE;
-	f->fmt.pix.pixelformat	= q_data->fmt->fourcc;
+	f->fmt.pix.pixelक्रमmat	= q_data->fmt->fourcc;
 	f->fmt.pix.bytesperline	= (q_data->width * q_data->fmt->depth) >> 3;
 	f->fmt.pix.sizeimage	= q_data->sizeimage;
 	f->fmt.pix.colorspace	= ctx->colorspace;
@@ -750,121 +751,121 @@ static int vidioc_g_fmt(struct vim2m_ctx *ctx, struct v4l2_format *f)
 	f->fmt.pix.ycbcr_enc	= ctx->ycbcr_enc;
 	f->fmt.pix.quantization	= ctx->quant;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_fmt_vid_out(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	return vidioc_g_fmt(file2ctx(file), f);
-}
+अटल पूर्णांक vidioc_g_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	वापस vidioc_g_fmt(file2ctx(file), f);
+पूर्ण
 
-static int vidioc_g_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	return vidioc_g_fmt(file2ctx(file), f);
-}
+अटल पूर्णांक vidioc_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	वापस vidioc_g_fmt(file2ctx(file), f);
+पूर्ण
 
-static int vidioc_try_fmt(struct v4l2_format *f, struct vim2m_fmt *fmt)
-{
-	int walign, halign;
+अटल पूर्णांक vidioc_try_fmt(काष्ठा v4l2_क्रमmat *f, काष्ठा vim2m_fmt *fmt)
+अणु
+	पूर्णांक walign, halign;
 	/*
-	 * V4L2 specification specifies the driver corrects the
-	 * format struct if any of the dimensions is unsupported
+	 * V4L2 specअगरication specअगरies the driver corrects the
+	 * क्रमmat काष्ठा अगर any of the dimensions is unsupported
 	 */
-	if (f->fmt.pix.height < MIN_H)
+	अगर (f->fmt.pix.height < MIN_H)
 		f->fmt.pix.height = MIN_H;
-	else if (f->fmt.pix.height > MAX_H)
+	अन्यथा अगर (f->fmt.pix.height > MAX_H)
 		f->fmt.pix.height = MAX_H;
 
-	if (f->fmt.pix.width < MIN_W)
+	अगर (f->fmt.pix.width < MIN_W)
 		f->fmt.pix.width = MIN_W;
-	else if (f->fmt.pix.width > MAX_W)
+	अन्यथा अगर (f->fmt.pix.width > MAX_W)
 		f->fmt.pix.width = MAX_W;
 
-	get_alignment(f->fmt.pix.pixelformat, &walign, &halign);
+	get_alignment(f->fmt.pix.pixelक्रमmat, &walign, &halign);
 	f->fmt.pix.width &= ~(walign - 1);
 	f->fmt.pix.height &= ~(halign - 1);
 	f->fmt.pix.bytesperline = (f->fmt.pix.width * fmt->depth) >> 3;
 	f->fmt.pix.sizeimage = f->fmt.pix.height * f->fmt.pix.bytesperline;
 	f->fmt.pix.field = V4L2_FIELD_NONE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_try_fmt_vid_cap(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct vim2m_fmt *fmt;
-	struct vim2m_ctx *ctx = file2ctx(file);
+अटल पूर्णांक vidioc_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा vim2m_fmt *fmt;
+	काष्ठा vim2m_ctx *ctx = file2ctx(file);
 
-	fmt = find_format(f->fmt.pix.pixelformat);
-	if (!fmt) {
-		f->fmt.pix.pixelformat = formats[0].fourcc;
-		fmt = find_format(f->fmt.pix.pixelformat);
-	}
-	if (!(fmt->types & MEM2MEM_CAPTURE)) {
+	fmt = find_क्रमmat(f->fmt.pix.pixelक्रमmat);
+	अगर (!fmt) अणु
+		f->fmt.pix.pixelक्रमmat = क्रमmats[0].fourcc;
+		fmt = find_क्रमmat(f->fmt.pix.pixelक्रमmat);
+	पूर्ण
+	अगर (!(fmt->types & MEM2MEM_CAPTURE)) अणु
 		v4l2_err(&ctx->dev->v4l2_dev,
 			 "Fourcc format (0x%08x) invalid.\n",
-			 f->fmt.pix.pixelformat);
-		return -EINVAL;
-	}
+			 f->fmt.pix.pixelक्रमmat);
+		वापस -EINVAL;
+	पूर्ण
 	f->fmt.pix.colorspace = ctx->colorspace;
 	f->fmt.pix.xfer_func = ctx->xfer_func;
 	f->fmt.pix.ycbcr_enc = ctx->ycbcr_enc;
 	f->fmt.pix.quantization = ctx->quant;
 
-	return vidioc_try_fmt(f, fmt);
-}
+	वापस vidioc_try_fmt(f, fmt);
+पूर्ण
 
-static int vidioc_try_fmt_vid_out(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct vim2m_fmt *fmt;
-	struct vim2m_ctx *ctx = file2ctx(file);
+अटल पूर्णांक vidioc_try_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा vim2m_fmt *fmt;
+	काष्ठा vim2m_ctx *ctx = file2ctx(file);
 
-	fmt = find_format(f->fmt.pix.pixelformat);
-	if (!fmt) {
-		f->fmt.pix.pixelformat = formats[0].fourcc;
-		fmt = find_format(f->fmt.pix.pixelformat);
-	}
-	if (!(fmt->types & MEM2MEM_OUTPUT)) {
+	fmt = find_क्रमmat(f->fmt.pix.pixelक्रमmat);
+	अगर (!fmt) अणु
+		f->fmt.pix.pixelक्रमmat = क्रमmats[0].fourcc;
+		fmt = find_क्रमmat(f->fmt.pix.pixelक्रमmat);
+	पूर्ण
+	अगर (!(fmt->types & MEM2MEM_OUTPUT)) अणु
 		v4l2_err(&ctx->dev->v4l2_dev,
 			 "Fourcc format (0x%08x) invalid.\n",
-			 f->fmt.pix.pixelformat);
-		return -EINVAL;
-	}
-	if (!f->fmt.pix.colorspace)
+			 f->fmt.pix.pixelक्रमmat);
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!f->fmt.pix.colorspace)
 		f->fmt.pix.colorspace = V4L2_COLORSPACE_REC709;
 
-	return vidioc_try_fmt(f, fmt);
-}
+	वापस vidioc_try_fmt(f, fmt);
+पूर्ण
 
-static int vidioc_s_fmt(struct vim2m_ctx *ctx, struct v4l2_format *f)
-{
-	struct vim2m_q_data *q_data;
-	struct vb2_queue *vq;
+अटल पूर्णांक vidioc_s_fmt(काष्ठा vim2m_ctx *ctx, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा vim2m_q_data *q_data;
+	काष्ठा vb2_queue *vq;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (!vq)
-		return -EINVAL;
+	अगर (!vq)
+		वापस -EINVAL;
 
 	q_data = get_q_data(ctx, f->type);
-	if (!q_data)
-		return -EINVAL;
+	अगर (!q_data)
+		वापस -EINVAL;
 
-	if (vb2_is_busy(vq)) {
+	अगर (vb2_is_busy(vq)) अणु
 		v4l2_err(&ctx->dev->v4l2_dev, "%s queue busy\n", __func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	q_data->fmt		= find_format(f->fmt.pix.pixelformat);
+	q_data->fmt		= find_क्रमmat(f->fmt.pix.pixelक्रमmat);
 	q_data->width		= f->fmt.pix.width;
 	q_data->height		= f->fmt.pix.height;
 	q_data->sizeimage	= q_data->width * q_data->height
 				* q_data->fmt->depth >> 3;
 
-	dprintk(ctx->dev, 1,
+	dprपूर्णांकk(ctx->dev, 1,
 		"Format for type %s: %dx%d (%d bpp), fmt: %c%c%c%c\n",
 		type_name(f->type), q_data->width, q_data->height,
 		q_data->fmt->depth,
@@ -873,93 +874,93 @@ static int vidioc_s_fmt(struct vim2m_ctx *ctx, struct v4l2_format *f)
 		(q_data->fmt->fourcc >> 16) & 0xff,
 		(q_data->fmt->fourcc >> 24) & 0xff);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	int ret;
+अटल पूर्णांक vidioc_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक ret;
 
 	ret = vidioc_try_fmt_vid_cap(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return vidioc_s_fmt(file2ctx(file), f);
-}
+	वापस vidioc_s_fmt(file2ctx(file), f);
+पूर्ण
 
-static int vidioc_s_fmt_vid_out(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct vim2m_ctx *ctx = file2ctx(file);
-	int ret;
+अटल पूर्णांक vidioc_s_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा vim2m_ctx *ctx = file2ctx(file);
+	पूर्णांक ret;
 
 	ret = vidioc_try_fmt_vid_out(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = vidioc_s_fmt(file2ctx(file), f);
-	if (!ret) {
+	अगर (!ret) अणु
 		ctx->colorspace = f->fmt.pix.colorspace;
 		ctx->xfer_func = f->fmt.pix.xfer_func;
 		ctx->ycbcr_enc = f->fmt.pix.ycbcr_enc;
 		ctx->quant = f->fmt.pix.quantization;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int vim2m_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct vim2m_ctx *ctx =
-		container_of(ctrl->handler, struct vim2m_ctx, hdl);
+अटल पूर्णांक vim2m_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा vim2m_ctx *ctx =
+		container_of(ctrl->handler, काष्ठा vim2m_ctx, hdl);
 
-	switch (ctrl->id) {
-	case V4L2_CID_HFLIP:
-		if (ctrl->val)
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_HFLIP:
+		अगर (ctrl->val)
 			ctx->mode |= MEM2MEM_HFLIP;
-		else
+		अन्यथा
 			ctx->mode &= ~MEM2MEM_HFLIP;
-		break;
+		अवरोध;
 
-	case V4L2_CID_VFLIP:
-		if (ctrl->val)
+	हाल V4L2_CID_VFLIP:
+		अगर (ctrl->val)
 			ctx->mode |= MEM2MEM_VFLIP;
-		else
+		अन्यथा
 			ctx->mode &= ~MEM2MEM_VFLIP;
-		break;
+		अवरोध;
 
-	case V4L2_CID_TRANS_TIME_MSEC:
-		ctx->transtime = ctrl->val;
-		if (ctx->transtime < 1)
-			ctx->transtime = 1;
-		break;
+	हाल V4L2_CID_TRANS_TIME_MSEC:
+		ctx->transसमय = ctrl->val;
+		अगर (ctx->transसमय < 1)
+			ctx->transसमय = 1;
+		अवरोध;
 
-	case V4L2_CID_TRANS_NUM_BUFS:
+	हाल V4L2_CID_TRANS_NUM_BUFS:
 		ctx->translen = ctrl->val;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		v4l2_err(&ctx->dev->v4l2_dev, "Invalid control\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ctrl_ops vim2m_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops vim2m_ctrl_ops = अणु
 	.s_ctrl = vim2m_s_ctrl,
-};
+पूर्ण;
 
-static const struct v4l2_ioctl_ops vim2m_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops vim2m_ioctl_ops = अणु
 	.vidioc_querycap	= vidioc_querycap,
 
-	.vidioc_enum_fmt_vid_cap = vidioc_enum_fmt_vid_cap,
-	.vidioc_enum_framesizes = vidioc_enum_framesizes,
+	.vidioc_क्रमागत_fmt_vid_cap = vidioc_क्रमागत_fmt_vid_cap,
+	.vidioc_क्रमागत_framesizes = vidioc_क्रमागत_framesizes,
 	.vidioc_g_fmt_vid_cap	= vidioc_g_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap	= vidioc_try_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap	= vidioc_s_fmt_vid_cap,
 
-	.vidioc_enum_fmt_vid_out = vidioc_enum_fmt_vid_out,
+	.vidioc_क्रमागत_fmt_vid_out = vidioc_क्रमागत_fmt_vid_out,
 	.vidioc_g_fmt_vid_out	= vidioc_g_fmt_vid_out,
 	.vidioc_try_fmt_vid_out	= vidioc_try_fmt_vid_out,
 	.vidioc_s_fmt_vid_out	= vidioc_s_fmt_vid_out,
@@ -977,177 +978,177 @@ static const struct v4l2_ioctl_ops vim2m_ioctl_ops = {
 
 	.vidioc_subscribe_event = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-};
+पूर्ण;
 
 /*
  * Queue operations
  */
 
-static int vim2m_queue_setup(struct vb2_queue *vq,
-			     unsigned int *nbuffers,
-			     unsigned int *nplanes,
-			     unsigned int sizes[],
-			     struct device *alloc_devs[])
-{
-	struct vim2m_ctx *ctx = vb2_get_drv_priv(vq);
-	struct vim2m_q_data *q_data;
-	unsigned int size, count = *nbuffers;
+अटल पूर्णांक vim2m_queue_setup(काष्ठा vb2_queue *vq,
+			     अचिन्हित पूर्णांक *nbuffers,
+			     अचिन्हित पूर्णांक *nplanes,
+			     अचिन्हित पूर्णांक sizes[],
+			     काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा vim2m_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा vim2m_q_data *q_data;
+	अचिन्हित पूर्णांक size, count = *nbuffers;
 
 	q_data = get_q_data(ctx, vq->type);
-	if (!q_data)
-		return -EINVAL;
+	अगर (!q_data)
+		वापस -EINVAL;
 
 	size = q_data->width * q_data->height * q_data->fmt->depth >> 3;
 
-	while (size * count > MEM2MEM_VID_MEM_LIMIT)
+	जबतक (size * count > MEM2MEM_VID_MEM_LIMIT)
 		(count)--;
 	*nbuffers = count;
 
-	if (*nplanes)
-		return sizes[0] < size ? -EINVAL : 0;
+	अगर (*nplanes)
+		वापस sizes[0] < size ? -EINVAL : 0;
 
 	*nplanes = 1;
 	sizes[0] = size;
 
-	dprintk(ctx->dev, 1, "%s: get %d buffer(s) of size %d each.\n",
+	dprपूर्णांकk(ctx->dev, 1, "%s: get %d buffer(s) of size %d each.\n",
 		type_name(vq->type), count, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vim2m_buf_out_validate(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct vim2m_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल पूर्णांक vim2m_buf_out_validate(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा vim2m_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
-	if (vbuf->field == V4L2_FIELD_ANY)
+	अगर (vbuf->field == V4L2_FIELD_ANY)
 		vbuf->field = V4L2_FIELD_NONE;
-	if (vbuf->field != V4L2_FIELD_NONE) {
-		dprintk(ctx->dev, 1, "%s field isn't supported\n", __func__);
-		return -EINVAL;
-	}
+	अगर (vbuf->field != V4L2_FIELD_NONE) अणु
+		dprपूर्णांकk(ctx->dev, 1, "%s field isn't supported\n", __func__);
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vim2m_buf_prepare(struct vb2_buffer *vb)
-{
-	struct vim2m_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
-	struct vim2m_q_data *q_data;
+अटल पूर्णांक vim2m_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vim2m_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा vim2m_q_data *q_data;
 
-	dprintk(ctx->dev, 2, "type: %s\n", type_name(vb->vb2_queue->type));
+	dprपूर्णांकk(ctx->dev, 2, "type: %s\n", type_name(vb->vb2_queue->type));
 
 	q_data = get_q_data(ctx, vb->vb2_queue->type);
-	if (!q_data)
-		return -EINVAL;
-	if (vb2_plane_size(vb, 0) < q_data->sizeimage) {
-		dprintk(ctx->dev, 1,
+	अगर (!q_data)
+		वापस -EINVAL;
+	अगर (vb2_plane_size(vb, 0) < q_data->sizeimage) अणु
+		dprपूर्णांकk(ctx->dev, 1,
 			"%s data will not fit into plane (%lu < %lu)\n",
 			__func__, vb2_plane_size(vb, 0),
-			(long)q_data->sizeimage);
-		return -EINVAL;
-	}
+			(दीर्घ)q_data->sizeimage);
+		वापस -EINVAL;
+	पूर्ण
 
 	vb2_set_plane_payload(vb, 0, q_data->sizeimage);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vim2m_buf_queue(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct vim2m_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल व्योम vim2m_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा vim2m_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
 	v4l2_m2m_buf_queue(ctx->fh.m2m_ctx, vbuf);
-}
+पूर्ण
 
-static int vim2m_start_streaming(struct vb2_queue *q, unsigned int count)
-{
-	struct vim2m_ctx *ctx = vb2_get_drv_priv(q);
-	struct vim2m_q_data *q_data = get_q_data(ctx, q->type);
+अटल पूर्णांक vim2m_start_streaming(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा vim2m_ctx *ctx = vb2_get_drv_priv(q);
+	काष्ठा vim2m_q_data *q_data = get_q_data(ctx, q->type);
 
-	if (!q_data)
-		return -EINVAL;
+	अगर (!q_data)
+		वापस -EINVAL;
 
-	if (V4L2_TYPE_IS_OUTPUT(q->type))
-		ctx->aborting = 0;
+	अगर (V4L2_TYPE_IS_OUTPUT(q->type))
+		ctx->पातing = 0;
 
 	q_data->sequence = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vim2m_stop_streaming(struct vb2_queue *q)
-{
-	struct vim2m_ctx *ctx = vb2_get_drv_priv(q);
-	struct vb2_v4l2_buffer *vbuf;
+अटल व्योम vim2m_stop_streaming(काष्ठा vb2_queue *q)
+अणु
+	काष्ठा vim2m_ctx *ctx = vb2_get_drv_priv(q);
+	काष्ठा vb2_v4l2_buffer *vbuf;
 
 	cancel_delayed_work_sync(&ctx->work_run);
 
-	for (;;) {
-		if (V4L2_TYPE_IS_OUTPUT(q->type))
-			vbuf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
-		else
-			vbuf = v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx);
-		if (!vbuf)
-			return;
+	क्रम (;;) अणु
+		अगर (V4L2_TYPE_IS_OUTPUT(q->type))
+			vbuf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx);
+		अन्यथा
+			vbuf = v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx);
+		अगर (!vbuf)
+			वापस;
 		v4l2_ctrl_request_complete(vbuf->vb2_buf.req_obj.req,
 					   &ctx->hdl);
-		v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_ERROR);
-	}
-}
+		v4l2_m2m_buf_करोne(vbuf, VB2_BUF_STATE_ERROR);
+	पूर्ण
+पूर्ण
 
-static void vim2m_buf_request_complete(struct vb2_buffer *vb)
-{
-	struct vim2m_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल व्योम vim2m_buf_request_complete(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vim2m_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
 	v4l2_ctrl_request_complete(vb->req_obj.req, &ctx->hdl);
-}
+पूर्ण
 
-static const struct vb2_ops vim2m_qops = {
+अटल स्थिर काष्ठा vb2_ops vim2m_qops = अणु
 	.queue_setup	 = vim2m_queue_setup,
 	.buf_out_validate	 = vim2m_buf_out_validate,
 	.buf_prepare	 = vim2m_buf_prepare,
 	.buf_queue	 = vim2m_buf_queue,
 	.start_streaming = vim2m_start_streaming,
 	.stop_streaming  = vim2m_stop_streaming,
-	.wait_prepare	 = vb2_ops_wait_prepare,
-	.wait_finish	 = vb2_ops_wait_finish,
+	.रुको_prepare	 = vb2_ops_रुको_prepare,
+	.रुको_finish	 = vb2_ops_रुको_finish,
 	.buf_request_complete = vim2m_buf_request_complete,
-};
+पूर्ण;
 
-static int queue_init(void *priv, struct vb2_queue *src_vq,
-		      struct vb2_queue *dst_vq)
-{
-	struct vim2m_ctx *ctx = priv;
-	int ret;
+अटल पूर्णांक queue_init(व्योम *priv, काष्ठा vb2_queue *src_vq,
+		      काष्ठा vb2_queue *dst_vq)
+अणु
+	काष्ठा vim2m_ctx *ctx = priv;
+	पूर्णांक ret;
 
 	src_vq->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	src_vq->io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
 	src_vq->drv_priv = ctx;
-	src_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
+	src_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
 	src_vq->ops = &vim2m_qops;
-	src_vq->mem_ops = &vb2_vmalloc_memops;
-	src_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	src_vq->mem_ops = &vb2_vदो_स्मृति_memops;
+	src_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	src_vq->lock = &ctx->vb_mutex;
 	src_vq->supports_requests = true;
 
 	ret = vb2_queue_init(src_vq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	dst_vq->io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
 	dst_vq->drv_priv = ctx;
-	dst_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
+	dst_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
 	dst_vq->ops = &vim2m_qops;
-	dst_vq->mem_ops = &vb2_vmalloc_memops;
-	dst_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	dst_vq->mem_ops = &vb2_vदो_स्मृति_memops;
+	dst_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	dst_vq->lock = &ctx->vb_mutex;
 
-	return vb2_queue_init(dst_vq);
-}
+	वापस vb2_queue_init(dst_vq);
+पूर्ण
 
-static struct v4l2_ctrl_config vim2m_ctrl_trans_time_msec = {
+अटल काष्ठा v4l2_ctrl_config vim2m_ctrl_trans_समय_msec = अणु
 	.ops = &vim2m_ctrl_ops,
 	.id = V4L2_CID_TRANS_TIME_MSEC,
 	.name = "Transaction Time (msec)",
@@ -1155,9 +1156,9 @@ static struct v4l2_ctrl_config vim2m_ctrl_trans_time_msec = {
 	.min = 1,
 	.max = 10001,
 	.step = 1,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config vim2m_ctrl_trans_num_bufs = {
+अटल स्थिर काष्ठा v4l2_ctrl_config vim2m_ctrl_trans_num_bufs = अणु
 	.ops = &vim2m_ctrl_ops,
 	.id = V4L2_CID_TRANS_NUM_BUFS,
 	.name = "Buffers Per Transaction",
@@ -1166,47 +1167,47 @@ static const struct v4l2_ctrl_config vim2m_ctrl_trans_num_bufs = {
 	.min = 1,
 	.max = MEM2MEM_DEF_NUM_BUFS,
 	.step = 1,
-};
+पूर्ण;
 
 /*
  * File operations
  */
-static int vim2m_open(struct file *file)
-{
-	struct vim2m_dev *dev = video_drvdata(file);
-	struct vim2m_ctx *ctx = NULL;
-	struct v4l2_ctrl_handler *hdl;
-	int rc = 0;
+अटल पूर्णांक vim2m_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा vim2m_dev *dev = video_drvdata(file);
+	काष्ठा vim2m_ctx *ctx = शून्य;
+	काष्ठा v4l2_ctrl_handler *hdl;
+	पूर्णांक rc = 0;
 
-	if (mutex_lock_interruptible(&dev->dev_mutex))
-		return -ERESTARTSYS;
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx) {
+	अगर (mutex_lock_पूर्णांकerruptible(&dev->dev_mutex))
+		वापस -ERESTARTSYS;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx) अणु
 		rc = -ENOMEM;
-		goto open_unlock;
-	}
+		जाओ खोलो_unlock;
+	पूर्ण
 
 	v4l2_fh_init(&ctx->fh, video_devdata(file));
-	file->private_data = &ctx->fh;
+	file->निजी_data = &ctx->fh;
 	ctx->dev = dev;
 	hdl = &ctx->hdl;
 	v4l2_ctrl_handler_init(hdl, 4);
 	v4l2_ctrl_new_std(hdl, &vim2m_ctrl_ops, V4L2_CID_HFLIP, 0, 1, 1, 0);
 	v4l2_ctrl_new_std(hdl, &vim2m_ctrl_ops, V4L2_CID_VFLIP, 0, 1, 1, 0);
 
-	vim2m_ctrl_trans_time_msec.def = default_transtime;
-	v4l2_ctrl_new_custom(hdl, &vim2m_ctrl_trans_time_msec, NULL);
-	v4l2_ctrl_new_custom(hdl, &vim2m_ctrl_trans_num_bufs, NULL);
-	if (hdl->error) {
+	vim2m_ctrl_trans_समय_msec.def = शेष_transसमय;
+	v4l2_ctrl_new_custom(hdl, &vim2m_ctrl_trans_समय_msec, शून्य);
+	v4l2_ctrl_new_custom(hdl, &vim2m_ctrl_trans_num_bufs, शून्य);
+	अगर (hdl->error) अणु
 		rc = hdl->error;
-		v4l2_ctrl_handler_free(hdl);
-		kfree(ctx);
-		goto open_unlock;
-	}
+		v4l2_ctrl_handler_मुक्त(hdl);
+		kमुक्त(ctx);
+		जाओ खोलो_unlock;
+	पूर्ण
 	ctx->fh.ctrl_handler = hdl;
 	v4l2_ctrl_handler_setup(hdl);
 
-	ctx->q_data[V4L2_M2M_SRC].fmt = &formats[0];
+	ctx->q_data[V4L2_M2M_SRC].fmt = &क्रमmats[0];
 	ctx->q_data[V4L2_M2M_SRC].width = 640;
 	ctx->q_data[V4L2_M2M_SRC].height = 480;
 	ctx->q_data[V4L2_M2M_SRC].sizeimage =
@@ -1221,101 +1222,101 @@ static int vim2m_open(struct file *file)
 	mutex_init(&ctx->vb_mutex);
 	INIT_DELAYED_WORK(&ctx->work_run, device_work);
 
-	if (IS_ERR(ctx->fh.m2m_ctx)) {
+	अगर (IS_ERR(ctx->fh.m2m_ctx)) अणु
 		rc = PTR_ERR(ctx->fh.m2m_ctx);
 
-		v4l2_ctrl_handler_free(hdl);
-		v4l2_fh_exit(&ctx->fh);
-		kfree(ctx);
-		goto open_unlock;
-	}
+		v4l2_ctrl_handler_मुक्त(hdl);
+		v4l2_fh_निकास(&ctx->fh);
+		kमुक्त(ctx);
+		जाओ खोलो_unlock;
+	पूर्ण
 
 	v4l2_fh_add(&ctx->fh);
 	atomic_inc(&dev->num_inst);
 
-	dprintk(dev, 1, "Created instance: %p, m2m_ctx: %p\n",
+	dprपूर्णांकk(dev, 1, "Created instance: %p, m2m_ctx: %p\n",
 		ctx, ctx->fh.m2m_ctx);
 
-open_unlock:
+खोलो_unlock:
 	mutex_unlock(&dev->dev_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int vim2m_release(struct file *file)
-{
-	struct vim2m_dev *dev = video_drvdata(file);
-	struct vim2m_ctx *ctx = file2ctx(file);
+अटल पूर्णांक vim2m_release(काष्ठा file *file)
+अणु
+	काष्ठा vim2m_dev *dev = video_drvdata(file);
+	काष्ठा vim2m_ctx *ctx = file2ctx(file);
 
-	dprintk(dev, 1, "Releasing instance %p\n", ctx);
+	dprपूर्णांकk(dev, 1, "Releasing instance %p\n", ctx);
 
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_exit(&ctx->fh);
-	v4l2_ctrl_handler_free(&ctx->hdl);
+	v4l2_fh_निकास(&ctx->fh);
+	v4l2_ctrl_handler_मुक्त(&ctx->hdl);
 	mutex_lock(&dev->dev_mutex);
 	v4l2_m2m_ctx_release(ctx->fh.m2m_ctx);
 	mutex_unlock(&dev->dev_mutex);
-	kfree(ctx);
+	kमुक्त(ctx);
 
 	atomic_dec(&dev->num_inst);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vim2m_device_release(struct video_device *vdev)
-{
-	struct vim2m_dev *dev = container_of(vdev, struct vim2m_dev, vfd);
+अटल व्योम vim2m_device_release(काष्ठा video_device *vdev)
+अणु
+	काष्ठा vim2m_dev *dev = container_of(vdev, काष्ठा vim2m_dev, vfd);
 
-	v4l2_device_unregister(&dev->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
 	v4l2_m2m_release(dev->m2m_dev);
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 	media_device_cleanup(&dev->mdev);
-#endif
-	kfree(dev);
-}
+#पूर्ण_अगर
+	kमुक्त(dev);
+पूर्ण
 
-static const struct v4l2_file_operations vim2m_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations vim2m_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= vim2m_open,
+	.खोलो		= vim2m_खोलो,
 	.release	= vim2m_release,
 	.poll		= v4l2_m2m_fop_poll,
 	.unlocked_ioctl	= video_ioctl2,
 	.mmap		= v4l2_m2m_fop_mmap,
-};
+पूर्ण;
 
-static const struct video_device vim2m_videodev = {
+अटल स्थिर काष्ठा video_device vim2m_videodev = अणु
 	.name		= MEM2MEM_NAME,
-	.vfl_dir	= VFL_DIR_M2M,
+	.vfl_dir	= VFL_सूची_M2M,
 	.fops		= &vim2m_fops,
 	.ioctl_ops	= &vim2m_ioctl_ops,
 	.minor		= -1,
 	.release	= vim2m_device_release,
 	.device_caps	= V4L2_CAP_VIDEO_M2M | V4L2_CAP_STREAMING,
-};
+पूर्ण;
 
-static const struct v4l2_m2m_ops m2m_ops = {
+अटल स्थिर काष्ठा v4l2_m2m_ops m2m_ops = अणु
 	.device_run	= device_run,
-	.job_ready	= job_ready,
-	.job_abort	= job_abort,
-};
+	.job_पढ़ोy	= job_पढ़ोy,
+	.job_पात	= job_पात,
+पूर्ण;
 
-static const struct media_device_ops m2m_media_ops = {
+अटल स्थिर काष्ठा media_device_ops m2m_media_ops = अणु
 	.req_validate = vb2_request_validate,
 	.req_queue = v4l2_m2m_request_queue,
-};
+पूर्ण;
 
-static int vim2m_probe(struct platform_device *pdev)
-{
-	struct vim2m_dev *dev;
-	struct video_device *vfd;
-	int ret;
+अटल पूर्णांक vim2m_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vim2m_dev *dev;
+	काष्ठा video_device *vfd;
+	पूर्णांक ret;
 
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
-	ret = v4l2_device_register(&pdev->dev, &dev->v4l2_dev);
-	if (ret)
-		goto error_free;
+	ret = v4l2_device_रेजिस्टर(&pdev->dev, &dev->v4l2_dev);
+	अगर (ret)
+		जाओ error_मुक्त;
 
 	atomic_set(&dev->num_inst, 0);
 	mutex_init(&dev->dev_mutex);
@@ -1329,109 +1330,109 @@ static int vim2m_probe(struct platform_device *pdev)
 	v4l2_info(&dev->v4l2_dev,
 		  "Device registered as /dev/video%d\n", vfd->num);
 
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 
 	dev->m2m_dev = v4l2_m2m_init(&m2m_ops);
-	if (IS_ERR(dev->m2m_dev)) {
+	अगर (IS_ERR(dev->m2m_dev)) अणु
 		v4l2_err(&dev->v4l2_dev, "Failed to init mem2mem device\n");
 		ret = PTR_ERR(dev->m2m_dev);
-		dev->m2m_dev = NULL;
-		goto error_dev;
-	}
+		dev->m2m_dev = शून्य;
+		जाओ error_dev;
+	पूर्ण
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 	dev->mdev.dev = &pdev->dev;
-	strscpy(dev->mdev.model, "vim2m", sizeof(dev->mdev.model));
+	strscpy(dev->mdev.model, "vim2m", माप(dev->mdev.model));
 	strscpy(dev->mdev.bus_info, "platform:vim2m",
-		sizeof(dev->mdev.bus_info));
+		माप(dev->mdev.bus_info));
 	media_device_init(&dev->mdev);
 	dev->mdev.ops = &m2m_media_ops;
 	dev->v4l2_dev.mdev = &dev->mdev;
-#endif
+#पूर्ण_अगर
 
-	ret = video_register_device(vfd, VFL_TYPE_VIDEO, 0);
-	if (ret) {
+	ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, 0);
+	अगर (ret) अणु
 		v4l2_err(&dev->v4l2_dev, "Failed to register video device\n");
-		goto error_m2m;
-	}
+		जाओ error_m2m;
+	पूर्ण
 
-#ifdef CONFIG_MEDIA_CONTROLLER
-	ret = v4l2_m2m_register_media_controller(dev->m2m_dev, vfd,
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
+	ret = v4l2_m2m_रेजिस्टर_media_controller(dev->m2m_dev, vfd,
 						 MEDIA_ENT_F_PROC_VIDEO_SCALER);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&dev->v4l2_dev, "Failed to init mem2mem media controller\n");
-		goto error_v4l2;
-	}
+		जाओ error_v4l2;
+	पूर्ण
 
-	ret = media_device_register(&dev->mdev);
-	if (ret) {
+	ret = media_device_रेजिस्टर(&dev->mdev);
+	अगर (ret) अणु
 		v4l2_err(&dev->v4l2_dev, "Failed to register mem2mem media device\n");
-		goto error_m2m_mc;
-	}
-#endif
-	return 0;
+		जाओ error_m2m_mc;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 error_m2m_mc:
-	v4l2_m2m_unregister_media_controller(dev->m2m_dev);
-#endif
+	v4l2_m2m_unरेजिस्टर_media_controller(dev->m2m_dev);
+#पूर्ण_अगर
 error_v4l2:
-	video_unregister_device(&dev->vfd);
-	/* vim2m_device_release called by video_unregister_device to release various objects */
-	return ret;
+	video_unरेजिस्टर_device(&dev->vfd);
+	/* vim2m_device_release called by video_unरेजिस्टर_device to release various objects */
+	वापस ret;
 error_m2m:
 	v4l2_m2m_release(dev->m2m_dev);
 error_dev:
-	v4l2_device_unregister(&dev->v4l2_dev);
-error_free:
-	kfree(dev);
+	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
+error_मुक्त:
+	kमुक्त(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vim2m_remove(struct platform_device *pdev)
-{
-	struct vim2m_dev *dev = platform_get_drvdata(pdev);
+अटल पूर्णांक vim2m_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vim2m_dev *dev = platक्रमm_get_drvdata(pdev);
 
 	v4l2_info(&dev->v4l2_dev, "Removing " MEM2MEM_NAME);
 
-#ifdef CONFIG_MEDIA_CONTROLLER
-	media_device_unregister(&dev->mdev);
-	v4l2_m2m_unregister_media_controller(dev->m2m_dev);
-#endif
-	video_unregister_device(&dev->vfd);
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
+	media_device_unरेजिस्टर(&dev->mdev);
+	v4l2_m2m_unरेजिस्टर_media_controller(dev->m2m_dev);
+#पूर्ण_अगर
+	video_unरेजिस्टर_device(&dev->vfd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver vim2m_pdrv = {
+अटल काष्ठा platक्रमm_driver vim2m_pdrv = अणु
 	.probe		= vim2m_probe,
-	.remove		= vim2m_remove,
-	.driver		= {
+	.हटाओ		= vim2m_हटाओ,
+	.driver		= अणु
 		.name	= MEM2MEM_NAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void __exit vim2m_exit(void)
-{
-	platform_driver_unregister(&vim2m_pdrv);
-	platform_device_unregister(&vim2m_pdev);
-}
+अटल व्योम __निकास vim2m_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&vim2m_pdrv);
+	platक्रमm_device_unरेजिस्टर(&vim2m_pdev);
+पूर्ण
 
-static int __init vim2m_init(void)
-{
-	int ret;
+अटल पूर्णांक __init vim2m_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_device_register(&vim2m_pdev);
-	if (ret)
-		return ret;
+	ret = platक्रमm_device_रेजिस्टर(&vim2m_pdev);
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&vim2m_pdrv);
-	if (ret)
-		platform_device_unregister(&vim2m_pdev);
+	ret = platक्रमm_driver_रेजिस्टर(&vim2m_pdrv);
+	अगर (ret)
+		platक्रमm_device_unरेजिस्टर(&vim2m_pdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 module_init(vim2m_init);
-module_exit(vim2m_exit);
+module_निकास(vim2m_निकास);

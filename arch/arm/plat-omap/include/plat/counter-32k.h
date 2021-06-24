@@ -1,1 +1,2 @@
-int omap_init_clocksource_32k(void __iomem *vbase);
+<शैली गुरु>
+पूर्णांक omap_init_घड़ीsource_32k(व्योम __iomem *vbase);

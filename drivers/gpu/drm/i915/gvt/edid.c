@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,139 +23,139 @@
  *
  * Authors:
  *    Ke Yu
- *    Zhiyuan Lv <zhiyuan.lv@intel.com>
+ *    Zhiyuan Lv <zhiyuan.lv@पूर्णांकel.com>
  *
  * Contributors:
- *    Terrence Xu <terrence.xu@intel.com>
- *    Changbin Du <changbin.du@intel.com>
- *    Bing Niu <bing.niu@intel.com>
- *    Zhi Wang <zhi.a.wang@intel.com>
+ *    Terrence Xu <terrence.xu@पूर्णांकel.com>
+ *    Changbin Du <changbin.du@पूर्णांकel.com>
+ *    Bing Niu <bing.niu@पूर्णांकel.com>
+ *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
  *
  */
 
-#include "i915_drv.h"
-#include "gvt.h"
+#समावेश "i915_drv.h"
+#समावेश "gvt.h"
 
-#define GMBUS1_TOTAL_BYTES_SHIFT 16
-#define GMBUS1_TOTAL_BYTES_MASK 0x1ff
-#define gmbus1_total_byte_count(v) (((v) >> \
+#घोषणा GMBUS1_TOTAL_BYTES_SHIFT 16
+#घोषणा GMBUS1_TOTAL_BYTES_MASK 0x1ff
+#घोषणा gmbus1_total_byte_count(v) (((v) >> \
 	GMBUS1_TOTAL_BYTES_SHIFT) & GMBUS1_TOTAL_BYTES_MASK)
-#define gmbus1_slave_addr(v) (((v) & 0xff) >> 1)
-#define gmbus1_slave_index(v) (((v) >> 8) & 0xff)
-#define gmbus1_bus_cycle(v) (((v) >> 25) & 0x7)
+#घोषणा gmbus1_slave_addr(v) (((v) & 0xff) >> 1)
+#घोषणा gmbus1_slave_index(v) (((v) >> 8) & 0xff)
+#घोषणा gmbus1_bus_cycle(v) (((v) >> 25) & 0x7)
 
 /* GMBUS0 bits definitions */
-#define _GMBUS_PIN_SEL_MASK     (0x7)
+#घोषणा _GMBUS_PIN_SEL_MASK     (0x7)
 
-static unsigned char edid_get_byte(struct intel_vgpu *vgpu)
-{
-	struct intel_vgpu_i2c_edid *edid = &vgpu->display.i2c_edid;
-	unsigned char chr = 0;
+अटल अचिन्हित अक्षर edid_get_byte(काष्ठा पूर्णांकel_vgpu *vgpu)
+अणु
+	काष्ठा पूर्णांकel_vgpu_i2c_edid *edid = &vgpu->display.i2c_edid;
+	अचिन्हित अक्षर chr = 0;
 
-	if (edid->state == I2C_NOT_SPECIFIED || !edid->slave_selected) {
+	अगर (edid->state == I2C_NOT_SPECIFIED || !edid->slave_selected) अणु
 		gvt_vgpu_err("Driver tries to read EDID without proper sequence!\n");
-		return 0;
-	}
-	if (edid->current_edid_read >= EDID_SIZE) {
+		वापस 0;
+	पूर्ण
+	अगर (edid->current_edid_पढ़ो >= EDID_SIZE) अणु
 		gvt_vgpu_err("edid_get_byte() exceeds the size of EDID!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!edid->edid_available) {
+	अगर (!edid->edid_available) अणु
 		gvt_vgpu_err("Reading EDID but EDID is not available!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (intel_vgpu_has_monitor_on_port(vgpu, edid->port)) {
-		struct intel_vgpu_edid_data *edid_data =
-			intel_vgpu_port(vgpu, edid->port)->edid;
+	अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, edid->port)) अणु
+		काष्ठा पूर्णांकel_vgpu_edid_data *edid_data =
+			पूर्णांकel_vgpu_port(vgpu, edid->port)->edid;
 
-		chr = edid_data->edid_block[edid->current_edid_read];
-		edid->current_edid_read++;
-	} else {
+		chr = edid_data->edid_block[edid->current_edid_पढ़ो];
+		edid->current_edid_पढ़ो++;
+	पूर्ण अन्यथा अणु
 		gvt_vgpu_err("No EDID available during the reading?\n");
-	}
-	return chr;
-}
+	पूर्ण
+	वापस chr;
+पूर्ण
 
-static inline int cnp_get_port_from_gmbus0(u32 gmbus0)
-{
-	int port_select = gmbus0 & _GMBUS_PIN_SEL_MASK;
-	int port = -EINVAL;
+अटल अंतरभूत पूर्णांक cnp_get_port_from_gmbus0(u32 gmbus0)
+अणु
+	पूर्णांक port_select = gmbus0 & _GMBUS_PIN_SEL_MASK;
+	पूर्णांक port = -EINVAL;
 
-	if (port_select == GMBUS_PIN_1_BXT)
+	अगर (port_select == GMBUS_PIN_1_BXT)
 		port = PORT_B;
-	else if (port_select == GMBUS_PIN_2_BXT)
+	अन्यथा अगर (port_select == GMBUS_PIN_2_BXT)
 		port = PORT_C;
-	else if (port_select == GMBUS_PIN_3_BXT)
+	अन्यथा अगर (port_select == GMBUS_PIN_3_BXT)
 		port = PORT_D;
-	else if (port_select == GMBUS_PIN_4_CNP)
+	अन्यथा अगर (port_select == GMBUS_PIN_4_CNP)
 		port = PORT_E;
-	return port;
-}
+	वापस port;
+पूर्ण
 
-static inline int bxt_get_port_from_gmbus0(u32 gmbus0)
-{
-	int port_select = gmbus0 & _GMBUS_PIN_SEL_MASK;
-	int port = -EINVAL;
+अटल अंतरभूत पूर्णांक bxt_get_port_from_gmbus0(u32 gmbus0)
+अणु
+	पूर्णांक port_select = gmbus0 & _GMBUS_PIN_SEL_MASK;
+	पूर्णांक port = -EINVAL;
 
-	if (port_select == GMBUS_PIN_1_BXT)
+	अगर (port_select == GMBUS_PIN_1_BXT)
 		port = PORT_B;
-	else if (port_select == GMBUS_PIN_2_BXT)
+	अन्यथा अगर (port_select == GMBUS_PIN_2_BXT)
 		port = PORT_C;
-	else if (port_select == GMBUS_PIN_3_BXT)
+	अन्यथा अगर (port_select == GMBUS_PIN_3_BXT)
 		port = PORT_D;
-	return port;
-}
+	वापस port;
+पूर्ण
 
-static inline int get_port_from_gmbus0(u32 gmbus0)
-{
-	int port_select = gmbus0 & _GMBUS_PIN_SEL_MASK;
-	int port = -EINVAL;
+अटल अंतरभूत पूर्णांक get_port_from_gmbus0(u32 gmbus0)
+अणु
+	पूर्णांक port_select = gmbus0 & _GMBUS_PIN_SEL_MASK;
+	पूर्णांक port = -EINVAL;
 
-	if (port_select == GMBUS_PIN_VGADDC)
+	अगर (port_select == GMBUS_PIN_VGADDC)
 		port = PORT_E;
-	else if (port_select == GMBUS_PIN_DPC)
+	अन्यथा अगर (port_select == GMBUS_PIN_DPC)
 		port = PORT_C;
-	else if (port_select == GMBUS_PIN_DPB)
+	अन्यथा अगर (port_select == GMBUS_PIN_DPB)
 		port = PORT_B;
-	else if (port_select == GMBUS_PIN_DPD)
+	अन्यथा अगर (port_select == GMBUS_PIN_DPD)
 		port = PORT_D;
-	return port;
-}
+	वापस port;
+पूर्ण
 
-static void reset_gmbus_controller(struct intel_vgpu *vgpu)
-{
+अटल व्योम reset_gmbus_controller(काष्ठा पूर्णांकel_vgpu *vgpu)
+अणु
 	vgpu_vreg_t(vgpu, PCH_GMBUS2) = GMBUS_HW_RDY;
-	if (!vgpu->display.i2c_edid.edid_available)
+	अगर (!vgpu->display.i2c_edid.edid_available)
 		vgpu_vreg_t(vgpu, PCH_GMBUS2) |= GMBUS_SATOER;
 	vgpu->display.i2c_edid.gmbus.phase = GMBUS_IDLE_PHASE;
-}
+पूर्ण
 
 /* GMBUS0 */
-static int gmbus0_mmio_write(struct intel_vgpu *vgpu,
-			unsigned int offset, void *p_data, unsigned int bytes)
-{
-	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
-	int port, pin_select;
+अटल पूर्णांक gmbus0_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
+			अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
+	पूर्णांक port, pin_select;
 
-	memcpy(&vgpu_vreg(vgpu, offset), p_data, bytes);
+	स_नकल(&vgpu_vreg(vgpu, offset), p_data, bytes);
 
 	pin_select = vgpu_vreg(vgpu, offset) & _GMBUS_PIN_SEL_MASK;
 
-	intel_vgpu_init_i2c_edid(vgpu);
+	पूर्णांकel_vgpu_init_i2c_edid(vgpu);
 
-	if (pin_select == 0)
-		return 0;
+	अगर (pin_select == 0)
+		वापस 0;
 
-	if (IS_BROXTON(i915))
+	अगर (IS_BROXTON(i915))
 		port = bxt_get_port_from_gmbus0(pin_select);
-	else if (IS_COFFEELAKE(i915) || IS_COMETLAKE(i915))
+	अन्यथा अगर (IS_COFFEELAKE(i915) || IS_COMETLAKE(i915))
 		port = cnp_get_port_from_gmbus0(pin_select);
-	else
+	अन्यथा
 		port = get_port_from_gmbus0(pin_select);
-	if (drm_WARN_ON(&i915->drm, port < 0))
-		return 0;
+	अगर (drm_WARN_ON(&i915->drm, port < 0))
+		वापस 0;
 
 	vgpu->display.i2c_edid.state = I2C_GMBUS;
 	vgpu->display.i2c_edid.gmbus.phase = GMBUS_IDLE_PHASE;
@@ -162,47 +163,47 @@ static int gmbus0_mmio_write(struct intel_vgpu *vgpu,
 	vgpu_vreg_t(vgpu, PCH_GMBUS2) &= ~GMBUS_ACTIVE;
 	vgpu_vreg_t(vgpu, PCH_GMBUS2) |= GMBUS_HW_RDY | GMBUS_HW_WAIT_PHASE;
 
-	if (intel_vgpu_has_monitor_on_port(vgpu, port) &&
-			!intel_vgpu_port_is_dp(vgpu, port)) {
+	अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu, port) &&
+			!पूर्णांकel_vgpu_port_is_dp(vgpu, port)) अणु
 		vgpu->display.i2c_edid.port = port;
 		vgpu->display.i2c_edid.edid_available = true;
 		vgpu_vreg_t(vgpu, PCH_GMBUS2) &= ~GMBUS_SATOER;
-	} else
+	पूर्ण अन्यथा
 		vgpu_vreg_t(vgpu, PCH_GMBUS2) |= GMBUS_SATOER;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gmbus1_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
-		void *p_data, unsigned int bytes)
-{
-	struct intel_vgpu_i2c_edid *i2c_edid = &vgpu->display.i2c_edid;
+अटल पूर्णांक gmbus1_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+		व्योम *p_data, अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा पूर्णांकel_vgpu_i2c_edid *i2c_edid = &vgpu->display.i2c_edid;
 	u32 slave_addr;
 	u32 wvalue = *(u32 *)p_data;
 
-	if (vgpu_vreg(vgpu, offset) & GMBUS_SW_CLR_INT) {
-		if (!(wvalue & GMBUS_SW_CLR_INT)) {
+	अगर (vgpu_vreg(vgpu, offset) & GMBUS_SW_CLR_INT) अणु
+		अगर (!(wvalue & GMBUS_SW_CLR_INT)) अणु
 			vgpu_vreg(vgpu, offset) &= ~GMBUS_SW_CLR_INT;
 			reset_gmbus_controller(vgpu);
-		}
+		पूर्ण
 		/*
 		 * TODO: "This bit is cleared to zero when an event
 		 * causes the HW_RDY bit transition to occur "
 		 */
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * per bspec setting this bit can cause:
 		 * 1) INT status bit cleared
-		 * 2) HW_RDY bit asserted
+		 * 2) HW_RDY bit निश्चितed
 		 */
-		if (wvalue & GMBUS_SW_CLR_INT) {
+		अगर (wvalue & GMBUS_SW_CLR_INT) अणु
 			vgpu_vreg_t(vgpu, PCH_GMBUS2) &= ~GMBUS_INT;
 			vgpu_vreg_t(vgpu, PCH_GMBUS2) |= GMBUS_HW_RDY;
-		}
+		पूर्ण
 
-		/* For virtualization, we suppose that HW is always ready,
+		/* For भवization, we suppose that HW is always पढ़ोy,
 		 * so GMBUS_SW_RDY should always be cleared
 		 */
-		if (wvalue & GMBUS_SW_RDY)
+		अगर (wvalue & GMBUS_SW_RDY)
 			wvalue &= ~GMBUS_SW_RDY;
 
 		i2c_edid->gmbus.total_byte_count =
@@ -210,58 +211,58 @@ static int gmbus1_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
 		slave_addr = gmbus1_slave_addr(wvalue);
 
 		/* vgpu gmbus only support EDID */
-		if (slave_addr == EDID_ADDR) {
+		अगर (slave_addr == EDID_ADDR) अणु
 			i2c_edid->slave_selected = true;
-		} else if (slave_addr != 0) {
+		पूर्ण अन्यथा अगर (slave_addr != 0) अणु
 			gvt_dbg_dpy(
 				"vgpu%d: unsupported gmbus slave addr(0x%x)\n"
 				"	gmbus operations will be ignored.\n",
 					vgpu->id, slave_addr);
-		}
+		पूर्ण
 
-		if (wvalue & GMBUS_CYCLE_INDEX)
-			i2c_edid->current_edid_read =
+		अगर (wvalue & GMBUS_CYCLE_INDEX)
+			i2c_edid->current_edid_पढ़ो =
 				gmbus1_slave_index(wvalue);
 
 		i2c_edid->gmbus.cycle_type = gmbus1_bus_cycle(wvalue);
-		switch (gmbus1_bus_cycle(wvalue)) {
-		case GMBUS_NOCYCLE:
-			break;
-		case GMBUS_STOP:
+		चयन (gmbus1_bus_cycle(wvalue)) अणु
+		हाल GMBUS_NOCYCLE:
+			अवरोध;
+		हाल GMBUS_STOP:
 			/* From spec:
 			 * This can only cause a STOP to be generated
-			 * if a GMBUS cycle is generated, the GMBUS is
-			 * currently in a data/wait/idle phase, or it is in a
+			 * अगर a GMBUS cycle is generated, the GMBUS is
+			 * currently in a data/रुको/idle phase, or it is in a
 			 * WAIT phase
 			 */
-			if (gmbus1_bus_cycle(vgpu_vreg(vgpu, offset))
-				!= GMBUS_NOCYCLE) {
-				intel_vgpu_init_i2c_edid(vgpu);
+			अगर (gmbus1_bus_cycle(vgpu_vreg(vgpu, offset))
+				!= GMBUS_NOCYCLE) अणु
+				पूर्णांकel_vgpu_init_i2c_edid(vgpu);
 				/* After the 'stop' cycle, hw state would become
 				 * 'stop phase' and then 'idle phase' after a
 				 * few milliseconds. In emulation, we just set
 				 * it as 'idle phase' ('stop phase' is not
-				 * visible in gmbus interface)
+				 * visible in gmbus पूर्णांकerface)
 				 */
 				i2c_edid->gmbus.phase = GMBUS_IDLE_PHASE;
 				vgpu_vreg_t(vgpu, PCH_GMBUS2) &= ~GMBUS_ACTIVE;
-			}
-			break;
-		case NIDX_NS_W:
-		case IDX_NS_W:
-		case NIDX_STOP:
-		case IDX_STOP:
+			पूर्ण
+			अवरोध;
+		हाल NIDX_NS_W:
+		हाल IDX_NS_W:
+		हाल NIDX_STOP:
+		हाल IDX_STOP:
 			/* From hw spec the GMBUS phase
 			 * transition like this:
 			 * START (-->INDEX) -->DATA
 			 */
 			i2c_edid->gmbus.phase = GMBUS_DATA_PHASE;
 			vgpu_vreg_t(vgpu, PCH_GMBUS2) |= GMBUS_ACTIVE;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			gvt_vgpu_err("Unknown/reserved GMBUS cycle detected!\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/*
 		 * From hw spec the WAIT state will be
 		 * cleared:
@@ -269,315 +270,315 @@ static int gmbus1_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
 		 * (2) by generating a stop
 		 */
 		vgpu_vreg(vgpu, offset) = wvalue;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int gmbus3_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
-	void *p_data, unsigned int bytes)
-{
-	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
+अटल पूर्णांक gmbus3_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+	व्योम *p_data, अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
 
 	drm_WARN_ON(&i915->drm, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gmbus3_mmio_read(struct intel_vgpu *vgpu, unsigned int offset,
-		void *p_data, unsigned int bytes)
-{
-	int i;
-	unsigned char byte_data;
-	struct intel_vgpu_i2c_edid *i2c_edid = &vgpu->display.i2c_edid;
-	int byte_left = i2c_edid->gmbus.total_byte_count -
-				i2c_edid->current_edid_read;
-	int byte_count = byte_left;
+अटल पूर्णांक gmbus3_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+		व्योम *p_data, अचिन्हित पूर्णांक bytes)
+अणु
+	पूर्णांक i;
+	अचिन्हित अक्षर byte_data;
+	काष्ठा पूर्णांकel_vgpu_i2c_edid *i2c_edid = &vgpu->display.i2c_edid;
+	पूर्णांक byte_left = i2c_edid->gmbus.total_byte_count -
+				i2c_edid->current_edid_पढ़ो;
+	पूर्णांक byte_count = byte_left;
 	u32 reg_data = 0;
 
-	/* Data can only be recevied if previous settings correct */
-	if (vgpu_vreg_t(vgpu, PCH_GMBUS1) & GMBUS_SLAVE_READ) {
-		if (byte_left <= 0) {
-			memcpy(p_data, &vgpu_vreg(vgpu, offset), bytes);
-			return 0;
-		}
+	/* Data can only be recevied अगर previous settings correct */
+	अगर (vgpu_vreg_t(vgpu, PCH_GMBUS1) & GMBUS_SLAVE_READ) अणु
+		अगर (byte_left <= 0) अणु
+			स_नकल(p_data, &vgpu_vreg(vgpu, offset), bytes);
+			वापस 0;
+		पूर्ण
 
-		if (byte_count > 4)
+		अगर (byte_count > 4)
 			byte_count = 4;
-		for (i = 0; i < byte_count; i++) {
+		क्रम (i = 0; i < byte_count; i++) अणु
 			byte_data = edid_get_byte(vgpu);
 			reg_data |= (byte_data << (i << 3));
-		}
+		पूर्ण
 
-		memcpy(&vgpu_vreg(vgpu, offset), &reg_data, byte_count);
-		memcpy(p_data, &vgpu_vreg(vgpu, offset), bytes);
+		स_नकल(&vgpu_vreg(vgpu, offset), &reg_data, byte_count);
+		स_नकल(p_data, &vgpu_vreg(vgpu, offset), bytes);
 
-		if (byte_left <= 4) {
-			switch (i2c_edid->gmbus.cycle_type) {
-			case NIDX_STOP:
-			case IDX_STOP:
+		अगर (byte_left <= 4) अणु
+			चयन (i2c_edid->gmbus.cycle_type) अणु
+			हाल NIDX_STOP:
+			हाल IDX_STOP:
 				i2c_edid->gmbus.phase = GMBUS_IDLE_PHASE;
-				break;
-			case NIDX_NS_W:
-			case IDX_NS_W:
-			default:
+				अवरोध;
+			हाल NIDX_NS_W:
+			हाल IDX_NS_W:
+			शेष:
 				i2c_edid->gmbus.phase = GMBUS_WAIT_PHASE;
-				break;
-			}
-			intel_vgpu_init_i2c_edid(vgpu);
-		}
+				अवरोध;
+			पूर्ण
+			पूर्णांकel_vgpu_init_i2c_edid(vgpu);
+		पूर्ण
 		/*
 		 * Read GMBUS3 during send operation,
-		 * return the latest written value
+		 * वापस the latest written value
 		 */
-	} else {
-		memcpy(p_data, &vgpu_vreg(vgpu, offset), bytes);
+	पूर्ण अन्यथा अणु
+		स_नकल(p_data, &vgpu_vreg(vgpu, offset), bytes);
 		gvt_vgpu_err("warning: gmbus3 read with nothing returned\n");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int gmbus2_mmio_read(struct intel_vgpu *vgpu, unsigned int offset,
-		void *p_data, unsigned int bytes)
-{
+अटल पूर्णांक gmbus2_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+		व्योम *p_data, अचिन्हित पूर्णांक bytes)
+अणु
 	u32 value = vgpu_vreg(vgpu, offset);
 
-	if (!(vgpu_vreg(vgpu, offset) & GMBUS_INUSE))
+	अगर (!(vgpu_vreg(vgpu, offset) & GMBUS_INUSE))
 		vgpu_vreg(vgpu, offset) |= GMBUS_INUSE;
-	memcpy(p_data, (void *)&value, bytes);
-	return 0;
-}
+	स_नकल(p_data, (व्योम *)&value, bytes);
+	वापस 0;
+पूर्ण
 
-static int gmbus2_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
-		void *p_data, unsigned int bytes)
-{
+अटल पूर्णांक gmbus2_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+		व्योम *p_data, अचिन्हित पूर्णांक bytes)
+अणु
 	u32 wvalue = *(u32 *)p_data;
 
-	if (wvalue & GMBUS_INUSE)
+	अगर (wvalue & GMBUS_INUSE)
 		vgpu_vreg(vgpu, offset) &= ~GMBUS_INUSE;
-	/* All other bits are read-only */
-	return 0;
-}
+	/* All other bits are पढ़ो-only */
+	वापस 0;
+पूर्ण
 
 /**
- * intel_gvt_i2c_handle_gmbus_read - emulate gmbus register mmio read
+ * पूर्णांकel_gvt_i2c_handle_gmbus_पढ़ो - emulate gmbus रेजिस्टर mmio पढ़ो
  * @vgpu: a vGPU
  * @offset: reg offset
- * @p_data: data return buffer
+ * @p_data: data वापस buffer
  * @bytes: access data length
  *
- * This function is used to emulate gmbus register mmio read
+ * This function is used to emulate gmbus रेजिस्टर mmio पढ़ो
  *
  * Returns:
- * Zero on success, negative error code if failed.
+ * Zero on success, negative error code अगर failed.
  *
  */
-int intel_gvt_i2c_handle_gmbus_read(struct intel_vgpu *vgpu,
-	unsigned int offset, void *p_data, unsigned int bytes)
-{
-	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
+पूर्णांक पूर्णांकel_gvt_i2c_handle_gmbus_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu,
+	अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
 
-	if (drm_WARN_ON(&i915->drm, bytes > 8 && (offset & (bytes - 1))))
-		return -EINVAL;
+	अगर (drm_WARN_ON(&i915->drm, bytes > 8 && (offset & (bytes - 1))))
+		वापस -EINVAL;
 
-	if (offset == i915_mmio_reg_offset(PCH_GMBUS2))
-		return gmbus2_mmio_read(vgpu, offset, p_data, bytes);
-	else if (offset == i915_mmio_reg_offset(PCH_GMBUS3))
-		return gmbus3_mmio_read(vgpu, offset, p_data, bytes);
+	अगर (offset == i915_mmio_reg_offset(PCH_GMBUS2))
+		वापस gmbus2_mmio_पढ़ो(vgpu, offset, p_data, bytes);
+	अन्यथा अगर (offset == i915_mmio_reg_offset(PCH_GMBUS3))
+		वापस gmbus3_mmio_पढ़ो(vgpu, offset, p_data, bytes);
 
-	memcpy(p_data, &vgpu_vreg(vgpu, offset), bytes);
-	return 0;
-}
+	स_नकल(p_data, &vgpu_vreg(vgpu, offset), bytes);
+	वापस 0;
+पूर्ण
 
 /**
- * intel_gvt_i2c_handle_gmbus_write - emulate gmbus register mmio write
+ * पूर्णांकel_gvt_i2c_handle_gmbus_ग_लिखो - emulate gmbus रेजिस्टर mmio ग_लिखो
  * @vgpu: a vGPU
  * @offset: reg offset
- * @p_data: data return buffer
+ * @p_data: data वापस buffer
  * @bytes: access data length
  *
- * This function is used to emulate gmbus register mmio write
+ * This function is used to emulate gmbus रेजिस्टर mmio ग_लिखो
  *
  * Returns:
- * Zero on success, negative error code if failed.
+ * Zero on success, negative error code अगर failed.
  *
  */
-int intel_gvt_i2c_handle_gmbus_write(struct intel_vgpu *vgpu,
-		unsigned int offset, void *p_data, unsigned int bytes)
-{
-	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
+पूर्णांक पूर्णांकel_gvt_i2c_handle_gmbus_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
+		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
 
-	if (drm_WARN_ON(&i915->drm, bytes > 8 && (offset & (bytes - 1))))
-		return -EINVAL;
+	अगर (drm_WARN_ON(&i915->drm, bytes > 8 && (offset & (bytes - 1))))
+		वापस -EINVAL;
 
-	if (offset == i915_mmio_reg_offset(PCH_GMBUS0))
-		return gmbus0_mmio_write(vgpu, offset, p_data, bytes);
-	else if (offset == i915_mmio_reg_offset(PCH_GMBUS1))
-		return gmbus1_mmio_write(vgpu, offset, p_data, bytes);
-	else if (offset == i915_mmio_reg_offset(PCH_GMBUS2))
-		return gmbus2_mmio_write(vgpu, offset, p_data, bytes);
-	else if (offset == i915_mmio_reg_offset(PCH_GMBUS3))
-		return gmbus3_mmio_write(vgpu, offset, p_data, bytes);
+	अगर (offset == i915_mmio_reg_offset(PCH_GMBUS0))
+		वापस gmbus0_mmio_ग_लिखो(vgpu, offset, p_data, bytes);
+	अन्यथा अगर (offset == i915_mmio_reg_offset(PCH_GMBUS1))
+		वापस gmbus1_mmio_ग_लिखो(vgpu, offset, p_data, bytes);
+	अन्यथा अगर (offset == i915_mmio_reg_offset(PCH_GMBUS2))
+		वापस gmbus2_mmio_ग_लिखो(vgpu, offset, p_data, bytes);
+	अन्यथा अगर (offset == i915_mmio_reg_offset(PCH_GMBUS3))
+		वापस gmbus3_mmio_ग_लिखो(vgpu, offset, p_data, bytes);
 
-	memcpy(&vgpu_vreg(vgpu, offset), p_data, bytes);
-	return 0;
-}
+	स_नकल(&vgpu_vreg(vgpu, offset), p_data, bytes);
+	वापस 0;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	AUX_CH_CTL = 0,
 	AUX_CH_DATA1,
 	AUX_CH_DATA2,
 	AUX_CH_DATA3,
 	AUX_CH_DATA4,
 	AUX_CH_DATA5
-};
+पूर्ण;
 
-static inline int get_aux_ch_reg(unsigned int offset)
-{
-	int reg;
+अटल अंतरभूत पूर्णांक get_aux_ch_reg(अचिन्हित पूर्णांक offset)
+अणु
+	पूर्णांक reg;
 
-	switch (offset & 0xff) {
-	case 0x10:
+	चयन (offset & 0xff) अणु
+	हाल 0x10:
 		reg = AUX_CH_CTL;
-		break;
-	case 0x14:
+		अवरोध;
+	हाल 0x14:
 		reg = AUX_CH_DATA1;
-		break;
-	case 0x18:
+		अवरोध;
+	हाल 0x18:
 		reg = AUX_CH_DATA2;
-		break;
-	case 0x1c:
+		अवरोध;
+	हाल 0x1c:
 		reg = AUX_CH_DATA3;
-		break;
-	case 0x20:
+		अवरोध;
+	हाल 0x20:
 		reg = AUX_CH_DATA4;
-		break;
-	case 0x24:
+		अवरोध;
+	हाल 0x24:
 		reg = AUX_CH_DATA5;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		reg = -1;
-		break;
-	}
-	return reg;
-}
+		अवरोध;
+	पूर्ण
+	वापस reg;
+पूर्ण
 
-#define AUX_CTL_MSG_LENGTH(reg) \
+#घोषणा AUX_CTL_MSG_LENGTH(reg) \
 	((reg & DP_AUX_CH_CTL_MESSAGE_SIZE_MASK) >> \
 		DP_AUX_CH_CTL_MESSAGE_SIZE_SHIFT)
 
 /**
- * intel_gvt_i2c_handle_aux_ch_write - emulate AUX channel register write
+ * पूर्णांकel_gvt_i2c_handle_aux_ch_ग_लिखो - emulate AUX channel रेजिस्टर ग_लिखो
  * @vgpu: a vGPU
  * @port_idx: port index
  * @offset: reg offset
- * @p_data: write ptr
+ * @p_data: ग_लिखो ptr
  *
- * This function is used to emulate AUX channel register write
+ * This function is used to emulate AUX channel रेजिस्टर ग_लिखो
  *
  */
-void intel_gvt_i2c_handle_aux_ch_write(struct intel_vgpu *vgpu,
-				int port_idx,
-				unsigned int offset,
-				void *p_data)
-{
-	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
-	struct intel_vgpu_i2c_edid *i2c_edid = &vgpu->display.i2c_edid;
-	int msg_length, ret_msg_size;
-	int msg, addr, ctrl, op;
+व्योम पूर्णांकel_gvt_i2c_handle_aux_ch_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
+				पूर्णांक port_idx,
+				अचिन्हित पूर्णांक offset,
+				व्योम *p_data)
+अणु
+	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
+	काष्ठा पूर्णांकel_vgpu_i2c_edid *i2c_edid = &vgpu->display.i2c_edid;
+	पूर्णांक msg_length, ret_msg_size;
+	पूर्णांक msg, addr, ctrl, op;
 	u32 value = *(u32 *)p_data;
-	int aux_data_for_write = 0;
-	int reg = get_aux_ch_reg(offset);
+	पूर्णांक aux_data_क्रम_ग_लिखो = 0;
+	पूर्णांक reg = get_aux_ch_reg(offset);
 
-	if (reg != AUX_CH_CTL) {
+	अगर (reg != AUX_CH_CTL) अणु
 		vgpu_vreg(vgpu, offset) = value;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	msg_length = AUX_CTL_MSG_LENGTH(value);
-	// check the msg in DATA register.
+	// check the msg in DATA रेजिस्टर.
 	msg = vgpu_vreg(vgpu, offset + 4);
 	addr = (msg >> 8) & 0xffff;
 	ctrl = (msg >> 24) & 0xff;
 	op = ctrl >> 4;
-	if (!(value & DP_AUX_CH_CTL_SEND_BUSY)) {
-		/* The ctl write to clear some states */
-		return;
-	}
+	अगर (!(value & DP_AUX_CH_CTL_SEND_BUSY)) अणु
+		/* The ctl ग_लिखो to clear some states */
+		वापस;
+	पूर्ण
 
-	/* Always set the wanted value for vms. */
+	/* Always set the wanted value क्रम vms. */
 	ret_msg_size = (((op & 0x1) == GVT_AUX_I2C_READ) ? 2 : 1);
 	vgpu_vreg(vgpu, offset) =
 		DP_AUX_CH_CTL_DONE |
 		((ret_msg_size << DP_AUX_CH_CTL_MESSAGE_SIZE_SHIFT) &
 		DP_AUX_CH_CTL_MESSAGE_SIZE_MASK);
 
-	if (msg_length == 3) {
-		if (!(op & GVT_AUX_I2C_MOT)) {
+	अगर (msg_length == 3) अणु
+		अगर (!(op & GVT_AUX_I2C_MOT)) अणु
 			/* stop */
-			intel_vgpu_init_i2c_edid(vgpu);
-		} else {
+			पूर्णांकel_vgpu_init_i2c_edid(vgpu);
+		पूर्ण अन्यथा अणु
 			/* start or restart */
 			i2c_edid->aux_ch.i2c_over_aux_ch = true;
 			i2c_edid->aux_ch.aux_ch_mot = true;
-			if (addr == 0) {
+			अगर (addr == 0) अणु
 				/* reset the address */
-				intel_vgpu_init_i2c_edid(vgpu);
-			} else if (addr == EDID_ADDR) {
+				पूर्णांकel_vgpu_init_i2c_edid(vgpu);
+			पूर्ण अन्यथा अगर (addr == EDID_ADDR) अणु
 				i2c_edid->state = I2C_AUX_CH;
 				i2c_edid->port = port_idx;
 				i2c_edid->slave_selected = true;
-				if (intel_vgpu_has_monitor_on_port(vgpu,
+				अगर (पूर्णांकel_vgpu_has_monitor_on_port(vgpu,
 					port_idx) &&
-					intel_vgpu_port_is_dp(vgpu, port_idx))
+					पूर्णांकel_vgpu_port_is_dp(vgpu, port_idx))
 					i2c_edid->edid_available = true;
-			}
-		}
-	} else if ((op & 0x1) == GVT_AUX_I2C_WRITE) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर ((op & 0x1) == GVT_AUX_I2C_WRITE) अणु
 		/* TODO
-		 * We only support EDID reading from I2C_over_AUX. And
-		 * we do not expect the index mode to be used. Right now
+		 * We only support EDID पढ़ोing from I2C_over_AUX. And
+		 * we करो not expect the index mode to be used. Right now
 		 * the WRITE operation is ignored. It is good enough to
-		 * support the gfx driver to do EDID access.
+		 * support the gfx driver to करो EDID access.
 		 */
-	} else {
-		if (drm_WARN_ON(&i915->drm, (op & 0x1) != GVT_AUX_I2C_READ))
-			return;
-		if (drm_WARN_ON(&i915->drm, msg_length != 4))
-			return;
-		if (i2c_edid->edid_available && i2c_edid->slave_selected) {
-			unsigned char val = edid_get_byte(vgpu);
+	पूर्ण अन्यथा अणु
+		अगर (drm_WARN_ON(&i915->drm, (op & 0x1) != GVT_AUX_I2C_READ))
+			वापस;
+		अगर (drm_WARN_ON(&i915->drm, msg_length != 4))
+			वापस;
+		अगर (i2c_edid->edid_available && i2c_edid->slave_selected) अणु
+			अचिन्हित अक्षर val = edid_get_byte(vgpu);
 
-			aux_data_for_write = (val << 16);
-		} else
-			aux_data_for_write = (0xff << 16);
-	}
-	/* write the return value in AUX_CH_DATA reg which includes:
+			aux_data_क्रम_ग_लिखो = (val << 16);
+		पूर्ण अन्यथा
+			aux_data_क्रम_ग_लिखो = (0xff << 16);
+	पूर्ण
+	/* ग_लिखो the वापस value in AUX_CH_DATA reg which includes:
 	 * ACK of I2C_WRITE
-	 * returned byte if it is READ
+	 * वापसed byte अगर it is READ
 	 */
-	aux_data_for_write |= GVT_AUX_I2C_REPLY_ACK << 24;
-	vgpu_vreg(vgpu, offset + 4) = aux_data_for_write;
-}
+	aux_data_क्रम_ग_लिखो |= GVT_AUX_I2C_REPLY_ACK << 24;
+	vgpu_vreg(vgpu, offset + 4) = aux_data_क्रम_ग_लिखो;
+पूर्ण
 
 /**
- * intel_vgpu_init_i2c_edid - initialize vGPU i2c edid emulation
+ * पूर्णांकel_vgpu_init_i2c_edid - initialize vGPU i2c edid emulation
  * @vgpu: a vGPU
  *
  * This function is used to initialize vGPU i2c edid emulation stuffs
  *
  */
-void intel_vgpu_init_i2c_edid(struct intel_vgpu *vgpu)
-{
-	struct intel_vgpu_i2c_edid *edid = &vgpu->display.i2c_edid;
+व्योम पूर्णांकel_vgpu_init_i2c_edid(काष्ठा पूर्णांकel_vgpu *vgpu)
+अणु
+	काष्ठा पूर्णांकel_vgpu_i2c_edid *edid = &vgpu->display.i2c_edid;
 
 	edid->state = I2C_NOT_SPECIFIED;
 
 	edid->port = -1;
 	edid->slave_selected = false;
 	edid->edid_available = false;
-	edid->current_edid_read = 0;
+	edid->current_edid_पढ़ो = 0;
 
-	memset(&edid->gmbus, 0, sizeof(struct intel_vgpu_i2c_gmbus));
+	स_रखो(&edid->gmbus, 0, माप(काष्ठा पूर्णांकel_vgpu_i2c_gmbus));
 
 	edid->aux_ch.i2c_over_aux_ch = false;
 	edid->aux_ch.aux_ch_mot = false;
-}
+पूर्ण

@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2017 James.Bottomley@HansenPartnership.com
  */
-#include <linux/slab.h>
-#include "tpm-dev.h"
+#समावेश <linux/slab.h>
+#समावेश "tpm-dev.h"
 
-struct tpmrm_priv {
-	struct file_priv priv;
-	struct tpm_space space;
-};
+काष्ठा tpmrm_priv अणु
+	काष्ठा file_priv priv;
+	काष्ठा tpm_space space;
+पूर्ण;
 
-static int tpmrm_open(struct inode *inode, struct file *file)
-{
-	struct tpm_chip *chip;
-	struct tpmrm_priv *priv;
-	int rc;
+अटल पूर्णांक tpmrm_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा tpm_chip *chip;
+	काष्ठा tpmrm_priv *priv;
+	पूर्णांक rc;
 
-	chip = container_of(inode->i_cdev, struct tpm_chip, cdevs);
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (priv == NULL)
-		return -ENOMEM;
+	chip = container_of(inode->i_cdev, काष्ठा tpm_chip, cdevs);
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (priv == शून्य)
+		वापस -ENOMEM;
 
 	rc = tpm2_init_space(&priv->space, TPM2_SPACE_BUFFER_SIZE);
-	if (rc) {
-		kfree(priv);
-		return -ENOMEM;
-	}
+	अगर (rc) अणु
+		kमुक्त(priv);
+		वापस -ENOMEM;
+	पूर्ण
 
-	tpm_common_open(file, chip, &priv->priv, &priv->space);
+	tpm_common_खोलो(file, chip, &priv->priv, &priv->space);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tpmrm_release(struct inode *inode, struct file *file)
-{
-	struct file_priv *fpriv = file->private_data;
-	struct tpmrm_priv *priv = container_of(fpriv, struct tpmrm_priv, priv);
+अटल पूर्णांक tpmrm_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा file_priv *fpriv = file->निजी_data;
+	काष्ठा tpmrm_priv *priv = container_of(fpriv, काष्ठा tpmrm_priv, priv);
 
 	tpm_common_release(file, fpriv);
 	tpm2_del_space(fpriv->chip, &priv->space);
-	kfree(priv);
+	kमुक्त(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct file_operations tpmrm_fops = {
+स्थिर काष्ठा file_operations tpmrm_fops = अणु
 	.owner = THIS_MODULE,
 	.llseek = no_llseek,
-	.open = tpmrm_open,
-	.read = tpm_common_read,
-	.write = tpm_common_write,
+	.खोलो = tpmrm_खोलो,
+	.पढ़ो = tpm_common_पढ़ो,
+	.ग_लिखो = tpm_common_ग_लिखो,
 	.poll = tpm_common_poll,
 	.release = tpmrm_release,
-};
+पूर्ण;

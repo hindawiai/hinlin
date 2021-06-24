@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- *  linux/drivers/video/fb_notify.c
+ *  linux/drivers/video/fb_notअगरy.c
  *
  *  Copyright (C) 2006 Antonino Daplas <adaplas@pol.net>
  *
@@ -7,48 +8,48 @@
  *	- Brad Douglas <brad@neruo.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/fb.h>
-#include <linux/notifier.h>
-#include <linux/export.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/export.h>
 
-static BLOCKING_NOTIFIER_HEAD(fb_notifier_list);
+अटल BLOCKING_NOTIFIER_HEAD(fb_notअगरier_list);
 
 /**
- *	fb_register_client - register a client notifier
- *	@nb: notifier block to callback on events
+ *	fb_रेजिस्टर_client - रेजिस्टर a client notअगरier
+ *	@nb: notअगरier block to callback on events
  *
  *	Return: 0 on success, negative error code on failure.
  */
-int fb_register_client(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&fb_notifier_list, nb);
-}
-EXPORT_SYMBOL(fb_register_client);
+पूर्णांक fb_रेजिस्टर_client(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&fb_notअगरier_list, nb);
+पूर्ण
+EXPORT_SYMBOL(fb_रेजिस्टर_client);
 
 /**
- *	fb_unregister_client - unregister a client notifier
- *	@nb: notifier block to callback on events
+ *	fb_unरेजिस्टर_client - unरेजिस्टर a client notअगरier
+ *	@nb: notअगरier block to callback on events
  *
  *	Return: 0 on success, negative error code on failure.
  */
-int fb_unregister_client(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&fb_notifier_list, nb);
-}
-EXPORT_SYMBOL(fb_unregister_client);
+पूर्णांक fb_unरेजिस्टर_client(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&fb_notअगरier_list, nb);
+पूर्ण
+EXPORT_SYMBOL(fb_unरेजिस्टर_client);
 
 /**
- * fb_notifier_call_chain - notify clients of fb_events
+ * fb_notअगरier_call_chain - notअगरy clients of fb_events
  * @val: value passed to callback
- * @v: pointer passed to callback
+ * @v: poपूर्णांकer passed to callback
  *
- * Return: The return value of the last notifier function
+ * Return: The वापस value of the last notअगरier function
  */
-int fb_notifier_call_chain(unsigned long val, void *v)
-{
-	return blocking_notifier_call_chain(&fb_notifier_list, val, v);
-}
-EXPORT_SYMBOL_GPL(fb_notifier_call_chain);
+पूर्णांक fb_notअगरier_call_chain(अचिन्हित दीर्घ val, व्योम *v)
+अणु
+	वापस blocking_notअगरier_call_chain(&fb_notअगरier_list, val, v);
+पूर्ण
+EXPORT_SYMBOL_GPL(fb_notअगरier_call_chain);

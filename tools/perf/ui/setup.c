@@ -1,121 +1,122 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <pthread.h>
-#include <dlfcn.h>
-#include <unistd.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <pthपढ़ो.h>
+#समावेश <dlfcn.h>
+#समावेश <unistd.h>
 
-#include <subcmd/pager.h>
-#include "../util/debug.h"
-#include "../util/hist.h"
-#include "ui.h"
+#समावेश <subcmd/pager.h>
+#समावेश "../util/debug.h"
+#समावेश "../util/hist.h"
+#समावेश "ui.h"
 
-pthread_mutex_t ui__lock = PTHREAD_MUTEX_INITIALIZER;
-void *perf_gtk_handle;
-int use_browser = -1;
+pthपढ़ो_mutex_t ui__lock = PTHREAD_MUTEX_INITIALIZER;
+व्योम *perf_gtk_handle;
+पूर्णांक use_browser = -1;
 
-#define PERF_GTK_DSO "libperf-gtk.so"
+#घोषणा PERF_GTK_DSO "libperf-gtk.so"
 
-#ifdef HAVE_GTK2_SUPPORT
+#अगर_घोषित HAVE_GTK2_SUPPORT
 
-static int setup_gtk_browser(void)
-{
-	int (*perf_ui_init)(void);
+अटल पूर्णांक setup_gtk_browser(व्योम)
+अणु
+	पूर्णांक (*perf_ui_init)(व्योम);
 
-	if (perf_gtk_handle)
-		return 0;
+	अगर (perf_gtk_handle)
+		वापस 0;
 
-	perf_gtk_handle = dlopen(PERF_GTK_DSO, RTLD_LAZY);
-	if (perf_gtk_handle == NULL) {
-		char buf[PATH_MAX];
-		scnprintf(buf, sizeof(buf), "%s/%s", LIBDIR, PERF_GTK_DSO);
-		perf_gtk_handle = dlopen(buf, RTLD_LAZY);
-	}
-	if (perf_gtk_handle == NULL)
-		return -1;
+	perf_gtk_handle = dlखोलो(PERF_GTK_DSO, RTLD_LAZY);
+	अगर (perf_gtk_handle == शून्य) अणु
+		अक्षर buf[PATH_MAX];
+		scnम_लिखो(buf, माप(buf), "%s/%s", LIBसूची, PERF_GTK_DSO);
+		perf_gtk_handle = dlखोलो(buf, RTLD_LAZY);
+	पूर्ण
+	अगर (perf_gtk_handle == शून्य)
+		वापस -1;
 
 	perf_ui_init = dlsym(perf_gtk_handle, "perf_gtk__init");
-	if (perf_ui_init == NULL)
-		goto out_close;
+	अगर (perf_ui_init == शून्य)
+		जाओ out_बंद;
 
-	if (perf_ui_init() == 0)
-		return 0;
+	अगर (perf_ui_init() == 0)
+		वापस 0;
 
-out_close:
-	dlclose(perf_gtk_handle);
-	return -1;
-}
+out_बंद:
+	dlबंद(perf_gtk_handle);
+	वापस -1;
+पूर्ण
 
-static void exit_gtk_browser(bool wait_for_ok)
-{
-	void (*perf_ui_exit)(bool);
+अटल व्योम निकास_gtk_browser(bool रुको_क्रम_ok)
+अणु
+	व्योम (*perf_ui_निकास)(bool);
 
-	if (perf_gtk_handle == NULL)
-		return;
+	अगर (perf_gtk_handle == शून्य)
+		वापस;
 
-	perf_ui_exit = dlsym(perf_gtk_handle, "perf_gtk__exit");
-	if (perf_ui_exit == NULL)
-		goto out_close;
+	perf_ui_निकास = dlsym(perf_gtk_handle, "perf_gtk__exit");
+	अगर (perf_ui_निकास == शून्य)
+		जाओ out_बंद;
 
-	perf_ui_exit(wait_for_ok);
+	perf_ui_निकास(रुको_क्रम_ok);
 
-out_close:
-	dlclose(perf_gtk_handle);
+out_बंद:
+	dlबंद(perf_gtk_handle);
 
-	perf_gtk_handle = NULL;
-}
-#else
-static inline int setup_gtk_browser(void) { return -1; }
-static inline void exit_gtk_browser(bool wait_for_ok __maybe_unused) {}
-#endif
+	perf_gtk_handle = शून्य;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक setup_gtk_browser(व्योम) अणु वापस -1; पूर्ण
+अटल अंतरभूत व्योम निकास_gtk_browser(bool रुको_क्रम_ok __maybe_unused) अणुपूर्ण
+#पूर्ण_अगर
 
-int stdio__config_color(const struct option *opt __maybe_unused,
-			const char *mode, int unset __maybe_unused)
-{
-	perf_use_color_default = perf_config_colorbool("color.ui", mode, -1);
-	return 0;
-}
+पूर्णांक stdio__config_color(स्थिर काष्ठा option *opt __maybe_unused,
+			स्थिर अक्षर *mode, पूर्णांक unset __maybe_unused)
+अणु
+	perf_use_color_शेष = perf_config_colorbool("color.ui", mode, -1);
+	वापस 0;
+पूर्ण
 
-void setup_browser(bool fallback_to_pager)
-{
-	if (use_browser < 2 && (!isatty(1) || dump_trace))
+व्योम setup_browser(bool fallback_to_pager)
+अणु
+	अगर (use_browser < 2 && (!isatty(1) || dump_trace))
 		use_browser = 0;
 
-	/* default to TUI */
-	if (use_browser < 0)
+	/* शेष to TUI */
+	अगर (use_browser < 0)
 		use_browser = 1;
 
-	switch (use_browser) {
-	case 2:
-		if (setup_gtk_browser() == 0)
-			break;
-		printf("GTK browser requested but could not find %s\n",
+	चयन (use_browser) अणु
+	हाल 2:
+		अगर (setup_gtk_browser() == 0)
+			अवरोध;
+		म_लिखो("GTK browser requested but could not find %s\n",
 		       PERF_GTK_DSO);
 		sleep(1);
 		use_browser = 1;
 		/* fall through */
-	case 1:
-		if (ui__init() == 0)
-			break;
+	हाल 1:
+		अगर (ui__init() == 0)
+			अवरोध;
 		/* fall through */
-	default:
+	शेष:
 		use_browser = 0;
-		if (fallback_to_pager)
+		अगर (fallback_to_pager)
 			setup_pager();
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void exit_browser(bool wait_for_ok)
-{
-	switch (use_browser) {
-	case 2:
-		exit_gtk_browser(wait_for_ok);
-		break;
+व्योम निकास_browser(bool रुको_क्रम_ok)
+अणु
+	चयन (use_browser) अणु
+	हाल 2:
+		निकास_gtk_browser(रुको_क्रम_ok);
+		अवरोध;
 
-	case 1:
-		ui__exit(wait_for_ok);
-		break;
+	हाल 1:
+		ui__निकास(रुको_क्रम_ok);
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण

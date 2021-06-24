@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * arch/arm/mach-ep93xx/gesbc9312.c
  * Glomation GESBC-9312-sx support.
@@ -6,35 +7,35 @@
  * Copyright (C) 2006 Lennert Buytenhek <buytenh@wantstofly.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/sizes.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sizes.h>
 
-#include "hardware.h"
+#समावेश "hardware.h"
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "soc.h"
+#समावेश "soc.h"
 
-static struct ep93xx_eth_data __initdata gesbc9312_eth_data = {
+अटल काष्ठा ep93xx_eth_data __initdata gesbc9312_eth_data = अणु
 	.phy_id		= 1,
-};
+पूर्ण;
 
-static void __init gesbc9312_init_machine(void)
-{
+अटल व्योम __init gesbc9312_init_machine(व्योम)
+अणु
 	ep93xx_init_devices();
-	ep93xx_register_flash(4, EP93XX_CS6_PHYS_BASE, SZ_8M);
-	ep93xx_register_eth(&gesbc9312_eth_data, 0);
-}
+	ep93xx_रेजिस्टर_flash(4, EP93XX_CS6_PHYS_BASE, SZ_8M);
+	ep93xx_रेजिस्टर_eth(&gesbc9312_eth_data, 0);
+पूर्ण
 
 MACHINE_START(GESBC9312, "Glomation GESBC-9312-sx")
-	/* Maintainer: Lennert Buytenhek <buytenh@wantstofly.org> */
+	/* Maपूर्णांकainer: Lennert Buytenhek <buytenh@wantstofly.org> */
 	.atag_offset	= 0x100,
 	.map_io		= ep93xx_map_io,
 	.init_irq	= ep93xx_init_irq,
-	.init_time	= ep93xx_timer_init,
+	.init_समय	= ep93xx_समयr_init,
 	.init_machine	= gesbc9312_init_machine,
 	.init_late	= ep93xx_init_late,
 	.restart	= ep93xx_restart,

@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2010 Red Hat Inc.
  * Author : Dave Airlie <airlied@redhat.com>
  *
- * ATPX support for both Intel/ATI
+ * ATPX support क्रम both Intel/ATI
  */
-#include <linux/vga_switcheroo.h>
-#include <linux/slab.h>
-#include <linux/acpi.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
+#समावेश <linux/vga_चयनeroo.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
 
-#include "amd_acpi.h"
+#समावेश "amd_acpi.h"
 
-#define AMDGPU_PX_QUIRK_FORCE_ATPX  (1 << 0)
+#घोषणा AMDGPU_PX_QUIRK_FORCE_ATPX  (1 << 0)
 
-struct amdgpu_px_quirk {
-	u32 chip_vendor;
+काष्ठा amdgpu_px_quirk अणु
+	u32 chip_venकरोr;
 	u32 chip_device;
-	u32 subsys_vendor;
+	u32 subsys_venकरोr;
 	u32 subsys_device;
 	u32 px_quirk_flags;
-};
+पूर्ण;
 
-struct amdgpu_atpx_functions {
+काष्ठा amdgpu_atpx_functions अणु
 	bool px_params;
-	bool power_cntl;
+	bool घातer_cntl;
 	bool disp_mux_cntl;
 	bool i2c_mux_cntl;
-	bool switch_start;
-	bool switch_end;
+	bool चयन_start;
+	bool चयन_end;
 	bool disp_connectors_mapping;
 	bool disp_detection_ports;
-};
+पूर्ण;
 
-struct amdgpu_atpx {
+काष्ठा amdgpu_atpx अणु
 	acpi_handle handle;
-	struct amdgpu_atpx_functions functions;
+	काष्ठा amdgpu_atpx_functions functions;
 	bool is_hybrid;
-	bool dgpu_req_power_for_displays;
-};
+	bool dgpu_req_घातer_क्रम_displays;
+पूर्ण;
 
-static struct amdgpu_atpx_priv {
+अटल काष्ठा amdgpu_atpx_priv अणु
 	bool atpx_detected;
 	bool bridge_pm_usable;
-	unsigned int quirks;
-	/* handle for device - and atpx */
+	अचिन्हित पूर्णांक quirks;
+	/* handle क्रम device - and atpx */
 	acpi_handle dhandle;
 	acpi_handle other_handle;
-	struct amdgpu_atpx atpx;
-} amdgpu_atpx_priv;
+	काष्ठा amdgpu_atpx atpx;
+पूर्ण amdgpu_atpx_priv;
 
-struct atpx_verify_interface {
-	u16 size;		/* structure size in bytes (includes size field) */
+काष्ठा atpx_verअगरy_पूर्णांकerface अणु
+	u16 size;		/* काष्ठाure size in bytes (includes size field) */
 	u16 version;		/* version */
 	u32 function_bits;	/* supported functions bit vector */
-} __packed;
+पूर्ण __packed;
 
-struct atpx_px_params {
-	u16 size;		/* structure size in bytes (includes size field) */
+काष्ठा atpx_px_params अणु
+	u16 size;		/* काष्ठाure size in bytes (includes size field) */
 	u32 valid_flags;	/* which flags are valid */
 	u32 flags;		/* flags */
-} __packed;
+पूर्ण __packed;
 
-struct atpx_power_control {
+काष्ठा atpx_घातer_control अणु
 	u16 size;
 	u8 dgpu_state;
-} __packed;
+पूर्ण __packed;
 
-struct atpx_mux {
+काष्ठा atpx_mux अणु
 	u16 size;
 	u16 mux;
-} __packed;
+पूर्ण __packed;
 
-bool amdgpu_has_atpx(void) {
-	return amdgpu_atpx_priv.atpx_detected;
-}
+bool amdgpu_has_atpx(व्योम) अणु
+	वापस amdgpu_atpx_priv.atpx_detected;
+पूर्ण
 
-bool amdgpu_has_atpx_dgpu_power_cntl(void) {
-	return amdgpu_atpx_priv.atpx.functions.power_cntl;
-}
+bool amdgpu_has_atpx_dgpu_घातer_cntl(व्योम) अणु
+	वापस amdgpu_atpx_priv.atpx.functions.घातer_cntl;
+पूर्ण
 
-bool amdgpu_is_atpx_hybrid(void) {
-	return amdgpu_atpx_priv.atpx.is_hybrid;
-}
+bool amdgpu_is_atpx_hybrid(व्योम) अणु
+	वापस amdgpu_atpx_priv.atpx.is_hybrid;
+पूर्ण
 
-bool amdgpu_atpx_dgpu_req_power_for_displays(void) {
-	return amdgpu_atpx_priv.atpx.dgpu_req_power_for_displays;
-}
+bool amdgpu_atpx_dgpu_req_घातer_क्रम_displays(व्योम) अणु
+	वापस amdgpu_atpx_priv.atpx.dgpu_req_घातer_क्रम_displays;
+पूर्ण
 
-#if defined(CONFIG_ACPI)
-void *amdgpu_atpx_get_dhandle(void) {
-	return amdgpu_atpx_priv.dhandle;
-}
-#endif
+#अगर defined(CONFIG_ACPI)
+व्योम *amdgpu_atpx_get_dhandle(व्योम) अणु
+	वापस amdgpu_atpx_priv.dhandle;
+पूर्ण
+#पूर्ण_अगर
 
 /**
  * amdgpu_atpx_call - call an ATPX method
@@ -103,399 +104,399 @@ void *amdgpu_atpx_get_dhandle(void) {
  * @params: ATPX function params
  *
  * Executes the requested ATPX function (all asics).
- * Returns a pointer to the acpi output buffer.
+ * Returns a poपूर्णांकer to the acpi output buffer.
  */
-static union acpi_object *amdgpu_atpx_call(acpi_handle handle, int function,
-					   struct acpi_buffer *params)
-{
+अटल जोड़ acpi_object *amdgpu_atpx_call(acpi_handle handle, पूर्णांक function,
+					   काष्ठा acpi_buffer *params)
+अणु
 	acpi_status status;
-	union acpi_object atpx_arg_elements[2];
-	struct acpi_object_list atpx_arg;
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	जोड़ acpi_object atpx_arg_elements[2];
+	काष्ठा acpi_object_list atpx_arg;
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
 
 	atpx_arg.count = 2;
-	atpx_arg.pointer = &atpx_arg_elements[0];
+	atpx_arg.poपूर्णांकer = &atpx_arg_elements[0];
 
 	atpx_arg_elements[0].type = ACPI_TYPE_INTEGER;
-	atpx_arg_elements[0].integer.value = function;
+	atpx_arg_elements[0].पूर्णांकeger.value = function;
 
-	if (params) {
+	अगर (params) अणु
 		atpx_arg_elements[1].type = ACPI_TYPE_BUFFER;
 		atpx_arg_elements[1].buffer.length = params->length;
-		atpx_arg_elements[1].buffer.pointer = params->pointer;
-	} else {
+		atpx_arg_elements[1].buffer.poपूर्णांकer = params->poपूर्णांकer;
+	पूर्ण अन्यथा अणु
 		/* We need a second fake parameter */
 		atpx_arg_elements[1].type = ACPI_TYPE_INTEGER;
-		atpx_arg_elements[1].integer.value = 0;
-	}
+		atpx_arg_elements[1].पूर्णांकeger.value = 0;
+	पूर्ण
 
-	status = acpi_evaluate_object(handle, NULL, &atpx_arg, &buffer);
+	status = acpi_evaluate_object(handle, शून्य, &atpx_arg, &buffer);
 
-	/* Fail only if calling the method fails and ATPX is supported */
-	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
-		printk("failed to evaluate ATPX got %s\n",
-		       acpi_format_exception(status));
-		kfree(buffer.pointer);
-		return NULL;
-	}
+	/* Fail only अगर calling the method fails and ATPX is supported */
+	अगर (ACPI_FAILURE(status) && status != AE_NOT_FOUND) अणु
+		prपूर्णांकk("failed to evaluate ATPX got %s\n",
+		       acpi_क्रमmat_exception(status));
+		kमुक्त(buffer.poपूर्णांकer);
+		वापस शून्य;
+	पूर्ण
 
-	return buffer.pointer;
-}
+	वापस buffer.poपूर्णांकer;
+पूर्ण
 
 /**
  * amdgpu_atpx_parse_functions - parse supported functions
  *
- * @f: supported functions struct
+ * @f: supported functions काष्ठा
  * @mask: supported functions mask from ATPX
  *
  * Use the supported functions mask from ATPX function
  * ATPX_FUNCTION_VERIFY_INTERFACE to determine what functions
  * are supported (all asics).
  */
-static void amdgpu_atpx_parse_functions(struct amdgpu_atpx_functions *f, u32 mask)
-{
+अटल व्योम amdgpu_atpx_parse_functions(काष्ठा amdgpu_atpx_functions *f, u32 mask)
+अणु
 	f->px_params = mask & ATPX_GET_PX_PARAMETERS_SUPPORTED;
-	f->power_cntl = mask & ATPX_POWER_CONTROL_SUPPORTED;
+	f->घातer_cntl = mask & ATPX_POWER_CONTROL_SUPPORTED;
 	f->disp_mux_cntl = mask & ATPX_DISPLAY_MUX_CONTROL_SUPPORTED;
 	f->i2c_mux_cntl = mask & ATPX_I2C_MUX_CONTROL_SUPPORTED;
-	f->switch_start = mask & ATPX_GRAPHICS_DEVICE_SWITCH_START_NOTIFICATION_SUPPORTED;
-	f->switch_end = mask & ATPX_GRAPHICS_DEVICE_SWITCH_END_NOTIFICATION_SUPPORTED;
+	f->चयन_start = mask & ATPX_GRAPHICS_DEVICE_SWITCH_START_NOTIFICATION_SUPPORTED;
+	f->चयन_end = mask & ATPX_GRAPHICS_DEVICE_SWITCH_END_NOTIFICATION_SUPPORTED;
 	f->disp_connectors_mapping = mask & ATPX_GET_DISPLAY_CONNECTORS_MAPPING_SUPPORTED;
 	f->disp_detection_ports = mask & ATPX_GET_DISPLAY_DETECTION_PORTS_SUPPORTED;
-}
+पूर्ण
 
 /**
  * amdgpu_atpx_validate_functions - validate ATPX functions
  *
- * @atpx: amdgpu atpx struct
+ * @atpx: amdgpu atpx काष्ठा
  *
  * Validate that required functions are enabled (all asics).
- * returns 0 on success, error on failure.
+ * वापसs 0 on success, error on failure.
  */
-static int amdgpu_atpx_validate(struct amdgpu_atpx *atpx)
-{
+अटल पूर्णांक amdgpu_atpx_validate(काष्ठा amdgpu_atpx *atpx)
+अणु
 	u32 valid_bits = 0;
 
-	if (atpx->functions.px_params) {
-		union acpi_object *info;
-		struct atpx_px_params output;
-		size_t size;
+	अगर (atpx->functions.px_params) अणु
+		जोड़ acpi_object *info;
+		काष्ठा atpx_px_params output;
+		माप_प्रकार size;
 
-		info = amdgpu_atpx_call(atpx->handle, ATPX_FUNCTION_GET_PX_PARAMETERS, NULL);
-		if (!info)
-			return -EIO;
+		info = amdgpu_atpx_call(atpx->handle, ATPX_FUNCTION_GET_PX_PARAMETERS, शून्य);
+		अगर (!info)
+			वापस -EIO;
 
-		memset(&output, 0, sizeof(output));
+		स_रखो(&output, 0, माप(output));
 
-		size = *(u16 *) info->buffer.pointer;
-		if (size < 10) {
-			printk("ATPX buffer is too small: %zu\n", size);
-			kfree(info);
-			return -EINVAL;
-		}
-		size = min(sizeof(output), size);
+		size = *(u16 *) info->buffer.poपूर्णांकer;
+		अगर (size < 10) अणु
+			prपूर्णांकk("ATPX buffer is too small: %zu\n", size);
+			kमुक्त(info);
+			वापस -EINVAL;
+		पूर्ण
+		size = min(माप(output), size);
 
-		memcpy(&output, info->buffer.pointer, size);
+		स_नकल(&output, info->buffer.poपूर्णांकer, size);
 
 		valid_bits = output.flags & output.valid_flags;
 
-		kfree(info);
-	}
+		kमुक्त(info);
+	पूर्ण
 
-	/* if separate mux flag is set, mux controls are required */
-	if (valid_bits & ATPX_SEPARATE_MUX_FOR_I2C) {
+	/* अगर separate mux flag is set, mux controls are required */
+	अगर (valid_bits & ATPX_SEPARATE_MUX_FOR_I2C) अणु
 		atpx->functions.i2c_mux_cntl = true;
 		atpx->functions.disp_mux_cntl = true;
-	}
-	/* if any outputs are muxed, mux controls are required */
-	if (valid_bits & (ATPX_CRT1_RGB_SIGNAL_MUXED |
+	पूर्ण
+	/* अगर any outमाला_दो are muxed, mux controls are required */
+	अगर (valid_bits & (ATPX_CRT1_RGB_SIGNAL_MUXED |
 			  ATPX_TV_SIGNAL_MUXED |
 			  ATPX_DFP_SIGNAL_MUXED))
 		atpx->functions.disp_mux_cntl = true;
 
 
-	/* some bioses set these bits rather than flagging power_cntl as supported */
-	if (valid_bits & (ATPX_DYNAMIC_PX_SUPPORTED |
+	/* some bioses set these bits rather than flagging घातer_cntl as supported */
+	अगर (valid_bits & (ATPX_DYNAMIC_PX_SUPPORTED |
 			  ATPX_DYNAMIC_DGPU_POWER_OFF_SUPPORTED))
-		atpx->functions.power_cntl = true;
+		atpx->functions.घातer_cntl = true;
 
 	atpx->is_hybrid = false;
-	if (valid_bits & ATPX_MS_HYBRID_GFX_SUPPORTED) {
-		if (amdgpu_atpx_priv.quirks & AMDGPU_PX_QUIRK_FORCE_ATPX) {
-			printk("ATPX Hybrid Graphics, forcing to ATPX\n");
-			atpx->functions.power_cntl = true;
+	अगर (valid_bits & ATPX_MS_HYBRID_GFX_SUPPORTED) अणु
+		अगर (amdgpu_atpx_priv.quirks & AMDGPU_PX_QUIRK_FORCE_ATPX) अणु
+			prपूर्णांकk("ATPX Hybrid Graphics, forcing to ATPX\n");
+			atpx->functions.घातer_cntl = true;
 			atpx->is_hybrid = false;
-		} else {
-			printk("ATPX Hybrid Graphics\n");
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk("ATPX Hybrid Graphics\n");
 			/*
 			 * Disable legacy PM methods only when pcie port PM is usable,
-			 * otherwise the device might fail to power off or power on.
+			 * otherwise the device might fail to घातer off or घातer on.
 			 */
-			atpx->functions.power_cntl = !amdgpu_atpx_priv.bridge_pm_usable;
+			atpx->functions.घातer_cntl = !amdgpu_atpx_priv.bridge_pm_usable;
 			atpx->is_hybrid = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	atpx->dgpu_req_power_for_displays = false;
-	if (valid_bits & ATPX_DGPU_REQ_POWER_FOR_DISPLAYS)
-		atpx->dgpu_req_power_for_displays = true;
+	atpx->dgpu_req_घातer_क्रम_displays = false;
+	अगर (valid_bits & ATPX_DGPU_REQ_POWER_FOR_DISPLAYS)
+		atpx->dgpu_req_घातer_क्रम_displays = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_atpx_verify_interface - verify ATPX
+ * amdgpu_atpx_verअगरy_पूर्णांकerface - verअगरy ATPX
  *
- * @atpx: amdgpu atpx struct
+ * @atpx: amdgpu atpx काष्ठा
  *
  * Execute the ATPX_FUNCTION_VERIFY_INTERFACE ATPX function
  * to initialize ATPX and determine what features are supported
  * (all asics).
- * returns 0 on success, error on failure.
+ * वापसs 0 on success, error on failure.
  */
-static int amdgpu_atpx_verify_interface(struct amdgpu_atpx *atpx)
-{
-	union acpi_object *info;
-	struct atpx_verify_interface output;
-	size_t size;
-	int err = 0;
+अटल पूर्णांक amdgpu_atpx_verअगरy_पूर्णांकerface(काष्ठा amdgpu_atpx *atpx)
+अणु
+	जोड़ acpi_object *info;
+	काष्ठा atpx_verअगरy_पूर्णांकerface output;
+	माप_प्रकार size;
+	पूर्णांक err = 0;
 
-	info = amdgpu_atpx_call(atpx->handle, ATPX_FUNCTION_VERIFY_INTERFACE, NULL);
-	if (!info)
-		return -EIO;
+	info = amdgpu_atpx_call(atpx->handle, ATPX_FUNCTION_VERIFY_INTERFACE, शून्य);
+	अगर (!info)
+		वापस -EIO;
 
-	memset(&output, 0, sizeof(output));
+	स_रखो(&output, 0, माप(output));
 
-	size = *(u16 *) info->buffer.pointer;
-	if (size < 8) {
-		printk("ATPX buffer is too small: %zu\n", size);
+	size = *(u16 *) info->buffer.poपूर्णांकer;
+	अगर (size < 8) अणु
+		prपूर्णांकk("ATPX buffer is too small: %zu\n", size);
 		err = -EINVAL;
-		goto out;
-	}
-	size = min(sizeof(output), size);
+		जाओ out;
+	पूर्ण
+	size = min(माप(output), size);
 
-	memcpy(&output, info->buffer.pointer, size);
+	स_नकल(&output, info->buffer.poपूर्णांकer, size);
 
 	/* TODO: check version? */
-	printk("ATPX version %u, functions 0x%08x\n",
+	prपूर्णांकk("ATPX version %u, functions 0x%08x\n",
 	       output.version, output.function_bits);
 
 	amdgpu_atpx_parse_functions(&atpx->functions, output.function_bits);
 
 out:
-	kfree(info);
-	return err;
-}
+	kमुक्त(info);
+	वापस err;
+पूर्ण
 
 /**
- * amdgpu_atpx_set_discrete_state - power up/down discrete GPU
+ * amdgpu_atpx_set_discrete_state - घातer up/करोwn discrete GPU
  *
- * @atpx: atpx info struct
- * @state: discrete GPU state (0 = power down, 1 = power up)
+ * @atpx: atpx info काष्ठा
+ * @state: discrete GPU state (0 = घातer करोwn, 1 = घातer up)
  *
  * Execute the ATPX_FUNCTION_POWER_CONTROL ATPX function to
- * power down/up the discrete GPU (all asics).
+ * घातer करोwn/up the discrete GPU (all asics).
  * Returns 0 on success, error on failure.
  */
-static int amdgpu_atpx_set_discrete_state(struct amdgpu_atpx *atpx, u8 state)
-{
-	struct acpi_buffer params;
-	union acpi_object *info;
-	struct atpx_power_control input;
+अटल पूर्णांक amdgpu_atpx_set_discrete_state(काष्ठा amdgpu_atpx *atpx, u8 state)
+अणु
+	काष्ठा acpi_buffer params;
+	जोड़ acpi_object *info;
+	काष्ठा atpx_घातer_control input;
 
-	if (atpx->functions.power_cntl) {
+	अगर (atpx->functions.घातer_cntl) अणु
 		input.size = 3;
 		input.dgpu_state = state;
 		params.length = input.size;
-		params.pointer = &input;
+		params.poपूर्णांकer = &input;
 		info = amdgpu_atpx_call(atpx->handle,
 					ATPX_FUNCTION_POWER_CONTROL,
 					&params);
-		if (!info)
-			return -EIO;
-		kfree(info);
+		अगर (!info)
+			वापस -EIO;
+		kमुक्त(info);
 
 		/* 200ms delay is required after off */
-		if (state == 0)
+		अगर (state == 0)
 			msleep(200);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_atpx_switch_disp_mux - switch display mux
+ * amdgpu_atpx_चयन_disp_mux - चयन display mux
  *
- * @atpx: atpx info struct
- * @mux_id: mux state (0 = integrated GPU, 1 = discrete GPU)
+ * @atpx: atpx info काष्ठा
+ * @mux_id: mux state (0 = पूर्णांकegrated GPU, 1 = discrete GPU)
  *
  * Execute the ATPX_FUNCTION_DISPLAY_MUX_CONTROL ATPX function to
- * switch the display mux between the discrete GPU and integrated GPU
+ * चयन the display mux between the discrete GPU and पूर्णांकegrated GPU
  * (all asics).
  * Returns 0 on success, error on failure.
  */
-static int amdgpu_atpx_switch_disp_mux(struct amdgpu_atpx *atpx, u16 mux_id)
-{
-	struct acpi_buffer params;
-	union acpi_object *info;
-	struct atpx_mux input;
+अटल पूर्णांक amdgpu_atpx_चयन_disp_mux(काष्ठा amdgpu_atpx *atpx, u16 mux_id)
+अणु
+	काष्ठा acpi_buffer params;
+	जोड़ acpi_object *info;
+	काष्ठा atpx_mux input;
 
-	if (atpx->functions.disp_mux_cntl) {
+	अगर (atpx->functions.disp_mux_cntl) अणु
 		input.size = 4;
 		input.mux = mux_id;
 		params.length = input.size;
-		params.pointer = &input;
+		params.poपूर्णांकer = &input;
 		info = amdgpu_atpx_call(atpx->handle,
 					ATPX_FUNCTION_DISPLAY_MUX_CONTROL,
 					&params);
-		if (!info)
-			return -EIO;
-		kfree(info);
-	}
-	return 0;
-}
+		अगर (!info)
+			वापस -EIO;
+		kमुक्त(info);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_atpx_switch_i2c_mux - switch i2c/hpd mux
+ * amdgpu_atpx_चयन_i2c_mux - चयन i2c/hpd mux
  *
- * @atpx: atpx info struct
- * @mux_id: mux state (0 = integrated GPU, 1 = discrete GPU)
+ * @atpx: atpx info काष्ठा
+ * @mux_id: mux state (0 = पूर्णांकegrated GPU, 1 = discrete GPU)
  *
  * Execute the ATPX_FUNCTION_I2C_MUX_CONTROL ATPX function to
- * switch the i2c/hpd mux between the discrete GPU and integrated GPU
+ * चयन the i2c/hpd mux between the discrete GPU and पूर्णांकegrated GPU
  * (all asics).
  * Returns 0 on success, error on failure.
  */
-static int amdgpu_atpx_switch_i2c_mux(struct amdgpu_atpx *atpx, u16 mux_id)
-{
-	struct acpi_buffer params;
-	union acpi_object *info;
-	struct atpx_mux input;
+अटल पूर्णांक amdgpu_atpx_चयन_i2c_mux(काष्ठा amdgpu_atpx *atpx, u16 mux_id)
+अणु
+	काष्ठा acpi_buffer params;
+	जोड़ acpi_object *info;
+	काष्ठा atpx_mux input;
 
-	if (atpx->functions.i2c_mux_cntl) {
+	अगर (atpx->functions.i2c_mux_cntl) अणु
 		input.size = 4;
 		input.mux = mux_id;
 		params.length = input.size;
-		params.pointer = &input;
+		params.poपूर्णांकer = &input;
 		info = amdgpu_atpx_call(atpx->handle,
 					ATPX_FUNCTION_I2C_MUX_CONTROL,
 					&params);
-		if (!info)
-			return -EIO;
-		kfree(info);
-	}
-	return 0;
-}
+		अगर (!info)
+			वापस -EIO;
+		kमुक्त(info);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_atpx_switch_start - notify the sbios of a GPU switch
+ * amdgpu_atpx_चयन_start - notअगरy the sbios of a GPU चयन
  *
- * @atpx: atpx info struct
- * @mux_id: mux state (0 = integrated GPU, 1 = discrete GPU)
+ * @atpx: atpx info काष्ठा
+ * @mux_id: mux state (0 = पूर्णांकegrated GPU, 1 = discrete GPU)
  *
  * Execute the ATPX_FUNCTION_GRAPHICS_DEVICE_SWITCH_START_NOTIFICATION ATPX
- * function to notify the sbios that a switch between the discrete GPU and
- * integrated GPU has begun (all asics).
+ * function to notअगरy the sbios that a चयन between the discrete GPU and
+ * पूर्णांकegrated GPU has begun (all asics).
  * Returns 0 on success, error on failure.
  */
-static int amdgpu_atpx_switch_start(struct amdgpu_atpx *atpx, u16 mux_id)
-{
-	struct acpi_buffer params;
-	union acpi_object *info;
-	struct atpx_mux input;
+अटल पूर्णांक amdgpu_atpx_चयन_start(काष्ठा amdgpu_atpx *atpx, u16 mux_id)
+अणु
+	काष्ठा acpi_buffer params;
+	जोड़ acpi_object *info;
+	काष्ठा atpx_mux input;
 
-	if (atpx->functions.switch_start) {
+	अगर (atpx->functions.चयन_start) अणु
 		input.size = 4;
 		input.mux = mux_id;
 		params.length = input.size;
-		params.pointer = &input;
+		params.poपूर्णांकer = &input;
 		info = amdgpu_atpx_call(atpx->handle,
 					ATPX_FUNCTION_GRAPHICS_DEVICE_SWITCH_START_NOTIFICATION,
 					&params);
-		if (!info)
-			return -EIO;
-		kfree(info);
-	}
-	return 0;
-}
+		अगर (!info)
+			वापस -EIO;
+		kमुक्त(info);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_atpx_switch_end - notify the sbios of a GPU switch
+ * amdgpu_atpx_चयन_end - notअगरy the sbios of a GPU चयन
  *
- * @atpx: atpx info struct
- * @mux_id: mux state (0 = integrated GPU, 1 = discrete GPU)
+ * @atpx: atpx info काष्ठा
+ * @mux_id: mux state (0 = पूर्णांकegrated GPU, 1 = discrete GPU)
  *
  * Execute the ATPX_FUNCTION_GRAPHICS_DEVICE_SWITCH_END_NOTIFICATION ATPX
- * function to notify the sbios that a switch between the discrete GPU and
- * integrated GPU has ended (all asics).
+ * function to notअगरy the sbios that a चयन between the discrete GPU and
+ * पूर्णांकegrated GPU has ended (all asics).
  * Returns 0 on success, error on failure.
  */
-static int amdgpu_atpx_switch_end(struct amdgpu_atpx *atpx, u16 mux_id)
-{
-	struct acpi_buffer params;
-	union acpi_object *info;
-	struct atpx_mux input;
+अटल पूर्णांक amdgpu_atpx_चयन_end(काष्ठा amdgpu_atpx *atpx, u16 mux_id)
+अणु
+	काष्ठा acpi_buffer params;
+	जोड़ acpi_object *info;
+	काष्ठा atpx_mux input;
 
-	if (atpx->functions.switch_end) {
+	अगर (atpx->functions.चयन_end) अणु
 		input.size = 4;
 		input.mux = mux_id;
 		params.length = input.size;
-		params.pointer = &input;
+		params.poपूर्णांकer = &input;
 		info = amdgpu_atpx_call(atpx->handle,
 					ATPX_FUNCTION_GRAPHICS_DEVICE_SWITCH_END_NOTIFICATION,
 					&params);
-		if (!info)
-			return -EIO;
-		kfree(info);
-	}
-	return 0;
-}
+		अगर (!info)
+			वापस -EIO;
+		kमुक्त(info);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_atpx_switchto - switch to the requested GPU
+ * amdgpu_atpx_चयनto - चयन to the requested GPU
  *
- * @id: GPU to switch to
+ * @id: GPU to चयन to
  *
- * Execute the necessary ATPX functions to switch between the discrete GPU and
- * integrated GPU (all asics).
+ * Execute the necessary ATPX functions to चयन between the discrete GPU and
+ * पूर्णांकegrated GPU (all asics).
  * Returns 0 on success, error on failure.
  */
-static int amdgpu_atpx_switchto(enum vga_switcheroo_client_id id)
-{
+अटल पूर्णांक amdgpu_atpx_चयनto(क्रमागत vga_चयनeroo_client_id id)
+अणु
 	u16 gpu_id;
 
-	if (id == VGA_SWITCHEROO_IGD)
+	अगर (id == VGA_SWITCHEROO_IGD)
 		gpu_id = ATPX_INTEGRATED_GPU;
-	else
+	अन्यथा
 		gpu_id = ATPX_DISCRETE_GPU;
 
-	amdgpu_atpx_switch_start(&amdgpu_atpx_priv.atpx, gpu_id);
-	amdgpu_atpx_switch_disp_mux(&amdgpu_atpx_priv.atpx, gpu_id);
-	amdgpu_atpx_switch_i2c_mux(&amdgpu_atpx_priv.atpx, gpu_id);
-	amdgpu_atpx_switch_end(&amdgpu_atpx_priv.atpx, gpu_id);
+	amdgpu_atpx_चयन_start(&amdgpu_atpx_priv.atpx, gpu_id);
+	amdgpu_atpx_चयन_disp_mux(&amdgpu_atpx_priv.atpx, gpu_id);
+	amdgpu_atpx_चयन_i2c_mux(&amdgpu_atpx_priv.atpx, gpu_id);
+	amdgpu_atpx_चयन_end(&amdgpu_atpx_priv.atpx, gpu_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_atpx_power_state - power down/up the requested GPU
+ * amdgpu_atpx_घातer_state - घातer करोwn/up the requested GPU
  *
- * @id: GPU to power down/up
- * @state: requested power state (0 = off, 1 = on)
+ * @id: GPU to घातer करोwn/up
+ * @state: requested घातer state (0 = off, 1 = on)
  *
- * Execute the necessary ATPX function to power down/up the discrete GPU
+ * Execute the necessary ATPX function to घातer करोwn/up the discrete GPU
  * (all asics).
  * Returns 0 on success, error on failure.
  */
-static int amdgpu_atpx_power_state(enum vga_switcheroo_client_id id,
-				   enum vga_switcheroo_state state)
-{
-	/* on w500 ACPI can't change intel gpu state */
-	if (id == VGA_SWITCHEROO_IGD)
-		return 0;
+अटल पूर्णांक amdgpu_atpx_घातer_state(क्रमागत vga_चयनeroo_client_id id,
+				   क्रमागत vga_चयनeroo_state state)
+अणु
+	/* on w500 ACPI can't change पूर्णांकel gpu state */
+	अगर (id == VGA_SWITCHEROO_IGD)
+		वापस 0;
 
 	amdgpu_atpx_set_discrete_state(&amdgpu_atpx_priv.atpx, state);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * amdgpu_atpx_pci_probe_handle - look up the ATPX handle
@@ -503,117 +504,117 @@ static int amdgpu_atpx_power_state(enum vga_switcheroo_client_id id,
  * @pdev: pci device
  *
  * Look up the ATPX handles (all asics).
- * Returns true if the handles are found, false if not.
+ * Returns true अगर the handles are found, false अगर not.
  */
-static bool amdgpu_atpx_pci_probe_handle(struct pci_dev *pdev)
-{
+अटल bool amdgpu_atpx_pci_probe_handle(काष्ठा pci_dev *pdev)
+अणु
 	acpi_handle dhandle, atpx_handle;
 	acpi_status status;
 
 	dhandle = ACPI_HANDLE(&pdev->dev);
-	if (!dhandle)
-		return false;
+	अगर (!dhandle)
+		वापस false;
 
 	status = acpi_get_handle(dhandle, "ATPX", &atpx_handle);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		amdgpu_atpx_priv.other_handle = dhandle;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	amdgpu_atpx_priv.dhandle = dhandle;
 	amdgpu_atpx_priv.atpx.handle = atpx_handle;
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * amdgpu_atpx_init - verify the ATPX interface
+ * amdgpu_atpx_init - verअगरy the ATPX पूर्णांकerface
  *
- * Verify the ATPX interface (all asics).
+ * Verअगरy the ATPX पूर्णांकerface (all asics).
  * Returns 0 on success, error on failure.
  */
-static int amdgpu_atpx_init(void)
-{
-	int r;
+अटल पूर्णांक amdgpu_atpx_init(व्योम)
+अणु
+	पूर्णांक r;
 
 	/* set up the ATPX handle */
-	r = amdgpu_atpx_verify_interface(&amdgpu_atpx_priv.atpx);
-	if (r)
-		return r;
+	r = amdgpu_atpx_verअगरy_पूर्णांकerface(&amdgpu_atpx_priv.atpx);
+	अगर (r)
+		वापस r;
 
 	/* validate the atpx setup */
 	r = amdgpu_atpx_validate(&amdgpu_atpx_priv.atpx);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * amdgpu_atpx_get_client_id - get the client id
  *
  * @pdev: pci device
  *
- * look up whether we are the integrated or discrete GPU (all asics).
+ * look up whether we are the पूर्णांकegrated or discrete GPU (all asics).
  * Returns the client id.
  */
-static enum vga_switcheroo_client_id amdgpu_atpx_get_client_id(struct pci_dev *pdev)
-{
-	if (amdgpu_atpx_priv.dhandle == ACPI_HANDLE(&pdev->dev))
-		return VGA_SWITCHEROO_IGD;
-	else
-		return VGA_SWITCHEROO_DIS;
-}
+अटल क्रमागत vga_चयनeroo_client_id amdgpu_atpx_get_client_id(काष्ठा pci_dev *pdev)
+अणु
+	अगर (amdgpu_atpx_priv.dhandle == ACPI_HANDLE(&pdev->dev))
+		वापस VGA_SWITCHEROO_IGD;
+	अन्यथा
+		वापस VGA_SWITCHEROO_DIS;
+पूर्ण
 
-static const struct vga_switcheroo_handler amdgpu_atpx_handler = {
-	.switchto = amdgpu_atpx_switchto,
-	.power_state = amdgpu_atpx_power_state,
+अटल स्थिर काष्ठा vga_चयनeroo_handler amdgpu_atpx_handler = अणु
+	.चयनto = amdgpu_atpx_चयनto,
+	.घातer_state = amdgpu_atpx_घातer_state,
 	.get_client_id = amdgpu_atpx_get_client_id,
-};
+पूर्ण;
 
-static const struct amdgpu_px_quirk amdgpu_px_quirk_list[] = {
-	/* HG _PR3 doesn't seem to work on this A+A weston board */
-	{ 0x1002, 0x6900, 0x1002, 0x0124, AMDGPU_PX_QUIRK_FORCE_ATPX },
-	{ 0x1002, 0x6900, 0x1028, 0x0812, AMDGPU_PX_QUIRK_FORCE_ATPX },
-	{ 0x1002, 0x6900, 0x1028, 0x0813, AMDGPU_PX_QUIRK_FORCE_ATPX },
-	{ 0x1002, 0x699f, 0x1028, 0x0814, AMDGPU_PX_QUIRK_FORCE_ATPX },
-	{ 0x1002, 0x6900, 0x1025, 0x125A, AMDGPU_PX_QUIRK_FORCE_ATPX },
-	{ 0x1002, 0x6900, 0x17AA, 0x3806, AMDGPU_PX_QUIRK_FORCE_ATPX },
-	{ 0, 0, 0, 0, 0 },
-};
+अटल स्थिर काष्ठा amdgpu_px_quirk amdgpu_px_quirk_list[] = अणु
+	/* HG _PR3 करोesn't seem to work on this A+A weston board */
+	अणु 0x1002, 0x6900, 0x1002, 0x0124, AMDGPU_PX_QUIRK_FORCE_ATPX पूर्ण,
+	अणु 0x1002, 0x6900, 0x1028, 0x0812, AMDGPU_PX_QUIRK_FORCE_ATPX पूर्ण,
+	अणु 0x1002, 0x6900, 0x1028, 0x0813, AMDGPU_PX_QUIRK_FORCE_ATPX पूर्ण,
+	अणु 0x1002, 0x699f, 0x1028, 0x0814, AMDGPU_PX_QUIRK_FORCE_ATPX पूर्ण,
+	अणु 0x1002, 0x6900, 0x1025, 0x125A, AMDGPU_PX_QUIRK_FORCE_ATPX पूर्ण,
+	अणु 0x1002, 0x6900, 0x17AA, 0x3806, AMDGPU_PX_QUIRK_FORCE_ATPX पूर्ण,
+	अणु 0, 0, 0, 0, 0 पूर्ण,
+पूर्ण;
 
-static void amdgpu_atpx_get_quirks(struct pci_dev *pdev)
-{
-	const struct amdgpu_px_quirk *p = amdgpu_px_quirk_list;
+अटल व्योम amdgpu_atpx_get_quirks(काष्ठा pci_dev *pdev)
+अणु
+	स्थिर काष्ठा amdgpu_px_quirk *p = amdgpu_px_quirk_list;
 
 	/* Apply PX quirks */
-	while (p && p->chip_device != 0) {
-		if (pdev->vendor == p->chip_vendor &&
+	जबतक (p && p->chip_device != 0) अणु
+		अगर (pdev->venकरोr == p->chip_venकरोr &&
 		    pdev->device == p->chip_device &&
-		    pdev->subsystem_vendor == p->subsys_vendor &&
-		    pdev->subsystem_device == p->subsys_device) {
+		    pdev->subप्रणाली_venकरोr == p->subsys_venकरोr &&
+		    pdev->subप्रणाली_device == p->subsys_device) अणु
 			amdgpu_atpx_priv.quirks |= p->px_quirk_flags;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		++p;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * amdgpu_atpx_detect - detect whether we have PX
  *
- * Check if we have a PX system (all asics).
- * Returns true if we have a PX system, false if not.
+ * Check अगर we have a PX प्रणाली (all asics).
+ * Returns true अगर we have a PX प्रणाली, false अगर not.
  */
-static bool amdgpu_atpx_detect(void)
-{
-	char acpi_method_name[255] = { 0 };
-	struct acpi_buffer buffer = {sizeof(acpi_method_name), acpi_method_name};
-	struct pci_dev *pdev = NULL;
+अटल bool amdgpu_atpx_detect(व्योम)
+अणु
+	अक्षर acpi_method_name[255] = अणु 0 पूर्ण;
+	काष्ठा acpi_buffer buffer = अणुमाप(acpi_method_name), acpi_method_nameपूर्ण;
+	काष्ठा pci_dev *pdev = शून्य;
 	bool has_atpx = false;
-	int vga_count = 0;
+	पूर्णांक vga_count = 0;
 	bool d3_supported = false;
-	struct pci_dev *parent_pdev;
+	काष्ठा pci_dev *parent_pdev;
 
-	while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != NULL) {
+	जबतक ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != शून्य) अणु
 		vga_count++;
 
 		has_atpx |= amdgpu_atpx_pci_probe_handle(pdev);
@@ -621,9 +622,9 @@ static bool amdgpu_atpx_detect(void)
 		parent_pdev = pci_upstream_bridge(pdev);
 		d3_supported |= parent_pdev && parent_pdev->bridge_d3;
 		amdgpu_atpx_get_quirks(pdev);
-	}
+	पूर्ण
 
-	while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != NULL) {
+	जबतक ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != शून्य) अणु
 		vga_count++;
 
 		has_atpx |= amdgpu_atpx_pci_probe_handle(pdev);
@@ -631,44 +632,44 @@ static bool amdgpu_atpx_detect(void)
 		parent_pdev = pci_upstream_bridge(pdev);
 		d3_supported |= parent_pdev && parent_pdev->bridge_d3;
 		amdgpu_atpx_get_quirks(pdev);
-	}
+	पूर्ण
 
-	if (has_atpx && vga_count == 2) {
+	अगर (has_atpx && vga_count == 2) अणु
 		acpi_get_name(amdgpu_atpx_priv.atpx.handle, ACPI_FULL_PATHNAME, &buffer);
 		pr_info("vga_switcheroo: detected switching method %s handle\n",
 			acpi_method_name);
 		amdgpu_atpx_priv.atpx_detected = true;
 		amdgpu_atpx_priv.bridge_pm_usable = d3_supported;
 		amdgpu_atpx_init();
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * amdgpu_register_atpx_handler - register with vga_switcheroo
+ * amdgpu_रेजिस्टर_atpx_handler - रेजिस्टर with vga_चयनeroo
  *
- * Register the PX callbacks with vga_switcheroo (all asics).
+ * Register the PX callbacks with vga_चयनeroo (all asics).
  */
-void amdgpu_register_atpx_handler(void)
-{
+व्योम amdgpu_रेजिस्टर_atpx_handler(व्योम)
+अणु
 	bool r;
-	enum vga_switcheroo_handler_flags_t handler_flags = 0;
+	क्रमागत vga_चयनeroo_handler_flags_t handler_flags = 0;
 
-	/* detect if we have any ATPX + 2 VGA in the system */
+	/* detect अगर we have any ATPX + 2 VGA in the प्रणाली */
 	r = amdgpu_atpx_detect();
-	if (!r)
-		return;
+	अगर (!r)
+		वापस;
 
-	vga_switcheroo_register_handler(&amdgpu_atpx_handler, handler_flags);
-}
+	vga_चयनeroo_रेजिस्टर_handler(&amdgpu_atpx_handler, handler_flags);
+पूर्ण
 
 /**
- * amdgpu_unregister_atpx_handler - unregister with vga_switcheroo
+ * amdgpu_unरेजिस्टर_atpx_handler - unरेजिस्टर with vga_चयनeroo
  *
- * Unregister the PX callbacks with vga_switcheroo (all asics).
+ * Unरेजिस्टर the PX callbacks with vga_चयनeroo (all asics).
  */
-void amdgpu_unregister_atpx_handler(void)
-{
-	vga_switcheroo_unregister_handler();
-}
+व्योम amdgpu_unरेजिस्टर_atpx_handler(व्योम)
+अणु
+	vga_चयनeroo_unरेजिस्टर_handler();
+पूर्ण

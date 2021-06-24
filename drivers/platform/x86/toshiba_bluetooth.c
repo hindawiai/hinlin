@@ -1,297 +1,298 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Toshiba Bluetooth Enable Driver
  *
  * Copyright (C) 2009 Jes Sorensen <Jes.Sorensen@gmail.com>
  * Copyright (C) 2015 Azael Avalos <coproscefalo@gmail.com>
  *
- * Thanks to Matthew Garrett for background info on ACPI innards which
+ * Thanks to Matthew Garrett क्रम background info on ACPI innards which
  * normal people aren't meant to understand :-)
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/acpi.h>
-#include <linux/rfkill.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/rfसमाप्त.h>
 
-#define BT_KILLSWITCH_MASK	0x01
-#define BT_PLUGGED_MASK		0x40
-#define BT_POWER_MASK		0x80
+#घोषणा BT_KILLSWITCH_MASK	0x01
+#घोषणा BT_PLUGGED_MASK		0x40
+#घोषणा BT_POWER_MASK		0x80
 
 MODULE_AUTHOR("Jes Sorensen <Jes.Sorensen@gmail.com>");
 MODULE_DESCRIPTION("Toshiba Laptop ACPI Bluetooth Enable Driver");
 MODULE_LICENSE("GPL");
 
-struct toshiba_bluetooth_dev {
-	struct acpi_device *acpi_dev;
-	struct rfkill *rfk;
+काष्ठा toshiba_bluetooth_dev अणु
+	काष्ठा acpi_device *acpi_dev;
+	काष्ठा rfसमाप्त *rfk;
 
-	bool killswitch;
+	bool समाप्तचयन;
 	bool plugged;
-	bool powered;
-};
+	bool घातered;
+पूर्ण;
 
-static int toshiba_bt_rfkill_add(struct acpi_device *device);
-static int toshiba_bt_rfkill_remove(struct acpi_device *device);
-static void toshiba_bt_rfkill_notify(struct acpi_device *device, u32 event);
+अटल पूर्णांक toshiba_bt_rfसमाप्त_add(काष्ठा acpi_device *device);
+अटल पूर्णांक toshiba_bt_rfसमाप्त_हटाओ(काष्ठा acpi_device *device);
+अटल व्योम toshiba_bt_rfसमाप्त_notअगरy(काष्ठा acpi_device *device, u32 event);
 
-static const struct acpi_device_id bt_device_ids[] = {
-	{ "TOS6205", 0},
-	{ "", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id bt_device_ids[] = अणु
+	अणु "TOS6205", 0पूर्ण,
+	अणु "", 0पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, bt_device_ids);
 
-#ifdef CONFIG_PM_SLEEP
-static int toshiba_bt_resume(struct device *dev);
-#endif
-static SIMPLE_DEV_PM_OPS(toshiba_bt_pm, NULL, toshiba_bt_resume);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक toshiba_bt_resume(काष्ठा device *dev);
+#पूर्ण_अगर
+अटल SIMPLE_DEV_PM_OPS(toshiba_bt_pm, शून्य, toshiba_bt_resume);
 
-static struct acpi_driver toshiba_bt_rfkill_driver = {
+अटल काष्ठा acpi_driver toshiba_bt_rfसमाप्त_driver = अणु
 	.name =		"Toshiba BT",
 	.class =	"Toshiba",
 	.ids =		bt_device_ids,
-	.ops =		{
-				.add =		toshiba_bt_rfkill_add,
-				.remove =	toshiba_bt_rfkill_remove,
-				.notify =	toshiba_bt_rfkill_notify,
-			},
+	.ops =		अणु
+				.add =		toshiba_bt_rfसमाप्त_add,
+				.हटाओ =	toshiba_bt_rfसमाप्त_हटाओ,
+				.notअगरy =	toshiba_bt_rfसमाप्त_notअगरy,
+			पूर्ण,
 	.owner = 	THIS_MODULE,
 	.drv.pm =	&toshiba_bt_pm,
-};
+पूर्ण;
 
-static int toshiba_bluetooth_present(acpi_handle handle)
-{
+अटल पूर्णांक toshiba_bluetooth_present(acpi_handle handle)
+अणु
 	acpi_status result;
 	u64 bt_present;
 
 	/*
 	 * Some Toshiba laptops may have a fake TOS6205 device in
-	 * their ACPI BIOS, so query the _STA method to see if there
+	 * their ACPI BIOS, so query the _STA method to see अगर there
 	 * is really anything there.
 	 */
-	result = acpi_evaluate_integer(handle, "_STA", NULL, &bt_present);
-	if (ACPI_FAILURE(result)) {
+	result = acpi_evaluate_पूर्णांकeger(handle, "_STA", शून्य, &bt_present);
+	अगर (ACPI_FAILURE(result)) अणु
 		pr_err("ACPI call to query Bluetooth presence failed\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (!bt_present) {
+	अगर (!bt_present) अणु
 		pr_info("Bluetooth device not present\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int toshiba_bluetooth_status(acpi_handle handle)
-{
+अटल पूर्णांक toshiba_bluetooth_status(acpi_handle handle)
+अणु
 	acpi_status result;
 	u64 status;
 
-	result = acpi_evaluate_integer(handle, "BTST", NULL, &status);
-	if (ACPI_FAILURE(result)) {
+	result = acpi_evaluate_पूर्णांकeger(handle, "BTST", शून्य, &status);
+	अगर (ACPI_FAILURE(result)) अणु
 		pr_err("Could not get Bluetooth device status\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int toshiba_bluetooth_enable(acpi_handle handle)
-{
+अटल पूर्णांक toshiba_bluetooth_enable(acpi_handle handle)
+अणु
 	acpi_status result;
 
-	result = acpi_evaluate_object(handle, "AUSB", NULL, NULL);
-	if (ACPI_FAILURE(result)) {
+	result = acpi_evaluate_object(handle, "AUSB", शून्य, शून्य);
+	अगर (ACPI_FAILURE(result)) अणु
 		pr_err("Could not attach USB Bluetooth device\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	result = acpi_evaluate_object(handle, "BTPO", NULL, NULL);
-	if (ACPI_FAILURE(result)) {
+	result = acpi_evaluate_object(handle, "BTPO", शून्य, शून्य);
+	अगर (ACPI_FAILURE(result)) अणु
 		pr_err("Could not power ON Bluetooth device\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int toshiba_bluetooth_disable(acpi_handle handle)
-{
+अटल पूर्णांक toshiba_bluetooth_disable(acpi_handle handle)
+अणु
 	acpi_status result;
 
-	result = acpi_evaluate_object(handle, "BTPF", NULL, NULL);
-	if (ACPI_FAILURE(result)) {
+	result = acpi_evaluate_object(handle, "BTPF", शून्य, शून्य);
+	अगर (ACPI_FAILURE(result)) अणु
 		pr_err("Could not power OFF Bluetooth device\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	result = acpi_evaluate_object(handle, "DUSB", NULL, NULL);
-	if (ACPI_FAILURE(result)) {
+	result = acpi_evaluate_object(handle, "DUSB", शून्य, शून्य);
+	अगर (ACPI_FAILURE(result)) अणु
 		pr_err("Could not detach USB Bluetooth device\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Helper function */
-static int toshiba_bluetooth_sync_status(struct toshiba_bluetooth_dev *bt_dev)
-{
-	int status;
+अटल पूर्णांक toshiba_bluetooth_sync_status(काष्ठा toshiba_bluetooth_dev *bt_dev)
+अणु
+	पूर्णांक status;
 
 	status = toshiba_bluetooth_status(bt_dev->acpi_dev->handle);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		pr_err("Could not sync bluetooth device status\n");
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	bt_dev->killswitch = (status & BT_KILLSWITCH_MASK) ? true : false;
+	bt_dev->समाप्तचयन = (status & BT_KILLSWITCH_MASK) ? true : false;
 	bt_dev->plugged = (status & BT_PLUGGED_MASK) ? true : false;
-	bt_dev->powered = (status & BT_POWER_MASK) ? true : false;
+	bt_dev->घातered = (status & BT_POWER_MASK) ? true : false;
 
 	pr_debug("Bluetooth status %d killswitch %d plugged %d powered %d\n",
-		 status, bt_dev->killswitch, bt_dev->plugged, bt_dev->powered);
+		 status, bt_dev->समाप्तचयन, bt_dev->plugged, bt_dev->घातered);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* RFKill handlers */
-static int bt_rfkill_set_block(void *data, bool blocked)
-{
-	struct toshiba_bluetooth_dev *bt_dev = data;
-	int ret;
+अटल पूर्णांक bt_rfसमाप्त_set_block(व्योम *data, bool blocked)
+अणु
+	काष्ठा toshiba_bluetooth_dev *bt_dev = data;
+	पूर्णांक ret;
 
 	ret = toshiba_bluetooth_sync_status(bt_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!bt_dev->killswitch)
-		return 0;
+	अगर (!bt_dev->समाप्तचयन)
+		वापस 0;
 
-	if (blocked)
+	अगर (blocked)
 		ret = toshiba_bluetooth_disable(bt_dev->acpi_dev->handle);
-	else
+	अन्यथा
 		ret = toshiba_bluetooth_enable(bt_dev->acpi_dev->handle);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void bt_rfkill_poll(struct rfkill *rfkill, void *data)
-{
-	struct toshiba_bluetooth_dev *bt_dev = data;
+अटल व्योम bt_rfसमाप्त_poll(काष्ठा rfसमाप्त *rfसमाप्त, व्योम *data)
+अणु
+	काष्ठा toshiba_bluetooth_dev *bt_dev = data;
 
-	if (toshiba_bluetooth_sync_status(bt_dev))
-		return;
+	अगर (toshiba_bluetooth_sync_status(bt_dev))
+		वापस;
 
 	/*
-	 * Note the Toshiba Bluetooth RFKill switch seems to be a strange
-	 * fish. It only provides a BT event when the switch is flipped to
+	 * Note the Toshiba Bluetooth RFKill चयन seems to be a strange
+	 * fish. It only provides a BT event when the चयन is flipped to
 	 * the 'on' position. When flipping it to 'off', the USB device is
 	 * simply pulled away underneath us, without any BT event being
 	 * delivered.
 	 */
-	rfkill_set_hw_state(bt_dev->rfk, !bt_dev->killswitch);
-}
+	rfसमाप्त_set_hw_state(bt_dev->rfk, !bt_dev->समाप्तचयन);
+पूर्ण
 
-static const struct rfkill_ops rfk_ops = {
-	.set_block = bt_rfkill_set_block,
-	.poll = bt_rfkill_poll,
-};
+अटल स्थिर काष्ठा rfसमाप्त_ops rfk_ops = अणु
+	.set_block = bt_rfसमाप्त_set_block,
+	.poll = bt_rfसमाप्त_poll,
+पूर्ण;
 
 /* ACPI driver functions */
-static void toshiba_bt_rfkill_notify(struct acpi_device *device, u32 event)
-{
-	struct toshiba_bluetooth_dev *bt_dev = acpi_driver_data(device);
+अटल व्योम toshiba_bt_rfसमाप्त_notअगरy(काष्ठा acpi_device *device, u32 event)
+अणु
+	काष्ठा toshiba_bluetooth_dev *bt_dev = acpi_driver_data(device);
 
-	if (toshiba_bluetooth_sync_status(bt_dev))
-		return;
+	अगर (toshiba_bluetooth_sync_status(bt_dev))
+		वापस;
 
-	rfkill_set_hw_state(bt_dev->rfk, !bt_dev->killswitch);
-}
+	rfसमाप्त_set_hw_state(bt_dev->rfk, !bt_dev->समाप्तचयन);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int toshiba_bt_resume(struct device *dev)
-{
-	struct toshiba_bluetooth_dev *bt_dev;
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक toshiba_bt_resume(काष्ठा device *dev)
+अणु
+	काष्ठा toshiba_bluetooth_dev *bt_dev;
+	पूर्णांक ret;
 
 	bt_dev = acpi_driver_data(to_acpi_device(dev));
 
 	ret = toshiba_bluetooth_sync_status(bt_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	rfkill_set_hw_state(bt_dev->rfk, !bt_dev->killswitch);
+	rfसमाप्त_set_hw_state(bt_dev->rfk, !bt_dev->समाप्तचयन);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int toshiba_bt_rfkill_add(struct acpi_device *device)
-{
-	struct toshiba_bluetooth_dev *bt_dev;
-	int result;
+अटल पूर्णांक toshiba_bt_rfसमाप्त_add(काष्ठा acpi_device *device)
+अणु
+	काष्ठा toshiba_bluetooth_dev *bt_dev;
+	पूर्णांक result;
 
 	result = toshiba_bluetooth_present(device->handle);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	pr_info("Toshiba ACPI Bluetooth device driver\n");
 
-	bt_dev = kzalloc(sizeof(*bt_dev), GFP_KERNEL);
-	if (!bt_dev)
-		return -ENOMEM;
+	bt_dev = kzalloc(माप(*bt_dev), GFP_KERNEL);
+	अगर (!bt_dev)
+		वापस -ENOMEM;
 	bt_dev->acpi_dev = device;
 	device->driver_data = bt_dev;
 	dev_set_drvdata(&device->dev, bt_dev);
 
 	result = toshiba_bluetooth_sync_status(bt_dev);
-	if (result) {
-		kfree(bt_dev);
-		return result;
-	}
+	अगर (result) अणु
+		kमुक्त(bt_dev);
+		वापस result;
+	पूर्ण
 
-	bt_dev->rfk = rfkill_alloc("Toshiba Bluetooth",
+	bt_dev->rfk = rfसमाप्त_alloc("Toshiba Bluetooth",
 				   &device->dev,
 				   RFKILL_TYPE_BLUETOOTH,
 				   &rfk_ops,
 				   bt_dev);
-	if (!bt_dev->rfk) {
+	अगर (!bt_dev->rfk) अणु
 		pr_err("Unable to allocate rfkill device\n");
-		kfree(bt_dev);
-		return -ENOMEM;
-	}
+		kमुक्त(bt_dev);
+		वापस -ENOMEM;
+	पूर्ण
 
-	rfkill_set_hw_state(bt_dev->rfk, !bt_dev->killswitch);
+	rfसमाप्त_set_hw_state(bt_dev->rfk, !bt_dev->समाप्तचयन);
 
-	result = rfkill_register(bt_dev->rfk);
-	if (result) {
+	result = rfसमाप्त_रेजिस्टर(bt_dev->rfk);
+	अगर (result) अणु
 		pr_err("Unable to register rfkill device\n");
-		rfkill_destroy(bt_dev->rfk);
-		kfree(bt_dev);
-	}
+		rfसमाप्त_destroy(bt_dev->rfk);
+		kमुक्त(bt_dev);
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int toshiba_bt_rfkill_remove(struct acpi_device *device)
-{
-	struct toshiba_bluetooth_dev *bt_dev = acpi_driver_data(device);
+अटल पूर्णांक toshiba_bt_rfसमाप्त_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा toshiba_bluetooth_dev *bt_dev = acpi_driver_data(device);
 
 	/* clean up */
-	if (bt_dev->rfk) {
-		rfkill_unregister(bt_dev->rfk);
-		rfkill_destroy(bt_dev->rfk);
-	}
+	अगर (bt_dev->rfk) अणु
+		rfसमाप्त_unरेजिस्टर(bt_dev->rfk);
+		rfसमाप्त_destroy(bt_dev->rfk);
+	पूर्ण
 
-	kfree(bt_dev);
+	kमुक्त(bt_dev);
 
-	return toshiba_bluetooth_disable(device->handle);
-}
+	वापस toshiba_bluetooth_disable(device->handle);
+पूर्ण
 
-module_acpi_driver(toshiba_bt_rfkill_driver);
+module_acpi_driver(toshiba_bt_rfसमाप्त_driver);

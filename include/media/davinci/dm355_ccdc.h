@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2005-2009 Texas Instruments Inc
  */
-#ifndef _DM355_CCDC_H
-#define _DM355_CCDC_H
-#include <media/davinci/ccdc_types.h>
-#include <media/davinci/vpfe_types.h>
+#अगर_अघोषित _DM355_CCDC_H
+#घोषणा _DM355_CCDC_H
+#समावेश <media/davinci/ccdc_types.h>
+#समावेश <media/davinci/vpfe_types.h>
 
-/* enum for No of pixel per line to be avg. in Black Clamping */
-enum ccdc_sample_length {
+/* क्रमागत क्रम No of pixel per line to be avg. in Black Clamping */
+क्रमागत ccdc_sample_length अणु
 	CCDC_SAMPLE_1PIXELS,
 	CCDC_SAMPLE_2PIXELS,
 	CCDC_SAMPLE_4PIXELS,
 	CCDC_SAMPLE_8PIXELS,
 	CCDC_SAMPLE_16PIXELS
-};
+पूर्ण;
 
-/* enum for No of lines in Black Clamping */
-enum ccdc_sample_line {
+/* क्रमागत क्रम No of lines in Black Clamping */
+क्रमागत ccdc_sample_line अणु
 	CCDC_SAMPLE_1LINES,
 	CCDC_SAMPLE_2LINES,
 	CCDC_SAMPLE_4LINES,
 	CCDC_SAMPLE_8LINES,
 	CCDC_SAMPLE_16LINES
-};
+पूर्ण;
 
-/* enum for Alaw gamma width */
-enum ccdc_gamma_width {
+/* क्रमागत क्रम Alaw gamma width */
+क्रमागत ccdc_gamma_width अणु
 	CCDC_GAMMA_BITS_13_4,
 	CCDC_GAMMA_BITS_12_3,
 	CCDC_GAMMA_BITS_11_2,
 	CCDC_GAMMA_BITS_10_1,
 	CCDC_GAMMA_BITS_09_0
-};
+पूर्ण;
 
-enum ccdc_colpats {
+क्रमागत ccdc_colpats अणु
 	CCDC_RED,
 	CCDC_GREEN_RED,
 	CCDC_GREEN_BLUE,
 	CCDC_BLUE
-};
+पूर्ण;
 
-struct ccdc_col_pat {
-	enum ccdc_colpats olop;
-	enum ccdc_colpats olep;
-	enum ccdc_colpats elop;
-	enum ccdc_colpats elep;
-};
+काष्ठा ccdc_col_pat अणु
+	क्रमागत ccdc_colpats olop;
+	क्रमागत ccdc_colpats olep;
+	क्रमागत ccdc_colpats elop;
+	क्रमागत ccdc_colpats elep;
+पूर्ण;
 
-enum ccdc_datasft {
+क्रमागत ccdc_datasft अणु
 	CCDC_DATA_NO_SHIFT,
 	CCDC_DATA_SHIFT_1BIT,
 	CCDC_DATA_SHIFT_2BIT,
@@ -56,9 +57,9 @@ enum ccdc_datasft {
 	CCDC_DATA_SHIFT_4BIT,
 	CCDC_DATA_SHIFT_5BIT,
 	CCDC_DATA_SHIFT_6BIT
-};
+पूर्ण;
 
-enum ccdc_data_size {
+क्रमागत ccdc_data_size अणु
 	CCDC_DATA_16BITS,
 	CCDC_DATA_15BITS,
 	CCDC_DATA_14BITS,
@@ -67,242 +68,242 @@ enum ccdc_data_size {
 	CCDC_DATA_11BITS,
 	CCDC_DATA_10BITS,
 	CCDC_DATA_8BITS
-};
-enum ccdc_mfilt1 {
+पूर्ण;
+क्रमागत ccdc_mfilt1 अणु
 	CCDC_NO_MEDIAN_FILTER1,
 	CCDC_AVERAGE_FILTER1,
 	CCDC_MEDIAN_FILTER1
-};
+पूर्ण;
 
-enum ccdc_mfilt2 {
+क्रमागत ccdc_mfilt2 अणु
 	CCDC_NO_MEDIAN_FILTER2,
 	CCDC_AVERAGE_FILTER2,
 	CCDC_MEDIAN_FILTER2
-};
+पूर्ण;
 
-/* structure for ALaw */
-struct ccdc_a_law {
+/* काष्ठाure क्रम ALaw */
+काष्ठा ccdc_a_law अणु
 	/* Enable/disable A-Law */
-	unsigned char enable;
+	अचिन्हित अक्षर enable;
 	/* Gamma Width Input */
-	enum ccdc_gamma_width gamma_wd;
-};
+	क्रमागत ccdc_gamma_width gamma_wd;
+पूर्ण;
 
-/* structure for Black Clamping */
-struct ccdc_black_clamp {
-	/* only if bClampEnable is TRUE */
-	unsigned char b_clamp_enable;
-	/* only if bClampEnable is TRUE */
-	enum ccdc_sample_length sample_pixel;
-	/* only if bClampEnable is TRUE */
-	enum ccdc_sample_line sample_ln;
-	/* only if bClampEnable is TRUE */
-	unsigned short start_pixel;
-	/* only if bClampEnable is FALSE */
-	unsigned short sgain;
-	unsigned short dc_sub;
-};
+/* काष्ठाure क्रम Black Clamping */
+काष्ठा ccdc_black_clamp अणु
+	/* only अगर bClampEnable is TRUE */
+	अचिन्हित अक्षर b_clamp_enable;
+	/* only अगर bClampEnable is TRUE */
+	क्रमागत ccdc_sample_length sample_pixel;
+	/* only अगर bClampEnable is TRUE */
+	क्रमागत ccdc_sample_line sample_ln;
+	/* only अगर bClampEnable is TRUE */
+	अचिन्हित लघु start_pixel;
+	/* only अगर bClampEnable is FALSE */
+	अचिन्हित लघु sgain;
+	अचिन्हित लघु dc_sub;
+पूर्ण;
 
-/* structure for Black Level Compensation */
-struct ccdc_black_compensation {
+/* काष्ठाure क्रम Black Level Compensation */
+काष्ठा ccdc_black_compensation अणु
 	/* Constant value to subtract from Red component */
-	unsigned char r;
+	अचिन्हित अक्षर r;
 	/* Constant value to subtract from Gr component */
-	unsigned char gr;
+	अचिन्हित अक्षर gr;
 	/* Constant value to subtract from Blue component */
-	unsigned char b;
+	अचिन्हित अक्षर b;
 	/* Constant value to subtract from Gb component */
-	unsigned char gb;
-};
+	अचिन्हित अक्षर gb;
+पूर्ण;
 
-struct ccdc_float {
-	int integer;
-	unsigned int decimal;
-};
+काष्ठा ccdc_भग्न अणु
+	पूर्णांक पूर्णांकeger;
+	अचिन्हित पूर्णांक decimal;
+पूर्ण;
 
-#define CCDC_CSC_COEFF_TABLE_SIZE	16
-/* structure for color space converter */
-struct ccdc_csc {
-	unsigned char enable;
+#घोषणा CCDC_CSC_COEFF_TABLE_SIZE	16
+/* काष्ठाure क्रम color space converter */
+काष्ठा ccdc_csc अणु
+	अचिन्हित अक्षर enable;
 	/*
 	 * S8Q5. Use 2 decimal precision, user values range from -3.00 to 3.99.
-	 * example - to use 1.03, set integer part as 1, and decimal part as 3
-	 * to use -1.03, set integer part as -1 and decimal part as 3
+	 * example - to use 1.03, set पूर्णांकeger part as 1, and decimal part as 3
+	 * to use -1.03, set पूर्णांकeger part as -1 and decimal part as 3
 	 */
-	struct ccdc_float coeff[CCDC_CSC_COEFF_TABLE_SIZE];
-};
+	काष्ठा ccdc_भग्न coeff[CCDC_CSC_COEFF_TABLE_SIZE];
+पूर्ण;
 
-/* Structures for Vertical Defect Correction*/
-enum ccdc_vdf_csl {
+/* Structures क्रम Vertical Defect Correction*/
+क्रमागत ccdc_vdf_csl अणु
 	CCDC_VDF_NORMAL,
 	CCDC_VDF_HORZ_INTERPOL_SAT,
 	CCDC_VDF_HORZ_INTERPOL
-};
+पूर्ण;
 
-enum ccdc_vdf_cuda {
+क्रमागत ccdc_vdf_cuda अणु
 	CCDC_VDF_WHOLE_LINE_CORRECT,
 	CCDC_VDF_UPPER_DISABLE
-};
+पूर्ण;
 
-enum ccdc_dfc_mwr {
+क्रमागत ccdc_dfc_mwr अणु
 	CCDC_DFC_MWR_WRITE_COMPLETE,
 	CCDC_DFC_WRITE_REG
-};
+पूर्ण;
 
-enum ccdc_dfc_mrd {
+क्रमागत ccdc_dfc_mrd अणु
 	CCDC_DFC_READ_COMPLETE,
 	CCDC_DFC_READ_REG
-};
+पूर्ण;
 
-enum ccdc_dfc_ma_rst {
+क्रमागत ccdc_dfc_ma_rst अणु
 	CCDC_DFC_INCR_ADDR,
 	CCDC_DFC_CLR_ADDR
-};
+पूर्ण;
 
-enum ccdc_dfc_mclr {
+क्रमागत ccdc_dfc_mclr अणु
 	CCDC_DFC_CLEAR_COMPLETE,
 	CCDC_DFC_CLEAR
-};
+पूर्ण;
 
-struct ccdc_dft_corr_ctl {
-	enum ccdc_vdf_csl vdfcsl;
-	enum ccdc_vdf_cuda vdfcuda;
-	unsigned int vdflsft;
-};
+काष्ठा ccdc_dft_corr_ctl अणु
+	क्रमागत ccdc_vdf_csl vdfcsl;
+	क्रमागत ccdc_vdf_cuda vdfcuda;
+	अचिन्हित पूर्णांक vdflsft;
+पूर्ण;
 
-struct ccdc_dft_corr_mem_ctl {
-	enum ccdc_dfc_mwr dfcmwr;
-	enum ccdc_dfc_mrd dfcmrd;
-	enum ccdc_dfc_ma_rst dfcmarst;
-	enum ccdc_dfc_mclr dfcmclr;
-};
+काष्ठा ccdc_dft_corr_mem_ctl अणु
+	क्रमागत ccdc_dfc_mwr dfcmwr;
+	क्रमागत ccdc_dfc_mrd dfcmrd;
+	क्रमागत ccdc_dfc_ma_rst dfcmarst;
+	क्रमागत ccdc_dfc_mclr dfcmclr;
+पूर्ण;
 
-#define CCDC_DFT_TABLE_SIZE	16
+#घोषणा CCDC_DFT_TABLE_SIZE	16
 /*
- * Main Structure for vertical defect correction. Vertical defect
- * correction can correct up to 16 defects if defects less than 16
+ * Main Structure क्रम vertical defect correction. Vertical defect
+ * correction can correct up to 16 defects अगर defects less than 16
  * then pad the rest with 0
  */
-struct ccdc_vertical_dft {
-	unsigned char ver_dft_en;
-	unsigned char gen_dft_en;
-	unsigned int saturation_ctl;
-	struct ccdc_dft_corr_ctl dft_corr_ctl;
-	struct ccdc_dft_corr_mem_ctl dft_corr_mem_ctl;
-	int table_size;
-	unsigned int dft_corr_horz[CCDC_DFT_TABLE_SIZE];
-	unsigned int dft_corr_vert[CCDC_DFT_TABLE_SIZE];
-	unsigned int dft_corr_sub1[CCDC_DFT_TABLE_SIZE];
-	unsigned int dft_corr_sub2[CCDC_DFT_TABLE_SIZE];
-	unsigned int dft_corr_sub3[CCDC_DFT_TABLE_SIZE];
-};
+काष्ठा ccdc_vertical_dft अणु
+	अचिन्हित अक्षर ver_dft_en;
+	अचिन्हित अक्षर gen_dft_en;
+	अचिन्हित पूर्णांक saturation_ctl;
+	काष्ठा ccdc_dft_corr_ctl dft_corr_ctl;
+	काष्ठा ccdc_dft_corr_mem_ctl dft_corr_mem_ctl;
+	पूर्णांक table_size;
+	अचिन्हित पूर्णांक dft_corr_horz[CCDC_DFT_TABLE_SIZE];
+	अचिन्हित पूर्णांक dft_corr_vert[CCDC_DFT_TABLE_SIZE];
+	अचिन्हित पूर्णांक dft_corr_sub1[CCDC_DFT_TABLE_SIZE];
+	अचिन्हित पूर्णांक dft_corr_sub2[CCDC_DFT_TABLE_SIZE];
+	अचिन्हित पूर्णांक dft_corr_sub3[CCDC_DFT_TABLE_SIZE];
+पूर्ण;
 
-struct ccdc_data_offset {
-	unsigned char horz_offset;
-	unsigned char vert_offset;
-};
+काष्ठा ccdc_data_offset अणु
+	अचिन्हित अक्षर horz_offset;
+	अचिन्हित अक्षर vert_offset;
+पूर्ण;
 
 /*
- * Structure for CCDC configuration parameters for raw capture mode passed
+ * Structure क्रम CCDC configuration parameters क्रम raw capture mode passed
  * by application
  */
-struct ccdc_config_params_raw {
-	/* data shift to be applied before storing */
-	enum ccdc_datasft datasft;
+काष्ठा ccdc_config_params_raw अणु
+	/* data shअगरt to be applied beक्रमe storing */
+	क्रमागत ccdc_datasft datasft;
 	/* data size value from 8 to 16 bits */
-	enum ccdc_data_size data_sz;
-	/* median filter for sdram */
-	enum ccdc_mfilt1 mfilt1;
-	enum ccdc_mfilt2 mfilt2;
+	क्रमागत ccdc_data_size data_sz;
+	/* median filter क्रम sdram */
+	क्रमागत ccdc_mfilt1 mfilt1;
+	क्रमागत ccdc_mfilt2 mfilt2;
 	/* low pass filter enable/disable */
-	unsigned char lpf_enable;
+	अचिन्हित अक्षर lpf_enable;
 	/* Threshold of median filter */
-	int med_filt_thres;
+	पूर्णांक med_filt_thres;
 	/*
-	 * horz and vertical data offset. Applicable for defect correction
+	 * horz and vertical data offset. Applicable क्रम defect correction
 	 * and lsc
 	 */
-	struct ccdc_data_offset data_offset;
-	/* Structure for Optional A-Law */
-	struct ccdc_a_law alaw;
-	/* Structure for Optical Black Clamp */
-	struct ccdc_black_clamp blk_clamp;
-	/* Structure for Black Compensation */
-	struct ccdc_black_compensation blk_comp;
-	/* structure for vertical Defect Correction Module Configuration */
-	struct ccdc_vertical_dft vertical_dft;
-	/* structure for color space converter Module Configuration */
-	struct ccdc_csc csc;
-	/* color patters for bayer capture */
-	struct ccdc_col_pat col_pat_field0;
-	struct ccdc_col_pat col_pat_field1;
-};
+	काष्ठा ccdc_data_offset data_offset;
+	/* Structure क्रम Optional A-Law */
+	काष्ठा ccdc_a_law alaw;
+	/* Structure क्रम Optical Black Clamp */
+	काष्ठा ccdc_black_clamp blk_clamp;
+	/* Structure क्रम Black Compensation */
+	काष्ठा ccdc_black_compensation blk_comp;
+	/* काष्ठाure क्रम vertical Defect Correction Module Configuration */
+	काष्ठा ccdc_vertical_dft vertical_dft;
+	/* काष्ठाure क्रम color space converter Module Configuration */
+	काष्ठा ccdc_csc csc;
+	/* color patters क्रम bayer capture */
+	काष्ठा ccdc_col_pat col_pat_field0;
+	काष्ठा ccdc_col_pat col_pat_field1;
+पूर्ण;
 
-#ifdef __KERNEL__
-#include <linux/io.h>
+#अगर_घोषित __KERNEL__
+#समावेश <linux/पन.स>
 
-#define CCDC_WIN_PAL	{0, 0, 720, 576}
-#define CCDC_WIN_VGA	{0, 0, 640, 480}
+#घोषणा CCDC_WIN_PAL	अणु0, 0, 720, 576पूर्ण
+#घोषणा CCDC_WIN_VGA	अणु0, 0, 640, 480पूर्ण
 
-struct ccdc_params_ycbcr {
-	/* pixel format */
-	enum ccdc_pixfmt pix_fmt;
-	/* progressive or interlaced frame */
-	enum ccdc_frmfmt frm_fmt;
-	/* video window */
-	struct v4l2_rect win;
+काष्ठा ccdc_params_ycbcr अणु
+	/* pixel क्रमmat */
+	क्रमागत ccdc_pixfmt pix_fmt;
+	/* progressive or पूर्णांकerlaced frame */
+	क्रमागत ccdc_frmfmt frm_fmt;
+	/* video winकरोw */
+	काष्ठा v4l2_rect win;
 	/* field id polarity */
-	enum vpfe_pin_pol fid_pol;
+	क्रमागत vpfe_pin_pol fid_pol;
 	/* vertical sync polarity */
-	enum vpfe_pin_pol vd_pol;
+	क्रमागत vpfe_pin_pol vd_pol;
 	/* horizontal sync polarity */
-	enum vpfe_pin_pol hd_pol;
+	क्रमागत vpfe_pin_pol hd_pol;
 	/* enable BT.656 embedded sync mode */
-	int bt656_enable;
+	पूर्णांक bt656_enable;
 	/* cb:y:cr:y or y:cb:y:cr in memory */
-	enum ccdc_pixorder pix_order;
-	/* interleaved or separated fields  */
-	enum ccdc_buftype buf_type;
-};
+	क्रमागत ccdc_pixorder pix_order;
+	/* पूर्णांकerleaved or separated fields  */
+	क्रमागत ccdc_buftype buf_type;
+पूर्ण;
 
 /* Gain applied to Raw Bayer data */
-struct ccdc_gain {
-	unsigned short r_ye;
-	unsigned short gr_cy;
-	unsigned short gb_g;
-	unsigned short b_mg;
-};
+काष्ठा ccdc_gain अणु
+	अचिन्हित लघु r_ye;
+	अचिन्हित लघु gr_cy;
+	अचिन्हित लघु gb_g;
+	अचिन्हित लघु b_mg;
+पूर्ण;
 
-/* Structure for CCDC configuration parameters for raw capture mode */
-struct ccdc_params_raw {
-	/* pixel format */
-	enum ccdc_pixfmt pix_fmt;
-	/* progressive or interlaced frame */
-	enum ccdc_frmfmt frm_fmt;
-	/* video window */
-	struct v4l2_rect win;
+/* Structure क्रम CCDC configuration parameters क्रम raw capture mode */
+काष्ठा ccdc_params_raw अणु
+	/* pixel क्रमmat */
+	क्रमागत ccdc_pixfmt pix_fmt;
+	/* progressive or पूर्णांकerlaced frame */
+	क्रमागत ccdc_frmfmt frm_fmt;
+	/* video winकरोw */
+	काष्ठा v4l2_rect win;
 	/* field id polarity */
-	enum vpfe_pin_pol fid_pol;
+	क्रमागत vpfe_pin_pol fid_pol;
 	/* vertical sync polarity */
-	enum vpfe_pin_pol vd_pol;
+	क्रमागत vpfe_pin_pol vd_pol;
 	/* horizontal sync polarity */
-	enum vpfe_pin_pol hd_pol;
-	/* interleaved or separated fields */
-	enum ccdc_buftype buf_type;
+	क्रमागत vpfe_pin_pol hd_pol;
+	/* पूर्णांकerleaved or separated fields */
+	क्रमागत ccdc_buftype buf_type;
 	/* Gain values */
-	struct ccdc_gain gain;
+	काष्ठा ccdc_gain gain;
 	/* offset */
-	unsigned int ccdc_offset;
+	अचिन्हित पूर्णांक ccdc_offset;
 	/* horizontal flip enable */
-	unsigned char horz_flip_enable;
+	अचिन्हित अक्षर horz_flip_enable;
 	/*
 	 * enable to store the image in inverse order in memory
 	 * (bottom to top)
 	 */
-	unsigned char image_invert_enable;
+	अचिन्हित अक्षर image_invert_enable;
 	/* Configurable part of raw data */
-	struct ccdc_config_params_raw config_params;
-};
+	काष्ठा ccdc_config_params_raw config_params;
+पूर्ण;
 
-#endif
-#endif				/* DM355_CCDC_H */
+#पूर्ण_अगर
+#पूर्ण_अगर				/* DM355_CCDC_H */

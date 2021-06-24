@@ -1,5 +1,6 @@
-#include <linux/module.h>
-#include <linux/glob.h>
+<शैली गुरु>
+#समावेश <linux/module.h>
+#समावेश <linux/glob.h>
 
 /*
  * The only reason this code can be compiled as a module is because the
@@ -14,110 +15,110 @@ MODULE_LICENSE("Dual MIT/GPL");
  * @pat: Shell-style pattern to match, e.g. "*.[ch]".
  * @str: String to match.  The pattern must match the entire string.
  *
- * Perform shell-style glob matching, returning true (1) if the match
- * succeeds, or false (0) if it fails.  Equivalent to !fnmatch(@pat, @str, 0).
+ * Perक्रमm shell-style glob matching, वापसing true (1) अगर the match
+ * succeeds, or false (0) अगर it fails.  Equivalent to !fnmatch(@pat, @str, 0).
  *
- * Pattern metacharacters are ?, *, [ and \.
- * (And, inside character classes, !, - and ].)
+ * Pattern metaअक्षरacters are ?, *, [ and \.
+ * (And, inside अक्षरacter classes, !, - and ].)
  *
- * This is small and simple implementation intended for device blacklists
+ * This is small and simple implementation पूर्णांकended क्रम device blacklists
  * where a string is matched against a number of patterns.  Thus, it
- * does not preprocess the patterns.  It is non-recursive, and run-time
- * is at most quadratic: strlen(@str)*strlen(@pat).
+ * करोes not preprocess the patterns.  It is non-recursive, and run-समय
+ * is at most quadratic: म_माप(@str)*म_माप(@pat).
  *
- * An example of the worst case is glob_match("*aaaaa", "aaaaaaaaaa");
- * it takes 6 passes over the pattern before matching the string.
+ * An example of the worst हाल is glob_match("*aaaaa", "aaaaaaaaaa");
+ * it takes 6 passes over the pattern beक्रमe matching the string.
  *
- * Like !fnmatch(@pat, @str, 0) and unlike the shell, this does NOT
- * treat / or leading . specially; it isn't actually used for pathnames.
+ * Like !fnmatch(@pat, @str, 0) and unlike the shell, this करोes NOT
+ * treat / or leading . specially; it isn't actually used क्रम pathnames.
  *
- * Note that according to glob(7) (and unlike bash), character classes
- * are complemented by a leading !; this does not support the regex-style
+ * Note that according to glob(7) (and unlike bash), अक्षरacter classes
+ * are complemented by a leading !; this करोes not support the regex-style
  * [^a-z] syntax.
  *
- * An opening bracket without a matching close is matched literally.
+ * An खोलोing bracket without a matching बंद is matched literally.
  */
-bool __pure glob_match(char const *pat, char const *str)
-{
+bool __pure glob_match(अक्षर स्थिर *pat, अक्षर स्थिर *str)
+अणु
 	/*
 	 * Backtrack to previous * on mismatch and retry starting one
-	 * character later in the string.  Because * matches all characters
-	 * (no exception for /), it can be easily proved that there's
+	 * अक्षरacter later in the string.  Because * matches all अक्षरacters
+	 * (no exception क्रम /), it can be easily proved that there's
 	 * never a need to backtrack multiple levels.
 	 */
-	char const *back_pat = NULL, *back_str = back_str;
+	अक्षर स्थिर *back_pat = शून्य, *back_str = back_str;
 
 	/*
-	 * Loop over each token (character or class) in pat, matching
-	 * it against the remaining unmatched tail of str.  Return false
+	 * Loop over each token (अक्षरacter or class) in pat, matching
+	 * it against the reमुख्यing unmatched tail of str.  Return false
 	 * on mismatch, or true after matching the trailing nul bytes.
 	 */
-	for (;;) {
-		unsigned char c = *str++;
-		unsigned char d = *pat++;
+	क्रम (;;) अणु
+		अचिन्हित अक्षर c = *str++;
+		अचिन्हित अक्षर d = *pat++;
 
-		switch (d) {
-		case '?':	/* Wildcard: anything but nul */
-			if (c == '\0')
-				return false;
-			break;
-		case '*':	/* Any-length wildcard */
-			if (*pat == '\0')	/* Optimize trailing * case */
-				return true;
+		चयन (d) अणु
+		हाल '?':	/* Wildcard: anything but nul */
+			अगर (c == '\0')
+				वापस false;
+			अवरोध;
+		हाल '*':	/* Any-length wildcard */
+			अगर (*pat == '\0')	/* Optimize trailing * हाल */
+				वापस true;
 			back_pat = pat;
 			back_str = --str;	/* Allow zero-length match */
-			break;
-		case '[': {	/* Character class */
+			अवरोध;
+		हाल '[': अणु	/* Character class */
 			bool match = false, inverted = (*pat == '!');
-			char const *class = pat + inverted;
-			unsigned char a = *class++;
+			अक्षर स्थिर *class = pat + inverted;
+			अचिन्हित अक्षर a = *class++;
 
 			/*
-			 * Iterate over each span in the character class.
-			 * A span is either a single character a, or a
+			 * Iterate over each span in the अक्षरacter class.
+			 * A span is either a single अक्षरacter a, or a
 			 * range a-b.  The first span may begin with ']'.
 			 */
-			do {
-				unsigned char b = a;
+			करो अणु
+				अचिन्हित अक्षर b = a;
 
-				if (a == '\0')	/* Malformed */
-					goto literal;
+				अगर (a == '\0')	/* Malक्रमmed */
+					जाओ literal;
 
-				if (class[0] == '-' && class[1] != ']') {
+				अगर (class[0] == '-' && class[1] != ']') अणु
 					b = class[1];
 
-					if (b == '\0')
-						goto literal;
+					अगर (b == '\0')
+						जाओ literal;
 
 					class += 2;
-					/* Any special action if a > b? */
-				}
+					/* Any special action अगर a > b? */
+				पूर्ण
 				match |= (a <= c && c <= b);
-			} while ((a = *class++) != ']');
+			पूर्ण जबतक ((a = *class++) != ']');
 
-			if (match == inverted)
-				goto backtrack;
+			अगर (match == inverted)
+				जाओ backtrack;
 			pat = class;
-			}
-			break;
-		case '\\':
+			पूर्ण
+			अवरोध;
+		हाल '\\':
 			d = *pat++;
 			fallthrough;
-		default:	/* Literal character */
+		शेष:	/* Literal अक्षरacter */
 literal:
-			if (c == d) {
-				if (d == '\0')
-					return true;
-				break;
-			}
+			अगर (c == d) अणु
+				अगर (d == '\0')
+					वापस true;
+				अवरोध;
+			पूर्ण
 backtrack:
-			if (c == '\0' || !back_pat)
-				return false;	/* No point continuing */
-			/* Try again from last *, one character later in str. */
+			अगर (c == '\0' || !back_pat)
+				वापस false;	/* No poपूर्णांक continuing */
+			/* Try again from last *, one अक्षरacter later in str. */
 			pat = back_pat;
 			str = ++back_str;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(glob_match);

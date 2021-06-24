@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_ARC_ENTRY_ARCV2_H
-#define __ASM_ARC_ENTRY_ARCV2_H
+#अगर_अघोषित __ASM_ARC_ENTRY_ARCV2_H
+#घोषणा __ASM_ARC_ENTRY_ARCV2_H
 
-#include <asm/asm-offsets.h>
-#include <asm/dsp-impl.h>
-#include <asm/irqflags-arcv2.h>
-#include <asm/thread_info.h>	/* For THREAD_SIZE */
+#समावेश <यंत्र/यंत्र-offsets.h>
+#समावेश <यंत्र/dsp-impl.h>
+#समावेश <यंत्र/irqflags-arcv2.h>
+#समावेश <यंत्र/thपढ़ो_info.h>	/* For THREAD_SIZE */
 
 /*
- * Interrupt/Exception stack layout (pt_regs) for ARCv2
- *   (End of struct aligned to end of page [unless nested])
+ * Interrupt/Exception stack layout (pt_regs) क्रम ARCv2
+ *   (End of काष्ठा aligned to end of page [unless nested])
  *
  *  INTERRUPT                          EXCEPTION
  *
@@ -26,7 +27,7 @@
  *              |      r30          |
  *              |      r58          |
  *              |      r59          |
- *  hw autosave ---------------------
+ *  hw स्वतःsave ---------------------
  *    optional  |      r0           |
  *              |      r1           |
  *              ~                   ~
@@ -41,7 +42,7 @@
  *              |      ldi base     |
  *              |      jli base     |
  *              ---------------------
- *  hw autosave |       pc / eret   |
+ *  hw स्वतःsave |       pc / eret   |
  *   mandatory  | stat32 / erstatus |
  *              ---------------------
  */
@@ -49,34 +50,34 @@
 /*------------------------------------------------------------------------*/
 .macro INTERRUPT_PROLOGUE
 
-	; (A) Before jumping to Interrupt Vector, hardware micro-ops did following:
-	;   1. SP auto-switched to kernel mode stack
-	;   2. STATUS32.Z flag set if in U mode at time of interrupt (U:1,K:0)
+	; (A) Beक्रमe jumping to Interrupt Vector, hardware micro-ops did following:
+	;   1. SP स्वतः-चयनed to kernel mode stack
+	;   2. STATUS32.Z flag set अगर in U mode at समय of पूर्णांकerrupt (U:1,K:0)
 	;   3. Auto save: (mandatory) Push PC and STAT32 on stack
-	;                 hardware does even if CONFIG_ARC_IRQ_NO_AUTOSAVE
+	;                 hardware करोes even अगर CONFIG_ARC_IRQ_NO_AUTOSAVE
 	;   4. Auto save: (optional) r0-r11, blink, LPE,LPS,LPC, JLI,LDI,EI
 	;
 	; (B) Manually saved some regs: r12,r25,r30, sp,fp,gp, ACCL pair
 
-#ifdef CONFIG_ARC_IRQ_NO_AUTOSAVE
-	; carve pt_regs on stack (case #3), PC/STAT32 already on stack
+#अगर_घोषित CONFIG_ARC_IRQ_NO_AUTOSAVE
+	; carve pt_regs on stack (हाल #3), PC/STAT32 alपढ़ोy on stack
 	sub	sp, sp, SZ_PT_REGS - 8
 
-	__SAVE_REGFILE_HARD
-#else
-	; carve pt_regs on stack (case #4), which grew partially already
+	__SAVE_REGखाता_HARD
+#अन्यथा
+	; carve pt_regs on stack (हाल #4), which grew partially alपढ़ोy
 	sub	sp, sp, PT_r0
-#endif
+#पूर्ण_अगर
 
-	__SAVE_REGFILE_SOFT
+	__SAVE_REGखाता_SOFT
 .endm
 
 /*------------------------------------------------------------------------*/
 .macro EXCEPTION_PROLOGUE
 
-	; (A) Before jumping to Exception Vector, hardware micro-ops did following:
-	;   1. SP auto-switched to kernel mode stack
-	;   2. STATUS32.Z flag set if in U mode at time of exception (U:1,K:0)
+	; (A) Beक्रमe jumping to Exception Vector, hardware micro-ops did following:
+	;   1. SP स्वतः-चयनed to kernel mode stack
+	;   2. STATUS32.Z flag set अगर in U mode at समय of exception (U:1,K:0)
 	;
 	; (B) Manually save the complete reg file below
 
@@ -84,8 +85,8 @@
 
 	; _HARD saves r10 clobbered by _SOFT as scratch hence comes first
 
-	__SAVE_REGFILE_HARD
-	__SAVE_REGFILE_SOFT
+	__SAVE_REGखाता_HARD
+	__SAVE_REGखाता_SOFT
 
 	st	r0, [sp]	; orig_r0
 
@@ -101,12 +102,12 @@
 .endm
 
 /*------------------------------------------------------------------------
- * This macro saves the registers manually which would normally be autosaved
- * by hardware on taken interrupts. It is used by
- *   - exception handlers (which don't have autosave)
- *   - interrupt autosave disabled due to CONFIG_ARC_IRQ_NO_AUTOSAVE
+ * This macro saves the रेजिस्टरs manually which would normally be स्वतःsaved
+ * by hardware on taken पूर्णांकerrupts. It is used by
+ *   - exception handlers (which करोn't have स्वतःsave)
+ *   - पूर्णांकerrupt स्वतःsave disabled due to CONFIG_ARC_IRQ_NO_AUTOSAVE
  */
-.macro __SAVE_REGFILE_HARD
+.macro __SAVE_REGखाता_HARD
 
 	ST2	r0,  r1,  PT_r0
 	ST2	r2,  r3,  PT_r2
@@ -123,17 +124,17 @@
 
 	st	lp_count, [sp, PT_lpc]
 
-	; skip JLI, LDI, EI for now
+	; skip JLI, LDI, EI क्रम now
 .endm
 
 /*------------------------------------------------------------------------
- * This macros saves a bunch of other registers which can't be autosaved for
+ * This macros saves a bunch of other रेजिस्टरs which can't be स्वतःsaved क्रम
  * various reasons:
  *   - r12: the last caller saved scratch reg since hardware saves in pairs so r0-r11
- *   - r30: free reg, used by gcc as scratch
+ *   - r30: मुक्त reg, used by gcc as scratch
  *   - ACCL/ACCH pair when they exist
  */
-.macro __SAVE_REGFILE_SOFT
+.macro __SAVE_REGखाता_SOFT
 
 	ST2	gp, fp, PT_r26		; gp (r26), fp (r27)
 
@@ -141,67 +142,67 @@
 	st	r30, [sp, PT_sp + 8]
 
 	; Saving pt_regs->sp correctly requires some extra work due to the way
-	; Auto stack switch works
+	; Auto stack चयन works
 	;  - U mode: retrieve it from AUX_USER_SP
-	;  - K mode: add the offset from current SP where H/w starts auto push
+	;  - K mode: add the offset from current SP where H/w starts स्वतः push
 	;
-	; 1. Utilize the fact that Z bit is set if Intr taken in U mode
-	; 2. Upon entry SP is always saved (for any inspection, unwinding etc),
-	;    but on return, restored only if U mode
+	; 1. Utilize the fact that Z bit is set अगर Intr taken in U mode
+	; 2. Upon entry SP is always saved (क्रम any inspection, unwinding etc),
+	;    but on वापस, restored only अगर U mode
 
 	lr	r10, [AUX_USER_SP]	; U mode SP
 
-	; ISA requires ADD.nz to have same dest and src reg operands
+	; ISA requires ADD.nz to have same dest and src reg opeअक्रमs
 	mov.nz	r10, sp
 	add.nz	r10, r10, SZ_PT_REGS	; K mode SP
 
 	st	r10, [sp, PT_sp]	; SP (pt_regs->sp)
 
-#ifdef CONFIG_ARC_CURR_IN_REG
+#अगर_घोषित CONFIG_ARC_CURR_IN_REG
 	st	r25, [sp, PT_user_r25]
 	GET_CURR_TASK_ON_CPU	r25
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
+#अगर_घोषित CONFIG_ARC_HAS_ACCL_REGS
 	ST2	r58, r59, PT_r58
-#endif
+#पूर्ण_अगर
 
-	/* clobbers r10, r11 registers pair */
-	DSP_SAVE_REGFILE_IRQ
+	/* clobbers r10, r11 रेजिस्टरs pair */
+	DSP_SAVE_REGखाता_IRQ
 .endm
 
 /*------------------------------------------------------------------------*/
-.macro __RESTORE_REGFILE_SOFT
+.macro __RESTORE_REGखाता_SOFT
 
 	LD2	gp, fp, PT_r26		; gp (r26), fp (r27)
 
 	ld	r12, [sp, PT_r12]
 	ld	r30, [sp, PT_r30]
 
-	; Restore SP (into AUX_USER_SP) only if returning to U mode
-	;  - for K mode, it will be implicitly restored as stack is unwound
-	;  - Z flag set on K is inverse of what hardware does on interrupt entry
-	;    but that doesn't really matter
+	; Restore SP (पूर्णांकo AUX_USER_SP) only अगर वापसing to U mode
+	;  - क्रम K mode, it will be implicitly restored as stack is unwound
+	;  - Z flag set on K is inverse of what hardware करोes on पूर्णांकerrupt entry
+	;    but that करोesn't really matter
 	bz	1f
 
 	ld	r10, [sp, PT_sp]	; SP (pt_regs->sp)
 	sr	r10, [AUX_USER_SP]
 1:
 
-#ifdef CONFIG_ARC_CURR_IN_REG
+#अगर_घोषित CONFIG_ARC_CURR_IN_REG
 	ld	r25, [sp, PT_user_r25]
-#endif
+#पूर्ण_अगर
 
-	/* clobbers r10, r11 registers pair */
-	DSP_RESTORE_REGFILE_IRQ
+	/* clobbers r10, r11 रेजिस्टरs pair */
+	DSP_RESTORE_REGखाता_IRQ
 
-#ifdef CONFIG_ARC_HAS_ACCL_REGS
+#अगर_घोषित CONFIG_ARC_HAS_ACCL_REGS
 	LD2	r58, r59, PT_r58
-#endif
+#पूर्ण_अगर
 .endm
 
 /*------------------------------------------------------------------------*/
-.macro __RESTORE_REGFILE_HARD
+.macro __RESTORE_REGखाता_HARD
 
 	ld	blink, [sp, PT_blink]
 
@@ -225,20 +226,20 @@
 .macro INTERRUPT_EPILOGUE
 
 	; INPUT: r0 has STAT32 of calling context
-	; INPUT: Z flag set if returning to K mode
+	; INPUT: Z flag set अगर वापसing to K mode
 
 	; _SOFT clobbers r10 restored by _HARD hence the order
 
-	__RESTORE_REGFILE_SOFT
+	__RESTORE_REGखाता_SOFT
 
-#ifdef CONFIG_ARC_IRQ_NO_AUTOSAVE
-	__RESTORE_REGFILE_HARD
+#अगर_घोषित CONFIG_ARC_IRQ_NO_AUTOSAVE
+	__RESTORE_REGखाता_HARD
 
-	; SP points to PC/STAT32: hw restores them despite NO_AUTOSAVE
+	; SP poपूर्णांकs to PC/STAT32: hw restores them despite NO_AUTOSAVE
 	add	sp, sp, SZ_PT_REGS - 8
-#else
+#अन्यथा
 	add	sp, sp, PT_r0
-#endif
+#पूर्ण_अगर
 
 .endm
 
@@ -247,7 +248,7 @@
 
 	; INPUT: r0 has STAT32 of calling context
 
-	btst	r0, STATUS_U_BIT	; Z flag set if K, used in restoring SP
+	btst	r0, STATUS_U_BIT	; Z flag set अगर K, used in restoring SP
 
 	ld	r10, [sp, PT_event + 4]
 	sr	r10, [erbta]
@@ -256,8 +257,8 @@
 	sr	r10, [eret]
 	sr	r11, [erstatus]
 
-	__RESTORE_REGFILE_SOFT
-	__RESTORE_REGFILE_HARD
+	__RESTORE_REGखाता_SOFT
+	__RESTORE_REGखाता_HARD
 
 	add	sp, sp, SZ_PT_REGS
 .endm
@@ -269,16 +270,16 @@
 	kflag   r9
 .endm
 
-/* Get thread_info of "current" tsk */
+/* Get thपढ़ो_info of "current" tsk */
 .macro GET_CURR_THR_INFO_FROM_SP  reg
-	bmskn \reg, sp, THREAD_SHIFT - 1
+	bmskn \लeg, sp, THREAD_SHIFT - 1
 .endm
 
 /* Get CPU-ID of this core */
 .macro  GET_CPU_ID  reg
-	lr  \reg, [identity]
-	xbfu \reg, \reg, 0xE8	/* 00111    01000 */
+	lr  \लeg, [identity]
+	xbfu \लeg, \लeg, 0xE8	/* 00111    01000 */
 				/* M = 8-1  N = 8 */
 .endm
 
-#endif
+#पूर्ण_अगर

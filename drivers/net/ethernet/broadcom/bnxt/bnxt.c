@@ -1,86 +1,87 @@
+<शैली गुरु>
 /* Broadcom NetXtreme-C/E network driver.
  *
  * Copyright (c) 2014-2016 Broadcom Corporation
  * Copyright (c) 2016-2019 Broadcom Limited
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/stringify.h>
-#include <linux/kernel.h>
-#include <linux/timer.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/dma-mapping.h>
-#include <linux/bitops.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/delay.h>
-#include <asm/byteorder.h>
-#include <asm/page.h>
-#include <linux/time.h>
-#include <linux/mii.h>
-#include <linux/mdio.h>
-#include <linux/if.h>
-#include <linux/if_vlan.h>
-#include <linux/if_bridge.h>
-#include <linux/rtc.h>
-#include <linux/bpf.h>
-#include <net/ip.h>
-#include <net/tcp.h>
-#include <net/udp.h>
-#include <net/checksum.h>
-#include <net/ip6_checksum.h>
-#include <net/udp_tunnel.h>
-#include <linux/workqueue.h>
-#include <linux/prefetch.h>
-#include <linux/cache.h>
-#include <linux/log2.h>
-#include <linux/aer.h>
-#include <linux/bitmap.h>
-#include <linux/cpu_rmap.h>
-#include <linux/cpumask.h>
-#include <net/pkt_cls.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <net/page_pool.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/page.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/mii.h>
+#समावेश <linux/mdपन.स>
+#समावेश <linux/अगर.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/bpf.h>
+#समावेश <net/ip.h>
+#समावेश <net/tcp.h>
+#समावेश <net/udp.h>
+#समावेश <net/checksum.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <net/udp_tunnel.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/aer.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/cpu_rmap.h>
+#समावेश <linux/cpumask.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <net/page_pool.h>
 
-#include "bnxt_hsi.h"
-#include "bnxt.h"
-#include "bnxt_ulp.h"
-#include "bnxt_sriov.h"
-#include "bnxt_ethtool.h"
-#include "bnxt_dcb.h"
-#include "bnxt_xdp.h"
-#include "bnxt_vfr.h"
-#include "bnxt_tc.h"
-#include "bnxt_devlink.h"
-#include "bnxt_debugfs.h"
+#समावेश "bnxt_hsi.h"
+#समावेश "bnxt.h"
+#समावेश "bnxt_ulp.h"
+#समावेश "bnxt_sriov.h"
+#समावेश "bnxt_ethtool.h"
+#समावेश "bnxt_dcb.h"
+#समावेश "bnxt_xdp.h"
+#समावेश "bnxt_vfr.h"
+#समावेश "bnxt_tc.h"
+#समावेश "bnxt_devlink.h"
+#समावेश "bnxt_debugfs.h"
 
-#define BNXT_TX_TIMEOUT		(5 * HZ)
-#define BNXT_DEF_MSG_ENABLE	(NETIF_MSG_DRV | NETIF_MSG_HW)
+#घोषणा BNXT_TX_TIMEOUT		(5 * HZ)
+#घोषणा BNXT_DEF_MSG_ENABLE	(NETIF_MSG_DRV | NETIF_MSG_HW)
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Broadcom BCM573xx network driver");
 
-#define BNXT_RX_OFFSET (NET_SKB_PAD + NET_IP_ALIGN)
-#define BNXT_RX_DMA_OFFSET NET_SKB_PAD
-#define BNXT_RX_COPY_THRESH 256
+#घोषणा BNXT_RX_OFFSET (NET_SKB_PAD + NET_IP_ALIGN)
+#घोषणा BNXT_RX_DMA_OFFSET NET_SKB_PAD
+#घोषणा BNXT_RX_COPY_THRESH 256
 
-#define BNXT_TX_PUSH_THRESH 164
+#घोषणा BNXT_TX_PUSH_THRESH 164
 
-enum board_idx {
+क्रमागत board_idx अणु
 	BCM57301,
 	BCM57302,
 	BCM57304,
@@ -126,142 +127,142 @@ enum board_idx {
 	NETXTREME_E_VF_HV,
 	NETXTREME_E_P5_VF,
 	NETXTREME_E_P5_VF_HV,
-};
+पूर्ण;
 
-/* indexed by enum above */
-static const struct {
-	char *name;
-} board_info[] = {
-	[BCM57301] = { "Broadcom BCM57301 NetXtreme-C 10Gb Ethernet" },
-	[BCM57302] = { "Broadcom BCM57302 NetXtreme-C 10Gb/25Gb Ethernet" },
-	[BCM57304] = { "Broadcom BCM57304 NetXtreme-C 10Gb/25Gb/40Gb/50Gb Ethernet" },
-	[BCM57417_NPAR] = { "Broadcom BCM57417 NetXtreme-E Ethernet Partition" },
-	[BCM58700] = { "Broadcom BCM58700 Nitro 1Gb/2.5Gb/10Gb Ethernet" },
-	[BCM57311] = { "Broadcom BCM57311 NetXtreme-C 10Gb Ethernet" },
-	[BCM57312] = { "Broadcom BCM57312 NetXtreme-C 10Gb/25Gb Ethernet" },
-	[BCM57402] = { "Broadcom BCM57402 NetXtreme-E 10Gb Ethernet" },
-	[BCM57404] = { "Broadcom BCM57404 NetXtreme-E 10Gb/25Gb Ethernet" },
-	[BCM57406] = { "Broadcom BCM57406 NetXtreme-E 10GBase-T Ethernet" },
-	[BCM57402_NPAR] = { "Broadcom BCM57402 NetXtreme-E Ethernet Partition" },
-	[BCM57407] = { "Broadcom BCM57407 NetXtreme-E 10GBase-T Ethernet" },
-	[BCM57412] = { "Broadcom BCM57412 NetXtreme-E 10Gb Ethernet" },
-	[BCM57414] = { "Broadcom BCM57414 NetXtreme-E 10Gb/25Gb Ethernet" },
-	[BCM57416] = { "Broadcom BCM57416 NetXtreme-E 10GBase-T Ethernet" },
-	[BCM57417] = { "Broadcom BCM57417 NetXtreme-E 10GBase-T Ethernet" },
-	[BCM57412_NPAR] = { "Broadcom BCM57412 NetXtreme-E Ethernet Partition" },
-	[BCM57314] = { "Broadcom BCM57314 NetXtreme-C 10Gb/25Gb/40Gb/50Gb Ethernet" },
-	[BCM57417_SFP] = { "Broadcom BCM57417 NetXtreme-E 10Gb/25Gb Ethernet" },
-	[BCM57416_SFP] = { "Broadcom BCM57416 NetXtreme-E 10Gb Ethernet" },
-	[BCM57404_NPAR] = { "Broadcom BCM57404 NetXtreme-E Ethernet Partition" },
-	[BCM57406_NPAR] = { "Broadcom BCM57406 NetXtreme-E Ethernet Partition" },
-	[BCM57407_SFP] = { "Broadcom BCM57407 NetXtreme-E 25Gb Ethernet" },
-	[BCM57407_NPAR] = { "Broadcom BCM57407 NetXtreme-E Ethernet Partition" },
-	[BCM57414_NPAR] = { "Broadcom BCM57414 NetXtreme-E Ethernet Partition" },
-	[BCM57416_NPAR] = { "Broadcom BCM57416 NetXtreme-E Ethernet Partition" },
-	[BCM57452] = { "Broadcom BCM57452 NetXtreme-E 10Gb/25Gb/40Gb/50Gb Ethernet" },
-	[BCM57454] = { "Broadcom BCM57454 NetXtreme-E 10Gb/25Gb/40Gb/50Gb/100Gb Ethernet" },
-	[BCM5745x_NPAR] = { "Broadcom BCM5745x NetXtreme-E Ethernet Partition" },
-	[BCM57508] = { "Broadcom BCM57508 NetXtreme-E 10Gb/25Gb/50Gb/100Gb/200Gb Ethernet" },
-	[BCM57504] = { "Broadcom BCM57504 NetXtreme-E 10Gb/25Gb/50Gb/100Gb/200Gb Ethernet" },
-	[BCM57502] = { "Broadcom BCM57502 NetXtreme-E 10Gb/25Gb/50Gb Ethernet" },
-	[BCM57508_NPAR] = { "Broadcom BCM57508 NetXtreme-E Ethernet Partition" },
-	[BCM57504_NPAR] = { "Broadcom BCM57504 NetXtreme-E Ethernet Partition" },
-	[BCM57502_NPAR] = { "Broadcom BCM57502 NetXtreme-E Ethernet Partition" },
-	[BCM58802] = { "Broadcom BCM58802 NetXtreme-S 10Gb/25Gb/40Gb/50Gb Ethernet" },
-	[BCM58804] = { "Broadcom BCM58804 NetXtreme-S 10Gb/25Gb/40Gb/50Gb/100Gb Ethernet" },
-	[BCM58808] = { "Broadcom BCM58808 NetXtreme-S 10Gb/25Gb/40Gb/50Gb/100Gb Ethernet" },
-	[NETXTREME_E_VF] = { "Broadcom NetXtreme-E Ethernet Virtual Function" },
-	[NETXTREME_C_VF] = { "Broadcom NetXtreme-C Ethernet Virtual Function" },
-	[NETXTREME_S_VF] = { "Broadcom NetXtreme-S Ethernet Virtual Function" },
-	[NETXTREME_C_VF_HV] = { "Broadcom NetXtreme-C Virtual Function for Hyper-V" },
-	[NETXTREME_E_VF_HV] = { "Broadcom NetXtreme-E Virtual Function for Hyper-V" },
-	[NETXTREME_E_P5_VF] = { "Broadcom BCM5750X NetXtreme-E Ethernet Virtual Function" },
-	[NETXTREME_E_P5_VF_HV] = { "Broadcom BCM5750X NetXtreme-E Virtual Function for Hyper-V" },
-};
+/* indexed by क्रमागत above */
+अटल स्थिर काष्ठा अणु
+	अक्षर *name;
+पूर्ण board_info[] = अणु
+	[BCM57301] = अणु "Broadcom BCM57301 NetXtreme-C 10Gb Ethernet" पूर्ण,
+	[BCM57302] = अणु "Broadcom BCM57302 NetXtreme-C 10Gb/25Gb Ethernet" पूर्ण,
+	[BCM57304] = अणु "Broadcom BCM57304 NetXtreme-C 10Gb/25Gb/40Gb/50Gb Ethernet" पूर्ण,
+	[BCM57417_NPAR] = अणु "Broadcom BCM57417 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM58700] = अणु "Broadcom BCM58700 Nitro 1Gb/2.5Gb/10Gb Ethernet" पूर्ण,
+	[BCM57311] = अणु "Broadcom BCM57311 NetXtreme-C 10Gb Ethernet" पूर्ण,
+	[BCM57312] = अणु "Broadcom BCM57312 NetXtreme-C 10Gb/25Gb Ethernet" पूर्ण,
+	[BCM57402] = अणु "Broadcom BCM57402 NetXtreme-E 10Gb Ethernet" पूर्ण,
+	[BCM57404] = अणु "Broadcom BCM57404 NetXtreme-E 10Gb/25Gb Ethernet" पूर्ण,
+	[BCM57406] = अणु "Broadcom BCM57406 NetXtreme-E 10GBase-T Ethernet" पूर्ण,
+	[BCM57402_NPAR] = अणु "Broadcom BCM57402 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM57407] = अणु "Broadcom BCM57407 NetXtreme-E 10GBase-T Ethernet" पूर्ण,
+	[BCM57412] = अणु "Broadcom BCM57412 NetXtreme-E 10Gb Ethernet" पूर्ण,
+	[BCM57414] = अणु "Broadcom BCM57414 NetXtreme-E 10Gb/25Gb Ethernet" पूर्ण,
+	[BCM57416] = अणु "Broadcom BCM57416 NetXtreme-E 10GBase-T Ethernet" पूर्ण,
+	[BCM57417] = अणु "Broadcom BCM57417 NetXtreme-E 10GBase-T Ethernet" पूर्ण,
+	[BCM57412_NPAR] = अणु "Broadcom BCM57412 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM57314] = अणु "Broadcom BCM57314 NetXtreme-C 10Gb/25Gb/40Gb/50Gb Ethernet" पूर्ण,
+	[BCM57417_SFP] = अणु "Broadcom BCM57417 NetXtreme-E 10Gb/25Gb Ethernet" पूर्ण,
+	[BCM57416_SFP] = अणु "Broadcom BCM57416 NetXtreme-E 10Gb Ethernet" पूर्ण,
+	[BCM57404_NPAR] = अणु "Broadcom BCM57404 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM57406_NPAR] = अणु "Broadcom BCM57406 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM57407_SFP] = अणु "Broadcom BCM57407 NetXtreme-E 25Gb Ethernet" पूर्ण,
+	[BCM57407_NPAR] = अणु "Broadcom BCM57407 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM57414_NPAR] = अणु "Broadcom BCM57414 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM57416_NPAR] = अणु "Broadcom BCM57416 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM57452] = अणु "Broadcom BCM57452 NetXtreme-E 10Gb/25Gb/40Gb/50Gb Ethernet" पूर्ण,
+	[BCM57454] = अणु "Broadcom BCM57454 NetXtreme-E 10Gb/25Gb/40Gb/50Gb/100Gb Ethernet" पूर्ण,
+	[BCM5745x_NPAR] = अणु "Broadcom BCM5745x NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM57508] = अणु "Broadcom BCM57508 NetXtreme-E 10Gb/25Gb/50Gb/100Gb/200Gb Ethernet" पूर्ण,
+	[BCM57504] = अणु "Broadcom BCM57504 NetXtreme-E 10Gb/25Gb/50Gb/100Gb/200Gb Ethernet" पूर्ण,
+	[BCM57502] = अणु "Broadcom BCM57502 NetXtreme-E 10Gb/25Gb/50Gb Ethernet" पूर्ण,
+	[BCM57508_NPAR] = अणु "Broadcom BCM57508 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM57504_NPAR] = अणु "Broadcom BCM57504 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM57502_NPAR] = अणु "Broadcom BCM57502 NetXtreme-E Ethernet Partition" पूर्ण,
+	[BCM58802] = अणु "Broadcom BCM58802 NetXtreme-S 10Gb/25Gb/40Gb/50Gb Ethernet" पूर्ण,
+	[BCM58804] = अणु "Broadcom BCM58804 NetXtreme-S 10Gb/25Gb/40Gb/50Gb/100Gb Ethernet" पूर्ण,
+	[BCM58808] = अणु "Broadcom BCM58808 NetXtreme-S 10Gb/25Gb/40Gb/50Gb/100Gb Ethernet" पूर्ण,
+	[NETXTREME_E_VF] = अणु "Broadcom NetXtreme-E Ethernet Virtual Function" पूर्ण,
+	[NETXTREME_C_VF] = अणु "Broadcom NetXtreme-C Ethernet Virtual Function" पूर्ण,
+	[NETXTREME_S_VF] = अणु "Broadcom NetXtreme-S Ethernet Virtual Function" पूर्ण,
+	[NETXTREME_C_VF_HV] = अणु "Broadcom NetXtreme-C Virtual Function for Hyper-V" पूर्ण,
+	[NETXTREME_E_VF_HV] = अणु "Broadcom NetXtreme-E Virtual Function for Hyper-V" पूर्ण,
+	[NETXTREME_E_P5_VF] = अणु "Broadcom BCM5750X NetXtreme-E Ethernet Virtual Function" पूर्ण,
+	[NETXTREME_E_P5_VF_HV] = अणु "Broadcom BCM5750X NetXtreme-E Virtual Function for Hyper-V" पूर्ण,
+पूर्ण;
 
-static const struct pci_device_id bnxt_pci_tbl[] = {
-	{ PCI_VDEVICE(BROADCOM, 0x1604), .driver_data = BCM5745x_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x1605), .driver_data = BCM5745x_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x1614), .driver_data = BCM57454 },
-	{ PCI_VDEVICE(BROADCOM, 0x16c0), .driver_data = BCM57417_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16c8), .driver_data = BCM57301 },
-	{ PCI_VDEVICE(BROADCOM, 0x16c9), .driver_data = BCM57302 },
-	{ PCI_VDEVICE(BROADCOM, 0x16ca), .driver_data = BCM57304 },
-	{ PCI_VDEVICE(BROADCOM, 0x16cc), .driver_data = BCM57417_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16cd), .driver_data = BCM58700 },
-	{ PCI_VDEVICE(BROADCOM, 0x16ce), .driver_data = BCM57311 },
-	{ PCI_VDEVICE(BROADCOM, 0x16cf), .driver_data = BCM57312 },
-	{ PCI_VDEVICE(BROADCOM, 0x16d0), .driver_data = BCM57402 },
-	{ PCI_VDEVICE(BROADCOM, 0x16d1), .driver_data = BCM57404 },
-	{ PCI_VDEVICE(BROADCOM, 0x16d2), .driver_data = BCM57406 },
-	{ PCI_VDEVICE(BROADCOM, 0x16d4), .driver_data = BCM57402_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16d5), .driver_data = BCM57407 },
-	{ PCI_VDEVICE(BROADCOM, 0x16d6), .driver_data = BCM57412 },
-	{ PCI_VDEVICE(BROADCOM, 0x16d7), .driver_data = BCM57414 },
-	{ PCI_VDEVICE(BROADCOM, 0x16d8), .driver_data = BCM57416 },
-	{ PCI_VDEVICE(BROADCOM, 0x16d9), .driver_data = BCM57417 },
-	{ PCI_VDEVICE(BROADCOM, 0x16de), .driver_data = BCM57412_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16df), .driver_data = BCM57314 },
-	{ PCI_VDEVICE(BROADCOM, 0x16e2), .driver_data = BCM57417_SFP },
-	{ PCI_VDEVICE(BROADCOM, 0x16e3), .driver_data = BCM57416_SFP },
-	{ PCI_VDEVICE(BROADCOM, 0x16e7), .driver_data = BCM57404_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16e8), .driver_data = BCM57406_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16e9), .driver_data = BCM57407_SFP },
-	{ PCI_VDEVICE(BROADCOM, 0x16ea), .driver_data = BCM57407_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16eb), .driver_data = BCM57412_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16ec), .driver_data = BCM57414_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16ed), .driver_data = BCM57414_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16ee), .driver_data = BCM57416_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16ef), .driver_data = BCM57416_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x16f0), .driver_data = BCM58808 },
-	{ PCI_VDEVICE(BROADCOM, 0x16f1), .driver_data = BCM57452 },
-	{ PCI_VDEVICE(BROADCOM, 0x1750), .driver_data = BCM57508 },
-	{ PCI_VDEVICE(BROADCOM, 0x1751), .driver_data = BCM57504 },
-	{ PCI_VDEVICE(BROADCOM, 0x1752), .driver_data = BCM57502 },
-	{ PCI_VDEVICE(BROADCOM, 0x1800), .driver_data = BCM57508_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x1801), .driver_data = BCM57504_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x1802), .driver_data = BCM57502_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x1803), .driver_data = BCM57508_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x1804), .driver_data = BCM57504_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0x1805), .driver_data = BCM57502_NPAR },
-	{ PCI_VDEVICE(BROADCOM, 0xd802), .driver_data = BCM58802 },
-	{ PCI_VDEVICE(BROADCOM, 0xd804), .driver_data = BCM58804 },
-#ifdef CONFIG_BNXT_SRIOV
-	{ PCI_VDEVICE(BROADCOM, 0x1606), .driver_data = NETXTREME_E_VF },
-	{ PCI_VDEVICE(BROADCOM, 0x1607), .driver_data = NETXTREME_E_VF_HV },
-	{ PCI_VDEVICE(BROADCOM, 0x1608), .driver_data = NETXTREME_E_VF_HV },
-	{ PCI_VDEVICE(BROADCOM, 0x1609), .driver_data = NETXTREME_E_VF },
-	{ PCI_VDEVICE(BROADCOM, 0x16bd), .driver_data = NETXTREME_E_VF_HV },
-	{ PCI_VDEVICE(BROADCOM, 0x16c1), .driver_data = NETXTREME_E_VF },
-	{ PCI_VDEVICE(BROADCOM, 0x16c2), .driver_data = NETXTREME_C_VF_HV },
-	{ PCI_VDEVICE(BROADCOM, 0x16c3), .driver_data = NETXTREME_C_VF_HV },
-	{ PCI_VDEVICE(BROADCOM, 0x16c4), .driver_data = NETXTREME_E_VF_HV },
-	{ PCI_VDEVICE(BROADCOM, 0x16c5), .driver_data = NETXTREME_E_VF_HV },
-	{ PCI_VDEVICE(BROADCOM, 0x16cb), .driver_data = NETXTREME_C_VF },
-	{ PCI_VDEVICE(BROADCOM, 0x16d3), .driver_data = NETXTREME_E_VF },
-	{ PCI_VDEVICE(BROADCOM, 0x16dc), .driver_data = NETXTREME_E_VF },
-	{ PCI_VDEVICE(BROADCOM, 0x16e1), .driver_data = NETXTREME_C_VF },
-	{ PCI_VDEVICE(BROADCOM, 0x16e5), .driver_data = NETXTREME_C_VF },
-	{ PCI_VDEVICE(BROADCOM, 0x16e6), .driver_data = NETXTREME_C_VF_HV },
-	{ PCI_VDEVICE(BROADCOM, 0x1806), .driver_data = NETXTREME_E_P5_VF },
-	{ PCI_VDEVICE(BROADCOM, 0x1807), .driver_data = NETXTREME_E_P5_VF },
-	{ PCI_VDEVICE(BROADCOM, 0x1808), .driver_data = NETXTREME_E_P5_VF_HV },
-	{ PCI_VDEVICE(BROADCOM, 0x1809), .driver_data = NETXTREME_E_P5_VF_HV },
-	{ PCI_VDEVICE(BROADCOM, 0xd800), .driver_data = NETXTREME_S_VF },
-#endif
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id bnxt_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(BROADCOM, 0x1604), .driver_data = BCM5745x_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1605), .driver_data = BCM5745x_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1614), .driver_data = BCM57454 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16c0), .driver_data = BCM57417_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16c8), .driver_data = BCM57301 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16c9), .driver_data = BCM57302 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16ca), .driver_data = BCM57304 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16cc), .driver_data = BCM57417_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16cd), .driver_data = BCM58700 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16ce), .driver_data = BCM57311 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16cf), .driver_data = BCM57312 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16d0), .driver_data = BCM57402 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16d1), .driver_data = BCM57404 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16d2), .driver_data = BCM57406 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16d4), .driver_data = BCM57402_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16d5), .driver_data = BCM57407 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16d6), .driver_data = BCM57412 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16d7), .driver_data = BCM57414 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16d8), .driver_data = BCM57416 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16d9), .driver_data = BCM57417 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16de), .driver_data = BCM57412_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16df), .driver_data = BCM57314 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16e2), .driver_data = BCM57417_SFP पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16e3), .driver_data = BCM57416_SFP पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16e7), .driver_data = BCM57404_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16e8), .driver_data = BCM57406_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16e9), .driver_data = BCM57407_SFP पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16ea), .driver_data = BCM57407_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16eb), .driver_data = BCM57412_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16ec), .driver_data = BCM57414_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16ed), .driver_data = BCM57414_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16ee), .driver_data = BCM57416_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16ef), .driver_data = BCM57416_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16f0), .driver_data = BCM58808 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16f1), .driver_data = BCM57452 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1750), .driver_data = BCM57508 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1751), .driver_data = BCM57504 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1752), .driver_data = BCM57502 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1800), .driver_data = BCM57508_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1801), .driver_data = BCM57504_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1802), .driver_data = BCM57502_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1803), .driver_data = BCM57508_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1804), .driver_data = BCM57504_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1805), .driver_data = BCM57502_NPAR पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0xd802), .driver_data = BCM58802 पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0xd804), .driver_data = BCM58804 पूर्ण,
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	अणु PCI_VDEVICE(BROADCOM, 0x1606), .driver_data = NETXTREME_E_VF पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1607), .driver_data = NETXTREME_E_VF_HV पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1608), .driver_data = NETXTREME_E_VF_HV पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1609), .driver_data = NETXTREME_E_VF पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16bd), .driver_data = NETXTREME_E_VF_HV पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16c1), .driver_data = NETXTREME_E_VF पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16c2), .driver_data = NETXTREME_C_VF_HV पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16c3), .driver_data = NETXTREME_C_VF_HV पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16c4), .driver_data = NETXTREME_E_VF_HV पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16c5), .driver_data = NETXTREME_E_VF_HV पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16cb), .driver_data = NETXTREME_C_VF पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16d3), .driver_data = NETXTREME_E_VF पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16dc), .driver_data = NETXTREME_E_VF पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16e1), .driver_data = NETXTREME_C_VF पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16e5), .driver_data = NETXTREME_C_VF पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x16e6), .driver_data = NETXTREME_C_VF_HV पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1806), .driver_data = NETXTREME_E_P5_VF पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1807), .driver_data = NETXTREME_E_P5_VF पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1808), .driver_data = NETXTREME_E_P5_VF_HV पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0x1809), .driver_data = NETXTREME_E_P5_VF_HV पूर्ण,
+	अणु PCI_VDEVICE(BROADCOM, 0xd800), .driver_data = NETXTREME_S_VF पूर्ण,
+#पूर्ण_अगर
+	अणु 0 पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, bnxt_pci_tbl);
 
-static const u16 bnxt_vf_req_snif[] = {
+अटल स्थिर u16 bnxt_vf_req_snअगर[] = अणु
 	HWRM_FUNC_CFG,
 	HWRM_FUNC_VF_CFG,
 	HWRM_PORT_PHY_QCFG,
 	HWRM_CFA_L2_FILTER_ALLOC,
-};
+पूर्ण;
 
-static const u16 bnxt_async_events_arr[] = {
+अटल स्थिर u16 bnxt_async_events_arr[] = अणु
 	ASYNC_EVENT_CMPL_EVENT_ID_LINK_STATUS_CHANGE,
 	ASYNC_EVENT_CMPL_EVENT_ID_LINK_SPEED_CHANGE,
 	ASYNC_EVENT_CMPL_EVENT_ID_PF_DRVR_UNLOAD,
@@ -274,63 +275,63 @@ static const u16 bnxt_async_events_arr[] = {
 	ASYNC_EVENT_CMPL_EVENT_ID_DEBUG_NOTIFICATION,
 	ASYNC_EVENT_CMPL_EVENT_ID_RING_MONITOR_MSG,
 	ASYNC_EVENT_CMPL_EVENT_ID_ECHO_REQUEST,
-};
+पूर्ण;
 
-static struct workqueue_struct *bnxt_pf_wq;
+अटल काष्ठा workqueue_काष्ठा *bnxt_pf_wq;
 
-static bool bnxt_vf_pciid(enum board_idx idx)
-{
-	return (idx == NETXTREME_C_VF || idx == NETXTREME_E_VF ||
+अटल bool bnxt_vf_pciid(क्रमागत board_idx idx)
+अणु
+	वापस (idx == NETXTREME_C_VF || idx == NETXTREME_E_VF ||
 		idx == NETXTREME_S_VF || idx == NETXTREME_C_VF_HV ||
 		idx == NETXTREME_E_VF_HV || idx == NETXTREME_E_P5_VF ||
 		idx == NETXTREME_E_P5_VF_HV);
-}
+पूर्ण
 
-#define DB_CP_REARM_FLAGS	(DB_KEY_CP | DB_IDX_VALID)
-#define DB_CP_FLAGS		(DB_KEY_CP | DB_IDX_VALID | DB_IRQ_DIS)
-#define DB_CP_IRQ_DIS_FLAGS	(DB_KEY_CP | DB_IRQ_DIS)
+#घोषणा DB_CP_REARM_FLAGS	(DB_KEY_CP | DB_IDX_VALID)
+#घोषणा DB_CP_FLAGS		(DB_KEY_CP | DB_IDX_VALID | DB_IRQ_DIS)
+#घोषणा DB_CP_IRQ_DIS_FLAGS	(DB_KEY_CP | DB_IRQ_DIS)
 
-#define BNXT_CP_DB_IRQ_DIS(db)						\
-		writel(DB_CP_IRQ_DIS_FLAGS, db)
+#घोषणा BNXT_CP_DB_IRQ_DIS(db)						\
+		ग_लिखोl(DB_CP_IRQ_DIS_FLAGS, db)
 
-#define BNXT_DB_CQ(db, idx)						\
-	writel(DB_CP_FLAGS | RING_CMP(idx), (db)->doorbell)
+#घोषणा BNXT_DB_CQ(db, idx)						\
+	ग_लिखोl(DB_CP_FLAGS | RING_CMP(idx), (db)->करोorbell)
 
-#define BNXT_DB_NQ_P5(db, idx)						\
-	writeq((db)->db_key64 | DBR_TYPE_NQ | RING_CMP(idx), (db)->doorbell)
+#घोषणा BNXT_DB_NQ_P5(db, idx)						\
+	ग_लिखोq((db)->db_key64 | DBR_TYPE_NQ | RING_CMP(idx), (db)->करोorbell)
 
-#define BNXT_DB_CQ_ARM(db, idx)						\
-	writel(DB_CP_REARM_FLAGS | RING_CMP(idx), (db)->doorbell)
+#घोषणा BNXT_DB_CQ_ARM(db, idx)						\
+	ग_लिखोl(DB_CP_REARM_FLAGS | RING_CMP(idx), (db)->करोorbell)
 
-#define BNXT_DB_NQ_ARM_P5(db, idx)					\
-	writeq((db)->db_key64 | DBR_TYPE_NQ_ARM | RING_CMP(idx), (db)->doorbell)
+#घोषणा BNXT_DB_NQ_ARM_P5(db, idx)					\
+	ग_लिखोq((db)->db_key64 | DBR_TYPE_NQ_ARM | RING_CMP(idx), (db)->करोorbell)
 
-static void bnxt_db_nq(struct bnxt *bp, struct bnxt_db_info *db, u32 idx)
-{
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
+अटल व्योम bnxt_db_nq(काष्ठा bnxt *bp, काष्ठा bnxt_db_info *db, u32 idx)
+अणु
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 		BNXT_DB_NQ_P5(db, idx);
-	else
+	अन्यथा
 		BNXT_DB_CQ(db, idx);
-}
+पूर्ण
 
-static void bnxt_db_nq_arm(struct bnxt *bp, struct bnxt_db_info *db, u32 idx)
-{
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
+अटल व्योम bnxt_db_nq_arm(काष्ठा bnxt *bp, काष्ठा bnxt_db_info *db, u32 idx)
+अणु
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 		BNXT_DB_NQ_ARM_P5(db, idx);
-	else
+	अन्यथा
 		BNXT_DB_CQ_ARM(db, idx);
-}
+पूर्ण
 
-static void bnxt_db_cq(struct bnxt *bp, struct bnxt_db_info *db, u32 idx)
-{
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
-		writeq(db->db_key64 | DBR_TYPE_CQ_ARMALL | RING_CMP(idx),
-		       db->doorbell);
-	else
+अटल व्योम bnxt_db_cq(काष्ठा bnxt *bp, काष्ठा bnxt_db_info *db, u32 idx)
+अणु
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+		ग_लिखोq(db->db_key64 | DBR_TYPE_CQ_ARMALL | RING_CMP(idx),
+		       db->करोorbell);
+	अन्यथा
 		BNXT_DB_CQ(db, idx);
-}
+पूर्ण
 
-const u16 bnxt_lhint_arr[] = {
+स्थिर u16 bnxt_lhपूर्णांक_arr[] = अणु
 	TX_BD_FLAGS_LHINT_512_AND_SMALLER,
 	TX_BD_FLAGS_LHINT_512_TO_1023,
 	TX_BD_FLAGS_LHINT_1024_TO_2047,
@@ -350,49 +351,49 @@ const u16 bnxt_lhint_arr[] = {
 	TX_BD_FLAGS_LHINT_2048_AND_LARGER,
 	TX_BD_FLAGS_LHINT_2048_AND_LARGER,
 	TX_BD_FLAGS_LHINT_2048_AND_LARGER,
-};
+पूर्ण;
 
-static u16 bnxt_xmit_get_cfa_action(struct sk_buff *skb)
-{
-	struct metadata_dst *md_dst = skb_metadata_dst(skb);
+अटल u16 bnxt_xmit_get_cfa_action(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा metadata_dst *md_dst = skb_metadata_dst(skb);
 
-	if (!md_dst || md_dst->type != METADATA_HW_PORT_MUX)
-		return 0;
+	अगर (!md_dst || md_dst->type != METADATA_HW_PORT_MUX)
+		वापस 0;
 
-	return md_dst->u.port_info.port_id;
-}
+	वापस md_dst->u.port_info.port_id;
+पूर्ण
 
-static netdev_tx_t bnxt_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct bnxt *bp = netdev_priv(dev);
-	struct tx_bd *txbd;
-	struct tx_bd_ext *txbd1;
-	struct netdev_queue *txq;
-	int i;
+अटल netdev_tx_t bnxt_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
+	काष्ठा tx_bd *txbd;
+	काष्ठा tx_bd_ext *txbd1;
+	काष्ठा netdev_queue *txq;
+	पूर्णांक i;
 	dma_addr_t mapping;
-	unsigned int length, pad = 0;
-	u32 len, free_size, vlan_tag_flags, cfa_action, flags;
+	अचिन्हित पूर्णांक length, pad = 0;
+	u32 len, मुक्त_size, vlan_tag_flags, cfa_action, flags;
 	u16 prod, last_frag;
-	struct pci_dev *pdev = bp->pdev;
-	struct bnxt_tx_ring_info *txr;
-	struct bnxt_sw_tx_bd *tx_buf;
+	काष्ठा pci_dev *pdev = bp->pdev;
+	काष्ठा bnxt_tx_ring_info *txr;
+	काष्ठा bnxt_sw_tx_bd *tx_buf;
 	__le32 lflags = 0;
 
 	i = skb_get_queue_mapping(skb);
-	if (unlikely(i >= bp->tx_nr_rings)) {
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	}
+	अगर (unlikely(i >= bp->tx_nr_rings)) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	txq = netdev_get_tx_queue(dev, i);
 	txr = &bp->tx_ring[bp->tx_ring_map[i]];
 	prod = txr->tx_prod;
 
-	free_size = bnxt_tx_avail(bp, txr);
-	if (unlikely(free_size < skb_shinfo(skb)->nr_frags + 2)) {
-		netif_tx_stop_queue(txq);
-		return NETDEV_TX_BUSY;
-	}
+	मुक्त_size = bnxt_tx_avail(bp, txr);
+	अगर (unlikely(मुक्त_size < skb_shinfo(skb)->nr_frags + 2)) अणु
+		netअगर_tx_stop_queue(txq);
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	length = skb->len;
 	len = skb_headlen(skb);
@@ -408,31 +409,31 @@ static netdev_tx_t bnxt_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	vlan_tag_flags = 0;
 	cfa_action = bnxt_xmit_get_cfa_action(skb);
-	if (skb_vlan_tag_present(skb)) {
+	अगर (skb_vlan_tag_present(skb)) अणु
 		vlan_tag_flags = TX_BD_CFA_META_KEY_VLAN |
 				 skb_vlan_tag_get(skb);
 		/* Currently supports 8021Q, 8021AD vlan offloads
 		 * QINQ1, QINQ2, QINQ3 vlan headers are deprecated
 		 */
-		if (skb->vlan_proto == htons(ETH_P_8021Q))
+		अगर (skb->vlan_proto == htons(ETH_P_8021Q))
 			vlan_tag_flags |= 1 << TX_BD_CFA_META_TPID_SHIFT;
-	}
+	पूर्ण
 
-	if (unlikely(skb->no_fcs)) {
+	अगर (unlikely(skb->no_fcs)) अणु
 		lflags |= cpu_to_le32(TX_BD_FLAGS_NO_CRC);
-		goto normal_tx;
-	}
+		जाओ normal_tx;
+	पूर्ण
 
-	if (free_size == bp->tx_ring_size && length <= bp->tx_push_thresh) {
-		struct tx_push_buffer *tx_push_buf = txr->tx_push;
-		struct tx_push_bd *tx_push = &tx_push_buf->push_bd;
-		struct tx_bd_ext *tx_push1 = &tx_push->txbd2;
-		void __iomem *db = txr->tx_db.doorbell;
-		void *pdata = tx_push_buf->data;
+	अगर (मुक्त_size == bp->tx_ring_size && length <= bp->tx_push_thresh) अणु
+		काष्ठा tx_push_buffer *tx_push_buf = txr->tx_push;
+		काष्ठा tx_push_bd *tx_push = &tx_push_buf->push_bd;
+		काष्ठा tx_bd_ext *tx_push1 = &tx_push->txbd2;
+		व्योम __iomem *db = txr->tx_db.करोorbell;
+		व्योम *pdata = tx_push_buf->data;
 		u64 *end;
-		int j, push_len;
+		पूर्णांक j, push_len;
 
-		/* Set COAL_NOW to be ready quickly for the next push */
+		/* Set COAL_NOW to be पढ़ोy quickly क्रम the next push */
 		tx_push->tx_bd_len_flags_type =
 			cpu_to_le32((length << TX_BD_LEN_SHIFT) |
 					TX_BD_TYPE_LONG_TX_BD |
@@ -441,10 +442,10 @@ static netdev_tx_t bnxt_start_xmit(struct sk_buff *skb, struct net_device *dev)
 					TX_BD_FLAGS_PACKET_END |
 					(2 << TX_BD_FLAGS_BD_CNT_SHIFT));
 
-		if (skb->ip_summed == CHECKSUM_PARTIAL)
+		अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 			tx_push1->tx_bd_hsize_lflags =
 					cpu_to_le32(TX_BD_FLAGS_TCP_UDP_CHKSUM);
-		else
+		अन्यथा
 			tx_push1->tx_bd_hsize_lflags = 0;
 
 		tx_push1->tx_bd_cfa_meta = cpu_to_le32(vlan_tag_flags);
@@ -457,62 +458,62 @@ static netdev_tx_t bnxt_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 		skb_copy_from_linear_data(skb, pdata, len);
 		pdata += len;
-		for (j = 0; j < last_frag; j++) {
+		क्रम (j = 0; j < last_frag; j++) अणु
 			skb_frag_t *frag = &skb_shinfo(skb)->frags[j];
-			void *fptr;
+			व्योम *fptr;
 
 			fptr = skb_frag_address_safe(frag);
-			if (!fptr)
-				goto normal_tx;
+			अगर (!fptr)
+				जाओ normal_tx;
 
-			memcpy(pdata, fptr, skb_frag_size(frag));
+			स_नकल(pdata, fptr, skb_frag_size(frag));
 			pdata += skb_frag_size(frag);
-		}
+		पूर्ण
 
 		txbd->tx_bd_len_flags_type = tx_push->tx_bd_len_flags_type;
 		txbd->tx_bd_haddr = txr->data_mapping;
 		prod = NEXT_TX(prod);
 		txbd = &txr->tx_desc_ring[TX_RING(prod)][TX_IDX(prod)];
-		memcpy(txbd, tx_push1, sizeof(*txbd));
+		स_नकल(txbd, tx_push1, माप(*txbd));
 		prod = NEXT_TX(prod);
-		tx_push->doorbell =
+		tx_push->करोorbell =
 			cpu_to_le32(DB_KEY_TX_PUSH | DB_LONG_TX_PUSH | prod);
 		txr->tx_prod = prod;
 
 		tx_buf->is_push = 1;
 		netdev_tx_sent_queue(txq, skb->len);
-		wmb();	/* Sync is_push and byte queue before pushing data */
+		wmb();	/* Sync is_push and byte queue beक्रमe pushing data */
 
-		push_len = (length + sizeof(*tx_push) + 7) / 8;
-		if (push_len > 16) {
-			__iowrite64_copy(db, tx_push_buf, 16);
-			__iowrite32_copy(db + 4, tx_push_buf + 1,
+		push_len = (length + माप(*tx_push) + 7) / 8;
+		अगर (push_len > 16) अणु
+			__ioग_लिखो64_copy(db, tx_push_buf, 16);
+			__ioग_लिखो32_copy(db + 4, tx_push_buf + 1,
 					 (push_len - 16) << 1);
-		} else {
-			__iowrite64_copy(db, tx_push_buf, push_len);
-		}
+		पूर्ण अन्यथा अणु
+			__ioग_लिखो64_copy(db, tx_push_buf, push_len);
+		पूर्ण
 
-		goto tx_done;
-	}
+		जाओ tx_करोne;
+	पूर्ण
 
 normal_tx:
-	if (length < BNXT_MIN_PKT_SIZE) {
+	अगर (length < BNXT_MIN_PKT_SIZE) अणु
 		pad = BNXT_MIN_PKT_SIZE - length;
-		if (skb_pad(skb, pad)) {
-			/* SKB already freed. */
-			tx_buf->skb = NULL;
-			return NETDEV_TX_OK;
-		}
+		अगर (skb_pad(skb, pad)) अणु
+			/* SKB alपढ़ोy मुक्तd. */
+			tx_buf->skb = शून्य;
+			वापस NETDEV_TX_OK;
+		पूर्ण
 		length = BNXT_MIN_PKT_SIZE;
-	}
+	पूर्ण
 
 	mapping = dma_map_single(&pdev->dev, skb->data, len, DMA_TO_DEVICE);
 
-	if (unlikely(dma_mapping_error(&pdev->dev, mapping))) {
-		dev_kfree_skb_any(skb);
-		tx_buf->skb = NULL;
-		return NETDEV_TX_OK;
-	}
+	अगर (unlikely(dma_mapping_error(&pdev->dev, mapping))) अणु
+		dev_kमुक्त_skb_any(skb);
+		tx_buf->skb = शून्य;
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	dma_unmap_addr_set(tx_buf, mapping, mapping);
 	flags = (len << TX_BD_LEN_SHIFT) | TX_BD_TYPE_LONG_TX_BD |
@@ -521,18 +522,18 @@ normal_tx:
 	txbd->tx_bd_haddr = cpu_to_le64(mapping);
 
 	prod = NEXT_TX(prod);
-	txbd1 = (struct tx_bd_ext *)
+	txbd1 = (काष्ठा tx_bd_ext *)
 		&txr->tx_desc_ring[TX_RING(prod)][TX_IDX(prod)];
 
 	txbd1->tx_bd_hsize_lflags = lflags;
-	if (skb_is_gso(skb)) {
+	अगर (skb_is_gso(skb)) अणु
 		u32 hdr_len;
 
-		if (skb->encapsulation)
+		अगर (skb->encapsulation)
 			hdr_len = skb_inner_network_offset(skb) +
 				skb_inner_network_header_len(skb) +
 				inner_tcp_hdrlen(skb);
-		else
+		अन्यथा
 			hdr_len = skb_transport_offset(skb) +
 				tcp_hdrlen(skb);
 
@@ -542,26 +543,26 @@ normal_tx:
 		length = skb_shinfo(skb)->gso_size;
 		txbd1->tx_bd_mss = cpu_to_le32(length);
 		length += hdr_len;
-	} else if (skb->ip_summed == CHECKSUM_PARTIAL) {
+	पूर्ण अन्यथा अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
 		txbd1->tx_bd_hsize_lflags |=
 			cpu_to_le32(TX_BD_FLAGS_TCP_UDP_CHKSUM);
 		txbd1->tx_bd_mss = 0;
-	}
+	पूर्ण
 
 	length >>= 9;
-	if (unlikely(length >= ARRAY_SIZE(bnxt_lhint_arr))) {
+	अगर (unlikely(length >= ARRAY_SIZE(bnxt_lhपूर्णांक_arr))) अणु
 		dev_warn_ratelimited(&pdev->dev, "Dropped oversize %d bytes TX packet.\n",
 				     skb->len);
 		i = 0;
-		goto tx_dma_error;
-	}
-	flags |= bnxt_lhint_arr[length];
+		जाओ tx_dma_error;
+	पूर्ण
+	flags |= bnxt_lhपूर्णांक_arr[length];
 	txbd->tx_bd_len_flags_type = cpu_to_le32(flags);
 
 	txbd1->tx_bd_cfa_meta = cpu_to_le32(vlan_tag_flags);
 	txbd1->tx_bd_cfa_action =
 			cpu_to_le32(cfa_action << TX_BD_CFA_ACTION_SHIFT);
-	for (i = 0; i < last_frag; i++) {
+	क्रम (i = 0; i < last_frag; i++) अणु
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 		prod = NEXT_TX(prod);
@@ -571,8 +572,8 @@ normal_tx:
 		mapping = skb_frag_dma_map(&pdev->dev, frag, 0, len,
 					   DMA_TO_DEVICE);
 
-		if (unlikely(dma_mapping_error(&pdev->dev, mapping)))
-			goto tx_dma_error;
+		अगर (unlikely(dma_mapping_error(&pdev->dev, mapping)))
+			जाओ tx_dma_error;
 
 		tx_buf = &txr->tx_buf_ring[prod];
 		dma_unmap_addr_set(tx_buf, mapping, mapping);
@@ -581,7 +582,7 @@ normal_tx:
 
 		flags = len << TX_BD_LEN_SHIFT;
 		txbd->tx_bd_len_flags_type = cpu_to_le32(flags);
-	}
+	पूर्ण
 
 	flags &= ~TX_BD_LEN;
 	txbd->tx_bd_len_flags_type =
@@ -590,33 +591,33 @@ normal_tx:
 
 	netdev_tx_sent_queue(txq, skb->len);
 
-	/* Sync BD data before updating doorbell */
+	/* Sync BD data beक्रमe updating करोorbell */
 	wmb();
 
 	prod = NEXT_TX(prod);
 	txr->tx_prod = prod;
 
-	if (!netdev_xmit_more() || netif_xmit_stopped(txq))
-		bnxt_db_write(bp, &txr->tx_db, prod);
+	अगर (!netdev_xmit_more() || netअगर_xmit_stopped(txq))
+		bnxt_db_ग_लिखो(bp, &txr->tx_db, prod);
 
-tx_done:
+tx_करोne:
 
-	if (unlikely(bnxt_tx_avail(bp, txr) <= MAX_SKB_FRAGS + 1)) {
-		if (netdev_xmit_more() && !tx_buf->is_push)
-			bnxt_db_write(bp, &txr->tx_db, prod);
+	अगर (unlikely(bnxt_tx_avail(bp, txr) <= MAX_SKB_FRAGS + 1)) अणु
+		अगर (netdev_xmit_more() && !tx_buf->is_push)
+			bnxt_db_ग_लिखो(bp, &txr->tx_db, prod);
 
-		netif_tx_stop_queue(txq);
+		netअगर_tx_stop_queue(txq);
 
-		/* netif_tx_stop_queue() must be done before checking
+		/* netअगर_tx_stop_queue() must be करोne beक्रमe checking
 		 * tx index in bnxt_tx_avail() below, because in
-		 * bnxt_tx_int(), we update tx index before checking for
-		 * netif_tx_queue_stopped().
+		 * bnxt_tx_पूर्णांक(), we update tx index beक्रमe checking क्रम
+		 * netअगर_tx_queue_stopped().
 		 */
 		smp_mb();
-		if (bnxt_tx_avail(bp, txr) > bp->tx_wake_thresh)
-			netif_tx_wake_queue(txq);
-	}
-	return NETDEV_TX_OK;
+		अगर (bnxt_tx_avail(bp, txr) > bp->tx_wake_thresh)
+			netअगर_tx_wake_queue(txq);
+	पूर्ण
+	वापस NETDEV_TX_OK;
 
 tx_dma_error:
 	last_frag = i;
@@ -624,53 +625,53 @@ tx_dma_error:
 	/* start back at beginning and unmap skb */
 	prod = txr->tx_prod;
 	tx_buf = &txr->tx_buf_ring[prod];
-	tx_buf->skb = NULL;
+	tx_buf->skb = शून्य;
 	dma_unmap_single(&pdev->dev, dma_unmap_addr(tx_buf, mapping),
 			 skb_headlen(skb), PCI_DMA_TODEVICE);
 	prod = NEXT_TX(prod);
 
-	/* unmap remaining mapped pages */
-	for (i = 0; i < last_frag; i++) {
+	/* unmap reमुख्यing mapped pages */
+	क्रम (i = 0; i < last_frag; i++) अणु
 		prod = NEXT_TX(prod);
 		tx_buf = &txr->tx_buf_ring[prod];
 		dma_unmap_page(&pdev->dev, dma_unmap_addr(tx_buf, mapping),
 			       skb_frag_size(&skb_shinfo(skb)->frags[i]),
 			       PCI_DMA_TODEVICE);
-	}
+	पूर्ण
 
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void bnxt_tx_int(struct bnxt *bp, struct bnxt_napi *bnapi, int nr_pkts)
-{
-	struct bnxt_tx_ring_info *txr = bnapi->tx_ring;
-	struct netdev_queue *txq = netdev_get_tx_queue(bp->dev, txr->txq_index);
+अटल व्योम bnxt_tx_पूर्णांक(काष्ठा bnxt *bp, काष्ठा bnxt_napi *bnapi, पूर्णांक nr_pkts)
+अणु
+	काष्ठा bnxt_tx_ring_info *txr = bnapi->tx_ring;
+	काष्ठा netdev_queue *txq = netdev_get_tx_queue(bp->dev, txr->txq_index);
 	u16 cons = txr->tx_cons;
-	struct pci_dev *pdev = bp->pdev;
-	int i;
-	unsigned int tx_bytes = 0;
+	काष्ठा pci_dev *pdev = bp->pdev;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक tx_bytes = 0;
 
-	for (i = 0; i < nr_pkts; i++) {
-		struct bnxt_sw_tx_bd *tx_buf;
-		struct sk_buff *skb;
-		int j, last;
+	क्रम (i = 0; i < nr_pkts; i++) अणु
+		काष्ठा bnxt_sw_tx_bd *tx_buf;
+		काष्ठा sk_buff *skb;
+		पूर्णांक j, last;
 
 		tx_buf = &txr->tx_buf_ring[cons];
 		cons = NEXT_TX(cons);
 		skb = tx_buf->skb;
-		tx_buf->skb = NULL;
+		tx_buf->skb = शून्य;
 
-		if (tx_buf->is_push) {
+		अगर (tx_buf->is_push) अणु
 			tx_buf->is_push = 0;
-			goto next_tx_int;
-		}
+			जाओ next_tx_पूर्णांक;
+		पूर्ण
 
 		dma_unmap_single(&pdev->dev, dma_unmap_addr(tx_buf, mapping),
 				 skb_headlen(skb), PCI_DMA_TODEVICE);
 		last = tx_buf->nr_frags;
 
-		for (j = 0; j < last; j++) {
+		क्रम (j = 0; j < last; j++) अणु
 			cons = NEXT_TX(cons);
 			tx_buf = &txr->tx_buf_ring[cons];
 			dma_unmap_page(
@@ -678,114 +679,114 @@ static void bnxt_tx_int(struct bnxt *bp, struct bnxt_napi *bnapi, int nr_pkts)
 				dma_unmap_addr(tx_buf, mapping),
 				skb_frag_size(&skb_shinfo(skb)->frags[j]),
 				PCI_DMA_TODEVICE);
-		}
+		पूर्ण
 
-next_tx_int:
+next_tx_पूर्णांक:
 		cons = NEXT_TX(cons);
 
 		tx_bytes += skb->len;
-		dev_kfree_skb_any(skb);
-	}
+		dev_kमुक्त_skb_any(skb);
+	पूर्ण
 
 	netdev_tx_completed_queue(txq, nr_pkts, tx_bytes);
 	txr->tx_cons = cons;
 
 	/* Need to make the tx_cons update visible to bnxt_start_xmit()
-	 * before checking for netif_tx_queue_stopped().  Without the
+	 * beक्रमe checking क्रम netअगर_tx_queue_stopped().  Without the
 	 * memory barrier, there is a small possibility that bnxt_start_xmit()
-	 * will miss it and cause the queue to be stopped forever.
+	 * will miss it and cause the queue to be stopped क्रमever.
 	 */
 	smp_mb();
 
-	if (unlikely(netif_tx_queue_stopped(txq)) &&
-	    (bnxt_tx_avail(bp, txr) > bp->tx_wake_thresh)) {
-		__netif_tx_lock(txq, smp_processor_id());
-		if (netif_tx_queue_stopped(txq) &&
+	अगर (unlikely(netअगर_tx_queue_stopped(txq)) &&
+	    (bnxt_tx_avail(bp, txr) > bp->tx_wake_thresh)) अणु
+		__netअगर_tx_lock(txq, smp_processor_id());
+		अगर (netअगर_tx_queue_stopped(txq) &&
 		    bnxt_tx_avail(bp, txr) > bp->tx_wake_thresh &&
 		    txr->dev_state != BNXT_DEV_STATE_CLOSING)
-			netif_tx_wake_queue(txq);
-		__netif_tx_unlock(txq);
-	}
-}
+			netअगर_tx_wake_queue(txq);
+		__netअगर_tx_unlock(txq);
+	पूर्ण
+पूर्ण
 
-static struct page *__bnxt_alloc_rx_page(struct bnxt *bp, dma_addr_t *mapping,
-					 struct bnxt_rx_ring_info *rxr,
+अटल काष्ठा page *__bnxt_alloc_rx_page(काष्ठा bnxt *bp, dma_addr_t *mapping,
+					 काष्ठा bnxt_rx_ring_info *rxr,
 					 gfp_t gfp)
-{
-	struct device *dev = &bp->pdev->dev;
-	struct page *page;
+अणु
+	काष्ठा device *dev = &bp->pdev->dev;
+	काष्ठा page *page;
 
 	page = page_pool_dev_alloc_pages(rxr->page_pool);
-	if (!page)
-		return NULL;
+	अगर (!page)
+		वापस शून्य;
 
 	*mapping = dma_map_page_attrs(dev, page, 0, PAGE_SIZE, bp->rx_dir,
 				      DMA_ATTR_WEAK_ORDERING);
-	if (dma_mapping_error(dev, *mapping)) {
+	अगर (dma_mapping_error(dev, *mapping)) अणु
 		page_pool_recycle_direct(rxr->page_pool, page);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	*mapping += bp->rx_dma_offset;
-	return page;
-}
+	वापस page;
+पूर्ण
 
-static inline u8 *__bnxt_alloc_rx_data(struct bnxt *bp, dma_addr_t *mapping,
+अटल अंतरभूत u8 *__bnxt_alloc_rx_data(काष्ठा bnxt *bp, dma_addr_t *mapping,
 				       gfp_t gfp)
-{
+अणु
 	u8 *data;
-	struct pci_dev *pdev = bp->pdev;
+	काष्ठा pci_dev *pdev = bp->pdev;
 
-	data = kmalloc(bp->rx_buf_size, gfp);
-	if (!data)
-		return NULL;
+	data = kदो_स्मृति(bp->rx_buf_size, gfp);
+	अगर (!data)
+		वापस शून्य;
 
 	*mapping = dma_map_single_attrs(&pdev->dev, data + bp->rx_dma_offset,
 					bp->rx_buf_use_size, bp->rx_dir,
 					DMA_ATTR_WEAK_ORDERING);
 
-	if (dma_mapping_error(&pdev->dev, *mapping)) {
-		kfree(data);
-		data = NULL;
-	}
-	return data;
-}
+	अगर (dma_mapping_error(&pdev->dev, *mapping)) अणु
+		kमुक्त(data);
+		data = शून्य;
+	पूर्ण
+	वापस data;
+पूर्ण
 
-int bnxt_alloc_rx_data(struct bnxt *bp, struct bnxt_rx_ring_info *rxr,
+पूर्णांक bnxt_alloc_rx_data(काष्ठा bnxt *bp, काष्ठा bnxt_rx_ring_info *rxr,
 		       u16 prod, gfp_t gfp)
-{
-	struct rx_bd *rxbd = &rxr->rx_desc_ring[RX_RING(prod)][RX_IDX(prod)];
-	struct bnxt_sw_rx_bd *rx_buf = &rxr->rx_buf_ring[prod];
+अणु
+	काष्ठा rx_bd *rxbd = &rxr->rx_desc_ring[RX_RING(prod)][RX_IDX(prod)];
+	काष्ठा bnxt_sw_rx_bd *rx_buf = &rxr->rx_buf_ring[prod];
 	dma_addr_t mapping;
 
-	if (BNXT_RX_PAGE_MODE(bp)) {
-		struct page *page =
+	अगर (BNXT_RX_PAGE_MODE(bp)) अणु
+		काष्ठा page *page =
 			__bnxt_alloc_rx_page(bp, &mapping, rxr, gfp);
 
-		if (!page)
-			return -ENOMEM;
+		अगर (!page)
+			वापस -ENOMEM;
 
 		rx_buf->data = page;
 		rx_buf->data_ptr = page_address(page) + bp->rx_offset;
-	} else {
+	पूर्ण अन्यथा अणु
 		u8 *data = __bnxt_alloc_rx_data(bp, &mapping, gfp);
 
-		if (!data)
-			return -ENOMEM;
+		अगर (!data)
+			वापस -ENOMEM;
 
 		rx_buf->data = data;
 		rx_buf->data_ptr = data + bp->rx_offset;
-	}
+	पूर्ण
 	rx_buf->mapping = mapping;
 
 	rxbd->rx_bd_haddr = cpu_to_le64(mapping);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void bnxt_reuse_rx_data(struct bnxt_rx_ring_info *rxr, u16 cons, void *data)
-{
+व्योम bnxt_reuse_rx_data(काष्ठा bnxt_rx_ring_info *rxr, u16 cons, व्योम *data)
+अणु
 	u16 prod = rxr->rx_prod;
-	struct bnxt_sw_rx_bd *cons_rx_buf, *prod_rx_buf;
-	struct rx_bd *cons_bd, *prod_bd;
+	काष्ठा bnxt_sw_rx_bd *cons_rx_buf, *prod_rx_buf;
+	काष्ठा rx_bd *cons_bd, *prod_bd;
 
 	prod_rx_buf = &rxr->rx_buf_ring[prod];
 	cons_rx_buf = &rxr->rx_buf_ring[cons];
@@ -799,61 +800,61 @@ void bnxt_reuse_rx_data(struct bnxt_rx_ring_info *rxr, u16 cons, void *data)
 	cons_bd = &rxr->rx_desc_ring[RX_RING(cons)][RX_IDX(cons)];
 
 	prod_bd->rx_bd_haddr = cons_bd->rx_bd_haddr;
-}
+पूर्ण
 
-static inline u16 bnxt_find_next_agg_idx(struct bnxt_rx_ring_info *rxr, u16 idx)
-{
+अटल अंतरभूत u16 bnxt_find_next_agg_idx(काष्ठा bnxt_rx_ring_info *rxr, u16 idx)
+अणु
 	u16 next, max = rxr->rx_agg_bmap_size;
 
 	next = find_next_zero_bit(rxr->rx_agg_bmap, max, idx);
-	if (next >= max)
+	अगर (next >= max)
 		next = find_first_zero_bit(rxr->rx_agg_bmap, max);
-	return next;
-}
+	वापस next;
+पूर्ण
 
-static inline int bnxt_alloc_rx_page(struct bnxt *bp,
-				     struct bnxt_rx_ring_info *rxr,
+अटल अंतरभूत पूर्णांक bnxt_alloc_rx_page(काष्ठा bnxt *bp,
+				     काष्ठा bnxt_rx_ring_info *rxr,
 				     u16 prod, gfp_t gfp)
-{
-	struct rx_bd *rxbd =
+अणु
+	काष्ठा rx_bd *rxbd =
 		&rxr->rx_agg_desc_ring[RX_RING(prod)][RX_IDX(prod)];
-	struct bnxt_sw_rx_agg_bd *rx_agg_buf;
-	struct pci_dev *pdev = bp->pdev;
-	struct page *page;
+	काष्ठा bnxt_sw_rx_agg_bd *rx_agg_buf;
+	काष्ठा pci_dev *pdev = bp->pdev;
+	काष्ठा page *page;
 	dma_addr_t mapping;
 	u16 sw_prod = rxr->rx_sw_agg_prod;
-	unsigned int offset = 0;
+	अचिन्हित पूर्णांक offset = 0;
 
-	if (PAGE_SIZE > BNXT_RX_PAGE_SIZE) {
+	अगर (PAGE_SIZE > BNXT_RX_PAGE_SIZE) अणु
 		page = rxr->rx_page;
-		if (!page) {
+		अगर (!page) अणु
 			page = alloc_page(gfp);
-			if (!page)
-				return -ENOMEM;
+			अगर (!page)
+				वापस -ENOMEM;
 			rxr->rx_page = page;
 			rxr->rx_page_offset = 0;
-		}
+		पूर्ण
 		offset = rxr->rx_page_offset;
 		rxr->rx_page_offset += BNXT_RX_PAGE_SIZE;
-		if (rxr->rx_page_offset == PAGE_SIZE)
-			rxr->rx_page = NULL;
-		else
+		अगर (rxr->rx_page_offset == PAGE_SIZE)
+			rxr->rx_page = शून्य;
+		अन्यथा
 			get_page(page);
-	} else {
+	पूर्ण अन्यथा अणु
 		page = alloc_page(gfp);
-		if (!page)
-			return -ENOMEM;
-	}
+		अगर (!page)
+			वापस -ENOMEM;
+	पूर्ण
 
 	mapping = dma_map_page_attrs(&pdev->dev, page, offset,
 				     BNXT_RX_PAGE_SIZE, PCI_DMA_FROMDEVICE,
 				     DMA_ATTR_WEAK_ORDERING);
-	if (dma_mapping_error(&pdev->dev, mapping)) {
-		__free_page(page);
-		return -EIO;
-	}
+	अगर (dma_mapping_error(&pdev->dev, mapping)) अणु
+		__मुक्त_page(page);
+		वापस -EIO;
+	पूर्ण
 
-	if (unlikely(test_bit(sw_prod, rxr->rx_agg_bmap)))
+	अगर (unlikely(test_bit(sw_prod, rxr->rx_agg_bmap)))
 		sw_prod = bnxt_find_next_agg_idx(rxr, sw_prod);
 
 	__set_bit(sw_prod, rxr->rx_agg_bmap);
@@ -865,70 +866,70 @@ static inline int bnxt_alloc_rx_page(struct bnxt *bp,
 	rx_agg_buf->mapping = mapping;
 	rxbd->rx_bd_haddr = cpu_to_le64(mapping);
 	rxbd->rx_bd_opaque = sw_prod;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct rx_agg_cmp *bnxt_get_agg(struct bnxt *bp,
-				       struct bnxt_cp_ring_info *cpr,
+अटल काष्ठा rx_agg_cmp *bnxt_get_agg(काष्ठा bnxt *bp,
+				       काष्ठा bnxt_cp_ring_info *cpr,
 				       u16 cp_cons, u16 curr)
-{
-	struct rx_agg_cmp *agg;
+अणु
+	काष्ठा rx_agg_cmp *agg;
 
 	cp_cons = RING_CMP(ADV_RAW_CMP(cp_cons, curr));
-	agg = (struct rx_agg_cmp *)
+	agg = (काष्ठा rx_agg_cmp *)
 		&cpr->cp_desc_ring[CP_RING(cp_cons)][CP_IDX(cp_cons)];
-	return agg;
-}
+	वापस agg;
+पूर्ण
 
-static struct rx_agg_cmp *bnxt_get_tpa_agg_p5(struct bnxt *bp,
-					      struct bnxt_rx_ring_info *rxr,
+अटल काष्ठा rx_agg_cmp *bnxt_get_tpa_agg_p5(काष्ठा bnxt *bp,
+					      काष्ठा bnxt_rx_ring_info *rxr,
 					      u16 agg_id, u16 curr)
-{
-	struct bnxt_tpa_info *tpa_info = &rxr->rx_tpa[agg_id];
+अणु
+	काष्ठा bnxt_tpa_info *tpa_info = &rxr->rx_tpa[agg_id];
 
-	return &tpa_info->agg_arr[curr];
-}
+	वापस &tpa_info->agg_arr[curr];
+पूर्ण
 
-static void bnxt_reuse_rx_agg_bufs(struct bnxt_cp_ring_info *cpr, u16 idx,
+अटल व्योम bnxt_reuse_rx_agg_bufs(काष्ठा bnxt_cp_ring_info *cpr, u16 idx,
 				   u16 start, u32 agg_bufs, bool tpa)
-{
-	struct bnxt_napi *bnapi = cpr->bnapi;
-	struct bnxt *bp = bnapi->bp;
-	struct bnxt_rx_ring_info *rxr = bnapi->rx_ring;
+अणु
+	काष्ठा bnxt_napi *bnapi = cpr->bnapi;
+	काष्ठा bnxt *bp = bnapi->bp;
+	काष्ठा bnxt_rx_ring_info *rxr = bnapi->rx_ring;
 	u16 prod = rxr->rx_agg_prod;
 	u16 sw_prod = rxr->rx_sw_agg_prod;
 	bool p5_tpa = false;
 	u32 i;
 
-	if ((bp->flags & BNXT_FLAG_CHIP_P5) && tpa)
+	अगर ((bp->flags & BNXT_FLAG_CHIP_P5) && tpa)
 		p5_tpa = true;
 
-	for (i = 0; i < agg_bufs; i++) {
+	क्रम (i = 0; i < agg_bufs; i++) अणु
 		u16 cons;
-		struct rx_agg_cmp *agg;
-		struct bnxt_sw_rx_agg_bd *cons_rx_buf, *prod_rx_buf;
-		struct rx_bd *prod_bd;
-		struct page *page;
+		काष्ठा rx_agg_cmp *agg;
+		काष्ठा bnxt_sw_rx_agg_bd *cons_rx_buf, *prod_rx_buf;
+		काष्ठा rx_bd *prod_bd;
+		काष्ठा page *page;
 
-		if (p5_tpa)
+		अगर (p5_tpa)
 			agg = bnxt_get_tpa_agg_p5(bp, rxr, idx, start + i);
-		else
+		अन्यथा
 			agg = bnxt_get_agg(bp, cpr, idx, start + i);
 		cons = agg->rx_agg_cmp_opaque;
 		__clear_bit(cons, rxr->rx_agg_bmap);
 
-		if (unlikely(test_bit(sw_prod, rxr->rx_agg_bmap)))
+		अगर (unlikely(test_bit(sw_prod, rxr->rx_agg_bmap)))
 			sw_prod = bnxt_find_next_agg_idx(rxr, sw_prod);
 
 		__set_bit(sw_prod, rxr->rx_agg_bmap);
 		prod_rx_buf = &rxr->rx_agg_ring[sw_prod];
 		cons_rx_buf = &rxr->rx_agg_ring[cons];
 
-		/* It is possible for sw_prod to be equal to cons, so
-		 * set cons_rx_buf->page to NULL first.
+		/* It is possible क्रम sw_prod to be equal to cons, so
+		 * set cons_rx_buf->page to शून्य first.
 		 */
 		page = cons_rx_buf->page;
-		cons_rx_buf->page = NULL;
+		cons_rx_buf->page = शून्य;
 		prod_rx_buf->page = page;
 		prod_rx_buf->offset = cons_rx_buf->offset;
 
@@ -941,47 +942,47 @@ static void bnxt_reuse_rx_agg_bufs(struct bnxt_cp_ring_info *cpr, u16 idx,
 
 		prod = NEXT_RX_AGG(prod);
 		sw_prod = NEXT_RX_AGG(sw_prod);
-	}
+	पूर्ण
 	rxr->rx_agg_prod = prod;
 	rxr->rx_sw_agg_prod = sw_prod;
-}
+पूर्ण
 
-static struct sk_buff *bnxt_rx_page_skb(struct bnxt *bp,
-					struct bnxt_rx_ring_info *rxr,
-					u16 cons, void *data, u8 *data_ptr,
+अटल काष्ठा sk_buff *bnxt_rx_page_skb(काष्ठा bnxt *bp,
+					काष्ठा bnxt_rx_ring_info *rxr,
+					u16 cons, व्योम *data, u8 *data_ptr,
 					dma_addr_t dma_addr,
-					unsigned int offset_and_len)
-{
-	unsigned int payload = offset_and_len >> 16;
-	unsigned int len = offset_and_len & 0xffff;
+					अचिन्हित पूर्णांक offset_and_len)
+अणु
+	अचिन्हित पूर्णांक payload = offset_and_len >> 16;
+	अचिन्हित पूर्णांक len = offset_and_len & 0xffff;
 	skb_frag_t *frag;
-	struct page *page = data;
+	काष्ठा page *page = data;
 	u16 prod = rxr->rx_prod;
-	struct sk_buff *skb;
-	int off, err;
+	काष्ठा sk_buff *skb;
+	पूर्णांक off, err;
 
 	err = bnxt_alloc_rx_data(bp, rxr, prod, GFP_ATOMIC);
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		bnxt_reuse_rx_data(rxr, cons, data);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	dma_addr -= bp->rx_dma_offset;
 	dma_unmap_page_attrs(&bp->pdev->dev, dma_addr, PAGE_SIZE, bp->rx_dir,
 			     DMA_ATTR_WEAK_ORDERING);
 	page_pool_release_page(rxr->page_pool, page);
 
-	if (unlikely(!payload))
+	अगर (unlikely(!payload))
 		payload = eth_get_headlen(bp->dev, data_ptr, len);
 
 	skb = napi_alloc_skb(&rxr->bnapi->napi, payload);
-	if (!skb) {
-		__free_page(page);
-		return NULL;
-	}
+	अगर (!skb) अणु
+		__मुक्त_page(page);
+		वापस शून्य;
+	पूर्ण
 
-	off = (void *)data_ptr - page_address(page);
+	off = (व्योम *)data_ptr - page_address(page);
 	skb_add_rx_frag(skb, 0, page, off, len, PAGE_SIZE);
-	memcpy(skb->data - NET_IP_ALIGN, data_ptr - NET_IP_ALIGN,
+	स_नकल(skb->data - NET_IP_ALIGN, data_ptr - NET_IP_ALIGN,
 	       payload + NET_IP_ALIGN);
 
 	frag = &skb_shinfo(skb)->frags[0];
@@ -990,63 +991,63 @@ static struct sk_buff *bnxt_rx_page_skb(struct bnxt *bp,
 	skb->data_len -= payload;
 	skb->tail += payload;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *bnxt_rx_skb(struct bnxt *bp,
-				   struct bnxt_rx_ring_info *rxr, u16 cons,
-				   void *data, u8 *data_ptr,
+अटल काष्ठा sk_buff *bnxt_rx_skb(काष्ठा bnxt *bp,
+				   काष्ठा bnxt_rx_ring_info *rxr, u16 cons,
+				   व्योम *data, u8 *data_ptr,
 				   dma_addr_t dma_addr,
-				   unsigned int offset_and_len)
-{
+				   अचिन्हित पूर्णांक offset_and_len)
+अणु
 	u16 prod = rxr->rx_prod;
-	struct sk_buff *skb;
-	int err;
+	काष्ठा sk_buff *skb;
+	पूर्णांक err;
 
 	err = bnxt_alloc_rx_data(bp, rxr, prod, GFP_ATOMIC);
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		bnxt_reuse_rx_data(rxr, cons, data);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	skb = build_skb(data, 0);
 	dma_unmap_single_attrs(&bp->pdev->dev, dma_addr, bp->rx_buf_use_size,
 			       bp->rx_dir, DMA_ATTR_WEAK_ORDERING);
-	if (!skb) {
-		kfree(data);
-		return NULL;
-	}
+	अगर (!skb) अणु
+		kमुक्त(data);
+		वापस शून्य;
+	पूर्ण
 
 	skb_reserve(skb, bp->rx_offset);
 	skb_put(skb, offset_and_len & 0xffff);
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *bnxt_rx_pages(struct bnxt *bp,
-				     struct bnxt_cp_ring_info *cpr,
-				     struct sk_buff *skb, u16 idx,
+अटल काष्ठा sk_buff *bnxt_rx_pages(काष्ठा bnxt *bp,
+				     काष्ठा bnxt_cp_ring_info *cpr,
+				     काष्ठा sk_buff *skb, u16 idx,
 				     u32 agg_bufs, bool tpa)
-{
-	struct bnxt_napi *bnapi = cpr->bnapi;
-	struct pci_dev *pdev = bp->pdev;
-	struct bnxt_rx_ring_info *rxr = bnapi->rx_ring;
+अणु
+	काष्ठा bnxt_napi *bnapi = cpr->bnapi;
+	काष्ठा pci_dev *pdev = bp->pdev;
+	काष्ठा bnxt_rx_ring_info *rxr = bnapi->rx_ring;
 	u16 prod = rxr->rx_agg_prod;
 	bool p5_tpa = false;
 	u32 i;
 
-	if ((bp->flags & BNXT_FLAG_CHIP_P5) && tpa)
+	अगर ((bp->flags & BNXT_FLAG_CHIP_P5) && tpa)
 		p5_tpa = true;
 
-	for (i = 0; i < agg_bufs; i++) {
+	क्रम (i = 0; i < agg_bufs; i++) अणु
 		u16 cons, frag_len;
-		struct rx_agg_cmp *agg;
-		struct bnxt_sw_rx_agg_bd *cons_rx_buf;
-		struct page *page;
+		काष्ठा rx_agg_cmp *agg;
+		काष्ठा bnxt_sw_rx_agg_bd *cons_rx_buf;
+		काष्ठा page *page;
 		dma_addr_t mapping;
 
-		if (p5_tpa)
+		अगर (p5_tpa)
 			agg = bnxt_get_tpa_agg_p5(bp, rxr, idx, i);
-		else
+		अन्यथा
 			agg = bnxt_get_agg(bp, cpr, idx, i);
 		cons = agg->rx_agg_cmp_opaque;
 		frag_len = (le32_to_cpu(agg->rx_agg_cmp_len_flags_type) &
@@ -1057,33 +1058,33 @@ static struct sk_buff *bnxt_rx_pages(struct bnxt *bp,
 				   cons_rx_buf->offset, frag_len);
 		__clear_bit(cons, rxr->rx_agg_bmap);
 
-		/* It is possible for bnxt_alloc_rx_page() to allocate
+		/* It is possible क्रम bnxt_alloc_rx_page() to allocate
 		 * a sw_prod index that equals the cons index, so we
 		 * need to clear the cons entry now.
 		 */
 		mapping = cons_rx_buf->mapping;
 		page = cons_rx_buf->page;
-		cons_rx_buf->page = NULL;
+		cons_rx_buf->page = शून्य;
 
-		if (bnxt_alloc_rx_page(bp, rxr, prod, GFP_ATOMIC) != 0) {
-			struct skb_shared_info *shinfo;
-			unsigned int nr_frags;
+		अगर (bnxt_alloc_rx_page(bp, rxr, prod, GFP_ATOMIC) != 0) अणु
+			काष्ठा skb_shared_info *shinfo;
+			अचिन्हित पूर्णांक nr_frags;
 
 			shinfo = skb_shinfo(skb);
 			nr_frags = --shinfo->nr_frags;
-			__skb_frag_set_page(&shinfo->frags[nr_frags], NULL);
+			__skb_frag_set_page(&shinfo->frags[nr_frags], शून्य);
 
-			dev_kfree_skb(skb);
+			dev_kमुक्त_skb(skb);
 
 			cons_rx_buf->page = page;
 
 			/* Update prod since possibly some pages have been
-			 * allocated already.
+			 * allocated alपढ़ोy.
 			 */
 			rxr->rx_agg_prod = prod;
 			bnxt_reuse_rx_agg_bufs(cpr, idx, i, agg_bufs - i, tpa);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
 		dma_unmap_page_attrs(&pdev->dev, mapping, BNXT_RX_PAGE_SIZE,
 				     PCI_DMA_FROMDEVICE,
@@ -1094,168 +1095,168 @@ static struct sk_buff *bnxt_rx_pages(struct bnxt *bp,
 		skb->truesize += PAGE_SIZE;
 
 		prod = NEXT_RX_AGG(prod);
-	}
+	पूर्ण
 	rxr->rx_agg_prod = prod;
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int bnxt_agg_bufs_valid(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
+अटल पूर्णांक bnxt_agg_bufs_valid(काष्ठा bnxt *bp, काष्ठा bnxt_cp_ring_info *cpr,
 			       u8 agg_bufs, u32 *raw_cons)
-{
+अणु
 	u16 last;
-	struct rx_agg_cmp *agg;
+	काष्ठा rx_agg_cmp *agg;
 
 	*raw_cons = ADV_RAW_CMP(*raw_cons, agg_bufs);
 	last = RING_CMP(*raw_cons);
-	agg = (struct rx_agg_cmp *)
+	agg = (काष्ठा rx_agg_cmp *)
 		&cpr->cp_desc_ring[CP_RING(last)][CP_IDX(last)];
-	return RX_AGG_CMP_VALID(agg, *raw_cons);
-}
+	वापस RX_AGG_CMP_VALID(agg, *raw_cons);
+पूर्ण
 
-static inline struct sk_buff *bnxt_copy_skb(struct bnxt_napi *bnapi, u8 *data,
-					    unsigned int len,
+अटल अंतरभूत काष्ठा sk_buff *bnxt_copy_skb(काष्ठा bnxt_napi *bnapi, u8 *data,
+					    अचिन्हित पूर्णांक len,
 					    dma_addr_t mapping)
-{
-	struct bnxt *bp = bnapi->bp;
-	struct pci_dev *pdev = bp->pdev;
-	struct sk_buff *skb;
+अणु
+	काष्ठा bnxt *bp = bnapi->bp;
+	काष्ठा pci_dev *pdev = bp->pdev;
+	काष्ठा sk_buff *skb;
 
 	skb = napi_alloc_skb(&bnapi->napi, len);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
-	dma_sync_single_for_cpu(&pdev->dev, mapping, bp->rx_copy_thresh,
+	dma_sync_single_क्रम_cpu(&pdev->dev, mapping, bp->rx_copy_thresh,
 				bp->rx_dir);
 
-	memcpy(skb->data - NET_IP_ALIGN, data - NET_IP_ALIGN,
+	स_नकल(skb->data - NET_IP_ALIGN, data - NET_IP_ALIGN,
 	       len + NET_IP_ALIGN);
 
-	dma_sync_single_for_device(&pdev->dev, mapping, bp->rx_copy_thresh,
+	dma_sync_single_क्रम_device(&pdev->dev, mapping, bp->rx_copy_thresh,
 				   bp->rx_dir);
 
 	skb_put(skb, len);
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int bnxt_discard_rx(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
-			   u32 *raw_cons, void *cmp)
-{
-	struct rx_cmp *rxcmp = cmp;
-	u32 tmp_raw_cons = *raw_cons;
+अटल पूर्णांक bnxt_discard_rx(काष्ठा bnxt *bp, काष्ठा bnxt_cp_ring_info *cpr,
+			   u32 *raw_cons, व्योम *cmp)
+अणु
+	काष्ठा rx_cmp *rxcmp = cmp;
+	u32 पंचांगp_raw_cons = *raw_cons;
 	u8 cmp_type, agg_bufs = 0;
 
 	cmp_type = RX_CMP_TYPE(rxcmp);
 
-	if (cmp_type == CMP_TYPE_RX_L2_CMP) {
+	अगर (cmp_type == CMP_TYPE_RX_L2_CMP) अणु
 		agg_bufs = (le32_to_cpu(rxcmp->rx_cmp_misc_v1) &
 			    RX_CMP_AGG_BUFS) >>
 			   RX_CMP_AGG_BUFS_SHIFT;
-	} else if (cmp_type == CMP_TYPE_RX_L2_TPA_END_CMP) {
-		struct rx_tpa_end_cmp *tpa_end = cmp;
+	पूर्ण अन्यथा अगर (cmp_type == CMP_TYPE_RX_L2_TPA_END_CMP) अणु
+		काष्ठा rx_tpa_end_cmp *tpa_end = cmp;
 
-		if (bp->flags & BNXT_FLAG_CHIP_P5)
-			return 0;
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+			वापस 0;
 
 		agg_bufs = TPA_END_AGG_BUFS(tpa_end);
-	}
+	पूर्ण
 
-	if (agg_bufs) {
-		if (!bnxt_agg_bufs_valid(bp, cpr, agg_bufs, &tmp_raw_cons))
-			return -EBUSY;
-	}
-	*raw_cons = tmp_raw_cons;
-	return 0;
-}
+	अगर (agg_bufs) अणु
+		अगर (!bnxt_agg_bufs_valid(bp, cpr, agg_bufs, &पंचांगp_raw_cons))
+			वापस -EBUSY;
+	पूर्ण
+	*raw_cons = पंचांगp_raw_cons;
+	वापस 0;
+पूर्ण
 
-static void bnxt_queue_fw_reset_work(struct bnxt *bp, unsigned long delay)
-{
-	if (!(test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)))
-		return;
+अटल व्योम bnxt_queue_fw_reset_work(काष्ठा bnxt *bp, अचिन्हित दीर्घ delay)
+अणु
+	अगर (!(test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)))
+		वापस;
 
-	if (BNXT_PF(bp))
+	अगर (BNXT_PF(bp))
 		queue_delayed_work(bnxt_pf_wq, &bp->fw_reset_task, delay);
-	else
+	अन्यथा
 		schedule_delayed_work(&bp->fw_reset_task, delay);
-}
+पूर्ण
 
-static void bnxt_queue_sp_work(struct bnxt *bp)
-{
-	if (BNXT_PF(bp))
+अटल व्योम bnxt_queue_sp_work(काष्ठा bnxt *bp)
+अणु
+	अगर (BNXT_PF(bp))
 		queue_work(bnxt_pf_wq, &bp->sp_task);
-	else
+	अन्यथा
 		schedule_work(&bp->sp_task);
-}
+पूर्ण
 
-static void bnxt_sched_reset(struct bnxt *bp, struct bnxt_rx_ring_info *rxr)
-{
-	if (!rxr->bnapi->in_reset) {
+अटल व्योम bnxt_sched_reset(काष्ठा bnxt *bp, काष्ठा bnxt_rx_ring_info *rxr)
+अणु
+	अगर (!rxr->bnapi->in_reset) अणु
 		rxr->bnapi->in_reset = true;
-		if (bp->flags & BNXT_FLAG_CHIP_P5)
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 			set_bit(BNXT_RESET_TASK_SP_EVENT, &bp->sp_event);
-		else
+		अन्यथा
 			set_bit(BNXT_RST_RING_SP_EVENT, &bp->sp_event);
 		bnxt_queue_sp_work(bp);
-	}
+	पूर्ण
 	rxr->rx_next_cons = 0xffff;
-}
+पूर्ण
 
-static u16 bnxt_alloc_agg_idx(struct bnxt_rx_ring_info *rxr, u16 agg_id)
-{
-	struct bnxt_tpa_idx_map *map = rxr->rx_tpa_idx_map;
+अटल u16 bnxt_alloc_agg_idx(काष्ठा bnxt_rx_ring_info *rxr, u16 agg_id)
+अणु
+	काष्ठा bnxt_tpa_idx_map *map = rxr->rx_tpa_idx_map;
 	u16 idx = agg_id & MAX_TPA_P5_MASK;
 
-	if (test_bit(idx, map->agg_idx_bmap))
+	अगर (test_bit(idx, map->agg_idx_bmap))
 		idx = find_first_zero_bit(map->agg_idx_bmap,
 					  BNXT_AGG_IDX_BMAP_SIZE);
 	__set_bit(idx, map->agg_idx_bmap);
 	map->agg_id_tbl[agg_id] = idx;
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static void bnxt_free_agg_idx(struct bnxt_rx_ring_info *rxr, u16 idx)
-{
-	struct bnxt_tpa_idx_map *map = rxr->rx_tpa_idx_map;
+अटल व्योम bnxt_मुक्त_agg_idx(काष्ठा bnxt_rx_ring_info *rxr, u16 idx)
+अणु
+	काष्ठा bnxt_tpa_idx_map *map = rxr->rx_tpa_idx_map;
 
 	__clear_bit(idx, map->agg_idx_bmap);
-}
+पूर्ण
 
-static u16 bnxt_lookup_agg_idx(struct bnxt_rx_ring_info *rxr, u16 agg_id)
-{
-	struct bnxt_tpa_idx_map *map = rxr->rx_tpa_idx_map;
+अटल u16 bnxt_lookup_agg_idx(काष्ठा bnxt_rx_ring_info *rxr, u16 agg_id)
+अणु
+	काष्ठा bnxt_tpa_idx_map *map = rxr->rx_tpa_idx_map;
 
-	return map->agg_id_tbl[agg_id];
-}
+	वापस map->agg_id_tbl[agg_id];
+पूर्ण
 
-static void bnxt_tpa_start(struct bnxt *bp, struct bnxt_rx_ring_info *rxr,
-			   struct rx_tpa_start_cmp *tpa_start,
-			   struct rx_tpa_start_cmp_ext *tpa_start1)
-{
-	struct bnxt_sw_rx_bd *cons_rx_buf, *prod_rx_buf;
-	struct bnxt_tpa_info *tpa_info;
+अटल व्योम bnxt_tpa_start(काष्ठा bnxt *bp, काष्ठा bnxt_rx_ring_info *rxr,
+			   काष्ठा rx_tpa_start_cmp *tpa_start,
+			   काष्ठा rx_tpa_start_cmp_ext *tpa_start1)
+अणु
+	काष्ठा bnxt_sw_rx_bd *cons_rx_buf, *prod_rx_buf;
+	काष्ठा bnxt_tpa_info *tpa_info;
 	u16 cons, prod, agg_id;
-	struct rx_bd *prod_bd;
+	काष्ठा rx_bd *prod_bd;
 	dma_addr_t mapping;
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 		agg_id = TPA_START_AGG_ID_P5(tpa_start);
 		agg_id = bnxt_alloc_agg_idx(rxr, agg_id);
-	} else {
+	पूर्ण अन्यथा अणु
 		agg_id = TPA_START_AGG_ID(tpa_start);
-	}
+	पूर्ण
 	cons = tpa_start->rx_tpa_start_cmp_opaque;
 	prod = rxr->rx_prod;
 	cons_rx_buf = &rxr->rx_buf_ring[cons];
 	prod_rx_buf = &rxr->rx_buf_ring[prod];
 	tpa_info = &rxr->rx_tpa[agg_id];
 
-	if (unlikely(cons != rxr->rx_next_cons ||
-		     TPA_START_ERROR(tpa_start))) {
+	अगर (unlikely(cons != rxr->rx_next_cons ||
+		     TPA_START_ERROR(tpa_start))) अणु
 		netdev_warn(bp->dev, "TPA cons %x, expected cons %x, error code %x\n",
 			    cons, rxr->rx_next_cons,
 			    TPA_START_ERROR_CODE(tpa_start1));
 		bnxt_sched_reset(bp, rxr);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* Store cfa_code in tpa_info to use in tpa_end
 	 * completion processing.
 	 */
@@ -1272,27 +1273,27 @@ static void bnxt_tpa_start(struct bnxt *bp, struct bnxt_rx_ring_info *rxr,
 
 	tpa_info->data = cons_rx_buf->data;
 	tpa_info->data_ptr = cons_rx_buf->data_ptr;
-	cons_rx_buf->data = NULL;
+	cons_rx_buf->data = शून्य;
 	tpa_info->mapping = cons_rx_buf->mapping;
 
 	tpa_info->len =
 		le32_to_cpu(tpa_start->rx_tpa_start_cmp_len_flags_type) >>
 				RX_TPA_START_CMP_LEN_SHIFT;
-	if (likely(TPA_START_HASH_VALID(tpa_start))) {
+	अगर (likely(TPA_START_HASH_VALID(tpa_start))) अणु
 		u32 hash_type = TPA_START_HASH_TYPE(tpa_start);
 
 		tpa_info->hash_type = PKT_HASH_TYPE_L4;
 		tpa_info->gso_type = SKB_GSO_TCPV4;
-		/* RSS profiles 1 and 3 with extract code 0 for inner 4-tuple */
-		if (hash_type == 3 || TPA_START_IS_IPV6(tpa_start1))
+		/* RSS profiles 1 and 3 with extract code 0 क्रम inner 4-tuple */
+		अगर (hash_type == 3 || TPA_START_IS_IPV6(tpa_start1))
 			tpa_info->gso_type = SKB_GSO_TCPV6;
 		tpa_info->rss_hash =
 			le32_to_cpu(tpa_start->rx_tpa_start_cmp_rss_hash);
-	} else {
+	पूर्ण अन्यथा अणु
 		tpa_info->hash_type = PKT_HASH_TYPE_NONE;
 		tpa_info->gso_type = 0;
-		netif_warn(bp, rx_err, bp->dev, "TPA packet without valid hash\n");
-	}
+		netअगर_warn(bp, rx_err, bp->dev, "TPA packet without valid hash\n");
+	पूर्ण
 	tpa_info->flags2 = le32_to_cpu(tpa_start1->rx_tpa_start_cmp_flags2);
 	tpa_info->metadata = le32_to_cpu(tpa_start1->rx_tpa_start_cmp_metadata);
 	tpa_info->hdr_info = le32_to_cpu(tpa_start1->rx_tpa_start_cmp_hdr_info);
@@ -1305,47 +1306,47 @@ static void bnxt_tpa_start(struct bnxt *bp, struct bnxt_rx_ring_info *rxr,
 
 	bnxt_reuse_rx_data(rxr, cons, cons_rx_buf->data);
 	rxr->rx_prod = NEXT_RX(rxr->rx_prod);
-	cons_rx_buf->data = NULL;
-}
+	cons_rx_buf->data = शून्य;
+पूर्ण
 
-static void bnxt_abort_tpa(struct bnxt_cp_ring_info *cpr, u16 idx, u32 agg_bufs)
-{
-	if (agg_bufs)
+अटल व्योम bnxt_पात_tpa(काष्ठा bnxt_cp_ring_info *cpr, u16 idx, u32 agg_bufs)
+अणु
+	अगर (agg_bufs)
 		bnxt_reuse_rx_agg_bufs(cpr, idx, 0, agg_bufs, true);
-}
+पूर्ण
 
-#ifdef CONFIG_INET
-static void bnxt_gro_tunnel(struct sk_buff *skb, __be16 ip_proto)
-{
-	struct udphdr *uh = NULL;
+#अगर_घोषित CONFIG_INET
+अटल व्योम bnxt_gro_tunnel(काष्ठा sk_buff *skb, __be16 ip_proto)
+अणु
+	काष्ठा udphdr *uh = शून्य;
 
-	if (ip_proto == htons(ETH_P_IP)) {
-		struct iphdr *iph = (struct iphdr *)skb->data;
+	अगर (ip_proto == htons(ETH_P_IP)) अणु
+		काष्ठा iphdr *iph = (काष्ठा iphdr *)skb->data;
 
-		if (iph->protocol == IPPROTO_UDP)
-			uh = (struct udphdr *)(iph + 1);
-	} else {
-		struct ipv6hdr *iph = (struct ipv6hdr *)skb->data;
+		अगर (iph->protocol == IPPROTO_UDP)
+			uh = (काष्ठा udphdr *)(iph + 1);
+	पूर्ण अन्यथा अणु
+		काष्ठा ipv6hdr *iph = (काष्ठा ipv6hdr *)skb->data;
 
-		if (iph->nexthdr == IPPROTO_UDP)
-			uh = (struct udphdr *)(iph + 1);
-	}
-	if (uh) {
-		if (uh->check)
+		अगर (iph->nexthdr == IPPROTO_UDP)
+			uh = (काष्ठा udphdr *)(iph + 1);
+	पूर्ण
+	अगर (uh) अणु
+		अगर (uh->check)
 			skb_shinfo(skb)->gso_type |= SKB_GSO_UDP_TUNNEL_CSUM;
-		else
+		अन्यथा
 			skb_shinfo(skb)->gso_type |= SKB_GSO_UDP_TUNNEL;
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static struct sk_buff *bnxt_gro_func_5731x(struct bnxt_tpa_info *tpa_info,
-					   int payload_off, int tcp_ts,
-					   struct sk_buff *skb)
-{
-#ifdef CONFIG_INET
-	struct tcphdr *th;
-	int len, nw_off;
+अटल काष्ठा sk_buff *bnxt_gro_func_5731x(काष्ठा bnxt_tpa_info *tpa_info,
+					   पूर्णांक payload_off, पूर्णांक tcp_ts,
+					   काष्ठा sk_buff *skb)
+अणु
+#अगर_घोषित CONFIG_INET
+	काष्ठा tcphdr *th;
+	पूर्णांक len, nw_off;
 	u16 outer_ip_off, inner_ip_off, inner_mac_off;
 	u32 hdr_info = tpa_info->hdr_info;
 	bool loopback = false;
@@ -1354,65 +1355,65 @@ static struct sk_buff *bnxt_gro_func_5731x(struct bnxt_tpa_info *tpa_info,
 	inner_mac_off = BNXT_TPA_INNER_L2_OFF(hdr_info);
 	outer_ip_off = BNXT_TPA_OUTER_L3_OFF(hdr_info);
 
-	/* If the packet is an internal loopback packet, the offsets will
+	/* If the packet is an पूर्णांकernal loopback packet, the offsets will
 	 * have an extra 4 bytes.
 	 */
-	if (inner_mac_off == 4) {
+	अगर (inner_mac_off == 4) अणु
 		loopback = true;
-	} else if (inner_mac_off > 4) {
+	पूर्ण अन्यथा अगर (inner_mac_off > 4) अणु
 		__be16 proto = *((__be16 *)(skb->data + inner_ip_off -
 					    ETH_HLEN - 2));
 
-		/* We only support inner iPv4/ipv6.  If we don't see the
+		/* We only support inner iPv4/ipv6.  If we करोn't see the
 		 * correct protocol ID, it must be a loopback packet where
 		 * the offsets are off by 4.
 		 */
-		if (proto != htons(ETH_P_IP) && proto != htons(ETH_P_IPV6))
+		अगर (proto != htons(ETH_P_IP) && proto != htons(ETH_P_IPV6))
 			loopback = true;
-	}
-	if (loopback) {
-		/* internal loopback packet, subtract all offsets by 4 */
+	पूर्ण
+	अगर (loopback) अणु
+		/* पूर्णांकernal loopback packet, subtract all offsets by 4 */
 		inner_ip_off -= 4;
 		inner_mac_off -= 4;
 		outer_ip_off -= 4;
-	}
+	पूर्ण
 
 	nw_off = inner_ip_off - ETH_HLEN;
 	skb_set_network_header(skb, nw_off);
-	if (tpa_info->flags2 & RX_TPA_START_CMP_FLAGS2_IP_TYPE) {
-		struct ipv6hdr *iph = ipv6_hdr(skb);
+	अगर (tpa_info->flags2 & RX_TPA_START_CMP_FLAGS2_IP_TYPE) अणु
+		काष्ठा ipv6hdr *iph = ipv6_hdr(skb);
 
-		skb_set_transport_header(skb, nw_off + sizeof(struct ipv6hdr));
+		skb_set_transport_header(skb, nw_off + माप(काष्ठा ipv6hdr));
 		len = skb->len - skb_transport_offset(skb);
 		th = tcp_hdr(skb);
 		th->check = ~tcp_v6_check(len, &iph->saddr, &iph->daddr, 0);
-	} else {
-		struct iphdr *iph = ip_hdr(skb);
+	पूर्ण अन्यथा अणु
+		काष्ठा iphdr *iph = ip_hdr(skb);
 
-		skb_set_transport_header(skb, nw_off + sizeof(struct iphdr));
+		skb_set_transport_header(skb, nw_off + माप(काष्ठा iphdr));
 		len = skb->len - skb_transport_offset(skb);
 		th = tcp_hdr(skb);
 		th->check = ~tcp_v4_check(len, iph->saddr, iph->daddr, 0);
-	}
+	पूर्ण
 
-	if (inner_mac_off) { /* tunnel */
+	अगर (inner_mac_off) अणु /* tunnel */
 		__be16 proto = *((__be16 *)(skb->data + outer_ip_off -
 					    ETH_HLEN - 2));
 
 		bnxt_gro_tunnel(skb, proto);
-	}
-#endif
-	return skb;
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *bnxt_gro_func_5750x(struct bnxt_tpa_info *tpa_info,
-					   int payload_off, int tcp_ts,
-					   struct sk_buff *skb)
-{
-#ifdef CONFIG_INET
+अटल काष्ठा sk_buff *bnxt_gro_func_5750x(काष्ठा bnxt_tpa_info *tpa_info,
+					   पूर्णांक payload_off, पूर्णांक tcp_ts,
+					   काष्ठा sk_buff *skb)
+अणु
+#अगर_घोषित CONFIG_INET
 	u16 outer_ip_off, inner_ip_off, inner_mac_off;
 	u32 hdr_info = tpa_info->hdr_info;
-	int iphdr_len, nw_off;
+	पूर्णांक iphdr_len, nw_off;
 
 	inner_ip_off = BNXT_TPA_INNER_L3_OFF(hdr_info);
 	inner_mac_off = BNXT_TPA_INNER_L2_OFF(hdr_info);
@@ -1421,190 +1422,190 @@ static struct sk_buff *bnxt_gro_func_5750x(struct bnxt_tpa_info *tpa_info,
 	nw_off = inner_ip_off - ETH_HLEN;
 	skb_set_network_header(skb, nw_off);
 	iphdr_len = (tpa_info->flags2 & RX_TPA_START_CMP_FLAGS2_IP_TYPE) ?
-		     sizeof(struct ipv6hdr) : sizeof(struct iphdr);
+		     माप(काष्ठा ipv6hdr) : माप(काष्ठा iphdr);
 	skb_set_transport_header(skb, nw_off + iphdr_len);
 
-	if (inner_mac_off) { /* tunnel */
+	अगर (inner_mac_off) अणु /* tunnel */
 		__be16 proto = *((__be16 *)(skb->data + outer_ip_off -
 					    ETH_HLEN - 2));
 
 		bnxt_gro_tunnel(skb, proto);
-	}
-#endif
-	return skb;
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस skb;
+पूर्ण
 
-#define BNXT_IPV4_HDR_SIZE	(sizeof(struct iphdr) + sizeof(struct tcphdr))
-#define BNXT_IPV6_HDR_SIZE	(sizeof(struct ipv6hdr) + sizeof(struct tcphdr))
+#घोषणा BNXT_IPV4_HDR_SIZE	(माप(काष्ठा iphdr) + माप(काष्ठा tcphdr))
+#घोषणा BNXT_IPV6_HDR_SIZE	(माप(काष्ठा ipv6hdr) + माप(काष्ठा tcphdr))
 
-static struct sk_buff *bnxt_gro_func_5730x(struct bnxt_tpa_info *tpa_info,
-					   int payload_off, int tcp_ts,
-					   struct sk_buff *skb)
-{
-#ifdef CONFIG_INET
-	struct tcphdr *th;
-	int len, nw_off, tcp_opt_len = 0;
+अटल काष्ठा sk_buff *bnxt_gro_func_5730x(काष्ठा bnxt_tpa_info *tpa_info,
+					   पूर्णांक payload_off, पूर्णांक tcp_ts,
+					   काष्ठा sk_buff *skb)
+अणु
+#अगर_घोषित CONFIG_INET
+	काष्ठा tcphdr *th;
+	पूर्णांक len, nw_off, tcp_opt_len = 0;
 
-	if (tcp_ts)
+	अगर (tcp_ts)
 		tcp_opt_len = 12;
 
-	if (tpa_info->gso_type == SKB_GSO_TCPV4) {
-		struct iphdr *iph;
+	अगर (tpa_info->gso_type == SKB_GSO_TCPV4) अणु
+		काष्ठा iphdr *iph;
 
 		nw_off = payload_off - BNXT_IPV4_HDR_SIZE - tcp_opt_len -
 			 ETH_HLEN;
 		skb_set_network_header(skb, nw_off);
 		iph = ip_hdr(skb);
-		skb_set_transport_header(skb, nw_off + sizeof(struct iphdr));
+		skb_set_transport_header(skb, nw_off + माप(काष्ठा iphdr));
 		len = skb->len - skb_transport_offset(skb);
 		th = tcp_hdr(skb);
 		th->check = ~tcp_v4_check(len, iph->saddr, iph->daddr, 0);
-	} else if (tpa_info->gso_type == SKB_GSO_TCPV6) {
-		struct ipv6hdr *iph;
+	पूर्ण अन्यथा अगर (tpa_info->gso_type == SKB_GSO_TCPV6) अणु
+		काष्ठा ipv6hdr *iph;
 
 		nw_off = payload_off - BNXT_IPV6_HDR_SIZE - tcp_opt_len -
 			 ETH_HLEN;
 		skb_set_network_header(skb, nw_off);
 		iph = ipv6_hdr(skb);
-		skb_set_transport_header(skb, nw_off + sizeof(struct ipv6hdr));
+		skb_set_transport_header(skb, nw_off + माप(काष्ठा ipv6hdr));
 		len = skb->len - skb_transport_offset(skb);
 		th = tcp_hdr(skb);
 		th->check = ~tcp_v6_check(len, &iph->saddr, &iph->daddr, 0);
-	} else {
-		dev_kfree_skb_any(skb);
-		return NULL;
-	}
+	पूर्ण अन्यथा अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस शून्य;
+	पूर्ण
 
-	if (nw_off) /* tunnel */
+	अगर (nw_off) /* tunnel */
 		bnxt_gro_tunnel(skb, skb->protocol);
-#endif
-	return skb;
-}
+#पूर्ण_अगर
+	वापस skb;
+पूर्ण
 
-static inline struct sk_buff *bnxt_gro_skb(struct bnxt *bp,
-					   struct bnxt_tpa_info *tpa_info,
-					   struct rx_tpa_end_cmp *tpa_end,
-					   struct rx_tpa_end_cmp_ext *tpa_end1,
-					   struct sk_buff *skb)
-{
-#ifdef CONFIG_INET
-	int payload_off;
+अटल अंतरभूत काष्ठा sk_buff *bnxt_gro_skb(काष्ठा bnxt *bp,
+					   काष्ठा bnxt_tpa_info *tpa_info,
+					   काष्ठा rx_tpa_end_cmp *tpa_end,
+					   काष्ठा rx_tpa_end_cmp_ext *tpa_end1,
+					   काष्ठा sk_buff *skb)
+अणु
+#अगर_घोषित CONFIG_INET
+	पूर्णांक payload_off;
 	u16 segs;
 
 	segs = TPA_END_TPA_SEGS(tpa_end);
-	if (segs == 1)
-		return skb;
+	अगर (segs == 1)
+		वापस skb;
 
 	NAPI_GRO_CB(skb)->count = segs;
 	skb_shinfo(skb)->gso_size =
 		le32_to_cpu(tpa_end1->rx_tpa_end_cmp_seg_len);
 	skb_shinfo(skb)->gso_type = tpa_info->gso_type;
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 		payload_off = TPA_END_PAYLOAD_OFF_P5(tpa_end1);
-	else
+	अन्यथा
 		payload_off = TPA_END_PAYLOAD_OFF(tpa_end);
 	skb = bp->gro_func(tpa_info, payload_off, TPA_END_GRO_TS(tpa_end), skb);
-	if (likely(skb))
+	अगर (likely(skb))
 		tcp_gro_complete(skb);
-#endif
-	return skb;
-}
+#पूर्ण_अगर
+	वापस skb;
+पूर्ण
 
 /* Given the cfa_code of a received packet determine which
  * netdev (vf-rep or PF) the packet is destined to.
  */
-static struct net_device *bnxt_get_pkt_dev(struct bnxt *bp, u16 cfa_code)
-{
-	struct net_device *dev = bnxt_get_vf_rep(bp, cfa_code);
+अटल काष्ठा net_device *bnxt_get_pkt_dev(काष्ठा bnxt *bp, u16 cfa_code)
+अणु
+	काष्ठा net_device *dev = bnxt_get_vf_rep(bp, cfa_code);
 
-	/* if vf-rep dev is NULL, the must belongs to the PF */
-	return dev ? dev : bp->dev;
-}
+	/* अगर vf-rep dev is शून्य, the must beदीर्घs to the PF */
+	वापस dev ? dev : bp->dev;
+पूर्ण
 
-static inline struct sk_buff *bnxt_tpa_end(struct bnxt *bp,
-					   struct bnxt_cp_ring_info *cpr,
+अटल अंतरभूत काष्ठा sk_buff *bnxt_tpa_end(काष्ठा bnxt *bp,
+					   काष्ठा bnxt_cp_ring_info *cpr,
 					   u32 *raw_cons,
-					   struct rx_tpa_end_cmp *tpa_end,
-					   struct rx_tpa_end_cmp_ext *tpa_end1,
+					   काष्ठा rx_tpa_end_cmp *tpa_end,
+					   काष्ठा rx_tpa_end_cmp_ext *tpa_end1,
 					   u8 *event)
-{
-	struct bnxt_napi *bnapi = cpr->bnapi;
-	struct bnxt_rx_ring_info *rxr = bnapi->rx_ring;
+अणु
+	काष्ठा bnxt_napi *bnapi = cpr->bnapi;
+	काष्ठा bnxt_rx_ring_info *rxr = bnapi->rx_ring;
 	u8 *data_ptr, agg_bufs;
-	unsigned int len;
-	struct bnxt_tpa_info *tpa_info;
+	अचिन्हित पूर्णांक len;
+	काष्ठा bnxt_tpa_info *tpa_info;
 	dma_addr_t mapping;
-	struct sk_buff *skb;
+	काष्ठा sk_buff *skb;
 	u16 idx = 0, agg_id;
-	void *data;
+	व्योम *data;
 	bool gro;
 
-	if (unlikely(bnapi->in_reset)) {
-		int rc = bnxt_discard_rx(bp, cpr, raw_cons, tpa_end);
+	अगर (unlikely(bnapi->in_reset)) अणु
+		पूर्णांक rc = bnxt_discard_rx(bp, cpr, raw_cons, tpa_end);
 
-		if (rc < 0)
-			return ERR_PTR(-EBUSY);
-		return NULL;
-	}
+		अगर (rc < 0)
+			वापस ERR_PTR(-EBUSY);
+		वापस शून्य;
+	पूर्ण
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 		agg_id = TPA_END_AGG_ID_P5(tpa_end);
 		agg_id = bnxt_lookup_agg_idx(rxr, agg_id);
 		agg_bufs = TPA_END_AGG_BUFS_P5(tpa_end1);
 		tpa_info = &rxr->rx_tpa[agg_id];
-		if (unlikely(agg_bufs != tpa_info->agg_count)) {
+		अगर (unlikely(agg_bufs != tpa_info->agg_count)) अणु
 			netdev_warn(bp->dev, "TPA end agg_buf %d != expected agg_bufs %d\n",
 				    agg_bufs, tpa_info->agg_count);
 			agg_bufs = tpa_info->agg_count;
-		}
+		पूर्ण
 		tpa_info->agg_count = 0;
 		*event |= BNXT_AGG_EVENT;
-		bnxt_free_agg_idx(rxr, agg_id);
+		bnxt_मुक्त_agg_idx(rxr, agg_id);
 		idx = agg_id;
 		gro = !!(bp->flags & BNXT_FLAG_GRO);
-	} else {
+	पूर्ण अन्यथा अणु
 		agg_id = TPA_END_AGG_ID(tpa_end);
 		agg_bufs = TPA_END_AGG_BUFS(tpa_end);
 		tpa_info = &rxr->rx_tpa[agg_id];
 		idx = RING_CMP(*raw_cons);
-		if (agg_bufs) {
-			if (!bnxt_agg_bufs_valid(bp, cpr, agg_bufs, raw_cons))
-				return ERR_PTR(-EBUSY);
+		अगर (agg_bufs) अणु
+			अगर (!bnxt_agg_bufs_valid(bp, cpr, agg_bufs, raw_cons))
+				वापस ERR_PTR(-EBUSY);
 
 			*event |= BNXT_AGG_EVENT;
 			idx = NEXT_CMP(idx);
-		}
+		पूर्ण
 		gro = !!TPA_END_GRO(tpa_end);
-	}
+	पूर्ण
 	data = tpa_info->data;
 	data_ptr = tpa_info->data_ptr;
 	prefetch(data_ptr);
 	len = tpa_info->len;
 	mapping = tpa_info->mapping;
 
-	if (unlikely(agg_bufs > MAX_SKB_FRAGS || TPA_END_ERRORS(tpa_end1))) {
-		bnxt_abort_tpa(cpr, idx, agg_bufs);
-		if (agg_bufs > MAX_SKB_FRAGS)
+	अगर (unlikely(agg_bufs > MAX_SKB_FRAGS || TPA_END_ERRORS(tpa_end1))) अणु
+		bnxt_पात_tpa(cpr, idx, agg_bufs);
+		अगर (agg_bufs > MAX_SKB_FRAGS)
 			netdev_warn(bp->dev, "TPA frags %d exceeded MAX_SKB_FRAGS %d\n",
-				    agg_bufs, (int)MAX_SKB_FRAGS);
-		return NULL;
-	}
+				    agg_bufs, (पूर्णांक)MAX_SKB_FRAGS);
+		वापस शून्य;
+	पूर्ण
 
-	if (len <= bp->rx_copy_thresh) {
+	अगर (len <= bp->rx_copy_thresh) अणु
 		skb = bnxt_copy_skb(bnapi, data_ptr, len, mapping);
-		if (!skb) {
-			bnxt_abort_tpa(cpr, idx, agg_bufs);
-			return NULL;
-		}
-	} else {
+		अगर (!skb) अणु
+			bnxt_पात_tpa(cpr, idx, agg_bufs);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		u8 *new_data;
 		dma_addr_t new_mapping;
 
 		new_data = __bnxt_alloc_rx_data(bp, &new_mapping, GFP_ATOMIC);
-		if (!new_data) {
-			bnxt_abort_tpa(cpr, idx, agg_bufs);
-			return NULL;
-		}
+		अगर (!new_data) अणु
+			bnxt_पात_tpa(cpr, idx, agg_bufs);
+			वापस शून्य;
+		पूर्ण
 
 		tpa_info->data = new_data;
 		tpa_info->data_ptr = new_data + bp->rx_offset;
@@ -1615,158 +1616,158 @@ static inline struct sk_buff *bnxt_tpa_end(struct bnxt *bp,
 				       bp->rx_buf_use_size, bp->rx_dir,
 				       DMA_ATTR_WEAK_ORDERING);
 
-		if (!skb) {
-			kfree(data);
-			bnxt_abort_tpa(cpr, idx, agg_bufs);
-			return NULL;
-		}
+		अगर (!skb) अणु
+			kमुक्त(data);
+			bnxt_पात_tpa(cpr, idx, agg_bufs);
+			वापस शून्य;
+		पूर्ण
 		skb_reserve(skb, bp->rx_offset);
 		skb_put(skb, len);
-	}
+	पूर्ण
 
-	if (agg_bufs) {
+	अगर (agg_bufs) अणु
 		skb = bnxt_rx_pages(bp, cpr, skb, idx, agg_bufs, true);
-		if (!skb) {
-			/* Page reuse already handled by bnxt_rx_pages(). */
-			return NULL;
-		}
-	}
+		अगर (!skb) अणु
+			/* Page reuse alपढ़ोy handled by bnxt_rx_pages(). */
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
 	skb->protocol =
 		eth_type_trans(skb, bnxt_get_pkt_dev(bp, tpa_info->cfa_code));
 
-	if (tpa_info->hash_type != PKT_HASH_TYPE_NONE)
+	अगर (tpa_info->hash_type != PKT_HASH_TYPE_NONE)
 		skb_set_hash(skb, tpa_info->rss_hash, tpa_info->hash_type);
 
-	if ((tpa_info->flags2 & RX_CMP_FLAGS2_META_FORMAT_VLAN) &&
-	    (skb->dev->features & BNXT_HW_FEATURE_VLAN_ALL_RX)) {
+	अगर ((tpa_info->flags2 & RX_CMP_FLAGS2_META_FORMAT_VLAN) &&
+	    (skb->dev->features & BNXT_HW_FEATURE_VLAN_ALL_RX)) अणु
 		u16 vlan_proto = tpa_info->metadata >>
 			RX_CMP_FLAGS2_METADATA_TPID_SFT;
 		u16 vtag = tpa_info->metadata & RX_CMP_FLAGS2_METADATA_TCI_MASK;
 
 		__vlan_hwaccel_put_tag(skb, htons(vlan_proto), vtag);
-	}
+	पूर्ण
 
-	skb_checksum_none_assert(skb);
-	if (likely(tpa_info->flags2 & RX_TPA_START_CMP_FLAGS2_L4_CS_CALC)) {
+	skb_checksum_none_निश्चित(skb);
+	अगर (likely(tpa_info->flags2 & RX_TPA_START_CMP_FLAGS2_L4_CS_CALC)) अणु
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 		skb->csum_level =
 			(tpa_info->flags2 & RX_CMP_FLAGS2_T_L4_CS_CALC) >> 3;
-	}
+	पूर्ण
 
-	if (gro)
+	अगर (gro)
 		skb = bnxt_gro_skb(bp, tpa_info, tpa_end, tpa_end1, skb);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static void bnxt_tpa_agg(struct bnxt *bp, struct bnxt_rx_ring_info *rxr,
-			 struct rx_agg_cmp *rx_agg)
-{
+अटल व्योम bnxt_tpa_agg(काष्ठा bnxt *bp, काष्ठा bnxt_rx_ring_info *rxr,
+			 काष्ठा rx_agg_cmp *rx_agg)
+अणु
 	u16 agg_id = TPA_AGG_AGG_ID(rx_agg);
-	struct bnxt_tpa_info *tpa_info;
+	काष्ठा bnxt_tpa_info *tpa_info;
 
 	agg_id = bnxt_lookup_agg_idx(rxr, agg_id);
 	tpa_info = &rxr->rx_tpa[agg_id];
 	BUG_ON(tpa_info->agg_count >= MAX_SKB_FRAGS);
 	tpa_info->agg_arr[tpa_info->agg_count++] = *rx_agg;
-}
+पूर्ण
 
-static void bnxt_deliver_skb(struct bnxt *bp, struct bnxt_napi *bnapi,
-			     struct sk_buff *skb)
-{
-	if (skb->dev != bp->dev) {
-		/* this packet belongs to a vf-rep */
+अटल व्योम bnxt_deliver_skb(काष्ठा bnxt *bp, काष्ठा bnxt_napi *bnapi,
+			     काष्ठा sk_buff *skb)
+अणु
+	अगर (skb->dev != bp->dev) अणु
+		/* this packet beदीर्घs to a vf-rep */
 		bnxt_vf_rep_rx(bp, skb);
-		return;
-	}
+		वापस;
+	पूर्ण
 	skb_record_rx_queue(skb, bnapi->index);
 	napi_gro_receive(&bnapi->napi, skb);
-}
+पूर्ण
 
-/* returns the following:
+/* वापसs the following:
  * 1       - 1 packet successfully received
  * 0       - successful TPA_START, packet not completed yet
- * -EBUSY  - completion ring does not have all the agg buffers yet
- * -ENOMEM - packet aborted due to out of memory
- * -EIO    - packet aborted due to hw error indicated in BD
+ * -EBUSY  - completion ring करोes not have all the agg buffers yet
+ * -ENOMEM - packet पातed due to out of memory
+ * -EIO    - packet पातed due to hw error indicated in BD
  */
-static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
+अटल पूर्णांक bnxt_rx_pkt(काष्ठा bnxt *bp, काष्ठा bnxt_cp_ring_info *cpr,
 		       u32 *raw_cons, u8 *event)
-{
-	struct bnxt_napi *bnapi = cpr->bnapi;
-	struct bnxt_rx_ring_info *rxr = bnapi->rx_ring;
-	struct net_device *dev = bp->dev;
-	struct rx_cmp *rxcmp;
-	struct rx_cmp_ext *rxcmp1;
-	u32 tmp_raw_cons = *raw_cons;
-	u16 cfa_code, cons, prod, cp_cons = RING_CMP(tmp_raw_cons);
-	struct bnxt_sw_rx_bd *rx_buf;
-	unsigned int len;
+अणु
+	काष्ठा bnxt_napi *bnapi = cpr->bnapi;
+	काष्ठा bnxt_rx_ring_info *rxr = bnapi->rx_ring;
+	काष्ठा net_device *dev = bp->dev;
+	काष्ठा rx_cmp *rxcmp;
+	काष्ठा rx_cmp_ext *rxcmp1;
+	u32 पंचांगp_raw_cons = *raw_cons;
+	u16 cfa_code, cons, prod, cp_cons = RING_CMP(पंचांगp_raw_cons);
+	काष्ठा bnxt_sw_rx_bd *rx_buf;
+	अचिन्हित पूर्णांक len;
 	u8 *data_ptr, agg_bufs, cmp_type;
 	dma_addr_t dma_addr;
-	struct sk_buff *skb;
-	void *data;
-	int rc = 0;
+	काष्ठा sk_buff *skb;
+	व्योम *data;
+	पूर्णांक rc = 0;
 	u32 misc;
 
-	rxcmp = (struct rx_cmp *)
+	rxcmp = (काष्ठा rx_cmp *)
 			&cpr->cp_desc_ring[CP_RING(cp_cons)][CP_IDX(cp_cons)];
 
 	cmp_type = RX_CMP_TYPE(rxcmp);
 
-	if (cmp_type == CMP_TYPE_RX_TPA_AGG_CMP) {
-		bnxt_tpa_agg(bp, rxr, (struct rx_agg_cmp *)rxcmp);
-		goto next_rx_no_prod_no_len;
-	}
+	अगर (cmp_type == CMP_TYPE_RX_TPA_AGG_CMP) अणु
+		bnxt_tpa_agg(bp, rxr, (काष्ठा rx_agg_cmp *)rxcmp);
+		जाओ next_rx_no_prod_no_len;
+	पूर्ण
 
-	tmp_raw_cons = NEXT_RAW_CMP(tmp_raw_cons);
-	cp_cons = RING_CMP(tmp_raw_cons);
-	rxcmp1 = (struct rx_cmp_ext *)
+	पंचांगp_raw_cons = NEXT_RAW_CMP(पंचांगp_raw_cons);
+	cp_cons = RING_CMP(पंचांगp_raw_cons);
+	rxcmp1 = (काष्ठा rx_cmp_ext *)
 			&cpr->cp_desc_ring[CP_RING(cp_cons)][CP_IDX(cp_cons)];
 
-	if (!RX_CMP_VALID(rxcmp1, tmp_raw_cons))
-		return -EBUSY;
+	अगर (!RX_CMP_VALID(rxcmp1, पंचांगp_raw_cons))
+		वापस -EBUSY;
 
 	prod = rxr->rx_prod;
 
-	if (cmp_type == CMP_TYPE_RX_L2_TPA_START_CMP) {
-		bnxt_tpa_start(bp, rxr, (struct rx_tpa_start_cmp *)rxcmp,
-			       (struct rx_tpa_start_cmp_ext *)rxcmp1);
+	अगर (cmp_type == CMP_TYPE_RX_L2_TPA_START_CMP) अणु
+		bnxt_tpa_start(bp, rxr, (काष्ठा rx_tpa_start_cmp *)rxcmp,
+			       (काष्ठा rx_tpa_start_cmp_ext *)rxcmp1);
 
 		*event |= BNXT_RX_EVENT;
-		goto next_rx_no_prod_no_len;
+		जाओ next_rx_no_prod_no_len;
 
-	} else if (cmp_type == CMP_TYPE_RX_L2_TPA_END_CMP) {
-		skb = bnxt_tpa_end(bp, cpr, &tmp_raw_cons,
-				   (struct rx_tpa_end_cmp *)rxcmp,
-				   (struct rx_tpa_end_cmp_ext *)rxcmp1, event);
+	पूर्ण अन्यथा अगर (cmp_type == CMP_TYPE_RX_L2_TPA_END_CMP) अणु
+		skb = bnxt_tpa_end(bp, cpr, &पंचांगp_raw_cons,
+				   (काष्ठा rx_tpa_end_cmp *)rxcmp,
+				   (काष्ठा rx_tpa_end_cmp_ext *)rxcmp1, event);
 
-		if (IS_ERR(skb))
-			return -EBUSY;
+		अगर (IS_ERR(skb))
+			वापस -EBUSY;
 
 		rc = -ENOMEM;
-		if (likely(skb)) {
+		अगर (likely(skb)) अणु
 			bnxt_deliver_skb(bp, bnapi, skb);
 			rc = 1;
-		}
+		पूर्ण
 		*event |= BNXT_RX_EVENT;
-		goto next_rx_no_prod_no_len;
-	}
+		जाओ next_rx_no_prod_no_len;
+	पूर्ण
 
 	cons = rxcmp->rx_cmp_opaque;
-	if (unlikely(cons != rxr->rx_next_cons)) {
-		int rc1 = bnxt_discard_rx(bp, cpr, &tmp_raw_cons, rxcmp);
+	अगर (unlikely(cons != rxr->rx_next_cons)) अणु
+		पूर्णांक rc1 = bnxt_discard_rx(bp, cpr, &पंचांगp_raw_cons, rxcmp);
 
-		/* 0xffff is forced error, don't print it */
-		if (rxr->rx_next_cons != 0xffff)
+		/* 0xffff is क्रमced error, करोn't prपूर्णांक it */
+		अगर (rxr->rx_next_cons != 0xffff)
 			netdev_warn(bp->dev, "RX cons %x != expected cons %x\n",
 				    cons, rxr->rx_next_cons);
 		bnxt_sched_reset(bp, rxr);
-		if (rc1)
-			return rc1;
-		goto next_rx_no_prod_no_len;
-	}
+		अगर (rc1)
+			वापस rc1;
+		जाओ next_rx_no_prod_no_len;
+	पूर्ण
 	rx_buf = &rxr->rx_buf_ring[cons];
 	data = rx_buf->data;
 	data_ptr = rx_buf->data_ptr;
@@ -1775,113 +1776,113 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 	misc = le32_to_cpu(rxcmp->rx_cmp_misc_v1);
 	agg_bufs = (misc & RX_CMP_AGG_BUFS) >> RX_CMP_AGG_BUFS_SHIFT;
 
-	if (agg_bufs) {
-		if (!bnxt_agg_bufs_valid(bp, cpr, agg_bufs, &tmp_raw_cons))
-			return -EBUSY;
+	अगर (agg_bufs) अणु
+		अगर (!bnxt_agg_bufs_valid(bp, cpr, agg_bufs, &पंचांगp_raw_cons))
+			वापस -EBUSY;
 
 		cp_cons = NEXT_CMP(cp_cons);
 		*event |= BNXT_AGG_EVENT;
-	}
+	पूर्ण
 	*event |= BNXT_RX_EVENT;
 
-	rx_buf->data = NULL;
-	if (rxcmp1->rx_cmp_cfa_code_errors_v2 & RX_CMP_L2_ERRORS) {
+	rx_buf->data = शून्य;
+	अगर (rxcmp1->rx_cmp_cfa_code_errors_v2 & RX_CMP_L2_ERRORS) अणु
 		u32 rx_err = le32_to_cpu(rxcmp1->rx_cmp_cfa_code_errors_v2);
 
 		bnxt_reuse_rx_data(rxr, cons, data);
-		if (agg_bufs)
+		अगर (agg_bufs)
 			bnxt_reuse_rx_agg_bufs(cpr, cp_cons, 0, agg_bufs,
 					       false);
 
 		rc = -EIO;
-		if (rx_err & RX_CMPL_ERRORS_BUFFER_ERROR_MASK) {
+		अगर (rx_err & RX_CMPL_ERRORS_BUFFER_ERROR_MASK) अणु
 			bnapi->cp_ring.sw_stats.rx.rx_buf_errors++;
-			if (!(bp->flags & BNXT_FLAG_CHIP_P5) &&
-			    !(bp->fw_cap & BNXT_FW_CAP_RING_MONITOR)) {
+			अगर (!(bp->flags & BNXT_FLAG_CHIP_P5) &&
+			    !(bp->fw_cap & BNXT_FW_CAP_RING_MONITOR)) अणु
 				netdev_warn_once(bp->dev, "RX buffer error %x\n",
 						 rx_err);
 				bnxt_sched_reset(bp, rxr);
-			}
-		}
-		goto next_rx_no_len;
-	}
+			पूर्ण
+		पूर्ण
+		जाओ next_rx_no_len;
+	पूर्ण
 
 	len = le32_to_cpu(rxcmp->rx_cmp_len_flags_type) >> RX_CMP_LEN_SHIFT;
 	dma_addr = rx_buf->mapping;
 
-	if (bnxt_rx_xdp(bp, rxr, cons, data, &data_ptr, &len, event)) {
+	अगर (bnxt_rx_xdp(bp, rxr, cons, data, &data_ptr, &len, event)) अणु
 		rc = 1;
-		goto next_rx;
-	}
+		जाओ next_rx;
+	पूर्ण
 
-	if (len <= bp->rx_copy_thresh) {
+	अगर (len <= bp->rx_copy_thresh) अणु
 		skb = bnxt_copy_skb(bnapi, data_ptr, len, dma_addr);
 		bnxt_reuse_rx_data(rxr, cons, data);
-		if (!skb) {
-			if (agg_bufs)
+		अगर (!skb) अणु
+			अगर (agg_bufs)
 				bnxt_reuse_rx_agg_bufs(cpr, cp_cons, 0,
 						       agg_bufs, false);
 			rc = -ENOMEM;
-			goto next_rx;
-		}
-	} else {
+			जाओ next_rx;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		u32 payload;
 
-		if (rx_buf->data_ptr == data_ptr)
+		अगर (rx_buf->data_ptr == data_ptr)
 			payload = misc & RX_CMP_PAYLOAD_OFFSET;
-		else
+		अन्यथा
 			payload = 0;
 		skb = bp->rx_skb_func(bp, rxr, cons, data, data_ptr, dma_addr,
 				      payload | len);
-		if (!skb) {
+		अगर (!skb) अणु
 			rc = -ENOMEM;
-			goto next_rx;
-		}
-	}
+			जाओ next_rx;
+		पूर्ण
+	पूर्ण
 
-	if (agg_bufs) {
+	अगर (agg_bufs) अणु
 		skb = bnxt_rx_pages(bp, cpr, skb, cp_cons, agg_bufs, false);
-		if (!skb) {
+		अगर (!skb) अणु
 			rc = -ENOMEM;
-			goto next_rx;
-		}
-	}
+			जाओ next_rx;
+		पूर्ण
+	पूर्ण
 
-	if (RX_CMP_HASH_VALID(rxcmp)) {
+	अगर (RX_CMP_HASH_VALID(rxcmp)) अणु
 		u32 hash_type = RX_CMP_HASH_TYPE(rxcmp);
-		enum pkt_hash_types type = PKT_HASH_TYPE_L4;
+		क्रमागत pkt_hash_types type = PKT_HASH_TYPE_L4;
 
-		/* RSS profiles 1 and 3 with extract code 0 for inner 4-tuple */
-		if (hash_type != 1 && hash_type != 3)
+		/* RSS profiles 1 and 3 with extract code 0 क्रम inner 4-tuple */
+		अगर (hash_type != 1 && hash_type != 3)
 			type = PKT_HASH_TYPE_L3;
 		skb_set_hash(skb, le32_to_cpu(rxcmp->rx_cmp_rss_hash), type);
-	}
+	पूर्ण
 
 	cfa_code = RX_CMP_CFA_CODE(rxcmp1);
 	skb->protocol = eth_type_trans(skb, bnxt_get_pkt_dev(bp, cfa_code));
 
-	if ((rxcmp1->rx_cmp_flags2 &
+	अगर ((rxcmp1->rx_cmp_flags2 &
 	     cpu_to_le32(RX_CMP_FLAGS2_META_FORMAT_VLAN)) &&
-	    (skb->dev->features & BNXT_HW_FEATURE_VLAN_ALL_RX)) {
+	    (skb->dev->features & BNXT_HW_FEATURE_VLAN_ALL_RX)) अणु
 		u32 meta_data = le32_to_cpu(rxcmp1->rx_cmp_meta_data);
 		u16 vtag = meta_data & RX_CMP_FLAGS2_METADATA_TCI_MASK;
 		u16 vlan_proto = meta_data >> RX_CMP_FLAGS2_METADATA_TPID_SFT;
 
 		__vlan_hwaccel_put_tag(skb, htons(vlan_proto), vtag);
-	}
+	पूर्ण
 
-	skb_checksum_none_assert(skb);
-	if (RX_CMP_L4_CS_OK(rxcmp1)) {
-		if (dev->features & NETIF_F_RXCSUM) {
+	skb_checksum_none_निश्चित(skb);
+	अगर (RX_CMP_L4_CS_OK(rxcmp1)) अणु
+		अगर (dev->features & NETIF_F_RXCSUM) अणु
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 			skb->csum_level = RX_CMP_ENCAP(rxcmp1);
-		}
-	} else {
-		if (rxcmp1->rx_cmp_cfa_code_errors_v2 & RX_CMP_L4_CS_ERR_BITS) {
-			if (dev->features & NETIF_F_RXCSUM)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (rxcmp1->rx_cmp_cfa_code_errors_v2 & RX_CMP_L4_CS_ERR_BITS) अणु
+			अगर (dev->features & NETIF_F_RXCSUM)
 				bnapi->cp_ring.sw_stats.rx.rx_l4_csum_errors++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	bnxt_deliver_skb(bp, bnapi, skb);
 	rc = 1;
@@ -1895,724 +1896,724 @@ next_rx_no_len:
 	rxr->rx_next_cons = NEXT_RX(cons);
 
 next_rx_no_prod_no_len:
-	*raw_cons = tmp_raw_cons;
+	*raw_cons = पंचांगp_raw_cons;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* In netpoll mode, if we are using a combined completion ring, we need to
+/* In netpoll mode, अगर we are using a combined completion ring, we need to
  * discard the rx packets and recycle the buffers.
  */
-static int bnxt_force_rx_discard(struct bnxt *bp,
-				 struct bnxt_cp_ring_info *cpr,
+अटल पूर्णांक bnxt_क्रमce_rx_discard(काष्ठा bnxt *bp,
+				 काष्ठा bnxt_cp_ring_info *cpr,
 				 u32 *raw_cons, u8 *event)
-{
-	u32 tmp_raw_cons = *raw_cons;
-	struct rx_cmp_ext *rxcmp1;
-	struct rx_cmp *rxcmp;
+अणु
+	u32 पंचांगp_raw_cons = *raw_cons;
+	काष्ठा rx_cmp_ext *rxcmp1;
+	काष्ठा rx_cmp *rxcmp;
 	u16 cp_cons;
 	u8 cmp_type;
 
-	cp_cons = RING_CMP(tmp_raw_cons);
-	rxcmp = (struct rx_cmp *)
+	cp_cons = RING_CMP(पंचांगp_raw_cons);
+	rxcmp = (काष्ठा rx_cmp *)
 			&cpr->cp_desc_ring[CP_RING(cp_cons)][CP_IDX(cp_cons)];
 
-	tmp_raw_cons = NEXT_RAW_CMP(tmp_raw_cons);
-	cp_cons = RING_CMP(tmp_raw_cons);
-	rxcmp1 = (struct rx_cmp_ext *)
+	पंचांगp_raw_cons = NEXT_RAW_CMP(पंचांगp_raw_cons);
+	cp_cons = RING_CMP(पंचांगp_raw_cons);
+	rxcmp1 = (काष्ठा rx_cmp_ext *)
 			&cpr->cp_desc_ring[CP_RING(cp_cons)][CP_IDX(cp_cons)];
 
-	if (!RX_CMP_VALID(rxcmp1, tmp_raw_cons))
-		return -EBUSY;
+	अगर (!RX_CMP_VALID(rxcmp1, पंचांगp_raw_cons))
+		वापस -EBUSY;
 
 	cmp_type = RX_CMP_TYPE(rxcmp);
-	if (cmp_type == CMP_TYPE_RX_L2_CMP) {
+	अगर (cmp_type == CMP_TYPE_RX_L2_CMP) अणु
 		rxcmp1->rx_cmp_cfa_code_errors_v2 |=
 			cpu_to_le32(RX_CMPL_ERRORS_CRC_ERROR);
-	} else if (cmp_type == CMP_TYPE_RX_L2_TPA_END_CMP) {
-		struct rx_tpa_end_cmp_ext *tpa_end1;
+	पूर्ण अन्यथा अगर (cmp_type == CMP_TYPE_RX_L2_TPA_END_CMP) अणु
+		काष्ठा rx_tpa_end_cmp_ext *tpa_end1;
 
-		tpa_end1 = (struct rx_tpa_end_cmp_ext *)rxcmp1;
+		tpa_end1 = (काष्ठा rx_tpa_end_cmp_ext *)rxcmp1;
 		tpa_end1->rx_tpa_end_cmp_errors_v2 |=
 			cpu_to_le32(RX_TPA_END_CMP_ERRORS);
-	}
-	return bnxt_rx_pkt(bp, cpr, raw_cons, event);
-}
+	पूर्ण
+	वापस bnxt_rx_pkt(bp, cpr, raw_cons, event);
+पूर्ण
 
-u32 bnxt_fw_health_readl(struct bnxt *bp, int reg_idx)
-{
-	struct bnxt_fw_health *fw_health = bp->fw_health;
+u32 bnxt_fw_health_पढ़ोl(काष्ठा bnxt *bp, पूर्णांक reg_idx)
+अणु
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
 	u32 reg = fw_health->regs[reg_idx];
 	u32 reg_type, reg_off, val = 0;
 
 	reg_type = BNXT_FW_HEALTH_REG_TYPE(reg);
 	reg_off = BNXT_FW_HEALTH_REG_OFF(reg);
-	switch (reg_type) {
-	case BNXT_FW_HEALTH_REG_TYPE_CFG:
-		pci_read_config_dword(bp->pdev, reg_off, &val);
-		break;
-	case BNXT_FW_HEALTH_REG_TYPE_GRC:
+	चयन (reg_type) अणु
+	हाल BNXT_FW_HEALTH_REG_TYPE_CFG:
+		pci_पढ़ो_config_dword(bp->pdev, reg_off, &val);
+		अवरोध;
+	हाल BNXT_FW_HEALTH_REG_TYPE_GRC:
 		reg_off = fw_health->mapped_regs[reg_idx];
 		fallthrough;
-	case BNXT_FW_HEALTH_REG_TYPE_BAR0:
-		val = readl(bp->bar0 + reg_off);
-		break;
-	case BNXT_FW_HEALTH_REG_TYPE_BAR1:
-		val = readl(bp->bar1 + reg_off);
-		break;
-	}
-	if (reg_idx == BNXT_FW_RESET_INPROG_REG)
+	हाल BNXT_FW_HEALTH_REG_TYPE_BAR0:
+		val = पढ़ोl(bp->bar0 + reg_off);
+		अवरोध;
+	हाल BNXT_FW_HEALTH_REG_TYPE_BAR1:
+		val = पढ़ोl(bp->bar1 + reg_off);
+		अवरोध;
+	पूर्ण
+	अगर (reg_idx == BNXT_FW_RESET_INPROG_REG)
 		val &= fw_health->fw_reset_inprog_reg_mask;
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static u16 bnxt_agg_ring_id_to_grp_idx(struct bnxt *bp, u16 ring_id)
-{
-	int i;
+अटल u16 bnxt_agg_ring_id_to_grp_idx(काष्ठा bnxt *bp, u16 ring_id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < bp->rx_nr_rings; i++) {
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
 		u16 grp_idx = bp->rx_ring[i].bnapi->index;
-		struct bnxt_ring_grp_info *grp_info;
+		काष्ठा bnxt_ring_grp_info *grp_info;
 
 		grp_info = &bp->grp_info[grp_idx];
-		if (grp_info->agg_fw_ring_id == ring_id)
-			return grp_idx;
-	}
-	return INVALID_HW_RING_ID;
-}
+		अगर (grp_info->agg_fw_ring_id == ring_id)
+			वापस grp_idx;
+	पूर्ण
+	वापस INVALID_HW_RING_ID;
+पूर्ण
 
-#define BNXT_GET_EVENT_PORT(data)	\
+#घोषणा BNXT_GET_EVENT_PORT(data)	\
 	((data) &			\
 	 ASYNC_EVENT_CMPL_PORT_CONN_NOT_ALLOWED_EVENT_DATA1_PORT_ID_MASK)
 
-#define BNXT_EVENT_RING_TYPE(data2)	\
+#घोषणा BNXT_EVENT_RING_TYPE(data2)	\
 	((data2) &			\
 	 ASYNC_EVENT_CMPL_RING_MONITOR_MSG_EVENT_DATA2_DISABLE_RING_TYPE_MASK)
 
-#define BNXT_EVENT_RING_TYPE_RX(data2)	\
+#घोषणा BNXT_EVENT_RING_TYPE_RX(data2)	\
 	(BNXT_EVENT_RING_TYPE(data2) ==	\
 	 ASYNC_EVENT_CMPL_RING_MONITOR_MSG_EVENT_DATA2_DISABLE_RING_TYPE_RX)
 
-static int bnxt_async_event_process(struct bnxt *bp,
-				    struct hwrm_async_event_cmpl *cmpl)
-{
+अटल पूर्णांक bnxt_async_event_process(काष्ठा bnxt *bp,
+				    काष्ठा hwrm_async_event_cmpl *cmpl)
+अणु
 	u16 event_id = le16_to_cpu(cmpl->event_id);
 	u32 data1 = le32_to_cpu(cmpl->event_data1);
 	u32 data2 = le32_to_cpu(cmpl->event_data2);
 
-	/* TODO CHIMP_FW: Define event id's for link change, error etc */
-	switch (event_id) {
-	case ASYNC_EVENT_CMPL_EVENT_ID_LINK_SPEED_CFG_CHANGE: {
-		struct bnxt_link_info *link_info = &bp->link_info;
+	/* TODO CHIMP_FW: Define event id's क्रम link change, error etc */
+	चयन (event_id) अणु
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_LINK_SPEED_CFG_CHANGE: अणु
+		काष्ठा bnxt_link_info *link_info = &bp->link_info;
 
-		if (BNXT_VF(bp))
-			goto async_event_process_exit;
+		अगर (BNXT_VF(bp))
+			जाओ async_event_process_निकास;
 
-		/* print unsupported speed warning in forced speed mode only */
-		if (!(link_info->autoneg & BNXT_AUTONEG_SPEED) &&
-		    (data1 & 0x20000)) {
-			u16 fw_speed = link_info->force_link_speed;
+		/* prपूर्णांक unsupported speed warning in क्रमced speed mode only */
+		अगर (!(link_info->स्वतःneg & BNXT_AUTONEG_SPEED) &&
+		    (data1 & 0x20000)) अणु
+			u16 fw_speed = link_info->क्रमce_link_speed;
 			u32 speed = bnxt_fw_to_ethtool_speed(fw_speed);
 
-			if (speed != SPEED_UNKNOWN)
+			अगर (speed != SPEED_UNKNOWN)
 				netdev_warn(bp->dev, "Link speed %d no longer supported\n",
 					    speed);
-		}
+		पूर्ण
 		set_bit(BNXT_LINK_SPEED_CHNG_SP_EVENT, &bp->sp_event);
-	}
+	पूर्ण
 		fallthrough;
-	case ASYNC_EVENT_CMPL_EVENT_ID_LINK_SPEED_CHANGE:
-	case ASYNC_EVENT_CMPL_EVENT_ID_PORT_PHY_CFG_CHANGE:
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_LINK_SPEED_CHANGE:
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_PORT_PHY_CFG_CHANGE:
 		set_bit(BNXT_LINK_CFG_CHANGE_SP_EVENT, &bp->sp_event);
 		fallthrough;
-	case ASYNC_EVENT_CMPL_EVENT_ID_LINK_STATUS_CHANGE:
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_LINK_STATUS_CHANGE:
 		set_bit(BNXT_LINK_CHNG_SP_EVENT, &bp->sp_event);
-		break;
-	case ASYNC_EVENT_CMPL_EVENT_ID_PF_DRVR_UNLOAD:
+		अवरोध;
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_PF_DRVR_UNLOAD:
 		set_bit(BNXT_HWRM_PF_UNLOAD_SP_EVENT, &bp->sp_event);
-		break;
-	case ASYNC_EVENT_CMPL_EVENT_ID_PORT_CONN_NOT_ALLOWED: {
+		अवरोध;
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_PORT_CONN_NOT_ALLOWED: अणु
 		u16 port_id = BNXT_GET_EVENT_PORT(data1);
 
-		if (BNXT_VF(bp))
-			break;
+		अगर (BNXT_VF(bp))
+			अवरोध;
 
-		if (bp->pf.port_id != port_id)
-			break;
+		अगर (bp->pf.port_id != port_id)
+			अवरोध;
 
 		set_bit(BNXT_HWRM_PORT_MODULE_SP_EVENT, &bp->sp_event);
-		break;
-	}
-	case ASYNC_EVENT_CMPL_EVENT_ID_VF_CFG_CHANGE:
-		if (BNXT_PF(bp))
-			goto async_event_process_exit;
+		अवरोध;
+	पूर्ण
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_VF_CFG_CHANGE:
+		अगर (BNXT_PF(bp))
+			जाओ async_event_process_निकास;
 		set_bit(BNXT_RESET_TASK_SILENT_SP_EVENT, &bp->sp_event);
-		break;
-	case ASYNC_EVENT_CMPL_EVENT_ID_RESET_NOTIFY: {
-		char *fatal_str = "non-fatal";
+		अवरोध;
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_RESET_NOTIFY: अणु
+		अक्षर *fatal_str = "non-fatal";
 
-		if (!bp->fw_health)
-			goto async_event_process_exit;
+		अगर (!bp->fw_health)
+			जाओ async_event_process_निकास;
 
-		bp->fw_reset_timestamp = jiffies;
-		bp->fw_reset_min_dsecs = cmpl->timestamp_lo;
-		if (!bp->fw_reset_min_dsecs)
+		bp->fw_reset_बारtamp = jअगरfies;
+		bp->fw_reset_min_dsecs = cmpl->बारtamp_lo;
+		अगर (!bp->fw_reset_min_dsecs)
 			bp->fw_reset_min_dsecs = BNXT_DFLT_FW_RST_MIN_DSECS;
-		bp->fw_reset_max_dsecs = le16_to_cpu(cmpl->timestamp_hi);
-		if (!bp->fw_reset_max_dsecs)
+		bp->fw_reset_max_dsecs = le16_to_cpu(cmpl->बारtamp_hi);
+		अगर (!bp->fw_reset_max_dsecs)
 			bp->fw_reset_max_dsecs = BNXT_DFLT_FW_RST_MAX_DSECS;
-		if (EVENT_DATA1_RESET_NOTIFY_FATAL(data1)) {
+		अगर (EVENT_DATA1_RESET_NOTIFY_FATAL(data1)) अणु
 			fatal_str = "fatal";
 			set_bit(BNXT_STATE_FW_FATAL_COND, &bp->state);
-		}
-		netif_warn(bp, hw, bp->dev,
+		पूर्ण
+		netअगर_warn(bp, hw, bp->dev,
 			   "Firmware %s reset event, data1: 0x%x, data2: 0x%x, min wait %u ms, max wait %u ms\n",
 			   fatal_str, data1, data2,
 			   bp->fw_reset_min_dsecs * 100,
 			   bp->fw_reset_max_dsecs * 100);
 		set_bit(BNXT_FW_RESET_NOTIFY_SP_EVENT, &bp->sp_event);
-		break;
-	}
-	case ASYNC_EVENT_CMPL_EVENT_ID_ERROR_RECOVERY: {
-		struct bnxt_fw_health *fw_health = bp->fw_health;
+		अवरोध;
+	पूर्ण
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_ERROR_RECOVERY: अणु
+		काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
 
-		if (!fw_health)
-			goto async_event_process_exit;
+		अगर (!fw_health)
+			जाओ async_event_process_निकास;
 
 		fw_health->enabled = EVENT_DATA1_RECOVERY_ENABLED(data1);
 		fw_health->master = EVENT_DATA1_RECOVERY_MASTER_FUNC(data1);
-		if (!fw_health->enabled) {
-			netif_info(bp, drv, bp->dev,
+		अगर (!fw_health->enabled) अणु
+			netअगर_info(bp, drv, bp->dev,
 				   "Error recovery info: error recovery[0]\n");
-			break;
-		}
-		fw_health->tmr_multiplier =
+			अवरोध;
+		पूर्ण
+		fw_health->पंचांगr_multiplier =
 			DIV_ROUND_UP(fw_health->polling_dsecs * HZ,
-				     bp->current_interval * 10);
-		fw_health->tmr_counter = fw_health->tmr_multiplier;
+				     bp->current_पूर्णांकerval * 10);
+		fw_health->पंचांगr_counter = fw_health->पंचांगr_multiplier;
 		fw_health->last_fw_heartbeat =
-			bnxt_fw_health_readl(bp, BNXT_FW_HEARTBEAT_REG);
+			bnxt_fw_health_पढ़ोl(bp, BNXT_FW_HEARTBEAT_REG);
 		fw_health->last_fw_reset_cnt =
-			bnxt_fw_health_readl(bp, BNXT_FW_RESET_CNT_REG);
-		netif_info(bp, drv, bp->dev,
+			bnxt_fw_health_पढ़ोl(bp, BNXT_FW_RESET_CNT_REG);
+		netअगर_info(bp, drv, bp->dev,
 			   "Error recovery info: error recovery[1], master[%d], reset count[%u], health status: 0x%x\n",
 			   fw_health->master, fw_health->last_fw_reset_cnt,
-			   bnxt_fw_health_readl(bp, BNXT_FW_HEALTH_REG));
-		goto async_event_process_exit;
-	}
-	case ASYNC_EVENT_CMPL_EVENT_ID_DEBUG_NOTIFICATION:
-		netif_notice(bp, hw, bp->dev,
+			   bnxt_fw_health_पढ़ोl(bp, BNXT_FW_HEALTH_REG));
+		जाओ async_event_process_निकास;
+	पूर्ण
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_DEBUG_NOTIFICATION:
+		netअगर_notice(bp, hw, bp->dev,
 			     "Received firmware debug notification, data1: 0x%x, data2: 0x%x\n",
 			     data1, data2);
-		goto async_event_process_exit;
-	case ASYNC_EVENT_CMPL_EVENT_ID_RING_MONITOR_MSG: {
-		struct bnxt_rx_ring_info *rxr;
+		जाओ async_event_process_निकास;
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_RING_MONITOR_MSG: अणु
+		काष्ठा bnxt_rx_ring_info *rxr;
 		u16 grp_idx;
 
-		if (bp->flags & BNXT_FLAG_CHIP_P5)
-			goto async_event_process_exit;
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+			जाओ async_event_process_निकास;
 
 		netdev_warn(bp->dev, "Ring monitor event, ring type %lu id 0x%x\n",
 			    BNXT_EVENT_RING_TYPE(data2), data1);
-		if (!BNXT_EVENT_RING_TYPE_RX(data2))
-			goto async_event_process_exit;
+		अगर (!BNXT_EVENT_RING_TYPE_RX(data2))
+			जाओ async_event_process_निकास;
 
 		grp_idx = bnxt_agg_ring_id_to_grp_idx(bp, data1);
-		if (grp_idx == INVALID_HW_RING_ID) {
+		अगर (grp_idx == INVALID_HW_RING_ID) अणु
 			netdev_warn(bp->dev, "Unknown RX agg ring id 0x%x\n",
 				    data1);
-			goto async_event_process_exit;
-		}
+			जाओ async_event_process_निकास;
+		पूर्ण
 		rxr = bp->bnapi[grp_idx]->rx_ring;
 		bnxt_sched_reset(bp, rxr);
-		goto async_event_process_exit;
-	}
-	case ASYNC_EVENT_CMPL_EVENT_ID_ECHO_REQUEST: {
-		struct bnxt_fw_health *fw_health = bp->fw_health;
+		जाओ async_event_process_निकास;
+	पूर्ण
+	हाल ASYNC_EVENT_CMPL_EVENT_ID_ECHO_REQUEST: अणु
+		काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
 
-		netif_notice(bp, hw, bp->dev,
+		netअगर_notice(bp, hw, bp->dev,
 			     "Received firmware echo request, data1: 0x%x, data2: 0x%x\n",
 			     data1, data2);
-		if (fw_health) {
+		अगर (fw_health) अणु
 			fw_health->echo_req_data1 = data1;
 			fw_health->echo_req_data2 = data2;
 			set_bit(BNXT_FW_ECHO_REQUEST_SP_EVENT, &bp->sp_event);
-			break;
-		}
-		goto async_event_process_exit;
-	}
-	default:
-		goto async_event_process_exit;
-	}
+			अवरोध;
+		पूर्ण
+		जाओ async_event_process_निकास;
+	पूर्ण
+	शेष:
+		जाओ async_event_process_निकास;
+	पूर्ण
 	bnxt_queue_sp_work(bp);
-async_event_process_exit:
+async_event_process_निकास:
 	bnxt_ulp_async_events(bp, cmpl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnxt_hwrm_handler(struct bnxt *bp, struct tx_cmp *txcmp)
-{
+अटल पूर्णांक bnxt_hwrm_handler(काष्ठा bnxt *bp, काष्ठा tx_cmp *txcmp)
+अणु
 	u16 cmpl_type = TX_CMP_TYPE(txcmp), vf_id, seq_id;
-	struct hwrm_cmpl *h_cmpl = (struct hwrm_cmpl *)txcmp;
-	struct hwrm_fwd_req_cmpl *fwd_req_cmpl =
-				(struct hwrm_fwd_req_cmpl *)txcmp;
+	काष्ठा hwrm_cmpl *h_cmpl = (काष्ठा hwrm_cmpl *)txcmp;
+	काष्ठा hwrm_fwd_req_cmpl *fwd_req_cmpl =
+				(काष्ठा hwrm_fwd_req_cmpl *)txcmp;
 
-	switch (cmpl_type) {
-	case CMPL_BASE_TYPE_HWRM_DONE:
+	चयन (cmpl_type) अणु
+	हाल CMPL_BASE_TYPE_HWRM_DONE:
 		seq_id = le16_to_cpu(h_cmpl->sequence_id);
-		if (seq_id == bp->hwrm_intr_seq_id)
-			bp->hwrm_intr_seq_id = (u16)~bp->hwrm_intr_seq_id;
-		else
+		अगर (seq_id == bp->hwrm_पूर्णांकr_seq_id)
+			bp->hwrm_पूर्णांकr_seq_id = (u16)~bp->hwrm_पूर्णांकr_seq_id;
+		अन्यथा
 			netdev_err(bp->dev, "Invalid hwrm seq id %d\n", seq_id);
-		break;
+		अवरोध;
 
-	case CMPL_BASE_TYPE_HWRM_FWD_REQ:
+	हाल CMPL_BASE_TYPE_HWRM_FWD_REQ:
 		vf_id = le16_to_cpu(fwd_req_cmpl->source_id);
 
-		if ((vf_id < bp->pf.first_vf_id) ||
-		    (vf_id >= bp->pf.first_vf_id + bp->pf.active_vfs)) {
+		अगर ((vf_id < bp->pf.first_vf_id) ||
+		    (vf_id >= bp->pf.first_vf_id + bp->pf.active_vfs)) अणु
 			netdev_err(bp->dev, "Msg contains invalid VF id %x\n",
 				   vf_id);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		set_bit(vf_id - bp->pf.first_vf_id, bp->pf.vf_event_bmap);
 		set_bit(BNXT_HWRM_EXEC_FWD_REQ_SP_EVENT, &bp->sp_event);
 		bnxt_queue_sp_work(bp);
-		break;
+		अवरोध;
 
-	case CMPL_BASE_TYPE_HWRM_ASYNC_EVENT:
+	हाल CMPL_BASE_TYPE_HWRM_ASYNC_EVENT:
 		bnxt_async_event_process(bp,
-					 (struct hwrm_async_event_cmpl *)txcmp);
+					 (काष्ठा hwrm_async_event_cmpl *)txcmp);
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t bnxt_msix(int irq, void *dev_instance)
-{
-	struct bnxt_napi *bnapi = dev_instance;
-	struct bnxt *bp = bnapi->bp;
-	struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+अटल irqवापस_t bnxt_msix(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	काष्ठा bnxt_napi *bnapi = dev_instance;
+	काष्ठा bnxt *bp = bnapi->bp;
+	काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
 	u32 cons = RING_CMP(cpr->cp_raw_cons);
 
 	cpr->event_ctr++;
 	prefetch(&cpr->cp_desc_ring[CP_RING(cons)][CP_IDX(cons)]);
 	napi_schedule(&bnapi->napi);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static inline int bnxt_has_work(struct bnxt *bp, struct bnxt_cp_ring_info *cpr)
-{
+अटल अंतरभूत पूर्णांक bnxt_has_work(काष्ठा bnxt *bp, काष्ठा bnxt_cp_ring_info *cpr)
+अणु
 	u32 raw_cons = cpr->cp_raw_cons;
 	u16 cons = RING_CMP(raw_cons);
-	struct tx_cmp *txcmp;
+	काष्ठा tx_cmp *txcmp;
 
 	txcmp = &cpr->cp_desc_ring[CP_RING(cons)][CP_IDX(cons)];
 
-	return TX_CMP_VALID(txcmp, raw_cons);
-}
+	वापस TX_CMP_VALID(txcmp, raw_cons);
+पूर्ण
 
-static irqreturn_t bnxt_inta(int irq, void *dev_instance)
-{
-	struct bnxt_napi *bnapi = dev_instance;
-	struct bnxt *bp = bnapi->bp;
-	struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+अटल irqवापस_t bnxt_पूर्णांकa(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	काष्ठा bnxt_napi *bnapi = dev_instance;
+	काष्ठा bnxt *bp = bnapi->bp;
+	काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
 	u32 cons = RING_CMP(cpr->cp_raw_cons);
-	u32 int_status;
+	u32 पूर्णांक_status;
 
 	prefetch(&cpr->cp_desc_ring[CP_RING(cons)][CP_IDX(cons)]);
 
-	if (!bnxt_has_work(bp, cpr)) {
-		int_status = readl(bp->bar0 + BNXT_CAG_REG_LEGACY_INT_STATUS);
-		/* return if erroneous interrupt */
-		if (!(int_status & (0x10000 << cpr->cp_ring_struct.fw_ring_id)))
-			return IRQ_NONE;
-	}
+	अगर (!bnxt_has_work(bp, cpr)) अणु
+		पूर्णांक_status = पढ़ोl(bp->bar0 + BNXT_CAG_REG_LEGACY_INT_STATUS);
+		/* वापस अगर erroneous पूर्णांकerrupt */
+		अगर (!(पूर्णांक_status & (0x10000 << cpr->cp_ring_काष्ठा.fw_ring_id)))
+			वापस IRQ_NONE;
+	पूर्ण
 
 	/* disable ring IRQ */
-	BNXT_CP_DB_IRQ_DIS(cpr->cp_db.doorbell);
+	BNXT_CP_DB_IRQ_DIS(cpr->cp_db.करोorbell);
 
-	/* Return here if interrupt is shared and is disabled. */
-	if (unlikely(atomic_read(&bp->intr_sem) != 0))
-		return IRQ_HANDLED;
+	/* Return here अगर पूर्णांकerrupt is shared and is disabled. */
+	अगर (unlikely(atomic_पढ़ो(&bp->पूर्णांकr_sem) != 0))
+		वापस IRQ_HANDLED;
 
 	napi_schedule(&bnapi->napi);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __bnxt_poll_work(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
-			    int budget)
-{
-	struct bnxt_napi *bnapi = cpr->bnapi;
+अटल पूर्णांक __bnxt_poll_work(काष्ठा bnxt *bp, काष्ठा bnxt_cp_ring_info *cpr,
+			    पूर्णांक budget)
+अणु
+	काष्ठा bnxt_napi *bnapi = cpr->bnapi;
 	u32 raw_cons = cpr->cp_raw_cons;
 	u32 cons;
-	int tx_pkts = 0;
-	int rx_pkts = 0;
+	पूर्णांक tx_pkts = 0;
+	पूर्णांक rx_pkts = 0;
 	u8 event = 0;
-	struct tx_cmp *txcmp;
+	काष्ठा tx_cmp *txcmp;
 
 	cpr->has_more_work = 0;
-	cpr->had_work_done = 1;
-	while (1) {
-		int rc;
+	cpr->had_work_करोne = 1;
+	जबतक (1) अणु
+		पूर्णांक rc;
 
 		cons = RING_CMP(raw_cons);
 		txcmp = &cpr->cp_desc_ring[CP_RING(cons)][CP_IDX(cons)];
 
-		if (!TX_CMP_VALID(txcmp, raw_cons))
-			break;
+		अगर (!TX_CMP_VALID(txcmp, raw_cons))
+			अवरोध;
 
-		/* The valid test of the entry must be done first before
-		 * reading any further.
+		/* The valid test of the entry must be करोne first beक्रमe
+		 * पढ़ोing any further.
 		 */
 		dma_rmb();
-		if (TX_CMP_TYPE(txcmp) == CMP_TYPE_TX_L2_CMP) {
+		अगर (TX_CMP_TYPE(txcmp) == CMP_TYPE_TX_L2_CMP) अणु
 			tx_pkts++;
-			/* return full budget so NAPI will complete. */
-			if (unlikely(tx_pkts > bp->tx_wake_thresh)) {
+			/* वापस full budget so NAPI will complete. */
+			अगर (unlikely(tx_pkts > bp->tx_wake_thresh)) अणु
 				rx_pkts = budget;
 				raw_cons = NEXT_RAW_CMP(raw_cons);
-				if (budget)
+				अगर (budget)
 					cpr->has_more_work = 1;
-				break;
-			}
-		} else if ((TX_CMP_TYPE(txcmp) & 0x30) == 0x10) {
-			if (likely(budget))
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अगर ((TX_CMP_TYPE(txcmp) & 0x30) == 0x10) अणु
+			अगर (likely(budget))
 				rc = bnxt_rx_pkt(bp, cpr, &raw_cons, &event);
-			else
-				rc = bnxt_force_rx_discard(bp, cpr, &raw_cons,
+			अन्यथा
+				rc = bnxt_क्रमce_rx_discard(bp, cpr, &raw_cons,
 							   &event);
-			if (likely(rc >= 0))
+			अगर (likely(rc >= 0))
 				rx_pkts += rc;
 			/* Increment rx_pkts when rc is -ENOMEM to count towards
 			 * the NAPI budget.  Otherwise, we may potentially loop
-			 * here forever if we consistently cannot allocate
+			 * here क्रमever अगर we consistently cannot allocate
 			 * buffers.
 			 */
-			else if (rc == -ENOMEM && budget)
+			अन्यथा अगर (rc == -ENOMEM && budget)
 				rx_pkts++;
-			else if (rc == -EBUSY)	/* partial completion */
-				break;
-		} else if (unlikely((TX_CMP_TYPE(txcmp) ==
+			अन्यथा अगर (rc == -EBUSY)	/* partial completion */
+				अवरोध;
+		पूर्ण अन्यथा अगर (unlikely((TX_CMP_TYPE(txcmp) ==
 				     CMPL_BASE_TYPE_HWRM_DONE) ||
 				    (TX_CMP_TYPE(txcmp) ==
 				     CMPL_BASE_TYPE_HWRM_FWD_REQ) ||
 				    (TX_CMP_TYPE(txcmp) ==
-				     CMPL_BASE_TYPE_HWRM_ASYNC_EVENT))) {
+				     CMPL_BASE_TYPE_HWRM_ASYNC_EVENT))) अणु
 			bnxt_hwrm_handler(bp, txcmp);
-		}
+		पूर्ण
 		raw_cons = NEXT_RAW_CMP(raw_cons);
 
-		if (rx_pkts && rx_pkts == budget) {
+		अगर (rx_pkts && rx_pkts == budget) अणु
 			cpr->has_more_work = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (event & BNXT_REDIRECT_EVENT)
-		xdp_do_flush_map();
+	अगर (event & BNXT_REसूचीECT_EVENT)
+		xdp_करो_flush_map();
 
-	if (event & BNXT_TX_EVENT) {
-		struct bnxt_tx_ring_info *txr = bnapi->tx_ring;
+	अगर (event & BNXT_TX_EVENT) अणु
+		काष्ठा bnxt_tx_ring_info *txr = bnapi->tx_ring;
 		u16 prod = txr->tx_prod;
 
-		/* Sync BD data before updating doorbell */
+		/* Sync BD data beक्रमe updating करोorbell */
 		wmb();
 
-		bnxt_db_write_relaxed(bp, &txr->tx_db, prod);
-	}
+		bnxt_db_ग_लिखो_relaxed(bp, &txr->tx_db, prod);
+	पूर्ण
 
 	cpr->cp_raw_cons = raw_cons;
 	bnapi->tx_pkts += tx_pkts;
 	bnapi->events |= event;
-	return rx_pkts;
-}
+	वापस rx_pkts;
+पूर्ण
 
-static void __bnxt_poll_work_done(struct bnxt *bp, struct bnxt_napi *bnapi)
-{
-	if (bnapi->tx_pkts) {
-		bnapi->tx_int(bp, bnapi, bnapi->tx_pkts);
+अटल व्योम __bnxt_poll_work_करोne(काष्ठा bnxt *bp, काष्ठा bnxt_napi *bnapi)
+अणु
+	अगर (bnapi->tx_pkts) अणु
+		bnapi->tx_पूर्णांक(bp, bnapi, bnapi->tx_pkts);
 		bnapi->tx_pkts = 0;
-	}
+	पूर्ण
 
-	if ((bnapi->events & BNXT_RX_EVENT) && !(bnapi->in_reset)) {
-		struct bnxt_rx_ring_info *rxr = bnapi->rx_ring;
+	अगर ((bnapi->events & BNXT_RX_EVENT) && !(bnapi->in_reset)) अणु
+		काष्ठा bnxt_rx_ring_info *rxr = bnapi->rx_ring;
 
-		if (bnapi->events & BNXT_AGG_EVENT)
-			bnxt_db_write(bp, &rxr->rx_agg_db, rxr->rx_agg_prod);
-		bnxt_db_write(bp, &rxr->rx_db, rxr->rx_prod);
-	}
+		अगर (bnapi->events & BNXT_AGG_EVENT)
+			bnxt_db_ग_लिखो(bp, &rxr->rx_agg_db, rxr->rx_agg_prod);
+		bnxt_db_ग_लिखो(bp, &rxr->rx_db, rxr->rx_prod);
+	पूर्ण
 	bnapi->events = 0;
-}
+पूर्ण
 
-static int bnxt_poll_work(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
-			  int budget)
-{
-	struct bnxt_napi *bnapi = cpr->bnapi;
-	int rx_pkts;
+अटल पूर्णांक bnxt_poll_work(काष्ठा bnxt *bp, काष्ठा bnxt_cp_ring_info *cpr,
+			  पूर्णांक budget)
+अणु
+	काष्ठा bnxt_napi *bnapi = cpr->bnapi;
+	पूर्णांक rx_pkts;
 
 	rx_pkts = __bnxt_poll_work(bp, cpr, budget);
 
-	/* ACK completion ring before freeing tx ring and producing new
+	/* ACK completion ring beक्रमe मुक्तing tx ring and producing new
 	 * buffers in rx/agg rings to prevent overflowing the completion
 	 * ring.
 	 */
 	bnxt_db_cq(bp, &cpr->cp_db, cpr->cp_raw_cons);
 
-	__bnxt_poll_work_done(bp, bnapi);
-	return rx_pkts;
-}
+	__bnxt_poll_work_करोne(bp, bnapi);
+	वापस rx_pkts;
+पूर्ण
 
-static int bnxt_poll_nitroa0(struct napi_struct *napi, int budget)
-{
-	struct bnxt_napi *bnapi = container_of(napi, struct bnxt_napi, napi);
-	struct bnxt *bp = bnapi->bp;
-	struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
-	struct bnxt_rx_ring_info *rxr = bnapi->rx_ring;
-	struct tx_cmp *txcmp;
-	struct rx_cmp_ext *rxcmp1;
-	u32 cp_cons, tmp_raw_cons;
+अटल पूर्णांक bnxt_poll_nitroa0(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा bnxt_napi *bnapi = container_of(napi, काष्ठा bnxt_napi, napi);
+	काष्ठा bnxt *bp = bnapi->bp;
+	काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	काष्ठा bnxt_rx_ring_info *rxr = bnapi->rx_ring;
+	काष्ठा tx_cmp *txcmp;
+	काष्ठा rx_cmp_ext *rxcmp1;
+	u32 cp_cons, पंचांगp_raw_cons;
 	u32 raw_cons = cpr->cp_raw_cons;
 	u32 rx_pkts = 0;
 	u8 event = 0;
 
-	while (1) {
-		int rc;
+	जबतक (1) अणु
+		पूर्णांक rc;
 
 		cp_cons = RING_CMP(raw_cons);
 		txcmp = &cpr->cp_desc_ring[CP_RING(cp_cons)][CP_IDX(cp_cons)];
 
-		if (!TX_CMP_VALID(txcmp, raw_cons))
-			break;
+		अगर (!TX_CMP_VALID(txcmp, raw_cons))
+			अवरोध;
 
-		if ((TX_CMP_TYPE(txcmp) & 0x30) == 0x10) {
-			tmp_raw_cons = NEXT_RAW_CMP(raw_cons);
-			cp_cons = RING_CMP(tmp_raw_cons);
-			rxcmp1 = (struct rx_cmp_ext *)
+		अगर ((TX_CMP_TYPE(txcmp) & 0x30) == 0x10) अणु
+			पंचांगp_raw_cons = NEXT_RAW_CMP(raw_cons);
+			cp_cons = RING_CMP(पंचांगp_raw_cons);
+			rxcmp1 = (काष्ठा rx_cmp_ext *)
 			  &cpr->cp_desc_ring[CP_RING(cp_cons)][CP_IDX(cp_cons)];
 
-			if (!RX_CMP_VALID(rxcmp1, tmp_raw_cons))
-				break;
+			अगर (!RX_CMP_VALID(rxcmp1, पंचांगp_raw_cons))
+				अवरोध;
 
-			/* force an error to recycle the buffer */
+			/* क्रमce an error to recycle the buffer */
 			rxcmp1->rx_cmp_cfa_code_errors_v2 |=
 				cpu_to_le32(RX_CMPL_ERRORS_CRC_ERROR);
 
 			rc = bnxt_rx_pkt(bp, cpr, &raw_cons, &event);
-			if (likely(rc == -EIO) && budget)
+			अगर (likely(rc == -EIO) && budget)
 				rx_pkts++;
-			else if (rc == -EBUSY)	/* partial completion */
-				break;
-		} else if (unlikely(TX_CMP_TYPE(txcmp) ==
-				    CMPL_BASE_TYPE_HWRM_DONE)) {
+			अन्यथा अगर (rc == -EBUSY)	/* partial completion */
+				अवरोध;
+		पूर्ण अन्यथा अगर (unlikely(TX_CMP_TYPE(txcmp) ==
+				    CMPL_BASE_TYPE_HWRM_DONE)) अणु
 			bnxt_hwrm_handler(bp, txcmp);
-		} else {
+		पूर्ण अन्यथा अणु
 			netdev_err(bp->dev,
 				   "Invalid completion received on special ring\n");
-		}
+		पूर्ण
 		raw_cons = NEXT_RAW_CMP(raw_cons);
 
-		if (rx_pkts == budget)
-			break;
-	}
+		अगर (rx_pkts == budget)
+			अवरोध;
+	पूर्ण
 
 	cpr->cp_raw_cons = raw_cons;
 	BNXT_DB_CQ(&cpr->cp_db, cpr->cp_raw_cons);
-	bnxt_db_write(bp, &rxr->rx_db, rxr->rx_prod);
+	bnxt_db_ग_लिखो(bp, &rxr->rx_db, rxr->rx_prod);
 
-	if (event & BNXT_AGG_EVENT)
-		bnxt_db_write(bp, &rxr->rx_agg_db, rxr->rx_agg_prod);
+	अगर (event & BNXT_AGG_EVENT)
+		bnxt_db_ग_लिखो(bp, &rxr->rx_agg_db, rxr->rx_agg_prod);
 
-	if (!bnxt_has_work(bp, cpr) && rx_pkts < budget) {
-		napi_complete_done(napi, rx_pkts);
+	अगर (!bnxt_has_work(bp, cpr) && rx_pkts < budget) अणु
+		napi_complete_करोne(napi, rx_pkts);
 		BNXT_DB_CQ_ARM(&cpr->cp_db, cpr->cp_raw_cons);
-	}
-	return rx_pkts;
-}
+	पूर्ण
+	वापस rx_pkts;
+पूर्ण
 
-static int bnxt_poll(struct napi_struct *napi, int budget)
-{
-	struct bnxt_napi *bnapi = container_of(napi, struct bnxt_napi, napi);
-	struct bnxt *bp = bnapi->bp;
-	struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
-	int work_done = 0;
+अटल पूर्णांक bnxt_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा bnxt_napi *bnapi = container_of(napi, काष्ठा bnxt_napi, napi);
+	काष्ठा bnxt *bp = bnapi->bp;
+	काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	पूर्णांक work_करोne = 0;
 
-	if (unlikely(test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state))) {
+	अगर (unlikely(test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state))) अणु
 		napi_complete(napi);
-		return 0;
-	}
-	while (1) {
-		work_done += bnxt_poll_work(bp, cpr, budget - work_done);
+		वापस 0;
+	पूर्ण
+	जबतक (1) अणु
+		work_करोne += bnxt_poll_work(bp, cpr, budget - work_करोne);
 
-		if (work_done >= budget) {
-			if (!budget)
+		अगर (work_करोne >= budget) अणु
+			अगर (!budget)
 				BNXT_DB_CQ_ARM(&cpr->cp_db, cpr->cp_raw_cons);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!bnxt_has_work(bp, cpr)) {
-			if (napi_complete_done(napi, work_done))
+		अगर (!bnxt_has_work(bp, cpr)) अणु
+			अगर (napi_complete_करोne(napi, work_करोne))
 				BNXT_DB_CQ_ARM(&cpr->cp_db, cpr->cp_raw_cons);
-			break;
-		}
-	}
-	if (bp->flags & BNXT_FLAG_DIM) {
-		struct dim_sample dim_sample = {};
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (bp->flags & BNXT_FLAG_DIM) अणु
+		काष्ठा dim_sample dim_sample = अणुपूर्ण;
 
 		dim_update_sample(cpr->event_ctr,
 				  cpr->rx_packets,
 				  cpr->rx_bytes,
 				  &dim_sample);
 		net_dim(&cpr->dim, dim_sample);
-	}
-	return work_done;
-}
+	पूर्ण
+	वापस work_करोne;
+पूर्ण
 
-static int __bnxt_poll_cqs(struct bnxt *bp, struct bnxt_napi *bnapi, int budget)
-{
-	struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
-	int i, work_done = 0;
+अटल पूर्णांक __bnxt_poll_cqs(काष्ठा bnxt *bp, काष्ठा bnxt_napi *bnapi, पूर्णांक budget)
+अणु
+	काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	पूर्णांक i, work_करोne = 0;
 
-	for (i = 0; i < 2; i++) {
-		struct bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[i];
+	क्रम (i = 0; i < 2; i++) अणु
+		काष्ठा bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[i];
 
-		if (cpr2) {
-			work_done += __bnxt_poll_work(bp, cpr2,
-						      budget - work_done);
+		अगर (cpr2) अणु
+			work_करोne += __bnxt_poll_work(bp, cpr2,
+						      budget - work_करोne);
 			cpr->has_more_work |= cpr2->has_more_work;
-		}
-	}
-	return work_done;
-}
+		पूर्ण
+	पूर्ण
+	वापस work_करोne;
+पूर्ण
 
-static void __bnxt_poll_cqs_done(struct bnxt *bp, struct bnxt_napi *bnapi,
+अटल व्योम __bnxt_poll_cqs_करोne(काष्ठा bnxt *bp, काष्ठा bnxt_napi *bnapi,
 				 u64 dbr_type)
-{
-	struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
-	int i;
+अणु
+	काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
-		struct bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[i];
-		struct bnxt_db_info *db;
+	क्रम (i = 0; i < 2; i++) अणु
+		काष्ठा bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[i];
+		काष्ठा bnxt_db_info *db;
 
-		if (cpr2 && cpr2->had_work_done) {
+		अगर (cpr2 && cpr2->had_work_करोne) अणु
 			db = &cpr2->cp_db;
-			writeq(db->db_key64 | dbr_type |
-			       RING_CMP(cpr2->cp_raw_cons), db->doorbell);
-			cpr2->had_work_done = 0;
-		}
-	}
-	__bnxt_poll_work_done(bp, bnapi);
-}
+			ग_लिखोq(db->db_key64 | dbr_type |
+			       RING_CMP(cpr2->cp_raw_cons), db->करोorbell);
+			cpr2->had_work_करोne = 0;
+		पूर्ण
+	पूर्ण
+	__bnxt_poll_work_करोne(bp, bnapi);
+पूर्ण
 
-static int bnxt_poll_p5(struct napi_struct *napi, int budget)
-{
-	struct bnxt_napi *bnapi = container_of(napi, struct bnxt_napi, napi);
-	struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+अटल पूर्णांक bnxt_poll_p5(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा bnxt_napi *bnapi = container_of(napi, काष्ठा bnxt_napi, napi);
+	काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
 	u32 raw_cons = cpr->cp_raw_cons;
-	struct bnxt *bp = bnapi->bp;
-	struct nqe_cn *nqcmp;
-	int work_done = 0;
+	काष्ठा bnxt *bp = bnapi->bp;
+	काष्ठा nqe_cn *nqcmp;
+	पूर्णांक work_करोne = 0;
 	u32 cons;
 
-	if (unlikely(test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state))) {
+	अगर (unlikely(test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state))) अणु
 		napi_complete(napi);
-		return 0;
-	}
-	if (cpr->has_more_work) {
+		वापस 0;
+	पूर्ण
+	अगर (cpr->has_more_work) अणु
 		cpr->has_more_work = 0;
-		work_done = __bnxt_poll_cqs(bp, bnapi, budget);
-	}
-	while (1) {
+		work_करोne = __bnxt_poll_cqs(bp, bnapi, budget);
+	पूर्ण
+	जबतक (1) अणु
 		cons = RING_CMP(raw_cons);
 		nqcmp = &cpr->nq_desc_ring[CP_RING(cons)][CP_IDX(cons)];
 
-		if (!NQ_CMP_VALID(nqcmp, raw_cons)) {
-			if (cpr->has_more_work)
-				break;
+		अगर (!NQ_CMP_VALID(nqcmp, raw_cons)) अणु
+			अगर (cpr->has_more_work)
+				अवरोध;
 
-			__bnxt_poll_cqs_done(bp, bnapi, DBR_TYPE_CQ_ARMALL);
+			__bnxt_poll_cqs_करोne(bp, bnapi, DBR_TYPE_CQ_ARMALL);
 			cpr->cp_raw_cons = raw_cons;
-			if (napi_complete_done(napi, work_done))
+			अगर (napi_complete_करोne(napi, work_करोne))
 				BNXT_DB_NQ_ARM_P5(&cpr->cp_db,
 						  cpr->cp_raw_cons);
-			return work_done;
-		}
+			वापस work_करोne;
+		पूर्ण
 
-		/* The valid test of the entry must be done first before
-		 * reading any further.
+		/* The valid test of the entry must be करोne first beक्रमe
+		 * पढ़ोing any further.
 		 */
 		dma_rmb();
 
-		if (nqcmp->type == cpu_to_le16(NQ_CN_TYPE_CQ_NOTIFICATION)) {
+		अगर (nqcmp->type == cpu_to_le16(NQ_CN_TYPE_CQ_NOTIFICATION)) अणु
 			u32 idx = le32_to_cpu(nqcmp->cq_handle_low);
-			struct bnxt_cp_ring_info *cpr2;
+			काष्ठा bnxt_cp_ring_info *cpr2;
 
 			cpr2 = cpr->cp_ring_arr[idx];
-			work_done += __bnxt_poll_work(bp, cpr2,
-						      budget - work_done);
+			work_करोne += __bnxt_poll_work(bp, cpr2,
+						      budget - work_करोne);
 			cpr->has_more_work |= cpr2->has_more_work;
-		} else {
-			bnxt_hwrm_handler(bp, (struct tx_cmp *)nqcmp);
-		}
+		पूर्ण अन्यथा अणु
+			bnxt_hwrm_handler(bp, (काष्ठा tx_cmp *)nqcmp);
+		पूर्ण
 		raw_cons = NEXT_RAW_CMP(raw_cons);
-	}
-	__bnxt_poll_cqs_done(bp, bnapi, DBR_TYPE_CQ);
-	if (raw_cons != cpr->cp_raw_cons) {
+	पूर्ण
+	__bnxt_poll_cqs_करोne(bp, bnapi, DBR_TYPE_CQ);
+	अगर (raw_cons != cpr->cp_raw_cons) अणु
 		cpr->cp_raw_cons = raw_cons;
 		BNXT_DB_NQ_P5(&cpr->cp_db, raw_cons);
-	}
-	return work_done;
-}
+	पूर्ण
+	वापस work_करोne;
+पूर्ण
 
-static void bnxt_free_tx_skbs(struct bnxt *bp)
-{
-	int i, max_idx;
-	struct pci_dev *pdev = bp->pdev;
+अटल व्योम bnxt_मुक्त_tx_skbs(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, max_idx;
+	काष्ठा pci_dev *pdev = bp->pdev;
 
-	if (!bp->tx_ring)
-		return;
+	अगर (!bp->tx_ring)
+		वापस;
 
 	max_idx = bp->tx_nr_pages * TX_DESC_CNT;
-	for (i = 0; i < bp->tx_nr_rings; i++) {
-		struct bnxt_tx_ring_info *txr = &bp->tx_ring[i];
-		int j;
+	क्रम (i = 0; i < bp->tx_nr_rings; i++) अणु
+		काष्ठा bnxt_tx_ring_info *txr = &bp->tx_ring[i];
+		पूर्णांक j;
 
-		for (j = 0; j < max_idx;) {
-			struct bnxt_sw_tx_bd *tx_buf = &txr->tx_buf_ring[j];
-			struct sk_buff *skb;
-			int k, last;
+		क्रम (j = 0; j < max_idx;) अणु
+			काष्ठा bnxt_sw_tx_bd *tx_buf = &txr->tx_buf_ring[j];
+			काष्ठा sk_buff *skb;
+			पूर्णांक k, last;
 
-			if (i < bp->tx_nr_rings_xdp &&
-			    tx_buf->action == XDP_REDIRECT) {
+			अगर (i < bp->tx_nr_rings_xdp &&
+			    tx_buf->action == XDP_REसूचीECT) अणु
 				dma_unmap_single(&pdev->dev,
 					dma_unmap_addr(tx_buf, mapping),
 					dma_unmap_len(tx_buf, len),
 					PCI_DMA_TODEVICE);
-				xdp_return_frame(tx_buf->xdpf);
+				xdp_वापस_frame(tx_buf->xdpf);
 				tx_buf->action = 0;
-				tx_buf->xdpf = NULL;
+				tx_buf->xdpf = शून्य;
 				j++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			skb = tx_buf->skb;
-			if (!skb) {
+			अगर (!skb) अणु
 				j++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			tx_buf->skb = NULL;
+			tx_buf->skb = शून्य;
 
-			if (tx_buf->is_push) {
-				dev_kfree_skb(skb);
+			अगर (tx_buf->is_push) अणु
+				dev_kमुक्त_skb(skb);
 				j += 2;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			dma_unmap_single(&pdev->dev,
 					 dma_unmap_addr(tx_buf, mapping),
@@ -2621,8 +2622,8 @@ static void bnxt_free_tx_skbs(struct bnxt *bp)
 
 			last = tx_buf->nr_frags;
 			j += 2;
-			for (k = 0; k < last; k++, j++) {
-				int ring_idx = j & bp->tx_ring_mask;
+			क्रम (k = 0; k < last; k++, j++) अणु
+				पूर्णांक ring_idx = j & bp->tx_ring_mask;
 				skb_frag_t *frag = &skb_shinfo(skb)->frags[k];
 
 				tx_buf = &txr->tx_buf_ring[ring_idx];
@@ -2630,427 +2631,427 @@ static void bnxt_free_tx_skbs(struct bnxt *bp)
 					&pdev->dev,
 					dma_unmap_addr(tx_buf, mapping),
 					skb_frag_size(frag), PCI_DMA_TODEVICE);
-			}
-			dev_kfree_skb(skb);
-		}
+			पूर्ण
+			dev_kमुक्त_skb(skb);
+		पूर्ण
 		netdev_tx_reset_queue(netdev_get_tx_queue(bp->dev, i));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnxt_free_one_rx_ring_skbs(struct bnxt *bp, int ring_nr)
-{
-	struct bnxt_rx_ring_info *rxr = &bp->rx_ring[ring_nr];
-	struct pci_dev *pdev = bp->pdev;
-	struct bnxt_tpa_idx_map *map;
-	int i, max_idx, max_agg_idx;
+अटल व्योम bnxt_मुक्त_one_rx_ring_skbs(काष्ठा bnxt *bp, पूर्णांक ring_nr)
+अणु
+	काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[ring_nr];
+	काष्ठा pci_dev *pdev = bp->pdev;
+	काष्ठा bnxt_tpa_idx_map *map;
+	पूर्णांक i, max_idx, max_agg_idx;
 
 	max_idx = bp->rx_nr_pages * RX_DESC_CNT;
 	max_agg_idx = bp->rx_agg_nr_pages * RX_DESC_CNT;
-	if (!rxr->rx_tpa)
-		goto skip_rx_tpa_free;
+	अगर (!rxr->rx_tpa)
+		जाओ skip_rx_tpa_मुक्त;
 
-	for (i = 0; i < bp->max_tpa; i++) {
-		struct bnxt_tpa_info *tpa_info = &rxr->rx_tpa[i];
+	क्रम (i = 0; i < bp->max_tpa; i++) अणु
+		काष्ठा bnxt_tpa_info *tpa_info = &rxr->rx_tpa[i];
 		u8 *data = tpa_info->data;
 
-		if (!data)
-			continue;
+		अगर (!data)
+			जारी;
 
 		dma_unmap_single_attrs(&pdev->dev, tpa_info->mapping,
 				       bp->rx_buf_use_size, bp->rx_dir,
 				       DMA_ATTR_WEAK_ORDERING);
 
-		tpa_info->data = NULL;
+		tpa_info->data = शून्य;
 
-		kfree(data);
-	}
+		kमुक्त(data);
+	पूर्ण
 
-skip_rx_tpa_free:
-	for (i = 0; i < max_idx; i++) {
-		struct bnxt_sw_rx_bd *rx_buf = &rxr->rx_buf_ring[i];
+skip_rx_tpa_मुक्त:
+	क्रम (i = 0; i < max_idx; i++) अणु
+		काष्ठा bnxt_sw_rx_bd *rx_buf = &rxr->rx_buf_ring[i];
 		dma_addr_t mapping = rx_buf->mapping;
-		void *data = rx_buf->data;
+		व्योम *data = rx_buf->data;
 
-		if (!data)
-			continue;
+		अगर (!data)
+			जारी;
 
-		rx_buf->data = NULL;
-		if (BNXT_RX_PAGE_MODE(bp)) {
+		rx_buf->data = शून्य;
+		अगर (BNXT_RX_PAGE_MODE(bp)) अणु
 			mapping -= bp->rx_dma_offset;
 			dma_unmap_page_attrs(&pdev->dev, mapping, PAGE_SIZE,
 					     bp->rx_dir,
 					     DMA_ATTR_WEAK_ORDERING);
 			page_pool_recycle_direct(rxr->page_pool, data);
-		} else {
+		पूर्ण अन्यथा अणु
 			dma_unmap_single_attrs(&pdev->dev, mapping,
 					       bp->rx_buf_use_size, bp->rx_dir,
 					       DMA_ATTR_WEAK_ORDERING);
-			kfree(data);
-		}
-	}
-	for (i = 0; i < max_agg_idx; i++) {
-		struct bnxt_sw_rx_agg_bd *rx_agg_buf = &rxr->rx_agg_ring[i];
-		struct page *page = rx_agg_buf->page;
+			kमुक्त(data);
+		पूर्ण
+	पूर्ण
+	क्रम (i = 0; i < max_agg_idx; i++) अणु
+		काष्ठा bnxt_sw_rx_agg_bd *rx_agg_buf = &rxr->rx_agg_ring[i];
+		काष्ठा page *page = rx_agg_buf->page;
 
-		if (!page)
-			continue;
+		अगर (!page)
+			जारी;
 
 		dma_unmap_page_attrs(&pdev->dev, rx_agg_buf->mapping,
 				     BNXT_RX_PAGE_SIZE, PCI_DMA_FROMDEVICE,
 				     DMA_ATTR_WEAK_ORDERING);
 
-		rx_agg_buf->page = NULL;
+		rx_agg_buf->page = शून्य;
 		__clear_bit(i, rxr->rx_agg_bmap);
 
-		__free_page(page);
-	}
-	if (rxr->rx_page) {
-		__free_page(rxr->rx_page);
-		rxr->rx_page = NULL;
-	}
+		__मुक्त_page(page);
+	पूर्ण
+	अगर (rxr->rx_page) अणु
+		__मुक्त_page(rxr->rx_page);
+		rxr->rx_page = शून्य;
+	पूर्ण
 	map = rxr->rx_tpa_idx_map;
-	if (map)
-		memset(map->agg_idx_bmap, 0, sizeof(map->agg_idx_bmap));
-}
+	अगर (map)
+		स_रखो(map->agg_idx_bmap, 0, माप(map->agg_idx_bmap));
+पूर्ण
 
-static void bnxt_free_rx_skbs(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_मुक्त_rx_skbs(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (!bp->rx_ring)
-		return;
+	अगर (!bp->rx_ring)
+		वापस;
 
-	for (i = 0; i < bp->rx_nr_rings; i++)
-		bnxt_free_one_rx_ring_skbs(bp, i);
-}
+	क्रम (i = 0; i < bp->rx_nr_rings; i++)
+		bnxt_मुक्त_one_rx_ring_skbs(bp, i);
+पूर्ण
 
-static void bnxt_free_skbs(struct bnxt *bp)
-{
-	bnxt_free_tx_skbs(bp);
-	bnxt_free_rx_skbs(bp);
-}
+अटल व्योम bnxt_मुक्त_skbs(काष्ठा bnxt *bp)
+अणु
+	bnxt_मुक्त_tx_skbs(bp);
+	bnxt_मुक्त_rx_skbs(bp);
+पूर्ण
 
-static void bnxt_init_ctx_mem(struct bnxt_mem_init *mem_init, void *p, int len)
-{
+अटल व्योम bnxt_init_ctx_mem(काष्ठा bnxt_mem_init *mem_init, व्योम *p, पूर्णांक len)
+अणु
 	u8 init_val = mem_init->init_val;
 	u16 offset = mem_init->offset;
 	u8 *p2 = p;
-	int i;
+	पूर्णांक i;
 
-	if (!init_val)
-		return;
-	if (offset == BNXT_MEM_INVALID_OFFSET) {
-		memset(p, init_val, len);
-		return;
-	}
-	for (i = 0; i < len; i += mem_init->size)
+	अगर (!init_val)
+		वापस;
+	अगर (offset == BNXT_MEM_INVALID_OFFSET) अणु
+		स_रखो(p, init_val, len);
+		वापस;
+	पूर्ण
+	क्रम (i = 0; i < len; i += mem_init->size)
 		*(p2 + i + offset) = init_val;
-}
+पूर्ण
 
-static void bnxt_free_ring(struct bnxt *bp, struct bnxt_ring_mem_info *rmem)
-{
-	struct pci_dev *pdev = bp->pdev;
-	int i;
+अटल व्योम bnxt_मुक्त_ring(काष्ठा bnxt *bp, काष्ठा bnxt_ring_mem_info *rmem)
+अणु
+	काष्ठा pci_dev *pdev = bp->pdev;
+	पूर्णांक i;
 
-	for (i = 0; i < rmem->nr_pages; i++) {
-		if (!rmem->pg_arr[i])
-			continue;
+	क्रम (i = 0; i < rmem->nr_pages; i++) अणु
+		अगर (!rmem->pg_arr[i])
+			जारी;
 
-		dma_free_coherent(&pdev->dev, rmem->page_size,
+		dma_मुक्त_coherent(&pdev->dev, rmem->page_size,
 				  rmem->pg_arr[i], rmem->dma_arr[i]);
 
-		rmem->pg_arr[i] = NULL;
-	}
-	if (rmem->pg_tbl) {
-		size_t pg_tbl_size = rmem->nr_pages * 8;
+		rmem->pg_arr[i] = शून्य;
+	पूर्ण
+	अगर (rmem->pg_tbl) अणु
+		माप_प्रकार pg_tbl_size = rmem->nr_pages * 8;
 
-		if (rmem->flags & BNXT_RMEM_USE_FULL_PAGE_FLAG)
+		अगर (rmem->flags & BNXT_RMEM_USE_FULL_PAGE_FLAG)
 			pg_tbl_size = rmem->page_size;
-		dma_free_coherent(&pdev->dev, pg_tbl_size,
+		dma_मुक्त_coherent(&pdev->dev, pg_tbl_size,
 				  rmem->pg_tbl, rmem->pg_tbl_map);
-		rmem->pg_tbl = NULL;
-	}
-	if (rmem->vmem_size && *rmem->vmem) {
-		vfree(*rmem->vmem);
-		*rmem->vmem = NULL;
-	}
-}
+		rmem->pg_tbl = शून्य;
+	पूर्ण
+	अगर (rmem->vmem_size && *rmem->vmem) अणु
+		vमुक्त(*rmem->vmem);
+		*rmem->vmem = शून्य;
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_ring(struct bnxt *bp, struct bnxt_ring_mem_info *rmem)
-{
-	struct pci_dev *pdev = bp->pdev;
+अटल पूर्णांक bnxt_alloc_ring(काष्ठा bnxt *bp, काष्ठा bnxt_ring_mem_info *rmem)
+अणु
+	काष्ठा pci_dev *pdev = bp->pdev;
 	u64 valid_bit = 0;
-	int i;
+	पूर्णांक i;
 
-	if (rmem->flags & (BNXT_RMEM_VALID_PTE_FLAG | BNXT_RMEM_RING_PTE_FLAG))
+	अगर (rmem->flags & (BNXT_RMEM_VALID_PTE_FLAG | BNXT_RMEM_RING_PTE_FLAG))
 		valid_bit = PTU_PTE_VALID;
-	if ((rmem->nr_pages > 1 || rmem->depth > 0) && !rmem->pg_tbl) {
-		size_t pg_tbl_size = rmem->nr_pages * 8;
+	अगर ((rmem->nr_pages > 1 || rmem->depth > 0) && !rmem->pg_tbl) अणु
+		माप_प्रकार pg_tbl_size = rmem->nr_pages * 8;
 
-		if (rmem->flags & BNXT_RMEM_USE_FULL_PAGE_FLAG)
+		अगर (rmem->flags & BNXT_RMEM_USE_FULL_PAGE_FLAG)
 			pg_tbl_size = rmem->page_size;
 		rmem->pg_tbl = dma_alloc_coherent(&pdev->dev, pg_tbl_size,
 						  &rmem->pg_tbl_map,
 						  GFP_KERNEL);
-		if (!rmem->pg_tbl)
-			return -ENOMEM;
-	}
+		अगर (!rmem->pg_tbl)
+			वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < rmem->nr_pages; i++) {
+	क्रम (i = 0; i < rmem->nr_pages; i++) अणु
 		u64 extra_bits = valid_bit;
 
 		rmem->pg_arr[i] = dma_alloc_coherent(&pdev->dev,
 						     rmem->page_size,
 						     &rmem->dma_arr[i],
 						     GFP_KERNEL);
-		if (!rmem->pg_arr[i])
-			return -ENOMEM;
+		अगर (!rmem->pg_arr[i])
+			वापस -ENOMEM;
 
-		if (rmem->mem_init)
+		अगर (rmem->mem_init)
 			bnxt_init_ctx_mem(rmem->mem_init, rmem->pg_arr[i],
 					  rmem->page_size);
-		if (rmem->nr_pages > 1 || rmem->depth > 0) {
-			if (i == rmem->nr_pages - 2 &&
+		अगर (rmem->nr_pages > 1 || rmem->depth > 0) अणु
+			अगर (i == rmem->nr_pages - 2 &&
 			    (rmem->flags & BNXT_RMEM_RING_PTE_FLAG))
 				extra_bits |= PTU_PTE_NEXT_TO_LAST;
-			else if (i == rmem->nr_pages - 1 &&
+			अन्यथा अगर (i == rmem->nr_pages - 1 &&
 				 (rmem->flags & BNXT_RMEM_RING_PTE_FLAG))
 				extra_bits |= PTU_PTE_LAST;
 			rmem->pg_tbl[i] =
 				cpu_to_le64(rmem->dma_arr[i] | extra_bits);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rmem->vmem_size) {
+	अगर (rmem->vmem_size) अणु
 		*rmem->vmem = vzalloc(rmem->vmem_size);
-		if (!(*rmem->vmem))
-			return -ENOMEM;
-	}
-	return 0;
-}
+		अगर (!(*rmem->vmem))
+			वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bnxt_free_tpa_info(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_मुक्त_tpa_info(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < bp->rx_nr_rings; i++) {
-		struct bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+		काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
 
-		kfree(rxr->rx_tpa_idx_map);
-		rxr->rx_tpa_idx_map = NULL;
-		if (rxr->rx_tpa) {
-			kfree(rxr->rx_tpa[0].agg_arr);
-			rxr->rx_tpa[0].agg_arr = NULL;
-		}
-		kfree(rxr->rx_tpa);
-		rxr->rx_tpa = NULL;
-	}
-}
+		kमुक्त(rxr->rx_tpa_idx_map);
+		rxr->rx_tpa_idx_map = शून्य;
+		अगर (rxr->rx_tpa) अणु
+			kमुक्त(rxr->rx_tpa[0].agg_arr);
+			rxr->rx_tpa[0].agg_arr = शून्य;
+		पूर्ण
+		kमुक्त(rxr->rx_tpa);
+		rxr->rx_tpa = शून्य;
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_tpa_info(struct bnxt *bp)
-{
-	int i, j, total_aggs = 0;
+अटल पूर्णांक bnxt_alloc_tpa_info(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, j, total_aggs = 0;
 
 	bp->max_tpa = MAX_TPA;
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
-		if (!bp->max_tpa_v2)
-			return 0;
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+		अगर (!bp->max_tpa_v2)
+			वापस 0;
 		bp->max_tpa = max_t(u16, bp->max_tpa_v2, MAX_TPA_P5);
 		total_aggs = bp->max_tpa * MAX_SKB_FRAGS;
-	}
+	पूर्ण
 
-	for (i = 0; i < bp->rx_nr_rings; i++) {
-		struct bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
-		struct rx_agg_cmp *agg;
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+		काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
+		काष्ठा rx_agg_cmp *agg;
 
-		rxr->rx_tpa = kcalloc(bp->max_tpa, sizeof(struct bnxt_tpa_info),
+		rxr->rx_tpa = kसुस्मृति(bp->max_tpa, माप(काष्ठा bnxt_tpa_info),
 				      GFP_KERNEL);
-		if (!rxr->rx_tpa)
-			return -ENOMEM;
+		अगर (!rxr->rx_tpa)
+			वापस -ENOMEM;
 
-		if (!(bp->flags & BNXT_FLAG_CHIP_P5))
-			continue;
-		agg = kcalloc(total_aggs, sizeof(*agg), GFP_KERNEL);
+		अगर (!(bp->flags & BNXT_FLAG_CHIP_P5))
+			जारी;
+		agg = kसुस्मृति(total_aggs, माप(*agg), GFP_KERNEL);
 		rxr->rx_tpa[0].agg_arr = agg;
-		if (!agg)
-			return -ENOMEM;
-		for (j = 1; j < bp->max_tpa; j++)
+		अगर (!agg)
+			वापस -ENOMEM;
+		क्रम (j = 1; j < bp->max_tpa; j++)
 			rxr->rx_tpa[j].agg_arr = agg + j * MAX_SKB_FRAGS;
-		rxr->rx_tpa_idx_map = kzalloc(sizeof(*rxr->rx_tpa_idx_map),
+		rxr->rx_tpa_idx_map = kzalloc(माप(*rxr->rx_tpa_idx_map),
 					      GFP_KERNEL);
-		if (!rxr->rx_tpa_idx_map)
-			return -ENOMEM;
-	}
-	return 0;
-}
+		अगर (!rxr->rx_tpa_idx_map)
+			वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bnxt_free_rx_rings(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_मुक्त_rx_rings(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (!bp->rx_ring)
-		return;
+	अगर (!bp->rx_ring)
+		वापस;
 
-	bnxt_free_tpa_info(bp);
-	for (i = 0; i < bp->rx_nr_rings; i++) {
-		struct bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
-		struct bnxt_ring_struct *ring;
+	bnxt_मुक्त_tpa_info(bp);
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+		काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
+		काष्ठा bnxt_ring_काष्ठा *ring;
 
-		if (rxr->xdp_prog)
+		अगर (rxr->xdp_prog)
 			bpf_prog_put(rxr->xdp_prog);
 
-		if (xdp_rxq_info_is_reg(&rxr->xdp_rxq))
+		अगर (xdp_rxq_info_is_reg(&rxr->xdp_rxq))
 			xdp_rxq_info_unreg(&rxr->xdp_rxq);
 
 		page_pool_destroy(rxr->page_pool);
-		rxr->page_pool = NULL;
+		rxr->page_pool = शून्य;
 
-		kfree(rxr->rx_agg_bmap);
-		rxr->rx_agg_bmap = NULL;
+		kमुक्त(rxr->rx_agg_bmap);
+		rxr->rx_agg_bmap = शून्य;
 
-		ring = &rxr->rx_ring_struct;
-		bnxt_free_ring(bp, &ring->ring_mem);
+		ring = &rxr->rx_ring_काष्ठा;
+		bnxt_मुक्त_ring(bp, &ring->ring_mem);
 
-		ring = &rxr->rx_agg_ring_struct;
-		bnxt_free_ring(bp, &ring->ring_mem);
-	}
-}
+		ring = &rxr->rx_agg_ring_काष्ठा;
+		bnxt_मुक्त_ring(bp, &ring->ring_mem);
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_rx_page_pool(struct bnxt *bp,
-				   struct bnxt_rx_ring_info *rxr)
-{
-	struct page_pool_params pp = { 0 };
+अटल पूर्णांक bnxt_alloc_rx_page_pool(काष्ठा bnxt *bp,
+				   काष्ठा bnxt_rx_ring_info *rxr)
+अणु
+	काष्ठा page_pool_params pp = अणु 0 पूर्ण;
 
 	pp.pool_size = bp->rx_ring_size;
 	pp.nid = dev_to_node(&bp->pdev->dev);
 	pp.dev = &bp->pdev->dev;
-	pp.dma_dir = DMA_BIDIRECTIONAL;
+	pp.dma_dir = DMA_BIसूचीECTIONAL;
 
 	rxr->page_pool = page_pool_create(&pp);
-	if (IS_ERR(rxr->page_pool)) {
-		int err = PTR_ERR(rxr->page_pool);
+	अगर (IS_ERR(rxr->page_pool)) अणु
+		पूर्णांक err = PTR_ERR(rxr->page_pool);
 
-		rxr->page_pool = NULL;
-		return err;
-	}
-	return 0;
-}
+		rxr->page_pool = शून्य;
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bnxt_alloc_rx_rings(struct bnxt *bp)
-{
-	int i, rc = 0, agg_rings = 0;
+अटल पूर्णांक bnxt_alloc_rx_rings(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, rc = 0, agg_rings = 0;
 
-	if (!bp->rx_ring)
-		return -ENOMEM;
+	अगर (!bp->rx_ring)
+		वापस -ENOMEM;
 
-	if (bp->flags & BNXT_FLAG_AGG_RINGS)
+	अगर (bp->flags & BNXT_FLAG_AGG_RINGS)
 		agg_rings = 1;
 
-	for (i = 0; i < bp->rx_nr_rings; i++) {
-		struct bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
-		struct bnxt_ring_struct *ring;
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+		काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
+		काष्ठा bnxt_ring_काष्ठा *ring;
 
-		ring = &rxr->rx_ring_struct;
+		ring = &rxr->rx_ring_काष्ठा;
 
 		rc = bnxt_alloc_rx_page_pool(bp, rxr);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		rc = xdp_rxq_info_reg(&rxr->xdp_rxq, bp->dev, i, 0);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 
 		rc = xdp_rxq_info_reg_mem_model(&rxr->xdp_rxq,
 						MEM_TYPE_PAGE_POOL,
 						rxr->page_pool);
-		if (rc) {
+		अगर (rc) अणु
 			xdp_rxq_info_unreg(&rxr->xdp_rxq);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
 		rc = bnxt_alloc_ring(bp, &ring->ring_mem);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		ring->grp_idx = i;
-		if (agg_rings) {
+		अगर (agg_rings) अणु
 			u16 mem_size;
 
-			ring = &rxr->rx_agg_ring_struct;
+			ring = &rxr->rx_agg_ring_काष्ठा;
 			rc = bnxt_alloc_ring(bp, &ring->ring_mem);
-			if (rc)
-				return rc;
+			अगर (rc)
+				वापस rc;
 
 			ring->grp_idx = i;
 			rxr->rx_agg_bmap_size = bp->rx_agg_ring_mask + 1;
 			mem_size = rxr->rx_agg_bmap_size / 8;
 			rxr->rx_agg_bmap = kzalloc(mem_size, GFP_KERNEL);
-			if (!rxr->rx_agg_bmap)
-				return -ENOMEM;
-		}
-	}
-	if (bp->flags & BNXT_FLAG_TPA)
+			अगर (!rxr->rx_agg_bmap)
+				वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
+	अगर (bp->flags & BNXT_FLAG_TPA)
 		rc = bnxt_alloc_tpa_info(bp);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void bnxt_free_tx_rings(struct bnxt *bp)
-{
-	int i;
-	struct pci_dev *pdev = bp->pdev;
+अटल व्योम bnxt_मुक्त_tx_rings(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
+	काष्ठा pci_dev *pdev = bp->pdev;
 
-	if (!bp->tx_ring)
-		return;
+	अगर (!bp->tx_ring)
+		वापस;
 
-	for (i = 0; i < bp->tx_nr_rings; i++) {
-		struct bnxt_tx_ring_info *txr = &bp->tx_ring[i];
-		struct bnxt_ring_struct *ring;
+	क्रम (i = 0; i < bp->tx_nr_rings; i++) अणु
+		काष्ठा bnxt_tx_ring_info *txr = &bp->tx_ring[i];
+		काष्ठा bnxt_ring_काष्ठा *ring;
 
-		if (txr->tx_push) {
-			dma_free_coherent(&pdev->dev, bp->tx_push_size,
+		अगर (txr->tx_push) अणु
+			dma_मुक्त_coherent(&pdev->dev, bp->tx_push_size,
 					  txr->tx_push, txr->tx_push_mapping);
-			txr->tx_push = NULL;
-		}
+			txr->tx_push = शून्य;
+		पूर्ण
 
-		ring = &txr->tx_ring_struct;
+		ring = &txr->tx_ring_काष्ठा;
 
-		bnxt_free_ring(bp, &ring->ring_mem);
-	}
-}
+		bnxt_मुक्त_ring(bp, &ring->ring_mem);
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_tx_rings(struct bnxt *bp)
-{
-	int i, j, rc;
-	struct pci_dev *pdev = bp->pdev;
+अटल पूर्णांक bnxt_alloc_tx_rings(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, j, rc;
+	काष्ठा pci_dev *pdev = bp->pdev;
 
 	bp->tx_push_size = 0;
-	if (bp->tx_push_thresh) {
-		int push_size;
+	अगर (bp->tx_push_thresh) अणु
+		पूर्णांक push_size;
 
-		push_size  = L1_CACHE_ALIGN(sizeof(struct tx_push_bd) +
+		push_size  = L1_CACHE_ALIGN(माप(काष्ठा tx_push_bd) +
 					bp->tx_push_thresh);
 
-		if (push_size > 256) {
+		अगर (push_size > 256) अणु
 			push_size = 0;
 			bp->tx_push_thresh = 0;
-		}
+		पूर्ण
 
 		bp->tx_push_size = push_size;
-	}
+	पूर्ण
 
-	for (i = 0, j = 0; i < bp->tx_nr_rings; i++) {
-		struct bnxt_tx_ring_info *txr = &bp->tx_ring[i];
-		struct bnxt_ring_struct *ring;
+	क्रम (i = 0, j = 0; i < bp->tx_nr_rings; i++) अणु
+		काष्ठा bnxt_tx_ring_info *txr = &bp->tx_ring[i];
+		काष्ठा bnxt_ring_काष्ठा *ring;
 		u8 qidx;
 
-		ring = &txr->tx_ring_struct;
+		ring = &txr->tx_ring_काष्ठा;
 
 		rc = bnxt_alloc_ring(bp, &ring->ring_mem);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		ring->grp_idx = txr->bnapi->index;
-		if (bp->tx_push_size) {
+		अगर (bp->tx_push_size) अणु
 			dma_addr_t mapping;
 
 			/* One pre-allocated DMA buffer to backup
@@ -3061,529 +3062,529 @@ static int bnxt_alloc_tx_rings(struct bnxt *bp)
 						&txr->tx_push_mapping,
 						GFP_KERNEL);
 
-			if (!txr->tx_push)
-				return -ENOMEM;
+			अगर (!txr->tx_push)
+				वापस -ENOMEM;
 
 			mapping = txr->tx_push_mapping +
-				sizeof(struct tx_push_bd);
+				माप(काष्ठा tx_push_bd);
 			txr->data_mapping = cpu_to_le64(mapping);
-		}
+		पूर्ण
 		qidx = bp->tc_to_qidx[j];
 		ring->queue_id = bp->q_info[qidx].queue_id;
-		if (i < bp->tx_nr_rings_xdp)
-			continue;
-		if (i % bp->tx_nr_rings_per_tc == (bp->tx_nr_rings_per_tc - 1))
+		अगर (i < bp->tx_nr_rings_xdp)
+			जारी;
+		अगर (i % bp->tx_nr_rings_per_tc == (bp->tx_nr_rings_per_tc - 1))
 			j++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bnxt_free_cp_rings(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_मुक्त_cp_rings(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (!bp->bnapi)
-		return;
+	अगर (!bp->bnapi)
+		वापस;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr;
-		struct bnxt_ring_struct *ring;
-		int j;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr;
+		काष्ठा bnxt_ring_काष्ठा *ring;
+		पूर्णांक j;
 
-		if (!bnapi)
-			continue;
+		अगर (!bnapi)
+			जारी;
 
 		cpr = &bnapi->cp_ring;
-		ring = &cpr->cp_ring_struct;
+		ring = &cpr->cp_ring_काष्ठा;
 
-		bnxt_free_ring(bp, &ring->ring_mem);
+		bnxt_मुक्त_ring(bp, &ring->ring_mem);
 
-		for (j = 0; j < 2; j++) {
-			struct bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[j];
+		क्रम (j = 0; j < 2; j++) अणु
+			काष्ठा bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[j];
 
-			if (cpr2) {
-				ring = &cpr2->cp_ring_struct;
-				bnxt_free_ring(bp, &ring->ring_mem);
-				kfree(cpr2);
-				cpr->cp_ring_arr[j] = NULL;
-			}
-		}
-	}
-}
+			अगर (cpr2) अणु
+				ring = &cpr2->cp_ring_काष्ठा;
+				bnxt_मुक्त_ring(bp, &ring->ring_mem);
+				kमुक्त(cpr2);
+				cpr->cp_ring_arr[j] = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static struct bnxt_cp_ring_info *bnxt_alloc_cp_sub_ring(struct bnxt *bp)
-{
-	struct bnxt_ring_mem_info *rmem;
-	struct bnxt_ring_struct *ring;
-	struct bnxt_cp_ring_info *cpr;
-	int rc;
+अटल काष्ठा bnxt_cp_ring_info *bnxt_alloc_cp_sub_ring(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_ring_mem_info *rmem;
+	काष्ठा bnxt_ring_काष्ठा *ring;
+	काष्ठा bnxt_cp_ring_info *cpr;
+	पूर्णांक rc;
 
-	cpr = kzalloc(sizeof(*cpr), GFP_KERNEL);
-	if (!cpr)
-		return NULL;
+	cpr = kzalloc(माप(*cpr), GFP_KERNEL);
+	अगर (!cpr)
+		वापस शून्य;
 
-	ring = &cpr->cp_ring_struct;
+	ring = &cpr->cp_ring_काष्ठा;
 	rmem = &ring->ring_mem;
 	rmem->nr_pages = bp->cp_nr_pages;
 	rmem->page_size = HW_CMPD_RING_SIZE;
-	rmem->pg_arr = (void **)cpr->cp_desc_ring;
+	rmem->pg_arr = (व्योम **)cpr->cp_desc_ring;
 	rmem->dma_arr = cpr->cp_desc_mapping;
 	rmem->flags = BNXT_RMEM_RING_PTE_FLAG;
 	rc = bnxt_alloc_ring(bp, rmem);
-	if (rc) {
-		bnxt_free_ring(bp, rmem);
-		kfree(cpr);
-		cpr = NULL;
-	}
-	return cpr;
-}
+	अगर (rc) अणु
+		bnxt_मुक्त_ring(bp, rmem);
+		kमुक्त(cpr);
+		cpr = शून्य;
+	पूर्ण
+	वापस cpr;
+पूर्ण
 
-static int bnxt_alloc_cp_rings(struct bnxt *bp)
-{
+अटल पूर्णांक bnxt_alloc_cp_rings(काष्ठा bnxt *bp)
+अणु
 	bool sh = !!(bp->flags & BNXT_FLAG_SHARED_RINGS);
-	int i, rc, ulp_base_vec, ulp_msix;
+	पूर्णांक i, rc, ulp_base_vec, ulp_msix;
 
 	ulp_msix = bnxt_get_ulp_msix_num(bp);
 	ulp_base_vec = bnxt_get_ulp_msix_base(bp);
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr;
-		struct bnxt_ring_struct *ring;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr;
+		काष्ठा bnxt_ring_काष्ठा *ring;
 
-		if (!bnapi)
-			continue;
+		अगर (!bnapi)
+			जारी;
 
 		cpr = &bnapi->cp_ring;
 		cpr->bnapi = bnapi;
-		ring = &cpr->cp_ring_struct;
+		ring = &cpr->cp_ring_काष्ठा;
 
 		rc = bnxt_alloc_ring(bp, &ring->ring_mem);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
-		if (ulp_msix && i >= ulp_base_vec)
+		अगर (ulp_msix && i >= ulp_base_vec)
 			ring->map_idx = i + ulp_msix;
-		else
+		अन्यथा
 			ring->map_idx = i;
 
-		if (!(bp->flags & BNXT_FLAG_CHIP_P5))
-			continue;
+		अगर (!(bp->flags & BNXT_FLAG_CHIP_P5))
+			जारी;
 
-		if (i < bp->rx_nr_rings) {
-			struct bnxt_cp_ring_info *cpr2 =
+		अगर (i < bp->rx_nr_rings) अणु
+			काष्ठा bnxt_cp_ring_info *cpr2 =
 				bnxt_alloc_cp_sub_ring(bp);
 
 			cpr->cp_ring_arr[BNXT_RX_HDL] = cpr2;
-			if (!cpr2)
-				return -ENOMEM;
+			अगर (!cpr2)
+				वापस -ENOMEM;
 			cpr2->bnapi = bnapi;
-		}
-		if ((sh && i < bp->tx_nr_rings) ||
-		    (!sh && i >= bp->rx_nr_rings)) {
-			struct bnxt_cp_ring_info *cpr2 =
+		पूर्ण
+		अगर ((sh && i < bp->tx_nr_rings) ||
+		    (!sh && i >= bp->rx_nr_rings)) अणु
+			काष्ठा bnxt_cp_ring_info *cpr2 =
 				bnxt_alloc_cp_sub_ring(bp);
 
 			cpr->cp_ring_arr[BNXT_TX_HDL] = cpr2;
-			if (!cpr2)
-				return -ENOMEM;
+			अगर (!cpr2)
+				वापस -ENOMEM;
 			cpr2->bnapi = bnapi;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bnxt_init_ring_struct(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_init_ring_काष्ठा(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_ring_mem_info *rmem;
-		struct bnxt_cp_ring_info *cpr;
-		struct bnxt_rx_ring_info *rxr;
-		struct bnxt_tx_ring_info *txr;
-		struct bnxt_ring_struct *ring;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_ring_mem_info *rmem;
+		काष्ठा bnxt_cp_ring_info *cpr;
+		काष्ठा bnxt_rx_ring_info *rxr;
+		काष्ठा bnxt_tx_ring_info *txr;
+		काष्ठा bnxt_ring_काष्ठा *ring;
 
-		if (!bnapi)
-			continue;
+		अगर (!bnapi)
+			जारी;
 
 		cpr = &bnapi->cp_ring;
-		ring = &cpr->cp_ring_struct;
+		ring = &cpr->cp_ring_काष्ठा;
 		rmem = &ring->ring_mem;
 		rmem->nr_pages = bp->cp_nr_pages;
 		rmem->page_size = HW_CMPD_RING_SIZE;
-		rmem->pg_arr = (void **)cpr->cp_desc_ring;
+		rmem->pg_arr = (व्योम **)cpr->cp_desc_ring;
 		rmem->dma_arr = cpr->cp_desc_mapping;
 		rmem->vmem_size = 0;
 
 		rxr = bnapi->rx_ring;
-		if (!rxr)
-			goto skip_rx;
+		अगर (!rxr)
+			जाओ skip_rx;
 
-		ring = &rxr->rx_ring_struct;
+		ring = &rxr->rx_ring_काष्ठा;
 		rmem = &ring->ring_mem;
 		rmem->nr_pages = bp->rx_nr_pages;
 		rmem->page_size = HW_RXBD_RING_SIZE;
-		rmem->pg_arr = (void **)rxr->rx_desc_ring;
+		rmem->pg_arr = (व्योम **)rxr->rx_desc_ring;
 		rmem->dma_arr = rxr->rx_desc_mapping;
 		rmem->vmem_size = SW_RXBD_RING_SIZE * bp->rx_nr_pages;
-		rmem->vmem = (void **)&rxr->rx_buf_ring;
+		rmem->vmem = (व्योम **)&rxr->rx_buf_ring;
 
-		ring = &rxr->rx_agg_ring_struct;
+		ring = &rxr->rx_agg_ring_काष्ठा;
 		rmem = &ring->ring_mem;
 		rmem->nr_pages = bp->rx_agg_nr_pages;
 		rmem->page_size = HW_RXBD_RING_SIZE;
-		rmem->pg_arr = (void **)rxr->rx_agg_desc_ring;
+		rmem->pg_arr = (व्योम **)rxr->rx_agg_desc_ring;
 		rmem->dma_arr = rxr->rx_agg_desc_mapping;
 		rmem->vmem_size = SW_RXBD_AGG_RING_SIZE * bp->rx_agg_nr_pages;
-		rmem->vmem = (void **)&rxr->rx_agg_ring;
+		rmem->vmem = (व्योम **)&rxr->rx_agg_ring;
 
 skip_rx:
 		txr = bnapi->tx_ring;
-		if (!txr)
-			continue;
+		अगर (!txr)
+			जारी;
 
-		ring = &txr->tx_ring_struct;
+		ring = &txr->tx_ring_काष्ठा;
 		rmem = &ring->ring_mem;
 		rmem->nr_pages = bp->tx_nr_pages;
 		rmem->page_size = HW_RXBD_RING_SIZE;
-		rmem->pg_arr = (void **)txr->tx_desc_ring;
+		rmem->pg_arr = (व्योम **)txr->tx_desc_ring;
 		rmem->dma_arr = txr->tx_desc_mapping;
 		rmem->vmem_size = SW_TXBD_RING_SIZE * bp->tx_nr_pages;
-		rmem->vmem = (void **)&txr->tx_buf_ring;
-	}
-}
+		rmem->vmem = (व्योम **)&txr->tx_buf_ring;
+	पूर्ण
+पूर्ण
 
-static void bnxt_init_rxbd_pages(struct bnxt_ring_struct *ring, u32 type)
-{
-	int i;
+अटल व्योम bnxt_init_rxbd_pages(काष्ठा bnxt_ring_काष्ठा *ring, u32 type)
+अणु
+	पूर्णांक i;
 	u32 prod;
-	struct rx_bd **rx_buf_ring;
+	काष्ठा rx_bd **rx_buf_ring;
 
-	rx_buf_ring = (struct rx_bd **)ring->ring_mem.pg_arr;
-	for (i = 0, prod = 0; i < ring->ring_mem.nr_pages; i++) {
-		int j;
-		struct rx_bd *rxbd;
+	rx_buf_ring = (काष्ठा rx_bd **)ring->ring_mem.pg_arr;
+	क्रम (i = 0, prod = 0; i < ring->ring_mem.nr_pages; i++) अणु
+		पूर्णांक j;
+		काष्ठा rx_bd *rxbd;
 
 		rxbd = rx_buf_ring[i];
-		if (!rxbd)
-			continue;
+		अगर (!rxbd)
+			जारी;
 
-		for (j = 0; j < RX_DESC_CNT; j++, rxbd++, prod++) {
+		क्रम (j = 0; j < RX_DESC_CNT; j++, rxbd++, prod++) अणु
 			rxbd->rx_bd_len_flags_type = cpu_to_le32(type);
 			rxbd->rx_bd_opaque = prod;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_one_rx_ring(struct bnxt *bp, int ring_nr)
-{
-	struct bnxt_rx_ring_info *rxr = &bp->rx_ring[ring_nr];
-	struct net_device *dev = bp->dev;
+अटल पूर्णांक bnxt_alloc_one_rx_ring(काष्ठा bnxt *bp, पूर्णांक ring_nr)
+अणु
+	काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[ring_nr];
+	काष्ठा net_device *dev = bp->dev;
 	u32 prod;
-	int i;
+	पूर्णांक i;
 
 	prod = rxr->rx_prod;
-	for (i = 0; i < bp->rx_ring_size; i++) {
-		if (bnxt_alloc_rx_data(bp, rxr, prod, GFP_KERNEL)) {
+	क्रम (i = 0; i < bp->rx_ring_size; i++) अणु
+		अगर (bnxt_alloc_rx_data(bp, rxr, prod, GFP_KERNEL)) अणु
 			netdev_warn(dev, "init'ed rx ring %d with %d/%d skbs only\n",
 				    ring_nr, i, bp->rx_ring_size);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		prod = NEXT_RX(prod);
-	}
+	पूर्ण
 	rxr->rx_prod = prod;
 
-	if (!(bp->flags & BNXT_FLAG_AGG_RINGS))
-		return 0;
+	अगर (!(bp->flags & BNXT_FLAG_AGG_RINGS))
+		वापस 0;
 
 	prod = rxr->rx_agg_prod;
-	for (i = 0; i < bp->rx_agg_ring_size; i++) {
-		if (bnxt_alloc_rx_page(bp, rxr, prod, GFP_KERNEL)) {
+	क्रम (i = 0; i < bp->rx_agg_ring_size; i++) अणु
+		अगर (bnxt_alloc_rx_page(bp, rxr, prod, GFP_KERNEL)) अणु
 			netdev_warn(dev, "init'ed rx ring %d with %d/%d pages only\n",
 				    ring_nr, i, bp->rx_ring_size);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		prod = NEXT_RX_AGG(prod);
-	}
+	पूर्ण
 	rxr->rx_agg_prod = prod;
 
-	if (rxr->rx_tpa) {
+	अगर (rxr->rx_tpa) अणु
 		dma_addr_t mapping;
 		u8 *data;
 
-		for (i = 0; i < bp->max_tpa; i++) {
+		क्रम (i = 0; i < bp->max_tpa; i++) अणु
 			data = __bnxt_alloc_rx_data(bp, &mapping, GFP_KERNEL);
-			if (!data)
-				return -ENOMEM;
+			अगर (!data)
+				वापस -ENOMEM;
 
 			rxr->rx_tpa[i].data = data;
 			rxr->rx_tpa[i].data_ptr = data + bp->rx_offset;
 			rxr->rx_tpa[i].mapping = mapping;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bnxt_init_one_rx_ring(struct bnxt *bp, int ring_nr)
-{
-	struct bnxt_rx_ring_info *rxr;
-	struct bnxt_ring_struct *ring;
+अटल पूर्णांक bnxt_init_one_rx_ring(काष्ठा bnxt *bp, पूर्णांक ring_nr)
+अणु
+	काष्ठा bnxt_rx_ring_info *rxr;
+	काष्ठा bnxt_ring_काष्ठा *ring;
 	u32 type;
 
 	type = (bp->rx_buf_use_size << RX_BD_LEN_SHIFT) |
 		RX_BD_TYPE_RX_PACKET_BD | RX_BD_FLAGS_EOP;
 
-	if (NET_IP_ALIGN == 2)
+	अगर (NET_IP_ALIGN == 2)
 		type |= RX_BD_FLAGS_SOP;
 
 	rxr = &bp->rx_ring[ring_nr];
-	ring = &rxr->rx_ring_struct;
+	ring = &rxr->rx_ring_काष्ठा;
 	bnxt_init_rxbd_pages(ring, type);
 
-	if (BNXT_RX_PAGE_MODE(bp) && bp->xdp_prog) {
+	अगर (BNXT_RX_PAGE_MODE(bp) && bp->xdp_prog) अणु
 		bpf_prog_add(bp->xdp_prog, 1);
 		rxr->xdp_prog = bp->xdp_prog;
-	}
+	पूर्ण
 	ring->fw_ring_id = INVALID_HW_RING_ID;
 
-	ring = &rxr->rx_agg_ring_struct;
+	ring = &rxr->rx_agg_ring_काष्ठा;
 	ring->fw_ring_id = INVALID_HW_RING_ID;
 
-	if ((bp->flags & BNXT_FLAG_AGG_RINGS)) {
+	अगर ((bp->flags & BNXT_FLAG_AGG_RINGS)) अणु
 		type = ((u32)BNXT_RX_PAGE_SIZE << RX_BD_LEN_SHIFT) |
 			RX_BD_TYPE_RX_AGG_BD | RX_BD_FLAGS_SOP;
 
 		bnxt_init_rxbd_pages(ring, type);
-	}
+	पूर्ण
 
-	return bnxt_alloc_one_rx_ring(bp, ring_nr);
-}
+	वापस bnxt_alloc_one_rx_ring(bp, ring_nr);
+पूर्ण
 
-static void bnxt_init_cp_rings(struct bnxt *bp)
-{
-	int i, j;
+अटल व्योम bnxt_init_cp_rings(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_cp_ring_info *cpr = &bp->bnapi[i]->cp_ring;
-		struct bnxt_ring_struct *ring = &cpr->cp_ring_struct;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_cp_ring_info *cpr = &bp->bnapi[i]->cp_ring;
+		काष्ठा bnxt_ring_काष्ठा *ring = &cpr->cp_ring_काष्ठा;
 
 		ring->fw_ring_id = INVALID_HW_RING_ID;
 		cpr->rx_ring_coal.coal_ticks = bp->rx_coal.coal_ticks;
 		cpr->rx_ring_coal.coal_bufs = bp->rx_coal.coal_bufs;
-		for (j = 0; j < 2; j++) {
-			struct bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[j];
+		क्रम (j = 0; j < 2; j++) अणु
+			काष्ठा bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[j];
 
-			if (!cpr2)
-				continue;
+			अगर (!cpr2)
+				जारी;
 
-			ring = &cpr2->cp_ring_struct;
+			ring = &cpr2->cp_ring_काष्ठा;
 			ring->fw_ring_id = INVALID_HW_RING_ID;
 			cpr2->rx_ring_coal.coal_ticks = bp->rx_coal.coal_ticks;
 			cpr2->rx_ring_coal.coal_bufs = bp->rx_coal.coal_bufs;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int bnxt_init_rx_rings(struct bnxt *bp)
-{
-	int i, rc = 0;
+अटल पूर्णांक bnxt_init_rx_rings(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, rc = 0;
 
-	if (BNXT_RX_PAGE_MODE(bp)) {
+	अगर (BNXT_RX_PAGE_MODE(bp)) अणु
 		bp->rx_offset = NET_IP_ALIGN + XDP_PACKET_HEADROOM;
 		bp->rx_dma_offset = XDP_PACKET_HEADROOM;
-	} else {
+	पूर्ण अन्यथा अणु
 		bp->rx_offset = BNXT_RX_OFFSET;
 		bp->rx_dma_offset = BNXT_RX_DMA_OFFSET;
-	}
+	पूर्ण
 
-	for (i = 0; i < bp->rx_nr_rings; i++) {
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
 		rc = bnxt_init_one_rx_ring(bp, i);
-		if (rc)
-			break;
-	}
+		अगर (rc)
+			अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_init_tx_rings(struct bnxt *bp)
-{
+अटल पूर्णांक bnxt_init_tx_rings(काष्ठा bnxt *bp)
+अणु
 	u16 i;
 
-	bp->tx_wake_thresh = max_t(int, bp->tx_ring_size / 2,
+	bp->tx_wake_thresh = max_t(पूर्णांक, bp->tx_ring_size / 2,
 				   MAX_SKB_FRAGS + 1);
 
-	for (i = 0; i < bp->tx_nr_rings; i++) {
-		struct bnxt_tx_ring_info *txr = &bp->tx_ring[i];
-		struct bnxt_ring_struct *ring = &txr->tx_ring_struct;
+	क्रम (i = 0; i < bp->tx_nr_rings; i++) अणु
+		काष्ठा bnxt_tx_ring_info *txr = &bp->tx_ring[i];
+		काष्ठा bnxt_ring_काष्ठा *ring = &txr->tx_ring_काष्ठा;
 
 		ring->fw_ring_id = INVALID_HW_RING_ID;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnxt_free_ring_grps(struct bnxt *bp)
-{
-	kfree(bp->grp_info);
-	bp->grp_info = NULL;
-}
+अटल व्योम bnxt_मुक्त_ring_grps(काष्ठा bnxt *bp)
+अणु
+	kमुक्त(bp->grp_info);
+	bp->grp_info = शून्य;
+पूर्ण
 
-static int bnxt_init_ring_grps(struct bnxt *bp, bool irq_re_init)
-{
-	int i;
+अटल पूर्णांक bnxt_init_ring_grps(काष्ठा bnxt *bp, bool irq_re_init)
+अणु
+	पूर्णांक i;
 
-	if (irq_re_init) {
-		bp->grp_info = kcalloc(bp->cp_nr_rings,
-				       sizeof(struct bnxt_ring_grp_info),
+	अगर (irq_re_init) अणु
+		bp->grp_info = kसुस्मृति(bp->cp_nr_rings,
+				       माप(काष्ठा bnxt_ring_grp_info),
 				       GFP_KERNEL);
-		if (!bp->grp_info)
-			return -ENOMEM;
-	}
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		if (irq_re_init)
+		अगर (!bp->grp_info)
+			वापस -ENOMEM;
+	पूर्ण
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		अगर (irq_re_init)
 			bp->grp_info[i].fw_stats_ctx = INVALID_HW_RING_ID;
 		bp->grp_info[i].fw_grp_id = INVALID_HW_RING_ID;
 		bp->grp_info[i].rx_fw_ring_id = INVALID_HW_RING_ID;
 		bp->grp_info[i].agg_fw_ring_id = INVALID_HW_RING_ID;
 		bp->grp_info[i].cp_fw_ring_id = INVALID_HW_RING_ID;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bnxt_free_vnics(struct bnxt *bp)
-{
-	kfree(bp->vnic_info);
-	bp->vnic_info = NULL;
+अटल व्योम bnxt_मुक्त_vnics(काष्ठा bnxt *bp)
+अणु
+	kमुक्त(bp->vnic_info);
+	bp->vnic_info = शून्य;
 	bp->nr_vnics = 0;
-}
+पूर्ण
 
-static int bnxt_alloc_vnics(struct bnxt *bp)
-{
-	int num_vnics = 1;
+अटल पूर्णांक bnxt_alloc_vnics(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक num_vnics = 1;
 
-#ifdef CONFIG_RFS_ACCEL
-	if ((bp->flags & (BNXT_FLAG_RFS | BNXT_FLAG_CHIP_P5)) == BNXT_FLAG_RFS)
+#अगर_घोषित CONFIG_RFS_ACCEL
+	अगर ((bp->flags & (BNXT_FLAG_RFS | BNXT_FLAG_CHIP_P5)) == BNXT_FLAG_RFS)
 		num_vnics += bp->rx_nr_rings;
-#endif
+#पूर्ण_अगर
 
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp))
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp))
 		num_vnics++;
 
-	bp->vnic_info = kcalloc(num_vnics, sizeof(struct bnxt_vnic_info),
+	bp->vnic_info = kसुस्मृति(num_vnics, माप(काष्ठा bnxt_vnic_info),
 				GFP_KERNEL);
-	if (!bp->vnic_info)
-		return -ENOMEM;
+	अगर (!bp->vnic_info)
+		वापस -ENOMEM;
 
 	bp->nr_vnics = num_vnics;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnxt_init_vnics(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_init_vnics(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < bp->nr_vnics; i++) {
-		struct bnxt_vnic_info *vnic = &bp->vnic_info[i];
-		int j;
+	क्रम (i = 0; i < bp->nr_vnics; i++) अणु
+		काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[i];
+		पूर्णांक j;
 
 		vnic->fw_vnic_id = INVALID_HW_RING_ID;
-		for (j = 0; j < BNXT_MAX_CTX_PER_VNIC; j++)
+		क्रम (j = 0; j < BNXT_MAX_CTX_PER_VNIC; j++)
 			vnic->fw_rss_cos_lb_ctx[j] = INVALID_HW_RING_ID;
 
 		vnic->fw_l2_ctx_id = INVALID_HW_RING_ID;
 
-		if (bp->vnic_info[i].rss_hash_key) {
-			if (i == 0)
-				prandom_bytes(vnic->rss_hash_key,
+		अगर (bp->vnic_info[i].rss_hash_key) अणु
+			अगर (i == 0)
+				pअक्रमom_bytes(vnic->rss_hash_key,
 					      HW_HASH_KEY_SIZE);
-			else
-				memcpy(vnic->rss_hash_key,
+			अन्यथा
+				स_नकल(vnic->rss_hash_key,
 				       bp->vnic_info[0].rss_hash_key,
 				       HW_HASH_KEY_SIZE);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int bnxt_calc_nr_ring_pages(u32 ring_size, int desc_per_pg)
-{
-	int pages;
+अटल पूर्णांक bnxt_calc_nr_ring_pages(u32 ring_size, पूर्णांक desc_per_pg)
+अणु
+	पूर्णांक pages;
 
 	pages = ring_size / desc_per_pg;
 
-	if (!pages)
-		return 1;
+	अगर (!pages)
+		वापस 1;
 
 	pages++;
 
-	while (pages & (pages - 1))
+	जबतक (pages & (pages - 1))
 		pages++;
 
-	return pages;
-}
+	वापस pages;
+पूर्ण
 
-void bnxt_set_tpa_flags(struct bnxt *bp)
-{
+व्योम bnxt_set_tpa_flags(काष्ठा bnxt *bp)
+अणु
 	bp->flags &= ~BNXT_FLAG_TPA;
-	if (bp->flags & BNXT_FLAG_NO_AGG_RINGS)
-		return;
-	if (bp->dev->features & NETIF_F_LRO)
+	अगर (bp->flags & BNXT_FLAG_NO_AGG_RINGS)
+		वापस;
+	अगर (bp->dev->features & NETIF_F_LRO)
 		bp->flags |= BNXT_FLAG_LRO;
-	else if (bp->dev->features & NETIF_F_GRO_HW)
+	अन्यथा अगर (bp->dev->features & NETIF_F_GRO_HW)
 		bp->flags |= BNXT_FLAG_GRO;
-}
+पूर्ण
 
-/* bp->rx_ring_size, bp->tx_ring_size, dev->mtu, BNXT_FLAG_{G|L}RO flags must
+/* bp->rx_ring_size, bp->tx_ring_size, dev->mtu, BNXT_FLAG_अणुG|Lपूर्णRO flags must
  * be set on entry.
  */
-void bnxt_set_ring_params(struct bnxt *bp)
-{
+व्योम bnxt_set_ring_params(काष्ठा bnxt *bp)
+अणु
 	u32 ring_size, rx_size, rx_space, max_rx_cmpl;
 	u32 agg_factor = 0, agg_ring_size = 0;
 
-	/* 8 for CRC and VLAN */
+	/* 8 क्रम CRC and VLAN */
 	rx_size = SKB_DATA_ALIGN(bp->dev->mtu + ETH_HLEN + NET_IP_ALIGN + 8);
 
 	rx_space = rx_size + NET_SKB_PAD +
-		SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
+		SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info));
 
 	bp->rx_copy_thresh = BNXT_RX_COPY_THRESH;
 	ring_size = bp->rx_ring_size;
 	bp->rx_agg_ring_size = 0;
 	bp->rx_agg_nr_pages = 0;
 
-	if (bp->flags & BNXT_FLAG_TPA)
+	अगर (bp->flags & BNXT_FLAG_TPA)
 		agg_factor = min_t(u32, 4, 65536 / BNXT_RX_PAGE_SIZE);
 
 	bp->flags &= ~BNXT_FLAG_JUMBO;
-	if (rx_space > PAGE_SIZE && !(bp->flags & BNXT_FLAG_NO_AGG_RINGS)) {
+	अगर (rx_space > PAGE_SIZE && !(bp->flags & BNXT_FLAG_NO_AGG_RINGS)) अणु
 		u32 jumbo_factor;
 
 		bp->flags |= BNXT_FLAG_JUMBO;
 		jumbo_factor = PAGE_ALIGN(bp->dev->mtu - 40) >> PAGE_SHIFT;
-		if (jumbo_factor > agg_factor)
+		अगर (jumbo_factor > agg_factor)
 			agg_factor = jumbo_factor;
-	}
+	पूर्ण
 	agg_ring_size = ring_size * agg_factor;
 
-	if (agg_ring_size) {
+	अगर (agg_ring_size) अणु
 		bp->rx_agg_nr_pages = bnxt_calc_nr_ring_pages(agg_ring_size,
 							RX_DESC_CNT);
-		if (bp->rx_agg_nr_pages > MAX_RX_AGG_PAGES) {
-			u32 tmp = agg_ring_size;
+		अगर (bp->rx_agg_nr_pages > MAX_RX_AGG_PAGES) अणु
+			u32 पंचांगp = agg_ring_size;
 
 			bp->rx_agg_nr_pages = MAX_RX_AGG_PAGES;
 			agg_ring_size = MAX_RX_AGG_PAGES * RX_DESC_CNT - 1;
 			netdev_warn(bp->dev, "rx agg ring size %d reduced to %d.\n",
-				    tmp, agg_ring_size);
-		}
+				    पंचांगp, agg_ring_size);
+		पूर्ण
 		bp->rx_agg_ring_size = agg_ring_size;
 		bp->rx_agg_ring_mask = (bp->rx_agg_nr_pages * RX_DESC_CNT) - 1;
 		rx_size = SKB_DATA_ALIGN(BNXT_RX_COPY_THRESH + NET_IP_ALIGN);
 		rx_space = rx_size + NET_SKB_PAD +
-			SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
-	}
+			SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info));
+	पूर्ण
 
 	bp->rx_buf_use_size = rx_size;
 	bp->rx_buf_size = rx_space;
@@ -3600,140 +3601,140 @@ void bnxt_set_ring_params(struct bnxt *bp)
 	 * immediately recycled, so the TPA completions are not bound by
 	 * the RX ring size.
 	 */
-	if (bp->flags & BNXT_FLAG_TPA)
+	अगर (bp->flags & BNXT_FLAG_TPA)
 		max_rx_cmpl += bp->max_tpa;
 	/* RX and TPA completions are 32-byte, all others are 16-byte */
 	ring_size = max_rx_cmpl * 2 + agg_ring_size + bp->tx_ring_size;
 	bp->cp_ring_size = ring_size;
 
 	bp->cp_nr_pages = bnxt_calc_nr_ring_pages(ring_size, CP_DESC_CNT);
-	if (bp->cp_nr_pages > MAX_CP_PAGES) {
+	अगर (bp->cp_nr_pages > MAX_CP_PAGES) अणु
 		bp->cp_nr_pages = MAX_CP_PAGES;
 		bp->cp_ring_size = MAX_CP_PAGES * CP_DESC_CNT - 1;
 		netdev_warn(bp->dev, "completion ring size %d reduced to %d.\n",
 			    ring_size, bp->cp_ring_size);
-	}
+	पूर्ण
 	bp->cp_bit = bp->cp_nr_pages * CP_DESC_CNT;
 	bp->cp_ring_mask = bp->cp_bit - 1;
-}
+पूर्ण
 
 /* Changing allocation mode of RX rings.
  * TODO: Update when extending xdp_rxq_info to support allocation modes.
  */
-int bnxt_set_rx_skb_mode(struct bnxt *bp, bool page_mode)
-{
-	if (page_mode) {
-		if (bp->dev->mtu > BNXT_MAX_PAGE_MODE_MTU)
-			return -EOPNOTSUPP;
+पूर्णांक bnxt_set_rx_skb_mode(काष्ठा bnxt *bp, bool page_mode)
+अणु
+	अगर (page_mode) अणु
+		अगर (bp->dev->mtu > BNXT_MAX_PAGE_MODE_MTU)
+			वापस -EOPNOTSUPP;
 		bp->dev->max_mtu =
 			min_t(u16, bp->max_mtu, BNXT_MAX_PAGE_MODE_MTU);
 		bp->flags &= ~BNXT_FLAG_AGG_RINGS;
 		bp->flags |= BNXT_FLAG_NO_AGG_RINGS | BNXT_FLAG_RX_PAGE_MODE;
-		bp->rx_dir = DMA_BIDIRECTIONAL;
+		bp->rx_dir = DMA_BIसूचीECTIONAL;
 		bp->rx_skb_func = bnxt_rx_page_skb;
 		/* Disable LRO or GRO_HW */
 		netdev_update_features(bp->dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		bp->dev->max_mtu = bp->max_mtu;
 		bp->flags &= ~BNXT_FLAG_RX_PAGE_MODE;
 		bp->rx_dir = DMA_FROM_DEVICE;
 		bp->rx_skb_func = bnxt_rx_skb;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bnxt_free_vnic_attributes(struct bnxt *bp)
-{
-	int i;
-	struct bnxt_vnic_info *vnic;
-	struct pci_dev *pdev = bp->pdev;
+अटल व्योम bnxt_मुक्त_vnic_attributes(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
+	काष्ठा bnxt_vnic_info *vnic;
+	काष्ठा pci_dev *pdev = bp->pdev;
 
-	if (!bp->vnic_info)
-		return;
+	अगर (!bp->vnic_info)
+		वापस;
 
-	for (i = 0; i < bp->nr_vnics; i++) {
+	क्रम (i = 0; i < bp->nr_vnics; i++) अणु
 		vnic = &bp->vnic_info[i];
 
-		kfree(vnic->fw_grp_ids);
-		vnic->fw_grp_ids = NULL;
+		kमुक्त(vnic->fw_grp_ids);
+		vnic->fw_grp_ids = शून्य;
 
-		kfree(vnic->uc_list);
-		vnic->uc_list = NULL;
+		kमुक्त(vnic->uc_list);
+		vnic->uc_list = शून्य;
 
-		if (vnic->mc_list) {
-			dma_free_coherent(&pdev->dev, vnic->mc_list_size,
+		अगर (vnic->mc_list) अणु
+			dma_मुक्त_coherent(&pdev->dev, vnic->mc_list_size,
 					  vnic->mc_list, vnic->mc_list_mapping);
-			vnic->mc_list = NULL;
-		}
+			vnic->mc_list = शून्य;
+		पूर्ण
 
-		if (vnic->rss_table) {
-			dma_free_coherent(&pdev->dev, vnic->rss_table_size,
+		अगर (vnic->rss_table) अणु
+			dma_मुक्त_coherent(&pdev->dev, vnic->rss_table_size,
 					  vnic->rss_table,
 					  vnic->rss_table_dma_addr);
-			vnic->rss_table = NULL;
-		}
+			vnic->rss_table = शून्य;
+		पूर्ण
 
-		vnic->rss_hash_key = NULL;
+		vnic->rss_hash_key = शून्य;
 		vnic->flags = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_vnic_attributes(struct bnxt *bp)
-{
-	int i, rc = 0, size;
-	struct bnxt_vnic_info *vnic;
-	struct pci_dev *pdev = bp->pdev;
-	int max_rings;
+अटल पूर्णांक bnxt_alloc_vnic_attributes(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, rc = 0, size;
+	काष्ठा bnxt_vnic_info *vnic;
+	काष्ठा pci_dev *pdev = bp->pdev;
+	पूर्णांक max_rings;
 
-	for (i = 0; i < bp->nr_vnics; i++) {
+	क्रम (i = 0; i < bp->nr_vnics; i++) अणु
 		vnic = &bp->vnic_info[i];
 
-		if (vnic->flags & BNXT_VNIC_UCAST_FLAG) {
-			int mem_size = (BNXT_MAX_UC_ADDRS - 1) * ETH_ALEN;
+		अगर (vnic->flags & BNXT_VNIC_UCAST_FLAG) अणु
+			पूर्णांक mem_size = (BNXT_MAX_UC_ADDRS - 1) * ETH_ALEN;
 
-			if (mem_size > 0) {
-				vnic->uc_list = kmalloc(mem_size, GFP_KERNEL);
-				if (!vnic->uc_list) {
+			अगर (mem_size > 0) अणु
+				vnic->uc_list = kदो_स्मृति(mem_size, GFP_KERNEL);
+				अगर (!vnic->uc_list) अणु
 					rc = -ENOMEM;
-					goto out;
-				}
-			}
-		}
+					जाओ out;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (vnic->flags & BNXT_VNIC_MCAST_FLAG) {
+		अगर (vnic->flags & BNXT_VNIC_MCAST_FLAG) अणु
 			vnic->mc_list_size = BNXT_MAX_MC_ADDRS * ETH_ALEN;
 			vnic->mc_list =
 				dma_alloc_coherent(&pdev->dev,
 						   vnic->mc_list_size,
 						   &vnic->mc_list_mapping,
 						   GFP_KERNEL);
-			if (!vnic->mc_list) {
+			अगर (!vnic->mc_list) अणु
 				rc = -ENOMEM;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		if (bp->flags & BNXT_FLAG_CHIP_P5)
-			goto vnic_skip_grps;
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+			जाओ vnic_skip_grps;
 
-		if (vnic->flags & BNXT_VNIC_RSS_FLAG)
+		अगर (vnic->flags & BNXT_VNIC_RSS_FLAG)
 			max_rings = bp->rx_nr_rings;
-		else
+		अन्यथा
 			max_rings = 1;
 
-		vnic->fw_grp_ids = kcalloc(max_rings, sizeof(u16), GFP_KERNEL);
-		if (!vnic->fw_grp_ids) {
+		vnic->fw_grp_ids = kसुस्मृति(max_rings, माप(u16), GFP_KERNEL);
+		अगर (!vnic->fw_grp_ids) अणु
 			rc = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 vnic_skip_grps:
-		if ((bp->flags & BNXT_FLAG_NEW_RSS_CAP) &&
+		अगर ((bp->flags & BNXT_FLAG_NEW_RSS_CAP) &&
 		    !(vnic->flags & BNXT_VNIC_RSS_FLAG))
-			continue;
+			जारी;
 
 		/* Allocate rss table and hash key */
-		size = L1_CACHE_ALIGN(HW_HASH_INDEX_SIZE * sizeof(u16));
-		if (bp->flags & BNXT_FLAG_CHIP_P5)
+		size = L1_CACHE_ALIGN(HW_HASH_INDEX_SIZE * माप(u16));
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 			size = L1_CACHE_ALIGN(BNXT_MAX_RSS_TABLE_SIZE_P5);
 
 		vnic->rss_table_size = size + HW_HASH_KEY_SIZE;
@@ -3741,188 +3742,188 @@ vnic_skip_grps:
 						     vnic->rss_table_size,
 						     &vnic->rss_table_dma_addr,
 						     GFP_KERNEL);
-		if (!vnic->rss_table) {
+		अगर (!vnic->rss_table) अणु
 			rc = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		vnic->rss_hash_key = ((void *)vnic->rss_table) + size;
+		vnic->rss_hash_key = ((व्योम *)vnic->rss_table) + size;
 		vnic->rss_hash_key_dma_addr = vnic->rss_table_dma_addr + size;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void bnxt_free_hwrm_resources(struct bnxt *bp)
-{
-	struct pci_dev *pdev = bp->pdev;
+अटल व्योम bnxt_मुक्त_hwrm_resources(काष्ठा bnxt *bp)
+अणु
+	काष्ठा pci_dev *pdev = bp->pdev;
 
-	if (bp->hwrm_cmd_resp_addr) {
-		dma_free_coherent(&pdev->dev, PAGE_SIZE, bp->hwrm_cmd_resp_addr,
+	अगर (bp->hwrm_cmd_resp_addr) अणु
+		dma_मुक्त_coherent(&pdev->dev, PAGE_SIZE, bp->hwrm_cmd_resp_addr,
 				  bp->hwrm_cmd_resp_dma_addr);
-		bp->hwrm_cmd_resp_addr = NULL;
-	}
+		bp->hwrm_cmd_resp_addr = शून्य;
+	पूर्ण
 
-	if (bp->hwrm_cmd_kong_resp_addr) {
-		dma_free_coherent(&pdev->dev, PAGE_SIZE,
+	अगर (bp->hwrm_cmd_kong_resp_addr) अणु
+		dma_मुक्त_coherent(&pdev->dev, PAGE_SIZE,
 				  bp->hwrm_cmd_kong_resp_addr,
 				  bp->hwrm_cmd_kong_resp_dma_addr);
-		bp->hwrm_cmd_kong_resp_addr = NULL;
-	}
-}
+		bp->hwrm_cmd_kong_resp_addr = शून्य;
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_kong_hwrm_resources(struct bnxt *bp)
-{
-	struct pci_dev *pdev = bp->pdev;
+अटल पूर्णांक bnxt_alloc_kong_hwrm_resources(काष्ठा bnxt *bp)
+अणु
+	काष्ठा pci_dev *pdev = bp->pdev;
 
-	if (bp->hwrm_cmd_kong_resp_addr)
-		return 0;
+	अगर (bp->hwrm_cmd_kong_resp_addr)
+		वापस 0;
 
 	bp->hwrm_cmd_kong_resp_addr =
 		dma_alloc_coherent(&pdev->dev, PAGE_SIZE,
 				   &bp->hwrm_cmd_kong_resp_dma_addr,
 				   GFP_KERNEL);
-	if (!bp->hwrm_cmd_kong_resp_addr)
-		return -ENOMEM;
+	अगर (!bp->hwrm_cmd_kong_resp_addr)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnxt_alloc_hwrm_resources(struct bnxt *bp)
-{
-	struct pci_dev *pdev = bp->pdev;
+अटल पूर्णांक bnxt_alloc_hwrm_resources(काष्ठा bnxt *bp)
+अणु
+	काष्ठा pci_dev *pdev = bp->pdev;
 
 	bp->hwrm_cmd_resp_addr = dma_alloc_coherent(&pdev->dev, PAGE_SIZE,
 						   &bp->hwrm_cmd_resp_dma_addr,
 						   GFP_KERNEL);
-	if (!bp->hwrm_cmd_resp_addr)
-		return -ENOMEM;
+	अगर (!bp->hwrm_cmd_resp_addr)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnxt_free_hwrm_short_cmd_req(struct bnxt *bp)
-{
-	if (bp->hwrm_short_cmd_req_addr) {
-		struct pci_dev *pdev = bp->pdev;
+अटल व्योम bnxt_मुक्त_hwrm_लघु_cmd_req(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->hwrm_लघु_cmd_req_addr) अणु
+		काष्ठा pci_dev *pdev = bp->pdev;
 
-		dma_free_coherent(&pdev->dev, bp->hwrm_max_ext_req_len,
-				  bp->hwrm_short_cmd_req_addr,
-				  bp->hwrm_short_cmd_req_dma_addr);
-		bp->hwrm_short_cmd_req_addr = NULL;
-	}
-}
+		dma_मुक्त_coherent(&pdev->dev, bp->hwrm_max_ext_req_len,
+				  bp->hwrm_लघु_cmd_req_addr,
+				  bp->hwrm_लघु_cmd_req_dma_addr);
+		bp->hwrm_लघु_cmd_req_addr = शून्य;
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_hwrm_short_cmd_req(struct bnxt *bp)
-{
-	struct pci_dev *pdev = bp->pdev;
+अटल पूर्णांक bnxt_alloc_hwrm_लघु_cmd_req(काष्ठा bnxt *bp)
+अणु
+	काष्ठा pci_dev *pdev = bp->pdev;
 
-	if (bp->hwrm_short_cmd_req_addr)
-		return 0;
+	अगर (bp->hwrm_लघु_cmd_req_addr)
+		वापस 0;
 
-	bp->hwrm_short_cmd_req_addr =
+	bp->hwrm_लघु_cmd_req_addr =
 		dma_alloc_coherent(&pdev->dev, bp->hwrm_max_ext_req_len,
-				   &bp->hwrm_short_cmd_req_dma_addr,
+				   &bp->hwrm_लघु_cmd_req_dma_addr,
 				   GFP_KERNEL);
-	if (!bp->hwrm_short_cmd_req_addr)
-		return -ENOMEM;
+	अगर (!bp->hwrm_लघु_cmd_req_addr)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnxt_free_stats_mem(struct bnxt *bp, struct bnxt_stats_mem *stats)
-{
-	kfree(stats->hw_masks);
-	stats->hw_masks = NULL;
-	kfree(stats->sw_stats);
-	stats->sw_stats = NULL;
-	if (stats->hw_stats) {
-		dma_free_coherent(&bp->pdev->dev, stats->len, stats->hw_stats,
+अटल व्योम bnxt_मुक्त_stats_mem(काष्ठा bnxt *bp, काष्ठा bnxt_stats_mem *stats)
+अणु
+	kमुक्त(stats->hw_masks);
+	stats->hw_masks = शून्य;
+	kमुक्त(stats->sw_stats);
+	stats->sw_stats = शून्य;
+	अगर (stats->hw_stats) अणु
+		dma_मुक्त_coherent(&bp->pdev->dev, stats->len, stats->hw_stats,
 				  stats->hw_stats_map);
-		stats->hw_stats = NULL;
-	}
-}
+		stats->hw_stats = शून्य;
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_stats_mem(struct bnxt *bp, struct bnxt_stats_mem *stats,
+अटल पूर्णांक bnxt_alloc_stats_mem(काष्ठा bnxt *bp, काष्ठा bnxt_stats_mem *stats,
 				bool alloc_masks)
-{
+अणु
 	stats->hw_stats = dma_alloc_coherent(&bp->pdev->dev, stats->len,
 					     &stats->hw_stats_map, GFP_KERNEL);
-	if (!stats->hw_stats)
-		return -ENOMEM;
+	अगर (!stats->hw_stats)
+		वापस -ENOMEM;
 
 	stats->sw_stats = kzalloc(stats->len, GFP_KERNEL);
-	if (!stats->sw_stats)
-		goto stats_mem_err;
+	अगर (!stats->sw_stats)
+		जाओ stats_mem_err;
 
-	if (alloc_masks) {
+	अगर (alloc_masks) अणु
 		stats->hw_masks = kzalloc(stats->len, GFP_KERNEL);
-		if (!stats->hw_masks)
-			goto stats_mem_err;
-	}
-	return 0;
+		अगर (!stats->hw_masks)
+			जाओ stats_mem_err;
+	पूर्ण
+	वापस 0;
 
 stats_mem_err:
-	bnxt_free_stats_mem(bp, stats);
-	return -ENOMEM;
-}
+	bnxt_मुक्त_stats_mem(bp, stats);
+	वापस -ENOMEM;
+पूर्ण
 
-static void bnxt_fill_masks(u64 *mask_arr, u64 mask, int count)
-{
-	int i;
+अटल व्योम bnxt_fill_masks(u64 *mask_arr, u64 mask, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++)
+	क्रम (i = 0; i < count; i++)
 		mask_arr[i] = mask;
-}
+पूर्ण
 
-static void bnxt_copy_hw_masks(u64 *mask_arr, __le64 *hw_mask_arr, int count)
-{
-	int i;
+अटल व्योम bnxt_copy_hw_masks(u64 *mask_arr, __le64 *hw_mask_arr, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++)
+	क्रम (i = 0; i < count; i++)
 		mask_arr[i] = le64_to_cpu(hw_mask_arr[i]);
-}
+पूर्ण
 
-static int bnxt_hwrm_func_qstat_ext(struct bnxt *bp,
-				    struct bnxt_stats_mem *stats)
-{
-	struct hwrm_func_qstats_ext_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_func_qstats_ext_input req = {0};
+अटल पूर्णांक bnxt_hwrm_func_qstat_ext(काष्ठा bnxt *bp,
+				    काष्ठा bnxt_stats_mem *stats)
+अणु
+	काष्ठा hwrm_func_qstats_ext_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_func_qstats_ext_input req = अणु0पूर्ण;
 	__le64 *hw_masks;
-	int rc;
+	पूर्णांक rc;
 
-	if (!(bp->fw_cap & BNXT_FW_CAP_EXT_HW_STATS_SUPPORTED) ||
+	अगर (!(bp->fw_cap & BNXT_FW_CAP_EXT_HW_STATS_SUPPORTED) ||
 	    !(bp->flags & BNXT_FLAG_CHIP_P5))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_QSTATS_EXT, -1, -1);
 	req.fid = cpu_to_le16(0xffff);
 	req.flags = FUNC_QSTATS_EXT_REQ_FLAGS_COUNTER_MASK;
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
-		goto qstat_exit;
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
+		जाओ qstat_निकास;
 
 	hw_masks = &resp->rx_ucast_pkts;
 	bnxt_copy_hw_masks(stats->hw_masks, hw_masks, stats->len / 8);
 
-qstat_exit:
+qstat_निकास:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_port_qstats(struct bnxt *bp, u8 flags);
-static int bnxt_hwrm_port_qstats_ext(struct bnxt *bp, u8 flags);
+अटल पूर्णांक bnxt_hwrm_port_qstats(काष्ठा bnxt *bp, u8 flags);
+अटल पूर्णांक bnxt_hwrm_port_qstats_ext(काष्ठा bnxt *bp, u8 flags);
 
-static void bnxt_init_stats(struct bnxt *bp)
-{
-	struct bnxt_napi *bnapi = bp->bnapi[0];
-	struct bnxt_cp_ring_info *cpr;
-	struct bnxt_stats_mem *stats;
+अटल व्योम bnxt_init_stats(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_napi *bnapi = bp->bnapi[0];
+	काष्ठा bnxt_cp_ring_info *cpr;
+	काष्ठा bnxt_stats_mem *stats;
 	__le64 *rx_stats, *tx_stats;
-	int rc, rx_count, tx_count;
+	पूर्णांक rc, rx_count, tx_count;
 	u64 *rx_masks, *tx_masks;
 	u64 mask;
 	u8 flags;
@@ -3930,731 +3931,731 @@ static void bnxt_init_stats(struct bnxt *bp)
 	cpr = &bnapi->cp_ring;
 	stats = &cpr->stats;
 	rc = bnxt_hwrm_func_qstat_ext(bp, stats);
-	if (rc) {
-		if (bp->flags & BNXT_FLAG_CHIP_P5)
+	अगर (rc) अणु
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 			mask = (1ULL << 48) - 1;
-		else
+		अन्यथा
 			mask = -1ULL;
 		bnxt_fill_masks(stats->hw_masks, mask, stats->len / 8);
-	}
-	if (bp->flags & BNXT_FLAG_PORT_STATS) {
+	पूर्ण
+	अगर (bp->flags & BNXT_FLAG_PORT_STATS) अणु
 		stats = &bp->port_stats;
 		rx_stats = stats->hw_stats;
 		rx_masks = stats->hw_masks;
-		rx_count = sizeof(struct rx_port_stats) / 8;
+		rx_count = माप(काष्ठा rx_port_stats) / 8;
 		tx_stats = rx_stats + BNXT_TX_PORT_STATS_BYTE_OFFSET / 8;
 		tx_masks = rx_masks + BNXT_TX_PORT_STATS_BYTE_OFFSET / 8;
-		tx_count = sizeof(struct tx_port_stats) / 8;
+		tx_count = माप(काष्ठा tx_port_stats) / 8;
 
 		flags = PORT_QSTATS_REQ_FLAGS_COUNTER_MASK;
 		rc = bnxt_hwrm_port_qstats(bp, flags);
-		if (rc) {
+		अगर (rc) अणु
 			mask = (1ULL << 40) - 1;
 
 			bnxt_fill_masks(rx_masks, mask, rx_count);
 			bnxt_fill_masks(tx_masks, mask, tx_count);
-		} else {
+		पूर्ण अन्यथा अणु
 			bnxt_copy_hw_masks(rx_masks, rx_stats, rx_count);
 			bnxt_copy_hw_masks(tx_masks, tx_stats, tx_count);
 			bnxt_hwrm_port_qstats(bp, 0);
-		}
-	}
-	if (bp->flags & BNXT_FLAG_PORT_STATS_EXT) {
+		पूर्ण
+	पूर्ण
+	अगर (bp->flags & BNXT_FLAG_PORT_STATS_EXT) अणु
 		stats = &bp->rx_port_stats_ext;
 		rx_stats = stats->hw_stats;
 		rx_masks = stats->hw_masks;
-		rx_count = sizeof(struct rx_port_stats_ext) / 8;
+		rx_count = माप(काष्ठा rx_port_stats_ext) / 8;
 		stats = &bp->tx_port_stats_ext;
 		tx_stats = stats->hw_stats;
 		tx_masks = stats->hw_masks;
-		tx_count = sizeof(struct tx_port_stats_ext) / 8;
+		tx_count = माप(काष्ठा tx_port_stats_ext) / 8;
 
 		flags = PORT_QSTATS_EXT_REQ_FLAGS_COUNTER_MASK;
 		rc = bnxt_hwrm_port_qstats_ext(bp, flags);
-		if (rc) {
+		अगर (rc) अणु
 			mask = (1ULL << 40) - 1;
 
 			bnxt_fill_masks(rx_masks, mask, rx_count);
-			if (tx_stats)
+			अगर (tx_stats)
 				bnxt_fill_masks(tx_masks, mask, tx_count);
-		} else {
+		पूर्ण अन्यथा अणु
 			bnxt_copy_hw_masks(rx_masks, rx_stats, rx_count);
-			if (tx_stats)
+			अगर (tx_stats)
 				bnxt_copy_hw_masks(tx_masks, tx_stats,
 						   tx_count);
 			bnxt_hwrm_port_qstats_ext(bp, 0);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void bnxt_free_port_stats(struct bnxt *bp)
-{
+अटल व्योम bnxt_मुक्त_port_stats(काष्ठा bnxt *bp)
+अणु
 	bp->flags &= ~BNXT_FLAG_PORT_STATS;
 	bp->flags &= ~BNXT_FLAG_PORT_STATS_EXT;
 
-	bnxt_free_stats_mem(bp, &bp->port_stats);
-	bnxt_free_stats_mem(bp, &bp->rx_port_stats_ext);
-	bnxt_free_stats_mem(bp, &bp->tx_port_stats_ext);
-}
+	bnxt_मुक्त_stats_mem(bp, &bp->port_stats);
+	bnxt_मुक्त_stats_mem(bp, &bp->rx_port_stats_ext);
+	bnxt_मुक्त_stats_mem(bp, &bp->tx_port_stats_ext);
+पूर्ण
 
-static void bnxt_free_ring_stats(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_मुक्त_ring_stats(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (!bp->bnapi)
-		return;
+	अगर (!bp->bnapi)
+		वापस;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
 
-		bnxt_free_stats_mem(bp, &cpr->stats);
-	}
-}
+		bnxt_मुक्त_stats_mem(bp, &cpr->stats);
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_stats(struct bnxt *bp)
-{
+अटल पूर्णांक bnxt_alloc_stats(काष्ठा bnxt *bp)
+अणु
 	u32 size, i;
-	int rc;
+	पूर्णांक rc;
 
 	size = bp->hw_ring_stats_size;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
 
 		cpr->stats.len = size;
 		rc = bnxt_alloc_stats_mem(bp, &cpr->stats, !i);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		cpr->hw_stats_ctx_id = INVALID_STATS_CTX_ID;
-	}
+	पूर्ण
 
-	if (BNXT_VF(bp) || bp->chip_num == CHIP_NUM_58700)
-		return 0;
+	अगर (BNXT_VF(bp) || bp->chip_num == CHIP_NUM_58700)
+		वापस 0;
 
-	if (bp->port_stats.hw_stats)
-		goto alloc_ext_stats;
+	अगर (bp->port_stats.hw_stats)
+		जाओ alloc_ext_stats;
 
 	bp->port_stats.len = BNXT_PORT_STATS_SIZE;
 	rc = bnxt_alloc_stats_mem(bp, &bp->port_stats, true);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	bp->flags |= BNXT_FLAG_PORT_STATS;
 
 alloc_ext_stats:
-	/* Display extended statistics only if FW supports it */
-	if (bp->hwrm_spec_code < 0x10804 || bp->hwrm_spec_code == 0x10900)
-		if (!(bp->fw_cap & BNXT_FW_CAP_EXT_STATS_SUPPORTED))
-			return 0;
+	/* Display extended statistics only अगर FW supports it */
+	अगर (bp->hwrm_spec_code < 0x10804 || bp->hwrm_spec_code == 0x10900)
+		अगर (!(bp->fw_cap & BNXT_FW_CAP_EXT_STATS_SUPPORTED))
+			वापस 0;
 
-	if (bp->rx_port_stats_ext.hw_stats)
-		goto alloc_tx_ext_stats;
+	अगर (bp->rx_port_stats_ext.hw_stats)
+		जाओ alloc_tx_ext_stats;
 
-	bp->rx_port_stats_ext.len = sizeof(struct rx_port_stats_ext);
+	bp->rx_port_stats_ext.len = माप(काष्ठा rx_port_stats_ext);
 	rc = bnxt_alloc_stats_mem(bp, &bp->rx_port_stats_ext, true);
 	/* Extended stats are optional */
-	if (rc)
-		return 0;
+	अगर (rc)
+		वापस 0;
 
 alloc_tx_ext_stats:
-	if (bp->tx_port_stats_ext.hw_stats)
-		return 0;
+	अगर (bp->tx_port_stats_ext.hw_stats)
+		वापस 0;
 
-	if (bp->hwrm_spec_code >= 0x10902 ||
-	    (bp->fw_cap & BNXT_FW_CAP_EXT_STATS_SUPPORTED)) {
-		bp->tx_port_stats_ext.len = sizeof(struct tx_port_stats_ext);
+	अगर (bp->hwrm_spec_code >= 0x10902 ||
+	    (bp->fw_cap & BNXT_FW_CAP_EXT_STATS_SUPPORTED)) अणु
+		bp->tx_port_stats_ext.len = माप(काष्ठा tx_port_stats_ext);
 		rc = bnxt_alloc_stats_mem(bp, &bp->tx_port_stats_ext, true);
 		/* Extended stats are optional */
-		if (rc)
-			return 0;
-	}
+		अगर (rc)
+			वापस 0;
+	पूर्ण
 	bp->flags |= BNXT_FLAG_PORT_STATS_EXT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnxt_clear_ring_indices(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_clear_ring_indices(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (!bp->bnapi)
-		return;
+	अगर (!bp->bnapi)
+		वापस;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr;
-		struct bnxt_rx_ring_info *rxr;
-		struct bnxt_tx_ring_info *txr;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr;
+		काष्ठा bnxt_rx_ring_info *rxr;
+		काष्ठा bnxt_tx_ring_info *txr;
 
-		if (!bnapi)
-			continue;
+		अगर (!bnapi)
+			जारी;
 
 		cpr = &bnapi->cp_ring;
 		cpr->cp_raw_cons = 0;
 
 		txr = bnapi->tx_ring;
-		if (txr) {
+		अगर (txr) अणु
 			txr->tx_prod = 0;
 			txr->tx_cons = 0;
-		}
+		पूर्ण
 
 		rxr = bnapi->rx_ring;
-		if (rxr) {
+		अगर (rxr) अणु
 			rxr->rx_prod = 0;
 			rxr->rx_agg_prod = 0;
 			rxr->rx_sw_agg_prod = 0;
 			rxr->rx_next_cons = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void bnxt_free_ntp_fltrs(struct bnxt *bp, bool irq_reinit)
-{
-#ifdef CONFIG_RFS_ACCEL
-	int i;
+अटल व्योम bnxt_मुक्त_ntp_fltrs(काष्ठा bnxt *bp, bool irq_reinit)
+अणु
+#अगर_घोषित CONFIG_RFS_ACCEL
+	पूर्णांक i;
 
 	/* Under rtnl_lock and all our NAPIs have been disabled.  It's
 	 * safe to delete the hash table.
 	 */
-	for (i = 0; i < BNXT_NTP_FLTR_HASH_SIZE; i++) {
-		struct hlist_head *head;
-		struct hlist_node *tmp;
-		struct bnxt_ntuple_filter *fltr;
+	क्रम (i = 0; i < BNXT_NTP_FLTR_HASH_SIZE; i++) अणु
+		काष्ठा hlist_head *head;
+		काष्ठा hlist_node *पंचांगp;
+		काष्ठा bnxt_ntuple_filter *fltr;
 
 		head = &bp->ntp_fltr_hash_tbl[i];
-		hlist_for_each_entry_safe(fltr, tmp, head, hash) {
+		hlist_क्रम_each_entry_safe(fltr, पंचांगp, head, hash) अणु
 			hlist_del(&fltr->hash);
-			kfree(fltr);
-		}
-	}
-	if (irq_reinit) {
-		kfree(bp->ntp_fltr_bmap);
-		bp->ntp_fltr_bmap = NULL;
-	}
+			kमुक्त(fltr);
+		पूर्ण
+	पूर्ण
+	अगर (irq_reinit) अणु
+		kमुक्त(bp->ntp_fltr_bmap);
+		bp->ntp_fltr_bmap = शून्य;
+	पूर्ण
 	bp->ntp_fltr_count = 0;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static int bnxt_alloc_ntp_fltrs(struct bnxt *bp)
-{
-#ifdef CONFIG_RFS_ACCEL
-	int i, rc = 0;
+अटल पूर्णांक bnxt_alloc_ntp_fltrs(काष्ठा bnxt *bp)
+अणु
+#अगर_घोषित CONFIG_RFS_ACCEL
+	पूर्णांक i, rc = 0;
 
-	if (!(bp->flags & BNXT_FLAG_RFS))
-		return 0;
+	अगर (!(bp->flags & BNXT_FLAG_RFS))
+		वापस 0;
 
-	for (i = 0; i < BNXT_NTP_FLTR_HASH_SIZE; i++)
+	क्रम (i = 0; i < BNXT_NTP_FLTR_HASH_SIZE; i++)
 		INIT_HLIST_HEAD(&bp->ntp_fltr_hash_tbl[i]);
 
 	bp->ntp_fltr_count = 0;
-	bp->ntp_fltr_bmap = kcalloc(BITS_TO_LONGS(BNXT_NTP_FLTR_MAX_FLTR),
-				    sizeof(long),
+	bp->ntp_fltr_bmap = kसुस्मृति(BITS_TO_LONGS(BNXT_NTP_FLTR_MAX_FLTR),
+				    माप(दीर्घ),
 				    GFP_KERNEL);
 
-	if (!bp->ntp_fltr_bmap)
+	अगर (!bp->ntp_fltr_bmap)
 		rc = -ENOMEM;
 
-	return rc;
-#else
-	return 0;
-#endif
-}
+	वापस rc;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-static void bnxt_free_mem(struct bnxt *bp, bool irq_re_init)
-{
-	bnxt_free_vnic_attributes(bp);
-	bnxt_free_tx_rings(bp);
-	bnxt_free_rx_rings(bp);
-	bnxt_free_cp_rings(bp);
-	bnxt_free_ntp_fltrs(bp, irq_re_init);
-	if (irq_re_init) {
-		bnxt_free_ring_stats(bp);
-		if (!(bp->phy_flags & BNXT_PHY_FL_PORT_STATS_NO_RESET) ||
+अटल व्योम bnxt_मुक्त_mem(काष्ठा bnxt *bp, bool irq_re_init)
+अणु
+	bnxt_मुक्त_vnic_attributes(bp);
+	bnxt_मुक्त_tx_rings(bp);
+	bnxt_मुक्त_rx_rings(bp);
+	bnxt_मुक्त_cp_rings(bp);
+	bnxt_मुक्त_ntp_fltrs(bp, irq_re_init);
+	अगर (irq_re_init) अणु
+		bnxt_मुक्त_ring_stats(bp);
+		अगर (!(bp->phy_flags & BNXT_PHY_FL_PORT_STATS_NO_RESET) ||
 		    test_bit(BNXT_STATE_IN_FW_RESET, &bp->state))
-			bnxt_free_port_stats(bp);
-		bnxt_free_ring_grps(bp);
-		bnxt_free_vnics(bp);
-		kfree(bp->tx_ring_map);
-		bp->tx_ring_map = NULL;
-		kfree(bp->tx_ring);
-		bp->tx_ring = NULL;
-		kfree(bp->rx_ring);
-		bp->rx_ring = NULL;
-		kfree(bp->bnapi);
-		bp->bnapi = NULL;
-	} else {
+			bnxt_मुक्त_port_stats(bp);
+		bnxt_मुक्त_ring_grps(bp);
+		bnxt_मुक्त_vnics(bp);
+		kमुक्त(bp->tx_ring_map);
+		bp->tx_ring_map = शून्य;
+		kमुक्त(bp->tx_ring);
+		bp->tx_ring = शून्य;
+		kमुक्त(bp->rx_ring);
+		bp->rx_ring = शून्य;
+		kमुक्त(bp->bnapi);
+		bp->bnapi = शून्य;
+	पूर्ण अन्यथा अणु
 		bnxt_clear_ring_indices(bp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_mem(struct bnxt *bp, bool irq_re_init)
-{
-	int i, j, rc, size, arr_size;
-	void *bnapi;
+अटल पूर्णांक bnxt_alloc_mem(काष्ठा bnxt *bp, bool irq_re_init)
+अणु
+	पूर्णांक i, j, rc, size, arr_size;
+	व्योम *bnapi;
 
-	if (irq_re_init) {
-		/* Allocate bnapi mem pointer array and mem block for
+	अगर (irq_re_init) अणु
+		/* Allocate bnapi mem poपूर्णांकer array and mem block क्रम
 		 * all queues
 		 */
-		arr_size = L1_CACHE_ALIGN(sizeof(struct bnxt_napi *) *
+		arr_size = L1_CACHE_ALIGN(माप(काष्ठा bnxt_napi *) *
 				bp->cp_nr_rings);
-		size = L1_CACHE_ALIGN(sizeof(struct bnxt_napi));
+		size = L1_CACHE_ALIGN(माप(काष्ठा bnxt_napi));
 		bnapi = kzalloc(arr_size + size * bp->cp_nr_rings, GFP_KERNEL);
-		if (!bnapi)
-			return -ENOMEM;
+		अगर (!bnapi)
+			वापस -ENOMEM;
 
 		bp->bnapi = bnapi;
 		bnapi += arr_size;
-		for (i = 0; i < bp->cp_nr_rings; i++, bnapi += size) {
+		क्रम (i = 0; i < bp->cp_nr_rings; i++, bnapi += size) अणु
 			bp->bnapi[i] = bnapi;
 			bp->bnapi[i]->index = i;
 			bp->bnapi[i]->bp = bp;
-			if (bp->flags & BNXT_FLAG_CHIP_P5) {
-				struct bnxt_cp_ring_info *cpr =
+			अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+				काष्ठा bnxt_cp_ring_info *cpr =
 					&bp->bnapi[i]->cp_ring;
 
-				cpr->cp_ring_struct.ring_mem.flags =
+				cpr->cp_ring_काष्ठा.ring_mem.flags =
 					BNXT_RMEM_RING_PTE_FLAG;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		bp->rx_ring = kcalloc(bp->rx_nr_rings,
-				      sizeof(struct bnxt_rx_ring_info),
+		bp->rx_ring = kसुस्मृति(bp->rx_nr_rings,
+				      माप(काष्ठा bnxt_rx_ring_info),
 				      GFP_KERNEL);
-		if (!bp->rx_ring)
-			return -ENOMEM;
+		अगर (!bp->rx_ring)
+			वापस -ENOMEM;
 
-		for (i = 0; i < bp->rx_nr_rings; i++) {
-			struct bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
+		क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+			काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
 
-			if (bp->flags & BNXT_FLAG_CHIP_P5) {
-				rxr->rx_ring_struct.ring_mem.flags =
+			अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+				rxr->rx_ring_काष्ठा.ring_mem.flags =
 					BNXT_RMEM_RING_PTE_FLAG;
-				rxr->rx_agg_ring_struct.ring_mem.flags =
+				rxr->rx_agg_ring_काष्ठा.ring_mem.flags =
 					BNXT_RMEM_RING_PTE_FLAG;
-			}
+			पूर्ण
 			rxr->bnapi = bp->bnapi[i];
 			bp->bnapi[i]->rx_ring = &bp->rx_ring[i];
-		}
+		पूर्ण
 
-		bp->tx_ring = kcalloc(bp->tx_nr_rings,
-				      sizeof(struct bnxt_tx_ring_info),
+		bp->tx_ring = kसुस्मृति(bp->tx_nr_rings,
+				      माप(काष्ठा bnxt_tx_ring_info),
 				      GFP_KERNEL);
-		if (!bp->tx_ring)
-			return -ENOMEM;
+		अगर (!bp->tx_ring)
+			वापस -ENOMEM;
 
-		bp->tx_ring_map = kcalloc(bp->tx_nr_rings, sizeof(u16),
+		bp->tx_ring_map = kसुस्मृति(bp->tx_nr_rings, माप(u16),
 					  GFP_KERNEL);
 
-		if (!bp->tx_ring_map)
-			return -ENOMEM;
+		अगर (!bp->tx_ring_map)
+			वापस -ENOMEM;
 
-		if (bp->flags & BNXT_FLAG_SHARED_RINGS)
+		अगर (bp->flags & BNXT_FLAG_SHARED_RINGS)
 			j = 0;
-		else
+		अन्यथा
 			j = bp->rx_nr_rings;
 
-		for (i = 0; i < bp->tx_nr_rings; i++, j++) {
-			struct bnxt_tx_ring_info *txr = &bp->tx_ring[i];
+		क्रम (i = 0; i < bp->tx_nr_rings; i++, j++) अणु
+			काष्ठा bnxt_tx_ring_info *txr = &bp->tx_ring[i];
 
-			if (bp->flags & BNXT_FLAG_CHIP_P5)
-				txr->tx_ring_struct.ring_mem.flags =
+			अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+				txr->tx_ring_काष्ठा.ring_mem.flags =
 					BNXT_RMEM_RING_PTE_FLAG;
 			txr->bnapi = bp->bnapi[j];
 			bp->bnapi[j]->tx_ring = txr;
 			bp->tx_ring_map[i] = bp->tx_nr_rings_xdp + i;
-			if (i >= bp->tx_nr_rings_xdp) {
+			अगर (i >= bp->tx_nr_rings_xdp) अणु
 				txr->txq_index = i - bp->tx_nr_rings_xdp;
-				bp->bnapi[j]->tx_int = bnxt_tx_int;
-			} else {
+				bp->bnapi[j]->tx_पूर्णांक = bnxt_tx_पूर्णांक;
+			पूर्ण अन्यथा अणु
 				bp->bnapi[j]->flags |= BNXT_NAPI_FLAG_XDP;
-				bp->bnapi[j]->tx_int = bnxt_tx_int_xdp;
-			}
-		}
+				bp->bnapi[j]->tx_पूर्णांक = bnxt_tx_पूर्णांक_xdp;
+			पूर्ण
+		पूर्ण
 
 		rc = bnxt_alloc_stats(bp);
-		if (rc)
-			goto alloc_mem_err;
+		अगर (rc)
+			जाओ alloc_mem_err;
 		bnxt_init_stats(bp);
 
 		rc = bnxt_alloc_ntp_fltrs(bp);
-		if (rc)
-			goto alloc_mem_err;
+		अगर (rc)
+			जाओ alloc_mem_err;
 
 		rc = bnxt_alloc_vnics(bp);
-		if (rc)
-			goto alloc_mem_err;
-	}
+		अगर (rc)
+			जाओ alloc_mem_err;
+	पूर्ण
 
-	bnxt_init_ring_struct(bp);
+	bnxt_init_ring_काष्ठा(bp);
 
 	rc = bnxt_alloc_rx_rings(bp);
-	if (rc)
-		goto alloc_mem_err;
+	अगर (rc)
+		जाओ alloc_mem_err;
 
 	rc = bnxt_alloc_tx_rings(bp);
-	if (rc)
-		goto alloc_mem_err;
+	अगर (rc)
+		जाओ alloc_mem_err;
 
 	rc = bnxt_alloc_cp_rings(bp);
-	if (rc)
-		goto alloc_mem_err;
+	अगर (rc)
+		जाओ alloc_mem_err;
 
 	bp->vnic_info[0].flags |= BNXT_VNIC_RSS_FLAG | BNXT_VNIC_MCAST_FLAG |
 				  BNXT_VNIC_UCAST_FLAG;
 	rc = bnxt_alloc_vnic_attributes(bp);
-	if (rc)
-		goto alloc_mem_err;
-	return 0;
+	अगर (rc)
+		जाओ alloc_mem_err;
+	वापस 0;
 
 alloc_mem_err:
-	bnxt_free_mem(bp, true);
-	return rc;
-}
+	bnxt_मुक्त_mem(bp, true);
+	वापस rc;
+पूर्ण
 
-static void bnxt_disable_int(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_disable_पूर्णांक(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (!bp->bnapi)
-		return;
+	अगर (!bp->bnapi)
+		वापस;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
-		struct bnxt_ring_struct *ring = &cpr->cp_ring_struct;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+		काष्ठा bnxt_ring_काष्ठा *ring = &cpr->cp_ring_काष्ठा;
 
-		if (ring->fw_ring_id != INVALID_HW_RING_ID)
+		अगर (ring->fw_ring_id != INVALID_HW_RING_ID)
 			bnxt_db_nq(bp, &cpr->cp_db, cpr->cp_raw_cons);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnxt_cp_num_to_irq_num(struct bnxt *bp, int n)
-{
-	struct bnxt_napi *bnapi = bp->bnapi[n];
-	struct bnxt_cp_ring_info *cpr;
+अटल पूर्णांक bnxt_cp_num_to_irq_num(काष्ठा bnxt *bp, पूर्णांक n)
+अणु
+	काष्ठा bnxt_napi *bnapi = bp->bnapi[n];
+	काष्ठा bnxt_cp_ring_info *cpr;
 
 	cpr = &bnapi->cp_ring;
-	return cpr->cp_ring_struct.map_idx;
-}
+	वापस cpr->cp_ring_काष्ठा.map_idx;
+पूर्ण
 
-static void bnxt_disable_int_sync(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_disable_पूर्णांक_sync(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (!bp->irq_tbl)
-		return;
+	अगर (!bp->irq_tbl)
+		वापस;
 
-	atomic_inc(&bp->intr_sem);
+	atomic_inc(&bp->पूर्णांकr_sem);
 
-	bnxt_disable_int(bp);
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		int map_idx = bnxt_cp_num_to_irq_num(bp, i);
+	bnxt_disable_पूर्णांक(bp);
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		पूर्णांक map_idx = bnxt_cp_num_to_irq_num(bp, i);
 
 		synchronize_irq(bp->irq_tbl[map_idx].vector);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnxt_enable_int(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_enable_पूर्णांक(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	atomic_set(&bp->intr_sem, 0);
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	atomic_set(&bp->पूर्णांकr_sem, 0);
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
 
 		bnxt_db_nq_arm(bp, &cpr->cp_db, cpr->cp_raw_cons);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void bnxt_hwrm_cmd_hdr_init(struct bnxt *bp, void *request, u16 req_type,
+व्योम bnxt_hwrm_cmd_hdr_init(काष्ठा bnxt *bp, व्योम *request, u16 req_type,
 			    u16 cmpl_ring, u16 target_id)
-{
-	struct input *req = request;
+अणु
+	काष्ठा input *req = request;
 
 	req->req_type = cpu_to_le16(req_type);
 	req->cmpl_ring = cpu_to_le16(cmpl_ring);
 	req->target_id = cpu_to_le16(target_id);
-	if (bnxt_kong_hwrm_message(bp, req))
+	अगर (bnxt_kong_hwrm_message(bp, req))
 		req->resp_addr = cpu_to_le64(bp->hwrm_cmd_kong_resp_dma_addr);
-	else
+	अन्यथा
 		req->resp_addr = cpu_to_le64(bp->hwrm_cmd_resp_dma_addr);
-}
+पूर्ण
 
-static int bnxt_hwrm_to_stderr(u32 hwrm_err)
-{
-	switch (hwrm_err) {
-	case HWRM_ERR_CODE_SUCCESS:
-		return 0;
-	case HWRM_ERR_CODE_RESOURCE_LOCKED:
-		return -EROFS;
-	case HWRM_ERR_CODE_RESOURCE_ACCESS_DENIED:
-		return -EACCES;
-	case HWRM_ERR_CODE_RESOURCE_ALLOC_ERROR:
-		return -ENOSPC;
-	case HWRM_ERR_CODE_INVALID_PARAMS:
-	case HWRM_ERR_CODE_INVALID_FLAGS:
-	case HWRM_ERR_CODE_INVALID_ENABLES:
-	case HWRM_ERR_CODE_UNSUPPORTED_TLV:
-	case HWRM_ERR_CODE_UNSUPPORTED_OPTION_ERR:
-		return -EINVAL;
-	case HWRM_ERR_CODE_NO_BUFFER:
-		return -ENOMEM;
-	case HWRM_ERR_CODE_HOT_RESET_PROGRESS:
-	case HWRM_ERR_CODE_BUSY:
-		return -EAGAIN;
-	case HWRM_ERR_CODE_CMD_NOT_SUPPORTED:
-		return -EOPNOTSUPP;
-	default:
-		return -EIO;
-	}
-}
+अटल पूर्णांक bnxt_hwrm_to_मानक_त्रुटि(u32 hwrm_err)
+अणु
+	चयन (hwrm_err) अणु
+	हाल HWRM_ERR_CODE_SUCCESS:
+		वापस 0;
+	हाल HWRM_ERR_CODE_RESOURCE_LOCKED:
+		वापस -EROFS;
+	हाल HWRM_ERR_CODE_RESOURCE_ACCESS_DENIED:
+		वापस -EACCES;
+	हाल HWRM_ERR_CODE_RESOURCE_ALLOC_ERROR:
+		वापस -ENOSPC;
+	हाल HWRM_ERR_CODE_INVALID_PARAMS:
+	हाल HWRM_ERR_CODE_INVALID_FLAGS:
+	हाल HWRM_ERR_CODE_INVALID_ENABLES:
+	हाल HWRM_ERR_CODE_UNSUPPORTED_TLV:
+	हाल HWRM_ERR_CODE_UNSUPPORTED_OPTION_ERR:
+		वापस -EINVAL;
+	हाल HWRM_ERR_CODE_NO_BUFFER:
+		वापस -ENOMEM;
+	हाल HWRM_ERR_CODE_HOT_RESET_PROGRESS:
+	हाल HWRM_ERR_CODE_BUSY:
+		वापस -EAGAIN;
+	हाल HWRM_ERR_CODE_CMD_NOT_SUPPORTED:
+		वापस -EOPNOTSUPP;
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
-static int bnxt_hwrm_do_send_msg(struct bnxt *bp, void *msg, u32 msg_len,
-				 int timeout, bool silent)
-{
-	int i, intr_process, rc, tmo_count;
-	struct input *req = msg;
+अटल पूर्णांक bnxt_hwrm_करो_send_msg(काष्ठा bnxt *bp, व्योम *msg, u32 msg_len,
+				 पूर्णांक समयout, bool silent)
+अणु
+	पूर्णांक i, पूर्णांकr_process, rc, पंचांगo_count;
+	काष्ठा input *req = msg;
 	u32 *data = msg;
 	u8 *valid;
 	u16 cp_ring_id, len = 0;
-	struct hwrm_err_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_err_output *resp = bp->hwrm_cmd_resp_addr;
 	u16 max_req_len = BNXT_HWRM_MAX_REQ_LEN;
-	struct hwrm_short_input short_input = {0};
-	u32 doorbell_offset = BNXT_GRCPF_REG_CHIMP_COMM_TRIGGER;
+	काष्ठा hwrm_लघु_input लघु_input = अणु0पूर्ण;
+	u32 करोorbell_offset = BNXT_GRCPF_REG_CHIMP_COMM_TRIGGER;
 	u32 bar_offset = BNXT_GRCPF_REG_CHIMP_COMM;
 	u16 dst = BNXT_HWRM_CHNL_CHIMP;
 
-	if (BNXT_NO_FW_ACCESS(bp) &&
+	अगर (BNXT_NO_FW_ACCESS(bp) &&
 	    le16_to_cpu(req->req_type) != HWRM_FUNC_RESET)
-		return -EBUSY;
+		वापस -EBUSY;
 
-	if (msg_len > BNXT_HWRM_MAX_REQ_LEN) {
-		if (msg_len > bp->hwrm_max_ext_req_len ||
-		    !bp->hwrm_short_cmd_req_addr)
-			return -EINVAL;
-	}
+	अगर (msg_len > BNXT_HWRM_MAX_REQ_LEN) अणु
+		अगर (msg_len > bp->hwrm_max_ext_req_len ||
+		    !bp->hwrm_लघु_cmd_req_addr)
+			वापस -EINVAL;
+	पूर्ण
 
-	if (bnxt_hwrm_kong_chnl(bp, req)) {
+	अगर (bnxt_hwrm_kong_chnl(bp, req)) अणु
 		dst = BNXT_HWRM_CHNL_KONG;
 		bar_offset = BNXT_GRCPF_REG_KONG_COMM;
-		doorbell_offset = BNXT_GRCPF_REG_KONG_COMM_TRIGGER;
+		करोorbell_offset = BNXT_GRCPF_REG_KONG_COMM_TRIGGER;
 		resp = bp->hwrm_cmd_kong_resp_addr;
-	}
+	पूर्ण
 
-	memset(resp, 0, PAGE_SIZE);
+	स_रखो(resp, 0, PAGE_SIZE);
 	cp_ring_id = le16_to_cpu(req->cmpl_ring);
-	intr_process = (cp_ring_id == INVALID_HW_RING_ID) ? 0 : 1;
+	पूर्णांकr_process = (cp_ring_id == INVALID_HW_RING_ID) ? 0 : 1;
 
 	req->seq_id = cpu_to_le16(bnxt_get_hwrm_seq_id(bp, dst));
 	/* currently supports only one outstanding message */
-	if (intr_process)
-		bp->hwrm_intr_seq_id = le16_to_cpu(req->seq_id);
+	अगर (पूर्णांकr_process)
+		bp->hwrm_पूर्णांकr_seq_id = le16_to_cpu(req->seq_id);
 
-	if ((bp->fw_cap & BNXT_FW_CAP_SHORT_CMD) ||
-	    msg_len > BNXT_HWRM_MAX_REQ_LEN) {
-		void *short_cmd_req = bp->hwrm_short_cmd_req_addr;
+	अगर ((bp->fw_cap & BNXT_FW_CAP_SHORT_CMD) ||
+	    msg_len > BNXT_HWRM_MAX_REQ_LEN) अणु
+		व्योम *लघु_cmd_req = bp->hwrm_लघु_cmd_req_addr;
 		u16 max_msg_len;
 
-		/* Set boundary for maximum extended request length for short
-		 * cmd format. If passed up from device use the max supported
-		 * internal req length.
+		/* Set boundary क्रम maximum extended request length क्रम लघु
+		 * cmd क्रमmat. If passed up from device use the max supported
+		 * पूर्णांकernal req length.
 		 */
 		max_msg_len = bp->hwrm_max_ext_req_len;
 
-		memcpy(short_cmd_req, req, msg_len);
-		if (msg_len < max_msg_len)
-			memset(short_cmd_req + msg_len, 0,
+		स_नकल(लघु_cmd_req, req, msg_len);
+		अगर (msg_len < max_msg_len)
+			स_रखो(लघु_cmd_req + msg_len, 0,
 			       max_msg_len - msg_len);
 
-		short_input.req_type = req->req_type;
-		short_input.signature =
+		लघु_input.req_type = req->req_type;
+		लघु_input.signature =
 				cpu_to_le16(SHORT_REQ_SIGNATURE_SHORT_CMD);
-		short_input.size = cpu_to_le16(msg_len);
-		short_input.req_addr =
-			cpu_to_le64(bp->hwrm_short_cmd_req_dma_addr);
+		लघु_input.size = cpu_to_le16(msg_len);
+		लघु_input.req_addr =
+			cpu_to_le64(bp->hwrm_लघु_cmd_req_dma_addr);
 
-		data = (u32 *)&short_input;
-		msg_len = sizeof(short_input);
+		data = (u32 *)&लघु_input;
+		msg_len = माप(लघु_input);
 
-		/* Sync memory write before updating doorbell */
+		/* Sync memory ग_लिखो beक्रमe updating करोorbell */
 		wmb();
 
 		max_req_len = BNXT_HWRM_SHORT_REQ_LEN;
-	}
+	पूर्ण
 
 	/* Write request msg to hwrm channel */
-	__iowrite32_copy(bp->bar0 + bar_offset, data, msg_len / 4);
+	__ioग_लिखो32_copy(bp->bar0 + bar_offset, data, msg_len / 4);
 
-	for (i = msg_len; i < max_req_len; i += 4)
-		writel(0, bp->bar0 + bar_offset + i);
+	क्रम (i = msg_len; i < max_req_len; i += 4)
+		ग_लिखोl(0, bp->bar0 + bar_offset + i);
 
-	/* Ring channel doorbell */
-	writel(1, bp->bar0 + doorbell_offset);
+	/* Ring channel करोorbell */
+	ग_लिखोl(1, bp->bar0 + करोorbell_offset);
 
-	if (!pci_is_enabled(bp->pdev))
-		return -ENODEV;
+	अगर (!pci_is_enabled(bp->pdev))
+		वापस -ENODEV;
 
-	if (!timeout)
-		timeout = DFLT_HWRM_CMD_TIMEOUT;
-	/* Limit timeout to an upper limit */
-	timeout = min(timeout, HWRM_CMD_MAX_TIMEOUT);
-	/* convert timeout to usec */
-	timeout *= 1000;
+	अगर (!समयout)
+		समयout = DFLT_HWRM_CMD_TIMEOUT;
+	/* Limit समयout to an upper limit */
+	समयout = min(समयout, HWRM_CMD_MAX_TIMEOUT);
+	/* convert समयout to usec */
+	समयout *= 1000;
 
 	i = 0;
-	/* Short timeout for the first few iterations:
-	 * number of loops = number of loops for short timeout +
-	 * number of loops for standard timeout.
+	/* Short समयout क्रम the first few iterations:
+	 * number of loops = number of loops क्रम लघु समयout +
+	 * number of loops क्रम standard समयout.
 	 */
-	tmo_count = HWRM_SHORT_TIMEOUT_COUNTER;
-	timeout = timeout - HWRM_SHORT_MIN_TIMEOUT * HWRM_SHORT_TIMEOUT_COUNTER;
-	tmo_count += DIV_ROUND_UP(timeout, HWRM_MIN_TIMEOUT);
+	पंचांगo_count = HWRM_SHORT_TIMEOUT_COUNTER;
+	समयout = समयout - HWRM_SHORT_MIN_TIMEOUT * HWRM_SHORT_TIMEOUT_COUNTER;
+	पंचांगo_count += DIV_ROUND_UP(समयout, HWRM_MIN_TIMEOUT);
 
-	if (intr_process) {
-		u16 seq_id = bp->hwrm_intr_seq_id;
+	अगर (पूर्णांकr_process) अणु
+		u16 seq_id = bp->hwrm_पूर्णांकr_seq_id;
 
-		/* Wait until hwrm response cmpl interrupt is processed */
-		while (bp->hwrm_intr_seq_id != (u16)~seq_id &&
-		       i++ < tmo_count) {
-			/* Abort the wait for completion if the FW health
+		/* Wait until hwrm response cmpl पूर्णांकerrupt is processed */
+		जबतक (bp->hwrm_पूर्णांकr_seq_id != (u16)~seq_id &&
+		       i++ < पंचांगo_count) अणु
+			/* Abort the रुको क्रम completion अगर the FW health
 			 * check has failed.
 			 */
-			if (test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state))
-				return -EBUSY;
+			अगर (test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state))
+				वापस -EBUSY;
 			/* on first few passes, just barely sleep */
-			if (i < HWRM_SHORT_TIMEOUT_COUNTER) {
+			अगर (i < HWRM_SHORT_TIMEOUT_COUNTER) अणु
 				usleep_range(HWRM_SHORT_MIN_TIMEOUT,
 					     HWRM_SHORT_MAX_TIMEOUT);
-			} else {
-				if (HWRM_WAIT_MUST_ABORT(bp, req))
-					break;
+			पूर्ण अन्यथा अणु
+				अगर (HWRM_WAIT_MUST_ABORT(bp, req))
+					अवरोध;
 				usleep_range(HWRM_MIN_TIMEOUT,
 					     HWRM_MAX_TIMEOUT);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (bp->hwrm_intr_seq_id != (u16)~seq_id) {
-			if (!silent)
+		अगर (bp->hwrm_पूर्णांकr_seq_id != (u16)~seq_id) अणु
+			अगर (!silent)
 				netdev_err(bp->dev, "Resp cmpl intr err msg: 0x%x\n",
 					   le16_to_cpu(req->req_type));
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		len = le16_to_cpu(resp->resp_len);
 		valid = ((u8 *)resp) + len - 1;
-	} else {
-		int j;
+	पूर्ण अन्यथा अणु
+		पूर्णांक j;
 
-		/* Check if response len is updated */
-		for (i = 0; i < tmo_count; i++) {
-			/* Abort the wait for completion if the FW health
+		/* Check अगर response len is updated */
+		क्रम (i = 0; i < पंचांगo_count; i++) अणु
+			/* Abort the रुको क्रम completion अगर the FW health
 			 * check has failed.
 			 */
-			if (test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state))
-				return -EBUSY;
+			अगर (test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state))
+				वापस -EBUSY;
 			len = le16_to_cpu(resp->resp_len);
-			if (len)
-				break;
+			अगर (len)
+				अवरोध;
 			/* on first few passes, just barely sleep */
-			if (i < HWRM_SHORT_TIMEOUT_COUNTER) {
+			अगर (i < HWRM_SHORT_TIMEOUT_COUNTER) अणु
 				usleep_range(HWRM_SHORT_MIN_TIMEOUT,
 					     HWRM_SHORT_MAX_TIMEOUT);
-			} else {
-				if (HWRM_WAIT_MUST_ABORT(bp, req))
-					goto timeout_abort;
+			पूर्ण अन्यथा अणु
+				अगर (HWRM_WAIT_MUST_ABORT(bp, req))
+					जाओ समयout_पात;
 				usleep_range(HWRM_MIN_TIMEOUT,
 					     HWRM_MAX_TIMEOUT);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (i >= tmo_count) {
-timeout_abort:
-			if (!silent)
+		अगर (i >= पंचांगo_count) अणु
+समयout_पात:
+			अगर (!silent)
 				netdev_err(bp->dev, "Error (timeout: %d) msg {0x%x 0x%x} len:%d\n",
 					   HWRM_TOTAL_TIMEOUT(i),
 					   le16_to_cpu(req->req_type),
 					   le16_to_cpu(req->seq_id), len);
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
 		/* Last byte of resp contains valid bit */
 		valid = ((u8 *)resp) + len - 1;
-		for (j = 0; j < HWRM_VALID_BIT_DELAY_USEC; j++) {
-			/* make sure we read from updated DMA memory */
+		क्रम (j = 0; j < HWRM_VALID_BIT_DELAY_USEC; j++) अणु
+			/* make sure we पढ़ो from updated DMA memory */
 			dma_rmb();
-			if (*valid)
-				break;
+			अगर (*valid)
+				अवरोध;
 			usleep_range(1, 5);
-		}
+		पूर्ण
 
-		if (j >= HWRM_VALID_BIT_DELAY_USEC) {
-			if (!silent)
+		अगर (j >= HWRM_VALID_BIT_DELAY_USEC) अणु
+			अगर (!silent)
 				netdev_err(bp->dev, "Error (timeout: %d) msg {0x%x 0x%x} len:%d v:%d\n",
 					   HWRM_TOTAL_TIMEOUT(i),
 					   le16_to_cpu(req->req_type),
 					   le16_to_cpu(req->seq_id), len,
 					   *valid);
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	/* Zero valid bit for compatibility.  Valid bit in an older spec
+	/* Zero valid bit क्रम compatibility.  Valid bit in an older spec
 	 * may become a new field in a newer spec.  We must make sure that
-	 * a new field not implemented by old spec will read zero.
+	 * a new field not implemented by old spec will पढ़ो zero.
 	 */
 	*valid = 0;
 	rc = le16_to_cpu(resp->error_code);
-	if (rc && !silent)
+	अगर (rc && !silent)
 		netdev_err(bp->dev, "hwrm req_type 0x%x seq id 0x%x error 0x%x\n",
 			   le16_to_cpu(resp->req_type),
 			   le16_to_cpu(resp->seq_id), rc);
-	return bnxt_hwrm_to_stderr(rc);
-}
+	वापस bnxt_hwrm_to_मानक_त्रुटि(rc);
+पूर्ण
 
-int _hwrm_send_message(struct bnxt *bp, void *msg, u32 msg_len, int timeout)
-{
-	return bnxt_hwrm_do_send_msg(bp, msg, msg_len, timeout, false);
-}
+पूर्णांक _hwrm_send_message(काष्ठा bnxt *bp, व्योम *msg, u32 msg_len, पूर्णांक समयout)
+अणु
+	वापस bnxt_hwrm_करो_send_msg(bp, msg, msg_len, समयout, false);
+पूर्ण
 
-int _hwrm_send_message_silent(struct bnxt *bp, void *msg, u32 msg_len,
-			      int timeout)
-{
-	return bnxt_hwrm_do_send_msg(bp, msg, msg_len, timeout, true);
-}
+पूर्णांक _hwrm_send_message_silent(काष्ठा bnxt *bp, व्योम *msg, u32 msg_len,
+			      पूर्णांक समयout)
+अणु
+	वापस bnxt_hwrm_करो_send_msg(bp, msg, msg_len, समयout, true);
+पूर्ण
 
-int hwrm_send_message(struct bnxt *bp, void *msg, u32 msg_len, int timeout)
-{
-	int rc;
-
-	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, msg, msg_len, timeout);
-	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
-
-int hwrm_send_message_silent(struct bnxt *bp, void *msg, u32 msg_len,
-			     int timeout)
-{
-	int rc;
+पूर्णांक hwrm_send_message(काष्ठा bnxt *bp, व्योम *msg, u32 msg_len, पूर्णांक समयout)
+अणु
+	पूर्णांक rc;
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = bnxt_hwrm_do_send_msg(bp, msg, msg_len, timeout, true);
+	rc = _hwrm_send_message(bp, msg, msg_len, समयout);
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int bnxt_hwrm_func_drv_rgtr(struct bnxt *bp, unsigned long *bmap, int bmap_size,
+पूर्णांक hwrm_send_message_silent(काष्ठा bnxt *bp, व्योम *msg, u32 msg_len,
+			     पूर्णांक समयout)
+अणु
+	पूर्णांक rc;
+
+	mutex_lock(&bp->hwrm_cmd_lock);
+	rc = bnxt_hwrm_करो_send_msg(bp, msg, msg_len, समयout, true);
+	mutex_unlock(&bp->hwrm_cmd_lock);
+	वापस rc;
+पूर्ण
+
+पूर्णांक bnxt_hwrm_func_drv_rgtr(काष्ठा bnxt *bp, अचिन्हित दीर्घ *bmap, पूर्णांक bmap_size,
 			    bool async_only)
-{
-	struct hwrm_func_drv_rgtr_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_func_drv_rgtr_input req = {0};
+अणु
+	काष्ठा hwrm_func_drv_rgtr_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_func_drv_rgtr_input req = अणु0पूर्ण;
 	DECLARE_BITMAP(async_events_bmap, 256);
 	u32 *events = (u32 *)async_events_bmap;
 	u32 flags;
-	int rc, i;
+	पूर्णांक rc, i;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_DRV_RGTR, -1, -1);
 
@@ -4665,9 +4666,9 @@ int bnxt_hwrm_func_drv_rgtr(struct bnxt *bp, unsigned long *bmap, int bmap_size,
 
 	req.os_type = cpu_to_le16(FUNC_DRV_RGTR_REQ_OS_TYPE_LINUX);
 	flags = FUNC_DRV_RGTR_REQ_FLAGS_16BIT_VER_MODE;
-	if (bp->fw_cap & BNXT_FW_CAP_HOT_RESET)
+	अगर (bp->fw_cap & BNXT_FW_CAP_HOT_RESET)
 		flags |= FUNC_DRV_RGTR_REQ_FLAGS_HOT_RESET_SUPPORT;
-	if (bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY)
+	अगर (bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY)
 		flags |= FUNC_DRV_RGTR_REQ_FLAGS_ERROR_RECOVERY_SUPPORT |
 			 FUNC_DRV_RGTR_REQ_FLAGS_MASTER_SUPPORT;
 	req.flags = cpu_to_le32(flags);
@@ -4678,110 +4679,110 @@ int bnxt_hwrm_func_drv_rgtr(struct bnxt *bp, unsigned long *bmap, int bmap_size,
 	req.ver_min = cpu_to_le16(DRV_VER_MIN);
 	req.ver_upd = cpu_to_le16(DRV_VER_UPD);
 
-	if (BNXT_PF(bp)) {
+	अगर (BNXT_PF(bp)) अणु
 		u32 data[8];
-		int i;
+		पूर्णांक i;
 
-		memset(data, 0, sizeof(data));
-		for (i = 0; i < ARRAY_SIZE(bnxt_vf_req_snif); i++) {
-			u16 cmd = bnxt_vf_req_snif[i];
-			unsigned int bit, idx;
+		स_रखो(data, 0, माप(data));
+		क्रम (i = 0; i < ARRAY_SIZE(bnxt_vf_req_snअगर); i++) अणु
+			u16 cmd = bnxt_vf_req_snअगर[i];
+			अचिन्हित पूर्णांक bit, idx;
 
 			idx = cmd / 32;
 			bit = cmd % 32;
 			data[idx] |= 1 << bit;
-		}
+		पूर्ण
 
-		for (i = 0; i < 8; i++)
+		क्रम (i = 0; i < 8; i++)
 			req.vf_req_fwd[i] = cpu_to_le32(data[i]);
 
 		req.enables |=
 			cpu_to_le32(FUNC_DRV_RGTR_REQ_ENABLES_VF_REQ_FWD);
-	}
+	पूर्ण
 
-	if (bp->fw_cap & BNXT_FW_CAP_OVS_64BIT_HANDLE)
+	अगर (bp->fw_cap & BNXT_FW_CAP_OVS_64BIT_HANDLE)
 		req.flags |= cpu_to_le32(
 			FUNC_DRV_RGTR_REQ_FLAGS_FLOW_HANDLE_64BIT_MODE);
 
-	memset(async_events_bmap, 0, sizeof(async_events_bmap));
-	for (i = 0; i < ARRAY_SIZE(bnxt_async_events_arr); i++) {
+	स_रखो(async_events_bmap, 0, माप(async_events_bmap));
+	क्रम (i = 0; i < ARRAY_SIZE(bnxt_async_events_arr); i++) अणु
 		u16 event_id = bnxt_async_events_arr[i];
 
-		if (event_id == ASYNC_EVENT_CMPL_EVENT_ID_ERROR_RECOVERY &&
+		अगर (event_id == ASYNC_EVENT_CMPL_EVENT_ID_ERROR_RECOVERY &&
 		    !(bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY))
-			continue;
+			जारी;
 		__set_bit(bnxt_async_events_arr[i], async_events_bmap);
-	}
-	if (bmap && bmap_size) {
-		for (i = 0; i < bmap_size; i++) {
-			if (test_bit(i, bmap))
+	पूर्ण
+	अगर (bmap && bmap_size) अणु
+		क्रम (i = 0; i < bmap_size; i++) अणु
+			अगर (test_bit(i, bmap))
 				__set_bit(i, async_events_bmap);
-		}
-	}
-	for (i = 0; i < 8; i++)
+		पूर्ण
+	पूर्ण
+	क्रम (i = 0; i < 8; i++)
 		req.async_event_fwd[i] |= cpu_to_le32(events[i]);
 
-	if (async_only)
+	अगर (async_only)
 		req.enables =
 			cpu_to_le32(FUNC_DRV_RGTR_REQ_ENABLES_ASYNC_EVENT_FWD);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
 		set_bit(BNXT_STATE_DRV_REGISTERED, &bp->state);
-		if (resp->flags &
+		अगर (resp->flags &
 		    cpu_to_le32(FUNC_DRV_RGTR_RESP_FLAGS_IF_CHANGE_SUPPORTED))
 			bp->fw_cap |= BNXT_FW_CAP_IF_CHANGE;
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_func_drv_unrgtr(struct bnxt *bp)
-{
-	struct hwrm_func_drv_unrgtr_input req = {0};
+अटल पूर्णांक bnxt_hwrm_func_drv_unrgtr(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_func_drv_unrgtr_input req = अणु0पूर्ण;
 
-	if (!test_and_clear_bit(BNXT_STATE_DRV_REGISTERED, &bp->state))
-		return 0;
+	अगर (!test_and_clear_bit(BNXT_STATE_DRV_REGISTERED, &bp->state))
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_DRV_UNRGTR, -1, -1);
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static int bnxt_hwrm_tunnel_dst_port_free(struct bnxt *bp, u8 tunnel_type)
-{
+अटल पूर्णांक bnxt_hwrm_tunnel_dst_port_मुक्त(काष्ठा bnxt *bp, u8 tunnel_type)
+अणु
 	u32 rc = 0;
-	struct hwrm_tunnel_dst_port_free_input req = {0};
+	काष्ठा hwrm_tunnel_dst_port_मुक्त_input req = अणु0पूर्ण;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_TUNNEL_DST_PORT_FREE, -1, -1);
 	req.tunnel_type = tunnel_type;
 
-	switch (tunnel_type) {
-	case TUNNEL_DST_PORT_FREE_REQ_TUNNEL_TYPE_VXLAN:
+	चयन (tunnel_type) अणु
+	हाल TUNNEL_DST_PORT_FREE_REQ_TUNNEL_TYPE_VXLAN:
 		req.tunnel_dst_port_id = cpu_to_le16(bp->vxlan_fw_dst_port_id);
 		bp->vxlan_fw_dst_port_id = INVALID_HW_RING_ID;
-		break;
-	case TUNNEL_DST_PORT_FREE_REQ_TUNNEL_TYPE_GENEVE:
+		अवरोध;
+	हाल TUNNEL_DST_PORT_FREE_REQ_TUNNEL_TYPE_GENEVE:
 		req.tunnel_dst_port_id = cpu_to_le16(bp->nge_fw_dst_port_id);
 		bp->nge_fw_dst_port_id = INVALID_HW_RING_ID;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	rc = hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
+	rc = hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
 		netdev_err(bp->dev, "hwrm_tunnel_dst_port_free failed. rc:%d\n",
 			   rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_tunnel_dst_port_alloc(struct bnxt *bp, __be16 port,
+अटल पूर्णांक bnxt_hwrm_tunnel_dst_port_alloc(काष्ठा bnxt *bp, __be16 port,
 					   u8 tunnel_type)
-{
+अणु
 	u32 rc = 0;
-	struct hwrm_tunnel_dst_port_alloc_input req = {0};
-	struct hwrm_tunnel_dst_port_alloc_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_tunnel_dst_port_alloc_input req = अणु0पूर्ण;
+	काष्ठा hwrm_tunnel_dst_port_alloc_output *resp = bp->hwrm_cmd_resp_addr;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_TUNNEL_DST_PORT_ALLOC, -1, -1);
 
@@ -4789,34 +4790,34 @@ static int bnxt_hwrm_tunnel_dst_port_alloc(struct bnxt *bp, __be16 port,
 	req.tunnel_dst_port_val = port;
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm_tunnel_dst_port_alloc failed. rc:%d\n",
 			   rc);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	switch (tunnel_type) {
-	case TUNNEL_DST_PORT_ALLOC_REQ_TUNNEL_TYPE_VXLAN:
+	चयन (tunnel_type) अणु
+	हाल TUNNEL_DST_PORT_ALLOC_REQ_TUNNEL_TYPE_VXLAN:
 		bp->vxlan_fw_dst_port_id =
 			le16_to_cpu(resp->tunnel_dst_port_id);
-		break;
-	case TUNNEL_DST_PORT_ALLOC_REQ_TUNNEL_TYPE_GENEVE:
+		अवरोध;
+	हाल TUNNEL_DST_PORT_ALLOC_REQ_TUNNEL_TYPE_GENEVE:
 		bp->nge_fw_dst_port_id = le16_to_cpu(resp->tunnel_dst_port_id);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 err_out:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_cfa_l2_set_rx_mask(struct bnxt *bp, u16 vnic_id)
-{
-	struct hwrm_cfa_l2_set_rx_mask_input req = {0};
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
+अटल पूर्णांक bnxt_hwrm_cfa_l2_set_rx_mask(काष्ठा bnxt *bp, u16 vnic_id)
+अणु
+	काष्ठा hwrm_cfa_l2_set_rx_mask_input req = अणु0पूर्ण;
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_CFA_L2_SET_RX_MASK, -1, -1);
 	req.vnic_id = cpu_to_le32(vnic->fw_vnic_id);
@@ -4824,21 +4825,21 @@ static int bnxt_hwrm_cfa_l2_set_rx_mask(struct bnxt *bp, u16 vnic_id)
 	req.num_mc_entries = cpu_to_le32(vnic->mc_list_count);
 	req.mc_tbl_addr = cpu_to_le64(vnic->mc_list_mapping);
 	req.mask = cpu_to_le32(vnic->rx_mask);
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-#ifdef CONFIG_RFS_ACCEL
-static int bnxt_hwrm_cfa_ntuple_filter_free(struct bnxt *bp,
-					    struct bnxt_ntuple_filter *fltr)
-{
-	struct hwrm_cfa_ntuple_filter_free_input req = {0};
+#अगर_घोषित CONFIG_RFS_ACCEL
+अटल पूर्णांक bnxt_hwrm_cfa_ntuple_filter_मुक्त(काष्ठा bnxt *bp,
+					    काष्ठा bnxt_ntuple_filter *fltr)
+अणु
+	काष्ठा hwrm_cfa_ntuple_filter_मुक्त_input req = अणु0पूर्ण;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_CFA_NTUPLE_FILTER_FREE, -1, -1);
 	req.ntuple_filter_id = fltr->filter_id;
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-#define BNXT_NTP_FLTR_FLAGS					\
+#घोषणा BNXT_NTP_FLTR_FLAGS					\
 	(CFA_NTUPLE_FILTER_ALLOC_REQ_ENABLES_L2_FILTER_ID |	\
 	 CFA_NTUPLE_FILTER_ALLOC_REQ_ENABLES_ETHERTYPE |	\
 	 CFA_NTUPLE_FILTER_ALLOC_REQ_ENABLES_SRC_MACADDR |	\
@@ -4854,62 +4855,62 @@ static int bnxt_hwrm_cfa_ntuple_filter_free(struct bnxt *bp,
 	 CFA_NTUPLE_FILTER_ALLOC_REQ_ENABLES_DST_PORT_MASK |	\
 	 CFA_NTUPLE_FILTER_ALLOC_REQ_ENABLES_DST_ID)
 
-#define BNXT_NTP_TUNNEL_FLTR_FLAG				\
+#घोषणा BNXT_NTP_TUNNEL_FLTR_FLAG				\
 		CFA_NTUPLE_FILTER_ALLOC_REQ_ENABLES_TUNNEL_TYPE
 
-static int bnxt_hwrm_cfa_ntuple_filter_alloc(struct bnxt *bp,
-					     struct bnxt_ntuple_filter *fltr)
-{
-	struct hwrm_cfa_ntuple_filter_alloc_input req = {0};
-	struct hwrm_cfa_ntuple_filter_alloc_output *resp;
-	struct flow_keys *keys = &fltr->fkeys;
-	struct bnxt_vnic_info *vnic;
+अटल पूर्णांक bnxt_hwrm_cfa_ntuple_filter_alloc(काष्ठा bnxt *bp,
+					     काष्ठा bnxt_ntuple_filter *fltr)
+अणु
+	काष्ठा hwrm_cfa_ntuple_filter_alloc_input req = अणु0पूर्ण;
+	काष्ठा hwrm_cfa_ntuple_filter_alloc_output *resp;
+	काष्ठा flow_keys *keys = &fltr->fkeys;
+	काष्ठा bnxt_vnic_info *vnic;
 	u32 flags = 0;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_CFA_NTUPLE_FILTER_ALLOC, -1, -1);
 	req.l2_filter_id = bp->vnic_info[0].fw_l2_filter_id[fltr->l2_fltr_idx];
 
-	if (bp->fw_cap & BNXT_FW_CAP_CFA_RFS_RING_TBL_IDX_V2) {
+	अगर (bp->fw_cap & BNXT_FW_CAP_CFA_RFS_RING_TBL_IDX_V2) अणु
 		flags = CFA_NTUPLE_FILTER_ALLOC_REQ_FLAGS_DEST_RFS_RING_IDX;
 		req.dst_id = cpu_to_le16(fltr->rxq);
-	} else {
+	पूर्ण अन्यथा अणु
 		vnic = &bp->vnic_info[fltr->rxq + 1];
 		req.dst_id = cpu_to_le16(vnic->fw_vnic_id);
-	}
+	पूर्ण
 	req.flags = cpu_to_le32(flags);
 	req.enables = cpu_to_le32(BNXT_NTP_FLTR_FLAGS);
 
 	req.ethertype = htons(ETH_P_IP);
-	memcpy(req.src_macaddr, fltr->src_mac_addr, ETH_ALEN);
+	स_नकल(req.src_macaddr, fltr->src_mac_addr, ETH_ALEN);
 	req.ip_addr_type = CFA_NTUPLE_FILTER_ALLOC_REQ_IP_ADDR_TYPE_IPV4;
 	req.ip_protocol = keys->basic.ip_proto;
 
-	if (keys->basic.n_proto == htons(ETH_P_IPV6)) {
-		int i;
+	अगर (keys->basic.n_proto == htons(ETH_P_IPV6)) अणु
+		पूर्णांक i;
 
 		req.ethertype = htons(ETH_P_IPV6);
 		req.ip_addr_type =
 			CFA_NTUPLE_FILTER_ALLOC_REQ_IP_ADDR_TYPE_IPV6;
-		*(struct in6_addr *)&req.src_ipaddr[0] =
+		*(काष्ठा in6_addr *)&req.src_ipaddr[0] =
 			keys->addrs.v6addrs.src;
-		*(struct in6_addr *)&req.dst_ipaddr[0] =
+		*(काष्ठा in6_addr *)&req.dst_ipaddr[0] =
 			keys->addrs.v6addrs.dst;
-		for (i = 0; i < 4; i++) {
+		क्रम (i = 0; i < 4; i++) अणु
 			req.src_ipaddr_mask[i] = cpu_to_be32(0xffffffff);
 			req.dst_ipaddr_mask[i] = cpu_to_be32(0xffffffff);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		req.src_ipaddr[0] = keys->addrs.v4addrs.src;
 		req.src_ipaddr_mask[0] = cpu_to_be32(0xffffffff);
 		req.dst_ipaddr[0] = keys->addrs.v4addrs.dst;
 		req.dst_ipaddr_mask[0] = cpu_to_be32(0xffffffff);
-	}
-	if (keys->control.flags & FLOW_DIS_ENCAPSULATION) {
+	पूर्ण
+	अगर (keys->control.flags & FLOW_DIS_ENCAPSULATION) अणु
 		req.enables |= cpu_to_le32(BNXT_NTP_TUNNEL_FLTR_FLAG);
 		req.tunnel_type =
 			CFA_NTUPLE_FILTER_ALLOC_REQ_TUNNEL_TYPE_ANYTUNNEL;
-	}
+	पूर्ण
 
 	req.src_port = keys->ports.src;
 	req.src_port_mask = cpu_to_be16(0xffff);
@@ -4917,26 +4918,26 @@ static int bnxt_hwrm_cfa_ntuple_filter_alloc(struct bnxt *bp,
 	req.dst_port_mask = cpu_to_be16(0xffff);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
 		resp = bnxt_get_hwrm_resp_addr(bp, &req);
 		fltr->filter_id = resp->ntuple_filter_id;
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
-#endif
+	वापस rc;
+पूर्ण
+#पूर्ण_अगर
 
-static int bnxt_hwrm_set_vnic_filter(struct bnxt *bp, u16 vnic_id, u16 idx,
+अटल पूर्णांक bnxt_hwrm_set_vnic_filter(काष्ठा bnxt *bp, u16 vnic_id, u16 idx,
 				     u8 *mac_addr)
-{
+अणु
 	u32 rc = 0;
-	struct hwrm_cfa_l2_filter_alloc_input req = {0};
-	struct hwrm_cfa_l2_filter_alloc_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_cfa_l2_filter_alloc_input req = अणु0पूर्ण;
+	काष्ठा hwrm_cfa_l2_filter_alloc_output *resp = bp->hwrm_cmd_resp_addr;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_CFA_L2_FILTER_ALLOC, -1, -1);
 	req.flags = cpu_to_le32(CFA_L2_FILTER_ALLOC_REQ_FLAGS_PATH_RX);
-	if (!BNXT_CHIP_TYPE_NITRO_A0(bp))
+	अगर (!BNXT_CHIP_TYPE_NITRO_A0(bp))
 		req.flags |=
 			cpu_to_le32(CFA_L2_FILTER_ALLOC_REQ_FLAGS_OUTERMOST);
 	req.dst_id = cpu_to_le16(bp->vnic_info[vnic_id].fw_vnic_id);
@@ -4944,7 +4945,7 @@ static int bnxt_hwrm_set_vnic_filter(struct bnxt *bp, u16 vnic_id, u16 idx,
 		cpu_to_le32(CFA_L2_FILTER_ALLOC_REQ_ENABLES_L2_ADDR |
 			    CFA_L2_FILTER_ALLOC_REQ_ENABLES_DST_ID |
 			    CFA_L2_FILTER_ALLOC_REQ_ENABLES_L2_ADDR_MASK);
-	memcpy(req.l2_addr, mac_addr, ETH_ALEN);
+	स_नकल(req.l2_addr, mac_addr, ETH_ALEN);
 	req.l2_addr_mask[0] = 0xff;
 	req.l2_addr_mask[1] = 0xff;
 	req.l2_addr_mask[2] = 0xff;
@@ -4953,54 +4954,54 @@ static int bnxt_hwrm_set_vnic_filter(struct bnxt *bp, u16 vnic_id, u16 idx,
 	req.l2_addr_mask[5] = 0xff;
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc)
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc)
 		bp->vnic_info[vnic_id].fw_l2_filter_id[idx] =
 							resp->l2_filter_id;
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_clear_vnic_filter(struct bnxt *bp)
-{
+अटल पूर्णांक bnxt_hwrm_clear_vnic_filter(काष्ठा bnxt *bp)
+अणु
 	u16 i, j, num_of_vnics = 1; /* only vnic 0 supported */
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	/* Any associated ntuple filters will also be cleared by firmware. */
 	mutex_lock(&bp->hwrm_cmd_lock);
-	for (i = 0; i < num_of_vnics; i++) {
-		struct bnxt_vnic_info *vnic = &bp->vnic_info[i];
+	क्रम (i = 0; i < num_of_vnics; i++) अणु
+		काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[i];
 
-		for (j = 0; j < vnic->uc_filter_count; j++) {
-			struct hwrm_cfa_l2_filter_free_input req = {0};
+		क्रम (j = 0; j < vnic->uc_filter_count; j++) अणु
+			काष्ठा hwrm_cfa_l2_filter_मुक्त_input req = अणु0पूर्ण;
 
 			bnxt_hwrm_cmd_hdr_init(bp, &req,
 					       HWRM_CFA_L2_FILTER_FREE, -1, -1);
 
 			req.l2_filter_id = vnic->fw_l2_filter_id[j];
 
-			rc = _hwrm_send_message(bp, &req, sizeof(req),
+			rc = _hwrm_send_message(bp, &req, माप(req),
 						HWRM_CMD_TIMEOUT);
-		}
+		पूर्ण
 		vnic->uc_filter_count = 0;
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_vnic_set_tpa(struct bnxt *bp, u16 vnic_id, u32 tpa_flags)
-{
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
+अटल पूर्णांक bnxt_hwrm_vnic_set_tpa(काष्ठा bnxt *bp, u16 vnic_id, u32 tpa_flags)
+अणु
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
 	u16 max_aggs = VNIC_TPA_CFG_REQ_MAX_AGGS_MAX;
-	struct hwrm_vnic_tpa_cfg_input req = {0};
+	काष्ठा hwrm_vnic_tpa_cfg_input req = अणु0पूर्ण;
 
-	if (vnic->fw_vnic_id == INVALID_HW_RING_ID)
-		return 0;
+	अगर (vnic->fw_vnic_id == INVALID_HW_RING_ID)
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VNIC_TPA_CFG, -1, -1);
 
-	if (tpa_flags) {
+	अगर (tpa_flags) अणु
 		u16 mss = bp->dev->mtu - 40;
 		u32 nsegs, n, segs = 0, flags;
 
@@ -5009,7 +5010,7 @@ static int bnxt_hwrm_vnic_set_tpa(struct bnxt *bp, u16 vnic_id, u32 tpa_flags)
 			VNIC_TPA_CFG_REQ_FLAGS_RSC_WND_UPDATE |
 			VNIC_TPA_CFG_REQ_FLAGS_AGG_WITH_ECN |
 			VNIC_TPA_CFG_REQ_FLAGS_AGG_WITH_SAME_GRE_SEQ;
-		if (tpa_flags & BNXT_FLAG_GRO)
+		अगर (tpa_flags & BNXT_FLAG_GRO)
 			flags |= VNIC_TPA_CFG_REQ_FLAGS_GRO;
 
 		req.flags = cpu_to_le32(flags);
@@ -5022,228 +5023,228 @@ static int bnxt_hwrm_vnic_set_tpa(struct bnxt *bp, u16 vnic_id, u32 tpa_flags)
 		/* Number of segs are log2 units, and first packet is not
 		 * included as part of this units.
 		 */
-		if (mss <= BNXT_RX_PAGE_SIZE) {
+		अगर (mss <= BNXT_RX_PAGE_SIZE) अणु
 			n = BNXT_RX_PAGE_SIZE / mss;
 			nsegs = (MAX_SKB_FRAGS - 1) * n;
-		} else {
+		पूर्ण अन्यथा अणु
 			n = mss / BNXT_RX_PAGE_SIZE;
-			if (mss & (BNXT_RX_PAGE_SIZE - 1))
+			अगर (mss & (BNXT_RX_PAGE_SIZE - 1))
 				n++;
 			nsegs = (MAX_SKB_FRAGS - n) / n;
-		}
+		पूर्ण
 
-		if (bp->flags & BNXT_FLAG_CHIP_P5) {
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 			segs = MAX_TPA_SEGS_P5;
 			max_aggs = bp->max_tpa;
-		} else {
+		पूर्ण अन्यथा अणु
 			segs = ilog2(nsegs);
-		}
+		पूर्ण
 		req.max_agg_segs = cpu_to_le16(segs);
 		req.max_aggs = cpu_to_le16(max_aggs);
 
 		req.min_agg_len = cpu_to_le32(512);
-	}
+	पूर्ण
 	req.vnic_id = cpu_to_le16(vnic->fw_vnic_id);
 
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static u16 bnxt_cp_ring_from_grp(struct bnxt *bp, struct bnxt_ring_struct *ring)
-{
-	struct bnxt_ring_grp_info *grp_info;
+अटल u16 bnxt_cp_ring_from_grp(काष्ठा bnxt *bp, काष्ठा bnxt_ring_काष्ठा *ring)
+अणु
+	काष्ठा bnxt_ring_grp_info *grp_info;
 
 	grp_info = &bp->grp_info[ring->grp_idx];
-	return grp_info->cp_fw_ring_id;
-}
+	वापस grp_info->cp_fw_ring_id;
+पूर्ण
 
-static u16 bnxt_cp_ring_for_rx(struct bnxt *bp, struct bnxt_rx_ring_info *rxr)
-{
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
-		struct bnxt_napi *bnapi = rxr->bnapi;
-		struct bnxt_cp_ring_info *cpr;
+अटल u16 bnxt_cp_ring_क्रम_rx(काष्ठा bnxt *bp, काष्ठा bnxt_rx_ring_info *rxr)
+अणु
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+		काष्ठा bnxt_napi *bnapi = rxr->bnapi;
+		काष्ठा bnxt_cp_ring_info *cpr;
 
 		cpr = bnapi->cp_ring.cp_ring_arr[BNXT_RX_HDL];
-		return cpr->cp_ring_struct.fw_ring_id;
-	} else {
-		return bnxt_cp_ring_from_grp(bp, &rxr->rx_ring_struct);
-	}
-}
+		वापस cpr->cp_ring_काष्ठा.fw_ring_id;
+	पूर्ण अन्यथा अणु
+		वापस bnxt_cp_ring_from_grp(bp, &rxr->rx_ring_काष्ठा);
+	पूर्ण
+पूर्ण
 
-static u16 bnxt_cp_ring_for_tx(struct bnxt *bp, struct bnxt_tx_ring_info *txr)
-{
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
-		struct bnxt_napi *bnapi = txr->bnapi;
-		struct bnxt_cp_ring_info *cpr;
+अटल u16 bnxt_cp_ring_क्रम_tx(काष्ठा bnxt *bp, काष्ठा bnxt_tx_ring_info *txr)
+अणु
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+		काष्ठा bnxt_napi *bnapi = txr->bnapi;
+		काष्ठा bnxt_cp_ring_info *cpr;
 
 		cpr = bnapi->cp_ring.cp_ring_arr[BNXT_TX_HDL];
-		return cpr->cp_ring_struct.fw_ring_id;
-	} else {
-		return bnxt_cp_ring_from_grp(bp, &txr->tx_ring_struct);
-	}
-}
+		वापस cpr->cp_ring_काष्ठा.fw_ring_id;
+	पूर्ण अन्यथा अणु
+		वापस bnxt_cp_ring_from_grp(bp, &txr->tx_ring_काष्ठा);
+	पूर्ण
+पूर्ण
 
-static int bnxt_alloc_rss_indir_tbl(struct bnxt *bp)
-{
-	int entries;
+अटल पूर्णांक bnxt_alloc_rss_indir_tbl(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक entries;
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 		entries = BNXT_MAX_RSS_TABLE_ENTRIES_P5;
-	else
+	अन्यथा
 		entries = HW_HASH_INDEX_SIZE;
 
 	bp->rss_indir_tbl_entries = entries;
-	bp->rss_indir_tbl = kmalloc_array(entries, sizeof(*bp->rss_indir_tbl),
+	bp->rss_indir_tbl = kदो_स्मृति_array(entries, माप(*bp->rss_indir_tbl),
 					  GFP_KERNEL);
-	if (!bp->rss_indir_tbl)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!bp->rss_indir_tbl)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static void bnxt_set_dflt_rss_indir_tbl(struct bnxt *bp)
-{
+अटल व्योम bnxt_set_dflt_rss_indir_tbl(काष्ठा bnxt *bp)
+अणु
 	u16 max_rings, max_entries, pad, i;
 
-	if (!bp->rx_nr_rings)
-		return;
+	अगर (!bp->rx_nr_rings)
+		वापस;
 
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp))
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp))
 		max_rings = bp->rx_nr_rings - 1;
-	else
+	अन्यथा
 		max_rings = bp->rx_nr_rings;
 
 	max_entries = bnxt_get_rxfh_indir_size(bp->dev);
 
-	for (i = 0; i < max_entries; i++)
-		bp->rss_indir_tbl[i] = ethtool_rxfh_indir_default(i, max_rings);
+	क्रम (i = 0; i < max_entries; i++)
+		bp->rss_indir_tbl[i] = ethtool_rxfh_indir_शेष(i, max_rings);
 
 	pad = bp->rss_indir_tbl_entries - max_entries;
-	if (pad)
-		memset(&bp->rss_indir_tbl[i], 0, pad * sizeof(u16));
-}
+	अगर (pad)
+		स_रखो(&bp->rss_indir_tbl[i], 0, pad * माप(u16));
+पूर्ण
 
-static u16 bnxt_get_max_rss_ring(struct bnxt *bp)
-{
+अटल u16 bnxt_get_max_rss_ring(काष्ठा bnxt *bp)
+अणु
 	u16 i, tbl_size, max_ring = 0;
 
-	if (!bp->rss_indir_tbl)
-		return 0;
+	अगर (!bp->rss_indir_tbl)
+		वापस 0;
 
 	tbl_size = bnxt_get_rxfh_indir_size(bp->dev);
-	for (i = 0; i < tbl_size; i++)
+	क्रम (i = 0; i < tbl_size; i++)
 		max_ring = max(max_ring, bp->rss_indir_tbl[i]);
-	return max_ring;
-}
+	वापस max_ring;
+पूर्ण
 
-int bnxt_get_nr_rss_ctxs(struct bnxt *bp, int rx_rings)
-{
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
-		return DIV_ROUND_UP(rx_rings, BNXT_RSS_TABLE_ENTRIES_P5);
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp))
-		return 2;
-	return 1;
-}
+पूर्णांक bnxt_get_nr_rss_ctxs(काष्ठा bnxt *bp, पूर्णांक rx_rings)
+अणु
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+		वापस DIV_ROUND_UP(rx_rings, BNXT_RSS_TABLE_ENTRIES_P5);
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp))
+		वापस 2;
+	वापस 1;
+पूर्ण
 
-static void __bnxt_fill_hw_rss_tbl(struct bnxt *bp, struct bnxt_vnic_info *vnic)
-{
+अटल व्योम __bnxt_fill_hw_rss_tbl(काष्ठा bnxt *bp, काष्ठा bnxt_vnic_info *vnic)
+अणु
 	bool no_rss = !(vnic->flags & BNXT_VNIC_RSS_FLAG);
 	u16 i, j;
 
 	/* Fill the RSS indirection table with ring group ids */
-	for (i = 0, j = 0; i < HW_HASH_INDEX_SIZE; i++) {
-		if (!no_rss)
+	क्रम (i = 0, j = 0; i < HW_HASH_INDEX_SIZE; i++) अणु
+		अगर (!no_rss)
 			j = bp->rss_indir_tbl[i];
 		vnic->rss_table[i] = cpu_to_le16(vnic->fw_grp_ids[j]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __bnxt_fill_hw_rss_tbl_p5(struct bnxt *bp,
-				      struct bnxt_vnic_info *vnic)
-{
+अटल व्योम __bnxt_fill_hw_rss_tbl_p5(काष्ठा bnxt *bp,
+				      काष्ठा bnxt_vnic_info *vnic)
+अणु
 	__le16 *ring_tbl = vnic->rss_table;
-	struct bnxt_rx_ring_info *rxr;
+	काष्ठा bnxt_rx_ring_info *rxr;
 	u16 tbl_size, i;
 
 	tbl_size = bnxt_get_rxfh_indir_size(bp->dev);
 
-	for (i = 0; i < tbl_size; i++) {
+	क्रम (i = 0; i < tbl_size; i++) अणु
 		u16 ring_id, j;
 
 		j = bp->rss_indir_tbl[i];
 		rxr = &bp->rx_ring[j];
 
-		ring_id = rxr->rx_ring_struct.fw_ring_id;
+		ring_id = rxr->rx_ring_काष्ठा.fw_ring_id;
 		*ring_tbl++ = cpu_to_le16(ring_id);
-		ring_id = bnxt_cp_ring_for_rx(bp, rxr);
+		ring_id = bnxt_cp_ring_क्रम_rx(bp, rxr);
 		*ring_tbl++ = cpu_to_le16(ring_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnxt_fill_hw_rss_tbl(struct bnxt *bp, struct bnxt_vnic_info *vnic)
-{
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
+अटल व्योम bnxt_fill_hw_rss_tbl(काष्ठा bnxt *bp, काष्ठा bnxt_vnic_info *vnic)
+अणु
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 		__bnxt_fill_hw_rss_tbl_p5(bp, vnic);
-	else
+	अन्यथा
 		__bnxt_fill_hw_rss_tbl(bp, vnic);
-}
+पूर्ण
 
-static int bnxt_hwrm_vnic_set_rss(struct bnxt *bp, u16 vnic_id, bool set_rss)
-{
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
-	struct hwrm_vnic_rss_cfg_input req = {0};
+अटल पूर्णांक bnxt_hwrm_vnic_set_rss(काष्ठा bnxt *bp, u16 vnic_id, bool set_rss)
+अणु
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
+	काष्ठा hwrm_vnic_rss_cfg_input req = अणु0पूर्ण;
 
-	if ((bp->flags & BNXT_FLAG_CHIP_P5) ||
+	अगर ((bp->flags & BNXT_FLAG_CHIP_P5) ||
 	    vnic->fw_rss_cos_lb_ctx[0] == INVALID_HW_RING_ID)
-		return 0;
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VNIC_RSS_CFG, -1, -1);
-	if (set_rss) {
+	अगर (set_rss) अणु
 		bnxt_fill_hw_rss_tbl(bp, vnic);
 		req.hash_type = cpu_to_le32(bp->rss_hash_cfg);
 		req.hash_mode_flags = VNIC_RSS_CFG_REQ_HASH_MODE_FLAGS_DEFAULT;
 		req.ring_grp_tbl_addr = cpu_to_le64(vnic->rss_table_dma_addr);
 		req.hash_key_tbl_addr =
 			cpu_to_le64(vnic->rss_hash_key_dma_addr);
-	}
+	पूर्ण
 	req.rss_ctx_idx = cpu_to_le16(vnic->fw_rss_cos_lb_ctx[0]);
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static int bnxt_hwrm_vnic_set_rss_p5(struct bnxt *bp, u16 vnic_id, bool set_rss)
-{
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
-	struct hwrm_vnic_rss_cfg_input req = {0};
+अटल पूर्णांक bnxt_hwrm_vnic_set_rss_p5(काष्ठा bnxt *bp, u16 vnic_id, bool set_rss)
+अणु
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
+	काष्ठा hwrm_vnic_rss_cfg_input req = अणु0पूर्ण;
 	dma_addr_t ring_tbl_map;
 	u32 i, nr_ctxs;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VNIC_RSS_CFG, -1, -1);
 	req.vnic_id = cpu_to_le16(vnic->fw_vnic_id);
-	if (!set_rss) {
-		hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-		return 0;
-	}
+	अगर (!set_rss) अणु
+		hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+		वापस 0;
+	पूर्ण
 	bnxt_fill_hw_rss_tbl(bp, vnic);
 	req.hash_type = cpu_to_le32(bp->rss_hash_cfg);
 	req.hash_mode_flags = VNIC_RSS_CFG_REQ_HASH_MODE_FLAGS_DEFAULT;
 	req.hash_key_tbl_addr = cpu_to_le64(vnic->rss_hash_key_dma_addr);
 	ring_tbl_map = vnic->rss_table_dma_addr;
 	nr_ctxs = bnxt_get_nr_rss_ctxs(bp, bp->rx_nr_rings);
-	for (i = 0; i < nr_ctxs; ring_tbl_map += BNXT_RSS_TABLE_SIZE_P5, i++) {
-		int rc;
+	क्रम (i = 0; i < nr_ctxs; ring_tbl_map += BNXT_RSS_TABLE_SIZE_P5, i++) अणु
+		पूर्णांक rc;
 
 		req.ring_grp_tbl_addr = cpu_to_le64(ring_tbl_map);
 		req.ring_table_pair_index = i;
 		req.rss_ctx_idx = cpu_to_le16(vnic->fw_rss_cos_lb_ctx[i]);
-		rc = hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-		if (rc)
-			return rc;
-	}
-	return 0;
-}
+		rc = hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bnxt_hwrm_vnic_set_hds(struct bnxt *bp, u16 vnic_id)
-{
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
-	struct hwrm_vnic_plcmodes_cfg_input req = {0};
+अटल पूर्णांक bnxt_hwrm_vnic_set_hds(काष्ठा bnxt *bp, u16 vnic_id)
+अणु
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
+	काष्ठा hwrm_vnic_plcmodes_cfg_input req = अणु0पूर्ण;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VNIC_PLCMODES_CFG, -1, -1);
 	req.flags = cpu_to_le32(VNIC_PLCMODES_CFG_REQ_FLAGS_JUMBO_PLACEMENT |
@@ -5256,114 +5257,114 @@ static int bnxt_hwrm_vnic_set_hds(struct bnxt *bp, u16 vnic_id)
 	req.jumbo_thresh = cpu_to_le16(bp->rx_copy_thresh);
 	req.hds_threshold = cpu_to_le16(bp->rx_copy_thresh);
 	req.vnic_id = cpu_to_le32(vnic->fw_vnic_id);
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static void bnxt_hwrm_vnic_ctx_free_one(struct bnxt *bp, u16 vnic_id,
+अटल व्योम bnxt_hwrm_vnic_ctx_मुक्त_one(काष्ठा bnxt *bp, u16 vnic_id,
 					u16 ctx_idx)
-{
-	struct hwrm_vnic_rss_cos_lb_ctx_free_input req = {0};
+अणु
+	काष्ठा hwrm_vnic_rss_cos_lb_ctx_मुक्त_input req = अणु0पूर्ण;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VNIC_RSS_COS_LB_CTX_FREE, -1, -1);
 	req.rss_cos_lb_ctx_id =
 		cpu_to_le16(bp->vnic_info[vnic_id].fw_rss_cos_lb_ctx[ctx_idx]);
 
-	hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
+	hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
 	bp->vnic_info[vnic_id].fw_rss_cos_lb_ctx[ctx_idx] = INVALID_HW_RING_ID;
-}
+पूर्ण
 
-static void bnxt_hwrm_vnic_ctx_free(struct bnxt *bp)
-{
-	int i, j;
+अटल व्योम bnxt_hwrm_vnic_ctx_मुक्त(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 0; i < bp->nr_vnics; i++) {
-		struct bnxt_vnic_info *vnic = &bp->vnic_info[i];
+	क्रम (i = 0; i < bp->nr_vnics; i++) अणु
+		काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[i];
 
-		for (j = 0; j < BNXT_MAX_CTX_PER_VNIC; j++) {
-			if (vnic->fw_rss_cos_lb_ctx[j] != INVALID_HW_RING_ID)
-				bnxt_hwrm_vnic_ctx_free_one(bp, i, j);
-		}
-	}
+		क्रम (j = 0; j < BNXT_MAX_CTX_PER_VNIC; j++) अणु
+			अगर (vnic->fw_rss_cos_lb_ctx[j] != INVALID_HW_RING_ID)
+				bnxt_hwrm_vnic_ctx_मुक्त_one(bp, i, j);
+		पूर्ण
+	पूर्ण
 	bp->rsscos_nr_ctxs = 0;
-}
+पूर्ण
 
-static int bnxt_hwrm_vnic_ctx_alloc(struct bnxt *bp, u16 vnic_id, u16 ctx_idx)
-{
-	int rc;
-	struct hwrm_vnic_rss_cos_lb_ctx_alloc_input req = {0};
-	struct hwrm_vnic_rss_cos_lb_ctx_alloc_output *resp =
+अटल पूर्णांक bnxt_hwrm_vnic_ctx_alloc(काष्ठा bnxt *bp, u16 vnic_id, u16 ctx_idx)
+अणु
+	पूर्णांक rc;
+	काष्ठा hwrm_vnic_rss_cos_lb_ctx_alloc_input req = अणु0पूर्ण;
+	काष्ठा hwrm_vnic_rss_cos_lb_ctx_alloc_output *resp =
 						bp->hwrm_cmd_resp_addr;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VNIC_RSS_COS_LB_CTX_ALLOC, -1,
 			       -1);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc)
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc)
 		bp->vnic_info[vnic_id].fw_rss_cos_lb_ctx[ctx_idx] =
 			le16_to_cpu(resp->rss_cos_lb_ctx_id);
 	mutex_unlock(&bp->hwrm_cmd_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static u32 bnxt_get_roce_vnic_mode(struct bnxt *bp)
-{
-	if (bp->flags & BNXT_FLAG_ROCE_MIRROR_CAP)
-		return VNIC_CFG_REQ_FLAGS_ROCE_MIRRORING_CAPABLE_VNIC_MODE;
-	return VNIC_CFG_REQ_FLAGS_ROCE_DUAL_VNIC_MODE;
-}
+अटल u32 bnxt_get_roce_vnic_mode(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->flags & BNXT_FLAG_ROCE_MIRROR_CAP)
+		वापस VNIC_CFG_REQ_FLAGS_ROCE_MIRRORING_CAPABLE_VNIC_MODE;
+	वापस VNIC_CFG_REQ_FLAGS_ROCE_DUAL_VNIC_MODE;
+पूर्ण
 
-int bnxt_hwrm_vnic_cfg(struct bnxt *bp, u16 vnic_id)
-{
-	unsigned int ring = 0, grp_idx;
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
-	struct hwrm_vnic_cfg_input req = {0};
+पूर्णांक bnxt_hwrm_vnic_cfg(काष्ठा bnxt *bp, u16 vnic_id)
+अणु
+	अचिन्हित पूर्णांक ring = 0, grp_idx;
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
+	काष्ठा hwrm_vnic_cfg_input req = अणु0पूर्ण;
 	u16 def_vlan = 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VNIC_CFG, -1, -1);
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
-		struct bnxt_rx_ring_info *rxr = &bp->rx_ring[0];
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+		काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[0];
 
-		req.default_rx_ring_id =
-			cpu_to_le16(rxr->rx_ring_struct.fw_ring_id);
-		req.default_cmpl_ring_id =
-			cpu_to_le16(bnxt_cp_ring_for_rx(bp, rxr));
+		req.शेष_rx_ring_id =
+			cpu_to_le16(rxr->rx_ring_काष्ठा.fw_ring_id);
+		req.शेष_cmpl_ring_id =
+			cpu_to_le16(bnxt_cp_ring_क्रम_rx(bp, rxr));
 		req.enables =
 			cpu_to_le32(VNIC_CFG_REQ_ENABLES_DEFAULT_RX_RING_ID |
 				    VNIC_CFG_REQ_ENABLES_DEFAULT_CMPL_RING_ID);
-		goto vnic_mru;
-	}
+		जाओ vnic_mru;
+	पूर्ण
 	req.enables = cpu_to_le32(VNIC_CFG_REQ_ENABLES_DFLT_RING_GRP);
-	/* Only RSS support for now TBD: COS & LB */
-	if (vnic->fw_rss_cos_lb_ctx[0] != INVALID_HW_RING_ID) {
+	/* Only RSS support क्रम now TBD: COS & LB */
+	अगर (vnic->fw_rss_cos_lb_ctx[0] != INVALID_HW_RING_ID) अणु
 		req.rss_rule = cpu_to_le16(vnic->fw_rss_cos_lb_ctx[0]);
 		req.enables |= cpu_to_le32(VNIC_CFG_REQ_ENABLES_RSS_RULE |
 					   VNIC_CFG_REQ_ENABLES_MRU);
-	} else if (vnic->flags & BNXT_VNIC_RFS_NEW_RSS_FLAG) {
+	पूर्ण अन्यथा अगर (vnic->flags & BNXT_VNIC_RFS_NEW_RSS_FLAG) अणु
 		req.rss_rule =
 			cpu_to_le16(bp->vnic_info[0].fw_rss_cos_lb_ctx[0]);
 		req.enables |= cpu_to_le32(VNIC_CFG_REQ_ENABLES_RSS_RULE |
 					   VNIC_CFG_REQ_ENABLES_MRU);
 		req.flags |= cpu_to_le32(VNIC_CFG_REQ_FLAGS_RSS_DFLT_CR_MODE);
-	} else {
+	पूर्ण अन्यथा अणु
 		req.rss_rule = cpu_to_le16(0xffff);
-	}
+	पूर्ण
 
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp) &&
-	    (vnic->fw_rss_cos_lb_ctx[0] != INVALID_HW_RING_ID)) {
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp) &&
+	    (vnic->fw_rss_cos_lb_ctx[0] != INVALID_HW_RING_ID)) अणु
 		req.cos_rule = cpu_to_le16(vnic->fw_rss_cos_lb_ctx[1]);
 		req.enables |= cpu_to_le32(VNIC_CFG_REQ_ENABLES_COS_RULE);
-	} else {
+	पूर्ण अन्यथा अणु
 		req.cos_rule = cpu_to_le16(0xffff);
-	}
+	पूर्ण
 
-	if (vnic->flags & BNXT_VNIC_RSS_FLAG)
+	अगर (vnic->flags & BNXT_VNIC_RSS_FLAG)
 		ring = 0;
-	else if (vnic->flags & BNXT_VNIC_RFS_FLAG)
+	अन्यथा अगर (vnic->flags & BNXT_VNIC_RFS_FLAG)
 		ring = vnic_id - 1;
-	else if ((vnic_id == 1) && BNXT_CHIP_TYPE_NITRO_A0(bp))
+	अन्यथा अगर ((vnic_id == 1) && BNXT_CHIP_TYPE_NITRO_A0(bp))
 		ring = bp->rx_nr_rings - 1;
 
 	grp_idx = bp->rx_ring[ring].bnapi->index;
@@ -5373,137 +5374,137 @@ vnic_mru:
 	req.mru = cpu_to_le16(bp->dev->mtu + ETH_HLEN + VLAN_HLEN);
 
 	req.vnic_id = cpu_to_le16(vnic->fw_vnic_id);
-#ifdef CONFIG_BNXT_SRIOV
-	if (BNXT_VF(bp))
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	अगर (BNXT_VF(bp))
 		def_vlan = bp->vf.vlan;
-#endif
-	if ((bp->flags & BNXT_FLAG_STRIP_VLAN) || def_vlan)
+#पूर्ण_अगर
+	अगर ((bp->flags & BNXT_FLAG_STRIP_VLAN) || def_vlan)
 		req.flags |= cpu_to_le32(VNIC_CFG_REQ_FLAGS_VLAN_STRIP_MODE);
-	if (!vnic_id && bnxt_ulp_registered(bp->edev, BNXT_ROCE_ULP))
+	अगर (!vnic_id && bnxt_ulp_रेजिस्टरed(bp->edev, BNXT_ROCE_ULP))
 		req.flags |= cpu_to_le32(bnxt_get_roce_vnic_mode(bp));
 
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static void bnxt_hwrm_vnic_free_one(struct bnxt *bp, u16 vnic_id)
-{
-	if (bp->vnic_info[vnic_id].fw_vnic_id != INVALID_HW_RING_ID) {
-		struct hwrm_vnic_free_input req = {0};
+अटल व्योम bnxt_hwrm_vnic_मुक्त_one(काष्ठा bnxt *bp, u16 vnic_id)
+अणु
+	अगर (bp->vnic_info[vnic_id].fw_vnic_id != INVALID_HW_RING_ID) अणु
+		काष्ठा hwrm_vnic_मुक्त_input req = अणु0पूर्ण;
 
 		bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VNIC_FREE, -1, -1);
 		req.vnic_id =
 			cpu_to_le32(bp->vnic_info[vnic_id].fw_vnic_id);
 
-		hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
+		hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
 		bp->vnic_info[vnic_id].fw_vnic_id = INVALID_HW_RING_ID;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnxt_hwrm_vnic_free(struct bnxt *bp)
-{
+अटल व्योम bnxt_hwrm_vnic_मुक्त(काष्ठा bnxt *bp)
+अणु
 	u16 i;
 
-	for (i = 0; i < bp->nr_vnics; i++)
-		bnxt_hwrm_vnic_free_one(bp, i);
-}
+	क्रम (i = 0; i < bp->nr_vnics; i++)
+		bnxt_hwrm_vnic_मुक्त_one(bp, i);
+पूर्ण
 
-static int bnxt_hwrm_vnic_alloc(struct bnxt *bp, u16 vnic_id,
-				unsigned int start_rx_ring_idx,
-				unsigned int nr_rings)
-{
-	int rc = 0;
-	unsigned int i, j, grp_idx, end_idx = start_rx_ring_idx + nr_rings;
-	struct hwrm_vnic_alloc_input req = {0};
-	struct hwrm_vnic_alloc_output *resp = bp->hwrm_cmd_resp_addr;
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
+अटल पूर्णांक bnxt_hwrm_vnic_alloc(काष्ठा bnxt *bp, u16 vnic_id,
+				अचिन्हित पूर्णांक start_rx_ring_idx,
+				अचिन्हित पूर्णांक nr_rings)
+अणु
+	पूर्णांक rc = 0;
+	अचिन्हित पूर्णांक i, j, grp_idx, end_idx = start_rx_ring_idx + nr_rings;
+	काष्ठा hwrm_vnic_alloc_input req = अणु0पूर्ण;
+	काष्ठा hwrm_vnic_alloc_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
-		goto vnic_no_ring_grps;
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+		जाओ vnic_no_ring_grps;
 
 	/* map ring groups to this vnic */
-	for (i = start_rx_ring_idx, j = 0; i < end_idx; i++, j++) {
+	क्रम (i = start_rx_ring_idx, j = 0; i < end_idx; i++, j++) अणु
 		grp_idx = bp->rx_ring[i].bnapi->index;
-		if (bp->grp_info[grp_idx].fw_grp_id == INVALID_HW_RING_ID) {
+		अगर (bp->grp_info[grp_idx].fw_grp_id == INVALID_HW_RING_ID) अणु
 			netdev_err(bp->dev, "Not enough ring groups avail:%x req:%x\n",
 				   j, nr_rings);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		vnic->fw_grp_ids[j] = bp->grp_info[grp_idx].fw_grp_id;
-	}
+	पूर्ण
 
 vnic_no_ring_grps:
-	for (i = 0; i < BNXT_MAX_CTX_PER_VNIC; i++)
+	क्रम (i = 0; i < BNXT_MAX_CTX_PER_VNIC; i++)
 		vnic->fw_rss_cos_lb_ctx[i] = INVALID_HW_RING_ID;
-	if (vnic_id == 0)
+	अगर (vnic_id == 0)
 		req.flags = cpu_to_le32(VNIC_ALLOC_REQ_FLAGS_DEFAULT);
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VNIC_ALLOC, -1, -1);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc)
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc)
 		vnic->fw_vnic_id = le32_to_cpu(resp->vnic_id);
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_vnic_qcaps(struct bnxt *bp)
-{
-	struct hwrm_vnic_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_vnic_qcaps_input req = {0};
-	int rc;
+अटल पूर्णांक bnxt_hwrm_vnic_qcaps(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_vnic_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_vnic_qcaps_input req = अणु0पूर्ण;
+	पूर्णांक rc;
 
-	bp->hw_ring_stats_size = sizeof(struct ctx_hw_stats);
+	bp->hw_ring_stats_size = माप(काष्ठा ctx_hw_stats);
 	bp->flags &= ~(BNXT_FLAG_NEW_RSS_CAP | BNXT_FLAG_ROCE_MIRROR_CAP);
-	if (bp->hwrm_spec_code < 0x10600)
-		return 0;
+	अगर (bp->hwrm_spec_code < 0x10600)
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VNIC_QCAPS, -1, -1);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
 		u32 flags = le32_to_cpu(resp->flags);
 
-		if (!(bp->flags & BNXT_FLAG_CHIP_P5) &&
+		अगर (!(bp->flags & BNXT_FLAG_CHIP_P5) &&
 		    (flags & VNIC_QCAPS_RESP_FLAGS_RSS_DFLT_CR_CAP))
 			bp->flags |= BNXT_FLAG_NEW_RSS_CAP;
-		if (flags &
+		अगर (flags &
 		    VNIC_QCAPS_RESP_FLAGS_ROCE_MIRRORING_CAPABLE_VNIC_CAP)
 			bp->flags |= BNXT_FLAG_ROCE_MIRROR_CAP;
 
-		/* Older P5 fw before EXT_HW_STATS support did not set
+		/* Older P5 fw beक्रमe EXT_HW_STATS support did not set
 		 * VLAN_STRIP_CAP properly.
 		 */
-		if ((flags & VNIC_QCAPS_RESP_FLAGS_VLAN_STRIP_CAP) ||
+		अगर ((flags & VNIC_QCAPS_RESP_FLAGS_VLAN_STRIP_CAP) ||
 		    (BNXT_CHIP_P5_THOR(bp) &&
 		     !(bp->fw_cap & BNXT_FW_CAP_EXT_HW_STATS_SUPPORTED)))
 			bp->fw_cap |= BNXT_FW_CAP_VLAN_RX_STRIP;
 		bp->max_tpa_v2 = le16_to_cpu(resp->max_aggs_supported);
-		if (bp->max_tpa_v2) {
-			if (BNXT_CHIP_P5_THOR(bp))
+		अगर (bp->max_tpa_v2) अणु
+			अगर (BNXT_CHIP_P5_THOR(bp))
 				bp->hw_ring_stats_size = BNXT_RING_STATS_SIZE_P5;
-			else
+			अन्यथा
 				bp->hw_ring_stats_size = BNXT_RING_STATS_SIZE_P5_SR2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_ring_grp_alloc(struct bnxt *bp)
-{
+अटल पूर्णांक bnxt_hwrm_ring_grp_alloc(काष्ठा bnxt *bp)
+अणु
 	u16 i;
 	u32 rc = 0;
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
-		return 0;
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+		वापस 0;
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	for (i = 0; i < bp->rx_nr_rings; i++) {
-		struct hwrm_ring_grp_alloc_input req = {0};
-		struct hwrm_ring_grp_alloc_output *resp =
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+		काष्ठा hwrm_ring_grp_alloc_input req = अणु0पूर्ण;
+		काष्ठा hwrm_ring_grp_alloc_output *resp =
 					bp->hwrm_cmd_resp_addr;
-		unsigned int grp_idx = bp->rx_ring[i].bnapi->index;
+		अचिन्हित पूर्णांक grp_idx = bp->rx_ring[i].bnapi->index;
 
 		bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_RING_GRP_ALLOC, -1, -1);
 
@@ -5512,86 +5513,86 @@ static int bnxt_hwrm_ring_grp_alloc(struct bnxt *bp)
 		req.ar = cpu_to_le16(bp->grp_info[grp_idx].agg_fw_ring_id);
 		req.sc = cpu_to_le16(bp->grp_info[grp_idx].fw_stats_ctx);
 
-		rc = _hwrm_send_message(bp, &req, sizeof(req),
+		rc = _hwrm_send_message(bp, &req, माप(req),
 					HWRM_CMD_TIMEOUT);
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 
 		bp->grp_info[grp_idx].fw_grp_id =
 			le32_to_cpu(resp->ring_group_id);
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void bnxt_hwrm_ring_grp_free(struct bnxt *bp)
-{
+अटल व्योम bnxt_hwrm_ring_grp_मुक्त(काष्ठा bnxt *bp)
+अणु
 	u16 i;
-	struct hwrm_ring_grp_free_input req = {0};
+	काष्ठा hwrm_ring_grp_मुक्त_input req = अणु0पूर्ण;
 
-	if (!bp->grp_info || (bp->flags & BNXT_FLAG_CHIP_P5))
-		return;
+	अगर (!bp->grp_info || (bp->flags & BNXT_FLAG_CHIP_P5))
+		वापस;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_RING_GRP_FREE, -1, -1);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		if (bp->grp_info[i].fw_grp_id == INVALID_HW_RING_ID)
-			continue;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		अगर (bp->grp_info[i].fw_grp_id == INVALID_HW_RING_ID)
+			जारी;
 		req.ring_group_id =
 			cpu_to_le32(bp->grp_info[i].fw_grp_id);
 
-		_hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
+		_hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
 		bp->grp_info[i].fw_grp_id = INVALID_HW_RING_ID;
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-}
+पूर्ण
 
-static int hwrm_ring_alloc_send_msg(struct bnxt *bp,
-				    struct bnxt_ring_struct *ring,
+अटल पूर्णांक hwrm_ring_alloc_send_msg(काष्ठा bnxt *bp,
+				    काष्ठा bnxt_ring_काष्ठा *ring,
 				    u32 ring_type, u32 map_index)
-{
-	int rc = 0, err = 0;
-	struct hwrm_ring_alloc_input req = {0};
-	struct hwrm_ring_alloc_output *resp = bp->hwrm_cmd_resp_addr;
-	struct bnxt_ring_mem_info *rmem = &ring->ring_mem;
-	struct bnxt_ring_grp_info *grp_info;
+अणु
+	पूर्णांक rc = 0, err = 0;
+	काष्ठा hwrm_ring_alloc_input req = अणु0पूर्ण;
+	काष्ठा hwrm_ring_alloc_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा bnxt_ring_mem_info *rmem = &ring->ring_mem;
+	काष्ठा bnxt_ring_grp_info *grp_info;
 	u16 ring_id;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_RING_ALLOC, -1, -1);
 
 	req.enables = 0;
-	if (rmem->nr_pages > 1) {
+	अगर (rmem->nr_pages > 1) अणु
 		req.page_tbl_addr = cpu_to_le64(rmem->pg_tbl_map);
 		/* Page size is in log2 units */
 		req.page_size = BNXT_PAGE_SHIFT;
 		req.page_tbl_depth = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		req.page_tbl_addr =  cpu_to_le64(rmem->dma_arr[0]);
-	}
+	पूर्ण
 	req.fbo = 0;
-	/* Association of ring index with doorbell index and MSIX number */
+	/* Association of ring index with करोorbell index and MSIX number */
 	req.logical_id = cpu_to_le16(map_index);
 
-	switch (ring_type) {
-	case HWRM_RING_ALLOC_TX: {
-		struct bnxt_tx_ring_info *txr;
+	चयन (ring_type) अणु
+	हाल HWRM_RING_ALLOC_TX: अणु
+		काष्ठा bnxt_tx_ring_info *txr;
 
-		txr = container_of(ring, struct bnxt_tx_ring_info,
-				   tx_ring_struct);
+		txr = container_of(ring, काष्ठा bnxt_tx_ring_info,
+				   tx_ring_काष्ठा);
 		req.ring_type = RING_ALLOC_REQ_RING_TYPE_TX;
 		/* Association of transmit ring with completion ring */
 		grp_info = &bp->grp_info[ring->grp_idx];
-		req.cmpl_ring_id = cpu_to_le16(bnxt_cp_ring_for_tx(bp, txr));
+		req.cmpl_ring_id = cpu_to_le16(bnxt_cp_ring_क्रम_tx(bp, txr));
 		req.length = cpu_to_le32(bp->tx_ring_mask + 1);
 		req.stat_ctx_id = cpu_to_le32(grp_info->fw_stats_ctx);
 		req.queue_id = cpu_to_le16(ring->queue_id);
-		break;
-	}
-	case HWRM_RING_ALLOC_RX:
+		अवरोध;
+	पूर्ण
+	हाल HWRM_RING_ALLOC_RX:
 		req.ring_type = RING_ALLOC_REQ_RING_TYPE_RX;
 		req.length = cpu_to_le32(bp->rx_ring_mask + 1);
-		if (bp->flags & BNXT_FLAG_CHIP_P5) {
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 			u16 flags = 0;
 
 			/* Association of rx ring with stats context */
@@ -5600,13 +5601,13 @@ static int hwrm_ring_alloc_send_msg(struct bnxt *bp,
 			req.stat_ctx_id = cpu_to_le32(grp_info->fw_stats_ctx);
 			req.enables |= cpu_to_le32(
 				RING_ALLOC_REQ_ENABLES_RX_BUF_SIZE_VALID);
-			if (NET_IP_ALIGN == 2)
+			अगर (NET_IP_ALIGN == 2)
 				flags = RING_ALLOC_REQ_FLAGS_RX_SOP_PAD;
 			req.flags = cpu_to_le16(flags);
-		}
-		break;
-	case HWRM_RING_ALLOC_AGG:
-		if (bp->flags & BNXT_FLAG_CHIP_P5) {
+		पूर्ण
+		अवरोध;
+	हाल HWRM_RING_ALLOC_AGG:
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 			req.ring_type = RING_ALLOC_REQ_RING_TYPE_RX_AGG;
 			/* Association of agg ring with rx ring */
 			grp_info = &bp->grp_info[ring->grp_idx];
@@ -5616,394 +5617,394 @@ static int hwrm_ring_alloc_send_msg(struct bnxt *bp,
 			req.enables |= cpu_to_le32(
 				RING_ALLOC_REQ_ENABLES_RX_RING_ID_VALID |
 				RING_ALLOC_REQ_ENABLES_RX_BUF_SIZE_VALID);
-		} else {
+		पूर्ण अन्यथा अणु
 			req.ring_type = RING_ALLOC_REQ_RING_TYPE_RX;
-		}
+		पूर्ण
 		req.length = cpu_to_le32(bp->rx_agg_ring_mask + 1);
-		break;
-	case HWRM_RING_ALLOC_CMPL:
+		अवरोध;
+	हाल HWRM_RING_ALLOC_CMPL:
 		req.ring_type = RING_ALLOC_REQ_RING_TYPE_L2_CMPL;
 		req.length = cpu_to_le32(bp->cp_ring_mask + 1);
-		if (bp->flags & BNXT_FLAG_CHIP_P5) {
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 			/* Association of cp ring with nq */
 			grp_info = &bp->grp_info[map_index];
 			req.nq_ring_id = cpu_to_le16(grp_info->cp_fw_ring_id);
 			req.cq_handle = cpu_to_le64(ring->handle);
 			req.enables |= cpu_to_le32(
 				RING_ALLOC_REQ_ENABLES_NQ_RING_ID_VALID);
-		} else if (bp->flags & BNXT_FLAG_USING_MSIX) {
-			req.int_mode = RING_ALLOC_REQ_INT_MODE_MSIX;
-		}
-		break;
-	case HWRM_RING_ALLOC_NQ:
+		पूर्ण अन्यथा अगर (bp->flags & BNXT_FLAG_USING_MSIX) अणु
+			req.पूर्णांक_mode = RING_ALLOC_REQ_INT_MODE_MSIX;
+		पूर्ण
+		अवरोध;
+	हाल HWRM_RING_ALLOC_NQ:
 		req.ring_type = RING_ALLOC_REQ_RING_TYPE_NQ;
 		req.length = cpu_to_le32(bp->cp_ring_mask + 1);
-		if (bp->flags & BNXT_FLAG_USING_MSIX)
-			req.int_mode = RING_ALLOC_REQ_INT_MODE_MSIX;
-		break;
-	default:
+		अगर (bp->flags & BNXT_FLAG_USING_MSIX)
+			req.पूर्णांक_mode = RING_ALLOC_REQ_INT_MODE_MSIX;
+		अवरोध;
+	शेष:
 		netdev_err(bp->dev, "hwrm alloc invalid ring type %d\n",
 			   ring_type);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
 	err = le16_to_cpu(resp->error_code);
 	ring_id = le16_to_cpu(resp->ring_id);
 	mutex_unlock(&bp->hwrm_cmd_lock);
 
-	if (rc || err) {
+	अगर (rc || err) अणु
 		netdev_err(bp->dev, "hwrm_ring_alloc type %d failed. rc:%x err:%x\n",
 			   ring_type, rc, err);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	ring->fw_ring_id = ring_id;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_set_async_event_cr(struct bnxt *bp, int idx)
-{
-	int rc;
+अटल पूर्णांक bnxt_hwrm_set_async_event_cr(काष्ठा bnxt *bp, पूर्णांक idx)
+अणु
+	पूर्णांक rc;
 
-	if (BNXT_PF(bp)) {
-		struct hwrm_func_cfg_input req = {0};
+	अगर (BNXT_PF(bp)) अणु
+		काष्ठा hwrm_func_cfg_input req = अणु0पूर्ण;
 
 		bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_CFG, -1, -1);
 		req.fid = cpu_to_le16(0xffff);
 		req.enables = cpu_to_le32(FUNC_CFG_REQ_ENABLES_ASYNC_EVENT_CR);
 		req.async_event_cr = cpu_to_le16(idx);
-		rc = hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	} else {
-		struct hwrm_func_vf_cfg_input req = {0};
+		rc = hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	पूर्ण अन्यथा अणु
+		काष्ठा hwrm_func_vf_cfg_input req = अणु0पूर्ण;
 
 		bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_VF_CFG, -1, -1);
 		req.enables =
 			cpu_to_le32(FUNC_VF_CFG_REQ_ENABLES_ASYNC_EVENT_CR);
 		req.async_event_cr = cpu_to_le16(idx);
-		rc = hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	}
-	return rc;
-}
+		rc = hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void bnxt_set_db(struct bnxt *bp, struct bnxt_db_info *db, u32 ring_type,
+अटल व्योम bnxt_set_db(काष्ठा bnxt *bp, काष्ठा bnxt_db_info *db, u32 ring_type,
 			u32 map_idx, u32 xid)
-{
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
-		if (BNXT_PF(bp))
-			db->doorbell = bp->bar1 + DB_PF_OFFSET_P5;
-		else
-			db->doorbell = bp->bar1 + DB_VF_OFFSET_P5;
-		switch (ring_type) {
-		case HWRM_RING_ALLOC_TX:
+अणु
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+		अगर (BNXT_PF(bp))
+			db->करोorbell = bp->bar1 + DB_PF_OFFSET_P5;
+		अन्यथा
+			db->करोorbell = bp->bar1 + DB_VF_OFFSET_P5;
+		चयन (ring_type) अणु
+		हाल HWRM_RING_ALLOC_TX:
 			db->db_key64 = DBR_PATH_L2 | DBR_TYPE_SQ;
-			break;
-		case HWRM_RING_ALLOC_RX:
-		case HWRM_RING_ALLOC_AGG:
+			अवरोध;
+		हाल HWRM_RING_ALLOC_RX:
+		हाल HWRM_RING_ALLOC_AGG:
 			db->db_key64 = DBR_PATH_L2 | DBR_TYPE_SRQ;
-			break;
-		case HWRM_RING_ALLOC_CMPL:
+			अवरोध;
+		हाल HWRM_RING_ALLOC_CMPL:
 			db->db_key64 = DBR_PATH_L2;
-			break;
-		case HWRM_RING_ALLOC_NQ:
+			अवरोध;
+		हाल HWRM_RING_ALLOC_NQ:
 			db->db_key64 = DBR_PATH_L2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		db->db_key64 |= (u64)xid << DBR_XID_SFT;
-	} else {
-		db->doorbell = bp->bar1 + map_idx * 0x80;
-		switch (ring_type) {
-		case HWRM_RING_ALLOC_TX:
+	पूर्ण अन्यथा अणु
+		db->करोorbell = bp->bar1 + map_idx * 0x80;
+		चयन (ring_type) अणु
+		हाल HWRM_RING_ALLOC_TX:
 			db->db_key32 = DB_KEY_TX;
-			break;
-		case HWRM_RING_ALLOC_RX:
-		case HWRM_RING_ALLOC_AGG:
+			अवरोध;
+		हाल HWRM_RING_ALLOC_RX:
+		हाल HWRM_RING_ALLOC_AGG:
 			db->db_key32 = DB_KEY_RX;
-			break;
-		case HWRM_RING_ALLOC_CMPL:
+			अवरोध;
+		हाल HWRM_RING_ALLOC_CMPL:
 			db->db_key32 = DB_KEY_CP;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int bnxt_hwrm_ring_alloc(struct bnxt *bp)
-{
+अटल पूर्णांक bnxt_hwrm_ring_alloc(काष्ठा bnxt *bp)
+अणु
 	bool agg_rings = !!(bp->flags & BNXT_FLAG_AGG_RINGS);
-	int i, rc = 0;
+	पूर्णांक i, rc = 0;
 	u32 type;
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 		type = HWRM_RING_ALLOC_NQ;
-	else
+	अन्यथा
 		type = HWRM_RING_ALLOC_CMPL;
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
-		struct bnxt_ring_struct *ring = &cpr->cp_ring_struct;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+		काष्ठा bnxt_ring_काष्ठा *ring = &cpr->cp_ring_काष्ठा;
 		u32 map_idx = ring->map_idx;
-		unsigned int vector;
+		अचिन्हित पूर्णांक vector;
 
 		vector = bp->irq_tbl[map_idx].vector;
 		disable_irq_nosync(vector);
 		rc = hwrm_ring_alloc_send_msg(bp, ring, type, map_idx);
-		if (rc) {
+		अगर (rc) अणु
 			enable_irq(vector);
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 		bnxt_set_db(bp, &cpr->cp_db, type, map_idx, ring->fw_ring_id);
 		bnxt_db_nq(bp, &cpr->cp_db, cpr->cp_raw_cons);
 		enable_irq(vector);
 		bp->grp_info[i].cp_fw_ring_id = ring->fw_ring_id;
 
-		if (!i) {
+		अगर (!i) अणु
 			rc = bnxt_hwrm_set_async_event_cr(bp, ring->fw_ring_id);
-			if (rc)
+			अगर (rc)
 				netdev_warn(bp->dev, "Failed to set async event completion ring.\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	type = HWRM_RING_ALLOC_TX;
-	for (i = 0; i < bp->tx_nr_rings; i++) {
-		struct bnxt_tx_ring_info *txr = &bp->tx_ring[i];
-		struct bnxt_ring_struct *ring;
+	क्रम (i = 0; i < bp->tx_nr_rings; i++) अणु
+		काष्ठा bnxt_tx_ring_info *txr = &bp->tx_ring[i];
+		काष्ठा bnxt_ring_काष्ठा *ring;
 		u32 map_idx;
 
-		if (bp->flags & BNXT_FLAG_CHIP_P5) {
-			struct bnxt_napi *bnapi = txr->bnapi;
-			struct bnxt_cp_ring_info *cpr, *cpr2;
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+			काष्ठा bnxt_napi *bnapi = txr->bnapi;
+			काष्ठा bnxt_cp_ring_info *cpr, *cpr2;
 			u32 type2 = HWRM_RING_ALLOC_CMPL;
 
 			cpr = &bnapi->cp_ring;
 			cpr2 = cpr->cp_ring_arr[BNXT_TX_HDL];
-			ring = &cpr2->cp_ring_struct;
+			ring = &cpr2->cp_ring_काष्ठा;
 			ring->handle = BNXT_TX_HDL;
 			map_idx = bnapi->index;
 			rc = hwrm_ring_alloc_send_msg(bp, ring, type2, map_idx);
-			if (rc)
-				goto err_out;
+			अगर (rc)
+				जाओ err_out;
 			bnxt_set_db(bp, &cpr2->cp_db, type2, map_idx,
 				    ring->fw_ring_id);
 			bnxt_db_cq(bp, &cpr2->cp_db, cpr2->cp_raw_cons);
-		}
-		ring = &txr->tx_ring_struct;
+		पूर्ण
+		ring = &txr->tx_ring_काष्ठा;
 		map_idx = i;
 		rc = hwrm_ring_alloc_send_msg(bp, ring, type, map_idx);
-		if (rc)
-			goto err_out;
+		अगर (rc)
+			जाओ err_out;
 		bnxt_set_db(bp, &txr->tx_db, type, map_idx, ring->fw_ring_id);
-	}
+	पूर्ण
 
 	type = HWRM_RING_ALLOC_RX;
-	for (i = 0; i < bp->rx_nr_rings; i++) {
-		struct bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
-		struct bnxt_ring_struct *ring = &rxr->rx_ring_struct;
-		struct bnxt_napi *bnapi = rxr->bnapi;
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+		काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
+		काष्ठा bnxt_ring_काष्ठा *ring = &rxr->rx_ring_काष्ठा;
+		काष्ठा bnxt_napi *bnapi = rxr->bnapi;
 		u32 map_idx = bnapi->index;
 
 		rc = hwrm_ring_alloc_send_msg(bp, ring, type, map_idx);
-		if (rc)
-			goto err_out;
+		अगर (rc)
+			जाओ err_out;
 		bnxt_set_db(bp, &rxr->rx_db, type, map_idx, ring->fw_ring_id);
 		/* If we have agg rings, post agg buffers first. */
-		if (!agg_rings)
-			bnxt_db_write(bp, &rxr->rx_db, rxr->rx_prod);
+		अगर (!agg_rings)
+			bnxt_db_ग_लिखो(bp, &rxr->rx_db, rxr->rx_prod);
 		bp->grp_info[map_idx].rx_fw_ring_id = ring->fw_ring_id;
-		if (bp->flags & BNXT_FLAG_CHIP_P5) {
-			struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+			काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
 			u32 type2 = HWRM_RING_ALLOC_CMPL;
-			struct bnxt_cp_ring_info *cpr2;
+			काष्ठा bnxt_cp_ring_info *cpr2;
 
 			cpr2 = cpr->cp_ring_arr[BNXT_RX_HDL];
-			ring = &cpr2->cp_ring_struct;
+			ring = &cpr2->cp_ring_काष्ठा;
 			ring->handle = BNXT_RX_HDL;
 			rc = hwrm_ring_alloc_send_msg(bp, ring, type2, map_idx);
-			if (rc)
-				goto err_out;
+			अगर (rc)
+				जाओ err_out;
 			bnxt_set_db(bp, &cpr2->cp_db, type2, map_idx,
 				    ring->fw_ring_id);
 			bnxt_db_cq(bp, &cpr2->cp_db, cpr2->cp_raw_cons);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (agg_rings) {
+	अगर (agg_rings) अणु
 		type = HWRM_RING_ALLOC_AGG;
-		for (i = 0; i < bp->rx_nr_rings; i++) {
-			struct bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
-			struct bnxt_ring_struct *ring =
-						&rxr->rx_agg_ring_struct;
+		क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+			काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
+			काष्ठा bnxt_ring_काष्ठा *ring =
+						&rxr->rx_agg_ring_काष्ठा;
 			u32 grp_idx = ring->grp_idx;
 			u32 map_idx = grp_idx + bp->rx_nr_rings;
 
 			rc = hwrm_ring_alloc_send_msg(bp, ring, type, map_idx);
-			if (rc)
-				goto err_out;
+			अगर (rc)
+				जाओ err_out;
 
 			bnxt_set_db(bp, &rxr->rx_agg_db, type, map_idx,
 				    ring->fw_ring_id);
-			bnxt_db_write(bp, &rxr->rx_agg_db, rxr->rx_agg_prod);
-			bnxt_db_write(bp, &rxr->rx_db, rxr->rx_prod);
+			bnxt_db_ग_लिखो(bp, &rxr->rx_agg_db, rxr->rx_agg_prod);
+			bnxt_db_ग_लिखो(bp, &rxr->rx_db, rxr->rx_prod);
 			bp->grp_info[grp_idx].agg_fw_ring_id = ring->fw_ring_id;
-		}
-	}
+		पूर्ण
+	पूर्ण
 err_out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int hwrm_ring_free_send_msg(struct bnxt *bp,
-				   struct bnxt_ring_struct *ring,
-				   u32 ring_type, int cmpl_ring_id)
-{
-	int rc;
-	struct hwrm_ring_free_input req = {0};
-	struct hwrm_ring_free_output *resp = bp->hwrm_cmd_resp_addr;
+अटल पूर्णांक hwrm_ring_मुक्त_send_msg(काष्ठा bnxt *bp,
+				   काष्ठा bnxt_ring_काष्ठा *ring,
+				   u32 ring_type, पूर्णांक cmpl_ring_id)
+अणु
+	पूर्णांक rc;
+	काष्ठा hwrm_ring_मुक्त_input req = अणु0पूर्ण;
+	काष्ठा hwrm_ring_मुक्त_output *resp = bp->hwrm_cmd_resp_addr;
 	u16 error_code;
 
-	if (BNXT_NO_FW_ACCESS(bp))
-		return 0;
+	अगर (BNXT_NO_FW_ACCESS(bp))
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_RING_FREE, cmpl_ring_id, -1);
 	req.ring_type = ring_type;
 	req.ring_id = cpu_to_le16(ring->fw_ring_id);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
 	error_code = le16_to_cpu(resp->error_code);
 	mutex_unlock(&bp->hwrm_cmd_lock);
 
-	if (rc || error_code) {
+	अगर (rc || error_code) अणु
 		netdev_err(bp->dev, "hwrm_ring_free type %d failed. rc:%x err:%x\n",
 			   ring_type, rc, error_code);
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bnxt_hwrm_ring_free(struct bnxt *bp, bool close_path)
-{
+अटल व्योम bnxt_hwrm_ring_मुक्त(काष्ठा bnxt *bp, bool बंद_path)
+अणु
 	u32 type;
-	int i;
+	पूर्णांक i;
 
-	if (!bp->bnapi)
-		return;
+	अगर (!bp->bnapi)
+		वापस;
 
-	for (i = 0; i < bp->tx_nr_rings; i++) {
-		struct bnxt_tx_ring_info *txr = &bp->tx_ring[i];
-		struct bnxt_ring_struct *ring = &txr->tx_ring_struct;
+	क्रम (i = 0; i < bp->tx_nr_rings; i++) अणु
+		काष्ठा bnxt_tx_ring_info *txr = &bp->tx_ring[i];
+		काष्ठा bnxt_ring_काष्ठा *ring = &txr->tx_ring_काष्ठा;
 
-		if (ring->fw_ring_id != INVALID_HW_RING_ID) {
-			u32 cmpl_ring_id = bnxt_cp_ring_for_tx(bp, txr);
+		अगर (ring->fw_ring_id != INVALID_HW_RING_ID) अणु
+			u32 cmpl_ring_id = bnxt_cp_ring_क्रम_tx(bp, txr);
 
-			hwrm_ring_free_send_msg(bp, ring,
+			hwrm_ring_मुक्त_send_msg(bp, ring,
 						RING_FREE_REQ_RING_TYPE_TX,
-						close_path ? cmpl_ring_id :
+						बंद_path ? cmpl_ring_id :
 						INVALID_HW_RING_ID);
 			ring->fw_ring_id = INVALID_HW_RING_ID;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < bp->rx_nr_rings; i++) {
-		struct bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
-		struct bnxt_ring_struct *ring = &rxr->rx_ring_struct;
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+		काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
+		काष्ठा bnxt_ring_काष्ठा *ring = &rxr->rx_ring_काष्ठा;
 		u32 grp_idx = rxr->bnapi->index;
 
-		if (ring->fw_ring_id != INVALID_HW_RING_ID) {
-			u32 cmpl_ring_id = bnxt_cp_ring_for_rx(bp, rxr);
+		अगर (ring->fw_ring_id != INVALID_HW_RING_ID) अणु
+			u32 cmpl_ring_id = bnxt_cp_ring_क्रम_rx(bp, rxr);
 
-			hwrm_ring_free_send_msg(bp, ring,
+			hwrm_ring_मुक्त_send_msg(bp, ring,
 						RING_FREE_REQ_RING_TYPE_RX,
-						close_path ? cmpl_ring_id :
+						बंद_path ? cmpl_ring_id :
 						INVALID_HW_RING_ID);
 			ring->fw_ring_id = INVALID_HW_RING_ID;
 			bp->grp_info[grp_idx].rx_fw_ring_id =
 				INVALID_HW_RING_ID;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 		type = RING_FREE_REQ_RING_TYPE_RX_AGG;
-	else
+	अन्यथा
 		type = RING_FREE_REQ_RING_TYPE_RX;
-	for (i = 0; i < bp->rx_nr_rings; i++) {
-		struct bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
-		struct bnxt_ring_struct *ring = &rxr->rx_agg_ring_struct;
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+		काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
+		काष्ठा bnxt_ring_काष्ठा *ring = &rxr->rx_agg_ring_काष्ठा;
 		u32 grp_idx = rxr->bnapi->index;
 
-		if (ring->fw_ring_id != INVALID_HW_RING_ID) {
-			u32 cmpl_ring_id = bnxt_cp_ring_for_rx(bp, rxr);
+		अगर (ring->fw_ring_id != INVALID_HW_RING_ID) अणु
+			u32 cmpl_ring_id = bnxt_cp_ring_क्रम_rx(bp, rxr);
 
-			hwrm_ring_free_send_msg(bp, ring, type,
-						close_path ? cmpl_ring_id :
+			hwrm_ring_मुक्त_send_msg(bp, ring, type,
+						बंद_path ? cmpl_ring_id :
 						INVALID_HW_RING_ID);
 			ring->fw_ring_id = INVALID_HW_RING_ID;
 			bp->grp_info[grp_idx].agg_fw_ring_id =
 				INVALID_HW_RING_ID;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* The completion rings are about to be freed.  After that the
-	 * IRQ doorbell will not work anymore.  So we need to disable
+	/* The completion rings are about to be मुक्तd.  After that the
+	 * IRQ करोorbell will not work anymore.  So we need to disable
 	 * IRQ here.
 	 */
-	bnxt_disable_int_sync(bp);
+	bnxt_disable_पूर्णांक_sync(bp);
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 		type = RING_FREE_REQ_RING_TYPE_NQ;
-	else
+	अन्यथा
 		type = RING_FREE_REQ_RING_TYPE_L2_CMPL;
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
-		struct bnxt_ring_struct *ring;
-		int j;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+		काष्ठा bnxt_ring_काष्ठा *ring;
+		पूर्णांक j;
 
-		for (j = 0; j < 2; j++) {
-			struct bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[j];
+		क्रम (j = 0; j < 2; j++) अणु
+			काष्ठा bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[j];
 
-			if (cpr2) {
-				ring = &cpr2->cp_ring_struct;
-				if (ring->fw_ring_id == INVALID_HW_RING_ID)
-					continue;
-				hwrm_ring_free_send_msg(bp, ring,
+			अगर (cpr2) अणु
+				ring = &cpr2->cp_ring_काष्ठा;
+				अगर (ring->fw_ring_id == INVALID_HW_RING_ID)
+					जारी;
+				hwrm_ring_मुक्त_send_msg(bp, ring,
 					RING_FREE_REQ_RING_TYPE_L2_CMPL,
 					INVALID_HW_RING_ID);
 				ring->fw_ring_id = INVALID_HW_RING_ID;
-			}
-		}
-		ring = &cpr->cp_ring_struct;
-		if (ring->fw_ring_id != INVALID_HW_RING_ID) {
-			hwrm_ring_free_send_msg(bp, ring, type,
+			पूर्ण
+		पूर्ण
+		ring = &cpr->cp_ring_काष्ठा;
+		अगर (ring->fw_ring_id != INVALID_HW_RING_ID) अणु
+			hwrm_ring_मुक्त_send_msg(bp, ring, type,
 						INVALID_HW_RING_ID);
 			ring->fw_ring_id = INVALID_HW_RING_ID;
 			bp->grp_info[i].cp_fw_ring_id = INVALID_HW_RING_ID;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int bnxt_trim_rings(struct bnxt *bp, int *rx, int *tx, int max,
+अटल पूर्णांक bnxt_trim_rings(काष्ठा bnxt *bp, पूर्णांक *rx, पूर्णांक *tx, पूर्णांक max,
 			   bool shared);
 
-static int bnxt_hwrm_get_rings(struct bnxt *bp)
-{
-	struct hwrm_func_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
-	struct bnxt_hw_resc *hw_resc = &bp->hw_resc;
-	struct hwrm_func_qcfg_input req = {0};
-	int rc;
+अटल पूर्णांक bnxt_hwrm_get_rings(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_func_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा bnxt_hw_resc *hw_resc = &bp->hw_resc;
+	काष्ठा hwrm_func_qcfg_input req = अणु0पूर्ण;
+	पूर्णांक rc;
 
-	if (bp->hwrm_spec_code < 0x10601)
-		return 0;
+	अगर (bp->hwrm_spec_code < 0x10601)
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_QCFG, -1, -1);
 	req.fid = cpu_to_le16(0xffff);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc) अणु
 		mutex_unlock(&bp->hwrm_cmd_lock);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	hw_resc->resv_tx_rings = le16_to_cpu(resp->alloc_tx_rings);
-	if (BNXT_NEW_RM(bp)) {
+	अगर (BNXT_NEW_RM(bp)) अणु
 		u16 cp, stats;
 
 		hw_resc->resv_rx_rings = le16_to_cpu(resp->alloc_rx_rings);
@@ -6013,106 +6014,106 @@ static int bnxt_hwrm_get_rings(struct bnxt *bp)
 		cp = le16_to_cpu(resp->alloc_cmpl_rings);
 		stats = le16_to_cpu(resp->alloc_stat_ctx);
 		hw_resc->resv_irqs = cp;
-		if (bp->flags & BNXT_FLAG_CHIP_P5) {
-			int rx = hw_resc->resv_rx_rings;
-			int tx = hw_resc->resv_tx_rings;
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+			पूर्णांक rx = hw_resc->resv_rx_rings;
+			पूर्णांक tx = hw_resc->resv_tx_rings;
 
-			if (bp->flags & BNXT_FLAG_AGG_RINGS)
+			अगर (bp->flags & BNXT_FLAG_AGG_RINGS)
 				rx >>= 1;
-			if (cp < (rx + tx)) {
+			अगर (cp < (rx + tx)) अणु
 				bnxt_trim_rings(bp, &rx, &tx, cp, false);
-				if (bp->flags & BNXT_FLAG_AGG_RINGS)
+				अगर (bp->flags & BNXT_FLAG_AGG_RINGS)
 					rx <<= 1;
 				hw_resc->resv_rx_rings = rx;
 				hw_resc->resv_tx_rings = tx;
-			}
+			पूर्ण
 			hw_resc->resv_irqs = le16_to_cpu(resp->alloc_msix);
 			hw_resc->resv_hw_ring_grps = rx;
-		}
+		पूर्ण
 		hw_resc->resv_cp_rings = cp;
 		hw_resc->resv_stat_ctxs = stats;
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Caller must hold bp->hwrm_cmd_lock */
-int __bnxt_hwrm_get_tx_rings(struct bnxt *bp, u16 fid, int *tx_rings)
-{
-	struct hwrm_func_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_func_qcfg_input req = {0};
-	int rc;
+पूर्णांक __bnxt_hwrm_get_tx_rings(काष्ठा bnxt *bp, u16 fid, पूर्णांक *tx_rings)
+अणु
+	काष्ठा hwrm_func_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_func_qcfg_input req = अणु0पूर्ण;
+	पूर्णांक rc;
 
-	if (bp->hwrm_spec_code < 0x10601)
-		return 0;
+	अगर (bp->hwrm_spec_code < 0x10601)
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_QCFG, -1, -1);
 	req.fid = cpu_to_le16(fid);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc)
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc)
 		*tx_rings = le16_to_cpu(resp->alloc_tx_rings);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool bnxt_rfs_supported(struct bnxt *bp);
+अटल bool bnxt_rfs_supported(काष्ठा bnxt *bp);
 
-static void
-__bnxt_hwrm_reserve_pf_rings(struct bnxt *bp, struct hwrm_func_cfg_input *req,
-			     int tx_rings, int rx_rings, int ring_grps,
-			     int cp_rings, int stats, int vnics)
-{
+अटल व्योम
+__bnxt_hwrm_reserve_pf_rings(काष्ठा bnxt *bp, काष्ठा hwrm_func_cfg_input *req,
+			     पूर्णांक tx_rings, पूर्णांक rx_rings, पूर्णांक ring_grps,
+			     पूर्णांक cp_rings, पूर्णांक stats, पूर्णांक vnics)
+अणु
 	u32 enables = 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, req, HWRM_FUNC_CFG, -1, -1);
 	req->fid = cpu_to_le16(0xffff);
 	enables |= tx_rings ? FUNC_CFG_REQ_ENABLES_NUM_TX_RINGS : 0;
 	req->num_tx_rings = cpu_to_le16(tx_rings);
-	if (BNXT_NEW_RM(bp)) {
+	अगर (BNXT_NEW_RM(bp)) अणु
 		enables |= rx_rings ? FUNC_CFG_REQ_ENABLES_NUM_RX_RINGS : 0;
 		enables |= stats ? FUNC_CFG_REQ_ENABLES_NUM_STAT_CTXS : 0;
-		if (bp->flags & BNXT_FLAG_CHIP_P5) {
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 			enables |= cp_rings ? FUNC_CFG_REQ_ENABLES_NUM_MSIX : 0;
 			enables |= tx_rings + ring_grps ?
 				   FUNC_CFG_REQ_ENABLES_NUM_CMPL_RINGS : 0;
 			enables |= rx_rings ?
 				FUNC_CFG_REQ_ENABLES_NUM_RSSCOS_CTXS : 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			enables |= cp_rings ?
 				   FUNC_CFG_REQ_ENABLES_NUM_CMPL_RINGS : 0;
 			enables |= ring_grps ?
 				   FUNC_CFG_REQ_ENABLES_NUM_HW_RING_GRPS |
 				   FUNC_CFG_REQ_ENABLES_NUM_RSSCOS_CTXS : 0;
-		}
+		पूर्ण
 		enables |= vnics ? FUNC_CFG_REQ_ENABLES_NUM_VNICS : 0;
 
 		req->num_rx_rings = cpu_to_le16(rx_rings);
-		if (bp->flags & BNXT_FLAG_CHIP_P5) {
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 			req->num_cmpl_rings = cpu_to_le16(tx_rings + ring_grps);
 			req->num_msix = cpu_to_le16(cp_rings);
 			req->num_rsscos_ctxs =
 				cpu_to_le16(DIV_ROUND_UP(ring_grps, 64));
-		} else {
+		पूर्ण अन्यथा अणु
 			req->num_cmpl_rings = cpu_to_le16(cp_rings);
 			req->num_hw_ring_grps = cpu_to_le16(ring_grps);
 			req->num_rsscos_ctxs = cpu_to_le16(1);
-			if (!(bp->flags & BNXT_FLAG_NEW_RSS_CAP) &&
+			अगर (!(bp->flags & BNXT_FLAG_NEW_RSS_CAP) &&
 			    bnxt_rfs_supported(bp))
 				req->num_rsscos_ctxs =
 					cpu_to_le16(ring_grps + 1);
-		}
+		पूर्ण
 		req->num_stat_ctxs = cpu_to_le16(stats);
 		req->num_vnics = cpu_to_le16(vnics);
-	}
+	पूर्ण
 	req->enables = cpu_to_le32(enables);
-}
+पूर्ण
 
-static void
-__bnxt_hwrm_reserve_vf_rings(struct bnxt *bp,
-			     struct hwrm_func_vf_cfg_input *req, int tx_rings,
-			     int rx_rings, int ring_grps, int cp_rings,
-			     int stats, int vnics)
-{
+अटल व्योम
+__bnxt_hwrm_reserve_vf_rings(काष्ठा bnxt *bp,
+			     काष्ठा hwrm_func_vf_cfg_input *req, पूर्णांक tx_rings,
+			     पूर्णांक rx_rings, पूर्णांक ring_grps, पूर्णांक cp_rings,
+			     पूर्णांक stats, पूर्णांक vnics)
+अणु
 	u32 enables = 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, req, HWRM_FUNC_VF_CFG, -1, -1);
@@ -6120,277 +6121,277 @@ __bnxt_hwrm_reserve_vf_rings(struct bnxt *bp,
 	enables |= rx_rings ? FUNC_VF_CFG_REQ_ENABLES_NUM_RX_RINGS |
 			      FUNC_VF_CFG_REQ_ENABLES_NUM_RSSCOS_CTXS : 0;
 	enables |= stats ? FUNC_VF_CFG_REQ_ENABLES_NUM_STAT_CTXS : 0;
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 		enables |= tx_rings + ring_grps ?
 			   FUNC_VF_CFG_REQ_ENABLES_NUM_CMPL_RINGS : 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		enables |= cp_rings ?
 			   FUNC_VF_CFG_REQ_ENABLES_NUM_CMPL_RINGS : 0;
 		enables |= ring_grps ?
 			   FUNC_VF_CFG_REQ_ENABLES_NUM_HW_RING_GRPS : 0;
-	}
+	पूर्ण
 	enables |= vnics ? FUNC_VF_CFG_REQ_ENABLES_NUM_VNICS : 0;
 	enables |= FUNC_VF_CFG_REQ_ENABLES_NUM_L2_CTXS;
 
 	req->num_l2_ctxs = cpu_to_le16(BNXT_VF_MAX_L2_CTX);
 	req->num_tx_rings = cpu_to_le16(tx_rings);
 	req->num_rx_rings = cpu_to_le16(rx_rings);
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 		req->num_cmpl_rings = cpu_to_le16(tx_rings + ring_grps);
 		req->num_rsscos_ctxs = cpu_to_le16(DIV_ROUND_UP(ring_grps, 64));
-	} else {
+	पूर्ण अन्यथा अणु
 		req->num_cmpl_rings = cpu_to_le16(cp_rings);
 		req->num_hw_ring_grps = cpu_to_le16(ring_grps);
 		req->num_rsscos_ctxs = cpu_to_le16(BNXT_VF_MAX_RSS_CTX);
-	}
+	पूर्ण
 	req->num_stat_ctxs = cpu_to_le16(stats);
 	req->num_vnics = cpu_to_le16(vnics);
 
 	req->enables = cpu_to_le32(enables);
-}
+पूर्ण
 
-static int
-bnxt_hwrm_reserve_pf_rings(struct bnxt *bp, int tx_rings, int rx_rings,
-			   int ring_grps, int cp_rings, int stats, int vnics)
-{
-	struct hwrm_func_cfg_input req = {0};
-	int rc;
+अटल पूर्णांक
+bnxt_hwrm_reserve_pf_rings(काष्ठा bnxt *bp, पूर्णांक tx_rings, पूर्णांक rx_rings,
+			   पूर्णांक ring_grps, पूर्णांक cp_rings, पूर्णांक stats, पूर्णांक vnics)
+अणु
+	काष्ठा hwrm_func_cfg_input req = अणु0पूर्ण;
+	पूर्णांक rc;
 
 	__bnxt_hwrm_reserve_pf_rings(bp, &req, tx_rings, rx_rings, ring_grps,
 				     cp_rings, stats, vnics);
-	if (!req.enables)
-		return 0;
+	अगर (!req.enables)
+		वापस 0;
 
-	rc = hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
-		return rc;
+	rc = hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
+		वापस rc;
 
-	if (bp->hwrm_spec_code < 0x10601)
+	अगर (bp->hwrm_spec_code < 0x10601)
 		bp->hw_resc.resv_tx_rings = tx_rings;
 
-	return bnxt_hwrm_get_rings(bp);
-}
+	वापस bnxt_hwrm_get_rings(bp);
+पूर्ण
 
-static int
-bnxt_hwrm_reserve_vf_rings(struct bnxt *bp, int tx_rings, int rx_rings,
-			   int ring_grps, int cp_rings, int stats, int vnics)
-{
-	struct hwrm_func_vf_cfg_input req = {0};
-	int rc;
+अटल पूर्णांक
+bnxt_hwrm_reserve_vf_rings(काष्ठा bnxt *bp, पूर्णांक tx_rings, पूर्णांक rx_rings,
+			   पूर्णांक ring_grps, पूर्णांक cp_rings, पूर्णांक stats, पूर्णांक vnics)
+अणु
+	काष्ठा hwrm_func_vf_cfg_input req = अणु0पूर्ण;
+	पूर्णांक rc;
 
-	if (!BNXT_NEW_RM(bp)) {
+	अगर (!BNXT_NEW_RM(bp)) अणु
 		bp->hw_resc.resv_tx_rings = tx_rings;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	__bnxt_hwrm_reserve_vf_rings(bp, &req, tx_rings, rx_rings, ring_grps,
 				     cp_rings, stats, vnics);
-	rc = hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
-		return rc;
+	rc = hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
+		वापस rc;
 
-	return bnxt_hwrm_get_rings(bp);
-}
+	वापस bnxt_hwrm_get_rings(bp);
+पूर्ण
 
-static int bnxt_hwrm_reserve_rings(struct bnxt *bp, int tx, int rx, int grp,
-				   int cp, int stat, int vnic)
-{
-	if (BNXT_PF(bp))
-		return bnxt_hwrm_reserve_pf_rings(bp, tx, rx, grp, cp, stat,
+अटल पूर्णांक bnxt_hwrm_reserve_rings(काष्ठा bnxt *bp, पूर्णांक tx, पूर्णांक rx, पूर्णांक grp,
+				   पूर्णांक cp, पूर्णांक stat, पूर्णांक vnic)
+अणु
+	अगर (BNXT_PF(bp))
+		वापस bnxt_hwrm_reserve_pf_rings(bp, tx, rx, grp, cp, stat,
 						  vnic);
-	else
-		return bnxt_hwrm_reserve_vf_rings(bp, tx, rx, grp, cp, stat,
+	अन्यथा
+		वापस bnxt_hwrm_reserve_vf_rings(bp, tx, rx, grp, cp, stat,
 						  vnic);
-}
+पूर्ण
 
-int bnxt_nq_rings_in_use(struct bnxt *bp)
-{
-	int cp = bp->cp_nr_rings;
-	int ulp_msix, ulp_base;
+पूर्णांक bnxt_nq_rings_in_use(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक cp = bp->cp_nr_rings;
+	पूर्णांक ulp_msix, ulp_base;
 
 	ulp_msix = bnxt_get_ulp_msix_num(bp);
-	if (ulp_msix) {
+	अगर (ulp_msix) अणु
 		ulp_base = bnxt_get_ulp_msix_base(bp);
 		cp += ulp_msix;
-		if ((ulp_base + ulp_msix) > cp)
+		अगर ((ulp_base + ulp_msix) > cp)
 			cp = ulp_base + ulp_msix;
-	}
-	return cp;
-}
+	पूर्ण
+	वापस cp;
+पूर्ण
 
-static int bnxt_cp_rings_in_use(struct bnxt *bp)
-{
-	int cp;
+अटल पूर्णांक bnxt_cp_rings_in_use(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक cp;
 
-	if (!(bp->flags & BNXT_FLAG_CHIP_P5))
-		return bnxt_nq_rings_in_use(bp);
+	अगर (!(bp->flags & BNXT_FLAG_CHIP_P5))
+		वापस bnxt_nq_rings_in_use(bp);
 
 	cp = bp->tx_nr_rings + bp->rx_nr_rings;
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
-static int bnxt_get_func_stat_ctxs(struct bnxt *bp)
-{
-	int ulp_stat = bnxt_get_ulp_stat_ctxs(bp);
-	int cp = bp->cp_nr_rings;
+अटल पूर्णांक bnxt_get_func_stat_ctxs(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक ulp_stat = bnxt_get_ulp_stat_ctxs(bp);
+	पूर्णांक cp = bp->cp_nr_rings;
 
-	if (!ulp_stat)
-		return cp;
+	अगर (!ulp_stat)
+		वापस cp;
 
-	if (bnxt_nq_rings_in_use(bp) > cp + bnxt_get_ulp_msix_num(bp))
-		return bnxt_get_ulp_msix_base(bp) + ulp_stat;
+	अगर (bnxt_nq_rings_in_use(bp) > cp + bnxt_get_ulp_msix_num(bp))
+		वापस bnxt_get_ulp_msix_base(bp) + ulp_stat;
 
-	return cp + ulp_stat;
-}
+	वापस cp + ulp_stat;
+पूर्ण
 
-/* Check if a default RSS map needs to be setup.  This function is only
- * used on older firmware that does not require reserving RX rings.
+/* Check अगर a शेष RSS map needs to be setup.  This function is only
+ * used on older firmware that करोes not require reserving RX rings.
  */
-static void bnxt_check_rss_tbl_no_rmgr(struct bnxt *bp)
-{
-	struct bnxt_hw_resc *hw_resc = &bp->hw_resc;
+अटल व्योम bnxt_check_rss_tbl_no_rmgr(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_hw_resc *hw_resc = &bp->hw_resc;
 
-	/* The RSS map is valid for RX rings set to resv_rx_rings */
-	if (hw_resc->resv_rx_rings != bp->rx_nr_rings) {
+	/* The RSS map is valid क्रम RX rings set to resv_rx_rings */
+	अगर (hw_resc->resv_rx_rings != bp->rx_nr_rings) अणु
 		hw_resc->resv_rx_rings = bp->rx_nr_rings;
-		if (!netif_is_rxfh_configured(bp->dev))
+		अगर (!netअगर_is_rxfh_configured(bp->dev))
 			bnxt_set_dflt_rss_indir_tbl(bp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool bnxt_need_reserve_rings(struct bnxt *bp)
-{
-	struct bnxt_hw_resc *hw_resc = &bp->hw_resc;
-	int cp = bnxt_cp_rings_in_use(bp);
-	int nq = bnxt_nq_rings_in_use(bp);
-	int rx = bp->rx_nr_rings, stat;
-	int vnic = 1, grp = rx;
+अटल bool bnxt_need_reserve_rings(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_hw_resc *hw_resc = &bp->hw_resc;
+	पूर्णांक cp = bnxt_cp_rings_in_use(bp);
+	पूर्णांक nq = bnxt_nq_rings_in_use(bp);
+	पूर्णांक rx = bp->rx_nr_rings, stat;
+	पूर्णांक vnic = 1, grp = rx;
 
-	if (hw_resc->resv_tx_rings != bp->tx_nr_rings &&
+	अगर (hw_resc->resv_tx_rings != bp->tx_nr_rings &&
 	    bp->hwrm_spec_code >= 0x10601)
-		return true;
+		वापस true;
 
-	/* Old firmware does not need RX ring reservations but we still
-	 * need to setup a default RSS map when needed.  With new firmware
+	/* Old firmware करोes not need RX ring reservations but we still
+	 * need to setup a शेष RSS map when needed.  With new firmware
 	 * we go through RX ring reservations first and then set up the
-	 * RSS map for the successfully reserved RX rings when needed.
+	 * RSS map क्रम the successfully reserved RX rings when needed.
 	 */
-	if (!BNXT_NEW_RM(bp)) {
+	अगर (!BNXT_NEW_RM(bp)) अणु
 		bnxt_check_rss_tbl_no_rmgr(bp);
-		return false;
-	}
-	if ((bp->flags & BNXT_FLAG_RFS) && !(bp->flags & BNXT_FLAG_CHIP_P5))
+		वापस false;
+	पूर्ण
+	अगर ((bp->flags & BNXT_FLAG_RFS) && !(bp->flags & BNXT_FLAG_CHIP_P5))
 		vnic = rx + 1;
-	if (bp->flags & BNXT_FLAG_AGG_RINGS)
+	अगर (bp->flags & BNXT_FLAG_AGG_RINGS)
 		rx <<= 1;
 	stat = bnxt_get_func_stat_ctxs(bp);
-	if (hw_resc->resv_rx_rings != rx || hw_resc->resv_cp_rings != cp ||
+	अगर (hw_resc->resv_rx_rings != rx || hw_resc->resv_cp_rings != cp ||
 	    hw_resc->resv_vnics != vnic || hw_resc->resv_stat_ctxs != stat ||
 	    (hw_resc->resv_hw_ring_grps != grp &&
 	     !(bp->flags & BNXT_FLAG_CHIP_P5)))
-		return true;
-	if ((bp->flags & BNXT_FLAG_CHIP_P5) && BNXT_PF(bp) &&
+		वापस true;
+	अगर ((bp->flags & BNXT_FLAG_CHIP_P5) && BNXT_PF(bp) &&
 	    hw_resc->resv_irqs != nq)
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
-static int __bnxt_reserve_rings(struct bnxt *bp)
-{
-	struct bnxt_hw_resc *hw_resc = &bp->hw_resc;
-	int cp = bnxt_nq_rings_in_use(bp);
-	int tx = bp->tx_nr_rings;
-	int rx = bp->rx_nr_rings;
-	int grp, rx_rings, rc;
-	int vnic = 1, stat;
+अटल पूर्णांक __bnxt_reserve_rings(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_hw_resc *hw_resc = &bp->hw_resc;
+	पूर्णांक cp = bnxt_nq_rings_in_use(bp);
+	पूर्णांक tx = bp->tx_nr_rings;
+	पूर्णांक rx = bp->rx_nr_rings;
+	पूर्णांक grp, rx_rings, rc;
+	पूर्णांक vnic = 1, stat;
 	bool sh = false;
 
-	if (!bnxt_need_reserve_rings(bp))
-		return 0;
+	अगर (!bnxt_need_reserve_rings(bp))
+		वापस 0;
 
-	if (bp->flags & BNXT_FLAG_SHARED_RINGS)
+	अगर (bp->flags & BNXT_FLAG_SHARED_RINGS)
 		sh = true;
-	if ((bp->flags & BNXT_FLAG_RFS) && !(bp->flags & BNXT_FLAG_CHIP_P5))
+	अगर ((bp->flags & BNXT_FLAG_RFS) && !(bp->flags & BNXT_FLAG_CHIP_P5))
 		vnic = rx + 1;
-	if (bp->flags & BNXT_FLAG_AGG_RINGS)
+	अगर (bp->flags & BNXT_FLAG_AGG_RINGS)
 		rx <<= 1;
 	grp = bp->rx_nr_rings;
 	stat = bnxt_get_func_stat_ctxs(bp);
 
 	rc = bnxt_hwrm_reserve_rings(bp, tx, rx, grp, cp, stat, vnic);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	tx = hw_resc->resv_tx_rings;
-	if (BNXT_NEW_RM(bp)) {
+	अगर (BNXT_NEW_RM(bp)) अणु
 		rx = hw_resc->resv_rx_rings;
 		cp = hw_resc->resv_irqs;
 		grp = hw_resc->resv_hw_ring_grps;
 		vnic = hw_resc->resv_vnics;
 		stat = hw_resc->resv_stat_ctxs;
-	}
+	पूर्ण
 
 	rx_rings = rx;
-	if (bp->flags & BNXT_FLAG_AGG_RINGS) {
-		if (rx >= 2) {
+	अगर (bp->flags & BNXT_FLAG_AGG_RINGS) अणु
+		अगर (rx >= 2) अणु
 			rx_rings = rx >> 1;
-		} else {
-			if (netif_running(bp->dev))
-				return -ENOMEM;
+		पूर्ण अन्यथा अणु
+			अगर (netअगर_running(bp->dev))
+				वापस -ENOMEM;
 
 			bp->flags &= ~BNXT_FLAG_AGG_RINGS;
 			bp->flags |= BNXT_FLAG_NO_AGG_RINGS;
 			bp->dev->hw_features &= ~NETIF_F_LRO;
 			bp->dev->features &= ~NETIF_F_LRO;
 			bnxt_set_ring_params(bp);
-		}
-	}
-	rx_rings = min_t(int, rx_rings, grp);
-	cp = min_t(int, cp, bp->cp_nr_rings);
-	if (stat > bnxt_get_ulp_stat_ctxs(bp))
+		पूर्ण
+	पूर्ण
+	rx_rings = min_t(पूर्णांक, rx_rings, grp);
+	cp = min_t(पूर्णांक, cp, bp->cp_nr_rings);
+	अगर (stat > bnxt_get_ulp_stat_ctxs(bp))
 		stat -= bnxt_get_ulp_stat_ctxs(bp);
-	cp = min_t(int, cp, stat);
+	cp = min_t(पूर्णांक, cp, stat);
 	rc = bnxt_trim_rings(bp, &rx_rings, &tx, cp, sh);
-	if (bp->flags & BNXT_FLAG_AGG_RINGS)
+	अगर (bp->flags & BNXT_FLAG_AGG_RINGS)
 		rx = rx_rings << 1;
-	cp = sh ? max_t(int, tx, rx_rings) : tx + rx_rings;
+	cp = sh ? max_t(पूर्णांक, tx, rx_rings) : tx + rx_rings;
 	bp->tx_nr_rings = tx;
 
 	/* If we cannot reserve all the RX rings, reset the RSS map only
-	 * if absolutely necessary
+	 * अगर असलolutely necessary
 	 */
-	if (rx_rings != bp->rx_nr_rings) {
+	अगर (rx_rings != bp->rx_nr_rings) अणु
 		netdev_warn(bp->dev, "Able to reserve only %d out of %d requested RX rings\n",
 			    rx_rings, bp->rx_nr_rings);
-		if ((bp->dev->priv_flags & IFF_RXFH_CONFIGURED) &&
+		अगर ((bp->dev->priv_flags & IFF_RXFH_CONFIGURED) &&
 		    (bnxt_get_nr_rss_ctxs(bp, bp->rx_nr_rings) !=
 		     bnxt_get_nr_rss_ctxs(bp, rx_rings) ||
-		     bnxt_get_max_rss_ring(bp) >= rx_rings)) {
+		     bnxt_get_max_rss_ring(bp) >= rx_rings)) अणु
 			netdev_warn(bp->dev, "RSS table entries reverting to default\n");
 			bp->dev->priv_flags &= ~IFF_RXFH_CONFIGURED;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	bp->rx_nr_rings = rx_rings;
 	bp->cp_nr_rings = cp;
 
-	if (!tx || !rx || !cp || !grp || !vnic || !stat)
-		return -ENOMEM;
+	अगर (!tx || !rx || !cp || !grp || !vnic || !stat)
+		वापस -ENOMEM;
 
-	if (!netif_is_rxfh_configured(bp->dev))
+	अगर (!netअगर_is_rxfh_configured(bp->dev))
 		bnxt_set_dflt_rss_indir_tbl(bp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_check_vf_rings(struct bnxt *bp, int tx_rings, int rx_rings,
-				    int ring_grps, int cp_rings, int stats,
-				    int vnics)
-{
-	struct hwrm_func_vf_cfg_input req = {0};
+अटल पूर्णांक bnxt_hwrm_check_vf_rings(काष्ठा bnxt *bp, पूर्णांक tx_rings, पूर्णांक rx_rings,
+				    पूर्णांक ring_grps, पूर्णांक cp_rings, पूर्णांक stats,
+				    पूर्णांक vnics)
+अणु
+	काष्ठा hwrm_func_vf_cfg_input req = अणु0पूर्ण;
 	u32 flags;
 
-	if (!BNXT_NEW_RM(bp))
-		return 0;
+	अगर (!BNXT_NEW_RM(bp))
+		वापस 0;
 
 	__bnxt_hwrm_reserve_vf_rings(bp, &req, tx_rings, rx_rings, ring_grps,
 				     cp_rings, stats, vnics);
@@ -6400,226 +6401,226 @@ static int bnxt_hwrm_check_vf_rings(struct bnxt *bp, int tx_rings, int rx_rings,
 		FUNC_VF_CFG_REQ_FLAGS_STAT_CTX_ASSETS_TEST |
 		FUNC_VF_CFG_REQ_FLAGS_VNIC_ASSETS_TEST |
 		FUNC_VF_CFG_REQ_FLAGS_RSSCOS_CTX_ASSETS_TEST;
-	if (!(bp->flags & BNXT_FLAG_CHIP_P5))
+	अगर (!(bp->flags & BNXT_FLAG_CHIP_P5))
 		flags |= FUNC_VF_CFG_REQ_FLAGS_RING_GRP_ASSETS_TEST;
 
 	req.flags = cpu_to_le32(flags);
-	return hwrm_send_message_silent(bp, &req, sizeof(req),
+	वापस hwrm_send_message_silent(bp, &req, माप(req),
 					HWRM_CMD_TIMEOUT);
-}
+पूर्ण
 
-static int bnxt_hwrm_check_pf_rings(struct bnxt *bp, int tx_rings, int rx_rings,
-				    int ring_grps, int cp_rings, int stats,
-				    int vnics)
-{
-	struct hwrm_func_cfg_input req = {0};
+अटल पूर्णांक bnxt_hwrm_check_pf_rings(काष्ठा bnxt *bp, पूर्णांक tx_rings, पूर्णांक rx_rings,
+				    पूर्णांक ring_grps, पूर्णांक cp_rings, पूर्णांक stats,
+				    पूर्णांक vnics)
+अणु
+	काष्ठा hwrm_func_cfg_input req = अणु0पूर्ण;
 	u32 flags;
 
 	__bnxt_hwrm_reserve_pf_rings(bp, &req, tx_rings, rx_rings, ring_grps,
 				     cp_rings, stats, vnics);
 	flags = FUNC_CFG_REQ_FLAGS_TX_ASSETS_TEST;
-	if (BNXT_NEW_RM(bp)) {
+	अगर (BNXT_NEW_RM(bp)) अणु
 		flags |= FUNC_CFG_REQ_FLAGS_RX_ASSETS_TEST |
 			 FUNC_CFG_REQ_FLAGS_CMPL_ASSETS_TEST |
 			 FUNC_CFG_REQ_FLAGS_STAT_CTX_ASSETS_TEST |
 			 FUNC_CFG_REQ_FLAGS_VNIC_ASSETS_TEST;
-		if (bp->flags & BNXT_FLAG_CHIP_P5)
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 			flags |= FUNC_CFG_REQ_FLAGS_RSSCOS_CTX_ASSETS_TEST |
 				 FUNC_CFG_REQ_FLAGS_NQ_ASSETS_TEST;
-		else
+		अन्यथा
 			flags |= FUNC_CFG_REQ_FLAGS_RING_GRP_ASSETS_TEST;
-	}
+	पूर्ण
 
 	req.flags = cpu_to_le32(flags);
-	return hwrm_send_message_silent(bp, &req, sizeof(req),
+	वापस hwrm_send_message_silent(bp, &req, माप(req),
 					HWRM_CMD_TIMEOUT);
-}
+पूर्ण
 
-static int bnxt_hwrm_check_rings(struct bnxt *bp, int tx_rings, int rx_rings,
-				 int ring_grps, int cp_rings, int stats,
-				 int vnics)
-{
-	if (bp->hwrm_spec_code < 0x10801)
-		return 0;
+अटल पूर्णांक bnxt_hwrm_check_rings(काष्ठा bnxt *bp, पूर्णांक tx_rings, पूर्णांक rx_rings,
+				 पूर्णांक ring_grps, पूर्णांक cp_rings, पूर्णांक stats,
+				 पूर्णांक vnics)
+अणु
+	अगर (bp->hwrm_spec_code < 0x10801)
+		वापस 0;
 
-	if (BNXT_PF(bp))
-		return bnxt_hwrm_check_pf_rings(bp, tx_rings, rx_rings,
+	अगर (BNXT_PF(bp))
+		वापस bnxt_hwrm_check_pf_rings(bp, tx_rings, rx_rings,
 						ring_grps, cp_rings, stats,
 						vnics);
 
-	return bnxt_hwrm_check_vf_rings(bp, tx_rings, rx_rings, ring_grps,
+	वापस bnxt_hwrm_check_vf_rings(bp, tx_rings, rx_rings, ring_grps,
 					cp_rings, stats, vnics);
-}
+पूर्ण
 
-static void bnxt_hwrm_coal_params_qcaps(struct bnxt *bp)
-{
-	struct hwrm_ring_aggint_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
-	struct bnxt_coal_cap *coal_cap = &bp->coal_cap;
-	struct hwrm_ring_aggint_qcaps_input req = {0};
-	int rc;
+अटल व्योम bnxt_hwrm_coal_params_qcaps(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_ring_aggपूर्णांक_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा bnxt_coal_cap *coal_cap = &bp->coal_cap;
+	काष्ठा hwrm_ring_aggपूर्णांक_qcaps_input req = अणु0पूर्ण;
+	पूर्णांक rc;
 
 	coal_cap->cmpl_params = BNXT_LEGACY_COAL_CMPL_PARAMS;
 	coal_cap->num_cmpl_dma_aggr_max = 63;
-	coal_cap->num_cmpl_dma_aggr_during_int_max = 63;
-	coal_cap->cmpl_aggr_dma_tmr_max = 65535;
-	coal_cap->cmpl_aggr_dma_tmr_during_int_max = 65535;
-	coal_cap->int_lat_tmr_min_max = 65535;
-	coal_cap->int_lat_tmr_max_max = 65535;
-	coal_cap->num_cmpl_aggr_int_max = 65535;
-	coal_cap->timer_units = 80;
+	coal_cap->num_cmpl_dma_aggr_during_पूर्णांक_max = 63;
+	coal_cap->cmpl_aggr_dma_पंचांगr_max = 65535;
+	coal_cap->cmpl_aggr_dma_पंचांगr_during_पूर्णांक_max = 65535;
+	coal_cap->पूर्णांक_lat_पंचांगr_min_max = 65535;
+	coal_cap->पूर्णांक_lat_पंचांगr_max_max = 65535;
+	coal_cap->num_cmpl_aggr_पूर्णांक_max = 65535;
+	coal_cap->समयr_units = 80;
 
-	if (bp->hwrm_spec_code < 0x10902)
-		return;
+	अगर (bp->hwrm_spec_code < 0x10902)
+		वापस;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_RING_AGGINT_QCAPS, -1, -1);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message_silent(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc) {
+	rc = _hwrm_send_message_silent(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
 		coal_cap->cmpl_params = le32_to_cpu(resp->cmpl_params);
 		coal_cap->nq_params = le32_to_cpu(resp->nq_params);
 		coal_cap->num_cmpl_dma_aggr_max =
 			le16_to_cpu(resp->num_cmpl_dma_aggr_max);
-		coal_cap->num_cmpl_dma_aggr_during_int_max =
-			le16_to_cpu(resp->num_cmpl_dma_aggr_during_int_max);
-		coal_cap->cmpl_aggr_dma_tmr_max =
-			le16_to_cpu(resp->cmpl_aggr_dma_tmr_max);
-		coal_cap->cmpl_aggr_dma_tmr_during_int_max =
-			le16_to_cpu(resp->cmpl_aggr_dma_tmr_during_int_max);
-		coal_cap->int_lat_tmr_min_max =
-			le16_to_cpu(resp->int_lat_tmr_min_max);
-		coal_cap->int_lat_tmr_max_max =
-			le16_to_cpu(resp->int_lat_tmr_max_max);
-		coal_cap->num_cmpl_aggr_int_max =
-			le16_to_cpu(resp->num_cmpl_aggr_int_max);
-		coal_cap->timer_units = le16_to_cpu(resp->timer_units);
-	}
+		coal_cap->num_cmpl_dma_aggr_during_पूर्णांक_max =
+			le16_to_cpu(resp->num_cmpl_dma_aggr_during_पूर्णांक_max);
+		coal_cap->cmpl_aggr_dma_पंचांगr_max =
+			le16_to_cpu(resp->cmpl_aggr_dma_पंचांगr_max);
+		coal_cap->cmpl_aggr_dma_पंचांगr_during_पूर्णांक_max =
+			le16_to_cpu(resp->cmpl_aggr_dma_पंचांगr_during_पूर्णांक_max);
+		coal_cap->पूर्णांक_lat_पंचांगr_min_max =
+			le16_to_cpu(resp->पूर्णांक_lat_पंचांगr_min_max);
+		coal_cap->पूर्णांक_lat_पंचांगr_max_max =
+			le16_to_cpu(resp->पूर्णांक_lat_पंचांगr_max_max);
+		coal_cap->num_cmpl_aggr_पूर्णांक_max =
+			le16_to_cpu(resp->num_cmpl_aggr_पूर्णांक_max);
+		coal_cap->समयr_units = le16_to_cpu(resp->समयr_units);
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-}
+पूर्ण
 
-static u16 bnxt_usec_to_coal_tmr(struct bnxt *bp, u16 usec)
-{
-	struct bnxt_coal_cap *coal_cap = &bp->coal_cap;
+अटल u16 bnxt_usec_to_coal_पंचांगr(काष्ठा bnxt *bp, u16 usec)
+अणु
+	काष्ठा bnxt_coal_cap *coal_cap = &bp->coal_cap;
 
-	return usec * 1000 / coal_cap->timer_units;
-}
+	वापस usec * 1000 / coal_cap->समयr_units;
+पूर्ण
 
-static void bnxt_hwrm_set_coal_params(struct bnxt *bp,
-	struct bnxt_coal *hw_coal,
-	struct hwrm_ring_cmpl_ring_cfg_aggint_params_input *req)
-{
-	struct bnxt_coal_cap *coal_cap = &bp->coal_cap;
+अटल व्योम bnxt_hwrm_set_coal_params(काष्ठा bnxt *bp,
+	काष्ठा bnxt_coal *hw_coal,
+	काष्ठा hwrm_ring_cmpl_ring_cfg_aggपूर्णांक_params_input *req)
+अणु
+	काष्ठा bnxt_coal_cap *coal_cap = &bp->coal_cap;
 	u32 cmpl_params = coal_cap->cmpl_params;
-	u16 val, tmr, max, flags = 0;
+	u16 val, पंचांगr, max, flags = 0;
 
 	max = hw_coal->bufs_per_record * 128;
-	if (hw_coal->budget)
+	अगर (hw_coal->budget)
 		max = hw_coal->bufs_per_record * hw_coal->budget;
-	max = min_t(u16, max, coal_cap->num_cmpl_aggr_int_max);
+	max = min_t(u16, max, coal_cap->num_cmpl_aggr_पूर्णांक_max);
 
 	val = clamp_t(u16, hw_coal->coal_bufs, 1, max);
-	req->num_cmpl_aggr_int = cpu_to_le16(val);
+	req->num_cmpl_aggr_पूर्णांक = cpu_to_le16(val);
 
 	val = min_t(u16, val, coal_cap->num_cmpl_dma_aggr_max);
 	req->num_cmpl_dma_aggr = cpu_to_le16(val);
 
 	val = clamp_t(u16, hw_coal->coal_bufs_irq, 1,
-		      coal_cap->num_cmpl_dma_aggr_during_int_max);
-	req->num_cmpl_dma_aggr_during_int = cpu_to_le16(val);
+		      coal_cap->num_cmpl_dma_aggr_during_पूर्णांक_max);
+	req->num_cmpl_dma_aggr_during_पूर्णांक = cpu_to_le16(val);
 
-	tmr = bnxt_usec_to_coal_tmr(bp, hw_coal->coal_ticks);
-	tmr = clamp_t(u16, tmr, 1, coal_cap->int_lat_tmr_max_max);
-	req->int_lat_tmr_max = cpu_to_le16(tmr);
+	पंचांगr = bnxt_usec_to_coal_पंचांगr(bp, hw_coal->coal_ticks);
+	पंचांगr = clamp_t(u16, पंचांगr, 1, coal_cap->पूर्णांक_lat_पंचांगr_max_max);
+	req->पूर्णांक_lat_पंचांगr_max = cpu_to_le16(पंचांगr);
 
-	/* min timer set to 1/2 of interrupt timer */
-	if (cmpl_params & RING_AGGINT_QCAPS_RESP_CMPL_PARAMS_INT_LAT_TMR_MIN) {
-		val = tmr / 2;
-		val = clamp_t(u16, val, 1, coal_cap->int_lat_tmr_min_max);
-		req->int_lat_tmr_min = cpu_to_le16(val);
+	/* min समयr set to 1/2 of पूर्णांकerrupt समयr */
+	अगर (cmpl_params & RING_AGGINT_QCAPS_RESP_CMPL_PARAMS_INT_LAT_TMR_MIN) अणु
+		val = पंचांगr / 2;
+		val = clamp_t(u16, val, 1, coal_cap->पूर्णांक_lat_पंचांगr_min_max);
+		req->पूर्णांक_lat_पंचांगr_min = cpu_to_le16(val);
 		req->enables |= cpu_to_le16(BNXT_COAL_CMPL_MIN_TMR_ENABLE);
-	}
+	पूर्ण
 
-	/* buf timer set to 1/4 of interrupt timer */
-	val = clamp_t(u16, tmr / 4, 1, coal_cap->cmpl_aggr_dma_tmr_max);
-	req->cmpl_aggr_dma_tmr = cpu_to_le16(val);
+	/* buf समयr set to 1/4 of पूर्णांकerrupt समयr */
+	val = clamp_t(u16, पंचांगr / 4, 1, coal_cap->cmpl_aggr_dma_पंचांगr_max);
+	req->cmpl_aggr_dma_पंचांगr = cpu_to_le16(val);
 
-	if (cmpl_params &
-	    RING_AGGINT_QCAPS_RESP_CMPL_PARAMS_NUM_CMPL_DMA_AGGR_DURING_INT) {
-		tmr = bnxt_usec_to_coal_tmr(bp, hw_coal->coal_ticks_irq);
-		val = clamp_t(u16, tmr, 1,
-			      coal_cap->cmpl_aggr_dma_tmr_during_int_max);
-		req->cmpl_aggr_dma_tmr_during_int = cpu_to_le16(val);
+	अगर (cmpl_params &
+	    RING_AGGINT_QCAPS_RESP_CMPL_PARAMS_NUM_CMPL_DMA_AGGR_DURING_INT) अणु
+		पंचांगr = bnxt_usec_to_coal_पंचांगr(bp, hw_coal->coal_ticks_irq);
+		val = clamp_t(u16, पंचांगr, 1,
+			      coal_cap->cmpl_aggr_dma_पंचांगr_during_पूर्णांक_max);
+		req->cmpl_aggr_dma_पंचांगr_during_पूर्णांक = cpu_to_le16(val);
 		req->enables |=
 			cpu_to_le16(BNXT_COAL_CMPL_AGGR_TMR_DURING_INT_ENABLE);
-	}
+	पूर्ण
 
-	if (cmpl_params & RING_AGGINT_QCAPS_RESP_CMPL_PARAMS_TIMER_RESET)
+	अगर (cmpl_params & RING_AGGINT_QCAPS_RESP_CMPL_PARAMS_TIMER_RESET)
 		flags |= RING_CMPL_RING_CFG_AGGINT_PARAMS_REQ_FLAGS_TIMER_RESET;
-	if ((cmpl_params & RING_AGGINT_QCAPS_RESP_CMPL_PARAMS_RING_IDLE) &&
+	अगर ((cmpl_params & RING_AGGINT_QCAPS_RESP_CMPL_PARAMS_RING_IDLE) &&
 	    hw_coal->idle_thresh && hw_coal->coal_ticks < hw_coal->idle_thresh)
 		flags |= RING_CMPL_RING_CFG_AGGINT_PARAMS_REQ_FLAGS_RING_IDLE;
 	req->flags = cpu_to_le16(flags);
 	req->enables |= cpu_to_le16(BNXT_COAL_CMPL_ENABLES);
-}
+पूर्ण
 
 /* Caller holds bp->hwrm_cmd_lock */
-static int __bnxt_hwrm_set_coal_nq(struct bnxt *bp, struct bnxt_napi *bnapi,
-				   struct bnxt_coal *hw_coal)
-{
-	struct hwrm_ring_cmpl_ring_cfg_aggint_params_input req = {0};
-	struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
-	struct bnxt_coal_cap *coal_cap = &bp->coal_cap;
+अटल पूर्णांक __bnxt_hwrm_set_coal_nq(काष्ठा bnxt *bp, काष्ठा bnxt_napi *bnapi,
+				   काष्ठा bnxt_coal *hw_coal)
+अणु
+	काष्ठा hwrm_ring_cmpl_ring_cfg_aggपूर्णांक_params_input req = अणु0पूर्ण;
+	काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	काष्ठा bnxt_coal_cap *coal_cap = &bp->coal_cap;
 	u32 nq_params = coal_cap->nq_params;
-	u16 tmr;
+	u16 पंचांगr;
 
-	if (!(nq_params & RING_AGGINT_QCAPS_RESP_NQ_PARAMS_INT_LAT_TMR_MIN))
-		return 0;
+	अगर (!(nq_params & RING_AGGINT_QCAPS_RESP_NQ_PARAMS_INT_LAT_TMR_MIN))
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_RING_CMPL_RING_CFG_AGGINT_PARAMS,
 			       -1, -1);
-	req.ring_id = cpu_to_le16(cpr->cp_ring_struct.fw_ring_id);
+	req.ring_id = cpu_to_le16(cpr->cp_ring_काष्ठा.fw_ring_id);
 	req.flags =
 		cpu_to_le16(RING_CMPL_RING_CFG_AGGINT_PARAMS_REQ_FLAGS_IS_NQ);
 
-	tmr = bnxt_usec_to_coal_tmr(bp, hw_coal->coal_ticks) / 2;
-	tmr = clamp_t(u16, tmr, 1, coal_cap->int_lat_tmr_min_max);
-	req.int_lat_tmr_min = cpu_to_le16(tmr);
+	पंचांगr = bnxt_usec_to_coal_पंचांगr(bp, hw_coal->coal_ticks) / 2;
+	पंचांगr = clamp_t(u16, पंचांगr, 1, coal_cap->पूर्णांक_lat_पंचांगr_min_max);
+	req.पूर्णांक_lat_पंचांगr_min = cpu_to_le16(पंचांगr);
 	req.enables |= cpu_to_le16(BNXT_COAL_CMPL_MIN_TMR_ENABLE);
-	return _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-int bnxt_hwrm_set_ring_coal(struct bnxt *bp, struct bnxt_napi *bnapi)
-{
-	struct hwrm_ring_cmpl_ring_cfg_aggint_params_input req_rx = {0};
-	struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
-	struct bnxt_coal coal;
+पूर्णांक bnxt_hwrm_set_ring_coal(काष्ठा bnxt *bp, काष्ठा bnxt_napi *bnapi)
+अणु
+	काष्ठा hwrm_ring_cmpl_ring_cfg_aggपूर्णांक_params_input req_rx = अणु0पूर्ण;
+	काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	काष्ठा bnxt_coal coal;
 
 	/* Tick values in micro seconds.
 	 * 1 coal_buf x bufs_per_record = 1 completion record.
 	 */
-	memcpy(&coal, &bp->rx_coal, sizeof(struct bnxt_coal));
+	स_नकल(&coal, &bp->rx_coal, माप(काष्ठा bnxt_coal));
 
 	coal.coal_ticks = cpr->rx_ring_coal.coal_ticks;
 	coal.coal_bufs = cpr->rx_ring_coal.coal_bufs;
 
-	if (!bnapi->rx_ring)
-		return -ENODEV;
+	अगर (!bnapi->rx_ring)
+		वापस -ENODEV;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req_rx,
 			       HWRM_RING_CMPL_RING_CFG_AGGINT_PARAMS, -1, -1);
 
 	bnxt_hwrm_set_coal_params(bp, &coal, &req_rx);
 
-	req_rx.ring_id = cpu_to_le16(bnxt_cp_ring_for_rx(bp, bnapi->rx_ring));
+	req_rx.ring_id = cpu_to_le16(bnxt_cp_ring_क्रम_rx(bp, bnapi->rx_ring));
 
-	return hwrm_send_message(bp, &req_rx, sizeof(req_rx),
+	वापस hwrm_send_message(bp, &req_rx, माप(req_rx),
 				 HWRM_CMD_TIMEOUT);
-}
+पूर्ण
 
-int bnxt_hwrm_set_coal(struct bnxt *bp)
-{
-	int i, rc = 0;
-	struct hwrm_ring_cmpl_ring_cfg_aggint_params_input req_rx = {0},
-							   req_tx = {0}, *req;
+पूर्णांक bnxt_hwrm_set_coal(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, rc = 0;
+	काष्ठा hwrm_ring_cmpl_ring_cfg_aggपूर्णांक_params_input req_rx = अणु0पूर्ण,
+							   req_tx = अणु0पूर्ण, *req;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req_rx,
 			       HWRM_RING_CMPL_RING_CFG_AGGINT_PARAMS, -1, -1);
@@ -6630,91 +6631,91 @@ int bnxt_hwrm_set_coal(struct bnxt *bp)
 	bnxt_hwrm_set_coal_params(bp, &bp->tx_coal, &req_tx);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_coal *hw_coal;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_coal *hw_coal;
 		u16 ring_id;
 
 		req = &req_rx;
-		if (!bnapi->rx_ring) {
-			ring_id = bnxt_cp_ring_for_tx(bp, bnapi->tx_ring);
+		अगर (!bnapi->rx_ring) अणु
+			ring_id = bnxt_cp_ring_क्रम_tx(bp, bnapi->tx_ring);
 			req = &req_tx;
-		} else {
-			ring_id = bnxt_cp_ring_for_rx(bp, bnapi->rx_ring);
-		}
+		पूर्ण अन्यथा अणु
+			ring_id = bnxt_cp_ring_क्रम_rx(bp, bnapi->rx_ring);
+		पूर्ण
 		req->ring_id = cpu_to_le16(ring_id);
 
-		rc = _hwrm_send_message(bp, req, sizeof(*req),
+		rc = _hwrm_send_message(bp, req, माप(*req),
 					HWRM_CMD_TIMEOUT);
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 
-		if (!(bp->flags & BNXT_FLAG_CHIP_P5))
-			continue;
+		अगर (!(bp->flags & BNXT_FLAG_CHIP_P5))
+			जारी;
 
-		if (bnapi->rx_ring && bnapi->tx_ring) {
+		अगर (bnapi->rx_ring && bnapi->tx_ring) अणु
 			req = &req_tx;
-			ring_id = bnxt_cp_ring_for_tx(bp, bnapi->tx_ring);
+			ring_id = bnxt_cp_ring_क्रम_tx(bp, bnapi->tx_ring);
 			req->ring_id = cpu_to_le16(ring_id);
-			rc = _hwrm_send_message(bp, req, sizeof(*req),
+			rc = _hwrm_send_message(bp, req, माप(*req),
 						HWRM_CMD_TIMEOUT);
-			if (rc)
-				break;
-		}
-		if (bnapi->rx_ring)
+			अगर (rc)
+				अवरोध;
+		पूर्ण
+		अगर (bnapi->rx_ring)
 			hw_coal = &bp->rx_coal;
-		else
+		अन्यथा
 			hw_coal = &bp->tx_coal;
 		__bnxt_hwrm_set_coal_nq(bp, bnapi, hw_coal);
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void bnxt_hwrm_stat_ctx_free(struct bnxt *bp)
-{
-	struct hwrm_stat_ctx_clr_stats_input req0 = {0};
-	struct hwrm_stat_ctx_free_input req = {0};
-	int i;
+अटल व्योम bnxt_hwrm_stat_ctx_मुक्त(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_stat_ctx_clr_stats_input req0 = अणु0पूर्ण;
+	काष्ठा hwrm_stat_ctx_मुक्त_input req = अणु0पूर्ण;
+	पूर्णांक i;
 
-	if (!bp->bnapi)
-		return;
+	अगर (!bp->bnapi)
+		वापस;
 
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp))
-		return;
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp))
+		वापस;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req0, HWRM_STAT_CTX_CLR_STATS, -1, -1);
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_STAT_CTX_FREE, -1, -1);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
 
-		if (cpr->hw_stats_ctx_id != INVALID_STATS_CTX_ID) {
+		अगर (cpr->hw_stats_ctx_id != INVALID_STATS_CTX_ID) अणु
 			req.stat_ctx_id = cpu_to_le32(cpr->hw_stats_ctx_id);
-			if (BNXT_FW_MAJ(bp) <= 20) {
+			अगर (BNXT_FW_MAJ(bp) <= 20) अणु
 				req0.stat_ctx_id = req.stat_ctx_id;
-				_hwrm_send_message(bp, &req0, sizeof(req0),
+				_hwrm_send_message(bp, &req0, माप(req0),
 						   HWRM_CMD_TIMEOUT);
-			}
-			_hwrm_send_message(bp, &req, sizeof(req),
+			पूर्ण
+			_hwrm_send_message(bp, &req, माप(req),
 					   HWRM_CMD_TIMEOUT);
 
 			cpr->hw_stats_ctx_id = INVALID_STATS_CTX_ID;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-}
+पूर्ण
 
-static int bnxt_hwrm_stat_ctx_alloc(struct bnxt *bp)
-{
-	int rc = 0, i;
-	struct hwrm_stat_ctx_alloc_input req = {0};
-	struct hwrm_stat_ctx_alloc_output *resp = bp->hwrm_cmd_resp_addr;
+अटल पूर्णांक bnxt_hwrm_stat_ctx_alloc(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc = 0, i;
+	काष्ठा hwrm_stat_ctx_alloc_input req = अणु0पूर्ण;
+	काष्ठा hwrm_stat_ctx_alloc_output *resp = bp->hwrm_cmd_resp_addr;
 
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp))
-		return 0;
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp))
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_STAT_CTX_ALLOC, -1, -1);
 
@@ -6722,156 +6723,156 @@ static int bnxt_hwrm_stat_ctx_alloc(struct bnxt *bp)
 	req.update_period_ms = cpu_to_le32(bp->stats_coal_ticks / 1000);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
 
 		req.stats_dma_addr = cpu_to_le64(cpr->stats.hw_stats_map);
 
-		rc = _hwrm_send_message(bp, &req, sizeof(req),
+		rc = _hwrm_send_message(bp, &req, माप(req),
 					HWRM_CMD_TIMEOUT);
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 
 		cpr->hw_stats_ctx_id = le32_to_cpu(resp->stat_ctx_id);
 
 		bp->grp_info[i].fw_stats_ctx = cpr->hw_stats_ctx_id;
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_func_qcfg(struct bnxt *bp)
-{
-	struct hwrm_func_qcfg_input req = {0};
-	struct hwrm_func_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
+अटल पूर्णांक bnxt_hwrm_func_qcfg(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_func_qcfg_input req = अणु0पूर्ण;
+	काष्ठा hwrm_func_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
 	u32 min_db_offset = 0;
 	u16 flags;
-	int rc;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_QCFG, -1, -1);
 	req.fid = cpu_to_le16(0xffff);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
-		goto func_qcfg_exit;
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
+		जाओ func_qcfg_निकास;
 
-#ifdef CONFIG_BNXT_SRIOV
-	if (BNXT_VF(bp)) {
-		struct bnxt_vf_info *vf = &bp->vf;
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	अगर (BNXT_VF(bp)) अणु
+		काष्ठा bnxt_vf_info *vf = &bp->vf;
 
 		vf->vlan = le16_to_cpu(resp->vlan) & VLAN_VID_MASK;
-	} else {
-		bp->pf.registered_vfs = le16_to_cpu(resp->registered_vfs);
-	}
-#endif
+	पूर्ण अन्यथा अणु
+		bp->pf.रेजिस्टरed_vfs = le16_to_cpu(resp->रेजिस्टरed_vfs);
+	पूर्ण
+#पूर्ण_अगर
 	flags = le16_to_cpu(resp->flags);
-	if (flags & (FUNC_QCFG_RESP_FLAGS_FW_DCBX_AGENT_ENABLED |
-		     FUNC_QCFG_RESP_FLAGS_FW_LLDP_AGENT_ENABLED)) {
+	अगर (flags & (FUNC_QCFG_RESP_FLAGS_FW_DCBX_AGENT_ENABLED |
+		     FUNC_QCFG_RESP_FLAGS_FW_LLDP_AGENT_ENABLED)) अणु
 		bp->fw_cap |= BNXT_FW_CAP_LLDP_AGENT;
-		if (flags & FUNC_QCFG_RESP_FLAGS_FW_DCBX_AGENT_ENABLED)
+		अगर (flags & FUNC_QCFG_RESP_FLAGS_FW_DCBX_AGENT_ENABLED)
 			bp->fw_cap |= BNXT_FW_CAP_DCBX_AGENT;
-	}
-	if (BNXT_PF(bp) && (flags & FUNC_QCFG_RESP_FLAGS_MULTI_HOST))
+	पूर्ण
+	अगर (BNXT_PF(bp) && (flags & FUNC_QCFG_RESP_FLAGS_MULTI_HOST))
 		bp->flags |= BNXT_FLAG_MULTI_HOST;
-	if (flags & FUNC_QCFG_RESP_FLAGS_RING_MONITOR_ENABLED)
+	अगर (flags & FUNC_QCFG_RESP_FLAGS_RING_MONITOR_ENABLED)
 		bp->fw_cap |= BNXT_FW_CAP_RING_MONITOR;
 
-	switch (resp->port_partition_type) {
-	case FUNC_QCFG_RESP_PORT_PARTITION_TYPE_NPAR1_0:
-	case FUNC_QCFG_RESP_PORT_PARTITION_TYPE_NPAR1_5:
-	case FUNC_QCFG_RESP_PORT_PARTITION_TYPE_NPAR2_0:
+	चयन (resp->port_partition_type) अणु
+	हाल FUNC_QCFG_RESP_PORT_PARTITION_TYPE_NPAR1_0:
+	हाल FUNC_QCFG_RESP_PORT_PARTITION_TYPE_NPAR1_5:
+	हाल FUNC_QCFG_RESP_PORT_PARTITION_TYPE_NPAR2_0:
 		bp->port_partition_type = resp->port_partition_type;
-		break;
-	}
-	if (bp->hwrm_spec_code < 0x10707 ||
+		अवरोध;
+	पूर्ण
+	अगर (bp->hwrm_spec_code < 0x10707 ||
 	    resp->evb_mode == FUNC_QCFG_RESP_EVB_MODE_VEB)
 		bp->br_mode = BRIDGE_MODE_VEB;
-	else if (resp->evb_mode == FUNC_QCFG_RESP_EVB_MODE_VEPA)
+	अन्यथा अगर (resp->evb_mode == FUNC_QCFG_RESP_EVB_MODE_VEPA)
 		bp->br_mode = BRIDGE_MODE_VEPA;
-	else
+	अन्यथा
 		bp->br_mode = BRIDGE_MODE_UNDEF;
 
 	bp->max_mtu = le16_to_cpu(resp->max_mtu_configured);
-	if (!bp->max_mtu)
+	अगर (!bp->max_mtu)
 		bp->max_mtu = BNXT_MAX_MTU;
 
-	if (bp->db_size)
-		goto func_qcfg_exit;
+	अगर (bp->db_size)
+		जाओ func_qcfg_निकास;
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
-		if (BNXT_PF(bp))
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+		अगर (BNXT_PF(bp))
 			min_db_offset = DB_PF_OFFSET_P5;
-		else
+		अन्यथा
 			min_db_offset = DB_VF_OFFSET_P5;
-	}
-	bp->db_size = PAGE_ALIGN(le16_to_cpu(resp->l2_doorbell_bar_size_kb) *
+	पूर्ण
+	bp->db_size = PAGE_ALIGN(le16_to_cpu(resp->l2_करोorbell_bar_size_kb) *
 				 1024);
-	if (!bp->db_size || bp->db_size > pci_resource_len(bp->pdev, 2) ||
+	अगर (!bp->db_size || bp->db_size > pci_resource_len(bp->pdev, 2) ||
 	    bp->db_size <= min_db_offset)
 		bp->db_size = pci_resource_len(bp->pdev, 2);
 
-func_qcfg_exit:
+func_qcfg_निकास:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void bnxt_init_ctx_initializer(struct bnxt_ctx_mem_info *ctx,
-			struct hwrm_func_backing_store_qcaps_output *resp)
-{
-	struct bnxt_mem_init *mem_init;
+अटल व्योम bnxt_init_ctx_initializer(काष्ठा bnxt_ctx_mem_info *ctx,
+			काष्ठा hwrm_func_backing_store_qcaps_output *resp)
+अणु
+	काष्ठा bnxt_mem_init *mem_init;
 	u16 init_mask;
 	u8 init_val;
 	u8 *offset;
-	int i;
+	पूर्णांक i;
 
 	init_val = resp->ctx_kind_initializer;
 	init_mask = le16_to_cpu(resp->ctx_init_mask);
 	offset = &resp->qp_init_offset;
 	mem_init = &ctx->mem_init[BNXT_CTX_MEM_INIT_QP];
-	for (i = 0; i < BNXT_CTX_MEM_INIT_MAX; i++, mem_init++, offset++) {
+	क्रम (i = 0; i < BNXT_CTX_MEM_INIT_MAX; i++, mem_init++, offset++) अणु
 		mem_init->init_val = init_val;
 		mem_init->offset = BNXT_MEM_INVALID_OFFSET;
-		if (!init_mask)
-			continue;
-		if (i == BNXT_CTX_MEM_INIT_STAT)
+		अगर (!init_mask)
+			जारी;
+		अगर (i == BNXT_CTX_MEM_INIT_STAT)
 			offset = &resp->stat_init_offset;
-		if (init_mask & (1 << i))
+		अगर (init_mask & (1 << i))
 			mem_init->offset = *offset * 4;
-		else
+		अन्यथा
 			mem_init->init_val = 0;
-	}
+	पूर्ण
 	ctx->mem_init[BNXT_CTX_MEM_INIT_QP].size = ctx->qp_entry_size;
 	ctx->mem_init[BNXT_CTX_MEM_INIT_SRQ].size = ctx->srq_entry_size;
 	ctx->mem_init[BNXT_CTX_MEM_INIT_CQ].size = ctx->cq_entry_size;
 	ctx->mem_init[BNXT_CTX_MEM_INIT_VNIC].size = ctx->vnic_entry_size;
 	ctx->mem_init[BNXT_CTX_MEM_INIT_STAT].size = ctx->stat_entry_size;
 	ctx->mem_init[BNXT_CTX_MEM_INIT_MRAV].size = ctx->mrav_entry_size;
-}
+पूर्ण
 
-static int bnxt_hwrm_func_backing_store_qcaps(struct bnxt *bp)
-{
-	struct hwrm_func_backing_store_qcaps_input req = {0};
-	struct hwrm_func_backing_store_qcaps_output *resp =
+अटल पूर्णांक bnxt_hwrm_func_backing_store_qcaps(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_func_backing_store_qcaps_input req = अणु0पूर्ण;
+	काष्ठा hwrm_func_backing_store_qcaps_output *resp =
 		bp->hwrm_cmd_resp_addr;
-	int rc;
+	पूर्णांक rc;
 
-	if (bp->hwrm_spec_code < 0x10902 || BNXT_VF(bp) || bp->ctx)
-		return 0;
+	अगर (bp->hwrm_spec_code < 0x10902 || BNXT_VF(bp) || bp->ctx)
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_BACKING_STORE_QCAPS, -1, -1);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message_silent(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc) {
-		struct bnxt_ctx_pg_info *ctx_pg;
-		struct bnxt_ctx_mem_info *ctx;
-		int i, tqm_rings;
+	rc = _hwrm_send_message_silent(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
+		काष्ठा bnxt_ctx_pg_info *ctx_pg;
+		काष्ठा bnxt_ctx_mem_info *ctx;
+		पूर्णांक i, tqm_rings;
 
-		ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-		if (!ctx) {
+		ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+		अगर (!ctx) अणु
 			rc = -ENOMEM;
-			goto ctx_err;
-		}
+			जाओ ctx_err;
+		पूर्ण
 		ctx->qp_max_entries = le32_to_cpu(resp->qp_max_entries);
 		ctx->qp_min_qp1_entries = le16_to_cpu(resp->qp_min_qp1_entries);
 		ctx->qp_max_l2_entries = le16_to_cpu(resp->qp_max_l2_entries);
@@ -6895,7 +6896,7 @@ static int bnxt_hwrm_func_backing_store_qcaps(struct bnxt *bp)
 		ctx->tqm_max_entries_per_ring =
 			le32_to_cpu(resp->tqm_max_entries_per_ring);
 		ctx->tqm_entries_multiple = resp->tqm_entries_multiple;
-		if (!ctx->tqm_entries_multiple)
+		अगर (!ctx->tqm_entries_multiple)
 			ctx->tqm_entries_multiple = 1;
 		ctx->mrav_max_entries = le32_to_cpu(resp->mrav_max_entries);
 		ctx->mrav_entry_size = le16_to_cpu(resp->mrav_entry_size);
@@ -6907,76 +6908,76 @@ static int bnxt_hwrm_func_backing_store_qcaps(struct bnxt *bp)
 		bnxt_init_ctx_initializer(ctx, resp);
 
 		ctx->tqm_fp_rings_count = resp->tqm_fp_rings_count;
-		if (!ctx->tqm_fp_rings_count)
+		अगर (!ctx->tqm_fp_rings_count)
 			ctx->tqm_fp_rings_count = bp->max_q;
-		else if (ctx->tqm_fp_rings_count > BNXT_MAX_TQM_FP_RINGS)
+		अन्यथा अगर (ctx->tqm_fp_rings_count > BNXT_MAX_TQM_FP_RINGS)
 			ctx->tqm_fp_rings_count = BNXT_MAX_TQM_FP_RINGS;
 
 		tqm_rings = ctx->tqm_fp_rings_count + BNXT_MAX_TQM_SP_RINGS;
-		ctx_pg = kcalloc(tqm_rings, sizeof(*ctx_pg), GFP_KERNEL);
-		if (!ctx_pg) {
-			kfree(ctx);
+		ctx_pg = kसुस्मृति(tqm_rings, माप(*ctx_pg), GFP_KERNEL);
+		अगर (!ctx_pg) अणु
+			kमुक्त(ctx);
 			rc = -ENOMEM;
-			goto ctx_err;
-		}
-		for (i = 0; i < tqm_rings; i++, ctx_pg++)
+			जाओ ctx_err;
+		पूर्ण
+		क्रम (i = 0; i < tqm_rings; i++, ctx_pg++)
 			ctx->tqm_mem[i] = ctx_pg;
 		bp->ctx = ctx;
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = 0;
-	}
+	पूर्ण
 ctx_err:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void bnxt_hwrm_set_pg_attr(struct bnxt_ring_mem_info *rmem, u8 *pg_attr,
+अटल व्योम bnxt_hwrm_set_pg_attr(काष्ठा bnxt_ring_mem_info *rmem, u8 *pg_attr,
 				  __le64 *pg_dir)
-{
-	if (!rmem->nr_pages)
-		return;
+अणु
+	अगर (!rmem->nr_pages)
+		वापस;
 
 	BNXT_SET_CTX_PAGE_ATTR(*pg_attr);
-	if (rmem->depth >= 1) {
-		if (rmem->depth == 2)
+	अगर (rmem->depth >= 1) अणु
+		अगर (rmem->depth == 2)
 			*pg_attr |= 2;
-		else
+		अन्यथा
 			*pg_attr |= 1;
 		*pg_dir = cpu_to_le64(rmem->pg_tbl_map);
-	} else {
+	पूर्ण अन्यथा अणु
 		*pg_dir = cpu_to_le64(rmem->dma_arr[0]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define FUNC_BACKING_STORE_CFG_REQ_DFLT_ENABLES			\
+#घोषणा FUNC_BACKING_STORE_CFG_REQ_DFLT_ENABLES			\
 	(FUNC_BACKING_STORE_CFG_REQ_ENABLES_QP |		\
 	 FUNC_BACKING_STORE_CFG_REQ_ENABLES_SRQ |		\
 	 FUNC_BACKING_STORE_CFG_REQ_ENABLES_CQ |		\
 	 FUNC_BACKING_STORE_CFG_REQ_ENABLES_VNIC |		\
 	 FUNC_BACKING_STORE_CFG_REQ_ENABLES_STAT)
 
-static int bnxt_hwrm_func_backing_store_cfg(struct bnxt *bp, u32 enables)
-{
-	struct hwrm_func_backing_store_cfg_input req = {0};
-	struct bnxt_ctx_mem_info *ctx = bp->ctx;
-	struct bnxt_ctx_pg_info *ctx_pg;
-	u32 req_len = sizeof(req);
+अटल पूर्णांक bnxt_hwrm_func_backing_store_cfg(काष्ठा bnxt *bp, u32 enables)
+अणु
+	काष्ठा hwrm_func_backing_store_cfg_input req = अणु0पूर्ण;
+	काष्ठा bnxt_ctx_mem_info *ctx = bp->ctx;
+	काष्ठा bnxt_ctx_pg_info *ctx_pg;
+	u32 req_len = माप(req);
 	__le32 *num_entries;
 	__le64 *pg_dir;
 	u32 flags = 0;
 	u8 *pg_attr;
 	u32 ena;
-	int i;
+	पूर्णांक i;
 
-	if (!ctx)
-		return 0;
+	अगर (!ctx)
+		वापस 0;
 
-	if (req_len > bp->hwrm_max_ext_req_len)
+	अगर (req_len > bp->hwrm_max_ext_req_len)
 		req_len = BNXT_BACKING_STORE_CFG_LEGACY_LEN;
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_BACKING_STORE_CFG, -1, -1);
 	req.enables = cpu_to_le32(enables);
 
-	if (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_QP) {
+	अगर (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_QP) अणु
 		ctx_pg = &ctx->qp_mem;
 		req.qp_num_entries = cpu_to_le32(ctx_pg->entries);
 		req.qp_num_qp1_entries = cpu_to_le16(ctx->qp_min_qp1_entries);
@@ -6985,8 +6986,8 @@ static int bnxt_hwrm_func_backing_store_cfg(struct bnxt *bp, u32 enables)
 		bnxt_hwrm_set_pg_attr(&ctx_pg->ring_mem,
 				      &req.qpc_pg_size_qpc_lvl,
 				      &req.qpc_page_dir);
-	}
-	if (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_SRQ) {
+	पूर्ण
+	अगर (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_SRQ) अणु
 		ctx_pg = &ctx->srq_mem;
 		req.srq_num_entries = cpu_to_le32(ctx_pg->entries);
 		req.srq_num_l2_entries = cpu_to_le16(ctx->srq_max_l2_entries);
@@ -6994,16 +6995,16 @@ static int bnxt_hwrm_func_backing_store_cfg(struct bnxt *bp, u32 enables)
 		bnxt_hwrm_set_pg_attr(&ctx_pg->ring_mem,
 				      &req.srq_pg_size_srq_lvl,
 				      &req.srq_page_dir);
-	}
-	if (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_CQ) {
+	पूर्ण
+	अगर (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_CQ) अणु
 		ctx_pg = &ctx->cq_mem;
 		req.cq_num_entries = cpu_to_le32(ctx_pg->entries);
 		req.cq_num_l2_entries = cpu_to_le16(ctx->cq_max_l2_entries);
 		req.cq_entry_size = cpu_to_le16(ctx->cq_entry_size);
 		bnxt_hwrm_set_pg_attr(&ctx_pg->ring_mem, &req.cq_pg_size_cq_lvl,
 				      &req.cq_page_dir);
-	}
-	if (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_VNIC) {
+	पूर्ण
+	अगर (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_VNIC) अणु
 		ctx_pg = &ctx->vnic_mem;
 		req.vnic_num_vnic_entries =
 			cpu_to_le16(ctx->vnic_max_vnic_entries);
@@ -7013,100 +7014,100 @@ static int bnxt_hwrm_func_backing_store_cfg(struct bnxt *bp, u32 enables)
 		bnxt_hwrm_set_pg_attr(&ctx_pg->ring_mem,
 				      &req.vnic_pg_size_vnic_lvl,
 				      &req.vnic_page_dir);
-	}
-	if (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_STAT) {
+	पूर्ण
+	अगर (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_STAT) अणु
 		ctx_pg = &ctx->stat_mem;
 		req.stat_num_entries = cpu_to_le32(ctx->stat_max_entries);
 		req.stat_entry_size = cpu_to_le16(ctx->stat_entry_size);
 		bnxt_hwrm_set_pg_attr(&ctx_pg->ring_mem,
 				      &req.stat_pg_size_stat_lvl,
 				      &req.stat_page_dir);
-	}
-	if (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_MRAV) {
+	पूर्ण
+	अगर (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_MRAV) अणु
 		ctx_pg = &ctx->mrav_mem;
 		req.mrav_num_entries = cpu_to_le32(ctx_pg->entries);
-		if (ctx->mrav_num_entries_units)
+		अगर (ctx->mrav_num_entries_units)
 			flags |=
 			FUNC_BACKING_STORE_CFG_REQ_FLAGS_MRAV_RESERVATION_SPLIT;
 		req.mrav_entry_size = cpu_to_le16(ctx->mrav_entry_size);
 		bnxt_hwrm_set_pg_attr(&ctx_pg->ring_mem,
 				      &req.mrav_pg_size_mrav_lvl,
 				      &req.mrav_page_dir);
-	}
-	if (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_TIM) {
+	पूर्ण
+	अगर (enables & FUNC_BACKING_STORE_CFG_REQ_ENABLES_TIM) अणु
 		ctx_pg = &ctx->tim_mem;
 		req.tim_num_entries = cpu_to_le32(ctx_pg->entries);
 		req.tim_entry_size = cpu_to_le16(ctx->tim_entry_size);
 		bnxt_hwrm_set_pg_attr(&ctx_pg->ring_mem,
-				      &req.tim_pg_size_tim_lvl,
+				      &req.tim_pg_माप_प्रकारim_lvl,
 				      &req.tim_page_dir);
-	}
-	for (i = 0, num_entries = &req.tqm_sp_num_entries,
-	     pg_attr = &req.tqm_sp_pg_size_tqm_sp_lvl,
+	पूर्ण
+	क्रम (i = 0, num_entries = &req.tqm_sp_num_entries,
+	     pg_attr = &req.tqm_sp_pg_माप_प्रकारqm_sp_lvl,
 	     pg_dir = &req.tqm_sp_page_dir,
 	     ena = FUNC_BACKING_STORE_CFG_REQ_ENABLES_TQM_SP;
 	     i < BNXT_MAX_TQM_RINGS;
-	     i++, num_entries++, pg_attr++, pg_dir++, ena <<= 1) {
-		if (!(enables & ena))
-			continue;
+	     i++, num_entries++, pg_attr++, pg_dir++, ena <<= 1) अणु
+		अगर (!(enables & ena))
+			जारी;
 
 		req.tqm_entry_size = cpu_to_le16(ctx->tqm_entry_size);
 		ctx_pg = ctx->tqm_mem[i];
 		*num_entries = cpu_to_le32(ctx_pg->entries);
 		bnxt_hwrm_set_pg_attr(&ctx_pg->ring_mem, pg_attr, pg_dir);
-	}
+	पूर्ण
 	req.flags = cpu_to_le32(flags);
-	return hwrm_send_message(bp, &req, req_len, HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, req_len, HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static int bnxt_alloc_ctx_mem_blk(struct bnxt *bp,
-				  struct bnxt_ctx_pg_info *ctx_pg)
-{
-	struct bnxt_ring_mem_info *rmem = &ctx_pg->ring_mem;
+अटल पूर्णांक bnxt_alloc_ctx_mem_blk(काष्ठा bnxt *bp,
+				  काष्ठा bnxt_ctx_pg_info *ctx_pg)
+अणु
+	काष्ठा bnxt_ring_mem_info *rmem = &ctx_pg->ring_mem;
 
 	rmem->page_size = BNXT_PAGE_SIZE;
 	rmem->pg_arr = ctx_pg->ctx_pg_arr;
 	rmem->dma_arr = ctx_pg->ctx_dma_arr;
 	rmem->flags = BNXT_RMEM_VALID_PTE_FLAG;
-	if (rmem->depth >= 1)
+	अगर (rmem->depth >= 1)
 		rmem->flags |= BNXT_RMEM_USE_FULL_PAGE_FLAG;
-	return bnxt_alloc_ring(bp, rmem);
-}
+	वापस bnxt_alloc_ring(bp, rmem);
+पूर्ण
 
-static int bnxt_alloc_ctx_pg_tbls(struct bnxt *bp,
-				  struct bnxt_ctx_pg_info *ctx_pg, u32 mem_size,
-				  u8 depth, struct bnxt_mem_init *mem_init)
-{
-	struct bnxt_ring_mem_info *rmem = &ctx_pg->ring_mem;
-	int rc;
+अटल पूर्णांक bnxt_alloc_ctx_pg_tbls(काष्ठा bnxt *bp,
+				  काष्ठा bnxt_ctx_pg_info *ctx_pg, u32 mem_size,
+				  u8 depth, काष्ठा bnxt_mem_init *mem_init)
+अणु
+	काष्ठा bnxt_ring_mem_info *rmem = &ctx_pg->ring_mem;
+	पूर्णांक rc;
 
-	if (!mem_size)
-		return -EINVAL;
+	अगर (!mem_size)
+		वापस -EINVAL;
 
 	ctx_pg->nr_pages = DIV_ROUND_UP(mem_size, BNXT_PAGE_SIZE);
-	if (ctx_pg->nr_pages > MAX_CTX_TOTAL_PAGES) {
+	अगर (ctx_pg->nr_pages > MAX_CTX_TOTAL_PAGES) अणु
 		ctx_pg->nr_pages = 0;
-		return -EINVAL;
-	}
-	if (ctx_pg->nr_pages > MAX_CTX_PAGES || depth > 1) {
-		int nr_tbls, i;
+		वापस -EINVAL;
+	पूर्ण
+	अगर (ctx_pg->nr_pages > MAX_CTX_PAGES || depth > 1) अणु
+		पूर्णांक nr_tbls, i;
 
 		rmem->depth = 2;
-		ctx_pg->ctx_pg_tbl = kcalloc(MAX_CTX_PAGES, sizeof(ctx_pg),
+		ctx_pg->ctx_pg_tbl = kसुस्मृति(MAX_CTX_PAGES, माप(ctx_pg),
 					     GFP_KERNEL);
-		if (!ctx_pg->ctx_pg_tbl)
-			return -ENOMEM;
+		अगर (!ctx_pg->ctx_pg_tbl)
+			वापस -ENOMEM;
 		nr_tbls = DIV_ROUND_UP(ctx_pg->nr_pages, MAX_CTX_PAGES);
 		rmem->nr_pages = nr_tbls;
 		rc = bnxt_alloc_ctx_mem_blk(bp, ctx_pg);
-		if (rc)
-			return rc;
-		for (i = 0; i < nr_tbls; i++) {
-			struct bnxt_ctx_pg_info *pg_tbl;
+		अगर (rc)
+			वापस rc;
+		क्रम (i = 0; i < nr_tbls; i++) अणु
+			काष्ठा bnxt_ctx_pg_info *pg_tbl;
 
-			pg_tbl = kzalloc(sizeof(*pg_tbl), GFP_KERNEL);
-			if (!pg_tbl)
-				return -ENOMEM;
+			pg_tbl = kzalloc(माप(*pg_tbl), GFP_KERNEL);
+			अगर (!pg_tbl)
+				वापस -ENOMEM;
 			ctx_pg->ctx_pg_tbl[i] = pg_tbl;
 			rmem = &pg_tbl->ring_mem;
 			rmem->pg_tbl = ctx_pg->ctx_pg_arr[i];
@@ -7114,193 +7115,193 @@ static int bnxt_alloc_ctx_pg_tbls(struct bnxt *bp,
 			rmem->depth = 1;
 			rmem->nr_pages = MAX_CTX_PAGES;
 			rmem->mem_init = mem_init;
-			if (i == (nr_tbls - 1)) {
-				int rem = ctx_pg->nr_pages % MAX_CTX_PAGES;
+			अगर (i == (nr_tbls - 1)) अणु
+				पूर्णांक rem = ctx_pg->nr_pages % MAX_CTX_PAGES;
 
-				if (rem)
+				अगर (rem)
 					rmem->nr_pages = rem;
-			}
+			पूर्ण
 			rc = bnxt_alloc_ctx_mem_blk(bp, pg_tbl);
-			if (rc)
-				break;
-		}
-	} else {
+			अगर (rc)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rmem->nr_pages = DIV_ROUND_UP(mem_size, BNXT_PAGE_SIZE);
-		if (rmem->nr_pages > 1 || depth)
+		अगर (rmem->nr_pages > 1 || depth)
 			rmem->depth = 1;
 		rmem->mem_init = mem_init;
 		rc = bnxt_alloc_ctx_mem_blk(bp, ctx_pg);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void bnxt_free_ctx_pg_tbls(struct bnxt *bp,
-				  struct bnxt_ctx_pg_info *ctx_pg)
-{
-	struct bnxt_ring_mem_info *rmem = &ctx_pg->ring_mem;
+अटल व्योम bnxt_मुक्त_ctx_pg_tbls(काष्ठा bnxt *bp,
+				  काष्ठा bnxt_ctx_pg_info *ctx_pg)
+अणु
+	काष्ठा bnxt_ring_mem_info *rmem = &ctx_pg->ring_mem;
 
-	if (rmem->depth > 1 || ctx_pg->nr_pages > MAX_CTX_PAGES ||
-	    ctx_pg->ctx_pg_tbl) {
-		int i, nr_tbls = rmem->nr_pages;
+	अगर (rmem->depth > 1 || ctx_pg->nr_pages > MAX_CTX_PAGES ||
+	    ctx_pg->ctx_pg_tbl) अणु
+		पूर्णांक i, nr_tbls = rmem->nr_pages;
 
-		for (i = 0; i < nr_tbls; i++) {
-			struct bnxt_ctx_pg_info *pg_tbl;
-			struct bnxt_ring_mem_info *rmem2;
+		क्रम (i = 0; i < nr_tbls; i++) अणु
+			काष्ठा bnxt_ctx_pg_info *pg_tbl;
+			काष्ठा bnxt_ring_mem_info *rmem2;
 
 			pg_tbl = ctx_pg->ctx_pg_tbl[i];
-			if (!pg_tbl)
-				continue;
+			अगर (!pg_tbl)
+				जारी;
 			rmem2 = &pg_tbl->ring_mem;
-			bnxt_free_ring(bp, rmem2);
-			ctx_pg->ctx_pg_arr[i] = NULL;
-			kfree(pg_tbl);
-			ctx_pg->ctx_pg_tbl[i] = NULL;
-		}
-		kfree(ctx_pg->ctx_pg_tbl);
-		ctx_pg->ctx_pg_tbl = NULL;
-	}
-	bnxt_free_ring(bp, rmem);
+			bnxt_मुक्त_ring(bp, rmem2);
+			ctx_pg->ctx_pg_arr[i] = शून्य;
+			kमुक्त(pg_tbl);
+			ctx_pg->ctx_pg_tbl[i] = शून्य;
+		पूर्ण
+		kमुक्त(ctx_pg->ctx_pg_tbl);
+		ctx_pg->ctx_pg_tbl = शून्य;
+	पूर्ण
+	bnxt_मुक्त_ring(bp, rmem);
 	ctx_pg->nr_pages = 0;
-}
+पूर्ण
 
-static void bnxt_free_ctx_mem(struct bnxt *bp)
-{
-	struct bnxt_ctx_mem_info *ctx = bp->ctx;
-	int i;
+अटल व्योम bnxt_मुक्त_ctx_mem(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_ctx_mem_info *ctx = bp->ctx;
+	पूर्णांक i;
 
-	if (!ctx)
-		return;
+	अगर (!ctx)
+		वापस;
 
-	if (ctx->tqm_mem[0]) {
-		for (i = 0; i < ctx->tqm_fp_rings_count + 1; i++)
-			bnxt_free_ctx_pg_tbls(bp, ctx->tqm_mem[i]);
-		kfree(ctx->tqm_mem[0]);
-		ctx->tqm_mem[0] = NULL;
-	}
+	अगर (ctx->tqm_mem[0]) अणु
+		क्रम (i = 0; i < ctx->tqm_fp_rings_count + 1; i++)
+			bnxt_मुक्त_ctx_pg_tbls(bp, ctx->tqm_mem[i]);
+		kमुक्त(ctx->tqm_mem[0]);
+		ctx->tqm_mem[0] = शून्य;
+	पूर्ण
 
-	bnxt_free_ctx_pg_tbls(bp, &ctx->tim_mem);
-	bnxt_free_ctx_pg_tbls(bp, &ctx->mrav_mem);
-	bnxt_free_ctx_pg_tbls(bp, &ctx->stat_mem);
-	bnxt_free_ctx_pg_tbls(bp, &ctx->vnic_mem);
-	bnxt_free_ctx_pg_tbls(bp, &ctx->cq_mem);
-	bnxt_free_ctx_pg_tbls(bp, &ctx->srq_mem);
-	bnxt_free_ctx_pg_tbls(bp, &ctx->qp_mem);
+	bnxt_मुक्त_ctx_pg_tbls(bp, &ctx->tim_mem);
+	bnxt_मुक्त_ctx_pg_tbls(bp, &ctx->mrav_mem);
+	bnxt_मुक्त_ctx_pg_tbls(bp, &ctx->stat_mem);
+	bnxt_मुक्त_ctx_pg_tbls(bp, &ctx->vnic_mem);
+	bnxt_मुक्त_ctx_pg_tbls(bp, &ctx->cq_mem);
+	bnxt_मुक्त_ctx_pg_tbls(bp, &ctx->srq_mem);
+	bnxt_मुक्त_ctx_pg_tbls(bp, &ctx->qp_mem);
 	ctx->flags &= ~BNXT_CTX_FLAG_INITED;
-}
+पूर्ण
 
-static int bnxt_alloc_ctx_mem(struct bnxt *bp)
-{
-	struct bnxt_ctx_pg_info *ctx_pg;
-	struct bnxt_ctx_mem_info *ctx;
-	struct bnxt_mem_init *init;
+अटल पूर्णांक bnxt_alloc_ctx_mem(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_ctx_pg_info *ctx_pg;
+	काष्ठा bnxt_ctx_mem_info *ctx;
+	काष्ठा bnxt_mem_init *init;
 	u32 mem_size, ena, entries;
 	u32 entries_sp, min;
 	u32 num_mr, num_ah;
 	u32 extra_srqs = 0;
 	u32 extra_qps = 0;
 	u8 pg_lvl = 1;
-	int i, rc;
+	पूर्णांक i, rc;
 
 	rc = bnxt_hwrm_func_backing_store_qcaps(bp);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "Failed querying context mem capability, rc = %d.\n",
 			   rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	ctx = bp->ctx;
-	if (!ctx || (ctx->flags & BNXT_CTX_FLAG_INITED))
-		return 0;
+	अगर (!ctx || (ctx->flags & BNXT_CTX_FLAG_INITED))
+		वापस 0;
 
-	if ((bp->flags & BNXT_FLAG_ROCE_CAP) && !is_kdump_kernel()) {
+	अगर ((bp->flags & BNXT_FLAG_ROCE_CAP) && !is_kdump_kernel()) अणु
 		pg_lvl = 2;
 		extra_qps = 65536;
 		extra_srqs = 8192;
-	}
+	पूर्ण
 
 	ctx_pg = &ctx->qp_mem;
 	ctx_pg->entries = ctx->qp_min_qp1_entries + ctx->qp_max_l2_entries +
 			  extra_qps;
-	if (ctx->qp_entry_size) {
+	अगर (ctx->qp_entry_size) अणु
 		mem_size = ctx->qp_entry_size * ctx_pg->entries;
 		init = &ctx->mem_init[BNXT_CTX_MEM_INIT_QP];
 		rc = bnxt_alloc_ctx_pg_tbls(bp, ctx_pg, mem_size, pg_lvl, init);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	ctx_pg = &ctx->srq_mem;
 	ctx_pg->entries = ctx->srq_max_l2_entries + extra_srqs;
-	if (ctx->srq_entry_size) {
+	अगर (ctx->srq_entry_size) अणु
 		mem_size = ctx->srq_entry_size * ctx_pg->entries;
 		init = &ctx->mem_init[BNXT_CTX_MEM_INIT_SRQ];
 		rc = bnxt_alloc_ctx_pg_tbls(bp, ctx_pg, mem_size, pg_lvl, init);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	ctx_pg = &ctx->cq_mem;
 	ctx_pg->entries = ctx->cq_max_l2_entries + extra_qps * 2;
-	if (ctx->cq_entry_size) {
+	अगर (ctx->cq_entry_size) अणु
 		mem_size = ctx->cq_entry_size * ctx_pg->entries;
 		init = &ctx->mem_init[BNXT_CTX_MEM_INIT_CQ];
 		rc = bnxt_alloc_ctx_pg_tbls(bp, ctx_pg, mem_size, pg_lvl, init);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	ctx_pg = &ctx->vnic_mem;
 	ctx_pg->entries = ctx->vnic_max_vnic_entries +
 			  ctx->vnic_max_ring_table_entries;
-	if (ctx->vnic_entry_size) {
+	अगर (ctx->vnic_entry_size) अणु
 		mem_size = ctx->vnic_entry_size * ctx_pg->entries;
 		init = &ctx->mem_init[BNXT_CTX_MEM_INIT_VNIC];
 		rc = bnxt_alloc_ctx_pg_tbls(bp, ctx_pg, mem_size, 1, init);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	ctx_pg = &ctx->stat_mem;
 	ctx_pg->entries = ctx->stat_max_entries;
-	if (ctx->stat_entry_size) {
+	अगर (ctx->stat_entry_size) अणु
 		mem_size = ctx->stat_entry_size * ctx_pg->entries;
 		init = &ctx->mem_init[BNXT_CTX_MEM_INIT_STAT];
 		rc = bnxt_alloc_ctx_pg_tbls(bp, ctx_pg, mem_size, 1, init);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	ena = 0;
-	if (!(bp->flags & BNXT_FLAG_ROCE_CAP))
-		goto skip_rdma;
+	अगर (!(bp->flags & BNXT_FLAG_ROCE_CAP))
+		जाओ skip_rdma;
 
 	ctx_pg = &ctx->mrav_mem;
-	/* 128K extra is needed to accommodate static AH context
+	/* 128K extra is needed to accommodate अटल AH context
 	 * allocation by f/w.
 	 */
 	num_mr = 1024 * 256;
 	num_ah = 1024 * 128;
 	ctx_pg->entries = num_mr + num_ah;
-	if (ctx->mrav_entry_size) {
+	अगर (ctx->mrav_entry_size) अणु
 		mem_size = ctx->mrav_entry_size * ctx_pg->entries;
 		init = &ctx->mem_init[BNXT_CTX_MEM_INIT_MRAV];
 		rc = bnxt_alloc_ctx_pg_tbls(bp, ctx_pg, mem_size, 2, init);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 	ena = FUNC_BACKING_STORE_CFG_REQ_ENABLES_MRAV;
-	if (ctx->mrav_num_entries_units)
+	अगर (ctx->mrav_num_entries_units)
 		ctx_pg->entries =
 			((num_mr / ctx->mrav_num_entries_units) << 16) |
 			 (num_ah / ctx->mrav_num_entries_units);
 
 	ctx_pg = &ctx->tim_mem;
 	ctx_pg->entries = ctx->qp_mem.entries;
-	if (ctx->tim_entry_size) {
+	अगर (ctx->tim_entry_size) अणु
 		mem_size = ctx->tim_entry_size * ctx_pg->entries;
-		rc = bnxt_alloc_ctx_pg_tbls(bp, ctx_pg, mem_size, 1, NULL);
-		if (rc)
-			return rc;
-	}
+		rc = bnxt_alloc_ctx_pg_tbls(bp, ctx_pg, mem_size, 1, शून्य);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 	ena |= FUNC_BACKING_STORE_CFG_REQ_ENABLES_TIM;
 
 skip_rdma:
@@ -7311,48 +7312,48 @@ skip_rdma:
 	entries = ctx->qp_max_l2_entries + 2 * (extra_qps + ctx->qp_min_qp1_entries);
 	entries = roundup(entries, ctx->tqm_entries_multiple);
 	entries = clamp_t(u32, entries, min, ctx->tqm_max_entries_per_ring);
-	for (i = 0; i < ctx->tqm_fp_rings_count + 1; i++) {
+	क्रम (i = 0; i < ctx->tqm_fp_rings_count + 1; i++) अणु
 		ctx_pg = ctx->tqm_mem[i];
 		ctx_pg->entries = i ? entries : entries_sp;
-		if (ctx->tqm_entry_size) {
+		अगर (ctx->tqm_entry_size) अणु
 			mem_size = ctx->tqm_entry_size * ctx_pg->entries;
 			rc = bnxt_alloc_ctx_pg_tbls(bp, ctx_pg, mem_size, 1,
-						    NULL);
-			if (rc)
-				return rc;
-		}
+						    शून्य);
+			अगर (rc)
+				वापस rc;
+		पूर्ण
 		ena |= FUNC_BACKING_STORE_CFG_REQ_ENABLES_TQM_SP << i;
-	}
+	पूर्ण
 	ena |= FUNC_BACKING_STORE_CFG_REQ_DFLT_ENABLES;
 	rc = bnxt_hwrm_func_backing_store_cfg(bp, ena);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "Failed configuring context mem, rc = %d.\n",
 			   rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	ctx->flags |= BNXT_CTX_FLAG_INITED;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bnxt_hwrm_func_resc_qcaps(struct bnxt *bp, bool all)
-{
-	struct hwrm_func_resource_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_func_resource_qcaps_input req = {0};
-	struct bnxt_hw_resc *hw_resc = &bp->hw_resc;
-	int rc;
+पूर्णांक bnxt_hwrm_func_resc_qcaps(काष्ठा bnxt *bp, bool all)
+अणु
+	काष्ठा hwrm_func_resource_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_func_resource_qcaps_input req = अणु0पूर्ण;
+	काष्ठा bnxt_hw_resc *hw_resc = &bp->hw_resc;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_RESOURCE_QCAPS, -1, -1);
 	req.fid = cpu_to_le16(0xffff);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message_silent(bp, &req, sizeof(req),
+	rc = _hwrm_send_message_silent(bp, &req, माप(req),
 				       HWRM_CMD_TIMEOUT);
-	if (rc)
-		goto hwrm_func_resc_qcaps_exit;
+	अगर (rc)
+		जाओ hwrm_func_resc_qcaps_निकास;
 
-	hw_resc->max_tx_sch_inputs = le16_to_cpu(resp->max_tx_scheduler_inputs);
-	if (!all)
-		goto hwrm_func_resc_qcaps_exit;
+	hw_resc->max_tx_sch_inमाला_दो = le16_to_cpu(resp->max_tx_scheduler_inमाला_दो);
+	अगर (!all)
+		जाओ hwrm_func_resc_qcaps_निकास;
 
 	hw_resc->min_rsscos_ctxs = le16_to_cpu(resp->min_rsscos_ctx);
 	hw_resc->max_rsscos_ctxs = le16_to_cpu(resp->max_rsscos_ctx);
@@ -7371,66 +7372,66 @@ int bnxt_hwrm_func_resc_qcaps(struct bnxt *bp, bool all)
 	hw_resc->min_stat_ctxs = le16_to_cpu(resp->min_stat_ctx);
 	hw_resc->max_stat_ctxs = le16_to_cpu(resp->max_stat_ctx);
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 		u16 max_msix = le16_to_cpu(resp->max_msix);
 
 		hw_resc->max_nqs = max_msix;
 		hw_resc->max_hw_ring_grps = hw_resc->max_rx_rings;
-	}
+	पूर्ण
 
-	if (BNXT_PF(bp)) {
-		struct bnxt_pf_info *pf = &bp->pf;
+	अगर (BNXT_PF(bp)) अणु
+		काष्ठा bnxt_pf_info *pf = &bp->pf;
 
 		pf->vf_resv_strategy =
 			le16_to_cpu(resp->vf_reservation_strategy);
-		if (pf->vf_resv_strategy > BNXT_VF_RESV_STRATEGY_MINIMAL_STATIC)
+		अगर (pf->vf_resv_strategy > BNXT_VF_RESV_STRATEGY_MINIMAL_STATIC)
 			pf->vf_resv_strategy = BNXT_VF_RESV_STRATEGY_MAXIMAL;
-	}
-hwrm_func_resc_qcaps_exit:
+	पूर्ण
+hwrm_func_resc_qcaps_निकास:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int __bnxt_hwrm_func_qcaps(struct bnxt *bp)
-{
-	int rc = 0;
-	struct hwrm_func_qcaps_input req = {0};
-	struct hwrm_func_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
-	struct bnxt_hw_resc *hw_resc = &bp->hw_resc;
+अटल पूर्णांक __bnxt_hwrm_func_qcaps(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा hwrm_func_qcaps_input req = अणु0पूर्ण;
+	काष्ठा hwrm_func_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा bnxt_hw_resc *hw_resc = &bp->hw_resc;
 	u32 flags, flags_ext;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_QCAPS, -1, -1);
 	req.fid = cpu_to_le16(0xffff);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
-		goto hwrm_func_qcaps_exit;
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
+		जाओ hwrm_func_qcaps_निकास;
 
 	flags = le32_to_cpu(resp->flags);
-	if (flags & FUNC_QCAPS_RESP_FLAGS_ROCE_V1_SUPPORTED)
+	अगर (flags & FUNC_QCAPS_RESP_FLAGS_ROCE_V1_SUPPORTED)
 		bp->flags |= BNXT_FLAG_ROCEV1_CAP;
-	if (flags & FUNC_QCAPS_RESP_FLAGS_ROCE_V2_SUPPORTED)
+	अगर (flags & FUNC_QCAPS_RESP_FLAGS_ROCE_V2_SUPPORTED)
 		bp->flags |= BNXT_FLAG_ROCEV2_CAP;
-	if (flags & FUNC_QCAPS_RESP_FLAGS_PCIE_STATS_SUPPORTED)
+	अगर (flags & FUNC_QCAPS_RESP_FLAGS_PCIE_STATS_SUPPORTED)
 		bp->fw_cap |= BNXT_FW_CAP_PCIE_STATS_SUPPORTED;
-	if (flags & FUNC_QCAPS_RESP_FLAGS_HOT_RESET_CAPABLE)
+	अगर (flags & FUNC_QCAPS_RESP_FLAGS_HOT_RESET_CAPABLE)
 		bp->fw_cap |= BNXT_FW_CAP_HOT_RESET;
-	if (flags & FUNC_QCAPS_RESP_FLAGS_EXT_STATS_SUPPORTED)
+	अगर (flags & FUNC_QCAPS_RESP_FLAGS_EXT_STATS_SUPPORTED)
 		bp->fw_cap |= BNXT_FW_CAP_EXT_STATS_SUPPORTED;
-	if (flags &  FUNC_QCAPS_RESP_FLAGS_ERROR_RECOVERY_CAPABLE)
+	अगर (flags &  FUNC_QCAPS_RESP_FLAGS_ERROR_RECOVERY_CAPABLE)
 		bp->fw_cap |= BNXT_FW_CAP_ERROR_RECOVERY;
-	if (flags & FUNC_QCAPS_RESP_FLAGS_ERR_RECOVER_RELOAD)
+	अगर (flags & FUNC_QCAPS_RESP_FLAGS_ERR_RECOVER_RELOAD)
 		bp->fw_cap |= BNXT_FW_CAP_ERR_RECOVER_RELOAD;
-	if (!(flags & FUNC_QCAPS_RESP_FLAGS_VLAN_ACCELERATION_TX_DISABLED))
+	अगर (!(flags & FUNC_QCAPS_RESP_FLAGS_VLAN_ACCELERATION_TX_DISABLED))
 		bp->fw_cap |= BNXT_FW_CAP_VLAN_TX_INSERT;
 
 	flags_ext = le32_to_cpu(resp->flags_ext);
-	if (flags_ext & FUNC_QCAPS_RESP_FLAGS_EXT_EXT_HW_STATS_SUPPORTED)
+	अगर (flags_ext & FUNC_QCAPS_RESP_FLAGS_EXT_EXT_HW_STATS_SUPPORTED)
 		bp->fw_cap |= BNXT_FW_CAP_EXT_HW_STATS_SUPPORTED;
 
 	bp->tx_push_thresh = 0;
-	if ((flags & FUNC_QCAPS_RESP_FLAGS_PUSH_MODE_SUPPORTED) &&
+	अगर ((flags & FUNC_QCAPS_RESP_FLAGS_PUSH_MODE_SUPPORTED) &&
 	    BNXT_FW_MAJ(bp) > 217)
 		bp->tx_push_thresh = BNXT_TX_PUSH_THRESH;
 
@@ -7439,18 +7440,18 @@ static int __bnxt_hwrm_func_qcaps(struct bnxt *bp)
 	hw_resc->max_tx_rings = le16_to_cpu(resp->max_tx_rings);
 	hw_resc->max_rx_rings = le16_to_cpu(resp->max_rx_rings);
 	hw_resc->max_hw_ring_grps = le32_to_cpu(resp->max_hw_ring_grps);
-	if (!hw_resc->max_hw_ring_grps)
+	अगर (!hw_resc->max_hw_ring_grps)
 		hw_resc->max_hw_ring_grps = hw_resc->max_tx_rings;
 	hw_resc->max_l2_ctxs = le16_to_cpu(resp->max_l2_ctxs);
 	hw_resc->max_vnics = le16_to_cpu(resp->max_vnics);
 	hw_resc->max_stat_ctxs = le16_to_cpu(resp->max_stat_ctx);
 
-	if (BNXT_PF(bp)) {
-		struct bnxt_pf_info *pf = &bp->pf;
+	अगर (BNXT_PF(bp)) अणु
+		काष्ठा bnxt_pf_info *pf = &bp->pf;
 
 		pf->fw_fid = le16_to_cpu(resp->fid);
 		pf->port_id = le16_to_cpu(resp->port_id);
-		memcpy(pf->mac_addr, resp->mac_address, ETH_ALEN);
+		स_नकल(pf->mac_addr, resp->mac_address, ETH_ALEN);
 		pf->first_vf_id = le16_to_cpu(resp->first_vf_id);
 		pf->max_vfs = le16_to_cpu(resp->max_vfs);
 		pf->max_encap_records = le32_to_cpu(resp->max_encap_records);
@@ -7460,242 +7461,242 @@ static int __bnxt_hwrm_func_qcaps(struct bnxt *bp)
 		pf->max_rx_em_flows = le32_to_cpu(resp->max_rx_em_flows);
 		pf->max_rx_wm_flows = le32_to_cpu(resp->max_rx_wm_flows);
 		bp->flags &= ~BNXT_FLAG_WOL_CAP;
-		if (flags & FUNC_QCAPS_RESP_FLAGS_WOL_MAGICPKT_SUPPORTED)
+		अगर (flags & FUNC_QCAPS_RESP_FLAGS_WOL_MAGICPKT_SUPPORTED)
 			bp->flags |= BNXT_FLAG_WOL_CAP;
-	} else {
-#ifdef CONFIG_BNXT_SRIOV
-		struct bnxt_vf_info *vf = &bp->vf;
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_BNXT_SRIOV
+		काष्ठा bnxt_vf_info *vf = &bp->vf;
 
 		vf->fw_fid = le16_to_cpu(resp->fid);
-		memcpy(vf->mac_addr, resp->mac_address, ETH_ALEN);
-#endif
-	}
+		स_नकल(vf->mac_addr, resp->mac_address, ETH_ALEN);
+#पूर्ण_अगर
+	पूर्ण
 
-hwrm_func_qcaps_exit:
+hwrm_func_qcaps_निकास:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_queue_qportcfg(struct bnxt *bp);
+अटल पूर्णांक bnxt_hwrm_queue_qportcfg(काष्ठा bnxt *bp);
 
-static int bnxt_hwrm_func_qcaps(struct bnxt *bp)
-{
-	int rc;
+अटल पूर्णांक bnxt_hwrm_func_qcaps(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 
 	rc = __bnxt_hwrm_func_qcaps(bp);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	rc = bnxt_hwrm_queue_qportcfg(bp);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm query qportcfg failure rc: %d\n", rc);
-		return rc;
-	}
-	if (bp->hwrm_spec_code >= 0x10803) {
+		वापस rc;
+	पूर्ण
+	अगर (bp->hwrm_spec_code >= 0x10803) अणु
 		rc = bnxt_alloc_ctx_mem(bp);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 		rc = bnxt_hwrm_func_resc_qcaps(bp, true);
-		if (!rc)
+		अगर (!rc)
 			bp->fw_cap |= BNXT_FW_CAP_NEW_RM;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bnxt_hwrm_cfa_adv_flow_mgnt_qcaps(struct bnxt *bp)
-{
-	struct hwrm_cfa_adv_flow_mgnt_qcaps_input req = {0};
-	struct hwrm_cfa_adv_flow_mgnt_qcaps_output *resp;
-	int rc = 0;
+अटल पूर्णांक bnxt_hwrm_cfa_adv_flow_mgnt_qcaps(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_cfa_adv_flow_mgnt_qcaps_input req = अणु0पूर्ण;
+	काष्ठा hwrm_cfa_adv_flow_mgnt_qcaps_output *resp;
+	पूर्णांक rc = 0;
 	u32 flags;
 
-	if (!(bp->fw_cap & BNXT_FW_CAP_CFA_ADV_FLOW))
-		return 0;
+	अगर (!(bp->fw_cap & BNXT_FW_CAP_CFA_ADV_FLOW))
+		वापस 0;
 
 	resp = bp->hwrm_cmd_resp_addr;
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_CFA_ADV_FLOW_MGNT_QCAPS, -1, -1);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
-		goto hwrm_cfa_adv_qcaps_exit;
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
+		जाओ hwrm_cfa_adv_qcaps_निकास;
 
 	flags = le32_to_cpu(resp->flags);
-	if (flags &
+	अगर (flags &
 	    CFA_ADV_FLOW_MGNT_QCAPS_RESP_FLAGS_RFS_RING_TBL_IDX_V2_SUPPORTED)
 		bp->fw_cap |= BNXT_FW_CAP_CFA_RFS_RING_TBL_IDX_V2;
 
-hwrm_cfa_adv_qcaps_exit:
+hwrm_cfa_adv_qcaps_निकास:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int __bnxt_alloc_fw_health(struct bnxt *bp)
-{
-	if (bp->fw_health)
-		return 0;
+अटल पूर्णांक __bnxt_alloc_fw_health(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->fw_health)
+		वापस 0;
 
-	bp->fw_health = kzalloc(sizeof(*bp->fw_health), GFP_KERNEL);
-	if (!bp->fw_health)
-		return -ENOMEM;
+	bp->fw_health = kzalloc(माप(*bp->fw_health), GFP_KERNEL);
+	अगर (!bp->fw_health)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnxt_alloc_fw_health(struct bnxt *bp)
-{
-	int rc;
+अटल पूर्णांक bnxt_alloc_fw_health(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 
-	if (!(bp->fw_cap & BNXT_FW_CAP_HOT_RESET) &&
+	अगर (!(bp->fw_cap & BNXT_FW_CAP_HOT_RESET) &&
 	    !(bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY))
-		return 0;
+		वापस 0;
 
 	rc = __bnxt_alloc_fw_health(bp);
-	if (rc) {
+	अगर (rc) अणु
 		bp->fw_cap &= ~BNXT_FW_CAP_HOT_RESET;
 		bp->fw_cap &= ~BNXT_FW_CAP_ERROR_RECOVERY;
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __bnxt_map_fw_health_reg(struct bnxt *bp, u32 reg)
-{
-	writel(reg & BNXT_GRC_BASE_MASK, bp->bar0 +
+अटल व्योम __bnxt_map_fw_health_reg(काष्ठा bnxt *bp, u32 reg)
+अणु
+	ग_लिखोl(reg & BNXT_GRC_BASE_MASK, bp->bar0 +
 					 BNXT_GRCPF_REG_WINDOW_BASE_OUT +
 					 BNXT_FW_HEALTH_WIN_MAP_OFF);
-}
+पूर्ण
 
-bool bnxt_is_fw_healthy(struct bnxt *bp)
-{
-	if (bp->fw_health && bp->fw_health->status_reliable) {
+bool bnxt_is_fw_healthy(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->fw_health && bp->fw_health->status_reliable) अणु
 		u32 fw_status;
 
-		fw_status = bnxt_fw_health_readl(bp, BNXT_FW_HEALTH_REG);
-		if (fw_status && !BNXT_FW_IS_HEALTHY(fw_status))
-			return false;
-	}
+		fw_status = bnxt_fw_health_पढ़ोl(bp, BNXT_FW_HEALTH_REG);
+		अगर (fw_status && !BNXT_FW_IS_HEALTHY(fw_status))
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void bnxt_inv_fw_health_reg(struct bnxt *bp)
-{
-	struct bnxt_fw_health *fw_health = bp->fw_health;
+अटल व्योम bnxt_inv_fw_health_reg(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
 	u32 reg_type;
 
-	if (!fw_health || !fw_health->status_reliable)
-		return;
+	अगर (!fw_health || !fw_health->status_reliable)
+		वापस;
 
 	reg_type = BNXT_FW_HEALTH_REG_TYPE(fw_health->regs[BNXT_FW_HEALTH_REG]);
-	if (reg_type == BNXT_FW_HEALTH_REG_TYPE_GRC)
+	अगर (reg_type == BNXT_FW_HEALTH_REG_TYPE_GRC)
 		fw_health->status_reliable = false;
-}
+पूर्ण
 
-static void bnxt_try_map_fw_health_reg(struct bnxt *bp)
-{
-	void __iomem *hs;
+अटल व्योम bnxt_try_map_fw_health_reg(काष्ठा bnxt *bp)
+अणु
+	व्योम __iomem *hs;
 	u32 status_loc;
 	u32 reg_type;
 	u32 sig;
 
-	if (bp->fw_health)
+	अगर (bp->fw_health)
 		bp->fw_health->status_reliable = false;
 
 	__bnxt_map_fw_health_reg(bp, HCOMM_STATUS_STRUCT_LOC);
 	hs = bp->bar0 + BNXT_FW_HEALTH_WIN_OFF(HCOMM_STATUS_STRUCT_LOC);
 
-	sig = readl(hs + offsetof(struct hcomm_status, sig_ver));
-	if ((sig & HCOMM_STATUS_SIGNATURE_MASK) != HCOMM_STATUS_SIGNATURE_VAL) {
-		if (!bp->chip_num) {
+	sig = पढ़ोl(hs + दुरत्व(काष्ठा hcomm_status, sig_ver));
+	अगर ((sig & HCOMM_STATUS_SIGNATURE_MASK) != HCOMM_STATUS_SIGNATURE_VAL) अणु
+		अगर (!bp->chip_num) अणु
 			__bnxt_map_fw_health_reg(bp, BNXT_GRC_REG_BASE);
-			bp->chip_num = readl(bp->bar0 +
+			bp->chip_num = पढ़ोl(bp->bar0 +
 					     BNXT_FW_HEALTH_WIN_BASE +
 					     BNXT_GRC_REG_CHIP_NUM);
-		}
-		if (!BNXT_CHIP_P5(bp))
-			return;
+		पूर्ण
+		अगर (!BNXT_CHIP_P5(bp))
+			वापस;
 
 		status_loc = BNXT_GRC_REG_STATUS_P5 |
 			     BNXT_FW_HEALTH_REG_TYPE_BAR0;
-	} else {
-		status_loc = readl(hs + offsetof(struct hcomm_status,
+	पूर्ण अन्यथा अणु
+		status_loc = पढ़ोl(hs + दुरत्व(काष्ठा hcomm_status,
 						 fw_status_loc));
-	}
+	पूर्ण
 
-	if (__bnxt_alloc_fw_health(bp)) {
+	अगर (__bnxt_alloc_fw_health(bp)) अणु
 		netdev_warn(bp->dev, "no memory for firmware status checks\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bp->fw_health->regs[BNXT_FW_HEALTH_REG] = status_loc;
 	reg_type = BNXT_FW_HEALTH_REG_TYPE(status_loc);
-	if (reg_type == BNXT_FW_HEALTH_REG_TYPE_GRC) {
+	अगर (reg_type == BNXT_FW_HEALTH_REG_TYPE_GRC) अणु
 		__bnxt_map_fw_health_reg(bp, status_loc);
 		bp->fw_health->mapped_regs[BNXT_FW_HEALTH_REG] =
 			BNXT_FW_HEALTH_WIN_OFF(status_loc);
-	}
+	पूर्ण
 
 	bp->fw_health->status_reliable = true;
-}
+पूर्ण
 
-static int bnxt_map_fw_health_regs(struct bnxt *bp)
-{
-	struct bnxt_fw_health *fw_health = bp->fw_health;
+अटल पूर्णांक bnxt_map_fw_health_regs(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
 	u32 reg_base = 0xffffffff;
-	int i;
+	पूर्णांक i;
 
 	bp->fw_health->status_reliable = false;
-	/* Only pre-map the monitoring GRC registers using window 3 */
-	for (i = 0; i < 4; i++) {
+	/* Only pre-map the monitoring GRC रेजिस्टरs using winकरोw 3 */
+	क्रम (i = 0; i < 4; i++) अणु
 		u32 reg = fw_health->regs[i];
 
-		if (BNXT_FW_HEALTH_REG_TYPE(reg) != BNXT_FW_HEALTH_REG_TYPE_GRC)
-			continue;
-		if (reg_base == 0xffffffff)
+		अगर (BNXT_FW_HEALTH_REG_TYPE(reg) != BNXT_FW_HEALTH_REG_TYPE_GRC)
+			जारी;
+		अगर (reg_base == 0xffffffff)
 			reg_base = reg & BNXT_GRC_BASE_MASK;
-		if ((reg & BNXT_GRC_BASE_MASK) != reg_base)
-			return -ERANGE;
+		अगर ((reg & BNXT_GRC_BASE_MASK) != reg_base)
+			वापस -दुस्फल;
 		fw_health->mapped_regs[i] = BNXT_FW_HEALTH_WIN_OFF(reg);
-	}
+	पूर्ण
 	bp->fw_health->status_reliable = true;
-	if (reg_base == 0xffffffff)
-		return 0;
+	अगर (reg_base == 0xffffffff)
+		वापस 0;
 
 	__bnxt_map_fw_health_reg(bp, reg_base);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnxt_hwrm_error_recovery_qcfg(struct bnxt *bp)
-{
-	struct hwrm_error_recovery_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
-	struct bnxt_fw_health *fw_health = bp->fw_health;
-	struct hwrm_error_recovery_qcfg_input req = {0};
-	int rc, i;
+अटल पूर्णांक bnxt_hwrm_error_recovery_qcfg(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_error_recovery_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
+	काष्ठा hwrm_error_recovery_qcfg_input req = अणु0पूर्ण;
+	पूर्णांक rc, i;
 
-	if (!(bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY))
-		return 0;
+	अगर (!(bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY))
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_ERROR_RECOVERY_QCFG, -1, -1);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
-		goto err_recovery_out;
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
+		जाओ err_recovery_out;
 	fw_health->flags = le32_to_cpu(resp->flags);
-	if ((fw_health->flags & ERROR_RECOVERY_QCFG_RESP_FLAGS_CO_CPU) &&
-	    !(bp->fw_cap & BNXT_FW_CAP_KONG_MB_CHNL)) {
+	अगर ((fw_health->flags & ERROR_RECOVERY_QCFG_RESP_FLAGS_CO_CPU) &&
+	    !(bp->fw_cap & BNXT_FW_CAP_KONG_MB_CHNL)) अणु
 		rc = -EINVAL;
-		goto err_recovery_out;
-	}
+		जाओ err_recovery_out;
+	पूर्ण
 	fw_health->polling_dsecs = le32_to_cpu(resp->driver_polling_freq);
-	fw_health->master_func_wait_dsecs =
-		le32_to_cpu(resp->master_func_wait_period);
-	fw_health->normal_func_wait_dsecs =
-		le32_to_cpu(resp->normal_func_wait_period);
-	fw_health->post_reset_wait_dsecs =
-		le32_to_cpu(resp->master_func_wait_period_after_reset);
-	fw_health->post_reset_max_wait_dsecs =
-		le32_to_cpu(resp->max_bailout_time_after_reset);
+	fw_health->master_func_रुको_dsecs =
+		le32_to_cpu(resp->master_func_रुको_period);
+	fw_health->normal_func_रुको_dsecs =
+		le32_to_cpu(resp->normal_func_रुको_period);
+	fw_health->post_reset_रुको_dsecs =
+		le32_to_cpu(resp->master_func_रुको_period_after_reset);
+	fw_health->post_reset_max_रुको_dsecs =
+		le32_to_cpu(resp->max_bailout_समय_after_reset);
 	fw_health->regs[BNXT_FW_HEALTH_REG] =
 		le32_to_cpu(resp->fw_health_status_reg);
 	fw_health->regs[BNXT_FW_HEARTBEAT_REG] =
@@ -7707,330 +7708,330 @@ static int bnxt_hwrm_error_recovery_qcfg(struct bnxt *bp)
 	fw_health->fw_reset_inprog_reg_mask =
 		le32_to_cpu(resp->reset_inprogress_reg_mask);
 	fw_health->fw_reset_seq_cnt = resp->reg_array_cnt;
-	if (fw_health->fw_reset_seq_cnt >= 16) {
+	अगर (fw_health->fw_reset_seq_cnt >= 16) अणु
 		rc = -EINVAL;
-		goto err_recovery_out;
-	}
-	for (i = 0; i < fw_health->fw_reset_seq_cnt; i++) {
+		जाओ err_recovery_out;
+	पूर्ण
+	क्रम (i = 0; i < fw_health->fw_reset_seq_cnt; i++) अणु
 		fw_health->fw_reset_seq_regs[i] =
 			le32_to_cpu(resp->reset_reg[i]);
 		fw_health->fw_reset_seq_vals[i] =
 			le32_to_cpu(resp->reset_reg_val[i]);
 		fw_health->fw_reset_seq_delay_msec[i] =
 			resp->delay_after_reset[i];
-	}
+	पूर्ण
 err_recovery_out:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	if (!rc)
+	अगर (!rc)
 		rc = bnxt_map_fw_health_regs(bp);
-	if (rc)
+	अगर (rc)
 		bp->fw_cap &= ~BNXT_FW_CAP_ERROR_RECOVERY;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_func_reset(struct bnxt *bp)
-{
-	struct hwrm_func_reset_input req = {0};
+अटल पूर्णांक bnxt_hwrm_func_reset(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_func_reset_input req = अणु0पूर्ण;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_RESET, -1, -1);
 	req.enables = 0;
 
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_RESET_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_RESET_TIMEOUT);
+पूर्ण
 
-static void bnxt_nvm_cfg_ver_get(struct bnxt *bp)
-{
-	struct hwrm_nvm_get_dev_info_output nvm_info;
+अटल व्योम bnxt_nvm_cfg_ver_get(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_nvm_get_dev_info_output nvm_info;
 
-	if (!bnxt_hwrm_nvm_get_dev_info(bp, &nvm_info))
-		snprintf(bp->nvm_cfg_ver, FW_VER_STR_LEN, "%d.%d.%d",
+	अगर (!bnxt_hwrm_nvm_get_dev_info(bp, &nvm_info))
+		snम_लिखो(bp->nvm_cfg_ver, FW_VER_STR_LEN, "%d.%d.%d",
 			 nvm_info.nvm_cfg_ver_maj, nvm_info.nvm_cfg_ver_min,
 			 nvm_info.nvm_cfg_ver_upd);
-}
+पूर्ण
 
-static int bnxt_hwrm_queue_qportcfg(struct bnxt *bp)
-{
-	int rc = 0;
-	struct hwrm_queue_qportcfg_input req = {0};
-	struct hwrm_queue_qportcfg_output *resp = bp->hwrm_cmd_resp_addr;
+अटल पूर्णांक bnxt_hwrm_queue_qportcfg(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा hwrm_queue_qportcfg_input req = अणु0पूर्ण;
+	काष्ठा hwrm_queue_qportcfg_output *resp = bp->hwrm_cmd_resp_addr;
 	u8 i, j, *qptr;
 	bool no_rdma;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_QUEUE_QPORTCFG, -1, -1);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
-		goto qportcfg_exit;
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
+		जाओ qportcfg_निकास;
 
-	if (!resp->max_configurable_queues) {
+	अगर (!resp->max_configurable_queues) अणु
 		rc = -EINVAL;
-		goto qportcfg_exit;
-	}
+		जाओ qportcfg_निकास;
+	पूर्ण
 	bp->max_tc = resp->max_configurable_queues;
 	bp->max_lltc = resp->max_configurable_lossless_queues;
-	if (bp->max_tc > BNXT_MAX_QUEUE)
+	अगर (bp->max_tc > BNXT_MAX_QUEUE)
 		bp->max_tc = BNXT_MAX_QUEUE;
 
 	no_rdma = !(bp->flags & BNXT_FLAG_ROCE_CAP);
 	qptr = &resp->queue_id0;
-	for (i = 0, j = 0; i < bp->max_tc; i++) {
+	क्रम (i = 0, j = 0; i < bp->max_tc; i++) अणु
 		bp->q_info[j].queue_id = *qptr;
 		bp->q_ids[i] = *qptr++;
 		bp->q_info[j].queue_profile = *qptr++;
 		bp->tc_to_qidx[j] = j;
-		if (!BNXT_CNPQ(bp->q_info[j].queue_profile) ||
+		अगर (!BNXT_CNPQ(bp->q_info[j].queue_profile) ||
 		    (no_rdma && BNXT_PF(bp)))
 			j++;
-	}
+	पूर्ण
 	bp->max_q = bp->max_tc;
 	bp->max_tc = max_t(u8, j, 1);
 
-	if (resp->queue_cfg_info & QUEUE_QPORTCFG_RESP_QUEUE_CFG_INFO_ASYM_CFG)
+	अगर (resp->queue_cfg_info & QUEUE_QPORTCFG_RESP_QUEUE_CFG_INFO_ASYM_CFG)
 		bp->max_tc = 1;
 
-	if (bp->max_lltc > bp->max_tc)
+	अगर (bp->max_lltc > bp->max_tc)
 		bp->max_lltc = bp->max_tc;
 
-qportcfg_exit:
+qportcfg_निकास:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int __bnxt_hwrm_ver_get(struct bnxt *bp, bool silent)
-{
-	struct hwrm_ver_get_input req = {0};
-	int rc;
+अटल पूर्णांक __bnxt_hwrm_ver_get(काष्ठा bnxt *bp, bool silent)
+अणु
+	काष्ठा hwrm_ver_get_input req = अणु0पूर्ण;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_VER_GET, -1, -1);
-	req.hwrm_intf_maj = HWRM_VERSION_MAJOR;
-	req.hwrm_intf_min = HWRM_VERSION_MINOR;
-	req.hwrm_intf_upd = HWRM_VERSION_UPDATE;
+	req.hwrm_पूर्णांकf_maj = HWRM_VERSION_MAJOR;
+	req.hwrm_पूर्णांकf_min = HWRM_VERSION_MINOR;
+	req.hwrm_पूर्णांकf_upd = HWRM_VERSION_UPDATE;
 
-	rc = bnxt_hwrm_do_send_msg(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT,
+	rc = bnxt_hwrm_करो_send_msg(bp, &req, माप(req), HWRM_CMD_TIMEOUT,
 				   silent);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_ver_get(struct bnxt *bp)
-{
-	struct hwrm_ver_get_output *resp = bp->hwrm_cmd_resp_addr;
+अटल पूर्णांक bnxt_hwrm_ver_get(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_ver_get_output *resp = bp->hwrm_cmd_resp_addr;
 	u16 fw_maj, fw_min, fw_bld, fw_rsv;
 	u32 dev_caps_cfg, hwrm_ver;
-	int rc, len;
+	पूर्णांक rc, len;
 
 	bp->hwrm_max_req_len = HWRM_MAX_REQ_LEN;
 	mutex_lock(&bp->hwrm_cmd_lock);
 	rc = __bnxt_hwrm_ver_get(bp, false);
-	if (rc)
-		goto hwrm_ver_get_exit;
+	अगर (rc)
+		जाओ hwrm_ver_get_निकास;
 
-	memcpy(&bp->ver_resp, resp, sizeof(struct hwrm_ver_get_output));
+	स_नकल(&bp->ver_resp, resp, माप(काष्ठा hwrm_ver_get_output));
 
-	bp->hwrm_spec_code = resp->hwrm_intf_maj_8b << 16 |
-			     resp->hwrm_intf_min_8b << 8 |
-			     resp->hwrm_intf_upd_8b;
-	if (resp->hwrm_intf_maj_8b < 1) {
+	bp->hwrm_spec_code = resp->hwrm_पूर्णांकf_maj_8b << 16 |
+			     resp->hwrm_पूर्णांकf_min_8b << 8 |
+			     resp->hwrm_पूर्णांकf_upd_8b;
+	अगर (resp->hwrm_पूर्णांकf_maj_8b < 1) अणु
 		netdev_warn(bp->dev, "HWRM interface %d.%d.%d is older than 1.0.0.\n",
-			    resp->hwrm_intf_maj_8b, resp->hwrm_intf_min_8b,
-			    resp->hwrm_intf_upd_8b);
+			    resp->hwrm_पूर्णांकf_maj_8b, resp->hwrm_पूर्णांकf_min_8b,
+			    resp->hwrm_पूर्णांकf_upd_8b);
 		netdev_warn(bp->dev, "Please update firmware with HWRM interface 1.0.0 or newer.\n");
-	}
+	पूर्ण
 
 	hwrm_ver = HWRM_VERSION_MAJOR << 16 | HWRM_VERSION_MINOR << 8 |
 			HWRM_VERSION_UPDATE;
 
-	if (bp->hwrm_spec_code > hwrm_ver)
-		snprintf(bp->hwrm_ver_supp, FW_VER_STR_LEN, "%d.%d.%d",
+	अगर (bp->hwrm_spec_code > hwrm_ver)
+		snम_लिखो(bp->hwrm_ver_supp, FW_VER_STR_LEN, "%d.%d.%d",
 			 HWRM_VERSION_MAJOR, HWRM_VERSION_MINOR,
 			 HWRM_VERSION_UPDATE);
-	else
-		snprintf(bp->hwrm_ver_supp, FW_VER_STR_LEN, "%d.%d.%d",
-			 resp->hwrm_intf_maj_8b, resp->hwrm_intf_min_8b,
-			 resp->hwrm_intf_upd_8b);
+	अन्यथा
+		snम_लिखो(bp->hwrm_ver_supp, FW_VER_STR_LEN, "%d.%d.%d",
+			 resp->hwrm_पूर्णांकf_maj_8b, resp->hwrm_पूर्णांकf_min_8b,
+			 resp->hwrm_पूर्णांकf_upd_8b);
 
 	fw_maj = le16_to_cpu(resp->hwrm_fw_major);
-	if (bp->hwrm_spec_code > 0x10803 && fw_maj) {
+	अगर (bp->hwrm_spec_code > 0x10803 && fw_maj) अणु
 		fw_min = le16_to_cpu(resp->hwrm_fw_minor);
 		fw_bld = le16_to_cpu(resp->hwrm_fw_build);
 		fw_rsv = le16_to_cpu(resp->hwrm_fw_patch);
 		len = FW_VER_STR_LEN;
-	} else {
+	पूर्ण अन्यथा अणु
 		fw_maj = resp->hwrm_fw_maj_8b;
 		fw_min = resp->hwrm_fw_min_8b;
 		fw_bld = resp->hwrm_fw_bld_8b;
 		fw_rsv = resp->hwrm_fw_rsvd_8b;
 		len = BC_HWRM_STR_LEN;
-	}
+	पूर्ण
 	bp->fw_ver_code = BNXT_FW_VER_CODE(fw_maj, fw_min, fw_bld, fw_rsv);
-	snprintf(bp->fw_ver_str, len, "%d.%d.%d.%d", fw_maj, fw_min, fw_bld,
+	snम_लिखो(bp->fw_ver_str, len, "%d.%d.%d.%d", fw_maj, fw_min, fw_bld,
 		 fw_rsv);
 
-	if (strlen(resp->active_pkg_name)) {
-		int fw_ver_len = strlen(bp->fw_ver_str);
+	अगर (म_माप(resp->active_pkg_name)) अणु
+		पूर्णांक fw_ver_len = म_माप(bp->fw_ver_str);
 
-		snprintf(bp->fw_ver_str + fw_ver_len,
+		snम_लिखो(bp->fw_ver_str + fw_ver_len,
 			 FW_VER_STR_LEN - fw_ver_len - 1, "/pkg %s",
 			 resp->active_pkg_name);
 		bp->fw_cap |= BNXT_FW_CAP_PKG_VER;
-	}
+	पूर्ण
 
-	bp->hwrm_cmd_timeout = le16_to_cpu(resp->def_req_timeout);
-	if (!bp->hwrm_cmd_timeout)
-		bp->hwrm_cmd_timeout = DFLT_HWRM_CMD_TIMEOUT;
+	bp->hwrm_cmd_समयout = le16_to_cpu(resp->def_req_समयout);
+	अगर (!bp->hwrm_cmd_समयout)
+		bp->hwrm_cmd_समयout = DFLT_HWRM_CMD_TIMEOUT;
 
-	if (resp->hwrm_intf_maj_8b >= 1) {
+	अगर (resp->hwrm_पूर्णांकf_maj_8b >= 1) अणु
 		bp->hwrm_max_req_len = le16_to_cpu(resp->max_req_win_len);
 		bp->hwrm_max_ext_req_len = le16_to_cpu(resp->max_ext_req_len);
-	}
-	if (bp->hwrm_max_ext_req_len < HWRM_MAX_REQ_LEN)
+	पूर्ण
+	अगर (bp->hwrm_max_ext_req_len < HWRM_MAX_REQ_LEN)
 		bp->hwrm_max_ext_req_len = HWRM_MAX_REQ_LEN;
 
 	bp->chip_num = le16_to_cpu(resp->chip_num);
 	bp->chip_rev = resp->chip_rev;
-	if (bp->chip_num == CHIP_NUM_58700 && !resp->chip_rev &&
+	अगर (bp->chip_num == CHIP_NUM_58700 && !resp->chip_rev &&
 	    !resp->chip_metal)
 		bp->flags |= BNXT_FLAG_CHIP_NITRO_A0;
 
 	dev_caps_cfg = le32_to_cpu(resp->dev_caps_cfg);
-	if ((dev_caps_cfg & VER_GET_RESP_DEV_CAPS_CFG_SHORT_CMD_SUPPORTED) &&
+	अगर ((dev_caps_cfg & VER_GET_RESP_DEV_CAPS_CFG_SHORT_CMD_SUPPORTED) &&
 	    (dev_caps_cfg & VER_GET_RESP_DEV_CAPS_CFG_SHORT_CMD_REQUIRED))
 		bp->fw_cap |= BNXT_FW_CAP_SHORT_CMD;
 
-	if (dev_caps_cfg & VER_GET_RESP_DEV_CAPS_CFG_KONG_MB_CHNL_SUPPORTED)
+	अगर (dev_caps_cfg & VER_GET_RESP_DEV_CAPS_CFG_KONG_MB_CHNL_SUPPORTED)
 		bp->fw_cap |= BNXT_FW_CAP_KONG_MB_CHNL;
 
-	if (dev_caps_cfg &
+	अगर (dev_caps_cfg &
 	    VER_GET_RESP_DEV_CAPS_CFG_FLOW_HANDLE_64BIT_SUPPORTED)
 		bp->fw_cap |= BNXT_FW_CAP_OVS_64BIT_HANDLE;
 
-	if (dev_caps_cfg &
+	अगर (dev_caps_cfg &
 	    VER_GET_RESP_DEV_CAPS_CFG_TRUSTED_VF_SUPPORTED)
 		bp->fw_cap |= BNXT_FW_CAP_TRUSTED_VF;
 
-	if (dev_caps_cfg &
+	अगर (dev_caps_cfg &
 	    VER_GET_RESP_DEV_CAPS_CFG_CFA_ADV_FLOW_MGNT_SUPPORTED)
 		bp->fw_cap |= BNXT_FW_CAP_CFA_ADV_FLOW;
 
-hwrm_ver_get_exit:
+hwrm_ver_get_निकास:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int bnxt_hwrm_fw_set_time(struct bnxt *bp)
-{
-	struct hwrm_fw_set_time_input req = {0};
-	struct tm tm;
-	time64_t now = ktime_get_real_seconds();
+पूर्णांक bnxt_hwrm_fw_set_समय(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_fw_set_समय_input req = अणु0पूर्ण;
+	काष्ठा पंचांग पंचांग;
+	समय64_t now = kसमय_get_real_seconds();
 
-	if ((BNXT_VF(bp) && bp->hwrm_spec_code < 0x10901) ||
+	अगर ((BNXT_VF(bp) && bp->hwrm_spec_code < 0x10901) ||
 	    bp->hwrm_spec_code < 0x10400)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	time64_to_tm(now, 0, &tm);
+	समय64_to_पंचांग(now, 0, &पंचांग);
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FW_SET_TIME, -1, -1);
-	req.year = cpu_to_le16(1900 + tm.tm_year);
-	req.month = 1 + tm.tm_mon;
-	req.day = tm.tm_mday;
-	req.hour = tm.tm_hour;
-	req.minute = tm.tm_min;
-	req.second = tm.tm_sec;
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	req.year = cpu_to_le16(1900 + पंचांग.पंचांग_year);
+	req.month = 1 + पंचांग.पंचांग_mon;
+	req.day = पंचांग.पंचांग_mday;
+	req.hour = पंचांग.पंचांग_hour;
+	req.minute = पंचांग.पंचांग_min;
+	req.second = पंचांग.पंचांग_sec;
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static void bnxt_add_one_ctr(u64 hw, u64 *sw, u64 mask)
-{
-	u64 sw_tmp;
+अटल व्योम bnxt_add_one_ctr(u64 hw, u64 *sw, u64 mask)
+अणु
+	u64 sw_पंचांगp;
 
 	hw &= mask;
-	sw_tmp = (*sw & ~mask) | hw;
-	if (hw < (*sw & mask))
-		sw_tmp += mask + 1;
-	WRITE_ONCE(*sw, sw_tmp);
-}
+	sw_पंचांगp = (*sw & ~mask) | hw;
+	अगर (hw < (*sw & mask))
+		sw_पंचांगp += mask + 1;
+	WRITE_ONCE(*sw, sw_पंचांगp);
+पूर्ण
 
-static void __bnxt_accumulate_stats(__le64 *hw_stats, u64 *sw_stats, u64 *masks,
-				    int count, bool ignore_zero)
-{
-	int i;
+अटल व्योम __bnxt_accumulate_stats(__le64 *hw_stats, u64 *sw_stats, u64 *masks,
+				    पूर्णांक count, bool ignore_zero)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		u64 hw = le64_to_cpu(READ_ONCE(hw_stats[i]));
 
-		if (ignore_zero && !hw)
-			continue;
+		अगर (ignore_zero && !hw)
+			जारी;
 
-		if (masks[i] == -1ULL)
+		अगर (masks[i] == -1ULL)
 			sw_stats[i] = hw;
-		else
+		अन्यथा
 			bnxt_add_one_ctr(hw, &sw_stats[i], masks[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnxt_accumulate_stats(struct bnxt_stats_mem *stats)
-{
-	if (!stats->hw_stats)
-		return;
+अटल व्योम bnxt_accumulate_stats(काष्ठा bnxt_stats_mem *stats)
+अणु
+	अगर (!stats->hw_stats)
+		वापस;
 
 	__bnxt_accumulate_stats(stats->hw_stats, stats->sw_stats,
 				stats->hw_masks, stats->len / 8, false);
-}
+पूर्ण
 
-static void bnxt_accumulate_all_stats(struct bnxt *bp)
-{
-	struct bnxt_stats_mem *ring0_stats;
+अटल व्योम bnxt_accumulate_all_stats(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_stats_mem *ring0_stats;
 	bool ignore_zero = false;
-	int i;
+	पूर्णांक i;
 
-	/* Chip bug.  Counter intermittently becomes 0. */
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
+	/* Chip bug.  Counter पूर्णांकermittently becomes 0. */
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 		ignore_zero = true;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr;
-		struct bnxt_stats_mem *stats;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr;
+		काष्ठा bnxt_stats_mem *stats;
 
 		cpr = &bnapi->cp_ring;
 		stats = &cpr->stats;
-		if (!i)
+		अगर (!i)
 			ring0_stats = stats;
 		__bnxt_accumulate_stats(stats->hw_stats, stats->sw_stats,
 					ring0_stats->hw_masks,
 					ring0_stats->len / 8, ignore_zero);
-	}
-	if (bp->flags & BNXT_FLAG_PORT_STATS) {
-		struct bnxt_stats_mem *stats = &bp->port_stats;
+	पूर्ण
+	अगर (bp->flags & BNXT_FLAG_PORT_STATS) अणु
+		काष्ठा bnxt_stats_mem *stats = &bp->port_stats;
 		__le64 *hw_stats = stats->hw_stats;
 		u64 *sw_stats = stats->sw_stats;
 		u64 *masks = stats->hw_masks;
-		int cnt;
+		पूर्णांक cnt;
 
-		cnt = sizeof(struct rx_port_stats) / 8;
+		cnt = माप(काष्ठा rx_port_stats) / 8;
 		__bnxt_accumulate_stats(hw_stats, sw_stats, masks, cnt, false);
 
 		hw_stats += BNXT_TX_PORT_STATS_BYTE_OFFSET / 8;
 		sw_stats += BNXT_TX_PORT_STATS_BYTE_OFFSET / 8;
 		masks += BNXT_TX_PORT_STATS_BYTE_OFFSET / 8;
-		cnt = sizeof(struct tx_port_stats) / 8;
+		cnt = माप(काष्ठा tx_port_stats) / 8;
 		__bnxt_accumulate_stats(hw_stats, sw_stats, masks, cnt, false);
-	}
-	if (bp->flags & BNXT_FLAG_PORT_STATS_EXT) {
+	पूर्ण
+	अगर (bp->flags & BNXT_FLAG_PORT_STATS_EXT) अणु
 		bnxt_accumulate_stats(&bp->rx_port_stats_ext);
 		bnxt_accumulate_stats(&bp->tx_port_stats_ext);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnxt_hwrm_port_qstats(struct bnxt *bp, u8 flags)
-{
-	struct bnxt_pf_info *pf = &bp->pf;
-	struct hwrm_port_qstats_input req = {0};
+अटल पूर्णांक bnxt_hwrm_port_qstats(काष्ठा bnxt *bp, u8 flags)
+अणु
+	काष्ठा bnxt_pf_info *pf = &bp->pf;
+	काष्ठा hwrm_port_qstats_input req = अणु0पूर्ण;
 
-	if (!(bp->flags & BNXT_FLAG_PORT_STATS))
-		return 0;
+	अगर (!(bp->flags & BNXT_FLAG_PORT_STATS))
+		वापस 0;
 
-	if (flags && !(bp->fw_cap & BNXT_FW_CAP_EXT_HW_STATS_SUPPORTED))
-		return -EOPNOTSUPP;
+	अगर (flags && !(bp->fw_cap & BNXT_FW_CAP_EXT_HW_STATS_SUPPORTED))
+		वापस -EOPNOTSUPP;
 
 	req.flags = flags;
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_QSTATS, -1, -1);
@@ -8038,763 +8039,763 @@ static int bnxt_hwrm_port_qstats(struct bnxt *bp, u8 flags)
 	req.tx_stat_host_addr = cpu_to_le64(bp->port_stats.hw_stats_map +
 					    BNXT_TX_PORT_STATS_BYTE_OFFSET);
 	req.rx_stat_host_addr = cpu_to_le64(bp->port_stats.hw_stats_map);
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static int bnxt_hwrm_port_qstats_ext(struct bnxt *bp, u8 flags)
-{
-	struct hwrm_port_qstats_ext_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_queue_pri2cos_qcfg_input req2 = {0};
-	struct hwrm_port_qstats_ext_input req = {0};
-	struct bnxt_pf_info *pf = &bp->pf;
+अटल पूर्णांक bnxt_hwrm_port_qstats_ext(काष्ठा bnxt *bp, u8 flags)
+अणु
+	काष्ठा hwrm_port_qstats_ext_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_queue_pri2cos_qcfg_input req2 = अणु0पूर्ण;
+	काष्ठा hwrm_port_qstats_ext_input req = अणु0पूर्ण;
+	काष्ठा bnxt_pf_info *pf = &bp->pf;
 	u32 tx_stat_size;
-	int rc;
+	पूर्णांक rc;
 
-	if (!(bp->flags & BNXT_FLAG_PORT_STATS_EXT))
-		return 0;
+	अगर (!(bp->flags & BNXT_FLAG_PORT_STATS_EXT))
+		वापस 0;
 
-	if (flags && !(bp->fw_cap & BNXT_FW_CAP_EXT_HW_STATS_SUPPORTED))
-		return -EOPNOTSUPP;
+	अगर (flags && !(bp->fw_cap & BNXT_FW_CAP_EXT_HW_STATS_SUPPORTED))
+		वापस -EOPNOTSUPP;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_QSTATS_EXT, -1, -1);
 	req.flags = flags;
 	req.port_id = cpu_to_le16(pf->port_id);
-	req.rx_stat_size = cpu_to_le16(sizeof(struct rx_port_stats_ext));
+	req.rx_stat_size = cpu_to_le16(माप(काष्ठा rx_port_stats_ext));
 	req.rx_stat_host_addr = cpu_to_le64(bp->rx_port_stats_ext.hw_stats_map);
 	tx_stat_size = bp->tx_port_stats_ext.hw_stats ?
-		       sizeof(struct tx_port_stats_ext) : 0;
+		       माप(काष्ठा tx_port_stats_ext) : 0;
 	req.tx_stat_size = cpu_to_le16(tx_stat_size);
 	req.tx_stat_host_addr = cpu_to_le64(bp->tx_port_stats_ext.hw_stats_map);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
 		bp->fw_rx_stats_ext_size = le16_to_cpu(resp->rx_stat_size) / 8;
 		bp->fw_tx_stats_ext_size = tx_stat_size ?
 			le16_to_cpu(resp->tx_stat_size) / 8 : 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		bp->fw_rx_stats_ext_size = 0;
 		bp->fw_tx_stats_ext_size = 0;
-	}
-	if (flags)
-		goto qstats_done;
+	पूर्ण
+	अगर (flags)
+		जाओ qstats_करोne;
 
-	if (bp->fw_tx_stats_ext_size <=
-	    offsetof(struct tx_port_stats_ext, pfc_pri0_tx_duration_us) / 8) {
+	अगर (bp->fw_tx_stats_ext_size <=
+	    दुरत्व(काष्ठा tx_port_stats_ext, pfc_pri0_tx_duration_us) / 8) अणु
 		mutex_unlock(&bp->hwrm_cmd_lock);
 		bp->pri2cos_valid = 0;
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req2, HWRM_QUEUE_PRI2COS_QCFG, -1, -1);
 	req2.flags = cpu_to_le32(QUEUE_PRI2COS_QCFG_REQ_FLAGS_IVLAN);
 
-	rc = _hwrm_send_message(bp, &req2, sizeof(req2), HWRM_CMD_TIMEOUT);
-	if (!rc) {
-		struct hwrm_queue_pri2cos_qcfg_output *resp2;
+	rc = _hwrm_send_message(bp, &req2, माप(req2), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
+		काष्ठा hwrm_queue_pri2cos_qcfg_output *resp2;
 		u8 *pri2cos;
-		int i, j;
+		पूर्णांक i, j;
 
 		resp2 = bp->hwrm_cmd_resp_addr;
 		pri2cos = &resp2->pri0_cos_queue_id;
-		for (i = 0; i < 8; i++) {
+		क्रम (i = 0; i < 8; i++) अणु
 			u8 queue_id = pri2cos[i];
 			u8 queue_idx;
 
 			/* Per port queue IDs start from 0, 10, 20, etc */
 			queue_idx = queue_id % 10;
-			if (queue_idx > BNXT_MAX_QUEUE) {
+			अगर (queue_idx > BNXT_MAX_QUEUE) अणु
 				bp->pri2cos_valid = false;
-				goto qstats_done;
-			}
-			for (j = 0; j < bp->max_q; j++) {
-				if (bp->q_ids[j] == queue_id)
+				जाओ qstats_करोne;
+			पूर्ण
+			क्रम (j = 0; j < bp->max_q; j++) अणु
+				अगर (bp->q_ids[j] == queue_id)
 					bp->pri2cos_idx[i] = queue_idx;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		bp->pri2cos_valid = 1;
-	}
-qstats_done:
+	पूर्ण
+qstats_करोne:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void bnxt_hwrm_free_tunnel_ports(struct bnxt *bp)
-{
-	if (bp->vxlan_fw_dst_port_id != INVALID_HW_RING_ID)
-		bnxt_hwrm_tunnel_dst_port_free(
+अटल व्योम bnxt_hwrm_मुक्त_tunnel_ports(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->vxlan_fw_dst_port_id != INVALID_HW_RING_ID)
+		bnxt_hwrm_tunnel_dst_port_मुक्त(
 			bp, TUNNEL_DST_PORT_FREE_REQ_TUNNEL_TYPE_VXLAN);
-	if (bp->nge_fw_dst_port_id != INVALID_HW_RING_ID)
-		bnxt_hwrm_tunnel_dst_port_free(
+	अगर (bp->nge_fw_dst_port_id != INVALID_HW_RING_ID)
+		bnxt_hwrm_tunnel_dst_port_मुक्त(
 			bp, TUNNEL_DST_PORT_FREE_REQ_TUNNEL_TYPE_GENEVE);
-}
+पूर्ण
 
-static int bnxt_set_tpa(struct bnxt *bp, bool set_tpa)
-{
-	int rc, i;
+अटल पूर्णांक bnxt_set_tpa(काष्ठा bnxt *bp, bool set_tpa)
+अणु
+	पूर्णांक rc, i;
 	u32 tpa_flags = 0;
 
-	if (set_tpa)
+	अगर (set_tpa)
 		tpa_flags = bp->flags & BNXT_FLAG_TPA;
-	else if (BNXT_NO_FW_ACCESS(bp))
-		return 0;
-	for (i = 0; i < bp->nr_vnics; i++) {
+	अन्यथा अगर (BNXT_NO_FW_ACCESS(bp))
+		वापस 0;
+	क्रम (i = 0; i < bp->nr_vnics; i++) अणु
 		rc = bnxt_hwrm_vnic_set_tpa(bp, i, tpa_flags);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(bp->dev, "hwrm vnic set tpa failure rc for vnic %d: %x\n",
 				   i, rc);
-			return rc;
-		}
-	}
-	return 0;
-}
+			वापस rc;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bnxt_hwrm_clear_vnic_rss(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_hwrm_clear_vnic_rss(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < bp->nr_vnics; i++)
+	क्रम (i = 0; i < bp->nr_vnics; i++)
 		bnxt_hwrm_vnic_set_rss(bp, i, false);
-}
+पूर्ण
 
-static void bnxt_clear_vnic(struct bnxt *bp)
-{
-	if (!bp->vnic_info)
-		return;
+अटल व्योम bnxt_clear_vnic(काष्ठा bnxt *bp)
+अणु
+	अगर (!bp->vnic_info)
+		वापस;
 
 	bnxt_hwrm_clear_vnic_filter(bp);
-	if (!(bp->flags & BNXT_FLAG_CHIP_P5)) {
-		/* clear all RSS setting before free vnic ctx */
+	अगर (!(bp->flags & BNXT_FLAG_CHIP_P5)) अणु
+		/* clear all RSS setting beक्रमe मुक्त vnic ctx */
 		bnxt_hwrm_clear_vnic_rss(bp);
-		bnxt_hwrm_vnic_ctx_free(bp);
-	}
-	/* before free the vnic, undo the vnic tpa settings */
-	if (bp->flags & BNXT_FLAG_TPA)
+		bnxt_hwrm_vnic_ctx_मुक्त(bp);
+	पूर्ण
+	/* beक्रमe मुक्त the vnic, unकरो the vnic tpa settings */
+	अगर (bp->flags & BNXT_FLAG_TPA)
 		bnxt_set_tpa(bp, false);
-	bnxt_hwrm_vnic_free(bp);
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
-		bnxt_hwrm_vnic_ctx_free(bp);
-}
+	bnxt_hwrm_vnic_मुक्त(bp);
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+		bnxt_hwrm_vnic_ctx_मुक्त(bp);
+पूर्ण
 
-static void bnxt_hwrm_resource_free(struct bnxt *bp, bool close_path,
+अटल व्योम bnxt_hwrm_resource_मुक्त(काष्ठा bnxt *bp, bool बंद_path,
 				    bool irq_re_init)
-{
+अणु
 	bnxt_clear_vnic(bp);
-	bnxt_hwrm_ring_free(bp, close_path);
-	bnxt_hwrm_ring_grp_free(bp);
-	if (irq_re_init) {
-		bnxt_hwrm_stat_ctx_free(bp);
-		bnxt_hwrm_free_tunnel_ports(bp);
-	}
-}
+	bnxt_hwrm_ring_मुक्त(bp, बंद_path);
+	bnxt_hwrm_ring_grp_मुक्त(bp);
+	अगर (irq_re_init) अणु
+		bnxt_hwrm_stat_ctx_मुक्त(bp);
+		bnxt_hwrm_मुक्त_tunnel_ports(bp);
+	पूर्ण
+पूर्ण
 
-static int bnxt_hwrm_set_br_mode(struct bnxt *bp, u16 br_mode)
-{
-	struct hwrm_func_cfg_input req = {0};
+अटल पूर्णांक bnxt_hwrm_set_br_mode(काष्ठा bnxt *bp, u16 br_mode)
+अणु
+	काष्ठा hwrm_func_cfg_input req = अणु0पूर्ण;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_CFG, -1, -1);
 	req.fid = cpu_to_le16(0xffff);
 	req.enables = cpu_to_le32(FUNC_CFG_REQ_ENABLES_EVB_MODE);
-	if (br_mode == BRIDGE_MODE_VEB)
+	अगर (br_mode == BRIDGE_MODE_VEB)
 		req.evb_mode = FUNC_CFG_REQ_EVB_MODE_VEB;
-	else if (br_mode == BRIDGE_MODE_VEPA)
+	अन्यथा अगर (br_mode == BRIDGE_MODE_VEPA)
 		req.evb_mode = FUNC_CFG_REQ_EVB_MODE_VEPA;
-	else
-		return -EINVAL;
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	अन्यथा
+		वापस -EINVAL;
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static int bnxt_hwrm_set_cache_line_size(struct bnxt *bp, int size)
-{
-	struct hwrm_func_cfg_input req = {0};
+अटल पूर्णांक bnxt_hwrm_set_cache_line_size(काष्ठा bnxt *bp, पूर्णांक size)
+अणु
+	काष्ठा hwrm_func_cfg_input req = अणु0पूर्ण;
 
-	if (BNXT_VF(bp) || bp->hwrm_spec_code < 0x10803)
-		return 0;
+	अगर (BNXT_VF(bp) || bp->hwrm_spec_code < 0x10803)
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_CFG, -1, -1);
 	req.fid = cpu_to_le16(0xffff);
 	req.enables = cpu_to_le32(FUNC_CFG_REQ_ENABLES_CACHE_LINESIZE);
 	req.options = FUNC_CFG_REQ_OPTIONS_CACHE_LINESIZE_SIZE_64;
-	if (size == 128)
+	अगर (size == 128)
 		req.options = FUNC_CFG_REQ_OPTIONS_CACHE_LINESIZE_SIZE_128;
 
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static int __bnxt_setup_vnic(struct bnxt *bp, u16 vnic_id)
-{
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
-	int rc;
+अटल पूर्णांक __bnxt_setup_vnic(काष्ठा bnxt *bp, u16 vnic_id)
+अणु
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[vnic_id];
+	पूर्णांक rc;
 
-	if (vnic->flags & BNXT_VNIC_RFS_NEW_RSS_FLAG)
-		goto skip_rss_ctx;
+	अगर (vnic->flags & BNXT_VNIC_RFS_NEW_RSS_FLAG)
+		जाओ skip_rss_ctx;
 
-	/* allocate context for vnic */
+	/* allocate context क्रम vnic */
 	rc = bnxt_hwrm_vnic_ctx_alloc(bp, vnic_id, 0);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm vnic %d alloc failure rc: %x\n",
 			   vnic_id, rc);
-		goto vnic_setup_err;
-	}
+		जाओ vnic_setup_err;
+	पूर्ण
 	bp->rsscos_nr_ctxs++;
 
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp)) {
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp)) अणु
 		rc = bnxt_hwrm_vnic_ctx_alloc(bp, vnic_id, 1);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(bp->dev, "hwrm vnic %d cos ctx alloc failure rc: %x\n",
 				   vnic_id, rc);
-			goto vnic_setup_err;
-		}
+			जाओ vnic_setup_err;
+		पूर्ण
 		bp->rsscos_nr_ctxs++;
-	}
+	पूर्ण
 
 skip_rss_ctx:
-	/* configure default vnic, ring grp */
+	/* configure शेष vnic, ring grp */
 	rc = bnxt_hwrm_vnic_cfg(bp, vnic_id);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm vnic %d cfg failure rc: %x\n",
 			   vnic_id, rc);
-		goto vnic_setup_err;
-	}
+		जाओ vnic_setup_err;
+	पूर्ण
 
 	/* Enable RSS hashing on vnic */
 	rc = bnxt_hwrm_vnic_set_rss(bp, vnic_id, true);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm vnic %d set rss failure rc: %x\n",
 			   vnic_id, rc);
-		goto vnic_setup_err;
-	}
+		जाओ vnic_setup_err;
+	पूर्ण
 
-	if (bp->flags & BNXT_FLAG_AGG_RINGS) {
+	अगर (bp->flags & BNXT_FLAG_AGG_RINGS) अणु
 		rc = bnxt_hwrm_vnic_set_hds(bp, vnic_id);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(bp->dev, "hwrm vnic %d set hds failure rc: %x\n",
 				   vnic_id, rc);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 vnic_setup_err:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int __bnxt_setup_vnic_p5(struct bnxt *bp, u16 vnic_id)
-{
-	int rc, i, nr_ctxs;
+अटल पूर्णांक __bnxt_setup_vnic_p5(काष्ठा bnxt *bp, u16 vnic_id)
+अणु
+	पूर्णांक rc, i, nr_ctxs;
 
 	nr_ctxs = bnxt_get_nr_rss_ctxs(bp, bp->rx_nr_rings);
-	for (i = 0; i < nr_ctxs; i++) {
+	क्रम (i = 0; i < nr_ctxs; i++) अणु
 		rc = bnxt_hwrm_vnic_ctx_alloc(bp, vnic_id, i);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(bp->dev, "hwrm vnic %d ctx %d alloc failure rc: %x\n",
 				   vnic_id, i, rc);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		bp->rsscos_nr_ctxs++;
-	}
-	if (i < nr_ctxs)
-		return -ENOMEM;
+	पूर्ण
+	अगर (i < nr_ctxs)
+		वापस -ENOMEM;
 
 	rc = bnxt_hwrm_vnic_set_rss_p5(bp, vnic_id, true);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm vnic %d set rss failure rc: %d\n",
 			   vnic_id, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	rc = bnxt_hwrm_vnic_cfg(bp, vnic_id);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm vnic %d cfg failure rc: %x\n",
 			   vnic_id, rc);
-		return rc;
-	}
-	if (bp->flags & BNXT_FLAG_AGG_RINGS) {
+		वापस rc;
+	पूर्ण
+	अगर (bp->flags & BNXT_FLAG_AGG_RINGS) अणु
 		rc = bnxt_hwrm_vnic_set_hds(bp, vnic_id);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(bp->dev, "hwrm vnic %d set hds failure rc: %x\n",
 				   vnic_id, rc);
-		}
-	}
-	return rc;
-}
+		पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int bnxt_setup_vnic(struct bnxt *bp, u16 vnic_id)
-{
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
-		return __bnxt_setup_vnic_p5(bp, vnic_id);
-	else
-		return __bnxt_setup_vnic(bp, vnic_id);
-}
+अटल पूर्णांक bnxt_setup_vnic(काष्ठा bnxt *bp, u16 vnic_id)
+अणु
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+		वापस __bnxt_setup_vnic_p5(bp, vnic_id);
+	अन्यथा
+		वापस __bnxt_setup_vnic(bp, vnic_id);
+पूर्ण
 
-static int bnxt_alloc_rfs_vnics(struct bnxt *bp)
-{
-#ifdef CONFIG_RFS_ACCEL
-	int i, rc = 0;
+अटल पूर्णांक bnxt_alloc_rfs_vnics(काष्ठा bnxt *bp)
+अणु
+#अगर_घोषित CONFIG_RFS_ACCEL
+	पूर्णांक i, rc = 0;
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
-		return 0;
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+		वापस 0;
 
-	for (i = 0; i < bp->rx_nr_rings; i++) {
-		struct bnxt_vnic_info *vnic;
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+		काष्ठा bnxt_vnic_info *vnic;
 		u16 vnic_id = i + 1;
 		u16 ring_id = i;
 
-		if (vnic_id >= bp->nr_vnics)
-			break;
+		अगर (vnic_id >= bp->nr_vnics)
+			अवरोध;
 
 		vnic = &bp->vnic_info[vnic_id];
 		vnic->flags |= BNXT_VNIC_RFS_FLAG;
-		if (bp->flags & BNXT_FLAG_NEW_RSS_CAP)
+		अगर (bp->flags & BNXT_FLAG_NEW_RSS_CAP)
 			vnic->flags |= BNXT_VNIC_RFS_NEW_RSS_FLAG;
 		rc = bnxt_hwrm_vnic_alloc(bp, vnic_id, ring_id, 1);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(bp->dev, "hwrm vnic %d alloc failure rc: %x\n",
 				   vnic_id, rc);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		rc = bnxt_setup_vnic(bp, vnic_id);
-		if (rc)
-			break;
-	}
-	return rc;
-#else
-	return 0;
-#endif
-}
+		अगर (rc)
+			अवरोध;
+	पूर्ण
+	वापस rc;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-/* Allow PF, trusted VFs and VFs with default VLAN to be in promiscuous mode */
-static bool bnxt_promisc_ok(struct bnxt *bp)
-{
-#ifdef CONFIG_BNXT_SRIOV
-	if (BNXT_VF(bp) && !bp->vf.vlan && !bnxt_is_trusted_vf(bp, &bp->vf))
-		return false;
-#endif
-	return true;
-}
+/* Allow PF, trusted VFs and VFs with शेष VLAN to be in promiscuous mode */
+अटल bool bnxt_promisc_ok(काष्ठा bnxt *bp)
+अणु
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	अगर (BNXT_VF(bp) && !bp->vf.vlan && !bnxt_is_trusted_vf(bp, &bp->vf))
+		वापस false;
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-static int bnxt_setup_nitroa0_vnic(struct bnxt *bp)
-{
-	unsigned int rc = 0;
+अटल पूर्णांक bnxt_setup_nitroa0_vnic(काष्ठा bnxt *bp)
+अणु
+	अचिन्हित पूर्णांक rc = 0;
 
 	rc = bnxt_hwrm_vnic_alloc(bp, 1, bp->rx_nr_rings - 1, 1);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "Cannot allocate special vnic for NS2 A0: %x\n",
 			   rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = bnxt_hwrm_vnic_cfg(bp, 1);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "Cannot allocate special vnic for NS2 A0: %x\n",
 			   rc);
-		return rc;
-	}
-	return rc;
-}
+		वापस rc;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int bnxt_cfg_rx_mode(struct bnxt *);
-static bool bnxt_mc_list_updated(struct bnxt *, u32 *);
+अटल पूर्णांक bnxt_cfg_rx_mode(काष्ठा bnxt *);
+अटल bool bnxt_mc_list_updated(काष्ठा bnxt *, u32 *);
 
-static int bnxt_init_chip(struct bnxt *bp, bool irq_re_init)
-{
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[0];
-	int rc = 0;
-	unsigned int rx_nr_rings = bp->rx_nr_rings;
+अटल पूर्णांक bnxt_init_chip(काष्ठा bnxt *bp, bool irq_re_init)
+अणु
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[0];
+	पूर्णांक rc = 0;
+	अचिन्हित पूर्णांक rx_nr_rings = bp->rx_nr_rings;
 
-	if (irq_re_init) {
+	अगर (irq_re_init) अणु
 		rc = bnxt_hwrm_stat_ctx_alloc(bp);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(bp->dev, "hwrm stat ctx alloc failure rc: %x\n",
 				   rc);
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
 	rc = bnxt_hwrm_ring_alloc(bp);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm ring alloc failure rc: %x\n", rc);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	rc = bnxt_hwrm_ring_grp_alloc(bp);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm_ring_grp alloc failure: %x\n", rc);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp))
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp))
 		rx_nr_rings--;
 
-	/* default vnic 0 */
+	/* शेष vnic 0 */
 	rc = bnxt_hwrm_vnic_alloc(bp, 0, 0, rx_nr_rings);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm vnic alloc failure rc: %x\n", rc);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	rc = bnxt_setup_vnic(bp, 0);
-	if (rc)
-		goto err_out;
+	अगर (rc)
+		जाओ err_out;
 
-	if (bp->flags & BNXT_FLAG_RFS) {
+	अगर (bp->flags & BNXT_FLAG_RFS) अणु
 		rc = bnxt_alloc_rfs_vnics(bp);
-		if (rc)
-			goto err_out;
-	}
+		अगर (rc)
+			जाओ err_out;
+	पूर्ण
 
-	if (bp->flags & BNXT_FLAG_TPA) {
+	अगर (bp->flags & BNXT_FLAG_TPA) अणु
 		rc = bnxt_set_tpa(bp, true);
-		if (rc)
-			goto err_out;
-	}
+		अगर (rc)
+			जाओ err_out;
+	पूर्ण
 
-	if (BNXT_VF(bp))
+	अगर (BNXT_VF(bp))
 		bnxt_update_vf_mac(bp);
 
-	/* Filter for default vnic 0 */
+	/* Filter क्रम शेष vnic 0 */
 	rc = bnxt_hwrm_set_vnic_filter(bp, 0, 0, bp->dev->dev_addr);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "HWRM vnic filter failure rc: %x\n", rc);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	vnic->uc_filter_count = 1;
 
 	vnic->rx_mask = 0;
-	if (bp->dev->flags & IFF_BROADCAST)
+	अगर (bp->dev->flags & IFF_BROADCAST)
 		vnic->rx_mask |= CFA_L2_SET_RX_MASK_REQ_MASK_BCAST;
 
-	if (bp->dev->flags & IFF_PROMISC)
+	अगर (bp->dev->flags & IFF_PROMISC)
 		vnic->rx_mask |= CFA_L2_SET_RX_MASK_REQ_MASK_PROMISCUOUS;
 
-	if (bp->dev->flags & IFF_ALLMULTI) {
+	अगर (bp->dev->flags & IFF_ALLMULTI) अणु
 		vnic->rx_mask |= CFA_L2_SET_RX_MASK_REQ_MASK_ALL_MCAST;
 		vnic->mc_list_count = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		u32 mask = 0;
 
 		bnxt_mc_list_updated(bp, &mask);
 		vnic->rx_mask |= mask;
-	}
+	पूर्ण
 
 	rc = bnxt_cfg_rx_mode(bp);
-	if (rc)
-		goto err_out;
+	अगर (rc)
+		जाओ err_out;
 
 	rc = bnxt_hwrm_set_coal(bp);
-	if (rc)
+	अगर (rc)
 		netdev_warn(bp->dev, "HWRM set coalescing failure rc: %x\n",
 				rc);
 
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp)) {
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp)) अणु
 		rc = bnxt_setup_nitroa0_vnic(bp);
-		if (rc)
+		अगर (rc)
 			netdev_err(bp->dev, "Special vnic setup failure for NS2 A0 rc: %x\n",
 				   rc);
-	}
+	पूर्ण
 
-	if (BNXT_VF(bp)) {
+	अगर (BNXT_VF(bp)) अणु
 		bnxt_hwrm_func_qcfg(bp);
 		netdev_update_features(bp->dev);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out:
-	bnxt_hwrm_resource_free(bp, 0, true);
+	bnxt_hwrm_resource_मुक्त(bp, 0, true);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_shutdown_nic(struct bnxt *bp, bool irq_re_init)
-{
-	bnxt_hwrm_resource_free(bp, 1, irq_re_init);
-	return 0;
-}
+अटल पूर्णांक bnxt_shutकरोwn_nic(काष्ठा bnxt *bp, bool irq_re_init)
+अणु
+	bnxt_hwrm_resource_मुक्त(bp, 1, irq_re_init);
+	वापस 0;
+पूर्ण
 
-static int bnxt_init_nic(struct bnxt *bp, bool irq_re_init)
-{
+अटल पूर्णांक bnxt_init_nic(काष्ठा bnxt *bp, bool irq_re_init)
+अणु
 	bnxt_init_cp_rings(bp);
 	bnxt_init_rx_rings(bp);
 	bnxt_init_tx_rings(bp);
 	bnxt_init_ring_grps(bp, irq_re_init);
 	bnxt_init_vnics(bp);
 
-	return bnxt_init_chip(bp, irq_re_init);
-}
+	वापस bnxt_init_chip(bp, irq_re_init);
+पूर्ण
 
-static int bnxt_set_real_num_queues(struct bnxt *bp)
-{
-	int rc;
-	struct net_device *dev = bp->dev;
+अटल पूर्णांक bnxt_set_real_num_queues(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
+	काष्ठा net_device *dev = bp->dev;
 
-	rc = netif_set_real_num_tx_queues(dev, bp->tx_nr_rings -
+	rc = netअगर_set_real_num_tx_queues(dev, bp->tx_nr_rings -
 					  bp->tx_nr_rings_xdp);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	rc = netif_set_real_num_rx_queues(dev, bp->rx_nr_rings);
-	if (rc)
-		return rc;
+	rc = netअगर_set_real_num_rx_queues(dev, bp->rx_nr_rings);
+	अगर (rc)
+		वापस rc;
 
-#ifdef CONFIG_RFS_ACCEL
-	if (bp->flags & BNXT_FLAG_RFS)
+#अगर_घोषित CONFIG_RFS_ACCEL
+	अगर (bp->flags & BNXT_FLAG_RFS)
 		dev->rx_cpu_rmap = alloc_irq_cpu_rmap(bp->rx_nr_rings);
-#endif
+#पूर्ण_अगर
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_trim_rings(struct bnxt *bp, int *rx, int *tx, int max,
+अटल पूर्णांक bnxt_trim_rings(काष्ठा bnxt *bp, पूर्णांक *rx, पूर्णांक *tx, पूर्णांक max,
 			   bool shared)
-{
-	int _rx = *rx, _tx = *tx;
+अणु
+	पूर्णांक _rx = *rx, _tx = *tx;
 
-	if (shared) {
-		*rx = min_t(int, _rx, max);
-		*tx = min_t(int, _tx, max);
-	} else {
-		if (max < 2)
-			return -ENOMEM;
+	अगर (shared) अणु
+		*rx = min_t(पूर्णांक, _rx, max);
+		*tx = min_t(पूर्णांक, _tx, max);
+	पूर्ण अन्यथा अणु
+		अगर (max < 2)
+			वापस -ENOMEM;
 
-		while (_rx + _tx > max) {
-			if (_rx > _tx && _rx > 1)
+		जबतक (_rx + _tx > max) अणु
+			अगर (_rx > _tx && _rx > 1)
 				_rx--;
-			else if (_tx > 1)
+			अन्यथा अगर (_tx > 1)
 				_tx--;
-		}
+		पूर्ण
 		*rx = _rx;
 		*tx = _tx;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bnxt_setup_msix(struct bnxt *bp)
-{
-	const int len = sizeof(bp->irq_tbl[0].name);
-	struct net_device *dev = bp->dev;
-	int tcs, i;
+अटल व्योम bnxt_setup_msix(काष्ठा bnxt *bp)
+अणु
+	स्थिर पूर्णांक len = माप(bp->irq_tbl[0].name);
+	काष्ठा net_device *dev = bp->dev;
+	पूर्णांक tcs, i;
 
 	tcs = netdev_get_num_tc(dev);
-	if (tcs) {
-		int i, off, count;
+	अगर (tcs) अणु
+		पूर्णांक i, off, count;
 
-		for (i = 0; i < tcs; i++) {
+		क्रम (i = 0; i < tcs; i++) अणु
 			count = bp->tx_nr_rings_per_tc;
 			off = i * count;
 			netdev_set_tc_queue(dev, i, count, off);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		int map_idx = bnxt_cp_num_to_irq_num(bp, i);
-		char *attr;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		पूर्णांक map_idx = bnxt_cp_num_to_irq_num(bp, i);
+		अक्षर *attr;
 
-		if (bp->flags & BNXT_FLAG_SHARED_RINGS)
+		अगर (bp->flags & BNXT_FLAG_SHARED_RINGS)
 			attr = "TxRx";
-		else if (i < bp->rx_nr_rings)
+		अन्यथा अगर (i < bp->rx_nr_rings)
 			attr = "rx";
-		else
+		अन्यथा
 			attr = "tx";
 
-		snprintf(bp->irq_tbl[map_idx].name, len, "%s-%s-%d", dev->name,
+		snम_लिखो(bp->irq_tbl[map_idx].name, len, "%s-%s-%d", dev->name,
 			 attr, i);
 		bp->irq_tbl[map_idx].handler = bnxt_msix;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnxt_setup_inta(struct bnxt *bp)
-{
-	const int len = sizeof(bp->irq_tbl[0].name);
+अटल व्योम bnxt_setup_पूर्णांकa(काष्ठा bnxt *bp)
+अणु
+	स्थिर पूर्णांक len = माप(bp->irq_tbl[0].name);
 
-	if (netdev_get_num_tc(bp->dev))
+	अगर (netdev_get_num_tc(bp->dev))
 		netdev_reset_tc(bp->dev);
 
-	snprintf(bp->irq_tbl[0].name, len, "%s-%s-%d", bp->dev->name, "TxRx",
+	snम_लिखो(bp->irq_tbl[0].name, len, "%s-%s-%d", bp->dev->name, "TxRx",
 		 0);
-	bp->irq_tbl[0].handler = bnxt_inta;
-}
+	bp->irq_tbl[0].handler = bnxt_पूर्णांकa;
+पूर्ण
 
-static int bnxt_init_int_mode(struct bnxt *bp);
+अटल पूर्णांक bnxt_init_पूर्णांक_mode(काष्ठा bnxt *bp);
 
-static int bnxt_setup_int_mode(struct bnxt *bp)
-{
-	int rc;
+अटल पूर्णांक bnxt_setup_पूर्णांक_mode(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 
-	if (!bp->irq_tbl) {
-		rc = bnxt_init_int_mode(bp);
-		if (rc || !bp->irq_tbl)
-			return rc ?: -ENODEV;
-	}
+	अगर (!bp->irq_tbl) अणु
+		rc = bnxt_init_पूर्णांक_mode(bp);
+		अगर (rc || !bp->irq_tbl)
+			वापस rc ?: -ENODEV;
+	पूर्ण
 
-	if (bp->flags & BNXT_FLAG_USING_MSIX)
+	अगर (bp->flags & BNXT_FLAG_USING_MSIX)
 		bnxt_setup_msix(bp);
-	else
-		bnxt_setup_inta(bp);
+	अन्यथा
+		bnxt_setup_पूर्णांकa(bp);
 
 	rc = bnxt_set_real_num_queues(bp);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#ifdef CONFIG_RFS_ACCEL
-static unsigned int bnxt_get_max_func_rss_ctxs(struct bnxt *bp)
-{
-	return bp->hw_resc.max_rsscos_ctxs;
-}
+#अगर_घोषित CONFIG_RFS_ACCEL
+अटल अचिन्हित पूर्णांक bnxt_get_max_func_rss_ctxs(काष्ठा bnxt *bp)
+अणु
+	वापस bp->hw_resc.max_rsscos_ctxs;
+पूर्ण
 
-static unsigned int bnxt_get_max_func_vnics(struct bnxt *bp)
-{
-	return bp->hw_resc.max_vnics;
-}
-#endif
+अटल अचिन्हित पूर्णांक bnxt_get_max_func_vnics(काष्ठा bnxt *bp)
+अणु
+	वापस bp->hw_resc.max_vnics;
+पूर्ण
+#पूर्ण_अगर
 
-unsigned int bnxt_get_max_func_stat_ctxs(struct bnxt *bp)
-{
-	return bp->hw_resc.max_stat_ctxs;
-}
+अचिन्हित पूर्णांक bnxt_get_max_func_stat_ctxs(काष्ठा bnxt *bp)
+अणु
+	वापस bp->hw_resc.max_stat_ctxs;
+पूर्ण
 
-unsigned int bnxt_get_max_func_cp_rings(struct bnxt *bp)
-{
-	return bp->hw_resc.max_cp_rings;
-}
+अचिन्हित पूर्णांक bnxt_get_max_func_cp_rings(काष्ठा bnxt *bp)
+अणु
+	वापस bp->hw_resc.max_cp_rings;
+पूर्ण
 
-static unsigned int bnxt_get_max_func_cp_rings_for_en(struct bnxt *bp)
-{
-	unsigned int cp = bp->hw_resc.max_cp_rings;
+अटल अचिन्हित पूर्णांक bnxt_get_max_func_cp_rings_क्रम_en(काष्ठा bnxt *bp)
+अणु
+	अचिन्हित पूर्णांक cp = bp->hw_resc.max_cp_rings;
 
-	if (!(bp->flags & BNXT_FLAG_CHIP_P5))
+	अगर (!(bp->flags & BNXT_FLAG_CHIP_P5))
 		cp -= bnxt_get_ulp_msix_num(bp);
 
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
-static unsigned int bnxt_get_max_func_irqs(struct bnxt *bp)
-{
-	struct bnxt_hw_resc *hw_resc = &bp->hw_resc;
+अटल अचिन्हित पूर्णांक bnxt_get_max_func_irqs(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_hw_resc *hw_resc = &bp->hw_resc;
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
-		return min_t(unsigned int, hw_resc->max_irqs, hw_resc->max_nqs);
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+		वापस min_t(अचिन्हित पूर्णांक, hw_resc->max_irqs, hw_resc->max_nqs);
 
-	return min_t(unsigned int, hw_resc->max_irqs, hw_resc->max_cp_rings);
-}
+	वापस min_t(अचिन्हित पूर्णांक, hw_resc->max_irqs, hw_resc->max_cp_rings);
+पूर्ण
 
-static void bnxt_set_max_func_irqs(struct bnxt *bp, unsigned int max_irqs)
-{
+अटल व्योम bnxt_set_max_func_irqs(काष्ठा bnxt *bp, अचिन्हित पूर्णांक max_irqs)
+अणु
 	bp->hw_resc.max_irqs = max_irqs;
-}
+पूर्ण
 
-unsigned int bnxt_get_avail_cp_rings_for_en(struct bnxt *bp)
-{
-	unsigned int cp;
+अचिन्हित पूर्णांक bnxt_get_avail_cp_rings_क्रम_en(काष्ठा bnxt *bp)
+अणु
+	अचिन्हित पूर्णांक cp;
 
-	cp = bnxt_get_max_func_cp_rings_for_en(bp);
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
-		return cp - bp->rx_nr_rings - bp->tx_nr_rings;
-	else
-		return cp - bp->cp_nr_rings;
-}
+	cp = bnxt_get_max_func_cp_rings_क्रम_en(bp);
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+		वापस cp - bp->rx_nr_rings - bp->tx_nr_rings;
+	अन्यथा
+		वापस cp - bp->cp_nr_rings;
+पूर्ण
 
-unsigned int bnxt_get_avail_stat_ctxs_for_en(struct bnxt *bp)
-{
-	return bnxt_get_max_func_stat_ctxs(bp) - bnxt_get_func_stat_ctxs(bp);
-}
+अचिन्हित पूर्णांक bnxt_get_avail_stat_ctxs_क्रम_en(काष्ठा bnxt *bp)
+अणु
+	वापस bnxt_get_max_func_stat_ctxs(bp) - bnxt_get_func_stat_ctxs(bp);
+पूर्ण
 
-int bnxt_get_avail_msix(struct bnxt *bp, int num)
-{
-	int max_cp = bnxt_get_max_func_cp_rings(bp);
-	int max_irq = bnxt_get_max_func_irqs(bp);
-	int total_req = bp->cp_nr_rings + num;
-	int max_idx, avail_msix;
+पूर्णांक bnxt_get_avail_msix(काष्ठा bnxt *bp, पूर्णांक num)
+अणु
+	पूर्णांक max_cp = bnxt_get_max_func_cp_rings(bp);
+	पूर्णांक max_irq = bnxt_get_max_func_irqs(bp);
+	पूर्णांक total_req = bp->cp_nr_rings + num;
+	पूर्णांक max_idx, avail_msix;
 
 	max_idx = bp->total_irqs;
-	if (!(bp->flags & BNXT_FLAG_CHIP_P5))
-		max_idx = min_t(int, bp->total_irqs, max_cp);
+	अगर (!(bp->flags & BNXT_FLAG_CHIP_P5))
+		max_idx = min_t(पूर्णांक, bp->total_irqs, max_cp);
 	avail_msix = max_idx - bp->cp_nr_rings;
-	if (!BNXT_NEW_RM(bp) || avail_msix >= num)
-		return avail_msix;
+	अगर (!BNXT_NEW_RM(bp) || avail_msix >= num)
+		वापस avail_msix;
 
-	if (max_irq < total_req) {
+	अगर (max_irq < total_req) अणु
 		num = max_irq - bp->cp_nr_rings;
-		if (num <= 0)
-			return 0;
-	}
-	return num;
-}
+		अगर (num <= 0)
+			वापस 0;
+	पूर्ण
+	वापस num;
+पूर्ण
 
-static int bnxt_get_num_msix(struct bnxt *bp)
-{
-	if (!BNXT_NEW_RM(bp))
-		return bnxt_get_max_func_irqs(bp);
+अटल पूर्णांक bnxt_get_num_msix(काष्ठा bnxt *bp)
+अणु
+	अगर (!BNXT_NEW_RM(bp))
+		वापस bnxt_get_max_func_irqs(bp);
 
-	return bnxt_nq_rings_in_use(bp);
-}
+	वापस bnxt_nq_rings_in_use(bp);
+पूर्ण
 
-static int bnxt_init_msix(struct bnxt *bp)
-{
-	int i, total_vecs, max, rc = 0, min = 1, ulp_msix;
-	struct msix_entry *msix_ent;
+अटल पूर्णांक bnxt_init_msix(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, total_vecs, max, rc = 0, min = 1, ulp_msix;
+	काष्ठा msix_entry *msix_ent;
 
 	total_vecs = bnxt_get_num_msix(bp);
 	max = bnxt_get_max_func_irqs(bp);
-	if (total_vecs > max)
+	अगर (total_vecs > max)
 		total_vecs = max;
 
-	if (!total_vecs)
-		return 0;
+	अगर (!total_vecs)
+		वापस 0;
 
-	msix_ent = kcalloc(total_vecs, sizeof(struct msix_entry), GFP_KERNEL);
-	if (!msix_ent)
-		return -ENOMEM;
+	msix_ent = kसुस्मृति(total_vecs, माप(काष्ठा msix_entry), GFP_KERNEL);
+	अगर (!msix_ent)
+		वापस -ENOMEM;
 
-	for (i = 0; i < total_vecs; i++) {
+	क्रम (i = 0; i < total_vecs; i++) अणु
 		msix_ent[i].entry = i;
 		msix_ent[i].vector = 0;
-	}
+	पूर्ण
 
-	if (!(bp->flags & BNXT_FLAG_SHARED_RINGS))
+	अगर (!(bp->flags & BNXT_FLAG_SHARED_RINGS))
 		min = 2;
 
 	total_vecs = pci_enable_msix_range(bp->pdev, msix_ent, min, total_vecs);
 	ulp_msix = bnxt_get_ulp_msix_num(bp);
-	if (total_vecs < 0 || total_vecs < ulp_msix) {
+	अगर (total_vecs < 0 || total_vecs < ulp_msix) अणु
 		rc = -ENODEV;
-		goto msix_setup_exit;
-	}
+		जाओ msix_setup_निकास;
+	पूर्ण
 
-	bp->irq_tbl = kcalloc(total_vecs, sizeof(struct bnxt_irq), GFP_KERNEL);
-	if (bp->irq_tbl) {
-		for (i = 0; i < total_vecs; i++)
+	bp->irq_tbl = kसुस्मृति(total_vecs, माप(काष्ठा bnxt_irq), GFP_KERNEL);
+	अगर (bp->irq_tbl) अणु
+		क्रम (i = 0; i < total_vecs; i++)
 			bp->irq_tbl[i].vector = msix_ent[i].vector;
 
 		bp->total_irqs = total_vecs;
 		/* Trim rings based upon num of vectors allocated */
 		rc = bnxt_trim_rings(bp, &bp->rx_nr_rings, &bp->tx_nr_rings,
 				     total_vecs - ulp_msix, min == 1);
-		if (rc)
-			goto msix_setup_exit;
+		अगर (rc)
+			जाओ msix_setup_निकास;
 
 		bp->cp_nr_rings = (min == 1) ?
-				  max_t(int, bp->tx_nr_rings, bp->rx_nr_rings) :
+				  max_t(पूर्णांक, bp->tx_nr_rings, bp->rx_nr_rings) :
 				  bp->tx_nr_rings + bp->rx_nr_rings;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = -ENOMEM;
-		goto msix_setup_exit;
-	}
+		जाओ msix_setup_निकास;
+	पूर्ण
 	bp->flags |= BNXT_FLAG_USING_MSIX;
-	kfree(msix_ent);
-	return 0;
+	kमुक्त(msix_ent);
+	वापस 0;
 
-msix_setup_exit:
+msix_setup_निकास:
 	netdev_err(bp->dev, "bnxt_init_msix err: %x\n", rc);
-	kfree(bp->irq_tbl);
-	bp->irq_tbl = NULL;
+	kमुक्त(bp->irq_tbl);
+	bp->irq_tbl = शून्य;
 	pci_disable_msix(bp->pdev);
-	kfree(msix_ent);
-	return rc;
-}
+	kमुक्त(msix_ent);
+	वापस rc;
+पूर्ण
 
-static int bnxt_init_inta(struct bnxt *bp)
-{
-	bp->irq_tbl = kzalloc(sizeof(struct bnxt_irq), GFP_KERNEL);
-	if (!bp->irq_tbl)
-		return -ENOMEM;
+अटल पूर्णांक bnxt_init_पूर्णांकa(काष्ठा bnxt *bp)
+अणु
+	bp->irq_tbl = kzalloc(माप(काष्ठा bnxt_irq), GFP_KERNEL);
+	अगर (!bp->irq_tbl)
+		वापस -ENOMEM;
 
 	bp->total_irqs = 1;
 	bp->rx_nr_rings = 1;
@@ -8802,470 +8803,470 @@ static int bnxt_init_inta(struct bnxt *bp)
 	bp->cp_nr_rings = 1;
 	bp->flags |= BNXT_FLAG_SHARED_RINGS;
 	bp->irq_tbl[0].vector = bp->pdev->irq;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnxt_init_int_mode(struct bnxt *bp)
-{
-	int rc = -ENODEV;
+अटल पूर्णांक bnxt_init_पूर्णांक_mode(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc = -ENODEV;
 
-	if (bp->flags & BNXT_FLAG_MSIX_CAP)
+	अगर (bp->flags & BNXT_FLAG_MSIX_CAP)
 		rc = bnxt_init_msix(bp);
 
-	if (!(bp->flags & BNXT_FLAG_USING_MSIX) && BNXT_PF(bp)) {
+	अगर (!(bp->flags & BNXT_FLAG_USING_MSIX) && BNXT_PF(bp)) अणु
 		/* fallback to INTA */
-		rc = bnxt_init_inta(bp);
-	}
-	return rc;
-}
+		rc = bnxt_init_पूर्णांकa(bp);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void bnxt_clear_int_mode(struct bnxt *bp)
-{
-	if (bp->flags & BNXT_FLAG_USING_MSIX)
+अटल व्योम bnxt_clear_पूर्णांक_mode(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->flags & BNXT_FLAG_USING_MSIX)
 		pci_disable_msix(bp->pdev);
 
-	kfree(bp->irq_tbl);
-	bp->irq_tbl = NULL;
+	kमुक्त(bp->irq_tbl);
+	bp->irq_tbl = शून्य;
 	bp->flags &= ~BNXT_FLAG_USING_MSIX;
-}
+पूर्ण
 
-int bnxt_reserve_rings(struct bnxt *bp, bool irq_re_init)
-{
-	int tcs = netdev_get_num_tc(bp->dev);
+पूर्णांक bnxt_reserve_rings(काष्ठा bnxt *bp, bool irq_re_init)
+अणु
+	पूर्णांक tcs = netdev_get_num_tc(bp->dev);
 	bool irq_cleared = false;
-	int rc;
+	पूर्णांक rc;
 
-	if (!bnxt_need_reserve_rings(bp))
-		return 0;
+	अगर (!bnxt_need_reserve_rings(bp))
+		वापस 0;
 
-	if (irq_re_init && BNXT_NEW_RM(bp) &&
-	    bnxt_get_num_msix(bp) != bp->total_irqs) {
+	अगर (irq_re_init && BNXT_NEW_RM(bp) &&
+	    bnxt_get_num_msix(bp) != bp->total_irqs) अणु
 		bnxt_ulp_irq_stop(bp);
-		bnxt_clear_int_mode(bp);
+		bnxt_clear_पूर्णांक_mode(bp);
 		irq_cleared = true;
-	}
+	पूर्ण
 	rc = __bnxt_reserve_rings(bp);
-	if (irq_cleared) {
-		if (!rc)
-			rc = bnxt_init_int_mode(bp);
+	अगर (irq_cleared) अणु
+		अगर (!rc)
+			rc = bnxt_init_पूर्णांक_mode(bp);
 		bnxt_ulp_irq_restart(bp, rc);
-	}
-	if (rc) {
+	पूर्ण
+	अगर (rc) अणु
 		netdev_err(bp->dev, "ring reservation/IRQ init failure rc: %d\n", rc);
-		return rc;
-	}
-	if (tcs && (bp->tx_nr_rings_per_tc * tcs != bp->tx_nr_rings)) {
+		वापस rc;
+	पूर्ण
+	अगर (tcs && (bp->tx_nr_rings_per_tc * tcs != bp->tx_nr_rings)) अणु
 		netdev_err(bp->dev, "tx ring reservation failure\n");
 		netdev_reset_tc(bp->dev);
 		bp->tx_nr_rings_per_tc = bp->tx_nr_rings;
-		return -ENOMEM;
-	}
-	return 0;
-}
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void bnxt_free_irq(struct bnxt *bp)
-{
-	struct bnxt_irq *irq;
-	int i;
+अटल व्योम bnxt_मुक्त_irq(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_irq *irq;
+	पूर्णांक i;
 
-#ifdef CONFIG_RFS_ACCEL
-	free_irq_cpu_rmap(bp->dev->rx_cpu_rmap);
-	bp->dev->rx_cpu_rmap = NULL;
-#endif
-	if (!bp->irq_tbl || !bp->bnapi)
-		return;
+#अगर_घोषित CONFIG_RFS_ACCEL
+	मुक्त_irq_cpu_rmap(bp->dev->rx_cpu_rmap);
+	bp->dev->rx_cpu_rmap = शून्य;
+#पूर्ण_अगर
+	अगर (!bp->irq_tbl || !bp->bnapi)
+		वापस;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		int map_idx = bnxt_cp_num_to_irq_num(bp, i);
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		पूर्णांक map_idx = bnxt_cp_num_to_irq_num(bp, i);
 
 		irq = &bp->irq_tbl[map_idx];
-		if (irq->requested) {
-			if (irq->have_cpumask) {
-				irq_set_affinity_hint(irq->vector, NULL);
-				free_cpumask_var(irq->cpu_mask);
+		अगर (irq->requested) अणु
+			अगर (irq->have_cpumask) अणु
+				irq_set_affinity_hपूर्णांक(irq->vector, शून्य);
+				मुक्त_cpumask_var(irq->cpu_mask);
 				irq->have_cpumask = 0;
-			}
-			free_irq(irq->vector, bp->bnapi[i]);
-		}
+			पूर्ण
+			मुक्त_irq(irq->vector, bp->bnapi[i]);
+		पूर्ण
 
 		irq->requested = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnxt_request_irq(struct bnxt *bp)
-{
-	int i, j, rc = 0;
-	unsigned long flags = 0;
-#ifdef CONFIG_RFS_ACCEL
-	struct cpu_rmap *rmap;
-#endif
+अटल पूर्णांक bnxt_request_irq(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i, j, rc = 0;
+	अचिन्हित दीर्घ flags = 0;
+#अगर_घोषित CONFIG_RFS_ACCEL
+	काष्ठा cpu_rmap *rmap;
+#पूर्ण_अगर
 
-	rc = bnxt_setup_int_mode(bp);
-	if (rc) {
+	rc = bnxt_setup_पूर्णांक_mode(bp);
+	अगर (rc) अणु
 		netdev_err(bp->dev, "bnxt_setup_int_mode err: %x\n",
 			   rc);
-		return rc;
-	}
-#ifdef CONFIG_RFS_ACCEL
+		वापस rc;
+	पूर्ण
+#अगर_घोषित CONFIG_RFS_ACCEL
 	rmap = bp->dev->rx_cpu_rmap;
-#endif
-	if (!(bp->flags & BNXT_FLAG_USING_MSIX))
+#पूर्ण_अगर
+	अगर (!(bp->flags & BNXT_FLAG_USING_MSIX))
 		flags = IRQF_SHARED;
 
-	for (i = 0, j = 0; i < bp->cp_nr_rings; i++) {
-		int map_idx = bnxt_cp_num_to_irq_num(bp, i);
-		struct bnxt_irq *irq = &bp->irq_tbl[map_idx];
+	क्रम (i = 0, j = 0; i < bp->cp_nr_rings; i++) अणु
+		पूर्णांक map_idx = bnxt_cp_num_to_irq_num(bp, i);
+		काष्ठा bnxt_irq *irq = &bp->irq_tbl[map_idx];
 
-#ifdef CONFIG_RFS_ACCEL
-		if (rmap && bp->bnapi[i]->rx_ring) {
+#अगर_घोषित CONFIG_RFS_ACCEL
+		अगर (rmap && bp->bnapi[i]->rx_ring) अणु
 			rc = irq_cpu_rmap_add(rmap, irq->vector);
-			if (rc)
+			अगर (rc)
 				netdev_warn(bp->dev, "failed adding irq rmap for ring %d\n",
 					    j);
 			j++;
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 		rc = request_irq(irq->vector, irq->handler, flags, irq->name,
 				 bp->bnapi[i]);
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 
 		irq->requested = 1;
 
-		if (zalloc_cpumask_var(&irq->cpu_mask, GFP_KERNEL)) {
-			int numa_node = dev_to_node(&bp->pdev->dev);
+		अगर (zalloc_cpumask_var(&irq->cpu_mask, GFP_KERNEL)) अणु
+			पूर्णांक numa_node = dev_to_node(&bp->pdev->dev);
 
 			irq->have_cpumask = 1;
-			cpumask_set_cpu(cpumask_local_spread(i, numa_node),
+			cpumask_set_cpu(cpumask_local_spपढ़ो(i, numa_node),
 					irq->cpu_mask);
-			rc = irq_set_affinity_hint(irq->vector, irq->cpu_mask);
-			if (rc) {
+			rc = irq_set_affinity_hपूर्णांक(irq->vector, irq->cpu_mask);
+			अगर (rc) अणु
 				netdev_warn(bp->dev,
 					    "Set affinity failed, IRQ = %d\n",
 					    irq->vector);
-				break;
-			}
-		}
-	}
-	return rc;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void bnxt_del_napi(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_del_napi(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (!bp->bnapi)
-		return;
+	अगर (!bp->bnapi)
+		वापस;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
 
-		__netif_napi_del(&bnapi->napi);
-	}
-	/* We called __netif_napi_del(), we need
-	 * to respect an RCU grace period before freeing napi structures.
+		__netअगर_napi_del(&bnapi->napi);
+	पूर्ण
+	/* We called __netअगर_napi_del(), we need
+	 * to respect an RCU grace period beक्रमe मुक्तing napi काष्ठाures.
 	 */
 	synchronize_net();
-}
+पूर्ण
 
-static void bnxt_init_napi(struct bnxt *bp)
-{
-	int i;
-	unsigned int cp_nr_rings = bp->cp_nr_rings;
-	struct bnxt_napi *bnapi;
+अटल व्योम bnxt_init_napi(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक cp_nr_rings = bp->cp_nr_rings;
+	काष्ठा bnxt_napi *bnapi;
 
-	if (bp->flags & BNXT_FLAG_USING_MSIX) {
-		int (*poll_fn)(struct napi_struct *, int) = bnxt_poll;
+	अगर (bp->flags & BNXT_FLAG_USING_MSIX) अणु
+		पूर्णांक (*poll_fn)(काष्ठा napi_काष्ठा *, पूर्णांक) = bnxt_poll;
 
-		if (bp->flags & BNXT_FLAG_CHIP_P5)
+		अगर (bp->flags & BNXT_FLAG_CHIP_P5)
 			poll_fn = bnxt_poll_p5;
-		else if (BNXT_CHIP_TYPE_NITRO_A0(bp))
+		अन्यथा अगर (BNXT_CHIP_TYPE_NITRO_A0(bp))
 			cp_nr_rings--;
-		for (i = 0; i < cp_nr_rings; i++) {
+		क्रम (i = 0; i < cp_nr_rings; i++) अणु
 			bnapi = bp->bnapi[i];
-			netif_napi_add(bp->dev, &bnapi->napi, poll_fn, 64);
-		}
-		if (BNXT_CHIP_TYPE_NITRO_A0(bp)) {
+			netअगर_napi_add(bp->dev, &bnapi->napi, poll_fn, 64);
+		पूर्ण
+		अगर (BNXT_CHIP_TYPE_NITRO_A0(bp)) अणु
 			bnapi = bp->bnapi[cp_nr_rings];
-			netif_napi_add(bp->dev, &bnapi->napi,
+			netअगर_napi_add(bp->dev, &bnapi->napi,
 				       bnxt_poll_nitroa0, 64);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		bnapi = bp->bnapi[0];
-		netif_napi_add(bp->dev, &bnapi->napi, bnxt_poll, 64);
-	}
-}
+		netअगर_napi_add(bp->dev, &bnapi->napi, bnxt_poll, 64);
+	पूर्ण
+पूर्ण
 
-static void bnxt_disable_napi(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_disable_napi(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (!bp->bnapi ||
+	अगर (!bp->bnapi ||
 	    test_and_set_bit(BNXT_STATE_NAPI_DISABLED, &bp->state))
-		return;
+		वापस;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_cp_ring_info *cpr = &bp->bnapi[i]->cp_ring;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_cp_ring_info *cpr = &bp->bnapi[i]->cp_ring;
 
-		if (bp->bnapi[i]->rx_ring)
+		अगर (bp->bnapi[i]->rx_ring)
 			cancel_work_sync(&cpr->dim.work);
 
 		napi_disable(&bp->bnapi[i]->napi);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnxt_enable_napi(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_enable_napi(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
 	clear_bit(BNXT_STATE_NAPI_DISABLED, &bp->state);
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr;
 
 		cpr = &bnapi->cp_ring;
-		if (bnapi->in_reset)
+		अगर (bnapi->in_reset)
 			cpr->sw_stats.rx.rx_resets++;
 		bnapi->in_reset = false;
 
-		if (bnapi->rx_ring) {
+		अगर (bnapi->rx_ring) अणु
 			INIT_WORK(&cpr->dim.work, bnxt_dim_work);
 			cpr->dim.mode = DIM_CQ_PERIOD_MODE_START_FROM_EQE;
-		}
+		पूर्ण
 		napi_enable(&bnapi->napi);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void bnxt_tx_disable(struct bnxt *bp)
-{
-	int i;
-	struct bnxt_tx_ring_info *txr;
+व्योम bnxt_tx_disable(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
+	काष्ठा bnxt_tx_ring_info *txr;
 
-	if (bp->tx_ring) {
-		for (i = 0; i < bp->tx_nr_rings; i++) {
+	अगर (bp->tx_ring) अणु
+		क्रम (i = 0; i < bp->tx_nr_rings; i++) अणु
 			txr = &bp->tx_ring[i];
 			txr->dev_state = BNXT_DEV_STATE_CLOSING;
-		}
-	}
-	/* Drop carrier first to prevent TX timeout */
-	netif_carrier_off(bp->dev);
+		पूर्ण
+	पूर्ण
+	/* Drop carrier first to prevent TX समयout */
+	netअगर_carrier_off(bp->dev);
 	/* Stop all TX queues */
-	netif_tx_disable(bp->dev);
-}
+	netअगर_tx_disable(bp->dev);
+पूर्ण
 
-void bnxt_tx_enable(struct bnxt *bp)
-{
-	int i;
-	struct bnxt_tx_ring_info *txr;
+व्योम bnxt_tx_enable(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
+	काष्ठा bnxt_tx_ring_info *txr;
 
-	for (i = 0; i < bp->tx_nr_rings; i++) {
+	क्रम (i = 0; i < bp->tx_nr_rings; i++) अणु
 		txr = &bp->tx_ring[i];
 		txr->dev_state = 0;
-	}
-	netif_tx_wake_all_queues(bp->dev);
-	if (bp->link_info.link_up)
-		netif_carrier_on(bp->dev);
-}
+	पूर्ण
+	netअगर_tx_wake_all_queues(bp->dev);
+	अगर (bp->link_info.link_up)
+		netअगर_carrier_on(bp->dev);
+पूर्ण
 
-static char *bnxt_report_fec(struct bnxt_link_info *link_info)
-{
+अटल अक्षर *bnxt_report_fec(काष्ठा bnxt_link_info *link_info)
+अणु
 	u8 active_fec = link_info->active_fec_sig_mode &
 			PORT_PHY_QCFG_RESP_ACTIVE_FEC_MASK;
 
-	switch (active_fec) {
-	default:
-	case PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_NONE_ACTIVE:
-		return "None";
-	case PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_CLAUSE74_ACTIVE:
-		return "Clause 74 BaseR";
-	case PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_CLAUSE91_ACTIVE:
-		return "Clause 91 RS(528,514)";
-	case PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_RS544_1XN_ACTIVE:
-		return "Clause 91 RS544_1XN";
-	case PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_RS544_IEEE_ACTIVE:
-		return "Clause 91 RS(544,514)";
-	case PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_RS272_1XN_ACTIVE:
-		return "Clause 91 RS272_1XN";
-	case PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_RS272_IEEE_ACTIVE:
-		return "Clause 91 RS(272,257)";
-	}
-}
+	चयन (active_fec) अणु
+	शेष:
+	हाल PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_NONE_ACTIVE:
+		वापस "None";
+	हाल PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_CLAUSE74_ACTIVE:
+		वापस "Clause 74 BaseR";
+	हाल PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_CLAUSE91_ACTIVE:
+		वापस "Clause 91 RS(528,514)";
+	हाल PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_RS544_1XN_ACTIVE:
+		वापस "Clause 91 RS544_1XN";
+	हाल PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_RS544_IEEE_ACTIVE:
+		वापस "Clause 91 RS(544,514)";
+	हाल PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_RS272_1XN_ACTIVE:
+		वापस "Clause 91 RS272_1XN";
+	हाल PORT_PHY_QCFG_RESP_ACTIVE_FEC_FEC_RS272_IEEE_ACTIVE:
+		वापस "Clause 91 RS(272,257)";
+	पूर्ण
+पूर्ण
 
-static void bnxt_report_link(struct bnxt *bp)
-{
-	if (bp->link_info.link_up) {
-		const char *signal = "";
-		const char *flow_ctrl;
-		const char *duplex;
+अटल व्योम bnxt_report_link(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->link_info.link_up) अणु
+		स्थिर अक्षर *संकेत = "";
+		स्थिर अक्षर *flow_ctrl;
+		स्थिर अक्षर *duplex;
 		u32 speed;
 		u16 fec;
 
-		netif_carrier_on(bp->dev);
+		netअगर_carrier_on(bp->dev);
 		speed = bnxt_fw_to_ethtool_speed(bp->link_info.link_speed);
-		if (speed == SPEED_UNKNOWN) {
+		अगर (speed == SPEED_UNKNOWN) अणु
 			netdev_info(bp->dev, "NIC Link is Up, speed unknown\n");
-			return;
-		}
-		if (bp->link_info.duplex == BNXT_LINK_DUPLEX_FULL)
+			वापस;
+		पूर्ण
+		अगर (bp->link_info.duplex == BNXT_LINK_DUPLEX_FULL)
 			duplex = "full";
-		else
+		अन्यथा
 			duplex = "half";
-		if (bp->link_info.pause == BNXT_LINK_PAUSE_BOTH)
+		अगर (bp->link_info.छोड़ो == BNXT_LINK_PAUSE_BOTH)
 			flow_ctrl = "ON - receive & transmit";
-		else if (bp->link_info.pause == BNXT_LINK_PAUSE_TX)
+		अन्यथा अगर (bp->link_info.छोड़ो == BNXT_LINK_PAUSE_TX)
 			flow_ctrl = "ON - transmit";
-		else if (bp->link_info.pause == BNXT_LINK_PAUSE_RX)
+		अन्यथा अगर (bp->link_info.छोड़ो == BNXT_LINK_PAUSE_RX)
 			flow_ctrl = "ON - receive";
-		else
+		अन्यथा
 			flow_ctrl = "none";
-		if (bp->link_info.phy_qcfg_resp.option_flags &
-		    PORT_PHY_QCFG_RESP_OPTION_FLAGS_SIGNAL_MODE_KNOWN) {
+		अगर (bp->link_info.phy_qcfg_resp.option_flags &
+		    PORT_PHY_QCFG_RESP_OPTION_FLAGS_SIGNAL_MODE_KNOWN) अणु
 			u8 sig_mode = bp->link_info.active_fec_sig_mode &
 				      PORT_PHY_QCFG_RESP_SIGNAL_MODE_MASK;
-			switch (sig_mode) {
-			case PORT_PHY_QCFG_RESP_SIGNAL_MODE_NRZ:
-				signal = "(NRZ) ";
-				break;
-			case PORT_PHY_QCFG_RESP_SIGNAL_MODE_PAM4:
-				signal = "(PAM4) ";
-				break;
-			default:
-				break;
-			}
-		}
+			चयन (sig_mode) अणु
+			हाल PORT_PHY_QCFG_RESP_SIGNAL_MODE_NRZ:
+				संकेत = "(NRZ) ";
+				अवरोध;
+			हाल PORT_PHY_QCFG_RESP_SIGNAL_MODE_PAM4:
+				संकेत = "(PAM4) ";
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		netdev_info(bp->dev, "NIC Link is Up, %u Mbps %s%s duplex, Flow control: %s\n",
-			    speed, signal, duplex, flow_ctrl);
-		if (bp->phy_flags & BNXT_PHY_FL_EEE_CAP)
+			    speed, संकेत, duplex, flow_ctrl);
+		अगर (bp->phy_flags & BNXT_PHY_FL_EEE_CAP)
 			netdev_info(bp->dev, "EEE is %s\n",
 				    bp->eee.eee_active ? "active" :
 							 "not active");
 		fec = bp->link_info.fec_cfg;
-		if (!(fec & PORT_PHY_QCFG_RESP_FEC_CFG_FEC_NONE_SUPPORTED))
+		अगर (!(fec & PORT_PHY_QCFG_RESP_FEC_CFG_FEC_NONE_SUPPORTED))
 			netdev_info(bp->dev, "FEC autoneg %s encoding: %s\n",
 				    (fec & BNXT_FEC_AUTONEG) ? "on" : "off",
 				    bnxt_report_fec(&bp->link_info));
-	} else {
-		netif_carrier_off(bp->dev);
+	पूर्ण अन्यथा अणु
+		netअगर_carrier_off(bp->dev);
 		netdev_err(bp->dev, "NIC Link is Down\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool bnxt_phy_qcaps_no_speed(struct hwrm_port_phy_qcaps_output *resp)
-{
-	if (!resp->supported_speeds_auto_mode &&
-	    !resp->supported_speeds_force_mode &&
-	    !resp->supported_pam4_speeds_auto_mode &&
-	    !resp->supported_pam4_speeds_force_mode)
-		return true;
-	return false;
-}
+अटल bool bnxt_phy_qcaps_no_speed(काष्ठा hwrm_port_phy_qcaps_output *resp)
+अणु
+	अगर (!resp->supported_speeds_स्वतः_mode &&
+	    !resp->supported_speeds_क्रमce_mode &&
+	    !resp->supported_pam4_speeds_स्वतः_mode &&
+	    !resp->supported_pam4_speeds_क्रमce_mode)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static int bnxt_hwrm_phy_qcaps(struct bnxt *bp)
-{
-	int rc = 0;
-	struct hwrm_port_phy_qcaps_input req = {0};
-	struct hwrm_port_phy_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
-	struct bnxt_link_info *link_info = &bp->link_info;
+अटल पूर्णांक bnxt_hwrm_phy_qcaps(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा hwrm_port_phy_qcaps_input req = अणु0पूर्ण;
+	काष्ठा hwrm_port_phy_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा bnxt_link_info *link_info = &bp->link_info;
 
-	if (bp->hwrm_spec_code < 0x10201)
-		return 0;
+	अगर (bp->hwrm_spec_code < 0x10201)
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_PHY_QCAPS, -1, -1);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc)
-		goto hwrm_phy_qcaps_exit;
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc)
+		जाओ hwrm_phy_qcaps_निकास;
 
 	bp->phy_flags = resp->flags;
-	if (resp->flags & PORT_PHY_QCAPS_RESP_FLAGS_EEE_SUPPORTED) {
-		struct ethtool_eee *eee = &bp->eee;
+	अगर (resp->flags & PORT_PHY_QCAPS_RESP_FLAGS_EEE_SUPPORTED) अणु
+		काष्ठा ethtool_eee *eee = &bp->eee;
 		u16 fw_speeds = le16_to_cpu(resp->supported_speeds_eee_mode);
 
 		eee->supported = _bnxt_fw_to_ethtool_adv_spds(fw_speeds, 0);
-		bp->lpi_tmr_lo = le32_to_cpu(resp->tx_lpi_timer_low) &
+		bp->lpi_पंचांगr_lo = le32_to_cpu(resp->tx_lpi_समयr_low) &
 				 PORT_PHY_QCAPS_RESP_TX_LPI_TIMER_LOW_MASK;
-		bp->lpi_tmr_hi = le32_to_cpu(resp->valid_tx_lpi_timer_high) &
+		bp->lpi_पंचांगr_hi = le32_to_cpu(resp->valid_tx_lpi_समयr_high) &
 				 PORT_PHY_QCAPS_RESP_TX_LPI_TIMER_HIGH_MASK;
-	}
+	पूर्ण
 
-	if (bp->hwrm_spec_code >= 0x10a01) {
-		if (bnxt_phy_qcaps_no_speed(resp)) {
+	अगर (bp->hwrm_spec_code >= 0x10a01) अणु
+		अगर (bnxt_phy_qcaps_no_speed(resp)) अणु
 			link_info->phy_state = BNXT_PHY_STATE_DISABLED;
 			netdev_warn(bp->dev, "Ethernet link disabled\n");
-		} else if (link_info->phy_state == BNXT_PHY_STATE_DISABLED) {
+		पूर्ण अन्यथा अगर (link_info->phy_state == BNXT_PHY_STATE_DISABLED) अणु
 			link_info->phy_state = BNXT_PHY_STATE_ENABLED;
 			netdev_info(bp->dev, "Ethernet link enabled\n");
 			/* Phy re-enabled, reprobe the speeds */
-			link_info->support_auto_speeds = 0;
-			link_info->support_pam4_auto_speeds = 0;
-		}
-	}
-	if (resp->supported_speeds_auto_mode)
-		link_info->support_auto_speeds =
-			le16_to_cpu(resp->supported_speeds_auto_mode);
-	if (resp->supported_pam4_speeds_auto_mode)
-		link_info->support_pam4_auto_speeds =
-			le16_to_cpu(resp->supported_pam4_speeds_auto_mode);
+			link_info->support_स्वतः_speeds = 0;
+			link_info->support_pam4_स्वतः_speeds = 0;
+		पूर्ण
+	पूर्ण
+	अगर (resp->supported_speeds_स्वतः_mode)
+		link_info->support_स्वतः_speeds =
+			le16_to_cpu(resp->supported_speeds_स्वतः_mode);
+	अगर (resp->supported_pam4_speeds_स्वतः_mode)
+		link_info->support_pam4_स्वतः_speeds =
+			le16_to_cpu(resp->supported_pam4_speeds_स्वतः_mode);
 
 	bp->port_count = resp->port_cnt;
 
-hwrm_phy_qcaps_exit:
+hwrm_phy_qcaps_निकास:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool bnxt_support_dropped(u16 advertising, u16 supported)
-{
-	u16 diff = advertising ^ supported;
+अटल bool bnxt_support_dropped(u16 advertising, u16 supported)
+अणु
+	u16 dअगरf = advertising ^ supported;
 
-	return ((supported | diff) != supported);
-}
+	वापस ((supported | dअगरf) != supported);
+पूर्ण
 
-int bnxt_update_link(struct bnxt *bp, bool chng_link_state)
-{
-	int rc = 0;
-	struct bnxt_link_info *link_info = &bp->link_info;
-	struct hwrm_port_phy_qcfg_input req = {0};
-	struct hwrm_port_phy_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
+पूर्णांक bnxt_update_link(काष्ठा bnxt *bp, bool chng_link_state)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा bnxt_link_info *link_info = &bp->link_info;
+	काष्ठा hwrm_port_phy_qcfg_input req = अणु0पूर्ण;
+	काष्ठा hwrm_port_phy_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
 	u8 link_up = link_info->link_up;
 	bool support_changed = false;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_PHY_QCFG, -1, -1);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc) अणु
 		mutex_unlock(&bp->hwrm_cmd_lock);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	memcpy(&link_info->phy_qcfg_resp, resp, sizeof(*resp));
+	स_नकल(&link_info->phy_qcfg_resp, resp, माप(*resp));
 	link_info->phy_link_status = resp->link;
 	link_info->duplex = resp->duplex_cfg;
-	if (bp->hwrm_spec_code >= 0x10800)
+	अगर (bp->hwrm_spec_code >= 0x10800)
 		link_info->duplex = resp->duplex_state;
-	link_info->pause = resp->pause;
-	link_info->auto_mode = resp->auto_mode;
-	link_info->auto_pause_setting = resp->auto_pause;
-	link_info->lp_pause = resp->link_partner_adv_pause;
-	link_info->force_pause_setting = resp->force_pause;
+	link_info->छोड़ो = resp->छोड़ो;
+	link_info->स्वतः_mode = resp->स्वतः_mode;
+	link_info->स्वतः_छोड़ो_setting = resp->स्वतः_छोड़ो;
+	link_info->lp_छोड़ो = resp->link_partner_adv_छोड़ो;
+	link_info->क्रमce_छोड़ो_setting = resp->क्रमce_छोड़ो;
 	link_info->duplex_setting = resp->duplex_cfg;
-	if (link_info->phy_link_status == BNXT_LINK_LINK)
+	अगर (link_info->phy_link_status == BNXT_LINK_LINK)
 		link_info->link_speed = le16_to_cpu(resp->link_speed);
-	else
+	अन्यथा
 		link_info->link_speed = 0;
-	link_info->force_link_speed = le16_to_cpu(resp->force_link_speed);
-	link_info->force_pam4_link_speed =
-		le16_to_cpu(resp->force_pam4_link_speed);
+	link_info->क्रमce_link_speed = le16_to_cpu(resp->क्रमce_link_speed);
+	link_info->क्रमce_pam4_link_speed =
+		le16_to_cpu(resp->क्रमce_pam4_link_speed);
 	link_info->support_speeds = le16_to_cpu(resp->support_speeds);
 	link_info->support_pam4_speeds = le16_to_cpu(resp->support_pam4_speeds);
-	link_info->auto_link_speeds = le16_to_cpu(resp->auto_link_speed_mask);
-	link_info->auto_pam4_link_speeds =
-		le16_to_cpu(resp->auto_pam4_link_speed_mask);
-	link_info->lp_auto_link_speeds =
+	link_info->स्वतः_link_speeds = le16_to_cpu(resp->स्वतः_link_speed_mask);
+	link_info->स्वतः_pam4_link_speeds =
+		le16_to_cpu(resp->स्वतः_pam4_link_speed_mask);
+	link_info->lp_स्वतः_link_speeds =
 		le16_to_cpu(resp->link_partner_adv_speeds);
-	link_info->lp_auto_pam4_link_speeds =
+	link_info->lp_स्वतः_pam4_link_speeds =
 		resp->link_partner_pam4_adv_speeds;
 	link_info->preemphasis = le32_to_cpu(resp->preemphasis);
 	link_info->phy_ver[0] = resp->phy_maj;
@@ -9278,23 +9279,23 @@ int bnxt_update_link(struct bnxt *bp, bool chng_link_state)
 			      PORT_PHY_QCFG_RESP_PHY_ADDR_MASK;
 	link_info->module_status = resp->module_status;
 
-	if (bp->phy_flags & BNXT_PHY_FL_EEE_CAP) {
-		struct ethtool_eee *eee = &bp->eee;
+	अगर (bp->phy_flags & BNXT_PHY_FL_EEE_CAP) अणु
+		काष्ठा ethtool_eee *eee = &bp->eee;
 		u16 fw_speeds;
 
 		eee->eee_active = 0;
-		if (resp->eee_config_phy_addr &
-		    PORT_PHY_QCFG_RESP_EEE_CONFIG_EEE_ACTIVE) {
+		अगर (resp->eee_config_phy_addr &
+		    PORT_PHY_QCFG_RESP_EEE_CONFIG_EEE_ACTIVE) अणु
 			eee->eee_active = 1;
 			fw_speeds = le16_to_cpu(
 				resp->link_partner_adv_eee_link_speed_mask);
 			eee->lp_advertised =
 				_bnxt_fw_to_ethtool_adv_spds(fw_speeds, 0);
-		}
+		पूर्ण
 
 		/* Pull initial EEE config */
-		if (!chng_link_state) {
-			if (resp->eee_config_phy_addr &
+		अगर (!chng_link_state) अणु
+			अगर (resp->eee_config_phy_addr &
 			    PORT_PHY_QCFG_RESP_EEE_CONFIG_EEE_ENABLED)
 				eee->eee_enabled = 1;
 
@@ -9302,360 +9303,360 @@ int bnxt_update_link(struct bnxt *bp, bool chng_link_state)
 			eee->advertised =
 				_bnxt_fw_to_ethtool_adv_spds(fw_speeds, 0);
 
-			if (resp->eee_config_phy_addr &
-			    PORT_PHY_QCFG_RESP_EEE_CONFIG_EEE_TX_LPI) {
-				__le32 tmr;
+			अगर (resp->eee_config_phy_addr &
+			    PORT_PHY_QCFG_RESP_EEE_CONFIG_EEE_TX_LPI) अणु
+				__le32 पंचांगr;
 
 				eee->tx_lpi_enabled = 1;
-				tmr = resp->xcvr_identifier_type_tx_lpi_timer;
-				eee->tx_lpi_timer = le32_to_cpu(tmr) &
+				पंचांगr = resp->xcvr_identअगरier_type_tx_lpi_समयr;
+				eee->tx_lpi_समयr = le32_to_cpu(पंचांगr) &
 					PORT_PHY_QCFG_RESP_TX_LPI_TIMER_MASK;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	link_info->fec_cfg = PORT_PHY_QCFG_RESP_FEC_CFG_FEC_NONE_SUPPORTED;
-	if (bp->hwrm_spec_code >= 0x10504) {
+	अगर (bp->hwrm_spec_code >= 0x10504) अणु
 		link_info->fec_cfg = le16_to_cpu(resp->fec_cfg);
-		link_info->active_fec_sig_mode = resp->active_fec_signal_mode;
-	}
+		link_info->active_fec_sig_mode = resp->active_fec_संकेत_mode;
+	पूर्ण
 	/* TODO: need to add more logic to report VF link */
-	if (chng_link_state) {
-		if (link_info->phy_link_status == BNXT_LINK_LINK)
+	अगर (chng_link_state) अणु
+		अगर (link_info->phy_link_status == BNXT_LINK_LINK)
 			link_info->link_up = 1;
-		else
+		अन्यथा
 			link_info->link_up = 0;
-		if (link_up != link_info->link_up)
+		अगर (link_up != link_info->link_up)
 			bnxt_report_link(bp);
-	} else {
-		/* alwasy link down if not require to update link state */
+	पूर्ण अन्यथा अणु
+		/* alwasy link करोwn अगर not require to update link state */
 		link_info->link_up = 0;
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
 
-	if (!BNXT_PHY_CFG_ABLE(bp))
-		return 0;
+	अगर (!BNXT_PHY_CFG_ABLE(bp))
+		वापस 0;
 
-	/* Check if any advertised speeds are no longer supported. The caller
-	 * holds the link_lock mutex, so we can modify link_info settings.
+	/* Check अगर any advertised speeds are no दीर्घer supported. The caller
+	 * holds the link_lock mutex, so we can modअगरy link_info settings.
 	 */
-	if (bnxt_support_dropped(link_info->advertising,
-				 link_info->support_auto_speeds)) {
-		link_info->advertising = link_info->support_auto_speeds;
+	अगर (bnxt_support_dropped(link_info->advertising,
+				 link_info->support_स्वतः_speeds)) अणु
+		link_info->advertising = link_info->support_स्वतः_speeds;
 		support_changed = true;
-	}
-	if (bnxt_support_dropped(link_info->advertising_pam4,
-				 link_info->support_pam4_auto_speeds)) {
-		link_info->advertising_pam4 = link_info->support_pam4_auto_speeds;
+	पूर्ण
+	अगर (bnxt_support_dropped(link_info->advertising_pam4,
+				 link_info->support_pam4_स्वतः_speeds)) अणु
+		link_info->advertising_pam4 = link_info->support_pam4_स्वतः_speeds;
 		support_changed = true;
-	}
-	if (support_changed && (link_info->autoneg & BNXT_AUTONEG_SPEED))
+	पूर्ण
+	अगर (support_changed && (link_info->स्वतःneg & BNXT_AUTONEG_SPEED))
 		bnxt_hwrm_set_link_setting(bp, true, false);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnxt_get_port_module_status(struct bnxt *bp)
-{
-	struct bnxt_link_info *link_info = &bp->link_info;
-	struct hwrm_port_phy_qcfg_output *resp = &link_info->phy_qcfg_resp;
+अटल व्योम bnxt_get_port_module_status(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_link_info *link_info = &bp->link_info;
+	काष्ठा hwrm_port_phy_qcfg_output *resp = &link_info->phy_qcfg_resp;
 	u8 module_status;
 
-	if (bnxt_update_link(bp, true))
-		return;
+	अगर (bnxt_update_link(bp, true))
+		वापस;
 
 	module_status = link_info->module_status;
-	switch (module_status) {
-	case PORT_PHY_QCFG_RESP_MODULE_STATUS_DISABLETX:
-	case PORT_PHY_QCFG_RESP_MODULE_STATUS_PWRDOWN:
-	case PORT_PHY_QCFG_RESP_MODULE_STATUS_WARNINGMSG:
+	चयन (module_status) अणु
+	हाल PORT_PHY_QCFG_RESP_MODULE_STATUS_DISABLETX:
+	हाल PORT_PHY_QCFG_RESP_MODULE_STATUS_PWRDOWN:
+	हाल PORT_PHY_QCFG_RESP_MODULE_STATUS_WARNINGMSG:
 		netdev_warn(bp->dev, "Unqualified SFP+ module detected on port %d\n",
 			    bp->pf.port_id);
-		if (bp->hwrm_spec_code >= 0x10201) {
+		अगर (bp->hwrm_spec_code >= 0x10201) अणु
 			netdev_warn(bp->dev, "Module part number %s\n",
-				    resp->phy_vendor_partnumber);
-		}
-		if (module_status == PORT_PHY_QCFG_RESP_MODULE_STATUS_DISABLETX)
+				    resp->phy_venकरोr_partnumber);
+		पूर्ण
+		अगर (module_status == PORT_PHY_QCFG_RESP_MODULE_STATUS_DISABLETX)
 			netdev_warn(bp->dev, "TX is disabled\n");
-		if (module_status == PORT_PHY_QCFG_RESP_MODULE_STATUS_PWRDOWN)
+		अगर (module_status == PORT_PHY_QCFG_RESP_MODULE_STATUS_PWRDOWN)
 			netdev_warn(bp->dev, "SFP+ module is shutdown\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bnxt_hwrm_set_pause_common(struct bnxt *bp, struct hwrm_port_phy_cfg_input *req)
-{
-	if (bp->link_info.autoneg & BNXT_AUTONEG_FLOW_CTRL) {
-		if (bp->hwrm_spec_code >= 0x10201)
-			req->auto_pause =
+अटल व्योम
+bnxt_hwrm_set_छोड़ो_common(काष्ठा bnxt *bp, काष्ठा hwrm_port_phy_cfg_input *req)
+अणु
+	अगर (bp->link_info.स्वतःneg & BNXT_AUTONEG_FLOW_CTRL) अणु
+		अगर (bp->hwrm_spec_code >= 0x10201)
+			req->स्वतः_छोड़ो =
 				PORT_PHY_CFG_REQ_AUTO_PAUSE_AUTONEG_PAUSE;
-		if (bp->link_info.req_flow_ctrl & BNXT_LINK_PAUSE_RX)
-			req->auto_pause |= PORT_PHY_CFG_REQ_AUTO_PAUSE_RX;
-		if (bp->link_info.req_flow_ctrl & BNXT_LINK_PAUSE_TX)
-			req->auto_pause |= PORT_PHY_CFG_REQ_AUTO_PAUSE_TX;
+		अगर (bp->link_info.req_flow_ctrl & BNXT_LINK_PAUSE_RX)
+			req->स्वतः_छोड़ो |= PORT_PHY_CFG_REQ_AUTO_PAUSE_RX;
+		अगर (bp->link_info.req_flow_ctrl & BNXT_LINK_PAUSE_TX)
+			req->स्वतः_छोड़ो |= PORT_PHY_CFG_REQ_AUTO_PAUSE_TX;
 		req->enables |=
 			cpu_to_le32(PORT_PHY_CFG_REQ_ENABLES_AUTO_PAUSE);
-	} else {
-		if (bp->link_info.req_flow_ctrl & BNXT_LINK_PAUSE_RX)
-			req->force_pause |= PORT_PHY_CFG_REQ_FORCE_PAUSE_RX;
-		if (bp->link_info.req_flow_ctrl & BNXT_LINK_PAUSE_TX)
-			req->force_pause |= PORT_PHY_CFG_REQ_FORCE_PAUSE_TX;
+	पूर्ण अन्यथा अणु
+		अगर (bp->link_info.req_flow_ctrl & BNXT_LINK_PAUSE_RX)
+			req->क्रमce_छोड़ो |= PORT_PHY_CFG_REQ_FORCE_PAUSE_RX;
+		अगर (bp->link_info.req_flow_ctrl & BNXT_LINK_PAUSE_TX)
+			req->क्रमce_छोड़ो |= PORT_PHY_CFG_REQ_FORCE_PAUSE_TX;
 		req->enables |=
 			cpu_to_le32(PORT_PHY_CFG_REQ_ENABLES_FORCE_PAUSE);
-		if (bp->hwrm_spec_code >= 0x10201) {
-			req->auto_pause = req->force_pause;
+		अगर (bp->hwrm_spec_code >= 0x10201) अणु
+			req->स्वतः_छोड़ो = req->क्रमce_छोड़ो;
 			req->enables |= cpu_to_le32(
 				PORT_PHY_CFG_REQ_ENABLES_AUTO_PAUSE);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void bnxt_hwrm_set_link_common(struct bnxt *bp, struct hwrm_port_phy_cfg_input *req)
-{
-	if (bp->link_info.autoneg & BNXT_AUTONEG_SPEED) {
-		req->auto_mode |= PORT_PHY_CFG_REQ_AUTO_MODE_SPEED_MASK;
-		if (bp->link_info.advertising) {
+अटल व्योम bnxt_hwrm_set_link_common(काष्ठा bnxt *bp, काष्ठा hwrm_port_phy_cfg_input *req)
+अणु
+	अगर (bp->link_info.स्वतःneg & BNXT_AUTONEG_SPEED) अणु
+		req->स्वतः_mode |= PORT_PHY_CFG_REQ_AUTO_MODE_SPEED_MASK;
+		अगर (bp->link_info.advertising) अणु
 			req->enables |= cpu_to_le32(PORT_PHY_CFG_REQ_ENABLES_AUTO_LINK_SPEED_MASK);
-			req->auto_link_speed_mask = cpu_to_le16(bp->link_info.advertising);
-		}
-		if (bp->link_info.advertising_pam4) {
+			req->स्वतः_link_speed_mask = cpu_to_le16(bp->link_info.advertising);
+		पूर्ण
+		अगर (bp->link_info.advertising_pam4) अणु
 			req->enables |=
 				cpu_to_le32(PORT_PHY_CFG_REQ_ENABLES_AUTO_PAM4_LINK_SPEED_MASK);
-			req->auto_link_pam4_speed_mask =
+			req->स्वतः_link_pam4_speed_mask =
 				cpu_to_le16(bp->link_info.advertising_pam4);
-		}
+		पूर्ण
 		req->enables |= cpu_to_le32(PORT_PHY_CFG_REQ_ENABLES_AUTO_MODE);
 		req->flags |= cpu_to_le32(PORT_PHY_CFG_REQ_FLAGS_RESTART_AUTONEG);
-	} else {
+	पूर्ण अन्यथा अणु
 		req->flags |= cpu_to_le32(PORT_PHY_CFG_REQ_FLAGS_FORCE);
-		if (bp->link_info.req_signal_mode == BNXT_SIG_MODE_PAM4) {
-			req->force_pam4_link_speed = cpu_to_le16(bp->link_info.req_link_speed);
+		अगर (bp->link_info.req_संकेत_mode == BNXT_SIG_MODE_PAM4) अणु
+			req->क्रमce_pam4_link_speed = cpu_to_le16(bp->link_info.req_link_speed);
 			req->enables |= cpu_to_le32(PORT_PHY_CFG_REQ_ENABLES_FORCE_PAM4_LINK_SPEED);
-		} else {
-			req->force_link_speed = cpu_to_le16(bp->link_info.req_link_speed);
-		}
-	}
+		पूर्ण अन्यथा अणु
+			req->क्रमce_link_speed = cpu_to_le16(bp->link_info.req_link_speed);
+		पूर्ण
+	पूर्ण
 
 	/* tell chimp that the setting takes effect immediately */
 	req->flags |= cpu_to_le32(PORT_PHY_CFG_REQ_FLAGS_RESET_PHY);
-}
+पूर्ण
 
-int bnxt_hwrm_set_pause(struct bnxt *bp)
-{
-	struct hwrm_port_phy_cfg_input req = {0};
-	int rc;
+पूर्णांक bnxt_hwrm_set_छोड़ो(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_port_phy_cfg_input req = अणु0पूर्ण;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_PHY_CFG, -1, -1);
-	bnxt_hwrm_set_pause_common(bp, &req);
+	bnxt_hwrm_set_छोड़ो_common(bp, &req);
 
-	if ((bp->link_info.autoneg & BNXT_AUTONEG_FLOW_CTRL) ||
-	    bp->link_info.force_link_chng)
+	अगर ((bp->link_info.स्वतःneg & BNXT_AUTONEG_FLOW_CTRL) ||
+	    bp->link_info.क्रमce_link_chng)
 		bnxt_hwrm_set_link_common(bp, &req);
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc && !(bp->link_info.autoneg & BNXT_AUTONEG_FLOW_CTRL)) {
-		/* since changing of pause setting doesn't trigger any link
-		 * change event, the driver needs to update the current pause
-		 * result upon successfully return of the phy_cfg command
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc && !(bp->link_info.स्वतःneg & BNXT_AUTONEG_FLOW_CTRL)) अणु
+		/* since changing of छोड़ो setting करोesn't trigger any link
+		 * change event, the driver needs to update the current छोड़ो
+		 * result upon successfully वापस of the phy_cfg command
 		 */
-		bp->link_info.pause =
-		bp->link_info.force_pause_setting = bp->link_info.req_flow_ctrl;
-		bp->link_info.auto_pause_setting = 0;
-		if (!bp->link_info.force_link_chng)
+		bp->link_info.छोड़ो =
+		bp->link_info.क्रमce_छोड़ो_setting = bp->link_info.req_flow_ctrl;
+		bp->link_info.स्वतः_छोड़ो_setting = 0;
+		अगर (!bp->link_info.क्रमce_link_chng)
 			bnxt_report_link(bp);
-	}
-	bp->link_info.force_link_chng = false;
+	पूर्ण
+	bp->link_info.क्रमce_link_chng = false;
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void bnxt_hwrm_set_eee(struct bnxt *bp,
-			      struct hwrm_port_phy_cfg_input *req)
-{
-	struct ethtool_eee *eee = &bp->eee;
+अटल व्योम bnxt_hwrm_set_eee(काष्ठा bnxt *bp,
+			      काष्ठा hwrm_port_phy_cfg_input *req)
+अणु
+	काष्ठा ethtool_eee *eee = &bp->eee;
 
-	if (eee->eee_enabled) {
+	अगर (eee->eee_enabled) अणु
 		u16 eee_speeds;
 		u32 flags = PORT_PHY_CFG_REQ_FLAGS_EEE_ENABLE;
 
-		if (eee->tx_lpi_enabled)
+		अगर (eee->tx_lpi_enabled)
 			flags |= PORT_PHY_CFG_REQ_FLAGS_EEE_TX_LPI_ENABLE;
-		else
+		अन्यथा
 			flags |= PORT_PHY_CFG_REQ_FLAGS_EEE_TX_LPI_DISABLE;
 
 		req->flags |= cpu_to_le32(flags);
-		eee_speeds = bnxt_get_fw_auto_link_speeds(eee->advertised);
+		eee_speeds = bnxt_get_fw_स्वतः_link_speeds(eee->advertised);
 		req->eee_link_speed_mask = cpu_to_le16(eee_speeds);
-		req->tx_lpi_timer = cpu_to_le32(eee->tx_lpi_timer);
-	} else {
+		req->tx_lpi_समयr = cpu_to_le32(eee->tx_lpi_समयr);
+	पूर्ण अन्यथा अणु
 		req->flags |= cpu_to_le32(PORT_PHY_CFG_REQ_FLAGS_EEE_DISABLE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int bnxt_hwrm_set_link_setting(struct bnxt *bp, bool set_pause, bool set_eee)
-{
-	struct hwrm_port_phy_cfg_input req = {0};
+पूर्णांक bnxt_hwrm_set_link_setting(काष्ठा bnxt *bp, bool set_छोड़ो, bool set_eee)
+अणु
+	काष्ठा hwrm_port_phy_cfg_input req = अणु0पूर्ण;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_PHY_CFG, -1, -1);
-	if (set_pause)
-		bnxt_hwrm_set_pause_common(bp, &req);
+	अगर (set_छोड़ो)
+		bnxt_hwrm_set_छोड़ो_common(bp, &req);
 
 	bnxt_hwrm_set_link_common(bp, &req);
 
-	if (set_eee)
+	अगर (set_eee)
 		bnxt_hwrm_set_eee(bp, &req);
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static int bnxt_hwrm_shutdown_link(struct bnxt *bp)
-{
-	struct hwrm_port_phy_cfg_input req = {0};
+अटल पूर्णांक bnxt_hwrm_shutकरोwn_link(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_port_phy_cfg_input req = अणु0पूर्ण;
 
-	if (!BNXT_SINGLE_PF(bp))
-		return 0;
+	अगर (!BNXT_SINGLE_PF(bp))
+		वापस 0;
 
-	if (pci_num_vf(bp->pdev) &&
+	अगर (pci_num_vf(bp->pdev) &&
 	    !(bp->phy_flags & BNXT_PHY_FL_FW_MANAGED_LKDN))
-		return 0;
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_PHY_CFG, -1, -1);
 	req.flags = cpu_to_le32(PORT_PHY_CFG_REQ_FLAGS_FORCE_LINK_DWN);
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static int bnxt_fw_init_one(struct bnxt *bp);
+अटल पूर्णांक bnxt_fw_init_one(काष्ठा bnxt *bp);
 
-static int bnxt_fw_reset_via_optee(struct bnxt *bp)
-{
-#ifdef CONFIG_TEE_BNXT_FW
-	int rc = tee_bnxt_fw_load();
+अटल पूर्णांक bnxt_fw_reset_via_optee(काष्ठा bnxt *bp)
+अणु
+#अगर_घोषित CONFIG_TEE_BNXT_FW
+	पूर्णांक rc = tee_bnxt_fw_load();
 
-	if (rc)
+	अगर (rc)
 		netdev_err(bp->dev, "Failed FW reset via OP-TEE, rc=%d\n", rc);
 
-	return rc;
-#else
+	वापस rc;
+#अन्यथा
 	netdev_err(bp->dev, "OP-TEE not supported\n");
-	return -ENODEV;
-#endif
-}
+	वापस -ENODEV;
+#पूर्ण_अगर
+पूर्ण
 
-static int bnxt_try_recover_fw(struct bnxt *bp)
-{
-	if (bp->fw_health && bp->fw_health->status_reliable) {
-		int retry = 0, rc;
+अटल पूर्णांक bnxt_try_recover_fw(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->fw_health && bp->fw_health->status_reliable) अणु
+		पूर्णांक retry = 0, rc;
 		u32 sts;
 
 		mutex_lock(&bp->hwrm_cmd_lock);
-		do {
-			sts = bnxt_fw_health_readl(bp, BNXT_FW_HEALTH_REG);
+		करो अणु
+			sts = bnxt_fw_health_पढ़ोl(bp, BNXT_FW_HEALTH_REG);
 			rc = __bnxt_hwrm_ver_get(bp, true);
-			if (!BNXT_FW_IS_BOOTING(sts) &&
+			अगर (!BNXT_FW_IS_BOOTING(sts) &&
 			    !BNXT_FW_IS_RECOVERING(sts))
-				break;
+				अवरोध;
 			retry++;
-		} while (rc == -EBUSY && retry < BNXT_FW_RETRY);
+		पूर्ण जबतक (rc == -EBUSY && retry < BNXT_FW_RETRY);
 		mutex_unlock(&bp->hwrm_cmd_lock);
 
-		if (!BNXT_FW_IS_HEALTHY(sts)) {
+		अगर (!BNXT_FW_IS_HEALTHY(sts)) अणु
 			netdev_err(bp->dev,
 				   "Firmware not responding, status: 0x%x\n",
 				   sts);
 			rc = -ENODEV;
-		}
-		if (sts & FW_STATUS_REG_CRASHED_NO_MASTER) {
+		पूर्ण
+		अगर (sts & FW_STATUS_REG_CRASHED_NO_MASTER) अणु
 			netdev_warn(bp->dev, "Firmware recover via OP-TEE requested\n");
-			return bnxt_fw_reset_via_optee(bp);
-		}
-		return rc;
-	}
+			वापस bnxt_fw_reset_via_optee(bp);
+		पूर्ण
+		वापस rc;
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int bnxt_hwrm_if_change(struct bnxt *bp, bool up)
-{
-	struct hwrm_func_drv_if_change_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_func_drv_if_change_input req = {0};
+अटल पूर्णांक bnxt_hwrm_अगर_change(काष्ठा bnxt *bp, bool up)
+अणु
+	काष्ठा hwrm_func_drv_अगर_change_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_func_drv_अगर_change_input req = अणु0पूर्ण;
 	bool fw_reset = !bp->irq_tbl;
 	bool resc_reinit = false;
-	int rc, retry = 0;
+	पूर्णांक rc, retry = 0;
 	u32 flags = 0;
 
-	if (!(bp->fw_cap & BNXT_FW_CAP_IF_CHANGE))
-		return 0;
+	अगर (!(bp->fw_cap & BNXT_FW_CAP_IF_CHANGE))
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_DRV_IF_CHANGE, -1, -1);
-	if (up)
+	अगर (up)
 		req.flags = cpu_to_le32(FUNC_DRV_IF_CHANGE_REQ_FLAGS_UP);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	while (retry < BNXT_FW_IF_RETRY) {
-		rc = _hwrm_send_message(bp, &req, sizeof(req),
+	जबतक (retry < BNXT_FW_IF_RETRY) अणु
+		rc = _hwrm_send_message(bp, &req, माप(req),
 					HWRM_CMD_TIMEOUT);
-		if (rc != -EAGAIN)
-			break;
+		अगर (rc != -EAGAIN)
+			अवरोध;
 
 		msleep(50);
 		retry++;
-	}
-	if (!rc)
+	पूर्ण
+	अगर (!rc)
 		flags = le32_to_cpu(resp->flags);
 	mutex_unlock(&bp->hwrm_cmd_lock);
 
-	if (rc == -EAGAIN)
-		return rc;
-	if (rc && up) {
+	अगर (rc == -EAGAIN)
+		वापस rc;
+	अगर (rc && up) अणु
 		rc = bnxt_try_recover_fw(bp);
 		fw_reset = true;
-	}
-	if (rc)
-		return rc;
+	पूर्ण
+	अगर (rc)
+		वापस rc;
 
-	if (!up) {
+	अगर (!up) अणु
 		bnxt_inv_fw_health_reg(bp);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (flags & FUNC_DRV_IF_CHANGE_RESP_FLAGS_RESC_CHANGE)
+	अगर (flags & FUNC_DRV_IF_CHANGE_RESP_FLAGS_RESC_CHANGE)
 		resc_reinit = true;
-	if (flags & FUNC_DRV_IF_CHANGE_RESP_FLAGS_HOT_FW_RESET_DONE)
+	अगर (flags & FUNC_DRV_IF_CHANGE_RESP_FLAGS_HOT_FW_RESET_DONE)
 		fw_reset = true;
-	else if (bp->fw_health && !bp->fw_health->status_reliable)
+	अन्यथा अगर (bp->fw_health && !bp->fw_health->status_reliable)
 		bnxt_try_map_fw_health_reg(bp);
 
-	if (test_bit(BNXT_STATE_IN_FW_RESET, &bp->state) && !fw_reset) {
+	अगर (test_bit(BNXT_STATE_IN_FW_RESET, &bp->state) && !fw_reset) अणु
 		netdev_err(bp->dev, "RESET_DONE not set during FW reset.\n");
 		set_bit(BNXT_STATE_ABORT_ERR, &bp->state);
-		return -ENODEV;
-	}
-	if (resc_reinit || fw_reset) {
-		if (fw_reset) {
+		वापस -ENODEV;
+	पूर्ण
+	अगर (resc_reinit || fw_reset) अणु
+		अगर (fw_reset) अणु
 			set_bit(BNXT_STATE_FW_RESET_DET, &bp->state);
-			if (!test_bit(BNXT_STATE_IN_FW_RESET, &bp->state))
+			अगर (!test_bit(BNXT_STATE_IN_FW_RESET, &bp->state))
 				bnxt_ulp_stop(bp);
-			bnxt_free_ctx_mem(bp);
-			kfree(bp->ctx);
-			bp->ctx = NULL;
-			bnxt_dcb_free(bp);
+			bnxt_मुक्त_ctx_mem(bp);
+			kमुक्त(bp->ctx);
+			bp->ctx = शून्य;
+			bnxt_dcb_मुक्त(bp);
 			rc = bnxt_fw_init_one(bp);
-			if (rc) {
+			अगर (rc) अणु
 				clear_bit(BNXT_STATE_FW_RESET_DET, &bp->state);
 				set_bit(BNXT_STATE_ABORT_ERR, &bp->state);
-				return rc;
-			}
-			bnxt_clear_int_mode(bp);
-			rc = bnxt_init_int_mode(bp);
-			if (rc) {
+				वापस rc;
+			पूर्ण
+			bnxt_clear_पूर्णांक_mode(bp);
+			rc = bnxt_init_पूर्णांक_mode(bp);
+			अगर (rc) अणु
 				clear_bit(BNXT_STATE_FW_RESET_DET, &bp->state);
 				netdev_err(bp->dev, "init int mode failed\n");
-				return rc;
-			}
-		}
-		if (BNXT_NEW_RM(bp)) {
-			struct bnxt_hw_resc *hw_resc = &bp->hw_resc;
+				वापस rc;
+			पूर्ण
+		पूर्ण
+		अगर (BNXT_NEW_RM(bp)) अणु
+			काष्ठा bnxt_hw_resc *hw_resc = &bp->hw_resc;
 
 			rc = bnxt_hwrm_func_resc_qcaps(bp, true);
-			if (rc)
+			अगर (rc)
 				netdev_err(bp->dev, "resc_qcaps failed\n");
 
 			hw_resc->resv_cp_rings = 0;
@@ -9665,691 +9666,691 @@ static int bnxt_hwrm_if_change(struct bnxt *bp, bool up)
 			hw_resc->resv_rx_rings = 0;
 			hw_resc->resv_hw_ring_grps = 0;
 			hw_resc->resv_vnics = 0;
-			if (!fw_reset) {
+			अगर (!fw_reset) अणु
 				bp->tx_nr_rings = 0;
 				bp->rx_nr_rings = 0;
-			}
-		}
-	}
-	return rc;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_port_led_qcaps(struct bnxt *bp)
-{
-	struct hwrm_port_led_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_port_led_qcaps_input req = {0};
-	struct bnxt_pf_info *pf = &bp->pf;
-	int rc;
+अटल पूर्णांक bnxt_hwrm_port_led_qcaps(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_port_led_qcaps_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_port_led_qcaps_input req = अणु0पूर्ण;
+	काष्ठा bnxt_pf_info *pf = &bp->pf;
+	पूर्णांक rc;
 
 	bp->num_leds = 0;
-	if (BNXT_VF(bp) || bp->hwrm_spec_code < 0x10601)
-		return 0;
+	अगर (BNXT_VF(bp) || bp->hwrm_spec_code < 0x10601)
+		वापस 0;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_LED_QCAPS, -1, -1);
 	req.port_id = cpu_to_le16(pf->port_id);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc) अणु
 		mutex_unlock(&bp->hwrm_cmd_lock);
-		return rc;
-	}
-	if (resp->num_leds > 0 && resp->num_leds < BNXT_MAX_LED) {
-		int i;
+		वापस rc;
+	पूर्ण
+	अगर (resp->num_leds > 0 && resp->num_leds < BNXT_MAX_LED) अणु
+		पूर्णांक i;
 
 		bp->num_leds = resp->num_leds;
-		memcpy(bp->leds, &resp->led0_id, sizeof(bp->leds[0]) *
+		स_नकल(bp->leds, &resp->led0_id, माप(bp->leds[0]) *
 						 bp->num_leds);
-		for (i = 0; i < bp->num_leds; i++) {
-			struct bnxt_led_info *led = &bp->leds[i];
+		क्रम (i = 0; i < bp->num_leds; i++) अणु
+			काष्ठा bnxt_led_info *led = &bp->leds[i];
 			__le16 caps = led->led_state_caps;
 
-			if (!led->led_group_id ||
-			    !BNXT_LED_ALT_BLINK_CAP(caps)) {
+			अगर (!led->led_group_id ||
+			    !BNXT_LED_ALT_BLINK_CAP(caps)) अणु
 				bp->num_leds = 0;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bnxt_hwrm_alloc_wol_fltr(struct bnxt *bp)
-{
-	struct hwrm_wol_filter_alloc_input req = {0};
-	struct hwrm_wol_filter_alloc_output *resp = bp->hwrm_cmd_resp_addr;
-	int rc;
+पूर्णांक bnxt_hwrm_alloc_wol_fltr(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_wol_filter_alloc_input req = अणु0पूर्ण;
+	काष्ठा hwrm_wol_filter_alloc_output *resp = bp->hwrm_cmd_resp_addr;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_WOL_FILTER_ALLOC, -1, -1);
 	req.port_id = cpu_to_le16(bp->pf.port_id);
 	req.wol_type = WOL_FILTER_ALLOC_REQ_WOL_TYPE_MAGICPKT;
 	req.enables = cpu_to_le32(WOL_FILTER_ALLOC_REQ_ENABLES_MAC_ADDRESS);
-	memcpy(req.mac_address, bp->dev->dev_addr, ETH_ALEN);
+	स_नकल(req.mac_address, bp->dev->dev_addr, ETH_ALEN);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc)
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc)
 		bp->wol_filter_id = resp->wol_filter_id;
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int bnxt_hwrm_free_wol_fltr(struct bnxt *bp)
-{
-	struct hwrm_wol_filter_free_input req = {0};
+पूर्णांक bnxt_hwrm_मुक्त_wol_fltr(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_wol_filter_मुक्त_input req = अणु0पूर्ण;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_WOL_FILTER_FREE, -1, -1);
 	req.port_id = cpu_to_le16(bp->pf.port_id);
 	req.enables = cpu_to_le32(WOL_FILTER_FREE_REQ_ENABLES_WOL_FILTER_ID);
 	req.wol_filter_id = bp->wol_filter_id;
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static u16 bnxt_hwrm_get_wol_fltrs(struct bnxt *bp, u16 handle)
-{
-	struct hwrm_wol_filter_qcfg_input req = {0};
-	struct hwrm_wol_filter_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
+अटल u16 bnxt_hwrm_get_wol_fltrs(काष्ठा bnxt *bp, u16 handle)
+अणु
+	काष्ठा hwrm_wol_filter_qcfg_input req = अणु0पूर्ण;
+	काष्ठा hwrm_wol_filter_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
 	u16 next_handle = 0;
-	int rc;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_WOL_FILTER_QCFG, -1, -1);
 	req.port_id = cpu_to_le16(bp->pf.port_id);
 	req.handle = cpu_to_le16(handle);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
 		next_handle = le16_to_cpu(resp->next_handle);
-		if (next_handle != 0) {
-			if (resp->wol_type ==
-			    WOL_FILTER_ALLOC_REQ_WOL_TYPE_MAGICPKT) {
+		अगर (next_handle != 0) अणु
+			अगर (resp->wol_type ==
+			    WOL_FILTER_ALLOC_REQ_WOL_TYPE_MAGICPKT) अणु
 				bp->wol = 1;
 				bp->wol_filter_id = resp->wol_filter_id;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return next_handle;
-}
+	वापस next_handle;
+पूर्ण
 
-static void bnxt_get_wol_settings(struct bnxt *bp)
-{
+अटल व्योम bnxt_get_wol_settings(काष्ठा bnxt *bp)
+अणु
 	u16 handle = 0;
 
 	bp->wol = 0;
-	if (!BNXT_PF(bp) || !(bp->flags & BNXT_FLAG_WOL_CAP))
-		return;
+	अगर (!BNXT_PF(bp) || !(bp->flags & BNXT_FLAG_WOL_CAP))
+		वापस;
 
-	do {
+	करो अणु
 		handle = bnxt_hwrm_get_wol_fltrs(bp, handle);
-	} while (handle && handle != 0xffff);
-}
+	पूर्ण जबतक (handle && handle != 0xffff);
+पूर्ण
 
-#ifdef CONFIG_BNXT_HWMON
-static ssize_t bnxt_show_temp(struct device *dev,
-			      struct device_attribute *devattr, char *buf)
-{
-	struct hwrm_temp_monitor_query_input req = {0};
-	struct hwrm_temp_monitor_query_output *resp;
-	struct bnxt *bp = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_BNXT_HWMON
+अटल sमाप_प्रकार bnxt_show_temp(काष्ठा device *dev,
+			      काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	काष्ठा hwrm_temp_monitor_query_input req = अणु0पूर्ण;
+	काष्ठा hwrm_temp_monitor_query_output *resp;
+	काष्ठा bnxt *bp = dev_get_drvdata(dev);
 	u32 len = 0;
-	int rc;
+	पूर्णांक rc;
 
 	resp = bp->hwrm_cmd_resp_addr;
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_TEMP_MONITOR_QUERY, -1, -1);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc)
-		len = sprintf(buf, "%u\n", resp->temp * 1000); /* display millidegree */
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc)
+		len = प्र_लिखो(buf, "%u\n", resp->temp * 1000); /* display millidegree */
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	if (rc)
-		return rc;
-	return len;
-}
-static SENSOR_DEVICE_ATTR(temp1_input, 0444, bnxt_show_temp, NULL, 0);
+	अगर (rc)
+		वापस rc;
+	वापस len;
+पूर्ण
+अटल SENSOR_DEVICE_ATTR(temp1_input, 0444, bnxt_show_temp, शून्य, 0);
 
-static struct attribute *bnxt_attrs[] = {
+अटल काष्ठा attribute *bnxt_attrs[] = अणु
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(bnxt);
 
-static void bnxt_hwmon_close(struct bnxt *bp)
-{
-	if (bp->hwmon_dev) {
-		hwmon_device_unregister(bp->hwmon_dev);
-		bp->hwmon_dev = NULL;
-	}
-}
+अटल व्योम bnxt_hwmon_बंद(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->hwmon_dev) अणु
+		hwmon_device_unरेजिस्टर(bp->hwmon_dev);
+		bp->hwmon_dev = शून्य;
+	पूर्ण
+पूर्ण
 
-static void bnxt_hwmon_open(struct bnxt *bp)
-{
-	struct hwrm_temp_monitor_query_input req = {0};
-	struct pci_dev *pdev = bp->pdev;
-	int rc;
+अटल व्योम bnxt_hwmon_खोलो(काष्ठा bnxt *bp)
+अणु
+	काष्ठा hwrm_temp_monitor_query_input req = अणु0पूर्ण;
+	काष्ठा pci_dev *pdev = bp->pdev;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_TEMP_MONITOR_QUERY, -1, -1);
-	rc = hwrm_send_message_silent(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc == -EACCES || rc == -EOPNOTSUPP) {
-		bnxt_hwmon_close(bp);
-		return;
-	}
+	rc = hwrm_send_message_silent(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc == -EACCES || rc == -EOPNOTSUPP) अणु
+		bnxt_hwmon_बंद(bp);
+		वापस;
+	पूर्ण
 
-	if (bp->hwmon_dev)
-		return;
+	अगर (bp->hwmon_dev)
+		वापस;
 
-	bp->hwmon_dev = hwmon_device_register_with_groups(&pdev->dev,
+	bp->hwmon_dev = hwmon_device_रेजिस्टर_with_groups(&pdev->dev,
 							  DRV_MODULE_NAME, bp,
 							  bnxt_groups);
-	if (IS_ERR(bp->hwmon_dev)) {
-		bp->hwmon_dev = NULL;
+	अगर (IS_ERR(bp->hwmon_dev)) अणु
+		bp->hwmon_dev = शून्य;
 		dev_warn(&pdev->dev, "Cannot register hwmon device\n");
-	}
-}
-#else
-static void bnxt_hwmon_close(struct bnxt *bp)
-{
-}
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल व्योम bnxt_hwmon_बंद(काष्ठा bnxt *bp)
+अणु
+पूर्ण
 
-static void bnxt_hwmon_open(struct bnxt *bp)
-{
-}
-#endif
+अटल व्योम bnxt_hwmon_खोलो(काष्ठा bnxt *bp)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static bool bnxt_eee_config_ok(struct bnxt *bp)
-{
-	struct ethtool_eee *eee = &bp->eee;
-	struct bnxt_link_info *link_info = &bp->link_info;
+अटल bool bnxt_eee_config_ok(काष्ठा bnxt *bp)
+अणु
+	काष्ठा ethtool_eee *eee = &bp->eee;
+	काष्ठा bnxt_link_info *link_info = &bp->link_info;
 
-	if (!(bp->phy_flags & BNXT_PHY_FL_EEE_CAP))
-		return true;
+	अगर (!(bp->phy_flags & BNXT_PHY_FL_EEE_CAP))
+		वापस true;
 
-	if (eee->eee_enabled) {
+	अगर (eee->eee_enabled) अणु
 		u32 advertising =
 			_bnxt_fw_to_ethtool_adv_spds(link_info->advertising, 0);
 
-		if (!(link_info->autoneg & BNXT_AUTONEG_SPEED)) {
+		अगर (!(link_info->स्वतःneg & BNXT_AUTONEG_SPEED)) अणु
 			eee->eee_enabled = 0;
-			return false;
-		}
-		if (eee->advertised & ~advertising) {
+			वापस false;
+		पूर्ण
+		अगर (eee->advertised & ~advertising) अणु
 			eee->advertised = advertising & eee->supported;
-			return false;
-		}
-	}
-	return true;
-}
+			वापस false;
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static int bnxt_update_phy_setting(struct bnxt *bp)
-{
-	int rc;
+अटल पूर्णांक bnxt_update_phy_setting(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 	bool update_link = false;
-	bool update_pause = false;
+	bool update_छोड़ो = false;
 	bool update_eee = false;
-	struct bnxt_link_info *link_info = &bp->link_info;
+	काष्ठा bnxt_link_info *link_info = &bp->link_info;
 
 	rc = bnxt_update_link(bp, true);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "failed to update link (rc: %x)\n",
 			   rc);
-		return rc;
-	}
-	if (!BNXT_SINGLE_PF(bp))
-		return 0;
+		वापस rc;
+	पूर्ण
+	अगर (!BNXT_SINGLE_PF(bp))
+		वापस 0;
 
-	if ((link_info->autoneg & BNXT_AUTONEG_FLOW_CTRL) &&
-	    (link_info->auto_pause_setting & BNXT_LINK_PAUSE_BOTH) !=
+	अगर ((link_info->स्वतःneg & BNXT_AUTONEG_FLOW_CTRL) &&
+	    (link_info->स्वतः_छोड़ो_setting & BNXT_LINK_PAUSE_BOTH) !=
 	    link_info->req_flow_ctrl)
-		update_pause = true;
-	if (!(link_info->autoneg & BNXT_AUTONEG_FLOW_CTRL) &&
-	    link_info->force_pause_setting != link_info->req_flow_ctrl)
-		update_pause = true;
-	if (!(link_info->autoneg & BNXT_AUTONEG_SPEED)) {
-		if (BNXT_AUTO_MODE(link_info->auto_mode))
+		update_छोड़ो = true;
+	अगर (!(link_info->स्वतःneg & BNXT_AUTONEG_FLOW_CTRL) &&
+	    link_info->क्रमce_छोड़ो_setting != link_info->req_flow_ctrl)
+		update_छोड़ो = true;
+	अगर (!(link_info->स्वतःneg & BNXT_AUTONEG_SPEED)) अणु
+		अगर (BNXT_AUTO_MODE(link_info->स्वतः_mode))
 			update_link = true;
-		if (link_info->req_signal_mode == BNXT_SIG_MODE_NRZ &&
-		    link_info->req_link_speed != link_info->force_link_speed)
+		अगर (link_info->req_संकेत_mode == BNXT_SIG_MODE_NRZ &&
+		    link_info->req_link_speed != link_info->क्रमce_link_speed)
 			update_link = true;
-		else if (link_info->req_signal_mode == BNXT_SIG_MODE_PAM4 &&
-			 link_info->req_link_speed != link_info->force_pam4_link_speed)
+		अन्यथा अगर (link_info->req_संकेत_mode == BNXT_SIG_MODE_PAM4 &&
+			 link_info->req_link_speed != link_info->क्रमce_pam4_link_speed)
 			update_link = true;
-		if (link_info->req_duplex != link_info->duplex_setting)
+		अगर (link_info->req_duplex != link_info->duplex_setting)
 			update_link = true;
-	} else {
-		if (link_info->auto_mode == BNXT_LINK_AUTO_NONE)
+	पूर्ण अन्यथा अणु
+		अगर (link_info->स्वतः_mode == BNXT_LINK_AUTO_NONE)
 			update_link = true;
-		if (link_info->advertising != link_info->auto_link_speeds ||
-		    link_info->advertising_pam4 != link_info->auto_pam4_link_speeds)
+		अगर (link_info->advertising != link_info->स्वतः_link_speeds ||
+		    link_info->advertising_pam4 != link_info->स्वतः_pam4_link_speeds)
 			update_link = true;
-	}
+	पूर्ण
 
-	/* The last close may have shutdown the link, so need to call
+	/* The last बंद may have shutकरोwn the link, so need to call
 	 * PHY_CFG to bring it back up.
 	 */
-	if (!bp->link_info.link_up)
+	अगर (!bp->link_info.link_up)
 		update_link = true;
 
-	if (!bnxt_eee_config_ok(bp))
+	अगर (!bnxt_eee_config_ok(bp))
 		update_eee = true;
 
-	if (update_link)
-		rc = bnxt_hwrm_set_link_setting(bp, update_pause, update_eee);
-	else if (update_pause)
-		rc = bnxt_hwrm_set_pause(bp);
-	if (rc) {
+	अगर (update_link)
+		rc = bnxt_hwrm_set_link_setting(bp, update_छोड़ो, update_eee);
+	अन्यथा अगर (update_छोड़ो)
+		rc = bnxt_hwrm_set_छोड़ो(bp);
+	अगर (rc) अणु
 		netdev_err(bp->dev, "failed to update phy setting (rc: %x)\n",
 			   rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* Common routine to pre-map certain register block to different GRC window.
- * A PF has 16 4K windows and a VF has 4 4K windows. However, only 15 windows
- * in PF and 3 windows in VF that can be customized to map in different
- * register blocks.
+/* Common routine to pre-map certain रेजिस्टर block to dअगरferent GRC winकरोw.
+ * A PF has 16 4K winकरोws and a VF has 4 4K winकरोws. However, only 15 winकरोws
+ * in PF and 3 winकरोws in VF that can be customized to map in dअगरferent
+ * रेजिस्टर blocks.
  */
-static void bnxt_preset_reg_win(struct bnxt *bp)
-{
-	if (BNXT_PF(bp)) {
-		/* CAG registers map to GRC window #4 */
-		writel(BNXT_CAG_REG_BASE,
+अटल व्योम bnxt_preset_reg_win(काष्ठा bnxt *bp)
+अणु
+	अगर (BNXT_PF(bp)) अणु
+		/* CAG रेजिस्टरs map to GRC winकरोw #4 */
+		ग_लिखोl(BNXT_CAG_REG_BASE,
 		       bp->bar0 + BNXT_GRCPF_REG_WINDOW_BASE_OUT + 12);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnxt_init_dflt_ring_mode(struct bnxt *bp);
+अटल पूर्णांक bnxt_init_dflt_ring_mode(काष्ठा bnxt *bp);
 
-static int bnxt_reinit_after_abort(struct bnxt *bp)
-{
-	int rc;
+अटल पूर्णांक bnxt_reinit_after_पात(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 
-	if (test_bit(BNXT_STATE_IN_FW_RESET, &bp->state))
-		return -EBUSY;
+	अगर (test_bit(BNXT_STATE_IN_FW_RESET, &bp->state))
+		वापस -EBUSY;
 
-	if (bp->dev->reg_state == NETREG_UNREGISTERED)
-		return -ENODEV;
+	अगर (bp->dev->reg_state == NETREG_UNREGISTERED)
+		वापस -ENODEV;
 
 	rc = bnxt_fw_init_one(bp);
-	if (!rc) {
-		bnxt_clear_int_mode(bp);
-		rc = bnxt_init_int_mode(bp);
-		if (!rc) {
+	अगर (!rc) अणु
+		bnxt_clear_पूर्णांक_mode(bp);
+		rc = bnxt_init_पूर्णांक_mode(bp);
+		अगर (!rc) अणु
 			clear_bit(BNXT_STATE_ABORT_ERR, &bp->state);
 			set_bit(BNXT_STATE_FW_RESET_DET, &bp->state);
-		}
-	}
-	return rc;
-}
+		पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int __bnxt_open_nic(struct bnxt *bp, bool irq_re_init, bool link_re_init)
-{
-	int rc = 0;
+अटल पूर्णांक __bnxt_खोलो_nic(काष्ठा bnxt *bp, bool irq_re_init, bool link_re_init)
+अणु
+	पूर्णांक rc = 0;
 
 	bnxt_preset_reg_win(bp);
-	netif_carrier_off(bp->dev);
-	if (irq_re_init) {
-		/* Reserve rings now if none were reserved at driver probe. */
+	netअगर_carrier_off(bp->dev);
+	अगर (irq_re_init) अणु
+		/* Reserve rings now अगर none were reserved at driver probe. */
 		rc = bnxt_init_dflt_ring_mode(bp);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(bp->dev, "Failed to reserve default rings at open\n");
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 	rc = bnxt_reserve_rings(bp, irq_re_init);
-	if (rc)
-		return rc;
-	if ((bp->flags & BNXT_FLAG_RFS) &&
-	    !(bp->flags & BNXT_FLAG_USING_MSIX)) {
-		/* disable RFS if falling back to INTA */
+	अगर (rc)
+		वापस rc;
+	अगर ((bp->flags & BNXT_FLAG_RFS) &&
+	    !(bp->flags & BNXT_FLAG_USING_MSIX)) अणु
+		/* disable RFS अगर falling back to INTA */
 		bp->dev->hw_features &= ~NETIF_F_NTUPLE;
 		bp->flags &= ~BNXT_FLAG_RFS;
-	}
+	पूर्ण
 
 	rc = bnxt_alloc_mem(bp, irq_re_init);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "bnxt_alloc_mem err: %x\n", rc);
-		goto open_err_free_mem;
-	}
+		जाओ खोलो_err_मुक्त_mem;
+	पूर्ण
 
-	if (irq_re_init) {
+	अगर (irq_re_init) अणु
 		bnxt_init_napi(bp);
 		rc = bnxt_request_irq(bp);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(bp->dev, "bnxt_request_irq err: %x\n", rc);
-			goto open_err_irq;
-		}
-	}
+			जाओ खोलो_err_irq;
+		पूर्ण
+	पूर्ण
 
 	rc = bnxt_init_nic(bp, irq_re_init);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "bnxt_init_nic err: %x\n", rc);
-		goto open_err_irq;
-	}
+		जाओ खोलो_err_irq;
+	पूर्ण
 
 	bnxt_enable_napi(bp);
 	bnxt_debug_dev_init(bp);
 
-	if (link_re_init) {
+	अगर (link_re_init) अणु
 		mutex_lock(&bp->link_lock);
 		rc = bnxt_update_phy_setting(bp);
 		mutex_unlock(&bp->link_lock);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_warn(bp->dev, "failed to update phy settings\n");
-			if (BNXT_SINGLE_PF(bp)) {
+			अगर (BNXT_SINGLE_PF(bp)) अणु
 				bp->link_info.phy_retry = true;
 				bp->link_info.phy_retry_expires =
-					jiffies + 5 * HZ;
-			}
-		}
-	}
+					jअगरfies + 5 * HZ;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (irq_re_init)
+	अगर (irq_re_init)
 		udp_tunnel_nic_reset_ntf(bp->dev);
 
 	set_bit(BNXT_STATE_OPEN, &bp->state);
-	bnxt_enable_int(bp);
+	bnxt_enable_पूर्णांक(bp);
 	/* Enable TX queues */
 	bnxt_tx_enable(bp);
-	mod_timer(&bp->timer, jiffies + bp->current_interval);
-	/* Poll link status and check for SFP+ module status */
+	mod_समयr(&bp->समयr, jअगरfies + bp->current_पूर्णांकerval);
+	/* Poll link status and check क्रम SFP+ module status */
 	bnxt_get_port_module_status(bp);
 
-	/* VF-reps may need to be re-opened after the PF is re-opened */
-	if (BNXT_PF(bp))
-		bnxt_vf_reps_open(bp);
-	return 0;
+	/* VF-reps may need to be re-खोलोed after the PF is re-खोलोed */
+	अगर (BNXT_PF(bp))
+		bnxt_vf_reps_खोलो(bp);
+	वापस 0;
 
-open_err_irq:
+खोलो_err_irq:
 	bnxt_del_napi(bp);
 
-open_err_free_mem:
-	bnxt_free_skbs(bp);
-	bnxt_free_irq(bp);
-	bnxt_free_mem(bp, true);
-	return rc;
-}
+खोलो_err_मुक्त_mem:
+	bnxt_मुक्त_skbs(bp);
+	bnxt_मुक्त_irq(bp);
+	bnxt_मुक्त_mem(bp, true);
+	वापस rc;
+पूर्ण
 
 /* rtnl_lock held */
-int bnxt_open_nic(struct bnxt *bp, bool irq_re_init, bool link_re_init)
-{
-	int rc = 0;
+पूर्णांक bnxt_खोलो_nic(काष्ठा bnxt *bp, bool irq_re_init, bool link_re_init)
+अणु
+	पूर्णांक rc = 0;
 
-	if (test_bit(BNXT_STATE_ABORT_ERR, &bp->state))
+	अगर (test_bit(BNXT_STATE_ABORT_ERR, &bp->state))
 		rc = -EIO;
-	if (!rc)
-		rc = __bnxt_open_nic(bp, irq_re_init, link_re_init);
-	if (rc) {
+	अगर (!rc)
+		rc = __bnxt_खोलो_nic(bp, irq_re_init, link_re_init);
+	अगर (rc) अणु
 		netdev_err(bp->dev, "nic open fail (rc: %x)\n", rc);
-		dev_close(bp->dev);
-	}
-	return rc;
-}
+		dev_बंद(bp->dev);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-/* rtnl_lock held, open the NIC half way by allocating all resources, but
- * NAPI, IRQ, and TX are not enabled.  This is mainly used for offline
+/* rtnl_lock held, खोलो the NIC half way by allocating all resources, but
+ * NAPI, IRQ, and TX are not enabled.  This is मुख्यly used क्रम offline
  * self tests.
  */
-int bnxt_half_open_nic(struct bnxt *bp)
-{
-	int rc = 0;
+पूर्णांक bnxt_half_खोलो_nic(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc = 0;
 
 	rc = bnxt_alloc_mem(bp, false);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "bnxt_alloc_mem err: %x\n", rc);
-		goto half_open_err;
-	}
+		जाओ half_खोलो_err;
+	पूर्ण
 	rc = bnxt_init_nic(bp, false);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "bnxt_init_nic err: %x\n", rc);
-		goto half_open_err;
-	}
-	return 0;
+		जाओ half_खोलो_err;
+	पूर्ण
+	वापस 0;
 
-half_open_err:
-	bnxt_free_skbs(bp);
-	bnxt_free_mem(bp, false);
-	dev_close(bp->dev);
-	return rc;
-}
+half_खोलो_err:
+	bnxt_मुक्त_skbs(bp);
+	bnxt_मुक्त_mem(bp, false);
+	dev_बंद(bp->dev);
+	वापस rc;
+पूर्ण
 
 /* rtnl_lock held, this call can only be made after a previous successful
- * call to bnxt_half_open_nic().
+ * call to bnxt_half_खोलो_nic().
  */
-void bnxt_half_close_nic(struct bnxt *bp)
-{
-	bnxt_hwrm_resource_free(bp, false, false);
-	bnxt_free_skbs(bp);
-	bnxt_free_mem(bp, false);
-}
+व्योम bnxt_half_बंद_nic(काष्ठा bnxt *bp)
+अणु
+	bnxt_hwrm_resource_मुक्त(bp, false, false);
+	bnxt_मुक्त_skbs(bp);
+	bnxt_मुक्त_mem(bp, false);
+पूर्ण
 
-static void bnxt_reenable_sriov(struct bnxt *bp)
-{
-	if (BNXT_PF(bp)) {
-		struct bnxt_pf_info *pf = &bp->pf;
-		int n = pf->active_vfs;
+अटल व्योम bnxt_reenable_sriov(काष्ठा bnxt *bp)
+अणु
+	अगर (BNXT_PF(bp)) अणु
+		काष्ठा bnxt_pf_info *pf = &bp->pf;
+		पूर्णांक n = pf->active_vfs;
 
-		if (n)
+		अगर (n)
 			bnxt_cfg_hw_sriov(bp, &n, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnxt_open(struct net_device *dev)
-{
-	struct bnxt *bp = netdev_priv(dev);
-	int rc;
+अटल पूर्णांक bnxt_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
+	पूर्णांक rc;
 
-	if (test_bit(BNXT_STATE_ABORT_ERR, &bp->state)) {
-		rc = bnxt_reinit_after_abort(bp);
-		if (rc) {
-			if (rc == -EBUSY)
+	अगर (test_bit(BNXT_STATE_ABORT_ERR, &bp->state)) अणु
+		rc = bnxt_reinit_after_पात(bp);
+		अगर (rc) अणु
+			अगर (rc == -EBUSY)
 				netdev_err(bp->dev, "A previous firmware reset has not completed, aborting\n");
-			else
+			अन्यथा
 				netdev_err(bp->dev, "Failed to reinitialize after aborted firmware reset\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	rc = bnxt_hwrm_if_change(bp, true);
-	if (rc)
-		return rc;
-	rc = __bnxt_open_nic(bp, true, true);
-	if (rc) {
-		bnxt_hwrm_if_change(bp, false);
-	} else {
-		if (test_and_clear_bit(BNXT_STATE_FW_RESET_DET, &bp->state)) {
-			if (!test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)) {
+	rc = bnxt_hwrm_अगर_change(bp, true);
+	अगर (rc)
+		वापस rc;
+	rc = __bnxt_खोलो_nic(bp, true, true);
+	अगर (rc) अणु
+		bnxt_hwrm_अगर_change(bp, false);
+	पूर्ण अन्यथा अणु
+		अगर (test_and_clear_bit(BNXT_STATE_FW_RESET_DET, &bp->state)) अणु
+			अगर (!test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)) अणु
 				bnxt_ulp_start(bp, 0);
 				bnxt_reenable_sriov(bp);
-			}
-		}
-		bnxt_hwmon_open(bp);
-	}
+			पूर्ण
+		पूर्ण
+		bnxt_hwmon_खोलो(bp);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool bnxt_drv_busy(struct bnxt *bp)
-{
-	return (test_bit(BNXT_STATE_IN_SP_TASK, &bp->state) ||
+अटल bool bnxt_drv_busy(काष्ठा bnxt *bp)
+अणु
+	वापस (test_bit(BNXT_STATE_IN_SP_TASK, &bp->state) ||
 		test_bit(BNXT_STATE_READ_STATS, &bp->state));
-}
+पूर्ण
 
-static void bnxt_get_ring_stats(struct bnxt *bp,
-				struct rtnl_link_stats64 *stats);
+अटल व्योम bnxt_get_ring_stats(काष्ठा bnxt *bp,
+				काष्ठा rtnl_link_stats64 *stats);
 
-static void __bnxt_close_nic(struct bnxt *bp, bool irq_re_init,
+अटल व्योम __bnxt_बंद_nic(काष्ठा bnxt *bp, bool irq_re_init,
 			     bool link_re_init)
-{
-	/* Close the VF-reps before closing PF */
-	if (BNXT_PF(bp))
-		bnxt_vf_reps_close(bp);
+अणु
+	/* Close the VF-reps beक्रमe closing PF */
+	अगर (BNXT_PF(bp))
+		bnxt_vf_reps_बंद(bp);
 
-	/* Change device state to avoid TX queue wake up's */
+	/* Change device state to aव्योम TX queue wake up's */
 	bnxt_tx_disable(bp);
 
 	clear_bit(BNXT_STATE_OPEN, &bp->state);
 	smp_mb__after_atomic();
-	while (bnxt_drv_busy(bp))
+	जबतक (bnxt_drv_busy(bp))
 		msleep(20);
 
-	/* Flush rings and and disable interrupts */
-	bnxt_shutdown_nic(bp, irq_re_init);
+	/* Flush rings and and disable पूर्णांकerrupts */
+	bnxt_shutकरोwn_nic(bp, irq_re_init);
 
-	/* TODO CHIMP_FW: Link/PHY related cleanup if (link_re_init) */
+	/* TODO CHIMP_FW: Link/PHY related cleanup अगर (link_re_init) */
 
-	bnxt_debug_dev_exit(bp);
+	bnxt_debug_dev_निकास(bp);
 	bnxt_disable_napi(bp);
-	del_timer_sync(&bp->timer);
-	bnxt_free_skbs(bp);
+	del_समयr_sync(&bp->समयr);
+	bnxt_मुक्त_skbs(bp);
 
-	/* Save ring stats before shutdown */
-	if (bp->bnapi && irq_re_init)
+	/* Save ring stats beक्रमe shutकरोwn */
+	अगर (bp->bnapi && irq_re_init)
 		bnxt_get_ring_stats(bp, &bp->net_stats_prev);
-	if (irq_re_init) {
-		bnxt_free_irq(bp);
+	अगर (irq_re_init) अणु
+		bnxt_मुक्त_irq(bp);
 		bnxt_del_napi(bp);
-	}
-	bnxt_free_mem(bp, irq_re_init);
-}
+	पूर्ण
+	bnxt_मुक्त_mem(bp, irq_re_init);
+पूर्ण
 
-int bnxt_close_nic(struct bnxt *bp, bool irq_re_init, bool link_re_init)
-{
-	int rc = 0;
+पूर्णांक bnxt_बंद_nic(काष्ठा bnxt *bp, bool irq_re_init, bool link_re_init)
+अणु
+	पूर्णांक rc = 0;
 
-	if (test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)) {
+	अगर (test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)) अणु
 		/* If we get here, it means firmware reset is in progress
-		 * while we are trying to close.  We can safely proceed with
-		 * the close because we are holding rtnl_lock().  Some firmware
-		 * messages may fail as we proceed to close.  We set the
-		 * ABORT_ERR flag here so that the FW reset thread will later
-		 * abort when it gets the rtnl_lock() and sees the flag.
+		 * जबतक we are trying to बंद.  We can safely proceed with
+		 * the बंद because we are holding rtnl_lock().  Some firmware
+		 * messages may fail as we proceed to बंद.  We set the
+		 * ABORT_ERR flag here so that the FW reset thपढ़ो will later
+		 * पात when it माला_लो the rtnl_lock() and sees the flag.
 		 */
 		netdev_warn(bp->dev, "FW reset in progress during close, FW reset will be aborted\n");
 		set_bit(BNXT_STATE_ABORT_ERR, &bp->state);
-	}
+	पूर्ण
 
-#ifdef CONFIG_BNXT_SRIOV
-	if (bp->sriov_cfg) {
-		rc = wait_event_interruptible_timeout(bp->sriov_cfg_wait,
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	अगर (bp->sriov_cfg) अणु
+		rc = रुको_event_पूर्णांकerruptible_समयout(bp->sriov_cfg_रुको,
 						      !bp->sriov_cfg,
 						      BNXT_SRIOV_CFG_WAIT_TMO);
-		if (rc)
+		अगर (rc)
 			netdev_warn(bp->dev, "timeout waiting for SRIOV config operation to complete!\n");
-	}
-#endif
-	__bnxt_close_nic(bp, irq_re_init, link_re_init);
-	return rc;
-}
+	पूर्ण
+#पूर्ण_अगर
+	__bnxt_बंद_nic(bp, irq_re_init, link_re_init);
+	वापस rc;
+पूर्ण
 
-static int bnxt_close(struct net_device *dev)
-{
-	struct bnxt *bp = netdev_priv(dev);
+अटल पूर्णांक bnxt_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 
-	bnxt_hwmon_close(bp);
-	bnxt_close_nic(bp, true, true);
-	bnxt_hwrm_shutdown_link(bp);
-	bnxt_hwrm_if_change(bp, false);
-	return 0;
-}
+	bnxt_hwmon_बंद(bp);
+	bnxt_बंद_nic(bp, true, true);
+	bnxt_hwrm_shutकरोwn_link(bp);
+	bnxt_hwrm_अगर_change(bp, false);
+	वापस 0;
+पूर्ण
 
-static int bnxt_hwrm_port_phy_read(struct bnxt *bp, u16 phy_addr, u16 reg,
+अटल पूर्णांक bnxt_hwrm_port_phy_पढ़ो(काष्ठा bnxt *bp, u16 phy_addr, u16 reg,
 				   u16 *val)
-{
-	struct hwrm_port_phy_mdio_read_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_port_phy_mdio_read_input req = {0};
-	int rc;
+अणु
+	काष्ठा hwrm_port_phy_mdio_पढ़ो_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_port_phy_mdio_पढ़ो_input req = अणु0पूर्ण;
+	पूर्णांक rc;
 
-	if (bp->hwrm_spec_code < 0x10a00)
-		return -EOPNOTSUPP;
+	अगर (bp->hwrm_spec_code < 0x10a00)
+		वापस -EOPNOTSUPP;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_PHY_MDIO_READ, -1, -1);
 	req.port_id = cpu_to_le16(bp->pf.port_id);
 	req.phy_addr = phy_addr;
 	req.reg_addr = cpu_to_le16(reg & 0x1f);
-	if (mdio_phy_id_is_c45(phy_addr)) {
+	अगर (mdio_phy_id_is_c45(phy_addr)) अणु
 		req.cl45_mdio = 1;
 		req.phy_addr = mdio_phy_id_prtad(phy_addr);
 		req.dev_addr = mdio_phy_id_devad(phy_addr);
 		req.reg_addr = cpu_to_le16(reg);
-	}
+	पूर्ण
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc)
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc)
 		*val = le16_to_cpu(resp->reg_data);
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_hwrm_port_phy_write(struct bnxt *bp, u16 phy_addr, u16 reg,
+अटल पूर्णांक bnxt_hwrm_port_phy_ग_लिखो(काष्ठा bnxt *bp, u16 phy_addr, u16 reg,
 				    u16 val)
-{
-	struct hwrm_port_phy_mdio_write_input req = {0};
+अणु
+	काष्ठा hwrm_port_phy_mdio_ग_लिखो_input req = अणु0पूर्ण;
 
-	if (bp->hwrm_spec_code < 0x10a00)
-		return -EOPNOTSUPP;
+	अगर (bp->hwrm_spec_code < 0x10a00)
+		वापस -EOPNOTSUPP;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_PHY_MDIO_WRITE, -1, -1);
 	req.port_id = cpu_to_le16(bp->pf.port_id);
 	req.phy_addr = phy_addr;
 	req.reg_addr = cpu_to_le16(reg & 0x1f);
-	if (mdio_phy_id_is_c45(phy_addr)) {
+	अगर (mdio_phy_id_is_c45(phy_addr)) अणु
 		req.cl45_mdio = 1;
 		req.phy_addr = mdio_phy_id_prtad(phy_addr);
 		req.dev_addr = mdio_phy_id_devad(phy_addr);
 		req.reg_addr = cpu_to_le16(reg);
-	}
+	पूर्ण
 	req.reg_data = cpu_to_le16(val);
 
-	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	वापस hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
 /* rtnl_lock held */
-static int bnxt_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	struct mii_ioctl_data *mdio = if_mii(ifr);
-	struct bnxt *bp = netdev_priv(dev);
-	int rc;
+अटल पूर्णांक bnxt_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	काष्ठा mii_ioctl_data *mdio = अगर_mii(अगरr);
+	काष्ठा bnxt *bp = netdev_priv(dev);
+	पूर्णांक rc;
 
-	switch (cmd) {
-	case SIOCGMIIPHY:
+	चयन (cmd) अणु
+	हाल SIOCGMIIPHY:
 		mdio->phy_id = bp->link_info.phy_addr;
 
 		fallthrough;
-	case SIOCGMIIREG: {
+	हाल SIOCGMIIREG: अणु
 		u16 mii_regval = 0;
 
-		if (!netif_running(dev))
-			return -EAGAIN;
+		अगर (!netअगर_running(dev))
+			वापस -EAGAIN;
 
-		rc = bnxt_hwrm_port_phy_read(bp, mdio->phy_id, mdio->reg_num,
+		rc = bnxt_hwrm_port_phy_पढ़ो(bp, mdio->phy_id, mdio->reg_num,
 					     &mii_regval);
 		mdio->val_out = mii_regval;
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	case SIOCSMIIREG:
-		if (!netif_running(dev))
-			return -EAGAIN;
+	हाल SIOCSMIIREG:
+		अगर (!netअगर_running(dev))
+			वापस -EAGAIN;
 
-		return bnxt_hwrm_port_phy_write(bp, mdio->phy_id, mdio->reg_num,
+		वापस bnxt_hwrm_port_phy_ग_लिखो(bp, mdio->phy_id, mdio->reg_num,
 						mdio->val_in);
 
-	default:
-		/* do nothing */
-		break;
-	}
-	return -EOPNOTSUPP;
-}
+	शेष:
+		/* करो nothing */
+		अवरोध;
+	पूर्ण
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static void bnxt_get_ring_stats(struct bnxt *bp,
-				struct rtnl_link_stats64 *stats)
-{
-	int i;
+अटल व्योम bnxt_get_ring_stats(काष्ठा bnxt *bp,
+				काष्ठा rtnl_link_stats64 *stats)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
 		u64 *sw = cpr->stats.sw_stats;
 
 		stats->rx_packets += BNXT_GET_RING_STATS64(sw, rx_ucast_pkts);
@@ -10374,13 +10375,13 @@ static void bnxt_get_ring_stats(struct bnxt *bp,
 		stats->multicast += BNXT_GET_RING_STATS64(sw, rx_mcast_pkts);
 
 		stats->tx_dropped += BNXT_GET_RING_STATS64(sw, tx_error_pkts);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnxt_add_prev_stats(struct bnxt *bp,
-				struct rtnl_link_stats64 *stats)
-{
-	struct rtnl_link_stats64 *prev_stats = &bp->net_stats_prev;
+अटल व्योम bnxt_add_prev_stats(काष्ठा bnxt *bp,
+				काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा rtnl_link_stats64 *prev_stats = &bp->net_stats_prev;
 
 	stats->rx_packets += prev_stats->rx_packets;
 	stats->tx_packets += prev_stats->tx_packets;
@@ -10389,28 +10390,28 @@ static void bnxt_add_prev_stats(struct bnxt *bp,
 	stats->rx_missed_errors += prev_stats->rx_missed_errors;
 	stats->multicast += prev_stats->multicast;
 	stats->tx_dropped += prev_stats->tx_dropped;
-}
+पूर्ण
 
-static void
-bnxt_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
-{
-	struct bnxt *bp = netdev_priv(dev);
+अटल व्योम
+bnxt_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 
 	set_bit(BNXT_STATE_READ_STATS, &bp->state);
-	/* Make sure bnxt_close_nic() sees that we are reading stats before
+	/* Make sure bnxt_बंद_nic() sees that we are पढ़ोing stats beक्रमe
 	 * we check the BNXT_STATE_OPEN flag.
 	 */
 	smp_mb__after_atomic();
-	if (!test_bit(BNXT_STATE_OPEN, &bp->state)) {
+	अगर (!test_bit(BNXT_STATE_OPEN, &bp->state)) अणु
 		clear_bit(BNXT_STATE_READ_STATS, &bp->state);
 		*stats = bp->net_stats_prev;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bnxt_get_ring_stats(bp, stats);
 	bnxt_add_prev_stats(bp, stats);
 
-	if (bp->flags & BNXT_FLAG_PORT_STATS) {
+	अगर (bp->flags & BNXT_FLAG_PORT_STATS) अणु
 		u64 *rx = bp->port_stats.sw_stats;
 		u64 *tx = bp->port_stats.sw_stats +
 			  BNXT_TX_PORT_STATS_BYTE_OFFSET / 8;
@@ -10428,76 +10429,76 @@ bnxt_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 			BNXT_GET_RX_PORT_STATS64(rx, rx_jbr_frames);
 		stats->collisions =
 			BNXT_GET_TX_PORT_STATS64(tx, tx_total_collisions);
-		stats->tx_fifo_errors =
-			BNXT_GET_TX_PORT_STATS64(tx, tx_fifo_underruns);
+		stats->tx_fअगरo_errors =
+			BNXT_GET_TX_PORT_STATS64(tx, tx_fअगरo_underruns);
 		stats->tx_errors = BNXT_GET_TX_PORT_STATS64(tx, tx_err);
-	}
+	पूर्ण
 	clear_bit(BNXT_STATE_READ_STATS, &bp->state);
-}
+पूर्ण
 
-static bool bnxt_mc_list_updated(struct bnxt *bp, u32 *rx_mask)
-{
-	struct net_device *dev = bp->dev;
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[0];
-	struct netdev_hw_addr *ha;
+अटल bool bnxt_mc_list_updated(काष्ठा bnxt *bp, u32 *rx_mask)
+अणु
+	काष्ठा net_device *dev = bp->dev;
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[0];
+	काष्ठा netdev_hw_addr *ha;
 	u8 *haddr;
-	int mc_count = 0;
+	पूर्णांक mc_count = 0;
 	bool update = false;
-	int off = 0;
+	पूर्णांक off = 0;
 
-	netdev_for_each_mc_addr(ha, dev) {
-		if (mc_count >= BNXT_MAX_MC_ADDRS) {
+	netdev_क्रम_each_mc_addr(ha, dev) अणु
+		अगर (mc_count >= BNXT_MAX_MC_ADDRS) अणु
 			*rx_mask |= CFA_L2_SET_RX_MASK_REQ_MASK_ALL_MCAST;
 			vnic->mc_list_count = 0;
-			return false;
-		}
+			वापस false;
+		पूर्ण
 		haddr = ha->addr;
-		if (!ether_addr_equal(haddr, vnic->mc_list + off)) {
-			memcpy(vnic->mc_list + off, haddr, ETH_ALEN);
+		अगर (!ether_addr_equal(haddr, vnic->mc_list + off)) अणु
+			स_नकल(vnic->mc_list + off, haddr, ETH_ALEN);
 			update = true;
-		}
+		पूर्ण
 		off += ETH_ALEN;
 		mc_count++;
-	}
-	if (mc_count)
+	पूर्ण
+	अगर (mc_count)
 		*rx_mask |= CFA_L2_SET_RX_MASK_REQ_MASK_MCAST;
 
-	if (mc_count != vnic->mc_list_count) {
+	अगर (mc_count != vnic->mc_list_count) अणु
 		vnic->mc_list_count = mc_count;
 		update = true;
-	}
-	return update;
-}
+	पूर्ण
+	वापस update;
+पूर्ण
 
-static bool bnxt_uc_list_updated(struct bnxt *bp)
-{
-	struct net_device *dev = bp->dev;
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[0];
-	struct netdev_hw_addr *ha;
-	int off = 0;
+अटल bool bnxt_uc_list_updated(काष्ठा bnxt *bp)
+अणु
+	काष्ठा net_device *dev = bp->dev;
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[0];
+	काष्ठा netdev_hw_addr *ha;
+	पूर्णांक off = 0;
 
-	if (netdev_uc_count(dev) != (vnic->uc_filter_count - 1))
-		return true;
+	अगर (netdev_uc_count(dev) != (vnic->uc_filter_count - 1))
+		वापस true;
 
-	netdev_for_each_uc_addr(ha, dev) {
-		if (!ether_addr_equal(ha->addr, vnic->uc_list + off))
-			return true;
+	netdev_क्रम_each_uc_addr(ha, dev) अणु
+		अगर (!ether_addr_equal(ha->addr, vnic->uc_list + off))
+			वापस true;
 
 		off += ETH_ALEN;
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static void bnxt_set_rx_mode(struct net_device *dev)
-{
-	struct bnxt *bp = netdev_priv(dev);
-	struct bnxt_vnic_info *vnic;
+अटल व्योम bnxt_set_rx_mode(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
+	काष्ठा bnxt_vnic_info *vnic;
 	bool mc_update = false;
 	bool uc_update;
 	u32 mask;
 
-	if (!test_bit(BNXT_STATE_OPEN, &bp->state))
-		return;
+	अगर (!test_bit(BNXT_STATE_OPEN, &bp->state))
+		वापस;
 
 	vnic = &bp->vnic_info[0];
 	mask = vnic->rx_mask;
@@ -10506,688 +10507,688 @@ static void bnxt_set_rx_mode(struct net_device *dev)
 		  CFA_L2_SET_RX_MASK_REQ_MASK_ALL_MCAST |
 		  CFA_L2_SET_RX_MASK_REQ_MASK_BCAST);
 
-	if (dev->flags & IFF_PROMISC)
+	अगर (dev->flags & IFF_PROMISC)
 		mask |= CFA_L2_SET_RX_MASK_REQ_MASK_PROMISCUOUS;
 
 	uc_update = bnxt_uc_list_updated(bp);
 
-	if (dev->flags & IFF_BROADCAST)
+	अगर (dev->flags & IFF_BROADCAST)
 		mask |= CFA_L2_SET_RX_MASK_REQ_MASK_BCAST;
-	if (dev->flags & IFF_ALLMULTI) {
+	अगर (dev->flags & IFF_ALLMULTI) अणु
 		mask |= CFA_L2_SET_RX_MASK_REQ_MASK_ALL_MCAST;
 		vnic->mc_list_count = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		mc_update = bnxt_mc_list_updated(bp, &mask);
-	}
+	पूर्ण
 
-	if (mask != vnic->rx_mask || uc_update || mc_update) {
+	अगर (mask != vnic->rx_mask || uc_update || mc_update) अणु
 		vnic->rx_mask = mask;
 
 		set_bit(BNXT_RX_MASK_SP_EVENT, &bp->sp_event);
 		bnxt_queue_sp_work(bp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bnxt_cfg_rx_mode(struct bnxt *bp)
-{
-	struct net_device *dev = bp->dev;
-	struct bnxt_vnic_info *vnic = &bp->vnic_info[0];
-	struct netdev_hw_addr *ha;
-	int i, off = 0, rc;
+अटल पूर्णांक bnxt_cfg_rx_mode(काष्ठा bnxt *bp)
+अणु
+	काष्ठा net_device *dev = bp->dev;
+	काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[0];
+	काष्ठा netdev_hw_addr *ha;
+	पूर्णांक i, off = 0, rc;
 	bool uc_update;
 
-	netif_addr_lock_bh(dev);
+	netअगर_addr_lock_bh(dev);
 	uc_update = bnxt_uc_list_updated(bp);
-	netif_addr_unlock_bh(dev);
+	netअगर_addr_unlock_bh(dev);
 
-	if (!uc_update)
-		goto skip_uc;
+	अगर (!uc_update)
+		जाओ skip_uc;
 
 	mutex_lock(&bp->hwrm_cmd_lock);
-	for (i = 1; i < vnic->uc_filter_count; i++) {
-		struct hwrm_cfa_l2_filter_free_input req = {0};
+	क्रम (i = 1; i < vnic->uc_filter_count; i++) अणु
+		काष्ठा hwrm_cfa_l2_filter_मुक्त_input req = अणु0पूर्ण;
 
 		bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_CFA_L2_FILTER_FREE, -1,
 				       -1);
 
 		req.l2_filter_id = vnic->fw_l2_filter_id[i];
 
-		rc = _hwrm_send_message(bp, &req, sizeof(req),
+		rc = _hwrm_send_message(bp, &req, माप(req),
 					HWRM_CMD_TIMEOUT);
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
 
 	vnic->uc_filter_count = 1;
 
-	netif_addr_lock_bh(dev);
-	if (netdev_uc_count(dev) > (BNXT_MAX_UC_ADDRS - 1)) {
+	netअगर_addr_lock_bh(dev);
+	अगर (netdev_uc_count(dev) > (BNXT_MAX_UC_ADDRS - 1)) अणु
 		vnic->rx_mask |= CFA_L2_SET_RX_MASK_REQ_MASK_PROMISCUOUS;
-	} else {
-		netdev_for_each_uc_addr(ha, dev) {
-			memcpy(vnic->uc_list + off, ha->addr, ETH_ALEN);
+	पूर्ण अन्यथा अणु
+		netdev_क्रम_each_uc_addr(ha, dev) अणु
+			स_नकल(vnic->uc_list + off, ha->addr, ETH_ALEN);
 			off += ETH_ALEN;
 			vnic->uc_filter_count++;
-		}
-	}
-	netif_addr_unlock_bh(dev);
+		पूर्ण
+	पूर्ण
+	netअगर_addr_unlock_bh(dev);
 
-	for (i = 1, off = 0; i < vnic->uc_filter_count; i++, off += ETH_ALEN) {
+	क्रम (i = 1, off = 0; i < vnic->uc_filter_count; i++, off += ETH_ALEN) अणु
 		rc = bnxt_hwrm_set_vnic_filter(bp, 0, i, vnic->uc_list + off);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(bp->dev, "HWRM vnic filter failure rc: %x\n",
 				   rc);
 			vnic->uc_filter_count = i;
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
 skip_uc:
-	if ((vnic->rx_mask & CFA_L2_SET_RX_MASK_REQ_MASK_PROMISCUOUS) &&
+	अगर ((vnic->rx_mask & CFA_L2_SET_RX_MASK_REQ_MASK_PROMISCUOUS) &&
 	    !bnxt_promisc_ok(bp))
 		vnic->rx_mask &= ~CFA_L2_SET_RX_MASK_REQ_MASK_PROMISCUOUS;
 	rc = bnxt_hwrm_cfa_l2_set_rx_mask(bp, 0);
-	if (rc && vnic->mc_list_count) {
+	अगर (rc && vnic->mc_list_count) अणु
 		netdev_info(bp->dev, "Failed setting MC filters rc: %d, turning on ALL_MCAST mode\n",
 			    rc);
 		vnic->rx_mask |= CFA_L2_SET_RX_MASK_REQ_MASK_ALL_MCAST;
 		vnic->mc_list_count = 0;
 		rc = bnxt_hwrm_cfa_l2_set_rx_mask(bp, 0);
-	}
-	if (rc)
+	पूर्ण
+	अगर (rc)
 		netdev_err(bp->dev, "HWRM cfa l2 rx mask failure rc: %d\n",
 			   rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool bnxt_can_reserve_rings(struct bnxt *bp)
-{
-#ifdef CONFIG_BNXT_SRIOV
-	if (BNXT_NEW_RM(bp) && BNXT_VF(bp)) {
-		struct bnxt_hw_resc *hw_resc = &bp->hw_resc;
+अटल bool bnxt_can_reserve_rings(काष्ठा bnxt *bp)
+अणु
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	अगर (BNXT_NEW_RM(bp) && BNXT_VF(bp)) अणु
+		काष्ठा bnxt_hw_resc *hw_resc = &bp->hw_resc;
 
 		/* No minimum rings were provisioned by the PF.  Don't
-		 * reserve rings by default when device is down.
+		 * reserve rings by शेष when device is करोwn.
 		 */
-		if (hw_resc->min_tx_rings || hw_resc->resv_tx_rings)
-			return true;
+		अगर (hw_resc->min_tx_rings || hw_resc->resv_tx_rings)
+			वापस true;
 
-		if (!netif_running(bp->dev))
-			return false;
-	}
-#endif
-	return true;
-}
+		अगर (!netअगर_running(bp->dev))
+			वापस false;
+	पूर्ण
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
 /* If the chip and firmware supports RFS */
-static bool bnxt_rfs_supported(struct bnxt *bp)
-{
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
-		if (bp->fw_cap & BNXT_FW_CAP_CFA_RFS_RING_TBL_IDX_V2)
-			return true;
-		return false;
-	}
-	if (BNXT_PF(bp) && !BNXT_CHIP_TYPE_NITRO_A0(bp))
-		return true;
-	if (bp->flags & BNXT_FLAG_NEW_RSS_CAP)
-		return true;
-	return false;
-}
+अटल bool bnxt_rfs_supported(काष्ठा bnxt *bp)
+अणु
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
+		अगर (bp->fw_cap & BNXT_FW_CAP_CFA_RFS_RING_TBL_IDX_V2)
+			वापस true;
+		वापस false;
+	पूर्ण
+	अगर (BNXT_PF(bp) && !BNXT_CHIP_TYPE_NITRO_A0(bp))
+		वापस true;
+	अगर (bp->flags & BNXT_FLAG_NEW_RSS_CAP)
+		वापस true;
+	वापस false;
+पूर्ण
 
-/* If runtime conditions support RFS */
-static bool bnxt_rfs_capable(struct bnxt *bp)
-{
-#ifdef CONFIG_RFS_ACCEL
-	int vnics, max_vnics, max_rss_ctxs;
+/* If runसमय conditions support RFS */
+अटल bool bnxt_rfs_capable(काष्ठा bnxt *bp)
+अणु
+#अगर_घोषित CONFIG_RFS_ACCEL
+	पूर्णांक vnics, max_vnics, max_rss_ctxs;
 
-	if (bp->flags & BNXT_FLAG_CHIP_P5)
-		return bnxt_rfs_supported(bp);
-	if (!(bp->flags & BNXT_FLAG_MSIX_CAP) || !bnxt_can_reserve_rings(bp))
-		return false;
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5)
+		वापस bnxt_rfs_supported(bp);
+	अगर (!(bp->flags & BNXT_FLAG_MSIX_CAP) || !bnxt_can_reserve_rings(bp))
+		वापस false;
 
 	vnics = 1 + bp->rx_nr_rings;
 	max_vnics = bnxt_get_max_func_vnics(bp);
 	max_rss_ctxs = bnxt_get_max_func_rss_ctxs(bp);
 
 	/* RSS contexts not a limiting factor */
-	if (bp->flags & BNXT_FLAG_NEW_RSS_CAP)
+	अगर (bp->flags & BNXT_FLAG_NEW_RSS_CAP)
 		max_rss_ctxs = max_vnics;
-	if (vnics > max_vnics || vnics > max_rss_ctxs) {
-		if (bp->rx_nr_rings > 1)
+	अगर (vnics > max_vnics || vnics > max_rss_ctxs) अणु
+		अगर (bp->rx_nr_rings > 1)
 			netdev_warn(bp->dev,
 				    "Not enough resources to support NTUPLE filters, enough resources for up to %d rx rings\n",
 				    min(max_rss_ctxs - 1, max_vnics - 1));
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!BNXT_NEW_RM(bp))
-		return true;
+	अगर (!BNXT_NEW_RM(bp))
+		वापस true;
 
-	if (vnics == bp->hw_resc.resv_vnics)
-		return true;
+	अगर (vnics == bp->hw_resc.resv_vnics)
+		वापस true;
 
 	bnxt_hwrm_reserve_rings(bp, 0, 0, 0, 0, 0, vnics);
-	if (vnics <= bp->hw_resc.resv_vnics)
-		return true;
+	अगर (vnics <= bp->hw_resc.resv_vnics)
+		वापस true;
 
 	netdev_warn(bp->dev, "Unable to reserve resources to support NTUPLE filters.\n");
 	bnxt_hwrm_reserve_rings(bp, 0, 0, 0, 0, 0, 1);
-	return false;
-#else
-	return false;
-#endif
-}
+	वापस false;
+#अन्यथा
+	वापस false;
+#पूर्ण_अगर
+पूर्ण
 
-static netdev_features_t bnxt_fix_features(struct net_device *dev,
+अटल netdev_features_t bnxt_fix_features(काष्ठा net_device *dev,
 					   netdev_features_t features)
-{
-	struct bnxt *bp = netdev_priv(dev);
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 	netdev_features_t vlan_features;
 
-	if ((features & NETIF_F_NTUPLE) && !bnxt_rfs_capable(bp))
+	अगर ((features & NETIF_F_NTUPLE) && !bnxt_rfs_capable(bp))
 		features &= ~NETIF_F_NTUPLE;
 
-	if (bp->flags & BNXT_FLAG_NO_AGG_RINGS)
+	अगर (bp->flags & BNXT_FLAG_NO_AGG_RINGS)
 		features &= ~(NETIF_F_LRO | NETIF_F_GRO_HW);
 
-	if (!(features & NETIF_F_GRO))
+	अगर (!(features & NETIF_F_GRO))
 		features &= ~NETIF_F_GRO_HW;
 
-	if (features & NETIF_F_GRO_HW)
+	अगर (features & NETIF_F_GRO_HW)
 		features &= ~NETIF_F_LRO;
 
 	/* Both CTAG and STAG VLAN accelaration on the RX side have to be
 	 * turned on or off together.
 	 */
 	vlan_features = features & BNXT_HW_FEATURE_VLAN_ALL_RX;
-	if (vlan_features != BNXT_HW_FEATURE_VLAN_ALL_RX) {
-		if (dev->features & BNXT_HW_FEATURE_VLAN_ALL_RX)
+	अगर (vlan_features != BNXT_HW_FEATURE_VLAN_ALL_RX) अणु
+		अगर (dev->features & BNXT_HW_FEATURE_VLAN_ALL_RX)
 			features &= ~BNXT_HW_FEATURE_VLAN_ALL_RX;
-		else if (vlan_features)
+		अन्यथा अगर (vlan_features)
 			features |= BNXT_HW_FEATURE_VLAN_ALL_RX;
-	}
-#ifdef CONFIG_BNXT_SRIOV
-	if (BNXT_VF(bp) && bp->vf.vlan)
+	पूर्ण
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	अगर (BNXT_VF(bp) && bp->vf.vlan)
 		features &= ~BNXT_HW_FEATURE_VLAN_ALL_RX;
-#endif
-	return features;
-}
+#पूर्ण_अगर
+	वापस features;
+पूर्ण
 
-static int bnxt_set_features(struct net_device *dev, netdev_features_t features)
-{
-	struct bnxt *bp = netdev_priv(dev);
+अटल पूर्णांक bnxt_set_features(काष्ठा net_device *dev, netdev_features_t features)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 	u32 flags = bp->flags;
 	u32 changes;
-	int rc = 0;
+	पूर्णांक rc = 0;
 	bool re_init = false;
 	bool update_tpa = false;
 
 	flags &= ~BNXT_FLAG_ALL_CONFIG_FEATS;
-	if (features & NETIF_F_GRO_HW)
+	अगर (features & NETIF_F_GRO_HW)
 		flags |= BNXT_FLAG_GRO;
-	else if (features & NETIF_F_LRO)
+	अन्यथा अगर (features & NETIF_F_LRO)
 		flags |= BNXT_FLAG_LRO;
 
-	if (bp->flags & BNXT_FLAG_NO_AGG_RINGS)
+	अगर (bp->flags & BNXT_FLAG_NO_AGG_RINGS)
 		flags &= ~BNXT_FLAG_TPA;
 
-	if (features & BNXT_HW_FEATURE_VLAN_ALL_RX)
+	अगर (features & BNXT_HW_FEATURE_VLAN_ALL_RX)
 		flags |= BNXT_FLAG_STRIP_VLAN;
 
-	if (features & NETIF_F_NTUPLE)
+	अगर (features & NETIF_F_NTUPLE)
 		flags |= BNXT_FLAG_RFS;
 
 	changes = flags ^ bp->flags;
-	if (changes & BNXT_FLAG_TPA) {
+	अगर (changes & BNXT_FLAG_TPA) अणु
 		update_tpa = true;
-		if ((bp->flags & BNXT_FLAG_TPA) == 0 ||
+		अगर ((bp->flags & BNXT_FLAG_TPA) == 0 ||
 		    (flags & BNXT_FLAG_TPA) == 0 ||
 		    (bp->flags & BNXT_FLAG_CHIP_P5))
 			re_init = true;
-	}
+	पूर्ण
 
-	if (changes & ~BNXT_FLAG_TPA)
+	अगर (changes & ~BNXT_FLAG_TPA)
 		re_init = true;
 
-	if (flags != bp->flags) {
+	अगर (flags != bp->flags) अणु
 		u32 old_flags = bp->flags;
 
-		if (!test_bit(BNXT_STATE_OPEN, &bp->state)) {
+		अगर (!test_bit(BNXT_STATE_OPEN, &bp->state)) अणु
 			bp->flags = flags;
-			if (update_tpa)
+			अगर (update_tpa)
 				bnxt_set_ring_params(bp);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
-		if (re_init) {
-			bnxt_close_nic(bp, false, false);
+		अगर (re_init) अणु
+			bnxt_बंद_nic(bp, false, false);
 			bp->flags = flags;
-			if (update_tpa)
+			अगर (update_tpa)
 				bnxt_set_ring_params(bp);
 
-			return bnxt_open_nic(bp, false, false);
-		}
-		if (update_tpa) {
+			वापस bnxt_खोलो_nic(bp, false, false);
+		पूर्ण
+		अगर (update_tpa) अणु
 			bp->flags = flags;
 			rc = bnxt_set_tpa(bp,
 					  (flags & BNXT_FLAG_TPA) ?
 					  true : false);
-			if (rc)
+			अगर (rc)
 				bp->flags = old_flags;
-		}
-	}
-	return rc;
-}
+		पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static bool bnxt_exthdr_check(struct bnxt *bp, struct sk_buff *skb, int nw_off,
+अटल bool bnxt_exthdr_check(काष्ठा bnxt *bp, काष्ठा sk_buff *skb, पूर्णांक nw_off,
 			      u8 **nextp)
-{
-	struct ipv6hdr *ip6h = (struct ipv6hdr *)(skb->data + nw_off);
-	int hdr_count = 0;
+अणु
+	काष्ठा ipv6hdr *ip6h = (काष्ठा ipv6hdr *)(skb->data + nw_off);
+	पूर्णांक hdr_count = 0;
 	u8 *nexthdr;
-	int start;
+	पूर्णांक start;
 
 	/* Check that there are at most 2 IPv6 extension headers, no
 	 * fragment header, and each is <= 64 bytes.
 	 */
-	start = nw_off + sizeof(*ip6h);
+	start = nw_off + माप(*ip6h);
 	nexthdr = &ip6h->nexthdr;
-	while (ipv6_ext_hdr(*nexthdr)) {
-		struct ipv6_opt_hdr *hp;
-		int hdrlen;
+	जबतक (ipv6_ext_hdr(*nexthdr)) अणु
+		काष्ठा ipv6_opt_hdr *hp;
+		पूर्णांक hdrlen;
 
-		if (hdr_count >= 3 || *nexthdr == NEXTHDR_NONE ||
+		अगर (hdr_count >= 3 || *nexthdr == NEXTHDR_NONE ||
 		    *nexthdr == NEXTHDR_FRAGMENT)
-			return false;
-		hp = __skb_header_pointer(NULL, start, sizeof(*hp), skb->data,
-					  skb_headlen(skb), NULL);
-		if (!hp)
-			return false;
-		if (*nexthdr == NEXTHDR_AUTH)
+			वापस false;
+		hp = __skb_header_poपूर्णांकer(शून्य, start, माप(*hp), skb->data,
+					  skb_headlen(skb), शून्य);
+		अगर (!hp)
+			वापस false;
+		अगर (*nexthdr == NEXTHDR_AUTH)
 			hdrlen = ipv6_authlen(hp);
-		else
+		अन्यथा
 			hdrlen = ipv6_optlen(hp);
 
-		if (hdrlen > 64)
-			return false;
+		अगर (hdrlen > 64)
+			वापस false;
 		nexthdr = &hp->nexthdr;
 		start += hdrlen;
 		hdr_count++;
-	}
-	if (nextp) {
+	पूर्ण
+	अगर (nextp) अणु
 		/* Caller will check inner protocol */
-		if (skb->encapsulation) {
+		अगर (skb->encapsulation) अणु
 			*nextp = nexthdr;
-			return true;
-		}
-		*nextp = NULL;
-	}
-	/* Only support TCP/UDP for non-tunneled ipv6 and inner ipv6 */
-	return *nexthdr == IPPROTO_TCP || *nexthdr == IPPROTO_UDP;
-}
+			वापस true;
+		पूर्ण
+		*nextp = शून्य;
+	पूर्ण
+	/* Only support TCP/UDP क्रम non-tunneled ipv6 and inner ipv6 */
+	वापस *nexthdr == IPPROTO_TCP || *nexthdr == IPPROTO_UDP;
+पूर्ण
 
 /* For UDP, we can only handle 1 Vxlan port and 1 Geneve port. */
-static bool bnxt_udp_tunl_check(struct bnxt *bp, struct sk_buff *skb)
-{
-	struct udphdr *uh = udp_hdr(skb);
+अटल bool bnxt_udp_tunl_check(काष्ठा bnxt *bp, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा udphdr *uh = udp_hdr(skb);
 	__be16 udp_port = uh->dest;
 
-	if (udp_port != bp->vxlan_port && udp_port != bp->nge_port)
-		return false;
-	if (skb->inner_protocol_type == ENCAP_TYPE_ETHER) {
-		struct ethhdr *eh = inner_eth_hdr(skb);
+	अगर (udp_port != bp->vxlan_port && udp_port != bp->nge_port)
+		वापस false;
+	अगर (skb->inner_protocol_type == ENCAP_TYPE_ETHER) अणु
+		काष्ठा ethhdr *eh = inner_eth_hdr(skb);
 
-		switch (eh->h_proto) {
-		case htons(ETH_P_IP):
-			return true;
-		case htons(ETH_P_IPV6):
-			return bnxt_exthdr_check(bp, skb,
+		चयन (eh->h_proto) अणु
+		हाल htons(ETH_P_IP):
+			वापस true;
+		हाल htons(ETH_P_IPV6):
+			वापस bnxt_exthdr_check(bp, skb,
 						 skb_inner_network_offset(skb),
-						 NULL);
-		}
-	}
-	return false;
-}
+						 शून्य);
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool bnxt_tunl_check(struct bnxt *bp, struct sk_buff *skb, u8 l4_proto)
-{
-	switch (l4_proto) {
-	case IPPROTO_UDP:
-		return bnxt_udp_tunl_check(bp, skb);
-	case IPPROTO_IPIP:
-		return true;
-	case IPPROTO_GRE: {
-		switch (skb->inner_protocol) {
-		default:
-			return false;
-		case htons(ETH_P_IP):
-			return true;
-		case htons(ETH_P_IPV6):
+अटल bool bnxt_tunl_check(काष्ठा bnxt *bp, काष्ठा sk_buff *skb, u8 l4_proto)
+अणु
+	चयन (l4_proto) अणु
+	हाल IPPROTO_UDP:
+		वापस bnxt_udp_tunl_check(bp, skb);
+	हाल IPPROTO_IPIP:
+		वापस true;
+	हाल IPPROTO_GRE: अणु
+		चयन (skb->inner_protocol) अणु
+		शेष:
+			वापस false;
+		हाल htons(ETH_P_IP):
+			वापस true;
+		हाल htons(ETH_P_IPV6):
 			fallthrough;
-		}
-	}
-	case IPPROTO_IPV6:
+		पूर्ण
+	पूर्ण
+	हाल IPPROTO_IPV6:
 		/* Check ext headers of inner ipv6 */
-		return bnxt_exthdr_check(bp, skb, skb_inner_network_offset(skb),
-					 NULL);
-	}
-	return false;
-}
+		वापस bnxt_exthdr_check(bp, skb, skb_inner_network_offset(skb),
+					 शून्य);
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static netdev_features_t bnxt_features_check(struct sk_buff *skb,
-					     struct net_device *dev,
+अटल netdev_features_t bnxt_features_check(काष्ठा sk_buff *skb,
+					     काष्ठा net_device *dev,
 					     netdev_features_t features)
-{
-	struct bnxt *bp = netdev_priv(dev);
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 	u8 *l4_proto;
 
 	features = vlan_features_check(skb, features);
-	switch (vlan_get_protocol(skb)) {
-	case htons(ETH_P_IP):
-		if (!skb->encapsulation)
-			return features;
+	चयन (vlan_get_protocol(skb)) अणु
+	हाल htons(ETH_P_IP):
+		अगर (!skb->encapsulation)
+			वापस features;
 		l4_proto = &ip_hdr(skb)->protocol;
-		if (bnxt_tunl_check(bp, skb, *l4_proto))
-			return features;
-		break;
-	case htons(ETH_P_IPV6):
-		if (!bnxt_exthdr_check(bp, skb, skb_network_offset(skb),
+		अगर (bnxt_tunl_check(bp, skb, *l4_proto))
+			वापस features;
+		अवरोध;
+	हाल htons(ETH_P_IPV6):
+		अगर (!bnxt_exthdr_check(bp, skb, skb_network_offset(skb),
 				       &l4_proto))
-			break;
-		if (!l4_proto || bnxt_tunl_check(bp, skb, *l4_proto))
-			return features;
-		break;
-	}
-	return features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
-}
+			अवरोध;
+		अगर (!l4_proto || bnxt_tunl_check(bp, skb, *l4_proto))
+			वापस features;
+		अवरोध;
+	पूर्ण
+	वापस features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
+पूर्ण
 
-int bnxt_dbg_hwrm_rd_reg(struct bnxt *bp, u32 reg_off, u16 num_words,
+पूर्णांक bnxt_dbg_hwrm_rd_reg(काष्ठा bnxt *bp, u32 reg_off, u16 num_words,
 			 u32 *reg_buf)
-{
-	struct hwrm_dbg_read_direct_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_dbg_read_direct_input req = {0};
+अणु
+	काष्ठा hwrm_dbg_पढ़ो_direct_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_dbg_पढ़ो_direct_input req = अणु0पूर्ण;
 	__le32 *dbg_reg_buf;
 	dma_addr_t mapping;
-	int rc, i;
+	पूर्णांक rc, i;
 
 	dbg_reg_buf = dma_alloc_coherent(&bp->pdev->dev, num_words * 4,
 					 &mapping, GFP_KERNEL);
-	if (!dbg_reg_buf)
-		return -ENOMEM;
-	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_DBG_READ_DIRECT, -1, -1);
+	अगर (!dbg_reg_buf)
+		वापस -ENOMEM;
+	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_DBG_READ_सूचीECT, -1, -1);
 	req.host_dest_addr = cpu_to_le64(mapping);
-	req.read_addr = cpu_to_le32(reg_off + CHIMP_REG_VIEW_ADDR);
-	req.read_len32 = cpu_to_le32(num_words);
+	req.पढ़ो_addr = cpu_to_le32(reg_off + CHIMP_REG_VIEW_ADDR);
+	req.पढ़ो_len32 = cpu_to_le32(num_words);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (rc || resp->error_code) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (rc || resp->error_code) अणु
 		rc = -EIO;
-		goto dbg_rd_reg_exit;
-	}
-	for (i = 0; i < num_words; i++)
+		जाओ dbg_rd_reg_निकास;
+	पूर्ण
+	क्रम (i = 0; i < num_words; i++)
 		reg_buf[i] = le32_to_cpu(dbg_reg_buf[i]);
 
-dbg_rd_reg_exit:
+dbg_rd_reg_निकास:
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	dma_free_coherent(&bp->pdev->dev, num_words * 4, dbg_reg_buf, mapping);
-	return rc;
-}
+	dma_मुक्त_coherent(&bp->pdev->dev, num_words * 4, dbg_reg_buf, mapping);
+	वापस rc;
+पूर्ण
 
-static int bnxt_dbg_hwrm_ring_info_get(struct bnxt *bp, u8 ring_type,
+अटल पूर्णांक bnxt_dbg_hwrm_ring_info_get(काष्ठा bnxt *bp, u8 ring_type,
 				       u32 ring_id, u32 *prod, u32 *cons)
-{
-	struct hwrm_dbg_ring_info_get_output *resp = bp->hwrm_cmd_resp_addr;
-	struct hwrm_dbg_ring_info_get_input req = {0};
-	int rc;
+अणु
+	काष्ठा hwrm_dbg_ring_info_get_output *resp = bp->hwrm_cmd_resp_addr;
+	काष्ठा hwrm_dbg_ring_info_get_input req = अणु0पूर्ण;
+	पूर्णांक rc;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_DBG_RING_INFO_GET, -1, -1);
 	req.ring_type = ring_type;
 	req.fw_ring_id = cpu_to_le32(ring_id);
 	mutex_lock(&bp->hwrm_cmd_lock);
-	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-	if (!rc) {
+	rc = _hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+	अगर (!rc) अणु
 		*prod = le32_to_cpu(resp->producer_index);
 		*cons = le32_to_cpu(resp->consumer_index);
-	}
+	पूर्ण
 	mutex_unlock(&bp->hwrm_cmd_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void bnxt_dump_tx_sw_state(struct bnxt_napi *bnapi)
-{
-	struct bnxt_tx_ring_info *txr = bnapi->tx_ring;
-	int i = bnapi->index;
+अटल व्योम bnxt_dump_tx_sw_state(काष्ठा bnxt_napi *bnapi)
+अणु
+	काष्ठा bnxt_tx_ring_info *txr = bnapi->tx_ring;
+	पूर्णांक i = bnapi->index;
 
-	if (!txr)
-		return;
+	अगर (!txr)
+		वापस;
 
 	netdev_info(bnapi->bp->dev, "[%d]: tx{fw_ring: %d prod: %x cons: %x}\n",
-		    i, txr->tx_ring_struct.fw_ring_id, txr->tx_prod,
+		    i, txr->tx_ring_काष्ठा.fw_ring_id, txr->tx_prod,
 		    txr->tx_cons);
-}
+पूर्ण
 
-static void bnxt_dump_rx_sw_state(struct bnxt_napi *bnapi)
-{
-	struct bnxt_rx_ring_info *rxr = bnapi->rx_ring;
-	int i = bnapi->index;
+अटल व्योम bnxt_dump_rx_sw_state(काष्ठा bnxt_napi *bnapi)
+अणु
+	काष्ठा bnxt_rx_ring_info *rxr = bnapi->rx_ring;
+	पूर्णांक i = bnapi->index;
 
-	if (!rxr)
-		return;
+	अगर (!rxr)
+		वापस;
 
 	netdev_info(bnapi->bp->dev, "[%d]: rx{fw_ring: %d prod: %x} rx_agg{fw_ring: %d agg_prod: %x sw_agg_prod: %x}\n",
-		    i, rxr->rx_ring_struct.fw_ring_id, rxr->rx_prod,
-		    rxr->rx_agg_ring_struct.fw_ring_id, rxr->rx_agg_prod,
+		    i, rxr->rx_ring_काष्ठा.fw_ring_id, rxr->rx_prod,
+		    rxr->rx_agg_ring_काष्ठा.fw_ring_id, rxr->rx_agg_prod,
 		    rxr->rx_sw_agg_prod);
-}
+पूर्ण
 
-static void bnxt_dump_cp_sw_state(struct bnxt_napi *bnapi)
-{
-	struct bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
-	int i = bnapi->index;
+अटल व्योम bnxt_dump_cp_sw_state(काष्ठा bnxt_napi *bnapi)
+अणु
+	काष्ठा bnxt_cp_ring_info *cpr = &bnapi->cp_ring;
+	पूर्णांक i = bnapi->index;
 
 	netdev_info(bnapi->bp->dev, "[%d]: cp{fw_ring: %d raw_cons: %x}\n",
-		    i, cpr->cp_ring_struct.fw_ring_id, cpr->cp_raw_cons);
-}
+		    i, cpr->cp_ring_काष्ठा.fw_ring_id, cpr->cp_raw_cons);
+पूर्ण
 
-static void bnxt_dbg_dump_states(struct bnxt *bp)
-{
-	int i;
-	struct bnxt_napi *bnapi;
+अटल व्योम bnxt_dbg_dump_states(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
+	काष्ठा bnxt_napi *bnapi;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
 		bnapi = bp->bnapi[i];
-		if (netif_msg_drv(bp)) {
+		अगर (netअगर_msg_drv(bp)) अणु
 			bnxt_dump_tx_sw_state(bnapi);
 			bnxt_dump_rx_sw_state(bnapi);
 			bnxt_dump_cp_sw_state(bnapi);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int bnxt_hwrm_rx_ring_reset(struct bnxt *bp, int ring_nr)
-{
-	struct bnxt_rx_ring_info *rxr = &bp->rx_ring[ring_nr];
-	struct hwrm_ring_reset_input req = {0};
-	struct bnxt_napi *bnapi = rxr->bnapi;
-	struct bnxt_cp_ring_info *cpr;
+अटल पूर्णांक bnxt_hwrm_rx_ring_reset(काष्ठा bnxt *bp, पूर्णांक ring_nr)
+अणु
+	काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[ring_nr];
+	काष्ठा hwrm_ring_reset_input req = अणु0पूर्ण;
+	काष्ठा bnxt_napi *bnapi = rxr->bnapi;
+	काष्ठा bnxt_cp_ring_info *cpr;
 	u16 cp_ring_id;
 
 	cpr = &bnapi->cp_ring;
-	cp_ring_id = cpr->cp_ring_struct.fw_ring_id;
+	cp_ring_id = cpr->cp_ring_काष्ठा.fw_ring_id;
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_RING_RESET, cp_ring_id, -1);
 	req.ring_type = RING_RESET_REQ_RING_TYPE_RX_RING_GRP;
 	req.ring_id = cpu_to_le16(bp->grp_info[bnapi->index].fw_grp_id);
-	return hwrm_send_message_silent(bp, &req, sizeof(req),
+	वापस hwrm_send_message_silent(bp, &req, माप(req),
 					HWRM_CMD_TIMEOUT);
-}
+पूर्ण
 
-static void bnxt_reset_task(struct bnxt *bp, bool silent)
-{
-	if (!silent)
+अटल व्योम bnxt_reset_task(काष्ठा bnxt *bp, bool silent)
+अणु
+	अगर (!silent)
 		bnxt_dbg_dump_states(bp);
-	if (netif_running(bp->dev)) {
-		int rc;
+	अगर (netअगर_running(bp->dev)) अणु
+		पूर्णांक rc;
 
-		if (silent) {
-			bnxt_close_nic(bp, false, false);
-			bnxt_open_nic(bp, false, false);
-		} else {
+		अगर (silent) अणु
+			bnxt_बंद_nic(bp, false, false);
+			bnxt_खोलो_nic(bp, false, false);
+		पूर्ण अन्यथा अणु
 			bnxt_ulp_stop(bp);
-			bnxt_close_nic(bp, true, false);
-			rc = bnxt_open_nic(bp, true, false);
+			bnxt_बंद_nic(bp, true, false);
+			rc = bnxt_खोलो_nic(bp, true, false);
 			bnxt_ulp_start(bp, rc);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void bnxt_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct bnxt *bp = netdev_priv(dev);
+अटल व्योम bnxt_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 
 	netdev_err(bp->dev,  "TX timeout detected, starting reset task!\n");
 	set_bit(BNXT_RESET_TASK_SP_EVENT, &bp->sp_event);
 	bnxt_queue_sp_work(bp);
-}
+पूर्ण
 
-static void bnxt_fw_health_check(struct bnxt *bp)
-{
-	struct bnxt_fw_health *fw_health = bp->fw_health;
+अटल व्योम bnxt_fw_health_check(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
 	u32 val;
 
-	if (!fw_health->enabled || test_bit(BNXT_STATE_IN_FW_RESET, &bp->state))
-		return;
+	अगर (!fw_health->enabled || test_bit(BNXT_STATE_IN_FW_RESET, &bp->state))
+		वापस;
 
-	if (fw_health->tmr_counter) {
-		fw_health->tmr_counter--;
-		return;
-	}
+	अगर (fw_health->पंचांगr_counter) अणु
+		fw_health->पंचांगr_counter--;
+		वापस;
+	पूर्ण
 
-	val = bnxt_fw_health_readl(bp, BNXT_FW_HEARTBEAT_REG);
-	if (val == fw_health->last_fw_heartbeat)
-		goto fw_reset;
+	val = bnxt_fw_health_पढ़ोl(bp, BNXT_FW_HEARTBEAT_REG);
+	अगर (val == fw_health->last_fw_heartbeat)
+		जाओ fw_reset;
 
 	fw_health->last_fw_heartbeat = val;
 
-	val = bnxt_fw_health_readl(bp, BNXT_FW_RESET_CNT_REG);
-	if (val != fw_health->last_fw_reset_cnt)
-		goto fw_reset;
+	val = bnxt_fw_health_पढ़ोl(bp, BNXT_FW_RESET_CNT_REG);
+	अगर (val != fw_health->last_fw_reset_cnt)
+		जाओ fw_reset;
 
-	fw_health->tmr_counter = fw_health->tmr_multiplier;
-	return;
+	fw_health->पंचांगr_counter = fw_health->पंचांगr_multiplier;
+	वापस;
 
 fw_reset:
 	set_bit(BNXT_FW_EXCEPTION_SP_EVENT, &bp->sp_event);
 	bnxt_queue_sp_work(bp);
-}
+पूर्ण
 
-static void bnxt_timer(struct timer_list *t)
-{
-	struct bnxt *bp = from_timer(bp, t, timer);
-	struct net_device *dev = bp->dev;
+अटल व्योम bnxt_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा bnxt *bp = from_समयr(bp, t, समयr);
+	काष्ठा net_device *dev = bp->dev;
 
-	if (!netif_running(dev) || !test_bit(BNXT_STATE_OPEN, &bp->state))
-		return;
+	अगर (!netअगर_running(dev) || !test_bit(BNXT_STATE_OPEN, &bp->state))
+		वापस;
 
-	if (atomic_read(&bp->intr_sem) != 0)
-		goto bnxt_restart_timer;
+	अगर (atomic_पढ़ो(&bp->पूर्णांकr_sem) != 0)
+		जाओ bnxt_restart_समयr;
 
-	if (bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY)
+	अगर (bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY)
 		bnxt_fw_health_check(bp);
 
-	if (bp->link_info.link_up && bp->stats_coal_ticks) {
+	अगर (bp->link_info.link_up && bp->stats_coal_ticks) अणु
 		set_bit(BNXT_PERIODIC_STATS_SP_EVENT, &bp->sp_event);
 		bnxt_queue_sp_work(bp);
-	}
+	पूर्ण
 
-	if (bnxt_tc_flower_enabled(bp)) {
+	अगर (bnxt_tc_flower_enabled(bp)) अणु
 		set_bit(BNXT_FLOW_STATS_SP_EVENT, &bp->sp_event);
 		bnxt_queue_sp_work(bp);
-	}
+	पूर्ण
 
-#ifdef CONFIG_RFS_ACCEL
-	if ((bp->flags & BNXT_FLAG_RFS) && bp->ntp_fltr_count) {
+#अगर_घोषित CONFIG_RFS_ACCEL
+	अगर ((bp->flags & BNXT_FLAG_RFS) && bp->ntp_fltr_count) अणु
 		set_bit(BNXT_RX_NTP_FLTR_SP_EVENT, &bp->sp_event);
 		bnxt_queue_sp_work(bp);
-	}
-#endif /*CONFIG_RFS_ACCEL*/
+	पूर्ण
+#पूर्ण_अगर /*CONFIG_RFS_ACCEL*/
 
-	if (bp->link_info.phy_retry) {
-		if (time_after(jiffies, bp->link_info.phy_retry_expires)) {
+	अगर (bp->link_info.phy_retry) अणु
+		अगर (समय_after(jअगरfies, bp->link_info.phy_retry_expires)) अणु
 			bp->link_info.phy_retry = false;
 			netdev_warn(bp->dev, "failed to update phy settings after maximum retries.\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			set_bit(BNXT_UPDATE_PHY_SP_EVENT, &bp->sp_event);
 			bnxt_queue_sp_work(bp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if ((bp->flags & BNXT_FLAG_CHIP_P5) && !bp->chip_rev &&
-	    netif_carrier_ok(dev)) {
+	अगर ((bp->flags & BNXT_FLAG_CHIP_P5) && !bp->chip_rev &&
+	    netअगर_carrier_ok(dev)) अणु
 		set_bit(BNXT_RING_COAL_NOW_SP_EVENT, &bp->sp_event);
 		bnxt_queue_sp_work(bp);
-	}
-bnxt_restart_timer:
-	mod_timer(&bp->timer, jiffies + bp->current_interval);
-}
+	पूर्ण
+bnxt_restart_समयr:
+	mod_समयr(&bp->समयr, jअगरfies + bp->current_पूर्णांकerval);
+पूर्ण
 
-static void bnxt_rtnl_lock_sp(struct bnxt *bp)
-{
+अटल व्योम bnxt_rtnl_lock_sp(काष्ठा bnxt *bp)
+अणु
 	/* We are called from bnxt_sp_task which has BNXT_STATE_IN_SP_TASK
-	 * set.  If the device is being closed, bnxt_close() may be holding
-	 * rtnl() and waiting for BNXT_STATE_IN_SP_TASK to clear.  So we
-	 * must clear BNXT_STATE_IN_SP_TASK before holding rtnl().
+	 * set.  If the device is being बंदd, bnxt_बंद() may be holding
+	 * rtnl() and रुकोing क्रम BNXT_STATE_IN_SP_TASK to clear.  So we
+	 * must clear BNXT_STATE_IN_SP_TASK beक्रमe holding rtnl().
 	 */
 	clear_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
 	rtnl_lock();
-}
+पूर्ण
 
-static void bnxt_rtnl_unlock_sp(struct bnxt *bp)
-{
+अटल व्योम bnxt_rtnl_unlock_sp(काष्ठा bnxt *bp)
+अणु
 	set_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
 	rtnl_unlock();
-}
+पूर्ण
 
 /* Only called from bnxt_sp_task() */
-static void bnxt_reset(struct bnxt *bp, bool silent)
-{
+अटल व्योम bnxt_reset(काष्ठा bnxt *bp, bool silent)
+अणु
 	bnxt_rtnl_lock_sp(bp);
-	if (test_bit(BNXT_STATE_OPEN, &bp->state))
+	अगर (test_bit(BNXT_STATE_OPEN, &bp->state))
 		bnxt_reset_task(bp, silent);
 	bnxt_rtnl_unlock_sp(bp);
-}
+पूर्ण
 
 /* Only called from bnxt_sp_task() */
-static void bnxt_rx_ring_reset(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_rx_ring_reset(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
 	bnxt_rtnl_lock_sp(bp);
-	if (!test_bit(BNXT_STATE_OPEN, &bp->state)) {
+	अगर (!test_bit(BNXT_STATE_OPEN, &bp->state)) अणु
 		bnxt_rtnl_unlock_sp(bp);
-		return;
-	}
-	/* Disable and flush TPA before resetting the RX ring */
-	if (bp->flags & BNXT_FLAG_TPA)
+		वापस;
+	पूर्ण
+	/* Disable and flush TPA beक्रमe resetting the RX ring */
+	अगर (bp->flags & BNXT_FLAG_TPA)
 		bnxt_set_tpa(bp, false);
-	for (i = 0; i < bp->rx_nr_rings; i++) {
-		struct bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
-		struct bnxt_cp_ring_info *cpr;
-		int rc;
+	क्रम (i = 0; i < bp->rx_nr_rings; i++) अणु
+		काष्ठा bnxt_rx_ring_info *rxr = &bp->rx_ring[i];
+		काष्ठा bnxt_cp_ring_info *cpr;
+		पूर्णांक rc;
 
-		if (!rxr->bnapi->in_reset)
-			continue;
+		अगर (!rxr->bnapi->in_reset)
+			जारी;
 
 		rc = bnxt_hwrm_rx_ring_reset(bp, i);
-		if (rc) {
-			if (rc == -EINVAL || rc == -EOPNOTSUPP)
+		अगर (rc) अणु
+			अगर (rc == -EINVAL || rc == -EOPNOTSUPP)
 				netdev_info_once(bp->dev, "RX ring reset not supported by firmware, falling back to global reset\n");
-			else
+			अन्यथा
 				netdev_warn(bp->dev, "RX ring reset failed, rc = %d, falling back to global reset\n",
 					    rc);
 			bnxt_reset_task(bp, true);
-			break;
-		}
-		bnxt_free_one_rx_ring_skbs(bp, i);
+			अवरोध;
+		पूर्ण
+		bnxt_मुक्त_one_rx_ring_skbs(bp, i);
 		rxr->rx_prod = 0;
 		rxr->rx_agg_prod = 0;
 		rxr->rx_sw_agg_prod = 0;
@@ -11196,414 +11197,414 @@ static void bnxt_rx_ring_reset(struct bnxt *bp)
 		bnxt_alloc_one_rx_ring(bp, i);
 		cpr = &rxr->bnapi->cp_ring;
 		cpr->sw_stats.rx.rx_resets++;
-		if (bp->flags & BNXT_FLAG_AGG_RINGS)
-			bnxt_db_write(bp, &rxr->rx_agg_db, rxr->rx_agg_prod);
-		bnxt_db_write(bp, &rxr->rx_db, rxr->rx_prod);
-	}
-	if (bp->flags & BNXT_FLAG_TPA)
+		अगर (bp->flags & BNXT_FLAG_AGG_RINGS)
+			bnxt_db_ग_लिखो(bp, &rxr->rx_agg_db, rxr->rx_agg_prod);
+		bnxt_db_ग_लिखो(bp, &rxr->rx_db, rxr->rx_prod);
+	पूर्ण
+	अगर (bp->flags & BNXT_FLAG_TPA)
 		bnxt_set_tpa(bp, true);
 	bnxt_rtnl_unlock_sp(bp);
-}
+पूर्ण
 
-static void bnxt_fw_reset_close(struct bnxt *bp)
-{
+अटल व्योम bnxt_fw_reset_बंद(काष्ठा bnxt *bp)
+अणु
 	bnxt_ulp_stop(bp);
 	/* When firmware is in fatal state, quiesce device and disable
-	 * bus master to prevent any potential bad DMAs before freeing
+	 * bus master to prevent any potential bad DMAs beक्रमe मुक्तing
 	 * kernel memory.
 	 */
-	if (test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state)) {
+	अगर (test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state)) अणु
 		u16 val = 0;
 
-		pci_read_config_word(bp->pdev, PCI_SUBSYSTEM_ID, &val);
-		if (val == 0xffff)
+		pci_पढ़ो_config_word(bp->pdev, PCI_SUBSYSTEM_ID, &val);
+		अगर (val == 0xffff)
 			bp->fw_reset_min_dsecs = 0;
 		bnxt_tx_disable(bp);
 		bnxt_disable_napi(bp);
-		bnxt_disable_int_sync(bp);
-		bnxt_free_irq(bp);
-		bnxt_clear_int_mode(bp);
+		bnxt_disable_पूर्णांक_sync(bp);
+		bnxt_मुक्त_irq(bp);
+		bnxt_clear_पूर्णांक_mode(bp);
 		pci_disable_device(bp->pdev);
-	}
-	__bnxt_close_nic(bp, true, false);
-	bnxt_vf_reps_free(bp);
-	bnxt_clear_int_mode(bp);
+	पूर्ण
+	__bnxt_बंद_nic(bp, true, false);
+	bnxt_vf_reps_मुक्त(bp);
+	bnxt_clear_पूर्णांक_mode(bp);
 	bnxt_hwrm_func_drv_unrgtr(bp);
-	if (pci_is_enabled(bp->pdev))
+	अगर (pci_is_enabled(bp->pdev))
 		pci_disable_device(bp->pdev);
-	bnxt_free_ctx_mem(bp);
-	kfree(bp->ctx);
-	bp->ctx = NULL;
-}
+	bnxt_मुक्त_ctx_mem(bp);
+	kमुक्त(bp->ctx);
+	bp->ctx = शून्य;
+पूर्ण
 
-static bool is_bnxt_fw_ok(struct bnxt *bp)
-{
-	struct bnxt_fw_health *fw_health = bp->fw_health;
+अटल bool is_bnxt_fw_ok(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
 	bool no_heartbeat = false, has_reset = false;
 	u32 val;
 
-	val = bnxt_fw_health_readl(bp, BNXT_FW_HEARTBEAT_REG);
-	if (val == fw_health->last_fw_heartbeat)
+	val = bnxt_fw_health_पढ़ोl(bp, BNXT_FW_HEARTBEAT_REG);
+	अगर (val == fw_health->last_fw_heartbeat)
 		no_heartbeat = true;
 
-	val = bnxt_fw_health_readl(bp, BNXT_FW_RESET_CNT_REG);
-	if (val != fw_health->last_fw_reset_cnt)
+	val = bnxt_fw_health_पढ़ोl(bp, BNXT_FW_RESET_CNT_REG);
+	अगर (val != fw_health->last_fw_reset_cnt)
 		has_reset = true;
 
-	if (!no_heartbeat && has_reset)
-		return true;
+	अगर (!no_heartbeat && has_reset)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* rtnl_lock is acquired before calling this function */
-static void bnxt_force_fw_reset(struct bnxt *bp)
-{
-	struct bnxt_fw_health *fw_health = bp->fw_health;
-	u32 wait_dsecs;
+/* rtnl_lock is acquired beक्रमe calling this function */
+अटल व्योम bnxt_क्रमce_fw_reset(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
+	u32 रुको_dsecs;
 
-	if (!test_bit(BNXT_STATE_OPEN, &bp->state) ||
+	अगर (!test_bit(BNXT_STATE_OPEN, &bp->state) ||
 	    test_bit(BNXT_STATE_IN_FW_RESET, &bp->state))
-		return;
+		वापस;
 
 	set_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
-	bnxt_fw_reset_close(bp);
-	wait_dsecs = fw_health->master_func_wait_dsecs;
-	if (fw_health->master) {
-		if (fw_health->flags & ERROR_RECOVERY_QCFG_RESP_FLAGS_CO_CPU)
-			wait_dsecs = 0;
+	bnxt_fw_reset_बंद(bp);
+	रुको_dsecs = fw_health->master_func_रुको_dsecs;
+	अगर (fw_health->master) अणु
+		अगर (fw_health->flags & ERROR_RECOVERY_QCFG_RESP_FLAGS_CO_CPU)
+			रुको_dsecs = 0;
 		bp->fw_reset_state = BNXT_FW_RESET_STATE_RESET_FW;
-	} else {
-		bp->fw_reset_timestamp = jiffies + wait_dsecs * HZ / 10;
-		wait_dsecs = fw_health->normal_func_wait_dsecs;
+	पूर्ण अन्यथा अणु
+		bp->fw_reset_बारtamp = jअगरfies + रुको_dsecs * HZ / 10;
+		रुको_dsecs = fw_health->normal_func_रुको_dsecs;
 		bp->fw_reset_state = BNXT_FW_RESET_STATE_ENABLE_DEV;
-	}
+	पूर्ण
 
-	bp->fw_reset_min_dsecs = fw_health->post_reset_wait_dsecs;
-	bp->fw_reset_max_dsecs = fw_health->post_reset_max_wait_dsecs;
-	bnxt_queue_fw_reset_work(bp, wait_dsecs * HZ / 10);
-}
+	bp->fw_reset_min_dsecs = fw_health->post_reset_रुको_dsecs;
+	bp->fw_reset_max_dsecs = fw_health->post_reset_max_रुको_dsecs;
+	bnxt_queue_fw_reset_work(bp, रुको_dsecs * HZ / 10);
+पूर्ण
 
-void bnxt_fw_exception(struct bnxt *bp)
-{
+व्योम bnxt_fw_exception(काष्ठा bnxt *bp)
+अणु
 	netdev_warn(bp->dev, "Detected firmware fatal condition, initiating reset\n");
 	set_bit(BNXT_STATE_FW_FATAL_COND, &bp->state);
 	bnxt_rtnl_lock_sp(bp);
-	bnxt_force_fw_reset(bp);
+	bnxt_क्रमce_fw_reset(bp);
 	bnxt_rtnl_unlock_sp(bp);
-}
+पूर्ण
 
-/* Returns the number of registered VFs, or 1 if VF configuration is pending, or
+/* Returns the number of रेजिस्टरed VFs, or 1 अगर VF configuration is pending, or
  * < 0 on error.
  */
-static int bnxt_get_registered_vfs(struct bnxt *bp)
-{
-#ifdef CONFIG_BNXT_SRIOV
-	int rc;
+अटल पूर्णांक bnxt_get_रेजिस्टरed_vfs(काष्ठा bnxt *bp)
+अणु
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	पूर्णांक rc;
 
-	if (!BNXT_PF(bp))
-		return 0;
+	अगर (!BNXT_PF(bp))
+		वापस 0;
 
 	rc = bnxt_hwrm_func_qcfg(bp);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "func_qcfg cmd failed, rc = %d\n", rc);
-		return rc;
-	}
-	if (bp->pf.registered_vfs)
-		return bp->pf.registered_vfs;
-	if (bp->sriov_cfg)
-		return 1;
-#endif
-	return 0;
-}
+		वापस rc;
+	पूर्ण
+	अगर (bp->pf.रेजिस्टरed_vfs)
+		वापस bp->pf.रेजिस्टरed_vfs;
+	अगर (bp->sriov_cfg)
+		वापस 1;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-void bnxt_fw_reset(struct bnxt *bp)
-{
+व्योम bnxt_fw_reset(काष्ठा bnxt *bp)
+अणु
 	bnxt_rtnl_lock_sp(bp);
-	if (test_bit(BNXT_STATE_OPEN, &bp->state) &&
-	    !test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)) {
-		int n = 0, tmo;
+	अगर (test_bit(BNXT_STATE_OPEN, &bp->state) &&
+	    !test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)) अणु
+		पूर्णांक n = 0, पंचांगo;
 
 		set_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
-		if (bp->pf.active_vfs &&
+		अगर (bp->pf.active_vfs &&
 		    !test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state))
-			n = bnxt_get_registered_vfs(bp);
-		if (n < 0) {
+			n = bnxt_get_रेजिस्टरed_vfs(bp);
+		अगर (n < 0) अणु
 			netdev_err(bp->dev, "Firmware reset aborted, rc = %d\n",
 				   n);
 			clear_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
-			dev_close(bp->dev);
-			goto fw_reset_exit;
-		} else if (n > 0) {
-			u16 vf_tmo_dsecs = n * 10;
+			dev_बंद(bp->dev);
+			जाओ fw_reset_निकास;
+		पूर्ण अन्यथा अगर (n > 0) अणु
+			u16 vf_पंचांगo_dsecs = n * 10;
 
-			if (bp->fw_reset_max_dsecs < vf_tmo_dsecs)
-				bp->fw_reset_max_dsecs = vf_tmo_dsecs;
+			अगर (bp->fw_reset_max_dsecs < vf_पंचांगo_dsecs)
+				bp->fw_reset_max_dsecs = vf_पंचांगo_dsecs;
 			bp->fw_reset_state =
 				BNXT_FW_RESET_STATE_POLL_VF;
 			bnxt_queue_fw_reset_work(bp, HZ / 10);
-			goto fw_reset_exit;
-		}
-		bnxt_fw_reset_close(bp);
-		if (bp->fw_cap & BNXT_FW_CAP_ERR_RECOVER_RELOAD) {
+			जाओ fw_reset_निकास;
+		पूर्ण
+		bnxt_fw_reset_बंद(bp);
+		अगर (bp->fw_cap & BNXT_FW_CAP_ERR_RECOVER_RELOAD) अणु
 			bp->fw_reset_state = BNXT_FW_RESET_STATE_POLL_FW_DOWN;
-			tmo = HZ / 10;
-		} else {
+			पंचांगo = HZ / 10;
+		पूर्ण अन्यथा अणु
 			bp->fw_reset_state = BNXT_FW_RESET_STATE_ENABLE_DEV;
-			tmo = bp->fw_reset_min_dsecs * HZ / 10;
-		}
-		bnxt_queue_fw_reset_work(bp, tmo);
-	}
-fw_reset_exit:
+			पंचांगo = bp->fw_reset_min_dsecs * HZ / 10;
+		पूर्ण
+		bnxt_queue_fw_reset_work(bp, पंचांगo);
+	पूर्ण
+fw_reset_निकास:
 	bnxt_rtnl_unlock_sp(bp);
-}
+पूर्ण
 
-static void bnxt_chk_missed_irq(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_chk_missed_irq(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	if (!(bp->flags & BNXT_FLAG_CHIP_P5))
-		return;
+	अगर (!(bp->flags & BNXT_FLAG_CHIP_P5))
+		वापस;
 
-	for (i = 0; i < bp->cp_nr_rings; i++) {
-		struct bnxt_napi *bnapi = bp->bnapi[i];
-		struct bnxt_cp_ring_info *cpr;
+	क्रम (i = 0; i < bp->cp_nr_rings; i++) अणु
+		काष्ठा bnxt_napi *bnapi = bp->bnapi[i];
+		काष्ठा bnxt_cp_ring_info *cpr;
 		u32 fw_ring_id;
-		int j;
+		पूर्णांक j;
 
-		if (!bnapi)
-			continue;
+		अगर (!bnapi)
+			जारी;
 
 		cpr = &bnapi->cp_ring;
-		for (j = 0; j < 2; j++) {
-			struct bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[j];
+		क्रम (j = 0; j < 2; j++) अणु
+			काष्ठा bnxt_cp_ring_info *cpr2 = cpr->cp_ring_arr[j];
 			u32 val[2];
 
-			if (!cpr2 || cpr2->has_more_work ||
+			अगर (!cpr2 || cpr2->has_more_work ||
 			    !bnxt_has_work(bp, cpr2))
-				continue;
+				जारी;
 
-			if (cpr2->cp_raw_cons != cpr2->last_cp_raw_cons) {
+			अगर (cpr2->cp_raw_cons != cpr2->last_cp_raw_cons) अणु
 				cpr2->last_cp_raw_cons = cpr2->cp_raw_cons;
-				continue;
-			}
-			fw_ring_id = cpr2->cp_ring_struct.fw_ring_id;
+				जारी;
+			पूर्ण
+			fw_ring_id = cpr2->cp_ring_काष्ठा.fw_ring_id;
 			bnxt_dbg_hwrm_ring_info_get(bp,
 				DBG_RING_INFO_GET_REQ_RING_TYPE_L2_CMPL,
 				fw_ring_id, &val[0], &val[1]);
 			cpr->sw_stats.cmn.missed_irqs++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void bnxt_cfg_ntp_filters(struct bnxt *);
+अटल व्योम bnxt_cfg_ntp_filters(काष्ठा bnxt *);
 
-static void bnxt_init_ethtool_link_settings(struct bnxt *bp)
-{
-	struct bnxt_link_info *link_info = &bp->link_info;
+अटल व्योम bnxt_init_ethtool_link_settings(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_link_info *link_info = &bp->link_info;
 
-	if (BNXT_AUTO_MODE(link_info->auto_mode)) {
-		link_info->autoneg = BNXT_AUTONEG_SPEED;
-		if (bp->hwrm_spec_code >= 0x10201) {
-			if (link_info->auto_pause_setting &
+	अगर (BNXT_AUTO_MODE(link_info->स्वतः_mode)) अणु
+		link_info->स्वतःneg = BNXT_AUTONEG_SPEED;
+		अगर (bp->hwrm_spec_code >= 0x10201) अणु
+			अगर (link_info->स्वतः_छोड़ो_setting &
 			    PORT_PHY_CFG_REQ_AUTO_PAUSE_AUTONEG_PAUSE)
-				link_info->autoneg |= BNXT_AUTONEG_FLOW_CTRL;
-		} else {
-			link_info->autoneg |= BNXT_AUTONEG_FLOW_CTRL;
-		}
-		link_info->advertising = link_info->auto_link_speeds;
-		link_info->advertising_pam4 = link_info->auto_pam4_link_speeds;
-	} else {
-		link_info->req_link_speed = link_info->force_link_speed;
-		link_info->req_signal_mode = BNXT_SIG_MODE_NRZ;
-		if (link_info->force_pam4_link_speed) {
+				link_info->स्वतःneg |= BNXT_AUTONEG_FLOW_CTRL;
+		पूर्ण अन्यथा अणु
+			link_info->स्वतःneg |= BNXT_AUTONEG_FLOW_CTRL;
+		पूर्ण
+		link_info->advertising = link_info->स्वतः_link_speeds;
+		link_info->advertising_pam4 = link_info->स्वतः_pam4_link_speeds;
+	पूर्ण अन्यथा अणु
+		link_info->req_link_speed = link_info->क्रमce_link_speed;
+		link_info->req_संकेत_mode = BNXT_SIG_MODE_NRZ;
+		अगर (link_info->क्रमce_pam4_link_speed) अणु
 			link_info->req_link_speed =
-				link_info->force_pam4_link_speed;
-			link_info->req_signal_mode = BNXT_SIG_MODE_PAM4;
-		}
+				link_info->क्रमce_pam4_link_speed;
+			link_info->req_संकेत_mode = BNXT_SIG_MODE_PAM4;
+		पूर्ण
 		link_info->req_duplex = link_info->duplex_setting;
-	}
-	if (link_info->autoneg & BNXT_AUTONEG_FLOW_CTRL)
+	पूर्ण
+	अगर (link_info->स्वतःneg & BNXT_AUTONEG_FLOW_CTRL)
 		link_info->req_flow_ctrl =
-			link_info->auto_pause_setting & BNXT_LINK_PAUSE_BOTH;
-	else
-		link_info->req_flow_ctrl = link_info->force_pause_setting;
-}
+			link_info->स्वतः_छोड़ो_setting & BNXT_LINK_PAUSE_BOTH;
+	अन्यथा
+		link_info->req_flow_ctrl = link_info->क्रमce_छोड़ो_setting;
+पूर्ण
 
-static void bnxt_fw_echo_reply(struct bnxt *bp)
-{
-	struct bnxt_fw_health *fw_health = bp->fw_health;
-	struct hwrm_func_echo_response_input req = {0};
+अटल व्योम bnxt_fw_echo_reply(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
+	काष्ठा hwrm_func_echo_response_input req = अणु0पूर्ण;
 
 	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FUNC_ECHO_RESPONSE, -1, -1);
 	req.event_data1 = cpu_to_le32(fw_health->echo_req_data1);
 	req.event_data2 = cpu_to_le32(fw_health->echo_req_data2);
-	hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-}
+	hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+पूर्ण
 
-static void bnxt_sp_task(struct work_struct *work)
-{
-	struct bnxt *bp = container_of(work, struct bnxt, sp_task);
+अटल व्योम bnxt_sp_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा bnxt *bp = container_of(work, काष्ठा bnxt, sp_task);
 
 	set_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
 	smp_mb__after_atomic();
-	if (!test_bit(BNXT_STATE_OPEN, &bp->state)) {
+	अगर (!test_bit(BNXT_STATE_OPEN, &bp->state)) अणु
 		clear_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (test_and_clear_bit(BNXT_RX_MASK_SP_EVENT, &bp->sp_event))
+	अगर (test_and_clear_bit(BNXT_RX_MASK_SP_EVENT, &bp->sp_event))
 		bnxt_cfg_rx_mode(bp);
 
-	if (test_and_clear_bit(BNXT_RX_NTP_FLTR_SP_EVENT, &bp->sp_event))
+	अगर (test_and_clear_bit(BNXT_RX_NTP_FLTR_SP_EVENT, &bp->sp_event))
 		bnxt_cfg_ntp_filters(bp);
-	if (test_and_clear_bit(BNXT_HWRM_EXEC_FWD_REQ_SP_EVENT, &bp->sp_event))
+	अगर (test_and_clear_bit(BNXT_HWRM_EXEC_FWD_REQ_SP_EVENT, &bp->sp_event))
 		bnxt_hwrm_exec_fwd_req(bp);
-	if (test_and_clear_bit(BNXT_PERIODIC_STATS_SP_EVENT, &bp->sp_event)) {
+	अगर (test_and_clear_bit(BNXT_PERIODIC_STATS_SP_EVENT, &bp->sp_event)) अणु
 		bnxt_hwrm_port_qstats(bp, 0);
 		bnxt_hwrm_port_qstats_ext(bp, 0);
 		bnxt_accumulate_all_stats(bp);
-	}
+	पूर्ण
 
-	if (test_and_clear_bit(BNXT_LINK_CHNG_SP_EVENT, &bp->sp_event)) {
-		int rc;
+	अगर (test_and_clear_bit(BNXT_LINK_CHNG_SP_EVENT, &bp->sp_event)) अणु
+		पूर्णांक rc;
 
 		mutex_lock(&bp->link_lock);
-		if (test_and_clear_bit(BNXT_LINK_SPEED_CHNG_SP_EVENT,
+		अगर (test_and_clear_bit(BNXT_LINK_SPEED_CHNG_SP_EVENT,
 				       &bp->sp_event))
 			bnxt_hwrm_phy_qcaps(bp);
 
 		rc = bnxt_update_link(bp, true);
-		if (rc)
+		अगर (rc)
 			netdev_err(bp->dev, "SP task can't update link (rc: %x)\n",
 				   rc);
 
-		if (test_and_clear_bit(BNXT_LINK_CFG_CHANGE_SP_EVENT,
+		अगर (test_and_clear_bit(BNXT_LINK_CFG_CHANGE_SP_EVENT,
 				       &bp->sp_event))
 			bnxt_init_ethtool_link_settings(bp);
 		mutex_unlock(&bp->link_lock);
-	}
-	if (test_and_clear_bit(BNXT_UPDATE_PHY_SP_EVENT, &bp->sp_event)) {
-		int rc;
+	पूर्ण
+	अगर (test_and_clear_bit(BNXT_UPDATE_PHY_SP_EVENT, &bp->sp_event)) अणु
+		पूर्णांक rc;
 
 		mutex_lock(&bp->link_lock);
 		rc = bnxt_update_phy_setting(bp);
 		mutex_unlock(&bp->link_lock);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_warn(bp->dev, "update phy settings retry failed\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			bp->link_info.phy_retry = false;
 			netdev_info(bp->dev, "update phy settings retry succeeded\n");
-		}
-	}
-	if (test_and_clear_bit(BNXT_HWRM_PORT_MODULE_SP_EVENT, &bp->sp_event)) {
+		पूर्ण
+	पूर्ण
+	अगर (test_and_clear_bit(BNXT_HWRM_PORT_MODULE_SP_EVENT, &bp->sp_event)) अणु
 		mutex_lock(&bp->link_lock);
 		bnxt_get_port_module_status(bp);
 		mutex_unlock(&bp->link_lock);
-	}
+	पूर्ण
 
-	if (test_and_clear_bit(BNXT_FLOW_STATS_SP_EVENT, &bp->sp_event))
+	अगर (test_and_clear_bit(BNXT_FLOW_STATS_SP_EVENT, &bp->sp_event))
 		bnxt_tc_flow_stats_work(bp);
 
-	if (test_and_clear_bit(BNXT_RING_COAL_NOW_SP_EVENT, &bp->sp_event))
+	अगर (test_and_clear_bit(BNXT_RING_COAL_NOW_SP_EVENT, &bp->sp_event))
 		bnxt_chk_missed_irq(bp);
 
-	if (test_and_clear_bit(BNXT_FW_ECHO_REQUEST_SP_EVENT, &bp->sp_event))
+	अगर (test_and_clear_bit(BNXT_FW_ECHO_REQUEST_SP_EVENT, &bp->sp_event))
 		bnxt_fw_echo_reply(bp);
 
 	/* These functions below will clear BNXT_STATE_IN_SP_TASK.  They
-	 * must be the last functions to be called before exiting.
+	 * must be the last functions to be called beक्रमe निकासing.
 	 */
-	if (test_and_clear_bit(BNXT_RESET_TASK_SP_EVENT, &bp->sp_event))
+	अगर (test_and_clear_bit(BNXT_RESET_TASK_SP_EVENT, &bp->sp_event))
 		bnxt_reset(bp, false);
 
-	if (test_and_clear_bit(BNXT_RESET_TASK_SILENT_SP_EVENT, &bp->sp_event))
+	अगर (test_and_clear_bit(BNXT_RESET_TASK_SILENT_SP_EVENT, &bp->sp_event))
 		bnxt_reset(bp, true);
 
-	if (test_and_clear_bit(BNXT_RST_RING_SP_EVENT, &bp->sp_event))
+	अगर (test_and_clear_bit(BNXT_RST_RING_SP_EVENT, &bp->sp_event))
 		bnxt_rx_ring_reset(bp);
 
-	if (test_and_clear_bit(BNXT_FW_RESET_NOTIFY_SP_EVENT, &bp->sp_event))
+	अगर (test_and_clear_bit(BNXT_FW_RESET_NOTIFY_SP_EVENT, &bp->sp_event))
 		bnxt_devlink_health_report(bp, BNXT_FW_RESET_NOTIFY_SP_EVENT);
 
-	if (test_and_clear_bit(BNXT_FW_EXCEPTION_SP_EVENT, &bp->sp_event)) {
-		if (!is_bnxt_fw_ok(bp))
+	अगर (test_and_clear_bit(BNXT_FW_EXCEPTION_SP_EVENT, &bp->sp_event)) अणु
+		अगर (!is_bnxt_fw_ok(bp))
 			bnxt_devlink_health_report(bp,
 						   BNXT_FW_EXCEPTION_SP_EVENT);
-	}
+	पूर्ण
 
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	clear_bit(BNXT_STATE_IN_SP_TASK, &bp->state);
-}
+पूर्ण
 
 /* Under rtnl_lock */
-int bnxt_check_rings(struct bnxt *bp, int tx, int rx, bool sh, int tcs,
-		     int tx_xdp)
-{
-	int max_rx, max_tx, tx_sets = 1;
-	int tx_rings_needed, stats;
-	int rx_rings = rx;
-	int cp, vnics, rc;
+पूर्णांक bnxt_check_rings(काष्ठा bnxt *bp, पूर्णांक tx, पूर्णांक rx, bool sh, पूर्णांक tcs,
+		     पूर्णांक tx_xdp)
+अणु
+	पूर्णांक max_rx, max_tx, tx_sets = 1;
+	पूर्णांक tx_rings_needed, stats;
+	पूर्णांक rx_rings = rx;
+	पूर्णांक cp, vnics, rc;
 
-	if (tcs)
+	अगर (tcs)
 		tx_sets = tcs;
 
 	rc = bnxt_get_max_rings(bp, &max_rx, &max_tx, sh);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (max_rx < rx)
-		return -ENOMEM;
+	अगर (max_rx < rx)
+		वापस -ENOMEM;
 
 	tx_rings_needed = tx * tx_sets + tx_xdp;
-	if (max_tx < tx_rings_needed)
-		return -ENOMEM;
+	अगर (max_tx < tx_rings_needed)
+		वापस -ENOMEM;
 
 	vnics = 1;
-	if ((bp->flags & (BNXT_FLAG_RFS | BNXT_FLAG_CHIP_P5)) == BNXT_FLAG_RFS)
+	अगर ((bp->flags & (BNXT_FLAG_RFS | BNXT_FLAG_CHIP_P5)) == BNXT_FLAG_RFS)
 		vnics += rx_rings;
 
-	if (bp->flags & BNXT_FLAG_AGG_RINGS)
+	अगर (bp->flags & BNXT_FLAG_AGG_RINGS)
 		rx_rings <<= 1;
-	cp = sh ? max_t(int, tx_rings_needed, rx) : tx_rings_needed + rx;
+	cp = sh ? max_t(पूर्णांक, tx_rings_needed, rx) : tx_rings_needed + rx;
 	stats = cp;
-	if (BNXT_NEW_RM(bp)) {
+	अगर (BNXT_NEW_RM(bp)) अणु
 		cp += bnxt_get_ulp_msix_num(bp);
 		stats += bnxt_get_ulp_stat_ctxs(bp);
-	}
-	return bnxt_hwrm_check_rings(bp, tx_rings_needed, rx_rings, rx, cp,
+	पूर्ण
+	वापस bnxt_hwrm_check_rings(bp, tx_rings_needed, rx_rings, rx, cp,
 				     stats, vnics);
-}
+पूर्ण
 
-static void bnxt_unmap_bars(struct bnxt *bp, struct pci_dev *pdev)
-{
-	if (bp->bar2) {
+अटल व्योम bnxt_unmap_bars(काष्ठा bnxt *bp, काष्ठा pci_dev *pdev)
+अणु
+	अगर (bp->bar2) अणु
 		pci_iounmap(pdev, bp->bar2);
-		bp->bar2 = NULL;
-	}
+		bp->bar2 = शून्य;
+	पूर्ण
 
-	if (bp->bar1) {
+	अगर (bp->bar1) अणु
 		pci_iounmap(pdev, bp->bar1);
-		bp->bar1 = NULL;
-	}
+		bp->bar1 = शून्य;
+	पूर्ण
 
-	if (bp->bar0) {
+	अगर (bp->bar0) अणु
 		pci_iounmap(pdev, bp->bar0);
-		bp->bar0 = NULL;
-	}
-}
+		bp->bar0 = शून्य;
+	पूर्ण
+पूर्ण
 
-static void bnxt_cleanup_pci(struct bnxt *bp)
-{
+अटल व्योम bnxt_cleanup_pci(काष्ठा bnxt *bp)
+अणु
 	bnxt_unmap_bars(bp, bp->pdev);
 	pci_release_regions(bp->pdev);
-	if (pci_is_enabled(bp->pdev))
+	अगर (pci_is_enabled(bp->pdev))
 		pci_disable_device(bp->pdev);
-}
+पूर्ण
 
-static void bnxt_init_dflt_coal(struct bnxt *bp)
-{
-	struct bnxt_coal *coal;
+अटल व्योम bnxt_init_dflt_coal(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_coal *coal;
 
 	/* Tick values in micro seconds.
 	 * 1 coal_buf x bufs_per_record = 1 completion record.
@@ -11625,166 +11626,166 @@ static void bnxt_init_dflt_coal(struct bnxt *bp)
 	coal->bufs_per_record = 1;
 
 	bp->stats_coal_ticks = BNXT_DEF_STATS_COAL_TICKS;
-}
+पूर्ण
 
-static int bnxt_fw_init_one_p1(struct bnxt *bp)
-{
-	int rc;
+अटल पूर्णांक bnxt_fw_init_one_p1(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 
 	bp->fw_cap = 0;
 	rc = bnxt_hwrm_ver_get(bp);
 	bnxt_try_map_fw_health_reg(bp);
-	if (rc) {
+	अगर (rc) अणु
 		rc = bnxt_try_recover_fw(bp);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 		rc = bnxt_hwrm_ver_get(bp);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (bp->fw_cap & BNXT_FW_CAP_KONG_MB_CHNL) {
+	अगर (bp->fw_cap & BNXT_FW_CAP_KONG_MB_CHNL) अणु
 		rc = bnxt_alloc_kong_hwrm_resources(bp);
-		if (rc)
+		अगर (rc)
 			bp->fw_cap &= ~BNXT_FW_CAP_KONG_MB_CHNL;
-	}
+	पूर्ण
 
-	if ((bp->fw_cap & BNXT_FW_CAP_SHORT_CMD) ||
-	    bp->hwrm_max_ext_req_len > BNXT_HWRM_MAX_REQ_LEN) {
-		rc = bnxt_alloc_hwrm_short_cmd_req(bp);
-		if (rc)
-			return rc;
-	}
+	अगर ((bp->fw_cap & BNXT_FW_CAP_SHORT_CMD) ||
+	    bp->hwrm_max_ext_req_len > BNXT_HWRM_MAX_REQ_LEN) अणु
+		rc = bnxt_alloc_hwrm_लघु_cmd_req(bp);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 	bnxt_nvm_cfg_ver_get(bp);
 
 	rc = bnxt_hwrm_func_reset(bp);
-	if (rc)
-		return -ENODEV;
+	अगर (rc)
+		वापस -ENODEV;
 
-	bnxt_hwrm_fw_set_time(bp);
-	return 0;
-}
+	bnxt_hwrm_fw_set_समय(bp);
+	वापस 0;
+पूर्ण
 
-static int bnxt_fw_init_one_p2(struct bnxt *bp)
-{
-	int rc;
+अटल पूर्णांक bnxt_fw_init_one_p2(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 
-	/* Get the MAX capabilities for this function */
+	/* Get the MAX capabilities क्रम this function */
 	rc = bnxt_hwrm_func_qcaps(bp);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "hwrm query capability failure rc: %x\n",
 			   rc);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	rc = bnxt_hwrm_cfa_adv_flow_mgnt_qcaps(bp);
-	if (rc)
+	अगर (rc)
 		netdev_warn(bp->dev, "hwrm query adv flow mgnt failure rc: %d\n",
 			    rc);
 
-	if (bnxt_alloc_fw_health(bp)) {
+	अगर (bnxt_alloc_fw_health(bp)) अणु
 		netdev_warn(bp->dev, "no memory for firmware error recovery\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = bnxt_hwrm_error_recovery_qcfg(bp);
-		if (rc)
+		अगर (rc)
 			netdev_warn(bp->dev, "hwrm query error recovery failure rc: %d\n",
 				    rc);
-	}
+	पूर्ण
 
-	rc = bnxt_hwrm_func_drv_rgtr(bp, NULL, 0, false);
-	if (rc)
-		return -ENODEV;
+	rc = bnxt_hwrm_func_drv_rgtr(bp, शून्य, 0, false);
+	अगर (rc)
+		वापस -ENODEV;
 
 	bnxt_hwrm_func_qcfg(bp);
 	bnxt_hwrm_vnic_qcaps(bp);
 	bnxt_hwrm_port_led_qcaps(bp);
 	bnxt_ethtool_init(bp);
 	bnxt_dcb_init(bp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnxt_set_dflt_rss_hash_type(struct bnxt *bp)
-{
+अटल व्योम bnxt_set_dflt_rss_hash_type(काष्ठा bnxt *bp)
+अणु
 	bp->flags &= ~BNXT_FLAG_UDP_RSS_CAP;
 	bp->rss_hash_cfg = VNIC_RSS_CFG_REQ_HASH_TYPE_IPV4 |
 			   VNIC_RSS_CFG_REQ_HASH_TYPE_TCP_IPV4 |
 			   VNIC_RSS_CFG_REQ_HASH_TYPE_IPV6 |
 			   VNIC_RSS_CFG_REQ_HASH_TYPE_TCP_IPV6;
-	if (BNXT_CHIP_P4_PLUS(bp) && bp->hwrm_spec_code >= 0x10501) {
+	अगर (BNXT_CHIP_P4_PLUS(bp) && bp->hwrm_spec_code >= 0x10501) अणु
 		bp->flags |= BNXT_FLAG_UDP_RSS_CAP;
 		bp->rss_hash_cfg |= VNIC_RSS_CFG_REQ_HASH_TYPE_UDP_IPV4 |
 				    VNIC_RSS_CFG_REQ_HASH_TYPE_UDP_IPV6;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnxt_set_dflt_rfs(struct bnxt *bp)
-{
-	struct net_device *dev = bp->dev;
+अटल व्योम bnxt_set_dflt_rfs(काष्ठा bnxt *bp)
+अणु
+	काष्ठा net_device *dev = bp->dev;
 
 	dev->hw_features &= ~NETIF_F_NTUPLE;
 	dev->features &= ~NETIF_F_NTUPLE;
 	bp->flags &= ~BNXT_FLAG_RFS;
-	if (bnxt_rfs_supported(bp)) {
+	अगर (bnxt_rfs_supported(bp)) अणु
 		dev->hw_features |= NETIF_F_NTUPLE;
-		if (bnxt_rfs_capable(bp)) {
+		अगर (bnxt_rfs_capable(bp)) अणु
 			bp->flags |= BNXT_FLAG_RFS;
 			dev->features |= NETIF_F_NTUPLE;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void bnxt_fw_init_one_p3(struct bnxt *bp)
-{
-	struct pci_dev *pdev = bp->pdev;
+अटल व्योम bnxt_fw_init_one_p3(काष्ठा bnxt *bp)
+अणु
+	काष्ठा pci_dev *pdev = bp->pdev;
 
 	bnxt_set_dflt_rss_hash_type(bp);
 	bnxt_set_dflt_rfs(bp);
 
 	bnxt_get_wol_settings(bp);
-	if (bp->flags & BNXT_FLAG_WOL_CAP)
+	अगर (bp->flags & BNXT_FLAG_WOL_CAP)
 		device_set_wakeup_enable(&pdev->dev, bp->wol);
-	else
+	अन्यथा
 		device_set_wakeup_capable(&pdev->dev, false);
 
 	bnxt_hwrm_set_cache_line_size(bp, cache_line_size());
 	bnxt_hwrm_coal_params_qcaps(bp);
-}
+पूर्ण
 
-static int bnxt_probe_phy(struct bnxt *bp, bool fw_dflt);
+अटल पूर्णांक bnxt_probe_phy(काष्ठा bnxt *bp, bool fw_dflt);
 
-static int bnxt_fw_init_one(struct bnxt *bp)
-{
-	int rc;
+अटल पूर्णांक bnxt_fw_init_one(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 
 	rc = bnxt_fw_init_one_p1(bp);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "Firmware init phase 1 failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	rc = bnxt_fw_init_one_p2(bp);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "Firmware init phase 2 failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	rc = bnxt_probe_phy(bp, false);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	rc = bnxt_approve_mac(bp, bp->dev->dev_addr, false);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* In case fw capabilities have changed, destroy the unneeded
+	/* In हाल fw capabilities have changed, destroy the unneeded
 	 * reporters and create newly capable ones.
 	 */
 	bnxt_dl_fw_reporters_destroy(bp, false);
 	bnxt_dl_fw_reporters_create(bp);
 	bnxt_fw_init_one_p3(bp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bnxt_fw_reset_writel(struct bnxt *bp, int reg_idx)
-{
-	struct bnxt_fw_health *fw_health = bp->fw_health;
+अटल व्योम bnxt_fw_reset_ग_लिखोl(काष्ठा bnxt *bp, पूर्णांक reg_idx)
+अणु
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
 	u32 reg = fw_health->fw_reset_seq_regs[reg_idx];
 	u32 val = fw_health->fw_reset_seq_vals[reg_idx];
 	u32 reg_type, reg_off, delay_msecs;
@@ -11792,249 +11793,249 @@ static void bnxt_fw_reset_writel(struct bnxt *bp, int reg_idx)
 	delay_msecs = fw_health->fw_reset_seq_delay_msec[reg_idx];
 	reg_type = BNXT_FW_HEALTH_REG_TYPE(reg);
 	reg_off = BNXT_FW_HEALTH_REG_OFF(reg);
-	switch (reg_type) {
-	case BNXT_FW_HEALTH_REG_TYPE_CFG:
-		pci_write_config_dword(bp->pdev, reg_off, val);
-		break;
-	case BNXT_FW_HEALTH_REG_TYPE_GRC:
-		writel(reg_off & BNXT_GRC_BASE_MASK,
+	चयन (reg_type) अणु
+	हाल BNXT_FW_HEALTH_REG_TYPE_CFG:
+		pci_ग_लिखो_config_dword(bp->pdev, reg_off, val);
+		अवरोध;
+	हाल BNXT_FW_HEALTH_REG_TYPE_GRC:
+		ग_लिखोl(reg_off & BNXT_GRC_BASE_MASK,
 		       bp->bar0 + BNXT_GRCPF_REG_WINDOW_BASE_OUT + 4);
 		reg_off = (reg_off & BNXT_GRC_OFFSET_MASK) + 0x2000;
 		fallthrough;
-	case BNXT_FW_HEALTH_REG_TYPE_BAR0:
-		writel(val, bp->bar0 + reg_off);
-		break;
-	case BNXT_FW_HEALTH_REG_TYPE_BAR1:
-		writel(val, bp->bar1 + reg_off);
-		break;
-	}
-	if (delay_msecs) {
-		pci_read_config_dword(bp->pdev, 0, &val);
+	हाल BNXT_FW_HEALTH_REG_TYPE_BAR0:
+		ग_लिखोl(val, bp->bar0 + reg_off);
+		अवरोध;
+	हाल BNXT_FW_HEALTH_REG_TYPE_BAR1:
+		ग_लिखोl(val, bp->bar1 + reg_off);
+		अवरोध;
+	पूर्ण
+	अगर (delay_msecs) अणु
+		pci_पढ़ो_config_dword(bp->pdev, 0, &val);
 		msleep(delay_msecs);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnxt_reset_all(struct bnxt *bp)
-{
-	struct bnxt_fw_health *fw_health = bp->fw_health;
-	int i, rc;
+अटल व्योम bnxt_reset_all(काष्ठा bnxt *bp)
+अणु
+	काष्ठा bnxt_fw_health *fw_health = bp->fw_health;
+	पूर्णांक i, rc;
 
-	if (bp->fw_cap & BNXT_FW_CAP_ERR_RECOVER_RELOAD) {
+	अगर (bp->fw_cap & BNXT_FW_CAP_ERR_RECOVER_RELOAD) अणु
 		bnxt_fw_reset_via_optee(bp);
-		bp->fw_reset_timestamp = jiffies;
-		return;
-	}
+		bp->fw_reset_बारtamp = jअगरfies;
+		वापस;
+	पूर्ण
 
-	if (fw_health->flags & ERROR_RECOVERY_QCFG_RESP_FLAGS_HOST) {
-		for (i = 0; i < fw_health->fw_reset_seq_cnt; i++)
-			bnxt_fw_reset_writel(bp, i);
-	} else if (fw_health->flags & ERROR_RECOVERY_QCFG_RESP_FLAGS_CO_CPU) {
-		struct hwrm_fw_reset_input req = {0};
+	अगर (fw_health->flags & ERROR_RECOVERY_QCFG_RESP_FLAGS_HOST) अणु
+		क्रम (i = 0; i < fw_health->fw_reset_seq_cnt; i++)
+			bnxt_fw_reset_ग_लिखोl(bp, i);
+	पूर्ण अन्यथा अगर (fw_health->flags & ERROR_RECOVERY_QCFG_RESP_FLAGS_CO_CPU) अणु
+		काष्ठा hwrm_fw_reset_input req = अणु0पूर्ण;
 
 		bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_FW_RESET, -1, -1);
 		req.resp_addr = cpu_to_le64(bp->hwrm_cmd_kong_resp_dma_addr);
 		req.embedded_proc_type = FW_RESET_REQ_EMBEDDED_PROC_TYPE_CHIP;
 		req.selfrst_status = FW_RESET_REQ_SELFRST_STATUS_SELFRSTASAP;
 		req.flags = FW_RESET_REQ_FLAGS_RESET_GRACEFUL;
-		rc = hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
-		if (rc != -ENODEV)
+		rc = hwrm_send_message(bp, &req, माप(req), HWRM_CMD_TIMEOUT);
+		अगर (rc != -ENODEV)
 			netdev_warn(bp->dev, "Unable to reset FW rc=%d\n", rc);
-	}
-	bp->fw_reset_timestamp = jiffies;
-}
+	पूर्ण
+	bp->fw_reset_बारtamp = jअगरfies;
+पूर्ण
 
-static bool bnxt_fw_reset_timeout(struct bnxt *bp)
-{
-	return time_after(jiffies, bp->fw_reset_timestamp +
+अटल bool bnxt_fw_reset_समयout(काष्ठा bnxt *bp)
+अणु
+	वापस समय_after(jअगरfies, bp->fw_reset_बारtamp +
 			  (bp->fw_reset_max_dsecs * HZ / 10));
-}
+पूर्ण
 
-static void bnxt_fw_reset_task(struct work_struct *work)
-{
-	struct bnxt *bp = container_of(work, struct bnxt, fw_reset_task.work);
-	int rc;
+अटल व्योम bnxt_fw_reset_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा bnxt *bp = container_of(work, काष्ठा bnxt, fw_reset_task.work);
+	पूर्णांक rc;
 
-	if (!test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)) {
+	अगर (!test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)) अणु
 		netdev_err(bp->dev, "bnxt_fw_reset_task() called when not in fw reset mode!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (bp->fw_reset_state) {
-	case BNXT_FW_RESET_STATE_POLL_VF: {
-		int n = bnxt_get_registered_vfs(bp);
-		int tmo;
+	चयन (bp->fw_reset_state) अणु
+	हाल BNXT_FW_RESET_STATE_POLL_VF: अणु
+		पूर्णांक n = bnxt_get_रेजिस्टरed_vfs(bp);
+		पूर्णांक पंचांगo;
 
-		if (n < 0) {
+		अगर (n < 0) अणु
 			netdev_err(bp->dev, "Firmware reset aborted, subsequent func_qcfg cmd failed, rc = %d, %d msecs since reset timestamp\n",
-				   n, jiffies_to_msecs(jiffies -
-				   bp->fw_reset_timestamp));
-			goto fw_reset_abort;
-		} else if (n > 0) {
-			if (bnxt_fw_reset_timeout(bp)) {
+				   n, jअगरfies_to_msecs(jअगरfies -
+				   bp->fw_reset_बारtamp));
+			जाओ fw_reset_पात;
+		पूर्ण अन्यथा अगर (n > 0) अणु
+			अगर (bnxt_fw_reset_समयout(bp)) अणु
 				clear_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
 				bp->fw_reset_state = 0;
 				netdev_err(bp->dev, "Firmware reset aborted, bnxt_get_registered_vfs() returns %d\n",
 					   n);
-				return;
-			}
+				वापस;
+			पूर्ण
 			bnxt_queue_fw_reset_work(bp, HZ / 10);
-			return;
-		}
-		bp->fw_reset_timestamp = jiffies;
+			वापस;
+		पूर्ण
+		bp->fw_reset_बारtamp = jअगरfies;
 		rtnl_lock();
-		bnxt_fw_reset_close(bp);
-		if (bp->fw_cap & BNXT_FW_CAP_ERR_RECOVER_RELOAD) {
+		bnxt_fw_reset_बंद(bp);
+		अगर (bp->fw_cap & BNXT_FW_CAP_ERR_RECOVER_RELOAD) अणु
 			bp->fw_reset_state = BNXT_FW_RESET_STATE_POLL_FW_DOWN;
-			tmo = HZ / 10;
-		} else {
+			पंचांगo = HZ / 10;
+		पूर्ण अन्यथा अणु
 			bp->fw_reset_state = BNXT_FW_RESET_STATE_ENABLE_DEV;
-			tmo = bp->fw_reset_min_dsecs * HZ / 10;
-		}
+			पंचांगo = bp->fw_reset_min_dsecs * HZ / 10;
+		पूर्ण
 		rtnl_unlock();
-		bnxt_queue_fw_reset_work(bp, tmo);
-		return;
-	}
-	case BNXT_FW_RESET_STATE_POLL_FW_DOWN: {
+		bnxt_queue_fw_reset_work(bp, पंचांगo);
+		वापस;
+	पूर्ण
+	हाल BNXT_FW_RESET_STATE_POLL_FW_DOWN: अणु
 		u32 val;
 
-		val = bnxt_fw_health_readl(bp, BNXT_FW_HEALTH_REG);
-		if (!(val & BNXT_FW_STATUS_SHUTDOWN) &&
-		    !bnxt_fw_reset_timeout(bp)) {
+		val = bnxt_fw_health_पढ़ोl(bp, BNXT_FW_HEALTH_REG);
+		अगर (!(val & BNXT_FW_STATUS_SHUTDOWN) &&
+		    !bnxt_fw_reset_समयout(bp)) अणु
 			bnxt_queue_fw_reset_work(bp, HZ / 5);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (!bp->fw_health->master) {
-			u32 wait_dsecs = bp->fw_health->normal_func_wait_dsecs;
+		अगर (!bp->fw_health->master) अणु
+			u32 रुको_dsecs = bp->fw_health->normal_func_रुको_dsecs;
 
 			bp->fw_reset_state = BNXT_FW_RESET_STATE_ENABLE_DEV;
-			bnxt_queue_fw_reset_work(bp, wait_dsecs * HZ / 10);
-			return;
-		}
+			bnxt_queue_fw_reset_work(bp, रुको_dsecs * HZ / 10);
+			वापस;
+		पूर्ण
 		bp->fw_reset_state = BNXT_FW_RESET_STATE_RESET_FW;
-	}
+	पूर्ण
 		fallthrough;
-	case BNXT_FW_RESET_STATE_RESET_FW:
+	हाल BNXT_FW_RESET_STATE_RESET_FW:
 		bnxt_reset_all(bp);
 		bp->fw_reset_state = BNXT_FW_RESET_STATE_ENABLE_DEV;
 		bnxt_queue_fw_reset_work(bp, bp->fw_reset_min_dsecs * HZ / 10);
-		return;
-	case BNXT_FW_RESET_STATE_ENABLE_DEV:
+		वापस;
+	हाल BNXT_FW_RESET_STATE_ENABLE_DEV:
 		bnxt_inv_fw_health_reg(bp);
-		if (test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state) &&
-		    !bp->fw_reset_min_dsecs) {
+		अगर (test_bit(BNXT_STATE_FW_FATAL_COND, &bp->state) &&
+		    !bp->fw_reset_min_dsecs) अणु
 			u16 val;
 
-			pci_read_config_word(bp->pdev, PCI_SUBSYSTEM_ID, &val);
-			if (val == 0xffff) {
-				if (bnxt_fw_reset_timeout(bp)) {
+			pci_पढ़ो_config_word(bp->pdev, PCI_SUBSYSTEM_ID, &val);
+			अगर (val == 0xffff) अणु
+				अगर (bnxt_fw_reset_समयout(bp)) अणु
 					netdev_err(bp->dev, "Firmware reset aborted, PCI config space invalid\n");
-					goto fw_reset_abort;
-				}
+					जाओ fw_reset_पात;
+				पूर्ण
 				bnxt_queue_fw_reset_work(bp, HZ / 1000);
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 		clear_bit(BNXT_STATE_FW_FATAL_COND, &bp->state);
-		if (pci_enable_device(bp->pdev)) {
+		अगर (pci_enable_device(bp->pdev)) अणु
 			netdev_err(bp->dev, "Cannot re-enable PCI device\n");
-			goto fw_reset_abort;
-		}
+			जाओ fw_reset_पात;
+		पूर्ण
 		pci_set_master(bp->pdev);
 		bp->fw_reset_state = BNXT_FW_RESET_STATE_POLL_FW;
 		fallthrough;
-	case BNXT_FW_RESET_STATE_POLL_FW:
-		bp->hwrm_cmd_timeout = SHORT_HWRM_CMD_TIMEOUT;
+	हाल BNXT_FW_RESET_STATE_POLL_FW:
+		bp->hwrm_cmd_समयout = SHORT_HWRM_CMD_TIMEOUT;
 		rc = __bnxt_hwrm_ver_get(bp, true);
-		if (rc) {
-			if (bnxt_fw_reset_timeout(bp)) {
+		अगर (rc) अणु
+			अगर (bnxt_fw_reset_समयout(bp)) अणु
 				netdev_err(bp->dev, "Firmware reset aborted\n");
-				goto fw_reset_abort_status;
-			}
+				जाओ fw_reset_पात_status;
+			पूर्ण
 			bnxt_queue_fw_reset_work(bp, HZ / 5);
-			return;
-		}
-		bp->hwrm_cmd_timeout = DFLT_HWRM_CMD_TIMEOUT;
+			वापस;
+		पूर्ण
+		bp->hwrm_cmd_समयout = DFLT_HWRM_CMD_TIMEOUT;
 		bp->fw_reset_state = BNXT_FW_RESET_STATE_OPENING;
 		fallthrough;
-	case BNXT_FW_RESET_STATE_OPENING:
-		while (!rtnl_trylock()) {
+	हाल BNXT_FW_RESET_STATE_OPENING:
+		जबतक (!rtnl_trylock()) अणु
 			bnxt_queue_fw_reset_work(bp, HZ / 10);
-			return;
-		}
-		rc = bnxt_open(bp->dev);
-		if (rc) {
+			वापस;
+		पूर्ण
+		rc = bnxt_खोलो(bp->dev);
+		अगर (rc) अणु
 			netdev_err(bp->dev, "bnxt_open_nic() failed\n");
 			clear_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
-			dev_close(bp->dev);
-		}
+			dev_बंद(bp->dev);
+		पूर्ण
 
 		bp->fw_reset_state = 0;
-		/* Make sure fw_reset_state is 0 before clearing the flag */
-		smp_mb__before_atomic();
+		/* Make sure fw_reset_state is 0 beक्रमe clearing the flag */
+		smp_mb__beक्रमe_atomic();
 		clear_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
 		bnxt_ulp_start(bp, rc);
-		if (!rc)
+		अगर (!rc)
 			bnxt_reenable_sriov(bp);
 		bnxt_vf_reps_alloc(bp);
-		bnxt_vf_reps_open(bp);
-		bnxt_dl_health_recovery_done(bp);
+		bnxt_vf_reps_खोलो(bp);
+		bnxt_dl_health_recovery_करोne(bp);
 		bnxt_dl_health_status_update(bp, true);
 		rtnl_unlock();
-		break;
-	}
-	return;
+		अवरोध;
+	पूर्ण
+	वापस;
 
-fw_reset_abort_status:
-	if (bp->fw_health->status_reliable ||
-	    (bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY)) {
-		u32 sts = bnxt_fw_health_readl(bp, BNXT_FW_HEALTH_REG);
+fw_reset_पात_status:
+	अगर (bp->fw_health->status_reliable ||
+	    (bp->fw_cap & BNXT_FW_CAP_ERROR_RECOVERY)) अणु
+		u32 sts = bnxt_fw_health_पढ़ोl(bp, BNXT_FW_HEALTH_REG);
 
 		netdev_err(bp->dev, "fw_health_status 0x%x\n", sts);
-	}
-fw_reset_abort:
+	पूर्ण
+fw_reset_पात:
 	clear_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
-	if (bp->fw_reset_state != BNXT_FW_RESET_STATE_POLL_VF)
+	अगर (bp->fw_reset_state != BNXT_FW_RESET_STATE_POLL_VF)
 		bnxt_dl_health_status_update(bp, false);
 	bp->fw_reset_state = 0;
 	rtnl_lock();
-	dev_close(bp->dev);
+	dev_बंद(bp->dev);
 	rtnl_unlock();
-}
+पूर्ण
 
-static int bnxt_init_board(struct pci_dev *pdev, struct net_device *dev)
-{
-	int rc;
-	struct bnxt *bp = netdev_priv(dev);
+अटल पूर्णांक bnxt_init_board(काष्ठा pci_dev *pdev, काष्ठा net_device *dev)
+अणु
+	पूर्णांक rc;
+	काष्ठा bnxt *bp = netdev_priv(dev);
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	/* enable device (incl. PCI PM wakeup), and bus-mastering */
 	rc = pci_enable_device(pdev);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "Cannot enable PCI device, aborting\n");
-		goto init_err;
-	}
+		जाओ init_err;
+	पूर्ण
 
-	if (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) {
+	अगर (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) अणु
 		dev_err(&pdev->dev,
 			"Cannot find PCI device base address, aborting\n");
 		rc = -ENODEV;
-		goto init_err_disable;
-	}
+		जाओ init_err_disable;
+	पूर्ण
 
 	rc = pci_request_regions(pdev, DRV_MODULE_NAME);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "Cannot obtain PCI resources, aborting\n");
-		goto init_err_disable;
-	}
+		जाओ init_err_disable;
+	पूर्ण
 
-	if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64)) != 0 &&
-	    dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32)) != 0) {
+	अगर (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64)) != 0 &&
+	    dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32)) != 0) अणु
 		dev_err(&pdev->dev, "System does not support DMA, aborting\n");
 		rc = -EIO;
-		goto init_err_release;
-	}
+		जाओ init_err_release;
+	पूर्ण
 
 	pci_set_master(pdev);
 
@@ -12045,18 +12046,18 @@ static int bnxt_init_board(struct pci_dev *pdev, struct net_device *dev)
 	 * determines the BAR size.
 	 */
 	bp->bar0 = pci_ioremap_bar(pdev, 0);
-	if (!bp->bar0) {
+	अगर (!bp->bar0) अणु
 		dev_err(&pdev->dev, "Cannot map device registers, aborting\n");
 		rc = -ENOMEM;
-		goto init_err_release;
-	}
+		जाओ init_err_release;
+	पूर्ण
 
 	bp->bar2 = pci_ioremap_bar(pdev, 4);
-	if (!bp->bar2) {
+	अगर (!bp->bar2) अणु
 		dev_err(&pdev->dev, "Cannot map bar4 registers, aborting\n");
 		rc = -ENOMEM;
-		goto init_err_release;
-	}
+		जाओ init_err_release;
+	पूर्ण
 
 	pci_enable_pcie_error_reporting(pdev);
 
@@ -12064,23 +12065,23 @@ static int bnxt_init_board(struct pci_dev *pdev, struct net_device *dev)
 	INIT_DELAYED_WORK(&bp->fw_reset_task, bnxt_fw_reset_task);
 
 	spin_lock_init(&bp->ntp_fltr_lock);
-#if BITS_PER_LONG == 32
+#अगर BITS_PER_LONG == 32
 	spin_lock_init(&bp->db_lock);
-#endif
+#पूर्ण_अगर
 
 	bp->rx_ring_size = BNXT_DEFAULT_RX_RING_SIZE;
 	bp->tx_ring_size = BNXT_DEFAULT_TX_RING_SIZE;
 
 	bnxt_init_dflt_coal(bp);
 
-	timer_setup(&bp->timer, bnxt_timer, 0);
-	bp->current_interval = BNXT_TIMER_INTERVAL;
+	समयr_setup(&bp->समयr, bnxt_समयr, 0);
+	bp->current_पूर्णांकerval = BNXT_TIMER_INTERVAL;
 
 	bp->vxlan_fw_dst_port_id = INVALID_HW_RING_ID;
 	bp->nge_fw_dst_port_id = INVALID_HW_RING_ID;
 
 	clear_bit(BNXT_STATE_OPEN, &bp->state);
-	return 0;
+	वापस 0;
 
 init_err_release:
 	bnxt_unmap_bars(bp, pdev);
@@ -12090,249 +12091,249 @@ init_err_disable:
 	pci_disable_device(pdev);
 
 init_err:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* rtnl_lock held */
-static int bnxt_change_mac_addr(struct net_device *dev, void *p)
-{
-	struct sockaddr *addr = p;
-	struct bnxt *bp = netdev_priv(dev);
-	int rc = 0;
+अटल पूर्णांक bnxt_change_mac_addr(काष्ठा net_device *dev, व्योम *p)
+अणु
+	काष्ठा sockaddr *addr = p;
+	काष्ठा bnxt *bp = netdev_priv(dev);
+	पूर्णांक rc = 0;
 
-	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(addr->sa_data))
+		वापस -EADDRNOTAVAIL;
 
-	if (ether_addr_equal(addr->sa_data, dev->dev_addr))
-		return 0;
+	अगर (ether_addr_equal(addr->sa_data, dev->dev_addr))
+		वापस 0;
 
 	rc = bnxt_approve_mac(bp, addr->sa_data, true);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
-	if (netif_running(dev)) {
-		bnxt_close_nic(bp, false, false);
-		rc = bnxt_open_nic(bp, false, false);
-	}
+	स_नकल(dev->dev_addr, addr->sa_data, dev->addr_len);
+	अगर (netअगर_running(dev)) अणु
+		bnxt_बंद_nic(bp, false, false);
+		rc = bnxt_खोलो_nic(bp, false, false);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* rtnl_lock held */
-static int bnxt_change_mtu(struct net_device *dev, int new_mtu)
-{
-	struct bnxt *bp = netdev_priv(dev);
+अटल पूर्णांक bnxt_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 
-	if (netif_running(dev))
-		bnxt_close_nic(bp, true, false);
+	अगर (netअगर_running(dev))
+		bnxt_बंद_nic(bp, true, false);
 
 	dev->mtu = new_mtu;
 	bnxt_set_ring_params(bp);
 
-	if (netif_running(dev))
-		return bnxt_open_nic(bp, true, false);
+	अगर (netअगर_running(dev))
+		वापस bnxt_खोलो_nic(bp, true, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bnxt_setup_mq_tc(struct net_device *dev, u8 tc)
-{
-	struct bnxt *bp = netdev_priv(dev);
+पूर्णांक bnxt_setup_mq_tc(काष्ठा net_device *dev, u8 tc)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 	bool sh = false;
-	int rc;
+	पूर्णांक rc;
 
-	if (tc > bp->max_tc) {
+	अगर (tc > bp->max_tc) अणु
 		netdev_err(dev, "Too many traffic classes requested: %d. Max supported is %d.\n",
 			   tc, bp->max_tc);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (netdev_get_num_tc(dev) == tc)
-		return 0;
+	अगर (netdev_get_num_tc(dev) == tc)
+		वापस 0;
 
-	if (bp->flags & BNXT_FLAG_SHARED_RINGS)
+	अगर (bp->flags & BNXT_FLAG_SHARED_RINGS)
 		sh = true;
 
 	rc = bnxt_check_rings(bp, bp->tx_nr_rings_per_tc, bp->rx_nr_rings,
 			      sh, tc, bp->tx_nr_rings_xdp);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Needs to close the device and do hw resource re-allocations */
-	if (netif_running(bp->dev))
-		bnxt_close_nic(bp, true, false);
+	/* Needs to बंद the device and करो hw resource re-allocations */
+	अगर (netअगर_running(bp->dev))
+		bnxt_बंद_nic(bp, true, false);
 
-	if (tc) {
+	अगर (tc) अणु
 		bp->tx_nr_rings = bp->tx_nr_rings_per_tc * tc;
 		netdev_set_num_tc(dev, tc);
-	} else {
+	पूर्ण अन्यथा अणु
 		bp->tx_nr_rings = bp->tx_nr_rings_per_tc;
 		netdev_reset_tc(dev);
-	}
+	पूर्ण
 	bp->tx_nr_rings += bp->tx_nr_rings_xdp;
-	bp->cp_nr_rings = sh ? max_t(int, bp->tx_nr_rings, bp->rx_nr_rings) :
+	bp->cp_nr_rings = sh ? max_t(पूर्णांक, bp->tx_nr_rings, bp->rx_nr_rings) :
 			       bp->tx_nr_rings + bp->rx_nr_rings;
 
-	if (netif_running(bp->dev))
-		return bnxt_open_nic(bp, true, false);
+	अगर (netअगर_running(bp->dev))
+		वापस bnxt_खोलो_nic(bp, true, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnxt_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
-				  void *cb_priv)
-{
-	struct bnxt *bp = cb_priv;
+अटल पूर्णांक bnxt_setup_tc_block_cb(क्रमागत tc_setup_type type, व्योम *type_data,
+				  व्योम *cb_priv)
+अणु
+	काष्ठा bnxt *bp = cb_priv;
 
-	if (!bnxt_tc_flower_enabled(bp) ||
+	अगर (!bnxt_tc_flower_enabled(bp) ||
 	    !tc_cls_can_offload_and_chain0(bp->dev, type_data))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	switch (type) {
-	case TC_SETUP_CLSFLOWER:
-		return bnxt_tc_setup_flower(bp, bp->pf.fw_fid, type_data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (type) अणु
+	हाल TC_SETUP_CLSFLOWER:
+		वापस bnxt_tc_setup_flower(bp, bp->pf.fw_fid, type_data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
 LIST_HEAD(bnxt_block_cb_list);
 
-static int bnxt_setup_tc(struct net_device *dev, enum tc_setup_type type,
-			 void *type_data)
-{
-	struct bnxt *bp = netdev_priv(dev);
+अटल पूर्णांक bnxt_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
+			 व्योम *type_data)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 
-	switch (type) {
-	case TC_SETUP_BLOCK:
-		return flow_block_cb_setup_simple(type_data,
+	चयन (type) अणु
+	हाल TC_SETUP_BLOCK:
+		वापस flow_block_cb_setup_simple(type_data,
 						  &bnxt_block_cb_list,
 						  bnxt_setup_tc_block_cb,
 						  bp, bp, true);
-	case TC_SETUP_QDISC_MQPRIO: {
-		struct tc_mqprio_qopt *mqprio = type_data;
+	हाल TC_SETUP_QDISC_MQPRIO: अणु
+		काष्ठा tc_mqprio_qopt *mqprio = type_data;
 
 		mqprio->hw = TC_MQPRIO_HW_OFFLOAD_TCS;
 
-		return bnxt_setup_mq_tc(dev, mqprio->num_tc);
-	}
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस bnxt_setup_mq_tc(dev, mqprio->num_tc);
+	पूर्ण
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_RFS_ACCEL
-static bool bnxt_fltr_match(struct bnxt_ntuple_filter *f1,
-			    struct bnxt_ntuple_filter *f2)
-{
-	struct flow_keys *keys1 = &f1->fkeys;
-	struct flow_keys *keys2 = &f2->fkeys;
+#अगर_घोषित CONFIG_RFS_ACCEL
+अटल bool bnxt_fltr_match(काष्ठा bnxt_ntuple_filter *f1,
+			    काष्ठा bnxt_ntuple_filter *f2)
+अणु
+	काष्ठा flow_keys *keys1 = &f1->fkeys;
+	काष्ठा flow_keys *keys2 = &f2->fkeys;
 
-	if (keys1->basic.n_proto != keys2->basic.n_proto ||
+	अगर (keys1->basic.n_proto != keys2->basic.n_proto ||
 	    keys1->basic.ip_proto != keys2->basic.ip_proto)
-		return false;
+		वापस false;
 
-	if (keys1->basic.n_proto == htons(ETH_P_IP)) {
-		if (keys1->addrs.v4addrs.src != keys2->addrs.v4addrs.src ||
+	अगर (keys1->basic.n_proto == htons(ETH_P_IP)) अणु
+		अगर (keys1->addrs.v4addrs.src != keys2->addrs.v4addrs.src ||
 		    keys1->addrs.v4addrs.dst != keys2->addrs.v4addrs.dst)
-			return false;
-	} else {
-		if (memcmp(&keys1->addrs.v6addrs.src, &keys2->addrs.v6addrs.src,
-			   sizeof(keys1->addrs.v6addrs.src)) ||
-		    memcmp(&keys1->addrs.v6addrs.dst, &keys2->addrs.v6addrs.dst,
-			   sizeof(keys1->addrs.v6addrs.dst)))
-			return false;
-	}
+			वापस false;
+	पूर्ण अन्यथा अणु
+		अगर (स_भेद(&keys1->addrs.v6addrs.src, &keys2->addrs.v6addrs.src,
+			   माप(keys1->addrs.v6addrs.src)) ||
+		    स_भेद(&keys1->addrs.v6addrs.dst, &keys2->addrs.v6addrs.dst,
+			   माप(keys1->addrs.v6addrs.dst)))
+			वापस false;
+	पूर्ण
 
-	if (keys1->ports.ports == keys2->ports.ports &&
+	अगर (keys1->ports.ports == keys2->ports.ports &&
 	    keys1->control.flags == keys2->control.flags &&
 	    ether_addr_equal(f1->src_mac_addr, f2->src_mac_addr) &&
 	    ether_addr_equal(f1->dst_mac_addr, f2->dst_mac_addr))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int bnxt_rx_flow_steer(struct net_device *dev, const struct sk_buff *skb,
+अटल पूर्णांक bnxt_rx_flow_steer(काष्ठा net_device *dev, स्थिर काष्ठा sk_buff *skb,
 			      u16 rxq_index, u32 flow_id)
-{
-	struct bnxt *bp = netdev_priv(dev);
-	struct bnxt_ntuple_filter *fltr, *new_fltr;
-	struct flow_keys *fkeys;
-	struct ethhdr *eth = (struct ethhdr *)skb_mac_header(skb);
-	int rc = 0, idx, bit_id, l2_idx = 0;
-	struct hlist_head *head;
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
+	काष्ठा bnxt_ntuple_filter *fltr, *new_fltr;
+	काष्ठा flow_keys *fkeys;
+	काष्ठा ethhdr *eth = (काष्ठा ethhdr *)skb_mac_header(skb);
+	पूर्णांक rc = 0, idx, bit_id, l2_idx = 0;
+	काष्ठा hlist_head *head;
 	u32 flags;
 
-	if (!ether_addr_equal(dev->dev_addr, eth->h_dest)) {
-		struct bnxt_vnic_info *vnic = &bp->vnic_info[0];
-		int off = 0, j;
+	अगर (!ether_addr_equal(dev->dev_addr, eth->h_dest)) अणु
+		काष्ठा bnxt_vnic_info *vnic = &bp->vnic_info[0];
+		पूर्णांक off = 0, j;
 
-		netif_addr_lock_bh(dev);
-		for (j = 0; j < vnic->uc_filter_count; j++, off += ETH_ALEN) {
-			if (ether_addr_equal(eth->h_dest,
-					     vnic->uc_list + off)) {
+		netअगर_addr_lock_bh(dev);
+		क्रम (j = 0; j < vnic->uc_filter_count; j++, off += ETH_ALEN) अणु
+			अगर (ether_addr_equal(eth->h_dest,
+					     vnic->uc_list + off)) अणु
 				l2_idx = j + 1;
-				break;
-			}
-		}
-		netif_addr_unlock_bh(dev);
-		if (!l2_idx)
-			return -EINVAL;
-	}
-	new_fltr = kzalloc(sizeof(*new_fltr), GFP_ATOMIC);
-	if (!new_fltr)
-		return -ENOMEM;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		netअगर_addr_unlock_bh(dev);
+		अगर (!l2_idx)
+			वापस -EINVAL;
+	पूर्ण
+	new_fltr = kzalloc(माप(*new_fltr), GFP_ATOMIC);
+	अगर (!new_fltr)
+		वापस -ENOMEM;
 
 	fkeys = &new_fltr->fkeys;
-	if (!skb_flow_dissect_flow_keys(skb, fkeys, 0)) {
+	अगर (!skb_flow_dissect_flow_keys(skb, fkeys, 0)) अणु
 		rc = -EPROTONOSUPPORT;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	if ((fkeys->basic.n_proto != htons(ETH_P_IP) &&
+	अगर ((fkeys->basic.n_proto != htons(ETH_P_IP) &&
 	     fkeys->basic.n_proto != htons(ETH_P_IPV6)) ||
 	    ((fkeys->basic.ip_proto != IPPROTO_TCP) &&
-	     (fkeys->basic.ip_proto != IPPROTO_UDP))) {
+	     (fkeys->basic.ip_proto != IPPROTO_UDP))) अणु
 		rc = -EPROTONOSUPPORT;
-		goto err_free;
-	}
-	if (fkeys->basic.n_proto == htons(ETH_P_IPV6) &&
-	    bp->hwrm_spec_code < 0x10601) {
+		जाओ err_मुक्त;
+	पूर्ण
+	अगर (fkeys->basic.n_proto == htons(ETH_P_IPV6) &&
+	    bp->hwrm_spec_code < 0x10601) अणु
 		rc = -EPROTONOSUPPORT;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 	flags = fkeys->control.flags;
-	if (((flags & FLOW_DIS_ENCAPSULATION) &&
-	     bp->hwrm_spec_code < 0x10601) || (flags & FLOW_DIS_IS_FRAGMENT)) {
+	अगर (((flags & FLOW_DIS_ENCAPSULATION) &&
+	     bp->hwrm_spec_code < 0x10601) || (flags & FLOW_DIS_IS_FRAGMENT)) अणु
 		rc = -EPROTONOSUPPORT;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	memcpy(new_fltr->dst_mac_addr, eth->h_dest, ETH_ALEN);
-	memcpy(new_fltr->src_mac_addr, eth->h_source, ETH_ALEN);
+	स_नकल(new_fltr->dst_mac_addr, eth->h_dest, ETH_ALEN);
+	स_नकल(new_fltr->src_mac_addr, eth->h_source, ETH_ALEN);
 
 	idx = skb_get_hash_raw(skb) & BNXT_NTP_FLTR_HASH_MASK;
 	head = &bp->ntp_fltr_hash_tbl[idx];
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(fltr, head, hash) {
-		if (bnxt_fltr_match(fltr, new_fltr)) {
-			rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(fltr, head, hash) अणु
+		अगर (bnxt_fltr_match(fltr, new_fltr)) अणु
+			rcu_पढ़ो_unlock();
 			rc = 0;
-			goto err_free;
-		}
-	}
-	rcu_read_unlock();
+			जाओ err_मुक्त;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	spin_lock_bh(&bp->ntp_fltr_lock);
-	bit_id = bitmap_find_free_region(bp->ntp_fltr_bmap,
+	bit_id = biपंचांगap_find_मुक्त_region(bp->ntp_fltr_bmap,
 					 BNXT_NTP_FLTR_MAX_FLTR, 0);
-	if (bit_id < 0) {
+	अगर (bit_id < 0) अणु
 		spin_unlock_bh(&bp->ntp_fltr_lock);
 		rc = -ENOMEM;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	new_fltr->sw_id = (u16)bit_id;
 	new_fltr->flow_id = flow_id;
@@ -12345,214 +12346,214 @@ static int bnxt_rx_flow_steer(struct net_device *dev, const struct sk_buff *skb,
 	set_bit(BNXT_RX_NTP_FLTR_SP_EVENT, &bp->sp_event);
 	bnxt_queue_sp_work(bp);
 
-	return new_fltr->sw_id;
+	वापस new_fltr->sw_id;
 
-err_free:
-	kfree(new_fltr);
-	return rc;
-}
+err_मुक्त:
+	kमुक्त(new_fltr);
+	वापस rc;
+पूर्ण
 
-static void bnxt_cfg_ntp_filters(struct bnxt *bp)
-{
-	int i;
+अटल व्योम bnxt_cfg_ntp_filters(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BNXT_NTP_FLTR_HASH_SIZE; i++) {
-		struct hlist_head *head;
-		struct hlist_node *tmp;
-		struct bnxt_ntuple_filter *fltr;
-		int rc;
+	क्रम (i = 0; i < BNXT_NTP_FLTR_HASH_SIZE; i++) अणु
+		काष्ठा hlist_head *head;
+		काष्ठा hlist_node *पंचांगp;
+		काष्ठा bnxt_ntuple_filter *fltr;
+		पूर्णांक rc;
 
 		head = &bp->ntp_fltr_hash_tbl[i];
-		hlist_for_each_entry_safe(fltr, tmp, head, hash) {
+		hlist_क्रम_each_entry_safe(fltr, पंचांगp, head, hash) अणु
 			bool del = false;
 
-			if (test_bit(BNXT_FLTR_VALID, &fltr->state)) {
-				if (rps_may_expire_flow(bp->dev, fltr->rxq,
+			अगर (test_bit(BNXT_FLTR_VALID, &fltr->state)) अणु
+				अगर (rps_may_expire_flow(bp->dev, fltr->rxq,
 							fltr->flow_id,
-							fltr->sw_id)) {
-					bnxt_hwrm_cfa_ntuple_filter_free(bp,
+							fltr->sw_id)) अणु
+					bnxt_hwrm_cfa_ntuple_filter_मुक्त(bp,
 									 fltr);
 					del = true;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				rc = bnxt_hwrm_cfa_ntuple_filter_alloc(bp,
 								       fltr);
-				if (rc)
+				अगर (rc)
 					del = true;
-				else
+				अन्यथा
 					set_bit(BNXT_FLTR_VALID, &fltr->state);
-			}
+			पूर्ण
 
-			if (del) {
+			अगर (del) अणु
 				spin_lock_bh(&bp->ntp_fltr_lock);
 				hlist_del_rcu(&fltr->hash);
 				bp->ntp_fltr_count--;
 				spin_unlock_bh(&bp->ntp_fltr_lock);
 				synchronize_rcu();
 				clear_bit(fltr->sw_id, bp->ntp_fltr_bmap);
-				kfree(fltr);
-			}
-		}
-	}
-	if (test_and_clear_bit(BNXT_HWRM_PF_UNLOAD_SP_EVENT, &bp->sp_event))
+				kमुक्त(fltr);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (test_and_clear_bit(BNXT_HWRM_PF_UNLOAD_SP_EVENT, &bp->sp_event))
 		netdev_info(bp->dev, "Receive PF driver unload event!\n");
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static void bnxt_cfg_ntp_filters(struct bnxt *bp)
-{
-}
+अटल व्योम bnxt_cfg_ntp_filters(काष्ठा bnxt *bp)
+अणु
+पूर्ण
 
-#endif /* CONFIG_RFS_ACCEL */
+#पूर्ण_अगर /* CONFIG_RFS_ACCEL */
 
-static int bnxt_udp_tunnel_sync(struct net_device *netdev, unsigned int table)
-{
-	struct bnxt *bp = netdev_priv(netdev);
-	struct udp_tunnel_info ti;
-	unsigned int cmd;
+अटल पूर्णांक bnxt_udp_tunnel_sync(काष्ठा net_device *netdev, अचिन्हित पूर्णांक table)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(netdev);
+	काष्ठा udp_tunnel_info ti;
+	अचिन्हित पूर्णांक cmd;
 
 	udp_tunnel_nic_get_port(netdev, table, 0, &ti);
-	if (ti.type == UDP_TUNNEL_TYPE_VXLAN) {
+	अगर (ti.type == UDP_TUNNEL_TYPE_VXLAN) अणु
 		bp->vxlan_port = ti.port;
 		cmd = TUNNEL_DST_PORT_FREE_REQ_TUNNEL_TYPE_VXLAN;
-	} else {
+	पूर्ण अन्यथा अणु
 		bp->nge_port = ti.port;
 		cmd = TUNNEL_DST_PORT_FREE_REQ_TUNNEL_TYPE_GENEVE;
-	}
+	पूर्ण
 
-	if (ti.port)
-		return bnxt_hwrm_tunnel_dst_port_alloc(bp, ti.port, cmd);
+	अगर (ti.port)
+		वापस bnxt_hwrm_tunnel_dst_port_alloc(bp, ti.port, cmd);
 
-	return bnxt_hwrm_tunnel_dst_port_free(bp, cmd);
-}
+	वापस bnxt_hwrm_tunnel_dst_port_मुक्त(bp, cmd);
+पूर्ण
 
-static const struct udp_tunnel_nic_info bnxt_udp_tunnels = {
+अटल स्थिर काष्ठा udp_tunnel_nic_info bnxt_udp_tunnels = अणु
 	.sync_table	= bnxt_udp_tunnel_sync,
 	.flags		= UDP_TUNNEL_NIC_INFO_MAY_SLEEP |
 			  UDP_TUNNEL_NIC_INFO_OPEN_ONLY,
-	.tables		= {
-		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN,  },
-		{ .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_GENEVE, },
-	},
-};
+	.tables		= अणु
+		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_VXLAN,  पूर्ण,
+		अणु .n_entries = 1, .tunnel_types = UDP_TUNNEL_TYPE_GENEVE, पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int bnxt_bridge_getlink(struct sk_buff *skb, u32 pid, u32 seq,
-			       struct net_device *dev, u32 filter_mask,
-			       int nlflags)
-{
-	struct bnxt *bp = netdev_priv(dev);
+अटल पूर्णांक bnxt_bridge_getlink(काष्ठा sk_buff *skb, u32 pid, u32 seq,
+			       काष्ठा net_device *dev, u32 filter_mask,
+			       पूर्णांक nlflags)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 
-	return ndo_dflt_bridge_getlink(skb, pid, seq, dev, bp->br_mode, 0, 0,
-				       nlflags, filter_mask, NULL);
-}
+	वापस nकरो_dflt_bridge_getlink(skb, pid, seq, dev, bp->br_mode, 0, 0,
+				       nlflags, filter_mask, शून्य);
+पूर्ण
 
-static int bnxt_bridge_setlink(struct net_device *dev, struct nlmsghdr *nlh,
-			       u16 flags, struct netlink_ext_ack *extack)
-{
-	struct bnxt *bp = netdev_priv(dev);
-	struct nlattr *attr, *br_spec;
-	int rem, rc = 0;
+अटल पूर्णांक bnxt_bridge_setlink(काष्ठा net_device *dev, काष्ठा nlmsghdr *nlh,
+			       u16 flags, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
+	काष्ठा nlattr *attr, *br_spec;
+	पूर्णांक rem, rc = 0;
 
-	if (bp->hwrm_spec_code < 0x10708 || !BNXT_SINGLE_PF(bp))
-		return -EOPNOTSUPP;
+	अगर (bp->hwrm_spec_code < 0x10708 || !BNXT_SINGLE_PF(bp))
+		वापस -EOPNOTSUPP;
 
-	br_spec = nlmsg_find_attr(nlh, sizeof(struct ifinfomsg), IFLA_AF_SPEC);
-	if (!br_spec)
-		return -EINVAL;
+	br_spec = nlmsg_find_attr(nlh, माप(काष्ठा अगरinfomsg), IFLA_AF_SPEC);
+	अगर (!br_spec)
+		वापस -EINVAL;
 
-	nla_for_each_nested(attr, br_spec, rem) {
+	nla_क्रम_each_nested(attr, br_spec, rem) अणु
 		u16 mode;
 
-		if (nla_type(attr) != IFLA_BRIDGE_MODE)
-			continue;
+		अगर (nla_type(attr) != IFLA_BRIDGE_MODE)
+			जारी;
 
-		if (nla_len(attr) < sizeof(mode))
-			return -EINVAL;
+		अगर (nla_len(attr) < माप(mode))
+			वापस -EINVAL;
 
 		mode = nla_get_u16(attr);
-		if (mode == bp->br_mode)
-			break;
+		अगर (mode == bp->br_mode)
+			अवरोध;
 
 		rc = bnxt_hwrm_set_br_mode(bp, mode);
-		if (!rc)
+		अगर (!rc)
 			bp->br_mode = mode;
-		break;
-	}
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-int bnxt_get_port_parent_id(struct net_device *dev,
-			    struct netdev_phys_item_id *ppid)
-{
-	struct bnxt *bp = netdev_priv(dev);
+पूर्णांक bnxt_get_port_parent_id(काष्ठा net_device *dev,
+			    काष्ठा netdev_phys_item_id *ppid)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 
-	if (bp->eswitch_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
-		return -EOPNOTSUPP;
+	अगर (bp->eचयन_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
+		वापस -EOPNOTSUPP;
 
-	/* The PF and it's VF-reps only support the switchdev framework */
-	if (!BNXT_PF(bp) || !(bp->flags & BNXT_FLAG_DSN_VALID))
-		return -EOPNOTSUPP;
+	/* The PF and it's VF-reps only support the चयनdev framework */
+	अगर (!BNXT_PF(bp) || !(bp->flags & BNXT_FLAG_DSN_VALID))
+		वापस -EOPNOTSUPP;
 
-	ppid->id_len = sizeof(bp->dsn);
-	memcpy(ppid->id, bp->dsn, ppid->id_len);
+	ppid->id_len = माप(bp->dsn);
+	स_नकल(ppid->id, bp->dsn, ppid->id_len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct devlink_port *bnxt_get_devlink_port(struct net_device *dev)
-{
-	struct bnxt *bp = netdev_priv(dev);
+अटल काष्ठा devlink_port *bnxt_get_devlink_port(काष्ठा net_device *dev)
+अणु
+	काष्ठा bnxt *bp = netdev_priv(dev);
 
-	return &bp->dl_port;
-}
+	वापस &bp->dl_port;
+पूर्ण
 
-static const struct net_device_ops bnxt_netdev_ops = {
-	.ndo_open		= bnxt_open,
-	.ndo_start_xmit		= bnxt_start_xmit,
-	.ndo_stop		= bnxt_close,
-	.ndo_get_stats64	= bnxt_get_stats64,
-	.ndo_set_rx_mode	= bnxt_set_rx_mode,
-	.ndo_do_ioctl		= bnxt_ioctl,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= bnxt_change_mac_addr,
-	.ndo_change_mtu		= bnxt_change_mtu,
-	.ndo_fix_features	= bnxt_fix_features,
-	.ndo_set_features	= bnxt_set_features,
-	.ndo_features_check	= bnxt_features_check,
-	.ndo_tx_timeout		= bnxt_tx_timeout,
-#ifdef CONFIG_BNXT_SRIOV
-	.ndo_get_vf_config	= bnxt_get_vf_config,
-	.ndo_set_vf_mac		= bnxt_set_vf_mac,
-	.ndo_set_vf_vlan	= bnxt_set_vf_vlan,
-	.ndo_set_vf_rate	= bnxt_set_vf_bw,
-	.ndo_set_vf_link_state	= bnxt_set_vf_link_state,
-	.ndo_set_vf_spoofchk	= bnxt_set_vf_spoofchk,
-	.ndo_set_vf_trust	= bnxt_set_vf_trust,
-#endif
-	.ndo_setup_tc           = bnxt_setup_tc,
-#ifdef CONFIG_RFS_ACCEL
-	.ndo_rx_flow_steer	= bnxt_rx_flow_steer,
-#endif
-	.ndo_bpf		= bnxt_xdp,
-	.ndo_xdp_xmit		= bnxt_xdp_xmit,
-	.ndo_bridge_getlink	= bnxt_bridge_getlink,
-	.ndo_bridge_setlink	= bnxt_bridge_setlink,
-	.ndo_get_devlink_port	= bnxt_get_devlink_port,
-};
+अटल स्थिर काष्ठा net_device_ops bnxt_netdev_ops = अणु
+	.nकरो_खोलो		= bnxt_खोलो,
+	.nकरो_start_xmit		= bnxt_start_xmit,
+	.nकरो_stop		= bnxt_बंद,
+	.nकरो_get_stats64	= bnxt_get_stats64,
+	.nकरो_set_rx_mode	= bnxt_set_rx_mode,
+	.nकरो_करो_ioctl		= bnxt_ioctl,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= bnxt_change_mac_addr,
+	.nकरो_change_mtu		= bnxt_change_mtu,
+	.nकरो_fix_features	= bnxt_fix_features,
+	.nकरो_set_features	= bnxt_set_features,
+	.nकरो_features_check	= bnxt_features_check,
+	.nकरो_tx_समयout		= bnxt_tx_समयout,
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	.nकरो_get_vf_config	= bnxt_get_vf_config,
+	.nकरो_set_vf_mac		= bnxt_set_vf_mac,
+	.nकरो_set_vf_vlan	= bnxt_set_vf_vlan,
+	.nकरो_set_vf_rate	= bnxt_set_vf_bw,
+	.nकरो_set_vf_link_state	= bnxt_set_vf_link_state,
+	.nकरो_set_vf_spoofchk	= bnxt_set_vf_spoofchk,
+	.nकरो_set_vf_trust	= bnxt_set_vf_trust,
+#पूर्ण_अगर
+	.nकरो_setup_tc           = bnxt_setup_tc,
+#अगर_घोषित CONFIG_RFS_ACCEL
+	.nकरो_rx_flow_steer	= bnxt_rx_flow_steer,
+#पूर्ण_अगर
+	.nकरो_bpf		= bnxt_xdp,
+	.nकरो_xdp_xmit		= bnxt_xdp_xmit,
+	.nकरो_bridge_getlink	= bnxt_bridge_getlink,
+	.nकरो_bridge_setlink	= bnxt_bridge_setlink,
+	.nकरो_get_devlink_port	= bnxt_get_devlink_port,
+पूर्ण;
 
-static void bnxt_remove_one(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
-	struct bnxt *bp = netdev_priv(dev);
+अटल व्योम bnxt_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
+	काष्ठा bnxt *bp = netdev_priv(dev);
 
-	if (BNXT_PF(bp))
+	अगर (BNXT_PF(bp))
 		bnxt_sriov_disable(bp);
 
-	if (BNXT_PF(bp))
+	अगर (BNXT_PF(bp))
 		devlink_port_type_clear(&bp->dl_port);
 	pci_disable_pcie_error_reporting(pdev);
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 	clear_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
 	/* Flush any pending tasks */
 	cancel_work_sync(&bp->sp_task);
@@ -12560,470 +12561,470 @@ static void bnxt_remove_one(struct pci_dev *pdev)
 	bp->sp_event = 0;
 
 	bnxt_dl_fw_reporters_destroy(bp, true);
-	bnxt_dl_unregister(bp);
-	bnxt_shutdown_tc(bp);
+	bnxt_dl_unरेजिस्टर(bp);
+	bnxt_shutकरोwn_tc(bp);
 
-	bnxt_clear_int_mode(bp);
+	bnxt_clear_पूर्णांक_mode(bp);
 	bnxt_hwrm_func_drv_unrgtr(bp);
-	bnxt_free_hwrm_resources(bp);
-	bnxt_free_hwrm_short_cmd_req(bp);
-	bnxt_ethtool_free(bp);
-	bnxt_dcb_free(bp);
-	kfree(bp->edev);
-	bp->edev = NULL;
-	kfree(bp->fw_health);
-	bp->fw_health = NULL;
+	bnxt_मुक्त_hwrm_resources(bp);
+	bnxt_मुक्त_hwrm_लघु_cmd_req(bp);
+	bnxt_ethtool_मुक्त(bp);
+	bnxt_dcb_मुक्त(bp);
+	kमुक्त(bp->edev);
+	bp->edev = शून्य;
+	kमुक्त(bp->fw_health);
+	bp->fw_health = शून्य;
 	bnxt_cleanup_pci(bp);
-	bnxt_free_ctx_mem(bp);
-	kfree(bp->ctx);
-	bp->ctx = NULL;
-	kfree(bp->rss_indir_tbl);
-	bp->rss_indir_tbl = NULL;
-	bnxt_free_port_stats(bp);
-	free_netdev(dev);
-}
+	bnxt_मुक्त_ctx_mem(bp);
+	kमुक्त(bp->ctx);
+	bp->ctx = शून्य;
+	kमुक्त(bp->rss_indir_tbl);
+	bp->rss_indir_tbl = शून्य;
+	bnxt_मुक्त_port_stats(bp);
+	मुक्त_netdev(dev);
+पूर्ण
 
-static int bnxt_probe_phy(struct bnxt *bp, bool fw_dflt)
-{
-	int rc = 0;
-	struct bnxt_link_info *link_info = &bp->link_info;
+अटल पूर्णांक bnxt_probe_phy(काष्ठा bnxt *bp, bool fw_dflt)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा bnxt_link_info *link_info = &bp->link_info;
 
 	bp->phy_flags = 0;
 	rc = bnxt_hwrm_phy_qcaps(bp);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "Probe phy can't get phy capabilities (rc: %x)\n",
 			   rc);
-		return rc;
-	}
-	if (bp->phy_flags & BNXT_PHY_FL_NO_FCS)
+		वापस rc;
+	पूर्ण
+	अगर (bp->phy_flags & BNXT_PHY_FL_NO_FCS)
 		bp->dev->priv_flags |= IFF_SUPP_NOFCS;
-	else
+	अन्यथा
 		bp->dev->priv_flags &= ~IFF_SUPP_NOFCS;
-	if (!fw_dflt)
-		return 0;
+	अगर (!fw_dflt)
+		वापस 0;
 
 	rc = bnxt_update_link(bp, false);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "Probe phy can't update link (rc: %x)\n",
 			   rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Older firmware does not have supported_auto_speeds, so assume
-	 * that all supported speeds can be autonegotiated.
+	/* Older firmware करोes not have supported_स्वतः_speeds, so assume
+	 * that all supported speeds can be स्वतःnegotiated.
 	 */
-	if (link_info->auto_link_speeds && !link_info->support_auto_speeds)
-		link_info->support_auto_speeds = link_info->support_speeds;
+	अगर (link_info->स्वतः_link_speeds && !link_info->support_स्वतः_speeds)
+		link_info->support_स्वतः_speeds = link_info->support_speeds;
 
 	bnxt_init_ethtool_link_settings(bp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnxt_get_max_irq(struct pci_dev *pdev)
-{
+अटल पूर्णांक bnxt_get_max_irq(काष्ठा pci_dev *pdev)
+अणु
 	u16 ctrl;
 
-	if (!pdev->msix_cap)
-		return 1;
+	अगर (!pdev->msix_cap)
+		वापस 1;
 
-	pci_read_config_word(pdev, pdev->msix_cap + PCI_MSIX_FLAGS, &ctrl);
-	return (ctrl & PCI_MSIX_FLAGS_QSIZE) + 1;
-}
+	pci_पढ़ो_config_word(pdev, pdev->msix_cap + PCI_MSIX_FLAGS, &ctrl);
+	वापस (ctrl & PCI_MSIX_FLAGS_QSIZE) + 1;
+पूर्ण
 
-static void _bnxt_get_max_rings(struct bnxt *bp, int *max_rx, int *max_tx,
-				int *max_cp)
-{
-	struct bnxt_hw_resc *hw_resc = &bp->hw_resc;
-	int max_ring_grps = 0, max_irq;
+अटल व्योम _bnxt_get_max_rings(काष्ठा bnxt *bp, पूर्णांक *max_rx, पूर्णांक *max_tx,
+				पूर्णांक *max_cp)
+अणु
+	काष्ठा bnxt_hw_resc *hw_resc = &bp->hw_resc;
+	पूर्णांक max_ring_grps = 0, max_irq;
 
 	*max_tx = hw_resc->max_tx_rings;
 	*max_rx = hw_resc->max_rx_rings;
-	*max_cp = bnxt_get_max_func_cp_rings_for_en(bp);
-	max_irq = min_t(int, bnxt_get_max_func_irqs(bp) -
+	*max_cp = bnxt_get_max_func_cp_rings_क्रम_en(bp);
+	max_irq = min_t(पूर्णांक, bnxt_get_max_func_irqs(bp) -
 			bnxt_get_ulp_msix_num(bp),
 			hw_resc->max_stat_ctxs - bnxt_get_ulp_stat_ctxs(bp));
-	if (!(bp->flags & BNXT_FLAG_CHIP_P5))
-		*max_cp = min_t(int, *max_cp, max_irq);
+	अगर (!(bp->flags & BNXT_FLAG_CHIP_P5))
+		*max_cp = min_t(पूर्णांक, *max_cp, max_irq);
 	max_ring_grps = hw_resc->max_hw_ring_grps;
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp) && BNXT_PF(bp)) {
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp) && BNXT_PF(bp)) अणु
 		*max_cp -= 1;
 		*max_rx -= 2;
-	}
-	if (bp->flags & BNXT_FLAG_AGG_RINGS)
+	पूर्ण
+	अगर (bp->flags & BNXT_FLAG_AGG_RINGS)
 		*max_rx >>= 1;
-	if (bp->flags & BNXT_FLAG_CHIP_P5) {
+	अगर (bp->flags & BNXT_FLAG_CHIP_P5) अणु
 		bnxt_trim_rings(bp, max_rx, max_tx, *max_cp, false);
 		/* On P5 chips, max_cp output param should be available NQs */
 		*max_cp = max_irq;
-	}
-	*max_rx = min_t(int, *max_rx, max_ring_grps);
-}
+	पूर्ण
+	*max_rx = min_t(पूर्णांक, *max_rx, max_ring_grps);
+पूर्ण
 
-int bnxt_get_max_rings(struct bnxt *bp, int *max_rx, int *max_tx, bool shared)
-{
-	int rx, tx, cp;
+पूर्णांक bnxt_get_max_rings(काष्ठा bnxt *bp, पूर्णांक *max_rx, पूर्णांक *max_tx, bool shared)
+अणु
+	पूर्णांक rx, tx, cp;
 
 	_bnxt_get_max_rings(bp, &rx, &tx, &cp);
 	*max_rx = rx;
 	*max_tx = tx;
-	if (!rx || !tx || !cp)
-		return -ENOMEM;
+	अगर (!rx || !tx || !cp)
+		वापस -ENOMEM;
 
-	return bnxt_trim_rings(bp, max_rx, max_tx, cp, shared);
-}
+	वापस bnxt_trim_rings(bp, max_rx, max_tx, cp, shared);
+पूर्ण
 
-static int bnxt_get_dflt_rings(struct bnxt *bp, int *max_rx, int *max_tx,
+अटल पूर्णांक bnxt_get_dflt_rings(काष्ठा bnxt *bp, पूर्णांक *max_rx, पूर्णांक *max_tx,
 			       bool shared)
-{
-	int rc;
+अणु
+	पूर्णांक rc;
 
 	rc = bnxt_get_max_rings(bp, max_rx, max_tx, shared);
-	if (rc && (bp->flags & BNXT_FLAG_AGG_RINGS)) {
+	अगर (rc && (bp->flags & BNXT_FLAG_AGG_RINGS)) अणु
 		/* Not enough rings, try disabling agg rings. */
 		bp->flags &= ~BNXT_FLAG_AGG_RINGS;
 		rc = bnxt_get_max_rings(bp, max_rx, max_tx, shared);
-		if (rc) {
-			/* set BNXT_FLAG_AGG_RINGS back for consistency */
+		अगर (rc) अणु
+			/* set BNXT_FLAG_AGG_RINGS back क्रम consistency */
 			bp->flags |= BNXT_FLAG_AGG_RINGS;
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 		bp->flags |= BNXT_FLAG_NO_AGG_RINGS;
 		bp->dev->hw_features &= ~(NETIF_F_LRO | NETIF_F_GRO_HW);
 		bp->dev->features &= ~(NETIF_F_LRO | NETIF_F_GRO_HW);
 		bnxt_set_ring_params(bp);
-	}
+	पूर्ण
 
-	if (bp->flags & BNXT_FLAG_ROCE_CAP) {
-		int max_cp, max_stat, max_irq;
+	अगर (bp->flags & BNXT_FLAG_ROCE_CAP) अणु
+		पूर्णांक max_cp, max_stat, max_irq;
 
-		/* Reserve minimum resources for RoCE */
+		/* Reserve minimum resources क्रम RoCE */
 		max_cp = bnxt_get_max_func_cp_rings(bp);
 		max_stat = bnxt_get_max_func_stat_ctxs(bp);
 		max_irq = bnxt_get_max_func_irqs(bp);
-		if (max_cp <= BNXT_MIN_ROCE_CP_RINGS ||
+		अगर (max_cp <= BNXT_MIN_ROCE_CP_RINGS ||
 		    max_irq <= BNXT_MIN_ROCE_CP_RINGS ||
 		    max_stat <= BNXT_MIN_ROCE_STAT_CTXS)
-			return 0;
+			वापस 0;
 
 		max_cp -= BNXT_MIN_ROCE_CP_RINGS;
 		max_irq -= BNXT_MIN_ROCE_CP_RINGS;
 		max_stat -= BNXT_MIN_ROCE_STAT_CTXS;
-		max_cp = min_t(int, max_cp, max_irq);
-		max_cp = min_t(int, max_cp, max_stat);
+		max_cp = min_t(पूर्णांक, max_cp, max_irq);
+		max_cp = min_t(पूर्णांक, max_cp, max_stat);
 		rc = bnxt_trim_rings(bp, max_rx, max_tx, max_cp, shared);
-		if (rc)
+		अगर (rc)
 			rc = 0;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-/* In initial default shared ring setting, each shared ring must have a
+/* In initial शेष shared ring setting, each shared ring must have a
  * RX/TX ring pair.
  */
-static void bnxt_trim_dflt_sh_rings(struct bnxt *bp)
-{
-	bp->cp_nr_rings = min_t(int, bp->tx_nr_rings_per_tc, bp->rx_nr_rings);
+अटल व्योम bnxt_trim_dflt_sh_rings(काष्ठा bnxt *bp)
+अणु
+	bp->cp_nr_rings = min_t(पूर्णांक, bp->tx_nr_rings_per_tc, bp->rx_nr_rings);
 	bp->rx_nr_rings = bp->cp_nr_rings;
 	bp->tx_nr_rings_per_tc = bp->cp_nr_rings;
 	bp->tx_nr_rings = bp->tx_nr_rings_per_tc;
-}
+पूर्ण
 
-static int bnxt_set_dflt_rings(struct bnxt *bp, bool sh)
-{
-	int dflt_rings, max_rx_rings, max_tx_rings, rc;
+अटल पूर्णांक bnxt_set_dflt_rings(काष्ठा bnxt *bp, bool sh)
+अणु
+	पूर्णांक dflt_rings, max_rx_rings, max_tx_rings, rc;
 
-	if (!bnxt_can_reserve_rings(bp))
-		return 0;
+	अगर (!bnxt_can_reserve_rings(bp))
+		वापस 0;
 
-	if (sh)
+	अगर (sh)
 		bp->flags |= BNXT_FLAG_SHARED_RINGS;
-	dflt_rings = is_kdump_kernel() ? 1 : netif_get_num_default_rss_queues();
-	/* Reduce default rings on multi-port cards so that total default
-	 * rings do not exceed CPU count.
+	dflt_rings = is_kdump_kernel() ? 1 : netअगर_get_num_शेष_rss_queues();
+	/* Reduce शेष rings on multi-port cards so that total शेष
+	 * rings करो not exceed CPU count.
 	 */
-	if (bp->port_count > 1) {
-		int max_rings =
-			max_t(int, num_online_cpus() / bp->port_count, 1);
+	अगर (bp->port_count > 1) अणु
+		पूर्णांक max_rings =
+			max_t(पूर्णांक, num_online_cpus() / bp->port_count, 1);
 
-		dflt_rings = min_t(int, dflt_rings, max_rings);
-	}
+		dflt_rings = min_t(पूर्णांक, dflt_rings, max_rings);
+	पूर्ण
 	rc = bnxt_get_dflt_rings(bp, &max_rx_rings, &max_tx_rings, sh);
-	if (rc)
-		return rc;
-	bp->rx_nr_rings = min_t(int, dflt_rings, max_rx_rings);
-	bp->tx_nr_rings_per_tc = min_t(int, dflt_rings, max_tx_rings);
-	if (sh)
+	अगर (rc)
+		वापस rc;
+	bp->rx_nr_rings = min_t(पूर्णांक, dflt_rings, max_rx_rings);
+	bp->tx_nr_rings_per_tc = min_t(पूर्णांक, dflt_rings, max_tx_rings);
+	अगर (sh)
 		bnxt_trim_dflt_sh_rings(bp);
-	else
+	अन्यथा
 		bp->cp_nr_rings = bp->tx_nr_rings_per_tc + bp->rx_nr_rings;
 	bp->tx_nr_rings = bp->tx_nr_rings_per_tc;
 
 	rc = __bnxt_reserve_rings(bp);
-	if (rc)
+	अगर (rc)
 		netdev_warn(bp->dev, "Unable to reserve tx rings\n");
 	bp->tx_nr_rings_per_tc = bp->tx_nr_rings;
-	if (sh)
+	अगर (sh)
 		bnxt_trim_dflt_sh_rings(bp);
 
 	/* Rings may have been trimmed, re-reserve the trimmed rings. */
-	if (bnxt_need_reserve_rings(bp)) {
+	अगर (bnxt_need_reserve_rings(bp)) अणु
 		rc = __bnxt_reserve_rings(bp);
-		if (rc)
+		अगर (rc)
 			netdev_warn(bp->dev, "2nd rings reservation failed.\n");
 		bp->tx_nr_rings_per_tc = bp->tx_nr_rings;
-	}
-	if (BNXT_CHIP_TYPE_NITRO_A0(bp)) {
+	पूर्ण
+	अगर (BNXT_CHIP_TYPE_NITRO_A0(bp)) अणु
 		bp->rx_nr_rings++;
 		bp->cp_nr_rings++;
-	}
-	if (rc) {
+	पूर्ण
+	अगर (rc) अणु
 		bp->tx_nr_rings = 0;
 		bp->rx_nr_rings = 0;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int bnxt_init_dflt_ring_mode(struct bnxt *bp)
-{
-	int rc;
+अटल पूर्णांक bnxt_init_dflt_ring_mode(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 
-	if (bp->tx_nr_rings)
-		return 0;
+	अगर (bp->tx_nr_rings)
+		वापस 0;
 
 	bnxt_ulp_irq_stop(bp);
-	bnxt_clear_int_mode(bp);
+	bnxt_clear_पूर्णांक_mode(bp);
 	rc = bnxt_set_dflt_rings(bp, true);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "Not enough rings available.\n");
-		goto init_dflt_ring_err;
-	}
-	rc = bnxt_init_int_mode(bp);
-	if (rc)
-		goto init_dflt_ring_err;
+		जाओ init_dflt_ring_err;
+	पूर्ण
+	rc = bnxt_init_पूर्णांक_mode(bp);
+	अगर (rc)
+		जाओ init_dflt_ring_err;
 
 	bp->tx_nr_rings_per_tc = bp->tx_nr_rings;
-	if (bnxt_rfs_supported(bp) && bnxt_rfs_capable(bp)) {
+	अगर (bnxt_rfs_supported(bp) && bnxt_rfs_capable(bp)) अणु
 		bp->flags |= BNXT_FLAG_RFS;
 		bp->dev->features |= NETIF_F_NTUPLE;
-	}
+	पूर्ण
 init_dflt_ring_err:
 	bnxt_ulp_irq_restart(bp, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int bnxt_restore_pf_fw_resources(struct bnxt *bp)
-{
-	int rc;
+पूर्णांक bnxt_restore_pf_fw_resources(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc;
 
 	ASSERT_RTNL();
 	bnxt_hwrm_func_qcaps(bp);
 
-	if (netif_running(bp->dev))
-		__bnxt_close_nic(bp, true, false);
+	अगर (netअगर_running(bp->dev))
+		__bnxt_बंद_nic(bp, true, false);
 
 	bnxt_ulp_irq_stop(bp);
-	bnxt_clear_int_mode(bp);
-	rc = bnxt_init_int_mode(bp);
+	bnxt_clear_पूर्णांक_mode(bp);
+	rc = bnxt_init_पूर्णांक_mode(bp);
 	bnxt_ulp_irq_restart(bp, rc);
 
-	if (netif_running(bp->dev)) {
-		if (rc)
-			dev_close(bp->dev);
-		else
-			rc = bnxt_open_nic(bp, true, false);
-	}
+	अगर (netअगर_running(bp->dev)) अणु
+		अगर (rc)
+			dev_बंद(bp->dev);
+		अन्यथा
+			rc = bnxt_खोलो_nic(bp, true, false);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_init_mac_addr(struct bnxt *bp)
-{
-	int rc = 0;
+अटल पूर्णांक bnxt_init_mac_addr(काष्ठा bnxt *bp)
+अणु
+	पूर्णांक rc = 0;
 
-	if (BNXT_PF(bp)) {
-		memcpy(bp->dev->dev_addr, bp->pf.mac_addr, ETH_ALEN);
-	} else {
-#ifdef CONFIG_BNXT_SRIOV
-		struct bnxt_vf_info *vf = &bp->vf;
+	अगर (BNXT_PF(bp)) अणु
+		स_नकल(bp->dev->dev_addr, bp->pf.mac_addr, ETH_ALEN);
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_BNXT_SRIOV
+		काष्ठा bnxt_vf_info *vf = &bp->vf;
 		bool strict_approval = true;
 
-		if (is_valid_ether_addr(vf->mac_addr)) {
-			/* overwrite netdev dev_addr with admin VF MAC */
-			memcpy(bp->dev->dev_addr, vf->mac_addr, ETH_ALEN);
+		अगर (is_valid_ether_addr(vf->mac_addr)) अणु
+			/* overग_लिखो netdev dev_addr with admin VF MAC */
+			स_नकल(bp->dev->dev_addr, vf->mac_addr, ETH_ALEN);
 			/* Older PF driver or firmware may not approve this
 			 * correctly.
 			 */
 			strict_approval = false;
-		} else {
-			eth_hw_addr_random(bp->dev);
-		}
+		पूर्ण अन्यथा अणु
+			eth_hw_addr_अक्रमom(bp->dev);
+		पूर्ण
 		rc = bnxt_approve_mac(bp, bp->dev->dev_addr, strict_approval);
-#endif
-	}
-	return rc;
-}
+#पूर्ण_अगर
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-#define BNXT_VPD_LEN	512
-static void bnxt_vpd_read_info(struct bnxt *bp)
-{
-	struct pci_dev *pdev = bp->pdev;
-	int i, len, pos, ro_size, size;
-	ssize_t vpd_size;
+#घोषणा BNXT_VPD_LEN	512
+अटल व्योम bnxt_vpd_पढ़ो_info(काष्ठा bnxt *bp)
+अणु
+	काष्ठा pci_dev *pdev = bp->pdev;
+	पूर्णांक i, len, pos, ro_size, size;
+	sमाप_प्रकार vpd_size;
 	u8 *vpd_data;
 
-	vpd_data = kmalloc(BNXT_VPD_LEN, GFP_KERNEL);
-	if (!vpd_data)
-		return;
+	vpd_data = kदो_स्मृति(BNXT_VPD_LEN, GFP_KERNEL);
+	अगर (!vpd_data)
+		वापस;
 
-	vpd_size = pci_read_vpd(pdev, 0, BNXT_VPD_LEN, vpd_data);
-	if (vpd_size <= 0) {
+	vpd_size = pci_पढ़ो_vpd(pdev, 0, BNXT_VPD_LEN, vpd_data);
+	अगर (vpd_size <= 0) अणु
 		netdev_err(bp->dev, "Unable to read VPD\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	i = pci_vpd_find_tag(vpd_data, vpd_size, PCI_VPD_LRDT_RO_DATA);
-	if (i < 0) {
+	अगर (i < 0) अणु
 		netdev_err(bp->dev, "VPD READ-Only not found\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	ro_size = pci_vpd_lrdt_size(&vpd_data[i]);
 	i += PCI_VPD_LRDT_TAG_SIZE;
-	if (i + ro_size > vpd_size)
-		goto exit;
+	अगर (i + ro_size > vpd_size)
+		जाओ निकास;
 
 	pos = pci_vpd_find_info_keyword(vpd_data, i, ro_size,
 					PCI_VPD_RO_KEYWORD_PARTNO);
-	if (pos < 0)
-		goto read_sn;
+	अगर (pos < 0)
+		जाओ पढ़ो_sn;
 
 	len = pci_vpd_info_field_size(&vpd_data[pos]);
 	pos += PCI_VPD_INFO_FLD_HDR_SIZE;
-	if (len + pos > vpd_size)
-		goto read_sn;
+	अगर (len + pos > vpd_size)
+		जाओ पढ़ो_sn;
 
 	size = min(len, BNXT_VPD_FLD_LEN - 1);
-	memcpy(bp->board_partno, &vpd_data[pos], size);
+	स_नकल(bp->board_partno, &vpd_data[pos], size);
 
-read_sn:
+पढ़ो_sn:
 	pos = pci_vpd_find_info_keyword(vpd_data, i, ro_size,
 					PCI_VPD_RO_KEYWORD_SERIALNO);
-	if (pos < 0)
-		goto exit;
+	अगर (pos < 0)
+		जाओ निकास;
 
 	len = pci_vpd_info_field_size(&vpd_data[pos]);
 	pos += PCI_VPD_INFO_FLD_HDR_SIZE;
-	if (len + pos > vpd_size)
-		goto exit;
+	अगर (len + pos > vpd_size)
+		जाओ निकास;
 
 	size = min(len, BNXT_VPD_FLD_LEN - 1);
-	memcpy(bp->board_serialno, &vpd_data[pos], size);
-exit:
-	kfree(vpd_data);
-}
+	स_नकल(bp->board_serialno, &vpd_data[pos], size);
+निकास:
+	kमुक्त(vpd_data);
+पूर्ण
 
-static int bnxt_pcie_dsn_get(struct bnxt *bp, u8 dsn[])
-{
-	struct pci_dev *pdev = bp->pdev;
+अटल पूर्णांक bnxt_pcie_dsn_get(काष्ठा bnxt *bp, u8 dsn[])
+अणु
+	काष्ठा pci_dev *pdev = bp->pdev;
 	u64 qword;
 
 	qword = pci_get_dsn(pdev);
-	if (!qword) {
+	अगर (!qword) अणु
 		netdev_info(bp->dev, "Unable to read adapter's DSN\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	put_unaligned_le64(qword, dsn);
 
 	bp->flags |= BNXT_FLAG_DSN_VALID;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bnxt_map_db_bar(struct bnxt *bp)
-{
-	if (!bp->db_size)
-		return -ENODEV;
+अटल पूर्णांक bnxt_map_db_bar(काष्ठा bnxt *bp)
+अणु
+	अगर (!bp->db_size)
+		वापस -ENODEV;
 	bp->bar1 = pci_iomap(bp->pdev, 2, bp->db_size);
-	if (!bp->bar1)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!bp->bar1)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static int bnxt_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	struct net_device *dev;
-	struct bnxt *bp;
-	int rc, max_irqs;
+अटल पूर्णांक bnxt_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा bnxt *bp;
+	पूर्णांक rc, max_irqs;
 
-	if (pci_is_bridge(pdev))
-		return -ENODEV;
+	अगर (pci_is_bridge(pdev))
+		वापस -ENODEV;
 
 	/* Clear any pending DMA transactions from crash kernel
-	 * while loading driver in capture kernel.
+	 * जबतक loading driver in capture kernel.
 	 */
-	if (is_kdump_kernel()) {
+	अगर (is_kdump_kernel()) अणु
 		pci_clear_master(pdev);
 		pcie_flr(pdev);
-	}
+	पूर्ण
 
 	max_irqs = bnxt_get_max_irq(pdev);
-	dev = alloc_etherdev_mq(sizeof(*bp), max_irqs);
-	if (!dev)
-		return -ENOMEM;
+	dev = alloc_etherdev_mq(माप(*bp), max_irqs);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	bp = netdev_priv(dev);
 	bp->msg_enable = BNXT_DEF_MSG_ENABLE;
 	bnxt_set_max_func_irqs(bp, max_irqs);
 
-	if (bnxt_vf_pciid(ent->driver_data))
+	अगर (bnxt_vf_pciid(ent->driver_data))
 		bp->flags |= BNXT_FLAG_VF;
 
-	if (pdev->msix_cap)
+	अगर (pdev->msix_cap)
 		bp->flags |= BNXT_FLAG_MSIX_CAP;
 
 	rc = bnxt_init_board(pdev, dev);
-	if (rc < 0)
-		goto init_err_free;
+	अगर (rc < 0)
+		जाओ init_err_मुक्त;
 
 	dev->netdev_ops = &bnxt_netdev_ops;
-	dev->watchdog_timeo = BNXT_TX_TIMEOUT;
+	dev->watchकरोg_समयo = BNXT_TX_TIMEOUT;
 	dev->ethtool_ops = &bnxt_ethtool_ops;
 	pci_set_drvdata(pdev, dev);
 
 	rc = bnxt_alloc_hwrm_resources(bp);
-	if (rc)
-		goto init_err_pci_clean;
+	अगर (rc)
+		जाओ init_err_pci_clean;
 
 	mutex_init(&bp->hwrm_cmd_lock);
 	mutex_init(&bp->link_lock);
 
 	rc = bnxt_fw_init_one_p1(bp);
-	if (rc)
-		goto init_err_pci_clean;
+	अगर (rc)
+		जाओ init_err_pci_clean;
 
-	if (BNXT_PF(bp))
-		bnxt_vpd_read_info(bp);
+	अगर (BNXT_PF(bp))
+		bnxt_vpd_पढ़ो_info(bp);
 
-	if (BNXT_CHIP_P5(bp)) {
+	अगर (BNXT_CHIP_P5(bp)) अणु
 		bp->flags |= BNXT_FLAG_CHIP_P5;
-		if (BNXT_CHIP_SR2(bp))
+		अगर (BNXT_CHIP_SR2(bp))
 			bp->flags |= BNXT_FLAG_CHIP_SR2;
-	}
+	पूर्ण
 
 	rc = bnxt_alloc_rss_indir_tbl(bp);
-	if (rc)
-		goto init_err_pci_clean;
+	अगर (rc)
+		जाओ init_err_pci_clean;
 
 	rc = bnxt_fw_init_one_p2(bp);
-	if (rc)
-		goto init_err_pci_clean;
+	अगर (rc)
+		जाओ init_err_pci_clean;
 
 	rc = bnxt_map_db_bar(bp);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "Cannot map doorbell BAR rc = %d, aborting\n",
 			rc);
-		goto init_err_pci_clean;
-	}
+		जाओ init_err_pci_clean;
+	पूर्ण
 
 	dev->hw_features = NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM | NETIF_F_SG |
 			   NETIF_F_TSO | NETIF_F_TSO6 |
@@ -13033,7 +13034,7 @@ static int bnxt_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 			   NETIF_F_GSO_PARTIAL | NETIF_F_RXHASH |
 			   NETIF_F_RXCSUM | NETIF_F_GRO;
 
-	if (BNXT_SUPPORTS_TPA(bp))
+	अगर (BNXT_SUPPORTS_TPA(bp))
 		dev->hw_features |= NETIF_F_LRO;
 
 	dev->hw_enc_features =
@@ -13047,397 +13048,397 @@ static int bnxt_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	dev->gso_partial_features = NETIF_F_GSO_UDP_TUNNEL_CSUM |
 				    NETIF_F_GSO_GRE_CSUM;
 	dev->vlan_features = dev->hw_features | NETIF_F_HIGHDMA;
-	if (bp->fw_cap & BNXT_FW_CAP_VLAN_RX_STRIP)
+	अगर (bp->fw_cap & BNXT_FW_CAP_VLAN_RX_STRIP)
 		dev->hw_features |= BNXT_HW_FEATURE_VLAN_ALL_RX;
-	if (bp->fw_cap & BNXT_FW_CAP_VLAN_TX_INSERT)
+	अगर (bp->fw_cap & BNXT_FW_CAP_VLAN_TX_INSERT)
 		dev->hw_features |= BNXT_HW_FEATURE_VLAN_ALL_TX;
-	if (BNXT_SUPPORTS_TPA(bp))
+	अगर (BNXT_SUPPORTS_TPA(bp))
 		dev->hw_features |= NETIF_F_GRO_HW;
 	dev->features |= dev->hw_features | NETIF_F_HIGHDMA;
-	if (dev->features & NETIF_F_GRO_HW)
+	अगर (dev->features & NETIF_F_GRO_HW)
 		dev->features &= ~NETIF_F_LRO;
 	dev->priv_flags |= IFF_UNICAST_FLT;
 
-#ifdef CONFIG_BNXT_SRIOV
-	init_waitqueue_head(&bp->sriov_cfg_wait);
+#अगर_घोषित CONFIG_BNXT_SRIOV
+	init_रुकोqueue_head(&bp->sriov_cfg_रुको);
 	mutex_init(&bp->sriov_lock);
-#endif
-	if (BNXT_SUPPORTS_TPA(bp)) {
+#पूर्ण_अगर
+	अगर (BNXT_SUPPORTS_TPA(bp)) अणु
 		bp->gro_func = bnxt_gro_func_5730x;
-		if (BNXT_CHIP_P4(bp))
+		अगर (BNXT_CHIP_P4(bp))
 			bp->gro_func = bnxt_gro_func_5731x;
-		else if (BNXT_CHIP_P5(bp))
+		अन्यथा अगर (BNXT_CHIP_P5(bp))
 			bp->gro_func = bnxt_gro_func_5750x;
-	}
-	if (!BNXT_CHIP_P4_PLUS(bp))
+	पूर्ण
+	अगर (!BNXT_CHIP_P4_PLUS(bp))
 		bp->flags |= BNXT_FLAG_DOUBLE_DB;
 
 	rc = bnxt_init_mac_addr(bp);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "Unable to initialize mac address.\n");
 		rc = -EADDRNOTAVAIL;
-		goto init_err_pci_clean;
-	}
+		जाओ init_err_pci_clean;
+	पूर्ण
 
-	if (BNXT_PF(bp)) {
-		/* Read the adapter's DSN to use as the eswitch switch_id */
+	अगर (BNXT_PF(bp)) अणु
+		/* Read the adapter's DSN to use as the eचयन चयन_id */
 		rc = bnxt_pcie_dsn_get(bp, bp->dsn);
-	}
+	पूर्ण
 
 	/* MTU range: 60 - FW defined max */
 	dev->min_mtu = ETH_ZLEN;
 	dev->max_mtu = bp->max_mtu;
 
 	rc = bnxt_probe_phy(bp, true);
-	if (rc)
-		goto init_err_pci_clean;
+	अगर (rc)
+		जाओ init_err_pci_clean;
 
 	bnxt_set_rx_skb_mode(bp, false);
 	bnxt_set_tpa_flags(bp);
 	bnxt_set_ring_params(bp);
 	rc = bnxt_set_dflt_rings(bp, true);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(bp->dev, "Not enough rings available.\n");
 		rc = -ENOMEM;
-		goto init_err_pci_clean;
-	}
+		जाओ init_err_pci_clean;
+	पूर्ण
 
 	bnxt_fw_init_one_p3(bp);
 
-	if (dev->hw_features & BNXT_HW_FEATURE_VLAN_ALL_RX)
+	अगर (dev->hw_features & BNXT_HW_FEATURE_VLAN_ALL_RX)
 		bp->flags |= BNXT_FLAG_STRIP_VLAN;
 
-	rc = bnxt_init_int_mode(bp);
-	if (rc)
-		goto init_err_pci_clean;
+	rc = bnxt_init_पूर्णांक_mode(bp);
+	अगर (rc)
+		जाओ init_err_pci_clean;
 
 	/* No TC has been set yet and rings may have been trimmed due to
 	 * limited MSIX, so we re-initialize the TX rings per TC.
 	 */
 	bp->tx_nr_rings_per_tc = bp->tx_nr_rings;
 
-	if (BNXT_PF(bp)) {
-		if (!bnxt_pf_wq) {
+	अगर (BNXT_PF(bp)) अणु
+		अगर (!bnxt_pf_wq) अणु
 			bnxt_pf_wq =
-				create_singlethread_workqueue("bnxt_pf_wq");
-			if (!bnxt_pf_wq) {
+				create_singlethपढ़ो_workqueue("bnxt_pf_wq");
+			अगर (!bnxt_pf_wq) अणु
 				dev_err(&pdev->dev, "Unable to create workqueue.\n");
 				rc = -ENOMEM;
-				goto init_err_pci_clean;
-			}
-		}
+				जाओ init_err_pci_clean;
+			पूर्ण
+		पूर्ण
 		rc = bnxt_init_tc(bp);
-		if (rc)
+		अगर (rc)
 			netdev_err(dev, "Failed to initialize TC flower offload, err = %d.\n",
 				   rc);
-	}
+	पूर्ण
 
 	bnxt_inv_fw_health_reg(bp);
-	bnxt_dl_register(bp);
+	bnxt_dl_रेजिस्टर(bp);
 
-	rc = register_netdev(dev);
-	if (rc)
-		goto init_err_cleanup;
+	rc = रेजिस्टर_netdev(dev);
+	अगर (rc)
+		जाओ init_err_cleanup;
 
-	if (BNXT_PF(bp))
+	अगर (BNXT_PF(bp))
 		devlink_port_type_eth_set(&bp->dl_port, bp->dev);
 	bnxt_dl_fw_reporters_create(bp);
 
 	netdev_info(dev, "%s found at mem %lx, node addr %pM\n",
 		    board_info[ent->driver_data].name,
-		    (long)pci_resource_start(pdev, 0), dev->dev_addr);
-	pcie_print_link_status(pdev);
+		    (दीर्घ)pci_resource_start(pdev, 0), dev->dev_addr);
+	pcie_prपूर्णांक_link_status(pdev);
 
 	pci_save_state(pdev);
-	return 0;
+	वापस 0;
 
 init_err_cleanup:
-	bnxt_dl_unregister(bp);
-	bnxt_shutdown_tc(bp);
-	bnxt_clear_int_mode(bp);
+	bnxt_dl_unरेजिस्टर(bp);
+	bnxt_shutकरोwn_tc(bp);
+	bnxt_clear_पूर्णांक_mode(bp);
 
 init_err_pci_clean:
 	bnxt_hwrm_func_drv_unrgtr(bp);
-	bnxt_free_hwrm_short_cmd_req(bp);
-	bnxt_free_hwrm_resources(bp);
-	bnxt_ethtool_free(bp);
-	kfree(bp->fw_health);
-	bp->fw_health = NULL;
+	bnxt_मुक्त_hwrm_लघु_cmd_req(bp);
+	bnxt_मुक्त_hwrm_resources(bp);
+	bnxt_ethtool_मुक्त(bp);
+	kमुक्त(bp->fw_health);
+	bp->fw_health = शून्य;
 	bnxt_cleanup_pci(bp);
-	bnxt_free_ctx_mem(bp);
-	kfree(bp->ctx);
-	bp->ctx = NULL;
-	kfree(bp->rss_indir_tbl);
-	bp->rss_indir_tbl = NULL;
+	bnxt_मुक्त_ctx_mem(bp);
+	kमुक्त(bp->ctx);
+	bp->ctx = शून्य;
+	kमुक्त(bp->rss_indir_tbl);
+	bp->rss_indir_tbl = शून्य;
 
-init_err_free:
-	free_netdev(dev);
-	return rc;
-}
+init_err_मुक्त:
+	मुक्त_netdev(dev);
+	वापस rc;
+पूर्ण
 
-static void bnxt_shutdown(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
-	struct bnxt *bp;
+अटल व्योम bnxt_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
+	काष्ठा bnxt *bp;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
 	rtnl_lock();
 	bp = netdev_priv(dev);
-	if (!bp)
-		goto shutdown_exit;
+	अगर (!bp)
+		जाओ shutकरोwn_निकास;
 
-	if (netif_running(dev))
-		dev_close(dev);
+	अगर (netअगर_running(dev))
+		dev_बंद(dev);
 
-	bnxt_ulp_shutdown(bp);
-	bnxt_clear_int_mode(bp);
+	bnxt_ulp_shutकरोwn(bp);
+	bnxt_clear_पूर्णांक_mode(bp);
 	pci_disable_device(pdev);
 
-	if (system_state == SYSTEM_POWER_OFF) {
+	अगर (प्रणाली_state == SYSTEM_POWER_OFF) अणु
 		pci_wake_from_d3(pdev, bp->wol);
-		pci_set_power_state(pdev, PCI_D3hot);
-	}
+		pci_set_घातer_state(pdev, PCI_D3hot);
+	पूर्ण
 
-shutdown_exit:
+shutकरोwn_निकास:
 	rtnl_unlock();
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int bnxt_suspend(struct device *device)
-{
-	struct net_device *dev = dev_get_drvdata(device);
-	struct bnxt *bp = netdev_priv(dev);
-	int rc = 0;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक bnxt_suspend(काष्ठा device *device)
+अणु
+	काष्ठा net_device *dev = dev_get_drvdata(device);
+	काष्ठा bnxt *bp = netdev_priv(dev);
+	पूर्णांक rc = 0;
 
 	rtnl_lock();
 	bnxt_ulp_stop(bp);
-	if (netif_running(dev)) {
-		netif_device_detach(dev);
-		rc = bnxt_close(dev);
-	}
+	अगर (netअगर_running(dev)) अणु
+		netअगर_device_detach(dev);
+		rc = bnxt_बंद(dev);
+	पूर्ण
 	bnxt_hwrm_func_drv_unrgtr(bp);
 	pci_disable_device(bp->pdev);
-	bnxt_free_ctx_mem(bp);
-	kfree(bp->ctx);
-	bp->ctx = NULL;
+	bnxt_मुक्त_ctx_mem(bp);
+	kमुक्त(bp->ctx);
+	bp->ctx = शून्य;
 	rtnl_unlock();
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bnxt_resume(struct device *device)
-{
-	struct net_device *dev = dev_get_drvdata(device);
-	struct bnxt *bp = netdev_priv(dev);
-	int rc = 0;
+अटल पूर्णांक bnxt_resume(काष्ठा device *device)
+अणु
+	काष्ठा net_device *dev = dev_get_drvdata(device);
+	काष्ठा bnxt *bp = netdev_priv(dev);
+	पूर्णांक rc = 0;
 
 	rtnl_lock();
 	rc = pci_enable_device(bp->pdev);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_err(dev, "Cannot re-enable PCI device during resume, err = %d\n",
 			   rc);
-		goto resume_exit;
-	}
+		जाओ resume_निकास;
+	पूर्ण
 	pci_set_master(bp->pdev);
-	if (bnxt_hwrm_ver_get(bp)) {
+	अगर (bnxt_hwrm_ver_get(bp)) अणु
 		rc = -ENODEV;
-		goto resume_exit;
-	}
+		जाओ resume_निकास;
+	पूर्ण
 	rc = bnxt_hwrm_func_reset(bp);
-	if (rc) {
+	अगर (rc) अणु
 		rc = -EBUSY;
-		goto resume_exit;
-	}
+		जाओ resume_निकास;
+	पूर्ण
 
 	rc = bnxt_hwrm_func_qcaps(bp);
-	if (rc)
-		goto resume_exit;
+	अगर (rc)
+		जाओ resume_निकास;
 
-	if (bnxt_hwrm_func_drv_rgtr(bp, NULL, 0, false)) {
+	अगर (bnxt_hwrm_func_drv_rgtr(bp, शून्य, 0, false)) अणु
 		rc = -ENODEV;
-		goto resume_exit;
-	}
+		जाओ resume_निकास;
+	पूर्ण
 
 	bnxt_get_wol_settings(bp);
-	if (netif_running(dev)) {
-		rc = bnxt_open(dev);
-		if (!rc)
-			netif_device_attach(dev);
-	}
+	अगर (netअगर_running(dev)) अणु
+		rc = bnxt_खोलो(dev);
+		अगर (!rc)
+			netअगर_device_attach(dev);
+	पूर्ण
 
-resume_exit:
+resume_निकास:
 	bnxt_ulp_start(bp, rc);
-	if (!rc)
+	अगर (!rc)
 		bnxt_reenable_sriov(bp);
 	rtnl_unlock();
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(bnxt_pm_ops, bnxt_suspend, bnxt_resume);
-#define BNXT_PM_OPS (&bnxt_pm_ops)
+अटल SIMPLE_DEV_PM_OPS(bnxt_pm_ops, bnxt_suspend, bnxt_resume);
+#घोषणा BNXT_PM_OPS (&bnxt_pm_ops)
 
-#else
+#अन्यथा
 
-#define BNXT_PM_OPS NULL
+#घोषणा BNXT_PM_OPS शून्य
 
-#endif /* CONFIG_PM_SLEEP */
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
 /**
  * bnxt_io_error_detected - called when PCI error is detected
- * @pdev: Pointer to PCI device
+ * @pdev: Poपूर्णांकer to PCI device
  * @state: The current pci connection state
  *
  * This function is called after a PCI bus error affecting
  * this device has been detected.
  */
-static pci_ers_result_t bnxt_io_error_detected(struct pci_dev *pdev,
+अटल pci_ers_result_t bnxt_io_error_detected(काष्ठा pci_dev *pdev,
 					       pci_channel_state_t state)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct bnxt *bp = netdev_priv(netdev);
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा bnxt *bp = netdev_priv(netdev);
 
 	netdev_info(netdev, "PCI I/O error detected\n");
 
 	rtnl_lock();
-	netif_device_detach(netdev);
+	netअगर_device_detach(netdev);
 
 	bnxt_ulp_stop(bp);
 
-	if (state == pci_channel_io_perm_failure) {
+	अगर (state == pci_channel_io_perm_failure) अणु
 		rtnl_unlock();
-		return PCI_ERS_RESULT_DISCONNECT;
-	}
+		वापस PCI_ERS_RESULT_DISCONNECT;
+	पूर्ण
 
-	if (state == pci_channel_io_frozen)
+	अगर (state == pci_channel_io_frozen)
 		set_bit(BNXT_STATE_PCI_CHANNEL_IO_FROZEN, &bp->state);
 
-	if (netif_running(netdev))
-		bnxt_close(netdev);
+	अगर (netअगर_running(netdev))
+		bnxt_बंद(netdev);
 
 	pci_disable_device(pdev);
-	bnxt_free_ctx_mem(bp);
-	kfree(bp->ctx);
-	bp->ctx = NULL;
+	bnxt_मुक्त_ctx_mem(bp);
+	kमुक्त(bp->ctx);
+	bp->ctx = शून्य;
 	rtnl_unlock();
 
 	/* Request a slot slot reset. */
-	return PCI_ERS_RESULT_NEED_RESET;
-}
+	वापस PCI_ERS_RESULT_NEED_RESET;
+पूर्ण
 
 /**
  * bnxt_io_slot_reset - called after the pci bus has been reset.
- * @pdev: Pointer to PCI device
+ * @pdev: Poपूर्णांकer to PCI device
  *
- * Restart the card from scratch, as if from a cold-boot.
- * At this point, the card has exprienced a hard reset,
+ * Restart the card from scratch, as अगर from a cold-boot.
+ * At this poपूर्णांक, the card has exprienced a hard reset,
  * followed by fixups by BIOS, and has its config space
  * set up identically to what it was at cold boot.
  */
-static pci_ers_result_t bnxt_io_slot_reset(struct pci_dev *pdev)
-{
+अटल pci_ers_result_t bnxt_io_slot_reset(काष्ठा pci_dev *pdev)
+अणु
 	pci_ers_result_t result = PCI_ERS_RESULT_DISCONNECT;
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct bnxt *bp = netdev_priv(netdev);
-	int err = 0, off;
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा bnxt *bp = netdev_priv(netdev);
+	पूर्णांक err = 0, off;
 
 	netdev_info(bp->dev, "PCI Slot Reset\n");
 
 	rtnl_lock();
 
-	if (pci_enable_device(pdev)) {
+	अगर (pci_enable_device(pdev)) अणु
 		dev_err(&pdev->dev,
 			"Cannot re-enable PCI device after reset.\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		pci_set_master(pdev);
-		/* Upon fatal error, our device internal logic that latches to
+		/* Upon fatal error, our device पूर्णांकernal logic that latches to
 		 * BAR value is getting reset and will restore only upon
 		 * rewritting the BARs.
 		 *
-		 * As pci_restore_state() does not re-write the BARs if the
+		 * As pci_restore_state() करोes not re-ग_लिखो the BARs अगर the
 		 * value is same as saved value earlier, driver needs to
-		 * write the BARs to 0 to force restore, in case of fatal error.
+		 * ग_लिखो the BARs to 0 to क्रमce restore, in हाल of fatal error.
 		 */
-		if (test_and_clear_bit(BNXT_STATE_PCI_CHANNEL_IO_FROZEN,
-				       &bp->state)) {
-			for (off = PCI_BASE_ADDRESS_0;
+		अगर (test_and_clear_bit(BNXT_STATE_PCI_CHANNEL_IO_FROZEN,
+				       &bp->state)) अणु
+			क्रम (off = PCI_BASE_ADDRESS_0;
 			     off <= PCI_BASE_ADDRESS_5; off += 4)
-				pci_write_config_dword(bp->pdev, off, 0);
-		}
+				pci_ग_लिखो_config_dword(bp->pdev, off, 0);
+		पूर्ण
 		pci_restore_state(pdev);
 		pci_save_state(pdev);
 
 		err = bnxt_hwrm_func_reset(bp);
-		if (!err)
+		अगर (!err)
 			result = PCI_ERS_RESULT_RECOVERED;
-	}
+	पूर्ण
 
 	rtnl_unlock();
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * bnxt_io_resume - called when traffic can start flowing again.
- * @pdev: Pointer to PCI device
+ * @pdev: Poपूर्णांकer to PCI device
  *
  * This callback is called when the error recovery driver tells
  * us that its OK to resume normal operation.
  */
-static void bnxt_io_resume(struct pci_dev *pdev)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct bnxt *bp = netdev_priv(netdev);
-	int err;
+अटल व्योम bnxt_io_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा bnxt *bp = netdev_priv(netdev);
+	पूर्णांक err;
 
 	netdev_info(bp->dev, "PCI Slot Resume\n");
 	rtnl_lock();
 
 	err = bnxt_hwrm_func_qcaps(bp);
-	if (!err && netif_running(netdev))
-		err = bnxt_open(netdev);
+	अगर (!err && netअगर_running(netdev))
+		err = bnxt_खोलो(netdev);
 
 	bnxt_ulp_start(bp, err);
-	if (!err) {
+	अगर (!err) अणु
 		bnxt_reenable_sriov(bp);
-		netif_device_attach(netdev);
-	}
+		netअगर_device_attach(netdev);
+	पूर्ण
 
 	rtnl_unlock();
-}
+पूर्ण
 
-static const struct pci_error_handlers bnxt_err_handler = {
+अटल स्थिर काष्ठा pci_error_handlers bnxt_err_handler = अणु
 	.error_detected	= bnxt_io_error_detected,
 	.slot_reset	= bnxt_io_slot_reset,
 	.resume		= bnxt_io_resume
-};
+पूर्ण;
 
-static struct pci_driver bnxt_pci_driver = {
+अटल काष्ठा pci_driver bnxt_pci_driver = अणु
 	.name		= DRV_MODULE_NAME,
 	.id_table	= bnxt_pci_tbl,
 	.probe		= bnxt_init_one,
-	.remove		= bnxt_remove_one,
-	.shutdown	= bnxt_shutdown,
+	.हटाओ		= bnxt_हटाओ_one,
+	.shutकरोwn	= bnxt_shutकरोwn,
 	.driver.pm	= BNXT_PM_OPS,
 	.err_handler	= &bnxt_err_handler,
-#if defined(CONFIG_BNXT_SRIOV)
+#अगर defined(CONFIG_BNXT_SRIOV)
 	.sriov_configure = bnxt_sriov_configure,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int __init bnxt_init(void)
-{
+अटल पूर्णांक __init bnxt_init(व्योम)
+अणु
 	bnxt_debug_init();
-	return pci_register_driver(&bnxt_pci_driver);
-}
+	वापस pci_रेजिस्टर_driver(&bnxt_pci_driver);
+पूर्ण
 
-static void __exit bnxt_exit(void)
-{
-	pci_unregister_driver(&bnxt_pci_driver);
-	if (bnxt_pf_wq)
+अटल व्योम __निकास bnxt_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&bnxt_pci_driver);
+	अगर (bnxt_pf_wq)
 		destroy_workqueue(bnxt_pf_wq);
-	bnxt_debug_exit();
-}
+	bnxt_debug_निकास();
+पूर्ण
 
 module_init(bnxt_init);
-module_exit(bnxt_exit);
+module_निकास(bnxt_निकास);

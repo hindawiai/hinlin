@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* 10G controller driver for Samsung SoCs
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* 10G controller driver क्रम Samsung SoCs
  *
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -7,245 +8,245 @@
  * Author: Siva Reddy Kallam <siva.kallam@samsung.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/io.h>
-#include <linux/mii.h>
-#include <linux/netdevice.h>
-#include <linux/platform_device.h>
-#include <linux/phy.h>
-#include <linux/slab.h>
-#include <linux/sxgbe_platform.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mii.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sxgbe_platक्रमm.h>
 
-#include "sxgbe_common.h"
-#include "sxgbe_reg.h"
+#समावेश "sxgbe_common.h"
+#समावेश "sxgbe_reg.h"
 
-#define SXGBE_SMA_WRITE_CMD	0x01 /* write command */
-#define SXGBE_SMA_PREAD_CMD	0x02 /* post read  increament address */
-#define SXGBE_SMA_READ_CMD	0x03 /* read command */
-#define SXGBE_SMA_SKIP_ADDRFRM	0x00040000 /* skip the address frame */
-#define SXGBE_MII_BUSY		0x00400000 /* mii busy */
+#घोषणा SXGBE_SMA_WRITE_CMD	0x01 /* ग_लिखो command */
+#घोषणा SXGBE_SMA_PREAD_CMD	0x02 /* post पढ़ो  increament address */
+#घोषणा SXGBE_SMA_READ_CMD	0x03 /* पढ़ो command */
+#घोषणा SXGBE_SMA_SKIP_ADDRFRM	0x00040000 /* skip the address frame */
+#घोषणा SXGBE_MII_BUSY		0x00400000 /* mii busy */
 
-static int sxgbe_mdio_busy_wait(void __iomem *ioaddr, unsigned int mii_data)
-{
-	unsigned long fin_time = jiffies + 3 * HZ; /* 3 seconds */
+अटल पूर्णांक sxgbe_mdio_busy_रुको(व्योम __iomem *ioaddr, अचिन्हित पूर्णांक mii_data)
+अणु
+	अचिन्हित दीर्घ fin_समय = jअगरfies + 3 * HZ; /* 3 seconds */
 
-	while (!time_after(jiffies, fin_time)) {
-		if (!(readl(ioaddr + mii_data) & SXGBE_MII_BUSY))
-			return 0;
+	जबतक (!समय_after(jअगरfies, fin_समय)) अणु
+		अगर (!(पढ़ोl(ioaddr + mii_data) & SXGBE_MII_BUSY))
+			वापस 0;
 		cpu_relax();
-	}
+	पूर्ण
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static void sxgbe_mdio_ctrl_data(struct sxgbe_priv_data *sp, u32 cmd,
+अटल व्योम sxgbe_mdio_ctrl_data(काष्ठा sxgbe_priv_data *sp, u32 cmd,
 				 u16 phydata)
-{
+अणु
 	u32 reg = phydata;
 
 	reg |= (cmd << 16) | SXGBE_SMA_SKIP_ADDRFRM |
 	       ((sp->clk_csr & 0x7) << 19) | SXGBE_MII_BUSY;
-	writel(reg, sp->ioaddr + sp->hw->mii.data);
-}
+	ग_लिखोl(reg, sp->ioaddr + sp->hw->mii.data);
+पूर्ण
 
-static void sxgbe_mdio_c45(struct sxgbe_priv_data *sp, u32 cmd, int phyaddr,
-			   int phyreg, u16 phydata)
-{
+अटल व्योम sxgbe_mdio_c45(काष्ठा sxgbe_priv_data *sp, u32 cmd, पूर्णांक phyaddr,
+			   पूर्णांक phyreg, u16 phydata)
+अणु
 	u32 reg;
 
-	/* set mdio address register */
+	/* set mdio address रेजिस्टर */
 	reg = ((phyreg >> 16) & 0x1f) << 21;
 	reg |= (phyaddr << 16) | (phyreg & 0xffff);
-	writel(reg, sp->ioaddr + sp->hw->mii.addr);
+	ग_लिखोl(reg, sp->ioaddr + sp->hw->mii.addr);
 
 	sxgbe_mdio_ctrl_data(sp, cmd, phydata);
-}
+पूर्ण
 
-static void sxgbe_mdio_c22(struct sxgbe_priv_data *sp, u32 cmd, int phyaddr,
-			   int phyreg, u16 phydata)
-{
+अटल व्योम sxgbe_mdio_c22(काष्ठा sxgbe_priv_data *sp, u32 cmd, पूर्णांक phyaddr,
+			   पूर्णांक phyreg, u16 phydata)
+अणु
 	u32 reg;
 
-	writel(1 << phyaddr, sp->ioaddr + SXGBE_MDIO_CLAUSE22_PORT_REG);
+	ग_लिखोl(1 << phyaddr, sp->ioaddr + SXGBE_MDIO_CLAUSE22_PORT_REG);
 
-	/* set mdio address register */
+	/* set mdio address रेजिस्टर */
 	reg = (phyaddr << 16) | (phyreg & 0x1f);
-	writel(reg, sp->ioaddr + sp->hw->mii.addr);
+	ग_लिखोl(reg, sp->ioaddr + sp->hw->mii.addr);
 
 	sxgbe_mdio_ctrl_data(sp, cmd, phydata);
-}
+पूर्ण
 
-static int sxgbe_mdio_access(struct sxgbe_priv_data *sp, u32 cmd, int phyaddr,
-			     int phyreg, u16 phydata)
-{
-	const struct mii_regs *mii = &sp->hw->mii;
-	int rc;
+अटल पूर्णांक sxgbe_mdio_access(काष्ठा sxgbe_priv_data *sp, u32 cmd, पूर्णांक phyaddr,
+			     पूर्णांक phyreg, u16 phydata)
+अणु
+	स्थिर काष्ठा mii_regs *mii = &sp->hw->mii;
+	पूर्णांक rc;
 
-	rc = sxgbe_mdio_busy_wait(sp->ioaddr, mii->data);
-	if (rc < 0)
-		return rc;
+	rc = sxgbe_mdio_busy_रुको(sp->ioaddr, mii->data);
+	अगर (rc < 0)
+		वापस rc;
 
-	if (phyreg & MII_ADDR_C45) {
+	अगर (phyreg & MII_ADDR_C45) अणु
 		sxgbe_mdio_c45(sp, cmd, phyaddr, phyreg, phydata);
-	} else {
+	पूर्ण अन्यथा अणु
 		 /* Ports 0-3 only support C22. */
-		if (phyaddr >= 4)
-			return -ENODEV;
+		अगर (phyaddr >= 4)
+			वापस -ENODEV;
 
 		sxgbe_mdio_c22(sp, cmd, phyaddr, phyreg, phydata);
-	}
+	पूर्ण
 
-	return sxgbe_mdio_busy_wait(sp->ioaddr, mii->data);
-}
+	वापस sxgbe_mdio_busy_रुको(sp->ioaddr, mii->data);
+पूर्ण
 
 /**
- * sxgbe_mdio_read
- * @bus: points to the mii_bus structure
+ * sxgbe_mdio_पढ़ो
+ * @bus: poपूर्णांकs to the mii_bus काष्ठाure
  * @phyaddr: address of phy port
- * @phyreg: address of register with in phy register
- * Description: this function used for C45 and C22 MDIO Read
+ * @phyreg: address of रेजिस्टर with in phy रेजिस्टर
+ * Description: this function used क्रम C45 and C22 MDIO Read
  */
-static int sxgbe_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
-{
-	struct net_device *ndev = bus->priv;
-	struct sxgbe_priv_data *priv = netdev_priv(ndev);
-	int rc;
+अटल पूर्णांक sxgbe_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक phyreg)
+अणु
+	काष्ठा net_device *ndev = bus->priv;
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(ndev);
+	पूर्णांक rc;
 
 	rc = sxgbe_mdio_access(priv, SXGBE_SMA_READ_CMD, phyaddr, phyreg, 0);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return readl(priv->ioaddr + priv->hw->mii.data) & 0xffff;
-}
+	वापस पढ़ोl(priv->ioaddr + priv->hw->mii.data) & 0xffff;
+पूर्ण
 
 /**
- * sxgbe_mdio_write
- * @bus: points to the mii_bus structure
+ * sxgbe_mdio_ग_लिखो
+ * @bus: poपूर्णांकs to the mii_bus काष्ठाure
  * @phyaddr: address of phy port
- * @phyreg: address of phy registers
- * @phydata: data to be written into phy register
- * Description: this function is used for C45 and C22 MDIO write
+ * @phyreg: address of phy रेजिस्टरs
+ * @phydata: data to be written पूर्णांकo phy रेजिस्टर
+ * Description: this function is used क्रम C45 and C22 MDIO ग_लिखो
  */
-static int sxgbe_mdio_write(struct mii_bus *bus, int phyaddr, int phyreg,
+अटल पूर्णांक sxgbe_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक phyreg,
 			     u16 phydata)
-{
-	struct net_device *ndev = bus->priv;
-	struct sxgbe_priv_data *priv = netdev_priv(ndev);
+अणु
+	काष्ठा net_device *ndev = bus->priv;
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(ndev);
 
-	return sxgbe_mdio_access(priv, SXGBE_SMA_WRITE_CMD, phyaddr, phyreg,
+	वापस sxgbe_mdio_access(priv, SXGBE_SMA_WRITE_CMD, phyaddr, phyreg,
 				 phydata);
-}
+पूर्ण
 
-int sxgbe_mdio_register(struct net_device *ndev)
-{
-	struct mii_bus *mdio_bus;
-	struct sxgbe_priv_data *priv = netdev_priv(ndev);
-	struct sxgbe_mdio_bus_data *mdio_data = priv->plat->mdio_bus_data;
-	int err, phy_addr;
-	int *irqlist;
+पूर्णांक sxgbe_mdio_रेजिस्टर(काष्ठा net_device *ndev)
+अणु
+	काष्ठा mii_bus *mdio_bus;
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(ndev);
+	काष्ठा sxgbe_mdio_bus_data *mdio_data = priv->plat->mdio_bus_data;
+	पूर्णांक err, phy_addr;
+	पूर्णांक *irqlist;
 	bool phy_found = false;
 	bool act;
 
 	/* allocate the new mdio bus */
 	mdio_bus = mdiobus_alloc();
-	if (!mdio_bus) {
+	अगर (!mdio_bus) अणु
 		netdev_err(ndev, "%s: mii bus allocation failed\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (mdio_data->irqs)
+	अगर (mdio_data->irqs)
 		irqlist = mdio_data->irqs;
-	else
+	अन्यथा
 		irqlist = priv->mii_irq;
 
 	/* assign mii bus fields */
 	mdio_bus->name = "sxgbe";
-	mdio_bus->read = &sxgbe_mdio_read;
-	mdio_bus->write = &sxgbe_mdio_write;
-	snprintf(mdio_bus->id, MII_BUS_ID_SIZE, "%s-%x",
+	mdio_bus->पढ़ो = &sxgbe_mdio_पढ़ो;
+	mdio_bus->ग_लिखो = &sxgbe_mdio_ग_लिखो;
+	snम_लिखो(mdio_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		 mdio_bus->name, priv->plat->bus_id);
 	mdio_bus->priv = ndev;
 	mdio_bus->phy_mask = mdio_data->phy_mask;
 	mdio_bus->parent = priv->device;
 
-	/* register with kernel subsystem */
-	err = mdiobus_register(mdio_bus);
-	if (err != 0) {
+	/* रेजिस्टर with kernel subप्रणाली */
+	err = mdiobus_रेजिस्टर(mdio_bus);
+	अगर (err != 0) अणु
 		netdev_err(ndev, "mdiobus register failed\n");
-		goto mdiobus_err;
-	}
+		जाओ mdiobus_err;
+	पूर्ण
 
-	for (phy_addr = 0; phy_addr < PHY_MAX_ADDR; phy_addr++) {
-		struct phy_device *phy = mdiobus_get_phy(mdio_bus, phy_addr);
+	क्रम (phy_addr = 0; phy_addr < PHY_MAX_ADDR; phy_addr++) अणु
+		काष्ठा phy_device *phy = mdiobus_get_phy(mdio_bus, phy_addr);
 
-		if (phy) {
-			char irq_num[4];
-			char *irq_str;
-			/* If an IRQ was provided to be assigned after
-			 * the bus probe, do it here.
+		अगर (phy) अणु
+			अक्षर irq_num[4];
+			अक्षर *irq_str;
+			/* If an IRQ was provided to be asचिन्हित after
+			 * the bus probe, करो it here.
 			 */
-			if ((mdio_data->irqs == NULL) &&
-			    (mdio_data->probed_phy_irq > 0)) {
+			अगर ((mdio_data->irqs == शून्य) &&
+			    (mdio_data->probed_phy_irq > 0)) अणु
 				irqlist[phy_addr] = mdio_data->probed_phy_irq;
 				phy->irq = mdio_data->probed_phy_irq;
-			}
+			पूर्ण
 
 			/* If we're  going to bind the MAC to this PHY bus,
 			 * and no PHY number was provided to the MAC,
 			 * use the one probed here.
 			 */
-			if (priv->plat->phy_addr == -1)
+			अगर (priv->plat->phy_addr == -1)
 				priv->plat->phy_addr = phy_addr;
 
 			act = (priv->plat->phy_addr == phy_addr);
-			switch (phy->irq) {
-			case PHY_POLL:
+			चयन (phy->irq) अणु
+			हाल PHY_POLL:
 				irq_str = "POLL";
-				break;
-			case PHY_MAC_INTERRUPT:
+				अवरोध;
+			हाल PHY_MAC_INTERRUPT:
 				irq_str = "MAC";
-				break;
-			default:
-				sprintf(irq_num, "%d", phy->irq);
+				अवरोध;
+			शेष:
+				प्र_लिखो(irq_num, "%d", phy->irq);
 				irq_str = irq_num;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			netdev_info(ndev, "PHY ID %08x at %d IRQ %s (%s)%s\n",
 				    phy->phy_id, phy_addr, irq_str,
 				    phydev_name(phy), act ? " active" : "");
 			phy_found = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!phy_found) {
+	अगर (!phy_found) अणु
 		netdev_err(ndev, "PHY not found\n");
-		goto phyfound_err;
-	}
+		जाओ phyfound_err;
+	पूर्ण
 
 	priv->mii = mdio_bus;
 
-	return 0;
+	वापस 0;
 
 phyfound_err:
 	err = -ENODEV;
-	mdiobus_unregister(mdio_bus);
+	mdiobus_unरेजिस्टर(mdio_bus);
 mdiobus_err:
-	mdiobus_free(mdio_bus);
-	return err;
-}
+	mdiobus_मुक्त(mdio_bus);
+	वापस err;
+पूर्ण
 
-int sxgbe_mdio_unregister(struct net_device *ndev)
-{
-	struct sxgbe_priv_data *priv = netdev_priv(ndev);
+पूर्णांक sxgbe_mdio_unरेजिस्टर(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sxgbe_priv_data *priv = netdev_priv(ndev);
 
-	if (!priv->mii)
-		return 0;
+	अगर (!priv->mii)
+		वापस 0;
 
-	mdiobus_unregister(priv->mii);
-	priv->mii->priv = NULL;
-	mdiobus_free(priv->mii);
-	priv->mii = NULL;
+	mdiobus_unरेजिस्टर(priv->mii);
+	priv->mii->priv = शून्य;
+	mdiobus_मुक्त(priv->mii);
+	priv->mii = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

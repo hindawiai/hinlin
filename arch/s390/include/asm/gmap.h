@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  KVM guest address space mapping code
  *
@@ -6,146 +7,146 @@
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#ifndef _ASM_S390_GMAP_H
-#define _ASM_S390_GMAP_H
+#अगर_अघोषित _ASM_S390_GMAP_H
+#घोषणा _ASM_S390_GMAP_H
 
-#include <linux/radix-tree.h>
-#include <linux/refcount.h>
+#समावेश <linux/radix-tree.h>
+#समावेश <linux/refcount.h>
 
-/* Generic bits for GMAP notification on DAT table entry changes. */
-#define GMAP_NOTIFY_SHADOW	0x2
-#define GMAP_NOTIFY_MPROT	0x1
+/* Generic bits क्रम GMAP notअगरication on DAT table entry changes. */
+#घोषणा GMAP_NOTIFY_SHADOW	0x2
+#घोषणा GMAP_NOTIFY_MPROT	0x1
 
-/* Status bits only for huge segment entries */
-#define _SEGMENT_ENTRY_GMAP_IN		0x8000	/* invalidation notify bit */
-#define _SEGMENT_ENTRY_GMAP_UC		0x4000	/* dirty (migration) */
+/* Status bits only क्रम huge segment entries */
+#घोषणा _SEGMENT_ENTRY_GMAP_IN		0x8000	/* invalidation notअगरy bit */
+#घोषणा _SEGMENT_ENTRY_GMAP_UC		0x4000	/* dirty (migration) */
 
 /**
- * struct gmap_struct - guest address space
- * @list: list head for the mm->context gmap list
+ * काष्ठा gmap_काष्ठा - guest address space
+ * @list: list head क्रम the mm->context gmap list
  * @crst_list: list of all crst tables used in the guest address space
- * @mm: pointer to the parent mm_struct
+ * @mm: poपूर्णांकer to the parent mm_काष्ठा
  * @guest_to_host: radix tree with guest to host address translation
- * @host_to_guest: radix tree with pointer to segment table entries
+ * @host_to_guest: radix tree with poपूर्णांकer to segment table entries
  * @guest_table_lock: spinlock to protect all entries in the guest page table
- * @ref_count: reference counter for the gmap structure
- * @table: pointer to the page directory
- * @asce: address space control element for gmap page table
- * @pfault_enabled: defines if pfaults are applicable for the guest
- * @guest_handle: protected virtual machine handle for the ultravisor
+ * @ref_count: reference counter क्रम the gmap काष्ठाure
+ * @table: poपूर्णांकer to the page directory
+ * @asce: address space control element क्रम gmap page table
+ * @pfault_enabled: defines अगर pfaults are applicable क्रम the guest
+ * @guest_handle: रक्षित भव machine handle क्रम the ultravisor
  * @host_to_rmap: radix tree with gmap_rmap lists
- * @children: list of shadow gmap structures
- * @pt_list: list of all page tables used in the shadow guest address space
- * @shadow_lock: spinlock to protect the shadow gmap list
- * @parent: pointer to the parent gmap for shadow guest address spaces
- * @orig_asce: ASCE for which the shadow page table has been created
- * @edat_level: edat level to be used for the shadow translation
- * @removed: flag to indicate if a shadow guest address space has been removed
- * @initialized: flag to indicate if a shadow guest address space can be used
+ * @children: list of shaकरोw gmap काष्ठाures
+ * @pt_list: list of all page tables used in the shaकरोw guest address space
+ * @shaकरोw_lock: spinlock to protect the shaकरोw gmap list
+ * @parent: poपूर्णांकer to the parent gmap क्रम shaकरोw guest address spaces
+ * @orig_asce: ASCE क्रम which the shaकरोw page table has been created
+ * @edat_level: edat level to be used क्रम the shaकरोw translation
+ * @हटाओd: flag to indicate अगर a shaकरोw guest address space has been हटाओd
+ * @initialized: flag to indicate अगर a shaकरोw guest address space can be used
  */
-struct gmap {
-	struct list_head list;
-	struct list_head crst_list;
-	struct mm_struct *mm;
-	struct radix_tree_root guest_to_host;
-	struct radix_tree_root host_to_guest;
+काष्ठा gmap अणु
+	काष्ठा list_head list;
+	काष्ठा list_head crst_list;
+	काष्ठा mm_काष्ठा *mm;
+	काष्ठा radix_tree_root guest_to_host;
+	काष्ठा radix_tree_root host_to_guest;
 	spinlock_t guest_table_lock;
 	refcount_t ref_count;
-	unsigned long *table;
-	unsigned long asce;
-	unsigned long asce_end;
-	void *private;
+	अचिन्हित दीर्घ *table;
+	अचिन्हित दीर्घ asce;
+	अचिन्हित दीर्घ asce_end;
+	व्योम *निजी;
 	bool pfault_enabled;
-	/* only set for protected virtual machines */
-	unsigned long guest_handle;
-	/* Additional data for shadow guest address spaces */
-	struct radix_tree_root host_to_rmap;
-	struct list_head children;
-	struct list_head pt_list;
-	spinlock_t shadow_lock;
-	struct gmap *parent;
-	unsigned long orig_asce;
-	int edat_level;
-	bool removed;
+	/* only set क्रम रक्षित भव machines */
+	अचिन्हित दीर्घ guest_handle;
+	/* Additional data क्रम shaकरोw guest address spaces */
+	काष्ठा radix_tree_root host_to_rmap;
+	काष्ठा list_head children;
+	काष्ठा list_head pt_list;
+	spinlock_t shaकरोw_lock;
+	काष्ठा gmap *parent;
+	अचिन्हित दीर्घ orig_asce;
+	पूर्णांक edat_level;
+	bool हटाओd;
 	bool initialized;
-};
+पूर्ण;
 
 /**
- * struct gmap_rmap - reverse mapping for shadow page table entries
- * @next: pointer to next rmap in the list
- * @raddr: virtual rmap address in the shadow guest address space
+ * काष्ठा gmap_rmap - reverse mapping क्रम shaकरोw page table entries
+ * @next: poपूर्णांकer to next rmap in the list
+ * @raddr: भव rmap address in the shaकरोw guest address space
  */
-struct gmap_rmap {
-	struct gmap_rmap *next;
-	unsigned long raddr;
-};
+काष्ठा gmap_rmap अणु
+	काष्ठा gmap_rmap *next;
+	अचिन्हित दीर्घ raddr;
+पूर्ण;
 
-#define gmap_for_each_rmap(pos, head) \
-	for (pos = (head); pos; pos = pos->next)
+#घोषणा gmap_क्रम_each_rmap(pos, head) \
+	क्रम (pos = (head); pos; pos = pos->next)
 
-#define gmap_for_each_rmap_safe(pos, n, head) \
-	for (pos = (head); n = pos ? pos->next : NULL, pos; pos = n)
+#घोषणा gmap_क्रम_each_rmap_safe(pos, n, head) \
+	क्रम (pos = (head); n = pos ? pos->next : शून्य, pos; pos = n)
 
 /**
- * struct gmap_notifier - notify function block for page invalidation
- * @notifier_call: address of callback function
+ * काष्ठा gmap_notअगरier - notअगरy function block क्रम page invalidation
+ * @notअगरier_call: address of callback function
  */
-struct gmap_notifier {
-	struct list_head list;
-	struct rcu_head rcu;
-	void (*notifier_call)(struct gmap *gmap, unsigned long start,
-			      unsigned long end);
-};
+काष्ठा gmap_notअगरier अणु
+	काष्ठा list_head list;
+	काष्ठा rcu_head rcu;
+	व्योम (*notअगरier_call)(काष्ठा gmap *gmap, अचिन्हित दीर्घ start,
+			      अचिन्हित दीर्घ end);
+पूर्ण;
 
-static inline int gmap_is_shadow(struct gmap *gmap)
-{
-	return !!gmap->parent;
-}
+अटल अंतरभूत पूर्णांक gmap_is_shaकरोw(काष्ठा gmap *gmap)
+अणु
+	वापस !!gmap->parent;
+पूर्ण
 
-struct gmap *gmap_create(struct mm_struct *mm, unsigned long limit);
-void gmap_remove(struct gmap *gmap);
-struct gmap *gmap_get(struct gmap *gmap);
-void gmap_put(struct gmap *gmap);
+काष्ठा gmap *gmap_create(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ limit);
+व्योम gmap_हटाओ(काष्ठा gmap *gmap);
+काष्ठा gmap *gmap_get(काष्ठा gmap *gmap);
+व्योम gmap_put(काष्ठा gmap *gmap);
 
-void gmap_enable(struct gmap *gmap);
-void gmap_disable(struct gmap *gmap);
-struct gmap *gmap_get_enabled(void);
-int gmap_map_segment(struct gmap *gmap, unsigned long from,
-		     unsigned long to, unsigned long len);
-int gmap_unmap_segment(struct gmap *gmap, unsigned long to, unsigned long len);
-unsigned long __gmap_translate(struct gmap *, unsigned long gaddr);
-unsigned long gmap_translate(struct gmap *, unsigned long gaddr);
-int __gmap_link(struct gmap *gmap, unsigned long gaddr, unsigned long vmaddr);
-int gmap_fault(struct gmap *, unsigned long gaddr, unsigned int fault_flags);
-void gmap_discard(struct gmap *, unsigned long from, unsigned long to);
-void __gmap_zap(struct gmap *, unsigned long gaddr);
-void gmap_unlink(struct mm_struct *, unsigned long *table, unsigned long vmaddr);
+व्योम gmap_enable(काष्ठा gmap *gmap);
+व्योम gmap_disable(काष्ठा gmap *gmap);
+काष्ठा gmap *gmap_get_enabled(व्योम);
+पूर्णांक gmap_map_segment(काष्ठा gmap *gmap, अचिन्हित दीर्घ from,
+		     अचिन्हित दीर्घ to, अचिन्हित दीर्घ len);
+पूर्णांक gmap_unmap_segment(काष्ठा gmap *gmap, अचिन्हित दीर्घ to, अचिन्हित दीर्घ len);
+अचिन्हित दीर्घ __gmap_translate(काष्ठा gmap *, अचिन्हित दीर्घ gaddr);
+अचिन्हित दीर्घ gmap_translate(काष्ठा gmap *, अचिन्हित दीर्घ gaddr);
+पूर्णांक __gmap_link(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr, अचिन्हित दीर्घ vmaddr);
+पूर्णांक gmap_fault(काष्ठा gmap *, अचिन्हित दीर्घ gaddr, अचिन्हित पूर्णांक fault_flags);
+व्योम gmap_discard(काष्ठा gmap *, अचिन्हित दीर्घ from, अचिन्हित दीर्घ to);
+व्योम __gmap_zap(काष्ठा gmap *, अचिन्हित दीर्घ gaddr);
+व्योम gmap_unlink(काष्ठा mm_काष्ठा *, अचिन्हित दीर्घ *table, अचिन्हित दीर्घ vmaddr);
 
-int gmap_read_table(struct gmap *gmap, unsigned long gaddr, unsigned long *val);
+पूर्णांक gmap_पढ़ो_table(काष्ठा gmap *gmap, अचिन्हित दीर्घ gaddr, अचिन्हित दीर्घ *val);
 
-struct gmap *gmap_shadow(struct gmap *parent, unsigned long asce,
-			 int edat_level);
-int gmap_shadow_valid(struct gmap *sg, unsigned long asce, int edat_level);
-int gmap_shadow_r2t(struct gmap *sg, unsigned long saddr, unsigned long r2t,
-		    int fake);
-int gmap_shadow_r3t(struct gmap *sg, unsigned long saddr, unsigned long r3t,
-		    int fake);
-int gmap_shadow_sgt(struct gmap *sg, unsigned long saddr, unsigned long sgt,
-		    int fake);
-int gmap_shadow_pgt(struct gmap *sg, unsigned long saddr, unsigned long pgt,
-		    int fake);
-int gmap_shadow_pgt_lookup(struct gmap *sg, unsigned long saddr,
-			   unsigned long *pgt, int *dat_protection, int *fake);
-int gmap_shadow_page(struct gmap *sg, unsigned long saddr, pte_t pte);
+काष्ठा gmap *gmap_shaकरोw(काष्ठा gmap *parent, अचिन्हित दीर्घ asce,
+			 पूर्णांक edat_level);
+पूर्णांक gmap_shaकरोw_valid(काष्ठा gmap *sg, अचिन्हित दीर्घ asce, पूर्णांक edat_level);
+पूर्णांक gmap_shaकरोw_r2t(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr, अचिन्हित दीर्घ r2t,
+		    पूर्णांक fake);
+पूर्णांक gmap_shaकरोw_r3t(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr, अचिन्हित दीर्घ r3t,
+		    पूर्णांक fake);
+पूर्णांक gmap_shaकरोw_sgt(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr, अचिन्हित दीर्घ sgt,
+		    पूर्णांक fake);
+पूर्णांक gmap_shaकरोw_pgt(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr, अचिन्हित दीर्घ pgt,
+		    पूर्णांक fake);
+पूर्णांक gmap_shaकरोw_pgt_lookup(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr,
+			   अचिन्हित दीर्घ *pgt, पूर्णांक *dat_protection, पूर्णांक *fake);
+पूर्णांक gmap_shaकरोw_page(काष्ठा gmap *sg, अचिन्हित दीर्घ saddr, pte_t pte);
 
-void gmap_register_pte_notifier(struct gmap_notifier *);
-void gmap_unregister_pte_notifier(struct gmap_notifier *);
+व्योम gmap_रेजिस्टर_pte_notअगरier(काष्ठा gmap_notअगरier *);
+व्योम gmap_unरेजिस्टर_pte_notअगरier(काष्ठा gmap_notअगरier *);
 
-int gmap_mprotect_notify(struct gmap *, unsigned long start,
-			 unsigned long len, int prot);
+पूर्णांक gmap_mprotect_notअगरy(काष्ठा gmap *, अचिन्हित दीर्घ start,
+			 अचिन्हित दीर्घ len, पूर्णांक prot);
 
-void gmap_sync_dirty_log_pmd(struct gmap *gmap, unsigned long dirty_bitmap[4],
-			     unsigned long gaddr, unsigned long vmaddr);
-int gmap_mark_unmergeable(void);
-void s390_reset_acc(struct mm_struct *mm);
-#endif /* _ASM_S390_GMAP_H */
+व्योम gmap_sync_dirty_log_pmd(काष्ठा gmap *gmap, अचिन्हित दीर्घ dirty_biपंचांगap[4],
+			     अचिन्हित दीर्घ gaddr, अचिन्हित दीर्घ vmaddr);
+पूर्णांक gmap_mark_unmergeable(व्योम);
+व्योम s390_reset_acc(काष्ठा mm_काष्ठा *mm);
+#पूर्ण_अगर /* _ASM_S390_GMAP_H */

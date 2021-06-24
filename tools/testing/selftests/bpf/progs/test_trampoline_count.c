@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdbool.h>
-#include <stddef.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <stdbool.h>
+#समावेश <मानकघोष.स>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
 SEC("fentry/__set_task_comm")
-int BPF_PROG(prog1, struct task_struct *tsk, const char *buf, bool exec)
-{
-	return 0;
-}
+पूर्णांक BPF_PROG(prog1, काष्ठा task_काष्ठा *tsk, स्थिर अक्षर *buf, bool exec)
+अणु
+	वापस 0;
+पूर्ण
 
 SEC("fexit/__set_task_comm")
-int BPF_PROG(prog2, struct task_struct *tsk, const char *buf, bool exec)
-{
-	return 0;
-}
+पूर्णांक BPF_PROG(prog2, काष्ठा task_काष्ठा *tsk, स्थिर अक्षर *buf, bool exec)
+अणु
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

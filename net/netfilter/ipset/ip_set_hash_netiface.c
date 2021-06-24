@@ -1,468 +1,469 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (C) 2011-2013 Jozsef Kadlecsik <kadlec@netfilter.org> */
 
-/* Kernel module implementing an IP set type: the hash:net,iface type */
+/* Kernel module implementing an IP set type: the hash:net,अगरace type */
 
-#include <linux/jhash.h>
-#include <linux/module.h>
-#include <linux/ip.h>
-#include <linux/skbuff.h>
-#include <linux/errno.h>
-#include <linux/random.h>
-#include <net/ip.h>
-#include <net/ipv6.h>
-#include <net/netlink.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अक्रमom.h>
+#समावेश <net/ip.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/netlink.h>
 
-#include <linux/netfilter.h>
-#include <linux/netfilter_bridge.h>
-#include <linux/netfilter/ipset/pfxlen.h>
-#include <linux/netfilter/ipset/ip_set.h>
-#include <linux/netfilter/ipset/ip_set_hash.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter_bridge.h>
+#समावेश <linux/netfilter/ipset/pfxlen.h>
+#समावेश <linux/netfilter/ipset/ip_set.h>
+#समावेश <linux/netfilter/ipset/ip_set_hash.h>
 
-#define IPSET_TYPE_REV_MIN	0
+#घोषणा IPSET_TYPE_REV_MIN	0
 /*				1    nomatch flag support added */
 /*				2    /0 support added */
 /*				3    Counters support added */
 /*				4    Comments support added */
 /*				5    Forceadd support added */
 /*				6    skbinfo support added */
-/*				7    interface wildcard support added */
-#define IPSET_TYPE_REV_MAX	8 /* bucketsize, initval support added */
+/*				7    पूर्णांकerface wildcard support added */
+#घोषणा IPSET_TYPE_REV_MAX	8 /* bucketsize, initval support added */
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jozsef Kadlecsik <kadlec@netfilter.org>");
 IP_SET_MODULE_DESC("hash:net,iface", IPSET_TYPE_REV_MIN, IPSET_TYPE_REV_MAX);
 MODULE_ALIAS("ip_set_hash:net,iface");
 
-/* Type specific function prefix */
-#define HTYPE		hash_netiface
-#define IP_SET_HASH_WITH_NETS
-#define IP_SET_HASH_WITH_MULTI
-#define IP_SET_HASH_WITH_NET0
+/* Type specअगरic function prefix */
+#घोषणा HTYPE		hash_netअगरace
+#घोषणा IP_SET_HASH_WITH_NETS
+#घोषणा IP_SET_HASH_WITH_MULTI
+#घोषणा IP_SET_HASH_WITH_NET0
 
-#define STRLCPY(a, b)	strlcpy(a, b, IFNAMSIZ)
+#घोषणा STRLCPY(a, b)	strlcpy(a, b, IFNAMSIZ)
 
 /* IPv4 variant */
 
-struct hash_netiface4_elem_hashed {
+काष्ठा hash_netअगरace4_elem_hashed अणु
 	__be32 ip;
 	u8 physdev;
 	u8 cidr;
 	u8 nomatch;
 	u8 elem;
-};
+पूर्ण;
 
 /* Member elements */
-struct hash_netiface4_elem {
+काष्ठा hash_netअगरace4_elem अणु
 	__be32 ip;
 	u8 physdev;
 	u8 cidr;
 	u8 nomatch;
 	u8 elem;
 	u8 wildcard;
-	char iface[IFNAMSIZ];
-};
+	अक्षर अगरace[IFNAMSIZ];
+पूर्ण;
 
 /* Common functions */
 
-static bool
-hash_netiface4_data_equal(const struct hash_netiface4_elem *ip1,
-			  const struct hash_netiface4_elem *ip2,
+अटल bool
+hash_netअगरace4_data_equal(स्थिर काष्ठा hash_netअगरace4_elem *ip1,
+			  स्थिर काष्ठा hash_netअगरace4_elem *ip2,
 			  u32 *multi)
-{
-	return ip1->ip == ip2->ip &&
+अणु
+	वापस ip1->ip == ip2->ip &&
 	       ip1->cidr == ip2->cidr &&
 	       (++*multi) &&
 	       ip1->physdev == ip2->physdev &&
 	       (ip1->wildcard ?
-		strncmp(ip1->iface, ip2->iface, strlen(ip1->iface)) == 0 :
-		strcmp(ip1->iface, ip2->iface) == 0);
-}
+		म_भेदन(ip1->अगरace, ip2->अगरace, म_माप(ip1->अगरace)) == 0 :
+		म_भेद(ip1->अगरace, ip2->अगरace) == 0);
+पूर्ण
 
-static int
-hash_netiface4_do_data_match(const struct hash_netiface4_elem *elem)
-{
-	return elem->nomatch ? -ENOTEMPTY : 1;
-}
+अटल पूर्णांक
+hash_netअगरace4_करो_data_match(स्थिर काष्ठा hash_netअगरace4_elem *elem)
+अणु
+	वापस elem->nomatch ? -ENOTEMPTY : 1;
+पूर्ण
 
-static void
-hash_netiface4_data_set_flags(struct hash_netiface4_elem *elem, u32 flags)
-{
+अटल व्योम
+hash_netअगरace4_data_set_flags(काष्ठा hash_netअगरace4_elem *elem, u32 flags)
+अणु
 	elem->nomatch = (flags >> 16) & IPSET_FLAG_NOMATCH;
-}
+पूर्ण
 
-static void
-hash_netiface4_data_reset_flags(struct hash_netiface4_elem *elem, u8 *flags)
-{
+अटल व्योम
+hash_netअगरace4_data_reset_flags(काष्ठा hash_netअगरace4_elem *elem, u8 *flags)
+अणु
 	swap(*flags, elem->nomatch);
-}
+पूर्ण
 
-static void
-hash_netiface4_data_netmask(struct hash_netiface4_elem *elem, u8 cidr)
-{
-	elem->ip &= ip_set_netmask(cidr);
+अटल व्योम
+hash_netअगरace4_data_neपंचांगask(काष्ठा hash_netअगरace4_elem *elem, u8 cidr)
+अणु
+	elem->ip &= ip_set_neपंचांगask(cidr);
 	elem->cidr = cidr;
-}
+पूर्ण
 
-static bool
-hash_netiface4_data_list(struct sk_buff *skb,
-			 const struct hash_netiface4_elem *data)
-{
+अटल bool
+hash_netअगरace4_data_list(काष्ठा sk_buff *skb,
+			 स्थिर काष्ठा hash_netअगरace4_elem *data)
+अणु
 	u32 flags = (data->physdev ? IPSET_FLAG_PHYSDEV : 0) |
 		    (data->wildcard ? IPSET_FLAG_IFACE_WILDCARD : 0);
 
-	if (data->nomatch)
+	अगर (data->nomatch)
 		flags |= IPSET_FLAG_NOMATCH;
-	if (nla_put_ipaddr4(skb, IPSET_ATTR_IP, data->ip) ||
+	अगर (nla_put_ipaddr4(skb, IPSET_ATTR_IP, data->ip) ||
 	    nla_put_u8(skb, IPSET_ATTR_CIDR, data->cidr) ||
-	    nla_put_string(skb, IPSET_ATTR_IFACE, data->iface) ||
+	    nla_put_string(skb, IPSET_ATTR_IFACE, data->अगरace) ||
 	    (flags &&
 	     nla_put_net32(skb, IPSET_ATTR_CADT_FLAGS, htonl(flags))))
-		goto nla_put_failure;
-	return false;
+		जाओ nla_put_failure;
+	वापस false;
 
 nla_put_failure:
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-hash_netiface4_data_next(struct hash_netiface4_elem *next,
-			 const struct hash_netiface4_elem *d)
-{
+अटल व्योम
+hash_netअगरace4_data_next(काष्ठा hash_netअगरace4_elem *next,
+			 स्थिर काष्ठा hash_netअगरace4_elem *d)
+अणु
 	next->ip = d->ip;
-}
+पूर्ण
 
-#define MTYPE		hash_netiface4
-#define HOST_MASK	32
-#define HKEY_DATALEN	sizeof(struct hash_netiface4_elem_hashed)
-#include "ip_set_hash_gen.h"
+#घोषणा MTYPE		hash_netअगरace4
+#घोषणा HOST_MASK	32
+#घोषणा HKEY_DATALEN	माप(काष्ठा hash_netअगरace4_elem_hashed)
+#समावेश "ip_set_hash_gen.h"
 
-#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-static const char *get_physindev_name(const struct sk_buff *skb)
-{
-	struct net_device *dev = nf_bridge_get_physindev(skb);
+#अगर IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+अटल स्थिर अक्षर *get_physindev_name(स्थिर काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = nf_bridge_get_physindev(skb);
 
-	return dev ? dev->name : NULL;
-}
+	वापस dev ? dev->name : शून्य;
+पूर्ण
 
-static const char *get_physoutdev_name(const struct sk_buff *skb)
-{
-	struct net_device *dev = nf_bridge_get_physoutdev(skb);
+अटल स्थिर अक्षर *get_physoutdev_name(स्थिर काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = nf_bridge_get_physoutdev(skb);
 
-	return dev ? dev->name : NULL;
-}
-#endif
+	वापस dev ? dev->name : शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static int
-hash_netiface4_kadt(struct ip_set *set, const struct sk_buff *skb,
-		    const struct xt_action_param *par,
-		    enum ipset_adt adt, struct ip_set_adt_opt *opt)
-{
-	struct hash_netiface4 *h = set->data;
+अटल पूर्णांक
+hash_netअगरace4_kadt(काष्ठा ip_set *set, स्थिर काष्ठा sk_buff *skb,
+		    स्थिर काष्ठा xt_action_param *par,
+		    क्रमागत ipset_adt adt, काष्ठा ip_set_adt_opt *opt)
+अणु
+	काष्ठा hash_netअगरace4 *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	struct hash_netiface4_elem e = {
+	काष्ठा hash_netअगरace4_elem e = अणु
 		.cidr = INIT_CIDR(h->nets[0].cidr[0], HOST_MASK),
 		.elem = 1,
-	};
-	struct ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
+	पूर्ण;
+	काष्ठा ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
 
-	if (adt == IPSET_TEST)
+	अगर (adt == IPSET_TEST)
 		e.cidr = HOST_MASK;
 
 	ip4addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip);
-	e.ip &= ip_set_netmask(e.cidr);
+	e.ip &= ip_set_neपंचांगask(e.cidr);
 
-#define IFACE(dir)	(par->state->dir ? par->state->dir->name : "")
-#define SRCDIR		(opt->flags & IPSET_DIM_TWO_SRC)
+#घोषणा IFACE(dir)	(par->state->dir ? par->state->dir->name : "")
+#घोषणा SRCसूची		(opt->flags & IPSET_DIM_TWO_SRC)
 
-	if (opt->cmdflags & IPSET_FLAG_PHYSDEV) {
-#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-		const char *eiface = SRCDIR ? get_physindev_name(skb) :
+	अगर (opt->cmdflags & IPSET_FLAG_PHYSDEV) अणु
+#अगर IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+		स्थिर अक्षर *eअगरace = SRCसूची ? get_physindev_name(skb) :
 					      get_physoutdev_name(skb);
 
-		if (!eiface)
-			return -EINVAL;
-		STRLCPY(e.iface, eiface);
+		अगर (!eअगरace)
+			वापस -EINVAL;
+		STRLCPY(e.अगरace, eअगरace);
 		e.physdev = 1;
-#endif
-	} else {
-		STRLCPY(e.iface, SRCDIR ? IFACE(in) : IFACE(out));
-	}
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		STRLCPY(e.अगरace, SRCसूची ? IFACE(in) : IFACE(out));
+	पूर्ण
 
-	if (strlen(e.iface) == 0)
-		return -EINVAL;
-	return adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
-}
+	अगर (म_माप(e.अगरace) == 0)
+		वापस -EINVAL;
+	वापस adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
+पूर्ण
 
-static int
-hash_netiface4_uadt(struct ip_set *set, struct nlattr *tb[],
-		    enum ipset_adt adt, u32 *lineno, u32 flags, bool retried)
-{
-	struct hash_netiface4 *h = set->data;
+अटल पूर्णांक
+hash_netअगरace4_uadt(काष्ठा ip_set *set, काष्ठा nlattr *tb[],
+		    क्रमागत ipset_adt adt, u32 *lineno, u32 flags, bool retried)
+अणु
+	काष्ठा hash_netअगरace4 *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	struct hash_netiface4_elem e = { .cidr = HOST_MASK, .elem = 1 };
-	struct ip_set_ext ext = IP_SET_INIT_UEXT(set);
+	काष्ठा hash_netअगरace4_elem e = अणु .cidr = HOST_MASK, .elem = 1 पूर्ण;
+	काष्ठा ip_set_ext ext = IP_SET_INIT_UEXT(set);
 	u32 ip = 0, ip_to = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (tb[IPSET_ATTR_LINENO])
+	अगर (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	if (unlikely(!tb[IPSET_ATTR_IP] ||
+	अगर (unlikely(!tb[IPSET_ATTR_IP] ||
 		     !tb[IPSET_ATTR_IFACE] ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_CADT_FLAGS)))
-		return -IPSET_ERR_PROTOCOL;
+		वापस -IPSET_ERR_PROTOCOL;
 
 	ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP], &ip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ip_set_get_extensions(set, tb, &ext);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (tb[IPSET_ATTR_CIDR]) {
+	अगर (tb[IPSET_ATTR_CIDR]) अणु
 		e.cidr = nla_get_u8(tb[IPSET_ATTR_CIDR]);
-		if (e.cidr > HOST_MASK)
-			return -IPSET_ERR_INVALID_CIDR;
-	}
-	nla_strscpy(e.iface, tb[IPSET_ATTR_IFACE], IFNAMSIZ);
+		अगर (e.cidr > HOST_MASK)
+			वापस -IPSET_ERR_INVALID_CIDR;
+	पूर्ण
+	nla_strscpy(e.अगरace, tb[IPSET_ATTR_IFACE], IFNAMSIZ);
 
-	if (tb[IPSET_ATTR_CADT_FLAGS]) {
+	अगर (tb[IPSET_ATTR_CADT_FLAGS]) अणु
 		u32 cadt_flags = ip_set_get_h32(tb[IPSET_ATTR_CADT_FLAGS]);
 
-		if (cadt_flags & IPSET_FLAG_PHYSDEV)
+		अगर (cadt_flags & IPSET_FLAG_PHYSDEV)
 			e.physdev = 1;
-		if (cadt_flags & IPSET_FLAG_NOMATCH)
+		अगर (cadt_flags & IPSET_FLAG_NOMATCH)
 			flags |= (IPSET_FLAG_NOMATCH << 16);
-		if (cadt_flags & IPSET_FLAG_IFACE_WILDCARD)
+		अगर (cadt_flags & IPSET_FLAG_IFACE_WILDCARD)
 			e.wildcard = 1;
-	}
-	if (adt == IPSET_TEST || !tb[IPSET_ATTR_IP_TO]) {
-		e.ip = htonl(ip & ip_set_hostmask(e.cidr));
+	पूर्ण
+	अगर (adt == IPSET_TEST || !tb[IPSET_ATTR_IP_TO]) अणु
+		e.ip = htonl(ip & ip_set_hosपंचांगask(e.cidr));
 		ret = adtfn(set, &e, &ext, &ext, flags);
-		return ip_set_enomatch(ret, flags, adt, set) ? -ret :
+		वापस ip_set_enomatch(ret, flags, adt, set) ? -ret :
 		       ip_set_eexist(ret, flags) ? 0 : ret;
-	}
+	पूर्ण
 
-	if (tb[IPSET_ATTR_IP_TO]) {
+	अगर (tb[IPSET_ATTR_IP_TO]) अणु
 		ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP_TO], &ip_to);
-		if (ret)
-			return ret;
-		if (ip_to < ip)
+		अगर (ret)
+			वापस ret;
+		अगर (ip_to < ip)
 			swap(ip, ip_to);
-		if (ip + UINT_MAX == ip_to)
-			return -IPSET_ERR_HASH_RANGE;
-	} else {
+		अगर (ip + अच_पूर्णांक_उच्च == ip_to)
+			वापस -IPSET_ERR_HASH_RANGE;
+	पूर्ण अन्यथा अणु
 		ip_set_mask_from_to(ip, ip_to, e.cidr);
-	}
+	पूर्ण
 
-	if (retried)
+	अगर (retried)
 		ip = ntohl(h->next.ip);
-	do {
+	करो अणु
 		e.ip = htonl(ip);
 		ip = ip_set_range_to_cidr(ip, ip_to, &e.cidr);
 		ret = adtfn(set, &e, &ext, &ext, flags);
 
-		if (ret && !ip_set_eexist(ret, flags))
-			return ret;
+		अगर (ret && !ip_set_eexist(ret, flags))
+			वापस ret;
 
 		ret = 0;
-	} while (ip++ < ip_to);
-	return ret;
-}
+	पूर्ण जबतक (ip++ < ip_to);
+	वापस ret;
+पूर्ण
 
 /* IPv6 variant */
 
-struct hash_netiface6_elem_hashed {
-	union nf_inet_addr ip;
+काष्ठा hash_netअगरace6_elem_hashed अणु
+	जोड़ nf_inet_addr ip;
 	u8 physdev;
 	u8 cidr;
 	u8 nomatch;
 	u8 elem;
-};
+पूर्ण;
 
-struct hash_netiface6_elem {
-	union nf_inet_addr ip;
+काष्ठा hash_netअगरace6_elem अणु
+	जोड़ nf_inet_addr ip;
 	u8 physdev;
 	u8 cidr;
 	u8 nomatch;
 	u8 elem;
 	u8 wildcard;
-	char iface[IFNAMSIZ];
-};
+	अक्षर अगरace[IFNAMSIZ];
+पूर्ण;
 
 /* Common functions */
 
-static bool
-hash_netiface6_data_equal(const struct hash_netiface6_elem *ip1,
-			  const struct hash_netiface6_elem *ip2,
+अटल bool
+hash_netअगरace6_data_equal(स्थिर काष्ठा hash_netअगरace6_elem *ip1,
+			  स्थिर काष्ठा hash_netअगरace6_elem *ip2,
 			  u32 *multi)
-{
-	return ipv6_addr_equal(&ip1->ip.in6, &ip2->ip.in6) &&
+अणु
+	वापस ipv6_addr_equal(&ip1->ip.in6, &ip2->ip.in6) &&
 	       ip1->cidr == ip2->cidr &&
 	       (++*multi) &&
 	       ip1->physdev == ip2->physdev &&
 	       (ip1->wildcard ?
-		strncmp(ip1->iface, ip2->iface, strlen(ip1->iface)) == 0 :
-		strcmp(ip1->iface, ip2->iface) == 0);
-}
+		म_भेदन(ip1->अगरace, ip2->अगरace, म_माप(ip1->अगरace)) == 0 :
+		म_भेद(ip1->अगरace, ip2->अगरace) == 0);
+पूर्ण
 
-static int
-hash_netiface6_do_data_match(const struct hash_netiface6_elem *elem)
-{
-	return elem->nomatch ? -ENOTEMPTY : 1;
-}
+अटल पूर्णांक
+hash_netअगरace6_करो_data_match(स्थिर काष्ठा hash_netअगरace6_elem *elem)
+अणु
+	वापस elem->nomatch ? -ENOTEMPTY : 1;
+पूर्ण
 
-static void
-hash_netiface6_data_set_flags(struct hash_netiface6_elem *elem, u32 flags)
-{
+अटल व्योम
+hash_netअगरace6_data_set_flags(काष्ठा hash_netअगरace6_elem *elem, u32 flags)
+अणु
 	elem->nomatch = (flags >> 16) & IPSET_FLAG_NOMATCH;
-}
+पूर्ण
 
-static void
-hash_netiface6_data_reset_flags(struct hash_netiface6_elem *elem, u8 *flags)
-{
+अटल व्योम
+hash_netअगरace6_data_reset_flags(काष्ठा hash_netअगरace6_elem *elem, u8 *flags)
+अणु
 	swap(*flags, elem->nomatch);
-}
+पूर्ण
 
-static void
-hash_netiface6_data_netmask(struct hash_netiface6_elem *elem, u8 cidr)
-{
-	ip6_netmask(&elem->ip, cidr);
+अटल व्योम
+hash_netअगरace6_data_neपंचांगask(काष्ठा hash_netअगरace6_elem *elem, u8 cidr)
+अणु
+	ip6_neपंचांगask(&elem->ip, cidr);
 	elem->cidr = cidr;
-}
+पूर्ण
 
-static bool
-hash_netiface6_data_list(struct sk_buff *skb,
-			 const struct hash_netiface6_elem *data)
-{
+अटल bool
+hash_netअगरace6_data_list(काष्ठा sk_buff *skb,
+			 स्थिर काष्ठा hash_netअगरace6_elem *data)
+अणु
 	u32 flags = (data->physdev ? IPSET_FLAG_PHYSDEV : 0) |
 		    (data->wildcard ? IPSET_FLAG_IFACE_WILDCARD : 0);
 
-	if (data->nomatch)
+	अगर (data->nomatch)
 		flags |= IPSET_FLAG_NOMATCH;
-	if (nla_put_ipaddr6(skb, IPSET_ATTR_IP, &data->ip.in6) ||
+	अगर (nla_put_ipaddr6(skb, IPSET_ATTR_IP, &data->ip.in6) ||
 	    nla_put_u8(skb, IPSET_ATTR_CIDR, data->cidr) ||
-	    nla_put_string(skb, IPSET_ATTR_IFACE, data->iface) ||
+	    nla_put_string(skb, IPSET_ATTR_IFACE, data->अगरace) ||
 	    (flags &&
 	     nla_put_net32(skb, IPSET_ATTR_CADT_FLAGS, htonl(flags))))
-		goto nla_put_failure;
-	return false;
+		जाओ nla_put_failure;
+	वापस false;
 
 nla_put_failure:
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-hash_netiface6_data_next(struct hash_netiface6_elem *next,
-			 const struct hash_netiface6_elem *d)
-{
-}
+अटल व्योम
+hash_netअगरace6_data_next(काष्ठा hash_netअगरace6_elem *next,
+			 स्थिर काष्ठा hash_netअगरace6_elem *d)
+अणु
+पूर्ण
 
-#undef MTYPE
-#undef HOST_MASK
+#अघोषित MTYPE
+#अघोषित HOST_MASK
 
-#define MTYPE		hash_netiface6
-#define HOST_MASK	128
-#define HKEY_DATALEN	sizeof(struct hash_netiface6_elem_hashed)
-#define IP_SET_EMIT_CREATE
-#include "ip_set_hash_gen.h"
+#घोषणा MTYPE		hash_netअगरace6
+#घोषणा HOST_MASK	128
+#घोषणा HKEY_DATALEN	माप(काष्ठा hash_netअगरace6_elem_hashed)
+#घोषणा IP_SET_EMIT_CREATE
+#समावेश "ip_set_hash_gen.h"
 
-static int
-hash_netiface6_kadt(struct ip_set *set, const struct sk_buff *skb,
-		    const struct xt_action_param *par,
-		    enum ipset_adt adt, struct ip_set_adt_opt *opt)
-{
-	struct hash_netiface6 *h = set->data;
+अटल पूर्णांक
+hash_netअगरace6_kadt(काष्ठा ip_set *set, स्थिर काष्ठा sk_buff *skb,
+		    स्थिर काष्ठा xt_action_param *par,
+		    क्रमागत ipset_adt adt, काष्ठा ip_set_adt_opt *opt)
+अणु
+	काष्ठा hash_netअगरace6 *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	struct hash_netiface6_elem e = {
+	काष्ठा hash_netअगरace6_elem e = अणु
 		.cidr = INIT_CIDR(h->nets[0].cidr[0], HOST_MASK),
 		.elem = 1,
-	};
-	struct ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
+	पूर्ण;
+	काष्ठा ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
 
-	if (adt == IPSET_TEST)
+	अगर (adt == IPSET_TEST)
 		e.cidr = HOST_MASK;
 
 	ip6addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip.in6);
-	ip6_netmask(&e.ip, e.cidr);
+	ip6_neपंचांगask(&e.ip, e.cidr);
 
-	if (opt->cmdflags & IPSET_FLAG_PHYSDEV) {
-#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-		const char *eiface = SRCDIR ? get_physindev_name(skb) :
+	अगर (opt->cmdflags & IPSET_FLAG_PHYSDEV) अणु
+#अगर IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+		स्थिर अक्षर *eअगरace = SRCसूची ? get_physindev_name(skb) :
 					      get_physoutdev_name(skb);
 
-		if (!eiface)
-			return -EINVAL;
-		STRLCPY(e.iface, eiface);
+		अगर (!eअगरace)
+			वापस -EINVAL;
+		STRLCPY(e.अगरace, eअगरace);
 		e.physdev = 1;
-#endif
-	} else {
-		STRLCPY(e.iface, SRCDIR ? IFACE(in) : IFACE(out));
-	}
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		STRLCPY(e.अगरace, SRCसूची ? IFACE(in) : IFACE(out));
+	पूर्ण
 
-	if (strlen(e.iface) == 0)
-		return -EINVAL;
+	अगर (म_माप(e.अगरace) == 0)
+		वापस -EINVAL;
 
-	return adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
-}
+	वापस adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
+पूर्ण
 
-static int
-hash_netiface6_uadt(struct ip_set *set, struct nlattr *tb[],
-		    enum ipset_adt adt, u32 *lineno, u32 flags, bool retried)
-{
+अटल पूर्णांक
+hash_netअगरace6_uadt(काष्ठा ip_set *set, काष्ठा nlattr *tb[],
+		    क्रमागत ipset_adt adt, u32 *lineno, u32 flags, bool retried)
+अणु
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	struct hash_netiface6_elem e = { .cidr = HOST_MASK, .elem = 1 };
-	struct ip_set_ext ext = IP_SET_INIT_UEXT(set);
-	int ret;
+	काष्ठा hash_netअगरace6_elem e = अणु .cidr = HOST_MASK, .elem = 1 पूर्ण;
+	काष्ठा ip_set_ext ext = IP_SET_INIT_UEXT(set);
+	पूर्णांक ret;
 
-	if (tb[IPSET_ATTR_LINENO])
+	अगर (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
-	if (unlikely(!tb[IPSET_ATTR_IP] ||
+	अगर (unlikely(!tb[IPSET_ATTR_IP] ||
 		     !tb[IPSET_ATTR_IFACE] ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_CADT_FLAGS)))
-		return -IPSET_ERR_PROTOCOL;
-	if (unlikely(tb[IPSET_ATTR_IP_TO]))
-		return -IPSET_ERR_HASH_RANGE_UNSUPPORTED;
+		वापस -IPSET_ERR_PROTOCOL;
+	अगर (unlikely(tb[IPSET_ATTR_IP_TO]))
+		वापस -IPSET_ERR_HASH_RANGE_UNSUPPORTED;
 
 	ret = ip_set_get_ipaddr6(tb[IPSET_ATTR_IP], &e.ip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ip_set_get_extensions(set, tb, &ext);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (tb[IPSET_ATTR_CIDR]) {
+	अगर (tb[IPSET_ATTR_CIDR]) अणु
 		e.cidr = nla_get_u8(tb[IPSET_ATTR_CIDR]);
-		if (e.cidr > HOST_MASK)
-			return -IPSET_ERR_INVALID_CIDR;
-	}
+		अगर (e.cidr > HOST_MASK)
+			वापस -IPSET_ERR_INVALID_CIDR;
+	पूर्ण
 
-	ip6_netmask(&e.ip, e.cidr);
+	ip6_neपंचांगask(&e.ip, e.cidr);
 
-	nla_strscpy(e.iface, tb[IPSET_ATTR_IFACE], IFNAMSIZ);
+	nla_strscpy(e.अगरace, tb[IPSET_ATTR_IFACE], IFNAMSIZ);
 
-	if (tb[IPSET_ATTR_CADT_FLAGS]) {
+	अगर (tb[IPSET_ATTR_CADT_FLAGS]) अणु
 		u32 cadt_flags = ip_set_get_h32(tb[IPSET_ATTR_CADT_FLAGS]);
 
-		if (cadt_flags & IPSET_FLAG_PHYSDEV)
+		अगर (cadt_flags & IPSET_FLAG_PHYSDEV)
 			e.physdev = 1;
-		if (cadt_flags & IPSET_FLAG_NOMATCH)
+		अगर (cadt_flags & IPSET_FLAG_NOMATCH)
 			flags |= (IPSET_FLAG_NOMATCH << 16);
-		if (cadt_flags & IPSET_FLAG_IFACE_WILDCARD)
+		अगर (cadt_flags & IPSET_FLAG_IFACE_WILDCARD)
 			e.wildcard = 1;
-	}
+	पूर्ण
 
 	ret = adtfn(set, &e, &ext, &ext, flags);
 
-	return ip_set_enomatch(ret, flags, adt, set) ? -ret :
+	वापस ip_set_enomatch(ret, flags, adt, set) ? -ret :
 	       ip_set_eexist(ret, flags) ? 0 : ret;
-}
+पूर्ण
 
-static struct ip_set_type hash_netiface_type __read_mostly = {
+अटल काष्ठा ip_set_type hash_netअगरace_type __पढ़ो_mostly = अणु
 	.name		= "hash:net,iface",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_IP | IPSET_TYPE_IFACE |
@@ -472,49 +473,49 @@ static struct ip_set_type hash_netiface_type __read_mostly = {
 	.revision_min	= IPSET_TYPE_REV_MIN,
 	.revision_max	= IPSET_TYPE_REV_MAX,
 	.create_flags[IPSET_TYPE_REV_MAX] = IPSET_CREATE_FLAG_BUCKETSIZE,
-	.create		= hash_netiface_create,
-	.create_policy	= {
-		[IPSET_ATTR_HASHSIZE]	= { .type = NLA_U32 },
-		[IPSET_ATTR_MAXELEM]	= { .type = NLA_U32 },
-		[IPSET_ATTR_INITVAL]	= { .type = NLA_U32 },
-		[IPSET_ATTR_BUCKETSIZE]	= { .type = NLA_U8 },
-		[IPSET_ATTR_RESIZE]	= { .type = NLA_U8  },
-		[IPSET_ATTR_PROTO]	= { .type = NLA_U8 },
-		[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
-		[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
-	},
-	.adt_policy	= {
-		[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
-		[IPSET_ATTR_IP_TO]	= { .type = NLA_NESTED },
-		[IPSET_ATTR_IFACE]	= { .type = NLA_NUL_STRING,
-					    .len  = IFNAMSIZ - 1 },
-		[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
-		[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
-		[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
-		[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
-		[IPSET_ATTR_BYTES]	= { .type = NLA_U64 },
-		[IPSET_ATTR_PACKETS]	= { .type = NLA_U64 },
-		[IPSET_ATTR_COMMENT]	= { .type = NLA_NUL_STRING,
-					    .len  = IPSET_MAX_COMMENT_SIZE },
-		[IPSET_ATTR_SKBMARK]	= { .type = NLA_U64 },
-		[IPSET_ATTR_SKBPRIO]	= { .type = NLA_U32 },
-		[IPSET_ATTR_SKBQUEUE]	= { .type = NLA_U16 },
-	},
+	.create		= hash_netअगरace_create,
+	.create_policy	= अणु
+		[IPSET_ATTR_HASHSIZE]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_MAXELEM]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_INITVAL]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_BUCKETSIZE]	= अणु .type = NLA_U8 पूर्ण,
+		[IPSET_ATTR_RESIZE]	= अणु .type = NLA_U8  पूर्ण,
+		[IPSET_ATTR_PROTO]	= अणु .type = NLA_U8 पूर्ण,
+		[IPSET_ATTR_TIMEOUT]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_CADT_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
+	पूर्ण,
+	.adt_policy	= अणु
+		[IPSET_ATTR_IP]		= अणु .type = NLA_NESTED पूर्ण,
+		[IPSET_ATTR_IP_TO]	= अणु .type = NLA_NESTED पूर्ण,
+		[IPSET_ATTR_IFACE]	= अणु .type = NLA_NUL_STRING,
+					    .len  = IFNAMSIZ - 1 पूर्ण,
+		[IPSET_ATTR_CADT_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_CIDR]	= अणु .type = NLA_U8 पूर्ण,
+		[IPSET_ATTR_TIMEOUT]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_LINENO]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_BYTES]	= अणु .type = NLA_U64 पूर्ण,
+		[IPSET_ATTR_PACKETS]	= अणु .type = NLA_U64 पूर्ण,
+		[IPSET_ATTR_COMMENT]	= अणु .type = NLA_NUL_STRING,
+					    .len  = IPSET_MAX_COMMENT_SIZE पूर्ण,
+		[IPSET_ATTR_SKBMARK]	= अणु .type = NLA_U64 पूर्ण,
+		[IPSET_ATTR_SKBPRIO]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_SKBQUEUE]	= अणु .type = NLA_U16 पूर्ण,
+	पूर्ण,
 	.me		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init
-hash_netiface_init(void)
-{
-	return ip_set_type_register(&hash_netiface_type);
-}
+अटल पूर्णांक __init
+hash_netअगरace_init(व्योम)
+अणु
+	वापस ip_set_type_रेजिस्टर(&hash_netअगरace_type);
+पूर्ण
 
-static void __exit
-hash_netiface_fini(void)
-{
+अटल व्योम __निकास
+hash_netअगरace_fini(व्योम)
+अणु
 	rcu_barrier();
-	ip_set_type_unregister(&hash_netiface_type);
-}
+	ip_set_type_unरेजिस्टर(&hash_netअगरace_type);
+पूर्ण
 
-module_init(hash_netiface_init);
-module_exit(hash_netiface_fini);
+module_init(hash_netअगरace_init);
+module_निकास(hash_netअगरace_fini);

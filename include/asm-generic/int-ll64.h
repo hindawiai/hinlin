@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * asm-generic/int-ll64.h
+ * यंत्र-generic/पूर्णांक-ll64.h
  *
- * Integer declarations for architectures which use "long long"
- * for 64-bit types.
+ * Integer declarations क्रम architectures which use "long long"
+ * क्रम 64-bit types.
  */
-#ifndef _ASM_GENERIC_INT_LL64_H
-#define _ASM_GENERIC_INT_LL64_H
+#अगर_अघोषित _ASM_GENERIC_INT_LL64_H
+#घोषणा _ASM_GENERIC_INT_LL64_H
 
-#include <uapi/asm-generic/int-ll64.h>
+#समावेश <uapi/यंत्र-generic/पूर्णांक-ll64.h>
 
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-typedef __s8  s8;
-typedef __u8  u8;
-typedef __s16 s16;
-typedef __u16 u16;
-typedef __s32 s32;
-typedef __u32 u32;
-typedef __s64 s64;
-typedef __u64 u64;
+प्रकार __s8  s8;
+प्रकार __u8  u8;
+प्रकार __s16 s16;
+प्रकार __u16 u16;
+प्रकार __s32 s32;
+प्रकार __u32 u32;
+प्रकार __s64 s64;
+प्रकार __u64 u64;
 
-#define S8_C(x)  x
-#define U8_C(x)  x ## U
-#define S16_C(x) x
-#define U16_C(x) x ## U
-#define S32_C(x) x
-#define U32_C(x) x ## U
-#define S64_C(x) x ## LL
-#define U64_C(x) x ## ULL
+#घोषणा S8_C(x)  x
+#घोषणा U8_C(x)  x ## U
+#घोषणा S16_C(x) x
+#घोषणा U16_C(x) x ## U
+#घोषणा S32_C(x) x
+#घोषणा U32_C(x) x ## U
+#घोषणा S64_C(x) x ## LL
+#घोषणा U64_C(x) x ## ULL
 
-#else /* __ASSEMBLY__ */
+#अन्यथा /* __ASSEMBLY__ */
 
-#define S8_C(x)  x
-#define U8_C(x)  x
-#define S16_C(x) x
-#define U16_C(x) x
-#define S32_C(x) x
-#define U32_C(x) x
-#define S64_C(x) x
-#define U64_C(x) x
+#घोषणा S8_C(x)  x
+#घोषणा U8_C(x)  x
+#घोषणा S16_C(x) x
+#घोषणा U16_C(x) x
+#घोषणा S32_C(x) x
+#घोषणा U32_C(x) x
+#घोषणा S64_C(x) x
+#घोषणा U64_C(x) x
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* _ASM_GENERIC_INT_LL64_H */
+#पूर्ण_अगर /* _ASM_GENERIC_INT_LL64_H */

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Linux/PA-RISC Project (http://www.parisc-linux.org/)
  *
- * Floating-point emulation code
+ * Floating-poपूर्णांक emulation code
  *  Copyright (C) 2001 Hewlett-Packard (Paul Bame) <bame@debian.org>
  */
 /*
@@ -12,10 +13,10 @@
  *	@(#)	pa/spmath/fcnvfx.c		$Revision: 1.1 $
  *
  *  Purpose:
- *	Single Floating-point to Single Fixed-point
- *	Single Floating-point to Double Fixed-point 
- *	Double Floating-point to Single Fixed-point 
- *	Double Floating-point to Double Fixed-point 
+ *	Single Floating-poपूर्णांक to Single Fixed-poपूर्णांक
+ *	Single Floating-poपूर्णांक to Double Fixed-poपूर्णांक 
+ *	Double Floating-poपूर्णांक to Single Fixed-poपूर्णांक 
+ *	Double Floating-poपूर्णांक to Double Fixed-poपूर्णांक 
  *
  *  External Interfaces:
  *	dbl_to_dbl_fcnvfx(srcptr,nullptr,dstptr,status)
@@ -32,457 +33,457 @@
 */
 
 
-#include "float.h"
-#include "sgl_float.h"
-#include "dbl_float.h"
-#include "cnv_float.h"
+#समावेश "float.h"
+#समावेश "sgl_float.h"
+#समावेश "dbl_float.h"
+#समावेश "cnv_float.h"
 
 /*
- *  Single Floating-point to Single Fixed-point 
+ *  Single Floating-poपूर्णांक to Single Fixed-poपूर्णांक 
  */
 /*ARGSUSED*/
-int
+पूर्णांक
 sgl_to_sgl_fcnvfx(
-		    sgl_floating_point *srcptr,
-		    sgl_floating_point *nullptr,
-		    int *dstptr,
-		    sgl_floating_point *status)
-{
-	register unsigned int src, temp;
-	register int src_exponent, result;
-	register boolean inexact = FALSE;
+		    sgl_भग्नing_poपूर्णांक *srcptr,
+		    sgl_भग्नing_poपूर्णांक *nullptr,
+		    पूर्णांक *dstptr,
+		    sgl_भग्नing_poपूर्णांक *status)
+अणु
+	रेजिस्टर अचिन्हित पूर्णांक src, temp;
+	रेजिस्टर पूर्णांक src_exponent, result;
+	रेजिस्टर boolean inexact = FALSE;
 
 	src = *srcptr;
 	src_exponent = Sgl_exponent(src) - SGL_BIAS;
 
 	/* 
-	 * Test for overflow
+	 * Test क्रम overflow
 	 */
-	if (src_exponent > SGL_FX_MAX_EXP) {
-		/* check for MININT */
-		if ((src_exponent > SGL_FX_MAX_EXP + 1) || 
-		Sgl_isnotzero_mantissa(src) || Sgl_iszero_sign(src)) {
-                        if (Sgl_iszero_sign(src)) result = 0x7fffffff;
-                        else result = 0x80000000; 
+	अगर (src_exponent > SGL_FX_MAX_EXP) अणु
+		/* check क्रम MININT */
+		अगर ((src_exponent > SGL_FX_MAX_EXP + 1) || 
+		Sgl_isnotzero_mantissa(src) || Sgl_iszero_sign(src)) अणु
+                        अगर (Sgl_iszero_sign(src)) result = 0x7fffffff;
+                        अन्यथा result = 0x80000000; 
 
-	                if (Is_invalidtrap_enabled()) {
-                            return(INVALIDEXCEPTION);
-                        }
+	                अगर (Is_invalidtrap_enabled()) अणु
+                            वापस(INVALIDEXCEPTION);
+                        पूर्ण
                         Set_invalidflag();
 			*dstptr = result;
-			return(NOEXCEPTION);
-       		}
-	}
+			वापस(NOEXCEPTION);
+       		पूर्ण
+	पूर्ण
 	/*
 	 * Generate result
 	 */
-	if (src_exponent >= 0) {
+	अगर (src_exponent >= 0) अणु
 		temp = src;
 		Sgl_clear_signexponent_set_hidden(temp);
 		Int_from_sgl_mantissa(temp,src_exponent);
-		if (Sgl_isone_sign(src))  result = -Sgl_all(temp);
-		else result = Sgl_all(temp);
+		अगर (Sgl_isone_sign(src))  result = -Sgl_all(temp);
+		अन्यथा result = Sgl_all(temp);
 
-		/* check for inexact */
-		if (Sgl_isinexact_to_fix(src,src_exponent)) {
+		/* check क्रम inexact */
+		अगर (Sgl_isinexact_to_fix(src,src_exponent)) अणु
 			inexact = TRUE;
 			/*  round result  */
-			switch (Rounding_mode()) {
-			case ROUNDPLUS:
-			     if (Sgl_iszero_sign(src)) result++;
-			     break;
-			case ROUNDMINUS:
-			     if (Sgl_isone_sign(src)) result--;
-			     break;
-			case ROUNDNEAREST:
-			     if (Sgl_isone_roundbit(src,src_exponent)) {
-			        if (Sgl_isone_stickybit(src,src_exponent) 
+			चयन (Rounding_mode()) अणु
+			हाल ROUNDPLUS:
+			     अगर (Sgl_iszero_sign(src)) result++;
+			     अवरोध;
+			हाल ROUNDMINUS:
+			     अगर (Sgl_isone_sign(src)) result--;
+			     अवरोध;
+			हाल ROUNDNEAREST:
+			     अगर (Sgl_isone_roundbit(src,src_exponent)) अणु
+			        अगर (Sgl_isone_stickybit(src,src_exponent) 
 				|| (Sgl_isone_lowmantissa(temp)))
-			           if (Sgl_iszero_sign(src)) result++;
-			           else result--;
-			     }
-			} 
-		}
-	}
-	else {
+			           अगर (Sgl_iszero_sign(src)) result++;
+			           अन्यथा result--;
+			     पूर्ण
+			पूर्ण 
+		पूर्ण
+	पूर्ण
+	अन्यथा अणु
 		result = 0;
 
-		/* check for inexact */
-		if (Sgl_isnotzero_exponentmantissa(src)) {
+		/* check क्रम inexact */
+		अगर (Sgl_isnotzero_exponenपंचांगantissa(src)) अणु
 			inexact = TRUE;
 			/*  round result  */
-			switch (Rounding_mode()) {
-			case ROUNDPLUS:
-			     if (Sgl_iszero_sign(src)) result++;
-			     break;
-			case ROUNDMINUS:
-			     if (Sgl_isone_sign(src)) result--;
-			     break;
-			case ROUNDNEAREST:
-			     if (src_exponent == -1)
-			        if (Sgl_isnotzero_mantissa(src))
-			           if (Sgl_iszero_sign(src)) result++;
-			           else result--;
-			} 
-		}
-	}
+			चयन (Rounding_mode()) अणु
+			हाल ROUNDPLUS:
+			     अगर (Sgl_iszero_sign(src)) result++;
+			     अवरोध;
+			हाल ROUNDMINUS:
+			     अगर (Sgl_isone_sign(src)) result--;
+			     अवरोध;
+			हाल ROUNDNEAREST:
+			     अगर (src_exponent == -1)
+			        अगर (Sgl_isnotzero_mantissa(src))
+			           अगर (Sgl_iszero_sign(src)) result++;
+			           अन्यथा result--;
+			पूर्ण 
+		पूर्ण
+	पूर्ण
 	*dstptr = result;
-	if (inexact) {
-		if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
-		else Set_inexactflag();
-	}
-	return(NOEXCEPTION);
-}
+	अगर (inexact) अणु
+		अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
+		अन्यथा Set_inexactflag();
+	पूर्ण
+	वापस(NOEXCEPTION);
+पूर्ण
 
 /*
- *  Single Floating-point to Double Fixed-point 
+ *  Single Floating-poपूर्णांक to Double Fixed-poपूर्णांक 
  */
 /*ARGSUSED*/
-int
+पूर्णांक
 sgl_to_dbl_fcnvfx(
-		sgl_floating_point *srcptr,
-		unsigned int *nullptr,
-		dbl_integer *dstptr,
-		unsigned int *status)
-{
-	register int src_exponent, resultp1;
-	register unsigned int src, temp, resultp2;
-	register boolean inexact = FALSE;
+		sgl_भग्नing_poपूर्णांक *srcptr,
+		अचिन्हित पूर्णांक *nullptr,
+		dbl_पूर्णांकeger *dstptr,
+		अचिन्हित पूर्णांक *status)
+अणु
+	रेजिस्टर पूर्णांक src_exponent, resultp1;
+	रेजिस्टर अचिन्हित पूर्णांक src, temp, resultp2;
+	रेजिस्टर boolean inexact = FALSE;
 
 	src = *srcptr;
 	src_exponent = Sgl_exponent(src) - SGL_BIAS;
 
 	/* 
-	 * Test for overflow
+	 * Test क्रम overflow
 	 */
-	if (src_exponent > DBL_FX_MAX_EXP) {
-		/* check for MININT */
-		if ((src_exponent > DBL_FX_MAX_EXP + 1) || 
-		Sgl_isnotzero_mantissa(src) || Sgl_iszero_sign(src)) {
-                        if (Sgl_iszero_sign(src)) {
+	अगर (src_exponent > DBL_FX_MAX_EXP) अणु
+		/* check क्रम MININT */
+		अगर ((src_exponent > DBL_FX_MAX_EXP + 1) || 
+		Sgl_isnotzero_mantissa(src) || Sgl_iszero_sign(src)) अणु
+                        अगर (Sgl_iszero_sign(src)) अणु
                               resultp1 = 0x7fffffff;
 			      resultp2 = 0xffffffff;
-			}
-                        else {
+			पूर्ण
+                        अन्यथा अणु
 			    resultp1 = 0x80000000; 
 			    resultp2 = 0;
-			}
-	                if (Is_invalidtrap_enabled()) {
-                            return(INVALIDEXCEPTION);
-                        }
+			पूर्ण
+	                अगर (Is_invalidtrap_enabled()) अणु
+                            वापस(INVALIDEXCEPTION);
+                        पूर्ण
                         Set_invalidflag();
-    		        Dint_copytoptr(resultp1,resultp2,dstptr);
-			return(NOEXCEPTION);
-		}
-		Dint_set_minint(resultp1,resultp2);
-		Dint_copytoptr(resultp1,resultp2,dstptr);
-		return(NOEXCEPTION);
-	}
+    		        Dपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
+			वापस(NOEXCEPTION);
+		पूर्ण
+		Dपूर्णांक_set_minपूर्णांक(resultp1,resultp2);
+		Dपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
+		वापस(NOEXCEPTION);
+	पूर्ण
 	/*
 	 * Generate result
 	 */
-	if (src_exponent >= 0) {
+	अगर (src_exponent >= 0) अणु
 		temp = src;
 		Sgl_clear_signexponent_set_hidden(temp);
-		Dint_from_sgl_mantissa(temp,src_exponent,resultp1,resultp2);
-		if (Sgl_isone_sign(src)) {
-			Dint_setone_sign(resultp1,resultp2);
-		}
+		Dपूर्णांक_from_sgl_mantissa(temp,src_exponent,resultp1,resultp2);
+		अगर (Sgl_isone_sign(src)) अणु
+			Dपूर्णांक_setone_sign(resultp1,resultp2);
+		पूर्ण
 
-		/* check for inexact */
-		if (Sgl_isinexact_to_fix(src,src_exponent)) {
+		/* check क्रम inexact */
+		अगर (Sgl_isinexact_to_fix(src,src_exponent)) अणु
 			inexact = TRUE;
                         /*  round result  */
-                        switch (Rounding_mode()) {
-                        case ROUNDPLUS:
-                             if (Sgl_iszero_sign(src)) {
-				Dint_increment(resultp1,resultp2);
-			     }
-                             break;
-                        case ROUNDMINUS:
-                             if (Sgl_isone_sign(src)) {
-				Dint_decrement(resultp1,resultp2);
-			     }
-                             break;
-                        case ROUNDNEAREST:
-                             if (Sgl_isone_roundbit(src,src_exponent))
-                                if (Sgl_isone_stickybit(src,src_exponent) || 
-				(Dint_isone_lowp2(resultp2)))
-				   if (Sgl_iszero_sign(src)) {
-				      Dint_increment(resultp1,resultp2);
-				   }
-                                   else {
-				      Dint_decrement(resultp1,resultp2);
-				   }
-                        }
-                }
-        }
-	else {
-		Dint_setzero(resultp1,resultp2);
+                        चयन (Rounding_mode()) अणु
+                        हाल ROUNDPLUS:
+                             अगर (Sgl_iszero_sign(src)) अणु
+				Dपूर्णांक_increment(resultp1,resultp2);
+			     पूर्ण
+                             अवरोध;
+                        हाल ROUNDMINUS:
+                             अगर (Sgl_isone_sign(src)) अणु
+				Dपूर्णांक_decrement(resultp1,resultp2);
+			     पूर्ण
+                             अवरोध;
+                        हाल ROUNDNEAREST:
+                             अगर (Sgl_isone_roundbit(src,src_exponent))
+                                अगर (Sgl_isone_stickybit(src,src_exponent) || 
+				(Dपूर्णांक_isone_lowp2(resultp2)))
+				   अगर (Sgl_iszero_sign(src)) अणु
+				      Dपूर्णांक_increment(resultp1,resultp2);
+				   पूर्ण
+                                   अन्यथा अणु
+				      Dपूर्णांक_decrement(resultp1,resultp2);
+				   पूर्ण
+                        पूर्ण
+                पूर्ण
+        पूर्ण
+	अन्यथा अणु
+		Dपूर्णांक_setzero(resultp1,resultp2);
 
-		/* check for inexact */
-		if (Sgl_isnotzero_exponentmantissa(src)) {
+		/* check क्रम inexact */
+		अगर (Sgl_isnotzero_exponenपंचांगantissa(src)) अणु
 			inexact = TRUE;
                         /*  round result  */
-                        switch (Rounding_mode()) {
-                        case ROUNDPLUS:
-                             if (Sgl_iszero_sign(src)) {
-				Dint_increment(resultp1,resultp2);
-			     }
-                             break;
-                        case ROUNDMINUS:
-                             if (Sgl_isone_sign(src)) {
-				Dint_decrement(resultp1,resultp2);
-			     }
-                             break;
-                        case ROUNDNEAREST:
-                             if (src_exponent == -1)
-                                if (Sgl_isnotzero_mantissa(src))
-                                   if (Sgl_iszero_sign(src)) {
-				      Dint_increment(resultp1,resultp2);
-				   }
-                                   else {
-				      Dint_decrement(resultp1,resultp2);
-				   }
-			}
-		}
-	}
-	Dint_copytoptr(resultp1,resultp2,dstptr);
-	if (inexact) {
-		if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
-		else Set_inexactflag();
-	}
-	return(NOEXCEPTION);
-}
+                        चयन (Rounding_mode()) अणु
+                        हाल ROUNDPLUS:
+                             अगर (Sgl_iszero_sign(src)) अणु
+				Dपूर्णांक_increment(resultp1,resultp2);
+			     पूर्ण
+                             अवरोध;
+                        हाल ROUNDMINUS:
+                             अगर (Sgl_isone_sign(src)) अणु
+				Dपूर्णांक_decrement(resultp1,resultp2);
+			     पूर्ण
+                             अवरोध;
+                        हाल ROUNDNEAREST:
+                             अगर (src_exponent == -1)
+                                अगर (Sgl_isnotzero_mantissa(src))
+                                   अगर (Sgl_iszero_sign(src)) अणु
+				      Dपूर्णांक_increment(resultp1,resultp2);
+				   पूर्ण
+                                   अन्यथा अणु
+				      Dपूर्णांक_decrement(resultp1,resultp2);
+				   पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	Dपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
+	अगर (inexact) अणु
+		अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
+		अन्यथा Set_inexactflag();
+	पूर्ण
+	वापस(NOEXCEPTION);
+पूर्ण
 
 /*
- *  Double Floating-point to Single Fixed-point 
+ *  Double Floating-poपूर्णांक to Single Fixed-poपूर्णांक 
  */
 /*ARGSUSED*/
-int
+पूर्णांक
 dbl_to_sgl_fcnvfx(
-		    dbl_floating_point *srcptr,
-		    unsigned int *nullptr,
-		    int *dstptr,
-		    unsigned int *status)
-{
-	register unsigned int srcp1,srcp2, tempp1,tempp2;
-	register int src_exponent, result;
-	register boolean inexact = FALSE;
+		    dbl_भग्नing_poपूर्णांक *srcptr,
+		    अचिन्हित पूर्णांक *nullptr,
+		    पूर्णांक *dstptr,
+		    अचिन्हित पूर्णांक *status)
+अणु
+	रेजिस्टर अचिन्हित पूर्णांक srcp1,srcp2, tempp1,tempp2;
+	रेजिस्टर पूर्णांक src_exponent, result;
+	रेजिस्टर boolean inexact = FALSE;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
 	src_exponent = Dbl_exponent(srcp1) - DBL_BIAS;
 
 	/* 
-	 * Test for overflow
+	 * Test क्रम overflow
 	 */
-	if (src_exponent > SGL_FX_MAX_EXP) {
-		/* check for MININT */
-		if (Dbl_isoverflow_to_int(src_exponent,srcp1,srcp2)) {
-                        if (Dbl_iszero_sign(srcp1)) result = 0x7fffffff;
-                        else result = 0x80000000; 
+	अगर (src_exponent > SGL_FX_MAX_EXP) अणु
+		/* check क्रम MININT */
+		अगर (Dbl_isoverflow_to_पूर्णांक(src_exponent,srcp1,srcp2)) अणु
+                        अगर (Dbl_iszero_sign(srcp1)) result = 0x7fffffff;
+                        अन्यथा result = 0x80000000; 
 
-	                if (Is_invalidtrap_enabled()) {
-                            return(INVALIDEXCEPTION);
-                        }
+	                अगर (Is_invalidtrap_enabled()) अणु
+                            वापस(INVALIDEXCEPTION);
+                        पूर्ण
                         Set_invalidflag();
 			*dstptr = result;
-			return(NOEXCEPTION);
-		}
-	}
+			वापस(NOEXCEPTION);
+		पूर्ण
+	पूर्ण
 	/*
 	 * Generate result
 	 */
-	if (src_exponent >= 0) {
+	अगर (src_exponent >= 0) अणु
 		tempp1 = srcp1;
 		tempp2 = srcp2;
 		Dbl_clear_signexponent_set_hidden(tempp1);
 		Int_from_dbl_mantissa(tempp1,tempp2,src_exponent);
-		if (Dbl_isone_sign(srcp1) && (src_exponent <= SGL_FX_MAX_EXP))
+		अगर (Dbl_isone_sign(srcp1) && (src_exponent <= SGL_FX_MAX_EXP))
 			result = -Dbl_allp1(tempp1);
-		else result = Dbl_allp1(tempp1);
+		अन्यथा result = Dbl_allp1(tempp1);
 
-		/* check for inexact */
-		if (Dbl_isinexact_to_fix(srcp1,srcp2,src_exponent)) {
+		/* check क्रम inexact */
+		अगर (Dbl_isinexact_to_fix(srcp1,srcp2,src_exponent)) अणु
                         inexact = TRUE;
                         /*  round result  */
-                        switch (Rounding_mode()) {
-                        case ROUNDPLUS:
-                             if (Dbl_iszero_sign(srcp1)) result++;
-                             break;
-                        case ROUNDMINUS:
-                             if (Dbl_isone_sign(srcp1)) result--;
-                             break;
-                        case ROUNDNEAREST:
-                             if (Dbl_isone_roundbit(srcp1,srcp2,src_exponent))
-                                if (Dbl_isone_stickybit(srcp1,srcp2,src_exponent) || 
+                        चयन (Rounding_mode()) अणु
+                        हाल ROUNDPLUS:
+                             अगर (Dbl_iszero_sign(srcp1)) result++;
+                             अवरोध;
+                        हाल ROUNDMINUS:
+                             अगर (Dbl_isone_sign(srcp1)) result--;
+                             अवरोध;
+                        हाल ROUNDNEAREST:
+                             अगर (Dbl_isone_roundbit(srcp1,srcp2,src_exponent))
+                                अगर (Dbl_isone_stickybit(srcp1,srcp2,src_exponent) || 
 				(Dbl_isone_lowmantissap1(tempp1)))
-                                   if (Dbl_iszero_sign(srcp1)) result++;
-                                   else result--;
-                        } 
-			/* check for overflow */
-			if ((Dbl_iszero_sign(srcp1) && result < 0) ||
-			    (Dbl_isone_sign(srcp1) && result > 0)) {
+                                   अगर (Dbl_iszero_sign(srcp1)) result++;
+                                   अन्यथा result--;
+                        पूर्ण 
+			/* check क्रम overflow */
+			अगर ((Dbl_iszero_sign(srcp1) && result < 0) ||
+			    (Dbl_isone_sign(srcp1) && result > 0)) अणु
 			        
-                          if (Dbl_iszero_sign(srcp1)) result = 0x7fffffff;
-                          else result = 0x80000000; 
+                          अगर (Dbl_iszero_sign(srcp1)) result = 0x7fffffff;
+                          अन्यथा result = 0x80000000; 
 
-	                  if (Is_invalidtrap_enabled()) {
-                            return(INVALIDEXCEPTION);
-                          }
+	                  अगर (Is_invalidtrap_enabled()) अणु
+                            वापस(INVALIDEXCEPTION);
+                          पूर्ण
                           Set_invalidflag();
 			  *dstptr = result;
-			  return(NOEXCEPTION);
-			}
-                }
-	}
-	else {
+			  वापस(NOEXCEPTION);
+			पूर्ण
+                पूर्ण
+	पूर्ण
+	अन्यथा अणु
 		result = 0;
 
-		/* check for inexact */
-		if (Dbl_isnotzero_exponentmantissa(srcp1,srcp2)) {
+		/* check क्रम inexact */
+		अगर (Dbl_isnotzero_exponenपंचांगantissa(srcp1,srcp2)) अणु
                         inexact = TRUE;
                         /*  round result  */
-                        switch (Rounding_mode()) {
-                        case ROUNDPLUS:
-                             if (Dbl_iszero_sign(srcp1)) result++;
-                             break;
-                        case ROUNDMINUS:
-                             if (Dbl_isone_sign(srcp1)) result--;
-                             break;
-                        case ROUNDNEAREST:
-                             if (src_exponent == -1)
-                                if (Dbl_isnotzero_mantissa(srcp1,srcp2))
-                                   if (Dbl_iszero_sign(srcp1)) result++;
-                                   else result--;
-			}
-                }
-	}
+                        चयन (Rounding_mode()) अणु
+                        हाल ROUNDPLUS:
+                             अगर (Dbl_iszero_sign(srcp1)) result++;
+                             अवरोध;
+                        हाल ROUNDMINUS:
+                             अगर (Dbl_isone_sign(srcp1)) result--;
+                             अवरोध;
+                        हाल ROUNDNEAREST:
+                             अगर (src_exponent == -1)
+                                अगर (Dbl_isnotzero_mantissa(srcp1,srcp2))
+                                   अगर (Dbl_iszero_sign(srcp1)) result++;
+                                   अन्यथा result--;
+			पूर्ण
+                पूर्ण
+	पूर्ण
 	*dstptr = result;
-        if (inexact) {
-                if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
-		else Set_inexactflag();
-        }
-	return(NOEXCEPTION);
-}
+        अगर (inexact) अणु
+                अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
+		अन्यथा Set_inexactflag();
+        पूर्ण
+	वापस(NOEXCEPTION);
+पूर्ण
 
 /*
- *  Double Floating-point to Double Fixed-point 
+ *  Double Floating-poपूर्णांक to Double Fixed-poपूर्णांक 
  */
 /*ARGSUSED*/
-int
+पूर्णांक
 dbl_to_dbl_fcnvfx(
-		    dbl_floating_point *srcptr,
-		    unsigned int *nullptr,
-		    dbl_integer *dstptr,
-		    unsigned int *status)
-{
-	register int src_exponent, resultp1;
-	register unsigned int srcp1, srcp2, tempp1, tempp2, resultp2;
-	register boolean inexact = FALSE;
+		    dbl_भग्नing_poपूर्णांक *srcptr,
+		    अचिन्हित पूर्णांक *nullptr,
+		    dbl_पूर्णांकeger *dstptr,
+		    अचिन्हित पूर्णांक *status)
+अणु
+	रेजिस्टर पूर्णांक src_exponent, resultp1;
+	रेजिस्टर अचिन्हित पूर्णांक srcp1, srcp2, tempp1, tempp2, resultp2;
+	रेजिस्टर boolean inexact = FALSE;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
 	src_exponent = Dbl_exponent(srcp1) - DBL_BIAS;
 
 	/* 
-	 * Test for overflow
+	 * Test क्रम overflow
 	 */
-	if (src_exponent > DBL_FX_MAX_EXP) {
-		/* check for MININT */
-		if ((src_exponent > DBL_FX_MAX_EXP + 1) || 
-		Dbl_isnotzero_mantissa(srcp1,srcp2) || Dbl_iszero_sign(srcp1)) {
-                        if (Dbl_iszero_sign(srcp1)) {
+	अगर (src_exponent > DBL_FX_MAX_EXP) अणु
+		/* check क्रम MININT */
+		अगर ((src_exponent > DBL_FX_MAX_EXP + 1) || 
+		Dbl_isnotzero_mantissa(srcp1,srcp2) || Dbl_iszero_sign(srcp1)) अणु
+                        अगर (Dbl_iszero_sign(srcp1)) अणु
                               resultp1 = 0x7fffffff;
 			      resultp2 = 0xffffffff;
-			}
-                        else {
+			पूर्ण
+                        अन्यथा अणु
 			    resultp1 = 0x80000000; 
 			    resultp2 = 0;
-			}
-	                if (Is_invalidtrap_enabled()) {
-                            return(INVALIDEXCEPTION);
-                        }
+			पूर्ण
+	                अगर (Is_invalidtrap_enabled()) अणु
+                            वापस(INVALIDEXCEPTION);
+                        पूर्ण
                         Set_invalidflag();
-    		        Dint_copytoptr(resultp1,resultp2,dstptr);
-			return(NOEXCEPTION);
-		}
-	}
+    		        Dपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
+			वापस(NOEXCEPTION);
+		पूर्ण
+	पूर्ण
  
 	/*
 	 * Generate result
 	 */
-	if (src_exponent >= 0) {
+	अगर (src_exponent >= 0) अणु
 		tempp1 = srcp1;
 		tempp2 = srcp2;
 		Dbl_clear_signexponent_set_hidden(tempp1);
-		Dint_from_dbl_mantissa(tempp1,tempp2,src_exponent,resultp1,
+		Dपूर्णांक_from_dbl_mantissa(tempp1,tempp2,src_exponent,resultp1,
 		resultp2);
-		if (Dbl_isone_sign(srcp1)) {
-			Dint_setone_sign(resultp1,resultp2);
-		}
+		अगर (Dbl_isone_sign(srcp1)) अणु
+			Dपूर्णांक_setone_sign(resultp1,resultp2);
+		पूर्ण
 
-		/* check for inexact */
-		if (Dbl_isinexact_to_fix(srcp1,srcp2,src_exponent)) {
+		/* check क्रम inexact */
+		अगर (Dbl_isinexact_to_fix(srcp1,srcp2,src_exponent)) अणु
                         inexact = TRUE;
                         /*  round result  */
-                        switch (Rounding_mode()) {
-                        case ROUNDPLUS:
-                             if (Dbl_iszero_sign(srcp1)) {
-				Dint_increment(resultp1,resultp2);
-			     }
-                             break;
-                        case ROUNDMINUS:
-                             if (Dbl_isone_sign(srcp1)) {
-				Dint_decrement(resultp1,resultp2);
-			     }
-                             break;
-                        case ROUNDNEAREST:
-                             if (Dbl_isone_roundbit(srcp1,srcp2,src_exponent))
-                                if (Dbl_isone_stickybit(srcp1,srcp2,src_exponent) || 
-				(Dint_isone_lowp2(resultp2)))
-                                   if (Dbl_iszero_sign(srcp1)) {
-				      Dint_increment(resultp1,resultp2);
-				   }
-                                   else {
-				      Dint_decrement(resultp1,resultp2);
-				   }
-                        } 
-                }
-	}
-	else {
-		Dint_setzero(resultp1,resultp2);
+                        चयन (Rounding_mode()) अणु
+                        हाल ROUNDPLUS:
+                             अगर (Dbl_iszero_sign(srcp1)) अणु
+				Dपूर्णांक_increment(resultp1,resultp2);
+			     पूर्ण
+                             अवरोध;
+                        हाल ROUNDMINUS:
+                             अगर (Dbl_isone_sign(srcp1)) अणु
+				Dपूर्णांक_decrement(resultp1,resultp2);
+			     पूर्ण
+                             अवरोध;
+                        हाल ROUNDNEAREST:
+                             अगर (Dbl_isone_roundbit(srcp1,srcp2,src_exponent))
+                                अगर (Dbl_isone_stickybit(srcp1,srcp2,src_exponent) || 
+				(Dपूर्णांक_isone_lowp2(resultp2)))
+                                   अगर (Dbl_iszero_sign(srcp1)) अणु
+				      Dपूर्णांक_increment(resultp1,resultp2);
+				   पूर्ण
+                                   अन्यथा अणु
+				      Dपूर्णांक_decrement(resultp1,resultp2);
+				   पूर्ण
+                        पूर्ण 
+                पूर्ण
+	पूर्ण
+	अन्यथा अणु
+		Dपूर्णांक_setzero(resultp1,resultp2);
 
-		/* check for inexact */
-		if (Dbl_isnotzero_exponentmantissa(srcp1,srcp2)) {
+		/* check क्रम inexact */
+		अगर (Dbl_isnotzero_exponenपंचांगantissa(srcp1,srcp2)) अणु
                         inexact = TRUE;
                         /*  round result  */
-                        switch (Rounding_mode()) {
-                        case ROUNDPLUS:
-                             if (Dbl_iszero_sign(srcp1)) {
-				Dint_increment(resultp1,resultp2);
-			     }
-                             break;
-                        case ROUNDMINUS:
-                             if (Dbl_isone_sign(srcp1)) {
-				Dint_decrement(resultp1,resultp2);
-			     }
-                             break;
-                        case ROUNDNEAREST:
-                             if (src_exponent == -1)
-                                if (Dbl_isnotzero_mantissa(srcp1,srcp2))
-                                   if (Dbl_iszero_sign(srcp1)) {
-				      Dint_increment(resultp1,resultp2);
-				   }
-                                   else {
-				      Dint_decrement(resultp1,resultp2);
-				   }
-			}
-                }
-	}
-	Dint_copytoptr(resultp1,resultp2,dstptr);
-        if (inexact) {
-                if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
-        	else Set_inexactflag();
-        }
-	return(NOEXCEPTION);
-}
+                        चयन (Rounding_mode()) अणु
+                        हाल ROUNDPLUS:
+                             अगर (Dbl_iszero_sign(srcp1)) अणु
+				Dपूर्णांक_increment(resultp1,resultp2);
+			     पूर्ण
+                             अवरोध;
+                        हाल ROUNDMINUS:
+                             अगर (Dbl_isone_sign(srcp1)) अणु
+				Dपूर्णांक_decrement(resultp1,resultp2);
+			     पूर्ण
+                             अवरोध;
+                        हाल ROUNDNEAREST:
+                             अगर (src_exponent == -1)
+                                अगर (Dbl_isnotzero_mantissa(srcp1,srcp2))
+                                   अगर (Dbl_iszero_sign(srcp1)) अणु
+				      Dपूर्णांक_increment(resultp1,resultp2);
+				   पूर्ण
+                                   अन्यथा अणु
+				      Dपूर्णांक_decrement(resultp1,resultp2);
+				   पूर्ण
+			पूर्ण
+                पूर्ण
+	पूर्ण
+	Dपूर्णांक_copytoptr(resultp1,resultp2,dstptr);
+        अगर (inexact) अणु
+                अगर (Is_inexacttrap_enabled()) वापस(INEXACTEXCEPTION);
+        	अन्यथा Set_inexactflag();
+        पूर्ण
+	वापस(NOEXCEPTION);
+पूर्ण

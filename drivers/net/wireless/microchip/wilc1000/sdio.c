@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2012 - 2018 Microchip Technology Inc., and its subsidiaries.
  * All rights reserved.
  */
 
-#include <linux/clk.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/mmc/sdio_ids.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/sdio.h>
-#include <linux/of_irq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/mmc/sdio_ids.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/sdपन.स>
+#समावेश <linux/of_irq.h>
 
-#include "netdev.h"
-#include "cfg80211.h"
+#समावेश "netdev.h"
+#समावेश "cfg80211.h"
 
-#define SDIO_MODALIAS "wilc1000_sdio"
+#घोषणा SDIO_MODALIAS "wilc1000_sdio"
 
-static const struct sdio_device_id wilc_sdio_ids[] = {
-	{ SDIO_DEVICE(SDIO_VENDOR_ID_MICROCHIP_WILC, SDIO_DEVICE_ID_MICROCHIP_WILC1000) },
-	{ },
-};
+अटल स्थिर काष्ठा sdio_device_id wilc_sdio_ids[] = अणु
+	अणु SDIO_DEVICE(SDIO_VENDOR_ID_MICROCHIP_WILC, SDIO_DEVICE_ID_MICROCHIP_WILC1000) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-#define WILC_SDIO_BLOCK_SIZE 512
+#घोषणा WILC_SDIO_BLOCK_SIZE 512
 
-struct wilc_sdio {
+काष्ठा wilc_sdio अणु
 	bool irq_gpio;
 	u32 block_size;
-	int has_thrpt_enh3;
-};
+	पूर्णांक has_thrpt_enh3;
+पूर्ण;
 
-struct sdio_cmd52 {
-	u32 read_write:		1;
+काष्ठा sdio_cmd52 अणु
+	u32 पढ़ो_ग_लिखो:		1;
 	u32 function:		3;
 	u32 raw:		1;
 	u32 address:		17;
 	u32 data:		8;
-};
+पूर्ण;
 
-struct sdio_cmd53 {
-	u32 read_write:		1;
+काष्ठा sdio_cmd53 अणु
+	u32 पढ़ो_ग_लिखो:		1;
 	u32 function:		3;
 	u32 block_mode:		1;
 	u32 increment:		1;
@@ -46,202 +47,202 @@ struct sdio_cmd53 {
 	u32 count:		9;
 	u8 *buffer;
 	u32 block_size;
-};
+पूर्ण;
 
-static const struct wilc_hif_func wilc_hif_sdio;
+अटल स्थिर काष्ठा wilc_hअगर_func wilc_hअगर_sdio;
 
-static void wilc_sdio_interrupt(struct sdio_func *func)
-{
+अटल व्योम wilc_sdio_पूर्णांकerrupt(काष्ठा sdio_func *func)
+अणु
 	sdio_release_host(func);
 	wilc_handle_isr(sdio_get_drvdata(func));
 	sdio_claim_host(func);
-}
+पूर्ण
 
-static int wilc_sdio_cmd52(struct wilc *wilc, struct sdio_cmd52 *cmd)
-{
-	struct sdio_func *func = container_of(wilc->dev, struct sdio_func, dev);
-	int ret;
+अटल पूर्णांक wilc_sdio_cmd52(काष्ठा wilc *wilc, काष्ठा sdio_cmd52 *cmd)
+अणु
+	काष्ठा sdio_func *func = container_of(wilc->dev, काष्ठा sdio_func, dev);
+	पूर्णांक ret;
 	u8 data;
 
 	sdio_claim_host(func);
 
 	func->num = cmd->function;
-	if (cmd->read_write) {  /* write */
-		if (cmd->raw) {
-			sdio_writeb(func, cmd->data, cmd->address, &ret);
-			data = sdio_readb(func, cmd->address, &ret);
+	अगर (cmd->पढ़ो_ग_लिखो) अणु  /* ग_लिखो */
+		अगर (cmd->raw) अणु
+			sdio_ग_लिखोb(func, cmd->data, cmd->address, &ret);
+			data = sdio_पढ़ोb(func, cmd->address, &ret);
 			cmd->data = data;
-		} else {
-			sdio_writeb(func, cmd->data, cmd->address, &ret);
-		}
-	} else {        /* read */
-		data = sdio_readb(func, cmd->address, &ret);
+		पूर्ण अन्यथा अणु
+			sdio_ग_लिखोb(func, cmd->data, cmd->address, &ret);
+		पूर्ण
+	पूर्ण अन्यथा अणु        /* पढ़ो */
+		data = sdio_पढ़ोb(func, cmd->address, &ret);
 		cmd->data = data;
-	}
+	पूर्ण
 
 	sdio_release_host(func);
 
-	if (ret)
+	अगर (ret)
 		dev_err(&func->dev, "%s..failed, err(%d)\n", __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wilc_sdio_cmd53(struct wilc *wilc, struct sdio_cmd53 *cmd)
-{
-	struct sdio_func *func = container_of(wilc->dev, struct sdio_func, dev);
-	int size, ret;
+अटल पूर्णांक wilc_sdio_cmd53(काष्ठा wilc *wilc, काष्ठा sdio_cmd53 *cmd)
+अणु
+	काष्ठा sdio_func *func = container_of(wilc->dev, काष्ठा sdio_func, dev);
+	पूर्णांक size, ret;
 
 	sdio_claim_host(func);
 
 	func->num = cmd->function;
 	func->cur_blksize = cmd->block_size;
-	if (cmd->block_mode)
+	अगर (cmd->block_mode)
 		size = cmd->count * cmd->block_size;
-	else
+	अन्यथा
 		size = cmd->count;
 
-	if (cmd->read_write) {  /* write */
-		ret = sdio_memcpy_toio(func, cmd->address,
-				       (void *)cmd->buffer, size);
-	} else {        /* read */
-		ret = sdio_memcpy_fromio(func, (void *)cmd->buffer,
+	अगर (cmd->पढ़ो_ग_लिखो) अणु  /* ग_लिखो */
+		ret = sdio_स_नकल_toio(func, cmd->address,
+				       (व्योम *)cmd->buffer, size);
+	पूर्ण अन्यथा अणु        /* पढ़ो */
+		ret = sdio_स_नकल_fromio(func, (व्योम *)cmd->buffer,
 					 cmd->address,  size);
-	}
+	पूर्ण
 
 	sdio_release_host(func);
 
-	if (ret)
+	अगर (ret)
 		dev_err(&func->dev, "%s..failed, err(%d)\n", __func__,  ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wilc_sdio_probe(struct sdio_func *func,
-			   const struct sdio_device_id *id)
-{
-	struct wilc *wilc;
-	int ret;
-	struct wilc_sdio *sdio_priv;
+अटल पूर्णांक wilc_sdio_probe(काष्ठा sdio_func *func,
+			   स्थिर काष्ठा sdio_device_id *id)
+अणु
+	काष्ठा wilc *wilc;
+	पूर्णांक ret;
+	काष्ठा wilc_sdio *sdio_priv;
 
-	sdio_priv = kzalloc(sizeof(*sdio_priv), GFP_KERNEL);
-	if (!sdio_priv)
-		return -ENOMEM;
+	sdio_priv = kzalloc(माप(*sdio_priv), GFP_KERNEL);
+	अगर (!sdio_priv)
+		वापस -ENOMEM;
 
 	ret = wilc_cfg80211_init(&wilc, &func->dev, WILC_HIF_SDIO,
-				 &wilc_hif_sdio);
-	if (ret) {
-		kfree(sdio_priv);
-		return ret;
-	}
+				 &wilc_hअगर_sdio);
+	अगर (ret) अणु
+		kमुक्त(sdio_priv);
+		वापस ret;
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_WILC1000_HW_OOB_INTR)) {
-		struct device_node *np = func->card->dev.of_node;
-		int irq_num = of_irq_get(np, 0);
+	अगर (IS_ENABLED(CONFIG_WILC1000_HW_OOB_INTR)) अणु
+		काष्ठा device_node *np = func->card->dev.of_node;
+		पूर्णांक irq_num = of_irq_get(np, 0);
 
-		if (irq_num > 0) {
+		अगर (irq_num > 0) अणु
 			wilc->dev_irq_num = irq_num;
 			sdio_priv->irq_gpio = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	sdio_set_drvdata(func, wilc);
 	wilc->bus_data = sdio_priv;
 	wilc->dev = &func->dev;
 
 	wilc->rtc_clk = devm_clk_get(&func->card->dev, "rtc");
-	if (PTR_ERR_OR_ZERO(wilc->rtc_clk) == -EPROBE_DEFER) {
-		kfree(sdio_priv);
-		return -EPROBE_DEFER;
-	} else if (!IS_ERR(wilc->rtc_clk))
+	अगर (PTR_ERR_OR_ZERO(wilc->rtc_clk) == -EPROBE_DEFER) अणु
+		kमुक्त(sdio_priv);
+		वापस -EPROBE_DEFER;
+	पूर्ण अन्यथा अगर (!IS_ERR(wilc->rtc_clk))
 		clk_prepare_enable(wilc->rtc_clk);
 
 	dev_info(&func->dev, "Driver Initializing success\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wilc_sdio_remove(struct sdio_func *func)
-{
-	struct wilc *wilc = sdio_get_drvdata(func);
+अटल व्योम wilc_sdio_हटाओ(काष्ठा sdio_func *func)
+अणु
+	काष्ठा wilc *wilc = sdio_get_drvdata(func);
 
-	if (!IS_ERR(wilc->rtc_clk))
+	अगर (!IS_ERR(wilc->rtc_clk))
 		clk_disable_unprepare(wilc->rtc_clk);
 
 	wilc_netdev_cleanup(wilc);
-}
+पूर्ण
 
-static int wilc_sdio_reset(struct wilc *wilc)
-{
-	struct sdio_cmd52 cmd;
-	int ret;
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
+अटल पूर्णांक wilc_sdio_reset(काष्ठा wilc *wilc)
+अणु
+	काष्ठा sdio_cmd52 cmd;
+	पूर्णांक ret;
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
 
-	cmd.read_write = 1;
+	cmd.पढ़ो_ग_लिखो = 1;
 	cmd.function = 0;
 	cmd.raw = 0;
 	cmd.address = SDIO_CCCR_ABORT;
 	cmd.data = WILC_SDIO_CCCR_ABORT_RESET;
 	ret = wilc_sdio_cmd52(wilc, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Fail cmd 52, reset cmd ...\n");
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int wilc_sdio_suspend(struct device *dev)
-{
-	struct sdio_func *func = dev_to_sdio_func(dev);
-	struct wilc *wilc = sdio_get_drvdata(func);
-	int ret;
+अटल पूर्णांक wilc_sdio_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
+	काष्ठा wilc *wilc = sdio_get_drvdata(func);
+	पूर्णांक ret;
 
 	dev_info(dev, "sdio suspend\n");
 	chip_wakeup(wilc);
 
-	if (!IS_ERR(wilc->rtc_clk))
+	अगर (!IS_ERR(wilc->rtc_clk))
 		clk_disable_unprepare(wilc->rtc_clk);
 
-	if (wilc->suspend_event) {
-		host_sleep_notify(wilc);
+	अगर (wilc->suspend_event) अणु
+		host_sleep_notअगरy(wilc);
 		chip_allow_sleep(wilc);
-	}
+	पूर्ण
 
 	ret = wilc_sdio_reset(wilc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Fail reset sdio\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	sdio_claim_host(func);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wilc_sdio_enable_interrupt(struct wilc *dev)
-{
-	struct sdio_func *func = container_of(dev->dev, struct sdio_func, dev);
-	int ret = 0;
+अटल पूर्णांक wilc_sdio_enable_पूर्णांकerrupt(काष्ठा wilc *dev)
+अणु
+	काष्ठा sdio_func *func = container_of(dev->dev, काष्ठा sdio_func, dev);
+	पूर्णांक ret = 0;
 
 	sdio_claim_host(func);
-	ret = sdio_claim_irq(func, wilc_sdio_interrupt);
+	ret = sdio_claim_irq(func, wilc_sdio_पूर्णांकerrupt);
 	sdio_release_host(func);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&func->dev, "can't claim sdio_irq, err(%d)\n", ret);
 		ret = -EIO;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void wilc_sdio_disable_interrupt(struct wilc *dev)
-{
-	struct sdio_func *func = container_of(dev->dev, struct sdio_func, dev);
-	int ret;
+अटल व्योम wilc_sdio_disable_पूर्णांकerrupt(काष्ठा wilc *dev)
+अणु
+	काष्ठा sdio_func *func = container_of(dev->dev, काष्ठा sdio_func, dev);
+	पूर्णांक ret;
 
 	sdio_claim_host(func);
 	ret = sdio_release_irq(func);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&func->dev, "can't release sdio_irq, err(%d)\n", ret);
 	sdio_release_host(func);
-}
+पूर्ण
 
 /********************************************
  *
@@ -249,115 +250,115 @@ static void wilc_sdio_disable_interrupt(struct wilc *dev)
  *
  ********************************************/
 
-static int wilc_sdio_set_func0_csa_address(struct wilc *wilc, u32 adr)
-{
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
-	struct sdio_cmd52 cmd;
-	int ret;
+अटल पूर्णांक wilc_sdio_set_func0_csa_address(काष्ठा wilc *wilc, u32 adr)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
+	काष्ठा sdio_cmd52 cmd;
+	पूर्णांक ret;
 
 	/**
 	 *      Review: BIG ENDIAN
 	 **/
-	cmd.read_write = 1;
+	cmd.पढ़ो_ग_लिखो = 1;
 	cmd.function = 0;
 	cmd.raw = 0;
 	cmd.address = WILC_SDIO_FBR_CSA_REG;
 	cmd.data = (u8)adr;
 	ret = wilc_sdio_cmd52(wilc, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Failed cmd52, set %04x data...\n",
 			cmd.address);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	cmd.address = WILC_SDIO_FBR_CSA_REG + 1;
 	cmd.data = (u8)(adr >> 8);
 	ret = wilc_sdio_cmd52(wilc, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Failed cmd52, set %04x data...\n",
 			cmd.address);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	cmd.address = WILC_SDIO_FBR_CSA_REG + 2;
 	cmd.data = (u8)(adr >> 16);
 	ret = wilc_sdio_cmd52(wilc, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Failed cmd52, set %04x data...\n",
 			cmd.address);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wilc_sdio_set_block_size(struct wilc *wilc, u8 func_num,
+अटल पूर्णांक wilc_sdio_set_block_size(काष्ठा wilc *wilc, u8 func_num,
 				    u32 block_size)
-{
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
-	struct sdio_cmd52 cmd;
-	int ret;
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
+	काष्ठा sdio_cmd52 cmd;
+	पूर्णांक ret;
 
-	cmd.read_write = 1;
+	cmd.पढ़ो_ग_लिखो = 1;
 	cmd.function = 0;
 	cmd.raw = 0;
 	cmd.address = SDIO_FBR_BASE(func_num) + SDIO_CCCR_BLKSIZE;
 	cmd.data = (u8)block_size;
 	ret = wilc_sdio_cmd52(wilc, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Failed cmd52, set %04x data...\n",
 			cmd.address);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	cmd.address = SDIO_FBR_BASE(func_num) + SDIO_CCCR_BLKSIZE +  1;
 	cmd.data = (u8)(block_size >> 8);
 	ret = wilc_sdio_cmd52(wilc, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Failed cmd52, set %04x data...\n",
 			cmd.address);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /********************************************
  *
- *      Sdio interfaces
+ *      Sdio पूर्णांकerfaces
  *
  ********************************************/
-static int wilc_sdio_write_reg(struct wilc *wilc, u32 addr, u32 data)
-{
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
-	struct wilc_sdio *sdio_priv = wilc->bus_data;
-	int ret;
+अटल पूर्णांक wilc_sdio_ग_लिखो_reg(काष्ठा wilc *wilc, u32 addr, u32 data)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
+	काष्ठा wilc_sdio *sdio_priv = wilc->bus_data;
+	पूर्णांक ret;
 
 	cpu_to_le32s(&data);
 
-	if (addr >= 0xf0 && addr <= 0xff) { /* only vendor specific registers */
-		struct sdio_cmd52 cmd;
+	अगर (addr >= 0xf0 && addr <= 0xff) अणु /* only venकरोr specअगरic रेजिस्टरs */
+		काष्ठा sdio_cmd52 cmd;
 
-		cmd.read_write = 1;
+		cmd.पढ़ो_ग_लिखो = 1;
 		cmd.function = 0;
 		cmd.raw = 0;
 		cmd.address = addr;
 		cmd.data = data;
 		ret = wilc_sdio_cmd52(wilc, &cmd);
-		if (ret)
+		अगर (ret)
 			dev_err(&func->dev,
 				"Failed cmd 52, read reg (%08x) ...\n", addr);
-	} else {
-		struct sdio_cmd53 cmd;
+	पूर्ण अन्यथा अणु
+		काष्ठा sdio_cmd53 cmd;
 
 		/**
 		 *      set the AHB address
 		 **/
 		ret = wilc_sdio_set_func0_csa_address(wilc, addr);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		cmd.read_write = 1;
+		cmd.पढ़ो_ग_लिखो = 1;
 		cmd.function = 0;
 		cmd.address = WILC_SDIO_FBR_DATA_REG;
 		cmd.block_mode = 0;
@@ -366,64 +367,64 @@ static int wilc_sdio_write_reg(struct wilc *wilc, u32 addr, u32 data)
 		cmd.buffer = (u8 *)&data;
 		cmd.block_size = sdio_priv->block_size;
 		ret = wilc_sdio_cmd53(wilc, &cmd);
-		if (ret)
+		अगर (ret)
 			dev_err(&func->dev,
 				"Failed cmd53, write reg (%08x)...\n", addr);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wilc_sdio_write(struct wilc *wilc, u32 addr, u8 *buf, u32 size)
-{
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
-	struct wilc_sdio *sdio_priv = wilc->bus_data;
+अटल पूर्णांक wilc_sdio_ग_लिखो(काष्ठा wilc *wilc, u32 addr, u8 *buf, u32 size)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
+	काष्ठा wilc_sdio *sdio_priv = wilc->bus_data;
 	u32 block_size = sdio_priv->block_size;
-	struct sdio_cmd53 cmd;
-	int nblk, nleft, ret;
+	काष्ठा sdio_cmd53 cmd;
+	पूर्णांक nblk, nleft, ret;
 
-	cmd.read_write = 1;
-	if (addr > 0) {
+	cmd.पढ़ो_ग_लिखो = 1;
+	अगर (addr > 0) अणु
 		/**
 		 *      func 0 access
 		 **/
 		cmd.function = 0;
 		cmd.address = WILC_SDIO_FBR_DATA_REG;
-	} else {
+	पूर्ण अन्यथा अणु
 		/**
 		 *      func 1 access
 		 **/
 		cmd.function = 1;
 		cmd.address = WILC_SDIO_F1_DATA_REG;
-	}
+	पूर्ण
 
 	size = ALIGN(size, 4);
 	nblk = size / block_size;
 	nleft = size % block_size;
 
-	if (nblk > 0) {
+	अगर (nblk > 0) अणु
 		cmd.block_mode = 1;
 		cmd.increment = 1;
 		cmd.count = nblk;
 		cmd.buffer = buf;
 		cmd.block_size = block_size;
-		if (addr > 0) {
+		अगर (addr > 0) अणु
 			ret = wilc_sdio_set_func0_csa_address(wilc, addr);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 		ret = wilc_sdio_cmd53(wilc, &cmd);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&func->dev,
 				"Failed cmd53 [%x], block send...\n", addr);
-			return ret;
-		}
-		if (addr > 0)
+			वापस ret;
+		पूर्ण
+		अगर (addr > 0)
 			addr += nblk * block_size;
 		buf += nblk * block_size;
-	}
+	पूर्ण
 
-	if (nleft > 0) {
+	अगर (nleft > 0) अणु
 		cmd.block_mode = 0;
 		cmd.increment = 1;
 		cmd.count = nleft;
@@ -431,50 +432,50 @@ static int wilc_sdio_write(struct wilc *wilc, u32 addr, u8 *buf, u32 size)
 
 		cmd.block_size = block_size;
 
-		if (addr > 0) {
+		अगर (addr > 0) अणु
 			ret = wilc_sdio_set_func0_csa_address(wilc, addr);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 		ret = wilc_sdio_cmd53(wilc, &cmd);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&func->dev,
 				"Failed cmd53 [%x], bytes send...\n", addr);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wilc_sdio_read_reg(struct wilc *wilc, u32 addr, u32 *data)
-{
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
-	struct wilc_sdio *sdio_priv = wilc->bus_data;
-	int ret;
+अटल पूर्णांक wilc_sdio_पढ़ो_reg(काष्ठा wilc *wilc, u32 addr, u32 *data)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
+	काष्ठा wilc_sdio *sdio_priv = wilc->bus_data;
+	पूर्णांक ret;
 
-	if (addr >= 0xf0 && addr <= 0xff) { /* only vendor specific registers */
-		struct sdio_cmd52 cmd;
+	अगर (addr >= 0xf0 && addr <= 0xff) अणु /* only venकरोr specअगरic रेजिस्टरs */
+		काष्ठा sdio_cmd52 cmd;
 
-		cmd.read_write = 0;
+		cmd.पढ़ो_ग_लिखो = 0;
 		cmd.function = 0;
 		cmd.raw = 0;
 		cmd.address = addr;
 		ret = wilc_sdio_cmd52(wilc, &cmd);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&func->dev,
 				"Failed cmd 52, read reg (%08x) ...\n", addr);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		*data = cmd.data;
-	} else {
-		struct sdio_cmd53 cmd;
+	पूर्ण अन्यथा अणु
+		काष्ठा sdio_cmd53 cmd;
 
 		ret = wilc_sdio_set_func0_csa_address(wilc, addr);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		cmd.read_write = 0;
+		cmd.पढ़ो_ग_लिखो = 0;
 		cmd.function = 0;
 		cmd.address = WILC_SDIO_FBR_DATA_REG;
 		cmd.block_mode = 0;
@@ -484,67 +485,67 @@ static int wilc_sdio_read_reg(struct wilc *wilc, u32 addr, u32 *data)
 
 		cmd.block_size = sdio_priv->block_size;
 		ret = wilc_sdio_cmd53(wilc, &cmd);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&func->dev,
 				"Failed cmd53, read reg (%08x)...\n", addr);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	le32_to_cpus(data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wilc_sdio_read(struct wilc *wilc, u32 addr, u8 *buf, u32 size)
-{
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
-	struct wilc_sdio *sdio_priv = wilc->bus_data;
+अटल पूर्णांक wilc_sdio_पढ़ो(काष्ठा wilc *wilc, u32 addr, u8 *buf, u32 size)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
+	काष्ठा wilc_sdio *sdio_priv = wilc->bus_data;
 	u32 block_size = sdio_priv->block_size;
-	struct sdio_cmd53 cmd;
-	int nblk, nleft, ret;
+	काष्ठा sdio_cmd53 cmd;
+	पूर्णांक nblk, nleft, ret;
 
-	cmd.read_write = 0;
-	if (addr > 0) {
+	cmd.पढ़ो_ग_लिखो = 0;
+	अगर (addr > 0) अणु
 		/**
 		 *      func 0 access
 		 **/
 		cmd.function = 0;
 		cmd.address = WILC_SDIO_FBR_DATA_REG;
-	} else {
+	पूर्ण अन्यथा अणु
 		/**
 		 *      func 1 access
 		 **/
 		cmd.function = 1;
 		cmd.address = WILC_SDIO_F1_DATA_REG;
-	}
+	पूर्ण
 
 	size = ALIGN(size, 4);
 	nblk = size / block_size;
 	nleft = size % block_size;
 
-	if (nblk > 0) {
+	अगर (nblk > 0) अणु
 		cmd.block_mode = 1;
 		cmd.increment = 1;
 		cmd.count = nblk;
 		cmd.buffer = buf;
 		cmd.block_size = block_size;
-		if (addr > 0) {
+		अगर (addr > 0) अणु
 			ret = wilc_sdio_set_func0_csa_address(wilc, addr);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 		ret = wilc_sdio_cmd53(wilc, &cmd);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&func->dev,
 				"Failed cmd53 [%x], block read...\n", addr);
-			return ret;
-		}
-		if (addr > 0)
+			वापस ret;
+		पूर्ण
+		अगर (addr > 0)
 			addr += nblk * block_size;
 		buf += nblk * block_size;
-	}       /* if (nblk > 0) */
+	पूर्ण       /* अगर (nblk > 0) */
 
-	if (nleft > 0) {
+	अगर (nleft > 0) अणु
 		cmd.block_mode = 0;
 		cmd.increment = 1;
 		cmd.count = nleft;
@@ -552,471 +553,471 @@ static int wilc_sdio_read(struct wilc *wilc, u32 addr, u8 *buf, u32 size)
 
 		cmd.block_size = block_size;
 
-		if (addr > 0) {
+		अगर (addr > 0) अणु
 			ret = wilc_sdio_set_func0_csa_address(wilc, addr);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 		ret = wilc_sdio_cmd53(wilc, &cmd);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&func->dev,
 				"Failed cmd53 [%x], bytes read...\n", addr);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /********************************************
  *
- *      Bus interfaces
+ *      Bus पूर्णांकerfaces
  *
  ********************************************/
 
-static int wilc_sdio_deinit(struct wilc *wilc)
-{
-	return 0;
-}
+अटल पूर्णांक wilc_sdio_deinit(काष्ठा wilc *wilc)
+अणु
+	वापस 0;
+पूर्ण
 
-static int wilc_sdio_init(struct wilc *wilc, bool resume)
-{
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
-	struct wilc_sdio *sdio_priv = wilc->bus_data;
-	struct sdio_cmd52 cmd;
-	int loop, ret;
+अटल पूर्णांक wilc_sdio_init(काष्ठा wilc *wilc, bool resume)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
+	काष्ठा wilc_sdio *sdio_priv = wilc->bus_data;
+	काष्ठा sdio_cmd52 cmd;
+	पूर्णांक loop, ret;
 	u32 chipid;
 
 	/**
 	 *      function 0 csa enable
 	 **/
-	cmd.read_write = 1;
+	cmd.पढ़ो_ग_लिखो = 1;
 	cmd.function = 0;
 	cmd.raw = 1;
 	cmd.address = SDIO_FBR_BASE(func->num);
 	cmd.data = SDIO_FBR_ENABLE_CSA;
 	ret = wilc_sdio_cmd52(wilc, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Fail cmd 52, enable csa...\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/**
 	 *      function 0 block size
 	 **/
 	ret = wilc_sdio_set_block_size(wilc, 0, WILC_SDIO_BLOCK_SIZE);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Fail cmd 52, set func 0 block size...\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	sdio_priv->block_size = WILC_SDIO_BLOCK_SIZE;
 
 	/**
 	 *      enable func1 IO
 	 **/
-	cmd.read_write = 1;
+	cmd.पढ़ो_ग_लिखो = 1;
 	cmd.function = 0;
 	cmd.raw = 1;
 	cmd.address = SDIO_CCCR_IOEx;
 	cmd.data = WILC_SDIO_CCCR_IO_EN_FUNC1;
 	ret = wilc_sdio_cmd52(wilc, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev,
 			"Fail cmd 52, set IOE register...\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/**
 	 *      make sure func 1 is up
 	 **/
-	cmd.read_write = 0;
+	cmd.पढ़ो_ग_लिखो = 0;
 	cmd.function = 0;
 	cmd.raw = 0;
 	cmd.address = SDIO_CCCR_IORx;
 	loop = 3;
-	do {
+	करो अणु
 		cmd.data = 0;
 		ret = wilc_sdio_cmd52(wilc, &cmd);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&func->dev,
 				"Fail cmd 52, get IOR register...\n");
-			return ret;
-		}
-		if (cmd.data == WILC_SDIO_CCCR_IO_EN_FUNC1)
-			break;
-	} while (loop--);
+			वापस ret;
+		पूर्ण
+		अगर (cmd.data == WILC_SDIO_CCCR_IO_EN_FUNC1)
+			अवरोध;
+	पूर्ण जबतक (loop--);
 
-	if (loop <= 0) {
+	अगर (loop <= 0) अणु
 		dev_err(&func->dev, "Fail func 1 is not ready...\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/**
-	 *      func 1 is ready, set func 1 block size
+	 *      func 1 is पढ़ोy, set func 1 block size
 	 **/
 	ret = wilc_sdio_set_block_size(wilc, 1, WILC_SDIO_BLOCK_SIZE);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Fail set func 1 block size...\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/**
-	 *      func 1 interrupt enable
+	 *      func 1 पूर्णांकerrupt enable
 	 **/
-	cmd.read_write = 1;
+	cmd.पढ़ो_ग_लिखो = 1;
 	cmd.function = 0;
 	cmd.raw = 1;
 	cmd.address = SDIO_CCCR_IENx;
 	cmd.data = WILC_SDIO_CCCR_IEN_MASTER | WILC_SDIO_CCCR_IEN_FUNC1;
 	ret = wilc_sdio_cmd52(wilc, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&func->dev, "Fail cmd 52, set IEN register...\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/**
-	 *      make sure can read back chip id correctly
+	 *      make sure can पढ़ो back chip id correctly
 	 **/
-	if (!resume) {
-		int rev;
+	अगर (!resume) अणु
+		पूर्णांक rev;
 
-		ret = wilc_sdio_read_reg(wilc, WILC_CHIPID, &chipid);
-		if (ret) {
+		ret = wilc_sdio_पढ़ो_reg(wilc, WILC_CHIPID, &chipid);
+		अगर (ret) अणु
 			dev_err(&func->dev, "Fail cmd read chip id...\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		dev_err(&func->dev, "chipid (%08x)\n", chipid);
 		rev = FIELD_GET(WILC_CHIP_REV_FIELD, chipid);
-		if (rev > FIELD_GET(WILC_CHIP_REV_FIELD, WILC_1000_BASE_ID_2A))
+		अगर (rev > FIELD_GET(WILC_CHIP_REV_FIELD, WILC_1000_BASE_ID_2A))
 			sdio_priv->has_thrpt_enh3 = 1;
-		else
+		अन्यथा
 			sdio_priv->has_thrpt_enh3 = 0;
 		dev_info(&func->dev, "has_thrpt_enh3 = %d...\n",
 			 sdio_priv->has_thrpt_enh3);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wilc_sdio_read_size(struct wilc *wilc, u32 *size)
-{
-	u32 tmp;
-	struct sdio_cmd52 cmd;
+अटल पूर्णांक wilc_sdio_पढ़ो_size(काष्ठा wilc *wilc, u32 *size)
+अणु
+	u32 पंचांगp;
+	काष्ठा sdio_cmd52 cmd;
 
 	/**
 	 *      Read DMA count in words
 	 **/
-	cmd.read_write = 0;
+	cmd.पढ़ो_ग_लिखो = 0;
 	cmd.function = 0;
 	cmd.raw = 0;
 	cmd.address = WILC_SDIO_INTERRUPT_DATA_SZ_REG;
 	cmd.data = 0;
 	wilc_sdio_cmd52(wilc, &cmd);
-	tmp = cmd.data;
+	पंचांगp = cmd.data;
 
 	cmd.address = WILC_SDIO_INTERRUPT_DATA_SZ_REG + 1;
 	cmd.data = 0;
 	wilc_sdio_cmd52(wilc, &cmd);
-	tmp |= (cmd.data << 8);
+	पंचांगp |= (cmd.data << 8);
 
-	*size = tmp;
-	return 0;
-}
+	*size = पंचांगp;
+	वापस 0;
+पूर्ण
 
-static int wilc_sdio_read_int(struct wilc *wilc, u32 *int_status)
-{
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
-	struct wilc_sdio *sdio_priv = wilc->bus_data;
-	u32 tmp;
+अटल पूर्णांक wilc_sdio_पढ़ो_पूर्णांक(काष्ठा wilc *wilc, u32 *पूर्णांक_status)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
+	काष्ठा wilc_sdio *sdio_priv = wilc->bus_data;
+	u32 पंचांगp;
 	u8 irq_flags;
-	struct sdio_cmd52 cmd;
+	काष्ठा sdio_cmd52 cmd;
 
-	wilc_sdio_read_size(wilc, &tmp);
+	wilc_sdio_पढ़ो_size(wilc, &पंचांगp);
 
 	/**
 	 *      Read IRQ flags
 	 **/
-	if (!sdio_priv->irq_gpio) {
+	अगर (!sdio_priv->irq_gpio) अणु
 		cmd.function = 1;
 		cmd.address = WILC_SDIO_EXT_IRQ_FLAG_REG;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd.function = 0;
 		cmd.address = WILC_SDIO_IRQ_FLAG_REG;
-	}
+	पूर्ण
 	cmd.raw = 0;
-	cmd.read_write = 0;
+	cmd.पढ़ो_ग_लिखो = 0;
 	cmd.data = 0;
 	wilc_sdio_cmd52(wilc, &cmd);
 	irq_flags = cmd.data;
-	tmp |= FIELD_PREP(IRG_FLAGS_MASK, cmd.data);
+	पंचांगp |= FIELD_PREP(IRG_FLAGS_MASK, cmd.data);
 
-	if (FIELD_GET(UNHANDLED_IRQ_MASK, irq_flags))
+	अगर (FIELD_GET(UNHANDLED_IRQ_MASK, irq_flags))
 		dev_err(&func->dev, "Unexpected interrupt (1) int=%lx\n",
 			FIELD_GET(UNHANDLED_IRQ_MASK, irq_flags));
 
-	*int_status = tmp;
+	*पूर्णांक_status = पंचांगp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wilc_sdio_clear_int_ext(struct wilc *wilc, u32 val)
-{
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
-	struct wilc_sdio *sdio_priv = wilc->bus_data;
-	int ret;
-	int vmm_ctl;
+अटल पूर्णांक wilc_sdio_clear_पूर्णांक_ext(काष्ठा wilc *wilc, u32 val)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
+	काष्ठा wilc_sdio *sdio_priv = wilc->bus_data;
+	पूर्णांक ret;
+	पूर्णांक vmm_ctl;
 
-	if (sdio_priv->has_thrpt_enh3) {
+	अगर (sdio_priv->has_thrpt_enh3) अणु
 		u32 reg = 0;
 
-		if (sdio_priv->irq_gpio)
+		अगर (sdio_priv->irq_gpio)
 			reg = val & (BIT(MAX_NUM_INT) - 1);
 
 		/* select VMM table 0 */
-		if (val & SEL_VMM_TBL0)
+		अगर (val & SEL_VMM_TBL0)
 			reg |= BIT(5);
 		/* select VMM table 1 */
-		if (val & SEL_VMM_TBL1)
+		अगर (val & SEL_VMM_TBL1)
 			reg |= BIT(6);
 		/* enable VMM */
-		if (val & EN_VMM)
+		अगर (val & EN_VMM)
 			reg |= BIT(7);
-		if (reg) {
-			struct sdio_cmd52 cmd;
+		अगर (reg) अणु
+			काष्ठा sdio_cmd52 cmd;
 
-			cmd.read_write = 1;
+			cmd.पढ़ो_ग_लिखो = 1;
 			cmd.function = 0;
 			cmd.raw = 0;
 			cmd.address = WILC_SDIO_IRQ_CLEAR_FLAG_REG;
 			cmd.data = reg;
 
 			ret = wilc_sdio_cmd52(wilc, &cmd);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(&func->dev,
 					"Failed cmd52, set (%02x) data (%d) ...\n",
 					cmd.address, __LINE__);
-				return ret;
-			}
-		}
-		return 0;
-	}
-	if (sdio_priv->irq_gpio) {
-		/* has_thrpt_enh2 uses register 0xf8 to clear interrupts. */
+				वापस ret;
+			पूर्ण
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	अगर (sdio_priv->irq_gpio) अणु
+		/* has_thrpt_enh2 uses रेजिस्टर 0xf8 to clear पूर्णांकerrupts. */
 		/*
-		 * Cannot clear multiple interrupts.
-		 * Must clear each interrupt individually.
+		 * Cannot clear multiple पूर्णांकerrupts.
+		 * Must clear each पूर्णांकerrupt inभागidually.
 		 */
 		u32 flags;
-		int i;
+		पूर्णांक i;
 
 		flags = val & (BIT(MAX_NUM_INT) - 1);
-		for (i = 0; i < NUM_INT_EXT && flags; i++) {
-			if (flags & BIT(i)) {
-				struct sdio_cmd52 cmd;
+		क्रम (i = 0; i < NUM_INT_EXT && flags; i++) अणु
+			अगर (flags & BIT(i)) अणु
+				काष्ठा sdio_cmd52 cmd;
 
-				cmd.read_write = 1;
+				cmd.पढ़ो_ग_लिखो = 1;
 				cmd.function = 0;
 				cmd.raw = 0;
 				cmd.address = WILC_SDIO_IRQ_CLEAR_FLAG_REG;
 				cmd.data = BIT(i);
 
 				ret = wilc_sdio_cmd52(wilc, &cmd);
-				if (ret) {
+				अगर (ret) अणु
 					dev_err(&func->dev,
 						"Failed cmd52, set (%02x) data (%d) ...\n",
 						cmd.address, __LINE__);
-					return ret;
-				}
+					वापस ret;
+				पूर्ण
 				flags &= ~BIT(i);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		for (i = NUM_INT_EXT; i < MAX_NUM_INT && flags; i++) {
-			if (flags & BIT(i)) {
+		क्रम (i = NUM_INT_EXT; i < MAX_NUM_INT && flags; i++) अणु
+			अगर (flags & BIT(i)) अणु
 				dev_err(&func->dev,
 					"Unexpected interrupt cleared %d...\n",
 					i);
 				flags &= ~BIT(i);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	vmm_ctl = 0;
 	/* select VMM table 0 */
-	if (val & SEL_VMM_TBL0)
+	अगर (val & SEL_VMM_TBL0)
 		vmm_ctl |= BIT(0);
 	/* select VMM table 1 */
-	if (val & SEL_VMM_TBL1)
+	अगर (val & SEL_VMM_TBL1)
 		vmm_ctl |= BIT(1);
 	/* enable VMM */
-	if (val & EN_VMM)
+	अगर (val & EN_VMM)
 		vmm_ctl |= BIT(2);
 
-	if (vmm_ctl) {
-		struct sdio_cmd52 cmd;
+	अगर (vmm_ctl) अणु
+		काष्ठा sdio_cmd52 cmd;
 
-		cmd.read_write = 1;
+		cmd.पढ़ो_ग_लिखो = 1;
 		cmd.function = 0;
 		cmd.raw = 0;
 		cmd.address = WILC_SDIO_VMM_TBL_CTRL_REG;
 		cmd.data = vmm_ctl;
 		ret = wilc_sdio_cmd52(wilc, &cmd);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&func->dev,
 				"Failed cmd52, set (%02x) data (%d) ...\n",
 				cmd.address, __LINE__);
-			return ret;
-		}
-	}
-	return 0;
-}
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int wilc_sdio_sync_ext(struct wilc *wilc, int nint)
-{
-	struct sdio_func *func = dev_to_sdio_func(wilc->dev);
-	struct wilc_sdio *sdio_priv = wilc->bus_data;
+अटल पूर्णांक wilc_sdio_sync_ext(काष्ठा wilc *wilc, पूर्णांक nपूर्णांक)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(wilc->dev);
+	काष्ठा wilc_sdio *sdio_priv = wilc->bus_data;
 	u32 reg;
 
-	if (nint > MAX_NUM_INT) {
-		dev_err(&func->dev, "Too many interrupts (%d)...\n", nint);
-		return -EINVAL;
-	}
+	अगर (nपूर्णांक > MAX_NUM_INT) अणु
+		dev_err(&func->dev, "Too many interrupts (%d)...\n", nपूर्णांक);
+		वापस -EINVAL;
+	पूर्ण
 
 	/**
-	 *      Disable power sequencer
+	 *      Disable घातer sequencer
 	 **/
-	if (wilc_sdio_read_reg(wilc, WILC_MISC, &reg)) {
+	अगर (wilc_sdio_पढ़ो_reg(wilc, WILC_MISC, &reg)) अणु
 		dev_err(&func->dev, "Failed read misc reg...\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	reg &= ~BIT(8);
-	if (wilc_sdio_write_reg(wilc, WILC_MISC, reg)) {
+	अगर (wilc_sdio_ग_लिखो_reg(wilc, WILC_MISC, reg)) अणु
 		dev_err(&func->dev, "Failed write misc reg...\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sdio_priv->irq_gpio) {
+	अगर (sdio_priv->irq_gpio) अणु
 		u32 reg;
-		int ret, i;
+		पूर्णांक ret, i;
 
 		/**
-		 *      interrupt pin mux select
+		 *      पूर्णांकerrupt pin mux select
 		 **/
-		ret = wilc_sdio_read_reg(wilc, WILC_PIN_MUX_0, &reg);
-		if (ret) {
+		ret = wilc_sdio_पढ़ो_reg(wilc, WILC_PIN_MUX_0, &reg);
+		अगर (ret) अणु
 			dev_err(&func->dev, "Failed read reg (%08x)...\n",
 				WILC_PIN_MUX_0);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		reg |= BIT(8);
-		ret = wilc_sdio_write_reg(wilc, WILC_PIN_MUX_0, reg);
-		if (ret) {
+		ret = wilc_sdio_ग_लिखो_reg(wilc, WILC_PIN_MUX_0, reg);
+		अगर (ret) अणु
 			dev_err(&func->dev, "Failed write reg (%08x)...\n",
 				WILC_PIN_MUX_0);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/**
-		 *      interrupt enable
+		 *      पूर्णांकerrupt enable
 		 **/
-		ret = wilc_sdio_read_reg(wilc, WILC_INTR_ENABLE, &reg);
-		if (ret) {
+		ret = wilc_sdio_पढ़ो_reg(wilc, WILC_INTR_ENABLE, &reg);
+		अगर (ret) अणु
 			dev_err(&func->dev, "Failed read reg (%08x)...\n",
 				WILC_INTR_ENABLE);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		for (i = 0; (i < 5) && (nint > 0); i++, nint--)
+		क्रम (i = 0; (i < 5) && (nपूर्णांक > 0); i++, nपूर्णांक--)
 			reg |= BIT((27 + i));
-		ret = wilc_sdio_write_reg(wilc, WILC_INTR_ENABLE, reg);
-		if (ret) {
+		ret = wilc_sdio_ग_लिखो_reg(wilc, WILC_INTR_ENABLE, reg);
+		अगर (ret) अणु
 			dev_err(&func->dev, "Failed write reg (%08x)...\n",
 				WILC_INTR_ENABLE);
-			return ret;
-		}
-		if (nint) {
-			ret = wilc_sdio_read_reg(wilc, WILC_INTR2_ENABLE, &reg);
-			if (ret) {
+			वापस ret;
+		पूर्ण
+		अगर (nपूर्णांक) अणु
+			ret = wilc_sdio_पढ़ो_reg(wilc, WILC_INTR2_ENABLE, &reg);
+			अगर (ret) अणु
 				dev_err(&func->dev,
 					"Failed read reg (%08x)...\n",
 					WILC_INTR2_ENABLE);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
-			for (i = 0; (i < 3) && (nint > 0); i++, nint--)
+			क्रम (i = 0; (i < 3) && (nपूर्णांक > 0); i++, nपूर्णांक--)
 				reg |= BIT(i);
 
-			ret = wilc_sdio_write_reg(wilc, WILC_INTR2_ENABLE, reg);
-			if (ret) {
+			ret = wilc_sdio_ग_लिखो_reg(wilc, WILC_INTR2_ENABLE, reg);
+			अगर (ret) अणु
 				dev_err(&func->dev,
 					"Failed write reg (%08x)...\n",
 					WILC_INTR2_ENABLE);
-				return ret;
-			}
-		}
-	}
-	return 0;
-}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Global sdio HIF function table */
-static const struct wilc_hif_func wilc_hif_sdio = {
-	.hif_init = wilc_sdio_init,
-	.hif_deinit = wilc_sdio_deinit,
-	.hif_read_reg = wilc_sdio_read_reg,
-	.hif_write_reg = wilc_sdio_write_reg,
-	.hif_block_rx = wilc_sdio_read,
-	.hif_block_tx = wilc_sdio_write,
-	.hif_read_int = wilc_sdio_read_int,
-	.hif_clear_int_ext = wilc_sdio_clear_int_ext,
-	.hif_read_size = wilc_sdio_read_size,
-	.hif_block_tx_ext = wilc_sdio_write,
-	.hif_block_rx_ext = wilc_sdio_read,
-	.hif_sync_ext = wilc_sdio_sync_ext,
-	.enable_interrupt = wilc_sdio_enable_interrupt,
-	.disable_interrupt = wilc_sdio_disable_interrupt,
-};
+अटल स्थिर काष्ठा wilc_hअगर_func wilc_hअगर_sdio = अणु
+	.hअगर_init = wilc_sdio_init,
+	.hअगर_deinit = wilc_sdio_deinit,
+	.hअगर_पढ़ो_reg = wilc_sdio_पढ़ो_reg,
+	.hअगर_ग_लिखो_reg = wilc_sdio_ग_लिखो_reg,
+	.hअगर_block_rx = wilc_sdio_पढ़ो,
+	.hअगर_block_tx = wilc_sdio_ग_लिखो,
+	.hअगर_पढ़ो_पूर्णांक = wilc_sdio_पढ़ो_पूर्णांक,
+	.hअगर_clear_पूर्णांक_ext = wilc_sdio_clear_पूर्णांक_ext,
+	.hअगर_पढ़ो_size = wilc_sdio_पढ़ो_size,
+	.hअगर_block_tx_ext = wilc_sdio_ग_लिखो,
+	.hअगर_block_rx_ext = wilc_sdio_पढ़ो,
+	.hअगर_sync_ext = wilc_sdio_sync_ext,
+	.enable_पूर्णांकerrupt = wilc_sdio_enable_पूर्णांकerrupt,
+	.disable_पूर्णांकerrupt = wilc_sdio_disable_पूर्णांकerrupt,
+पूर्ण;
 
-static int wilc_sdio_resume(struct device *dev)
-{
-	struct sdio_func *func = dev_to_sdio_func(dev);
-	struct wilc *wilc = sdio_get_drvdata(func);
+अटल पूर्णांक wilc_sdio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
+	काष्ठा wilc *wilc = sdio_get_drvdata(func);
 
 	dev_info(dev, "sdio resume\n");
 	sdio_release_host(func);
 	chip_wakeup(wilc);
 	wilc_sdio_init(wilc, true);
 
-	if (wilc->suspend_event)
-		host_wakeup_notify(wilc);
+	अगर (wilc->suspend_event)
+		host_wakeup_notअगरy(wilc);
 
 	chip_allow_sleep(wilc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id wilc_of_match[] = {
-	{ .compatible = "microchip,wilc1000", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id wilc_of_match[] = अणु
+	अणु .compatible = "microchip,wilc1000", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, wilc_of_match);
 
-static const struct dev_pm_ops wilc_sdio_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops wilc_sdio_pm_ops = अणु
 	.suspend = wilc_sdio_suspend,
 	.resume = wilc_sdio_resume,
-};
+पूर्ण;
 
-static struct sdio_driver wilc_sdio_driver = {
+अटल काष्ठा sdio_driver wilc_sdio_driver = अणु
 	.name		= SDIO_MODALIAS,
 	.id_table	= wilc_sdio_ids,
 	.probe		= wilc_sdio_probe,
-	.remove		= wilc_sdio_remove,
-	.drv = {
+	.हटाओ		= wilc_sdio_हटाओ,
+	.drv = अणु
 		.pm = &wilc_sdio_pm_ops,
 		.of_match_table = wilc_of_match,
-	}
-};
+	पूर्ण
+पूर्ण;
 module_driver(wilc_sdio_driver,
-	      sdio_register_driver,
-	      sdio_unregister_driver);
+	      sdio_रेजिस्टर_driver,
+	      sdio_unरेजिस्टर_driver);
 MODULE_LICENSE("GPL");

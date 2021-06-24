@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  (C) 2004-2009  Dominik Brodowski <linux@dominikbrodowski.de>
+ *  (C) 2004-2009  Dominik Broकरोwski <linux@करोminikbroकरोwski.de>
  */
 
 
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <unistd.h>
 
-#include "cpufreq.h"
-#include "cpupower_intern.h"
+#समावेश "cpufreq.h"
+#समावेश "cpupower_intern.h"
 
 /* CPUFREQ sysfs access **************************************************/
 
-/* helper function to read file from /sys into given buffer */
+/* helper function to पढ़ो file from /sys पूर्णांकo given buffer */
 /* fname is a relative path under "cpuX/cpufreq" dir */
-static unsigned int sysfs_cpufreq_read_file(unsigned int cpu, const char *fname,
-					    char *buf, size_t buflen)
-{
-	char path[SYSFS_PATH_MAX];
+अटल अचिन्हित पूर्णांक sysfs_cpufreq_पढ़ो_file(अचिन्हित पूर्णांक cpu, स्थिर अक्षर *fname,
+					    अक्षर *buf, माप_प्रकार buflen)
+अणु
+	अक्षर path[SYSFS_PATH_MAX];
 
-	snprintf(path, sizeof(path), PATH_TO_CPU "cpu%u/cpufreq/%s",
+	snम_लिखो(path, माप(path), PATH_TO_CPU "cpu%u/cpufreq/%s",
 			 cpu, fname);
-	return cpupower_read_sysfs(path, buf, buflen);
-}
+	वापस cpuघातer_पढ़ो_sysfs(path, buf, buflen);
+पूर्ण
 
-/* helper function to write a new value to a /sys file */
+/* helper function to ग_लिखो a new value to a /sys file */
 /* fname is a relative path under "cpuX/cpufreq" dir */
-static unsigned int sysfs_cpufreq_write_file(unsigned int cpu,
-					     const char *fname,
-					     const char *value, size_t len)
-{
-	char path[SYSFS_PATH_MAX];
-	int fd;
-	ssize_t numwrite;
+अटल अचिन्हित पूर्णांक sysfs_cpufreq_ग_लिखो_file(अचिन्हित पूर्णांक cpu,
+					     स्थिर अक्षर *fname,
+					     स्थिर अक्षर *value, माप_प्रकार len)
+अणु
+	अक्षर path[SYSFS_PATH_MAX];
+	पूर्णांक fd;
+	sमाप_प्रकार numग_लिखो;
 
-	snprintf(path, sizeof(path), PATH_TO_CPU "cpu%u/cpufreq/%s",
+	snम_लिखो(path, माप(path), PATH_TO_CPU "cpu%u/cpufreq/%s",
 			 cpu, fname);
 
-	fd = open(path, O_WRONLY);
-	if (fd == -1)
-		return 0;
+	fd = खोलो(path, O_WRONLY);
+	अगर (fd == -1)
+		वापस 0;
 
-	numwrite = write(fd, value, len);
-	if (numwrite < 1) {
-		close(fd);
-		return 0;
-	}
+	numग_लिखो = ग_लिखो(fd, value, len);
+	अगर (numग_लिखो < 1) अणु
+		बंद(fd);
+		वापस 0;
+	पूर्ण
 
-	close(fd);
+	बंद(fd);
 
-	return (unsigned int) numwrite;
-}
+	वापस (अचिन्हित पूर्णांक) numग_लिखो;
+पूर्ण
 
-/* read access to files which contain one numeric value */
+/* पढ़ो access to files which contain one numeric value */
 
-enum cpufreq_value {
+क्रमागत cpufreq_value अणु
 	CPUINFO_CUR_FREQ,
 	CPUINFO_MIN_FREQ,
 	CPUINFO_MAX_FREQ,
@@ -69,10 +70,10 @@ enum cpufreq_value {
 	SCALING_MIN_FREQ,
 	SCALING_MAX_FREQ,
 	STATS_NUM_TRANSITIONS,
-	MAX_CPUFREQ_VALUE_READ_FILES
-};
+	MAX_CPUFREQ_VALUE_READ_खाताS
+पूर्ण;
 
-static const char *cpufreq_value_files[MAX_CPUFREQ_VALUE_READ_FILES] = {
+अटल स्थिर अक्षर *cpufreq_value_files[MAX_CPUFREQ_VALUE_READ_खाताS] = अणु
 	[CPUINFO_CUR_FREQ] = "cpuinfo_cur_freq",
 	[CPUINFO_MIN_FREQ] = "cpuinfo_min_freq",
 	[CPUINFO_MAX_FREQ] = "cpuinfo_max_freq",
@@ -81,696 +82,696 @@ static const char *cpufreq_value_files[MAX_CPUFREQ_VALUE_READ_FILES] = {
 	[SCALING_MIN_FREQ] = "scaling_min_freq",
 	[SCALING_MAX_FREQ] = "scaling_max_freq",
 	[STATS_NUM_TRANSITIONS] = "stats/total_trans"
-};
+पूर्ण;
 
 
-static unsigned long sysfs_cpufreq_get_one_value(unsigned int cpu,
-						 enum cpufreq_value which)
-{
-	unsigned long value;
-	unsigned int len;
-	char linebuf[MAX_LINE_LEN];
-	char *endp;
+अटल अचिन्हित दीर्घ sysfs_cpufreq_get_one_value(अचिन्हित पूर्णांक cpu,
+						 क्रमागत cpufreq_value which)
+अणु
+	अचिन्हित दीर्घ value;
+	अचिन्हित पूर्णांक len;
+	अक्षर linebuf[MAX_LINE_LEN];
+	अक्षर *endp;
 
-	if (which >= MAX_CPUFREQ_VALUE_READ_FILES)
-		return 0;
+	अगर (which >= MAX_CPUFREQ_VALUE_READ_खाताS)
+		वापस 0;
 
-	len = sysfs_cpufreq_read_file(cpu, cpufreq_value_files[which],
-				linebuf, sizeof(linebuf));
+	len = sysfs_cpufreq_पढ़ो_file(cpu, cpufreq_value_files[which],
+				linebuf, माप(linebuf));
 
-	if (len == 0)
-		return 0;
+	अगर (len == 0)
+		वापस 0;
 
-	value = strtoul(linebuf, &endp, 0);
+	value = म_से_अदीर्घ(linebuf, &endp, 0);
 
-	if (endp == linebuf || errno == ERANGE)
-		return 0;
+	अगर (endp == linebuf || त्रुटि_सं == दुस्फल)
+		वापस 0;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-/* read access to files which contain one string */
+/* पढ़ो access to files which contain one string */
 
-enum cpufreq_string {
+क्रमागत cpufreq_string अणु
 	SCALING_DRIVER,
 	SCALING_GOVERNOR,
-	MAX_CPUFREQ_STRING_FILES
-};
+	MAX_CPUFREQ_STRING_खाताS
+पूर्ण;
 
-static const char *cpufreq_string_files[MAX_CPUFREQ_STRING_FILES] = {
+अटल स्थिर अक्षर *cpufreq_string_files[MAX_CPUFREQ_STRING_खाताS] = अणु
 	[SCALING_DRIVER] = "scaling_driver",
 	[SCALING_GOVERNOR] = "scaling_governor",
-};
+पूर्ण;
 
 
-static char *sysfs_cpufreq_get_one_string(unsigned int cpu,
-					   enum cpufreq_string which)
-{
-	char linebuf[MAX_LINE_LEN];
-	char *result;
-	unsigned int len;
+अटल अक्षर *sysfs_cpufreq_get_one_string(अचिन्हित पूर्णांक cpu,
+					   क्रमागत cpufreq_string which)
+अणु
+	अक्षर linebuf[MAX_LINE_LEN];
+	अक्षर *result;
+	अचिन्हित पूर्णांक len;
 
-	if (which >= MAX_CPUFREQ_STRING_FILES)
-		return NULL;
+	अगर (which >= MAX_CPUFREQ_STRING_खाताS)
+		वापस शून्य;
 
-	len = sysfs_cpufreq_read_file(cpu, cpufreq_string_files[which],
-				linebuf, sizeof(linebuf));
-	if (len == 0)
-		return NULL;
+	len = sysfs_cpufreq_पढ़ो_file(cpu, cpufreq_string_files[which],
+				linebuf, माप(linebuf));
+	अगर (len == 0)
+		वापस शून्य;
 
 	result = strdup(linebuf);
-	if (result == NULL)
-		return NULL;
+	अगर (result == शून्य)
+		वापस शून्य;
 
-	if (result[strlen(result) - 1] == '\n')
-		result[strlen(result) - 1] = '\0';
+	अगर (result[म_माप(result) - 1] == '\n')
+		result[म_माप(result) - 1] = '\0';
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-/* write access */
+/* ग_लिखो access */
 
-enum cpufreq_write {
+क्रमागत cpufreq_ग_लिखो अणु
 	WRITE_SCALING_MIN_FREQ,
 	WRITE_SCALING_MAX_FREQ,
 	WRITE_SCALING_GOVERNOR,
 	WRITE_SCALING_SET_SPEED,
-	MAX_CPUFREQ_WRITE_FILES
-};
+	MAX_CPUFREQ_WRITE_खाताS
+पूर्ण;
 
-static const char *cpufreq_write_files[MAX_CPUFREQ_WRITE_FILES] = {
+अटल स्थिर अक्षर *cpufreq_ग_लिखो_files[MAX_CPUFREQ_WRITE_खाताS] = अणु
 	[WRITE_SCALING_MIN_FREQ] = "scaling_min_freq",
 	[WRITE_SCALING_MAX_FREQ] = "scaling_max_freq",
 	[WRITE_SCALING_GOVERNOR] = "scaling_governor",
 	[WRITE_SCALING_SET_SPEED] = "scaling_setspeed",
-};
+पूर्ण;
 
-static int sysfs_cpufreq_write_one_value(unsigned int cpu,
-					 enum cpufreq_write which,
-					 const char *new_value, size_t len)
-{
-	if (which >= MAX_CPUFREQ_WRITE_FILES)
-		return 0;
+अटल पूर्णांक sysfs_cpufreq_ग_लिखो_one_value(अचिन्हित पूर्णांक cpu,
+					 क्रमागत cpufreq_ग_लिखो which,
+					 स्थिर अक्षर *new_value, माप_प्रकार len)
+अणु
+	अगर (which >= MAX_CPUFREQ_WRITE_खाताS)
+		वापस 0;
 
-	if (sysfs_cpufreq_write_file(cpu, cpufreq_write_files[which],
+	अगर (sysfs_cpufreq_ग_लिखो_file(cpu, cpufreq_ग_लिखो_files[which],
 					new_value, len) != len)
-		return -ENODEV;
+		वापस -ENODEV;
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-unsigned long cpufreq_get_freq_kernel(unsigned int cpu)
-{
-	return sysfs_cpufreq_get_one_value(cpu, SCALING_CUR_FREQ);
-}
+अचिन्हित दीर्घ cpufreq_get_freq_kernel(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस sysfs_cpufreq_get_one_value(cpu, SCALING_CUR_FREQ);
+पूर्ण
 
-unsigned long cpufreq_get_freq_hardware(unsigned int cpu)
-{
-	return sysfs_cpufreq_get_one_value(cpu, CPUINFO_CUR_FREQ);
-}
+अचिन्हित दीर्घ cpufreq_get_freq_hardware(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस sysfs_cpufreq_get_one_value(cpu, CPUINFO_CUR_FREQ);
+पूर्ण
 
-unsigned long cpufreq_get_transition_latency(unsigned int cpu)
-{
-	return sysfs_cpufreq_get_one_value(cpu, CPUINFO_LATENCY);
-}
+अचिन्हित दीर्घ cpufreq_get_transition_latency(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस sysfs_cpufreq_get_one_value(cpu, CPUINFO_LATENCY);
+पूर्ण
 
-int cpufreq_get_hardware_limits(unsigned int cpu,
-				unsigned long *min,
-				unsigned long *max)
-{
-	if ((!min) || (!max))
-		return -EINVAL;
+पूर्णांक cpufreq_get_hardware_limits(अचिन्हित पूर्णांक cpu,
+				अचिन्हित दीर्घ *min,
+				अचिन्हित दीर्घ *max)
+अणु
+	अगर ((!min) || (!max))
+		वापस -EINVAL;
 
 	*min = sysfs_cpufreq_get_one_value(cpu, CPUINFO_MIN_FREQ);
-	if (!*min)
-		return -ENODEV;
+	अगर (!*min)
+		वापस -ENODEV;
 
 	*max = sysfs_cpufreq_get_one_value(cpu, CPUINFO_MAX_FREQ);
-	if (!*max)
-		return -ENODEV;
+	अगर (!*max)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char *cpufreq_get_driver(unsigned int cpu)
-{
-	return sysfs_cpufreq_get_one_string(cpu, SCALING_DRIVER);
-}
+अक्षर *cpufreq_get_driver(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस sysfs_cpufreq_get_one_string(cpu, SCALING_DRIVER);
+पूर्ण
 
-void cpufreq_put_driver(char *ptr)
-{
-	if (!ptr)
-		return;
-	free(ptr);
-}
+व्योम cpufreq_put_driver(अक्षर *ptr)
+अणु
+	अगर (!ptr)
+		वापस;
+	मुक्त(ptr);
+पूर्ण
 
-struct cpufreq_policy *cpufreq_get_policy(unsigned int cpu)
-{
-	struct cpufreq_policy *policy;
+काष्ठा cpufreq_policy *cpufreq_get_policy(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpufreq_policy *policy;
 
-	policy = malloc(sizeof(struct cpufreq_policy));
-	if (!policy)
-		return NULL;
+	policy = दो_स्मृति(माप(काष्ठा cpufreq_policy));
+	अगर (!policy)
+		वापस शून्य;
 
 	policy->governor = sysfs_cpufreq_get_one_string(cpu, SCALING_GOVERNOR);
-	if (!policy->governor) {
-		free(policy);
-		return NULL;
-	}
+	अगर (!policy->governor) अणु
+		मुक्त(policy);
+		वापस शून्य;
+	पूर्ण
 	policy->min = sysfs_cpufreq_get_one_value(cpu, SCALING_MIN_FREQ);
 	policy->max = sysfs_cpufreq_get_one_value(cpu, SCALING_MAX_FREQ);
-	if ((!policy->min) || (!policy->max)) {
-		free(policy->governor);
-		free(policy);
-		return NULL;
-	}
+	अगर ((!policy->min) || (!policy->max)) अणु
+		मुक्त(policy->governor);
+		मुक्त(policy);
+		वापस शून्य;
+	पूर्ण
 
-	return policy;
-}
+	वापस policy;
+पूर्ण
 
-void cpufreq_put_policy(struct cpufreq_policy *policy)
-{
-	if ((!policy) || (!policy->governor))
-		return;
+व्योम cpufreq_put_policy(काष्ठा cpufreq_policy *policy)
+अणु
+	अगर ((!policy) || (!policy->governor))
+		वापस;
 
-	free(policy->governor);
-	policy->governor = NULL;
-	free(policy);
-}
+	मुक्त(policy->governor);
+	policy->governor = शून्य;
+	मुक्त(policy);
+पूर्ण
 
-struct cpufreq_available_governors *cpufreq_get_available_governors(unsigned
-								int cpu)
-{
-	struct cpufreq_available_governors *first = NULL;
-	struct cpufreq_available_governors *current = NULL;
-	char linebuf[MAX_LINE_LEN];
-	unsigned int pos, i;
-	unsigned int len;
+काष्ठा cpufreq_available_governors *cpufreq_get_available_governors(अचिन्हित
+								पूर्णांक cpu)
+अणु
+	काष्ठा cpufreq_available_governors *first = शून्य;
+	काष्ठा cpufreq_available_governors *current = शून्य;
+	अक्षर linebuf[MAX_LINE_LEN];
+	अचिन्हित पूर्णांक pos, i;
+	अचिन्हित पूर्णांक len;
 
-	len = sysfs_cpufreq_read_file(cpu, "scaling_available_governors",
-				linebuf, sizeof(linebuf));
-	if (len == 0)
-		return NULL;
+	len = sysfs_cpufreq_पढ़ो_file(cpu, "scaling_available_governors",
+				linebuf, माप(linebuf));
+	अगर (len == 0)
+		वापस शून्य;
 
 	pos = 0;
-	for (i = 0; i < len; i++) {
-		if (linebuf[i] == ' ' || linebuf[i] == '\n') {
-			if (i - pos < 2)
-				continue;
-			if (current) {
-				current->next = malloc(sizeof(*current));
-				if (!current->next)
-					goto error_out;
+	क्रम (i = 0; i < len; i++) अणु
+		अगर (linebuf[i] == ' ' || linebuf[i] == '\n') अणु
+			अगर (i - pos < 2)
+				जारी;
+			अगर (current) अणु
+				current->next = दो_स्मृति(माप(*current));
+				अगर (!current->next)
+					जाओ error_out;
 				current = current->next;
-			} else {
-				first = malloc(sizeof(*first));
-				if (!first)
-					return NULL;
+			पूर्ण अन्यथा अणु
+				first = दो_स्मृति(माप(*first));
+				अगर (!first)
+					वापस शून्य;
 				current = first;
-			}
+			पूर्ण
 			current->first = first;
-			current->next = NULL;
+			current->next = शून्य;
 
-			current->governor = malloc(i - pos + 1);
-			if (!current->governor)
-				goto error_out;
+			current->governor = दो_स्मृति(i - pos + 1);
+			अगर (!current->governor)
+				जाओ error_out;
 
-			memcpy(current->governor, linebuf + pos, i - pos);
+			स_नकल(current->governor, linebuf + pos, i - pos);
 			current->governor[i - pos] = '\0';
 			pos = i + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return first;
+	वापस first;
 
  error_out:
-	while (first) {
+	जबतक (first) अणु
 		current = first->next;
-		if (first->governor)
-			free(first->governor);
-		free(first);
+		अगर (first->governor)
+			मुक्त(first->governor);
+		मुक्त(first);
 		first = current;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void cpufreq_put_available_governors(struct cpufreq_available_governors *any)
-{
-	struct cpufreq_available_governors *tmp, *next;
+व्योम cpufreq_put_available_governors(काष्ठा cpufreq_available_governors *any)
+अणु
+	काष्ठा cpufreq_available_governors *पंचांगp, *next;
 
-	if (!any)
-		return;
+	अगर (!any)
+		वापस;
 
-	tmp = any->first;
-	while (tmp) {
-		next = tmp->next;
-		if (tmp->governor)
-			free(tmp->governor);
-		free(tmp);
-		tmp = next;
-	}
-}
+	पंचांगp = any->first;
+	जबतक (पंचांगp) अणु
+		next = पंचांगp->next;
+		अगर (पंचांगp->governor)
+			मुक्त(पंचांगp->governor);
+		मुक्त(पंचांगp);
+		पंचांगp = next;
+	पूर्ण
+पूर्ण
 
 
-struct cpufreq_available_frequencies
-*cpufreq_get_available_frequencies(unsigned int cpu)
-{
-	struct cpufreq_available_frequencies *first = NULL;
-	struct cpufreq_available_frequencies *current = NULL;
-	char one_value[SYSFS_PATH_MAX];
-	char linebuf[MAX_LINE_LEN];
-	unsigned int pos, i;
-	unsigned int len;
+काष्ठा cpufreq_available_frequencies
+*cpufreq_get_available_frequencies(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpufreq_available_frequencies *first = शून्य;
+	काष्ठा cpufreq_available_frequencies *current = शून्य;
+	अक्षर one_value[SYSFS_PATH_MAX];
+	अक्षर linebuf[MAX_LINE_LEN];
+	अचिन्हित पूर्णांक pos, i;
+	अचिन्हित पूर्णांक len;
 
-	len = sysfs_cpufreq_read_file(cpu, "scaling_available_frequencies",
-				      linebuf, sizeof(linebuf));
-	if (len == 0)
-		return NULL;
+	len = sysfs_cpufreq_पढ़ो_file(cpu, "scaling_available_frequencies",
+				      linebuf, माप(linebuf));
+	अगर (len == 0)
+		वापस शून्य;
 
 	pos = 0;
-	for (i = 0; i < len; i++) {
-		if (linebuf[i] == ' ' || linebuf[i] == '\n') {
-			if (i - pos < 2)
-				continue;
-			if (i - pos >= SYSFS_PATH_MAX)
-				goto error_out;
-			if (current) {
-				current->next = malloc(sizeof(*current));
-				if (!current->next)
-					goto error_out;
+	क्रम (i = 0; i < len; i++) अणु
+		अगर (linebuf[i] == ' ' || linebuf[i] == '\n') अणु
+			अगर (i - pos < 2)
+				जारी;
+			अगर (i - pos >= SYSFS_PATH_MAX)
+				जाओ error_out;
+			अगर (current) अणु
+				current->next = दो_स्मृति(माप(*current));
+				अगर (!current->next)
+					जाओ error_out;
 				current = current->next;
-			} else {
-				first = malloc(sizeof(*first));
-				if (!first)
-					return NULL;
+			पूर्ण अन्यथा अणु
+				first = दो_स्मृति(माप(*first));
+				अगर (!first)
+					वापस शून्य;
 				current = first;
-			}
+			पूर्ण
 			current->first = first;
-			current->next = NULL;
+			current->next = शून्य;
 
-			memcpy(one_value, linebuf + pos, i - pos);
+			स_नकल(one_value, linebuf + pos, i - pos);
 			one_value[i - pos] = '\0';
-			if (sscanf(one_value, "%lu", &current->frequency) != 1)
-				goto error_out;
+			अगर (माला_पूछो(one_value, "%lu", &current->frequency) != 1)
+				जाओ error_out;
 
 			pos = i + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return first;
+	वापस first;
 
  error_out:
-	while (first) {
+	जबतक (first) अणु
 		current = first->next;
-		free(first);
+		मुक्त(first);
 		first = current;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct cpufreq_available_frequencies
-*cpufreq_get_boost_frequencies(unsigned int cpu)
-{
-	struct cpufreq_available_frequencies *first = NULL;
-	struct cpufreq_available_frequencies *current = NULL;
-	char one_value[SYSFS_PATH_MAX];
-	char linebuf[MAX_LINE_LEN];
-	unsigned int pos, i;
-	unsigned int len;
+काष्ठा cpufreq_available_frequencies
+*cpufreq_get_boost_frequencies(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpufreq_available_frequencies *first = शून्य;
+	काष्ठा cpufreq_available_frequencies *current = शून्य;
+	अक्षर one_value[SYSFS_PATH_MAX];
+	अक्षर linebuf[MAX_LINE_LEN];
+	अचिन्हित पूर्णांक pos, i;
+	अचिन्हित पूर्णांक len;
 
-	len = sysfs_cpufreq_read_file(cpu, "scaling_boost_frequencies",
-				      linebuf, sizeof(linebuf));
-	if (len == 0)
-		return NULL;
+	len = sysfs_cpufreq_पढ़ो_file(cpu, "scaling_boost_frequencies",
+				      linebuf, माप(linebuf));
+	अगर (len == 0)
+		वापस शून्य;
 
 	pos = 0;
-	for (i = 0; i < len; i++) {
-		if (linebuf[i] == ' ' || linebuf[i] == '\n') {
-			if (i - pos < 2)
-				continue;
-			if (i - pos >= SYSFS_PATH_MAX)
-				goto error_out;
-			if (current) {
-				current->next = malloc(sizeof(*current));
-				if (!current->next)
-					goto error_out;
+	क्रम (i = 0; i < len; i++) अणु
+		अगर (linebuf[i] == ' ' || linebuf[i] == '\n') अणु
+			अगर (i - pos < 2)
+				जारी;
+			अगर (i - pos >= SYSFS_PATH_MAX)
+				जाओ error_out;
+			अगर (current) अणु
+				current->next = दो_स्मृति(माप(*current));
+				अगर (!current->next)
+					जाओ error_out;
 				current = current->next;
-			} else {
-				first = malloc(sizeof(*first));
-				if (!first)
-					return NULL;
+			पूर्ण अन्यथा अणु
+				first = दो_स्मृति(माप(*first));
+				अगर (!first)
+					वापस शून्य;
 				current = first;
-			}
+			पूर्ण
 			current->first = first;
-			current->next = NULL;
+			current->next = शून्य;
 
-			memcpy(one_value, linebuf + pos, i - pos);
+			स_नकल(one_value, linebuf + pos, i - pos);
 			one_value[i - pos] = '\0';
-			if (sscanf(one_value, "%lu", &current->frequency) != 1)
-				goto error_out;
+			अगर (माला_पूछो(one_value, "%lu", &current->frequency) != 1)
+				जाओ error_out;
 
 			pos = i + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return first;
+	वापस first;
 
  error_out:
-	while (first) {
+	जबतक (first) अणु
 		current = first->next;
-		free(first);
+		मुक्त(first);
 		first = current;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void cpufreq_put_available_frequencies(struct cpufreq_available_frequencies *any)
-{
-	struct cpufreq_available_frequencies *tmp, *next;
+व्योम cpufreq_put_available_frequencies(काष्ठा cpufreq_available_frequencies *any)
+अणु
+	काष्ठा cpufreq_available_frequencies *पंचांगp, *next;
 
-	if (!any)
-		return;
+	अगर (!any)
+		वापस;
 
-	tmp = any->first;
-	while (tmp) {
-		next = tmp->next;
-		free(tmp);
-		tmp = next;
-	}
-}
+	पंचांगp = any->first;
+	जबतक (पंचांगp) अणु
+		next = पंचांगp->next;
+		मुक्त(पंचांगp);
+		पंचांगp = next;
+	पूर्ण
+पूर्ण
 
-void cpufreq_put_boost_frequencies(struct cpufreq_available_frequencies *any)
-{
+व्योम cpufreq_put_boost_frequencies(काष्ठा cpufreq_available_frequencies *any)
+अणु
 	cpufreq_put_available_frequencies(any);
-}
+पूर्ण
 
-static struct cpufreq_affected_cpus *sysfs_get_cpu_list(unsigned int cpu,
-							const char *file)
-{
-	struct cpufreq_affected_cpus *first = NULL;
-	struct cpufreq_affected_cpus *current = NULL;
-	char one_value[SYSFS_PATH_MAX];
-	char linebuf[MAX_LINE_LEN];
-	unsigned int pos, i;
-	unsigned int len;
+अटल काष्ठा cpufreq_affected_cpus *sysfs_get_cpu_list(अचिन्हित पूर्णांक cpu,
+							स्थिर अक्षर *file)
+अणु
+	काष्ठा cpufreq_affected_cpus *first = शून्य;
+	काष्ठा cpufreq_affected_cpus *current = शून्य;
+	अक्षर one_value[SYSFS_PATH_MAX];
+	अक्षर linebuf[MAX_LINE_LEN];
+	अचिन्हित पूर्णांक pos, i;
+	अचिन्हित पूर्णांक len;
 
-	len = sysfs_cpufreq_read_file(cpu, file, linebuf, sizeof(linebuf));
-	if (len == 0)
-		return NULL;
+	len = sysfs_cpufreq_पढ़ो_file(cpu, file, linebuf, माप(linebuf));
+	अगर (len == 0)
+		वापस शून्य;
 
 	pos = 0;
-	for (i = 0; i < len; i++) {
-		if (i == len || linebuf[i] == ' ' || linebuf[i] == '\n') {
-			if (i - pos  < 1)
-				continue;
-			if (i - pos >= SYSFS_PATH_MAX)
-				goto error_out;
-			if (current) {
-				current->next = malloc(sizeof(*current));
-				if (!current->next)
-					goto error_out;
+	क्रम (i = 0; i < len; i++) अणु
+		अगर (i == len || linebuf[i] == ' ' || linebuf[i] == '\n') अणु
+			अगर (i - pos  < 1)
+				जारी;
+			अगर (i - pos >= SYSFS_PATH_MAX)
+				जाओ error_out;
+			अगर (current) अणु
+				current->next = दो_स्मृति(माप(*current));
+				अगर (!current->next)
+					जाओ error_out;
 				current = current->next;
-			} else {
-				first = malloc(sizeof(*first));
-				if (!first)
-					return NULL;
+			पूर्ण अन्यथा अणु
+				first = दो_स्मृति(माप(*first));
+				अगर (!first)
+					वापस शून्य;
 				current = first;
-			}
+			पूर्ण
 			current->first = first;
-			current->next = NULL;
+			current->next = शून्य;
 
-			memcpy(one_value, linebuf + pos, i - pos);
+			स_नकल(one_value, linebuf + pos, i - pos);
 			one_value[i - pos] = '\0';
 
-			if (sscanf(one_value, "%u", &current->cpu) != 1)
-				goto error_out;
+			अगर (माला_पूछो(one_value, "%u", &current->cpu) != 1)
+				जाओ error_out;
 
 			pos = i + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return first;
+	वापस first;
 
  error_out:
-	while (first) {
+	जबतक (first) अणु
 		current = first->next;
-		free(first);
+		मुक्त(first);
 		first = current;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct cpufreq_affected_cpus *cpufreq_get_affected_cpus(unsigned int cpu)
-{
-	return sysfs_get_cpu_list(cpu, "affected_cpus");
-}
+काष्ठा cpufreq_affected_cpus *cpufreq_get_affected_cpus(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस sysfs_get_cpu_list(cpu, "affected_cpus");
+पूर्ण
 
-void cpufreq_put_affected_cpus(struct cpufreq_affected_cpus *any)
-{
-	struct cpufreq_affected_cpus *tmp, *next;
+व्योम cpufreq_put_affected_cpus(काष्ठा cpufreq_affected_cpus *any)
+अणु
+	काष्ठा cpufreq_affected_cpus *पंचांगp, *next;
 
-	if (!any)
-		return;
+	अगर (!any)
+		वापस;
 
-	tmp = any->first;
-	while (tmp) {
-		next = tmp->next;
-		free(tmp);
-		tmp = next;
-	}
-}
+	पंचांगp = any->first;
+	जबतक (पंचांगp) अणु
+		next = पंचांगp->next;
+		मुक्त(पंचांगp);
+		पंचांगp = next;
+	पूर्ण
+पूर्ण
 
 
-struct cpufreq_affected_cpus *cpufreq_get_related_cpus(unsigned int cpu)
-{
-	return sysfs_get_cpu_list(cpu, "related_cpus");
-}
+काष्ठा cpufreq_affected_cpus *cpufreq_get_related_cpus(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस sysfs_get_cpu_list(cpu, "related_cpus");
+पूर्ण
 
-void cpufreq_put_related_cpus(struct cpufreq_affected_cpus *any)
-{
+व्योम cpufreq_put_related_cpus(काष्ठा cpufreq_affected_cpus *any)
+अणु
 	cpufreq_put_affected_cpus(any);
-}
+पूर्ण
 
-static int verify_gov(char *new_gov, char *passed_gov)
-{
-	unsigned int i, j = 0;
+अटल पूर्णांक verअगरy_gov(अक्षर *new_gov, अक्षर *passed_gov)
+अणु
+	अचिन्हित पूर्णांक i, j = 0;
 
-	if (!passed_gov || (strlen(passed_gov) > 19))
-		return -EINVAL;
+	अगर (!passed_gov || (म_माप(passed_gov) > 19))
+		वापस -EINVAL;
 
-	strncpy(new_gov, passed_gov, 20);
-	for (i = 0; i < 20; i++) {
-		if (j) {
+	म_नकलन(new_gov, passed_gov, 20);
+	क्रम (i = 0; i < 20; i++) अणु
+		अगर (j) अणु
 			new_gov[i] = '\0';
-			continue;
-		}
-		if ((new_gov[i] >= 'a') && (new_gov[i] <= 'z'))
-			continue;
+			जारी;
+		पूर्ण
+		अगर ((new_gov[i] >= 'a') && (new_gov[i] <= 'z'))
+			जारी;
 
-		if ((new_gov[i] >= 'A') && (new_gov[i] <= 'Z'))
-			continue;
+		अगर ((new_gov[i] >= 'A') && (new_gov[i] <= 'Z'))
+			जारी;
 
-		if (new_gov[i] == '-')
-			continue;
+		अगर (new_gov[i] == '-')
+			जारी;
 
-		if (new_gov[i] == '_')
-			continue;
+		अगर (new_gov[i] == '_')
+			जारी;
 
-		if (new_gov[i] == '\0') {
+		अगर (new_gov[i] == '\0') अणु
 			j = 1;
-			continue;
-		}
-		return -EINVAL;
-	}
+			जारी;
+		पूर्ण
+		वापस -EINVAL;
+	पूर्ण
 	new_gov[19] = '\0';
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cpufreq_set_policy(unsigned int cpu, struct cpufreq_policy *policy)
-{
-	char min[SYSFS_PATH_MAX];
-	char max[SYSFS_PATH_MAX];
-	char gov[SYSFS_PATH_MAX];
-	int ret;
-	unsigned long old_min;
-	int write_max_first;
+पूर्णांक cpufreq_set_policy(अचिन्हित पूर्णांक cpu, काष्ठा cpufreq_policy *policy)
+अणु
+	अक्षर min[SYSFS_PATH_MAX];
+	अक्षर max[SYSFS_PATH_MAX];
+	अक्षर gov[SYSFS_PATH_MAX];
+	पूर्णांक ret;
+	अचिन्हित दीर्घ old_min;
+	पूर्णांक ग_लिखो_max_first;
 
-	if (!policy || !(policy->governor))
-		return -EINVAL;
+	अगर (!policy || !(policy->governor))
+		वापस -EINVAL;
 
-	if (policy->max < policy->min)
-		return -EINVAL;
+	अगर (policy->max < policy->min)
+		वापस -EINVAL;
 
-	if (verify_gov(gov, policy->governor))
-		return -EINVAL;
+	अगर (verअगरy_gov(gov, policy->governor))
+		वापस -EINVAL;
 
-	snprintf(min, SYSFS_PATH_MAX, "%lu", policy->min);
-	snprintf(max, SYSFS_PATH_MAX, "%lu", policy->max);
+	snम_लिखो(min, SYSFS_PATH_MAX, "%lu", policy->min);
+	snम_लिखो(max, SYSFS_PATH_MAX, "%lu", policy->max);
 
 	old_min = sysfs_cpufreq_get_one_value(cpu, SCALING_MIN_FREQ);
-	write_max_first = (old_min && (policy->max < old_min) ? 0 : 1);
+	ग_लिखो_max_first = (old_min && (policy->max < old_min) ? 0 : 1);
 
-	if (write_max_first) {
-		ret = sysfs_cpufreq_write_one_value(cpu, WRITE_SCALING_MAX_FREQ,
-						    max, strlen(max));
-		if (ret)
-			return ret;
-	}
+	अगर (ग_लिखो_max_first) अणु
+		ret = sysfs_cpufreq_ग_लिखो_one_value(cpu, WRITE_SCALING_MAX_FREQ,
+						    max, म_माप(max));
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = sysfs_cpufreq_write_one_value(cpu, WRITE_SCALING_MIN_FREQ, min,
-					    strlen(min));
-	if (ret)
-		return ret;
+	ret = sysfs_cpufreq_ग_लिखो_one_value(cpu, WRITE_SCALING_MIN_FREQ, min,
+					    म_माप(min));
+	अगर (ret)
+		वापस ret;
 
-	if (!write_max_first) {
-		ret = sysfs_cpufreq_write_one_value(cpu, WRITE_SCALING_MAX_FREQ,
-						    max, strlen(max));
-		if (ret)
-			return ret;
-	}
+	अगर (!ग_लिखो_max_first) अणु
+		ret = sysfs_cpufreq_ग_लिखो_one_value(cpu, WRITE_SCALING_MAX_FREQ,
+						    max, म_माप(max));
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return sysfs_cpufreq_write_one_value(cpu, WRITE_SCALING_GOVERNOR,
-					     gov, strlen(gov));
-}
-
-
-int cpufreq_modify_policy_min(unsigned int cpu, unsigned long min_freq)
-{
-	char value[SYSFS_PATH_MAX];
-
-	snprintf(value, SYSFS_PATH_MAX, "%lu", min_freq);
-
-	return sysfs_cpufreq_write_one_value(cpu, WRITE_SCALING_MIN_FREQ,
-					     value, strlen(value));
-}
+	वापस sysfs_cpufreq_ग_लिखो_one_value(cpu, WRITE_SCALING_GOVERNOR,
+					     gov, म_माप(gov));
+पूर्ण
 
 
-int cpufreq_modify_policy_max(unsigned int cpu, unsigned long max_freq)
-{
-	char value[SYSFS_PATH_MAX];
+पूर्णांक cpufreq_modअगरy_policy_min(अचिन्हित पूर्णांक cpu, अचिन्हित दीर्घ min_freq)
+अणु
+	अक्षर value[SYSFS_PATH_MAX];
 
-	snprintf(value, SYSFS_PATH_MAX, "%lu", max_freq);
+	snम_लिखो(value, SYSFS_PATH_MAX, "%lu", min_freq);
 
-	return sysfs_cpufreq_write_one_value(cpu, WRITE_SCALING_MAX_FREQ,
-					     value, strlen(value));
-}
+	वापस sysfs_cpufreq_ग_लिखो_one_value(cpu, WRITE_SCALING_MIN_FREQ,
+					     value, म_माप(value));
+पूर्ण
 
-int cpufreq_modify_policy_governor(unsigned int cpu, char *governor)
-{
-	char new_gov[SYSFS_PATH_MAX];
 
-	if ((!governor) || (strlen(governor) > 19))
-		return -EINVAL;
+पूर्णांक cpufreq_modअगरy_policy_max(अचिन्हित पूर्णांक cpu, अचिन्हित दीर्घ max_freq)
+अणु
+	अक्षर value[SYSFS_PATH_MAX];
 
-	if (verify_gov(new_gov, governor))
-		return -EINVAL;
+	snम_लिखो(value, SYSFS_PATH_MAX, "%lu", max_freq);
 
-	return sysfs_cpufreq_write_one_value(cpu, WRITE_SCALING_GOVERNOR,
-					     new_gov, strlen(new_gov));
-}
+	वापस sysfs_cpufreq_ग_लिखो_one_value(cpu, WRITE_SCALING_MAX_FREQ,
+					     value, म_माप(value));
+पूर्ण
 
-int cpufreq_set_frequency(unsigned int cpu, unsigned long target_frequency)
-{
-	struct cpufreq_policy *pol = cpufreq_get_policy(cpu);
-	char userspace_gov[] = "userspace";
-	char freq[SYSFS_PATH_MAX];
-	int ret;
+पूर्णांक cpufreq_modअगरy_policy_governor(अचिन्हित पूर्णांक cpu, अक्षर *governor)
+अणु
+	अक्षर new_gov[SYSFS_PATH_MAX];
 
-	if (!pol)
-		return -ENODEV;
+	अगर ((!governor) || (म_माप(governor) > 19))
+		वापस -EINVAL;
 
-	if (strncmp(pol->governor, userspace_gov, 9) != 0) {
-		ret = cpufreq_modify_policy_governor(cpu, userspace_gov);
-		if (ret) {
+	अगर (verअगरy_gov(new_gov, governor))
+		वापस -EINVAL;
+
+	वापस sysfs_cpufreq_ग_लिखो_one_value(cpu, WRITE_SCALING_GOVERNOR,
+					     new_gov, म_माप(new_gov));
+पूर्ण
+
+पूर्णांक cpufreq_set_frequency(अचिन्हित पूर्णांक cpu, अचिन्हित दीर्घ target_frequency)
+अणु
+	काष्ठा cpufreq_policy *pol = cpufreq_get_policy(cpu);
+	अक्षर userspace_gov[] = "userspace";
+	अक्षर freq[SYSFS_PATH_MAX];
+	पूर्णांक ret;
+
+	अगर (!pol)
+		वापस -ENODEV;
+
+	अगर (म_भेदन(pol->governor, userspace_gov, 9) != 0) अणु
+		ret = cpufreq_modअगरy_policy_governor(cpu, userspace_gov);
+		अगर (ret) अणु
 			cpufreq_put_policy(pol);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	cpufreq_put_policy(pol);
 
-	snprintf(freq, SYSFS_PATH_MAX, "%lu", target_frequency);
+	snम_लिखो(freq, SYSFS_PATH_MAX, "%lu", target_frequency);
 
-	return sysfs_cpufreq_write_one_value(cpu, WRITE_SCALING_SET_SPEED,
-					     freq, strlen(freq));
-}
+	वापस sysfs_cpufreq_ग_लिखो_one_value(cpu, WRITE_SCALING_SET_SPEED,
+					     freq, म_माप(freq));
+पूर्ण
 
-struct cpufreq_stats *cpufreq_get_stats(unsigned int cpu,
-					unsigned long long *total_time)
-{
-	struct cpufreq_stats *first = NULL;
-	struct cpufreq_stats *current = NULL;
-	char one_value[SYSFS_PATH_MAX];
-	char linebuf[MAX_LINE_LEN];
-	unsigned int pos, i;
-	unsigned int len;
+काष्ठा cpufreq_stats *cpufreq_get_stats(अचिन्हित पूर्णांक cpu,
+					अचिन्हित दीर्घ दीर्घ *total_समय)
+अणु
+	काष्ठा cpufreq_stats *first = शून्य;
+	काष्ठा cpufreq_stats *current = शून्य;
+	अक्षर one_value[SYSFS_PATH_MAX];
+	अक्षर linebuf[MAX_LINE_LEN];
+	अचिन्हित पूर्णांक pos, i;
+	अचिन्हित पूर्णांक len;
 
-	len = sysfs_cpufreq_read_file(cpu, "stats/time_in_state",
-				linebuf, sizeof(linebuf));
-	if (len == 0)
-		return NULL;
+	len = sysfs_cpufreq_पढ़ो_file(cpu, "stats/time_in_state",
+				linebuf, माप(linebuf));
+	अगर (len == 0)
+		वापस शून्य;
 
-	*total_time = 0;
+	*total_समय = 0;
 	pos = 0;
-	for (i = 0; i < len; i++) {
-		if (i == strlen(linebuf) || linebuf[i] == '\n')	{
-			if (i - pos < 2)
-				continue;
-			if ((i - pos) >= SYSFS_PATH_MAX)
-				goto error_out;
-			if (current) {
-				current->next = malloc(sizeof(*current));
-				if (!current->next)
-					goto error_out;
+	क्रम (i = 0; i < len; i++) अणु
+		अगर (i == म_माप(linebuf) || linebuf[i] == '\n')	अणु
+			अगर (i - pos < 2)
+				जारी;
+			अगर ((i - pos) >= SYSFS_PATH_MAX)
+				जाओ error_out;
+			अगर (current) अणु
+				current->next = दो_स्मृति(माप(*current));
+				अगर (!current->next)
+					जाओ error_out;
 				current = current->next;
-			} else {
-				first = malloc(sizeof(*first));
-				if (!first)
-					return NULL;
+			पूर्ण अन्यथा अणु
+				first = दो_स्मृति(माप(*first));
+				अगर (!first)
+					वापस शून्य;
 				current = first;
-			}
+			पूर्ण
 			current->first = first;
-			current->next = NULL;
+			current->next = शून्य;
 
-			memcpy(one_value, linebuf + pos, i - pos);
+			स_नकल(one_value, linebuf + pos, i - pos);
 			one_value[i - pos] = '\0';
-			if (sscanf(one_value, "%lu %llu",
+			अगर (माला_पूछो(one_value, "%lu %llu",
 					&current->frequency,
-					&current->time_in_state) != 2)
-				goto error_out;
+					&current->समय_in_state) != 2)
+				जाओ error_out;
 
-			*total_time = *total_time + current->time_in_state;
+			*total_समय = *total_समय + current->समय_in_state;
 			pos = i + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return first;
+	वापस first;
 
  error_out:
-	while (first) {
+	जबतक (first) अणु
 		current = first->next;
-		free(first);
+		मुक्त(first);
 		first = current;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void cpufreq_put_stats(struct cpufreq_stats *any)
-{
-	struct cpufreq_stats *tmp, *next;
+व्योम cpufreq_put_stats(काष्ठा cpufreq_stats *any)
+अणु
+	काष्ठा cpufreq_stats *पंचांगp, *next;
 
-	if (!any)
-		return;
+	अगर (!any)
+		वापस;
 
-	tmp = any->first;
-	while (tmp) {
-		next = tmp->next;
-		free(tmp);
-		tmp = next;
-	}
-}
+	पंचांगp = any->first;
+	जबतक (पंचांगp) अणु
+		next = पंचांगp->next;
+		मुक्त(पंचांगp);
+		पंचांगp = next;
+	पूर्ण
+पूर्ण
 
-unsigned long cpufreq_get_transitions(unsigned int cpu)
-{
-	return sysfs_cpufreq_get_one_value(cpu, STATS_NUM_TRANSITIONS);
-}
+अचिन्हित दीर्घ cpufreq_get_transitions(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस sysfs_cpufreq_get_one_value(cpu, STATS_NUM_TRANSITIONS);
+पूर्ण

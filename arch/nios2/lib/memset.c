@@ -1,46 +1,47 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2011 Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2004 Microtronix Datacom Ltd
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/types.h>
-#include <linux/string.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
 
-void *memset(void *s, int c, size_t count)
-{
-	int destptr, charcnt, dwordcnt, fill8reg, wrkrega;
+व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार count)
+अणु
+	पूर्णांक destptr, अक्षरcnt, dwordcnt, fill8reg, wrkrega;
 
-	if (!count)
-		return s;
+	अगर (!count)
+		वापस s;
 
 	c &= 0xFF;
 
-	if (count <= 8) {
-		char *xs = (char *) s;
+	अगर (count <= 8) अणु
+		अक्षर *xs = (अक्षर *) s;
 
-		while (count--)
+		जबतक (count--)
 			*xs++ = c;
-		return s;
-	}
+		वापस s;
+	पूर्ण
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		/* fill8 %3, %5 (c & 0xff) */
 		"	slli	%4, %5, 8\n"
 		"	or	%4, %4, %5\n"
 		"	slli    %3, %4, 16\n"
 		"	or	%3, %3, %4\n"
-		/* Word-align %0 (s) if necessary */
+		/* Word-align %0 (s) अगर necessary */
 		"	andi	%4, %0, 0x01\n"
 		"	beq	%4, zero, 1f\n"
 		"	addi	%1, %1, -1\n"
 		"	stb	%3, 0(%0)\n"
 		"	addi	%0, %0, 1\n"
 		"1:	mov	%2, %1\n"
-		/* Dword-align %0 (s) if necessary */
+		/* Dword-align %0 (s) अगर necessary */
 		"	andi	%4, %0, 0x02\n"
 		"	beq	%4, zero, 2f\n"
 		"	addi	%1, %1, -2\n"
@@ -54,18 +55,18 @@ void *memset(void *s, int c, size_t count)
 		"	addi	%0, %0, 4\n"
 		"	addi    %2, %2, -1\n"
 		"	bne	%2, zero, 3b\n"
-		/* store residual word and/or byte if necessary */
+		/* store residual word and/or byte अगर necessary */
 		"	andi	%4, %1, 0x02\n"
 		"	beq	%4, zero, 4f\n"
 		"	sth	%3, 0(%0)\n"
 		"	addi	%0, %0, 2\n"
-		/* store residual byte if necessary */
+		/* store residual byte अगर necessary */
 		"4:	andi	%4, %1, 0x01\n"
 		"	beq	%4, zero, 5f\n"
 		"	stb	%3, 0(%0)\n"
 		"5:\n"
 		: "=r" (destptr),	/* %0  Output */
-		  "=r" (charcnt),	/* %1  Output */
+		  "=r" (अक्षरcnt),	/* %1  Output */
 		  "=r" (dwordcnt),	/* %2  Output */
 		  "=r" (fill8reg),	/* %3  Output */
 		  "=&r" (wrkrega)	/* %4  Output only */
@@ -75,5 +76,5 @@ void *memset(void *s, int c, size_t count)
 		: "memory"		/* clobbered */
 	);
 
-	return s;
-}
+	वापस s;
+पूर्ण

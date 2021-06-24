@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <test_progs.h>
-#include "cgroup_helpers.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <test_progs.h>
+#समावेश "cgroup_helpers.h"
 
-static char bpf_log_buf[4096];
-static bool verbose;
+अटल अक्षर bpf_log_buf[4096];
+अटल bool verbose;
 
-enum sockopt_test_error {
+क्रमागत sockopt_test_error अणु
 	OK = 0,
 	DENY_LOAD,
 	DENY_ATTACH,
@@ -13,61 +14,61 @@ enum sockopt_test_error {
 	EFAULT_GETSOCKOPT,
 	EPERM_SETSOCKOPT,
 	EFAULT_SETSOCKOPT,
-};
+पूर्ण;
 
-static struct sockopt_test {
-	const char			*descr;
-	const struct bpf_insn		insns[64];
-	enum bpf_attach_type		attach_type;
-	enum bpf_attach_type		expected_attach_type;
+अटल काष्ठा sockopt_test अणु
+	स्थिर अक्षर			*descr;
+	स्थिर काष्ठा bpf_insn		insns[64];
+	क्रमागत bpf_attach_type		attach_type;
+	क्रमागत bpf_attach_type		expected_attach_type;
 
-	int				set_optname;
-	int				set_level;
-	const char			set_optval[64];
+	पूर्णांक				set_optname;
+	पूर्णांक				set_level;
+	स्थिर अक्षर			set_optval[64];
 	socklen_t			set_optlen;
 
-	int				get_optname;
-	int				get_level;
-	const char			get_optval[64];
+	पूर्णांक				get_optname;
+	पूर्णांक				get_level;
+	स्थिर अक्षर			get_optval[64];
 	socklen_t			get_optlen;
 	socklen_t			get_optlen_ret;
 
-	enum sockopt_test_error		error;
-} tests[] = {
+	क्रमागत sockopt_test_error		error;
+पूर्ण tests[] = अणु
 
-	/* ==================== getsockopt ====================  */
+	/* ==================== माला_लोockopt ====================  */
 
-	{
+	अणु
 		.descr = "getsockopt: no expected_attach_type",
-		.insns = {
-			/* return 1 */
+		.insns = अणु
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
 
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = 0,
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: wrong expected_attach_type",
-		.insns = {
-			/* return 1 */
+		.insns = अणु
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
 
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 		.error = DENY_ATTACH,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: bypass bpf hook",
-		.insns = {
-			/* return 1 */
+		.insns = अणु
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
@@ -77,18 +78,18 @@ static struct sockopt_test {
 		.get_optname = IP_TOS,
 		.set_optname = IP_TOS,
 
-		.set_optval = { 1 << 3 },
+		.set_optval = अणु 1 << 3 पूर्ण,
 		.set_optlen = 1,
 
-		.get_optval = { 1 << 3 },
+		.get_optval = अणु 1 << 3 पूर्ण,
 		.get_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: return EPERM from bpf hook",
-		.insns = {
+		.insns = अणु
 			BPF_MOV64_IMM(BPF_REG_0, 0),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
@@ -97,255 +98,255 @@ static struct sockopt_test {
 
 		.get_optlen = 1,
 		.error = EPERM_GETSOCKOPT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: no optval bounds check, deny loading",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->optval */
 			BPF_LDX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optval)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval)),
 
 			/* ctx->optval[0] = 0x80 */
 			BPF_MOV64_IMM(BPF_REG_0, 0x80),
 			BPF_STX_MEM(BPF_W, BPF_REG_6, BPF_REG_0, 0),
 
-			/* return 1 */
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: read ctx->level",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->level */
 			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, level)),
+				    दुरत्व(काष्ठा bpf_sockopt, level)),
 
-			/* if (ctx->level == 123) { */
+			/* अगर (ctx->level == 123) अणु */
 			BPF_JMP_IMM(BPF_JNE, BPF_REG_6, 123, 4),
 			/* ctx->retval = 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, retval)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, retval)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_JMP_A(1),
-			/* } else { */
-			/* return 0 */
+			/* पूर्ण अन्यथा अणु */
+			/* वापस 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
-			/* } */
+			/* पूर्ण */
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.get_level = 123,
 
 		.get_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: deny writing to ctx->level",
-		.insns = {
+		.insns = अणु
 			/* ctx->level = 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, level)),
+				    दुरत्व(काष्ठा bpf_sockopt, level)),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: read ctx->optname",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->optname */
 			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optname)),
+				    दुरत्व(काष्ठा bpf_sockopt, optname)),
 
-			/* if (ctx->optname == 123) { */
+			/* अगर (ctx->optname == 123) अणु */
 			BPF_JMP_IMM(BPF_JNE, BPF_REG_6, 123, 4),
 			/* ctx->retval = 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, retval)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, retval)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_JMP_A(1),
-			/* } else { */
-			/* return 0 */
+			/* पूर्ण अन्यथा अणु */
+			/* वापस 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
-			/* } */
+			/* पूर्ण */
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.get_optname = 123,
 
 		.get_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: read ctx->retval",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->retval */
 			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, retval)),
+				    दुरत्व(काष्ठा bpf_sockopt, retval)),
 
-			/* return 1 */
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.get_level = SOL_IP,
 		.get_optname = IP_TOS,
 		.get_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: deny writing to ctx->optname",
-		.insns = {
+		.insns = अणु
 			/* ctx->optname = 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optname)),
+				    दुरत्व(काष्ठा bpf_sockopt, optname)),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: read ctx->optlen",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->optlen */
 			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optlen)),
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
 
-			/* if (ctx->optlen == 64) { */
+			/* अगर (ctx->optlen == 64) अणु */
 			BPF_JMP_IMM(BPF_JNE, BPF_REG_6, 64, 4),
 			/* ctx->retval = 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, retval)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, retval)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_JMP_A(1),
-			/* } else { */
-			/* return 0 */
+			/* पूर्ण अन्यथा अणु */
+			/* वापस 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
-			/* } */
+			/* पूर्ण */
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.get_optlen = 64,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: deny bigger ctx->optlen",
-		.insns = {
+		.insns = अणु
 			/* ctx->optlen = 65 */
 			BPF_MOV64_IMM(BPF_REG_0, 65),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optlen)),
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
 
 			/* ctx->retval = 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, retval)),
+				    दुरत्व(काष्ठा bpf_sockopt, retval)),
 
-			/* return 1 */
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.get_optlen = 64,
 
 		.error = EFAULT_GETSOCKOPT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: deny arbitrary ctx->retval",
-		.insns = {
+		.insns = अणु
 			/* ctx->retval = 123 */
 			BPF_MOV64_IMM(BPF_REG_0, 123),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, retval)),
+				    दुरत्व(काष्ठा bpf_sockopt, retval)),
 
-			/* return 1 */
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.get_optlen = 64,
 
 		.error = EFAULT_GETSOCKOPT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: support smaller ctx->optlen",
-		.insns = {
+		.insns = अणु
 			/* ctx->optlen = 32 */
 			BPF_MOV64_IMM(BPF_REG_0, 32),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optlen)),
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
 			/* ctx->retval = 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, retval)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, retval)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.get_optlen = 64,
 		.get_optlen_ret = 32,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: deny writing to ctx->optval",
-		.insns = {
+		.insns = अणु
 			/* ctx->optval = 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optval)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval)),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: deny writing to ctx->optval_end",
-		.insns = {
+		.insns = अणु
 			/* ctx->optval_end = 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optval_end)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval_end)),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "getsockopt: rewrite value",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->optval */
 			BPF_LDX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optval)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval)),
 			/* r2 = ctx->optval */
 			BPF_MOV64_REG(BPF_REG_2, BPF_REG_6),
 			/* r6 = ctx->optval + 1 */
@@ -353,66 +354,66 @@ static struct sockopt_test {
 
 			/* r7 = ctx->optval_end */
 			BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optval_end)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval_end)),
 
-			/* if (ctx->optval + 1 <= ctx->optval_end) { */
+			/* अगर (ctx->optval + 1 <= ctx->optval_end) अणु */
 			BPF_JMP_REG(BPF_JGT, BPF_REG_6, BPF_REG_7, 1),
 			/* ctx->optval[0] = 0xF0 */
 			BPF_ST_MEM(BPF_B, BPF_REG_2, 0, 0xF0),
-			/* } */
+			/* पूर्ण */
 
 			/* ctx->retval = 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, retval)),
+				    दुरत्व(काष्ठा bpf_sockopt, retval)),
 
-			/* return 1*/
+			/* वापस 1*/
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_GETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 
 		.get_level = SOL_IP,
 		.get_optname = IP_TOS,
 
-		.get_optval = { 0xF0 },
+		.get_optval = अणु 0xF0 पूर्ण,
 		.get_optlen = 1,
-	},
+	पूर्ण,
 
 	/* ==================== setsockopt ====================  */
 
-	{
+	अणु
 		.descr = "setsockopt: no expected_attach_type",
-		.insns = {
-			/* return 1 */
+		.insns = अणु
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
 
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = 0,
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: wrong expected_attach_type",
-		.insns = {
-			/* return 1 */
+		.insns = अणु
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
 
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_GETSOCKOPT,
 		.error = DENY_ATTACH,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: bypass bpf hook",
-		.insns = {
-			/* return 1 */
+		.insns = अणु
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
@@ -422,19 +423,19 @@ static struct sockopt_test {
 		.get_optname = IP_TOS,
 		.set_optname = IP_TOS,
 
-		.set_optval = { 1 << 3 },
+		.set_optval = अणु 1 << 3 पूर्ण,
 		.set_optlen = 1,
 
-		.get_optval = { 1 << 3 },
+		.get_optval = अणु 1 << 3 पूर्ण,
 		.get_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: return EPERM from bpf hook",
-		.insns = {
-			/* return 0 */
+		.insns = अणु
+			/* वापस 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
@@ -443,65 +444,65 @@ static struct sockopt_test {
 
 		.set_optlen = 1,
 		.error = EPERM_SETSOCKOPT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: no optval bounds check, deny loading",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->optval */
 			BPF_LDX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optval)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval)),
 
 			/* r0 = ctx->optval[0] */
 			BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_6, 0),
 
-			/* return 1 */
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: read ctx->level",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->level */
 			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, level)),
+				    दुरत्व(काष्ठा bpf_sockopt, level)),
 
-			/* if (ctx->level == 123) { */
+			/* अगर (ctx->level == 123) अणु */
 			BPF_JMP_IMM(BPF_JNE, BPF_REG_6, 123, 4),
 			/* ctx->optlen = -1 */
 			BPF_MOV64_IMM(BPF_REG_0, -1),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optlen)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_JMP_A(1),
-			/* } else { */
-			/* return 0 */
+			/* पूर्ण अन्यथा अणु */
+			/* वापस 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
-			/* } */
+			/* पूर्ण */
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
 		.set_level = 123,
 
 		.set_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: allow changing ctx->level",
-		.insns = {
+		.insns = अणु
 			/* ctx->level = SOL_IP */
 			BPF_MOV64_IMM(BPF_REG_0, SOL_IP),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, level)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, level)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
@@ -511,51 +512,51 @@ static struct sockopt_test {
 		.get_optname = IP_TOS,
 		.set_optname = IP_TOS,
 
-		.set_optval = { 1 << 3 },
+		.set_optval = अणु 1 << 3 पूर्ण,
 		.set_optlen = 1,
-		.get_optval = { 1 << 3 },
+		.get_optval = अणु 1 << 3 पूर्ण,
 		.get_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: read ctx->optname",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->optname */
 			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optname)),
+				    दुरत्व(काष्ठा bpf_sockopt, optname)),
 
-			/* if (ctx->optname == 123) { */
+			/* अगर (ctx->optname == 123) अणु */
 			BPF_JMP_IMM(BPF_JNE, BPF_REG_6, 123, 4),
 			/* ctx->optlen = -1 */
 			BPF_MOV64_IMM(BPF_REG_0, -1),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optlen)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_JMP_A(1),
-			/* } else { */
-			/* return 0 */
+			/* पूर्ण अन्यथा अणु */
+			/* वापस 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
-			/* } */
+			/* पूर्ण */
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
 		.set_optname = 123,
 
 		.set_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: allow changing ctx->optname",
-		.insns = {
+		.insns = अणु
 			/* ctx->optname = IP_TOS */
 			BPF_MOV64_IMM(BPF_REG_0, IP_TOS),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optname)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, optname)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
@@ -565,95 +566,95 @@ static struct sockopt_test {
 		.get_optname = IP_TOS,
 		.set_optname = 456, /* should be rewritten to IP_TOS */
 
-		.set_optval = { 1 << 3 },
+		.set_optval = अणु 1 << 3 पूर्ण,
 		.set_optlen = 1,
-		.get_optval = { 1 << 3 },
+		.get_optval = अणु 1 << 3 पूर्ण,
 		.get_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: read ctx->optlen",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->optlen */
 			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optlen)),
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
 
-			/* if (ctx->optlen == 64) { */
+			/* अगर (ctx->optlen == 64) अणु */
 			BPF_JMP_IMM(BPF_JNE, BPF_REG_6, 64, 4),
 			/* ctx->optlen = -1 */
 			BPF_MOV64_IMM(BPF_REG_0, -1),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optlen)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_JMP_A(1),
-			/* } else { */
-			/* return 0 */
+			/* पूर्ण अन्यथा अणु */
+			/* वापस 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
-			/* } */
+			/* पूर्ण */
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
 		.set_optlen = 64,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: ctx->optlen == -1 is ok",
-		.insns = {
+		.insns = अणु
 			/* ctx->optlen = -1 */
 			BPF_MOV64_IMM(BPF_REG_0, -1),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optlen)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
 		.set_optlen = 64,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: deny ctx->optlen < 0 (except -1)",
-		.insns = {
+		.insns = अणु
 			/* ctx->optlen = -2 */
 			BPF_MOV64_IMM(BPF_REG_0, -2),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optlen)),
-			/* return 1 */
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
 		.set_optlen = 4,
 
 		.error = EFAULT_SETSOCKOPT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: deny ctx->optlen > input optlen",
-		.insns = {
+		.insns = अणु
 			/* ctx->optlen = 65 */
 			BPF_MOV64_IMM(BPF_REG_0, 65),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optlen)),
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
 		.set_optlen = 64,
 
 		.error = EFAULT_SETSOCKOPT,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: allow changing ctx->optlen within bounds",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->optval */
 			BPF_LDX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optval)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval)),
 			/* r2 = ctx->optval */
 			BPF_MOV64_REG(BPF_REG_2, BPF_REG_6),
 			/* r6 = ctx->optval + 1 */
@@ -661,23 +662,23 @@ static struct sockopt_test {
 
 			/* r7 = ctx->optval_end */
 			BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optval_end)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval_end)),
 
-			/* if (ctx->optval + 1 <= ctx->optval_end) { */
+			/* अगर (ctx->optval + 1 <= ctx->optval_end) अणु */
 			BPF_JMP_REG(BPF_JGT, BPF_REG_6, BPF_REG_7, 1),
 			/* ctx->optval[0] = 1 << 3 */
 			BPF_ST_MEM(BPF_B, BPF_REG_2, 0, 1 << 3),
-			/* } */
+			/* पूर्ण */
 
 			/* ctx->optlen = 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optlen)),
+				    दुरत्व(काष्ठा bpf_sockopt, optlen)),
 
-			/* return 1*/
+			/* वापस 1*/
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
@@ -687,104 +688,104 @@ static struct sockopt_test {
 		.get_optname = IP_TOS,
 		.set_optname = IP_TOS,
 
-		.set_optval = { 1, 1, 1, 1 },
+		.set_optval = अणु 1, 1, 1, 1 पूर्ण,
 		.set_optlen = 4,
-		.get_optval = { 1 << 3 },
+		.get_optval = अणु 1 << 3 पूर्ण,
 		.get_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: deny write ctx->retval",
-		.insns = {
+		.insns = अणु
 			/* ctx->retval = 0 */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
 			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, retval)),
+				    दुरत्व(काष्ठा bpf_sockopt, retval)),
 
-			/* return 1 */
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: deny read ctx->retval",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->retval */
 			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, retval)),
+				    दुरत्व(काष्ठा bpf_sockopt, retval)),
 
-			/* return 1 */
+			/* वापस 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: deny writing to ctx->optval",
-		.insns = {
+		.insns = अणु
 			/* ctx->optval = 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optval)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval)),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: deny writing to ctx->optval_end",
-		.insns = {
+		.insns = अणु
 			/* ctx->optval_end = 1 */
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-				    offsetof(struct bpf_sockopt, optval_end)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval_end)),
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
 		.error = DENY_LOAD,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: allow IP_TOS <= 128",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->optval */
 			BPF_LDX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optval)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval)),
 			/* r7 = ctx->optval + 1 */
 			BPF_MOV64_REG(BPF_REG_7, BPF_REG_6),
 			BPF_ALU64_IMM(BPF_ADD, BPF_REG_7, 1),
 
 			/* r8 = ctx->optval_end */
 			BPF_LDX_MEM(BPF_DW, BPF_REG_8, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optval_end)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval_end)),
 
-			/* if (ctx->optval + 1 <= ctx->optval_end) { */
+			/* अगर (ctx->optval + 1 <= ctx->optval_end) अणु */
 			BPF_JMP_REG(BPF_JGT, BPF_REG_7, BPF_REG_8, 4),
 
 			/* r9 = ctx->optval[0] */
 			BPF_LDX_MEM(BPF_B, BPF_REG_9, BPF_REG_6, 0),
 
-			/* if (ctx->optval[0] < 128) */
+			/* अगर (ctx->optval[0] < 128) */
 			BPF_JMP_IMM(BPF_JGT, BPF_REG_9, 128, 2),
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_JMP_A(1),
-			/* } */
+			/* पूर्ण */
 
-			/* } else { */
+			/* पूर्ण अन्यथा अणु */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
-			/* } */
+			/* पूर्ण */
 
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
@@ -794,43 +795,43 @@ static struct sockopt_test {
 		.get_optname = IP_TOS,
 		.set_optname = IP_TOS,
 
-		.set_optval = { 0x80 },
+		.set_optval = अणु 0x80 पूर्ण,
 		.set_optlen = 1,
-		.get_optval = { 0x80 },
+		.get_optval = अणु 0x80 पूर्ण,
 		.get_optlen = 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.descr = "setsockopt: deny IP_TOS > 128",
-		.insns = {
+		.insns = अणु
 			/* r6 = ctx->optval */
 			BPF_LDX_MEM(BPF_DW, BPF_REG_6, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optval)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval)),
 			/* r7 = ctx->optval + 1 */
 			BPF_MOV64_REG(BPF_REG_7, BPF_REG_6),
 			BPF_ALU64_IMM(BPF_ADD, BPF_REG_7, 1),
 
 			/* r8 = ctx->optval_end */
 			BPF_LDX_MEM(BPF_DW, BPF_REG_8, BPF_REG_1,
-				    offsetof(struct bpf_sockopt, optval_end)),
+				    दुरत्व(काष्ठा bpf_sockopt, optval_end)),
 
-			/* if (ctx->optval + 1 <= ctx->optval_end) { */
+			/* अगर (ctx->optval + 1 <= ctx->optval_end) अणु */
 			BPF_JMP_REG(BPF_JGT, BPF_REG_7, BPF_REG_8, 4),
 
 			/* r9 = ctx->optval[0] */
 			BPF_LDX_MEM(BPF_B, BPF_REG_9, BPF_REG_6, 0),
 
-			/* if (ctx->optval[0] < 128) */
+			/* अगर (ctx->optval[0] < 128) */
 			BPF_JMP_IMM(BPF_JGT, BPF_REG_9, 128, 2),
 			BPF_MOV64_IMM(BPF_REG_0, 1),
 			BPF_JMP_A(1),
-			/* } */
+			/* पूर्ण */
 
-			/* } else { */
+			/* पूर्ण अन्यथा अणु */
 			BPF_MOV64_IMM(BPF_REG_0, 0),
-			/* } */
+			/* पूर्ण */
 
 			BPF_EXIT_INSN(),
-		},
+		पूर्ण,
 		.attach_type = BPF_CGROUP_SETSOCKOPT,
 		.expected_attach_type = BPF_CGROUP_SETSOCKOPT,
 
@@ -840,146 +841,146 @@ static struct sockopt_test {
 		.get_optname = IP_TOS,
 		.set_optname = IP_TOS,
 
-		.set_optval = { 0x81 },
+		.set_optval = अणु 0x81 पूर्ण,
 		.set_optlen = 1,
-		.get_optval = { 0x00 },
+		.get_optval = अणु 0x00 पूर्ण,
 		.get_optlen = 1,
 
 		.error = EPERM_SETSOCKOPT,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int load_prog(const struct bpf_insn *insns,
-		     enum bpf_attach_type expected_attach_type)
-{
-	struct bpf_load_program_attr attr = {
+अटल पूर्णांक load_prog(स्थिर काष्ठा bpf_insn *insns,
+		     क्रमागत bpf_attach_type expected_attach_type)
+अणु
+	काष्ठा bpf_load_program_attr attr = अणु
 		.prog_type = BPF_PROG_TYPE_CGROUP_SOCKOPT,
 		.expected_attach_type = expected_attach_type,
 		.insns = insns,
 		.license = "GPL",
 		.log_level = 2,
-	};
-	int fd;
+	पूर्ण;
+	पूर्णांक fd;
 
-	for (;
+	क्रम (;
 	     insns[attr.insns_cnt].code != (BPF_JMP | BPF_EXIT);
-	     attr.insns_cnt++) {
-	}
+	     attr.insns_cnt++) अणु
+	पूर्ण
 	attr.insns_cnt++;
 
-	fd = bpf_load_program_xattr(&attr, bpf_log_buf, sizeof(bpf_log_buf));
-	if (verbose && fd < 0)
-		fprintf(stderr, "%s\n", bpf_log_buf);
+	fd = bpf_load_program_xattr(&attr, bpf_log_buf, माप(bpf_log_buf));
+	अगर (verbose && fd < 0)
+		ख_लिखो(मानक_त्रुटि, "%s\n", bpf_log_buf);
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static int run_test(int cgroup_fd, struct sockopt_test *test)
-{
-	int sock_fd, err, prog_fd;
-	void *optval = NULL;
-	int ret = 0;
+अटल पूर्णांक run_test(पूर्णांक cgroup_fd, काष्ठा sockopt_test *test)
+अणु
+	पूर्णांक sock_fd, err, prog_fd;
+	व्योम *optval = शून्य;
+	पूर्णांक ret = 0;
 
 	prog_fd = load_prog(test->insns, test->expected_attach_type);
-	if (prog_fd < 0) {
-		if (test->error == DENY_LOAD)
-			return 0;
+	अगर (prog_fd < 0) अणु
+		अगर (test->error == DENY_LOAD)
+			वापस 0;
 
 		log_err("Failed to load BPF program");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	err = bpf_prog_attach(prog_fd, cgroup_fd, test->attach_type, 0);
-	if (err < 0) {
-		if (test->error == DENY_ATTACH)
-			goto close_prog_fd;
+	अगर (err < 0) अणु
+		अगर (test->error == DENY_ATTACH)
+			जाओ बंद_prog_fd;
 
 		log_err("Failed to attach BPF program");
 		ret = -1;
-		goto close_prog_fd;
-	}
+		जाओ बंद_prog_fd;
+	पूर्ण
 
 	sock_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock_fd < 0) {
+	अगर (sock_fd < 0) अणु
 		log_err("Failed to create AF_INET socket");
 		ret = -1;
-		goto detach_prog;
-	}
+		जाओ detach_prog;
+	पूर्ण
 
-	if (test->set_optlen) {
+	अगर (test->set_optlen) अणु
 		err = setsockopt(sock_fd, test->set_level, test->set_optname,
 				 test->set_optval, test->set_optlen);
-		if (err) {
-			if (errno == EPERM && test->error == EPERM_SETSOCKOPT)
-				goto close_sock_fd;
-			if (errno == EFAULT && test->error == EFAULT_SETSOCKOPT)
-				goto free_optval;
+		अगर (err) अणु
+			अगर (त्रुटि_सं == EPERM && test->error == EPERM_SETSOCKOPT)
+				जाओ बंद_sock_fd;
+			अगर (त्रुटि_सं == EFAULT && test->error == EFAULT_SETSOCKOPT)
+				जाओ मुक्त_optval;
 
 			log_err("Failed to call setsockopt");
 			ret = -1;
-			goto close_sock_fd;
-		}
-	}
+			जाओ बंद_sock_fd;
+		पूर्ण
+	पूर्ण
 
-	if (test->get_optlen) {
-		optval = malloc(test->get_optlen);
+	अगर (test->get_optlen) अणु
+		optval = दो_स्मृति(test->get_optlen);
 		socklen_t optlen = test->get_optlen;
 		socklen_t expected_get_optlen = test->get_optlen_ret ?:
 			test->get_optlen;
 
-		err = getsockopt(sock_fd, test->get_level, test->get_optname,
+		err = माला_लोockopt(sock_fd, test->get_level, test->get_optname,
 				 optval, &optlen);
-		if (err) {
-			if (errno == EPERM && test->error == EPERM_GETSOCKOPT)
-				goto free_optval;
-			if (errno == EFAULT && test->error == EFAULT_GETSOCKOPT)
-				goto free_optval;
+		अगर (err) अणु
+			अगर (त्रुटि_सं == EPERM && test->error == EPERM_GETSOCKOPT)
+				जाओ मुक्त_optval;
+			अगर (त्रुटि_सं == EFAULT && test->error == EFAULT_GETSOCKOPT)
+				जाओ मुक्त_optval;
 
 			log_err("Failed to call getsockopt");
 			ret = -1;
-			goto free_optval;
-		}
+			जाओ मुक्त_optval;
+		पूर्ण
 
-		if (optlen != expected_get_optlen) {
-			errno = 0;
+		अगर (optlen != expected_get_optlen) अणु
+			त्रुटि_सं = 0;
 			log_err("getsockopt returned unexpected optlen");
 			ret = -1;
-			goto free_optval;
-		}
+			जाओ मुक्त_optval;
+		पूर्ण
 
-		if (memcmp(optval, test->get_optval, optlen) != 0) {
-			errno = 0;
+		अगर (स_भेद(optval, test->get_optval, optlen) != 0) अणु
+			त्रुटि_सं = 0;
 			log_err("getsockopt returned unexpected optval");
 			ret = -1;
-			goto free_optval;
-		}
-	}
+			जाओ मुक्त_optval;
+		पूर्ण
+	पूर्ण
 
 	ret = test->error != OK;
 
-free_optval:
-	free(optval);
-close_sock_fd:
-	close(sock_fd);
+मुक्त_optval:
+	मुक्त(optval);
+बंद_sock_fd:
+	बंद(sock_fd);
 detach_prog:
 	bpf_prog_detach2(prog_fd, cgroup_fd, test->attach_type);
-close_prog_fd:
-	close(prog_fd);
-	return ret;
-}
+बंद_prog_fd:
+	बंद(prog_fd);
+	वापस ret;
+पूर्ण
 
-void test_sockopt(void)
-{
-	int cgroup_fd, i;
+व्योम test_sockopt(व्योम)
+अणु
+	पूर्णांक cgroup_fd, i;
 
 	cgroup_fd = test__join_cgroup("/sockopt");
-	if (CHECK_FAIL(cgroup_fd < 0))
-		return;
+	अगर (CHECK_FAIL(cgroup_fd < 0))
+		वापस;
 
-	for (i = 0; i < ARRAY_SIZE(tests); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(tests); i++) अणु
 		test__start_subtest(tests[i].descr);
 		CHECK_FAIL(run_test(cgroup_fd, &tests[i]));
-	}
+	पूर्ण
 
-	close(cgroup_fd);
-}
+	बंद(cgroup_fd);
+पूर्ण

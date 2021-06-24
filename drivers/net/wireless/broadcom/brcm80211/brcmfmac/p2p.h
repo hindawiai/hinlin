@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2012 Broadcom Corporation
  */
-#ifndef WL_CFGP2P_H_
-#define WL_CFGP2P_H_
+#अगर_अघोषित WL_CFGP2P_H_
+#घोषणा WL_CFGP2P_H_
 
-#include <net/cfg80211.h>
+#समावेश <net/cfg80211.h>
 
-struct brcmf_cfg80211_info;
+काष्ठा brcmf_cfg80211_info;
 
 /**
- * enum p2p_bss_type - different type of BSS configurations.
+ * क्रमागत p2p_bss_type - dअगरferent type of BSS configurations.
  *
  * @P2PAPI_BSSCFG_PRIMARY: maps to driver's primary bsscfg.
  * @P2PAPI_BSSCFG_DEVICE: maps to driver's P2P device discovery bsscfg.
  * @P2PAPI_BSSCFG_CONNECTION: maps to driver's 1st P2P connection bsscfg.
  * @P2PAPI_BSSCFG_CONNECTION2: maps to driver's 2nd P2P connection bsscfg.
- * @P2PAPI_BSSCFG_MAX: used for range checking.
+ * @P2PAPI_BSSCFG_MAX: used क्रम range checking.
  */
-enum p2p_bss_type {
+क्रमागत p2p_bss_type अणु
 	P2PAPI_BSSCFG_PRIMARY, /* maps to driver's primary bsscfg */
 	P2PAPI_BSSCFG_DEVICE, /* maps to driver's P2P device discovery bsscfg */
 	P2PAPI_BSSCFG_CONNECTION, /* driver's 1st P2P connection bsscfg */
 	P2PAPI_BSSCFG_CONNECTION2, /* driver's 2nd P2P connection bsscfg */
 	P2PAPI_BSSCFG_MAX
-};
+पूर्ण;
 
 /**
- * struct p2p_bss - peer-to-peer bss related information.
+ * काष्ठा p2p_bss - peer-to-peer bss related inक्रमmation.
  *
- * @vif: virtual interface of this P2P bss.
- * @private_data: TBD
+ * @vअगर: भव पूर्णांकerface of this P2P bss.
+ * @निजी_data: TBD
  */
-struct p2p_bss {
-	struct brcmf_cfg80211_vif *vif;
-	void *private_data;
-};
+काष्ठा p2p_bss अणु
+	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+	व्योम *निजी_data;
+पूर्ण;
 
 /**
- * enum brcmf_p2p_status - P2P specific dongle status.
+ * क्रमागत brcmf_p2p_status - P2P specअगरic करोngle status.
  *
- * @BRCMF_P2P_STATUS_IF_ADD: peer-to-peer vif add sent to dongle.
+ * @BRCMF_P2P_STATUS_IF_ADD: peer-to-peer vअगर add sent to करोngle.
  * @BRCMF_P2P_STATUS_IF_DEL: NOT-USED?
- * @BRCMF_P2P_STATUS_IF_DELETING: peer-to-peer vif delete sent to dongle.
- * @BRCMF_P2P_STATUS_IF_CHANGING: peer-to-peer vif change sent to dongle.
- * @BRCMF_P2P_STATUS_IF_CHANGED: peer-to-peer vif change completed on dongle.
+ * @BRCMF_P2P_STATUS_IF_DELETING: peer-to-peer vअगर delete sent to करोngle.
+ * @BRCMF_P2P_STATUS_IF_CHANGING: peer-to-peer vअगर change sent to करोngle.
+ * @BRCMF_P2P_STATUS_IF_CHANGED: peer-to-peer vअगर change completed on करोngle.
  * @BRCMF_P2P_STATUS_ACTION_TX_COMPLETED: action frame tx completed.
  * @BRCMF_P2P_STATUS_ACTION_TX_NOACK: action frame tx not acked.
  * @BRCMF_P2P_STATUS_GO_NEG_PHASE: P2P GO negotiation ongoing.
- * @BRCMF_P2P_STATUS_DISCOVER_LISTEN: P2P listen, remaining on channel.
+ * @BRCMF_P2P_STATUS_DISCOVER_LISTEN: P2P listen, reमुख्यing on channel.
  * @BRCMF_P2P_STATUS_SENDING_ACT_FRAME: In the process of sending action frame.
- * @BRCMF_P2P_STATUS_WAITING_NEXT_AF_LISTEN: extra listen time for af tx.
- * @BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME: waiting for action frame response.
- * @BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL: search channel for AF active.
+ * @BRCMF_P2P_STATUS_WAITING_NEXT_AF_LISTEN: extra listen समय क्रम af tx.
+ * @BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME: रुकोing क्रम action frame response.
+ * @BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL: search channel क्रम AF active.
  */
-enum brcmf_p2p_status {
+क्रमागत brcmf_p2p_status अणु
 	BRCMF_P2P_STATUS_ENABLED,
 	BRCMF_P2P_STATUS_IF_ADD,
 	BRCMF_P2P_STATUS_IF_DEL,
@@ -69,111 +70,111 @@ enum brcmf_p2p_status {
 	BRCMF_P2P_STATUS_WAITING_NEXT_AF_LISTEN,
 	BRCMF_P2P_STATUS_WAITING_NEXT_ACT_FRAME,
 	BRCMF_P2P_STATUS_FINDING_COMMON_CHANNEL
-};
+पूर्ण;
 
 /**
- * struct afx_hdl - action frame off channel storage.
+ * काष्ठा afx_hdl - action frame off channel storage.
  *
- * @afx_work: worker thread for searching channel
- * @act_frm_scan: thread synchronizing struct.
+ * @afx_work: worker thपढ़ो क्रम searching channel
+ * @act_frm_scan: thपढ़ो synchronizing काष्ठा.
  * @is_active: channel searching active.
  * @peer_chan: current channel.
- * @is_listen: sets mode for afx worker.
+ * @is_listen: sets mode क्रम afx worker.
  * @my_listen_chan: this peers listen channel.
  * @peer_listen_chan: remote peers listen channel.
  * @tx_dst_addr: mac address where tx af should be sent to.
  */
-struct afx_hdl {
-	struct work_struct afx_work;
-	struct completion act_frm_scan;
+काष्ठा afx_hdl अणु
+	काष्ठा work_काष्ठा afx_work;
+	काष्ठा completion act_frm_scan;
 	bool is_active;
 	s32 peer_chan;
 	bool is_listen;
 	u16 my_listen_chan;
 	u16 peer_listen_chan;
 	u8 tx_dst_addr[ETH_ALEN];
-};
+पूर्ण;
 
 /**
- * struct brcmf_p2p_info - p2p specific driver information.
+ * काष्ठा brcmf_p2p_info - p2p specअगरic driver inक्रमmation.
  *
- * @cfg: driver private data for cfg80211 interface.
- * @status: status of P2P (see enum brcmf_p2p_status).
+ * @cfg: driver निजी data क्रम cfg80211 पूर्णांकerface.
+ * @status: status of P2P (see क्रमागत brcmf_p2p_status).
  * @dev_addr: P2P device address.
- * @int_addr: P2P interface address.
- * @bss_idx: informate for P2P bss types.
- * @listen_timer: timer for @WL_P2P_DISC_ST_LISTEN discover state.
- * @listen_channel: channel for @WL_P2P_DISC_ST_LISTEN discover state.
- * @remain_on_channel: contains copy of struct used by cfg80211.
- * @remain_on_channel_cookie: cookie counter for remain on channel cmd
+ * @पूर्णांक_addr: P2P पूर्णांकerface address.
+ * @bss_idx: inक्रमmate क्रम P2P bss types.
+ * @listen_समयr: समयr क्रम @WL_P2P_DISC_ST_LISTEN discover state.
+ * @listen_channel: channel क्रम @WL_P2P_DISC_ST_LISTEN discover state.
+ * @reमुख्य_on_channel: contains copy of काष्ठा used by cfg80211.
+ * @reमुख्य_on_channel_cookie: cookie counter क्रम reमुख्य on channel cmd
  * @next_af_subtype: expected action frame subtype.
- * @send_af_done: indication that action frame tx is complete.
+ * @send_af_करोne: indication that action frame tx is complete.
  * @afx_hdl: action frame search handler info.
  * @af_sent_channel: channel action frame is sent.
- * @af_tx_sent_jiffies: jiffies time when af tx was transmitted.
- * @wait_next_af: thread synchronizing struct.
+ * @af_tx_sent_jअगरfies: jअगरfies समय when af tx was transmitted.
+ * @रुको_next_af: thपढ़ो synchronizing काष्ठा.
  * @gon_req_action: about to send go negotiation requets frame.
  * @block_gon_req_tx: drop tx go negotiation requets frame.
- * @p2pdev_dynamically: is p2p device if created by module param or supplicant.
- * @wait_for_offchan_complete: wait for off-channel tx completion event.
+ * @p2pdev_dynamically: is p2p device अगर created by module param or supplicant.
+ * @रुको_क्रम_offchan_complete: रुको क्रम off-channel tx completion event.
  */
-struct brcmf_p2p_info {
-	struct brcmf_cfg80211_info *cfg;
-	unsigned long status;
+काष्ठा brcmf_p2p_info अणु
+	काष्ठा brcmf_cfg80211_info *cfg;
+	अचिन्हित दीर्घ status;
 	u8 dev_addr[ETH_ALEN];
-	u8 conn_int_addr[ETH_ALEN];
-	u8 conn2_int_addr[ETH_ALEN];
-	struct p2p_bss bss_idx[P2PAPI_BSSCFG_MAX];
-	struct timer_list listen_timer;
+	u8 conn_पूर्णांक_addr[ETH_ALEN];
+	u8 conn2_पूर्णांक_addr[ETH_ALEN];
+	काष्ठा p2p_bss bss_idx[P2PAPI_BSSCFG_MAX];
+	काष्ठा समयr_list listen_समयr;
 	u8 listen_channel;
-	struct ieee80211_channel remain_on_channel;
-	u32 remain_on_channel_cookie;
+	काष्ठा ieee80211_channel reमुख्य_on_channel;
+	u32 reमुख्य_on_channel_cookie;
 	u8 next_af_subtype;
-	struct completion send_af_done;
-	struct afx_hdl afx_hdl;
+	काष्ठा completion send_af_करोne;
+	काष्ठा afx_hdl afx_hdl;
 	u32 af_sent_channel;
-	unsigned long af_tx_sent_jiffies;
-	struct completion wait_next_af;
+	अचिन्हित दीर्घ af_tx_sent_jअगरfies;
+	काष्ठा completion रुको_next_af;
 	bool gon_req_action;
 	bool block_gon_req_tx;
 	bool p2pdev_dynamically;
-	bool wait_for_offchan_complete;
-};
+	bool रुको_क्रम_offchan_complete;
+पूर्ण;
 
-s32 brcmf_p2p_attach(struct brcmf_cfg80211_info *cfg, bool p2pdev_forced);
-void brcmf_p2p_detach(struct brcmf_p2p_info *p2p);
-struct wireless_dev *brcmf_p2p_add_vif(struct wiphy *wiphy, const char *name,
-				       unsigned char name_assign_type,
-				       enum nl80211_iftype type,
-				       struct vif_params *params);
-int brcmf_p2p_del_vif(struct wiphy *wiphy, struct wireless_dev *wdev);
-int brcmf_p2p_ifchange(struct brcmf_cfg80211_info *cfg,
-		       enum brcmf_fil_p2p_if_types if_type);
-void brcmf_p2p_ifp_removed(struct brcmf_if *ifp, bool rtnl_locked);
-int brcmf_p2p_start_device(struct wiphy *wiphy, struct wireless_dev *wdev);
-void brcmf_p2p_stop_device(struct wiphy *wiphy, struct wireless_dev *wdev);
-int brcmf_p2p_scan_prep(struct wiphy *wiphy,
-			struct cfg80211_scan_request *request,
-			struct brcmf_cfg80211_vif *vif);
-int brcmf_p2p_remain_on_channel(struct wiphy *wiphy, struct wireless_dev *wdev,
-				struct ieee80211_channel *channel,
-				unsigned int duration, u64 *cookie);
-int brcmf_p2p_notify_listen_complete(struct brcmf_if *ifp,
-				     const struct brcmf_event_msg *e,
-				     void *data);
-void brcmf_p2p_cancel_remain_on_channel(struct brcmf_if *ifp);
-int brcmf_p2p_notify_action_frame_rx(struct brcmf_if *ifp,
-				     const struct brcmf_event_msg *e,
-				     void *data);
-int brcmf_p2p_notify_action_tx_complete(struct brcmf_if *ifp,
-					const struct brcmf_event_msg *e,
-					void *data);
-bool brcmf_p2p_send_action_frame(struct brcmf_cfg80211_info *cfg,
-				 struct net_device *ndev,
-				 struct brcmf_fil_af_params_le *af_params);
-bool brcmf_p2p_scan_finding_common_channel(struct brcmf_cfg80211_info *cfg,
-					   struct brcmf_bss_info_le *bi);
-s32 brcmf_p2p_notify_rx_mgmt_p2p_probereq(struct brcmf_if *ifp,
-					  const struct brcmf_event_msg *e,
-					  void *data);
-#endif /* WL_CFGP2P_H_ */
+s32 brcmf_p2p_attach(काष्ठा brcmf_cfg80211_info *cfg, bool p2pdev_क्रमced);
+व्योम brcmf_p2p_detach(काष्ठा brcmf_p2p_info *p2p);
+काष्ठा wireless_dev *brcmf_p2p_add_vअगर(काष्ठा wiphy *wiphy, स्थिर अक्षर *name,
+				       अचिन्हित अक्षर name_assign_type,
+				       क्रमागत nl80211_अगरtype type,
+				       काष्ठा vअगर_params *params);
+पूर्णांक brcmf_p2p_del_vअगर(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev);
+पूर्णांक brcmf_p2p_अगरchange(काष्ठा brcmf_cfg80211_info *cfg,
+		       क्रमागत brcmf_fil_p2p_अगर_types अगर_type);
+व्योम brcmf_p2p_अगरp_हटाओd(काष्ठा brcmf_अगर *अगरp, bool rtnl_locked);
+पूर्णांक brcmf_p2p_start_device(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev);
+व्योम brcmf_p2p_stop_device(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev);
+पूर्णांक brcmf_p2p_scan_prep(काष्ठा wiphy *wiphy,
+			काष्ठा cfg80211_scan_request *request,
+			काष्ठा brcmf_cfg80211_vअगर *vअगर);
+पूर्णांक brcmf_p2p_reमुख्य_on_channel(काष्ठा wiphy *wiphy, काष्ठा wireless_dev *wdev,
+				काष्ठा ieee80211_channel *channel,
+				अचिन्हित पूर्णांक duration, u64 *cookie);
+पूर्णांक brcmf_p2p_notअगरy_listen_complete(काष्ठा brcmf_अगर *अगरp,
+				     स्थिर काष्ठा brcmf_event_msg *e,
+				     व्योम *data);
+व्योम brcmf_p2p_cancel_reमुख्य_on_channel(काष्ठा brcmf_अगर *अगरp);
+पूर्णांक brcmf_p2p_notअगरy_action_frame_rx(काष्ठा brcmf_अगर *अगरp,
+				     स्थिर काष्ठा brcmf_event_msg *e,
+				     व्योम *data);
+पूर्णांक brcmf_p2p_notअगरy_action_tx_complete(काष्ठा brcmf_अगर *अगरp,
+					स्थिर काष्ठा brcmf_event_msg *e,
+					व्योम *data);
+bool brcmf_p2p_send_action_frame(काष्ठा brcmf_cfg80211_info *cfg,
+				 काष्ठा net_device *ndev,
+				 काष्ठा brcmf_fil_af_params_le *af_params);
+bool brcmf_p2p_scan_finding_common_channel(काष्ठा brcmf_cfg80211_info *cfg,
+					   काष्ठा brcmf_bss_info_le *bi);
+s32 brcmf_p2p_notअगरy_rx_mgmt_p2p_probereq(काष्ठा brcmf_अगर *अगरp,
+					  स्थिर काष्ठा brcmf_event_msg *e,
+					  व्योम *data);
+#पूर्ण_अगर /* WL_CFGP2P_H_ */

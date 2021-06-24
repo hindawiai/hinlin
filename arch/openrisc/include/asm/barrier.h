@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_BARRIER_H
-#define __ASM_BARRIER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_BARRIER_H
+#घोषणा __ASM_BARRIER_H
 
-#define mb() asm volatile ("l.msync" ::: "memory")
+#घोषणा mb() यंत्र अस्थिर ("l.msync" ::: "memory")
 
-#include <asm-generic/barrier.h>
+#समावेश <यंत्र-generic/barrier.h>
 
-#endif /* __ASM_BARRIER_H */
+#पूर्ण_अगर /* __ASM_BARRIER_H */

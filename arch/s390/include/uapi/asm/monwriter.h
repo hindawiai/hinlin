@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright IBM Corp. 2006
- * Character device driver for writing z/VM APPLDATA monitor records
+ * Character device driver क्रम writing z/VM APPLDATA monitor records
  * Version 1.0
  * Author(s): Melissa Howland <melissah@us.ibm.com>
  *
  */
 
-#ifndef _ASM_390_MONWRITER_H
-#define _ASM_390_MONWRITER_H
+#अगर_अघोषित _ASM_390_MONWRITER_H
+#घोषणा _ASM_390_MONWRITER_H
 
 /* mon_function values */
-#define MONWRITE_START_INTERVAL	0x00 /* start interval recording */
-#define MONWRITE_STOP_INTERVAL	0x01 /* stop interval or config recording */
-#define MONWRITE_GEN_EVENT	0x02 /* generate event record */
-#define MONWRITE_START_CONFIG	0x03 /* start configuration recording */
+#घोषणा MONWRITE_START_INTERVAL	0x00 /* start पूर्णांकerval recording */
+#घोषणा MONWRITE_STOP_INTERVAL	0x01 /* stop पूर्णांकerval or config recording */
+#घोषणा MONWRITE_GEN_EVENT	0x02 /* generate event record */
+#घोषणा MONWRITE_START_CONFIG	0x03 /* start configuration recording */
 
-/* the header the app uses in its write() data */
-struct monwrite_hdr {
-	unsigned char mon_function;
-	unsigned short applid;
-	unsigned char record_num;
-	unsigned short version;
-	unsigned short release;
-	unsigned short mod_level;
-	unsigned short datalen;
-	unsigned char hdrlen;
+/* the header the app uses in its ग_लिखो() data */
+काष्ठा monग_लिखो_hdr अणु
+	अचिन्हित अक्षर mon_function;
+	अचिन्हित लघु applid;
+	अचिन्हित अक्षर record_num;
+	अचिन्हित लघु version;
+	अचिन्हित लघु release;
+	अचिन्हित लघु mod_level;
+	अचिन्हित लघु datalen;
+	अचिन्हित अक्षर hdrlen;
 
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-#endif /* _ASM_390_MONWRITER_H */
+#पूर्ण_अगर /* _ASM_390_MONWRITER_H */

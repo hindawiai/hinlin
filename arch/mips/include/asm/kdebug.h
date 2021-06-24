@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_MIPS_KDEBUG_H
-#define _ASM_MIPS_KDEBUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_MIPS_KDEBUG_H
+#घोषणा _ASM_MIPS_KDEBUG_H
 
-#include <linux/notifier.h>
+#समावेश <linux/notअगरier.h>
 
-enum die_val {
+क्रमागत die_val अणु
 	DIE_OOPS = 1,
 	DIE_FP,
 	DIE_TRAP,
@@ -15,6 +16,6 @@ enum die_val {
 	DIE_MSAFP,
 	DIE_UPROBE,
 	DIE_UPROBE_XOL,
-};
+पूर्ण;
 
-#endif /* _ASM_MIPS_KDEBUG_H */
+#पूर्ण_अगर /* _ASM_MIPS_KDEBUG_H */

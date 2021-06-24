@@ -1,106 +1,107 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2014-15 Synopsys, Inc. (www.synopsys.com)
  */
 
-#ifndef __ASM_IRQFLAGS_ARCV2_H
-#define __ASM_IRQFLAGS_ARCV2_H
+#अगर_अघोषित __ASM_IRQFLAGS_ARCV2_H
+#घोषणा __ASM_IRQFLAGS_ARCV2_H
 
-#include <asm/arcregs.h>
+#समावेश <यंत्र/arcregs.h>
 
 /* status32 Bits */
-#define STATUS_AD_BIT	19   /* Disable Align chk: core supports non-aligned */
-#define STATUS_IE_BIT	31
+#घोषणा STATUS_AD_BIT	19   /* Disable Align chk: core supports non-aligned */
+#घोषणा STATUS_IE_BIT	31
 
-#define STATUS_AD_MASK		(1<<STATUS_AD_BIT)
-#define STATUS_IE_MASK		(1<<STATUS_IE_BIT)
+#घोषणा STATUS_AD_MASK		(1<<STATUS_AD_BIT)
+#घोषणा STATUS_IE_MASK		(1<<STATUS_IE_BIT)
 
 /* status32 Bits as encoded/expected by CLRI/SETI */
-#define CLRI_STATUS_IE_BIT	4
+#घोषणा CLRI_STATUS_IE_BIT	4
 
-#define CLRI_STATUS_E_MASK	0xF
-#define CLRI_STATUS_IE_MASK	(1 << CLRI_STATUS_IE_BIT)
+#घोषणा CLRI_STATUS_E_MASK	0xF
+#घोषणा CLRI_STATUS_IE_MASK	(1 << CLRI_STATUS_IE_BIT)
 
-#define AUX_USER_SP		0x00D
-#define AUX_IRQ_CTRL		0x00E
-#define AUX_IRQ_ACT		0x043	/* Active Intr across all levels */
-#define AUX_IRQ_LVL_PEND	0x200	/* Pending Intr across all levels */
-#define AUX_IRQ_HINT		0x201	/* For generating Soft Interrupts */
-#define AUX_IRQ_PRIORITY	0x206
-#define ICAUSE			0x40a
-#define AUX_IRQ_SELECT		0x40b
-#define AUX_IRQ_ENABLE		0x40c
+#घोषणा AUX_USER_SP		0x00D
+#घोषणा AUX_IRQ_CTRL		0x00E
+#घोषणा AUX_IRQ_ACT		0x043	/* Active Intr across all levels */
+#घोषणा AUX_IRQ_LVL_PEND	0x200	/* Pending Intr across all levels */
+#घोषणा AUX_IRQ_HINT		0x201	/* For generating Soft Interrupts */
+#घोषणा AUX_IRQ_PRIORITY	0x206
+#घोषणा ICAUSE			0x40a
+#घोषणा AUX_IRQ_SELECT		0x40b
+#घोषणा AUX_IRQ_ENABLE		0x40c
 
 /* Was Intr taken in User Mode */
-#define AUX_IRQ_ACT_BIT_U	31
+#घोषणा AUX_IRQ_ACT_BIT_U	31
 
 /*
  * Hardware supports 16 priorities (0 highest, 15 lowest)
- * Linux by default runs at 1, priority 0 reserved for NMI style interrupts
+ * Linux by शेष runs at 1, priority 0 reserved क्रम NMI style पूर्णांकerrupts
  */
-#define ARCV2_IRQ_DEF_PRIO	1
+#घोषणा ARCV2_IRQ_DEF_PRIO	1
 
-/* seed value for status register */
-#ifdef CONFIG_ARC_USE_UNALIGNED_MEM_ACCESS
-#define __AD_ENB	STATUS_AD_MASK
-#else
-#define __AD_ENB	0
-#endif
+/* seed value क्रम status रेजिस्टर */
+#अगर_घोषित CONFIG_ARC_USE_UNALIGNED_MEM_ACCESS
+#घोषणा __AD_ENB	STATUS_AD_MASK
+#अन्यथा
+#घोषणा __AD_ENB	0
+#पूर्ण_अगर
 
-#define ISA_INIT_STATUS_BITS	(STATUS_IE_MASK | __AD_ENB | \
+#घोषणा ISA_INIT_STATUS_BITS	(STATUS_IE_MASK | __AD_ENB | \
 					(ARCV2_IRQ_DEF_PRIO << 1))
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
 /*
  * Save IRQ state and disable IRQs
  */
-static inline long arch_local_irq_save(void)
-{
-	unsigned long flags;
+अटल अंतरभूत दीर्घ arch_local_irq_save(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	__asm__ __volatile__("	clri %0	\n" : "=r" (flags) : : "memory");
+	__यंत्र__ __अस्थिर__("	clri %0	\n" : "=r" (flags) : : "memory");
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 /*
  * restore saved IRQ state
  */
-static inline void arch_local_irq_restore(unsigned long flags)
-{
-	__asm__ __volatile__("	seti %0	\n" : : "r" (flags) : "memory");
-}
+अटल अंतरभूत व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
+अणु
+	__यंत्र__ __अस्थिर__("	seti %0	\n" : : "r" (flags) : "memory");
+पूर्ण
 
 /*
  * Unconditionally Enable IRQs
  */
-static inline void arch_local_irq_enable(void)
-{
-	unsigned int irqact = read_aux_reg(AUX_IRQ_ACT);
+अटल अंतरभूत व्योम arch_local_irq_enable(व्योम)
+अणु
+	अचिन्हित पूर्णांक irqact = पढ़ो_aux_reg(AUX_IRQ_ACT);
 
-	if (irqact & 0xffff)
-		write_aux_reg(AUX_IRQ_ACT, irqact & ~0xffff);
+	अगर (irqact & 0xffff)
+		ग_लिखो_aux_reg(AUX_IRQ_ACT, irqact & ~0xffff);
 
-	__asm__ __volatile__("	seti	\n" : : : "memory");
-}
+	__यंत्र__ __अस्थिर__("	seti	\n" : : : "memory");
+पूर्ण
 
 /*
  * Unconditionally Disable IRQs
  */
-static inline void arch_local_irq_disable(void)
-{
-	__asm__ __volatile__("	clri	\n" : : : "memory");
-}
+अटल अंतरभूत व्योम arch_local_irq_disable(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__("	clri	\n" : : : "memory");
+पूर्ण
 
 /*
  * save IRQ state
  */
-static inline long arch_local_save_flags(void)
-{
-	unsigned long temp;
+अटल अंतरभूत दीर्घ arch_local_save_flags(व्योम)
+अणु
+	अचिन्हित दीर्घ temp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	lr  %0, [status32]	\n"
 	: "=&r"(temp)
 	:
@@ -113,35 +114,35 @@ static inline long arch_local_save_flags(void)
 	temp = (1 << 5) |
 		((!!(temp & STATUS_IE_MASK)) << CLRI_STATUS_IE_BIT) |
 		((temp >> 1) & CLRI_STATUS_E_MASK);
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
 /*
  * Query IRQ state
  */
-static inline int arch_irqs_disabled_flags(unsigned long flags)
-{
-	return !(flags & CLRI_STATUS_IE_MASK);
-}
+अटल अंतरभूत पूर्णांक arch_irqs_disabled_flags(अचिन्हित दीर्घ flags)
+अणु
+	वापस !(flags & CLRI_STATUS_IE_MASK);
+पूर्ण
 
-static inline int arch_irqs_disabled(void)
-{
-	return arch_irqs_disabled_flags(arch_local_save_flags());
-}
+अटल अंतरभूत पूर्णांक arch_irqs_disabled(व्योम)
+अणु
+	वापस arch_irqs_disabled_flags(arch_local_save_flags());
+पूर्ण
 
-static inline void arc_softirq_trigger(int irq)
-{
-	write_aux_reg(AUX_IRQ_HINT, irq);
-}
+अटल अंतरभूत व्योम arc_softirq_trigger(पूर्णांक irq)
+अणु
+	ग_लिखो_aux_reg(AUX_IRQ_HINT, irq);
+पूर्ण
 
-static inline void arc_softirq_clear(int irq)
-{
-	write_aux_reg(AUX_IRQ_HINT, 0);
-}
+अटल अंतरभूत व्योम arc_softirq_clear(पूर्णांक irq)
+अणु
+	ग_लिखो_aux_reg(AUX_IRQ_HINT, 0);
+पूर्ण
 
-#else
+#अन्यथा
 
-#ifdef CONFIG_TRACE_IRQFLAGS
+#अगर_घोषित CONFIG_TRACE_IRQFLAGS
 
 .macro TRACE_ASM_IRQ_DISABLE
 	bl	trace_hardirqs_off
@@ -151,7 +152,7 @@ static inline void arc_softirq_clear(int irq)
 	bl	trace_hardirqs_on
 .endm
 
-#else
+#अन्यथा
 
 .macro TRACE_ASM_IRQ_DISABLE
 .endm
@@ -159,7 +160,7 @@ static inline void arc_softirq_clear(int irq)
 .macro TRACE_ASM_IRQ_ENABLE
 .endm
 
-#endif
+#पूर्ण_अगर
 .macro IRQ_DISABLE  scratch
 	clri
 	TRACE_ASM_IRQ_DISABLE
@@ -170,6 +171,6 @@ static inline void arc_softirq_clear(int irq)
 	seti
 .endm
 
-#endif	/* __ASSEMBLY__ */
+#पूर्ण_अगर	/* __ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *	Access to VGA videoram
  *
  *	(c) 1998 Martin Mares <mj@ucw.cz>
- *	(c) 1999 Asit Mallick <asit.k.mallick@intel.com>
- *	(c) 1999 Don Dugger <don.dugger@intel.com>
+ *	(c) 1999 Asit Mallick <asit.k.mallick@पूर्णांकel.com>
+ *	(c) 1999 Don Dugger <करोn.dugger@पूर्णांकel.com>
  */
 
-#ifndef __ASM_IA64_VGA_H_
-#define __ASM_IA64_VGA_H_
+#अगर_अघोषित __ASM_IA64_VGA_H_
+#घोषणा __ASM_IA64_VGA_H_
 
 /*
  * On the PC, we can just recalculate addresses and then access the
  * videoram directly without any black magic.
  */
 
-extern unsigned long vga_console_iobase;
-extern unsigned long vga_console_membase;
+बाह्य अचिन्हित दीर्घ vga_console_iobase;
+बाह्य अचिन्हित दीर्घ vga_console_membase;
 
-#define VGA_MAP_MEM(x,s)	((unsigned long) ioremap(vga_console_membase + (x), s))
+#घोषणा VGA_MAP_MEM(x,s)	((अचिन्हित दीर्घ) ioremap(vga_console_membase + (x), s))
 
-#define vga_readb(x)	(*(x))
-#define vga_writeb(x,y)	(*(y) = (x))
+#घोषणा vga_पढ़ोb(x)	(*(x))
+#घोषणा vga_ग_लिखोb(x,y)	(*(y) = (x))
 
-#endif /* __ASM_IA64_VGA_H_ */
+#पूर्ण_अगर /* __ASM_IA64_VGA_H_ */

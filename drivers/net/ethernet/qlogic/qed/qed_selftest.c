@@ -1,185 +1,186 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2016  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#include <linux/crc32.h>
-#include "qed.h"
-#include "qed_dev_api.h"
-#include "qed_mcp.h"
-#include "qed_sp.h"
-#include "qed_selftest.h"
+#समावेश <linux/crc32.h>
+#समावेश "qed.h"
+#समावेश "qed_dev_api.h"
+#समावेश "qed_mcp.h"
+#समावेश "qed_sp.h"
+#समावेश "qed_selftest.h"
 
-int qed_selftest_memory(struct qed_dev *cdev)
-{
-	int rc = 0, i;
+पूर्णांक qed_selftest_memory(काष्ठा qed_dev *cdev)
+अणु
+	पूर्णांक rc = 0, i;
 
-	for_each_hwfn(cdev, i) {
+	क्रम_each_hwfn(cdev, i) अणु
 		rc = qed_sp_heartbeat_ramrod(&cdev->hwfns[i]);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int qed_selftest_interrupt(struct qed_dev *cdev)
-{
-	int rc = 0, i;
+पूर्णांक qed_selftest_पूर्णांकerrupt(काष्ठा qed_dev *cdev)
+अणु
+	पूर्णांक rc = 0, i;
 
-	for_each_hwfn(cdev, i) {
+	क्रम_each_hwfn(cdev, i) अणु
 		rc = qed_sp_heartbeat_ramrod(&cdev->hwfns[i]);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int qed_selftest_register(struct qed_dev *cdev)
-{
-	struct qed_hwfn *p_hwfn;
-	struct qed_ptt *p_ptt;
-	int rc = 0, i;
+पूर्णांक qed_selftest_रेजिस्टर(काष्ठा qed_dev *cdev)
+अणु
+	काष्ठा qed_hwfn *p_hwfn;
+	काष्ठा qed_ptt *p_ptt;
+	पूर्णांक rc = 0, i;
 
-	/* although performed by MCP, this test is per engine */
-	for_each_hwfn(cdev, i) {
+	/* although perक्रमmed by MCP, this test is per engine */
+	क्रम_each_hwfn(cdev, i) अणु
 		p_hwfn = &cdev->hwfns[i];
 		p_ptt = qed_ptt_acquire(p_hwfn);
-		if (!p_ptt) {
+		अगर (!p_ptt) अणु
 			DP_ERR(p_hwfn, "failed to acquire ptt\n");
-			return -EBUSY;
-		}
-		rc = qed_mcp_bist_register_test(p_hwfn, p_ptt);
+			वापस -EBUSY;
+		पूर्ण
+		rc = qed_mcp_bist_रेजिस्टर_test(p_hwfn, p_ptt);
 		qed_ptt_release(p_hwfn, p_ptt);
-		if (rc)
-			break;
-	}
+		अगर (rc)
+			अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int qed_selftest_clock(struct qed_dev *cdev)
-{
-	struct qed_hwfn *p_hwfn;
-	struct qed_ptt *p_ptt;
-	int rc = 0, i;
+पूर्णांक qed_selftest_घड़ी(काष्ठा qed_dev *cdev)
+अणु
+	काष्ठा qed_hwfn *p_hwfn;
+	काष्ठा qed_ptt *p_ptt;
+	पूर्णांक rc = 0, i;
 
-	/* although performed by MCP, this test is per engine */
-	for_each_hwfn(cdev, i) {
+	/* although perक्रमmed by MCP, this test is per engine */
+	क्रम_each_hwfn(cdev, i) अणु
 		p_hwfn = &cdev->hwfns[i];
 		p_ptt = qed_ptt_acquire(p_hwfn);
-		if (!p_ptt) {
+		अगर (!p_ptt) अणु
 			DP_ERR(p_hwfn, "failed to acquire ptt\n");
-			return -EBUSY;
-		}
-		rc = qed_mcp_bist_clock_test(p_hwfn, p_ptt);
+			वापस -EBUSY;
+		पूर्ण
+		rc = qed_mcp_bist_घड़ी_प्रकारest(p_hwfn, p_ptt);
 		qed_ptt_release(p_hwfn, p_ptt);
-		if (rc)
-			break;
-	}
+		अगर (rc)
+			अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int qed_selftest_nvram(struct qed_dev *cdev)
-{
-	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_ptt *p_ptt = qed_ptt_acquire(p_hwfn);
+पूर्णांक qed_selftest_nvram(काष्ठा qed_dev *cdev)
+अणु
+	काष्ठा qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_ptt *p_ptt = qed_ptt_acquire(p_hwfn);
 	u32 num_images, i, j, nvm_crc, calc_crc;
-	struct bist_nvm_image_att image_att;
-	u8 *buf = NULL;
+	काष्ठा bist_nvm_image_att image_att;
+	u8 *buf = शून्य;
 	__be32 val;
-	int rc;
+	पूर्णांक rc;
 
-	if (!p_ptt) {
+	अगर (!p_ptt) अणु
 		DP_ERR(p_hwfn, "failed to acquire ptt\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/* Acquire from MFW the amount of available images */
 	rc = qed_mcp_bist_nvm_get_num_images(p_hwfn, p_ptt, &num_images);
-	if (rc || !num_images) {
+	अगर (rc || !num_images) अणु
 		DP_ERR(p_hwfn, "Failed getting number of images\n");
 		rc = -EINVAL;
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
 	/* Iterate over images and validate CRC */
-	for (i = 0; i < num_images; i++) {
-		/* This mailbox returns information about the image required for
-		 * reading it.
+	क्रम (i = 0; i < num_images; i++) अणु
+		/* This mailbox वापसs inक्रमmation about the image required क्रम
+		 * पढ़ोing it.
 		 */
 		rc = qed_mcp_bist_nvm_get_image_att(p_hwfn, p_ptt,
 						    &image_att, i);
-		if (rc) {
+		अगर (rc) अणु
 			DP_ERR(p_hwfn,
 			       "Failed getting image index %d attributes\n",
 			       i);
-			goto err0;
-		}
+			जाओ err0;
+		पूर्ण
 
 		/* After MFW crash dump is collected - the image's CRC stops
 		 * being valid.
 		 */
-		if (image_att.image_type == NVM_TYPE_MDUMP)
-			continue;
+		अगर (image_att.image_type == NVM_TYPE_MDUMP)
+			जारी;
 
 		DP_VERBOSE(p_hwfn, QED_MSG_SP, "image index %d, size %x\n",
 			   i, image_att.len);
 
-		/* Allocate a buffer for holding the nvram image */
+		/* Allocate a buffer क्रम holding the nvram image */
 		buf = kzalloc(image_att.len, GFP_KERNEL);
-		if (!buf) {
+		अगर (!buf) अणु
 			rc = -ENOMEM;
-			goto err0;
-		}
+			जाओ err0;
+		पूर्ण
 
-		/* Read image into buffer */
-		rc = qed_mcp_nvm_read(p_hwfn->cdev, image_att.nvm_start_addr,
+		/* Read image पूर्णांकo buffer */
+		rc = qed_mcp_nvm_पढ़ो(p_hwfn->cdev, image_att.nvm_start_addr,
 				      buf, image_att.len);
-		if (rc) {
+		अगर (rc) अणु
 			DP_ERR(p_hwfn,
 			       "Failed reading image index %d from nvm.\n", i);
-			goto err1;
-		}
+			जाओ err1;
+		पूर्ण
 
-		/* Convert the buffer into big-endian format (excluding the
+		/* Convert the buffer पूर्णांकo big-endian क्रमmat (excluding the
 		 * closing 4 bytes of CRC).
 		 */
-		for (j = 0; j < image_att.len - 4; j += 4) {
+		क्रम (j = 0; j < image_att.len - 4; j += 4) अणु
 			val = cpu_to_be32(*(u32 *)&buf[j]);
-			*(u32 *)&buf[j] = (__force u32)val;
-		}
+			*(u32 *)&buf[j] = (__क्रमce u32)val;
+		पूर्ण
 
-		/* Calc CRC for the "actual" image buffer, i.e. not including
+		/* Calc CRC क्रम the "actual" image buffer, i.e. not including
 		 * the last 4 CRC bytes.
 		 */
 		nvm_crc = *(u32 *)(buf + image_att.len - 4);
 		calc_crc = crc32(0xffffffff, buf, image_att.len - 4);
-		calc_crc = (__force u32)~cpu_to_be32(calc_crc);
+		calc_crc = (__क्रमce u32)~cpu_to_be32(calc_crc);
 		DP_VERBOSE(p_hwfn, QED_MSG_SP,
 			   "nvm crc 0x%x, calc_crc 0x%x\n", nvm_crc, calc_crc);
 
-		if (calc_crc != nvm_crc) {
+		अगर (calc_crc != nvm_crc) अणु
 			rc = -EINVAL;
-			goto err1;
-		}
+			जाओ err1;
+		पूर्ण
 
-		/* Done with this image; Free to prevent double release
+		/* Done with this image; Free to prevent द्विगुन release
 		 * on subsequent failure.
 		 */
-		kfree(buf);
-		buf = NULL;
-	}
+		kमुक्त(buf);
+		buf = शून्य;
+	पूर्ण
 
 	qed_ptt_release(p_hwfn, p_ptt);
-	return 0;
+	वापस 0;
 
 err1:
-	kfree(buf);
+	kमुक्त(buf);
 err0:
 	qed_ptt_release(p_hwfn, p_ptt);
-	return rc;
-}
+	वापस rc;
+पूर्ण

@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/module.h>
-#include <linux/version.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/sched/debug.h>
-#include <linux/delay.h>
-#include <linux/kallsyms.h>
-#include <linux/uaccess.h>
-#include <linux/ptrace.h>
+#समावेश <linux/module.h>
+#समावेश <linux/version.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/ptrace.h>
 
-#include <asm/elf.h>
-#include <abi/reg_ops.h>
+#समावेश <यंत्र/elf.h>
+#समावेश <abi/reg_ops.h>
 
-struct cpuinfo_csky cpu_data[NR_CPUS];
+काष्ठा cpuinfo_csky cpu_data[NR_CPUS];
 
-#ifdef CONFIG_STACKPROTECTOR
-#include <linux/stackprotector.h>
-unsigned long __stack_chk_guard __read_mostly;
+#अगर_घोषित CONFIG_STACKPROTECTOR
+#समावेश <linux/stackprotector.h>
+अचिन्हित दीर्घ __stack_chk_guard __पढ़ो_mostly;
 EXPORT_SYMBOL(__stack_chk_guard);
-#endif
+#पूर्ण_अगर
 
-asmlinkage void ret_from_fork(void);
-asmlinkage void ret_from_kernel_thread(void);
+यंत्रlinkage व्योम ret_from_विभाजन(व्योम);
+यंत्रlinkage व्योम ret_from_kernel_thपढ़ो(व्योम);
 
 /*
  * Some archs flush debug and FPU info here
  */
-void flush_thread(void){}
+व्योम flush_thपढ़ो(व्योम)अणुपूर्ण
 
-int copy_thread(unsigned long clone_flags,
-		unsigned long usp,
-		unsigned long kthread_arg,
-		struct task_struct *p,
-		unsigned long tls)
-{
-	struct switch_stack *childstack;
-	struct pt_regs *childregs = task_pt_regs(p);
+पूर्णांक copy_thपढ़ो(अचिन्हित दीर्घ clone_flags,
+		अचिन्हित दीर्घ usp,
+		अचिन्हित दीर्घ kthपढ़ो_arg,
+		काष्ठा task_काष्ठा *p,
+		अचिन्हित दीर्घ tls)
+अणु
+	काष्ठा चयन_stack *childstack;
+	काष्ठा pt_regs *childregs = task_pt_regs(p);
 
-#ifdef CONFIG_CPU_HAS_FPU
-	save_to_user_fp(&p->thread.user_fp);
-#endif
+#अगर_घोषित CONFIG_CPU_HAS_FPU
+	save_to_user_fp(&p->thपढ़ो.user_fp);
+#पूर्ण_अगर
 
-	childstack = ((struct switch_stack *) childregs) - 1;
-	memset(childstack, 0, sizeof(struct switch_stack));
+	childstack = ((काष्ठा चयन_stack *) childregs) - 1;
+	स_रखो(childstack, 0, माप(काष्ठा चयन_stack));
 
-	/* setup thread.sp for switch_to !!! */
-	p->thread.sp = (unsigned long)childstack;
+	/* setup thपढ़ो.sp क्रम चयन_to !!! */
+	p->thपढ़ो.sp = (अचिन्हित दीर्घ)childstack;
 
-	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
-		memset(childregs, 0, sizeof(struct pt_regs));
-		childstack->r15 = (unsigned long) ret_from_kernel_thread;
-		childstack->r10 = kthread_arg;
+	अगर (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) अणु
+		स_रखो(childregs, 0, माप(काष्ठा pt_regs));
+		childstack->r15 = (अचिन्हित दीर्घ) ret_from_kernel_thपढ़ो;
+		childstack->r10 = kthपढ़ो_arg;
 		childstack->r9 = usp;
 		childregs->sr = mfcr("psr");
-	} else {
+	पूर्ण अन्यथा अणु
 		*childregs = *(current_pt_regs());
-		if (usp)
+		अगर (usp)
 			childregs->usp = usp;
-		if (clone_flags & CLONE_SETTLS)
-			task_thread_info(p)->tp_value = childregs->tls
+		अगर (clone_flags & CLONE_SETTLS)
+			task_thपढ़ो_info(p)->tp_value = childregs->tls
 						      = tls;
 
 		childregs->a0 = 0;
-		childstack->r15 = (unsigned long) ret_from_fork;
-	}
+		childstack->r15 = (अचिन्हित दीर्घ) ret_from_विभाजन;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Fill in the fpu structure for a core dump.  */
-int dump_fpu(struct pt_regs *regs, struct user_fp *fpu)
-{
-	memcpy(fpu, &current->thread.user_fp, sizeof(*fpu));
-	return 1;
-}
+/* Fill in the fpu काष्ठाure क्रम a core dump.  */
+पूर्णांक dump_fpu(काष्ठा pt_regs *regs, काष्ठा user_fp *fpu)
+अणु
+	स_नकल(fpu, &current->thपढ़ो.user_fp, माप(*fpu));
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(dump_fpu);
 
-int dump_task_regs(struct task_struct *tsk, elf_gregset_t *pr_regs)
-{
-	struct pt_regs *regs = task_pt_regs(tsk);
+पूर्णांक dump_task_regs(काष्ठा task_काष्ठा *tsk, elf_gregset_t *pr_regs)
+अणु
+	काष्ठा pt_regs *regs = task_pt_regs(tsk);
 
 	/* NOTE: usp is error value. */
 	ELF_CORE_COPY_REGS((*pr_regs), regs)
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-#ifndef CONFIG_CPU_PM_NONE
-void arch_cpu_idle(void)
-{
-#ifdef CONFIG_CPU_PM_WAIT
-	asm volatile("wait\n");
-#endif
+#अगर_अघोषित CONFIG_CPU_PM_NONE
+व्योम arch_cpu_idle(व्योम)
+अणु
+#अगर_घोषित CONFIG_CPU_PM_WAIT
+	यंत्र अस्थिर("wait\n");
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_PM_DOZE
-	asm volatile("doze\n");
-#endif
+#अगर_घोषित CONFIG_CPU_PM_DOZE
+	यंत्र अस्थिर("doze\n");
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_PM_STOP
-	asm volatile("stop\n");
-#endif
+#अगर_घोषित CONFIG_CPU_PM_STOP
+	यंत्र अस्थिर("stop\n");
+#पूर्ण_अगर
 	raw_local_irq_enable();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

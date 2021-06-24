@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Traphandler
  * Copyright (C) 2014 Free Electrons
  *
  * Author: Jean-Jacques Hiblot <jjhiblot@traphandler.com>
- * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
+ * Author: Boris BREZILLON <boris.brezillon@मुक्त-electrons.com>
  */
 
-#include <linux/clk.h>
-#include <linux/mfd/atmel-hlcdc.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/pm.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/mfd/aपंचांगel-hlcdc.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <video/videomode.h>
+#समावेश <video/videomode.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_modeset_helper_vtables.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_modeset_helper_vtables.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "atmel_hlcdc_dc.h"
+#समावेश "atmel_hlcdc_dc.h"
 
 /**
- * struct atmel_hlcdc_crtc_state - Atmel HLCDC CRTC state structure
+ * काष्ठा aपंचांगel_hlcdc_crtc_state - Aपंचांगel HLCDC CRTC state काष्ठाure
  *
  * @base: base CRTC state
  * @output_mode: RGBXXX output mode
  */
-struct atmel_hlcdc_crtc_state {
-	struct drm_crtc_state base;
-	unsigned int output_mode;
-};
+काष्ठा aपंचांगel_hlcdc_crtc_state अणु
+	काष्ठा drm_crtc_state base;
+	अचिन्हित पूर्णांक output_mode;
+पूर्ण;
 
-static inline struct atmel_hlcdc_crtc_state *
-drm_crtc_state_to_atmel_hlcdc_crtc_state(struct drm_crtc_state *state)
-{
-	return container_of(state, struct atmel_hlcdc_crtc_state, base);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_hlcdc_crtc_state *
+drm_crtc_state_to_aपंचांगel_hlcdc_crtc_state(काष्ठा drm_crtc_state *state)
+अणु
+	वापस container_of(state, काष्ठा aपंचांगel_hlcdc_crtc_state, base);
+पूर्ण
 
 /**
- * struct atmel_hlcdc_crtc - Atmel HLCDC CRTC structure
+ * काष्ठा aपंचांगel_hlcdc_crtc - Aपंचांगel HLCDC CRTC काष्ठाure
  *
- * @base: base DRM CRTC structure
- * @dc: pointer to the atmel_hlcdc structure provided by the MFD device
- * @event: pointer to the current page flip event
- * @id: CRTC id (returned by drm_crtc_index)
+ * @base: base DRM CRTC काष्ठाure
+ * @dc: poपूर्णांकer to the aपंचांगel_hlcdc काष्ठाure provided by the MFD device
+ * @event: poपूर्णांकer to the current page flip event
+ * @id: CRTC id (वापसed by drm_crtc_index)
  */
-struct atmel_hlcdc_crtc {
-	struct drm_crtc base;
-	struct atmel_hlcdc_dc *dc;
-	struct drm_pending_vblank_event *event;
-	int id;
-};
+काष्ठा aपंचांगel_hlcdc_crtc अणु
+	काष्ठा drm_crtc base;
+	काष्ठा aपंचांगel_hlcdc_dc *dc;
+	काष्ठा drm_pending_vblank_event *event;
+	पूर्णांक id;
+पूर्ण;
 
-static inline struct atmel_hlcdc_crtc *
-drm_crtc_to_atmel_hlcdc_crtc(struct drm_crtc *crtc)
-{
-	return container_of(crtc, struct atmel_hlcdc_crtc, base);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_hlcdc_crtc *
+drm_crtc_to_aपंचांगel_hlcdc_crtc(काष्ठा drm_crtc *crtc)
+अणु
+	वापस container_of(crtc, काष्ठा aपंचांगel_hlcdc_crtc, base);
+पूर्ण
 
-static void atmel_hlcdc_crtc_mode_set_nofb(struct drm_crtc *c)
-{
-	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
-	struct regmap *regmap = crtc->dc->hlcdc->regmap;
-	struct drm_display_mode *adj = &c->state->adjusted_mode;
-	struct atmel_hlcdc_crtc_state *state;
-	unsigned long mode_rate;
-	struct videomode vm;
-	unsigned long prate;
-	unsigned int mask = ATMEL_HLCDC_CLKDIV_MASK | ATMEL_HLCDC_CLKPOL;
-	unsigned int cfg = 0;
-	int div, ret;
+अटल व्योम aपंचांगel_hlcdc_crtc_mode_set_nofb(काष्ठा drm_crtc *c)
+अणु
+	काष्ठा aपंचांगel_hlcdc_crtc *crtc = drm_crtc_to_aपंचांगel_hlcdc_crtc(c);
+	काष्ठा regmap *regmap = crtc->dc->hlcdc->regmap;
+	काष्ठा drm_display_mode *adj = &c->state->adjusted_mode;
+	काष्ठा aपंचांगel_hlcdc_crtc_state *state;
+	अचिन्हित दीर्घ mode_rate;
+	काष्ठा videomode vm;
+	अचिन्हित दीर्घ prate;
+	अचिन्हित पूर्णांक mask = ATMEL_HLCDC_CLKDIV_MASK | ATMEL_HLCDC_CLKPOL;
+	अचिन्हित पूर्णांक cfg = 0;
+	पूर्णांक भाग, ret;
 
 	ret = clk_prepare_enable(crtc->dc->hlcdc->sys_clk);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
 	vm.vfront_porch = adj->crtc_vsync_start - adj->crtc_vdisplay;
 	vm.vback_porch = adj->crtc_vtotal - adj->crtc_vsync_end;
@@ -86,62 +87,62 @@ static void atmel_hlcdc_crtc_mode_set_nofb(struct drm_crtc *c)
 	vm.hback_porch = adj->crtc_htotal - adj->crtc_hsync_end;
 	vm.hsync_len = adj->crtc_hsync_end - adj->crtc_hsync_start;
 
-	regmap_write(regmap, ATMEL_HLCDC_CFG(1),
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_CFG(1),
 		     (vm.hsync_len - 1) | ((vm.vsync_len - 1) << 16));
 
-	regmap_write(regmap, ATMEL_HLCDC_CFG(2),
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_CFG(2),
 		     (vm.vfront_porch - 1) | (vm.vback_porch << 16));
 
-	regmap_write(regmap, ATMEL_HLCDC_CFG(3),
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_CFG(3),
 		     (vm.hfront_porch - 1) | ((vm.hback_porch - 1) << 16));
 
-	regmap_write(regmap, ATMEL_HLCDC_CFG(4),
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_CFG(4),
 		     (adj->crtc_hdisplay - 1) |
 		     ((adj->crtc_vdisplay - 1) << 16));
 
 	prate = clk_get_rate(crtc->dc->hlcdc->sys_clk);
-	mode_rate = adj->crtc_clock * 1000;
-	if (!crtc->dc->desc->fixed_clksrc) {
+	mode_rate = adj->crtc_घड़ी * 1000;
+	अगर (!crtc->dc->desc->fixed_clksrc) अणु
 		prate *= 2;
 		cfg |= ATMEL_HLCDC_CLKSEL;
 		mask |= ATMEL_HLCDC_CLKSEL;
-	}
+	पूर्ण
 
-	div = DIV_ROUND_UP(prate, mode_rate);
-	if (div < 2) {
-		div = 2;
-	} else if (ATMEL_HLCDC_CLKDIV(div) & ~ATMEL_HLCDC_CLKDIV_MASK) {
-		/* The divider ended up too big, try a lower base rate. */
+	भाग = DIV_ROUND_UP(prate, mode_rate);
+	अगर (भाग < 2) अणु
+		भाग = 2;
+	पूर्ण अन्यथा अगर (ATMEL_HLCDC_CLKDIV(भाग) & ~ATMEL_HLCDC_CLKDIV_MASK) अणु
+		/* The भागider ended up too big, try a lower base rate. */
 		cfg &= ~ATMEL_HLCDC_CLKSEL;
 		prate /= 2;
-		div = DIV_ROUND_UP(prate, mode_rate);
-		if (ATMEL_HLCDC_CLKDIV(div) & ~ATMEL_HLCDC_CLKDIV_MASK)
-			div = ATMEL_HLCDC_CLKDIV_MASK;
-	} else {
-		int div_low = prate / mode_rate;
+		भाग = DIV_ROUND_UP(prate, mode_rate);
+		अगर (ATMEL_HLCDC_CLKDIV(भाग) & ~ATMEL_HLCDC_CLKDIV_MASK)
+			भाग = ATMEL_HLCDC_CLKDIV_MASK;
+	पूर्ण अन्यथा अणु
+		पूर्णांक भाग_low = prate / mode_rate;
 
-		if (div_low >= 2 &&
-		    (10 * (prate / div_low - mode_rate) <
-		     (mode_rate - prate / div)))
+		अगर (भाग_low >= 2 &&
+		    (10 * (prate / भाग_low - mode_rate) <
+		     (mode_rate - prate / भाग)))
 			/*
-			 * At least 10 times better when using a higher
+			 * At least 10 बार better when using a higher
 			 * frequency than requested, instead of a lower.
 			 * So, go with that.
 			 */
-			div = div_low;
-	}
+			भाग = भाग_low;
+	पूर्ण
 
-	cfg |= ATMEL_HLCDC_CLKDIV(div);
+	cfg |= ATMEL_HLCDC_CLKDIV(भाग);
 
 	regmap_update_bits(regmap, ATMEL_HLCDC_CFG(0), mask, cfg);
 
-	state = drm_crtc_state_to_atmel_hlcdc_crtc_state(c->state);
+	state = drm_crtc_state_to_aपंचांगel_hlcdc_crtc_state(c->state);
 	cfg = state->output_mode << 8;
 
-	if (adj->flags & DRM_MODE_FLAG_NVSYNC)
+	अगर (adj->flags & DRM_MODE_FLAG_NVSYNC)
 		cfg |= ATMEL_HLCDC_VSPOL;
 
-	if (adj->flags & DRM_MODE_FLAG_NHSYNC)
+	अगर (adj->flags & DRM_MODE_FLAG_NHSYNC)
 		cfg |= ATMEL_HLCDC_HSPOL;
 
 	regmap_update_bits(regmap, ATMEL_HLCDC_CFG(5),
@@ -153,377 +154,377 @@ static void atmel_hlcdc_crtc_mode_set_nofb(struct drm_crtc *c)
 			   cfg);
 
 	clk_disable_unprepare(crtc->dc->hlcdc->sys_clk);
-}
+पूर्ण
 
-static enum drm_mode_status
-atmel_hlcdc_crtc_mode_valid(struct drm_crtc *c,
-			    const struct drm_display_mode *mode)
-{
-	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
+अटल क्रमागत drm_mode_status
+aपंचांगel_hlcdc_crtc_mode_valid(काष्ठा drm_crtc *c,
+			    स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा aपंचांगel_hlcdc_crtc *crtc = drm_crtc_to_aपंचांगel_hlcdc_crtc(c);
 
-	return atmel_hlcdc_dc_mode_valid(crtc->dc, mode);
-}
+	वापस aपंचांगel_hlcdc_dc_mode_valid(crtc->dc, mode);
+पूर्ण
 
-static void atmel_hlcdc_crtc_atomic_disable(struct drm_crtc *c,
-					    struct drm_atomic_state *state)
-{
-	struct drm_device *dev = c->dev;
-	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
-	struct regmap *regmap = crtc->dc->hlcdc->regmap;
-	unsigned int status;
+अटल व्योम aपंचांगel_hlcdc_crtc_atomic_disable(काष्ठा drm_crtc *c,
+					    काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_device *dev = c->dev;
+	काष्ठा aपंचांगel_hlcdc_crtc *crtc = drm_crtc_to_aपंचांगel_hlcdc_crtc(c);
+	काष्ठा regmap *regmap = crtc->dc->hlcdc->regmap;
+	अचिन्हित पूर्णांक status;
 
 	drm_crtc_vblank_off(c);
 
-	pm_runtime_get_sync(dev->dev);
+	pm_runसमय_get_sync(dev->dev);
 
-	regmap_write(regmap, ATMEL_HLCDC_DIS, ATMEL_HLCDC_DISP);
-	while (!regmap_read(regmap, ATMEL_HLCDC_SR, &status) &&
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_DIS, ATMEL_HLCDC_DISP);
+	जबतक (!regmap_पढ़ो(regmap, ATMEL_HLCDC_SR, &status) &&
 	       (status & ATMEL_HLCDC_DISP))
 		cpu_relax();
 
-	regmap_write(regmap, ATMEL_HLCDC_DIS, ATMEL_HLCDC_SYNC);
-	while (!regmap_read(regmap, ATMEL_HLCDC_SR, &status) &&
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_DIS, ATMEL_HLCDC_SYNC);
+	जबतक (!regmap_पढ़ो(regmap, ATMEL_HLCDC_SR, &status) &&
 	       (status & ATMEL_HLCDC_SYNC))
 		cpu_relax();
 
-	regmap_write(regmap, ATMEL_HLCDC_DIS, ATMEL_HLCDC_PIXEL_CLK);
-	while (!regmap_read(regmap, ATMEL_HLCDC_SR, &status) &&
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_DIS, ATMEL_HLCDC_PIXEL_CLK);
+	जबतक (!regmap_पढ़ो(regmap, ATMEL_HLCDC_SR, &status) &&
 	       (status & ATMEL_HLCDC_PIXEL_CLK))
 		cpu_relax();
 
 	clk_disable_unprepare(crtc->dc->hlcdc->sys_clk);
 	pinctrl_pm_select_sleep_state(dev->dev);
 
-	pm_runtime_allow(dev->dev);
+	pm_runसमय_allow(dev->dev);
 
-	pm_runtime_put_sync(dev->dev);
-}
+	pm_runसमय_put_sync(dev->dev);
+पूर्ण
 
-static void atmel_hlcdc_crtc_atomic_enable(struct drm_crtc *c,
-					   struct drm_atomic_state *state)
-{
-	struct drm_device *dev = c->dev;
-	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
-	struct regmap *regmap = crtc->dc->hlcdc->regmap;
-	unsigned int status;
+अटल व्योम aपंचांगel_hlcdc_crtc_atomic_enable(काष्ठा drm_crtc *c,
+					   काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_device *dev = c->dev;
+	काष्ठा aपंचांगel_hlcdc_crtc *crtc = drm_crtc_to_aपंचांगel_hlcdc_crtc(c);
+	काष्ठा regmap *regmap = crtc->dc->hlcdc->regmap;
+	अचिन्हित पूर्णांक status;
 
-	pm_runtime_get_sync(dev->dev);
+	pm_runसमय_get_sync(dev->dev);
 
-	pm_runtime_forbid(dev->dev);
+	pm_runसमय_क्रमbid(dev->dev);
 
-	pinctrl_pm_select_default_state(dev->dev);
+	pinctrl_pm_select_शेष_state(dev->dev);
 	clk_prepare_enable(crtc->dc->hlcdc->sys_clk);
 
-	regmap_write(regmap, ATMEL_HLCDC_EN, ATMEL_HLCDC_PIXEL_CLK);
-	while (!regmap_read(regmap, ATMEL_HLCDC_SR, &status) &&
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_EN, ATMEL_HLCDC_PIXEL_CLK);
+	जबतक (!regmap_पढ़ो(regmap, ATMEL_HLCDC_SR, &status) &&
 	       !(status & ATMEL_HLCDC_PIXEL_CLK))
 		cpu_relax();
 
 
-	regmap_write(regmap, ATMEL_HLCDC_EN, ATMEL_HLCDC_SYNC);
-	while (!regmap_read(regmap, ATMEL_HLCDC_SR, &status) &&
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_EN, ATMEL_HLCDC_SYNC);
+	जबतक (!regmap_पढ़ो(regmap, ATMEL_HLCDC_SR, &status) &&
 	       !(status & ATMEL_HLCDC_SYNC))
 		cpu_relax();
 
-	regmap_write(regmap, ATMEL_HLCDC_EN, ATMEL_HLCDC_DISP);
-	while (!regmap_read(regmap, ATMEL_HLCDC_SR, &status) &&
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_EN, ATMEL_HLCDC_DISP);
+	जबतक (!regmap_पढ़ो(regmap, ATMEL_HLCDC_SR, &status) &&
 	       !(status & ATMEL_HLCDC_DISP))
 		cpu_relax();
 
-	pm_runtime_put_sync(dev->dev);
+	pm_runसमय_put_sync(dev->dev);
 
 	drm_crtc_vblank_on(c);
-}
+पूर्ण
 
-#define ATMEL_HLCDC_RGB444_OUTPUT	BIT(0)
-#define ATMEL_HLCDC_RGB565_OUTPUT	BIT(1)
-#define ATMEL_HLCDC_RGB666_OUTPUT	BIT(2)
-#define ATMEL_HLCDC_RGB888_OUTPUT	BIT(3)
-#define ATMEL_HLCDC_OUTPUT_MODE_MASK	GENMASK(3, 0)
+#घोषणा ATMEL_HLCDC_RGB444_OUTPUT	BIT(0)
+#घोषणा ATMEL_HLCDC_RGB565_OUTPUT	BIT(1)
+#घोषणा ATMEL_HLCDC_RGB666_OUTPUT	BIT(2)
+#घोषणा ATMEL_HLCDC_RGB888_OUTPUT	BIT(3)
+#घोषणा ATMEL_HLCDC_OUTPUT_MODE_MASK	GENMASK(3, 0)
 
-static int atmel_hlcdc_connector_output_mode(struct drm_connector_state *state)
-{
-	struct drm_connector *connector = state->connector;
-	struct drm_display_info *info = &connector->display_info;
-	struct drm_encoder *encoder;
-	unsigned int supported_fmts = 0;
-	int j;
+अटल पूर्णांक aपंचांगel_hlcdc_connector_output_mode(काष्ठा drm_connector_state *state)
+अणु
+	काष्ठा drm_connector *connector = state->connector;
+	काष्ठा drm_display_info *info = &connector->display_info;
+	काष्ठा drm_encoder *encoder;
+	अचिन्हित पूर्णांक supported_fmts = 0;
+	पूर्णांक j;
 
 	encoder = state->best_encoder;
-	if (!encoder)
+	अगर (!encoder)
 		encoder = connector->encoder;
 
-	switch (atmel_hlcdc_encoder_get_bus_fmt(encoder)) {
-	case 0:
-		break;
-	case MEDIA_BUS_FMT_RGB444_1X12:
-		return ATMEL_HLCDC_RGB444_OUTPUT;
-	case MEDIA_BUS_FMT_RGB565_1X16:
-		return ATMEL_HLCDC_RGB565_OUTPUT;
-	case MEDIA_BUS_FMT_RGB666_1X18:
-		return ATMEL_HLCDC_RGB666_OUTPUT;
-	case MEDIA_BUS_FMT_RGB888_1X24:
-		return ATMEL_HLCDC_RGB888_OUTPUT;
-	default:
-		return -EINVAL;
-	}
+	चयन (aपंचांगel_hlcdc_encoder_get_bus_fmt(encoder)) अणु
+	हाल 0:
+		अवरोध;
+	हाल MEDIA_BUS_FMT_RGB444_1X12:
+		वापस ATMEL_HLCDC_RGB444_OUTPUT;
+	हाल MEDIA_BUS_FMT_RGB565_1X16:
+		वापस ATMEL_HLCDC_RGB565_OUTPUT;
+	हाल MEDIA_BUS_FMT_RGB666_1X18:
+		वापस ATMEL_HLCDC_RGB666_OUTPUT;
+	हाल MEDIA_BUS_FMT_RGB888_1X24:
+		वापस ATMEL_HLCDC_RGB888_OUTPUT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	for (j = 0; j < info->num_bus_formats; j++) {
-		switch (info->bus_formats[j]) {
-		case MEDIA_BUS_FMT_RGB444_1X12:
+	क्रम (j = 0; j < info->num_bus_क्रमmats; j++) अणु
+		चयन (info->bus_क्रमmats[j]) अणु
+		हाल MEDIA_BUS_FMT_RGB444_1X12:
 			supported_fmts |= ATMEL_HLCDC_RGB444_OUTPUT;
-			break;
-		case MEDIA_BUS_FMT_RGB565_1X16:
+			अवरोध;
+		हाल MEDIA_BUS_FMT_RGB565_1X16:
 			supported_fmts |= ATMEL_HLCDC_RGB565_OUTPUT;
-			break;
-		case MEDIA_BUS_FMT_RGB666_1X18:
+			अवरोध;
+		हाल MEDIA_BUS_FMT_RGB666_1X18:
 			supported_fmts |= ATMEL_HLCDC_RGB666_OUTPUT;
-			break;
-		case MEDIA_BUS_FMT_RGB888_1X24:
+			अवरोध;
+		हाल MEDIA_BUS_FMT_RGB888_1X24:
 			supported_fmts |= ATMEL_HLCDC_RGB888_OUTPUT;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return supported_fmts;
-}
+	वापस supported_fmts;
+पूर्ण
 
-static int atmel_hlcdc_crtc_select_output_mode(struct drm_crtc_state *state)
-{
-	unsigned int output_fmts = ATMEL_HLCDC_OUTPUT_MODE_MASK;
-	struct atmel_hlcdc_crtc_state *hstate;
-	struct drm_connector_state *cstate;
-	struct drm_connector *connector;
-	struct atmel_hlcdc_crtc *crtc;
-	int i;
+अटल पूर्णांक aपंचांगel_hlcdc_crtc_select_output_mode(काष्ठा drm_crtc_state *state)
+अणु
+	अचिन्हित पूर्णांक output_fmts = ATMEL_HLCDC_OUTPUT_MODE_MASK;
+	काष्ठा aपंचांगel_hlcdc_crtc_state *hstate;
+	काष्ठा drm_connector_state *cstate;
+	काष्ठा drm_connector *connector;
+	काष्ठा aपंचांगel_hlcdc_crtc *crtc;
+	पूर्णांक i;
 
-	crtc = drm_crtc_to_atmel_hlcdc_crtc(state->crtc);
+	crtc = drm_crtc_to_aपंचांगel_hlcdc_crtc(state->crtc);
 
-	for_each_new_connector_in_state(state->state, connector, cstate, i) {
-		unsigned int supported_fmts = 0;
+	क्रम_each_new_connector_in_state(state->state, connector, cstate, i) अणु
+		अचिन्हित पूर्णांक supported_fmts = 0;
 
-		if (!cstate->crtc)
-			continue;
+		अगर (!cstate->crtc)
+			जारी;
 
-		supported_fmts = atmel_hlcdc_connector_output_mode(cstate);
+		supported_fmts = aपंचांगel_hlcdc_connector_output_mode(cstate);
 
-		if (crtc->dc->desc->conflicting_output_formats)
+		अगर (crtc->dc->desc->conflicting_output_क्रमmats)
 			output_fmts &= supported_fmts;
-		else
+		अन्यथा
 			output_fmts |= supported_fmts;
-	}
+	पूर्ण
 
-	if (!output_fmts)
-		return -EINVAL;
+	अगर (!output_fmts)
+		वापस -EINVAL;
 
-	hstate = drm_crtc_state_to_atmel_hlcdc_crtc_state(state);
+	hstate = drm_crtc_state_to_aपंचांगel_hlcdc_crtc_state(state);
 	hstate->output_mode = fls(output_fmts) - 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_hlcdc_crtc_atomic_check(struct drm_crtc *c,
-					 struct drm_atomic_state *state)
-{
-	struct drm_crtc_state *s = drm_atomic_get_new_crtc_state(state, c);
-	int ret;
+अटल पूर्णांक aपंचांगel_hlcdc_crtc_atomic_check(काष्ठा drm_crtc *c,
+					 काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc_state *s = drm_atomic_get_new_crtc_state(state, c);
+	पूर्णांक ret;
 
-	ret = atmel_hlcdc_crtc_select_output_mode(s);
-	if (ret)
-		return ret;
+	ret = aपंचांगel_hlcdc_crtc_select_output_mode(s);
+	अगर (ret)
+		वापस ret;
 
-	ret = atmel_hlcdc_plane_prepare_disc_area(s);
-	if (ret)
-		return ret;
+	ret = aपंचांगel_hlcdc_plane_prepare_disc_area(s);
+	अगर (ret)
+		वापस ret;
 
-	return atmel_hlcdc_plane_prepare_ahb_routing(s);
-}
+	वापस aपंचांगel_hlcdc_plane_prepare_ahb_routing(s);
+पूर्ण
 
-static void atmel_hlcdc_crtc_atomic_begin(struct drm_crtc *c,
-					  struct drm_atomic_state *state)
-{
-	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
+अटल व्योम aपंचांगel_hlcdc_crtc_atomic_begin(काष्ठा drm_crtc *c,
+					  काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा aपंचांगel_hlcdc_crtc *crtc = drm_crtc_to_aपंचांगel_hlcdc_crtc(c);
 
-	if (c->state->event) {
+	अगर (c->state->event) अणु
 		c->state->event->pipe = drm_crtc_index(c);
 
 		WARN_ON(drm_crtc_vblank_get(c) != 0);
 
 		crtc->event = c->state->event;
-		c->state->event = NULL;
-	}
-}
+		c->state->event = शून्य;
+	पूर्ण
+पूर्ण
 
-static void atmel_hlcdc_crtc_atomic_flush(struct drm_crtc *crtc,
-					  struct drm_atomic_state *state)
-{
-	/* TODO: write common plane control register if available */
-}
+अटल व्योम aपंचांगel_hlcdc_crtc_atomic_flush(काष्ठा drm_crtc *crtc,
+					  काष्ठा drm_atomic_state *state)
+अणु
+	/* TODO: ग_लिखो common plane control रेजिस्टर अगर available */
+पूर्ण
 
-static const struct drm_crtc_helper_funcs lcdc_crtc_helper_funcs = {
-	.mode_valid = atmel_hlcdc_crtc_mode_valid,
-	.mode_set_nofb = atmel_hlcdc_crtc_mode_set_nofb,
-	.atomic_check = atmel_hlcdc_crtc_atomic_check,
-	.atomic_begin = atmel_hlcdc_crtc_atomic_begin,
-	.atomic_flush = atmel_hlcdc_crtc_atomic_flush,
-	.atomic_enable = atmel_hlcdc_crtc_atomic_enable,
-	.atomic_disable = atmel_hlcdc_crtc_atomic_disable,
-};
+अटल स्थिर काष्ठा drm_crtc_helper_funcs lcdc_crtc_helper_funcs = अणु
+	.mode_valid = aपंचांगel_hlcdc_crtc_mode_valid,
+	.mode_set_nofb = aपंचांगel_hlcdc_crtc_mode_set_nofb,
+	.atomic_check = aपंचांगel_hlcdc_crtc_atomic_check,
+	.atomic_begin = aपंचांगel_hlcdc_crtc_atomic_begin,
+	.atomic_flush = aपंचांगel_hlcdc_crtc_atomic_flush,
+	.atomic_enable = aपंचांगel_hlcdc_crtc_atomic_enable,
+	.atomic_disable = aपंचांगel_hlcdc_crtc_atomic_disable,
+पूर्ण;
 
-static void atmel_hlcdc_crtc_destroy(struct drm_crtc *c)
-{
-	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
+अटल व्योम aपंचांगel_hlcdc_crtc_destroy(काष्ठा drm_crtc *c)
+अणु
+	काष्ठा aपंचांगel_hlcdc_crtc *crtc = drm_crtc_to_aपंचांगel_hlcdc_crtc(c);
 
 	drm_crtc_cleanup(c);
-	kfree(crtc);
-}
+	kमुक्त(crtc);
+पूर्ण
 
-static void atmel_hlcdc_crtc_finish_page_flip(struct atmel_hlcdc_crtc *crtc)
-{
-	struct drm_device *dev = crtc->base.dev;
-	unsigned long flags;
+अटल व्योम aपंचांगel_hlcdc_crtc_finish_page_flip(काष्ठा aपंचांगel_hlcdc_crtc *crtc)
+अणु
+	काष्ठा drm_device *dev = crtc->base.dev;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->event_lock, flags);
-	if (crtc->event) {
+	अगर (crtc->event) अणु
 		drm_crtc_send_vblank_event(&crtc->base, crtc->event);
 		drm_crtc_vblank_put(&crtc->base);
-		crtc->event = NULL;
-	}
+		crtc->event = शून्य;
+	पूर्ण
 	spin_unlock_irqrestore(&dev->event_lock, flags);
-}
+पूर्ण
 
-void atmel_hlcdc_crtc_irq(struct drm_crtc *c)
-{
+व्योम aपंचांगel_hlcdc_crtc_irq(काष्ठा drm_crtc *c)
+अणु
 	drm_crtc_handle_vblank(c);
-	atmel_hlcdc_crtc_finish_page_flip(drm_crtc_to_atmel_hlcdc_crtc(c));
-}
+	aपंचांगel_hlcdc_crtc_finish_page_flip(drm_crtc_to_aपंचांगel_hlcdc_crtc(c));
+पूर्ण
 
-static void atmel_hlcdc_crtc_reset(struct drm_crtc *crtc)
-{
-	struct atmel_hlcdc_crtc_state *state;
+अटल व्योम aपंचांगel_hlcdc_crtc_reset(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा aपंचांगel_hlcdc_crtc_state *state;
 
-	if (crtc->state) {
+	अगर (crtc->state) अणु
 		__drm_atomic_helper_crtc_destroy_state(crtc->state);
-		state = drm_crtc_state_to_atmel_hlcdc_crtc_state(crtc->state);
-		kfree(state);
-		crtc->state = NULL;
-	}
+		state = drm_crtc_state_to_aपंचांगel_hlcdc_crtc_state(crtc->state);
+		kमुक्त(state);
+		crtc->state = शून्य;
+	पूर्ण
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
-	if (state)
+	state = kzalloc(माप(*state), GFP_KERNEL);
+	अगर (state)
 		__drm_atomic_helper_crtc_reset(crtc, &state->base);
-}
+पूर्ण
 
-static struct drm_crtc_state *
-atmel_hlcdc_crtc_duplicate_state(struct drm_crtc *crtc)
-{
-	struct atmel_hlcdc_crtc_state *state, *cur;
+अटल काष्ठा drm_crtc_state *
+aपंचांगel_hlcdc_crtc_duplicate_state(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा aपंचांगel_hlcdc_crtc_state *state, *cur;
 
-	if (WARN_ON(!crtc->state))
-		return NULL;
+	अगर (WARN_ON(!crtc->state))
+		वापस शून्य;
 
-	state = kmalloc(sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	state = kदो_स्मृति(माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &state->base);
 
-	cur = drm_crtc_state_to_atmel_hlcdc_crtc_state(crtc->state);
+	cur = drm_crtc_state_to_aपंचांगel_hlcdc_crtc_state(crtc->state);
 	state->output_mode = cur->output_mode;
 
-	return &state->base;
-}
+	वापस &state->base;
+पूर्ण
 
-static void atmel_hlcdc_crtc_destroy_state(struct drm_crtc *crtc,
-					   struct drm_crtc_state *s)
-{
-	struct atmel_hlcdc_crtc_state *state;
+अटल व्योम aपंचांगel_hlcdc_crtc_destroy_state(काष्ठा drm_crtc *crtc,
+					   काष्ठा drm_crtc_state *s)
+अणु
+	काष्ठा aपंचांगel_hlcdc_crtc_state *state;
 
-	state = drm_crtc_state_to_atmel_hlcdc_crtc_state(s);
+	state = drm_crtc_state_to_aपंचांगel_hlcdc_crtc_state(s);
 	__drm_atomic_helper_crtc_destroy_state(s);
-	kfree(state);
-}
+	kमुक्त(state);
+पूर्ण
 
-static int atmel_hlcdc_crtc_enable_vblank(struct drm_crtc *c)
-{
-	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
-	struct regmap *regmap = crtc->dc->hlcdc->regmap;
+अटल पूर्णांक aपंचांगel_hlcdc_crtc_enable_vblank(काष्ठा drm_crtc *c)
+अणु
+	काष्ठा aपंचांगel_hlcdc_crtc *crtc = drm_crtc_to_aपंचांगel_hlcdc_crtc(c);
+	काष्ठा regmap *regmap = crtc->dc->hlcdc->regmap;
 
-	/* Enable SOF (Start Of Frame) interrupt for vblank counting */
-	regmap_write(regmap, ATMEL_HLCDC_IER, ATMEL_HLCDC_SOF);
+	/* Enable SOF (Start Of Frame) पूर्णांकerrupt क्रम vblank counting */
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_IER, ATMEL_HLCDC_SOF);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atmel_hlcdc_crtc_disable_vblank(struct drm_crtc *c)
-{
-	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
-	struct regmap *regmap = crtc->dc->hlcdc->regmap;
+अटल व्योम aपंचांगel_hlcdc_crtc_disable_vblank(काष्ठा drm_crtc *c)
+अणु
+	काष्ठा aपंचांगel_hlcdc_crtc *crtc = drm_crtc_to_aपंचांगel_hlcdc_crtc(c);
+	काष्ठा regmap *regmap = crtc->dc->hlcdc->regmap;
 
-	regmap_write(regmap, ATMEL_HLCDC_IDR, ATMEL_HLCDC_SOF);
-}
+	regmap_ग_लिखो(regmap, ATMEL_HLCDC_IDR, ATMEL_HLCDC_SOF);
+पूर्ण
 
-static const struct drm_crtc_funcs atmel_hlcdc_crtc_funcs = {
+अटल स्थिर काष्ठा drm_crtc_funcs aपंचांगel_hlcdc_crtc_funcs = अणु
 	.page_flip = drm_atomic_helper_page_flip,
 	.set_config = drm_atomic_helper_set_config,
-	.destroy = atmel_hlcdc_crtc_destroy,
-	.reset = atmel_hlcdc_crtc_reset,
-	.atomic_duplicate_state =  atmel_hlcdc_crtc_duplicate_state,
-	.atomic_destroy_state = atmel_hlcdc_crtc_destroy_state,
-	.enable_vblank = atmel_hlcdc_crtc_enable_vblank,
-	.disable_vblank = atmel_hlcdc_crtc_disable_vblank,
-};
+	.destroy = aपंचांगel_hlcdc_crtc_destroy,
+	.reset = aपंचांगel_hlcdc_crtc_reset,
+	.atomic_duplicate_state =  aपंचांगel_hlcdc_crtc_duplicate_state,
+	.atomic_destroy_state = aपंचांगel_hlcdc_crtc_destroy_state,
+	.enable_vblank = aपंचांगel_hlcdc_crtc_enable_vblank,
+	.disable_vblank = aपंचांगel_hlcdc_crtc_disable_vblank,
+पूर्ण;
 
-int atmel_hlcdc_crtc_create(struct drm_device *dev)
-{
-	struct atmel_hlcdc_plane *primary = NULL, *cursor = NULL;
-	struct atmel_hlcdc_dc *dc = dev->dev_private;
-	struct atmel_hlcdc_crtc *crtc;
-	int ret;
-	int i;
+पूर्णांक aपंचांगel_hlcdc_crtc_create(काष्ठा drm_device *dev)
+अणु
+	काष्ठा aपंचांगel_hlcdc_plane *primary = शून्य, *cursor = शून्य;
+	काष्ठा aपंचांगel_hlcdc_dc *dc = dev->dev_निजी;
+	काष्ठा aपंचांगel_hlcdc_crtc *crtc;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	crtc = kzalloc(sizeof(*crtc), GFP_KERNEL);
-	if (!crtc)
-		return -ENOMEM;
+	crtc = kzalloc(माप(*crtc), GFP_KERNEL);
+	अगर (!crtc)
+		वापस -ENOMEM;
 
 	crtc->dc = dc;
 
-	for (i = 0; i < ATMEL_HLCDC_MAX_LAYERS; i++) {
-		if (!dc->layers[i])
-			continue;
+	क्रम (i = 0; i < ATMEL_HLCDC_MAX_LAYERS; i++) अणु
+		अगर (!dc->layers[i])
+			जारी;
 
-		switch (dc->layers[i]->desc->type) {
-		case ATMEL_HLCDC_BASE_LAYER:
-			primary = atmel_hlcdc_layer_to_plane(dc->layers[i]);
-			break;
+		चयन (dc->layers[i]->desc->type) अणु
+		हाल ATMEL_HLCDC_BASE_LAYER:
+			primary = aपंचांगel_hlcdc_layer_to_plane(dc->layers[i]);
+			अवरोध;
 
-		case ATMEL_HLCDC_CURSOR_LAYER:
-			cursor = atmel_hlcdc_layer_to_plane(dc->layers[i]);
-			break;
+		हाल ATMEL_HLCDC_CURSOR_LAYER:
+			cursor = aपंचांगel_hlcdc_layer_to_plane(dc->layers[i]);
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ret = drm_crtc_init_with_planes(dev, &crtc->base, &primary->base,
-					&cursor->base, &atmel_hlcdc_crtc_funcs,
-					NULL);
-	if (ret < 0)
-		goto fail;
+					&cursor->base, &aपंचांगel_hlcdc_crtc_funcs,
+					शून्य);
+	अगर (ret < 0)
+		जाओ fail;
 
 	crtc->id = drm_crtc_index(&crtc->base);
 
-	for (i = 0; i < ATMEL_HLCDC_MAX_LAYERS; i++) {
-		struct atmel_hlcdc_plane *overlay;
+	क्रम (i = 0; i < ATMEL_HLCDC_MAX_LAYERS; i++) अणु
+		काष्ठा aपंचांगel_hlcdc_plane *overlay;
 
-		if (dc->layers[i] &&
-		    dc->layers[i]->desc->type == ATMEL_HLCDC_OVERLAY_LAYER) {
-			overlay = atmel_hlcdc_layer_to_plane(dc->layers[i]);
+		अगर (dc->layers[i] &&
+		    dc->layers[i]->desc->type == ATMEL_HLCDC_OVERLAY_LAYER) अणु
+			overlay = aपंचांगel_hlcdc_layer_to_plane(dc->layers[i]);
 			overlay->base.possible_crtcs = 1 << crtc->id;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	drm_crtc_helper_add(&crtc->base, &lcdc_crtc_helper_funcs);
 
@@ -533,9 +534,9 @@ int atmel_hlcdc_crtc_create(struct drm_device *dev)
 
 	dc->crtc = &crtc->base;
 
-	return 0;
+	वापस 0;
 
 fail:
-	atmel_hlcdc_crtc_destroy(&crtc->base);
-	return ret;
-}
+	aपंचांगel_hlcdc_crtc_destroy(&crtc->base);
+	वापस ret;
+पूर्ण

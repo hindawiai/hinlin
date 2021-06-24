@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NOUVEAU_TTM_H__
-#define __NOUVEAU_TTM_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NOUVEAU_TTM_H__
+#घोषणा __NOUVEAU_TTM_H__
 
-static inline struct nouveau_drm *
-nouveau_bdev(struct ttm_device *bd)
-{
-	return container_of(bd, struct nouveau_drm, ttm.bdev);
-}
+अटल अंतरभूत काष्ठा nouveau_drm *
+nouveau_bdev(काष्ठा tपंचांग_device *bd)
+अणु
+	वापस container_of(bd, काष्ठा nouveau_drm, tपंचांग.bdev);
+पूर्ण
 
-extern const struct ttm_resource_manager_func nouveau_vram_manager;
-extern const struct ttm_resource_manager_func nouveau_gart_manager;
-extern const struct ttm_resource_manager_func nv04_gart_manager;
+बाह्य स्थिर काष्ठा tपंचांग_resource_manager_func nouveau_vram_manager;
+बाह्य स्थिर काष्ठा tपंचांग_resource_manager_func nouveau_gart_manager;
+बाह्य स्थिर काष्ठा tपंचांग_resource_manager_func nv04_gart_manager;
 
-struct ttm_tt *nouveau_sgdma_create_ttm(struct ttm_buffer_object *bo,
+काष्ठा tपंचांग_tt *nouveau_sgdma_create_tपंचांग(काष्ठा tपंचांग_buffer_object *bo,
 					u32 page_flags);
 
-int  nouveau_ttm_init(struct nouveau_drm *drm);
-void nouveau_ttm_fini(struct nouveau_drm *drm);
-int  nouveau_ttm_mmap(struct file *, struct vm_area_struct *);
+पूर्णांक  nouveau_tपंचांग_init(काष्ठा nouveau_drm *drm);
+व्योम nouveau_tपंचांग_fini(काष्ठा nouveau_drm *drm);
+पूर्णांक  nouveau_tपंचांग_mmap(काष्ठा file *, काष्ठा vm_area_काष्ठा *);
 
-int  nouveau_ttm_global_init(struct nouveau_drm *);
-void nouveau_ttm_global_release(struct nouveau_drm *);
+पूर्णांक  nouveau_tपंचांग_global_init(काष्ठा nouveau_drm *);
+व्योम nouveau_tपंचांग_global_release(काष्ठा nouveau_drm *);
 
-int nouveau_sgdma_bind(struct ttm_device *bdev, struct ttm_tt *ttm, struct ttm_resource *reg);
-void nouveau_sgdma_unbind(struct ttm_device *bdev, struct ttm_tt *ttm);
-void nouveau_sgdma_destroy(struct ttm_device *bdev, struct ttm_tt *ttm);
-#endif
+पूर्णांक nouveau_sgdma_bind(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग, काष्ठा tपंचांग_resource *reg);
+व्योम nouveau_sgdma_unbind(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग);
+व्योम nouveau_sgdma_destroy(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग);
+#पूर्ण_अगर

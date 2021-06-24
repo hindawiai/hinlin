@@ -1,27 +1,28 @@
+<शैली गुरु>
 /*
  * SMC 37C669 initialization code
  */
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include <linux/mm.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/spinlock.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/spinlock.h>
 
-#include <asm/hwrpb.h>
-#include <asm/io.h>
+#समावेश <यंत्र/hwrpb.h>
+#समावेश <यंत्र/पन.स>
 
-#if 0
-# define DBG_DEVS(args)         printk args
-#else
+#अगर 0
+# define DBG_DEVS(args)         prपूर्णांकk args
+#अन्यथा
 # define DBG_DEVS(args)
-#endif
+#पूर्ण_अगर
 
-#define KB              1024
-#define MB              (1024*KB)
-#define GB              (1024*MB)
+#घोषणा KB              1024
+#घोषणा MB              (1024*KB)
+#घोषणा GB              (1024*MB)
 
-#define SMC_DEBUG   0
+#घोषणा SMC_DEBUG   0
 
 /* File:	smcc669_def.h
  *
@@ -36,184 +37,184 @@
  * other person.  No title to and  ownership of the  software is  hereby
  * transferred.
  *
- * The information in this software is  subject to change without notice
- * and  should  not  be  construed  as a commitment by Digital Equipment
+ * The inक्रमmation in this software is  subject to change without notice
+ * and  should  not  be  स्थिरrued  as a commiपंचांगent by Digital Equipment
  * Corporation.
  *
- * Digital assumes no responsibility for the use  or  reliability of its
+ * Digital assumes no responsibility क्रम the use  or  reliability of its
  * software on equipment which is not supplied by Digital.
  *
  *
  * Abstract:	
  *
- *	This file contains header definitions for the SMC37c669 
+ *	This file contains header definitions क्रम the SMC37c669 
  *	Super I/O controller. 
  *
  * Author:	
  *
- *	Eric Rasmussen
+ *	Eric Rयंत्रussen
  *
- * Modification History:
+ * Modअगरication History:
  *
  *	er	28-Jan-1997	Initial Entry
  */
 
-#ifndef __SMC37c669_H
-#define __SMC37c669_H
+#अगर_अघोषित __SMC37c669_H
+#घोषणा __SMC37c669_H
 
 /*
-** Macros for handling device IRQs
+** Macros क्रम handling device IRQs
 **
 ** The mask acts as a flag used in mapping actual ISA IRQs (0 - 15) 
 ** to device IRQs (A - H).
 */
-#define SMC37c669_DEVICE_IRQ_MASK	0x80000000
-#define SMC37c669_DEVICE_IRQ( __i )	\
+#घोषणा SMC37c669_DEVICE_IRQ_MASK	0x80000000
+#घोषणा SMC37c669_DEVICE_IRQ( __i )	\
 	((SMC37c669_DEVICE_IRQ_MASK) | (__i))
-#define SMC37c669_IS_DEVICE_IRQ(__i)	\
+#घोषणा SMC37c669_IS_DEVICE_IRQ(__i)	\
 	(((__i) & (SMC37c669_DEVICE_IRQ_MASK)) == (SMC37c669_DEVICE_IRQ_MASK))
-#define SMC37c669_RAW_DEVICE_IRQ(__i)	\
+#घोषणा SMC37c669_RAW_DEVICE_IRQ(__i)	\
 	((__i) & ~(SMC37c669_DEVICE_IRQ_MASK))
 
 /*
-** Macros for handling device DRQs
+** Macros क्रम handling device DRQs
 **
 ** The mask acts as a flag used in mapping actual ISA DMA
 ** channels to device DMA channels (A - C).
 */
-#define SMC37c669_DEVICE_DRQ_MASK	0x80000000
-#define SMC37c669_DEVICE_DRQ(__d)	\
+#घोषणा SMC37c669_DEVICE_DRQ_MASK	0x80000000
+#घोषणा SMC37c669_DEVICE_DRQ(__d)	\
 	((SMC37c669_DEVICE_DRQ_MASK) | (__d))
-#define SMC37c669_IS_DEVICE_DRQ(__d)	\
+#घोषणा SMC37c669_IS_DEVICE_DRQ(__d)	\
 	(((__d) & (SMC37c669_DEVICE_DRQ_MASK)) == (SMC37c669_DEVICE_DRQ_MASK))
-#define SMC37c669_RAW_DEVICE_DRQ(__d)	\
+#घोषणा SMC37c669_RAW_DEVICE_DRQ(__d)	\
 	((__d) & ~(SMC37c669_DEVICE_DRQ_MASK))
 
-#define SMC37c669_DEVICE_ID	0x3
+#घोषणा SMC37c669_DEVICE_ID	0x3
 
 /*
 ** SMC37c669 Device Function Definitions
 */
-#define SERIAL_0	0
-#define SERIAL_1	1
-#define PARALLEL_0	2
-#define FLOPPY_0	3
-#define IDE_0		4
-#define NUM_FUNCS	5
+#घोषणा SERIAL_0	0
+#घोषणा SERIAL_1	1
+#घोषणा PARALLEL_0	2
+#घोषणा FLOPPY_0	3
+#घोषणा IDE_0		4
+#घोषणा NUM_FUNCS	5
 
 /*
 ** Default Device Function Mappings
 */
-#define COM1_BASE	0x3F8
-#define COM1_IRQ	4
-#define COM2_BASE	0x2F8
-#define COM2_IRQ	3
-#define PARP_BASE	0x3BC
-#define PARP_IRQ	7
-#define PARP_DRQ	3
-#define FDC_BASE	0x3F0
-#define FDC_IRQ		6
-#define FDC_DRQ		2
+#घोषणा COM1_BASE	0x3F8
+#घोषणा COM1_IRQ	4
+#घोषणा COM2_BASE	0x2F8
+#घोषणा COM2_IRQ	3
+#घोषणा PARP_BASE	0x3BC
+#घोषणा PARP_IRQ	7
+#घोषणा PARP_DRQ	3
+#घोषणा FDC_BASE	0x3F0
+#घोषणा FDC_IRQ		6
+#घोषणा FDC_DRQ		2
 
 /*
 ** Configuration On/Off Key Definitions
 */
-#define SMC37c669_CONFIG_ON_KEY		0x55
-#define SMC37c669_CONFIG_OFF_KEY	0xAA
+#घोषणा SMC37c669_CONFIG_ON_KEY		0x55
+#घोषणा SMC37c669_CONFIG_OFF_KEY	0xAA
 
 /*
 ** SMC 37c669 Device IRQs
 */
-#define SMC37c669_DEVICE_IRQ_A	    ( SMC37c669_DEVICE_IRQ( 0x01 ) )
-#define SMC37c669_DEVICE_IRQ_B	    ( SMC37c669_DEVICE_IRQ( 0x02 ) )
-#define SMC37c669_DEVICE_IRQ_C	    ( SMC37c669_DEVICE_IRQ( 0x03 ) )
-#define SMC37c669_DEVICE_IRQ_D	    ( SMC37c669_DEVICE_IRQ( 0x04 ) )
-#define SMC37c669_DEVICE_IRQ_E	    ( SMC37c669_DEVICE_IRQ( 0x05 ) )
-#define SMC37c669_DEVICE_IRQ_F	    ( SMC37c669_DEVICE_IRQ( 0x06 ) )
+#घोषणा SMC37c669_DEVICE_IRQ_A	    ( SMC37c669_DEVICE_IRQ( 0x01 ) )
+#घोषणा SMC37c669_DEVICE_IRQ_B	    ( SMC37c669_DEVICE_IRQ( 0x02 ) )
+#घोषणा SMC37c669_DEVICE_IRQ_C	    ( SMC37c669_DEVICE_IRQ( 0x03 ) )
+#घोषणा SMC37c669_DEVICE_IRQ_D	    ( SMC37c669_DEVICE_IRQ( 0x04 ) )
+#घोषणा SMC37c669_DEVICE_IRQ_E	    ( SMC37c669_DEVICE_IRQ( 0x05 ) )
+#घोषणा SMC37c669_DEVICE_IRQ_F	    ( SMC37c669_DEVICE_IRQ( 0x06 ) )
 /*      SMC37c669_DEVICE_IRQ_G	    *** RESERVED ***/
-#define SMC37c669_DEVICE_IRQ_H	    ( SMC37c669_DEVICE_IRQ( 0x08 ) )
+#घोषणा SMC37c669_DEVICE_IRQ_H	    ( SMC37c669_DEVICE_IRQ( 0x08 ) )
 
 /*
 ** SMC 37c669 Device DMA Channel Definitions
 */
-#define SMC37c669_DEVICE_DRQ_A		    ( SMC37c669_DEVICE_DRQ( 0x01 ) )
-#define SMC37c669_DEVICE_DRQ_B		    ( SMC37c669_DEVICE_DRQ( 0x02 ) )
-#define SMC37c669_DEVICE_DRQ_C		    ( SMC37c669_DEVICE_DRQ( 0x03 ) )
+#घोषणा SMC37c669_DEVICE_DRQ_A		    ( SMC37c669_DEVICE_DRQ( 0x01 ) )
+#घोषणा SMC37c669_DEVICE_DRQ_B		    ( SMC37c669_DEVICE_DRQ( 0x02 ) )
+#घोषणा SMC37c669_DEVICE_DRQ_C		    ( SMC37c669_DEVICE_DRQ( 0x03 ) )
 
 /*
 ** Configuration Register Index Definitions
 */
-#define SMC37c669_CR00_INDEX	    0x00
-#define SMC37c669_CR01_INDEX	    0x01
-#define SMC37c669_CR02_INDEX	    0x02
-#define SMC37c669_CR03_INDEX	    0x03
-#define SMC37c669_CR04_INDEX	    0x04
-#define SMC37c669_CR05_INDEX	    0x05
-#define SMC37c669_CR06_INDEX	    0x06
-#define SMC37c669_CR07_INDEX	    0x07
-#define SMC37c669_CR08_INDEX	    0x08
-#define SMC37c669_CR09_INDEX	    0x09
-#define SMC37c669_CR0A_INDEX	    0x0A
-#define SMC37c669_CR0B_INDEX	    0x0B
-#define SMC37c669_CR0C_INDEX	    0x0C
-#define SMC37c669_CR0D_INDEX	    0x0D
-#define SMC37c669_CR0E_INDEX	    0x0E
-#define SMC37c669_CR0F_INDEX	    0x0F
-#define SMC37c669_CR10_INDEX	    0x10
-#define SMC37c669_CR11_INDEX	    0x11
-#define SMC37c669_CR12_INDEX	    0x12
-#define SMC37c669_CR13_INDEX	    0x13
-#define SMC37c669_CR14_INDEX	    0x14
-#define SMC37c669_CR15_INDEX	    0x15
-#define SMC37c669_CR16_INDEX	    0x16
-#define SMC37c669_CR17_INDEX	    0x17
-#define SMC37c669_CR18_INDEX	    0x18
-#define SMC37c669_CR19_INDEX	    0x19
-#define SMC37c669_CR1A_INDEX	    0x1A
-#define SMC37c669_CR1B_INDEX	    0x1B
-#define SMC37c669_CR1C_INDEX	    0x1C
-#define SMC37c669_CR1D_INDEX	    0x1D
-#define SMC37c669_CR1E_INDEX	    0x1E
-#define SMC37c669_CR1F_INDEX	    0x1F
-#define SMC37c669_CR20_INDEX	    0x20
-#define SMC37c669_CR21_INDEX	    0x21
-#define SMC37c669_CR22_INDEX	    0x22
-#define SMC37c669_CR23_INDEX	    0x23
-#define SMC37c669_CR24_INDEX	    0x24
-#define SMC37c669_CR25_INDEX	    0x25
-#define SMC37c669_CR26_INDEX	    0x26
-#define SMC37c669_CR27_INDEX	    0x27
-#define SMC37c669_CR28_INDEX	    0x28
-#define SMC37c669_CR29_INDEX	    0x29
+#घोषणा SMC37c669_CR00_INDEX	    0x00
+#घोषणा SMC37c669_CR01_INDEX	    0x01
+#घोषणा SMC37c669_CR02_INDEX	    0x02
+#घोषणा SMC37c669_CR03_INDEX	    0x03
+#घोषणा SMC37c669_CR04_INDEX	    0x04
+#घोषणा SMC37c669_CR05_INDEX	    0x05
+#घोषणा SMC37c669_CR06_INDEX	    0x06
+#घोषणा SMC37c669_CR07_INDEX	    0x07
+#घोषणा SMC37c669_CR08_INDEX	    0x08
+#घोषणा SMC37c669_CR09_INDEX	    0x09
+#घोषणा SMC37c669_CR0A_INDEX	    0x0A
+#घोषणा SMC37c669_CR0B_INDEX	    0x0B
+#घोषणा SMC37c669_CR0C_INDEX	    0x0C
+#घोषणा SMC37c669_CR0D_INDEX	    0x0D
+#घोषणा SMC37c669_CR0E_INDEX	    0x0E
+#घोषणा SMC37c669_CR0F_INDEX	    0x0F
+#घोषणा SMC37c669_CR10_INDEX	    0x10
+#घोषणा SMC37c669_CR11_INDEX	    0x11
+#घोषणा SMC37c669_CR12_INDEX	    0x12
+#घोषणा SMC37c669_CR13_INDEX	    0x13
+#घोषणा SMC37c669_CR14_INDEX	    0x14
+#घोषणा SMC37c669_CR15_INDEX	    0x15
+#घोषणा SMC37c669_CR16_INDEX	    0x16
+#घोषणा SMC37c669_CR17_INDEX	    0x17
+#घोषणा SMC37c669_CR18_INDEX	    0x18
+#घोषणा SMC37c669_CR19_INDEX	    0x19
+#घोषणा SMC37c669_CR1A_INDEX	    0x1A
+#घोषणा SMC37c669_CR1B_INDEX	    0x1B
+#घोषणा SMC37c669_CR1C_INDEX	    0x1C
+#घोषणा SMC37c669_CR1D_INDEX	    0x1D
+#घोषणा SMC37c669_CR1E_INDEX	    0x1E
+#घोषणा SMC37c669_CR1F_INDEX	    0x1F
+#घोषणा SMC37c669_CR20_INDEX	    0x20
+#घोषणा SMC37c669_CR21_INDEX	    0x21
+#घोषणा SMC37c669_CR22_INDEX	    0x22
+#घोषणा SMC37c669_CR23_INDEX	    0x23
+#घोषणा SMC37c669_CR24_INDEX	    0x24
+#घोषणा SMC37c669_CR25_INDEX	    0x25
+#घोषणा SMC37c669_CR26_INDEX	    0x26
+#घोषणा SMC37c669_CR27_INDEX	    0x27
+#घोषणा SMC37c669_CR28_INDEX	    0x28
+#घोषणा SMC37c669_CR29_INDEX	    0x29
 
 /*
 ** Configuration Register Alias Definitions
 */
-#define SMC37c669_DEVICE_ID_INDEX		    SMC37c669_CR0D_INDEX
-#define SMC37c669_DEVICE_REVISION_INDEX		    SMC37c669_CR0E_INDEX
-#define SMC37c669_FDC_BASE_ADDRESS_INDEX	    SMC37c669_CR20_INDEX
-#define SMC37c669_IDE_BASE_ADDRESS_INDEX	    SMC37c669_CR21_INDEX
-#define SMC37c669_IDE_ALTERNATE_ADDRESS_INDEX	    SMC37c669_CR22_INDEX
-#define SMC37c669_PARALLEL0_BASE_ADDRESS_INDEX	    SMC37c669_CR23_INDEX
-#define SMC37c669_SERIAL0_BASE_ADDRESS_INDEX	    SMC37c669_CR24_INDEX
-#define SMC37c669_SERIAL1_BASE_ADDRESS_INDEX	    SMC37c669_CR25_INDEX
-#define SMC37c669_PARALLEL_FDC_DRQ_INDEX	    SMC37c669_CR26_INDEX
-#define SMC37c669_PARALLEL_FDC_IRQ_INDEX	    SMC37c669_CR27_INDEX
-#define SMC37c669_SERIAL_IRQ_INDEX		    SMC37c669_CR28_INDEX
+#घोषणा SMC37c669_DEVICE_ID_INDEX		    SMC37c669_CR0D_INDEX
+#घोषणा SMC37c669_DEVICE_REVISION_INDEX		    SMC37c669_CR0E_INDEX
+#घोषणा SMC37c669_FDC_BASE_ADDRESS_INDEX	    SMC37c669_CR20_INDEX
+#घोषणा SMC37c669_IDE_BASE_ADDRESS_INDEX	    SMC37c669_CR21_INDEX
+#घोषणा SMC37c669_IDE_ALTERNATE_ADDRESS_INDEX	    SMC37c669_CR22_INDEX
+#घोषणा SMC37c669_PARALLEL0_BASE_ADDRESS_INDEX	    SMC37c669_CR23_INDEX
+#घोषणा SMC37c669_SERIAL0_BASE_ADDRESS_INDEX	    SMC37c669_CR24_INDEX
+#घोषणा SMC37c669_SERIAL1_BASE_ADDRESS_INDEX	    SMC37c669_CR25_INDEX
+#घोषणा SMC37c669_PARALLEL_FDC_DRQ_INDEX	    SMC37c669_CR26_INDEX
+#घोषणा SMC37c669_PARALLEL_FDC_IRQ_INDEX	    SMC37c669_CR27_INDEX
+#घोषणा SMC37c669_SERIAL_IRQ_INDEX		    SMC37c669_CR28_INDEX
 
 /*
 ** Configuration Register Definitions
 **
-** The INDEX (write only) and DATA (read/write) ports are effective 
+** The INDEX (ग_लिखो only) and DATA (पढ़ो/ग_लिखो) ports are effective 
 ** only when the chip is in the Configuration State.
 */
-typedef struct _SMC37c669_CONFIG_REGS {
-    unsigned char index_port;
-    unsigned char data_port;
-} SMC37c669_CONFIG_REGS;
+प्रकार काष्ठा _SMC37c669_CONFIG_REGS अणु
+    अचिन्हित अक्षर index_port;
+    अचिन्हित अक्षर data_port;
+पूर्ण SMC37c669_CONFIG_REGS;
 
 /*
-** CR00 - default value 0x28
+** CR00 - शेष value 0x28
 **
 **  IDE_EN (CR00<1:0>):
 **	0x - 30ua pull-ups on nIDEEN, nHDCS0, NHDCS1
@@ -225,52 +226,52 @@ typedef struct _SMC37c669_CONFIG_REGS {
 **	A high level on this software controlled bit can
 **	be used to indicate that a valid configuration
 **	cycle has occurred.  The control software must
-**	take care to set this bit at the appropriate times.
-**	Set to zero after power up.  This bit has no
+**	take care to set this bit at the appropriate बार.
+**	Set to zero after घातer up.  This bit has no
 **	effect on any other hardware in the chip.
 **
 */
-typedef union _SMC37c669_CR00 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned ide_en : 2;	    /* See note above		*/
-	unsigned reserved1 : 1;	    /* RAZ			*/
-	unsigned fdc_pwr : 1;	    /* 1 = supply power to FDC  */
-	unsigned reserved2 : 3;	    /* Read as 010b		*/
-	unsigned valid : 1;	    /* See note above		*/
-    }	by_field;
-} SMC37c669_CR00;
+प्रकार जोड़ _SMC37c669_CR00 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित ide_en : 2;	    /* See note above		*/
+	अचिन्हित reserved1 : 1;	    /* RAZ			*/
+	अचिन्हित fdc_pwr : 1;	    /* 1 = supply घातer to FDC  */
+	अचिन्हित reserved2 : 3;	    /* Read as 010b		*/
+	अचिन्हित valid : 1;	    /* See note above		*/
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR00;
 
 /*
-** CR01 - default value 0x9C
+** CR01 - शेष value 0x9C
 */
-typedef union _SMC37c669_CR01 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned reserved1 : 2;	    /* RAZ			    */
-	unsigned ppt_pwr : 1;	    /* 1 = supply power to PPT	    */
-	unsigned ppt_mode : 1;	    /* 1 = Printer mode, 0 = EPP    */
-	unsigned reserved2 : 1;	    /* Read as 1		    */
-	unsigned reserved3 : 2;	    /* RAZ			    */
-	unsigned lock_crx: 1;	    /* Lock CR00 - CR18		    */
-    }	by_field;
-} SMC37c669_CR01;
+प्रकार जोड़ _SMC37c669_CR01 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित reserved1 : 2;	    /* RAZ			    */
+	अचिन्हित ppt_pwr : 1;	    /* 1 = supply घातer to PPT	    */
+	अचिन्हित ppt_mode : 1;	    /* 1 = Prपूर्णांकer mode, 0 = EPP    */
+	अचिन्हित reserved2 : 1;	    /* Read as 1		    */
+	अचिन्हित reserved3 : 2;	    /* RAZ			    */
+	अचिन्हित lock_crx: 1;	    /* Lock CR00 - CR18		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR01;
 
 /*
-** CR02 - default value 0x88
+** CR02 - शेष value 0x88
 */
-typedef union _SMC37c669_CR02 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned reserved1 : 3;	    /* RAZ			    */
-	unsigned uart1_pwr : 1;	    /* 1 = supply power to UART1    */
-	unsigned reserved2 : 3;	    /* RAZ			    */
-	unsigned uart2_pwr : 1;	    /* 1 = supply power to UART2    */
-    }	by_field;
-} SMC37c669_CR02;
+प्रकार जोड़ _SMC37c669_CR02 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित reserved1 : 3;	    /* RAZ			    */
+	अचिन्हित uart1_pwr : 1;	    /* 1 = supply घातer to UART1    */
+	अचिन्हित reserved2 : 3;	    /* RAZ			    */
+	अचिन्हित uart2_pwr : 1;	    /* 1 = supply घातer to UART2    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR02;
 
 /*
-** CR03 - default value 0x78
+** CR03 - शेष value 0x78
 **
 **  CR03<7>	CR03<2>	    Pin 94
 **  -------	-------	    ------
@@ -285,21 +286,21 @@ typedef union _SMC37c669_CR02 {
 **     1	   0	    Reserved
 **     1	   1	    AT Mode
 */
-typedef union _SMC37c669_CR03 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned pwrgd_gamecs : 1;  /* 1 = PWRGD, 0 = GAMECS	    */
-	unsigned fdc_mode2 : 1;	    /* 1 = Enhanced Mode 2	    */
-	unsigned pin94_0 : 1;	    /* See note above		    */
-	unsigned reserved1 : 1;	    /* RAZ			    */
-	unsigned drvden : 1;	    /* 1 = high, 0 - output	    */
-	unsigned op_mode : 2;	    /* See note above		    */
-	unsigned pin94_1 : 1;	    /* See note above		    */
-    }	by_field;
-} SMC37c669_CR03;
+प्रकार जोड़ _SMC37c669_CR03 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित pwrgd_gamecs : 1;  /* 1 = PWRGD, 0 = GAMECS	    */
+	अचिन्हित fdc_mode2 : 1;	    /* 1 = Enhanced Mode 2	    */
+	अचिन्हित pin94_0 : 1;	    /* See note above		    */
+	अचिन्हित reserved1 : 1;	    /* RAZ			    */
+	अचिन्हित drvden : 1;	    /* 1 = high, 0 - output	    */
+	अचिन्हित op_mode : 2;	    /* See note above		    */
+	अचिन्हित pin94_1 : 1;	    /* See note above		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR03;
 
 /*
-** CR04 - default value 0x00
+** CR04 - शेष value 0x00
 **
 **  PP_EXT_MODE:
 **	If CR01<PP_MODE> = 0 and PP_EXT_MODE =
@@ -307,16 +308,16 @@ typedef union _SMC37c669_CR03 {
 **	    01 - EPP mode and SPP
 **	    10 - ECP mode
 **		 In this mode, 2 drives can be supported
-**		 directly, 3 or 4 drives must use external
+**		 directly, 3 or 4 drives must use बाह्यal
 **		 4 drive support.  SPP can be selected
-**		 through the ECR register of ECP as mode 000.
+**		 through the ECR रेजिस्टर of ECP as mode 000.
 **	    11 - ECP mode and EPP mode
 **		 In this mode, 2 drives can be supported
-**		 directly, 3 or 4 drives must use external
+**		 directly, 3 or 4 drives must use बाह्यal
 **		 4 drive support.  SPP can be selected
-**		 through the ECR register of ECP as mode 000.
+**		 through the ECR रेजिस्टर of ECP as mode 000.
 **		 In this mode, EPP can be selected through
-**		 the ECR register of ECP as mode 100.
+**		 the ECR रेजिस्टर of ECP as mode 100.
 **
 **  PP_FDC:
 **	00 - Normal
@@ -327,8 +328,8 @@ typedef union _SMC37c669_CR03 {
 **  MIDI1:
 **	Serial Clock Select: 
 **	    A low level on this bit disables MIDI support,
-**	    clock = divide by 13.  A high level on this 
-**	    bit enables MIDI support, clock = divide by 12.
+**	    घड़ी = भागide by 13.  A high level on this 
+**	    bit enables MIDI support, घड़ी = भागide by 12.
 **
 **	MIDI operates at 31.25 Kbps which can be derived 
 **	from 125 KHz (24 MHz / 12 = 2 MHz, 2 MHz / 16 = 125 KHz)
@@ -341,20 +342,20 @@ typedef union _SMC37c669_CR03 {
 **	functions will not be available on pins 25 and 26
 **	unless CR00<IDE_EN> = 11.
 */
-typedef union _SMC37c669_CR04 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned ppt_ext_mode : 2;  /* See note above		    */
-	unsigned ppt_fdc : 2;	    /* See note above		    */
-	unsigned midi1 : 1;	    /* See note above		    */
-	unsigned midi2 : 1;	    /* See note above		    */
-	unsigned epp_type : 1;	    /* 0 = EPP 1.9, 1 = EPP 1.7	    */
-	unsigned alt_io : 1;	    /* See note above		    */
-    }	by_field;
-} SMC37c669_CR04;
+प्रकार जोड़ _SMC37c669_CR04 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित ppt_ext_mode : 2;  /* See note above		    */
+	अचिन्हित ppt_fdc : 2;	    /* See note above		    */
+	अचिन्हित midi1 : 1;	    /* See note above		    */
+	अचिन्हित midi2 : 1;	    /* See note above		    */
+	अचिन्हित epp_type : 1;	    /* 0 = EPP 1.9, 1 = EPP 1.7	    */
+	अचिन्हित alt_io : 1;	    /* See note above		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR04;
 
 /*
-** CR05 - default value 0x00
+** CR05 - शेष value 0x00
 **
 **  DEN_SEL:
 **	00 - Densel output normal
@@ -363,67 +364,67 @@ typedef union _SMC37c669_CR04 {
 **	11 - Densel output 0
 **
 */
-typedef union _SMC37c669_CR05 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned reserved1 : 2;	    /* RAZ					*/
-	unsigned fdc_dma_mode : 1;  /* 0 = burst, 1 = non-burst			*/
-	unsigned den_sel : 2;	    /* See note above				*/
-	unsigned swap_drv : 1;	    /* Swap the FDC motor selects		*/
-	unsigned extx4 : 1;	    /* 0 = 2 drive, 1 = external 4 drive decode	*/
-	unsigned reserved2 : 1;	    /* RAZ					*/
-    }	by_field;
-} SMC37c669_CR05;
+प्रकार जोड़ _SMC37c669_CR05 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित reserved1 : 2;	    /* RAZ					*/
+	अचिन्हित fdc_dma_mode : 1;  /* 0 = burst, 1 = non-burst			*/
+	अचिन्हित den_sel : 2;	    /* See note above				*/
+	अचिन्हित swap_drv : 1;	    /* Swap the FDC motor selects		*/
+	अचिन्हित extx4 : 1;	    /* 0 = 2 drive, 1 = बाह्यal 4 drive decode	*/
+	अचिन्हित reserved2 : 1;	    /* RAZ					*/
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR05;
 
 /*
-** CR06 - default value 0xFF
+** CR06 - शेष value 0xFF
 */
-typedef union _SMC37c669_CR06 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned floppy_a : 2;	    /* Type of floppy drive A	    */
-	unsigned floppy_b : 2;	    /* Type of floppy drive B	    */
-	unsigned floppy_c : 2;	    /* Type of floppy drive C	    */
-	unsigned floppy_d : 2;	    /* Type of floppy drive D	    */
-    }	by_field;
-} SMC37c669_CR06;
+प्रकार जोड़ _SMC37c669_CR06 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित floppy_a : 2;	    /* Type of floppy drive A	    */
+	अचिन्हित floppy_b : 2;	    /* Type of floppy drive B	    */
+	अचिन्हित floppy_c : 2;	    /* Type of floppy drive C	    */
+	अचिन्हित floppy_d : 2;	    /* Type of floppy drive D	    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR06;
 
 /*
-** CR07 - default value 0x00
+** CR07 - शेष value 0x00
 **
 **  Auto Power Management CR07<7:4>:
-**	0 - Auto Powerdown disabled (default)
-**	1 - Auto Powerdown enabled
+**	0 - Auto Powerकरोwn disabled (शेष)
+**	1 - Auto Powerकरोwn enabled
 **
-**	This bit is reset to the default state by POR or
+**	This bit is reset to the शेष state by POR or
 **	a hardware reset.
 **
 */
-typedef union _SMC37c669_CR07 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned floppy_boot : 2;   /* 0 = A:, 1 = B:		    */
-	unsigned reserved1 : 2;	    /* RAZ			    */
-	unsigned ppt_en : 1;	    /* See note above		    */
-	unsigned uart1_en : 1;	    /* See note above		    */
-	unsigned uart2_en : 1;	    /* See note above		    */
-	unsigned fdc_en : 1;	    /* See note above		    */
-    }	by_field;
-} SMC37c669_CR07;
+प्रकार जोड़ _SMC37c669_CR07 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित floppy_boot : 2;   /* 0 = A:, 1 = B:		    */
+	अचिन्हित reserved1 : 2;	    /* RAZ			    */
+	अचिन्हित ppt_en : 1;	    /* See note above		    */
+	अचिन्हित uart1_en : 1;	    /* See note above		    */
+	अचिन्हित uart2_en : 1;	    /* See note above		    */
+	अचिन्हित fdc_en : 1;	    /* See note above		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR07;
 
 /*
-** CR08 - default value 0x00
+** CR08 - शेष value 0x00
 */
-typedef union _SMC37c669_CR08 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned zero : 4;	    /* 0			    */
-	unsigned addrx7_4 : 4;	    /* ADR<7:3> for ADRx decode	    */
-    }	by_field;
-} SMC37c669_CR08;
+प्रकार जोड़ _SMC37c669_CR08 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित zero : 4;	    /* 0			    */
+	अचिन्हित addrx7_4 : 4;	    /* ADR<7:3> क्रम ADRx decode	    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR08;
 
 /*
-** CR09 - default value 0x00
+** CR09 - शेष value 0x00
 **
 **  ADRx_CONFIG:
 **	00 - ADRx disabled
@@ -432,136 +433,136 @@ typedef union _SMC37c669_CR08 {
 **	11 - 16 byte block decode A<3:0> = XXXXb
 **
 */
-typedef union _SMC37c669_CR09 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned adra8 : 3;	    /* ADR<10:8> for ADRx decode    */
-	unsigned reserved1 : 3;
-	unsigned adrx_config : 2;   /* See note above		    */
-    }	by_field;
-} SMC37c669_CR09;
+प्रकार जोड़ _SMC37c669_CR09 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित adra8 : 3;	    /* ADR<10:8> क्रम ADRx decode    */
+	अचिन्हित reserved1 : 3;
+	अचिन्हित adrx_config : 2;   /* See note above		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR09;
 
 /*
-** CR0A - default value 0x00
+** CR0A - शेष value 0x00
 */
-typedef union _SMC37c669_CR0A {
-    unsigned char as_uchar;
-    struct {
-    	unsigned ecp_fifo_threshold : 4;
-	unsigned reserved1 : 4;
-    }	by_field;
-} SMC37c669_CR0A;
+प्रकार जोड़ _SMC37c669_CR0A अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित ecp_fअगरo_threshold : 4;
+	अचिन्हित reserved1 : 4;
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR0A;
 
 /*
-** CR0B - default value 0x00
+** CR0B - शेष value 0x00
 */
-typedef union _SMC37c669_CR0B {
-    unsigned char as_uchar;
-    struct {
-    	unsigned fdd0_drtx : 2;	    /* FDD0 Data Rate Table	    */
-	unsigned fdd1_drtx : 2;	    /* FDD1 Data Rate Table	    */
-	unsigned fdd2_drtx : 2;	    /* FDD2 Data Rate Table	    */
-	unsigned fdd3_drtx : 2;	    /* FDD3 Data Rate Table	    */
-    }	by_field;
-} SMC37c669_CR0B;
+प्रकार जोड़ _SMC37c669_CR0B अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित fdd0_drtx : 2;	    /* FDD0 Data Rate Table	    */
+	अचिन्हित fdd1_drtx : 2;	    /* FDD1 Data Rate Table	    */
+	अचिन्हित fdd2_drtx : 2;	    /* FDD2 Data Rate Table	    */
+	अचिन्हित fdd3_drtx : 2;	    /* FDD3 Data Rate Table	    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR0B;
 
 /*
-** CR0C - default value 0x00
+** CR0C - शेष value 0x00
 **
 **  UART2_MODE:
-**	000 - Standard (default)
+**	000 - Standard (शेष)
 **	001 - IrDA (HPSIR)
-**	010 - Amplitude Shift Keyed IR @500 KHz
+**	010 - Amplitude Shअगरt Keyed IR @500 KHz
 **	011 - Reserved
 **	1xx - Reserved
 **
 */
-typedef union _SMC37c669_CR0C {
-    unsigned char as_uchar;
-    struct {
-    	unsigned uart2_rcv_polarity : 1;    /* 1 = invert RX		*/
-	unsigned uart2_xmit_polarity : 1;   /* 1 = invert TX		*/
-	unsigned uart2_duplex : 1;	    /* 1 = full, 0 = half	*/
-	unsigned uart2_mode : 3;	    /* See note above		*/
-	unsigned uart1_speed : 1;	    /* 1 = high speed enabled	*/
-	unsigned uart2_speed : 1;	    /* 1 = high speed enabled	*/
-    }	by_field;
-} SMC37c669_CR0C;
+प्रकार जोड़ _SMC37c669_CR0C अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित uart2_rcv_polarity : 1;    /* 1 = invert RX		*/
+	अचिन्हित uart2_xmit_polarity : 1;   /* 1 = invert TX		*/
+	अचिन्हित uart2_duplex : 1;	    /* 1 = full, 0 = half	*/
+	अचिन्हित uart2_mode : 3;	    /* See note above		*/
+	अचिन्हित uart1_speed : 1;	    /* 1 = high speed enabled	*/
+	अचिन्हित uart2_speed : 1;	    /* 1 = high speed enabled	*/
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR0C;
 
 /*
-** CR0D - default value 0x03
+** CR0D - शेष value 0x03
 **
-**  Device ID Register - read only
+**  Device ID Register - पढ़ो only
 */
-typedef union _SMC37c669_CR0D {
-    unsigned char as_uchar;
-    struct {
-    	unsigned device_id : 8;	    /* Returns 0x3 in this field    */
-    }	by_field;
-} SMC37c669_CR0D;
+प्रकार जोड़ _SMC37c669_CR0D अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित device_id : 8;	    /* Returns 0x3 in this field    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR0D;
 
 /*
-** CR0E - default value 0x02
+** CR0E - शेष value 0x02
 **
-**  Device Revision Register - read only
+**  Device Revision Register - पढ़ो only
 */
-typedef union _SMC37c669_CR0E {
-    unsigned char as_uchar;
-    struct {
-    	unsigned device_rev : 8;    /* Returns 0x2 in this field    */
-    }	by_field;
-} SMC37c669_CR0E;
+प्रकार जोड़ _SMC37c669_CR0E अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित device_rev : 8;    /* Returns 0x2 in this field    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR0E;
 
 /*
-** CR0F - default value 0x00
+** CR0F - शेष value 0x00
 */
-typedef union _SMC37c669_CR0F {
-    unsigned char as_uchar;
-    struct {
-    	unsigned test0 : 1;	    /* Reserved - set to 0	    */
-	unsigned test1 : 1;	    /* Reserved - set to 0	    */
-	unsigned test2 : 1;	    /* Reserved - set to 0	    */
-	unsigned test3 : 1;	    /* Reserved - set t0 0	    */
-	unsigned test4 : 1;	    /* Reserved - set to 0	    */
-	unsigned test5 : 1;	    /* Reserved - set t0 0	    */
-	unsigned test6 : 1;	    /* Reserved - set t0 0	    */
-	unsigned test7 : 1;	    /* Reserved - set to 0	    */
-    }	by_field;
-} SMC37c669_CR0F;
+प्रकार जोड़ _SMC37c669_CR0F अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित test0 : 1;	    /* Reserved - set to 0	    */
+	अचिन्हित test1 : 1;	    /* Reserved - set to 0	    */
+	अचिन्हित test2 : 1;	    /* Reserved - set to 0	    */
+	अचिन्हित test3 : 1;	    /* Reserved - set t0 0	    */
+	अचिन्हित test4 : 1;	    /* Reserved - set to 0	    */
+	अचिन्हित test5 : 1;	    /* Reserved - set t0 0	    */
+	अचिन्हित test6 : 1;	    /* Reserved - set t0 0	    */
+	अचिन्हित test7 : 1;	    /* Reserved - set to 0	    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR0F;
 
 /*
-** CR10 - default value 0x00
+** CR10 - शेष value 0x00
 */
-typedef union _SMC37c669_CR10 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned reserved1 : 3;	     /* RAZ			    */
-	unsigned pll_gain : 1;	     /* 1 = 3V, 2 = 5V operation    */
-	unsigned pll_stop : 1;	     /* 1 = stop PLLs		    */
-	unsigned ace_stop : 1;	     /* 1 = stop UART clocks	    */
-	unsigned pll_clock_ctrl : 1; /* 0 = 14.318 MHz, 1 = 24 MHz  */
-	unsigned ir_test : 1;	     /* Enable IR test mode	    */
-    }	by_field;
-} SMC37c669_CR10;
+प्रकार जोड़ _SMC37c669_CR10 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित reserved1 : 3;	     /* RAZ			    */
+	अचिन्हित pll_gain : 1;	     /* 1 = 3V, 2 = 5V operation    */
+	अचिन्हित pll_stop : 1;	     /* 1 = stop PLLs		    */
+	अचिन्हित ace_stop : 1;	     /* 1 = stop UART घड़ीs	    */
+	अचिन्हित pll_घड़ी_ctrl : 1; /* 0 = 14.318 MHz, 1 = 24 MHz  */
+	अचिन्हित ir_test : 1;	     /* Enable IR test mode	    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR10;
 
 /*
-** CR11 - default value 0x00
+** CR11 - शेष value 0x00
 */
-typedef union _SMC37c669_CR11 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned ir_loopback : 1;   /* Internal IR loop back		    */
-	unsigned test_10ms : 1;	    /* Test 10ms autopowerdown FDC timeout  */
-	unsigned reserved1 : 6;	    /* RAZ				    */
-    }	by_field;
-} SMC37c669_CR11;
+प्रकार जोड़ _SMC37c669_CR11 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित ir_loopback : 1;   /* Internal IR loop back		    */
+	अचिन्हित test_10ms : 1;	    /* Test 10ms स्वतःघातerकरोwn FDC समयout  */
+	अचिन्हित reserved1 : 6;	    /* RAZ				    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR11;
 
 /*
-** CR12 - CR1D are reserved registers
+** CR12 - CR1D are reserved रेजिस्टरs
 */
 
 /*
-** CR1E - default value 0x80
+** CR1E - शेष value 0x80
 **
 **  GAMECS:
 **	00 - GAMECS disabled
@@ -570,16 +571,16 @@ typedef union _SMC37c669_CR11 {
 **	11 - 16 byte block decode ADR<3:0> = XXXXb
 **
 */
-typedef union _SMC37c66_CR1E {
-    unsigned char as_uchar;
-    struct {
-    	unsigned gamecs_config: 2;   /* See note above		    */
-	unsigned gamecs_addr9_4 : 6; /* GAMECS Addr<9:4>	    */
-    }	by_field;
-} SMC37c669_CR1E;
+प्रकार जोड़ _SMC37c66_CR1E अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित gamecs_config: 2;   /* See note above		    */
+	अचिन्हित gamecs_addr9_4 : 6; /* GAMECS Addr<9:4>	    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR1E;
 
 /*
-** CR1F - default value 0x00
+** CR1F - शेष value 0x00
 **
 **  DT0 DT1 DRVDEN0 DRVDEN1 Drive Type
 **  --- --- ------- ------- ----------
@@ -594,66 +595,66 @@ typedef union _SMC37c66_CR1E {
 **	  pins - DRVDEN0 and DRVDEN1.
 **
 */
-typedef union _SMC37c669_CR1F {
-    unsigned char as_uchar;
-    struct {
-    	unsigned fdd0_drive_type : 2;	/* FDD0 drive type	    */
-	unsigned fdd1_drive_type : 2;	/* FDD1 drive type	    */
-	unsigned fdd2_drive_type : 2;	/* FDD2 drive type	    */
-	unsigned fdd3_drive_type : 2;	/* FDD3 drive type	    */
-    }	by_field;
-} SMC37c669_CR1F;
+प्रकार जोड़ _SMC37c669_CR1F अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित fdd0_drive_type : 2;	/* FDD0 drive type	    */
+	अचिन्हित fdd1_drive_type : 2;	/* FDD1 drive type	    */
+	अचिन्हित fdd2_drive_type : 2;	/* FDD2 drive type	    */
+	अचिन्हित fdd3_drive_type : 2;	/* FDD3 drive type	    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR1F;
 
 /*
-** CR20 - default value 0x3C
+** CR20 - शेष value 0x3C
 **
 **  FDC Base Address Register
 **	- To disable this decode set Addr<9:8> = 0
 **	- A<10> = 0, A<3:0> = 0XXXb to access.
 **
 */
-typedef union _SMC37c669_CR20 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned zero : 2;	    /* 0			    */
-	unsigned addr9_4 : 6;	    /* FDC Addr<9:4>		    */
-    }	by_field;
-} SMC37c669_CR20;
+प्रकार जोड़ _SMC37c669_CR20 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित zero : 2;	    /* 0			    */
+	अचिन्हित addr9_4 : 6;	    /* FDC Addr<9:4>		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR20;
 
 /*
-** CR21 - default value 0x3C
+** CR21 - शेष value 0x3C
 **
 **  IDE Base Address Register
 **	- To disable this decode set Addr<9:8> = 0
 **	- A<10> = 0, A<3:0> = 0XXXb to access.
 **
 */
-typedef union _SMC37c669_CR21 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned zero : 2;	    /* 0			    */
-	unsigned addr9_4 : 6;	    /* IDE Addr<9:4>		    */
-    }	by_field;
-} SMC37c669_CR21;
+प्रकार जोड़ _SMC37c669_CR21 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित zero : 2;	    /* 0			    */
+	अचिन्हित addr9_4 : 6;	    /* IDE Addr<9:4>		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR21;
 
 /*
-** CR22 - default value 0x3D
+** CR22 - शेष value 0x3D
 **
 **  IDE Alternate Status Base Address Register
 **	- To disable this decode set Addr<9:8> = 0
 **	- A<10> = 0, A<3:0> = 0110b to access.
 **
 */
-typedef union _SMC37c669_CR22 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned zero : 2;	    /* 0			    */
-	unsigned addr9_4 : 6;	    /* IDE Alt Status Addr<9:4>	    */
-    }	by_field;
-} SMC37c669_CR22;
+प्रकार जोड़ _SMC37c669_CR22 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित zero : 2;	    /* 0			    */
+	अचिन्हित addr9_4 : 6;	    /* IDE Alt Status Addr<9:4>	    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR22;
 
 /*
-** CR23 - default value 0x00
+** CR23 - शेष value 0x00
 **
 **  Parallel Port Base Address Register
 **	- To disable this decode set Addr<9:8> = 0
@@ -662,47 +663,47 @@ typedef union _SMC37c669_CR22 {
 **	  If EPP is NOT enabled, A<1:0> = XXb to access
 **
 */
-typedef union _SMC37c669_CR23 {
-    unsigned char as_uchar;
-    struct {
-	unsigned addr9_2 : 8;	    /* Parallel Port Addr<9:2>	    */
-    }	by_field;
-} SMC37c669_CR23;
+प्रकार जोड़ _SMC37c669_CR23 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+	अचिन्हित addr9_2 : 8;	    /* Parallel Port Addr<9:2>	    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR23;
 
 /*
-** CR24 - default value 0x00
+** CR24 - शेष value 0x00
 **
 **  UART1 Base Address Register
 **	- To disable this decode set Addr<9:8> = 0
 **	- A<10> = 0, A<2:0> = XXXb to access.
 **
 */
-typedef union _SMC37c669_CR24 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned zero : 1;	    /* 0			    */
-	unsigned addr9_3 : 7;	    /* UART1 Addr<9:3>		    */
-    }	by_field;
-} SMC37c669_CR24;
+प्रकार जोड़ _SMC37c669_CR24 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित zero : 1;	    /* 0			    */
+	अचिन्हित addr9_3 : 7;	    /* UART1 Addr<9:3>		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR24;
 
 /*
-** CR25 - default value 0x00
+** CR25 - शेष value 0x00
 **
 **  UART2 Base Address Register
 **	- To disable this decode set Addr<9:8> = 0
 **	- A<10> = 0, A<2:0> = XXXb to access.
 **
 */
-typedef union _SMC37c669_CR25 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned zero : 1;	    /* 0			    */
-	unsigned addr9_3 : 7;	    /* UART2 Addr<9:3>		    */
-    }	by_field;
-} SMC37c669_CR25;
+प्रकार जोड़ _SMC37c669_CR25 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित zero : 1;	    /* 0			    */
+	अचिन्हित addr9_3 : 7;	    /* UART2 Addr<9:3>		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR25;
 
 /*
-** CR26 - default value 0x00
+** CR26 - शेष value 0x00
 **
 **  Parallel Port / FDC DMA Select Register
 **
@@ -715,16 +716,16 @@ typedef union _SMC37c669_CR25 {
 **   0011	 DMA_C
 **
 */
-typedef union _SMC37c669_CR26 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned ppt_drq : 4;	    /* See note above		    */
-	unsigned fdc_drq : 4;	    /* See note above		    */
-    }	by_field;
-} SMC37c669_CR26;
+प्रकार जोड़ _SMC37c669_CR26 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित ppt_drq : 4;	    /* See note above		    */
+	अचिन्हित fdc_drq : 4;	    /* See note above		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR26;
 
 /*
-** CR27 - default value 0x00
+** CR27 - शेष value 0x00
 **
 **  Parallel Port / FDC IRQ Select Register
 **
@@ -744,16 +745,16 @@ typedef union _SMC37c669_CR26 {
 **  Any unselected IRQ REQ is in tristate
 **
 */
-typedef union _SMC37c669_CR27 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned ppt_irq : 4;	    /* See note above		    */
-	unsigned fdc_irq : 4;	    /* See note above		    */
-    }	by_field;
-} SMC37c669_CR27;
+प्रकार जोड़ _SMC37c669_CR27 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित ppt_irq : 4;	    /* See note above		    */
+	अचिन्हित fdc_irq : 4;	    /* See note above		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR27;
 
 /*
-** CR28 - default value 0x00
+** CR28 - शेष value 0x00
 **
 **  UART IRQ Select Register
 **
@@ -769,7 +770,7 @@ typedef union _SMC37c669_CR27 {
 **   0110	 IRQ_F
 **   0111	 Reserved
 **   1000	 IRQ_H
-**   1111	 share with UART1 (only for UART2)
+**   1111	 share with UART1 (only क्रम UART2)
 **
 **  Any unselected IRQ REQ is in tristate
 **
@@ -778,16 +779,16 @@ typedef union _SMC37c669_CR27 {
 **  0xF to enable sharing mechanism.
 **
 */
-typedef union _SMC37c669_CR28 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned uart2_irq : 4;	    /* See note above		    */
-	unsigned uart1_irq : 4;	    /* See note above		    */
-    }	by_field;
-} SMC37c669_CR28;
+प्रकार जोड़ _SMC37c669_CR28 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित uart2_irq : 4;	    /* See note above		    */
+	अचिन्हित uart1_irq : 4;	    /* See note above		    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR28;
 
 /*
-** CR29 - default value 0x00
+** CR29 - शेष value 0x00
 **
 **  IRQIN IRQ Select Register
 **
@@ -807,83 +808,83 @@ typedef union _SMC37c669_CR28 {
 **  Any unselected IRQ REQ is in tristate
 **
 */
-typedef union _SMC37c669_CR29 {
-    unsigned char as_uchar;
-    struct {
-    	unsigned irqin_irq : 4;	    /* See note above		    */
-	unsigned reserved1 : 4;	    /* RAZ			    */
-    }	by_field;
-} SMC37c669_CR29;
+प्रकार जोड़ _SMC37c669_CR29 अणु
+    अचिन्हित अक्षर as_uअक्षर;
+    काष्ठा अणु
+    	अचिन्हित irqin_irq : 4;	    /* See note above		    */
+	अचिन्हित reserved1 : 4;	    /* RAZ			    */
+    पूर्ण	by_field;
+पूर्ण SMC37c669_CR29;
 
 /*
-** Aliases of Configuration Register formats (should match
+** Aliases of Configuration Register क्रमmats (should match
 ** the set of index aliases).
 **
-** Note that CR24 and CR25 have the same format and are the
-** base address registers for UART1 and UART2.  Because of
-** this we only define 1 alias here - for CR24 - as the serial
-** base address register.
+** Note that CR24 and CR25 have the same क्रमmat and are the
+** base address रेजिस्टरs क्रम UART1 and UART2.  Because of
+** this we only define 1 alias here - क्रम CR24 - as the serial
+** base address रेजिस्टर.
 **
-** Note that CR21 and CR22 have the same format and are the
-** base address and alternate status address registers for
+** Note that CR21 and CR22 have the same क्रमmat and are the
+** base address and alternate status address रेजिस्टरs क्रम
 ** the IDE controller.  Because of this we only define 1 alias
-** here - for CR21 - as the IDE address register.
+** here - क्रम CR21 - as the IDE address रेजिस्टर.
 **
 */
-typedef SMC37c669_CR0D SMC37c669_DEVICE_ID_REGISTER;
-typedef SMC37c669_CR0E SMC37c669_DEVICE_REVISION_REGISTER;
-typedef SMC37c669_CR20 SMC37c669_FDC_BASE_ADDRESS_REGISTER;
-typedef SMC37c669_CR21 SMC37c669_IDE_ADDRESS_REGISTER;
-typedef SMC37c669_CR23 SMC37c669_PARALLEL_BASE_ADDRESS_REGISTER;
-typedef SMC37c669_CR24 SMC37c669_SERIAL_BASE_ADDRESS_REGISTER;
-typedef SMC37c669_CR26 SMC37c669_PARALLEL_FDC_DRQ_REGISTER;
-typedef SMC37c669_CR27 SMC37c669_PARALLEL_FDC_IRQ_REGISTER;
-typedef SMC37c669_CR28 SMC37c669_SERIAL_IRQ_REGISTER;
+प्रकार SMC37c669_CR0D SMC37c669_DEVICE_ID_REGISTER;
+प्रकार SMC37c669_CR0E SMC37c669_DEVICE_REVISION_REGISTER;
+प्रकार SMC37c669_CR20 SMC37c669_FDC_BASE_ADDRESS_REGISTER;
+प्रकार SMC37c669_CR21 SMC37c669_IDE_ADDRESS_REGISTER;
+प्रकार SMC37c669_CR23 SMC37c669_PARALLEL_BASE_ADDRESS_REGISTER;
+प्रकार SMC37c669_CR24 SMC37c669_SERIAL_BASE_ADDRESS_REGISTER;
+प्रकार SMC37c669_CR26 SMC37c669_PARALLEL_FDC_DRQ_REGISTER;
+प्रकार SMC37c669_CR27 SMC37c669_PARALLEL_FDC_IRQ_REGISTER;
+प्रकार SMC37c669_CR28 SMC37c669_SERIAL_IRQ_REGISTER;
 
 /*
 ** ISA/Device IRQ Translation Table Entry Definition
 */
-typedef struct _SMC37c669_IRQ_TRANSLATION_ENTRY {
-    int device_irq;
-    int isa_irq;
-} SMC37c669_IRQ_TRANSLATION_ENTRY;
+प्रकार काष्ठा _SMC37c669_IRQ_TRANSLATION_ENTRY अणु
+    पूर्णांक device_irq;
+    पूर्णांक isa_irq;
+पूर्ण SMC37c669_IRQ_TRANSLATION_ENTRY;
 
 /*
 ** ISA/Device DMA Translation Table Entry Definition
 */
-typedef struct _SMC37c669_DRQ_TRANSLATION_ENTRY {
-    int device_drq;
-    int isa_drq;
-} SMC37c669_DRQ_TRANSLATION_ENTRY;
+प्रकार काष्ठा _SMC37c669_DRQ_TRANSLATION_ENTRY अणु
+    पूर्णांक device_drq;
+    पूर्णांक isa_drq;
+पूर्ण SMC37c669_DRQ_TRANSLATION_ENTRY;
 
 /*
 ** External Interface Function Prototype Declarations
 */
 
 SMC37c669_CONFIG_REGS *SMC37c669_detect( 
-    int
+    पूर्णांक
 );
 
-unsigned int SMC37c669_enable_device( 
-    unsigned int func 
+अचिन्हित पूर्णांक SMC37c669_enable_device( 
+    अचिन्हित पूर्णांक func 
 );
 
-unsigned int SMC37c669_disable_device( 
-    unsigned int func 
+अचिन्हित पूर्णांक SMC37c669_disable_device( 
+    अचिन्हित पूर्णांक func 
 );
 
-unsigned int SMC37c669_configure_device( 
-    unsigned int func, 
-    int port, 
-    int irq, 
-    int drq 
+अचिन्हित पूर्णांक SMC37c669_configure_device( 
+    अचिन्हित पूर्णांक func, 
+    पूर्णांक port, 
+    पूर्णांक irq, 
+    पूर्णांक drq 
 );
 
-void SMC37c669_display_device_info( 
-    void 
+व्योम SMC37c669_display_device_info( 
+    व्योम 
 );
 
-#endif	/* __SMC37c669_H */
+#पूर्ण_अगर	/* __SMC37c669_H */
 
 /* file:	smcc669.c
  *
@@ -898,11 +899,11 @@ void SMC37c669_display_device_info(
  * other person.  No title to and  ownership of the  software is  hereby
  * transferred.
  *
- * The information in this software is  subject to change without notice
- * and  should  not  be  construed  as a commitment by digital equipment
+ * The inक्रमmation in this software is  subject to change without notice
+ * and  should  not  be  स्थिरrued  as a commiपंचांगent by digital equipment
  * corporation.
  *
- * Digital assumes no responsibility for the use  or  reliability of its
+ * Digital assumes no responsibility क्रम the use  or  reliability of its
  * software on equipment which is not supplied by digital.
  */
 
@@ -918,7 +919,7 @@ void SMC37c669_display_device_info(
  *
  *  AUTHORS:
  *
- *	Eric Rasmussen
+ *	Eric Rयंत्रussen
  *
  *  CREATION DATE:
  *  
@@ -926,54 +927,54 @@ void SMC37c669_display_device_info(
  *
  *  MODIFICATION HISTORY:
  *	
- *	er	01-May-1997	Fixed pointer conversion errors in 
+ *	er	01-May-1997	Fixed poपूर्णांकer conversion errors in 
  *				SMC37c669_get_device_config().
  *      er	28-Jan-1997	Initial version.
  *
  *--
  */
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
+#अगर_अघोषित TRUE
+#घोषणा TRUE 1
+#पूर्ण_अगर
+#अगर_अघोषित FALSE
+#घोषणा FALSE 0
+#पूर्ण_अगर
 
-#define wb( _x_, _y_ )	outb( _y_, (unsigned int)((unsigned long)_x_) )
-#define rb( _x_ )	inb( (unsigned int)((unsigned long)_x_) )
+#घोषणा wb( _x_, _y_ )	outb( _y_, (अचिन्हित पूर्णांक)((अचिन्हित दीर्घ)_x_) )
+#घोषणा rb( _x_ )	inb( (अचिन्हित पूर्णांक)((अचिन्हित दीर्घ)_x_) )
 
 /*
-** Local storage for device configuration information.
+** Local storage क्रम device configuration inक्रमmation.
 **
-** Since the SMC37c669 does not provide an explicit
-** mechanism for enabling/disabling individual device 
+** Since the SMC37c669 करोes not provide an explicit
+** mechanism क्रम enabling/disabling inभागidual device 
 ** functions, other than unmapping the device, local 
-** storage for device configuration information is 
-** allocated here for use in implementing our own 
+** storage क्रम device configuration inक्रमmation is 
+** allocated here क्रम use in implementing our own 
 ** function enable/disable scheme.
 */
-static struct DEVICE_CONFIG {
-    unsigned int port1;
-    unsigned int port2;
-    int irq;
-    int drq;
-} local_config [NUM_FUNCS];
+अटल काष्ठा DEVICE_CONFIG अणु
+    अचिन्हित पूर्णांक port1;
+    अचिन्हित पूर्णांक port2;
+    पूर्णांक irq;
+    पूर्णांक drq;
+पूर्ण local_config [NUM_FUNCS];
 
 /*
-** List of all possible addresses for the Super I/O chip
+** List of all possible addresses क्रम the Super I/O chip
 */
-static unsigned long SMC37c669_Addresses[] __initdata =
-    {
+अटल अचिन्हित दीर्घ SMC37c669_Addresses[] __initdata =
+    अणु
 	0x3F0UL,	    /* Primary address	    */
 	0x370UL,	    /* Secondary address    */
 	0UL		    /* End of list	    */
-    };
+    पूर्ण;
 
 /*
-** Global Pointer to the Super I/O device
+** Global Poपूर्णांकer to the Super I/O device
 */
-static SMC37c669_CONFIG_REGS *SMC37c669 __initdata = NULL;
+अटल SMC37c669_CONFIG_REGS *SMC37c669 __initdata = शून्य;
 
 /*
 ** IRQ Translation Table
@@ -982,47 +983,47 @@ static SMC37c669_CONFIG_REGS *SMC37c669 __initdata = NULL;
 ** and standard ISA IRQs.
 **
 */
-static SMC37c669_IRQ_TRANSLATION_ENTRY *SMC37c669_irq_table __initdata; 
+अटल SMC37c669_IRQ_TRANSLATION_ENTRY *SMC37c669_irq_table __initdata; 
 
 /*
-** The following definition is for the default IRQ 
+** The following definition is क्रम the शेष IRQ 
 ** translation table.
 */
-static SMC37c669_IRQ_TRANSLATION_ENTRY SMC37c669_default_irq_table[]
+अटल SMC37c669_IRQ_TRANSLATION_ENTRY SMC37c669_शेष_irq_table[]
 __initdata = 
-    { 
-	{ SMC37c669_DEVICE_IRQ_A, -1 }, 
-	{ SMC37c669_DEVICE_IRQ_B, -1 }, 
-	{ SMC37c669_DEVICE_IRQ_C, 7 }, 
-	{ SMC37c669_DEVICE_IRQ_D, 6 }, 
-	{ SMC37c669_DEVICE_IRQ_E, 4 }, 
-	{ SMC37c669_DEVICE_IRQ_F, 3 }, 
-	{ SMC37c669_DEVICE_IRQ_H, -1 }, 
-	{ -1, -1 } /* End of table */
-    };
+    अणु 
+	अणु SMC37c669_DEVICE_IRQ_A, -1 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_B, -1 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_C, 7 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_D, 6 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_E, 4 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_F, 3 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_H, -1 पूर्ण, 
+	अणु -1, -1 पूर्ण /* End of table */
+    पूर्ण;
 
 /*
-** The following definition is for the MONET (XP1000) IRQ 
+** The following definition is क्रम the MONET (XP1000) IRQ 
 ** translation table.
 */
-static SMC37c669_IRQ_TRANSLATION_ENTRY SMC37c669_monet_irq_table[]
+अटल SMC37c669_IRQ_TRANSLATION_ENTRY SMC37c669_monet_irq_table[]
 __initdata = 
-    { 
-	{ SMC37c669_DEVICE_IRQ_A, -1 }, 
-	{ SMC37c669_DEVICE_IRQ_B, -1 }, 
-	{ SMC37c669_DEVICE_IRQ_C, 6 }, 
-	{ SMC37c669_DEVICE_IRQ_D, 7 }, 
-	{ SMC37c669_DEVICE_IRQ_E, 4 }, 
-	{ SMC37c669_DEVICE_IRQ_F, 3 }, 
-	{ SMC37c669_DEVICE_IRQ_H, -1 }, 
-	{ -1, -1 } /* End of table */
-    };
+    अणु 
+	अणु SMC37c669_DEVICE_IRQ_A, -1 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_B, -1 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_C, 6 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_D, 7 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_E, 4 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_F, 3 पूर्ण, 
+	अणु SMC37c669_DEVICE_IRQ_H, -1 पूर्ण, 
+	अणु -1, -1 पूर्ण /* End of table */
+    पूर्ण;
 
-static SMC37c669_IRQ_TRANSLATION_ENTRY *SMC37c669_irq_tables[] __initdata =
-    {
-	SMC37c669_default_irq_table,
+अटल SMC37c669_IRQ_TRANSLATION_ENTRY *SMC37c669_irq_tables[] __initdata =
+    अणु
+	SMC37c669_शेष_irq_table,
 	SMC37c669_monet_irq_table
-    }; 
+    पूर्ण; 
 
 /*
 ** DRQ Translation Table
@@ -1031,66 +1032,66 @@ static SMC37c669_IRQ_TRANSLATION_ENTRY *SMC37c669_irq_tables[] __initdata =
 ** ISA DMA channels.
 **
 */
-static SMC37c669_DRQ_TRANSLATION_ENTRY *SMC37c669_drq_table __initdata;
+अटल SMC37c669_DRQ_TRANSLATION_ENTRY *SMC37c669_drq_table __initdata;
 
 /*
-** The following definition is the default DRQ
+** The following definition is the शेष DRQ
 ** translation table.
 */
-static SMC37c669_DRQ_TRANSLATION_ENTRY SMC37c669_default_drq_table[]
+अटल SMC37c669_DRQ_TRANSLATION_ENTRY SMC37c669_शेष_drq_table[]
 __initdata = 
-    { 
-	{ SMC37c669_DEVICE_DRQ_A, 2 }, 
-	{ SMC37c669_DEVICE_DRQ_B, 3 }, 
-	{ SMC37c669_DEVICE_DRQ_C, -1 }, 
-	{ -1, -1 } /* End of table */
-    };
+    अणु 
+	अणु SMC37c669_DEVICE_DRQ_A, 2 पूर्ण, 
+	अणु SMC37c669_DEVICE_DRQ_B, 3 पूर्ण, 
+	अणु SMC37c669_DEVICE_DRQ_C, -1 पूर्ण, 
+	अणु -1, -1 पूर्ण /* End of table */
+    पूर्ण;
 
 /*
 ** Local Function Prototype Declarations
 */
 
-static unsigned int SMC37c669_is_device_enabled( 
-    unsigned int func 
+अटल अचिन्हित पूर्णांक SMC37c669_is_device_enabled( 
+    अचिन्हित पूर्णांक func 
 );
 
-#if 0
-static unsigned int SMC37c669_get_device_config( 
-    unsigned int func, 
-    int *port, 
-    int *irq, 
-    int *drq 
+#अगर 0
+अटल अचिन्हित पूर्णांक SMC37c669_get_device_config( 
+    अचिन्हित पूर्णांक func, 
+    पूर्णांक *port, 
+    पूर्णांक *irq, 
+    पूर्णांक *drq 
 );
-#endif
+#पूर्ण_अगर
 
-static void SMC37c669_config_mode( 
-    unsigned int enable 
-);
-
-static unsigned char SMC37c669_read_config( 
-    unsigned char index 
+अटल व्योम SMC37c669_config_mode( 
+    अचिन्हित पूर्णांक enable 
 );
 
-static void SMC37c669_write_config( 
-    unsigned char index, 
-    unsigned char data 
+अटल अचिन्हित अक्षर SMC37c669_पढ़ो_config( 
+    अचिन्हित अक्षर index 
 );
 
-static void SMC37c669_init_local_config( void );
-
-static struct DEVICE_CONFIG *SMC37c669_get_config(
-    unsigned int func
+अटल व्योम SMC37c669_ग_लिखो_config( 
+    अचिन्हित अक्षर index, 
+    अचिन्हित अक्षर data 
 );
 
-static int SMC37c669_xlate_irq(
-    int irq 
+अटल व्योम SMC37c669_init_local_config( व्योम );
+
+अटल काष्ठा DEVICE_CONFIG *SMC37c669_get_config(
+    अचिन्हित पूर्णांक func
 );
 
-static int SMC37c669_xlate_drq(
-    int drq 
+अटल पूर्णांक SMC37c669_xlate_irq(
+    पूर्णांक irq 
 );
 
-static  __cacheline_aligned DEFINE_SPINLOCK(smc_lock);
+अटल पूर्णांक SMC37c669_xlate_drq(
+    पूर्णांक drq 
+);
+
+अटल  __cacheline_aligned DEFINE_SPINLOCK(smc_lock);
 
 /*
 **++
@@ -1105,8 +1106,8 @@ static  __cacheline_aligned DEFINE_SPINLOCK(smc_lock);
 **
 **  RETURN VALUE:
 **
-**      Returns a pointer to the device if found, otherwise,
-**	the NULL pointer is returned.
+**      Returns a poपूर्णांकer to the device अगर found, otherwise,
+**	the शून्य poपूर्णांकer is वापसed.
 **
 **  SIDE EFFECTS:
 **
@@ -1114,16 +1115,16 @@ static  __cacheline_aligned DEFINE_SPINLOCK(smc_lock);
 **
 **--
 */
-SMC37c669_CONFIG_REGS * __init SMC37c669_detect( int index )
-{
-    int i;
+SMC37c669_CONFIG_REGS * __init SMC37c669_detect( पूर्णांक index )
+अणु
+    पूर्णांक i;
     SMC37c669_DEVICE_ID_REGISTER id;
 
-    for ( i = 0;  SMC37c669_Addresses[i] != 0;  i++ ) {
+    क्रम ( i = 0;  SMC37c669_Addresses[i] != 0;  i++ ) अणु
 /*
-** Initialize the device pointer even though we don't yet know if
+** Initialize the device poपूर्णांकer even though we करोn't yet know अगर
 ** the controller is at this address.  The support functions access
-** the controller through this device pointer so we need to set it
+** the controller through this device poपूर्णांकer so we need to set it
 ** even when we are looking ...
 */
     	SMC37c669 = ( SMC37c669_CONFIG_REGS * )SMC37c669_Addresses[i];
@@ -1134,7 +1135,7 @@ SMC37c669_CONFIG_REGS * __init SMC37c669_detect( int index )
 /*
 ** Read the device id
 */
-	id.as_uchar = SMC37c669_read_config( SMC37c669_DEVICE_ID_INDEX );
+	id.as_uअक्षर = SMC37c669_पढ़ो_config( SMC37c669_DEVICE_ID_INDEX );
 /*
 ** Exit configuration mode
 */
@@ -1143,28 +1144,28 @@ SMC37c669_CONFIG_REGS * __init SMC37c669_detect( int index )
 ** Does the device id match?  If so, assume we have found an
 ** SMC37c669 controller at this address.
 */
-	if ( id.by_field.device_id == SMC37c669_DEVICE_ID ) {
+	अगर ( id.by_field.device_id == SMC37c669_DEVICE_ID ) अणु
 /*
 ** Initialize the IRQ and DRQ translation tables.
 */
     	    SMC37c669_irq_table = SMC37c669_irq_tables[ index ];
-	    SMC37c669_drq_table = SMC37c669_default_drq_table;
+	    SMC37c669_drq_table = SMC37c669_शेष_drq_table;
 /*
 ** erfix
 **
-** If the platform can't use the IRQ and DRQ defaults set up in this 
-** file, it should call a platform-specific external routine at this 
-** point to reset the IRQ and DRQ translation table pointers to point 
-** at the appropriate tables for the platform.  If the defaults are 
-** acceptable, then the external routine should do nothing.
+** If the platक्रमm can't use the IRQ and DRQ शेषs set up in this 
+** file, it should call a platक्रमm-specअगरic बाह्यal routine at this 
+** poपूर्णांक to reset the IRQ and DRQ translation table poपूर्णांकers to poपूर्णांक 
+** at the appropriate tables क्रम the platक्रमm.  If the शेषs are 
+** acceptable, then the बाह्यal routine should करो nothing.
 */
 
 /*
-** Put the chip back into configuration mode
+** Put the chip back पूर्णांकo configuration mode
 */
 	    SMC37c669_config_mode( TRUE );
 /*
-** Initialize local storage for configuration information
+** Initialize local storage क्रम configuration inक्रमmation
 */
 	    SMC37c669_init_local_config( );
 /*
@@ -1172,20 +1173,20 @@ SMC37c669_CONFIG_REGS * __init SMC37c669_detect( int index )
 */
 	    SMC37c669_config_mode( FALSE );
 /*
-** SMC37c669 controller found, break out of search loop
+** SMC37c669 controller found, अवरोध out of search loop
 */
-	    break;
-	}
-	else {
+	    अवरोध;
+	पूर्ण
+	अन्यथा अणु
 /*
 ** Otherwise, we did not find an SMC37c669 controller at this
-** address so set the device pointer to NULL.
+** address so set the device poपूर्णांकer to शून्य.
 */
-	    SMC37c669 = NULL;
-	}
-    }
-    return SMC37c669;
-}
+	    SMC37c669 = शून्य;
+	पूर्ण
+    पूर्ण
+    वापस SMC37c669;
+पूर्ण
 
 
 /*
@@ -1205,7 +1206,7 @@ SMC37c669_CONFIG_REGS * __init SMC37c669_detect( int index )
 **
 **  SIDE EFFECTS:
 **
-**      {@description or none@}
+**      अणु@description or none@पूर्ण
 **
 **  DESIGN:
 **
@@ -1214,210 +1215,210 @@ SMC37c669_CONFIG_REGS * __init SMC37c669_detect( int index )
 **	"shadow" copy of the device configuration is kept so we can
 **	just set each mapping to what the local copy says.
 **
-**	This function ALWAYS updates the local shadow configuration of
-**	the device function being enabled, even if the device is always
-**	enabled.  To avoid replication of code, functions such as
+**	This function ALWAYS updates the local shaकरोw configuration of
+**	the device function being enabled, even अगर the device is always
+**	enabled.  To aव्योम replication of code, functions such as
 **	configure_device set up the local copy and then call this 
 **	function to the update the real device.
 **
 **--
 */
-unsigned int __init SMC37c669_enable_device ( unsigned int func )
-{
-    unsigned int ret_val = FALSE;
+अचिन्हित पूर्णांक __init SMC37c669_enable_device ( अचिन्हित पूर्णांक func )
+अणु
+    अचिन्हित पूर्णांक ret_val = FALSE;
 /*
-** Put the device into configuration mode
+** Put the device पूर्णांकo configuration mode
 */
     SMC37c669_config_mode( TRUE );
-    switch ( func ) {
-    	case SERIAL_0:
-	    {
+    चयन ( func ) अणु
+    	हाल SERIAL_0:
+	    अणु
 	    	SMC37c669_SERIAL_BASE_ADDRESS_REGISTER base_addr;
 		SMC37c669_SERIAL_IRQ_REGISTER irq;
 /*
 ** Enable the serial 1 IRQ mapping
 */
-	    	irq.as_uchar = 
-		    SMC37c669_read_config( SMC37c669_SERIAL_IRQ_INDEX );
+	    	irq.as_uअक्षर = 
+		    SMC37c669_पढ़ो_config( SMC37c669_SERIAL_IRQ_INDEX );
 
 		irq.by_field.uart1_irq =
 		    SMC37c669_RAW_DEVICE_IRQ(
 			SMC37c669_xlate_irq( local_config[ func ].irq )
 		    );
 
-		SMC37c669_write_config( SMC37c669_SERIAL_IRQ_INDEX, irq.as_uchar );
+		SMC37c669_ग_लिखो_config( SMC37c669_SERIAL_IRQ_INDEX, irq.as_uअक्षर );
 /*
 ** Enable the serial 1 port base address mapping
 */
-		base_addr.as_uchar = 0;
+		base_addr.as_uअक्षर = 0;
 		base_addr.by_field.addr9_3 = local_config[ func ].port1 >> 3;
 
-		SMC37c669_write_config( 
+		SMC37c669_ग_लिखो_config( 
 		    SMC37c669_SERIAL0_BASE_ADDRESS_INDEX,
-		    base_addr.as_uchar
+		    base_addr.as_uअक्षर
 		);
 		ret_val = TRUE;
-		break;
-	    }
-	case SERIAL_1:
-	    {
+		अवरोध;
+	    पूर्ण
+	हाल SERIAL_1:
+	    अणु
 	    	SMC37c669_SERIAL_BASE_ADDRESS_REGISTER base_addr;
 		SMC37c669_SERIAL_IRQ_REGISTER irq;
 /*
 ** Enable the serial 2 IRQ mapping
 */
-	    	irq.as_uchar = 
-		    SMC37c669_read_config( SMC37c669_SERIAL_IRQ_INDEX );
+	    	irq.as_uअक्षर = 
+		    SMC37c669_पढ़ो_config( SMC37c669_SERIAL_IRQ_INDEX );
 
 		irq.by_field.uart2_irq =
 		    SMC37c669_RAW_DEVICE_IRQ(
 			SMC37c669_xlate_irq( local_config[ func ].irq )
 		    );
 
-		SMC37c669_write_config( SMC37c669_SERIAL_IRQ_INDEX, irq.as_uchar );
+		SMC37c669_ग_लिखो_config( SMC37c669_SERIAL_IRQ_INDEX, irq.as_uअक्षर );
 /*
 ** Enable the serial 2 port base address mapping
 */
-		base_addr.as_uchar = 0;
+		base_addr.as_uअक्षर = 0;
 		base_addr.by_field.addr9_3 = local_config[ func ].port1 >> 3;
 
-		SMC37c669_write_config( 
+		SMC37c669_ग_लिखो_config( 
 		    SMC37c669_SERIAL1_BASE_ADDRESS_INDEX,
-		    base_addr.as_uchar
+		    base_addr.as_uअक्षर
 		);
 		ret_val = TRUE;
-		break;
-	    }
-	case PARALLEL_0:
-	    {
+		अवरोध;
+	    पूर्ण
+	हाल PARALLEL_0:
+	    अणु
 	    	SMC37c669_PARALLEL_BASE_ADDRESS_REGISTER base_addr;
 		SMC37c669_PARALLEL_FDC_IRQ_REGISTER irq;
 		SMC37c669_PARALLEL_FDC_DRQ_REGISTER drq;
 /*
 ** Enable the parallel port DMA channel mapping
 */
-	    	drq.as_uchar =
-		    SMC37c669_read_config( SMC37c669_PARALLEL_FDC_DRQ_INDEX );
+	    	drq.as_uअक्षर =
+		    SMC37c669_पढ़ो_config( SMC37c669_PARALLEL_FDC_DRQ_INDEX );
 
 		drq.by_field.ppt_drq = 
 		    SMC37c669_RAW_DEVICE_DRQ(
 			SMC37c669_xlate_drq( local_config[ func ].drq )
 		    );
 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_PARALLEL_FDC_DRQ_INDEX,
-		    drq.as_uchar
+		    drq.as_uअक्षर
 		);
 /*
 ** Enable the parallel port IRQ mapping
 */
-		irq.as_uchar = 
-		    SMC37c669_read_config( SMC37c669_PARALLEL_FDC_IRQ_INDEX );
+		irq.as_uअक्षर = 
+		    SMC37c669_पढ़ो_config( SMC37c669_PARALLEL_FDC_IRQ_INDEX );
 
 		irq.by_field.ppt_irq =
 		    SMC37c669_RAW_DEVICE_IRQ(
 			SMC37c669_xlate_irq( local_config[ func ].irq )
 		    );
 
-		SMC37c669_write_config( 
+		SMC37c669_ग_लिखो_config( 
 		    SMC37c669_PARALLEL_FDC_IRQ_INDEX,
-		    irq.as_uchar
+		    irq.as_uअक्षर
 		);
 /*
 ** Enable the parallel port base address mapping
 */
-		base_addr.as_uchar = 0;
+		base_addr.as_uअक्षर = 0;
 		base_addr.by_field.addr9_2 = local_config[ func ].port1 >> 2;
 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_PARALLEL0_BASE_ADDRESS_INDEX,
-		    base_addr.as_uchar
+		    base_addr.as_uअक्षर
 		);
 		ret_val = TRUE;
-		break;
-	    }
-	case FLOPPY_0:
-	    {
+		अवरोध;
+	    पूर्ण
+	हाल FLOPPY_0:
+	    अणु
 	    	SMC37c669_FDC_BASE_ADDRESS_REGISTER base_addr;
 		SMC37c669_PARALLEL_FDC_IRQ_REGISTER irq;
 		SMC37c669_PARALLEL_FDC_DRQ_REGISTER drq;
 /*
 ** Enable the floppy controller DMA channel mapping
 */
-	    	drq.as_uchar =
-		    SMC37c669_read_config( SMC37c669_PARALLEL_FDC_DRQ_INDEX );
+	    	drq.as_uअक्षर =
+		    SMC37c669_पढ़ो_config( SMC37c669_PARALLEL_FDC_DRQ_INDEX );
 		 
 		drq.by_field.fdc_drq =
 		    SMC37c669_RAW_DEVICE_DRQ(
 			SMC37c669_xlate_drq( local_config[ func ].drq )
 		    );
 		 
-		SMC37c669_write_config( 
+		SMC37c669_ग_लिखो_config( 
 		    SMC37c669_PARALLEL_FDC_DRQ_INDEX,
-		    drq.as_uchar
+		    drq.as_uअक्षर
 		);
 /*
 ** Enable the floppy controller IRQ mapping
 */
-		irq.as_uchar =
-		    SMC37c669_read_config( SMC37c669_PARALLEL_FDC_IRQ_INDEX );
+		irq.as_uअक्षर =
+		    SMC37c669_पढ़ो_config( SMC37c669_PARALLEL_FDC_IRQ_INDEX );
 		 
 		irq.by_field.fdc_irq =
 		    SMC37c669_RAW_DEVICE_IRQ(
 			SMC37c669_xlate_irq( local_config[ func ].irq )
 		    );
 		 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_PARALLEL_FDC_IRQ_INDEX,
-		    irq.as_uchar
+		    irq.as_uअक्षर
 		);
 /*
 ** Enable the floppy controller base address mapping
 */
-		base_addr.as_uchar = 0;
+		base_addr.as_uअक्षर = 0;
 		base_addr.by_field.addr9_4 = local_config[ func ].port1 >> 4;
 		 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_FDC_BASE_ADDRESS_INDEX,
-		    base_addr.as_uchar
+		    base_addr.as_uअक्षर
 		);
 		ret_val = TRUE;
-		break;
-	    }
-	case IDE_0:
-	    {
+		अवरोध;
+	    पूर्ण
+	हाल IDE_0:
+	    अणु
 	    	SMC37c669_IDE_ADDRESS_REGISTER ide_addr;
 /*
 ** Enable the IDE alternate status base address mapping
 */
-	    	ide_addr.as_uchar = 0;
+	    	ide_addr.as_uअक्षर = 0;
 		ide_addr.by_field.addr9_4 = local_config[ func ].port2 >> 4;
 		 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_IDE_ALTERNATE_ADDRESS_INDEX,
-		    ide_addr.as_uchar
+		    ide_addr.as_uअक्षर
 		);
 /*
 ** Enable the IDE controller base address mapping
 */
-		ide_addr.as_uchar = 0;
+		ide_addr.as_uअक्षर = 0;
 		ide_addr.by_field.addr9_4 = local_config[ func ].port1 >> 4;
 		 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_IDE_BASE_ADDRESS_INDEX,
-		    ide_addr.as_uchar
+		    ide_addr.as_uअक्षर
 		);
 		ret_val = TRUE;
-		break;
-	    }
-    }
+		अवरोध;
+	    पूर्ण
+    पूर्ण
 /*
-** Exit configuration mode and return
+** Exit configuration mode and वापस
 */
     SMC37c669_config_mode( FALSE );
 
-    return ret_val;
-}
+    वापस ret_val;
+पूर्ण
 
 
 /*
@@ -1434,194 +1435,194 @@ unsigned int __init SMC37c669_enable_device ( unsigned int func )
 **
 **  RETURN VALUE:
 **
-**      Return TRUE if the device function was disabled, otherwise, FALSE
+**      Return TRUE अगर the device function was disabled, otherwise, FALSE
 **
 **  SIDE EFFECTS:
 **
-**      {@description or none@}
+**      अणु@description or none@पूर्ण
 **
 **  DESIGN:
 **
 **      Disabling a function in the SMC37c669 device involves
 **	disabling all the function's mappings (port, irq, drq ...).
-**	A shadow copy of the device configuration is maintained
+**	A shaकरोw copy of the device configuration is मुख्यtained
 **	in local storage so we won't worry aboving saving the
-**	current configuration information.
+**	current configuration inक्रमmation.
 **
 **--
 */
-unsigned int __init SMC37c669_disable_device ( unsigned int func )
-{
-    unsigned int ret_val = FALSE;
+अचिन्हित पूर्णांक __init SMC37c669_disable_device ( अचिन्हित पूर्णांक func )
+अणु
+    अचिन्हित पूर्णांक ret_val = FALSE;
 
 /*
-** Put the device into configuration mode
+** Put the device पूर्णांकo configuration mode
 */
     SMC37c669_config_mode( TRUE );
-    switch ( func ) {
-    	case SERIAL_0:
-	    {
+    चयन ( func ) अणु
+    	हाल SERIAL_0:
+	    अणु
 	    	SMC37c669_SERIAL_BASE_ADDRESS_REGISTER base_addr;
 		SMC37c669_SERIAL_IRQ_REGISTER irq;
 /*
 ** Disable the serial 1 IRQ mapping
 */
-	    	irq.as_uchar = 
-		    SMC37c669_read_config( SMC37c669_SERIAL_IRQ_INDEX );
+	    	irq.as_uअक्षर = 
+		    SMC37c669_पढ़ो_config( SMC37c669_SERIAL_IRQ_INDEX );
 
 		irq.by_field.uart1_irq = 0;
 
-		SMC37c669_write_config( SMC37c669_SERIAL_IRQ_INDEX, irq.as_uchar );
+		SMC37c669_ग_लिखो_config( SMC37c669_SERIAL_IRQ_INDEX, irq.as_uअक्षर );
 /*
 ** Disable the serial 1 port base address mapping
 */
-		base_addr.as_uchar = 0;
-		SMC37c669_write_config( 
+		base_addr.as_uअक्षर = 0;
+		SMC37c669_ग_लिखो_config( 
 		    SMC37c669_SERIAL0_BASE_ADDRESS_INDEX,
-		    base_addr.as_uchar
+		    base_addr.as_uअक्षर
 		);
 		ret_val = TRUE;
-		break;
-	    }
-	case SERIAL_1:
-	    {
+		अवरोध;
+	    पूर्ण
+	हाल SERIAL_1:
+	    अणु
 	    	SMC37c669_SERIAL_BASE_ADDRESS_REGISTER base_addr;
 		SMC37c669_SERIAL_IRQ_REGISTER irq;
 /*
 ** Disable the serial 2 IRQ mapping
 */
-	    	irq.as_uchar = 
-		    SMC37c669_read_config( SMC37c669_SERIAL_IRQ_INDEX );
+	    	irq.as_uअक्षर = 
+		    SMC37c669_पढ़ो_config( SMC37c669_SERIAL_IRQ_INDEX );
 
 		irq.by_field.uart2_irq = 0;
 
-		SMC37c669_write_config( SMC37c669_SERIAL_IRQ_INDEX, irq.as_uchar );
+		SMC37c669_ग_लिखो_config( SMC37c669_SERIAL_IRQ_INDEX, irq.as_uअक्षर );
 /*
 ** Disable the serial 2 port base address mapping
 */
-		base_addr.as_uchar = 0;
+		base_addr.as_uअक्षर = 0;
 
-		SMC37c669_write_config( 
+		SMC37c669_ग_लिखो_config( 
 		    SMC37c669_SERIAL1_BASE_ADDRESS_INDEX,
-		    base_addr.as_uchar
+		    base_addr.as_uअक्षर
 		);
 		ret_val = TRUE;
-		break;
-	    }
-	case PARALLEL_0:
-	    {
+		अवरोध;
+	    पूर्ण
+	हाल PARALLEL_0:
+	    अणु
 	    	SMC37c669_PARALLEL_BASE_ADDRESS_REGISTER base_addr;
 		SMC37c669_PARALLEL_FDC_IRQ_REGISTER irq;
 		SMC37c669_PARALLEL_FDC_DRQ_REGISTER drq;
 /*
 ** Disable the parallel port DMA channel mapping
 */
-	    	drq.as_uchar =
-		    SMC37c669_read_config( SMC37c669_PARALLEL_FDC_DRQ_INDEX );
+	    	drq.as_uअक्षर =
+		    SMC37c669_पढ़ो_config( SMC37c669_PARALLEL_FDC_DRQ_INDEX );
 
 		drq.by_field.ppt_drq = 0;
 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_PARALLEL_FDC_DRQ_INDEX,
-		    drq.as_uchar
+		    drq.as_uअक्षर
 		);
 /*
 ** Disable the parallel port IRQ mapping
 */
-		irq.as_uchar = 
-		    SMC37c669_read_config( SMC37c669_PARALLEL_FDC_IRQ_INDEX );
+		irq.as_uअक्षर = 
+		    SMC37c669_पढ़ो_config( SMC37c669_PARALLEL_FDC_IRQ_INDEX );
 
 		irq.by_field.ppt_irq = 0;
 
-		SMC37c669_write_config( 
+		SMC37c669_ग_लिखो_config( 
 		    SMC37c669_PARALLEL_FDC_IRQ_INDEX,
-		    irq.as_uchar
+		    irq.as_uअक्षर
 		);
 /*
 ** Disable the parallel port base address mapping
 */
-		base_addr.as_uchar = 0;
+		base_addr.as_uअक्षर = 0;
 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_PARALLEL0_BASE_ADDRESS_INDEX,
-		    base_addr.as_uchar
+		    base_addr.as_uअक्षर
 		);
 		ret_val = TRUE;
-		break;
-	    }
-	case FLOPPY_0:
-	    {
+		अवरोध;
+	    पूर्ण
+	हाल FLOPPY_0:
+	    अणु
 	    	SMC37c669_FDC_BASE_ADDRESS_REGISTER base_addr;
 		SMC37c669_PARALLEL_FDC_IRQ_REGISTER irq;
 		SMC37c669_PARALLEL_FDC_DRQ_REGISTER drq;
 /*
 ** Disable the floppy controller DMA channel mapping
 */
-	    	drq.as_uchar =
-		    SMC37c669_read_config( SMC37c669_PARALLEL_FDC_DRQ_INDEX );
+	    	drq.as_uअक्षर =
+		    SMC37c669_पढ़ो_config( SMC37c669_PARALLEL_FDC_DRQ_INDEX );
 		 
 		drq.by_field.fdc_drq = 0;
 		 
-		SMC37c669_write_config( 
+		SMC37c669_ग_लिखो_config( 
 		    SMC37c669_PARALLEL_FDC_DRQ_INDEX,
-		    drq.as_uchar
+		    drq.as_uअक्षर
 		);
 /*
 ** Disable the floppy controller IRQ mapping
 */
-		irq.as_uchar =
-		    SMC37c669_read_config( SMC37c669_PARALLEL_FDC_IRQ_INDEX );
+		irq.as_uअक्षर =
+		    SMC37c669_पढ़ो_config( SMC37c669_PARALLEL_FDC_IRQ_INDEX );
 		 
 		irq.by_field.fdc_irq = 0;
 		 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_PARALLEL_FDC_IRQ_INDEX,
-		    irq.as_uchar
+		    irq.as_uअक्षर
 		);
 /*
 ** Disable the floppy controller base address mapping
 */
-		base_addr.as_uchar = 0;
+		base_addr.as_uअक्षर = 0;
 		 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_FDC_BASE_ADDRESS_INDEX,
-		    base_addr.as_uchar
+		    base_addr.as_uअक्षर
 		);
 		ret_val = TRUE;
-		break;
-	    }
-	case IDE_0:
-	    {
+		अवरोध;
+	    पूर्ण
+	हाल IDE_0:
+	    अणु
 	    	SMC37c669_IDE_ADDRESS_REGISTER ide_addr;
 /*
 ** Disable the IDE alternate status base address mapping
 */
-	    	ide_addr.as_uchar = 0;
+	    	ide_addr.as_uअक्षर = 0;
 		 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_IDE_ALTERNATE_ADDRESS_INDEX,
-		    ide_addr.as_uchar
+		    ide_addr.as_uअक्षर
 		);
 /*
 ** Disable the IDE controller base address mapping
 */
-		ide_addr.as_uchar = 0;
+		ide_addr.as_uअक्षर = 0;
 		 
-		SMC37c669_write_config(
+		SMC37c669_ग_लिखो_config(
 		    SMC37c669_IDE_BASE_ADDRESS_INDEX,
-		    ide_addr.as_uchar
+		    ide_addr.as_uअक्षर
 		);
 		ret_val = TRUE;
-		break;
-	    }
-    }
+		अवरोध;
+	    पूर्ण
+    पूर्ण
 /*
-** Exit configuration mode and return
+** Exit configuration mode and वापस
 */
     SMC37c669_config_mode( FALSE );
 
-    return ret_val;
-}
+    वापस ret_val;
+पूर्ण
 
 
 /*
@@ -1637,68 +1638,68 @@ unsigned int __init SMC37c669_disable_device ( unsigned int func )
 **          Which device function
 **       
 **      port:
-**          I/O port for the function to use
+**          I/O port क्रम the function to use
 **	 
 **      irq:
-**          IRQ for the device function to use
+**          IRQ क्रम the device function to use
 **	 
 **      drq:
-**          DMA channel for the device function to use
+**          DMA channel क्रम the device function to use
 **
 **  RETURN VALUE:
 **
-**      Returns TRUE if the device function was configured, 
+**      Returns TRUE अगर the device function was configured, 
 **	otherwise, FALSE.
 **
 **  SIDE EFFECTS:
 **
-**      {@description or none@}
+**      अणु@description or none@पूर्ण
 **
 **  DESIGN:
 **
-**	If this function returns TRUE, the local shadow copy of
+**	If this function वापसs TRUE, the local shaकरोw copy of
 **	the configuration is also updated.  If the device function
-**	is currently disabled, only the local shadow copy is 
+**	is currently disabled, only the local shaकरोw copy is 
 **	updated and the actual device function will be updated
-**	if/when it is enabled.
+**	अगर/when it is enabled.
 **
 **--
 */
-unsigned int __init SMC37c669_configure_device (
-    unsigned int func,
-    int port,
-    int irq,
-    int drq )
-{
-    struct DEVICE_CONFIG *cp;
+अचिन्हित पूर्णांक __init SMC37c669_configure_device (
+    अचिन्हित पूर्णांक func,
+    पूर्णांक port,
+    पूर्णांक irq,
+    पूर्णांक drq )
+अणु
+    काष्ठा DEVICE_CONFIG *cp;
 
 /*
-** Check for a valid configuration
+** Check क्रम a valid configuration
 */
-    if ( ( cp = SMC37c669_get_config ( func ) ) != NULL ) {
+    अगर ( ( cp = SMC37c669_get_config ( func ) ) != शून्य ) अणु
 /*
-** Configuration is valid, update the local shadow copy
+** Configuration is valid, update the local shaकरोw copy
 */
-    	if ( ( drq & ~0xFF ) == 0 ) {
+    	अगर ( ( drq & ~0xFF ) == 0 ) अणु
 	    cp->drq = drq;
-	}
-	if ( ( irq & ~0xFF ) == 0 ) {
+	पूर्ण
+	अगर ( ( irq & ~0xFF ) == 0 ) अणु
 	    cp->irq = irq;
-	}
-	if ( ( port & ~0xFFFF ) == 0 ) {
+	पूर्ण
+	अगर ( ( port & ~0xFFFF ) == 0 ) अणु
 	    cp->port1 = port;
-	}
+	पूर्ण
 /*
 ** If the device function is enabled, update the actual
 ** device configuration.
 */
-	if ( SMC37c669_is_device_enabled( func ) ) {
+	अगर ( SMC37c669_is_device_enabled( func ) ) अणु
 	    SMC37c669_enable_device( func );
-	}
-	return TRUE;
-    }
-    return FALSE;
-}
+	पूर्ण
+	वापस TRUE;
+    पूर्ण
+    वापस FALSE;
+पूर्ण
 
 
 /*
@@ -1715,85 +1716,85 @@ unsigned int __init SMC37c669_configure_device (
 **
 **  RETURN VALUE:
 **
-**      Returns TRUE if the device function is enabled, otherwise, FALSE
+**      Returns TRUE अगर the device function is enabled, otherwise, FALSE
 **
 **  SIDE EFFECTS:
 **
-**      {@description or none@}
+**      अणु@description or none@पूर्ण
 **
 **  DESIGN:
 **
 **      To check whether a device is enabled we will only look at 
 **	the port base address mapping.  According to the SMC37c669
-**	specification, all of the port base address mappings are
-**	disabled if the addr<9:8> (bits <7:6> of the register) are
+**	specअगरication, all of the port base address mappings are
+**	disabled अगर the addr<9:8> (bits <7:6> of the रेजिस्टर) are
 **	zero.
 **
 **--
 */
-static unsigned int __init SMC37c669_is_device_enabled ( unsigned int func )
-{
-    unsigned char base_addr = 0;
-    unsigned int dev_ok = FALSE;
-    unsigned int ret_val = FALSE;
+अटल अचिन्हित पूर्णांक __init SMC37c669_is_device_enabled ( अचिन्हित पूर्णांक func )
+अणु
+    अचिन्हित अक्षर base_addr = 0;
+    अचिन्हित पूर्णांक dev_ok = FALSE;
+    अचिन्हित पूर्णांक ret_val = FALSE;
 /*
 ** Enter configuration mode
 */
     SMC37c669_config_mode( TRUE );
      
-    switch ( func ) {
-    	case SERIAL_0:
+    चयन ( func ) अणु
+    	हाल SERIAL_0:
 	    base_addr =
-		SMC37c669_read_config( SMC37c669_SERIAL0_BASE_ADDRESS_INDEX );
+		SMC37c669_पढ़ो_config( SMC37c669_SERIAL0_BASE_ADDRESS_INDEX );
 	    dev_ok = TRUE;
-	    break;
-	case SERIAL_1:
+	    अवरोध;
+	हाल SERIAL_1:
 	    base_addr =
-		SMC37c669_read_config( SMC37c669_SERIAL1_BASE_ADDRESS_INDEX );
+		SMC37c669_पढ़ो_config( SMC37c669_SERIAL1_BASE_ADDRESS_INDEX );
 	    dev_ok = TRUE;
-	    break;
-	case PARALLEL_0:
+	    अवरोध;
+	हाल PARALLEL_0:
 	    base_addr =
-		SMC37c669_read_config( SMC37c669_PARALLEL0_BASE_ADDRESS_INDEX );
+		SMC37c669_पढ़ो_config( SMC37c669_PARALLEL0_BASE_ADDRESS_INDEX );
 	    dev_ok = TRUE;
-	    break;
-	case FLOPPY_0:
+	    अवरोध;
+	हाल FLOPPY_0:
 	    base_addr =
-		SMC37c669_read_config( SMC37c669_FDC_BASE_ADDRESS_INDEX );
+		SMC37c669_पढ़ो_config( SMC37c669_FDC_BASE_ADDRESS_INDEX );
 	    dev_ok = TRUE;
-	    break;
-	case IDE_0:
+	    अवरोध;
+	हाल IDE_0:
 	    base_addr =
-		SMC37c669_read_config( SMC37c669_IDE_BASE_ADDRESS_INDEX );
+		SMC37c669_पढ़ो_config( SMC37c669_IDE_BASE_ADDRESS_INDEX );
 	    dev_ok = TRUE;
-	    break;
-    }
+	    अवरोध;
+    पूर्ण
 /*
-** If we have a valid device, check base_addr<7:6> to see if the
+** If we have a valid device, check base_addr<7:6> to see अगर the
 ** device is enabled (mapped).
 */
-    if ( ( dev_ok ) && ( ( base_addr & 0xC0 ) != 0 ) ) {
+    अगर ( ( dev_ok ) && ( ( base_addr & 0xC0 ) != 0 ) ) अणु
 /*
 ** The mapping is not disabled, so assume that the function is 
 ** enabled.
 */
     	ret_val = TRUE;
-    }
+    पूर्ण
 /*
 ** Exit configuration mode 
 */
     SMC37c669_config_mode( FALSE );
 
-    return ret_val;
-}
+    वापस ret_val;
+पूर्ण
 
 
-#if 0
+#अगर 0
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**      This function retrieves the configuration information of a 
+**      This function retrieves the configuration inक्रमmation of a 
 **	device function within the SMC37c699 Super I/O controller.
 **
 **  FORMAL PARAMETERS:
@@ -1802,62 +1803,62 @@ static unsigned int __init SMC37c669_is_device_enabled ( unsigned int func )
 **          Which device function
 **       
 **      port:
-**          I/O port returned
+**          I/O port वापसed
 **	 
 **      irq:
-**          IRQ returned
+**          IRQ वापसed
 **	 
 **      drq:
-**          DMA channel returned
+**          DMA channel वापसed
 **
 **  RETURN VALUE:
 **
-**      Returns TRUE if the device configuration was successfully
+**      Returns TRUE अगर the device configuration was successfully
 **	retrieved, otherwise, FALSE.
 **
 **  SIDE EFFECTS:
 **
-**      The data pointed to by the port, irq, and drq parameters
-**	my be modified even if the configuration is not successfully
+**      The data poपूर्णांकed to by the port, irq, and drq parameters
+**	my be modअगरied even अगर the configuration is not successfully
 **	retrieved.
 **
 **  DESIGN:
 **
-**      The device configuration is fetched from the local shadow
+**      The device configuration is fetched from the local shaकरोw
 **	copy.  Any unused parameters will be set to -1.  Any
-**	parameter which is not desired can specify the NULL
-**	pointer.
+**	parameter which is not desired can specअगरy the शून्य
+**	poपूर्णांकer.
 **
 **--
 */
-static unsigned int __init SMC37c669_get_device_config (
-    unsigned int func,
-    int *port,
-    int *irq,
-    int *drq )
-{
-    struct DEVICE_CONFIG *cp;
-    unsigned int ret_val = FALSE;
+अटल अचिन्हित पूर्णांक __init SMC37c669_get_device_config (
+    अचिन्हित पूर्णांक func,
+    पूर्णांक *port,
+    पूर्णांक *irq,
+    पूर्णांक *drq )
+अणु
+    काष्ठा DEVICE_CONFIG *cp;
+    अचिन्हित पूर्णांक ret_val = FALSE;
 /*
-** Check for a valid device configuration
+** Check क्रम a valid device configuration
 */
-    if ( ( cp = SMC37c669_get_config( func ) ) != NULL ) {
-    	if ( drq != NULL ) {
+    अगर ( ( cp = SMC37c669_get_config( func ) ) != शून्य ) अणु
+    	अगर ( drq != शून्य ) अणु
 	    *drq = cp->drq;
 	    ret_val = TRUE;
-	}
-	if ( irq != NULL ) {
+	पूर्ण
+	अगर ( irq != शून्य ) अणु
 	    *irq = cp->irq;
 	    ret_val = TRUE;
-	}
-	if ( port != NULL ) {
+	पूर्ण
+	अगर ( port != शून्य ) अणु
 	    *port = cp->port1;
 	    ret_val = TRUE;
-	}
-    }
-    return ret_val;
-}
-#endif
+	पूर्ण
+    पूर्ण
+    वापस ret_val;
+पूर्ण
+#पूर्ण_अगर
 
 
 /*
@@ -1881,73 +1882,73 @@ static unsigned int __init SMC37c669_get_device_config (
 **
 **--
 */
-void __init SMC37c669_display_device_info ( void )
-{
-    if ( SMC37c669_is_device_enabled( SERIAL_0 ) ) {
-    	printk( "  Serial 0:    Enabled [ Port 0x%x, IRQ %d ]\n",
+व्योम __init SMC37c669_display_device_info ( व्योम )
+अणु
+    अगर ( SMC37c669_is_device_enabled( SERIAL_0 ) ) अणु
+    	prपूर्णांकk( "  Serial 0:    Enabled [ Port 0x%x, IRQ %d ]\n",
 		 local_config[ SERIAL_0 ].port1,
 		 local_config[ SERIAL_0 ].irq
 	);
-    }
-    else {
-    	printk( "  Serial 0:    Disabled\n" );
-    }
+    पूर्ण
+    अन्यथा अणु
+    	prपूर्णांकk( "  Serial 0:    Disabled\n" );
+    पूर्ण
 
-    if ( SMC37c669_is_device_enabled( SERIAL_1 ) ) {
-    	printk( "  Serial 1:    Enabled [ Port 0x%x, IRQ %d ]\n",
+    अगर ( SMC37c669_is_device_enabled( SERIAL_1 ) ) अणु
+    	prपूर्णांकk( "  Serial 1:    Enabled [ Port 0x%x, IRQ %d ]\n",
 		 local_config[ SERIAL_1 ].port1,
 		 local_config[ SERIAL_1 ].irq
 	);
-    }
-    else {
-    	printk( "  Serial 1:    Disabled\n" );
-    }
+    पूर्ण
+    अन्यथा अणु
+    	prपूर्णांकk( "  Serial 1:    Disabled\n" );
+    पूर्ण
 
-    if ( SMC37c669_is_device_enabled( PARALLEL_0 ) ) {
-    	printk( "  Parallel:    Enabled [ Port 0x%x, IRQ %d/%d ]\n",
+    अगर ( SMC37c669_is_device_enabled( PARALLEL_0 ) ) अणु
+    	prपूर्णांकk( "  Parallel:    Enabled [ Port 0x%x, IRQ %d/%d ]\n",
 		 local_config[ PARALLEL_0 ].port1,
 		 local_config[ PARALLEL_0 ].irq,
 		 local_config[ PARALLEL_0 ].drq
 	);
-    }
-    else {
-    	printk( "  Parallel:    Disabled\n" );
-    }
+    पूर्ण
+    अन्यथा अणु
+    	prपूर्णांकk( "  Parallel:    Disabled\n" );
+    पूर्ण
 
-    if ( SMC37c669_is_device_enabled( FLOPPY_0 ) ) {
-    	printk( "  Floppy Ctrl: Enabled [ Port 0x%x, IRQ %d/%d ]\n",
+    अगर ( SMC37c669_is_device_enabled( FLOPPY_0 ) ) अणु
+    	prपूर्णांकk( "  Floppy Ctrl: Enabled [ Port 0x%x, IRQ %d/%d ]\n",
 		 local_config[ FLOPPY_0 ].port1,
 		 local_config[ FLOPPY_0 ].irq,
 		 local_config[ FLOPPY_0 ].drq
 	);
-    }
-    else {
-    	printk( "  Floppy Ctrl: Disabled\n" );
-    }
+    पूर्ण
+    अन्यथा अणु
+    	prपूर्णांकk( "  Floppy Ctrl: Disabled\n" );
+    पूर्ण
 
-    if ( SMC37c669_is_device_enabled( IDE_0 ) ) {
-    	printk( "  IDE 0:       Enabled [ Port 0x%x, IRQ %d ]\n",
+    अगर ( SMC37c669_is_device_enabled( IDE_0 ) ) अणु
+    	prपूर्णांकk( "  IDE 0:       Enabled [ Port 0x%x, IRQ %d ]\n",
 		 local_config[ IDE_0 ].port1,
 		 local_config[ IDE_0 ].irq
 	);
-    }
-    else {
-    	printk( "  IDE 0:       Disabled\n" );
-    }
-}
+    पूर्ण
+    अन्यथा अणु
+    	prपूर्णांकk( "  IDE 0:       Disabled\n" );
+    पूर्ण
+पूर्ण
 
 
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**      This function puts the SMC37c669 Super I/O controller into,
+**      This function माला_दो the SMC37c669 Super I/O controller पूर्णांकo,
 **	and takes it out of, configuration mode.
 **
 **  FORMAL PARAMETERS:
 **
 **      enable:
-**          TRUE to enter configuration mode, FALSE to exit.
+**          TRUE to enter configuration mode, FALSE to निकास.
 **
 **  RETURN VALUE:
 **
@@ -1959,43 +1960,43 @@ void __init SMC37c669_display_device_info ( void )
 **
 **--
 */
-static void __init SMC37c669_config_mode( 
-    unsigned int enable )
-{
-    if ( enable ) {
+अटल व्योम __init SMC37c669_config_mode( 
+    अचिन्हित पूर्णांक enable )
+अणु
+    अगर ( enable ) अणु
 /*
-** To enter configuration mode, two writes in succession to the index
-** port are required.  If a write to another address or port occurs
-** between these two writes, the chip does not enter configuration
-** mode.  Therefore, a spinlock is placed around the two writes to 
-** guarantee that they complete uninterrupted.
+** To enter configuration mode, two ग_लिखोs in succession to the index
+** port are required.  If a ग_लिखो to another address or port occurs
+** between these two ग_लिखोs, the chip करोes not enter configuration
+** mode.  Thereक्रमe, a spinlock is placed around the two ग_लिखोs to 
+** guarantee that they complete unपूर्णांकerrupted.
 */
 	spin_lock(&smc_lock);
     	wb( &SMC37c669->index_port, SMC37c669_CONFIG_ON_KEY );
     	wb( &SMC37c669->index_port, SMC37c669_CONFIG_ON_KEY );
 	spin_unlock(&smc_lock);
-    }
-    else {
+    पूर्ण
+    अन्यथा अणु
     	wb( &SMC37c669->index_port, SMC37c669_CONFIG_OFF_KEY );
-    }
-}
+    पूर्ण
+पूर्ण
 
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**      This function reads an SMC37c669 Super I/O controller
-**	configuration register.  This function assumes that the
-**	device is already in configuration mode.
+**      This function पढ़ोs an SMC37c669 Super I/O controller
+**	configuration रेजिस्टर.  This function assumes that the
+**	device is alपढ़ोy in configuration mode.
 **
 **  FORMAL PARAMETERS:
 **
 **      index:
-**          Index value of configuration register to read
+**          Index value of configuration रेजिस्टर to पढ़ो
 **
 **  RETURN VALUE:
 **
-**      Data read from configuration register
+**      Data पढ़ो from configuration रेजिस्टर
 **
 **  SIDE EFFECTS:
 **
@@ -2003,25 +2004,25 @@ static void __init SMC37c669_config_mode(
 **
 **--
 */
-static unsigned char __init SMC37c669_read_config( 
-    unsigned char index )
-{
+अटल अचिन्हित अक्षर __init SMC37c669_पढ़ो_config( 
+    अचिन्हित अक्षर index )
+अणु
 	wb(&SMC37c669->index_port, index);
-	return rb(&SMC37c669->data_port);
-}
+	वापस rb(&SMC37c669->data_port);
+पूर्ण
 
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**      This function writes an SMC37c669 Super I/O controller
-**	configuration register.  This function assumes that the
-**	device is already in configuration mode.
+**      This function ग_लिखोs an SMC37c669 Super I/O controller
+**	configuration रेजिस्टर.  This function assumes that the
+**	device is alपढ़ोy in configuration mode.
 **
 **  FORMAL PARAMETERS:
 **
 **      index:
-**          Index of configuration register to write
+**          Index of configuration रेजिस्टर to ग_लिखो
 **       
 **      data:
 **          Data to be written
@@ -2036,13 +2037,13 @@ static unsigned char __init SMC37c669_read_config(
 **
 **--
 */
-static void __init SMC37c669_write_config( 
-    unsigned char index, 
-    unsigned char data )
-{
+अटल व्योम __init SMC37c669_ग_लिखो_config( 
+    अचिन्हित अक्षर index, 
+    अचिन्हित अक्षर data )
+अणु
     wb( &SMC37c669->index_port, index );
     wb( &SMC37c669->data_port, data );
-}
+पूर्ण
 
 
 /*
@@ -2051,7 +2052,7 @@ static void __init SMC37c669_write_config(
 **
 **      This function initializes the local device
 **	configuration storage.  This function assumes
-**	that the device is already in configuration
+**	that the device is alपढ़ोy in configuration
 **	mode.
 **
 **  FORMAL PARAMETERS:
@@ -2064,13 +2065,13 @@ static void __init SMC37c669_write_config(
 **
 **  SIDE EFFECTS:
 **
-**      Local storage for device configuration information
+**      Local storage क्रम device configuration inक्रमmation
 **	is initialized.
 **
 **--
 */
-static void __init SMC37c669_init_local_config ( void )
-{
+अटल व्योम __init SMC37c669_init_local_config ( व्योम )
+अणु
     SMC37c669_SERIAL_BASE_ADDRESS_REGISTER uart_base;
     SMC37c669_SERIAL_IRQ_REGISTER uart_irqs;
     SMC37c669_PARALLEL_BASE_ADDRESS_REGISTER ppt_base;
@@ -2083,15 +2084,15 @@ static void __init SMC37c669_init_local_config ( void )
 /*
 ** Get serial port 1 base address 
 */
-    uart_base.as_uchar = 
-	SMC37c669_read_config( SMC37c669_SERIAL0_BASE_ADDRESS_INDEX );
+    uart_base.as_uअक्षर = 
+	SMC37c669_पढ़ो_config( SMC37c669_SERIAL0_BASE_ADDRESS_INDEX );
 /*
-** Get IRQs for serial ports 1 & 2
+** Get IRQs क्रम serial ports 1 & 2
 */
-    uart_irqs.as_uchar = 
-	SMC37c669_read_config( SMC37c669_SERIAL_IRQ_INDEX );
+    uart_irqs.as_uअक्षर = 
+	SMC37c669_पढ़ो_config( SMC37c669_SERIAL_IRQ_INDEX );
 /*
-** Store local configuration information for serial port 1
+** Store local configuration inक्रमmation क्रम serial port 1
 */
     local_config[SERIAL_0].port1 = uart_base.by_field.addr9_3 << 3;
     local_config[SERIAL_0].irq = 
@@ -2101,10 +2102,10 @@ static void __init SMC37c669_init_local_config ( void )
 /*
 ** Get serial port 2 base address
 */
-    uart_base.as_uchar = 
-	SMC37c669_read_config( SMC37c669_SERIAL1_BASE_ADDRESS_INDEX );
+    uart_base.as_uअक्षर = 
+	SMC37c669_पढ़ो_config( SMC37c669_SERIAL1_BASE_ADDRESS_INDEX );
 /*
-** Store local configuration information for serial port 2
+** Store local configuration inक्रमmation क्रम serial port 2
 */
     local_config[SERIAL_1].port1 = uart_base.by_field.addr9_3 << 3;
     local_config[SERIAL_1].irq = 
@@ -2114,20 +2115,20 @@ static void __init SMC37c669_init_local_config ( void )
 /*
 ** Get parallel port base address
 */
-    ppt_base.as_uchar =
-	SMC37c669_read_config( SMC37c669_PARALLEL0_BASE_ADDRESS_INDEX );
+    ppt_base.as_uअक्षर =
+	SMC37c669_पढ़ो_config( SMC37c669_PARALLEL0_BASE_ADDRESS_INDEX );
 /*
-** Get IRQs for parallel port and floppy controller
+** Get IRQs क्रम parallel port and floppy controller
 */
-    ppt_fdc_irqs.as_uchar =
-	SMC37c669_read_config( SMC37c669_PARALLEL_FDC_IRQ_INDEX );
+    ppt_fdc_irqs.as_uअक्षर =
+	SMC37c669_पढ़ो_config( SMC37c669_PARALLEL_FDC_IRQ_INDEX );
 /*
-** Get DRQs for parallel port and floppy controller
+** Get DRQs क्रम parallel port and floppy controller
 */
-    ppt_fdc_drqs.as_uchar =
-	SMC37c669_read_config( SMC37c669_PARALLEL_FDC_DRQ_INDEX );
+    ppt_fdc_drqs.as_uअक्षर =
+	SMC37c669_पढ़ो_config( SMC37c669_PARALLEL_FDC_DRQ_INDEX );
 /*
-** Store local configuration information for parallel port
+** Store local configuration inक्रमmation क्रम parallel port
 */
     local_config[PARALLEL_0].port1 = ppt_base.by_field.addr9_2 << 2;
     local_config[PARALLEL_0].irq =
@@ -2141,10 +2142,10 @@ static void __init SMC37c669_init_local_config ( void )
 /*
 ** Get floppy controller base address
 */
-    fdc_base.as_uchar = 
-	SMC37c669_read_config( SMC37c669_FDC_BASE_ADDRESS_INDEX );
+    fdc_base.as_uअक्षर = 
+	SMC37c669_पढ़ो_config( SMC37c669_FDC_BASE_ADDRESS_INDEX );
 /*
-** Store local configuration information for floppy controller
+** Store local configuration inक्रमmation क्रम floppy controller
 */
     local_config[FLOPPY_0].port1 = fdc_base.by_field.addr9_4 << 4;
     local_config[FLOPPY_0].irq =
@@ -2158,27 +2159,27 @@ static void __init SMC37c669_init_local_config ( void )
 /*
 ** Get IDE controller base address
 */
-    ide_base.as_uchar =
-	SMC37c669_read_config( SMC37c669_IDE_BASE_ADDRESS_INDEX );
+    ide_base.as_uअक्षर =
+	SMC37c669_पढ़ो_config( SMC37c669_IDE_BASE_ADDRESS_INDEX );
 /*
 ** Get IDE alternate status base address
 */
-    ide_alt.as_uchar =
-	SMC37c669_read_config( SMC37c669_IDE_ALTERNATE_ADDRESS_INDEX );
+    ide_alt.as_uअक्षर =
+	SMC37c669_पढ़ो_config( SMC37c669_IDE_ALTERNATE_ADDRESS_INDEX );
 /*
-** Store local configuration information for IDE controller
+** Store local configuration inक्रमmation क्रम IDE controller
 */
     local_config[IDE_0].port1 = ide_base.by_field.addr9_4 << 4;
     local_config[IDE_0].port2 = ide_alt.by_field.addr9_4 << 4;
     local_config[IDE_0].irq = 14;
-}
+पूर्ण
 
 
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**      This function returns a pointer to the local shadow
+**      This function वापसs a poपूर्णांकer to the local shaकरोw
 **	configuration of the requested device function.
 **
 **  FORMAL PARAMETERS:
@@ -2188,44 +2189,44 @@ static void __init SMC37c669_init_local_config ( void )
 **
 **  RETURN VALUE:
 **
-**      Returns a pointer to the DEVICE_CONFIG structure for the
-**	requested function, otherwise, NULL.
+**      Returns a poपूर्णांकer to the DEVICE_CONFIG काष्ठाure क्रम the
+**	requested function, otherwise, शून्य.
 **
 **  SIDE EFFECTS:
 **
-**      {@description or none@}
+**      अणु@description or none@पूर्ण
 **
 **--
 */
-static struct DEVICE_CONFIG * __init SMC37c669_get_config( unsigned int func )
-{
-    struct DEVICE_CONFIG *cp = NULL;
+अटल काष्ठा DEVICE_CONFIG * __init SMC37c669_get_config( अचिन्हित पूर्णांक func )
+अणु
+    काष्ठा DEVICE_CONFIG *cp = शून्य;
 
-    switch ( func ) {
-    	case SERIAL_0:
+    चयन ( func ) अणु
+    	हाल SERIAL_0:
 	    cp = &local_config[ SERIAL_0 ];
-	    break;
-	case SERIAL_1:
+	    अवरोध;
+	हाल SERIAL_1:
 	    cp = &local_config[ SERIAL_1 ];
-	    break;
-	case PARALLEL_0:
+	    अवरोध;
+	हाल PARALLEL_0:
 	    cp = &local_config[ PARALLEL_0 ];
-	    break;
-	case FLOPPY_0:
+	    अवरोध;
+	हाल FLOPPY_0:
 	    cp = &local_config[ FLOPPY_0 ];
-	    break;
-	case IDE_0:
+	    अवरोध;
+	हाल IDE_0:
 	    cp = &local_config[ IDE_0 ];
-	    break;
-    }
-    return cp;
-}
+	    अवरोध;
+    पूर्ण
+    वापस cp;
+पूर्ण
 
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**      This function translates IRQs back and forth between ISA
+**      This function translates IRQs back and क्रमth between ISA
 **	IRQs and SMC37c669 device IRQs.
 **
 **  FORMAL PARAMETERS:
@@ -2235,49 +2236,49 @@ static struct DEVICE_CONFIG * __init SMC37c669_get_config( unsigned int func )
 **
 **  RETURN VALUE:
 **
-**      Returns the translated IRQ, otherwise, returns -1.
+**      Returns the translated IRQ, otherwise, वापसs -1.
 **
 **  SIDE EFFECTS:
 **
-**      {@description or none@}
+**      अणु@description or none@पूर्ण
 **
 **--
 */
-static int __init SMC37c669_xlate_irq ( int irq )
-{
-    int i, translated_irq = -1;
+अटल पूर्णांक __init SMC37c669_xlate_irq ( पूर्णांक irq )
+अणु
+    पूर्णांक i, translated_irq = -1;
 
-    if ( SMC37c669_IS_DEVICE_IRQ( irq ) ) {
+    अगर ( SMC37c669_IS_DEVICE_IRQ( irq ) ) अणु
 /*
 ** We are translating a device IRQ to an ISA IRQ
 */
-    	for ( i = 0; ( SMC37c669_irq_table[i].device_irq != -1 ) || ( SMC37c669_irq_table[i].isa_irq != -1 ); i++ ) {
-	    if ( irq == SMC37c669_irq_table[i].device_irq ) {
+    	क्रम ( i = 0; ( SMC37c669_irq_table[i].device_irq != -1 ) || ( SMC37c669_irq_table[i].isa_irq != -1 ); i++ ) अणु
+	    अगर ( irq == SMC37c669_irq_table[i].device_irq ) अणु
 	    	translated_irq = SMC37c669_irq_table[i].isa_irq;
-		break;
-	    }
-	}
-    }
-    else {
+		अवरोध;
+	    पूर्ण
+	पूर्ण
+    पूर्ण
+    अन्यथा अणु
 /*
 ** We are translating an ISA IRQ to a device IRQ
 */
-    	for ( i = 0; ( SMC37c669_irq_table[i].isa_irq != -1 ) || ( SMC37c669_irq_table[i].device_irq != -1 ); i++ ) {
-	    if ( irq == SMC37c669_irq_table[i].isa_irq ) {
+    	क्रम ( i = 0; ( SMC37c669_irq_table[i].isa_irq != -1 ) || ( SMC37c669_irq_table[i].device_irq != -1 ); i++ ) अणु
+	    अगर ( irq == SMC37c669_irq_table[i].isa_irq ) अणु
 	    	translated_irq = SMC37c669_irq_table[i].device_irq;
-		break;
-	    }
-	}
-    }
-    return translated_irq;
-}
+		अवरोध;
+	    पूर्ण
+	पूर्ण
+    पूर्ण
+    वापस translated_irq;
+पूर्ण
 
 
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**      This function translates DMA channels back and forth between
+**      This function translates DMA channels back and क्रमth between
 **	ISA DMA channels and SMC37c669 device DMA channels.
 **
 **  FORMAL PARAMETERS:
@@ -2287,47 +2288,47 @@ static int __init SMC37c669_xlate_irq ( int irq )
 **
 **  RETURN VALUE:
 **
-**      Returns the translated DMA channel, otherwise, returns -1
+**      Returns the translated DMA channel, otherwise, वापसs -1
 **
 **  SIDE EFFECTS:
 **
-**      {@description or none@}
+**      अणु@description or none@पूर्ण
 **
 **--
 */
-static int __init SMC37c669_xlate_drq ( int drq )
-{
-    int i, translated_drq = -1;
+अटल पूर्णांक __init SMC37c669_xlate_drq ( पूर्णांक drq )
+अणु
+    पूर्णांक i, translated_drq = -1;
 
-    if ( SMC37c669_IS_DEVICE_DRQ( drq ) ) {
+    अगर ( SMC37c669_IS_DEVICE_DRQ( drq ) ) अणु
 /*
 ** We are translating a device DMA channel to an ISA DMA channel
 */
-    	for ( i = 0; ( SMC37c669_drq_table[i].device_drq != -1 ) || ( SMC37c669_drq_table[i].isa_drq != -1 ); i++ ) {
-	    if ( drq == SMC37c669_drq_table[i].device_drq ) {
+    	क्रम ( i = 0; ( SMC37c669_drq_table[i].device_drq != -1 ) || ( SMC37c669_drq_table[i].isa_drq != -1 ); i++ ) अणु
+	    अगर ( drq == SMC37c669_drq_table[i].device_drq ) अणु
 	    	translated_drq = SMC37c669_drq_table[i].isa_drq;
-		break;
-	    }
-	}
-    }
-    else {
+		अवरोध;
+	    पूर्ण
+	पूर्ण
+    पूर्ण
+    अन्यथा अणु
 /*
 ** We are translating an ISA DMA channel to a device DMA channel
 */
-    	for ( i = 0; ( SMC37c669_drq_table[i].isa_drq != -1 ) || ( SMC37c669_drq_table[i].device_drq != -1 ); i++ ) {
-	    if ( drq == SMC37c669_drq_table[i].isa_drq ) {
+    	क्रम ( i = 0; ( SMC37c669_drq_table[i].isa_drq != -1 ) || ( SMC37c669_drq_table[i].device_drq != -1 ); i++ ) अणु
+	    अगर ( drq == SMC37c669_drq_table[i].isa_drq ) अणु
 	    	translated_drq = SMC37c669_drq_table[i].device_drq;
-		break;
-	    }
-	}
-    }
-    return translated_drq;
-}
+		अवरोध;
+	    पूर्ण
+	पूर्ण
+    पूर्ण
+    वापस translated_drq;
+पूर्ण
 
-#if 0
-int __init smcc669_init ( void )
-{
-    struct INODE *ip;
+#अगर 0
+पूर्णांक __init smcc669_init ( व्योम )
+अणु
+    काष्ठा INODE *ip;
 
     allocinode( smc_ddb.name, 1, &ip );
     ip->dva = &smc_ddb;
@@ -2336,107 +2337,107 @@ int __init smcc669_init ( void )
     ip->misc = 0;
     INODE_UNLOCK( ip );
 
-    return msg_success;
-}
+    वापस msg_success;
+पूर्ण
 
-int __init smcc669_open( struct FILE *fp, char *info, char *next, char *mode )
-{
-    struct INODE *ip;
+पूर्णांक __init smcc669_खोलो( काष्ठा खाता *fp, अक्षर *info, अक्षर *next, अक्षर *mode )
+अणु
+    काष्ठा INODE *ip;
 /*
-** Allow multiple readers but only one writer.  ip->misc keeps track
-** of the number of writers
+** Allow multiple पढ़ोers but only one ग_लिखोr.  ip->misc keeps track
+** of the number of ग_लिखोrs
 */
     ip = fp->ip;
     INODE_LOCK( ip );
-    if ( fp->mode & ATTR$M_WRITE ) {
-	if ( ip->misc ) {
+    अगर ( fp->mode & ATTR$M_WRITE ) अणु
+	अगर ( ip->misc ) अणु
 	    INODE_UNLOCK( ip );
-	    return msg_failure;	    /* too many writers */
-	}
+	    वापस msg_failure;	    /* too many ग_लिखोrs */
+	पूर्ण
 	ip->misc++;
-    }
+    पूर्ण
 /*
-** Treat the information field as a byte offset
+** Treat the inक्रमmation field as a byte offset
 */
     *fp->offset = xtoi( info );
     INODE_UNLOCK( ip );
 
-    return msg_success;
-}
+    वापस msg_success;
+पूर्ण
 
-int __init smcc669_close( struct FILE *fp )
-{
-    struct INODE *ip;
+पूर्णांक __init smcc669_बंद( काष्ठा खाता *fp )
+अणु
+    काष्ठा INODE *ip;
 
     ip = fp->ip;
-    if ( fp->mode & ATTR$M_WRITE ) {
+    अगर ( fp->mode & ATTR$M_WRITE ) अणु
 	INODE_LOCK( ip );
 	ip->misc--;
 	INODE_UNLOCK( ip );
-    }
-    return msg_success;
-}
+    पूर्ण
+    वापस msg_success;
+पूर्ण
 
-int __init smcc669_read( struct FILE *fp, int size, int number, unsigned char *buf )
-{
-    int i;
-    int length;
-    int nbytes;
-    struct INODE *ip;
+पूर्णांक __init smcc669_पढ़ो( काष्ठा खाता *fp, पूर्णांक size, पूर्णांक number, अचिन्हित अक्षर *buf )
+अणु
+    पूर्णांक i;
+    पूर्णांक length;
+    पूर्णांक nbytes;
+    काष्ठा INODE *ip;
 
 /*
-** Always access a byte at a time
+** Always access a byte at a समय
 */
     ip = fp->ip;
     length = size * number;
     nbytes = 0;
 
     SMC37c669_config_mode( TRUE );
-    for ( i = 0; i < length; i++ ) {
-	if ( !inrange( *fp->offset, 0, ip->len[0] ) ) 
-	    break;
-	*buf++ = SMC37c669_read_config( *fp->offset );
+    क्रम ( i = 0; i < length; i++ ) अणु
+	अगर ( !inrange( *fp->offset, 0, ip->len[0] ) ) 
+	    अवरोध;
+	*buf++ = SMC37c669_पढ़ो_config( *fp->offset );
 	*fp->offset += 1;
 	nbytes++;
-    }
+    पूर्ण
     SMC37c669_config_mode( FALSE );
-    return nbytes;
-}
+    वापस nbytes;
+पूर्ण
 
-int __init smcc669_write( struct FILE *fp, int size, int number, unsigned char *buf )
-{
-    int i;
-    int length;
-    int nbytes;
-    struct INODE *ip;
+पूर्णांक __init smcc669_ग_लिखो( काष्ठा खाता *fp, पूर्णांक size, पूर्णांक number, अचिन्हित अक्षर *buf )
+अणु
+    पूर्णांक i;
+    पूर्णांक length;
+    पूर्णांक nbytes;
+    काष्ठा INODE *ip;
 /*
-** Always access a byte at a time
+** Always access a byte at a समय
 */
     ip = fp->ip;
     length = size * number;
     nbytes = 0;
 
     SMC37c669_config_mode( TRUE );
-    for ( i = 0; i < length; i++ ) {
-	if ( !inrange( *fp->offset, 0, ip->len[0] ) ) 
-	    break;
-	SMC37c669_write_config( *fp->offset, *buf );
+    क्रम ( i = 0; i < length; i++ ) अणु
+	अगर ( !inrange( *fp->offset, 0, ip->len[0] ) ) 
+	    अवरोध;
+	SMC37c669_ग_लिखो_config( *fp->offset, *buf );
 	*fp->offset += 1;
 	buf++;
 	nbytes++;
-    }
+    पूर्ण
     SMC37c669_config_mode( FALSE );
-    return nbytes;
-}
-#endif
+    वापस nbytes;
+पूर्ण
+#पूर्ण_अगर
 
-void __init
-SMC37c669_dump_registers(void)
-{
-  int i;
-  for (i = 0; i <= 0x29; i++)
-    printk("-- CR%02x : %02x\n", i, SMC37c669_read_config(i));
-}
+व्योम __init
+SMC37c669_dump_रेजिस्टरs(व्योम)
+अणु
+  पूर्णांक i;
+  क्रम (i = 0; i <= 0x29; i++)
+    prपूर्णांकk("-- CR%02x : %02x\n", i, SMC37c669_पढ़ो_config(i));
+पूर्ण
 /*+
  * ============================================================================
  * = SMC_init - SMC37c669 Super I/O controller initialization                 =
@@ -2464,19 +2465,19 @@ SMC37c669_dump_registers(void)
  *      None
  *
  */
-void __init SMC669_Init ( int index )
-{
+व्योम __init SMC669_Init ( पूर्णांक index )
+अणु
     SMC37c669_CONFIG_REGS *SMC_base;
-    unsigned long flags;
+    अचिन्हित दीर्घ flags;
 
     local_irq_save(flags);
-    if ( ( SMC_base = SMC37c669_detect( index ) ) != NULL ) {
-#if SMC_DEBUG
+    अगर ( ( SMC_base = SMC37c669_detect( index ) ) != शून्य ) अणु
+#अगर SMC_DEBUG
 	SMC37c669_config_mode( TRUE );
-	SMC37c669_dump_registers( );
+	SMC37c669_dump_रेजिस्टरs( );
 	SMC37c669_config_mode( FALSE );
         SMC37c669_display_device_info( );
-#endif
+#पूर्ण_अगर
         SMC37c669_disable_device( SERIAL_0 );
         SMC37c669_configure_device(
             SERIAL_0,
@@ -2513,25 +2514,25 @@ void __init SMC669_Init ( int index )
         );
         SMC37c669_enable_device( FLOPPY_0 );
           
-	/* Wake up sometimes forgotten floppy, especially on DP264. */
+	/* Wake up someबार क्रमgotten floppy, especially on DP264. */
 	outb(0xc, 0x3f2);
 
         SMC37c669_disable_device( IDE_0 );
 
-#if SMC_DEBUG
+#अगर SMC_DEBUG
 	SMC37c669_config_mode( TRUE );
-	SMC37c669_dump_registers( );
+	SMC37c669_dump_रेजिस्टरs( );
 	SMC37c669_config_mode( FALSE );
         SMC37c669_display_device_info( );
-#endif
+#पूर्ण_अगर
 	local_irq_restore(flags);
-        printk( "SMC37c669 Super I/O Controller found @ 0x%p\n",
+        prपूर्णांकk( "SMC37c669 Super I/O Controller found @ 0x%p\n",
 		SMC_base );
-    }
-    else {
+    पूर्ण
+    अन्यथा अणु
 	local_irq_restore(flags);
-#if SMC_DEBUG
-        printk( "No SMC37c669 Super I/O Controller found\n" );
-#endif
-    }
-}
+#अगर SMC_DEBUG
+        prपूर्णांकk( "No SMC37c669 Super I/O Controller found\n" );
+#पूर्ण_अगर
+    पूर्ण
+पूर्ण

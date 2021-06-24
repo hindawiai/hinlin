@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-1.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-1.0+ */
 /*
  * Renesas USB driver
  *
@@ -6,53 +7,53 @@
  * Copyright (C) 2019 Renesas Electronics Corporation
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
-#ifndef RENESAS_USB_MOD_H
-#define RENESAS_USB_MOD_H
+#अगर_अघोषित RENESAS_USB_MOD_H
+#घोषणा RENESAS_USB_MOD_H
 
-#include <linux/spinlock.h>
-#include <linux/usb/renesas_usbhs.h>
-#include "common.h"
+#समावेश <linux/spinlock.h>
+#समावेश <linux/usb/renesas_usbhs.h>
+#समावेश "common.h"
 
 /*
- *	struct
+ *	काष्ठा
  */
-struct usbhs_irq_state {
-	u16 intsts0;
-	u16 intsts1;
+काष्ठा usbhs_irq_state अणु
+	u16 पूर्णांकsts0;
+	u16 पूर्णांकsts1;
 	u16 brdysts;
 	u16 nrdysts;
 	u16 bempsts;
-};
+पूर्ण;
 
-struct usbhs_mod {
-	char *name;
+काष्ठा usbhs_mod अणु
+	अक्षर *name;
 
 	/*
-	 * entry point from common.c
+	 * entry poपूर्णांक from common.c
 	 */
-	int (*start)(struct usbhs_priv *priv);
-	int (*stop)(struct usbhs_priv *priv);
+	पूर्णांक (*start)(काष्ठा usbhs_priv *priv);
+	पूर्णांक (*stop)(काष्ठा usbhs_priv *priv);
 
 	/*
 	 * INTSTS0
 	 */
 
 	/* DVST (DVSQ) */
-	int (*irq_dev_state)(struct usbhs_priv *priv,
-			     struct usbhs_irq_state *irq_state);
+	पूर्णांक (*irq_dev_state)(काष्ठा usbhs_priv *priv,
+			     काष्ठा usbhs_irq_state *irq_state);
 
 	/* CTRT (CTSQ) */
-	int (*irq_ctrl_stage)(struct usbhs_priv *priv,
-			      struct usbhs_irq_state *irq_state);
+	पूर्णांक (*irq_ctrl_stage)(काष्ठा usbhs_priv *priv,
+			      काष्ठा usbhs_irq_state *irq_state);
 
 	/* BEMP / BEMPSTS */
-	int (*irq_empty)(struct usbhs_priv *priv,
-			 struct usbhs_irq_state *irq_state);
+	पूर्णांक (*irq_empty)(काष्ठा usbhs_priv *priv,
+			 काष्ठा usbhs_irq_state *irq_state);
 	u16 irq_bempsts;
 
 	/* BRDY / BRDYSTS */
-	int (*irq_ready)(struct usbhs_priv *priv,
-			 struct usbhs_irq_state *irq_state);
+	पूर्णांक (*irq_पढ़ोy)(काष्ठा usbhs_priv *priv,
+			 काष्ठा usbhs_irq_state *irq_state);
 	u16 irq_brdysts;
 
 	/*
@@ -60,120 +61,120 @@ struct usbhs_mod {
 	 */
 
 	/* ATTCHE */
-	int (*irq_attch)(struct usbhs_priv *priv,
-			 struct usbhs_irq_state *irq_state);
+	पूर्णांक (*irq_attch)(काष्ठा usbhs_priv *priv,
+			 काष्ठा usbhs_irq_state *irq_state);
 
 	/* DTCHE */
-	int (*irq_dtch)(struct usbhs_priv *priv,
-			struct usbhs_irq_state *irq_state);
+	पूर्णांक (*irq_dtch)(काष्ठा usbhs_priv *priv,
+			काष्ठा usbhs_irq_state *irq_state);
 
 	/* SIGN */
-	int (*irq_sign)(struct usbhs_priv *priv,
-			struct usbhs_irq_state *irq_state);
+	पूर्णांक (*irq_sign)(काष्ठा usbhs_priv *priv,
+			काष्ठा usbhs_irq_state *irq_state);
 
 	/* SACK */
-	int (*irq_sack)(struct usbhs_priv *priv,
-			struct usbhs_irq_state *irq_state);
+	पूर्णांक (*irq_sack)(काष्ठा usbhs_priv *priv,
+			काष्ठा usbhs_irq_state *irq_state);
 
-	struct usbhs_priv *priv;
-};
+	काष्ठा usbhs_priv *priv;
+पूर्ण;
 
-struct usbhs_mod_info {
-	struct usbhs_mod *mod[USBHS_MAX];
-	struct usbhs_mod *curt; /* current mod */
+काष्ठा usbhs_mod_info अणु
+	काष्ठा usbhs_mod *mod[USBHS_MAX];
+	काष्ठा usbhs_mod *curt; /* current mod */
 
 	/*
 	 * INTSTS0 :: VBINT
 	 *
-	 * This function will be used as autonomy mode (runtime_pwctrl == 0)
-	 * when the platform doesn't have own get_vbus function.
+	 * This function will be used as स्वतःnomy mode (runसमय_pwctrl == 0)
+	 * when the platक्रमm करोesn't have own get_vbus function.
 	 *
 	 * This callback cannot be member of "struct usbhs_mod" because it
 	 * will be used even though host/gadget has not been selected.
 	 */
-	int (*irq_vbus)(struct usbhs_priv *priv,
-			struct usbhs_irq_state *irq_state);
+	पूर्णांक (*irq_vbus)(काष्ठा usbhs_priv *priv,
+			काष्ठा usbhs_irq_state *irq_state);
 
 	/*
-	 * This function will be used on any gadget mode. To simplify the code,
+	 * This function will be used on any gadget mode. To simplअगरy the code,
 	 * this member is in here.
 	 */
-	int (*get_vbus)(struct platform_device *pdev);
-};
+	पूर्णांक (*get_vbus)(काष्ठा platक्रमm_device *pdev);
+पूर्ण;
 
 /*
- *		for host/gadget module
+ *		क्रम host/gadget module
  */
-struct usbhs_mod *usbhs_mod_get(struct usbhs_priv *priv, int id);
-struct usbhs_mod *usbhs_mod_get_current(struct usbhs_priv *priv);
-void usbhs_mod_register(struct usbhs_priv *priv, struct usbhs_mod *usb, int id);
-int usbhs_mod_is_host(struct usbhs_priv *priv);
-int usbhs_mod_change(struct usbhs_priv *priv, int id);
-int usbhs_mod_probe(struct usbhs_priv *priv);
-void usbhs_mod_remove(struct usbhs_priv *priv);
+काष्ठा usbhs_mod *usbhs_mod_get(काष्ठा usbhs_priv *priv, पूर्णांक id);
+काष्ठा usbhs_mod *usbhs_mod_get_current(काष्ठा usbhs_priv *priv);
+व्योम usbhs_mod_रेजिस्टर(काष्ठा usbhs_priv *priv, काष्ठा usbhs_mod *usb, पूर्णांक id);
+पूर्णांक usbhs_mod_is_host(काष्ठा usbhs_priv *priv);
+पूर्णांक usbhs_mod_change(काष्ठा usbhs_priv *priv, पूर्णांक id);
+पूर्णांक usbhs_mod_probe(काष्ठा usbhs_priv *priv);
+व्योम usbhs_mod_हटाओ(काष्ठा usbhs_priv *priv);
 
-void usbhs_mod_autonomy_mode(struct usbhs_priv *priv);
-void usbhs_mod_non_autonomy_mode(struct usbhs_priv *priv);
+व्योम usbhs_mod_स्वतःnomy_mode(काष्ठा usbhs_priv *priv);
+व्योम usbhs_mod_non_स्वतःnomy_mode(काष्ठा usbhs_priv *priv);
 
 /*
  *		status functions
  */
-int usbhs_status_get_device_state(struct usbhs_irq_state *irq_state);
-int usbhs_status_get_ctrl_stage(struct usbhs_irq_state *irq_state);
+पूर्णांक usbhs_status_get_device_state(काष्ठा usbhs_irq_state *irq_state);
+पूर्णांक usbhs_status_get_ctrl_stage(काष्ठा usbhs_irq_state *irq_state);
 
 /*
  *		callback functions
  */
-void usbhs_irq_callback_update(struct usbhs_priv *priv, struct usbhs_mod *mod);
+व्योम usbhs_irq_callback_update(काष्ठा usbhs_priv *priv, काष्ठा usbhs_mod *mod);
 
 
-#define usbhs_mod_call(priv, func, param...)		\
-	({						\
-		struct usbhs_mod *mod;			\
+#घोषणा usbhs_mod_call(priv, func, param...)		\
+	(अणु						\
+		काष्ठा usbhs_mod *mod;			\
 		mod = usbhs_mod_get_current(priv);	\
 		!mod		? -ENODEV :		\
 		!mod->func	? 0 :			\
 		 mod->func(param);			\
-	})
+	पूर्ण)
 
-#define usbhs_priv_to_modinfo(priv) (&priv->mod_info)
-#define usbhs_mod_info_call(priv, func, param...)	\
-({							\
-	struct usbhs_mod_info *info;			\
+#घोषणा usbhs_priv_to_modinfo(priv) (&priv->mod_info)
+#घोषणा usbhs_mod_info_call(priv, func, param...)	\
+(अणु							\
+	काष्ठा usbhs_mod_info *info;			\
 	info = usbhs_priv_to_modinfo(priv);		\
 	!info->func ? 0 :				\
 	 info->func(param);				\
-})
+पूर्ण)
 
 /*
  * host / gadget control
  */
-#if	defined(CONFIG_USB_RENESAS_USBHS_HCD) || \
+#अगर	defined(CONFIG_USB_RENESAS_USBHS_HCD) || \
 	defined(CONFIG_USB_RENESAS_USBHS_HCD_MODULE)
-extern int usbhs_mod_host_probe(struct usbhs_priv *priv);
-extern int usbhs_mod_host_remove(struct usbhs_priv *priv);
-#else
-static inline int usbhs_mod_host_probe(struct usbhs_priv *priv)
-{
-	return 0;
-}
-static inline void usbhs_mod_host_remove(struct usbhs_priv *priv)
-{
-}
-#endif
+बाह्य पूर्णांक usbhs_mod_host_probe(काष्ठा usbhs_priv *priv);
+बाह्य पूर्णांक usbhs_mod_host_हटाओ(काष्ठा usbhs_priv *priv);
+#अन्यथा
+अटल अंतरभूत पूर्णांक usbhs_mod_host_probe(काष्ठा usbhs_priv *priv)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम usbhs_mod_host_हटाओ(काष्ठा usbhs_priv *priv)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#if	defined(CONFIG_USB_RENESAS_USBHS_UDC) || \
+#अगर	defined(CONFIG_USB_RENESAS_USBHS_UDC) || \
 	defined(CONFIG_USB_RENESAS_USBHS_UDC_MODULE)
-extern int usbhs_mod_gadget_probe(struct usbhs_priv *priv);
-extern void usbhs_mod_gadget_remove(struct usbhs_priv *priv);
-#else
-static inline int usbhs_mod_gadget_probe(struct usbhs_priv *priv)
-{
-	return 0;
-}
-static inline void usbhs_mod_gadget_remove(struct usbhs_priv *priv)
-{
-}
-#endif
+बाह्य पूर्णांक usbhs_mod_gadget_probe(काष्ठा usbhs_priv *priv);
+बाह्य व्योम usbhs_mod_gadget_हटाओ(काष्ठा usbhs_priv *priv);
+#अन्यथा
+अटल अंतरभूत पूर्णांक usbhs_mod_gadget_probe(काष्ठा usbhs_priv *priv)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम usbhs_mod_gadget_हटाओ(काष्ठा usbhs_priv *priv)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* RENESAS_USB_MOD_H */
+#पूर्ण_अगर /* RENESAS_USB_MOD_H */

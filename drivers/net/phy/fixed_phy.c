@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Fixed MDIO bus (MDIO bus emulation with fixed PHYs)
  *
@@ -8,145 +9,145 @@
  * Copyright (c) 2006-2007 MontaVista Software, Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/list.h>
-#include <linux/mii.h>
-#include <linux/phy.h>
-#include <linux/phy_fixed.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/gpio/consumer.h>
-#include <linux/idr.h>
-#include <linux/netdevice.h>
-#include <linux/linkmode.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/phy_fixed.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/linkmode.h>
 
-#include "swphy.h"
+#समावेश "swphy.h"
 
-struct fixed_mdio_bus {
-	struct mii_bus *mii_bus;
-	struct list_head phys;
-};
+काष्ठा fixed_mdio_bus अणु
+	काष्ठा mii_bus *mii_bus;
+	काष्ठा list_head phys;
+पूर्ण;
 
-struct fixed_phy {
-	int addr;
-	struct phy_device *phydev;
-	struct fixed_phy_status status;
+काष्ठा fixed_phy अणु
+	पूर्णांक addr;
+	काष्ठा phy_device *phydev;
+	काष्ठा fixed_phy_status status;
 	bool no_carrier;
-	int (*link_update)(struct net_device *, struct fixed_phy_status *);
-	struct list_head node;
-	struct gpio_desc *link_gpiod;
-};
+	पूर्णांक (*link_update)(काष्ठा net_device *, काष्ठा fixed_phy_status *);
+	काष्ठा list_head node;
+	काष्ठा gpio_desc *link_gpiod;
+पूर्ण;
 
-static struct platform_device *pdev;
-static struct fixed_mdio_bus platform_fmb = {
-	.phys = LIST_HEAD_INIT(platform_fmb.phys),
-};
+अटल काष्ठा platक्रमm_device *pdev;
+अटल काष्ठा fixed_mdio_bus platक्रमm_fmb = अणु
+	.phys = LIST_HEAD_INIT(platक्रमm_fmb.phys),
+पूर्ण;
 
-int fixed_phy_change_carrier(struct net_device *dev, bool new_carrier)
-{
-	struct fixed_mdio_bus *fmb = &platform_fmb;
-	struct phy_device *phydev = dev->phydev;
-	struct fixed_phy *fp;
+पूर्णांक fixed_phy_change_carrier(काष्ठा net_device *dev, bool new_carrier)
+अणु
+	काष्ठा fixed_mdio_bus *fmb = &platक्रमm_fmb;
+	काष्ठा phy_device *phydev = dev->phydev;
+	काष्ठा fixed_phy *fp;
 
-	if (!phydev || !phydev->mdio.bus)
-		return -EINVAL;
+	अगर (!phydev || !phydev->mdio.bus)
+		वापस -EINVAL;
 
-	list_for_each_entry(fp, &fmb->phys, node) {
-		if (fp->addr == phydev->mdio.addr) {
+	list_क्रम_each_entry(fp, &fmb->phys, node) अणु
+		अगर (fp->addr == phydev->mdio.addr) अणु
 			fp->no_carrier = !new_carrier;
-			return 0;
-		}
-	}
-	return -EINVAL;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(fixed_phy_change_carrier);
 
-static void fixed_phy_update(struct fixed_phy *fp)
-{
-	if (!fp->no_carrier && fp->link_gpiod)
+अटल व्योम fixed_phy_update(काष्ठा fixed_phy *fp)
+अणु
+	अगर (!fp->no_carrier && fp->link_gpiod)
 		fp->status.link = !!gpiod_get_value_cansleep(fp->link_gpiod);
-}
+पूर्ण
 
-static int fixed_mdio_read(struct mii_bus *bus, int phy_addr, int reg_num)
-{
-	struct fixed_mdio_bus *fmb = bus->priv;
-	struct fixed_phy *fp;
+अटल पूर्णांक fixed_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_addr, पूर्णांक reg_num)
+अणु
+	काष्ठा fixed_mdio_bus *fmb = bus->priv;
+	काष्ठा fixed_phy *fp;
 
-	list_for_each_entry(fp, &fmb->phys, node) {
-		if (fp->addr == phy_addr) {
-			struct fixed_phy_status state;
+	list_क्रम_each_entry(fp, &fmb->phys, node) अणु
+		अगर (fp->addr == phy_addr) अणु
+			काष्ठा fixed_phy_status state;
 
 			fp->status.link = !fp->no_carrier;
 
-			/* Issue callback if user registered it. */
-			if (fp->link_update)
+			/* Issue callback अगर user रेजिस्टरed it. */
+			अगर (fp->link_update)
 				fp->link_update(fp->phydev->attached_dev,
 						&fp->status);
 
-			/* Check the GPIO for change in status */
+			/* Check the GPIO क्रम change in status */
 			fixed_phy_update(fp);
 			state = fp->status;
 
-			return swphy_read_reg(reg_num, &state);
-		}
-	}
+			वापस swphy_पढ़ो_reg(reg_num, &state);
+		पूर्ण
+	पूर्ण
 
-	return 0xFFFF;
-}
+	वापस 0xFFFF;
+पूर्ण
 
-static int fixed_mdio_write(struct mii_bus *bus, int phy_addr, int reg_num,
+अटल पूर्णांक fixed_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_addr, पूर्णांक reg_num,
 			    u16 val)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
 /*
- * If something weird is required to be done with link/speed,
+ * If something weird is required to be करोne with link/speed,
  * network driver is able to assign a function to implement this.
- * May be useful for PHY's that need to be software-driven.
+ * May be useful क्रम PHY's that need to be software-driven.
  */
-int fixed_phy_set_link_update(struct phy_device *phydev,
-			      int (*link_update)(struct net_device *,
-						 struct fixed_phy_status *))
-{
-	struct fixed_mdio_bus *fmb = &platform_fmb;
-	struct fixed_phy *fp;
+पूर्णांक fixed_phy_set_link_update(काष्ठा phy_device *phydev,
+			      पूर्णांक (*link_update)(काष्ठा net_device *,
+						 काष्ठा fixed_phy_status *))
+अणु
+	काष्ठा fixed_mdio_bus *fmb = &platक्रमm_fmb;
+	काष्ठा fixed_phy *fp;
 
-	if (!phydev || !phydev->mdio.bus)
-		return -EINVAL;
+	अगर (!phydev || !phydev->mdio.bus)
+		वापस -EINVAL;
 
-	list_for_each_entry(fp, &fmb->phys, node) {
-		if (fp->addr == phydev->mdio.addr) {
+	list_क्रम_each_entry(fp, &fmb->phys, node) अणु
+		अगर (fp->addr == phydev->mdio.addr) अणु
 			fp->link_update = link_update;
 			fp->phydev = phydev;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 EXPORT_SYMBOL_GPL(fixed_phy_set_link_update);
 
-static int fixed_phy_add_gpiod(unsigned int irq, int phy_addr,
-			       struct fixed_phy_status *status,
-			       struct gpio_desc *gpiod)
-{
-	int ret;
-	struct fixed_mdio_bus *fmb = &platform_fmb;
-	struct fixed_phy *fp;
+अटल पूर्णांक fixed_phy_add_gpiod(अचिन्हित पूर्णांक irq, पूर्णांक phy_addr,
+			       काष्ठा fixed_phy_status *status,
+			       काष्ठा gpio_desc *gpiod)
+अणु
+	पूर्णांक ret;
+	काष्ठा fixed_mdio_bus *fmb = &platक्रमm_fmb;
+	काष्ठा fixed_phy *fp;
 
 	ret = swphy_validate_state(status);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	fp = kzalloc(sizeof(*fp), GFP_KERNEL);
-	if (!fp)
-		return -ENOMEM;
+	fp = kzalloc(माप(*fp), GFP_KERNEL);
+	अगर (!fp)
+		वापस -ENOMEM;
 
-	if (irq != PHY_POLL)
+	अगर (irq != PHY_POLL)
 		fmb->mii_bus->irq[phy_addr] = irq;
 
 	fp->addr = phy_addr;
@@ -157,47 +158,47 @@ static int fixed_phy_add_gpiod(unsigned int irq, int phy_addr,
 
 	list_add_tail(&fp->node, &fmb->phys);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int fixed_phy_add(unsigned int irq, int phy_addr,
-		  struct fixed_phy_status *status) {
+पूर्णांक fixed_phy_add(अचिन्हित पूर्णांक irq, पूर्णांक phy_addr,
+		  काष्ठा fixed_phy_status *status) अणु
 
-	return fixed_phy_add_gpiod(irq, phy_addr, status, NULL);
-}
+	वापस fixed_phy_add_gpiod(irq, phy_addr, status, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(fixed_phy_add);
 
-static DEFINE_IDA(phy_fixed_ida);
+अटल DEFINE_IDA(phy_fixed_ida);
 
-static void fixed_phy_del(int phy_addr)
-{
-	struct fixed_mdio_bus *fmb = &platform_fmb;
-	struct fixed_phy *fp, *tmp;
+अटल व्योम fixed_phy_del(पूर्णांक phy_addr)
+अणु
+	काष्ठा fixed_mdio_bus *fmb = &platक्रमm_fmb;
+	काष्ठा fixed_phy *fp, *पंचांगp;
 
-	list_for_each_entry_safe(fp, tmp, &fmb->phys, node) {
-		if (fp->addr == phy_addr) {
+	list_क्रम_each_entry_safe(fp, पंचांगp, &fmb->phys, node) अणु
+		अगर (fp->addr == phy_addr) अणु
 			list_del(&fp->node);
-			if (fp->link_gpiod)
+			अगर (fp->link_gpiod)
 				gpiod_put(fp->link_gpiod);
-			kfree(fp);
-			ida_simple_remove(&phy_fixed_ida, phy_addr);
-			return;
-		}
-	}
-}
+			kमुक्त(fp);
+			ida_simple_हटाओ(&phy_fixed_ida, phy_addr);
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_OF_GPIO
-static struct gpio_desc *fixed_phy_get_gpiod(struct device_node *np)
-{
-	struct device_node *fixed_link_node;
-	struct gpio_desc *gpiod;
+#अगर_घोषित CONFIG_OF_GPIO
+अटल काष्ठा gpio_desc *fixed_phy_get_gpiod(काष्ठा device_node *np)
+अणु
+	काष्ठा device_node *fixed_link_node;
+	काष्ठा gpio_desc *gpiod;
 
-	if (!np)
-		return NULL;
+	अगर (!np)
+		वापस शून्य;
 
 	fixed_link_node = of_get_child_by_name(np, "fixed-link");
-	if (!fixed_link_node)
-		return NULL;
+	अगर (!fixed_link_node)
+		वापस शून्य;
 
 	/*
 	 * As the fixed link is just a device tree node without any
@@ -206,184 +207,184 @@ static struct gpio_desc *fixed_phy_get_gpiod(struct device_node *np)
 	 */
 	gpiod = fwnode_gpiod_get_index(of_fwnode_handle(fixed_link_node),
 				       "link", 0, GPIOD_IN, "mdio");
-	if (IS_ERR(gpiod) && PTR_ERR(gpiod) != -EPROBE_DEFER) {
-		if (PTR_ERR(gpiod) != -ENOENT)
+	अगर (IS_ERR(gpiod) && PTR_ERR(gpiod) != -EPROBE_DEFER) अणु
+		अगर (PTR_ERR(gpiod) != -ENOENT)
 			pr_err("error getting GPIO for fixed link %pOF, proceed without\n",
 			       fixed_link_node);
-		gpiod = NULL;
-	}
+		gpiod = शून्य;
+	पूर्ण
 	of_node_put(fixed_link_node);
 
-	return gpiod;
-}
-#else
-static struct gpio_desc *fixed_phy_get_gpiod(struct device_node *np)
-{
-	return NULL;
-}
-#endif
+	वापस gpiod;
+पूर्ण
+#अन्यथा
+अटल काष्ठा gpio_desc *fixed_phy_get_gpiod(काष्ठा device_node *np)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static struct phy_device *__fixed_phy_register(unsigned int irq,
-					       struct fixed_phy_status *status,
-					       struct device_node *np,
-					       struct gpio_desc *gpiod)
-{
-	struct fixed_mdio_bus *fmb = &platform_fmb;
-	struct phy_device *phy;
-	int phy_addr;
-	int ret;
+अटल काष्ठा phy_device *__fixed_phy_रेजिस्टर(अचिन्हित पूर्णांक irq,
+					       काष्ठा fixed_phy_status *status,
+					       काष्ठा device_node *np,
+					       काष्ठा gpio_desc *gpiod)
+अणु
+	काष्ठा fixed_mdio_bus *fmb = &platक्रमm_fmb;
+	काष्ठा phy_device *phy;
+	पूर्णांक phy_addr;
+	पूर्णांक ret;
 
-	if (!fmb->mii_bus || fmb->mii_bus->state != MDIOBUS_REGISTERED)
-		return ERR_PTR(-EPROBE_DEFER);
+	अगर (!fmb->mii_bus || fmb->mii_bus->state != MDIOBUS_REGISTERED)
+		वापस ERR_PTR(-EPROBE_DEFER);
 
-	/* Check if we have a GPIO associated with this fixed phy */
-	if (!gpiod) {
+	/* Check अगर we have a GPIO associated with this fixed phy */
+	अगर (!gpiod) अणु
 		gpiod = fixed_phy_get_gpiod(np);
-		if (IS_ERR(gpiod))
-			return ERR_CAST(gpiod);
-	}
+		अगर (IS_ERR(gpiod))
+			वापस ERR_CAST(gpiod);
+	पूर्ण
 
 	/* Get the next available PHY address, up to PHY_MAX_ADDR */
 	phy_addr = ida_simple_get(&phy_fixed_ida, 0, PHY_MAX_ADDR, GFP_KERNEL);
-	if (phy_addr < 0)
-		return ERR_PTR(phy_addr);
+	अगर (phy_addr < 0)
+		वापस ERR_PTR(phy_addr);
 
 	ret = fixed_phy_add_gpiod(irq, phy_addr, status, gpiod);
-	if (ret < 0) {
-		ida_simple_remove(&phy_fixed_ida, phy_addr);
-		return ERR_PTR(ret);
-	}
+	अगर (ret < 0) अणु
+		ida_simple_हटाओ(&phy_fixed_ida, phy_addr);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	phy = get_phy_device(fmb->mii_bus, phy_addr, false);
-	if (IS_ERR(phy)) {
+	अगर (IS_ERR(phy)) अणु
 		fixed_phy_del(phy_addr);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	/* propagate the fixed link values to struct phy_device */
+	/* propagate the fixed link values to काष्ठा phy_device */
 	phy->link = status->link;
-	if (status->link) {
+	अगर (status->link) अणु
 		phy->speed = status->speed;
 		phy->duplex = status->duplex;
-		phy->pause = status->pause;
-		phy->asym_pause = status->asym_pause;
-	}
+		phy->छोड़ो = status->छोड़ो;
+		phy->asym_छोड़ो = status->asym_छोड़ो;
+	पूर्ण
 
 	of_node_get(np);
 	phy->mdio.dev.of_node = np;
-	phy->is_pseudo_fixed_link = true;
+	phy->is_pseuकरो_fixed_link = true;
 
-	switch (status->speed) {
-	case SPEED_1000:
+	चयन (status->speed) अणु
+	हाल SPEED_1000:
 		linkmode_set_bit(ETHTOOL_LINK_MODE_1000baseT_Half_BIT,
 				 phy->supported);
 		linkmode_set_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 				 phy->supported);
 		fallthrough;
-	case SPEED_100:
+	हाल SPEED_100:
 		linkmode_set_bit(ETHTOOL_LINK_MODE_100baseT_Half_BIT,
 				 phy->supported);
 		linkmode_set_bit(ETHTOOL_LINK_MODE_100baseT_Full_BIT,
 				 phy->supported);
 		fallthrough;
-	case SPEED_10:
-	default:
+	हाल SPEED_10:
+	शेष:
 		linkmode_set_bit(ETHTOOL_LINK_MODE_10baseT_Half_BIT,
 				 phy->supported);
 		linkmode_set_bit(ETHTOOL_LINK_MODE_10baseT_Full_BIT,
 				 phy->supported);
-	}
+	पूर्ण
 
 	phy_advertise_supported(phy);
 
-	ret = phy_device_register(phy);
-	if (ret) {
-		phy_device_free(phy);
+	ret = phy_device_रेजिस्टर(phy);
+	अगर (ret) अणु
+		phy_device_मुक्त(phy);
 		of_node_put(np);
 		fixed_phy_del(phy_addr);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return phy;
-}
+	वापस phy;
+पूर्ण
 
-struct phy_device *fixed_phy_register(unsigned int irq,
-				      struct fixed_phy_status *status,
-				      struct device_node *np)
-{
-	return __fixed_phy_register(irq, status, np, NULL);
-}
-EXPORT_SYMBOL_GPL(fixed_phy_register);
+काष्ठा phy_device *fixed_phy_रेजिस्टर(अचिन्हित पूर्णांक irq,
+				      काष्ठा fixed_phy_status *status,
+				      काष्ठा device_node *np)
+अणु
+	वापस __fixed_phy_रेजिस्टर(irq, status, np, शून्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(fixed_phy_रेजिस्टर);
 
-struct phy_device *
-fixed_phy_register_with_gpiod(unsigned int irq,
-			      struct fixed_phy_status *status,
-			      struct gpio_desc *gpiod)
-{
-	return __fixed_phy_register(irq, status, NULL, gpiod);
-}
-EXPORT_SYMBOL_GPL(fixed_phy_register_with_gpiod);
+काष्ठा phy_device *
+fixed_phy_रेजिस्टर_with_gpiod(अचिन्हित पूर्णांक irq,
+			      काष्ठा fixed_phy_status *status,
+			      काष्ठा gpio_desc *gpiod)
+अणु
+	वापस __fixed_phy_रेजिस्टर(irq, status, शून्य, gpiod);
+पूर्ण
+EXPORT_SYMBOL_GPL(fixed_phy_रेजिस्टर_with_gpiod);
 
-void fixed_phy_unregister(struct phy_device *phy)
-{
-	phy_device_remove(phy);
+व्योम fixed_phy_unरेजिस्टर(काष्ठा phy_device *phy)
+अणु
+	phy_device_हटाओ(phy);
 	of_node_put(phy->mdio.dev.of_node);
 	fixed_phy_del(phy->mdio.addr);
-}
-EXPORT_SYMBOL_GPL(fixed_phy_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(fixed_phy_unरेजिस्टर);
 
-static int __init fixed_mdio_bus_init(void)
-{
-	struct fixed_mdio_bus *fmb = &platform_fmb;
-	int ret;
+अटल पूर्णांक __init fixed_mdio_bus_init(व्योम)
+अणु
+	काष्ठा fixed_mdio_bus *fmb = &platक्रमm_fmb;
+	पूर्णांक ret;
 
-	pdev = platform_device_register_simple("Fixed MDIO bus", 0, NULL, 0);
-	if (IS_ERR(pdev))
-		return PTR_ERR(pdev);
+	pdev = platक्रमm_device_रेजिस्टर_simple("Fixed MDIO bus", 0, शून्य, 0);
+	अगर (IS_ERR(pdev))
+		वापस PTR_ERR(pdev);
 
 	fmb->mii_bus = mdiobus_alloc();
-	if (fmb->mii_bus == NULL) {
+	अगर (fmb->mii_bus == शून्य) अणु
 		ret = -ENOMEM;
-		goto err_mdiobus_reg;
-	}
+		जाओ err_mdiobus_reg;
+	पूर्ण
 
-	snprintf(fmb->mii_bus->id, MII_BUS_ID_SIZE, "fixed-0");
+	snम_लिखो(fmb->mii_bus->id, MII_BUS_ID_SIZE, "fixed-0");
 	fmb->mii_bus->name = "Fixed MDIO Bus";
 	fmb->mii_bus->priv = fmb;
 	fmb->mii_bus->parent = &pdev->dev;
-	fmb->mii_bus->read = &fixed_mdio_read;
-	fmb->mii_bus->write = &fixed_mdio_write;
+	fmb->mii_bus->पढ़ो = &fixed_mdio_पढ़ो;
+	fmb->mii_bus->ग_लिखो = &fixed_mdio_ग_लिखो;
 
-	ret = mdiobus_register(fmb->mii_bus);
-	if (ret)
-		goto err_mdiobus_alloc;
+	ret = mdiobus_रेजिस्टर(fmb->mii_bus);
+	अगर (ret)
+		जाओ err_mdiobus_alloc;
 
-	return 0;
+	वापस 0;
 
 err_mdiobus_alloc:
-	mdiobus_free(fmb->mii_bus);
+	mdiobus_मुक्त(fmb->mii_bus);
 err_mdiobus_reg:
-	platform_device_unregister(pdev);
-	return ret;
-}
+	platक्रमm_device_unरेजिस्टर(pdev);
+	वापस ret;
+पूर्ण
 module_init(fixed_mdio_bus_init);
 
-static void __exit fixed_mdio_bus_exit(void)
-{
-	struct fixed_mdio_bus *fmb = &platform_fmb;
-	struct fixed_phy *fp, *tmp;
+अटल व्योम __निकास fixed_mdio_bus_निकास(व्योम)
+अणु
+	काष्ठा fixed_mdio_bus *fmb = &platक्रमm_fmb;
+	काष्ठा fixed_phy *fp, *पंचांगp;
 
-	mdiobus_unregister(fmb->mii_bus);
-	mdiobus_free(fmb->mii_bus);
-	platform_device_unregister(pdev);
+	mdiobus_unरेजिस्टर(fmb->mii_bus);
+	mdiobus_मुक्त(fmb->mii_bus);
+	platक्रमm_device_unरेजिस्टर(pdev);
 
-	list_for_each_entry_safe(fp, tmp, &fmb->phys, node) {
+	list_क्रम_each_entry_safe(fp, पंचांगp, &fmb->phys, node) अणु
 		list_del(&fp->node);
-		kfree(fp);
-	}
+		kमुक्त(fp);
+	पूर्ण
 	ida_destroy(&phy_fixed_ida);
-}
-module_exit(fixed_mdio_bus_exit);
+पूर्ण
+module_निकास(fixed_mdio_bus_निकास);
 
 MODULE_DESCRIPTION("Fixed MDIO bus (MDIO bus emulation with fixed PHYs)");
 MODULE_AUTHOR("Vitaly Bordug");

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel IXP4xx OF physmap add-on
  * Copyright (C) 2019 Linus Walleij <linus.walleij@linaro.org>
@@ -9,124 +10,124 @@
  * Copyright (C) 2002 Intel Corporation
  * Copyright (C) 2003-2004 MontaVista Software, Inc.
  */
-#include <linux/export.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/mtd/map.h>
-#include <linux/mtd/xip.h>
-#include "physmap-ixp4xx.h"
+#समावेश <linux/export.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/mtd/map.h>
+#समावेश <linux/mtd/xip.h>
+#समावेश "physmap-ixp4xx.h"
 
 /*
- * Read/write a 16 bit word from flash address 'addr'.
+ * Read/ग_लिखो a 16 bit word from flash address 'addr'.
  *
  * When the cpu is in little-endian mode it swizzles the address lines
- * ('address coherency') so we need to undo the swizzling to ensure commands
+ * ('address coherency') so we need to unकरो the swizzling to ensure commands
  * and the like end up on the correct flash address.
  *
  * To further complicate matters, due to the way the expansion bus controller
- * handles 32 bit reads, the byte stream ABCD is stored on the flash as:
+ * handles 32 bit पढ़ोs, the byte stream ABCD is stored on the flash as:
  *     D15    D0
  *     +---+---+
  *     | A | B | 0
  *     +---+---+
  *     | C | D | 2
  *     +---+---+
- * This means that on LE systems each 16 bit word must be swapped. Note that
+ * This means that on LE प्रणालीs each 16 bit word must be swapped. Note that
  * this requires CONFIG_MTD_CFI_BE_BYTE_SWAP to be enabled to 'unswap' the CFI
  * data and other flash commands which are always in D7-D0.
  */
-#ifndef CONFIG_CPU_BIG_ENDIAN
+#अगर_अघोषित CONFIG_CPU_BIG_ENDIAN
 
-static inline u16 flash_read16(void __iomem *addr)
-{
-	return be16_to_cpu(__raw_readw((void __iomem *)((unsigned long)addr ^ 0x2)));
-}
+अटल अंतरभूत u16 flash_पढ़ो16(व्योम __iomem *addr)
+अणु
+	वापस be16_to_cpu(__raw_पढ़ोw((व्योम __iomem *)((अचिन्हित दीर्घ)addr ^ 0x2)));
+पूर्ण
 
-static inline void flash_write16(u16 d, void __iomem *addr)
-{
-	__raw_writew(cpu_to_be16(d), (void __iomem *)((unsigned long)addr ^ 0x2));
-}
+अटल अंतरभूत व्योम flash_ग_लिखो16(u16 d, व्योम __iomem *addr)
+अणु
+	__raw_ग_लिखोw(cpu_to_be16(d), (व्योम __iomem *)((अचिन्हित दीर्घ)addr ^ 0x2));
+पूर्ण
 
-#define	BYTE0(h)	((h) & 0xFF)
-#define	BYTE1(h)	(((h) >> 8) & 0xFF)
+#घोषणा	BYTE0(h)	((h) & 0xFF)
+#घोषणा	BYTE1(h)	(((h) >> 8) & 0xFF)
 
-#else
+#अन्यथा
 
-static inline u16 flash_read16(const void __iomem *addr)
-{
-	return __raw_readw(addr);
-}
+अटल अंतरभूत u16 flash_पढ़ो16(स्थिर व्योम __iomem *addr)
+अणु
+	वापस __raw_पढ़ोw(addr);
+पूर्ण
 
-static inline void flash_write16(u16 d, void __iomem *addr)
-{
-	__raw_writew(d, addr);
-}
+अटल अंतरभूत व्योम flash_ग_लिखो16(u16 d, व्योम __iomem *addr)
+अणु
+	__raw_ग_लिखोw(d, addr);
+पूर्ण
 
-#define	BYTE0(h)	(((h) >> 8) & 0xFF)
-#define	BYTE1(h)	((h) & 0xFF)
-#endif
+#घोषणा	BYTE0(h)	(((h) >> 8) & 0xFF)
+#घोषणा	BYTE1(h)	((h) & 0xFF)
+#पूर्ण_अगर
 
-static map_word ixp4xx_read16(struct map_info *map, unsigned long ofs)
-{
+अटल map_word ixp4xx_पढ़ो16(काष्ठा map_info *map, अचिन्हित दीर्घ ofs)
+अणु
 	map_word val;
 
-	val.x[0] = flash_read16(map->virt + ofs);
-	return val;
-}
+	val.x[0] = flash_पढ़ो16(map->virt + ofs);
+	वापस val;
+पूर्ण
 
 /*
  * The IXP4xx expansion bus only allows 16-bit wide acceses
  * when attached to a 16-bit wide device (such as the 28F128J3A),
- * so we can't just memcpy_fromio().
+ * so we can't just स_नकल_fromio().
  */
-static void ixp4xx_copy_from(struct map_info *map, void *to,
-			     unsigned long from, ssize_t len)
-{
+अटल व्योम ixp4xx_copy_from(काष्ठा map_info *map, व्योम *to,
+			     अचिन्हित दीर्घ from, sमाप_प्रकार len)
+अणु
 	u8 *dest = (u8 *) to;
-	void __iomem *src = map->virt + from;
+	व्योम __iomem *src = map->virt + from;
 
-	if (len <= 0)
-		return;
+	अगर (len <= 0)
+		वापस;
 
-	if (from & 1) {
-		*dest++ = BYTE1(flash_read16(src-1));
+	अगर (from & 1) अणु
+		*dest++ = BYTE1(flash_पढ़ो16(src-1));
 		src++;
 		--len;
-	}
+	पूर्ण
 
-	while (len >= 2) {
-		u16 data = flash_read16(src);
+	जबतक (len >= 2) अणु
+		u16 data = flash_पढ़ो16(src);
 		*dest++ = BYTE0(data);
 		*dest++ = BYTE1(data);
 		src += 2;
 		len -= 2;
-	}
+	पूर्ण
 
-	if (len > 0)
-		*dest++ = BYTE0(flash_read16(src));
-}
+	अगर (len > 0)
+		*dest++ = BYTE0(flash_पढ़ो16(src));
+पूर्ण
 
-static void ixp4xx_write16(struct map_info *map, map_word d, unsigned long adr)
-{
-	flash_write16(d.x[0], map->virt + adr);
-}
+अटल व्योम ixp4xx_ग_लिखो16(काष्ठा map_info *map, map_word d, अचिन्हित दीर्घ adr)
+अणु
+	flash_ग_लिखो16(d.x[0], map->virt + adr);
+पूर्ण
 
-int of_flash_probe_ixp4xx(struct platform_device *pdev,
-			  struct device_node *np,
-			  struct map_info *map)
-{
-	struct device *dev = &pdev->dev;
+पूर्णांक of_flash_probe_ixp4xx(काष्ठा platक्रमm_device *pdev,
+			  काष्ठा device_node *np,
+			  काष्ठा map_info *map)
+अणु
+	काष्ठा device *dev = &pdev->dev;
 
-	/* Multiplatform guard */
-	if (!of_device_is_compatible(np, "intel,ixp4xx-flash"))
-		return 0;
+	/* Multiplatक्रमm guard */
+	अगर (!of_device_is_compatible(np, "intel,ixp4xx-flash"))
+		वापस 0;
 
-	map->read = ixp4xx_read16;
-	map->write = ixp4xx_write16;
+	map->पढ़ो = ixp4xx_पढ़ो16;
+	map->ग_लिखो = ixp4xx_ग_लिखो16;
 	map->copy_from = ixp4xx_copy_from;
-	map->copy_to = NULL;
+	map->copy_to = शून्य;
 
 	dev_info(dev, "initialized Intel IXP4xx-specific physmap control\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

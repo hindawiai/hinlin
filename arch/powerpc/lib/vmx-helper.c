@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) IBM Corporation, 2011
  *
  * Authors: Sukadev Bhattiprolu <sukadev@linux.vnet.ibm.com>
- *          Anton Blanchard <anton@au.ibm.com>
+ *          Anton Blanअक्षरd <anton@au.ibm.com>
  */
-#include <linux/uaccess.h>
-#include <linux/hardirq.h>
-#include <asm/switch_to.h>
-#include <asm/asm-prototypes.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/hardirq.h>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <यंत्र/यंत्र-prototypes.h>
 
-int enter_vmx_usercopy(void)
-{
-	if (in_interrupt())
-		return 0;
+पूर्णांक enter_vmx_usercopy(व्योम)
+अणु
+	अगर (in_पूर्णांकerrupt())
+		वापस 0;
 
 	preempt_disable();
 	/*
@@ -26,41 +27,41 @@ int enter_vmx_usercopy(void)
 
 	enable_kernel_altivec();
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * This function must return 0 because we tail call optimise when calling
- * from __copy_tofrom_user_power7 which returns 0 on success.
+ * This function must वापस 0 because we tail call optimise when calling
+ * from __copy_tofrom_user_घातer7 which वापसs 0 on success.
  */
-int exit_vmx_usercopy(void)
-{
+पूर्णांक निकास_vmx_usercopy(व्योम)
+अणु
 	disable_kernel_altivec();
 	pagefault_enable();
 	preempt_enable();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int enter_vmx_ops(void)
-{
-	if (in_interrupt())
-		return 0;
+पूर्णांक enter_vmx_ops(व्योम)
+अणु
+	अगर (in_पूर्णांकerrupt())
+		वापस 0;
 
 	preempt_disable();
 
 	enable_kernel_altivec();
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * All calls to this function will be optimised into tail calls. We are
- * passed a pointer to the destination which we return as required by a
- * memcpy implementation.
+ * All calls to this function will be optimised पूर्णांकo tail calls. We are
+ * passed a poपूर्णांकer to the destination which we वापस as required by a
+ * स_नकल implementation.
  */
-void *exit_vmx_ops(void *dest)
-{
+व्योम *निकास_vmx_ops(व्योम *dest)
+अणु
 	disable_kernel_altivec();
 	preempt_enable();
-	return dest;
-}
+	वापस dest;
+पूर्ण

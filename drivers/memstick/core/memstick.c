@@ -1,659 +1,660 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Sony MemoryStick support
  *
  *  Copyright (C) 2007 Alex Dubov <oakad@yahoo.com>
  *
- * Special thanks to Carlos Corbacho for providing various MemoryStick cards
+ * Special thanks to Carlos Corbacho क्रम providing various MemoryStick cards
  * that made this driver possible.
  */
 
-#include <linux/memstick.h>
-#include <linux/idr.h>
-#include <linux/fs.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/memstick.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pm_runसमय.स>
 
-#define DRIVER_NAME "memstick"
+#घोषणा DRIVER_NAME "memstick"
 
-static unsigned int cmd_retries = 3;
-module_param(cmd_retries, uint, 0644);
+अटल अचिन्हित पूर्णांक cmd_retries = 3;
+module_param(cmd_retries, uपूर्णांक, 0644);
 
-static struct workqueue_struct *workqueue;
-static DEFINE_IDR(memstick_host_idr);
-static DEFINE_SPINLOCK(memstick_host_lock);
+अटल काष्ठा workqueue_काष्ठा *workqueue;
+अटल DEFINE_IDR(memstick_host_idr);
+अटल DEFINE_SPINLOCK(memstick_host_lock);
 
-static int memstick_dev_match(struct memstick_dev *card,
-			      struct memstick_device_id *id)
-{
-	if (id->match_flags & MEMSTICK_MATCH_ALL) {
-		if ((id->type == card->id.type)
+अटल पूर्णांक memstick_dev_match(काष्ठा memstick_dev *card,
+			      काष्ठा memstick_device_id *id)
+अणु
+	अगर (id->match_flags & MEMSTICK_MATCH_ALL) अणु
+		अगर ((id->type == card->id.type)
 		    && (id->category == card->id.category)
 		    && (id->class == card->id.class))
-			return 1;
-	}
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memstick_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct memstick_dev *card = container_of(dev, struct memstick_dev,
+अटल पूर्णांक memstick_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा memstick_dev *card = container_of(dev, काष्ठा memstick_dev,
 						 dev);
-	struct memstick_driver *ms_drv = container_of(drv,
-						      struct memstick_driver,
+	काष्ठा memstick_driver *ms_drv = container_of(drv,
+						      काष्ठा memstick_driver,
 						      driver);
-	struct memstick_device_id *ids = ms_drv->id_table;
+	काष्ठा memstick_device_id *ids = ms_drv->id_table;
 
-	if (ids) {
-		while (ids->match_flags) {
-			if (memstick_dev_match(card, ids))
-				return 1;
+	अगर (ids) अणु
+		जबतक (ids->match_flags) अणु
+			अगर (memstick_dev_match(card, ids))
+				वापस 1;
 			++ids;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int memstick_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct memstick_dev *card = container_of(dev, struct memstick_dev,
+अटल पूर्णांक memstick_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा memstick_dev *card = container_of(dev, काष्ठा memstick_dev,
 						  dev);
 
-	if (add_uevent_var(env, "MEMSTICK_TYPE=%02X", card->id.type))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "MEMSTICK_TYPE=%02X", card->id.type))
+		वापस -ENOMEM;
 
-	if (add_uevent_var(env, "MEMSTICK_CATEGORY=%02X", card->id.category))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "MEMSTICK_CATEGORY=%02X", card->id.category))
+		वापस -ENOMEM;
 
-	if (add_uevent_var(env, "MEMSTICK_CLASS=%02X", card->id.class))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "MEMSTICK_CLASS=%02X", card->id.class))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memstick_device_probe(struct device *dev)
-{
-	struct memstick_dev *card = container_of(dev, struct memstick_dev,
+अटल पूर्णांक memstick_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा memstick_dev *card = container_of(dev, काष्ठा memstick_dev,
 						 dev);
-	struct memstick_driver *drv = container_of(dev->driver,
-						   struct memstick_driver,
+	काष्ठा memstick_driver *drv = container_of(dev->driver,
+						   काष्ठा memstick_driver,
 						   driver);
-	int rc = -ENODEV;
+	पूर्णांक rc = -ENODEV;
 
-	if (dev->driver && drv->probe) {
+	अगर (dev->driver && drv->probe) अणु
 		rc = drv->probe(card);
-		if (!rc)
+		अगर (!rc)
 			get_device(dev);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int memstick_device_remove(struct device *dev)
-{
-	struct memstick_dev *card = container_of(dev, struct memstick_dev,
+अटल पूर्णांक memstick_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा memstick_dev *card = container_of(dev, काष्ठा memstick_dev,
 						  dev);
-	struct memstick_driver *drv = container_of(dev->driver,
-						   struct memstick_driver,
+	काष्ठा memstick_driver *drv = container_of(dev->driver,
+						   काष्ठा memstick_driver,
 						   driver);
 
-	if (dev->driver && drv->remove) {
-		drv->remove(card);
-		card->dev.driver = NULL;
-	}
+	अगर (dev->driver && drv->हटाओ) अणु
+		drv->हटाओ(card);
+		card->dev.driver = शून्य;
+	पूर्ण
 
 	put_device(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int memstick_device_suspend(struct device *dev, pm_message_t state)
-{
-	struct memstick_dev *card = container_of(dev, struct memstick_dev,
+अटल पूर्णांक memstick_device_suspend(काष्ठा device *dev, pm_message_t state)
+अणु
+	काष्ठा memstick_dev *card = container_of(dev, काष्ठा memstick_dev,
 						  dev);
-	struct memstick_driver *drv = container_of(dev->driver,
-						   struct memstick_driver,
+	काष्ठा memstick_driver *drv = container_of(dev->driver,
+						   काष्ठा memstick_driver,
 						   driver);
 
-	if (dev->driver && drv->suspend)
-		return drv->suspend(card, state);
-	return 0;
-}
+	अगर (dev->driver && drv->suspend)
+		वापस drv->suspend(card, state);
+	वापस 0;
+पूर्ण
 
-static int memstick_device_resume(struct device *dev)
-{
-	struct memstick_dev *card = container_of(dev, struct memstick_dev,
+अटल पूर्णांक memstick_device_resume(काष्ठा device *dev)
+अणु
+	काष्ठा memstick_dev *card = container_of(dev, काष्ठा memstick_dev,
 						  dev);
-	struct memstick_driver *drv = container_of(dev->driver,
-						   struct memstick_driver,
+	काष्ठा memstick_driver *drv = container_of(dev->driver,
+						   काष्ठा memstick_driver,
 						   driver);
 
-	if (dev->driver && drv->resume)
-		return drv->resume(card);
-	return 0;
-}
+	अगर (dev->driver && drv->resume)
+		वापस drv->resume(card);
+	वापस 0;
+पूर्ण
 
-#else
+#अन्यथा
 
-#define memstick_device_suspend NULL
-#define memstick_device_resume NULL
+#घोषणा memstick_device_suspend शून्य
+#घोषणा memstick_device_resume शून्य
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
-#define MEMSTICK_ATTR(name, format)                                           \
-static ssize_t name##_show(struct device *dev, struct device_attribute *attr, \
-			    char *buf)                                        \
-{                                                                             \
-	struct memstick_dev *card = container_of(dev, struct memstick_dev,    \
+#घोषणा MEMSTICK_ATTR(name, क्रमmat)                                           \
+अटल sमाप_प्रकार name##_show(काष्ठा device *dev, काष्ठा device_attribute *attr, \
+			    अक्षर *buf)                                        \
+अणु                                                                             \
+	काष्ठा memstick_dev *card = container_of(dev, काष्ठा memstick_dev,    \
 						 dev);                        \
-	return sprintf(buf, format, card->id.name);                           \
-}                                                                             \
-static DEVICE_ATTR_RO(name);
+	वापस प्र_लिखो(buf, क्रमmat, card->id.name);                           \
+पूर्ण                                                                             \
+अटल DEVICE_ATTR_RO(name);
 
 MEMSTICK_ATTR(type, "%02X");
 MEMSTICK_ATTR(category, "%02X");
 MEMSTICK_ATTR(class, "%02X");
 
-static struct attribute *memstick_dev_attrs[] = {
+अटल काष्ठा attribute *memstick_dev_attrs[] = अणु
 	&dev_attr_type.attr,
 	&dev_attr_category.attr,
 	&dev_attr_class.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(memstick_dev);
 
-static struct bus_type memstick_bus_type = {
+अटल काष्ठा bus_type memstick_bus_type = अणु
 	.name           = "memstick",
 	.dev_groups	= memstick_dev_groups,
 	.match          = memstick_bus_match,
 	.uevent         = memstick_uevent,
 	.probe          = memstick_device_probe,
-	.remove         = memstick_device_remove,
+	.हटाओ         = memstick_device_हटाओ,
 	.suspend        = memstick_device_suspend,
 	.resume         = memstick_device_resume
-};
+पूर्ण;
 
-static void memstick_free(struct device *dev)
-{
-	struct memstick_host *host = container_of(dev, struct memstick_host,
+अटल व्योम memstick_मुक्त(काष्ठा device *dev)
+अणु
+	काष्ठा memstick_host *host = container_of(dev, काष्ठा memstick_host,
 						  dev);
-	kfree(host);
-}
+	kमुक्त(host);
+पूर्ण
 
-static struct class memstick_host_class = {
+अटल काष्ठा class memstick_host_class = अणु
 	.name        = "memstick_host",
-	.dev_release = memstick_free
-};
+	.dev_release = memstick_मुक्त
+पूर्ण;
 
-static void memstick_free_card(struct device *dev)
-{
-	struct memstick_dev *card = container_of(dev, struct memstick_dev,
+अटल व्योम memstick_मुक्त_card(काष्ठा device *dev)
+अणु
+	काष्ठा memstick_dev *card = container_of(dev, काष्ठा memstick_dev,
 						 dev);
-	kfree(card);
-}
+	kमुक्त(card);
+पूर्ण
 
-static int memstick_dummy_check(struct memstick_dev *card)
-{
-	return 0;
-}
+अटल पूर्णांक memstick_dummy_check(काष्ठा memstick_dev *card)
+अणु
+	वापस 0;
+पूर्ण
 
 /**
  * memstick_detect_change - schedule media detection on memstick host
  * @host - host to use
  */
-void memstick_detect_change(struct memstick_host *host)
-{
+व्योम memstick_detect_change(काष्ठा memstick_host *host)
+अणु
 	queue_work(workqueue, &host->media_checker);
-}
+पूर्ण
 EXPORT_SYMBOL(memstick_detect_change);
 
 /**
  * memstick_next_req - called by host driver to obtain next request to process
  * @host - host to use
- * @mrq - pointer to stick the request to
+ * @mrq - poपूर्णांकer to stick the request to
  *
- * Host calls this function from idle state (*mrq == NULL) or after finishing
- * previous request (*mrq should point to it). If previous request was
- * unsuccessful, it is retried for predetermined number of times. Return value
- * of 0 means that new request was assigned to the host.
+ * Host calls this function from idle state (*mrq == शून्य) or after finishing
+ * previous request (*mrq should poपूर्णांक to it). If previous request was
+ * unsuccessful, it is retried क्रम predetermined number of बार. Return value
+ * of 0 means that new request was asचिन्हित to the host.
  */
-int memstick_next_req(struct memstick_host *host, struct memstick_request **mrq)
-{
-	int rc = -ENXIO;
+पूर्णांक memstick_next_req(काष्ठा memstick_host *host, काष्ठा memstick_request **mrq)
+अणु
+	पूर्णांक rc = -ENXIO;
 
-	if ((*mrq) && (*mrq)->error && host->retries) {
+	अगर ((*mrq) && (*mrq)->error && host->retries) अणु
 		(*mrq)->error = rc;
 		host->retries--;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (host->card && host->card->next_request)
+	अगर (host->card && host->card->next_request)
 		rc = host->card->next_request(host->card, mrq);
 
-	if (!rc)
+	अगर (!rc)
 		host->retries = cmd_retries > 1 ? cmd_retries - 1 : 1;
-	else
-		*mrq = NULL;
+	अन्यथा
+		*mrq = शून्य;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL(memstick_next_req);
 
 /**
- * memstick_new_req - notify the host that some requests are pending
+ * memstick_new_req - notअगरy the host that some requests are pending
  * @host - host to use
  */
-void memstick_new_req(struct memstick_host *host)
-{
-	if (host->card) {
+व्योम memstick_new_req(काष्ठा memstick_host *host)
+अणु
+	अगर (host->card) अणु
 		host->retries = cmd_retries;
 		reinit_completion(&host->card->mrq_complete);
 		host->request(host);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(memstick_new_req);
 
 /**
- * memstick_init_req_sg - set request fields needed for bulk data transfer
+ * memstick_init_req_sg - set request fields needed क्रम bulk data transfer
  * @mrq - request to use
  * @tpc - memstick Transport Protocol Command
  * @sg - TPC argument
  */
-void memstick_init_req_sg(struct memstick_request *mrq, unsigned char tpc,
-			  const struct scatterlist *sg)
-{
+व्योम memstick_init_req_sg(काष्ठा memstick_request *mrq, अचिन्हित अक्षर tpc,
+			  स्थिर काष्ठा scatterlist *sg)
+अणु
 	mrq->tpc = tpc;
-	if (tpc & 8)
+	अगर (tpc & 8)
 		mrq->data_dir = WRITE;
-	else
+	अन्यथा
 		mrq->data_dir = READ;
 
 	mrq->sg = *sg;
-	mrq->long_data = 1;
+	mrq->दीर्घ_data = 1;
 
-	if (tpc == MS_TPC_SET_CMD || tpc == MS_TPC_EX_SET_CMD)
-		mrq->need_card_int = 1;
-	else
-		mrq->need_card_int = 0;
-}
+	अगर (tpc == MS_TPC_SET_CMD || tpc == MS_TPC_EX_SET_CMD)
+		mrq->need_card_पूर्णांक = 1;
+	अन्यथा
+		mrq->need_card_पूर्णांक = 0;
+पूर्ण
 EXPORT_SYMBOL(memstick_init_req_sg);
 
 /**
- * memstick_init_req - set request fields needed for short data transfer
+ * memstick_init_req - set request fields needed क्रम लघु data transfer
  * @mrq - request to use
  * @tpc - memstick Transport Protocol Command
  * @buf - TPC argument buffer
  * @length - TPC argument size
  *
- * The intended use of this function (transfer of data items several bytes
- * in size) allows us to just copy the value between request structure and
+ * The पूर्णांकended use of this function (transfer of data items several bytes
+ * in size) allows us to just copy the value between request काष्ठाure and
  * user supplied buffer.
  */
-void memstick_init_req(struct memstick_request *mrq, unsigned char tpc,
-		       const void *buf, size_t length)
-{
+व्योम memstick_init_req(काष्ठा memstick_request *mrq, अचिन्हित अक्षर tpc,
+		       स्थिर व्योम *buf, माप_प्रकार length)
+अणु
 	mrq->tpc = tpc;
-	if (tpc & 8)
+	अगर (tpc & 8)
 		mrq->data_dir = WRITE;
-	else
+	अन्यथा
 		mrq->data_dir = READ;
 
-	mrq->data_len = length > sizeof(mrq->data) ? sizeof(mrq->data) : length;
-	if (mrq->data_dir == WRITE)
-		memcpy(mrq->data, buf, mrq->data_len);
+	mrq->data_len = length > माप(mrq->data) ? माप(mrq->data) : length;
+	अगर (mrq->data_dir == WRITE)
+		स_नकल(mrq->data, buf, mrq->data_len);
 
-	mrq->long_data = 0;
+	mrq->दीर्घ_data = 0;
 
-	if (tpc == MS_TPC_SET_CMD || tpc == MS_TPC_EX_SET_CMD)
-		mrq->need_card_int = 1;
-	else
-		mrq->need_card_int = 0;
-}
+	अगर (tpc == MS_TPC_SET_CMD || tpc == MS_TPC_EX_SET_CMD)
+		mrq->need_card_पूर्णांक = 1;
+	अन्यथा
+		mrq->need_card_पूर्णांक = 0;
+पूर्ण
 EXPORT_SYMBOL(memstick_init_req);
 
 /*
  * Functions prefixed with "h_" are protocol callbacks. They can be called from
- * interrupt context. Return value of 0 means that request processing is still
- * ongoing, while special error value of -EAGAIN means that current request is
- * finished (and request processor should come back some time later).
+ * पूर्णांकerrupt context. Return value of 0 means that request processing is still
+ * ongoing, जबतक special error value of -EAGAIN means that current request is
+ * finished (and request processor should come back some समय later).
  */
 
-static int h_memstick_read_dev_id(struct memstick_dev *card,
-				  struct memstick_request **mrq)
-{
-	struct ms_id_register id_reg;
+अटल पूर्णांक h_memstick_पढ़ो_dev_id(काष्ठा memstick_dev *card,
+				  काष्ठा memstick_request **mrq)
+अणु
+	काष्ठा ms_id_रेजिस्टर id_reg;
 
-	if (!(*mrq)) {
+	अगर (!(*mrq)) अणु
 		memstick_init_req(&card->current_mrq, MS_TPC_READ_REG, &id_reg,
-				  sizeof(struct ms_id_register));
+				  माप(काष्ठा ms_id_रेजिस्टर));
 		*mrq = &card->current_mrq;
-		return 0;
-	}
-	if (!(*mrq)->error) {
-		memcpy(&id_reg, (*mrq)->data, sizeof(id_reg));
+		वापस 0;
+	पूर्ण
+	अगर (!(*mrq)->error) अणु
+		स_नकल(&id_reg, (*mrq)->data, माप(id_reg));
 		card->id.match_flags = MEMSTICK_MATCH_ALL;
 		card->id.type = id_reg.type;
 		card->id.category = id_reg.category;
 		card->id.class = id_reg.class;
-		dev_dbg(&card->dev, "if_mode = %02x\n", id_reg.if_mode);
-	}
+		dev_dbg(&card->dev, "if_mode = %02x\n", id_reg.अगर_mode);
+	पूर्ण
 	complete(&card->mrq_complete);
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static int h_memstick_set_rw_addr(struct memstick_dev *card,
-				  struct memstick_request **mrq)
-{
-	if (!(*mrq)) {
+अटल पूर्णांक h_memstick_set_rw_addr(काष्ठा memstick_dev *card,
+				  काष्ठा memstick_request **mrq)
+अणु
+	अगर (!(*mrq)) अणु
 		memstick_init_req(&card->current_mrq, MS_TPC_SET_RW_REG_ADRS,
-				  (char *)&card->reg_addr,
-				  sizeof(card->reg_addr));
+				  (अक्षर *)&card->reg_addr,
+				  माप(card->reg_addr));
 		*mrq = &card->current_mrq;
-		return 0;
-	} else {
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		complete(&card->mrq_complete);
-		return -EAGAIN;
-	}
-}
+		वापस -EAGAIN;
+	पूर्ण
+पूर्ण
 
 /**
- * memstick_set_rw_addr - issue SET_RW_REG_ADDR request and wait for it to
+ * memstick_set_rw_addr - issue SET_RW_REG_ADDR request and रुको क्रम it to
  *                        complete
  * @card - media device to use
  */
-int memstick_set_rw_addr(struct memstick_dev *card)
-{
+पूर्णांक memstick_set_rw_addr(काष्ठा memstick_dev *card)
+अणु
 	card->next_request = h_memstick_set_rw_addr;
 	memstick_new_req(card->host);
-	wait_for_completion(&card->mrq_complete);
+	रुको_क्रम_completion(&card->mrq_complete);
 
-	return card->current_mrq.error;
-}
+	वापस card->current_mrq.error;
+पूर्ण
 EXPORT_SYMBOL(memstick_set_rw_addr);
 
-static struct memstick_dev *memstick_alloc_card(struct memstick_host *host)
-{
-	struct memstick_dev *card = kzalloc(sizeof(struct memstick_dev),
+अटल काष्ठा memstick_dev *memstick_alloc_card(काष्ठा memstick_host *host)
+अणु
+	काष्ठा memstick_dev *card = kzalloc(माप(काष्ठा memstick_dev),
 					    GFP_KERNEL);
-	struct memstick_dev *old_card = host->card;
-	struct ms_id_register id_reg;
+	काष्ठा memstick_dev *old_card = host->card;
+	काष्ठा ms_id_रेजिस्टर id_reg;
 
-	if (card) {
+	अगर (card) अणु
 		card->host = host;
 		dev_set_name(&card->dev, "%s", dev_name(&host->dev));
 		card->dev.parent = &host->dev;
 		card->dev.bus = &memstick_bus_type;
-		card->dev.release = memstick_free_card;
+		card->dev.release = memstick_मुक्त_card;
 		card->check = memstick_dummy_check;
 
-		card->reg_addr.r_offset = offsetof(struct ms_register, id);
-		card->reg_addr.r_length = sizeof(id_reg);
-		card->reg_addr.w_offset = offsetof(struct ms_register, id);
-		card->reg_addr.w_length = sizeof(id_reg);
+		card->reg_addr.r_offset = दुरत्व(काष्ठा ms_रेजिस्टर, id);
+		card->reg_addr.r_length = माप(id_reg);
+		card->reg_addr.w_offset = दुरत्व(काष्ठा ms_रेजिस्टर, id);
+		card->reg_addr.w_length = माप(id_reg);
 
 		init_completion(&card->mrq_complete);
 
 		host->card = card;
-		if (memstick_set_rw_addr(card))
-			goto err_out;
+		अगर (memstick_set_rw_addr(card))
+			जाओ err_out;
 
-		card->next_request = h_memstick_read_dev_id;
+		card->next_request = h_memstick_पढ़ो_dev_id;
 		memstick_new_req(host);
-		wait_for_completion(&card->mrq_complete);
+		रुको_क्रम_completion(&card->mrq_complete);
 
-		if (card->current_mrq.error)
-			goto err_out;
-	}
+		अगर (card->current_mrq.error)
+			जाओ err_out;
+	पूर्ण
 	host->card = old_card;
-	return card;
+	वापस card;
 err_out:
 	host->card = old_card;
-	kfree(card);
-	return NULL;
-}
+	kमुक्त(card);
+	वापस शून्य;
+पूर्ण
 
-static int memstick_power_on(struct memstick_host *host)
-{
-	int rc = host->set_param(host, MEMSTICK_POWER, MEMSTICK_POWER_ON);
+अटल पूर्णांक memstick_घातer_on(काष्ठा memstick_host *host)
+अणु
+	पूर्णांक rc = host->set_param(host, MEMSTICK_POWER, MEMSTICK_POWER_ON);
 
-	if (!rc)
+	अगर (!rc)
 		rc = host->set_param(host, MEMSTICK_INTERFACE, MEMSTICK_SERIAL);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void memstick_check(struct work_struct *work)
-{
-	struct memstick_host *host = container_of(work, struct memstick_host,
+अटल व्योम memstick_check(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा memstick_host *host = container_of(work, काष्ठा memstick_host,
 						  media_checker);
-	struct memstick_dev *card;
+	काष्ठा memstick_dev *card;
 
 	dev_dbg(&host->dev, "memstick_check started\n");
-	pm_runtime_get_noresume(host->dev.parent);
+	pm_runसमय_get_noresume(host->dev.parent);
 	mutex_lock(&host->lock);
-	if (!host->card) {
-		if (memstick_power_on(host))
-			goto out_power_off;
-	} else if (host->card->stop)
+	अगर (!host->card) अणु
+		अगर (memstick_घातer_on(host))
+			जाओ out_घातer_off;
+	पूर्ण अन्यथा अगर (host->card->stop)
 		host->card->stop(host->card);
 
-	if (host->removing)
-		goto out_power_off;
+	अगर (host->removing)
+		जाओ out_घातer_off;
 
 	card = memstick_alloc_card(host);
 
-	if (!card) {
-		if (host->card) {
-			device_unregister(&host->card->dev);
-			host->card = NULL;
-		}
-	} else {
+	अगर (!card) अणु
+		अगर (host->card) अणु
+			device_unरेजिस्टर(&host->card->dev);
+			host->card = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_dbg(&host->dev, "new card %02x, %02x, %02x\n",
 			card->id.type, card->id.category, card->id.class);
-		if (host->card) {
-			if (memstick_set_rw_addr(host->card)
+		अगर (host->card) अणु
+			अगर (memstick_set_rw_addr(host->card)
 			    || !memstick_dev_match(host->card, &card->id)
-			    || !(host->card->check(host->card))) {
-				device_unregister(&host->card->dev);
-				host->card = NULL;
-			} else if (host->card->start)
+			    || !(host->card->check(host->card))) अणु
+				device_unरेजिस्टर(&host->card->dev);
+				host->card = शून्य;
+			पूर्ण अन्यथा अगर (host->card->start)
 				host->card->start(host->card);
-		}
+		पूर्ण
 
-		if (!host->card) {
+		अगर (!host->card) अणु
 			host->card = card;
-			if (device_register(&card->dev)) {
+			अगर (device_रेजिस्टर(&card->dev)) अणु
 				put_device(&card->dev);
-				host->card = NULL;
-			}
-		} else
-			kfree(card);
-	}
+				host->card = शून्य;
+			पूर्ण
+		पूर्ण अन्यथा
+			kमुक्त(card);
+	पूर्ण
 
-out_power_off:
-	if (!host->card)
+out_घातer_off:
+	अगर (!host->card)
 		host->set_param(host, MEMSTICK_POWER, MEMSTICK_POWER_OFF);
 
 	mutex_unlock(&host->lock);
-	pm_runtime_put(host->dev.parent);
+	pm_runसमय_put(host->dev.parent);
 	dev_dbg(&host->dev, "memstick_check finished\n");
-}
+पूर्ण
 
 /**
- * memstick_alloc_host - allocate a memstick_host structure
- * @extra: size of the user private data to allocate
+ * memstick_alloc_host - allocate a memstick_host काष्ठाure
+ * @extra: size of the user निजी data to allocate
  * @dev: parent device of the host
  */
-struct memstick_host *memstick_alloc_host(unsigned int extra,
-					  struct device *dev)
-{
-	struct memstick_host *host;
+काष्ठा memstick_host *memstick_alloc_host(अचिन्हित पूर्णांक extra,
+					  काष्ठा device *dev)
+अणु
+	काष्ठा memstick_host *host;
 
-	host = kzalloc(sizeof(struct memstick_host) + extra, GFP_KERNEL);
-	if (host) {
+	host = kzalloc(माप(काष्ठा memstick_host) + extra, GFP_KERNEL);
+	अगर (host) अणु
 		mutex_init(&host->lock);
 		INIT_WORK(&host->media_checker, memstick_check);
 		host->dev.class = &memstick_host_class;
 		host->dev.parent = dev;
 		device_initialize(&host->dev);
-	}
-	return host;
-}
+	पूर्ण
+	वापस host;
+पूर्ण
 EXPORT_SYMBOL(memstick_alloc_host);
 
 /**
  * memstick_add_host - start request processing on memstick host
  * @host - host to use
  */
-int memstick_add_host(struct memstick_host *host)
-{
-	int rc;
+पूर्णांक memstick_add_host(काष्ठा memstick_host *host)
+अणु
+	पूर्णांक rc;
 
 	idr_preload(GFP_KERNEL);
 	spin_lock(&memstick_host_lock);
 
 	rc = idr_alloc(&memstick_host_idr, host, 0, 0, GFP_NOWAIT);
-	if (rc >= 0)
+	अगर (rc >= 0)
 		host->id = rc;
 
 	spin_unlock(&memstick_host_lock);
 	idr_preload_end();
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	dev_set_name(&host->dev, "memstick%u", host->id);
 
 	rc = device_add(&host->dev);
-	if (rc) {
+	अगर (rc) अणु
 		spin_lock(&memstick_host_lock);
-		idr_remove(&memstick_host_idr, host->id);
+		idr_हटाओ(&memstick_host_idr, host->id);
 		spin_unlock(&memstick_host_lock);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	host->set_param(host, MEMSTICK_POWER, MEMSTICK_POWER_OFF);
 	memstick_detect_change(host);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(memstick_add_host);
 
 /**
- * memstick_remove_host - stop request processing on memstick host
+ * memstick_हटाओ_host - stop request processing on memstick host
  * @host - host to use
  */
-void memstick_remove_host(struct memstick_host *host)
-{
+व्योम memstick_हटाओ_host(काष्ठा memstick_host *host)
+अणु
 	host->removing = 1;
 	flush_workqueue(workqueue);
 	mutex_lock(&host->lock);
-	if (host->card)
-		device_unregister(&host->card->dev);
-	host->card = NULL;
+	अगर (host->card)
+		device_unरेजिस्टर(&host->card->dev);
+	host->card = शून्य;
 	host->set_param(host, MEMSTICK_POWER, MEMSTICK_POWER_OFF);
 	mutex_unlock(&host->lock);
 
 	spin_lock(&memstick_host_lock);
-	idr_remove(&memstick_host_idr, host->id);
+	idr_हटाओ(&memstick_host_idr, host->id);
 	spin_unlock(&memstick_host_lock);
 	device_del(&host->dev);
-}
-EXPORT_SYMBOL(memstick_remove_host);
+पूर्ण
+EXPORT_SYMBOL(memstick_हटाओ_host);
 
 /**
- * memstick_free_host - free memstick host
+ * memstick_मुक्त_host - मुक्त memstick host
  * @host - host to use
  */
-void memstick_free_host(struct memstick_host *host)
-{
+व्योम memstick_मुक्त_host(काष्ठा memstick_host *host)
+अणु
 	mutex_destroy(&host->lock);
 	put_device(&host->dev);
-}
-EXPORT_SYMBOL(memstick_free_host);
+पूर्ण
+EXPORT_SYMBOL(memstick_मुक्त_host);
 
 /**
- * memstick_suspend_host - notify bus driver of host suspension
+ * memstick_suspend_host - notअगरy bus driver of host suspension
  * @host - host to use
  */
-void memstick_suspend_host(struct memstick_host *host)
-{
+व्योम memstick_suspend_host(काष्ठा memstick_host *host)
+अणु
 	mutex_lock(&host->lock);
 	host->set_param(host, MEMSTICK_POWER, MEMSTICK_POWER_OFF);
 	mutex_unlock(&host->lock);
-}
+पूर्ण
 EXPORT_SYMBOL(memstick_suspend_host);
 
 /**
- * memstick_resume_host - notify bus driver of host resumption
+ * memstick_resume_host - notअगरy bus driver of host resumption
  * @host - host to use
  */
-void memstick_resume_host(struct memstick_host *host)
-{
-	int rc = 0;
+व्योम memstick_resume_host(काष्ठा memstick_host *host)
+अणु
+	पूर्णांक rc = 0;
 
 	mutex_lock(&host->lock);
-	if (host->card)
-		rc = memstick_power_on(host);
+	अगर (host->card)
+		rc = memstick_घातer_on(host);
 	mutex_unlock(&host->lock);
 
-	if (!rc)
+	अगर (!rc)
 		memstick_detect_change(host);
-}
+पूर्ण
 EXPORT_SYMBOL(memstick_resume_host);
 
-int memstick_register_driver(struct memstick_driver *drv)
-{
+पूर्णांक memstick_रेजिस्टर_driver(काष्ठा memstick_driver *drv)
+अणु
 	drv->driver.bus = &memstick_bus_type;
 
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL(memstick_register_driver);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(memstick_रेजिस्टर_driver);
 
-void memstick_unregister_driver(struct memstick_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL(memstick_unregister_driver);
+व्योम memstick_unरेजिस्टर_driver(काष्ठा memstick_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(memstick_unरेजिस्टर_driver);
 
 
-static int __init memstick_init(void)
-{
-	int rc;
+अटल पूर्णांक __init memstick_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	workqueue = create_freezable_workqueue("kmemstick");
-	if (!workqueue)
-		return -ENOMEM;
+	workqueue = create_मुक्तzable_workqueue("kmemstick");
+	अगर (!workqueue)
+		वापस -ENOMEM;
 
-	rc = bus_register(&memstick_bus_type);
-	if (rc)
-		goto error_destroy_workqueue;
+	rc = bus_रेजिस्टर(&memstick_bus_type);
+	अगर (rc)
+		जाओ error_destroy_workqueue;
 
-	rc = class_register(&memstick_host_class);
-	if (rc)
-		goto error_bus_unregister;
+	rc = class_रेजिस्टर(&memstick_host_class);
+	अगर (rc)
+		जाओ error_bus_unरेजिस्टर;
 
-	return 0;
+	वापस 0;
 
-error_bus_unregister:
-	bus_unregister(&memstick_bus_type);
+error_bus_unरेजिस्टर:
+	bus_unरेजिस्टर(&memstick_bus_type);
 error_destroy_workqueue:
 	destroy_workqueue(workqueue);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit memstick_exit(void)
-{
-	class_unregister(&memstick_host_class);
-	bus_unregister(&memstick_bus_type);
+अटल व्योम __निकास memstick_निकास(व्योम)
+अणु
+	class_unरेजिस्टर(&memstick_host_class);
+	bus_unरेजिस्टर(&memstick_bus_type);
 	destroy_workqueue(workqueue);
 	idr_destroy(&memstick_host_idr);
-}
+पूर्ण
 
 module_init(memstick_init);
-module_exit(memstick_exit);
+module_निकास(memstick_निकास);
 
 MODULE_AUTHOR("Alex Dubov");
 MODULE_LICENSE("GPL");

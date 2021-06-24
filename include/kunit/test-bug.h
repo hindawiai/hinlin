@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * KUnit API allowing dynamic analysis tools to interact with KUnit tests
+ * KUnit API allowing dynamic analysis tools to पूर्णांकeract with KUnit tests
  *
  * Copyright (C) 2020, Google LLC.
- * Author: Uriel Guajardo <urielguajardo@google.com>
+ * Author: Uriel Guajarकरो <urielguajarकरो@google.com>
  */
 
-#ifndef _KUNIT_TEST_BUG_H
-#define _KUNIT_TEST_BUG_H
+#अगर_अघोषित _KUNIT_TEST_BUG_H
+#घोषणा _KUNIT_TEST_BUG_H
 
-#define kunit_fail_current_test(fmt, ...) \
-	__kunit_fail_current_test(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#घोषणा kunit_fail_current_test(fmt, ...) \
+	__kunit_fail_current_test(__खाता__, __LINE__, fmt, ##__VA_ARGS__)
 
-#if IS_BUILTIN(CONFIG_KUNIT)
+#अगर IS_BUILTIN(CONFIG_KUNIT)
 
-extern __printf(3, 4) void __kunit_fail_current_test(const char *file, int line,
-						    const char *fmt, ...);
+बाह्य __म_लिखो(3, 4) व्योम __kunit_fail_current_test(स्थिर अक्षर *file, पूर्णांक line,
+						    स्थिर अक्षर *fmt, ...);
 
-#else
+#अन्यथा
 
-static inline __printf(3, 4) void __kunit_fail_current_test(const char *file, int line,
-							    const char *fmt, ...)
-{
-}
+अटल अंतरभूत __म_लिखो(3, 4) व्योम __kunit_fail_current_test(स्थिर अक्षर *file, पूर्णांक line,
+							    स्थिर अक्षर *fmt, ...)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _KUNIT_TEST_BUG_H */
+#पूर्ण_अगर /* _KUNIT_TEST_BUG_H */

@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
-#include <fcntl.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
+#समावेश <fcntl.h>
 
-int main(int argc, char **argv)
-{
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
         splice(0, 0, 1, 0, 1<<30, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण

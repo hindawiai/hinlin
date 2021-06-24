@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * unaligned.c: Unaligned load/store trap handling with special
- *              cases for the kernel to do them more quickly.
+ *              हालs क्रम the kernel to करो them more quickly.
  *
  * Copyright (C) 1996 David S. Miller (davem@caip.rutgers.edu)
  * Copyright (C) 1996 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
 
 
-#include <linux/kernel.h>
-#include <linux/sched/signal.h>
-#include <linux/mm.h>
-#include <asm/ptrace.h>
-#include <asm/processor.h>
-#include <linux/uaccess.h>
-#include <linux/smp.h>
-#include <linux/perf_event.h>
-#include <linux/extable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/extable.h>
 
-#include <asm/setup.h>
+#समावेश <यंत्र/setup.h>
 
-#include "kernel.h"
+#समावेश "kernel.h"
 
-enum direction {
+क्रमागत direction अणु
 	load,    /* ld, ldd, ldh, ldsh */
 	store,   /* st, std, sth, stsh */
 	both,    /* Swap, ldstub, etc. */
 	fpload,
 	fpstore,
 	invalid,
-};
+पूर्ण;
 
-static inline enum direction decode_direction(unsigned int insn)
-{
-	unsigned long tmp = (insn >> 21) & 1;
+अटल अंतरभूत क्रमागत direction decode_direction(अचिन्हित पूर्णांक insn)
+अणु
+	अचिन्हित दीर्घ पंचांगp = (insn >> 21) & 1;
 
-	if(!tmp)
-		return load;
-	else {
-		if(((insn>>19)&0x3f) == 15)
-			return both;
-		else
-			return store;
-	}
-}
+	अगर(!पंचांगp)
+		वापस load;
+	अन्यथा अणु
+		अगर(((insn>>19)&0x3f) == 15)
+			वापस both;
+		अन्यथा
+			वापस store;
+	पूर्ण
+पूर्ण
 
-/* 8 = double-word, 4 = word, 2 = half-word */
-static inline int decode_access_size(unsigned int insn)
-{
+/* 8 = द्विगुन-word, 4 = word, 2 = half-word */
+अटल अंतरभूत पूर्णांक decode_access_size(अचिन्हित पूर्णांक insn)
+अणु
 	insn = (insn >> 19) & 3;
 
-	if(!insn)
-		return 4;
-	else if(insn == 3)
-		return 8;
-	else if(insn == 2)
-		return 2;
-	else {
-		printk("Impossible unaligned trap. insn=%08x\n", insn);
-		die_if_kernel("Byte sized unaligned access?!?!", current->thread.kregs);
-		return 4; /* just to keep gcc happy. */
-	}
-}
+	अगर(!insn)
+		वापस 4;
+	अन्यथा अगर(insn == 3)
+		वापस 8;
+	अन्यथा अगर(insn == 2)
+		वापस 2;
+	अन्यथा अणु
+		prपूर्णांकk("Impossible unaligned trap. insn=%08x\n", insn);
+		die_अगर_kernel("Byte sized unaligned access?!?!", current->thपढ़ो.kregs);
+		वापस 4; /* just to keep gcc happy. */
+	पूर्ण
+पूर्ण
 
-/* 0x400000 = signed, 0 = unsigned */
-static inline int decode_signedness(unsigned int insn)
-{
-	return (insn & 0x400000);
-}
+/* 0x400000 = चिन्हित, 0 = अचिन्हित */
+अटल अंतरभूत पूर्णांक decode_चिन्हितness(अचिन्हित पूर्णांक insn)
+अणु
+	वापस (insn & 0x400000);
+पूर्ण
 
-static inline void maybe_flush_windows(unsigned int rs1, unsigned int rs2,
-				       unsigned int rd)
-{
-	if(rs2 >= 16 || rs1 >= 16 || rd >= 16) {
+अटल अंतरभूत व्योम maybe_flush_winकरोws(अचिन्हित पूर्णांक rs1, अचिन्हित पूर्णांक rs2,
+				       अचिन्हित पूर्णांक rd)
+अणु
+	अगर(rs2 >= 16 || rs1 >= 16 || rd >= 16) अणु
 		/* Wheee... */
-		__asm__ __volatile__("save %sp, -0x40, %sp\n\t"
+		__यंत्र__ __अस्थिर__("save %sp, -0x40, %sp\n\t"
 				     "save %sp, -0x40, %sp\n\t"
 				     "save %sp, -0x40, %sp\n\t"
 				     "save %sp, -0x40, %sp\n\t"
@@ -83,200 +84,200 @@ static inline void maybe_flush_windows(unsigned int rs1, unsigned int rs2,
 				     "save %sp, -0x40, %sp\n\t"
 				     "restore; restore; restore; restore;\n\t"
 				     "restore; restore; restore;\n\t");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int sign_extend_imm13(int imm)
-{
-	return imm << 19 >> 19;
-}
+अटल अंतरभूत पूर्णांक sign_extend_imm13(पूर्णांक imm)
+अणु
+	वापस imm << 19 >> 19;
+पूर्ण
 
-static inline unsigned long fetch_reg(unsigned int reg, struct pt_regs *regs)
-{
-	struct reg_window32 *win;
+अटल अंतरभूत अचिन्हित दीर्घ fetch_reg(अचिन्हित पूर्णांक reg, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा reg_winकरोw32 *win;
 
-	if(reg < 16)
-		return (!reg ? 0 : regs->u_regs[reg]);
+	अगर(reg < 16)
+		वापस (!reg ? 0 : regs->u_regs[reg]);
 
-	/* Ho hum, the slightly complicated case. */
-	win = (struct reg_window32 *) regs->u_regs[UREG_FP];
-	return win->locals[reg - 16]; /* yes, I know what this does... */
-}
+	/* Ho hum, the slightly complicated हाल. */
+	win = (काष्ठा reg_winकरोw32 *) regs->u_regs[UREG_FP];
+	वापस win->locals[reg - 16]; /* yes, I know what this करोes... */
+पूर्ण
 
-static inline unsigned long safe_fetch_reg(unsigned int reg, struct pt_regs *regs)
-{
-	struct reg_window32 __user *win;
-	unsigned long ret;
+अटल अंतरभूत अचिन्हित दीर्घ safe_fetch_reg(अचिन्हित पूर्णांक reg, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा reg_winकरोw32 __user *win;
+	अचिन्हित दीर्घ ret;
 
-	if (reg < 16)
-		return (!reg ? 0 : regs->u_regs[reg]);
+	अगर (reg < 16)
+		वापस (!reg ? 0 : regs->u_regs[reg]);
 
-	/* Ho hum, the slightly complicated case. */
-	win = (struct reg_window32 __user *) regs->u_regs[UREG_FP];
+	/* Ho hum, the slightly complicated हाल. */
+	win = (काष्ठा reg_winकरोw32 __user *) regs->u_regs[UREG_FP];
 
-	if ((unsigned long)win & 3)
-		return -1;
+	अगर ((अचिन्हित दीर्घ)win & 3)
+		वापस -1;
 
-	if (get_user(ret, &win->locals[reg - 16]))
-		return -1;
+	अगर (get_user(ret, &win->locals[reg - 16]))
+		वापस -1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline unsigned long *fetch_reg_addr(unsigned int reg, struct pt_regs *regs)
-{
-	struct reg_window32 *win;
+अटल अंतरभूत अचिन्हित दीर्घ *fetch_reg_addr(अचिन्हित पूर्णांक reg, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा reg_winकरोw32 *win;
 
-	if(reg < 16)
-		return &regs->u_regs[reg];
-	win = (struct reg_window32 *) regs->u_regs[UREG_FP];
-	return &win->locals[reg - 16];
-}
+	अगर(reg < 16)
+		वापस &regs->u_regs[reg];
+	win = (काष्ठा reg_winकरोw32 *) regs->u_regs[UREG_FP];
+	वापस &win->locals[reg - 16];
+पूर्ण
 
-static unsigned long compute_effective_address(struct pt_regs *regs,
-					       unsigned int insn)
-{
-	unsigned int rs1 = (insn >> 14) & 0x1f;
-	unsigned int rs2 = insn & 0x1f;
-	unsigned int rd = (insn >> 25) & 0x1f;
+अटल अचिन्हित दीर्घ compute_effective_address(काष्ठा pt_regs *regs,
+					       अचिन्हित पूर्णांक insn)
+अणु
+	अचिन्हित पूर्णांक rs1 = (insn >> 14) & 0x1f;
+	अचिन्हित पूर्णांक rs2 = insn & 0x1f;
+	अचिन्हित पूर्णांक rd = (insn >> 25) & 0x1f;
 
-	if(insn & 0x2000) {
-		maybe_flush_windows(rs1, 0, rd);
-		return (fetch_reg(rs1, regs) + sign_extend_imm13(insn));
-	} else {
-		maybe_flush_windows(rs1, rs2, rd);
-		return (fetch_reg(rs1, regs) + fetch_reg(rs2, regs));
-	}
-}
+	अगर(insn & 0x2000) अणु
+		maybe_flush_winकरोws(rs1, 0, rd);
+		वापस (fetch_reg(rs1, regs) + sign_extend_imm13(insn));
+	पूर्ण अन्यथा अणु
+		maybe_flush_winकरोws(rs1, rs2, rd);
+		वापस (fetch_reg(rs1, regs) + fetch_reg(rs2, regs));
+	पूर्ण
+पूर्ण
 
-unsigned long safe_compute_effective_address(struct pt_regs *regs,
-					     unsigned int insn)
-{
-	unsigned int rs1 = (insn >> 14) & 0x1f;
-	unsigned int rs2 = insn & 0x1f;
-	unsigned int rd = (insn >> 25) & 0x1f;
+अचिन्हित दीर्घ safe_compute_effective_address(काष्ठा pt_regs *regs,
+					     अचिन्हित पूर्णांक insn)
+अणु
+	अचिन्हित पूर्णांक rs1 = (insn >> 14) & 0x1f;
+	अचिन्हित पूर्णांक rs2 = insn & 0x1f;
+	अचिन्हित पूर्णांक rd = (insn >> 25) & 0x1f;
 
-	if(insn & 0x2000) {
-		maybe_flush_windows(rs1, 0, rd);
-		return (safe_fetch_reg(rs1, regs) + sign_extend_imm13(insn));
-	} else {
-		maybe_flush_windows(rs1, rs2, rd);
-		return (safe_fetch_reg(rs1, regs) + safe_fetch_reg(rs2, regs));
-	}
-}
+	अगर(insn & 0x2000) अणु
+		maybe_flush_winकरोws(rs1, 0, rd);
+		वापस (safe_fetch_reg(rs1, regs) + sign_extend_imm13(insn));
+	पूर्ण अन्यथा अणु
+		maybe_flush_winकरोws(rs1, rs2, rd);
+		वापस (safe_fetch_reg(rs1, regs) + safe_fetch_reg(rs2, regs));
+	पूर्ण
+पूर्ण
 
-/* This is just to make gcc think panic does return... */
-static void unaligned_panic(char *str)
-{
+/* This is just to make gcc think panic करोes वापस... */
+अटल व्योम unaligned_panic(अक्षर *str)
+अणु
 	panic("%s", str);
-}
+पूर्ण
 
-/* una_asm.S */
-extern int do_int_load(unsigned long *dest_reg, int size,
-		       unsigned long *saddr, int is_signed);
-extern int __do_int_store(unsigned long *dst_addr, int size,
-			  unsigned long *src_val);
+/* una_यंत्र.S */
+बाह्य पूर्णांक करो_पूर्णांक_load(अचिन्हित दीर्घ *dest_reg, पूर्णांक size,
+		       अचिन्हित दीर्घ *saddr, पूर्णांक is_चिन्हित);
+बाह्य पूर्णांक __करो_पूर्णांक_store(अचिन्हित दीर्घ *dst_addr, पूर्णांक size,
+			  अचिन्हित दीर्घ *src_val);
 
-static int do_int_store(int reg_num, int size, unsigned long *dst_addr,
-			struct pt_regs *regs)
-{
-	unsigned long zero[2] = { 0, 0 };
-	unsigned long *src_val;
+अटल पूर्णांक करो_पूर्णांक_store(पूर्णांक reg_num, पूर्णांक size, अचिन्हित दीर्घ *dst_addr,
+			काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ zero[2] = अणु 0, 0 पूर्ण;
+	अचिन्हित दीर्घ *src_val;
 
-	if (reg_num)
+	अगर (reg_num)
 		src_val = fetch_reg_addr(reg_num, regs);
-	else {
+	अन्यथा अणु
 		src_val = &zero[0];
-		if (size == 8)
+		अगर (size == 8)
 			zero[1] = fetch_reg(1, regs);
-	}
-	return __do_int_store(dst_addr, size, src_val);
-}
+	पूर्ण
+	वापस __करो_पूर्णांक_store(dst_addr, size, src_val);
+पूर्ण
 
-extern void smp_capture(void);
-extern void smp_release(void);
+बाह्य व्योम smp_capture(व्योम);
+बाह्य व्योम smp_release(व्योम);
 
-static inline void advance(struct pt_regs *regs)
-{
+अटल अंतरभूत व्योम advance(काष्ठा pt_regs *regs)
+अणु
 	regs->pc   = regs->npc;
 	regs->npc += 4;
-}
+पूर्ण
 
-static inline int floating_point_load_or_store_p(unsigned int insn)
-{
-	return (insn >> 24) & 1;
-}
+अटल अंतरभूत पूर्णांक भग्नing_poपूर्णांक_load_or_store_p(अचिन्हित पूर्णांक insn)
+अणु
+	वापस (insn >> 24) & 1;
+पूर्ण
 
-static inline int ok_for_kernel(unsigned int insn)
-{
-	return !floating_point_load_or_store_p(insn);
-}
+अटल अंतरभूत पूर्णांक ok_क्रम_kernel(अचिन्हित पूर्णांक insn)
+अणु
+	वापस !भग्नing_poपूर्णांक_load_or_store_p(insn);
+पूर्ण
 
-static void kernel_mna_trap_fault(struct pt_regs *regs, unsigned int insn)
-{
-	const struct exception_table_entry *entry;
+अटल व्योम kernel_mna_trap_fault(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक insn)
+अणु
+	स्थिर काष्ठा exception_table_entry *entry;
 
 	entry = search_exception_tables(regs->pc);
-	if (!entry) {
-		unsigned long address = compute_effective_address(regs, insn);
-        	if(address < PAGE_SIZE) {
-                	printk(KERN_ALERT "Unable to handle kernel NULL pointer dereference in mna handler");
-        	} else
-                	printk(KERN_ALERT "Unable to handle kernel paging request in mna handler");
-	        printk(KERN_ALERT " at virtual address %08lx\n",address);
-		printk(KERN_ALERT "current->{mm,active_mm}->context = %08lx\n",
+	अगर (!entry) अणु
+		अचिन्हित दीर्घ address = compute_effective_address(regs, insn);
+        	अगर(address < PAGE_SIZE) अणु
+                	prपूर्णांकk(KERN_ALERT "Unable to handle kernel NULL pointer dereference in mna handler");
+        	पूर्ण अन्यथा
+                	prपूर्णांकk(KERN_ALERT "Unable to handle kernel paging request in mna handler");
+	        prपूर्णांकk(KERN_ALERT " at virtual address %08lx\n",address);
+		prपूर्णांकk(KERN_ALERT "current->{mm,active_mm}->context = %08lx\n",
 			(current->mm ? current->mm->context :
 			current->active_mm->context));
-		printk(KERN_ALERT "current->{mm,active_mm}->pgd = %08lx\n",
-			(current->mm ? (unsigned long) current->mm->pgd :
-			(unsigned long) current->active_mm->pgd));
-	        die_if_kernel("Oops", regs);
+		prपूर्णांकk(KERN_ALERT "current->{mm,active_mm}->pgd = %08lx\n",
+			(current->mm ? (अचिन्हित दीर्घ) current->mm->pgd :
+			(अचिन्हित दीर्घ) current->active_mm->pgd));
+	        die_अगर_kernel("Oops", regs);
 		/* Not reached */
-	}
+	पूर्ण
 	regs->pc = entry->fixup;
 	regs->npc = regs->pc + 4;
-}
+पूर्ण
 
-asmlinkage void kernel_unaligned_trap(struct pt_regs *regs, unsigned int insn)
-{
-	enum direction dir = decode_direction(insn);
-	int size = decode_access_size(insn);
+यंत्रlinkage व्योम kernel_unaligned_trap(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक insn)
+अणु
+	क्रमागत direction dir = decode_direction(insn);
+	पूर्णांक size = decode_access_size(insn);
 
-	if(!ok_for_kernel(insn) || dir == both) {
-		printk("Unsupported unaligned load/store trap for kernel at <%08lx>.\n",
+	अगर(!ok_क्रम_kernel(insn) || dir == both) अणु
+		prपूर्णांकk("Unsupported unaligned load/store trap for kernel at <%08lx>.\n",
 		       regs->pc);
 		unaligned_panic("Wheee. Kernel does fpu/atomic unaligned load/store.");
-	} else {
-		unsigned long addr = compute_effective_address(regs, insn);
-		int err;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ addr = compute_effective_address(regs, insn);
+		पूर्णांक err;
 
 		perf_sw_event(PERF_COUNT_SW_ALIGNMENT_FAULTS, 1, regs, addr);
-		switch (dir) {
-		case load:
-			err = do_int_load(fetch_reg_addr(((insn>>25)&0x1f),
+		चयन (dir) अणु
+		हाल load:
+			err = करो_पूर्णांक_load(fetch_reg_addr(((insn>>25)&0x1f),
 							 regs),
-					  size, (unsigned long *) addr,
-					  decode_signedness(insn));
-			break;
+					  size, (अचिन्हित दीर्घ *) addr,
+					  decode_चिन्हितness(insn));
+			अवरोध;
 
-		case store:
-			err = do_int_store(((insn>>25)&0x1f), size,
-					   (unsigned long *) addr, regs);
-			break;
-		default:
+		हाल store:
+			err = करो_पूर्णांक_store(((insn>>25)&0x1f), size,
+					   (अचिन्हित दीर्घ *) addr, regs);
+			अवरोध;
+		शेष:
 			panic("Impossible kernel unaligned trap.");
 			/* Not reached... */
-		}
-		if (err)
+		पूर्ण
+		अगर (err)
 			kernel_mna_trap_fault(regs, insn);
-		else
+		अन्यथा
 			advance(regs);
-	}
-}
+	पूर्ण
+पूर्ण
 
-asmlinkage void user_unaligned_trap(struct pt_regs *regs, unsigned int insn)
-{
+यंत्रlinkage व्योम user_unaligned_trap(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक insn)
+अणु
 	send_sig_fault(SIGBUS, BUS_ADRALN,
-		       (void __user *)safe_compute_effective_address(regs, insn),
+		       (व्योम __user *)safe_compute_effective_address(regs, insn),
 		       0, current);
-}
+पूर्ण

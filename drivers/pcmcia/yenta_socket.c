@@ -1,218 +1,219 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Regular cardbus driver ("yenta_socket")
  *
  * (C) Copyright 1999, 2000 Linus Torvalds
  *
  * Changelog:
- * Aug 2002: Manfred Spraul <manfred@colorfullife.com>
+ * Aug 2002: Manfred Spraul <manfred@colorfullअगरe.com>
  * 	Dynamically adjust the size of the bridge resource
  *
- * May 2003: Dominik Brodowski <linux@brodo.de>
- * 	Merge pci_socket.c and yenta.c into one file
+ * May 2003: Dominik Broकरोwski <linux@broकरो.de>
+ * 	Merge pci_socket.c and yenta.c पूर्णांकo one file
  */
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/workqueue.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
 
-#include <pcmcia/ss.h>
+#समावेश <pcmcia/ss.h>
 
-#include "yenta_socket.h"
-#include "i82365.h"
+#समावेश "yenta_socket.h"
+#समावेश "i82365.h"
 
-static bool disable_clkrun;
+अटल bool disable_clkrun;
 module_param(disable_clkrun, bool, 0444);
 MODULE_PARM_DESC(disable_clkrun,
 		 "If PC card doesn't function properly, please try this option (TI and Ricoh bridges only)");
 
-static bool isa_probe = 1;
+अटल bool isa_probe = 1;
 module_param(isa_probe, bool, 0444);
 MODULE_PARM_DESC(isa_probe, "If set ISA interrupts are probed (default). Set to N to disable probing");
 
-static bool pwr_irqs_off;
+अटल bool pwr_irqs_off;
 module_param(pwr_irqs_off, bool, 0644);
 MODULE_PARM_DESC(pwr_irqs_off, "Force IRQs off during power-on of slot. Use only when seeing IRQ storms!");
 
-static char o2_speedup[] = "default";
-module_param_string(o2_speedup, o2_speedup, sizeof(o2_speedup), 0444);
+अटल अक्षर o2_speedup[] = "default";
+module_param_string(o2_speedup, o2_speedup, माप(o2_speedup), 0444);
 MODULE_PARM_DESC(o2_speedup, "Use prefetch/burst for O2-bridges: 'on', 'off' "
 	"or 'default' (uses recommended behaviour for the detected bridge)");
 
 /*
- * Only probe "regular" interrupts, don't
+ * Only probe "regular" पूर्णांकerrupts, करोn't
  * touch dangerous spots like the mouse irq,
  * because there are mice that apparently
- * get really confused if they get fondled
- * too intimately.
+ * get really confused अगर they get fondled
+ * too पूर्णांकimately.
  *
  * Default to 11, 10, 9, 7, 6, 5, 4, 3.
  */
-static u32 isa_interrupts = 0x0ef8;
+अटल u32 isa_पूर्णांकerrupts = 0x0ef8;
 
 
-#define debug(x, s, args...) dev_dbg(&s->dev->dev, x, ##args)
+#घोषणा debug(x, s, args...) dev_dbg(&s->dev->dev, x, ##args)
 
 /* Don't ask.. */
-#define to_cycles(ns)	((ns)/120)
-#define to_ns(cycles)	((cycles)*120)
+#घोषणा to_cycles(ns)	((ns)/120)
+#घोषणा to_ns(cycles)	((cycles)*120)
 
 /*
  * yenta PCI irq probing.
  * currently only used in the TI/EnE initialization code
  */
-#ifdef CONFIG_YENTA_TI
-static int yenta_probe_cb_irq(struct yenta_socket *socket);
-static unsigned int yenta_probe_irq(struct yenta_socket *socket,
+#अगर_घोषित CONFIG_YENTA_TI
+अटल पूर्णांक yenta_probe_cb_irq(काष्ठा yenta_socket *socket);
+अटल अचिन्हित पूर्णांक yenta_probe_irq(काष्ठा yenta_socket *socket,
 				u32 isa_irq_mask);
-#endif
+#पूर्ण_अगर
 
 
-static unsigned int override_bios;
-module_param(override_bios, uint, 0000);
+अटल अचिन्हित पूर्णांक override_bios;
+module_param(override_bios, uपूर्णांक, 0000);
 MODULE_PARM_DESC(override_bios, "yenta ignore bios resource allocation");
 
 /*
- * Generate easy-to-use ways of reading a cardbus sockets
+ * Generate easy-to-use ways of पढ़ोing a cardbus sockets
  * regular memory space ("cb_xxx"), configuration space
  * ("config_xxx") and compatibility space ("exca_xxxx")
  */
-static inline u32 cb_readl(struct yenta_socket *socket, unsigned reg)
-{
-	u32 val = readl(socket->base + reg);
+अटल अंतरभूत u32 cb_पढ़ोl(काष्ठा yenta_socket *socket, अचिन्हित reg)
+अणु
+	u32 val = पढ़ोl(socket->base + reg);
 	debug("%04x %08x\n", socket, reg, val);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void cb_writel(struct yenta_socket *socket, unsigned reg, u32 val)
-{
+अटल अंतरभूत व्योम cb_ग_लिखोl(काष्ठा yenta_socket *socket, अचिन्हित reg, u32 val)
+अणु
 	debug("%04x %08x\n", socket, reg, val);
-	writel(val, socket->base + reg);
-	readl(socket->base + reg); /* avoid problems with PCI write posting */
-}
+	ग_लिखोl(val, socket->base + reg);
+	पढ़ोl(socket->base + reg); /* aव्योम problems with PCI ग_लिखो posting */
+पूर्ण
 
-static inline u8 config_readb(struct yenta_socket *socket, unsigned offset)
-{
+अटल अंतरभूत u8 config_पढ़ोb(काष्ठा yenta_socket *socket, अचिन्हित offset)
+अणु
 	u8 val;
-	pci_read_config_byte(socket->dev, offset, &val);
+	pci_पढ़ो_config_byte(socket->dev, offset, &val);
 	debug("%04x %02x\n", socket, offset, val);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline u16 config_readw(struct yenta_socket *socket, unsigned offset)
-{
+अटल अंतरभूत u16 config_पढ़ोw(काष्ठा yenta_socket *socket, अचिन्हित offset)
+अणु
 	u16 val;
-	pci_read_config_word(socket->dev, offset, &val);
+	pci_पढ़ो_config_word(socket->dev, offset, &val);
 	debug("%04x %04x\n", socket, offset, val);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline u32 config_readl(struct yenta_socket *socket, unsigned offset)
-{
+अटल अंतरभूत u32 config_पढ़ोl(काष्ठा yenta_socket *socket, अचिन्हित offset)
+अणु
 	u32 val;
-	pci_read_config_dword(socket->dev, offset, &val);
+	pci_पढ़ो_config_dword(socket->dev, offset, &val);
 	debug("%04x %08x\n", socket, offset, val);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void config_writeb(struct yenta_socket *socket, unsigned offset, u8 val)
-{
+अटल अंतरभूत व्योम config_ग_लिखोb(काष्ठा yenta_socket *socket, अचिन्हित offset, u8 val)
+अणु
 	debug("%04x %02x\n", socket, offset, val);
-	pci_write_config_byte(socket->dev, offset, val);
-}
+	pci_ग_लिखो_config_byte(socket->dev, offset, val);
+पूर्ण
 
-static inline void config_writew(struct yenta_socket *socket, unsigned offset, u16 val)
-{
+अटल अंतरभूत व्योम config_ग_लिखोw(काष्ठा yenta_socket *socket, अचिन्हित offset, u16 val)
+अणु
 	debug("%04x %04x\n", socket, offset, val);
-	pci_write_config_word(socket->dev, offset, val);
-}
+	pci_ग_लिखो_config_word(socket->dev, offset, val);
+पूर्ण
 
-static inline void config_writel(struct yenta_socket *socket, unsigned offset, u32 val)
-{
+अटल अंतरभूत व्योम config_ग_लिखोl(काष्ठा yenta_socket *socket, अचिन्हित offset, u32 val)
+अणु
 	debug("%04x %08x\n", socket, offset, val);
-	pci_write_config_dword(socket->dev, offset, val);
-}
+	pci_ग_लिखो_config_dword(socket->dev, offset, val);
+पूर्ण
 
-static inline u8 exca_readb(struct yenta_socket *socket, unsigned reg)
-{
-	u8 val = readb(socket->base + 0x800 + reg);
+अटल अंतरभूत u8 exca_पढ़ोb(काष्ठा yenta_socket *socket, अचिन्हित reg)
+अणु
+	u8 val = पढ़ोb(socket->base + 0x800 + reg);
 	debug("%04x %02x\n", socket, reg, val);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline u8 exca_readw(struct yenta_socket *socket, unsigned reg)
-{
+अटल अंतरभूत u8 exca_पढ़ोw(काष्ठा yenta_socket *socket, अचिन्हित reg)
+अणु
 	u16 val;
-	val = readb(socket->base + 0x800 + reg);
-	val |= readb(socket->base + 0x800 + reg + 1) << 8;
+	val = पढ़ोb(socket->base + 0x800 + reg);
+	val |= पढ़ोb(socket->base + 0x800 + reg + 1) << 8;
 	debug("%04x %04x\n", socket, reg, val);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void exca_writeb(struct yenta_socket *socket, unsigned reg, u8 val)
-{
+अटल अंतरभूत व्योम exca_ग_लिखोb(काष्ठा yenta_socket *socket, अचिन्हित reg, u8 val)
+अणु
 	debug("%04x %02x\n", socket, reg, val);
-	writeb(val, socket->base + 0x800 + reg);
-	readb(socket->base + 0x800 + reg); /* PCI write posting... */
-}
+	ग_लिखोb(val, socket->base + 0x800 + reg);
+	पढ़ोb(socket->base + 0x800 + reg); /* PCI ग_लिखो posting... */
+पूर्ण
 
-static void exca_writew(struct yenta_socket *socket, unsigned reg, u16 val)
-{
+अटल व्योम exca_ग_लिखोw(काष्ठा yenta_socket *socket, अचिन्हित reg, u16 val)
+अणु
 	debug("%04x %04x\n", socket, reg, val);
-	writeb(val, socket->base + 0x800 + reg);
-	writeb(val >> 8, socket->base + 0x800 + reg + 1);
+	ग_लिखोb(val, socket->base + 0x800 + reg);
+	ग_लिखोb(val >> 8, socket->base + 0x800 + reg + 1);
 
-	/* PCI write posting... */
-	readb(socket->base + 0x800 + reg);
-	readb(socket->base + 0x800 + reg + 1);
-}
+	/* PCI ग_लिखो posting... */
+	पढ़ोb(socket->base + 0x800 + reg);
+	पढ़ोb(socket->base + 0x800 + reg + 1);
+पूर्ण
 
-static ssize_t show_yenta_registers(struct device *yentadev, struct device_attribute *attr, char *buf)
-{
-	struct yenta_socket *socket = dev_get_drvdata(yentadev);
-	int offset = 0, i;
+अटल sमाप_प्रकार show_yenta_रेजिस्टरs(काष्ठा device *yentadev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा yenta_socket *socket = dev_get_drvdata(yentadev);
+	पूर्णांक offset = 0, i;
 
-	offset = snprintf(buf, PAGE_SIZE, "CB registers:");
-	for (i = 0; i < 0x24; i += 4) {
-		unsigned val;
-		if (!(i & 15))
-			offset += scnprintf(buf + offset, PAGE_SIZE - offset, "\n%02x:", i);
-		val = cb_readl(socket, i);
-		offset += scnprintf(buf + offset, PAGE_SIZE - offset, " %08x", val);
-	}
+	offset = snम_लिखो(buf, PAGE_SIZE, "CB registers:");
+	क्रम (i = 0; i < 0x24; i += 4) अणु
+		अचिन्हित val;
+		अगर (!(i & 15))
+			offset += scnम_लिखो(buf + offset, PAGE_SIZE - offset, "\n%02x:", i);
+		val = cb_पढ़ोl(socket, i);
+		offset += scnम_लिखो(buf + offset, PAGE_SIZE - offset, " %08x", val);
+	पूर्ण
 
-	offset += scnprintf(buf + offset, PAGE_SIZE - offset, "\n\nExCA registers:");
-	for (i = 0; i < 0x45; i++) {
-		unsigned char val;
-		if (!(i & 7)) {
-			if (i & 8) {
-				memcpy(buf + offset, " -", 2);
+	offset += scnम_लिखो(buf + offset, PAGE_SIZE - offset, "\n\nExCA registers:");
+	क्रम (i = 0; i < 0x45; i++) अणु
+		अचिन्हित अक्षर val;
+		अगर (!(i & 7)) अणु
+			अगर (i & 8) अणु
+				स_नकल(buf + offset, " -", 2);
 				offset += 2;
-			} else
-				offset += scnprintf(buf + offset, PAGE_SIZE - offset, "\n%02x:", i);
-		}
-		val = exca_readb(socket, i);
-		offset += scnprintf(buf + offset, PAGE_SIZE - offset, " %02x", val);
-	}
+			पूर्ण अन्यथा
+				offset += scnम_लिखो(buf + offset, PAGE_SIZE - offset, "\n%02x:", i);
+		पूर्ण
+		val = exca_पढ़ोb(socket, i);
+		offset += scnम_लिखो(buf + offset, PAGE_SIZE - offset, " %02x", val);
+	पूर्ण
 	buf[offset++] = '\n';
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
-static DEVICE_ATTR(yenta_registers, S_IRUSR, show_yenta_registers, NULL);
+अटल DEVICE_ATTR(yenta_रेजिस्टरs, S_IRUSR, show_yenta_रेजिस्टरs, शून्य);
 
 /*
  * Ugh, mixed-mode cardbus and 16-bit pccard state: things depend
  * on what kind of card is inserted..
  */
-static int yenta_get_status(struct pcmcia_socket *sock, unsigned int *value)
-{
-	struct yenta_socket *socket = container_of(sock, struct yenta_socket, socket);
-	unsigned int val;
-	u32 state = cb_readl(socket, CB_SOCKET_STATE);
+अटल पूर्णांक yenta_get_status(काष्ठा pcmcia_socket *sock, अचिन्हित पूर्णांक *value)
+अणु
+	काष्ठा yenta_socket *socket = container_of(sock, काष्ठा yenta_socket, socket);
+	अचिन्हित पूर्णांक val;
+	u32 state = cb_पढ़ोl(socket, CB_SOCKET_STATE);
 
 	val  = (state & CB_3VCARD) ? SS_3VCARD : 0;
 	val |= (state & CB_XVCARD) ? SS_XVCARD : 0;
@@ -220,231 +221,231 @@ static int yenta_get_status(struct pcmcia_socket *sock, unsigned int *value)
 	val |= (state & (CB_CDETECT1 | CB_CDETECT2)) ? SS_PENDING : 0;
 
 
-	if (state & CB_CBCARD) {
+	अगर (state & CB_CBCARD) अणु
 		val |= SS_CARDBUS;
 		val |= (state & CB_CARDSTS) ? SS_STSCHG : 0;
 		val |= (state & (CB_CDETECT1 | CB_CDETECT2)) ? 0 : SS_DETECT;
 		val |= (state & CB_PWRCYCLE) ? SS_POWERON | SS_READY : 0;
-	} else if (state & CB_16BITCARD) {
-		u8 status = exca_readb(socket, I365_STATUS);
+	पूर्ण अन्यथा अगर (state & CB_16BITCARD) अणु
+		u8 status = exca_पढ़ोb(socket, I365_STATUS);
 		val |= ((status & I365_CS_DETECT) == I365_CS_DETECT) ? SS_DETECT : 0;
-		if (exca_readb(socket, I365_INTCTL) & I365_PC_IOCARD) {
+		अगर (exca_पढ़ोb(socket, I365_INTCTL) & I365_PC_IOCARD) अणु
 			val |= (status & I365_CS_STSCHG) ? 0 : SS_STSCHG;
-		} else {
+		पूर्ण अन्यथा अणु
 			val |= (status & I365_CS_BVD1) ? 0 : SS_BATDEAD;
 			val |= (status & I365_CS_BVD2) ? 0 : SS_BATWARN;
-		}
+		पूर्ण
 		val |= (status & I365_CS_WRPROT) ? SS_WRPROT : 0;
 		val |= (status & I365_CS_READY) ? SS_READY : 0;
 		val |= (status & I365_CS_POWERON) ? SS_POWERON : 0;
-	}
+	पूर्ण
 
 	*value = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void yenta_set_power(struct yenta_socket *socket, socket_state_t *state)
-{
-	/* some birdges require to use the ExCA registers to power 16bit cards */
-	if (!(cb_readl(socket, CB_SOCKET_STATE) & CB_CBCARD) &&
-	    (socket->flags & YENTA_16BIT_POWER_EXCA)) {
+अटल व्योम yenta_set_घातer(काष्ठा yenta_socket *socket, socket_state_t *state)
+अणु
+	/* some birdges require to use the ExCA रेजिस्टरs to घातer 16bit cards */
+	अगर (!(cb_पढ़ोl(socket, CB_SOCKET_STATE) & CB_CBCARD) &&
+	    (socket->flags & YENTA_16BIT_POWER_EXCA)) अणु
 		u8 reg, old;
-		reg = old = exca_readb(socket, I365_POWER);
+		reg = old = exca_पढ़ोb(socket, I365_POWER);
 		reg &= ~(I365_VCC_MASK | I365_VPP1_MASK | I365_VPP2_MASK);
 
 		/* i82365SL-DF style */
-		if (socket->flags & YENTA_16BIT_POWER_DF) {
-			switch (state->Vcc) {
-			case 33:
+		अगर (socket->flags & YENTA_16BIT_POWER_DF) अणु
+			चयन (state->Vcc) अणु
+			हाल 33:
 				reg |= I365_VCC_3V;
-				break;
-			case 50:
+				अवरोध;
+			हाल 50:
 				reg |= I365_VCC_5V;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				reg = 0;
-				break;
-			}
-			switch (state->Vpp) {
-			case 33:
-			case 50:
+				अवरोध;
+			पूर्ण
+			चयन (state->Vpp) अणु
+			हाल 33:
+			हाल 50:
 				reg |= I365_VPP1_5V;
-				break;
-			case 120:
+				अवरोध;
+			हाल 120:
 				reg |= I365_VPP1_12V;
-				break;
-			}
-		} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* i82365SL-B style */
-			switch (state->Vcc) {
-			case 50:
+			चयन (state->Vcc) अणु
+			हाल 50:
 				reg |= I365_VCC_5V;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				reg = 0;
-				break;
-			}
-			switch (state->Vpp) {
-			case 50:
+				अवरोध;
+			पूर्ण
+			चयन (state->Vpp) अणु
+			हाल 50:
 				reg |= I365_VPP1_5V | I365_VPP2_5V;
-				break;
-			case 120:
+				अवरोध;
+			हाल 120:
 				reg |= I365_VPP1_12V | I365_VPP2_12V;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (reg != old)
-			exca_writeb(socket, I365_POWER, reg);
-	} else {
+		अगर (reg != old)
+			exca_ग_लिखोb(socket, I365_POWER, reg);
+	पूर्ण अन्यथा अणु
 		u32 reg = 0;	/* CB_SC_STPCLK? */
-		switch (state->Vcc) {
-		case 33:
+		चयन (state->Vcc) अणु
+		हाल 33:
 			reg = CB_SC_VCC_3V;
-			break;
-		case 50:
+			अवरोध;
+		हाल 50:
 			reg = CB_SC_VCC_5V;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			reg = 0;
-			break;
-		}
-		switch (state->Vpp) {
-		case 33:
+			अवरोध;
+		पूर्ण
+		चयन (state->Vpp) अणु
+		हाल 33:
 			reg |= CB_SC_VPP_3V;
-			break;
-		case 50:
+			अवरोध;
+		हाल 50:
 			reg |= CB_SC_VPP_5V;
-			break;
-		case 120:
+			अवरोध;
+		हाल 120:
 			reg |= CB_SC_VPP_12V;
-			break;
-		}
-		if (reg != cb_readl(socket, CB_SOCKET_CONTROL))
-			cb_writel(socket, CB_SOCKET_CONTROL, reg);
-	}
-}
+			अवरोध;
+		पूर्ण
+		अगर (reg != cb_पढ़ोl(socket, CB_SOCKET_CONTROL))
+			cb_ग_लिखोl(socket, CB_SOCKET_CONTROL, reg);
+	पूर्ण
+पूर्ण
 
-static int yenta_set_socket(struct pcmcia_socket *sock, socket_state_t *state)
-{
-	struct yenta_socket *socket = container_of(sock, struct yenta_socket, socket);
+अटल पूर्णांक yenta_set_socket(काष्ठा pcmcia_socket *sock, socket_state_t *state)
+अणु
+	काष्ठा yenta_socket *socket = container_of(sock, काष्ठा yenta_socket, socket);
 	u16 bridge;
 
-	/* if powering down: do it immediately */
-	if (state->Vcc == 0)
-		yenta_set_power(socket, state);
+	/* अगर घातering करोwn: करो it immediately */
+	अगर (state->Vcc == 0)
+		yenta_set_घातer(socket, state);
 
 	socket->io_irq = state->io_irq;
-	bridge = config_readw(socket, CB_BRIDGE_CONTROL) & ~(CB_BRIDGE_CRST | CB_BRIDGE_INTR);
-	if (cb_readl(socket, CB_SOCKET_STATE) & CB_CBCARD) {
-		u8 intr;
+	bridge = config_पढ़ोw(socket, CB_BRIDGE_CONTROL) & ~(CB_BRIDGE_CRST | CB_BRIDGE_INTR);
+	अगर (cb_पढ़ोl(socket, CB_SOCKET_STATE) & CB_CBCARD) अणु
+		u8 पूर्णांकr;
 		bridge |= (state->flags & SS_RESET) ? CB_BRIDGE_CRST : 0;
 
-		/* ISA interrupt control? */
-		intr = exca_readb(socket, I365_INTCTL);
-		intr = (intr & ~0xf);
-		if (!socket->dev->irq) {
-			intr |= socket->cb_irq ? socket->cb_irq : state->io_irq;
+		/* ISA पूर्णांकerrupt control? */
+		पूर्णांकr = exca_पढ़ोb(socket, I365_INTCTL);
+		पूर्णांकr = (पूर्णांकr & ~0xf);
+		अगर (!socket->dev->irq) अणु
+			पूर्णांकr |= socket->cb_irq ? socket->cb_irq : state->io_irq;
 			bridge |= CB_BRIDGE_INTR;
-		}
-		exca_writeb(socket, I365_INTCTL, intr);
-	}  else {
+		पूर्ण
+		exca_ग_लिखोb(socket, I365_INTCTL, पूर्णांकr);
+	पूर्ण  अन्यथा अणु
 		u8 reg;
 
-		reg = exca_readb(socket, I365_INTCTL) & (I365_RING_ENA | I365_INTR_ENA);
+		reg = exca_पढ़ोb(socket, I365_INTCTL) & (I365_RING_ENA | I365_INTR_ENA);
 		reg |= (state->flags & SS_RESET) ? 0 : I365_PC_RESET;
 		reg |= (state->flags & SS_IOCARD) ? I365_PC_IOCARD : 0;
-		if (state->io_irq != socket->dev->irq) {
+		अगर (state->io_irq != socket->dev->irq) अणु
 			reg |= state->io_irq;
 			bridge |= CB_BRIDGE_INTR;
-		}
-		exca_writeb(socket, I365_INTCTL, reg);
+		पूर्ण
+		exca_ग_लिखोb(socket, I365_INTCTL, reg);
 
-		reg = exca_readb(socket, I365_POWER) & (I365_VCC_MASK|I365_VPP1_MASK);
+		reg = exca_पढ़ोb(socket, I365_POWER) & (I365_VCC_MASK|I365_VPP1_MASK);
 		reg |= I365_PWR_NORESET;
-		if (state->flags & SS_PWR_AUTO)
+		अगर (state->flags & SS_PWR_AUTO)
 			reg |= I365_PWR_AUTO;
-		if (state->flags & SS_OUTPUT_ENA)
+		अगर (state->flags & SS_OUTPUT_ENA)
 			reg |= I365_PWR_OUT;
-		if (exca_readb(socket, I365_POWER) != reg)
-			exca_writeb(socket, I365_POWER, reg);
+		अगर (exca_पढ़ोb(socket, I365_POWER) != reg)
+			exca_ग_लिखोb(socket, I365_POWER, reg);
 
-		/* CSC interrupt: no ISA irq for CSC */
-		reg = exca_readb(socket, I365_CSCINT);
+		/* CSC पूर्णांकerrupt: no ISA irq क्रम CSC */
+		reg = exca_पढ़ोb(socket, I365_CSCINT);
 		reg &= I365_CSC_IRQ_MASK;
 		reg |= I365_CSC_DETECT;
-		if (state->flags & SS_IOCARD) {
-			if (state->csc_mask & SS_STSCHG)
+		अगर (state->flags & SS_IOCARD) अणु
+			अगर (state->csc_mask & SS_STSCHG)
 				reg |= I365_CSC_STSCHG;
-		} else {
-			if (state->csc_mask & SS_BATDEAD)
+		पूर्ण अन्यथा अणु
+			अगर (state->csc_mask & SS_BATDEAD)
 				reg |= I365_CSC_BVD1;
-			if (state->csc_mask & SS_BATWARN)
+			अगर (state->csc_mask & SS_BATWARN)
 				reg |= I365_CSC_BVD2;
-			if (state->csc_mask & SS_READY)
+			अगर (state->csc_mask & SS_READY)
 				reg |= I365_CSC_READY;
-		}
-		exca_writeb(socket, I365_CSCINT, reg);
-		exca_readb(socket, I365_CSC);
-		if (sock->zoom_video)
+		पूर्ण
+		exca_ग_लिखोb(socket, I365_CSCINT, reg);
+		exca_पढ़ोb(socket, I365_CSC);
+		अगर (sock->zoom_video)
 			sock->zoom_video(sock, state->flags & SS_ZVCARD);
-	}
-	config_writew(socket, CB_BRIDGE_CONTROL, bridge);
-	/* Socket event mask: get card insert/remove events.. */
-	cb_writel(socket, CB_SOCKET_EVENT, -1);
-	cb_writel(socket, CB_SOCKET_MASK, CB_CDMASK);
+	पूर्ण
+	config_ग_लिखोw(socket, CB_BRIDGE_CONTROL, bridge);
+	/* Socket event mask: get card insert/हटाओ events.. */
+	cb_ग_लिखोl(socket, CB_SOCKET_EVENT, -1);
+	cb_ग_लिखोl(socket, CB_SOCKET_MASK, CB_CDMASK);
 
-	/* if powering up: do it as the last step when the socket is configured */
-	if (state->Vcc != 0)
-		yenta_set_power(socket, state);
-	return 0;
-}
+	/* अगर घातering up: करो it as the last step when the socket is configured */
+	अगर (state->Vcc != 0)
+		yenta_set_घातer(socket, state);
+	वापस 0;
+पूर्ण
 
-static int yenta_set_io_map(struct pcmcia_socket *sock, struct pccard_io_map *io)
-{
-	struct yenta_socket *socket = container_of(sock, struct yenta_socket, socket);
-	int map;
-	unsigned char ioctl, addr, enable;
+अटल पूर्णांक yenta_set_io_map(काष्ठा pcmcia_socket *sock, काष्ठा pccard_io_map *io)
+अणु
+	काष्ठा yenta_socket *socket = container_of(sock, काष्ठा yenta_socket, socket);
+	पूर्णांक map;
+	अचिन्हित अक्षर ioctl, addr, enable;
 
 	map = io->map;
 
-	if (map > 1)
-		return -EINVAL;
+	अगर (map > 1)
+		वापस -EINVAL;
 
 	enable = I365_ENA_IO(map);
-	addr = exca_readb(socket, I365_ADDRWIN);
+	addr = exca_पढ़ोb(socket, I365_ADDRWIN);
 
-	/* Disable the window before changing it.. */
-	if (addr & enable) {
+	/* Disable the winकरोw beक्रमe changing it.. */
+	अगर (addr & enable) अणु
 		addr &= ~enable;
-		exca_writeb(socket, I365_ADDRWIN, addr);
-	}
+		exca_ग_लिखोb(socket, I365_ADDRWIN, addr);
+	पूर्ण
 
-	exca_writew(socket, I365_IO(map)+I365_W_START, io->start);
-	exca_writew(socket, I365_IO(map)+I365_W_STOP, io->stop);
+	exca_ग_लिखोw(socket, I365_IO(map)+I365_W_START, io->start);
+	exca_ग_लिखोw(socket, I365_IO(map)+I365_W_STOP, io->stop);
 
-	ioctl = exca_readb(socket, I365_IOCTL) & ~I365_IOCTL_MASK(map);
-	if (io->flags & MAP_0WS)
+	ioctl = exca_पढ़ोb(socket, I365_IOCTL) & ~I365_IOCTL_MASK(map);
+	अगर (io->flags & MAP_0WS)
 		ioctl |= I365_IOCTL_0WS(map);
-	if (io->flags & MAP_16BIT)
+	अगर (io->flags & MAP_16BIT)
 		ioctl |= I365_IOCTL_16BIT(map);
-	if (io->flags & MAP_AUTOSZ)
+	अगर (io->flags & MAP_AUTOSZ)
 		ioctl |= I365_IOCTL_IOCS16(map);
-	exca_writeb(socket, I365_IOCTL, ioctl);
+	exca_ग_लिखोb(socket, I365_IOCTL, ioctl);
 
-	if (io->flags & MAP_ACTIVE)
-		exca_writeb(socket, I365_ADDRWIN, addr | enable);
-	return 0;
-}
+	अगर (io->flags & MAP_ACTIVE)
+		exca_ग_लिखोb(socket, I365_ADDRWIN, addr | enable);
+	वापस 0;
+पूर्ण
 
-static int yenta_set_mem_map(struct pcmcia_socket *sock, struct pccard_mem_map *mem)
-{
-	struct yenta_socket *socket = container_of(sock, struct yenta_socket, socket);
-	struct pci_bus_region region;
-	int map;
-	unsigned char addr, enable;
-	unsigned int start, stop, card_start;
-	unsigned short word;
+अटल पूर्णांक yenta_set_mem_map(काष्ठा pcmcia_socket *sock, काष्ठा pccard_mem_map *mem)
+अणु
+	काष्ठा yenta_socket *socket = container_of(sock, काष्ठा yenta_socket, socket);
+	काष्ठा pci_bus_region region;
+	पूर्णांक map;
+	अचिन्हित अक्षर addr, enable;
+	अचिन्हित पूर्णांक start, stop, card_start;
+	अचिन्हित लघु word;
 
 	pcibios_resource_to_bus(socket->dev->bus, &region, mem->res);
 
@@ -453,316 +454,316 @@ static int yenta_set_mem_map(struct pcmcia_socket *sock, struct pccard_mem_map *
 	stop = region.end;
 	card_start = mem->card_start;
 
-	if (map > 4 || start > stop || ((start ^ stop) >> 24) ||
+	अगर (map > 4 || start > stop || ((start ^ stop) >> 24) ||
 	    (card_start >> 26) || mem->speed > 1000)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	enable = I365_ENA_MEM(map);
-	addr = exca_readb(socket, I365_ADDRWIN);
-	if (addr & enable) {
+	addr = exca_पढ़ोb(socket, I365_ADDRWIN);
+	अगर (addr & enable) अणु
 		addr &= ~enable;
-		exca_writeb(socket, I365_ADDRWIN, addr);
-	}
+		exca_ग_लिखोb(socket, I365_ADDRWIN, addr);
+	पूर्ण
 
-	exca_writeb(socket, CB_MEM_PAGE(map), start >> 24);
+	exca_ग_लिखोb(socket, CB_MEM_PAGE(map), start >> 24);
 
 	word = (start >> 12) & 0x0fff;
-	if (mem->flags & MAP_16BIT)
+	अगर (mem->flags & MAP_16BIT)
 		word |= I365_MEM_16BIT;
-	if (mem->flags & MAP_0WS)
+	अगर (mem->flags & MAP_0WS)
 		word |= I365_MEM_0WS;
-	exca_writew(socket, I365_MEM(map) + I365_W_START, word);
+	exca_ग_लिखोw(socket, I365_MEM(map) + I365_W_START, word);
 
 	word = (stop >> 12) & 0x0fff;
-	switch (to_cycles(mem->speed)) {
-	case 0:
-		break;
-	case 1:
+	चयन (to_cycles(mem->speed)) अणु
+	हाल 0:
+		अवरोध;
+	हाल 1:
 		word |= I365_MEM_WS0;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		word |= I365_MEM_WS1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		word |= I365_MEM_WS1 | I365_MEM_WS0;
-		break;
-	}
-	exca_writew(socket, I365_MEM(map) + I365_W_STOP, word);
+		अवरोध;
+	पूर्ण
+	exca_ग_लिखोw(socket, I365_MEM(map) + I365_W_STOP, word);
 
 	word = ((card_start - start) >> 12) & 0x3fff;
-	if (mem->flags & MAP_WRPROT)
+	अगर (mem->flags & MAP_WRPROT)
 		word |= I365_MEM_WRPROT;
-	if (mem->flags & MAP_ATTRIB)
+	अगर (mem->flags & MAP_ATTRIB)
 		word |= I365_MEM_REG;
-	exca_writew(socket, I365_MEM(map) + I365_W_OFF, word);
+	exca_ग_लिखोw(socket, I365_MEM(map) + I365_W_OFF, word);
 
-	if (mem->flags & MAP_ACTIVE)
-		exca_writeb(socket, I365_ADDRWIN, addr | enable);
-	return 0;
-}
+	अगर (mem->flags & MAP_ACTIVE)
+		exca_ग_लिखोb(socket, I365_ADDRWIN, addr | enable);
+	वापस 0;
+पूर्ण
 
 
 
-static irqreturn_t yenta_interrupt(int irq, void *dev_id)
-{
-	unsigned int events;
-	struct yenta_socket *socket = (struct yenta_socket *) dev_id;
+अटल irqवापस_t yenta_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित पूर्णांक events;
+	काष्ठा yenta_socket *socket = (काष्ठा yenta_socket *) dev_id;
 	u8 csc;
 	u32 cb_event;
 
-	/* Clear interrupt status for the event */
-	cb_event = cb_readl(socket, CB_SOCKET_EVENT);
-	cb_writel(socket, CB_SOCKET_EVENT, cb_event);
+	/* Clear पूर्णांकerrupt status क्रम the event */
+	cb_event = cb_पढ़ोl(socket, CB_SOCKET_EVENT);
+	cb_ग_लिखोl(socket, CB_SOCKET_EVENT, cb_event);
 
-	csc = exca_readb(socket, I365_CSC);
+	csc = exca_पढ़ोb(socket, I365_CSC);
 
-	if (!(cb_event || csc))
-		return IRQ_NONE;
+	अगर (!(cb_event || csc))
+		वापस IRQ_NONE;
 
 	events = (cb_event & (CB_CD1EVENT | CB_CD2EVENT)) ? SS_DETECT : 0 ;
 	events |= (csc & I365_CSC_DETECT) ? SS_DETECT : 0;
-	if (exca_readb(socket, I365_INTCTL) & I365_PC_IOCARD) {
+	अगर (exca_पढ़ोb(socket, I365_INTCTL) & I365_PC_IOCARD) अणु
 		events |= (csc & I365_CSC_STSCHG) ? SS_STSCHG : 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		events |= (csc & I365_CSC_BVD1) ? SS_BATDEAD : 0;
 		events |= (csc & I365_CSC_BVD2) ? SS_BATWARN : 0;
 		events |= (csc & I365_CSC_READY) ? SS_READY : 0;
-	}
+	पूर्ण
 
-	if (events)
+	अगर (events)
 		pcmcia_parse_events(&socket->socket, events);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void yenta_interrupt_wrapper(struct timer_list *t)
-{
-	struct yenta_socket *socket = from_timer(socket, t, poll_timer);
+अटल व्योम yenta_पूर्णांकerrupt_wrapper(काष्ठा समयr_list *t)
+अणु
+	काष्ठा yenta_socket *socket = from_समयr(socket, t, poll_समयr);
 
-	yenta_interrupt(0, (void *)socket);
-	socket->poll_timer.expires = jiffies + HZ;
-	add_timer(&socket->poll_timer);
-}
+	yenta_पूर्णांकerrupt(0, (व्योम *)socket);
+	socket->poll_समयr.expires = jअगरfies + HZ;
+	add_समयr(&socket->poll_समयr);
+पूर्ण
 
-static void yenta_clear_maps(struct yenta_socket *socket)
-{
-	int i;
-	struct resource res = { .start = 0, .end = 0x0fff };
-	pccard_io_map io = { 0, 0, 0, 0, 1 };
-	pccard_mem_map mem = { .res = &res, };
+अटल व्योम yenta_clear_maps(काष्ठा yenta_socket *socket)
+अणु
+	पूर्णांक i;
+	काष्ठा resource res = अणु .start = 0, .end = 0x0fff पूर्ण;
+	pccard_io_map io = अणु 0, 0, 0, 0, 1 पूर्ण;
+	pccard_mem_map mem = अणु .res = &res, पूर्ण;
 
 	yenta_set_socket(&socket->socket, &dead_socket);
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		io.map = i;
 		yenta_set_io_map(&socket->socket, &io);
-	}
-	for (i = 0; i < 5; i++) {
+	पूर्ण
+	क्रम (i = 0; i < 5; i++) अणु
 		mem.map = i;
 		yenta_set_mem_map(&socket->socket, &mem);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* redoes voltage interrogation if required */
-static void yenta_interrogate(struct yenta_socket *socket)
-{
+/* reकरोes voltage पूर्णांकerrogation अगर required */
+अटल व्योम yenta_पूर्णांकerrogate(काष्ठा yenta_socket *socket)
+अणु
 	u32 state;
 
-	state = cb_readl(socket, CB_SOCKET_STATE);
-	if (!(state & (CB_5VCARD | CB_3VCARD | CB_XVCARD | CB_YVCARD)) ||
+	state = cb_पढ़ोl(socket, CB_SOCKET_STATE);
+	अगर (!(state & (CB_5VCARD | CB_3VCARD | CB_XVCARD | CB_YVCARD)) ||
 	    (state & (CB_CDETECT1 | CB_CDETECT2 | CB_NOTACARD | CB_BADVCCREQ)) ||
 	    ((state & (CB_16BITCARD | CB_CBCARD)) == (CB_16BITCARD | CB_CBCARD)))
-		cb_writel(socket, CB_SOCKET_FORCE, CB_CVSTEST);
-}
+		cb_ग_लिखोl(socket, CB_SOCKET_FORCE, CB_CVSTEST);
+पूर्ण
 
 /* Called at resume and initialization events */
-static int yenta_sock_init(struct pcmcia_socket *sock)
-{
-	struct yenta_socket *socket = container_of(sock, struct yenta_socket, socket);
+अटल पूर्णांक yenta_sock_init(काष्ठा pcmcia_socket *sock)
+अणु
+	काष्ठा yenta_socket *socket = container_of(sock, काष्ठा yenta_socket, socket);
 
-	exca_writeb(socket, I365_GBLCTL, 0x00);
-	exca_writeb(socket, I365_GENCTL, 0x00);
+	exca_ग_लिखोb(socket, I365_GBLCTL, 0x00);
+	exca_ग_लिखोb(socket, I365_GENCTL, 0x00);
 
-	/* Redo card voltage interrogation */
-	yenta_interrogate(socket);
+	/* Reकरो card voltage पूर्णांकerrogation */
+	yenta_पूर्णांकerrogate(socket);
 
 	yenta_clear_maps(socket);
 
-	if (socket->type && socket->type->sock_init)
+	अगर (socket->type && socket->type->sock_init)
 		socket->type->sock_init(socket);
 
-	/* Re-enable CSC interrupts */
-	cb_writel(socket, CB_SOCKET_MASK, CB_CDMASK);
+	/* Re-enable CSC पूर्णांकerrupts */
+	cb_ग_लिखोl(socket, CB_SOCKET_MASK, CB_CDMASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int yenta_sock_suspend(struct pcmcia_socket *sock)
-{
-	struct yenta_socket *socket = container_of(sock, struct yenta_socket, socket);
+अटल पूर्णांक yenta_sock_suspend(काष्ठा pcmcia_socket *sock)
+अणु
+	काष्ठा yenta_socket *socket = container_of(sock, काष्ठा yenta_socket, socket);
 
-	/* Disable CSC interrupts */
-	cb_writel(socket, CB_SOCKET_MASK, 0x0);
+	/* Disable CSC पूर्णांकerrupts */
+	cb_ग_लिखोl(socket, CB_SOCKET_MASK, 0x0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Use an adaptive allocation for the memory resource,
- * sometimes the memory behind pci bridges is limited:
- * 1/8 of the size of the io window of the parent.
+ * Use an adaptive allocation क्रम the memory resource,
+ * someबार the memory behind pci bridges is limited:
+ * 1/8 of the size of the io winकरोw of the parent.
  * max 4 MB, min 16 kB. We try very hard to not get below
  * the "ACC" values, though.
  */
-#define BRIDGE_MEM_MAX (4*1024*1024)
-#define BRIDGE_MEM_ACC (128*1024)
-#define BRIDGE_MEM_MIN (16*1024)
+#घोषणा BRIDGE_MEM_MAX (4*1024*1024)
+#घोषणा BRIDGE_MEM_ACC (128*1024)
+#घोषणा BRIDGE_MEM_MIN (16*1024)
 
-#define BRIDGE_IO_MAX 512
-#define BRIDGE_IO_ACC 256
-#define BRIDGE_IO_MIN 32
+#घोषणा BRIDGE_IO_MAX 512
+#घोषणा BRIDGE_IO_ACC 256
+#घोषणा BRIDGE_IO_MIN 32
 
-#ifndef PCIBIOS_MIN_CARDBUS_IO
-#define PCIBIOS_MIN_CARDBUS_IO PCIBIOS_MIN_IO
-#endif
+#अगर_अघोषित PCIBIOS_MIN_CARDBUS_IO
+#घोषणा PCIBIOS_MIN_CARDBUS_IO PCIBIOS_MIN_IO
+#पूर्ण_अगर
 
-static int yenta_search_one_res(struct resource *root, struct resource *res,
+अटल पूर्णांक yenta_search_one_res(काष्ठा resource *root, काष्ठा resource *res,
 				u32 min)
-{
+अणु
 	u32 align, size, start, end;
 
-	if (res->flags & IORESOURCE_IO) {
+	अगर (res->flags & IORESOURCE_IO) अणु
 		align = 1024;
 		size = BRIDGE_IO_MAX;
 		start = PCIBIOS_MIN_CARDBUS_IO;
 		end = ~0U;
-	} else {
-		unsigned long avail = root->end - root->start;
-		int i;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ avail = root->end - root->start;
+		पूर्णांक i;
 		size = BRIDGE_MEM_MAX;
-		if (size > avail/8) {
+		अगर (size > avail/8) अणु
 			size = (avail+1)/8;
-			/* round size down to next power of 2 */
+			/* round size करोwn to next घातer of 2 */
 			i = 0;
-			while ((size /= 2) != 0)
+			जबतक ((size /= 2) != 0)
 				i++;
 			size = 1 << i;
-		}
-		if (size < min)
+		पूर्ण
+		अगर (size < min)
 			size = min;
 		align = size;
 		start = PCIBIOS_MIN_MEM;
 		end = ~0U;
-	}
+	पूर्ण
 
-	do {
-		if (allocate_resource(root, res, size, start, end, align,
-				      NULL, NULL) == 0) {
-			return 1;
-		}
+	करो अणु
+		अगर (allocate_resource(root, res, size, start, end, align,
+				      शून्य, शून्य) == 0) अणु
+			वापस 1;
+		पूर्ण
 		size = size/2;
 		align = size;
-	} while (size >= min);
+	पूर्ण जबतक (size >= min);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int yenta_search_res(struct yenta_socket *socket, struct resource *res,
+अटल पूर्णांक yenta_search_res(काष्ठा yenta_socket *socket, काष्ठा resource *res,
 			    u32 min)
-{
-	struct resource *root;
-	int i;
+अणु
+	काष्ठा resource *root;
+	पूर्णांक i;
 
-	pci_bus_for_each_resource(socket->dev->bus, root, i) {
-		if (!root)
-			continue;
+	pci_bus_क्रम_each_resource(socket->dev->bus, root, i) अणु
+		अगर (!root)
+			जारी;
 
-		if ((res->flags ^ root->flags) &
+		अगर ((res->flags ^ root->flags) &
 		    (IORESOURCE_IO | IORESOURCE_MEM | IORESOURCE_PREFETCH))
-			continue; /* Wrong type */
+			जारी; /* Wrong type */
 
-		if (yenta_search_one_res(root, res, min))
-			return 1;
-	}
-	return 0;
-}
+		अगर (yenta_search_one_res(root, res, min))
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int yenta_allocate_res(struct yenta_socket *socket, int nr, unsigned type, int addr_start, int addr_end)
-{
-	struct pci_dev *dev = socket->dev;
-	struct resource *res;
-	struct pci_bus_region region;
-	unsigned mask;
+अटल पूर्णांक yenta_allocate_res(काष्ठा yenta_socket *socket, पूर्णांक nr, अचिन्हित type, पूर्णांक addr_start, पूर्णांक addr_end)
+अणु
+	काष्ठा pci_dev *dev = socket->dev;
+	काष्ठा resource *res;
+	काष्ठा pci_bus_region region;
+	अचिन्हित mask;
 
 	res = &dev->resource[nr];
-	/* Already allocated? */
-	if (res->parent)
-		return 0;
+	/* Alपढ़ोy allocated? */
+	अगर (res->parent)
+		वापस 0;
 
 	/* The granularity of the memory limit is 4kB, on IO it's 4 bytes */
 	mask = ~0xfff;
-	if (type & IORESOURCE_IO)
+	अगर (type & IORESOURCE_IO)
 		mask = ~3;
 
 	res->name = dev->subordinate->name;
 	res->flags = type;
 
-	region.start = config_readl(socket, addr_start) & mask;
-	region.end = config_readl(socket, addr_end) | ~mask;
-	if (region.start && region.end > region.start && !override_bios) {
+	region.start = config_पढ़ोl(socket, addr_start) & mask;
+	region.end = config_पढ़ोl(socket, addr_end) | ~mask;
+	अगर (region.start && region.end > region.start && !override_bios) अणु
 		pcibios_bus_to_resource(dev->bus, res, &region);
-		if (pci_claim_resource(dev, nr) == 0)
-			return 0;
+		अगर (pci_claim_resource(dev, nr) == 0)
+			वापस 0;
 		dev_info(&dev->dev,
 			 "Preassigned resource %d busy or not available, reconfiguring...\n",
 			 nr);
-	}
+	पूर्ण
 
-	if (type & IORESOURCE_IO) {
-		if ((yenta_search_res(socket, res, BRIDGE_IO_MAX)) ||
+	अगर (type & IORESOURCE_IO) अणु
+		अगर ((yenta_search_res(socket, res, BRIDGE_IO_MAX)) ||
 		    (yenta_search_res(socket, res, BRIDGE_IO_ACC)) ||
 		    (yenta_search_res(socket, res, BRIDGE_IO_MIN)))
-			return 1;
-	} else {
-		if (type & IORESOURCE_PREFETCH) {
-			if ((yenta_search_res(socket, res, BRIDGE_MEM_MAX)) ||
+			वापस 1;
+	पूर्ण अन्यथा अणु
+		अगर (type & IORESOURCE_PREFETCH) अणु
+			अगर ((yenta_search_res(socket, res, BRIDGE_MEM_MAX)) ||
 			    (yenta_search_res(socket, res, BRIDGE_MEM_ACC)) ||
 			    (yenta_search_res(socket, res, BRIDGE_MEM_MIN)))
-				return 1;
+				वापस 1;
 			/* Approximating prefetchable by non-prefetchable */
 			res->flags = IORESOURCE_MEM;
-		}
-		if ((yenta_search_res(socket, res, BRIDGE_MEM_MAX)) ||
+		पूर्ण
+		अगर ((yenta_search_res(socket, res, BRIDGE_MEM_MAX)) ||
 		    (yenta_search_res(socket, res, BRIDGE_MEM_ACC)) ||
 		    (yenta_search_res(socket, res, BRIDGE_MEM_MIN)))
-			return 1;
-	}
+			वापस 1;
+	पूर्ण
 
 	dev_info(&dev->dev,
 		 "no resource of type %x available, trying to continue...\n",
 		 type);
 	res->start = res->end = res->flags = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void yenta_free_res(struct yenta_socket *socket, int nr)
-{
-	struct pci_dev *dev = socket->dev;
-	struct resource *res;
+अटल व्योम yenta_मुक्त_res(काष्ठा yenta_socket *socket, पूर्णांक nr)
+अणु
+	काष्ठा pci_dev *dev = socket->dev;
+	काष्ठा resource *res;
 
 	res = &dev->resource[nr];
-	if (res->start != 0 && res->end != 0)
+	अगर (res->start != 0 && res->end != 0)
 		release_resource(res);
 
 	res->start = res->end = res->flags = 0;
-}
+पूर्ण
 
 /*
- * Allocate the bridge mappings for the device..
+ * Allocate the bridge mappings क्रम the device..
  */
-static void yenta_allocate_resources(struct yenta_socket *socket)
-{
-	int program = 0;
+अटल व्योम yenta_allocate_resources(काष्ठा yenta_socket *socket)
+अणु
+	पूर्णांक program = 0;
 	program += yenta_allocate_res(socket, PCI_CB_BRIDGE_IO_0_WINDOW,
 			   IORESOURCE_IO,
 			   PCI_CB_IO_BASE_0, PCI_CB_IO_LIMIT_0);
@@ -775,79 +776,79 @@ static void yenta_allocate_resources(struct yenta_socket *socket)
 	program += yenta_allocate_res(socket, PCI_CB_BRIDGE_MEM_1_WINDOW,
 			   IORESOURCE_MEM,
 			   PCI_CB_MEMORY_BASE_1, PCI_CB_MEMORY_LIMIT_1);
-	if (program)
+	अगर (program)
 		pci_setup_cardbus(socket->dev->subordinate);
-}
+पूर्ण
 
 
 /*
- * Free the bridge mappings for the device..
+ * Free the bridge mappings क्रम the device..
  */
-static void yenta_free_resources(struct yenta_socket *socket)
-{
-	yenta_free_res(socket, PCI_CB_BRIDGE_IO_0_WINDOW);
-	yenta_free_res(socket, PCI_CB_BRIDGE_IO_1_WINDOW);
-	yenta_free_res(socket, PCI_CB_BRIDGE_MEM_0_WINDOW);
-	yenta_free_res(socket, PCI_CB_BRIDGE_MEM_1_WINDOW);
-}
+अटल व्योम yenta_मुक्त_resources(काष्ठा yenta_socket *socket)
+अणु
+	yenta_मुक्त_res(socket, PCI_CB_BRIDGE_IO_0_WINDOW);
+	yenta_मुक्त_res(socket, PCI_CB_BRIDGE_IO_1_WINDOW);
+	yenta_मुक्त_res(socket, PCI_CB_BRIDGE_MEM_0_WINDOW);
+	yenta_मुक्त_res(socket, PCI_CB_BRIDGE_MEM_1_WINDOW);
+पूर्ण
 
 
 /*
- * Close it down - release our resources and go home..
+ * Close it करोwn - release our resources and go home..
  */
-static void yenta_close(struct pci_dev *dev)
-{
-	struct yenta_socket *sock = pci_get_drvdata(dev);
+अटल व्योम yenta_बंद(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा yenta_socket *sock = pci_get_drvdata(dev);
 
-	/* Remove the register attributes */
-	device_remove_file(&dev->dev, &dev_attr_yenta_registers);
+	/* Remove the रेजिस्टर attributes */
+	device_हटाओ_file(&dev->dev, &dev_attr_yenta_रेजिस्टरs);
 
-	/* we don't want a dying socket registered */
-	pcmcia_unregister_socket(&sock->socket);
+	/* we करोn't want a dying socket रेजिस्टरed */
+	pcmcia_unरेजिस्टर_socket(&sock->socket);
 
-	/* Disable all events so we don't die in an IRQ storm */
-	cb_writel(sock, CB_SOCKET_MASK, 0x0);
-	exca_writeb(sock, I365_CSCINT, 0);
+	/* Disable all events so we करोn't die in an IRQ storm */
+	cb_ग_लिखोl(sock, CB_SOCKET_MASK, 0x0);
+	exca_ग_लिखोb(sock, I365_CSCINT, 0);
 
-	if (sock->cb_irq)
-		free_irq(sock->cb_irq, sock);
-	else
-		del_timer_sync(&sock->poll_timer);
+	अगर (sock->cb_irq)
+		मुक्त_irq(sock->cb_irq, sock);
+	अन्यथा
+		del_समयr_sync(&sock->poll_समयr);
 
 	iounmap(sock->base);
-	yenta_free_resources(sock);
+	yenta_मुक्त_resources(sock);
 
 	pci_release_regions(dev);
 	pci_disable_device(dev);
-	pci_set_drvdata(dev, NULL);
-	kfree(sock);
-}
+	pci_set_drvdata(dev, शून्य);
+	kमुक्त(sock);
+पूर्ण
 
 
-static struct pccard_operations yenta_socket_operations = {
+अटल काष्ठा pccard_operations yenta_socket_operations = अणु
 	.init			= yenta_sock_init,
 	.suspend		= yenta_sock_suspend,
 	.get_status		= yenta_get_status,
 	.set_socket		= yenta_set_socket,
 	.set_io_map		= yenta_set_io_map,
 	.set_mem_map		= yenta_set_mem_map,
-};
+पूर्ण;
 
 
-#ifdef CONFIG_YENTA_TI
-#include "ti113x.h"
-#endif
-#ifdef CONFIG_YENTA_RICOH
-#include "ricoh.h"
-#endif
-#ifdef CONFIG_YENTA_TOSHIBA
-#include "topic.h"
-#endif
-#ifdef CONFIG_YENTA_O2
-#include "o2micro.h"
-#endif
+#अगर_घोषित CONFIG_YENTA_TI
+#समावेश "ti113x.h"
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_YENTA_RICOH
+#समावेश "ricoh.h"
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_YENTA_TOSHIBA
+#समावेश "topic.h"
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_YENTA_O2
+#समावेश "o2micro.h"
+#पूर्ण_अगर
 
-enum {
+क्रमागत अणु
 	CARDBUS_TYPE_DEFAULT = -1,
 	CARDBUS_TYPE_TI,
 	CARDBUS_TYPE_TI113X,
@@ -858,323 +859,323 @@ enum {
 	CARDBUS_TYPE_TOPIC97,
 	CARDBUS_TYPE_O2MICRO,
 	CARDBUS_TYPE_ENE,
-};
+पूर्ण;
 
 /*
- * Different cardbus controllers have slightly different
+ * Dअगरferent cardbus controllers have slightly dअगरferent
  * initialization sequences etc details. List them here..
  */
-static struct cardbus_type cardbus_type[] = {
-#ifdef CONFIG_YENTA_TI
-	[CARDBUS_TYPE_TI]	= {
+अटल काष्ठा cardbus_type cardbus_type[] = अणु
+#अगर_घोषित CONFIG_YENTA_TI
+	[CARDBUS_TYPE_TI]	= अणु
 		.override	= ti_override,
 		.save_state	= ti_save_state,
 		.restore_state	= ti_restore_state,
 		.sock_init	= ti_init,
-	},
-	[CARDBUS_TYPE_TI113X]	= {
+	पूर्ण,
+	[CARDBUS_TYPE_TI113X]	= अणु
 		.override	= ti113x_override,
 		.save_state	= ti_save_state,
 		.restore_state	= ti_restore_state,
 		.sock_init	= ti_init,
-	},
-	[CARDBUS_TYPE_TI12XX]	= {
+	पूर्ण,
+	[CARDBUS_TYPE_TI12XX]	= अणु
 		.override	= ti12xx_override,
 		.save_state	= ti_save_state,
 		.restore_state	= ti_restore_state,
 		.sock_init	= ti_init,
-	},
-	[CARDBUS_TYPE_TI1250]	= {
+	पूर्ण,
+	[CARDBUS_TYPE_TI1250]	= अणु
 		.override	= ti1250_override,
 		.save_state	= ti_save_state,
 		.restore_state	= ti_restore_state,
 		.sock_init	= ti_init,
-	},
-	[CARDBUS_TYPE_ENE]	= {
+	पूर्ण,
+	[CARDBUS_TYPE_ENE]	= अणु
 		.override	= ene_override,
 		.save_state	= ti_save_state,
 		.restore_state	= ti_restore_state,
 		.sock_init	= ti_init,
-	},
-#endif
-#ifdef CONFIG_YENTA_RICOH
-	[CARDBUS_TYPE_RICOH]	= {
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_YENTA_RICOH
+	[CARDBUS_TYPE_RICOH]	= अणु
 		.override	= ricoh_override,
 		.save_state	= ricoh_save_state,
 		.restore_state	= ricoh_restore_state,
-	},
-#endif
-#ifdef CONFIG_YENTA_TOSHIBA
-	[CARDBUS_TYPE_TOPIC95]	= {
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_YENTA_TOSHIBA
+	[CARDBUS_TYPE_TOPIC95]	= अणु
 		.override	= topic95_override,
-	},
-	[CARDBUS_TYPE_TOPIC97]	= {
+	पूर्ण,
+	[CARDBUS_TYPE_TOPIC97]	= अणु
 		.override	= topic97_override,
-	},
-#endif
-#ifdef CONFIG_YENTA_O2
-	[CARDBUS_TYPE_O2MICRO]	= {
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_YENTA_O2
+	[CARDBUS_TYPE_O2MICRO]	= अणु
 		.override	= o2micro_override,
 		.restore_state	= o2micro_restore_state,
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
 
-static unsigned int yenta_probe_irq(struct yenta_socket *socket, u32 isa_irq_mask)
-{
-	int i;
-	unsigned long val;
+अटल अचिन्हित पूर्णांक yenta_probe_irq(काष्ठा yenta_socket *socket, u32 isa_irq_mask)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ val;
 	u32 mask;
 	u8 reg;
 
 	/*
-	 * Probe for usable interrupts using the force
-	 * register to generate bogus card status events.
+	 * Probe क्रम usable पूर्णांकerrupts using the क्रमce
+	 * रेजिस्टर to generate bogus card status events.
 	 */
-	cb_writel(socket, CB_SOCKET_EVENT, -1);
-	cb_writel(socket, CB_SOCKET_MASK, CB_CSTSMASK);
-	reg = exca_readb(socket, I365_CSCINT);
-	exca_writeb(socket, I365_CSCINT, 0);
+	cb_ग_लिखोl(socket, CB_SOCKET_EVENT, -1);
+	cb_ग_लिखोl(socket, CB_SOCKET_MASK, CB_CSTSMASK);
+	reg = exca_पढ़ोb(socket, I365_CSCINT);
+	exca_ग_लिखोb(socket, I365_CSCINT, 0);
 	val = probe_irq_on() & isa_irq_mask;
-	for (i = 1; i < 16; i++) {
-		if (!((val >> i) & 1))
-			continue;
-		exca_writeb(socket, I365_CSCINT, I365_CSC_STSCHG | (i << 4));
-		cb_writel(socket, CB_SOCKET_FORCE, CB_FCARDSTS);
+	क्रम (i = 1; i < 16; i++) अणु
+		अगर (!((val >> i) & 1))
+			जारी;
+		exca_ग_लिखोb(socket, I365_CSCINT, I365_CSC_STSCHG | (i << 4));
+		cb_ग_लिखोl(socket, CB_SOCKET_FORCE, CB_FCARDSTS);
 		udelay(100);
-		cb_writel(socket, CB_SOCKET_EVENT, -1);
-	}
-	cb_writel(socket, CB_SOCKET_MASK, 0);
-	exca_writeb(socket, I365_CSCINT, reg);
+		cb_ग_लिखोl(socket, CB_SOCKET_EVENT, -1);
+	पूर्ण
+	cb_ग_लिखोl(socket, CB_SOCKET_MASK, 0);
+	exca_ग_लिखोb(socket, I365_CSCINT, reg);
 
 	mask = probe_irq_mask(val) & 0xffff;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 
 /*
  * yenta PCI irq probing.
  * currently only used in the TI/EnE initialization code
  */
-#ifdef CONFIG_YENTA_TI
+#अगर_घोषित CONFIG_YENTA_TI
 
-/* interrupt handler, only used during probing */
-static irqreturn_t yenta_probe_handler(int irq, void *dev_id)
-{
-	struct yenta_socket *socket = (struct yenta_socket *) dev_id;
+/* पूर्णांकerrupt handler, only used during probing */
+अटल irqवापस_t yenta_probe_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा yenta_socket *socket = (काष्ठा yenta_socket *) dev_id;
 	u8 csc;
 	u32 cb_event;
 
-	/* Clear interrupt status for the event */
-	cb_event = cb_readl(socket, CB_SOCKET_EVENT);
-	cb_writel(socket, CB_SOCKET_EVENT, -1);
-	csc = exca_readb(socket, I365_CSC);
+	/* Clear पूर्णांकerrupt status क्रम the event */
+	cb_event = cb_पढ़ोl(socket, CB_SOCKET_EVENT);
+	cb_ग_लिखोl(socket, CB_SOCKET_EVENT, -1);
+	csc = exca_पढ़ोb(socket, I365_CSC);
 
-	if (cb_event || csc) {
+	अगर (cb_event || csc) अणु
 		socket->probe_status = 1;
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-/* probes the PCI interrupt, use only on override functions */
-static int yenta_probe_cb_irq(struct yenta_socket *socket)
-{
+/* probes the PCI पूर्णांकerrupt, use only on override functions */
+अटल पूर्णांक yenta_probe_cb_irq(काष्ठा yenta_socket *socket)
+अणु
 	u8 reg = 0;
 
-	if (!socket->cb_irq)
-		return -1;
+	अगर (!socket->cb_irq)
+		वापस -1;
 
 	socket->probe_status = 0;
 
-	if (request_irq(socket->cb_irq, yenta_probe_handler, IRQF_SHARED, "yenta", socket)) {
+	अगर (request_irq(socket->cb_irq, yenta_probe_handler, IRQF_SHARED, "yenta", socket)) अणु
 		dev_warn(&socket->dev->dev,
 			 "request_irq() in yenta_probe_cb_irq() failed!\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	/* generate interrupt, wait */
-	if (!socket->dev->irq)
-		reg = exca_readb(socket, I365_CSCINT);
-	exca_writeb(socket, I365_CSCINT, reg | I365_CSC_STSCHG);
-	cb_writel(socket, CB_SOCKET_EVENT, -1);
-	cb_writel(socket, CB_SOCKET_MASK, CB_CSTSMASK);
-	cb_writel(socket, CB_SOCKET_FORCE, CB_FCARDSTS);
+	/* generate पूर्णांकerrupt, रुको */
+	अगर (!socket->dev->irq)
+		reg = exca_पढ़ोb(socket, I365_CSCINT);
+	exca_ग_लिखोb(socket, I365_CSCINT, reg | I365_CSC_STSCHG);
+	cb_ग_लिखोl(socket, CB_SOCKET_EVENT, -1);
+	cb_ग_लिखोl(socket, CB_SOCKET_MASK, CB_CSTSMASK);
+	cb_ग_लिखोl(socket, CB_SOCKET_FORCE, CB_FCARDSTS);
 
 	msleep(100);
 
-	/* disable interrupts */
-	cb_writel(socket, CB_SOCKET_MASK, 0);
-	exca_writeb(socket, I365_CSCINT, reg);
-	cb_writel(socket, CB_SOCKET_EVENT, -1);
-	exca_readb(socket, I365_CSC);
+	/* disable पूर्णांकerrupts */
+	cb_ग_लिखोl(socket, CB_SOCKET_MASK, 0);
+	exca_ग_लिखोb(socket, I365_CSCINT, reg);
+	cb_ग_लिखोl(socket, CB_SOCKET_EVENT, -1);
+	exca_पढ़ोb(socket, I365_CSC);
 
-	free_irq(socket->cb_irq, socket);
+	मुक्त_irq(socket->cb_irq, socket);
 
-	return (int) socket->probe_status;
-}
+	वापस (पूर्णांक) socket->probe_status;
+पूर्ण
 
-#endif /* CONFIG_YENTA_TI */
+#पूर्ण_अगर /* CONFIG_YENTA_TI */
 
 
 /*
- * Set static data that doesn't need re-initializing..
+ * Set अटल data that करोesn't need re-initializing..
  */
-static void yenta_get_socket_capabilities(struct yenta_socket *socket, u32 isa_irq_mask)
-{
+अटल व्योम yenta_get_socket_capabilities(काष्ठा yenta_socket *socket, u32 isa_irq_mask)
+अणु
 	socket->socket.pci_irq = socket->cb_irq;
-	if (isa_probe)
+	अगर (isa_probe)
 		socket->socket.irq_mask = yenta_probe_irq(socket, isa_irq_mask);
-	else
+	अन्यथा
 		socket->socket.irq_mask = 0;
 
 	dev_info(&socket->dev->dev, "ISA IRQ mask 0x%04x, PCI irq %d\n",
 		 socket->socket.irq_mask, socket->cb_irq);
-}
+पूर्ण
 
 /*
- * Initialize the standard cardbus registers
+ * Initialize the standard cardbus रेजिस्टरs
  */
-static void yenta_config_init(struct yenta_socket *socket)
-{
+अटल व्योम yenta_config_init(काष्ठा yenta_socket *socket)
+अणु
 	u16 bridge;
-	struct pci_dev *dev = socket->dev;
-	struct pci_bus_region region;
+	काष्ठा pci_dev *dev = socket->dev;
+	काष्ठा pci_bus_region region;
 
 	pcibios_resource_to_bus(socket->dev->bus, &region, &dev->resource[0]);
 
-	config_writel(socket, CB_LEGACY_MODE_BASE, 0);
-	config_writel(socket, PCI_BASE_ADDRESS_0, region.start);
-	config_writew(socket, PCI_COMMAND,
+	config_ग_लिखोl(socket, CB_LEGACY_MODE_BASE, 0);
+	config_ग_लिखोl(socket, PCI_BASE_ADDRESS_0, region.start);
+	config_ग_लिखोw(socket, PCI_COMMAND,
 			PCI_COMMAND_IO |
 			PCI_COMMAND_MEMORY |
 			PCI_COMMAND_MASTER |
 			PCI_COMMAND_WAIT);
 
 	/* MAGIC NUMBERS! Fixme */
-	config_writeb(socket, PCI_CACHE_LINE_SIZE, L1_CACHE_BYTES / 4);
-	config_writeb(socket, PCI_LATENCY_TIMER, 168);
-	config_writel(socket, PCI_PRIMARY_BUS,
-		(176 << 24) |			   /* sec. latency timer */
-		((unsigned int)dev->subordinate->busn_res.end << 16) | /* subordinate bus */
-		((unsigned int)dev->subordinate->busn_res.start << 8) |  /* secondary bus */
+	config_ग_लिखोb(socket, PCI_CACHE_LINE_SIZE, L1_CACHE_BYTES / 4);
+	config_ग_लिखोb(socket, PCI_LATENCY_TIMER, 168);
+	config_ग_लिखोl(socket, PCI_PRIMARY_BUS,
+		(176 << 24) |			   /* sec. latency समयr */
+		((अचिन्हित पूर्णांक)dev->subordinate->busn_res.end << 16) | /* subordinate bus */
+		((अचिन्हित पूर्णांक)dev->subordinate->busn_res.start << 8) |  /* secondary bus */
 		dev->subordinate->primary);		   /* primary bus */
 
 	/*
 	 * Set up the bridging state:
-	 *  - enable write posting.
-	 *  - memory window 0 prefetchable, window 1 non-prefetchable
-	 *  - PCI interrupts enabled if a PCI interrupt exists..
+	 *  - enable ग_लिखो posting.
+	 *  - memory winकरोw 0 prefetchable, winकरोw 1 non-prefetchable
+	 *  - PCI पूर्णांकerrupts enabled अगर a PCI पूर्णांकerrupt exists..
 	 */
-	bridge = config_readw(socket, CB_BRIDGE_CONTROL);
+	bridge = config_पढ़ोw(socket, CB_BRIDGE_CONTROL);
 	bridge &= ~(CB_BRIDGE_CRST | CB_BRIDGE_PREFETCH1 | CB_BRIDGE_ISAEN | CB_BRIDGE_VGAEN);
 	bridge |= CB_BRIDGE_PREFETCH0 | CB_BRIDGE_POSTEN;
-	config_writew(socket, CB_BRIDGE_CONTROL, bridge);
-}
+	config_ग_लिखोw(socket, CB_BRIDGE_CONTROL, bridge);
+पूर्ण
 
 /**
  * yenta_fixup_parent_bridge - Fix subordinate bus# of the parent bridge
  * @cardbus_bridge: The PCI bus which the CardBus bridge bridges to
  *
- * Checks if devices on the bus which the CardBus bridge bridges to would be
+ * Checks अगर devices on the bus which the CardBus bridge bridges to would be
  * invisible during PCI scans because of a misconfigured subordinate number
  * of the parent brige - some BIOSes seem to be too lazy to set it right.
  * Does the fixup carefully by checking how far it can go without conflicts.
- * See http://bugzilla.kernel.org/show_bug.cgi?id=2944 for more information.
+ * See http://bugzilla.kernel.org/show_bug.cgi?id=2944 क्रम more inक्रमmation.
  */
-static void yenta_fixup_parent_bridge(struct pci_bus *cardbus_bridge)
-{
-	struct pci_bus *sibling;
-	unsigned char upper_limit;
+अटल व्योम yenta_fixup_parent_bridge(काष्ठा pci_bus *cardbus_bridge)
+अणु
+	काष्ठा pci_bus *sibling;
+	अचिन्हित अक्षर upper_limit;
 	/*
-	 * We only check and fix the parent bridge: All systems which need
+	 * We only check and fix the parent bridge: All प्रणालीs which need
 	 * this fixup that have been reviewed are laptops and the only bridge
 	 * which needed fixing was the parent bridge of the CardBus bridge:
 	 */
-	struct pci_bus *bridge_to_fix = cardbus_bridge->parent;
+	काष्ठा pci_bus *bridge_to_fix = cardbus_bridge->parent;
 
-	/* Check bus numbers are already set up correctly: */
-	if (bridge_to_fix->busn_res.end >= cardbus_bridge->busn_res.end)
-		return; /* The subordinate number is ok, nothing to do */
+	/* Check bus numbers are alपढ़ोy set up correctly: */
+	अगर (bridge_to_fix->busn_res.end >= cardbus_bridge->busn_res.end)
+		वापस; /* The subordinate number is ok, nothing to करो */
 
-	if (!bridge_to_fix->parent)
-		return; /* Root bridges are ok */
+	अगर (!bridge_to_fix->parent)
+		वापस; /* Root bridges are ok */
 
 	/* stay within the limits of the bus range of the parent: */
 	upper_limit = bridge_to_fix->parent->busn_res.end;
 
 	/* check the bus ranges of all sibling bridges to prevent overlap */
-	list_for_each_entry(sibling, &bridge_to_fix->parent->children,
-			node) {
+	list_क्रम_each_entry(sibling, &bridge_to_fix->parent->children,
+			node) अणु
 		/*
 		 * If the sibling has a higher secondary bus number
 		 * and it's secondary is equal or smaller than our
 		 * current upper limit, set the new upper limit to
 		 * the bus number below the sibling's range:
 		 */
-		if (sibling->busn_res.start > bridge_to_fix->busn_res.end
+		अगर (sibling->busn_res.start > bridge_to_fix->busn_res.end
 		    && sibling->busn_res.start <= upper_limit)
 			upper_limit = sibling->busn_res.start - 1;
-	}
+	पूर्ण
 
 	/* Show that the wanted subordinate number is not possible: */
-	if (cardbus_bridge->busn_res.end > upper_limit)
+	अगर (cardbus_bridge->busn_res.end > upper_limit)
 		dev_warn(&cardbus_bridge->dev,
 			 "Upper limit for fixing this bridge's parent bridge: #%02x\n",
 			 upper_limit);
 
 	/* If we have room to increase the bridge's subordinate number, */
-	if (bridge_to_fix->busn_res.end < upper_limit) {
+	अगर (bridge_to_fix->busn_res.end < upper_limit) अणु
 
 		/* use the highest number of the hidden bus, within limits */
-		unsigned char subordinate_to_assign =
-			min_t(int, cardbus_bridge->busn_res.end, upper_limit);
+		अचिन्हित अक्षर subordinate_to_assign =
+			min_t(पूर्णांक, cardbus_bridge->busn_res.end, upper_limit);
 
 		dev_info(&bridge_to_fix->dev,
 			 "Raising subordinate bus# of parent bus (#%02x) from #%02x to #%02x\n",
 			 bridge_to_fix->number,
-			 (int)bridge_to_fix->busn_res.end,
+			 (पूर्णांक)bridge_to_fix->busn_res.end,
 			 subordinate_to_assign);
 
-		/* Save the new subordinate in the bus struct of the bridge */
+		/* Save the new subordinate in the bus काष्ठा of the bridge */
 		bridge_to_fix->busn_res.end = subordinate_to_assign;
 
 		/* and update the PCI config space with the new subordinate */
-		pci_write_config_byte(bridge_to_fix->self,
+		pci_ग_लिखो_config_byte(bridge_to_fix->self,
 			PCI_SUBORDINATE_BUS, bridge_to_fix->busn_res.end);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Initialize a cardbus controller. Make sure we have a usable
- * interrupt, and that we can map the cardbus area. Fill in the
- * socket information structure..
+ * पूर्णांकerrupt, and that we can map the cardbus area. Fill in the
+ * socket inक्रमmation काष्ठाure..
  */
-static int yenta_probe(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	struct yenta_socket *socket;
-	int ret;
+अटल पूर्णांक yenta_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा yenta_socket *socket;
+	पूर्णांक ret;
 
 	/*
-	 * If we failed to assign proper bus numbers for this cardbus
-	 * controller during PCI probe, its subordinate pci_bus is NULL.
-	 * Bail out if so.
+	 * If we failed to assign proper bus numbers क्रम this cardbus
+	 * controller during PCI probe, its subordinate pci_bus is शून्य.
+	 * Bail out अगर so.
 	 */
-	if (!dev->subordinate) {
+	अगर (!dev->subordinate) अणु
 		dev_err(&dev->dev, "no bus associated! (try 'pci=assign-busses')\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	socket = kzalloc(sizeof(struct yenta_socket), GFP_KERNEL);
-	if (!socket)
-		return -ENOMEM;
+	socket = kzalloc(माप(काष्ठा yenta_socket), GFP_KERNEL);
+	अगर (!socket)
+		वापस -ENOMEM;
 
 	/* prepare pcmcia_socket */
 	socket->socket.ops = &yenta_socket_operations;
-	socket->socket.resource_ops = &pccard_nonstatic_ops;
+	socket->socket.resource_ops = &pccard_nonअटल_ops;
 	socket->socket.dev.parent = &dev->dev;
 	socket->socket.driver_data = socket;
 	socket->socket.owner = THIS_MODULE;
@@ -1182,199 +1183,199 @@ static int yenta_probe(struct pci_dev *dev, const struct pci_device_id *id)
 	socket->socket.map_size = 0x1000;
 	socket->socket.cb_dev = dev;
 
-	/* prepare struct yenta_socket */
+	/* prepare काष्ठा yenta_socket */
 	socket->dev = dev;
 	pci_set_drvdata(dev, socket);
 
 	/*
 	 * Do some basic sanity checking..
 	 */
-	if (pci_enable_device(dev)) {
+	अगर (pci_enable_device(dev)) अणु
 		ret = -EBUSY;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
 	ret = pci_request_regions(dev, "yenta_socket");
-	if (ret)
-		goto disable;
+	अगर (ret)
+		जाओ disable;
 
-	if (!pci_resource_start(dev, 0)) {
+	अगर (!pci_resource_start(dev, 0)) अणु
 		dev_err(&dev->dev, "No cardbus resource!\n");
 		ret = -ENODEV;
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 
 	/*
-	 * Ok, start setup.. Map the cardbus registers,
+	 * Ok, start setup.. Map the cardbus रेजिस्टरs,
 	 * and request the IRQ.
 	 */
 	socket->base = ioremap(pci_resource_start(dev, 0), 0x1000);
-	if (!socket->base) {
+	अगर (!socket->base) अणु
 		ret = -ENOMEM;
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 
 	/*
-	 * report the subsystem vendor and device for help debugging
+	 * report the subप्रणाली venकरोr and device क्रम help debugging
 	 * the irq stuff...
 	 */
 	dev_info(&dev->dev, "CardBus bridge found [%04x:%04x]\n",
-		 dev->subsystem_vendor, dev->subsystem_device);
+		 dev->subप्रणाली_venकरोr, dev->subप्रणाली_device);
 
 	yenta_config_init(socket);
 
 	/* Disable all events */
-	cb_writel(socket, CB_SOCKET_MASK, 0x0);
+	cb_ग_लिखोl(socket, CB_SOCKET_MASK, 0x0);
 
 	/* Set up the bridge regions.. */
 	yenta_allocate_resources(socket);
 
 	socket->cb_irq = dev->irq;
 
-	/* Do we have special options for the device? */
-	if (id->driver_data != CARDBUS_TYPE_DEFAULT &&
-	    id->driver_data < ARRAY_SIZE(cardbus_type)) {
+	/* Do we have special options क्रम the device? */
+	अगर (id->driver_data != CARDBUS_TYPE_DEFAULT &&
+	    id->driver_data < ARRAY_SIZE(cardbus_type)) अणु
 		socket->type = &cardbus_type[id->driver_data];
 
 		ret = socket->type->override(socket);
-		if (ret < 0)
-			goto unmap;
-	}
+		अगर (ret < 0)
+			जाओ unmap;
+	पूर्ण
 
 	/* We must finish initialization here */
 
-	if (!socket->cb_irq || request_irq(socket->cb_irq, yenta_interrupt, IRQF_SHARED, "yenta", socket)) {
+	अगर (!socket->cb_irq || request_irq(socket->cb_irq, yenta_पूर्णांकerrupt, IRQF_SHARED, "yenta", socket)) अणु
 		/* No IRQ or request_irq failed. Poll */
 		socket->cb_irq = 0; /* But zero is a valid IRQ number. */
-		timer_setup(&socket->poll_timer, yenta_interrupt_wrapper, 0);
-		mod_timer(&socket->poll_timer, jiffies + HZ);
+		समयr_setup(&socket->poll_समयr, yenta_पूर्णांकerrupt_wrapper, 0);
+		mod_समयr(&socket->poll_समयr, jअगरfies + HZ);
 		dev_info(&dev->dev,
 			 "no PCI IRQ, CardBus support disabled for this socket.\n");
 		dev_info(&dev->dev,
 			 "check your BIOS CardBus, BIOS IRQ or ACPI settings.\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		socket->socket.features |= SS_CAP_CARDBUS;
-	}
+	पूर्ण
 
-	/* Figure out what the dang thing can do for the PCMCIA layer... */
-	yenta_interrogate(socket);
-	yenta_get_socket_capabilities(socket, isa_interrupts);
+	/* Figure out what the dang thing can करो क्रम the PCMCIA layer... */
+	yenta_पूर्णांकerrogate(socket);
+	yenta_get_socket_capabilities(socket, isa_पूर्णांकerrupts);
 	dev_info(&dev->dev, "Socket status: %08x\n",
-		 cb_readl(socket, CB_SOCKET_STATE));
+		 cb_पढ़ोl(socket, CB_SOCKET_STATE));
 
 	yenta_fixup_parent_bridge(dev->subordinate);
 
 	/* Register it with the pcmcia layer.. */
-	ret = pcmcia_register_socket(&socket->socket);
-	if (ret)
-		goto free_irq;
+	ret = pcmcia_रेजिस्टर_socket(&socket->socket);
+	अगर (ret)
+		जाओ मुक्त_irq;
 
-	/* Add the yenta register attributes */
-	ret = device_create_file(&dev->dev, &dev_attr_yenta_registers);
-	if (ret)
-		goto unregister_socket;
+	/* Add the yenta रेजिस्टर attributes */
+	ret = device_create_file(&dev->dev, &dev_attr_yenta_रेजिस्टरs);
+	अगर (ret)
+		जाओ unरेजिस्टर_socket;
 
-	return ret;
+	वापस ret;
 
 	/* error path... */
- unregister_socket:
-	pcmcia_unregister_socket(&socket->socket);
- free_irq:
-	if (socket->cb_irq)
-		free_irq(socket->cb_irq, socket);
-	else
-		del_timer_sync(&socket->poll_timer);
+ unरेजिस्टर_socket:
+	pcmcia_unरेजिस्टर_socket(&socket->socket);
+ मुक्त_irq:
+	अगर (socket->cb_irq)
+		मुक्त_irq(socket->cb_irq, socket);
+	अन्यथा
+		del_समयr_sync(&socket->poll_समयr);
  unmap:
 	iounmap(socket->base);
-	yenta_free_resources(socket);
+	yenta_मुक्त_resources(socket);
  release:
 	pci_release_regions(dev);
  disable:
 	pci_disable_device(dev);
- free:
-	pci_set_drvdata(dev, NULL);
-	kfree(socket);
-	return ret;
-}
+ मुक्त:
+	pci_set_drvdata(dev, शून्य);
+	kमुक्त(socket);
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int yenta_dev_suspend_noirq(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct yenta_socket *socket = pci_get_drvdata(pdev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक yenta_dev_suspend_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा yenta_socket *socket = pci_get_drvdata(pdev);
 
-	if (!socket)
-		return 0;
+	अगर (!socket)
+		वापस 0;
 
-	if (socket->type && socket->type->save_state)
+	अगर (socket->type && socket->type->save_state)
 		socket->type->save_state(socket);
 
 	pci_save_state(pdev);
-	pci_read_config_dword(pdev, 16*4, &socket->saved_state[0]);
-	pci_read_config_dword(pdev, 17*4, &socket->saved_state[1]);
+	pci_पढ़ो_config_dword(pdev, 16*4, &socket->saved_state[0]);
+	pci_पढ़ो_config_dword(pdev, 17*4, &socket->saved_state[1]);
 	pci_disable_device(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int yenta_dev_resume_noirq(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct yenta_socket *socket = pci_get_drvdata(pdev);
-	int ret;
+अटल पूर्णांक yenta_dev_resume_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा yenta_socket *socket = pci_get_drvdata(pdev);
+	पूर्णांक ret;
 
-	if (!socket)
-		return 0;
+	अगर (!socket)
+		वापस 0;
 
-	pci_write_config_dword(pdev, 16*4, socket->saved_state[0]);
-	pci_write_config_dword(pdev, 17*4, socket->saved_state[1]);
+	pci_ग_लिखो_config_dword(pdev, 16*4, socket->saved_state[0]);
+	pci_ग_लिखो_config_dword(pdev, 17*4, socket->saved_state[1]);
 
 	ret = pci_enable_device(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pci_set_master(pdev);
 
-	if (socket->type && socket->type->restore_state)
+	अगर (socket->type && socket->type->restore_state)
 		socket->type->restore_state(socket);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops yenta_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops yenta_pm_ops = अणु
 	.suspend_noirq = yenta_dev_suspend_noirq,
 	.resume_noirq = yenta_dev_resume_noirq,
-	.freeze_noirq = yenta_dev_suspend_noirq,
+	.मुक्तze_noirq = yenta_dev_suspend_noirq,
 	.thaw_noirq = yenta_dev_resume_noirq,
-	.poweroff_noirq = yenta_dev_suspend_noirq,
+	.घातeroff_noirq = yenta_dev_suspend_noirq,
 	.restore_noirq = yenta_dev_resume_noirq,
-};
+पूर्ण;
 
-#define YENTA_PM_OPS	(&yenta_pm_ops)
-#else
-#define YENTA_PM_OPS	NULL
-#endif
+#घोषणा YENTA_PM_OPS	(&yenta_pm_ops)
+#अन्यथा
+#घोषणा YENTA_PM_OPS	शून्य
+#पूर्ण_अगर
 
-#define CB_ID(vend, dev, type)				\
-	{						\
-		.vendor		= vend,			\
+#घोषणा CB_ID(vend, dev, type)				\
+	अणु						\
+		.venकरोr		= vend,			\
 		.device		= dev,			\
-		.subvendor	= PCI_ANY_ID,		\
+		.subvenकरोr	= PCI_ANY_ID,		\
 		.subdevice	= PCI_ANY_ID,		\
 		.class		= PCI_CLASS_BRIDGE_CARDBUS << 8, \
 		.class_mask	= ~0,			\
 		.driver_data	= CARDBUS_TYPE_##type,	\
-	}
+	पूर्ण
 
-static const struct pci_device_id yenta_table[] = {
+अटल स्थिर काष्ठा pci_device_id yenta_table[] = अणु
 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_1031, TI),
 
 	/*
-	 * TBD: Check if these TI variants can use more
+	 * TBD: Check अगर these TI variants can use more
 	 * advanced overrides instead.  (I can't get the
-	 * data sheets for these devices. --rmk)
+	 * data sheets क्रम these devices. --rmk)
 	 */
-#ifdef CONFIG_YENTA_TI
+#अगर_घोषित CONFIG_YENTA_TI
 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_1210, TI),
 
 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_1130, TI113X),
@@ -1418,40 +1419,40 @@ static const struct pci_device_id yenta_table[] = {
 	CB_ID(PCI_VENDOR_ID_ENE, PCI_DEVICE_ID_ENE_1225, ENE),
 	CB_ID(PCI_VENDOR_ID_ENE, PCI_DEVICE_ID_ENE_1410, ENE),
 	CB_ID(PCI_VENDOR_ID_ENE, PCI_DEVICE_ID_ENE_1420, ENE),
-#endif /* CONFIG_YENTA_TI */
+#पूर्ण_अगर /* CONFIG_YENTA_TI */
 
-#ifdef CONFIG_YENTA_RICOH
+#अगर_घोषित CONFIG_YENTA_RICOH
 	CB_ID(PCI_VENDOR_ID_RICOH, PCI_DEVICE_ID_RICOH_RL5C465, RICOH),
 	CB_ID(PCI_VENDOR_ID_RICOH, PCI_DEVICE_ID_RICOH_RL5C466, RICOH),
 	CB_ID(PCI_VENDOR_ID_RICOH, PCI_DEVICE_ID_RICOH_RL5C475, RICOH),
 	CB_ID(PCI_VENDOR_ID_RICOH, PCI_DEVICE_ID_RICOH_RL5C476, RICOH),
 	CB_ID(PCI_VENDOR_ID_RICOH, PCI_DEVICE_ID_RICOH_RL5C478, RICOH),
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_YENTA_TOSHIBA
+#अगर_घोषित CONFIG_YENTA_TOSHIBA
 	CB_ID(PCI_VENDOR_ID_TOSHIBA, PCI_DEVICE_ID_TOSHIBA_TOPIC95, TOPIC95),
 	CB_ID(PCI_VENDOR_ID_TOSHIBA, PCI_DEVICE_ID_TOSHIBA_TOPIC97, TOPIC97),
 	CB_ID(PCI_VENDOR_ID_TOSHIBA, PCI_DEVICE_ID_TOSHIBA_TOPIC100, TOPIC97),
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_YENTA_O2
+#अगर_घोषित CONFIG_YENTA_O2
 	CB_ID(PCI_VENDOR_ID_O2, PCI_ANY_ID, O2MICRO),
-#endif
+#पूर्ण_अगर
 
 	/* match any cardbus bridge */
 	CB_ID(PCI_ANY_ID, PCI_ANY_ID, DEFAULT),
-	{ /* all zeroes */ }
-};
+	अणु /* all zeroes */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, yenta_table);
 
 
-static struct pci_driver yenta_cardbus_driver = {
+अटल काष्ठा pci_driver yenta_cardbus_driver = अणु
 	.name		= "yenta_cardbus",
 	.id_table	= yenta_table,
 	.probe		= yenta_probe,
-	.remove		= yenta_close,
+	.हटाओ		= yenta_बंद,
 	.driver.pm	= YENTA_PM_OPS,
-};
+पूर्ण;
 
 module_pci_driver(yenta_cardbus_driver);
 

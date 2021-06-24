@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,181 +22,181 @@
  *
  * Authors: Ben Skeggs
  */
-#include "channv50.h"
+#समावेश "channv50.h"
 
-#include <core/client.h>
-#include <subdev/timer.h>
+#समावेश <core/client.h>
+#समावेश <subdev/समयr.h>
 
-#include <nvif/cl507d.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/cl507d.h>
+#समावेश <nvअगर/unpack.h>
 
-int
-nv50_disp_core_new_(const struct nv50_disp_chan_func *func,
-		    const struct nv50_disp_chan_mthd *mthd,
-		    struct nv50_disp *disp, int chid,
-		    const struct nvkm_oclass *oclass, void *argv, u32 argc,
-		    struct nvkm_object **pobject)
-{
-	union {
-		struct nv50_disp_core_channel_dma_v0 v0;
-	} *args = argv;
-	struct nvkm_object *parent = oclass->parent;
+पूर्णांक
+nv50_disp_core_new_(स्थिर काष्ठा nv50_disp_chan_func *func,
+		    स्थिर काष्ठा nv50_disp_chan_mthd *mthd,
+		    काष्ठा nv50_disp *disp, पूर्णांक chid,
+		    स्थिर काष्ठा nvkm_oclass *oclass, व्योम *argv, u32 argc,
+		    काष्ठा nvkm_object **pobject)
+अणु
+	जोड़ अणु
+		काष्ठा nv50_disp_core_channel_dma_v0 v0;
+	पूर्ण *args = argv;
+	काष्ठा nvkm_object *parent = oclass->parent;
 	u64 push;
-	int ret = -ENOSYS;
+	पूर्णांक ret = -ENOSYS;
 
-	nvif_ioctl(parent, "create disp core channel dma size %d\n", argc);
-	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
-		nvif_ioctl(parent, "create disp core channel dma vers %d "
+	nvअगर_ioctl(parent, "create disp core channel dma size %d\n", argc);
+	अगर (!(ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) अणु
+		nvअगर_ioctl(parent, "create disp core channel dma vers %d "
 				   "pushbuf %016llx\n",
 			   args->v0.version, args->v0.pushbuf);
 		push = args->v0.pushbuf;
-	} else
-		return ret;
+	पूर्ण अन्यथा
+		वापस ret;
 
-	return nv50_disp_dmac_new_(func, mthd, disp, chid, 0,
+	वापस nv50_disp_dmac_new_(func, mthd, disp, chid, 0,
 				   push, oclass, pobject);
-}
+पूर्ण
 
-const struct nv50_disp_mthd_list
-nv50_disp_core_mthd_base = {
+स्थिर काष्ठा nv50_disp_mthd_list
+nv50_disp_core_mthd_base = अणु
 	.mthd = 0x0000,
 	.addr = 0x000000,
-	.data = {
-		{ 0x0080, 0x000000 },
-		{ 0x0084, 0x610bb8 },
-		{ 0x0088, 0x610b9c },
-		{ 0x008c, 0x000000 },
-		{}
-	}
-};
+	.data = अणु
+		अणु 0x0080, 0x000000 पूर्ण,
+		अणु 0x0084, 0x610bb8 पूर्ण,
+		अणु 0x0088, 0x610b9c पूर्ण,
+		अणु 0x008c, 0x000000 पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct nv50_disp_mthd_list
-nv50_disp_core_mthd_dac = {
+अटल स्थिर काष्ठा nv50_disp_mthd_list
+nv50_disp_core_mthd_dac = अणु
 	.mthd = 0x0080,
 	.addr = 0x000008,
-	.data = {
-		{ 0x0400, 0x610b58 },
-		{ 0x0404, 0x610bdc },
-		{ 0x0420, 0x610828 },
-		{}
-	}
-};
+	.data = अणु
+		अणु 0x0400, 0x610b58 पूर्ण,
+		अणु 0x0404, 0x610bdc पूर्ण,
+		अणु 0x0420, 0x610828 पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-const struct nv50_disp_mthd_list
-nv50_disp_core_mthd_sor = {
+स्थिर काष्ठा nv50_disp_mthd_list
+nv50_disp_core_mthd_sor = अणु
 	.mthd = 0x0040,
 	.addr = 0x000008,
-	.data = {
-		{ 0x0600, 0x610b70 },
-		{}
-	}
-};
+	.data = अणु
+		अणु 0x0600, 0x610b70 पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-const struct nv50_disp_mthd_list
-nv50_disp_core_mthd_pior = {
+स्थिर काष्ठा nv50_disp_mthd_list
+nv50_disp_core_mthd_pior = अणु
 	.mthd = 0x0040,
 	.addr = 0x000008,
-	.data = {
-		{ 0x0700, 0x610b80 },
-		{}
-	}
-};
+	.data = अणु
+		अणु 0x0700, 0x610b80 पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct nv50_disp_mthd_list
-nv50_disp_core_mthd_head = {
+अटल स्थिर काष्ठा nv50_disp_mthd_list
+nv50_disp_core_mthd_head = अणु
 	.mthd = 0x0400,
 	.addr = 0x000540,
-	.data = {
-		{ 0x0800, 0x610ad8 },
-		{ 0x0804, 0x610ad0 },
-		{ 0x0808, 0x610a48 },
-		{ 0x080c, 0x610a78 },
-		{ 0x0810, 0x610ac0 },
-		{ 0x0814, 0x610af8 },
-		{ 0x0818, 0x610b00 },
-		{ 0x081c, 0x610ae8 },
-		{ 0x0820, 0x610af0 },
-		{ 0x0824, 0x610b08 },
-		{ 0x0828, 0x610b10 },
-		{ 0x082c, 0x610a68 },
-		{ 0x0830, 0x610a60 },
-		{ 0x0834, 0x000000 },
-		{ 0x0838, 0x610a40 },
-		{ 0x0840, 0x610a24 },
-		{ 0x0844, 0x610a2c },
-		{ 0x0848, 0x610aa8 },
-		{ 0x084c, 0x610ab0 },
-		{ 0x0860, 0x610a84 },
-		{ 0x0864, 0x610a90 },
-		{ 0x0868, 0x610b18 },
-		{ 0x086c, 0x610b20 },
-		{ 0x0870, 0x610ac8 },
-		{ 0x0874, 0x610a38 },
-		{ 0x0880, 0x610a58 },
-		{ 0x0884, 0x610a9c },
-		{ 0x08a0, 0x610a70 },
-		{ 0x08a4, 0x610a50 },
-		{ 0x08a8, 0x610ae0 },
-		{ 0x08c0, 0x610b28 },
-		{ 0x08c4, 0x610b30 },
-		{ 0x08c8, 0x610b40 },
-		{ 0x08d4, 0x610b38 },
-		{ 0x08d8, 0x610b48 },
-		{ 0x08dc, 0x610b50 },
-		{ 0x0900, 0x610a18 },
-		{ 0x0904, 0x610ab8 },
-		{}
-	}
-};
+	.data = अणु
+		अणु 0x0800, 0x610ad8 पूर्ण,
+		अणु 0x0804, 0x610ad0 पूर्ण,
+		अणु 0x0808, 0x610a48 पूर्ण,
+		अणु 0x080c, 0x610a78 पूर्ण,
+		अणु 0x0810, 0x610ac0 पूर्ण,
+		अणु 0x0814, 0x610af8 पूर्ण,
+		अणु 0x0818, 0x610b00 पूर्ण,
+		अणु 0x081c, 0x610ae8 पूर्ण,
+		अणु 0x0820, 0x610af0 पूर्ण,
+		अणु 0x0824, 0x610b08 पूर्ण,
+		अणु 0x0828, 0x610b10 पूर्ण,
+		अणु 0x082c, 0x610a68 पूर्ण,
+		अणु 0x0830, 0x610a60 पूर्ण,
+		अणु 0x0834, 0x000000 पूर्ण,
+		अणु 0x0838, 0x610a40 पूर्ण,
+		अणु 0x0840, 0x610a24 पूर्ण,
+		अणु 0x0844, 0x610a2c पूर्ण,
+		अणु 0x0848, 0x610aa8 पूर्ण,
+		अणु 0x084c, 0x610ab0 पूर्ण,
+		अणु 0x0860, 0x610a84 पूर्ण,
+		अणु 0x0864, 0x610a90 पूर्ण,
+		अणु 0x0868, 0x610b18 पूर्ण,
+		अणु 0x086c, 0x610b20 पूर्ण,
+		अणु 0x0870, 0x610ac8 पूर्ण,
+		अणु 0x0874, 0x610a38 पूर्ण,
+		अणु 0x0880, 0x610a58 पूर्ण,
+		अणु 0x0884, 0x610a9c पूर्ण,
+		अणु 0x08a0, 0x610a70 पूर्ण,
+		अणु 0x08a4, 0x610a50 पूर्ण,
+		अणु 0x08a8, 0x610ae0 पूर्ण,
+		अणु 0x08c0, 0x610b28 पूर्ण,
+		अणु 0x08c4, 0x610b30 पूर्ण,
+		अणु 0x08c8, 0x610b40 पूर्ण,
+		अणु 0x08d4, 0x610b38 पूर्ण,
+		अणु 0x08d8, 0x610b48 पूर्ण,
+		अणु 0x08dc, 0x610b50 पूर्ण,
+		अणु 0x0900, 0x610a18 पूर्ण,
+		अणु 0x0904, 0x610ab8 पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct nv50_disp_chan_mthd
-nv50_disp_core_mthd = {
+अटल स्थिर काष्ठा nv50_disp_chan_mthd
+nv50_disp_core_mthd = अणु
 	.name = "Core",
 	.addr = 0x000000,
 	.prev = 0x000004,
-	.data = {
-		{ "Global", 1, &nv50_disp_core_mthd_base },
-		{    "DAC", 3, &nv50_disp_core_mthd_dac  },
-		{    "SOR", 2, &nv50_disp_core_mthd_sor  },
-		{   "PIOR", 3, &nv50_disp_core_mthd_pior },
-		{   "HEAD", 2, &nv50_disp_core_mthd_head },
-		{}
-	}
-};
+	.data = अणु
+		अणु "Global", 1, &nv50_disp_core_mthd_base पूर्ण,
+		अणु    "DAC", 3, &nv50_disp_core_mthd_dac  पूर्ण,
+		अणु    "SOR", 2, &nv50_disp_core_mthd_sor  पूर्ण,
+		अणु   "PIOR", 3, &nv50_disp_core_mthd_pior पूर्ण,
+		अणु   "HEAD", 2, &nv50_disp_core_mthd_head पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-static void
-nv50_disp_core_fini(struct nv50_disp_chan *chan)
-{
-	struct nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
-	struct nvkm_device *device = subdev->device;
+अटल व्योम
+nv50_disp_core_fini(काष्ठा nv50_disp_chan *chan)
+अणु
+	काष्ठा nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 
 	/* deactivate channel */
 	nvkm_mask(device, 0x610200, 0x00000010, 0x00000000);
 	nvkm_mask(device, 0x610200, 0x00000003, 0x00000000);
-	if (nvkm_msec(device, 2000,
-		if (!(nvkm_rd32(device, 0x610200) & 0x001e0000))
-			break;
-	) < 0) {
+	अगर (nvkm_msec(device, 2000,
+		अगर (!(nvkm_rd32(device, 0x610200) & 0x001e0000))
+			अवरोध;
+	) < 0) अणु
 		nvkm_error(subdev, "core fini: %08x\n",
 			   nvkm_rd32(device, 0x610200));
-	}
+	पूर्ण
 
 	chan->suspend_put = nvkm_rd32(device, 0x640000);
-}
+पूर्ण
 
-static int
-nv50_disp_core_init(struct nv50_disp_chan *chan)
-{
-	struct nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
-	struct nvkm_device *device = subdev->device;
+अटल पूर्णांक
+nv50_disp_core_init(काष्ठा nv50_disp_chan *chan)
+अणु
+	काष्ठा nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 
 	/* attempt to unstick channel from some unknown state */
-	if ((nvkm_rd32(device, 0x610200) & 0x009f0000) == 0x00020000)
+	अगर ((nvkm_rd32(device, 0x610200) & 0x009f0000) == 0x00020000)
 		nvkm_mask(device, 0x610200, 0x00800000, 0x00800000);
-	if ((nvkm_rd32(device, 0x610200) & 0x003f0000) == 0x00030000)
+	अगर ((nvkm_rd32(device, 0x610200) & 0x003f0000) == 0x00030000)
 		nvkm_mask(device, 0x610200, 0x00600000, 0x00600000);
 
-	/* initialise channel for dma command submission */
+	/* initialise channel क्रम dma command submission */
 	nvkm_wr32(device, 0x610204, chan->push);
 	nvkm_wr32(device, 0x610208, 0x00010000);
 	nvkm_wr32(device, 0x61020c, 0x00000000);
@@ -203,32 +204,32 @@ nv50_disp_core_init(struct nv50_disp_chan *chan)
 	nvkm_wr32(device, 0x640000, chan->suspend_put);
 	nvkm_wr32(device, 0x610200, 0x01000013);
 
-	/* wait for it to go inactive */
-	if (nvkm_msec(device, 2000,
-		if (!(nvkm_rd32(device, 0x610200) & 0x80000000))
-			break;
-	) < 0) {
+	/* रुको क्रम it to go inactive */
+	अगर (nvkm_msec(device, 2000,
+		अगर (!(nvkm_rd32(device, 0x610200) & 0x80000000))
+			अवरोध;
+	) < 0) अणु
 		nvkm_error(subdev, "core init: %08x\n",
 			   nvkm_rd32(device, 0x610200));
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct nv50_disp_chan_func
-nv50_disp_core_func = {
+स्थिर काष्ठा nv50_disp_chan_func
+nv50_disp_core_func = अणु
 	.init = nv50_disp_core_init,
 	.fini = nv50_disp_core_fini,
-	.intr = nv50_disp_chan_intr,
+	.पूर्णांकr = nv50_disp_chan_पूर्णांकr,
 	.user = nv50_disp_chan_user,
 	.bind = nv50_disp_dmac_bind,
-};
+पूर्ण;
 
-int
-nv50_disp_core_new(const struct nvkm_oclass *oclass, void *argv, u32 argc,
-		   struct nv50_disp *disp, struct nvkm_object **pobject)
-{
-	return nv50_disp_core_new_(&nv50_disp_core_func, &nv50_disp_core_mthd,
+पूर्णांक
+nv50_disp_core_new(स्थिर काष्ठा nvkm_oclass *oclass, व्योम *argv, u32 argc,
+		   काष्ठा nv50_disp *disp, काष्ठा nvkm_object **pobject)
+अणु
+	वापस nv50_disp_core_new_(&nv50_disp_core_func, &nv50_disp_core_mthd,
 				   disp, 0, oclass, argv, argc, pobject);
-}
+पूर्ण

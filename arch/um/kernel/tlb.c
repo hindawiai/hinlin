@@ -1,604 +1,605 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <asm/tlbflush.h>
-#include <as-layout.h>
-#include <mem_user.h>
-#include <os.h>
-#include <skas.h>
-#include <kern_util.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <as-layout.h>
+#समावेश <mem_user.h>
+#समावेश <os.h>
+#समावेश <skas.h>
+#समावेश <kern_util.h>
 
-struct host_vm_change {
-	struct host_vm_op {
-		enum { NONE, MMAP, MUNMAP, MPROTECT } type;
-		union {
-			struct {
-				unsigned long addr;
-				unsigned long len;
-				unsigned int prot;
-				int fd;
+काष्ठा host_vm_change अणु
+	काष्ठा host_vm_op अणु
+		क्रमागत अणु NONE, MMAP, MUNMAP, MPROTECT पूर्ण type;
+		जोड़ अणु
+			काष्ठा अणु
+				अचिन्हित दीर्घ addr;
+				अचिन्हित दीर्घ len;
+				अचिन्हित पूर्णांक prot;
+				पूर्णांक fd;
 				__u64 offset;
-			} mmap;
-			struct {
-				unsigned long addr;
-				unsigned long len;
-			} munmap;
-			struct {
-				unsigned long addr;
-				unsigned long len;
-				unsigned int prot;
-			} mprotect;
-		} u;
-	} ops[1];
-	int userspace;
-	int index;
-	struct mm_struct *mm;
-	void *data;
-	int force;
-};
+			पूर्ण mmap;
+			काष्ठा अणु
+				अचिन्हित दीर्घ addr;
+				अचिन्हित दीर्घ len;
+			पूर्ण munmap;
+			काष्ठा अणु
+				अचिन्हित दीर्घ addr;
+				अचिन्हित दीर्घ len;
+				अचिन्हित पूर्णांक prot;
+			पूर्ण mprotect;
+		पूर्ण u;
+	पूर्ण ops[1];
+	पूर्णांक userspace;
+	पूर्णांक index;
+	काष्ठा mm_काष्ठा *mm;
+	व्योम *data;
+	पूर्णांक क्रमce;
+पूर्ण;
 
-#define INIT_HVC(mm, force, userspace) \
-	((struct host_vm_change) \
-	 { .ops		= { { .type = NONE } },	\
+#घोषणा INIT_HVC(mm, क्रमce, userspace) \
+	((काष्ठा host_vm_change) \
+	 अणु .ops		= अणु अणु .type = NONE पूर्ण पूर्ण,	\
 	   .mm		= mm, \
-       	   .data	= NULL, \
+       	   .data	= शून्य, \
 	   .userspace	= userspace, \
 	   .index	= 0, \
-	   .force	= force })
+	   .क्रमce	= क्रमce पूर्ण)
 
-static void report_enomem(void)
-{
-	printk(KERN_ERR "UML ran out of memory on the host side! "
+अटल व्योम report_enomem(व्योम)
+अणु
+	prपूर्णांकk(KERN_ERR "UML ran out of memory on the host side! "
 			"This can happen due to a memory limitation or "
 			"vm.max_map_count has been reached.\n");
-}
+पूर्ण
 
-static int do_ops(struct host_vm_change *hvc, int end,
-		  int finished)
-{
-	struct host_vm_op *op;
-	int i, ret = 0;
+अटल पूर्णांक करो_ops(काष्ठा host_vm_change *hvc, पूर्णांक end,
+		  पूर्णांक finished)
+अणु
+	काष्ठा host_vm_op *op;
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < end && !ret; i++) {
+	क्रम (i = 0; i < end && !ret; i++) अणु
 		op = &hvc->ops[i];
-		switch (op->type) {
-		case MMAP:
-			if (hvc->userspace)
+		चयन (op->type) अणु
+		हाल MMAP:
+			अगर (hvc->userspace)
 				ret = map(&hvc->mm->context.id, op->u.mmap.addr,
 					  op->u.mmap.len, op->u.mmap.prot,
 					  op->u.mmap.fd,
 					  op->u.mmap.offset, finished,
 					  &hvc->data);
-			else
+			अन्यथा
 				map_memory(op->u.mmap.addr, op->u.mmap.offset,
 					   op->u.mmap.len, 1, 1, 1);
-			break;
-		case MUNMAP:
-			if (hvc->userspace)
+			अवरोध;
+		हाल MUNMAP:
+			अगर (hvc->userspace)
 				ret = unmap(&hvc->mm->context.id,
 					    op->u.munmap.addr,
 					    op->u.munmap.len, finished,
 					    &hvc->data);
-			else
+			अन्यथा
 				ret = os_unmap_memory(
-					(void *) op->u.munmap.addr,
+					(व्योम *) op->u.munmap.addr,
 						      op->u.munmap.len);
 
-			break;
-		case MPROTECT:
-			if (hvc->userspace)
+			अवरोध;
+		हाल MPROTECT:
+			अगर (hvc->userspace)
 				ret = protect(&hvc->mm->context.id,
 					      op->u.mprotect.addr,
 					      op->u.mprotect.len,
 					      op->u.mprotect.prot,
 					      finished, &hvc->data);
-			else
+			अन्यथा
 				ret = os_protect_memory(
-					(void *) op->u.mprotect.addr,
+					(व्योम *) op->u.mprotect.addr,
 							op->u.mprotect.len,
 							1, 1, 1);
-			break;
-		default:
-			printk(KERN_ERR "Unknown op type %d in do_ops\n",
+			अवरोध;
+		शेष:
+			prपूर्णांकk(KERN_ERR "Unknown op type %d in do_ops\n",
 			       op->type);
 			BUG();
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ret == -ENOMEM)
+	अगर (ret == -ENOMEM)
 		report_enomem();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int add_mmap(unsigned long virt, unsigned long phys, unsigned long len,
-		    unsigned int prot, struct host_vm_change *hvc)
-{
+अटल पूर्णांक add_mmap(अचिन्हित दीर्घ virt, अचिन्हित दीर्घ phys, अचिन्हित दीर्घ len,
+		    अचिन्हित पूर्णांक prot, काष्ठा host_vm_change *hvc)
+अणु
 	__u64 offset;
-	struct host_vm_op *last;
-	int fd = -1, ret = 0;
+	काष्ठा host_vm_op *last;
+	पूर्णांक fd = -1, ret = 0;
 
-	if (hvc->userspace)
+	अगर (hvc->userspace)
 		fd = phys_mapping(phys, &offset);
-	else
+	अन्यथा
 		offset = phys;
-	if (hvc->index != 0) {
+	अगर (hvc->index != 0) अणु
 		last = &hvc->ops[hvc->index - 1];
-		if ((last->type == MMAP) &&
+		अगर ((last->type == MMAP) &&
 		   (last->u.mmap.addr + last->u.mmap.len == virt) &&
 		   (last->u.mmap.prot == prot) && (last->u.mmap.fd == fd) &&
-		   (last->u.mmap.offset + last->u.mmap.len == offset)) {
+		   (last->u.mmap.offset + last->u.mmap.len == offset)) अणु
 			last->u.mmap.len += len;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (hvc->index == ARRAY_SIZE(hvc->ops)) {
-		ret = do_ops(hvc, ARRAY_SIZE(hvc->ops), 0);
+	अगर (hvc->index == ARRAY_SIZE(hvc->ops)) अणु
+		ret = करो_ops(hvc, ARRAY_SIZE(hvc->ops), 0);
 		hvc->index = 0;
-	}
+	पूर्ण
 
-	hvc->ops[hvc->index++] = ((struct host_vm_op)
-				  { .type	= MMAP,
-				    .u = { .mmap = { .addr	= virt,
+	hvc->ops[hvc->index++] = ((काष्ठा host_vm_op)
+				  अणु .type	= MMAP,
+				    .u = अणु .mmap = अणु .addr	= virt,
 						     .len	= len,
 						     .prot	= prot,
 						     .fd	= fd,
-						     .offset	= offset }
-			   } });
-	return ret;
-}
+						     .offset	= offset पूर्ण
+			   पूर्ण पूर्ण);
+	वापस ret;
+पूर्ण
 
-static int add_munmap(unsigned long addr, unsigned long len,
-		      struct host_vm_change *hvc)
-{
-	struct host_vm_op *last;
-	int ret = 0;
+अटल पूर्णांक add_munmap(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+		      काष्ठा host_vm_change *hvc)
+अणु
+	काष्ठा host_vm_op *last;
+	पूर्णांक ret = 0;
 
-	if (hvc->index != 0) {
+	अगर (hvc->index != 0) अणु
 		last = &hvc->ops[hvc->index - 1];
-		if ((last->type == MUNMAP) &&
-		   (last->u.munmap.addr + last->u.mmap.len == addr)) {
+		अगर ((last->type == MUNMAP) &&
+		   (last->u.munmap.addr + last->u.mmap.len == addr)) अणु
 			last->u.munmap.len += len;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (hvc->index == ARRAY_SIZE(hvc->ops)) {
-		ret = do_ops(hvc, ARRAY_SIZE(hvc->ops), 0);
+	अगर (hvc->index == ARRAY_SIZE(hvc->ops)) अणु
+		ret = करो_ops(hvc, ARRAY_SIZE(hvc->ops), 0);
 		hvc->index = 0;
-	}
+	पूर्ण
 
-	hvc->ops[hvc->index++] = ((struct host_vm_op)
-				  { .type	= MUNMAP,
-			     	    .u = { .munmap = { .addr	= addr,
-						       .len	= len } } });
-	return ret;
-}
+	hvc->ops[hvc->index++] = ((काष्ठा host_vm_op)
+				  अणु .type	= MUNMAP,
+			     	    .u = अणु .munmap = अणु .addr	= addr,
+						       .len	= len पूर्ण पूर्ण पूर्ण);
+	वापस ret;
+पूर्ण
 
-static int add_mprotect(unsigned long addr, unsigned long len,
-			unsigned int prot, struct host_vm_change *hvc)
-{
-	struct host_vm_op *last;
-	int ret = 0;
+अटल पूर्णांक add_mprotect(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+			अचिन्हित पूर्णांक prot, काष्ठा host_vm_change *hvc)
+अणु
+	काष्ठा host_vm_op *last;
+	पूर्णांक ret = 0;
 
-	if (hvc->index != 0) {
+	अगर (hvc->index != 0) अणु
 		last = &hvc->ops[hvc->index - 1];
-		if ((last->type == MPROTECT) &&
+		अगर ((last->type == MPROTECT) &&
 		   (last->u.mprotect.addr + last->u.mprotect.len == addr) &&
-		   (last->u.mprotect.prot == prot)) {
+		   (last->u.mprotect.prot == prot)) अणु
 			last->u.mprotect.len += len;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (hvc->index == ARRAY_SIZE(hvc->ops)) {
-		ret = do_ops(hvc, ARRAY_SIZE(hvc->ops), 0);
+	अगर (hvc->index == ARRAY_SIZE(hvc->ops)) अणु
+		ret = करो_ops(hvc, ARRAY_SIZE(hvc->ops), 0);
 		hvc->index = 0;
-	}
+	पूर्ण
 
-	hvc->ops[hvc->index++] = ((struct host_vm_op)
-				  { .type	= MPROTECT,
-			     	    .u = { .mprotect = { .addr	= addr,
+	hvc->ops[hvc->index++] = ((काष्ठा host_vm_op)
+				  अणु .type	= MPROTECT,
+			     	    .u = अणु .mprotect = अणु .addr	= addr,
 							 .len	= len,
-							 .prot	= prot } } });
-	return ret;
-}
+							 .prot	= prot पूर्ण पूर्ण पूर्ण);
+	वापस ret;
+पूर्ण
 
-#define ADD_ROUND(n, inc) (((n) + (inc)) & ~((inc) - 1))
+#घोषणा ADD_ROUND(n, inc) (((n) + (inc)) & ~((inc) - 1))
 
-static inline int update_pte_range(pmd_t *pmd, unsigned long addr,
-				   unsigned long end,
-				   struct host_vm_change *hvc)
-{
+अटल अंतरभूत पूर्णांक update_pte_range(pmd_t *pmd, अचिन्हित दीर्घ addr,
+				   अचिन्हित दीर्घ end,
+				   काष्ठा host_vm_change *hvc)
+अणु
 	pte_t *pte;
-	int r, w, x, prot, ret = 0;
+	पूर्णांक r, w, x, prot, ret = 0;
 
 	pte = pte_offset_kernel(pmd, addr);
-	do {
-		r = pte_read(*pte);
-		w = pte_write(*pte);
+	करो अणु
+		r = pte_पढ़ो(*pte);
+		w = pte_ग_लिखो(*pte);
 		x = pte_exec(*pte);
-		if (!pte_young(*pte)) {
+		अगर (!pte_young(*pte)) अणु
 			r = 0;
 			w = 0;
-		} else if (!pte_dirty(*pte))
+		पूर्ण अन्यथा अगर (!pte_dirty(*pte))
 			w = 0;
 
 		prot = ((r ? UM_PROT_READ : 0) | (w ? UM_PROT_WRITE : 0) |
 			(x ? UM_PROT_EXEC : 0));
-		if (hvc->force || pte_newpage(*pte)) {
-			if (pte_present(*pte)) {
-				if (pte_newpage(*pte))
+		अगर (hvc->क्रमce || pte_newpage(*pte)) अणु
+			अगर (pte_present(*pte)) अणु
+				अगर (pte_newpage(*pte))
 					ret = add_mmap(addr, pte_val(*pte) & PAGE_MASK,
 						       PAGE_SIZE, prot, hvc);
-			} else
+			पूर्ण अन्यथा
 				ret = add_munmap(addr, PAGE_SIZE, hvc);
-		} else if (pte_newprot(*pte))
+		पूर्ण अन्यथा अगर (pte_newprot(*pte))
 			ret = add_mprotect(addr, PAGE_SIZE, prot, hvc);
 		*pte = pte_mkuptodate(*pte);
-	} while (pte++, addr += PAGE_SIZE, ((addr < end) && !ret));
-	return ret;
-}
+	पूर्ण जबतक (pte++, addr += PAGE_SIZE, ((addr < end) && !ret));
+	वापस ret;
+पूर्ण
 
-static inline int update_pmd_range(pud_t *pud, unsigned long addr,
-				   unsigned long end,
-				   struct host_vm_change *hvc)
-{
+अटल अंतरभूत पूर्णांक update_pmd_range(pud_t *pud, अचिन्हित दीर्घ addr,
+				   अचिन्हित दीर्घ end,
+				   काष्ठा host_vm_change *hvc)
+अणु
 	pmd_t *pmd;
-	unsigned long next;
-	int ret = 0;
+	अचिन्हित दीर्घ next;
+	पूर्णांक ret = 0;
 
 	pmd = pmd_offset(pud, addr);
-	do {
+	करो अणु
 		next = pmd_addr_end(addr, end);
-		if (!pmd_present(*pmd)) {
-			if (hvc->force || pmd_newpage(*pmd)) {
+		अगर (!pmd_present(*pmd)) अणु
+			अगर (hvc->क्रमce || pmd_newpage(*pmd)) अणु
 				ret = add_munmap(addr, next - addr, hvc);
 				pmd_mkuptodate(*pmd);
-			}
-		}
-		else ret = update_pte_range(pmd, addr, next, hvc);
-	} while (pmd++, addr = next, ((addr < end) && !ret));
-	return ret;
-}
+			पूर्ण
+		पूर्ण
+		अन्यथा ret = update_pte_range(pmd, addr, next, hvc);
+	पूर्ण जबतक (pmd++, addr = next, ((addr < end) && !ret));
+	वापस ret;
+पूर्ण
 
-static inline int update_pud_range(p4d_t *p4d, unsigned long addr,
-				   unsigned long end,
-				   struct host_vm_change *hvc)
-{
+अटल अंतरभूत पूर्णांक update_pud_range(p4d_t *p4d, अचिन्हित दीर्घ addr,
+				   अचिन्हित दीर्घ end,
+				   काष्ठा host_vm_change *hvc)
+अणु
 	pud_t *pud;
-	unsigned long next;
-	int ret = 0;
+	अचिन्हित दीर्घ next;
+	पूर्णांक ret = 0;
 
 	pud = pud_offset(p4d, addr);
-	do {
+	करो अणु
 		next = pud_addr_end(addr, end);
-		if (!pud_present(*pud)) {
-			if (hvc->force || pud_newpage(*pud)) {
+		अगर (!pud_present(*pud)) अणु
+			अगर (hvc->क्रमce || pud_newpage(*pud)) अणु
 				ret = add_munmap(addr, next - addr, hvc);
 				pud_mkuptodate(*pud);
-			}
-		}
-		else ret = update_pmd_range(pud, addr, next, hvc);
-	} while (pud++, addr = next, ((addr < end) && !ret));
-	return ret;
-}
+			पूर्ण
+		पूर्ण
+		अन्यथा ret = update_pmd_range(pud, addr, next, hvc);
+	पूर्ण जबतक (pud++, addr = next, ((addr < end) && !ret));
+	वापस ret;
+पूर्ण
 
-static inline int update_p4d_range(pgd_t *pgd, unsigned long addr,
-				   unsigned long end,
-				   struct host_vm_change *hvc)
-{
+अटल अंतरभूत पूर्णांक update_p4d_range(pgd_t *pgd, अचिन्हित दीर्घ addr,
+				   अचिन्हित दीर्घ end,
+				   काष्ठा host_vm_change *hvc)
+अणु
 	p4d_t *p4d;
-	unsigned long next;
-	int ret = 0;
+	अचिन्हित दीर्घ next;
+	पूर्णांक ret = 0;
 
 	p4d = p4d_offset(pgd, addr);
-	do {
+	करो अणु
 		next = p4d_addr_end(addr, end);
-		if (!p4d_present(*p4d)) {
-			if (hvc->force || p4d_newpage(*p4d)) {
+		अगर (!p4d_present(*p4d)) अणु
+			अगर (hvc->क्रमce || p4d_newpage(*p4d)) अणु
 				ret = add_munmap(addr, next - addr, hvc);
 				p4d_mkuptodate(*p4d);
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			ret = update_pud_range(p4d, addr, next, hvc);
-	} while (p4d++, addr = next, ((addr < end) && !ret));
-	return ret;
-}
+	पूर्ण जबतक (p4d++, addr = next, ((addr < end) && !ret));
+	वापस ret;
+पूर्ण
 
-void fix_range_common(struct mm_struct *mm, unsigned long start_addr,
-		      unsigned long end_addr, int force)
-{
+व्योम fix_range_common(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start_addr,
+		      अचिन्हित दीर्घ end_addr, पूर्णांक क्रमce)
+अणु
 	pgd_t *pgd;
-	struct host_vm_change hvc;
-	unsigned long addr = start_addr, next;
-	int ret = 0, userspace = 1;
+	काष्ठा host_vm_change hvc;
+	अचिन्हित दीर्घ addr = start_addr, next;
+	पूर्णांक ret = 0, userspace = 1;
 
-	hvc = INIT_HVC(mm, force, userspace);
+	hvc = INIT_HVC(mm, क्रमce, userspace);
 	pgd = pgd_offset(mm, addr);
-	do {
+	करो अणु
 		next = pgd_addr_end(addr, end_addr);
-		if (!pgd_present(*pgd)) {
-			if (force || pgd_newpage(*pgd)) {
+		अगर (!pgd_present(*pgd)) अणु
+			अगर (क्रमce || pgd_newpage(*pgd)) अणु
 				ret = add_munmap(addr, next - addr, &hvc);
 				pgd_mkuptodate(*pgd);
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			ret = update_p4d_range(pgd, addr, next, &hvc);
-	} while (pgd++, addr = next, ((addr < end_addr) && !ret));
+	पूर्ण जबतक (pgd++, addr = next, ((addr < end_addr) && !ret));
 
-	if (!ret)
-		ret = do_ops(&hvc, hvc.index, 1);
+	अगर (!ret)
+		ret = करो_ops(&hvc, hvc.index, 1);
 
-	/* This is not an else because ret is modified above */
-	if (ret) {
-		struct mm_id *mm_idp = &current->mm->context.id;
+	/* This is not an अन्यथा because ret is modअगरied above */
+	अगर (ret) अणु
+		काष्ठा mm_id *mm_idp = &current->mm->context.id;
 
-		printk(KERN_ERR "fix_range_common: failed, killing current "
+		prपूर्णांकk(KERN_ERR "fix_range_common: failed, killing current "
 		       "process: %d\n", task_tgid_vnr(current));
-		mm_idp->kill = 1;
-	}
-}
+		mm_idp->समाप्त = 1;
+	पूर्ण
+पूर्ण
 
-static int flush_tlb_kernel_range_common(unsigned long start, unsigned long end)
-{
-	struct mm_struct *mm;
+अटल पूर्णांक flush_tlb_kernel_range_common(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	काष्ठा mm_काष्ठा *mm;
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
-	unsigned long addr, last;
-	int updated = 0, err = 0, force = 0, userspace = 0;
-	struct host_vm_change hvc;
+	अचिन्हित दीर्घ addr, last;
+	पूर्णांक updated = 0, err = 0, क्रमce = 0, userspace = 0;
+	काष्ठा host_vm_change hvc;
 
 	mm = &init_mm;
-	hvc = INIT_HVC(mm, force, userspace);
-	for (addr = start; addr < end;) {
+	hvc = INIT_HVC(mm, क्रमce, userspace);
+	क्रम (addr = start; addr < end;) अणु
 		pgd = pgd_offset(mm, addr);
-		if (!pgd_present(*pgd)) {
-			last = ADD_ROUND(addr, PGDIR_SIZE);
-			if (last > end)
+		अगर (!pgd_present(*pgd)) अणु
+			last = ADD_ROUND(addr, PGसूची_SIZE);
+			अगर (last > end)
 				last = end;
-			if (pgd_newpage(*pgd)) {
+			अगर (pgd_newpage(*pgd)) अणु
 				updated = 1;
 				err = add_munmap(addr, last - addr, &hvc);
-				if (err < 0)
+				अगर (err < 0)
 					panic("munmap failed, errno = %d\n",
 					      -err);
-			}
+			पूर्ण
 			addr = last;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		p4d = p4d_offset(pgd, addr);
-		if (!p4d_present(*p4d)) {
+		अगर (!p4d_present(*p4d)) अणु
 			last = ADD_ROUND(addr, P4D_SIZE);
-			if (last > end)
+			अगर (last > end)
 				last = end;
-			if (p4d_newpage(*p4d)) {
+			अगर (p4d_newpage(*p4d)) अणु
 				updated = 1;
 				err = add_munmap(addr, last - addr, &hvc);
-				if (err < 0)
+				अगर (err < 0)
 					panic("munmap failed, errno = %d\n",
 					      -err);
-			}
+			पूर्ण
 			addr = last;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		pud = pud_offset(p4d, addr);
-		if (!pud_present(*pud)) {
+		अगर (!pud_present(*pud)) अणु
 			last = ADD_ROUND(addr, PUD_SIZE);
-			if (last > end)
+			अगर (last > end)
 				last = end;
-			if (pud_newpage(*pud)) {
+			अगर (pud_newpage(*pud)) अणु
 				updated = 1;
 				err = add_munmap(addr, last - addr, &hvc);
-				if (err < 0)
+				अगर (err < 0)
 					panic("munmap failed, errno = %d\n",
 					      -err);
-			}
+			पूर्ण
 			addr = last;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		pmd = pmd_offset(pud, addr);
-		if (!pmd_present(*pmd)) {
+		अगर (!pmd_present(*pmd)) अणु
 			last = ADD_ROUND(addr, PMD_SIZE);
-			if (last > end)
+			अगर (last > end)
 				last = end;
-			if (pmd_newpage(*pmd)) {
+			अगर (pmd_newpage(*pmd)) अणु
 				updated = 1;
 				err = add_munmap(addr, last - addr, &hvc);
-				if (err < 0)
+				अगर (err < 0)
 					panic("munmap failed, errno = %d\n",
 					      -err);
-			}
+			पूर्ण
 			addr = last;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		pte = pte_offset_kernel(pmd, addr);
-		if (!pte_present(*pte) || pte_newpage(*pte)) {
+		अगर (!pte_present(*pte) || pte_newpage(*pte)) अणु
 			updated = 1;
 			err = add_munmap(addr, PAGE_SIZE, &hvc);
-			if (err < 0)
+			अगर (err < 0)
 				panic("munmap failed, errno = %d\n",
 				      -err);
-			if (pte_present(*pte))
+			अगर (pte_present(*pte))
 				err = add_mmap(addr, pte_val(*pte) & PAGE_MASK,
 					       PAGE_SIZE, 0, &hvc);
-		}
-		else if (pte_newprot(*pte)) {
+		पूर्ण
+		अन्यथा अगर (pte_newprot(*pte)) अणु
 			updated = 1;
 			err = add_mprotect(addr, PAGE_SIZE, 0, &hvc);
-		}
+		पूर्ण
 		addr += PAGE_SIZE;
-	}
-	if (!err)
-		err = do_ops(&hvc, hvc.index, 1);
+	पूर्ण
+	अगर (!err)
+		err = करो_ops(&hvc, hvc.index, 1);
 
-	if (err < 0)
+	अगर (err < 0)
 		panic("flush_tlb_kernel failed, errno = %d\n", err);
-	return updated;
-}
+	वापस updated;
+पूर्ण
 
-void flush_tlb_page(struct vm_area_struct *vma, unsigned long address)
-{
+व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
-	struct mm_struct *mm = vma->vm_mm;
-	void *flush = NULL;
-	int r, w, x, prot, err = 0;
-	struct mm_id *mm_id;
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+	व्योम *flush = शून्य;
+	पूर्णांक r, w, x, prot, err = 0;
+	काष्ठा mm_id *mm_id;
 
 	address &= PAGE_MASK;
 
 	pgd = pgd_offset(mm, address);
-	if (!pgd_present(*pgd))
-		goto kill;
+	अगर (!pgd_present(*pgd))
+		जाओ समाप्त;
 
 	p4d = p4d_offset(pgd, address);
-	if (!p4d_present(*p4d))
-		goto kill;
+	अगर (!p4d_present(*p4d))
+		जाओ समाप्त;
 
 	pud = pud_offset(p4d, address);
-	if (!pud_present(*pud))
-		goto kill;
+	अगर (!pud_present(*pud))
+		जाओ समाप्त;
 
 	pmd = pmd_offset(pud, address);
-	if (!pmd_present(*pmd))
-		goto kill;
+	अगर (!pmd_present(*pmd))
+		जाओ समाप्त;
 
 	pte = pte_offset_kernel(pmd, address);
 
-	r = pte_read(*pte);
-	w = pte_write(*pte);
+	r = pte_पढ़ो(*pte);
+	w = pte_ग_लिखो(*pte);
 	x = pte_exec(*pte);
-	if (!pte_young(*pte)) {
+	अगर (!pte_young(*pte)) अणु
 		r = 0;
 		w = 0;
-	} else if (!pte_dirty(*pte)) {
+	पूर्ण अन्यथा अगर (!pte_dirty(*pte)) अणु
 		w = 0;
-	}
+	पूर्ण
 
 	mm_id = &mm->context.id;
 	prot = ((r ? UM_PROT_READ : 0) | (w ? UM_PROT_WRITE : 0) |
 		(x ? UM_PROT_EXEC : 0));
-	if (pte_newpage(*pte)) {
-		if (pte_present(*pte)) {
-			unsigned long long offset;
-			int fd;
+	अगर (pte_newpage(*pte)) अणु
+		अगर (pte_present(*pte)) अणु
+			अचिन्हित दीर्घ दीर्घ offset;
+			पूर्णांक fd;
 
 			fd = phys_mapping(pte_val(*pte) & PAGE_MASK, &offset);
 			err = map(mm_id, address, PAGE_SIZE, prot, fd, offset,
 				  1, &flush);
-		}
-		else err = unmap(mm_id, address, PAGE_SIZE, 1, &flush);
-	}
-	else if (pte_newprot(*pte))
+		पूर्ण
+		अन्यथा err = unmap(mm_id, address, PAGE_SIZE, 1, &flush);
+	पूर्ण
+	अन्यथा अगर (pte_newprot(*pte))
 		err = protect(mm_id, address, PAGE_SIZE, prot, 1, &flush);
 
-	if (err) {
-		if (err == -ENOMEM)
+	अगर (err) अणु
+		अगर (err == -ENOMEM)
 			report_enomem();
 
-		goto kill;
-	}
+		जाओ समाप्त;
+	पूर्ण
 
 	*pte = pte_mkuptodate(*pte);
 
-	return;
+	वापस;
 
-kill:
-	printk(KERN_ERR "Failed to flush page for address 0x%lx\n", address);
-	force_sig(SIGKILL);
-}
+समाप्त:
+	prपूर्णांकk(KERN_ERR "Failed to flush page for address 0x%lx\n", address);
+	क्रमce_sig(SIGKILL);
+पूर्ण
 
-void flush_tlb_all(void)
-{
+व्योम flush_tlb_all(व्योम)
+अणु
 	/*
-	 * Don't bother flushing if this address space is about to be
+	 * Don't bother flushing अगर this address space is about to be
 	 * destroyed.
 	 */
-	if (atomic_read(&current->mm->mm_users) == 0)
-		return;
+	अगर (atomic_पढ़ो(&current->mm->mm_users) == 0)
+		वापस;
 
 	flush_tlb_mm(current->mm);
-}
+पूर्ण
 
-void flush_tlb_kernel_range(unsigned long start, unsigned long end)
-{
+व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	flush_tlb_kernel_range_common(start, end);
-}
+पूर्ण
 
-void flush_tlb_kernel_vm(void)
-{
+व्योम flush_tlb_kernel_vm(व्योम)
+अणु
 	flush_tlb_kernel_range_common(start_vm, end_vm);
-}
+पूर्ण
 
-void __flush_tlb_one(unsigned long addr)
-{
+व्योम __flush_tlb_one(अचिन्हित दीर्घ addr)
+अणु
 	flush_tlb_kernel_range_common(addr, addr + PAGE_SIZE);
-}
+पूर्ण
 
-static void fix_range(struct mm_struct *mm, unsigned long start_addr,
-		      unsigned long end_addr, int force)
-{
+अटल व्योम fix_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start_addr,
+		      अचिन्हित दीर्घ end_addr, पूर्णांक क्रमce)
+अणु
 	/*
-	 * Don't bother flushing if this address space is about to be
+	 * Don't bother flushing अगर this address space is about to be
 	 * destroyed.
 	 */
-	if (atomic_read(&mm->mm_users) == 0)
-		return;
+	अगर (atomic_पढ़ो(&mm->mm_users) == 0)
+		वापस;
 
-	fix_range_common(mm, start_addr, end_addr, force);
-}
+	fix_range_common(mm, start_addr, end_addr, क्रमce);
+पूर्ण
 
-void flush_tlb_range(struct vm_area_struct *vma, unsigned long start,
-		     unsigned long end)
-{
-	if (vma->vm_mm == NULL)
+व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+		     अचिन्हित दीर्घ end)
+अणु
+	अगर (vma->vm_mm == शून्य)
 		flush_tlb_kernel_range_common(start, end);
-	else fix_range(vma->vm_mm, start, end, 0);
-}
+	अन्यथा fix_range(vma->vm_mm, start, end, 0);
+पूर्ण
 EXPORT_SYMBOL(flush_tlb_range);
 
-void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
-			unsigned long end)
-{
+व्योम flush_tlb_mm_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start,
+			अचिन्हित दीर्घ end)
+अणु
 	fix_range(mm, start, end, 0);
-}
+पूर्ण
 
-void flush_tlb_mm(struct mm_struct *mm)
-{
-	struct vm_area_struct *vma = mm->mmap;
+व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = mm->mmap;
 
-	while (vma != NULL) {
+	जबतक (vma != शून्य) अणु
 		fix_range(mm, vma->vm_start, vma->vm_end, 0);
 		vma = vma->vm_next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void force_flush_all(void)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma = mm->mmap;
+व्योम क्रमce_flush_all(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma = mm->mmap;
 
-	while (vma != NULL) {
+	जबतक (vma != शून्य) अणु
 		fix_range(mm, vma->vm_start, vma->vm_end, 1);
 		vma = vma->vm_next;
-	}
-}
+	पूर्ण
+पूर्ण

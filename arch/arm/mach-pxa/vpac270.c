@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Hardware definitions for Voipac PXA270
+ * Hardware definitions क्रम Voipac PXA270
  *
  * Copyright (C) 2010
  * Marek Vasut <marek.vasut@gmail.com>
  */
 
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/irq.h>
-#include <linux/gpio_keys.h>
-#include <linux/input.h>
-#include <linux/leds.h>
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/mtd/physmap.h>
-#include <linux/mtd/onenand.h>
-#include <linux/dm9000.h>
-#include <linux/ucb1400.h>
-#include <linux/ata_platform.h>
-#include <linux/regulator/machine.h>
-#include <linux/regulator/max1586.h>
-#include <linux/platform_data/i2c-pxa.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/input.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/mtd/onenand.h>
+#समावेश <linux/dm9000.h>
+#समावेश <linux/ucb1400.h>
+#समावेश <linux/ata_platक्रमm.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/regulator/max1586.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "pxa27x.h"
-#include <mach/audio.h>
-#include <mach/vpac270.h>
-#include <linux/platform_data/mmc-pxamci.h>
-#include <linux/platform_data/video-pxafb.h>
-#include <linux/platform_data/usb-ohci-pxa27x.h>
-#include "pxa27x-udc.h"
-#include "udc.h"
-#include <linux/platform_data/ata-pxa.h>
+#समावेश "pxa27x.h"
+#समावेश <mach/audपन.स>
+#समावेश <mach/vpac270.h>
+#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#समावेश <linux/platक्रमm_data/usb-ohci-pxa27x.h>
+#समावेश "pxa27x-udc.h"
+#समावेश "udc.h"
+#समावेश <linux/platक्रमm_data/ata-pxa.h>
 
-#include "generic.h"
-#include "devices.h"
+#समावेश "generic.h"
+#समावेश "devices.h"
 
 /******************************************************************************
  * Pin configuration
  ******************************************************************************/
-static unsigned long vpac270_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ vpac270_pin_config[] __initdata = अणु
 	/* MMC */
 	GPIO32_MMC_CLK,
 	GPIO92_MMC_DAT_0,
@@ -53,7 +54,7 @@ static unsigned long vpac270_pin_config[] __initdata = {
 	GPIO111_MMC_DAT_3,
 	GPIO112_MMC_CMD,
 	GPIO53_GPIO,	/* SD detect */
-	GPIO52_GPIO,	/* SD r/o switch */
+	GPIO52_GPIO,	/* SD r/o चयन */
 
 	/* GPIO KEYS */
 	GPIO1_GPIO,	/* USER BTN */
@@ -142,351 +143,351 @@ static unsigned long vpac270_pin_config[] __initdata = {
 	/* IDE */
 	GPIO36_GPIO,	/* IDE IRQ */
 	GPIO80_DREQ_1,
-};
+पूर्ण;
 
 /******************************************************************************
  * NOR Flash
  ******************************************************************************/
-#if defined(CONFIG_MTD_PHYSMAP) || defined(CONFIG_MTD_PHYSMAP_MODULE)
-static struct mtd_partition vpac270_nor_partitions[] = {
-	{
+#अगर defined(CONFIG_MTD_PHYSMAP) || defined(CONFIG_MTD_PHYSMAP_MODULE)
+अटल काष्ठा mtd_partition vpac270_nor_partitions[] = अणु
+	अणु
 		.name		= "Flash",
 		.offset		= 0x00000000,
 		.size		= MTDPART_SIZ_FULL,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct physmap_flash_data vpac270_flash_data[] = {
-	{
+अटल काष्ठा physmap_flash_data vpac270_flash_data[] = अणु
+	अणु
 		.width		= 2,	/* bankwidth in bytes */
 		.parts		= vpac270_nor_partitions,
 		.nr_parts	= ARRAY_SIZE(vpac270_nor_partitions)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct resource vpac270_flash_resource = {
+अटल काष्ठा resource vpac270_flash_resource = अणु
 	.start	= PXA_CS0_PHYS,
 	.end	= PXA_CS0_PHYS + SZ_64M - 1,
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device vpac270_flash = {
+अटल काष्ठा platक्रमm_device vpac270_flash = अणु
 	.name		= "physmap-flash",
 	.id		= 0,
 	.resource	= &vpac270_flash_resource,
 	.num_resources	= 1,
-	.dev 		= {
-		.platform_data = vpac270_flash_data,
-	},
-};
-static void __init vpac270_nor_init(void)
-{
-	platform_device_register(&vpac270_flash);
-}
-#else
-static inline void vpac270_nor_init(void) {}
-#endif
+	.dev 		= अणु
+		.platक्रमm_data = vpac270_flash_data,
+	पूर्ण,
+पूर्ण;
+अटल व्योम __init vpac270_nor_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&vpac270_flash);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_nor_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
- * OneNAND Flash
+ * Oneन_अंकD Flash
  ******************************************************************************/
-#if defined(CONFIG_MTD_ONENAND) || defined(CONFIG_MTD_ONENAND_MODULE)
-static struct mtd_partition vpac270_onenand_partitions[] = {
-	{
+#अगर defined(CONFIG_MTD_ONEन_अंकD) || defined(CONFIG_MTD_ONEन_अंकD_MODULE)
+अटल काष्ठा mtd_partition vpac270_onenand_partitions[] = अणु
+	अणु
 		.name		= "Flash",
 		.offset		= 0x00000000,
 		.size		= MTDPART_SIZ_FULL,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct onenand_platform_data vpac270_onenand_info = {
+अटल काष्ठा onenand_platक्रमm_data vpac270_onenand_info = अणु
 	.parts		= vpac270_onenand_partitions,
 	.nr_parts	= ARRAY_SIZE(vpac270_onenand_partitions),
-};
+पूर्ण;
 
-static struct resource vpac270_onenand_resources[] = {
-	[0] = {
+अटल काष्ठा resource vpac270_onenand_resources[] = अणु
+	[0] = अणु
 		.start	= PXA_CS0_PHYS,
 		.end	= PXA_CS0_PHYS + SZ_1M,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device vpac270_onenand = {
+अटल काष्ठा platक्रमm_device vpac270_onenand = अणु
 	.name		= "onenand-flash",
 	.id		= -1,
 	.resource	= vpac270_onenand_resources,
 	.num_resources	= ARRAY_SIZE(vpac270_onenand_resources),
-	.dev		= {
-		.platform_data	= &vpac270_onenand_info,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &vpac270_onenand_info,
+	पूर्ण,
+पूर्ण;
 
-static void __init vpac270_onenand_init(void)
-{
-	platform_device_register(&vpac270_onenand);
-}
-#else
-static void __init vpac270_onenand_init(void) {}
-#endif
+अटल व्योम __init vpac270_onenand_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&vpac270_onenand);
+पूर्ण
+#अन्यथा
+अटल व्योम __init vpac270_onenand_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * SD/MMC card controller
  ******************************************************************************/
-#if defined(CONFIG_MMC_PXA) || defined(CONFIG_MMC_PXA_MODULE)
-static struct pxamci_platform_data vpac270_mci_platform_data = {
+#अगर defined(CONFIG_MMC_PXA) || defined(CONFIG_MMC_PXA_MODULE)
+अटल काष्ठा pxamci_platक्रमm_data vpac270_mci_platक्रमm_data = अणु
 	.ocr_mask		= MMC_VDD_32_33 | MMC_VDD_33_34,
 	.detect_delay_ms	= 200,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table vpac270_mci_gpio_table = {
+अटल काष्ठा gpiod_lookup_table vpac270_mci_gpio_table = अणु
 	.dev_id = "pxa2xx-mci.0",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", GPIO53_VPAC270_SD_DETECT_N,
 			    "cd", GPIO_ACTIVE_LOW),
 		GPIO_LOOKUP("gpio-pxa", GPIO52_VPAC270_SD_READONLY,
 			    "wp", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static void __init vpac270_mmc_init(void)
-{
+अटल व्योम __init vpac270_mmc_init(व्योम)
+अणु
 	gpiod_add_lookup_table(&vpac270_mci_gpio_table);
-	pxa_set_mci_info(&vpac270_mci_platform_data);
-}
-#else
-static inline void vpac270_mmc_init(void) {}
-#endif
+	pxa_set_mci_info(&vpac270_mci_platक्रमm_data);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_mmc_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * GPIO keys
  ******************************************************************************/
-#if defined(CONFIG_KEYBOARD_GPIO) || defined(CONFIG_KEYBOARD_GPIO_MODULE)
-static struct gpio_keys_button vpac270_pxa_buttons[] = {
-	{KEY_POWER, GPIO1_VPAC270_USER_BTN, 0, "USER BTN"},
-};
+#अगर defined(CONFIG_KEYBOARD_GPIO) || defined(CONFIG_KEYBOARD_GPIO_MODULE)
+अटल काष्ठा gpio_keys_button vpac270_pxa_buttons[] = अणु
+	अणुKEY_POWER, GPIO1_VPAC270_USER_BTN, 0, "USER BTN"पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data vpac270_pxa_keys_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data vpac270_pxa_keys_data = अणु
 	.buttons	= vpac270_pxa_buttons,
 	.nbuttons	= ARRAY_SIZE(vpac270_pxa_buttons),
-};
+पूर्ण;
 
-static struct platform_device vpac270_pxa_keys = {
+अटल काष्ठा platक्रमm_device vpac270_pxa_keys = अणु
 	.name	= "gpio-keys",
 	.id	= -1,
-	.dev	= {
-		.platform_data = &vpac270_pxa_keys_data,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data = &vpac270_pxa_keys_data,
+	पूर्ण,
+पूर्ण;
 
-static void __init vpac270_keys_init(void)
-{
-	platform_device_register(&vpac270_pxa_keys);
-}
-#else
-static inline void vpac270_keys_init(void) {}
-#endif
+अटल व्योम __init vpac270_keys_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&vpac270_pxa_keys);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_keys_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * LED
  ******************************************************************************/
-#if defined(CONFIG_LEDS_GPIO) || defined(CONFIG_LEDS_GPIO_MODULE)
-struct gpio_led vpac270_gpio_leds[] = {
-{
+#अगर defined(CONFIG_LEDS_GPIO) || defined(CONFIG_LEDS_GPIO_MODULE)
+काष्ठा gpio_led vpac270_gpio_leds[] = अणु
+अणु
 	.name			= "vpac270:orange:user",
-	.default_trigger	= "none",
+	.शेष_trigger	= "none",
 	.gpio			= GPIO15_VPAC270_LED_ORANGE,
 	.active_low		= 1,
-}
-};
+पूर्ण
+पूर्ण;
 
-static struct gpio_led_platform_data vpac270_gpio_led_info = {
+अटल काष्ठा gpio_led_platक्रमm_data vpac270_gpio_led_info = अणु
 	.leds		= vpac270_gpio_leds,
 	.num_leds	= ARRAY_SIZE(vpac270_gpio_leds),
-};
+पूर्ण;
 
-static struct platform_device vpac270_leds = {
+अटल काष्ठा platक्रमm_device vpac270_leds = अणु
 	.name	= "leds-gpio",
 	.id	= -1,
-	.dev	= {
-		.platform_data	= &vpac270_gpio_led_info,
-	}
-};
+	.dev	= अणु
+		.platक्रमm_data	= &vpac270_gpio_led_info,
+	पूर्ण
+पूर्ण;
 
-static void __init vpac270_leds_init(void)
-{
-	platform_device_register(&vpac270_leds);
-}
-#else
-static inline void vpac270_leds_init(void) {}
-#endif
+अटल व्योम __init vpac270_leds_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&vpac270_leds);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_leds_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * USB Host
  ******************************************************************************/
-#if defined(CONFIG_USB_OHCI_HCD) || defined(CONFIG_USB_OHCI_HCD_MODULE)
-static int vpac270_ohci_init(struct device *dev)
-{
+#अगर defined(CONFIG_USB_OHCI_HCD) || defined(CONFIG_USB_OHCI_HCD_MODULE)
+अटल पूर्णांक vpac270_ohci_init(काष्ठा device *dev)
+अणु
 	UP2OCR = UP2OCR_HXS | UP2OCR_HXOE | UP2OCR_DPPDE | UP2OCR_DMPDE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pxaohci_platform_data vpac270_ohci_info = {
+अटल काष्ठा pxaohci_platक्रमm_data vpac270_ohci_info = अणु
 	.port_mode	= PMM_PERPORT_MODE,
 	.flags		= ENABLE_PORT1 | ENABLE_PORT2 |
 			POWER_CONTROL_LOW | POWER_SENSE_LOW,
 	.init		= vpac270_ohci_init,
-};
+पूर्ण;
 
-static void __init vpac270_uhc_init(void)
-{
+अटल व्योम __init vpac270_uhc_init(व्योम)
+अणु
 	pxa_set_ohci_info(&vpac270_ohci_info);
-}
-#else
-static inline void vpac270_uhc_init(void) {}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_uhc_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * USB Gadget
  ******************************************************************************/
-#if defined(CONFIG_USB_PXA27X)||defined(CONFIG_USB_PXA27X_MODULE)
-static struct gpiod_lookup_table vpac270_gpio_vbus_gpiod_table = {
+#अगर defined(CONFIG_USB_PXA27X)||defined(CONFIG_USB_PXA27X_MODULE)
+अटल काष्ठा gpiod_lookup_table vpac270_gpio_vbus_gpiod_table = अणु
 	.dev_id = "gpio-vbus",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", GPIO41_VPAC270_UDC_DETECT,
 			    "vbus", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device vpac270_gpio_vbus = {
+अटल काष्ठा platक्रमm_device vpac270_gpio_vbus = अणु
 	.name	= "gpio-vbus",
 	.id	= -1,
-};
+पूर्ण;
 
-static void vpac270_udc_command(int cmd)
-{
-	if (cmd == PXA2XX_UDC_CMD_CONNECT)
+अटल व्योम vpac270_udc_command(पूर्णांक cmd)
+अणु
+	अगर (cmd == PXA2XX_UDC_CMD_CONNECT)
 		UP2OCR = UP2OCR_HXOE | UP2OCR_DPPUE;
-	else if (cmd == PXA2XX_UDC_CMD_DISCONNECT)
+	अन्यथा अगर (cmd == PXA2XX_UDC_CMD_DISCONNECT)
 		UP2OCR = UP2OCR_HXOE;
-}
+पूर्ण
 
-static struct pxa2xx_udc_mach_info vpac270_udc_info __initdata = {
+अटल काष्ठा pxa2xx_udc_mach_info vpac270_udc_info __initdata = अणु
 	.udc_command		= vpac270_udc_command,
 	.gpio_pullup		= -1,
-};
+पूर्ण;
 
-static void __init vpac270_udc_init(void)
-{
+अटल व्योम __init vpac270_udc_init(व्योम)
+अणु
 	pxa_set_udc_info(&vpac270_udc_info);
 	gpiod_add_lookup_table(&vpac270_gpio_vbus_gpiod_table);
-	platform_device_register(&vpac270_gpio_vbus);
-}
-#else
-static inline void vpac270_udc_init(void) {}
-#endif
+	platक्रमm_device_रेजिस्टर(&vpac270_gpio_vbus);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_udc_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * Ethernet
  ******************************************************************************/
-#if defined(CONFIG_DM9000) || defined(CONFIG_DM9000_MODULE)
-static struct resource vpac270_dm9000_resources[] = {
-	[0] = {
+#अगर defined(CONFIG_DM9000) || defined(CONFIG_DM9000_MODULE)
+अटल काष्ठा resource vpac270_dm9000_resources[] = अणु
+	[0] = अणु
 		.start	= PXA_CS2_PHYS + 0x300,
 		.end	= PXA_CS2_PHYS + 0x303,
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= PXA_CS2_PHYS + 0x304,
 		.end	= PXA_CS2_PHYS + 0x343,
 		.flags	= IORESOURCE_MEM,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.start	= PXA_GPIO_TO_IRQ(GPIO114_VPAC270_ETH_IRQ),
 		.end	= PXA_GPIO_TO_IRQ(GPIO114_VPAC270_ETH_IRQ),
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct dm9000_plat_data vpac270_dm9000_platdata = {
+अटल काष्ठा dm9000_plat_data vpac270_dm9000_platdata = अणु
 	.flags		= DM9000_PLATF_32BITONLY,
-};
+पूर्ण;
 
-static struct platform_device vpac270_dm9000_device = {
+अटल काष्ठा platक्रमm_device vpac270_dm9000_device = अणु
 	.name		= "dm9000",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(vpac270_dm9000_resources),
 	.resource	= vpac270_dm9000_resources,
-	.dev		= {
-		.platform_data = &vpac270_dm9000_platdata,
-	}
-};
+	.dev		= अणु
+		.platक्रमm_data = &vpac270_dm9000_platdata,
+	पूर्ण
+पूर्ण;
 
-static void __init vpac270_eth_init(void)
-{
-	platform_device_register(&vpac270_dm9000_device);
-}
-#else
-static inline void vpac270_eth_init(void) {}
-#endif
+अटल व्योम __init vpac270_eth_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&vpac270_dm9000_device);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_eth_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * Audio and Touchscreen
  ******************************************************************************/
-#if	defined(CONFIG_TOUCHSCREEN_UCB1400) || \
+#अगर	defined(CONFIG_TOUCHSCREEN_UCB1400) || \
 	defined(CONFIG_TOUCHSCREEN_UCB1400_MODULE)
-static pxa2xx_audio_ops_t vpac270_ac97_pdata = {
+अटल pxa2xx_audio_ops_t vpac270_ac97_pdata = अणु
 	.reset_gpio	= 95,
-};
+पूर्ण;
 
-static struct ucb1400_pdata vpac270_ucb1400_pdata = {
+अटल काष्ठा ucb1400_pdata vpac270_ucb1400_pdata = अणु
 	.irq		= PXA_GPIO_TO_IRQ(GPIO113_VPAC270_TS_IRQ),
-};
+पूर्ण;
 
-static struct platform_device vpac270_ucb1400_device = {
+अटल काष्ठा platक्रमm_device vpac270_ucb1400_device = अणु
 	.name		= "ucb1400_core",
 	.id		= -1,
-	.dev		= {
-		.platform_data = &vpac270_ucb1400_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data = &vpac270_ucb1400_pdata,
+	पूर्ण,
+पूर्ण;
 
-static void __init vpac270_ts_init(void)
-{
+अटल व्योम __init vpac270_ts_init(व्योम)
+अणु
 	pxa_set_ac97_info(&vpac270_ac97_pdata);
-	platform_device_register(&vpac270_ucb1400_device);
-}
-#else
-static inline void vpac270_ts_init(void) {}
-#endif
+	platक्रमm_device_रेजिस्टर(&vpac270_ucb1400_device);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_ts_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * RTC
  ******************************************************************************/
-#if defined(CONFIG_RTC_DRV_DS1307) || defined(CONFIG_RTC_DRV_DS1307_MODULE)
-static struct i2c_board_info __initdata vpac270_i2c_devs[] = {
-	{
+#अगर defined(CONFIG_RTC_DRV_DS1307) || defined(CONFIG_RTC_DRV_DS1307_MODULE)
+अटल काष्ठा i2c_board_info __initdata vpac270_i2c_devs[] = अणु
+	अणु
 		I2C_BOARD_INFO("ds1339", 0x68),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void __init vpac270_rtc_init(void)
-{
-	i2c_register_board_info(0, ARRAY_AND_SIZE(vpac270_i2c_devs));
-}
-#else
-static inline void vpac270_rtc_init(void) {}
-#endif
+अटल व्योम __init vpac270_rtc_init(व्योम)
+अणु
+	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(vpac270_i2c_devs));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_rtc_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * Framebuffer
  ******************************************************************************/
-#if defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
-static struct pxafb_mode_info vpac270_lcd_modes[] = {
-{
-	.pixclock	= 57692,
+#अगर defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
+अटल काष्ठा pxafb_mode_info vpac270_lcd_modes[] = अणु
+अणु
+	.pixघड़ी	= 57692,
 	.xres		= 640,
 	.yres		= 480,
 	.bpp		= 32,
@@ -501,8 +502,8 @@ static struct pxafb_mode_info vpac270_lcd_modes[] = {
 	.vsync_len	= 2,
 
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-}, {	/* CRT 640x480 */
-	.pixclock	= 35000,
+पूर्ण, अणु	/* CRT 640x480 */
+	.pixघड़ी	= 35000,
 	.xres		= 640,
 	.yres		= 480,
 	.bpp		= 16,
@@ -517,8 +518,8 @@ static struct pxafb_mode_info vpac270_lcd_modes[] = {
 	.vsync_len	= 1,
 
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-}, {	/* CRT 800x600 H=30kHz V=48HZ */
-	.pixclock	= 25000,
+पूर्ण, अणु	/* CRT 800x600 H=30kHz V=48HZ */
+	.pixघड़ी	= 25000,
 	.xres		= 800,
 	.yres		= 600,
 	.bpp		= 16,
@@ -533,8 +534,8 @@ static struct pxafb_mode_info vpac270_lcd_modes[] = {
 	.vsync_len	= 1,
 
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-}, {	/* CRT 1024x768 H=40kHz V=50Hz */
-	.pixclock	= 15000,
+पूर्ण, अणु	/* CRT 1024x768 H=40kHz V=50Hz */
+	.pixघड़ी	= 15000,
 	.xres		= 1024,
 	.yres		= 768,
 	.bpp		= 16,
@@ -549,163 +550,163 @@ static struct pxafb_mode_info vpac270_lcd_modes[] = {
 	.vsync_len	= 1,
 
 	.sync		= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-}
-};
+पूर्ण
+पूर्ण;
 
-static struct pxafb_mach_info vpac270_lcd_screen = {
+अटल काष्ठा pxafb_mach_info vpac270_lcd_screen = अणु
 	.modes		= vpac270_lcd_modes,
 	.num_modes	= ARRAY_SIZE(vpac270_lcd_modes),
 	.lcd_conn	= LCD_COLOR_TFT_18BPP,
-};
+पूर्ण;
 
-static void vpac270_lcd_power(int on, struct fb_var_screeninfo *info)
-{
+अटल व्योम vpac270_lcd_घातer(पूर्णांक on, काष्ठा fb_var_screeninfo *info)
+अणु
 	gpio_set_value(GPIO81_VPAC270_BKL_ON, on);
-}
+पूर्ण
 
-static void __init vpac270_lcd_init(void)
-{
-	int ret;
+अटल व्योम __init vpac270_lcd_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = gpio_request(GPIO81_VPAC270_BKL_ON, "BKL-ON");
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Requesting BKL-ON GPIO failed!\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = gpio_direction_output(GPIO81_VPAC270_BKL_ON, 1);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Setting BKL-ON GPIO direction failed!\n");
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
-	vpac270_lcd_screen.pxafb_lcd_power = vpac270_lcd_power;
-	pxa_set_fb_info(NULL, &vpac270_lcd_screen);
-	return;
+	vpac270_lcd_screen.pxafb_lcd_घातer = vpac270_lcd_घातer;
+	pxa_set_fb_info(शून्य, &vpac270_lcd_screen);
+	वापस;
 
 err2:
-	gpio_free(GPIO81_VPAC270_BKL_ON);
+	gpio_मुक्त(GPIO81_VPAC270_BKL_ON);
 err:
-	return;
-}
-#else
-static inline void vpac270_lcd_init(void) {}
-#endif
+	वापस;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_lcd_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * PATA IDE
  ******************************************************************************/
-#if defined(CONFIG_PATA_PXA) || defined(CONFIG_PATA_PXA_MODULE)
-static struct pata_pxa_pdata vpac270_pata_pdata = {
-	.reg_shift	= 1,
+#अगर defined(CONFIG_PATA_PXA) || defined(CONFIG_PATA_PXA_MODULE)
+अटल काष्ठा pata_pxa_pdata vpac270_pata_pdata = अणु
+	.reg_shअगरt	= 1,
 	.dma_dreq	= 1,
 	.irq_flags	= IRQF_TRIGGER_RISING,
-};
+पूर्ण;
 
-static struct resource vpac270_ide_resources[] = {
-	[0] = {	/* I/O Base address */
+अटल काष्ठा resource vpac270_ide_resources[] = अणु
+	[0] = अणु	/* I/O Base address */
 	       .start	= PXA_CS3_PHYS + 0x120,
 	       .end	= PXA_CS3_PHYS + 0x13f,
 	       .flags	= IORESOURCE_MEM
-	},
-	[1] = {	/* CTL Base address */
+	पूर्ण,
+	[1] = अणु	/* CTL Base address */
 	       .start	= PXA_CS3_PHYS + 0x15c,
 	       .end	= PXA_CS3_PHYS + 0x15f,
 	       .flags	= IORESOURCE_MEM
-	},
-	[2] = {	/* DMA Base address */
+	पूर्ण,
+	[2] = अणु	/* DMA Base address */
 	       .start	= PXA_CS3_PHYS + 0x20,
 	       .end	= PXA_CS3_PHYS + 0x2f,
 	       .flags	= IORESOURCE_DMA
-	},
-	[3] = {	/* IDE IRQ pin */
+	पूर्ण,
+	[3] = अणु	/* IDE IRQ pin */
 	       .start	= PXA_GPIO_TO_IRQ(GPIO36_VPAC270_IDE_IRQ),
 	       .end	= PXA_GPIO_TO_IRQ(GPIO36_VPAC270_IDE_IRQ),
 	       .flags	= IORESOURCE_IRQ
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device vpac270_ide_device = {
+अटल काष्ठा platक्रमm_device vpac270_ide_device = अणु
 	.name		= "pata_pxa",
 	.num_resources	= ARRAY_SIZE(vpac270_ide_resources),
 	.resource	= vpac270_ide_resources,
-	.dev		= {
-		.platform_data	= &vpac270_pata_pdata,
+	.dev		= अणु
+		.platक्रमm_data	= &vpac270_pata_pdata,
 		.coherent_dma_mask	= 0xffffffff,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static void __init vpac270_ide_init(void)
-{
-	platform_device_register(&vpac270_ide_device);
-}
-#else
-static inline void vpac270_ide_init(void) {}
-#endif
+अटल व्योम __init vpac270_ide_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&vpac270_ide_device);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_ide_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
- * Core power regulator
+ * Core घातer regulator
  ******************************************************************************/
-#if defined(CONFIG_REGULATOR_MAX1586) || \
+#अगर defined(CONFIG_REGULATOR_MAX1586) || \
     defined(CONFIG_REGULATOR_MAX1586_MODULE)
-static struct regulator_consumer_supply vpac270_max1587a_consumers[] = {
-	REGULATOR_SUPPLY("vcc_core", NULL),
-};
+अटल काष्ठा regulator_consumer_supply vpac270_max1587a_consumers[] = अणु
+	REGULATOR_SUPPLY("vcc_core", शून्य),
+पूर्ण;
 
-static struct regulator_init_data vpac270_max1587a_v3_info = {
-	.constraints = {
+अटल काष्ठा regulator_init_data vpac270_max1587a_v3_info = अणु
+	.स्थिरraपूर्णांकs = अणु
 		.name		= "vcc_core range",
 		.min_uV		= 900000,
 		.max_uV		= 1705000,
 		.always_on	= 1,
 		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE,
-	},
+	पूर्ण,
 	.consumer_supplies	= vpac270_max1587a_consumers,
 	.num_consumer_supplies	= ARRAY_SIZE(vpac270_max1587a_consumers),
-};
+पूर्ण;
 
-static struct max1586_subdev_data vpac270_max1587a_subdevs[] = {
-	{
+अटल काष्ठा max1586_subdev_data vpac270_max1587a_subdevs[] = अणु
+	अणु
 		.name		= "vcc_core",
 		.id		= MAX1586_V3,
-		.platform_data	= &vpac270_max1587a_v3_info,
-	}
-};
+		.platक्रमm_data	= &vpac270_max1587a_v3_info,
+	पूर्ण
+पूर्ण;
 
-static struct max1586_platform_data vpac270_max1587a_info = {
+अटल काष्ठा max1586_platक्रमm_data vpac270_max1587a_info = अणु
 	.subdevs     = vpac270_max1587a_subdevs,
 	.num_subdevs = ARRAY_SIZE(vpac270_max1587a_subdevs),
 	.v3_gain     = MAX1586_GAIN_R24_3k32, /* 730..1550 mV */
-};
+पूर्ण;
 
-static struct i2c_board_info __initdata vpac270_pi2c_board_info[] = {
-	{
+अटल काष्ठा i2c_board_info __initdata vpac270_pi2c_board_info[] = अणु
+	अणु
 		I2C_BOARD_INFO("max1586", 0x14),
-		.platform_data	= &vpac270_max1587a_info,
-	},
-};
+		.platक्रमm_data	= &vpac270_max1587a_info,
+	पूर्ण,
+पूर्ण;
 
-static void __init vpac270_pmic_init(void)
-{
-	i2c_register_board_info(1, ARRAY_AND_SIZE(vpac270_pi2c_board_info));
-}
-#else
-static inline void vpac270_pmic_init(void) {}
-#endif
+अटल व्योम __init vpac270_pmic_init(व्योम)
+अणु
+	i2c_रेजिस्टर_board_info(1, ARRAY_AND_SIZE(vpac270_pi2c_board_info));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम vpac270_pmic_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 
 /******************************************************************************
  * Machine init
  ******************************************************************************/
-static void __init vpac270_init(void)
-{
+अटल व्योम __init vpac270_init(व्योम)
+अणु
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(vpac270_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
-	pxa_set_i2c_info(NULL);
-	pxa27x_set_i2c_power_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
+	pxa_set_i2c_info(शून्य);
+	pxa27x_set_i2c_घातer_info(शून्य);
 
 	vpac270_pmic_init();
 	vpac270_lcd_init();
@@ -721,8 +722,8 @@ static void __init vpac270_init(void)
 	vpac270_rtc_init();
 	vpac270_ide_init();
 
-	regulator_has_full_constraints();
-}
+	regulator_has_full_स्थिरraपूर्णांकs();
+पूर्ण
 
 MACHINE_START(VPAC270, "Voipac PXA270")
 	.atag_offset	= 0x100,
@@ -730,7 +731,7 @@ MACHINE_START(VPAC270, "Voipac PXA270")
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine	= vpac270_init,
 	.restart	= pxa_restart,
 MACHINE_END

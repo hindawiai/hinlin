@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_SHMPARAM_H
-#define __ASM_CSKY_SHMPARAM_H
+#अगर_अघोषित __ASM_CSKY_SHMPARAM_H
+#घोषणा __ASM_CSKY_SHMPARAM_H
 
-#define SHMLBA	(4 * PAGE_SIZE)
+#घोषणा SHMLBA	(4 * PAGE_SIZE)
 
-#define __ARCH_FORCE_SHMLBA
+#घोषणा __ARCH_FORCE_SHMLBA
 
-#endif /* __ASM_CSKY_SHMPARAM_H */
+#पूर्ण_अगर /* __ASM_CSKY_SHMPARAM_H */

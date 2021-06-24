@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2008-2013 Freescale Semiconductor, Inc. All rights reserved.
  */
 
-#ifndef KVM_E500_MMU_HOST_H
-#define KVM_E500_MMU_HOST_H
+#अगर_अघोषित KVM_E500_MMU_HOST_H
+#घोषणा KVM_E500_MMU_HOST_H
 
-void inval_gtlbe_on_host(struct kvmppc_vcpu_e500 *vcpu_e500, int tlbsel,
-			 int esel);
+व्योम inval_gtlbe_on_host(काष्ठा kvmppc_vcpu_e500 *vcpu_e500, पूर्णांक tlbsel,
+			 पूर्णांक esel);
 
-int e500_mmu_host_init(struct kvmppc_vcpu_e500 *vcpu_e500);
-void e500_mmu_host_uninit(struct kvmppc_vcpu_e500 *vcpu_e500);
+पूर्णांक e500_mmu_host_init(काष्ठा kvmppc_vcpu_e500 *vcpu_e500);
+व्योम e500_mmu_host_uninit(काष्ठा kvmppc_vcpu_e500 *vcpu_e500);
 
-#endif /* KVM_E500_MMU_HOST_H */
+#पूर्ण_अगर /* KVM_E500_MMU_HOST_H */

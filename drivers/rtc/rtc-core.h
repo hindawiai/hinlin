@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifdef CONFIG_RTC_INTF_DEV
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_घोषित CONFIG_RTC_INTF_DEV
 
-extern void __init rtc_dev_init(void);
-extern void __exit rtc_dev_exit(void);
-extern void rtc_dev_prepare(struct rtc_device *rtc);
+बाह्य व्योम __init rtc_dev_init(व्योम);
+बाह्य व्योम __निकास rtc_dev_निकास(व्योम);
+बाह्य व्योम rtc_dev_prepare(काष्ठा rtc_device *rtc);
 
-#else
+#अन्यथा
 
-static inline void rtc_dev_init(void)
-{
-}
+अटल अंतरभूत व्योम rtc_dev_init(व्योम)
+अणु
+पूर्ण
 
-static inline void rtc_dev_exit(void)
-{
-}
+अटल अंतरभूत व्योम rtc_dev_निकास(व्योम)
+अणु
+पूर्ण
 
-static inline void rtc_dev_prepare(struct rtc_device *rtc)
-{
-}
+अटल अंतरभूत व्योम rtc_dev_prepare(काष्ठा rtc_device *rtc)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_RTC_INTF_PROC
+#अगर_घोषित CONFIG_RTC_INTF_PROC
 
-extern void rtc_proc_add_device(struct rtc_device *rtc);
-extern void rtc_proc_del_device(struct rtc_device *rtc);
+बाह्य व्योम rtc_proc_add_device(काष्ठा rtc_device *rtc);
+बाह्य व्योम rtc_proc_del_device(काष्ठा rtc_device *rtc);
 
-#else
+#अन्यथा
 
-static inline void rtc_proc_add_device(struct rtc_device *rtc)
-{
-}
+अटल अंतरभूत व्योम rtc_proc_add_device(काष्ठा rtc_device *rtc)
+अणु
+पूर्ण
 
-static inline void rtc_proc_del_device(struct rtc_device *rtc)
-{
-}
+अटल अंतरभूत व्योम rtc_proc_del_device(काष्ठा rtc_device *rtc)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_RTC_INTF_SYSFS
-const struct attribute_group **rtc_get_dev_attribute_groups(void);
-#else
-static inline const struct attribute_group **rtc_get_dev_attribute_groups(void)
-{
-	return NULL;
-}
-#endif
+#अगर_घोषित CONFIG_RTC_INTF_SYSFS
+स्थिर काष्ठा attribute_group **rtc_get_dev_attribute_groups(व्योम);
+#अन्यथा
+अटल अंतरभूत स्थिर काष्ठा attribute_group **rtc_get_dev_attribute_groups(व्योम)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर

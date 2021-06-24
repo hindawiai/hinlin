@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * IPv6 library code, needed by static components when full IPv6 support is
- * not configured or static.
+ * IPv6 library code, needed by अटल components when full IPv6 support is
+ * not configured or अटल.
  */
-#include <linux/export.h>
-#include <net/ipv6.h>
+#समावेश <linux/export.h>
+#समावेश <net/ipv6.h>
 
 /*
- * find out if nexthdr is a well-known extension header or a protocol
+ * find out अगर nexthdr is a well-known extension header or a protocol
  */
 
 bool ipv6_ext_hdr(u8 nexthdr)
-{
+अणु
 	/*
-	 * find out if nexthdr is an extension header or a protocol
+	 * find out अगर nexthdr is an extension header or a protocol
 	 */
-	return   (nexthdr == NEXTHDR_HOP)	||
+	वापस   (nexthdr == NEXTHDR_HOP)	||
 		 (nexthdr == NEXTHDR_ROUTING)	||
 		 (nexthdr == NEXTHDR_FRAGMENT)	||
 		 (nexthdr == NEXTHDR_AUTH)	||
 		 (nexthdr == NEXTHDR_NONE)	||
 		 (nexthdr == NEXTHDR_DEST);
-}
+पूर्ण
 EXPORT_SYMBOL(ipv6_ext_hdr);
 
 /*
@@ -29,252 +30,252 @@ EXPORT_SYMBOL(ipv6_ext_hdr);
  *
  * Note that strictly speaking this conflicts with RFC 2460 4.0:
  * ...The contents and semantics of each extension header determine whether
- * or not to proceed to the next header.  Therefore, extension headers must
+ * or not to proceed to the next header.  Thereक्रमe, extension headers must
  * be processed strictly in the order they appear in the packet; a
- * receiver must not, for example, scan through a packet looking for a
+ * receiver must not, क्रम example, scan through a packet looking क्रम a
  * particular kind of extension header and process that header prior to
  * processing all preceding ones.
  *
- * We do exactly this. This is a protocol bug. We can't decide after a
- * seeing an unknown discard-with-error flavour TLV option if it's a
+ * We करो exactly this. This is a protocol bug. We can't decide after a
+ * seeing an unknown discard-with-error flavour TLV option अगर it's a
  * ICMP error message or not (errors should never be send in reply to
  * ICMP error messages).
  *
- * But I see no other way to do this. This might need to be reexamined
+ * But I see no other way to करो this. This might need to be reexamined
  * when Linux implements ESP (and maybe AUTH) headers.
  * --AK
  *
  * This function parses (probably truncated) exthdr set "hdr".
- * "nexthdrp" initially points to some place,
+ * "nexthdrp" initially poपूर्णांकs to some place,
  * where type of the first header can be found.
  *
- * It skips all well-known exthdrs, and returns pointer to the start
+ * It skips all well-known exthdrs, and वापसs poपूर्णांकer to the start
  * of unparsable area i.e. the first header with unknown type.
- * If it is not NULL *nexthdr is updated by type/protocol of this header.
+ * If it is not शून्य *nexthdr is updated by type/protocol of this header.
  *
- * NOTES: - if packet terminated with NEXTHDR_NONE it returns NULL.
- *        - it may return pointer pointing beyond end of packet,
- *	    if the last recognized header is truncated in the middle.
- *        - if packet is truncated, so that all parsed headers are skipped,
- *	    it returns NULL.
+ * NOTES: - अगर packet terminated with NEXTHDR_NONE it वापसs शून्य.
+ *        - it may वापस poपूर्णांकer poपूर्णांकing beyond end of packet,
+ *	    अगर the last recognized header is truncated in the middle.
+ *        - अगर packet is truncated, so that all parsed headers are skipped,
+ *	    it वापसs शून्य.
  *	  - First fragment header is skipped, not-first ones
  *	    are considered as unparsable.
  *	  - Reports the offset field of the final fragment header so it is
  *	    possible to tell whether this is a first fragment, later fragment,
  *	    or not fragmented.
- *	  - ESP is unparsable for now and considered like
+ *	  - ESP is unparsable क्रम now and considered like
  *	    normal payload protocol.
  *	  - Note also special handling of AUTH header. Thanks to IPsec wizards.
  *
  * --ANK (980726)
  */
 
-int ipv6_skip_exthdr(const struct sk_buff *skb, int start, u8 *nexthdrp,
+पूर्णांक ipv6_skip_exthdr(स्थिर काष्ठा sk_buff *skb, पूर्णांक start, u8 *nexthdrp,
 		     __be16 *frag_offp)
-{
+अणु
 	u8 nexthdr = *nexthdrp;
 
 	*frag_offp = 0;
 
-	while (ipv6_ext_hdr(nexthdr)) {
-		struct ipv6_opt_hdr _hdr, *hp;
-		int hdrlen;
+	जबतक (ipv6_ext_hdr(nexthdr)) अणु
+		काष्ठा ipv6_opt_hdr _hdr, *hp;
+		पूर्णांक hdrlen;
 
-		if (nexthdr == NEXTHDR_NONE)
-			return -1;
-		hp = skb_header_pointer(skb, start, sizeof(_hdr), &_hdr);
-		if (!hp)
-			return -1;
-		if (nexthdr == NEXTHDR_FRAGMENT) {
+		अगर (nexthdr == NEXTHDR_NONE)
+			वापस -1;
+		hp = skb_header_poपूर्णांकer(skb, start, माप(_hdr), &_hdr);
+		अगर (!hp)
+			वापस -1;
+		अगर (nexthdr == NEXTHDR_FRAGMENT) अणु
 			__be16 _frag_off, *fp;
-			fp = skb_header_pointer(skb,
-						start+offsetof(struct frag_hdr,
+			fp = skb_header_poपूर्णांकer(skb,
+						start+दुरत्व(काष्ठा frag_hdr,
 							       frag_off),
-						sizeof(_frag_off),
+						माप(_frag_off),
 						&_frag_off);
-			if (!fp)
-				return -1;
+			अगर (!fp)
+				वापस -1;
 
 			*frag_offp = *fp;
-			if (ntohs(*frag_offp) & ~0x7)
-				break;
+			अगर (ntohs(*frag_offp) & ~0x7)
+				अवरोध;
 			hdrlen = 8;
-		} else if (nexthdr == NEXTHDR_AUTH)
+		पूर्ण अन्यथा अगर (nexthdr == NEXTHDR_AUTH)
 			hdrlen = ipv6_authlen(hp);
-		else
+		अन्यथा
 			hdrlen = ipv6_optlen(hp);
 
 		nexthdr = hp->nexthdr;
 		start += hdrlen;
-	}
+	पूर्ण
 
 	*nexthdrp = nexthdr;
-	return start;
-}
+	वापस start;
+पूर्ण
 EXPORT_SYMBOL(ipv6_skip_exthdr);
 
-int ipv6_find_tlv(const struct sk_buff *skb, int offset, int type)
-{
-	const unsigned char *nh = skb_network_header(skb);
-	int packet_len = skb_tail_pointer(skb) - skb_network_header(skb);
-	struct ipv6_opt_hdr *hdr;
-	int len;
+पूर्णांक ipv6_find_tlv(स्थिर काष्ठा sk_buff *skb, पूर्णांक offset, पूर्णांक type)
+अणु
+	स्थिर अचिन्हित अक्षर *nh = skb_network_header(skb);
+	पूर्णांक packet_len = skb_tail_poपूर्णांकer(skb) - skb_network_header(skb);
+	काष्ठा ipv6_opt_hdr *hdr;
+	पूर्णांक len;
 
-	if (offset + 2 > packet_len)
-		goto bad;
-	hdr = (struct ipv6_opt_hdr *)(nh + offset);
+	अगर (offset + 2 > packet_len)
+		जाओ bad;
+	hdr = (काष्ठा ipv6_opt_hdr *)(nh + offset);
 	len = ((hdr->hdrlen + 1) << 3);
 
-	if (offset + len > packet_len)
-		goto bad;
+	अगर (offset + len > packet_len)
+		जाओ bad;
 
 	offset += 2;
 	len -= 2;
 
-	while (len > 0) {
-		int opttype = nh[offset];
-		int optlen;
+	जबतक (len > 0) अणु
+		पूर्णांक opttype = nh[offset];
+		पूर्णांक optlen;
 
-		if (opttype == type)
-			return offset;
+		अगर (opttype == type)
+			वापस offset;
 
-		switch (opttype) {
-		case IPV6_TLV_PAD1:
+		चयन (opttype) अणु
+		हाल IPV6_TLV_PAD1:
 			optlen = 1;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			optlen = nh[offset + 1] + 2;
-			if (optlen > len)
-				goto bad;
-			break;
-		}
+			अगर (optlen > len)
+				जाओ bad;
+			अवरोध;
+		पूर्ण
 		offset += optlen;
 		len -= optlen;
-	}
+	पूर्ण
 	/* not_found */
  bad:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL_GPL(ipv6_find_tlv);
 
 /*
- * find the offset to specified header or the protocol number of last header
- * if target < 0. "last header" is transport protocol header, ESP, or
+ * find the offset to specअगरied header or the protocol number of last header
+ * अगर target < 0. "last header" is transport protocol header, ESP, or
  * "No next header".
  *
- * Note that *offset is used as input/output parameter, and if it is not zero,
+ * Note that *offset is used as input/output parameter, and अगर it is not zero,
  * then it must be a valid offset to an inner IPv6 header. This can be used
  * to explore inner IPv6 header, eg. ICMPv6 error messages.
  *
- * If target header is found, its offset is set in *offset and return protocol
- * number. Otherwise, return -1.
+ * If target header is found, its offset is set in *offset and वापस protocol
+ * number. Otherwise, वापस -1.
  *
- * If the first fragment doesn't contain the final protocol header or
+ * If the first fragment करोesn't contain the final protocol header or
  * NEXTHDR_NONE it is considered invalid.
  *
- * Note that non-1st fragment is special case that "the protocol number
- * of last header" is "next header" field in Fragment header. In this case,
- * *offset is meaningless and fragment offset is stored in *fragoff if fragoff
- * isn't NULL.
+ * Note that non-1st fragment is special हाल that "the protocol number
+ * of last header" is "next header" field in Fragment header. In this हाल,
+ * *offset is meaningless and fragment offset is stored in *fragoff अगर fragoff
+ * isn't शून्य.
  *
- * if flags is not NULL and it's a fragment, then the frag flag
+ * अगर flags is not शून्य and it's a fragment, then the frag flag
  * IP6_FH_F_FRAG will be set. If it's an AH header, the
  * IP6_FH_F_AUTH flag is set and target < 0, then this function will
  * stop at the AH header. If IP6_FH_F_SKIP_RH flag was passed, then this
  * function will skip all those routing headers, where segements_left was 0.
  */
-int ipv6_find_hdr(const struct sk_buff *skb, unsigned int *offset,
-		  int target, unsigned short *fragoff, int *flags)
-{
-	unsigned int start = skb_network_offset(skb) + sizeof(struct ipv6hdr);
+पूर्णांक ipv6_find_hdr(स्थिर काष्ठा sk_buff *skb, अचिन्हित पूर्णांक *offset,
+		  पूर्णांक target, अचिन्हित लघु *fragoff, पूर्णांक *flags)
+अणु
+	अचिन्हित पूर्णांक start = skb_network_offset(skb) + माप(काष्ठा ipv6hdr);
 	u8 nexthdr = ipv6_hdr(skb)->nexthdr;
 	bool found;
 
-	if (fragoff)
+	अगर (fragoff)
 		*fragoff = 0;
 
-	if (*offset) {
-		struct ipv6hdr _ip6, *ip6;
+	अगर (*offset) अणु
+		काष्ठा ipv6hdr _ip6, *ip6;
 
-		ip6 = skb_header_pointer(skb, *offset, sizeof(_ip6), &_ip6);
-		if (!ip6 || (ip6->version != 6))
-			return -EBADMSG;
-		start = *offset + sizeof(struct ipv6hdr);
+		ip6 = skb_header_poपूर्णांकer(skb, *offset, माप(_ip6), &_ip6);
+		अगर (!ip6 || (ip6->version != 6))
+			वापस -EBADMSG;
+		start = *offset + माप(काष्ठा ipv6hdr);
 		nexthdr = ip6->nexthdr;
-	}
+	पूर्ण
 
-	do {
-		struct ipv6_opt_hdr _hdr, *hp;
-		unsigned int hdrlen;
+	करो अणु
+		काष्ठा ipv6_opt_hdr _hdr, *hp;
+		अचिन्हित पूर्णांक hdrlen;
 		found = (nexthdr == target);
 
-		if ((!ipv6_ext_hdr(nexthdr)) || nexthdr == NEXTHDR_NONE) {
-			if (target < 0 || found)
-				break;
-			return -ENOENT;
-		}
+		अगर ((!ipv6_ext_hdr(nexthdr)) || nexthdr == NEXTHDR_NONE) अणु
+			अगर (target < 0 || found)
+				अवरोध;
+			वापस -ENOENT;
+		पूर्ण
 
-		hp = skb_header_pointer(skb, start, sizeof(_hdr), &_hdr);
-		if (!hp)
-			return -EBADMSG;
+		hp = skb_header_poपूर्णांकer(skb, start, माप(_hdr), &_hdr);
+		अगर (!hp)
+			वापस -EBADMSG;
 
-		if (nexthdr == NEXTHDR_ROUTING) {
-			struct ipv6_rt_hdr _rh, *rh;
+		अगर (nexthdr == NEXTHDR_ROUTING) अणु
+			काष्ठा ipv6_rt_hdr _rh, *rh;
 
-			rh = skb_header_pointer(skb, start, sizeof(_rh),
+			rh = skb_header_poपूर्णांकer(skb, start, माप(_rh),
 						&_rh);
-			if (!rh)
-				return -EBADMSG;
+			अगर (!rh)
+				वापस -EBADMSG;
 
-			if (flags && (*flags & IP6_FH_F_SKIP_RH) &&
+			अगर (flags && (*flags & IP6_FH_F_SKIP_RH) &&
 			    rh->segments_left == 0)
 				found = false;
-		}
+		पूर्ण
 
-		if (nexthdr == NEXTHDR_FRAGMENT) {
-			unsigned short _frag_off;
+		अगर (nexthdr == NEXTHDR_FRAGMENT) अणु
+			अचिन्हित लघु _frag_off;
 			__be16 *fp;
 
-			if (flags)	/* Indicate that this is a fragment */
+			अगर (flags)	/* Indicate that this is a fragment */
 				*flags |= IP6_FH_F_FRAG;
-			fp = skb_header_pointer(skb,
-						start+offsetof(struct frag_hdr,
+			fp = skb_header_poपूर्णांकer(skb,
+						start+दुरत्व(काष्ठा frag_hdr,
 							       frag_off),
-						sizeof(_frag_off),
+						माप(_frag_off),
 						&_frag_off);
-			if (!fp)
-				return -EBADMSG;
+			अगर (!fp)
+				वापस -EBADMSG;
 
 			_frag_off = ntohs(*fp) & ~0x7;
-			if (_frag_off) {
-				if (target < 0 &&
+			अगर (_frag_off) अणु
+				अगर (target < 0 &&
 				    ((!ipv6_ext_hdr(hp->nexthdr)) ||
-				     hp->nexthdr == NEXTHDR_NONE)) {
-					if (fragoff)
+				     hp->nexthdr == NEXTHDR_NONE)) अणु
+					अगर (fragoff)
 						*fragoff = _frag_off;
-					return hp->nexthdr;
-				}
-				if (!found)
-					return -ENOENT;
-				if (fragoff)
+					वापस hp->nexthdr;
+				पूर्ण
+				अगर (!found)
+					वापस -ENOENT;
+				अगर (fragoff)
 					*fragoff = _frag_off;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			hdrlen = 8;
-		} else if (nexthdr == NEXTHDR_AUTH) {
-			if (flags && (*flags & IP6_FH_F_AUTH) && (target < 0))
-				break;
+		पूर्ण अन्यथा अगर (nexthdr == NEXTHDR_AUTH) अणु
+			अगर (flags && (*flags & IP6_FH_F_AUTH) && (target < 0))
+				अवरोध;
 			hdrlen = ipv6_authlen(hp);
-		} else
+		पूर्ण अन्यथा
 			hdrlen = ipv6_optlen(hp);
 
-		if (!found) {
+		अगर (!found) अणु
 			nexthdr = hp->nexthdr;
 			start += hdrlen;
-		}
-	} while (!found);
+		पूर्ण
+	पूर्ण जबतक (!found);
 
 	*offset = start;
-	return nexthdr;
-}
+	वापस nexthdr;
+पूर्ण
 EXPORT_SYMBOL(ipv6_find_hdr);

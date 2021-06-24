@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * (C) COPYRIGHT 2018 ARM Limited. All rights reserved.
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
-#ifndef _D71_DEV_H_
-#define _D71_DEV_H_
+#अगर_अघोषित _D71_DEV_H_
+#घोषणा _D71_DEV_H_
 
-#include "komeda_dev.h"
-#include "komeda_pipeline.h"
-#include "d71_regs.h"
+#समावेश "komeda_dev.h"
+#समावेश "komeda_pipeline.h"
+#समावेश "d71_regs.h"
 
-struct d71_pipeline {
-	struct komeda_pipeline base;
+काष्ठा d71_pipeline अणु
+	काष्ठा komeda_pipeline base;
 
-	/* d71 private pipeline blocks */
+	/* d71 निजी pipeline blocks */
 	u32 __iomem	*lpu_addr;
 	u32 __iomem	*cu_addr;
-	u32 __iomem	*dou_addr;
-	u32 __iomem	*dou_ft_coeff_addr; /* forward transform coeffs table */
-};
+	u32 __iomem	*करोu_addr;
+	u32 __iomem	*करोu_ft_coeff_addr; /* क्रमward transक्रमm coeffs table */
+पूर्ण;
 
-struct d71_dev {
-	struct komeda_dev *mdev;
+काष्ठा d71_dev अणु
+	काष्ठा komeda_dev *mdev;
 
-	int	num_blocks;
-	int	num_pipelines;
-	int	num_rich_layers;
+	पूर्णांक	num_blocks;
+	पूर्णांक	num_pipelines;
+	पूर्णांक	num_rich_layers;
 	u32	max_line_size;
 	u32	max_vsize;
 	u32	supports_dual_link : 1;
-	u32	integrates_tbu : 1;
+	u32	पूर्णांकegrates_tbu : 1;
 
-	/* global register blocks */
+	/* global रेजिस्टर blocks */
 	u32 __iomem	*gcu_addr;
 	/* scaling coeffs table */
 	u32 __iomem	*glb_scl_coeff_addr[D71_MAX_GLB_SCL_COEFF];
 	u32 __iomem	*periph_addr;
 
-	struct d71_pipeline *pipes[D71_MAX_PIPELINE];
-};
+	काष्ठा d71_pipeline *pipes[D71_MAX_PIPELINE];
+पूर्ण;
 
-#define to_d71_pipeline(x)	container_of(x, struct d71_pipeline, base)
+#घोषणा to_d71_pipeline(x)	container_of(x, काष्ठा d71_pipeline, base)
 
-extern const struct komeda_pipeline_funcs d71_pipeline_funcs;
+बाह्य स्थिर काष्ठा komeda_pipeline_funcs d71_pipeline_funcs;
 
-int d71_probe_block(struct d71_dev *d71,
-		    struct block_header *blk, u32 __iomem *reg);
-void d71_read_block_header(u32 __iomem *reg, struct block_header *blk);
+पूर्णांक d71_probe_block(काष्ठा d71_dev *d71,
+		    काष्ठा block_header *blk, u32 __iomem *reg);
+व्योम d71_पढ़ो_block_header(u32 __iomem *reg, काष्ठा block_header *blk);
 
-void d71_dump(struct komeda_dev *mdev, struct seq_file *sf);
+व्योम d71_dump(काष्ठा komeda_dev *mdev, काष्ठा seq_file *sf);
 
-#endif /* !_D71_DEV_H_ */
+#पूर्ण_अगर /* !_D71_DEV_H_ */

@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Spreadtrum divider clock driver
+// Spपढ़ोtrum भागider घड़ी driver
 //
-// Copyright (C) 2017 Spreadtrum, Inc.
-// Author: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
+// Copyright (C) 2017 Spपढ़ोtrum, Inc.
+// Author: Chunyan Zhang <chunyan.zhang@spपढ़ोtrum.com>
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-#include "div.h"
+#समावेश "div.h"
 
-long sprd_div_helper_round_rate(struct sprd_clk_common *common,
-				const struct sprd_div_internal *div,
-				unsigned long rate,
-				unsigned long *parent_rate)
-{
-	return divider_round_rate(&common->hw, rate, parent_rate,
-				  NULL, div->width, 0);
-}
-EXPORT_SYMBOL_GPL(sprd_div_helper_round_rate);
+दीर्घ sprd_भाग_helper_round_rate(काष्ठा sprd_clk_common *common,
+				स्थिर काष्ठा sprd_भाग_पूर्णांकernal *भाग,
+				अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *parent_rate)
+अणु
+	वापस भागider_round_rate(&common->hw, rate, parent_rate,
+				  शून्य, भाग->width, 0);
+पूर्ण
+EXPORT_SYMBOL_GPL(sprd_भाग_helper_round_rate);
 
-static long sprd_div_round_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long *parent_rate)
-{
-	struct sprd_div *cd = hw_to_sprd_div(hw);
+अटल दीर्घ sprd_भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा sprd_भाग *cd = hw_to_sprd_भाग(hw);
 
-	return sprd_div_helper_round_rate(&cd->common, &cd->div,
+	वापस sprd_भाग_helper_round_rate(&cd->common, &cd->भाग,
 					  rate, parent_rate);
-}
+पूर्ण
 
-unsigned long sprd_div_helper_recalc_rate(struct sprd_clk_common *common,
-					  const struct sprd_div_internal *div,
-					  unsigned long parent_rate)
-{
-	unsigned long val;
-	unsigned int reg;
+अचिन्हित दीर्घ sprd_भाग_helper_recalc_rate(काष्ठा sprd_clk_common *common,
+					  स्थिर काष्ठा sprd_भाग_पूर्णांकernal *भाग,
+					  अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित दीर्घ val;
+	अचिन्हित पूर्णांक reg;
 
-	regmap_read(common->regmap, common->reg, &reg);
-	val = reg >> div->shift;
-	val &= (1 << div->width) - 1;
+	regmap_पढ़ो(common->regmap, common->reg, &reg);
+	val = reg >> भाग->shअगरt;
+	val &= (1 << भाग->width) - 1;
 
-	return divider_recalc_rate(&common->hw, parent_rate, val, NULL, 0,
-				   div->width);
-}
-EXPORT_SYMBOL_GPL(sprd_div_helper_recalc_rate);
+	वापस भागider_recalc_rate(&common->hw, parent_rate, val, शून्य, 0,
+				   भाग->width);
+पूर्ण
+EXPORT_SYMBOL_GPL(sprd_भाग_helper_recalc_rate);
 
-static unsigned long sprd_div_recalc_rate(struct clk_hw *hw,
-					  unsigned long parent_rate)
-{
-	struct sprd_div *cd = hw_to_sprd_div(hw);
+अटल अचिन्हित दीर्घ sprd_भाग_recalc_rate(काष्ठा clk_hw *hw,
+					  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा sprd_भाग *cd = hw_to_sprd_भाग(hw);
 
-	return sprd_div_helper_recalc_rate(&cd->common, &cd->div, parent_rate);
-}
+	वापस sprd_भाग_helper_recalc_rate(&cd->common, &cd->भाग, parent_rate);
+पूर्ण
 
-int sprd_div_helper_set_rate(const struct sprd_clk_common *common,
-			     const struct sprd_div_internal *div,
-			     unsigned long rate,
-			     unsigned long parent_rate)
-{
-	unsigned long val;
-	unsigned int reg;
+पूर्णांक sprd_भाग_helper_set_rate(स्थिर काष्ठा sprd_clk_common *common,
+			     स्थिर काष्ठा sprd_भाग_पूर्णांकernal *भाग,
+			     अचिन्हित दीर्घ rate,
+			     अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित दीर्घ val;
+	अचिन्हित पूर्णांक reg;
 
-	val = divider_get_val(rate, parent_rate, NULL,
-			      div->width, 0);
+	val = भागider_get_val(rate, parent_rate, शून्य,
+			      भाग->width, 0);
 
-	regmap_read(common->regmap, common->reg, &reg);
-	reg &= ~GENMASK(div->width + div->shift - 1, div->shift);
+	regmap_पढ़ो(common->regmap, common->reg, &reg);
+	reg &= ~GENMASK(भाग->width + भाग->shअगरt - 1, भाग->shअगरt);
 
-	regmap_write(common->regmap, common->reg,
-			  reg | (val << div->shift));
+	regmap_ग_लिखो(common->regmap, common->reg,
+			  reg | (val << भाग->shअगरt));
 
-	return 0;
+	वापस 0;
 
-}
-EXPORT_SYMBOL_GPL(sprd_div_helper_set_rate);
+पूर्ण
+EXPORT_SYMBOL_GPL(sprd_भाग_helper_set_rate);
 
-static int sprd_div_set_rate(struct clk_hw *hw, unsigned long rate,
-			     unsigned long parent_rate)
-{
-	struct sprd_div *cd = hw_to_sprd_div(hw);
+अटल पूर्णांक sprd_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा sprd_भाग *cd = hw_to_sprd_भाग(hw);
 
-	return sprd_div_helper_set_rate(&cd->common, &cd->div,
+	वापस sprd_भाग_helper_set_rate(&cd->common, &cd->भाग,
 					rate, parent_rate);
-}
+पूर्ण
 
-const struct clk_ops sprd_div_ops = {
-	.recalc_rate = sprd_div_recalc_rate,
-	.round_rate = sprd_div_round_rate,
-	.set_rate = sprd_div_set_rate,
-};
-EXPORT_SYMBOL_GPL(sprd_div_ops);
+स्थिर काष्ठा clk_ops sprd_भाग_ops = अणु
+	.recalc_rate = sprd_भाग_recalc_rate,
+	.round_rate = sprd_भाग_round_rate,
+	.set_rate = sprd_भाग_set_rate,
+पूर्ण;
+EXPORT_SYMBOL_GPL(sprd_भाग_ops);

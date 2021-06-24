@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
- * drivers/char/hw_random/ixp4xx-rng.c
+ * drivers/अक्षर/hw_अक्रमom/ixp4xx-rng.c
  *
- * RNG driver for Intel IXP4xx family of NPUs
+ * RNG driver क्रम Intel IXP4xx family of NPUs
  *
- * Author: Deepak Saxena <dsaxena@plexity.net>
+ * Author: Deepak Saxena <dsaxena@plनिकासy.net>
  *
  * Copyright 2005 (c) MontaVista Software, Inc.
  *
@@ -14,61 +15,61 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
-#include <linux/hw_random.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/hw_अक्रमom.h>
 
-#include <asm/io.h>
-#include <mach/hardware.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <mach/hardware.h>
 
 
-static int ixp4xx_rng_data_read(struct hwrng *rng, u32 *buffer)
-{
-	void __iomem * rng_base = (void __iomem *)rng->priv;
+अटल पूर्णांक ixp4xx_rng_data_पढ़ो(काष्ठा hwrng *rng, u32 *buffer)
+अणु
+	व्योम __iomem * rng_base = (व्योम __iomem *)rng->priv;
 
-	*buffer = __raw_readl(rng_base);
+	*buffer = __raw_पढ़ोl(rng_base);
 
-	return 4;
-}
+	वापस 4;
+पूर्ण
 
-static struct hwrng ixp4xx_rng_ops = {
+अटल काष्ठा hwrng ixp4xx_rng_ops = अणु
 	.name		= "ixp4xx",
-	.data_read	= ixp4xx_rng_data_read,
-};
+	.data_पढ़ो	= ixp4xx_rng_data_पढ़ो,
+पूर्ण;
 
-static int __init ixp4xx_rng_init(void)
-{
-	void __iomem * rng_base;
-	int err;
+अटल पूर्णांक __init ixp4xx_rng_init(व्योम)
+अणु
+	व्योम __iomem * rng_base;
+	पूर्णांक err;
 
-	if (!cpu_is_ixp46x()) /* includes IXP455 */
-		return -ENOSYS;
+	अगर (!cpu_is_ixp46x()) /* includes IXP455 */
+		वापस -ENOSYS;
 
 	rng_base = ioremap(0x70002100, 4);
-	if (!rng_base)
-		return -ENOMEM;
-	ixp4xx_rng_ops.priv = (unsigned long)rng_base;
-	err = hwrng_register(&ixp4xx_rng_ops);
-	if (err)
+	अगर (!rng_base)
+		वापस -ENOMEM;
+	ixp4xx_rng_ops.priv = (अचिन्हित दीर्घ)rng_base;
+	err = hwrng_रेजिस्टर(&ixp4xx_rng_ops);
+	अगर (err)
 		iounmap(rng_base);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit ixp4xx_rng_exit(void)
-{
-	void __iomem * rng_base = (void __iomem *)ixp4xx_rng_ops.priv;
+अटल व्योम __निकास ixp4xx_rng_निकास(व्योम)
+अणु
+	व्योम __iomem * rng_base = (व्योम __iomem *)ixp4xx_rng_ops.priv;
 
-	hwrng_unregister(&ixp4xx_rng_ops);
+	hwrng_unरेजिस्टर(&ixp4xx_rng_ops);
 	iounmap(rng_base);
-}
+पूर्ण
 
 module_init(ixp4xx_rng_init);
-module_exit(ixp4xx_rng_exit);
+module_निकास(ixp4xx_rng_निकास);
 
 MODULE_AUTHOR("Deepak Saxena <dsaxena@plexity.net>");
 MODULE_DESCRIPTION("H/W Pseudo-Random Number Generator (RNG) driver for IXP45x/46x");

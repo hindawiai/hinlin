@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_GEN_STATS_H
-#define __LINUX_GEN_STATS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_GEN_STATS_H
+#घोषणा __LINUX_GEN_STATS_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum {
+क्रमागत अणु
 	TCA_STATS_UNSPEC,
 	TCA_STATS_BASIC,
 	TCA_STATS_RATE_EST,
@@ -15,64 +16,64 @@ enum {
 	TCA_STATS_BASIC_HW,
 	TCA_STATS_PKT64,
 	__TCA_STATS_MAX,
-};
-#define TCA_STATS_MAX (__TCA_STATS_MAX - 1)
+पूर्ण;
+#घोषणा TCA_STATS_MAX (__TCA_STATS_MAX - 1)
 
 /**
- * struct gnet_stats_basic - byte/packet throughput statistics
+ * काष्ठा gnet_stats_basic - byte/packet throughput statistics
  * @bytes: number of seen bytes
  * @packets: number of seen packets
  */
-struct gnet_stats_basic {
+काष्ठा gnet_stats_basic अणु
 	__u64	bytes;
 	__u32	packets;
-};
+पूर्ण;
 
 /**
- * struct gnet_stats_rate_est - rate estimator
+ * काष्ठा gnet_stats_rate_est - rate estimator
  * @bps: current byte rate
  * @pps: current packet rate
  */
-struct gnet_stats_rate_est {
+काष्ठा gnet_stats_rate_est अणु
 	__u32	bps;
 	__u32	pps;
-};
+पूर्ण;
 
 /**
- * struct gnet_stats_rate_est64 - rate estimator
+ * काष्ठा gnet_stats_rate_est64 - rate estimator
  * @bps: current byte rate
  * @pps: current packet rate
  */
-struct gnet_stats_rate_est64 {
+काष्ठा gnet_stats_rate_est64 अणु
 	__u64	bps;
 	__u64	pps;
-};
+पूर्ण;
 
 /**
- * struct gnet_stats_queue - queuing statistics
+ * काष्ठा gnet_stats_queue - queuing statistics
  * @qlen: queue length
  * @backlog: backlog size of queue
  * @drops: number of dropped packets
  * @requeues: number of requeues
  * @overlimits: number of enqueues over the limit
  */
-struct gnet_stats_queue {
+काष्ठा gnet_stats_queue अणु
 	__u32	qlen;
 	__u32	backlog;
 	__u32	drops;
 	__u32	requeues;
 	__u32	overlimits;
-};
+पूर्ण;
 
 /**
- * struct gnet_estimator - rate estimator configuration
- * @interval: sampling period
- * @ewma_log: the log of measurement window weight
+ * काष्ठा gnet_estimator - rate estimator configuration
+ * @पूर्णांकerval: sampling period
+ * @ewma_log: the log of measurement winकरोw weight
  */
-struct gnet_estimator {
-	signed char	interval;
-	unsigned char	ewma_log;
-};
+काष्ठा gnet_estimator अणु
+	चिन्हित अक्षर	पूर्णांकerval;
+	अचिन्हित अक्षर	ewma_log;
+पूर्ण;
 
 
-#endif /* __LINUX_GEN_STATS_H */
+#पूर्ण_अगर /* __LINUX_GEN_STATS_H */

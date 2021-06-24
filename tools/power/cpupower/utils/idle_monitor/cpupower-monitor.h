@@ -1,95 +1,96 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  (C) 2010,2011       Thomas Renninger <trenn@suse.de>, Novell Inc.
  */
 
-#ifndef __CPUIDLE_INFO_HW__
-#define __CPUIDLE_INFO_HW__
+#अगर_अघोषित __CPUIDLE_INFO_HW__
+#घोषणा __CPUIDLE_INFO_HW__
 
-#include <stdarg.h>
-#include <time.h>
+#समावेश <मानकतर्क.स>
+#समावेश <समय.स>
 
-#include "idle_monitor/idle_monitors.h"
+#समावेश "idle_monitor/idle_monitors.h"
 
-#define MONITORS_MAX 20
-#define MONITOR_NAME_LEN 20
+#घोषणा MONITORS_MAX 20
+#घोषणा MONITOR_NAME_LEN 20
 
 /* CSTATE_NAME_LEN is limited by header field width defined
- * in cpupower-monitor.c. Header field width is defined to be
- * sum of percent width and two spaces for padding.
+ * in cpuघातer-monitor.c. Header field width is defined to be
+ * sum of percent width and two spaces क्रम padding.
  */
-#ifdef __powerpc__
-#define CSTATE_NAME_LEN 7
-#else
-#define CSTATE_NAME_LEN 5
-#endif
-#define CSTATE_DESC_LEN 60
+#अगर_घोषित __घातerpc__
+#घोषणा CSTATE_NAME_LEN 7
+#अन्यथा
+#घोषणा CSTATE_NAME_LEN 5
+#पूर्ण_अगर
+#घोषणा CSTATE_DESC_LEN 60
 
-extern int cpu_count;
+बाह्य पूर्णांक cpu_count;
 
 /* Hard to define the right names ...: */
-enum power_range_e {
-	RANGE_THREAD,	/* Lowest in topology hierarcy, AMD: core, Intel: thread
+क्रमागत घातer_range_e अणु
+	RANGE_THREAD,	/* Lowest in topology hierarcy, AMD: core, Intel: thपढ़ो
 			   kernel sysfs: cpu */
 	RANGE_CORE,	/* AMD: unit, Intel: core, kernel_sysfs: core_id */
 	RANGE_PACKAGE,	/* Package, processor socket */
-	RANGE_MACHINE,	/* Machine, platform wide */
-	RANGE_MAX };
+	RANGE_MACHINE,	/* Machine, platक्रमm wide */
+	RANGE_MAX पूर्ण;
 
-typedef struct cstate {
-	int  id;
-	enum power_range_e range;
-	char name[CSTATE_NAME_LEN];
-	char desc[CSTATE_DESC_LEN];
+प्रकार काष्ठा cstate अणु
+	पूर्णांक  id;
+	क्रमागत घातer_range_e range;
+	अक्षर name[CSTATE_NAME_LEN];
+	अक्षर desc[CSTATE_DESC_LEN];
 
 	/* either provide a percentage or a general count */
-	int (*get_count_percent)(unsigned int self_id, double *percent,
-				 unsigned int cpu);
-	int (*get_count)(unsigned int self_id, unsigned long long *count,
-			 unsigned int cpu);
-} cstate_t;
+	पूर्णांक (*get_count_percent)(अचिन्हित पूर्णांक self_id, द्विगुन *percent,
+				 अचिन्हित पूर्णांक cpu);
+	पूर्णांक (*get_count)(अचिन्हित पूर्णांक self_id, अचिन्हित दीर्घ दीर्घ *count,
+			 अचिन्हित पूर्णांक cpu);
+पूर्ण cstate_t;
 
-struct cpuidle_monitor {
+काष्ठा cpuidle_monitor अणु
 	/* Name must not contain whitespaces */
-	char name[MONITOR_NAME_LEN];
-	int name_len;
-	int hw_states_num;
+	अक्षर name[MONITOR_NAME_LEN];
+	पूर्णांक name_len;
+	पूर्णांक hw_states_num;
 	cstate_t *hw_states;
-	int (*start) (void);
-	int (*stop) (void);
-	struct cpuidle_monitor* (*do_register) (void);
-	void (*unregister)(void);
-	unsigned int overflow_s;
-	struct {
-		unsigned int needs_root:1;
-		unsigned int per_cpu_schedule:1;
-	} flags;
-};
+	पूर्णांक (*start) (व्योम);
+	पूर्णांक (*stop) (व्योम);
+	काष्ठा cpuidle_monitor* (*करो_रेजिस्टर) (व्योम);
+	व्योम (*unरेजिस्टर)(व्योम);
+	अचिन्हित पूर्णांक overflow_s;
+	काष्ठा अणु
+		अचिन्हित पूर्णांक needs_root:1;
+		अचिन्हित पूर्णांक per_cpu_schedule:1;
+	पूर्ण flags;
+पूर्ण;
 
-extern long long timespec_diff_us(struct timespec start, struct timespec end);
+बाह्य दीर्घ दीर्घ बारpec_dअगरf_us(काष्ठा बारpec start, काष्ठा बारpec end);
 
-#define print_overflow_err(mes, ov)						\
-{										\
-	fprintf(stderr, gettext("Measure took %u seconds, but registers could "	\
+#घोषणा prपूर्णांक_overflow_err(mes, ov)						\
+अणु										\
+	ख_लिखो(मानक_त्रुटि, gettext("Measure took %u seconds, but registers could "	\
 				"overflow at %u seconds, results "		\
 				"could be inaccurate\n"), mes, ov);		\
-}
+पूर्ण
 
 
-/* Taken over from x86info project sources  -> return 0 on success */
-#include <sched.h>
-#include <sys/types.h>
-#include <unistd.h>
-static inline int bind_cpu(int cpu)
-{
+/* Taken over from x86info project sources  -> वापस 0 on success */
+#समावेश <sched.h>
+#समावेश <sys/types.h>
+#समावेश <unistd.h>
+अटल अंतरभूत पूर्णांक bind_cpu(पूर्णांक cpu)
+अणु
 	cpu_set_t set;
 
-	if (sched_getaffinity(getpid(), sizeof(set), &set) == 0) {
+	अगर (sched_getaffinity(getpid(), माप(set), &set) == 0) अणु
 		CPU_ZERO(&set);
 		CPU_SET(cpu, &set);
-		return sched_setaffinity(getpid(), sizeof(set), &set);
-	}
-	return 1;
-}
+		वापस sched_setaffinity(getpid(), माप(set), &set);
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-#endif /* __CPUIDLE_INFO_HW__ */
+#पूर्ण_अगर /* __CPUIDLE_INFO_HW__ */

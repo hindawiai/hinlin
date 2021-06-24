@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/delay.h>
-#include <linux/regmap.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/regmap.h>
 
-#include "kxsd9.h"
+#समावेश "kxsd9.h"
 
-static int kxsd9_i2c_probe(struct i2c_client *i2c,
-			   const struct i2c_device_id *id)
-{
-	static const struct regmap_config config = {
+अटल पूर्णांक kxsd9_i2c_probe(काष्ठा i2c_client *i2c,
+			   स्थिर काष्ठा i2c_device_id *id)
+अणु
+	अटल स्थिर काष्ठा regmap_config config = अणु
 		.reg_bits = 8,
 		.val_bits = 8,
-		.max_register = 0x0e,
-	};
-	struct regmap *regmap;
+		.max_रेजिस्टर = 0x0e,
+	पूर्ण;
+	काष्ठा regmap *regmap;
 
 	regmap = devm_regmap_init_i2c(i2c, &config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&i2c->dev, "Failed to register i2c regmap: %pe\n",
 			regmap);
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return kxsd9_common_probe(&i2c->dev,
+	वापस kxsd9_common_probe(&i2c->dev,
 				  regmap,
 				  i2c->name);
-}
+पूर्ण
 
-static int kxsd9_i2c_remove(struct i2c_client *client)
-{
-	return kxsd9_common_remove(&client->dev);
-}
+अटल पूर्णांक kxsd9_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	वापस kxsd9_common_हटाओ(&client->dev);
+पूर्ण
 
-static const struct of_device_id kxsd9_of_match[] = {
-	{ .compatible = "kionix,kxsd9", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id kxsd9_of_match[] = अणु
+	अणु .compatible = "kionix,kxsd9", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, kxsd9_of_match);
 
-static const struct i2c_device_id kxsd9_i2c_id[] = {
-	{"kxsd9", 0},
-	{ },
-};
+अटल स्थिर काष्ठा i2c_device_id kxsd9_i2c_id[] = अणु
+	अणु"kxsd9", 0पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, kxsd9_i2c_id);
 
-static struct i2c_driver kxsd9_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver kxsd9_i2c_driver = अणु
+	.driver = अणु
 		.name	= "kxsd9",
 		.of_match_table = kxsd9_of_match,
 		.pm = &kxsd9_dev_pm_ops,
-	},
+	पूर्ण,
 	.probe		= kxsd9_i2c_probe,
-	.remove		= kxsd9_i2c_remove,
+	.हटाओ		= kxsd9_i2c_हटाओ,
 	.id_table	= kxsd9_i2c_id,
-};
+पूर्ण;
 module_i2c_driver(kxsd9_i2c_driver);
 
 MODULE_LICENSE("GPL v2");

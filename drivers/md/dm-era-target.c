@@ -1,165 +1,166 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include "dm.h"
-#include "persistent-data/dm-transaction-manager.h"
-#include "persistent-data/dm-bitset.h"
-#include "persistent-data/dm-space-map.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश "dm.h"
+#समावेश "persistent-data/dm-transaction-manager.h"
+#समावेश "persistent-data/dm-bitset.h"
+#समावेश "persistent-data/dm-space-map.h"
 
-#include <linux/dm-io.h>
-#include <linux/dm-kcopyd.h>
-#include <linux/init.h>
-#include <linux/mempool.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/dm-पन.स>
+#समावेश <linux/dm-kcopyd.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#define DM_MSG_PREFIX "era"
+#घोषणा DM_MSG_PREFIX "era"
 
-#define SUPERBLOCK_LOCATION 0
-#define SUPERBLOCK_MAGIC 2126579579
-#define SUPERBLOCK_CSUM_XOR 146538381
-#define MIN_ERA_VERSION 1
-#define MAX_ERA_VERSION 1
-#define INVALID_WRITESET_ROOT SUPERBLOCK_LOCATION
-#define MIN_BLOCK_SIZE 8
+#घोषणा SUPERBLOCK_LOCATION 0
+#घोषणा SUPERBLOCK_MAGIC 2126579579
+#घोषणा SUPERBLOCK_CSUM_XOR 146538381
+#घोषणा MIN_ERA_VERSION 1
+#घोषणा MAX_ERA_VERSION 1
+#घोषणा INVALID_WRITESET_ROOT SUPERBLOCK_LOCATION
+#घोषणा MIN_BLOCK_SIZE 8
 
 /*----------------------------------------------------------------
  * Writeset
  *--------------------------------------------------------------*/
-struct writeset_metadata {
-	uint32_t nr_bits;
+काष्ठा ग_लिखोset_metadata अणु
+	uपूर्णांक32_t nr_bits;
 	dm_block_t root;
-};
+पूर्ण;
 
-struct writeset {
-	struct writeset_metadata md;
+काष्ठा ग_लिखोset अणु
+	काष्ठा ग_लिखोset_metadata md;
 
 	/*
-	 * An in core copy of the bits to save constantly doing look ups on
+	 * An in core copy of the bits to save स्थिरantly करोing look ups on
 	 * disk.
 	 */
-	unsigned long *bits;
-};
+	अचिन्हित दीर्घ *bits;
+पूर्ण;
 
 /*
- * This does not free off the on disk bitset as this will normally be done
- * after digesting into the era array.
+ * This करोes not मुक्त off the on disk bitset as this will normally be करोne
+ * after digesting पूर्णांकo the era array.
  */
-static void writeset_free(struct writeset *ws)
-{
-	vfree(ws->bits);
-	ws->bits = NULL;
-}
+अटल व्योम ग_लिखोset_मुक्त(काष्ठा ग_लिखोset *ws)
+अणु
+	vमुक्त(ws->bits);
+	ws->bits = शून्य;
+पूर्ण
 
-static int setup_on_disk_bitset(struct dm_disk_bitset *info,
-				unsigned nr_bits, dm_block_t *root)
-{
-	int r;
+अटल पूर्णांक setup_on_disk_bitset(काष्ठा dm_disk_bitset *info,
+				अचिन्हित nr_bits, dm_block_t *root)
+अणु
+	पूर्णांक r;
 
 	r = dm_bitset_empty(info, root);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return dm_bitset_resize(info, *root, 0, nr_bits, false, root);
-}
+	वापस dm_bitset_resize(info, *root, 0, nr_bits, false, root);
+पूर्ण
 
-static size_t bitset_size(unsigned nr_bits)
-{
-	return sizeof(unsigned long) * dm_div_up(nr_bits, BITS_PER_LONG);
-}
+अटल माप_प्रकार bitset_size(अचिन्हित nr_bits)
+अणु
+	वापस माप(अचिन्हित दीर्घ) * dm_भाग_up(nr_bits, BITS_PER_LONG);
+पूर्ण
 
 /*
- * Allocates memory for the in core bitset.
+ * Allocates memory क्रम the in core bitset.
  */
-static int writeset_alloc(struct writeset *ws, dm_block_t nr_blocks)
-{
+अटल पूर्णांक ग_लिखोset_alloc(काष्ठा ग_लिखोset *ws, dm_block_t nr_blocks)
+अणु
 	ws->bits = vzalloc(bitset_size(nr_blocks));
-	if (!ws->bits) {
+	अगर (!ws->bits) अणु
 		DMERR("%s: couldn't allocate in memory bitset", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Wipes the in-core bitset, and creates a new on disk bitset.
  */
-static int writeset_init(struct dm_disk_bitset *info, struct writeset *ws,
+अटल पूर्णांक ग_लिखोset_init(काष्ठा dm_disk_bitset *info, काष्ठा ग_लिखोset *ws,
 			 dm_block_t nr_blocks)
-{
-	int r;
+अणु
+	पूर्णांक r;
 
-	memset(ws->bits, 0, bitset_size(nr_blocks));
+	स_रखो(ws->bits, 0, bitset_size(nr_blocks));
 
 	ws->md.nr_bits = nr_blocks;
 	r = setup_on_disk_bitset(info, ws->md.nr_bits, &ws->md.root);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: setup_on_disk_bitset failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool writeset_marked(struct writeset *ws, dm_block_t block)
-{
-	return test_bit(block, ws->bits);
-}
+अटल bool ग_लिखोset_marked(काष्ठा ग_लिखोset *ws, dm_block_t block)
+अणु
+	वापस test_bit(block, ws->bits);
+पूर्ण
 
-static int writeset_marked_on_disk(struct dm_disk_bitset *info,
-				   struct writeset_metadata *m, dm_block_t block,
+अटल पूर्णांक ग_लिखोset_marked_on_disk(काष्ठा dm_disk_bitset *info,
+				   काष्ठा ग_लिखोset_metadata *m, dm_block_t block,
 				   bool *result)
-{
+अणु
 	dm_block_t old = m->root;
 
 	/*
 	 * The bitset was flushed when it was archived, so we know there'll
 	 * be no change to the root.
 	 */
-	int r = dm_bitset_test_bit(info, m->root, block, &m->root, result);
-	if (r) {
+	पूर्णांक r = dm_bitset_test_bit(info, m->root, block, &m->root, result);
+	अगर (r) अणु
 		DMERR("%s: dm_bitset_test_bit failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	BUG_ON(m->root != old);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * Returns < 0 on error, 0 if the bit wasn't previously set, 1 if it was.
+ * Returns < 0 on error, 0 अगर the bit wasn't previously set, 1 अगर it was.
  */
-static int writeset_test_and_set(struct dm_disk_bitset *info,
-				 struct writeset *ws, uint32_t block)
-{
-	int r;
+अटल पूर्णांक ग_लिखोset_test_and_set(काष्ठा dm_disk_bitset *info,
+				 काष्ठा ग_लिखोset *ws, uपूर्णांक32_t block)
+अणु
+	पूर्णांक r;
 
-	if (!test_bit(block, ws->bits)) {
+	अगर (!test_bit(block, ws->bits)) अणु
 		r = dm_bitset_set_bit(info, ws->md.root, block, &ws->md.root);
-		if (r) {
+		अगर (r) अणु
 			/* FIXME: fail mode */
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*----------------------------------------------------------------
  * On disk metadata layout
  *--------------------------------------------------------------*/
-#define SPACE_MAP_ROOT_SIZE 128
-#define UUID_LEN 16
+#घोषणा SPACE_MAP_ROOT_SIZE 128
+#घोषणा UUID_LEN 16
 
-struct writeset_disk {
+काष्ठा ग_लिखोset_disk अणु
 	__le32 nr_bits;
 	__le64 root;
-} __packed;
+पूर्ण __packed;
 
-struct superblock_disk {
+काष्ठा superblock_disk अणु
 	__le32 csum;
 	__le32 flags;
 	__le64 blocknr;
@@ -175,325 +176,325 @@ struct superblock_disk {
 	__le32 nr_blocks;
 
 	__le32 current_era;
-	struct writeset_disk current_writeset;
+	काष्ठा ग_लिखोset_disk current_ग_लिखोset;
 
 	/*
 	 * Only these two fields are valid within the metadata snapshot.
 	 */
-	__le64 writeset_tree_root;
+	__le64 ग_लिखोset_tree_root;
 	__le64 era_array_root;
 
 	__le64 metadata_snap;
-} __packed;
+पूर्ण __packed;
 
 /*----------------------------------------------------------------
  * Superblock validation
  *--------------------------------------------------------------*/
-static void sb_prepare_for_write(struct dm_block_validator *v,
-				 struct dm_block *b,
-				 size_t sb_block_size)
-{
-	struct superblock_disk *disk = dm_block_data(b);
+अटल व्योम sb_prepare_क्रम_ग_लिखो(काष्ठा dm_block_validator *v,
+				 काष्ठा dm_block *b,
+				 माप_प्रकार sb_block_size)
+अणु
+	काष्ठा superblock_disk *disk = dm_block_data(b);
 
 	disk->blocknr = cpu_to_le64(dm_block_location(b));
 	disk->csum = cpu_to_le32(dm_bm_checksum(&disk->flags,
-						sb_block_size - sizeof(__le32),
+						sb_block_size - माप(__le32),
 						SUPERBLOCK_CSUM_XOR));
-}
+पूर्ण
 
-static int check_metadata_version(struct superblock_disk *disk)
-{
-	uint32_t metadata_version = le32_to_cpu(disk->version);
-	if (metadata_version < MIN_ERA_VERSION || metadata_version > MAX_ERA_VERSION) {
+अटल पूर्णांक check_metadata_version(काष्ठा superblock_disk *disk)
+अणु
+	uपूर्णांक32_t metadata_version = le32_to_cpu(disk->version);
+	अगर (metadata_version < MIN_ERA_VERSION || metadata_version > MAX_ERA_VERSION) अणु
 		DMERR("Era metadata version %u found, but only versions between %u and %u supported.",
 		      metadata_version, MIN_ERA_VERSION, MAX_ERA_VERSION);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sb_check(struct dm_block_validator *v,
-		    struct dm_block *b,
-		    size_t sb_block_size)
-{
-	struct superblock_disk *disk = dm_block_data(b);
+अटल पूर्णांक sb_check(काष्ठा dm_block_validator *v,
+		    काष्ठा dm_block *b,
+		    माप_प्रकार sb_block_size)
+अणु
+	काष्ठा superblock_disk *disk = dm_block_data(b);
 	__le32 csum_le;
 
-	if (dm_block_location(b) != le64_to_cpu(disk->blocknr)) {
+	अगर (dm_block_location(b) != le64_to_cpu(disk->blocknr)) अणु
 		DMERR("sb_check failed: blocknr %llu: wanted %llu",
 		      le64_to_cpu(disk->blocknr),
-		      (unsigned long long)dm_block_location(b));
-		return -ENOTBLK;
-	}
+		      (अचिन्हित दीर्घ दीर्घ)dm_block_location(b));
+		वापस -ENOTBLK;
+	पूर्ण
 
-	if (le64_to_cpu(disk->magic) != SUPERBLOCK_MAGIC) {
+	अगर (le64_to_cpu(disk->magic) != SUPERBLOCK_MAGIC) अणु
 		DMERR("sb_check failed: magic %llu: wanted %llu",
 		      le64_to_cpu(disk->magic),
-		      (unsigned long long) SUPERBLOCK_MAGIC);
-		return -EILSEQ;
-	}
+		      (अचिन्हित दीर्घ दीर्घ) SUPERBLOCK_MAGIC);
+		वापस -EILSEQ;
+	पूर्ण
 
 	csum_le = cpu_to_le32(dm_bm_checksum(&disk->flags,
-					     sb_block_size - sizeof(__le32),
+					     sb_block_size - माप(__le32),
 					     SUPERBLOCK_CSUM_XOR));
-	if (csum_le != disk->csum) {
+	अगर (csum_le != disk->csum) अणु
 		DMERR("sb_check failed: csum %u: wanted %u",
 		      le32_to_cpu(csum_le), le32_to_cpu(disk->csum));
-		return -EILSEQ;
-	}
+		वापस -EILSEQ;
+	पूर्ण
 
-	return check_metadata_version(disk);
-}
+	वापस check_metadata_version(disk);
+पूर्ण
 
-static struct dm_block_validator sb_validator = {
+अटल काष्ठा dm_block_validator sb_validator = अणु
 	.name = "superblock",
-	.prepare_for_write = sb_prepare_for_write,
+	.prepare_क्रम_ग_लिखो = sb_prepare_क्रम_ग_लिखो,
 	.check = sb_check
-};
+पूर्ण;
 
 /*----------------------------------------------------------------
  * Low level metadata handling
  *--------------------------------------------------------------*/
-#define DM_ERA_METADATA_BLOCK_SIZE 4096
-#define ERA_MAX_CONCURRENT_LOCKS 5
+#घोषणा DM_ERA_METADATA_BLOCK_SIZE 4096
+#घोषणा ERA_MAX_CONCURRENT_LOCKS 5
 
-struct era_metadata {
-	struct block_device *bdev;
-	struct dm_block_manager *bm;
-	struct dm_space_map *sm;
-	struct dm_transaction_manager *tm;
+काष्ठा era_metadata अणु
+	काष्ठा block_device *bdev;
+	काष्ठा dm_block_manager *bm;
+	काष्ठा dm_space_map *sm;
+	काष्ठा dm_transaction_manager *पंचांग;
 
 	dm_block_t block_size;
-	uint32_t nr_blocks;
+	uपूर्णांक32_t nr_blocks;
 
-	uint32_t current_era;
+	uपूर्णांक32_t current_era;
 
 	/*
-	 * We preallocate 2 writesets.  When an era rolls over we
-	 * switch between them. This means the allocation is done at
-	 * preresume time, rather than on the io path.
+	 * We pपुनः_स्मृतिate 2 ग_लिखोsets.  When an era rolls over we
+	 * चयन between them. This means the allocation is करोne at
+	 * preresume समय, rather than on the io path.
 	 */
-	struct writeset writesets[2];
-	struct writeset *current_writeset;
+	काष्ठा ग_लिखोset ग_लिखोsets[2];
+	काष्ठा ग_लिखोset *current_ग_लिखोset;
 
-	dm_block_t writeset_tree_root;
+	dm_block_t ग_लिखोset_tree_root;
 	dm_block_t era_array_root;
 
-	struct dm_disk_bitset bitset_info;
-	struct dm_btree_info writeset_tree_info;
-	struct dm_array_info era_array_info;
+	काष्ठा dm_disk_bitset bitset_info;
+	काष्ठा dm_btree_info ग_लिखोset_tree_info;
+	काष्ठा dm_array_info era_array_info;
 
 	dm_block_t metadata_snap;
 
 	/*
-	 * A flag that is set whenever a writeset has been archived.
+	 * A flag that is set whenever a ग_लिखोset has been archived.
 	 */
-	bool archived_writesets;
+	bool archived_ग_लिखोsets;
 
 	/*
-	 * Reading the space map root can fail, so we read it into this
-	 * buffer before the superblock is locked and updated.
+	 * Reading the space map root can fail, so we पढ़ो it पूर्णांकo this
+	 * buffer beक्रमe the superblock is locked and updated.
 	 */
 	__u8 metadata_space_map_root[SPACE_MAP_ROOT_SIZE];
-};
+पूर्ण;
 
-static int superblock_read_lock(struct era_metadata *md,
-				struct dm_block **sblock)
-{
-	return dm_bm_read_lock(md->bm, SUPERBLOCK_LOCATION,
+अटल पूर्णांक superblock_पढ़ो_lock(काष्ठा era_metadata *md,
+				काष्ठा dm_block **sblock)
+अणु
+	वापस dm_bm_पढ़ो_lock(md->bm, SUPERBLOCK_LOCATION,
 			       &sb_validator, sblock);
-}
+पूर्ण
 
-static int superblock_lock_zero(struct era_metadata *md,
-				struct dm_block **sblock)
-{
-	return dm_bm_write_lock_zero(md->bm, SUPERBLOCK_LOCATION,
+अटल पूर्णांक superblock_lock_zero(काष्ठा era_metadata *md,
+				काष्ठा dm_block **sblock)
+अणु
+	वापस dm_bm_ग_लिखो_lock_zero(md->bm, SUPERBLOCK_LOCATION,
 				     &sb_validator, sblock);
-}
+पूर्ण
 
-static int superblock_lock(struct era_metadata *md,
-			   struct dm_block **sblock)
-{
-	return dm_bm_write_lock(md->bm, SUPERBLOCK_LOCATION,
+अटल पूर्णांक superblock_lock(काष्ठा era_metadata *md,
+			   काष्ठा dm_block **sblock)
+अणु
+	वापस dm_bm_ग_लिखो_lock(md->bm, SUPERBLOCK_LOCATION,
 				&sb_validator, sblock);
-}
+पूर्ण
 
 /* FIXME: duplication with cache and thin */
-static int superblock_all_zeroes(struct dm_block_manager *bm, bool *result)
-{
-	int r;
-	unsigned i;
-	struct dm_block *b;
+अटल पूर्णांक superblock_all_zeroes(काष्ठा dm_block_manager *bm, bool *result)
+अणु
+	पूर्णांक r;
+	अचिन्हित i;
+	काष्ठा dm_block *b;
 	__le64 *data_le, zero = cpu_to_le64(0);
-	unsigned sb_block_size = dm_bm_block_size(bm) / sizeof(__le64);
+	अचिन्हित sb_block_size = dm_bm_block_size(bm) / माप(__le64);
 
 	/*
 	 * We can't use a validator here - it may be all zeroes.
 	 */
-	r = dm_bm_read_lock(bm, SUPERBLOCK_LOCATION, NULL, &b);
-	if (r)
-		return r;
+	r = dm_bm_पढ़ो_lock(bm, SUPERBLOCK_LOCATION, शून्य, &b);
+	अगर (r)
+		वापस r;
 
 	data_le = dm_block_data(b);
 	*result = true;
-	for (i = 0; i < sb_block_size; i++) {
-		if (data_le[i] != zero) {
+	क्रम (i = 0; i < sb_block_size; i++) अणु
+		अगर (data_le[i] != zero) अणु
 			*result = false;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	dm_bm_unlock(b);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-static void ws_pack(const struct writeset_metadata *core, struct writeset_disk *disk)
-{
+अटल व्योम ws_pack(स्थिर काष्ठा ग_लिखोset_metadata *core, काष्ठा ग_लिखोset_disk *disk)
+अणु
 	disk->nr_bits = cpu_to_le32(core->nr_bits);
 	disk->root = cpu_to_le64(core->root);
-}
+पूर्ण
 
-static void ws_unpack(const struct writeset_disk *disk, struct writeset_metadata *core)
-{
+अटल व्योम ws_unpack(स्थिर काष्ठा ग_लिखोset_disk *disk, काष्ठा ग_लिखोset_metadata *core)
+अणु
 	core->nr_bits = le32_to_cpu(disk->nr_bits);
 	core->root = le64_to_cpu(disk->root);
-}
+पूर्ण
 
-static void ws_inc(void *context, const void *value)
-{
-	struct era_metadata *md = context;
-	struct writeset_disk ws_d;
+अटल व्योम ws_inc(व्योम *context, स्थिर व्योम *value)
+अणु
+	काष्ठा era_metadata *md = context;
+	काष्ठा ग_लिखोset_disk ws_d;
 	dm_block_t b;
 
-	memcpy(&ws_d, value, sizeof(ws_d));
+	स_नकल(&ws_d, value, माप(ws_d));
 	b = le64_to_cpu(ws_d.root);
 
-	dm_tm_inc(md->tm, b);
-}
+	dm_पंचांग_inc(md->पंचांग, b);
+पूर्ण
 
-static void ws_dec(void *context, const void *value)
-{
-	struct era_metadata *md = context;
-	struct writeset_disk ws_d;
+अटल व्योम ws_dec(व्योम *context, स्थिर व्योम *value)
+अणु
+	काष्ठा era_metadata *md = context;
+	काष्ठा ग_लिखोset_disk ws_d;
 	dm_block_t b;
 
-	memcpy(&ws_d, value, sizeof(ws_d));
+	स_नकल(&ws_d, value, माप(ws_d));
 	b = le64_to_cpu(ws_d.root);
 
 	dm_bitset_del(&md->bitset_info, b);
-}
+पूर्ण
 
-static int ws_eq(void *context, const void *value1, const void *value2)
-{
-	return !memcmp(value1, value2, sizeof(struct writeset_disk));
-}
+अटल पूर्णांक ws_eq(व्योम *context, स्थिर व्योम *value1, स्थिर व्योम *value2)
+अणु
+	वापस !स_भेद(value1, value2, माप(काष्ठा ग_लिखोset_disk));
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-static void setup_writeset_tree_info(struct era_metadata *md)
-{
-	struct dm_btree_value_type *vt = &md->writeset_tree_info.value_type;
-	md->writeset_tree_info.tm = md->tm;
-	md->writeset_tree_info.levels = 1;
+अटल व्योम setup_ग_लिखोset_tree_info(काष्ठा era_metadata *md)
+अणु
+	काष्ठा dm_btree_value_type *vt = &md->ग_लिखोset_tree_info.value_type;
+	md->ग_लिखोset_tree_info.पंचांग = md->पंचांग;
+	md->ग_लिखोset_tree_info.levels = 1;
 	vt->context = md;
-	vt->size = sizeof(struct writeset_disk);
+	vt->size = माप(काष्ठा ग_लिखोset_disk);
 	vt->inc = ws_inc;
 	vt->dec = ws_dec;
 	vt->equal = ws_eq;
-}
+पूर्ण
 
-static void setup_era_array_info(struct era_metadata *md)
+अटल व्योम setup_era_array_info(काष्ठा era_metadata *md)
 
-{
-	struct dm_btree_value_type vt;
-	vt.context = NULL;
-	vt.size = sizeof(__le32);
-	vt.inc = NULL;
-	vt.dec = NULL;
-	vt.equal = NULL;
+अणु
+	काष्ठा dm_btree_value_type vt;
+	vt.context = शून्य;
+	vt.size = माप(__le32);
+	vt.inc = शून्य;
+	vt.dec = शून्य;
+	vt.equal = शून्य;
 
-	dm_array_info_init(&md->era_array_info, md->tm, &vt);
-}
+	dm_array_info_init(&md->era_array_info, md->पंचांग, &vt);
+पूर्ण
 
-static void setup_infos(struct era_metadata *md)
-{
-	dm_disk_bitset_init(md->tm, &md->bitset_info);
-	setup_writeset_tree_info(md);
+अटल व्योम setup_infos(काष्ठा era_metadata *md)
+अणु
+	dm_disk_bitset_init(md->पंचांग, &md->bitset_info);
+	setup_ग_लिखोset_tree_info(md);
 	setup_era_array_info(md);
-}
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-static int create_fresh_metadata(struct era_metadata *md)
-{
-	int r;
+अटल पूर्णांक create_fresh_metadata(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r;
 
-	r = dm_tm_create_with_sm(md->bm, SUPERBLOCK_LOCATION,
-				 &md->tm, &md->sm);
-	if (r < 0) {
+	r = dm_पंचांग_create_with_sm(md->bm, SUPERBLOCK_LOCATION,
+				 &md->पंचांग, &md->sm);
+	अगर (r < 0) अणु
 		DMERR("dm_tm_create_with_sm failed");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	setup_infos(md);
 
-	r = dm_btree_empty(&md->writeset_tree_info, &md->writeset_tree_root);
-	if (r) {
+	r = dm_btree_empty(&md->ग_लिखोset_tree_info, &md->ग_लिखोset_tree_root);
+	अगर (r) अणु
 		DMERR("couldn't create new writeset tree");
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	r = dm_array_empty(&md->era_array_info, &md->era_array_root);
-	if (r) {
+	अगर (r) अणु
 		DMERR("couldn't create era array");
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 bad:
 	dm_sm_destroy(md->sm);
-	dm_tm_destroy(md->tm);
+	dm_पंचांग_destroy(md->पंचांग);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int save_sm_root(struct era_metadata *md)
-{
-	int r;
-	size_t metadata_len;
+अटल पूर्णांक save_sm_root(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r;
+	माप_प्रकार metadata_len;
 
 	r = dm_sm_root_size(md->sm, &metadata_len);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	return dm_sm_copy_root(md->sm, &md->metadata_space_map_root,
+	वापस dm_sm_copy_root(md->sm, &md->metadata_space_map_root,
 			       metadata_len);
-}
+पूर्ण
 
-static void copy_sm_root(struct era_metadata *md, struct superblock_disk *disk)
-{
-	memcpy(&disk->metadata_space_map_root,
+अटल व्योम copy_sm_root(काष्ठा era_metadata *md, काष्ठा superblock_disk *disk)
+अणु
+	स_नकल(&disk->metadata_space_map_root,
 	       &md->metadata_space_map_root,
-	       sizeof(md->metadata_space_map_root));
-}
+	       माप(md->metadata_space_map_root));
+पूर्ण
 
 /*
- * Writes a superblock, including the static fields that don't get updated
+ * Writes a superblock, including the अटल fields that करोn't get updated
  * with every commit (possible optimisation here).  'md' should be fully
- * constructed when this is called.
+ * स्थिरructed when this is called.
  */
-static void prepare_superblock(struct era_metadata *md, struct superblock_disk *disk)
-{
+अटल व्योम prepare_superblock(काष्ठा era_metadata *md, काष्ठा superblock_disk *disk)
+अणु
 	disk->magic = cpu_to_le64(SUPERBLOCK_MAGIC);
 	disk->flags = cpu_to_le32(0ul);
 
 	/* FIXME: can't keep blanking the uuid (uuid is currently unused though) */
-	memset(disk->uuid, 0, sizeof(disk->uuid));
+	स_रखो(disk->uuid, 0, माप(disk->uuid));
 	disk->version = cpu_to_le32(MAX_ERA_VERSION);
 
 	copy_sm_root(md, disk);
@@ -503,589 +504,589 @@ static void prepare_superblock(struct era_metadata *md, struct superblock_disk *
 	disk->nr_blocks = cpu_to_le32(md->nr_blocks);
 	disk->current_era = cpu_to_le32(md->current_era);
 
-	ws_pack(&md->current_writeset->md, &disk->current_writeset);
-	disk->writeset_tree_root = cpu_to_le64(md->writeset_tree_root);
+	ws_pack(&md->current_ग_लिखोset->md, &disk->current_ग_लिखोset);
+	disk->ग_लिखोset_tree_root = cpu_to_le64(md->ग_लिखोset_tree_root);
 	disk->era_array_root = cpu_to_le64(md->era_array_root);
 	disk->metadata_snap = cpu_to_le64(md->metadata_snap);
-}
+पूर्ण
 
-static int write_superblock(struct era_metadata *md)
-{
-	int r;
-	struct dm_block *sblock;
-	struct superblock_disk *disk;
+अटल पूर्णांक ग_लिखो_superblock(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_block *sblock;
+	काष्ठा superblock_disk *disk;
 
 	r = save_sm_root(md);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: save_sm_root failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = superblock_lock_zero(md, &sblock);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	disk = dm_block_data(sblock);
 	prepare_superblock(md, disk);
 
-	return dm_tm_commit(md->tm, sblock);
-}
+	वापस dm_पंचांग_commit(md->पंचांग, sblock);
+पूर्ण
 
 /*
  * Assumes block_size and the infos are set.
  */
-static int format_metadata(struct era_metadata *md)
-{
-	int r;
+अटल पूर्णांक क्रमmat_metadata(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r;
 
 	r = create_fresh_metadata(md);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	r = write_superblock(md);
-	if (r) {
+	r = ग_लिखो_superblock(md);
+	अगर (r) अणु
 		dm_sm_destroy(md->sm);
-		dm_tm_destroy(md->tm);
-		return r;
-	}
+		dm_पंचांग_destroy(md->पंचांग);
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int open_metadata(struct era_metadata *md)
-{
-	int r;
-	struct dm_block *sblock;
-	struct superblock_disk *disk;
+अटल पूर्णांक खोलो_metadata(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_block *sblock;
+	काष्ठा superblock_disk *disk;
 
-	r = superblock_read_lock(md, &sblock);
-	if (r) {
+	r = superblock_पढ़ो_lock(md, &sblock);
+	अगर (r) अणु
 		DMERR("couldn't read_lock superblock");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	disk = dm_block_data(sblock);
 
-	/* Verify the data block size hasn't changed */
-	if (le32_to_cpu(disk->data_block_size) != md->block_size) {
+	/* Verअगरy the data block size hasn't changed */
+	अगर (le32_to_cpu(disk->data_block_size) != md->block_size) अणु
 		DMERR("changing the data block size (from %u to %llu) is not supported",
 		      le32_to_cpu(disk->data_block_size), md->block_size);
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	r = dm_tm_open_with_sm(md->bm, SUPERBLOCK_LOCATION,
+	r = dm_पंचांग_खोलो_with_sm(md->bm, SUPERBLOCK_LOCATION,
 			       disk->metadata_space_map_root,
-			       sizeof(disk->metadata_space_map_root),
-			       &md->tm, &md->sm);
-	if (r) {
+			       माप(disk->metadata_space_map_root),
+			       &md->पंचांग, &md->sm);
+	अगर (r) अणु
 		DMERR("dm_tm_open_with_sm failed");
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	setup_infos(md);
 
 	md->nr_blocks = le32_to_cpu(disk->nr_blocks);
 	md->current_era = le32_to_cpu(disk->current_era);
 
-	ws_unpack(&disk->current_writeset, &md->current_writeset->md);
-	md->writeset_tree_root = le64_to_cpu(disk->writeset_tree_root);
+	ws_unpack(&disk->current_ग_लिखोset, &md->current_ग_लिखोset->md);
+	md->ग_लिखोset_tree_root = le64_to_cpu(disk->ग_लिखोset_tree_root);
 	md->era_array_root = le64_to_cpu(disk->era_array_root);
 	md->metadata_snap = le64_to_cpu(disk->metadata_snap);
-	md->archived_writesets = true;
+	md->archived_ग_लिखोsets = true;
 
 	dm_bm_unlock(sblock);
 
-	return 0;
+	वापस 0;
 
 bad:
 	dm_bm_unlock(sblock);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int open_or_format_metadata(struct era_metadata *md,
-				   bool may_format)
-{
-	int r;
-	bool unformatted = false;
+अटल पूर्णांक खोलो_or_क्रमmat_metadata(काष्ठा era_metadata *md,
+				   bool may_क्रमmat)
+अणु
+	पूर्णांक r;
+	bool unक्रमmatted = false;
 
-	r = superblock_all_zeroes(md->bm, &unformatted);
-	if (r)
-		return r;
+	r = superblock_all_zeroes(md->bm, &unक्रमmatted);
+	अगर (r)
+		वापस r;
 
-	if (unformatted)
-		return may_format ? format_metadata(md) : -EPERM;
+	अगर (unक्रमmatted)
+		वापस may_क्रमmat ? क्रमmat_metadata(md) : -EPERM;
 
-	return open_metadata(md);
-}
+	वापस खोलो_metadata(md);
+पूर्ण
 
-static int create_persistent_data_objects(struct era_metadata *md,
-					  bool may_format)
-{
-	int r;
+अटल पूर्णांक create_persistent_data_objects(काष्ठा era_metadata *md,
+					  bool may_क्रमmat)
+अणु
+	पूर्णांक r;
 
 	md->bm = dm_block_manager_create(md->bdev, DM_ERA_METADATA_BLOCK_SIZE,
 					 ERA_MAX_CONCURRENT_LOCKS);
-	if (IS_ERR(md->bm)) {
+	अगर (IS_ERR(md->bm)) अणु
 		DMERR("could not create block manager");
-		return PTR_ERR(md->bm);
-	}
+		वापस PTR_ERR(md->bm);
+	पूर्ण
 
-	r = open_or_format_metadata(md, may_format);
-	if (r)
+	r = खोलो_or_क्रमmat_metadata(md, may_क्रमmat);
+	अगर (r)
 		dm_block_manager_destroy(md->bm);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void destroy_persistent_data_objects(struct era_metadata *md)
-{
+अटल व्योम destroy_persistent_data_objects(काष्ठा era_metadata *md)
+अणु
 	dm_sm_destroy(md->sm);
-	dm_tm_destroy(md->tm);
+	dm_पंचांग_destroy(md->पंचांग);
 	dm_block_manager_destroy(md->bm);
-}
+पूर्ण
 
 /*
- * This waits until all era_map threads have picked up the new filter.
+ * This रुकोs until all era_map thपढ़ोs have picked up the new filter.
  */
-static void swap_writeset(struct era_metadata *md, struct writeset *new_writeset)
-{
-	rcu_assign_pointer(md->current_writeset, new_writeset);
+अटल व्योम swap_ग_लिखोset(काष्ठा era_metadata *md, काष्ठा ग_लिखोset *new_ग_लिखोset)
+अणु
+	rcu_assign_poपूर्णांकer(md->current_ग_लिखोset, new_ग_लिखोset);
 	synchronize_rcu();
-}
+पूर्ण
 
 /*----------------------------------------------------------------
- * Writesets get 'digested' into the main era array.
+ * Writesets get 'digested' पूर्णांकo the मुख्य era array.
  *
- * We're using a coroutine here so the worker thread can do the digestion,
- * thus avoiding synchronisation of the metadata.  Digesting a whole
- * writeset in one go would cause too much latency.
+ * We're using a coroutine here so the worker thपढ़ो can करो the digestion,
+ * thus aव्योमing synchronisation of the metadata.  Digesting a whole
+ * ग_लिखोset in one go would cause too much latency.
  *--------------------------------------------------------------*/
-struct digest {
-	uint32_t era;
-	unsigned nr_bits, current_bit;
-	struct writeset_metadata writeset;
+काष्ठा digest अणु
+	uपूर्णांक32_t era;
+	अचिन्हित nr_bits, current_bit;
+	काष्ठा ग_लिखोset_metadata ग_लिखोset;
 	__le32 value;
-	struct dm_disk_bitset info;
+	काष्ठा dm_disk_bitset info;
 
-	int (*step)(struct era_metadata *, struct digest *);
-};
+	पूर्णांक (*step)(काष्ठा era_metadata *, काष्ठा digest *);
+पूर्ण;
 
-static int metadata_digest_lookup_writeset(struct era_metadata *md,
-					   struct digest *d);
+अटल पूर्णांक metadata_digest_lookup_ग_लिखोset(काष्ठा era_metadata *md,
+					   काष्ठा digest *d);
 
-static int metadata_digest_remove_writeset(struct era_metadata *md,
-					   struct digest *d)
-{
-	int r;
-	uint64_t key = d->era;
+अटल पूर्णांक metadata_digest_हटाओ_ग_लिखोset(काष्ठा era_metadata *md,
+					   काष्ठा digest *d)
+अणु
+	पूर्णांक r;
+	uपूर्णांक64_t key = d->era;
 
-	r = dm_btree_remove(&md->writeset_tree_info, md->writeset_tree_root,
-			    &key, &md->writeset_tree_root);
-	if (r) {
+	r = dm_btree_हटाओ(&md->ग_लिखोset_tree_info, md->ग_लिखोset_tree_root,
+			    &key, &md->ग_लिखोset_tree_root);
+	अगर (r) अणु
 		DMERR("%s: dm_btree_remove failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	d->step = metadata_digest_lookup_writeset;
-	return 0;
-}
+	d->step = metadata_digest_lookup_ग_लिखोset;
+	वापस 0;
+पूर्ण
 
-#define INSERTS_PER_STEP 100
+#घोषणा INSERTS_PER_STEP 100
 
-static int metadata_digest_transcribe_writeset(struct era_metadata *md,
-					       struct digest *d)
-{
-	int r;
+अटल पूर्णांक metadata_digest_transcribe_ग_लिखोset(काष्ठा era_metadata *md,
+					       काष्ठा digest *d)
+अणु
+	पूर्णांक r;
 	bool marked;
-	unsigned b, e = min(d->current_bit + INSERTS_PER_STEP, d->nr_bits);
+	अचिन्हित b, e = min(d->current_bit + INSERTS_PER_STEP, d->nr_bits);
 
-	for (b = d->current_bit; b < e; b++) {
-		r = writeset_marked_on_disk(&d->info, &d->writeset, b, &marked);
-		if (r) {
+	क्रम (b = d->current_bit; b < e; b++) अणु
+		r = ग_लिखोset_marked_on_disk(&d->info, &d->ग_लिखोset, b, &marked);
+		अगर (r) अणु
 			DMERR("%s: writeset_marked_on_disk failed", __func__);
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
-		if (!marked)
-			continue;
+		अगर (!marked)
+			जारी;
 
-		__dm_bless_for_disk(&d->value);
+		__dm_bless_क्रम_disk(&d->value);
 		r = dm_array_set_value(&md->era_array_info, md->era_array_root,
 				       b, &d->value, &md->era_array_root);
-		if (r) {
+		अगर (r) अणु
 			DMERR("%s: dm_array_set_value failed", __func__);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
-	if (b == d->nr_bits)
-		d->step = metadata_digest_remove_writeset;
-	else
+	अगर (b == d->nr_bits)
+		d->step = metadata_digest_हटाओ_ग_लिखोset;
+	अन्यथा
 		d->current_bit = b;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int metadata_digest_lookup_writeset(struct era_metadata *md,
-					   struct digest *d)
-{
-	int r;
-	uint64_t key;
-	struct writeset_disk disk;
+अटल पूर्णांक metadata_digest_lookup_ग_लिखोset(काष्ठा era_metadata *md,
+					   काष्ठा digest *d)
+अणु
+	पूर्णांक r;
+	uपूर्णांक64_t key;
+	काष्ठा ग_लिखोset_disk disk;
 
-	r = dm_btree_find_lowest_key(&md->writeset_tree_info,
-				     md->writeset_tree_root, &key);
-	if (r < 0)
-		return r;
+	r = dm_btree_find_lowest_key(&md->ग_लिखोset_tree_info,
+				     md->ग_लिखोset_tree_root, &key);
+	अगर (r < 0)
+		वापस r;
 
 	d->era = key;
 
-	r = dm_btree_lookup(&md->writeset_tree_info,
-			    md->writeset_tree_root, &key, &disk);
-	if (r) {
-		if (r == -ENODATA) {
-			d->step = NULL;
-			return 0;
-		}
+	r = dm_btree_lookup(&md->ग_लिखोset_tree_info,
+			    md->ग_लिखोset_tree_root, &key, &disk);
+	अगर (r) अणु
+		अगर (r == -ENODATA) अणु
+			d->step = शून्य;
+			वापस 0;
+		पूर्ण
 
 		DMERR("%s: dm_btree_lookup failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	ws_unpack(&disk, &d->writeset);
+	ws_unpack(&disk, &d->ग_लिखोset);
 	d->value = cpu_to_le32(key);
 
 	/*
-	 * We initialise another bitset info to avoid any caching side effects
+	 * We initialise another bitset info to aव्योम any caching side effects
 	 * with the previous one.
 	 */
-	dm_disk_bitset_init(md->tm, &d->info);
+	dm_disk_bitset_init(md->पंचांग, &d->info);
 
-	d->nr_bits = min(d->writeset.nr_bits, md->nr_blocks);
+	d->nr_bits = min(d->ग_लिखोset.nr_bits, md->nr_blocks);
 	d->current_bit = 0;
-	d->step = metadata_digest_transcribe_writeset;
+	d->step = metadata_digest_transcribe_ग_लिखोset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int metadata_digest_start(struct era_metadata *md, struct digest *d)
-{
-	if (d->step)
-		return 0;
+अटल पूर्णांक metadata_digest_start(काष्ठा era_metadata *md, काष्ठा digest *d)
+अणु
+	अगर (d->step)
+		वापस 0;
 
-	memset(d, 0, sizeof(*d));
-	d->step = metadata_digest_lookup_writeset;
+	स_रखो(d, 0, माप(*d));
+	d->step = metadata_digest_lookup_ग_लिखोset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------
- * High level metadata interface.  Target methods should use these, and not
+ * High level metadata पूर्णांकerface.  Target methods should use these, and not
  * the lower level ones.
  *--------------------------------------------------------------*/
-static struct era_metadata *metadata_open(struct block_device *bdev,
+अटल काष्ठा era_metadata *metadata_खोलो(काष्ठा block_device *bdev,
 					  sector_t block_size,
-					  bool may_format)
-{
-	int r;
-	struct era_metadata *md = kzalloc(sizeof(*md), GFP_KERNEL);
+					  bool may_क्रमmat)
+अणु
+	पूर्णांक r;
+	काष्ठा era_metadata *md = kzalloc(माप(*md), GFP_KERNEL);
 
-	if (!md)
-		return NULL;
+	अगर (!md)
+		वापस शून्य;
 
 	md->bdev = bdev;
 	md->block_size = block_size;
 
-	md->writesets[0].md.root = INVALID_WRITESET_ROOT;
-	md->writesets[1].md.root = INVALID_WRITESET_ROOT;
-	md->current_writeset = &md->writesets[0];
+	md->ग_लिखोsets[0].md.root = INVALID_WRITESET_ROOT;
+	md->ग_लिखोsets[1].md.root = INVALID_WRITESET_ROOT;
+	md->current_ग_लिखोset = &md->ग_लिखोsets[0];
 
-	r = create_persistent_data_objects(md, may_format);
-	if (r) {
-		kfree(md);
-		return ERR_PTR(r);
-	}
+	r = create_persistent_data_objects(md, may_क्रमmat);
+	अगर (r) अणु
+		kमुक्त(md);
+		वापस ERR_PTR(r);
+	पूर्ण
 
-	return md;
-}
+	वापस md;
+पूर्ण
 
-static void metadata_close(struct era_metadata *md)
-{
-	writeset_free(&md->writesets[0]);
-	writeset_free(&md->writesets[1]);
+अटल व्योम metadata_बंद(काष्ठा era_metadata *md)
+अणु
+	ग_लिखोset_मुक्त(&md->ग_लिखोsets[0]);
+	ग_लिखोset_मुक्त(&md->ग_लिखोsets[1]);
 	destroy_persistent_data_objects(md);
-	kfree(md);
-}
+	kमुक्त(md);
+पूर्ण
 
-static bool valid_nr_blocks(dm_block_t n)
-{
+अटल bool valid_nr_blocks(dm_block_t n)
+अणु
 	/*
 	 * dm_bitset restricts us to 2^32.  test_bit & co. restrict us
 	 * further to 2^31 - 1
 	 */
-	return n < (1ull << 31);
-}
+	वापस n < (1ull << 31);
+पूर्ण
 
-static int metadata_resize(struct era_metadata *md, void *arg)
-{
-	int r;
+अटल पूर्णांक metadata_resize(काष्ठा era_metadata *md, व्योम *arg)
+अणु
+	पूर्णांक r;
 	dm_block_t *new_size = arg;
 	__le32 value;
 
-	if (!valid_nr_blocks(*new_size)) {
+	अगर (!valid_nr_blocks(*new_size)) अणु
 		DMERR("Invalid number of origin blocks %llu",
-		      (unsigned long long) *new_size);
-		return -EINVAL;
-	}
+		      (अचिन्हित दीर्घ दीर्घ) *new_size);
+		वापस -EINVAL;
+	पूर्ण
 
-	writeset_free(&md->writesets[0]);
-	writeset_free(&md->writesets[1]);
+	ग_लिखोset_मुक्त(&md->ग_लिखोsets[0]);
+	ग_लिखोset_मुक्त(&md->ग_लिखोsets[1]);
 
-	r = writeset_alloc(&md->writesets[0], *new_size);
-	if (r) {
+	r = ग_लिखोset_alloc(&md->ग_लिखोsets[0], *new_size);
+	अगर (r) अणु
 		DMERR("%s: writeset_alloc failed for writeset 0", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	r = writeset_alloc(&md->writesets[1], *new_size);
-	if (r) {
+	r = ग_लिखोset_alloc(&md->ग_लिखोsets[1], *new_size);
+	अगर (r) अणु
 		DMERR("%s: writeset_alloc failed for writeset 1", __func__);
-		writeset_free(&md->writesets[0]);
-		return r;
-	}
+		ग_लिखोset_मुक्त(&md->ग_लिखोsets[0]);
+		वापस r;
+	पूर्ण
 
 	value = cpu_to_le32(0u);
-	__dm_bless_for_disk(&value);
+	__dm_bless_क्रम_disk(&value);
 	r = dm_array_resize(&md->era_array_info, md->era_array_root,
 			    md->nr_blocks, *new_size,
 			    &value, &md->era_array_root);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: dm_array_resize failed", __func__);
-		writeset_free(&md->writesets[0]);
-		writeset_free(&md->writesets[1]);
-		return r;
-	}
+		ग_लिखोset_मुक्त(&md->ग_लिखोsets[0]);
+		ग_लिखोset_मुक्त(&md->ग_लिखोsets[1]);
+		वापस r;
+	पूर्ण
 
 	md->nr_blocks = *new_size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int metadata_era_archive(struct era_metadata *md)
-{
-	int r;
-	uint64_t keys[1];
-	struct writeset_disk value;
+अटल पूर्णांक metadata_era_archive(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r;
+	uपूर्णांक64_t keys[1];
+	काष्ठा ग_लिखोset_disk value;
 
-	r = dm_bitset_flush(&md->bitset_info, md->current_writeset->md.root,
-			    &md->current_writeset->md.root);
-	if (r) {
+	r = dm_bitset_flush(&md->bitset_info, md->current_ग_लिखोset->md.root,
+			    &md->current_ग_लिखोset->md.root);
+	अगर (r) अणु
 		DMERR("%s: dm_bitset_flush failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	ws_pack(&md->current_writeset->md, &value);
+	ws_pack(&md->current_ग_लिखोset->md, &value);
 
 	keys[0] = md->current_era;
-	__dm_bless_for_disk(&value);
-	r = dm_btree_insert(&md->writeset_tree_info, md->writeset_tree_root,
-			    keys, &value, &md->writeset_tree_root);
-	if (r) {
+	__dm_bless_क्रम_disk(&value);
+	r = dm_btree_insert(&md->ग_लिखोset_tree_info, md->ग_लिखोset_tree_root,
+			    keys, &value, &md->ग_लिखोset_tree_root);
+	अगर (r) अणु
 		DMERR("%s: couldn't insert writeset into btree", __func__);
 		/* FIXME: fail mode */
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	md->current_writeset->md.root = INVALID_WRITESET_ROOT;
-	md->archived_writesets = true;
+	md->current_ग_लिखोset->md.root = INVALID_WRITESET_ROOT;
+	md->archived_ग_लिखोsets = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct writeset *next_writeset(struct era_metadata *md)
-{
-	return (md->current_writeset == &md->writesets[0]) ?
-		&md->writesets[1] : &md->writesets[0];
-}
+अटल काष्ठा ग_लिखोset *next_ग_लिखोset(काष्ठा era_metadata *md)
+अणु
+	वापस (md->current_ग_लिखोset == &md->ग_लिखोsets[0]) ?
+		&md->ग_लिखोsets[1] : &md->ग_लिखोsets[0];
+पूर्ण
 
-static int metadata_new_era(struct era_metadata *md)
-{
-	int r;
-	struct writeset *new_writeset = next_writeset(md);
+अटल पूर्णांक metadata_new_era(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r;
+	काष्ठा ग_लिखोset *new_ग_लिखोset = next_ग_लिखोset(md);
 
-	r = writeset_init(&md->bitset_info, new_writeset, md->nr_blocks);
-	if (r) {
+	r = ग_लिखोset_init(&md->bitset_info, new_ग_लिखोset, md->nr_blocks);
+	अगर (r) अणु
 		DMERR("%s: writeset_init failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	swap_writeset(md, new_writeset);
+	swap_ग_लिखोset(md, new_ग_लिखोset);
 	md->current_era++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int metadata_era_rollover(struct era_metadata *md)
-{
-	int r;
+अटल पूर्णांक metadata_era_rollover(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r;
 
-	if (md->current_writeset->md.root != INVALID_WRITESET_ROOT) {
+	अगर (md->current_ग_लिखोset->md.root != INVALID_WRITESET_ROOT) अणु
 		r = metadata_era_archive(md);
-		if (r) {
+		अगर (r) अणु
 			DMERR("%s: metadata_archive_era failed", __func__);
 			/* FIXME: fail mode? */
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	r = metadata_new_era(md);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: new era failed", __func__);
 		/* FIXME: fail mode */
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool metadata_current_marked(struct era_metadata *md, dm_block_t block)
-{
+अटल bool metadata_current_marked(काष्ठा era_metadata *md, dm_block_t block)
+अणु
 	bool r;
-	struct writeset *ws;
+	काष्ठा ग_लिखोset *ws;
 
-	rcu_read_lock();
-	ws = rcu_dereference(md->current_writeset);
-	r = writeset_marked(ws, block);
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	ws = rcu_dereference(md->current_ग_लिखोset);
+	r = ग_लिखोset_marked(ws, block);
+	rcu_पढ़ो_unlock();
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int metadata_commit(struct era_metadata *md)
-{
-	int r;
-	struct dm_block *sblock;
+अटल पूर्णांक metadata_commit(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_block *sblock;
 
-	if (md->current_writeset->md.root != INVALID_WRITESET_ROOT) {
-		r = dm_bitset_flush(&md->bitset_info, md->current_writeset->md.root,
-				    &md->current_writeset->md.root);
-		if (r) {
+	अगर (md->current_ग_लिखोset->md.root != INVALID_WRITESET_ROOT) अणु
+		r = dm_bitset_flush(&md->bitset_info, md->current_ग_लिखोset->md.root,
+				    &md->current_ग_लिखोset->md.root);
+		अगर (r) अणु
 			DMERR("%s: bitset flush failed", __func__);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
-	r = dm_tm_pre_commit(md->tm);
-	if (r) {
+	r = dm_पंचांग_pre_commit(md->पंचांग);
+	अगर (r) अणु
 		DMERR("%s: pre commit failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = save_sm_root(md);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: save_sm_root failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = superblock_lock(md, &sblock);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: superblock lock failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	prepare_superblock(md, dm_block_data(sblock));
 
-	return dm_tm_commit(md->tm, sblock);
-}
+	वापस dm_पंचांग_commit(md->पंचांग, sblock);
+पूर्ण
 
-static int metadata_checkpoint(struct era_metadata *md)
-{
+अटल पूर्णांक metadata_checkpoपूर्णांक(काष्ठा era_metadata *md)
+अणु
 	/*
 	 * For now we just rollover, but later I want to put a check in to
-	 * avoid this if the filter is still pretty fresh.
+	 * aव्योम this अगर the filter is still pretty fresh.
 	 */
-	return metadata_era_rollover(md);
-}
+	वापस metadata_era_rollover(md);
+पूर्ण
 
 /*
  * Metadata snapshots allow userland to access era data.
  */
-static int metadata_take_snap(struct era_metadata *md)
-{
-	int r, inc;
-	struct dm_block *clone;
+अटल पूर्णांक metadata_take_snap(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r, inc;
+	काष्ठा dm_block *clone;
 
-	if (md->metadata_snap != SUPERBLOCK_LOCATION) {
+	अगर (md->metadata_snap != SUPERBLOCK_LOCATION) अणु
 		DMERR("%s: metadata snapshot already exists", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	r = metadata_era_rollover(md);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: era rollover failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = metadata_commit(md);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: pre commit failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = dm_sm_inc_block(md->sm, SUPERBLOCK_LOCATION);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: couldn't increment superblock", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	r = dm_tm_shadow_block(md->tm, SUPERBLOCK_LOCATION,
+	r = dm_पंचांग_shaकरोw_block(md->पंचांग, SUPERBLOCK_LOCATION,
 			       &sb_validator, &clone, &inc);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: couldn't shadow superblock", __func__);
 		dm_sm_dec_block(md->sm, SUPERBLOCK_LOCATION);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	BUG_ON(!inc);
 
-	r = dm_sm_inc_block(md->sm, md->writeset_tree_root);
-	if (r) {
+	r = dm_sm_inc_block(md->sm, md->ग_लिखोset_tree_root);
+	अगर (r) अणु
 		DMERR("%s: couldn't inc writeset tree root", __func__);
-		dm_tm_unlock(md->tm, clone);
-		return r;
-	}
+		dm_पंचांग_unlock(md->पंचांग, clone);
+		वापस r;
+	पूर्ण
 
 	r = dm_sm_inc_block(md->sm, md->era_array_root);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: couldn't inc era tree root", __func__);
-		dm_sm_dec_block(md->sm, md->writeset_tree_root);
-		dm_tm_unlock(md->tm, clone);
-		return r;
-	}
+		dm_sm_dec_block(md->sm, md->ग_लिखोset_tree_root);
+		dm_पंचांग_unlock(md->पंचांग, clone);
+		वापस r;
+	पूर्ण
 
 	md->metadata_snap = dm_block_location(clone);
 
-	dm_tm_unlock(md->tm, clone);
+	dm_पंचांग_unlock(md->पंचांग, clone);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int metadata_drop_snap(struct era_metadata *md)
-{
-	int r;
+अटल पूर्णांक metadata_drop_snap(काष्ठा era_metadata *md)
+अणु
+	पूर्णांक r;
 	dm_block_t location;
-	struct dm_block *clone;
-	struct superblock_disk *disk;
+	काष्ठा dm_block *clone;
+	काष्ठा superblock_disk *disk;
 
-	if (md->metadata_snap == SUPERBLOCK_LOCATION) {
+	अगर (md->metadata_snap == SUPERBLOCK_LOCATION) अणु
 		DMERR("%s: no snap to drop", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	r = dm_tm_read_lock(md->tm, md->metadata_snap, &sb_validator, &clone);
-	if (r) {
+	r = dm_पंचांग_पढ़ो_lock(md->पंचांग, md->metadata_snap, &sb_validator, &clone);
+	अगर (r) अणु
 		DMERR("%s: couldn't read lock superblock clone", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	/*
 	 * Whatever happens now we'll commit with no record of the metadata
@@ -1094,156 +1095,156 @@ static int metadata_drop_snap(struct era_metadata *md)
 	md->metadata_snap = SUPERBLOCK_LOCATION;
 
 	disk = dm_block_data(clone);
-	r = dm_btree_del(&md->writeset_tree_info,
-			 le64_to_cpu(disk->writeset_tree_root));
-	if (r) {
+	r = dm_btree_del(&md->ग_लिखोset_tree_info,
+			 le64_to_cpu(disk->ग_लिखोset_tree_root));
+	अगर (r) अणु
 		DMERR("%s: error deleting writeset tree clone", __func__);
-		dm_tm_unlock(md->tm, clone);
-		return r;
-	}
+		dm_पंचांग_unlock(md->पंचांग, clone);
+		वापस r;
+	पूर्ण
 
 	r = dm_array_del(&md->era_array_info, le64_to_cpu(disk->era_array_root));
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: error deleting era array clone", __func__);
-		dm_tm_unlock(md->tm, clone);
-		return r;
-	}
+		dm_पंचांग_unlock(md->पंचांग, clone);
+		वापस r;
+	पूर्ण
 
 	location = dm_block_location(clone);
-	dm_tm_unlock(md->tm, clone);
+	dm_पंचांग_unlock(md->पंचांग, clone);
 
-	return dm_sm_dec_block(md->sm, location);
-}
+	वापस dm_sm_dec_block(md->sm, location);
+पूर्ण
 
-struct metadata_stats {
+काष्ठा metadata_stats अणु
 	dm_block_t used;
 	dm_block_t total;
 	dm_block_t snap;
-	uint32_t era;
-};
+	uपूर्णांक32_t era;
+पूर्ण;
 
-static int metadata_get_stats(struct era_metadata *md, void *ptr)
-{
-	int r;
-	struct metadata_stats *s = ptr;
-	dm_block_t nr_free, nr_total;
+अटल पूर्णांक metadata_get_stats(काष्ठा era_metadata *md, व्योम *ptr)
+अणु
+	पूर्णांक r;
+	काष्ठा metadata_stats *s = ptr;
+	dm_block_t nr_मुक्त, nr_total;
 
-	r = dm_sm_get_nr_free(md->sm, &nr_free);
-	if (r) {
+	r = dm_sm_get_nr_मुक्त(md->sm, &nr_मुक्त);
+	अगर (r) अणु
 		DMERR("dm_sm_get_nr_free returned %d", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = dm_sm_get_nr_blocks(md->sm, &nr_total);
-	if (r) {
+	अगर (r) अणु
 		DMERR("dm_pool_get_metadata_dev_size returned %d", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	s->used = nr_total - nr_free;
+	s->used = nr_total - nr_मुक्त;
 	s->total = nr_total;
 	s->snap = md->metadata_snap;
 	s->era = md->current_era;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-struct era {
-	struct dm_target *ti;
+काष्ठा era अणु
+	काष्ठा dm_target *ti;
 
-	struct dm_dev *metadata_dev;
-	struct dm_dev *origin_dev;
+	काष्ठा dm_dev *metadata_dev;
+	काष्ठा dm_dev *origin_dev;
 
 	dm_block_t nr_blocks;
-	uint32_t sectors_per_block;
-	int sectors_per_block_shift;
-	struct era_metadata *md;
+	uपूर्णांक32_t sectors_per_block;
+	पूर्णांक sectors_per_block_shअगरt;
+	काष्ठा era_metadata *md;
 
-	struct workqueue_struct *wq;
-	struct work_struct worker;
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा work_काष्ठा worker;
 
 	spinlock_t deferred_lock;
-	struct bio_list deferred_bios;
+	काष्ठा bio_list deferred_bios;
 
 	spinlock_t rpc_lock;
-	struct list_head rpc_calls;
+	काष्ठा list_head rpc_calls;
 
-	struct digest digest;
+	काष्ठा digest digest;
 	atomic_t suspended;
-};
+पूर्ण;
 
-struct rpc {
-	struct list_head list;
+काष्ठा rpc अणु
+	काष्ठा list_head list;
 
-	int (*fn0)(struct era_metadata *);
-	int (*fn1)(struct era_metadata *, void *);
-	void *arg;
-	int result;
+	पूर्णांक (*fn0)(काष्ठा era_metadata *);
+	पूर्णांक (*fn1)(काष्ठा era_metadata *, व्योम *);
+	व्योम *arg;
+	पूर्णांक result;
 
-	struct completion complete;
-};
+	काष्ठा completion complete;
+पूर्ण;
 
 /*----------------------------------------------------------------
  * Remapping.
  *---------------------------------------------------------------*/
-static bool block_size_is_power_of_two(struct era *era)
-{
-	return era->sectors_per_block_shift >= 0;
-}
+अटल bool block_size_is_घातer_of_two(काष्ठा era *era)
+अणु
+	वापस era->sectors_per_block_shअगरt >= 0;
+पूर्ण
 
-static dm_block_t get_block(struct era *era, struct bio *bio)
-{
+अटल dm_block_t get_block(काष्ठा era *era, काष्ठा bio *bio)
+अणु
 	sector_t block_nr = bio->bi_iter.bi_sector;
 
-	if (!block_size_is_power_of_two(era))
-		(void) sector_div(block_nr, era->sectors_per_block);
-	else
-		block_nr >>= era->sectors_per_block_shift;
+	अगर (!block_size_is_घातer_of_two(era))
+		(व्योम) sector_भाग(block_nr, era->sectors_per_block);
+	अन्यथा
+		block_nr >>= era->sectors_per_block_shअगरt;
 
-	return block_nr;
-}
+	वापस block_nr;
+पूर्ण
 
-static void remap_to_origin(struct era *era, struct bio *bio)
-{
+अटल व्योम remap_to_origin(काष्ठा era *era, काष्ठा bio *bio)
+अणु
 	bio_set_dev(bio, era->origin_dev->bdev);
-}
+पूर्ण
 
 /*----------------------------------------------------------------
- * Worker thread
+ * Worker thपढ़ो
  *--------------------------------------------------------------*/
-static void wake_worker(struct era *era)
-{
-	if (!atomic_read(&era->suspended))
+अटल व्योम wake_worker(काष्ठा era *era)
+अणु
+	अगर (!atomic_पढ़ो(&era->suspended))
 		queue_work(era->wq, &era->worker);
-}
+पूर्ण
 
-static void process_old_eras(struct era *era)
-{
-	int r;
+अटल व्योम process_old_eras(काष्ठा era *era)
+अणु
+	पूर्णांक r;
 
-	if (!era->digest.step)
-		return;
+	अगर (!era->digest.step)
+		वापस;
 
 	r = era->digest.step(era->md, &era->digest);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		DMERR("%s: digest step failed, stopping digestion", __func__);
-		era->digest.step = NULL;
+		era->digest.step = शून्य;
 
-	} else if (era->digest.step)
+	पूर्ण अन्यथा अगर (era->digest.step)
 		wake_worker(era);
-}
+पूर्ण
 
-static void process_deferred_bios(struct era *era)
-{
-	int r;
-	struct bio_list deferred_bios, marked_bios;
-	struct bio *bio;
-	struct blk_plug plug;
+अटल व्योम process_deferred_bios(काष्ठा era *era)
+अणु
+	पूर्णांक r;
+	काष्ठा bio_list deferred_bios, marked_bios;
+	काष्ठा bio *bio;
+	काष्ठा blk_plug plug;
 	bool commit_needed = false;
 	bool failed = false;
-	struct writeset *ws = era->md->current_writeset;
+	काष्ठा ग_लिखोset *ws = era->md->current_ग_लिखोset;
 
 	bio_list_init(&deferred_bios);
 	bio_list_init(&marked_bios);
@@ -1253,108 +1254,108 @@ static void process_deferred_bios(struct era *era)
 	bio_list_init(&era->deferred_bios);
 	spin_unlock(&era->deferred_lock);
 
-	if (bio_list_empty(&deferred_bios))
-		return;
+	अगर (bio_list_empty(&deferred_bios))
+		वापस;
 
-	while ((bio = bio_list_pop(&deferred_bios))) {
-		r = writeset_test_and_set(&era->md->bitset_info, ws,
+	जबतक ((bio = bio_list_pop(&deferred_bios))) अणु
+		r = ग_लिखोset_test_and_set(&era->md->bitset_info, ws,
 					  get_block(era, bio));
-		if (r < 0) {
+		अगर (r < 0) अणु
 			/*
 			 * This is bad news, we need to rollback.
 			 * FIXME: finish.
 			 */
 			failed = true;
-		} else if (r == 0)
+		पूर्ण अन्यथा अगर (r == 0)
 			commit_needed = true;
 
 		bio_list_add(&marked_bios, bio);
-	}
+	पूर्ण
 
-	if (commit_needed) {
+	अगर (commit_needed) अणु
 		r = metadata_commit(era->md);
-		if (r)
+		अगर (r)
 			failed = true;
-	}
+	पूर्ण
 
-	if (failed)
-		while ((bio = bio_list_pop(&marked_bios)))
+	अगर (failed)
+		जबतक ((bio = bio_list_pop(&marked_bios)))
 			bio_io_error(bio);
-	else {
+	अन्यथा अणु
 		blk_start_plug(&plug);
-		while ((bio = bio_list_pop(&marked_bios))) {
+		जबतक ((bio = bio_list_pop(&marked_bios))) अणु
 			/*
-			 * Only update the in-core writeset if the on-disk one
+			 * Only update the in-core ग_लिखोset अगर the on-disk one
 			 * was updated too.
 			 */
-			if (commit_needed)
+			अगर (commit_needed)
 				set_bit(get_block(era, bio), ws->bits);
 			submit_bio_noacct(bio);
-		}
+		पूर्ण
 		blk_finish_plug(&plug);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void process_rpc_calls(struct era *era)
-{
-	int r;
+अटल व्योम process_rpc_calls(काष्ठा era *era)
+अणु
+	पूर्णांक r;
 	bool need_commit = false;
-	struct list_head calls;
-	struct rpc *rpc, *tmp;
+	काष्ठा list_head calls;
+	काष्ठा rpc *rpc, *पंचांगp;
 
 	INIT_LIST_HEAD(&calls);
 	spin_lock(&era->rpc_lock);
 	list_splice_init(&era->rpc_calls, &calls);
 	spin_unlock(&era->rpc_lock);
 
-	list_for_each_entry_safe(rpc, tmp, &calls, list) {
+	list_क्रम_each_entry_safe(rpc, पंचांगp, &calls, list) अणु
 		rpc->result = rpc->fn0 ? rpc->fn0(era->md) : rpc->fn1(era->md, rpc->arg);
 		need_commit = true;
-	}
+	पूर्ण
 
-	if (need_commit) {
+	अगर (need_commit) अणु
 		r = metadata_commit(era->md);
-		if (r)
-			list_for_each_entry_safe(rpc, tmp, &calls, list)
+		अगर (r)
+			list_क्रम_each_entry_safe(rpc, पंचांगp, &calls, list)
 				rpc->result = r;
-	}
+	पूर्ण
 
-	list_for_each_entry_safe(rpc, tmp, &calls, list)
+	list_क्रम_each_entry_safe(rpc, पंचांगp, &calls, list)
 		complete(&rpc->complete);
-}
+पूर्ण
 
-static void kick_off_digest(struct era *era)
-{
-	if (era->md->archived_writesets) {
-		era->md->archived_writesets = false;
+अटल व्योम kick_off_digest(काष्ठा era *era)
+अणु
+	अगर (era->md->archived_ग_लिखोsets) अणु
+		era->md->archived_ग_लिखोsets = false;
 		metadata_digest_start(era->md, &era->digest);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void do_work(struct work_struct *ws)
-{
-	struct era *era = container_of(ws, struct era, worker);
+अटल व्योम करो_work(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा era *era = container_of(ws, काष्ठा era, worker);
 
 	kick_off_digest(era);
 	process_old_eras(era);
 	process_deferred_bios(era);
 	process_rpc_calls(era);
-}
+पूर्ण
 
-static void defer_bio(struct era *era, struct bio *bio)
-{
+अटल व्योम defer_bio(काष्ठा era *era, काष्ठा bio *bio)
+अणु
 	spin_lock(&era->deferred_lock);
 	bio_list_add(&era->deferred_bios, bio);
 	spin_unlock(&era->deferred_lock);
 
 	wake_worker(era);
-}
+पूर्ण
 
 /*
  * Make an rpc call to the worker to change the metadata.
  */
-static int perform_rpc(struct era *era, struct rpc *rpc)
-{
+अटल पूर्णांक perक्रमm_rpc(काष्ठा era *era, काष्ठा rpc *rpc)
+अणु
 	rpc->result = 0;
 	init_completion(&rpc->complete);
 
@@ -1363,151 +1364,151 @@ static int perform_rpc(struct era *era, struct rpc *rpc)
 	spin_unlock(&era->rpc_lock);
 
 	wake_worker(era);
-	wait_for_completion(&rpc->complete);
+	रुको_क्रम_completion(&rpc->complete);
 
-	return rpc->result;
-}
+	वापस rpc->result;
+पूर्ण
 
-static int in_worker0(struct era *era, int (*fn)(struct era_metadata *))
-{
-	struct rpc rpc;
+अटल पूर्णांक in_worker0(काष्ठा era *era, पूर्णांक (*fn)(काष्ठा era_metadata *))
+अणु
+	काष्ठा rpc rpc;
 	rpc.fn0 = fn;
-	rpc.fn1 = NULL;
+	rpc.fn1 = शून्य;
 
-	return perform_rpc(era, &rpc);
-}
+	वापस perक्रमm_rpc(era, &rpc);
+पूर्ण
 
-static int in_worker1(struct era *era,
-		      int (*fn)(struct era_metadata *, void *), void *arg)
-{
-	struct rpc rpc;
-	rpc.fn0 = NULL;
+अटल पूर्णांक in_worker1(काष्ठा era *era,
+		      पूर्णांक (*fn)(काष्ठा era_metadata *, व्योम *), व्योम *arg)
+अणु
+	काष्ठा rpc rpc;
+	rpc.fn0 = शून्य;
 	rpc.fn1 = fn;
 	rpc.arg = arg;
 
-	return perform_rpc(era, &rpc);
-}
+	वापस perक्रमm_rpc(era, &rpc);
+पूर्ण
 
-static void start_worker(struct era *era)
-{
+अटल व्योम start_worker(काष्ठा era *era)
+अणु
 	atomic_set(&era->suspended, 0);
-}
+पूर्ण
 
-static void stop_worker(struct era *era)
-{
+अटल व्योम stop_worker(काष्ठा era *era)
+अणु
 	atomic_set(&era->suspended, 1);
 	flush_workqueue(era->wq);
-}
+पूर्ण
 
 /*----------------------------------------------------------------
  * Target methods
  *--------------------------------------------------------------*/
-static void era_destroy(struct era *era)
-{
-	if (era->md)
-		metadata_close(era->md);
+अटल व्योम era_destroy(काष्ठा era *era)
+अणु
+	अगर (era->md)
+		metadata_बंद(era->md);
 
-	if (era->wq)
+	अगर (era->wq)
 		destroy_workqueue(era->wq);
 
-	if (era->origin_dev)
+	अगर (era->origin_dev)
 		dm_put_device(era->ti, era->origin_dev);
 
-	if (era->metadata_dev)
+	अगर (era->metadata_dev)
 		dm_put_device(era->ti, era->metadata_dev);
 
-	kfree(era);
-}
+	kमुक्त(era);
+पूर्ण
 
-static dm_block_t calc_nr_blocks(struct era *era)
-{
-	return dm_sector_div_up(era->ti->len, era->sectors_per_block);
-}
+अटल dm_block_t calc_nr_blocks(काष्ठा era *era)
+अणु
+	वापस dm_sector_भाग_up(era->ti->len, era->sectors_per_block);
+पूर्ण
 
-static bool valid_block_size(dm_block_t block_size)
-{
+अटल bool valid_block_size(dm_block_t block_size)
+अणु
 	bool greater_than_zero = block_size > 0;
 	bool multiple_of_min_block_size = (block_size & (MIN_BLOCK_SIZE - 1)) == 0;
 
-	return greater_than_zero && multiple_of_min_block_size;
-}
+	वापस greater_than_zero && multiple_of_min_block_size;
+पूर्ण
 
 /*
  * <metadata dev> <data dev> <data block size (sectors)>
  */
-static int era_ctr(struct dm_target *ti, unsigned argc, char **argv)
-{
-	int r;
-	char dummy;
-	struct era *era;
-	struct era_metadata *md;
+अटल पूर्णांक era_ctr(काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv)
+अणु
+	पूर्णांक r;
+	अक्षर dummy;
+	काष्ठा era *era;
+	काष्ठा era_metadata *md;
 
-	if (argc != 3) {
+	अगर (argc != 3) अणु
 		ti->error = "Invalid argument count";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	era = kzalloc(sizeof(*era), GFP_KERNEL);
-	if (!era) {
+	era = kzalloc(माप(*era), GFP_KERNEL);
+	अगर (!era) अणु
 		ti->error = "Error allocating era structure";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	era->ti = ti;
 
 	r = dm_get_device(ti, argv[0], FMODE_READ | FMODE_WRITE, &era->metadata_dev);
-	if (r) {
+	अगर (r) अणु
 		ti->error = "Error opening metadata device";
 		era_destroy(era);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	r = dm_get_device(ti, argv[1], FMODE_READ | FMODE_WRITE, &era->origin_dev);
-	if (r) {
+	अगर (r) अणु
 		ti->error = "Error opening data device";
 		era_destroy(era);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	r = sscanf(argv[2], "%u%c", &era->sectors_per_block, &dummy);
-	if (r != 1) {
+	r = माला_पूछो(argv[2], "%u%c", &era->sectors_per_block, &dummy);
+	अगर (r != 1) अणु
 		ti->error = "Error parsing block size";
 		era_destroy(era);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	r = dm_set_target_max_io_len(ti, era->sectors_per_block);
-	if (r) {
+	अगर (r) अणु
 		ti->error = "could not set max io len";
 		era_destroy(era);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!valid_block_size(era->sectors_per_block)) {
+	अगर (!valid_block_size(era->sectors_per_block)) अणु
 		ti->error = "Invalid block size";
 		era_destroy(era);
-		return -EINVAL;
-	}
-	if (era->sectors_per_block & (era->sectors_per_block - 1))
-		era->sectors_per_block_shift = -1;
-	else
-		era->sectors_per_block_shift = __ffs(era->sectors_per_block);
+		वापस -EINVAL;
+	पूर्ण
+	अगर (era->sectors_per_block & (era->sectors_per_block - 1))
+		era->sectors_per_block_shअगरt = -1;
+	अन्यथा
+		era->sectors_per_block_shअगरt = __ffs(era->sectors_per_block);
 
-	md = metadata_open(era->metadata_dev->bdev, era->sectors_per_block, true);
-	if (IS_ERR(md)) {
+	md = metadata_खोलो(era->metadata_dev->bdev, era->sectors_per_block, true);
+	अगर (IS_ERR(md)) अणु
 		ti->error = "Error reading metadata";
 		era_destroy(era);
-		return PTR_ERR(md);
-	}
+		वापस PTR_ERR(md);
+	पूर्ण
 	era->md = md;
 
 	era->wq = alloc_ordered_workqueue("dm-" DM_MSG_PREFIX, WQ_MEM_RECLAIM);
-	if (!era->wq) {
+	अगर (!era->wq) अणु
 		ti->error = "could not create workqueue for metadata object";
 		era_destroy(era);
-		return -ENOMEM;
-	}
-	INIT_WORK(&era->worker, do_work);
+		वापस -ENOMEM;
+	पूर्ण
+	INIT_WORK(&era->worker, करो_work);
 
 	spin_lock_init(&era->deferred_lock);
 	bio_list_init(&era->deferred_bios);
@@ -1515,195 +1516,195 @@ static int era_ctr(struct dm_target *ti, unsigned argc, char **argv)
 	spin_lock_init(&era->rpc_lock);
 	INIT_LIST_HEAD(&era->rpc_calls);
 
-	ti->private = era;
+	ti->निजी = era;
 	ti->num_flush_bios = 1;
 	ti->flush_supported = true;
 
 	ti->num_discard_bios = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void era_dtr(struct dm_target *ti)
-{
-	era_destroy(ti->private);
-}
+अटल व्योम era_dtr(काष्ठा dm_target *ti)
+अणु
+	era_destroy(ti->निजी);
+पूर्ण
 
-static int era_map(struct dm_target *ti, struct bio *bio)
-{
-	struct era *era = ti->private;
+अटल पूर्णांक era_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
+अणु
+	काष्ठा era *era = ti->निजी;
 	dm_block_t block = get_block(era, bio);
 
 	/*
-	 * All bios get remapped to the origin device.  We do this now, but
+	 * All bios get remapped to the origin device.  We करो this now, but
 	 * it may not get issued until later.  Depending on whether the
 	 * block is marked in this era.
 	 */
 	remap_to_origin(era, bio);
 
 	/*
-	 * REQ_PREFLUSH bios carry no data, so we're not interested in them.
+	 * REQ_PREFLUSH bios carry no data, so we're not पूर्णांकerested in them.
 	 */
-	if (!(bio->bi_opf & REQ_PREFLUSH) &&
+	अगर (!(bio->bi_opf & REQ_PREFLUSH) &&
 	    (bio_data_dir(bio) == WRITE) &&
-	    !metadata_current_marked(era->md, block)) {
+	    !metadata_current_marked(era->md, block)) अणु
 		defer_bio(era, bio);
-		return DM_MAPIO_SUBMITTED;
-	}
+		वापस DM_MAPIO_SUBMITTED;
+	पूर्ण
 
-	return DM_MAPIO_REMAPPED;
-}
+	वापस DM_MAPIO_REMAPPED;
+पूर्ण
 
-static void era_postsuspend(struct dm_target *ti)
-{
-	int r;
-	struct era *era = ti->private;
+अटल व्योम era_postsuspend(काष्ठा dm_target *ti)
+अणु
+	पूर्णांक r;
+	काष्ठा era *era = ti->निजी;
 
 	r = in_worker0(era, metadata_era_archive);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: couldn't archive current era", __func__);
 		/* FIXME: fail mode */
-	}
+	पूर्ण
 
 	stop_worker(era);
-}
+पूर्ण
 
-static int era_preresume(struct dm_target *ti)
-{
-	int r;
-	struct era *era = ti->private;
+अटल पूर्णांक era_preresume(काष्ठा dm_target *ti)
+अणु
+	पूर्णांक r;
+	काष्ठा era *era = ti->निजी;
 	dm_block_t new_size = calc_nr_blocks(era);
 
-	if (era->nr_blocks != new_size) {
+	अगर (era->nr_blocks != new_size) अणु
 		r = metadata_resize(era->md, &new_size);
-		if (r) {
+		अगर (r) अणु
 			DMERR("%s: metadata_resize failed", __func__);
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		r = metadata_commit(era->md);
-		if (r) {
+		अगर (r) अणु
 			DMERR("%s: metadata_commit failed", __func__);
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		era->nr_blocks = new_size;
-	}
+	पूर्ण
 
 	start_worker(era);
 
 	r = in_worker0(era, metadata_era_rollover);
-	if (r) {
+	अगर (r) अणु
 		DMERR("%s: metadata_era_rollover failed", __func__);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Status format:
+ * Status क्रमmat:
  *
  * <metadata block size> <#used metadata blocks>/<#total metadata blocks>
  * <current era> <held metadata root | '-'>
  */
-static void era_status(struct dm_target *ti, status_type_t type,
-		       unsigned status_flags, char *result, unsigned maxlen)
-{
-	int r;
-	struct era *era = ti->private;
-	ssize_t sz = 0;
-	struct metadata_stats stats;
-	char buf[BDEVNAME_SIZE];
+अटल व्योम era_status(काष्ठा dm_target *ti, status_type_t type,
+		       अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
+अणु
+	पूर्णांक r;
+	काष्ठा era *era = ti->निजी;
+	sमाप_प्रकार sz = 0;
+	काष्ठा metadata_stats stats;
+	अक्षर buf[BDEVNAME_SIZE];
 
-	switch (type) {
-	case STATUSTYPE_INFO:
+	चयन (type) अणु
+	हाल STATUSTYPE_INFO:
 		r = in_worker1(era, metadata_get_stats, &stats);
-		if (r)
-			goto err;
+		अगर (r)
+			जाओ err;
 
 		DMEMIT("%u %llu/%llu %u",
-		       (unsigned) (DM_ERA_METADATA_BLOCK_SIZE >> SECTOR_SHIFT),
-		       (unsigned long long) stats.used,
-		       (unsigned long long) stats.total,
-		       (unsigned) stats.era);
+		       (अचिन्हित) (DM_ERA_METADATA_BLOCK_SIZE >> SECTOR_SHIFT),
+		       (अचिन्हित दीर्घ दीर्घ) stats.used,
+		       (अचिन्हित दीर्घ दीर्घ) stats.total,
+		       (अचिन्हित) stats.era);
 
-		if (stats.snap != SUPERBLOCK_LOCATION)
+		अगर (stats.snap != SUPERBLOCK_LOCATION)
 			DMEMIT(" %llu", stats.snap);
-		else
+		अन्यथा
 			DMEMIT(" -");
-		break;
+		अवरोध;
 
-	case STATUSTYPE_TABLE:
-		format_dev_t(buf, era->metadata_dev->bdev->bd_dev);
+	हाल STATUSTYPE_TABLE:
+		क्रमmat_dev_t(buf, era->metadata_dev->bdev->bd_dev);
 		DMEMIT("%s ", buf);
-		format_dev_t(buf, era->origin_dev->bdev->bd_dev);
+		क्रमmat_dev_t(buf, era->origin_dev->bdev->bd_dev);
 		DMEMIT("%s %u", buf, era->sectors_per_block);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return;
+	वापस;
 
 err:
 	DMEMIT("Error");
-}
+पूर्ण
 
-static int era_message(struct dm_target *ti, unsigned argc, char **argv,
-		       char *result, unsigned maxlen)
-{
-	struct era *era = ti->private;
+अटल पूर्णांक era_message(काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv,
+		       अक्षर *result, अचिन्हित maxlen)
+अणु
+	काष्ठा era *era = ti->निजी;
 
-	if (argc != 1) {
+	अगर (argc != 1) अणु
 		DMERR("incorrect number of message arguments");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!strcasecmp(argv[0], "checkpoint"))
-		return in_worker0(era, metadata_checkpoint);
+	अगर (!strहालcmp(argv[0], "checkpoint"))
+		वापस in_worker0(era, metadata_checkpoपूर्णांक);
 
-	if (!strcasecmp(argv[0], "take_metadata_snap"))
-		return in_worker0(era, metadata_take_snap);
+	अगर (!strहालcmp(argv[0], "take_metadata_snap"))
+		वापस in_worker0(era, metadata_take_snap);
 
-	if (!strcasecmp(argv[0], "drop_metadata_snap"))
-		return in_worker0(era, metadata_drop_snap);
+	अगर (!strहालcmp(argv[0], "drop_metadata_snap"))
+		वापस in_worker0(era, metadata_drop_snap);
 
 	DMERR("unsupported message '%s'", argv[0]);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static sector_t get_dev_size(struct dm_dev *dev)
-{
-	return i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
-}
+अटल sector_t get_dev_size(काष्ठा dm_dev *dev)
+अणु
+	वापस i_size_पढ़ो(dev->bdev->bd_inode) >> SECTOR_SHIFT;
+पूर्ण
 
-static int era_iterate_devices(struct dm_target *ti,
-			       iterate_devices_callout_fn fn, void *data)
-{
-	struct era *era = ti->private;
-	return fn(ti, era->origin_dev, 0, get_dev_size(era->origin_dev), data);
-}
+अटल पूर्णांक era_iterate_devices(काष्ठा dm_target *ti,
+			       iterate_devices_callout_fn fn, व्योम *data)
+अणु
+	काष्ठा era *era = ti->निजी;
+	वापस fn(ti, era->origin_dev, 0, get_dev_size(era->origin_dev), data);
+पूर्ण
 
-static void era_io_hints(struct dm_target *ti, struct queue_limits *limits)
-{
-	struct era *era = ti->private;
-	uint64_t io_opt_sectors = limits->io_opt >> SECTOR_SHIFT;
+अटल व्योम era_io_hपूर्णांकs(काष्ठा dm_target *ti, काष्ठा queue_limits *limits)
+अणु
+	काष्ठा era *era = ti->निजी;
+	uपूर्णांक64_t io_opt_sectors = limits->io_opt >> SECTOR_SHIFT;
 
 	/*
-	 * If the system-determined stacked limits are compatible with the
-	 * era device's blocksize (io_opt is a factor) do not override them.
+	 * If the प्रणाली-determined stacked limits are compatible with the
+	 * era device's blocksize (io_opt is a factor) करो not override them.
 	 */
-	if (io_opt_sectors < era->sectors_per_block ||
-	    do_div(io_opt_sectors, era->sectors_per_block)) {
+	अगर (io_opt_sectors < era->sectors_per_block ||
+	    करो_भाग(io_opt_sectors, era->sectors_per_block)) अणु
 		blk_limits_io_min(limits, 0);
 		blk_limits_io_opt(limits, era->sectors_per_block << SECTOR_SHIFT);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-static struct target_type era_target = {
+अटल काष्ठा target_type era_target = अणु
 	.name = "era",
-	.version = {1, 0, 0},
+	.version = अणु1, 0, 0पूर्ण,
 	.module = THIS_MODULE,
 	.ctr = era_ctr,
 	.dtr = era_dtr,
@@ -1713,29 +1714,29 @@ static struct target_type era_target = {
 	.status = era_status,
 	.message = era_message,
 	.iterate_devices = era_iterate_devices,
-	.io_hints = era_io_hints
-};
+	.io_hपूर्णांकs = era_io_hपूर्णांकs
+पूर्ण;
 
-static int __init dm_era_init(void)
-{
-	int r;
+अटल पूर्णांक __init dm_era_init(व्योम)
+अणु
+	पूर्णांक r;
 
-	r = dm_register_target(&era_target);
-	if (r) {
+	r = dm_रेजिस्टर_target(&era_target);
+	अगर (r) अणु
 		DMERR("era target registration failed: %d", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit dm_era_exit(void)
-{
-	dm_unregister_target(&era_target);
-}
+अटल व्योम __निकास dm_era_निकास(व्योम)
+अणु
+	dm_unरेजिस्टर_target(&era_target);
+पूर्ण
 
 module_init(dm_era_init);
-module_exit(dm_era_exit);
+module_निकास(dm_era_निकास);
 
 MODULE_DESCRIPTION(DM_NAME " era target");
 MODULE_AUTHOR("Joe Thornber <ejt@redhat.com>");

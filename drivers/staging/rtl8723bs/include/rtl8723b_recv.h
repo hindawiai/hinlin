@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __RTL8723B_RECV_H__
-#define __RTL8723B_RECV_H__
+#अगर_अघोषित __RTL8723B_RECV_H__
+#घोषणा __RTL8723B_RECV_H__
 
-#include <rtl8192c_recv.h>
+#समावेश <rtl8192c_recv.h>
 
-struct rxreport_8723b {
+काष्ठा rxreport_8723b अणु
 	/* DWORD 0 */
 	u32 pktlen:14;
 	u32 crc32:1;
@@ -17,7 +18,7 @@ struct rxreport_8723b {
 	u32 drvinfosize:4;
 	u32 security:3;
 	u32 qos:1;
-	u32 shift:2;
+	u32 shअगरt:2;
 	u32 physt:1;
 	u32 swdec:1;
 	u32 rsvd0028:2;
@@ -79,12 +80,12 @@ struct rxreport_8723b {
 
 	/* DWORD 5 */
 	u32 tsfl;
-};
+पूर्ण;
 
-s32 rtl8723bs_init_recv_priv(struct adapter *padapter);
-void rtl8723bs_free_recv_priv(struct adapter *padapter);
+s32 rtl8723bs_init_recv_priv(काष्ठा adapter *padapter);
+व्योम rtl8723bs_मुक्त_recv_priv(काष्ठा adapter *padapter);
 
-void rtl8723b_query_rx_phy_status(union recv_frame *prframe, struct phy_stat *pphy_stat);
-void rtl8723b_process_phy_info(struct adapter *padapter, void *prframe);
+व्योम rtl8723b_query_rx_phy_status(जोड़ recv_frame *prframe, काष्ठा phy_stat *pphy_stat);
+व्योम rtl8723b_process_phy_info(काष्ठा adapter *padapter, व्योम *prframe);
 
-#endif
+#पूर्ण_अगर

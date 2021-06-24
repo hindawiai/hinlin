@@ -1,12 +1,13 @@
-#ifndef __NVIF_IF000D_H__
-#define __NVIF_IF000D_H__
-#include "if000c.h"
+<शैली गुरु>
+#अगर_अघोषित __NVIF_IF000D_H__
+#घोषणा __NVIF_IF000D_H__
+#समावेश "if000c.h"
 
-struct nv04_vmm_vn {
-	/* nvif_vmm_vX ... */
-};
+काष्ठा nv04_vmm_vn अणु
+	/* nvअगर_vmm_vX ... */
+पूर्ण;
 
-struct nv04_vmm_map_vn {
-	/* nvif_vmm_map_vX ... */
-};
-#endif
+काष्ठा nv04_vmm_map_vn अणु
+	/* nvअगर_vmm_map_vX ... */
+पूर्ण;
+#पूर्ण_अगर

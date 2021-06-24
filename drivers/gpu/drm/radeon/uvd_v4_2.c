@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,33 +20,33 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Christian König <christian.koenig@amd.com>
+ * Authors: Christian Kथघnig <christian.koenig@amd.com>
  */
 
-#include <linux/firmware.h>
+#समावेश <linux/firmware.h>
 
-#include "radeon.h"
-#include "radeon_asic.h"
-#include "cikd.h"
+#समावेश "radeon.h"
+#समावेश "radeon_asic.h"
+#समावेश "cikd.h"
 
 /**
  * uvd_v4_2_resume - memory controller programming
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  *
  * Let the UVD memory controller know it's offsets
  */
-int uvd_v4_2_resume(struct radeon_device *rdev)
-{
-	uint64_t addr;
-	uint32_t size;
+पूर्णांक uvd_v4_2_resume(काष्ठा radeon_device *rdev)
+अणु
+	uपूर्णांक64_t addr;
+	uपूर्णांक32_t size;
 
 	/* program the VCPU memory controller bits 0-27 */
 
-	/* skip over the header of the new firmware format */
-	if (rdev->uvd.fw_header_present)
+	/* skip over the header of the new firmware क्रमmat */
+	अगर (rdev->uvd.fw_header_present)
 		addr = (rdev->uvd.gpu_addr + 0x200) >> 3;
-	else
+	अन्यथा
 		addr = rdev->uvd.gpu_addr >> 3;
 
 	size = RADEON_GPU_PAGE_ALIGN(rdev->uvd_fw->size + 4) >> 3;
@@ -71,8 +72,8 @@ int uvd_v4_2_resume(struct radeon_device *rdev)
 	addr = (rdev->uvd.gpu_addr >> 32) & 0xFF;
 	WREG32(UVD_LMI_EXT40_ADDR, addr | (0x9 << 16) | (0x1 << 31));
 
-	if (rdev->uvd.fw_header_present)
+	अगर (rdev->uvd.fw_header_present)
 		WREG32(UVD_GP_SCRATCH4, rdev->uvd.max_handles);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *      uvc_status.c  --  USB Video Class driver - Status endpoint
+ *      uvc_status.c  --  USB Video Class driver - Status endpoपूर्णांक
  *
  *      Copyright (C) 2005-2009
- *          Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ *          Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/input.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
-#include <linux/usb/input.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/input.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/input.h>
 
-#include "uvcvideo.h"
+#समावेश "uvcvideo.h"
 
 /* --------------------------------------------------------------------------
  * Input device
  */
-#ifdef CONFIG_USB_VIDEO_CLASS_INPUT_EVDEV
-static int uvc_input_init(struct uvc_device *dev)
-{
-	struct input_dev *input;
-	int ret;
+#अगर_घोषित CONFIG_USB_VIDEO_CLASS_INPUT_EVDEV
+अटल पूर्णांक uvc_input_init(काष्ठा uvc_device *dev)
+अणु
+	काष्ठा input_dev *input;
+	पूर्णांक ret;
 
 	input = input_allocate_device();
-	if (input == NULL)
-		return -ENOMEM;
+	अगर (input == शून्य)
+		वापस -ENOMEM;
 
-	usb_make_path(dev->udev, dev->input_phys, sizeof(dev->input_phys));
-	strlcat(dev->input_phys, "/button", sizeof(dev->input_phys));
+	usb_make_path(dev->udev, dev->input_phys, माप(dev->input_phys));
+	strlcat(dev->input_phys, "/button", माप(dev->input_phys));
 
 	input->name = dev->name;
 	input->phys = dev->input_phys;
 	usb_to_input_id(dev->udev, &input->id);
-	input->dev.parent = &dev->intf->dev;
+	input->dev.parent = &dev->पूर्णांकf->dev;
 
 	__set_bit(EV_KEY, input->evbit);
 	__set_bit(KEY_CAMERA, input->keybit);
 
-	if ((ret = input_register_device(input)) < 0)
-		goto error;
+	अगर ((ret = input_रेजिस्टर_device(input)) < 0)
+		जाओ error;
 
 	dev->input = input;
-	return 0;
+	वापस 0;
 
 error:
-	input_free_device(input);
-	return ret;
-}
+	input_मुक्त_device(input);
+	वापस ret;
+पूर्ण
 
-static void uvc_input_unregister(struct uvc_device *dev)
-{
-	if (dev->input)
-		input_unregister_device(dev->input);
-}
+अटल व्योम uvc_input_unरेजिस्टर(काष्ठा uvc_device *dev)
+अणु
+	अगर (dev->input)
+		input_unरेजिस्टर_device(dev->input);
+पूर्ण
 
-static void uvc_input_report_key(struct uvc_device *dev, unsigned int code,
-	int value)
-{
-	if (dev->input) {
+अटल व्योम uvc_input_report_key(काष्ठा uvc_device *dev, अचिन्हित पूर्णांक code,
+	पूर्णांक value)
+अणु
+	अगर (dev->input) अणु
 		input_report_key(dev->input, code, value);
 		input_sync(dev->input);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else
-#define uvc_input_init(dev)
-#define uvc_input_unregister(dev)
-#define uvc_input_report_key(dev, code, value)
-#endif /* CONFIG_USB_VIDEO_CLASS_INPUT_EVDEV */
+#अन्यथा
+#घोषणा uvc_input_init(dev)
+#घोषणा uvc_input_unरेजिस्टर(dev)
+#घोषणा uvc_input_report_key(dev, code, value)
+#पूर्ण_अगर /* CONFIG_USB_VIDEO_CLASS_INPUT_EVDEV */
 
 /* --------------------------------------------------------------------------
- * Status interrupt endpoint
+ * Status पूर्णांकerrupt endpoपूर्णांक
  */
-struct uvc_streaming_status {
+काष्ठा uvc_streaming_status अणु
 	u8	bStatusType;
 	u8	bOriginator;
 	u8	bEvent;
 	u8	bValue[];
-} __packed;
+पूर्ण __packed;
 
-struct uvc_control_status {
+काष्ठा uvc_control_status अणु
 	u8	bStatusType;
 	u8	bOriginator;
 	u8	bEvent;
 	u8	bSelector;
 	u8	bAttribute;
 	u8	bValue[];
-} __packed;
+पूर्ण __packed;
 
-static void uvc_event_streaming(struct uvc_device *dev,
-				struct uvc_streaming_status *status, int len)
-{
-	if (len < 3) {
+अटल व्योम uvc_event_streaming(काष्ठा uvc_device *dev,
+				काष्ठा uvc_streaming_status *status, पूर्णांक len)
+अणु
+	अगर (len < 3) अणु
 		uvc_dbg(dev, STATUS,
 			"Invalid streaming status event received\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (status->bEvent == 0) {
-		if (len < 4)
-			return;
+	अगर (status->bEvent == 0) अणु
+		अगर (len < 4)
+			वापस;
 		uvc_dbg(dev, STATUS, "Button (intf %u) %s len %d\n",
 			status->bOriginator,
 			status->bValue[0] ? "pressed" : "released", len);
 		uvc_input_report_key(dev, KEY_CAMERA, status->bValue[0]);
-	} else {
+	पूर्ण अन्यथा अणु
 		uvc_dbg(dev, STATUS, "Stream %u error event %02x len %d\n",
 			status->bOriginator, status->bEvent, len);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define UVC_CTRL_VALUE_CHANGE	0
-#define UVC_CTRL_INFO_CHANGE	1
-#define UVC_CTRL_FAILURE_CHANGE	2
-#define UVC_CTRL_MIN_CHANGE	3
-#define UVC_CTRL_MAX_CHANGE	4
+#घोषणा UVC_CTRL_VALUE_CHANGE	0
+#घोषणा UVC_CTRL_INFO_CHANGE	1
+#घोषणा UVC_CTRL_FAILURE_CHANGE	2
+#घोषणा UVC_CTRL_MIN_CHANGE	3
+#घोषणा UVC_CTRL_MAX_CHANGE	4
 
-static struct uvc_control *uvc_event_entity_find_ctrl(struct uvc_entity *entity,
+अटल काष्ठा uvc_control *uvc_event_entity_find_ctrl(काष्ठा uvc_entity *entity,
 						      u8 selector)
-{
-	struct uvc_control *ctrl;
-	unsigned int i;
+अणु
+	काष्ठा uvc_control *ctrl;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0, ctrl = entity->controls; i < entity->ncontrols; i++, ctrl++)
-		if (ctrl->info.selector == selector)
-			return ctrl;
+	क्रम (i = 0, ctrl = entity->controls; i < entity->ncontrols; i++, ctrl++)
+		अगर (ctrl->info.selector == selector)
+			वापस ctrl;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct uvc_control *uvc_event_find_ctrl(struct uvc_device *dev,
-					const struct uvc_control_status *status,
-					struct uvc_video_chain **chain)
-{
-	list_for_each_entry((*chain), &dev->chains, list) {
-		struct uvc_entity *entity;
-		struct uvc_control *ctrl;
+अटल काष्ठा uvc_control *uvc_event_find_ctrl(काष्ठा uvc_device *dev,
+					स्थिर काष्ठा uvc_control_status *status,
+					काष्ठा uvc_video_chain **chain)
+अणु
+	list_क्रम_each_entry((*chain), &dev->chains, list) अणु
+		काष्ठा uvc_entity *entity;
+		काष्ठा uvc_control *ctrl;
 
-		list_for_each_entry(entity, &(*chain)->entities, chain) {
-			if (entity->id != status->bOriginator)
-				continue;
+		list_क्रम_each_entry(entity, &(*chain)->entities, chain) अणु
+			अगर (entity->id != status->bOriginator)
+				जारी;
 
 			ctrl = uvc_event_entity_find_ctrl(entity,
 							  status->bSelector);
-			if (ctrl)
-				return ctrl;
-		}
-	}
+			अगर (ctrl)
+				वापस ctrl;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool uvc_event_control(struct urb *urb,
-			      const struct uvc_control_status *status, int len)
-{
-	static const char *attrs[] = { "value", "info", "failure", "min", "max" };
-	struct uvc_device *dev = urb->context;
-	struct uvc_video_chain *chain;
-	struct uvc_control *ctrl;
+अटल bool uvc_event_control(काष्ठा urb *urb,
+			      स्थिर काष्ठा uvc_control_status *status, पूर्णांक len)
+अणु
+	अटल स्थिर अक्षर *attrs[] = अणु "value", "info", "failure", "min", "max" पूर्ण;
+	काष्ठा uvc_device *dev = urb->context;
+	काष्ठा uvc_video_chain *chain;
+	काष्ठा uvc_control *ctrl;
 
-	if (len < 6 || status->bEvent != 0 ||
-	    status->bAttribute >= ARRAY_SIZE(attrs)) {
+	अगर (len < 6 || status->bEvent != 0 ||
+	    status->bAttribute >= ARRAY_SIZE(attrs)) अणु
 		uvc_dbg(dev, STATUS, "Invalid control status event received\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	uvc_dbg(dev, STATUS, "Control %u/%u %s change len %d\n",
 		status->bOriginator, status->bSelector,
@@ -172,142 +173,142 @@ static bool uvc_event_control(struct urb *urb,
 
 	/* Find the control. */
 	ctrl = uvc_event_find_ctrl(dev, status, &chain);
-	if (!ctrl)
-		return false;
+	अगर (!ctrl)
+		वापस false;
 
-	switch (status->bAttribute) {
-	case UVC_CTRL_VALUE_CHANGE:
-		return uvc_ctrl_status_event_async(urb, chain, ctrl,
+	चयन (status->bAttribute) अणु
+	हाल UVC_CTRL_VALUE_CHANGE:
+		वापस uvc_ctrl_status_event_async(urb, chain, ctrl,
 						   status->bValue);
 
-	case UVC_CTRL_INFO_CHANGE:
-	case UVC_CTRL_FAILURE_CHANGE:
-	case UVC_CTRL_MIN_CHANGE:
-	case UVC_CTRL_MAX_CHANGE:
-		break;
-	}
+	हाल UVC_CTRL_INFO_CHANGE:
+	हाल UVC_CTRL_FAILURE_CHANGE:
+	हाल UVC_CTRL_MIN_CHANGE:
+	हाल UVC_CTRL_MAX_CHANGE:
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void uvc_status_complete(struct urb *urb)
-{
-	struct uvc_device *dev = urb->context;
-	int len, ret;
+अटल व्योम uvc_status_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा uvc_device *dev = urb->context;
+	पूर्णांक len, ret;
 
-	switch (urb->status) {
-	case 0:
-		break;
+	चयन (urb->status) अणु
+	हाल 0:
+		अवरोध;
 
-	case -ENOENT:		/* usb_kill_urb() called. */
-	case -ECONNRESET:	/* usb_unlink_urb() called. */
-	case -ESHUTDOWN:	/* The endpoint is being disabled. */
-	case -EPROTO:		/* Device is disconnected (reported by some
+	हाल -ENOENT:		/* usb_समाप्त_urb() called. */
+	हाल -ECONNRESET:	/* usb_unlink_urb() called. */
+	हाल -ESHUTDOWN:	/* The endpoपूर्णांक is being disabled. */
+	हाल -EPROTO:		/* Device is disconnected (reported by some
 				 * host controller). */
-		return;
+		वापस;
 
-	default:
+	शेष:
 		dev_warn(&dev->udev->dev,
 			 "Non-zero status (%d) in status completion handler.\n",
 			 urb->status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	len = urb->actual_length;
-	if (len > 0) {
-		switch (dev->status[0] & 0x0f) {
-		case UVC_STATUS_TYPE_CONTROL: {
-			struct uvc_control_status *status =
-				(struct uvc_control_status *)dev->status;
+	अगर (len > 0) अणु
+		चयन (dev->status[0] & 0x0f) अणु
+		हाल UVC_STATUS_TYPE_CONTROL: अणु
+			काष्ठा uvc_control_status *status =
+				(काष्ठा uvc_control_status *)dev->status;
 
-			if (uvc_event_control(urb, status, len))
+			अगर (uvc_event_control(urb, status, len))
 				/* The URB will be resubmitted in work context. */
-				return;
-			break;
-		}
+				वापस;
+			अवरोध;
+		पूर्ण
 
-		case UVC_STATUS_TYPE_STREAMING: {
-			struct uvc_streaming_status *status =
-				(struct uvc_streaming_status *)dev->status;
+		हाल UVC_STATUS_TYPE_STREAMING: अणु
+			काष्ठा uvc_streaming_status *status =
+				(काष्ठा uvc_streaming_status *)dev->status;
 
 			uvc_event_streaming(dev, status, len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		default:
+		शेष:
 			uvc_dbg(dev, STATUS, "Unknown status event type %u\n",
 				dev->status[0]);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Resubmit the URB. */
-	urb->interval = dev->int_ep->desc.bInterval;
+	urb->पूर्णांकerval = dev->पूर्णांक_ep->desc.bInterval;
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&dev->udev->dev,
 			"Failed to resubmit status URB (%d).\n", ret);
-}
+पूर्ण
 
-int uvc_status_init(struct uvc_device *dev)
-{
-	struct usb_host_endpoint *ep = dev->int_ep;
-	unsigned int pipe;
-	int interval;
+पूर्णांक uvc_status_init(काष्ठा uvc_device *dev)
+अणु
+	काष्ठा usb_host_endpoपूर्णांक *ep = dev->पूर्णांक_ep;
+	अचिन्हित पूर्णांक pipe;
+	पूर्णांक पूर्णांकerval;
 
-	if (ep == NULL)
-		return 0;
+	अगर (ep == शून्य)
+		वापस 0;
 
 	uvc_input_init(dev);
 
 	dev->status = kzalloc(UVC_MAX_STATUS_SIZE, GFP_KERNEL);
-	if (dev->status == NULL)
-		return -ENOMEM;
+	अगर (dev->status == शून्य)
+		वापस -ENOMEM;
 
-	dev->int_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (dev->int_urb == NULL) {
-		kfree(dev->status);
-		return -ENOMEM;
-	}
+	dev->पूर्णांक_urb = usb_alloc_urb(0, GFP_KERNEL);
+	अगर (dev->पूर्णांक_urb == शून्य) अणु
+		kमुक्त(dev->status);
+		वापस -ENOMEM;
+	पूर्ण
 
-	pipe = usb_rcvintpipe(dev->udev, ep->desc.bEndpointAddress);
+	pipe = usb_rcvपूर्णांकpipe(dev->udev, ep->desc.bEndpoपूर्णांकAddress);
 
-	/* For high-speed interrupt endpoints, the bInterval value is used as
-	 * an exponent of two. Some developers forgot about it.
+	/* For high-speed पूर्णांकerrupt endpoपूर्णांकs, the bInterval value is used as
+	 * an exponent of two. Some developers क्रमgot about it.
 	 */
-	interval = ep->desc.bInterval;
-	if (interval > 16 && dev->udev->speed == USB_SPEED_HIGH &&
+	पूर्णांकerval = ep->desc.bInterval;
+	अगर (पूर्णांकerval > 16 && dev->udev->speed == USB_SPEED_HIGH &&
 	    (dev->quirks & UVC_QUIRK_STATUS_INTERVAL))
-		interval = fls(interval) - 1;
+		पूर्णांकerval = fls(पूर्णांकerval) - 1;
 
-	usb_fill_int_urb(dev->int_urb, dev->udev, pipe,
+	usb_fill_पूर्णांक_urb(dev->पूर्णांक_urb, dev->udev, pipe,
 		dev->status, UVC_MAX_STATUS_SIZE, uvc_status_complete,
-		dev, interval);
+		dev, पूर्णांकerval);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void uvc_status_unregister(struct uvc_device *dev)
-{
-	usb_kill_urb(dev->int_urb);
-	uvc_input_unregister(dev);
-}
+व्योम uvc_status_unरेजिस्टर(काष्ठा uvc_device *dev)
+अणु
+	usb_समाप्त_urb(dev->पूर्णांक_urb);
+	uvc_input_unरेजिस्टर(dev);
+पूर्ण
 
-void uvc_status_cleanup(struct uvc_device *dev)
-{
-	usb_free_urb(dev->int_urb);
-	kfree(dev->status);
-}
+व्योम uvc_status_cleanup(काष्ठा uvc_device *dev)
+अणु
+	usb_मुक्त_urb(dev->पूर्णांक_urb);
+	kमुक्त(dev->status);
+पूर्ण
 
-int uvc_status_start(struct uvc_device *dev, gfp_t flags)
-{
-	if (dev->int_urb == NULL)
-		return 0;
+पूर्णांक uvc_status_start(काष्ठा uvc_device *dev, gfp_t flags)
+अणु
+	अगर (dev->पूर्णांक_urb == शून्य)
+		वापस 0;
 
-	return usb_submit_urb(dev->int_urb, flags);
-}
+	वापस usb_submit_urb(dev->पूर्णांक_urb, flags);
+पूर्ण
 
-void uvc_status_stop(struct uvc_device *dev)
-{
-	usb_kill_urb(dev->int_urb);
-}
+व्योम uvc_status_stop(काष्ठा uvc_device *dev)
+अणु
+	usb_समाप्त_urb(dev->पूर्णांक_urb);
+पूर्ण

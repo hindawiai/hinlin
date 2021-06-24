@@ -1,85 +1,86 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Ultravisor definitions
  *
  * Copyright 2019, IBM Corporation.
  *
  */
-#ifndef _ASM_POWERPC_ULTRAVISOR_H
-#define _ASM_POWERPC_ULTRAVISOR_H
+#अगर_अघोषित _ASM_POWERPC_ULTRAVISOR_H
+#घोषणा _ASM_POWERPC_ULTRAVISOR_H
 
-#include <asm/asm-prototypes.h>
-#include <asm/ultravisor-api.h>
-#include <asm/firmware.h>
+#समावेश <यंत्र/यंत्र-prototypes.h>
+#समावेश <यंत्र/ultravisor-api.h>
+#समावेश <यंत्र/firmware.h>
 
-int early_init_dt_scan_ultravisor(unsigned long node, const char *uname,
-				  int depth, void *data);
+पूर्णांक early_init_dt_scan_ultravisor(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
+				  पूर्णांक depth, व्योम *data);
 
 /*
- * In ultravisor enabled systems, PTCR becomes ultravisor privileged only for
- * writing and an attempt to write to it will cause a Hypervisor Emulation
- * Assistance interrupt.
+ * In ultravisor enabled प्रणालीs, PTCR becomes ultravisor privileged only क्रम
+ * writing and an attempt to ग_लिखो to it will cause a Hypervisor Emulation
+ * Assistance पूर्णांकerrupt.
  */
-static inline void set_ptcr_when_no_uv(u64 val)
-{
-	if (!firmware_has_feature(FW_FEATURE_ULTRAVISOR))
+अटल अंतरभूत व्योम set_ptcr_when_no_uv(u64 val)
+अणु
+	अगर (!firmware_has_feature(FW_FEATURE_ULTRAVISOR))
 		mtspr(SPRN_PTCR, val);
-}
+पूर्ण
 
-static inline int uv_register_pate(u64 lpid, u64 dw0, u64 dw1)
-{
-	return ucall_norets(UV_WRITE_PATE, lpid, dw0, dw1);
-}
+अटल अंतरभूत पूर्णांक uv_रेजिस्टर_pate(u64 lpid, u64 dw0, u64 dw1)
+अणु
+	वापस ucall_norets(UV_WRITE_PATE, lpid, dw0, dw1);
+पूर्ण
 
-static inline int uv_share_page(u64 pfn, u64 npages)
-{
-	return ucall_norets(UV_SHARE_PAGE, pfn, npages);
-}
+अटल अंतरभूत पूर्णांक uv_share_page(u64 pfn, u64 npages)
+अणु
+	वापस ucall_norets(UV_SHARE_PAGE, pfn, npages);
+पूर्ण
 
-static inline int uv_unshare_page(u64 pfn, u64 npages)
-{
-	return ucall_norets(UV_UNSHARE_PAGE, pfn, npages);
-}
+अटल अंतरभूत पूर्णांक uv_unshare_page(u64 pfn, u64 npages)
+अणु
+	वापस ucall_norets(UV_UNSHARE_PAGE, pfn, npages);
+पूर्ण
 
-static inline int uv_unshare_all_pages(void)
-{
-	return ucall_norets(UV_UNSHARE_ALL_PAGES);
-}
+अटल अंतरभूत पूर्णांक uv_unshare_all_pages(व्योम)
+अणु
+	वापस ucall_norets(UV_UNSHARE_ALL_PAGES);
+पूर्ण
 
-static inline int uv_page_in(u64 lpid, u64 src_ra, u64 dst_gpa, u64 flags,
-			     u64 page_shift)
-{
-	return ucall_norets(UV_PAGE_IN, lpid, src_ra, dst_gpa, flags,
-			    page_shift);
-}
+अटल अंतरभूत पूर्णांक uv_page_in(u64 lpid, u64 src_ra, u64 dst_gpa, u64 flags,
+			     u64 page_shअगरt)
+अणु
+	वापस ucall_norets(UV_PAGE_IN, lpid, src_ra, dst_gpa, flags,
+			    page_shअगरt);
+पूर्ण
 
-static inline int uv_page_out(u64 lpid, u64 dst_ra, u64 src_gpa, u64 flags,
-			      u64 page_shift)
-{
-	return ucall_norets(UV_PAGE_OUT, lpid, dst_ra, src_gpa, flags,
-			    page_shift);
-}
+अटल अंतरभूत पूर्णांक uv_page_out(u64 lpid, u64 dst_ra, u64 src_gpa, u64 flags,
+			      u64 page_shअगरt)
+अणु
+	वापस ucall_norets(UV_PAGE_OUT, lpid, dst_ra, src_gpa, flags,
+			    page_shअगरt);
+पूर्ण
 
-static inline int uv_register_mem_slot(u64 lpid, u64 start_gpa, u64 size,
+अटल अंतरभूत पूर्णांक uv_रेजिस्टर_mem_slot(u64 lpid, u64 start_gpa, u64 size,
 				       u64 flags, u64 slotid)
-{
-	return ucall_norets(UV_REGISTER_MEM_SLOT, lpid, start_gpa,
+अणु
+	वापस ucall_norets(UV_REGISTER_MEM_SLOT, lpid, start_gpa,
 			    size, flags, slotid);
-}
+पूर्ण
 
-static inline int uv_unregister_mem_slot(u64 lpid, u64 slotid)
-{
-	return ucall_norets(UV_UNREGISTER_MEM_SLOT, lpid, slotid);
-}
+अटल अंतरभूत पूर्णांक uv_unरेजिस्टर_mem_slot(u64 lpid, u64 slotid)
+अणु
+	वापस ucall_norets(UV_UNREGISTER_MEM_SLOT, lpid, slotid);
+पूर्ण
 
-static inline int uv_page_inval(u64 lpid, u64 gpa, u64 page_shift)
-{
-	return ucall_norets(UV_PAGE_INVAL, lpid, gpa, page_shift);
-}
+अटल अंतरभूत पूर्णांक uv_page_inval(u64 lpid, u64 gpa, u64 page_shअगरt)
+अणु
+	वापस ucall_norets(UV_PAGE_INVAL, lpid, gpa, page_shअगरt);
+पूर्ण
 
-static inline int uv_svm_terminate(u64 lpid)
-{
-	return ucall_norets(UV_SVM_TERMINATE, lpid);
-}
+अटल अंतरभूत पूर्णांक uv_svm_terminate(u64 lpid)
+अणु
+	वापस ucall_norets(UV_SVM_TERMINATE, lpid);
+पूर्ण
 
-#endif	/* _ASM_POWERPC_ULTRAVISOR_H */
+#पूर्ण_अगर	/* _ASM_POWERPC_ULTRAVISOR_H */

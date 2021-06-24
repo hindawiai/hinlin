@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // STMicroelectronics FTS Touchscreen device driver
 //
 // Copyright (c) 2017 Samsung Electronics Co., Ltd.
 // Copyright (c) 2017 Andi Shyti <andi@etezian.org>
 
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/input/mt.h>
-#include <linux/input/touchscreen.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/pm_runtime.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/input/touchscreen.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regulator/consumer.h>
 
 /* I2C commands */
-#define STMFTS_READ_INFO			0x80
-#define STMFTS_READ_STATUS			0x84
-#define STMFTS_READ_ONE_EVENT			0x85
-#define STMFTS_READ_ALL_EVENT			0x86
-#define STMFTS_LATEST_EVENT			0x87
-#define STMFTS_SLEEP_IN				0x90
-#define STMFTS_SLEEP_OUT			0x91
-#define STMFTS_MS_MT_SENSE_OFF			0x92
-#define STMFTS_MS_MT_SENSE_ON			0x93
-#define STMFTS_SS_HOVER_SENSE_OFF		0x94
-#define STMFTS_SS_HOVER_SENSE_ON		0x95
-#define STMFTS_MS_KEY_SENSE_OFF			0x9a
-#define STMFTS_MS_KEY_SENSE_ON			0x9b
-#define STMFTS_SYSTEM_RESET			0xa0
-#define STMFTS_CLEAR_EVENT_STACK		0xa1
-#define STMFTS_FULL_FORCE_CALIBRATION		0xa2
-#define STMFTS_MS_CX_TUNING			0xa3
-#define STMFTS_SS_CX_TUNING			0xa4
+#घोषणा STMFTS_READ_INFO			0x80
+#घोषणा STMFTS_READ_STATUS			0x84
+#घोषणा STMFTS_READ_ONE_EVENT			0x85
+#घोषणा STMFTS_READ_ALL_EVENT			0x86
+#घोषणा STMFTS_LATEST_EVENT			0x87
+#घोषणा STMFTS_SLEEP_IN				0x90
+#घोषणा STMFTS_SLEEP_OUT			0x91
+#घोषणा STMFTS_MS_MT_SENSE_OFF			0x92
+#घोषणा STMFTS_MS_MT_SENSE_ON			0x93
+#घोषणा STMFTS_SS_HOVER_SENSE_OFF		0x94
+#घोषणा STMFTS_SS_HOVER_SENSE_ON		0x95
+#घोषणा STMFTS_MS_KEY_SENSE_OFF			0x9a
+#घोषणा STMFTS_MS_KEY_SENSE_ON			0x9b
+#घोषणा STMFTS_SYSTEM_RESET			0xa0
+#घोषणा STMFTS_CLEAR_EVENT_STACK		0xa1
+#घोषणा STMFTS_FULL_FORCE_CALIBRATION		0xa2
+#घोषणा STMFTS_MS_CX_TUNING			0xa3
+#घोषणा STMFTS_SS_CX_TUNING			0xa4
 
 /* events */
-#define STMFTS_EV_NO_EVENT			0x00
-#define STMFTS_EV_MULTI_TOUCH_DETECTED		0x02
-#define STMFTS_EV_MULTI_TOUCH_ENTER		0x03
-#define STMFTS_EV_MULTI_TOUCH_LEAVE		0x04
-#define STMFTS_EV_MULTI_TOUCH_MOTION		0x05
-#define STMFTS_EV_HOVER_ENTER			0x07
-#define STMFTS_EV_HOVER_LEAVE			0x08
-#define STMFTS_EV_HOVER_MOTION			0x09
-#define STMFTS_EV_KEY_STATUS			0x0e
-#define STMFTS_EV_ERROR				0x0f
-#define STMFTS_EV_CONTROLLER_READY		0x10
-#define STMFTS_EV_SLEEP_OUT_CONTROLLER_READY	0x11
-#define STMFTS_EV_STATUS			0x16
-#define STMFTS_EV_DEBUG				0xdb
+#घोषणा STMFTS_EV_NO_EVENT			0x00
+#घोषणा STMFTS_EV_MULTI_TOUCH_DETECTED		0x02
+#घोषणा STMFTS_EV_MULTI_TOUCH_ENTER		0x03
+#घोषणा STMFTS_EV_MULTI_TOUCH_LEAVE		0x04
+#घोषणा STMFTS_EV_MULTI_TOUCH_MOTION		0x05
+#घोषणा STMFTS_EV_HOVER_ENTER			0x07
+#घोषणा STMFTS_EV_HOVER_LEAVE			0x08
+#घोषणा STMFTS_EV_HOVER_MOTION			0x09
+#घोषणा STMFTS_EV_KEY_STATUS			0x0e
+#घोषणा STMFTS_EV_ERROR				0x0f
+#घोषणा STMFTS_EV_CONTROLLER_READY		0x10
+#घोषणा STMFTS_EV_SLEEP_OUT_CONTROLLER_READY	0x11
+#घोषणा STMFTS_EV_STATUS			0x16
+#घोषणा STMFTS_EV_DEBUG				0xdb
 
 /* multi touch related event masks */
-#define STMFTS_MASK_EVENT_ID			0x0f
-#define STMFTS_MASK_TOUCH_ID			0xf0
-#define STMFTS_MASK_LEFT_EVENT			0x0f
-#define STMFTS_MASK_X_MSB			0x0f
-#define STMFTS_MASK_Y_LSB			0xf0
+#घोषणा STMFTS_MASK_EVENT_ID			0x0f
+#घोषणा STMFTS_MASK_TOUCH_ID			0xf0
+#घोषणा STMFTS_MASK_LEFT_EVENT			0x0f
+#घोषणा STMFTS_MASK_X_MSB			0x0f
+#घोषणा STMFTS_MASK_Y_LSB			0xf0
 
 /* key related event masks */
-#define STMFTS_MASK_KEY_NO_TOUCH		0x00
-#define STMFTS_MASK_KEY_MENU			0x01
-#define STMFTS_MASK_KEY_BACK			0x02
+#घोषणा STMFTS_MASK_KEY_NO_TOUCH		0x00
+#घोषणा STMFTS_MASK_KEY_MENU			0x01
+#घोषणा STMFTS_MASK_KEY_BACK			0x02
 
-#define STMFTS_EVENT_SIZE	8
-#define STMFTS_STACK_DEPTH	32
-#define STMFTS_DATA_MAX_SIZE	(STMFTS_EVENT_SIZE * STMFTS_STACK_DEPTH)
-#define STMFTS_MAX_FINGERS	10
-#define STMFTS_DEV_NAME		"stmfts"
+#घोषणा STMFTS_EVENT_SIZE	8
+#घोषणा STMFTS_STACK_DEPTH	32
+#घोषणा STMFTS_DATA_MAX_SIZE	(STMFTS_EVENT_SIZE * STMFTS_STACK_DEPTH)
+#घोषणा STMFTS_MAX_FINGERS	10
+#घोषणा STMFTS_DEV_NAME		"stmfts"
 
-enum stmfts_regulators {
+क्रमागत sपंचांगfts_regulators अणु
 	STMFTS_REGULATOR_VDD,
 	STMFTS_REGULATOR_AVDD,
-};
+पूर्ण;
 
-struct stmfts_data {
-	struct i2c_client *client;
-	struct input_dev *input;
-	struct led_classdev led_cdev;
-	struct mutex mutex;
+काष्ठा sपंचांगfts_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा input_dev *input;
+	काष्ठा led_classdev led_cdev;
+	काष्ठा mutex mutex;
 
-	struct touchscreen_properties prop;
+	काष्ठा touchscreen_properties prop;
 
-	struct regulator_bulk_data regulators[2];
+	काष्ठा regulator_bulk_data regulators[2];
 
 	/*
 	 * Presence of ledvdd will be used also to check
 	 * whether the LED is supported.
 	 */
-	struct regulator *ledvdd;
+	काष्ठा regulator *ledvdd;
 
 	u16 chip_id;
 	u8 chip_ver;
@@ -98,79 +99,79 @@ struct stmfts_data {
 
 	u8 data[STMFTS_DATA_MAX_SIZE];
 
-	struct completion cmd_done;
+	काष्ठा completion cmd_करोne;
 
 	bool use_key;
 	bool led_status;
 	bool hover_enabled;
 	bool running;
-};
+पूर्ण;
 
-static int stmfts_brightness_set(struct led_classdev *led_cdev,
-					enum led_brightness value)
-{
-	struct stmfts_data *sdata = container_of(led_cdev,
-					struct stmfts_data, led_cdev);
-	int err;
+अटल पूर्णांक sपंचांगfts_brightness_set(काष्ठा led_classdev *led_cdev,
+					क्रमागत led_brightness value)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = container_of(led_cdev,
+					काष्ठा sपंचांगfts_data, led_cdev);
+	पूर्णांक err;
 
-	if (value != sdata->led_status && sdata->ledvdd) {
-		if (!value) {
+	अगर (value != sdata->led_status && sdata->ledvdd) अणु
+		अगर (!value) अणु
 			regulator_disable(sdata->ledvdd);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = regulator_enable(sdata->ledvdd);
-			if (err) {
+			अगर (err) अणु
 				dev_warn(&sdata->client->dev,
 					 "failed to disable ledvdd regulator: %d\n",
 					 err);
-				return err;
-			}
-		}
+				वापस err;
+			पूर्ण
+		पूर्ण
 		sdata->led_status = value;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum led_brightness stmfts_brightness_get(struct led_classdev *led_cdev)
-{
-	struct stmfts_data *sdata = container_of(led_cdev,
-						struct stmfts_data, led_cdev);
+अटल क्रमागत led_brightness sपंचांगfts_brightness_get(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = container_of(led_cdev,
+						काष्ठा sपंचांगfts_data, led_cdev);
 
-	return !!regulator_is_enabled(sdata->ledvdd);
-}
+	वापस !!regulator_is_enabled(sdata->ledvdd);
+पूर्ण
 
 /*
- * We can't simply use i2c_smbus_read_i2c_block_data because we
- * need to read more than 255 bytes (
+ * We can't simply use i2c_smbus_पढ़ो_i2c_block_data because we
+ * need to पढ़ो more than 255 bytes (
  */
-static int stmfts_read_events(struct stmfts_data *sdata)
-{
+अटल पूर्णांक sपंचांगfts_पढ़ो_events(काष्ठा sपंचांगfts_data *sdata)
+अणु
 	u8 cmd = STMFTS_READ_ALL_EVENT;
-	struct i2c_msg msgs[2] = {
-		{
+	काष्ठा i2c_msg msgs[2] = अणु
+		अणु
 			.addr	= sdata->client->addr,
 			.len	= 1,
 			.buf	= &cmd,
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr	= sdata->client->addr,
 			.flags	= I2C_M_RD,
 			.len	= STMFTS_DATA_MAX_SIZE,
 			.buf	= sdata->data,
-		},
-	};
-	int ret;
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक ret;
 
 	ret = i2c_transfer(sdata->client->adapter, msgs, ARRAY_SIZE(msgs));
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return ret == ARRAY_SIZE(msgs) ? 0 : -EIO;
-}
+	वापस ret == ARRAY_SIZE(msgs) ? 0 : -EIO;
+पूर्ण
 
-static void stmfts_report_contact_event(struct stmfts_data *sdata,
-					const u8 event[])
-{
+अटल व्योम sपंचांगfts_report_contact_event(काष्ठा sपंचांगfts_data *sdata,
+					स्थिर u8 event[])
+अणु
 	u8 slot_id = (event[0] & STMFTS_MASK_TOUCH_ID) >> 4;
 	u16 x = event[1] | ((event[2] & STMFTS_MASK_X_MSB) << 8);
 	u16 y = (event[2] >> 4) | (event[3] << 4);
@@ -182,200 +183,200 @@ static void stmfts_report_contact_event(struct stmfts_data *sdata,
 	input_mt_slot(sdata->input, slot_id);
 
 	input_mt_report_slot_state(sdata->input, MT_TOOL_FINGER, true);
-	input_report_abs(sdata->input, ABS_MT_POSITION_X, x);
-	input_report_abs(sdata->input, ABS_MT_POSITION_Y, y);
-	input_report_abs(sdata->input, ABS_MT_TOUCH_MAJOR, maj);
-	input_report_abs(sdata->input, ABS_MT_TOUCH_MINOR, min);
-	input_report_abs(sdata->input, ABS_MT_PRESSURE, area);
-	input_report_abs(sdata->input, ABS_MT_ORIENTATION, orientation);
+	input_report_असल(sdata->input, ABS_MT_POSITION_X, x);
+	input_report_असल(sdata->input, ABS_MT_POSITION_Y, y);
+	input_report_असल(sdata->input, ABS_MT_TOUCH_MAJOR, maj);
+	input_report_असल(sdata->input, ABS_MT_TOUCH_MINOR, min);
+	input_report_असल(sdata->input, ABS_MT_PRESSURE, area);
+	input_report_असल(sdata->input, ABS_MT_ORIENTATION, orientation);
 
 	input_sync(sdata->input);
-}
+पूर्ण
 
-static void stmfts_report_contact_release(struct stmfts_data *sdata,
-					  const u8 event[])
-{
+अटल व्योम sपंचांगfts_report_contact_release(काष्ठा sपंचांगfts_data *sdata,
+					  स्थिर u8 event[])
+अणु
 	u8 slot_id = (event[0] & STMFTS_MASK_TOUCH_ID) >> 4;
 
 	input_mt_slot(sdata->input, slot_id);
 	input_mt_report_slot_inactive(sdata->input);
 
 	input_sync(sdata->input);
-}
+पूर्ण
 
-static void stmfts_report_hover_event(struct stmfts_data *sdata,
-				      const u8 event[])
-{
+अटल व्योम sपंचांगfts_report_hover_event(काष्ठा sपंचांगfts_data *sdata,
+				      स्थिर u8 event[])
+अणु
 	u16 x = (event[2] << 4) | (event[4] >> 4);
 	u16 y = (event[3] << 4) | (event[4] & STMFTS_MASK_Y_LSB);
 	u8 z = event[5];
 
-	input_report_abs(sdata->input, ABS_X, x);
-	input_report_abs(sdata->input, ABS_Y, y);
-	input_report_abs(sdata->input, ABS_DISTANCE, z);
+	input_report_असल(sdata->input, ABS_X, x);
+	input_report_असल(sdata->input, ABS_Y, y);
+	input_report_असल(sdata->input, ABS_DISTANCE, z);
 
 	input_sync(sdata->input);
-}
+पूर्ण
 
-static void stmfts_report_key_event(struct stmfts_data *sdata, const u8 event[])
-{
-	switch (event[2]) {
-	case 0:
+अटल व्योम sपंचांगfts_report_key_event(काष्ठा sपंचांगfts_data *sdata, स्थिर u8 event[])
+अणु
+	चयन (event[2]) अणु
+	हाल 0:
 		input_report_key(sdata->input, KEY_BACK, 0);
 		input_report_key(sdata->input, KEY_MENU, 0);
-		break;
+		अवरोध;
 
-	case STMFTS_MASK_KEY_BACK:
+	हाल STMFTS_MASK_KEY_BACK:
 		input_report_key(sdata->input, KEY_BACK, 1);
-		break;
+		अवरोध;
 
-	case STMFTS_MASK_KEY_MENU:
+	हाल STMFTS_MASK_KEY_MENU:
 		input_report_key(sdata->input, KEY_MENU, 1);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(&sdata->client->dev,
 			 "unknown key event: %#02x\n", event[2]);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	input_sync(sdata->input);
-}
+पूर्ण
 
-static void stmfts_parse_events(struct stmfts_data *sdata)
-{
-	int i;
+अटल व्योम sपंचांगfts_parse_events(काष्ठा sपंचांगfts_data *sdata)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < STMFTS_STACK_DEPTH; i++) {
+	क्रम (i = 0; i < STMFTS_STACK_DEPTH; i++) अणु
 		u8 *event = &sdata->data[i * STMFTS_EVENT_SIZE];
 
-		switch (event[0]) {
+		चयन (event[0]) अणु
 
-		case STMFTS_EV_CONTROLLER_READY:
-		case STMFTS_EV_SLEEP_OUT_CONTROLLER_READY:
-		case STMFTS_EV_STATUS:
-			complete(&sdata->cmd_done);
+		हाल STMFTS_EV_CONTROLLER_READY:
+		हाल STMFTS_EV_SLEEP_OUT_CONTROLLER_READY:
+		हाल STMFTS_EV_STATUS:
+			complete(&sdata->cmd_करोne);
 			fallthrough;
 
-		case STMFTS_EV_NO_EVENT:
-		case STMFTS_EV_DEBUG:
-			return;
-		}
+		हाल STMFTS_EV_NO_EVENT:
+		हाल STMFTS_EV_DEBUG:
+			वापस;
+		पूर्ण
 
-		switch (event[0] & STMFTS_MASK_EVENT_ID) {
+		चयन (event[0] & STMFTS_MASK_EVENT_ID) अणु
 
-		case STMFTS_EV_MULTI_TOUCH_ENTER:
-		case STMFTS_EV_MULTI_TOUCH_MOTION:
-			stmfts_report_contact_event(sdata, event);
-			break;
+		हाल STMFTS_EV_MULTI_TOUCH_ENTER:
+		हाल STMFTS_EV_MULTI_TOUCH_MOTION:
+			sपंचांगfts_report_contact_event(sdata, event);
+			अवरोध;
 
-		case STMFTS_EV_MULTI_TOUCH_LEAVE:
-			stmfts_report_contact_release(sdata, event);
-			break;
+		हाल STMFTS_EV_MULTI_TOUCH_LEAVE:
+			sपंचांगfts_report_contact_release(sdata, event);
+			अवरोध;
 
-		case STMFTS_EV_HOVER_ENTER:
-		case STMFTS_EV_HOVER_LEAVE:
-		case STMFTS_EV_HOVER_MOTION:
-			stmfts_report_hover_event(sdata, event);
-			break;
+		हाल STMFTS_EV_HOVER_ENTER:
+		हाल STMFTS_EV_HOVER_LEAVE:
+		हाल STMFTS_EV_HOVER_MOTION:
+			sपंचांगfts_report_hover_event(sdata, event);
+			अवरोध;
 
-		case STMFTS_EV_KEY_STATUS:
-			stmfts_report_key_event(sdata, event);
-			break;
+		हाल STMFTS_EV_KEY_STATUS:
+			sपंचांगfts_report_key_event(sdata, event);
+			अवरोध;
 
-		case STMFTS_EV_ERROR:
+		हाल STMFTS_EV_ERROR:
 			dev_warn(&sdata->client->dev,
 					"error code: 0x%x%x%x%x%x%x",
 					event[6], event[5], event[4],
 					event[3], event[2], event[1]);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(&sdata->client->dev,
 				"unknown event %#02x\n", event[0]);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t stmfts_irq_handler(int irq, void *dev)
-{
-	struct stmfts_data *sdata = dev;
-	int err;
+अटल irqवापस_t sपंचांगfts_irq_handler(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev;
+	पूर्णांक err;
 
 	mutex_lock(&sdata->mutex);
 
-	err = stmfts_read_events(sdata);
-	if (unlikely(err))
+	err = sपंचांगfts_पढ़ो_events(sdata);
+	अगर (unlikely(err))
 		dev_err(&sdata->client->dev,
 			"failed to read events: %d\n", err);
-	else
-		stmfts_parse_events(sdata);
+	अन्यथा
+		sपंचांगfts_parse_events(sdata);
 
 	mutex_unlock(&sdata->mutex);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int stmfts_command(struct stmfts_data *sdata, const u8 cmd)
-{
-	int err;
+अटल पूर्णांक sपंचांगfts_command(काष्ठा sपंचांगfts_data *sdata, स्थिर u8 cmd)
+अणु
+	पूर्णांक err;
 
-	reinit_completion(&sdata->cmd_done);
+	reinit_completion(&sdata->cmd_करोne);
 
-	err = i2c_smbus_write_byte(sdata->client, cmd);
-	if (err)
-		return err;
+	err = i2c_smbus_ग_लिखो_byte(sdata->client, cmd);
+	अगर (err)
+		वापस err;
 
-	if (!wait_for_completion_timeout(&sdata->cmd_done,
-					 msecs_to_jiffies(1000)))
-		return -ETIMEDOUT;
+	अगर (!रुको_क्रम_completion_समयout(&sdata->cmd_करोne,
+					 msecs_to_jअगरfies(1000)))
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmfts_input_open(struct input_dev *dev)
-{
-	struct stmfts_data *sdata = input_get_drvdata(dev);
-	int err;
+अटल पूर्णांक sपंचांगfts_input_खोलो(काष्ठा input_dev *dev)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = input_get_drvdata(dev);
+	पूर्णांक err;
 
-	err = pm_runtime_get_sync(&sdata->client->dev);
-	if (err < 0)
-		return err;
+	err = pm_runसमय_get_sync(&sdata->client->dev);
+	अगर (err < 0)
+		वापस err;
 
-	err = i2c_smbus_write_byte(sdata->client, STMFTS_MS_MT_SENSE_ON);
-	if (err)
-		return err;
+	err = i2c_smbus_ग_लिखो_byte(sdata->client, STMFTS_MS_MT_SENSE_ON);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&sdata->mutex);
 	sdata->running = true;
 
-	if (sdata->hover_enabled) {
-		err = i2c_smbus_write_byte(sdata->client,
+	अगर (sdata->hover_enabled) अणु
+		err = i2c_smbus_ग_लिखो_byte(sdata->client,
 					   STMFTS_SS_HOVER_SENSE_ON);
-		if (err)
+		अगर (err)
 			dev_warn(&sdata->client->dev,
 				 "failed to enable hover\n");
-	}
+	पूर्ण
 	mutex_unlock(&sdata->mutex);
 
-	if (sdata->use_key) {
-		err = i2c_smbus_write_byte(sdata->client,
+	अगर (sdata->use_key) अणु
+		err = i2c_smbus_ग_लिखो_byte(sdata->client,
 					   STMFTS_MS_KEY_SENSE_ON);
-		if (err)
+		अगर (err)
 			/* I can still use only the touch screen */
 			dev_warn(&sdata->client->dev,
 				 "failed to enable touchkey\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stmfts_input_close(struct input_dev *dev)
-{
-	struct stmfts_data *sdata = input_get_drvdata(dev);
-	int err;
+अटल व्योम sपंचांगfts_input_बंद(काष्ठा input_dev *dev)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = input_get_drvdata(dev);
+	पूर्णांक err;
 
-	err = i2c_smbus_write_byte(sdata->client, STMFTS_MS_MT_SENSE_OFF);
-	if (err)
+	err = i2c_smbus_ग_लिखो_byte(sdata->client, STMFTS_MS_MT_SENSE_OFF);
+	अगर (err)
 		dev_warn(&sdata->client->dev,
 			 "failed to disable touchscreen: %d\n", err);
 
@@ -383,129 +384,129 @@ static void stmfts_input_close(struct input_dev *dev)
 
 	sdata->running = false;
 
-	if (sdata->hover_enabled) {
-		err = i2c_smbus_write_byte(sdata->client,
+	अगर (sdata->hover_enabled) अणु
+		err = i2c_smbus_ग_लिखो_byte(sdata->client,
 					   STMFTS_SS_HOVER_SENSE_OFF);
-		if (err)
+		अगर (err)
 			dev_warn(&sdata->client->dev,
 				 "failed to disable hover: %d\n", err);
-	}
+	पूर्ण
 	mutex_unlock(&sdata->mutex);
 
-	if (sdata->use_key) {
-		err = i2c_smbus_write_byte(sdata->client,
+	अगर (sdata->use_key) अणु
+		err = i2c_smbus_ग_लिखो_byte(sdata->client,
 					   STMFTS_MS_KEY_SENSE_OFF);
-		if (err)
+		अगर (err)
 			dev_warn(&sdata->client->dev,
 				 "failed to disable touchkey: %d\n", err);
-	}
+	पूर्ण
 
-	pm_runtime_put_sync(&sdata->client->dev);
-}
+	pm_runसमय_put_sync(&sdata->client->dev);
+पूर्ण
 
-static ssize_t stmfts_sysfs_chip_id(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
+अटल sमाप_प्रकार sपंचांगfts_sysfs_chip_id(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%#x\n", sdata->chip_id);
-}
+	वापस प्र_लिखो(buf, "%#x\n", sdata->chip_id);
+पूर्ण
 
-static ssize_t stmfts_sysfs_chip_version(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
+अटल sमाप_प्रकार sपंचांगfts_sysfs_chip_version(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", sdata->chip_ver);
-}
+	वापस प्र_लिखो(buf, "%u\n", sdata->chip_ver);
+पूर्ण
 
-static ssize_t stmfts_sysfs_fw_ver(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
+अटल sमाप_प्रकार sपंचांगfts_sysfs_fw_ver(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", sdata->fw_ver);
-}
+	वापस प्र_लिखो(buf, "%u\n", sdata->fw_ver);
+पूर्ण
 
-static ssize_t stmfts_sysfs_config_id(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
+अटल sमाप_प्रकार sपंचांगfts_sysfs_config_id(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%#x\n", sdata->config_id);
-}
+	वापस प्र_लिखो(buf, "%#x\n", sdata->config_id);
+पूर्ण
 
-static ssize_t stmfts_sysfs_config_version(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
+अटल sमाप_प्रकार sपंचांगfts_sysfs_config_version(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", sdata->config_ver);
-}
+	वापस प्र_लिखो(buf, "%u\n", sdata->config_ver);
+पूर्ण
 
-static ssize_t stmfts_sysfs_read_status(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
+अटल sमाप_प्रकार sपंचांगfts_sysfs_पढ़ो_status(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
 	u8 status[4];
-	int err;
+	पूर्णांक err;
 
-	err = i2c_smbus_read_i2c_block_data(sdata->client, STMFTS_READ_STATUS,
-					    sizeof(status), status);
-	if (err)
-		return err;
+	err = i2c_smbus_पढ़ो_i2c_block_data(sdata->client, STMFTS_READ_STATUS,
+					    माप(status), status);
+	अगर (err)
+		वापस err;
 
-	return sprintf(buf, "%#02x\n", status[0]);
-}
+	वापस प्र_लिखो(buf, "%#02x\n", status[0]);
+पूर्ण
 
-static ssize_t stmfts_sysfs_hover_enable_read(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
+अटल sमाप_प्रकार sपंचांगfts_sysfs_hover_enable_पढ़ो(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", sdata->hover_enabled);
-}
+	वापस प्र_लिखो(buf, "%u\n", sdata->hover_enabled);
+पूर्ण
 
-static ssize_t stmfts_sysfs_hover_enable_write(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t len)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
-	unsigned long value;
-	int err = 0;
+अटल sमाप_प्रकार sपंचांगfts_sysfs_hover_enable_ग_लिखो(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ value;
+	पूर्णांक err = 0;
 
-	if (kstrtoul(buf, 0, &value))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &value))
+		वापस -EINVAL;
 
 	mutex_lock(&sdata->mutex);
 
-	if (value && sdata->hover_enabled)
-		goto out;
+	अगर (value && sdata->hover_enabled)
+		जाओ out;
 
-	if (sdata->running)
-		err = i2c_smbus_write_byte(sdata->client,
+	अगर (sdata->running)
+		err = i2c_smbus_ग_लिखो_byte(sdata->client,
 					   value ? STMFTS_SS_HOVER_SENSE_ON :
 						   STMFTS_SS_HOVER_SENSE_OFF);
 
-	if (!err)
+	अगर (!err)
 		sdata->hover_enabled = !!value;
 
 out:
 	mutex_unlock(&sdata->mutex);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static DEVICE_ATTR(chip_id, 0444, stmfts_sysfs_chip_id, NULL);
-static DEVICE_ATTR(chip_version, 0444, stmfts_sysfs_chip_version, NULL);
-static DEVICE_ATTR(fw_ver, 0444, stmfts_sysfs_fw_ver, NULL);
-static DEVICE_ATTR(config_id, 0444, stmfts_sysfs_config_id, NULL);
-static DEVICE_ATTR(config_version, 0444, stmfts_sysfs_config_version, NULL);
-static DEVICE_ATTR(status, 0444, stmfts_sysfs_read_status, NULL);
-static DEVICE_ATTR(hover_enable, 0644, stmfts_sysfs_hover_enable_read,
-					stmfts_sysfs_hover_enable_write);
+अटल DEVICE_ATTR(chip_id, 0444, sपंचांगfts_sysfs_chip_id, शून्य);
+अटल DEVICE_ATTR(chip_version, 0444, sपंचांगfts_sysfs_chip_version, शून्य);
+अटल DEVICE_ATTR(fw_ver, 0444, sपंचांगfts_sysfs_fw_ver, शून्य);
+अटल DEVICE_ATTR(config_id, 0444, sपंचांगfts_sysfs_config_id, शून्य);
+अटल DEVICE_ATTR(config_version, 0444, sपंचांगfts_sysfs_config_version, शून्य);
+अटल DEVICE_ATTR(status, 0444, sपंचांगfts_sysfs_पढ़ो_status, शून्य);
+अटल DEVICE_ATTR(hover_enable, 0644, sपंचांगfts_sysfs_hover_enable_पढ़ो,
+					sपंचांगfts_sysfs_hover_enable_ग_लिखो);
 
-static struct attribute *stmfts_sysfs_attrs[] = {
+अटल काष्ठा attribute *sपंचांगfts_sysfs_attrs[] = अणु
 	&dev_attr_chip_id.attr,
 	&dev_attr_chip_version.attr,
 	&dev_attr_fw_ver.attr,
@@ -513,35 +514,35 @@ static struct attribute *stmfts_sysfs_attrs[] = {
 	&dev_attr_config_version.attr,
 	&dev_attr_status.attr,
 	&dev_attr_hover_enable.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct attribute_group stmfts_attribute_group = {
-	.attrs = stmfts_sysfs_attrs
-};
+अटल काष्ठा attribute_group sपंचांगfts_attribute_group = अणु
+	.attrs = sपंचांगfts_sysfs_attrs
+पूर्ण;
 
-static int stmfts_power_on(struct stmfts_data *sdata)
-{
-	int err;
+अटल पूर्णांक sपंचांगfts_घातer_on(काष्ठा sपंचांगfts_data *sdata)
+अणु
+	पूर्णांक err;
 	u8 reg[8];
 
 	err = regulator_bulk_enable(ARRAY_SIZE(sdata->regulators),
 				    sdata->regulators);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/*
-	 * The datasheet does not specify the power on time, but considering
-	 * that the reset time is < 10ms, I sleep 20ms to be sure
+	 * The datasheet करोes not specअगरy the घातer on समय, but considering
+	 * that the reset समय is < 10ms, I sleep 20ms to be sure
 	 */
 	msleep(20);
 
-	err = i2c_smbus_read_i2c_block_data(sdata->client, STMFTS_READ_INFO,
-					    sizeof(reg), reg);
-	if (err < 0)
-		return err;
-	if (err != sizeof(reg))
-		return -EIO;
+	err = i2c_smbus_पढ़ो_i2c_block_data(sdata->client, STMFTS_READ_INFO,
+					    माप(reg), reg);
+	अगर (err < 0)
+		वापस err;
+	अगर (err != माप(reg))
+		वापस -EIO;
 
 	sdata->chip_id = be16_to_cpup((__be16 *)&reg[6]);
 	sdata->chip_ver = reg[0];
@@ -553,268 +554,268 @@ static int stmfts_power_on(struct stmfts_data *sdata)
 
 	msleep(50);
 
-	err = stmfts_command(sdata, STMFTS_SYSTEM_RESET);
-	if (err)
-		return err;
+	err = sपंचांगfts_command(sdata, STMFTS_SYSTEM_RESET);
+	अगर (err)
+		वापस err;
 
-	err = stmfts_command(sdata, STMFTS_SLEEP_OUT);
-	if (err)
-		return err;
+	err = sपंचांगfts_command(sdata, STMFTS_SLEEP_OUT);
+	अगर (err)
+		वापस err;
 
 	/* optional tuning */
-	err = stmfts_command(sdata, STMFTS_MS_CX_TUNING);
-	if (err)
+	err = sपंचांगfts_command(sdata, STMFTS_MS_CX_TUNING);
+	अगर (err)
 		dev_warn(&sdata->client->dev,
 			 "failed to perform mutual auto tune: %d\n", err);
 
 	/* optional tuning */
-	err = stmfts_command(sdata, STMFTS_SS_CX_TUNING);
-	if (err)
+	err = sपंचांगfts_command(sdata, STMFTS_SS_CX_TUNING);
+	अगर (err)
 		dev_warn(&sdata->client->dev,
 			 "failed to perform self auto tune: %d\n", err);
 
-	err = stmfts_command(sdata, STMFTS_FULL_FORCE_CALIBRATION);
-	if (err)
-		return err;
+	err = sपंचांगfts_command(sdata, STMFTS_FULL_FORCE_CALIBRATION);
+	अगर (err)
+		वापस err;
 
 	/*
-	 * At this point no one is using the touchscreen
-	 * and I don't really care about the return value
+	 * At this poपूर्णांक no one is using the touchscreen
+	 * and I करोn't really care about the वापस value
 	 */
-	(void) i2c_smbus_write_byte(sdata->client, STMFTS_SLEEP_IN);
+	(व्योम) i2c_smbus_ग_लिखो_byte(sdata->client, STMFTS_SLEEP_IN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stmfts_power_off(void *data)
-{
-	struct stmfts_data *sdata = data;
+अटल व्योम sपंचांगfts_घातer_off(व्योम *data)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = data;
 
 	disable_irq(sdata->client->irq);
 	regulator_bulk_disable(ARRAY_SIZE(sdata->regulators),
 						sdata->regulators);
-}
+पूर्ण
 
-/* This function is void because I don't want to prevent using the touch key
- * only because the LEDs don't get registered
+/* This function is व्योम because I करोn't want to prevent using the touch key
+ * only because the LEDs करोn't get रेजिस्टरed
  */
-static int stmfts_enable_led(struct stmfts_data *sdata)
-{
-	int err;
+अटल पूर्णांक sपंचांगfts_enable_led(काष्ठा sपंचांगfts_data *sdata)
+अणु
+	पूर्णांक err;
 
-	/* get the regulator for powering the leds on */
+	/* get the regulator क्रम घातering the leds on */
 	sdata->ledvdd = devm_regulator_get(&sdata->client->dev, "ledvdd");
-	if (IS_ERR(sdata->ledvdd))
-		return PTR_ERR(sdata->ledvdd);
+	अगर (IS_ERR(sdata->ledvdd))
+		वापस PTR_ERR(sdata->ledvdd);
 
 	sdata->led_cdev.name = STMFTS_DEV_NAME;
 	sdata->led_cdev.max_brightness = LED_ON;
 	sdata->led_cdev.brightness = LED_OFF;
-	sdata->led_cdev.brightness_set_blocking = stmfts_brightness_set;
-	sdata->led_cdev.brightness_get = stmfts_brightness_get;
+	sdata->led_cdev.brightness_set_blocking = sपंचांगfts_brightness_set;
+	sdata->led_cdev.brightness_get = sपंचांगfts_brightness_get;
 
-	err = devm_led_classdev_register(&sdata->client->dev, &sdata->led_cdev);
-	if (err) {
+	err = devm_led_classdev_रेजिस्टर(&sdata->client->dev, &sdata->led_cdev);
+	अगर (err) अणु
 		devm_regulator_put(sdata->ledvdd);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmfts_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	int err;
-	struct stmfts_data *sdata;
+अटल पूर्णांक sपंचांगfts_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक err;
+	काष्ठा sपंचांगfts_data *sdata;
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
 						I2C_FUNC_SMBUS_BYTE_DATA |
 						I2C_FUNC_SMBUS_I2C_BLOCK))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	sdata = devm_kzalloc(&client->dev, sizeof(*sdata), GFP_KERNEL);
-	if (!sdata)
-		return -ENOMEM;
+	sdata = devm_kzalloc(&client->dev, माप(*sdata), GFP_KERNEL);
+	अगर (!sdata)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, sdata);
 
 	sdata->client = client;
 	mutex_init(&sdata->mutex);
-	init_completion(&sdata->cmd_done);
+	init_completion(&sdata->cmd_करोne);
 
 	sdata->regulators[STMFTS_REGULATOR_VDD].supply = "vdd";
 	sdata->regulators[STMFTS_REGULATOR_AVDD].supply = "avdd";
 	err = devm_regulator_bulk_get(&client->dev,
 				      ARRAY_SIZE(sdata->regulators),
 				      sdata->regulators);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	sdata->input = devm_input_allocate_device(&client->dev);
-	if (!sdata->input)
-		return -ENOMEM;
+	अगर (!sdata->input)
+		वापस -ENOMEM;
 
 	sdata->input->name = STMFTS_DEV_NAME;
 	sdata->input->id.bustype = BUS_I2C;
-	sdata->input->open = stmfts_input_open;
-	sdata->input->close = stmfts_input_close;
+	sdata->input->खोलो = sपंचांगfts_input_खोलो;
+	sdata->input->बंद = sपंचांगfts_input_बंद;
 
 	input_set_capability(sdata->input, EV_ABS, ABS_MT_POSITION_X);
 	input_set_capability(sdata->input, EV_ABS, ABS_MT_POSITION_Y);
 	touchscreen_parse_properties(sdata->input, true, &sdata->prop);
 
-	input_set_abs_params(sdata->input, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
-	input_set_abs_params(sdata->input, ABS_MT_TOUCH_MINOR, 0, 255, 0, 0);
-	input_set_abs_params(sdata->input, ABS_MT_ORIENTATION, 0, 255, 0, 0);
-	input_set_abs_params(sdata->input, ABS_MT_PRESSURE, 0, 255, 0, 0);
-	input_set_abs_params(sdata->input, ABS_DISTANCE, 0, 255, 0, 0);
+	input_set_असल_params(sdata->input, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
+	input_set_असल_params(sdata->input, ABS_MT_TOUCH_MINOR, 0, 255, 0, 0);
+	input_set_असल_params(sdata->input, ABS_MT_ORIENTATION, 0, 255, 0, 0);
+	input_set_असल_params(sdata->input, ABS_MT_PRESSURE, 0, 255, 0, 0);
+	input_set_असल_params(sdata->input, ABS_DISTANCE, 0, 255, 0, 0);
 
-	sdata->use_key = device_property_read_bool(&client->dev,
+	sdata->use_key = device_property_पढ़ो_bool(&client->dev,
 						   "touch-key-connected");
-	if (sdata->use_key) {
+	अगर (sdata->use_key) अणु
 		input_set_capability(sdata->input, EV_KEY, KEY_MENU);
 		input_set_capability(sdata->input, EV_KEY, KEY_BACK);
-	}
+	पूर्ण
 
 	err = input_mt_init_slots(sdata->input,
-				  STMFTS_MAX_FINGERS, INPUT_MT_DIRECT);
-	if (err)
-		return err;
+				  STMFTS_MAX_FINGERS, INPUT_MT_सूचीECT);
+	अगर (err)
+		वापस err;
 
 	input_set_drvdata(sdata->input, sdata);
 
 	/*
-	 * stmfts_power_on expects interrupt to be disabled, but
-	 * at this point the device is still off and I do not trust
+	 * sपंचांगfts_घातer_on expects पूर्णांकerrupt to be disabled, but
+	 * at this poपूर्णांक the device is still off and I करो not trust
 	 * the status of the irq line that can generate some spurious
-	 * interrupts. To be on the safe side it's better to not enable
-	 * the interrupts during their request.
+	 * पूर्णांकerrupts. To be on the safe side it's better to not enable
+	 * the पूर्णांकerrupts during their request.
 	 */
-	err = devm_request_threaded_irq(&client->dev, client->irq,
-					NULL, stmfts_irq_handler,
+	err = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+					शून्य, sपंचांगfts_irq_handler,
 					IRQF_ONESHOT | IRQF_NO_AUTOEN,
 					"stmfts_irq", sdata);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	dev_dbg(&client->dev, "initializing ST-Microelectronics FTS...\n");
 
-	err = stmfts_power_on(sdata);
-	if (err)
-		return err;
+	err = sपंचांगfts_घातer_on(sdata);
+	अगर (err)
+		वापस err;
 
-	err = devm_add_action_or_reset(&client->dev, stmfts_power_off, sdata);
-	if (err)
-		return err;
+	err = devm_add_action_or_reset(&client->dev, sपंचांगfts_घातer_off, sdata);
+	अगर (err)
+		वापस err;
 
-	err = input_register_device(sdata->input);
-	if (err)
-		return err;
+	err = input_रेजिस्टर_device(sdata->input);
+	अगर (err)
+		वापस err;
 
-	if (sdata->use_key) {
-		err = stmfts_enable_led(sdata);
-		if (err) {
+	अगर (sdata->use_key) अणु
+		err = sपंचांगfts_enable_led(sdata);
+		अगर (err) अणु
 			/*
-			 * Even if the LEDs have failed to be initialized and
+			 * Even अगर the LEDs have failed to be initialized and
 			 * used in the driver, I can still use the device even
-			 * without LEDs. The ledvdd regulator pointer will be
+			 * without LEDs. The ledvdd regulator poपूर्णांकer will be
 			 * used as a flag.
 			 */
 			dev_warn(&client->dev, "unable to use touchkey leds\n");
-			sdata->ledvdd = NULL;
-		}
-	}
+			sdata->ledvdd = शून्य;
+		पूर्ण
+	पूर्ण
 
-	err = devm_device_add_group(&client->dev, &stmfts_attribute_group);
-	if (err)
-		return err;
+	err = devm_device_add_group(&client->dev, &sपंचांगfts_attribute_group);
+	अगर (err)
+		वापस err;
 
-	pm_runtime_enable(&client->dev);
+	pm_runसमय_enable(&client->dev);
 	device_enable_async_suspend(&client->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmfts_remove(struct i2c_client *client)
-{
-	pm_runtime_disable(&client->dev);
+अटल पूर्णांक sपंचांगfts_हटाओ(काष्ठा i2c_client *client)
+अणु
+	pm_runसमय_disable(&client->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stmfts_runtime_suspend(struct device *dev)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused sपंचांगfts_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte(sdata->client, STMFTS_SLEEP_IN);
-	if (ret)
+	ret = i2c_smbus_ग_लिखो_byte(sdata->client, STMFTS_SLEEP_IN);
+	अगर (ret)
 		dev_warn(dev, "failed to suspend device: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused stmfts_runtime_resume(struct device *dev)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused sपंचांगfts_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte(sdata->client, STMFTS_SLEEP_OUT);
-	if (ret)
+	ret = i2c_smbus_ग_लिखो_byte(sdata->client, STMFTS_SLEEP_OUT);
+	अगर (ret)
 		dev_err(dev, "failed to resume device: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused stmfts_suspend(struct device *dev)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused sपंचांगfts_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
 
-	stmfts_power_off(sdata);
+	sपंचांगfts_घातer_off(sdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stmfts_resume(struct device *dev)
-{
-	struct stmfts_data *sdata = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused sपंचांगfts_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांगfts_data *sdata = dev_get_drvdata(dev);
 
-	return stmfts_power_on(sdata);
-}
+	वापस sपंचांगfts_घातer_on(sdata);
+पूर्ण
 
-static const struct dev_pm_ops stmfts_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(stmfts_suspend, stmfts_resume)
-	SET_RUNTIME_PM_OPS(stmfts_runtime_suspend, stmfts_runtime_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops sपंचांगfts_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(sपंचांगfts_suspend, sपंचांगfts_resume)
+	SET_RUNTIME_PM_OPS(sपंचांगfts_runसमय_suspend, sपंचांगfts_runसमय_resume, शून्य)
+पूर्ण;
 
-#ifdef CONFIG_OF
-static const struct of_device_id stmfts_of_match[] = {
-	{ .compatible = "st,stmfts", },
-	{ },
-};
-MODULE_DEVICE_TABLE(of, stmfts_of_match);
-#endif
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id sपंचांगfts_of_match[] = अणु
+	अणु .compatible = "st,stmfts", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, sपंचांगfts_of_match);
+#पूर्ण_अगर
 
-static const struct i2c_device_id stmfts_id[] = {
-	{ "stmfts", 0 },
-	{ },
-};
-MODULE_DEVICE_TABLE(i2c, stmfts_id);
+अटल स्थिर काष्ठा i2c_device_id sपंचांगfts_id[] = अणु
+	अणु "stmfts", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(i2c, sपंचांगfts_id);
 
-static struct i2c_driver stmfts_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver sपंचांगfts_driver = अणु
+	.driver = अणु
 		.name = STMFTS_DEV_NAME,
-		.of_match_table = of_match_ptr(stmfts_of_match),
-		.pm = &stmfts_pm_ops,
+		.of_match_table = of_match_ptr(sपंचांगfts_of_match),
+		.pm = &sपंचांगfts_pm_ops,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
-	.probe = stmfts_probe,
-	.remove = stmfts_remove,
-	.id_table = stmfts_id,
-};
+	पूर्ण,
+	.probe = sपंचांगfts_probe,
+	.हटाओ = sपंचांगfts_हटाओ,
+	.id_table = sपंचांगfts_id,
+पूर्ण;
 
-module_i2c_driver(stmfts_driver);
+module_i2c_driver(sपंचांगfts_driver);
 
 MODULE_AUTHOR("Andi Shyti <andi.shyti@samsung.com>");
 MODULE_DESCRIPTION("STMicroelectronics FTS Touch Screen");

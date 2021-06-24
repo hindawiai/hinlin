@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM nmi
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM nmi
 
-#if !defined(_TRACE_NMI_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_NMI_H
+#अगर !defined(_TRACE_NMI_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_NMI_H
 
-#include <linux/ktime.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 TRACE_EVENT(nmi_handler,
 
-	TP_PROTO(void *handler, s64 delta_ns, int handled),
+	TP_PROTO(व्योम *handler, s64 delta_ns, पूर्णांक handled),
 
 	TP_ARGS(handler, delta_ns, handled),
 
 	TP_STRUCT__entry(
-		__field(	void *,		handler	)
+		__field(	व्योम *,		handler	)
 		__field(	s64,		delta_ns)
-		__field(	int,		handled	)
+		__field(	पूर्णांक,		handled	)
 	),
 
 	TP_fast_assign(
@@ -26,13 +27,13 @@ TRACE_EVENT(nmi_handler,
 		__entry->handled = handled;
 	),
 
-	TP_printk("%ps() delta_ns: %lld handled: %d",
+	TP_prपूर्णांकk("%ps() delta_ns: %lld handled: %d",
 		__entry->handler,
 		__entry->delta_ns,
 		__entry->handled)
 );
 
-#endif /* _TRACE_NMI_H */
+#पूर्ण_अगर /* _TRACE_NMI_H */
 
 /* This part ust be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

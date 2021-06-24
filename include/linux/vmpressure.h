@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_VMPRESSURE_H
-#define __LINUX_VMPRESSURE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_VMPRESSURE_H
+#घोषणा __LINUX_VMPRESSURE_H
 
-#include <linux/mutex.h>
-#include <linux/list.h>
-#include <linux/workqueue.h>
-#include <linux/gfp.h>
-#include <linux/types.h>
-#include <linux/cgroup.h>
-#include <linux/eventfd.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/list.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/types.h>
+#समावेश <linux/cgroup.h>
+#समावेश <linux/eventfd.h>
 
-struct vmpressure {
-	unsigned long scanned;
-	unsigned long reclaimed;
+काष्ठा vmpressure अणु
+	अचिन्हित दीर्घ scanned;
+	अचिन्हित दीर्घ reclaimed;
 
-	unsigned long tree_scanned;
-	unsigned long tree_reclaimed;
+	अचिन्हित दीर्घ tree_scanned;
+	अचिन्हित दीर्घ tree_reclaimed;
 	/* The lock is used to keep the scanned/reclaimed above in sync. */
 	spinlock_t sr_lock;
 
-	/* The list of vmpressure_event structs. */
-	struct list_head events;
-	/* Have to grab the lock on events traversal or modifications. */
-	struct mutex events_lock;
+	/* The list of vmpressure_event काष्ठाs. */
+	काष्ठा list_head events;
+	/* Have to grab the lock on events traversal or modअगरications. */
+	काष्ठा mutex events_lock;
 
-	struct work_struct work;
-};
+	काष्ठा work_काष्ठा work;
+पूर्ण;
 
-struct mem_cgroup;
+काष्ठा mem_cgroup;
 
-#ifdef CONFIG_MEMCG
-extern void vmpressure(gfp_t gfp, struct mem_cgroup *memcg, bool tree,
-		       unsigned long scanned, unsigned long reclaimed);
-extern void vmpressure_prio(gfp_t gfp, struct mem_cgroup *memcg, int prio);
+#अगर_घोषित CONFIG_MEMCG
+बाह्य व्योम vmpressure(gfp_t gfp, काष्ठा mem_cgroup *memcg, bool tree,
+		       अचिन्हित दीर्घ scanned, अचिन्हित दीर्घ reclaimed);
+बाह्य व्योम vmpressure_prio(gfp_t gfp, काष्ठा mem_cgroup *memcg, पूर्णांक prio);
 
-extern void vmpressure_init(struct vmpressure *vmpr);
-extern void vmpressure_cleanup(struct vmpressure *vmpr);
-extern struct vmpressure *memcg_to_vmpressure(struct mem_cgroup *memcg);
-extern struct cgroup_subsys_state *vmpressure_to_css(struct vmpressure *vmpr);
-extern int vmpressure_register_event(struct mem_cgroup *memcg,
-				     struct eventfd_ctx *eventfd,
-				     const char *args);
-extern void vmpressure_unregister_event(struct mem_cgroup *memcg,
-					struct eventfd_ctx *eventfd);
-#else
-static inline void vmpressure(gfp_t gfp, struct mem_cgroup *memcg, bool tree,
-			      unsigned long scanned, unsigned long reclaimed) {}
-static inline void vmpressure_prio(gfp_t gfp, struct mem_cgroup *memcg,
-				   int prio) {}
-#endif /* CONFIG_MEMCG */
-#endif /* __LINUX_VMPRESSURE_H */
+बाह्य व्योम vmpressure_init(काष्ठा vmpressure *vmpr);
+बाह्य व्योम vmpressure_cleanup(काष्ठा vmpressure *vmpr);
+बाह्य काष्ठा vmpressure *memcg_to_vmpressure(काष्ठा mem_cgroup *memcg);
+बाह्य काष्ठा cgroup_subsys_state *vmpressure_to_css(काष्ठा vmpressure *vmpr);
+बाह्य पूर्णांक vmpressure_रेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+				     काष्ठा eventfd_ctx *eventfd,
+				     स्थिर अक्षर *args);
+बाह्य व्योम vmpressure_unरेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+					काष्ठा eventfd_ctx *eventfd);
+#अन्यथा
+अटल अंतरभूत व्योम vmpressure(gfp_t gfp, काष्ठा mem_cgroup *memcg, bool tree,
+			      अचिन्हित दीर्घ scanned, अचिन्हित दीर्घ reclaimed) अणुपूर्ण
+अटल अंतरभूत व्योम vmpressure_prio(gfp_t gfp, काष्ठा mem_cgroup *memcg,
+				   पूर्णांक prio) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_MEMCG */
+#पूर्ण_अगर /* __LINUX_VMPRESSURE_H */

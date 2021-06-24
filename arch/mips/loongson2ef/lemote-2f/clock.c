@@ -1,51 +1,52 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2006 - 2008 Lemote Inc. & Institute of Computing Technology
  * Author: Yanhua, yanh@lemote.com
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/cpufreq.h>
-#include <linux/errno.h>
-#include <linux/export.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
 
-#include <asm/mach-loongson2ef/loongson.h>
+#समावेश <यंत्र/mach-loongson2ef/loongson.h>
 
-enum {
+क्रमागत अणु
 	DC_ZERO, DC_25PT = 2, DC_37PT, DC_50PT, DC_62PT, DC_75PT,
 	DC_87PT, DC_DISABLE, DC_RESV
-};
+पूर्ण;
 
-struct cpufreq_frequency_table loongson2_clockmod_table[] = {
-	{0, DC_RESV, CPUFREQ_ENTRY_INVALID},
-	{0, DC_ZERO, CPUFREQ_ENTRY_INVALID},
-	{0, DC_25PT, 0},
-	{0, DC_37PT, 0},
-	{0, DC_50PT, 0},
-	{0, DC_62PT, 0},
-	{0, DC_75PT, 0},
-	{0, DC_87PT, 0},
-	{0, DC_DISABLE, 0},
-	{0, DC_RESV, CPUFREQ_TABLE_END},
-};
-EXPORT_SYMBOL_GPL(loongson2_clockmod_table);
+काष्ठा cpufreq_frequency_table loongson2_घड़ीmod_table[] = अणु
+	अणु0, DC_RESV, CPUFREQ_ENTRY_INVALIDपूर्ण,
+	अणु0, DC_ZERO, CPUFREQ_ENTRY_INVALIDपूर्ण,
+	अणु0, DC_25PT, 0पूर्ण,
+	अणु0, DC_37PT, 0पूर्ण,
+	अणु0, DC_50PT, 0पूर्ण,
+	अणु0, DC_62PT, 0पूर्ण,
+	अणु0, DC_75PT, 0पूर्ण,
+	अणु0, DC_87PT, 0पूर्ण,
+	अणु0, DC_DISABLE, 0पूर्ण,
+	अणु0, DC_RESV, CPUFREQ_TABLE_ENDपूर्ण,
+पूर्ण;
+EXPORT_SYMBOL_GPL(loongson2_घड़ीmod_table);
 
-int loongson2_cpu_set_rate(unsigned long rate_khz)
-{
-	struct cpufreq_frequency_table *pos;
-	int regval;
+पूर्णांक loongson2_cpu_set_rate(अचिन्हित दीर्घ rate_khz)
+अणु
+	काष्ठा cpufreq_frequency_table *pos;
+	पूर्णांक regval;
 
-	cpufreq_for_each_valid_entry(pos, loongson2_clockmod_table)
-		if (rate_khz == pos->frequency)
-			break;
-	if (rate_khz != pos->frequency)
-		return -ENOTSUPP;
+	cpufreq_क्रम_each_valid_entry(pos, loongson2_घड़ीmod_table)
+		अगर (rate_khz == pos->frequency)
+			अवरोध;
+	अगर (rate_khz != pos->frequency)
+		वापस -ENOTSUPP;
 
-	regval = readl(LOONGSON_CHIPCFG);
+	regval = पढ़ोl(LOONGSON_CHIPCFG);
 	regval = (regval & ~0x7) | (pos->driver_data - 1);
-	writel(regval, LOONGSON_CHIPCFG);
+	ग_लिखोl(regval, LOONGSON_CHIPCFG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(loongson2_cpu_set_rate);

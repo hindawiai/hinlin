@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC64_SCRATCHPAD_H
-#define _SPARC64_SCRATCHPAD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC64_SCRATCHPAD_H
+#घोषणा _SPARC64_SCRATCHPAD_H
 
-/* Sun4v scratchpad registers, accessed via ASI_SCRATCHPAD.  */
+/* Sun4v scratchpad रेजिस्टरs, accessed via ASI_SCRATCHPAD.  */
 
-#define SCRATCHPAD_MMU_MISS	0x00 /* Shared with OBP - set by OBP	    */
-#define SCRATCHPAD_CPUID	0x08 /* Shared with OBP - set by hypervisor */
-#define SCRATCHPAD_UTSBREG1	0x10
-#define SCRATCHPAD_UTSBREG2	0x18
+#घोषणा SCRATCHPAD_MMU_MISS	0x00 /* Shared with OBP - set by OBP	    */
+#घोषणा SCRATCHPAD_CPUID	0x08 /* Shared with OBP - set by hypervisor */
+#घोषणा SCRATCHPAD_UTSBREG1	0x10
+#घोषणा SCRATCHPAD_UTSBREG2	0x18
 	/* 0x20 and 0x28, hypervisor only... */
-#define SCRATCHPAD_UNUSED1	0x30
-#define SCRATCHPAD_UNUSED2	0x38 /* Reserved for OBP		    */
+#घोषणा SCRATCHPAD_UNUSED1	0x30
+#घोषणा SCRATCHPAD_UNUSED2	0x38 /* Reserved क्रम OBP		    */
 
-#endif /* !(_SPARC64_SCRATCHPAD_H) */
+#पूर्ण_अगर /* !(_SPARC64_SCRATCHPAD_H) */

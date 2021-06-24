@@ -1,259 +1,260 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014-2017 Linaro Ltd. <ard.biesheuvel@linaro.org>
  */
 
-#include <linux/elf.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/sort.h>
-#include <linux/moduleloader.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/moduleloader.h>
 
-#include <asm/cache.h>
-#include <asm/opcodes.h>
+#समावेश <यंत्र/cache.h>
+#समावेश <यंत्र/opcodes.h>
 
-#define PLT_ENT_STRIDE		L1_CACHE_BYTES
-#define PLT_ENT_COUNT		(PLT_ENT_STRIDE / sizeof(u32))
-#define PLT_ENT_SIZE		(sizeof(struct plt_entries) / PLT_ENT_COUNT)
+#घोषणा PLT_ENT_STRIDE		L1_CACHE_BYTES
+#घोषणा PLT_ENT_COUNT		(PLT_ENT_STRIDE / माप(u32))
+#घोषणा PLT_ENT_SIZE		(माप(काष्ठा plt_entries) / PLT_ENT_COUNT)
 
-#ifdef CONFIG_THUMB2_KERNEL
-#define PLT_ENT_LDR		__opcode_to_mem_thumb32(0xf8dff000 | \
+#अगर_घोषित CONFIG_THUMB2_KERNEL
+#घोषणा PLT_ENT_LDR		__opcode_to_mem_thumb32(0xf8dff000 | \
 							(PLT_ENT_STRIDE - 4))
-#else
-#define PLT_ENT_LDR		__opcode_to_mem_arm(0xe59ff000 | \
+#अन्यथा
+#घोषणा PLT_ENT_LDR		__opcode_to_mem_arm(0xe59ff000 | \
 						    (PLT_ENT_STRIDE - 8))
-#endif
+#पूर्ण_अगर
 
-struct plt_entries {
+काष्ठा plt_entries अणु
 	u32	ldr[PLT_ENT_COUNT];
 	u32	lit[PLT_ENT_COUNT];
-};
+पूर्ण;
 
-static bool in_init(const struct module *mod, unsigned long loc)
-{
-	return loc - (u32)mod->init_layout.base < mod->init_layout.size;
-}
+अटल bool in_init(स्थिर काष्ठा module *mod, अचिन्हित दीर्घ loc)
+अणु
+	वापस loc - (u32)mod->init_layout.base < mod->init_layout.size;
+पूर्ण
 
-u32 get_module_plt(struct module *mod, unsigned long loc, Elf32_Addr val)
-{
-	struct mod_plt_sec *pltsec = !in_init(mod, loc) ? &mod->arch.core :
+u32 get_module_plt(काष्ठा module *mod, अचिन्हित दीर्घ loc, Elf32_Addr val)
+अणु
+	काष्ठा mod_plt_sec *pltsec = !in_init(mod, loc) ? &mod->arch.core :
 							  &mod->arch.init;
 
-	struct plt_entries *plt = (struct plt_entries *)pltsec->plt->sh_addr;
-	int idx = 0;
+	काष्ठा plt_entries *plt = (काष्ठा plt_entries *)pltsec->plt->sh_addr;
+	पूर्णांक idx = 0;
 
 	/*
-	 * Look for an existing entry pointing to 'val'. Given that the
+	 * Look क्रम an existing entry poपूर्णांकing to 'val'. Given that the
 	 * relocations are sorted, this will be the last entry we allocated.
-	 * (if one exists).
+	 * (अगर one exists).
 	 */
-	if (pltsec->plt_count > 0) {
+	अगर (pltsec->plt_count > 0) अणु
 		plt += (pltsec->plt_count - 1) / PLT_ENT_COUNT;
 		idx = (pltsec->plt_count - 1) % PLT_ENT_COUNT;
 
-		if (plt->lit[idx] == val)
-			return (u32)&plt->ldr[idx];
+		अगर (plt->lit[idx] == val)
+			वापस (u32)&plt->ldr[idx];
 
 		idx = (idx + 1) % PLT_ENT_COUNT;
-		if (!idx)
+		अगर (!idx)
 			plt++;
-	}
+	पूर्ण
 
 	pltsec->plt_count++;
 	BUG_ON(pltsec->plt_count * PLT_ENT_SIZE > pltsec->plt->sh_size);
 
-	if (!idx)
+	अगर (!idx)
 		/* Populate a new set of entries */
-		*plt = (struct plt_entries){
-			{ [0 ... PLT_ENT_COUNT - 1] = PLT_ENT_LDR, },
-			{ val, }
-		};
-	else
+		*plt = (काष्ठा plt_entries)अणु
+			अणु [0 ... PLT_ENT_COUNT - 1] = PLT_ENT_LDR, पूर्ण,
+			अणु val, पूर्ण
+		पूर्ण;
+	अन्यथा
 		plt->lit[idx] = val;
 
-	return (u32)&plt->ldr[idx];
-}
+	वापस (u32)&plt->ldr[idx];
+पूर्ण
 
-#define cmp_3way(a,b)	((a) < (b) ? -1 : (a) > (b))
+#घोषणा cmp_3way(a,b)	((a) < (b) ? -1 : (a) > (b))
 
-static int cmp_rel(const void *a, const void *b)
-{
-	const Elf32_Rel *x = a, *y = b;
-	int i;
+अटल पूर्णांक cmp_rel(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	स्थिर Elf32_Rel *x = a, *y = b;
+	पूर्णांक i;
 
 	/* sort by type and symbol index */
 	i = cmp_3way(ELF32_R_TYPE(x->r_info), ELF32_R_TYPE(y->r_info));
-	if (i == 0)
+	अगर (i == 0)
 		i = cmp_3way(ELF32_R_SYM(x->r_info), ELF32_R_SYM(y->r_info));
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static bool is_zero_addend_relocation(Elf32_Addr base, const Elf32_Rel *rel)
-{
+अटल bool is_zero_addend_relocation(Elf32_Addr base, स्थिर Elf32_Rel *rel)
+अणु
 	u32 *tval = (u32 *)(base + rel->r_offset);
 
 	/*
 	 * Do a bitwise compare on the raw addend rather than fully decoding
-	 * the offset and doing an arithmetic comparison.
+	 * the offset and करोing an arithmetic comparison.
 	 * Note that a zero-addend jump/call relocation is encoded taking the
-	 * PC bias into account, i.e., -8 for ARM and -4 for Thumb2.
+	 * PC bias पूर्णांकo account, i.e., -8 क्रम ARM and -4 क्रम Thumb2.
 	 */
-	switch (ELF32_R_TYPE(rel->r_info)) {
+	चयन (ELF32_R_TYPE(rel->r_info)) अणु
 		u16 upper, lower;
 
-	case R_ARM_THM_CALL:
-	case R_ARM_THM_JUMP24:
+	हाल R_ARM_THM_CALL:
+	हाल R_ARM_THM_JUMP24:
 		upper = __mem_to_opcode_thumb16(((u16 *)tval)[0]);
 		lower = __mem_to_opcode_thumb16(((u16 *)tval)[1]);
 
-		return (upper & 0x7ff) == 0x7ff && (lower & 0x2fff) == 0x2ffe;
+		वापस (upper & 0x7ff) == 0x7ff && (lower & 0x2fff) == 0x2ffe;
 
-	case R_ARM_CALL:
-	case R_ARM_PC24:
-	case R_ARM_JUMP24:
-		return (__mem_to_opcode_arm(*tval) & 0xffffff) == 0xfffffe;
-	}
+	हाल R_ARM_CALL:
+	हाल R_ARM_PC24:
+	हाल R_ARM_JUMP24:
+		वापस (__mem_to_opcode_arm(*tval) & 0xffffff) == 0xfffffe;
+	पूर्ण
 	BUG();
-}
+पूर्ण
 
-static bool duplicate_rel(Elf32_Addr base, const Elf32_Rel *rel, int num)
-{
-	const Elf32_Rel *prev;
+अटल bool duplicate_rel(Elf32_Addr base, स्थिर Elf32_Rel *rel, पूर्णांक num)
+अणु
+	स्थिर Elf32_Rel *prev;
 
 	/*
 	 * Entries are sorted by type and symbol index. That means that,
-	 * if a duplicate entry exists, it must be in the preceding
+	 * अगर a duplicate entry exists, it must be in the preceding
 	 * slot.
 	 */
-	if (!num)
-		return false;
+	अगर (!num)
+		वापस false;
 
 	prev = rel + num - 1;
-	return cmp_rel(rel + num, prev) == 0 &&
+	वापस cmp_rel(rel + num, prev) == 0 &&
 	       is_zero_addend_relocation(base, prev);
-}
+पूर्ण
 
 /* Count how many PLT entries we may need */
-static unsigned int count_plts(const Elf32_Sym *syms, Elf32_Addr base,
-			       const Elf32_Rel *rel, int num, Elf32_Word dstidx)
-{
-	unsigned int ret = 0;
-	const Elf32_Sym *s;
-	int i;
+अटल अचिन्हित पूर्णांक count_plts(स्थिर Elf32_Sym *syms, Elf32_Addr base,
+			       स्थिर Elf32_Rel *rel, पूर्णांक num, Elf32_Word dstidx)
+अणु
+	अचिन्हित पूर्णांक ret = 0;
+	स्थिर Elf32_Sym *s;
+	पूर्णांक i;
 
-	for (i = 0; i < num; i++) {
-		switch (ELF32_R_TYPE(rel[i].r_info)) {
-		case R_ARM_CALL:
-		case R_ARM_PC24:
-		case R_ARM_JUMP24:
-		case R_ARM_THM_CALL:
-		case R_ARM_THM_JUMP24:
+	क्रम (i = 0; i < num; i++) अणु
+		चयन (ELF32_R_TYPE(rel[i].r_info)) अणु
+		हाल R_ARM_CALL:
+		हाल R_ARM_PC24:
+		हाल R_ARM_JUMP24:
+		हाल R_ARM_THM_CALL:
+		हाल R_ARM_THM_JUMP24:
 			/*
-			 * We only have to consider branch targets that resolve
-			 * to symbols that are defined in a different section.
+			 * We only have to consider branch tarमाला_लो that resolve
+			 * to symbols that are defined in a dअगरferent section.
 			 * This is not simply a heuristic, it is a fundamental
 			 * limitation, since there is no guaranteed way to emit
-			 * PLT entries sufficiently close to the branch if the
+			 * PLT entries sufficiently बंद to the branch अगर the
 			 * section size exceeds the range of a branch
-			 * instruction. So ignore relocations against defined
-			 * symbols if they live in the same section as the
+			 * inकाष्ठाion. So ignore relocations against defined
+			 * symbols अगर they live in the same section as the
 			 * relocation target.
 			 */
 			s = syms + ELF32_R_SYM(rel[i].r_info);
-			if (s->st_shndx == dstidx)
-				break;
+			अगर (s->st_shndx == dstidx)
+				अवरोध;
 
 			/*
 			 * Jump relocations with non-zero addends against
 			 * undefined symbols are supported by the ELF spec, but
-			 * do not occur in practice (e.g., 'jump n bytes past
-			 * the entry point of undefined function symbol f').
+			 * करो not occur in practice (e.g., 'jump n bytes past
+			 * the entry poपूर्णांक of undefined function symbol f').
 			 * So we need to support them, but there is no need to
-			 * take them into consideration when trying to optimize
-			 * this code. So let's only check for duplicates when
-			 * the addend is zero. (Note that calls into the core
+			 * take them पूर्णांकo consideration when trying to optimize
+			 * this code. So let's only check क्रम duplicates when
+			 * the addend is zero. (Note that calls पूर्णांकo the core
 			 * module via init PLT entries could involve section
-			 * relative symbol references with non-zero addends, for
+			 * relative symbol references with non-zero addends, क्रम
 			 * which we may end up emitting duplicates, but the init
-			 * PLT is released along with the rest of the .init
+			 * PLT is released aदीर्घ with the rest of the .init
 			 * region as soon as module loading completes.)
 			 */
-			if (!is_zero_addend_relocation(base, rel + i) ||
+			अगर (!is_zero_addend_relocation(base, rel + i) ||
 			    !duplicate_rel(base, rel, i))
 				ret++;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int module_frob_arch_sections(Elf_Ehdr *ehdr, Elf_Shdr *sechdrs,
-			      char *secstrings, struct module *mod)
-{
-	unsigned long core_plts = 0;
-	unsigned long init_plts = 0;
+पूर्णांक module_frob_arch_sections(Elf_Ehdr *ehdr, Elf_Shdr *sechdrs,
+			      अक्षर *secstrings, काष्ठा module *mod)
+अणु
+	अचिन्हित दीर्घ core_plts = 0;
+	अचिन्हित दीर्घ init_plts = 0;
 	Elf32_Shdr *s, *sechdrs_end = sechdrs + ehdr->e_shnum;
-	Elf32_Sym *syms = NULL;
+	Elf32_Sym *syms = शून्य;
 
 	/*
-	 * To store the PLTs, we expand the .text section for core module code
-	 * and for initialization code.
+	 * To store the PLTs, we expand the .text section क्रम core module code
+	 * and क्रम initialization code.
 	 */
-	for (s = sechdrs; s < sechdrs_end; ++s) {
-		if (strcmp(".plt", secstrings + s->sh_name) == 0)
+	क्रम (s = sechdrs; s < sechdrs_end; ++s) अणु
+		अगर (म_भेद(".plt", secstrings + s->sh_name) == 0)
 			mod->arch.core.plt = s;
-		else if (strcmp(".init.plt", secstrings + s->sh_name) == 0)
+		अन्यथा अगर (म_भेद(".init.plt", secstrings + s->sh_name) == 0)
 			mod->arch.init.plt = s;
-		else if (s->sh_type == SHT_SYMTAB)
+		अन्यथा अगर (s->sh_type == SHT_SYMTAB)
 			syms = (Elf32_Sym *)s->sh_addr;
-	}
+	पूर्ण
 
-	if (!mod->arch.core.plt || !mod->arch.init.plt) {
+	अगर (!mod->arch.core.plt || !mod->arch.init.plt) अणु
 		pr_err("%s: module PLT section(s) missing\n", mod->name);
-		return -ENOEXEC;
-	}
-	if (!syms) {
+		वापस -ENOEXEC;
+	पूर्ण
+	अगर (!syms) अणु
 		pr_err("%s: module symtab section missing\n", mod->name);
-		return -ENOEXEC;
-	}
+		वापस -ENOEXEC;
+	पूर्ण
 
-	for (s = sechdrs + 1; s < sechdrs_end; ++s) {
-		Elf32_Rel *rels = (void *)ehdr + s->sh_offset;
-		int numrels = s->sh_size / sizeof(Elf32_Rel);
+	क्रम (s = sechdrs + 1; s < sechdrs_end; ++s) अणु
+		Elf32_Rel *rels = (व्योम *)ehdr + s->sh_offset;
+		पूर्णांक numrels = s->sh_size / माप(Elf32_Rel);
 		Elf32_Shdr *dstsec = sechdrs + s->sh_info;
 
-		if (s->sh_type != SHT_REL)
-			continue;
+		अगर (s->sh_type != SHT_REL)
+			जारी;
 
 		/* ignore relocations that operate on non-exec sections */
-		if (!(dstsec->sh_flags & SHF_EXECINSTR))
-			continue;
+		अगर (!(dstsec->sh_flags & SHF_EXECINSTR))
+			जारी;
 
 		/* sort by type and symbol index */
-		sort(rels, numrels, sizeof(Elf32_Rel), cmp_rel, NULL);
+		sort(rels, numrels, माप(Elf32_Rel), cmp_rel, शून्य);
 
-		if (strncmp(secstrings + dstsec->sh_name, ".init", 5) != 0)
+		अगर (म_भेदन(secstrings + dstsec->sh_name, ".init", 5) != 0)
 			core_plts += count_plts(syms, dstsec->sh_addr, rels,
 						numrels, s->sh_info);
-		else
+		अन्यथा
 			init_plts += count_plts(syms, dstsec->sh_addr, rels,
 						numrels, s->sh_info);
-	}
+	पूर्ण
 
 	mod->arch.core.plt->sh_type = SHT_NOBITS;
 	mod->arch.core.plt->sh_flags = SHF_EXECINSTR | SHF_ALLOC;
 	mod->arch.core.plt->sh_addralign = L1_CACHE_BYTES;
 	mod->arch.core.plt->sh_size = round_up(core_plts * PLT_ENT_SIZE,
-					       sizeof(struct plt_entries));
+					       माप(काष्ठा plt_entries));
 	mod->arch.core.plt_count = 0;
 
 	mod->arch.init.plt->sh_type = SHT_NOBITS;
 	mod->arch.init.plt->sh_flags = SHF_EXECINSTR | SHF_ALLOC;
 	mod->arch.init.plt->sh_addralign = L1_CACHE_BYTES;
 	mod->arch.init.plt->sh_size = round_up(init_plts * PLT_ENT_SIZE,
-					       sizeof(struct plt_entries));
+					       माप(काष्ठा plt_entries));
 	mod->arch.init.plt_count = 0;
 
 	pr_debug("%s: plt=%x, init.plt=%x\n", __func__,
 		 mod->arch.core.plt->sh_size, mod->arch.init.plt->sh_size);
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/bitops.h>
-#include <linux/regmap.h>
-#include <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/export.h>
 
-#include "clk-regmap-mux.h"
+#समावेश "clk-regmap-mux.h"
 
-static inline struct clk_regmap_mux *to_clk_regmap_mux(struct clk_hw *hw)
-{
-	return container_of(to_clk_regmap(hw), struct clk_regmap_mux, clkr);
-}
+अटल अंतरभूत काष्ठा clk_regmap_mux *to_clk_regmap_mux(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(to_clk_regmap(hw), काष्ठा clk_regmap_mux, clkr);
+पूर्ण
 
-static u8 mux_get_parent(struct clk_hw *hw)
-{
-	struct clk_regmap_mux *mux = to_clk_regmap_mux(hw);
-	struct clk_regmap *clkr = to_clk_regmap(hw);
-	unsigned int mask = GENMASK(mux->width - 1, 0);
-	unsigned int val;
+अटल u8 mux_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap_mux *mux = to_clk_regmap_mux(hw);
+	काष्ठा clk_regmap *clkr = to_clk_regmap(hw);
+	अचिन्हित पूर्णांक mask = GENMASK(mux->width - 1, 0);
+	अचिन्हित पूर्णांक val;
 
-	regmap_read(clkr->regmap, mux->reg, &val);
+	regmap_पढ़ो(clkr->regmap, mux->reg, &val);
 
-	val >>= mux->shift;
+	val >>= mux->shअगरt;
 	val &= mask;
 
-	if (mux->parent_map)
-		return qcom_find_src_index(hw, mux->parent_map, val);
+	अगर (mux->parent_map)
+		वापस qcom_find_src_index(hw, mux->parent_map, val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int mux_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_regmap_mux *mux = to_clk_regmap_mux(hw);
-	struct clk_regmap *clkr = to_clk_regmap(hw);
-	unsigned int mask = GENMASK(mux->width + mux->shift - 1, mux->shift);
-	unsigned int val;
+अटल पूर्णांक mux_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_regmap_mux *mux = to_clk_regmap_mux(hw);
+	काष्ठा clk_regmap *clkr = to_clk_regmap(hw);
+	अचिन्हित पूर्णांक mask = GENMASK(mux->width + mux->shअगरt - 1, mux->shअगरt);
+	अचिन्हित पूर्णांक val;
 
-	if (mux->parent_map)
+	अगर (mux->parent_map)
 		index = mux->parent_map[index].cfg;
 
 	val = index;
-	val <<= mux->shift;
+	val <<= mux->shअगरt;
 
-	return regmap_update_bits(clkr->regmap, mux->reg, mask, val);
-}
+	वापस regmap_update_bits(clkr->regmap, mux->reg, mask, val);
+पूर्ण
 
-const struct clk_ops clk_regmap_mux_closest_ops = {
+स्थिर काष्ठा clk_ops clk_regmap_mux_बंदst_ops = अणु
 	.get_parent = mux_get_parent,
 	.set_parent = mux_set_parent,
-	.determine_rate = __clk_mux_determine_rate_closest,
-};
-EXPORT_SYMBOL_GPL(clk_regmap_mux_closest_ops);
+	.determine_rate = __clk_mux_determine_rate_बंदst,
+पूर्ण;
+EXPORT_SYMBOL_GPL(clk_regmap_mux_बंदst_ops);

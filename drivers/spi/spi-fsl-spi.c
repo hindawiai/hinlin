@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Freescale SPI controller driver.
  *
- * Maintainer: Kumar Gala
+ * Maपूर्णांकainer: Kumar Gala
  *
  * Copyright (C) 2006 Polycom, Inc.
  * Copyright 2010 Freescale Semiconductor, Inc.
@@ -15,249 +16,249 @@
  * Copyright (c) 2012 Aeroflex Gaisler AB.
  * Author: Andreas Larsson <andreas@gaisler.com>
  */
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/fsl_devices.h>
-#include <linux/gpio/consumer.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/spi_bitbang.h>
-#include <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/fsl_devices.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/spi_bitbang.h>
+#समावेश <linux/types.h>
 
-#ifdef CONFIG_FSL_SOC
-#include <sysdev/fsl_soc.h>
-#endif
+#अगर_घोषित CONFIG_FSL_SOC
+#समावेश <sysdev/fsl_soc.h>
+#पूर्ण_अगर
 
-/* Specific to the MPC8306/MPC8309 */
-#define IMMR_SPI_CS_OFFSET 0x14c
-#define SPI_BOOT_SEL_BIT   0x80000000
+/* Specअगरic to the MPC8306/MPC8309 */
+#घोषणा IMMR_SPI_CS_OFFSET 0x14c
+#घोषणा SPI_BOOT_SEL_BIT   0x80000000
 
-#include "spi-fsl-lib.h"
-#include "spi-fsl-cpm.h"
-#include "spi-fsl-spi.h"
+#समावेश "spi-fsl-lib.h"
+#समावेश "spi-fsl-cpm.h"
+#समावेश "spi-fsl-spi.h"
 
-#define TYPE_FSL	0
-#define TYPE_GRLIB	1
+#घोषणा TYPE_FSL	0
+#घोषणा TYPE_GRLIB	1
 
-struct fsl_spi_match_data {
-	int type;
-};
+काष्ठा fsl_spi_match_data अणु
+	पूर्णांक type;
+पूर्ण;
 
-static struct fsl_spi_match_data of_fsl_spi_fsl_config = {
+अटल काष्ठा fsl_spi_match_data of_fsl_spi_fsl_config = अणु
 	.type = TYPE_FSL,
-};
+पूर्ण;
 
-static struct fsl_spi_match_data of_fsl_spi_grlib_config = {
+अटल काष्ठा fsl_spi_match_data of_fsl_spi_grlib_config = अणु
 	.type = TYPE_GRLIB,
-};
+पूर्ण;
 
-static const struct of_device_id of_fsl_spi_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id of_fsl_spi_match[] = अणु
+	अणु
 		.compatible = "fsl,spi",
 		.data = &of_fsl_spi_fsl_config,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "aeroflexgaisler,spictrl",
 		.data = &of_fsl_spi_grlib_config,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_fsl_spi_match);
 
-static int fsl_spi_get_type(struct device *dev)
-{
-	const struct of_device_id *match;
+अटल पूर्णांक fsl_spi_get_type(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
 
-	if (dev->of_node) {
+	अगर (dev->of_node) अणु
 		match = of_match_node(of_fsl_spi_match, dev->of_node);
-		if (match && match->data)
-			return ((struct fsl_spi_match_data *)match->data)->type;
-	}
-	return TYPE_FSL;
-}
+		अगर (match && match->data)
+			वापस ((काष्ठा fsl_spi_match_data *)match->data)->type;
+	पूर्ण
+	वापस TYPE_FSL;
+पूर्ण
 
-static void fsl_spi_change_mode(struct spi_device *spi)
-{
-	struct mpc8xxx_spi *mspi = spi_master_get_devdata(spi->master);
-	struct spi_mpc8xxx_cs *cs = spi->controller_state;
-	struct fsl_spi_reg __iomem *reg_base = mspi->reg_base;
+अटल व्योम fsl_spi_change_mode(काष्ठा spi_device *spi)
+अणु
+	काष्ठा mpc8xxx_spi *mspi = spi_master_get_devdata(spi->master);
+	काष्ठा spi_mpc8xxx_cs *cs = spi->controller_state;
+	काष्ठा fsl_spi_reg __iomem *reg_base = mspi->reg_base;
 	__be32 __iomem *mode = &reg_base->mode;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (cs->hw_mode == mpc8xxx_spi_read_reg(mode))
-		return;
+	अगर (cs->hw_mode == mpc8xxx_spi_पढ़ो_reg(mode))
+		वापस;
 
-	/* Turn off IRQs locally to minimize time that SPI is disabled. */
+	/* Turn off IRQs locally to minimize समय that SPI is disabled. */
 	local_irq_save(flags);
 
 	/* Turn off SPI unit prior changing mode */
-	mpc8xxx_spi_write_reg(mode, cs->hw_mode & ~SPMODE_ENABLE);
+	mpc8xxx_spi_ग_लिखो_reg(mode, cs->hw_mode & ~SPMODE_ENABLE);
 
 	/* When in CPM mode, we need to reinit tx and rx. */
-	if (mspi->flags & SPI_CPM_MODE) {
+	अगर (mspi->flags & SPI_CPM_MODE) अणु
 		fsl_spi_cpm_reinit_txrx(mspi);
-	}
-	mpc8xxx_spi_write_reg(mode, cs->hw_mode);
+	पूर्ण
+	mpc8xxx_spi_ग_लिखो_reg(mode, cs->hw_mode);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static void fsl_spi_chipselect(struct spi_device *spi, int value)
-{
-	struct mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(spi->master);
-	struct fsl_spi_platform_data *pdata;
-	struct spi_mpc8xxx_cs	*cs = spi->controller_state;
+अटल व्योम fsl_spi_chipselect(काष्ठा spi_device *spi, पूर्णांक value)
+अणु
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(spi->master);
+	काष्ठा fsl_spi_platक्रमm_data *pdata;
+	काष्ठा spi_mpc8xxx_cs	*cs = spi->controller_state;
 
-	pdata = spi->dev.parent->parent->platform_data;
+	pdata = spi->dev.parent->parent->platक्रमm_data;
 
-	if (value == BITBANG_CS_INACTIVE) {
-		if (pdata->cs_control)
+	अगर (value == BITBANG_CS_INACTIVE) अणु
+		अगर (pdata->cs_control)
 			pdata->cs_control(spi, false);
-	}
+	पूर्ण
 
-	if (value == BITBANG_CS_ACTIVE) {
-		mpc8xxx_spi->rx_shift = cs->rx_shift;
-		mpc8xxx_spi->tx_shift = cs->tx_shift;
+	अगर (value == BITBANG_CS_ACTIVE) अणु
+		mpc8xxx_spi->rx_shअगरt = cs->rx_shअगरt;
+		mpc8xxx_spi->tx_shअगरt = cs->tx_shअगरt;
 		mpc8xxx_spi->get_rx = cs->get_rx;
 		mpc8xxx_spi->get_tx = cs->get_tx;
 
 		fsl_spi_change_mode(spi);
 
-		if (pdata->cs_control)
+		अगर (pdata->cs_control)
 			pdata->cs_control(spi, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fsl_spi_qe_cpu_set_shifts(u32 *rx_shift, u32 *tx_shift,
-				      int bits_per_word, int msb_first)
-{
-	*rx_shift = 0;
-	*tx_shift = 0;
-	if (msb_first) {
-		if (bits_per_word <= 8) {
-			*rx_shift = 16;
-			*tx_shift = 24;
-		} else if (bits_per_word <= 16) {
-			*rx_shift = 16;
-			*tx_shift = 16;
-		}
-	} else {
-		if (bits_per_word <= 8)
-			*rx_shift = 8;
-	}
-}
+अटल व्योम fsl_spi_qe_cpu_set_shअगरts(u32 *rx_shअगरt, u32 *tx_shअगरt,
+				      पूर्णांक bits_per_word, पूर्णांक msb_first)
+अणु
+	*rx_shअगरt = 0;
+	*tx_shअगरt = 0;
+	अगर (msb_first) अणु
+		अगर (bits_per_word <= 8) अणु
+			*rx_shअगरt = 16;
+			*tx_shअगरt = 24;
+		पूर्ण अन्यथा अगर (bits_per_word <= 16) अणु
+			*rx_shअगरt = 16;
+			*tx_shअगरt = 16;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (bits_per_word <= 8)
+			*rx_shअगरt = 8;
+	पूर्ण
+पूर्ण
 
-static void fsl_spi_grlib_set_shifts(u32 *rx_shift, u32 *tx_shift,
-				     int bits_per_word, int msb_first)
-{
-	*rx_shift = 0;
-	*tx_shift = 0;
-	if (bits_per_word <= 16) {
-		if (msb_first) {
-			*rx_shift = 16; /* LSB in bit 16 */
-			*tx_shift = 32 - bits_per_word; /* MSB in bit 31 */
-		} else {
-			*rx_shift = 16 - bits_per_word; /* MSB in bit 15 */
-		}
-	}
-}
+अटल व्योम fsl_spi_grlib_set_shअगरts(u32 *rx_shअगरt, u32 *tx_shअगरt,
+				     पूर्णांक bits_per_word, पूर्णांक msb_first)
+अणु
+	*rx_shअगरt = 0;
+	*tx_shअगरt = 0;
+	अगर (bits_per_word <= 16) अणु
+		अगर (msb_first) अणु
+			*rx_shअगरt = 16; /* LSB in bit 16 */
+			*tx_shअगरt = 32 - bits_per_word; /* MSB in bit 31 */
+		पूर्ण अन्यथा अणु
+			*rx_shअगरt = 16 - bits_per_word; /* MSB in bit 15 */
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int mspi_apply_cpu_mode_quirks(struct spi_mpc8xxx_cs *cs,
-				struct spi_device *spi,
-				struct mpc8xxx_spi *mpc8xxx_spi,
-				int bits_per_word)
-{
-	cs->rx_shift = 0;
-	cs->tx_shift = 0;
-	if (bits_per_word <= 8) {
+अटल पूर्णांक mspi_apply_cpu_mode_quirks(काष्ठा spi_mpc8xxx_cs *cs,
+				काष्ठा spi_device *spi,
+				काष्ठा mpc8xxx_spi *mpc8xxx_spi,
+				पूर्णांक bits_per_word)
+अणु
+	cs->rx_shअगरt = 0;
+	cs->tx_shअगरt = 0;
+	अगर (bits_per_word <= 8) अणु
 		cs->get_rx = mpc8xxx_spi_rx_buf_u8;
 		cs->get_tx = mpc8xxx_spi_tx_buf_u8;
-	} else if (bits_per_word <= 16) {
+	पूर्ण अन्यथा अगर (bits_per_word <= 16) अणु
 		cs->get_rx = mpc8xxx_spi_rx_buf_u16;
 		cs->get_tx = mpc8xxx_spi_tx_buf_u16;
-	} else if (bits_per_word <= 32) {
+	पूर्ण अन्यथा अगर (bits_per_word <= 32) अणु
 		cs->get_rx = mpc8xxx_spi_rx_buf_u32;
 		cs->get_tx = mpc8xxx_spi_tx_buf_u32;
-	} else
-		return -EINVAL;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
-	if (mpc8xxx_spi->set_shifts)
-		mpc8xxx_spi->set_shifts(&cs->rx_shift, &cs->tx_shift,
+	अगर (mpc8xxx_spi->set_shअगरts)
+		mpc8xxx_spi->set_shअगरts(&cs->rx_shअगरt, &cs->tx_shअगरt,
 					bits_per_word,
 					!(spi->mode & SPI_LSB_FIRST));
 
-	mpc8xxx_spi->rx_shift = cs->rx_shift;
-	mpc8xxx_spi->tx_shift = cs->tx_shift;
+	mpc8xxx_spi->rx_shअगरt = cs->rx_shअगरt;
+	mpc8xxx_spi->tx_shअगरt = cs->tx_shअगरt;
 	mpc8xxx_spi->get_rx = cs->get_rx;
 	mpc8xxx_spi->get_tx = cs->get_tx;
 
-	return bits_per_word;
-}
+	वापस bits_per_word;
+पूर्ण
 
-static int mspi_apply_qe_mode_quirks(struct spi_mpc8xxx_cs *cs,
-				struct spi_device *spi,
-				int bits_per_word)
-{
-	/* QE uses Little Endian for words > 8
-	 * so transform all words > 8 into 8 bits
-	 * Unfortnatly that doesn't work for LSB so
-	 * reject these for now */
-	/* Note: 32 bits word, LSB works iff
+अटल पूर्णांक mspi_apply_qe_mode_quirks(काष्ठा spi_mpc8xxx_cs *cs,
+				काष्ठा spi_device *spi,
+				पूर्णांक bits_per_word)
+अणु
+	/* QE uses Little Endian क्रम words > 8
+	 * so transक्रमm all words > 8 पूर्णांकo 8 bits
+	 * Unक्रमtnatly that करोesn't work क्रम LSB so
+	 * reject these क्रम now */
+	/* Note: 32 bits word, LSB works अगरf
 	 * tfcr/rfcr is set to CPMFCR_GBL */
-	if (spi->mode & SPI_LSB_FIRST &&
+	अगर (spi->mode & SPI_LSB_FIRST &&
 	    bits_per_word > 8)
-		return -EINVAL;
-	if (bits_per_word > 8)
-		return 8; /* pretend its 8 bits */
-	return bits_per_word;
-}
+		वापस -EINVAL;
+	अगर (bits_per_word > 8)
+		वापस 8; /* pretend its 8 bits */
+	वापस bits_per_word;
+पूर्ण
 
-static int fsl_spi_setup_transfer(struct spi_device *spi,
-					struct spi_transfer *t)
-{
-	struct mpc8xxx_spi *mpc8xxx_spi;
-	int bits_per_word = 0;
+अटल पूर्णांक fsl_spi_setup_transfer(काष्ठा spi_device *spi,
+					काष्ठा spi_transfer *t)
+अणु
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi;
+	पूर्णांक bits_per_word = 0;
 	u8 pm;
 	u32 hz = 0;
-	struct spi_mpc8xxx_cs	*cs = spi->controller_state;
+	काष्ठा spi_mpc8xxx_cs	*cs = spi->controller_state;
 
 	mpc8xxx_spi = spi_master_get_devdata(spi->master);
 
-	if (t) {
+	अगर (t) अणु
 		bits_per_word = t->bits_per_word;
 		hz = t->speed_hz;
-	}
+	पूर्ण
 
 	/* spi_transfer level calls that work per-word */
-	if (!bits_per_word)
+	अगर (!bits_per_word)
 		bits_per_word = spi->bits_per_word;
 
-	if (!hz)
+	अगर (!hz)
 		hz = spi->max_speed_hz;
 
-	if (!(mpc8xxx_spi->flags & SPI_CPM_MODE))
+	अगर (!(mpc8xxx_spi->flags & SPI_CPM_MODE))
 		bits_per_word = mspi_apply_cpu_mode_quirks(cs, spi,
 							   mpc8xxx_spi,
 							   bits_per_word);
-	else if (mpc8xxx_spi->flags & SPI_QE)
+	अन्यथा अगर (mpc8xxx_spi->flags & SPI_QE)
 		bits_per_word = mspi_apply_qe_mode_quirks(cs, spi,
 							  bits_per_word);
 
-	if (bits_per_word < 0)
-		return bits_per_word;
+	अगर (bits_per_word < 0)
+		वापस bits_per_word;
 
-	if (bits_per_word == 32)
+	अगर (bits_per_word == 32)
 		bits_per_word = 0;
-	else
+	अन्यथा
 		bits_per_word = bits_per_word - 1;
 
 	/* mask out bits we are going to set */
@@ -266,346 +267,346 @@ static int fsl_spi_setup_transfer(struct spi_device *spi,
 
 	cs->hw_mode |= SPMODE_LEN(bits_per_word);
 
-	if ((mpc8xxx_spi->spibrg / hz) > 64) {
+	अगर ((mpc8xxx_spi->spibrg / hz) > 64) अणु
 		cs->hw_mode |= SPMODE_DIV16;
 		pm = (mpc8xxx_spi->spibrg - 1) / (hz * 64) + 1;
 		WARN_ONCE(pm > 16,
 			  "%s: Requested speed is too low: %d Hz. Will use %d Hz instead.\n",
 			  dev_name(&spi->dev), hz, mpc8xxx_spi->spibrg / 1024);
-		if (pm > 16)
+		अगर (pm > 16)
 			pm = 16;
-	} else {
+	पूर्ण अन्यथा अणु
 		pm = (mpc8xxx_spi->spibrg - 1) / (hz * 4) + 1;
-	}
-	if (pm)
+	पूर्ण
+	अगर (pm)
 		pm--;
 
 	cs->hw_mode |= SPMODE_PM(pm);
 
 	fsl_spi_change_mode(spi);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsl_spi_cpu_bufs(struct mpc8xxx_spi *mspi,
-				struct spi_transfer *t, unsigned int len)
-{
+अटल पूर्णांक fsl_spi_cpu_bufs(काष्ठा mpc8xxx_spi *mspi,
+				काष्ठा spi_transfer *t, अचिन्हित पूर्णांक len)
+अणु
 	u32 word;
-	struct fsl_spi_reg __iomem *reg_base = mspi->reg_base;
+	काष्ठा fsl_spi_reg __iomem *reg_base = mspi->reg_base;
 
 	mspi->count = len;
 
-	/* enable rx ints */
-	mpc8xxx_spi_write_reg(&reg_base->mask, SPIM_NE);
+	/* enable rx पूर्णांकs */
+	mpc8xxx_spi_ग_लिखो_reg(&reg_base->mask, SPIM_NE);
 
 	/* transmit word */
 	word = mspi->get_tx(mspi);
-	mpc8xxx_spi_write_reg(&reg_base->transmit, word);
+	mpc8xxx_spi_ग_लिखो_reg(&reg_base->transmit, word);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsl_spi_bufs(struct spi_device *spi, struct spi_transfer *t,
+अटल पूर्णांक fsl_spi_bufs(काष्ठा spi_device *spi, काष्ठा spi_transfer *t,
 			    bool is_dma_mapped)
-{
-	struct mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(spi->master);
-	struct fsl_spi_reg __iomem *reg_base;
-	unsigned int len = t->len;
+अणु
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(spi->master);
+	काष्ठा fsl_spi_reg __iomem *reg_base;
+	अचिन्हित पूर्णांक len = t->len;
 	u8 bits_per_word;
-	int ret;
+	पूर्णांक ret;
 
 	reg_base = mpc8xxx_spi->reg_base;
 	bits_per_word = spi->bits_per_word;
-	if (t->bits_per_word)
+	अगर (t->bits_per_word)
 		bits_per_word = t->bits_per_word;
 
-	if (bits_per_word > 8) {
+	अगर (bits_per_word > 8) अणु
 		/* invalid length? */
-		if (len & 1)
-			return -EINVAL;
+		अगर (len & 1)
+			वापस -EINVAL;
 		len /= 2;
-	}
-	if (bits_per_word > 16) {
+	पूर्ण
+	अगर (bits_per_word > 16) अणु
 		/* invalid length? */
-		if (len & 1)
-			return -EINVAL;
+		अगर (len & 1)
+			वापस -EINVAL;
 		len /= 2;
-	}
+	पूर्ण
 
 	mpc8xxx_spi->tx = t->tx_buf;
 	mpc8xxx_spi->rx = t->rx_buf;
 
-	reinit_completion(&mpc8xxx_spi->done);
+	reinit_completion(&mpc8xxx_spi->करोne);
 
-	if (mpc8xxx_spi->flags & SPI_CPM_MODE)
+	अगर (mpc8xxx_spi->flags & SPI_CPM_MODE)
 		ret = fsl_spi_cpm_bufs(mpc8xxx_spi, t, is_dma_mapped);
-	else
+	अन्यथा
 		ret = fsl_spi_cpu_bufs(mpc8xxx_spi, t, len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	wait_for_completion(&mpc8xxx_spi->done);
+	रुको_क्रम_completion(&mpc8xxx_spi->करोne);
 
-	/* disable rx ints */
-	mpc8xxx_spi_write_reg(&reg_base->mask, 0);
+	/* disable rx पूर्णांकs */
+	mpc8xxx_spi_ग_लिखो_reg(&reg_base->mask, 0);
 
-	if (mpc8xxx_spi->flags & SPI_CPM_MODE)
+	अगर (mpc8xxx_spi->flags & SPI_CPM_MODE)
 		fsl_spi_cpm_bufs_complete(mpc8xxx_spi);
 
-	return mpc8xxx_spi->count;
-}
+	वापस mpc8xxx_spi->count;
+पूर्ण
 
-static int fsl_spi_do_one_msg(struct spi_master *master,
-			      struct spi_message *m)
-{
-	struct mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(master);
-	struct spi_device *spi = m->spi;
-	struct spi_transfer *t, *first;
-	unsigned int cs_change;
-	const int nsecs = 50;
-	int status, last_bpw;
+अटल पूर्णांक fsl_spi_करो_one_msg(काष्ठा spi_master *master,
+			      काष्ठा spi_message *m)
+अणु
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(master);
+	काष्ठा spi_device *spi = m->spi;
+	काष्ठा spi_transfer *t, *first;
+	अचिन्हित पूर्णांक cs_change;
+	स्थिर पूर्णांक nsecs = 50;
+	पूर्णांक status, last_bpw;
 
 	/*
 	 * In CPU mode, optimize large byte transfers to use larger
-	 * bits_per_word values to reduce number of interrupts taken.
+	 * bits_per_word values to reduce number of पूर्णांकerrupts taken.
 	 */
-	if (!(mpc8xxx_spi->flags & SPI_CPM_MODE)) {
-		list_for_each_entry(t, &m->transfers, transfer_list) {
-			if (t->len < 256 || t->bits_per_word != 8)
-				continue;
-			if ((t->len & 3) == 0)
+	अगर (!(mpc8xxx_spi->flags & SPI_CPM_MODE)) अणु
+		list_क्रम_each_entry(t, &m->transfers, transfer_list) अणु
+			अगर (t->len < 256 || t->bits_per_word != 8)
+				जारी;
+			अगर ((t->len & 3) == 0)
 				t->bits_per_word = 32;
-			else if ((t->len & 1) == 0)
+			अन्यथा अगर ((t->len & 1) == 0)
 				t->bits_per_word = 16;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Don't allow changes if CS is active */
+	/* Don't allow changes अगर CS is active */
 	cs_change = 1;
-	list_for_each_entry(t, &m->transfers, transfer_list) {
-		if (cs_change)
+	list_क्रम_each_entry(t, &m->transfers, transfer_list) अणु
+		अगर (cs_change)
 			first = t;
 		cs_change = t->cs_change;
-		if (first->speed_hz != t->speed_hz) {
+		अगर (first->speed_hz != t->speed_hz) अणु
 			dev_err(&spi->dev,
 				"speed_hz cannot change while CS is active\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	last_bpw = -1;
 	cs_change = 1;
 	status = -EINVAL;
-	list_for_each_entry(t, &m->transfers, transfer_list) {
-		if (cs_change || last_bpw != t->bits_per_word)
+	list_क्रम_each_entry(t, &m->transfers, transfer_list) अणु
+		अगर (cs_change || last_bpw != t->bits_per_word)
 			status = fsl_spi_setup_transfer(spi, t);
-		if (status < 0)
-			break;
+		अगर (status < 0)
+			अवरोध;
 		last_bpw = t->bits_per_word;
 
-		if (cs_change) {
+		अगर (cs_change) अणु
 			fsl_spi_chipselect(spi, BITBANG_CS_ACTIVE);
 			ndelay(nsecs);
-		}
+		पूर्ण
 		cs_change = t->cs_change;
-		if (t->len)
+		अगर (t->len)
 			status = fsl_spi_bufs(spi, t, m->is_dma_mapped);
-		if (status) {
+		अगर (status) अणु
 			status = -EMSGSIZE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		m->actual_length += t->len;
 
 		spi_transfer_delay_exec(t);
 
-		if (cs_change) {
+		अगर (cs_change) अणु
 			ndelay(nsecs);
 			fsl_spi_chipselect(spi, BITBANG_CS_INACTIVE);
 			ndelay(nsecs);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	m->status = status;
 
-	if (status || !cs_change) {
+	अगर (status || !cs_change) अणु
 		ndelay(nsecs);
 		fsl_spi_chipselect(spi, BITBANG_CS_INACTIVE);
-	}
+	पूर्ण
 
-	fsl_spi_setup_transfer(spi, NULL);
+	fsl_spi_setup_transfer(spi, शून्य);
 	spi_finalize_current_message(master);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsl_spi_setup(struct spi_device *spi)
-{
-	struct mpc8xxx_spi *mpc8xxx_spi;
-	struct fsl_spi_reg __iomem *reg_base;
+अटल पूर्णांक fsl_spi_setup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi;
+	काष्ठा fsl_spi_reg __iomem *reg_base;
 	bool initial_setup = false;
-	int retval;
+	पूर्णांक retval;
 	u32 hw_mode;
-	struct spi_mpc8xxx_cs *cs = spi_get_ctldata(spi);
+	काष्ठा spi_mpc8xxx_cs *cs = spi_get_ctldata(spi);
 
-	if (!spi->max_speed_hz)
-		return -EINVAL;
+	अगर (!spi->max_speed_hz)
+		वापस -EINVAL;
 
-	if (!cs) {
-		cs = kzalloc(sizeof(*cs), GFP_KERNEL);
-		if (!cs)
-			return -ENOMEM;
+	अगर (!cs) अणु
+		cs = kzalloc(माप(*cs), GFP_KERNEL);
+		अगर (!cs)
+			वापस -ENOMEM;
 		spi_set_ctldata(spi, cs);
 		initial_setup = true;
-	}
+	पूर्ण
 	mpc8xxx_spi = spi_master_get_devdata(spi->master);
 
 	reg_base = mpc8xxx_spi->reg_base;
 
 	hw_mode = cs->hw_mode; /* Save original settings */
-	cs->hw_mode = mpc8xxx_spi_read_reg(&reg_base->mode);
+	cs->hw_mode = mpc8xxx_spi_पढ़ो_reg(&reg_base->mode);
 	/* mask out bits we are going to set */
 	cs->hw_mode &= ~(SPMODE_CP_BEGIN_EDGECLK | SPMODE_CI_INACTIVEHIGH
 			 | SPMODE_REV | SPMODE_LOOP);
 
-	if (spi->mode & SPI_CPHA)
+	अगर (spi->mode & SPI_CPHA)
 		cs->hw_mode |= SPMODE_CP_BEGIN_EDGECLK;
-	if (spi->mode & SPI_CPOL)
+	अगर (spi->mode & SPI_CPOL)
 		cs->hw_mode |= SPMODE_CI_INACTIVEHIGH;
-	if (!(spi->mode & SPI_LSB_FIRST))
+	अगर (!(spi->mode & SPI_LSB_FIRST))
 		cs->hw_mode |= SPMODE_REV;
-	if (spi->mode & SPI_LOOP)
+	अगर (spi->mode & SPI_LOOP)
 		cs->hw_mode |= SPMODE_LOOP;
 
-	retval = fsl_spi_setup_transfer(spi, NULL);
-	if (retval < 0) {
+	retval = fsl_spi_setup_transfer(spi, शून्य);
+	अगर (retval < 0) अणु
 		cs->hw_mode = hw_mode; /* Restore settings */
-		if (initial_setup)
-			kfree(cs);
-		return retval;
-	}
+		अगर (initial_setup)
+			kमुक्त(cs);
+		वापस retval;
+	पूर्ण
 
-	/* Initialize chipselect - might be active for SPI_CS_HIGH mode */
+	/* Initialize chipselect - might be active क्रम SPI_CS_HIGH mode */
 	fsl_spi_chipselect(spi, BITBANG_CS_INACTIVE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fsl_spi_cleanup(struct spi_device *spi)
-{
-	struct spi_mpc8xxx_cs *cs = spi_get_ctldata(spi);
+अटल व्योम fsl_spi_cleanup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा spi_mpc8xxx_cs *cs = spi_get_ctldata(spi);
 
-	kfree(cs);
-	spi_set_ctldata(spi, NULL);
-}
+	kमुक्त(cs);
+	spi_set_ctldata(spi, शून्य);
+पूर्ण
 
-static void fsl_spi_cpu_irq(struct mpc8xxx_spi *mspi, u32 events)
-{
-	struct fsl_spi_reg __iomem *reg_base = mspi->reg_base;
+अटल व्योम fsl_spi_cpu_irq(काष्ठा mpc8xxx_spi *mspi, u32 events)
+अणु
+	काष्ठा fsl_spi_reg __iomem *reg_base = mspi->reg_base;
 
 	/* We need handle RX first */
-	if (events & SPIE_NE) {
-		u32 rx_data = mpc8xxx_spi_read_reg(&reg_base->receive);
+	अगर (events & SPIE_NE) अणु
+		u32 rx_data = mpc8xxx_spi_पढ़ो_reg(&reg_base->receive);
 
-		if (mspi->rx)
+		अगर (mspi->rx)
 			mspi->get_rx(rx_data, mspi);
-	}
+	पूर्ण
 
-	if ((events & SPIE_NF) == 0)
-		/* spin until TX is done */
-		while (((events =
-			mpc8xxx_spi_read_reg(&reg_base->event)) &
+	अगर ((events & SPIE_NF) == 0)
+		/* spin until TX is करोne */
+		जबतक (((events =
+			mpc8xxx_spi_पढ़ो_reg(&reg_base->event)) &
 						SPIE_NF) == 0)
 			cpu_relax();
 
 	/* Clear the events */
-	mpc8xxx_spi_write_reg(&reg_base->event, events);
+	mpc8xxx_spi_ग_लिखो_reg(&reg_base->event, events);
 
 	mspi->count -= 1;
-	if (mspi->count) {
+	अगर (mspi->count) अणु
 		u32 word = mspi->get_tx(mspi);
 
-		mpc8xxx_spi_write_reg(&reg_base->transmit, word);
-	} else {
-		complete(&mspi->done);
-	}
-}
+		mpc8xxx_spi_ग_लिखो_reg(&reg_base->transmit, word);
+	पूर्ण अन्यथा अणु
+		complete(&mspi->करोne);
+	पूर्ण
+पूर्ण
 
-static irqreturn_t fsl_spi_irq(s32 irq, void *context_data)
-{
-	struct mpc8xxx_spi *mspi = context_data;
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t fsl_spi_irq(s32 irq, व्योम *context_data)
+अणु
+	काष्ठा mpc8xxx_spi *mspi = context_data;
+	irqवापस_t ret = IRQ_NONE;
 	u32 events;
-	struct fsl_spi_reg __iomem *reg_base = mspi->reg_base;
+	काष्ठा fsl_spi_reg __iomem *reg_base = mspi->reg_base;
 
-	/* Get interrupt events(tx/rx) */
-	events = mpc8xxx_spi_read_reg(&reg_base->event);
-	if (events)
+	/* Get पूर्णांकerrupt events(tx/rx) */
+	events = mpc8xxx_spi_पढ़ो_reg(&reg_base->event);
+	अगर (events)
 		ret = IRQ_HANDLED;
 
 	dev_dbg(mspi->dev, "%s: events %x\n", __func__, events);
 
-	if (mspi->flags & SPI_CPM_MODE)
+	अगर (mspi->flags & SPI_CPM_MODE)
 		fsl_spi_cpm_irq(mspi, events);
-	else
+	अन्यथा
 		fsl_spi_cpu_irq(mspi, events);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void fsl_spi_grlib_cs_control(struct spi_device *spi, bool on)
-{
-	struct mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(spi->master);
-	struct fsl_spi_reg __iomem *reg_base = mpc8xxx_spi->reg_base;
+अटल व्योम fsl_spi_grlib_cs_control(काष्ठा spi_device *spi, bool on)
+अणु
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(spi->master);
+	काष्ठा fsl_spi_reg __iomem *reg_base = mpc8xxx_spi->reg_base;
 	u32 slvsel;
 	u16 cs = spi->chip_select;
 
-	if (spi->cs_gpiod) {
+	अगर (spi->cs_gpiod) अणु
 		gpiod_set_value(spi->cs_gpiod, on);
-	} else if (cs < mpc8xxx_spi->native_chipselects) {
-		slvsel = mpc8xxx_spi_read_reg(&reg_base->slvsel);
+	पूर्ण अन्यथा अगर (cs < mpc8xxx_spi->native_chipselects) अणु
+		slvsel = mpc8xxx_spi_पढ़ो_reg(&reg_base->slvsel);
 		slvsel = on ? (slvsel | (1 << cs)) : (slvsel & ~(1 << cs));
-		mpc8xxx_spi_write_reg(&reg_base->slvsel, slvsel);
-	}
-}
+		mpc8xxx_spi_ग_लिखो_reg(&reg_base->slvsel, slvsel);
+	पूर्ण
+पूर्ण
 
-static void fsl_spi_grlib_probe(struct device *dev)
-{
-	struct fsl_spi_platform_data *pdata = dev_get_platdata(dev);
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(master);
-	struct fsl_spi_reg __iomem *reg_base = mpc8xxx_spi->reg_base;
-	int mbits;
+अटल व्योम fsl_spi_grlib_probe(काष्ठा device *dev)
+अणु
+	काष्ठा fsl_spi_platक्रमm_data *pdata = dev_get_platdata(dev);
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(master);
+	काष्ठा fsl_spi_reg __iomem *reg_base = mpc8xxx_spi->reg_base;
+	पूर्णांक mbits;
 	u32 capabilities;
 
-	capabilities = mpc8xxx_spi_read_reg(&reg_base->cap);
+	capabilities = mpc8xxx_spi_पढ़ो_reg(&reg_base->cap);
 
-	mpc8xxx_spi->set_shifts = fsl_spi_grlib_set_shifts;
+	mpc8xxx_spi->set_shअगरts = fsl_spi_grlib_set_shअगरts;
 	mbits = SPCAP_MAXWLEN(capabilities);
-	if (mbits)
+	अगर (mbits)
 		mpc8xxx_spi->max_bits_per_word = mbits + 1;
 
 	mpc8xxx_spi->native_chipselects = 0;
-	if (SPCAP_SSEN(capabilities)) {
+	अगर (SPCAP_SSEN(capabilities)) अणु
 		mpc8xxx_spi->native_chipselects = SPCAP_SSSZ(capabilities);
-		mpc8xxx_spi_write_reg(&reg_base->slvsel, 0xffffffff);
-	}
+		mpc8xxx_spi_ग_लिखो_reg(&reg_base->slvsel, 0xffffffff);
+	पूर्ण
 	master->num_chipselect = mpc8xxx_spi->native_chipselects;
 	pdata->cs_control = fsl_spi_grlib_cs_control;
-}
+पूर्ण
 
-static struct spi_master *fsl_spi_probe(struct device *dev,
-		struct resource *mem, unsigned int irq)
-{
-	struct fsl_spi_platform_data *pdata = dev_get_platdata(dev);
-	struct spi_master *master;
-	struct mpc8xxx_spi *mpc8xxx_spi;
-	struct fsl_spi_reg __iomem *reg_base;
+अटल काष्ठा spi_master *fsl_spi_probe(काष्ठा device *dev,
+		काष्ठा resource *mem, अचिन्हित पूर्णांक irq)
+अणु
+	काष्ठा fsl_spi_platक्रमm_data *pdata = dev_get_platdata(dev);
+	काष्ठा spi_master *master;
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi;
+	काष्ठा fsl_spi_reg __iomem *reg_base;
 	u32 regval;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	master = spi_alloc_master(dev, sizeof(struct mpc8xxx_spi));
-	if (master == NULL) {
+	master = spi_alloc_master(dev, माप(काष्ठा mpc8xxx_spi));
+	अगर (master == शून्य) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	dev_set_drvdata(dev, master);
 
@@ -613,7 +614,7 @@ static struct spi_master *fsl_spi_probe(struct device *dev,
 
 	master->setup = fsl_spi_setup;
 	master->cleanup = fsl_spi_cleanup;
-	master->transfer_one_message = fsl_spi_do_one_msg;
+	master->transfer_one_message = fsl_spi_करो_one_msg;
 	master->use_gpio_descriptors = true;
 
 	mpc8xxx_spi = spi_master_get_devdata(master);
@@ -621,256 +622,256 @@ static struct spi_master *fsl_spi_probe(struct device *dev,
 	mpc8xxx_spi->type = fsl_spi_get_type(dev);
 
 	ret = fsl_spi_cpm_init(mpc8xxx_spi);
-	if (ret)
-		goto err_cpm_init;
+	अगर (ret)
+		जाओ err_cpm_init;
 
 	mpc8xxx_spi->reg_base = devm_ioremap_resource(dev, mem);
-	if (IS_ERR(mpc8xxx_spi->reg_base)) {
+	अगर (IS_ERR(mpc8xxx_spi->reg_base)) अणु
 		ret = PTR_ERR(mpc8xxx_spi->reg_base);
-		goto err_probe;
-	}
+		जाओ err_probe;
+	पूर्ण
 
-	if (mpc8xxx_spi->type == TYPE_GRLIB)
+	अगर (mpc8xxx_spi->type == TYPE_GRLIB)
 		fsl_spi_grlib_probe(dev);
 
 	master->bits_per_word_mask =
 		(SPI_BPW_RANGE_MASK(4, 16) | SPI_BPW_MASK(32)) &
 		SPI_BPW_RANGE_MASK(1, mpc8xxx_spi->max_bits_per_word);
 
-	if (mpc8xxx_spi->flags & SPI_QE_CPU_MODE)
-		mpc8xxx_spi->set_shifts = fsl_spi_qe_cpu_set_shifts;
+	अगर (mpc8xxx_spi->flags & SPI_QE_CPU_MODE)
+		mpc8xxx_spi->set_shअगरts = fsl_spi_qe_cpu_set_shअगरts;
 
-	if (mpc8xxx_spi->set_shifts)
+	अगर (mpc8xxx_spi->set_shअगरts)
 		/* 8 bits per word and MSB first */
-		mpc8xxx_spi->set_shifts(&mpc8xxx_spi->rx_shift,
-					&mpc8xxx_spi->tx_shift, 8, 1);
+		mpc8xxx_spi->set_shअगरts(&mpc8xxx_spi->rx_shअगरt,
+					&mpc8xxx_spi->tx_shअगरt, 8, 1);
 
-	/* Register for SPI Interrupt */
+	/* Register क्रम SPI Interrupt */
 	ret = devm_request_irq(dev, mpc8xxx_spi->irq, fsl_spi_irq,
 			       0, "fsl_spi", mpc8xxx_spi);
 
-	if (ret != 0)
-		goto err_probe;
+	अगर (ret != 0)
+		जाओ err_probe;
 
 	reg_base = mpc8xxx_spi->reg_base;
 
 	/* SPI controller initializations */
-	mpc8xxx_spi_write_reg(&reg_base->mode, 0);
-	mpc8xxx_spi_write_reg(&reg_base->mask, 0);
-	mpc8xxx_spi_write_reg(&reg_base->command, 0);
-	mpc8xxx_spi_write_reg(&reg_base->event, 0xffffffff);
+	mpc8xxx_spi_ग_लिखो_reg(&reg_base->mode, 0);
+	mpc8xxx_spi_ग_लिखो_reg(&reg_base->mask, 0);
+	mpc8xxx_spi_ग_लिखो_reg(&reg_base->command, 0);
+	mpc8xxx_spi_ग_लिखो_reg(&reg_base->event, 0xffffffff);
 
-	/* Enable SPI interface */
+	/* Enable SPI पूर्णांकerface */
 	regval = pdata->initial_spmode | SPMODE_INIT_VAL | SPMODE_ENABLE;
-	if (mpc8xxx_spi->max_bits_per_word < 8) {
+	अगर (mpc8xxx_spi->max_bits_per_word < 8) अणु
 		regval &= ~SPMODE_LEN(0xF);
 		regval |= SPMODE_LEN(mpc8xxx_spi->max_bits_per_word - 1);
-	}
-	if (mpc8xxx_spi->flags & SPI_QE_CPU_MODE)
+	पूर्ण
+	अगर (mpc8xxx_spi->flags & SPI_QE_CPU_MODE)
 		regval |= SPMODE_OP;
 
-	mpc8xxx_spi_write_reg(&reg_base->mode, regval);
+	mpc8xxx_spi_ग_लिखो_reg(&reg_base->mode, regval);
 
-	ret = devm_spi_register_master(dev, master);
-	if (ret < 0)
-		goto err_probe;
+	ret = devm_spi_रेजिस्टर_master(dev, master);
+	अगर (ret < 0)
+		जाओ err_probe;
 
 	dev_info(dev, "at 0x%p (irq = %d), %s mode\n", reg_base,
 		 mpc8xxx_spi->irq, mpc8xxx_spi_strmode(mpc8xxx_spi->flags));
 
-	return master;
+	वापस master;
 
 err_probe:
-	fsl_spi_cpm_free(mpc8xxx_spi);
+	fsl_spi_cpm_मुक्त(mpc8xxx_spi);
 err_cpm_init:
 	spi_master_put(master);
 err:
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static void fsl_spi_cs_control(struct spi_device *spi, bool on)
-{
-	if (spi->cs_gpiod) {
+अटल व्योम fsl_spi_cs_control(काष्ठा spi_device *spi, bool on)
+अणु
+	अगर (spi->cs_gpiod) अणु
 		gpiod_set_value(spi->cs_gpiod, on);
-	} else {
-		struct device *dev = spi->dev.parent->parent;
-		struct fsl_spi_platform_data *pdata = dev_get_platdata(dev);
-		struct mpc8xxx_spi_probe_info *pinfo = to_of_pinfo(pdata);
+	पूर्ण अन्यथा अणु
+		काष्ठा device *dev = spi->dev.parent->parent;
+		काष्ठा fsl_spi_platक्रमm_data *pdata = dev_get_platdata(dev);
+		काष्ठा mpc8xxx_spi_probe_info *pinfo = to_of_pinfo(pdata);
 
-		if (WARN_ON_ONCE(!pinfo->immr_spi_cs))
-			return;
-		iowrite32be(on ? 0 : SPI_BOOT_SEL_BIT, pinfo->immr_spi_cs);
-	}
-}
+		अगर (WARN_ON_ONCE(!pinfo->immr_spi_cs))
+			वापस;
+		ioग_लिखो32be(on ? 0 : SPI_BOOT_SEL_BIT, pinfo->immr_spi_cs);
+	पूर्ण
+पूर्ण
 
-static int of_fsl_spi_probe(struct platform_device *ofdev)
-{
-	struct device *dev = &ofdev->dev;
-	struct device_node *np = ofdev->dev.of_node;
-	struct spi_master *master;
-	struct resource mem;
-	int irq, type;
-	int ret;
+अटल पूर्णांक of_fsl_spi_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा device *dev = &ofdev->dev;
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	काष्ठा spi_master *master;
+	काष्ठा resource mem;
+	पूर्णांक irq, type;
+	पूर्णांक ret;
 	bool spisel_boot = false;
-#if IS_ENABLED(CONFIG_FSL_SOC)
-	struct mpc8xxx_spi_probe_info *pinfo = NULL;
-#endif
+#अगर IS_ENABLED(CONFIG_FSL_SOC)
+	काष्ठा mpc8xxx_spi_probe_info *pinfo = शून्य;
+#पूर्ण_अगर
 
 
 	ret = of_mpc8xxx_spi_probe(ofdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	type = fsl_spi_get_type(&ofdev->dev);
-	if (type == TYPE_FSL) {
-		struct fsl_spi_platform_data *pdata = dev_get_platdata(dev);
-#if IS_ENABLED(CONFIG_FSL_SOC)
+	अगर (type == TYPE_FSL) अणु
+		काष्ठा fsl_spi_platक्रमm_data *pdata = dev_get_platdata(dev);
+#अगर IS_ENABLED(CONFIG_FSL_SOC)
 		pinfo = to_of_pinfo(pdata);
 
-		spisel_boot = of_property_read_bool(np, "fsl,spisel_boot");
-		if (spisel_boot) {
+		spisel_boot = of_property_पढ़ो_bool(np, "fsl,spisel_boot");
+		अगर (spisel_boot) अणु
 			pinfo->immr_spi_cs = ioremap(get_immrbase() + IMMR_SPI_CS_OFFSET, 4);
-			if (!pinfo->immr_spi_cs)
-				return -ENOMEM;
-		}
-#endif
+			अगर (!pinfo->immr_spi_cs)
+				वापस -ENOMEM;
+		पूर्ण
+#पूर्ण_अगर
 		/*
-		 * Handle the case where we have one hardwired (always selected)
+		 * Handle the हाल where we have one hardwired (always selected)
 		 * device on the first "chipselect". Else we let the core code
 		 * handle any GPIOs or native chip selects and assign the
-		 * appropriate callback for dealing with the CS lines. This isn't
+		 * appropriate callback क्रम dealing with the CS lines. This isn't
 		 * supported on the GRLIB variant.
 		 */
 		ret = gpiod_count(dev, "cs");
-		if (ret < 0)
+		अगर (ret < 0)
 			ret = 0;
-		if (ret == 0 && !spisel_boot) {
+		अगर (ret == 0 && !spisel_boot) अणु
 			pdata->max_chipselect = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			pdata->max_chipselect = ret + spisel_boot;
 			pdata->cs_control = fsl_spi_cs_control;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = of_address_to_resource(np, 0, &mem);
-	if (ret)
-		goto unmap_out;
+	अगर (ret)
+		जाओ unmap_out;
 
-	irq = platform_get_irq(ofdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(ofdev, 0);
+	अगर (irq < 0) अणु
 		ret = irq;
-		goto unmap_out;
-	}
+		जाओ unmap_out;
+	पूर्ण
 
 	master = fsl_spi_probe(dev, &mem, irq);
 
-	return PTR_ERR_OR_ZERO(master);
+	वापस PTR_ERR_OR_ZERO(master);
 
 unmap_out:
-#if IS_ENABLED(CONFIG_FSL_SOC)
-	if (spisel_boot)
+#अगर IS_ENABLED(CONFIG_FSL_SOC)
+	अगर (spisel_boot)
 		iounmap(pinfo->immr_spi_cs);
-#endif
-	return ret;
-}
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-static int of_fsl_spi_remove(struct platform_device *ofdev)
-{
-	struct spi_master *master = platform_get_drvdata(ofdev);
-	struct mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(master);
+अटल पूर्णांक of_fsl_spi_हटाओ(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा spi_master *master = platक्रमm_get_drvdata(ofdev);
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(master);
 
-	fsl_spi_cpm_free(mpc8xxx_spi);
-	return 0;
-}
+	fsl_spi_cpm_मुक्त(mpc8xxx_spi);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver of_fsl_spi_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver of_fsl_spi_driver = अणु
+	.driver = अणु
 		.name = "fsl_spi",
 		.of_match_table = of_fsl_spi_match,
-	},
+	पूर्ण,
 	.probe		= of_fsl_spi_probe,
-	.remove		= of_fsl_spi_remove,
-};
+	.हटाओ		= of_fsl_spi_हटाओ,
+पूर्ण;
 
-#ifdef CONFIG_MPC832x_RDB
+#अगर_घोषित CONFIG_MPC832x_RDB
 /*
  * XXX XXX XXX
- * This is "legacy" platform driver, was used by the MPC8323E-RDB boards
+ * This is "legacy" platक्रमm driver, was used by the MPC8323E-RDB boards
  * only. The driver should go away soon, since newer MPC8323E-RDB's device
- * tree can work with OpenFirmware driver. But for now we support old trees
+ * tree can work with OpenFirmware driver. But क्रम now we support old trees
  * as well.
  */
-static int plat_mpc8xxx_spi_probe(struct platform_device *pdev)
-{
-	struct resource *mem;
-	int irq;
-	struct spi_master *master;
+अटल पूर्णांक plat_mpc8xxx_spi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *mem;
+	पूर्णांक irq;
+	काष्ठा spi_master *master;
 
-	if (!dev_get_platdata(&pdev->dev))
-		return -EINVAL;
+	अगर (!dev_get_platdata(&pdev->dev))
+		वापस -EINVAL;
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!mem)
-		return -EINVAL;
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!mem)
+		वापस -EINVAL;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq <= 0)
-		return -EINVAL;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq <= 0)
+		वापस -EINVAL;
 
 	master = fsl_spi_probe(&pdev->dev, mem, irq);
-	return PTR_ERR_OR_ZERO(master);
-}
+	वापस PTR_ERR_OR_ZERO(master);
+पूर्ण
 
-static int plat_mpc8xxx_spi_remove(struct platform_device *pdev)
-{
-	struct spi_master *master = platform_get_drvdata(pdev);
-	struct mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(master);
+अटल पूर्णांक plat_mpc8xxx_spi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master = platक्रमm_get_drvdata(pdev);
+	काष्ठा mpc8xxx_spi *mpc8xxx_spi = spi_master_get_devdata(master);
 
-	fsl_spi_cpm_free(mpc8xxx_spi);
+	fsl_spi_cpm_मुक्त(mpc8xxx_spi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 MODULE_ALIAS("platform:mpc8xxx_spi");
-static struct platform_driver mpc8xxx_spi_driver = {
+अटल काष्ठा platक्रमm_driver mpc8xxx_spi_driver = अणु
 	.probe = plat_mpc8xxx_spi_probe,
-	.remove = plat_mpc8xxx_spi_remove,
-	.driver = {
+	.हटाओ = plat_mpc8xxx_spi_हटाओ,
+	.driver = अणु
 		.name = "mpc8xxx_spi",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static bool legacy_driver_failed;
+अटल bool legacy_driver_failed;
 
-static void __init legacy_driver_register(void)
-{
-	legacy_driver_failed = platform_driver_register(&mpc8xxx_spi_driver);
-}
+अटल व्योम __init legacy_driver_रेजिस्टर(व्योम)
+अणु
+	legacy_driver_failed = platक्रमm_driver_रेजिस्टर(&mpc8xxx_spi_driver);
+पूर्ण
 
-static void __exit legacy_driver_unregister(void)
-{
-	if (legacy_driver_failed)
-		return;
-	platform_driver_unregister(&mpc8xxx_spi_driver);
-}
-#else
-static void __init legacy_driver_register(void) {}
-static void __exit legacy_driver_unregister(void) {}
-#endif /* CONFIG_MPC832x_RDB */
+अटल व्योम __निकास legacy_driver_unरेजिस्टर(व्योम)
+अणु
+	अगर (legacy_driver_failed)
+		वापस;
+	platक्रमm_driver_unरेजिस्टर(&mpc8xxx_spi_driver);
+पूर्ण
+#अन्यथा
+अटल व्योम __init legacy_driver_रेजिस्टर(व्योम) अणुपूर्ण
+अटल व्योम __निकास legacy_driver_unरेजिस्टर(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_MPC832x_RDB */
 
-static int __init fsl_spi_init(void)
-{
-	legacy_driver_register();
-	return platform_driver_register(&of_fsl_spi_driver);
-}
+अटल पूर्णांक __init fsl_spi_init(व्योम)
+अणु
+	legacy_driver_रेजिस्टर();
+	वापस platक्रमm_driver_रेजिस्टर(&of_fsl_spi_driver);
+पूर्ण
 module_init(fsl_spi_init);
 
-static void __exit fsl_spi_exit(void)
-{
-	platform_driver_unregister(&of_fsl_spi_driver);
-	legacy_driver_unregister();
-}
-module_exit(fsl_spi_exit);
+अटल व्योम __निकास fsl_spi_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&of_fsl_spi_driver);
+	legacy_driver_unरेजिस्टर();
+पूर्ण
+module_निकास(fsl_spi_निकास);
 
 MODULE_AUTHOR("Kumar Gala");
 MODULE_DESCRIPTION("Simple Freescale SPI Driver");

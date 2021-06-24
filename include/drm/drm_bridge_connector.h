@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Copyright (C) 2019 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Copyright (C) 2019 Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
 
-#ifndef __DRM_BRIDGE_CONNECTOR_H__
-#define __DRM_BRIDGE_CONNECTOR_H__
+#अगर_अघोषित __DRM_BRIDGE_CONNECTOR_H__
+#घोषणा __DRM_BRIDGE_CONNECTOR_H__
 
-struct drm_connector;
-struct drm_device;
-struct drm_encoder;
+काष्ठा drm_connector;
+काष्ठा drm_device;
+काष्ठा drm_encoder;
 
-void drm_bridge_connector_enable_hpd(struct drm_connector *connector);
-void drm_bridge_connector_disable_hpd(struct drm_connector *connector);
-struct drm_connector *drm_bridge_connector_init(struct drm_device *drm,
-						struct drm_encoder *encoder);
+व्योम drm_bridge_connector_enable_hpd(काष्ठा drm_connector *connector);
+व्योम drm_bridge_connector_disable_hpd(काष्ठा drm_connector *connector);
+काष्ठा drm_connector *drm_bridge_connector_init(काष्ठा drm_device *drm,
+						काष्ठा drm_encoder *encoder);
 
-#endif /* __DRM_BRIDGE_CONNECTOR_H__ */
+#पूर्ण_अगर /* __DRM_BRIDGE_CONNECTOR_H__ */

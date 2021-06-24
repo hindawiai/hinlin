@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  kernel/sched/cpupri.c
  *
@@ -14,15 +15,15 @@
  *                 (INVALID), NORMAL, RT1, ... RT99, HIGHER
  *
  *  going from the lowest priority to the highest.  CPUs in the INVALID state
- *  are not eligible for routing.  The system maintains this state with
- *  a 2 dimensional bitmap (the first for priority class, the second for CPUs
- *  in that class).  Therefore a typical application without affinity
- *  restrictions can find a suitable CPU with O(1) complexity (e.g. two bit
+ *  are not eligible क्रम routing.  The प्रणाली मुख्यtains this state with
+ *  a 2 dimensional biपंचांगap (the first क्रम priority class, the second क्रम CPUs
+ *  in that class).  Thereक्रमe a typical application without affinity
+ *  restrictions can find a suitable CPU with O(1) complनिकासy (e.g. two bit
  *  searches).  For tasks with affinity restrictions, the algorithm has a
- *  worst case complexity of O(min(101, nr_domcpus)), though the scenario that
- *  yields the worst case search is fairly contrived.
+ *  worst हाल complनिकासy of O(min(101, nr_करोmcpus)), though the scenario that
+ *  yields the worst हाल search is fairly contrived.
  */
-#include "sched.h"
+#समावेश "sched.h"
 
 /*
  * p->rt_priority   p->prio   newpri   cpupri
@@ -40,42 +41,42 @@
  *
  *				 100	  100 (CPUPRI_HIGHER)
  */
-static int convert_prio(int prio)
-{
-	int cpupri;
+अटल पूर्णांक convert_prio(पूर्णांक prio)
+अणु
+	पूर्णांक cpupri;
 
-	switch (prio) {
-	case CPUPRI_INVALID:
+	चयन (prio) अणु
+	हाल CPUPRI_INVALID:
 		cpupri = CPUPRI_INVALID;	/* -1 */
-		break;
+		अवरोध;
 
-	case 0 ... 98:
+	हाल 0 ... 98:
 		cpupri = MAX_RT_PRIO-1 - prio;	/* 1 ... 99 */
-		break;
+		अवरोध;
 
-	case MAX_RT_PRIO-1:
+	हाल MAX_RT_PRIO-1:
 		cpupri = CPUPRI_NORMAL;		/*  0 */
-		break;
+		अवरोध;
 
-	case MAX_RT_PRIO:
+	हाल MAX_RT_PRIO:
 		cpupri = CPUPRI_HIGHER;		/* 100 */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return cpupri;
-}
+	वापस cpupri;
+पूर्ण
 
-static inline int __cpupri_find(struct cpupri *cp, struct task_struct *p,
-				struct cpumask *lowest_mask, int idx)
-{
-	struct cpupri_vec *vec  = &cp->pri_to_cpu[idx];
-	int skip = 0;
+अटल अंतरभूत पूर्णांक __cpupri_find(काष्ठा cpupri *cp, काष्ठा task_काष्ठा *p,
+				काष्ठा cpumask *lowest_mask, पूर्णांक idx)
+अणु
+	काष्ठा cpupri_vec *vec  = &cp->pri_to_cpu[idx];
+	पूर्णांक skip = 0;
 
-	if (!atomic_read(&(vec)->count))
+	अगर (!atomic_पढ़ो(&(vec)->count))
 		skip = 1;
 	/*
-	 * When looking at the vector, we need to read the counter,
-	 * do a memory barrier, then read the mask.
+	 * When looking at the vector, we need to पढ़ो the counter,
+	 * करो a memory barrier, then पढ़ो the mask.
 	 *
 	 * Note: This is still all racy, but we can deal with it.
 	 *  Ideally, we only want to look at masks that are set.
@@ -83,119 +84,119 @@ static inline int __cpupri_find(struct cpupri *cp, struct task_struct *p,
 	 *  If a mask is not set, then the only thing wrong is that we
 	 *  did a little more work than necessary.
 	 *
-	 *  If we read a zero count but the mask is set, because of the
+	 *  If we पढ़ो a zero count but the mask is set, because of the
 	 *  memory barriers, that can only happen when the highest prio
-	 *  task for a run queue has left the run queue, in which case,
+	 *  task क्रम a run queue has left the run queue, in which हाल,
 	 *  it will be followed by a pull. If the task we are processing
 	 *  fails to find a proper place to go, that pull request will
-	 *  pull this task if the run queue is running at a lower
+	 *  pull this task अगर the run queue is running at a lower
 	 *  priority.
 	 */
 	smp_rmb();
 
-	/* Need to do the rmb for every iteration */
-	if (skip)
-		return 0;
+	/* Need to करो the rmb क्रम every iteration */
+	अगर (skip)
+		वापस 0;
 
-	if (cpumask_any_and(&p->cpus_mask, vec->mask) >= nr_cpu_ids)
-		return 0;
+	अगर (cpumask_any_and(&p->cpus_mask, vec->mask) >= nr_cpu_ids)
+		वापस 0;
 
-	if (lowest_mask) {
+	अगर (lowest_mask) अणु
 		cpumask_and(lowest_mask, &p->cpus_mask, vec->mask);
 
 		/*
 		 * We have to ensure that we have at least one bit
 		 * still set in the array, since the map could have
 		 * been concurrently emptied between the first and
-		 * second reads of vec->mask.  If we hit this
+		 * second पढ़ोs of vec->mask.  If we hit this
 		 * condition, simply act as though we never hit this
-		 * priority level and continue on.
+		 * priority level and जारी on.
 		 */
-		if (cpumask_empty(lowest_mask))
-			return 0;
-	}
+		अगर (cpumask_empty(lowest_mask))
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int cpupri_find(struct cpupri *cp, struct task_struct *p,
-		struct cpumask *lowest_mask)
-{
-	return cpupri_find_fitness(cp, p, lowest_mask, NULL);
-}
+पूर्णांक cpupri_find(काष्ठा cpupri *cp, काष्ठा task_काष्ठा *p,
+		काष्ठा cpumask *lowest_mask)
+अणु
+	वापस cpupri_find_fitness(cp, p, lowest_mask, शून्य);
+पूर्ण
 
 /**
- * cpupri_find_fitness - find the best (lowest-pri) CPU in the system
+ * cpupri_find_fitness - find the best (lowest-pri) CPU in the प्रणाली
  * @cp: The cpupri context
  * @p: The task
- * @lowest_mask: A mask to fill in with selected CPUs (or NULL)
- * @fitness_fn: A pointer to a function to do custom checks whether the CPU
- *              fits a specific criteria so that we only return those CPUs.
+ * @lowest_mask: A mask to fill in with selected CPUs (or शून्य)
+ * @fitness_fn: A poपूर्णांकer to a function to करो custom checks whether the CPU
+ *              fits a specअगरic criteria so that we only वापस those CPUs.
  *
- * Note: This function returns the recommended CPUs as calculated during the
- * current invocation.  By the time the call returns, the CPUs may have in
- * fact changed priorities any number of times.  While not ideal, it is not
+ * Note: This function वापसs the recommended CPUs as calculated during the
+ * current invocation.  By the समय the call वापसs, the CPUs may have in
+ * fact changed priorities any number of बार.  While not ideal, it is not
  * an issue of correctness since the normal rebalancer logic will correct
- * any discrepancies created by racing against the uncertainty of the current
+ * any discrepancies created by racing against the uncertaपूर्णांकy of the current
  * priority configuration.
  *
- * Return: (int)bool - CPUs were found
+ * Return: (पूर्णांक)bool - CPUs were found
  */
-int cpupri_find_fitness(struct cpupri *cp, struct task_struct *p,
-		struct cpumask *lowest_mask,
-		bool (*fitness_fn)(struct task_struct *p, int cpu))
-{
-	int task_pri = convert_prio(p->prio);
-	int idx, cpu;
+पूर्णांक cpupri_find_fitness(काष्ठा cpupri *cp, काष्ठा task_काष्ठा *p,
+		काष्ठा cpumask *lowest_mask,
+		bool (*fitness_fn)(काष्ठा task_काष्ठा *p, पूर्णांक cpu))
+अणु
+	पूर्णांक task_pri = convert_prio(p->prio);
+	पूर्णांक idx, cpu;
 
 	BUG_ON(task_pri >= CPUPRI_NR_PRIORITIES);
 
-	for (idx = 0; idx < task_pri; idx++) {
+	क्रम (idx = 0; idx < task_pri; idx++) अणु
 
-		if (!__cpupri_find(cp, p, lowest_mask, idx))
-			continue;
+		अगर (!__cpupri_find(cp, p, lowest_mask, idx))
+			जारी;
 
-		if (!lowest_mask || !fitness_fn)
-			return 1;
+		अगर (!lowest_mask || !fitness_fn)
+			वापस 1;
 
 		/* Ensure the capacity of the CPUs fit the task */
-		for_each_cpu(cpu, lowest_mask) {
-			if (!fitness_fn(p, cpu))
+		क्रम_each_cpu(cpu, lowest_mask) अणु
+			अगर (!fitness_fn(p, cpu))
 				cpumask_clear_cpu(cpu, lowest_mask);
-		}
+		पूर्ण
 
 		/*
 		 * If no CPU at the current priority can fit the task
-		 * continue looking
+		 * जारी looking
 		 */
-		if (cpumask_empty(lowest_mask))
-			continue;
+		अगर (cpumask_empty(lowest_mask))
+			जारी;
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/*
 	 * If we failed to find a fitting lowest_mask, kick off a new search
-	 * but without taking into account any fitness criteria this time.
+	 * but without taking पूर्णांकo account any fitness criteria this समय.
 	 *
 	 * This rule favours honouring priority over fitting the task in the
 	 * correct CPU (Capacity Awareness being the only user now).
-	 * The idea is that if a higher priority task can run, then it should
-	 * run even if this ends up being on unfitting CPU.
+	 * The idea is that अगर a higher priority task can run, then it should
+	 * run even अगर this ends up being on unfitting CPU.
 	 *
 	 * The cost of this trade-off is not entirely clear and will probably
-	 * be good for some workloads and bad for others.
+	 * be good क्रम some workloads and bad क्रम others.
 	 *
-	 * The main idea here is that if some CPUs were over-committed, we try
-	 * to spread which is what the scheduler traditionally did. Sys admins
-	 * must do proper RT planning to avoid overloading the system if they
+	 * The मुख्य idea here is that अगर some CPUs were over-committed, we try
+	 * to spपढ़ो which is what the scheduler traditionally did. Sys admins
+	 * must करो proper RT planning to aव्योम overloading the प्रणाली अगर they
 	 * really care.
 	 */
-	if (fitness_fn)
-		return cpupri_find(cp, p, lowest_mask);
+	अगर (fitness_fn)
+		वापस cpupri_find(cp, p, lowest_mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cpupri_set - update the CPU priority setting
@@ -205,112 +206,112 @@ int cpupri_find_fitness(struct cpupri *cp, struct task_struct *p,
  *
  * Note: Assumes cpu_rq(cpu)->lock is locked
  *
- * Returns: (void)
+ * Returns: (व्योम)
  */
-void cpupri_set(struct cpupri *cp, int cpu, int newpri)
-{
-	int *currpri = &cp->cpu_to_pri[cpu];
-	int oldpri = *currpri;
-	int do_mb = 0;
+व्योम cpupri_set(काष्ठा cpupri *cp, पूर्णांक cpu, पूर्णांक newpri)
+अणु
+	पूर्णांक *currpri = &cp->cpu_to_pri[cpu];
+	पूर्णांक oldpri = *currpri;
+	पूर्णांक करो_mb = 0;
 
 	newpri = convert_prio(newpri);
 
 	BUG_ON(newpri >= CPUPRI_NR_PRIORITIES);
 
-	if (newpri == oldpri)
-		return;
+	अगर (newpri == oldpri)
+		वापस;
 
 	/*
-	 * If the CPU was currently mapped to a different value, we
-	 * need to map it to the new value then remove the old value.
+	 * If the CPU was currently mapped to a dअगरferent value, we
+	 * need to map it to the new value then हटाओ the old value.
 	 * Note, we must add the new value first, otherwise we risk the
 	 * cpu being missed by the priority loop in cpupri_find.
 	 */
-	if (likely(newpri != CPUPRI_INVALID)) {
-		struct cpupri_vec *vec = &cp->pri_to_cpu[newpri];
+	अगर (likely(newpri != CPUPRI_INVALID)) अणु
+		काष्ठा cpupri_vec *vec = &cp->pri_to_cpu[newpri];
 
 		cpumask_set_cpu(cpu, vec->mask);
 		/*
 		 * When adding a new vector, we update the mask first,
-		 * do a write memory barrier, and then update the count, to
+		 * करो a ग_लिखो memory barrier, and then update the count, to
 		 * make sure the vector is visible when count is set.
 		 */
-		smp_mb__before_atomic();
+		smp_mb__beक्रमe_atomic();
 		atomic_inc(&(vec)->count);
-		do_mb = 1;
-	}
-	if (likely(oldpri != CPUPRI_INVALID)) {
-		struct cpupri_vec *vec  = &cp->pri_to_cpu[oldpri];
+		करो_mb = 1;
+	पूर्ण
+	अगर (likely(oldpri != CPUPRI_INVALID)) अणु
+		काष्ठा cpupri_vec *vec  = &cp->pri_to_cpu[oldpri];
 
 		/*
-		 * Because the order of modification of the vec->count
+		 * Because the order of modअगरication of the vec->count
 		 * is important, we must make sure that the update
-		 * of the new prio is seen before we decrement the
+		 * of the new prio is seen beक्रमe we decrement the
 		 * old prio. This makes sure that the loop sees
-		 * one or the other when we raise the priority of
-		 * the run queue. We don't care about when we lower the
+		 * one or the other when we उठाओ the priority of
+		 * the run queue. We करोn't care about when we lower the
 		 * priority, as that will trigger an rt pull anyway.
 		 *
-		 * We only need to do a memory barrier if we updated
+		 * We only need to करो a memory barrier अगर we updated
 		 * the new priority vec.
 		 */
-		if (do_mb)
+		अगर (करो_mb)
 			smp_mb__after_atomic();
 
 		/*
 		 * When removing from the vector, we decrement the counter first
-		 * do a memory barrier and then clear the mask.
+		 * करो a memory barrier and then clear the mask.
 		 */
 		atomic_dec(&(vec)->count);
 		smp_mb__after_atomic();
 		cpumask_clear_cpu(cpu, vec->mask);
-	}
+	पूर्ण
 
 	*currpri = newpri;
-}
+पूर्ण
 
 /**
- * cpupri_init - initialize the cpupri structure
+ * cpupri_init - initialize the cpupri काष्ठाure
  * @cp: The cpupri context
  *
  * Return: -ENOMEM on memory allocation failure.
  */
-int cpupri_init(struct cpupri *cp)
-{
-	int i;
+पूर्णांक cpupri_init(काष्ठा cpupri *cp)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < CPUPRI_NR_PRIORITIES; i++) {
-		struct cpupri_vec *vec = &cp->pri_to_cpu[i];
+	क्रम (i = 0; i < CPUPRI_NR_PRIORITIES; i++) अणु
+		काष्ठा cpupri_vec *vec = &cp->pri_to_cpu[i];
 
 		atomic_set(&vec->count, 0);
-		if (!zalloc_cpumask_var(&vec->mask, GFP_KERNEL))
-			goto cleanup;
-	}
+		अगर (!zalloc_cpumask_var(&vec->mask, GFP_KERNEL))
+			जाओ cleanup;
+	पूर्ण
 
-	cp->cpu_to_pri = kcalloc(nr_cpu_ids, sizeof(int), GFP_KERNEL);
-	if (!cp->cpu_to_pri)
-		goto cleanup;
+	cp->cpu_to_pri = kसुस्मृति(nr_cpu_ids, माप(पूर्णांक), GFP_KERNEL);
+	अगर (!cp->cpu_to_pri)
+		जाओ cleanup;
 
-	for_each_possible_cpu(i)
+	क्रम_each_possible_cpu(i)
 		cp->cpu_to_pri[i] = CPUPRI_INVALID;
 
-	return 0;
+	वापस 0;
 
 cleanup:
-	for (i--; i >= 0; i--)
-		free_cpumask_var(cp->pri_to_cpu[i].mask);
-	return -ENOMEM;
-}
+	क्रम (i--; i >= 0; i--)
+		मुक्त_cpumask_var(cp->pri_to_cpu[i].mask);
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * cpupri_cleanup - clean up the cpupri structure
+ * cpupri_cleanup - clean up the cpupri काष्ठाure
  * @cp: The cpupri context
  */
-void cpupri_cleanup(struct cpupri *cp)
-{
-	int i;
+व्योम cpupri_cleanup(काष्ठा cpupri *cp)
+अणु
+	पूर्णांक i;
 
-	kfree(cp->cpu_to_pri);
-	for (i = 0; i < CPUPRI_NR_PRIORITIES; i++)
-		free_cpumask_var(cp->pri_to_cpu[i].mask);
-}
+	kमुक्त(cp->cpu_to_pri);
+	क्रम (i = 0; i < CPUPRI_NR_PRIORITIES; i++)
+		मुक्त_cpumask_var(cp->pri_to_cpu[i].mask);
+पूर्ण

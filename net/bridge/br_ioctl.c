@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	Ioctl handler
  *	Linux ethernet bridge
@@ -7,218 +8,218 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
-#include <linux/capability.h>
-#include <linux/kernel.h>
-#include <linux/if_bridge.h>
-#include <linux/netdevice.h>
-#include <linux/slab.h>
-#include <linux/times.h>
-#include <net/net_namespace.h>
-#include <linux/uaccess.h>
-#include "br_private.h"
+#समावेश <linux/capability.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/बार.h>
+#समावेश <net/net_namespace.h>
+#समावेश <linux/uaccess.h>
+#समावेश "br_private.h"
 
-static int get_bridge_ifindices(struct net *net, int *indices, int num)
-{
-	struct net_device *dev;
-	int i = 0;
+अटल पूर्णांक get_bridge_अगरindices(काष्ठा net *net, पूर्णांक *indices, पूर्णांक num)
+अणु
+	काष्ठा net_device *dev;
+	पूर्णांक i = 0;
 
-	rcu_read_lock();
-	for_each_netdev_rcu(net, dev) {
-		if (i >= num)
-			break;
-		if (dev->priv_flags & IFF_EBRIDGE)
-			indices[i++] = dev->ifindex;
-	}
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_rcu(net, dev) अणु
+		अगर (i >= num)
+			अवरोध;
+		अगर (dev->priv_flags & IFF_EBRIDGE)
+			indices[i++] = dev->अगरindex;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /* called with RTNL */
-static void get_port_ifindices(struct net_bridge *br, int *ifindices, int num)
-{
-	struct net_bridge_port *p;
+अटल व्योम get_port_अगरindices(काष्ठा net_bridge *br, पूर्णांक *अगरindices, पूर्णांक num)
+अणु
+	काष्ठा net_bridge_port *p;
 
-	list_for_each_entry(p, &br->port_list, list) {
-		if (p->port_no < num)
-			ifindices[p->port_no] = p->dev->ifindex;
-	}
-}
+	list_क्रम_each_entry(p, &br->port_list, list) अणु
+		अगर (p->port_no < num)
+			अगरindices[p->port_no] = p->dev->अगरindex;
+	पूर्ण
+पूर्ण
 
 /*
- * Format up to a page worth of forwarding table entries
+ * Format up to a page worth of क्रमwarding table entries
  * userbuf -- where to copy result
  * maxnum  -- maximum number of entries desired
- *            (limited to a page for sanity)
+ *            (limited to a page क्रम sanity)
  * offset  -- number of records to skip
  */
-static int get_fdb_entries(struct net_bridge *br, void __user *userbuf,
-			   unsigned long maxnum, unsigned long offset)
-{
-	int num;
-	void *buf;
-	size_t size;
+अटल पूर्णांक get_fdb_entries(काष्ठा net_bridge *br, व्योम __user *userbuf,
+			   अचिन्हित दीर्घ maxnum, अचिन्हित दीर्घ offset)
+अणु
+	पूर्णांक num;
+	व्योम *buf;
+	माप_प्रकार size;
 
-	/* Clamp size to PAGE_SIZE, test maxnum to avoid overflow */
-	if (maxnum > PAGE_SIZE/sizeof(struct __fdb_entry))
-		maxnum = PAGE_SIZE/sizeof(struct __fdb_entry);
+	/* Clamp size to PAGE_SIZE, test maxnum to aव्योम overflow */
+	अगर (maxnum > PAGE_SIZE/माप(काष्ठा __fdb_entry))
+		maxnum = PAGE_SIZE/माप(काष्ठा __fdb_entry);
 
-	size = maxnum * sizeof(struct __fdb_entry);
+	size = maxnum * माप(काष्ठा __fdb_entry);
 
-	buf = kmalloc(size, GFP_USER);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(size, GFP_USER);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	num = br_fdb_fillbuf(br, buf, maxnum, offset);
-	if (num > 0) {
-		if (copy_to_user(userbuf, buf, num*sizeof(struct __fdb_entry)))
+	अगर (num > 0) अणु
+		अगर (copy_to_user(userbuf, buf, num*माप(काष्ठा __fdb_entry)))
 			num = -EFAULT;
-	}
-	kfree(buf);
+	पूर्ण
+	kमुक्त(buf);
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
 /* called with RTNL */
-static int add_del_if(struct net_bridge *br, int ifindex, int isadd)
-{
-	struct net *net = dev_net(br->dev);
-	struct net_device *dev;
-	int ret;
+अटल पूर्णांक add_del_अगर(काष्ठा net_bridge *br, पूर्णांक अगरindex, पूर्णांक isadd)
+अणु
+	काष्ठा net *net = dev_net(br->dev);
+	काष्ठा net_device *dev;
+	पूर्णांक ret;
 
-	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	dev = __dev_get_by_index(net, ifindex);
-	if (dev == NULL)
-		return -EINVAL;
+	dev = __dev_get_by_index(net, अगरindex);
+	अगर (dev == शून्य)
+		वापस -EINVAL;
 
-	if (isadd)
-		ret = br_add_if(br, dev, NULL);
-	else
-		ret = br_del_if(br, dev);
+	अगर (isadd)
+		ret = br_add_अगर(br, dev, शून्य);
+	अन्यथा
+		ret = br_del_अगर(br, dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Legacy ioctl's through SIOCDEVPRIVATE
- * This interface is deprecated because it was too difficult
- * to do the translation for 32/64bit ioctl compatibility.
+ * This पूर्णांकerface is deprecated because it was too dअगरficult
+ * to करो the translation क्रम 32/64bit ioctl compatibility.
  */
-static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-	struct net_bridge *br = netdev_priv(dev);
-	struct net_bridge_port *p = NULL;
-	unsigned long args[4];
-	int ret = -EOPNOTSUPP;
+अटल पूर्णांक old_dev_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
+	काष्ठा net_bridge_port *p = शून्य;
+	अचिन्हित दीर्घ args[4];
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	if (copy_from_user(args, rq->ifr_data, sizeof(args)))
-		return -EFAULT;
+	अगर (copy_from_user(args, rq->अगरr_data, माप(args)))
+		वापस -EFAULT;
 
-	switch (args[0]) {
-	case BRCTL_ADD_IF:
-	case BRCTL_DEL_IF:
-		return add_del_if(br, args[1], args[0] == BRCTL_ADD_IF);
+	चयन (args[0]) अणु
+	हाल BRCTL_ADD_IF:
+	हाल BRCTL_DEL_IF:
+		वापस add_del_अगर(br, args[1], args[0] == BRCTL_ADD_IF);
 
-	case BRCTL_GET_BRIDGE_INFO:
-	{
-		struct __bridge_info b;
+	हाल BRCTL_GET_BRIDGE_INFO:
+	अणु
+		काष्ठा __bridge_info b;
 
-		memset(&b, 0, sizeof(struct __bridge_info));
-		rcu_read_lock();
-		memcpy(&b.designated_root, &br->designated_root, 8);
-		memcpy(&b.bridge_id, &br->bridge_id, 8);
+		स_रखो(&b, 0, माप(काष्ठा __bridge_info));
+		rcu_पढ़ो_lock();
+		स_नकल(&b.designated_root, &br->designated_root, 8);
+		स_नकल(&b.bridge_id, &br->bridge_id, 8);
 		b.root_path_cost = br->root_path_cost;
-		b.max_age = jiffies_to_clock_t(br->max_age);
-		b.hello_time = jiffies_to_clock_t(br->hello_time);
-		b.forward_delay = br->forward_delay;
+		b.max_age = jअगरfies_to_घड़ी_प्रकार(br->max_age);
+		b.hello_समय = jअगरfies_to_घड़ी_प्रकार(br->hello_समय);
+		b.क्रमward_delay = br->क्रमward_delay;
 		b.bridge_max_age = br->bridge_max_age;
-		b.bridge_hello_time = br->bridge_hello_time;
-		b.bridge_forward_delay = jiffies_to_clock_t(br->bridge_forward_delay);
+		b.bridge_hello_समय = br->bridge_hello_समय;
+		b.bridge_क्रमward_delay = jअगरfies_to_घड़ी_प्रकार(br->bridge_क्रमward_delay);
 		b.topology_change = br->topology_change;
 		b.topology_change_detected = br->topology_change_detected;
 		b.root_port = br->root_port;
 
 		b.stp_enabled = (br->stp_enabled != BR_NO_STP);
-		b.ageing_time = jiffies_to_clock_t(br->ageing_time);
-		b.hello_timer_value = br_timer_value(&br->hello_timer);
-		b.tcn_timer_value = br_timer_value(&br->tcn_timer);
-		b.topology_change_timer_value = br_timer_value(&br->topology_change_timer);
-		b.gc_timer_value = br_timer_value(&br->gc_work.timer);
-		rcu_read_unlock();
+		b.ageing_समय = jअगरfies_to_घड़ी_प्रकार(br->ageing_समय);
+		b.hello_समयr_value = br_समयr_value(&br->hello_समयr);
+		b.tcn_समयr_value = br_समयr_value(&br->tcn_समयr);
+		b.topology_change_समयr_value = br_समयr_value(&br->topology_change_समयr);
+		b.gc_समयr_value = br_समयr_value(&br->gc_work.समयr);
+		rcu_पढ़ो_unlock();
 
-		if (copy_to_user((void __user *)args[1], &b, sizeof(b)))
-			return -EFAULT;
+		अगर (copy_to_user((व्योम __user *)args[1], &b, माप(b)))
+			वापस -EFAULT;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	case BRCTL_GET_PORT_LIST:
-	{
-		int num, *indices;
+	हाल BRCTL_GET_PORT_LIST:
+	अणु
+		पूर्णांक num, *indices;
 
 		num = args[2];
-		if (num < 0)
-			return -EINVAL;
-		if (num == 0)
+		अगर (num < 0)
+			वापस -EINVAL;
+		अगर (num == 0)
 			num = 256;
-		if (num > BR_MAX_PORTS)
+		अगर (num > BR_MAX_PORTS)
 			num = BR_MAX_PORTS;
 
-		indices = kcalloc(num, sizeof(int), GFP_KERNEL);
-		if (indices == NULL)
-			return -ENOMEM;
+		indices = kसुस्मृति(num, माप(पूर्णांक), GFP_KERNEL);
+		अगर (indices == शून्य)
+			वापस -ENOMEM;
 
-		get_port_ifindices(br, indices, num);
-		if (copy_to_user((void __user *)args[1], indices, num*sizeof(int)))
+		get_port_अगरindices(br, indices, num);
+		अगर (copy_to_user((व्योम __user *)args[1], indices, num*माप(पूर्णांक)))
 			num =  -EFAULT;
-		kfree(indices);
-		return num;
-	}
+		kमुक्त(indices);
+		वापस num;
+	पूर्ण
 
-	case BRCTL_SET_BRIDGE_FORWARD_DELAY:
-		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+	हाल BRCTL_SET_BRIDGE_FORWARD_DELAY:
+		अगर (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
 
-		ret = br_set_forward_delay(br, args[1]);
-		break;
+		ret = br_set_क्रमward_delay(br, args[1]);
+		अवरोध;
 
-	case BRCTL_SET_BRIDGE_HELLO_TIME:
-		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+	हाल BRCTL_SET_BRIDGE_HELLO_TIME:
+		अगर (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
 
-		ret = br_set_hello_time(br, args[1]);
-		break;
+		ret = br_set_hello_समय(br, args[1]);
+		अवरोध;
 
-	case BRCTL_SET_BRIDGE_MAX_AGE:
-		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+	हाल BRCTL_SET_BRIDGE_MAX_AGE:
+		अगर (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
 
 		ret = br_set_max_age(br, args[1]);
-		break;
+		अवरोध;
 
-	case BRCTL_SET_AGEING_TIME:
-		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+	हाल BRCTL_SET_AGEING_TIME:
+		अगर (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
 
-		ret = br_set_ageing_time(br, args[1]);
-		break;
+		ret = br_set_ageing_समय(br, args[1]);
+		अवरोध;
 
-	case BRCTL_GET_PORT_INFO:
-	{
-		struct __port_info p;
-		struct net_bridge_port *pt;
+	हाल BRCTL_GET_PORT_INFO:
+	अणु
+		काष्ठा __port_info p;
+		काष्ठा net_bridge_port *pt;
 
-		rcu_read_lock();
-		if ((pt = br_get_port(br, args[2])) == NULL) {
-			rcu_read_unlock();
-			return -EINVAL;
-		}
+		rcu_पढ़ो_lock();
+		अगर ((pt = br_get_port(br, args[2])) == शून्य) अणु
+			rcu_पढ़ो_unlock();
+			वापस -EINVAL;
+		पूर्ण
 
-		memset(&p, 0, sizeof(struct __port_info));
-		memcpy(&p.designated_root, &pt->designated_root, 8);
-		memcpy(&p.designated_bridge, &pt->designated_bridge, 8);
+		स_रखो(&p, 0, माप(काष्ठा __port_info));
+		स_नकल(&p.designated_root, &pt->designated_root, 8);
+		स_नकल(&p.designated_bridge, &pt->designated_bridge, 8);
 		p.port_id = pt->port_id;
 		p.designated_port = pt->designated_port;
 		p.path_cost = pt->path_cost;
@@ -226,172 +227,172 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		p.state = pt->state;
 		p.top_change_ack = pt->topology_change_ack;
 		p.config_pending = pt->config_pending;
-		p.message_age_timer_value = br_timer_value(&pt->message_age_timer);
-		p.forward_delay_timer_value = br_timer_value(&pt->forward_delay_timer);
-		p.hold_timer_value = br_timer_value(&pt->hold_timer);
+		p.message_age_समयr_value = br_समयr_value(&pt->message_age_समयr);
+		p.क्रमward_delay_समयr_value = br_समयr_value(&pt->क्रमward_delay_समयr);
+		p.hold_समयr_value = br_समयr_value(&pt->hold_समयr);
 
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
-		if (copy_to_user((void __user *)args[1], &p, sizeof(p)))
-			return -EFAULT;
+		अगर (copy_to_user((व्योम __user *)args[1], &p, माप(p)))
+			वापस -EFAULT;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	case BRCTL_SET_BRIDGE_STP_STATE:
-		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+	हाल BRCTL_SET_BRIDGE_STP_STATE:
+		अगर (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
 
-		ret = br_stp_set_enabled(br, args[1], NULL);
-		break;
+		ret = br_stp_set_enabled(br, args[1], शून्य);
+		अवरोध;
 
-	case BRCTL_SET_BRIDGE_PRIORITY:
-		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+	हाल BRCTL_SET_BRIDGE_PRIORITY:
+		अगर (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
 
 		br_stp_set_bridge_priority(br, args[1]);
 		ret = 0;
-		break;
+		अवरोध;
 
-	case BRCTL_SET_PORT_PRIORITY:
-	{
-		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+	हाल BRCTL_SET_PORT_PRIORITY:
+	अणु
+		अगर (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
 
 		spin_lock_bh(&br->lock);
-		if ((p = br_get_port(br, args[1])) == NULL)
+		अगर ((p = br_get_port(br, args[1])) == शून्य)
 			ret = -EINVAL;
-		else
+		अन्यथा
 			ret = br_stp_set_port_priority(p, args[2]);
 		spin_unlock_bh(&br->lock);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case BRCTL_SET_PATH_COST:
-	{
-		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+	हाल BRCTL_SET_PATH_COST:
+	अणु
+		अगर (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
 
 		spin_lock_bh(&br->lock);
-		if ((p = br_get_port(br, args[1])) == NULL)
+		अगर ((p = br_get_port(br, args[1])) == शून्य)
 			ret = -EINVAL;
-		else
+		अन्यथा
 			ret = br_stp_set_path_cost(p, args[2]);
 		spin_unlock_bh(&br->lock);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case BRCTL_GET_FDB_ENTRIES:
-		return get_fdb_entries(br, (void __user *)args[1],
+	हाल BRCTL_GET_FDB_ENTRIES:
+		वापस get_fdb_entries(br, (व्योम __user *)args[1],
 				       args[2], args[3]);
-	}
+	पूर्ण
 
-	if (!ret) {
-		if (p)
-			br_ifinfo_notify(RTM_NEWLINK, NULL, p);
-		else
+	अगर (!ret) अणु
+		अगर (p)
+			br_अगरinfo_notअगरy(RTM_NEWLINK, शून्य, p);
+		अन्यथा
 			netdev_state_change(br->dev);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int old_deviceless(struct net *net, void __user *uarg)
-{
-	unsigned long args[3];
+अटल पूर्णांक old_deviceless(काष्ठा net *net, व्योम __user *uarg)
+अणु
+	अचिन्हित दीर्घ args[3];
 
-	if (copy_from_user(args, uarg, sizeof(args)))
-		return -EFAULT;
+	अगर (copy_from_user(args, uarg, माप(args)))
+		वापस -EFAULT;
 
-	switch (args[0]) {
-	case BRCTL_GET_VERSION:
-		return BRCTL_VERSION;
+	चयन (args[0]) अणु
+	हाल BRCTL_GET_VERSION:
+		वापस BRCTL_VERSION;
 
-	case BRCTL_GET_BRIDGES:
-	{
-		int *indices;
-		int ret = 0;
+	हाल BRCTL_GET_BRIDGES:
+	अणु
+		पूर्णांक *indices;
+		पूर्णांक ret = 0;
 
-		if (args[2] >= 2048)
-			return -ENOMEM;
-		indices = kcalloc(args[2], sizeof(int), GFP_KERNEL);
-		if (indices == NULL)
-			return -ENOMEM;
+		अगर (args[2] >= 2048)
+			वापस -ENOMEM;
+		indices = kसुस्मृति(args[2], माप(पूर्णांक), GFP_KERNEL);
+		अगर (indices == शून्य)
+			वापस -ENOMEM;
 
-		args[2] = get_bridge_ifindices(net, indices, args[2]);
+		args[2] = get_bridge_अगरindices(net, indices, args[2]);
 
-		ret = copy_to_user((void __user *)args[1], indices, args[2]*sizeof(int))
+		ret = copy_to_user((व्योम __user *)args[1], indices, args[2]*माप(पूर्णांक))
 			? -EFAULT : args[2];
 
-		kfree(indices);
-		return ret;
-	}
+		kमुक्त(indices);
+		वापस ret;
+	पूर्ण
 
-	case BRCTL_ADD_BRIDGE:
-	case BRCTL_DEL_BRIDGE:
-	{
-		char buf[IFNAMSIZ];
+	हाल BRCTL_ADD_BRIDGE:
+	हाल BRCTL_DEL_BRIDGE:
+	अणु
+		अक्षर buf[IFNAMSIZ];
 
-		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
 
-		if (copy_from_user(buf, (void __user *)args[1], IFNAMSIZ))
-			return -EFAULT;
-
-		buf[IFNAMSIZ-1] = 0;
-
-		if (args[0] == BRCTL_ADD_BRIDGE)
-			return br_add_bridge(net, buf);
-
-		return br_del_bridge(net, buf);
-	}
-	}
-
-	return -EOPNOTSUPP;
-}
-
-int br_ioctl_deviceless_stub(struct net *net, unsigned int cmd, void __user *uarg)
-{
-	switch (cmd) {
-	case SIOCGIFBR:
-	case SIOCSIFBR:
-		return old_deviceless(net, uarg);
-
-	case SIOCBRADDBR:
-	case SIOCBRDELBR:
-	{
-		char buf[IFNAMSIZ];
-
-		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
-
-		if (copy_from_user(buf, uarg, IFNAMSIZ))
-			return -EFAULT;
+		अगर (copy_from_user(buf, (व्योम __user *)args[1], IFNAMSIZ))
+			वापस -EFAULT;
 
 		buf[IFNAMSIZ-1] = 0;
-		if (cmd == SIOCBRADDBR)
-			return br_add_bridge(net, buf);
 
-		return br_del_bridge(net, buf);
-	}
-	}
-	return -EOPNOTSUPP;
-}
+		अगर (args[0] == BRCTL_ADD_BRIDGE)
+			वापस br_add_bridge(net, buf);
 
-int br_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-	struct net_bridge *br = netdev_priv(dev);
+		वापस br_del_bridge(net, buf);
+	पूर्ण
+	पूर्ण
 
-	switch (cmd) {
-	case SIOCDEVPRIVATE:
-		return old_dev_ioctl(dev, rq, cmd);
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-	case SIOCBRADDIF:
-	case SIOCBRDELIF:
-		return add_del_if(br, rq->ifr_ifindex, cmd == SIOCBRADDIF);
+पूर्णांक br_ioctl_deviceless_stub(काष्ठा net *net, अचिन्हित पूर्णांक cmd, व्योम __user *uarg)
+अणु
+	चयन (cmd) अणु
+	हाल SIOCGIFBR:
+	हाल SIOCSIFBR:
+		वापस old_deviceless(net, uarg);
 
-	}
+	हाल SIOCBRADDBR:
+	हाल SIOCBRDELBR:
+	अणु
+		अक्षर buf[IFNAMSIZ];
+
+		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
+
+		अगर (copy_from_user(buf, uarg, IFNAMSIZ))
+			वापस -EFAULT;
+
+		buf[IFNAMSIZ-1] = 0;
+		अगर (cmd == SIOCBRADDBR)
+			वापस br_add_bridge(net, buf);
+
+		वापस br_del_bridge(net, buf);
+	पूर्ण
+	पूर्ण
+	वापस -EOPNOTSUPP;
+पूर्ण
+
+पूर्णांक br_dev_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
+
+	चयन (cmd) अणु
+	हाल SIOCDEVPRIVATE:
+		वापस old_dev_ioctl(dev, rq, cmd);
+
+	हाल SIOCBRADDIF:
+	हाल SIOCBRDELIF:
+		वापस add_del_अगर(br, rq->अगरr_अगरindex, cmd == SIOCBRADDIF);
+
+	पूर्ण
 
 	br_debug(br, "Bridge does not support ioctl 0x%x\n", cmd);
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण

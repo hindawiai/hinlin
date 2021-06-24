@@ -1,7 +1,8 @@
+<शैली गुरु>
 /****************************************************************************/
 
 /*
- *	uclinux.c -- generic memory mapped MTD driver for uclinux
+ *	uclinux.c -- generic memory mapped MTD driver क्रम uclinux
  *
  *	(C) Copyright 2002, Greg Ungerer (gerg@snapgear.com)
  *
@@ -10,109 +11,109 @@
 
 /****************************************************************************/
 
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/major.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/map.h>
-#include <linux/mtd/partitions.h>
-#include <asm/io.h>
-#include <asm/sections.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/major.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/map.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/sections.h>
 
 /****************************************************************************/
 
-#ifdef CONFIG_MTD_ROM
-#define MAP_NAME "rom"
-#else
-#define MAP_NAME "ram"
-#endif
+#अगर_घोषित CONFIG_MTD_ROM
+#घोषणा MAP_NAME "rom"
+#अन्यथा
+#घोषणा MAP_NAME "ram"
+#पूर्ण_अगर
 
-static struct map_info uclinux_ram_map = {
+अटल काष्ठा map_info uclinux_ram_map = अणु
 	.name = MAP_NAME,
 	.size = 0,
-};
+पूर्ण;
 
-static unsigned long physaddr = -1;
-module_param(physaddr, ulong, S_IRUGO);
+अटल अचिन्हित दीर्घ physaddr = -1;
+module_param(physaddr, uदीर्घ, S_IRUGO);
 
-static struct mtd_info *uclinux_ram_mtdinfo;
-
-/****************************************************************************/
-
-static const struct mtd_partition uclinux_romfs[] = {
-	{ .name = "ROMfs" }
-};
-
-#define	NUM_PARTITIONS	ARRAY_SIZE(uclinux_romfs)
+अटल काष्ठा mtd_info *uclinux_ram_mtdinfo;
 
 /****************************************************************************/
 
-static int uclinux_point(struct mtd_info *mtd, loff_t from, size_t len,
-	size_t *retlen, void **virt, resource_size_t *phys)
-{
-	struct map_info *map = mtd->priv;
+अटल स्थिर काष्ठा mtd_partition uclinux_romfs[] = अणु
+	अणु .name = "ROMfs" पूर्ण
+पूर्ण;
+
+#घोषणा	NUM_PARTITIONS	ARRAY_SIZE(uclinux_romfs)
+
+/****************************************************************************/
+
+अटल पूर्णांक uclinux_poपूर्णांक(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
+	माप_प्रकार *retlen, व्योम **virt, resource_माप_प्रकार *phys)
+अणु
+	काष्ठा map_info *map = mtd->priv;
 	*virt = map->virt + from;
-	if (phys)
+	अगर (phys)
 		*phys = map->phys + from;
 	*retlen = len;
-	return(0);
-}
+	वापस(0);
+पूर्ण
 
 /****************************************************************************/
 
-static int __init uclinux_mtd_init(void)
-{
-	struct mtd_info *mtd;
-	struct map_info *mapp;
+अटल पूर्णांक __init uclinux_mtd_init(व्योम)
+अणु
+	काष्ठा mtd_info *mtd;
+	काष्ठा map_info *mapp;
 
 	mapp = &uclinux_ram_map;
 
-	if (physaddr == -1)
-		mapp->phys = (resource_size_t)__bss_stop;
-	else
+	अगर (physaddr == -1)
+		mapp->phys = (resource_माप_प्रकार)__bss_stop;
+	अन्यथा
 		mapp->phys = physaddr;
 
-	if (!mapp->size)
-		mapp->size = PAGE_ALIGN(ntohl(*((unsigned long *)(mapp->phys + 8))));
+	अगर (!mapp->size)
+		mapp->size = PAGE_ALIGN(ntohl(*((अचिन्हित दीर्घ *)(mapp->phys + 8))));
 	mapp->bankwidth = 4;
 
-	printk("uclinux[mtd]: probe address=0x%x size=0x%x\n",
-	       	(int) mapp->phys, (int) mapp->size);
+	prपूर्णांकk("uclinux[mtd]: probe address=0x%x size=0x%x\n",
+	       	(पूर्णांक) mapp->phys, (पूर्णांक) mapp->size);
 
 	/*
-	 * The filesystem is guaranteed to be in direct mapped memory. It is
+	 * The fileप्रणाली is guaranteed to be in direct mapped memory. It is
 	 * directly following the kernels own bss region. Following the same
 	 * mechanism used by architectures setting up traditional initrds we
-	 * use phys_to_virt to get the virtual address of its start.
+	 * use phys_to_virt to get the भव address of its start.
 	 */
 	mapp->virt = phys_to_virt(mapp->phys);
 
-	if (mapp->virt == 0) {
-		printk("uclinux[mtd]: no virtual mapping?\n");
-		return(-EIO);
-	}
+	अगर (mapp->virt == 0) अणु
+		prपूर्णांकk("uclinux[mtd]: no virtual mapping?\n");
+		वापस(-EIO);
+	पूर्ण
 
 	simple_map_init(mapp);
 
-	mtd = do_map_probe("map_" MAP_NAME, mapp);
-	if (!mtd) {
-		printk("uclinux[mtd]: failed to find a mapping?\n");
-		return(-ENXIO);
-	}
+	mtd = करो_map_probe("map_" MAP_NAME, mapp);
+	अगर (!mtd) अणु
+		prपूर्णांकk("uclinux[mtd]: failed to find a mapping?\n");
+		वापस(-ENXIO);
+	पूर्ण
 
 	mtd->owner = THIS_MODULE;
-	mtd->_point = uclinux_point;
+	mtd->_poपूर्णांक = uclinux_poपूर्णांक;
 	mtd->priv = mapp;
 
 	uclinux_ram_mtdinfo = mtd;
-	mtd_device_register(mtd, uclinux_romfs, NUM_PARTITIONS);
+	mtd_device_रेजिस्टर(mtd, uclinux_romfs, NUM_PARTITIONS);
 
-	return(0);
-}
+	वापस(0);
+पूर्ण
 device_initcall(uclinux_mtd_init);
 
 /****************************************************************************/

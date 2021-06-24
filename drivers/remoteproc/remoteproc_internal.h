@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Remote processor framework
  *
@@ -9,191 +10,191 @@
  * Brian Swetland <swetland@google.com>
  */
 
-#ifndef REMOTEPROC_INTERNAL_H
-#define REMOTEPROC_INTERNAL_H
+#अगर_अघोषित REMOTEPROC_INTERNAL_H
+#घोषणा REMOTEPROC_INTERNAL_H
 
-#include <linux/irqreturn.h>
-#include <linux/firmware.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/firmware.h>
 
-struct rproc;
+काष्ठा rproc;
 
-struct rproc_debug_trace {
-	struct rproc *rproc;
-	struct dentry *tfile;
-	struct list_head node;
-	struct rproc_mem_entry trace_mem;
-};
+काष्ठा rproc_debug_trace अणु
+	काष्ठा rproc *rproc;
+	काष्ठा dentry *tfile;
+	काष्ठा list_head node;
+	काष्ठा rproc_mem_entry trace_mem;
+पूर्ण;
 
 /* from remoteproc_core.c */
-void rproc_release(struct kref *kref);
-irqreturn_t rproc_vq_interrupt(struct rproc *rproc, int vq_id);
-void rproc_vdev_release(struct kref *ref);
-int rproc_of_parse_firmware(struct device *dev, int index,
-			    const char **fw_name);
+व्योम rproc_release(काष्ठा kref *kref);
+irqवापस_t rproc_vq_पूर्णांकerrupt(काष्ठा rproc *rproc, पूर्णांक vq_id);
+व्योम rproc_vdev_release(काष्ठा kref *ref);
+पूर्णांक rproc_of_parse_firmware(काष्ठा device *dev, पूर्णांक index,
+			    स्थिर अक्षर **fw_name);
 
 /* from remoteproc_virtio.c */
-int rproc_add_virtio_dev(struct rproc_vdev *rvdev, int id);
-int rproc_remove_virtio_dev(struct device *dev, void *data);
+पूर्णांक rproc_add_virtio_dev(काष्ठा rproc_vdev *rvdev, पूर्णांक id);
+पूर्णांक rproc_हटाओ_virtio_dev(काष्ठा device *dev, व्योम *data);
 
 /* from remoteproc_debugfs.c */
-void rproc_remove_trace_file(struct dentry *tfile);
-struct dentry *rproc_create_trace_file(const char *name, struct rproc *rproc,
-				       struct rproc_debug_trace *trace);
-void rproc_delete_debug_dir(struct rproc *rproc);
-void rproc_create_debug_dir(struct rproc *rproc);
-void rproc_init_debugfs(void);
-void rproc_exit_debugfs(void);
+व्योम rproc_हटाओ_trace_file(काष्ठा dentry *tfile);
+काष्ठा dentry *rproc_create_trace_file(स्थिर अक्षर *name, काष्ठा rproc *rproc,
+				       काष्ठा rproc_debug_trace *trace);
+व्योम rproc_delete_debug_dir(काष्ठा rproc *rproc);
+व्योम rproc_create_debug_dir(काष्ठा rproc *rproc);
+व्योम rproc_init_debugfs(व्योम);
+व्योम rproc_निकास_debugfs(व्योम);
 
 /* from remoteproc_sysfs.c */
-extern struct class rproc_class;
-int rproc_init_sysfs(void);
-void rproc_exit_sysfs(void);
+बाह्य काष्ठा class rproc_class;
+पूर्णांक rproc_init_sysfs(व्योम);
+व्योम rproc_निकास_sysfs(व्योम);
 
 /* from remoteproc_coredump.c */
-void rproc_coredump_cleanup(struct rproc *rproc);
-void rproc_coredump(struct rproc *rproc);
+व्योम rproc_coredump_cleanup(काष्ठा rproc *rproc);
+व्योम rproc_coredump(काष्ठा rproc *rproc);
 
-#ifdef CONFIG_REMOTEPROC_CDEV
-void rproc_init_cdev(void);
-void rproc_exit_cdev(void);
-int rproc_char_device_add(struct rproc *rproc);
-void rproc_char_device_remove(struct rproc *rproc);
-#else
-static inline void rproc_init_cdev(void)
-{
-}
+#अगर_घोषित CONFIG_REMOTEPROC_CDEV
+व्योम rproc_init_cdev(व्योम);
+व्योम rproc_निकास_cdev(व्योम);
+पूर्णांक rproc_अक्षर_device_add(काष्ठा rproc *rproc);
+व्योम rproc_अक्षर_device_हटाओ(काष्ठा rproc *rproc);
+#अन्यथा
+अटल अंतरभूत व्योम rproc_init_cdev(व्योम)
+अणु
+पूर्ण
 
-static inline void rproc_exit_cdev(void)
-{
-}
+अटल अंतरभूत व्योम rproc_निकास_cdev(व्योम)
+अणु
+पूर्ण
 
 /*
- * The character device interface is an optional feature, if it is not enabled
- * the function should not return an error.
+ * The अक्षरacter device पूर्णांकerface is an optional feature, अगर it is not enabled
+ * the function should not वापस an error.
  */
-static inline int rproc_char_device_add(struct rproc *rproc)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक rproc_अक्षर_device_add(काष्ठा rproc *rproc)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void  rproc_char_device_remove(struct rproc *rproc)
-{
-}
-#endif
+अटल अंतरभूत व्योम  rproc_अक्षर_device_हटाओ(काष्ठा rproc *rproc)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-void rproc_free_vring(struct rproc_vring *rvring);
-int rproc_alloc_vring(struct rproc_vdev *rvdev, int i);
+व्योम rproc_मुक्त_vring(काष्ठा rproc_vring *rvring);
+पूर्णांक rproc_alloc_vring(काष्ठा rproc_vdev *rvdev, पूर्णांक i);
 
-void *rproc_da_to_va(struct rproc *rproc, u64 da, size_t len, bool *is_iomem);
-phys_addr_t rproc_va_to_pa(void *cpu_addr);
-int rproc_trigger_recovery(struct rproc *rproc);
+व्योम *rproc_da_to_va(काष्ठा rproc *rproc, u64 da, माप_प्रकार len, bool *is_iomem);
+phys_addr_t rproc_va_to_pa(व्योम *cpu_addr);
+पूर्णांक rproc_trigger_recovery(काष्ठा rproc *rproc);
 
-int rproc_elf_sanity_check(struct rproc *rproc, const struct firmware *fw);
-u64 rproc_elf_get_boot_addr(struct rproc *rproc, const struct firmware *fw);
-int rproc_elf_load_segments(struct rproc *rproc, const struct firmware *fw);
-int rproc_elf_load_rsc_table(struct rproc *rproc, const struct firmware *fw);
-struct resource_table *rproc_elf_find_loaded_rsc_table(struct rproc *rproc,
-						       const struct firmware *fw);
-struct rproc_mem_entry *
-rproc_find_carveout_by_name(struct rproc *rproc, const char *name, ...);
+पूर्णांक rproc_elf_sanity_check(काष्ठा rproc *rproc, स्थिर काष्ठा firmware *fw);
+u64 rproc_elf_get_boot_addr(काष्ठा rproc *rproc, स्थिर काष्ठा firmware *fw);
+पूर्णांक rproc_elf_load_segments(काष्ठा rproc *rproc, स्थिर काष्ठा firmware *fw);
+पूर्णांक rproc_elf_load_rsc_table(काष्ठा rproc *rproc, स्थिर काष्ठा firmware *fw);
+काष्ठा resource_table *rproc_elf_find_loaded_rsc_table(काष्ठा rproc *rproc,
+						       स्थिर काष्ठा firmware *fw);
+काष्ठा rproc_mem_entry *
+rproc_find_carveout_by_name(काष्ठा rproc *rproc, स्थिर अक्षर *name, ...);
 
-static inline int rproc_prepare_device(struct rproc *rproc)
-{
-	if (rproc->ops->prepare)
-		return rproc->ops->prepare(rproc);
+अटल अंतरभूत पूर्णांक rproc_prepare_device(काष्ठा rproc *rproc)
+अणु
+	अगर (rproc->ops->prepare)
+		वापस rproc->ops->prepare(rproc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int rproc_unprepare_device(struct rproc *rproc)
-{
-	if (rproc->ops->unprepare)
-		return rproc->ops->unprepare(rproc);
+अटल अंतरभूत पूर्णांक rproc_unprepare_device(काष्ठा rproc *rproc)
+अणु
+	अगर (rproc->ops->unprepare)
+		वापस rproc->ops->unprepare(rproc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int rproc_attach_device(struct rproc *rproc)
-{
-	if (rproc->ops->attach)
-		return rproc->ops->attach(rproc);
+अटल अंतरभूत पूर्णांक rproc_attach_device(काष्ठा rproc *rproc)
+अणु
+	अगर (rproc->ops->attach)
+		वापस rproc->ops->attach(rproc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline
-int rproc_fw_sanity_check(struct rproc *rproc, const struct firmware *fw)
-{
-	if (rproc->ops->sanity_check)
-		return rproc->ops->sanity_check(rproc, fw);
+अटल अंतरभूत
+पूर्णांक rproc_fw_sanity_check(काष्ठा rproc *rproc, स्थिर काष्ठा firmware *fw)
+अणु
+	अगर (rproc->ops->sanity_check)
+		वापस rproc->ops->sanity_check(rproc, fw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline
-u64 rproc_get_boot_addr(struct rproc *rproc, const struct firmware *fw)
-{
-	if (rproc->ops->get_boot_addr)
-		return rproc->ops->get_boot_addr(rproc, fw);
+अटल अंतरभूत
+u64 rproc_get_boot_addr(काष्ठा rproc *rproc, स्थिर काष्ठा firmware *fw)
+अणु
+	अगर (rproc->ops->get_boot_addr)
+		वापस rproc->ops->get_boot_addr(rproc, fw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline
-int rproc_load_segments(struct rproc *rproc, const struct firmware *fw)
-{
-	if (rproc->ops->load)
-		return rproc->ops->load(rproc, fw);
+अटल अंतरभूत
+पूर्णांक rproc_load_segments(काष्ठा rproc *rproc, स्थिर काष्ठा firmware *fw)
+अणु
+	अगर (rproc->ops->load)
+		वापस rproc->ops->load(rproc, fw);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static inline int rproc_parse_fw(struct rproc *rproc, const struct firmware *fw)
-{
-	if (rproc->ops->parse_fw)
-		return rproc->ops->parse_fw(rproc, fw);
+अटल अंतरभूत पूर्णांक rproc_parse_fw(काष्ठा rproc *rproc, स्थिर काष्ठा firmware *fw)
+अणु
+	अगर (rproc->ops->parse_fw)
+		वापस rproc->ops->parse_fw(rproc, fw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline
-int rproc_handle_rsc(struct rproc *rproc, u32 rsc_type, void *rsc, int offset,
-		     int avail)
-{
-	if (rproc->ops->handle_rsc)
-		return rproc->ops->handle_rsc(rproc, rsc_type, rsc, offset,
+अटल अंतरभूत
+पूर्णांक rproc_handle_rsc(काष्ठा rproc *rproc, u32 rsc_type, व्योम *rsc, पूर्णांक offset,
+		     पूर्णांक avail)
+अणु
+	अगर (rproc->ops->handle_rsc)
+		वापस rproc->ops->handle_rsc(rproc, rsc_type, rsc, offset,
 					      avail);
 
-	return RSC_IGNORED;
-}
+	वापस RSC_IGNORED;
+पूर्ण
 
-static inline
-struct resource_table *rproc_find_loaded_rsc_table(struct rproc *rproc,
-						   const struct firmware *fw)
-{
-	if (rproc->ops->find_loaded_rsc_table)
-		return rproc->ops->find_loaded_rsc_table(rproc, fw);
+अटल अंतरभूत
+काष्ठा resource_table *rproc_find_loaded_rsc_table(काष्ठा rproc *rproc,
+						   स्थिर काष्ठा firmware *fw)
+अणु
+	अगर (rproc->ops->find_loaded_rsc_table)
+		वापस rproc->ops->find_loaded_rsc_table(rproc, fw);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline
-struct resource_table *rproc_get_loaded_rsc_table(struct rproc *rproc,
-						  size_t *size)
-{
-	if (rproc->ops->get_loaded_rsc_table)
-		return rproc->ops->get_loaded_rsc_table(rproc, size);
+अटल अंतरभूत
+काष्ठा resource_table *rproc_get_loaded_rsc_table(काष्ठा rproc *rproc,
+						  माप_प्रकार *size)
+अणु
+	अगर (rproc->ops->get_loaded_rsc_table)
+		वापस rproc->ops->get_loaded_rsc_table(rproc, size);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline
-bool rproc_u64_fit_in_size_t(u64 val)
-{
-	if (sizeof(size_t) == sizeof(u64))
-		return true;
+अटल अंतरभूत
+bool rproc_u64_fit_in_माप_प्रकार(u64 val)
+अणु
+	अगर (माप(माप_प्रकार) == माप(u64))
+		वापस true;
 
-	return (val <= (size_t) -1);
-}
+	वापस (val <= (माप_प्रकार) -1);
+पूर्ण
 
-#endif /* REMOTEPROC_INTERNAL_H */
+#पूर्ण_अगर /* REMOTEPROC_INTERNAL_H */

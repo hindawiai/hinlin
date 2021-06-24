@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Signal support for Hexagon processor
+ * Signal support क्रम Hexagon processor
  *
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/linkage.h>
-#include <linux/syscalls.h>
-#include <linux/tracehook.h>
-#include <linux/sched/task_stack.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/sched/task_stack.h>
 
-#include <asm/registers.h>
-#include <asm/thread_info.h>
-#include <asm/unistd.h>
-#include <linux/uaccess.h>
-#include <asm/ucontext.h>
-#include <asm/cacheflush.h>
-#include <asm/signal.h>
-#include <asm/vdso.h>
+#समावेश <यंत्र/रेजिस्टरs.h>
+#समावेश <यंत्र/thपढ़ो_info.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/ucontext.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/संकेत.स>
+#समावेश <यंत्र/vdso.h>
 
-struct rt_sigframe {
-	unsigned long tramp[2];
-	struct siginfo info;
-	struct ucontext uc;
-};
+काष्ठा rt_sigframe अणु
+	अचिन्हित दीर्घ tramp[2];
+	काष्ठा siginfo info;
+	काष्ठा ucontext uc;
+पूर्ण;
 
-static void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
-			  size_t frame_size)
-{
-	unsigned long sp = sigsp(regs->r29, ksig);
+अटल व्योम __user *get_sigframe(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs,
+			  माप_प्रकार frame_size)
+अणु
+	अचिन्हित दीर्घ sp = sigsp(regs->r29, ksig);
 
-	return (void __user *)((sp - frame_size) & ~(sizeof(long long) - 1));
-}
+	वापस (व्योम __user *)((sp - frame_size) & ~(माप(दीर्घ दीर्घ) - 1));
+पूर्ण
 
-static int setup_sigcontext(struct pt_regs *regs, struct sigcontext __user *sc)
-{
-	unsigned long tmp;
-	int err = 0;
+अटल पूर्णांक setup_sigcontext(काष्ठा pt_regs *regs, काष्ठा sigcontext __user *sc)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	पूर्णांक err = 0;
 
 	err |= copy_to_user(&sc->sc_regs.r0, &regs->r00,
-			    32*sizeof(unsigned long));
+			    32*माप(अचिन्हित दीर्घ));
 
 	err |= __put_user(regs->sa0, &sc->sc_regs.sa0);
 	err |= __put_user(regs->lc0, &sc->sc_regs.lc0);
@@ -51,25 +52,25 @@ static int setup_sigcontext(struct pt_regs *regs, struct sigcontext __user *sc)
 	err |= __put_user(regs->preds, &sc->sc_regs.p3_0);
 	err |= __put_user(regs->gp, &sc->sc_regs.gp);
 	err |= __put_user(regs->ugp, &sc->sc_regs.ugp);
-#if CONFIG_HEXAGON_ARCH_VERSION >= 4
+#अगर CONFIG_HEXAGON_ARCH_VERSION >= 4
 	err |= __put_user(regs->cs0, &sc->sc_regs.cs0);
 	err |= __put_user(regs->cs1, &sc->sc_regs.cs1);
-#endif
-	tmp = pt_elr(regs); err |= __put_user(tmp, &sc->sc_regs.pc);
-	tmp = pt_cause(regs); err |= __put_user(tmp, &sc->sc_regs.cause);
-	tmp = pt_badva(regs); err |= __put_user(tmp, &sc->sc_regs.badva);
+#पूर्ण_अगर
+	पंचांगp = pt_elr(regs); err |= __put_user(पंचांगp, &sc->sc_regs.pc);
+	पंचांगp = pt_cause(regs); err |= __put_user(पंचांगp, &sc->sc_regs.cause);
+	पंचांगp = pt_badva(regs); err |= __put_user(पंचांगp, &sc->sc_regs.badva);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int restore_sigcontext(struct pt_regs *regs,
-			      struct sigcontext __user *sc)
-{
-	unsigned long tmp;
-	int err = 0;
+अटल पूर्णांक restore_sigcontext(काष्ठा pt_regs *regs,
+			      काष्ठा sigcontext __user *sc)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	पूर्णांक err = 0;
 
 	err |= copy_from_user(&regs->r00, &sc->sc_regs.r0,
-			      32 * sizeof(unsigned long));
+			      32 * माप(अचिन्हित दीर्घ));
 
 	err |= __get_user(regs->sa0, &sc->sc_regs.sa0);
 	err |= __get_user(regs->lc0, &sc->sc_regs.lc0);
@@ -81,177 +82,177 @@ static int restore_sigcontext(struct pt_regs *regs,
 	err |= __get_user(regs->preds, &sc->sc_regs.p3_0);
 	err |= __get_user(regs->gp, &sc->sc_regs.gp);
 	err |= __get_user(regs->ugp, &sc->sc_regs.ugp);
-#if CONFIG_HEXAGON_ARCH_VERSION >= 4
+#अगर CONFIG_HEXAGON_ARCH_VERSION >= 4
 	err |= __get_user(regs->cs0, &sc->sc_regs.cs0);
 	err |= __get_user(regs->cs1, &sc->sc_regs.cs1);
-#endif
-	err |= __get_user(tmp, &sc->sc_regs.pc); pt_set_elr(regs, tmp);
+#पूर्ण_अगर
+	err |= __get_user(पंचांगp, &sc->sc_regs.pc); pt_set_elr(regs, पंचांगp);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Setup signal stack frame with siginfo structure
+ * Setup संकेत stack frame with siginfo काष्ठाure
  */
-static int setup_rt_frame(struct ksignal *ksig, sigset_t *set,
-			  struct pt_regs *regs)
-{
-	int err = 0;
-	struct rt_sigframe __user *frame;
-	struct hexagon_vdso *vdso = current->mm->context.vdso;
+अटल पूर्णांक setup_rt_frame(काष्ठा kसंकेत *ksig, sigset_t *set,
+			  काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा rt_sigframe __user *frame;
+	काष्ठा hexagon_vdso *vdso = current->mm->context.vdso;
 
-	frame = get_sigframe(ksig, regs, sizeof(struct rt_sigframe));
+	frame = get_sigframe(ksig, regs, माप(काष्ठा rt_sigframe));
 
-	if (!access_ok(frame, sizeof(struct rt_sigframe)))
-		return -EFAULT;
+	अगर (!access_ok(frame, माप(काष्ठा rt_sigframe)))
+		वापस -EFAULT;
 
-	if (copy_siginfo_to_user(&frame->info, &ksig->info))
-		return -EFAULT;
+	अगर (copy_siginfo_to_user(&frame->info, &ksig->info))
+		वापस -EFAULT;
 
-	/* The on-stack signal trampoline is no longer executed;
-	 * however, the libgcc signal frame unwinding code checks for
+	/* The on-stack संकेत trampoline is no दीर्घer executed;
+	 * however, the libgcc संकेत frame unwinding code checks क्रम
 	 * the presence of these two numeric magic values.
 	 */
 	err |= __put_user(0x7800d166, &frame->tramp[0]);
 	err |= __put_user(0x5400c004, &frame->tramp[1]);
 	err |= setup_sigcontext(regs, &frame->uc.uc_mcontext);
-	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
-	err |= __save_altstack(&frame->uc.uc_stack, user_stack_pointer(regs));
-	if (err)
-		return -EFAULT;
+	err |= __copy_to_user(&frame->uc.uc_sigmask, set, माप(*set));
+	err |= __save_altstack(&frame->uc.uc_stack, user_stack_poपूर्णांकer(regs));
+	अगर (err)
+		वापस -EFAULT;
 
-	/* Load r0/r1 pair with signumber/siginfo pointer... */
-	regs->r0100 = ((unsigned long long)((unsigned long)&frame->info) << 32)
-		| (unsigned long long)ksig->sig;
-	regs->r02 = (unsigned long) &frame->uc;
-	regs->r31 = (unsigned long) vdso->rt_signal_trampoline;
-	pt_psp(regs) = (unsigned long) frame;
-	pt_set_elr(regs, (unsigned long)ksig->ka.sa.sa_handler);
+	/* Load r0/r1 pair with signumber/siginfo poपूर्णांकer... */
+	regs->r0100 = ((अचिन्हित दीर्घ दीर्घ)((अचिन्हित दीर्घ)&frame->info) << 32)
+		| (अचिन्हित दीर्घ दीर्घ)ksig->sig;
+	regs->r02 = (अचिन्हित दीर्घ) &frame->uc;
+	regs->r31 = (अचिन्हित दीर्घ) vdso->rt_संकेत_trampoline;
+	pt_psp(regs) = (अचिन्हित दीर्घ) frame;
+	pt_set_elr(regs, (अचिन्हित दीर्घ)ksig->ka.sa.sa_handler);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Setup invocation of signal handler
+ * Setup invocation of संकेत handler
  */
-static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
-{
-	int ret;
+अटल व्योम handle_संकेत(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * If we're handling a signal that aborted a system call,
-	 * set up the error return value before adding the signal
+	 * If we're handling a संकेत that पातed a प्रणाली call,
+	 * set up the error वापस value beक्रमe adding the संकेत
 	 * frame to the stack.
 	 */
 
-	if (regs->syscall_nr >= 0) {
-		switch (regs->r00) {
-		case -ERESTART_RESTARTBLOCK:
-		case -ERESTARTNOHAND:
+	अगर (regs->syscall_nr >= 0) अणु
+		चयन (regs->r00) अणु
+		हाल -ERESTART_RESTARTBLOCK:
+		हाल -ERESTARTNOHAND:
 			regs->r00 = -EINTR;
-			break;
-		case -ERESTARTSYS:
-			if (!(ksig->ka.sa.sa_flags & SA_RESTART)) {
+			अवरोध;
+		हाल -ERESTARTSYS:
+			अगर (!(ksig->ka.sa.sa_flags & SA_RESTART)) अणु
 				regs->r00 = -EINTR;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			fallthrough;
-		case -ERESTARTNOINTR:
+		हाल -ERESTARTNOINTR:
 			regs->r06 = regs->syscall_nr;
 			pt_set_elr(regs, pt_elr(regs) - 4);
 			regs->r00 = regs->restart_r0;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Set up the stack frame; not doing the SA_SIGINFO thing.  We
+	 * Set up the stack frame; not करोing the SA_SIGINFO thing.  We
 	 * only set up the rt_frame flavor.
 	 */
-	/* If there was an error on setup, no signal was delivered. */
+	/* If there was an error on setup, no संकेत was delivered. */
 	ret = setup_rt_frame(ksig, sigmask_to_save(), regs);
 
-	signal_setup_done(ret, ksig, test_thread_flag(TIF_SINGLESTEP));
-}
+	संकेत_setup_करोne(ret, ksig, test_thपढ़ो_flag(TIF_SINGLESTEP));
+पूर्ण
 
 /*
- * Called from return-from-event code.
+ * Called from वापस-from-event code.
  */
-void do_signal(struct pt_regs *regs)
-{
-	struct ksignal ksig;
+व्योम करो_संकेत(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा kसंकेत ksig;
 
-	if (!user_mode(regs))
-		return;
+	अगर (!user_mode(regs))
+		वापस;
 
-	if (get_signal(&ksig)) {
-		handle_signal(&ksig, regs);
-		return;
-	}
+	अगर (get_संकेत(&ksig)) अणु
+		handle_संकेत(&ksig, regs);
+		वापस;
+	पूर्ण
 
 	/*
-	 * No (more) signals; if we came from a system call, handle the restart.
+	 * No (more) संकेतs; अगर we came from a प्रणाली call, handle the restart.
 	 */
 
-	if (regs->syscall_nr >= 0) {
-		switch (regs->r00) {
-		case -ERESTARTNOHAND:
-		case -ERESTARTSYS:
-		case -ERESTARTNOINTR:
+	अगर (regs->syscall_nr >= 0) अणु
+		चयन (regs->r00) अणु
+		हाल -ERESTARTNOHAND:
+		हाल -ERESTARTSYS:
+		हाल -ERESTARTNOINTR:
 			regs->r06 = regs->syscall_nr;
-			break;
-		case -ERESTART_RESTARTBLOCK:
+			अवरोध;
+		हाल -ERESTART_RESTARTBLOCK:
 			regs->r06 = __NR_restart_syscall;
-			break;
-		default:
-			goto no_restart;
-		}
+			अवरोध;
+		शेष:
+			जाओ no_restart;
+		पूर्ण
 		pt_set_elr(regs, pt_elr(regs) - 4);
 		regs->r00 = regs->restart_r0;
-	}
+	पूर्ण
 
 no_restart:
-	/* If there's no signal to deliver, put the saved sigmask back */
+	/* If there's no संकेत to deliver, put the saved sigmask back */
 	restore_saved_sigmask();
-}
+पूर्ण
 
 /*
- * Architecture-specific wrappers for signal-related system calls
+ * Architecture-specअगरic wrappers क्रम संकेत-related प्रणाली calls
  */
 
-asmlinkage int sys_rt_sigreturn(void)
-{
-	struct pt_regs *regs = current_pt_regs();
-	struct rt_sigframe __user *frame;
+यंत्रlinkage पूर्णांक sys_rt_sigवापस(व्योम)
+अणु
+	काष्ठा pt_regs *regs = current_pt_regs();
+	काष्ठा rt_sigframe __user *frame;
 	sigset_t blocked;
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
-	frame = (struct rt_sigframe __user *)pt_psp(regs);
-	if (!access_ok(frame, sizeof(*frame)))
-		goto badframe;
-	if (__copy_from_user(&blocked, &frame->uc.uc_sigmask, sizeof(blocked)))
-		goto badframe;
+	frame = (काष्ठा rt_sigframe __user *)pt_psp(regs);
+	अगर (!access_ok(frame, माप(*frame)))
+		जाओ badframe;
+	अगर (__copy_from_user(&blocked, &frame->uc.uc_sigmask, माप(blocked)))
+		जाओ badframe;
 
 	set_current_blocked(&blocked);
 
-	if (restore_sigcontext(regs, &frame->uc.uc_mcontext))
-		goto badframe;
+	अगर (restore_sigcontext(regs, &frame->uc.uc_mcontext))
+		जाओ badframe;
 
 	/* Restore the user's stack as well */
 	pt_psp(regs) = regs->r29;
 
 	regs->syscall_nr = -1;
 
-	if (restore_altstack(&frame->uc.uc_stack))
-		goto badframe;
+	अगर (restore_altstack(&frame->uc.uc_stack))
+		जाओ badframe;
 
-	return regs->r00;
+	वापस regs->r00;
 
 badframe:
-	force_sig(SIGSEGV);
-	return 0;
-}
+	क्रमce_sig(संक_अंश);
+	वापस 0;
+पूर्ण

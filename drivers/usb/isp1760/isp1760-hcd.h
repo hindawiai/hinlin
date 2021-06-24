@@ -1,103 +1,104 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ISP1760_HCD_H_
-#define _ISP1760_HCD_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ISP1760_HCD_H_
+#घोषणा _ISP1760_HCD_H_
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-struct isp1760_qh;
-struct isp1760_qtd;
-struct resource;
-struct usb_hcd;
+काष्ठा isp1760_qh;
+काष्ठा isp1760_qtd;
+काष्ठा resource;
+काष्ठा usb_hcd;
 
 /*
- * 60kb divided in:
+ * 60kb भागided in:
  * - 32 blocks @ 256  bytes
  * - 20 blocks @ 1024 bytes
  * -  4 blocks @ 8192 bytes
  */
 
-#define BLOCK_1_NUM 32
-#define BLOCK_2_NUM 20
-#define BLOCK_3_NUM 4
+#घोषणा BLOCK_1_NUM 32
+#घोषणा BLOCK_2_NUM 20
+#घोषणा BLOCK_3_NUM 4
 
-#define BLOCK_1_SIZE 256
-#define BLOCK_2_SIZE 1024
-#define BLOCK_3_SIZE 8192
-#define BLOCKS (BLOCK_1_NUM + BLOCK_2_NUM + BLOCK_3_NUM)
-#define MAX_PAYLOAD_SIZE BLOCK_3_SIZE
-#define PAYLOAD_AREA_SIZE 0xf000
+#घोषणा BLOCK_1_SIZE 256
+#घोषणा BLOCK_2_SIZE 1024
+#घोषणा BLOCK_3_SIZE 8192
+#घोषणा BLOCKS (BLOCK_1_NUM + BLOCK_2_NUM + BLOCK_3_NUM)
+#घोषणा MAX_PAYLOAD_SIZE BLOCK_3_SIZE
+#घोषणा PAYLOAD_AREA_SIZE 0xf000
 
-struct isp1760_slotinfo {
-	struct isp1760_qh *qh;
-	struct isp1760_qtd *qtd;
-	unsigned long timestamp;
-};
+काष्ठा isp1760_slotinfo अणु
+	काष्ठा isp1760_qh *qh;
+	काष्ठा isp1760_qtd *qtd;
+	अचिन्हित दीर्घ बारtamp;
+पूर्ण;
 
 /* chip memory management */
-struct isp1760_memory_chunk {
-	unsigned int start;
-	unsigned int size;
-	unsigned int free;
-};
+काष्ठा isp1760_memory_chunk अणु
+	अचिन्हित पूर्णांक start;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक मुक्त;
+पूर्ण;
 
-enum isp1760_queue_head_types {
+क्रमागत isp1760_queue_head_types अणु
 	QH_CONTROL,
 	QH_BULK,
 	QH_INTERRUPT,
 	QH_END
-};
+पूर्ण;
 
-struct isp1760_hcd {
-#ifdef CONFIG_USB_ISP1760_HCD
-	struct usb_hcd		*hcd;
+काष्ठा isp1760_hcd अणु
+#अगर_घोषित CONFIG_USB_ISP1760_HCD
+	काष्ठा usb_hcd		*hcd;
 
 	u32 hcs_params;
 	spinlock_t		lock;
-	struct isp1760_slotinfo	atl_slots[32];
-	int			atl_done_map;
-	struct isp1760_slotinfo	int_slots[32];
-	int			int_done_map;
-	struct isp1760_memory_chunk memory_pool[BLOCKS];
-	struct list_head	qh_list[QH_END];
+	काष्ठा isp1760_slotinfo	atl_slots[32];
+	पूर्णांक			atl_करोne_map;
+	काष्ठा isp1760_slotinfo	पूर्णांक_slots[32];
+	पूर्णांक			पूर्णांक_करोne_map;
+	काष्ठा isp1760_memory_chunk memory_pool[BLOCKS];
+	काष्ठा list_head	qh_list[QH_END];
 
 	/* periodic schedule support */
-#define	DEFAULT_I_TDPS		1024
-	unsigned		periodic_size;
-	unsigned		i_thresh;
-	unsigned long		reset_done;
-	unsigned long		next_statechange;
-#endif
-};
+#घोषणा	DEFAULT_I_TDPS		1024
+	अचिन्हित		periodic_size;
+	अचिन्हित		i_thresh;
+	अचिन्हित दीर्घ		reset_करोne;
+	अचिन्हित दीर्घ		next_statechange;
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_USB_ISP1760_HCD
-int isp1760_hcd_register(struct isp1760_hcd *priv, void __iomem *regs,
-			 struct resource *mem, int irq, unsigned long irqflags,
-			 struct device *dev);
-void isp1760_hcd_unregister(struct isp1760_hcd *priv);
+#अगर_घोषित CONFIG_USB_ISP1760_HCD
+पूर्णांक isp1760_hcd_रेजिस्टर(काष्ठा isp1760_hcd *priv, व्योम __iomem *regs,
+			 काष्ठा resource *mem, पूर्णांक irq, अचिन्हित दीर्घ irqflags,
+			 काष्ठा device *dev);
+व्योम isp1760_hcd_unरेजिस्टर(काष्ठा isp1760_hcd *priv);
 
-int isp1760_init_kmem_once(void);
-void isp1760_deinit_kmem_cache(void);
-#else
-static inline int isp1760_hcd_register(struct isp1760_hcd *priv,
-				       void __iomem *regs, struct resource *mem,
-				       int irq, unsigned long irqflags,
-				       struct device *dev)
-{
-	return 0;
-}
+पूर्णांक isp1760_init_kmem_once(व्योम);
+व्योम isp1760_deinit_kmem_cache(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक isp1760_hcd_रेजिस्टर(काष्ठा isp1760_hcd *priv,
+				       व्योम __iomem *regs, काष्ठा resource *mem,
+				       पूर्णांक irq, अचिन्हित दीर्घ irqflags,
+				       काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void isp1760_hcd_unregister(struct isp1760_hcd *priv)
-{
-}
+अटल अंतरभूत व्योम isp1760_hcd_unरेजिस्टर(काष्ठा isp1760_hcd *priv)
+अणु
+पूर्ण
 
-static inline int isp1760_init_kmem_once(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक isp1760_init_kmem_once(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void isp1760_deinit_kmem_cache(void)
-{
-}
-#endif
+अटल अंतरभूत व्योम isp1760_deinit_kmem_cache(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ISP1760_HCD_H_ */
+#पूर्ण_अगर /* _ISP1760_HCD_H_ */

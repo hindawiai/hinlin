@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * slotmap.h
+ * sloपंचांगap.h
  *
  * description here
  *
@@ -8,21 +9,21 @@
  */
 
 
-#ifndef SLOTMAP_H
-#define SLOTMAP_H
+#अगर_अघोषित SLOTMAP_H
+#घोषणा SLOTMAP_H
 
-int ocfs2_init_slot_info(struct ocfs2_super *osb);
-void ocfs2_free_slot_info(struct ocfs2_super *osb);
+पूर्णांक ocfs2_init_slot_info(काष्ठा ocfs2_super *osb);
+व्योम ocfs2_मुक्त_slot_info(काष्ठा ocfs2_super *osb);
 
-int ocfs2_find_slot(struct ocfs2_super *osb);
-void ocfs2_put_slot(struct ocfs2_super *osb);
+पूर्णांक ocfs2_find_slot(काष्ठा ocfs2_super *osb);
+व्योम ocfs2_put_slot(काष्ठा ocfs2_super *osb);
 
-int ocfs2_refresh_slot_info(struct ocfs2_super *osb);
+पूर्णांक ocfs2_refresh_slot_info(काष्ठा ocfs2_super *osb);
 
-int ocfs2_node_num_to_slot(struct ocfs2_super *osb, unsigned int node_num);
-int ocfs2_slot_to_node_num_locked(struct ocfs2_super *osb, int slot_num,
-				  unsigned int *node_num);
+पूर्णांक ocfs2_node_num_to_slot(काष्ठा ocfs2_super *osb, अचिन्हित पूर्णांक node_num);
+पूर्णांक ocfs2_slot_to_node_num_locked(काष्ठा ocfs2_super *osb, पूर्णांक slot_num,
+				  अचिन्हित पूर्णांक *node_num);
 
-int ocfs2_clear_slot(struct ocfs2_super *osb, int slot_num);
+पूर्णांक ocfs2_clear_slot(काष्ठा ocfs2_super *osb, पूर्णांक slot_num);
 
-#endif
+#पूर्ण_अगर

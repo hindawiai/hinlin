@@ -1,152 +1,153 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2014-2016 IBM Corp.
  */
 
-#include <linux/module.h>
-#include <asm/pnv-pci.h>
-#include <asm/opal.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/pnv-pci.h>
+#समावेश <यंत्र/opal.h>
 
-#include "pci.h"
+#समावेश "pci.h"
 
-int pnv_phb_to_cxl_mode(struct pci_dev *dev, uint64_t mode)
-{
-	struct pci_controller *hose = pci_bus_to_host(dev->bus);
-	struct pnv_phb *phb = hose->private_data;
-	struct pnv_ioda_pe *pe;
-	int rc;
+पूर्णांक pnv_phb_to_cxl_mode(काष्ठा pci_dev *dev, uपूर्णांक64_t mode)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(dev->bus);
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	काष्ठा pnv_ioda_pe *pe;
+	पूर्णांक rc;
 
 	pe = pnv_ioda_get_pe(dev);
-	if (!pe)
-		return -ENODEV;
+	अगर (!pe)
+		वापस -ENODEV;
 
 	pe_info(pe, "Switching PHB to CXL\n");
 
 	rc = opal_pci_set_phb_cxl_mode(phb->opal_id, mode, pe->pe_number);
-	if (rc == OPAL_UNSUPPORTED)
+	अगर (rc == OPAL_UNSUPPORTED)
 		dev_err(&dev->dev, "Required cxl mode not supported by firmware - update skiboot\n");
-	else if (rc)
+	अन्यथा अगर (rc)
 		dev_err(&dev->dev, "opal_pci_set_phb_cxl_mode failed: %i\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL(pnv_phb_to_cxl_mode);
 
-/* Find PHB for cxl dev and allocate MSI hwirqs?
- * Returns the absolute hardware IRQ number
+/* Find PHB क्रम cxl dev and allocate MSI hwirqs?
+ * Returns the असलolute hardware IRQ number
  */
-int pnv_cxl_alloc_hwirqs(struct pci_dev *dev, int num)
-{
-	struct pci_controller *hose = pci_bus_to_host(dev->bus);
-	struct pnv_phb *phb = hose->private_data;
-	int hwirq = msi_bitmap_alloc_hwirqs(&phb->msi_bmp, num);
+पूर्णांक pnv_cxl_alloc_hwirqs(काष्ठा pci_dev *dev, पूर्णांक num)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(dev->bus);
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	पूर्णांक hwirq = msi_biपंचांगap_alloc_hwirqs(&phb->msi_bmp, num);
 
-	if (hwirq < 0) {
+	अगर (hwirq < 0) अणु
 		dev_warn(&dev->dev, "Failed to find a free MSI\n");
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	return phb->msi_base + hwirq;
-}
+	वापस phb->msi_base + hwirq;
+पूर्ण
 EXPORT_SYMBOL(pnv_cxl_alloc_hwirqs);
 
-void pnv_cxl_release_hwirqs(struct pci_dev *dev, int hwirq, int num)
-{
-	struct pci_controller *hose = pci_bus_to_host(dev->bus);
-	struct pnv_phb *phb = hose->private_data;
+व्योम pnv_cxl_release_hwirqs(काष्ठा pci_dev *dev, पूर्णांक hwirq, पूर्णांक num)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(dev->bus);
+	काष्ठा pnv_phb *phb = hose->निजी_data;
 
-	msi_bitmap_free_hwirqs(&phb->msi_bmp, hwirq - phb->msi_base, num);
-}
+	msi_biपंचांगap_मुक्त_hwirqs(&phb->msi_bmp, hwirq - phb->msi_base, num);
+पूर्ण
 EXPORT_SYMBOL(pnv_cxl_release_hwirqs);
 
-void pnv_cxl_release_hwirq_ranges(struct cxl_irq_ranges *irqs,
-				  struct pci_dev *dev)
-{
-	struct pci_controller *hose = pci_bus_to_host(dev->bus);
-	struct pnv_phb *phb = hose->private_data;
-	int i, hwirq;
+व्योम pnv_cxl_release_hwirq_ranges(काष्ठा cxl_irq_ranges *irqs,
+				  काष्ठा pci_dev *dev)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(dev->bus);
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	पूर्णांक i, hwirq;
 
-	for (i = 1; i < CXL_IRQ_RANGES; i++) {
-		if (!irqs->range[i])
-			continue;
+	क्रम (i = 1; i < CXL_IRQ_RANGES; i++) अणु
+		अगर (!irqs->range[i])
+			जारी;
 		pr_devel("cxl release irq range 0x%x: offset: 0x%lx  limit: %ld\n",
 			 i, irqs->offset[i],
 			 irqs->range[i]);
 		hwirq = irqs->offset[i] - phb->msi_base;
-		msi_bitmap_free_hwirqs(&phb->msi_bmp, hwirq,
+		msi_biपंचांगap_मुक्त_hwirqs(&phb->msi_bmp, hwirq,
 				       irqs->range[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(pnv_cxl_release_hwirq_ranges);
 
-int pnv_cxl_alloc_hwirq_ranges(struct cxl_irq_ranges *irqs,
-			       struct pci_dev *dev, int num)
-{
-	struct pci_controller *hose = pci_bus_to_host(dev->bus);
-	struct pnv_phb *phb = hose->private_data;
-	int i, hwirq, try;
+पूर्णांक pnv_cxl_alloc_hwirq_ranges(काष्ठा cxl_irq_ranges *irqs,
+			       काष्ठा pci_dev *dev, पूर्णांक num)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(dev->bus);
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	पूर्णांक i, hwirq, try;
 
-	memset(irqs, 0, sizeof(struct cxl_irq_ranges));
+	स_रखो(irqs, 0, माप(काष्ठा cxl_irq_ranges));
 
-	/* 0 is reserved for the multiplexed PSL DSI interrupt */
-	for (i = 1; i < CXL_IRQ_RANGES && num; i++) {
+	/* 0 is reserved क्रम the multiplexed PSL DSI पूर्णांकerrupt */
+	क्रम (i = 1; i < CXL_IRQ_RANGES && num; i++) अणु
 		try = num;
-		while (try) {
-			hwirq = msi_bitmap_alloc_hwirqs(&phb->msi_bmp, try);
-			if (hwirq >= 0)
-				break;
+		जबतक (try) अणु
+			hwirq = msi_biपंचांगap_alloc_hwirqs(&phb->msi_bmp, try);
+			अगर (hwirq >= 0)
+				अवरोध;
 			try /= 2;
-		}
-		if (!try)
-			goto fail;
+		पूर्ण
+		अगर (!try)
+			जाओ fail;
 
 		irqs->offset[i] = phb->msi_base + hwirq;
 		irqs->range[i] = try;
 		pr_devel("cxl alloc irq range 0x%x: offset: 0x%lx  limit: %li\n",
 			 i, irqs->offset[i], irqs->range[i]);
 		num -= try;
-	}
-	if (num)
-		goto fail;
+	पूर्ण
+	अगर (num)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 fail:
 	pnv_cxl_release_hwirq_ranges(irqs, dev);
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 EXPORT_SYMBOL(pnv_cxl_alloc_hwirq_ranges);
 
-int pnv_cxl_get_irq_count(struct pci_dev *dev)
-{
-	struct pci_controller *hose = pci_bus_to_host(dev->bus);
-	struct pnv_phb *phb = hose->private_data;
+पूर्णांक pnv_cxl_get_irq_count(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(dev->bus);
+	काष्ठा pnv_phb *phb = hose->निजी_data;
 
-	return phb->msi_bmp.irq_count;
-}
+	वापस phb->msi_bmp.irq_count;
+पूर्ण
 EXPORT_SYMBOL(pnv_cxl_get_irq_count);
 
-int pnv_cxl_ioda_msi_setup(struct pci_dev *dev, unsigned int hwirq,
-			   unsigned int virq)
-{
-	struct pci_controller *hose = pci_bus_to_host(dev->bus);
-	struct pnv_phb *phb = hose->private_data;
-	unsigned int xive_num = hwirq - phb->msi_base;
-	struct pnv_ioda_pe *pe;
-	int rc;
+पूर्णांक pnv_cxl_ioda_msi_setup(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक hwirq,
+			   अचिन्हित पूर्णांक virq)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(dev->bus);
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	अचिन्हित पूर्णांक xive_num = hwirq - phb->msi_base;
+	काष्ठा pnv_ioda_pe *pe;
+	पूर्णांक rc;
 
-	if (!(pe = pnv_ioda_get_pe(dev)))
-		return -ENODEV;
+	अगर (!(pe = pnv_ioda_get_pe(dev)))
+		वापस -ENODEV;
 
 	/* Assign XIVE to PE */
 	rc = opal_pci_set_xive_pe(phb->opal_id, pe->pe_number, xive_num);
-	if (rc) {
+	अगर (rc) अणु
 		pe_warn(pe, "%s: OPAL error %d setting msi_base 0x%x "
 			"hwirq 0x%x XIVE 0x%x PE\n",
 			pci_name(dev), rc, phb->msi_base, hwirq, xive_num);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	pnv_set_msi_irq_chip(phb, virq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(pnv_cxl_ioda_msi_setup);

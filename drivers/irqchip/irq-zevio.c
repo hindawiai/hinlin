@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/drivers/irqchip/irq-zevio.c
  *
  *  Copyright (C) 2013 Daniel Tang <tangrs@tangrs.id.au>
  */
 
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
 
-#include <asm/mach/irq.h>
-#include <asm/exception.h>
+#समावेश <यंत्र/mach/irq.h>
+#समावेश <यंत्र/exception.h>
 
-#define IO_STATUS	0x000
-#define IO_RAW_STATUS	0x004
-#define IO_ENABLE	0x008
-#define IO_DISABLE	0x00C
-#define IO_CURRENT	0x020
-#define IO_RESET	0x028
-#define IO_MAX_PRIOTY	0x02C
+#घोषणा IO_STATUS	0x000
+#घोषणा IO_RAW_STATUS	0x004
+#घोषणा IO_ENABLE	0x008
+#घोषणा IO_DISABLE	0x00C
+#घोषणा IO_CURRENT	0x020
+#घोषणा IO_RESET	0x028
+#घोषणा IO_MAX_PRIOTY	0x02C
 
-#define IO_IRQ_BASE	0x000
-#define IO_FIQ_BASE	0x100
+#घोषणा IO_IRQ_BASE	0x000
+#घोषणा IO_FIQ_BASE	0x100
 
-#define IO_INVERT_SEL	0x200
-#define IO_STICKY_SEL	0x204
-#define IO_PRIORITY_SEL	0x300
+#घोषणा IO_INVERT_SEL	0x200
+#घोषणा IO_STICKY_SEL	0x204
+#घोषणा IO_PRIORITY_SEL	0x300
 
-#define MAX_INTRS	32
-#define FIQ_START	MAX_INTRS
+#घोषणा MAX_INTRS	32
+#घोषणा FIQ_START	MAX_INTRS
 
-static struct irq_domain *zevio_irq_domain;
-static void __iomem *zevio_irq_io;
+अटल काष्ठा irq_करोमुख्य *zevio_irq_करोमुख्य;
+अटल व्योम __iomem *zevio_irq_io;
 
-static void zevio_irq_ack(struct irq_data *irqd)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(irqd);
-	struct irq_chip_regs *regs = &irq_data_get_chip_type(irqd)->regs;
+अटल व्योम zevio_irq_ack(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(irqd);
+	काष्ठा irq_chip_regs *regs = &irq_data_get_chip_type(irqd)->regs;
 
-	readl(gc->reg_base + regs->ack);
-}
+	पढ़ोl(gc->reg_base + regs->ack);
+पूर्ण
 
-static void __exception_irq_entry zevio_handle_irq(struct pt_regs *regs)
-{
-	int irqnr;
+अटल व्योम __exception_irq_entry zevio_handle_irq(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक irqnr;
 
-	while (readl(zevio_irq_io + IO_STATUS)) {
-		irqnr = readl(zevio_irq_io + IO_CURRENT);
-		handle_domain_irq(zevio_irq_domain, irqnr, regs);
-	}
-}
+	जबतक (पढ़ोl(zevio_irq_io + IO_STATUS)) अणु
+		irqnr = पढ़ोl(zevio_irq_io + IO_CURRENT);
+		handle_करोमुख्य_irq(zevio_irq_करोमुख्य, irqnr, regs);
+	पूर्ण
+पूर्ण
 
-static void __init zevio_init_irq_base(void __iomem *base)
-{
-	/* Disable all interrupts */
-	writel(~0, base + IO_DISABLE);
+अटल व्योम __init zevio_init_irq_base(व्योम __iomem *base)
+अणु
+	/* Disable all पूर्णांकerrupts */
+	ग_लिखोl(~0, base + IO_DISABLE);
 
-	/* Accept interrupts of all priorities */
-	writel(0xF, base + IO_MAX_PRIOTY);
+	/* Accept पूर्णांकerrupts of all priorities */
+	ग_लिखोl(0xF, base + IO_MAX_PRIOTY);
 
-	/* Reset existing interrupts */
-	readl(base + IO_RESET);
-}
+	/* Reset existing पूर्णांकerrupts */
+	पढ़ोl(base + IO_RESET);
+पूर्ण
 
-static int __init zevio_of_init(struct device_node *node,
-				struct device_node *parent)
-{
-	unsigned int clr = IRQ_NOREQUEST | IRQ_NOPROBE | IRQ_NOAUTOEN;
-	struct irq_chip_generic *gc;
-	int ret;
+अटल पूर्णांक __init zevio_of_init(काष्ठा device_node *node,
+				काष्ठा device_node *parent)
+अणु
+	अचिन्हित पूर्णांक clr = IRQ_NOREQUEST | IRQ_NOPROBE | IRQ_NOAUTOEN;
+	काष्ठा irq_chip_generic *gc;
+	पूर्णांक ret;
 
-	if (WARN_ON(zevio_irq_io || zevio_irq_domain))
-		return -EBUSY;
+	अगर (WARN_ON(zevio_irq_io || zevio_irq_करोमुख्य))
+		वापस -EBUSY;
 
 	zevio_irq_io = of_iomap(node, 0);
 	BUG_ON(!zevio_irq_io);
 
-	/* Do not invert interrupt status bits */
-	writel(~0, zevio_irq_io + IO_INVERT_SEL);
+	/* Do not invert पूर्णांकerrupt status bits */
+	ग_लिखोl(~0, zevio_irq_io + IO_INVERT_SEL);
 
-	/* Disable sticky interrupts */
-	writel(0, zevio_irq_io + IO_STICKY_SEL);
+	/* Disable sticky पूर्णांकerrupts */
+	ग_लिखोl(0, zevio_irq_io + IO_STICKY_SEL);
 
-	/* We don't use IRQ priorities. Set each IRQ to highest priority. */
-	memset_io(zevio_irq_io + IO_PRIORITY_SEL, 0, MAX_INTRS * sizeof(u32));
+	/* We करोn't use IRQ priorities. Set each IRQ to highest priority. */
+	स_रखो_io(zevio_irq_io + IO_PRIORITY_SEL, 0, MAX_INTRS * माप(u32));
 
 	/* Init IRQ and FIQ */
 	zevio_init_irq_base(zevio_irq_io + IO_IRQ_BASE);
 	zevio_init_irq_base(zevio_irq_io + IO_FIQ_BASE);
 
-	zevio_irq_domain = irq_domain_add_linear(node, MAX_INTRS,
-						 &irq_generic_chip_ops, NULL);
-	BUG_ON(!zevio_irq_domain);
+	zevio_irq_करोमुख्य = irq_करोमुख्य_add_linear(node, MAX_INTRS,
+						 &irq_generic_chip_ops, शून्य);
+	BUG_ON(!zevio_irq_करोमुख्य);
 
-	ret = irq_alloc_domain_generic_chips(zevio_irq_domain, MAX_INTRS, 1,
+	ret = irq_alloc_करोमुख्य_generic_chips(zevio_irq_करोमुख्य, MAX_INTRS, 1,
 					     "zevio_intc", handle_level_irq,
 					     clr, 0, IRQ_GC_INIT_MASK_CACHE);
 	BUG_ON(ret);
 
-	gc = irq_get_domain_generic_chip(zevio_irq_domain, 0);
+	gc = irq_get_करोमुख्य_generic_chip(zevio_irq_करोमुख्य, 0);
 	gc->reg_base				= zevio_irq_io;
 	gc->chip_types[0].chip.irq_ack		= zevio_irq_ack;
 	gc->chip_types[0].chip.irq_mask		= irq_gc_mask_disable_reg;
@@ -114,7 +115,7 @@ static int __init zevio_of_init(struct device_node *node,
 	set_handle_irq(zevio_handle_irq);
 
 	pr_info("TI-NSPIRE classic IRQ controller\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 IRQCHIP_DECLARE(zevio_irq, "lsi,zevio-intc", zevio_of_init);

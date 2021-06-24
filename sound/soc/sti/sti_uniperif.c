@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) STMicroelectronics SA 2015
  * Authors: Arnaud Pouliquen <arnaud.pouliquen@st.com>
- *          for STMicroelectronics.
+ *          क्रम STMicroelectronics.
  */
 
-#include <linux/module.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/delay.h>
 
-#include "uniperif.h"
+#समावेश "uniperif.h"
 
 /*
  * User frame size shall be 2, 4, 6 or 8 32-bits words length
  * (i.e. 8, 16, 24 or 32 bytes)
- * This constraint comes from allowed values for
- * UNIPERIF_I2S_FMT_NUM_CH register
+ * This स्थिरraपूर्णांक comes from allowed values क्रम
+ * UNIPERIF_I2S_FMT_NUM_CH रेजिस्टर
  */
-#define UNIPERIF_MAX_FRAME_SZ 0x20
-#define UNIPERIF_ALLOWED_FRAME_SZ (0x08 | 0x10 | 0x18 | UNIPERIF_MAX_FRAME_SZ)
+#घोषणा UNIPERIF_MAX_FRAME_SZ 0x20
+#घोषणा UNIPERIF_ALLOWED_FRAME_SZ (0x08 | 0x10 | 0x18 | UNIPERIF_MAX_FRAME_SZ)
 
-struct sti_uniperiph_dev_data {
-	unsigned int id; /* Nb available player instances */
-	unsigned int version; /* player IP version */
-	unsigned int stream;
-	const char *dai_names;
-	enum uniperif_type type;
-};
+काष्ठा sti_uniperiph_dev_data अणु
+	अचिन्हित पूर्णांक id; /* Nb available player instances */
+	अचिन्हित पूर्णांक version; /* player IP version */
+	अचिन्हित पूर्णांक stream;
+	स्थिर अक्षर *dai_names;
+	क्रमागत uniperअगर_type type;
+पूर्ण;
 
-static const struct sti_uniperiph_dev_data sti_uniplayer_hdmi = {
+अटल स्थिर काष्ठा sti_uniperiph_dev_data sti_uniplayer_hdmi = अणु
 	.id = 0,
 	.version = SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0,
 	.stream = SNDRV_PCM_STREAM_PLAYBACK,
 	.dai_names = "Uni Player #0 (HDMI)",
 	.type = SND_ST_UNIPERIF_TYPE_HDMI
-};
+पूर्ण;
 
-static const struct sti_uniperiph_dev_data sti_uniplayer_pcm_out = {
+अटल स्थिर काष्ठा sti_uniperiph_dev_data sti_uniplayer_pcm_out = अणु
 	.id = 1,
 	.version = SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0,
 	.stream = SNDRV_PCM_STREAM_PLAYBACK,
 	.dai_names = "Uni Player #1 (PCM OUT)",
 	.type = SND_ST_UNIPERIF_TYPE_PCM | SND_ST_UNIPERIF_TYPE_TDM,
-};
+पूर्ण;
 
-static const struct sti_uniperiph_dev_data sti_uniplayer_dac = {
+अटल स्थिर काष्ठा sti_uniperiph_dev_data sti_uniplayer_dac = अणु
 	.id = 2,
 	.version = SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0,
 	.stream = SNDRV_PCM_STREAM_PLAYBACK,
 	.dai_names = "Uni Player #2 (DAC)",
 	.type = SND_ST_UNIPERIF_TYPE_PCM,
-};
+पूर्ण;
 
-static const struct sti_uniperiph_dev_data sti_uniplayer_spdif = {
+अटल स्थिर काष्ठा sti_uniperiph_dev_data sti_uniplayer_spdअगर = अणु
 	.id = 3,
 	.version = SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0,
 	.stream = SNDRV_PCM_STREAM_PLAYBACK,
 	.dai_names = "Uni Player #3 (SPDIF)",
 	.type = SND_ST_UNIPERIF_TYPE_SPDIF
-};
+पूर्ण;
 
-static const struct sti_uniperiph_dev_data sti_unireader_pcm_in = {
+अटल स्थिर काष्ठा sti_uniperiph_dev_data sti_uniपढ़ोer_pcm_in = अणु
 	.id = 0,
 	.version = SND_ST_UNIPERIF_VERSION_UNI_RDR_1_0,
 	.stream = SNDRV_PCM_STREAM_CAPTURE,
 	.dai_names = "Uni Reader #0 (PCM IN)",
 	.type = SND_ST_UNIPERIF_TYPE_PCM | SND_ST_UNIPERIF_TYPE_TDM,
-};
+पूर्ण;
 
-static const struct sti_uniperiph_dev_data sti_unireader_hdmi_in = {
+अटल स्थिर काष्ठा sti_uniperiph_dev_data sti_uniपढ़ोer_hdmi_in = अणु
 	.id = 1,
 	.version = SND_ST_UNIPERIF_VERSION_UNI_RDR_1_0,
 	.stream = SNDRV_PCM_STREAM_CAPTURE,
 	.dai_names = "Uni Reader #1 (HDMI IN)",
 	.type = SND_ST_UNIPERIF_TYPE_PCM,
-};
+पूर्ण;
 
-static const struct of_device_id snd_soc_sti_match[] = {
-	{ .compatible = "st,stih407-uni-player-hdmi",
+अटल स्थिर काष्ठा of_device_id snd_soc_sti_match[] = अणु
+	अणु .compatible = "st,stih407-uni-player-hdmi",
 	  .data = &sti_uniplayer_hdmi
-	},
-	{ .compatible = "st,stih407-uni-player-pcm-out",
+	पूर्ण,
+	अणु .compatible = "st,stih407-uni-player-pcm-out",
 	  .data = &sti_uniplayer_pcm_out
-	},
-	{ .compatible = "st,stih407-uni-player-dac",
+	पूर्ण,
+	अणु .compatible = "st,stih407-uni-player-dac",
 	  .data = &sti_uniplayer_dac
-	},
-	{ .compatible = "st,stih407-uni-player-spdif",
-	  .data = &sti_uniplayer_spdif
-	},
-	{ .compatible = "st,stih407-uni-reader-pcm_in",
-	  .data = &sti_unireader_pcm_in
-	},
-	{ .compatible = "st,stih407-uni-reader-hdmi",
-	  .data = &sti_unireader_hdmi_in
-	},
-	{},
-};
+	पूर्ण,
+	अणु .compatible = "st,stih407-uni-player-spdif",
+	  .data = &sti_uniplayer_spdअगर
+	पूर्ण,
+	अणु .compatible = "st,stih407-uni-reader-pcm_in",
+	  .data = &sti_uniपढ़ोer_pcm_in
+	पूर्ण,
+	अणु .compatible = "st,stih407-uni-reader-hdmi",
+	  .data = &sti_uniपढ़ोer_hdmi_in
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, snd_soc_sti_match);
 
-int  sti_uniperiph_reset(struct uniperif *uni)
-{
-	int count = 10;
+पूर्णांक  sti_uniperiph_reset(काष्ठा uniperअगर *uni)
+अणु
+	पूर्णांक count = 10;
 
 	/* Reset uniperipheral uni */
 	SET_UNIPERIF_SOFT_RST_SOFT_RST(uni);
 
-	if (uni->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0) {
-		while (GET_UNIPERIF_SOFT_RST_SOFT_RST(uni) && count) {
+	अगर (uni->ver < SND_ST_UNIPERIF_VERSION_UNI_PLR_TOP_1_0) अणु
+		जबतक (GET_UNIPERIF_SOFT_RST_SOFT_RST(uni) && count) अणु
 			udelay(5);
 			count--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!count) {
+	अगर (!count) अणु
 		dev_err(uni->dev, "Failed to reset uniperif\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sti_uniperiph_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
-			       unsigned int rx_mask, int slots,
-			       int slot_width)
-{
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *uni = priv->dai_data.uni;
-	int i, frame_size, avail_slots;
+पूर्णांक sti_uniperiph_set_tdm_slot(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक tx_mask,
+			       अचिन्हित पूर्णांक rx_mask, पूर्णांक slots,
+			       पूर्णांक slot_width)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *uni = priv->dai_data.uni;
+	पूर्णांक i, frame_size, avail_slots;
 
-	if (!UNIPERIF_TYPE_IS_TDM(uni)) {
+	अगर (!UNIPERIF_TYPE_IS_TDM(uni)) अणु
 		dev_err(uni->dev, "cpu dai not in tdm mode\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* store info in unip context */
 	uni->tdm_slot.slots = slots;
@@ -140,81 +141,81 @@ int sti_uniperiph_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	/* unip is unidirectionnal */
 	uni->tdm_slot.mask = (tx_mask != 0) ? tx_mask : rx_mask;
 
-	/* number of available timeslots */
-	for (i = 0, avail_slots = 0; i < uni->tdm_slot.slots; i++) {
-		if ((uni->tdm_slot.mask >> i) & 0x01)
+	/* number of available बारlots */
+	क्रम (i = 0, avail_slots = 0; i < uni->tdm_slot.slots; i++) अणु
+		अगर ((uni->tdm_slot.mask >> i) & 0x01)
 			avail_slots++;
-	}
+	पूर्ण
 	uni->tdm_slot.avail_slots = avail_slots;
 
 	/* frame size in bytes */
 	frame_size = uni->tdm_slot.avail_slots * uni->tdm_slot.slot_width / 8;
 
 	/* check frame size is allowed */
-	if ((frame_size > UNIPERIF_MAX_FRAME_SZ) ||
-	    (frame_size & ~(int)UNIPERIF_ALLOWED_FRAME_SZ)) {
+	अगर ((frame_size > UNIPERIF_MAX_FRAME_SZ) ||
+	    (frame_size & ~(पूर्णांक)UNIPERIF_ALLOWED_FRAME_SZ)) अणु
 		dev_err(uni->dev, "frame size not allowed: %d bytes\n",
 			frame_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sti_uniperiph_fix_tdm_chan(struct snd_pcm_hw_params *params,
-			       struct snd_pcm_hw_rule *rule)
-{
-	struct uniperif *uni = rule->private;
-	struct snd_interval t;
+पूर्णांक sti_uniperiph_fix_tdm_chan(काष्ठा snd_pcm_hw_params *params,
+			       काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा uniperअगर *uni = rule->निजी;
+	काष्ठा snd_पूर्णांकerval t;
 
 	t.min = uni->tdm_slot.avail_slots;
 	t.max = uni->tdm_slot.avail_slots;
-	t.openmin = 0;
-	t.openmax = 0;
-	t.integer = 0;
+	t.खोलोmin = 0;
+	t.खोलोmax = 0;
+	t.पूर्णांकeger = 0;
 
-	return snd_interval_refine(hw_param_interval(params, rule->var), &t);
-}
+	वापस snd_पूर्णांकerval_refine(hw_param_पूर्णांकerval(params, rule->var), &t);
+पूर्ण
 
-int sti_uniperiph_fix_tdm_format(struct snd_pcm_hw_params *params,
-				 struct snd_pcm_hw_rule *rule)
-{
-	struct uniperif *uni = rule->private;
-	struct snd_mask *maskp = hw_param_mask(params, rule->var);
-	u64 format;
+पूर्णांक sti_uniperiph_fix_tdm_क्रमmat(काष्ठा snd_pcm_hw_params *params,
+				 काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा uniperअगर *uni = rule->निजी;
+	काष्ठा snd_mask *maskp = hw_param_mask(params, rule->var);
+	u64 क्रमmat;
 
-	switch (uni->tdm_slot.slot_width) {
-	case 16:
-		format = SNDRV_PCM_FMTBIT_S16_LE;
-		break;
-	case 32:
-		format = SNDRV_PCM_FMTBIT_S32_LE;
-		break;
-	default:
+	चयन (uni->tdm_slot.slot_width) अणु
+	हाल 16:
+		क्रमmat = SNDRV_PCM_FMTBIT_S16_LE;
+		अवरोध;
+	हाल 32:
+		क्रमmat = SNDRV_PCM_FMTBIT_S32_LE;
+		अवरोध;
+	शेष:
 		dev_err(uni->dev, "format not supported: %d bits\n",
 			uni->tdm_slot.slot_width);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	maskp->bits[0] &= (u_int32_t)format;
-	maskp->bits[1] &= (u_int32_t)(format >> 32);
-	/* clear remaining indexes */
-	memset(maskp->bits + 2, 0, (SNDRV_MASK_MAX - 64) / 8);
+	maskp->bits[0] &= (u_पूर्णांक32_t)क्रमmat;
+	maskp->bits[1] &= (u_पूर्णांक32_t)(क्रमmat >> 32);
+	/* clear reमुख्यing indexes */
+	स_रखो(maskp->bits + 2, 0, (SNDRV_MASK_MAX - 64) / 8);
 
-	if (!maskp->bits[0] && !maskp->bits[1])
-		return -EINVAL;
+	अगर (!maskp->bits[0] && !maskp->bits[1])
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sti_uniperiph_get_tdm_word_pos(struct uniperif *uni,
-				   unsigned int *word_pos)
-{
-	int slot_width = uni->tdm_slot.slot_width / 8;
-	int slots_num = uni->tdm_slot.slots;
-	unsigned int slots_mask = uni->tdm_slot.mask;
-	int i, j, k;
-	unsigned int word16_pos[4];
+पूर्णांक sti_uniperiph_get_tdm_word_pos(काष्ठा uniperअगर *uni,
+				   अचिन्हित पूर्णांक *word_pos)
+अणु
+	पूर्णांक slot_width = uni->tdm_slot.slot_width / 8;
+	पूर्णांक slots_num = uni->tdm_slot.slots;
+	अचिन्हित पूर्णांक slots_mask = uni->tdm_slot.mask;
+	पूर्णांक i, j, k;
+	अचिन्हित पूर्णांक word16_pos[4];
 
 	/* word16_pos:
 	 * word16_pos[0] = WORDX_LSB
@@ -224,46 +225,46 @@ int sti_uniperiph_get_tdm_word_pos(struct uniperif *uni,
 	 */
 
 	/* set unip word position */
-	for (i = 0, j = 0, k = 0; (i < slots_num) && (k < WORD_MAX); i++) {
-		if ((slots_mask >> i) & 0x01) {
+	क्रम (i = 0, j = 0, k = 0; (i < slots_num) && (k < WORD_MAX); i++) अणु
+		अगर ((slots_mask >> i) & 0x01) अणु
 			word16_pos[j] = i * slot_width;
 
-			if (slot_width == 4) {
+			अगर (slot_width == 4) अणु
 				word16_pos[j + 1] = word16_pos[j] + 2;
 				j++;
-			}
+			पूर्ण
 			j++;
 
-			if (j > 3) {
+			अगर (j > 3) अणु
 				word_pos[k] = word16_pos[1] |
 					      (word16_pos[0] << 8) |
 					      (word16_pos[3] << 16) |
 					      (word16_pos[2] << 24);
 				j = 0;
 				k++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * sti_uniperiph_dai_create_ctrl
  * This function is used to create Ctrl associated to DAI but also pcm device.
- * Request is done by front end to associate ctrl with pcm device id
+ * Request is करोne by front end to associate ctrl with pcm device id
  */
-static int sti_uniperiph_dai_create_ctrl(struct snd_soc_dai *dai)
-{
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *uni = priv->dai_data.uni;
-	struct snd_kcontrol_new *ctrl;
-	int i;
+अटल पूर्णांक sti_uniperiph_dai_create_ctrl(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *uni = priv->dai_data.uni;
+	काष्ठा snd_kcontrol_new *ctrl;
+	पूर्णांक i;
 
-	if (!uni->num_ctrls)
-		return 0;
+	अगर (!uni->num_ctrls)
+		वापस 0;
 
-	for (i = 0; i < uni->num_ctrls; i++) {
+	क्रम (i = 0; i < uni->num_ctrls; i++) अणु
 		/*
 		 * Several Control can have same name. Controls are indexed on
 		 * Uniperipheral instance ID
@@ -271,187 +272,187 @@ static int sti_uniperiph_dai_create_ctrl(struct snd_soc_dai *dai)
 		ctrl = &uni->snd_ctrls[i];
 		ctrl->index = uni->id;
 		ctrl->device = uni->id;
-	}
+	पूर्ण
 
-	return snd_soc_add_dai_controls(dai, uni->snd_ctrls, uni->num_ctrls);
-}
+	वापस snd_soc_add_dai_controls(dai, uni->snd_ctrls, uni->num_ctrls);
+पूर्ण
 
 /*
  * DAI
  */
-int sti_uniperiph_dai_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params,
-				struct snd_soc_dai *dai)
-{
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct uniperif *uni = priv->dai_data.uni;
-	struct snd_dmaengine_dai_dma_data *dma_data;
-	int transfer_size;
+पूर्णांक sti_uniperiph_dai_hw_params(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_pcm_hw_params *params,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा uniperअगर *uni = priv->dai_data.uni;
+	काष्ठा snd_dmaengine_dai_dma_data *dma_data;
+	पूर्णांक transfer_size;
 
-	if (uni->type == SND_ST_UNIPERIF_TYPE_TDM)
+	अगर (uni->type == SND_ST_UNIPERIF_TYPE_TDM)
 		/* transfer size = user frame size (in 32-bits FIFO cell) */
 		transfer_size = snd_soc_params_to_frame_size(params) / 32;
-	else
+	अन्यथा
 		transfer_size = params_channels(params) * UNIPERIF_FIFO_FRAMES;
 
 	dma_data = snd_soc_dai_get_dma_data(dai, substream);
 	dma_data->maxburst = transfer_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sti_uniperiph_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+पूर्णांक sti_uniperiph_dai_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
 
-	priv->dai_data.uni->daifmt = fmt;
+	priv->dai_data.uni->daअगरmt = fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sti_uniperiph_suspend(struct snd_soc_component *component)
-{
-	struct sti_uniperiph_data *priv = snd_soc_component_get_drvdata(component);
-	struct uniperif *uni = priv->dai_data.uni;
-	int ret;
+अटल पूर्णांक sti_uniperiph_suspend(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_component_get_drvdata(component);
+	काष्ठा uniperअगर *uni = priv->dai_data.uni;
+	पूर्णांक ret;
 
 	/* The uniperipheral should be in stopped state */
-	if (uni->state != UNIPERIF_STATE_STOPPED) {
+	अगर (uni->state != UNIPERIF_STATE_STOPPED) अणु
 		dev_err(uni->dev, "%s: invalid uni state( %d)\n",
-			__func__, (int)uni->state);
-		return -EBUSY;
-	}
+			__func__, (पूर्णांक)uni->state);
+		वापस -EBUSY;
+	पूर्ण
 
-	/* Pinctrl: switch pinstate to sleep */
+	/* Pinctrl: चयन pinstate to sleep */
 	ret = pinctrl_pm_select_sleep_state(uni->dev);
-	if (ret)
+	अगर (ret)
 		dev_err(uni->dev, "%s: failed to select pinctrl state\n",
 			__func__);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sti_uniperiph_resume(struct snd_soc_component *component)
-{
-	struct sti_uniperiph_data *priv = snd_soc_component_get_drvdata(component);
-	struct uniperif *uni = priv->dai_data.uni;
-	int ret;
+अटल पूर्णांक sti_uniperiph_resume(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_component_get_drvdata(component);
+	काष्ठा uniperअगर *uni = priv->dai_data.uni;
+	पूर्णांक ret;
 
-	if (priv->dai_data.stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	अगर (priv->dai_data.stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 		ret = uni_player_resume(uni);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* pinctrl: switch pinstate to default */
-	ret = pinctrl_pm_select_default_state(uni->dev);
-	if (ret)
+	/* pinctrl: चयन pinstate to शेष */
+	ret = pinctrl_pm_select_शेष_state(uni->dev);
+	अगर (ret)
 		dev_err(uni->dev, "%s: failed to select pinctrl state\n",
 			__func__);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sti_uniperiph_dai_probe(struct snd_soc_dai *dai)
-{
-	struct sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
-	struct sti_uniperiph_dai *dai_data = &priv->dai_data;
+अटल पूर्णांक sti_uniperiph_dai_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा sti_uniperiph_data *priv = snd_soc_dai_get_drvdata(dai);
+	काष्ठा sti_uniperiph_dai *dai_data = &priv->dai_data;
 
 	/* DMA settings*/
-	if (priv->dai_data.stream == SNDRV_PCM_STREAM_PLAYBACK)
-		snd_soc_dai_init_dma_data(dai, &dai_data->dma_data, NULL);
-	else
-		snd_soc_dai_init_dma_data(dai, NULL, &dai_data->dma_data);
+	अगर (priv->dai_data.stream == SNDRV_PCM_STREAM_PLAYBACK)
+		snd_soc_dai_init_dma_data(dai, &dai_data->dma_data, शून्य);
+	अन्यथा
+		snd_soc_dai_init_dma_data(dai, शून्य, &dai_data->dma_data);
 
-	dai_data->dma_data.addr = dai_data->uni->fifo_phys_address;
+	dai_data->dma_data.addr = dai_data->uni->fअगरo_phys_address;
 	dai_data->dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 
-	return sti_uniperiph_dai_create_ctrl(dai);
-}
+	वापस sti_uniperiph_dai_create_ctrl(dai);
+पूर्ण
 
-static const struct snd_soc_dai_driver sti_uniperiph_dai_template = {
+अटल स्थिर काष्ठा snd_soc_dai_driver sti_uniperiph_dai_ढाँचा = अणु
 	.probe = sti_uniperiph_dai_probe,
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver sti_uniperiph_dai_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver sti_uniperiph_dai_component = अणु
 	.name = "sti_cpu_dai",
 	.suspend = sti_uniperiph_suspend,
 	.resume = sti_uniperiph_resume
-};
+पूर्ण;
 
-static int sti_uniperiph_cpu_dai_of(struct device_node *node,
-				    struct sti_uniperiph_data *priv)
-{
-	struct device *dev = &priv->pdev->dev;
-	struct sti_uniperiph_dai *dai_data = &priv->dai_data;
-	struct snd_soc_dai_driver *dai = priv->dai;
-	struct snd_soc_pcm_stream *stream;
-	struct uniperif *uni;
-	const struct of_device_id *of_id;
-	const struct sti_uniperiph_dev_data *dev_data;
-	const char *mode;
-	int ret;
+अटल पूर्णांक sti_uniperiph_cpu_dai_of(काष्ठा device_node *node,
+				    काष्ठा sti_uniperiph_data *priv)
+अणु
+	काष्ठा device *dev = &priv->pdev->dev;
+	काष्ठा sti_uniperiph_dai *dai_data = &priv->dai_data;
+	काष्ठा snd_soc_dai_driver *dai = priv->dai;
+	काष्ठा snd_soc_pcm_stream *stream;
+	काष्ठा uniperअगर *uni;
+	स्थिर काष्ठा of_device_id *of_id;
+	स्थिर काष्ठा sti_uniperiph_dev_data *dev_data;
+	स्थिर अक्षर *mode;
+	पूर्णांक ret;
 
-	/* Populate data structure depending on compatibility */
+	/* Populate data काष्ठाure depending on compatibility */
 	of_id = of_match_node(snd_soc_sti_match, node);
-	if (!of_id->data) {
+	अगर (!of_id->data) अणु
 		dev_err(dev, "data associated to device is missing\n");
-		return -EINVAL;
-	}
-	dev_data = (struct sti_uniperiph_dev_data *)of_id->data;
+		वापस -EINVAL;
+	पूर्ण
+	dev_data = (काष्ठा sti_uniperiph_dev_data *)of_id->data;
 
-	uni = devm_kzalloc(dev, sizeof(*uni), GFP_KERNEL);
-	if (!uni)
-		return -ENOMEM;
+	uni = devm_kzalloc(dev, माप(*uni), GFP_KERNEL);
+	अगर (!uni)
+		वापस -ENOMEM;
 
 	uni->id = dev_data->id;
 	uni->ver = dev_data->version;
 
-	*dai = sti_uniperiph_dai_template;
+	*dai = sti_uniperiph_dai_ढाँचा;
 	dai->name = dev_data->dai_names;
 
 	/* Get resources */
-	uni->mem_region = platform_get_resource(priv->pdev, IORESOURCE_MEM, 0);
+	uni->mem_region = platक्रमm_get_resource(priv->pdev, IORESOURCE_MEM, 0);
 
-	if (!uni->mem_region) {
+	अगर (!uni->mem_region) अणु
 		dev_err(dev, "Failed to get memory resource\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	uni->base = devm_ioremap_resource(dev, uni->mem_region);
 
-	if (IS_ERR(uni->base))
-		return PTR_ERR(uni->base);
+	अगर (IS_ERR(uni->base))
+		वापस PTR_ERR(uni->base);
 
-	uni->fifo_phys_address = uni->mem_region->start +
+	uni->fअगरo_phys_address = uni->mem_region->start +
 				     UNIPERIF_FIFO_DATA_OFFSET(uni);
 
-	uni->irq = platform_get_irq(priv->pdev, 0);
-	if (uni->irq < 0)
-		return -ENXIO;
+	uni->irq = platक्रमm_get_irq(priv->pdev, 0);
+	अगर (uni->irq < 0)
+		वापस -ENXIO;
 
 	uni->type = dev_data->type;
 
-	/* check if player should be configured for tdm */
-	if (dev_data->type & SND_ST_UNIPERIF_TYPE_TDM) {
-		if (!of_property_read_string(node, "st,tdm-mode", &mode))
+	/* check अगर player should be configured क्रम tdm */
+	अगर (dev_data->type & SND_ST_UNIPERIF_TYPE_TDM) अणु
+		अगर (!of_property_पढ़ो_string(node, "st,tdm-mode", &mode))
 			uni->type = SND_ST_UNIPERIF_TYPE_TDM;
-		else
+		अन्यथा
 			uni->type = SND_ST_UNIPERIF_TYPE_PCM;
-	}
+	पूर्ण
 
 	dai_data->uni = uni;
 	dai_data->stream = dev_data->stream;
 
-	if (priv->dai_data.stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	अगर (priv->dai_data.stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 		ret = uni_player_init(priv->pdev, uni);
 		stream = &dai->playback;
-	} else {
-		ret = uni_reader_init(priv->pdev, uni);
+	पूर्ण अन्यथा अणु
+		ret = uni_पढ़ोer_init(priv->pdev, uni);
 		stream = &dai->capture;
-	}
-	if (ret < 0)
-		return ret;
+	पूर्ण
+	अगर (ret < 0)
+		वापस ret;
 
 	dai->ops = uni->dai_ops;
 
@@ -459,55 +460,55 @@ static int sti_uniperiph_cpu_dai_of(struct device_node *node,
 	stream->channels_min = uni->hw->channels_min;
 	stream->channels_max = uni->hw->channels_max;
 	stream->rates = uni->hw->rates;
-	stream->formats = uni->hw->formats;
+	stream->क्रमmats = uni->hw->क्रमmats;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_dmaengine_pcm_config dmaengine_pcm_config = {
+अटल स्थिर काष्ठा snd_dmaengine_pcm_config dmaengine_pcm_config = अणु
 	.prepare_slave_config = snd_dmaengine_pcm_prepare_slave_config,
-};
+पूर्ण;
 
-static int sti_uniperiph_probe(struct platform_device *pdev)
-{
-	struct sti_uniperiph_data *priv;
-	struct device_node *node = pdev->dev.of_node;
-	int ret;
+अटल पूर्णांक sti_uniperiph_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sti_uniperiph_data *priv;
+	काष्ठा device_node *node = pdev->dev.of_node;
+	पूर्णांक ret;
 
-	/* Allocate the private data and the CPU_DAI array */
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
-	priv->dai = devm_kzalloc(&pdev->dev, sizeof(*priv->dai), GFP_KERNEL);
-	if (!priv->dai)
-		return -ENOMEM;
+	/* Allocate the निजी data and the CPU_DAI array */
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
+	priv->dai = devm_kzalloc(&pdev->dev, माप(*priv->dai), GFP_KERNEL);
+	अगर (!priv->dai)
+		वापस -ENOMEM;
 
 	priv->pdev = pdev;
 
 	ret = sti_uniperiph_cpu_dai_of(node, priv);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	dev_set_drvdata(&pdev->dev, priv);
 
-	ret = devm_snd_soc_register_component(&pdev->dev,
+	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
 					      &sti_uniperiph_dai_component,
 					      priv->dai, 1);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return devm_snd_dmaengine_pcm_register(&pdev->dev,
+	वापस devm_snd_dmaengine_pcm_रेजिस्टर(&pdev->dev,
 					       &dmaengine_pcm_config, 0);
-}
+पूर्ण
 
-static struct platform_driver sti_uniperiph_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sti_uniperiph_driver = अणु
+	.driver = अणु
 		.name = "sti-uniperiph-dai",
 		.of_match_table = snd_soc_sti_match,
-	},
+	पूर्ण,
 	.probe = sti_uniperiph_probe,
-};
-module_platform_driver(sti_uniperiph_driver);
+पूर्ण;
+module_platक्रमm_driver(sti_uniperiph_driver);
 
 MODULE_DESCRIPTION("uniperipheral DAI driver");
 MODULE_AUTHOR("Arnaud Pouliquen <arnaud.pouliquen@st.com>");

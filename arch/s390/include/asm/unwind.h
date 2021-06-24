@@ -1,83 +1,84 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_S390_UNWIND_H
-#define _ASM_S390_UNWIND_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_S390_UNWIND_H
+#घोषणा _ASM_S390_UNWIND_H
 
-#include <linux/sched.h>
-#include <linux/ftrace.h>
-#include <asm/ptrace.h>
-#include <asm/stacktrace.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/ftrace.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/stacktrace.h>
 
 /*
  * To use the stack unwinder it has to be initialized with unwind_start.
- * There four combinations for task and regs:
- * 1) task==NULL, regs==NULL: the unwind starts for the task that is currently
- *    running, sp/ip picked up from the CPU registers
- * 2) task==NULL, regs!=NULL: the unwind starts from the sp/ip found in
- *    the struct pt_regs of an interrupt frame for the current task
- * 3) task!=NULL, regs==NULL: the unwind starts for an inactive task with
- *    the sp picked up from task->thread.ksp and the ip picked up from the
- *    return address stored by __switch_to
- * 4) task!=NULL, regs!=NULL: the sp/ip are picked up from the interrupt
+ * There four combinations क्रम task and regs:
+ * 1) task==शून्य, regs==शून्य: the unwind starts क्रम the task that is currently
+ *    running, sp/ip picked up from the CPU रेजिस्टरs
+ * 2) task==शून्य, regs!=शून्य: the unwind starts from the sp/ip found in
+ *    the काष्ठा pt_regs of an पूर्णांकerrupt frame क्रम the current task
+ * 3) task!=शून्य, regs==शून्य: the unwind starts क्रम an inactive task with
+ *    the sp picked up from task->thपढ़ो.ksp and the ip picked up from the
+ *    वापस address stored by __चयन_to
+ * 4) task!=शून्य, regs!=शून्य: the sp/ip are picked up from the पूर्णांकerrupt
  *    frame 'regs' of a inactive task
  * If 'first_frame' is not zero unwind_start skips unwind frames until it
- * reaches the specified stack pointer.
- * The end of the unwinding is indicated with unwind_done, this can be true
+ * reaches the specअगरied stack poपूर्णांकer.
+ * The end of the unwinding is indicated with unwind_करोne, this can be true
  * right after unwind_start, e.g. with first_frame!=0 that can not be found.
  * unwind_next_frame skips to the next frame.
- * Once the unwind is completed unwind_error() can be used to check if there
+ * Once the unwind is completed unwind_error() can be used to check अगर there
  * has been a situation where the unwinder could not correctly understand
  * the tasks call chain.
  */
 
-struct unwind_state {
-	struct stack_info stack_info;
-	unsigned long stack_mask;
-	struct task_struct *task;
-	struct pt_regs *regs;
-	unsigned long sp, ip;
-	int graph_idx;
+काष्ठा unwind_state अणु
+	काष्ठा stack_info stack_info;
+	अचिन्हित दीर्घ stack_mask;
+	काष्ठा task_काष्ठा *task;
+	काष्ठा pt_regs *regs;
+	अचिन्हित दीर्घ sp, ip;
+	पूर्णांक graph_idx;
 	bool reliable;
 	bool error;
-};
+पूर्ण;
 
-void __unwind_start(struct unwind_state *state, struct task_struct *task,
-		    struct pt_regs *regs, unsigned long first_frame);
-bool unwind_next_frame(struct unwind_state *state);
-unsigned long unwind_get_return_address(struct unwind_state *state);
+व्योम __unwind_start(काष्ठा unwind_state *state, काष्ठा task_काष्ठा *task,
+		    काष्ठा pt_regs *regs, अचिन्हित दीर्घ first_frame);
+bool unwind_next_frame(काष्ठा unwind_state *state);
+अचिन्हित दीर्घ unwind_get_वापस_address(काष्ठा unwind_state *state);
 
-static inline bool unwind_done(struct unwind_state *state)
-{
-	return state->stack_info.type == STACK_TYPE_UNKNOWN;
-}
+अटल अंतरभूत bool unwind_करोne(काष्ठा unwind_state *state)
+अणु
+	वापस state->stack_info.type == STACK_TYPE_UNKNOWN;
+पूर्ण
 
-static inline bool unwind_error(struct unwind_state *state)
-{
-	return state->error;
-}
+अटल अंतरभूत bool unwind_error(काष्ठा unwind_state *state)
+अणु
+	वापस state->error;
+पूर्ण
 
-static inline void unwind_start(struct unwind_state *state,
-				struct task_struct *task,
-				struct pt_regs *regs,
-				unsigned long first_frame)
-{
+अटल अंतरभूत व्योम unwind_start(काष्ठा unwind_state *state,
+				काष्ठा task_काष्ठा *task,
+				काष्ठा pt_regs *regs,
+				अचिन्हित दीर्घ first_frame)
+अणु
 	task = task ?: current;
-	first_frame = first_frame ?: get_stack_pointer(task, regs);
+	first_frame = first_frame ?: get_stack_poपूर्णांकer(task, regs);
 	__unwind_start(state, task, regs, first_frame);
-}
+पूर्ण
 
-static inline struct pt_regs *unwind_get_entry_regs(struct unwind_state *state)
-{
-	return unwind_done(state) ? NULL : state->regs;
-}
+अटल अंतरभूत काष्ठा pt_regs *unwind_get_entry_regs(काष्ठा unwind_state *state)
+अणु
+	वापस unwind_करोne(state) ? शून्य : state->regs;
+पूर्ण
 
-#define unwind_for_each_frame(state, task, regs, first_frame)	\
-	for (unwind_start(state, task, regs, first_frame);	\
-	     !unwind_done(state);				\
+#घोषणा unwind_क्रम_each_frame(state, task, regs, first_frame)	\
+	क्रम (unwind_start(state, task, regs, first_frame);	\
+	     !unwind_करोne(state);				\
 	     unwind_next_frame(state))
 
-static inline void unwind_init(void) {}
-static inline void unwind_module_init(struct module *mod, void *orc_ip,
-				      size_t orc_ip_size, void *orc,
-				      size_t orc_size) {}
+अटल अंतरभूत व्योम unwind_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम unwind_module_init(काष्ठा module *mod, व्योम *orc_ip,
+				      माप_प्रकार orc_ip_size, व्योम *orc,
+				      माप_प्रकार orc_size) अणुपूर्ण
 
-#endif /* _ASM_S390_UNWIND_H */
+#पूर्ण_अगर /* _ASM_S390_UNWIND_H */

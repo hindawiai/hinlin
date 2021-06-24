@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * isphist.h
  *
@@ -8,20 +9,20 @@
  * Copyright (C) 2009 Texas Instruments, Inc.
  *
  * Contacts: David Cohen <dacohen@gmail.com>
- *	     Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ *	     Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#ifndef OMAP3_ISP_HIST_H
-#define OMAP3_ISP_HIST_H
+#अगर_अघोषित OMAP3_ISP_HIST_H
+#घोषणा OMAP3_ISP_HIST_H
 
-#include <linux/omap3isp.h>
+#समावेश <linux/omap3isp.h>
 
-#define ISPHIST_IN_BIT_WIDTH_CCDC	10
+#घोषणा ISPHIST_IN_BIT_WIDTH_CCDC	10
 
-struct isp_device;
+काष्ठा isp_device;
 
-int omap3isp_hist_init(struct isp_device *isp);
-void omap3isp_hist_cleanup(struct isp_device *isp);
+पूर्णांक omap3isp_hist_init(काष्ठा isp_device *isp);
+व्योम omap3isp_hist_cleanup(काष्ठा isp_device *isp);
 
-#endif /* OMAP3_ISP_HIST */
+#पूर्ण_अगर /* OMAP3_ISP_HIST */

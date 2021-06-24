@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#include <linux/types.h>
-#include "qed.h"
-#include "qed_dev_api.h"
-#include "qed_hw.h"
-#include "qed_l2.h"
-#include "qed_mcp.h"
-#include "qed_ptp.h"
-#include "qed_reg_addr.h"
+#समावेश <linux/types.h>
+#समावेश "qed.h"
+#समावेश "qed_dev_api.h"
+#समावेश "qed_hw.h"
+#समावेश "qed_l2.h"
+#समावेश "qed_mcp.h"
+#समावेश "qed_ptp.h"
+#समावेश "qed_reg_addr.h"
 
-/* 16 nano second time quantas to wait before making a Drift adjustment */
-#define QED_DRIFT_CNTR_TIME_QUANTA_SHIFT	0
-/* Nano seconds to add/subtract when making a Drift adjustment */
-#define QED_DRIFT_CNTR_ADJUSTMENT_SHIFT		28
-/* Add/subtract the Adjustment_Value when making a Drift adjustment */
-#define QED_DRIFT_CNTR_DIRECTION_SHIFT		31
-#define QED_TIMESTAMP_MASK			BIT(16)
-/* Param mask for Hardware to detect/timestamp the L2/L4 unicast PTP packets */
-#define QED_PTP_UCAST_PARAM_MASK              0x70F
+/* 16 nano second समय quantas to रुको beक्रमe making a Drअगरt adjusपंचांगent */
+#घोषणा QED_DRIFT_CNTR_TIME_QUANTA_SHIFT	0
+/* Nano seconds to add/subtract when making a Drअगरt adjusपंचांगent */
+#घोषणा QED_DRIFT_CNTR_ADJUSTMENT_SHIFT		28
+/* Add/subtract the Adjusपंचांगent_Value when making a Drअगरt adjusपंचांगent */
+#घोषणा QED_DRIFT_CNTR_सूचीECTION_SHIFT		31
+#घोषणा QED_TIMESTAMP_MASK			BIT(16)
+/* Param mask क्रम Hardware to detect/बारtamp the L2/L4 unicast PTP packets */
+#घोषणा QED_PTP_UCAST_PARAM_MASK              0x70F
 
-static enum qed_resc_lock qed_ptcdev_to_resc(struct qed_hwfn *p_hwfn)
-{
-	switch (MFW_PORT(p_hwfn)) {
-	case 0:
-		return QED_RESC_LOCK_PTP_PORT0;
-	case 1:
-		return QED_RESC_LOCK_PTP_PORT1;
-	case 2:
-		return QED_RESC_LOCK_PTP_PORT2;
-	case 3:
-		return QED_RESC_LOCK_PTP_PORT3;
-	default:
-		return QED_RESC_LOCK_RESC_INVALID;
-	}
-}
+अटल क्रमागत qed_resc_lock qed_ptcdev_to_resc(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	चयन (MFW_PORT(p_hwfn)) अणु
+	हाल 0:
+		वापस QED_RESC_LOCK_PTP_PORT0;
+	हाल 1:
+		वापस QED_RESC_LOCK_PTP_PORT1;
+	हाल 2:
+		वापस QED_RESC_LOCK_PTP_PORT2;
+	हाल 3:
+		वापस QED_RESC_LOCK_PTP_PORT3;
+	शेष:
+		वापस QED_RESC_LOCK_RESC_INVALID;
+	पूर्ण
+पूर्ण
 
-static int qed_ptp_res_lock(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	struct qed_resc_lock_params params;
-	enum qed_resc_lock resource;
-	int rc;
+अटल पूर्णांक qed_ptp_res_lock(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	काष्ठा qed_resc_lock_params params;
+	क्रमागत qed_resc_lock resource;
+	पूर्णांक rc;
 
 	resource = qed_ptcdev_to_resc(p_hwfn);
-	if (resource == QED_RESC_LOCK_RESC_INVALID)
-		return -EINVAL;
+	अगर (resource == QED_RESC_LOCK_RESC_INVALID)
+		वापस -EINVAL;
 
-	qed_mcp_resc_lock_default_init(&params, NULL, resource, true);
+	qed_mcp_resc_lock_शेष_init(&params, शून्य, resource, true);
 
 	rc = qed_mcp_resc_lock(p_hwfn, p_ptt, &params);
-	if (rc && rc != -EINVAL) {
-		return rc;
-	} else if (rc == -EINVAL) {
-		/* MFW doesn't support resource locking, first PF on the port
+	अगर (rc && rc != -EINVAL) अणु
+		वापस rc;
+	पूर्ण अन्यथा अगर (rc == -EINVAL) अणु
+		/* MFW करोesn't support resource locking, first PF on the port
 		 * has lock ownership.
 		 */
-		if (p_hwfn->abs_pf_id < p_hwfn->cdev->num_ports_in_engine)
-			return 0;
+		अगर (p_hwfn->असल_pf_id < p_hwfn->cdev->num_ports_in_engine)
+			वापस 0;
 
 		DP_INFO(p_hwfn, "PF doesn't have lock ownership\n");
-		return -EBUSY;
-	} else if (!rc && !params.b_granted) {
+		वापस -EBUSY;
+	पूर्ण अन्यथा अगर (!rc && !params.b_granted) अणु
 		DP_INFO(p_hwfn, "Failed to acquire ptp resource lock\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qed_ptp_res_unlock(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	struct qed_resc_unlock_params params;
-	enum qed_resc_lock resource;
-	int rc;
+अटल पूर्णांक qed_ptp_res_unlock(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	काष्ठा qed_resc_unlock_params params;
+	क्रमागत qed_resc_lock resource;
+	पूर्णांक rc;
 
 	resource = qed_ptcdev_to_resc(p_hwfn);
-	if (resource == QED_RESC_LOCK_RESC_INVALID)
-		return -EINVAL;
+	अगर (resource == QED_RESC_LOCK_RESC_INVALID)
+		वापस -EINVAL;
 
-	qed_mcp_resc_lock_default_init(NULL, &params, resource, true);
+	qed_mcp_resc_lock_शेष_init(शून्य, &params, resource, true);
 
 	rc = qed_mcp_resc_unlock(p_hwfn, p_ptt, &params);
-	if (rc == -EINVAL) {
-		/* MFW doesn't support locking, first PF has lock ownership */
-		if (p_hwfn->abs_pf_id < p_hwfn->cdev->num_ports_in_engine) {
+	अगर (rc == -EINVAL) अणु
+		/* MFW करोesn't support locking, first PF has lock ownership */
+		अगर (p_hwfn->असल_pf_id < p_hwfn->cdev->num_ports_in_engine) अणु
 			rc = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			DP_INFO(p_hwfn, "PF doesn't have lock ownership\n");
-			return -EINVAL;
-		}
-	} else if (rc) {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अगर (rc) अणु
 		DP_INFO(p_hwfn, "Failed to release the ptp resource lock\n");
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* Read Rx timestamp */
-static int qed_ptp_hw_read_rx_ts(struct qed_dev *cdev, u64 *timestamp)
-{
-	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
+/* Read Rx बारtamp */
+अटल पूर्णांक qed_ptp_hw_पढ़ो_rx_ts(काष्ठा qed_dev *cdev, u64 *बारtamp)
+अणु
+	काष्ठा qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
 	u32 val;
 
-	*timestamp = 0;
+	*बारtamp = 0;
 	val = qed_rd(p_hwfn, p_ptt, NIG_REG_LLH_PTP_HOST_BUF_SEQID);
-	if (!(val & QED_TIMESTAMP_MASK)) {
+	अगर (!(val & QED_TIMESTAMP_MASK)) अणु
 		DP_INFO(p_hwfn, "Invalid Rx timestamp, buf_seqid = %d\n", val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	val = qed_rd(p_hwfn, p_ptt, NIG_REG_LLH_PTP_HOST_BUF_TS_LSB);
-	*timestamp = qed_rd(p_hwfn, p_ptt, NIG_REG_LLH_PTP_HOST_BUF_TS_MSB);
-	*timestamp <<= 32;
-	*timestamp |= val;
+	*बारtamp = qed_rd(p_hwfn, p_ptt, NIG_REG_LLH_PTP_HOST_BUF_TS_MSB);
+	*बारtamp <<= 32;
+	*बारtamp |= val;
 
-	/* Reset timestamp register to allow new timestamp */
+	/* Reset बारtamp रेजिस्टर to allow new बारtamp */
 	qed_wr(p_hwfn, p_ptt, NIG_REG_LLH_PTP_HOST_BUF_SEQID,
 	       QED_TIMESTAMP_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Read Tx timestamp */
-static int qed_ptp_hw_read_tx_ts(struct qed_dev *cdev, u64 *timestamp)
-{
-	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
+/* Read Tx बारtamp */
+अटल पूर्णांक qed_ptp_hw_पढ़ो_tx_ts(काष्ठा qed_dev *cdev, u64 *बारtamp)
+अणु
+	काष्ठा qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
 	u32 val;
 
-	*timestamp = 0;
+	*बारtamp = 0;
 	val = qed_rd(p_hwfn, p_ptt, NIG_REG_TX_LLH_PTP_BUF_SEQID);
-	if (!(val & QED_TIMESTAMP_MASK)) {
+	अगर (!(val & QED_TIMESTAMP_MASK)) अणु
 		DP_VERBOSE(p_hwfn, QED_MSG_DEBUG,
 			   "Invalid Tx timestamp, buf_seqid = %08x\n", val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	val = qed_rd(p_hwfn, p_ptt, NIG_REG_TX_LLH_PTP_BUF_TS_LSB);
-	*timestamp = qed_rd(p_hwfn, p_ptt, NIG_REG_TX_LLH_PTP_BUF_TS_MSB);
-	*timestamp <<= 32;
-	*timestamp |= val;
+	*बारtamp = qed_rd(p_hwfn, p_ptt, NIG_REG_TX_LLH_PTP_BUF_TS_MSB);
+	*बारtamp <<= 32;
+	*बारtamp |= val;
 
-	/* Reset timestamp register to allow new timestamp */
+	/* Reset बारtamp रेजिस्टर to allow new बारtamp */
 	qed_wr(p_hwfn, p_ptt, NIG_REG_TX_LLH_PTP_BUF_SEQID, QED_TIMESTAMP_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Read Phy Hardware Clock */
-static int qed_ptp_hw_read_cc(struct qed_dev *cdev, u64 *phc_cycles)
-{
-	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
+अटल पूर्णांक qed_ptp_hw_पढ़ो_cc(काष्ठा qed_dev *cdev, u64 *phc_cycles)
+अणु
+	काष्ठा qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
 	u32 temp = 0;
 
 	temp = qed_rd(p_hwfn, p_ptt, NIG_REG_TSGEN_SYNC_TIME_LSB);
@@ -163,201 +164,201 @@ static int qed_ptp_hw_read_cc(struct qed_dev *cdev, u64 *phc_cycles)
 	*phc_cycles <<= 32;
 	*phc_cycles |= temp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Filter PTP protocol packets that need to be timestamped */
-static int qed_ptp_hw_cfg_filters(struct qed_dev *cdev,
-				  enum qed_ptp_filter_type rx_type,
-				  enum qed_ptp_hwtstamp_tx_type tx_type)
-{
-	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
+/* Filter PTP protocol packets that need to be बारtamped */
+अटल पूर्णांक qed_ptp_hw_cfg_filters(काष्ठा qed_dev *cdev,
+				  क्रमागत qed_ptp_filter_type rx_type,
+				  क्रमागत qed_ptp_hwtstamp_tx_type tx_type)
+अणु
+	काष्ठा qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
 	u32 rule_mask, enable_cfg = 0x0;
 
-	switch (rx_type) {
-	case QED_PTP_FILTER_NONE:
+	चयन (rx_type) अणु
+	हाल QED_PTP_FILTER_NONE:
 		enable_cfg = 0x0;
 		rule_mask = 0x3FFF;
-		break;
-	case QED_PTP_FILTER_ALL:
+		अवरोध;
+	हाल QED_PTP_FILTER_ALL:
 		enable_cfg = 0x7;
 		rule_mask = 0x3CAA;
-		break;
-	case QED_PTP_FILTER_V1_L4_EVENT:
+		अवरोध;
+	हाल QED_PTP_FILTER_V1_L4_EVENT:
 		enable_cfg = 0x3;
 		rule_mask = 0x3FFA;
-		break;
-	case QED_PTP_FILTER_V1_L4_GEN:
+		अवरोध;
+	हाल QED_PTP_FILTER_V1_L4_GEN:
 		enable_cfg = 0x3;
 		rule_mask = 0x3FFE;
-		break;
-	case QED_PTP_FILTER_V2_L4_EVENT:
+		अवरोध;
+	हाल QED_PTP_FILTER_V2_L4_EVENT:
 		enable_cfg = 0x5;
 		rule_mask = 0x3FAA;
-		break;
-	case QED_PTP_FILTER_V2_L4_GEN:
+		अवरोध;
+	हाल QED_PTP_FILTER_V2_L4_GEN:
 		enable_cfg = 0x5;
 		rule_mask = 0x3FEE;
-		break;
-	case QED_PTP_FILTER_V2_L2_EVENT:
+		अवरोध;
+	हाल QED_PTP_FILTER_V2_L2_EVENT:
 		enable_cfg = 0x5;
 		rule_mask = 0x3CFF;
-		break;
-	case QED_PTP_FILTER_V2_L2_GEN:
+		अवरोध;
+	हाल QED_PTP_FILTER_V2_L2_GEN:
 		enable_cfg = 0x5;
 		rule_mask = 0x3EFF;
-		break;
-	case QED_PTP_FILTER_V2_EVENT:
+		अवरोध;
+	हाल QED_PTP_FILTER_V2_EVENT:
 		enable_cfg = 0x5;
 		rule_mask = 0x3CAA;
-		break;
-	case QED_PTP_FILTER_V2_GEN:
+		अवरोध;
+	हाल QED_PTP_FILTER_V2_GEN:
 		enable_cfg = 0x5;
 		rule_mask = 0x3EEE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DP_INFO(p_hwfn, "Invalid PTP filter type %d\n", rx_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	qed_wr(p_hwfn, p_ptt, NIG_REG_LLH_PTP_PARAM_MASK,
 	       QED_PTP_UCAST_PARAM_MASK);
 	qed_wr(p_hwfn, p_ptt, NIG_REG_LLH_PTP_RULE_MASK, rule_mask);
 	qed_wr(p_hwfn, p_ptt, NIG_REG_RX_PTP_EN, enable_cfg);
 
-	if (tx_type == QED_PTP_HWTSTAMP_TX_OFF) {
+	अगर (tx_type == QED_PTP_HWTSTAMP_TX_OFF) अणु
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TX_PTP_EN, 0x0);
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TX_LLH_PTP_PARAM_MASK, 0x7FF);
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TX_LLH_PTP_RULE_MASK, 0x3FFF);
-	} else {
+	पूर्ण अन्यथा अणु
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TX_PTP_EN, enable_cfg);
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TX_LLH_PTP_PARAM_MASK,
 		       QED_PTP_UCAST_PARAM_MASK);
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TX_LLH_PTP_RULE_MASK, rule_mask);
-	}
+	पूर्ण
 
-	/* Reset possibly old timestamps */
+	/* Reset possibly old बारtamps */
 	qed_wr(p_hwfn, p_ptt, NIG_REG_LLH_PTP_HOST_BUF_SEQID,
 	       QED_TIMESTAMP_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Adjust the HW clock by a rate given in parts-per-billion (ppb) units.
- * FW/HW accepts the adjustment value in terms of 3 parameters:
- *   Drift period - adjustment happens once in certain number of nano seconds.
- *   Drift value - time is adjusted by a certain value, for example by 5 ns.
- *   Drift direction - add or subtract the adjustment value.
- * The routine translates ppb into the adjustment triplet in an optimal manner.
+/* Adjust the HW घड़ी by a rate given in parts-per-billion (ppb) units.
+ * FW/HW accepts the adjusपंचांगent value in terms of 3 parameters:
+ *   Drअगरt period - adjusपंचांगent happens once in certain number of nano seconds.
+ *   Drअगरt value - समय is adjusted by a certain value, क्रम example by 5 ns.
+ *   Drअगरt direction - add or subtract the adjusपंचांगent value.
+ * The routine translates ppb पूर्णांकo the adjusपंचांगent triplet in an optimal manner.
  */
-static int qed_ptp_hw_adjfreq(struct qed_dev *cdev, s32 ppb)
-{
-	s64 best_val = 0, val, best_period = 0, period, approx_dev, dif, dif2;
-	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
-	u32 drift_ctr_cfg = 0, drift_state;
-	int drift_dir = 1;
+अटल पूर्णांक qed_ptp_hw_adjfreq(काष्ठा qed_dev *cdev, s32 ppb)
+अणु
+	s64 best_val = 0, val, best_period = 0, period, approx_dev, dअगर, dअगर2;
+	काष्ठा qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
+	u32 drअगरt_ctr_cfg = 0, drअगरt_state;
+	पूर्णांक drअगरt_dir = 1;
 
-	if (ppb < 0) {
+	अगर (ppb < 0) अणु
 		ppb = -ppb;
-		drift_dir = 0;
-	}
+		drअगरt_dir = 0;
+	पूर्ण
 
-	if (ppb > 1) {
-		s64 best_dif = ppb, best_approx_dev = 1;
+	अगर (ppb > 1) अणु
+		s64 best_dअगर = ppb, best_approx_dev = 1;
 
-		/* Adjustment value is up to +/-7ns, find an optimal value in
+		/* Adjusपंचांगent value is up to +/-7ns, find an optimal value in
 		 * this range.
 		 */
-		for (val = 7; val > 0; val--) {
-			period = div_s64(val * 1000000000, ppb);
+		क्रम (val = 7; val > 0; val--) अणु
+			period = भाग_s64(val * 1000000000, ppb);
 			period -= 8;
 			period >>= 4;
-			if (period < 1)
+			अगर (period < 1)
 				period = 1;
-			if (period > 0xFFFFFFE)
+			अगर (period > 0xFFFFFFE)
 				period = 0xFFFFFFE;
 
-			/* Check both rounding ends for approximate error */
+			/* Check both rounding ends क्रम approximate error */
 			approx_dev = period * 16 + 8;
-			dif = ppb * approx_dev - val * 1000000000;
-			dif2 = dif + 16 * ppb;
+			dअगर = ppb * approx_dev - val * 1000000000;
+			dअगर2 = dअगर + 16 * ppb;
 
-			if (dif < 0)
-				dif = -dif;
-			if (dif2 < 0)
-				dif2 = -dif2;
+			अगर (dअगर < 0)
+				dअगर = -dअगर;
+			अगर (dअगर2 < 0)
+				dअगर2 = -dअगर2;
 
 			/* Determine which end gives better approximation */
-			if (dif * (approx_dev + 16) > dif2 * approx_dev) {
+			अगर (dअगर * (approx_dev + 16) > dअगर2 * approx_dev) अणु
 				period++;
 				approx_dev += 16;
-				dif = dif2;
-			}
+				dअगर = dअगर2;
+			पूर्ण
 
 			/* Track best approximation found so far */
-			if (best_dif * approx_dev > dif * best_approx_dev) {
-				best_dif = dif;
+			अगर (best_dअगर * approx_dev > dअगर * best_approx_dev) अणु
+				best_dअगर = dअगर;
 				best_val = val;
 				best_period = period;
 				best_approx_dev = approx_dev;
-			}
-		}
-	} else if (ppb == 1) {
-		/* This is a special case as its the only value which wouldn't
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (ppb == 1) अणु
+		/* This is a special हाल as its the only value which wouldn't
 		 * fit in a s64 variable. In order to prevent castings simple
 		 * handle it seperately.
 		 */
 		best_val = 4;
 		best_period = 0xee6b27f;
-	} else {
+	पूर्ण अन्यथा अणु
 		best_val = 0;
 		best_period = 0xFFFFFFF;
-	}
+	पूर्ण
 
-	drift_ctr_cfg = (best_period << QED_DRIFT_CNTR_TIME_QUANTA_SHIFT) |
-			(((int)best_val) << QED_DRIFT_CNTR_ADJUSTMENT_SHIFT) |
-			(((int)drift_dir) << QED_DRIFT_CNTR_DIRECTION_SHIFT);
+	drअगरt_ctr_cfg = (best_period << QED_DRIFT_CNTR_TIME_QUANTA_SHIFT) |
+			(((पूर्णांक)best_val) << QED_DRIFT_CNTR_ADJUSTMENT_SHIFT) |
+			(((पूर्णांक)drअगरt_dir) << QED_DRIFT_CNTR_सूचीECTION_SHIFT);
 
 	qed_wr(p_hwfn, p_ptt, NIG_REG_TSGEN_RST_DRIFT_CNTR, 0x1);
 
-	drift_state = qed_rd(p_hwfn, p_ptt, NIG_REG_TSGEN_RST_DRIFT_CNTR);
-	if (drift_state & 1) {
+	drअगरt_state = qed_rd(p_hwfn, p_ptt, NIG_REG_TSGEN_RST_DRIFT_CNTR);
+	अगर (drअगरt_state & 1) अणु
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TSGEN_DRIFT_CNTR_CONF,
-		       drift_ctr_cfg);
-	} else {
+		       drअगरt_ctr_cfg);
+	पूर्ण अन्यथा अणु
 		DP_INFO(p_hwfn, "Drift counter is not reset\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	qed_wr(p_hwfn, p_ptt, NIG_REG_TSGEN_RST_DRIFT_CNTR, 0x0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_ptp_hw_enable(struct qed_dev *cdev)
-{
-	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_ptt *p_ptt;
-	int rc;
+अटल पूर्णांक qed_ptp_hw_enable(काष्ठा qed_dev *cdev)
+अणु
+	काष्ठा qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_ptt *p_ptt;
+	पूर्णांक rc;
 
 	p_ptt = qed_ptt_acquire(p_hwfn);
-	if (!p_ptt) {
+	अगर (!p_ptt) अणु
 		DP_NOTICE(p_hwfn, "Failed to acquire PTT for PTP\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	p_hwfn->p_ptp_ptt = p_ptt;
 
 	rc = qed_ptp_res_lock(p_hwfn, p_ptt);
-	if (rc) {
+	अगर (rc) अणु
 		DP_INFO(p_hwfn,
 			"Couldn't acquire the resource lock, skip ptp enable for this PF\n");
 		qed_ptt_release(p_hwfn, p_ptt);
-		p_hwfn->p_ptp_ptt = NULL;
-		return rc;
-	}
+		p_hwfn->p_ptp_ptt = शून्य;
+		वापस rc;
+	पूर्ण
 
 	/* Reset PTP event detection rules - will be configured in the IOCTL */
 	qed_wr(p_hwfn, p_ptt, NIG_REG_LLH_PTP_PARAM_MASK, 0x7FF);
@@ -370,38 +371,38 @@ static int qed_ptp_hw_enable(struct qed_dev *cdev)
 
 	qed_wr(p_hwfn, p_ptt, NIG_REG_TS_OUTPUT_ENABLE_PDA, 0x1);
 
-	/* Pause free running counter */
-	if (QED_IS_BB_B0(p_hwfn->cdev))
+	/* Pause मुक्त running counter */
+	अगर (QED_IS_BB_B0(p_hwfn->cdev))
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TIMESYNC_GEN_REG_BB, 2);
-	if (QED_IS_AH(p_hwfn->cdev))
+	अगर (QED_IS_AH(p_hwfn->cdev))
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TSGEN_FREECNT_UPDATE_K2, 2);
 
 	qed_wr(p_hwfn, p_ptt, NIG_REG_TSGEN_FREE_CNT_VALUE_LSB, 0);
 	qed_wr(p_hwfn, p_ptt, NIG_REG_TSGEN_FREE_CNT_VALUE_MSB, 0);
-	/* Resume free running counter */
-	if (QED_IS_BB_B0(p_hwfn->cdev))
+	/* Resume मुक्त running counter */
+	अगर (QED_IS_BB_B0(p_hwfn->cdev))
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TIMESYNC_GEN_REG_BB, 4);
-	if (QED_IS_AH(p_hwfn->cdev)) {
+	अगर (QED_IS_AH(p_hwfn->cdev)) अणु
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TSGEN_FREECNT_UPDATE_K2, 4);
 		qed_wr(p_hwfn, p_ptt, NIG_REG_PTP_LATCH_OSTS_PKT_TIME, 1);
-	}
+	पूर्ण
 
-	/* Disable drift register */
+	/* Disable drअगरt रेजिस्टर */
 	qed_wr(p_hwfn, p_ptt, NIG_REG_TSGEN_DRIFT_CNTR_CONF, 0x0);
 	qed_wr(p_hwfn, p_ptt, NIG_REG_TSGEN_RST_DRIFT_CNTR, 0x0);
 
-	/* Reset possibly old timestamps */
+	/* Reset possibly old बारtamps */
 	qed_wr(p_hwfn, p_ptt, NIG_REG_LLH_PTP_HOST_BUF_SEQID,
 	       QED_TIMESTAMP_MASK);
 	qed_wr(p_hwfn, p_ptt, NIG_REG_TX_LLH_PTP_BUF_SEQID, QED_TIMESTAMP_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_ptp_hw_disable(struct qed_dev *cdev)
-{
-	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
+अटल पूर्णांक qed_ptp_hw_disable(काष्ठा qed_dev *cdev)
+अणु
+	काष्ठा qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_ptt *p_ptt = p_hwfn->p_ptp_ptt;
 
 	qed_ptp_res_unlock(p_hwfn, p_ptt);
 
@@ -417,17 +418,17 @@ static int qed_ptp_hw_disable(struct qed_dev *cdev)
 	qed_wr(p_hwfn, p_ptt, NIG_REG_TX_PTP_EN, 0x0);
 
 	qed_ptt_release(p_hwfn, p_ptt);
-	p_hwfn->p_ptp_ptt = NULL;
+	p_hwfn->p_ptp_ptt = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct qed_eth_ptp_ops qed_ptp_ops_pass = {
+स्थिर काष्ठा qed_eth_ptp_ops qed_ptp_ops_pass = अणु
 	.cfg_filters = qed_ptp_hw_cfg_filters,
-	.read_rx_ts = qed_ptp_hw_read_rx_ts,
-	.read_tx_ts = qed_ptp_hw_read_tx_ts,
-	.read_cc = qed_ptp_hw_read_cc,
+	.पढ़ो_rx_ts = qed_ptp_hw_पढ़ो_rx_ts,
+	.पढ़ो_tx_ts = qed_ptp_hw_पढ़ो_tx_ts,
+	.पढ़ो_cc = qed_ptp_hw_पढ़ो_cc,
 	.adjfreq = qed_ptp_hw_adjfreq,
 	.disable = qed_ptp_hw_disable,
 	.enable = qed_ptp_hw_enable,
-};
+पूर्ण;

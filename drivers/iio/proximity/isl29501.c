@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * isl29501.c: ISL29501 Time of Flight sensor driver.
  *
@@ -8,109 +9,109 @@
  * 7-bit I2C slave address: 0x57
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/err.h>
-#include <linux/of_device.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
 
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/triggered_buffer.h>
 
-/* Control, setting and status registers */
-#define ISL29501_DEVICE_ID			0x00
-#define ISL29501_ID				0x0A
+/* Control, setting and status रेजिस्टरs */
+#घोषणा ISL29501_DEVICE_ID			0x00
+#घोषणा ISL29501_ID				0x0A
 
-/* Sampling control registers */
-#define ISL29501_INTEGRATION_PERIOD		0x10
-#define ISL29501_SAMPLE_PERIOD			0x11
+/* Sampling control रेजिस्टरs */
+#घोषणा ISL29501_INTEGRATION_PERIOD		0x10
+#घोषणा ISL29501_SAMPLE_PERIOD			0x11
 
-/* Closed loop calibration registers */
-#define ISL29501_CROSSTALK_I_MSB		0x24
-#define ISL29501_CROSSTALK_I_LSB		0x25
-#define ISL29501_CROSSTALK_I_EXPONENT		0x26
-#define ISL29501_CROSSTALK_Q_MSB		0x27
-#define ISL29501_CROSSTALK_Q_LSB		0x28
-#define ISL29501_CROSSTALK_Q_EXPONENT		0x29
-#define ISL29501_CROSSTALK_GAIN_MSB		0x2A
-#define ISL29501_CROSSTALK_GAIN_LSB		0x2B
-#define ISL29501_MAGNITUDE_REF_EXP		0x2C
-#define ISL29501_MAGNITUDE_REF_MSB		0x2D
-#define ISL29501_MAGNITUDE_REF_LSB		0x2E
-#define ISL29501_PHASE_OFFSET_MSB		0x2F
-#define ISL29501_PHASE_OFFSET_LSB		0x30
+/* Closed loop calibration रेजिस्टरs */
+#घोषणा ISL29501_CROSSTALK_I_MSB		0x24
+#घोषणा ISL29501_CROSSTALK_I_LSB		0x25
+#घोषणा ISL29501_CROSSTALK_I_EXPONENT		0x26
+#घोषणा ISL29501_CROSSTALK_Q_MSB		0x27
+#घोषणा ISL29501_CROSSTALK_Q_LSB		0x28
+#घोषणा ISL29501_CROSSTALK_Q_EXPONENT		0x29
+#घोषणा ISL29501_CROSSTALK_GAIN_MSB		0x2A
+#घोषणा ISL29501_CROSSTALK_GAIN_LSB		0x2B
+#घोषणा ISL29501_MAGNITUDE_REF_EXP		0x2C
+#घोषणा ISL29501_MAGNITUDE_REF_MSB		0x2D
+#घोषणा ISL29501_MAGNITUDE_REF_LSB		0x2E
+#घोषणा ISL29501_PHASE_OFFSET_MSB		0x2F
+#घोषणा ISL29501_PHASE_OFFSET_LSB		0x30
 
-/* Analog control registers */
-#define ISL29501_DRIVER_RANGE			0x90
-#define ISL29501_EMITTER_DAC			0x91
+/* Analog control रेजिस्टरs */
+#घोषणा ISL29501_DRIVER_RANGE			0x90
+#घोषणा ISL29501_EMITTER_DAC			0x91
 
-#define ISL29501_COMMAND_REGISTER		0xB0
+#घोषणा ISL29501_COMMAND_REGISTER		0xB0
 
 /* Commands */
-#define ISL29501_EMUL_SAMPLE_START_PIN		0x49
-#define ISL29501_RESET_ALL_REGISTERS		0xD7
-#define ISL29501_RESET_INT_SM			0xD1
+#घोषणा ISL29501_EMUL_SAMPLE_START_PIN		0x49
+#घोषणा ISL29501_RESET_ALL_REGISTERS		0xD7
+#घोषणा ISL29501_RESET_INT_SM			0xD1
 
 /* Ambiant light and temperature corrections */
-#define ISL29501_TEMP_REFERENCE			0x31
-#define ISL29501_PHASE_EXPONENT			0x33
-#define ISL29501_TEMP_COEFF_A			0x34
-#define ISL29501_TEMP_COEFF_B			0x39
-#define ISL29501_AMBIANT_COEFF_A		0x36
-#define ISL29501_AMBIANT_COEFF_B		0x3B
+#घोषणा ISL29501_TEMP_REFERENCE			0x31
+#घोषणा ISL29501_PHASE_EXPONENT			0x33
+#घोषणा ISL29501_TEMP_COEFF_A			0x34
+#घोषणा ISL29501_TEMP_COEFF_B			0x39
+#घोषणा ISL29501_AMBIANT_COEFF_A		0x36
+#घोषणा ISL29501_AMBIANT_COEFF_B		0x3B
 
-/* Data output registers */
-#define ISL29501_DISTANCE_MSB_DATA		0xD1
-#define ISL29501_DISTANCE_LSB_DATA		0xD2
-#define ISL29501_PRECISION_MSB			0xD3
-#define ISL29501_PRECISION_LSB			0xD4
-#define ISL29501_MAGNITUDE_EXPONENT		0xD5
-#define ISL29501_MAGNITUDE_MSB			0xD6
-#define ISL29501_MAGNITUDE_LSB			0xD7
-#define ISL29501_PHASE_MSB			0xD8
-#define ISL29501_PHASE_LSB			0xD9
-#define ISL29501_I_RAW_EXPONENT			0xDA
-#define ISL29501_I_RAW_MSB			0xDB
-#define ISL29501_I_RAW_LSB			0xDC
-#define ISL29501_Q_RAW_EXPONENT			0xDD
-#define ISL29501_Q_RAW_MSB			0xDE
-#define ISL29501_Q_RAW_LSB			0xDF
-#define ISL29501_DIE_TEMPERATURE		0xE2
-#define ISL29501_AMBIENT_LIGHT			0xE3
-#define ISL29501_GAIN_MSB			0xE6
-#define ISL29501_GAIN_LSB			0xE7
+/* Data output रेजिस्टरs */
+#घोषणा ISL29501_DISTANCE_MSB_DATA		0xD1
+#घोषणा ISL29501_DISTANCE_LSB_DATA		0xD2
+#घोषणा ISL29501_PRECISION_MSB			0xD3
+#घोषणा ISL29501_PRECISION_LSB			0xD4
+#घोषणा ISL29501_MAGNITUDE_EXPONENT		0xD5
+#घोषणा ISL29501_MAGNITUDE_MSB			0xD6
+#घोषणा ISL29501_MAGNITUDE_LSB			0xD7
+#घोषणा ISL29501_PHASE_MSB			0xD8
+#घोषणा ISL29501_PHASE_LSB			0xD9
+#घोषणा ISL29501_I_RAW_EXPONENT			0xDA
+#घोषणा ISL29501_I_RAW_MSB			0xDB
+#घोषणा ISL29501_I_RAW_LSB			0xDC
+#घोषणा ISL29501_Q_RAW_EXPONENT			0xDD
+#घोषणा ISL29501_Q_RAW_MSB			0xDE
+#घोषणा ISL29501_Q_RAW_LSB			0xDF
+#घोषणा ISL29501_DIE_TEMPERATURE		0xE2
+#घोषणा ISL29501_AMBIENT_LIGHT			0xE3
+#घोषणा ISL29501_GAIN_MSB			0xE6
+#घोषणा ISL29501_GAIN_LSB			0xE7
 
-#define ISL29501_MAX_EXP_VAL 15
+#घोषणा ISL29501_MAX_EXP_VAL 15
 
-#define ISL29501_INT_TIME_AVAILABLE \
+#घोषणा ISL29501_INT_TIME_AVAILABLE \
 	"0.00007 0.00014 0.00028 0.00057 0.00114 " \
 	"0.00228 0.00455 0.00910 0.01820 0.03640 " \
 	"0.07281 0.14561"
 
-#define ISL29501_CURRENT_SCALE_AVAILABLE \
+#घोषणा ISL29501_CURRENT_SCALE_AVAILABLE \
 	"0.0039 0.0078 0.0118 0.0157 0.0196 " \
 	"0.0235 0.0275 0.0314 0.0352 0.0392 " \
 	"0.0431 0.0471 0.0510 0.0549 0.0588"
 
-enum isl29501_correction_coeff {
+क्रमागत isl29501_correction_coeff अणु
 	COEFF_TEMP_A,
 	COEFF_TEMP_B,
 	COEFF_LIGHT_A,
 	COEFF_LIGHT_B,
 	COEFF_MAX,
-};
+पूर्ण;
 
-struct isl29501_private {
-	struct i2c_client *client;
-	struct mutex lock;
+काष्ठा isl29501_निजी अणु
+	काष्ठा i2c_client *client;
+	काष्ठा mutex lock;
 	/* Exact representation of correction coefficients. */
-	unsigned int shadow_coeffs[COEFF_MAX];
-};
+	अचिन्हित पूर्णांक shaकरोw_coeffs[COEFF_MAX];
+पूर्ण;
 
-enum isl29501_register_name {
+क्रमागत isl29501_रेजिस्टर_name अणु
 	REG_DISTANCE,
 	REG_PHASE,
 	REG_TEMPERATURE,
@@ -128,303 +129,303 @@ enum isl29501_register_name {
 	REG_SAMPLE_TIME,
 	REG_DRIVER_RANGE,
 	REG_EMITTER_DAC,
-};
+पूर्ण;
 
-struct isl29501_register_desc {
+काष्ठा isl29501_रेजिस्टर_desc अणु
 	u8 msb;
 	u8 lsb;
-};
+पूर्ण;
 
-static const struct isl29501_register_desc isl29501_registers[] = {
-	[REG_DISTANCE] = {
+अटल स्थिर काष्ठा isl29501_रेजिस्टर_desc isl29501_रेजिस्टरs[] = अणु
+	[REG_DISTANCE] = अणु
 		.msb = ISL29501_DISTANCE_MSB_DATA,
 		.lsb = ISL29501_DISTANCE_LSB_DATA,
-	},
-	[REG_PHASE] = {
+	पूर्ण,
+	[REG_PHASE] = अणु
 		.msb = ISL29501_PHASE_MSB,
 		.lsb = ISL29501_PHASE_LSB,
-	},
-	[REG_TEMPERATURE] = {
+	पूर्ण,
+	[REG_TEMPERATURE] = अणु
 		.lsb = ISL29501_DIE_TEMPERATURE,
-	},
-	[REG_AMBIENT_LIGHT] = {
+	पूर्ण,
+	[REG_AMBIENT_LIGHT] = अणु
 		.lsb = ISL29501_AMBIENT_LIGHT,
-	},
-	[REG_GAIN] = {
+	पूर्ण,
+	[REG_GAIN] = अणु
 		.msb = ISL29501_GAIN_MSB,
 		.lsb = ISL29501_GAIN_LSB,
-	},
-	[REG_GAIN_BIAS] = {
+	पूर्ण,
+	[REG_GAIN_BIAS] = अणु
 		.msb = ISL29501_CROSSTALK_GAIN_MSB,
 		.lsb = ISL29501_CROSSTALK_GAIN_LSB,
-	},
-	[REG_PHASE_EXP] = {
+	पूर्ण,
+	[REG_PHASE_EXP] = अणु
 		.lsb = ISL29501_PHASE_EXPONENT,
-	},
-	[REG_CALIB_PHASE_TEMP_A] = {
+	पूर्ण,
+	[REG_CALIB_PHASE_TEMP_A] = अणु
 		.lsb = ISL29501_TEMP_COEFF_A,
-	},
-	[REG_CALIB_PHASE_TEMP_B] = {
+	पूर्ण,
+	[REG_CALIB_PHASE_TEMP_B] = अणु
 		.lsb = ISL29501_TEMP_COEFF_B,
-	},
-	[REG_CALIB_PHASE_LIGHT_A] = {
+	पूर्ण,
+	[REG_CALIB_PHASE_LIGHT_A] = अणु
 		.lsb = ISL29501_AMBIANT_COEFF_A,
-	},
-	[REG_CALIB_PHASE_LIGHT_B] = {
+	पूर्ण,
+	[REG_CALIB_PHASE_LIGHT_B] = अणु
 		.lsb = ISL29501_AMBIANT_COEFF_B,
-	},
-	[REG_DISTANCE_BIAS] = {
+	पूर्ण,
+	[REG_DISTANCE_BIAS] = अणु
 		.msb = ISL29501_PHASE_OFFSET_MSB,
 		.lsb = ISL29501_PHASE_OFFSET_LSB,
-	},
-	[REG_TEMPERATURE_BIAS] = {
+	पूर्ण,
+	[REG_TEMPERATURE_BIAS] = अणु
 		.lsb = ISL29501_TEMP_REFERENCE,
-	},
-	[REG_INT_TIME] = {
+	पूर्ण,
+	[REG_INT_TIME] = अणु
 		.lsb = ISL29501_INTEGRATION_PERIOD,
-	},
-	[REG_SAMPLE_TIME] = {
+	पूर्ण,
+	[REG_SAMPLE_TIME] = अणु
 		.lsb = ISL29501_SAMPLE_PERIOD,
-	},
-	[REG_DRIVER_RANGE] = {
+	पूर्ण,
+	[REG_DRIVER_RANGE] = अणु
 		.lsb = ISL29501_DRIVER_RANGE,
-	},
-	[REG_EMITTER_DAC] = {
+	पूर्ण,
+	[REG_EMITTER_DAC] = अणु
 		.lsb = ISL29501_EMITTER_DAC,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int isl29501_register_read(struct isl29501_private *isl29501,
-				  enum isl29501_register_name name,
+अटल पूर्णांक isl29501_रेजिस्टर_पढ़ो(काष्ठा isl29501_निजी *isl29501,
+				  क्रमागत isl29501_रेजिस्टर_name name,
 				  u32 *val)
-{
-	const struct isl29501_register_desc *reg = &isl29501_registers[name];
+अणु
+	स्थिर काष्ठा isl29501_रेजिस्टर_desc *reg = &isl29501_रेजिस्टरs[name];
 	u8 msb = 0, lsb = 0;
 	s32 ret;
 
 	mutex_lock(&isl29501->lock);
-	if (reg->msb) {
-		ret = i2c_smbus_read_byte_data(isl29501->client, reg->msb);
-		if (ret < 0)
-			goto err;
+	अगर (reg->msb) अणु
+		ret = i2c_smbus_पढ़ो_byte_data(isl29501->client, reg->msb);
+		अगर (ret < 0)
+			जाओ err;
 		msb = ret;
-	}
+	पूर्ण
 
-	if (reg->lsb) {
-		ret = i2c_smbus_read_byte_data(isl29501->client, reg->lsb);
-		if (ret < 0)
-			goto err;
+	अगर (reg->lsb) अणु
+		ret = i2c_smbus_पढ़ो_byte_data(isl29501->client, reg->lsb);
+		अगर (ret < 0)
+			जाओ err;
 		lsb = ret;
-	}
+	पूर्ण
 	mutex_unlock(&isl29501->lock);
 
 	*val = (msb << 8) + lsb;
 
-	return 0;
+	वापस 0;
 err:
 	mutex_unlock(&isl29501->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 isl29501_register_write(struct isl29501_private *isl29501,
-				   enum isl29501_register_name name,
+अटल u32 isl29501_रेजिस्टर_ग_लिखो(काष्ठा isl29501_निजी *isl29501,
+				   क्रमागत isl29501_रेजिस्टर_name name,
 				   u32 value)
-{
-	const struct isl29501_register_desc *reg = &isl29501_registers[name];
-	int ret;
+अणु
+	स्थिर काष्ठा isl29501_रेजिस्टर_desc *reg = &isl29501_रेजिस्टरs[name];
+	पूर्णांक ret;
 
-	if (!reg->msb && value > U8_MAX)
-		return -ERANGE;
+	अगर (!reg->msb && value > U8_MAX)
+		वापस -दुस्फल;
 
-	if (value > U16_MAX)
-		return -ERANGE;
+	अगर (value > U16_MAX)
+		वापस -दुस्फल;
 
 	mutex_lock(&isl29501->lock);
-	if (reg->msb) {
-		ret = i2c_smbus_write_byte_data(isl29501->client,
+	अगर (reg->msb) अणु
+		ret = i2c_smbus_ग_लिखो_byte_data(isl29501->client,
 						reg->msb, value >> 8);
-		if (ret < 0)
-			goto err;
-	}
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
 
-	ret = i2c_smbus_write_byte_data(isl29501->client, reg->lsb, value);
+	ret = i2c_smbus_ग_लिखो_byte_data(isl29501->client, reg->lsb, value);
 
 err:
 	mutex_unlock(&isl29501->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t isl29501_read_ext(struct iio_dev *indio_dev,
-				 uintptr_t private,
-				 const struct iio_chan_spec *chan,
-				 char *buf)
-{
-	struct isl29501_private *isl29501 = iio_priv(indio_dev);
-	enum isl29501_register_name reg = private;
-	int ret;
+अटल sमाप_प्रकार isl29501_पढ़ो_ext(काष्ठा iio_dev *indio_dev,
+				 uपूर्णांकptr_t निजी,
+				 स्थिर काष्ठा iio_chan_spec *chan,
+				 अक्षर *buf)
+अणु
+	काष्ठा isl29501_निजी *isl29501 = iio_priv(indio_dev);
+	क्रमागत isl29501_रेजिस्टर_name reg = निजी;
+	पूर्णांक ret;
 	u32 value, gain, coeff, exp;
 
-	switch (reg) {
-	case REG_GAIN:
-	case REG_GAIN_BIAS:
-		ret = isl29501_register_read(isl29501, reg, &gain);
-		if (ret < 0)
-			return ret;
+	चयन (reg) अणु
+	हाल REG_GAIN:
+	हाल REG_GAIN_BIAS:
+		ret = isl29501_रेजिस्टर_पढ़ो(isl29501, reg, &gain);
+		अगर (ret < 0)
+			वापस ret;
 
 		value = gain;
-		break;
-	case REG_CALIB_PHASE_TEMP_A:
-	case REG_CALIB_PHASE_TEMP_B:
-	case REG_CALIB_PHASE_LIGHT_A:
-	case REG_CALIB_PHASE_LIGHT_B:
-		ret = isl29501_register_read(isl29501, REG_PHASE_EXP, &exp);
-		if (ret < 0)
-			return ret;
+		अवरोध;
+	हाल REG_CALIB_PHASE_TEMP_A:
+	हाल REG_CALIB_PHASE_TEMP_B:
+	हाल REG_CALIB_PHASE_LIGHT_A:
+	हाल REG_CALIB_PHASE_LIGHT_B:
+		ret = isl29501_रेजिस्टर_पढ़ो(isl29501, REG_PHASE_EXP, &exp);
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = isl29501_register_read(isl29501, reg, &coeff);
-		if (ret < 0)
-			return ret;
+		ret = isl29501_रेजिस्टर_पढ़ो(isl29501, reg, &coeff);
+		अगर (ret < 0)
+			वापस ret;
 
 		value = coeff << exp;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return sprintf(buf, "%u\n", value);
-}
+	वापस प्र_लिखो(buf, "%u\n", value);
+पूर्ण
 
-static int isl29501_set_shadow_coeff(struct isl29501_private *isl29501,
-				     enum isl29501_register_name reg,
-				     unsigned int val)
-{
-	enum isl29501_correction_coeff coeff;
+अटल पूर्णांक isl29501_set_shaकरोw_coeff(काष्ठा isl29501_निजी *isl29501,
+				     क्रमागत isl29501_रेजिस्टर_name reg,
+				     अचिन्हित पूर्णांक val)
+अणु
+	क्रमागत isl29501_correction_coeff coeff;
 
-	switch (reg) {
-	case REG_CALIB_PHASE_TEMP_A:
+	चयन (reg) अणु
+	हाल REG_CALIB_PHASE_TEMP_A:
 		coeff = COEFF_TEMP_A;
-		break;
-	case REG_CALIB_PHASE_TEMP_B:
+		अवरोध;
+	हाल REG_CALIB_PHASE_TEMP_B:
 		coeff = COEFF_TEMP_B;
-		break;
-	case REG_CALIB_PHASE_LIGHT_A:
+		अवरोध;
+	हाल REG_CALIB_PHASE_LIGHT_A:
 		coeff = COEFF_LIGHT_A;
-		break;
-	case REG_CALIB_PHASE_LIGHT_B:
+		अवरोध;
+	हाल REG_CALIB_PHASE_LIGHT_B:
 		coeff = COEFF_LIGHT_B;
-		break;
-	default:
-		return -EINVAL;
-	}
-	isl29501->shadow_coeffs[coeff] = val;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	isl29501->shaकरोw_coeffs[coeff] = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isl29501_write_coeff(struct isl29501_private *isl29501,
-				enum isl29501_correction_coeff coeff,
-				int val)
-{
-	enum isl29501_register_name reg;
+अटल पूर्णांक isl29501_ग_लिखो_coeff(काष्ठा isl29501_निजी *isl29501,
+				क्रमागत isl29501_correction_coeff coeff,
+				पूर्णांक val)
+अणु
+	क्रमागत isl29501_रेजिस्टर_name reg;
 
-	switch (coeff) {
-	case COEFF_TEMP_A:
+	चयन (coeff) अणु
+	हाल COEFF_TEMP_A:
 		reg = REG_CALIB_PHASE_TEMP_A;
-		break;
-	case COEFF_TEMP_B:
+		अवरोध;
+	हाल COEFF_TEMP_B:
 		reg = REG_CALIB_PHASE_TEMP_B;
-		break;
-	case COEFF_LIGHT_A:
+		अवरोध;
+	हाल COEFF_LIGHT_A:
 		reg = REG_CALIB_PHASE_LIGHT_A;
-		break;
-	case COEFF_LIGHT_B:
+		अवरोध;
+	हाल COEFF_LIGHT_B:
 		reg = REG_CALIB_PHASE_LIGHT_B;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return isl29501_register_write(isl29501, reg, val);
-}
+	वापस isl29501_रेजिस्टर_ग_लिखो(isl29501, reg, val);
+पूर्ण
 
-static unsigned int isl29501_find_corr_exp(unsigned int val,
-					   unsigned int max_exp,
-					   unsigned int max_mantissa)
-{
-	unsigned int exp = 1;
+अटल अचिन्हित पूर्णांक isl29501_find_corr_exp(अचिन्हित पूर्णांक val,
+					   अचिन्हित पूर्णांक max_exp,
+					   अचिन्हित पूर्णांक max_mantissa)
+अणु
+	अचिन्हित पूर्णांक exp = 1;
 
 	/*
 	 * Correction coefficients are represented under
-	 * mantissa * 2^exponent form, where mantissa and exponent
-	 * are stored in two separate registers of the sensor.
+	 * mantissa * 2^exponent क्रमm, where mantissa and exponent
+	 * are stored in two separate रेजिस्टरs of the sensor.
 	 *
-	 * Compute and return the lowest exponent such as:
+	 * Compute and वापस the lowest exponent such as:
 	 *	     mantissa = value / 2^exponent
 	 *
 	 *  where mantissa < max_mantissa.
 	 */
-	if (val <= max_mantissa)
-		return 0;
+	अगर (val <= max_mantissa)
+		वापस 0;
 
-	while ((val >> exp) > max_mantissa) {
+	जबतक ((val >> exp) > max_mantissa) अणु
 		exp++;
 
-		if (exp > max_exp)
-			return max_exp;
-	}
+		अगर (exp > max_exp)
+			वापस max_exp;
+	पूर्ण
 
-	return exp;
-}
+	वापस exp;
+पूर्ण
 
-static ssize_t isl29501_write_ext(struct iio_dev *indio_dev,
-				  uintptr_t private,
-				  const struct iio_chan_spec *chan,
-				  const char *buf, size_t len)
-{
-	struct isl29501_private *isl29501 = iio_priv(indio_dev);
-	enum isl29501_register_name reg = private;
-	unsigned int val;
-	int max_exp = 0;
-	int ret;
-	int i;
+अटल sमाप_प्रकार isl29501_ग_लिखो_ext(काष्ठा iio_dev *indio_dev,
+				  uपूर्णांकptr_t निजी,
+				  स्थिर काष्ठा iio_chan_spec *chan,
+				  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा isl29501_निजी *isl29501 = iio_priv(indio_dev);
+	क्रमागत isl29501_रेजिस्टर_name reg = निजी;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक max_exp = 0;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	ret = kstrtouint(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kstrtouपूर्णांक(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
-	switch (reg) {
-	case REG_GAIN_BIAS:
-		if (val > U16_MAX)
-			return -ERANGE;
+	चयन (reg) अणु
+	हाल REG_GAIN_BIAS:
+		अगर (val > U16_MAX)
+			वापस -दुस्फल;
 
-		ret = isl29501_register_write(isl29501, reg, val);
-		if (ret < 0)
-			return ret;
+		ret = isl29501_रेजिस्टर_ग_लिखो(isl29501, reg, val);
+		अगर (ret < 0)
+			वापस ret;
 
-		break;
-	case REG_CALIB_PHASE_TEMP_A:
-	case REG_CALIB_PHASE_TEMP_B:
-	case REG_CALIB_PHASE_LIGHT_A:
-	case REG_CALIB_PHASE_LIGHT_B:
+		अवरोध;
+	हाल REG_CALIB_PHASE_TEMP_A:
+	हाल REG_CALIB_PHASE_TEMP_B:
+	हाल REG_CALIB_PHASE_LIGHT_A:
+	हाल REG_CALIB_PHASE_LIGHT_B:
 
-		if (val > (U8_MAX << ISL29501_MAX_EXP_VAL))
-			return -ERANGE;
+		अगर (val > (U8_MAX << ISL29501_MAX_EXP_VAL))
+			वापस -दुस्फल;
 
-		/* Store the correction coefficient under its exact form. */
-		ret = isl29501_set_shadow_coeff(isl29501, reg, val);
-		if (ret < 0)
-			return ret;
+		/* Store the correction coefficient under its exact क्रमm. */
+		ret = isl29501_set_shaकरोw_coeff(isl29501, reg, val);
+		अगर (ret < 0)
+			वापस ret;
 
 		/*
 		 * Find the highest exponent needed to represent
 		 * correction coefficients.
 		 */
-		for (i = 0; i < COEFF_MAX; i++) {
-			int corr;
-			int corr_exp;
+		क्रम (i = 0; i < COEFF_MAX; i++) अणु
+			पूर्णांक corr;
+			पूर्णांक corr_exp;
 
-			corr = isl29501->shadow_coeffs[i];
+			corr = isl29501->shaकरोw_coeffs[i];
 			corr_exp = isl29501_find_corr_exp(corr,
 							  ISL29501_MAX_EXP_VAL,
 							  U8_MAX / 2);
@@ -432,533 +433,533 @@ static ssize_t isl29501_write_ext(struct iio_dev *indio_dev,
 				"found exp of corr(%d) = %d\n", corr, corr_exp);
 
 			max_exp = max(max_exp, corr_exp);
-		}
+		पूर्ण
 
 		/*
 		 * Represent every correction coefficient under
-		 * mantissa * 2^max_exponent form and force the
+		 * mantissa * 2^max_exponent क्रमm and क्रमce the
 		 * writing of those coefficients on the sensor.
 		 */
-		for (i = 0; i < COEFF_MAX; i++) {
-			int corr;
-			int mantissa;
+		क्रम (i = 0; i < COEFF_MAX; i++) अणु
+			पूर्णांक corr;
+			पूर्णांक mantissa;
 
-			corr = isl29501->shadow_coeffs[i];
-			if (!corr)
-				continue;
+			corr = isl29501->shaकरोw_coeffs[i];
+			अगर (!corr)
+				जारी;
 
 			mantissa = corr >> max_exp;
 
-			ret = isl29501_write_coeff(isl29501, i, mantissa);
-			if (ret < 0)
-				return ret;
-		}
+			ret = isl29501_ग_लिखो_coeff(isl29501, i, mantissa);
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
 
-		ret = isl29501_register_write(isl29501, REG_PHASE_EXP, max_exp);
-		if (ret < 0)
-			return ret;
+		ret = isl29501_रेजिस्टर_ग_लिखो(isl29501, REG_PHASE_EXP, max_exp);
+		अगर (ret < 0)
+			वापस ret;
 
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-#define _ISL29501_EXT_INFO(_name, _ident) { \
+#घोषणा _ISL29501_EXT_INFO(_name, _ident) अणु \
 	.name = _name, \
-	.read = isl29501_read_ext, \
-	.write = isl29501_write_ext, \
-	.private = _ident, \
+	.पढ़ो = isl29501_पढ़ो_ext, \
+	.ग_लिखो = isl29501_ग_लिखो_ext, \
+	.निजी = _ident, \
 	.shared = IIO_SEPARATE, \
-}
+पूर्ण
 
-static const struct iio_chan_spec_ext_info isl29501_ext_info[] = {
+अटल स्थिर काष्ठा iio_chan_spec_ext_info isl29501_ext_info[] = अणु
 	_ISL29501_EXT_INFO("agc_gain", REG_GAIN),
 	_ISL29501_EXT_INFO("agc_gain_bias", REG_GAIN_BIAS),
 	_ISL29501_EXT_INFO("calib_phase_temp_a", REG_CALIB_PHASE_TEMP_A),
 	_ISL29501_EXT_INFO("calib_phase_temp_b", REG_CALIB_PHASE_TEMP_B),
 	_ISL29501_EXT_INFO("calib_phase_light_a", REG_CALIB_PHASE_LIGHT_A),
 	_ISL29501_EXT_INFO("calib_phase_light_b", REG_CALIB_PHASE_LIGHT_B),
-	{ },
-};
+	अणु पूर्ण,
+पूर्ण;
 
-#define ISL29501_DISTANCE_SCAN_INDEX 0
-#define ISL29501_TIMESTAMP_SCAN_INDEX 1
+#घोषणा ISL29501_DISTANCE_SCAN_INDEX 0
+#घोषणा ISL29501_TIMESTAMP_SCAN_INDEX 1
 
-static const struct iio_chan_spec isl29501_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec isl29501_channels[] = अणु
+	अणु
 		.type = IIO_PROXIMITY,
 		.scan_index = ISL29501_DISTANCE_SCAN_INDEX,
 		.info_mask_separate =
 			BIT(IIO_CHAN_INFO_RAW)   |
 			BIT(IIO_CHAN_INFO_SCALE) |
 			BIT(IIO_CHAN_INFO_CALIBBIAS),
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 'u',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_CPU,
-		},
+		पूर्ण,
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_INT_TIME) |
 				BIT(IIO_CHAN_INFO_SAMP_FREQ),
 		.ext_info = isl29501_ext_info,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_PHASE,
 		.scan_index = -1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				BIT(IIO_CHAN_INFO_SCALE),
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_CURRENT,
 		.scan_index = -1,
 		.output = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				BIT(IIO_CHAN_INFO_SCALE),
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_TEMP,
 		.scan_index = -1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				BIT(IIO_CHAN_INFO_SCALE)     |
 				BIT(IIO_CHAN_INFO_CALIBBIAS),
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_INTENSITY,
 		.scan_index = -1,
-		.modified = 1,
+		.modअगरied = 1,
 		.channel2 = IIO_MOD_LIGHT_CLEAR,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				BIT(IIO_CHAN_INFO_SCALE),
-	},
+	पूर्ण,
 	IIO_CHAN_SOFT_TIMESTAMP(ISL29501_TIMESTAMP_SCAN_INDEX),
-};
+पूर्ण;
 
-static int isl29501_reset_registers(struct isl29501_private *isl29501)
-{
-	int ret;
+अटल पूर्णांक isl29501_reset_रेजिस्टरs(काष्ठा isl29501_निजी *isl29501)
+अणु
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(isl29501->client,
+	ret = i2c_smbus_ग_लिखो_byte_data(isl29501->client,
 					ISL29501_COMMAND_REGISTER,
 					ISL29501_RESET_ALL_REGISTERS);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&isl29501->client->dev,
 			"cannot reset registers %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = i2c_smbus_write_byte_data(isl29501->client,
+	ret = i2c_smbus_ग_लिखो_byte_data(isl29501->client,
 					ISL29501_COMMAND_REGISTER,
 					ISL29501_RESET_INT_SM);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&isl29501->client->dev,
 			"cannot reset state machine %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int isl29501_begin_acquisition(struct isl29501_private *isl29501)
-{
-	int ret;
+अटल पूर्णांक isl29501_begin_acquisition(काष्ठा isl29501_निजी *isl29501)
+अणु
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(isl29501->client,
+	ret = i2c_smbus_ग_लिखो_byte_data(isl29501->client,
 					ISL29501_COMMAND_REGISTER,
 					ISL29501_EMUL_SAMPLE_START_PIN);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&isl29501->client->dev,
 			"cannot begin acquisition %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static IIO_CONST_ATTR_INT_TIME_AVAIL(ISL29501_INT_TIME_AVAILABLE);
-static IIO_CONST_ATTR(out_current_scale_available,
+अटल IIO_CONST_ATTR_INT_TIME_AVAIL(ISL29501_INT_TIME_AVAILABLE);
+अटल IIO_CONST_ATTR(out_current_scale_available,
 		      ISL29501_CURRENT_SCALE_AVAILABLE);
 
-static struct attribute *isl29501_attributes[] = {
-	&iio_const_attr_integration_time_available.dev_attr.attr,
-	&iio_const_attr_out_current_scale_available.dev_attr.attr,
-	NULL
-};
+अटल काष्ठा attribute *isl29501_attributes[] = अणु
+	&iio_स्थिर_attr_पूर्णांकegration_समय_available.dev_attr.attr,
+	&iio_स्थिर_attr_out_current_scale_available.dev_attr.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group isl29501_attribute_group = {
+अटल स्थिर काष्ठा attribute_group isl29501_attribute_group = अणु
 	.attrs = isl29501_attributes,
-};
+पूर्ण;
 
-static const int isl29501_current_scale_table[][2] = {
-	{0, 3900}, {0, 7800}, {0, 11800}, {0, 15700},
-	{0, 19600}, {0, 23500}, {0, 27500}, {0, 31400},
-	{0, 35200}, {0, 39200}, {0, 43100}, {0, 47100},
-	{0, 51000}, {0, 54900}, {0, 58800},
-};
+अटल स्थिर पूर्णांक isl29501_current_scale_table[][2] = अणु
+	अणु0, 3900पूर्ण, अणु0, 7800पूर्ण, अणु0, 11800पूर्ण, अणु0, 15700पूर्ण,
+	अणु0, 19600पूर्ण, अणु0, 23500पूर्ण, अणु0, 27500पूर्ण, अणु0, 31400पूर्ण,
+	अणु0, 35200पूर्ण, अणु0, 39200पूर्ण, अणु0, 43100पूर्ण, अणु0, 47100पूर्ण,
+	अणु0, 51000पूर्ण, अणु0, 54900पूर्ण, अणु0, 58800पूर्ण,
+पूर्ण;
 
-static const int isl29501_int_time[][2] = {
-	{0, 70},    /* 0.07 ms */
-	{0, 140},   /* 0.14 ms */
-	{0, 280},   /* 0.28 ms */
-	{0, 570},   /* 0.57 ms */
-	{0, 1140},  /* 1.14 ms */
-	{0, 2280},  /* 2.28 ms */
-	{0, 4550},  /* 4.55 ms */
-	{0, 9100},  /* 9.11 ms */
-	{0, 18200}, /* 18.2 ms */
-	{0, 36400}, /* 36.4 ms */
-	{0, 72810}, /* 72.81 ms */
-	{0, 145610} /* 145.28 ms */
-};
+अटल स्थिर पूर्णांक isl29501_पूर्णांक_समय[][2] = अणु
+	अणु0, 70पूर्ण,    /* 0.07 ms */
+	अणु0, 140पूर्ण,   /* 0.14 ms */
+	अणु0, 280पूर्ण,   /* 0.28 ms */
+	अणु0, 570पूर्ण,   /* 0.57 ms */
+	अणु0, 1140पूर्ण,  /* 1.14 ms */
+	अणु0, 2280पूर्ण,  /* 2.28 ms */
+	अणु0, 4550पूर्ण,  /* 4.55 ms */
+	अणु0, 9100पूर्ण,  /* 9.11 ms */
+	अणु0, 18200पूर्ण, /* 18.2 ms */
+	अणु0, 36400पूर्ण, /* 36.4 ms */
+	अणु0, 72810पूर्ण, /* 72.81 ms */
+	अणु0, 145610पूर्ण /* 145.28 ms */
+पूर्ण;
 
-static int isl29501_get_raw(struct isl29501_private *isl29501,
-			    const struct iio_chan_spec *chan,
-			    int *raw)
-{
-	int ret;
+अटल पूर्णांक isl29501_get_raw(काष्ठा isl29501_निजी *isl29501,
+			    स्थिर काष्ठा iio_chan_spec *chan,
+			    पूर्णांक *raw)
+अणु
+	पूर्णांक ret;
 
-	switch (chan->type) {
-	case IIO_PROXIMITY:
-		ret = isl29501_register_read(isl29501, REG_DISTANCE, raw);
-		if (ret < 0)
-			return ret;
+	चयन (chan->type) अणु
+	हाल IIO_PROXIMITY:
+		ret = isl29501_रेजिस्टर_पढ़ो(isl29501, REG_DISTANCE, raw);
+		अगर (ret < 0)
+			वापस ret;
 
-		return IIO_VAL_INT;
-	case IIO_INTENSITY:
-		ret = isl29501_register_read(isl29501,
+		वापस IIO_VAL_INT;
+	हाल IIO_INTENSITY:
+		ret = isl29501_रेजिस्टर_पढ़ो(isl29501,
 					     REG_AMBIENT_LIGHT,
 					     raw);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		return IIO_VAL_INT;
-	case IIO_PHASE:
-		ret = isl29501_register_read(isl29501, REG_PHASE, raw);
-		if (ret < 0)
-			return ret;
+		वापस IIO_VAL_INT;
+	हाल IIO_PHASE:
+		ret = isl29501_रेजिस्टर_पढ़ो(isl29501, REG_PHASE, raw);
+		अगर (ret < 0)
+			वापस ret;
 
-		return IIO_VAL_INT;
-	case IIO_CURRENT:
-		ret = isl29501_register_read(isl29501, REG_EMITTER_DAC, raw);
-		if (ret < 0)
-			return ret;
+		वापस IIO_VAL_INT;
+	हाल IIO_CURRENT:
+		ret = isl29501_रेजिस्टर_पढ़ो(isl29501, REG_EMITTER_DAC, raw);
+		अगर (ret < 0)
+			वापस ret;
 
-		return IIO_VAL_INT;
-	case IIO_TEMP:
-		ret = isl29501_register_read(isl29501, REG_TEMPERATURE, raw);
-		if (ret < 0)
-			return ret;
+		वापस IIO_VAL_INT;
+	हाल IIO_TEMP:
+		ret = isl29501_रेजिस्टर_पढ़ो(isl29501, REG_TEMPERATURE, raw);
+		अगर (ret < 0)
+			वापस ret;
 
-		return IIO_VAL_INT;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_INT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int isl29501_get_scale(struct isl29501_private *isl29501,
-			      const struct iio_chan_spec *chan,
-			      int *val, int *val2)
-{
-	int ret;
+अटल पूर्णांक isl29501_get_scale(काष्ठा isl29501_निजी *isl29501,
+			      स्थिर काष्ठा iio_chan_spec *chan,
+			      पूर्णांक *val, पूर्णांक *val2)
+अणु
+	पूर्णांक ret;
 	u32 current_scale;
 
-	switch (chan->type) {
-	case IIO_PROXIMITY:
+	चयन (chan->type) अणु
+	हाल IIO_PROXIMITY:
 		/* distance = raw_distance * 33.31 / 65536 (m) */
 		*val = 3331;
 		*val2 = 6553600;
 
-		return IIO_VAL_FRACTIONAL;
-	case IIO_PHASE:
+		वापस IIO_VAL_FRACTIONAL;
+	हाल IIO_PHASE:
 		/* phase = raw_phase * 2pi / 65536 (rad) */
 		*val = 0;
 		*val2 = 95874;
 
-		return IIO_VAL_INT_PLUS_NANO;
-	case IIO_INTENSITY:
+		वापस IIO_VAL_INT_PLUS_न_अंकO;
+	हाल IIO_INTENSITY:
 		/* light = raw_light * 35 / 10000 (mA) */
 		*val = 35;
 		*val2 = 10000;
 
-		return IIO_VAL_FRACTIONAL;
-	case IIO_CURRENT:
-		ret = isl29501_register_read(isl29501,
+		वापस IIO_VAL_FRACTIONAL;
+	हाल IIO_CURRENT:
+		ret = isl29501_रेजिस्टर_पढ़ो(isl29501,
 					     REG_DRIVER_RANGE,
 					     &current_scale);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		if (current_scale > ARRAY_SIZE(isl29501_current_scale_table))
-			return -EINVAL;
+		अगर (current_scale > ARRAY_SIZE(isl29501_current_scale_table))
+			वापस -EINVAL;
 
-		if (!current_scale) {
+		अगर (!current_scale) अणु
 			*val = 0;
 			*val2 = 0;
-			return IIO_VAL_INT;
-		}
+			वापस IIO_VAL_INT;
+		पूर्ण
 
 		*val = isl29501_current_scale_table[current_scale - 1][0];
 		*val2 = isl29501_current_scale_table[current_scale - 1][1];
 
-		return IIO_VAL_INT_PLUS_MICRO;
-	case IIO_TEMP:
-		/* temperature = raw_temperature * 125 / 100000 (milli °C) */
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	हाल IIO_TEMP:
+		/* temperature = raw_temperature * 125 / 100000 (milli तओC) */
 		*val = 125;
 		*val2 = 100000;
 
-		return IIO_VAL_FRACTIONAL;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_FRACTIONAL;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int isl29501_get_calibbias(struct isl29501_private *isl29501,
-				  const struct iio_chan_spec *chan,
-				  int *bias)
-{
-	switch (chan->type) {
-	case IIO_PROXIMITY:
-		return isl29501_register_read(isl29501,
+अटल पूर्णांक isl29501_get_calibbias(काष्ठा isl29501_निजी *isl29501,
+				  स्थिर काष्ठा iio_chan_spec *chan,
+				  पूर्णांक *bias)
+अणु
+	चयन (chan->type) अणु
+	हाल IIO_PROXIMITY:
+		वापस isl29501_रेजिस्टर_पढ़ो(isl29501,
 					      REG_DISTANCE_BIAS,
 					      bias);
-	case IIO_TEMP:
-		return isl29501_register_read(isl29501,
+	हाल IIO_TEMP:
+		वापस isl29501_रेजिस्टर_पढ़ो(isl29501,
 					      REG_TEMPERATURE_BIAS,
 					      bias);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int isl29501_get_inttime(struct isl29501_private *isl29501,
-				int *val, int *val2)
-{
-	int ret;
-	u32 inttime;
+अटल पूर्णांक isl29501_get_पूर्णांकसमय(काष्ठा isl29501_निजी *isl29501,
+				पूर्णांक *val, पूर्णांक *val2)
+अणु
+	पूर्णांक ret;
+	u32 पूर्णांकसमय;
 
-	ret = isl29501_register_read(isl29501, REG_INT_TIME, &inttime);
-	if (ret < 0)
-		return ret;
+	ret = isl29501_रेजिस्टर_पढ़ो(isl29501, REG_INT_TIME, &पूर्णांकसमय);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (inttime >= ARRAY_SIZE(isl29501_int_time))
-		return -EINVAL;
+	अगर (पूर्णांकसमय >= ARRAY_SIZE(isl29501_पूर्णांक_समय))
+		वापस -EINVAL;
 
-	*val = isl29501_int_time[inttime][0];
-	*val2 = isl29501_int_time[inttime][1];
+	*val = isl29501_पूर्णांक_समय[पूर्णांकसमय][0];
+	*val2 = isl29501_पूर्णांक_समय[पूर्णांकसमय][1];
 
-	return IIO_VAL_INT_PLUS_MICRO;
-}
+	वापस IIO_VAL_INT_PLUS_MICRO;
+पूर्ण
 
-static int isl29501_get_freq(struct isl29501_private *isl29501,
-			     int *val, int *val2)
-{
-	int ret;
-	int sample_time;
-	unsigned long long freq;
+अटल पूर्णांक isl29501_get_freq(काष्ठा isl29501_निजी *isl29501,
+			     पूर्णांक *val, पूर्णांक *val2)
+अणु
+	पूर्णांक ret;
+	पूर्णांक sample_समय;
+	अचिन्हित दीर्घ दीर्घ freq;
 	u32 temp;
 
-	ret = isl29501_register_read(isl29501, REG_SAMPLE_TIME, &sample_time);
-	if (ret < 0)
-		return ret;
+	ret = isl29501_रेजिस्टर_पढ़ो(isl29501, REG_SAMPLE_TIME, &sample_समय);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* freq = 1 / (0.000450 * (sample_time + 1) * 10^-6) */
+	/* freq = 1 / (0.000450 * (sample_समय + 1) * 10^-6) */
 	freq = 1000000ULL * 1000000ULL;
 
-	do_div(freq, 450 * (sample_time + 1));
+	करो_भाग(freq, 450 * (sample_समय + 1));
 
-	temp = do_div(freq, 1000000);
+	temp = करो_भाग(freq, 1000000);
 	*val = freq;
 	*val2 = temp;
 
-	return IIO_VAL_INT_PLUS_MICRO;
-}
+	वापस IIO_VAL_INT_PLUS_MICRO;
+पूर्ण
 
-static int isl29501_read_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan, int *val,
-			     int *val2, long mask)
-{
-	struct isl29501_private *isl29501 = iio_priv(indio_dev);
+अटल पूर्णांक isl29501_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
+			     पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा isl29501_निजी *isl29501 = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		return isl29501_get_raw(isl29501, chan, val);
-	case IIO_CHAN_INFO_SCALE:
-		return isl29501_get_scale(isl29501, chan, val, val2);
-	case IIO_CHAN_INFO_INT_TIME:
-		return isl29501_get_inttime(isl29501, val, val2);
-	case IIO_CHAN_INFO_SAMP_FREQ:
-		return isl29501_get_freq(isl29501, val, val2);
-	case IIO_CHAN_INFO_CALIBBIAS:
-		return isl29501_get_calibbias(isl29501, chan, val);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		वापस isl29501_get_raw(isl29501, chan, val);
+	हाल IIO_CHAN_INFO_SCALE:
+		वापस isl29501_get_scale(isl29501, chan, val, val2);
+	हाल IIO_CHAN_INFO_INT_TIME:
+		वापस isl29501_get_पूर्णांकसमय(isl29501, val, val2);
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		वापस isl29501_get_freq(isl29501, val, val2);
+	हाल IIO_CHAN_INFO_CALIBBIAS:
+		वापस isl29501_get_calibbias(isl29501, chan, val);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int isl29501_set_raw(struct isl29501_private *isl29501,
-			    const struct iio_chan_spec *chan,
-			    int raw)
-{
-	switch (chan->type) {
-	case IIO_CURRENT:
-		return isl29501_register_write(isl29501, REG_EMITTER_DAC, raw);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक isl29501_set_raw(काष्ठा isl29501_निजी *isl29501,
+			    स्थिर काष्ठा iio_chan_spec *chan,
+			    पूर्णांक raw)
+अणु
+	चयन (chan->type) अणु
+	हाल IIO_CURRENT:
+		वापस isl29501_रेजिस्टर_ग_लिखो(isl29501, REG_EMITTER_DAC, raw);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int isl29501_set_inttime(struct isl29501_private *isl29501,
-				int val, int val2)
-{
-	int i;
+अटल पूर्णांक isl29501_set_पूर्णांकसमय(काष्ठा isl29501_निजी *isl29501,
+				पूर्णांक val, पूर्णांक val2)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(isl29501_int_time); i++) {
-		if (isl29501_int_time[i][0] == val &&
-		    isl29501_int_time[i][1] == val2) {
-			return isl29501_register_write(isl29501,
+	क्रम (i = 0; i < ARRAY_SIZE(isl29501_पूर्णांक_समय); i++) अणु
+		अगर (isl29501_पूर्णांक_समय[i][0] == val &&
+		    isl29501_पूर्णांक_समय[i][1] == val2) अणु
+			वापस isl29501_रेजिस्टर_ग_लिखो(isl29501,
 						       REG_INT_TIME,
 						       i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int isl29501_set_scale(struct isl29501_private *isl29501,
-			      const struct iio_chan_spec *chan,
-			      int val, int val2)
-{
-	int i;
+अटल पूर्णांक isl29501_set_scale(काष्ठा isl29501_निजी *isl29501,
+			      स्थिर काष्ठा iio_chan_spec *chan,
+			      पूर्णांक val, पूर्णांक val2)
+अणु
+	पूर्णांक i;
 
-	if (chan->type != IIO_CURRENT)
-		return -EINVAL;
+	अगर (chan->type != IIO_CURRENT)
+		वापस -EINVAL;
 
-	for (i = 0; i < ARRAY_SIZE(isl29501_current_scale_table); i++) {
-		if (isl29501_current_scale_table[i][0] == val &&
-		    isl29501_current_scale_table[i][1] == val2) {
-			return isl29501_register_write(isl29501,
+	क्रम (i = 0; i < ARRAY_SIZE(isl29501_current_scale_table); i++) अणु
+		अगर (isl29501_current_scale_table[i][0] == val &&
+		    isl29501_current_scale_table[i][1] == val2) अणु
+			वापस isl29501_रेजिस्टर_ग_लिखो(isl29501,
 						       REG_DRIVER_RANGE,
 						       i + 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int isl29501_set_calibbias(struct isl29501_private *isl29501,
-				  const struct iio_chan_spec *chan,
-				  int bias)
-{
-	switch (chan->type) {
-	case IIO_PROXIMITY:
-		return isl29501_register_write(isl29501,
+अटल पूर्णांक isl29501_set_calibbias(काष्ठा isl29501_निजी *isl29501,
+				  स्थिर काष्ठा iio_chan_spec *chan,
+				  पूर्णांक bias)
+अणु
+	चयन (chan->type) अणु
+	हाल IIO_PROXIMITY:
+		वापस isl29501_रेजिस्टर_ग_लिखो(isl29501,
 					      REG_DISTANCE_BIAS,
 					      bias);
-	case IIO_TEMP:
-		return isl29501_register_write(isl29501,
+	हाल IIO_TEMP:
+		वापस isl29501_रेजिस्टर_ग_लिखो(isl29501,
 					       REG_TEMPERATURE_BIAS,
 					       bias);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int isl29501_set_freq(struct isl29501_private *isl29501,
-			     int val, int val2)
-{
-	int freq;
-	unsigned long long sample_time;
+अटल पूर्णांक isl29501_set_freq(काष्ठा isl29501_निजी *isl29501,
+			     पूर्णांक val, पूर्णांक val2)
+अणु
+	पूर्णांक freq;
+	अचिन्हित दीर्घ दीर्घ sample_समय;
 
-	/* sample_freq = 1 / (0.000450 * (sample_time + 1) * 10^-6) */
+	/* sample_freq = 1 / (0.000450 * (sample_समय + 1) * 10^-6) */
 	freq = val * 1000000 + val2 % 1000000;
-	sample_time = 2222ULL * 1000000ULL;
-	do_div(sample_time, freq);
+	sample_समय = 2222ULL * 1000000ULL;
+	करो_भाग(sample_समय, freq);
 
-	sample_time -= 1;
+	sample_समय -= 1;
 
-	if (sample_time > 255)
-		return -ERANGE;
+	अगर (sample_समय > 255)
+		वापस -दुस्फल;
 
-	return isl29501_register_write(isl29501, REG_SAMPLE_TIME, sample_time);
-}
+	वापस isl29501_रेजिस्टर_ग_लिखो(isl29501, REG_SAMPLE_TIME, sample_समय);
+पूर्ण
 
-static int isl29501_write_raw(struct iio_dev *indio_dev,
-			      struct iio_chan_spec const *chan,
-			      int val, int val2, long mask)
-{
-	struct isl29501_private *isl29501 = iio_priv(indio_dev);
+अटल पूर्णांक isl29501_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			      काष्ठा iio_chan_spec स्थिर *chan,
+			      पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा isl29501_निजी *isl29501 = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		return isl29501_set_raw(isl29501, chan, val);
-	case IIO_CHAN_INFO_INT_TIME:
-		return isl29501_set_inttime(isl29501, val, val2);
-	case IIO_CHAN_INFO_SAMP_FREQ:
-		return isl29501_set_freq(isl29501, val, val2);
-	case IIO_CHAN_INFO_SCALE:
-		return isl29501_set_scale(isl29501, chan, val, val2);
-	case IIO_CHAN_INFO_CALIBBIAS:
-		return isl29501_set_calibbias(isl29501, chan, val);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		वापस isl29501_set_raw(isl29501, chan, val);
+	हाल IIO_CHAN_INFO_INT_TIME:
+		वापस isl29501_set_पूर्णांकसमय(isl29501, val, val2);
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		वापस isl29501_set_freq(isl29501, val, val2);
+	हाल IIO_CHAN_INFO_SCALE:
+		वापस isl29501_set_scale(isl29501, chan, val, val2);
+	हाल IIO_CHAN_INFO_CALIBBIAS:
+		वापस isl29501_set_calibbias(isl29501, chan, val);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info isl29501_info = {
-	.read_raw = &isl29501_read_raw,
-	.write_raw = &isl29501_write_raw,
+अटल स्थिर काष्ठा iio_info isl29501_info = अणु
+	.पढ़ो_raw = &isl29501_पढ़ो_raw,
+	.ग_लिखो_raw = &isl29501_ग_लिखो_raw,
 	.attrs = &isl29501_attribute_group,
-};
+पूर्ण;
 
-static int isl29501_init_chip(struct isl29501_private *isl29501)
-{
-	int ret;
+अटल पूर्णांक isl29501_init_chip(काष्ठा isl29501_निजी *isl29501)
+अणु
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(isl29501->client, ISL29501_DEVICE_ID);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(isl29501->client, ISL29501_DEVICE_ID);
+	अगर (ret < 0) अणु
 		dev_err(&isl29501->client->dev, "Error reading device id\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ret != ISL29501_ID) {
+	अगर (ret != ISL29501_ID) अणु
 		dev_err(&isl29501->client->dev,
 			"Wrong chip id, got %x expected %x\n",
 			ret, ISL29501_DEVICE_ID);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = isl29501_reset_registers(isl29501);
-	if (ret < 0)
-		return ret;
+	ret = isl29501_reset_रेजिस्टरs(isl29501);
+	अगर (ret < 0)
+		वापस ret;
 
-	return isl29501_begin_acquisition(isl29501);
-}
+	वापस isl29501_begin_acquisition(isl29501);
+पूर्ण
 
-static irqreturn_t isl29501_trigger_handler(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct isl29501_private *isl29501 = iio_priv(indio_dev);
-	const unsigned long *active_mask = indio_dev->active_scan_mask;
-	u32 buffer[4] = {}; /* 1x16-bit + ts */
+अटल irqवापस_t isl29501_trigger_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा isl29501_निजी *isl29501 = iio_priv(indio_dev);
+	स्थिर अचिन्हित दीर्घ *active_mask = indio_dev->active_scan_mask;
+	u32 buffer[4] = अणुपूर्ण; /* 1x16-bit + ts */
 
-	if (test_bit(ISL29501_DISTANCE_SCAN_INDEX, active_mask))
-		isl29501_register_read(isl29501, REG_DISTANCE, buffer);
+	अगर (test_bit(ISL29501_DISTANCE_SCAN_INDEX, active_mask))
+		isl29501_रेजिस्टर_पढ़ो(isl29501, REG_DISTANCE, buffer);
 
-	iio_push_to_buffers_with_timestamp(indio_dev, buffer, pf->timestamp);
-	iio_trigger_notify_done(indio_dev->trig);
+	iio_push_to_buffers_with_बारtamp(indio_dev, buffer, pf->बारtamp);
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int isl29501_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
-{
-	struct iio_dev *indio_dev;
-	struct isl29501_private *isl29501;
-	int ret;
+अटल पूर्णांक isl29501_probe(काष्ठा i2c_client *client,
+			  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा isl29501_निजी *isl29501;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*isl29501));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*isl29501));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	isl29501 = iio_priv(indio_dev);
 
@@ -968,49 +969,49 @@ static int isl29501_probe(struct i2c_client *client,
 	mutex_init(&isl29501->lock);
 
 	ret = isl29501_init_chip(isl29501);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = isl29501_channels;
 	indio_dev->num_channels = ARRAY_SIZE(isl29501_channels);
 	indio_dev->name = client->name;
 	indio_dev->info = &isl29501_info;
 
 	ret = devm_iio_triggered_buffer_setup(&client->dev, indio_dev,
-					      iio_pollfunc_store_time,
+					      iio_pollfunc_store_समय,
 					      isl29501_trigger_handler,
-					      NULL);
-	if (ret < 0) {
+					      शून्य);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "unable to setup iio triggered buffer\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return devm_iio_device_register(&client->dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
+पूर्ण
 
-static const struct i2c_device_id isl29501_id[] = {
-	{"isl29501", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id isl29501_id[] = अणु
+	अणु"isl29501", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, isl29501_id);
 
-#if defined(CONFIG_OF)
-static const struct of_device_id isl29501_i2c_matches[] = {
-	{ .compatible = "renesas,isl29501" },
-	{ }
-};
+#अगर defined(CONFIG_OF)
+अटल स्थिर काष्ठा of_device_id isl29501_i2c_matches[] = अणु
+	अणु .compatible = "renesas,isl29501" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, isl29501_i2c_matches);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver isl29501_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver isl29501_driver = अणु
+	.driver = अणु
 		.name	= "isl29501",
-	},
+	पूर्ण,
 	.id_table	= isl29501_id,
 	.probe		= isl29501_probe,
-};
+पूर्ण;
 module_i2c_driver(isl29501_driver);
 
 MODULE_AUTHOR("Mathieu Othacehe <m.othacehe@gmail.com>");

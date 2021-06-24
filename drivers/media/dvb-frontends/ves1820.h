@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
     VES1820  - Single Chip Cable Channel Receiver driver module
 
@@ -6,39 +7,39 @@
 
 */
 
-#ifndef VES1820_H
-#define VES1820_H
+#अगर_अघोषित VES1820_H
+#घोषणा VES1820_H
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-#define VES1820_SELAGC_PWM 0
-#define VES1820_SELAGC_SIGNAMPERR 1
+#घोषणा VES1820_SELAGC_PWM 0
+#घोषणा VES1820_SELAGC_SIGNAMPERR 1
 
-struct ves1820_config
-{
+काष्ठा ves1820_config
+अणु
 	/* the demodulator's i2c address */
 	u8 demod_address;
 
 	/* value of XIN to use */
 	u32 xin;
 
-	/* does inversion need inverted? */
+	/* करोes inversion need inverted? */
 	u8 invert:1;
 
 	/* SELAGC control */
 	u8 selagc:1;
-};
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_VES1820)
-extern struct dvb_frontend* ves1820_attach(const struct ves1820_config* config,
-					   struct i2c_adapter* i2c, u8 pwm);
-#else
-static inline struct dvb_frontend* ves1820_attach(const struct ves1820_config* config,
-					   struct i2c_adapter* i2c, u8 pwm)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif // CONFIG_DVB_VES1820
+#अगर IS_REACHABLE(CONFIG_DVB_VES1820)
+बाह्य काष्ठा dvb_frontend* ves1820_attach(स्थिर काष्ठा ves1820_config* config,
+					   काष्ठा i2c_adapter* i2c, u8 pwm);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend* ves1820_attach(स्थिर काष्ठा ves1820_config* config,
+					   काष्ठा i2c_adapter* i2c, u8 pwm)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर // CONFIG_DVB_VES1820
 
-#endif // VES1820_H
+#पूर्ण_अगर // VES1820_H

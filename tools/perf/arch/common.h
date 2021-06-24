@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ARCH_PERF_COMMON_H
-#define ARCH_PERF_COMMON_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ARCH_PERF_COMMON_H
+#घोषणा ARCH_PERF_COMMON_H
 
-#include <stdbool.h>
+#समावेश <stdbool.h>
 
-struct perf_env;
+काष्ठा perf_env;
 
-int perf_env__lookup_objdump(struct perf_env *env, const char **path);
-bool perf_env__single_address_space(struct perf_env *env);
+पूर्णांक perf_env__lookup_objdump(काष्ठा perf_env *env, स्थिर अक्षर **path);
+bool perf_env__single_address_space(काष्ठा perf_env *env);
 
-#endif /* ARCH_PERF_COMMON_H */
+#पूर्ण_अगर /* ARCH_PERF_COMMON_H */

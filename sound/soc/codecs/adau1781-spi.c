@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for ADAU1381/ADAU1781 CODEC
+ * Driver क्रम ADAU1381/ADAU1781 CODEC
  *
  * Copyright 2014 Analog Devices Inc.
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
-#include <sound/soc.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <sound/soc.h>
 
-#include "adau1781.h"
+#समावेश "adau1781.h"
 
-static void adau1781_spi_switch_mode(struct device *dev)
-{
-	struct spi_device *spi = to_spi_device(dev);
+अटल व्योम adau1781_spi_चयन_mode(काष्ठा device *dev)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
 
 	/*
-	 * To get the device into SPI mode CLATCH has to be pulled low three
-	 * times.  Do this by issuing three dummy reads.
+	 * To get the device पूर्णांकo SPI mode CLATCH has to be pulled low three
+	 * बार.  Do this by issuing three dummy पढ़ोs.
 	 */
 	spi_w8r8(spi, 0x00);
 	spi_w8r8(spi, 0x00);
 	spi_w8r8(spi, 0x00);
-}
+पूर्ण
 
-static int adau1781_spi_probe(struct spi_device *spi)
-{
-	const struct spi_device_id *id = spi_get_device_id(spi);
-	struct regmap_config config;
+अटल पूर्णांक adau1781_spi_probe(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
+	काष्ठा regmap_config config;
 
-	if (!id)
-		return -EINVAL;
+	अगर (!id)
+		वापस -EINVAL;
 
 	config = adau1781_regmap_config;
 	config.val_bits = 8;
 	config.reg_bits = 24;
-	config.read_flag_mask = 0x1;
+	config.पढ़ो_flag_mask = 0x1;
 
-	return adau1781_probe(&spi->dev,
+	वापस adau1781_probe(&spi->dev,
 		devm_regmap_init_spi(spi, &config),
-		id->driver_data, adau1781_spi_switch_mode);
-}
+		id->driver_data, adau1781_spi_चयन_mode);
+पूर्ण
 
-static int adau1781_spi_remove(struct spi_device *spi)
-{
-	adau17x1_remove(&spi->dev);
-	return 0;
-}
+अटल पूर्णांक adau1781_spi_हटाओ(काष्ठा spi_device *spi)
+अणु
+	adau17x1_हटाओ(&spi->dev);
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id adau1781_spi_id[] = {
-	{ "adau1381", ADAU1381 },
-	{ "adau1781", ADAU1781 },
-	{ }
-};
+अटल स्थिर काष्ठा spi_device_id adau1781_spi_id[] = अणु
+	अणु "adau1381", ADAU1381 पूर्ण,
+	अणु "adau1781", ADAU1781 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, adau1781_spi_id);
 
-#if defined(CONFIG_OF)
-static const struct of_device_id adau1781_spi_dt_ids[] = {
-	{ .compatible = "adi,adau1381", },
-	{ .compatible = "adi,adau1781", },
-	{ },
-};
+#अगर defined(CONFIG_OF)
+अटल स्थिर काष्ठा of_device_id adau1781_spi_dt_ids[] = अणु
+	अणु .compatible = "adi,adau1381", पूर्ण,
+	अणु .compatible = "adi,adau1781", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, adau1781_spi_dt_ids);
-#endif
+#पूर्ण_अगर
 
-static struct spi_driver adau1781_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver adau1781_spi_driver = अणु
+	.driver = अणु
 		.name = "adau1781",
 		.of_match_table = of_match_ptr(adau1781_spi_dt_ids),
-	},
+	पूर्ण,
 	.probe = adau1781_spi_probe,
-	.remove = adau1781_spi_remove,
+	.हटाओ = adau1781_spi_हटाओ,
 	.id_table = adau1781_spi_id,
-};
+पूर्ण;
 module_spi_driver(adau1781_spi_driver);
 
 MODULE_DESCRIPTION("ASoC ADAU1381/ADAU1781 CODEC SPI driver");

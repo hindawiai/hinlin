@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright 2014 IBM Corp.
  */
 
-#ifndef _MISC_CXL_BASE_H
-#define _MISC_CXL_BASE_H
+#अगर_अघोषित _MISC_CXL_BASE_H
+#घोषणा _MISC_CXL_BASE_H
 
-#ifdef CONFIG_CXL_BASE
+#अगर_घोषित CONFIG_CXL_BASE
 
-#define CXL_IRQ_RANGES 4
+#घोषणा CXL_IRQ_RANGES 4
 
-struct cxl_irq_ranges {
+काष्ठा cxl_irq_ranges अणु
 	irq_hw_number_t offset[CXL_IRQ_RANGES];
 	irq_hw_number_t range[CXL_IRQ_RANGES];
-};
+पूर्ण;
 
-extern atomic_t cxl_use_count;
+बाह्य atomic_t cxl_use_count;
 
-static inline bool cxl_ctx_in_use(void)
-{
-       return (atomic_read(&cxl_use_count) != 0);
-}
+अटल अंतरभूत bool cxl_ctx_in_use(व्योम)
+अणु
+       वापस (atomic_पढ़ो(&cxl_use_count) != 0);
+पूर्ण
 
-static inline void cxl_ctx_get(void)
-{
+अटल अंतरभूत व्योम cxl_ctx_get(व्योम)
+अणु
        atomic_inc(&cxl_use_count);
-}
+पूर्ण
 
-static inline void cxl_ctx_put(void)
-{
+अटल अंतरभूत व्योम cxl_ctx_put(व्योम)
+अणु
        atomic_dec(&cxl_use_count);
-}
+पूर्ण
 
-struct cxl_afu *cxl_afu_get(struct cxl_afu *afu);
-void cxl_afu_put(struct cxl_afu *afu);
-void cxl_slbia(struct mm_struct *mm);
+काष्ठा cxl_afu *cxl_afu_get(काष्ठा cxl_afu *afu);
+व्योम cxl_afu_put(काष्ठा cxl_afu *afu);
+व्योम cxl_slbia(काष्ठा mm_काष्ठा *mm);
 
-#else /* CONFIG_CXL_BASE */
+#अन्यथा /* CONFIG_CXL_BASE */
 
-static inline bool cxl_ctx_in_use(void) { return false; }
-static inline struct cxl_afu *cxl_afu_get(struct cxl_afu *afu) { return NULL; }
-static inline void cxl_afu_put(struct cxl_afu *afu) {}
-static inline void cxl_slbia(struct mm_struct *mm) {}
+अटल अंतरभूत bool cxl_ctx_in_use(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत काष्ठा cxl_afu *cxl_afu_get(काष्ठा cxl_afu *afu) अणु वापस शून्य; पूर्ण
+अटल अंतरभूत व्योम cxl_afu_put(काष्ठा cxl_afu *afu) अणुपूर्ण
+अटल अंतरभूत व्योम cxl_slbia(काष्ठा mm_काष्ठा *mm) अणुपूर्ण
 
-#endif /* CONFIG_CXL_BASE */
+#पूर्ण_अगर /* CONFIG_CXL_BASE */
 
-#endif
+#पूर्ण_अगर

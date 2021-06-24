@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2013-2014, NVIDIA CORPORATION.  All rights reserved.
  *
  * Based on drivers/misc/eeprom/sunxi_sid.c
  */
 
-#include <linux/device.h>
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/kobject.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/random.h>
+#समावेश <linux/device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/अक्रमom.h>
 
-#include <soc/tegra/fuse.h>
+#समावेश <soc/tegra/fuse.h>
 
-#include "fuse.h"
+#समावेश "fuse.h"
 
-#define FUSE_BEGIN	0x100
-#define FUSE_UID_LOW	0x08
-#define FUSE_UID_HIGH	0x0c
+#घोषणा FUSE_BEGIN	0x100
+#घोषणा FUSE_UID_LOW	0x08
+#घोषणा FUSE_UID_HIGH	0x0c
 
-static u32 tegra20_fuse_read_early(struct tegra_fuse *fuse, unsigned int offset)
-{
-	return readl_relaxed(fuse->base + FUSE_BEGIN + offset);
-}
+अटल u32 tegra20_fuse_पढ़ो_early(काष्ठा tegra_fuse *fuse, अचिन्हित पूर्णांक offset)
+अणु
+	वापस पढ़ोl_relaxed(fuse->base + FUSE_BEGIN + offset);
+पूर्ण
 
-static void apb_dma_complete(void *args)
-{
-	struct tegra_fuse *fuse = args;
+अटल व्योम apb_dma_complete(व्योम *args)
+अणु
+	काष्ठा tegra_fuse *fuse = args;
 
-	complete(&fuse->apbdma.wait);
-}
+	complete(&fuse->apbdma.रुको);
+पूर्ण
 
-static u32 tegra20_fuse_read(struct tegra_fuse *fuse, unsigned int offset)
-{
-	unsigned long flags = DMA_PREP_INTERRUPT | DMA_CTRL_ACK;
-	struct dma_async_tx_descriptor *dma_desc;
-	unsigned long time_left;
+अटल u32 tegra20_fuse_पढ़ो(काष्ठा tegra_fuse *fuse, अचिन्हित पूर्णांक offset)
+अणु
+	अचिन्हित दीर्घ flags = DMA_PREP_INTERRUPT | DMA_CTRL_ACK;
+	काष्ठा dma_async_tx_descriptor *dma_desc;
+	अचिन्हित दीर्घ समय_left;
 	u32 value = 0;
-	int err;
+	पूर्णांक err;
 
 	mutex_lock(&fuse->apbdma.lock);
 
 	fuse->apbdma.config.src_addr = fuse->phys + FUSE_BEGIN + offset;
 
 	err = dmaengine_slave_config(fuse->apbdma.chan, &fuse->apbdma.config);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	dma_desc = dmaengine_prep_slave_single(fuse->apbdma.chan,
 					       fuse->apbdma.phys,
-					       sizeof(u32), DMA_DEV_TO_MEM,
+					       माप(u32), DMA_DEV_TO_MEM,
 					       flags);
-	if (!dma_desc)
-		goto out;
+	अगर (!dma_desc)
+		जाओ out;
 
 	dma_desc->callback = apb_dma_complete;
 	dma_desc->callback_param = fuse;
 
-	reinit_completion(&fuse->apbdma.wait);
+	reinit_completion(&fuse->apbdma.रुको);
 
 	clk_prepare_enable(fuse->clk);
 
 	dmaengine_submit(dma_desc);
 	dma_async_issue_pending(fuse->apbdma.chan);
-	time_left = wait_for_completion_timeout(&fuse->apbdma.wait,
-						msecs_to_jiffies(50));
+	समय_left = रुको_क्रम_completion_समयout(&fuse->apbdma.रुको,
+						msecs_to_jअगरfies(50));
 
-	if (WARN(time_left == 0, "apb read dma timed out"))
+	अगर (WARN(समय_left == 0, "apb read dma timed out"))
 		dmaengine_terminate_all(fuse->apbdma.chan);
-	else
+	अन्यथा
 		value = *fuse->apbdma.virt;
 
 	clk_disable_unprepare(fuse->clk);
 
 out:
 	mutex_unlock(&fuse->apbdma.lock);
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static bool dma_filter(struct dma_chan *chan, void *filter_param)
-{
-	struct device_node *np = chan->device->dev->of_node;
+अटल bool dma_filter(काष्ठा dma_chan *chan, व्योम *filter_param)
+अणु
+	काष्ठा device_node *np = chan->device->dev->of_node;
 
-	return of_device_is_compatible(np, "nvidia,tegra20-apbdma");
-}
+	वापस of_device_is_compatible(np, "nvidia,tegra20-apbdma");
+पूर्ण
 
-static int tegra20_fuse_probe(struct tegra_fuse *fuse)
-{
+अटल पूर्णांक tegra20_fuse_probe(काष्ठा tegra_fuse *fuse)
+अणु
 	dma_cap_mask_t mask;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
 
-	fuse->apbdma.chan = dma_request_channel(mask, dma_filter, NULL);
-	if (!fuse->apbdma.chan)
-		return -EPROBE_DEFER;
+	fuse->apbdma.chan = dma_request_channel(mask, dma_filter, शून्य);
+	अगर (!fuse->apbdma.chan)
+		वापस -EPROBE_DEFER;
 
-	fuse->apbdma.virt = dma_alloc_coherent(fuse->dev, sizeof(u32),
+	fuse->apbdma.virt = dma_alloc_coherent(fuse->dev, माप(u32),
 					       &fuse->apbdma.phys,
 					       GFP_KERNEL);
-	if (!fuse->apbdma.virt) {
+	अगर (!fuse->apbdma.virt) अणु
 		dma_release_channel(fuse->apbdma.chan);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	fuse->apbdma.config.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 	fuse->apbdma.config.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
@@ -118,51 +119,51 @@ static int tegra20_fuse_probe(struct tegra_fuse *fuse)
 	fuse->apbdma.config.direction = DMA_DEV_TO_MEM;
 	fuse->apbdma.config.device_fc = false;
 
-	init_completion(&fuse->apbdma.wait);
+	init_completion(&fuse->apbdma.रुको);
 	mutex_init(&fuse->apbdma.lock);
-	fuse->read = tegra20_fuse_read;
+	fuse->पढ़ो = tegra20_fuse_पढ़ो;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct tegra_fuse_info tegra20_fuse_info = {
-	.read = tegra20_fuse_read,
+अटल स्थिर काष्ठा tegra_fuse_info tegra20_fuse_info = अणु
+	.पढ़ो = tegra20_fuse_पढ़ो,
 	.size = 0x1f8,
 	.spare = 0x100,
-};
+पूर्ण;
 
-/* Early boot code. This code is called before the devices are created */
+/* Early boot code. This code is called beक्रमe the devices are created */
 
-static void __init tegra20_fuse_add_randomness(void)
-{
-	u32 randomness[7];
+अटल व्योम __init tegra20_fuse_add_अक्रमomness(व्योम)
+अणु
+	u32 अक्रमomness[7];
 
-	randomness[0] = tegra_sku_info.sku_id;
-	randomness[1] = tegra_read_straps();
-	randomness[2] = tegra_read_chipid();
-	randomness[3] = tegra_sku_info.cpu_process_id << 16;
-	randomness[3] |= tegra_sku_info.soc_process_id;
-	randomness[4] = tegra_sku_info.cpu_speedo_id << 16;
-	randomness[4] |= tegra_sku_info.soc_speedo_id;
-	randomness[5] = tegra_fuse_read_early(FUSE_UID_LOW);
-	randomness[6] = tegra_fuse_read_early(FUSE_UID_HIGH);
+	अक्रमomness[0] = tegra_sku_info.sku_id;
+	अक्रमomness[1] = tegra_पढ़ो_straps();
+	अक्रमomness[2] = tegra_पढ़ो_chipid();
+	अक्रमomness[3] = tegra_sku_info.cpu_process_id << 16;
+	अक्रमomness[3] |= tegra_sku_info.soc_process_id;
+	अक्रमomness[4] = tegra_sku_info.cpu_speeकरो_id << 16;
+	अक्रमomness[4] |= tegra_sku_info.soc_speeकरो_id;
+	अक्रमomness[5] = tegra_fuse_पढ़ो_early(FUSE_UID_LOW);
+	अक्रमomness[6] = tegra_fuse_पढ़ो_early(FUSE_UID_HIGH);
 
-	add_device_randomness(randomness, sizeof(randomness));
-}
+	add_device_अक्रमomness(अक्रमomness, माप(अक्रमomness));
+पूर्ण
 
-static void __init tegra20_fuse_init(struct tegra_fuse *fuse)
-{
-	fuse->read_early = tegra20_fuse_read_early;
+अटल व्योम __init tegra20_fuse_init(काष्ठा tegra_fuse *fuse)
+अणु
+	fuse->पढ़ो_early = tegra20_fuse_पढ़ो_early;
 
 	tegra_init_revision();
-	fuse->soc->speedo_init(&tegra_sku_info);
-	tegra20_fuse_add_randomness();
-}
+	fuse->soc->speeकरो_init(&tegra_sku_info);
+	tegra20_fuse_add_अक्रमomness();
+पूर्ण
 
-const struct tegra_fuse_soc tegra20_fuse_soc = {
+स्थिर काष्ठा tegra_fuse_soc tegra20_fuse_soc = अणु
 	.init = tegra20_fuse_init,
-	.speedo_init = tegra20_init_speedo_data,
+	.speeकरो_init = tegra20_init_speeकरो_data,
 	.probe = tegra20_fuse_probe,
 	.info = &tegra20_fuse_info,
 	.soc_attr_group = &tegra_soc_attr_group,
-};
+पूर्ण;

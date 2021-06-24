@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2017 Jernej Skrabec <jernej.skrabec@siol.net>
  *
@@ -9,10 +10,10 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include "sun8i_ui_scaler.h"
-#include "sun8i_vi_scaler.h"
+#समावेश "sun8i_ui_scaler.h"
+#समावेश "sun8i_vi_scaler.h"
 
-static const u32 lan2coefftab16[240] = {
+अटल स्थिर u32 lan2coefftab16[240] = अणु
 	0x00004000, 0x00033ffe, 0x00063efc, 0x000a3bfb,
 	0xff0f37fb, 0xfe1433fb, 0xfd192ffb, 0xfd1f29fb,
 	0xfc2424fc, 0xfb291ffd, 0xfb2f19fd, 0xfb3314fe,
@@ -87,74 +88,74 @@ static const u32 lan2coefftab16[240] = {
 	0x03161c0b, 0x04171b0a, 0x05171b09, 0x06181a08,
 	0x07191907, 0x081a1806, 0x091a1805, 0x0a1b1704,
 	0x0b1c1603, 0x0d1c1502, 0x0e1d1401, 0x0f1d1301,
-};
+पूर्ण;
 
-static u32 sun8i_ui_scaler_base(struct sun8i_mixer *mixer, int channel)
-{
-	int vi_num = mixer->cfg->vi_num;
+अटल u32 sun8i_ui_scaler_base(काष्ठा sun8i_mixer *mixer, पूर्णांक channel)
+अणु
+	पूर्णांक vi_num = mixer->cfg->vi_num;
 
-	if (mixer->cfg->is_de3)
-		return DE3_VI_SCALER_UNIT_BASE +
+	अगर (mixer->cfg->is_de3)
+		वापस DE3_VI_SCALER_UNIT_BASE +
 		       DE3_VI_SCALER_UNIT_SIZE * vi_num +
 		       DE3_UI_SCALER_UNIT_SIZE * (channel - vi_num);
-	else
-		return DE2_VI_SCALER_UNIT_BASE +
+	अन्यथा
+		वापस DE2_VI_SCALER_UNIT_BASE +
 		       DE2_VI_SCALER_UNIT_SIZE * vi_num +
 		       DE2_UI_SCALER_UNIT_SIZE * (channel - vi_num);
-}
+पूर्ण
 
-static int sun8i_ui_scaler_coef_index(unsigned int step)
-{
-	unsigned int scale, int_part, float_part;
+अटल पूर्णांक sun8i_ui_scaler_coef_index(अचिन्हित पूर्णांक step)
+अणु
+	अचिन्हित पूर्णांक scale, पूर्णांक_part, भग्न_part;
 
 	scale = step >> (SUN8I_UI_SCALER_SCALE_FRAC - 3);
-	int_part = scale >> 3;
-	float_part = scale & 0x7;
+	पूर्णांक_part = scale >> 3;
+	भग्न_part = scale & 0x7;
 
-	switch (int_part) {
-	case 0:
-		return 0;
-	case 1:
-		return float_part;
-	case 2:
-		return 8 + (float_part >> 1);
-	case 3:
-		return 12;
-	case 4:
-		return 13;
-	default:
-		return 14;
-	}
-}
+	चयन (पूर्णांक_part) अणु
+	हाल 0:
+		वापस 0;
+	हाल 1:
+		वापस भग्न_part;
+	हाल 2:
+		वापस 8 + (भग्न_part >> 1);
+	हाल 3:
+		वापस 12;
+	हाल 4:
+		वापस 13;
+	शेष:
+		वापस 14;
+	पूर्ण
+पूर्ण
 
-void sun8i_ui_scaler_enable(struct sun8i_mixer *mixer, int layer, bool enable)
-{
+व्योम sun8i_ui_scaler_enable(काष्ठा sun8i_mixer *mixer, पूर्णांक layer, bool enable)
+अणु
 	u32 val, base;
 
-	if (WARN_ON(layer < mixer->cfg->vi_num))
-		return;
+	अगर (WARN_ON(layer < mixer->cfg->vi_num))
+		वापस;
 
 	base = sun8i_ui_scaler_base(mixer, layer);
 
-	if (enable)
+	अगर (enable)
 		val = SUN8I_SCALER_GSU_CTRL_EN |
 		      SUN8I_SCALER_GSU_CTRL_COEFF_RDY;
-	else
+	अन्यथा
 		val = 0;
 
-	regmap_write(mixer->engine.regs, SUN8I_SCALER_GSU_CTRL(base), val);
-}
+	regmap_ग_लिखो(mixer->engine.regs, SUN8I_SCALER_GSU_CTRL(base), val);
+पूर्ण
 
-void sun8i_ui_scaler_setup(struct sun8i_mixer *mixer, int layer,
+व्योम sun8i_ui_scaler_setup(काष्ठा sun8i_mixer *mixer, पूर्णांक layer,
 			   u32 src_w, u32 src_h, u32 dst_w, u32 dst_h,
 			   u32 hscale, u32 vscale, u32 hphase, u32 vphase)
-{
+अणु
 	u32 insize, outsize;
-	int i, offset;
+	पूर्णांक i, offset;
 	u32 base;
 
-	if (WARN_ON(layer < mixer->cfg->vi_num))
-		return;
+	अगर (WARN_ON(layer < mixer->cfg->vi_num))
+		वापस;
 
 	base = sun8i_ui_scaler_base(mixer, layer);
 
@@ -166,22 +167,22 @@ void sun8i_ui_scaler_setup(struct sun8i_mixer *mixer, int layer,
 	insize = SUN8I_UI_SCALER_SIZE(src_w, src_h);
 	outsize = SUN8I_UI_SCALER_SIZE(dst_w, dst_h);
 
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_SCALER_GSU_OUTSIZE(base), outsize);
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_SCALER_GSU_INSIZE(base), insize);
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_SCALER_GSU_HSTEP(base), hscale);
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_SCALER_GSU_VSTEP(base), vscale);
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_SCALER_GSU_HPHASE(base), hphase);
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_SCALER_GSU_VPHASE(base), vphase);
 	offset = sun8i_ui_scaler_coef_index(hscale) *
 			SUN8I_UI_SCALER_COEFF_COUNT;
-	for (i = 0; i < SUN8I_UI_SCALER_COEFF_COUNT; i++)
-		regmap_write(mixer->engine.regs,
+	क्रम (i = 0; i < SUN8I_UI_SCALER_COEFF_COUNT; i++)
+		regmap_ग_लिखो(mixer->engine.regs,
 			     SUN8I_SCALER_GSU_HCOEFF(base, i),
 			     lan2coefftab16[offset + i]);
-}
+पूर्ण

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2009-2014  Realtek Corporation.*/
 
-#include "../wifi.h"
-#include <linux/module.h>
+#समावेश "../wifi.h"
+#समावेश <linux/module.h>
 
 
 MODULE_AUTHOR("Realtek WlanFAE	<wlanfae@realtek.com>");

@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Implement the manual drop-all-pagecache function
  */
 
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/fs.h>
-#include <linux/writeback.h>
-#include <linux/sysctl.h>
-#include <linux/gfp.h>
-#include "internal.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/gfp.h>
+#समावेश "internal.h"
 
 /* A global variable is a bit ugly, but it keeps the code simple */
-int sysctl_drop_caches;
+पूर्णांक sysctl_drop_caches;
 
-static void drop_pagecache_sb(struct super_block *sb, void *unused)
-{
-	struct inode *inode, *toput_inode = NULL;
+अटल व्योम drop_pagecache_sb(काष्ठा super_block *sb, व्योम *unused)
+अणु
+	काष्ठा inode *inode, *toput_inode = शून्य;
 
 	spin_lock(&sb->s_inode_list_lock);
-	list_for_each_entry(inode, &sb->s_inodes, i_sb_list) {
+	list_क्रम_each_entry(inode, &sb->s_inodes, i_sb_list) अणु
 		spin_lock(&inode->i_lock);
 		/*
 		 * We must skip inodes in unusual state. We may also skip
-		 * inodes without pages but we deliberately won't in case
-		 * we need to reschedule to avoid softlockups.
+		 * inodes without pages but we deliberately won't in हाल
+		 * we need to reschedule to aव्योम softlockups.
 		 */
-		if ((inode->i_state & (I_FREEING|I_WILL_FREE|I_NEW)) ||
-		    (inode->i_mapping->nrpages == 0 && !need_resched())) {
+		अगर ((inode->i_state & (I_FREEING|I_WILL_FREE|I_NEW)) ||
+		    (inode->i_mapping->nrpages == 0 && !need_resched())) अणु
 			spin_unlock(&inode->i_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		__iget(inode);
 		spin_unlock(&inode->i_lock);
 		spin_unlock(&sb->s_inode_list_lock);
@@ -41,36 +42,36 @@ static void drop_pagecache_sb(struct super_block *sb, void *unused)
 
 		cond_resched();
 		spin_lock(&sb->s_inode_list_lock);
-	}
+	पूर्ण
 	spin_unlock(&sb->s_inode_list_lock);
 	iput(toput_inode);
-}
+पूर्ण
 
-int drop_caches_sysctl_handler(struct ctl_table *table, int write,
-		void *buffer, size_t *length, loff_t *ppos)
-{
-	int ret;
+पूर्णांक drop_caches_sysctl_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		व्योम *buffer, माप_प्रकार *length, loff_t *ppos)
+अणु
+	पूर्णांक ret;
 
-	ret = proc_dointvec_minmax(table, write, buffer, length, ppos);
-	if (ret)
-		return ret;
-	if (write) {
-		static int stfu;
+	ret = proc_करोपूर्णांकvec_minmax(table, ग_लिखो, buffer, length, ppos);
+	अगर (ret)
+		वापस ret;
+	अगर (ग_लिखो) अणु
+		अटल पूर्णांक stfu;
 
-		if (sysctl_drop_caches & 1) {
-			iterate_supers(drop_pagecache_sb, NULL);
+		अगर (sysctl_drop_caches & 1) अणु
+			iterate_supers(drop_pagecache_sb, शून्य);
 			count_vm_event(DROP_PAGECACHE);
-		}
-		if (sysctl_drop_caches & 2) {
+		पूर्ण
+		अगर (sysctl_drop_caches & 2) अणु
 			drop_slab();
 			count_vm_event(DROP_SLAB);
-		}
-		if (!stfu) {
+		पूर्ण
+		अगर (!stfu) अणु
 			pr_info("%s (%d): drop_caches: %d\n",
 				current->comm, task_pid_nr(current),
 				sysctl_drop_caches);
-		}
+		पूर्ण
 		stfu |= sysctl_drop_caches & 4;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण

@@ -1,267 +1,268 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
- * Clock Tree for the Texas Instruments TLV320AIC32x4
+ * Clock Tree क्रम the Texas Instruments TLV320AIC32x4
  *
  * Copyright 2019 Annaliese McDermond
  *
  * Author: Annaliese McDermond <nh6z@nh6z.net>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/regmap.h>
-#include <linux/device.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/device.h>
 
-#include "tlv320aic32x4.h"
+#समावेश "tlv320aic32x4.h"
 
-#define to_clk_aic32x4(_hw) container_of(_hw, struct clk_aic32x4, hw)
-struct clk_aic32x4 {
-	struct clk_hw hw;
-	struct device *dev;
-	struct regmap *regmap;
-	unsigned int reg;
-};
+#घोषणा to_clk_aic32x4(_hw) container_of(_hw, काष्ठा clk_aic32x4, hw)
+काष्ठा clk_aic32x4 अणु
+	काष्ठा clk_hw hw;
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	अचिन्हित पूर्णांक reg;
+पूर्ण;
 
 /*
- * struct clk_aic32x4_pll_muldiv - Multiplier/divider settings
+ * काष्ठा clk_aic32x4_pll_muद_भाग - Multiplier/भागider settings
  * @p:		Divider
  * @r:		first multiplier
- * @j:		integer part of second multiplier
+ * @j:		पूर्णांकeger part of second multiplier
  * @d:		decimal part of second multiplier
  */
-struct clk_aic32x4_pll_muldiv {
+काष्ठा clk_aic32x4_pll_muद_भाग अणु
 	u8 p;
 	u16 r;
 	u8 j;
 	u16 d;
-};
+पूर्ण;
 
-struct aic32x4_clkdesc {
-	const char *name;
-	const char * const *parent_names;
-	unsigned int num_parents;
-	const struct clk_ops *ops;
-	unsigned int reg;
-};
+काष्ठा aic32x4_clkdesc अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *parent_names;
+	अचिन्हित पूर्णांक num_parents;
+	स्थिर काष्ठा clk_ops *ops;
+	अचिन्हित पूर्णांक reg;
+पूर्ण;
 
-static int clk_aic32x4_pll_prepare(struct clk_hw *hw)
-{
-	struct clk_aic32x4 *pll = to_clk_aic32x4(hw);
+अटल पूर्णांक clk_aic32x4_pll_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_aic32x4 *pll = to_clk_aic32x4(hw);
 
-	return regmap_update_bits(pll->regmap, AIC32X4_PLLPR,
+	वापस regmap_update_bits(pll->regmap, AIC32X4_PLLPR,
 				AIC32X4_PLLEN, AIC32X4_PLLEN);
-}
+पूर्ण
 
-static void clk_aic32x4_pll_unprepare(struct clk_hw *hw)
-{
-	struct clk_aic32x4 *pll = to_clk_aic32x4(hw);
+अटल व्योम clk_aic32x4_pll_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_aic32x4 *pll = to_clk_aic32x4(hw);
 
 	regmap_update_bits(pll->regmap, AIC32X4_PLLPR,
 				AIC32X4_PLLEN, 0);
-}
+पूर्ण
 
-static int clk_aic32x4_pll_is_prepared(struct clk_hw *hw)
-{
-	struct clk_aic32x4 *pll = to_clk_aic32x4(hw);
+अटल पूर्णांक clk_aic32x4_pll_is_prepared(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_aic32x4 *pll = to_clk_aic32x4(hw);
 
-	unsigned int val;
-	int ret;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(pll->regmap, AIC32X4_PLLPR, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(pll->regmap, AIC32X4_PLLPR, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return !!(val & AIC32X4_PLLEN);
-}
+	वापस !!(val & AIC32X4_PLLEN);
+पूर्ण
 
-static int clk_aic32x4_pll_get_muldiv(struct clk_aic32x4 *pll,
-			struct clk_aic32x4_pll_muldiv *settings)
-{
-	/*	Change to use regmap_bulk_read? */
-	unsigned int val;
-	int ret;
+अटल पूर्णांक clk_aic32x4_pll_get_muद_भाग(काष्ठा clk_aic32x4 *pll,
+			काष्ठा clk_aic32x4_pll_muद_भाग *settings)
+अणु
+	/*	Change to use regmap_bulk_पढ़ो? */
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(pll->regmap, AIC32X4_PLLPR, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(pll->regmap, AIC32X4_PLLPR, &val);
+	अगर (ret < 0)
+		वापस ret;
 	settings->r = val & AIC32X4_PLL_R_MASK;
 	settings->p = (val & AIC32X4_PLL_P_MASK) >> AIC32X4_PLL_P_SHIFT;
 
-	ret = regmap_read(pll->regmap, AIC32X4_PLLJ, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(pll->regmap, AIC32X4_PLLJ, &val);
+	अगर (ret < 0)
+		वापस ret;
 	settings->j = val;
 
-	ret = regmap_read(pll->regmap, AIC32X4_PLLDMSB, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(pll->regmap, AIC32X4_PLLDMSB, &val);
+	अगर (ret < 0)
+		वापस ret;
 	settings->d = val << 8;
 
-	ret = regmap_read(pll->regmap, AIC32X4_PLLDLSB,	 &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(pll->regmap, AIC32X4_PLLDLSB,	 &val);
+	अगर (ret < 0)
+		वापस ret;
 	settings->d |= val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_aic32x4_pll_set_muldiv(struct clk_aic32x4 *pll,
-			struct clk_aic32x4_pll_muldiv *settings)
-{
-	int ret;
-	/*	Change to use regmap_bulk_write for some if not all? */
+अटल पूर्णांक clk_aic32x4_pll_set_muद_भाग(काष्ठा clk_aic32x4 *pll,
+			काष्ठा clk_aic32x4_pll_muद_भाग *settings)
+अणु
+	पूर्णांक ret;
+	/*	Change to use regmap_bulk_ग_लिखो क्रम some अगर not all? */
 
 	ret = regmap_update_bits(pll->regmap, AIC32X4_PLLPR,
 				AIC32X4_PLL_R_MASK, settings->r);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = regmap_update_bits(pll->regmap, AIC32X4_PLLPR,
 				AIC32X4_PLL_P_MASK,
 				settings->p << AIC32X4_PLL_P_SHIFT);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_write(pll->regmap, AIC32X4_PLLJ, settings->j);
-	if (ret < 0)
-		return ret;
+	ret = regmap_ग_लिखो(pll->regmap, AIC32X4_PLLJ, settings->j);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_write(pll->regmap, AIC32X4_PLLDMSB, (settings->d >> 8));
-	if (ret < 0)
-		return ret;
-	ret = regmap_write(pll->regmap, AIC32X4_PLLDLSB, (settings->d & 0xff));
-	if (ret < 0)
-		return ret;
+	ret = regmap_ग_लिखो(pll->regmap, AIC32X4_PLLDMSB, (settings->d >> 8));
+	अगर (ret < 0)
+		वापस ret;
+	ret = regmap_ग_लिखो(pll->regmap, AIC32X4_PLLDLSB, (settings->d & 0xff));
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long clk_aic32x4_pll_calc_rate(
-			struct clk_aic32x4_pll_muldiv *settings,
-			unsigned long parent_rate)
-{
+अटल अचिन्हित दीर्घ clk_aic32x4_pll_calc_rate(
+			काष्ठा clk_aic32x4_pll_muद_भाग *settings,
+			अचिन्हित दीर्घ parent_rate)
+अणु
 	u64 rate;
 	/*
-	 * We scale j by 10000 to account for the decimal part of P and divide
+	 * We scale j by 10000 to account क्रम the decimal part of P and भागide
 	 * it back out later.
 	 */
 	rate = (u64) parent_rate * settings->r *
 				((settings->j * 10000) + settings->d);
 
-	return (unsigned long) DIV_ROUND_UP_ULL(rate, settings->p * 10000);
-}
+	वापस (अचिन्हित दीर्घ) DIV_ROUND_UP_ULL(rate, settings->p * 10000);
+पूर्ण
 
-static int clk_aic32x4_pll_calc_muldiv(struct clk_aic32x4_pll_muldiv *settings,
-			unsigned long rate, unsigned long parent_rate)
-{
+अटल पूर्णांक clk_aic32x4_pll_calc_muद_भाग(काष्ठा clk_aic32x4_pll_muद_भाग *settings,
+			अचिन्हित दीर्घ rate, अचिन्हित दीर्घ parent_rate)
+अणु
 	u64 multiplier;
 
 	settings->p = parent_rate / AIC32X4_MAX_PLL_CLKIN + 1;
-	if (settings->p > 8)
-		return -1;
+	अगर (settings->p > 8)
+		वापस -1;
 
 	/*
 	 * We scale this figure by 10000 so that we can get the decimal part
-	 * of the multiplier.	This is because we can't do floating point
+	 * of the multiplier.	This is because we can't करो भग्नing poपूर्णांक
 	 * math in the kernel.
 	 */
 	multiplier = (u64) rate * settings->p * 10000;
-	do_div(multiplier, parent_rate);
+	करो_भाग(multiplier, parent_rate);
 
 	/*
 	 * J can't be over 64, so R can scale this.
 	 * R can't be greater than 4.
 	 */
 	settings->r = ((u32) multiplier / 640000) + 1;
-	if (settings->r > 4)
-		return -1;
-	do_div(multiplier, settings->r);
+	अगर (settings->r > 4)
+		वापस -1;
+	करो_भाग(multiplier, settings->r);
 
 	/*
 	 * J can't be < 1.
 	 */
-	if (multiplier < 10000)
-		return -1;
+	अगर (multiplier < 10000)
+		वापस -1;
 
-	/* Figure out the integer part, J, and the fractional part, D. */
+	/* Figure out the पूर्णांकeger part, J, and the fractional part, D. */
 	settings->j = (u32) multiplier / 10000;
 	settings->d = (u32) multiplier % 10000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long clk_aic32x4_pll_recalc_rate(struct clk_hw *hw,
-			unsigned long parent_rate)
-{
-	struct clk_aic32x4 *pll = to_clk_aic32x4(hw);
-	struct clk_aic32x4_pll_muldiv settings;
-	int ret;
+अटल अचिन्हित दीर्घ clk_aic32x4_pll_recalc_rate(काष्ठा clk_hw *hw,
+			अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_aic32x4 *pll = to_clk_aic32x4(hw);
+	काष्ठा clk_aic32x4_pll_muद_भाग settings;
+	पूर्णांक ret;
 
-	ret =  clk_aic32x4_pll_get_muldiv(pll, &settings);
-	if (ret < 0)
-		return 0;
+	ret =  clk_aic32x4_pll_get_muद_भाग(pll, &settings);
+	अगर (ret < 0)
+		वापस 0;
 
-	return clk_aic32x4_pll_calc_rate(&settings, parent_rate);
-}
+	वापस clk_aic32x4_pll_calc_rate(&settings, parent_rate);
+पूर्ण
 
-static long clk_aic32x4_pll_round_rate(struct clk_hw *hw,
-			unsigned long rate,
-			unsigned long *parent_rate)
-{
-	struct clk_aic32x4_pll_muldiv settings;
-	int ret;
+अटल दीर्घ clk_aic32x4_pll_round_rate(काष्ठा clk_hw *hw,
+			अचिन्हित दीर्घ rate,
+			अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा clk_aic32x4_pll_muद_भाग settings;
+	पूर्णांक ret;
 
-	ret = clk_aic32x4_pll_calc_muldiv(&settings, rate, *parent_rate);
-	if (ret < 0)
-		return 0;
+	ret = clk_aic32x4_pll_calc_muद_भाग(&settings, rate, *parent_rate);
+	अगर (ret < 0)
+		वापस 0;
 
-	return clk_aic32x4_pll_calc_rate(&settings, *parent_rate);
-}
+	वापस clk_aic32x4_pll_calc_rate(&settings, *parent_rate);
+पूर्ण
 
-static int clk_aic32x4_pll_set_rate(struct clk_hw *hw,
-			unsigned long rate,
-			unsigned long parent_rate)
-{
-	struct clk_aic32x4 *pll = to_clk_aic32x4(hw);
-	struct clk_aic32x4_pll_muldiv settings;
-	int ret;
+अटल पूर्णांक clk_aic32x4_pll_set_rate(काष्ठा clk_hw *hw,
+			अचिन्हित दीर्घ rate,
+			अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_aic32x4 *pll = to_clk_aic32x4(hw);
+	काष्ठा clk_aic32x4_pll_muद_भाग settings;
+	पूर्णांक ret;
 
-	ret = clk_aic32x4_pll_calc_muldiv(&settings, rate, parent_rate);
-	if (ret < 0)
-		return -EINVAL;
+	ret = clk_aic32x4_pll_calc_muद_भाग(&settings, rate, parent_rate);
+	अगर (ret < 0)
+		वापस -EINVAL;
 
-	ret = clk_aic32x4_pll_set_muldiv(pll, &settings);
-	if (ret)
-		return ret;
+	ret = clk_aic32x4_pll_set_muद_भाग(pll, &settings);
+	अगर (ret)
+		वापस ret;
 
-	/* 10ms is the delay to wait before the clocks are stable */
+	/* 10ms is the delay to रुको beक्रमe the घड़ीs are stable */
 	msleep(10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_aic32x4_pll_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_aic32x4 *pll = to_clk_aic32x4(hw);
+अटल पूर्णांक clk_aic32x4_pll_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_aic32x4 *pll = to_clk_aic32x4(hw);
 
-	return regmap_update_bits(pll->regmap,
+	वापस regmap_update_bits(pll->regmap,
 				AIC32X4_CLKMUX,
 				AIC32X4_PLL_CLKIN_MASK,
 				index << AIC32X4_PLL_CLKIN_SHIFT);
-}
+पूर्ण
 
-static u8 clk_aic32x4_pll_get_parent(struct clk_hw *hw)
-{
-	struct clk_aic32x4 *pll = to_clk_aic32x4(hw);
-	unsigned int val;
+अटल u8 clk_aic32x4_pll_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_aic32x4 *pll = to_clk_aic32x4(hw);
+	अचिन्हित पूर्णांक val;
 
-	regmap_read(pll->regmap, AIC32X4_PLLPR, &val);
+	regmap_पढ़ो(pll->regmap, AIC32X4_PLLPR, &val);
 
-	return (val & AIC32X4_PLL_CLKIN_MASK) >> AIC32X4_PLL_CLKIN_SHIFT;
-}
+	वापस (val & AIC32X4_PLL_CLKIN_MASK) >> AIC32X4_PLL_CLKIN_SHIFT;
+पूर्ण
 
 
-static const struct clk_ops aic32x4_pll_ops = {
+अटल स्थिर काष्ठा clk_ops aic32x4_pll_ops = अणु
 	.prepare = clk_aic32x4_pll_prepare,
 	.unprepare = clk_aic32x4_pll_unprepare,
 	.is_prepared = clk_aic32x4_pll_is_prepared,
@@ -270,183 +271,183 @@ static const struct clk_ops aic32x4_pll_ops = {
 	.set_rate = clk_aic32x4_pll_set_rate,
 	.set_parent = clk_aic32x4_pll_set_parent,
 	.get_parent = clk_aic32x4_pll_get_parent,
-};
+पूर्ण;
 
-static int clk_aic32x4_codec_clkin_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_aic32x4 *mux = to_clk_aic32x4(hw);
+अटल पूर्णांक clk_aic32x4_codec_clkin_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_aic32x4 *mux = to_clk_aic32x4(hw);
 
-	return regmap_update_bits(mux->regmap,
+	वापस regmap_update_bits(mux->regmap,
 		AIC32X4_CLKMUX,
 		AIC32X4_CODEC_CLKIN_MASK, index << AIC32X4_CODEC_CLKIN_SHIFT);
-}
+पूर्ण
 
-static u8 clk_aic32x4_codec_clkin_get_parent(struct clk_hw *hw)
-{
-	struct clk_aic32x4 *mux = to_clk_aic32x4(hw);
-	unsigned int val;
+अटल u8 clk_aic32x4_codec_clkin_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_aic32x4 *mux = to_clk_aic32x4(hw);
+	अचिन्हित पूर्णांक val;
 
-	regmap_read(mux->regmap, AIC32X4_CLKMUX, &val);
+	regmap_पढ़ो(mux->regmap, AIC32X4_CLKMUX, &val);
 
-	return (val & AIC32X4_CODEC_CLKIN_MASK) >> AIC32X4_CODEC_CLKIN_SHIFT;
-}
+	वापस (val & AIC32X4_CODEC_CLKIN_MASK) >> AIC32X4_CODEC_CLKIN_SHIFT;
+पूर्ण
 
-static const struct clk_ops aic32x4_codec_clkin_ops = {
+अटल स्थिर काष्ठा clk_ops aic32x4_codec_clkin_ops = अणु
 	.set_parent = clk_aic32x4_codec_clkin_set_parent,
 	.get_parent = clk_aic32x4_codec_clkin_get_parent,
-};
+पूर्ण;
 
-static int clk_aic32x4_div_prepare(struct clk_hw *hw)
-{
-	struct clk_aic32x4 *div = to_clk_aic32x4(hw);
+अटल पूर्णांक clk_aic32x4_भाग_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_aic32x4 *भाग = to_clk_aic32x4(hw);
 
-	return regmap_update_bits(div->regmap, div->reg,
+	वापस regmap_update_bits(भाग->regmap, भाग->reg,
 				AIC32X4_DIVEN, AIC32X4_DIVEN);
-}
+पूर्ण
 
-static void clk_aic32x4_div_unprepare(struct clk_hw *hw)
-{
-	struct clk_aic32x4 *div = to_clk_aic32x4(hw);
+अटल व्योम clk_aic32x4_भाग_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_aic32x4 *भाग = to_clk_aic32x4(hw);
 
-	regmap_update_bits(div->regmap, div->reg,
+	regmap_update_bits(भाग->regmap, भाग->reg,
 			AIC32X4_DIVEN, 0);
-}
+पूर्ण
 
-static int clk_aic32x4_div_set_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long parent_rate)
-{
-	struct clk_aic32x4 *div = to_clk_aic32x4(hw);
-	u8 divisor;
+अटल पूर्णांक clk_aic32x4_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_aic32x4 *भाग = to_clk_aic32x4(hw);
+	u8 भागisor;
 
-	divisor = DIV_ROUND_UP(parent_rate, rate);
-	if (divisor > 128)
-		return -EINVAL;
+	भागisor = DIV_ROUND_UP(parent_rate, rate);
+	अगर (भागisor > 128)
+		वापस -EINVAL;
 
-	return regmap_update_bits(div->regmap, div->reg,
-				AIC32X4_DIV_MASK, divisor);
-}
+	वापस regmap_update_bits(भाग->regmap, भाग->reg,
+				AIC32X4_DIV_MASK, भागisor);
+पूर्ण
 
-static long clk_aic32x4_div_round_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long *parent_rate)
-{
-	unsigned long divisor;
+अटल दीर्घ clk_aic32x4_भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *parent_rate)
+अणु
+	अचिन्हित दीर्घ भागisor;
 
-	divisor = DIV_ROUND_UP(*parent_rate, rate);
-	if (divisor > 128)
-		return -EINVAL;
+	भागisor = DIV_ROUND_UP(*parent_rate, rate);
+	अगर (भागisor > 128)
+		वापस -EINVAL;
 
-	return DIV_ROUND_UP(*parent_rate, divisor);
-}
+	वापस DIV_ROUND_UP(*parent_rate, भागisor);
+पूर्ण
 
-static unsigned long clk_aic32x4_div_recalc_rate(struct clk_hw *hw,
-						unsigned long parent_rate)
-{
-	struct clk_aic32x4 *div = to_clk_aic32x4(hw);
+अटल अचिन्हित दीर्घ clk_aic32x4_भाग_recalc_rate(काष्ठा clk_hw *hw,
+						अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_aic32x4 *भाग = to_clk_aic32x4(hw);
 
-	unsigned int val;
+	अचिन्हित पूर्णांक val;
 
-	regmap_read(div->regmap, div->reg, &val);
+	regmap_पढ़ो(भाग->regmap, भाग->reg, &val);
 
-	return DIV_ROUND_UP(parent_rate, val & AIC32X4_DIV_MASK);
-}
+	वापस DIV_ROUND_UP(parent_rate, val & AIC32X4_DIV_MASK);
+पूर्ण
 
-static const struct clk_ops aic32x4_div_ops = {
-	.prepare = clk_aic32x4_div_prepare,
-	.unprepare = clk_aic32x4_div_unprepare,
-	.set_rate = clk_aic32x4_div_set_rate,
-	.round_rate = clk_aic32x4_div_round_rate,
-	.recalc_rate = clk_aic32x4_div_recalc_rate,
-};
+अटल स्थिर काष्ठा clk_ops aic32x4_भाग_ops = अणु
+	.prepare = clk_aic32x4_भाग_prepare,
+	.unprepare = clk_aic32x4_भाग_unprepare,
+	.set_rate = clk_aic32x4_भाग_set_rate,
+	.round_rate = clk_aic32x4_भाग_round_rate,
+	.recalc_rate = clk_aic32x4_भाग_recalc_rate,
+पूर्ण;
 
-static int clk_aic32x4_bdiv_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_aic32x4 *mux = to_clk_aic32x4(hw);
+अटल पूर्णांक clk_aic32x4_bभाग_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_aic32x4 *mux = to_clk_aic32x4(hw);
 
-	return regmap_update_bits(mux->regmap, AIC32X4_IFACE3,
+	वापस regmap_update_bits(mux->regmap, AIC32X4_IFACE3,
 				AIC32X4_BDIVCLK_MASK, index);
-}
+पूर्ण
 
-static u8 clk_aic32x4_bdiv_get_parent(struct clk_hw *hw)
-{
-	struct clk_aic32x4 *mux = to_clk_aic32x4(hw);
-	unsigned int val;
+अटल u8 clk_aic32x4_bभाग_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_aic32x4 *mux = to_clk_aic32x4(hw);
+	अचिन्हित पूर्णांक val;
 
-	regmap_read(mux->regmap, AIC32X4_IFACE3, &val);
+	regmap_पढ़ो(mux->regmap, AIC32X4_IFACE3, &val);
 
-	return val & AIC32X4_BDIVCLK_MASK;
-}
+	वापस val & AIC32X4_BDIVCLK_MASK;
+पूर्ण
 
-static const struct clk_ops aic32x4_bdiv_ops = {
-	.prepare = clk_aic32x4_div_prepare,
-	.unprepare = clk_aic32x4_div_unprepare,
-	.set_parent = clk_aic32x4_bdiv_set_parent,
-	.get_parent = clk_aic32x4_bdiv_get_parent,
-	.set_rate = clk_aic32x4_div_set_rate,
-	.round_rate = clk_aic32x4_div_round_rate,
-	.recalc_rate = clk_aic32x4_div_recalc_rate,
-};
+अटल स्थिर काष्ठा clk_ops aic32x4_bभाग_ops = अणु
+	.prepare = clk_aic32x4_भाग_prepare,
+	.unprepare = clk_aic32x4_भाग_unprepare,
+	.set_parent = clk_aic32x4_bभाग_set_parent,
+	.get_parent = clk_aic32x4_bभाग_get_parent,
+	.set_rate = clk_aic32x4_भाग_set_rate,
+	.round_rate = clk_aic32x4_भाग_round_rate,
+	.recalc_rate = clk_aic32x4_भाग_recalc_rate,
+पूर्ण;
 
-static struct aic32x4_clkdesc aic32x4_clkdesc_array[] = {
-	{
+अटल काष्ठा aic32x4_clkdesc aic32x4_clkdesc_array[] = अणु
+	अणु
 		.name = "pll",
 		.parent_names =
-			(const char* []) { "mclk", "bclk", "gpio", "din" },
+			(स्थिर अक्षर* []) अणु "mclk", "bclk", "gpio", "din" पूर्ण,
 		.num_parents = 4,
 		.ops = &aic32x4_pll_ops,
 		.reg = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "codec_clkin",
 		.parent_names =
-			(const char *[]) { "mclk", "bclk", "gpio", "pll" },
+			(स्थिर अक्षर *[]) अणु "mclk", "bclk", "gpio", "pll" पूर्ण,
 		.num_parents = 4,
 		.ops = &aic32x4_codec_clkin_ops,
 		.reg = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "ndac",
-		.parent_names = (const char * []) { "codec_clkin" },
+		.parent_names = (स्थिर अक्षर * []) अणु "codec_clkin" पूर्ण,
 		.num_parents = 1,
-		.ops = &aic32x4_div_ops,
+		.ops = &aic32x4_भाग_ops,
 		.reg = AIC32X4_NDAC,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "mdac",
-		.parent_names = (const char * []) { "ndac" },
+		.parent_names = (स्थिर अक्षर * []) अणु "ndac" पूर्ण,
 		.num_parents = 1,
-		.ops = &aic32x4_div_ops,
+		.ops = &aic32x4_भाग_ops,
 		.reg = AIC32X4_MDAC,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "nadc",
-		.parent_names = (const char * []) { "codec_clkin" },
+		.parent_names = (स्थिर अक्षर * []) अणु "codec_clkin" पूर्ण,
 		.num_parents = 1,
-		.ops = &aic32x4_div_ops,
+		.ops = &aic32x4_भाग_ops,
 		.reg = AIC32X4_NADC,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "madc",
-		.parent_names = (const char * []) { "nadc" },
+		.parent_names = (स्थिर अक्षर * []) अणु "nadc" पूर्ण,
 		.num_parents = 1,
-		.ops = &aic32x4_div_ops,
+		.ops = &aic32x4_भाग_ops,
 		.reg = AIC32X4_MADC,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "bdiv",
 		.parent_names =
-			(const char *[]) { "ndac", "mdac", "nadc", "madc" },
+			(स्थिर अक्षर *[]) अणु "ndac", "mdac", "nadc", "madc" पूर्ण,
 		.num_parents = 4,
-		.ops = &aic32x4_bdiv_ops,
+		.ops = &aic32x4_bभाग_ops,
 		.reg = AIC32X4_BCLKN,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct clk *aic32x4_register_clk(struct device *dev,
-			struct aic32x4_clkdesc *desc)
-{
-	struct clk_init_data init;
-	struct clk_aic32x4 *priv;
-	const char *devname = dev_name(dev);
+अटल काष्ठा clk *aic32x4_रेजिस्टर_clk(काष्ठा device *dev,
+			काष्ठा aic32x4_clkdesc *desc)
+अणु
+	काष्ठा clk_init_data init;
+	काष्ठा clk_aic32x4 *priv;
+	स्थिर अक्षर *devname = dev_name(dev);
 
 	init.ops = desc->ops;
 	init.name = desc->name;
@@ -454,22 +455,22 @@ static struct clk *aic32x4_register_clk(struct device *dev,
 	init.num_parents = desc->num_parents;
 	init.flags = 0;
 
-	priv = devm_kzalloc(dev, sizeof(struct clk_aic32x4), GFP_KERNEL);
-	if (priv == NULL)
-		return (struct clk *) -ENOMEM;
+	priv = devm_kzalloc(dev, माप(काष्ठा clk_aic32x4), GFP_KERNEL);
+	अगर (priv == शून्य)
+		वापस (काष्ठा clk *) -ENOMEM;
 
 	priv->dev = dev;
 	priv->hw.init = &init;
-	priv->regmap = dev_get_regmap(dev, NULL);
+	priv->regmap = dev_get_regmap(dev, शून्य);
 	priv->reg = desc->reg;
 
-	clk_hw_register_clkdev(&priv->hw, desc->name, devname);
-	return devm_clk_register(dev, &priv->hw);
-}
+	clk_hw_रेजिस्टर_clkdev(&priv->hw, desc->name, devname);
+	वापस devm_clk_रेजिस्टर(dev, &priv->hw);
+पूर्ण
 
-int aic32x4_register_clocks(struct device *dev, const char *mclk_name)
-{
-	int i;
+पूर्णांक aic32x4_रेजिस्टर_घड़ीs(काष्ठा device *dev, स्थिर अक्षर *mclk_name)
+अणु
+	पूर्णांक i;
 
 	/*
 	 * These lines are here to preserve the current functionality of
@@ -478,13 +479,13 @@ int aic32x4_register_clocks(struct device *dev, const char *mclk_name)
 	 * rather than code.
 	 */
 	aic32x4_clkdesc_array[0].parent_names =
-			(const char* []) { mclk_name, "bclk", "gpio", "din" };
+			(स्थिर अक्षर* []) अणु mclk_name, "bclk", "gpio", "din" पूर्ण;
 	aic32x4_clkdesc_array[1].parent_names =
-			(const char *[]) { mclk_name, "bclk", "gpio", "pll" };
+			(स्थिर अक्षर *[]) अणु mclk_name, "bclk", "gpio", "pll" पूर्ण;
 
-	for (i = 0; i < ARRAY_SIZE(aic32x4_clkdesc_array); ++i)
-		aic32x4_register_clk(dev, &aic32x4_clkdesc_array[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(aic32x4_clkdesc_array); ++i)
+		aic32x4_रेजिस्टर_clk(dev, &aic32x4_clkdesc_array[i]);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(aic32x4_register_clocks);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(aic32x4_रेजिस्टर_घड़ीs);

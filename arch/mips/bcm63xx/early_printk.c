@@ -1,30 +1,31 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
+ * Copyright (C) 2008 Maxime Bizon <mbizon@मुक्तbox.fr>
  */
 
-#include <bcm63xx_io.h>
-#include <linux/serial_bcm63xx.h>
-#include <asm/setup.h>
+#समावेश <bcm63xx_पन.स>
+#समावेश <linux/serial_bcm63xx.h>
+#समावेश <यंत्र/setup.h>
 
-static void wait_xfered(void)
-{
-	unsigned int val;
+अटल व्योम रुको_xfered(व्योम)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	/* wait for any previous char to be transmitted */
-	do {
-		val = bcm_uart0_readl(UART_IR_REG);
-		if (val & UART_IR_STAT(UART_IR_TXEMPTY))
-			break;
-	} while (1);
-}
+	/* रुको क्रम any previous अक्षर to be transmitted */
+	करो अणु
+		val = bcm_uart0_पढ़ोl(UART_IR_REG);
+		अगर (val & UART_IR_STAT(UART_IR_TXEMPTY))
+			अवरोध;
+	पूर्ण जबतक (1);
+पूर्ण
 
-void prom_putchar(char c)
-{
-	wait_xfered();
-	bcm_uart0_writel(c, UART_FIFO_REG);
-	wait_xfered();
-}
+व्योम prom_अक्षर_दो(अक्षर c)
+अणु
+	रुको_xfered();
+	bcm_uart0_ग_लिखोl(c, UART_FIFO_REG);
+	रुको_xfered();
+पूर्ण

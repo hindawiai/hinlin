@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_MACH_PXA910_H
-#define __ASM_MACH_PXA910_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_MACH_PXA910_H
+#घोषणा __ASM_MACH_PXA910_H
 
-extern void pxa910_timer_init(void);
-extern void __init icu_init_irq(void);
-extern void __init pxa910_init_irq(void);
+बाह्य व्योम pxa910_समयr_init(व्योम);
+बाह्य व्योम __init icu_init_irq(व्योम);
+बाह्य व्योम __init pxa910_init_irq(व्योम);
 
-#include <linux/i2c.h>
-#include <linux/platform_data/i2c-pxa.h>
-#include <linux/platform_data/mtd-nand-pxa3xx.h>
-#include <video/mmp_disp.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
+#समावेश <linux/platक्रमm_data/mtd-nand-pxa3xx.h>
+#समावेश <video/mmp_disp.h>
 
-#include "devices.h"
+#समावेश "devices.h"
 
-extern struct pxa_device_desc pxa910_device_uart1;
-extern struct pxa_device_desc pxa910_device_uart2;
-extern struct pxa_device_desc pxa910_device_twsi0;
-extern struct pxa_device_desc pxa910_device_twsi1;
-extern struct pxa_device_desc pxa910_device_pwm1;
-extern struct pxa_device_desc pxa910_device_pwm2;
-extern struct pxa_device_desc pxa910_device_pwm3;
-extern struct pxa_device_desc pxa910_device_pwm4;
-extern struct pxa_device_desc pxa910_device_nand;
-extern struct platform_device pxa168_device_usb_phy;
-extern struct platform_device pxa168_device_u2o;
-extern struct platform_device pxa168_device_u2ootg;
-extern struct platform_device pxa168_device_u2oehci;
-extern struct pxa_device_desc pxa910_device_disp;
-extern struct pxa_device_desc pxa910_device_fb;
-extern struct pxa_device_desc pxa910_device_panel;
-extern struct platform_device pxa910_device_gpio;
-extern struct platform_device pxa910_device_rtc;
+बाह्य काष्ठा pxa_device_desc pxa910_device_uart1;
+बाह्य काष्ठा pxa_device_desc pxa910_device_uart2;
+बाह्य काष्ठा pxa_device_desc pxa910_device_twsi0;
+बाह्य काष्ठा pxa_device_desc pxa910_device_twsi1;
+बाह्य काष्ठा pxa_device_desc pxa910_device_pwm1;
+बाह्य काष्ठा pxa_device_desc pxa910_device_pwm2;
+बाह्य काष्ठा pxa_device_desc pxa910_device_pwm3;
+बाह्य काष्ठा pxa_device_desc pxa910_device_pwm4;
+बाह्य काष्ठा pxa_device_desc pxa910_device_nand;
+बाह्य काष्ठा platक्रमm_device pxa168_device_usb_phy;
+बाह्य काष्ठा platक्रमm_device pxa168_device_u2o;
+बाह्य काष्ठा platक्रमm_device pxa168_device_u2ootg;
+बाह्य काष्ठा platक्रमm_device pxa168_device_u2oehci;
+बाह्य काष्ठा pxa_device_desc pxa910_device_disp;
+बाह्य काष्ठा pxa_device_desc pxa910_device_fb;
+बाह्य काष्ठा pxa_device_desc pxa910_device_panel;
+बाह्य काष्ठा platक्रमm_device pxa910_device_gpio;
+बाह्य काष्ठा platक्रमm_device pxa910_device_rtc;
 
-static inline int pxa910_add_uart(int id)
-{
-	struct pxa_device_desc *d = NULL;
+अटल अंतरभूत पूर्णांक pxa910_add_uart(पूर्णांक id)
+अणु
+	काष्ठा pxa_device_desc *d = शून्य;
 
-	switch (id) {
-	case 1: d = &pxa910_device_uart1; break;
-	case 2: d = &pxa910_device_uart2; break;
-	}
+	चयन (id) अणु
+	हाल 1: d = &pxa910_device_uart1; अवरोध;
+	हाल 2: d = &pxa910_device_uart2; अवरोध;
+	पूर्ण
 
-	if (d == NULL)
-		return -EINVAL;
+	अगर (d == शून्य)
+		वापस -EINVAL;
 
-	return pxa_register_device(d, NULL, 0);
-}
+	वापस pxa_रेजिस्टर_device(d, शून्य, 0);
+पूर्ण
 
-static inline int pxa910_add_twsi(int id, struct i2c_pxa_platform_data *data,
-				  struct i2c_board_info *info, unsigned size)
-{
-	struct pxa_device_desc *d = NULL;
-	int ret;
+अटल अंतरभूत पूर्णांक pxa910_add_twsi(पूर्णांक id, काष्ठा i2c_pxa_platक्रमm_data *data,
+				  काष्ठा i2c_board_info *info, अचिन्हित size)
+अणु
+	काष्ठा pxa_device_desc *d = शून्य;
+	पूर्णांक ret;
 
-	switch (id) {
-	case 0: d = &pxa910_device_twsi0; break;
-	case 1: d = &pxa910_device_twsi1; break;
-	default:
-		return -EINVAL;
-	}
+	चयन (id) अणु
+	हाल 0: d = &pxa910_device_twsi0; अवरोध;
+	हाल 1: d = &pxa910_device_twsi1; अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = i2c_register_board_info(id, info, size);
-	if (ret)
-		return ret;
+	ret = i2c_रेजिस्टर_board_info(id, info, size);
+	अगर (ret)
+		वापस ret;
 
-	return pxa_register_device(d, data, sizeof(*data));
-}
+	वापस pxa_रेजिस्टर_device(d, data, माप(*data));
+पूर्ण
 
-static inline int pxa910_add_pwm(int id)
-{
-	struct pxa_device_desc *d = NULL;
+अटल अंतरभूत पूर्णांक pxa910_add_pwm(पूर्णांक id)
+अणु
+	काष्ठा pxa_device_desc *d = शून्य;
 
-	switch (id) {
-	case 1: d = &pxa910_device_pwm1; break;
-	case 2: d = &pxa910_device_pwm2; break;
-	case 3: d = &pxa910_device_pwm3; break;
-	case 4: d = &pxa910_device_pwm4; break;
-	default:
-		return -EINVAL;
-	}
+	चयन (id) अणु
+	हाल 1: d = &pxa910_device_pwm1; अवरोध;
+	हाल 2: d = &pxa910_device_pwm2; अवरोध;
+	हाल 3: d = &pxa910_device_pwm3; अवरोध;
+	हाल 4: d = &pxa910_device_pwm4; अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return pxa_register_device(d, NULL, 0);
-}
+	वापस pxa_रेजिस्टर_device(d, शून्य, 0);
+पूर्ण
 
-static inline int pxa910_add_nand(struct pxa3xx_nand_platform_data *info)
-{
-	return pxa_register_device(&pxa910_device_nand, info, sizeof(*info));
-}
-#endif /* __ASM_MACH_PXA910_H */
+अटल अंतरभूत पूर्णांक pxa910_add_nand(काष्ठा pxa3xx_nand_platक्रमm_data *info)
+अणु
+	वापस pxa_रेजिस्टर_device(&pxa910_device_nand, info, माप(*info));
+पूर्ण
+#पूर्ण_अगर /* __ASM_MACH_PXA910_H */

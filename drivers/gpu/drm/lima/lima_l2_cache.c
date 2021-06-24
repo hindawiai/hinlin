@@ -1,98 +1,99 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#include <linux/iopoll.h>
-#include <linux/device.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/device.h>
 
-#include "lima_device.h"
-#include "lima_l2_cache.h"
-#include "lima_regs.h"
+#समावेश "lima_device.h"
+#समावेश "lima_l2_cache.h"
+#समावेश "lima_regs.h"
 
-#define l2_cache_write(reg, data) writel(data, ip->iomem + reg)
-#define l2_cache_read(reg) readl(ip->iomem + reg)
+#घोषणा l2_cache_ग_लिखो(reg, data) ग_लिखोl(data, ip->iomem + reg)
+#घोषणा l2_cache_पढ़ो(reg) पढ़ोl(ip->iomem + reg)
 
-static int lima_l2_cache_wait_idle(struct lima_ip *ip)
-{
-	struct lima_device *dev = ip->dev;
-	int err;
+अटल पूर्णांक lima_l2_cache_रुको_idle(काष्ठा lima_ip *ip)
+अणु
+	काष्ठा lima_device *dev = ip->dev;
+	पूर्णांक err;
 	u32 v;
 
-	err = readl_poll_timeout(ip->iomem + LIMA_L2_CACHE_STATUS, v,
+	err = पढ़ोl_poll_समयout(ip->iomem + LIMA_L2_CACHE_STATUS, v,
 				 !(v & LIMA_L2_CACHE_STATUS_COMMAND_BUSY),
 				 0, 1000);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev->dev, "l2 cache wait command timeout\n");
-		return err;
-	}
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int lima_l2_cache_flush(struct lima_ip *ip)
-{
-	int ret;
+पूर्णांक lima_l2_cache_flush(काष्ठा lima_ip *ip)
+अणु
+	पूर्णांक ret;
 
 	spin_lock(&ip->data.lock);
-	l2_cache_write(LIMA_L2_CACHE_COMMAND, LIMA_L2_CACHE_COMMAND_CLEAR_ALL);
-	ret = lima_l2_cache_wait_idle(ip);
+	l2_cache_ग_लिखो(LIMA_L2_CACHE_COMMAND, LIMA_L2_CACHE_COMMAND_CLEAR_ALL);
+	ret = lima_l2_cache_रुको_idle(ip);
 	spin_unlock(&ip->data.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lima_l2_cache_hw_init(struct lima_ip *ip)
-{
-	int err;
+अटल पूर्णांक lima_l2_cache_hw_init(काष्ठा lima_ip *ip)
+अणु
+	पूर्णांक err;
 
 	err = lima_l2_cache_flush(ip);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	l2_cache_write(LIMA_L2_CACHE_ENABLE,
+	l2_cache_ग_लिखो(LIMA_L2_CACHE_ENABLE,
 		       LIMA_L2_CACHE_ENABLE_ACCESS |
 		       LIMA_L2_CACHE_ENABLE_READ_ALLOCATE);
-	l2_cache_write(LIMA_L2_CACHE_MAX_READS, 0x1c);
+	l2_cache_ग_लिखो(LIMA_L2_CACHE_MAX_READS, 0x1c);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int lima_l2_cache_resume(struct lima_ip *ip)
-{
-	return lima_l2_cache_hw_init(ip);
-}
+पूर्णांक lima_l2_cache_resume(काष्ठा lima_ip *ip)
+अणु
+	वापस lima_l2_cache_hw_init(ip);
+पूर्ण
 
-void lima_l2_cache_suspend(struct lima_ip *ip)
-{
+व्योम lima_l2_cache_suspend(काष्ठा lima_ip *ip)
+अणु
 
-}
+पूर्ण
 
-int lima_l2_cache_init(struct lima_ip *ip)
-{
-	int i;
+पूर्णांक lima_l2_cache_init(काष्ठा lima_ip *ip)
+अणु
+	पूर्णांक i;
 	u32 size;
-	struct lima_device *dev = ip->dev;
+	काष्ठा lima_device *dev = ip->dev;
 
 	/* l2_cache2 only exists when one of PP4-7 present */
-	if (ip->id == lima_ip_l2_cache2) {
-		for (i = lima_ip_pp4; i <= lima_ip_pp7; i++) {
-			if (dev->ip[i].present)
-				break;
-		}
-		if (i > lima_ip_pp7)
-			return -ENODEV;
-	}
+	अगर (ip->id == lima_ip_l2_cache2) अणु
+		क्रम (i = lima_ip_pp4; i <= lima_ip_pp7; i++) अणु
+			अगर (dev->ip[i].present)
+				अवरोध;
+		पूर्ण
+		अगर (i > lima_ip_pp7)
+			वापस -ENODEV;
+	पूर्ण
 
 	spin_lock_init(&ip->data.lock);
 
-	size = l2_cache_read(LIMA_L2_CACHE_SIZE);
+	size = l2_cache_पढ़ो(LIMA_L2_CACHE_SIZE);
 	dev_info(dev->dev, "l2 cache %uK, %u-way, %ubyte cache line, %ubit external bus\n",
 		 1 << (((size >> 16) & 0xff) - 10),
 		 1 << ((size >> 8) & 0xff),
 		 1 << (size & 0xff),
 		 1 << ((size >> 24) & 0xff));
 
-	return lima_l2_cache_hw_init(ip);
-}
+	वापस lima_l2_cache_hw_init(ip);
+पूर्ण
 
-void lima_l2_cache_fini(struct lima_ip *ip)
-{
+व्योम lima_l2_cache_fini(काष्ठा lima_ip *ip)
+अणु
 
-}
+पूर्ण

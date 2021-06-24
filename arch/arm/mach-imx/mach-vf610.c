@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2012-2013 Freescale Semiconductor, Inc.
  */
 
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/io.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/पन.स>
 
-#include <linux/irqchip.h>
-#include <asm/mach/arch.h>
-#include <asm/hardware/cache-l2x0.h>
+#समावेश <linux/irqchip.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/hardware/cache-l2x0.h>
 
-#include "common.h"
-#include "hardware.h"
+#समावेश "common.h"
+#समावेश "hardware.h"
 
-#define MSCM_CPxCOUNT		0x00c
-#define MSCM_CPxCFG1		0x014
+#घोषणा MSCM_CPxCOUNT		0x00c
+#घोषणा MSCM_CPxCFG1		0x014
 
-static void __init vf610_detect_cpu(void)
-{
-	struct device_node *np;
+अटल व्योम __init vf610_detect_cpu(व्योम)
+अणु
+	काष्ठा device_node *np;
 	u32 cpxcount, cpxcfg1;
-	unsigned int cpu_type;
-	void __iomem *mscm;
+	अचिन्हित पूर्णांक cpu_type;
+	व्योम __iomem *mscm;
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,vf610-mscm-cpucfg");
-	if (WARN_ON(!np))
-		return;
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,vf610-mscm-cpucfg");
+	अगर (WARN_ON(!np))
+		वापस;
 
 	mscm = of_iomap(np, 0);
 	of_node_put(np);
 
-	if (WARN_ON(!mscm))
-		return;
+	अगर (WARN_ON(!mscm))
+		वापस;
 
-	cpxcount = readl_relaxed(mscm + MSCM_CPxCOUNT);
-	cpxcfg1  = readl_relaxed(mscm + MSCM_CPxCFG1);
+	cpxcount = पढ़ोl_relaxed(mscm + MSCM_CPxCOUNT);
+	cpxcfg1  = पढ़ोl_relaxed(mscm + MSCM_CPxCFG1);
 
 	iounmap(mscm);
 
 	cpu_type = cpxcount ? MXC_CPU_VF600 : MXC_CPU_VF500;
 
-	if (cpxcfg1)
+	अगर (cpxcfg1)
 		cpu_type |= MXC_CPU_VFx10;
 
 	mxc_set_cpu_type(cpu_type);
-}
+पूर्ण
 
-static void __init vf610_init_machine(void)
-{
+अटल व्योम __init vf610_init_machine(व्योम)
+अणु
 	vf610_detect_cpu();
 
-	of_platform_default_populate(NULL, NULL, NULL);
-}
+	of_platक्रमm_शेष_populate(शून्य, शून्य, शून्य);
+पूर्ण
 
-static const char * const vf610_dt_compat[] __initconst = {
+अटल स्थिर अक्षर * स्थिर vf610_dt_compat[] __initस्थिर = अणु
 	"fsl,vf500",
 	"fsl,vf510",
 	"fsl,vf600",
 	"fsl,vf610",
 	"fsl,vf610m4",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(VYBRID_VF610, "Freescale Vybrid VF5xx/VF6xx (Device Tree)")
 	.l2c_aux_val	= 0,

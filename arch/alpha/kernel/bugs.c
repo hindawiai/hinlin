@@ -1,45 +1,46 @@
+<शैली गुरु>
 
-#include <asm/hwrpb.h>
-#include <linux/device.h>
+#समावेश <यंत्र/hwrpb.h>
+#समावेश <linux/device.h>
 
 
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 
-static int cpu_is_ev6_or_later(void)
-{
-	struct percpu_struct *cpu;
-        unsigned long cputype;
+अटल पूर्णांक cpu_is_ev6_or_later(व्योम)
+अणु
+	काष्ठा percpu_काष्ठा *cpu;
+        अचिन्हित दीर्घ cputype;
 
-        cpu = (struct percpu_struct *)((char *)hwrpb + hwrpb->processor_offset);
+        cpu = (काष्ठा percpu_काष्ठा *)((अक्षर *)hwrpb + hwrpb->processor_offset);
         cputype = cpu->type & 0xffffffff;
         /* Include all of EV6, EV67, EV68, EV7, EV79 and EV69. */
-        return (cputype == EV6_CPU) || ((cputype >= EV67_CPU) && (cputype <= EV69_CPU));
-}
+        वापस (cputype == EV6_CPU) || ((cputype >= EV67_CPU) && (cputype <= EV69_CPU));
+पूर्ण
 
-ssize_t cpu_show_meltdown(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	if (cpu_is_ev6_or_later())
-		return sprintf(buf, "Vulnerable\n");
-	else
-		return sprintf(buf, "Not affected\n");
-}
+sमाप_प्रकार cpu_show_meltकरोwn(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अगर (cpu_is_ev6_or_later())
+		वापस प्र_लिखो(buf, "Vulnerable\n");
+	अन्यथा
+		वापस प्र_लिखो(buf, "Not affected\n");
+पूर्ण
 
-ssize_t cpu_show_spectre_v1(struct device *dev,
-                            struct device_attribute *attr, char *buf)
-{
-	if (cpu_is_ev6_or_later())
-		return sprintf(buf, "Vulnerable\n");
-	else
-		return sprintf(buf, "Not affected\n");
-}
+sमाप_प्रकार cpu_show_spectre_v1(काष्ठा device *dev,
+                            काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अगर (cpu_is_ev6_or_later())
+		वापस प्र_लिखो(buf, "Vulnerable\n");
+	अन्यथा
+		वापस प्र_लिखो(buf, "Not affected\n");
+पूर्ण
 
-ssize_t cpu_show_spectre_v2(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	if (cpu_is_ev6_or_later())
-		return sprintf(buf, "Vulnerable\n");
-	else
-		return sprintf(buf, "Not affected\n");
-}
-#endif
+sमाप_प्रकार cpu_show_spectre_v2(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अगर (cpu_is_ev6_or_later())
+		वापस प्र_लिखो(buf, "Vulnerable\n");
+	अन्यथा
+		वापस प्र_लिखो(buf, "Not affected\n");
+पूर्ण
+#पूर्ण_अगर

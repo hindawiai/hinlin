@@ -1,4 +1,5 @@
-/* mga_irq.c -- IRQ handling for radeon -*- linux-c -*-
+<शैली गुरु>
+/* mga_irq.c -- IRQ handling क्रम radeon -*- linux-c -*-
  */
 /*
  * Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
@@ -7,12 +8,12 @@
  * initial release of the Radeon 8500 driver under the XFree86 license.
  * This notice must be preserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -31,139 +32,139 @@
  *    Eric Anholt <anholt@FreeBSD.org>
  */
 
-#include "mga_drv.h"
+#समावेश "mga_drv.h"
 
-u32 mga_get_vblank_counter(struct drm_device *dev, unsigned int pipe)
-{
-	const drm_mga_private_t *const dev_priv =
-		(drm_mga_private_t *) dev->dev_private;
+u32 mga_get_vblank_counter(काष्ठा drm_device *dev, अचिन्हित पूर्णांक pipe)
+अणु
+	स्थिर drm_mga_निजी_t *स्थिर dev_priv =
+		(drm_mga_निजी_t *) dev->dev_निजी;
 
-	if (pipe != 0)
-		return 0;
+	अगर (pipe != 0)
+		वापस 0;
 
-	return atomic_read(&dev_priv->vbl_received);
-}
+	वापस atomic_पढ़ो(&dev_priv->vbl_received);
+पूर्ण
 
 
-irqreturn_t mga_driver_irq_handler(int irq, void *arg)
-{
-	struct drm_device *dev = (struct drm_device *) arg;
-	drm_mga_private_t *dev_priv = (drm_mga_private_t *) dev->dev_private;
-	int status;
-	int handled = 0;
+irqवापस_t mga_driver_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा drm_device *dev = (काष्ठा drm_device *) arg;
+	drm_mga_निजी_t *dev_priv = (drm_mga_निजी_t *) dev->dev_निजी;
+	पूर्णांक status;
+	पूर्णांक handled = 0;
 
 	status = MGA_READ(MGA_STATUS);
 
-	/* VBLANK interrupt */
-	if (status & MGA_VLINEPEN) {
+	/* VBLANK पूर्णांकerrupt */
+	अगर (status & MGA_VLINEPEN) अणु
 		MGA_WRITE(MGA_ICLEAR, MGA_VLINEICLR);
 		atomic_inc(&dev_priv->vbl_received);
 		drm_handle_vblank(dev, 0);
 		handled = 1;
-	}
+	पूर्ण
 
-	/* SOFTRAP interrupt */
-	if (status & MGA_SOFTRAPEN) {
-		const u32 prim_start = MGA_READ(MGA_PRIMADDRESS);
-		const u32 prim_end = MGA_READ(MGA_PRIMEND);
+	/* SOFTRAP पूर्णांकerrupt */
+	अगर (status & MGA_SOFTRAPEN) अणु
+		स्थिर u32 prim_start = MGA_READ(MGA_PRIMADDRESS);
+		स्थिर u32 prim_end = MGA_READ(MGA_PRIMEND);
 
 
 		MGA_WRITE(MGA_ICLEAR, MGA_SOFTRAPICLR);
 
-		/* In addition to clearing the interrupt-pending bit, we
-		 * have to write to MGA_PRIMEND to re-start the DMA operation.
+		/* In addition to clearing the पूर्णांकerrupt-pending bit, we
+		 * have to ग_लिखो to MGA_PRIMEND to re-start the DMA operation.
 		 */
-		if ((prim_start & ~0x03) != (prim_end & ~0x03))
+		अगर ((prim_start & ~0x03) != (prim_end & ~0x03))
 			MGA_WRITE(MGA_PRIMEND, prim_end);
 
 		atomic_inc(&dev_priv->last_fence_retired);
 		wake_up(&dev_priv->fence_queue);
 		handled = 1;
-	}
+	पूर्ण
 
-	if (handled)
-		return IRQ_HANDLED;
-	return IRQ_NONE;
-}
+	अगर (handled)
+		वापस IRQ_HANDLED;
+	वापस IRQ_NONE;
+पूर्ण
 
-int mga_enable_vblank(struct drm_device *dev, unsigned int pipe)
-{
-	drm_mga_private_t *dev_priv = (drm_mga_private_t *) dev->dev_private;
+पूर्णांक mga_enable_vblank(काष्ठा drm_device *dev, अचिन्हित पूर्णांक pipe)
+अणु
+	drm_mga_निजी_t *dev_priv = (drm_mga_निजी_t *) dev->dev_निजी;
 
-	if (pipe != 0) {
+	अगर (pipe != 0) अणु
 		DRM_ERROR("tried to enable vblank on non-existent crtc %u\n",
 			  pipe);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	MGA_WRITE(MGA_IEN, MGA_VLINEIEN | MGA_SOFTRAPEN);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-void mga_disable_vblank(struct drm_device *dev, unsigned int pipe)
-{
-	if (pipe != 0) {
+व्योम mga_disable_vblank(काष्ठा drm_device *dev, अचिन्हित पूर्णांक pipe)
+अणु
+	अगर (pipe != 0) अणु
 		DRM_ERROR("tried to disable vblank on non-existent crtc %u\n",
 			  pipe);
-	}
+	पूर्ण
 
-	/* Do *NOT* disable the vertical refresh interrupt.  MGA doesn't have
+	/* Do *NOT* disable the vertical refresh पूर्णांकerrupt.  MGA करोesn't have
 	 * a nice hardware counter that tracks the number of refreshes when
-	 * the interrupt is disabled, and the kernel doesn't know the refresh
+	 * the पूर्णांकerrupt is disabled, and the kernel करोesn't know the refresh
 	 * rate to calculate an estimate.
 	 */
 	/* MGA_WRITE(MGA_IEN, MGA_VLINEIEN | MGA_SOFTRAPEN); */
-}
+पूर्ण
 
-void mga_driver_fence_wait(struct drm_device *dev, unsigned int *sequence)
-{
-	drm_mga_private_t *dev_priv = (drm_mga_private_t *) dev->dev_private;
-	unsigned int cur_fence;
+व्योम mga_driver_fence_रुको(काष्ठा drm_device *dev, अचिन्हित पूर्णांक *sequence)
+अणु
+	drm_mga_निजी_t *dev_priv = (drm_mga_निजी_t *) dev->dev_निजी;
+	अचिन्हित पूर्णांक cur_fence;
 
 	/* Assume that the user has missed the current sequence number
-	 * by about a day rather than she wants to wait for years
+	 * by about a day rather than she wants to रुको क्रम years
 	 * using fences.
 	 */
-	wait_event_timeout(dev_priv->fence_queue,
-		    (((cur_fence = atomic_read(&dev_priv->last_fence_retired))
+	रुको_event_समयout(dev_priv->fence_queue,
+		    (((cur_fence = atomic_पढ़ो(&dev_priv->last_fence_retired))
 		      - *sequence) <= (1 << 23)),
-		    msecs_to_jiffies(3000));
+		    msecs_to_jअगरfies(3000));
 
 	*sequence = cur_fence;
-}
+पूर्ण
 
-void mga_driver_irq_preinstall(struct drm_device *dev)
-{
-	drm_mga_private_t *dev_priv = (drm_mga_private_t *) dev->dev_private;
+व्योम mga_driver_irq_preinstall(काष्ठा drm_device *dev)
+अणु
+	drm_mga_निजी_t *dev_priv = (drm_mga_निजी_t *) dev->dev_निजी;
 
-	/* Disable *all* interrupts */
+	/* Disable *all* पूर्णांकerrupts */
 	MGA_WRITE(MGA_IEN, 0);
-	/* Clear bits if they're already high */
+	/* Clear bits अगर they're alपढ़ोy high */
 	MGA_WRITE(MGA_ICLEAR, ~0);
-}
+पूर्ण
 
-int mga_driver_irq_postinstall(struct drm_device *dev)
-{
-	drm_mga_private_t *dev_priv = (drm_mga_private_t *) dev->dev_private;
+पूर्णांक mga_driver_irq_postinstall(काष्ठा drm_device *dev)
+अणु
+	drm_mga_निजी_t *dev_priv = (drm_mga_निजी_t *) dev->dev_निजी;
 
-	init_waitqueue_head(&dev_priv->fence_queue);
+	init_रुकोqueue_head(&dev_priv->fence_queue);
 
-	/* Turn on soft trap interrupt.  Vertical blank interrupts are enabled
+	/* Turn on soft trap पूर्णांकerrupt.  Vertical blank पूर्णांकerrupts are enabled
 	 * in mga_enable_vblank.
 	 */
 	MGA_WRITE(MGA_IEN, MGA_SOFTRAPEN);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mga_driver_irq_uninstall(struct drm_device *dev)
-{
-	drm_mga_private_t *dev_priv = (drm_mga_private_t *) dev->dev_private;
-	if (!dev_priv)
-		return;
+व्योम mga_driver_irq_uninstall(काष्ठा drm_device *dev)
+अणु
+	drm_mga_निजी_t *dev_priv = (drm_mga_निजी_t *) dev->dev_निजी;
+	अगर (!dev_priv)
+		वापस;
 
-	/* Disable *all* interrupts */
+	/* Disable *all* पूर्णांकerrupts */
 	MGA_WRITE(MGA_IEN, 0);
 
 	dev->irq_enabled = false;
-}
+पूर्ण

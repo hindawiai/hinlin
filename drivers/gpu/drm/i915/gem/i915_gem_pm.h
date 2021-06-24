@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __I915_GEM_PM_H__
-#define __I915_GEM_PM_H__
+#अगर_अघोषित __I915_GEM_PM_H__
+#घोषणा __I915_GEM_PM_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_i915_private;
-struct work_struct;
+काष्ठा drm_i915_निजी;
+काष्ठा work_काष्ठा;
 
-void i915_gem_resume(struct drm_i915_private *i915);
+व्योम i915_gem_resume(काष्ठा drm_i915_निजी *i915);
 
-void i915_gem_idle_work_handler(struct work_struct *work);
+व्योम i915_gem_idle_work_handler(काष्ठा work_काष्ठा *work);
 
-void i915_gem_suspend(struct drm_i915_private *i915);
-void i915_gem_suspend_late(struct drm_i915_private *i915);
+व्योम i915_gem_suspend(काष्ठा drm_i915_निजी *i915);
+व्योम i915_gem_suspend_late(काष्ठा drm_i915_निजी *i915);
 
-int i915_gem_freeze(struct drm_i915_private *i915);
-int i915_gem_freeze_late(struct drm_i915_private *i915);
+पूर्णांक i915_gem_मुक्तze(काष्ठा drm_i915_निजी *i915);
+पूर्णांक i915_gem_मुक्तze_late(काष्ठा drm_i915_निजी *i915);
 
-#endif /* __I915_GEM_PM_H__ */
+#पूर्ण_अगर /* __I915_GEM_PM_H__ */

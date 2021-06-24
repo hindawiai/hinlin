@@ -1,353 +1,354 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
-#include <linux/bits.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/watchdog.h>
-#include <linux/of_device.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/of_device.h>
 
-enum wdt_reg {
+क्रमागत wdt_reg अणु
 	WDT_RST,
 	WDT_EN,
 	WDT_STS,
 	WDT_BARK_TIME,
 	WDT_BITE_TIME,
-};
+पूर्ण;
 
-#define QCOM_WDT_ENABLE		BIT(0)
+#घोषणा QCOM_WDT_ENABLE		BIT(0)
 
-static const u32 reg_offset_data_apcs_tmr[] = {
+अटल स्थिर u32 reg_offset_data_apcs_पंचांगr[] = अणु
 	[WDT_RST] = 0x38,
 	[WDT_EN] = 0x40,
 	[WDT_STS] = 0x44,
 	[WDT_BARK_TIME] = 0x4C,
 	[WDT_BITE_TIME] = 0x5C,
-};
+पूर्ण;
 
-static const u32 reg_offset_data_kpss[] = {
+अटल स्थिर u32 reg_offset_data_kpss[] = अणु
 	[WDT_RST] = 0x4,
 	[WDT_EN] = 0x8,
 	[WDT_STS] = 0xC,
 	[WDT_BARK_TIME] = 0x10,
 	[WDT_BITE_TIME] = 0x14,
-};
+पूर्ण;
 
-struct qcom_wdt_match_data {
-	const u32 *offset;
-	bool pretimeout;
-};
+काष्ठा qcom_wdt_match_data अणु
+	स्थिर u32 *offset;
+	bool preसमयout;
+पूर्ण;
 
-struct qcom_wdt {
-	struct watchdog_device	wdd;
-	unsigned long		rate;
-	void __iomem		*base;
-	const u32		*layout;
-};
+काष्ठा qcom_wdt अणु
+	काष्ठा watchकरोg_device	wdd;
+	अचिन्हित दीर्घ		rate;
+	व्योम __iomem		*base;
+	स्थिर u32		*layout;
+पूर्ण;
 
-static void __iomem *wdt_addr(struct qcom_wdt *wdt, enum wdt_reg reg)
-{
-	return wdt->base + wdt->layout[reg];
-}
+अटल व्योम __iomem *wdt_addr(काष्ठा qcom_wdt *wdt, क्रमागत wdt_reg reg)
+अणु
+	वापस wdt->base + wdt->layout[reg];
+पूर्ण
 
-static inline
-struct qcom_wdt *to_qcom_wdt(struct watchdog_device *wdd)
-{
-	return container_of(wdd, struct qcom_wdt, wdd);
-}
+अटल अंतरभूत
+काष्ठा qcom_wdt *to_qcom_wdt(काष्ठा watchकरोg_device *wdd)
+अणु
+	वापस container_of(wdd, काष्ठा qcom_wdt, wdd);
+पूर्ण
 
-static irqreturn_t qcom_wdt_isr(int irq, void *arg)
-{
-	struct watchdog_device *wdd = arg;
+अटल irqवापस_t qcom_wdt_isr(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा watchकरोg_device *wdd = arg;
 
-	watchdog_notify_pretimeout(wdd);
+	watchकरोg_notअगरy_preसमयout(wdd);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int qcom_wdt_start(struct watchdog_device *wdd)
-{
-	struct qcom_wdt *wdt = to_qcom_wdt(wdd);
-	unsigned int bark = wdd->timeout - wdd->pretimeout;
+अटल पूर्णांक qcom_wdt_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा qcom_wdt *wdt = to_qcom_wdt(wdd);
+	अचिन्हित पूर्णांक bark = wdd->समयout - wdd->preसमयout;
 
-	writel(0, wdt_addr(wdt, WDT_EN));
-	writel(1, wdt_addr(wdt, WDT_RST));
-	writel(bark * wdt->rate, wdt_addr(wdt, WDT_BARK_TIME));
-	writel(wdd->timeout * wdt->rate, wdt_addr(wdt, WDT_BITE_TIME));
-	writel(QCOM_WDT_ENABLE, wdt_addr(wdt, WDT_EN));
-	return 0;
-}
+	ग_लिखोl(0, wdt_addr(wdt, WDT_EN));
+	ग_लिखोl(1, wdt_addr(wdt, WDT_RST));
+	ग_लिखोl(bark * wdt->rate, wdt_addr(wdt, WDT_BARK_TIME));
+	ग_लिखोl(wdd->समयout * wdt->rate, wdt_addr(wdt, WDT_BITE_TIME));
+	ग_लिखोl(QCOM_WDT_ENABLE, wdt_addr(wdt, WDT_EN));
+	वापस 0;
+पूर्ण
 
-static int qcom_wdt_stop(struct watchdog_device *wdd)
-{
-	struct qcom_wdt *wdt = to_qcom_wdt(wdd);
+अटल पूर्णांक qcom_wdt_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा qcom_wdt *wdt = to_qcom_wdt(wdd);
 
-	writel(0, wdt_addr(wdt, WDT_EN));
-	return 0;
-}
+	ग_लिखोl(0, wdt_addr(wdt, WDT_EN));
+	वापस 0;
+पूर्ण
 
-static int qcom_wdt_ping(struct watchdog_device *wdd)
-{
-	struct qcom_wdt *wdt = to_qcom_wdt(wdd);
+अटल पूर्णांक qcom_wdt_ping(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा qcom_wdt *wdt = to_qcom_wdt(wdd);
 
-	writel(1, wdt_addr(wdt, WDT_RST));
-	return 0;
-}
+	ग_लिखोl(1, wdt_addr(wdt, WDT_RST));
+	वापस 0;
+पूर्ण
 
-static int qcom_wdt_set_timeout(struct watchdog_device *wdd,
-				unsigned int timeout)
-{
-	wdd->timeout = timeout;
-	return qcom_wdt_start(wdd);
-}
+अटल पूर्णांक qcom_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
+				अचिन्हित पूर्णांक समयout)
+अणु
+	wdd->समयout = समयout;
+	वापस qcom_wdt_start(wdd);
+पूर्ण
 
-static int qcom_wdt_set_pretimeout(struct watchdog_device *wdd,
-				   unsigned int timeout)
-{
-	wdd->pretimeout = timeout;
-	return qcom_wdt_start(wdd);
-}
+अटल पूर्णांक qcom_wdt_set_preसमयout(काष्ठा watchकरोg_device *wdd,
+				   अचिन्हित पूर्णांक समयout)
+अणु
+	wdd->preसमयout = समयout;
+	वापस qcom_wdt_start(wdd);
+पूर्ण
 
-static int qcom_wdt_restart(struct watchdog_device *wdd, unsigned long action,
-			    void *data)
-{
-	struct qcom_wdt *wdt = to_qcom_wdt(wdd);
-	u32 timeout;
+अटल पूर्णांक qcom_wdt_restart(काष्ठा watchकरोg_device *wdd, अचिन्हित दीर्घ action,
+			    व्योम *data)
+अणु
+	काष्ठा qcom_wdt *wdt = to_qcom_wdt(wdd);
+	u32 समयout;
 
 	/*
-	 * Trigger watchdog bite:
+	 * Trigger watchकरोg bite:
 	 *    Setup BITE_TIME to be 128ms, and enable WDT.
 	 */
-	timeout = 128 * wdt->rate / 1000;
+	समयout = 128 * wdt->rate / 1000;
 
-	writel(0, wdt_addr(wdt, WDT_EN));
-	writel(1, wdt_addr(wdt, WDT_RST));
-	writel(timeout, wdt_addr(wdt, WDT_BARK_TIME));
-	writel(timeout, wdt_addr(wdt, WDT_BITE_TIME));
-	writel(QCOM_WDT_ENABLE, wdt_addr(wdt, WDT_EN));
+	ग_लिखोl(0, wdt_addr(wdt, WDT_EN));
+	ग_लिखोl(1, wdt_addr(wdt, WDT_RST));
+	ग_लिखोl(समयout, wdt_addr(wdt, WDT_BARK_TIME));
+	ग_लिखोl(समयout, wdt_addr(wdt, WDT_BITE_TIME));
+	ग_लिखोl(QCOM_WDT_ENABLE, wdt_addr(wdt, WDT_EN));
 
 	/*
-	 * Actually make sure the above sequence hits hardware before sleeping.
+	 * Actually make sure the above sequence hits hardware beक्रमe sleeping.
 	 */
 	wmb();
 
 	mdelay(150);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_wdt_is_running(struct watchdog_device *wdd)
-{
-	struct qcom_wdt *wdt = to_qcom_wdt(wdd);
+अटल पूर्णांक qcom_wdt_is_running(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा qcom_wdt *wdt = to_qcom_wdt(wdd);
 
-	return (readl(wdt_addr(wdt, WDT_EN)) & QCOM_WDT_ENABLE);
-}
+	वापस (पढ़ोl(wdt_addr(wdt, WDT_EN)) & QCOM_WDT_ENABLE);
+पूर्ण
 
-static const struct watchdog_ops qcom_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops qcom_wdt_ops = अणु
 	.start		= qcom_wdt_start,
 	.stop		= qcom_wdt_stop,
 	.ping		= qcom_wdt_ping,
-	.set_timeout	= qcom_wdt_set_timeout,
-	.set_pretimeout	= qcom_wdt_set_pretimeout,
+	.set_समयout	= qcom_wdt_set_समयout,
+	.set_preसमयout	= qcom_wdt_set_preसमयout,
 	.restart        = qcom_wdt_restart,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static const struct watchdog_info qcom_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info qcom_wdt_info = अणु
 	.options	= WDIOF_KEEPALIVEPING
 			| WDIOF_MAGICCLOSE
 			| WDIOF_SETTIMEOUT
 			| WDIOF_CARDRESET,
 	.identity	= KBUILD_MODNAME,
-};
+पूर्ण;
 
-static const struct watchdog_info qcom_wdt_pt_info = {
+अटल स्थिर काष्ठा watchकरोg_info qcom_wdt_pt_info = अणु
 	.options	= WDIOF_KEEPALIVEPING
 			| WDIOF_MAGICCLOSE
 			| WDIOF_SETTIMEOUT
 			| WDIOF_PRETIMEOUT
 			| WDIOF_CARDRESET,
 	.identity	= KBUILD_MODNAME,
-};
+पूर्ण;
 
-static void qcom_clk_disable_unprepare(void *data)
-{
+अटल व्योम qcom_clk_disable_unprepare(व्योम *data)
+अणु
 	clk_disable_unprepare(data);
-}
+पूर्ण
 
-static const struct qcom_wdt_match_data match_data_apcs_tmr = {
-	.offset = reg_offset_data_apcs_tmr,
-	.pretimeout = false,
-};
+अटल स्थिर काष्ठा qcom_wdt_match_data match_data_apcs_पंचांगr = अणु
+	.offset = reg_offset_data_apcs_पंचांगr,
+	.preसमयout = false,
+पूर्ण;
 
-static const struct qcom_wdt_match_data match_data_kpss = {
+अटल स्थिर काष्ठा qcom_wdt_match_data match_data_kpss = अणु
 	.offset = reg_offset_data_kpss,
-	.pretimeout = true,
-};
+	.preसमयout = true,
+पूर्ण;
 
-static int qcom_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct qcom_wdt *wdt;
-	struct resource *res;
-	struct device_node *np = dev->of_node;
-	const struct qcom_wdt_match_data *data;
+अटल पूर्णांक qcom_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा qcom_wdt *wdt;
+	काष्ठा resource *res;
+	काष्ठा device_node *np = dev->of_node;
+	स्थिर काष्ठा qcom_wdt_match_data *data;
 	u32 percpu_offset;
-	int irq, ret;
-	struct clk *clk;
+	पूर्णांक irq, ret;
+	काष्ठा clk *clk;
 
 	data = of_device_get_match_data(dev);
-	if (!data) {
+	अगर (!data) अणु
 		dev_err(dev, "Unsupported QCOM WDT module\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	wdt = devm_kzalloc(dev, sizeof(*wdt), GFP_KERNEL);
-	if (!wdt)
-		return -ENOMEM;
+	wdt = devm_kzalloc(dev, माप(*wdt), GFP_KERNEL);
+	अगर (!wdt)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENOMEM;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENOMEM;
 
-	/* We use CPU0's DGT for the watchdog */
-	if (of_property_read_u32(np, "cpu-offset", &percpu_offset))
+	/* We use CPU0's DGT क्रम the watchकरोg */
+	अगर (of_property_पढ़ो_u32(np, "cpu-offset", &percpu_offset))
 		percpu_offset = 0;
 
 	res->start += percpu_offset;
 	res->end += percpu_offset;
 
 	wdt->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(wdt->base))
-		return PTR_ERR(wdt->base);
+	अगर (IS_ERR(wdt->base))
+		वापस PTR_ERR(wdt->base);
 
-	clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(clk)) {
+	clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(clk)) अणु
 		dev_err(dev, "failed to get input clock\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to setup clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = devm_add_action_or_reset(dev, qcom_clk_disable_unprepare, clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * We use the clock rate to calculate the max timeout, so ensure it's
-	 * not zero to avoid a divide-by-zero exception.
+	 * We use the घड़ी rate to calculate the max समयout, so ensure it's
+	 * not zero to aव्योम a भागide-by-zero exception.
 	 *
-	 * WATCHDOG_CORE assumes units of seconds, if the WDT is clocked such
-	 * that it would bite before a second elapses it's usefulness is
-	 * limited.  Bail if this is the case.
+	 * WATCHDOG_CORE assumes units of seconds, अगर the WDT is घड़ीed such
+	 * that it would bite beक्रमe a second elapses it's usefulness is
+	 * limited.  Bail अगर this is the हाल.
 	 */
 	wdt->rate = clk_get_rate(clk);
-	if (wdt->rate == 0 ||
-	    wdt->rate > 0x10000000U) {
+	अगर (wdt->rate == 0 ||
+	    wdt->rate > 0x10000000U) अणु
 		dev_err(dev, "invalid clock rate\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* check if there is pretimeout support */
-	irq = platform_get_irq_optional(pdev, 0);
-	if (data->pretimeout && irq > 0) {
+	/* check अगर there is preसमयout support */
+	irq = platक्रमm_get_irq_optional(pdev, 0);
+	अगर (data->preसमयout && irq > 0) अणु
 		ret = devm_request_irq(dev, irq, qcom_wdt_isr, 0,
 				       "wdt_bark", &wdt->wdd);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		wdt->wdd.info = &qcom_wdt_pt_info;
-		wdt->wdd.pretimeout = 1;
-	} else {
-		if (irq == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+		wdt->wdd.preसमयout = 1;
+	पूर्ण अन्यथा अणु
+		अगर (irq == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 
 		wdt->wdd.info = &qcom_wdt_info;
-	}
+	पूर्ण
 
 	wdt->wdd.ops = &qcom_wdt_ops;
-	wdt->wdd.min_timeout = 1;
-	wdt->wdd.max_timeout = 0x10000000U / wdt->rate;
+	wdt->wdd.min_समयout = 1;
+	wdt->wdd.max_समयout = 0x10000000U / wdt->rate;
 	wdt->wdd.parent = dev;
 	wdt->layout = data->offset;
 
-	if (readl(wdt_addr(wdt, WDT_STS)) & 1)
+	अगर (पढ़ोl(wdt_addr(wdt, WDT_STS)) & 1)
 		wdt->wdd.bootstatus = WDIOF_CARDRESET;
 
 	/*
-	 * If 'timeout-sec' unspecified in devicetree, assume a 30 second
-	 * default, unless the max timeout is less than 30 seconds, then use
+	 * If 'timeout-sec' unspecअगरied in devicetree, assume a 30 second
+	 * शेष, unless the max समयout is less than 30 seconds, then use
 	 * the max instead.
 	 */
-	wdt->wdd.timeout = min(wdt->wdd.max_timeout, 30U);
-	watchdog_init_timeout(&wdt->wdd, 0, dev);
+	wdt->wdd.समयout = min(wdt->wdd.max_समयout, 30U);
+	watchकरोg_init_समयout(&wdt->wdd, 0, dev);
 
 	/*
-	 * If WDT is already running, call WDT start which
-	 * will stop the WDT, set timeouts as bootloader
-	 * might use different ones and set running bit
-	 * to inform the WDT subsystem to ping the WDT
+	 * If WDT is alपढ़ोy running, call WDT start which
+	 * will stop the WDT, set समयouts as bootloader
+	 * might use dअगरferent ones and set running bit
+	 * to inक्रमm the WDT subप्रणाली to ping the WDT
 	 */
-	if (qcom_wdt_is_running(&wdt->wdd)) {
+	अगर (qcom_wdt_is_running(&wdt->wdd)) अणु
 		qcom_wdt_start(&wdt->wdd);
 		set_bit(WDOG_HW_RUNNING, &wdt->wdd.status);
-	}
+	पूर्ण
 
-	ret = devm_watchdog_register_device(dev, &wdt->wdd);
-	if (ret)
-		return ret;
+	ret = devm_watchकरोg_रेजिस्टर_device(dev, &wdt->wdd);
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, wdt);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, wdt);
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused qcom_wdt_suspend(struct device *dev)
-{
-	struct qcom_wdt *wdt = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused qcom_wdt_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा qcom_wdt *wdt = dev_get_drvdata(dev);
 
-	if (watchdog_active(&wdt->wdd))
+	अगर (watchकरोg_active(&wdt->wdd))
 		qcom_wdt_stop(&wdt->wdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused qcom_wdt_resume(struct device *dev)
-{
-	struct qcom_wdt *wdt = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused qcom_wdt_resume(काष्ठा device *dev)
+अणु
+	काष्ठा qcom_wdt *wdt = dev_get_drvdata(dev);
 
-	if (watchdog_active(&wdt->wdd))
+	अगर (watchकरोg_active(&wdt->wdd))
 		qcom_wdt_start(&wdt->wdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(qcom_wdt_pm_ops, qcom_wdt_suspend, qcom_wdt_resume);
+अटल SIMPLE_DEV_PM_OPS(qcom_wdt_pm_ops, qcom_wdt_suspend, qcom_wdt_resume);
 
-static const struct of_device_id qcom_wdt_of_table[] = {
-	{ .compatible = "qcom,kpss-timer", .data = &match_data_apcs_tmr },
-	{ .compatible = "qcom,scss-timer", .data = &match_data_apcs_tmr },
-	{ .compatible = "qcom,kpss-wdt", .data = &match_data_kpss },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id qcom_wdt_of_table[] = अणु
+	अणु .compatible = "qcom,kpss-timer", .data = &match_data_apcs_पंचांगr पूर्ण,
+	अणु .compatible = "qcom,scss-timer", .data = &match_data_apcs_पंचांगr पूर्ण,
+	अणु .compatible = "qcom,kpss-wdt", .data = &match_data_kpss पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qcom_wdt_of_table);
 
-static struct platform_driver qcom_watchdog_driver = {
+अटल काष्ठा platक्रमm_driver qcom_watchकरोg_driver = अणु
 	.probe	= qcom_wdt_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= KBUILD_MODNAME,
 		.of_match_table	= qcom_wdt_of_table,
 		.pm		= &qcom_wdt_pm_ops,
-	},
-};
-module_platform_driver(qcom_watchdog_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(qcom_watchकरोg_driver);
 
 MODULE_DESCRIPTION("QCOM KPSS Watchdog Driver");
 MODULE_LICENSE("GPL v2");

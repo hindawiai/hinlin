@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef B43legacy_LEDS_H_
-#define B43legacy_LEDS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित B43legacy_LEDS_H_
+#घोषणा B43legacy_LEDS_H_
 
-struct b43legacy_wldev;
+काष्ठा b43legacy_wldev;
 
-#ifdef CONFIG_B43LEGACY_LEDS
+#अगर_घोषित CONFIG_B43LEGACY_LEDS
 
-#include <linux/types.h>
-#include <linux/leds.h>
+#समावेश <linux/types.h>
+#समावेश <linux/leds.h>
 
 
-#define B43legacy_LED_MAX_NAME_LEN	31
+#घोषणा B43legacy_LED_MAX_NAME_LEN	31
 
-struct b43legacy_led {
-	struct b43legacy_wldev *dev;
+काष्ठा b43legacy_led अणु
+	काष्ठा b43legacy_wldev *dev;
 	/* The LED class device */
-	struct led_classdev led_dev;
+	काष्ठा led_classdev led_dev;
 	/* The index number of the LED. */
 	u8 index;
-	/* If activelow is true, the LED is ON if the
-	 * bit is switched off. */
+	/* If activelow is true, the LED is ON अगर the
+	 * bit is चयनed off. */
 	bool activelow;
-	/* The unique name string for this LED device. */
-	char name[B43legacy_LED_MAX_NAME_LEN + 1];
-};
+	/* The unique name string क्रम this LED device. */
+	अक्षर name[B43legacy_LED_MAX_NAME_LEN + 1];
+पूर्ण;
 
-#define B43legacy_LED_BEHAVIOUR		0x7F
-#define B43legacy_LED_ACTIVELOW		0x80
+#घोषणा B43legacy_LED_BEHAVIOUR		0x7F
+#घोषणा B43legacy_LED_ACTIVELOW		0x80
 /* LED behaviour values */
-enum b43legacy_led_behaviour {
+क्रमागत b43legacy_led_behaviour अणु
 	B43legacy_LED_OFF,
 	B43legacy_LED_ON,
 	B43legacy_LED_ACTIVITY,
@@ -41,24 +42,24 @@ enum b43legacy_led_behaviour {
 	B43legacy_LED_WEIRD,
 	B43legacy_LED_ASSOC,
 	B43legacy_LED_INACTIVE,
-};
+पूर्ण;
 
-void b43legacy_leds_init(struct b43legacy_wldev *dev);
-void b43legacy_leds_exit(struct b43legacy_wldev *dev);
+व्योम b43legacy_leds_init(काष्ठा b43legacy_wldev *dev);
+व्योम b43legacy_leds_निकास(काष्ठा b43legacy_wldev *dev);
 
-#else /* CONFIG_B43LEGACY_LEDS */
+#अन्यथा /* CONFIG_B43LEGACY_LEDS */
 /* LED support disabled */
 
-struct b43legacy_led {
+काष्ठा b43legacy_led अणु
 	/* empty */
-};
+पूर्ण;
 
-static inline void b43legacy_leds_init(struct b43legacy_wldev *dev)
-{
-}
-static inline void b43legacy_leds_exit(struct b43legacy_wldev *dev)
-{
-}
-#endif /* CONFIG_B43LEGACY_LEDS */
+अटल अंतरभूत व्योम b43legacy_leds_init(काष्ठा b43legacy_wldev *dev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम b43legacy_leds_निकास(काष्ठा b43legacy_wldev *dev)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_B43LEGACY_LEDS */
 
-#endif /* B43legacy_LEDS_H_ */
+#पूर्ण_अगर /* B43legacy_LEDS_H_ */

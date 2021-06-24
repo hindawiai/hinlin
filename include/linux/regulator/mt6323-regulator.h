@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 MediaTek Inc.
  * Author: Chen Zhong <chen.zhong@mediatek.com>
  */
 
-#ifndef __LINUX_REGULATOR_MT6323_H
-#define __LINUX_REGULATOR_MT6323_H
+#अगर_अघोषित __LINUX_REGULATOR_MT6323_H
+#घोषणा __LINUX_REGULATOR_MT6323_H
 
-enum {
+क्रमागत अणु
 	MT6323_ID_VPROC = 0,
 	MT6323_ID_VSYS,
 	MT6323_ID_VPA,
@@ -37,8 +38,8 @@ enum {
 	MT6323_ID_VCAMD,
 	MT6323_ID_VCAMIO,
 	MT6323_ID_RG_MAX,
-};
+पूर्ण;
 
-#define MT6323_MAX_REGULATOR	MT6323_ID_RG_MAX
+#घोषणा MT6323_MAX_REGULATOR	MT6323_ID_RG_MAX
 
-#endif /* __LINUX_REGULATOR_MT6323_H */
+#पूर्ण_अगर /* __LINUX_REGULATOR_MT6323_H */

@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* Common code for 32 and 64-bit NUMA */
-#include <linux/acpi.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/string.h>
-#include <linux/init.h>
-#include <linux/memblock.h>
-#include <linux/mmzone.h>
-#include <linux/ctype.h>
-#include <linux/nodemask.h>
-#include <linux/sched.h>
-#include <linux/topology.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* Common code क्रम 32 and 64-bit NUMA */
+#समावेश <linux/acpi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/topology.h>
 
-#include <asm/e820/api.h>
-#include <asm/proto.h>
-#include <asm/dma.h>
-#include <asm/amd_nb.h>
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/amd_nb.h>
 
-#include "numa_internal.h"
+#समावेश "numa_internal.h"
 
-int numa_off;
+पूर्णांक numa_off;
 nodemask_t numa_nodes_parsed __initdata;
 
-struct pglist_data *node_data[MAX_NUMNODES] __read_mostly;
+काष्ठा pglist_data *node_data[MAX_NUMNODES] __पढ़ो_mostly;
 EXPORT_SYMBOL(node_data);
 
-static struct numa_meminfo numa_meminfo __initdata_or_meminfo;
-static struct numa_meminfo numa_reserved_meminfo __initdata_or_meminfo;
+अटल काष्ठा numa_meminfo numa_meminfo __initdata_or_meminfo;
+अटल काष्ठा numa_meminfo numa_reserved_meminfo __initdata_or_meminfo;
 
-static int numa_distance_cnt;
-static u8 *numa_distance;
+अटल पूर्णांक numa_distance_cnt;
+अटल u8 *numa_distance;
 
-static __init int numa_setup(char *opt)
-{
-	if (!opt)
-		return -EINVAL;
-	if (!strncmp(opt, "off", 3))
+अटल __init पूर्णांक numa_setup(अक्षर *opt)
+अणु
+	अगर (!opt)
+		वापस -EINVAL;
+	अगर (!म_भेदन(opt, "off", 3))
 		numa_off = 1;
-	if (!strncmp(opt, "fake=", 5))
-		return numa_emu_cmdline(opt + 5);
-	if (!strncmp(opt, "noacpi", 6))
+	अगर (!म_भेदन(opt, "fake=", 5))
+		वापस numa_emu_cmdline(opt + 5);
+	अगर (!म_भेदन(opt, "noacpi", 6))
 		disable_srat();
-	if (!strncmp(opt, "nohmat", 6))
+	अगर (!म_भेदन(opt, "nohmat", 6))
 		disable_hmat();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("numa", numa_setup);
 
 /*
  * apicid, cpu, node mappings
  */
-s16 __apicid_to_node[MAX_LOCAL_APIC] = {
+s16 __apicid_to_node[MAX_LOCAL_APIC] = अणु
 	[0 ... MAX_LOCAL_APIC-1] = NUMA_NO_NODE
-};
+पूर्ण;
 
-int numa_cpu_node(int cpu)
-{
-	int apicid = early_per_cpu(x86_cpu_to_apicid, cpu);
+पूर्णांक numa_cpu_node(पूर्णांक cpu)
+अणु
+	पूर्णांक apicid = early_per_cpu(x86_cpu_to_apicid, cpu);
 
-	if (apicid != BAD_APICID)
-		return __apicid_to_node[apicid];
-	return NUMA_NO_NODE;
-}
+	अगर (apicid != BAD_APICID)
+		वापस __apicid_to_node[apicid];
+	वापस NUMA_NO_NODE;
+पूर्ण
 
 cpumask_var_t node_to_cpumask_map[MAX_NUMNODES];
 EXPORT_SYMBOL(node_to_cpumask_map);
@@ -69,112 +70,112 @@ EXPORT_SYMBOL(node_to_cpumask_map);
 /*
  * Map cpu index to node index
  */
-DEFINE_EARLY_PER_CPU(int, x86_cpu_to_node_map, NUMA_NO_NODE);
+DEFINE_EARLY_PER_CPU(पूर्णांक, x86_cpu_to_node_map, NUMA_NO_NODE);
 EXPORT_EARLY_PER_CPU_SYMBOL(x86_cpu_to_node_map);
 
-void numa_set_node(int cpu, int node)
-{
-	int *cpu_to_node_map = early_per_cpu_ptr(x86_cpu_to_node_map);
+व्योम numa_set_node(पूर्णांक cpu, पूर्णांक node)
+अणु
+	पूर्णांक *cpu_to_node_map = early_per_cpu_ptr(x86_cpu_to_node_map);
 
 	/* early setting, no percpu area yet */
-	if (cpu_to_node_map) {
+	अगर (cpu_to_node_map) अणु
 		cpu_to_node_map[cpu] = node;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-#ifdef CONFIG_DEBUG_PER_CPU_MAPS
-	if (cpu >= nr_cpu_ids || !cpu_possible(cpu)) {
-		printk(KERN_ERR "numa_set_node: invalid cpu# (%d)\n", cpu);
+#अगर_घोषित CONFIG_DEBUG_PER_CPU_MAPS
+	अगर (cpu >= nr_cpu_ids || !cpu_possible(cpu)) अणु
+		prपूर्णांकk(KERN_ERR "numa_set_node: invalid cpu# (%d)\n", cpu);
 		dump_stack();
-		return;
-	}
-#endif
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
 	per_cpu(x86_cpu_to_node_map, cpu) = node;
 
 	set_cpu_numa_node(cpu, node);
-}
+पूर्ण
 
-void numa_clear_node(int cpu)
-{
+व्योम numa_clear_node(पूर्णांक cpu)
+अणु
 	numa_set_node(cpu, NUMA_NO_NODE);
-}
+पूर्ण
 
 /*
  * Allocate node_to_cpumask_map based on number of available nodes
  * Requires node_possible_map to be valid.
  *
- * Note: cpumask_of_node() is not valid until after this is done.
+ * Note: cpumask_of_node() is not valid until after this is करोne.
  * (Use CONFIG_DEBUG_PER_CPU_MAPS to check this.)
  */
-void __init setup_node_to_cpumask_map(void)
-{
-	unsigned int node;
+व्योम __init setup_node_to_cpumask_map(व्योम)
+अणु
+	अचिन्हित पूर्णांक node;
 
-	/* setup nr_node_ids if not done yet */
-	if (nr_node_ids == MAX_NUMNODES)
+	/* setup nr_node_ids अगर not करोne yet */
+	अगर (nr_node_ids == MAX_NUMNODES)
 		setup_nr_node_ids();
 
 	/* allocate the map */
-	for (node = 0; node < nr_node_ids; node++)
-		alloc_bootmem_cpumask_var(&node_to_cpumask_map[node]);
+	क्रम (node = 0; node < nr_node_ids; node++)
+		alloc_booपंचांगem_cpumask_var(&node_to_cpumask_map[node]);
 
 	/* cpumask_of_node() will now work */
 	pr_debug("Node to cpumask map for %u nodes\n", nr_node_ids);
-}
+पूर्ण
 
-static int __init numa_add_memblk_to(int nid, u64 start, u64 end,
-				     struct numa_meminfo *mi)
-{
+अटल पूर्णांक __init numa_add_memblk_to(पूर्णांक nid, u64 start, u64 end,
+				     काष्ठा numa_meminfo *mi)
+अणु
 	/* ignore zero length blks */
-	if (start == end)
-		return 0;
+	अगर (start == end)
+		वापस 0;
 
 	/* whine about and ignore invalid blks */
-	if (start > end || nid < 0 || nid >= MAX_NUMNODES) {
+	अगर (start > end || nid < 0 || nid >= MAX_NUMNODES) अणु
 		pr_warn("Warning: invalid memblk node %d [mem %#010Lx-%#010Lx]\n",
 			nid, start, end - 1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (mi->nr_blks >= NR_NODE_MEMBLKS) {
+	अगर (mi->nr_blks >= NR_NODE_MEMBLKS) अणु
 		pr_err("too many memblk ranges\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mi->blk[mi->nr_blks].start = start;
 	mi->blk[mi->nr_blks].end = end;
 	mi->blk[mi->nr_blks].nid = nid;
 	mi->nr_blks++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * numa_remove_memblk_from - Remove one numa_memblk from a numa_meminfo
- * @idx: Index of memblk to remove
- * @mi: numa_meminfo to remove memblk from
+ * numa_हटाओ_memblk_from - Remove one numa_memblk from a numa_meminfo
+ * @idx: Index of memblk to हटाओ
+ * @mi: numa_meminfo to हटाओ memblk from
  *
- * Remove @idx'th numa_memblk from @mi by shifting @mi->blk[] and
+ * Remove @idx'th numa_memblk from @mi by shअगरting @mi->blk[] and
  * decrementing @mi->nr_blks.
  */
-void __init numa_remove_memblk_from(int idx, struct numa_meminfo *mi)
-{
+व्योम __init numa_हटाओ_memblk_from(पूर्णांक idx, काष्ठा numa_meminfo *mi)
+अणु
 	mi->nr_blks--;
-	memmove(&mi->blk[idx], &mi->blk[idx + 1],
-		(mi->nr_blks - idx) * sizeof(mi->blk[0]));
-}
+	स_हटाओ(&mi->blk[idx], &mi->blk[idx + 1],
+		(mi->nr_blks - idx) * माप(mi->blk[0]));
+पूर्ण
 
 /**
  * numa_move_tail_memblk - Move a numa_memblk from one numa_meminfo to another
  * @dst: numa_meminfo to append block to
- * @idx: Index of memblk to remove
- * @src: numa_meminfo to remove memblk from
+ * @idx: Index of memblk to हटाओ
+ * @src: numa_meminfo to हटाओ memblk from
  */
-static void __init numa_move_tail_memblk(struct numa_meminfo *dst, int idx,
-					 struct numa_meminfo *src)
-{
+अटल व्योम __init numa_move_tail_memblk(काष्ठा numa_meminfo *dst, पूर्णांक idx,
+					 काष्ठा numa_meminfo *src)
+अणु
 	dst->blk[dst->nr_blks++] = src->blk[idx];
-	numa_remove_memblk_from(idx, src);
-}
+	numa_हटाओ_memblk_from(idx, src);
+पूर्ण
 
 /**
  * numa_add_memblk - Add one numa_memblk to numa_meminfo
@@ -182,97 +183,97 @@ static void __init numa_move_tail_memblk(struct numa_meminfo *dst, int idx,
  * @start: Start address of the new memblk
  * @end: End address of the new memblk
  *
- * Add a new memblk to the default numa_meminfo.
+ * Add a new memblk to the शेष numa_meminfo.
  *
  * RETURNS:
- * 0 on success, -errno on failure.
+ * 0 on success, -त्रुटि_सं on failure.
  */
-int __init numa_add_memblk(int nid, u64 start, u64 end)
-{
-	return numa_add_memblk_to(nid, start, end, &numa_meminfo);
-}
+पूर्णांक __init numa_add_memblk(पूर्णांक nid, u64 start, u64 end)
+अणु
+	वापस numa_add_memblk_to(nid, start, end, &numa_meminfo);
+पूर्ण
 
-/* Allocate NODE_DATA for a node on the local memory */
-static void __init alloc_node_data(int nid)
-{
-	const size_t nd_size = roundup(sizeof(pg_data_t), PAGE_SIZE);
+/* Allocate NODE_DATA क्रम a node on the local memory */
+अटल व्योम __init alloc_node_data(पूर्णांक nid)
+अणु
+	स्थिर माप_प्रकार nd_size = roundup(माप(pg_data_t), PAGE_SIZE);
 	u64 nd_pa;
-	void *nd;
-	int tnid;
+	व्योम *nd;
+	पूर्णांक tnid;
 
 	/*
 	 * Allocate node data.  Try node-local memory and then any node.
 	 * Never allocate in DMA zone.
 	 */
 	nd_pa = memblock_phys_alloc_try_nid(nd_size, SMP_CACHE_BYTES, nid);
-	if (!nd_pa) {
+	अगर (!nd_pa) अणु
 		pr_err("Cannot find %zu bytes in any node (initial node: %d)\n",
 		       nd_size, nid);
-		return;
-	}
+		वापस;
+	पूर्ण
 	nd = __va(nd_pa);
 
 	/* report and initialize */
-	printk(KERN_INFO "NODE_DATA(%d) allocated [mem %#010Lx-%#010Lx]\n", nid,
+	prपूर्णांकk(KERN_INFO "NODE_DATA(%d) allocated [mem %#010Lx-%#010Lx]\n", nid,
 	       nd_pa, nd_pa + nd_size - 1);
 	tnid = early_pfn_to_nid(nd_pa >> PAGE_SHIFT);
-	if (tnid != nid)
-		printk(KERN_INFO "    NODE_DATA(%d) on node %d\n", nid, tnid);
+	अगर (tnid != nid)
+		prपूर्णांकk(KERN_INFO "    NODE_DATA(%d) on node %d\n", nid, tnid);
 
 	node_data[nid] = nd;
-	memset(NODE_DATA(nid), 0, sizeof(pg_data_t));
+	स_रखो(NODE_DATA(nid), 0, माप(pg_data_t));
 
 	node_set_online(nid);
-}
+पूर्ण
 
 /**
  * numa_cleanup_meminfo - Cleanup a numa_meminfo
  * @mi: numa_meminfo to clean up
  *
- * Sanitize @mi by merging and removing unnecessary memblks.  Also check for
+ * Sanitize @mi by merging and removing unnecessary memblks.  Also check क्रम
  * conflicts and clear unused memblks.
  *
  * RETURNS:
- * 0 on success, -errno on failure.
+ * 0 on success, -त्रुटि_सं on failure.
  */
-int __init numa_cleanup_meminfo(struct numa_meminfo *mi)
-{
-	const u64 low = 0;
-	const u64 high = PFN_PHYS(max_pfn);
-	int i, j, k;
+पूर्णांक __init numa_cleanup_meminfo(काष्ठा numa_meminfo *mi)
+अणु
+	स्थिर u64 low = 0;
+	स्थिर u64 high = PFN_PHYS(max_pfn);
+	पूर्णांक i, j, k;
 
 	/* first, trim all entries */
-	for (i = 0; i < mi->nr_blks; i++) {
-		struct numa_memblk *bi = &mi->blk[i];
+	क्रम (i = 0; i < mi->nr_blks; i++) अणु
+		काष्ठा numa_memblk *bi = &mi->blk[i];
 
 		/* move / save reserved memory ranges */
-		if (!memblock_overlaps_region(&memblock.memory,
-					bi->start, bi->end - bi->start)) {
+		अगर (!memblock_overlaps_region(&memblock.memory,
+					bi->start, bi->end - bi->start)) अणु
 			numa_move_tail_memblk(&numa_reserved_meminfo, i--, mi);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* make sure all non-reserved blocks are inside the limits */
 		bi->start = max(bi->start, low);
 
-		/* preserve info for non-RAM areas above 'max_pfn': */
-		if (bi->end > high) {
+		/* preserve info क्रम non-RAM areas above 'max_pfn': */
+		अगर (bi->end > high) अणु
 			numa_add_memblk_to(bi->nid, high, bi->end,
 					   &numa_reserved_meminfo);
 			bi->end = high;
-		}
+		पूर्ण
 
 		/* and there's no empty block */
-		if (bi->start >= bi->end)
-			numa_remove_memblk_from(i--, mi);
-	}
+		अगर (bi->start >= bi->end)
+			numa_हटाओ_memblk_from(i--, mi);
+	पूर्ण
 
 	/* merge neighboring / overlapping entries */
-	for (i = 0; i < mi->nr_blks; i++) {
-		struct numa_memblk *bi = &mi->blk[i];
+	क्रम (i = 0; i < mi->nr_blks; i++) अणु
+		काष्ठा numa_memblk *bi = &mi->blk[i];
 
-		for (j = i + 1; j < mi->nr_blks; j++) {
-			struct numa_memblk *bj = &mi->blk[j];
+		क्रम (j = i + 1; j < mi->nr_blks; j++) अणु
+			काष्ठा numa_memblk *bj = &mi->blk[j];
 			u64 start, end;
 
 			/*
@@ -280,124 +281,124 @@ int __init numa_cleanup_meminfo(struct numa_meminfo *mi)
 			 * about but allow overlaps of the same nid.  They
 			 * will be merged below.
 			 */
-			if (bi->end > bj->start && bi->start < bj->end) {
-				if (bi->nid != bj->nid) {
+			अगर (bi->end > bj->start && bi->start < bj->end) अणु
+				अगर (bi->nid != bj->nid) अणु
 					pr_err("node %d [mem %#010Lx-%#010Lx] overlaps with node %d [mem %#010Lx-%#010Lx]\n",
 					       bi->nid, bi->start, bi->end - 1,
 					       bj->nid, bj->start, bj->end - 1);
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 				pr_warn("Warning: node %d [mem %#010Lx-%#010Lx] overlaps with itself [mem %#010Lx-%#010Lx]\n",
 					bi->nid, bi->start, bi->end - 1,
 					bj->start, bj->end - 1);
-			}
+			पूर्ण
 
 			/*
 			 * Join together blocks on the same node, holes
-			 * between which don't overlap with memory on other
+			 * between which करोn't overlap with memory on other
 			 * nodes.
 			 */
-			if (bi->nid != bj->nid)
-				continue;
+			अगर (bi->nid != bj->nid)
+				जारी;
 			start = min(bi->start, bj->start);
 			end = max(bi->end, bj->end);
-			for (k = 0; k < mi->nr_blks; k++) {
-				struct numa_memblk *bk = &mi->blk[k];
+			क्रम (k = 0; k < mi->nr_blks; k++) अणु
+				काष्ठा numa_memblk *bk = &mi->blk[k];
 
-				if (bi->nid == bk->nid)
-					continue;
-				if (start < bk->end && end > bk->start)
-					break;
-			}
-			if (k < mi->nr_blks)
-				continue;
-			printk(KERN_INFO "NUMA: Node %d [mem %#010Lx-%#010Lx] + [mem %#010Lx-%#010Lx] -> [mem %#010Lx-%#010Lx]\n",
+				अगर (bi->nid == bk->nid)
+					जारी;
+				अगर (start < bk->end && end > bk->start)
+					अवरोध;
+			पूर्ण
+			अगर (k < mi->nr_blks)
+				जारी;
+			prपूर्णांकk(KERN_INFO "NUMA: Node %d [mem %#010Lx-%#010Lx] + [mem %#010Lx-%#010Lx] -> [mem %#010Lx-%#010Lx]\n",
 			       bi->nid, bi->start, bi->end - 1, bj->start,
 			       bj->end - 1, start, end - 1);
 			bi->start = start;
 			bi->end = end;
-			numa_remove_memblk_from(j--, mi);
-		}
-	}
+			numa_हटाओ_memblk_from(j--, mi);
+		पूर्ण
+	पूर्ण
 
 	/* clear unused ones */
-	for (i = mi->nr_blks; i < ARRAY_SIZE(mi->blk); i++) {
+	क्रम (i = mi->nr_blks; i < ARRAY_SIZE(mi->blk); i++) अणु
 		mi->blk[i].start = mi->blk[i].end = 0;
 		mi->blk[i].nid = NUMA_NO_NODE;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Set nodes, which have memory in @mi, in *@nodemask.
  */
-static void __init numa_nodemask_from_meminfo(nodemask_t *nodemask,
-					      const struct numa_meminfo *mi)
-{
-	int i;
+अटल व्योम __init numa_nodemask_from_meminfo(nodemask_t *nodemask,
+					      स्थिर काष्ठा numa_meminfo *mi)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(mi->blk); i++)
-		if (mi->blk[i].start != mi->blk[i].end &&
+	क्रम (i = 0; i < ARRAY_SIZE(mi->blk); i++)
+		अगर (mi->blk[i].start != mi->blk[i].end &&
 		    mi->blk[i].nid != NUMA_NO_NODE)
 			node_set(mi->blk[i].nid, *nodemask);
-}
+पूर्ण
 
 /**
  * numa_reset_distance - Reset NUMA distance table
  *
- * The current table is freed.  The next numa_set_distance() call will
+ * The current table is मुक्तd.  The next numa_set_distance() call will
  * create a new one.
  */
-void __init numa_reset_distance(void)
-{
-	size_t size = numa_distance_cnt * numa_distance_cnt * sizeof(numa_distance[0]);
+व्योम __init numa_reset_distance(व्योम)
+अणु
+	माप_प्रकार size = numa_distance_cnt * numa_distance_cnt * माप(numa_distance[0]);
 
 	/* numa_distance could be 1LU marking allocation failure, test cnt */
-	if (numa_distance_cnt)
-		memblock_free(__pa(numa_distance), size);
+	अगर (numa_distance_cnt)
+		memblock_मुक्त(__pa(numa_distance), size);
 	numa_distance_cnt = 0;
-	numa_distance = NULL;	/* enable table creation */
-}
+	numa_distance = शून्य;	/* enable table creation */
+पूर्ण
 
-static int __init numa_alloc_distance(void)
-{
+अटल पूर्णांक __init numa_alloc_distance(व्योम)
+अणु
 	nodemask_t nodes_parsed;
-	size_t size;
-	int i, j, cnt = 0;
+	माप_प्रकार size;
+	पूर्णांक i, j, cnt = 0;
 	u64 phys;
 
 	/* size the new table and allocate it */
 	nodes_parsed = numa_nodes_parsed;
 	numa_nodemask_from_meminfo(&nodes_parsed, &numa_meminfo);
 
-	for_each_node_mask(i, nodes_parsed)
+	क्रम_each_node_mask(i, nodes_parsed)
 		cnt = i;
 	cnt++;
-	size = cnt * cnt * sizeof(numa_distance[0]);
+	size = cnt * cnt * माप(numa_distance[0]);
 
 	phys = memblock_find_in_range(0, PFN_PHYS(max_pfn_mapped),
 				      size, PAGE_SIZE);
-	if (!phys) {
+	अगर (!phys) अणु
 		pr_warn("Warning: can't allocate distance table!\n");
-		/* don't retry until explicitly reset */
-		numa_distance = (void *)1LU;
-		return -ENOMEM;
-	}
+		/* करोn't retry until explicitly reset */
+		numa_distance = (व्योम *)1LU;
+		वापस -ENOMEM;
+	पूर्ण
 	memblock_reserve(phys, size);
 
 	numa_distance = __va(phys);
 	numa_distance_cnt = cnt;
 
-	/* fill with the default distances */
-	for (i = 0; i < cnt; i++)
-		for (j = 0; j < cnt; j++)
+	/* fill with the शेष distances */
+	क्रम (i = 0; i < cnt; i++)
+		क्रम (j = 0; j < cnt; j++)
 			numa_distance[i * cnt + j] = i == j ?
 				LOCAL_DISTANCE : REMOTE_DISTANCE;
-	printk(KERN_DEBUG "NUMA: Initialized distance table, cnt=%d\n", cnt);
+	prपूर्णांकk(KERN_DEBUG "NUMA: Initialized distance table, cnt=%d\n", cnt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * numa_set_distance - Set NUMA distance from one NUMA to another
@@ -406,163 +407,163 @@ static int __init numa_alloc_distance(void)
  * @distance: NUMA distance
  *
  * Set the distance from node @from to @to to @distance.  If distance table
- * doesn't exist, one which is large enough to accommodate all the currently
+ * करोesn't exist, one which is large enough to accommodate all the currently
  * known nodes will be created.
  *
- * If such table cannot be allocated, a warning is printed and further
+ * If such table cannot be allocated, a warning is prपूर्णांकed and further
  * calls are ignored until the distance table is reset with
  * numa_reset_distance().
  *
  * If @from or @to is higher than the highest known node or lower than zero
- * at the time of table creation or @distance doesn't make sense, the call
+ * at the समय of table creation or @distance करोesn't make sense, the call
  * is ignored.
- * This is to allow simplification of specific NUMA config implementations.
+ * This is to allow simplअगरication of specअगरic NUMA config implementations.
  */
-void __init numa_set_distance(int from, int to, int distance)
-{
-	if (!numa_distance && numa_alloc_distance() < 0)
-		return;
+व्योम __init numa_set_distance(पूर्णांक from, पूर्णांक to, पूर्णांक distance)
+अणु
+	अगर (!numa_distance && numa_alloc_distance() < 0)
+		वापस;
 
-	if (from >= numa_distance_cnt || to >= numa_distance_cnt ||
-			from < 0 || to < 0) {
+	अगर (from >= numa_distance_cnt || to >= numa_distance_cnt ||
+			from < 0 || to < 0) अणु
 		pr_warn_once("Warning: node ids are out of bound, from=%d to=%d distance=%d\n",
 			     from, to, distance);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if ((u8)distance != distance ||
-	    (from == to && distance != LOCAL_DISTANCE)) {
+	अगर ((u8)distance != distance ||
+	    (from == to && distance != LOCAL_DISTANCE)) अणु
 		pr_warn_once("Warning: invalid distance parameter, from=%d to=%d distance=%d\n",
 			     from, to, distance);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	numa_distance[from * numa_distance_cnt + to] = distance;
-}
+पूर्ण
 
-int __node_distance(int from, int to)
-{
-	if (from >= numa_distance_cnt || to >= numa_distance_cnt)
-		return from == to ? LOCAL_DISTANCE : REMOTE_DISTANCE;
-	return numa_distance[from * numa_distance_cnt + to];
-}
+पूर्णांक __node_distance(पूर्णांक from, पूर्णांक to)
+अणु
+	अगर (from >= numa_distance_cnt || to >= numa_distance_cnt)
+		वापस from == to ? LOCAL_DISTANCE : REMOTE_DISTANCE;
+	वापस numa_distance[from * numa_distance_cnt + to];
+पूर्ण
 EXPORT_SYMBOL(__node_distance);
 
 /*
  * Sanity check to catch more bad NUMA configurations (they are amazingly
  * common).  Make sure the nodes cover all memory.
  */
-static bool __init numa_meminfo_cover_memory(const struct numa_meminfo *mi)
-{
+अटल bool __init numa_meminfo_cover_memory(स्थिर काष्ठा numa_meminfo *mi)
+अणु
 	u64 numaram, e820ram;
-	int i;
+	पूर्णांक i;
 
 	numaram = 0;
-	for (i = 0; i < mi->nr_blks; i++) {
+	क्रम (i = 0; i < mi->nr_blks; i++) अणु
 		u64 s = mi->blk[i].start >> PAGE_SHIFT;
 		u64 e = mi->blk[i].end >> PAGE_SHIFT;
 		numaram += e - s;
-		numaram -= __absent_pages_in_range(mi->blk[i].nid, s, e);
-		if ((s64)numaram < 0)
+		numaram -= __असलent_pages_in_range(mi->blk[i].nid, s, e);
+		अगर ((s64)numaram < 0)
 			numaram = 0;
-	}
+	पूर्ण
 
-	e820ram = max_pfn - absent_pages_in_range(0, max_pfn);
+	e820ram = max_pfn - असलent_pages_in_range(0, max_pfn);
 
 	/* We seem to lose 3 pages somewhere. Allow 1M of slack. */
-	if ((s64)(e820ram - numaram) >= (1 << (20 - PAGE_SHIFT))) {
-		printk(KERN_ERR "NUMA: nodes only cover %LuMB of your %LuMB e820 RAM. Not used.\n",
+	अगर ((s64)(e820ram - numaram) >= (1 << (20 - PAGE_SHIFT))) अणु
+		prपूर्णांकk(KERN_ERR "NUMA: nodes only cover %LuMB of your %LuMB e820 RAM. Not used.\n",
 		       (numaram << PAGE_SHIFT) >> 20,
 		       (e820ram << PAGE_SHIFT) >> 20);
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /*
  * Mark all currently memblock-reserved physical memory (which covers the
  * kernel's own memory ranges) as hot-unswappable.
  */
-static void __init numa_clear_kernel_node_hotplug(void)
-{
+अटल व्योम __init numa_clear_kernel_node_hotplug(व्योम)
+अणु
 	nodemask_t reserved_nodemask = NODE_MASK_NONE;
-	struct memblock_region *mb_region;
-	int i;
+	काष्ठा memblock_region *mb_region;
+	पूर्णांक i;
 
 	/*
-	 * We have to do some preprocessing of memblock regions, to
-	 * make them suitable for reservation.
+	 * We have to करो some preprocessing of memblock regions, to
+	 * make them suitable क्रम reservation.
 	 *
-	 * At this time, all memory regions reserved by memblock are
+	 * At this समय, all memory regions reserved by memblock are
 	 * used by the kernel, but those regions are not split up
-	 * along node boundaries yet, and don't necessarily have their
+	 * aदीर्घ node boundaries yet, and करोn't necessarily have their
 	 * node ID set yet either.
 	 *
 	 * So iterate over all memory known to the x86 architecture,
 	 * and use those ranges to set the nid in memblock.reserved.
-	 * This will split up the memblock regions along node
+	 * This will split up the memblock regions aदीर्घ node
 	 * boundaries and will set the node IDs as well.
 	 */
-	for (i = 0; i < numa_meminfo.nr_blks; i++) {
-		struct numa_memblk *mb = numa_meminfo.blk + i;
-		int ret;
+	क्रम (i = 0; i < numa_meminfo.nr_blks; i++) अणु
+		काष्ठा numa_memblk *mb = numa_meminfo.blk + i;
+		पूर्णांक ret;
 
 		ret = memblock_set_node(mb->start, mb->end - mb->start, &memblock.reserved, mb->nid);
 		WARN_ON_ONCE(ret);
-	}
+	पूर्ण
 
 	/*
-	 * Now go over all reserved memblock regions, to construct a
+	 * Now go over all reserved memblock regions, to स्थिरruct a
 	 * node mask of all kernel reserved memory areas.
 	 *
 	 * [ Note, when booting with mem=nn[kMG] or in a kdump kernel,
 	 *   numa_meminfo might not include all memblock.reserved
 	 *   memory ranges, because quirks such as trim_snb_memory()
-	 *   reserve specific pages for Sandy Bridge graphics. ]
+	 *   reserve specअगरic pages क्रम Sandy Bridge graphics. ]
 	 */
-	for_each_reserved_mem_region(mb_region) {
-		int nid = memblock_get_region_node(mb_region);
+	क्रम_each_reserved_mem_region(mb_region) अणु
+		पूर्णांक nid = memblock_get_region_node(mb_region);
 
-		if (nid != MAX_NUMNODES)
+		अगर (nid != MAX_NUMNODES)
 			node_set(nid, reserved_nodemask);
-	}
+	पूर्ण
 
 	/*
-	 * Finally, clear the MEMBLOCK_HOTPLUG flag for all memory
-	 * belonging to the reserved node mask.
+	 * Finally, clear the MEMBLOCK_HOTPLUG flag क्रम all memory
+	 * beदीर्घing to the reserved node mask.
 	 *
 	 * Note that this will include memory regions that reside
 	 * on nodes that contain kernel memory - entire nodes
 	 * become hot-unpluggable:
 	 */
-	for (i = 0; i < numa_meminfo.nr_blks; i++) {
-		struct numa_memblk *mb = numa_meminfo.blk + i;
+	क्रम (i = 0; i < numa_meminfo.nr_blks; i++) अणु
+		काष्ठा numa_memblk *mb = numa_meminfo.blk + i;
 
-		if (!node_isset(mb->nid, reserved_nodemask))
-			continue;
+		अगर (!node_isset(mb->nid, reserved_nodemask))
+			जारी;
 
 		memblock_clear_hotplug(mb->start, mb->end - mb->start);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init numa_register_memblks(struct numa_meminfo *mi)
-{
-	int i, nid;
+अटल पूर्णांक __init numa_रेजिस्टर_memblks(काष्ठा numa_meminfo *mi)
+अणु
+	पूर्णांक i, nid;
 
-	/* Account for nodes with cpus and no memory */
+	/* Account क्रम nodes with cpus and no memory */
 	node_possible_map = numa_nodes_parsed;
 	numa_nodemask_from_meminfo(&node_possible_map, mi);
-	if (WARN_ON(nodes_empty(node_possible_map)))
-		return -EINVAL;
+	अगर (WARN_ON(nodes_empty(node_possible_map)))
+		वापस -EINVAL;
 
-	for (i = 0; i < mi->nr_blks; i++) {
-		struct numa_memblk *mb = &mi->blk[i];
+	क्रम (i = 0; i < mi->nr_blks; i++) अणु
+		काष्ठा numa_memblk *mb = &mi->blk[i];
 		memblock_set_node(mb->start, mb->end - mb->start,
 				  &memblock.memory, mb->nid);
-	}
+	पूर्ण
 
 	/*
-	 * At very early time, the kernel have to use some memory such as
+	 * At very early समय, the kernel have to use some memory such as
 	 * loading the kernel image. We cannot prevent this anyway. So any
 	 * node the kernel resides in should be un-hotpluggable.
 	 *
@@ -571,150 +572,150 @@ static int __init numa_register_memblks(struct numa_meminfo *mi)
 	numa_clear_kernel_node_hotplug();
 
 	/*
-	 * If sections array is gonna be used for pfn -> nid mapping, check
+	 * If sections array is gonna be used क्रम pfn -> nid mapping, check
 	 * whether its granularity is fine enough.
 	 */
-	if (IS_ENABLED(NODE_NOT_IN_PAGE_FLAGS)) {
-		unsigned long pfn_align = node_map_pfn_alignment();
+	अगर (IS_ENABLED(NODE_NOT_IN_PAGE_FLAGS)) अणु
+		अचिन्हित दीर्घ pfn_align = node_map_pfn_alignment();
 
-		if (pfn_align && pfn_align < PAGES_PER_SECTION) {
+		अगर (pfn_align && pfn_align < PAGES_PER_SECTION) अणु
 			pr_warn("Node alignment %LuMB < min %LuMB, rejecting NUMA config\n",
 				PFN_PHYS(pfn_align) >> 20,
 				PFN_PHYS(PAGES_PER_SECTION) >> 20);
-			return -EINVAL;
-		}
-	}
-	if (!numa_meminfo_cover_memory(mi))
-		return -EINVAL;
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	अगर (!numa_meminfo_cover_memory(mi))
+		वापस -EINVAL;
 
-	/* Finally register nodes. */
-	for_each_node_mask(nid, node_possible_map) {
+	/* Finally रेजिस्टर nodes. */
+	क्रम_each_node_mask(nid, node_possible_map) अणु
 		u64 start = PFN_PHYS(max_pfn);
 		u64 end = 0;
 
-		for (i = 0; i < mi->nr_blks; i++) {
-			if (nid != mi->blk[i].nid)
-				continue;
+		क्रम (i = 0; i < mi->nr_blks; i++) अणु
+			अगर (nid != mi->blk[i].nid)
+				जारी;
 			start = min(mi->blk[i].start, start);
 			end = max(mi->blk[i].end, end);
-		}
+		पूर्ण
 
-		if (start >= end)
-			continue;
+		अगर (start >= end)
+			जारी;
 
 		/*
 		 * Don't confuse VM with a node that doesn't have the
 		 * minimum amount of memory:
 		 */
-		if (end && (end - start) < NODE_MIN_SIZE)
-			continue;
+		अगर (end && (end - start) < NODE_MIN_SIZE)
+			जारी;
 
 		alloc_node_data(nid);
-	}
+	पूर्ण
 
-	/* Dump memblock with node info and return. */
+	/* Dump memblock with node info and वापस. */
 	memblock_dump_all();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * There are unfortunately some poorly designed mainboards around that
- * only connect memory to a single CPU. This breaks the 1:1 cpu->node
- * mapping. To avoid this fill in the mapping for all possible CPUs,
+ * There are unक्रमtunately some poorly deचिन्हित मुख्यboards around that
+ * only connect memory to a single CPU. This अवरोधs the 1:1 cpu->node
+ * mapping. To aव्योम this fill in the mapping क्रम all possible CPUs,
  * as the number of CPUs is not known yet. We round robin the existing
  * nodes.
  */
-static void __init numa_init_array(void)
-{
-	int rr, i;
+अटल व्योम __init numa_init_array(व्योम)
+अणु
+	पूर्णांक rr, i;
 
 	rr = first_node(node_online_map);
-	for (i = 0; i < nr_cpu_ids; i++) {
-		if (early_cpu_to_node(i) != NUMA_NO_NODE)
-			continue;
+	क्रम (i = 0; i < nr_cpu_ids; i++) अणु
+		अगर (early_cpu_to_node(i) != NUMA_NO_NODE)
+			जारी;
 		numa_set_node(i, rr);
 		rr = next_node_in(rr, node_online_map);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init numa_init(int (*init_func)(void))
-{
-	int i;
-	int ret;
+अटल पूर्णांक __init numa_init(पूर्णांक (*init_func)(व्योम))
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < MAX_LOCAL_APIC; i++)
+	क्रम (i = 0; i < MAX_LOCAL_APIC; i++)
 		set_apicid_to_node(i, NUMA_NO_NODE);
 
 	nodes_clear(numa_nodes_parsed);
 	nodes_clear(node_possible_map);
 	nodes_clear(node_online_map);
-	memset(&numa_meminfo, 0, sizeof(numa_meminfo));
-	WARN_ON(memblock_set_node(0, ULLONG_MAX, &memblock.memory,
+	स_रखो(&numa_meminfo, 0, माप(numa_meminfo));
+	WARN_ON(memblock_set_node(0, ULदीर्घ_उच्च, &memblock.memory,
 				  MAX_NUMNODES));
-	WARN_ON(memblock_set_node(0, ULLONG_MAX, &memblock.reserved,
+	WARN_ON(memblock_set_node(0, ULदीर्घ_उच्च, &memblock.reserved,
 				  MAX_NUMNODES));
-	/* In case that parsing SRAT failed. */
-	WARN_ON(memblock_clear_hotplug(0, ULLONG_MAX));
+	/* In हाल that parsing SRAT failed. */
+	WARN_ON(memblock_clear_hotplug(0, ULदीर्घ_उच्च));
 	numa_reset_distance();
 
 	ret = init_func();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
-	 * We reset memblock back to the top-down direction
-	 * here because if we configured ACPI_NUMA, we have
+	 * We reset memblock back to the top-करोwn direction
+	 * here because अगर we configured ACPI_NUMA, we have
 	 * parsed SRAT in init_func(). It is ok to have the
-	 * reset here even if we did't configure ACPI_NUMA
+	 * reset here even अगर we did't configure ACPI_NUMA
 	 * or acpi numa init fails and fallbacks to dummy
 	 * numa init.
 	 */
 	memblock_set_bottom_up(false);
 
 	ret = numa_cleanup_meminfo(&numa_meminfo);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	numa_emulation(&numa_meminfo, numa_distance_cnt);
 
-	ret = numa_register_memblks(&numa_meminfo);
-	if (ret < 0)
-		return ret;
+	ret = numa_रेजिस्टर_memblks(&numa_meminfo);
+	अगर (ret < 0)
+		वापस ret;
 
-	for (i = 0; i < nr_cpu_ids; i++) {
-		int nid = early_cpu_to_node(i);
+	क्रम (i = 0; i < nr_cpu_ids; i++) अणु
+		पूर्णांक nid = early_cpu_to_node(i);
 
-		if (nid == NUMA_NO_NODE)
-			continue;
-		if (!node_online(nid))
+		अगर (nid == NUMA_NO_NODE)
+			जारी;
+		अगर (!node_online(nid))
 			numa_clear_node(i);
-	}
+	पूर्ण
 	numa_init_array();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * dummy_numa_init - Fallback dummy NUMA init
  *
- * Used if there's no underlying NUMA architecture, NUMA initialization
+ * Used अगर there's no underlying NUMA architecture, NUMA initialization
  * fails, or NUMA is disabled on the command line.
  *
  * Must online at least one node and add memory blocks that cover all
  * allowed memory.  This function must not fail.
  */
-static int __init dummy_numa_init(void)
-{
-	printk(KERN_INFO "%s\n",
+अटल पूर्णांक __init dummy_numa_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "%s\n",
 	       numa_off ? "NUMA turned off" : "No NUMA configuration found");
-	printk(KERN_INFO "Faking a node at [mem %#018Lx-%#018Lx]\n",
+	prपूर्णांकk(KERN_INFO "Faking a node at [mem %#018Lx-%#018Lx]\n",
 	       0LLU, PFN_PHYS(max_pfn) - 1);
 
 	node_set(0, numa_nodes_parsed);
 	numa_add_memblk(0, 0, PFN_PHYS(max_pfn));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * x86_numa_init - Initialize NUMA
@@ -723,236 +724,236 @@ static int __init dummy_numa_init(void)
  * last fallback is dummy single node config encompassing whole memory and
  * never fails.
  */
-void __init x86_numa_init(void)
-{
-	if (!numa_off) {
-#ifdef CONFIG_ACPI_NUMA
-		if (!numa_init(x86_acpi_numa_init))
-			return;
-#endif
-#ifdef CONFIG_AMD_NUMA
-		if (!numa_init(amd_numa_init))
-			return;
-#endif
-	}
+व्योम __init x86_numa_init(व्योम)
+अणु
+	अगर (!numa_off) अणु
+#अगर_घोषित CONFIG_ACPI_NUMA
+		अगर (!numa_init(x86_acpi_numa_init))
+			वापस;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_AMD_NUMA
+		अगर (!numa_init(amd_numa_init))
+			वापस;
+#पूर्ण_अगर
+	पूर्ण
 
 	numa_init(dummy_numa_init);
-}
+पूर्ण
 
-static void __init init_memory_less_node(int nid)
-{
+अटल व्योम __init init_memory_less_node(पूर्णांक nid)
+अणु
 	/* Allocate and initialize node data. Memory-less node is now online.*/
 	alloc_node_data(nid);
-	free_area_init_memoryless_node(nid);
+	मुक्त_area_init_memoryless_node(nid);
 
 	/*
 	 * All zonelists will be built later in start_kernel() after per cpu
 	 * areas are initialized.
 	 */
-}
+पूर्ण
 
 /*
  * A node may exist which has one or more Generic Initiators but no CPUs and no
  * memory.
  *
  * This function must be called after init_cpu_to_node(), to ensure that any
- * memoryless CPU nodes have already been brought online, and before the
- * node_data[nid] is needed for zone list setup in build_all_zonelists().
+ * memoryless CPU nodes have alपढ़ोy been brought online, and beक्रमe the
+ * node_data[nid] is needed क्रम zone list setup in build_all_zonelists().
  *
  * When this function is called, any nodes containing either memory and/or CPUs
- * will already be online and there is no need to do anything extra, even if
+ * will alपढ़ोy be online and there is no need to करो anything extra, even अगर
  * they also contain one or more Generic Initiators.
  */
-void __init init_gi_nodes(void)
-{
-	int nid;
+व्योम __init init_gi_nodes(व्योम)
+अणु
+	पूर्णांक nid;
 
-	for_each_node_state(nid, N_GENERIC_INITIATOR)
-		if (!node_online(nid))
+	क्रम_each_node_state(nid, N_GENERIC_INITIATOR)
+		अगर (!node_online(nid))
 			init_memory_less_node(nid);
-}
+पूर्ण
 
 /*
  * Setup early cpu_to_node.
  *
- * Populate cpu_to_node[] only if x86_cpu_to_apicid[],
- * and apicid_to_node[] tables have valid entries for a CPU.
- * This means we skip cpu_to_node[] initialisation for NUMA
- * emulation and faking node case (when running a kernel compiled
- * for NUMA on a non NUMA box), which is OK as cpu_to_node[]
- * is already initialized in a round robin manner at numa_init_array,
+ * Populate cpu_to_node[] only अगर x86_cpu_to_apicid[],
+ * and apicid_to_node[] tables have valid entries क्रम a CPU.
+ * This means we skip cpu_to_node[] initialisation क्रम NUMA
+ * emulation and faking node हाल (when running a kernel compiled
+ * क्रम NUMA on a non NUMA box), which is OK as cpu_to_node[]
+ * is alपढ़ोy initialized in a round robin manner at numa_init_array,
  * prior to this call, and this initialization is good enough
- * for the fake NUMA cases.
+ * क्रम the fake NUMA हालs.
  *
- * Called before the per_cpu areas are setup.
+ * Called beक्रमe the per_cpu areas are setup.
  */
-void __init init_cpu_to_node(void)
-{
-	int cpu;
+व्योम __init init_cpu_to_node(व्योम)
+अणु
+	पूर्णांक cpu;
 	u16 *cpu_to_apicid = early_per_cpu_ptr(x86_cpu_to_apicid);
 
-	BUG_ON(cpu_to_apicid == NULL);
+	BUG_ON(cpu_to_apicid == शून्य);
 
-	for_each_possible_cpu(cpu) {
-		int node = numa_cpu_node(cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		पूर्णांक node = numa_cpu_node(cpu);
 
-		if (node == NUMA_NO_NODE)
-			continue;
+		अगर (node == NUMA_NO_NODE)
+			जारी;
 
-		if (!node_online(node))
+		अगर (!node_online(node))
 			init_memory_less_node(node);
 
 		numa_set_node(cpu, node);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifndef CONFIG_DEBUG_PER_CPU_MAPS
+#अगर_अघोषित CONFIG_DEBUG_PER_CPU_MAPS
 
-# ifndef CONFIG_NUMA_EMU
-void numa_add_cpu(int cpu)
-{
+# अगरndef CONFIG_NUMA_EMU
+व्योम numa_add_cpu(पूर्णांक cpu)
+अणु
 	cpumask_set_cpu(cpu, node_to_cpumask_map[early_cpu_to_node(cpu)]);
-}
+पूर्ण
 
-void numa_remove_cpu(int cpu)
-{
+व्योम numa_हटाओ_cpu(पूर्णांक cpu)
+अणु
 	cpumask_clear_cpu(cpu, node_to_cpumask_map[early_cpu_to_node(cpu)]);
-}
-# endif	/* !CONFIG_NUMA_EMU */
+पूर्ण
+# endअगर	/* !CONFIG_NUMA_EMU */
 
-#else	/* !CONFIG_DEBUG_PER_CPU_MAPS */
+#अन्यथा	/* !CONFIG_DEBUG_PER_CPU_MAPS */
 
-int __cpu_to_node(int cpu)
-{
-	if (early_per_cpu_ptr(x86_cpu_to_node_map)) {
-		printk(KERN_WARNING
+पूर्णांक __cpu_to_node(पूर्णांक cpu)
+अणु
+	अगर (early_per_cpu_ptr(x86_cpu_to_node_map)) अणु
+		prपूर्णांकk(KERN_WARNING
 			"cpu_to_node(%d): usage too early!\n", cpu);
 		dump_stack();
-		return early_per_cpu_ptr(x86_cpu_to_node_map)[cpu];
-	}
-	return per_cpu(x86_cpu_to_node_map, cpu);
-}
+		वापस early_per_cpu_ptr(x86_cpu_to_node_map)[cpu];
+	पूर्ण
+	वापस per_cpu(x86_cpu_to_node_map, cpu);
+पूर्ण
 EXPORT_SYMBOL(__cpu_to_node);
 
 /*
- * Same function as cpu_to_node() but used if called before the
+ * Same function as cpu_to_node() but used अगर called beक्रमe the
  * per_cpu areas are setup.
  */
-int early_cpu_to_node(int cpu)
-{
-	if (early_per_cpu_ptr(x86_cpu_to_node_map))
-		return early_per_cpu_ptr(x86_cpu_to_node_map)[cpu];
+पूर्णांक early_cpu_to_node(पूर्णांक cpu)
+अणु
+	अगर (early_per_cpu_ptr(x86_cpu_to_node_map))
+		वापस early_per_cpu_ptr(x86_cpu_to_node_map)[cpu];
 
-	if (!cpu_possible(cpu)) {
-		printk(KERN_WARNING
+	अगर (!cpu_possible(cpu)) अणु
+		prपूर्णांकk(KERN_WARNING
 			"early_cpu_to_node(%d): no per_cpu area!\n", cpu);
 		dump_stack();
-		return NUMA_NO_NODE;
-	}
-	return per_cpu(x86_cpu_to_node_map, cpu);
-}
+		वापस NUMA_NO_NODE;
+	पूर्ण
+	वापस per_cpu(x86_cpu_to_node_map, cpu);
+पूर्ण
 
-void debug_cpumask_set_cpu(int cpu, int node, bool enable)
-{
-	struct cpumask *mask;
+व्योम debug_cpumask_set_cpu(पूर्णांक cpu, पूर्णांक node, bool enable)
+अणु
+	काष्ठा cpumask *mask;
 
-	if (node == NUMA_NO_NODE) {
-		/* early_cpu_to_node() already emits a warning and trace */
-		return;
-	}
+	अगर (node == NUMA_NO_NODE) अणु
+		/* early_cpu_to_node() alपढ़ोy emits a warning and trace */
+		वापस;
+	पूर्ण
 	mask = node_to_cpumask_map[node];
-	if (!mask) {
+	अगर (!mask) अणु
 		pr_err("node_to_cpumask_map[%i] NULL\n", node);
 		dump_stack();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (enable)
+	अगर (enable)
 		cpumask_set_cpu(cpu, mask);
-	else
+	अन्यथा
 		cpumask_clear_cpu(cpu, mask);
 
-	printk(KERN_DEBUG "%s cpu %d node %d: mask now %*pbl\n",
+	prपूर्णांकk(KERN_DEBUG "%s cpu %d node %d: mask now %*pbl\n",
 		enable ? "numa_add_cpu" : "numa_remove_cpu",
 		cpu, node, cpumask_pr_args(mask));
-	return;
-}
+	वापस;
+पूर्ण
 
-# ifndef CONFIG_NUMA_EMU
-static void numa_set_cpumask(int cpu, bool enable)
-{
+# अगरndef CONFIG_NUMA_EMU
+अटल व्योम numa_set_cpumask(पूर्णांक cpu, bool enable)
+अणु
 	debug_cpumask_set_cpu(cpu, early_cpu_to_node(cpu), enable);
-}
+पूर्ण
 
-void numa_add_cpu(int cpu)
-{
+व्योम numa_add_cpu(पूर्णांक cpu)
+अणु
 	numa_set_cpumask(cpu, true);
-}
+पूर्ण
 
-void numa_remove_cpu(int cpu)
-{
+व्योम numa_हटाओ_cpu(पूर्णांक cpu)
+अणु
 	numa_set_cpumask(cpu, false);
-}
-# endif	/* !CONFIG_NUMA_EMU */
+पूर्ण
+# endअगर	/* !CONFIG_NUMA_EMU */
 
 /*
- * Returns a pointer to the bitmask of CPUs on Node 'node'.
+ * Returns a poपूर्णांकer to the biपंचांगask of CPUs on Node 'node'.
  */
-const struct cpumask *cpumask_of_node(int node)
-{
-	if ((unsigned)node >= nr_node_ids) {
-		printk(KERN_WARNING
+स्थिर काष्ठा cpumask *cpumask_of_node(पूर्णांक node)
+अणु
+	अगर ((अचिन्हित)node >= nr_node_ids) अणु
+		prपूर्णांकk(KERN_WARNING
 			"cpumask_of_node(%d): (unsigned)node >= nr_node_ids(%u)\n",
 			node, nr_node_ids);
 		dump_stack();
-		return cpu_none_mask;
-	}
-	if (node_to_cpumask_map[node] == NULL) {
-		printk(KERN_WARNING
+		वापस cpu_none_mask;
+	पूर्ण
+	अगर (node_to_cpumask_map[node] == शून्य) अणु
+		prपूर्णांकk(KERN_WARNING
 			"cpumask_of_node(%d): no node_to_cpumask_map!\n",
 			node);
 		dump_stack();
-		return cpu_online_mask;
-	}
-	return node_to_cpumask_map[node];
-}
+		वापस cpu_online_mask;
+	पूर्ण
+	वापस node_to_cpumask_map[node];
+पूर्ण
 EXPORT_SYMBOL(cpumask_of_node);
 
-#endif	/* !CONFIG_DEBUG_PER_CPU_MAPS */
+#पूर्ण_अगर	/* !CONFIG_DEBUG_PER_CPU_MAPS */
 
-#ifdef CONFIG_NUMA_KEEP_MEMINFO
-static int meminfo_to_nid(struct numa_meminfo *mi, u64 start)
-{
-	int i;
+#अगर_घोषित CONFIG_NUMA_KEEP_MEMINFO
+अटल पूर्णांक meminfo_to_nid(काष्ठा numa_meminfo *mi, u64 start)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mi->nr_blks; i++)
-		if (mi->blk[i].start <= start && mi->blk[i].end > start)
-			return mi->blk[i].nid;
-	return NUMA_NO_NODE;
-}
+	क्रम (i = 0; i < mi->nr_blks; i++)
+		अगर (mi->blk[i].start <= start && mi->blk[i].end > start)
+			वापस mi->blk[i].nid;
+	वापस NUMA_NO_NODE;
+पूर्ण
 
-int phys_to_target_node(phys_addr_t start)
-{
-	int nid = meminfo_to_nid(&numa_meminfo, start);
+पूर्णांक phys_to_target_node(phys_addr_t start)
+अणु
+	पूर्णांक nid = meminfo_to_nid(&numa_meminfo, start);
 
 	/*
-	 * Prefer online nodes, but if reserved memory might be
-	 * hot-added continue the search with reserved ranges.
+	 * Prefer online nodes, but अगर reserved memory might be
+	 * hot-added जारी the search with reserved ranges.
 	 */
-	if (nid != NUMA_NO_NODE)
-		return nid;
+	अगर (nid != NUMA_NO_NODE)
+		वापस nid;
 
-	return meminfo_to_nid(&numa_reserved_meminfo, start);
-}
+	वापस meminfo_to_nid(&numa_reserved_meminfo, start);
+पूर्ण
 EXPORT_SYMBOL_GPL(phys_to_target_node);
 
-int memory_add_physaddr_to_nid(u64 start)
-{
-	int nid = meminfo_to_nid(&numa_meminfo, start);
+पूर्णांक memory_add_physaddr_to_nid(u64 start)
+अणु
+	पूर्णांक nid = meminfo_to_nid(&numa_meminfo, start);
 
-	if (nid == NUMA_NO_NODE)
+	अगर (nid == NUMA_NO_NODE)
 		nid = numa_meminfo.blk[0].nid;
-	return nid;
-}
+	वापस nid;
+पूर्ण
 EXPORT_SYMBOL_GPL(memory_add_physaddr_to_nid);
-#endif
+#पूर्ण_अगर

@@ -1,117 +1,118 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_MACINTOSH_H
-#define __ASM_MACINTOSH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_MACINTOSH_H
+#घोषणा __ASM_MACINTOSH_H
 
-#include <linux/seq_file.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
 
-#include <asm/bootinfo-mac.h>
+#समावेश <यंत्र/bootinfo-mac.h>
 
-
-/*
- *	Apple Macintoshisms
- */
-
-extern void mac_reset(void);
-extern void mac_poweroff(void);
-extern void mac_init_IRQ(void);
-
-extern void mac_irq_enable(struct irq_data *data);
-extern void mac_irq_disable(struct irq_data *data);
-
-extern unsigned char mac_pram_read_byte(int);
-extern void mac_pram_write_byte(unsigned char, int);
-extern ssize_t mac_pram_get_size(void);
 
 /*
- *	Macintosh Table
+ *	Apple Macपूर्णांकoshisms
  */
 
-struct mac_model
-{
-	short ident;
-	char *name;
-	char adb_type;
-	char via_type;
-	char scsi_type;
-	char ide_type;
-	char scc_type;
-	char ether_type;
-	char expansion_type;
-	char floppy_type;
-};
+बाह्य व्योम mac_reset(व्योम);
+बाह्य व्योम mac_घातeroff(व्योम);
+बाह्य व्योम mac_init_IRQ(व्योम);
 
-#define MAC_ADB_NONE		0
-#define MAC_ADB_II		1
-#define MAC_ADB_EGRET		2
-#define MAC_ADB_CUDA		3
-#define MAC_ADB_PB1		4
-#define MAC_ADB_PB2		5
-#define MAC_ADB_IOP		6
+बाह्य व्योम mac_irq_enable(काष्ठा irq_data *data);
+बाह्य व्योम mac_irq_disable(काष्ठा irq_data *data);
 
-#define MAC_VIA_II		1
-#define MAC_VIA_IICI		2
-#define MAC_VIA_QUADRA		3
+बाह्य अचिन्हित अक्षर mac_pram_पढ़ो_byte(पूर्णांक);
+बाह्य व्योम mac_pram_ग_लिखो_byte(अचिन्हित अक्षर, पूर्णांक);
+बाह्य sमाप_प्रकार mac_pram_get_size(व्योम);
 
-#define MAC_SCSI_NONE		0
-#define MAC_SCSI_OLD		1
-#define MAC_SCSI_QUADRA		2
-#define MAC_SCSI_QUADRA2	3
-#define MAC_SCSI_QUADRA3	4
-#define MAC_SCSI_IIFX		5
-#define MAC_SCSI_DUO		6
-#define MAC_SCSI_LC		7
+/*
+ *	Macपूर्णांकosh Table
+ */
 
-#define MAC_IDE_NONE		0
-#define MAC_IDE_QUADRA		1
-#define MAC_IDE_PB		2
-#define MAC_IDE_BABOON		3
+काष्ठा mac_model
+अणु
+	लघु ident;
+	अक्षर *name;
+	अक्षर adb_type;
+	अक्षर via_type;
+	अक्षर scsi_type;
+	अक्षर ide_type;
+	अक्षर scc_type;
+	अक्षर ether_type;
+	अक्षर expansion_type;
+	अक्षर floppy_type;
+पूर्ण;
 
-#define MAC_SCC_II		1
-#define MAC_SCC_IOP		2
-#define MAC_SCC_QUADRA		3
-#define MAC_SCC_PSC		4
+#घोषणा MAC_ADB_NONE		0
+#घोषणा MAC_ADB_II		1
+#घोषणा MAC_ADB_EGRET		2
+#घोषणा MAC_ADB_CUDA		3
+#घोषणा MAC_ADB_PB1		4
+#घोषणा MAC_ADB_PB2		5
+#घोषणा MAC_ADB_IOP		6
 
-#define MAC_ETHER_NONE		0
-#define MAC_ETHER_SONIC		1
-#define MAC_ETHER_MACE		2
+#घोषणा MAC_VIA_II		1
+#घोषणा MAC_VIA_IICI		2
+#घोषणा MAC_VIA_QUADRA		3
 
-#define MAC_EXP_NONE		0
-#define MAC_EXP_PDS		1 /* Accepts only a PDS card */
-#define MAC_EXP_NUBUS		2 /* Accepts only NuBus card(s) */
-#define MAC_EXP_PDS_NUBUS	3 /* Accepts PDS card and/or NuBus card(s) */
-#define MAC_EXP_PDS_COMM	4 /* Accepts PDS card or Comm Slot card */
+#घोषणा MAC_SCSI_NONE		0
+#घोषणा MAC_SCSI_OLD		1
+#घोषणा MAC_SCSI_QUADRA		2
+#घोषणा MAC_SCSI_QUADRA2	3
+#घोषणा MAC_SCSI_QUADRA3	4
+#घोषणा MAC_SCSI_IIFX		5
+#घोषणा MAC_SCSI_DUO		6
+#घोषणा MAC_SCSI_LC		7
 
-#define MAC_FLOPPY_UNSUPPORTED	0
-#define MAC_FLOPPY_SWIM_IOP	1
-#define MAC_FLOPPY_OLD		2
-#define MAC_FLOPPY_QUADRA	3
-#define MAC_FLOPPY_LC		4
+#घोषणा MAC_IDE_NONE		0
+#घोषणा MAC_IDE_QUADRA		1
+#घोषणा MAC_IDE_PB		2
+#घोषणा MAC_IDE_BABOON		3
 
-extern struct mac_model *macintosh_config;
+#घोषणा MAC_SCC_II		1
+#घोषणा MAC_SCC_IOP		2
+#घोषणा MAC_SCC_QUADRA		3
+#घोषणा MAC_SCC_PSC		4
+
+#घोषणा MAC_ETHER_NONE		0
+#घोषणा MAC_ETHER_SONIC		1
+#घोषणा MAC_ETHER_MACE		2
+
+#घोषणा MAC_EXP_NONE		0
+#घोषणा MAC_EXP_PDS		1 /* Accepts only a PDS card */
+#घोषणा MAC_EXP_NUBUS		2 /* Accepts only NuBus card(s) */
+#घोषणा MAC_EXP_PDS_NUBUS	3 /* Accepts PDS card and/or NuBus card(s) */
+#घोषणा MAC_EXP_PDS_COMM	4 /* Accepts PDS card or Comm Slot card */
+
+#घोषणा MAC_FLOPPY_UNSUPPORTED	0
+#घोषणा MAC_FLOPPY_SWIM_IOP	1
+#घोषणा MAC_FLOPPY_OLD		2
+#घोषणा MAC_FLOPPY_QUADRA	3
+#घोषणा MAC_FLOPPY_LC		4
+
+बाह्य काष्ठा mac_model *macपूर्णांकosh_config;
 
 
     /*
      * Internal representation of the Mac hardware, filled in from bootinfo
      */
 
-struct mac_booter_data
-{
-	unsigned long videoaddr;
-	unsigned long videorow;
-	unsigned long videodepth;
-	unsigned long dimensions;
-	unsigned long boottime;
-	unsigned long gmtbias;
-	unsigned long videological;
-	unsigned long sccbase;
-	unsigned long id;
-	unsigned long memsize;
-	unsigned long cpuid;
-	unsigned long rombase;
-};
+काष्ठा mac_booter_data
+अणु
+	अचिन्हित दीर्घ videoaddr;
+	अचिन्हित दीर्घ videorow;
+	अचिन्हित दीर्घ videodepth;
+	अचिन्हित दीर्घ dimensions;
+	अचिन्हित दीर्घ bootसमय;
+	अचिन्हित दीर्घ gmtbias;
+	अचिन्हित दीर्घ videological;
+	अचिन्हित दीर्घ sccbase;
+	अचिन्हित दीर्घ id;
+	अचिन्हित दीर्घ memsize;
+	अचिन्हित दीर्घ cpuid;
+	अचिन्हित दीर्घ rombase;
+पूर्ण;
 
-extern struct mac_booter_data mac_bi_data;
+बाह्य काष्ठा mac_booter_data mac_bi_data;
 
-#endif
+#पूर्ण_अगर

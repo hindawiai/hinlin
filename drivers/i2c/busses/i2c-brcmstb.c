@@ -1,113 +1,114 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2014 Broadcom Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
-#define N_DATA_REGS					8
+#घोषणा N_DATA_REGS					8
 
 /*
- * PER_I2C/BSC count register mask depends on 1 byte/4 byte data register
+ * PER_I2C/BSC count रेजिस्टर mask depends on 1 byte/4 byte data रेजिस्टर
  * size. Cable modem and DSL SoCs with Peripheral i2c cores use 1 byte per
- * data register whereas STB SoCs use 4 byte per data register transfer,
- * account for this difference in total count per transaction and mask to
+ * data रेजिस्टर whereas STB SoCs use 4 byte per data रेजिस्टर transfer,
+ * account क्रम this dअगरference in total count per transaction and mask to
  * use.
  */
-#define BSC_CNT_REG1_MASK(nb)	(nb == 1 ? GENMASK(3, 0) : GENMASK(5, 0))
-#define BSC_CNT_REG1_SHIFT	0
+#घोषणा BSC_CNT_REG1_MASK(nb)	(nb == 1 ? GENMASK(3, 0) : GENMASK(5, 0))
+#घोषणा BSC_CNT_REG1_SHIFT	0
 
-/* BSC CTL register field definitions */
-#define BSC_CTL_REG_DTF_MASK				0x00000003
-#define BSC_CTL_REG_SCL_SEL_MASK			0x00000030
-#define BSC_CTL_REG_SCL_SEL_SHIFT			4
-#define BSC_CTL_REG_INT_EN_MASK				0x00000040
-#define BSC_CTL_REG_INT_EN_SHIFT			6
-#define BSC_CTL_REG_DIV_CLK_MASK			0x00000080
+/* BSC CTL रेजिस्टर field definitions */
+#घोषणा BSC_CTL_REG_DTF_MASK				0x00000003
+#घोषणा BSC_CTL_REG_SCL_SEL_MASK			0x00000030
+#घोषणा BSC_CTL_REG_SCL_SEL_SHIFT			4
+#घोषणा BSC_CTL_REG_INT_EN_MASK				0x00000040
+#घोषणा BSC_CTL_REG_INT_EN_SHIFT			6
+#घोषणा BSC_CTL_REG_DIV_CLK_MASK			0x00000080
 
-/* BSC_IIC_ENABLE r/w enable and interrupt field definitions */
-#define BSC_IIC_EN_RESTART_MASK				0x00000040
-#define BSC_IIC_EN_NOSTART_MASK				0x00000020
-#define BSC_IIC_EN_NOSTOP_MASK				0x00000010
-#define BSC_IIC_EN_NOACK_MASK				0x00000004
-#define BSC_IIC_EN_INTRP_MASK				0x00000002
-#define BSC_IIC_EN_ENABLE_MASK				0x00000001
+/* BSC_IIC_ENABLE r/w enable and पूर्णांकerrupt field definitions */
+#घोषणा BSC_IIC_EN_RESTART_MASK				0x00000040
+#घोषणा BSC_IIC_EN_NOSTART_MASK				0x00000020
+#घोषणा BSC_IIC_EN_NOSTOP_MASK				0x00000010
+#घोषणा BSC_IIC_EN_NOACK_MASK				0x00000004
+#घोषणा BSC_IIC_EN_INTRP_MASK				0x00000002
+#घोषणा BSC_IIC_EN_ENABLE_MASK				0x00000001
 
-/* BSC_CTLHI control register field definitions */
-#define BSC_CTLHI_REG_INPUT_SWITCHING_LEVEL_MASK	0x00000080
-#define BSC_CTLHI_REG_DATAREG_SIZE_MASK			0x00000040
-#define BSC_CTLHI_REG_IGNORE_ACK_MASK			0x00000002
-#define BSC_CTLHI_REG_WAIT_DIS_MASK			0x00000001
+/* BSC_CTLHI control रेजिस्टर field definitions */
+#घोषणा BSC_CTLHI_REG_INPUT_SWITCHING_LEVEL_MASK	0x00000080
+#घोषणा BSC_CTLHI_REG_DATAREG_SIZE_MASK			0x00000040
+#घोषणा BSC_CTLHI_REG_IGNORE_ACK_MASK			0x00000002
+#घोषणा BSC_CTLHI_REG_WAIT_DIS_MASK			0x00000001
 
-#define I2C_TIMEOUT					100 /* msecs */
+#घोषणा I2C_TIMEOUT					100 /* msecs */
 
-/* Condition mask used for non combined transfer */
-#define COND_RESTART		BSC_IIC_EN_RESTART_MASK
-#define COND_NOSTART		BSC_IIC_EN_NOSTART_MASK
-#define COND_NOSTOP		BSC_IIC_EN_NOSTOP_MASK
-#define COND_START_STOP		(COND_RESTART | COND_NOSTART | COND_NOSTOP)
+/* Condition mask used क्रम non combined transfer */
+#घोषणा COND_RESTART		BSC_IIC_EN_RESTART_MASK
+#घोषणा COND_NOSTART		BSC_IIC_EN_NOSTART_MASK
+#घोषणा COND_NOSTOP		BSC_IIC_EN_NOSTOP_MASK
+#घोषणा COND_START_STOP		(COND_RESTART | COND_NOSTART | COND_NOSTOP)
 
 /* BSC data transfer direction */
-#define DTF_WR_MASK		0x00000000
-#define DTF_RD_MASK		0x00000001
-/* BSC data transfer direction combined format */
-#define DTF_RD_WR_MASK		0x00000002
-#define DTF_WR_RD_MASK		0x00000003
+#घोषणा DTF_WR_MASK		0x00000000
+#घोषणा DTF_RD_MASK		0x00000001
+/* BSC data transfer direction combined क्रमmat */
+#घोषणा DTF_RD_WR_MASK		0x00000002
+#घोषणा DTF_WR_RD_MASK		0x00000003
 
-#define INT_ENABLE		true
-#define INT_DISABLE		false
+#घोषणा INT_ENABLE		true
+#घोषणा INT_DISABLE		false
 
-/* BSC block register map structure to cache fields to be written */
-struct bsc_regs {
+/* BSC block रेजिस्टर map काष्ठाure to cache fields to be written */
+काष्ठा bsc_regs अणु
 	u32	chip_address;           /* slave address */
 	u32	data_in[N_DATA_REGS];   /* tx data buffer*/
 	u32	cnt_reg;		/* rx/tx data length */
-	u32	ctl_reg;		/* control register */
+	u32	ctl_reg;		/* control रेजिस्टर */
 	u32	iic_enable;		/* xfer enable and status */
 	u32	data_out[N_DATA_REGS];  /* rx data buffer */
 	u32	ctlhi_reg;		/* more control fields */
 	u32	scl_param;		/* reserved */
-};
+पूर्ण;
 
-struct bsc_clk_param {
+काष्ठा bsc_clk_param अणु
 	u32 hz;
 	u32 scl_mask;
-	u32 div_mask;
-};
+	u32 भाग_mask;
+पूर्ण;
 
-enum bsc_xfer_cmd {
+क्रमागत bsc_xfer_cmd अणु
 	CMD_WR,
 	CMD_RD,
 	CMD_WR_NOACK,
 	CMD_RD_NOACK,
-};
+पूर्ण;
 
-static char const *cmd_string[] = {
+अटल अक्षर स्थिर *cmd_string[] = अणु
 	[CMD_WR] = "WR",
 	[CMD_RD] = "RD",
 	[CMD_WR_NOACK] = "WR NOACK",
 	[CMD_RD_NOACK] = "RD NOACK",
-};
+पूर्ण;
 
-enum bus_speeds {
+क्रमागत bus_speeds अणु
 	SPD_375K,
 	SPD_390K,
 	SPD_187K,
@@ -116,643 +117,643 @@ enum bus_speeds {
 	SPD_97K,
 	SPD_46K,
 	SPD_50K
-};
+पूर्ण;
 
-static const struct bsc_clk_param bsc_clk[] = {
-	[SPD_375K] = {
+अटल स्थिर काष्ठा bsc_clk_param bsc_clk[] = अणु
+	[SPD_375K] = अणु
 		.hz = 375000,
 		.scl_mask = SPD_375K << BSC_CTL_REG_SCL_SEL_SHIFT,
-		.div_mask = 0
-	},
-	[SPD_390K] = {
+		.भाग_mask = 0
+	पूर्ण,
+	[SPD_390K] = अणु
 		.hz = 390000,
 		.scl_mask = SPD_390K << BSC_CTL_REG_SCL_SEL_SHIFT,
-		.div_mask = 0
-	},
-	[SPD_187K] = {
+		.भाग_mask = 0
+	पूर्ण,
+	[SPD_187K] = अणु
 		.hz = 187500,
 		.scl_mask = SPD_187K << BSC_CTL_REG_SCL_SEL_SHIFT,
-		.div_mask = 0
-	},
-	[SPD_200K] = {
+		.भाग_mask = 0
+	पूर्ण,
+	[SPD_200K] = अणु
 		.hz = 200000,
 		.scl_mask = SPD_200K << BSC_CTL_REG_SCL_SEL_SHIFT,
-		.div_mask = 0
-	},
-	[SPD_93K]  = {
+		.भाग_mask = 0
+	पूर्ण,
+	[SPD_93K]  = अणु
 		.hz = 93750,
 		.scl_mask = SPD_375K << BSC_CTL_REG_SCL_SEL_SHIFT,
-		.div_mask = BSC_CTL_REG_DIV_CLK_MASK
-	},
-	[SPD_97K]  = {
+		.भाग_mask = BSC_CTL_REG_DIV_CLK_MASK
+	पूर्ण,
+	[SPD_97K]  = अणु
 		.hz = 97500,
 		.scl_mask = SPD_390K << BSC_CTL_REG_SCL_SEL_SHIFT,
-		.div_mask = BSC_CTL_REG_DIV_CLK_MASK
-	},
-	[SPD_46K]  = {
+		.भाग_mask = BSC_CTL_REG_DIV_CLK_MASK
+	पूर्ण,
+	[SPD_46K]  = अणु
 		.hz = 46875,
 		.scl_mask = SPD_187K << BSC_CTL_REG_SCL_SEL_SHIFT,
-		.div_mask = BSC_CTL_REG_DIV_CLK_MASK
-	},
-	[SPD_50K]  = {
+		.भाग_mask = BSC_CTL_REG_DIV_CLK_MASK
+	पूर्ण,
+	[SPD_50K]  = अणु
 		.hz = 50000,
 		.scl_mask = SPD_200K << BSC_CTL_REG_SCL_SEL_SHIFT,
-		.div_mask = BSC_CTL_REG_DIV_CLK_MASK
-	}
-};
+		.भाग_mask = BSC_CTL_REG_DIV_CLK_MASK
+	पूर्ण
+पूर्ण;
 
-struct brcmstb_i2c_dev {
-	struct device *device;
-	void __iomem *base;
-	int irq;
-	struct bsc_regs *bsc_regmap;
-	struct i2c_adapter adapter;
-	struct completion done;
+काष्ठा brcmstb_i2c_dev अणु
+	काष्ठा device *device;
+	व्योम __iomem *base;
+	पूर्णांक irq;
+	काष्ठा bsc_regs *bsc_regmap;
+	काष्ठा i2c_adapter adapter;
+	काष्ठा completion करोne;
 	u32 clk_freq_hz;
-	int data_regsz;
-};
+	पूर्णांक data_regsz;
+पूर्ण;
 
-/* register accessors for both be and le cpu arch */
-#ifdef CONFIG_CPU_BIG_ENDIAN
-#define __bsc_readl(_reg) ioread32be(_reg)
-#define __bsc_writel(_val, _reg) iowrite32be(_val, _reg)
-#else
-#define __bsc_readl(_reg) ioread32(_reg)
-#define __bsc_writel(_val, _reg) iowrite32(_val, _reg)
-#endif
+/* रेजिस्टर accessors क्रम both be and le cpu arch */
+#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
+#घोषणा __bsc_पढ़ोl(_reg) ioपढ़ो32be(_reg)
+#घोषणा __bsc_ग_लिखोl(_val, _reg) ioग_लिखो32be(_val, _reg)
+#अन्यथा
+#घोषणा __bsc_पढ़ोl(_reg) ioपढ़ो32(_reg)
+#घोषणा __bsc_ग_लिखोl(_val, _reg) ioग_लिखो32(_val, _reg)
+#पूर्ण_अगर
 
-#define bsc_readl(_dev, _reg)						\
-	__bsc_readl(_dev->base + offsetof(struct bsc_regs, _reg))
+#घोषणा bsc_पढ़ोl(_dev, _reg)						\
+	__bsc_पढ़ोl(_dev->base + दुरत्व(काष्ठा bsc_regs, _reg))
 
-#define bsc_writel(_dev, _val, _reg)					\
-	__bsc_writel(_val, _dev->base + offsetof(struct bsc_regs, _reg))
+#घोषणा bsc_ग_लिखोl(_dev, _val, _reg)					\
+	__bsc_ग_लिखोl(_val, _dev->base + दुरत्व(काष्ठा bsc_regs, _reg))
 
-static inline int brcmstb_i2c_get_xfersz(struct brcmstb_i2c_dev *dev)
-{
-	return (N_DATA_REGS * dev->data_regsz);
-}
+अटल अंतरभूत पूर्णांक brcmstb_i2c_get_xfersz(काष्ठा brcmstb_i2c_dev *dev)
+अणु
+	वापस (N_DATA_REGS * dev->data_regsz);
+पूर्ण
 
-static inline int brcmstb_i2c_get_data_regsz(struct brcmstb_i2c_dev *dev)
-{
-	return dev->data_regsz;
-}
+अटल अंतरभूत पूर्णांक brcmstb_i2c_get_data_regsz(काष्ठा brcmstb_i2c_dev *dev)
+अणु
+	वापस dev->data_regsz;
+पूर्ण
 
-static void brcmstb_i2c_enable_disable_irq(struct brcmstb_i2c_dev *dev,
-					   bool int_en)
-{
+अटल व्योम brcmstb_i2c_enable_disable_irq(काष्ठा brcmstb_i2c_dev *dev,
+					   bool पूर्णांक_en)
+अणु
 
-	if (int_en)
-		/* Enable BSC  CTL interrupt line */
+	अगर (पूर्णांक_en)
+		/* Enable BSC  CTL पूर्णांकerrupt line */
 		dev->bsc_regmap->ctl_reg |= BSC_CTL_REG_INT_EN_MASK;
-	else
-		/* Disable BSC CTL interrupt line */
+	अन्यथा
+		/* Disable BSC CTL पूर्णांकerrupt line */
 		dev->bsc_regmap->ctl_reg &= ~BSC_CTL_REG_INT_EN_MASK;
 
 	barrier();
-	bsc_writel(dev, dev->bsc_regmap->ctl_reg, ctl_reg);
-}
+	bsc_ग_लिखोl(dev, dev->bsc_regmap->ctl_reg, ctl_reg);
+पूर्ण
 
-static irqreturn_t brcmstb_i2c_isr(int irq, void *devid)
-{
-	struct brcmstb_i2c_dev *dev = devid;
-	u32 status_bsc_ctl = bsc_readl(dev, ctl_reg);
-	u32 status_iic_intrp = bsc_readl(dev, iic_enable);
+अटल irqवापस_t brcmstb_i2c_isr(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा brcmstb_i2c_dev *dev = devid;
+	u32 status_bsc_ctl = bsc_पढ़ोl(dev, ctl_reg);
+	u32 status_iic_पूर्णांकrp = bsc_पढ़ोl(dev, iic_enable);
 
 	dev_dbg(dev->device, "isr CTL_REG %x IIC_EN %x\n",
-		status_bsc_ctl, status_iic_intrp);
+		status_bsc_ctl, status_iic_पूर्णांकrp);
 
-	if (!(status_bsc_ctl & BSC_CTL_REG_INT_EN_MASK))
-		return IRQ_NONE;
+	अगर (!(status_bsc_ctl & BSC_CTL_REG_INT_EN_MASK))
+		वापस IRQ_NONE;
 
 	brcmstb_i2c_enable_disable_irq(dev, INT_DISABLE);
-	complete(&dev->done);
+	complete(&dev->करोne);
 
 	dev_dbg(dev->device, "isr handled");
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* Wait for device to be ready */
-static int brcmstb_i2c_wait_if_busy(struct brcmstb_i2c_dev *dev)
-{
-	unsigned long timeout = jiffies + msecs_to_jiffies(I2C_TIMEOUT);
+/* Wait क्रम device to be पढ़ोy */
+अटल पूर्णांक brcmstb_i2c_रुको_अगर_busy(काष्ठा brcmstb_i2c_dev *dev)
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(I2C_TIMEOUT);
 
-	while ((bsc_readl(dev, iic_enable) & BSC_IIC_EN_INTRP_MASK)) {
-		if (time_after(jiffies, timeout))
-			return -ETIMEDOUT;
+	जबतक ((bsc_पढ़ोl(dev, iic_enable) & BSC_IIC_EN_INTRP_MASK)) अणु
+		अगर (समय_after(jअगरfies, समयout))
+			वापस -ETIMEDOUT;
 		cpu_relax();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* i2c xfer completion function, handles both irq and polling mode */
-static int brcmstb_i2c_wait_for_completion(struct brcmstb_i2c_dev *dev)
-{
-	int ret = 0;
-	unsigned long timeout = msecs_to_jiffies(I2C_TIMEOUT);
+अटल पूर्णांक brcmstb_i2c_रुको_क्रम_completion(काष्ठा brcmstb_i2c_dev *dev)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(I2C_TIMEOUT);
 
-	if (dev->irq >= 0) {
-		if (!wait_for_completion_timeout(&dev->done, timeout))
+	अगर (dev->irq >= 0) अणु
+		अगर (!रुको_क्रम_completion_समयout(&dev->करोne, समयout))
 			ret = -ETIMEDOUT;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* we are in polling mode */
-		u32 bsc_intrp;
-		unsigned long time_left = jiffies + timeout;
+		u32 bsc_पूर्णांकrp;
+		अचिन्हित दीर्घ समय_left = jअगरfies + समयout;
 
-		do {
-			bsc_intrp = bsc_readl(dev, iic_enable) &
+		करो अणु
+			bsc_पूर्णांकrp = bsc_पढ़ोl(dev, iic_enable) &
 				BSC_IIC_EN_INTRP_MASK;
-			if (time_after(jiffies, time_left)) {
+			अगर (समय_after(jअगरfies, समय_left)) अणु
 				ret = -ETIMEDOUT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			cpu_relax();
-		} while (!bsc_intrp);
-	}
+		पूर्ण जबतक (!bsc_पूर्णांकrp);
+	पूर्ण
 
-	if (dev->irq < 0 || ret == -ETIMEDOUT)
+	अगर (dev->irq < 0 || ret == -ETIMEDOUT)
 		brcmstb_i2c_enable_disable_irq(dev, INT_DISABLE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Set xfer START/STOP conditions for subsequent transfer */
-static void brcmstb_set_i2c_start_stop(struct brcmstb_i2c_dev *dev,
+/* Set xfer START/STOP conditions क्रम subsequent transfer */
+अटल व्योम brcmstb_set_i2c_start_stop(काष्ठा brcmstb_i2c_dev *dev,
 				       u32 cond_flag)
-{
+अणु
 	u32 regval = dev->bsc_regmap->iic_enable;
 
 	dev->bsc_regmap->iic_enable = (regval & ~COND_START_STOP) | cond_flag;
-}
+पूर्ण
 
 /* Send I2C request check completion */
-static int brcmstb_send_i2c_cmd(struct brcmstb_i2c_dev *dev,
-				enum bsc_xfer_cmd cmd)
-{
-	int rc = 0;
-	struct bsc_regs *pi2creg = dev->bsc_regmap;
+अटल पूर्णांक brcmstb_send_i2c_cmd(काष्ठा brcmstb_i2c_dev *dev,
+				क्रमागत bsc_xfer_cmd cmd)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा bsc_regs *pi2creg = dev->bsc_regmap;
 
-	/* Make sure the hardware is ready */
-	rc = brcmstb_i2c_wait_if_busy(dev);
-	if (rc < 0)
-		return rc;
+	/* Make sure the hardware is पढ़ोy */
+	rc = brcmstb_i2c_रुको_अगर_busy(dev);
+	अगर (rc < 0)
+		वापस rc;
 
-	/* only if we are in interrupt mode */
-	if (dev->irq >= 0)
-		reinit_completion(&dev->done);
+	/* only अगर we are in पूर्णांकerrupt mode */
+	अगर (dev->irq >= 0)
+		reinit_completion(&dev->करोne);
 
-	/* enable BSC CTL interrupt line */
+	/* enable BSC CTL पूर्णांकerrupt line */
 	brcmstb_i2c_enable_disable_irq(dev, INT_ENABLE);
 
 	/* initiate transfer by setting iic_enable */
 	pi2creg->iic_enable |= BSC_IIC_EN_ENABLE_MASK;
-	bsc_writel(dev, pi2creg->iic_enable, iic_enable);
+	bsc_ग_लिखोl(dev, pi2creg->iic_enable, iic_enable);
 
-	/* Wait for transaction to finish or timeout */
-	rc = brcmstb_i2c_wait_for_completion(dev);
-	if (rc) {
+	/* Wait क्रम transaction to finish or समयout */
+	rc = brcmstb_i2c_रुको_क्रम_completion(dev);
+	अगर (rc) अणु
 		dev_dbg(dev->device, "intr timeout for cmd %s\n",
 			cmd_string[cmd]);
-		goto cmd_out;
-	}
+		जाओ cmd_out;
+	पूर्ण
 
-	if ((cmd == CMD_RD || cmd == CMD_WR) &&
-	    bsc_readl(dev, iic_enable) & BSC_IIC_EN_NOACK_MASK) {
+	अगर ((cmd == CMD_RD || cmd == CMD_WR) &&
+	    bsc_पढ़ोl(dev, iic_enable) & BSC_IIC_EN_NOACK_MASK) अणु
 		rc = -EREMOTEIO;
 		dev_dbg(dev->device, "controller received NOACK intr for %s\n",
 			cmd_string[cmd]);
-	}
+	पूर्ण
 
 cmd_out:
-	bsc_writel(dev, 0, cnt_reg);
-	bsc_writel(dev, 0, iic_enable);
+	bsc_ग_लिखोl(dev, 0, cnt_reg);
+	bsc_ग_लिखोl(dev, 0, iic_enable);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Actual data transfer through the BSC master */
-static int brcmstb_i2c_xfer_bsc_data(struct brcmstb_i2c_dev *dev,
-				     u8 *buf, unsigned int len,
-				     struct i2c_msg *pmsg)
-{
-	int cnt, byte, i, rc;
-	enum bsc_xfer_cmd cmd;
+अटल पूर्णांक brcmstb_i2c_xfer_bsc_data(काष्ठा brcmstb_i2c_dev *dev,
+				     u8 *buf, अचिन्हित पूर्णांक len,
+				     काष्ठा i2c_msg *pmsg)
+अणु
+	पूर्णांक cnt, byte, i, rc;
+	क्रमागत bsc_xfer_cmd cmd;
 	u32 ctl_reg;
-	struct bsc_regs *pi2creg = dev->bsc_regmap;
-	int no_ack = pmsg->flags & I2C_M_IGNORE_NAK;
-	int data_regsz = brcmstb_i2c_get_data_regsz(dev);
+	काष्ठा bsc_regs *pi2creg = dev->bsc_regmap;
+	पूर्णांक no_ack = pmsg->flags & I2C_M_IGNORE_NAK;
+	पूर्णांक data_regsz = brcmstb_i2c_get_data_regsz(dev);
 
-	/* see if the transaction needs to check NACK conditions */
-	if (no_ack) {
+	/* see अगर the transaction needs to check NACK conditions */
+	अगर (no_ack) अणु
 		cmd = (pmsg->flags & I2C_M_RD) ? CMD_RD_NOACK
 			: CMD_WR_NOACK;
 		pi2creg->ctlhi_reg |= BSC_CTLHI_REG_IGNORE_ACK_MASK;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd = (pmsg->flags & I2C_M_RD) ? CMD_RD : CMD_WR;
 		pi2creg->ctlhi_reg &= ~BSC_CTLHI_REG_IGNORE_ACK_MASK;
-	}
-	bsc_writel(dev, pi2creg->ctlhi_reg, ctlhi_reg);
+	पूर्ण
+	bsc_ग_लिखोl(dev, pi2creg->ctlhi_reg, ctlhi_reg);
 
 	/* set data transfer direction */
 	ctl_reg = pi2creg->ctl_reg & ~BSC_CTL_REG_DTF_MASK;
-	if (cmd == CMD_WR || cmd == CMD_WR_NOACK)
+	अगर (cmd == CMD_WR || cmd == CMD_WR_NOACK)
 		pi2creg->ctl_reg = ctl_reg | DTF_WR_MASK;
-	else
+	अन्यथा
 		pi2creg->ctl_reg = ctl_reg | DTF_RD_MASK;
 
-	/* set the read/write length */
-	bsc_writel(dev, BSC_CNT_REG1_MASK(data_regsz) &
+	/* set the पढ़ो/ग_लिखो length */
+	bsc_ग_लिखोl(dev, BSC_CNT_REG1_MASK(data_regsz) &
 		   (len << BSC_CNT_REG1_SHIFT), cnt_reg);
 
-	/* Write data into data_in register */
+	/* Write data पूर्णांकo data_in रेजिस्टर */
 
-	if (cmd == CMD_WR || cmd == CMD_WR_NOACK) {
-		for (cnt = 0, i = 0; cnt < len; cnt += data_regsz, i++) {
+	अगर (cmd == CMD_WR || cmd == CMD_WR_NOACK) अणु
+		क्रम (cnt = 0, i = 0; cnt < len; cnt += data_regsz, i++) अणु
 			u32 word = 0;
 
-			for (byte = 0; byte < data_regsz; byte++) {
+			क्रम (byte = 0; byte < data_regsz; byte++) अणु
 				word >>= BITS_PER_BYTE;
-				if ((cnt + byte) < len)
+				अगर ((cnt + byte) < len)
 					word |= buf[cnt + byte] <<
 					(BITS_PER_BYTE * (data_regsz - 1));
-			}
-			bsc_writel(dev, word, data_in[i]);
-		}
-	}
+			पूर्ण
+			bsc_ग_लिखोl(dev, word, data_in[i]);
+		पूर्ण
+	पूर्ण
 
-	/* Initiate xfer, the function will return on completion */
+	/* Initiate xfer, the function will वापस on completion */
 	rc = brcmstb_send_i2c_cmd(dev, cmd);
 
-	if (rc != 0) {
+	अगर (rc != 0) अणु
 		dev_dbg(dev->device, "%s failure", cmd_string[cmd]);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Read data from data_out register */
-	if (cmd == CMD_RD || cmd == CMD_RD_NOACK) {
-		for (cnt = 0, i = 0; cnt < len; cnt += data_regsz, i++) {
-			u32 data = bsc_readl(dev, data_out[i]);
+	/* Read data from data_out रेजिस्टर */
+	अगर (cmd == CMD_RD || cmd == CMD_RD_NOACK) अणु
+		क्रम (cnt = 0, i = 0; cnt < len; cnt += data_regsz, i++) अणु
+			u32 data = bsc_पढ़ोl(dev, data_out[i]);
 
-			for (byte = 0; byte < data_regsz &&
-				     (byte + cnt) < len; byte++) {
+			क्रम (byte = 0; byte < data_regsz &&
+				     (byte + cnt) < len; byte++) अणु
 				buf[cnt + byte] = data & 0xff;
 				data >>= BITS_PER_BYTE;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Write a single byte of data to the i2c bus */
-static int brcmstb_i2c_write_data_byte(struct brcmstb_i2c_dev *dev,
-				       u8 *buf, unsigned int nak_expected)
-{
-	enum bsc_xfer_cmd cmd = nak_expected ? CMD_WR : CMD_WR_NOACK;
+अटल पूर्णांक brcmstb_i2c_ग_लिखो_data_byte(काष्ठा brcmstb_i2c_dev *dev,
+				       u8 *buf, अचिन्हित पूर्णांक nak_expected)
+अणु
+	क्रमागत bsc_xfer_cmd cmd = nak_expected ? CMD_WR : CMD_WR_NOACK;
 
-	bsc_writel(dev, 1, cnt_reg);
-	bsc_writel(dev, *buf, data_in);
+	bsc_ग_लिखोl(dev, 1, cnt_reg);
+	bsc_ग_लिखोl(dev, *buf, data_in);
 
-	return brcmstb_send_i2c_cmd(dev, cmd);
-}
+	वापस brcmstb_send_i2c_cmd(dev, cmd);
+पूर्ण
 
 /* Send i2c address */
-static int brcmstb_i2c_do_addr(struct brcmstb_i2c_dev *dev,
-			       struct i2c_msg *msg)
-{
-	unsigned char addr;
+अटल पूर्णांक brcmstb_i2c_करो_addr(काष्ठा brcmstb_i2c_dev *dev,
+			       काष्ठा i2c_msg *msg)
+अणु
+	अचिन्हित अक्षर addr;
 
-	if (msg->flags & I2C_M_TEN) {
+	अगर (msg->flags & I2C_M_TEN) अणु
 		/* First byte is 11110XX0 where XX is upper 2 bits */
 		addr = 0xF0 | ((msg->addr & 0x300) >> 7);
-		bsc_writel(dev, addr, chip_address);
+		bsc_ग_लिखोl(dev, addr, chip_address);
 
-		/* Second byte is the remaining 8 bits */
+		/* Second byte is the reमुख्यing 8 bits */
 		addr = msg->addr & 0xFF;
-		if (brcmstb_i2c_write_data_byte(dev, &addr, 0) < 0)
-			return -EREMOTEIO;
+		अगर (brcmstb_i2c_ग_लिखो_data_byte(dev, &addr, 0) < 0)
+			वापस -EREMOTEIO;
 
-		if (msg->flags & I2C_M_RD) {
-			/* For read, send restart without stop condition */
+		अगर (msg->flags & I2C_M_RD) अणु
+			/* For पढ़ो, send restart without stop condition */
 			brcmstb_set_i2c_start_stop(dev, COND_RESTART
 						   | COND_NOSTOP);
-			/* Then re-send the first byte with the read bit set */
+			/* Then re-send the first byte with the पढ़ो bit set */
 			addr = 0xF0 | ((msg->addr & 0x300) >> 7) | 0x01;
-			if (brcmstb_i2c_write_data_byte(dev, &addr, 0) < 0)
-				return -EREMOTEIO;
+			अगर (brcmstb_i2c_ग_लिखो_data_byte(dev, &addr, 0) < 0)
+				वापस -EREMOTEIO;
 
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		addr = i2c_8bit_addr_from_msg(msg);
 
-		bsc_writel(dev, addr, chip_address);
-	}
+		bsc_ग_लिखोl(dev, addr, chip_address);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Master transfer function */
-static int brcmstb_i2c_xfer(struct i2c_adapter *adapter,
-			    struct i2c_msg msgs[], int num)
-{
-	struct brcmstb_i2c_dev *dev = i2c_get_adapdata(adapter);
-	struct i2c_msg *pmsg;
-	int rc = 0;
-	int i;
-	int bytes_to_xfer;
-	u8 *tmp_buf;
-	int len = 0;
-	int xfersz = brcmstb_i2c_get_xfersz(dev);
+अटल पूर्णांक brcmstb_i2c_xfer(काष्ठा i2c_adapter *adapter,
+			    काष्ठा i2c_msg msgs[], पूर्णांक num)
+अणु
+	काष्ठा brcmstb_i2c_dev *dev = i2c_get_adapdata(adapter);
+	काष्ठा i2c_msg *pmsg;
+	पूर्णांक rc = 0;
+	पूर्णांक i;
+	पूर्णांक bytes_to_xfer;
+	u8 *पंचांगp_buf;
+	पूर्णांक len = 0;
+	पूर्णांक xfersz = brcmstb_i2c_get_xfersz(dev);
 	u32 cond, cond_per_msg;
 
 	/* Loop through all messages */
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		pmsg = &msgs[i];
 		len = pmsg->len;
-		tmp_buf = pmsg->buf;
+		पंचांगp_buf = pmsg->buf;
 
 		dev_dbg(dev->device,
 			"msg# %d/%d flg %x buf %x len %d\n", i,
 			num - 1, pmsg->flags,
 			pmsg->buf ? pmsg->buf[0] : '0', pmsg->len);
 
-		if (i < (num - 1) && (msgs[i + 1].flags & I2C_M_NOSTART))
+		अगर (i < (num - 1) && (msgs[i + 1].flags & I2C_M_NOSTART))
 			cond = ~COND_START_STOP;
-		else
+		अन्यथा
 			cond = COND_RESTART | COND_NOSTOP;
 
 		brcmstb_set_i2c_start_stop(dev, cond);
 
 		/* Send slave address */
-		if (!(pmsg->flags & I2C_M_NOSTART)) {
-			rc = brcmstb_i2c_do_addr(dev, pmsg);
-			if (rc < 0) {
+		अगर (!(pmsg->flags & I2C_M_NOSTART)) अणु
+			rc = brcmstb_i2c_करो_addr(dev, pmsg);
+			अगर (rc < 0) अणु
 				dev_dbg(dev->device,
 					"NACK for addr %2.2x msg#%d rc = %d\n",
 					pmsg->addr, i, rc);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		cond_per_msg = cond;
 
-		/* Perform data transfer */
-		while (len) {
+		/* Perक्रमm data transfer */
+		जबतक (len) अणु
 			bytes_to_xfer = min(len, xfersz);
 
-			if (len <= xfersz) {
-				if (i == (num - 1))
+			अगर (len <= xfersz) अणु
+				अगर (i == (num - 1))
 					cond_per_msg = cond_per_msg &
 						~(COND_RESTART | COND_NOSTOP);
-				else
+				अन्यथा
 					cond_per_msg = cond;
-			} else {
+			पूर्ण अन्यथा अणु
 				cond_per_msg = (cond_per_msg & ~COND_RESTART) |
 					COND_NOSTOP;
-			}
+			पूर्ण
 
 			brcmstb_set_i2c_start_stop(dev, cond_per_msg);
 
-			rc = brcmstb_i2c_xfer_bsc_data(dev, tmp_buf,
+			rc = brcmstb_i2c_xfer_bsc_data(dev, पंचांगp_buf,
 						       bytes_to_xfer, pmsg);
-			if (rc < 0)
-				goto out;
+			अगर (rc < 0)
+				जाओ out;
 
 			len -=  bytes_to_xfer;
-			tmp_buf += bytes_to_xfer;
+			पंचांगp_buf += bytes_to_xfer;
 
 			cond_per_msg = COND_NOSTART | COND_NOSTOP;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rc = num;
 out:
-	return rc;
+	वापस rc;
 
-}
+पूर्ण
 
-static u32 brcmstb_i2c_functionality(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_10BIT_ADDR
+अटल u32 brcmstb_i2c_functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_10BIT_ADDR
 		| I2C_FUNC_NOSTART | I2C_FUNC_PROTOCOL_MANGLING;
-}
+पूर्ण
 
-static const struct i2c_algorithm brcmstb_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm brcmstb_i2c_algo = अणु
 	.master_xfer = brcmstb_i2c_xfer,
 	.functionality = brcmstb_i2c_functionality,
-};
+पूर्ण;
 
-static void brcmstb_i2c_set_bus_speed(struct brcmstb_i2c_dev *dev)
-{
-	int i = 0, num_speeds = ARRAY_SIZE(bsc_clk);
+अटल व्योम brcmstb_i2c_set_bus_speed(काष्ठा brcmstb_i2c_dev *dev)
+अणु
+	पूर्णांक i = 0, num_speeds = ARRAY_SIZE(bsc_clk);
 	u32 clk_freq_hz = dev->clk_freq_hz;
 
-	for (i = 0; i < num_speeds; i++) {
-		if (bsc_clk[i].hz == clk_freq_hz) {
+	क्रम (i = 0; i < num_speeds; i++) अणु
+		अगर (bsc_clk[i].hz == clk_freq_hz) अणु
 			dev->bsc_regmap->ctl_reg &= ~(BSC_CTL_REG_SCL_SEL_MASK
 						| BSC_CTL_REG_DIV_CLK_MASK);
 			dev->bsc_regmap->ctl_reg |= (bsc_clk[i].scl_mask |
-						     bsc_clk[i].div_mask);
-			bsc_writel(dev, dev->bsc_regmap->ctl_reg, ctl_reg);
-			break;
-		}
-	}
+						     bsc_clk[i].भाग_mask);
+			bsc_ग_लिखोl(dev, dev->bsc_regmap->ctl_reg, ctl_reg);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* in case we did not get find a valid speed */
-	if (i == num_speeds) {
-		i = (bsc_readl(dev, ctl_reg) & BSC_CTL_REG_SCL_SEL_MASK) >>
+	/* in हाल we did not get find a valid speed */
+	अगर (i == num_speeds) अणु
+		i = (bsc_पढ़ोl(dev, ctl_reg) & BSC_CTL_REG_SCL_SEL_MASK) >>
 			BSC_CTL_REG_SCL_SEL_SHIFT;
 		dev_warn(dev->device, "leaving current clock-frequency @ %dHz\n",
 			bsc_clk[i].hz);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void brcmstb_i2c_set_bsc_reg_defaults(struct brcmstb_i2c_dev *dev)
-{
-	if (brcmstb_i2c_get_data_regsz(dev) == sizeof(u32))
+अटल व्योम brcmstb_i2c_set_bsc_reg_शेषs(काष्ठा brcmstb_i2c_dev *dev)
+अणु
+	अगर (brcmstb_i2c_get_data_regsz(dev) == माप(u32))
 		/* set 4 byte data in/out xfers  */
 		dev->bsc_regmap->ctlhi_reg = BSC_CTLHI_REG_DATAREG_SIZE_MASK;
-	else
+	अन्यथा
 		dev->bsc_regmap->ctlhi_reg &= ~BSC_CTLHI_REG_DATAREG_SIZE_MASK;
 
-	bsc_writel(dev, dev->bsc_regmap->ctlhi_reg, ctlhi_reg);
+	bsc_ग_लिखोl(dev, dev->bsc_regmap->ctlhi_reg, ctlhi_reg);
 	/* set bus speed */
 	brcmstb_i2c_set_bus_speed(dev);
-}
+पूर्ण
 
-#define AUTOI2C_CTRL0		0x26c
-#define AUTOI2C_CTRL0_RELEASE_BSC	BIT(1)
+#घोषणा AUTOI2C_CTRL0		0x26c
+#घोषणा AUTOI2C_CTRL0_RELEASE_BSC	BIT(1)
 
-static int bcm2711_release_bsc(struct brcmstb_i2c_dev *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev->device);
-	struct resource *iomem;
-	void __iomem *autoi2c;
+अटल पूर्णांक bcm2711_release_bsc(काष्ठा brcmstb_i2c_dev *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev->device);
+	काष्ठा resource *iomem;
+	व्योम __iomem *स्वतःi2c;
 
-	/* Map hardware registers */
-	iomem = platform_get_resource_byname(pdev, IORESOURCE_MEM, "auto-i2c");
-	autoi2c = devm_ioremap_resource(&pdev->dev, iomem);
-	if (IS_ERR(autoi2c))
-		return PTR_ERR(autoi2c);
+	/* Map hardware रेजिस्टरs */
+	iomem = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "auto-i2c");
+	स्वतःi2c = devm_ioremap_resource(&pdev->dev, iomem);
+	अगर (IS_ERR(स्वतःi2c))
+		वापस PTR_ERR(स्वतःi2c);
 
-	writel(AUTOI2C_CTRL0_RELEASE_BSC, autoi2c + AUTOI2C_CTRL0);
-	devm_iounmap(&pdev->dev, autoi2c);
+	ग_लिखोl(AUTOI2C_CTRL0_RELEASE_BSC, स्वतःi2c + AUTOI2C_CTRL0);
+	devm_iounmap(&pdev->dev, स्वतःi2c);
 
 	/* We need to reset the controller after the release */
 	dev->bsc_regmap->iic_enable = 0;
-	bsc_writel(dev, dev->bsc_regmap->iic_enable, iic_enable);
+	bsc_ग_लिखोl(dev, dev->bsc_regmap->iic_enable, iic_enable);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmstb_i2c_probe(struct platform_device *pdev)
-{
-	int rc = 0;
-	struct brcmstb_i2c_dev *dev;
-	struct i2c_adapter *adap;
-	struct resource *iomem;
-	const char *int_name;
+अटल पूर्णांक brcmstb_i2c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा brcmstb_i2c_dev *dev;
+	काष्ठा i2c_adapter *adap;
+	काष्ठा resource *iomem;
+	स्थिर अक्षर *पूर्णांक_name;
 
-	/* Allocate memory for private data structure */
-	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	/* Allocate memory क्रम निजी data काष्ठाure */
+	dev = devm_kzalloc(&pdev->dev, माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
-	dev->bsc_regmap = devm_kzalloc(&pdev->dev, sizeof(*dev->bsc_regmap), GFP_KERNEL);
-	if (!dev->bsc_regmap)
-		return -ENOMEM;
+	dev->bsc_regmap = devm_kzalloc(&pdev->dev, माप(*dev->bsc_regmap), GFP_KERNEL);
+	अगर (!dev->bsc_regmap)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 	dev->device = &pdev->dev;
-	init_completion(&dev->done);
+	init_completion(&dev->करोne);
 
-	/* Map hardware registers */
-	iomem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	/* Map hardware रेजिस्टरs */
+	iomem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	dev->base = devm_ioremap_resource(dev->device, iomem);
-	if (IS_ERR(dev->base)) {
+	अगर (IS_ERR(dev->base)) अणु
 		rc = -ENOMEM;
-		goto probe_errorout;
-	}
+		जाओ probe_errorout;
+	पूर्ण
 
-	if (of_device_is_compatible(dev->device->of_node,
-				    "brcm,bcm2711-hdmi-i2c")) {
+	अगर (of_device_is_compatible(dev->device->of_node,
+				    "brcm,bcm2711-hdmi-i2c")) अणु
 		rc = bcm2711_release_bsc(dev);
-		if (rc)
-			goto probe_errorout;
-	}
+		अगर (rc)
+			जाओ probe_errorout;
+	पूर्ण
 
-	rc = of_property_read_string(dev->device->of_node, "interrupt-names",
-				     &int_name);
-	if (rc < 0)
-		int_name = NULL;
+	rc = of_property_पढ़ो_string(dev->device->of_node, "interrupt-names",
+				     &पूर्णांक_name);
+	अगर (rc < 0)
+		पूर्णांक_name = शून्य;
 
-	/* Get the interrupt number */
-	dev->irq = platform_get_irq_optional(pdev, 0);
+	/* Get the पूर्णांकerrupt number */
+	dev->irq = platक्रमm_get_irq_optional(pdev, 0);
 
-	/* disable the bsc interrupt line */
+	/* disable the bsc पूर्णांकerrupt line */
 	brcmstb_i2c_enable_disable_irq(dev, INT_DISABLE);
 
-	/* register the ISR handler */
-	if (dev->irq >= 0) {
+	/* रेजिस्टर the ISR handler */
+	अगर (dev->irq >= 0) अणु
 		rc = devm_request_irq(&pdev->dev, dev->irq, brcmstb_i2c_isr,
 				      IRQF_SHARED,
-				      int_name ? int_name : pdev->name,
+				      पूर्णांक_name ? पूर्णांक_name : pdev->name,
 				      dev);
 
-		if (rc) {
+		अगर (rc) अणु
 			dev_dbg(dev->device, "falling back to polling mode");
 			dev->irq = -1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (of_property_read_u32(dev->device->of_node,
-				 "clock-frequency", &dev->clk_freq_hz)) {
+	अगर (of_property_पढ़ो_u32(dev->device->of_node,
+				 "clock-frequency", &dev->clk_freq_hz)) अणु
 		dev_warn(dev->device, "setting clock-frequency@%dHz\n",
 			 bsc_clk[0].hz);
 		dev->clk_freq_hz = bsc_clk[0].hz;
-	}
+	पूर्ण
 
-	/* set the data in/out register size for compatible SoCs */
-	if (of_device_is_compatible(dev->device->of_node,
+	/* set the data in/out रेजिस्टर size क्रम compatible SoCs */
+	अगर (of_device_is_compatible(dev->device->of_node,
 				    "brcmstb,brcmper-i2c"))
-		dev->data_regsz = sizeof(u8);
-	else
-		dev->data_regsz = sizeof(u32);
+		dev->data_regsz = माप(u8);
+	अन्यथा
+		dev->data_regsz = माप(u32);
 
-	brcmstb_i2c_set_bsc_reg_defaults(dev);
+	brcmstb_i2c_set_bsc_reg_शेषs(dev);
 
 	/* Add the i2c adapter */
 	adap = &dev->adapter;
 	i2c_set_adapdata(adap, dev);
 	adap->owner = THIS_MODULE;
-	strlcpy(adap->name, "Broadcom STB : ", sizeof(adap->name));
-	if (int_name)
-		strlcat(adap->name, int_name, sizeof(adap->name));
+	strlcpy(adap->name, "Broadcom STB : ", माप(adap->name));
+	अगर (पूर्णांक_name)
+		strlcat(adap->name, पूर्णांक_name, माप(adap->name));
 	adap->algo = &brcmstb_i2c_algo;
 	adap->dev.parent = &pdev->dev;
 	adap->dev.of_node = pdev->dev.of_node;
 	rc = i2c_add_adapter(adap);
-	if (rc)
-		goto probe_errorout;
+	अगर (rc)
+		जाओ probe_errorout;
 
 	dev_info(dev->device, "%s@%dhz registered in %s mode\n",
-		 int_name ? int_name : " ", dev->clk_freq_hz,
+		 पूर्णांक_name ? पूर्णांक_name : " ", dev->clk_freq_hz,
 		 (dev->irq >= 0) ? "interrupt" : "polling");
 
-	return 0;
+	वापस 0;
 
 probe_errorout:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int brcmstb_i2c_remove(struct platform_device *pdev)
-{
-	struct brcmstb_i2c_dev *dev = platform_get_drvdata(pdev);
+अटल पूर्णांक brcmstb_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा brcmstb_i2c_dev *dev = platक्रमm_get_drvdata(pdev);
 
 	i2c_del_adapter(&dev->adapter);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int brcmstb_i2c_suspend(struct device *dev)
-{
-	struct brcmstb_i2c_dev *i2c_dev = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक brcmstb_i2c_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा brcmstb_i2c_dev *i2c_dev = dev_get_drvdata(dev);
 
 	i2c_mark_adapter_suspended(&i2c_dev->adapter);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmstb_i2c_resume(struct device *dev)
-{
-	struct brcmstb_i2c_dev *i2c_dev = dev_get_drvdata(dev);
+अटल पूर्णांक brcmstb_i2c_resume(काष्ठा device *dev)
+अणु
+	काष्ठा brcmstb_i2c_dev *i2c_dev = dev_get_drvdata(dev);
 
-	brcmstb_i2c_set_bsc_reg_defaults(i2c_dev);
+	brcmstb_i2c_set_bsc_reg_शेषs(i2c_dev);
 	i2c_mark_adapter_resumed(&i2c_dev->adapter);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(brcmstb_i2c_pm, brcmstb_i2c_suspend,
+अटल SIMPLE_DEV_PM_OPS(brcmstb_i2c_pm, brcmstb_i2c_suspend,
 			 brcmstb_i2c_resume);
 
-static const struct of_device_id brcmstb_i2c_of_match[] = {
-	{.compatible = "brcm,brcmstb-i2c"},
-	{.compatible = "brcm,brcmper-i2c"},
-	{.compatible = "brcm,bcm2711-hdmi-i2c"},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id brcmstb_i2c_of_match[] = अणु
+	अणु.compatible = "brcm,brcmstb-i2c"पूर्ण,
+	अणु.compatible = "brcm,brcmper-i2c"पूर्ण,
+	अणु.compatible = "brcm,bcm2711-hdmi-i2c"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, brcmstb_i2c_of_match);
 
-static struct platform_driver brcmstb_i2c_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver brcmstb_i2c_driver = अणु
+	.driver = अणु
 		   .name = "brcmstb-i2c",
 		   .of_match_table = brcmstb_i2c_of_match,
 		   .pm = &brcmstb_i2c_pm,
-		   },
+		   पूर्ण,
 	.probe = brcmstb_i2c_probe,
-	.remove = brcmstb_i2c_remove,
-};
-module_platform_driver(brcmstb_i2c_driver);
+	.हटाओ = brcmstb_i2c_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(brcmstb_i2c_driver);
 
 MODULE_AUTHOR("Kamal Dasu <kdasu@broadcom.com>");
 MODULE_DESCRIPTION("Broadcom Settop I2C Driver");

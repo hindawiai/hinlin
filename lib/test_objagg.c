@@ -1,1021 +1,1022 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2018 Mellanox Technologies. All rights reserved */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/random.h>
-#include <linux/objagg.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/objagg.h>
 
-struct tokey {
-	unsigned int id;
-};
+काष्ठा tokey अणु
+	अचिन्हित पूर्णांक id;
+पूर्ण;
 
-#define NUM_KEYS 32
+#घोषणा NUM_KEYS 32
 
-static int key_id_index(unsigned int key_id)
-{
-	if (key_id >= NUM_KEYS) {
+अटल पूर्णांक key_id_index(अचिन्हित पूर्णांक key_id)
+अणु
+	अगर (key_id >= NUM_KEYS) अणु
 		WARN_ON(1);
-		return 0;
-	}
-	return key_id;
-}
+		वापस 0;
+	पूर्ण
+	वापस key_id;
+पूर्ण
 
-#define BUF_LEN 128
+#घोषणा BUF_LEN 128
 
-struct world {
-	unsigned int root_count;
-	unsigned int delta_count;
-	char next_root_buf[BUF_LEN];
-	struct objagg_obj *objagg_objs[NUM_KEYS];
-	unsigned int key_refs[NUM_KEYS];
-};
+काष्ठा world अणु
+	अचिन्हित पूर्णांक root_count;
+	अचिन्हित पूर्णांक delta_count;
+	अक्षर next_root_buf[BUF_LEN];
+	काष्ठा objagg_obj *objagg_objs[NUM_KEYS];
+	अचिन्हित पूर्णांक key_refs[NUM_KEYS];
+पूर्ण;
 
-struct root {
-	struct tokey key;
-	char buf[BUF_LEN];
-};
+काष्ठा root अणु
+	काष्ठा tokey key;
+	अक्षर buf[BUF_LEN];
+पूर्ण;
 
-struct delta {
-	unsigned int key_id_diff;
-};
+काष्ठा delta अणु
+	अचिन्हित पूर्णांक key_id_dअगरf;
+पूर्ण;
 
-static struct objagg_obj *world_obj_get(struct world *world,
-					struct objagg *objagg,
-					unsigned int key_id)
-{
-	struct objagg_obj *objagg_obj;
-	struct tokey key;
-	int err;
+अटल काष्ठा objagg_obj *world_obj_get(काष्ठा world *world,
+					काष्ठा objagg *objagg,
+					अचिन्हित पूर्णांक key_id)
+अणु
+	काष्ठा objagg_obj *objagg_obj;
+	काष्ठा tokey key;
+	पूर्णांक err;
 
 	key.id = key_id;
 	objagg_obj = objagg_obj_get(objagg, &key);
-	if (IS_ERR(objagg_obj)) {
+	अगर (IS_ERR(objagg_obj)) अणु
 		pr_err("Key %u: Failed to get object.\n", key_id);
-		return objagg_obj;
-	}
-	if (!world->key_refs[key_id_index(key_id)]) {
+		वापस objagg_obj;
+	पूर्ण
+	अगर (!world->key_refs[key_id_index(key_id)]) अणु
 		world->objagg_objs[key_id_index(key_id)] = objagg_obj;
-	} else if (world->objagg_objs[key_id_index(key_id)] != objagg_obj) {
+	पूर्ण अन्यथा अगर (world->objagg_objs[key_id_index(key_id)] != objagg_obj) अणु
 		pr_err("Key %u: God another object for the same key.\n",
 		       key_id);
 		err = -EINVAL;
-		goto err_key_id_check;
-	}
+		जाओ err_key_id_check;
+	पूर्ण
 	world->key_refs[key_id_index(key_id)]++;
-	return objagg_obj;
+	वापस objagg_obj;
 
 err_key_id_check:
 	objagg_obj_put(objagg, objagg_obj);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void world_obj_put(struct world *world, struct objagg *objagg,
-			  unsigned int key_id)
-{
-	struct objagg_obj *objagg_obj;
+अटल व्योम world_obj_put(काष्ठा world *world, काष्ठा objagg *objagg,
+			  अचिन्हित पूर्णांक key_id)
+अणु
+	काष्ठा objagg_obj *objagg_obj;
 
-	if (!world->key_refs[key_id_index(key_id)])
-		return;
+	अगर (!world->key_refs[key_id_index(key_id)])
+		वापस;
 	objagg_obj = world->objagg_objs[key_id_index(key_id)];
 	objagg_obj_put(objagg, objagg_obj);
 	world->key_refs[key_id_index(key_id)]--;
-}
+पूर्ण
 
-#define MAX_KEY_ID_DIFF 5
+#घोषणा MAX_KEY_ID_DIFF 5
 
-static bool delta_check(void *priv, const void *parent_obj, const void *obj)
-{
-	const struct tokey *parent_key = parent_obj;
-	const struct tokey *key = obj;
-	int diff = key->id - parent_key->id;
+अटल bool delta_check(व्योम *priv, स्थिर व्योम *parent_obj, स्थिर व्योम *obj)
+अणु
+	स्थिर काष्ठा tokey *parent_key = parent_obj;
+	स्थिर काष्ठा tokey *key = obj;
+	पूर्णांक dअगरf = key->id - parent_key->id;
 
-	return diff >= 0 && diff <= MAX_KEY_ID_DIFF;
-}
+	वापस dअगरf >= 0 && dअगरf <= MAX_KEY_ID_DIFF;
+पूर्ण
 
-static void *delta_create(void *priv, void *parent_obj, void *obj)
-{
-	struct tokey *parent_key = parent_obj;
-	struct world *world = priv;
-	struct tokey *key = obj;
-	int diff = key->id - parent_key->id;
-	struct delta *delta;
+अटल व्योम *delta_create(व्योम *priv, व्योम *parent_obj, व्योम *obj)
+अणु
+	काष्ठा tokey *parent_key = parent_obj;
+	काष्ठा world *world = priv;
+	काष्ठा tokey *key = obj;
+	पूर्णांक dअगरf = key->id - parent_key->id;
+	काष्ठा delta *delta;
 
-	if (!delta_check(priv, parent_obj, obj))
-		return ERR_PTR(-EINVAL);
+	अगर (!delta_check(priv, parent_obj, obj))
+		वापस ERR_PTR(-EINVAL);
 
-	delta = kzalloc(sizeof(*delta), GFP_KERNEL);
-	if (!delta)
-		return ERR_PTR(-ENOMEM);
-	delta->key_id_diff = diff;
+	delta = kzalloc(माप(*delta), GFP_KERNEL);
+	अगर (!delta)
+		वापस ERR_PTR(-ENOMEM);
+	delta->key_id_dअगरf = dअगरf;
 	world->delta_count++;
-	return delta;
-}
+	वापस delta;
+पूर्ण
 
-static void delta_destroy(void *priv, void *delta_priv)
-{
-	struct delta *delta = delta_priv;
-	struct world *world = priv;
+अटल व्योम delta_destroy(व्योम *priv, व्योम *delta_priv)
+अणु
+	काष्ठा delta *delta = delta_priv;
+	काष्ठा world *world = priv;
 
 	world->delta_count--;
-	kfree(delta);
-}
+	kमुक्त(delta);
+पूर्ण
 
-static void *root_create(void *priv, void *obj, unsigned int id)
-{
-	struct world *world = priv;
-	struct tokey *key = obj;
-	struct root *root;
+अटल व्योम *root_create(व्योम *priv, व्योम *obj, अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा world *world = priv;
+	काष्ठा tokey *key = obj;
+	काष्ठा root *root;
 
-	root = kzalloc(sizeof(*root), GFP_KERNEL);
-	if (!root)
-		return ERR_PTR(-ENOMEM);
-	memcpy(&root->key, key, sizeof(root->key));
-	memcpy(root->buf, world->next_root_buf, sizeof(root->buf));
+	root = kzalloc(माप(*root), GFP_KERNEL);
+	अगर (!root)
+		वापस ERR_PTR(-ENOMEM);
+	स_नकल(&root->key, key, माप(root->key));
+	स_नकल(root->buf, world->next_root_buf, माप(root->buf));
 	world->root_count++;
-	return root;
-}
+	वापस root;
+पूर्ण
 
-static void root_destroy(void *priv, void *root_priv)
-{
-	struct root *root = root_priv;
-	struct world *world = priv;
+अटल व्योम root_destroy(व्योम *priv, व्योम *root_priv)
+अणु
+	काष्ठा root *root = root_priv;
+	काष्ठा world *world = priv;
 
 	world->root_count--;
-	kfree(root);
-}
+	kमुक्त(root);
+पूर्ण
 
-static int test_nodelta_obj_get(struct world *world, struct objagg *objagg,
-				unsigned int key_id, bool should_create_root)
-{
-	unsigned int orig_root_count = world->root_count;
-	struct objagg_obj *objagg_obj;
-	const struct root *root;
-	int err;
+अटल पूर्णांक test_nodelta_obj_get(काष्ठा world *world, काष्ठा objagg *objagg,
+				अचिन्हित पूर्णांक key_id, bool should_create_root)
+अणु
+	अचिन्हित पूर्णांक orig_root_count = world->root_count;
+	काष्ठा objagg_obj *objagg_obj;
+	स्थिर काष्ठा root *root;
+	पूर्णांक err;
 
-	if (should_create_root)
-		prandom_bytes(world->next_root_buf,
-			      sizeof(world->next_root_buf));
+	अगर (should_create_root)
+		pअक्रमom_bytes(world->next_root_buf,
+			      माप(world->next_root_buf));
 
 	objagg_obj = world_obj_get(world, objagg, key_id);
-	if (IS_ERR(objagg_obj)) {
+	अगर (IS_ERR(objagg_obj)) अणु
 		pr_err("Key %u: Failed to get object.\n", key_id);
-		return PTR_ERR(objagg_obj);
-	}
-	if (should_create_root) {
-		if (world->root_count != orig_root_count + 1) {
+		वापस PTR_ERR(objagg_obj);
+	पूर्ण
+	अगर (should_create_root) अणु
+		अगर (world->root_count != orig_root_count + 1) अणु
 			pr_err("Key %u: Root was not created\n", key_id);
 			err = -EINVAL;
-			goto err_check_root_count;
-		}
-	} else {
-		if (world->root_count != orig_root_count) {
+			जाओ err_check_root_count;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (world->root_count != orig_root_count) अणु
 			pr_err("Key %u: Root was incorrectly created\n",
 			       key_id);
 			err = -EINVAL;
-			goto err_check_root_count;
-		}
-	}
+			जाओ err_check_root_count;
+		पूर्ण
+	पूर्ण
 	root = objagg_obj_root_priv(objagg_obj);
-	if (root->key.id != key_id) {
+	अगर (root->key.id != key_id) अणु
 		pr_err("Key %u: Root has unexpected key id\n", key_id);
 		err = -EINVAL;
-		goto err_check_key_id;
-	}
-	if (should_create_root &&
-	    memcmp(world->next_root_buf, root->buf, sizeof(root->buf))) {
+		जाओ err_check_key_id;
+	पूर्ण
+	अगर (should_create_root &&
+	    स_भेद(world->next_root_buf, root->buf, माप(root->buf))) अणु
 		pr_err("Key %u: Buffer does not match the expected content\n",
 		       key_id);
 		err = -EINVAL;
-		goto err_check_buf;
-	}
-	return 0;
+		जाओ err_check_buf;
+	पूर्ण
+	वापस 0;
 
 err_check_buf:
 err_check_key_id:
 err_check_root_count:
 	objagg_obj_put(objagg, objagg_obj);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int test_nodelta_obj_put(struct world *world, struct objagg *objagg,
-				unsigned int key_id, bool should_destroy_root)
-{
-	unsigned int orig_root_count = world->root_count;
+अटल पूर्णांक test_nodelta_obj_put(काष्ठा world *world, काष्ठा objagg *objagg,
+				अचिन्हित पूर्णांक key_id, bool should_destroy_root)
+अणु
+	अचिन्हित पूर्णांक orig_root_count = world->root_count;
 
 	world_obj_put(world, objagg, key_id);
 
-	if (should_destroy_root) {
-		if (world->root_count != orig_root_count - 1) {
+	अगर (should_destroy_root) अणु
+		अगर (world->root_count != orig_root_count - 1) अणु
 			pr_err("Key %u: Root was not destroyed\n", key_id);
-			return -EINVAL;
-		}
-	} else {
-		if (world->root_count != orig_root_count) {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (world->root_count != orig_root_count) अणु
 			pr_err("Key %u: Root was incorrectly destroyed\n",
 			       key_id);
-			return -EINVAL;
-		}
-	}
-	return 0;
-}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int check_stats_zero(struct objagg *objagg)
-{
-	const struct objagg_stats *stats;
-	int err = 0;
+अटल पूर्णांक check_stats_zero(काष्ठा objagg *objagg)
+अणु
+	स्थिर काष्ठा objagg_stats *stats;
+	पूर्णांक err = 0;
 
 	stats = objagg_stats_get(objagg);
-	if (IS_ERR(stats))
-		return PTR_ERR(stats);
+	अगर (IS_ERR(stats))
+		वापस PTR_ERR(stats);
 
-	if (stats->stats_info_count != 0) {
+	अगर (stats->stats_info_count != 0) अणु
 		pr_err("Stats: Object count is not zero while it should be\n");
 		err = -EINVAL;
-	}
+	पूर्ण
 
 	objagg_stats_put(stats);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int check_stats_nodelta(struct objagg *objagg)
-{
-	const struct objagg_stats *stats;
-	int i;
-	int err;
+अटल पूर्णांक check_stats_nodelta(काष्ठा objagg *objagg)
+अणु
+	स्थिर काष्ठा objagg_stats *stats;
+	पूर्णांक i;
+	पूर्णांक err;
 
 	stats = objagg_stats_get(objagg);
-	if (IS_ERR(stats))
-		return PTR_ERR(stats);
+	अगर (IS_ERR(stats))
+		वापस PTR_ERR(stats);
 
-	if (stats->stats_info_count != NUM_KEYS) {
+	अगर (stats->stats_info_count != NUM_KEYS) अणु
 		pr_err("Stats: Unexpected object count (%u expected, %u returned)\n",
 		       NUM_KEYS, stats->stats_info_count);
 		err = -EINVAL;
-		goto stats_put;
-	}
+		जाओ stats_put;
+	पूर्ण
 
-	for (i = 0; i < stats->stats_info_count; i++) {
-		if (stats->stats_info[i].stats.user_count != 2) {
+	क्रम (i = 0; i < stats->stats_info_count; i++) अणु
+		अगर (stats->stats_info[i].stats.user_count != 2) अणु
 			pr_err("Stats: incorrect user count\n");
 			err = -EINVAL;
-			goto stats_put;
-		}
-		if (stats->stats_info[i].stats.delta_user_count != 2) {
+			जाओ stats_put;
+		पूर्ण
+		अगर (stats->stats_info[i].stats.delta_user_count != 2) अणु
 			pr_err("Stats: incorrect delta user count\n");
 			err = -EINVAL;
-			goto stats_put;
-		}
-	}
+			जाओ stats_put;
+		पूर्ण
+	पूर्ण
 	err = 0;
 
 stats_put:
 	objagg_stats_put(stats);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool delta_check_dummy(void *priv, const void *parent_obj,
-			      const void *obj)
-{
-	return false;
-}
+अटल bool delta_check_dummy(व्योम *priv, स्थिर व्योम *parent_obj,
+			      स्थिर व्योम *obj)
+अणु
+	वापस false;
+पूर्ण
 
-static void *delta_create_dummy(void *priv, void *parent_obj, void *obj)
-{
-	return ERR_PTR(-EOPNOTSUPP);
-}
+अटल व्योम *delta_create_dummy(व्योम *priv, व्योम *parent_obj, व्योम *obj)
+अणु
+	वापस ERR_PTR(-EOPNOTSUPP);
+पूर्ण
 
-static void delta_destroy_dummy(void *priv, void *delta_priv)
-{
-}
+अटल व्योम delta_destroy_dummy(व्योम *priv, व्योम *delta_priv)
+अणु
+पूर्ण
 
-static const struct objagg_ops nodelta_ops = {
-	.obj_size = sizeof(struct tokey),
+अटल स्थिर काष्ठा objagg_ops nodelta_ops = अणु
+	.obj_size = माप(काष्ठा tokey),
 	.delta_check = delta_check_dummy,
 	.delta_create = delta_create_dummy,
 	.delta_destroy = delta_destroy_dummy,
 	.root_create = root_create,
 	.root_destroy = root_destroy,
-};
+पूर्ण;
 
-static int test_nodelta(void)
-{
-	struct world world = {};
-	struct objagg *objagg;
-	int i;
-	int err;
+अटल पूर्णांक test_nodelta(व्योम)
+अणु
+	काष्ठा world world = अणुपूर्ण;
+	काष्ठा objagg *objagg;
+	पूर्णांक i;
+	पूर्णांक err;
 
-	objagg = objagg_create(&nodelta_ops, NULL, &world);
-	if (IS_ERR(objagg))
-		return PTR_ERR(objagg);
+	objagg = objagg_create(&nodelta_ops, शून्य, &world);
+	अगर (IS_ERR(objagg))
+		वापस PTR_ERR(objagg);
 
 	err = check_stats_zero(objagg);
-	if (err)
-		goto err_stats_first_zero;
+	अगर (err)
+		जाओ err_stats_first_zero;
 
-	/* First round of gets, the root objects should be created */
-	for (i = 0; i < NUM_KEYS; i++) {
+	/* First round of माला_लो, the root objects should be created */
+	क्रम (i = 0; i < NUM_KEYS; i++) अणु
 		err = test_nodelta_obj_get(&world, objagg, i, true);
-		if (err)
-			goto err_obj_first_get;
-	}
+		अगर (err)
+			जाओ err_obj_first_get;
+	पूर्ण
 
-	/* Do the second round of gets, all roots are already created,
+	/* Do the second round of माला_लो, all roots are alपढ़ोy created,
 	 * make sure that no new root is created
 	 */
-	for (i = 0; i < NUM_KEYS; i++) {
+	क्रम (i = 0; i < NUM_KEYS; i++) अणु
 		err = test_nodelta_obj_get(&world, objagg, i, false);
-		if (err)
-			goto err_obj_second_get;
-	}
+		अगर (err)
+			जाओ err_obj_second_get;
+	पूर्ण
 
 	err = check_stats_nodelta(objagg);
-	if (err)
-		goto err_stats_nodelta;
+	अगर (err)
+		जाओ err_stats_nodelta;
 
-	for (i = NUM_KEYS - 1; i >= 0; i--) {
+	क्रम (i = NUM_KEYS - 1; i >= 0; i--) अणु
 		err = test_nodelta_obj_put(&world, objagg, i, false);
-		if (err)
-			goto err_obj_first_put;
-	}
-	for (i = NUM_KEYS - 1; i >= 0; i--) {
+		अगर (err)
+			जाओ err_obj_first_put;
+	पूर्ण
+	क्रम (i = NUM_KEYS - 1; i >= 0; i--) अणु
 		err = test_nodelta_obj_put(&world, objagg, i, true);
-		if (err)
-			goto err_obj_second_put;
-	}
+		अगर (err)
+			जाओ err_obj_second_put;
+	पूर्ण
 
 	err = check_stats_zero(objagg);
-	if (err)
-		goto err_stats_second_zero;
+	अगर (err)
+		जाओ err_stats_second_zero;
 
 	objagg_destroy(objagg);
-	return 0;
+	वापस 0;
 
 err_stats_nodelta:
 err_obj_first_put:
 err_obj_second_get:
-	for (i--; i >= 0; i--)
+	क्रम (i--; i >= 0; i--)
 		world_obj_put(&world, objagg, i);
 
 	i = NUM_KEYS;
 err_obj_first_get:
 err_obj_second_put:
-	for (i--; i >= 0; i--)
+	क्रम (i--; i >= 0; i--)
 		world_obj_put(&world, objagg, i);
 err_stats_first_zero:
 err_stats_second_zero:
 	objagg_destroy(objagg);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct objagg_ops delta_ops = {
-	.obj_size = sizeof(struct tokey),
+अटल स्थिर काष्ठा objagg_ops delta_ops = अणु
+	.obj_size = माप(काष्ठा tokey),
 	.delta_check = delta_check,
 	.delta_create = delta_create,
 	.delta_destroy = delta_destroy,
 	.root_create = root_create,
 	.root_destroy = root_destroy,
-};
+पूर्ण;
 
-enum action {
+क्रमागत action अणु
 	ACTION_GET,
 	ACTION_PUT,
-};
+पूर्ण;
 
-enum expect_delta {
+क्रमागत expect_delta अणु
 	EXPECT_DELTA_SAME,
 	EXPECT_DELTA_INC,
 	EXPECT_DELTA_DEC,
-};
+पूर्ण;
 
-enum expect_root {
+क्रमागत expect_root अणु
 	EXPECT_ROOT_SAME,
 	EXPECT_ROOT_INC,
 	EXPECT_ROOT_DEC,
-};
+पूर्ण;
 
-struct expect_stats_info {
-	struct objagg_obj_stats stats;
+काष्ठा expect_stats_info अणु
+	काष्ठा objagg_obj_stats stats;
 	bool is_root;
-	unsigned int key_id;
-};
+	अचिन्हित पूर्णांक key_id;
+पूर्ण;
 
-struct expect_stats {
-	unsigned int info_count;
-	struct expect_stats_info info[NUM_KEYS];
-};
+काष्ठा expect_stats अणु
+	अचिन्हित पूर्णांक info_count;
+	काष्ठा expect_stats_info info[NUM_KEYS];
+पूर्ण;
 
-struct action_item {
-	unsigned int key_id;
-	enum action action;
-	enum expect_delta expect_delta;
-	enum expect_root expect_root;
-	struct expect_stats expect_stats;
-};
+काष्ठा action_item अणु
+	अचिन्हित पूर्णांक key_id;
+	क्रमागत action action;
+	क्रमागत expect_delta expect_delta;
+	क्रमागत expect_root expect_root;
+	काष्ठा expect_stats expect_stats;
+पूर्ण;
 
-#define EXPECT_STATS(count, ...)		\
-{						\
+#घोषणा EXPECT_STATS(count, ...)		\
+अणु						\
 	.info_count = count,			\
-	.info = { __VA_ARGS__ }			\
-}
+	.info = अणु __VA_ARGS__ पूर्ण			\
+पूर्ण
 
-#define ROOT(key_id, user_count, delta_user_count)	\
-	{{user_count, delta_user_count}, true, key_id}
+#घोषणा ROOT(key_id, user_count, delta_user_count)	\
+	अणुअणुuser_count, delta_user_countपूर्ण, true, key_idपूर्ण
 
-#define DELTA(key_id, user_count)			\
-	{{user_count, user_count}, false, key_id}
+#घोषणा DELTA(key_id, user_count)			\
+	अणुअणुuser_count, user_countपूर्ण, false, key_idपूर्ण
 
-static const struct action_item action_items[] = {
-	{
+अटल स्थिर काष्ठा action_item action_items[] = अणु
+	अणु
 		1, ACTION_GET, EXPECT_DELTA_SAME, EXPECT_ROOT_INC,
 		EXPECT_STATS(1, ROOT(1, 1, 1)),
-	},	/* r: 1			d: */
-	{
+	पूर्ण,	/* r: 1			d: */
+	अणु
 		7, ACTION_GET, EXPECT_DELTA_SAME, EXPECT_ROOT_INC,
 		EXPECT_STATS(2, ROOT(1, 1, 1), ROOT(7, 1, 1)),
-	},	/* r: 1, 7		d: */
-	{
+	पूर्ण,	/* r: 1, 7		d: */
+	अणु
 		3, ACTION_GET, EXPECT_DELTA_INC, EXPECT_ROOT_SAME,
 		EXPECT_STATS(3, ROOT(1, 1, 2), ROOT(7, 1, 1),
 				DELTA(3, 1)),
-	},	/* r: 1, 7		d: 3^1 */
-	{
+	पूर्ण,	/* r: 1, 7		d: 3^1 */
+	अणु
 		5, ACTION_GET, EXPECT_DELTA_INC, EXPECT_ROOT_SAME,
 		EXPECT_STATS(4, ROOT(1, 1, 3), ROOT(7, 1, 1),
 				DELTA(3, 1), DELTA(5, 1)),
-	},	/* r: 1, 7		d: 3^1, 5^1 */
-	{
+	पूर्ण,	/* r: 1, 7		d: 3^1, 5^1 */
+	अणु
 		3, ACTION_GET, EXPECT_DELTA_SAME, EXPECT_ROOT_SAME,
 		EXPECT_STATS(4, ROOT(1, 1, 4), ROOT(7, 1, 1),
 				DELTA(3, 2), DELTA(5, 1)),
-	},	/* r: 1, 7		d: 3^1, 3^1, 5^1 */
-	{
+	पूर्ण,	/* r: 1, 7		d: 3^1, 3^1, 5^1 */
+	अणु
 		1, ACTION_GET, EXPECT_DELTA_SAME, EXPECT_ROOT_SAME,
 		EXPECT_STATS(4, ROOT(1, 2, 5), ROOT(7, 1, 1),
 				DELTA(3, 2), DELTA(5, 1)),
-	},	/* r: 1, 1, 7		d: 3^1, 3^1, 5^1 */
-	{
+	पूर्ण,	/* r: 1, 1, 7		d: 3^1, 3^1, 5^1 */
+	अणु
 		30, ACTION_GET, EXPECT_DELTA_SAME, EXPECT_ROOT_INC,
 		EXPECT_STATS(5, ROOT(1, 2, 5), ROOT(7, 1, 1), ROOT(30, 1, 1),
 				DELTA(3, 2), DELTA(5, 1)),
-	},	/* r: 1, 1, 7, 30	d: 3^1, 3^1, 5^1 */
-	{
+	पूर्ण,	/* r: 1, 1, 7, 30	d: 3^1, 3^1, 5^1 */
+	अणु
 		8, ACTION_GET, EXPECT_DELTA_INC, EXPECT_ROOT_SAME,
 		EXPECT_STATS(6, ROOT(1, 2, 5), ROOT(7, 1, 2), ROOT(30, 1, 1),
 				DELTA(3, 2), DELTA(5, 1), DELTA(8, 1)),
-	},	/* r: 1, 1, 7, 30	d: 3^1, 3^1, 5^1, 8^7 */
-	{
+	पूर्ण,	/* r: 1, 1, 7, 30	d: 3^1, 3^1, 5^1, 8^7 */
+	अणु
 		8, ACTION_GET, EXPECT_DELTA_SAME, EXPECT_ROOT_SAME,
 		EXPECT_STATS(6, ROOT(1, 2, 5), ROOT(7, 1, 3), ROOT(30, 1, 1),
 				DELTA(3, 2), DELTA(8, 2), DELTA(5, 1)),
-	},	/* r: 1, 1, 7, 30	d: 3^1, 3^1, 5^1, 8^7, 8^7 */
-	{
+	पूर्ण,	/* r: 1, 1, 7, 30	d: 3^1, 3^1, 5^1, 8^7, 8^7 */
+	अणु
 		3, ACTION_PUT, EXPECT_DELTA_SAME, EXPECT_ROOT_SAME,
 		EXPECT_STATS(6, ROOT(1, 2, 4), ROOT(7, 1, 3), ROOT(30, 1, 1),
 				DELTA(8, 2), DELTA(3, 1), DELTA(5, 1)),
-	},	/* r: 1, 1, 7, 30	d: 3^1, 5^1, 8^7, 8^7 */
-	{
+	पूर्ण,	/* r: 1, 1, 7, 30	d: 3^1, 5^1, 8^7, 8^7 */
+	अणु
 		3, ACTION_PUT, EXPECT_DELTA_DEC, EXPECT_ROOT_SAME,
 		EXPECT_STATS(5, ROOT(1, 2, 3), ROOT(7, 1, 3), ROOT(30, 1, 1),
 				DELTA(8, 2), DELTA(5, 1)),
-	},	/* r: 1, 1, 7, 30	d: 5^1, 8^7, 8^7 */
-	{
+	पूर्ण,	/* r: 1, 1, 7, 30	d: 5^1, 8^7, 8^7 */
+	अणु
 		1, ACTION_PUT, EXPECT_DELTA_SAME, EXPECT_ROOT_SAME,
 		EXPECT_STATS(5, ROOT(7, 1, 3), ROOT(1, 1, 2), ROOT(30, 1, 1),
 				DELTA(8, 2), DELTA(5, 1)),
-	},	/* r: 1, 7, 30		d: 5^1, 8^7, 8^7 */
-	{
+	पूर्ण,	/* r: 1, 7, 30		d: 5^1, 8^7, 8^7 */
+	अणु
 		1, ACTION_PUT, EXPECT_DELTA_SAME, EXPECT_ROOT_SAME,
 		EXPECT_STATS(5, ROOT(7, 1, 3), ROOT(30, 1, 1), ROOT(1, 0, 1),
 				DELTA(8, 2), DELTA(5, 1)),
-	},	/* r: 7, 30		d: 5^1, 8^7, 8^7 */
-	{
+	पूर्ण,	/* r: 7, 30		d: 5^1, 8^7, 8^7 */
+	अणु
 		5, ACTION_PUT, EXPECT_DELTA_DEC, EXPECT_ROOT_DEC,
 		EXPECT_STATS(3, ROOT(7, 1, 3), ROOT(30, 1, 1),
 				DELTA(8, 2)),
-	},	/* r: 7, 30		d: 8^7, 8^7 */
-	{
+	पूर्ण,	/* r: 7, 30		d: 8^7, 8^7 */
+	अणु
 		5, ACTION_GET, EXPECT_DELTA_SAME, EXPECT_ROOT_INC,
 		EXPECT_STATS(4, ROOT(7, 1, 3), ROOT(30, 1, 1), ROOT(5, 1, 1),
 				DELTA(8, 2)),
-	},	/* r: 7, 30, 5		d: 8^7, 8^7 */
-	{
+	पूर्ण,	/* r: 7, 30, 5		d: 8^7, 8^7 */
+	अणु
 		6, ACTION_GET, EXPECT_DELTA_INC, EXPECT_ROOT_SAME,
 		EXPECT_STATS(5, ROOT(7, 1, 3), ROOT(5, 1, 2), ROOT(30, 1, 1),
 				DELTA(8, 2), DELTA(6, 1)),
-	},	/* r: 7, 30, 5		d: 8^7, 8^7, 6^5 */
-	{
+	पूर्ण,	/* r: 7, 30, 5		d: 8^7, 8^7, 6^5 */
+	अणु
 		8, ACTION_GET, EXPECT_DELTA_SAME, EXPECT_ROOT_SAME,
 		EXPECT_STATS(5, ROOT(7, 1, 4), ROOT(5, 1, 2), ROOT(30, 1, 1),
 				DELTA(8, 3), DELTA(6, 1)),
-	},	/* r: 7, 30, 5		d: 8^7, 8^7, 8^7, 6^5 */
-	{
+	पूर्ण,	/* r: 7, 30, 5		d: 8^7, 8^7, 8^7, 6^5 */
+	अणु
 		8, ACTION_PUT, EXPECT_DELTA_SAME, EXPECT_ROOT_SAME,
 		EXPECT_STATS(5, ROOT(7, 1, 3), ROOT(5, 1, 2), ROOT(30, 1, 1),
 				DELTA(8, 2), DELTA(6, 1)),
-	},	/* r: 7, 30, 5		d: 8^7, 8^7, 6^5 */
-	{
+	पूर्ण,	/* r: 7, 30, 5		d: 8^7, 8^7, 6^5 */
+	अणु
 		8, ACTION_PUT, EXPECT_DELTA_SAME, EXPECT_ROOT_SAME,
 		EXPECT_STATS(5, ROOT(7, 1, 2), ROOT(5, 1, 2), ROOT(30, 1, 1),
 				DELTA(8, 1), DELTA(6, 1)),
-	},	/* r: 7, 30, 5		d: 8^7, 6^5 */
-	{
+	पूर्ण,	/* r: 7, 30, 5		d: 8^7, 6^5 */
+	अणु
 		8, ACTION_PUT, EXPECT_DELTA_DEC, EXPECT_ROOT_SAME,
 		EXPECT_STATS(4, ROOT(5, 1, 2), ROOT(7, 1, 1), ROOT(30, 1, 1),
 				DELTA(6, 1)),
-	},	/* r: 7, 30, 5		d: 6^5 */
-	{
+	पूर्ण,	/* r: 7, 30, 5		d: 6^5 */
+	अणु
 		8, ACTION_GET, EXPECT_DELTA_INC, EXPECT_ROOT_SAME,
 		EXPECT_STATS(5, ROOT(5, 1, 3), ROOT(7, 1, 1), ROOT(30, 1, 1),
 				DELTA(6, 1), DELTA(8, 1)),
-	},	/* r: 7, 30, 5		d: 6^5, 8^5 */
-	{
+	पूर्ण,	/* r: 7, 30, 5		d: 6^5, 8^5 */
+	अणु
 		7, ACTION_PUT, EXPECT_DELTA_SAME, EXPECT_ROOT_DEC,
 		EXPECT_STATS(4, ROOT(5, 1, 3), ROOT(30, 1, 1),
 				DELTA(6, 1), DELTA(8, 1)),
-	},	/* r: 30, 5		d: 6^5, 8^5 */
-	{
+	पूर्ण,	/* r: 30, 5		d: 6^5, 8^5 */
+	अणु
 		30, ACTION_PUT, EXPECT_DELTA_SAME, EXPECT_ROOT_DEC,
 		EXPECT_STATS(3, ROOT(5, 1, 3),
 				DELTA(6, 1), DELTA(8, 1)),
-	},	/* r: 5			d: 6^5, 8^5 */
-	{
+	पूर्ण,	/* r: 5			d: 6^5, 8^5 */
+	अणु
 		5, ACTION_PUT, EXPECT_DELTA_SAME, EXPECT_ROOT_SAME,
 		EXPECT_STATS(3, ROOT(5, 0, 2),
 				DELTA(6, 1), DELTA(8, 1)),
-	},	/* r:			d: 6^5, 8^5 */
-	{
+	पूर्ण,	/* r:			d: 6^5, 8^5 */
+	अणु
 		6, ACTION_PUT, EXPECT_DELTA_DEC, EXPECT_ROOT_SAME,
 		EXPECT_STATS(2, ROOT(5, 0, 1),
 				DELTA(8, 1)),
-	},	/* r:			d: 6^5 */
-	{
+	पूर्ण,	/* r:			d: 6^5 */
+	अणु
 		8, ACTION_PUT, EXPECT_DELTA_DEC, EXPECT_ROOT_DEC,
 		EXPECT_STATS(0, ),
-	},	/* r:			d: */
-};
+	पूर्ण,	/* r:			d: */
+पूर्ण;
 
-static int check_expect(struct world *world,
-			const struct action_item *action_item,
-			unsigned int orig_delta_count,
-			unsigned int orig_root_count)
-{
-	unsigned int key_id = action_item->key_id;
+अटल पूर्णांक check_expect(काष्ठा world *world,
+			स्थिर काष्ठा action_item *action_item,
+			अचिन्हित पूर्णांक orig_delta_count,
+			अचिन्हित पूर्णांक orig_root_count)
+अणु
+	अचिन्हित पूर्णांक key_id = action_item->key_id;
 
-	switch (action_item->expect_delta) {
-	case EXPECT_DELTA_SAME:
-		if (orig_delta_count != world->delta_count) {
+	चयन (action_item->expect_delta) अणु
+	हाल EXPECT_DELTA_SAME:
+		अगर (orig_delta_count != world->delta_count) अणु
 			pr_err("Key %u: Delta count changed while expected to remain the same.\n",
 			       key_id);
-			return -EINVAL;
-		}
-		break;
-	case EXPECT_DELTA_INC:
-		if (WARN_ON(action_item->action == ACTION_PUT))
-			return -EINVAL;
-		if (orig_delta_count + 1 != world->delta_count) {
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल EXPECT_DELTA_INC:
+		अगर (WARN_ON(action_item->action == ACTION_PUT))
+			वापस -EINVAL;
+		अगर (orig_delta_count + 1 != world->delta_count) अणु
 			pr_err("Key %u: Delta count was not incremented.\n",
 			       key_id);
-			return -EINVAL;
-		}
-		break;
-	case EXPECT_DELTA_DEC:
-		if (WARN_ON(action_item->action == ACTION_GET))
-			return -EINVAL;
-		if (orig_delta_count - 1 != world->delta_count) {
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल EXPECT_DELTA_DEC:
+		अगर (WARN_ON(action_item->action == ACTION_GET))
+			वापस -EINVAL;
+		अगर (orig_delta_count - 1 != world->delta_count) अणु
 			pr_err("Key %u: Delta count was not decremented.\n",
 			       key_id);
-			return -EINVAL;
-		}
-		break;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	switch (action_item->expect_root) {
-	case EXPECT_ROOT_SAME:
-		if (orig_root_count != world->root_count) {
+	चयन (action_item->expect_root) अणु
+	हाल EXPECT_ROOT_SAME:
+		अगर (orig_root_count != world->root_count) अणु
 			pr_err("Key %u: Root count changed while expected to remain the same.\n",
 			       key_id);
-			return -EINVAL;
-		}
-		break;
-	case EXPECT_ROOT_INC:
-		if (WARN_ON(action_item->action == ACTION_PUT))
-			return -EINVAL;
-		if (orig_root_count + 1 != world->root_count) {
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल EXPECT_ROOT_INC:
+		अगर (WARN_ON(action_item->action == ACTION_PUT))
+			वापस -EINVAL;
+		अगर (orig_root_count + 1 != world->root_count) अणु
 			pr_err("Key %u: Root count was not incremented.\n",
 			       key_id);
-			return -EINVAL;
-		}
-		break;
-	case EXPECT_ROOT_DEC:
-		if (WARN_ON(action_item->action == ACTION_GET))
-			return -EINVAL;
-		if (orig_root_count - 1 != world->root_count) {
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल EXPECT_ROOT_DEC:
+		अगर (WARN_ON(action_item->action == ACTION_GET))
+			वापस -EINVAL;
+		अगर (orig_root_count - 1 != world->root_count) अणु
 			pr_err("Key %u: Root count was not decremented.\n",
 			       key_id);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int obj_to_key_id(struct objagg_obj *objagg_obj)
-{
-	const struct tokey *root_key;
-	const struct delta *delta;
-	unsigned int key_id;
+अटल अचिन्हित पूर्णांक obj_to_key_id(काष्ठा objagg_obj *objagg_obj)
+अणु
+	स्थिर काष्ठा tokey *root_key;
+	स्थिर काष्ठा delta *delta;
+	अचिन्हित पूर्णांक key_id;
 
 	root_key = objagg_obj_root_priv(objagg_obj);
 	key_id = root_key->id;
 	delta = objagg_obj_delta_priv(objagg_obj);
-	if (delta)
-		key_id += delta->key_id_diff;
-	return key_id;
-}
+	अगर (delta)
+		key_id += delta->key_id_dअगरf;
+	वापस key_id;
+पूर्ण
 
-static int
-check_expect_stats_nums(const struct objagg_obj_stats_info *stats_info,
-			const struct expect_stats_info *expect_stats_info,
-			const char **errmsg)
-{
-	if (stats_info->is_root != expect_stats_info->is_root) {
-		if (errmsg)
+अटल पूर्णांक
+check_expect_stats_nums(स्थिर काष्ठा objagg_obj_stats_info *stats_info,
+			स्थिर काष्ठा expect_stats_info *expect_stats_info,
+			स्थिर अक्षर **errmsg)
+अणु
+	अगर (stats_info->is_root != expect_stats_info->is_root) अणु
+		अगर (errmsg)
 			*errmsg = "Incorrect root/delta indication";
-		return -EINVAL;
-	}
-	if (stats_info->stats.user_count !=
-	    expect_stats_info->stats.user_count) {
-		if (errmsg)
+		वापस -EINVAL;
+	पूर्ण
+	अगर (stats_info->stats.user_count !=
+	    expect_stats_info->stats.user_count) अणु
+		अगर (errmsg)
 			*errmsg = "Incorrect user count";
-		return -EINVAL;
-	}
-	if (stats_info->stats.delta_user_count !=
-	    expect_stats_info->stats.delta_user_count) {
-		if (errmsg)
+		वापस -EINVAL;
+	पूर्ण
+	अगर (stats_info->stats.delta_user_count !=
+	    expect_stats_info->stats.delta_user_count) अणु
+		अगर (errmsg)
 			*errmsg = "Incorrect delta user count";
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-check_expect_stats_key_id(const struct objagg_obj_stats_info *stats_info,
-			  const struct expect_stats_info *expect_stats_info,
-			  const char **errmsg)
-{
-	if (obj_to_key_id(stats_info->objagg_obj) !=
-	    expect_stats_info->key_id) {
-		if (errmsg)
+अटल पूर्णांक
+check_expect_stats_key_id(स्थिर काष्ठा objagg_obj_stats_info *stats_info,
+			  स्थिर काष्ठा expect_stats_info *expect_stats_info,
+			  स्थिर अक्षर **errmsg)
+अणु
+	अगर (obj_to_key_id(stats_info->objagg_obj) !=
+	    expect_stats_info->key_id) अणु
+		अगर (errmsg)
 			*errmsg = "incorrect key id";
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int check_expect_stats_neigh(const struct objagg_stats *stats,
-				    const struct expect_stats *expect_stats,
-				    int pos)
-{
-	int i;
-	int err;
+अटल पूर्णांक check_expect_stats_neigh(स्थिर काष्ठा objagg_stats *stats,
+				    स्थिर काष्ठा expect_stats *expect_stats,
+				    पूर्णांक pos)
+अणु
+	पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = pos - 1; i >= 0; i--) {
+	क्रम (i = pos - 1; i >= 0; i--) अणु
 		err = check_expect_stats_nums(&stats->stats_info[i],
-					      &expect_stats->info[pos], NULL);
-		if (err)
-			break;
+					      &expect_stats->info[pos], शून्य);
+		अगर (err)
+			अवरोध;
 		err = check_expect_stats_key_id(&stats->stats_info[i],
-						&expect_stats->info[pos], NULL);
-		if (!err)
-			return 0;
-	}
-	for (i = pos + 1; i < stats->stats_info_count; i++) {
+						&expect_stats->info[pos], शून्य);
+		अगर (!err)
+			वापस 0;
+	पूर्ण
+	क्रम (i = pos + 1; i < stats->stats_info_count; i++) अणु
 		err = check_expect_stats_nums(&stats->stats_info[i],
-					      &expect_stats->info[pos], NULL);
-		if (err)
-			break;
+					      &expect_stats->info[pos], शून्य);
+		अगर (err)
+			अवरोध;
 		err = check_expect_stats_key_id(&stats->stats_info[i],
-						&expect_stats->info[pos], NULL);
-		if (!err)
-			return 0;
-	}
-	return -EINVAL;
-}
+						&expect_stats->info[pos], शून्य);
+		अगर (!err)
+			वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int __check_expect_stats(const struct objagg_stats *stats,
-				const struct expect_stats *expect_stats,
-				const char **errmsg)
-{
-	int i;
-	int err;
+अटल पूर्णांक __check_expect_stats(स्थिर काष्ठा objagg_stats *stats,
+				स्थिर काष्ठा expect_stats *expect_stats,
+				स्थिर अक्षर **errmsg)
+अणु
+	पूर्णांक i;
+	पूर्णांक err;
 
-	if (stats->stats_info_count != expect_stats->info_count) {
+	अगर (stats->stats_info_count != expect_stats->info_count) अणु
 		*errmsg = "Unexpected object count";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < stats->stats_info_count; i++) {
+	क्रम (i = 0; i < stats->stats_info_count; i++) अणु
 		err = check_expect_stats_nums(&stats->stats_info[i],
 					      &expect_stats->info[i], errmsg);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = check_expect_stats_key_id(&stats->stats_info[i],
 						&expect_stats->info[i], errmsg);
-		if (err) {
+		अगर (err) अणु
 			/* It is possible that one of the neighbor stats with
 			 * same numbers have the correct key id, so check it
 			 */
 			err = check_expect_stats_neigh(stats, expect_stats, i);
-			if (err)
-				return err;
-		}
-	}
-	return 0;
-}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int check_expect_stats(struct objagg *objagg,
-			      const struct expect_stats *expect_stats,
-			      const char **errmsg)
-{
-	const struct objagg_stats *stats;
-	int err;
+अटल पूर्णांक check_expect_stats(काष्ठा objagg *objagg,
+			      स्थिर काष्ठा expect_stats *expect_stats,
+			      स्थिर अक्षर **errmsg)
+अणु
+	स्थिर काष्ठा objagg_stats *stats;
+	पूर्णांक err;
 
 	stats = objagg_stats_get(objagg);
-	if (IS_ERR(stats)) {
+	अगर (IS_ERR(stats)) अणु
 		*errmsg = "objagg_stats_get() failed.";
-		return PTR_ERR(stats);
-	}
+		वापस PTR_ERR(stats);
+	पूर्ण
 	err = __check_expect_stats(stats, expect_stats, errmsg);
 	objagg_stats_put(stats);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int test_delta_action_item(struct world *world,
-				  struct objagg *objagg,
-				  const struct action_item *action_item,
+अटल पूर्णांक test_delta_action_item(काष्ठा world *world,
+				  काष्ठा objagg *objagg,
+				  स्थिर काष्ठा action_item *action_item,
 				  bool inverse)
-{
-	unsigned int orig_delta_count = world->delta_count;
-	unsigned int orig_root_count = world->root_count;
-	unsigned int key_id = action_item->key_id;
-	enum action action = action_item->action;
-	struct objagg_obj *objagg_obj;
-	const char *errmsg;
-	int err;
+अणु
+	अचिन्हित पूर्णांक orig_delta_count = world->delta_count;
+	अचिन्हित पूर्णांक orig_root_count = world->root_count;
+	अचिन्हित पूर्णांक key_id = action_item->key_id;
+	क्रमागत action action = action_item->action;
+	काष्ठा objagg_obj *objagg_obj;
+	स्थिर अक्षर *errmsg;
+	पूर्णांक err;
 
-	if (inverse)
+	अगर (inverse)
 		action = action == ACTION_GET ? ACTION_PUT : ACTION_GET;
 
-	switch (action) {
-	case ACTION_GET:
+	चयन (action) अणु
+	हाल ACTION_GET:
 		objagg_obj = world_obj_get(world, objagg, key_id);
-		if (IS_ERR(objagg_obj))
-			return PTR_ERR(objagg_obj);
-		break;
-	case ACTION_PUT:
+		अगर (IS_ERR(objagg_obj))
+			वापस PTR_ERR(objagg_obj);
+		अवरोध;
+	हाल ACTION_PUT:
 		world_obj_put(world, objagg, key_id);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (inverse)
-		return 0;
+	अगर (inverse)
+		वापस 0;
 	err = check_expect(world, action_item,
 			   orig_delta_count, orig_root_count);
-	if (err)
-		goto errout;
+	अगर (err)
+		जाओ errout;
 
 	err = check_expect_stats(objagg, &action_item->expect_stats, &errmsg);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Key %u: Stats: %s\n", action_item->key_id, errmsg);
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 errout:
 	/* This can only happen when action is not inversed.
-	 * So in case of an error, cleanup by doing inverse action.
+	 * So in हाल of an error, cleanup by करोing inverse action.
 	 */
 	test_delta_action_item(world, objagg, action_item, true);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int test_delta(void)
-{
-	struct world world = {};
-	struct objagg *objagg;
-	int i;
-	int err;
+अटल पूर्णांक test_delta(व्योम)
+अणु
+	काष्ठा world world = अणुपूर्ण;
+	काष्ठा objagg *objagg;
+	पूर्णांक i;
+	पूर्णांक err;
 
-	objagg = objagg_create(&delta_ops, NULL, &world);
-	if (IS_ERR(objagg))
-		return PTR_ERR(objagg);
+	objagg = objagg_create(&delta_ops, शून्य, &world);
+	अगर (IS_ERR(objagg))
+		वापस PTR_ERR(objagg);
 
-	for (i = 0; i < ARRAY_SIZE(action_items); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(action_items); i++) अणु
 		err = test_delta_action_item(&world, objagg,
 					     &action_items[i], false);
-		if (err)
-			goto err_do_action_item;
-	}
+		अगर (err)
+			जाओ err_करो_action_item;
+	पूर्ण
 
 	objagg_destroy(objagg);
-	return 0;
+	वापस 0;
 
-err_do_action_item:
-	for (i--; i >= 0; i--)
+err_करो_action_item:
+	क्रम (i--; i >= 0; i--)
 		test_delta_action_item(&world, objagg, &action_items[i], true);
 
 	objagg_destroy(objagg);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct hints_case {
-	const unsigned int *key_ids;
-	size_t key_ids_count;
-	struct expect_stats expect_stats;
-	struct expect_stats expect_stats_hints;
-};
+काष्ठा hपूर्णांकs_हाल अणु
+	स्थिर अचिन्हित पूर्णांक *key_ids;
+	माप_प्रकार key_ids_count;
+	काष्ठा expect_stats expect_stats;
+	काष्ठा expect_stats expect_stats_hपूर्णांकs;
+पूर्ण;
 
-static const unsigned int hints_case_key_ids[] = {
+अटल स्थिर अचिन्हित पूर्णांक hपूर्णांकs_हाल_key_ids[] = अणु
 	1, 7, 3, 5, 3, 1, 30, 8, 8, 5, 6, 8,
-};
+पूर्ण;
 
-static const struct hints_case hints_case = {
-	.key_ids = hints_case_key_ids,
-	.key_ids_count = ARRAY_SIZE(hints_case_key_ids),
+अटल स्थिर काष्ठा hपूर्णांकs_हाल hपूर्णांकs_हाल = अणु
+	.key_ids = hपूर्णांकs_हाल_key_ids,
+	.key_ids_count = ARRAY_SIZE(hपूर्णांकs_हाल_key_ids),
 	.expect_stats =
 		EXPECT_STATS(7, ROOT(1, 2, 7), ROOT(7, 1, 4), ROOT(30, 1, 1),
 				DELTA(8, 3), DELTA(3, 2),
 				DELTA(5, 2), DELTA(6, 1)),
-	.expect_stats_hints =
+	.expect_stats_hपूर्णांकs =
 		EXPECT_STATS(7, ROOT(3, 2, 9), ROOT(1, 2, 2), ROOT(30, 1, 1),
 				DELTA(8, 3), DELTA(5, 2),
 				DELTA(6, 1), DELTA(7, 1)),
-};
+पूर्ण;
 
-static void __pr_debug_stats(const struct objagg_stats *stats)
-{
-	int i;
+अटल व्योम __pr_debug_stats(स्थिर काष्ठा objagg_stats *stats)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < stats->stats_info_count; i++)
+	क्रम (i = 0; i < stats->stats_info_count; i++)
 		pr_debug("Stat index %d key %u: u %d, d %d, %s\n", i,
 			 obj_to_key_id(stats->stats_info[i].objagg_obj),
 			 stats->stats_info[i].stats.user_count,
 			 stats->stats_info[i].stats.delta_user_count,
 			 stats->stats_info[i].is_root ? "root" : "noroot");
-}
+पूर्ण
 
-static void pr_debug_stats(struct objagg *objagg)
-{
-	const struct objagg_stats *stats;
+अटल व्योम pr_debug_stats(काष्ठा objagg *objagg)
+अणु
+	स्थिर काष्ठा objagg_stats *stats;
 
 	stats = objagg_stats_get(objagg);
-	if (IS_ERR(stats))
-		return;
+	अगर (IS_ERR(stats))
+		वापस;
 	__pr_debug_stats(stats);
 	objagg_stats_put(stats);
-}
+पूर्ण
 
-static void pr_debug_hints_stats(struct objagg_hints *objagg_hints)
-{
-	const struct objagg_stats *stats;
+अटल व्योम pr_debug_hपूर्णांकs_stats(काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs)
+अणु
+	स्थिर काष्ठा objagg_stats *stats;
 
-	stats = objagg_hints_stats_get(objagg_hints);
-	if (IS_ERR(stats))
-		return;
+	stats = objagg_hपूर्णांकs_stats_get(objagg_hपूर्णांकs);
+	अगर (IS_ERR(stats))
+		वापस;
 	__pr_debug_stats(stats);
 	objagg_stats_put(stats);
-}
+पूर्ण
 
-static int check_expect_hints_stats(struct objagg_hints *objagg_hints,
-				    const struct expect_stats *expect_stats,
-				    const char **errmsg)
-{
-	const struct objagg_stats *stats;
-	int err;
+अटल पूर्णांक check_expect_hपूर्णांकs_stats(काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs,
+				    स्थिर काष्ठा expect_stats *expect_stats,
+				    स्थिर अक्षर **errmsg)
+अणु
+	स्थिर काष्ठा objagg_stats *stats;
+	पूर्णांक err;
 
-	stats = objagg_hints_stats_get(objagg_hints);
-	if (IS_ERR(stats))
-		return PTR_ERR(stats);
+	stats = objagg_hपूर्णांकs_stats_get(objagg_hपूर्णांकs);
+	अगर (IS_ERR(stats))
+		वापस PTR_ERR(stats);
 	err = __check_expect_stats(stats, expect_stats, errmsg);
 	objagg_stats_put(stats);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int test_hints_case(const struct hints_case *hints_case)
-{
-	struct objagg_obj *objagg_obj;
-	struct objagg_hints *hints;
-	struct world world2 = {};
-	struct world world = {};
-	struct objagg *objagg2;
-	struct objagg *objagg;
-	const char *errmsg;
-	int i;
-	int err;
+अटल पूर्णांक test_hपूर्णांकs_हाल(स्थिर काष्ठा hपूर्णांकs_हाल *hपूर्णांकs_हाल)
+अणु
+	काष्ठा objagg_obj *objagg_obj;
+	काष्ठा objagg_hपूर्णांकs *hपूर्णांकs;
+	काष्ठा world world2 = अणुपूर्ण;
+	काष्ठा world world = अणुपूर्ण;
+	काष्ठा objagg *objagg2;
+	काष्ठा objagg *objagg;
+	स्थिर अक्षर *errmsg;
+	पूर्णांक i;
+	पूर्णांक err;
 
-	objagg = objagg_create(&delta_ops, NULL, &world);
-	if (IS_ERR(objagg))
-		return PTR_ERR(objagg);
+	objagg = objagg_create(&delta_ops, शून्य, &world);
+	अगर (IS_ERR(objagg))
+		वापस PTR_ERR(objagg);
 
-	for (i = 0; i < hints_case->key_ids_count; i++) {
+	क्रम (i = 0; i < hपूर्णांकs_हाल->key_ids_count; i++) अणु
 		objagg_obj = world_obj_get(&world, objagg,
-					   hints_case->key_ids[i]);
-		if (IS_ERR(objagg_obj)) {
+					   hपूर्णांकs_हाल->key_ids[i]);
+		अगर (IS_ERR(objagg_obj)) अणु
 			err = PTR_ERR(objagg_obj);
-			goto err_world_obj_get;
-		}
-	}
+			जाओ err_world_obj_get;
+		पूर्ण
+	पूर्ण
 
 	pr_debug_stats(objagg);
-	err = check_expect_stats(objagg, &hints_case->expect_stats, &errmsg);
-	if (err) {
+	err = check_expect_stats(objagg, &hपूर्णांकs_हाल->expect_stats, &errmsg);
+	अगर (err) अणु
 		pr_err("Stats: %s\n", errmsg);
-		goto err_check_expect_stats;
-	}
+		जाओ err_check_expect_stats;
+	पूर्ण
 
-	hints = objagg_hints_get(objagg, OBJAGG_OPT_ALGO_SIMPLE_GREEDY);
-	if (IS_ERR(hints)) {
-		err = PTR_ERR(hints);
-		goto err_hints_get;
-	}
+	hपूर्णांकs = objagg_hपूर्णांकs_get(objagg, OBJAGG_OPT_ALGO_SIMPLE_GREEDY);
+	अगर (IS_ERR(hपूर्णांकs)) अणु
+		err = PTR_ERR(hपूर्णांकs);
+		जाओ err_hपूर्णांकs_get;
+	पूर्ण
 
-	pr_debug_hints_stats(hints);
-	err = check_expect_hints_stats(hints, &hints_case->expect_stats_hints,
+	pr_debug_hपूर्णांकs_stats(hपूर्णांकs);
+	err = check_expect_hपूर्णांकs_stats(hपूर्णांकs, &hपूर्णांकs_हाल->expect_stats_hपूर्णांकs,
 				       &errmsg);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Hints stats: %s\n", errmsg);
-		goto err_check_expect_hints_stats;
-	}
+		जाओ err_check_expect_hपूर्णांकs_stats;
+	पूर्ण
 
-	objagg2 = objagg_create(&delta_ops, hints, &world2);
-	if (IS_ERR(objagg2))
-		return PTR_ERR(objagg2);
+	objagg2 = objagg_create(&delta_ops, hपूर्णांकs, &world2);
+	अगर (IS_ERR(objagg2))
+		वापस PTR_ERR(objagg2);
 
-	for (i = 0; i < hints_case->key_ids_count; i++) {
+	क्रम (i = 0; i < hपूर्णांकs_हाल->key_ids_count; i++) अणु
 		objagg_obj = world_obj_get(&world2, objagg2,
-					   hints_case->key_ids[i]);
-		if (IS_ERR(objagg_obj)) {
+					   hपूर्णांकs_हाल->key_ids[i]);
+		अगर (IS_ERR(objagg_obj)) अणु
 			err = PTR_ERR(objagg_obj);
-			goto err_world2_obj_get;
-		}
-	}
+			जाओ err_world2_obj_get;
+		पूर्ण
+	पूर्ण
 
 	pr_debug_stats(objagg2);
-	err = check_expect_stats(objagg2, &hints_case->expect_stats_hints,
+	err = check_expect_stats(objagg2, &hपूर्णांकs_हाल->expect_stats_hपूर्णांकs,
 				 &errmsg);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Stats2: %s\n", errmsg);
-		goto err_check_expect_stats2;
-	}
+		जाओ err_check_expect_stats2;
+	पूर्ण
 
 	err = 0;
 
 err_check_expect_stats2:
 err_world2_obj_get:
-	for (i--; i >= 0; i--)
-		world_obj_put(&world2, objagg, hints_case->key_ids[i]);
-	i = hints_case->key_ids_count;
+	क्रम (i--; i >= 0; i--)
+		world_obj_put(&world2, objagg, hपूर्णांकs_हाल->key_ids[i]);
+	i = hपूर्णांकs_हाल->key_ids_count;
 	objagg_destroy(objagg2);
-err_check_expect_hints_stats:
-	objagg_hints_put(hints);
-err_hints_get:
+err_check_expect_hपूर्णांकs_stats:
+	objagg_hपूर्णांकs_put(hपूर्णांकs);
+err_hपूर्णांकs_get:
 err_check_expect_stats:
 err_world_obj_get:
-	for (i--; i >= 0; i--)
-		world_obj_put(&world, objagg, hints_case->key_ids[i]);
+	क्रम (i--; i >= 0; i--)
+		world_obj_put(&world, objagg, hपूर्णांकs_हाल->key_ids[i]);
 
 	objagg_destroy(objagg);
-	return err;
-}
-static int test_hints(void)
-{
-	return test_hints_case(&hints_case);
-}
+	वापस err;
+पूर्ण
+अटल पूर्णांक test_hपूर्णांकs(व्योम)
+अणु
+	वापस test_hपूर्णांकs_हाल(&hपूर्णांकs_हाल);
+पूर्ण
 
-static int __init test_objagg_init(void)
-{
-	int err;
+अटल पूर्णांक __init test_objagg_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = test_nodelta();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = test_delta();
-	if (err)
-		return err;
-	return test_hints();
-}
+	अगर (err)
+		वापस err;
+	वापस test_hपूर्णांकs();
+पूर्ण
 
-static void __exit test_objagg_exit(void)
-{
-}
+अटल व्योम __निकास test_objagg_निकास(व्योम)
+अणु
+पूर्ण
 
 module_init(test_objagg_init);
-module_exit(test_objagg_exit);
+module_निकास(test_objagg_निकास);
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Jiri Pirko <jiri@mellanox.com>");
 MODULE_DESCRIPTION("Test module for objagg");

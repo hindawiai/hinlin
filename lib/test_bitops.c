@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2020 Intel Corporation
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/printk.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/prपूर्णांकk.h>
 
 /* a tiny module only meant to test
  *
  *   set/clear_bit
- *   get_count_order/long
+ *   get_count_order/दीर्घ
  */
 
-/* use an enum because thats the most common BITMAP usage */
-enum bitops_fun {
+/* use an क्रमागत because thats the most common BITMAP usage */
+क्रमागत bitops_fun अणु
 	BITOPS_4 = 4,
 	BITOPS_7 = 7,
 	BITOPS_11 = 11,
@@ -24,87 +25,87 @@ enum bitops_fun {
 	BITOPS_88 = 88,
 	BITOPS_LAST = 255,
 	BITOPS_LENGTH = 256
-};
+पूर्ण;
 
-static DECLARE_BITMAP(g_bitmap, BITOPS_LENGTH);
+अटल DECLARE_BITMAP(g_biपंचांगap, BITOPS_LENGTH);
 
-static unsigned int order_comb[][2] = {
-	{0x00000003,  2},
-	{0x00000004,  2},
-	{0x00001fff, 13},
-	{0x00002000, 13},
-	{0x50000000, 31},
-	{0x80000000, 31},
-	{0x80003000, 32},
-};
+अटल अचिन्हित पूर्णांक order_comb[][2] = अणु
+	अणु0x00000003,  2पूर्ण,
+	अणु0x00000004,  2पूर्ण,
+	अणु0x00001fff, 13पूर्ण,
+	अणु0x00002000, 13पूर्ण,
+	अणु0x50000000, 31पूर्ण,
+	अणु0x80000000, 31पूर्ण,
+	अणु0x80003000, 32पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_64BIT
-static unsigned long order_comb_long[][2] = {
-	{0x0000000300000000, 34},
-	{0x0000000400000000, 34},
-	{0x00001fff00000000, 45},
-	{0x0000200000000000, 45},
-	{0x5000000000000000, 63},
-	{0x8000000000000000, 63},
-	{0x8000300000000000, 64},
-};
-#endif
+#अगर_घोषित CONFIG_64BIT
+अटल अचिन्हित दीर्घ order_comb_दीर्घ[][2] = अणु
+	अणु0x0000000300000000, 34पूर्ण,
+	अणु0x0000000400000000, 34पूर्ण,
+	अणु0x00001fff00000000, 45पूर्ण,
+	अणु0x0000200000000000, 45पूर्ण,
+	अणु0x5000000000000000, 63पूर्ण,
+	अणु0x8000000000000000, 63पूर्ण,
+	अणु0x8000300000000000, 64पूर्ण,
+पूर्ण;
+#पूर्ण_अगर
 
-static int __init test_bitops_startup(void)
-{
-	int i, bit_set;
+अटल पूर्णांक __init test_bitops_startup(व्योम)
+अणु
+	पूर्णांक i, bit_set;
 
 	pr_info("Starting bitops test\n");
-	set_bit(BITOPS_4, g_bitmap);
-	set_bit(BITOPS_7, g_bitmap);
-	set_bit(BITOPS_11, g_bitmap);
-	set_bit(BITOPS_31, g_bitmap);
-	set_bit(BITOPS_88, g_bitmap);
+	set_bit(BITOPS_4, g_biपंचांगap);
+	set_bit(BITOPS_7, g_biपंचांगap);
+	set_bit(BITOPS_11, g_biपंचांगap);
+	set_bit(BITOPS_31, g_biपंचांगap);
+	set_bit(BITOPS_88, g_biपंचांगap);
 
-	for (i = 0; i < ARRAY_SIZE(order_comb); i++) {
-		if (order_comb[i][1] != get_count_order(order_comb[i][0]))
+	क्रम (i = 0; i < ARRAY_SIZE(order_comb); i++) अणु
+		अगर (order_comb[i][1] != get_count_order(order_comb[i][0]))
 			pr_warn("get_count_order wrong for %x\n",
 				       order_comb[i][0]);
-	}
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(order_comb); i++) {
-		if (order_comb[i][1] != get_count_order_long(order_comb[i][0]))
+	क्रम (i = 0; i < ARRAY_SIZE(order_comb); i++) अणु
+		अगर (order_comb[i][1] != get_count_order_दीर्घ(order_comb[i][0]))
 			pr_warn("get_count_order_long wrong for %x\n",
 				       order_comb[i][0]);
-	}
+	पूर्ण
 
-#ifdef CONFIG_64BIT
-	for (i = 0; i < ARRAY_SIZE(order_comb_long); i++) {
-		if (order_comb_long[i][1] !=
-			       get_count_order_long(order_comb_long[i][0]))
+#अगर_घोषित CONFIG_64BIT
+	क्रम (i = 0; i < ARRAY_SIZE(order_comb_दीर्घ); i++) अणु
+		अगर (order_comb_दीर्घ[i][1] !=
+			       get_count_order_दीर्घ(order_comb_दीर्घ[i][0]))
 			pr_warn("get_count_order_long wrong for %lx\n",
-				       order_comb_long[i][0]);
-	}
-#endif
+				       order_comb_दीर्घ[i][0]);
+	पूर्ण
+#पूर्ण_अगर
 
 	barrier();
 
-	clear_bit(BITOPS_4, g_bitmap);
-	clear_bit(BITOPS_7, g_bitmap);
-	clear_bit(BITOPS_11, g_bitmap);
-	clear_bit(BITOPS_31, g_bitmap);
-	clear_bit(BITOPS_88, g_bitmap);
+	clear_bit(BITOPS_4, g_biपंचांगap);
+	clear_bit(BITOPS_7, g_biपंचांगap);
+	clear_bit(BITOPS_11, g_biपंचांगap);
+	clear_bit(BITOPS_31, g_biपंचांगap);
+	clear_bit(BITOPS_88, g_biपंचांगap);
 
-	bit_set = find_first_bit(g_bitmap, BITOPS_LAST);
-	if (bit_set != BITOPS_LAST)
+	bit_set = find_first_bit(g_biपंचांगap, BITOPS_LAST);
+	अगर (bit_set != BITOPS_LAST)
 		pr_err("ERROR: FOUND SET BIT %d\n", bit_set);
 
 	pr_info("Completed bitops test\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit test_bitops_unstartup(void)
-{
-}
+अटल व्योम __निकास test_bitops_unstartup(व्योम)
+अणु
+पूर्ण
 
 module_init(test_bitops_startup);
-module_exit(test_bitops_unstartup);
+module_निकास(test_bitops_unstartup);
 
 MODULE_AUTHOR("Jesse Brandeburg <jesse.brandeburg@intel.com>, Wei Yang <richard.weiyang@gmail.com>");
 MODULE_LICENSE("GPL");

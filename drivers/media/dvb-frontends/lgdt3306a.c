@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *    Support for LGDT3306A - 8VSB/QAM-B
+ *    Support क्रम LGDT3306A - 8VSB/QAM-B
  *
  *    Copyright (C) 2013 Fred Richter <frichter@hauppauge.com>
- *    - driver structure based on lgdt3305.[ch] by Michael Krufky
+ *    - driver काष्ठाure based on lgdt3305.[ch] by Michael Krufky
  *    - code based on LG3306_V0.35 API by LG Electronics Inc.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <asm/div64.h>
-#include <linux/kernel.h>
-#include <linux/dvb/frontend.h>
-#include <media/dvb_math.h>
-#include "lgdt3306a.h"
-#include <linux/i2c-mux.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <media/dvb_गणित.स>
+#समावेश "lgdt3306a.h"
+#समावेश <linux/i2c-mux.h>
 
 
-static int debug;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "set debug level (info=1, reg=2 (or-able))");
 
 /*
  * Older drivers treated QAM64 and QAM256 the same; that is the HW always
  * used "Auto" mode during detection.  Setting "forced_manual"=1 allows
  * the user to treat these modes as separate.  For backwards compatibility,
- * it's off by default.  QAM_AUTO can now be specified to achive that
- * effect even if "forced_manual"=1
+ * it's off by शेष.  QAM_AUTO can now be specअगरied to achive that
+ * effect even अगर "forced_manual"=1
  */
-static int forced_manual;
-module_param(forced_manual, int, 0644);
-MODULE_PARM_DESC(forced_manual, "if set, QAM64 and QAM256 will only lock to modulation specified");
+अटल पूर्णांक क्रमced_manual;
+module_param(क्रमced_manual, पूर्णांक, 0644);
+MODULE_PARM_DESC(क्रमced_manual, "if set, QAM64 and QAM256 will only lock to modulation specified");
 
-#define DBG_INFO 1
-#define DBG_REG  2
-#define DBG_DUMP 4 /* FGR - comment out to remove dump code */
+#घोषणा DBG_INFO 1
+#घोषणा DBG_REG  2
+#घोषणा DBG_DUMP 4 /* FGR - comment out to हटाओ dump code */
 
-#define lg_debug(fmt, arg...) \
-	printk(KERN_DEBUG pr_fmt(fmt), ## arg)
+#घोषणा lg_debug(fmt, arg...) \
+	prपूर्णांकk(KERN_DEBUG pr_fmt(fmt), ## arg)
 
-#define dbg_info(fmt, arg...)					\
-	do {							\
-		if (debug & DBG_INFO)				\
+#घोषणा dbg_info(fmt, arg...)					\
+	करो अणु							\
+		अगर (debug & DBG_INFO)				\
 			lg_debug(fmt, ## arg);			\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define dbg_reg(fmt, arg...)					\
-	do {							\
-		if (debug & DBG_REG)				\
+#घोषणा dbg_reg(fmt, arg...)					\
+	करो अणु							\
+		अगर (debug & DBG_REG)				\
 			lg_debug(fmt, ## arg);			\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define lg_chkerr(ret)							\
-({									\
-	int __ret;							\
+#घोषणा lg_chkerr(ret)							\
+(अणु									\
+	पूर्णांक __ret;							\
 	__ret = (ret < 0);						\
-	if (__ret)							\
+	अगर (__ret)							\
 		pr_err("error %d on line %d\n",	ret, __LINE__);		\
 	__ret;								\
-})
+पूर्ण)
 
-struct lgdt3306a_state {
-	struct i2c_adapter *i2c_adap;
-	const struct lgdt3306a_config *cfg;
+काष्ठा lgdt3306a_state अणु
+	काष्ठा i2c_adapter *i2c_adap;
+	स्थिर काष्ठा lgdt3306a_config *cfg;
 
-	struct dvb_frontend frontend;
+	काष्ठा dvb_frontend frontend;
 
-	enum fe_modulation current_modulation;
+	क्रमागत fe_modulation current_modulation;
 	u32 current_frequency;
 	u32 snr;
 
-	struct i2c_mux_core *muxc;
-};
+	काष्ठा i2c_mux_core *muxc;
+पूर्ण;
 
 /*
  * LG3306A Register Usage
- *  (LG does not really name the registers, so this code does not either)
+ *  (LG करोes not really name the रेजिस्टरs, so this code करोes not either)
  *
  * 0000 -> 00FF Common control and status
  * 1000 -> 10FF Synchronizer control and status
@@ -85,877 +86,877 @@ struct lgdt3306a_state {
  * 3000 -> 30FF FEC control and status
  */
 
-enum lgdt3306a_lock_status {
+क्रमागत lgdt3306a_lock_status अणु
 	LG3306_UNLOCK       = 0x00,
 	LG3306_LOCK         = 0x01,
 	LG3306_UNKNOWN_LOCK = 0xff
-};
+पूर्ण;
 
-enum lgdt3306a_neverlock_status {
+क्रमागत lgdt3306a_neverlock_status अणु
 	LG3306_NL_INIT    = 0x00,
 	LG3306_NL_PROCESS = 0x01,
 	LG3306_NL_LOCK    = 0x02,
 	LG3306_NL_FAIL    = 0x03,
 	LG3306_NL_UNKNOWN = 0xff
-};
+पूर्ण;
 
-enum lgdt3306a_modulation {
+क्रमागत lgdt3306a_modulation अणु
 	LG3306_VSB          = 0x00,
 	LG3306_QAM64        = 0x01,
 	LG3306_QAM256       = 0x02,
 	LG3306_UNKNOWN_MODE = 0xff
-};
+पूर्ण;
 
-enum lgdt3306a_lock_check {
+क्रमागत lgdt3306a_lock_check अणु
 	LG3306_SYNC_LOCK,
 	LG3306_FEC_LOCK,
 	LG3306_TR_LOCK,
 	LG3306_AGC_LOCK,
-};
+पूर्ण;
 
 
-#ifdef DBG_DUMP
-static void lgdt3306a_DumpAllRegs(struct lgdt3306a_state *state);
-static void lgdt3306a_DumpRegs(struct lgdt3306a_state *state);
-#endif
+#अगर_घोषित DBG_DUMP
+अटल व्योम lgdt3306a_DumpAllRegs(काष्ठा lgdt3306a_state *state);
+अटल व्योम lgdt3306a_DumpRegs(काष्ठा lgdt3306a_state *state);
+#पूर्ण_अगर
 
 
-static int lgdt3306a_write_reg(struct lgdt3306a_state *state, u16 reg, u8 val)
-{
-	int ret;
-	u8 buf[] = { reg >> 8, reg & 0xff, val };
-	struct i2c_msg msg = {
+अटल पूर्णांक lgdt3306a_ग_लिखो_reg(काष्ठा lgdt3306a_state *state, u16 reg, u8 val)
+अणु
+	पूर्णांक ret;
+	u8 buf[] = अणु reg >> 8, reg & 0xff, val पूर्ण;
+	काष्ठा i2c_msg msg = अणु
 		.addr = state->cfg->i2c_addr, .flags = 0,
 		.buf = buf, .len = 3,
-	};
+	पूर्ण;
 
 	dbg_reg("reg: 0x%04x, val: 0x%02x\n", reg, val);
 
 	ret = i2c_transfer(state->i2c_adap, &msg, 1);
 
-	if (ret != 1) {
+	अगर (ret != 1) अणु
 		pr_err("error (addr %02x %02x <- %02x, err = %i)\n",
 		       msg.buf[0], msg.buf[1], msg.buf[2], ret);
-		if (ret < 0)
-			return ret;
-		else
-			return -EREMOTEIO;
-	}
-	return 0;
-}
+		अगर (ret < 0)
+			वापस ret;
+		अन्यथा
+			वापस -EREMOTEIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int lgdt3306a_read_reg(struct lgdt3306a_state *state, u16 reg, u8 *val)
-{
-	int ret;
-	u8 reg_buf[] = { reg >> 8, reg & 0xff };
-	struct i2c_msg msg[] = {
-		{ .addr = state->cfg->i2c_addr,
-		  .flags = 0, .buf = reg_buf, .len = 2 },
-		{ .addr = state->cfg->i2c_addr,
-		  .flags = I2C_M_RD, .buf = val, .len = 1 },
-	};
+अटल पूर्णांक lgdt3306a_पढ़ो_reg(काष्ठा lgdt3306a_state *state, u16 reg, u8 *val)
+अणु
+	पूर्णांक ret;
+	u8 reg_buf[] = अणु reg >> 8, reg & 0xff पूर्ण;
+	काष्ठा i2c_msg msg[] = अणु
+		अणु .addr = state->cfg->i2c_addr,
+		  .flags = 0, .buf = reg_buf, .len = 2 पूर्ण,
+		अणु .addr = state->cfg->i2c_addr,
+		  .flags = I2C_M_RD, .buf = val, .len = 1 पूर्ण,
+	पूर्ण;
 
 	ret = i2c_transfer(state->i2c_adap, msg, 2);
 
-	if (ret != 2) {
+	अगर (ret != 2) अणु
 		pr_err("error (addr %02x reg %04x error (ret == %i)\n",
 		       state->cfg->i2c_addr, reg, ret);
-		if (ret < 0)
-			return ret;
-		else
-			return -EREMOTEIO;
-	}
+		अगर (ret < 0)
+			वापस ret;
+		अन्यथा
+			वापस -EREMOTEIO;
+	पूर्ण
 	dbg_reg("reg: 0x%04x, val: 0x%02x\n", reg, *val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define read_reg(state, reg)						\
-({									\
+#घोषणा पढ़ो_reg(state, reg)						\
+(अणु									\
 	u8 __val;							\
-	int ret = lgdt3306a_read_reg(state, reg, &__val);		\
-	if (lg_chkerr(ret))						\
+	पूर्णांक ret = lgdt3306a_पढ़ो_reg(state, reg, &__val);		\
+	अगर (lg_chkerr(ret))						\
 		__val = 0;						\
 	__val;								\
-})
+पूर्ण)
 
-static int lgdt3306a_set_reg_bit(struct lgdt3306a_state *state,
-				u16 reg, int bit, int onoff)
-{
+अटल पूर्णांक lgdt3306a_set_reg_bit(काष्ठा lgdt3306a_state *state,
+				u16 reg, पूर्णांक bit, पूर्णांक onoff)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
 	dbg_reg("reg: 0x%04x, bit: %d, level: %d\n", reg, bit, onoff);
 
-	ret = lgdt3306a_read_reg(state, reg, &val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_पढ़ो_reg(state, reg, &val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	val &= ~(1 << bit);
 	val |= (onoff & 1) << bit;
 
-	ret = lgdt3306a_write_reg(state, reg, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, reg, val);
 	lg_chkerr(ret);
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
 
-static int lgdt3306a_soft_reset(struct lgdt3306a_state *state)
-{
-	int ret;
+अटल पूर्णांक lgdt3306a_soft_reset(काष्ठा lgdt3306a_state *state)
+अणु
+	पूर्णांक ret;
 
 	dbg_info("\n");
 
 	ret = lgdt3306a_set_reg_bit(state, 0x0000, 7, 0);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	msleep(20);
 	ret = lgdt3306a_set_reg_bit(state, 0x0000, 7, 1);
 	lg_chkerr(ret);
 
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_mpeg_mode(struct lgdt3306a_state *state,
-				     enum lgdt3306a_mpeg_mode mode)
-{
+अटल पूर्णांक lgdt3306a_mpeg_mode(काष्ठा lgdt3306a_state *state,
+				     क्रमागत lgdt3306a_mpeg_mode mode)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
 	dbg_info("(%d)\n", mode);
-	/* transport packet format - TPSENB=0x80 */
+	/* transport packet क्रमmat - TPSENB=0x80 */
 	ret = lgdt3306a_set_reg_bit(state, 0x0071, 7,
 				     mode == LGDT3306A_MPEG_PARALLEL ? 1 : 0);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/*
-	 * start of packet signal duration
+	 * start of packet संकेत duration
 	 * TPSSOPBITEN=0x40; 0=byte duration, 1=bit duration
 	 */
 	ret = lgdt3306a_set_reg_bit(state, 0x0071, 6, 0);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	ret = lgdt3306a_read_reg(state, 0x0070, &val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0070, &val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	val |= 0x10; /* TPCLKSUPB=0x10 */
 
-	if (mode == LGDT3306A_MPEG_PARALLEL)
+	अगर (mode == LGDT3306A_MPEG_PARALLEL)
 		val &= ~0x10;
 
-	ret = lgdt3306a_write_reg(state, 0x0070, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0070, val);
 	lg_chkerr(ret);
 
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_mpeg_mode_polarity(struct lgdt3306a_state *state,
-				       enum lgdt3306a_tp_clock_edge edge,
-				       enum lgdt3306a_tp_valid_polarity valid)
-{
+अटल पूर्णांक lgdt3306a_mpeg_mode_polarity(काष्ठा lgdt3306a_state *state,
+				       क्रमागत lgdt3306a_tp_घड़ी_edge edge,
+				       क्रमागत lgdt3306a_tp_valid_polarity valid)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
 	dbg_info("edge=%d, valid=%d\n", edge, valid);
 
-	ret = lgdt3306a_read_reg(state, 0x0070, &val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0070, &val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	val &= ~0x06; /* TPCLKPOL=0x04, TPVALPOL=0x02 */
 
-	if (edge == LGDT3306A_TPCLK_RISING_EDGE)
+	अगर (edge == LGDT3306A_TPCLK_RISING_EDGE)
 		val |= 0x04;
-	if (valid == LGDT3306A_TP_VALID_HIGH)
+	अगर (valid == LGDT3306A_TP_VALID_HIGH)
 		val |= 0x02;
 
-	ret = lgdt3306a_write_reg(state, 0x0070, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0070, val);
 	lg_chkerr(ret);
 
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_mpeg_tristate(struct lgdt3306a_state *state,
-				     int mode)
-{
+अटल पूर्णांक lgdt3306a_mpeg_tristate(काष्ठा lgdt3306a_state *state,
+				     पूर्णांक mode)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
 	dbg_info("(%d)\n", mode);
 
-	if (mode) {
-		ret = lgdt3306a_read_reg(state, 0x0070, &val);
-		if (lg_chkerr(ret))
-			goto fail;
+	अगर (mode) अणु
+		ret = lgdt3306a_पढ़ो_reg(state, 0x0070, &val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 		/*
 		 * Tristate bus; TPOUTEN=0x80, TPCLKOUTEN=0x20,
 		 * TPDATAOUTEN=0x08
 		 */
 		val &= ~0xa8;
-		ret = lgdt3306a_write_reg(state, 0x0070, val);
-		if (lg_chkerr(ret))
-			goto fail;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x0070, val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
 		/* AGCIFOUTENB=0x40; 1=Disable IFAGC pin */
 		ret = lgdt3306a_set_reg_bit(state, 0x0003, 6, 1);
-		if (lg_chkerr(ret))
-			goto fail;
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* enable IFAGC pin */
 		ret = lgdt3306a_set_reg_bit(state, 0x0003, 6, 0);
-		if (lg_chkerr(ret))
-			goto fail;
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
-		ret = lgdt3306a_read_reg(state, 0x0070, &val);
-		if (lg_chkerr(ret))
-			goto fail;
+		ret = lgdt3306a_पढ़ो_reg(state, 0x0070, &val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
 		val |= 0xa8; /* enable bus */
-		ret = lgdt3306a_write_reg(state, 0x0070, val);
-		if (lg_chkerr(ret))
-			goto fail;
-	}
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x0070, val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
+	पूर्ण
 
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_ts_bus_ctrl(struct dvb_frontend *fe, int acquire)
-{
-	struct lgdt3306a_state *state = fe->demodulator_priv;
+अटल पूर्णांक lgdt3306a_ts_bus_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक acquire)
+अणु
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
 
 	dbg_info("acquire=%d\n", acquire);
 
-	return lgdt3306a_mpeg_tristate(state, acquire ? 0 : 1);
+	वापस lgdt3306a_mpeg_tristate(state, acquire ? 0 : 1);
 
-}
+पूर्ण
 
-static int lgdt3306a_power(struct lgdt3306a_state *state,
-				     int mode)
-{
-	int ret;
+अटल पूर्णांक lgdt3306a_घातer(काष्ठा lgdt3306a_state *state,
+				     पूर्णांक mode)
+अणु
+	पूर्णांक ret;
 
 	dbg_info("(%d)\n", mode);
 
-	if (mode == 0) {
-		/* into reset */
+	अगर (mode == 0) अणु
+		/* पूर्णांकo reset */
 		ret = lgdt3306a_set_reg_bit(state, 0x0000, 7, 0);
-		if (lg_chkerr(ret))
-			goto fail;
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
-		/* power down */
+		/* घातer करोwn */
 		ret = lgdt3306a_set_reg_bit(state, 0x0000, 0, 0);
-		if (lg_chkerr(ret))
-			goto fail;
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* out of reset */
 		ret = lgdt3306a_set_reg_bit(state, 0x0000, 7, 1);
-		if (lg_chkerr(ret))
-			goto fail;
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
-		/* power up */
+		/* घातer up */
 		ret = lgdt3306a_set_reg_bit(state, 0x0000, 0, 1);
-		if (lg_chkerr(ret))
-			goto fail;
-	}
+		अगर (lg_chkerr(ret))
+			जाओ fail;
+	पूर्ण
 
-#ifdef DBG_DUMP
+#अगर_घोषित DBG_DUMP
 	lgdt3306a_DumpAllRegs(state);
-#endif
+#पूर्ण_अगर
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int lgdt3306a_set_vsb(struct lgdt3306a_state *state)
-{
+अटल पूर्णांक lgdt3306a_set_vsb(काष्ठा lgdt3306a_state *state)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
 	dbg_info("\n");
 
 	/* 0. Spectrum inversion detection manual; spectrum inverted */
-	ret = lgdt3306a_read_reg(state, 0x0002, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0002, &val);
 	val &= 0xf7; /* SPECINVAUTO Off */
 	val |= 0x04; /* SPECINV On */
-	ret = lgdt3306a_write_reg(state, 0x0002, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0002, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 1. Selection of standard mode(0x08=QAM, 0x80=VSB) */
-	ret = lgdt3306a_write_reg(state, 0x0008, 0x80);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0008, 0x80);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	/* 2. Bandwidth mode for VSB(6MHz) */
-	ret = lgdt3306a_read_reg(state, 0x0009, &val);
+	/* 2. Bandwidth mode क्रम VSB(6MHz) */
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0009, &val);
 	val &= 0xe3;
 	val |= 0x0c; /* STDOPDETTMODE[2:0]=3 */
-	ret = lgdt3306a_write_reg(state, 0x0009, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0009, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 3. QAM mode detection mode(None) */
-	ret = lgdt3306a_read_reg(state, 0x0009, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0009, &val);
 	val &= 0xfc; /* STDOPDETCMODE[1:0]=0 */
-	ret = lgdt3306a_write_reg(state, 0x0009, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0009, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 4. ADC sampling frequency rate(2x sampling) */
-	ret = lgdt3306a_read_reg(state, 0x000d, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x000d, &val);
 	val &= 0xbf; /* SAMPLING4XFEN=0 */
-	ret = lgdt3306a_write_reg(state, 0x000d, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x000d, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-#if 0
+#अगर 0
 	/* FGR - disable any AICC filtering, testing only */
 
-	ret = lgdt3306a_write_reg(state, 0x0024, 0x00);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0024, 0x00);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* AICCFIXFREQ0 NT N-1(Video rejection) */
-	ret = lgdt3306a_write_reg(state, 0x002e, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x002f, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x0030, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002e, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002f, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0030, 0x00);
 
 	/* AICCFIXFREQ1 NT N-1(Audio rejection) */
-	ret = lgdt3306a_write_reg(state, 0x002b, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x002c, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x002d, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002b, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002c, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002d, 0x00);
 
 	/* AICCFIXFREQ2 NT Co-Channel(Video rejection) */
-	ret = lgdt3306a_write_reg(state, 0x0028, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x0029, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x002a, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0028, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0029, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002a, 0x00);
 
 	/* AICCFIXFREQ3 NT Co-Channel(Audio rejection) */
-	ret = lgdt3306a_write_reg(state, 0x0025, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x0026, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x0027, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0025, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0026, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0027, 0x00);
 
-#else
-	/* FGR - this works well for HVR-1955,1975 */
+#अन्यथा
+	/* FGR - this works well क्रम HVR-1955,1975 */
 
 	/* 5. AICCOPMODE  NT N-1 Adj. */
-	ret = lgdt3306a_write_reg(state, 0x0024, 0x5A);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0024, 0x5A);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* AICCFIXFREQ0 NT N-1(Video rejection) */
-	ret = lgdt3306a_write_reg(state, 0x002e, 0x5A);
-	ret = lgdt3306a_write_reg(state, 0x002f, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x0030, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002e, 0x5A);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002f, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0030, 0x00);
 
 	/* AICCFIXFREQ1 NT N-1(Audio rejection) */
-	ret = lgdt3306a_write_reg(state, 0x002b, 0x36);
-	ret = lgdt3306a_write_reg(state, 0x002c, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x002d, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002b, 0x36);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002c, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002d, 0x00);
 
 	/* AICCFIXFREQ2 NT Co-Channel(Video rejection) */
-	ret = lgdt3306a_write_reg(state, 0x0028, 0x2A);
-	ret = lgdt3306a_write_reg(state, 0x0029, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x002a, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0028, 0x2A);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0029, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x002a, 0x00);
 
 	/* AICCFIXFREQ3 NT Co-Channel(Audio rejection) */
-	ret = lgdt3306a_write_reg(state, 0x0025, 0x06);
-	ret = lgdt3306a_write_reg(state, 0x0026, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x0027, 0x00);
-#endif
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0025, 0x06);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0026, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0027, 0x00);
+#पूर्ण_अगर
 
-	ret = lgdt3306a_read_reg(state, 0x001e, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x001e, &val);
 	val &= 0x0f;
 	val |= 0xa0;
-	ret = lgdt3306a_write_reg(state, 0x001e, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x001e, val);
 
-	ret = lgdt3306a_write_reg(state, 0x0022, 0x08);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0022, 0x08);
 
-	ret = lgdt3306a_write_reg(state, 0x0023, 0xFF);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0023, 0xFF);
 
-	ret = lgdt3306a_read_reg(state, 0x211f, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x211f, &val);
 	val &= 0xef;
-	ret = lgdt3306a_write_reg(state, 0x211f, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x211f, val);
 
-	ret = lgdt3306a_write_reg(state, 0x2173, 0x01);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x2173, 0x01);
 
-	ret = lgdt3306a_read_reg(state, 0x1061, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x1061, &val);
 	val &= 0xf8;
 	val |= 0x04;
-	ret = lgdt3306a_write_reg(state, 0x1061, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x1061, val);
 
-	ret = lgdt3306a_read_reg(state, 0x103d, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x103d, &val);
 	val &= 0xcf;
-	ret = lgdt3306a_write_reg(state, 0x103d, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x103d, val);
 
-	ret = lgdt3306a_write_reg(state, 0x2122, 0x40);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x2122, 0x40);
 
-	ret = lgdt3306a_read_reg(state, 0x2141, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x2141, &val);
 	val &= 0x3f;
-	ret = lgdt3306a_write_reg(state, 0x2141, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x2141, val);
 
-	ret = lgdt3306a_read_reg(state, 0x2135, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x2135, &val);
 	val &= 0x0f;
 	val |= 0x70;
-	ret = lgdt3306a_write_reg(state, 0x2135, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x2135, val);
 
-	ret = lgdt3306a_read_reg(state, 0x0003, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0003, &val);
 	val &= 0xf7;
-	ret = lgdt3306a_write_reg(state, 0x0003, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0003, val);
 
-	ret = lgdt3306a_read_reg(state, 0x001c, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x001c, &val);
 	val &= 0x7f;
-	ret = lgdt3306a_write_reg(state, 0x001c, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x001c, val);
 
 	/* 6. EQ step size */
-	ret = lgdt3306a_read_reg(state, 0x2179, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x2179, &val);
 	val &= 0xf8;
-	ret = lgdt3306a_write_reg(state, 0x2179, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x2179, val);
 
-	ret = lgdt3306a_read_reg(state, 0x217a, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x217a, &val);
 	val &= 0xf8;
-	ret = lgdt3306a_write_reg(state, 0x217a, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x217a, val);
 
 	/* 7. Reset */
 	ret = lgdt3306a_soft_reset(state);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	dbg_info("complete\n");
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_set_qam(struct lgdt3306a_state *state, int modulation)
-{
+अटल पूर्णांक lgdt3306a_set_qam(काष्ठा lgdt3306a_state *state, पूर्णांक modulation)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
 	dbg_info("modulation=%d\n", modulation);
 
 	/* 1. Selection of standard mode(0x08=QAM, 0x80=VSB) */
-	ret = lgdt3306a_write_reg(state, 0x0008, 0x08);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0008, 0x08);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 1a. Spectrum inversion detection to Auto */
-	ret = lgdt3306a_read_reg(state, 0x0002, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0002, &val);
 	val &= 0xfb; /* SPECINV Off */
 	val |= 0x08; /* SPECINVAUTO On */
-	ret = lgdt3306a_write_reg(state, 0x0002, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0002, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	/* 2. Bandwidth mode for QAM */
-	ret = lgdt3306a_read_reg(state, 0x0009, &val);
+	/* 2. Bandwidth mode क्रम QAM */
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0009, &val);
 	val &= 0xe3; /* STDOPDETTMODE[2:0]=0 VSB Off */
-	ret = lgdt3306a_write_reg(state, 0x0009, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0009, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	/* 3. : 64QAM/256QAM detection(manual, auto) */
-	ret = lgdt3306a_read_reg(state, 0x0009, &val);
+	/* 3. : 64QAM/256QAM detection(manual, स्वतः) */
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0009, &val);
 	val &= 0xfc;
-	/* Check for forced Manual modulation modes; otherwise always "auto" */
-	if(forced_manual && (modulation != QAM_AUTO)){
+	/* Check क्रम क्रमced Manual modulation modes; otherwise always "auto" */
+	अगर(क्रमced_manual && (modulation != QAM_AUTO))अणु
 		val |= 0x01; /* STDOPDETCMODE[1:0]= 1=Manual */
-	} else {
+	पूर्ण अन्यथा अणु
 		val |= 0x02; /* STDOPDETCMODE[1:0]= 2=Auto */
-	}
-	ret = lgdt3306a_write_reg(state, 0x0009, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	पूर्ण
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0009, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	/* 3a. : 64QAM/256QAM selection for manual */
-	ret = lgdt3306a_read_reg(state, 0x101a, &val);
+	/* 3a. : 64QAM/256QAM selection क्रम manual */
+	ret = lgdt3306a_पढ़ो_reg(state, 0x101a, &val);
 	val &= 0xf8;
-	if (modulation == QAM_64)
+	अगर (modulation == QAM_64)
 		val |= 0x02; /* QMDQMODE[2:0]=2=QAM64 */
-	else
+	अन्यथा
 		val |= 0x04; /* QMDQMODE[2:0]=4=QAM256 */
 
-	ret = lgdt3306a_write_reg(state, 0x101a, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x101a, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 4. ADC sampling frequency rate(4x sampling) */
-	ret = lgdt3306a_read_reg(state, 0x000d, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x000d, &val);
 	val &= 0xbf;
 	val |= 0x40; /* SAMPLING4XFEN=1 */
-	ret = lgdt3306a_write_reg(state, 0x000d, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x000d, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 5. No AICC operation in QAM mode */
-	ret = lgdt3306a_read_reg(state, 0x0024, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0024, &val);
 	val &= 0x00;
-	ret = lgdt3306a_write_reg(state, 0x0024, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0024, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 5.1 V0.36 SRDCHKALWAYS : For better QAM detection */
-	ret = lgdt3306a_read_reg(state, 0x000a, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x000a, &val);
 	val &= 0xfd;
 	val |= 0x02;
-	ret = lgdt3306a_write_reg(state, 0x000a, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x000a, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 5.2 V0.36 Control of "no signal" detector function */
-	ret = lgdt3306a_read_reg(state, 0x2849, &val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x2849, &val);
 	val &= 0xdf;
-	ret = lgdt3306a_write_reg(state, 0x2849, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x2849, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	/* 5.3 Fix for Blonder Tongue HDE-2H-QAM and AQM modulators */
-	ret = lgdt3306a_read_reg(state, 0x302b, &val);
-	val &= 0x7f;  /* SELFSYNCFINDEN_CQS=0; disable auto reset */
-	ret = lgdt3306a_write_reg(state, 0x302b, val);
-	if (lg_chkerr(ret))
-		goto fail;
+	/* 5.3 Fix क्रम Blonder Tongue HDE-2H-QAM and AQM modulators */
+	ret = lgdt3306a_पढ़ो_reg(state, 0x302b, &val);
+	val &= 0x7f;  /* SELFSYNCFINDEN_CQS=0; disable स्वतः reset */
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x302b, val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 6. Reset */
 	ret = lgdt3306a_soft_reset(state);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	dbg_info("complete\n");
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_set_modulation(struct lgdt3306a_state *state,
-				   struct dtv_frontend_properties *p)
-{
-	int ret;
+अटल पूर्णांक lgdt3306a_set_modulation(काष्ठा lgdt3306a_state *state,
+				   काष्ठा dtv_frontend_properties *p)
+अणु
+	पूर्णांक ret;
 
 	dbg_info("\n");
 
-	switch (p->modulation) {
-	case VSB_8:
+	चयन (p->modulation) अणु
+	हाल VSB_8:
 		ret = lgdt3306a_set_vsb(state);
-		break;
-	case QAM_64:
-	case QAM_256:
-	case QAM_AUTO:
+		अवरोध;
+	हाल QAM_64:
+	हाल QAM_256:
+	हाल QAM_AUTO:
 		ret = lgdt3306a_set_qam(state, p->modulation);
-		break;
-	default:
-		return -EINVAL;
-	}
-	if (lg_chkerr(ret))
-		goto fail;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	state->current_modulation = p->modulation;
 
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
 
-static int lgdt3306a_agc_setup(struct lgdt3306a_state *state,
-			      struct dtv_frontend_properties *p)
-{
-	/* TODO: anything we want to do here??? */
+अटल पूर्णांक lgdt3306a_agc_setup(काष्ठा lgdt3306a_state *state,
+			      काष्ठा dtv_frontend_properties *p)
+अणु
+	/* TODO: anything we want to करो here??? */
 	dbg_info("\n");
 
-	switch (p->modulation) {
-	case VSB_8:
-		break;
-	case QAM_64:
-	case QAM_256:
-	case QAM_AUTO:
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	चयन (p->modulation) अणु
+	हाल VSB_8:
+		अवरोध;
+	हाल QAM_64:
+	हाल QAM_256:
+	हाल QAM_AUTO:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
 
-static int lgdt3306a_set_inversion(struct lgdt3306a_state *state,
-				       int inversion)
-{
-	int ret;
+अटल पूर्णांक lgdt3306a_set_inversion(काष्ठा lgdt3306a_state *state,
+				       पूर्णांक inversion)
+अणु
+	पूर्णांक ret;
 
 	dbg_info("(%d)\n", inversion);
 
 	ret = lgdt3306a_set_reg_bit(state, 0x0002, 2, inversion ? 1 : 0);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_set_inversion_auto(struct lgdt3306a_state *state,
-				       int enabled)
-{
-	int ret;
+अटल पूर्णांक lgdt3306a_set_inversion_स्वतः(काष्ठा lgdt3306a_state *state,
+				       पूर्णांक enabled)
+अणु
+	पूर्णांक ret;
 
 	dbg_info("(%d)\n", enabled);
 
 	/* 0=Manual 1=Auto(QAM only) - SPECINVAUTO=0x04 */
 	ret = lgdt3306a_set_reg_bit(state, 0x0002, 3, enabled);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_set_if(struct lgdt3306a_state *state,
-			   struct dtv_frontend_properties *p)
-{
-	int ret;
-	u16 if_freq_khz;
+अटल पूर्णांक lgdt3306a_set_अगर(काष्ठा lgdt3306a_state *state,
+			   काष्ठा dtv_frontend_properties *p)
+अणु
+	पूर्णांक ret;
+	u16 अगर_freq_khz;
 	u8 nco1, nco2;
 
-	switch (p->modulation) {
-	case VSB_8:
-		if_freq_khz = state->cfg->vsb_if_khz;
-		break;
-	case QAM_64:
-	case QAM_256:
-	case QAM_AUTO:
-		if_freq_khz = state->cfg->qam_if_khz;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (p->modulation) अणु
+	हाल VSB_8:
+		अगर_freq_khz = state->cfg->vsb_अगर_khz;
+		अवरोध;
+	हाल QAM_64:
+	हाल QAM_256:
+	हाल QAM_AUTO:
+		अगर_freq_khz = state->cfg->qam_अगर_khz;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (if_freq_khz) {
-	default:
+	चयन (अगर_freq_khz) अणु
+	शेष:
 		pr_warn("IF=%d KHz is not supported, 3250 assumed\n",
-			if_freq_khz);
+			अगर_freq_khz);
 		fallthrough;
-	case 3250: /* 3.25Mhz */
+	हाल 3250: /* 3.25Mhz */
 		nco1 = 0x34;
 		nco2 = 0x00;
-		break;
-	case 3500: /* 3.50Mhz */
+		अवरोध;
+	हाल 3500: /* 3.50Mhz */
 		nco1 = 0x38;
 		nco2 = 0x00;
-		break;
-	case 4000: /* 4.00Mhz */
+		अवरोध;
+	हाल 4000: /* 4.00Mhz */
 		nco1 = 0x40;
 		nco2 = 0x00;
-		break;
-	case 5000: /* 5.00Mhz */
+		अवरोध;
+	हाल 5000: /* 5.00Mhz */
 		nco1 = 0x50;
 		nco2 = 0x00;
-		break;
-	case 5380: /* 5.38Mhz */
+		अवरोध;
+	हाल 5380: /* 5.38Mhz */
 		nco1 = 0x56;
 		nco2 = 0x14;
-		break;
-	}
-	ret = lgdt3306a_write_reg(state, 0x0010, nco1);
-	if (ret)
-		return ret;
-	ret = lgdt3306a_write_reg(state, 0x0011, nco2);
-	if (ret)
-		return ret;
+		अवरोध;
+	पूर्ण
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0010, nco1);
+	अगर (ret)
+		वापस ret;
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0011, nco2);
+	अगर (ret)
+		वापस ret;
 
-	dbg_info("if_freq=%d KHz->[%04x]\n", if_freq_khz, nco1<<8 | nco2);
+	dbg_info("if_freq=%d KHz->[%04x]\n", अगर_freq_khz, nco1<<8 | nco2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
 
-static int lgdt3306a_i2c_gate_ctrl(struct dvb_frontend *fe, int enable)
-{
-	struct lgdt3306a_state *state = fe->demodulator_priv;
+अटल पूर्णांक lgdt3306a_i2c_gate_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक enable)
+अणु
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
 
-	if (state->cfg->deny_i2c_rptr) {
+	अगर (state->cfg->deny_i2c_rptr) अणु
 		dbg_info("deny_i2c_rptr=%d\n", state->cfg->deny_i2c_rptr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	dbg_info("(%d)\n", enable);
 
 	/* NI2CRPTEN=0x80 */
-	return lgdt3306a_set_reg_bit(state, 0x0002, 7, enable ? 0 : 1);
-}
+	वापस lgdt3306a_set_reg_bit(state, 0x0002, 7, enable ? 0 : 1);
+पूर्ण
 
-static int lgdt3306a_sleep(struct lgdt3306a_state *state)
-{
-	int ret;
+अटल पूर्णांक lgdt3306a_sleep(काष्ठा lgdt3306a_state *state)
+अणु
+	पूर्णांक ret;
 
 	dbg_info("\n");
-	state->current_frequency = -1; /* force re-tune, when we wake */
+	state->current_frequency = -1; /* क्रमce re-tune, when we wake */
 
 	ret = lgdt3306a_mpeg_tristate(state, 1); /* disable data bus */
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	ret = lgdt3306a_power(state, 0); /* power down */
+	ret = lgdt3306a_घातer(state, 0); /* घातer करोwn */
 	lg_chkerr(ret);
 
 fail:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lgdt3306a_fe_sleep(struct dvb_frontend *fe)
-{
-	struct lgdt3306a_state *state = fe->demodulator_priv;
+अटल पूर्णांक lgdt3306a_fe_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
 
-	return lgdt3306a_sleep(state);
-}
+	वापस lgdt3306a_sleep(state);
+पूर्ण
 
-static int lgdt3306a_init(struct dvb_frontend *fe)
-{
-	struct lgdt3306a_state *state = fe->demodulator_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक lgdt3306a_init(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
 	dbg_info("\n");
 
 	/* 1. Normal operation mode */
 	ret = lgdt3306a_set_reg_bit(state, 0x0001, 0, 1); /* SIMFASTENB=0x01 */
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	/* 2. Spectrum inversion auto detection (Not valid for VSB) */
-	ret = lgdt3306a_set_inversion_auto(state, 0);
-	if (lg_chkerr(ret))
-		goto fail;
+	/* 2. Spectrum inversion स्वतः detection (Not valid क्रम VSB) */
+	ret = lgdt3306a_set_inversion_स्वतः(state, 0);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 3. Spectrum inversion(According to the tuner configuration) */
 	ret = lgdt3306a_set_inversion(state, 1);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	/* 4. Peak-to-peak voltage of ADC input signal */
+	/* 4. Peak-to-peak voltage of ADC input संकेत */
 
 	/* ADCSEL1V=0x80=1Vpp; 0x00=2Vpp */
 	ret = lgdt3306a_set_reg_bit(state, 0x0004, 7, 1);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	/* 5. ADC output data capture clock phase */
+	/* 5. ADC output data capture घड़ी phase */
 
-	/* 0=same phase as ADC clock */
+	/* 0=same phase as ADC घड़ी */
 	ret = lgdt3306a_set_reg_bit(state, 0x0004, 2, 0);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	/* 5a. ADC sampling clock source */
+	/* 5a. ADC sampling घड़ी source */
 
-	/* ADCCLKPLLSEL=0x08; 0=use ext clock, not PLL */
+	/* ADCCLKPLLSEL=0x08; 0=use ext घड़ी, not PLL */
 	ret = lgdt3306a_set_reg_bit(state, 0x0004, 3, 0);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	/* 6. Automatic PLL set */
 
 	/* PLLSETAUTO=0x40; 0=off */
 	ret = lgdt3306a_set_reg_bit(state, 0x0005, 6, 0);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	if (state->cfg->xtalMHz == 24) {	/* 24MHz */
-		/* 7. Frequency for PLL output(0x2564 for 192MHz for 24MHz) */
-		ret = lgdt3306a_read_reg(state, 0x0005, &val);
-		if (lg_chkerr(ret))
-			goto fail;
+	अगर (state->cfg->xtalMHz == 24) अणु	/* 24MHz */
+		/* 7. Frequency क्रम PLL output(0x2564 क्रम 192MHz क्रम 24MHz) */
+		ret = lgdt3306a_पढ़ो_reg(state, 0x0005, &val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 		val &= 0xc0;
 		val |= 0x25;
-		ret = lgdt3306a_write_reg(state, 0x0005, val);
-		if (lg_chkerr(ret))
-			goto fail;
-		ret = lgdt3306a_write_reg(state, 0x0006, 0x64);
-		if (lg_chkerr(ret))
-			goto fail;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x0005, val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x0006, 0x64);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
-		/* 8. ADC sampling frequency(0x180000 for 24MHz sampling) */
-		ret = lgdt3306a_read_reg(state, 0x000d, &val);
-		if (lg_chkerr(ret))
-			goto fail;
+		/* 8. ADC sampling frequency(0x180000 क्रम 24MHz sampling) */
+		ret = lgdt3306a_पढ़ो_reg(state, 0x000d, &val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 		val &= 0xc0;
 		val |= 0x18;
-		ret = lgdt3306a_write_reg(state, 0x000d, val);
-		if (lg_chkerr(ret))
-			goto fail;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x000d, val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
-	} else if (state->cfg->xtalMHz == 25) { /* 25MHz */
-		/* 7. Frequency for PLL output */
-		ret = lgdt3306a_read_reg(state, 0x0005, &val);
-		if (lg_chkerr(ret))
-			goto fail;
+	पूर्ण अन्यथा अगर (state->cfg->xtalMHz == 25) अणु /* 25MHz */
+		/* 7. Frequency क्रम PLL output */
+		ret = lgdt3306a_पढ़ो_reg(state, 0x0005, &val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 		val &= 0xc0;
 		val |= 0x25;
-		ret = lgdt3306a_write_reg(state, 0x0005, val);
-		if (lg_chkerr(ret))
-			goto fail;
-		ret = lgdt3306a_write_reg(state, 0x0006, 0x64);
-		if (lg_chkerr(ret))
-			goto fail;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x0005, val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x0006, 0x64);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
-		/* 8. ADC sampling frequency(0x190000 for 25MHz sampling) */
-		ret = lgdt3306a_read_reg(state, 0x000d, &val);
-		if (lg_chkerr(ret))
-			goto fail;
+		/* 8. ADC sampling frequency(0x190000 क्रम 25MHz sampling) */
+		ret = lgdt3306a_पढ़ो_reg(state, 0x000d, &val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 		val &= 0xc0;
 		val |= 0x19;
-		ret = lgdt3306a_write_reg(state, 0x000d, val);
-		if (lg_chkerr(ret))
-			goto fail;
-	} else {
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x000d, val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
+	पूर्ण अन्यथा अणु
 		pr_err("Bad xtalMHz=%d\n", state->cfg->xtalMHz);
-	}
-#if 0
-	ret = lgdt3306a_write_reg(state, 0x000e, 0x00);
-	ret = lgdt3306a_write_reg(state, 0x000f, 0x00);
-#endif
+	पूर्ण
+#अगर 0
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x000e, 0x00);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x000f, 0x00);
+#पूर्ण_अगर
 
-	/* 9. Center frequency of input signal of ADC */
-	ret = lgdt3306a_write_reg(state, 0x0010, 0x34); /* 3.25MHz */
-	ret = lgdt3306a_write_reg(state, 0x0011, 0x00);
+	/* 9. Center frequency of input संकेत of ADC */
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0010, 0x34); /* 3.25MHz */
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0011, 0x00);
 
 	/* 10. Fixed gain error value */
-	ret = lgdt3306a_write_reg(state, 0x0014, 0); /* gain error=0 */
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0014, 0); /* gain error=0 */
 
-	/* 10a. VSB TR BW gear shift initial step */
-	ret = lgdt3306a_read_reg(state, 0x103c, &val);
+	/* 10a. VSB TR BW gear shअगरt initial step */
+	ret = lgdt3306a_पढ़ो_reg(state, 0x103c, &val);
 	val &= 0x0f;
 	val |= 0x20; /* SAMGSAUTOSTL_V[3:0] = 2 */
-	ret = lgdt3306a_write_reg(state, 0x103c, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x103c, val);
 
-	/* 10b. Timing offset calibration in low temperature for VSB */
-	ret = lgdt3306a_read_reg(state, 0x103d, &val);
+	/* 10b. Timing offset calibration in low temperature क्रम VSB */
+	ret = lgdt3306a_पढ़ो_reg(state, 0x103d, &val);
 	val &= 0xfc;
 	val |= 0x03;
-	ret = lgdt3306a_write_reg(state, 0x103d, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x103d, val);
 
-	/* 10c. Timing offset calibration in low temperature for QAM */
-	ret = lgdt3306a_read_reg(state, 0x1036, &val);
+	/* 10c. Timing offset calibration in low temperature क्रम QAM */
+	ret = lgdt3306a_पढ़ो_reg(state, 0x1036, &val);
 	val &= 0xf0;
 	val |= 0x0c;
-	ret = lgdt3306a_write_reg(state, 0x1036, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x1036, val);
 
 	/* 11. Using the imaginary part of CIR in CIR loading */
-	ret = lgdt3306a_read_reg(state, 0x211f, &val);
-	val &= 0xef; /* do not use imaginary of CIR */
-	ret = lgdt3306a_write_reg(state, 0x211f, val);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x211f, &val);
+	val &= 0xef; /* करो not use imaginary of CIR */
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x211f, val);
 
-	/* 12. Control of no signal detector function */
-	ret = lgdt3306a_read_reg(state, 0x2849, &val);
-	val &= 0xef; /* NOUSENOSIGDET=0, enable no signal detector */
-	ret = lgdt3306a_write_reg(state, 0x2849, val);
+	/* 12. Control of no संकेत detector function */
+	ret = lgdt3306a_पढ़ो_reg(state, 0x2849, &val);
+	val &= 0xef; /* NOUSENOSIGDET=0, enable no संकेत detector */
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x2849, val);
 
 	/* FGR - put demod in some known mode */
 	ret = lgdt3306a_set_vsb(state);
 
-	/* 13. TP stream format */
+	/* 13. TP stream क्रमmat */
 	ret = lgdt3306a_mpeg_mode(state, state->cfg->mpeg_mode);
 
 	/* 14. disable output buses */
@@ -969,583 +970,583 @@ static int lgdt3306a_init(struct dvb_frontend *fe)
 	c->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_set_parameters(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct lgdt3306a_state *state = fe->demodulator_priv;
-	int ret;
+अटल पूर्णांक lgdt3306a_set_parameters(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
+	पूर्णांक ret;
 
 	dbg_info("(%d, %d)\n", p->frequency, p->modulation);
 
-	if (state->current_frequency  == p->frequency &&
-	   state->current_modulation == p->modulation) {
+	अगर (state->current_frequency  == p->frequency &&
+	   state->current_modulation == p->modulation) अणु
 		dbg_info(" (already set, skipping ...)\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	state->current_frequency = -1;
 	state->current_modulation = -1;
 
-	ret = lgdt3306a_power(state, 1); /* power up */
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_घातer(state, 1); /* घातer up */
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	if (fe->ops.tuner_ops.set_params) {
+	अगर (fe->ops.tuner_ops.set_params) अणु
 		ret = fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl)
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 0);
-#if 0
-		if (lg_chkerr(ret))
-			goto fail;
+#अगर 0
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 		state->current_frequency = p->frequency;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	ret = lgdt3306a_set_modulation(state, p);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	ret = lgdt3306a_agc_setup(state, p);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	ret = lgdt3306a_set_if(state, p);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = lgdt3306a_set_अगर(state, p);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	/* spectral_inversion defaults already set for VSB and QAM */
+	/* spectral_inversion शेषs alपढ़ोy set क्रम VSB and QAM */
 
 	ret = lgdt3306a_mpeg_mode(state, state->cfg->mpeg_mode);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	ret = lgdt3306a_mpeg_mode_polarity(state,
 					  state->cfg->tpclk_edge,
 					  state->cfg->tpvalid_polarity);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	ret = lgdt3306a_mpeg_tristate(state, 0); /* enable data bus */
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
 	ret = lgdt3306a_soft_reset(state);
-	if (lg_chkerr(ret))
-		goto fail;
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-#ifdef DBG_DUMP
+#अगर_घोषित DBG_DUMP
 	lgdt3306a_DumpAllRegs(state);
-#endif
+#पूर्ण_अगर
 	state->current_frequency = p->frequency;
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_get_frontend(struct dvb_frontend *fe,
-				  struct dtv_frontend_properties *p)
-{
-	struct lgdt3306a_state *state = fe->demodulator_priv;
+अटल पूर्णांक lgdt3306a_get_frontend(काष्ठा dvb_frontend *fe,
+				  काष्ठा dtv_frontend_properties *p)
+अणु
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
 
 	dbg_info("(%u, %d)\n",
 		 state->current_frequency, state->current_modulation);
 
 	p->modulation = state->current_modulation;
 	p->frequency = state->current_frequency;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum dvbfe_algo lgdt3306a_get_frontend_algo(struct dvb_frontend *fe)
-{
-#if 1
-	return DVBFE_ALGO_CUSTOM;
-#else
-	return DVBFE_ALGO_HW;
-#endif
-}
+अटल क्रमागत dvbfe_algo lgdt3306a_get_frontend_algo(काष्ठा dvb_frontend *fe)
+अणु
+#अगर 1
+	वापस DVBFE_ALGO_CUSTOM;
+#अन्यथा
+	वापस DVBFE_ALGO_HW;
+#पूर्ण_अगर
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
-static int lgdt3306a_monitor_vsb(struct lgdt3306a_state *state)
-{
+अटल पूर्णांक lgdt3306a_monitor_vsb(काष्ठा lgdt3306a_state *state)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 	u8 snrRef, maxPowerMan, nCombDet;
 	u16 fbDlyCir;
 
-	ret = lgdt3306a_read_reg(state, 0x21a1, &val);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x21a1, &val);
+	अगर (ret)
+		वापस ret;
 	snrRef = val & 0x3f;
 
-	ret = lgdt3306a_read_reg(state, 0x2185, &maxPowerMan);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x2185, &maxPowerMan);
+	अगर (ret)
+		वापस ret;
 
-	ret = lgdt3306a_read_reg(state, 0x2191, &val);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x2191, &val);
+	अगर (ret)
+		वापस ret;
 	nCombDet = (val & 0x80) >> 7;
 
-	ret = lgdt3306a_read_reg(state, 0x2180, &val);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x2180, &val);
+	अगर (ret)
+		वापस ret;
 	fbDlyCir = (val & 0x03) << 8;
 
-	ret = lgdt3306a_read_reg(state, 0x2181, &val);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x2181, &val);
+	अगर (ret)
+		वापस ret;
 	fbDlyCir |= val;
 
 	dbg_info("snrRef=%d maxPowerMan=0x%x nCombDet=%d fbDlyCir=0x%x\n",
 		snrRef, maxPowerMan, nCombDet, fbDlyCir);
 
 	/* Carrier offset sub loop bandwidth */
-	ret = lgdt3306a_read_reg(state, 0x1061, &val);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x1061, &val);
+	अगर (ret)
+		वापस ret;
 	val &= 0xf8;
-	if ((snrRef > 18) && (maxPowerMan > 0x68)
+	अगर ((snrRef > 18) && (maxPowerMan > 0x68)
 	    && (nCombDet == 0x01)
-	    && ((fbDlyCir == 0x03FF) || (fbDlyCir < 0x6C))) {
+	    && ((fbDlyCir == 0x03FF) || (fbDlyCir < 0x6C))) अणु
 		/* SNR is over 18dB and no ghosting */
 		val |= 0x00; /* final bandwidth = 0 */
-	} else {
+	पूर्ण अन्यथा अणु
 		val |= 0x04; /* final bandwidth = 4 */
-	}
-	ret = lgdt3306a_write_reg(state, 0x1061, val);
-	if (ret)
-		return ret;
+	पूर्ण
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x1061, val);
+	अगर (ret)
+		वापस ret;
 
 	/* Adjust Notch Filter */
-	ret = lgdt3306a_read_reg(state, 0x0024, &val);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0024, &val);
+	अगर (ret)
+		वापस ret;
 	val &= 0x0f;
-	if (nCombDet == 0) { /* Turn on the Notch Filter */
+	अगर (nCombDet == 0) अणु /* Turn on the Notch Filter */
 		val |= 0x50;
-	}
-	ret = lgdt3306a_write_reg(state, 0x0024, val);
-	if (ret)
-		return ret;
+	पूर्ण
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x0024, val);
+	अगर (ret)
+		वापस ret;
 
 	/* VSB Timing Recovery output normalization */
-	ret = lgdt3306a_read_reg(state, 0x103d, &val);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x103d, &val);
+	अगर (ret)
+		वापस ret;
 	val &= 0xcf;
 	val |= 0x20;
-	ret = lgdt3306a_write_reg(state, 0x103d, val);
+	ret = lgdt3306a_ग_लिखो_reg(state, 0x103d, val);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum lgdt3306a_modulation
-lgdt3306a_check_oper_mode(struct lgdt3306a_state *state)
-{
+अटल क्रमागत lgdt3306a_modulation
+lgdt3306a_check_oper_mode(काष्ठा lgdt3306a_state *state)
+अणु
 	u8 val = 0;
-	int ret;
+	पूर्णांक ret;
 
-	ret = lgdt3306a_read_reg(state, 0x0081, &val);
-	if (ret)
-		goto err;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0081, &val);
+	अगर (ret)
+		जाओ err;
 
-	if (val & 0x80)	{
+	अगर (val & 0x80)	अणु
 		dbg_info("VSB\n");
-		return LG3306_VSB;
-	}
-	if (val & 0x08) {
-		ret = lgdt3306a_read_reg(state, 0x00a6, &val);
-		if (ret)
-			goto err;
+		वापस LG3306_VSB;
+	पूर्ण
+	अगर (val & 0x08) अणु
+		ret = lgdt3306a_पढ़ो_reg(state, 0x00a6, &val);
+		अगर (ret)
+			जाओ err;
 		val = val >> 2;
-		if (val & 0x01) {
+		अगर (val & 0x01) अणु
 			dbg_info("QAM256\n");
-			return LG3306_QAM256;
-		}
+			वापस LG3306_QAM256;
+		पूर्ण
 		dbg_info("QAM64\n");
-		return LG3306_QAM64;
-	}
+		वापस LG3306_QAM64;
+	पूर्ण
 err:
 	pr_warn("UNKNOWN\n");
-	return LG3306_UNKNOWN_MODE;
-}
+	वापस LG3306_UNKNOWN_MODE;
+पूर्ण
 
-static enum lgdt3306a_lock_status
-lgdt3306a_check_lock_status(struct lgdt3306a_state *state,
-			    enum lgdt3306a_lock_check whatLock)
-{
+अटल क्रमागत lgdt3306a_lock_status
+lgdt3306a_check_lock_status(काष्ठा lgdt3306a_state *state,
+			    क्रमागत lgdt3306a_lock_check whatLock)
+अणु
 	u8 val = 0;
-	int ret;
-	enum lgdt3306a_modulation	modeOper;
-	enum lgdt3306a_lock_status lockStatus;
+	पूर्णांक ret;
+	क्रमागत lgdt3306a_modulation	modeOper;
+	क्रमागत lgdt3306a_lock_status lockStatus;
 
 	modeOper = LG3306_UNKNOWN_MODE;
 
-	switch (whatLock) {
-	case LG3306_SYNC_LOCK:
-	{
-		ret = lgdt3306a_read_reg(state, 0x00a6, &val);
-		if (ret)
-			return ret;
+	चयन (whatLock) अणु
+	हाल LG3306_SYNC_LOCK:
+	अणु
+		ret = lgdt3306a_पढ़ो_reg(state, 0x00a6, &val);
+		अगर (ret)
+			वापस ret;
 
-		if ((val & 0x80) == 0x80)
+		अगर ((val & 0x80) == 0x80)
 			lockStatus = LG3306_LOCK;
-		else
+		अन्यथा
 			lockStatus = LG3306_UNLOCK;
 
 		dbg_info("SYNC_LOCK=%x\n", lockStatus);
-		break;
-	}
-	case LG3306_AGC_LOCK:
-	{
-		ret = lgdt3306a_read_reg(state, 0x0080, &val);
-		if (ret)
-			return ret;
+		अवरोध;
+	पूर्ण
+	हाल LG3306_AGC_LOCK:
+	अणु
+		ret = lgdt3306a_पढ़ो_reg(state, 0x0080, &val);
+		अगर (ret)
+			वापस ret;
 
-		if ((val & 0x40) == 0x40)
+		अगर ((val & 0x40) == 0x40)
 			lockStatus = LG3306_LOCK;
-		else
+		अन्यथा
 			lockStatus = LG3306_UNLOCK;
 
 		dbg_info("AGC_LOCK=%x\n", lockStatus);
-		break;
-	}
-	case LG3306_TR_LOCK:
-	{
+		अवरोध;
+	पूर्ण
+	हाल LG3306_TR_LOCK:
+	अणु
 		modeOper = lgdt3306a_check_oper_mode(state);
-		if ((modeOper == LG3306_QAM64) || (modeOper == LG3306_QAM256)) {
-			ret = lgdt3306a_read_reg(state, 0x1094, &val);
-			if (ret)
-				return ret;
+		अगर ((modeOper == LG3306_QAM64) || (modeOper == LG3306_QAM256)) अणु
+			ret = lgdt3306a_पढ़ो_reg(state, 0x1094, &val);
+			अगर (ret)
+				वापस ret;
 
-			if ((val & 0x80) == 0x80)
+			अगर ((val & 0x80) == 0x80)
 				lockStatus = LG3306_LOCK;
-			else
+			अन्यथा
 				lockStatus = LG3306_UNLOCK;
-		} else
+		पूर्ण अन्यथा
 			lockStatus = LG3306_UNKNOWN_LOCK;
 
 		dbg_info("TR_LOCK=%x\n", lockStatus);
-		break;
-	}
-	case LG3306_FEC_LOCK:
-	{
+		अवरोध;
+	पूर्ण
+	हाल LG3306_FEC_LOCK:
+	अणु
 		modeOper = lgdt3306a_check_oper_mode(state);
-		if ((modeOper == LG3306_QAM64) || (modeOper == LG3306_QAM256)) {
-			ret = lgdt3306a_read_reg(state, 0x0080, &val);
-			if (ret)
-				return ret;
+		अगर ((modeOper == LG3306_QAM64) || (modeOper == LG3306_QAM256)) अणु
+			ret = lgdt3306a_पढ़ो_reg(state, 0x0080, &val);
+			अगर (ret)
+				वापस ret;
 
-			if ((val & 0x10) == 0x10)
+			अगर ((val & 0x10) == 0x10)
 				lockStatus = LG3306_LOCK;
-			else
+			अन्यथा
 				lockStatus = LG3306_UNLOCK;
-		} else
+		पूर्ण अन्यथा
 			lockStatus = LG3306_UNKNOWN_LOCK;
 
 		dbg_info("FEC_LOCK=%x\n", lockStatus);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		lockStatus = LG3306_UNKNOWN_LOCK;
 		pr_warn("UNKNOWN whatLock=%d\n", whatLock);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return lockStatus;
-}
+	वापस lockStatus;
+पूर्ण
 
-static enum lgdt3306a_neverlock_status
-lgdt3306a_check_neverlock_status(struct lgdt3306a_state *state)
-{
+अटल क्रमागत lgdt3306a_neverlock_status
+lgdt3306a_check_neverlock_status(काष्ठा lgdt3306a_state *state)
+अणु
 	u8 val = 0;
-	int ret;
-	enum lgdt3306a_neverlock_status lockStatus;
+	पूर्णांक ret;
+	क्रमागत lgdt3306a_neverlock_status lockStatus;
 
-	ret = lgdt3306a_read_reg(state, 0x0080, &val);
-	if (ret)
-		return ret;
-	lockStatus = (enum lgdt3306a_neverlock_status)(val & 0x03);
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0080, &val);
+	अगर (ret)
+		वापस ret;
+	lockStatus = (क्रमागत lgdt3306a_neverlock_status)(val & 0x03);
 
 	dbg_info("NeverLock=%d", lockStatus);
 
-	return lockStatus;
-}
+	वापस lockStatus;
+पूर्ण
 
-static int lgdt3306a_pre_monitoring(struct lgdt3306a_state *state)
-{
+अटल पूर्णांक lgdt3306a_pre_monitoring(काष्ठा lgdt3306a_state *state)
+अणु
 	u8 val = 0;
-	int ret;
-	u8 currChDiffACQ, snrRef, mainStrong, aiccrejStatus;
+	पूर्णांक ret;
+	u8 currChDअगरfACQ, snrRef, मुख्यStrong, aiccrejStatus;
 
 	/* Channel variation */
-	ret = lgdt3306a_read_reg(state, 0x21bc, &currChDiffACQ);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x21bc, &currChDअगरfACQ);
+	अगर (ret)
+		वापस ret;
 
 	/* SNR of Frame sync */
-	ret = lgdt3306a_read_reg(state, 0x21a1, &val);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x21a1, &val);
+	अगर (ret)
+		वापस ret;
 	snrRef = val & 0x3f;
 
 	/* Strong Main CIR */
-	ret = lgdt3306a_read_reg(state, 0x2199, &val);
-	if (ret)
-		return ret;
-	mainStrong = (val & 0x40) >> 6;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x2199, &val);
+	अगर (ret)
+		वापस ret;
+	मुख्यStrong = (val & 0x40) >> 6;
 
-	ret = lgdt3306a_read_reg(state, 0x0090, &val);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0090, &val);
+	अगर (ret)
+		वापस ret;
 	aiccrejStatus = (val & 0xf0) >> 4;
 
 	dbg_info("snrRef=%d mainStrong=%d aiccrejStatus=%d currChDiffACQ=0x%x\n",
-		snrRef, mainStrong, aiccrejStatus, currChDiffACQ);
+		snrRef, मुख्यStrong, aiccrejStatus, currChDअगरfACQ);
 
-#if 0
+#अगर 0
 	/* Dynamic ghost exists */
-	if ((mainStrong == 0) && (currChDiffACQ > 0x70))
-#endif
-	if (mainStrong == 0) {
-		ret = lgdt3306a_read_reg(state, 0x2135, &val);
-		if (ret)
-			return ret;
+	अगर ((मुख्यStrong == 0) && (currChDअगरfACQ > 0x70))
+#पूर्ण_अगर
+	अगर (मुख्यStrong == 0) अणु
+		ret = lgdt3306a_पढ़ो_reg(state, 0x2135, &val);
+		अगर (ret)
+			वापस ret;
 		val &= 0x0f;
 		val |= 0xa0;
-		ret = lgdt3306a_write_reg(state, 0x2135, val);
-		if (ret)
-			return ret;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x2135, val);
+		अगर (ret)
+			वापस ret;
 
-		ret = lgdt3306a_read_reg(state, 0x2141, &val);
-		if (ret)
-			return ret;
+		ret = lgdt3306a_पढ़ो_reg(state, 0x2141, &val);
+		अगर (ret)
+			वापस ret;
 		val &= 0x3f;
 		val |= 0x80;
-		ret = lgdt3306a_write_reg(state, 0x2141, val);
-		if (ret)
-			return ret;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x2141, val);
+		अगर (ret)
+			वापस ret;
 
-		ret = lgdt3306a_write_reg(state, 0x2122, 0x70);
-		if (ret)
-			return ret;
-	} else { /* Weak ghost or static channel */
-		ret = lgdt3306a_read_reg(state, 0x2135, &val);
-		if (ret)
-			return ret;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x2122, 0x70);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु /* Weak ghost or अटल channel */
+		ret = lgdt3306a_पढ़ो_reg(state, 0x2135, &val);
+		अगर (ret)
+			वापस ret;
 		val &= 0x0f;
 		val |= 0x70;
-		ret = lgdt3306a_write_reg(state, 0x2135, val);
-		if (ret)
-			return ret;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x2135, val);
+		अगर (ret)
+			वापस ret;
 
-		ret = lgdt3306a_read_reg(state, 0x2141, &val);
-		if (ret)
-			return ret;
+		ret = lgdt3306a_पढ़ो_reg(state, 0x2141, &val);
+		अगर (ret)
+			वापस ret;
 		val &= 0x3f;
 		val |= 0x40;
-		ret = lgdt3306a_write_reg(state, 0x2141, val);
-		if (ret)
-			return ret;
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x2141, val);
+		अगर (ret)
+			वापस ret;
 
-		ret = lgdt3306a_write_reg(state, 0x2122, 0x40);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		ret = lgdt3306a_ग_लिखो_reg(state, 0x2122, 0x40);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static enum lgdt3306a_lock_status
-lgdt3306a_sync_lock_poll(struct lgdt3306a_state *state)
-{
-	enum lgdt3306a_lock_status syncLockStatus = LG3306_UNLOCK;
-	int	i;
+अटल क्रमागत lgdt3306a_lock_status
+lgdt3306a_sync_lock_poll(काष्ठा lgdt3306a_state *state)
+अणु
+	क्रमागत lgdt3306a_lock_status syncLockStatus = LG3306_UNLOCK;
+	पूर्णांक	i;
 
-	for (i = 0; i < 2; i++)	{
+	क्रम (i = 0; i < 2; i++)	अणु
 		msleep(30);
 
 		syncLockStatus = lgdt3306a_check_lock_status(state,
 							     LG3306_SYNC_LOCK);
 
-		if (syncLockStatus == LG3306_LOCK) {
+		अगर (syncLockStatus == LG3306_LOCK) अणु
 			dbg_info("locked(%d)\n", i);
-			return LG3306_LOCK;
-		}
-	}
+			वापस LG3306_LOCK;
+		पूर्ण
+	पूर्ण
 	dbg_info("not locked\n");
-	return LG3306_UNLOCK;
-}
+	वापस LG3306_UNLOCK;
+पूर्ण
 
-static enum lgdt3306a_lock_status
-lgdt3306a_fec_lock_poll(struct lgdt3306a_state *state)
-{
-	enum lgdt3306a_lock_status FECLockStatus = LG3306_UNLOCK;
-	int	i;
+अटल क्रमागत lgdt3306a_lock_status
+lgdt3306a_fec_lock_poll(काष्ठा lgdt3306a_state *state)
+अणु
+	क्रमागत lgdt3306a_lock_status FECLockStatus = LG3306_UNLOCK;
+	पूर्णांक	i;
 
-	for (i = 0; i < 2; i++)	{
+	क्रम (i = 0; i < 2; i++)	अणु
 		msleep(30);
 
 		FECLockStatus = lgdt3306a_check_lock_status(state,
 							    LG3306_FEC_LOCK);
 
-		if (FECLockStatus == LG3306_LOCK) {
+		अगर (FECLockStatus == LG3306_LOCK) अणु
 			dbg_info("locked(%d)\n", i);
-			return FECLockStatus;
-		}
-	}
+			वापस FECLockStatus;
+		पूर्ण
+	पूर्ण
 	dbg_info("not locked\n");
-	return FECLockStatus;
-}
+	वापस FECLockStatus;
+पूर्ण
 
-static enum lgdt3306a_neverlock_status
-lgdt3306a_neverlock_poll(struct lgdt3306a_state *state)
-{
-	enum lgdt3306a_neverlock_status NLLockStatus = LG3306_NL_FAIL;
-	int	i;
+अटल क्रमागत lgdt3306a_neverlock_status
+lgdt3306a_neverlock_poll(काष्ठा lgdt3306a_state *state)
+अणु
+	क्रमागत lgdt3306a_neverlock_status NLLockStatus = LG3306_NL_FAIL;
+	पूर्णांक	i;
 
-	for (i = 0; i < 5; i++) {
+	क्रम (i = 0; i < 5; i++) अणु
 		msleep(30);
 
 		NLLockStatus = lgdt3306a_check_neverlock_status(state);
 
-		if (NLLockStatus == LG3306_NL_LOCK) {
+		अगर (NLLockStatus == LG3306_NL_LOCK) अणु
 			dbg_info("NL_LOCK(%d)\n", i);
-			return NLLockStatus;
-		}
-	}
+			वापस NLLockStatus;
+		पूर्ण
+	पूर्ण
 	dbg_info("NLLockStatus=%d\n", NLLockStatus);
-	return NLLockStatus;
-}
+	वापस NLLockStatus;
+पूर्ण
 
-static u8 lgdt3306a_get_packet_error(struct lgdt3306a_state *state)
-{
+अटल u8 lgdt3306a_get_packet_error(काष्ठा lgdt3306a_state *state)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = lgdt3306a_read_reg(state, 0x00fa, &val);
-	if (ret)
-		return ret;
+	ret = lgdt3306a_पढ़ो_reg(state, 0x00fa, &val);
+	अगर (ret)
+		वापस ret;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static const u32 valx_x10[] = {
+अटल स्थिर u32 valx_x10[] = अणु
 	10,  11,  13,  15,  17,  20,  25,  33,  41,  50,  59,  73,  87,  100
-};
-static const u32 log10x_x1000[] = {
+पूर्ण;
+अटल स्थिर u32 log10x_x1000[] = अणु
 	0,   41, 114, 176, 230, 301, 398, 518, 613, 699, 771, 863, 939, 1000
-};
+पूर्ण;
 
-static u32 log10_x1000(u32 x)
-{
-	u32 diff_val, step_val, step_log10;
+अटल u32 log10_x1000(u32 x)
+अणु
+	u32 dअगरf_val, step_val, step_log10;
 	u32 log_val = 0;
 	u32 i;
 
-	if (x <= 0)
-		return -1000000; /* signal error */
+	अगर (x <= 0)
+		वापस -1000000; /* संकेत error */
 
-	if (x == 10)
-		return 0; /* log(1)=0 */
+	अगर (x == 10)
+		वापस 0; /* log(1)=0 */
 
-	if (x < 10) {
-		while (x < 10) {
+	अगर (x < 10) अणु
+		जबतक (x < 10) अणु
 			x = x * 10;
 			log_val--;
-		}
-	} else {	/* x > 10 */
-		while (x >= 100) {
+		पूर्ण
+	पूर्ण अन्यथा अणु	/* x > 10 */
+		जबतक (x >= 100) अणु
 			x = x / 10;
 			log_val++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	log_val *= 1000;
 
-	if (x == 10) /* was our input an exact multiple of 10 */
-		return log_val;	/* don't need to interpolate */
+	अगर (x == 10) /* was our input an exact multiple of 10 */
+		वापस log_val;	/* करोn't need to पूर्णांकerpolate */
 
 	/* find our place on the log curve */
-	for (i = 1; i < ARRAY_SIZE(valx_x10); i++) {
-		if (valx_x10[i] >= x)
-			break;
-	}
-	if (i == ARRAY_SIZE(valx_x10))
-		return log_val + log10x_x1000[i - 1];
+	क्रम (i = 1; i < ARRAY_SIZE(valx_x10); i++) अणु
+		अगर (valx_x10[i] >= x)
+			अवरोध;
+	पूर्ण
+	अगर (i == ARRAY_SIZE(valx_x10))
+		वापस log_val + log10x_x1000[i - 1];
 
-	diff_val   = x - valx_x10[i-1];
+	dअगरf_val   = x - valx_x10[i-1];
 	step_val   = valx_x10[i] - valx_x10[i - 1];
 	step_log10 = log10x_x1000[i] - log10x_x1000[i - 1];
 
-	/* do a linear interpolation to get in-between values */
-	return log_val + log10x_x1000[i - 1] +
-		((diff_val*step_log10) / step_val);
-}
+	/* करो a linear पूर्णांकerpolation to get in-between values */
+	वापस log_val + log10x_x1000[i - 1] +
+		((dअगरf_val*step_log10) / step_val);
+पूर्ण
 
-static u32 lgdt3306a_calculate_snr_x100(struct lgdt3306a_state *state)
-{
+अटल u32 lgdt3306a_calculate_snr_x100(काष्ठा lgdt3306a_state *state)
+अणु
 	u32 mse; /* Mean-Square Error */
-	u32 pwr; /* Constelation power */
+	u32 pwr; /* Constelation घातer */
 	u32 snr_x100;
 
-	mse = (read_reg(state, 0x00ec) << 8) |
-	      (read_reg(state, 0x00ed));
-	pwr = (read_reg(state, 0x00e8) << 8) |
-	      (read_reg(state, 0x00e9));
+	mse = (पढ़ो_reg(state, 0x00ec) << 8) |
+	      (पढ़ो_reg(state, 0x00ed));
+	pwr = (पढ़ो_reg(state, 0x00e8) << 8) |
+	      (पढ़ो_reg(state, 0x00e9));
 
-	if (mse == 0) /* no signal */
-		return 0;
+	अगर (mse == 0) /* no संकेत */
+		वापस 0;
 
 	snr_x100 = log10_x1000((pwr * 10000) / mse) - 3000;
 	dbg_info("mse=%u, pwr=%u, snr_x100=%d\n", mse, pwr, snr_x100);
 
-	return snr_x100;
-}
+	वापस snr_x100;
+पूर्ण
 
-static enum lgdt3306a_lock_status
-lgdt3306a_vsb_lock_poll(struct lgdt3306a_state *state)
-{
-	int ret;
+अटल क्रमागत lgdt3306a_lock_status
+lgdt3306a_vsb_lock_poll(काष्ठा lgdt3306a_state *state)
+अणु
+	पूर्णांक ret;
 	u8 cnt = 0;
 	u8 packet_error;
 	u32 snr;
 
-	for (cnt = 0; cnt < 10; cnt++) {
-		if (lgdt3306a_sync_lock_poll(state) == LG3306_UNLOCK) {
+	क्रम (cnt = 0; cnt < 10; cnt++) अणु
+		अगर (lgdt3306a_sync_lock_poll(state) == LG3306_UNLOCK) अणु
 			dbg_info("no sync lock!\n");
-			return LG3306_UNLOCK;
-		}
+			वापस LG3306_UNLOCK;
+		पूर्ण
 
 		msleep(20);
 		ret = lgdt3306a_pre_monitoring(state);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		packet_error = lgdt3306a_get_packet_error(state);
 		snr = lgdt3306a_calculate_snr_x100(state);
 		dbg_info("cnt=%d errors=%d snr=%d\n", cnt, packet_error, snr);
 
-		if ((snr >= 1500) && (packet_error < 0xff))
-			return LG3306_LOCK;
-	}
+		अगर ((snr >= 1500) && (packet_error < 0xff))
+			वापस LG3306_LOCK;
+	पूर्ण
 
 	dbg_info("not locked!\n");
-	return LG3306_UNLOCK;
-}
+	वापस LG3306_UNLOCK;
+पूर्ण
 
-static enum lgdt3306a_lock_status
-lgdt3306a_qam_lock_poll(struct lgdt3306a_state *state)
-{
+अटल क्रमागत lgdt3306a_lock_status
+lgdt3306a_qam_lock_poll(काष्ठा lgdt3306a_state *state)
+अणु
 	u8 cnt;
 	u8 packet_error;
 	u32	snr;
 
-	for (cnt = 0; cnt < 10; cnt++) {
-		if (lgdt3306a_fec_lock_poll(state) == LG3306_UNLOCK) {
+	क्रम (cnt = 0; cnt < 10; cnt++) अणु
+		अगर (lgdt3306a_fec_lock_poll(state) == LG3306_UNLOCK) अणु
 			dbg_info("no fec lock!\n");
-			return LG3306_UNLOCK;
-		}
+			वापस LG3306_UNLOCK;
+		पूर्ण
 
 		msleep(20);
 
@@ -1553,317 +1554,317 @@ lgdt3306a_qam_lock_poll(struct lgdt3306a_state *state)
 		snr = lgdt3306a_calculate_snr_x100(state);
 		dbg_info("cnt=%d errors=%d snr=%d\n", cnt, packet_error, snr);
 
-		if ((snr >= 1500) && (packet_error < 0xff))
-			return LG3306_LOCK;
-	}
+		अगर ((snr >= 1500) && (packet_error < 0xff))
+			वापस LG3306_LOCK;
+	पूर्ण
 
 	dbg_info("not locked!\n");
-	return LG3306_UNLOCK;
-}
+	वापस LG3306_UNLOCK;
+पूर्ण
 
-static int lgdt3306a_read_status(struct dvb_frontend *fe,
-				 enum fe_status *status)
-{
-	struct lgdt3306a_state *state = fe->demodulator_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक lgdt3306a_पढ़ो_status(काष्ठा dvb_frontend *fe,
+				 क्रमागत fe_status *status)
+अणु
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u16 strength = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (fe->ops.tuner_ops.get_rf_strength) {
+	अगर (fe->ops.tuner_ops.get_rf_strength) अणु
 		ret = fe->ops.tuner_ops.get_rf_strength(fe, &strength);
-		if (ret == 0)
+		अगर (ret == 0)
 			dbg_info("strength=%d\n", strength);
-		else
+		अन्यथा
 			dbg_info("fe->ops.tuner_ops.get_rf_strength() failed\n");
-	}
+	पूर्ण
 
 	*status = 0;
-	if (lgdt3306a_neverlock_poll(state) == LG3306_NL_LOCK) {
+	अगर (lgdt3306a_neverlock_poll(state) == LG3306_NL_LOCK) अणु
 		*status |= FE_HAS_SIGNAL;
 		*status |= FE_HAS_CARRIER;
 
-		switch (state->current_modulation) {
-		case QAM_256:
-		case QAM_64:
-		case QAM_AUTO:
-			if (lgdt3306a_qam_lock_poll(state) == LG3306_LOCK) {
+		चयन (state->current_modulation) अणु
+		हाल QAM_256:
+		हाल QAM_64:
+		हाल QAM_AUTO:
+			अगर (lgdt3306a_qam_lock_poll(state) == LG3306_LOCK) अणु
 				*status |= FE_HAS_VITERBI;
 				*status |= FE_HAS_SYNC;
 
 				*status |= FE_HAS_LOCK;
-			}
-			break;
-		case VSB_8:
-			if (lgdt3306a_vsb_lock_poll(state) == LG3306_LOCK) {
+			पूर्ण
+			अवरोध;
+		हाल VSB_8:
+			अगर (lgdt3306a_vsb_lock_poll(state) == LG3306_LOCK) अणु
 				*status |= FE_HAS_VITERBI;
 				*status |= FE_HAS_SYNC;
 
 				*status |= FE_HAS_LOCK;
 
 				ret = lgdt3306a_monitor_vsb(state);
-			}
-			break;
-		default:
+			पूर्ण
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-		}
+		पूर्ण
 
-		if (*status & FE_HAS_SYNC) {
+		अगर (*status & FE_HAS_SYNC) अणु
 			c->cnr.len = 1;
 			c->cnr.stat[0].scale = FE_SCALE_DECIBEL;
 			c->cnr.stat[0].svalue = lgdt3306a_calculate_snr_x100(state) * 10;
-		} else {
+		पूर्ण अन्यथा अणु
 			c->cnr.len = 1;
 			c->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 
-static int lgdt3306a_read_snr(struct dvb_frontend *fe, u16 *snr)
-{
-	struct lgdt3306a_state *state = fe->demodulator_priv;
+अटल पूर्णांक lgdt3306a_पढ़ो_snr(काष्ठा dvb_frontend *fe, u16 *snr)
+अणु
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
 
 	state->snr = lgdt3306a_calculate_snr_x100(state);
 	/* report SNR in dB * 10 */
 	*snr = state->snr/10;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lgdt3306a_read_signal_strength(struct dvb_frontend *fe,
+अटल पूर्णांक lgdt3306a_पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe,
 					 u16 *strength)
-{
+अणु
 	/*
 	 * Calculate some sort of "strength" from SNR
 	 */
-	struct lgdt3306a_state *state = fe->demodulator_priv;
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
 	u8 val;
 	u16 snr; /* snr_x10 */
-	int ret;
+	पूर्णांक ret;
 	u32 ref_snr; /* snr*100 */
 	u32 str;
 
 	*strength = 0;
 
-	switch (state->current_modulation) {
-	case VSB_8:
+	चयन (state->current_modulation) अणु
+	हाल VSB_8:
 		 ref_snr = 1600; /* 16dB */
-		 break;
-	case QAM_64:
-	case QAM_256:
-	case QAM_AUTO:
+		 अवरोध;
+	हाल QAM_64:
+	हाल QAM_256:
+	हाल QAM_AUTO:
 		/* need to know actual modulation to set proper SNR baseline */
-		ret = lgdt3306a_read_reg(state, 0x00a6, &val);
-		if (lg_chkerr(ret))
-			goto fail;
+		ret = lgdt3306a_पढ़ो_reg(state, 0x00a6, &val);
+		अगर (lg_chkerr(ret))
+			जाओ fail;
 
-		if(val & 0x04)
+		अगर(val & 0x04)
 			ref_snr = 2800; /* QAM-256 28dB */
-		else
+		अन्यथा
 			ref_snr = 2200; /* QAM-64  22dB */
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = fe->ops.read_snr(fe, &snr);
-	if (lg_chkerr(ret))
-		goto fail;
+	ret = fe->ops.पढ़ो_snr(fe, &snr);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
 
-	if (state->snr <= (ref_snr - 100))
+	अगर (state->snr <= (ref_snr - 100))
 		str = 0;
-	else if (state->snr <= ref_snr)
+	अन्यथा अगर (state->snr <= ref_snr)
 		str = (0xffff * 65) / 100; /* 65% */
-	else {
+	अन्यथा अणु
 		str = state->snr - ref_snr;
 		str /= 50;
 		str += 78; /* 78%-100% */
-		if (str > 100)
+		अगर (str > 100)
 			str = 100;
 		str = (0xffff * str) / 100;
-	}
+	पूर्ण
 	*strength = (u16)str;
 	dbg_info("strength=%u\n", *strength);
 
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
 
-static int lgdt3306a_read_ber(struct dvb_frontend *fe, u32 *ber)
-{
-	struct lgdt3306a_state *state = fe->demodulator_priv;
-	u32 tmp;
+अटल पूर्णांक lgdt3306a_पढ़ो_ber(काष्ठा dvb_frontend *fe, u32 *ber)
+अणु
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
+	u32 पंचांगp;
 
 	*ber = 0;
-#if 1
-	/* FGR - FIXME - I don't know what value is expected by dvb_core
+#अगर 1
+	/* FGR - FIXME - I करोn't know what value is expected by dvb_core
 	 * what is the scale of the value?? */
-	tmp =              read_reg(state, 0x00fc); /* NBERVALUE[24-31] */
-	tmp = (tmp << 8) | read_reg(state, 0x00fd); /* NBERVALUE[16-23] */
-	tmp = (tmp << 8) | read_reg(state, 0x00fe); /* NBERVALUE[8-15] */
-	tmp = (tmp << 8) | read_reg(state, 0x00ff); /* NBERVALUE[0-7] */
-	*ber = tmp;
-	dbg_info("ber=%u\n", tmp);
-#endif
-	return 0;
-}
+	पंचांगp =              पढ़ो_reg(state, 0x00fc); /* NBERVALUE[24-31] */
+	पंचांगp = (पंचांगp << 8) | पढ़ो_reg(state, 0x00fd); /* NBERVALUE[16-23] */
+	पंचांगp = (पंचांगp << 8) | पढ़ो_reg(state, 0x00fe); /* NBERVALUE[8-15] */
+	पंचांगp = (पंचांगp << 8) | पढ़ो_reg(state, 0x00ff); /* NBERVALUE[0-7] */
+	*ber = पंचांगp;
+	dbg_info("ber=%u\n", पंचांगp);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int lgdt3306a_read_ucblocks(struct dvb_frontend *fe, u32 *ucblocks)
-{
-	struct lgdt3306a_state *state = fe->demodulator_priv;
+अटल पूर्णांक lgdt3306a_पढ़ो_ucblocks(काष्ठा dvb_frontend *fe, u32 *ucblocks)
+अणु
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
 
 	*ucblocks = 0;
-#if 1
-	/* FGR - FIXME - I don't know what value is expected by dvb_core
+#अगर 1
+	/* FGR - FIXME - I करोn't know what value is expected by dvb_core
 	 * what happens when value wraps? */
-	*ucblocks = read_reg(state, 0x00f4); /* TPIFTPERRCNT[0-7] */
+	*ucblocks = पढ़ो_reg(state, 0x00f4); /* TPIFTPERRCNT[0-7] */
 	dbg_info("ucblocks=%u\n", *ucblocks);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lgdt3306a_tune(struct dvb_frontend *fe, bool re_tune,
-			  unsigned int mode_flags, unsigned int *delay,
-			  enum fe_status *status)
-{
-	int ret = 0;
-	struct lgdt3306a_state *state = fe->demodulator_priv;
+अटल पूर्णांक lgdt3306a_tune(काष्ठा dvb_frontend *fe, bool re_tune,
+			  अचिन्हित पूर्णांक mode_flags, अचिन्हित पूर्णांक *delay,
+			  क्रमागत fe_status *status)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
 
 	dbg_info("re_tune=%u\n", re_tune);
 
-	if (re_tune) {
-		state->current_frequency = -1; /* force re-tune */
+	अगर (re_tune) अणु
+		state->current_frequency = -1; /* क्रमce re-tune */
 		ret = lgdt3306a_set_parameters(fe);
-		if (ret != 0)
-			return ret;
-	}
+		अगर (ret != 0)
+			वापस ret;
+	पूर्ण
 	*delay = 125;
-	ret = lgdt3306a_read_status(fe, status);
+	ret = lgdt3306a_पढ़ो_status(fe, status);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_get_tune_settings(struct dvb_frontend *fe,
-				       struct dvb_frontend_tune_settings
+अटल पूर्णांक lgdt3306a_get_tune_settings(काष्ठा dvb_frontend *fe,
+				       काष्ठा dvb_frontend_tune_settings
 				       *fe_tune_settings)
-{
+अणु
 	fe_tune_settings->min_delay_ms = 100;
 	dbg_info("\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum dvbfe_search lgdt3306a_search(struct dvb_frontend *fe)
-{
-	enum fe_status status = 0;
-	int ret;
+अटल क्रमागत dvbfe_search lgdt3306a_search(काष्ठा dvb_frontend *fe)
+अणु
+	क्रमागत fe_status status = 0;
+	पूर्णांक ret;
 
 	/* set frontend */
 	ret = lgdt3306a_set_parameters(fe);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	ret = lgdt3306a_read_status(fe, &status);
-	if (ret)
-		goto error;
+	ret = lgdt3306a_पढ़ो_status(fe, &status);
+	अगर (ret)
+		जाओ error;
 
-	/* check if we have a valid signal */
-	if (status & FE_HAS_LOCK)
-		return DVBFE_ALGO_SEARCH_SUCCESS;
-	else
-		return DVBFE_ALGO_SEARCH_AGAIN;
+	/* check अगर we have a valid संकेत */
+	अगर (status & FE_HAS_LOCK)
+		वापस DVBFE_ALGO_SEARCH_SUCCESS;
+	अन्यथा
+		वापस DVBFE_ALGO_SEARCH_AGAIN;
 
 error:
 	dbg_info("failed (%d)\n", ret);
-	return DVBFE_ALGO_SEARCH_ERROR;
-}
+	वापस DVBFE_ALGO_SEARCH_ERROR;
+पूर्ण
 
-static void lgdt3306a_release(struct dvb_frontend *fe)
-{
-	struct lgdt3306a_state *state = fe->demodulator_priv;
+अटल व्योम lgdt3306a_release(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा lgdt3306a_state *state = fe->demodulator_priv;
 
 	dbg_info("\n");
-	kfree(state);
-}
+	kमुक्त(state);
+पूर्ण
 
-static const struct dvb_frontend_ops lgdt3306a_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops lgdt3306a_ops;
 
-struct dvb_frontend *lgdt3306a_attach(const struct lgdt3306a_config *config,
-				      struct i2c_adapter *i2c_adap)
-{
-	struct lgdt3306a_state *state = NULL;
-	int ret;
+काष्ठा dvb_frontend *lgdt3306a_attach(स्थिर काष्ठा lgdt3306a_config *config,
+				      काष्ठा i2c_adapter *i2c_adap)
+अणु
+	काष्ठा lgdt3306a_state *state = शून्य;
+	पूर्णांक ret;
 	u8 val;
 
 	dbg_info("(%d-%04x)\n",
 	       i2c_adap ? i2c_adapter_id(i2c_adap) : 0,
 	       config ? config->i2c_addr : 0);
 
-	state = kzalloc(sizeof(struct lgdt3306a_state), GFP_KERNEL);
-	if (state == NULL)
-		goto fail;
+	state = kzalloc(माप(काष्ठा lgdt3306a_state), GFP_KERNEL);
+	अगर (state == शून्य)
+		जाओ fail;
 
 	state->cfg = config;
 	state->i2c_adap = i2c_adap;
 
-	memcpy(&state->frontend.ops, &lgdt3306a_ops,
-	       sizeof(struct dvb_frontend_ops));
+	स_नकल(&state->frontend.ops, &lgdt3306a_ops,
+	       माप(काष्ठा dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
 
-	/* verify that we're talking to a lg3306a */
+	/* verअगरy that we're talking to a lg3306a */
 	/* FGR - NOTE - there is no obvious ChipId to check; we check
 	 * some "known" bits after reset, but it's still just a guess */
-	ret = lgdt3306a_read_reg(state, 0x0000, &val);
-	if (lg_chkerr(ret))
-		goto fail;
-	if ((val & 0x74) != 0x74) {
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0000, &val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
+	अगर ((val & 0x74) != 0x74) अणु
 		pr_warn("expected 0x74, got 0x%x\n", (val & 0x74));
-#if 0
+#अगर 0
 		/* FIXME - re-enable when we know this is right */
-		goto fail;
-#endif
-	}
-	ret = lgdt3306a_read_reg(state, 0x0001, &val);
-	if (lg_chkerr(ret))
-		goto fail;
-	if ((val & 0xf6) != 0xc6) {
+		जाओ fail;
+#पूर्ण_अगर
+	पूर्ण
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0001, &val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
+	अगर ((val & 0xf6) != 0xc6) अणु
 		pr_warn("expected 0xc6, got 0x%x\n", (val & 0xf6));
-#if 0
+#अगर 0
 		/* FIXME - re-enable when we know this is right */
-		goto fail;
-#endif
-	}
-	ret = lgdt3306a_read_reg(state, 0x0002, &val);
-	if (lg_chkerr(ret))
-		goto fail;
-	if ((val & 0x73) != 0x03) {
+		जाओ fail;
+#पूर्ण_अगर
+	पूर्ण
+	ret = lgdt3306a_पढ़ो_reg(state, 0x0002, &val);
+	अगर (lg_chkerr(ret))
+		जाओ fail;
+	अगर ((val & 0x73) != 0x03) अणु
 		pr_warn("expected 0x03, got 0x%x\n", (val & 0x73));
-#if 0
+#अगर 0
 		/* FIXME - re-enable when we know this is right */
-		goto fail;
-#endif
-	}
+		जाओ fail;
+#पूर्ण_अगर
+	पूर्ण
 
 	state->current_frequency = -1;
 	state->current_modulation = -1;
 
 	lgdt3306a_sleep(state);
 
-	return &state->frontend;
+	वापस &state->frontend;
 
 fail:
 	pr_warn("unable to detect LGDT3306A hardware\n");
-	kfree(state);
-	return NULL;
-}
+	kमुक्त(state);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(lgdt3306a_attach);
 
-#ifdef DBG_DUMP
+#अगर_घोषित DBG_DUMP
 
-static const short regtab[] = {
+अटल स्थिर लघु regtab[] = अणु
 	0x0000, /* SOFTRSTB 1'b1 1'b1 1'b1 ADCPDB 1'b1 PLLPDB GBBPDB 11111111 */
 	0x0001, /* 1'b1 1'b1 1'b0 1'b0 AUTORPTRS */
 	0x0002, /* NI2CRPTEN 1'b0 1'b0 1'b0 SPECINVAUT */
@@ -1959,7 +1960,7 @@ static const short regtab[] = {
 	0x00a2, /* SAMFREQOFFSET[15:8] */
 	0x00a3, /* SAMFREQOFFSET[7:0] */
 	0x00a6, /* SYNCLOCK SYNCLOCKH */
-#if 0 /* covered elsewhere */
+#अगर 0 /* covered अन्यथाwhere */
 	0x00e8, /* CONSTPWR[15:8] */
 	0x00e9, /* CONSTPWR[7:0] */
 	0x00ea, /* BMSE[15:8] */
@@ -1968,7 +1969,7 @@ static const short regtab[] = {
 	0x00ed, /* MSE[7:0] */
 	0x00ee, /* CONSTI[7:0] */
 	0x00ef, /* CONSTQ[7:0] */
-#endif
+#पूर्ण_अगर
 	0x00f4, /* TPIFTPERRCNT[7:0] */
 	0x00f5, /* TPCORREC */
 	0x00f6, /* VBBER[15:8] */
@@ -2006,7 +2007,7 @@ static const short regtab[] = {
 	0x1081, /* SRDSTATUS[1:0] x x x x x SRDLOCK */
 	0x10a9, /* EQSTATUS_CQS[1:0] x x x x x x */
 	0x10b7, /* EQSTATUS_V[1:0] x x x x x x */
-#if 0 /* SMART_ANT */
+#अगर 0 /* SMART_ANT */
 	0x1f00, /* MODEDETE */
 	0x1f01, /* x x x x x x x SFNRST xxxxxxx0 */
 	0x1f03, /* NUMOFANT[7:0] 10000000 */
@@ -2056,7 +2057,7 @@ static const short regtab[] = {
 	0x1f95, /* CURPWMSE[23:16] */
 	0x1f96, /* CURPWMSE[15:8] */
 	0x1f97, /* CURPWMSE[7:0] */
-#endif /* SMART_ANT */
+#पूर्ण_अगर /* SMART_ANT */
 	0x211f, /* 1'b1 1'b1 1'b1 CIRQEN x x 1'b0 1'b0 1111xx00 */
 	0x212a, /* EQAUTOST */
 	0x2122, /* CHFAST[7:0] 01100000 */
@@ -2089,173 +2090,173 @@ static const short regtab[] = {
 	0x3032, /* 1'b1 1'b0 1'b0 1'b0 x x FRAMELOCKMODE_CQS[1:0] 1000xx11 */
 	0x30a9, /* VDLOCK_Q FRAMELOCK */
 	0x30aa, /* MPEGLOCK */
-};
+पूर्ण;
 
-#define numDumpRegs (ARRAY_SIZE(regtab))
-static u8 regval1[numDumpRegs] = {0, };
-static u8 regval2[numDumpRegs] = {0, };
+#घोषणा numDumpRegs (ARRAY_SIZE(regtab))
+अटल u8 regval1[numDumpRegs] = अणु0, पूर्ण;
+अटल u8 regval2[numDumpRegs] = अणु0, पूर्ण;
 
-static void lgdt3306a_DumpAllRegs(struct lgdt3306a_state *state)
-{
-		memset(regval2, 0xff, sizeof(regval2));
+अटल व्योम lgdt3306a_DumpAllRegs(काष्ठा lgdt3306a_state *state)
+अणु
+		स_रखो(regval2, 0xff, माप(regval2));
 		lgdt3306a_DumpRegs(state);
-}
+पूर्ण
 
-static void lgdt3306a_DumpRegs(struct lgdt3306a_state *state)
-{
-	int i;
-	int sav_debug = debug;
+अटल व्योम lgdt3306a_DumpRegs(काष्ठा lgdt3306a_state *state)
+अणु
+	पूर्णांक i;
+	पूर्णांक sav_debug = debug;
 
-	if ((debug & DBG_DUMP) == 0)
-		return;
+	अगर ((debug & DBG_DUMP) == 0)
+		वापस;
 	debug &= ~DBG_REG; /* suppress DBG_REG during reg dump */
 
 	lg_debug("\n");
 
-	for (i = 0; i < numDumpRegs; i++) {
-		lgdt3306a_read_reg(state, regtab[i], &regval1[i]);
-		if (regval1[i] != regval2[i]) {
+	क्रम (i = 0; i < numDumpRegs; i++) अणु
+		lgdt3306a_पढ़ो_reg(state, regtab[i], &regval1[i]);
+		अगर (regval1[i] != regval2[i]) अणु
 			lg_debug(" %04X = %02X\n", regtab[i], regval1[i]);
 			regval2[i] = regval1[i];
-		}
-	}
+		पूर्ण
+	पूर्ण
 	debug = sav_debug;
-}
-#endif /* DBG_DUMP */
+पूर्ण
+#पूर्ण_अगर /* DBG_DUMP */
 
 
 
-static const struct dvb_frontend_ops lgdt3306a_ops = {
-	.delsys = { SYS_ATSC, SYS_DVBC_ANNEX_B },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops lgdt3306a_ops = अणु
+	.delsys = अणु SYS_ATSC, SYS_DVBC_ANNEX_B पूर्ण,
+	.info = अणु
 		.name = "LG Electronics LGDT3306A VSB/QAM Frontend",
 		.frequency_min_hz      =  54 * MHz,
 		.frequency_max_hz      = 858 * MHz,
 		.frequency_stepsize_hz = 62500,
 		.caps = FE_CAN_QAM_AUTO | FE_CAN_QAM_64 | FE_CAN_QAM_256 | FE_CAN_8VSB
-	},
+	पूर्ण,
 	.i2c_gate_ctrl        = lgdt3306a_i2c_gate_ctrl,
 	.init                 = lgdt3306a_init,
 	.sleep                = lgdt3306a_fe_sleep,
-	/* if this is set, it overrides the default swzigzag */
+	/* अगर this is set, it overrides the शेष swzigzag */
 	.tune                 = lgdt3306a_tune,
 	.set_frontend         = lgdt3306a_set_parameters,
 	.get_frontend         = lgdt3306a_get_frontend,
 	.get_frontend_algo    = lgdt3306a_get_frontend_algo,
 	.get_tune_settings    = lgdt3306a_get_tune_settings,
-	.read_status          = lgdt3306a_read_status,
-	.read_ber             = lgdt3306a_read_ber,
-	.read_signal_strength = lgdt3306a_read_signal_strength,
-	.read_snr             = lgdt3306a_read_snr,
-	.read_ucblocks        = lgdt3306a_read_ucblocks,
+	.पढ़ो_status          = lgdt3306a_पढ़ो_status,
+	.पढ़ो_ber             = lgdt3306a_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = lgdt3306a_पढ़ो_संकेत_strength,
+	.पढ़ो_snr             = lgdt3306a_पढ़ो_snr,
+	.पढ़ो_ucblocks        = lgdt3306a_पढ़ो_ucblocks,
 	.release              = lgdt3306a_release,
 	.ts_bus_ctrl          = lgdt3306a_ts_bus_ctrl,
 	.search               = lgdt3306a_search,
-};
+पूर्ण;
 
-static int lgdt3306a_select(struct i2c_mux_core *muxc, u32 chan)
-{
-	struct i2c_client *client = i2c_mux_priv(muxc);
-	struct lgdt3306a_state *state = i2c_get_clientdata(client);
+अटल पूर्णांक lgdt3306a_select(काष्ठा i2c_mux_core *muxc, u32 chan)
+अणु
+	काष्ठा i2c_client *client = i2c_mux_priv(muxc);
+	काष्ठा lgdt3306a_state *state = i2c_get_clientdata(client);
 
-	return lgdt3306a_i2c_gate_ctrl(&state->frontend, 1);
-}
+	वापस lgdt3306a_i2c_gate_ctrl(&state->frontend, 1);
+पूर्ण
 
-static int lgdt3306a_deselect(struct i2c_mux_core *muxc, u32 chan)
-{
-	struct i2c_client *client = i2c_mux_priv(muxc);
-	struct lgdt3306a_state *state = i2c_get_clientdata(client);
+अटल पूर्णांक lgdt3306a_deselect(काष्ठा i2c_mux_core *muxc, u32 chan)
+अणु
+	काष्ठा i2c_client *client = i2c_mux_priv(muxc);
+	काष्ठा lgdt3306a_state *state = i2c_get_clientdata(client);
 
-	return lgdt3306a_i2c_gate_ctrl(&state->frontend, 0);
-}
+	वापस lgdt3306a_i2c_gate_ctrl(&state->frontend, 0);
+पूर्ण
 
-static int lgdt3306a_probe(struct i2c_client *client,
-		const struct i2c_device_id *id)
-{
-	struct lgdt3306a_config *config;
-	struct lgdt3306a_state *state;
-	struct dvb_frontend *fe;
-	int ret;
+अटल पूर्णांक lgdt3306a_probe(काष्ठा i2c_client *client,
+		स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा lgdt3306a_config *config;
+	काष्ठा lgdt3306a_state *state;
+	काष्ठा dvb_frontend *fe;
+	पूर्णांक ret;
 
-	config = kmemdup(client->dev.platform_data,
-			 sizeof(struct lgdt3306a_config), GFP_KERNEL);
-	if (config == NULL) {
+	config = kmemdup(client->dev.platक्रमm_data,
+			 माप(काष्ठा lgdt3306a_config), GFP_KERNEL);
+	अगर (config == शून्य) अणु
 		ret = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	config->i2c_addr = client->addr;
 	fe = lgdt3306a_attach(config, client->adapter);
-	if (fe == NULL) {
+	अगर (fe == शून्य) अणु
 		ret = -ENODEV;
-		goto err_fe;
-	}
+		जाओ err_fe;
+	पूर्ण
 
 	i2c_set_clientdata(client, fe->demodulator_priv);
 	state = fe->demodulator_priv;
-	state->frontend.ops.release = NULL;
+	state->frontend.ops.release = शून्य;
 
-	/* create mux i2c adapter for tuner */
+	/* create mux i2c adapter क्रम tuner */
 	state->muxc = i2c_mux_alloc(client->adapter, &client->dev,
 				  1, 0, I2C_MUX_LOCKED,
 				  lgdt3306a_select, lgdt3306a_deselect);
-	if (!state->muxc) {
+	अगर (!state->muxc) अणु
 		ret = -ENOMEM;
-		goto err_kfree;
-	}
+		जाओ err_kमुक्त;
+	पूर्ण
 	state->muxc->priv = client;
 	ret = i2c_mux_add_adapter(state->muxc, 0, 0, 0);
-	if (ret)
-		goto err_kfree;
+	अगर (ret)
+		जाओ err_kमुक्त;
 
 	/* create dvb_frontend */
-	fe->ops.i2c_gate_ctrl = NULL;
+	fe->ops.i2c_gate_ctrl = शून्य;
 	*config->i2c_adapter = state->muxc->adapter[0];
 	*config->fe = fe;
 
 	dev_info(&client->dev, "LG Electronics LGDT3306A successfully identified\n");
 
-	return 0;
+	वापस 0;
 
-err_kfree:
-	kfree(state);
+err_kमुक्त:
+	kमुक्त(state);
 err_fe:
-	kfree(config);
+	kमुक्त(config);
 fail:
 	dev_warn(&client->dev, "probe failed = %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lgdt3306a_remove(struct i2c_client *client)
-{
-	struct lgdt3306a_state *state = i2c_get_clientdata(client);
+अटल पूर्णांक lgdt3306a_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा lgdt3306a_state *state = i2c_get_clientdata(client);
 
 	i2c_mux_del_adapters(state->muxc);
 
-	state->frontend.ops.release = NULL;
-	state->frontend.demodulator_priv = NULL;
+	state->frontend.ops.release = शून्य;
+	state->frontend.demodulator_priv = शून्य;
 
-	kfree(state->cfg);
-	kfree(state);
+	kमुक्त(state->cfg);
+	kमुक्त(state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id lgdt3306a_id_table[] = {
-	{"lgdt3306a", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id lgdt3306a_id_table[] = अणु
+	अणु"lgdt3306a", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, lgdt3306a_id_table);
 
-static struct i2c_driver lgdt3306a_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver lgdt3306a_driver = अणु
+	.driver = अणु
 		.name                = "lgdt3306a",
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe		= lgdt3306a_probe,
-	.remove		= lgdt3306a_remove,
+	.हटाओ		= lgdt3306a_हटाओ,
 	.id_table	= lgdt3306a_id_table,
-};
+पूर्ण;
 
 module_i2c_driver(lgdt3306a_driver);
 

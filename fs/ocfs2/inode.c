@@ -1,143 +1,144 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * inode.c
  *
- * vfs' aops, fops, dops and iops
+ * vfs' aops, fops, करोps and iops
  *
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/highmem.h>
-#include <linux/pagemap.h>
-#include <linux/quotaops.h>
-#include <linux/iversion.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/iversion.h>
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-#include <cluster/masklog.h>
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
+#समावेश "ocfs2.h"
 
-#include "alloc.h"
-#include "dir.h"
-#include "blockcheck.h"
-#include "dlmglue.h"
-#include "extent_map.h"
-#include "file.h"
-#include "heartbeat.h"
-#include "inode.h"
-#include "journal.h"
-#include "namei.h"
-#include "suballoc.h"
-#include "super.h"
-#include "symlink.h"
-#include "sysfile.h"
-#include "uptodate.h"
-#include "xattr.h"
-#include "refcounttree.h"
-#include "ocfs2_trace.h"
-#include "filecheck.h"
+#समावेश "alloc.h"
+#समावेश "dir.h"
+#समावेश "blockcheck.h"
+#समावेश "dlmglue.h"
+#समावेश "extent_map.h"
+#समावेश "file.h"
+#समावेश "heartbeat.h"
+#समावेश "inode.h"
+#समावेश "journal.h"
+#समावेश "namei.h"
+#समावेश "suballoc.h"
+#समावेश "super.h"
+#समावेश "symlink.h"
+#समावेश "sysfile.h"
+#समावेश "uptodate.h"
+#समावेश "xattr.h"
+#समावेश "refcounttree.h"
+#समावेश "ocfs2_trace.h"
+#समावेश "filecheck.h"
 
-#include "buffer_head_io.h"
+#समावेश "buffer_head_io.h"
 
-struct ocfs2_find_inode_args
-{
+काष्ठा ocfs2_find_inode_args
+अणु
 	u64		fi_blkno;
-	unsigned long	fi_ino;
-	unsigned int	fi_flags;
-	unsigned int	fi_sysfile_type;
-};
+	अचिन्हित दीर्घ	fi_ino;
+	अचिन्हित पूर्णांक	fi_flags;
+	अचिन्हित पूर्णांक	fi_sysfile_type;
+पूर्ण;
 
-static struct lock_class_key ocfs2_sysfile_lock_key[NUM_SYSTEM_INODES];
+अटल काष्ठा lock_class_key ocfs2_sysfile_lock_key[NUM_SYSTEM_INODES];
 
-static int ocfs2_read_locked_inode(struct inode *inode,
-				   struct ocfs2_find_inode_args *args);
-static int ocfs2_init_locked_inode(struct inode *inode, void *opaque);
-static int ocfs2_find_actor(struct inode *inode, void *opaque);
-static int ocfs2_truncate_for_delete(struct ocfs2_super *osb,
-				    struct inode *inode,
-				    struct buffer_head *fe_bh);
+अटल पूर्णांक ocfs2_पढ़ो_locked_inode(काष्ठा inode *inode,
+				   काष्ठा ocfs2_find_inode_args *args);
+अटल पूर्णांक ocfs2_init_locked_inode(काष्ठा inode *inode, व्योम *opaque);
+अटल पूर्णांक ocfs2_find_actor(काष्ठा inode *inode, व्योम *opaque);
+अटल पूर्णांक ocfs2_truncate_क्रम_delete(काष्ठा ocfs2_super *osb,
+				    काष्ठा inode *inode,
+				    काष्ठा buffer_head *fe_bh);
 
-static int ocfs2_filecheck_read_inode_block_full(struct inode *inode,
-						 struct buffer_head **bh,
-						 int flags, int type);
-static int ocfs2_filecheck_validate_inode_block(struct super_block *sb,
-						struct buffer_head *bh);
-static int ocfs2_filecheck_repair_inode_block(struct super_block *sb,
-					      struct buffer_head *bh);
+अटल पूर्णांक ocfs2_filecheck_पढ़ो_inode_block_full(काष्ठा inode *inode,
+						 काष्ठा buffer_head **bh,
+						 पूर्णांक flags, पूर्णांक type);
+अटल पूर्णांक ocfs2_filecheck_validate_inode_block(काष्ठा super_block *sb,
+						काष्ठा buffer_head *bh);
+अटल पूर्णांक ocfs2_filecheck_repair_inode_block(काष्ठा super_block *sb,
+					      काष्ठा buffer_head *bh);
 
-void ocfs2_set_inode_flags(struct inode *inode)
-{
-	unsigned int flags = OCFS2_I(inode)->ip_attr;
+व्योम ocfs2_set_inode_flags(काष्ठा inode *inode)
+अणु
+	अचिन्हित पूर्णांक flags = OCFS2_I(inode)->ip_attr;
 
 	inode->i_flags &= ~(S_IMMUTABLE |
-		S_SYNC | S_APPEND | S_NOATIME | S_DIRSYNC);
+		S_SYNC | S_APPEND | S_NOATIME | S_सूचीSYNC);
 
-	if (flags & OCFS2_IMMUTABLE_FL)
+	अगर (flags & OCFS2_IMMUTABLE_FL)
 		inode->i_flags |= S_IMMUTABLE;
 
-	if (flags & OCFS2_SYNC_FL)
+	अगर (flags & OCFS2_SYNC_FL)
 		inode->i_flags |= S_SYNC;
-	if (flags & OCFS2_APPEND_FL)
+	अगर (flags & OCFS2_APPEND_FL)
 		inode->i_flags |= S_APPEND;
-	if (flags & OCFS2_NOATIME_FL)
+	अगर (flags & OCFS2_NOATIME_FL)
 		inode->i_flags |= S_NOATIME;
-	if (flags & OCFS2_DIRSYNC_FL)
-		inode->i_flags |= S_DIRSYNC;
-}
+	अगर (flags & OCFS2_सूचीSYNC_FL)
+		inode->i_flags |= S_सूचीSYNC;
+पूर्ण
 
 /* Propagate flags from i_flags to OCFS2_I(inode)->ip_attr */
-void ocfs2_get_inode_flags(struct ocfs2_inode_info *oi)
-{
-	unsigned int flags = oi->vfs_inode.i_flags;
+व्योम ocfs2_get_inode_flags(काष्ठा ocfs2_inode_info *oi)
+अणु
+	अचिन्हित पूर्णांक flags = oi->vfs_inode.i_flags;
 
 	oi->ip_attr &= ~(OCFS2_SYNC_FL|OCFS2_APPEND_FL|
-			OCFS2_IMMUTABLE_FL|OCFS2_NOATIME_FL|OCFS2_DIRSYNC_FL);
-	if (flags & S_SYNC)
+			OCFS2_IMMUTABLE_FL|OCFS2_NOATIME_FL|OCFS2_सूचीSYNC_FL);
+	अगर (flags & S_SYNC)
 		oi->ip_attr |= OCFS2_SYNC_FL;
-	if (flags & S_APPEND)
+	अगर (flags & S_APPEND)
 		oi->ip_attr |= OCFS2_APPEND_FL;
-	if (flags & S_IMMUTABLE)
+	अगर (flags & S_IMMUTABLE)
 		oi->ip_attr |= OCFS2_IMMUTABLE_FL;
-	if (flags & S_NOATIME)
+	अगर (flags & S_NOATIME)
 		oi->ip_attr |= OCFS2_NOATIME_FL;
-	if (flags & S_DIRSYNC)
-		oi->ip_attr |= OCFS2_DIRSYNC_FL;
-}
+	अगर (flags & S_सूचीSYNC)
+		oi->ip_attr |= OCFS2_सूचीSYNC_FL;
+पूर्ण
 
-struct inode *ocfs2_ilookup(struct super_block *sb, u64 blkno)
-{
-	struct ocfs2_find_inode_args args;
+काष्ठा inode *ocfs2_ilookup(काष्ठा super_block *sb, u64 blkno)
+अणु
+	काष्ठा ocfs2_find_inode_args args;
 
 	args.fi_blkno = blkno;
 	args.fi_flags = 0;
 	args.fi_ino = ino_from_blkno(sb, blkno);
 	args.fi_sysfile_type = 0;
 
-	return ilookup5(sb, blkno, ocfs2_find_actor, &args);
-}
-struct inode *ocfs2_iget(struct ocfs2_super *osb, u64 blkno, unsigned flags,
-			 int sysfile_type)
-{
-	int rc = -ESTALE;
-	struct inode *inode = NULL;
-	struct super_block *sb = osb->sb;
-	struct ocfs2_find_inode_args args;
+	वापस ilookup5(sb, blkno, ocfs2_find_actor, &args);
+पूर्ण
+काष्ठा inode *ocfs2_iget(काष्ठा ocfs2_super *osb, u64 blkno, अचिन्हित flags,
+			 पूर्णांक sysfile_type)
+अणु
+	पूर्णांक rc = -ESTALE;
+	काष्ठा inode *inode = शून्य;
+	काष्ठा super_block *sb = osb->sb;
+	काष्ठा ocfs2_find_inode_args args;
 	journal_t *journal = OCFS2_SB(sb)->journal->j_journal;
 
-	trace_ocfs2_iget_begin((unsigned long long)blkno, flags,
+	trace_ocfs2_iget_begin((अचिन्हित दीर्घ दीर्घ)blkno, flags,
 			       sysfile_type);
 
 	/* Ok. By now we've either got the offsets passed to us by the
-	 * caller, or we just pulled them off the bh. Lets do some
+	 * caller, or we just pulled them off the bh. Lets करो some
 	 * sanity checks to make sure they're OK. */
-	if (blkno == 0) {
+	अगर (blkno == 0) अणु
 		inode = ERR_PTR(-EINVAL);
-		mlog_errno(PTR_ERR(inode));
-		goto bail;
-	}
+		mlog_त्रुटि_सं(PTR_ERR(inode));
+		जाओ bail;
+	पूर्ण
 
 	args.fi_blkno = blkno;
 	args.fi_flags = flags;
@@ -147,72 +148,72 @@ struct inode *ocfs2_iget(struct ocfs2_super *osb, u64 blkno, unsigned flags,
 	inode = iget5_locked(sb, args.fi_ino, ocfs2_find_actor,
 			     ocfs2_init_locked_inode, &args);
 	/* inode was *not* in the inode cache. 2.6.x requires
-	 * us to do our own read_inode call and unlock it
+	 * us to करो our own पढ़ो_inode call and unlock it
 	 * afterwards. */
-	if (inode == NULL) {
+	अगर (inode == शून्य) अणु
 		inode = ERR_PTR(-ENOMEM);
-		mlog_errno(PTR_ERR(inode));
-		goto bail;
-	}
+		mlog_त्रुटि_सं(PTR_ERR(inode));
+		जाओ bail;
+	पूर्ण
 	trace_ocfs2_iget5_locked(inode->i_state);
-	if (inode->i_state & I_NEW) {
-		rc = ocfs2_read_locked_inode(inode, &args);
+	अगर (inode->i_state & I_NEW) अणु
+		rc = ocfs2_पढ़ो_locked_inode(inode, &args);
 		unlock_new_inode(inode);
-	}
-	if (is_bad_inode(inode)) {
+	पूर्ण
+	अगर (is_bad_inode(inode)) अणु
 		iput(inode);
 		inode = ERR_PTR(rc);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	/*
 	 * Set transaction id's of transactions that have to be committed
 	 * to finish f[data]sync. We set them to currently running transaction
 	 * as we cannot be sure that the inode or some of its metadata isn't
 	 * part of the transaction - the inode could have been reclaimed and
-	 * now it is reread from disk.
+	 * now it is reपढ़ो from disk.
 	 */
-	if (journal) {
+	अगर (journal) अणु
 		transaction_t *transaction;
 		tid_t tid;
-		struct ocfs2_inode_info *oi = OCFS2_I(inode);
+		काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 
-		read_lock(&journal->j_state_lock);
-		if (journal->j_running_transaction)
+		पढ़ो_lock(&journal->j_state_lock);
+		अगर (journal->j_running_transaction)
 			transaction = journal->j_running_transaction;
-		else
+		अन्यथा
 			transaction = journal->j_committing_transaction;
-		if (transaction)
+		अगर (transaction)
 			tid = transaction->t_tid;
-		else
+		अन्यथा
 			tid = journal->j_commit_sequence;
-		read_unlock(&journal->j_state_lock);
+		पढ़ो_unlock(&journal->j_state_lock);
 		oi->i_sync_tid = tid;
 		oi->i_datasync_tid = tid;
-	}
+	पूर्ण
 
 bail:
-	if (!IS_ERR(inode)) {
+	अगर (!IS_ERR(inode)) अणु
 		trace_ocfs2_iget_end(inode, 
-			(unsigned long long)OCFS2_I(inode)->ip_blkno);
-	}
+			(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
+	पूर्ण
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
 
 /*
- * here's how inodes get read from disk:
+ * here's how inodes get पढ़ो from disk:
  * iget5_locked -> find_actor -> OCFS2_FIND_ACTOR
- * found? : return the in-memory inode
+ * found? : वापस the in-memory inode
  * not found? : get_new_inode -> OCFS2_INIT_LOCKED_INODE
  */
 
-static int ocfs2_find_actor(struct inode *inode, void *opaque)
-{
-	struct ocfs2_find_inode_args *args = NULL;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	int ret = 0;
+अटल पूर्णांक ocfs2_find_actor(काष्ठा inode *inode, व्योम *opaque)
+अणु
+	काष्ठा ocfs2_find_inode_args *args = शून्य;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	पूर्णांक ret = 0;
 
 	args = opaque;
 
@@ -220,64 +221,64 @@ static int ocfs2_find_actor(struct inode *inode, void *opaque)
 
 	trace_ocfs2_find_actor(inode, inode->i_ino, opaque, args->fi_blkno);
 
-	if (oi->ip_blkno != args->fi_blkno)
-		goto bail;
+	अगर (oi->ip_blkno != args->fi_blkno)
+		जाओ bail;
 
 	ret = 1;
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * initialize the new inode, but don't do anything that would cause
+ * initialize the new inode, but करोn't करो anything that would cause
  * us to sleep.
- * return 0 on success, 1 on failure
+ * वापस 0 on success, 1 on failure
  */
-static int ocfs2_init_locked_inode(struct inode *inode, void *opaque)
-{
-	struct ocfs2_find_inode_args *args = opaque;
-	static struct lock_class_key ocfs2_quota_ip_alloc_sem_key,
+अटल पूर्णांक ocfs2_init_locked_inode(काष्ठा inode *inode, व्योम *opaque)
+अणु
+	काष्ठा ocfs2_find_inode_args *args = opaque;
+	अटल काष्ठा lock_class_key ocfs2_quota_ip_alloc_sem_key,
 				     ocfs2_file_ip_alloc_sem_key;
 
 	inode->i_ino = args->fi_ino;
 	OCFS2_I(inode)->ip_blkno = args->fi_blkno;
-	if (args->fi_sysfile_type != 0)
+	अगर (args->fi_sysfile_type != 0)
 		lockdep_set_class(&inode->i_rwsem,
 			&ocfs2_sysfile_lock_key[args->fi_sysfile_type]);
-	if (args->fi_sysfile_type == USER_QUOTA_SYSTEM_INODE ||
+	अगर (args->fi_sysfile_type == USER_QUOTA_SYSTEM_INODE ||
 	    args->fi_sysfile_type == GROUP_QUOTA_SYSTEM_INODE ||
 	    args->fi_sysfile_type == LOCAL_USER_QUOTA_SYSTEM_INODE ||
 	    args->fi_sysfile_type == LOCAL_GROUP_QUOTA_SYSTEM_INODE)
 		lockdep_set_class(&OCFS2_I(inode)->ip_alloc_sem,
 				  &ocfs2_quota_ip_alloc_sem_key);
-	else
+	अन्यथा
 		lockdep_set_class(&OCFS2_I(inode)->ip_alloc_sem,
 				  &ocfs2_file_ip_alloc_sem_key);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ocfs2_populate_inode(struct inode *inode, struct ocfs2_dinode *fe,
-			  int create_ino)
-{
-	struct super_block *sb;
-	struct ocfs2_super *osb;
-	int use_plocks = 1;
+व्योम ocfs2_populate_inode(काष्ठा inode *inode, काष्ठा ocfs2_dinode *fe,
+			  पूर्णांक create_ino)
+अणु
+	काष्ठा super_block *sb;
+	काष्ठा ocfs2_super *osb;
+	पूर्णांक use_plocks = 1;
 
 	sb = inode->i_sb;
 	osb = OCFS2_SB(sb);
 
-	if ((osb->s_mount_opt & OCFS2_MOUNT_LOCALFLOCKS) ||
+	अगर ((osb->s_mount_opt & OCFS2_MOUNT_LOCALFLOCKS) ||
 	    ocfs2_mount_local(osb) || !ocfs2_stack_supports_plocks())
 		use_plocks = 0;
 
 	/*
-	 * These have all been checked by ocfs2_read_inode_block() or set
+	 * These have all been checked by ocfs2_पढ़ो_inode_block() or set
 	 * by ocfs2_mknod_locked(), so a failure is a code bug.
 	 */
-	BUG_ON(!OCFS2_IS_VALID_DINODE(fe));  /* This means that read_inode
+	BUG_ON(!OCFS2_IS_VALID_DINODE(fe));  /* This means that पढ़ो_inode
 						cannot create a superblock
-						inode today.  change if
+						inode today.  change अगर
 						that is needed. */
 	BUG_ON(!(fe->i_flags & cpu_to_le32(OCFS2_VALID_FL)));
 	BUG_ON(le32_to_cpu(fe->i_fs_generation) != osb->fs_generation);
@@ -291,87 +292,87 @@ void ocfs2_populate_inode(struct inode *inode, struct ocfs2_dinode *fe,
 	inode->i_generation = le32_to_cpu(fe->i_generation);
 	inode->i_rdev = huge_decode_dev(le64_to_cpu(fe->id1.dev1.i_rdev));
 	inode->i_mode = le16_to_cpu(fe->i_mode);
-	i_uid_write(inode, le32_to_cpu(fe->i_uid));
-	i_gid_write(inode, le32_to_cpu(fe->i_gid));
+	i_uid_ग_लिखो(inode, le32_to_cpu(fe->i_uid));
+	i_gid_ग_लिखो(inode, le32_to_cpu(fe->i_gid));
 
 	/* Fast symlinks will have i_size but no allocated clusters. */
-	if (S_ISLNK(inode->i_mode) && !fe->i_clusters) {
+	अगर (S_ISLNK(inode->i_mode) && !fe->i_clusters) अणु
 		inode->i_blocks = 0;
 		inode->i_mapping->a_ops = &ocfs2_fast_symlink_aops;
-	} else {
+	पूर्ण अन्यथा अणु
 		inode->i_blocks = ocfs2_inode_sector_count(inode);
 		inode->i_mapping->a_ops = &ocfs2_aops;
-	}
-	inode->i_atime.tv_sec = le64_to_cpu(fe->i_atime);
-	inode->i_atime.tv_nsec = le32_to_cpu(fe->i_atime_nsec);
-	inode->i_mtime.tv_sec = le64_to_cpu(fe->i_mtime);
-	inode->i_mtime.tv_nsec = le32_to_cpu(fe->i_mtime_nsec);
-	inode->i_ctime.tv_sec = le64_to_cpu(fe->i_ctime);
-	inode->i_ctime.tv_nsec = le32_to_cpu(fe->i_ctime_nsec);
+	पूर्ण
+	inode->i_aसमय.tv_sec = le64_to_cpu(fe->i_aसमय);
+	inode->i_aसमय.tv_nsec = le32_to_cpu(fe->i_aसमय_nsec);
+	inode->i_mसमय.tv_sec = le64_to_cpu(fe->i_mसमय);
+	inode->i_mसमय.tv_nsec = le32_to_cpu(fe->i_mसमय_nsec);
+	inode->i_स_समय.tv_sec = le64_to_cpu(fe->i_स_समय);
+	inode->i_स_समय.tv_nsec = le32_to_cpu(fe->i_स_समय_nsec);
 
-	if (OCFS2_I(inode)->ip_blkno != le64_to_cpu(fe->i_blkno))
+	अगर (OCFS2_I(inode)->ip_blkno != le64_to_cpu(fe->i_blkno))
 		mlog(ML_ERROR,
 		     "ip_blkno %llu != i_blkno %llu!\n",
-		     (unsigned long long)OCFS2_I(inode)->ip_blkno,
-		     (unsigned long long)le64_to_cpu(fe->i_blkno));
+		     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+		     (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(fe->i_blkno));
 
-	set_nlink(inode, ocfs2_read_links_count(fe));
+	set_nlink(inode, ocfs2_पढ़ो_links_count(fe));
 
 	trace_ocfs2_populate_inode(OCFS2_I(inode)->ip_blkno,
 				   le32_to_cpu(fe->i_flags));
-	if (fe->i_flags & cpu_to_le32(OCFS2_SYSTEM_FL)) {
-		OCFS2_I(inode)->ip_flags |= OCFS2_INODE_SYSTEM_FILE;
+	अगर (fe->i_flags & cpu_to_le32(OCFS2_SYSTEM_FL)) अणु
+		OCFS2_I(inode)->ip_flags |= OCFS2_INODE_SYSTEM_खाता;
 		inode->i_flags |= S_NOQUOTA;
-	}
+	पूर्ण
   
-	if (fe->i_flags & cpu_to_le32(OCFS2_LOCAL_ALLOC_FL)) {
+	अगर (fe->i_flags & cpu_to_le32(OCFS2_LOCAL_ALLOC_FL)) अणु
 		OCFS2_I(inode)->ip_flags |= OCFS2_INODE_BITMAP;
-	} else if (fe->i_flags & cpu_to_le32(OCFS2_BITMAP_FL)) {
+	पूर्ण अन्यथा अगर (fe->i_flags & cpu_to_le32(OCFS2_BITMAP_FL)) अणु
 		OCFS2_I(inode)->ip_flags |= OCFS2_INODE_BITMAP;
-	} else if (fe->i_flags & cpu_to_le32(OCFS2_QUOTA_FL)) {
+	पूर्ण अन्यथा अगर (fe->i_flags & cpu_to_le32(OCFS2_QUOTA_FL)) अणु
 		inode->i_flags |= S_NOQUOTA;
-	} else if (fe->i_flags & cpu_to_le32(OCFS2_SUPER_BLOCK_FL)) {
+	पूर्ण अन्यथा अगर (fe->i_flags & cpu_to_le32(OCFS2_SUPER_BLOCK_FL)) अणु
 		/* we can't actually hit this as read_inode can't
 		 * handle superblocks today ;-) */
 		BUG();
-	}
+	पूर्ण
 
-	switch (inode->i_mode & S_IFMT) {
-	    case S_IFREG:
-		    if (use_plocks)
+	चयन (inode->i_mode & S_IFMT) अणु
+	    हाल S_IFREG:
+		    अगर (use_plocks)
 			    inode->i_fop = &ocfs2_fops;
-		    else
+		    अन्यथा
 			    inode->i_fop = &ocfs2_fops_no_plocks;
 		    inode->i_op = &ocfs2_file_iops;
-		    i_size_write(inode, le64_to_cpu(fe->i_size));
-		    break;
-	    case S_IFDIR:
+		    i_size_ग_लिखो(inode, le64_to_cpu(fe->i_size));
+		    अवरोध;
+	    हाल S_IFसूची:
 		    inode->i_op = &ocfs2_dir_iops;
-		    if (use_plocks)
-			    inode->i_fop = &ocfs2_dops;
-		    else
-			    inode->i_fop = &ocfs2_dops_no_plocks;
-		    i_size_write(inode, le64_to_cpu(fe->i_size));
+		    अगर (use_plocks)
+			    inode->i_fop = &ocfs2_करोps;
+		    अन्यथा
+			    inode->i_fop = &ocfs2_करोps_no_plocks;
+		    i_size_ग_लिखो(inode, le64_to_cpu(fe->i_size));
 		    OCFS2_I(inode)->ip_dir_lock_gen = 1;
-		    break;
-	    case S_IFLNK:
+		    अवरोध;
+	    हाल S_IFLNK:
 		    inode->i_op = &ocfs2_symlink_inode_operations;
 		    inode_nohighmem(inode);
-		    i_size_write(inode, le64_to_cpu(fe->i_size));
-		    break;
-	    default:
+		    i_size_ग_लिखो(inode, le64_to_cpu(fe->i_size));
+		    अवरोध;
+	    शेष:
 		    inode->i_op = &ocfs2_special_file_iops;
 		    init_special_inode(inode, inode->i_mode,
 				       inode->i_rdev);
-		    break;
-	}
+		    अवरोध;
+	पूर्ण
 
-	if (create_ino) {
+	अगर (create_ino) अणु
 		inode->i_ino = ino_from_blkno(inode->i_sb,
 			       le64_to_cpu(fe->i_blkno));
 
 		/*
-		 * If we ever want to create system files from kernel,
+		 * If we ever want to create प्रणाली files from kernel,
 		 * the generation argument to
 		 * ocfs2_inode_lock_res_init() will have to change.
 		 */
@@ -380,9 +381,9 @@ void ocfs2_populate_inode(struct inode *inode, struct ocfs2_dinode *fe,
 		ocfs2_inode_lock_res_init(&OCFS2_I(inode)->ip_inode_lockres,
 					  OCFS2_LOCK_TYPE_META, 0, inode);
 
-		ocfs2_inode_lock_res_init(&OCFS2_I(inode)->ip_open_lockres,
+		ocfs2_inode_lock_res_init(&OCFS2_I(inode)->ip_खोलो_lockres,
 					  OCFS2_LOCK_TYPE_OPEN, 0, inode);
-	}
+	पूर्ण
 
 	ocfs2_inode_lock_res_init(&OCFS2_I(inode)->ip_rw_lockres,
 				  OCFS2_LOCK_TYPE_RW, inode->i_generation,
@@ -393,19 +394,19 @@ void ocfs2_populate_inode(struct inode *inode, struct ocfs2_dinode *fe,
 	OCFS2_I(inode)->ip_last_used_slot = 0;
 	OCFS2_I(inode)->ip_last_used_group = 0;
 
-	if (S_ISDIR(inode->i_mode))
+	अगर (S_ISसूची(inode->i_mode))
 		ocfs2_resv_set_type(&OCFS2_I(inode)->ip_la_data_resv,
-				    OCFS2_RESV_FLAG_DIR);
-}
+				    OCFS2_RESV_FLAG_सूची);
+पूर्ण
 
-static int ocfs2_read_locked_inode(struct inode *inode,
-				   struct ocfs2_find_inode_args *args)
-{
-	struct super_block *sb;
-	struct ocfs2_super *osb;
-	struct ocfs2_dinode *fe;
-	struct buffer_head *bh = NULL;
-	int status, can_lock, lock_level = 0;
+अटल पूर्णांक ocfs2_पढ़ो_locked_inode(काष्ठा inode *inode,
+				   काष्ठा ocfs2_find_inode_args *args)
+अणु
+	काष्ठा super_block *sb;
+	काष्ठा ocfs2_super *osb;
+	काष्ठा ocfs2_dinode *fe;
+	काष्ठा buffer_head *bh = शून्य;
+	पूर्णांक status, can_lock, lock_level = 0;
 	u32 generation = 0;
 
 	status = -EINVAL;
@@ -413,129 +414,129 @@ static int ocfs2_read_locked_inode(struct inode *inode,
 	osb = OCFS2_SB(sb);
 
 	/*
-	 * To improve performance of cold-cache inode stats, we take
-	 * the cluster lock here if possible.
+	 * To improve perक्रमmance of cold-cache inode stats, we take
+	 * the cluster lock here अगर possible.
 	 *
 	 * Generally, OCFS2 never trusts the contents of an inode
 	 * unless it's holding a cluster lock, so taking it here isn't
-	 * a correctness issue as much as it is a performance
+	 * a correctness issue as much as it is a perक्रमmance
 	 * improvement.
 	 *
-	 * There are three times when taking the lock is not a good idea:
+	 * There are three बार when taking the lock is not a good idea:
 	 *
-	 * 1) During startup, before we have initialized the DLM.
+	 * 1) During startup, beक्रमe we have initialized the DLM.
 	 *
-	 * 2) If we are reading certain system files which never get
+	 * 2) If we are पढ़ोing certain प्रणाली files which never get
 	 *    cluster locks (local alloc, truncate log).
 	 *
-	 * 3) If the process doing the iget() is responsible for
+	 * 3) If the process करोing the iget() is responsible क्रम
 	 *    orphan dir recovery. We're holding the orphan dir lock and
-	 *    can get into a deadlock with another process on another
+	 *    can get पूर्णांकo a deadlock with another process on another
 	 *    node in ->delete_inode().
 	 *
 	 * #1 and #2 can be simply solved by never taking the lock
-	 * here for system files (which are the only type we read
-	 * during mount). It's a heavier approach, but our main
+	 * here क्रम प्रणाली files (which are the only type we पढ़ो
+	 * during mount). It's a heavier approach, but our मुख्य
 	 * concern is user-accessible files anyway.
 	 *
 	 * #3 works itself out because we'll eventually take the
-	 * cluster lock before trusting anything anyway.
+	 * cluster lock beक्रमe trusting anything anyway.
 	 */
-	can_lock = !(args->fi_flags & OCFS2_FI_FLAG_SYSFILE)
+	can_lock = !(args->fi_flags & OCFS2_FI_FLAG_SYSखाता)
 		&& !(args->fi_flags & OCFS2_FI_FLAG_ORPHAN_RECOVERY)
 		&& !ocfs2_mount_local(osb);
 
-	trace_ocfs2_read_locked_inode(
-		(unsigned long long)OCFS2_I(inode)->ip_blkno, can_lock);
+	trace_ocfs2_पढ़ो_locked_inode(
+		(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno, can_lock);
 
 	/*
-	 * To maintain backwards compatibility with older versions of
-	 * ocfs2-tools, we still store the generation value for system
+	 * To मुख्यtain backwards compatibility with older versions of
+	 * ocfs2-tools, we still store the generation value क्रम प्रणाली
 	 * files. The only ones that actually matter to userspace are
 	 * the journals, but it's easier and inexpensive to just flag
-	 * all system files similarly.
+	 * all प्रणाली files similarly.
 	 */
-	if (args->fi_flags & OCFS2_FI_FLAG_SYSFILE)
+	अगर (args->fi_flags & OCFS2_FI_FLAG_SYSखाता)
 		generation = osb->fs_generation;
 
 	ocfs2_inode_lock_res_init(&OCFS2_I(inode)->ip_inode_lockres,
 				  OCFS2_LOCK_TYPE_META,
 				  generation, inode);
 
-	ocfs2_inode_lock_res_init(&OCFS2_I(inode)->ip_open_lockres,
+	ocfs2_inode_lock_res_init(&OCFS2_I(inode)->ip_खोलो_lockres,
 				  OCFS2_LOCK_TYPE_OPEN,
 				  0, inode);
 
-	if (can_lock) {
-		status = ocfs2_open_lock(inode);
-		if (status) {
+	अगर (can_lock) अणु
+		status = ocfs2_खोलो_lock(inode);
+		अगर (status) अणु
 			make_bad_inode(inode);
-			mlog_errno(status);
-			return status;
-		}
-		status = ocfs2_inode_lock(inode, NULL, lock_level);
-		if (status) {
+			mlog_त्रुटि_सं(status);
+			वापस status;
+		पूर्ण
+		status = ocfs2_inode_lock(inode, शून्य, lock_level);
+		अगर (status) अणु
 			make_bad_inode(inode);
-			mlog_errno(status);
-			return status;
-		}
-	}
+			mlog_त्रुटि_सं(status);
+			वापस status;
+		पूर्ण
+	पूर्ण
 
-	if (args->fi_flags & OCFS2_FI_FLAG_ORPHAN_RECOVERY) {
-		status = ocfs2_try_open_lock(inode, 0);
-		if (status) {
+	अगर (args->fi_flags & OCFS2_FI_FLAG_ORPHAN_RECOVERY) अणु
+		status = ocfs2_try_खोलो_lock(inode, 0);
+		अगर (status) अणु
 			make_bad_inode(inode);
-			return status;
-		}
-	}
+			वापस status;
+		पूर्ण
+	पूर्ण
 
-	if (can_lock) {
-		if (args->fi_flags & OCFS2_FI_FLAG_FILECHECK_CHK)
-			status = ocfs2_filecheck_read_inode_block_full(inode,
+	अगर (can_lock) अणु
+		अगर (args->fi_flags & OCFS2_FI_FLAG_खाताCHECK_CHK)
+			status = ocfs2_filecheck_पढ़ो_inode_block_full(inode,
 						&bh, OCFS2_BH_IGNORE_CACHE, 0);
-		else if (args->fi_flags & OCFS2_FI_FLAG_FILECHECK_FIX)
-			status = ocfs2_filecheck_read_inode_block_full(inode,
+		अन्यथा अगर (args->fi_flags & OCFS2_FI_FLAG_खाताCHECK_FIX)
+			status = ocfs2_filecheck_पढ़ो_inode_block_full(inode,
 						&bh, OCFS2_BH_IGNORE_CACHE, 1);
-		else
-			status = ocfs2_read_inode_block_full(inode,
+		अन्यथा
+			status = ocfs2_पढ़ो_inode_block_full(inode,
 						&bh, OCFS2_BH_IGNORE_CACHE);
-	} else {
-		status = ocfs2_read_blocks_sync(osb, args->fi_blkno, 1, &bh);
+	पूर्ण अन्यथा अणु
+		status = ocfs2_पढ़ो_blocks_sync(osb, args->fi_blkno, 1, &bh);
 		/*
 		 * If buffer is in jbd, then its checksum may not have been
 		 * computed as yet.
 		 */
-		if (!status && !buffer_jbd(bh)) {
-			if (args->fi_flags & OCFS2_FI_FLAG_FILECHECK_CHK)
+		अगर (!status && !buffer_jbd(bh)) अणु
+			अगर (args->fi_flags & OCFS2_FI_FLAG_खाताCHECK_CHK)
 				status = ocfs2_filecheck_validate_inode_block(
 								osb->sb, bh);
-			else if (args->fi_flags & OCFS2_FI_FLAG_FILECHECK_FIX)
+			अन्यथा अगर (args->fi_flags & OCFS2_FI_FLAG_खाताCHECK_FIX)
 				status = ocfs2_filecheck_repair_inode_block(
 								osb->sb, bh);
-			else
+			अन्यथा
 				status = ocfs2_validate_inode_block(
 								osb->sb, bh);
-		}
-	}
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+		पूर्ण
+	पूर्ण
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	status = -EINVAL;
-	fe = (struct ocfs2_dinode *) bh->b_data;
+	fe = (काष्ठा ocfs2_dinode *) bh->b_data;
 
 	/*
 	 * This is a code bug. Right now the caller needs to
-	 * understand whether it is asking for a system file inode or
+	 * understand whether it is asking क्रम a प्रणाली file inode or
 	 * not so the proper lock names can be built.
 	 */
 	mlog_bug_on_msg(!!(fe->i_flags & cpu_to_le32(OCFS2_SYSTEM_FL)) !=
-			!!(args->fi_flags & OCFS2_FI_FLAG_SYSFILE),
+			!!(args->fi_flags & OCFS2_FI_FLAG_SYSखाता),
 			"Inode %llu: system file state is ambiguous\n",
-			(unsigned long long)args->fi_blkno);
+			(अचिन्हित दीर्घ दीर्घ)args->fi_blkno);
 
-	if (S_ISCHR(le16_to_cpu(fe->i_mode)) ||
+	अगर (S_ISCHR(le16_to_cpu(fe->i_mode)) ||
 	    S_ISBLK(le16_to_cpu(fe->i_mode)))
 		inode->i_rdev = huge_decode_dev(le64_to_cpu(fe->id1.dev1.i_rdev));
 
@@ -543,484 +544,484 @@ static int ocfs2_read_locked_inode(struct inode *inode,
 
 	BUG_ON(args->fi_blkno != le64_to_cpu(fe->i_blkno));
 
-	if (buffer_dirty(bh) && !buffer_jbd(bh)) {
-		if (can_lock) {
+	अगर (buffer_dirty(bh) && !buffer_jbd(bh)) अणु
+		अगर (can_lock) अणु
 			ocfs2_inode_unlock(inode, lock_level);
 			lock_level = 1;
-			ocfs2_inode_lock(inode, NULL, lock_level);
-		}
-		status = ocfs2_write_block(osb, bh, INODE_CACHE(inode));
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail;
-		}
-	}
+			ocfs2_inode_lock(inode, शून्य, lock_level);
+		पूर्ण
+		status = ocfs2_ग_लिखो_block(osb, bh, INODE_CACHE(inode));
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
 	status = 0;
 
 bail:
-	if (can_lock)
+	अगर (can_lock)
 		ocfs2_inode_unlock(inode, lock_level);
 
-	if (status < 0)
+	अगर (status < 0)
 		make_bad_inode(inode);
 
-	brelse(bh);
+	brअन्यथा(bh);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void ocfs2_sync_blockdev(struct super_block *sb)
-{
+व्योम ocfs2_sync_blockdev(काष्ठा super_block *sb)
+अणु
 	sync_blockdev(sb->s_bdev);
-}
+पूर्ण
 
-static int ocfs2_truncate_for_delete(struct ocfs2_super *osb,
-				     struct inode *inode,
-				     struct buffer_head *fe_bh)
-{
-	int status = 0;
-	struct ocfs2_dinode *fe;
-	handle_t *handle = NULL;
+अटल पूर्णांक ocfs2_truncate_क्रम_delete(काष्ठा ocfs2_super *osb,
+				     काष्ठा inode *inode,
+				     काष्ठा buffer_head *fe_bh)
+अणु
+	पूर्णांक status = 0;
+	काष्ठा ocfs2_dinode *fe;
+	handle_t *handle = शून्य;
 
-	fe = (struct ocfs2_dinode *) fe_bh->b_data;
+	fe = (काष्ठा ocfs2_dinode *) fe_bh->b_data;
 
 	/*
-	 * This check will also skip truncate of inodes with inline
+	 * This check will also skip truncate of inodes with अंतरभूत
 	 * data and fast symlinks.
 	 */
-	if (fe->i_clusters) {
-		if (ocfs2_should_order_data(inode))
+	अगर (fe->i_clusters) अणु
+		अगर (ocfs2_should_order_data(inode))
 			ocfs2_begin_ordered_truncate(inode, 0);
 
 		handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-		if (IS_ERR(handle)) {
+		अगर (IS_ERR(handle)) अणु
 			status = PTR_ERR(handle);
-			handle = NULL;
-			mlog_errno(status);
-			goto out;
-		}
+			handle = शून्य;
+			mlog_त्रुटि_सं(status);
+			जाओ out;
+		पूर्ण
 
 		status = ocfs2_journal_access_di(handle, INODE_CACHE(inode),
 						 fe_bh,
 						 OCFS2_JOURNAL_ACCESS_WRITE);
-		if (status < 0) {
-			mlog_errno(status);
-			goto out;
-		}
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ out;
+		पूर्ण
 
-		i_size_write(inode, 0);
+		i_size_ग_लिखो(inode, 0);
 
 		status = ocfs2_mark_inode_dirty(handle, inode, fe_bh);
-		if (status < 0) {
-			mlog_errno(status);
-			goto out;
-		}
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ out;
+		पूर्ण
 
 		ocfs2_commit_trans(osb, handle);
-		handle = NULL;
+		handle = शून्य;
 
 		status = ocfs2_commit_truncate(osb, inode, fe_bh);
-		if (status < 0)
-			mlog_errno(status);
-	}
+		अगर (status < 0)
+			mlog_त्रुटि_सं(status);
+	पूर्ण
 
 out:
-	if (handle)
+	अगर (handle)
 		ocfs2_commit_trans(osb, handle);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_remove_inode(struct inode *inode,
-			      struct buffer_head *di_bh,
-			      struct inode *orphan_dir_inode,
-			      struct buffer_head *orphan_dir_bh)
-{
-	int status;
-	struct inode *inode_alloc_inode = NULL;
-	struct buffer_head *inode_alloc_bh = NULL;
+अटल पूर्णांक ocfs2_हटाओ_inode(काष्ठा inode *inode,
+			      काष्ठा buffer_head *di_bh,
+			      काष्ठा inode *orphan_dir_inode,
+			      काष्ठा buffer_head *orphan_dir_bh)
+अणु
+	पूर्णांक status;
+	काष्ठा inode *inode_alloc_inode = शून्य;
+	काष्ठा buffer_head *inode_alloc_bh = शून्य;
 	handle_t *handle;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *) di_bh->b_data;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *) di_bh->b_data;
 
 	inode_alloc_inode =
-		ocfs2_get_system_file_inode(osb, INODE_ALLOC_SYSTEM_INODE,
+		ocfs2_get_प्रणाली_file_inode(osb, INODE_ALLOC_SYSTEM_INODE,
 					    le16_to_cpu(di->i_suballoc_slot));
-	if (!inode_alloc_inode) {
+	अगर (!inode_alloc_inode) अणु
 		status = -ENOENT;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	inode_lock(inode_alloc_inode);
 	status = ocfs2_inode_lock(inode_alloc_inode, &inode_alloc_bh, 1);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		inode_unlock(inode_alloc_inode);
 
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	handle = ocfs2_start_trans(osb, OCFS2_DELETE_INODE_CREDITS +
 				   ocfs2_quota_trans_credits(inode->i_sb));
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		status = PTR_ERR(handle);
-		mlog_errno(status);
-		goto bail_unlock;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail_unlock;
+	पूर्ण
 
-	if (!(OCFS2_I(inode)->ip_flags & OCFS2_INODE_SKIP_ORPHAN_DIR)) {
+	अगर (!(OCFS2_I(inode)->ip_flags & OCFS2_INODE_SKIP_ORPHAN_सूची)) अणु
 		status = ocfs2_orphan_del(osb, handle, orphan_dir_inode, inode,
 					  orphan_dir_bh, false);
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail_commit;
-		}
-	}
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail_commit;
+		पूर्ण
+	पूर्ण
 
-	/* set the inodes dtime */
+	/* set the inodes dसमय */
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(inode), di_bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail_commit;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail_commit;
+	पूर्ण
 
-	di->i_dtime = cpu_to_le64(ktime_get_real_seconds());
+	di->i_dसमय = cpu_to_le64(kसमय_get_real_seconds());
 	di->i_flags &= cpu_to_le32(~(OCFS2_VALID_FL | OCFS2_ORPHANED_FL));
 	ocfs2_journal_dirty(handle, di_bh);
 
-	ocfs2_remove_from_cache(INODE_CACHE(inode), di_bh);
-	dquot_free_inode(inode);
+	ocfs2_हटाओ_from_cache(INODE_CACHE(inode), di_bh);
+	dquot_मुक्त_inode(inode);
 
-	status = ocfs2_free_dinode(handle, inode_alloc_inode,
+	status = ocfs2_मुक्त_dinode(handle, inode_alloc_inode,
 				   inode_alloc_bh, di);
-	if (status < 0)
-		mlog_errno(status);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
 bail_commit:
 	ocfs2_commit_trans(osb, handle);
 bail_unlock:
 	ocfs2_inode_unlock(inode_alloc_inode, 1);
 	inode_unlock(inode_alloc_inode);
-	brelse(inode_alloc_bh);
+	brअन्यथा(inode_alloc_bh);
 bail:
 	iput(inode_alloc_inode);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- * Serialize with orphan dir recovery. If the process doing
- * recovery on this orphan dir does an iget() with the dir
+ * Serialize with orphan dir recovery. If the process करोing
+ * recovery on this orphan dir करोes an iget() with the dir
  * i_mutex held, we'll deadlock here. Instead we detect this
- * and exit early - recovery will wipe this inode for us.
+ * and निकास early - recovery will wipe this inode क्रम us.
  */
-static int ocfs2_check_orphan_recovery_state(struct ocfs2_super *osb,
-					     int slot)
-{
-	int ret = 0;
+अटल पूर्णांक ocfs2_check_orphan_recovery_state(काष्ठा ocfs2_super *osb,
+					     पूर्णांक slot)
+अणु
+	पूर्णांक ret = 0;
 
 	spin_lock(&osb->osb_lock);
-	if (ocfs2_node_map_test_bit(osb, &osb->osb_recovering_orphan_dirs, slot)) {
+	अगर (ocfs2_node_map_test_bit(osb, &osb->osb_recovering_orphan_dirs, slot)) अणु
 		ret = -EDEADLK;
-		goto out;
-	}
-	/* This signals to the orphan recovery process that it should
-	 * wait for us to handle the wipe. */
+		जाओ out;
+	पूर्ण
+	/* This संकेतs to the orphan recovery process that it should
+	 * रुको क्रम us to handle the wipe. */
 	osb->osb_orphan_wipes[slot]++;
 out:
 	spin_unlock(&osb->osb_lock);
 	trace_ocfs2_check_orphan_recovery_state(slot, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ocfs2_signal_wipe_completion(struct ocfs2_super *osb,
-					 int slot)
-{
+अटल व्योम ocfs2_संकेत_wipe_completion(काष्ठा ocfs2_super *osb,
+					 पूर्णांक slot)
+अणु
 	spin_lock(&osb->osb_lock);
 	osb->osb_orphan_wipes[slot]--;
 	spin_unlock(&osb->osb_lock);
 
 	wake_up(&osb->osb_wipe_event);
-}
+पूर्ण
 
-static int ocfs2_wipe_inode(struct inode *inode,
-			    struct buffer_head *di_bh)
-{
-	int status, orphaned_slot = -1;
-	struct inode *orphan_dir_inode = NULL;
-	struct buffer_head *orphan_dir_bh = NULL;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *) di_bh->b_data;
+अटल पूर्णांक ocfs2_wipe_inode(काष्ठा inode *inode,
+			    काष्ठा buffer_head *di_bh)
+अणु
+	पूर्णांक status, orphaned_slot = -1;
+	काष्ठा inode *orphan_dir_inode = शून्य;
+	काष्ठा buffer_head *orphan_dir_bh = शून्य;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *) di_bh->b_data;
 
-	if (!(OCFS2_I(inode)->ip_flags & OCFS2_INODE_SKIP_ORPHAN_DIR)) {
+	अगर (!(OCFS2_I(inode)->ip_flags & OCFS2_INODE_SKIP_ORPHAN_सूची)) अणु
 		orphaned_slot = le16_to_cpu(di->i_orphaned_slot);
 
 		status = ocfs2_check_orphan_recovery_state(osb, orphaned_slot);
-		if (status)
-			return status;
+		अगर (status)
+			वापस status;
 
-		orphan_dir_inode = ocfs2_get_system_file_inode(osb,
-							       ORPHAN_DIR_SYSTEM_INODE,
+		orphan_dir_inode = ocfs2_get_प्रणाली_file_inode(osb,
+							       ORPHAN_सूची_SYSTEM_INODE,
 							       orphaned_slot);
-		if (!orphan_dir_inode) {
+		अगर (!orphan_dir_inode) अणु
 			status = -ENOENT;
-			mlog_errno(status);
-			goto bail;
-		}
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
 
-		/* Lock the orphan dir. The lock will be held for the entire
-		 * delete_inode operation. We do this now to avoid races with
+		/* Lock the orphan dir. The lock will be held क्रम the entire
+		 * delete_inode operation. We करो this now to aव्योम races with
 		 * recovery completion on other nodes. */
 		inode_lock(orphan_dir_inode);
 		status = ocfs2_inode_lock(orphan_dir_inode, &orphan_dir_bh, 1);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			inode_unlock(orphan_dir_inode);
 
-			mlog_errno(status);
-			goto bail;
-		}
-	}
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
-	/* we do this while holding the orphan dir lock because we
-	 * don't want recovery being run from another node to try an
+	/* we करो this जबतक holding the orphan dir lock because we
+	 * करोn't want recovery being run from another node to try an
 	 * inode delete underneath us -- this will result in two nodes
 	 * truncating the same file! */
-	status = ocfs2_truncate_for_delete(osb, inode, di_bh);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail_unlock_dir;
-	}
+	status = ocfs2_truncate_क्रम_delete(osb, inode, di_bh);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail_unlock_dir;
+	पूर्ण
 
 	/* Remove any dir index tree */
-	if (S_ISDIR(inode->i_mode)) {
+	अगर (S_ISसूची(inode->i_mode)) अणु
 		status = ocfs2_dx_dir_truncate(inode, di_bh);
-		if (status) {
-			mlog_errno(status);
-			goto bail_unlock_dir;
-		}
-	}
+		अगर (status) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail_unlock_dir;
+		पूर्ण
+	पूर्ण
 
 	/*Free extended attribute resources associated with this inode.*/
-	status = ocfs2_xattr_remove(inode, di_bh);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail_unlock_dir;
-	}
+	status = ocfs2_xattr_हटाओ(inode, di_bh);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail_unlock_dir;
+	पूर्ण
 
-	status = ocfs2_remove_refcount_tree(inode, di_bh);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail_unlock_dir;
-	}
+	status = ocfs2_हटाओ_refcount_tree(inode, di_bh);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail_unlock_dir;
+	पूर्ण
 
-	status = ocfs2_remove_inode(inode, di_bh, orphan_dir_inode,
+	status = ocfs2_हटाओ_inode(inode, di_bh, orphan_dir_inode,
 				    orphan_dir_bh);
-	if (status < 0)
-		mlog_errno(status);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
 bail_unlock_dir:
-	if (OCFS2_I(inode)->ip_flags & OCFS2_INODE_SKIP_ORPHAN_DIR)
-		return status;
+	अगर (OCFS2_I(inode)->ip_flags & OCFS2_INODE_SKIP_ORPHAN_सूची)
+		वापस status;
 
 	ocfs2_inode_unlock(orphan_dir_inode, 1);
 	inode_unlock(orphan_dir_inode);
-	brelse(orphan_dir_bh);
+	brअन्यथा(orphan_dir_bh);
 bail:
 	iput(orphan_dir_inode);
-	ocfs2_signal_wipe_completion(osb, orphaned_slot);
+	ocfs2_संकेत_wipe_completion(osb, orphaned_slot);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* There is a series of simple checks that should be done before a
+/* There is a series of simple checks that should be करोne beक्रमe a
  * trylock is even considered. Encapsulate those in this function. */
-static int ocfs2_inode_is_valid_to_delete(struct inode *inode)
-{
-	int ret = 0;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अटल पूर्णांक ocfs2_inode_is_valid_to_delete(काष्ठा inode *inode)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	trace_ocfs2_inode_is_valid_to_delete(current, osb->dc_task,
-					     (unsigned long long)oi->ip_blkno,
+					     (अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
 					     oi->ip_flags);
 
-	/* We shouldn't be getting here for the root directory
+	/* We shouldn't be getting here क्रम the root directory
 	 * inode.. */
-	if (inode == osb->root_inode) {
+	अगर (inode == osb->root_inode) अणु
 		mlog(ML_ERROR, "Skipping delete of root inode.\n");
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	/*
-	 * If we're coming from downconvert_thread we can't go into our own
+	 * If we're coming from downconvert_thread we can't go पूर्णांकo our own
 	 * voting [hello, deadlock city!] so we cannot delete the inode. But
-	 * since we dropped last inode ref when downconverting dentry lock,
-	 * we cannot have the file open and thus the node doing unlink will
+	 * since we dropped last inode ref when करोwnconverting dentry lock,
+	 * we cannot have the file खोलो and thus the node करोing unlink will
 	 * take care of deleting the inode.
 	 */
-	if (current == osb->dc_task)
-		goto bail;
+	अगर (current == osb->dc_task)
+		जाओ bail;
 
 	spin_lock(&oi->ip_lock);
-	/* OCFS2 *never* deletes system files. This should technically
-	 * never get here as system file inodes should always have a
+	/* OCFS2 *never* deletes प्रणाली files. This should technically
+	 * never get here as प्रणाली file inodes should always have a
 	 * positive link count. */
-	if (oi->ip_flags & OCFS2_INODE_SYSTEM_FILE) {
+	अगर (oi->ip_flags & OCFS2_INODE_SYSTEM_खाता) अणु
 		mlog(ML_ERROR, "Skipping delete of system file %llu\n",
-		     (unsigned long long)oi->ip_blkno);
-		goto bail_unlock;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)oi->ip_blkno);
+		जाओ bail_unlock;
+	पूर्ण
 
 	ret = 1;
 bail_unlock:
 	spin_unlock(&oi->ip_lock);
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Query the cluster to determine whether we should wipe an inode from
  * disk or not.
  *
  * Requires the inode to have the cluster lock. */
-static int ocfs2_query_inode_wipe(struct inode *inode,
-				  struct buffer_head *di_bh,
-				  int *wipe)
-{
-	int status = 0, reason = 0;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_dinode *di;
+अटल पूर्णांक ocfs2_query_inode_wipe(काष्ठा inode *inode,
+				  काष्ठा buffer_head *di_bh,
+				  पूर्णांक *wipe)
+अणु
+	पूर्णांक status = 0, reason = 0;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_dinode *di;
 
 	*wipe = 0;
 
-	trace_ocfs2_query_inode_wipe_begin((unsigned long long)oi->ip_blkno,
+	trace_ocfs2_query_inode_wipe_begin((अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
 					   inode->i_nlink);
 
-	/* While we were waiting for the cluster lock in
+	/* While we were रुकोing क्रम the cluster lock in
 	 * ocfs2_delete_inode, another node might have asked to delete
 	 * the inode. Recheck our flags to catch this. */
-	if (!ocfs2_inode_is_valid_to_delete(inode)) {
+	अगर (!ocfs2_inode_is_valid_to_delete(inode)) अणु
 		reason = 1;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	/* Now that we have an up to date inode, we can double check
+	/* Now that we have an up to date inode, we can द्विगुन check
 	 * the link count. */
-	if (inode->i_nlink)
-		goto bail;
+	अगर (inode->i_nlink)
+		जाओ bail;
 
-	/* Do some basic inode verification... */
-	di = (struct ocfs2_dinode *) di_bh->b_data;
-	if (!(di->i_flags & cpu_to_le32(OCFS2_ORPHANED_FL)) &&
-	    !(oi->ip_flags & OCFS2_INODE_SKIP_ORPHAN_DIR)) {
+	/* Do some basic inode verअगरication... */
+	di = (काष्ठा ocfs2_dinode *) di_bh->b_data;
+	अगर (!(di->i_flags & cpu_to_le32(OCFS2_ORPHANED_FL)) &&
+	    !(oi->ip_flags & OCFS2_INODE_SKIP_ORPHAN_सूची)) अणु
 		/*
 		 * Inodes in the orphan dir must have ORPHANED_FL.  The only
 		 * inodes that come back out of the orphan dir are reflink
-		 * targets. A reflink target may be moved out of the orphan
-		 * dir between the time we scan the directory and the time we
+		 * tarमाला_लो. A reflink target may be moved out of the orphan
+		 * dir between the समय we scan the directory and the समय we
 		 * process it. This would lead to HAS_REFCOUNT_FL being set but
 		 * ORPHANED_FL not.
 		 */
-		if (di->i_dyn_features & cpu_to_le16(OCFS2_HAS_REFCOUNT_FL)) {
+		अगर (di->i_dyn_features & cpu_to_le16(OCFS2_HAS_REFCOUNT_FL)) अणु
 			reason = 2;
-			goto bail;
-		}
+			जाओ bail;
+		पूर्ण
 
-		/* for lack of a better error? */
+		/* क्रम lack of a better error? */
 		status = -EEXIST;
 		mlog(ML_ERROR,
 		     "Inode %llu (on-disk %llu) not orphaned! "
 		     "Disk flags  0x%x, inode flags 0x%x\n",
-		     (unsigned long long)oi->ip_blkno,
-		     (unsigned long long)le64_to_cpu(di->i_blkno),
+		     (अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
+		     (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(di->i_blkno),
 		     le32_to_cpu(di->i_flags), oi->ip_flags);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	/* has someone already deleted us?! baaad... */
-	if (di->i_dtime) {
+	/* has someone alपढ़ोy deleted us?! baaad... */
+	अगर (di->i_dसमय) अणु
 		status = -EEXIST;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	/*
 	 * This is how ocfs2 determines whether an inode is still live
-	 * within the cluster. Every node takes a shared read lock on
-	 * the inode open lock in ocfs2_read_locked_inode(). When we
+	 * within the cluster. Every node takes a shared पढ़ो lock on
+	 * the inode खोलो lock in ocfs2_पढ़ो_locked_inode(). When we
 	 * get to ->delete_inode(), each node tries to convert it's
 	 * lock to an exclusive. Trylocks are serialized by the inode
 	 * meta data lock. If the upconvert succeeds, we know the inode
-	 * is no longer live and can be deleted.
+	 * is no दीर्घer live and can be deleted.
 	 *
 	 * Though we call this with the meta data lock held, the
 	 * trylock keeps us from ABBA deadlock.
 	 */
-	status = ocfs2_try_open_lock(inode, 1);
-	if (status == -EAGAIN) {
+	status = ocfs2_try_खोलो_lock(inode, 1);
+	अगर (status == -EAGAIN) अणु
 		status = 0;
 		reason = 3;
-		goto bail;
-	}
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	*wipe = 1;
 	trace_ocfs2_query_inode_wipe_succ(le16_to_cpu(di->i_orphaned_slot));
 
 bail:
 	trace_ocfs2_query_inode_wipe_end(status, reason);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* Support function for ocfs2_delete_inode. Will help us keep the
- * inode data in a consistent state for clear_inode. Always truncates
+/* Support function क्रम ocfs2_delete_inode. Will help us keep the
+ * inode data in a consistent state क्रम clear_inode. Always truncates
  * pages, optionally sync's them first. */
-static void ocfs2_cleanup_delete_inode(struct inode *inode,
-				       int sync_data)
-{
+अटल व्योम ocfs2_cleanup_delete_inode(काष्ठा inode *inode,
+				       पूर्णांक sync_data)
+अणु
 	trace_ocfs2_cleanup_delete_inode(
-		(unsigned long long)OCFS2_I(inode)->ip_blkno, sync_data);
-	if (sync_data)
-		filemap_write_and_wait(inode->i_mapping);
+		(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno, sync_data);
+	अगर (sync_data)
+		filemap_ग_लिखो_and_रुको(inode->i_mapping);
 	truncate_inode_pages_final(&inode->i_data);
-}
+पूर्ण
 
-static void ocfs2_delete_inode(struct inode *inode)
-{
-	int wipe, status;
+अटल व्योम ocfs2_delete_inode(काष्ठा inode *inode)
+अणु
+	पूर्णांक wipe, status;
 	sigset_t oldset;
-	struct buffer_head *di_bh = NULL;
-	struct ocfs2_dinode *di = NULL;
+	काष्ठा buffer_head *di_bh = शून्य;
+	काष्ठा ocfs2_dinode *di = शून्य;
 
 	trace_ocfs2_delete_inode(inode->i_ino,
-				 (unsigned long long)OCFS2_I(inode)->ip_blkno,
+				 (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
 				 is_bad_inode(inode));
 
-	/* When we fail in read_inode() we mark inode as bad. The second test
-	 * catches the case when inode allocation fails before allocating
-	 * a block for inode. */
-	if (is_bad_inode(inode) || !OCFS2_I(inode)->ip_blkno)
-		goto bail;
+	/* When we fail in पढ़ो_inode() we mark inode as bad. The second test
+	 * catches the हाल when inode allocation fails beक्रमe allocating
+	 * a block क्रम inode. */
+	अगर (is_bad_inode(inode) || !OCFS2_I(inode)->ip_blkno)
+		जाओ bail;
 
-	if (!ocfs2_inode_is_valid_to_delete(inode)) {
+	अगर (!ocfs2_inode_is_valid_to_delete(inode)) अणु
 		/* It's probably not necessary to truncate_inode_pages
-		 * here but we do it for safety anyway (it will most
+		 * here but we करो it क्रम safety anyway (it will most
 		 * likely be a no-op anyway) */
 		ocfs2_cleanup_delete_inode(inode, 0);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	dquot_initialize(inode);
 
-	/* We want to block signals in delete_inode as the lock and
-	 * messaging paths may return us -ERESTARTSYS. Which would
-	 * cause us to exit early, resulting in inodes being orphaned
-	 * forever. */
-	ocfs2_block_signals(&oldset);
+	/* We want to block संकेतs in delete_inode as the lock and
+	 * messaging paths may वापस us -ERESTARTSYS. Which would
+	 * cause us to निकास early, resulting in inodes being orphaned
+	 * क्रमever. */
+	ocfs2_block_संकेतs(&oldset);
 
 	/*
 	 * Synchronize us against ocfs2_get_dentry. We take this in
@@ -1028,172 +1029,172 @@ static void ocfs2_delete_inode(struct inode *inode)
 	 * process deletes.
 	 */
 	status = ocfs2_nfs_sync_lock(OCFS2_SB(inode->i_sb), 0);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		mlog(ML_ERROR, "getting nfs sync lock(PR) failed %d\n", status);
 		ocfs2_cleanup_delete_inode(inode, 0);
-		goto bail_unblock;
-	}
-	/* Lock down the inode. This gives us an up to date view of
-	 * it's metadata (for verification), and allows us to
+		जाओ bail_unblock;
+	पूर्ण
+	/* Lock करोwn the inode. This gives us an up to date view of
+	 * it's metadata (क्रम verअगरication), and allows us to
 	 * serialize delete_inode on multiple nodes.
 	 *
-	 * Even though we might be doing a truncate, we don't take the
+	 * Even though we might be करोing a truncate, we करोn't take the
 	 * allocation lock here as it won't be needed - nobody will
-	 * have the file open.
+	 * have the file खोलो.
 	 */
 	status = ocfs2_inode_lock(inode, &di_bh, 1);
-	if (status < 0) {
-		if (status != -ENOENT)
-			mlog_errno(status);
+	अगर (status < 0) अणु
+		अगर (status != -ENOENT)
+			mlog_त्रुटि_सं(status);
 		ocfs2_cleanup_delete_inode(inode, 0);
-		goto bail_unlock_nfs_sync;
-	}
+		जाओ bail_unlock_nfs_sync;
+	पूर्ण
 
-	di = (struct ocfs2_dinode *)di_bh->b_data;
-	/* Skip inode deletion and wait for dio orphan entry recovered
+	di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
+	/* Skip inode deletion and रुको क्रम dio orphan entry recovered
 	 * first */
-	if (unlikely(di->i_flags & cpu_to_le32(OCFS2_DIO_ORPHANED_FL))) {
+	अगर (unlikely(di->i_flags & cpu_to_le32(OCFS2_DIO_ORPHANED_FL))) अणु
 		ocfs2_cleanup_delete_inode(inode, 0);
-		goto bail_unlock_inode;
-	}
+		जाओ bail_unlock_inode;
+	पूर्ण
 
 	/* Query the cluster. This will be the final decision made
-	 * before we go ahead and wipe the inode. */
+	 * beक्रमe we go ahead and wipe the inode. */
 	status = ocfs2_query_inode_wipe(inode, di_bh, &wipe);
-	if (!wipe || status < 0) {
+	अगर (!wipe || status < 0) अणु
 		/* Error and remote inode busy both mean we won't be
 		 * removing the inode, so they take almost the same
 		 * path. */
-		if (status < 0)
-			mlog_errno(status);
+		अगर (status < 0)
+			mlog_त्रुटि_सं(status);
 
 		/* Someone in the cluster has disallowed a wipe of
 		 * this inode, or it was never completely
-		 * orphaned. Write out the pages and exit now. */
+		 * orphaned. Write out the pages and निकास now. */
 		ocfs2_cleanup_delete_inode(inode, 1);
-		goto bail_unlock_inode;
-	}
+		जाओ bail_unlock_inode;
+	पूर्ण
 
 	ocfs2_cleanup_delete_inode(inode, 0);
 
 	status = ocfs2_wipe_inode(inode, di_bh);
-	if (status < 0) {
-		if (status != -EDEADLK)
-			mlog_errno(status);
-		goto bail_unlock_inode;
-	}
+	अगर (status < 0) अणु
+		अगर (status != -EDEADLK)
+			mlog_त्रुटि_सं(status);
+		जाओ bail_unlock_inode;
+	पूर्ण
 
 	/*
 	 * Mark the inode as successfully deleted.
 	 *
-	 * This is important for ocfs2_clear_inode() as it will check
-	 * this flag and skip any checkpointing work
+	 * This is important क्रम ocfs2_clear_inode() as it will check
+	 * this flag and skip any checkpoपूर्णांकing work
 	 *
 	 * ocfs2_stuff_meta_lvb() also uses this flag to invalidate
-	 * the LVB for other nodes.
+	 * the LVB क्रम other nodes.
 	 */
 	OCFS2_I(inode)->ip_flags |= OCFS2_INODE_DELETED;
 
 bail_unlock_inode:
 	ocfs2_inode_unlock(inode, 1);
-	brelse(di_bh);
+	brअन्यथा(di_bh);
 
 bail_unlock_nfs_sync:
 	ocfs2_nfs_sync_unlock(OCFS2_SB(inode->i_sb), 0);
 
 bail_unblock:
-	ocfs2_unblock_signals(&oldset);
+	ocfs2_unblock_संकेतs(&oldset);
 bail:
-	return;
-}
+	वापस;
+पूर्ण
 
-static void ocfs2_clear_inode(struct inode *inode)
-{
-	int status;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अटल व्योम ocfs2_clear_inode(काष्ठा inode *inode)
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	clear_inode(inode);
-	trace_ocfs2_clear_inode((unsigned long long)oi->ip_blkno,
+	trace_ocfs2_clear_inode((अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
 				inode->i_nlink);
 
-	mlog_bug_on_msg(osb == NULL,
+	mlog_bug_on_msg(osb == शून्य,
 			"Inode=%lu\n", inode->i_ino);
 
 	dquot_drop(inode);
 
-	/* To preven remote deletes we hold open lock before, now it
-	 * is time to unlock PR and EX open locks. */
-	ocfs2_open_unlock(inode);
+	/* To preven remote deletes we hold खोलो lock beक्रमe, now it
+	 * is समय to unlock PR and EX खोलो locks. */
+	ocfs2_खोलो_unlock(inode);
 
-	/* Do these before all the other work so that we don't bounce
-	 * the downconvert thread while waiting to destroy the locks. */
-	ocfs2_mark_lockres_freeing(osb, &oi->ip_rw_lockres);
-	ocfs2_mark_lockres_freeing(osb, &oi->ip_inode_lockres);
-	ocfs2_mark_lockres_freeing(osb, &oi->ip_open_lockres);
+	/* Do these beक्रमe all the other work so that we करोn't bounce
+	 * the करोwnconvert thपढ़ो जबतक रुकोing to destroy the locks. */
+	ocfs2_mark_lockres_मुक्तing(osb, &oi->ip_rw_lockres);
+	ocfs2_mark_lockres_मुक्तing(osb, &oi->ip_inode_lockres);
+	ocfs2_mark_lockres_मुक्तing(osb, &oi->ip_खोलो_lockres);
 
 	ocfs2_resv_discard(&osb->osb_la_resmap,
 			   &oi->ip_la_data_resv);
 	ocfs2_resv_init_once(&oi->ip_la_data_resv);
 
-	/* We very well may get a clear_inode before all an inodes
+	/* We very well may get a clear_inode beक्रमe all an inodes
 	 * metadata has hit disk. Of course, we can't drop any cluster
 	 * locks until the journal has finished with it. The only
 	 * exception here are successfully wiped inodes - their
-	 * metadata can now be considered to be part of the system
+	 * metadata can now be considered to be part of the प्रणाली
 	 * inodes from which it came. */
-	if (!(oi->ip_flags & OCFS2_INODE_DELETED))
-		ocfs2_checkpoint_inode(inode);
+	अगर (!(oi->ip_flags & OCFS2_INODE_DELETED))
+		ocfs2_checkpoपूर्णांक_inode(inode);
 
 	mlog_bug_on_msg(!list_empty(&oi->ip_io_markers),
 			"Clear inode of %llu, inode has io markers\n",
-			(unsigned long long)oi->ip_blkno);
+			(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno);
 	mlog_bug_on_msg(!list_empty(&oi->ip_unwritten_list),
 			"Clear inode of %llu, inode has unwritten extents\n",
-			(unsigned long long)oi->ip_blkno);
+			(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno);
 
 	ocfs2_extent_map_trunc(inode, 0);
 
 	status = ocfs2_drop_inode_locks(inode);
-	if (status < 0)
-		mlog_errno(status);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
-	ocfs2_lock_res_free(&oi->ip_rw_lockres);
-	ocfs2_lock_res_free(&oi->ip_inode_lockres);
-	ocfs2_lock_res_free(&oi->ip_open_lockres);
+	ocfs2_lock_res_मुक्त(&oi->ip_rw_lockres);
+	ocfs2_lock_res_मुक्त(&oi->ip_inode_lockres);
+	ocfs2_lock_res_मुक्त(&oi->ip_खोलो_lockres);
 
-	ocfs2_metadata_cache_exit(INODE_CACHE(inode));
+	ocfs2_metadata_cache_निकास(INODE_CACHE(inode));
 
 	mlog_bug_on_msg(INODE_CACHE(inode)->ci_num_cached,
 			"Clear inode of %llu, inode has %u cache items\n",
-			(unsigned long long)oi->ip_blkno,
+			(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
 			INODE_CACHE(inode)->ci_num_cached);
 
 	mlog_bug_on_msg(!(INODE_CACHE(inode)->ci_flags & OCFS2_CACHE_FL_INLINE),
 			"Clear inode of %llu, inode has a bad flag\n",
-			(unsigned long long)oi->ip_blkno);
+			(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno);
 
 	mlog_bug_on_msg(spin_is_locked(&oi->ip_lock),
 			"Clear inode of %llu, inode is locked\n",
-			(unsigned long long)oi->ip_blkno);
+			(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno);
 
 	mlog_bug_on_msg(!mutex_trylock(&oi->ip_io_mutex),
 			"Clear inode of %llu, io_mutex is locked\n",
-			(unsigned long long)oi->ip_blkno);
+			(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno);
 	mutex_unlock(&oi->ip_io_mutex);
 
 	/*
-	 * down_trylock() returns 0, down_write_trylock() returns 1
+	 * करोwn_trylock() वापसs 0, करोwn_ग_लिखो_trylock() वापसs 1
 	 * kernel 1, world 0
 	 */
-	mlog_bug_on_msg(!down_write_trylock(&oi->ip_alloc_sem),
+	mlog_bug_on_msg(!करोwn_ग_लिखो_trylock(&oi->ip_alloc_sem),
 			"Clear inode of %llu, alloc_sem is locked\n",
-			(unsigned long long)oi->ip_blkno);
-	up_write(&oi->ip_alloc_sem);
+			(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno);
+	up_ग_लिखो(&oi->ip_alloc_sem);
 
-	mlog_bug_on_msg(oi->ip_open_count,
+	mlog_bug_on_msg(oi->ip_खोलो_count,
 			"Clear inode of %llu has open count %d\n",
-			(unsigned long long)oi->ip_blkno, oi->ip_open_count);
+			(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno, oi->ip_खोलो_count);
 
 	/* Clear all other flags. */
 	oi->ip_flags = 0;
@@ -1202,103 +1203,103 @@ static void ocfs2_clear_inode(struct inode *inode)
 
 	/*
 	 * ip_jinode is used to track txns against this inode. We ensure that
-	 * the journal is flushed before journal shutdown. Thus it is safe to
-	 * have inodes get cleaned up after journal shutdown.
+	 * the journal is flushed beक्रमe journal shutकरोwn. Thus it is safe to
+	 * have inodes get cleaned up after journal shutकरोwn.
 	 */
 	jbd2_journal_release_jbd_inode(osb->journal->j_journal,
 				       &oi->ip_jinode);
-}
+पूर्ण
 
-void ocfs2_evict_inode(struct inode *inode)
-{
-	if (!inode->i_nlink ||
-	    (OCFS2_I(inode)->ip_flags & OCFS2_INODE_MAYBE_ORPHANED)) {
+व्योम ocfs2_evict_inode(काष्ठा inode *inode)
+अणु
+	अगर (!inode->i_nlink ||
+	    (OCFS2_I(inode)->ip_flags & OCFS2_INODE_MAYBE_ORPHANED)) अणु
 		ocfs2_delete_inode(inode);
-	} else {
+	पूर्ण अन्यथा अणु
 		truncate_inode_pages_final(&inode->i_data);
-	}
+	पूर्ण
 	ocfs2_clear_inode(inode);
-}
+पूर्ण
 
 /* Called under inode_lock, with no more references on the
- * struct inode, so it's safe here to check the flags field
+ * काष्ठा inode, so it's safe here to check the flags field
  * and to manipulate i_nlink without any other locks. */
-int ocfs2_drop_inode(struct inode *inode)
-{
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+पूर्णांक ocfs2_drop_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 
-	trace_ocfs2_drop_inode((unsigned long long)oi->ip_blkno,
+	trace_ocfs2_drop_inode((अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
 				inode->i_nlink, oi->ip_flags);
 
-	assert_spin_locked(&inode->i_lock);
+	निश्चित_spin_locked(&inode->i_lock);
 	inode->i_state |= I_WILL_FREE;
 	spin_unlock(&inode->i_lock);
-	write_inode_now(inode, 1);
+	ग_लिखो_inode_now(inode, 1);
 	spin_lock(&inode->i_lock);
 	WARN_ON(inode->i_state & I_NEW);
 	inode->i_state &= ~I_WILL_FREE;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * This is called from our getattr.
  */
-int ocfs2_inode_revalidate(struct dentry *dentry)
-{
-	struct inode *inode = d_inode(dentry);
-	int status = 0;
+पूर्णांक ocfs2_inode_revalidate(काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक status = 0;
 
 	trace_ocfs2_inode_revalidate(inode,
-		inode ? (unsigned long long)OCFS2_I(inode)->ip_blkno : 0ULL,
-		inode ? (unsigned long long)OCFS2_I(inode)->ip_flags : 0);
+		inode ? (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno : 0ULL,
+		inode ? (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_flags : 0);
 
-	if (!inode) {
+	अगर (!inode) अणु
 		status = -ENOENT;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	spin_lock(&OCFS2_I(inode)->ip_lock);
-	if (OCFS2_I(inode)->ip_flags & OCFS2_INODE_DELETED) {
+	अगर (OCFS2_I(inode)->ip_flags & OCFS2_INODE_DELETED) अणु
 		spin_unlock(&OCFS2_I(inode)->ip_lock);
 		status = -ENOENT;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 	spin_unlock(&OCFS2_I(inode)->ip_lock);
 
-	/* Let ocfs2_inode_lock do the work of updating our struct
-	 * inode for us. */
-	status = ocfs2_inode_lock(inode, NULL, 0);
-	if (status < 0) {
-		if (status != -ENOENT)
-			mlog_errno(status);
-		goto bail;
-	}
+	/* Let ocfs2_inode_lock करो the work of updating our काष्ठा
+	 * inode क्रम us. */
+	status = ocfs2_inode_lock(inode, शून्य, 0);
+	अगर (status < 0) अणु
+		अगर (status != -ENOENT)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 	ocfs2_inode_unlock(inode, 0);
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  * Updates a disk inode from a
- * struct inode.
+ * काष्ठा inode.
  * Only takes ip_lock.
  */
-int ocfs2_mark_inode_dirty(handle_t *handle,
-			   struct inode *inode,
-			   struct buffer_head *bh)
-{
-	int status;
-	struct ocfs2_dinode *fe = (struct ocfs2_dinode *) bh->b_data;
+पूर्णांक ocfs2_mark_inode_dirty(handle_t *handle,
+			   काष्ठा inode *inode,
+			   काष्ठा buffer_head *bh)
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_dinode *fe = (काष्ठा ocfs2_dinode *) bh->b_data;
 
-	trace_ocfs2_mark_inode_dirty((unsigned long long)OCFS2_I(inode)->ip_blkno);
+	trace_ocfs2_mark_inode_dirty((अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
 
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(inode), bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto leave;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ leave;
+	पूर्ण
 
 	spin_lock(&OCFS2_I(inode)->ip_lock);
 	fe->i_clusters = cpu_to_le32(OCFS2_I(inode)->ip_clusters);
@@ -1307,78 +1308,78 @@ int ocfs2_mark_inode_dirty(handle_t *handle,
 	fe->i_dyn_features = cpu_to_le16(OCFS2_I(inode)->ip_dyn_features);
 	spin_unlock(&OCFS2_I(inode)->ip_lock);
 
-	fe->i_size = cpu_to_le64(i_size_read(inode));
+	fe->i_size = cpu_to_le64(i_size_पढ़ो(inode));
 	ocfs2_set_links_count(fe, inode->i_nlink);
-	fe->i_uid = cpu_to_le32(i_uid_read(inode));
-	fe->i_gid = cpu_to_le32(i_gid_read(inode));
+	fe->i_uid = cpu_to_le32(i_uid_पढ़ो(inode));
+	fe->i_gid = cpu_to_le32(i_gid_पढ़ो(inode));
 	fe->i_mode = cpu_to_le16(inode->i_mode);
-	fe->i_atime = cpu_to_le64(inode->i_atime.tv_sec);
-	fe->i_atime_nsec = cpu_to_le32(inode->i_atime.tv_nsec);
-	fe->i_ctime = cpu_to_le64(inode->i_ctime.tv_sec);
-	fe->i_ctime_nsec = cpu_to_le32(inode->i_ctime.tv_nsec);
-	fe->i_mtime = cpu_to_le64(inode->i_mtime.tv_sec);
-	fe->i_mtime_nsec = cpu_to_le32(inode->i_mtime.tv_nsec);
+	fe->i_aसमय = cpu_to_le64(inode->i_aसमय.tv_sec);
+	fe->i_aसमय_nsec = cpu_to_le32(inode->i_aसमय.tv_nsec);
+	fe->i_स_समय = cpu_to_le64(inode->i_स_समय.tv_sec);
+	fe->i_स_समय_nsec = cpu_to_le32(inode->i_स_समय.tv_nsec);
+	fe->i_mसमय = cpu_to_le64(inode->i_mसमय.tv_sec);
+	fe->i_mसमय_nsec = cpu_to_le32(inode->i_mसमय.tv_nsec);
 
 	ocfs2_journal_dirty(handle, bh);
 	ocfs2_update_inode_fsync_trans(handle, inode, 1);
 leave:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  *
- * Updates a struct inode from a disk inode.
- * does no i/o, only takes ip_lock.
+ * Updates a काष्ठा inode from a disk inode.
+ * करोes no i/o, only takes ip_lock.
  */
-void ocfs2_refresh_inode(struct inode *inode,
-			 struct ocfs2_dinode *fe)
-{
+व्योम ocfs2_refresh_inode(काष्ठा inode *inode,
+			 काष्ठा ocfs2_dinode *fe)
+अणु
 	spin_lock(&OCFS2_I(inode)->ip_lock);
 
 	OCFS2_I(inode)->ip_clusters = le32_to_cpu(fe->i_clusters);
 	OCFS2_I(inode)->ip_attr = le32_to_cpu(fe->i_attr);
 	OCFS2_I(inode)->ip_dyn_features = le16_to_cpu(fe->i_dyn_features);
 	ocfs2_set_inode_flags(inode);
-	i_size_write(inode, le64_to_cpu(fe->i_size));
-	set_nlink(inode, ocfs2_read_links_count(fe));
-	i_uid_write(inode, le32_to_cpu(fe->i_uid));
-	i_gid_write(inode, le32_to_cpu(fe->i_gid));
+	i_size_ग_लिखो(inode, le64_to_cpu(fe->i_size));
+	set_nlink(inode, ocfs2_पढ़ो_links_count(fe));
+	i_uid_ग_लिखो(inode, le32_to_cpu(fe->i_uid));
+	i_gid_ग_लिखो(inode, le32_to_cpu(fe->i_gid));
 	inode->i_mode = le16_to_cpu(fe->i_mode);
-	if (S_ISLNK(inode->i_mode) && le32_to_cpu(fe->i_clusters) == 0)
+	अगर (S_ISLNK(inode->i_mode) && le32_to_cpu(fe->i_clusters) == 0)
 		inode->i_blocks = 0;
-	else
+	अन्यथा
 		inode->i_blocks = ocfs2_inode_sector_count(inode);
-	inode->i_atime.tv_sec = le64_to_cpu(fe->i_atime);
-	inode->i_atime.tv_nsec = le32_to_cpu(fe->i_atime_nsec);
-	inode->i_mtime.tv_sec = le64_to_cpu(fe->i_mtime);
-	inode->i_mtime.tv_nsec = le32_to_cpu(fe->i_mtime_nsec);
-	inode->i_ctime.tv_sec = le64_to_cpu(fe->i_ctime);
-	inode->i_ctime.tv_nsec = le32_to_cpu(fe->i_ctime_nsec);
+	inode->i_aसमय.tv_sec = le64_to_cpu(fe->i_aसमय);
+	inode->i_aसमय.tv_nsec = le32_to_cpu(fe->i_aसमय_nsec);
+	inode->i_mसमय.tv_sec = le64_to_cpu(fe->i_mसमय);
+	inode->i_mसमय.tv_nsec = le32_to_cpu(fe->i_mसमय_nsec);
+	inode->i_स_समय.tv_sec = le64_to_cpu(fe->i_स_समय);
+	inode->i_स_समय.tv_nsec = le32_to_cpu(fe->i_स_समय_nsec);
 
 	spin_unlock(&OCFS2_I(inode)->ip_lock);
-}
+पूर्ण
 
-int ocfs2_validate_inode_block(struct super_block *sb,
-			       struct buffer_head *bh)
-{
-	int rc;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)bh->b_data;
+पूर्णांक ocfs2_validate_inode_block(काष्ठा super_block *sb,
+			       काष्ठा buffer_head *bh)
+अणु
+	पूर्णांक rc;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)bh->b_data;
 
-	trace_ocfs2_validate_inode_block((unsigned long long)bh->b_blocknr);
+	trace_ocfs2_validate_inode_block((अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
 
 	BUG_ON(!buffer_uptodate(bh));
 
 	/*
-	 * If the ecc fails, we return the error but otherwise
-	 * leave the filesystem running.  We know any error is
+	 * If the ecc fails, we वापस the error but otherwise
+	 * leave the fileप्रणाली running.  We know any error is
 	 * local to this block.
 	 */
 	rc = ocfs2_validate_meta_ecc(sb, bh->b_data, &di->i_check);
-	if (rc) {
+	अगर (rc) अणु
 		mlog(ML_ERROR, "Checksum failed for dinode %llu\n",
-		     (unsigned long long)bh->b_blocknr);
-		goto bail;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+		जाओ bail;
+	पूर्ण
 
 	/*
 	 * Errors after here are fatal.
@@ -1386,274 +1387,274 @@ int ocfs2_validate_inode_block(struct super_block *sb,
 
 	rc = -EINVAL;
 
-	if (!OCFS2_IS_VALID_DINODE(di)) {
+	अगर (!OCFS2_IS_VALID_DINODE(di)) अणु
 		rc = ocfs2_error(sb, "Invalid dinode #%llu: signature = %.*s\n",
-				 (unsigned long long)bh->b_blocknr, 7,
+				 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr, 7,
 				 di->i_signature);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (le64_to_cpu(di->i_blkno) != bh->b_blocknr) {
+	अगर (le64_to_cpu(di->i_blkno) != bh->b_blocknr) अणु
 		rc = ocfs2_error(sb, "Invalid dinode #%llu: i_blkno is %llu\n",
-				 (unsigned long long)bh->b_blocknr,
-				 (unsigned long long)le64_to_cpu(di->i_blkno));
-		goto bail;
-	}
+				 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
+				 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(di->i_blkno));
+		जाओ bail;
+	पूर्ण
 
-	if (!(di->i_flags & cpu_to_le32(OCFS2_VALID_FL))) {
+	अगर (!(di->i_flags & cpu_to_le32(OCFS2_VALID_FL))) अणु
 		rc = ocfs2_error(sb,
 				 "Invalid dinode #%llu: OCFS2_VALID_FL not set\n",
-				 (unsigned long long)bh->b_blocknr);
-		goto bail;
-	}
+				 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+		जाओ bail;
+	पूर्ण
 
-	if (le32_to_cpu(di->i_fs_generation) !=
-	    OCFS2_SB(sb)->fs_generation) {
+	अगर (le32_to_cpu(di->i_fs_generation) !=
+	    OCFS2_SB(sb)->fs_generation) अणु
 		rc = ocfs2_error(sb,
 				 "Invalid dinode #%llu: fs_generation is %u\n",
-				 (unsigned long long)bh->b_blocknr,
+				 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
 				 le32_to_cpu(di->i_fs_generation));
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	rc = 0;
 
 bail:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ocfs2_filecheck_validate_inode_block(struct super_block *sb,
-						struct buffer_head *bh)
-{
-	int rc = 0;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)bh->b_data;
+अटल पूर्णांक ocfs2_filecheck_validate_inode_block(काष्ठा super_block *sb,
+						काष्ठा buffer_head *bh)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)bh->b_data;
 
 	trace_ocfs2_filecheck_validate_inode_block(
-		(unsigned long long)bh->b_blocknr);
+		(अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
 
 	BUG_ON(!buffer_uptodate(bh));
 
 	/*
 	 * Call ocfs2_validate_meta_ecc() first since it has ecc repair
-	 * function, but we should not return error immediately when ecc
+	 * function, but we should not वापस error immediately when ecc
 	 * validation fails, because the reason is quite likely the invalid
 	 * inode number inputed.
 	 */
 	rc = ocfs2_validate_meta_ecc(sb, bh->b_data, &di->i_check);
-	if (rc) {
+	अगर (rc) अणु
 		mlog(ML_ERROR,
 		     "Filecheck: checksum failed for dinode %llu\n",
-		     (unsigned long long)bh->b_blocknr);
-		rc = -OCFS2_FILECHECK_ERR_BLOCKECC;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+		rc = -OCFS2_खाताCHECK_ERR_BLOCKECC;
+	पूर्ण
 
-	if (!OCFS2_IS_VALID_DINODE(di)) {
+	अगर (!OCFS2_IS_VALID_DINODE(di)) अणु
 		mlog(ML_ERROR,
 		     "Filecheck: invalid dinode #%llu: signature = %.*s\n",
-		     (unsigned long long)bh->b_blocknr, 7, di->i_signature);
-		rc = -OCFS2_FILECHECK_ERR_INVALIDINO;
-		goto bail;
-	} else if (rc)
-		goto bail;
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr, 7, di->i_signature);
+		rc = -OCFS2_खाताCHECK_ERR_INVALIDINO;
+		जाओ bail;
+	पूर्ण अन्यथा अगर (rc)
+		जाओ bail;
 
-	if (le64_to_cpu(di->i_blkno) != bh->b_blocknr) {
+	अगर (le64_to_cpu(di->i_blkno) != bh->b_blocknr) अणु
 		mlog(ML_ERROR,
 		     "Filecheck: invalid dinode #%llu: i_blkno is %llu\n",
-		     (unsigned long long)bh->b_blocknr,
-		     (unsigned long long)le64_to_cpu(di->i_blkno));
-		rc = -OCFS2_FILECHECK_ERR_BLOCKNO;
-		goto bail;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
+		     (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(di->i_blkno));
+		rc = -OCFS2_खाताCHECK_ERR_BLOCKNO;
+		जाओ bail;
+	पूर्ण
 
-	if (!(di->i_flags & cpu_to_le32(OCFS2_VALID_FL))) {
+	अगर (!(di->i_flags & cpu_to_le32(OCFS2_VALID_FL))) अणु
 		mlog(ML_ERROR,
 		     "Filecheck: invalid dinode #%llu: OCFS2_VALID_FL "
 		     "not set\n",
-		     (unsigned long long)bh->b_blocknr);
-		rc = -OCFS2_FILECHECK_ERR_VALIDFLAG;
-		goto bail;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+		rc = -OCFS2_खाताCHECK_ERR_VALIDFLAG;
+		जाओ bail;
+	पूर्ण
 
-	if (le32_to_cpu(di->i_fs_generation) !=
-	    OCFS2_SB(sb)->fs_generation) {
+	अगर (le32_to_cpu(di->i_fs_generation) !=
+	    OCFS2_SB(sb)->fs_generation) अणु
 		mlog(ML_ERROR,
 		     "Filecheck: invalid dinode #%llu: fs_generation is %u\n",
-		     (unsigned long long)bh->b_blocknr,
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
 		     le32_to_cpu(di->i_fs_generation));
-		rc = -OCFS2_FILECHECK_ERR_GENERATION;
-	}
+		rc = -OCFS2_खाताCHECK_ERR_GENERATION;
+	पूर्ण
 
 bail:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ocfs2_filecheck_repair_inode_block(struct super_block *sb,
-					      struct buffer_head *bh)
-{
-	int changed = 0;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)bh->b_data;
+अटल पूर्णांक ocfs2_filecheck_repair_inode_block(काष्ठा super_block *sb,
+					      काष्ठा buffer_head *bh)
+अणु
+	पूर्णांक changed = 0;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)bh->b_data;
 
-	if (!ocfs2_filecheck_validate_inode_block(sb, bh))
-		return 0;
+	अगर (!ocfs2_filecheck_validate_inode_block(sb, bh))
+		वापस 0;
 
 	trace_ocfs2_filecheck_repair_inode_block(
-		(unsigned long long)bh->b_blocknr);
+		(अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
 
-	if (ocfs2_is_hard_readonly(OCFS2_SB(sb)) ||
-	    ocfs2_is_soft_readonly(OCFS2_SB(sb))) {
+	अगर (ocfs2_is_hard_पढ़ोonly(OCFS2_SB(sb)) ||
+	    ocfs2_is_soft_पढ़ोonly(OCFS2_SB(sb))) अणु
 		mlog(ML_ERROR,
 		     "Filecheck: cannot repair dinode #%llu "
 		     "on readonly filesystem\n",
-		     (unsigned long long)bh->b_blocknr);
-		return -OCFS2_FILECHECK_ERR_READONLY;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+		वापस -OCFS2_खाताCHECK_ERR_READONLY;
+	पूर्ण
 
-	if (buffer_jbd(bh)) {
+	अगर (buffer_jbd(bh)) अणु
 		mlog(ML_ERROR,
 		     "Filecheck: cannot repair dinode #%llu, "
 		     "its buffer is in jbd\n",
-		     (unsigned long long)bh->b_blocknr);
-		return -OCFS2_FILECHECK_ERR_INJBD;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+		वापस -OCFS2_खाताCHECK_ERR_INJBD;
+	पूर्ण
 
-	if (!OCFS2_IS_VALID_DINODE(di)) {
+	अगर (!OCFS2_IS_VALID_DINODE(di)) अणु
 		/* Cannot fix invalid inode block */
-		return -OCFS2_FILECHECK_ERR_INVALIDINO;
-	}
+		वापस -OCFS2_खाताCHECK_ERR_INVALIDINO;
+	पूर्ण
 
-	if (!(di->i_flags & cpu_to_le32(OCFS2_VALID_FL))) {
+	अगर (!(di->i_flags & cpu_to_le32(OCFS2_VALID_FL))) अणु
 		/* Cannot just add VALID_FL flag back as a fix,
 		 * need more things to check here.
 		 */
-		return -OCFS2_FILECHECK_ERR_VALIDFLAG;
-	}
+		वापस -OCFS2_खाताCHECK_ERR_VALIDFLAG;
+	पूर्ण
 
-	if (le64_to_cpu(di->i_blkno) != bh->b_blocknr) {
+	अगर (le64_to_cpu(di->i_blkno) != bh->b_blocknr) अणु
 		di->i_blkno = cpu_to_le64(bh->b_blocknr);
 		changed = 1;
 		mlog(ML_ERROR,
 		     "Filecheck: reset dinode #%llu: i_blkno to %llu\n",
-		     (unsigned long long)bh->b_blocknr,
-		     (unsigned long long)le64_to_cpu(di->i_blkno));
-	}
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
+		     (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(di->i_blkno));
+	पूर्ण
 
-	if (le32_to_cpu(di->i_fs_generation) !=
-	    OCFS2_SB(sb)->fs_generation) {
+	अगर (le32_to_cpu(di->i_fs_generation) !=
+	    OCFS2_SB(sb)->fs_generation) अणु
 		di->i_fs_generation = cpu_to_le32(OCFS2_SB(sb)->fs_generation);
 		changed = 1;
 		mlog(ML_ERROR,
 		     "Filecheck: reset dinode #%llu: fs_generation to %u\n",
-		     (unsigned long long)bh->b_blocknr,
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
 		     le32_to_cpu(di->i_fs_generation));
-	}
+	पूर्ण
 
-	if (changed || ocfs2_validate_meta_ecc(sb, bh->b_data, &di->i_check)) {
+	अगर (changed || ocfs2_validate_meta_ecc(sb, bh->b_data, &di->i_check)) अणु
 		ocfs2_compute_meta_ecc(sb, bh->b_data, &di->i_check);
 		mark_buffer_dirty(bh);
 		mlog(ML_ERROR,
 		     "Filecheck: reset dinode #%llu: compute meta ecc\n",
-		     (unsigned long long)bh->b_blocknr);
-	}
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ocfs2_filecheck_read_inode_block_full(struct inode *inode,
-				      struct buffer_head **bh,
-				      int flags, int type)
-{
-	int rc;
-	struct buffer_head *tmp = *bh;
+अटल पूर्णांक
+ocfs2_filecheck_पढ़ो_inode_block_full(काष्ठा inode *inode,
+				      काष्ठा buffer_head **bh,
+				      पूर्णांक flags, पूर्णांक type)
+अणु
+	पूर्णांक rc;
+	काष्ठा buffer_head *पंचांगp = *bh;
 
-	if (!type) /* Check inode block */
-		rc = ocfs2_read_blocks(INODE_CACHE(inode),
+	अगर (!type) /* Check inode block */
+		rc = ocfs2_पढ़ो_blocks(INODE_CACHE(inode),
 				OCFS2_I(inode)->ip_blkno,
-				1, &tmp, flags,
+				1, &पंचांगp, flags,
 				ocfs2_filecheck_validate_inode_block);
-	else /* Repair inode block */
-		rc = ocfs2_read_blocks(INODE_CACHE(inode),
+	अन्यथा /* Repair inode block */
+		rc = ocfs2_पढ़ो_blocks(INODE_CACHE(inode),
 				OCFS2_I(inode)->ip_blkno,
-				1, &tmp, flags,
+				1, &पंचांगp, flags,
 				ocfs2_filecheck_repair_inode_block);
 
-	/* If ocfs2_read_blocks() got us a new bh, pass it up. */
-	if (!rc && !*bh)
-		*bh = tmp;
+	/* If ocfs2_पढ़ो_blocks() got us a new bh, pass it up. */
+	अगर (!rc && !*bh)
+		*bh = पंचांगp;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int ocfs2_read_inode_block_full(struct inode *inode, struct buffer_head **bh,
-				int flags)
-{
-	int rc;
-	struct buffer_head *tmp = *bh;
+पूर्णांक ocfs2_पढ़ो_inode_block_full(काष्ठा inode *inode, काष्ठा buffer_head **bh,
+				पूर्णांक flags)
+अणु
+	पूर्णांक rc;
+	काष्ठा buffer_head *पंचांगp = *bh;
 
-	rc = ocfs2_read_blocks(INODE_CACHE(inode), OCFS2_I(inode)->ip_blkno,
-			       1, &tmp, flags, ocfs2_validate_inode_block);
+	rc = ocfs2_पढ़ो_blocks(INODE_CACHE(inode), OCFS2_I(inode)->ip_blkno,
+			       1, &पंचांगp, flags, ocfs2_validate_inode_block);
 
-	/* If ocfs2_read_blocks() got us a new bh, pass it up. */
-	if (!rc && !*bh)
-		*bh = tmp;
+	/* If ocfs2_पढ़ो_blocks() got us a new bh, pass it up. */
+	अगर (!rc && !*bh)
+		*bh = पंचांगp;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int ocfs2_read_inode_block(struct inode *inode, struct buffer_head **bh)
-{
-	return ocfs2_read_inode_block_full(inode, bh, 0);
-}
+पूर्णांक ocfs2_पढ़ो_inode_block(काष्ठा inode *inode, काष्ठा buffer_head **bh)
+अणु
+	वापस ocfs2_पढ़ो_inode_block_full(inode, bh, 0);
+पूर्ण
 
 
-static u64 ocfs2_inode_cache_owner(struct ocfs2_caching_info *ci)
-{
-	struct ocfs2_inode_info *oi = cache_info_to_inode(ci);
+अटल u64 ocfs2_inode_cache_owner(काष्ठा ocfs2_caching_info *ci)
+अणु
+	काष्ठा ocfs2_inode_info *oi = cache_info_to_inode(ci);
 
-	return oi->ip_blkno;
-}
+	वापस oi->ip_blkno;
+पूर्ण
 
-static struct super_block *ocfs2_inode_cache_get_super(struct ocfs2_caching_info *ci)
-{
-	struct ocfs2_inode_info *oi = cache_info_to_inode(ci);
+अटल काष्ठा super_block *ocfs2_inode_cache_get_super(काष्ठा ocfs2_caching_info *ci)
+अणु
+	काष्ठा ocfs2_inode_info *oi = cache_info_to_inode(ci);
 
-	return oi->vfs_inode.i_sb;
-}
+	वापस oi->vfs_inode.i_sb;
+पूर्ण
 
-static void ocfs2_inode_cache_lock(struct ocfs2_caching_info *ci)
-{
-	struct ocfs2_inode_info *oi = cache_info_to_inode(ci);
+अटल व्योम ocfs2_inode_cache_lock(काष्ठा ocfs2_caching_info *ci)
+अणु
+	काष्ठा ocfs2_inode_info *oi = cache_info_to_inode(ci);
 
 	spin_lock(&oi->ip_lock);
-}
+पूर्ण
 
-static void ocfs2_inode_cache_unlock(struct ocfs2_caching_info *ci)
-{
-	struct ocfs2_inode_info *oi = cache_info_to_inode(ci);
+अटल व्योम ocfs2_inode_cache_unlock(काष्ठा ocfs2_caching_info *ci)
+अणु
+	काष्ठा ocfs2_inode_info *oi = cache_info_to_inode(ci);
 
 	spin_unlock(&oi->ip_lock);
-}
+पूर्ण
 
-static void ocfs2_inode_cache_io_lock(struct ocfs2_caching_info *ci)
-{
-	struct ocfs2_inode_info *oi = cache_info_to_inode(ci);
+अटल व्योम ocfs2_inode_cache_io_lock(काष्ठा ocfs2_caching_info *ci)
+अणु
+	काष्ठा ocfs2_inode_info *oi = cache_info_to_inode(ci);
 
 	mutex_lock(&oi->ip_io_mutex);
-}
+पूर्ण
 
-static void ocfs2_inode_cache_io_unlock(struct ocfs2_caching_info *ci)
-{
-	struct ocfs2_inode_info *oi = cache_info_to_inode(ci);
+अटल व्योम ocfs2_inode_cache_io_unlock(काष्ठा ocfs2_caching_info *ci)
+अणु
+	काष्ठा ocfs2_inode_info *oi = cache_info_to_inode(ci);
 
 	mutex_unlock(&oi->ip_io_mutex);
-}
+पूर्ण
 
-const struct ocfs2_caching_operations ocfs2_inode_caching_ops = {
+स्थिर काष्ठा ocfs2_caching_operations ocfs2_inode_caching_ops = अणु
 	.co_owner		= ocfs2_inode_cache_owner,
 	.co_get_super		= ocfs2_inode_cache_get_super,
 	.co_cache_lock		= ocfs2_inode_cache_lock,
 	.co_cache_unlock	= ocfs2_inode_cache_unlock,
 	.co_io_lock		= ocfs2_inode_cache_io_lock,
 	.co_io_unlock		= ocfs2_inode_cache_io_unlock,
-};
+पूर्ण;
 

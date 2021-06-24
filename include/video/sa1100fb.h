@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * StrongARM 1100 LCD Controller Frame Buffer Device
  *
@@ -5,59 +6,59 @@
  *  Based on acornfb.c Copyright (C) Russell King.
  *  
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#ifndef _VIDEO_SA1100FB_H
-#define _VIDEO_SA1100FB_H
+#अगर_अघोषित _VIDEO_SA1100FB_H
+#घोषणा _VIDEO_SA1100FB_H
 
-#include <linux/fb.h>
-#include <linux/types.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/types.h>
 
-#define RGB_4	0
-#define RGB_8	1
-#define RGB_16	2
-#define NR_RGB	3
+#घोषणा RGB_4	0
+#घोषणा RGB_8	1
+#घोषणा RGB_16	2
+#घोषणा NR_RGB	3
 
-/* These are the bitfields for each display depth that we support. */
-struct sa1100fb_rgb {
-	struct fb_bitfield	red;
-	struct fb_bitfield	green;
-	struct fb_bitfield	blue;
-	struct fb_bitfield	transp;
-};
+/* These are the bitfields क्रम each display depth that we support. */
+काष्ठा sa1100fb_rgb अणु
+	काष्ठा fb_bitfield	red;
+	काष्ठा fb_bitfield	green;
+	काष्ठा fb_bitfield	blue;
+	काष्ठा fb_bitfield	transp;
+पूर्ण;
 
-/* This structure describes the machine which we are running on. */
-struct sa1100fb_mach_info {
-	u_long		pixclock;
+/* This काष्ठाure describes the machine which we are running on. */
+काष्ठा sa1100fb_mach_info अणु
+	u_दीर्घ		pixघड़ी;
 
-	u_short		xres;
-	u_short		yres;
+	u_लघु		xres;
+	u_लघु		yres;
 
-	u_char		bpp;
-	u_char		hsync_len;
-	u_char		left_margin;
-	u_char		right_margin;
+	u_अक्षर		bpp;
+	u_अक्षर		hsync_len;
+	u_अक्षर		left_margin;
+	u_अक्षर		right_margin;
 
-	u_char		vsync_len;
-	u_char		upper_margin;
-	u_char		lower_margin;
-	u_char		sync;
+	u_अक्षर		vsync_len;
+	u_अक्षर		upper_margin;
+	u_अक्षर		lower_margin;
+	u_अक्षर		sync;
 
-	u_int		cmap_greyscale:1,
+	u_पूर्णांक		cmap_greyscale:1,
 			cmap_inverse:1,
-			cmap_static:1,
+			cmap_अटल:1,
 			unused:29;
 
-	u_int		lccr0;
-	u_int		lccr3;
+	u_पूर्णांक		lccr0;
+	u_पूर्णांक		lccr3;
 
-	/* Overrides for the default RGB maps */
-	const struct sa1100fb_rgb *rgb[NR_RGB];
+	/* Overrides क्रम the शेष RGB maps */
+	स्थिर काष्ठा sa1100fb_rgb *rgb[NR_RGB];
 
-	void (*backlight_power)(int);
-	void (*lcd_power)(int);
-	void (*set_visual)(u32);
-};
+	व्योम (*backlight_घातer)(पूर्णांक);
+	व्योम (*lcd_घातer)(पूर्णांक);
+	व्योम (*set_visual)(u32);
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

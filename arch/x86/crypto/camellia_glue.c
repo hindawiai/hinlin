@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Glue Code for assembler optimized version of Camellia
+ * Glue Code क्रम assembler optimized version of Camellia
  *
  * Copyright (c) 2012 Jussi Kivilinna <jussi.kivilinna@mbnet.fi>
  *
@@ -8,42 +9,42 @@
  *  Copyright (C) 2006 NTT (Nippon Telegraph and Telephone Corporation)
  */
 
-#include <asm/unaligned.h>
-#include <linux/crypto.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <crypto/algapi.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <crypto/algapi.h>
 
-#include "camellia.h"
-#include "ecb_cbc_helpers.h"
+#समावेश "camellia.h"
+#समावेश "ecb_cbc_helpers.h"
 
 /* regular block cipher functions */
-asmlinkage void __camellia_enc_blk(const void *ctx, u8 *dst, const u8 *src,
+यंत्रlinkage व्योम __camellia_enc_blk(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src,
 				   bool xor);
 EXPORT_SYMBOL_GPL(__camellia_enc_blk);
-asmlinkage void camellia_dec_blk(const void *ctx, u8 *dst, const u8 *src);
+यंत्रlinkage व्योम camellia_dec_blk(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 EXPORT_SYMBOL_GPL(camellia_dec_blk);
 
 /* 2-way parallel cipher functions */
-asmlinkage void __camellia_enc_blk_2way(const void *ctx, u8 *dst, const u8 *src,
+यंत्रlinkage व्योम __camellia_enc_blk_2way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src,
 					bool xor);
 EXPORT_SYMBOL_GPL(__camellia_enc_blk_2way);
-asmlinkage void camellia_dec_blk_2way(const void *ctx, u8 *dst, const u8 *src);
+यंत्रlinkage व्योम camellia_dec_blk_2way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 EXPORT_SYMBOL_GPL(camellia_dec_blk_2way);
 
-static void camellia_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
+अटल व्योम camellia_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
 	camellia_enc_blk(crypto_tfm_ctx(tfm), dst, src);
-}
+पूर्ण
 
-static void camellia_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
+अटल व्योम camellia_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
 	camellia_dec_blk(crypto_tfm_ctx(tfm), dst, src);
-}
+पूर्ण
 
 /* camellia sboxes */
-__visible const u64 camellia_sp10011110[256] = {
+__visible स्थिर u64 camellia_sp10011110[256] = अणु
 	0x7000007070707000ULL, 0x8200008282828200ULL, 0x2c00002c2c2c2c00ULL,
 	0xec0000ecececec00ULL, 0xb30000b3b3b3b300ULL, 0x2700002727272700ULL,
 	0xc00000c0c0c0c000ULL, 0xe50000e5e5e5e500ULL, 0xe40000e4e4e4e400ULL,
@@ -130,9 +131,9 @@ __visible const u64 camellia_sp10011110[256] = {
 	0xe30000e3e3e3e300ULL, 0xad0000adadadad00ULL, 0xf40000f4f4f4f400ULL,
 	0x7700007777777700ULL, 0xc70000c7c7c7c700ULL, 0x8000008080808000ULL,
 	0x9e00009e9e9e9e00ULL,
-};
+पूर्ण;
 
-__visible const u64 camellia_sp22000222[256] = {
+__visible स्थिर u64 camellia_sp22000222[256] = अणु
 	0xe0e0000000e0e0e0ULL, 0x0505000000050505ULL, 0x5858000000585858ULL,
 	0xd9d9000000d9d9d9ULL, 0x6767000000676767ULL, 0x4e4e0000004e4e4eULL,
 	0x8181000000818181ULL, 0xcbcb000000cbcbcbULL, 0xc9c9000000c9c9c9ULL,
@@ -219,9 +220,9 @@ __visible const u64 camellia_sp22000222[256] = {
 	0xc7c7000000c7c7c7ULL, 0x5b5b0000005b5b5bULL, 0xe9e9000000e9e9e9ULL,
 	0xeeee000000eeeeeeULL, 0x8f8f0000008f8f8fULL, 0x0101000000010101ULL,
 	0x3d3d0000003d3d3dULL,
-};
+पूर्ण;
 
-__visible const u64 camellia_sp03303033[256] = {
+__visible स्थिर u64 camellia_sp03303033[256] = अणु
 	0x0038380038003838ULL, 0x0041410041004141ULL, 0x0016160016001616ULL,
 	0x0076760076007676ULL, 0x00d9d900d900d9d9ULL, 0x0093930093009393ULL,
 	0x0060600060006060ULL, 0x00f2f200f200f2f2ULL, 0x0072720072007272ULL,
@@ -308,9 +309,9 @@ __visible const u64 camellia_sp03303033[256] = {
 	0x00f1f100f100f1f1ULL, 0x00d6d600d600d6d6ULL, 0x007a7a007a007a7aULL,
 	0x00bbbb00bb00bbbbULL, 0x00e3e300e300e3e3ULL, 0x0040400040004040ULL,
 	0x004f4f004f004f4fULL,
-};
+पूर्ण;
 
-__visible const u64 camellia_sp00444404[256] = {
+__visible स्थिर u64 camellia_sp00444404[256] = अणु
 	0x0000707070700070ULL, 0x00002c2c2c2c002cULL, 0x0000b3b3b3b300b3ULL,
 	0x0000c0c0c0c000c0ULL, 0x0000e4e4e4e400e4ULL, 0x0000575757570057ULL,
 	0x0000eaeaeaea00eaULL, 0x0000aeaeaeae00aeULL, 0x0000232323230023ULL,
@@ -397,9 +398,9 @@ __visible const u64 camellia_sp00444404[256] = {
 	0x00007b7b7b7b007bULL, 0x0000c9c9c9c900c9ULL, 0x0000c1c1c1c100c1ULL,
 	0x0000e3e3e3e300e3ULL, 0x0000f4f4f4f400f4ULL, 0x0000c7c7c7c700c7ULL,
 	0x00009e9e9e9e009eULL,
-};
+पूर्ण;
 
-__visible const u64 camellia_sp02220222[256] = {
+__visible स्थिर u64 camellia_sp02220222[256] = अणु
 	0x00e0e0e000e0e0e0ULL, 0x0005050500050505ULL, 0x0058585800585858ULL,
 	0x00d9d9d900d9d9d9ULL, 0x0067676700676767ULL, 0x004e4e4e004e4e4eULL,
 	0x0081818100818181ULL, 0x00cbcbcb00cbcbcbULL, 0x00c9c9c900c9c9c9ULL,
@@ -486,9 +487,9 @@ __visible const u64 camellia_sp02220222[256] = {
 	0x00c7c7c700c7c7c7ULL, 0x005b5b5b005b5b5bULL, 0x00e9e9e900e9e9e9ULL,
 	0x00eeeeee00eeeeeeULL, 0x008f8f8f008f8f8fULL, 0x0001010100010101ULL,
 	0x003d3d3d003d3d3dULL,
-};
+पूर्ण;
 
-__visible const u64 camellia_sp30333033[256] = {
+__visible स्थिर u64 camellia_sp30333033[256] = अणु
 	0x3800383838003838ULL, 0x4100414141004141ULL, 0x1600161616001616ULL,
 	0x7600767676007676ULL, 0xd900d9d9d900d9d9ULL, 0x9300939393009393ULL,
 	0x6000606060006060ULL, 0xf200f2f2f200f2f2ULL, 0x7200727272007272ULL,
@@ -575,9 +576,9 @@ __visible const u64 camellia_sp30333033[256] = {
 	0xf100f1f1f100f1f1ULL, 0xd600d6d6d600d6d6ULL, 0x7a007a7a7a007a7aULL,
 	0xbb00bbbbbb00bbbbULL, 0xe300e3e3e300e3e3ULL, 0x4000404040004040ULL,
 	0x4f004f4f4f004f4fULL,
-};
+पूर्ण;
 
-__visible const u64 camellia_sp44044404[256] = {
+__visible स्थिर u64 camellia_sp44044404[256] = अणु
 	0x7070007070700070ULL, 0x2c2c002c2c2c002cULL, 0xb3b300b3b3b300b3ULL,
 	0xc0c000c0c0c000c0ULL, 0xe4e400e4e4e400e4ULL, 0x5757005757570057ULL,
 	0xeaea00eaeaea00eaULL, 0xaeae00aeaeae00aeULL, 0x2323002323230023ULL,
@@ -664,9 +665,9 @@ __visible const u64 camellia_sp44044404[256] = {
 	0x7b7b007b7b7b007bULL, 0xc9c900c9c9c900c9ULL, 0xc1c100c1c1c100c1ULL,
 	0xe3e300e3e3e300e3ULL, 0xf4f400f4f4f400f4ULL, 0xc7c700c7c7c700c7ULL,
 	0x9e9e009e9e9e009eULL,
-};
+पूर्ण;
 
-__visible const u64 camellia_sp11101110[256] = {
+__visible स्थिर u64 camellia_sp11101110[256] = अणु
 	0x7070700070707000ULL, 0x8282820082828200ULL, 0x2c2c2c002c2c2c00ULL,
 	0xececec00ececec00ULL, 0xb3b3b300b3b3b300ULL, 0x2727270027272700ULL,
 	0xc0c0c000c0c0c000ULL, 0xe5e5e500e5e5e500ULL, 0xe4e4e400e4e4e400ULL,
@@ -753,53 +754,53 @@ __visible const u64 camellia_sp11101110[256] = {
 	0xe3e3e300e3e3e300ULL, 0xadadad00adadad00ULL, 0xf4f4f400f4f4f400ULL,
 	0x7777770077777700ULL, 0xc7c7c700c7c7c700ULL, 0x8080800080808000ULL,
 	0x9e9e9e009e9e9e00ULL,
-};
+पूर्ण;
 
-/* key constants */
-#define CAMELLIA_SIGMA1L (0xA09E667FL)
-#define CAMELLIA_SIGMA1R (0x3BCC908BL)
-#define CAMELLIA_SIGMA2L (0xB67AE858L)
-#define CAMELLIA_SIGMA2R (0x4CAA73B2L)
-#define CAMELLIA_SIGMA3L (0xC6EF372FL)
-#define CAMELLIA_SIGMA3R (0xE94F82BEL)
-#define CAMELLIA_SIGMA4L (0x54FF53A5L)
-#define CAMELLIA_SIGMA4R (0xF1D36F1CL)
-#define CAMELLIA_SIGMA5L (0x10E527FAL)
-#define CAMELLIA_SIGMA5R (0xDE682D1DL)
-#define CAMELLIA_SIGMA6L (0xB05688C2L)
-#define CAMELLIA_SIGMA6R (0xB3E6C1FDL)
+/* key स्थिरants */
+#घोषणा CAMELLIA_SIGMA1L (0xA09E667FL)
+#घोषणा CAMELLIA_SIGMA1R (0x3BCC908BL)
+#घोषणा CAMELLIA_SIGMA2L (0xB67AE858L)
+#घोषणा CAMELLIA_SIGMA2R (0x4CAA73B2L)
+#घोषणा CAMELLIA_SIGMA3L (0xC6EF372FL)
+#घोषणा CAMELLIA_SIGMA3R (0xE94F82BEL)
+#घोषणा CAMELLIA_SIGMA4L (0x54FF53A5L)
+#घोषणा CAMELLIA_SIGMA4R (0xF1D36F1CL)
+#घोषणा CAMELLIA_SIGMA5L (0x10E527FAL)
+#घोषणा CAMELLIA_SIGMA5R (0xDE682D1DL)
+#घोषणा CAMELLIA_SIGMA6L (0xB05688C2L)
+#घोषणा CAMELLIA_SIGMA6R (0xB3E6C1FDL)
 
 /* macros */
-#define ROLDQ(l, r, bits) ({ \
+#घोषणा ROLDQ(l, r, bits) (अणु \
 	u64 t = l;					\
 	l = (l << bits) | (r >> (64 - bits));		\
 	r = (r << bits) | (t >> (64 - bits));		\
-})
+पूर्ण)
 
-#define CAMELLIA_F(x, kl, kr, y) ({ \
+#घोषणा CAMELLIA_F(x, kl, kr, y) (अणु \
 	u64 ii = x ^ (((u64)kl << 32) | kr);				\
-	y = camellia_sp11101110[(uint8_t)ii];				\
-	y ^= camellia_sp44044404[(uint8_t)(ii >> 8)];			\
+	y = camellia_sp11101110[(uपूर्णांक8_t)ii];				\
+	y ^= camellia_sp44044404[(uपूर्णांक8_t)(ii >> 8)];			\
 	ii >>= 16;							\
-	y ^= camellia_sp30333033[(uint8_t)ii];				\
-	y ^= camellia_sp02220222[(uint8_t)(ii >> 8)];			\
+	y ^= camellia_sp30333033[(uपूर्णांक8_t)ii];				\
+	y ^= camellia_sp02220222[(uपूर्णांक8_t)(ii >> 8)];			\
 	ii >>= 16;							\
-	y ^= camellia_sp00444404[(uint8_t)ii];				\
-	y ^= camellia_sp03303033[(uint8_t)(ii >> 8)];			\
+	y ^= camellia_sp00444404[(uपूर्णांक8_t)ii];				\
+	y ^= camellia_sp03303033[(uपूर्णांक8_t)(ii >> 8)];			\
 	ii >>= 16;							\
-	y ^= camellia_sp22000222[(uint8_t)ii];				\
-	y ^= camellia_sp10011110[(uint8_t)(ii >> 8)];			\
+	y ^= camellia_sp22000222[(uपूर्णांक8_t)ii];				\
+	y ^= camellia_sp10011110[(uपूर्णांक8_t)(ii >> 8)];			\
 	y = ror64(y, 32);						\
-})
+पूर्ण)
 
-#define SET_SUBKEY_LR(INDEX, sRL) (subkey[(INDEX)] = ror64((sRL), 32))
+#घोषणा SET_SUBKEY_LR(INDEX, sRL) (subkey[(INDEX)] = ror64((sRL), 32))
 
-static void camellia_setup_tail(u64 *subkey, u64 *subRL, int max)
-{
+अटल व्योम camellia_setup_tail(u64 *subkey, u64 *subRL, पूर्णांक max)
+अणु
 	u64 kw4, tt;
 	u32 dw, tl, tr;
 
-	/* absorb kw2 to other subkeys */
+	/* असलorb kw2 to other subkeys */
 	/* round 2 */
 	subRL[3] ^= subRL[1];
 	/* round 4 */
@@ -808,7 +809,7 @@ static void camellia_setup_tail(u64 *subkey, u64 *subRL, int max)
 	subRL[7] ^= subRL[1];
 
 	subRL[1] ^= (subRL[1] & ~subRL[9]) << 32;
-	/* modified for FLinv(kl2) */
+	/* modअगरied क्रम FLinv(kl2) */
 	dw = (subRL[1] & subRL[9]) >> 32;
 	subRL[1] ^= rol32(dw, 1);
 
@@ -820,7 +821,7 @@ static void camellia_setup_tail(u64 *subkey, u64 *subRL, int max)
 	subRL[15] ^= subRL[1];
 
 	subRL[1] ^= (subRL[1] & ~subRL[17]) << 32;
-	/* modified for FLinv(kl4) */
+	/* modअगरied क्रम FLinv(kl4) */
 	dw = (subRL[1] & subRL[17]) >> 32;
 	subRL[1] ^= rol32(dw, 1);
 
@@ -831,15 +832,15 @@ static void camellia_setup_tail(u64 *subkey, u64 *subRL, int max)
 	/* round 18 */
 	subRL[23] ^= subRL[1];
 
-	if (max == 24) {
+	अगर (max == 24) अणु
 		/* kw3 */
 		subRL[24] ^= subRL[1];
 
-		/* absorb kw4 to other subkeys */
+		/* असलorb kw4 to other subkeys */
 		kw4 = subRL[25];
-	} else {
+	पूर्ण अन्यथा अणु
 		subRL[1] ^= (subRL[1] & ~subRL[25]) << 32;
-		/* modified for FLinv(kl6) */
+		/* modअगरied क्रम FLinv(kl6) */
 		dw = (subRL[1] & subRL[25]) >> 32;
 		subRL[1] ^= rol32(dw, 1);
 
@@ -852,7 +853,7 @@ static void camellia_setup_tail(u64 *subkey, u64 *subRL, int max)
 		/* kw3 */
 		subRL[32] ^= subRL[1];
 
-		/* absorb kw4 to other subkeys */
+		/* असलorb kw4 to other subkeys */
 		kw4 = subRL[33];
 		/* round 23 */
 		subRL[30] ^= kw4;
@@ -862,10 +863,10 @@ static void camellia_setup_tail(u64 *subkey, u64 *subRL, int max)
 		subRL[26] ^= kw4;
 
 		kw4 ^= (kw4 & ~subRL[24]) << 32;
-		/* modified for FL(kl5) */
+		/* modअगरied क्रम FL(kl5) */
 		dw = (kw4 & subRL[24]) >> 32;
 		kw4 ^= rol32(dw, 1);
-	}
+	पूर्ण
 
 	/* round 17 */
 	subRL[22] ^= kw4;
@@ -875,7 +876,7 @@ static void camellia_setup_tail(u64 *subkey, u64 *subRL, int max)
 	subRL[18] ^= kw4;
 
 	kw4 ^= (kw4 & ~subRL[16]) << 32;
-	/* modified for FL(kl3) */
+	/* modअगरied क्रम FL(kl3) */
 	dw = (kw4 & subRL[16]) >> 32;
 	kw4 ^= rol32(dw, 1);
 
@@ -887,7 +888,7 @@ static void camellia_setup_tail(u64 *subkey, u64 *subRL, int max)
 	subRL[10] ^= kw4;
 
 	kw4 ^= (kw4 & ~subRL[8]) << 32;
-	/* modified for FL(kl1) */
+	/* modअगरied क्रम FL(kl1) */
 	dw = (kw4 & subRL[8]) >> 32;
 	kw4 ^= rol32(dw, 1);
 
@@ -948,10 +949,10 @@ static void camellia_setup_tail(u64 *subkey, u64 *subRL, int max)
 	SET_SUBKEY_LR(21, subRL[20] ^ subRL[22]);		/* round 16 */
 	SET_SUBKEY_LR(22, subRL[21] ^ subRL[23]);		/* round 17 */
 
-	if (max == 24) {
+	अगर (max == 24) अणु
 		SET_SUBKEY_LR(23, subRL[22]);			/* round 18 */
 		SET_SUBKEY_LR(24, subRL[24] ^ subRL[23]);	/* kw3 */
-	} else {
+	पूर्ण अन्यथा अणु
 		tl = (subRL[26] >> 32) ^ (subRL[26] & ~subRL[24]);
 		dw = tl & (subRL[24] >> 32);			/* FL(kl5) */
 		tr = subRL[26] ^ rol32(dw, 1);
@@ -973,11 +974,11 @@ static void camellia_setup_tail(u64 *subkey, u64 *subRL, int max)
 		SET_SUBKEY_LR(30, subRL[29] ^ subRL[31]);	/* round 23 */
 		SET_SUBKEY_LR(31, subRL[30]);			/* round 24 */
 		SET_SUBKEY_LR(32, subRL[32] ^ subRL[31]);	/* kw3 */
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void camellia_setup128(const unsigned char *key, u64 *subkey)
-{
+अटल व्योम camellia_setup128(स्थिर अचिन्हित अक्षर *key, u64 *subkey)
+अणु
 	u64 kl, kr, ww;
 	u64 subRL[26];
 
@@ -993,7 +994,7 @@ static void camellia_setup128(const unsigned char *key, u64 *subkey)
 	/* kw2 */
 	subRL[1] = kr;
 
-	/* rotation left shift 15bit */
+	/* rotation left shअगरt 15bit */
 	ROLDQ(kl, kr, 15);
 
 	/* k3 */
@@ -1001,7 +1002,7 @@ static void camellia_setup128(const unsigned char *key, u64 *subkey)
 	/* k4 */
 	subRL[5] = kr;
 
-	/* rotation left shift 15+30bit */
+	/* rotation left shअगरt 15+30bit */
 	ROLDQ(kl, kr, 30);
 
 	/* k7 */
@@ -1009,12 +1010,12 @@ static void camellia_setup128(const unsigned char *key, u64 *subkey)
 	/* k8 */
 	subRL[11] = kr;
 
-	/* rotation left shift 15+30+15bit */
+	/* rotation left shअगरt 15+30+15bit */
 	ROLDQ(kl, kr, 15);
 
 	/* k10 */
 	subRL[13] = kr;
-	/* rotation left shift 15+30+15+17 bit */
+	/* rotation left shअगरt 15+30+15+17 bit */
 	ROLDQ(kl, kr, 17);
 
 	/* kl3 */
@@ -1022,7 +1023,7 @@ static void camellia_setup128(const unsigned char *key, u64 *subkey)
 	/* kl4 */
 	subRL[17] = kr;
 
-	/* rotation left shift 15+30+15+17+17 bit */
+	/* rotation left shअगरt 15+30+15+17+17 bit */
 	ROLDQ(kl, kr, 17);
 
 	/* k13 */
@@ -1030,7 +1031,7 @@ static void camellia_setup128(const unsigned char *key, u64 *subkey)
 	/* k14 */
 	subRL[19] = kr;
 
-	/* rotation left shift 15+30+15+17+17+17 bit */
+	/* rotation left shअगरt 15+30+15+17+17+17 bit */
 	ROLDQ(kl, kr, 17);
 
 	/* k17 */
@@ -1080,10 +1081,10 @@ static void camellia_setup128(const unsigned char *key, u64 *subkey)
 	subRL[25] = kr;
 
 	camellia_setup_tail(subkey, subRL, 24);
-}
+पूर्ण
 
-static void camellia_setup256(const unsigned char *key, u64 *subkey)
-{
+अटल व्योम camellia_setup256(स्थिर अचिन्हित अक्षर *key, u64 *subkey)
+अणु
 	u64 kl, kr;			/* left half of key */
 	u64 krl, krr;			/* right half of key */
 	u64 ww;				/* temporary variables */
@@ -1178,13 +1179,13 @@ static void camellia_setup256(const unsigned char *key, u64 *subkey)
 	subRL[14] = kl;
 	/* k12 */
 	subRL[15] = kr;
-	/* rotation left shift 32bit */
+	/* rotation left shअगरt 32bit */
 	ROLDQ(kl, kr, 32);
 	/* kl5 */
 	subRL[24] = kl;
 	/* kl6 */
 	subRL[25] = kr;
-	/* rotation left shift 17 from k11,k12 -> k21,k22 */
+	/* rotation left shअगरt 17 from k11,k12 -> k21,k22 */
 	ROLDQ(kl, kr, 17);
 	/* k21 */
 	subRL[28] = kl;
@@ -1213,138 +1214,138 @@ static void camellia_setup256(const unsigned char *key, u64 *subkey)
 	subRL[33] = krr;
 
 	camellia_setup_tail(subkey, subRL, 32);
-}
+पूर्ण
 
-static void camellia_setup192(const unsigned char *key, u64 *subkey)
-{
-	unsigned char kk[32];
+अटल व्योम camellia_setup192(स्थिर अचिन्हित अक्षर *key, u64 *subkey)
+अणु
+	अचिन्हित अक्षर kk[32];
 	u64 krl, krr;
 
-	memcpy(kk, key, 24);
-	memcpy((unsigned char *)&krl, key+16, 8);
+	स_नकल(kk, key, 24);
+	स_नकल((अचिन्हित अक्षर *)&krl, key+16, 8);
 	krr = ~krl;
-	memcpy(kk+24, (unsigned char *)&krr, 8);
+	स_नकल(kk+24, (अचिन्हित अक्षर *)&krr, 8);
 	camellia_setup256(kk, subkey);
-}
+पूर्ण
 
-int __camellia_setkey(struct camellia_ctx *cctx, const unsigned char *key,
-		      unsigned int key_len)
-{
-	if (key_len != 16 && key_len != 24 && key_len != 32)
-		return -EINVAL;
+पूर्णांक __camellia_setkey(काष्ठा camellia_ctx *cctx, स्थिर अचिन्हित अक्षर *key,
+		      अचिन्हित पूर्णांक key_len)
+अणु
+	अगर (key_len != 16 && key_len != 24 && key_len != 32)
+		वापस -EINVAL;
 
 	cctx->key_length = key_len;
 
-	switch (key_len) {
-	case 16:
+	चयन (key_len) अणु
+	हाल 16:
 		camellia_setup128(key, cctx->key_table);
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		camellia_setup192(key, cctx->key_table);
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		camellia_setup256(key, cctx->key_table);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(__camellia_setkey);
 
-static int camellia_setkey(struct crypto_tfm *tfm, const u8 *key,
-			   unsigned int key_len)
-{
-	return __camellia_setkey(crypto_tfm_ctx(tfm), key, key_len);
-}
+अटल पूर्णांक camellia_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key,
+			   अचिन्हित पूर्णांक key_len)
+अणु
+	वापस __camellia_setkey(crypto_tfm_ctx(tfm), key, key_len);
+पूर्ण
 
-static int camellia_setkey_skcipher(struct crypto_skcipher *tfm, const u8 *key,
-				    unsigned int key_len)
-{
-	return camellia_setkey(&tfm->base, key, key_len);
-}
+अटल पूर्णांक camellia_setkey_skcipher(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+				    अचिन्हित पूर्णांक key_len)
+अणु
+	वापस camellia_setkey(&tfm->base, key, key_len);
+पूर्ण
 
-void camellia_decrypt_cbc_2way(const void *ctx, u8 *dst, const u8 *src)
-{
+व्योम camellia_decrypt_cbc_2way(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src)
+अणु
 	u8 buf[CAMELLIA_BLOCK_SIZE];
-	const u8 *iv = src;
+	स्थिर u8 *iv = src;
 
-	if (dst == src)
-		iv = memcpy(buf, iv, sizeof(buf));
+	अगर (dst == src)
+		iv = स_नकल(buf, iv, माप(buf));
 	camellia_dec_blk_2way(ctx, dst, src);
 	crypto_xor(dst + CAMELLIA_BLOCK_SIZE, iv, CAMELLIA_BLOCK_SIZE);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(camellia_decrypt_cbc_2way);
 
-static int ecb_encrypt(struct skcipher_request *req)
-{
+अटल पूर्णांक ecb_encrypt(काष्ठा skcipher_request *req)
+अणु
 	ECB_WALK_START(req, CAMELLIA_BLOCK_SIZE, -1);
 	ECB_BLOCK(2, camellia_enc_blk_2way);
 	ECB_BLOCK(1, camellia_enc_blk);
 	ECB_WALK_END();
-}
+पूर्ण
 
-static int ecb_decrypt(struct skcipher_request *req)
-{
+अटल पूर्णांक ecb_decrypt(काष्ठा skcipher_request *req)
+अणु
 	ECB_WALK_START(req, CAMELLIA_BLOCK_SIZE, -1);
 	ECB_BLOCK(2, camellia_dec_blk_2way);
 	ECB_BLOCK(1, camellia_dec_blk);
 	ECB_WALK_END();
-}
+पूर्ण
 
-static int cbc_encrypt(struct skcipher_request *req)
-{
+अटल पूर्णांक cbc_encrypt(काष्ठा skcipher_request *req)
+अणु
 	CBC_WALK_START(req, CAMELLIA_BLOCK_SIZE, -1);
 	CBC_ENC_BLOCK(camellia_enc_blk);
 	CBC_WALK_END();
-}
+पूर्ण
 
-static int cbc_decrypt(struct skcipher_request *req)
-{
+अटल पूर्णांक cbc_decrypt(काष्ठा skcipher_request *req)
+अणु
 	CBC_WALK_START(req, CAMELLIA_BLOCK_SIZE, -1);
 	CBC_DEC_BLOCK(2, camellia_decrypt_cbc_2way);
 	CBC_DEC_BLOCK(1, camellia_dec_blk);
 	CBC_WALK_END();
-}
+पूर्ण
 
-static struct crypto_alg camellia_cipher_alg = {
+अटल काष्ठा crypto_alg camellia_cipher_alg = अणु
 	.cra_name		= "camellia",
 	.cra_driver_name	= "camellia-asm",
 	.cra_priority		= 200,
 	.cra_flags		= CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		= CAMELLIA_BLOCK_SIZE,
-	.cra_ctxsize		= sizeof(struct camellia_ctx),
+	.cra_ctxsize		= माप(काष्ठा camellia_ctx),
 	.cra_alignmask		= 0,
 	.cra_module		= THIS_MODULE,
-	.cra_u			= {
-		.cipher = {
+	.cra_u			= अणु
+		.cipher = अणु
 			.cia_min_keysize = CAMELLIA_MIN_KEY_SIZE,
 			.cia_max_keysize = CAMELLIA_MAX_KEY_SIZE,
 			.cia_setkey	 = camellia_setkey,
 			.cia_encrypt	 = camellia_encrypt,
 			.cia_decrypt	 = camellia_decrypt
-		}
-	}
-};
+		पूर्ण
+	पूर्ण
+पूर्ण;
 
-static struct skcipher_alg camellia_skcipher_algs[] = {
-	{
+अटल काष्ठा skcipher_alg camellia_skcipher_algs[] = अणु
+	अणु
 		.base.cra_name		= "ecb(camellia)",
 		.base.cra_driver_name	= "ecb-camellia-asm",
 		.base.cra_priority	= 300,
 		.base.cra_blocksize	= CAMELLIA_BLOCK_SIZE,
-		.base.cra_ctxsize	= sizeof(struct camellia_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा camellia_ctx),
 		.base.cra_module	= THIS_MODULE,
 		.min_keysize		= CAMELLIA_MIN_KEY_SIZE,
 		.max_keysize		= CAMELLIA_MAX_KEY_SIZE,
 		.setkey			= camellia_setkey_skcipher,
 		.encrypt		= ecb_encrypt,
 		.decrypt		= ecb_decrypt,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "cbc(camellia)",
 		.base.cra_driver_name	= "cbc-camellia-asm",
 		.base.cra_priority	= 300,
 		.base.cra_blocksize	= CAMELLIA_BLOCK_SIZE,
-		.base.cra_ctxsize	= sizeof(struct camellia_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा camellia_ctx),
 		.base.cra_module	= THIS_MODULE,
 		.min_keysize		= CAMELLIA_MIN_KEY_SIZE,
 		.max_keysize		= CAMELLIA_MAX_KEY_SIZE,
@@ -1352,64 +1353,64 @@ static struct skcipher_alg camellia_skcipher_algs[] = {
 		.setkey			= camellia_setkey_skcipher,
 		.encrypt		= cbc_encrypt,
 		.decrypt		= cbc_decrypt,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static bool is_blacklisted_cpu(void)
-{
-	if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL)
-		return false;
+अटल bool is_blacklisted_cpu(व्योम)
+अणु
+	अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_INTEL)
+		वापस false;
 
-	if (boot_cpu_data.x86 == 0x0f) {
+	अगर (boot_cpu_data.x86 == 0x0f) अणु
 		/*
-		 * On Pentium 4, camellia-asm is slower than original assembler
+		 * On Pentium 4, camellia-यंत्र is slower than original assembler
 		 * implementation because excessive uses of 64bit rotate and
-		 * left-shifts (which are really slow on P4) needed to store and
-		 * handle 128bit block in two 64bit registers.
+		 * left-shअगरts (which are really slow on P4) needed to store and
+		 * handle 128bit block in two 64bit रेजिस्टरs.
 		 */
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int force;
-module_param(force, int, 0);
-MODULE_PARM_DESC(force, "Force module load, ignore CPU blacklist");
+अटल पूर्णांक क्रमce;
+module_param(क्रमce, पूर्णांक, 0);
+MODULE_PARM_DESC(क्रमce, "Force module load, ignore CPU blacklist");
 
-static int __init init(void)
-{
-	int err;
+अटल पूर्णांक __init init(व्योम)
+अणु
+	पूर्णांक err;
 
-	if (!force && is_blacklisted_cpu()) {
-		printk(KERN_INFO
+	अगर (!क्रमce && is_blacklisted_cpu()) अणु
+		prपूर्णांकk(KERN_INFO
 			"camellia-x86_64: performance on this CPU "
 			"would be suboptimal: disabling "
 			"camellia-x86_64.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	err = crypto_register_alg(&camellia_cipher_alg);
-	if (err)
-		return err;
+	err = crypto_रेजिस्टर_alg(&camellia_cipher_alg);
+	अगर (err)
+		वापस err;
 
-	err = crypto_register_skciphers(camellia_skcipher_algs,
+	err = crypto_रेजिस्टर_skciphers(camellia_skcipher_algs,
 					ARRAY_SIZE(camellia_skcipher_algs));
-	if (err)
-		crypto_unregister_alg(&camellia_cipher_alg);
+	अगर (err)
+		crypto_unरेजिस्टर_alg(&camellia_cipher_alg);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit fini(void)
-{
-	crypto_unregister_alg(&camellia_cipher_alg);
-	crypto_unregister_skciphers(camellia_skcipher_algs,
+अटल व्योम __निकास fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_alg(&camellia_cipher_alg);
+	crypto_unरेजिस्टर_skciphers(camellia_skcipher_algs,
 				    ARRAY_SIZE(camellia_skcipher_algs));
-}
+पूर्ण
 
 module_init(init);
-module_exit(fini);
+module_निकास(fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Camellia Cipher Algorithm, asm optimized");

@@ -1,15 +1,16 @@
+<शैली गुरु>
 /*
  * AGPGART module version 0.99
- * Copyright (C) 1999 Jeff Hartmann
+ * Copyright (C) 1999 Jeff Harपंचांगann
  * Copyright (C) 1999 Precision Insight, Inc.
  * Copyright (C) 1999 Xi Graphics, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -23,106 +24,106 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef _AGP_H
-#define _AGP_H 1
+#अगर_अघोषित _AGP_H
+#घोषणा _AGP_H 1
 
-#include <linux/mutex.h>
-#include <linux/agp_backend.h>
-#include <uapi/linux/agpgart.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/agp_backend.h>
+#समावेश <uapi/linux/agpgart.h>
 
-struct agp_info {
-	struct agp_version version;	/* version of the driver        */
-	u32 bridge_id;		/* bridge vendor/device         */
+काष्ठा agp_info अणु
+	काष्ठा agp_version version;	/* version of the driver        */
+	u32 bridge_id;		/* bridge venकरोr/device         */
 	u32 agp_mode;		/* mode info of bridge          */
-	unsigned long aper_base;/* base of aperture             */
-	size_t aper_size;	/* size of aperture             */
-	size_t pg_total;	/* max pages (swap + system)    */
-	size_t pg_system;	/* max pages (system)           */
-	size_t pg_used;		/* current pages used           */
-};
+	अचिन्हित दीर्घ aper_base;/* base of aperture             */
+	माप_प्रकार aper_size;	/* size of aperture             */
+	माप_प्रकार pg_total;	/* max pages (swap + प्रणाली)    */
+	माप_प्रकार pg_प्रणाली;	/* max pages (प्रणाली)           */
+	माप_प्रकार pg_used;		/* current pages used           */
+पूर्ण;
 
-struct agp_setup {
+काष्ठा agp_setup अणु
 	u32 agp_mode;		/* mode info of bridge          */
-};
+पूर्ण;
 
 /*
- * The "prot" down below needs still a "sleep" flag somehow ...
+ * The "prot" करोwn below needs still a "sleep" flag somehow ...
  */
-struct agp_segment {
+काष्ठा agp_segment अणु
 	off_t pg_start;		/* starting page to populate    */
-	size_t pg_count;	/* number of pages              */
-	int prot;		/* prot flags for mmap          */
-};
+	माप_प्रकार pg_count;	/* number of pages              */
+	पूर्णांक prot;		/* prot flags क्रम mmap          */
+पूर्ण;
 
-struct agp_segment_priv {
+काष्ठा agp_segment_priv अणु
 	off_t pg_start;
-	size_t pg_count;
+	माप_प्रकार pg_count;
 	pgprot_t prot;
-};
+पूर्ण;
 
-struct agp_region {
+काष्ठा agp_region अणु
 	pid_t pid;		/* pid of process               */
-	size_t seg_count;	/* number of segments           */
-	struct agp_segment *seg_list;
-};
+	माप_प्रकार seg_count;	/* number of segments           */
+	काष्ठा agp_segment *seg_list;
+पूर्ण;
 
-struct agp_allocate {
-	int key;		/* tag of allocation            */
-	size_t pg_count;	/* number of pages              */
+काष्ठा agp_allocate अणु
+	पूर्णांक key;		/* tag of allocation            */
+	माप_प्रकार pg_count;	/* number of pages              */
 	u32 type;		/* 0 == normal, other devspec   */
-	u32 physical;           /* device specific (some devices  
+	u32 physical;           /* device specअगरic (some devices  
 				 * need a phys address of the     
 				 * actual page behind the gatt    
 				 * table)                        */
-};
+पूर्ण;
 
-struct agp_bind {
-	int key;		/* tag of allocation            */
+काष्ठा agp_bind अणु
+	पूर्णांक key;		/* tag of allocation            */
 	off_t pg_start;		/* starting page to populate    */
-};
+पूर्ण;
 
-struct agp_unbind {
-	int key;		/* tag of allocation            */
-	u32 priority;		/* priority for paging out      */
-};
+काष्ठा agp_unbind अणु
+	पूर्णांक key;		/* tag of allocation            */
+	u32 priority;		/* priority क्रम paging out      */
+पूर्ण;
 
-struct agp_client {
-	struct agp_client *next;
-	struct agp_client *prev;
+काष्ठा agp_client अणु
+	काष्ठा agp_client *next;
+	काष्ठा agp_client *prev;
 	pid_t pid;
-	int num_segments;
-	struct agp_segment_priv **segments;
-};
+	पूर्णांक num_segments;
+	काष्ठा agp_segment_priv **segments;
+पूर्ण;
 
-struct agp_controller {
-	struct agp_controller *next;
-	struct agp_controller *prev;
+काष्ठा agp_controller अणु
+	काष्ठा agp_controller *next;
+	काष्ठा agp_controller *prev;
 	pid_t pid;
-	int num_clients;
-	struct agp_memory *pool;
-	struct agp_client *clients;
-};
+	पूर्णांक num_clients;
+	काष्ठा agp_memory *pool;
+	काष्ठा agp_client *clients;
+पूर्ण;
 
-#define AGP_FF_ALLOW_CLIENT		0
-#define AGP_FF_ALLOW_CONTROLLER 	1
-#define AGP_FF_IS_CLIENT		2
-#define AGP_FF_IS_CONTROLLER		3
-#define AGP_FF_IS_VALID 		4
+#घोषणा AGP_FF_ALLOW_CLIENT		0
+#घोषणा AGP_FF_ALLOW_CONTROLLER 	1
+#घोषणा AGP_FF_IS_CLIENT		2
+#घोषणा AGP_FF_IS_CONTROLLER		3
+#घोषणा AGP_FF_IS_VALID 		4
 
-struct agp_file_private {
-	struct agp_file_private *next;
-	struct agp_file_private *prev;
+काष्ठा agp_file_निजी अणु
+	काष्ठा agp_file_निजी *next;
+	काष्ठा agp_file_निजी *prev;
 	pid_t my_pid;
-	unsigned long access_flags;	/* long req'd for set_bit --RR */
-};
+	अचिन्हित दीर्घ access_flags;	/* दीर्घ req'd क्रम set_bit --RR */
+पूर्ण;
 
-struct agp_front_data {
-	struct mutex agp_mutex;
-	struct agp_controller *current_controller;
-	struct agp_controller *controllers;
-	struct agp_file_private *file_priv_list;
+काष्ठा agp_front_data अणु
+	काष्ठा mutex agp_mutex;
+	काष्ठा agp_controller *current_controller;
+	काष्ठा agp_controller *controllers;
+	काष्ठा agp_file_निजी *file_priv_list;
 	bool used_by_controller;
 	bool backend_acquired;
-};
+पूर्ण;
 
-#endif				/* _AGP_H */
+#पूर्ण_अगर				/* _AGP_H */

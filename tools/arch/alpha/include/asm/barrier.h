@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __TOOLS_LINUX_ASM_ALPHA_BARRIER_H
-#define __TOOLS_LINUX_ASM_ALPHA_BARRIER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __TOOLS_LINUX_ASM_ALPHA_BARRIER_H
+#घोषणा __TOOLS_LINUX_ASM_ALPHA_BARRIER_H
 
-#define mb()	__asm__ __volatile__("mb": : :"memory")
-#define rmb()	__asm__ __volatile__("mb": : :"memory")
-#define wmb()	__asm__ __volatile__("wmb": : :"memory")
+#घोषणा mb()	__यंत्र__ __अस्थिर__("mb": : :"memory")
+#घोषणा rmb()	__यंत्र__ __अस्थिर__("mb": : :"memory")
+#घोषणा wmb()	__यंत्र__ __अस्थिर__("wmb": : :"memory")
 
-#endif		/* __TOOLS_LINUX_ASM_ALPHA_BARRIER_H */
+#पूर्ण_अगर		/* __TOOLS_LINUX_ASM_ALPHA_BARRIER_H */

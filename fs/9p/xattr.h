@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright IBM Corporation, 2010
  * Author Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of version 2.1 of the GNU Lesser General Public License
  * as published by the Free Software Foundation.
  *
@@ -11,24 +12,24 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
  */
-#ifndef FS_9P_XATTR_H
-#define FS_9P_XATTR_H
+#अगर_अघोषित FS_9P_XATTR_H
+#घोषणा FS_9P_XATTR_H
 
-#include <linux/xattr.h>
-#include <net/9p/9p.h>
-#include <net/9p/client.h>
+#समावेश <linux/xattr.h>
+#समावेश <net/9p/9p.h>
+#समावेश <net/9p/client.h>
 
-extern const struct xattr_handler *v9fs_xattr_handlers[];
-extern const struct xattr_handler v9fs_xattr_acl_access_handler;
-extern const struct xattr_handler v9fs_xattr_acl_default_handler;
+बाह्य स्थिर काष्ठा xattr_handler *v9fs_xattr_handlers[];
+बाह्य स्थिर काष्ठा xattr_handler v9fs_xattr_acl_access_handler;
+बाह्य स्थिर काष्ठा xattr_handler v9fs_xattr_acl_शेष_handler;
 
-extern ssize_t v9fs_fid_xattr_get(struct p9_fid *, const char *,
-				  void *, size_t);
-extern ssize_t v9fs_xattr_get(struct dentry *, const char *,
-			      void *, size_t);
-extern int v9fs_fid_xattr_set(struct p9_fid *, const char *,
-			  const void *, size_t, int);
-extern int v9fs_xattr_set(struct dentry *, const char *,
-			  const void *, size_t, int);
-extern ssize_t v9fs_listxattr(struct dentry *, char *, size_t);
-#endif /* FS_9P_XATTR_H */
+बाह्य sमाप_प्रकार v9fs_fid_xattr_get(काष्ठा p9_fid *, स्थिर अक्षर *,
+				  व्योम *, माप_प्रकार);
+बाह्य sमाप_प्रकार v9fs_xattr_get(काष्ठा dentry *, स्थिर अक्षर *,
+			      व्योम *, माप_प्रकार);
+बाह्य पूर्णांक v9fs_fid_xattr_set(काष्ठा p9_fid *, स्थिर अक्षर *,
+			  स्थिर व्योम *, माप_प्रकार, पूर्णांक);
+बाह्य पूर्णांक v9fs_xattr_set(काष्ठा dentry *, स्थिर अक्षर *,
+			  स्थिर व्योम *, माप_प्रकार, पूर्णांक);
+बाह्य sमाप_प्रकार v9fs_listxattr(काष्ठा dentry *, अक्षर *, माप_प्रकार);
+#पूर्ण_अगर /* FS_9P_XATTR_H */

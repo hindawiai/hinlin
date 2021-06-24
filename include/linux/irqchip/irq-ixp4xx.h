@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __IRQ_IXP4XX_H
-#define __IRQ_IXP4XX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __IRQ_IXP4XX_H
+#घोषणा __IRQ_IXP4XX_H
 
-#include <linux/ioport.h>
-struct irq_domain;
+#समावेश <linux/ioport.h>
+काष्ठा irq_करोमुख्य;
 
-void ixp4xx_irq_init(resource_size_t irqbase,
+व्योम ixp4xx_irq_init(resource_माप_प्रकार irqbase,
 		     bool is_356);
-struct irq_domain *ixp4xx_get_irq_domain(void);
+काष्ठा irq_करोमुख्य *ixp4xx_get_irq_करोमुख्य(व्योम);
 
-#endif /* __IRQ_IXP4XX_H */
+#पूर्ण_अगर /* __IRQ_IXP4XX_H */

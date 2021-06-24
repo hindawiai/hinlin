@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,37 +16,37 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _VNIC_RQ_H_
-#define _VNIC_RQ_H_
+#अगर_अघोषित _VNIC_RQ_H_
+#घोषणा _VNIC_RQ_H_
 
-#include <linux/pci.h>
-#include "vnic_dev.h"
-#include "vnic_cq.h"
+#समावेश <linux/pci.h>
+#समावेश "vnic_dev.h"
+#समावेश "vnic_cq.h"
 
 /*
- * These defines avoid symbol clash between fnic and enic (Cisco 10G Eth
+ * These defines aव्योम symbol clash between fnic and enic (Cisco 10G Eth
  * Driver) when both are built with CONFIG options =y
  */
-#define vnic_rq_desc_avail fnic_rq_desc_avail
-#define vnic_rq_desc_used fnic_rq_desc_used
-#define vnic_rq_next_desc fnic_rq_next_desc
-#define vnic_rq_next_index fnic_rq_next_index
-#define vnic_rq_next_buf_index fnic_rq_next_buf_index
-#define vnic_rq_post fnic_rq_post
-#define vnic_rq_posting_soon fnic_rq_posting_soon
-#define vnic_rq_return_descs fnic_rq_return_descs
-#define vnic_rq_service fnic_rq_service
-#define vnic_rq_fill fnic_rq_fill
-#define vnic_rq_free fnic_rq_free
-#define vnic_rq_alloc fnic_rq_alloc
-#define vnic_rq_init fnic_rq_init
-#define vnic_rq_error_status fnic_rq_error_status
-#define vnic_rq_enable fnic_rq_enable
-#define vnic_rq_disable fnic_rq_disable
-#define vnic_rq_clean fnic_rq_clean
+#घोषणा vnic_rq_desc_avail fnic_rq_desc_avail
+#घोषणा vnic_rq_desc_used fnic_rq_desc_used
+#घोषणा vnic_rq_next_desc fnic_rq_next_desc
+#घोषणा vnic_rq_next_index fnic_rq_next_index
+#घोषणा vnic_rq_next_buf_index fnic_rq_next_buf_index
+#घोषणा vnic_rq_post fnic_rq_post
+#घोषणा vnic_rq_posting_soon fnic_rq_posting_soon
+#घोषणा vnic_rq_वापस_descs fnic_rq_वापस_descs
+#घोषणा vnic_rq_service fnic_rq_service
+#घोषणा vnic_rq_fill fnic_rq_fill
+#घोषणा vnic_rq_मुक्त fnic_rq_मुक्त
+#घोषणा vnic_rq_alloc fnic_rq_alloc
+#घोषणा vnic_rq_init fnic_rq_init
+#घोषणा vnic_rq_error_status fnic_rq_error_status
+#घोषणा vnic_rq_enable fnic_rq_enable
+#घोषणा vnic_rq_disable fnic_rq_disable
+#घोषणा vnic_rq_clean fnic_rq_clean
 
 /* Receive queue control */
-struct vnic_rq_ctrl {
+काष्ठा vnic_rq_ctrl अणु
 	u64 ring_base;			/* 0x00 */
 	u32 ring_size;			/* 0x08 */
 	u32 pad0;
@@ -59,9 +60,9 @@ struct vnic_rq_ctrl {
 	u32 pad4;
 	u32 fetch_index;		/* 0x30 */
 	u32 pad5;
-	u32 error_interrupt_enable;	/* 0x38 */
+	u32 error_पूर्णांकerrupt_enable;	/* 0x38 */
 	u32 pad6;
-	u32 error_interrupt_offset;	/* 0x40 */
+	u32 error_पूर्णांकerrupt_offset;	/* 0x40 */
 	u32 pad7;
 	u32 error_status;		/* 0x48 */
 	u32 pad8;
@@ -69,71 +70,71 @@ struct vnic_rq_ctrl {
 	u32 pad9;
 	u32 dropped_packet_count_rc;	/* 0x58 */
 	u32 pad10;
-};
+पूर्ण;
 
-/* Break the vnic_rq_buf allocations into blocks of 64 entries */
-#define VNIC_RQ_BUF_BLK_ENTRIES 64
-#define VNIC_RQ_BUF_BLK_SZ \
-	(VNIC_RQ_BUF_BLK_ENTRIES * sizeof(struct vnic_rq_buf))
-#define VNIC_RQ_BUF_BLKS_NEEDED(entries) \
+/* Break the vnic_rq_buf allocations पूर्णांकo blocks of 64 entries */
+#घोषणा VNIC_RQ_BUF_BLK_ENTRIES 64
+#घोषणा VNIC_RQ_BUF_BLK_SZ \
+	(VNIC_RQ_BUF_BLK_ENTRIES * माप(काष्ठा vnic_rq_buf))
+#घोषणा VNIC_RQ_BUF_BLKS_NEEDED(entries) \
 	DIV_ROUND_UP(entries, VNIC_RQ_BUF_BLK_ENTRIES)
-#define VNIC_RQ_BUF_BLKS_MAX VNIC_RQ_BUF_BLKS_NEEDED(4096)
+#घोषणा VNIC_RQ_BUF_BLKS_MAX VNIC_RQ_BUF_BLKS_NEEDED(4096)
 
-struct vnic_rq_buf {
-	struct vnic_rq_buf *next;
+काष्ठा vnic_rq_buf अणु
+	काष्ठा vnic_rq_buf *next;
 	dma_addr_t dma_addr;
-	void *os_buf;
-	unsigned int os_buf_index;
-	unsigned int len;
-	unsigned int index;
-	void *desc;
-};
+	व्योम *os_buf;
+	अचिन्हित पूर्णांक os_buf_index;
+	अचिन्हित पूर्णांक len;
+	अचिन्हित पूर्णांक index;
+	व्योम *desc;
+पूर्ण;
 
-struct vnic_rq {
-	unsigned int index;
-	struct vnic_dev *vdev;
-	struct vnic_rq_ctrl __iomem *ctrl;	/* memory-mapped */
-	struct vnic_dev_ring ring;
-	struct vnic_rq_buf *bufs[VNIC_RQ_BUF_BLKS_MAX];
-	struct vnic_rq_buf *to_use;
-	struct vnic_rq_buf *to_clean;
-	void *os_buf_head;
-	unsigned int buf_index;
-	unsigned int pkts_outstanding;
-};
+काष्ठा vnic_rq अणु
+	अचिन्हित पूर्णांक index;
+	काष्ठा vnic_dev *vdev;
+	काष्ठा vnic_rq_ctrl __iomem *ctrl;	/* memory-mapped */
+	काष्ठा vnic_dev_ring ring;
+	काष्ठा vnic_rq_buf *bufs[VNIC_RQ_BUF_BLKS_MAX];
+	काष्ठा vnic_rq_buf *to_use;
+	काष्ठा vnic_rq_buf *to_clean;
+	व्योम *os_buf_head;
+	अचिन्हित पूर्णांक buf_index;
+	अचिन्हित पूर्णांक pkts_outstanding;
+पूर्ण;
 
-static inline unsigned int vnic_rq_desc_avail(struct vnic_rq *rq)
-{
-	/* how many does SW own? */
-	return rq->ring.desc_avail;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक vnic_rq_desc_avail(काष्ठा vnic_rq *rq)
+अणु
+	/* how many करोes SW own? */
+	वापस rq->ring.desc_avail;
+पूर्ण
 
-static inline unsigned int vnic_rq_desc_used(struct vnic_rq *rq)
-{
-	/* how many does HW own? */
-	return rq->ring.desc_count - rq->ring.desc_avail - 1;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक vnic_rq_desc_used(काष्ठा vnic_rq *rq)
+अणु
+	/* how many करोes HW own? */
+	वापस rq->ring.desc_count - rq->ring.desc_avail - 1;
+पूर्ण
 
-static inline void *vnic_rq_next_desc(struct vnic_rq *rq)
-{
-	return rq->to_use->desc;
-}
+अटल अंतरभूत व्योम *vnic_rq_next_desc(काष्ठा vnic_rq *rq)
+अणु
+	वापस rq->to_use->desc;
+पूर्ण
 
-static inline unsigned int vnic_rq_next_index(struct vnic_rq *rq)
-{
-	return rq->to_use->index;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक vnic_rq_next_index(काष्ठा vnic_rq *rq)
+अणु
+	वापस rq->to_use->index;
+पूर्ण
 
-static inline unsigned int vnic_rq_next_buf_index(struct vnic_rq *rq)
-{
-	return rq->buf_index++;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक vnic_rq_next_buf_index(काष्ठा vnic_rq *rq)
+अणु
+	वापस rq->buf_index++;
+पूर्ण
 
-static inline void vnic_rq_post(struct vnic_rq *rq,
-	void *os_buf, unsigned int os_buf_index,
-	dma_addr_t dma_addr, unsigned int len)
-{
-	struct vnic_rq_buf *buf = rq->to_use;
+अटल अंतरभूत व्योम vnic_rq_post(काष्ठा vnic_rq *rq,
+	व्योम *os_buf, अचिन्हित पूर्णांक os_buf_index,
+	dma_addr_t dma_addr, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा vnic_rq_buf *buf = rq->to_use;
 
 	buf->os_buf = os_buf;
 	buf->os_buf_index = os_buf_index;
@@ -147,89 +148,89 @@ static inline void vnic_rq_post(struct vnic_rq *rq,
 	/* Move the posted_index every nth descriptor
 	 */
 
-#ifndef VNIC_RQ_RETURN_RATE
-#define VNIC_RQ_RETURN_RATE		0xf	/* keep 2^n - 1 */
-#endif
+#अगर_अघोषित VNIC_RQ_RETURN_RATE
+#घोषणा VNIC_RQ_RETURN_RATE		0xf	/* keep 2^n - 1 */
+#पूर्ण_अगर
 
-	if ((buf->index & VNIC_RQ_RETURN_RATE) == 0) {
-		/* Adding write memory barrier prevents compiler and/or CPU
-		 * reordering, thus avoiding descriptor posting before
-		 * descriptor is initialized. Otherwise, hardware can read
+	अगर ((buf->index & VNIC_RQ_RETURN_RATE) == 0) अणु
+		/* Adding ग_लिखो memory barrier prevents compiler and/or CPU
+		 * reordering, thus aव्योमing descriptor posting beक्रमe
+		 * descriptor is initialized. Otherwise, hardware can पढ़ो
 		 * stale descriptor fields.
 		 */
 		wmb();
-		iowrite32(buf->index, &rq->ctrl->posted_index);
-	}
-}
+		ioग_लिखो32(buf->index, &rq->ctrl->posted_index);
+	पूर्ण
+पूर्ण
 
-static inline int vnic_rq_posting_soon(struct vnic_rq *rq)
-{
-	return (rq->to_use->index & VNIC_RQ_RETURN_RATE) == 0;
-}
+अटल अंतरभूत पूर्णांक vnic_rq_posting_soon(काष्ठा vnic_rq *rq)
+अणु
+	वापस (rq->to_use->index & VNIC_RQ_RETURN_RATE) == 0;
+पूर्ण
 
-static inline void vnic_rq_return_descs(struct vnic_rq *rq, unsigned int count)
-{
+अटल अंतरभूत व्योम vnic_rq_वापस_descs(काष्ठा vnic_rq *rq, अचिन्हित पूर्णांक count)
+अणु
 	rq->ring.desc_avail += count;
-}
+पूर्ण
 
-enum desc_return_options {
+क्रमागत desc_वापस_options अणु
 	VNIC_RQ_RETURN_DESC,
 	VNIC_RQ_DEFER_RETURN_DESC,
-};
+पूर्ण;
 
-static inline void vnic_rq_service(struct vnic_rq *rq,
-	struct cq_desc *cq_desc, u16 completed_index,
-	int desc_return, void (*buf_service)(struct vnic_rq *rq,
-	struct cq_desc *cq_desc, struct vnic_rq_buf *buf,
-	int skipped, void *opaque), void *opaque)
-{
-	struct vnic_rq_buf *buf;
-	int skipped;
+अटल अंतरभूत व्योम vnic_rq_service(काष्ठा vnic_rq *rq,
+	काष्ठा cq_desc *cq_desc, u16 completed_index,
+	पूर्णांक desc_वापस, व्योम (*buf_service)(काष्ठा vnic_rq *rq,
+	काष्ठा cq_desc *cq_desc, काष्ठा vnic_rq_buf *buf,
+	पूर्णांक skipped, व्योम *opaque), व्योम *opaque)
+अणु
+	काष्ठा vnic_rq_buf *buf;
+	पूर्णांक skipped;
 
 	buf = rq->to_clean;
-	while (1) {
+	जबतक (1) अणु
 
 		skipped = (buf->index != completed_index);
 
 		(*buf_service)(rq, cq_desc, buf, skipped, opaque);
 
-		if (desc_return == VNIC_RQ_RETURN_DESC)
+		अगर (desc_वापस == VNIC_RQ_RETURN_DESC)
 			rq->ring.desc_avail++;
 
 		rq->to_clean = buf->next;
 
-		if (!skipped)
-			break;
+		अगर (!skipped)
+			अवरोध;
 
 		buf = rq->to_clean;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int vnic_rq_fill(struct vnic_rq *rq,
-	int (*buf_fill)(struct vnic_rq *rq))
-{
-	int err;
+अटल अंतरभूत पूर्णांक vnic_rq_fill(काष्ठा vnic_rq *rq,
+	पूर्णांक (*buf_fill)(काष्ठा vnic_rq *rq))
+अणु
+	पूर्णांक err;
 
-	while (vnic_rq_desc_avail(rq) > 1) {
+	जबतक (vnic_rq_desc_avail(rq) > 1) अणु
 
 		err = (*buf_fill)(rq);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vnic_rq_free(struct vnic_rq *rq);
-int vnic_rq_alloc(struct vnic_dev *vdev, struct vnic_rq *rq, unsigned int index,
-	unsigned int desc_count, unsigned int desc_size);
-void vnic_rq_init(struct vnic_rq *rq, unsigned int cq_index,
-	unsigned int error_interrupt_enable,
-	unsigned int error_interrupt_offset);
-unsigned int vnic_rq_error_status(struct vnic_rq *rq);
-void vnic_rq_enable(struct vnic_rq *rq);
-int vnic_rq_disable(struct vnic_rq *rq);
-void vnic_rq_clean(struct vnic_rq *rq,
-	void (*buf_clean)(struct vnic_rq *rq, struct vnic_rq_buf *buf));
+व्योम vnic_rq_मुक्त(काष्ठा vnic_rq *rq);
+पूर्णांक vnic_rq_alloc(काष्ठा vnic_dev *vdev, काष्ठा vnic_rq *rq, अचिन्हित पूर्णांक index,
+	अचिन्हित पूर्णांक desc_count, अचिन्हित पूर्णांक desc_size);
+व्योम vnic_rq_init(काष्ठा vnic_rq *rq, अचिन्हित पूर्णांक cq_index,
+	अचिन्हित पूर्णांक error_पूर्णांकerrupt_enable,
+	अचिन्हित पूर्णांक error_पूर्णांकerrupt_offset);
+अचिन्हित पूर्णांक vnic_rq_error_status(काष्ठा vnic_rq *rq);
+व्योम vnic_rq_enable(काष्ठा vnic_rq *rq);
+पूर्णांक vnic_rq_disable(काष्ठा vnic_rq *rq);
+व्योम vnic_rq_clean(काष्ठा vnic_rq *rq,
+	व्योम (*buf_clean)(काष्ठा vnic_rq *rq, काष्ठा vnic_rq_buf *buf));
 
-#endif /* _VNIC_RQ_H_ */
+#पूर्ण_अगर /* _VNIC_RQ_H_ */

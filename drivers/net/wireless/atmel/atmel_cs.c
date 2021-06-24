@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*** -*- linux-c -*- **********************************************************
 
-     Driver for Atmel at76c502 at76c504 and at76c506 wireless cards.
+     Driver क्रम Aपंचांगel at76c502 at76c504 and at76c506 wireless cards.
 
         Copyright 2000-2001 ATMEL Corporation.
         Copyright 2003 Simon Kelley.
 
-    This code was developed from version 2.1.1 of the Atmel drivers,
-    released by Atmel corp. under the GPL in December 2002. It also
+    This code was developed from version 2.1.1 of the Aपंचांगel drivers,
+    released by Aपंचांगel corp. under the GPL in December 2002. It also
     includes code from the Linux aironet drivers (C) Benjamin Reed,
     and the Linux PCMCIA package, (C) David Hinds.
 
     For all queries about this code, please contact the current author,
-    Simon Kelley <simon@thekelleys.org.uk> and not Atmel Corporation.
+    Simon Kelley <simon@thekelleys.org.uk> and not Aपंचांगel Corporation.
 
-    This program is free software; you can redistribute it and/or modify
+    This program is मुक्त software; you can redistribute it and/or modअगरy
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -21,35 +22,35 @@
     This software is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU General Public License क्रम more details.
 
     You should have received a copy of the GNU General Public License
-    along with Atmel wireless lan drivers; if not, see
+    aदीर्घ with Aपंचांगel wireless lan drivers; अगर not, see
     <http://www.gnu.org/licenses/>.
 
 ******************************************************************************/
 
-#ifdef __IN_PCMCIA_PACKAGE__
-#include <pcmcia/k_compat.h>
-#endif
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/ptrace.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/netdevice.h>
-#include <linux/moduleparam.h>
-#include <linux/device.h>
+#अगर_घोषित __IN_PCMCIA_PACKAGE__
+#समावेश <pcmcia/k_compat.h>
+#पूर्ण_अगर
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/device.h>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/cisreg.h>
-#include <pcmcia/ds.h>
-#include <pcmcia/ciscode.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/cisreg.h>
+#समावेश <pcmcia/ds.h>
+#समावेश <pcmcia/ciscode.h>
 
-#include <asm/io.h>
-#include <linux/wireless.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/wireless.h>
 
-#include "atmel.h"
+#समावेश "atmel.h"
 
 
 /*====================================================================*/
@@ -60,64 +61,64 @@ MODULE_LICENSE("GPL");
 
 /*====================================================================*/
 
-static int atmel_config(struct pcmcia_device *link);
-static void atmel_release(struct pcmcia_device *link);
+अटल पूर्णांक aपंचांगel_config(काष्ठा pcmcia_device *link);
+अटल व्योम aपंचांगel_release(काष्ठा pcmcia_device *link);
 
-static void atmel_detach(struct pcmcia_device *p_dev);
+अटल व्योम aपंचांगel_detach(काष्ठा pcmcia_device *p_dev);
 
-struct local_info {
-	struct net_device *eth_dev;
-};
+काष्ठा local_info अणु
+	काष्ठा net_device *eth_dev;
+पूर्ण;
 
-static int atmel_probe(struct pcmcia_device *p_dev)
-{
-	struct local_info *local;
+अटल पूर्णांक aपंचांगel_probe(काष्ठा pcmcia_device *p_dev)
+अणु
+	काष्ठा local_info *local;
 
 	dev_dbg(&p_dev->dev, "atmel_attach()\n");
 
-	/* Allocate space for private device-specific data */
-	local = kzalloc(sizeof(*local), GFP_KERNEL);
-	if (!local)
-		return -ENOMEM;
+	/* Allocate space क्रम निजी device-specअगरic data */
+	local = kzalloc(माप(*local), GFP_KERNEL);
+	अगर (!local)
+		वापस -ENOMEM;
 
 	p_dev->priv = local;
 
-	return atmel_config(p_dev);
-} /* atmel_attach */
+	वापस aपंचांगel_config(p_dev);
+पूर्ण /* aपंचांगel_attach */
 
-static void atmel_detach(struct pcmcia_device *link)
-{
+अटल व्योम aपंचांगel_detach(काष्ठा pcmcia_device *link)
+अणु
 	dev_dbg(&link->dev, "atmel_detach\n");
 
-	atmel_release(link);
+	aपंचांगel_release(link);
 
-	kfree(link->priv);
-}
+	kमुक्त(link->priv);
+पूर्ण
 
-/* Call-back function to interrogate PCMCIA-specific information
+/* Call-back function to पूर्णांकerrogate PCMCIA-specअगरic inक्रमmation
    about the current existence of the card */
-static int card_present(void *arg)
-{
-	struct pcmcia_device *link = (struct pcmcia_device *)arg;
+अटल पूर्णांक card_present(व्योम *arg)
+अणु
+	काष्ठा pcmcia_device *link = (काष्ठा pcmcia_device *)arg;
 
-	if (pcmcia_dev_present(link))
-		return 1;
+	अगर (pcmcia_dev_present(link))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_config_check(struct pcmcia_device *p_dev, void *priv_data)
-{
-	if (p_dev->config_index == 0)
-		return -EINVAL;
+अटल पूर्णांक aपंचांगel_config_check(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
+अणु
+	अगर (p_dev->config_index == 0)
+		वापस -EINVAL;
 
-	return pcmcia_request_io(p_dev);
-}
+	वापस pcmcia_request_io(p_dev);
+पूर्ण
 
-static int atmel_config(struct pcmcia_device *link)
-{
-	int ret;
-	const struct pcmcia_device_id *did;
+अटल पूर्णांक aपंचांगel_config(काष्ठा pcmcia_device *link)
+अणु
+	पूर्णांक ret;
+	स्थिर काष्ठा pcmcia_device_id *did;
 
 	did = dev_get_drvdata(&link->dev);
 
@@ -126,86 +127,86 @@ static int atmel_config(struct pcmcia_device *link)
 	link->config_flags |= CONF_ENABLE_IRQ | CONF_AUTO_SET_VPP |
 		CONF_AUTO_AUDIO | CONF_AUTO_SET_IO;
 
-	if (pcmcia_loop_config(link, atmel_config_check, NULL))
-		goto failed;
+	अगर (pcmcia_loop_config(link, aपंचांगel_config_check, शून्य))
+		जाओ failed;
 
-	if (!link->irq) {
+	अगर (!link->irq) अणु
 		dev_err(&link->dev, "atmel: cannot assign IRQ: check that CONFIG_ISA is set in kernel config.");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	ret = pcmcia_enable_device(link);
-	if (ret)
-		goto failed;
+	अगर (ret)
+		जाओ failed;
 
-	((struct local_info *)link->priv)->eth_dev =
-		init_atmel_card(link->irq,
+	((काष्ठा local_info *)link->priv)->eth_dev =
+		init_aपंचांगel_card(link->irq,
 				link->resource[0]->start,
 				did ? did->driver_info : ATMEL_FW_TYPE_NONE,
 				&link->dev,
 				card_present,
 				link);
-	if (!((struct local_info *)link->priv)->eth_dev)
-			goto failed;
+	अगर (!((काष्ठा local_info *)link->priv)->eth_dev)
+			जाओ failed;
 
 
-	return 0;
+	वापस 0;
 
  failed:
-	atmel_release(link);
-	return -ENODEV;
-}
+	aपंचांगel_release(link);
+	वापस -ENODEV;
+पूर्ण
 
-static void atmel_release(struct pcmcia_device *link)
-{
-	struct net_device *dev = ((struct local_info *)link->priv)->eth_dev;
+अटल व्योम aपंचांगel_release(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा net_device *dev = ((काष्ठा local_info *)link->priv)->eth_dev;
 
 	dev_dbg(&link->dev, "atmel_release\n");
 
-	if (dev)
-		stop_atmel_card(dev);
-	((struct local_info *)link->priv)->eth_dev = NULL;
+	अगर (dev)
+		stop_aपंचांगel_card(dev);
+	((काष्ठा local_info *)link->priv)->eth_dev = शून्य;
 
 	pcmcia_disable_device(link);
-}
+पूर्ण
 
-static int atmel_suspend(struct pcmcia_device *link)
-{
-	struct local_info *local = link->priv;
+अटल पूर्णांक aपंचांगel_suspend(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा local_info *local = link->priv;
 
-	netif_device_detach(local->eth_dev);
+	netअगर_device_detach(local->eth_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_resume(struct pcmcia_device *link)
-{
-	struct local_info *local = link->priv;
+अटल पूर्णांक aपंचांगel_resume(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा local_info *local = link->priv;
 
-	atmel_open(local->eth_dev);
-	netif_device_attach(local->eth_dev);
+	aपंचांगel_खोलो(local->eth_dev);
+	netअगर_device_attach(local->eth_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*====================================================================*/
-/* We use the driver_info field to store the correct firmware type for a card. */
+/* We use the driver_info field to store the correct firmware type क्रम a card. */
 
-#define PCMCIA_DEVICE_MANF_CARD_INFO(manf, card, info) { \
+#घोषणा PCMCIA_DEVICE_MANF_CARD_INFO(manf, card, info) अणु \
 	.match_flags = PCMCIA_DEV_ID_MATCH_MANF_ID| \
 			PCMCIA_DEV_ID_MATCH_CARD_ID, \
 	.manf_id = (manf), \
 	.card_id = (card), \
-        .driver_info = (kernel_ulong_t)(info), }
+        .driver_info = (kernel_uदीर्घ_t)(info), पूर्ण
 
-#define PCMCIA_DEVICE_PROD_ID12_INFO(v1, v2, vh1, vh2, info) { \
+#घोषणा PCMCIA_DEVICE_PROD_ID12_INFO(v1, v2, vh1, vh2, info) अणु \
 	.match_flags = PCMCIA_DEV_ID_MATCH_PROD_ID1| \
 			PCMCIA_DEV_ID_MATCH_PROD_ID2, \
-	.prod_id = { (v1), (v2), NULL, NULL }, \
-	.prod_id_hash = { (vh1), (vh2), 0, 0 }, \
-        .driver_info = (kernel_ulong_t)(info), }
+	.prod_id = अणु (v1), (v2), शून्य, शून्य पूर्ण, \
+	.prod_id_hash = अणु (vh1), (vh2), 0, 0 पूर्ण, \
+        .driver_info = (kernel_uदीर्घ_t)(info), पूर्ण
 
-static const struct pcmcia_device_id atmel_ids[] = {
+अटल स्थिर काष्ठा pcmcia_device_id aपंचांगel_ids[] = अणु
 	PCMCIA_DEVICE_MANF_CARD_INFO(0x0101, 0x0620, ATMEL_FW_TYPE_502_3COM),
 	PCMCIA_DEVICE_MANF_CARD_INFO(0x0101, 0x0696, ATMEL_FW_TYPE_502_3COM),
 	PCMCIA_DEVICE_MANF_CARD_INFO(0x01bf, 0x3302, ATMEL_FW_TYPE_502E),
@@ -227,53 +228,53 @@ static const struct pcmcia_device_id atmel_ids[] = {
 	PCMCIA_DEVICE_PROD_ID12_INFO("Wireless", "PC_CARD", 0xa407ecdd, 0x119f6314, ATMEL_FW_TYPE_502D),
 	PCMCIA_DEVICE_PROD_ID12_INFO("WLAN", "802.11b PC CARD", 0x575c516c, 0xb1f6dbc4, ATMEL_FW_TYPE_502D),
 	PCMCIA_DEVICE_PROD_ID12_INFO("LG", "LW2100N", 0xb474d43a, 0x6b1fec94, ATMEL_FW_TYPE_502E),
-	PCMCIA_DEVICE_NULL
-};
+	PCMCIA_DEVICE_शून्य
+पूर्ण;
 
-MODULE_DEVICE_TABLE(pcmcia, atmel_ids);
+MODULE_DEVICE_TABLE(pcmcia, aपंचांगel_ids);
 
-static struct pcmcia_driver atmel_driver = {
+अटल काष्ठा pcmcia_driver aपंचांगel_driver = अणु
 	.owner		= THIS_MODULE,
 	.name		= "atmel_cs",
-	.probe          = atmel_probe,
-	.remove		= atmel_detach,
-	.id_table	= atmel_ids,
-	.suspend	= atmel_suspend,
-	.resume		= atmel_resume,
-};
-module_pcmcia_driver(atmel_driver);
+	.probe          = aपंचांगel_probe,
+	.हटाओ		= aपंचांगel_detach,
+	.id_table	= aपंचांगel_ids,
+	.suspend	= aपंचांगel_suspend,
+	.resume		= aपंचांगel_resume,
+पूर्ण;
+module_pcmcia_driver(aपंचांगel_driver);
 
 /*
-    This program is free software; you can redistribute it and/or
-    modify it under the terms of the GNU General Public License
+    This program is मुक्त software; you can redistribute it and/or
+    modअगरy it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU General Public License क्रम more details.
 
     In addition:
 
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
+    Redistribution and use in source and binary क्रमms, with or without
+    modअगरication, are permitted provided that the following conditions
     are met:
 
     1. Redistributions of source code must retain the above copyright
        notice, this list of conditions and the following disclaimer.
-    2. Redistributions in binary form must reproduce the above copyright
+    2. Redistributions in binary क्रमm must reproduce the above copyright
        notice, this list of conditions and the following disclaimer in the
-       documentation and/or other materials provided with the distribution.
-    3. The name of the author may not be used to endorse or promote
-       products derived from this software without specific prior written
+       करोcumentation and/or other materials provided with the distribution.
+    3. The name of the author may not be used to enकरोrse or promote
+       products derived from this software without specअगरic prior written
        permission.
 
     THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
     IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-    ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
-    INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY सूचीECT,
+    INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
     (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
     SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,

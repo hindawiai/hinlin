@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_I8259_H
-#define _ASM_POWERPC_I8259_H
-#ifdef __KERNEL__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_I8259_H
+#घोषणा _ASM_POWERPC_I8259_H
+#अगर_घोषित __KERNEL__
 
-#include <linux/irq.h>
+#समावेश <linux/irq.h>
 
-extern void i8259_init(struct device_node *node, unsigned long intack_addr);
-extern unsigned int i8259_irq(void);
-extern struct irq_domain *i8259_get_host(void);
+बाह्य व्योम i8259_init(काष्ठा device_node *node, अचिन्हित दीर्घ पूर्णांकack_addr);
+बाह्य अचिन्हित पूर्णांक i8259_irq(व्योम);
+बाह्य काष्ठा irq_करोमुख्य *i8259_get_host(व्योम);
 
-#endif /* __KERNEL__ */
-#endif /* _ASM_POWERPC_I8259_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* _ASM_POWERPC_I8259_H */

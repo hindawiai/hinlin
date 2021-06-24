@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /* Glue code to lib/swiotlb-xen.c */
 
-#include <linux/dma-map-ops.h>
-#include <linux/pci.h>
-#include <xen/swiotlb-xen.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/pci.h>
+#समावेश <xen/swiotlb-xen.h>
 
-#include <asm/xen/hypervisor.h>
-#include <xen/xen.h>
-#include <asm/iommu_table.h>
+#समावेश <यंत्र/xen/hypervisor.h>
+#समावेश <xen/xen.h>
+#समावेश <यंत्र/iommu_table.h>
 
 
-#include <asm/xen/swiotlb-xen.h>
-#ifdef CONFIG_X86_64
-#include <asm/iommu.h>
-#include <asm/dma.h>
-#endif
-#include <linux/export.h>
+#समावेश <यंत्र/xen/swiotlb-xen.h>
+#अगर_घोषित CONFIG_X86_64
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/dma.h>
+#पूर्ण_अगर
+#समावेश <linux/export.h>
 
-int xen_swiotlb __read_mostly;
+पूर्णांक xen_swiotlb __पढ़ो_mostly;
 
 /*
- * pci_xen_swiotlb_detect - set xen_swiotlb to 1 if necessary
+ * pci_xen_swiotlb_detect - set xen_swiotlb to 1 अगर necessary
  *
- * This returns non-zero if we are forced to use xen_swiotlb (by the boot
+ * This वापसs non-zero अगर we are क्रमced to use xen_swiotlb (by the boot
  * option).
  */
-int __init pci_xen_swiotlb_detect(void)
-{
+पूर्णांक __init pci_xen_swiotlb_detect(व्योम)
+अणु
 
-	if (!xen_pv_domain())
-		return 0;
+	अगर (!xen_pv_करोमुख्य())
+		वापस 0;
 
-	/* If running as PV guest, either iommu=soft, or swiotlb=force will
+	/* If running as PV guest, either iommu=soft, or swiotlb=क्रमce will
 	 * activate this IOMMU. If running as PV privileged, activate it
 	 * irregardless.
 	 */
-	if (xen_initial_domain() || swiotlb || swiotlb_force == SWIOTLB_FORCE)
+	अगर (xen_initial_करोमुख्य() || swiotlb || swiotlb_क्रमce == SWIOTLB_FORCE)
 		xen_swiotlb = 1;
 
 	/* If we are running under Xen, we MUST disable the native SWIOTLB.
-	 * Don't worry about swiotlb_force flag activating the native, as
+	 * Don't worry about swiotlb_क्रमce flag activating the native, as
 	 * the 'swiotlb' flag is the only one turning it on. */
 	swiotlb = 0;
 
-#ifdef CONFIG_X86_64
-	/* pci_swiotlb_detect_4gb turns on native SWIOTLB if no_iommu == 0
-	 * (so no iommu=X command line over-writes).
-	 * Considering that PV guests do not want the *native SWIOTLB* but
+#अगर_घोषित CONFIG_X86_64
+	/* pci_swiotlb_detect_4gb turns on native SWIOTLB अगर no_iommu == 0
+	 * (so no iommu=X command line over-ग_लिखोs).
+	 * Considering that PV guests करो not want the *native SWIOTLB* but
 	 * only Xen SWIOTLB it is not useful to us so set no_iommu=1 here.
 	 */
-	if (max_pfn > MAX_DMA32_PFN)
+	अगर (max_pfn > MAX_DMA32_PFN)
 		no_iommu = 1;
-#endif
-	return xen_swiotlb;
-}
+#पूर्ण_अगर
+	वापस xen_swiotlb;
+पूर्ण
 
-void __init pci_xen_swiotlb_init(void)
-{
-	if (xen_swiotlb) {
+व्योम __init pci_xen_swiotlb_init(व्योम)
+अणु
+	अगर (xen_swiotlb) अणु
 		xen_swiotlb_init_early();
 		dma_ops = &xen_swiotlb_dma_ops;
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 		/* Make sure ACS will be enabled */
 		pci_request_acs();
-#endif
-	}
-}
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-int pci_xen_swiotlb_init_late(void)
-{
-	int rc;
+पूर्णांक pci_xen_swiotlb_init_late(व्योम)
+अणु
+	पूर्णांक rc;
 
-	if (xen_swiotlb)
-		return 0;
+	अगर (xen_swiotlb)
+		वापस 0;
 
 	rc = xen_swiotlb_init();
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	dma_ops = &xen_swiotlb_dma_ops;
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 	/* Make sure ACS will be enabled */
 	pci_request_acs();
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_xen_swiotlb_init_late);
 
 IOMMU_INIT_FINISH(pci_xen_swiotlb_detect,
-		  NULL,
+		  शून्य,
 		  pci_xen_swiotlb_init,
-		  NULL);
+		  शून्य);

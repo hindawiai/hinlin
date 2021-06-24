@@ -1,11 +1,12 @@
+<शैली गुरु>
 /*
- * clock.h:  Definitions for clock operations on the Sparc.
+ * घड़ी.h:  Definitions क्रम घड़ी operations on the Sparc.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
-#ifndef _SPARC_CLOCK_H
-#define _SPARC_CLOCK_H
+#अगर_अघोषित _SPARC_CLOCK_H
+#घोषणा _SPARC_CLOCK_H
 
-/* Foo for now. */
+/* Foo क्रम now. */
 
-#endif /* !(_SPARC_CLOCK_H) */
+#पूर्ण_अगर /* !(_SPARC_CLOCK_H) */

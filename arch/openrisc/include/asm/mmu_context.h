@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,26 +13,26 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_MMU_CONTEXT_H
-#define __ASM_OPENRISC_MMU_CONTEXT_H
+#अगर_अघोषित __ASM_OPENRISC_MMU_CONTEXT_H
+#घोषणा __ASM_OPENRISC_MMU_CONTEXT_H
 
-#include <asm-generic/mm_hooks.h>
+#समावेश <यंत्र-generic/mm_hooks.h>
 
-#define init_new_context init_new_context
-extern int init_new_context(struct task_struct *tsk, struct mm_struct *mm);
-#define destroy_context destroy_context
-extern void destroy_context(struct mm_struct *mm);
-extern void switch_mm(struct mm_struct *prev, struct mm_struct *next,
-		      struct task_struct *tsk);
+#घोषणा init_new_context init_new_context
+बाह्य पूर्णांक init_new_context(काष्ठा task_काष्ठा *tsk, काष्ठा mm_काष्ठा *mm);
+#घोषणा destroy_context destroy_context
+बाह्य व्योम destroy_context(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम चयन_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
+		      काष्ठा task_काष्ठा *tsk);
 
-#define activate_mm(prev, next) switch_mm((prev), (next), NULL)
+#घोषणा activate_mm(prev, next) चयन_mm((prev), (next), शून्य)
 
 /* current active pgd - this is similar to other processors pgd
- * registers like cr3 on the i386
+ * रेजिस्टरs like cr3 on the i386
  */
 
-extern volatile pgd_t *current_pgd[]; /* defined in arch/openrisc/mm/fault.c */
+बाह्य अस्थिर pgd_t *current_pgd[]; /* defined in arch/खोलोrisc/mm/fault.c */
 
-#include <asm-generic/mmu_context.h>
+#समावेश <यंत्र-generic/mmu_context.h>
 
-#endif
+#पूर्ण_अगर

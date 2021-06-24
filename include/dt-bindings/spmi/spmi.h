@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
-#ifndef __DT_BINDINGS_SPMI_H
-#define __DT_BINDINGS_SPMI_H
+#अगर_अघोषित __DT_BINDINGS_SPMI_H
+#घोषणा __DT_BINDINGS_SPMI_H
 
-#define SPMI_USID	0
-#define SPMI_GSID	1
+#घोषणा SPMI_USID	0
+#घोषणा SPMI_GSID	1
 
-#endif
+#पूर्ण_अगर

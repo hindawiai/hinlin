@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Free Electrons
  * Copyright (C) 2015 NextThing Co
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  */
 
-#ifndef _SUN4I_FRAMEBUFFER_H_
-#define _SUN4I_FRAMEBUFFER_H_
+#अगर_अघोषित _SUN4I_FRAMEBUFFER_H_
+#घोषणा _SUN4I_FRAMEBUFFER_H_
 
-void sun4i_framebuffer_init(struct drm_device *drm);
+व्योम sun4i_framebuffer_init(काष्ठा drm_device *drm);
 
-#endif /* _SUN4I_FRAMEBUFFER_H_ */
+#पूर्ण_अगर /* _SUN4I_FRAMEBUFFER_H_ */

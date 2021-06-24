@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2014 ARM Ltd. */
-#ifndef __ASM_PTDUMP_H
-#define __ASM_PTDUMP_H
+#अगर_अघोषित __ASM_PTDUMP_H
+#घोषणा __ASM_PTDUMP_H
 
-#ifdef CONFIG_ARM_PTDUMP_CORE
+#अगर_घोषित CONFIG_ARM_PTDUMP_CORE
 
-#include <linux/mm_types.h>
-#include <linux/seq_file.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/seq_file.h>
 
-struct addr_marker {
-	unsigned long start_address;
-	char *name;
-};
+काष्ठा addr_marker अणु
+	अचिन्हित दीर्घ start_address;
+	अक्षर *name;
+पूर्ण;
 
-struct ptdump_info {
-	struct mm_struct		*mm;
-	const struct addr_marker	*markers;
-	unsigned long			base_addr;
-};
+काष्ठा ptdump_info अणु
+	काष्ठा mm_काष्ठा		*mm;
+	स्थिर काष्ठा addr_marker	*markers;
+	अचिन्हित दीर्घ			base_addr;
+पूर्ण;
 
-void ptdump_walk_pgd(struct seq_file *s, struct ptdump_info *info);
-#ifdef CONFIG_ARM_PTDUMP_DEBUGFS
-void ptdump_debugfs_register(struct ptdump_info *info, const char *name);
-#else
-static inline void ptdump_debugfs_register(struct ptdump_info *info,
-					   const char *name) { }
-#endif /* CONFIG_ARM_PTDUMP_DEBUGFS */
+व्योम ptdump_walk_pgd(काष्ठा seq_file *s, काष्ठा ptdump_info *info);
+#अगर_घोषित CONFIG_ARM_PTDUMP_DEBUGFS
+व्योम ptdump_debugfs_रेजिस्टर(काष्ठा ptdump_info *info, स्थिर अक्षर *name);
+#अन्यथा
+अटल अंतरभूत व्योम ptdump_debugfs_रेजिस्टर(काष्ठा ptdump_info *info,
+					   स्थिर अक्षर *name) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_ARM_PTDUMP_DEBUGFS */
 
-void ptdump_check_wx(void);
+व्योम ptdump_check_wx(व्योम);
 
-#endif /* CONFIG_ARM_PTDUMP_CORE */
+#पूर्ण_अगर /* CONFIG_ARM_PTDUMP_CORE */
 
-#ifdef CONFIG_DEBUG_WX
-#define debug_checkwx() ptdump_check_wx()
-#else
-#define debug_checkwx() do { } while (0)
-#endif
+#अगर_घोषित CONFIG_DEBUG_WX
+#घोषणा debug_checkwx() ptdump_check_wx()
+#अन्यथा
+#घोषणा debug_checkwx() करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#endif /* __ASM_PTDUMP_H */
+#पूर्ण_अगर /* __ASM_PTDUMP_H */

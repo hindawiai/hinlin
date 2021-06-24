@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012, Microsoft Corporation.
  *
@@ -6,30 +7,30 @@
  *   K. Y. Srinivasan <kys@microsoft.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/jiffies.h>
-#include <linux/mman.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/kthread.h>
-#include <linux/completion.h>
-#include <linux/memory_hotplug.h>
-#include <linux/memory.h>
-#include <linux/notifier.h>
-#include <linux/percpu_counter.h>
-#include <linux/page_reporting.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/memory_hotplug.h>
+#समावेश <linux/memory.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/percpu_counter.h>
+#समावेश <linux/page_reporting.h>
 
-#include <linux/hyperv.h>
-#include <asm/hyperv-tlfs.h>
+#समावेश <linux/hyperv.h>
+#समावेश <यंत्र/hyperv-tlfs.h>
 
-#include <asm/mshyperv.h>
+#समावेश <यंत्र/mshyperv.h>
 
-#define CREATE_TRACE_POINTS
-#include "hv_trace_balloon.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "hv_trace_balloon.h"
 
 /*
  * We begin with definitions supporting the Dynamic Memory protocol
@@ -52,11 +53,11 @@
  * Changed to 1.0 on 2011/04/05
  */
 
-#define DYNMEM_MAKE_VERSION(Major, Minor) ((__u32)(((Major) << 16) | (Minor)))
-#define DYNMEM_MAJOR_VERSION(Version) ((__u32)(Version) >> 16)
-#define DYNMEM_MINOR_VERSION(Version) ((__u32)(Version) & 0xff)
+#घोषणा DYNMEM_MAKE_VERSION(Major, Minor) ((__u32)(((Major) << 16) | (Minor)))
+#घोषणा DYNMEM_MAJOR_VERSION(Version) ((__u32)(Version) >> 16)
+#घोषणा DYNMEM_MINOR_VERSION(Version) ((__u32)(Version) & 0xff)
 
-enum {
+क्रमागत अणु
 	DYNMEM_PROTOCOL_VERSION_1 = DYNMEM_MAKE_VERSION(0, 3),
 	DYNMEM_PROTOCOL_VERSION_2 = DYNMEM_MAKE_VERSION(1, 0),
 	DYNMEM_PROTOCOL_VERSION_3 = DYNMEM_MAKE_VERSION(2, 0),
@@ -66,7 +67,7 @@ enum {
 	DYNMEM_PROTOCOL_VERSION_WIN10 = DYNMEM_PROTOCOL_VERSION_3,
 
 	DYNMEM_PROTOCOL_VERSION_CURRENT = DYNMEM_PROTOCOL_VERSION_WIN10
-};
+पूर्ण;
 
 
 
@@ -74,7 +75,7 @@ enum {
  * Message Types
  */
 
-enum dm_message_type {
+क्रमागत dm_message_type अणु
 	/*
 	 * Version 0.3
 	 */
@@ -96,7 +97,7 @@ enum dm_message_type {
 	 */
 	DM_INFO_MESSAGE			= 12,
 	DM_VERSION_1_MAX		= 12
-};
+पूर्ण;
 
 
 /*
@@ -104,81 +105,81 @@ enum dm_message_type {
  * protocol.
  */
 
-union dm_version {
-	struct {
+जोड़ dm_version अणु
+	काष्ठा अणु
 		__u16 minor_version;
 		__u16 major_version;
-	};
+	पूर्ण;
 	__u32 version;
-} __packed;
+पूर्ण __packed;
 
 
-union dm_caps {
-	struct {
+जोड़ dm_caps अणु
+	काष्ठा अणु
 		__u64 balloon:1;
 		__u64 hot_add:1;
 		/*
 		 * To support guests that may have alignment
-		 * limitations on hot-add, the guest can specify
+		 * limitations on hot-add, the guest can specअगरy
 		 * its alignment requirements; a value of n
 		 * represents an alignment of 2^n in mega bytes.
 		 */
 		__u64 hot_add_alignment:4;
 		__u64 reservedz:58;
-	} cap_bits;
+	पूर्ण cap_bits;
 	__u64 caps;
-} __packed;
+पूर्ण __packed;
 
-union dm_mem_page_range {
-	struct  {
+जोड़ dm_mem_page_range अणु
+	काष्ठा  अणु
 		/*
 		 * The PFN number of the first page in the range.
 		 * 40 bits is the architectural limit of a PFN
-		 * number for AMD64.
+		 * number क्रम AMD64.
 		 */
 		__u64 start_page:40;
 		/*
 		 * The number of pages in the range.
 		 */
 		__u64 page_cnt:24;
-	} finfo;
+	पूर्ण finfo;
 	__u64  page_range;
-} __packed;
+पूर्ण __packed;
 
 
 
 /*
- * The header for all dynamic memory messages:
+ * The header क्रम all dynamic memory messages:
  *
  * type: Type of the message.
  * size: Size of the message in bytes; including the header.
- * trans_id: The guest is responsible for manufacturing this ID.
+ * trans_id: The guest is responsible क्रम manufacturing this ID.
  */
 
-struct dm_header {
+काष्ठा dm_header अणु
 	__u16 type;
 	__u16 size;
 	__u32 trans_id;
-} __packed;
+पूर्ण __packed;
 
 /*
- * A generic message format for dynamic memory.
- * Specific message formats are defined later in the file.
+ * A generic message क्रमmat क्रम dynamic memory.
+ * Specअगरic message क्रमmats are defined later in the file.
  */
 
-struct dm_message {
-	struct dm_header hdr;
-	__u8 data[]; /* enclosed message */
-} __packed;
+काष्ठा dm_message अणु
+	काष्ठा dm_header hdr;
+	__u8 data[]; /* enबंदd message */
+पूर्ण __packed;
 
 
 /*
- * Specific message types supporting the dynamic memory protocol.
+ * Specअगरic message types supporting the dynamic memory protocol.
  */
 
 /*
  * Version negotiation message. Sent from the guest to the host.
- * The guest is free to try different versions until the host
+ * The guest is मुक्त to try dअगरferent versions until the host
  * accepts the version.
  *
  * dm_version: The protocol version requested.
@@ -186,57 +187,57 @@ struct dm_message {
  * reservedz: Reserved field, set to zero.
  */
 
-struct dm_version_request {
-	struct dm_header hdr;
-	union dm_version version;
+काष्ठा dm_version_request अणु
+	काष्ठा dm_header hdr;
+	जोड़ dm_version version;
 	__u32 is_last_attempt:1;
 	__u32 reservedz:31;
-} __packed;
+पूर्ण __packed;
 
 /*
  * Version response message; Host to Guest and indicates
- * if the host has accepted the version sent by the guest.
+ * अगर the host has accepted the version sent by the guest.
  *
  * is_accepted: If TRUE, host has accepted the version and the guest
  * should proceed to the next stage of the protocol. FALSE indicates that
- * guest should re-try with a different version.
+ * guest should re-try with a dअगरferent version.
  *
  * reservedz: Reserved field, set to zero.
  */
 
-struct dm_version_response {
-	struct dm_header hdr;
+काष्ठा dm_version_response अणु
+	काष्ठा dm_header hdr;
 	__u64 is_accepted:1;
 	__u64 reservedz:63;
-} __packed;
+पूर्ण __packed;
 
 /*
  * Message reporting capabilities. This is sent from the guest to the
  * host.
  */
 
-struct dm_capabilities {
-	struct dm_header hdr;
-	union dm_caps caps;
+काष्ठा dm_capabilities अणु
+	काष्ठा dm_header hdr;
+	जोड़ dm_caps caps;
 	__u64 min_page_cnt;
 	__u64 max_page_number;
-} __packed;
+पूर्ण __packed;
 
 /*
  * Response to the capabilities message. This is sent from the host to the
- * guest. This message notifies if the host has accepted the guest's
- * capabilities. If the host has not accepted, the guest must shutdown
+ * guest. This message notअगरies अगर the host has accepted the guest's
+ * capabilities. If the host has not accepted, the guest must shutकरोwn
  * the service.
  *
- * is_accepted: Indicates if the host has accepted guest's capabilities.
+ * is_accepted: Indicates अगर the host has accepted guest's capabilities.
  * reservedz: Must be 0.
  */
 
-struct dm_capabilities_resp_msg {
-	struct dm_header hdr;
+काष्ठा dm_capabilities_resp_msg अणु
+	काष्ठा dm_header hdr;
 	__u64 is_accepted:1;
 	__u64 reservedz:63;
-} __packed;
+पूर्ण __packed;
 
 /*
  * This message is used to report memory pressure from the guest.
@@ -246,27 +247,27 @@ struct dm_capabilities_resp_msg {
  * num_avail: Available memory in pages.
  * num_committed: Committed memory in pages.
  * page_file_size: The accumulated size of all page files
- *		   in the system in pages.
- * zero_free: The nunber of zero and free pages.
- * page_file_writes: The writes to the page file in pages.
- * io_diff: An indicator of file cache efficiency or page file activity,
+ *		   in the प्रणाली in pages.
+ * zero_मुक्त: The nunber of zero and मुक्त pages.
+ * page_file_ग_लिखोs: The ग_लिखोs to the page file in pages.
+ * io_dअगरf: An indicator of file cache efficiency or page file activity,
  *	    calculated as File Cache Page Fault Count - Page Read Count.
  *	    This value is in pages.
  *
- * Some of these metrics are Windows specific and fortunately
+ * Some of these metrics are Winकरोws specअगरic and क्रमtunately
  * the algorithm on the host side that computes the guest memory
  * pressure only uses num_committed value.
  */
 
-struct dm_status {
-	struct dm_header hdr;
+काष्ठा dm_status अणु
+	काष्ठा dm_header hdr;
 	__u64 num_avail;
 	__u64 num_committed;
 	__u64 page_file_size;
-	__u64 zero_free;
-	__u32 page_file_writes;
-	__u32 io_diff;
-} __packed;
+	__u64 zero_मुक्त;
+	__u32 page_file_ग_लिखोs;
+	__u32 io_dअगरf;
+पूर्ण __packed;
 
 
 /*
@@ -277,11 +278,11 @@ struct dm_status {
  * num_pages: number of pages to allocate.
  */
 
-struct dm_balloon {
-	struct dm_header hdr;
+काष्ठा dm_balloon अणु
+	काष्ठा dm_header hdr;
 	__u32 num_pages;
 	__u32 reservedz;
-} __packed;
+पूर्ण __packed;
 
 
 /*
@@ -290,44 +291,44 @@ struct dm_balloon {
  *
  * reservedz: Reserved; must be set to zero.
  * more_pages: If FALSE, this is the last message of the transaction.
- * if TRUE there will atleast one more message from the guest.
+ * अगर TRUE there will atleast one more message from the guest.
  *
  * range_count: The number of ranges in the range array.
  *
- * range_array: An array of page ranges returned to the host.
+ * range_array: An array of page ranges वापसed to the host.
  *
  */
 
-struct dm_balloon_response {
-	struct dm_header hdr;
+काष्ठा dm_balloon_response अणु
+	काष्ठा dm_header hdr;
 	__u32 reservedz;
 	__u32 more_pages:1;
 	__u32 range_count:31;
-	union dm_mem_page_range range_array[];
-} __packed;
+	जोड़ dm_mem_page_range range_array[];
+पूर्ण __packed;
 
 /*
  * Un-balloon message; this message is sent from the host
  * to the guest to give guest more memory.
  *
  * more_pages: If FALSE, this is the last message of the transaction.
- * if TRUE there will atleast one more message from the guest.
+ * अगर TRUE there will atleast one more message from the guest.
  *
  * reservedz: Reserved; must be set to zero.
  *
  * range_count: The number of ranges in the range array.
  *
- * range_array: An array of page ranges returned to the host.
+ * range_array: An array of page ranges वापसed to the host.
  *
  */
 
-struct dm_unballoon_request {
-	struct dm_header hdr;
+काष्ठा dm_unballoon_request अणु
+	काष्ठा dm_header hdr;
 	__u32 more_pages:1;
 	__u32 reservedz:31;
 	__u32 range_count;
-	union dm_mem_page_range range_array[];
-} __packed;
+	जोड़ dm_mem_page_range range_array[];
+पूर्ण __packed;
 
 /*
  * Un-balloon response message; this message is sent from the guest
@@ -335,9 +336,9 @@ struct dm_unballoon_request {
  *
  */
 
-struct dm_unballoon_response {
-	struct dm_header hdr;
-} __packed;
+काष्ठा dm_unballoon_response अणु
+	काष्ठा dm_header hdr;
+पूर्ण __packed;
 
 
 /*
@@ -347,10 +348,10 @@ struct dm_unballoon_response {
  *
  */
 
-struct dm_hot_add {
-	struct dm_header hdr;
-	union dm_mem_page_range range;
-} __packed;
+काष्ठा dm_hot_add अणु
+	काष्ठा dm_header hdr;
+	जोड़ dm_mem_page_range range;
+पूर्ण __packed;
 
 /*
  * Hot add response message.
@@ -359,11 +360,11 @@ struct dm_hot_add {
  * assume all further hot add requests will fail, since this indicates that
  * the guest has hit an upper physical memory barrier.
  *
- * Hot adds may also fail due to low resources; in this case, the guest must
+ * Hot adds may also fail due to low resources; in this हाल, the guest must
  * not complete this message until the hot add can succeed, and the host must
  * not send a new hot add request until the response is sent.
  * If VSC fails to hot add memory DYNMEM_NUMBER_OF_UNSUCCESSFUL_HOTADD_ATTEMPTS
- * times it fails the request.
+ * बार it fails the request.
  *
  *
  * page_count: number of pages that were successfully hot added.
@@ -372,56 +373,56 @@ struct dm_hot_add {
  *
  */
 
-struct dm_hot_add_response {
-	struct dm_header hdr;
+काष्ठा dm_hot_add_response अणु
+	काष्ठा dm_header hdr;
 	__u32 page_count;
 	__u32 result;
-} __packed;
+पूर्ण __packed;
 
 /*
- * Types of information sent from host to the guest.
+ * Types of inक्रमmation sent from host to the guest.
  */
 
-enum dm_info_type {
+क्रमागत dm_info_type अणु
 	INFO_TYPE_MAX_PAGE_CNT = 0,
 	MAX_INFO_TYPE
-};
+पूर्ण;
 
 
 /*
- * Header for the information message.
+ * Header क्रम the inक्रमmation message.
  */
 
-struct dm_info_header {
-	enum dm_info_type type;
+काष्ठा dm_info_header अणु
+	क्रमागत dm_info_type type;
 	__u32 data_size;
-} __packed;
+पूर्ण __packed;
 
 /*
  * This message is sent from the host to the guest to pass
- * some relevant information (win8 addition).
+ * some relevant inक्रमmation (win8 addition).
  *
  * reserved: no used.
- * info_size: size of the information blob.
- * info: information blob.
+ * info_size: size of the inक्रमmation blob.
+ * info: inक्रमmation blob.
  */
 
-struct dm_info_msg {
-	struct dm_header hdr;
+काष्ठा dm_info_msg अणु
+	काष्ठा dm_header hdr;
 	__u32 reserved;
 	__u32 info_size;
 	__u8  info[];
-};
+पूर्ण;
 
 /*
  * End protocol definitions.
  */
 
 /*
- * State to manage hot adding memory into the guest.
- * The range start_pfn : end_pfn specifies the range
+ * State to manage hot adding memory पूर्णांकo the guest.
+ * The range start_pfn : end_pfn specअगरies the range
  * that the host has asked us to hot add. The range
- * start_pfn : ha_end_pfn specifies the range that we have
+ * start_pfn : ha_end_pfn specअगरies the range that we have
  * currently hot added. We hot add in multiples of 128M
  * chunks; it is possible that we may not be able to bring
  * online all the pages in the region. The range
@@ -429,121 +430,121 @@ struct dm_info_msg {
  * be brough online.
  */
 
-struct hv_hotadd_state {
-	struct list_head list;
-	unsigned long start_pfn;
-	unsigned long covered_start_pfn;
-	unsigned long covered_end_pfn;
-	unsigned long ha_end_pfn;
-	unsigned long end_pfn;
+काष्ठा hv_hotadd_state अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ start_pfn;
+	अचिन्हित दीर्घ covered_start_pfn;
+	अचिन्हित दीर्घ covered_end_pfn;
+	अचिन्हित दीर्घ ha_end_pfn;
+	अचिन्हित दीर्घ end_pfn;
 	/*
 	 * A list of gaps.
 	 */
-	struct list_head gap_list;
-};
+	काष्ठा list_head gap_list;
+पूर्ण;
 
-struct hv_hotadd_gap {
-	struct list_head list;
-	unsigned long start_pfn;
-	unsigned long end_pfn;
-};
+काष्ठा hv_hotadd_gap अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ start_pfn;
+	अचिन्हित दीर्घ end_pfn;
+पूर्ण;
 
-struct balloon_state {
+काष्ठा balloon_state अणु
 	__u32 num_pages;
-	struct work_struct wrk;
-};
+	काष्ठा work_काष्ठा wrk;
+पूर्ण;
 
-struct hot_add_wrk {
-	union dm_mem_page_range ha_page_range;
-	union dm_mem_page_range ha_region_range;
-	struct work_struct wrk;
-};
+काष्ठा hot_add_wrk अणु
+	जोड़ dm_mem_page_range ha_page_range;
+	जोड़ dm_mem_page_range ha_region_range;
+	काष्ठा work_काष्ठा wrk;
+पूर्ण;
 
-static bool allow_hibernation;
-static bool hot_add = true;
-static bool do_hot_add;
+अटल bool allow_hibernation;
+अटल bool hot_add = true;
+अटल bool करो_hot_add;
 /*
  * Delay reporting memory pressure by
- * the specified number of seconds.
+ * the specअगरied number of seconds.
  */
-static uint pressure_report_delay = 45;
+अटल uपूर्णांक pressure_report_delay = 45;
 
 /*
- * The last time we posted a pressure report to host.
+ * The last समय we posted a pressure report to host.
  */
-static unsigned long last_post_time;
+अटल अचिन्हित दीर्घ last_post_समय;
 
 module_param(hot_add, bool, (S_IRUGO | S_IWUSR));
 MODULE_PARM_DESC(hot_add, "If set attempt memory hot_add");
 
-module_param(pressure_report_delay, uint, (S_IRUGO | S_IWUSR));
+module_param(pressure_report_delay, uपूर्णांक, (S_IRUGO | S_IWUSR));
 MODULE_PARM_DESC(pressure_report_delay, "Delay in secs in reporting pressure");
-static atomic_t trans_id = ATOMIC_INIT(0);
+अटल atomic_t trans_id = ATOMIC_INIT(0);
 
-static int dm_ring_size = 20 * 1024;
+अटल पूर्णांक dm_ring_size = 20 * 1024;
 
 /*
- * Driver specific state.
+ * Driver specअगरic state.
  */
 
-enum hv_dm_state {
+क्रमागत hv_dm_state अणु
 	DM_INITIALIZING = 0,
 	DM_INITIALIZED,
 	DM_BALLOON_UP,
 	DM_BALLOON_DOWN,
 	DM_HOT_ADD,
 	DM_INIT_ERROR
-};
+पूर्ण;
 
 
-static __u8 recv_buffer[HV_HYP_PAGE_SIZE];
-static __u8 balloon_up_send_buffer[HV_HYP_PAGE_SIZE];
-#define PAGES_IN_2M (2 * 1024 * 1024 / PAGE_SIZE)
-#define HA_CHUNK (128 * 1024 * 1024 / PAGE_SIZE)
+अटल __u8 recv_buffer[HV_HYP_PAGE_SIZE];
+अटल __u8 balloon_up_send_buffer[HV_HYP_PAGE_SIZE];
+#घोषणा PAGES_IN_2M (2 * 1024 * 1024 / PAGE_SIZE)
+#घोषणा HA_CHUNK (128 * 1024 * 1024 / PAGE_SIZE)
 
-struct hv_dynmem_device {
-	struct hv_device *dev;
-	enum hv_dm_state state;
-	struct completion host_event;
-	struct completion config_event;
+काष्ठा hv_dynmem_device अणु
+	काष्ठा hv_device *dev;
+	क्रमागत hv_dm_state state;
+	काष्ठा completion host_event;
+	काष्ठा completion config_event;
 
 	/*
 	 * Number of pages we have currently ballooned out.
 	 */
-	unsigned int num_pages_ballooned;
-	unsigned int num_pages_onlined;
-	unsigned int num_pages_added;
+	अचिन्हित पूर्णांक num_pages_ballooned;
+	अचिन्हित पूर्णांक num_pages_onlined;
+	अचिन्हित पूर्णांक num_pages_added;
 
 	/*
 	 * State to manage the ballooning (up) operation.
 	 */
-	struct balloon_state balloon_wrk;
+	काष्ठा balloon_state balloon_wrk;
 
 	/*
 	 * State to execute the "hot-add" operation.
 	 */
-	struct hot_add_wrk ha_wrk;
+	काष्ठा hot_add_wrk ha_wrk;
 
 	/*
-	 * This state tracks if the host has specified a hot-add
+	 * This state tracks अगर the host has specअगरied a hot-add
 	 * region.
 	 */
-	bool host_specified_ha_region;
+	bool host_specअगरied_ha_region;
 
 	/*
 	 * State to synchronize hot-add.
 	 */
-	struct completion  ol_waitevent;
+	काष्ठा completion  ol_रुकोevent;
 	/*
-	 * This thread handles hot-add
-	 * requests from the host as well as notifying
+	 * This thपढ़ो handles hot-add
+	 * requests from the host as well as notअगरying
 	 * the host with regards to memory pressure in
 	 * the guest.
 	 */
-	struct task_struct *thread;
+	काष्ठा task_काष्ठा *thपढ़ो;
 
 	/*
-	 * Protects ha_region_list, num_pages_onlined counter and individual
+	 * Protects ha_region_list, num_pages_onlined counter and inभागidual
 	 * regions from ha_region_list.
 	 */
 	spinlock_t ha_lock;
@@ -551,11 +552,11 @@ struct hv_dynmem_device {
 	/*
 	 * A list of hot-add regions.
 	 */
-	struct list_head ha_region_list;
+	काष्ठा list_head ha_region_list;
 
 	/*
 	 * We start with the highest version we can support
-	 * and downgrade based on the host; we save here the
+	 * and करोwngrade based on the host; we save here the
 	 * next version to try.
 	 */
 	__u32 next_version;
@@ -565,250 +566,250 @@ struct hv_dynmem_device {
 	 */
 	__u32 version;
 
-	struct page_reporting_dev_info pr_dev_info;
-};
+	काष्ठा page_reporting_dev_info pr_dev_info;
+पूर्ण;
 
-static struct hv_dynmem_device dm_device;
+अटल काष्ठा hv_dynmem_device dm_device;
 
-static void post_status(struct hv_dynmem_device *dm);
+अटल व्योम post_status(काष्ठा hv_dynmem_device *dm);
 
-#ifdef CONFIG_MEMORY_HOTPLUG
-static inline bool has_pfn_is_backed(struct hv_hotadd_state *has,
-				     unsigned long pfn)
-{
-	struct hv_hotadd_gap *gap;
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+अटल अंतरभूत bool has_pfn_is_backed(काष्ठा hv_hotadd_state *has,
+				     अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा hv_hotadd_gap *gap;
 
 	/* The page is not backed. */
-	if ((pfn < has->covered_start_pfn) || (pfn >= has->covered_end_pfn))
-		return false;
+	अगर ((pfn < has->covered_start_pfn) || (pfn >= has->covered_end_pfn))
+		वापस false;
 
-	/* Check for gaps. */
-	list_for_each_entry(gap, &has->gap_list, list) {
-		if ((pfn >= gap->start_pfn) && (pfn < gap->end_pfn))
-			return false;
-	}
+	/* Check क्रम gaps. */
+	list_क्रम_each_entry(gap, &has->gap_list, list) अणु
+		अगर ((pfn >= gap->start_pfn) && (pfn < gap->end_pfn))
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static unsigned long hv_page_offline_check(unsigned long start_pfn,
-					   unsigned long nr_pages)
-{
-	unsigned long pfn = start_pfn, count = 0;
-	struct hv_hotadd_state *has;
+अटल अचिन्हित दीर्घ hv_page_offline_check(अचिन्हित दीर्घ start_pfn,
+					   अचिन्हित दीर्घ nr_pages)
+अणु
+	अचिन्हित दीर्घ pfn = start_pfn, count = 0;
+	काष्ठा hv_hotadd_state *has;
 	bool found;
 
-	while (pfn < start_pfn + nr_pages) {
+	जबतक (pfn < start_pfn + nr_pages) अणु
 		/*
-		 * Search for HAS which covers the pfn and when we find one
+		 * Search क्रम HAS which covers the pfn and when we find one
 		 * count how many consequitive PFNs are covered.
 		 */
 		found = false;
-		list_for_each_entry(has, &dm_device.ha_region_list, list) {
-			while ((pfn >= has->start_pfn) &&
+		list_क्रम_each_entry(has, &dm_device.ha_region_list, list) अणु
+			जबतक ((pfn >= has->start_pfn) &&
 			       (pfn < has->end_pfn) &&
-			       (pfn < start_pfn + nr_pages)) {
+			       (pfn < start_pfn + nr_pages)) अणु
 				found = true;
-				if (has_pfn_is_backed(has, pfn))
+				अगर (has_pfn_is_backed(has, pfn))
 					count++;
 				pfn++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/*
 		 * This PFN is not in any HAS (e.g. we're offlining a region
-		 * which was present at boot), no need to account for it. Go
+		 * which was present at boot), no need to account क्रम it. Go
 		 * to the next one.
 		 */
-		if (!found)
+		अगर (!found)
 			pfn++;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int hv_memory_notifier(struct notifier_block *nb, unsigned long val,
-			      void *v)
-{
-	struct memory_notify *mem = (struct memory_notify *)v;
-	unsigned long flags, pfn_count;
+अटल पूर्णांक hv_memory_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
+			      व्योम *v)
+अणु
+	काष्ठा memory_notअगरy *mem = (काष्ठा memory_notअगरy *)v;
+	अचिन्हित दीर्घ flags, pfn_count;
 
-	switch (val) {
-	case MEM_ONLINE:
-	case MEM_CANCEL_ONLINE:
-		complete(&dm_device.ol_waitevent);
-		break;
+	चयन (val) अणु
+	हाल MEM_ONLINE:
+	हाल MEM_CANCEL_ONLINE:
+		complete(&dm_device.ol_रुकोevent);
+		अवरोध;
 
-	case MEM_OFFLINE:
+	हाल MEM_OFFLINE:
 		spin_lock_irqsave(&dm_device.ha_lock, flags);
 		pfn_count = hv_page_offline_check(mem->start_pfn,
 						  mem->nr_pages);
-		if (pfn_count <= dm_device.num_pages_onlined) {
+		अगर (pfn_count <= dm_device.num_pages_onlined) अणु
 			dm_device.num_pages_onlined -= pfn_count;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * We're offlining more pages than we managed to online.
-			 * This is unexpected. In any case don't let
+			 * This is unexpected. In any हाल करोn't let
 			 * num_pages_onlined wrap around zero.
 			 */
 			WARN_ON_ONCE(1);
 			dm_device.num_pages_onlined = 0;
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&dm_device.ha_lock, flags);
-		break;
-	case MEM_GOING_ONLINE:
-	case MEM_GOING_OFFLINE:
-	case MEM_CANCEL_OFFLINE:
-		break;
-	}
-	return NOTIFY_OK;
-}
+		अवरोध;
+	हाल MEM_GOING_ONLINE:
+	हाल MEM_GOING_OFFLINE:
+	हाल MEM_CANCEL_OFFLINE:
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block hv_memory_nb = {
-	.notifier_call = hv_memory_notifier,
+अटल काष्ठा notअगरier_block hv_memory_nb = अणु
+	.notअगरier_call = hv_memory_notअगरier,
 	.priority = 0
-};
+पूर्ण;
 
-/* Check if the particular page is backed and can be onlined and online it. */
-static void hv_page_online_one(struct hv_hotadd_state *has, struct page *pg)
-{
-	if (!has_pfn_is_backed(has, page_to_pfn(pg))) {
-		if (!PageOffline(pg))
+/* Check अगर the particular page is backed and can be onlined and online it. */
+अटल व्योम hv_page_online_one(काष्ठा hv_hotadd_state *has, काष्ठा page *pg)
+अणु
+	अगर (!has_pfn_is_backed(has, page_to_pfn(pg))) अणु
+		अगर (!PageOffline(pg))
 			__SetPageOffline(pg);
-		return;
-	}
-	if (PageOffline(pg))
+		वापस;
+	पूर्ण
+	अगर (PageOffline(pg))
 		__ClearPageOffline(pg);
 
 	/* This frame is currently backed; online the page. */
 	generic_online_page(pg, 0);
 
-	lockdep_assert_held(&dm_device.ha_lock);
+	lockdep_निश्चित_held(&dm_device.ha_lock);
 	dm_device.num_pages_onlined++;
-}
+पूर्ण
 
-static void hv_bring_pgs_online(struct hv_hotadd_state *has,
-				unsigned long start_pfn, unsigned long size)
-{
-	int i;
+अटल व्योम hv_bring_pgs_online(काष्ठा hv_hotadd_state *has,
+				अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ size)
+अणु
+	पूर्णांक i;
 
 	pr_debug("Online %lu pages starting at pfn 0x%lx\n", size, start_pfn);
-	for (i = 0; i < size; i++)
+	क्रम (i = 0; i < size; i++)
 		hv_page_online_one(has, pfn_to_page(start_pfn + i));
-}
+पूर्ण
 
-static void hv_mem_hot_add(unsigned long start, unsigned long size,
-				unsigned long pfn_count,
-				struct hv_hotadd_state *has)
-{
-	int ret = 0;
-	int i, nid;
-	unsigned long start_pfn;
-	unsigned long processed_pfn;
-	unsigned long total_pfn = pfn_count;
-	unsigned long flags;
+अटल व्योम hv_mem_hot_add(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size,
+				अचिन्हित दीर्घ pfn_count,
+				काष्ठा hv_hotadd_state *has)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक i, nid;
+	अचिन्हित दीर्घ start_pfn;
+	अचिन्हित दीर्घ processed_pfn;
+	अचिन्हित दीर्घ total_pfn = pfn_count;
+	अचिन्हित दीर्घ flags;
 
-	for (i = 0; i < (size/HA_CHUNK); i++) {
+	क्रम (i = 0; i < (size/HA_CHUNK); i++) अणु
 		start_pfn = start + (i * HA_CHUNK);
 
 		spin_lock_irqsave(&dm_device.ha_lock, flags);
 		has->ha_end_pfn +=  HA_CHUNK;
 
-		if (total_pfn > HA_CHUNK) {
+		अगर (total_pfn > HA_CHUNK) अणु
 			processed_pfn = HA_CHUNK;
 			total_pfn -= HA_CHUNK;
-		} else {
+		पूर्ण अन्यथा अणु
 			processed_pfn = total_pfn;
 			total_pfn = 0;
-		}
+		पूर्ण
 
 		has->covered_end_pfn +=  processed_pfn;
 		spin_unlock_irqrestore(&dm_device.ha_lock, flags);
 
-		reinit_completion(&dm_device.ol_waitevent);
+		reinit_completion(&dm_device.ol_रुकोevent);
 
 		nid = memory_add_physaddr_to_nid(PFN_PHYS(start_pfn));
 		ret = add_memory(nid, PFN_PHYS((start_pfn)),
 				(HA_CHUNK << PAGE_SHIFT), MHP_MERGE_RESOURCE);
 
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("hot_add memory failed error is %d\n", ret);
-			if (ret == -EEXIST) {
+			अगर (ret == -EEXIST) अणु
 				/*
 				 * This error indicates that the error
 				 * is not a transient failure. This is the
-				 * case where the guest's physical address map
+				 * हाल where the guest's physical address map
 				 * precludes hot adding memory. Stop all further
 				 * memory hot-add.
 				 */
-				do_hot_add = false;
-			}
+				करो_hot_add = false;
+			पूर्ण
 			spin_lock_irqsave(&dm_device.ha_lock, flags);
 			has->ha_end_pfn -= HA_CHUNK;
 			has->covered_end_pfn -=  processed_pfn;
 			spin_unlock_irqrestore(&dm_device.ha_lock, flags);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * Wait for memory to get onlined. If the kernel onlined the
-		 * memory when adding it, this will return directly. Otherwise,
-		 * it will wait for user space to online the memory. This helps
-		 * to avoid adding memory faster than it is getting onlined. As
-		 * adding succeeded, it is ok to proceed even if the memory was
-		 * not onlined in time.
+		 * Wait क्रम memory to get onlined. If the kernel onlined the
+		 * memory when adding it, this will वापस directly. Otherwise,
+		 * it will रुको क्रम user space to online the memory. This helps
+		 * to aव्योम adding memory faster than it is getting onlined. As
+		 * adding succeeded, it is ok to proceed even अगर the memory was
+		 * not onlined in समय.
 		 */
-		wait_for_completion_timeout(&dm_device.ol_waitevent, 5 * HZ);
+		रुको_क्रम_completion_समयout(&dm_device.ol_रुकोevent, 5 * HZ);
 		post_status(&dm_device);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void hv_online_page(struct page *pg, unsigned int order)
-{
-	struct hv_hotadd_state *has;
-	unsigned long flags;
-	unsigned long pfn = page_to_pfn(pg);
+अटल व्योम hv_online_page(काष्ठा page *pg, अचिन्हित पूर्णांक order)
+अणु
+	काष्ठा hv_hotadd_state *has;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ pfn = page_to_pfn(pg);
 
 	spin_lock_irqsave(&dm_device.ha_lock, flags);
-	list_for_each_entry(has, &dm_device.ha_region_list, list) {
-		/* The page belongs to a different HAS. */
-		if ((pfn < has->start_pfn) ||
+	list_क्रम_each_entry(has, &dm_device.ha_region_list, list) अणु
+		/* The page beदीर्घs to a dअगरferent HAS. */
+		अगर ((pfn < has->start_pfn) ||
 				(pfn + (1UL << order) > has->end_pfn))
-			continue;
+			जारी;
 
 		hv_bring_pgs_online(has, pfn, 1UL << order);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&dm_device.ha_lock, flags);
-}
+पूर्ण
 
-static int pfn_covered(unsigned long start_pfn, unsigned long pfn_cnt)
-{
-	struct hv_hotadd_state *has;
-	struct hv_hotadd_gap *gap;
-	unsigned long residual, new_inc;
-	int ret = 0;
-	unsigned long flags;
+अटल पूर्णांक pfn_covered(अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ pfn_cnt)
+अणु
+	काष्ठा hv_hotadd_state *has;
+	काष्ठा hv_hotadd_gap *gap;
+	अचिन्हित दीर्घ residual, new_inc;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dm_device.ha_lock, flags);
-	list_for_each_entry(has, &dm_device.ha_region_list, list) {
+	list_क्रम_each_entry(has, &dm_device.ha_region_list, list) अणु
 		/*
 		 * If the pfn range we are dealing with is not in the current
 		 * "hot add block", move on.
 		 */
-		if (start_pfn < has->start_pfn || start_pfn >= has->end_pfn)
-			continue;
+		अगर (start_pfn < has->start_pfn || start_pfn >= has->end_pfn)
+			जारी;
 
 		/*
 		 * If the current start pfn is not where the covered_end
 		 * is, create a gap and update covered_end_pfn.
 		 */
-		if (has->covered_end_pfn != start_pfn) {
-			gap = kzalloc(sizeof(struct hv_hotadd_gap), GFP_ATOMIC);
-			if (!gap) {
+		अगर (has->covered_end_pfn != start_pfn) अणु
+			gap = kzalloc(माप(काष्ठा hv_hotadd_gap), GFP_ATOMIC);
+			अगर (!gap) अणु
 				ret = -ENOMEM;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			INIT_LIST_HEAD(&gap->list);
 			gap->start_pfn = has->covered_end_pfn;
@@ -816,84 +817,84 @@ static int pfn_covered(unsigned long start_pfn, unsigned long pfn_cnt)
 			list_add_tail(&gap->list, &has->gap_list);
 
 			has->covered_end_pfn = start_pfn;
-		}
+		पूर्ण
 
 		/*
 		 * If the current hot add-request extends beyond
 		 * our current limit; extend it.
 		 */
-		if ((start_pfn + pfn_cnt) > has->end_pfn) {
+		अगर ((start_pfn + pfn_cnt) > has->end_pfn) अणु
 			residual = (start_pfn + pfn_cnt - has->end_pfn);
 			/*
 			 * Extend the region by multiples of HA_CHUNK.
 			 */
 			new_inc = (residual / HA_CHUNK) * HA_CHUNK;
-			if (residual % HA_CHUNK)
+			अगर (residual % HA_CHUNK)
 				new_inc += HA_CHUNK;
 
 			has->end_pfn += new_inc;
-		}
+		पूर्ण
 
 		ret = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&dm_device.ha_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned long handle_pg_range(unsigned long pg_start,
-					unsigned long pg_count)
-{
-	unsigned long start_pfn = pg_start;
-	unsigned long pfn_cnt = pg_count;
-	unsigned long size;
-	struct hv_hotadd_state *has;
-	unsigned long pgs_ol = 0;
-	unsigned long old_covered_state;
-	unsigned long res = 0, flags;
+अटल अचिन्हित दीर्घ handle_pg_range(अचिन्हित दीर्घ pg_start,
+					अचिन्हित दीर्घ pg_count)
+अणु
+	अचिन्हित दीर्घ start_pfn = pg_start;
+	अचिन्हित दीर्घ pfn_cnt = pg_count;
+	अचिन्हित दीर्घ size;
+	काष्ठा hv_hotadd_state *has;
+	अचिन्हित दीर्घ pgs_ol = 0;
+	अचिन्हित दीर्घ old_covered_state;
+	अचिन्हित दीर्घ res = 0, flags;
 
 	pr_debug("Hot adding %lu pages starting at pfn 0x%lx.\n", pg_count,
 		pg_start);
 
 	spin_lock_irqsave(&dm_device.ha_lock, flags);
-	list_for_each_entry(has, &dm_device.ha_region_list, list) {
+	list_क्रम_each_entry(has, &dm_device.ha_region_list, list) अणु
 		/*
 		 * If the pfn range we are dealing with is not in the current
 		 * "hot add block", move on.
 		 */
-		if (start_pfn < has->start_pfn || start_pfn >= has->end_pfn)
-			continue;
+		अगर (start_pfn < has->start_pfn || start_pfn >= has->end_pfn)
+			जारी;
 
 		old_covered_state = has->covered_end_pfn;
 
-		if (start_pfn < has->ha_end_pfn) {
+		अगर (start_pfn < has->ha_end_pfn) अणु
 			/*
-			 * This is the case where we are backing pages
-			 * in an already hot added region. Bring
+			 * This is the हाल where we are backing pages
+			 * in an alपढ़ोy hot added region. Bring
 			 * these pages online first.
 			 */
 			pgs_ol = has->ha_end_pfn - start_pfn;
-			if (pgs_ol > pfn_cnt)
+			अगर (pgs_ol > pfn_cnt)
 				pgs_ol = pfn_cnt;
 
 			has->covered_end_pfn +=  pgs_ol;
 			pfn_cnt -= pgs_ol;
 			/*
-			 * Check if the corresponding memory block is already
-			 * online. It is possible to observe struct pages still
+			 * Check अगर the corresponding memory block is alपढ़ोy
+			 * online. It is possible to observe काष्ठा pages still
 			 * being uninitialized here so check section instead.
-			 * In case the section is online we need to bring the
+			 * In हाल the section is online we need to bring the
 			 * rest of pfns (which were not backed previously)
 			 * online too.
 			 */
-			if (start_pfn > has->start_pfn &&
+			अगर (start_pfn > has->start_pfn &&
 			    online_section_nr(pfn_to_section_nr(start_pfn)))
 				hv_bring_pgs_online(has, start_pfn, pgs_ol);
 
-		}
+		पूर्ण
 
-		if ((has->ha_end_pfn < has->end_pfn) && (pfn_cnt > 0)) {
+		अगर ((has->ha_end_pfn < has->end_pfn) && (pfn_cnt > 0)) अणु
 			/*
 			 * We have some residual hot add range
 			 * that needs to be hot added; hot add
@@ -902,58 +903,58 @@ static unsigned long handle_pg_range(unsigned long pg_start,
 			 * we have.
 			 */
 			size = (has->end_pfn - has->ha_end_pfn);
-			if (pfn_cnt <= size) {
+			अगर (pfn_cnt <= size) अणु
 				size = ((pfn_cnt / HA_CHUNK) * HA_CHUNK);
-				if (pfn_cnt % HA_CHUNK)
+				अगर (pfn_cnt % HA_CHUNK)
 					size += HA_CHUNK;
-			} else {
+			पूर्ण अन्यथा अणु
 				pfn_cnt = size;
-			}
+			पूर्ण
 			spin_unlock_irqrestore(&dm_device.ha_lock, flags);
 			hv_mem_hot_add(has->ha_end_pfn, size, pfn_cnt, has);
 			spin_lock_irqsave(&dm_device.ha_lock, flags);
-		}
+		पूर्ण
 		/*
 		 * If we managed to online any pages that were given to us,
 		 * we declare success.
 		 */
 		res = has->covered_end_pfn - old_covered_state;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&dm_device.ha_lock, flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static unsigned long process_hot_add(unsigned long pg_start,
-					unsigned long pfn_cnt,
-					unsigned long rg_start,
-					unsigned long rg_size)
-{
-	struct hv_hotadd_state *ha_region = NULL;
-	int covered;
-	unsigned long flags;
+अटल अचिन्हित दीर्घ process_hot_add(अचिन्हित दीर्घ pg_start,
+					अचिन्हित दीर्घ pfn_cnt,
+					अचिन्हित दीर्घ rg_start,
+					अचिन्हित दीर्घ rg_size)
+अणु
+	काष्ठा hv_hotadd_state *ha_region = शून्य;
+	पूर्णांक covered;
+	अचिन्हित दीर्घ flags;
 
-	if (pfn_cnt == 0)
-		return 0;
+	अगर (pfn_cnt == 0)
+		वापस 0;
 
-	if (!dm_device.host_specified_ha_region) {
+	अगर (!dm_device.host_specअगरied_ha_region) अणु
 		covered = pfn_covered(pg_start, pfn_cnt);
-		if (covered < 0)
-			return 0;
+		अगर (covered < 0)
+			वापस 0;
 
-		if (covered)
-			goto do_pg_range;
-	}
+		अगर (covered)
+			जाओ करो_pg_range;
+	पूर्ण
 
 	/*
-	 * If the host has specified a hot-add range; deal with it first.
+	 * If the host has specअगरied a hot-add range; deal with it first.
 	 */
 
-	if (rg_size != 0) {
-		ha_region = kzalloc(sizeof(struct hv_hotadd_state), GFP_KERNEL);
-		if (!ha_region)
-			return 0;
+	अगर (rg_size != 0) अणु
+		ha_region = kzalloc(माप(काष्ठा hv_hotadd_state), GFP_KERNEL);
+		अगर (!ha_region)
+			वापस 0;
 
 		INIT_LIST_HEAD(&ha_region->list);
 		INIT_LIST_HEAD(&ha_region->gap_list);
@@ -967,130 +968,130 @@ static unsigned long process_hot_add(unsigned long pg_start,
 		spin_lock_irqsave(&dm_device.ha_lock, flags);
 		list_add_tail(&ha_region->list, &dm_device.ha_region_list);
 		spin_unlock_irqrestore(&dm_device.ha_lock, flags);
-	}
+	पूर्ण
 
-do_pg_range:
+करो_pg_range:
 	/*
-	 * Process the page range specified; bringing them
-	 * online if possible.
+	 * Process the page range specअगरied; bringing them
+	 * online अगर possible.
 	 */
-	return handle_pg_range(pg_start, pfn_cnt);
-}
+	वापस handle_pg_range(pg_start, pfn_cnt);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static void hot_add_req(struct work_struct *dummy)
-{
-	struct dm_hot_add_response resp;
-#ifdef CONFIG_MEMORY_HOTPLUG
-	unsigned long pg_start, pfn_cnt;
-	unsigned long rg_start, rg_sz;
-#endif
-	struct hv_dynmem_device *dm = &dm_device;
+अटल व्योम hot_add_req(काष्ठा work_काष्ठा *dummy)
+अणु
+	काष्ठा dm_hot_add_response resp;
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+	अचिन्हित दीर्घ pg_start, pfn_cnt;
+	अचिन्हित दीर्घ rg_start, rg_sz;
+#पूर्ण_अगर
+	काष्ठा hv_dynmem_device *dm = &dm_device;
 
-	memset(&resp, 0, sizeof(struct dm_hot_add_response));
+	स_रखो(&resp, 0, माप(काष्ठा dm_hot_add_response));
 	resp.hdr.type = DM_MEM_HOT_ADD_RESPONSE;
-	resp.hdr.size = sizeof(struct dm_hot_add_response);
+	resp.hdr.size = माप(काष्ठा dm_hot_add_response);
 
-#ifdef CONFIG_MEMORY_HOTPLUG
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
 	pg_start = dm->ha_wrk.ha_page_range.finfo.start_page;
 	pfn_cnt = dm->ha_wrk.ha_page_range.finfo.page_cnt;
 
 	rg_start = dm->ha_wrk.ha_region_range.finfo.start_page;
 	rg_sz = dm->ha_wrk.ha_region_range.finfo.page_cnt;
 
-	if ((rg_start == 0) && (!dm->host_specified_ha_region)) {
-		unsigned long region_size;
-		unsigned long region_start;
+	अगर ((rg_start == 0) && (!dm->host_specअगरied_ha_region)) अणु
+		अचिन्हित दीर्घ region_size;
+		अचिन्हित दीर्घ region_start;
 
 		/*
-		 * The host has not specified the hot-add region.
-		 * Based on the hot-add page range being specified,
+		 * The host has not specअगरied the hot-add region.
+		 * Based on the hot-add page range being specअगरied,
 		 * compute a hot-add region that can cover the pages
-		 * that need to be hot-added while ensuring the alignment
+		 * that need to be hot-added जबतक ensuring the alignment
 		 * and size requirements of Linux as it relates to hot-add.
 		 */
 		region_start = pg_start;
 		region_size = (pfn_cnt / HA_CHUNK) * HA_CHUNK;
-		if (pfn_cnt % HA_CHUNK)
+		अगर (pfn_cnt % HA_CHUNK)
 			region_size += HA_CHUNK;
 
 		region_start = (pg_start / HA_CHUNK) * HA_CHUNK;
 
 		rg_start = region_start;
 		rg_sz = region_size;
-	}
+	पूर्ण
 
-	if (do_hot_add)
+	अगर (करो_hot_add)
 		resp.page_count = process_hot_add(pg_start, pfn_cnt,
 						rg_start, rg_sz);
 
 	dm->num_pages_added += resp.page_count;
-#endif
+#पूर्ण_अगर
 	/*
-	 * The result field of the response structure has the
+	 * The result field of the response काष्ठाure has the
 	 * following semantics:
 	 *
-	 * 1. If all or some pages hot-added: Guest should return success.
+	 * 1. If all or some pages hot-added: Guest should वापस success.
 	 *
 	 * 2. If no pages could be hot-added:
 	 *
-	 * If the guest returns success, then the host
+	 * If the guest वापसs success, then the host
 	 * will not attempt any further hot-add operations. This
-	 * signifies a permanent failure.
+	 * signअगरies a permanent failure.
 	 *
-	 * If the guest returns failure, then this failure will be
+	 * If the guest वापसs failure, then this failure will be
 	 * treated as a transient failure and the host may retry the
 	 * hot-add operation after some delay.
 	 */
-	if (resp.page_count > 0)
+	अगर (resp.page_count > 0)
 		resp.result = 1;
-	else if (!do_hot_add)
+	अन्यथा अगर (!करो_hot_add)
 		resp.result = 1;
-	else
+	अन्यथा
 		resp.result = 0;
 
-	if (!do_hot_add || resp.page_count == 0) {
-		if (!allow_hibernation)
+	अगर (!करो_hot_add || resp.page_count == 0) अणु
+		अगर (!allow_hibernation)
 			pr_err("Memory hot add failed\n");
-		else
+		अन्यथा
 			pr_info("Ignore hot-add request!\n");
-	}
+	पूर्ण
 
 	dm->state = DM_INITIALIZED;
-	resp.hdr.trans_id = atomic_inc_return(&trans_id);
+	resp.hdr.trans_id = atomic_inc_वापस(&trans_id);
 	vmbus_sendpacket(dm->dev->channel, &resp,
-			sizeof(struct dm_hot_add_response),
-			(unsigned long)NULL,
+			माप(काष्ठा dm_hot_add_response),
+			(अचिन्हित दीर्घ)शून्य,
 			VM_PKT_DATA_INBAND, 0);
-}
+पूर्ण
 
-static void process_info(struct hv_dynmem_device *dm, struct dm_info_msg *msg)
-{
-	struct dm_info_header *info_hdr;
+अटल व्योम process_info(काष्ठा hv_dynmem_device *dm, काष्ठा dm_info_msg *msg)
+अणु
+	काष्ठा dm_info_header *info_hdr;
 
-	info_hdr = (struct dm_info_header *)msg->info;
+	info_hdr = (काष्ठा dm_info_header *)msg->info;
 
-	switch (info_hdr->type) {
-	case INFO_TYPE_MAX_PAGE_CNT:
-		if (info_hdr->data_size == sizeof(__u64)) {
+	चयन (info_hdr->type) अणु
+	हाल INFO_TYPE_MAX_PAGE_CNT:
+		अगर (info_hdr->data_size == माप(__u64)) अणु
 			__u64 *max_page_count = (__u64 *)&info_hdr[1];
 
 			pr_info("Max. dynamic memory size: %llu MB\n",
 				(*max_page_count) >> (20 - HV_HYP_PAGE_SHIFT));
-		}
+		पूर्ण
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_warn("Received Unknown type: %d\n", info_hdr->type);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned long compute_balloon_floor(void)
-{
-	unsigned long min_pages;
-	unsigned long nr_pages = totalram_pages();
-#define MB2PAGES(mb) ((mb) << (20 - PAGE_SHIFT))
+अटल अचिन्हित दीर्घ compute_balloon_न्यूनमान(व्योम)
+अणु
+	अचिन्हित दीर्घ min_pages;
+	अचिन्हित दीर्घ nr_pages = totalram_pages();
+#घोषणा MB2PAGES(mb) ((mb) << (20 - PAGE_SHIFT))
 	/* Simple continuous piecewiese linear function:
 	 *  max MiB -> min MiB  gradient
 	 *       0         0
@@ -1102,54 +1103,54 @@ static unsigned long compute_balloon_floor(void)
 	 *    8192       744    (1/16)
 	 *   32768      1512	(1/32)
 	 */
-	if (nr_pages < MB2PAGES(128))
+	अगर (nr_pages < MB2PAGES(128))
 		min_pages = MB2PAGES(8) + (nr_pages >> 1);
-	else if (nr_pages < MB2PAGES(512))
+	अन्यथा अगर (nr_pages < MB2PAGES(512))
 		min_pages = MB2PAGES(40) + (nr_pages >> 2);
-	else if (nr_pages < MB2PAGES(2048))
+	अन्यथा अगर (nr_pages < MB2PAGES(2048))
 		min_pages = MB2PAGES(104) + (nr_pages >> 3);
-	else if (nr_pages < MB2PAGES(8192))
+	अन्यथा अगर (nr_pages < MB2PAGES(8192))
 		min_pages = MB2PAGES(232) + (nr_pages >> 4);
-	else
+	अन्यथा
 		min_pages = MB2PAGES(488) + (nr_pages >> 5);
-#undef MB2PAGES
-	return min_pages;
-}
+#अघोषित MB2PAGES
+	वापस min_pages;
+पूर्ण
 
 /*
  * Post our status as it relates memory pressure to the
  * host. Host expects the guests to post this status
- * periodically at 1 second intervals.
+ * periodically at 1 second पूर्णांकervals.
  *
- * The metrics specified in this protocol are very Windows
- * specific and so we cook up numbers here to convey our memory
+ * The metrics specअगरied in this protocol are very Winकरोws
+ * specअगरic and so we cook up numbers here to convey our memory
  * pressure.
  */
 
-static void post_status(struct hv_dynmem_device *dm)
-{
-	struct dm_status status;
-	unsigned long now = jiffies;
-	unsigned long last_post = last_post_time;
+अटल व्योम post_status(काष्ठा hv_dynmem_device *dm)
+अणु
+	काष्ठा dm_status status;
+	अचिन्हित दीर्घ now = jअगरfies;
+	अचिन्हित दीर्घ last_post = last_post_समय;
 
-	if (pressure_report_delay > 0) {
+	अगर (pressure_report_delay > 0) अणु
 		--pressure_report_delay;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!time_after(now, (last_post_time + HZ)))
-		return;
+	अगर (!समय_after(now, (last_post_समय + HZ)))
+		वापस;
 
-	memset(&status, 0, sizeof(struct dm_status));
+	स_रखो(&status, 0, माप(काष्ठा dm_status));
 	status.hdr.type = DM_STATUS_REPORT;
-	status.hdr.size = sizeof(struct dm_status);
-	status.hdr.trans_id = atomic_inc_return(&trans_id);
+	status.hdr.size = माप(काष्ठा dm_status);
+	status.hdr.trans_id = atomic_inc_वापस(&trans_id);
 
 	/*
-	 * The host expects the guest to report free and committed memory.
-	 * Furthermore, the host expects the pressure information to include
+	 * The host expects the guest to report मुक्त and committed memory.
+	 * Furthermore, the host expects the pressure inक्रमmation to include
 	 * the ballooned out pages. For a given amount of memory that we are
-	 * managing we need to compute a floor below which we should not
+	 * managing we need to compute a न्यूनमान below which we should not
 	 * balloon. Compute this and add it to the pressure report.
 	 * We also need to report all offline pages (num_pages_added -
 	 * num_pages_onlined) as committed to the host, otherwise it can try
@@ -1160,158 +1161,158 @@ static void post_status(struct hv_dynmem_device *dm)
 		dm->num_pages_ballooned +
 		(dm->num_pages_added > dm->num_pages_onlined ?
 		 dm->num_pages_added - dm->num_pages_onlined : 0) +
-		compute_balloon_floor();
+		compute_balloon_न्यूनमान();
 
 	trace_balloon_status(status.num_avail, status.num_committed,
 			     vm_memory_committed(), dm->num_pages_ballooned,
 			     dm->num_pages_added, dm->num_pages_onlined);
 	/*
-	 * If our transaction ID is no longer current, just don't
-	 * send the status. This can happen if we were interrupted
+	 * If our transaction ID is no दीर्घer current, just करोn't
+	 * send the status. This can happen अगर we were पूर्णांकerrupted
 	 * after we picked our transaction ID.
 	 */
-	if (status.hdr.trans_id != atomic_read(&trans_id))
-		return;
+	अगर (status.hdr.trans_id != atomic_पढ़ो(&trans_id))
+		वापस;
 
 	/*
-	 * If the last post time that we sampled has changed,
-	 * we have raced, don't post the status.
+	 * If the last post समय that we sampled has changed,
+	 * we have raced, करोn't post the status.
 	 */
-	if (last_post != last_post_time)
-		return;
+	अगर (last_post != last_post_समय)
+		वापस;
 
-	last_post_time = jiffies;
+	last_post_समय = jअगरfies;
 	vmbus_sendpacket(dm->dev->channel, &status,
-				sizeof(struct dm_status),
-				(unsigned long)NULL,
+				माप(काष्ठा dm_status),
+				(अचिन्हित दीर्घ)शून्य,
 				VM_PKT_DATA_INBAND, 0);
 
-}
+पूर्ण
 
-static void free_balloon_pages(struct hv_dynmem_device *dm,
-			 union dm_mem_page_range *range_array)
-{
-	int num_pages = range_array->finfo.page_cnt;
+अटल व्योम मुक्त_balloon_pages(काष्ठा hv_dynmem_device *dm,
+			 जोड़ dm_mem_page_range *range_array)
+अणु
+	पूर्णांक num_pages = range_array->finfo.page_cnt;
 	__u64 start_frame = range_array->finfo.start_page;
-	struct page *pg;
-	int i;
+	काष्ठा page *pg;
+	पूर्णांक i;
 
-	for (i = 0; i < num_pages; i++) {
+	क्रम (i = 0; i < num_pages; i++) अणु
 		pg = pfn_to_page(i + start_frame);
 		__ClearPageOffline(pg);
-		__free_page(pg);
+		__मुक्त_page(pg);
 		dm->num_pages_ballooned--;
 		adjust_managed_page_count(pg, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 
-static unsigned int alloc_balloon_pages(struct hv_dynmem_device *dm,
-					unsigned int num_pages,
-					struct dm_balloon_response *bl_resp,
-					int alloc_unit)
-{
-	unsigned int i, j;
-	struct page *pg;
+अटल अचिन्हित पूर्णांक alloc_balloon_pages(काष्ठा hv_dynmem_device *dm,
+					अचिन्हित पूर्णांक num_pages,
+					काष्ठा dm_balloon_response *bl_resp,
+					पूर्णांक alloc_unit)
+अणु
+	अचिन्हित पूर्णांक i, j;
+	काष्ठा page *pg;
 
-	for (i = 0; i < num_pages / alloc_unit; i++) {
-		if (bl_resp->hdr.size + sizeof(union dm_mem_page_range) >
+	क्रम (i = 0; i < num_pages / alloc_unit; i++) अणु
+		अगर (bl_resp->hdr.size + माप(जोड़ dm_mem_page_range) >
 			HV_HYP_PAGE_SIZE)
-			return i * alloc_unit;
+			वापस i * alloc_unit;
 
 		/*
-		 * We execute this code in a thread context. Furthermore,
-		 * we don't want the kernel to try too hard.
+		 * We execute this code in a thपढ़ो context. Furthermore,
+		 * we करोn't want the kernel to try too hard.
 		 */
 		pg = alloc_pages(GFP_HIGHUSER | __GFP_NORETRY |
 				__GFP_NOMEMALLOC | __GFP_NOWARN,
 				get_order(alloc_unit << PAGE_SHIFT));
 
-		if (!pg)
-			return i * alloc_unit;
+		अगर (!pg)
+			वापस i * alloc_unit;
 
 		dm->num_pages_ballooned += alloc_unit;
 
 		/*
 		 * If we allocatted 2M pages; split them so we
-		 * can free them in any order we get.
+		 * can मुक्त them in any order we get.
 		 */
 
-		if (alloc_unit != 1)
+		अगर (alloc_unit != 1)
 			split_page(pg, get_order(alloc_unit << PAGE_SHIFT));
 
 		/* mark all pages offline */
-		for (j = 0; j < alloc_unit; j++) {
+		क्रम (j = 0; j < alloc_unit; j++) अणु
 			__SetPageOffline(pg + j);
 			adjust_managed_page_count(pg + j, -1);
-		}
+		पूर्ण
 
 		bl_resp->range_count++;
 		bl_resp->range_array[i].finfo.start_page =
 			page_to_pfn(pg);
 		bl_resp->range_array[i].finfo.page_cnt = alloc_unit;
-		bl_resp->hdr.size += sizeof(union dm_mem_page_range);
+		bl_resp->hdr.size += माप(जोड़ dm_mem_page_range);
 
-	}
+	पूर्ण
 
-	return i * alloc_unit;
-}
+	वापस i * alloc_unit;
+पूर्ण
 
-static void balloon_up(struct work_struct *dummy)
-{
-	unsigned int num_pages = dm_device.balloon_wrk.num_pages;
-	unsigned int num_ballooned = 0;
-	struct dm_balloon_response *bl_resp;
-	int alloc_unit;
-	int ret;
-	bool done = false;
-	int i;
-	long avail_pages;
-	unsigned long floor;
+अटल व्योम balloon_up(काष्ठा work_काष्ठा *dummy)
+अणु
+	अचिन्हित पूर्णांक num_pages = dm_device.balloon_wrk.num_pages;
+	अचिन्हित पूर्णांक num_ballooned = 0;
+	काष्ठा dm_balloon_response *bl_resp;
+	पूर्णांक alloc_unit;
+	पूर्णांक ret;
+	bool करोne = false;
+	पूर्णांक i;
+	दीर्घ avail_pages;
+	अचिन्हित दीर्घ न्यूनमान;
 
 	/*
-	 * We will attempt 2M allocations. However, if we fail to
+	 * We will attempt 2M allocations. However, अगर we fail to
 	 * allocate 2M chunks, we will go back to PAGE_SIZE allocations.
 	 */
 	alloc_unit = PAGES_IN_2M;
 
 	avail_pages = si_mem_available();
-	floor = compute_balloon_floor();
+	न्यूनमान = compute_balloon_न्यूनमान();
 
-	/* Refuse to balloon below the floor. */
-	if (avail_pages < num_pages || avail_pages - num_pages < floor) {
+	/* Refuse to balloon below the न्यूनमान. */
+	अगर (avail_pages < num_pages || avail_pages - num_pages < न्यूनमान) अणु
 		pr_info("Balloon request will be partially fulfilled. %s\n",
 			avail_pages < num_pages ? "Not enough memory." :
 			"Balloon floor reached.");
 
-		num_pages = avail_pages > floor ? (avail_pages - floor) : 0;
-	}
+		num_pages = avail_pages > न्यूनमान ? (avail_pages - न्यूनमान) : 0;
+	पूर्ण
 
-	while (!done) {
-		memset(balloon_up_send_buffer, 0, HV_HYP_PAGE_SIZE);
-		bl_resp = (struct dm_balloon_response *)balloon_up_send_buffer;
+	जबतक (!करोne) अणु
+		स_रखो(balloon_up_send_buffer, 0, HV_HYP_PAGE_SIZE);
+		bl_resp = (काष्ठा dm_balloon_response *)balloon_up_send_buffer;
 		bl_resp->hdr.type = DM_BALLOON_RESPONSE;
-		bl_resp->hdr.size = sizeof(struct dm_balloon_response);
+		bl_resp->hdr.size = माप(काष्ठा dm_balloon_response);
 		bl_resp->more_pages = 1;
 
 		num_pages -= num_ballooned;
 		num_ballooned = alloc_balloon_pages(&dm_device, num_pages,
 						    bl_resp, alloc_unit);
 
-		if (alloc_unit != 1 && num_ballooned == 0) {
+		अगर (alloc_unit != 1 && num_ballooned == 0) अणु
 			alloc_unit = 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (num_ballooned == 0 || num_ballooned == num_pages) {
+		अगर (num_ballooned == 0 || num_ballooned == num_pages) अणु
 			pr_debug("Ballooned %u out of %u requested pages.\n",
 				num_pages, dm_device.balloon_wrk.num_pages);
 
 			bl_resp->more_pages = 0;
-			done = true;
+			करोne = true;
 			dm_device.state = DM_INITIALIZED;
-		}
+		पूर्ण
 
 		/*
 		 * We are pushing a lot of data through the channel;
@@ -1319,285 +1320,285 @@ static void balloon_up(struct work_struct *dummy)
 		 * lack of space in the ring buffer.
 		 */
 
-		do {
-			bl_resp->hdr.trans_id = atomic_inc_return(&trans_id);
+		करो अणु
+			bl_resp->hdr.trans_id = atomic_inc_वापस(&trans_id);
 			ret = vmbus_sendpacket(dm_device.dev->channel,
 						bl_resp,
 						bl_resp->hdr.size,
-						(unsigned long)NULL,
+						(अचिन्हित दीर्घ)शून्य,
 						VM_PKT_DATA_INBAND, 0);
 
-			if (ret == -EAGAIN)
+			अगर (ret == -EAGAIN)
 				msleep(20);
 			post_status(&dm_device);
-		} while (ret == -EAGAIN);
+		पूर्ण जबतक (ret == -EAGAIN);
 
-		if (ret) {
+		अगर (ret) अणु
 			/*
 			 * Free up the memory we allocatted.
 			 */
 			pr_err("Balloon response failed\n");
 
-			for (i = 0; i < bl_resp->range_count; i++)
-				free_balloon_pages(&dm_device,
+			क्रम (i = 0; i < bl_resp->range_count; i++)
+				मुक्त_balloon_pages(&dm_device,
 						 &bl_resp->range_array[i]);
 
-			done = true;
-		}
-	}
+			करोne = true;
+		पूर्ण
+	पूर्ण
 
-}
+पूर्ण
 
-static void balloon_down(struct hv_dynmem_device *dm,
-			struct dm_unballoon_request *req)
-{
-	union dm_mem_page_range *range_array = req->range_array;
-	int range_count = req->range_count;
-	struct dm_unballoon_response resp;
-	int i;
-	unsigned int prev_pages_ballooned = dm->num_pages_ballooned;
+अटल व्योम balloon_करोwn(काष्ठा hv_dynmem_device *dm,
+			काष्ठा dm_unballoon_request *req)
+अणु
+	जोड़ dm_mem_page_range *range_array = req->range_array;
+	पूर्णांक range_count = req->range_count;
+	काष्ठा dm_unballoon_response resp;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक prev_pages_ballooned = dm->num_pages_ballooned;
 
-	for (i = 0; i < range_count; i++) {
-		free_balloon_pages(dm, &range_array[i]);
+	क्रम (i = 0; i < range_count; i++) अणु
+		मुक्त_balloon_pages(dm, &range_array[i]);
 		complete(&dm_device.config_event);
-	}
+	पूर्ण
 
 	pr_debug("Freed %u ballooned pages.\n",
 		prev_pages_ballooned - dm->num_pages_ballooned);
 
-	if (req->more_pages == 1)
-		return;
+	अगर (req->more_pages == 1)
+		वापस;
 
-	memset(&resp, 0, sizeof(struct dm_unballoon_response));
+	स_रखो(&resp, 0, माप(काष्ठा dm_unballoon_response));
 	resp.hdr.type = DM_UNBALLOON_RESPONSE;
-	resp.hdr.trans_id = atomic_inc_return(&trans_id);
-	resp.hdr.size = sizeof(struct dm_unballoon_response);
+	resp.hdr.trans_id = atomic_inc_वापस(&trans_id);
+	resp.hdr.size = माप(काष्ठा dm_unballoon_response);
 
 	vmbus_sendpacket(dm_device.dev->channel, &resp,
-				sizeof(struct dm_unballoon_response),
-				(unsigned long)NULL,
+				माप(काष्ठा dm_unballoon_response),
+				(अचिन्हित दीर्घ)शून्य,
 				VM_PKT_DATA_INBAND, 0);
 
 	dm->state = DM_INITIALIZED;
-}
+पूर्ण
 
-static void balloon_onchannelcallback(void *context);
+अटल व्योम balloon_onchannelcallback(व्योम *context);
 
-static int dm_thread_func(void *dm_dev)
-{
-	struct hv_dynmem_device *dm = dm_dev;
+अटल पूर्णांक dm_thपढ़ो_func(व्योम *dm_dev)
+अणु
+	काष्ठा hv_dynmem_device *dm = dm_dev;
 
-	while (!kthread_should_stop()) {
-		wait_for_completion_interruptible_timeout(
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		रुको_क्रम_completion_पूर्णांकerruptible_समयout(
 						&dm_device.config_event, 1*HZ);
 		/*
-		 * The host expects us to post information on the memory
+		 * The host expects us to post inक्रमmation on the memory
 		 * pressure every second.
 		 */
 		reinit_completion(&dm_device.config_event);
 		post_status(dm);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void version_resp(struct hv_dynmem_device *dm,
-			struct dm_version_response *vresp)
-{
-	struct dm_version_request version_req;
-	int ret;
+अटल व्योम version_resp(काष्ठा hv_dynmem_device *dm,
+			काष्ठा dm_version_response *vresp)
+अणु
+	काष्ठा dm_version_request version_req;
+	पूर्णांक ret;
 
-	if (vresp->is_accepted) {
+	अगर (vresp->is_accepted) अणु
 		/*
-		 * We are done; wakeup the
-		 * context waiting for version
+		 * We are करोne; wakeup the
+		 * context रुकोing क्रम version
 		 * negotiation.
 		 */
 		complete(&dm->host_event);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/*
-	 * If there are more versions to try, continue
-	 * with negotiations; if not
-	 * shutdown the service since we are not able
+	 * If there are more versions to try, जारी
+	 * with negotiations; अगर not
+	 * shutकरोwn the service since we are not able
 	 * to negotiate a suitable version number
 	 * with the host.
 	 */
-	if (dm->next_version == 0)
-		goto version_error;
+	अगर (dm->next_version == 0)
+		जाओ version_error;
 
-	memset(&version_req, 0, sizeof(struct dm_version_request));
+	स_रखो(&version_req, 0, माप(काष्ठा dm_version_request));
 	version_req.hdr.type = DM_VERSION_REQUEST;
-	version_req.hdr.size = sizeof(struct dm_version_request);
-	version_req.hdr.trans_id = atomic_inc_return(&trans_id);
+	version_req.hdr.size = माप(काष्ठा dm_version_request);
+	version_req.hdr.trans_id = atomic_inc_वापस(&trans_id);
 	version_req.version.version = dm->next_version;
 	dm->version = version_req.version.version;
 
 	/*
-	 * Set the next version to try in case current version fails.
+	 * Set the next version to try in हाल current version fails.
 	 * Win7 protocol ought to be the last one to try.
 	 */
-	switch (version_req.version.version) {
-	case DYNMEM_PROTOCOL_VERSION_WIN8:
+	चयन (version_req.version.version) अणु
+	हाल DYNMEM_PROTOCOL_VERSION_WIN8:
 		dm->next_version = DYNMEM_PROTOCOL_VERSION_WIN7;
 		version_req.is_last_attempt = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dm->next_version = 0;
 		version_req.is_last_attempt = 1;
-	}
+	पूर्ण
 
 	ret = vmbus_sendpacket(dm->dev->channel, &version_req,
-				sizeof(struct dm_version_request),
-				(unsigned long)NULL,
+				माप(काष्ठा dm_version_request),
+				(अचिन्हित दीर्घ)शून्य,
 				VM_PKT_DATA_INBAND, 0);
 
-	if (ret)
-		goto version_error;
+	अगर (ret)
+		जाओ version_error;
 
-	return;
+	वापस;
 
 version_error:
 	dm->state = DM_INIT_ERROR;
 	complete(&dm->host_event);
-}
+पूर्ण
 
-static void cap_resp(struct hv_dynmem_device *dm,
-			struct dm_capabilities_resp_msg *cap_resp)
-{
-	if (!cap_resp->is_accepted) {
+अटल व्योम cap_resp(काष्ठा hv_dynmem_device *dm,
+			काष्ठा dm_capabilities_resp_msg *cap_resp)
+अणु
+	अगर (!cap_resp->is_accepted) अणु
 		pr_err("Capabilities not accepted by host\n");
 		dm->state = DM_INIT_ERROR;
-	}
+	पूर्ण
 	complete(&dm->host_event);
-}
+पूर्ण
 
-static void balloon_onchannelcallback(void *context)
-{
-	struct hv_device *dev = context;
+अटल व्योम balloon_onchannelcallback(व्योम *context)
+अणु
+	काष्ठा hv_device *dev = context;
 	u32 recvlen;
 	u64 requestid;
-	struct dm_message *dm_msg;
-	struct dm_header *dm_hdr;
-	struct hv_dynmem_device *dm = hv_get_drvdata(dev);
-	struct dm_balloon *bal_msg;
-	struct dm_hot_add *ha_msg;
-	union dm_mem_page_range *ha_pg_range;
-	union dm_mem_page_range *ha_region;
+	काष्ठा dm_message *dm_msg;
+	काष्ठा dm_header *dm_hdr;
+	काष्ठा hv_dynmem_device *dm = hv_get_drvdata(dev);
+	काष्ठा dm_balloon *bal_msg;
+	काष्ठा dm_hot_add *ha_msg;
+	जोड़ dm_mem_page_range *ha_pg_range;
+	जोड़ dm_mem_page_range *ha_region;
 
-	memset(recv_buffer, 0, sizeof(recv_buffer));
+	स_रखो(recv_buffer, 0, माप(recv_buffer));
 	vmbus_recvpacket(dev->channel, recv_buffer,
 			 HV_HYP_PAGE_SIZE, &recvlen, &requestid);
 
-	if (recvlen > 0) {
-		dm_msg = (struct dm_message *)recv_buffer;
+	अगर (recvlen > 0) अणु
+		dm_msg = (काष्ठा dm_message *)recv_buffer;
 		dm_hdr = &dm_msg->hdr;
 
-		switch (dm_hdr->type) {
-		case DM_VERSION_RESPONSE:
+		चयन (dm_hdr->type) अणु
+		हाल DM_VERSION_RESPONSE:
 			version_resp(dm,
-				 (struct dm_version_response *)dm_msg);
-			break;
+				 (काष्ठा dm_version_response *)dm_msg);
+			अवरोध;
 
-		case DM_CAPABILITIES_RESPONSE:
+		हाल DM_CAPABILITIES_RESPONSE:
 			cap_resp(dm,
-				 (struct dm_capabilities_resp_msg *)dm_msg);
-			break;
+				 (काष्ठा dm_capabilities_resp_msg *)dm_msg);
+			अवरोध;
 
-		case DM_BALLOON_REQUEST:
-			if (allow_hibernation) {
+		हाल DM_BALLOON_REQUEST:
+			अगर (allow_hibernation) अणु
 				pr_info("Ignore balloon-up request!\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (dm->state == DM_BALLOON_UP)
+			अगर (dm->state == DM_BALLOON_UP)
 				pr_warn("Currently ballooning\n");
-			bal_msg = (struct dm_balloon *)recv_buffer;
+			bal_msg = (काष्ठा dm_balloon *)recv_buffer;
 			dm->state = DM_BALLOON_UP;
 			dm_device.balloon_wrk.num_pages = bal_msg->num_pages;
 			schedule_work(&dm_device.balloon_wrk.wrk);
-			break;
+			अवरोध;
 
-		case DM_UNBALLOON_REQUEST:
-			if (allow_hibernation) {
+		हाल DM_UNBALLOON_REQUEST:
+			अगर (allow_hibernation) अणु
 				pr_info("Ignore balloon-down request!\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			dm->state = DM_BALLOON_DOWN;
-			balloon_down(dm,
-				 (struct dm_unballoon_request *)recv_buffer);
-			break;
+			balloon_करोwn(dm,
+				 (काष्ठा dm_unballoon_request *)recv_buffer);
+			अवरोध;
 
-		case DM_MEM_HOT_ADD_REQUEST:
-			if (dm->state == DM_HOT_ADD)
+		हाल DM_MEM_HOT_ADD_REQUEST:
+			अगर (dm->state == DM_HOT_ADD)
 				pr_warn("Currently hot-adding\n");
 			dm->state = DM_HOT_ADD;
-			ha_msg = (struct dm_hot_add *)recv_buffer;
-			if (ha_msg->hdr.size == sizeof(struct dm_hot_add)) {
+			ha_msg = (काष्ठा dm_hot_add *)recv_buffer;
+			अगर (ha_msg->hdr.size == माप(काष्ठा dm_hot_add)) अणु
 				/*
-				 * This is a normal hot-add request specifying
+				 * This is a normal hot-add request specअगरying
 				 * hot-add memory.
 				 */
-				dm->host_specified_ha_region = false;
+				dm->host_specअगरied_ha_region = false;
 				ha_pg_range = &ha_msg->range;
 				dm->ha_wrk.ha_page_range = *ha_pg_range;
 				dm->ha_wrk.ha_region_range.page_range = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
-				 * Host is specifying that we first hot-add
+				 * Host is specअगरying that we first hot-add
 				 * a region and then partially populate this
 				 * region.
 				 */
-				dm->host_specified_ha_region = true;
+				dm->host_specअगरied_ha_region = true;
 				ha_pg_range = &ha_msg->range;
 				ha_region = &ha_pg_range[1];
 				dm->ha_wrk.ha_page_range = *ha_pg_range;
 				dm->ha_wrk.ha_region_range = *ha_region;
-			}
+			पूर्ण
 			schedule_work(&dm_device.ha_wrk.wrk);
-			break;
+			अवरोध;
 
-		case DM_INFO_MESSAGE:
-			process_info(dm, (struct dm_info_msg *)dm_msg);
-			break;
+		हाल DM_INFO_MESSAGE:
+			process_info(dm, (काष्ठा dm_info_msg *)dm_msg);
+			अवरोध;
 
-		default:
+		शेष:
 			pr_warn("Unhandled message: type: %d\n", dm_hdr->type);
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-}
+पूर्ण
 
 /* Hyper-V only supports reporting 2MB pages or higher */
-#define HV_MIN_PAGE_REPORTING_ORDER	9
-#define HV_MIN_PAGE_REPORTING_LEN (HV_HYP_PAGE_SIZE << HV_MIN_PAGE_REPORTING_ORDER)
-static int hv_free_page_report(struct page_reporting_dev_info *pr_dev_info,
-		    struct scatterlist *sgl, unsigned int nents)
-{
-	unsigned long flags;
-	struct hv_memory_hint *hint;
-	int i;
+#घोषणा HV_MIN_PAGE_REPORTING_ORDER	9
+#घोषणा HV_MIN_PAGE_REPORTING_LEN (HV_HYP_PAGE_SIZE << HV_MIN_PAGE_REPORTING_ORDER)
+अटल पूर्णांक hv_मुक्त_page_report(काष्ठा page_reporting_dev_info *pr_dev_info,
+		    काष्ठा scatterlist *sgl, अचिन्हित पूर्णांक nents)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा hv_memory_hपूर्णांक *hपूर्णांक;
+	पूर्णांक i;
 	u64 status;
-	struct scatterlist *sg;
+	काष्ठा scatterlist *sg;
 
-	WARN_ON_ONCE(nents > HV_MEMORY_HINT_MAX_GPA_PAGE_RANGES);
+	WARN_ON_ONCE(nents > HV_MEMORY_Hपूर्णांक_उच्च_GPA_PAGE_RANGES);
 	WARN_ON_ONCE(sgl->length < HV_MIN_PAGE_REPORTING_LEN);
 	local_irq_save(flags);
-	hint = *(struct hv_memory_hint **)this_cpu_ptr(hyperv_pcpu_input_arg);
-	if (!hint) {
+	hपूर्णांक = *(काष्ठा hv_memory_hपूर्णांक **)this_cpu_ptr(hyperv_pcpu_input_arg);
+	अगर (!hपूर्णांक) अणु
 		local_irq_restore(flags);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	hint->type = HV_EXT_MEMORY_HEAT_HINT_TYPE_COLD_DISCARD;
-	hint->reserved = 0;
-	for_each_sg(sgl, sg, nents, i) {
-		union hv_gpa_page_range *range;
+	hपूर्णांक->type = HV_EXT_MEMORY_HEAT_HINT_TYPE_COLD_DISCARD;
+	hपूर्णांक->reserved = 0;
+	क्रम_each_sg(sgl, sg, nents, i) अणु
+		जोड़ hv_gpa_page_range *range;
 
-		range = &hint->ranges[i];
+		range = &hपूर्णांक->ranges[i];
 		range->address_space = 0;
 		/* page reporting only reports 2MB pages or higher */
 		range->page.largepage = 1;
@@ -1606,100 +1607,100 @@ static int hv_free_page_report(struct page_reporting_dev_info *pr_dev_info,
 		range->page_size = HV_GPA_PAGE_RANGE_PAGE_SIZE_2MB;
 		range->base_large_pfn =
 			page_to_hvpfn(sg_page(sg)) >> HV_MIN_PAGE_REPORTING_ORDER;
-	}
+	पूर्ण
 
-	status = hv_do_rep_hypercall(HV_EXT_CALL_MEMORY_HEAT_HINT, nents, 0,
-				     hint, NULL);
+	status = hv_करो_rep_hypercall(HV_EXT_CALL_MEMORY_HEAT_HINT, nents, 0,
+				     hपूर्णांक, शून्य);
 	local_irq_restore(flags);
-	if ((status & HV_HYPERCALL_RESULT_MASK) != HV_STATUS_SUCCESS) {
+	अगर ((status & HV_HYPERCALL_RESULT_MASK) != HV_STATUS_SUCCESS) अणु
 		pr_err("Cold memory discard hypercall failed with status %llx\n",
 			status);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enable_page_reporting(void)
-{
-	int ret;
+अटल व्योम enable_page_reporting(व्योम)
+अणु
+	पूर्णांक ret;
 
 	/* Essentially, validating 'PAGE_REPORTING_MIN_ORDER' is big enough. */
-	if (pageblock_order < HV_MIN_PAGE_REPORTING_ORDER) {
+	अगर (pageblock_order < HV_MIN_PAGE_REPORTING_ORDER) अणु
 		pr_debug("Cold memory discard is only supported on 2MB pages and above\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!hv_query_ext_cap(HV_EXT_CAPABILITY_MEMORY_COLD_DISCARD_HINT)) {
+	अगर (!hv_query_ext_cap(HV_EXT_CAPABILITY_MEMORY_COLD_DISCARD_HINT)) अणु
 		pr_debug("Cold memory discard hint not supported by Hyper-V\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	BUILD_BUG_ON(PAGE_REPORTING_CAPACITY > HV_MEMORY_HINT_MAX_GPA_PAGE_RANGES);
-	dm_device.pr_dev_info.report = hv_free_page_report;
-	ret = page_reporting_register(&dm_device.pr_dev_info);
-	if (ret < 0) {
-		dm_device.pr_dev_info.report = NULL;
+	BUILD_BUG_ON(PAGE_REPORTING_CAPACITY > HV_MEMORY_Hपूर्णांक_उच्च_GPA_PAGE_RANGES);
+	dm_device.pr_dev_info.report = hv_मुक्त_page_report;
+	ret = page_reporting_रेजिस्टर(&dm_device.pr_dev_info);
+	अगर (ret < 0) अणु
+		dm_device.pr_dev_info.report = शून्य;
 		pr_err("Failed to enable cold memory discard: %d\n", ret);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_info("Cold memory discard hint enabled\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void disable_page_reporting(void)
-{
-	if (dm_device.pr_dev_info.report) {
-		page_reporting_unregister(&dm_device.pr_dev_info);
-		dm_device.pr_dev_info.report = NULL;
-	}
-}
+अटल व्योम disable_page_reporting(व्योम)
+अणु
+	अगर (dm_device.pr_dev_info.report) अणु
+		page_reporting_unरेजिस्टर(&dm_device.pr_dev_info);
+		dm_device.pr_dev_info.report = शून्य;
+	पूर्ण
+पूर्ण
 
-static int balloon_connect_vsp(struct hv_device *dev)
-{
-	struct dm_version_request version_req;
-	struct dm_capabilities cap_msg;
-	unsigned long t;
-	int ret;
+अटल पूर्णांक balloon_connect_vsp(काष्ठा hv_device *dev)
+अणु
+	काष्ठा dm_version_request version_req;
+	काष्ठा dm_capabilities cap_msg;
+	अचिन्हित दीर्घ t;
+	पूर्णांक ret;
 
-	ret = vmbus_open(dev->channel, dm_ring_size, dm_ring_size, NULL, 0,
+	ret = vmbus_खोलो(dev->channel, dm_ring_size, dm_ring_size, शून्य, 0,
 			 balloon_onchannelcallback, dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Initiate the hand shake with the host and negotiate
 	 * a version that the host can support. We start with the
-	 * highest version number and go down if the host cannot
+	 * highest version number and go करोwn अगर the host cannot
 	 * support it.
 	 */
-	memset(&version_req, 0, sizeof(struct dm_version_request));
+	स_रखो(&version_req, 0, माप(काष्ठा dm_version_request));
 	version_req.hdr.type = DM_VERSION_REQUEST;
-	version_req.hdr.size = sizeof(struct dm_version_request);
-	version_req.hdr.trans_id = atomic_inc_return(&trans_id);
+	version_req.hdr.size = माप(काष्ठा dm_version_request);
+	version_req.hdr.trans_id = atomic_inc_वापस(&trans_id);
 	version_req.version.version = DYNMEM_PROTOCOL_VERSION_WIN10;
 	version_req.is_last_attempt = 0;
 	dm_device.version = version_req.version.version;
 
 	ret = vmbus_sendpacket(dev->channel, &version_req,
-			       sizeof(struct dm_version_request),
-			       (unsigned long)NULL, VM_PKT_DATA_INBAND, 0);
-	if (ret)
-		goto out;
+			       माप(काष्ठा dm_version_request),
+			       (अचिन्हित दीर्घ)शून्य, VM_PKT_DATA_INBAND, 0);
+	अगर (ret)
+		जाओ out;
 
-	t = wait_for_completion_timeout(&dm_device.host_event, 5*HZ);
-	if (t == 0) {
+	t = रुको_क्रम_completion_समयout(&dm_device.host_event, 5*HZ);
+	अगर (t == 0) अणु
 		ret = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * If we could not negotiate a compatible version with the host
 	 * fail the probe function.
 	 */
-	if (dm_device.state == DM_INIT_ERROR) {
+	अगर (dm_device.state == DM_INIT_ERROR) अणु
 		ret = -EPROTO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pr_info("Using Dynamic Memory protocol version %u.%u\n",
 		DYNMEM_MAJOR_VERSION(dm_device.version),
@@ -1708,74 +1709,74 @@ static int balloon_connect_vsp(struct hv_device *dev)
 	/*
 	 * Now submit our capabilities to the host.
 	 */
-	memset(&cap_msg, 0, sizeof(struct dm_capabilities));
+	स_रखो(&cap_msg, 0, माप(काष्ठा dm_capabilities));
 	cap_msg.hdr.type = DM_CAPABILITIES_REPORT;
-	cap_msg.hdr.size = sizeof(struct dm_capabilities);
-	cap_msg.hdr.trans_id = atomic_inc_return(&trans_id);
+	cap_msg.hdr.size = माप(काष्ठा dm_capabilities);
+	cap_msg.hdr.trans_id = atomic_inc_वापस(&trans_id);
 
 	/*
-	 * When hibernation (i.e. virtual ACPI S4 state) is enabled, the host
+	 * When hibernation (i.e. भव ACPI S4 state) is enabled, the host
 	 * currently still requires the bits to be set, so we have to add code
-	 * to fail the host's hot-add and balloon up/down requests, if any.
+	 * to fail the host's hot-add and balloon up/करोwn requests, अगर any.
 	 */
 	cap_msg.caps.cap_bits.balloon = 1;
 	cap_msg.caps.cap_bits.hot_add = 1;
 
 	/*
-	 * Specify our alignment requirements as it relates
-	 * memory hot-add. Specify 128MB alignment.
+	 * Specअगरy our alignment requirements as it relates
+	 * memory hot-add. Specअगरy 128MB alignment.
 	 */
 	cap_msg.caps.cap_bits.hot_add_alignment = 7;
 
 	/*
-	 * Currently the host does not use these
-	 * values and we set them to what is done in the
-	 * Windows driver.
+	 * Currently the host करोes not use these
+	 * values and we set them to what is करोne in the
+	 * Winकरोws driver.
 	 */
 	cap_msg.min_page_cnt = 0;
 	cap_msg.max_page_number = -1;
 
 	ret = vmbus_sendpacket(dev->channel, &cap_msg,
-			       sizeof(struct dm_capabilities),
-			       (unsigned long)NULL, VM_PKT_DATA_INBAND, 0);
-	if (ret)
-		goto out;
+			       माप(काष्ठा dm_capabilities),
+			       (अचिन्हित दीर्घ)शून्य, VM_PKT_DATA_INBAND, 0);
+	अगर (ret)
+		जाओ out;
 
-	t = wait_for_completion_timeout(&dm_device.host_event, 5*HZ);
-	if (t == 0) {
+	t = रुको_क्रम_completion_समयout(&dm_device.host_event, 5*HZ);
+	अगर (t == 0) अणु
 		ret = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * If the host does not like our capabilities,
+	 * If the host करोes not like our capabilities,
 	 * fail the probe function.
 	 */
-	if (dm_device.state == DM_INIT_ERROR) {
+	अगर (dm_device.state == DM_INIT_ERROR) अणु
 		ret = -EPROTO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out:
-	vmbus_close(dev->channel);
-	return ret;
-}
+	vmbus_बंद(dev->channel);
+	वापस ret;
+पूर्ण
 
-static int balloon_probe(struct hv_device *dev,
-			 const struct hv_vmbus_device_id *dev_id)
-{
-	int ret;
+अटल पूर्णांक balloon_probe(काष्ठा hv_device *dev,
+			 स्थिर काष्ठा hv_vmbus_device_id *dev_id)
+अणु
+	पूर्णांक ret;
 
 	allow_hibernation = hv_is_hibernation_supported();
-	if (allow_hibernation)
+	अगर (allow_hibernation)
 		hot_add = false;
 
-#ifdef CONFIG_MEMORY_HOTPLUG
-	do_hot_add = hot_add;
-#else
-	do_hot_add = false;
-#endif
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+	करो_hot_add = hot_add;
+#अन्यथा
+	करो_hot_add = false;
+#पूर्ण_अगर
 	dm_device.dev = dev;
 	dm_device.state = DM_INITIALIZING;
 	dm_device.next_version = DYNMEM_PROTOCOL_VERSION_WIN8;
@@ -1785,157 +1786,157 @@ static int balloon_probe(struct hv_device *dev,
 	spin_lock_init(&dm_device.ha_lock);
 	INIT_WORK(&dm_device.balloon_wrk.wrk, balloon_up);
 	INIT_WORK(&dm_device.ha_wrk.wrk, hot_add_req);
-	dm_device.host_specified_ha_region = false;
+	dm_device.host_specअगरied_ha_region = false;
 
-#ifdef CONFIG_MEMORY_HOTPLUG
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
 	set_online_page_callback(&hv_online_page);
-	init_completion(&dm_device.ol_waitevent);
-	register_memory_notifier(&hv_memory_nb);
-#endif
+	init_completion(&dm_device.ol_रुकोevent);
+	रेजिस्टर_memory_notअगरier(&hv_memory_nb);
+#पूर्ण_अगर
 
 	hv_set_drvdata(dev, &dm_device);
 
 	ret = balloon_connect_vsp(dev);
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
 	enable_page_reporting();
 	dm_device.state = DM_INITIALIZED;
 
-	dm_device.thread =
-		 kthread_run(dm_thread_func, &dm_device, "hv_balloon");
-	if (IS_ERR(dm_device.thread)) {
-		ret = PTR_ERR(dm_device.thread);
-		goto probe_error;
-	}
+	dm_device.thपढ़ो =
+		 kthपढ़ो_run(dm_thपढ़ो_func, &dm_device, "hv_balloon");
+	अगर (IS_ERR(dm_device.thपढ़ो)) अणु
+		ret = PTR_ERR(dm_device.thपढ़ो);
+		जाओ probe_error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 probe_error:
 	dm_device.state = DM_INIT_ERROR;
-	dm_device.thread  = NULL;
+	dm_device.thपढ़ो  = शून्य;
 	disable_page_reporting();
-	vmbus_close(dev->channel);
-#ifdef CONFIG_MEMORY_HOTPLUG
-	unregister_memory_notifier(&hv_memory_nb);
+	vmbus_बंद(dev->channel);
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+	unरेजिस्टर_memory_notअगरier(&hv_memory_nb);
 	restore_online_page_callback(&hv_online_page);
-#endif
-	return ret;
-}
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-static int balloon_remove(struct hv_device *dev)
-{
-	struct hv_dynmem_device *dm = hv_get_drvdata(dev);
-	struct hv_hotadd_state *has, *tmp;
-	struct hv_hotadd_gap *gap, *tmp_gap;
-	unsigned long flags;
+अटल पूर्णांक balloon_हटाओ(काष्ठा hv_device *dev)
+अणु
+	काष्ठा hv_dynmem_device *dm = hv_get_drvdata(dev);
+	काष्ठा hv_hotadd_state *has, *पंचांगp;
+	काष्ठा hv_hotadd_gap *gap, *पंचांगp_gap;
+	अचिन्हित दीर्घ flags;
 
-	if (dm->num_pages_ballooned != 0)
+	अगर (dm->num_pages_ballooned != 0)
 		pr_warn("Ballooned pages: %d\n", dm->num_pages_ballooned);
 
 	cancel_work_sync(&dm->balloon_wrk.wrk);
 	cancel_work_sync(&dm->ha_wrk.wrk);
 
-	kthread_stop(dm->thread);
+	kthपढ़ो_stop(dm->thपढ़ो);
 	disable_page_reporting();
-	vmbus_close(dev->channel);
-#ifdef CONFIG_MEMORY_HOTPLUG
-	unregister_memory_notifier(&hv_memory_nb);
+	vmbus_बंद(dev->channel);
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+	unरेजिस्टर_memory_notअगरier(&hv_memory_nb);
 	restore_online_page_callback(&hv_online_page);
-#endif
+#पूर्ण_अगर
 	spin_lock_irqsave(&dm_device.ha_lock, flags);
-	list_for_each_entry_safe(has, tmp, &dm->ha_region_list, list) {
-		list_for_each_entry_safe(gap, tmp_gap, &has->gap_list, list) {
+	list_क्रम_each_entry_safe(has, पंचांगp, &dm->ha_region_list, list) अणु
+		list_क्रम_each_entry_safe(gap, पंचांगp_gap, &has->gap_list, list) अणु
 			list_del(&gap->list);
-			kfree(gap);
-		}
+			kमुक्त(gap);
+		पूर्ण
 		list_del(&has->list);
-		kfree(has);
-	}
+		kमुक्त(has);
+	पूर्ण
 	spin_unlock_irqrestore(&dm_device.ha_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int balloon_suspend(struct hv_device *hv_dev)
-{
-	struct hv_dynmem_device *dm = hv_get_drvdata(hv_dev);
+अटल पूर्णांक balloon_suspend(काष्ठा hv_device *hv_dev)
+अणु
+	काष्ठा hv_dynmem_device *dm = hv_get_drvdata(hv_dev);
 
 	tasklet_disable(&hv_dev->channel->callback_event);
 
 	cancel_work_sync(&dm->balloon_wrk.wrk);
 	cancel_work_sync(&dm->ha_wrk.wrk);
 
-	if (dm->thread) {
-		kthread_stop(dm->thread);
-		dm->thread = NULL;
-		vmbus_close(hv_dev->channel);
-	}
+	अगर (dm->thपढ़ो) अणु
+		kthपढ़ो_stop(dm->thपढ़ो);
+		dm->thपढ़ो = शून्य;
+		vmbus_बंद(hv_dev->channel);
+	पूर्ण
 
 	tasklet_enable(&hv_dev->channel->callback_event);
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int balloon_resume(struct hv_device *dev)
-{
-	int ret;
+अटल पूर्णांक balloon_resume(काष्ठा hv_device *dev)
+अणु
+	पूर्णांक ret;
 
 	dm_device.state = DM_INITIALIZING;
 
 	ret = balloon_connect_vsp(dev);
 
-	if (ret != 0)
-		goto out;
+	अगर (ret != 0)
+		जाओ out;
 
-	dm_device.thread =
-		 kthread_run(dm_thread_func, &dm_device, "hv_balloon");
-	if (IS_ERR(dm_device.thread)) {
-		ret = PTR_ERR(dm_device.thread);
-		dm_device.thread = NULL;
-		goto close_channel;
-	}
+	dm_device.thपढ़ो =
+		 kthपढ़ो_run(dm_thपढ़ो_func, &dm_device, "hv_balloon");
+	अगर (IS_ERR(dm_device.thपढ़ो)) अणु
+		ret = PTR_ERR(dm_device.thपढ़ो);
+		dm_device.thपढ़ो = शून्य;
+		जाओ बंद_channel;
+	पूर्ण
 
 	dm_device.state = DM_INITIALIZED;
-	return 0;
-close_channel:
-	vmbus_close(dev->channel);
+	वापस 0;
+बंद_channel:
+	vmbus_बंद(dev->channel);
 out:
 	dm_device.state = DM_INIT_ERROR;
-#ifdef CONFIG_MEMORY_HOTPLUG
-	unregister_memory_notifier(&hv_memory_nb);
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+	unरेजिस्टर_memory_notअगरier(&hv_memory_nb);
 	restore_online_page_callback(&hv_online_page);
-#endif
-	return ret;
-}
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-static const struct hv_vmbus_device_id id_table[] = {
+अटल स्थिर काष्ठा hv_vmbus_device_id id_table[] = अणु
 	/* Dynamic Memory Class ID */
 	/* 525074DC-8985-46e2-8057-A307DC18A502 */
-	{ HV_DM_GUID, },
-	{ },
-};
+	अणु HV_DM_GUID, पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(vmbus, id_table);
 
-static  struct hv_driver balloon_drv = {
+अटल  काष्ठा hv_driver balloon_drv = अणु
 	.name = "hv_balloon",
 	.id_table = id_table,
 	.probe =  balloon_probe,
-	.remove =  balloon_remove,
+	.हटाओ =  balloon_हटाओ,
 	.suspend = balloon_suspend,
 	.resume = balloon_resume,
-	.driver = {
+	.driver = अणु
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init init_balloon_drv(void)
-{
+अटल पूर्णांक __init init_balloon_drv(व्योम)
+अणु
 
-	return vmbus_driver_register(&balloon_drv);
-}
+	वापस vmbus_driver_रेजिस्टर(&balloon_drv);
+पूर्ण
 
 module_init(init_balloon_drv);
 

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,98 +23,98 @@
  *
  */
 
-#include "gem/i915_gem_pm.h"
-#include "gem/selftests/igt_gem_utils.h"
-#include "gem/selftests/mock_context.h"
-#include "gt/intel_gt.h"
+#समावेश "gem/i915_gem_pm.h"
+#समावेश "gem/selftests/igt_gem_utils.h"
+#समावेश "gem/selftests/mock_context.h"
+#समावेश "gt/intel_gt.h"
 
-#include "i915_selftest.h"
+#समावेश "i915_selftest.h"
 
-#include "igt_flush_test.h"
-#include "lib_sw_fence.h"
-#include "mock_drm.h"
-#include "mock_gem_device.h"
+#समावेश "igt_flush_test.h"
+#समावेश "lib_sw_fence.h"
+#समावेश "mock_drm.h"
+#समावेश "mock_gem_device.h"
 
-static void quirk_add(struct drm_i915_gem_object *obj,
-		      struct list_head *objects)
-{
-	/* quirk is only for live tiled objects, use it to declare ownership */
+अटल व्योम quirk_add(काष्ठा drm_i915_gem_object *obj,
+		      काष्ठा list_head *objects)
+अणु
+	/* quirk is only क्रम live tiled objects, use it to declare ownership */
 	GEM_BUG_ON(i915_gem_object_has_tiling_quirk(obj));
 	i915_gem_object_set_tiling_quirk(obj);
 	list_add(&obj->st_link, objects);
-}
+पूर्ण
 
-static int populate_ggtt(struct i915_ggtt *ggtt, struct list_head *objects)
-{
-	struct drm_i915_gem_object *obj;
-	unsigned long count;
+अटल पूर्णांक populate_ggtt(काष्ठा i915_ggtt *ggtt, काष्ठा list_head *objects)
+अणु
+	काष्ठा drm_i915_gem_object *obj;
+	अचिन्हित दीर्घ count;
 
 	count = 0;
-	do {
-		struct i915_vma *vma;
+	करो अणु
+		काष्ठा i915_vma *vma;
 
-		obj = i915_gem_object_create_internal(ggtt->vm.i915,
+		obj = i915_gem_object_create_पूर्णांकernal(ggtt->vm.i915,
 						      I915_GTT_PAGE_SIZE);
-		if (IS_ERR(obj))
-			return PTR_ERR(obj);
+		अगर (IS_ERR(obj))
+			वापस PTR_ERR(obj);
 
-		vma = i915_gem_object_ggtt_pin(obj, NULL, 0, 0, 0);
-		if (IS_ERR(vma)) {
+		vma = i915_gem_object_ggtt_pin(obj, शून्य, 0, 0, 0);
+		अगर (IS_ERR(vma)) अणु
 			i915_gem_object_put(obj);
-			if (vma == ERR_PTR(-ENOSPC))
-				break;
+			अगर (vma == ERR_PTR(-ENOSPC))
+				अवरोध;
 
-			return PTR_ERR(vma);
-		}
+			वापस PTR_ERR(vma);
+		पूर्ण
 
 		quirk_add(obj, objects);
 		count++;
-	} while (1);
+	पूर्ण जबतक (1);
 	pr_debug("Filled GGTT with %lu pages [%llu total]\n",
 		 count, ggtt->vm.total / PAGE_SIZE);
 
-	if (list_empty(&ggtt->vm.bound_list)) {
+	अगर (list_empty(&ggtt->vm.bound_list)) अणु
 		pr_err("No objects on the GGTT inactive list!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void unpin_ggtt(struct i915_ggtt *ggtt)
-{
-	struct i915_vma *vma;
+अटल व्योम unpin_ggtt(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा i915_vma *vma;
 
-	list_for_each_entry(vma, &ggtt->vm.bound_list, vm_link)
-		if (i915_gem_object_has_tiling_quirk(vma->obj))
+	list_क्रम_each_entry(vma, &ggtt->vm.bound_list, vm_link)
+		अगर (i915_gem_object_has_tiling_quirk(vma->obj))
 			i915_vma_unpin(vma);
-}
+पूर्ण
 
-static void cleanup_objects(struct i915_ggtt *ggtt, struct list_head *list)
-{
-	struct drm_i915_gem_object *obj, *on;
+अटल व्योम cleanup_objects(काष्ठा i915_ggtt *ggtt, काष्ठा list_head *list)
+अणु
+	काष्ठा drm_i915_gem_object *obj, *on;
 
-	list_for_each_entry_safe(obj, on, list, st_link) {
+	list_क्रम_each_entry_safe(obj, on, list, st_link) अणु
 		GEM_BUG_ON(!i915_gem_object_has_tiling_quirk(obj));
 		i915_gem_object_set_tiling_quirk(obj);
 		i915_gem_object_put(obj);
-	}
+	पूर्ण
 
-	i915_gem_drain_freed_objects(ggtt->vm.i915);
-}
+	i915_gem_drain_मुक्तd_objects(ggtt->vm.i915);
+पूर्ण
 
-static int igt_evict_something(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct i915_ggtt *ggtt = gt->ggtt;
+अटल पूर्णांक igt_evict_something(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा i915_ggtt *ggtt = gt->ggtt;
 	LIST_HEAD(objects);
-	int err;
+	पूर्णांक err;
 
 	/* Fill the GGTT with pinned objects and try to evict one. */
 
 	err = populate_ggtt(ggtt, &objects);
-	if (err)
-		goto cleanup;
+	अगर (err)
+		जाओ cleanup;
 
 	/* Everything is pinned, nothing should happen */
 	mutex_lock(&ggtt->vm.mutex);
@@ -122,11 +123,11 @@ static int igt_evict_something(void *arg)
 				       0, U64_MAX,
 				       0);
 	mutex_unlock(&ggtt->vm.mutex);
-	if (err != -ENOSPC) {
+	अगर (err != -ENOSPC) अणु
 		pr_err("i915_gem_evict_something failed on a full GGTT with err=%d\n",
 		       err);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	unpin_ggtt(ggtt);
 
@@ -137,409 +138,409 @@ static int igt_evict_something(void *arg)
 				       0, U64_MAX,
 				       0);
 	mutex_unlock(&ggtt->vm.mutex);
-	if (err) {
+	अगर (err) अणु
 		pr_err("i915_gem_evict_something failed on a full GGTT with err=%d\n",
 		       err);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 cleanup:
 	cleanup_objects(ggtt, &objects);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igt_overcommit(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct i915_ggtt *ggtt = gt->ggtt;
-	struct drm_i915_gem_object *obj;
-	struct i915_vma *vma;
+अटल पूर्णांक igt_overcommit(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा i915_ggtt *ggtt = gt->ggtt;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_vma *vma;
 	LIST_HEAD(objects);
-	int err;
+	पूर्णांक err;
 
 	/* Fill the GGTT with pinned objects and then try to pin one more.
 	 * We expect it to fail.
 	 */
 
 	err = populate_ggtt(ggtt, &objects);
-	if (err)
-		goto cleanup;
+	अगर (err)
+		जाओ cleanup;
 
-	obj = i915_gem_object_create_internal(gt->i915, I915_GTT_PAGE_SIZE);
-	if (IS_ERR(obj)) {
+	obj = i915_gem_object_create_पूर्णांकernal(gt->i915, I915_GTT_PAGE_SIZE);
+	अगर (IS_ERR(obj)) अणु
 		err = PTR_ERR(obj);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	quirk_add(obj, &objects);
 
-	vma = i915_gem_object_ggtt_pin(obj, NULL, 0, 0, 0);
-	if (vma != ERR_PTR(-ENOSPC)) {
-		pr_err("Failed to evict+insert, i915_gem_object_ggtt_pin returned err=%d\n", (int)PTR_ERR_OR_ZERO(vma));
+	vma = i915_gem_object_ggtt_pin(obj, शून्य, 0, 0, 0);
+	अगर (vma != ERR_PTR(-ENOSPC)) अणु
+		pr_err("Failed to evict+insert, i915_gem_object_ggtt_pin returned err=%d\n", (पूर्णांक)PTR_ERR_OR_ZERO(vma));
 		err = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 cleanup:
 	cleanup_objects(ggtt, &objects);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igt_evict_for_vma(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct i915_ggtt *ggtt = gt->ggtt;
-	struct drm_mm_node target = {
+अटल पूर्णांक igt_evict_क्रम_vma(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा i915_ggtt *ggtt = gt->ggtt;
+	काष्ठा drm_mm_node target = अणु
 		.start = 0,
 		.size = 4096,
-	};
+	पूर्ण;
 	LIST_HEAD(objects);
-	int err;
+	पूर्णांक err;
 
 	/* Fill the GGTT with pinned objects and try to evict a range. */
 
 	err = populate_ggtt(ggtt, &objects);
-	if (err)
-		goto cleanup;
+	अगर (err)
+		जाओ cleanup;
 
 	/* Everything is pinned, nothing should happen */
 	mutex_lock(&ggtt->vm.mutex);
-	err = i915_gem_evict_for_node(&ggtt->vm, &target, 0);
+	err = i915_gem_evict_क्रम_node(&ggtt->vm, &target, 0);
 	mutex_unlock(&ggtt->vm.mutex);
-	if (err != -ENOSPC) {
+	अगर (err != -ENOSPC) अणु
 		pr_err("i915_gem_evict_for_node on a full GGTT returned err=%d\n",
 		       err);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	unpin_ggtt(ggtt);
 
 	/* Everything is unpinned, we should be able to evict the node */
 	mutex_lock(&ggtt->vm.mutex);
-	err = i915_gem_evict_for_node(&ggtt->vm, &target, 0);
+	err = i915_gem_evict_क्रम_node(&ggtt->vm, &target, 0);
 	mutex_unlock(&ggtt->vm.mutex);
-	if (err) {
+	अगर (err) अणु
 		pr_err("i915_gem_evict_for_node returned err=%d\n",
 		       err);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 cleanup:
 	cleanup_objects(ggtt, &objects);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mock_color_adjust(const struct drm_mm_node *node,
-			      unsigned long color,
+अटल व्योम mock_color_adjust(स्थिर काष्ठा drm_mm_node *node,
+			      अचिन्हित दीर्घ color,
 			      u64 *start,
 			      u64 *end)
-{
-}
+अणु
+पूर्ण
 
-static int igt_evict_for_cache_color(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct i915_ggtt *ggtt = gt->ggtt;
-	const unsigned long flags = PIN_OFFSET_FIXED;
-	struct drm_mm_node target = {
+अटल पूर्णांक igt_evict_क्रम_cache_color(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा i915_ggtt *ggtt = gt->ggtt;
+	स्थिर अचिन्हित दीर्घ flags = PIN_OFFSET_FIXED;
+	काष्ठा drm_mm_node target = अणु
 		.start = I915_GTT_PAGE_SIZE * 2,
 		.size = I915_GTT_PAGE_SIZE,
 		.color = I915_CACHE_LLC,
-	};
-	struct drm_i915_gem_object *obj;
-	struct i915_vma *vma;
+	पूर्ण;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_vma *vma;
 	LIST_HEAD(objects);
-	int err;
+	पूर्णांक err;
 
 	/*
-	 * Currently the use of color_adjust for the GGTT is limited to cache
-	 * coloring and guard pages, and so the presence of mm.color_adjust for
+	 * Currently the use of color_adjust क्रम the GGTT is limited to cache
+	 * coloring and guard pages, and so the presence of mm.color_adjust क्रम
 	 * the GGTT is assumed to be i915_ggtt_color_adjust, hence using a mock
-	 * color adjust will work just fine for our purposes.
+	 * color adjust will work just fine क्रम our purposes.
 	 */
 	ggtt->vm.mm.color_adjust = mock_color_adjust;
 	GEM_BUG_ON(!i915_vm_has_cache_coloring(&ggtt->vm));
 
-	obj = i915_gem_object_create_internal(gt->i915, I915_GTT_PAGE_SIZE);
-	if (IS_ERR(obj)) {
+	obj = i915_gem_object_create_पूर्णांकernal(gt->i915, I915_GTT_PAGE_SIZE);
+	अगर (IS_ERR(obj)) अणु
 		err = PTR_ERR(obj);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 	i915_gem_object_set_cache_coherency(obj, I915_CACHE_LLC);
 	quirk_add(obj, &objects);
 
-	vma = i915_gem_object_ggtt_pin(obj, NULL, 0, 0,
+	vma = i915_gem_object_ggtt_pin(obj, शून्य, 0, 0,
 				       I915_GTT_PAGE_SIZE | flags);
-	if (IS_ERR(vma)) {
+	अगर (IS_ERR(vma)) अणु
 		pr_err("[0]i915_gem_object_ggtt_pin failed\n");
 		err = PTR_ERR(vma);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	obj = i915_gem_object_create_internal(gt->i915, I915_GTT_PAGE_SIZE);
-	if (IS_ERR(obj)) {
+	obj = i915_gem_object_create_पूर्णांकernal(gt->i915, I915_GTT_PAGE_SIZE);
+	अगर (IS_ERR(obj)) अणु
 		err = PTR_ERR(obj);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 	i915_gem_object_set_cache_coherency(obj, I915_CACHE_LLC);
 	quirk_add(obj, &objects);
 
 	/* Neighbouring; same colour - should fit */
-	vma = i915_gem_object_ggtt_pin(obj, NULL, 0, 0,
+	vma = i915_gem_object_ggtt_pin(obj, शून्य, 0, 0,
 				       (I915_GTT_PAGE_SIZE * 2) | flags);
-	if (IS_ERR(vma)) {
+	अगर (IS_ERR(vma)) अणु
 		pr_err("[1]i915_gem_object_ggtt_pin failed\n");
 		err = PTR_ERR(vma);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	i915_vma_unpin(vma);
 
 	/* Remove just the second vma */
 	mutex_lock(&ggtt->vm.mutex);
-	err = i915_gem_evict_for_node(&ggtt->vm, &target, 0);
+	err = i915_gem_evict_क्रम_node(&ggtt->vm, &target, 0);
 	mutex_unlock(&ggtt->vm.mutex);
-	if (err) {
+	अगर (err) अणु
 		pr_err("[0]i915_gem_evict_for_node returned err=%d\n", err);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	/* Attempt to remove the first *pinned* vma, by removing the (empty)
+	/* Attempt to हटाओ the first *pinned* vma, by removing the (empty)
 	 * neighbour -- this should fail.
 	 */
 	target.color = I915_CACHE_L3_LLC;
 
 	mutex_lock(&ggtt->vm.mutex);
-	err = i915_gem_evict_for_node(&ggtt->vm, &target, 0);
+	err = i915_gem_evict_क्रम_node(&ggtt->vm, &target, 0);
 	mutex_unlock(&ggtt->vm.mutex);
-	if (!err) {
+	अगर (!err) अणु
 		pr_err("[1]i915_gem_evict_for_node returned err=%d\n", err);
 		err = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	err = 0;
 
 cleanup:
 	unpin_ggtt(ggtt);
 	cleanup_objects(ggtt, &objects);
-	ggtt->vm.mm.color_adjust = NULL;
-	return err;
-}
+	ggtt->vm.mm.color_adjust = शून्य;
+	वापस err;
+पूर्ण
 
-static int igt_evict_vm(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct i915_ggtt *ggtt = gt->ggtt;
+अटल पूर्णांक igt_evict_vm(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा i915_ggtt *ggtt = gt->ggtt;
 	LIST_HEAD(objects);
-	int err;
+	पूर्णांक err;
 
 	/* Fill the GGTT with pinned objects and try to evict everything. */
 
 	err = populate_ggtt(ggtt, &objects);
-	if (err)
-		goto cleanup;
+	अगर (err)
+		जाओ cleanup;
 
 	/* Everything is pinned, nothing should happen */
 	mutex_lock(&ggtt->vm.mutex);
 	err = i915_gem_evict_vm(&ggtt->vm);
 	mutex_unlock(&ggtt->vm.mutex);
-	if (err) {
+	अगर (err) अणु
 		pr_err("i915_gem_evict_vm on a full GGTT returned err=%d]\n",
 		       err);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	unpin_ggtt(ggtt);
 
 	mutex_lock(&ggtt->vm.mutex);
 	err = i915_gem_evict_vm(&ggtt->vm);
 	mutex_unlock(&ggtt->vm.mutex);
-	if (err) {
+	अगर (err) अणु
 		pr_err("i915_gem_evict_vm on a full GGTT returned err=%d]\n",
 		       err);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 cleanup:
 	cleanup_objects(ggtt, &objects);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igt_evict_contexts(void *arg)
-{
-	const u64 PRETEND_GGTT_SIZE = 16ull << 20;
-	struct intel_gt *gt = arg;
-	struct i915_ggtt *ggtt = gt->ggtt;
-	struct drm_i915_private *i915 = gt->i915;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	struct reserved {
-		struct drm_mm_node node;
-		struct reserved *next;
-	} *reserved = NULL;
-	intel_wakeref_t wakeref;
-	struct drm_mm_node hole;
-	unsigned long count;
-	int err;
+अटल पूर्णांक igt_evict_contexts(व्योम *arg)
+अणु
+	स्थिर u64 PRETEND_GGTT_SIZE = 16ull << 20;
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा i915_ggtt *ggtt = gt->ggtt;
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	काष्ठा reserved अणु
+		काष्ठा drm_mm_node node;
+		काष्ठा reserved *next;
+	पूर्ण *reserved = शून्य;
+	पूर्णांकel_wakeref_t wakeref;
+	काष्ठा drm_mm_node hole;
+	अचिन्हित दीर्घ count;
+	पूर्णांक err;
 
 	/*
-	 * The purpose of this test is to verify that we will trigger an
-	 * eviction in the GGTT when constructing a request that requires
-	 * additional space in the GGTT for pinning the context. This space
+	 * The purpose of this test is to verअगरy that we will trigger an
+	 * eviction in the GGTT when स्थिरructing a request that requires
+	 * additional space in the GGTT क्रम pinning the context. This space
 	 * is not directly tied to the request so reclaiming it requires
 	 * extra work.
 	 *
-	 * As such this test is only meaningful for full-ppgtt environments
+	 * As such this test is only meaningful क्रम full-ppgtt environments
 	 * where the GTT space of the request is separate from the GGTT
 	 * allocation required to build the request.
 	 */
-	if (!HAS_FULL_PPGTT(i915))
-		return 0;
+	अगर (!HAS_FULL_PPGTT(i915))
+		वापस 0;
 
-	wakeref = intel_runtime_pm_get(&i915->runtime_pm);
+	wakeref = पूर्णांकel_runसमय_pm_get(&i915->runसमय_pm);
 
 	/* Reserve a block so that we know we have enough to fit a few rq */
-	memset(&hole, 0, sizeof(hole));
+	स_रखो(&hole, 0, माप(hole));
 	mutex_lock(&ggtt->vm.mutex);
 	err = i915_gem_gtt_insert(&ggtt->vm, &hole,
 				  PRETEND_GGTT_SIZE, 0, I915_COLOR_UNEVICTABLE,
 				  0, ggtt->vm.total,
 				  PIN_NOEVICT);
-	if (err)
-		goto out_locked;
+	अगर (err)
+		जाओ out_locked;
 
 	/* Make the GGTT appear small by filling it with unevictable nodes */
 	count = 0;
-	do {
-		struct reserved *r;
+	करो अणु
+		काष्ठा reserved *r;
 
 		mutex_unlock(&ggtt->vm.mutex);
-		r = kcalloc(1, sizeof(*r), GFP_KERNEL);
+		r = kसुस्मृति(1, माप(*r), GFP_KERNEL);
 		mutex_lock(&ggtt->vm.mutex);
-		if (!r) {
+		अगर (!r) अणु
 			err = -ENOMEM;
-			goto out_locked;
-		}
+			जाओ out_locked;
+		पूर्ण
 
-		if (i915_gem_gtt_insert(&ggtt->vm, &r->node,
+		अगर (i915_gem_gtt_insert(&ggtt->vm, &r->node,
 					1ul << 20, 0, I915_COLOR_UNEVICTABLE,
 					0, ggtt->vm.total,
-					PIN_NOEVICT)) {
-			kfree(r);
-			break;
-		}
+					PIN_NOEVICT)) अणु
+			kमुक्त(r);
+			अवरोध;
+		पूर्ण
 
 		r->next = reserved;
 		reserved = r;
 
 		count++;
-	} while (1);
-	drm_mm_remove_node(&hole);
+	पूर्ण जबतक (1);
+	drm_mm_हटाओ_node(&hole);
 	mutex_unlock(&ggtt->vm.mutex);
 	pr_info("Filled GGTT with %lu 1MiB nodes\n", count);
 
 	/* Overfill the GGTT with context objects and so try to evict one. */
-	for_each_engine(engine, gt, id) {
-		struct i915_sw_fence fence;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा i915_sw_fence fence;
 
 		count = 0;
 		onstack_fence_init(&fence);
-		do {
-			struct intel_context *ce;
-			struct i915_request *rq;
+		करो अणु
+			काष्ठा पूर्णांकel_context *ce;
+			काष्ठा i915_request *rq;
 
-			ce = intel_context_create(engine);
-			if (IS_ERR(ce))
-				break;
+			ce = पूर्णांकel_context_create(engine);
+			अगर (IS_ERR(ce))
+				अवरोध;
 
-			/* We will need some GGTT space for the rq's context */
-			igt_evict_ctl.fail_if_busy = true;
-			rq = intel_context_create_request(ce);
-			igt_evict_ctl.fail_if_busy = false;
-			intel_context_put(ce);
+			/* We will need some GGTT space क्रम the rq's context */
+			igt_evict_ctl.fail_अगर_busy = true;
+			rq = पूर्णांकel_context_create_request(ce);
+			igt_evict_ctl.fail_अगर_busy = false;
+			पूर्णांकel_context_put(ce);
 
-			if (IS_ERR(rq)) {
-				/* When full, fail_if_busy will trigger EBUSY */
-				if (PTR_ERR(rq) != -EBUSY) {
+			अगर (IS_ERR(rq)) अणु
+				/* When full, fail_अगर_busy will trigger EBUSY */
+				अगर (PTR_ERR(rq) != -EBUSY) अणु
 					pr_err("Unexpected error from request alloc (on %s): %d\n",
 					       engine->name,
-					       (int)PTR_ERR(rq));
+					       (पूर्णांक)PTR_ERR(rq));
 					err = PTR_ERR(rq);
-				}
-				break;
-			}
+				पूर्ण
+				अवरोध;
+			पूर्ण
 
 			/* Keep every request/ctx pinned until we are full */
-			err = i915_sw_fence_await_sw_fence_gfp(&rq->submit,
+			err = i915_sw_fence_aरुको_sw_fence_gfp(&rq->submit,
 							       &fence,
 							       GFP_KERNEL);
-			if (err < 0)
-				break;
+			अगर (err < 0)
+				अवरोध;
 
 			i915_request_add(rq);
 			count++;
 			err = 0;
-		} while(1);
+		पूर्ण जबतक(1);
 		onstack_fence_fini(&fence);
 		pr_info("Submitted %lu contexts/requests on %s\n",
 			count, engine->name);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
 	mutex_lock(&ggtt->vm.mutex);
 out_locked:
-	if (igt_flush_test(i915))
+	अगर (igt_flush_test(i915))
 		err = -EIO;
-	while (reserved) {
-		struct reserved *next = reserved->next;
+	जबतक (reserved) अणु
+		काष्ठा reserved *next = reserved->next;
 
-		drm_mm_remove_node(&reserved->node);
-		kfree(reserved);
+		drm_mm_हटाओ_node(&reserved->node);
+		kमुक्त(reserved);
 
 		reserved = next;
-	}
-	if (drm_mm_node_allocated(&hole))
-		drm_mm_remove_node(&hole);
+	पूर्ण
+	अगर (drm_mm_node_allocated(&hole))
+		drm_mm_हटाओ_node(&hole);
 	mutex_unlock(&ggtt->vm.mutex);
-	intel_runtime_pm_put(&i915->runtime_pm, wakeref);
+	पूर्णांकel_runसमय_pm_put(&i915->runसमय_pm, wakeref);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int i915_gem_evict_mock_selftests(void)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक i915_gem_evict_mock_selftests(व्योम)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_evict_something),
-		SUBTEST(igt_evict_for_vma),
-		SUBTEST(igt_evict_for_cache_color),
+		SUBTEST(igt_evict_क्रम_vma),
+		SUBTEST(igt_evict_क्रम_cache_color),
 		SUBTEST(igt_evict_vm),
 		SUBTEST(igt_overcommit),
-	};
-	struct drm_i915_private *i915;
-	intel_wakeref_t wakeref;
-	int err = 0;
+	पूर्ण;
+	काष्ठा drm_i915_निजी *i915;
+	पूर्णांकel_wakeref_t wakeref;
+	पूर्णांक err = 0;
 
 	i915 = mock_gem_device();
-	if (!i915)
-		return -ENOMEM;
+	अगर (!i915)
+		वापस -ENOMEM;
 
-	with_intel_runtime_pm(&i915->runtime_pm, wakeref)
+	with_पूर्णांकel_runसमय_pm(&i915->runसमय_pm, wakeref)
 		err = i915_subtests(tests, &i915->gt);
 
 	mock_destroy_device(i915);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int i915_gem_evict_live_selftests(struct drm_i915_private *i915)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक i915_gem_evict_live_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_evict_contexts),
-	};
+	पूर्ण;
 
-	if (intel_gt_is_wedged(&i915->gt))
-		return 0;
+	अगर (पूर्णांकel_gt_is_wedged(&i915->gt))
+		वापस 0;
 
-	return intel_gt_live_subtests(tests, &i915->gt);
-}
+	वापस पूर्णांकel_gt_live_subtests(tests, &i915->gt);
+पूर्ण

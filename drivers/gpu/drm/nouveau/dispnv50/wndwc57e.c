@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,29 +20,29 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "wndw.h"
-#include "atom.h"
+#समावेश "wndw.h"
+#समावेश "atom.h"
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_plane_helper.h>
-#include <nouveau_bo.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_plane_helper.h>
+#समावेश <nouveau_bo.h>
 
-#include <nvif/clc37e.h>
-#include <nvif/pushc37b.h>
+#समावेश <nvअगर/clc37e.h>
+#समावेश <nvअगर/pushc37b.h>
 
-#include <nvhw/class/clc57e.h>
+#समावेश <nvhw/class/clc57e.h>
 
-static int
-wndwc57e_image_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
-{
-	struct nvif_push *push = wndw->wndw.push;
-	int ret;
+अटल पूर्णांक
+wndwc57e_image_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wndw.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 17)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 17)))
+		वापस ret;
 
 	PUSH_MTHD(push, NVC57E, SET_PRESENT_CONTROL,
-		  NVVAL(NVC57E, SET_PRESENT_CONTROL, MIN_PRESENT_INTERVAL, asyw->image.interval) |
+		  NVVAL(NVC57E, SET_PRESENT_CONTROL, MIN_PRESENT_INTERVAL, asyw->image.पूर्णांकerval) |
 		  NVVAL(NVC57E, SET_PRESENT_CONTROL, BEGIN_MODE, asyw->image.mode) |
 		  NVDEF(NVC57E, SET_PRESENT_CONTROL, TIMESTAMP_MODE, DISABLE));
 
@@ -54,7 +55,7 @@ wndwc57e_image_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
 		  NVVAL(NVC57E, SET_STORAGE, MEMORY_LAYOUT, asyw->image.layout),
 
 				SET_PARAMS,
-		  NVVAL(NVC57E, SET_PARAMS, FORMAT, asyw->image.format) |
+		  NVVAL(NVC57E, SET_PARAMS, FORMAT, asyw->image.क्रमmat) |
 		  NVDEF(NVC57E, SET_PARAMS, CLAMP_BEFORE_BLEND, DISABLE) |
 		  NVDEF(NVC57E, SET_PARAMS, SWAP_UV, DISABLE) |
 		  NVDEF(NVC57E, SET_PARAMS, FMT_ROUNDING_MODE, ROUND_TO_NEAREST),
@@ -77,61 +78,61 @@ wndwc57e_image_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
 	PUSH_MTHD(push, NVC57E, SET_SIZE_OUT,
 		  NVVAL(NVC57E, SET_SIZE_OUT, WIDTH, asyw->state.crtc_w) |
 		  NVVAL(NVC57E, SET_SIZE_OUT, HEIGHT, asyw->state.crtc_h));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-wndwc57e_csc_clr(struct nv50_wndw *wndw)
-{
-	struct nvif_push *push = wndw->wndw.push;
-	const u32 identity[12] = {
+पूर्णांक
+wndwc57e_csc_clr(काष्ठा nv50_wndw *wndw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wndw.push;
+	स्थिर u32 identity[12] = अणु
 		0x00010000, 0x00000000, 0x00000000, 0x00000000,
 		0x00000000, 0x00010000, 0x00000000, 0x00000000,
 		0x00000000, 0x00000000, 0x00010000, 0x00000000,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 1 + ARRAY_SIZE(identity))))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 1 + ARRAY_SIZE(identity))))
+		वापस ret;
 
 	PUSH_MTHD(push, NVC57E, SET_FMT_COEFFICIENT_C00, identity, ARRAY_SIZE(identity));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-wndwc57e_csc_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
-{
-	struct nvif_push *push = wndw->wndw.push;
-	int ret;
+पूर्णांक
+wndwc57e_csc_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wndw.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 13)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 13)))
+		वापस ret;
 
 	PUSH_MTHD(push, NVC57E, SET_FMT_COEFFICIENT_C00, asyw->csc.matrix, 12);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-wndwc57e_ilut_clr(struct nv50_wndw *wndw)
-{
-	struct nvif_push *push = wndw->wndw.push;
-	int ret;
+पूर्णांक
+wndwc57e_ilut_clr(काष्ठा nv50_wndw *wndw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wndw.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NVC57E, SET_CONTEXT_DMA_ILUT, 0x00000000);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-wndwc57e_ilut_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
-{
-	struct nvif_push *push = wndw->wndw.push;
-	int ret;
+पूर्णांक
+wndwc57e_ilut_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wndw.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 4)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 4)))
+		वापस ret;
 
 	PUSH_MTHD(push, NVC57E, SET_ILUT_CONTROL,
 		  NVVAL(NVC57E, SET_ILUT_CONTROL, SIZE, asyw->xlut.i.size) |
@@ -140,61 +141,61 @@ wndwc57e_ilut_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
 
 				SET_CONTEXT_DMA_ILUT, asyw->xlut.handle,
 				SET_OFFSET_ILUT, asyw->xlut.i.offset >> 8);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u16
+अटल u16
 fixedU0_16_FP16(u16 fixed)
-{
-        int sign = 0, exp = 0, man = 0;
-        if (fixed) {
-                while (--exp && !(fixed & 0x8000))
+अणु
+        पूर्णांक sign = 0, exp = 0, man = 0;
+        अगर (fixed) अणु
+                जबतक (--exp && !(fixed & 0x8000))
                         fixed <<= 1;
                 man = ((fixed << 1) & 0xffc0) >> 6;
                 exp += 15;
-        }
-        return (sign << 15) | (exp << 10) | man;
-}
+        पूर्ण
+        वापस (sign << 15) | (exp << 10) | man;
+पूर्ण
 
-static void
-wndwc57e_ilut_load(struct drm_color_lut *in, int size, void __iomem *mem)
-{
-	memset_io(mem, 0x00, 0x20); /* VSS header. */
+अटल व्योम
+wndwc57e_ilut_load(काष्ठा drm_color_lut *in, पूर्णांक size, व्योम __iomem *mem)
+अणु
+	स_रखो_io(mem, 0x00, 0x20); /* VSS header. */
 	mem += 0x20;
 
-	for (; size--; in++, mem += 0x08) {
+	क्रम (; size--; in++, mem += 0x08) अणु
 		u16 r = fixedU0_16_FP16(drm_color_lut_extract(in->  red, 16));
 		u16 g = fixedU0_16_FP16(drm_color_lut_extract(in->green, 16));
 		u16 b = fixedU0_16_FP16(drm_color_lut_extract(in-> blue, 16));
-		writew(r, mem + 0);
-		writew(g, mem + 2);
-		writew(b, mem + 4);
-	}
+		ग_लिखोw(r, mem + 0);
+		ग_लिखोw(g, mem + 2);
+		ग_लिखोw(b, mem + 4);
+	पूर्ण
 
-	/* INTERPOLATE modes require a "next" entry to interpolate with,
-	 * so we replicate the last entry to deal with this for now.
+	/* INTERPOLATE modes require a "next" entry to पूर्णांकerpolate with,
+	 * so we replicate the last entry to deal with this क्रम now.
 	 */
-	writew(readw(mem - 8), mem + 0);
-	writew(readw(mem - 6), mem + 2);
-	writew(readw(mem - 4), mem + 4);
-}
+	ग_लिखोw(पढ़ोw(mem - 8), mem + 0);
+	ग_लिखोw(पढ़ोw(mem - 6), mem + 2);
+	ग_लिखोw(पढ़ोw(mem - 4), mem + 4);
+पूर्ण
 
 bool
-wndwc57e_ilut(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw, int size)
-{
-	if (size = size ? size : 1024, size != 256 && size != 1024)
-		return false;
+wndwc57e_ilut(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw, पूर्णांक size)
+अणु
+	अगर (size = size ? size : 1024, size != 256 && size != 1024)
+		वापस false;
 
-	if (size == 256)
-		asyw->xlut.i.mode = NVC57E_SET_ILUT_CONTROL_MODE_DIRECT8;
-	else
-		asyw->xlut.i.mode = NVC57E_SET_ILUT_CONTROL_MODE_DIRECT10;
+	अगर (size == 256)
+		asyw->xlut.i.mode = NVC57E_SET_ILUT_CONTROL_MODE_सूचीECT8;
+	अन्यथा
+		asyw->xlut.i.mode = NVC57E_SET_ILUT_CONTROL_MODE_सूचीECT10;
 
 	asyw->xlut.i.size = 4 /* VSS header. */ + size + 1 /* Entries. */;
 	asyw->xlut.i.output_mode = NVC57E_SET_ILUT_CONTROL_INTERPOLATE_DISABLE;
 	asyw->xlut.i.load = wndwc57e_ilut_load;
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /****************************************************************
  *            Log2(block height) ----------------------------+  *
@@ -202,7 +203,7 @@ wndwc57e_ilut(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw, int size)
  *            Gob Height/Page Kind Generation ------+     |  |  *
  *                          Sector layout -------+  |     |  |  *
  *                          Compression ------+  |  |     |  |  */
-const u64 wndwc57e_modifiers[] = { /*         |  |  |     |  |  */
+स्थिर u64 wndwc57e_modअगरiers[] = अणु /*         |  |  |     |  |  */
 	DRM_FORMAT_MOD_NVIDIA_BLOCK_LINEAR_2D(0, 1, 2, 0x06, 0),
 	DRM_FORMAT_MOD_NVIDIA_BLOCK_LINEAR_2D(0, 1, 2, 0x06, 1),
 	DRM_FORMAT_MOD_NVIDIA_BLOCK_LINEAR_2D(0, 1, 2, 0x06, 2),
@@ -211,10 +212,10 @@ const u64 wndwc57e_modifiers[] = { /*         |  |  |     |  |  */
 	DRM_FORMAT_MOD_NVIDIA_BLOCK_LINEAR_2D(0, 1, 2, 0x06, 5),
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_INVALID
-};
+पूर्ण;
 
-static const struct nv50_wndw_func
-wndwc57e = {
+अटल स्थिर काष्ठा nv50_wndw_func
+wndwc57e = अणु
 	.acquire = wndwc37e_acquire,
 	.release = wndwc37e_release,
 	.sema_set = wndwc37e_sema_set,
@@ -222,7 +223,7 @@ wndwc57e = {
 	.ntfy_set = wndwc37e_ntfy_set,
 	.ntfy_clr = wndwc37e_ntfy_clr,
 	.ntfy_reset = corec37d_ntfy_init,
-	.ntfy_wait_begun = base507c_ntfy_wait_begun,
+	.ntfy_रुको_begun = base507c_ntfy_रुको_begun,
 	.ilut = wndwc57e_ilut,
 	.ilut_identity = true,
 	.ilut_size = 1024,
@@ -235,12 +236,12 @@ wndwc57e = {
 	.image_clr = wndwc37e_image_clr,
 	.blend_set = wndwc37e_blend_set,
 	.update = wndwc37e_update,
-};
+पूर्ण;
 
-int
-wndwc57e_new(struct nouveau_drm *drm, enum drm_plane_type type, int index,
-	     s32 oclass, struct nv50_wndw **pwndw)
-{
-	return wndwc37e_new_(&wndwc57e, drm, type, index, oclass,
+पूर्णांक
+wndwc57e_new(काष्ठा nouveau_drm *drm, क्रमागत drm_plane_type type, पूर्णांक index,
+	     s32 oclass, काष्ठा nv50_wndw **pwndw)
+अणु
+	वापस wndwc37e_new_(&wndwc57e, drm, type, index, oclass,
 			     BIT(index >> 1), pwndw);
-}
+पूर्ण

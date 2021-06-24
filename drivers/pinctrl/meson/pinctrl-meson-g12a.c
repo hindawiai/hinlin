@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: (GPL-2.0+ or MIT)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0+ or MIT)
 /*
- * Pin controller and GPIO driver for Amlogic Meson G12A SoC.
+ * Pin controller and GPIO driver क्रम Amlogic Meson G12A SoC.
  *
  * Copyright (c) 2018 Amlogic, Inc. All rights reserved.
  * Author: Xingyu Chen <xingyu.chen@amlogic.com>
  * Author: Yixun Lan <yixun.lan@amlogic.com>
  */
 
-#include <dt-bindings/gpio/meson-g12a-gpio.h>
-#include "pinctrl-meson.h"
-#include "pinctrl-meson-axg-pmx.h"
+#समावेश <dt-bindings/gpio/meson-g12a-gpपन.स>
+#समावेश "pinctrl-meson.h"
+#समावेश "pinctrl-meson-axg-pmx.h"
 
-static const struct pinctrl_pin_desc meson_g12a_periphs_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc meson_g12a_periphs_pins[] = अणु
 	MESON_PIN(GPIOZ_0),
 	MESON_PIN(GPIOZ_1),
 	MESON_PIN(GPIOZ_2),
@@ -97,9 +98,9 @@ static const struct pinctrl_pin_desc meson_g12a_periphs_pins[] = {
 	MESON_PIN(GPIOX_17),
 	MESON_PIN(GPIOX_18),
 	MESON_PIN(GPIOX_19),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc meson_g12a_aobus_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc meson_g12a_aobus_pins[] = अणु
 	MESON_PIN(GPIOAO_0),
 	MESON_PIN(GPIOAO_1),
 	MESON_PIN(GPIOAO_2),
@@ -115,325 +116,325 @@ static const struct pinctrl_pin_desc meson_g12a_aobus_pins[] = {
 	MESON_PIN(GPIOE_0),
 	MESON_PIN(GPIOE_1),
 	MESON_PIN(GPIOE_2),
-};
+पूर्ण;
 
 /* emmc */
-static const unsigned int emmc_nand_d0_pins[]		= { BOOT_0 };
-static const unsigned int emmc_nand_d1_pins[]		= { BOOT_1 };
-static const unsigned int emmc_nand_d2_pins[]		= { BOOT_2 };
-static const unsigned int emmc_nand_d3_pins[]		= { BOOT_3 };
-static const unsigned int emmc_nand_d4_pins[]		= { BOOT_4 };
-static const unsigned int emmc_nand_d5_pins[]		= { BOOT_5 };
-static const unsigned int emmc_nand_d6_pins[]		= { BOOT_6 };
-static const unsigned int emmc_nand_d7_pins[]		= { BOOT_7 };
-static const unsigned int emmc_clk_pins[]		= { BOOT_8 };
-static const unsigned int emmc_cmd_pins[]		= { BOOT_10 };
-static const unsigned int emmc_nand_ds_pins[]		= { BOOT_13 };
+अटल स्थिर अचिन्हित पूर्णांक emmc_nand_d0_pins[]		= अणु BOOT_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_nand_d1_pins[]		= अणु BOOT_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_nand_d2_pins[]		= अणु BOOT_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_nand_d3_pins[]		= अणु BOOT_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_nand_d4_pins[]		= अणु BOOT_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_nand_d5_pins[]		= अणु BOOT_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_nand_d6_pins[]		= अणु BOOT_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_nand_d7_pins[]		= अणु BOOT_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_clk_pins[]		= अणु BOOT_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_cmd_pins[]		= अणु BOOT_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_nand_ds_pins[]		= अणु BOOT_13 पूर्ण;
 
 /* nand */
-static const unsigned int nand_wen_clk_pins[]		= { BOOT_8 };
-static const unsigned int nand_ale_pins[]		= { BOOT_9 };
-static const unsigned int nand_cle_pins[]		= { BOOT_10 };
-static const unsigned int nand_ce0_pins[]		= { BOOT_11 };
-static const unsigned int nand_ren_wr_pins[]		= { BOOT_12 };
-static const unsigned int nand_rb0_pins[]		= { BOOT_14 };
-static const unsigned int nand_ce1_pins[]		= { BOOT_15 };
+अटल स्थिर अचिन्हित पूर्णांक nand_wen_clk_pins[]		= अणु BOOT_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nand_ale_pins[]		= अणु BOOT_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nand_cle_pins[]		= अणु BOOT_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nand_ce0_pins[]		= अणु BOOT_11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nand_ren_wr_pins[]		= अणु BOOT_12 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nand_rb0_pins[]		= अणु BOOT_14 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nand_ce1_pins[]		= अणु BOOT_15 पूर्ण;
 
 /* nor */
-static const unsigned int nor_hold_pins[]		= { BOOT_3 };
-static const unsigned int nor_d_pins[]			= { BOOT_4 };
-static const unsigned int nor_q_pins[]			= { BOOT_5 };
-static const unsigned int nor_c_pins[]			= { BOOT_6 };
-static const unsigned int nor_wp_pins[]			= { BOOT_7 };
-static const unsigned int nor_cs_pins[]			= { BOOT_14 };
+अटल स्थिर अचिन्हित पूर्णांक nor_hold_pins[]		= अणु BOOT_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nor_d_pins[]			= अणु BOOT_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nor_q_pins[]			= अणु BOOT_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nor_c_pins[]			= अणु BOOT_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nor_wp_pins[]			= अणु BOOT_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक nor_cs_pins[]			= अणु BOOT_14 पूर्ण;
 
 /* sdio */
-static const unsigned int sdio_d0_pins[]		= { GPIOX_0 };
-static const unsigned int sdio_d1_pins[]		= { GPIOX_1 };
-static const unsigned int sdio_d2_pins[]		= { GPIOX_2 };
-static const unsigned int sdio_d3_pins[]		= { GPIOX_3 };
-static const unsigned int sdio_clk_pins[]		= { GPIOX_4 };
-static const unsigned int sdio_cmd_pins[]		= { GPIOX_5 };
+अटल स्थिर अचिन्हित पूर्णांक sdio_d0_pins[]		= अणु GPIOX_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio_d1_pins[]		= अणु GPIOX_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio_d2_pins[]		= अणु GPIOX_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio_d3_pins[]		= अणु GPIOX_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio_clk_pins[]		= अणु GPIOX_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio_cmd_pins[]		= अणु GPIOX_5 पूर्ण;
 
 /* sdcard */
-static const unsigned int sdcard_d0_c_pins[]		= { GPIOC_0 };
-static const unsigned int sdcard_d1_c_pins[]		= { GPIOC_1 };
-static const unsigned int sdcard_d2_c_pins[]		= { GPIOC_2 };
-static const unsigned int sdcard_d3_c_pins[]		= { GPIOC_3 };
-static const unsigned int sdcard_clk_c_pins[]		= { GPIOC_4 };
-static const unsigned int sdcard_cmd_c_pins[]		= { GPIOC_5 };
+अटल स्थिर अचिन्हित पूर्णांक sdcard_d0_c_pins[]		= अणु GPIOC_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdcard_d1_c_pins[]		= अणु GPIOC_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdcard_d2_c_pins[]		= अणु GPIOC_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdcard_d3_c_pins[]		= अणु GPIOC_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdcard_clk_c_pins[]		= अणु GPIOC_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdcard_cmd_c_pins[]		= अणु GPIOC_5 पूर्ण;
 
-static const unsigned int sdcard_d0_z_pins[]		= { GPIOZ_2 };
-static const unsigned int sdcard_d1_z_pins[]		= { GPIOZ_3 };
-static const unsigned int sdcard_d2_z_pins[]		= { GPIOZ_4 };
-static const unsigned int sdcard_d3_z_pins[]		= { GPIOZ_5 };
-static const unsigned int sdcard_clk_z_pins[]		= { GPIOZ_6 };
-static const unsigned int sdcard_cmd_z_pins[]		= { GPIOZ_7 };
+अटल स्थिर अचिन्हित पूर्णांक sdcard_d0_z_pins[]		= अणु GPIOZ_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdcard_d1_z_pins[]		= अणु GPIOZ_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdcard_d2_z_pins[]		= अणु GPIOZ_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdcard_d3_z_pins[]		= अणु GPIOZ_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdcard_clk_z_pins[]		= अणु GPIOZ_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdcard_cmd_z_pins[]		= अणु GPIOZ_7 पूर्ण;
 
 /* spi0 */
-static const unsigned int spi0_mosi_c_pins[]		= { GPIOC_0 };
-static const unsigned int spi0_miso_c_pins[]		= { GPIOC_1 };
-static const unsigned int spi0_ss0_c_pins[]		= { GPIOC_2 };
-static const unsigned int spi0_clk_c_pins[]		= { GPIOC_3 };
+अटल स्थिर अचिन्हित पूर्णांक spi0_mosi_c_pins[]		= अणु GPIOC_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_miso_c_pins[]		= अणु GPIOC_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_ss0_c_pins[]		= अणु GPIOC_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_clk_c_pins[]		= अणु GPIOC_3 पूर्ण;
 
-static const unsigned int spi0_mosi_x_pins[]		= { GPIOX_8 };
-static const unsigned int spi0_miso_x_pins[]		= { GPIOX_9 };
-static const unsigned int spi0_ss0_x_pins[]		= { GPIOX_10 };
-static const unsigned int spi0_clk_x_pins[]		= { GPIOX_11 };
+अटल स्थिर अचिन्हित पूर्णांक spi0_mosi_x_pins[]		= अणु GPIOX_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_miso_x_pins[]		= अणु GPIOX_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_ss0_x_pins[]		= अणु GPIOX_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_clk_x_pins[]		= अणु GPIOX_11 पूर्ण;
 
 /* spi1 */
-static const unsigned int spi1_mosi_pins[]		= { GPIOH_4 };
-static const unsigned int spi1_miso_pins[]		= { GPIOH_5 };
-static const unsigned int spi1_ss0_pins[]		= { GPIOH_6 };
-static const unsigned int spi1_clk_pins[]		= { GPIOH_7 };
+अटल स्थिर अचिन्हित पूर्णांक spi1_mosi_pins[]		= अणु GPIOH_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_miso_pins[]		= अणु GPIOH_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_ss0_pins[]		= अणु GPIOH_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_clk_pins[]		= अणु GPIOH_7 पूर्ण;
 
 /* i2c0 */
-static const unsigned int i2c0_sda_c_pins[]		= { GPIOC_5 };
-static const unsigned int i2c0_sck_c_pins[]		= { GPIOC_6 };
-static const unsigned int i2c0_sda_z0_pins[]		= { GPIOZ_0 };
-static const unsigned int i2c0_sck_z1_pins[]		= { GPIOZ_1 };
-static const unsigned int i2c0_sda_z7_pins[]		= { GPIOZ_7 };
-static const unsigned int i2c0_sck_z8_pins[]		= { GPIOZ_8 };
+अटल स्थिर अचिन्हित पूर्णांक i2c0_sda_c_pins[]		= अणु GPIOC_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_sck_c_pins[]		= अणु GPIOC_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_sda_z0_pins[]		= अणु GPIOZ_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_sck_z1_pins[]		= अणु GPIOZ_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_sda_z7_pins[]		= अणु GPIOZ_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_sck_z8_pins[]		= अणु GPIOZ_8 पूर्ण;
 
 /* i2c1 */
-static const unsigned int i2c1_sda_x_pins[]		= { GPIOX_10 };
-static const unsigned int i2c1_sck_x_pins[]		= { GPIOX_11 };
-static const unsigned int i2c1_sda_h2_pins[]		= { GPIOH_2 };
-static const unsigned int i2c1_sck_h3_pins[]		= { GPIOH_3 };
-static const unsigned int i2c1_sda_h6_pins[]		= { GPIOH_6 };
-static const unsigned int i2c1_sck_h7_pins[]		= { GPIOH_7 };
+अटल स्थिर अचिन्हित पूर्णांक i2c1_sda_x_pins[]		= अणु GPIOX_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_sck_x_pins[]		= अणु GPIOX_11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_sda_h2_pins[]		= अणु GPIOH_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_sck_h3_pins[]		= अणु GPIOH_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_sda_h6_pins[]		= अणु GPIOH_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_sck_h7_pins[]		= अणु GPIOH_7 पूर्ण;
 
 /* i2c2 */
-static const unsigned int i2c2_sda_x_pins[]		= { GPIOX_17 };
-static const unsigned int i2c2_sck_x_pins[]		= { GPIOX_18 };
-static const unsigned int i2c2_sda_z_pins[]		= { GPIOZ_14 };
-static const unsigned int i2c2_sck_z_pins[]		= { GPIOZ_15 };
+अटल स्थिर अचिन्हित पूर्णांक i2c2_sda_x_pins[]		= अणु GPIOX_17 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c2_sck_x_pins[]		= अणु GPIOX_18 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c2_sda_z_pins[]		= अणु GPIOZ_14 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c2_sck_z_pins[]		= अणु GPIOZ_15 पूर्ण;
 
 /* i2c3 */
-static const unsigned int i2c3_sda_h_pins[]		= { GPIOH_0 };
-static const unsigned int i2c3_sck_h_pins[]		= { GPIOH_1 };
-static const unsigned int i2c3_sda_a_pins[]		= { GPIOA_14 };
-static const unsigned int i2c3_sck_a_pins[]		= { GPIOA_15 };
+अटल स्थिर अचिन्हित पूर्णांक i2c3_sda_h_pins[]		= अणु GPIOH_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c3_sck_h_pins[]		= अणु GPIOH_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c3_sda_a_pins[]		= अणु GPIOA_14 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c3_sck_a_pins[]		= अणु GPIOA_15 पूर्ण;
 
 /* uart_a */
-static const unsigned int uart_a_tx_pins[]		= { GPIOX_12 };
-static const unsigned int uart_a_rx_pins[]		= { GPIOX_13 };
-static const unsigned int uart_a_cts_pins[]		= { GPIOX_14 };
-static const unsigned int uart_a_rts_pins[]		= { GPIOX_15 };
+अटल स्थिर अचिन्हित पूर्णांक uart_a_tx_pins[]		= अणु GPIOX_12 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_a_rx_pins[]		= अणु GPIOX_13 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_a_cts_pins[]		= अणु GPIOX_14 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_a_rts_pins[]		= अणु GPIOX_15 पूर्ण;
 
 /* uart_b */
-static const unsigned int uart_b_tx_pins[]		= { GPIOX_6 };
-static const unsigned int uart_b_rx_pins[]		= { GPIOX_7 };
+अटल स्थिर अचिन्हित पूर्णांक uart_b_tx_pins[]		= अणु GPIOX_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_b_rx_pins[]		= अणु GPIOX_7 पूर्ण;
 
 /* uart_c */
-static const unsigned int uart_c_rts_pins[]		= { GPIOH_4 };
-static const unsigned int uart_c_cts_pins[]		= { GPIOH_5 };
-static const unsigned int uart_c_rx_pins[]		= { GPIOH_6 };
-static const unsigned int uart_c_tx_pins[]		= { GPIOH_7 };
+अटल स्थिर अचिन्हित पूर्णांक uart_c_rts_pins[]		= अणु GPIOH_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_c_cts_pins[]		= अणु GPIOH_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_c_rx_pins[]		= अणु GPIOH_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_c_tx_pins[]		= अणु GPIOH_7 पूर्ण;
 
 /* uart_ao_a_c */
-static const unsigned int uart_ao_a_rx_c_pins[]		= { GPIOC_2 };
-static const unsigned int uart_ao_a_tx_c_pins[]		= { GPIOC_3 };
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_a_rx_c_pins[]		= अणु GPIOC_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_a_tx_c_pins[]		= अणु GPIOC_3 पूर्ण;
 
 /* iso7816 */
-static const unsigned int iso7816_clk_c_pins[]		= { GPIOC_5 };
-static const unsigned int iso7816_data_c_pins[]		= { GPIOC_6 };
-static const unsigned int iso7816_clk_x_pins[]		= { GPIOX_8 };
-static const unsigned int iso7816_data_x_pins[]		= { GPIOX_9 };
-static const unsigned int iso7816_clk_h_pins[]		= { GPIOH_6 };
-static const unsigned int iso7816_data_h_pins[]		= { GPIOH_7 };
-static const unsigned int iso7816_clk_z_pins[]		= { GPIOZ_0 };
-static const unsigned int iso7816_data_z_pins[]		= { GPIOZ_1 };
+अटल स्थिर अचिन्हित पूर्णांक iso7816_clk_c_pins[]		= अणु GPIOC_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक iso7816_data_c_pins[]		= अणु GPIOC_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक iso7816_clk_x_pins[]		= अणु GPIOX_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक iso7816_data_x_pins[]		= अणु GPIOX_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक iso7816_clk_h_pins[]		= अणु GPIOH_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक iso7816_data_h_pins[]		= अणु GPIOH_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक iso7816_clk_z_pins[]		= अणु GPIOZ_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक iso7816_data_z_pins[]		= अणु GPIOZ_1 पूर्ण;
 
 /* eth */
-static const unsigned int eth_mdio_pins[]		= { GPIOZ_0 };
-static const unsigned int eth_mdc_pins[]		= { GPIOZ_1 };
-static const unsigned int eth_rgmii_rx_clk_pins[]	= { GPIOZ_2 };
-static const unsigned int eth_rx_dv_pins[]		= { GPIOZ_3 };
-static const unsigned int eth_rxd0_pins[]		= { GPIOZ_4 };
-static const unsigned int eth_rxd1_pins[]		= { GPIOZ_5 };
-static const unsigned int eth_rxd2_rgmii_pins[]		= { GPIOZ_6 };
-static const unsigned int eth_rxd3_rgmii_pins[]		= { GPIOZ_7 };
-static const unsigned int eth_rgmii_tx_clk_pins[]	= { GPIOZ_8 };
-static const unsigned int eth_txen_pins[]		= { GPIOZ_9 };
-static const unsigned int eth_txd0_pins[]		= { GPIOZ_10 };
-static const unsigned int eth_txd1_pins[]		= { GPIOZ_11 };
-static const unsigned int eth_txd2_rgmii_pins[]		= { GPIOZ_12 };
-static const unsigned int eth_txd3_rgmii_pins[]		= { GPIOZ_13 };
-static const unsigned int eth_link_led_pins[]		= { GPIOZ_14 };
-static const unsigned int eth_act_led_pins[]		= { GPIOZ_15 };
+अटल स्थिर अचिन्हित पूर्णांक eth_mdio_pins[]		= अणु GPIOZ_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_mdc_pins[]		= अणु GPIOZ_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_rgmii_rx_clk_pins[]	= अणु GPIOZ_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_rx_dv_pins[]		= अणु GPIOZ_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_rxd0_pins[]		= अणु GPIOZ_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_rxd1_pins[]		= अणु GPIOZ_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_rxd2_rgmii_pins[]		= अणु GPIOZ_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_rxd3_rgmii_pins[]		= अणु GPIOZ_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_rgmii_tx_clk_pins[]	= अणु GPIOZ_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_txen_pins[]		= अणु GPIOZ_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_txd0_pins[]		= अणु GPIOZ_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_txd1_pins[]		= अणु GPIOZ_11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_txd2_rgmii_pins[]		= अणु GPIOZ_12 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_txd3_rgmii_pins[]		= अणु GPIOZ_13 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_link_led_pins[]		= अणु GPIOZ_14 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक eth_act_led_pins[]		= अणु GPIOZ_15 पूर्ण;
 
 /* pwm_a */
-static const unsigned int pwm_a_pins[]			= { GPIOX_6 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_a_pins[]			= अणु GPIOX_6 पूर्ण;
 
 /* pwm_b */
-static const unsigned int pwm_b_x7_pins[]		= { GPIOX_7 };
-static const unsigned int pwm_b_x19_pins[]		= { GPIOX_19 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_b_x7_pins[]		= अणु GPIOX_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pwm_b_x19_pins[]		= अणु GPIOX_19 पूर्ण;
 
 /* pwm_c */
-static const unsigned int pwm_c_c_pins[]		= { GPIOC_4 };
-static const unsigned int pwm_c_x5_pins[]		= { GPIOX_5 };
-static const unsigned int pwm_c_x8_pins[]		= { GPIOX_8 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_c_c_pins[]		= अणु GPIOC_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pwm_c_x5_pins[]		= अणु GPIOX_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pwm_c_x8_pins[]		= अणु GPIOX_8 पूर्ण;
 
 /* pwm_d */
-static const unsigned int pwm_d_x3_pins[]		= { GPIOX_3 };
-static const unsigned int pwm_d_x6_pins[]		= { GPIOX_6 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_d_x3_pins[]		= अणु GPIOX_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pwm_d_x6_pins[]		= अणु GPIOX_6 पूर्ण;
 
 /* pwm_e */
-static const unsigned int pwm_e_pins[]			= { GPIOX_16 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_e_pins[]			= अणु GPIOX_16 पूर्ण;
 
 /* pwm_f */
-static const unsigned int pwm_f_x_pins[]		= { GPIOX_7 };
-static const unsigned int pwm_f_h_pins[]		= { GPIOH_5 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_f_x_pins[]		= अणु GPIOX_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pwm_f_h_pins[]		= अणु GPIOH_5 पूर्ण;
 
 /* cec_ao */
-static const unsigned int cec_ao_a_h_pins[]		= { GPIOH_3 };
-static const unsigned int cec_ao_b_h_pins[]		= { GPIOH_3 };
+अटल स्थिर अचिन्हित पूर्णांक cec_ao_a_h_pins[]		= अणु GPIOH_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cec_ao_b_h_pins[]		= अणु GPIOH_3 पूर्ण;
 
 /* jtag_b */
-static const unsigned int jtag_b_tdo_pins[]		= { GPIOC_0 };
-static const unsigned int jtag_b_tdi_pins[]		= { GPIOC_1 };
-static const unsigned int jtag_b_clk_pins[]		= { GPIOC_4 };
-static const unsigned int jtag_b_tms_pins[]		= { GPIOC_5 };
+अटल स्थिर अचिन्हित पूर्णांक jtag_b_tकरो_pins[]		= अणु GPIOC_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक jtag_b_tdi_pins[]		= अणु GPIOC_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक jtag_b_clk_pins[]		= अणु GPIOC_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक jtag_b_पंचांगs_pins[]		= अणु GPIOC_5 पूर्ण;
 
 /* bt565_a */
-static const unsigned int bt565_a_vs_pins[]		= { GPIOZ_0 };
-static const unsigned int bt565_a_hs_pins[]		= { GPIOZ_1 };
-static const unsigned int bt565_a_clk_pins[]		= { GPIOZ_3 };
-static const unsigned int bt565_a_din0_pins[]		= { GPIOZ_4 };
-static const unsigned int bt565_a_din1_pins[]		= { GPIOZ_5 };
-static const unsigned int bt565_a_din2_pins[]		= { GPIOZ_6 };
-static const unsigned int bt565_a_din3_pins[]		= { GPIOZ_7 };
-static const unsigned int bt565_a_din4_pins[]		= { GPIOZ_8 };
-static const unsigned int bt565_a_din5_pins[]		= { GPIOZ_9 };
-static const unsigned int bt565_a_din6_pins[]		= { GPIOZ_10 };
-static const unsigned int bt565_a_din7_pins[]		= { GPIOZ_11 };
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_vs_pins[]		= अणु GPIOZ_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_hs_pins[]		= अणु GPIOZ_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_clk_pins[]		= अणु GPIOZ_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_din0_pins[]		= अणु GPIOZ_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_din1_pins[]		= अणु GPIOZ_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_din2_pins[]		= अणु GPIOZ_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_din3_pins[]		= अणु GPIOZ_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_din4_pins[]		= अणु GPIOZ_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_din5_pins[]		= अणु GPIOZ_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_din6_pins[]		= अणु GPIOZ_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक bt565_a_din7_pins[]		= अणु GPIOZ_11 पूर्ण;
 
 /* tsin_a */
-static const unsigned int tsin_a_valid_pins[]		= { GPIOX_2 };
-static const unsigned int tsin_a_sop_pins[]		= { GPIOX_1 };
-static const unsigned int tsin_a_din0_pins[]		= { GPIOX_0 };
-static const unsigned int tsin_a_clk_pins[]		= { GPIOX_3 };
+अटल स्थिर अचिन्हित पूर्णांक tsin_a_valid_pins[]		= अणु GPIOX_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_a_sop_pins[]		= अणु GPIOX_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_a_din0_pins[]		= अणु GPIOX_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_a_clk_pins[]		= अणु GPIOX_3 पूर्ण;
 
 /* tsin_b */
-static const unsigned int tsin_b_valid_x_pins[]		= { GPIOX_9 };
-static const unsigned int tsin_b_sop_x_pins[]		= { GPIOX_8 };
-static const unsigned int tsin_b_din0_x_pins[]		= { GPIOX_10 };
-static const unsigned int tsin_b_clk_x_pins[]		= { GPIOX_11 };
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_valid_x_pins[]		= अणु GPIOX_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_sop_x_pins[]		= अणु GPIOX_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_din0_x_pins[]		= अणु GPIOX_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_clk_x_pins[]		= अणु GPIOX_11 पूर्ण;
 
-static const unsigned int tsin_b_valid_z_pins[]		= { GPIOZ_2 };
-static const unsigned int tsin_b_sop_z_pins[]		= { GPIOZ_3 };
-static const unsigned int tsin_b_din0_z_pins[]		= { GPIOZ_4 };
-static const unsigned int tsin_b_clk_z_pins[]		= { GPIOZ_5 };
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_valid_z_pins[]		= अणु GPIOZ_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_sop_z_pins[]		= अणु GPIOZ_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_din0_z_pins[]		= अणु GPIOZ_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_clk_z_pins[]		= अणु GPIOZ_5 पूर्ण;
 
-static const unsigned int tsin_b_fail_pins[]		= { GPIOZ_6 };
-static const unsigned int tsin_b_din1_pins[]		= { GPIOZ_7 };
-static const unsigned int tsin_b_din2_pins[]		= { GPIOZ_8 };
-static const unsigned int tsin_b_din3_pins[]		= { GPIOZ_9 };
-static const unsigned int tsin_b_din4_pins[]		= { GPIOZ_10 };
-static const unsigned int tsin_b_din5_pins[]		= { GPIOZ_11 };
-static const unsigned int tsin_b_din6_pins[]		= { GPIOZ_12 };
-static const unsigned int tsin_b_din7_pins[]		= { GPIOZ_13 };
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_fail_pins[]		= अणु GPIOZ_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_din1_pins[]		= अणु GPIOZ_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_din2_pins[]		= अणु GPIOZ_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_din3_pins[]		= अणु GPIOZ_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_din4_pins[]		= अणु GPIOZ_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_din5_pins[]		= अणु GPIOZ_11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_din6_pins[]		= अणु GPIOZ_12 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_b_din7_pins[]		= अणु GPIOZ_13 पूर्ण;
 
 /* hdmitx */
-static const unsigned int hdmitx_sda_pins[]		= { GPIOH_0 };
-static const unsigned int hdmitx_sck_pins[]		= { GPIOH_1 };
-static const unsigned int hdmitx_hpd_in_pins[]		= { GPIOH_2 };
+अटल स्थिर अचिन्हित पूर्णांक hdmitx_sda_pins[]		= अणु GPIOH_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक hdmitx_sck_pins[]		= अणु GPIOH_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक hdmitx_hpd_in_pins[]		= अणु GPIOH_2 पूर्ण;
 
 /* pdm */
-static const unsigned int pdm_din0_c_pins[]		= { GPIOC_0 };
-static const unsigned int pdm_din1_c_pins[]		= { GPIOC_1 };
-static const unsigned int pdm_din2_c_pins[]		= { GPIOC_2 };
-static const unsigned int pdm_din3_c_pins[]		= { GPIOC_3 };
-static const unsigned int pdm_dclk_c_pins[]		= { GPIOC_4 };
+अटल स्थिर अचिन्हित पूर्णांक pdm_din0_c_pins[]		= अणु GPIOC_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din1_c_pins[]		= अणु GPIOC_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din2_c_pins[]		= अणु GPIOC_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din3_c_pins[]		= अणु GPIOC_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_dclk_c_pins[]		= अणु GPIOC_4 पूर्ण;
 
-static const unsigned int pdm_din0_x_pins[]		= { GPIOX_0 };
-static const unsigned int pdm_din1_x_pins[]		= { GPIOX_1 };
-static const unsigned int pdm_din2_x_pins[]		= { GPIOX_2 };
-static const unsigned int pdm_din3_x_pins[]		= { GPIOX_3 };
-static const unsigned int pdm_dclk_x_pins[]		= { GPIOX_4 };
+अटल स्थिर अचिन्हित पूर्णांक pdm_din0_x_pins[]		= अणु GPIOX_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din1_x_pins[]		= अणु GPIOX_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din2_x_pins[]		= अणु GPIOX_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din3_x_pins[]		= अणु GPIOX_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_dclk_x_pins[]		= अणु GPIOX_4 पूर्ण;
 
-static const unsigned int pdm_din0_z_pins[]		= { GPIOZ_2 };
-static const unsigned int pdm_din1_z_pins[]		= { GPIOZ_3 };
-static const unsigned int pdm_din2_z_pins[]		= { GPIOZ_4 };
-static const unsigned int pdm_din3_z_pins[]		= { GPIOZ_5 };
-static const unsigned int pdm_dclk_z_pins[]		= { GPIOZ_6 };
+अटल स्थिर अचिन्हित पूर्णांक pdm_din0_z_pins[]		= अणु GPIOZ_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din1_z_pins[]		= अणु GPIOZ_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din2_z_pins[]		= अणु GPIOZ_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din3_z_pins[]		= अणु GPIOZ_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_dclk_z_pins[]		= अणु GPIOZ_6 पूर्ण;
 
-static const unsigned int pdm_din0_a_pins[]		= { GPIOA_8 };
-static const unsigned int pdm_din1_a_pins[]		= { GPIOA_9 };
-static const unsigned int pdm_din2_a_pins[]		= { GPIOA_6 };
-static const unsigned int pdm_din3_a_pins[]		= { GPIOA_5 };
-static const unsigned int pdm_dclk_a_pins[]		= { GPIOA_7 };
+अटल स्थिर अचिन्हित पूर्णांक pdm_din0_a_pins[]		= अणु GPIOA_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din1_a_pins[]		= अणु GPIOA_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din2_a_pins[]		= अणु GPIOA_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_din3_a_pins[]		= अणु GPIOA_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pdm_dclk_a_pins[]		= अणु GPIOA_7 पूर्ण;
 
-/* spdif_in */
-static const unsigned int spdif_in_h_pins[]		= { GPIOH_5 };
-static const unsigned int spdif_in_a10_pins[]		= { GPIOA_10 };
-static const unsigned int spdif_in_a12_pins[]		= { GPIOA_12 };
+/* spdअगर_in */
+अटल स्थिर अचिन्हित पूर्णांक spdअगर_in_h_pins[]		= अणु GPIOH_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spdअगर_in_a10_pins[]		= अणु GPIOA_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spdअगर_in_a12_pins[]		= अणु GPIOA_12 पूर्ण;
 
-/* spdif_out */
-static const unsigned int spdif_out_h_pins[]		= { GPIOH_4 };
-static const unsigned int spdif_out_a11_pins[]		= { GPIOA_11 };
-static const unsigned int spdif_out_a13_pins[]		= { GPIOA_13 };
+/* spdअगर_out */
+अटल स्थिर अचिन्हित पूर्णांक spdअगर_out_h_pins[]		= अणु GPIOH_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spdअगर_out_a11_pins[]		= अणु GPIOA_11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spdअगर_out_a13_pins[]		= अणु GPIOA_13 पूर्ण;
 
 /* mclk0 */
-static const unsigned int mclk0_a_pins[]		= { GPIOA_0 };
+अटल स्थिर अचिन्हित पूर्णांक mclk0_a_pins[]		= अणु GPIOA_0 पूर्ण;
 
 /* mclk1 */
-static const unsigned int mclk1_x_pins[]		= { GPIOX_5 };
-static const unsigned int mclk1_z_pins[]		= { GPIOZ_8 };
-static const unsigned int mclk1_a_pins[]		= { GPIOA_11 };
+अटल स्थिर अचिन्हित पूर्णांक mclk1_x_pins[]		= अणु GPIOX_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mclk1_z_pins[]		= अणु GPIOZ_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mclk1_a_pins[]		= अणु GPIOA_11 पूर्ण;
 
 /* tdm */
-static const unsigned int tdm_a_slv_sclk_pins[]		= { GPIOX_11 };
-static const unsigned int tdm_a_slv_fs_pins[]		= { GPIOX_10 };
-static const unsigned int tdm_a_sclk_pins[]		= { GPIOX_11 };
-static const unsigned int tdm_a_fs_pins[]		= { GPIOX_10 };
-static const unsigned int tdm_a_din0_pins[]		= { GPIOX_9 };
-static const unsigned int tdm_a_din1_pins[]		= { GPIOX_8 };
-static const unsigned int tdm_a_dout0_pins[]		= { GPIOX_9 };
-static const unsigned int tdm_a_dout1_pins[]		= { GPIOX_8 };
+अटल स्थिर अचिन्हित पूर्णांक tdm_a_slv_sclk_pins[]		= अणु GPIOX_11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_a_slv_fs_pins[]		= अणु GPIOX_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_a_sclk_pins[]		= अणु GPIOX_11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_a_fs_pins[]		= अणु GPIOX_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_a_din0_pins[]		= अणु GPIOX_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_a_din1_pins[]		= अणु GPIOX_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_a_करोut0_pins[]		= अणु GPIOX_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_a_करोut1_pins[]		= अणु GPIOX_8 पूर्ण;
 
-static const unsigned int tdm_b_slv_sclk_pins[]		= { GPIOA_1 };
-static const unsigned int tdm_b_slv_fs_pins[]		= { GPIOA_2 };
-static const unsigned int tdm_b_sclk_pins[]		= { GPIOA_1 };
-static const unsigned int tdm_b_fs_pins[]		= { GPIOA_2 };
-static const unsigned int tdm_b_din0_pins[]		= { GPIOA_3 };
-static const unsigned int tdm_b_din1_pins[]		= { GPIOA_4 };
-static const unsigned int tdm_b_din2_pins[]		= { GPIOA_5 };
-static const unsigned int tdm_b_din3_a_pins[]		= { GPIOA_6 };
-static const unsigned int tdm_b_din3_h_pins[]		= { GPIOH_5 };
-static const unsigned int tdm_b_dout0_pins[]		= { GPIOA_3 };
-static const unsigned int tdm_b_dout1_pins[]		= { GPIOA_4 };
-static const unsigned int tdm_b_dout2_pins[]		= { GPIOA_5 };
-static const unsigned int tdm_b_dout3_a_pins[]		= { GPIOA_6 };
-static const unsigned int tdm_b_dout3_h_pins[]		= { GPIOH_5 };
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_slv_sclk_pins[]		= अणु GPIOA_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_slv_fs_pins[]		= अणु GPIOA_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_sclk_pins[]		= अणु GPIOA_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_fs_pins[]		= अणु GPIOA_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_din0_pins[]		= अणु GPIOA_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_din1_pins[]		= अणु GPIOA_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_din2_pins[]		= अणु GPIOA_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_din3_a_pins[]		= अणु GPIOA_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_din3_h_pins[]		= अणु GPIOH_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_करोut0_pins[]		= अणु GPIOA_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_करोut1_pins[]		= अणु GPIOA_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_करोut2_pins[]		= अणु GPIOA_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_करोut3_a_pins[]		= अणु GPIOA_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_b_करोut3_h_pins[]		= अणु GPIOH_5 पूर्ण;
 
-static const unsigned int tdm_c_slv_sclk_a_pins[]	= { GPIOA_12 };
-static const unsigned int tdm_c_slv_fs_a_pins[]		= { GPIOA_13 };
-static const unsigned int tdm_c_slv_sclk_z_pins[]	= { GPIOZ_7 };
-static const unsigned int tdm_c_slv_fs_z_pins[]		= { GPIOZ_6 };
-static const unsigned int tdm_c_sclk_a_pins[]		= { GPIOA_12 };
-static const unsigned int tdm_c_fs_a_pins[]		= { GPIOA_13 };
-static const unsigned int tdm_c_sclk_z_pins[]		= { GPIOZ_7 };
-static const unsigned int tdm_c_fs_z_pins[]		= { GPIOZ_6 };
-static const unsigned int tdm_c_din0_a_pins[]		= { GPIOA_10 };
-static const unsigned int tdm_c_din1_a_pins[]		= { GPIOA_9 };
-static const unsigned int tdm_c_din2_a_pins[]		= { GPIOA_8 };
-static const unsigned int tdm_c_din3_a_pins[]		= { GPIOA_7 };
-static const unsigned int tdm_c_din0_z_pins[]		= { GPIOZ_2 };
-static const unsigned int tdm_c_din1_z_pins[]		= { GPIOZ_3 };
-static const unsigned int tdm_c_din2_z_pins[]		= { GPIOZ_4 };
-static const unsigned int tdm_c_din3_z_pins[]		= { GPIOZ_5 };
-static const unsigned int tdm_c_dout0_a_pins[]		= { GPIOA_10 };
-static const unsigned int tdm_c_dout1_a_pins[]		= { GPIOA_9 };
-static const unsigned int tdm_c_dout2_a_pins[]		= { GPIOA_8 };
-static const unsigned int tdm_c_dout3_a_pins[]		= { GPIOA_7 };
-static const unsigned int tdm_c_dout0_z_pins[]		= { GPIOZ_2 };
-static const unsigned int tdm_c_dout1_z_pins[]		= { GPIOZ_3 };
-static const unsigned int tdm_c_dout2_z_pins[]		= { GPIOZ_4 };
-static const unsigned int tdm_c_dout3_z_pins[]		= { GPIOZ_5 };
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_slv_sclk_a_pins[]	= अणु GPIOA_12 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_slv_fs_a_pins[]		= अणु GPIOA_13 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_slv_sclk_z_pins[]	= अणु GPIOZ_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_slv_fs_z_pins[]		= अणु GPIOZ_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_sclk_a_pins[]		= अणु GPIOA_12 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_fs_a_pins[]		= अणु GPIOA_13 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_sclk_z_pins[]		= अणु GPIOZ_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_fs_z_pins[]		= अणु GPIOZ_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_din0_a_pins[]		= अणु GPIOA_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_din1_a_pins[]		= अणु GPIOA_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_din2_a_pins[]		= अणु GPIOA_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_din3_a_pins[]		= अणु GPIOA_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_din0_z_pins[]		= अणु GPIOZ_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_din1_z_pins[]		= अणु GPIOZ_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_din2_z_pins[]		= अणु GPIOZ_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_din3_z_pins[]		= अणु GPIOZ_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_करोut0_a_pins[]		= अणु GPIOA_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_करोut1_a_pins[]		= अणु GPIOA_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_करोut2_a_pins[]		= अणु GPIOA_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_करोut3_a_pins[]		= अणु GPIOA_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_करोut0_z_pins[]		= अणु GPIOZ_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_करोut1_z_pins[]		= अणु GPIOZ_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_करोut2_z_pins[]		= अणु GPIOZ_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_c_करोut3_z_pins[]		= अणु GPIOZ_5 पूर्ण;
 
-static struct meson_pmx_group meson_g12a_periphs_groups[] = {
+अटल काष्ठा meson_pmx_group meson_g12a_periphs_groups[] = अणु
 	GPIO_GROUP(GPIOZ_0),
 	GPIO_GROUP(GPIOZ_1),
 	GPIO_GROUP(GPIOZ_2),
@@ -613,10 +614,10 @@ static struct meson_pmx_group meson_g12a_periphs_groups[] = {
 	GROUP(tdm_c_din3_z,		6),
 	GROUP(tdm_c_sclk_z,		4),
 	GROUP(tdm_c_fs_z,		4),
-	GROUP(tdm_c_dout0_z,		4),
-	GROUP(tdm_c_dout1_z,		4),
-	GROUP(tdm_c_dout2_z,		4),
-	GROUP(tdm_c_dout3_z,		4),
+	GROUP(tdm_c_करोut0_z,		4),
+	GROUP(tdm_c_करोut1_z,		4),
+	GROUP(tdm_c_करोut2_z,		4),
+	GROUP(tdm_c_करोut3_z,		4),
 	GROUP(mclk1_z,			4),
 
 	/* bank GPIOX */
@@ -670,8 +671,8 @@ static struct meson_pmx_group meson_g12a_periphs_groups[] = {
 	GROUP(tdm_a_din1,		2),
 	GROUP(tdm_a_sclk,		1),
 	GROUP(tdm_a_fs,			1),
-	GROUP(tdm_a_dout0,		1),
-	GROUP(tdm_a_dout1,		1),
+	GROUP(tdm_a_करोut0,		1),
+	GROUP(tdm_a_करोut1,		1),
 	GROUP(mclk1_x,			2),
 
 	/* bank GPIOC */
@@ -692,10 +693,10 @@ static struct meson_pmx_group meson_g12a_periphs_groups[] = {
 	GROUP(iso7816_clk_c,		5),
 	GROUP(iso7816_data_c,		5),
 	GROUP(pwm_c_c,			5),
-	GROUP(jtag_b_tdo,		2),
+	GROUP(jtag_b_tकरो,		2),
 	GROUP(jtag_b_tdi,		2),
 	GROUP(jtag_b_clk,		2),
-	GROUP(jtag_b_tms,		2),
+	GROUP(jtag_b_पंचांगs,		2),
 	GROUP(pdm_din0_c,		4),
 	GROUP(pdm_din1_c,		4),
 	GROUP(pdm_din2_c,		4),
@@ -725,10 +726,10 @@ static struct meson_pmx_group meson_g12a_periphs_groups[] = {
 	GROUP(hdmitx_sda,		1),
 	GROUP(hdmitx_sck,		1),
 	GROUP(hdmitx_hpd_in,		1),
-	GROUP(spdif_out_h,		1),
-	GROUP(spdif_in_h,		1),
+	GROUP(spdअगर_out_h,		1),
+	GROUP(spdअगर_in_h,		1),
 	GROUP(tdm_b_din3_h,		6),
-	GROUP(tdm_b_dout3_h,		5),
+	GROUP(tdm_b_करोut3_h,		5),
 
 	/* bank GPIOA */
 	GROUP(i2c3_sda_a,		2),
@@ -738,10 +739,10 @@ static struct meson_pmx_group meson_g12a_periphs_groups[] = {
 	GROUP(pdm_din2_a,		1),
 	GROUP(pdm_din3_a,		1),
 	GROUP(pdm_dclk_a,		1),
-	GROUP(spdif_in_a10,		1),
-	GROUP(spdif_in_a12,		1),
-	GROUP(spdif_out_a11,		1),
-	GROUP(spdif_out_a13,		1),
+	GROUP(spdअगर_in_a10,		1),
+	GROUP(spdअगर_in_a12,		1),
+	GROUP(spdअगर_out_a11,		1),
+	GROUP(spdअगर_out_a13,		1),
 	GROUP(tdm_b_slv_sclk,		2),
 	GROUP(tdm_b_slv_fs,		2),
 	GROUP(tdm_b_din0,		2),
@@ -750,10 +751,10 @@ static struct meson_pmx_group meson_g12a_periphs_groups[] = {
 	GROUP(tdm_b_din3_a,		2),
 	GROUP(tdm_b_sclk,		1),
 	GROUP(tdm_b_fs,			1),
-	GROUP(tdm_b_dout0,		1),
-	GROUP(tdm_b_dout1,		1),
-	GROUP(tdm_b_dout2,		3),
-	GROUP(tdm_b_dout3_a,		3),
+	GROUP(tdm_b_करोut0,		1),
+	GROUP(tdm_b_करोut1,		1),
+	GROUP(tdm_b_करोut2,		3),
+	GROUP(tdm_b_करोut3_a,		3),
 	GROUP(tdm_c_slv_sclk_a,		3),
 	GROUP(tdm_c_slv_fs_a,		3),
 	GROUP(tdm_c_din0_a,		3),
@@ -762,100 +763,100 @@ static struct meson_pmx_group meson_g12a_periphs_groups[] = {
 	GROUP(tdm_c_din3_a,		3),
 	GROUP(tdm_c_sclk_a,		2),
 	GROUP(tdm_c_fs_a,		2),
-	GROUP(tdm_c_dout0_a,		2),
-	GROUP(tdm_c_dout1_a,		2),
-	GROUP(tdm_c_dout2_a,		2),
-	GROUP(tdm_c_dout3_a,		2),
+	GROUP(tdm_c_करोut0_a,		2),
+	GROUP(tdm_c_करोut1_a,		2),
+	GROUP(tdm_c_करोut2_a,		2),
+	GROUP(tdm_c_करोut3_a,		2),
 	GROUP(mclk0_a,			1),
 	GROUP(mclk1_a,			2),
-};
+पूर्ण;
 
 /* uart_ao_a */
-static const unsigned int uart_ao_a_tx_pins[]		= { GPIOAO_0 };
-static const unsigned int uart_ao_a_rx_pins[]		= { GPIOAO_1 };
-static const unsigned int uart_ao_a_cts_pins[]		= { GPIOE_0 };
-static const unsigned int uart_ao_a_rts_pins[]		= { GPIOE_1 };
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_a_tx_pins[]		= अणु GPIOAO_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_a_rx_pins[]		= अणु GPIOAO_1 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_a_cts_pins[]		= अणु GPIOE_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_a_rts_pins[]		= अणु GPIOE_1 पूर्ण;
 
 /* uart_ao_b */
-static const unsigned int uart_ao_b_tx_2_pins[]		= { GPIOAO_2 };
-static const unsigned int uart_ao_b_rx_3_pins[]		= { GPIOAO_3 };
-static const unsigned int uart_ao_b_tx_8_pins[]		= { GPIOAO_8 };
-static const unsigned int uart_ao_b_rx_9_pins[]		= { GPIOAO_9 };
-static const unsigned int uart_ao_b_cts_pins[]		= { GPIOE_0 };
-static const unsigned int uart_ao_b_rts_pins[]		= { GPIOE_1 };
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_b_tx_2_pins[]		= अणु GPIOAO_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_b_rx_3_pins[]		= अणु GPIOAO_3 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_b_tx_8_pins[]		= अणु GPIOAO_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_b_rx_9_pins[]		= अणु GPIOAO_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_b_cts_pins[]		= अणु GPIOE_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart_ao_b_rts_pins[]		= अणु GPIOE_1 पूर्ण;
 
 /* i2c_ao */
-static const unsigned int i2c_ao_sck_pins[]		= { GPIOAO_2 };
-static const unsigned int i2c_ao_sda_pins[]		= { GPIOAO_3 };
+अटल स्थिर अचिन्हित पूर्णांक i2c_ao_sck_pins[]		= अणु GPIOAO_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c_ao_sda_pins[]		= अणु GPIOAO_3 पूर्ण;
 
-static const unsigned int i2c_ao_sck_e_pins[]		= { GPIOE_0 };
-static const unsigned int i2c_ao_sda_e_pins[]		= { GPIOE_1 };
+अटल स्थिर अचिन्हित पूर्णांक i2c_ao_sck_e_pins[]		= अणु GPIOE_0 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c_ao_sda_e_pins[]		= अणु GPIOE_1 पूर्ण;
 
 /* i2c_ao_slave */
-static const unsigned int i2c_ao_slave_sck_pins[]	= { GPIOAO_2 };
-static const unsigned int i2c_ao_slave_sda_pins[]	= { GPIOAO_3 };
+अटल स्थिर अचिन्हित पूर्णांक i2c_ao_slave_sck_pins[]	= अणु GPIOAO_2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c_ao_slave_sda_pins[]	= अणु GPIOAO_3 पूर्ण;
 
 /* ir_in */
-static const unsigned int remote_ao_input_pins[]	= { GPIOAO_5 };
+अटल स्थिर अचिन्हित पूर्णांक remote_ao_input_pins[]	= अणु GPIOAO_5 पूर्ण;
 
 /* ir_out */
-static const unsigned int remote_ao_out_pins[]		= { GPIOAO_4 };
+अटल स्थिर अचिन्हित पूर्णांक remote_ao_out_pins[]		= अणु GPIOAO_4 पूर्ण;
 
 /* pwm_a_e */
-static const unsigned int pwm_a_e_pins[]		= { GPIOE_2 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_a_e_pins[]		= अणु GPIOE_2 पूर्ण;
 
 /* pwm_ao_a */
-static const unsigned int pwm_ao_a_pins[]		= { GPIOAO_11 };
-static const unsigned int pwm_ao_a_hiz_pins[]		= { GPIOAO_11 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_ao_a_pins[]		= अणु GPIOAO_11 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pwm_ao_a_hiz_pins[]		= अणु GPIOAO_11 पूर्ण;
 
 /* pwm_ao_b */
-static const unsigned int pwm_ao_b_pins[]		= { GPIOE_0 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_ao_b_pins[]		= अणु GPIOE_0 पूर्ण;
 
 /* pwm_ao_c */
-static const unsigned int pwm_ao_c_4_pins[]		= { GPIOAO_4 };
-static const unsigned int pwm_ao_c_hiz_pins[]		= { GPIOAO_4 };
-static const unsigned int pwm_ao_c_6_pins[]		= { GPIOAO_6 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_ao_c_4_pins[]		= अणु GPIOAO_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pwm_ao_c_hiz_pins[]		= अणु GPIOAO_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pwm_ao_c_6_pins[]		= अणु GPIOAO_6 पूर्ण;
 
 /* pwm_ao_d */
-static const unsigned int pwm_ao_d_5_pins[]		= { GPIOAO_5 };
-static const unsigned int pwm_ao_d_10_pins[]		= { GPIOAO_10 };
-static const unsigned int pwm_ao_d_e_pins[]		= { GPIOE_1 };
+अटल स्थिर अचिन्हित पूर्णांक pwm_ao_d_5_pins[]		= अणु GPIOAO_5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pwm_ao_d_10_pins[]		= अणु GPIOAO_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक pwm_ao_d_e_pins[]		= अणु GPIOE_1 पूर्ण;
 
 /* jtag_a */
-static const unsigned int jtag_a_tdi_pins[]		= { GPIOAO_8 };
-static const unsigned int jtag_a_tdo_pins[]		= { GPIOAO_9 };
-static const unsigned int jtag_a_clk_pins[]		= { GPIOAO_6 };
-static const unsigned int jtag_a_tms_pins[]		= { GPIOAO_7 };
+अटल स्थिर अचिन्हित पूर्णांक jtag_a_tdi_pins[]		= अणु GPIOAO_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक jtag_a_tकरो_pins[]		= अणु GPIOAO_9 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक jtag_a_clk_pins[]		= अणु GPIOAO_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक jtag_a_पंचांगs_pins[]		= अणु GPIOAO_7 पूर्ण;
 
 /* cec_ao */
-static const unsigned int cec_ao_a_pins[]		= { GPIOAO_10 };
-static const unsigned int cec_ao_b_pins[]		= { GPIOAO_10 };
+अटल स्थिर अचिन्हित पूर्णांक cec_ao_a_pins[]		= अणु GPIOAO_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक cec_ao_b_pins[]		= अणु GPIOAO_10 पूर्ण;
 
 /* tsin_ao_a */
-static const unsigned int tsin_ao_asop_pins[]		= { GPIOAO_6 };
-static const unsigned int tsin_ao_adin0_pins[]		= { GPIOAO_7 };
-static const unsigned int tsin_ao_aclk_pins[]		= { GPIOAO_8 };
-static const unsigned int tsin_ao_a_valid_pins[]	= { GPIOAO_9 };
+अटल स्थिर अचिन्हित पूर्णांक tsin_ao_asop_pins[]		= अणु GPIOAO_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_ao_adin0_pins[]		= अणु GPIOAO_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_ao_aclk_pins[]		= अणु GPIOAO_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tsin_ao_a_valid_pins[]	= अणु GPIOAO_9 पूर्ण;
 
-/* spdif_ao_out */
-static const unsigned int spdif_ao_out_pins[]		= { GPIOAO_10 };
+/* spdअगर_ao_out */
+अटल स्थिर अचिन्हित पूर्णांक spdअगर_ao_out_pins[]		= अणु GPIOAO_10 पूर्ण;
 
 /* tdm_ao_b */
-static const unsigned int tdm_ao_b_slv_fs_pins[]	= { GPIOAO_7 };
-static const unsigned int tdm_ao_b_slv_sclk_pins[]	= { GPIOAO_8 };
-static const unsigned int tdm_ao_b_fs_pins[]		= { GPIOAO_7 };
-static const unsigned int tdm_ao_b_sclk_pins[]		= { GPIOAO_8 };
-static const unsigned int tdm_ao_b_din0_pins[]		= { GPIOAO_4 };
-static const unsigned int tdm_ao_b_din1_pins[]		= { GPIOAO_10 };
-static const unsigned int tdm_ao_b_din2_pins[]		= { GPIOAO_6 };
-static const unsigned int tdm_ao_b_dout0_pins[]		= { GPIOAO_4 };
-static const unsigned int tdm_ao_b_dout1_pins[]		= { GPIOAO_10 };
-static const unsigned int tdm_ao_b_dout2_pins[]		= { GPIOAO_6 };
+अटल स्थिर अचिन्हित पूर्णांक tdm_ao_b_slv_fs_pins[]	= अणु GPIOAO_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_ao_b_slv_sclk_pins[]	= अणु GPIOAO_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_ao_b_fs_pins[]		= अणु GPIOAO_7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_ao_b_sclk_pins[]		= अणु GPIOAO_8 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_ao_b_din0_pins[]		= अणु GPIOAO_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_ao_b_din1_pins[]		= अणु GPIOAO_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_ao_b_din2_pins[]		= अणु GPIOAO_6 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_ao_b_करोut0_pins[]		= अणु GPIOAO_4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_ao_b_करोut1_pins[]		= अणु GPIOAO_10 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक tdm_ao_b_करोut2_pins[]		= अणु GPIOAO_6 पूर्ण;
 
 /* mclk0_ao */
-static const unsigned int mclk0_ao_pins[]		= { GPIOAO_9 };
+अटल स्थिर अचिन्हित पूर्णांक mclk0_ao_pins[]		= अणु GPIOAO_9 पूर्ण;
 
-static struct meson_pmx_group meson_g12a_aobus_groups[] = {
+अटल काष्ठा meson_pmx_group meson_g12a_aobus_groups[] = अणु
 	GPIO_GROUP(GPIOAO_0),
 	GPIO_GROUP(GPIOAO_1),
 	GPIO_GROUP(GPIOAO_2),
@@ -902,19 +903,19 @@ static struct meson_pmx_group meson_g12a_aobus_groups[] = {
 	GROUP(pwm_ao_d_10,		3),
 	GROUP(pwm_ao_d_e,		3),
 	GROUP(jtag_a_tdi,		1),
-	GROUP(jtag_a_tdo,		1),
+	GROUP(jtag_a_tकरो,		1),
 	GROUP(jtag_a_clk,		1),
-	GROUP(jtag_a_tms,		1),
+	GROUP(jtag_a_पंचांगs,		1),
 	GROUP(cec_ao_a,			1),
 	GROUP(cec_ao_b,			2),
 	GROUP(tsin_ao_asop,		4),
 	GROUP(tsin_ao_adin0,		4),
 	GROUP(tsin_ao_aclk,		4),
 	GROUP(tsin_ao_a_valid,		4),
-	GROUP(spdif_ao_out,		4),
-	GROUP(tdm_ao_b_dout0,		5),
-	GROUP(tdm_ao_b_dout1,		5),
-	GROUP(tdm_ao_b_dout2,		5),
+	GROUP(spdअगर_ao_out,		4),
+	GROUP(tdm_ao_b_करोut0,		5),
+	GROUP(tdm_ao_b_करोut1,		5),
+	GROUP(tdm_ao_b_करोut2,		5),
 	GROUP(tdm_ao_b_fs,		5),
 	GROUP(tdm_ao_b_sclk,		5),
 	GROUP(tdm_ao_b_din0,		6),
@@ -923,9 +924,9 @@ static struct meson_pmx_group meson_g12a_aobus_groups[] = {
 	GROUP(tdm_ao_b_slv_fs,		6),
 	GROUP(tdm_ao_b_slv_sclk,	6),
 	GROUP(mclk0_ao,			5),
-};
+पूर्ण;
 
-static const char * const gpio_periphs_groups[] = {
+अटल स्थिर अक्षर * स्थिर gpio_periphs_groups[] = अणु
 	"GPIOZ_0", "GPIOZ_1", "GPIOZ_2", "GPIOZ_3", "GPIOZ_4",
 	"GPIOZ_5", "GPIOZ_6", "GPIOZ_7", "GPIOZ_8", "GPIOZ_9",
 	"GPIOZ_10", "GPIOZ_11", "GPIOZ_12", "GPIOZ_13", "GPIOZ_14",
@@ -951,163 +952,163 @@ static const char * const gpio_periphs_groups[] = {
 	"GPIOX_5", "GPIOX_6", "GPIOX_7", "GPIOX_8", "GPIOX_9",
 	"GPIOX_10", "GPIOX_11", "GPIOX_12", "GPIOX_13", "GPIOX_14",
 	"GPIOX_15", "GPIOX_16", "GPIOX_17", "GPIOX_18", "GPIOX_19",
-};
+पूर्ण;
 
-static const char * const emmc_groups[] = {
+अटल स्थिर अक्षर * स्थिर emmc_groups[] = अणु
 	"emmc_nand_d0", "emmc_nand_d1", "emmc_nand_d2",
 	"emmc_nand_d3", "emmc_nand_d4", "emmc_nand_d5",
 	"emmc_nand_d6", "emmc_nand_d7",
 	"emmc_clk", "emmc_cmd", "emmc_nand_ds",
-};
+पूर्ण;
 
-static const char * const nand_groups[] = {
+अटल स्थिर अक्षर * स्थिर nand_groups[] = अणु
 	"emmc_nand_d0", "emmc_nand_d1", "emmc_nand_d2",
 	"emmc_nand_d3", "emmc_nand_d4", "emmc_nand_d5",
 	"emmc_nand_d6", "emmc_nand_d7",
 	"nand_ce0", "nand_ale", "nand_cle",
 	"nand_wen_clk", "nand_ren_wr", "nand_rb0",
 	"emmc_nand_ds", "nand_ce1",
-};
+पूर्ण;
 
-static const char * const nor_groups[] = {
+अटल स्थिर अक्षर * स्थिर nor_groups[] = अणु
 	"nor_d", "nor_q", "nor_c", "nor_cs",
 	"nor_hold", "nor_wp",
-};
+पूर्ण;
 
-static const char * const sdio_groups[] = {
+अटल स्थिर अक्षर * स्थिर sdio_groups[] = अणु
 	"sdio_d0", "sdio_d1", "sdio_d2", "sdio_d3",
 	"sdio_cmd", "sdio_clk", "sdio_dummy",
-};
+पूर्ण;
 
-static const char * const sdcard_groups[] = {
+अटल स्थिर अक्षर * स्थिर sdcard_groups[] = अणु
 	"sdcard_d0_c", "sdcard_d1_c", "sdcard_d2_c", "sdcard_d3_c",
 	"sdcard_clk_c", "sdcard_cmd_c",
 	"sdcard_d0_z", "sdcard_d1_z", "sdcard_d2_z", "sdcard_d3_z",
 	"sdcard_clk_z", "sdcard_cmd_z",
-};
+पूर्ण;
 
-static const char * const spi0_groups[] = {
+अटल स्थिर अक्षर * स्थिर spi0_groups[] = अणु
 	"spi0_mosi_c", "spi0_miso_c", "spi0_ss0_c", "spi0_clk_c",
 	"spi0_mosi_x", "spi0_miso_x", "spi0_ss0_x", "spi0_clk_x",
-};
+पूर्ण;
 
-static const char * const spi1_groups[] = {
+अटल स्थिर अक्षर * स्थिर spi1_groups[] = अणु
 	"spi1_mosi", "spi1_miso", "spi1_ss0", "spi1_clk",
-};
+पूर्ण;
 
-static const char * const i2c0_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c0_groups[] = अणु
 	"i2c0_sda_c", "i2c0_sck_c",
 	"i2c0_sda_z0", "i2c0_sck_z1",
 	"i2c0_sda_z7", "i2c0_sck_z8",
-};
+पूर्ण;
 
-static const char * const i2c1_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c1_groups[] = अणु
 	"i2c1_sda_x", "i2c1_sck_x",
 	"i2c1_sda_h2", "i2c1_sck_h3",
 	"i2c1_sda_h6", "i2c1_sck_h7",
-};
+पूर्ण;
 
-static const char * const i2c2_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c2_groups[] = अणु
 	"i2c2_sda_x", "i2c2_sck_x",
 	"i2c2_sda_z", "i2c2_sck_z",
-};
+पूर्ण;
 
-static const char * const i2c3_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c3_groups[] = अणु
 	"i2c3_sda_h", "i2c3_sck_h",
 	"i2c3_sda_a", "i2c3_sck_a",
-};
+पूर्ण;
 
-static const char * const uart_a_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart_a_groups[] = अणु
 	"uart_a_tx", "uart_a_rx", "uart_a_cts", "uart_a_rts",
-};
+पूर्ण;
 
-static const char * const uart_b_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart_b_groups[] = अणु
 	"uart_b_tx", "uart_b_rx",
-};
+पूर्ण;
 
-static const char * const uart_c_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart_c_groups[] = अणु
 	"uart_c_tx", "uart_c_rx", "uart_c_cts", "uart_c_rts",
-};
+पूर्ण;
 
-static const char * const uart_ao_a_c_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart_ao_a_c_groups[] = अणु
 	"uart_ao_a_rx_c", "uart_ao_a_tx_c",
-};
+पूर्ण;
 
-static const char * const iso7816_groups[] = {
+अटल स्थिर अक्षर * स्थिर iso7816_groups[] = अणु
 	"iso7816_clk_c", "iso7816_data_c",
 	"iso7816_clk_x", "iso7816_data_x",
 	"iso7816_clk_h", "iso7816_data_h",
 	"iso7816_clk_z", "iso7816_data_z",
-};
+पूर्ण;
 
-static const char * const eth_groups[] = {
+अटल स्थिर अक्षर * स्थिर eth_groups[] = अणु
 	"eth_rxd2_rgmii", "eth_rxd3_rgmii", "eth_rgmii_tx_clk",
 	"eth_txd2_rgmii", "eth_txd3_rgmii", "eth_rgmii_rx_clk",
 	"eth_txd0", "eth_txd1", "eth_txen", "eth_mdc",
 	"eth_rxd0", "eth_rxd1", "eth_rx_dv", "eth_mdio",
 	"eth_link_led", "eth_act_led",
-};
+पूर्ण;
 
-static const char * const pwm_a_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_a_groups[] = अणु
 	"pwm_a",
-};
+पूर्ण;
 
-static const char * const pwm_b_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_b_groups[] = अणु
 	"pwm_b_x7", "pwm_b_x19",
-};
+पूर्ण;
 
-static const char * const pwm_c_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_c_groups[] = अणु
 	"pwm_c_c", "pwm_c_x5", "pwm_c_x8",
-};
+पूर्ण;
 
-static const char * const pwm_d_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_d_groups[] = अणु
 	"pwm_d_x3", "pwm_d_x6",
-};
+पूर्ण;
 
-static const char * const pwm_e_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_e_groups[] = अणु
 	"pwm_e",
-};
+पूर्ण;
 
-static const char * const pwm_f_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_f_groups[] = अणु
 	"pwm_f_x", "pwm_f_h",
-};
+पूर्ण;
 
-static const char * const cec_ao_a_h_groups[] = {
+अटल स्थिर अक्षर * स्थिर cec_ao_a_h_groups[] = अणु
 	"cec_ao_a_h",
-};
+पूर्ण;
 
-static const char * const cec_ao_b_h_groups[] = {
+अटल स्थिर अक्षर * स्थिर cec_ao_b_h_groups[] = अणु
 	"cec_ao_b_h",
-};
+पूर्ण;
 
-static const char * const jtag_b_groups[] = {
+अटल स्थिर अक्षर * स्थिर jtag_b_groups[] = अणु
 	"jtag_b_tdi", "jtag_b_tdo", "jtag_b_clk", "jtag_b_tms",
-};
+पूर्ण;
 
-static const char * const bt565_a_groups[] = {
+अटल स्थिर अक्षर * स्थिर bt565_a_groups[] = अणु
 	"bt565_a_vs", "bt565_a_hs", "bt565_a_clk",
 	"bt565_a_din0", "bt565_a_din1", "bt565_a_din2",
 	"bt565_a_din3", "bt565_a_din4", "bt565_a_din5",
 	"bt565_a_din6", "bt565_a_din7",
-};
+पूर्ण;
 
-static const char * const tsin_a_groups[] = {
+अटल स्थिर अक्षर * स्थिर tsin_a_groups[] = अणु
 	"tsin_a_valid", "tsin_a_sop", "tsin_a_din0",
 	"tsin_a_clk",
-};
+पूर्ण;
 
-static const char * const tsin_b_groups[] = {
+अटल स्थिर अक्षर * स्थिर tsin_b_groups[] = अणु
 	"tsin_b_valid_x", "tsin_b_sop_x", "tsin_b_din0_x", "tsin_b_clk_x",
 	"tsin_b_valid_z", "tsin_b_sop_z", "tsin_b_din0_z", "tsin_b_clk_z",
 	"tsin_b_fail", "tsin_b_din1", "tsin_b_din2", "tsin_b_din3",
 	"tsin_b_din4", "tsin_b_din5", "tsin_b_din6", "tsin_b_din7",
-};
+पूर्ण;
 
-static const char * const hdmitx_groups[] = {
+अटल स्थिर अक्षर * स्थिर hdmitx_groups[] = अणु
 	"hdmitx_sda", "hdmitx_sck", "hdmitx_hpd_in",
-};
+पूर्ण;
 
-static const char * const pdm_groups[] = {
+अटल स्थिर अक्षर * स्थिर pdm_groups[] = अणु
 	"pdm_din0_c", "pdm_din1_c", "pdm_din2_c", "pdm_din3_c",
 	"pdm_dclk_c",
 	"pdm_din0_x", "pdm_din1_x", "pdm_din2_x", "pdm_din3_x",
@@ -1116,38 +1117,38 @@ static const char * const pdm_groups[] = {
 	"pdm_dclk_z",
 	"pdm_din0_a", "pdm_din1_a", "pdm_din2_a", "pdm_din3_a",
 	"pdm_dclk_a",
-};
+पूर्ण;
 
-static const char * const spdif_in_groups[] = {
+अटल स्थिर अक्षर * स्थिर spdअगर_in_groups[] = अणु
 	"spdif_in_h", "spdif_in_a10", "spdif_in_a12",
-};
+पूर्ण;
 
-static const char * const spdif_out_groups[] = {
+अटल स्थिर अक्षर * स्थिर spdअगर_out_groups[] = अणु
 	"spdif_out_h", "spdif_out_a11", "spdif_out_a13",
-};
+पूर्ण;
 
-static const char * const mclk0_groups[] = {
+अटल स्थिर अक्षर * स्थिर mclk0_groups[] = अणु
 	"mclk0_a",
-};
+पूर्ण;
 
-static const char * const mclk1_groups[] = {
+अटल स्थिर अक्षर * स्थिर mclk1_groups[] = अणु
 	"mclk1_x", "mclk1_z", "mclk1_a",
-};
+पूर्ण;
 
-static const char * const tdm_a_groups[] = {
+अटल स्थिर अक्षर * स्थिर tdm_a_groups[] = अणु
 	"tdm_a_slv_sclk", "tdm_a_slv_fs", "tdm_a_sclk", "tdm_a_fs",
 	"tdm_a_din0", "tdm_a_din1", "tdm_a_dout0", "tdm_a_dout1",
-};
+पूर्ण;
 
-static const char * const tdm_b_groups[] = {
+अटल स्थिर अक्षर * स्थिर tdm_b_groups[] = अणु
 	"tdm_b_slv_sclk", "tdm_b_slv_fs", "tdm_b_sclk", "tdm_b_fs",
 	"tdm_b_din0", "tdm_b_din1", "tdm_b_din2",
 	"tdm_b_din3_a", "tdm_b_din3_h",
 	"tdm_b_dout0", "tdm_b_dout1", "tdm_b_dout2",
 	"tdm_b_dout3_a", "tdm_b_dout3_h",
-};
+पूर्ण;
 
-static const char * const tdm_c_groups[] = {
+अटल स्थिर अक्षर * स्थिर tdm_c_groups[] = अणु
 	"tdm_c_slv_sclk_a", "tdm_c_slv_fs_a",
 	"tdm_c_slv_sclk_z", "tdm_c_slv_fs_z",
 	"tdm_c_sclk_a", "tdm_c_fs_a",
@@ -1160,95 +1161,95 @@ static const char * const tdm_c_groups[] = {
 	"tdm_c_dout2_a", "tdm_c_dout3_a",
 	"tdm_c_dout0_z", "tdm_c_dout1_z",
 	"tdm_c_dout2_z", "tdm_c_dout3_z",
-};
+पूर्ण;
 
-static const char * const gpio_aobus_groups[] = {
+अटल स्थिर अक्षर * स्थिर gpio_aobus_groups[] = अणु
 	"GPIOAO_0", "GPIOAO_1", "GPIOAO_2", "GPIOAO_3", "GPIOAO_4",
 	"GPIOAO_5", "GPIOAO_6", "GPIOAO_7", "GPIOAO_8", "GPIOAO_9",
 	"GPIOAO_10", "GPIOAO_11", "GPIOE_0", "GPIOE_1", "GPIOE_2",
-};
+पूर्ण;
 
-static const char * const uart_ao_a_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart_ao_a_groups[] = अणु
 	"uart_ao_a_tx", "uart_ao_a_rx",
 	"uart_ao_a_cts", "uart_ao_a_rts",
-};
+पूर्ण;
 
-static const char * const uart_ao_b_groups[] = {
+अटल स्थिर अक्षर * स्थिर uart_ao_b_groups[] = अणु
 	"uart_ao_b_tx_2", "uart_ao_b_rx_3",
 	"uart_ao_b_tx_8", "uart_ao_b_rx_9",
 	"uart_ao_b_cts", "uart_ao_b_rts",
-};
+पूर्ण;
 
-static const char * const i2c_ao_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c_ao_groups[] = अणु
 	"i2c_ao_sck", "i2c_ao_sda",
 	"i2c_ao_sck_e", "i2c_ao_sda_e",
-};
+पूर्ण;
 
-static const char * const i2c_ao_slave_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c_ao_slave_groups[] = अणु
 	"i2c_ao_slave_sck", "i2c_ao_slave_sda",
-};
+पूर्ण;
 
-static const char * const remote_ao_input_groups[] = {
+अटल स्थिर अक्षर * स्थिर remote_ao_input_groups[] = अणु
 	"remote_ao_input",
-};
+पूर्ण;
 
-static const char * const remote_ao_out_groups[] = {
+अटल स्थिर अक्षर * स्थिर remote_ao_out_groups[] = अणु
 	"remote_ao_out",
-};
+पूर्ण;
 
-static const char * const pwm_a_e_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_a_e_groups[] = अणु
 	"pwm_a_e",
-};
+पूर्ण;
 
-static const char * const pwm_ao_a_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_ao_a_groups[] = अणु
 	"pwm_ao_a", "pwm_ao_a_hiz",
-};
+पूर्ण;
 
-static const char * const pwm_ao_b_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_ao_b_groups[] = अणु
 	"pwm_ao_b",
-};
+पूर्ण;
 
-static const char * const pwm_ao_c_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_ao_c_groups[] = अणु
 	"pwm_ao_c_4", "pwm_ao_c_hiz",
 	"pwm_ao_c_6",
-};
+पूर्ण;
 
-static const char * const pwm_ao_d_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm_ao_d_groups[] = अणु
 	"pwm_ao_d_5", "pwm_ao_d_10", "pwm_ao_d_e",
-};
+पूर्ण;
 
-static const char * const jtag_a_groups[] = {
+अटल स्थिर अक्षर * स्थिर jtag_a_groups[] = अणु
 	"jtag_a_tdi", "jtag_a_tdo", "jtag_a_clk", "jtag_a_tms",
-};
+पूर्ण;
 
-static const char * const cec_ao_a_groups[] = {
+अटल स्थिर अक्षर * स्थिर cec_ao_a_groups[] = अणु
 	"cec_ao_a",
-};
+पूर्ण;
 
-static const char * const cec_ao_b_groups[] = {
+अटल स्थिर अक्षर * स्थिर cec_ao_b_groups[] = अणु
 	"cec_ao_b",
-};
+पूर्ण;
 
-static const char * const tsin_ao_a_groups[] = {
+अटल स्थिर अक्षर * स्थिर tsin_ao_a_groups[] = अणु
 	"tsin_ao_asop", "tsin_ao_adin0", "tsin_ao_aclk", "tsin_ao_a_valid",
-};
+पूर्ण;
 
-static const char * const spdif_ao_out_groups[] = {
+अटल स्थिर अक्षर * स्थिर spdअगर_ao_out_groups[] = अणु
 	"spdif_ao_out",
-};
+पूर्ण;
 
-static const char * const tdm_ao_b_groups[] = {
+अटल स्थिर अक्षर * स्थिर tdm_ao_b_groups[] = अणु
 	"tdm_ao_b_dout0", "tdm_ao_b_dout1", "tdm_ao_b_dout2",
 	"tdm_ao_b_fs", "tdm_ao_b_sclk",
 	"tdm_ao_b_din0", "tdm_ao_b_din1", "tdm_ao_b_din2",
 	"tdm_ao_b_slv_fs", "tdm_ao_b_slv_sclk",
-};
+पूर्ण;
 
-static const char * const mclk0_ao_groups[] = {
+अटल स्थिर अक्षर * स्थिर mclk0_ao_groups[] = अणु
 	"mclk0_ao",
-};
+पूर्ण;
 
-static struct meson_pmx_func meson_g12a_periphs_functions[] = {
+अटल काष्ठा meson_pmx_func meson_g12a_periphs_functions[] = अणु
 	FUNCTION(gpio_periphs),
 	FUNCTION(emmc),
 	FUNCTION(nor),
@@ -1281,16 +1282,16 @@ static struct meson_pmx_func meson_g12a_periphs_functions[] = {
 	FUNCTION(tsin_b),
 	FUNCTION(hdmitx),
 	FUNCTION(pdm),
-	FUNCTION(spdif_out),
-	FUNCTION(spdif_in),
+	FUNCTION(spdअगर_out),
+	FUNCTION(spdअगर_in),
 	FUNCTION(mclk0),
 	FUNCTION(mclk1),
 	FUNCTION(tdm_a),
 	FUNCTION(tdm_b),
 	FUNCTION(tdm_c),
-};
+पूर्ण;
 
-static struct meson_pmx_func meson_g12a_aobus_functions[] = {
+अटल काष्ठा meson_pmx_func meson_g12a_aobus_functions[] = अणु
 	FUNCTION(gpio_aobus),
 	FUNCTION(uart_ao_a),
 	FUNCTION(uart_ao_b),
@@ -1307,12 +1308,12 @@ static struct meson_pmx_func meson_g12a_aobus_functions[] = {
 	FUNCTION(cec_ao_a),
 	FUNCTION(cec_ao_b),
 	FUNCTION(tsin_ao_a),
-	FUNCTION(spdif_ao_out),
+	FUNCTION(spdअगर_ao_out),
 	FUNCTION(tdm_ao_b),
 	FUNCTION(mclk0_ao),
-};
+पूर्ण;
 
-static struct meson_bank meson_g12a_periphs_banks[] = {
+अटल काष्ठा meson_bank meson_g12a_periphs_banks[] = अणु
 	/* name  first  last  irq  pullen  pull  dir  out  in  ds */
 	BANK_DS("Z",    GPIOZ_0,    GPIOZ_15, 12, 27,
 		4,  0,  4,  0,  12,  0,  13, 0,  14, 0, 5, 0),
@@ -1326,18 +1327,18 @@ static struct meson_bank meson_g12a_periphs_banks[] = {
 		5,  0,  5,  0,  16,  0,  17,  0,  18,  0, 6, 0),
 	BANK_DS("X",    GPIOX_0,    GPIOX_19,   77, 96,
 		2,  0,  2,  0,  6,  0,  7,  0,  8,  0, 2, 0),
-};
+पूर्ण;
 
-static struct meson_bank meson_g12a_aobus_banks[] = {
+अटल काष्ठा meson_bank meson_g12a_aobus_banks[] = अणु
 	/* name  first  last  irq  pullen  pull  dir  out  in  ds */
 	BANK_DS("AO", GPIOAO_0, GPIOAO_11, 0, 11, 3, 0, 2, 0, 0, 0, 4, 0, 1, 0,
 		0, 0),
 	/* GPIOE actually located in the AO bank */
 	BANK_DS("E", GPIOE_0, GPIOE_2, 97, 99, 3, 16, 2, 16, 0, 16, 4, 16, 1,
 		16, 1, 0),
-};
+पूर्ण;
 
-static struct meson_pmx_bank meson_g12a_periphs_pmx_banks[] = {
+अटल काष्ठा meson_pmx_bank meson_g12a_periphs_pmx_banks[] = अणु
 	/*	 name	 first		lask	   reg	offset  */
 	BANK_PMX("Z",    GPIOZ_0, GPIOZ_15, 0x6, 0),
 	BANK_PMX("H",    GPIOH_0, GPIOH_8,  0xb, 0),
@@ -1345,32 +1346,32 @@ static struct meson_pmx_bank meson_g12a_periphs_pmx_banks[] = {
 	BANK_PMX("C",    GPIOC_0, GPIOC_7,  0x9, 0),
 	BANK_PMX("A",    GPIOA_0, GPIOA_15, 0xd, 0),
 	BANK_PMX("X",    GPIOX_0, GPIOX_19, 0x3, 0),
-};
+पूर्ण;
 
-static struct meson_axg_pmx_data meson_g12a_periphs_pmx_banks_data = {
+अटल काष्ठा meson_axg_pmx_data meson_g12a_periphs_pmx_banks_data = अणु
 	.pmx_banks	= meson_g12a_periphs_pmx_banks,
 	.num_pmx_banks	= ARRAY_SIZE(meson_g12a_periphs_pmx_banks),
-};
+पूर्ण;
 
-static struct meson_pmx_bank meson_g12a_aobus_pmx_banks[] = {
+अटल काष्ठा meson_pmx_bank meson_g12a_aobus_pmx_banks[] = अणु
 	BANK_PMX("AO",  GPIOAO_0, GPIOAO_11, 0x0, 0),
 	BANK_PMX("E",   GPIOE_0,  GPIOE_2,   0x1, 16),
-};
+पूर्ण;
 
-static struct meson_axg_pmx_data meson_g12a_aobus_pmx_banks_data = {
+अटल काष्ठा meson_axg_pmx_data meson_g12a_aobus_pmx_banks_data = अणु
 	.pmx_banks	= meson_g12a_aobus_pmx_banks,
 	.num_pmx_banks	= ARRAY_SIZE(meson_g12a_aobus_pmx_banks),
-};
+पूर्ण;
 
-static int meson_g12a_aobus_parse_dt_extra(struct meson_pinctrl *pc)
-{
+अटल पूर्णांक meson_g12a_aobus_parse_dt_extra(काष्ठा meson_pinctrl *pc)
+अणु
 	pc->reg_pull = pc->reg_gpio;
 	pc->reg_pullen = pc->reg_gpio;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct meson_pinctrl_data meson_g12a_periphs_pinctrl_data = {
+अटल काष्ठा meson_pinctrl_data meson_g12a_periphs_pinctrl_data = अणु
 	.name		= "periphs-banks",
 	.pins		= meson_g12a_periphs_pins,
 	.groups		= meson_g12a_periphs_groups,
@@ -1382,9 +1383,9 @@ static struct meson_pinctrl_data meson_g12a_periphs_pinctrl_data = {
 	.num_banks	= ARRAY_SIZE(meson_g12a_periphs_banks),
 	.pmx_ops	= &meson_axg_pmx_ops,
 	.pmx_data	= &meson_g12a_periphs_pmx_banks_data,
-};
+पूर्ण;
 
-static struct meson_pinctrl_data meson_g12a_aobus_pinctrl_data = {
+अटल काष्ठा meson_pinctrl_data meson_g12a_aobus_pinctrl_data = अणु
 	.name		= "aobus-banks",
 	.pins		= meson_g12a_aobus_pins,
 	.groups		= meson_g12a_aobus_groups,
@@ -1397,28 +1398,28 @@ static struct meson_pinctrl_data meson_g12a_aobus_pinctrl_data = {
 	.pmx_ops	= &meson_axg_pmx_ops,
 	.pmx_data	= &meson_g12a_aobus_pmx_banks_data,
 	.parse_dt	= meson_g12a_aobus_parse_dt_extra,
-};
+पूर्ण;
 
-static const struct of_device_id meson_g12a_pinctrl_dt_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id meson_g12a_pinctrl_dt_match[] = अणु
+	अणु
 		.compatible = "amlogic,meson-g12a-periphs-pinctrl",
 		.data = &meson_g12a_periphs_pinctrl_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "amlogic,meson-g12a-aobus-pinctrl",
 		.data = &meson_g12a_aobus_pinctrl_data,
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, meson_g12a_pinctrl_dt_match);
 
-static struct platform_driver meson_g12a_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver meson_g12a_pinctrl_driver = अणु
 	.probe  = meson_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name	= "meson-g12a-pinctrl",
 		.of_match_table = meson_g12a_pinctrl_dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(meson_g12a_pinctrl_driver);
+module_platक्रमm_driver(meson_g12a_pinctrl_driver);
 MODULE_LICENSE("Dual BSD/GPL");

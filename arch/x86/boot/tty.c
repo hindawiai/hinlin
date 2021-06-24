@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright (C) 1991, 1992 Linus Torvalds
@@ -11,127 +12,127 @@
  * Very simple screen and serial I/O
  */
 
-#include "boot.h"
+#समावेश "boot.h"
 
-int early_serial_base;
+पूर्णांक early_serial_base;
 
-#define XMTRDY          0x20
+#घोषणा XMTRDY          0x20
 
-#define TXR             0       /*  Transmit register (WRITE) */
-#define LSR             5       /*  Line Status               */
+#घोषणा TXR             0       /*  Transmit रेजिस्टर (WRITE) */
+#घोषणा LSR             5       /*  Line Status               */
 
 /*
- * These functions are in .inittext so they can be used to signal
+ * These functions are in .inittext so they can be used to संकेत
  * error during initialization.
  */
 
-static void __section(".inittext") serial_putchar(int ch)
-{
-	unsigned timeout = 0xffff;
+अटल व्योम __section(".inittext") serial_अक्षर_दो(पूर्णांक ch)
+अणु
+	अचिन्हित समयout = 0xffff;
 
-	while ((inb(early_serial_base + LSR) & XMTRDY) == 0 && --timeout)
+	जबतक ((inb(early_serial_base + LSR) & XMTRDY) == 0 && --समयout)
 		cpu_relax();
 
 	outb(ch, early_serial_base + TXR);
-}
+पूर्ण
 
-static void __section(".inittext") bios_putchar(int ch)
-{
-	struct biosregs ireg;
+अटल व्योम __section(".inittext") bios_अक्षर_दो(पूर्णांक ch)
+अणु
+	काष्ठा biosregs ireg;
 
 	initregs(&ireg);
 	ireg.bx = 0x0007;
 	ireg.cx = 0x0001;
 	ireg.ah = 0x0e;
 	ireg.al = ch;
-	intcall(0x10, &ireg, NULL);
-}
+	पूर्णांकcall(0x10, &ireg, शून्य);
+पूर्ण
 
-void __section(".inittext") putchar(int ch)
-{
-	if (ch == '\n')
-		putchar('\r');	/* \n -> \r\n */
+व्योम __section(".inittext") अक्षर_दो(पूर्णांक ch)
+अणु
+	अगर (ch == '\n')
+		अक्षर_दो('\r');	/* \न -> \ल\न */
 
-	bios_putchar(ch);
+	bios_अक्षर_दो(ch);
 
-	if (early_serial_base != 0)
-		serial_putchar(ch);
-}
+	अगर (early_serial_base != 0)
+		serial_अक्षर_दो(ch);
+पूर्ण
 
-void __section(".inittext") puts(const char *str)
-{
-	while (*str)
-		putchar(*str++);
-}
+व्योम __section(".inittext") माला_दो(स्थिर अक्षर *str)
+अणु
+	जबतक (*str)
+		अक्षर_दो(*str++);
+पूर्ण
 
 /*
- * Read the CMOS clock through the BIOS, and return the
+ * Read the CMOS घड़ी through the BIOS, and वापस the
  * seconds in BCD.
  */
 
-static u8 gettime(void)
-{
-	struct biosregs ireg, oreg;
+अटल u8 समय_लो(व्योम)
+अणु
+	काष्ठा biosregs ireg, oreg;
 
 	initregs(&ireg);
 	ireg.ah = 0x02;
-	intcall(0x1a, &ireg, &oreg);
+	पूर्णांकcall(0x1a, &ireg, &oreg);
 
-	return oreg.dh;
-}
+	वापस oreg.dh;
+पूर्ण
 
 /*
  * Read from the keyboard
  */
-int getchar(void)
-{
-	struct biosregs ireg, oreg;
+पूर्णांक अक्षर_लो(व्योम)
+अणु
+	काष्ठा biosregs ireg, oreg;
 
 	initregs(&ireg);
 	/* ireg.ah = 0x00; */
-	intcall(0x16, &ireg, &oreg);
+	पूर्णांकcall(0x16, &ireg, &oreg);
 
-	return oreg.al;
-}
+	वापस oreg.al;
+पूर्ण
 
-static int kbd_pending(void)
-{
-	struct biosregs ireg, oreg;
+अटल पूर्णांक kbd_pending(व्योम)
+अणु
+	काष्ठा biosregs ireg, oreg;
 
 	initregs(&ireg);
 	ireg.ah = 0x01;
-	intcall(0x16, &ireg, &oreg);
+	पूर्णांकcall(0x16, &ireg, &oreg);
 
-	return !(oreg.eflags & X86_EFLAGS_ZF);
-}
+	वापस !(oreg.eflags & X86_EFLAGS_ZF);
+पूर्ण
 
-void kbd_flush(void)
-{
-	for (;;) {
-		if (!kbd_pending())
-			break;
-		getchar();
-	}
-}
+व्योम kbd_flush(व्योम)
+अणु
+	क्रम (;;) अणु
+		अगर (!kbd_pending())
+			अवरोध;
+		अक्षर_लो();
+	पूर्ण
+पूर्ण
 
-int getchar_timeout(void)
-{
-	int cnt = 30;
-	int t0, t1;
+पूर्णांक अक्षर_लो_समयout(व्योम)
+अणु
+	पूर्णांक cnt = 30;
+	पूर्णांक t0, t1;
 
-	t0 = gettime();
+	t0 = समय_लो();
 
-	while (cnt) {
-		if (kbd_pending())
-			return getchar();
+	जबतक (cnt) अणु
+		अगर (kbd_pending())
+			वापस अक्षर_लो();
 
-		t1 = gettime();
-		if (t0 != t1) {
+		t1 = समय_लो();
+		अगर (t0 != t1) अणु
 			cnt--;
 			t0 = t1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;		/* Timeout! */
-}
+	वापस 0;		/* Timeout! */
+पूर्ण
 

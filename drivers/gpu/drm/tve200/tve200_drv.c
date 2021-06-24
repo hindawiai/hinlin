@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2017 Linus Walleij <linus.walleij@linaro.org>
  * Parts of this file were based on sources as follows:
@@ -17,54 +18,54 @@
  * Controller (TVC) and is found in the Gemini Chipset from Storlink
  * Semiconductor (later Storm Semiconductor, later Cortina Systems)
  * but also in the Grain Media GM8180 chipset. On the Gemini the module
- * is connected to 8 data lines and a single clock line, comprising an
- * 8-bit BT.656 interface.
+ * is connected to 8 data lines and a single घड़ी line, comprising an
+ * 8-bit BT.656 पूर्णांकerface.
  *
- * This is a very basic YUV display driver. The datasheet specifies that
- * it supports the ITU BT.656 standard. It requires a 27 MHz clock which is
+ * This is a very basic YUV display driver. The datasheet specअगरies that
+ * it supports the ITU BT.656 standard. It requires a 27 MHz घड़ी which is
  * the hallmark of any TV encoder supporting both PAL and NTSC.
  *
- * This driver exposes a standard KMS interface for this TV encoder.
+ * This driver exposes a standard KMS पूर्णांकerface क्रम this TV encoder.
  */
 
-#include <linux/clk.h>
-#include <linux/dma-buf.h>
-#include <linux/irq.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/shmem_fs.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/shmem_fs.h>
+#समावेश <linux/slab.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_bridge.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_of.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "tve200_drm.h"
+#समावेश "tve200_drm.h"
 
-#define DRIVER_DESC      "DRM module for Faraday TVE200"
+#घोषणा DRIVER_DESC      "DRM module for Faraday TVE200"
 
-static const struct drm_mode_config_funcs mode_config_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs mode_config_funcs = अणु
 	.fb_create = drm_gem_fb_create,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-};
+पूर्ण;
 
-static int tve200_modeset_init(struct drm_device *dev)
-{
-	struct drm_mode_config *mode_config;
-	struct tve200_drm_dev_private *priv = dev->dev_private;
-	struct drm_panel *panel;
-	struct drm_bridge *bridge;
-	int ret = 0;
+अटल पूर्णांक tve200_modeset_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_mode_config *mode_config;
+	काष्ठा tve200_drm_dev_निजी *priv = dev->dev_निजी;
+	काष्ठा drm_panel *panel;
+	काष्ठा drm_bridge *bridge;
+	पूर्णांक ret = 0;
 
 	drm_mode_config_init(dev);
 	mode_config = &dev->mode_config;
@@ -76,37 +77,37 @@ static int tve200_modeset_init(struct drm_device *dev)
 
 	ret = drm_of_find_panel_or_bridge(dev->dev->of_node,
 					  0, 0, &panel, &bridge);
-	if (ret && ret != -ENODEV)
-		return ret;
-	if (panel) {
+	अगर (ret && ret != -ENODEV)
+		वापस ret;
+	अगर (panel) अणु
 		bridge = drm_panel_bridge_add_typed(panel,
 						    DRM_MODE_CONNECTOR_Unknown);
-		if (IS_ERR(bridge)) {
+		अगर (IS_ERR(bridge)) अणु
 			ret = PTR_ERR(bridge);
-			goto out_bridge;
-		}
-	} else {
+			जाओ out_bridge;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * TODO: when we are using a different bridge than a panel
-		 * (such as a dumb VGA connector) we need to devise a different
+		 * TODO: when we are using a dअगरferent bridge than a panel
+		 * (such as a dumb VGA connector) we need to devise a dअगरferent
 		 * method to get the connector out of the bridge.
 		 */
 		dev_err(dev->dev, "the bridge is not a panel\n");
-		goto out_bridge;
-	}
+		जाओ out_bridge;
+	पूर्ण
 
 	ret = tve200_display_init(dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "failed to init display\n");
-		goto out_bridge;
-	}
+		जाओ out_bridge;
+	पूर्ण
 
 	ret = drm_simple_display_pipe_attach_bridge(&priv->pipe,
 						    bridge);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "failed to attach bridge\n");
-		goto out_bridge;
-	}
+		जाओ out_bridge;
+	पूर्ण
 
 	priv->panel = panel;
 	priv->connector = drm_panel_bridge_connector(bridge);
@@ -116,29 +117,29 @@ static int tve200_modeset_init(struct drm_device *dev)
 		 dev_name(panel->dev));
 
 	ret = drm_vblank_init(dev, 1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "failed to init vblank\n");
-		goto out_bridge;
-	}
+		जाओ out_bridge;
+	पूर्ण
 
 	drm_mode_config_reset(dev);
 	drm_kms_helper_poll_init(dev);
 
-	goto finish;
+	जाओ finish;
 
 out_bridge:
-	if (panel)
-		drm_panel_bridge_remove(bridge);
+	अगर (panel)
+		drm_panel_bridge_हटाओ(bridge);
 	drm_mode_config_cleanup(dev);
 finish:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 DEFINE_DRM_GEM_CMA_FOPS(drm_fops);
 
-static const struct drm_driver tve200_drm_driver = {
+अटल स्थिर काष्ठा drm_driver tve200_drm_driver = अणु
 	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
-	.ioctls = NULL,
+	.ioctls = शून्य,
 	.fops = &drm_fops,
 	.name = "tve200",
 	.desc = DRIVER_DESC,
@@ -147,126 +148,126 @@ static const struct drm_driver tve200_drm_driver = {
 	.minor = 0,
 	.patchlevel = 0,
 	DRM_GEM_CMA_DRIVER_OPS,
-};
+पूर्ण;
 
-static int tve200_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct tve200_drm_dev_private *priv;
-	struct drm_device *drm;
-	struct resource *res;
-	int irq;
-	int ret;
+अटल पूर्णांक tve200_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा tve200_drm_dev_निजी *priv;
+	काष्ठा drm_device *drm;
+	काष्ठा resource *res;
+	पूर्णांक irq;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	drm = drm_dev_alloc(&tve200_drm_driver, dev);
-	if (IS_ERR(drm))
-		return PTR_ERR(drm);
-	platform_set_drvdata(pdev, drm);
+	अगर (IS_ERR(drm))
+		वापस PTR_ERR(drm);
+	platक्रमm_set_drvdata(pdev, drm);
 	priv->drm = drm;
-	drm->dev_private = priv;
+	drm->dev_निजी = priv;
 
-	/* Clock the silicon so we can access the registers */
+	/* Clock the silicon so we can access the रेजिस्टरs */
 	priv->pclk = devm_clk_get(dev, "PCLK");
-	if (IS_ERR(priv->pclk)) {
+	अगर (IS_ERR(priv->pclk)) अणु
 		dev_err(dev, "unable to get PCLK\n");
 		ret = PTR_ERR(priv->pclk);
-		goto dev_unref;
-	}
+		जाओ dev_unref;
+	पूर्ण
 	ret = clk_prepare_enable(priv->pclk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable PCLK\n");
-		goto dev_unref;
-	}
+		जाओ dev_unref;
+	पूर्ण
 
-	/* This clock is for the pixels (27MHz) */
+	/* This घड़ी is क्रम the pixels (27MHz) */
 	priv->clk = devm_clk_get(dev, "TVE");
-	if (IS_ERR(priv->clk)) {
+	अगर (IS_ERR(priv->clk)) अणु
 		dev_err(dev, "unable to get TVE clock\n");
 		ret = PTR_ERR(priv->clk);
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->regs = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->regs)) {
+	अगर (IS_ERR(priv->regs)) अणु
 		dev_err(dev, "%s failed mmio\n", __func__);
 		ret = -EINVAL;
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		ret = irq;
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
-	/* turn off interrupts before requesting the irq */
-	writel(0, priv->regs + TVE200_INT_EN);
+	/* turn off पूर्णांकerrupts beक्रमe requesting the irq */
+	ग_लिखोl(0, priv->regs + TVE200_INT_EN);
 
 	ret = devm_request_irq(dev, irq, tve200_irq, 0, "tve200", priv);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to request irq %d\n", ret);
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
 	ret = tve200_modeset_init(drm);
-	if (ret)
-		goto clk_disable;
+	अगर (ret)
+		जाओ clk_disable;
 
-	ret = drm_dev_register(drm, 0);
-	if (ret < 0)
-		goto clk_disable;
+	ret = drm_dev_रेजिस्टर(drm, 0);
+	अगर (ret < 0)
+		जाओ clk_disable;
 
 	/*
-	 * Passing in 16 here will make the RGB565 mode the default
+	 * Passing in 16 here will make the RGB565 mode the शेष
 	 * Passing in 32 will use XRGB8888 mode
 	 */
 	drm_fbdev_generic_setup(drm, 16);
 
-	return 0;
+	वापस 0;
 
 clk_disable:
 	clk_disable_unprepare(priv->pclk);
 dev_unref:
 	drm_dev_put(drm);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tve200_remove(struct platform_device *pdev)
-{
-	struct drm_device *drm = platform_get_drvdata(pdev);
-	struct tve200_drm_dev_private *priv = drm->dev_private;
+अटल पूर्णांक tve200_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा drm_device *drm = platक्रमm_get_drvdata(pdev);
+	काष्ठा tve200_drm_dev_निजी *priv = drm->dev_निजी;
 
-	drm_dev_unregister(drm);
-	if (priv->panel)
-		drm_panel_bridge_remove(priv->bridge);
+	drm_dev_unरेजिस्टर(drm);
+	अगर (priv->panel)
+		drm_panel_bridge_हटाओ(priv->bridge);
 	drm_mode_config_cleanup(drm);
 	clk_disable_unprepare(priv->pclk);
 	drm_dev_put(drm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id tve200_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id tve200_of_match[] = अणु
+	अणु
 		.compatible = "faraday,tve200",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver tve200_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tve200_driver = अणु
+	.driver = अणु
 		.name           = "tve200",
 		.of_match_table = of_match_ptr(tve200_of_match),
-	},
+	पूर्ण,
 	.probe = tve200_probe,
-	.remove = tve200_remove,
-};
-module_platform_driver(tve200_driver);
+	.हटाओ = tve200_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(tve200_driver);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("Linus Walleij <linus.walleij@linaro.org>");

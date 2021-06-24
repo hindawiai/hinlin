@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* vim: set ts=8 sw=8 noet tw=80 nowrap: */
 /*
  *  comedi/drivers/ni_routing/ni_route_values/ni_eseries.c
- *  Route information for NI_ESERIES boards.
+ *  Route inक्रमmation क्रम NI_ESERIES boards.
  *
  *  COMEDI - Linux Control and Measurement Device Interface
  *  Copyright (C) 2016 Spencer E. Olson <olsonse@umich.edu>
  *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is मुक्त software; you can redistribute it and/or modअगरy
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -15,73 +16,73 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  GNU General Public License क्रम more details.
  */
 
 /*
- * This file includes a list of all the values of various signals routes
- * available on NI 660x hardware.  In many cases, one does not explicitly make
+ * This file includes a list of all the values of various संकेतs routes
+ * available on NI 660x hardware.  In many हालs, one करोes not explicitly make
  * these routes, rather one might indicate that something is used as the source
  * of one particular trigger or another (using *_src=TRIG_EXT).
  *
  * The contents of this file can be generated using the tools in
- * comedi/drivers/ni_routing/tools.  This file also contains specific notes to
+ * comedi/drivers/ni_routing/tools.  This file also contains specअगरic notes to
  * this family of devices.
  *
- * Please use those tools to help maintain the contents of this file, but be
- * mindful to not lose the notes already made in this file, since these notes
- * are critical to a complete undertsanding of the register values of this
+ * Please use those tools to help मुख्यtain the contents of this file, but be
+ * mindful to not lose the notes alपढ़ोy made in this file, since these notes
+ * are critical to a complete undertsanding of the रेजिस्टर values of this
  * family.
  */
 
-#include "../ni_route_values.h"
-#include "all.h"
+#समावेश "../ni_route_values.h"
+#समावेश "all.h"
 
 /*
- * Note that for e-series devices, the backplane TRIGGER_LINE(6) is generally
+ * Note that क्रम e-series devices, the backplane TRIGGER_LINE(6) is generally
  * not connected to RTSI(6).
  */
 
-const struct family_route_values ni_eseries_route_values = {
+स्थिर काष्ठा family_route_values ni_eseries_route_values = अणु
 	.family = "ni_eseries",
-	.register_values = {
+	.रेजिस्टर_values = अणु
 		/*
-		 * destination = {
-		 *              source          = register value,
+		 * destination = अणु
+		 *              source          = रेजिस्टर value,
 		 *              ...
-		 * }
+		 * पूर्ण
 		 */
-		[B(NI_PFI(0))] = {
+		[B(NI_PFI(0))] = अणु
 			[B(NI_AI_StartTrigger)]	= I(NI_PFI_OUTPUT_AI_START1),
-		},
-		[B(NI_PFI(1))] = {
+		पूर्ण,
+		[B(NI_PFI(1))] = अणु
 			[B(NI_AI_ReferenceTrigger)]	= I(NI_PFI_OUTPUT_AI_START2),
-		},
-		[B(NI_PFI(2))] = {
+		पूर्ण,
+		[B(NI_PFI(2))] = अणु
 			[B(NI_AI_ConvertClock)]	= I(NI_PFI_OUTPUT_AI_CONVERT),
-		},
-		[B(NI_PFI(3))] = {
+		पूर्ण,
+		[B(NI_PFI(3))] = अणु
 			[B(NI_CtrSource(1))]	= I(NI_PFI_OUTPUT_G_SRC1),
-		},
-		[B(NI_PFI(4))] = {
+		पूर्ण,
+		[B(NI_PFI(4))] = अणु
 			[B(NI_CtrGate(1))]	= I(NI_PFI_OUTPUT_G_GATE1),
-		},
-		[B(NI_PFI(5))] = {
+		पूर्ण,
+		[B(NI_PFI(5))] = अणु
 			[B(NI_AO_SampleClock)]	= I(NI_PFI_OUTPUT_AO_UPDATE_N),
-		},
-		[B(NI_PFI(6))] = {
+		पूर्ण,
+		[B(NI_PFI(6))] = अणु
 			[B(NI_AO_StartTrigger)]	= I(NI_PFI_OUTPUT_AO_START1),
-		},
-		[B(NI_PFI(7))] = {
+		पूर्ण,
+		[B(NI_PFI(7))] = अणु
 			[B(NI_AI_SampleClock)]	= I(NI_PFI_OUTPUT_AI_START_PULSE),
-		},
-		[B(NI_PFI(8))] = {
+		पूर्ण,
+		[B(NI_PFI(8))] = अणु
 			[B(NI_CtrSource(0))]	= I(NI_PFI_OUTPUT_G_SRC0),
-		},
-		[B(NI_PFI(9))] = {
+		पूर्ण,
+		[B(NI_PFI(9))] = अणु
 			[B(NI_CtrGate(0))]	= I(NI_PFI_OUTPUT_G_GATE0),
-		},
-		[B(TRIGGER_LINE(0))] = {
+		पूर्ण,
+		[B(TRIGGER_LINE(0))] = अणु
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -94,8 +95,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			[B(NI_RGOUT0)]	= I(7),
-		},
-		[B(TRIGGER_LINE(1))] = {
+		पूर्ण,
+		[B(TRIGGER_LINE(1))] = अणु
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -108,8 +109,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			[B(NI_RGOUT0)]	= I(7),
-		},
-		[B(TRIGGER_LINE(2))] = {
+		पूर्ण,
+		[B(TRIGGER_LINE(2))] = अणु
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -122,8 +123,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			[B(NI_RGOUT0)]	= I(7),
-		},
-		[B(TRIGGER_LINE(3))] = {
+		पूर्ण,
+		[B(TRIGGER_LINE(3))] = अणु
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -136,8 +137,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			[B(NI_RGOUT0)]	= I(7),
-		},
-		[B(TRIGGER_LINE(4))] = {
+		पूर्ण,
+		[B(TRIGGER_LINE(4))] = अणु
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -150,8 +151,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			[B(NI_RGOUT0)]	= I(7),
-		},
-		[B(TRIGGER_LINE(5))] = {
+		पूर्ण,
+		[B(TRIGGER_LINE(5))] = अणु
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -164,8 +165,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			[B(NI_RGOUT0)]	= I(7),
-		},
-		[B(TRIGGER_LINE(6))] = {
+		पूर्ण,
+		[B(TRIGGER_LINE(6))] = अणु
 			[B(NI_RTSI_BRD(0))]	= I(8),
 			[B(NI_RTSI_BRD(1))]	= I(9),
 			[B(NI_RTSI_BRD(2))]	= I(10),
@@ -178,11 +179,11 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_AO_SampleClock)]	= I(3),
 			[B(NI_AO_StartTrigger)]	= I(4),
 			[B(NI_RGOUT0)]	= I(7),
-		},
-		[B(TRIGGER_LINE(7))] = {
+		पूर्ण,
+		[B(TRIGGER_LINE(7))] = अणु
 			[B(NI_20MHzTimebase)]	= I(NI_RTSI_OUTPUT_RTSI_OSC),
-		},
-		[B(NI_RTSI_BRD(0))] = {
+		पूर्ण,
+		[B(NI_RTSI_BRD(0))] = अणु
 			[B(TRIGGER_LINE(0))]	= I(0),
 			[B(TRIGGER_LINE(1))]	= I(1),
 			[B(TRIGGER_LINE(2))]	= I(2),
@@ -192,8 +193,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(TRIGGER_LINE(6))]	= I(6),
 			[B(PXI_Star)]	= I(6),
 			[B(NI_AI_STOP)]	= I(7),
-		},
-		[B(NI_RTSI_BRD(1))] = {
+		पूर्ण,
+		[B(NI_RTSI_BRD(1))] = अणु
 			[B(TRIGGER_LINE(0))]	= I(0),
 			[B(TRIGGER_LINE(1))]	= I(1),
 			[B(TRIGGER_LINE(2))]	= I(2),
@@ -203,8 +204,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(TRIGGER_LINE(6))]	= I(6),
 			[B(PXI_Star)]	= I(6),
 			[B(NI_AI_STOP)]	= I(7),
-		},
-		[B(NI_RTSI_BRD(2))] = {
+		पूर्ण,
+		[B(NI_RTSI_BRD(2))] = अणु
 			[B(TRIGGER_LINE(0))]	= I(0),
 			[B(TRIGGER_LINE(1))]	= I(1),
 			[B(TRIGGER_LINE(2))]	= I(2),
@@ -214,8 +215,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(TRIGGER_LINE(6))]	= I(6),
 			[B(PXI_Star)]	= I(6),
 			[B(NI_AI_SampleClock)]	= I(7),
-		},
-		[B(NI_RTSI_BRD(3))] = {
+		पूर्ण,
+		[B(NI_RTSI_BRD(3))] = अणु
 			[B(TRIGGER_LINE(0))]	= I(0),
 			[B(TRIGGER_LINE(1))]	= I(1),
 			[B(TRIGGER_LINE(2))]	= I(2),
@@ -225,8 +226,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(TRIGGER_LINE(6))]	= I(6),
 			[B(PXI_Star)]	= I(6),
 			[B(NI_AI_SampleClock)]	= I(7),
-		},
-		[B(NI_CtrSource(0))] = {
+		पूर्ण,
+		[B(NI_CtrSource(0))] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -250,8 +251,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_20MHzTimebase)]	= U(0),
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_CtrSource(1))] = {
+		पूर्ण,
+		[B(NI_CtrSource(1))] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -275,8 +276,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_20MHzTimebase)]	= U(0),
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_CtrGate(0))] = {
+		पूर्ण,
+		[B(NI_CtrGate(0))] = अणु
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -299,8 +300,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_AI_StartTrigger)]	= I(21),
 			[B(NI_AI_ReferenceTrigger)]	= I(18),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_CtrGate(1))] = {
+		पूर्ण,
+		[B(NI_CtrGate(1))] = अणु
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -323,8 +324,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_AI_StartTrigger)]	= I(21),
 			[B(NI_AI_ReferenceTrigger)]	= I(18),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_CtrOut(0))] = {
+		पूर्ण,
+		[B(NI_CtrOut(0))] = अणु
 			[B(TRIGGER_LINE(0))]	= I(1),
 			[B(TRIGGER_LINE(1))]	= I(2),
 			[B(TRIGGER_LINE(2))]	= I(3),
@@ -334,11 +335,11 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(TRIGGER_LINE(6))]	= I(7),
 			[B(NI_CtrInternalOutput(0))]	= I(0),
 			[B(PXI_Star)]	= I(7),
-		},
-		[B(NI_CtrOut(1))] = {
+		पूर्ण,
+		[B(NI_CtrOut(1))] = अणु
 			[B(NI_CtrInternalOutput(1))]	= I(0),
-		},
-		[B(NI_AI_SampleClock)] = {
+		पूर्ण,
+		[B(NI_AI_SampleClock)] = अणु
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -360,8 +361,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(PXI_Star)]	= I(17),
 			[B(NI_AI_SampleClockTimebase)]	= I(0),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_AI_SampleClockTimebase)] = {
+		पूर्ण,
+		[B(NI_AI_SampleClockTimebase)] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -384,8 +385,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_20MHzTimebase)]	= U(0),
 			[B(NI_100kHzTimebase)]	= U(19),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_AI_StartTrigger)] = {
+		पूर्ण,
+		[B(NI_AI_StartTrigger)] = अणु
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -406,8 +407,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_CtrInternalOutput(0))]	= I(18),
 			[B(PXI_Star)]	= I(17),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_AI_ReferenceTrigger)] = {
+		पूर्ण,
+		[B(NI_AI_ReferenceTrigger)] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -428,8 +429,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(TRIGGER_LINE(6))]	= U(17),
 			[B(PXI_Star)]	= U(17),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_AI_ConvertClock)] = {
+		पूर्ण,
+		[B(NI_AI_ConvertClock)] = अणु
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -451,13 +452,13 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(PXI_Star)]	= I(17),
 			[B(NI_AI_ConvertClockTimebase)]	= I(0),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_AI_ConvertClockTimebase)] = {
+		पूर्ण,
+		[B(NI_AI_ConvertClockTimebase)] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_AI_SampleClockTimebase)]	= U(0),
 			[B(NI_20MHzTimebase)]	= U(1),
-		},
-		[B(NI_AI_PauseTrigger)] = {
+		पूर्ण,
+		[B(NI_AI_PauseTrigger)] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -478,8 +479,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(TRIGGER_LINE(6))]	= U(17),
 			[B(PXI_Star)]	= U(17),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_AO_SampleClock)] = {
+		पूर्ण,
+		[B(NI_AO_SampleClock)] = अणु
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -501,8 +502,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(PXI_Star)]	= I(17),
 			[B(NI_AO_SampleClockTimebase)]	= I(0),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_AO_SampleClockTimebase)] = {
+		पूर्ण,
+		[B(NI_AO_SampleClockTimebase)] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -525,8 +526,8 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(NI_20MHzTimebase)]	= U(0),
 			[B(NI_100kHzTimebase)]	= U(19),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_AO_StartTrigger)] = {
+		पूर्ण,
+		[B(NI_AO_StartTrigger)] = अणु
 			[B(NI_PFI(0))]	= I(1),
 			[B(NI_PFI(1))]	= I(2),
 			[B(NI_PFI(2))]	= I(3),
@@ -546,16 +547,16 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(TRIGGER_LINE(6))]	= I(17),
 			[B(PXI_Star)]	= I(17),
 			/*
-			 * for the signal route
+			 * क्रम the संकेत route
 			 * (NI_AI_StartTrigger->NI_AO_StartTrigger), MHDDK says
-			 * used register value 18 and DAQ-STC says 19.
+			 * used रेजिस्टर value 18 and DAQ-STC says 19.
 			 * Hoping that the MHDDK is correct--being a "working"
 			 * example.
 			 */
 			[B(NI_AI_StartTrigger)]	= I(18),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_AO_PauseTrigger)] = {
+		पूर्ण,
+		[B(NI_AO_PauseTrigger)] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(0))]	= U(1),
 			[B(NI_PFI(1))]	= U(2),
@@ -576,27 +577,27 @@ const struct family_route_values ni_eseries_route_values = {
 			[B(TRIGGER_LINE(6))]	= U(17),
 			[B(PXI_Star)]	= U(17),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_MasterTimebase)] = {
+		पूर्ण,
+		[B(NI_MasterTimebase)] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(TRIGGER_LINE(7))]	= U(1),
 			[B(PXI_Star)]	= U(2),
 			[B(PXI_Clk10)]	= U(3),
 			[B(NI_10MHzRefClock)]	= U(0),
-		},
+		पूर्ण,
 		/*
-		 * This symbol is not defined and nothing for this is
+		 * This symbol is not defined and nothing क्रम this is
 		 * implemented--just including this because data was found in
-		 * the NI-STC for it--can't remember where.
-		 * [B(NI_FrequencyOutTimebase)] = {
+		 * the NI-STC क्रम it--can't remember where.
+		 * [B(NI_FrequencyOutTimebase)] = अणु
 		 *	** These are not currently implemented in ni modules **
 		 *	[B(NI_20MHzTimebase)]	= U(0),
 		 *	[B(NI_100kHzTimebase)]	= U(1),
-		 * },
+		 * पूर्ण,
 		 */
-		[B(NI_RGOUT0)] = {
+		[B(NI_RGOUT0)] = अणु
 			[B(NI_CtrInternalOutput(0))]	= I(0),
 			[B(NI_CtrOut(0))]	= I(1),
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;

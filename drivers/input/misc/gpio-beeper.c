@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Generic GPIO beeper driver
  *
  * Copyright (C) 2013-2014 Alexander Shiyan <shc_work@mail.ru>
  */
 
-#include <linux/input.h>
-#include <linux/module.h>
-#include <linux/gpio/consumer.h>
-#include <linux/of.h>
-#include <linux/workqueue.h>
-#include <linux/platform_device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/of.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define BEEPER_MODNAME		"gpio-beeper"
+#घोषणा BEEPER_MODNAME		"gpio-beeper"
 
-struct gpio_beeper {
-	struct work_struct	work;
-	struct gpio_desc	*desc;
+काष्ठा gpio_beeper अणु
+	काष्ठा work_काष्ठा	work;
+	काष्ठा gpio_desc	*desc;
 	bool			beeping;
-};
+पूर्ण;
 
-static void gpio_beeper_toggle(struct gpio_beeper *beep, bool on)
-{
+अटल व्योम gpio_beeper_toggle(काष्ठा gpio_beeper *beep, bool on)
+अणु
 	gpiod_set_value_cansleep(beep->desc, on);
-}
+पूर्ण
 
-static void gpio_beeper_work(struct work_struct *work)
-{
-	struct gpio_beeper *beep = container_of(work, struct gpio_beeper, work);
+अटल व्योम gpio_beeper_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा gpio_beeper *beep = container_of(work, काष्ठा gpio_beeper, work);
 
 	gpio_beeper_toggle(beep, beep->beeping);
-}
+पूर्ण
 
-static int gpio_beeper_event(struct input_dev *dev, unsigned int type,
-			     unsigned int code, int value)
-{
-	struct gpio_beeper *beep = input_get_drvdata(dev);
+अटल पूर्णांक gpio_beeper_event(काष्ठा input_dev *dev, अचिन्हित पूर्णांक type,
+			     अचिन्हित पूर्णांक code, पूर्णांक value)
+अणु
+	काष्ठा gpio_beeper *beep = input_get_drvdata(dev);
 
-	if (type != EV_SND || code != SND_BELL)
-		return -ENOTSUPP;
+	अगर (type != EV_SND || code != SND_BELL)
+		वापस -ENOTSUPP;
 
-	if (value < 0)
-		return -EINVAL;
+	अगर (value < 0)
+		वापस -EINVAL;
 
 	beep->beeping = value;
 	/* Schedule work to actually turn the beeper on or off */
 	schedule_work(&beep->work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gpio_beeper_close(struct input_dev *input)
-{
-	struct gpio_beeper *beep = input_get_drvdata(input);
+अटल व्योम gpio_beeper_बंद(काष्ठा input_dev *input)
+अणु
+	काष्ठा gpio_beeper *beep = input_get_drvdata(input);
 
 	cancel_work_sync(&beep->work);
 	gpio_beeper_toggle(beep, false);
-}
+पूर्ण
 
-static int gpio_beeper_probe(struct platform_device *pdev)
-{
-	struct gpio_beeper *beep;
-	struct input_dev *input;
+अटल पूर्णांक gpio_beeper_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gpio_beeper *beep;
+	काष्ठा input_dev *input;
 
-	beep = devm_kzalloc(&pdev->dev, sizeof(*beep), GFP_KERNEL);
-	if (!beep)
-		return -ENOMEM;
+	beep = devm_kzalloc(&pdev->dev, माप(*beep), GFP_KERNEL);
+	अगर (!beep)
+		वापस -ENOMEM;
 
-	beep->desc = devm_gpiod_get(&pdev->dev, NULL, GPIOD_OUT_LOW);
-	if (IS_ERR(beep->desc))
-		return PTR_ERR(beep->desc);
+	beep->desc = devm_gpiod_get(&pdev->dev, शून्य, GPIOD_OUT_LOW);
+	अगर (IS_ERR(beep->desc))
+		वापस PTR_ERR(beep->desc);
 
 	input = devm_input_allocate_device(&pdev->dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	INIT_WORK(&beep->work, gpio_beeper_work);
 
 	input->name		= pdev->name;
 	input->id.bustype	= BUS_HOST;
-	input->id.vendor	= 0x0001;
+	input->id.venकरोr	= 0x0001;
 	input->id.product	= 0x0001;
 	input->id.version	= 0x0100;
-	input->close		= gpio_beeper_close;
+	input->बंद		= gpio_beeper_बंद;
 	input->event		= gpio_beeper_event;
 
 	input_set_capability(input, EV_SND, SND_BELL);
 
 	input_set_drvdata(input, beep);
 
-	return input_register_device(input);
-}
+	वापस input_रेजिस्टर_device(input);
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id gpio_beeper_of_match[] = {
-	{ .compatible = BEEPER_MODNAME, },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id gpio_beeper_of_match[] = अणु
+	अणु .compatible = BEEPER_MODNAME, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, gpio_beeper_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver gpio_beeper_platform_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver gpio_beeper_platक्रमm_driver = अणु
+	.driver	= अणु
 		.name		= BEEPER_MODNAME,
 		.of_match_table	= of_match_ptr(gpio_beeper_of_match),
-	},
+	पूर्ण,
 	.probe	= gpio_beeper_probe,
-};
-module_platform_driver(gpio_beeper_platform_driver);
+पूर्ण;
+module_platक्रमm_driver(gpio_beeper_platक्रमm_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Alexander Shiyan <shc_work@mail.ru>");

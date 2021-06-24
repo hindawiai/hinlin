@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /**
  * drivers/extcon/extcon-tusb320.c - TUSB320 extcon driver
  *
@@ -6,79 +7,79 @@
  * Author: Michael Auchter <michael.auchter@ni.com>
  */
 
-#include <linux/extcon-provider.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
+#समावेश <linux/extcon-provider.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
 
-#define TUSB320_REG9				0x9
-#define TUSB320_REG9_ATTACHED_STATE_SHIFT	6
-#define TUSB320_REG9_ATTACHED_STATE_MASK	0x3
-#define TUSB320_REG9_CABLE_DIRECTION		BIT(5)
-#define TUSB320_REG9_INTERRUPT_STATUS		BIT(4)
-#define TUSB320_ATTACHED_STATE_NONE		0x0
-#define TUSB320_ATTACHED_STATE_DFP		0x1
-#define TUSB320_ATTACHED_STATE_UFP		0x2
-#define TUSB320_ATTACHED_STATE_ACC		0x3
+#घोषणा TUSB320_REG9				0x9
+#घोषणा TUSB320_REG9_ATTACHED_STATE_SHIFT	6
+#घोषणा TUSB320_REG9_ATTACHED_STATE_MASK	0x3
+#घोषणा TUSB320_REG9_CABLE_सूचीECTION		BIT(5)
+#घोषणा TUSB320_REG9_INTERRUPT_STATUS		BIT(4)
+#घोषणा TUSB320_ATTACHED_STATE_NONE		0x0
+#घोषणा TUSB320_ATTACHED_STATE_DFP		0x1
+#घोषणा TUSB320_ATTACHED_STATE_UFP		0x2
+#घोषणा TUSB320_ATTACHED_STATE_ACC		0x3
 
-struct tusb320_priv {
-	struct device *dev;
-	struct regmap *regmap;
-	struct extcon_dev *edev;
-};
+काष्ठा tusb320_priv अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	काष्ठा extcon_dev *edev;
+पूर्ण;
 
-static const char * const tusb_attached_states[] = {
+अटल स्थिर अक्षर * स्थिर tusb_attached_states[] = अणु
 	[TUSB320_ATTACHED_STATE_NONE] = "not attached",
 	[TUSB320_ATTACHED_STATE_DFP]  = "downstream facing port",
 	[TUSB320_ATTACHED_STATE_UFP]  = "upstream facing port",
 	[TUSB320_ATTACHED_STATE_ACC]  = "accessory",
-};
+पूर्ण;
 
-static const unsigned int tusb320_extcon_cable[] = {
+अटल स्थिर अचिन्हित पूर्णांक tusb320_extcon_cable[] = अणु
 	EXTCON_USB,
 	EXTCON_USB_HOST,
 	EXTCON_NONE,
-};
+पूर्ण;
 
-static int tusb320_check_signature(struct tusb320_priv *priv)
-{
-	static const char sig[] = { '\0', 'T', 'U', 'S', 'B', '3', '2', '0' };
-	unsigned val;
-	int i, ret;
+अटल पूर्णांक tusb320_check_signature(काष्ठा tusb320_priv *priv)
+अणु
+	अटल स्थिर अक्षर sig[] = अणु '\0', 'T', 'U', 'S', 'B', '3', '2', '0' पूर्ण;
+	अचिन्हित val;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < sizeof(sig); i++) {
-		ret = regmap_read(priv->regmap, sizeof(sig) - 1 - i, &val);
-		if (ret < 0)
-			return ret;
-		if (val != sig[i]) {
+	क्रम (i = 0; i < माप(sig); i++) अणु
+		ret = regmap_पढ़ो(priv->regmap, माप(sig) - 1 - i, &val);
+		अगर (ret < 0)
+			वापस ret;
+		अगर (val != sig[i]) अणु
 			dev_err(priv->dev, "signature mismatch!\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t tusb320_irq_handler(int irq, void *dev_id)
-{
-	struct tusb320_priv *priv = dev_id;
-	int state, polarity;
-	unsigned reg;
+अटल irqवापस_t tusb320_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा tusb320_priv *priv = dev_id;
+	पूर्णांक state, polarity;
+	अचिन्हित reg;
 
-	if (regmap_read(priv->regmap, TUSB320_REG9, &reg)) {
+	अगर (regmap_पढ़ो(priv->regmap, TUSB320_REG9, &reg)) अणु
 		dev_err(priv->dev, "error during i2c read!\n");
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (!(reg & TUSB320_REG9_INTERRUPT_STATUS))
-		return IRQ_NONE;
+	अगर (!(reg & TUSB320_REG9_INTERRUPT_STATUS))
+		वापस IRQ_NONE;
 
 	state = (reg >> TUSB320_REG9_ATTACHED_STATE_SHIFT) &
 		TUSB320_REG9_ATTACHED_STATE_MASK;
-	polarity = !!(reg & TUSB320_REG9_CABLE_DIRECTION);
+	polarity = !!(reg & TUSB320_REG9_CABLE_सूचीECTION);
 
 	dev_dbg(priv->dev, "attached state: %s, polarity: %d\n",
 		tusb_attached_states[state], polarity);
@@ -89,53 +90,53 @@ static irqreturn_t tusb320_irq_handler(int irq, void *dev_id)
 			 state == TUSB320_ATTACHED_STATE_DFP);
 	extcon_set_property(priv->edev, EXTCON_USB,
 			    EXTCON_PROP_USB_TYPEC_POLARITY,
-			    (union extcon_property_value)polarity);
+			    (जोड़ extcon_property_value)polarity);
 	extcon_set_property(priv->edev, EXTCON_USB_HOST,
 			    EXTCON_PROP_USB_TYPEC_POLARITY,
-			    (union extcon_property_value)polarity);
+			    (जोड़ extcon_property_value)polarity);
 	extcon_sync(priv->edev, EXTCON_USB);
 	extcon_sync(priv->edev, EXTCON_USB_HOST);
 
-	regmap_write(priv->regmap, TUSB320_REG9, reg);
+	regmap_ग_लिखो(priv->regmap, TUSB320_REG9, reg);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct regmap_config tusb320_regmap_config = {
+अटल स्थिर काष्ठा regmap_config tusb320_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-};
+पूर्ण;
 
-static int tusb320_extcon_probe(struct i2c_client *client,
-				const struct i2c_device_id *id)
-{
-	struct tusb320_priv *priv;
-	int ret;
+अटल पूर्णांक tusb320_extcon_probe(काष्ठा i2c_client *client,
+				स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा tusb320_priv *priv;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(&client->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&client->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 	priv->dev = &client->dev;
 
 	priv->regmap = devm_regmap_init_i2c(client, &tusb320_regmap_config);
-	if (IS_ERR(priv->regmap))
-		return PTR_ERR(priv->regmap);
+	अगर (IS_ERR(priv->regmap))
+		वापस PTR_ERR(priv->regmap);
 
 	ret = tusb320_check_signature(priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	priv->edev = devm_extcon_dev_allocate(priv->dev, tusb320_extcon_cable);
-	if (IS_ERR(priv->edev)) {
+	अगर (IS_ERR(priv->edev)) अणु
 		dev_err(priv->dev, "failed to allocate extcon device\n");
-		return PTR_ERR(priv->edev);
-	}
+		वापस PTR_ERR(priv->edev);
+	पूर्ण
 
-	ret = devm_extcon_dev_register(priv->dev, priv->edev);
-	if (ret < 0) {
+	ret = devm_extcon_dev_रेजिस्टर(priv->dev, priv->edev);
+	अगर (ret < 0) अणु
 		dev_err(priv->dev, "failed to register extcon device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	extcon_set_property_capability(priv->edev, EXTCON_USB,
 				       EXTCON_PROP_USB_TYPEC_POLARITY);
@@ -145,39 +146,39 @@ static int tusb320_extcon_probe(struct i2c_client *client,
 	/* update initial state */
 	tusb320_irq_handler(client->irq, priv);
 
-	ret = devm_request_threaded_irq(priv->dev, client->irq, NULL,
+	ret = devm_request_thपढ़ोed_irq(priv->dev, client->irq, शून्य,
 					tusb320_irq_handler,
 					IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					client->name, priv);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id tusb320_extcon_dt_match[] = {
-	{ .compatible = "ti,tusb320", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id tusb320_extcon_dt_match[] = अणु
+	अणु .compatible = "ti,tusb320", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tusb320_extcon_dt_match);
 
-static struct i2c_driver tusb320_extcon_driver = {
+अटल काष्ठा i2c_driver tusb320_extcon_driver = अणु
 	.probe		= tusb320_extcon_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "extcon-tusb320",
 		.of_match_table = tusb320_extcon_dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init tusb320_init(void)
-{
-	return i2c_add_driver(&tusb320_extcon_driver);
-}
+अटल पूर्णांक __init tusb320_init(व्योम)
+अणु
+	वापस i2c_add_driver(&tusb320_extcon_driver);
+पूर्ण
 subsys_initcall(tusb320_init);
 
-static void __exit tusb320_exit(void)
-{
+अटल व्योम __निकास tusb320_निकास(व्योम)
+अणु
 	i2c_del_driver(&tusb320_extcon_driver);
-}
-module_exit(tusb320_exit);
+पूर्ण
+module_निकास(tusb320_निकास);
 
 MODULE_AUTHOR("Michael Auchter <michael.auchter@ni.com>");
 MODULE_DESCRIPTION("TI TUSB320 extcon driver");

@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Device Tree support for Rockchip SoCs
+ * Device Tree support क्रम Rockchip SoCs
  *
- * Copyright (c) 2013 MundoReader S.L.
+ * Copyright (c) 2013 MunकरोReader S.L.
  * Author: Heiko Stuebner <heiko@sntech.de>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/of_clk.h>
-#include <linux/of_platform.h>
-#include <linux/irqchip.h>
-#include <linux/clocksource.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
-#include <asm/hardware/cache-l2x0.h>
-#include "core.h"
-#include "pm.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_clk.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/hardware/cache-l2x0.h>
+#समावेश "core.h"
+#समावेश "pm.h"
 
-#define RK3288_TIMER6_7_PHYS 0xff810000
+#घोषणा RK3288_TIMER6_7_PHYS 0xff810000
 
-static void __init rockchip_timer_init(void)
-{
-	if (of_machine_is_compatible("rockchip,rk3288")) {
-		void __iomem *reg_base;
+अटल व्योम __init rockchip_समयr_init(व्योम)
+अणु
+	अगर (of_machine_is_compatible("rockchip,rk3288")) अणु
+		व्योम __iomem *reg_base;
 
 		/*
-		 * Most/all uboot versions for rk3288 don't enable timer7
-		 * which is needed for the architected timer to work.
+		 * Most/all uboot versions क्रम rk3288 करोn't enable समयr7
+		 * which is needed क्रम the architected समयr to work.
 		 * So make sure it is running during early boot.
 		 */
 		reg_base = ioremap(RK3288_TIMER6_7_PHYS, SZ_16K);
-		if (reg_base) {
-			writel(0, reg_base + 0x30);
-			writel(0xffffffff, reg_base + 0x20);
-			writel(0xffffffff, reg_base + 0x24);
-			writel(1, reg_base + 0x30);
+		अगर (reg_base) अणु
+			ग_लिखोl(0, reg_base + 0x30);
+			ग_लिखोl(0xffffffff, reg_base + 0x20);
+			ग_लिखोl(0xffffffff, reg_base + 0x24);
+			ग_लिखोl(1, reg_base + 0x30);
 			dsb();
 			iounmap(reg_base);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err("rockchip: could not map timer7 registers\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	of_clk_init(NULL);
-	timer_probe();
-}
+	of_clk_init(शून्य);
+	समयr_probe();
+पूर्ण
 
-static void __init rockchip_dt_init(void)
-{
+अटल व्योम __init rockchip_dt_init(व्योम)
+अणु
 	rockchip_suspend_init();
-}
+पूर्ण
 
-static const char * const rockchip_board_dt_compat[] = {
+अटल स्थिर अक्षर * स्थिर rockchip_board_dt_compat[] = अणु
 	"rockchip,rk2928",
 	"rockchip,rk3066a",
 	"rockchip,rk3066b",
@@ -63,13 +64,13 @@ static const char * const rockchip_board_dt_compat[] = {
 	"rockchip,rk3228",
 	"rockchip,rk3288",
 	"rockchip,rv1108",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(ROCKCHIP_DT, "Rockchip (Device Tree)")
 	.l2c_aux_val	= 0,
 	.l2c_aux_mask	= ~0,
-	.init_time	= rockchip_timer_init,
+	.init_समय	= rockchip_समयr_init,
 	.dt_compat	= rockchip_board_dt_compat,
 	.init_machine	= rockchip_dt_init,
 MACHINE_END

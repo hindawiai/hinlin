@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Fujitsu MB86A16 DVB-S/DSS DC Receiver driver
 
@@ -6,36 +7,36 @@
 
 */
 
-#ifndef __MB86A16_H
-#define __MB86A16_H
+#अगर_अघोषित __MB86A16_H
+#घोषणा __MB86A16_H
 
-#include <linux/dvb/frontend.h>
-#include <media/dvb_frontend.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <media/dvb_frontend.h>
 
 
-struct mb86a16_config {
+काष्ठा mb86a16_config अणु
 	u8 demod_address;
 
-	int (*set_voltage)(struct dvb_frontend *fe,
-			   enum fe_sec_voltage voltage);
-};
+	पूर्णांक (*set_voltage)(काष्ठा dvb_frontend *fe,
+			   क्रमागत fe_sec_voltage voltage);
+पूर्ण;
 
 
 
-#if IS_REACHABLE(CONFIG_DVB_MB86A16)
+#अगर IS_REACHABLE(CONFIG_DVB_MB86A16)
 
-extern struct dvb_frontend *mb86a16_attach(const struct mb86a16_config *config,
-					   struct i2c_adapter *i2c_adap);
+बाह्य काष्ठा dvb_frontend *mb86a16_attach(स्थिर काष्ठा mb86a16_config *config,
+					   काष्ठा i2c_adapter *i2c_adap);
 
-#else
+#अन्यथा
 
-static inline struct dvb_frontend *mb86a16_attach(const struct mb86a16_config *config,
-					   struct i2c_adapter *i2c_adap)
-{
-	printk(KERN_WARNING "%s: Driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
+अटल अंतरभूत काष्ठा dvb_frontend *mb86a16_attach(स्थिर काष्ठा mb86a16_config *config,
+					   काष्ठा i2c_adapter *i2c_adap)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: Driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
 
-#endif /* CONFIG_DVB_MB86A16 */
+#पूर्ण_अगर /* CONFIG_DVB_MB86A16 */
 
-#endif /* __MB86A16_H */
+#पूर्ण_अगर /* __MB86A16_H */

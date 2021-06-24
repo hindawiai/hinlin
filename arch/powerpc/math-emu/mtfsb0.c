@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
 
-#include <asm/sfp-machine.h>
-#include <math-emu/soft-fp.h>
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <math-emu/soft-fp.h>
 
-int
-mtfsb0(int crbD)
-{
-	if ((crbD != 1) && (crbD != 2))
+पूर्णांक
+mtfsb0(पूर्णांक crbD)
+अणु
+	अगर ((crbD != 1) && (crbD != 2))
 		__FPU_FPSCR &= ~(1 << (31 - crbD));
 
-#ifdef DEBUG
-	printk("%s: %d %08lx\n", __func__, crbD, __FPU_FPSCR);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("%s: %d %08lx\n", __func__, crbD, __FPU_FPSCR);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
-#ifndef _HNS_GMAC_H
-#define _HNS_GMAC_H
+#अगर_अघोषित _HNS_GMAC_H
+#घोषणा _HNS_GMAC_H
 
-#include "hns_dsaf_mac.h"
+#समावेश "hns_dsaf_mac.h"
 
-enum hns_port_mode {
+क्रमागत hns_port_mode अणु
 	GMAC_10M_MII = 0,
 	GMAC_100M_MII,
 	GMAC_1000M_GMII,
@@ -19,23 +20,23 @@ enum hns_port_mode {
 	GMAC_100M_SGMII,
 	GMAC_1000M_SGMII,
 	GMAC_10000M_SGMII	/* 10GE */
-};
+पूर्ण;
 
-enum hns_gmac_duplex_mdoe {
+क्रमागत hns_gmac_duplex_mकरोe अणु
 	GMAC_HALF_DUPLEX_MODE = 0,
 	GMAC_FULL_DUPLEX_MODE
-};
+पूर्ण;
 
-struct hns_gmac_port_mode_cfg {
-	enum hns_port_mode port_mode;
+काष्ठा hns_gmac_port_mode_cfg अणु
+	क्रमागत hns_port_mode port_mode;
 	u32 max_frm_size;
-	u32 short_runts_thr;
+	u32 लघु_runts_thr;
 	u32 pad_enable;
 	u32 crc_add;
-	u32 an_enable;	/*auto-nego enable  */
+	u32 an_enable;	/*स्वतः-nego enable  */
 	u32 runt_pkt_en;
 	u32 strip_pad_en;
-};
+पूर्ण;
 
-#define ETH_GMAC_DUMP_NUM		96
-#endif				/* __HNS_GMAC_H__ */
+#घोषणा ETH_GMAC_DUMP_NUM		96
+#पूर्ण_अगर				/* __HNS_GMAC_H__ */

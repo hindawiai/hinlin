@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _AV7110_IPACK_H_
-#define _AV7110_IPACK_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _AV7110_IPACK_H_
+#घोषणा _AV7110_IPACK_H_
 
-extern int av7110_ipack_init(struct ipack *p, int size,
-			     void (*func)(u8 *buf,  int size, void *priv));
+बाह्य पूर्णांक av7110_ipack_init(काष्ठा ipack *p, पूर्णांक size,
+			     व्योम (*func)(u8 *buf,  पूर्णांक size, व्योम *priv));
 
-extern void av7110_ipack_reset(struct ipack *p);
-extern int  av7110_ipack_instant_repack(const u8 *buf, int count, struct ipack *p);
-extern void av7110_ipack_free(struct ipack * p);
-extern void av7110_ipack_flush(struct ipack *p);
+बाह्य व्योम av7110_ipack_reset(काष्ठा ipack *p);
+बाह्य पूर्णांक  av7110_ipack_instant_repack(स्थिर u8 *buf, पूर्णांक count, काष्ठा ipack *p);
+बाह्य व्योम av7110_ipack_मुक्त(काष्ठा ipack * p);
+बाह्य व्योम av7110_ipack_flush(काष्ठा ipack *p);
 
-#endif
+#पूर्ण_अगर

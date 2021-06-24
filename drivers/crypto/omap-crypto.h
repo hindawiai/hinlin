@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * OMAP Crypto driver common support routines.
  *
@@ -6,29 +7,29 @@
  *   Tero Kristo <t-kristo@ti.com>
  */
 
-#ifndef __CRYPTO_OMAP_CRYPTO_H
-#define __CRYPTO_OMAP_CRYPTO_H
+#अगर_अघोषित __CRYPTO_OMAP_CRYPTO_H
+#घोषणा __CRYPTO_OMAP_CRYPTO_H
 
-enum {
+क्रमागत अणु
 	OMAP_CRYPTO_NOT_ALIGNED = 1,
 	OMAP_CRYPTO_BAD_DATA_LENGTH,
-};
+पूर्ण;
 
-#define OMAP_CRYPTO_DATA_COPIED		BIT(0)
-#define OMAP_CRYPTO_SG_COPIED		BIT(1)
+#घोषणा OMAP_CRYPTO_DATA_COPIED		BIT(0)
+#घोषणा OMAP_CRYPTO_SG_COPIED		BIT(1)
 
-#define OMAP_CRYPTO_COPY_MASK		0x3
+#घोषणा OMAP_CRYPTO_COPY_MASK		0x3
 
-#define OMAP_CRYPTO_COPY_DATA		BIT(0)
-#define OMAP_CRYPTO_FORCE_COPY		BIT(1)
-#define OMAP_CRYPTO_ZERO_BUF		BIT(2)
-#define OMAP_CRYPTO_FORCE_SINGLE_ENTRY	BIT(3)
+#घोषणा OMAP_CRYPTO_COPY_DATA		BIT(0)
+#घोषणा OMAP_CRYPTO_FORCE_COPY		BIT(1)
+#घोषणा OMAP_CRYPTO_ZERO_BUF		BIT(2)
+#घोषणा OMAP_CRYPTO_FORCE_SINGLE_ENTRY	BIT(3)
 
-int omap_crypto_align_sg(struct scatterlist **sg, int total, int bs,
-			 struct scatterlist *new_sg, u16 flags,
-			 u8 flags_shift, unsigned long *dd_flags);
-void omap_crypto_cleanup(struct scatterlist *sg, struct scatterlist *orig,
-			 int offset, int len, u8 flags_shift,
-			 unsigned long flags);
+पूर्णांक omap_crypto_align_sg(काष्ठा scatterlist **sg, पूर्णांक total, पूर्णांक bs,
+			 काष्ठा scatterlist *new_sg, u16 flags,
+			 u8 flags_shअगरt, अचिन्हित दीर्घ *dd_flags);
+व्योम omap_crypto_cleanup(काष्ठा scatterlist *sg, काष्ठा scatterlist *orig,
+			 पूर्णांक offset, पूर्णांक len, u8 flags_shअगरt,
+			 अचिन्हित दीर्घ flags);
 
-#endif
+#पूर्ण_अगर

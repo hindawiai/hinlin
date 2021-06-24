@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _M68K_DIV64_H
-#define _M68K_DIV64_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _M68K_DIV64_H
+#घोषणा _M68K_DIV64_H
 
-#ifdef CONFIG_CPU_HAS_NO_MULDIV64
-#include <asm-generic/div64.h>
-#else
+#अगर_घोषित CONFIG_CPU_HAS_NO_MULDIV64
+#समावेश <यंत्र-generic/भाग64.h>
+#अन्यथा
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-/* n = n / base; return rem; */
+/* n = n / base; वापस rem; */
 
-#define do_div(n, base) ({					\
-	union {							\
-		unsigned long n32[2];				\
-		unsigned long long n64;				\
-	} __n;							\
-	unsigned long __rem, __upper;				\
-	unsigned long __base = (base);				\
+#घोषणा करो_भाग(n, base) (अणु					\
+	जोड़ अणु							\
+		अचिन्हित दीर्घ n32[2];				\
+		अचिन्हित दीर्घ दीर्घ n64;				\
+	पूर्ण __n;							\
+	अचिन्हित दीर्घ __rem, __upper;				\
+	अचिन्हित दीर्घ __base = (base);				\
 								\
 	__n.n64 = (n);						\
-	if ((__upper = __n.n32[0])) {				\
-		asm ("divul.l %2,%1:%0"				\
+	अगर ((__upper = __n.n32[0])) अणु				\
+		यंत्र ("divul.l %2,%1:%0"				\
 		     : "=d" (__n.n32[0]), "=d" (__upper)	\
 		     : "d" (__base), "0" (__n.n32[0]));		\
-	}							\
-	asm ("divu.l %2,%1:%0"					\
+	पूर्ण							\
+	यंत्र ("divu.l %2,%1:%0"					\
 	     : "=d" (__n.n32[1]), "=d" (__rem)			\
 	     : "d" (__base), "1" (__upper), "0" (__n.n32[1]));	\
 	(n) = __n.n64;						\
 	__rem;							\
-})
+पूर्ण)
 
-#endif /* CONFIG_CPU_HAS_NO_MULDIV64 */
+#पूर्ण_अगर /* CONFIG_CPU_HAS_NO_MULDIV64 */
 
-#endif /* _M68K_DIV64_H */
+#पूर्ण_अगर /* _M68K_DIV64_H */

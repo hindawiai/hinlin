@@ -1,351 +1,352 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Remote Controller core raw events header
  *
  * Copyright (C) 2010 by Mauro Carvalho Chehab
  */
 
-#ifndef _RC_CORE_PRIV
-#define _RC_CORE_PRIV
+#अगर_अघोषित _RC_CORE_PRIV
+#घोषणा _RC_CORE_PRIV
 
-#define	RC_DEV_MAX		256
+#घोषणा	RC_DEV_MAX		256
 /* Define the max number of pulse/space transitions to buffer */
-#define	MAX_IR_EVENT_SIZE	512
+#घोषणा	MAX_IR_EVENT_SIZE	512
 
-#include <linux/slab.h>
-#include <uapi/linux/bpf.h>
-#include <media/rc-core.h>
-
-/**
- * rc_open - Opens a RC device
- *
- * @rdev: pointer to struct rc_dev.
- */
-int rc_open(struct rc_dev *rdev);
+#समावेश <linux/slab.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <media/rc-core.h>
 
 /**
- * rc_close - Closes a RC device
+ * rc_खोलो - Opens a RC device
  *
- * @rdev: pointer to struct rc_dev.
+ * @rdev: poपूर्णांकer to काष्ठा rc_dev.
  */
-void rc_close(struct rc_dev *rdev);
+पूर्णांक rc_खोलो(काष्ठा rc_dev *rdev);
 
-struct ir_raw_handler {
-	struct list_head list;
+/**
+ * rc_बंद - Closes a RC device
+ *
+ * @rdev: poपूर्णांकer to काष्ठा rc_dev.
+ */
+व्योम rc_बंद(काष्ठा rc_dev *rdev);
+
+काष्ठा ir_raw_handler अणु
+	काष्ठा list_head list;
 
 	u64 protocols; /* which are handled by this handler */
-	int (*decode)(struct rc_dev *dev, struct ir_raw_event event);
-	int (*encode)(enum rc_proto protocol, u32 scancode,
-		      struct ir_raw_event *events, unsigned int max);
+	पूर्णांक (*decode)(काष्ठा rc_dev *dev, काष्ठा ir_raw_event event);
+	पूर्णांक (*encode)(क्रमागत rc_proto protocol, u32 scancode,
+		      काष्ठा ir_raw_event *events, अचिन्हित पूर्णांक max);
 	u32 carrier;
-	u32 min_timeout;
+	u32 min_समयout;
 
 	/* These two should only be used by the mce kbd decoder */
-	int (*raw_register)(struct rc_dev *dev);
-	int (*raw_unregister)(struct rc_dev *dev);
-};
+	पूर्णांक (*raw_रेजिस्टर)(काष्ठा rc_dev *dev);
+	पूर्णांक (*raw_unरेजिस्टर)(काष्ठा rc_dev *dev);
+पूर्ण;
 
-struct ir_raw_event_ctrl {
-	struct list_head		list;		/* to keep track of raw clients */
-	struct task_struct		*thread;
-	/* fifo for the pulse/space durations */
-	DECLARE_KFIFO(kfifo, struct ir_raw_event, MAX_IR_EVENT_SIZE);
-	ktime_t				last_event;	/* when last event occurred */
-	struct rc_dev			*dev;		/* pointer to the parent rc_dev */
+काष्ठा ir_raw_event_ctrl अणु
+	काष्ठा list_head		list;		/* to keep track of raw clients */
+	काष्ठा task_काष्ठा		*thपढ़ो;
+	/* fअगरo क्रम the pulse/space durations */
+	DECLARE_KFIFO(kfअगरo, काष्ठा ir_raw_event, MAX_IR_EVENT_SIZE);
+	kसमय_प्रकार				last_event;	/* when last event occurred */
+	काष्ठा rc_dev			*dev;		/* poपूर्णांकer to the parent rc_dev */
 	/* handle delayed ir_raw_event_store_edge processing */
 	spinlock_t			edge_spinlock;
-	struct timer_list		edge_handle;
+	काष्ठा समयr_list		edge_handle;
 
 	/* raw decoder state follows */
-	struct ir_raw_event prev_ev;
-	struct ir_raw_event this_ev;
+	काष्ठा ir_raw_event prev_ev;
+	काष्ठा ir_raw_event this_ev;
 
-#ifdef CONFIG_BPF_LIRC_MODE2
+#अगर_घोषित CONFIG_BPF_LIRC_MODE2
 	u32				bpf_sample;
-	struct bpf_prog_array __rcu	*progs;
-#endif
-#if IS_ENABLED(CONFIG_IR_NEC_DECODER)
-	struct nec_dec {
-		int state;
-		unsigned count;
+	काष्ठा bpf_prog_array __rcu	*progs;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_NEC_DECODER)
+	काष्ठा nec_dec अणु
+		पूर्णांक state;
+		अचिन्हित count;
 		u32 bits;
 		bool is_nec_x;
 		bool necx_repeat;
-	} nec;
-#endif
-#if IS_ENABLED(CONFIG_IR_RC5_DECODER)
-	struct rc5_dec {
-		int state;
+	पूर्ण nec;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_RC5_DECODER)
+	काष्ठा rc5_dec अणु
+		पूर्णांक state;
 		u32 bits;
-		unsigned count;
+		अचिन्हित count;
 		bool is_rc5x;
-	} rc5;
-#endif
-#if IS_ENABLED(CONFIG_IR_RC6_DECODER)
-	struct rc6_dec {
-		int state;
+	पूर्ण rc5;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_RC6_DECODER)
+	काष्ठा rc6_dec अणु
+		पूर्णांक state;
 		u8 header;
 		u32 body;
 		bool toggle;
-		unsigned count;
-		unsigned wanted_bits;
-	} rc6;
-#endif
-#if IS_ENABLED(CONFIG_IR_SONY_DECODER)
-	struct sony_dec {
-		int state;
+		अचिन्हित count;
+		अचिन्हित wanted_bits;
+	पूर्ण rc6;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_SONY_DECODER)
+	काष्ठा sony_dec अणु
+		पूर्णांक state;
 		u32 bits;
-		unsigned count;
-	} sony;
-#endif
-#if IS_ENABLED(CONFIG_IR_JVC_DECODER)
-	struct jvc_dec {
-		int state;
+		अचिन्हित count;
+	पूर्ण sony;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_JVC_DECODER)
+	काष्ठा jvc_dec अणु
+		पूर्णांक state;
 		u16 bits;
 		u16 old_bits;
-		unsigned count;
+		अचिन्हित count;
 		bool first;
 		bool toggle;
-	} jvc;
-#endif
-#if IS_ENABLED(CONFIG_IR_SANYO_DECODER)
-	struct sanyo_dec {
-		int state;
-		unsigned count;
+	पूर्ण jvc;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_SANYO_DECODER)
+	काष्ठा sanyo_dec अणु
+		पूर्णांक state;
+		अचिन्हित count;
 		u64 bits;
-	} sanyo;
-#endif
-#if IS_ENABLED(CONFIG_IR_SHARP_DECODER)
-	struct sharp_dec {
-		int state;
-		unsigned count;
+	पूर्ण sanyo;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_SHARP_DECODER)
+	काष्ठा sharp_dec अणु
+		पूर्णांक state;
+		अचिन्हित count;
 		u32 bits;
-		unsigned int pulse_len;
-	} sharp;
-#endif
-#if IS_ENABLED(CONFIG_IR_MCE_KBD_DECODER)
-	struct mce_kbd_dec {
-		/* locks key up timer */
+		अचिन्हित पूर्णांक pulse_len;
+	पूर्ण sharp;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_MCE_KBD_DECODER)
+	काष्ठा mce_kbd_dec अणु
+		/* locks key up समयr */
 		spinlock_t keylock;
-		struct timer_list rx_timeout;
-		int state;
+		काष्ठा समयr_list rx_समयout;
+		पूर्णांक state;
 		u8 header;
 		u32 body;
-		unsigned count;
-		unsigned wanted_bits;
-	} mce_kbd;
-#endif
-#if IS_ENABLED(CONFIG_IR_XMP_DECODER)
-	struct xmp_dec {
-		int state;
-		unsigned count;
+		अचिन्हित count;
+		अचिन्हित wanted_bits;
+	पूर्ण mce_kbd;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_XMP_DECODER)
+	काष्ठा xmp_dec अणु
+		पूर्णांक state;
+		अचिन्हित count;
 		u32 durations[16];
-	} xmp;
-#endif
-#if IS_ENABLED(CONFIG_IR_IMON_DECODER)
-	struct imon_dec {
-		int state;
-		int count;
-		int last_chk;
-		unsigned int bits;
+	पूर्ण xmp;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_IMON_DECODER)
+	काष्ठा imon_dec अणु
+		पूर्णांक state;
+		पूर्णांक count;
+		पूर्णांक last_chk;
+		अचिन्हित पूर्णांक bits;
 		bool stick_keyboard;
-	} imon;
-#endif
-#if IS_ENABLED(CONFIG_IR_RCMM_DECODER)
-	struct rcmm_dec {
-		int state;
-		unsigned int count;
+	पूर्ण imon;
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_IR_RCMM_DECODER)
+	काष्ठा rcmm_dec अणु
+		पूर्णांक state;
+		अचिन्हित पूर्णांक count;
 		u32 bits;
-	} rcmm;
-#endif
-};
+	पूर्ण rcmm;
+#पूर्ण_अगर
+पूर्ण;
 
-/* Mutex for locking raw IR processing and handler change */
-extern struct mutex ir_raw_handler_lock;
+/* Mutex क्रम locking raw IR processing and handler change */
+बाह्य काष्ठा mutex ir_raw_handler_lock;
 
-/* macros for IR decoders */
-static inline bool geq_margin(unsigned d1, unsigned d2, unsigned margin)
-{
-	return d1 > (d2 - margin);
-}
+/* macros क्रम IR decoders */
+अटल अंतरभूत bool geq_margin(अचिन्हित d1, अचिन्हित d2, अचिन्हित margin)
+अणु
+	वापस d1 > (d2 - margin);
+पूर्ण
 
-static inline bool eq_margin(unsigned d1, unsigned d2, unsigned margin)
-{
-	return ((d1 > (d2 - margin)) && (d1 < (d2 + margin)));
-}
+अटल अंतरभूत bool eq_margin(अचिन्हित d1, अचिन्हित d2, अचिन्हित margin)
+अणु
+	वापस ((d1 > (d2 - margin)) && (d1 < (d2 + margin)));
+पूर्ण
 
-static inline bool is_transition(struct ir_raw_event *x, struct ir_raw_event *y)
-{
-	return x->pulse != y->pulse;
-}
+अटल अंतरभूत bool is_transition(काष्ठा ir_raw_event *x, काष्ठा ir_raw_event *y)
+अणु
+	वापस x->pulse != y->pulse;
+पूर्ण
 
-static inline void decrease_duration(struct ir_raw_event *ev, unsigned duration)
-{
-	if (duration > ev->duration)
+अटल अंतरभूत व्योम decrease_duration(काष्ठा ir_raw_event *ev, अचिन्हित duration)
+अणु
+	अगर (duration > ev->duration)
 		ev->duration = 0;
-	else
+	अन्यथा
 		ev->duration -= duration;
-}
+पूर्ण
 
-/* Returns true if event is normal pulse/space event */
-static inline bool is_timing_event(struct ir_raw_event ev)
-{
-	return !ev.carrier_report && !ev.reset;
-}
+/* Returns true अगर event is normal pulse/space event */
+अटल अंतरभूत bool is_timing_event(काष्ठा ir_raw_event ev)
+अणु
+	वापस !ev.carrier_report && !ev.reset;
+पूर्ण
 
-#define TO_STR(is_pulse)		((is_pulse) ? "pulse" : "space")
+#घोषणा TO_STR(is_pulse)		((is_pulse) ? "pulse" : "space")
 
-/* functions for IR encoders */
-bool rc_validate_scancode(enum rc_proto proto, u32 scancode);
+/* functions क्रम IR encoders */
+bool rc_validate_scancode(क्रमागत rc_proto proto, u32 scancode);
 
-static inline void init_ir_raw_event_duration(struct ir_raw_event *ev,
-					      unsigned int pulse,
+अटल अंतरभूत व्योम init_ir_raw_event_duration(काष्ठा ir_raw_event *ev,
+					      अचिन्हित पूर्णांक pulse,
 					      u32 duration)
-{
-	*ev = (struct ir_raw_event) {
+अणु
+	*ev = (काष्ठा ir_raw_event) अणु
 		.duration = duration,
 		.pulse = pulse
-	};
-}
+	पूर्ण;
+पूर्ण
 
 /**
- * struct ir_raw_timings_manchester - Manchester coding timings
- * @leader_pulse:	duration of leader pulse (if any) 0 if continuing
- *			existing signal
- * @leader_space:	duration of leader space (if any)
- * @clock:		duration of each pulse/space in ns
- * @invert:		if set clock logic is inverted
+ * काष्ठा ir_raw_timings_manchester - Manchester coding timings
+ * @leader_pulse:	duration of leader pulse (अगर any) 0 अगर continuing
+ *			existing संकेत
+ * @leader_space:	duration of leader space (अगर any)
+ * @घड़ी:		duration of each pulse/space in ns
+ * @invert:		अगर set घड़ी logic is inverted
  *			(0 = space + pulse, 1 = pulse + space)
  * @trailer_space:	duration of trailer space in ns
  */
-struct ir_raw_timings_manchester {
-	unsigned int leader_pulse;
-	unsigned int leader_space;
-	unsigned int clock;
-	unsigned int invert:1;
-	unsigned int trailer_space;
-};
+काष्ठा ir_raw_timings_manchester अणु
+	अचिन्हित पूर्णांक leader_pulse;
+	अचिन्हित पूर्णांक leader_space;
+	अचिन्हित पूर्णांक घड़ी;
+	अचिन्हित पूर्णांक invert:1;
+	अचिन्हित पूर्णांक trailer_space;
+पूर्ण;
 
-int ir_raw_gen_manchester(struct ir_raw_event **ev, unsigned int max,
-			  const struct ir_raw_timings_manchester *timings,
-			  unsigned int n, u64 data);
+पूर्णांक ir_raw_gen_manchester(काष्ठा ir_raw_event **ev, अचिन्हित पूर्णांक max,
+			  स्थिर काष्ठा ir_raw_timings_manchester *timings,
+			  अचिन्हित पूर्णांक n, u64 data);
 
 /**
  * ir_raw_gen_pulse_space() - generate pulse and space raw events.
- * @ev:			Pointer to pointer to next free raw event.
- *			Will be incremented for each raw event written.
- * @max:		Pointer to number of raw events available in buffer.
- *			Will be decremented for each raw event written.
+ * @ev:			Poपूर्णांकer to poपूर्णांकer to next मुक्त raw event.
+ *			Will be incremented क्रम each raw event written.
+ * @max:		Poपूर्णांकer to number of raw events available in buffer.
+ *			Will be decremented क्रम each raw event written.
  * @pulse_width:	Width of pulse in ns.
  * @space_width:	Width of space in ns.
  *
  * Returns:	0 on success.
- *		-ENOBUFS if there isn't enough buffer space to write both raw
- *		events. In this case @max events will have been written.
+ *		-ENOBUFS अगर there isn't enough buffer space to ग_लिखो both raw
+ *		events. In this हाल @max events will have been written.
  */
-static inline int ir_raw_gen_pulse_space(struct ir_raw_event **ev,
-					 unsigned int *max,
-					 unsigned int pulse_width,
-					 unsigned int space_width)
-{
-	if (!*max)
-		return -ENOBUFS;
+अटल अंतरभूत पूर्णांक ir_raw_gen_pulse_space(काष्ठा ir_raw_event **ev,
+					 अचिन्हित पूर्णांक *max,
+					 अचिन्हित पूर्णांक pulse_width,
+					 अचिन्हित पूर्णांक space_width)
+अणु
+	अगर (!*max)
+		वापस -ENOBUFS;
 	init_ir_raw_event_duration((*ev)++, 1, pulse_width);
-	if (!--*max)
-		return -ENOBUFS;
+	अगर (!--*max)
+		वापस -ENOBUFS;
 	init_ir_raw_event_duration((*ev)++, 0, space_width);
 	--*max;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * struct ir_raw_timings_pd - pulse-distance modulation timings
- * @header_pulse:	duration of header pulse in ns (0 for none)
+ * काष्ठा ir_raw_timings_pd - pulse-distance modulation timings
+ * @header_pulse:	duration of header pulse in ns (0 क्रम none)
  * @header_space:	duration of header space in ns
  * @bit_pulse:		duration of bit pulse in ns
- * @bit_space:		duration of bit space (for logic 0 and 1) in ns
+ * @bit_space:		duration of bit space (क्रम logic 0 and 1) in ns
  * @trailer_pulse:	duration of trailer pulse in ns
  * @trailer_space:	duration of trailer space in ns
- * @msb_first:		1 if most significant bit is sent first
+ * @msb_first:		1 अगर most signअगरicant bit is sent first
  */
-struct ir_raw_timings_pd {
-	unsigned int header_pulse;
-	unsigned int header_space;
-	unsigned int bit_pulse;
-	unsigned int bit_space[2];
-	unsigned int trailer_pulse;
-	unsigned int trailer_space;
-	unsigned int msb_first:1;
-};
+काष्ठा ir_raw_timings_pd अणु
+	अचिन्हित पूर्णांक header_pulse;
+	अचिन्हित पूर्णांक header_space;
+	अचिन्हित पूर्णांक bit_pulse;
+	अचिन्हित पूर्णांक bit_space[2];
+	अचिन्हित पूर्णांक trailer_pulse;
+	अचिन्हित पूर्णांक trailer_space;
+	अचिन्हित पूर्णांक msb_first:1;
+पूर्ण;
 
-int ir_raw_gen_pd(struct ir_raw_event **ev, unsigned int max,
-		  const struct ir_raw_timings_pd *timings,
-		  unsigned int n, u64 data);
+पूर्णांक ir_raw_gen_pd(काष्ठा ir_raw_event **ev, अचिन्हित पूर्णांक max,
+		  स्थिर काष्ठा ir_raw_timings_pd *timings,
+		  अचिन्हित पूर्णांक n, u64 data);
 
 /**
- * struct ir_raw_timings_pl - pulse-length modulation timings
- * @header_pulse:	duration of header pulse in ns (0 for none)
+ * काष्ठा ir_raw_timings_pl - pulse-length modulation timings
+ * @header_pulse:	duration of header pulse in ns (0 क्रम none)
  * @bit_space:		duration of bit space in ns
- * @bit_pulse:		duration of bit pulse (for logic 0 and 1) in ns
+ * @bit_pulse:		duration of bit pulse (क्रम logic 0 and 1) in ns
  * @trailer_space:	duration of trailer space in ns
- * @msb_first:		1 if most significant bit is sent first
+ * @msb_first:		1 अगर most signअगरicant bit is sent first
  */
-struct ir_raw_timings_pl {
-	unsigned int header_pulse;
-	unsigned int bit_space;
-	unsigned int bit_pulse[2];
-	unsigned int trailer_space;
-	unsigned int msb_first:1;
-};
+काष्ठा ir_raw_timings_pl अणु
+	अचिन्हित पूर्णांक header_pulse;
+	अचिन्हित पूर्णांक bit_space;
+	अचिन्हित पूर्णांक bit_pulse[2];
+	अचिन्हित पूर्णांक trailer_space;
+	अचिन्हित पूर्णांक msb_first:1;
+पूर्ण;
 
-int ir_raw_gen_pl(struct ir_raw_event **ev, unsigned int max,
-		  const struct ir_raw_timings_pl *timings,
-		  unsigned int n, u64 data);
+पूर्णांक ir_raw_gen_pl(काष्ठा ir_raw_event **ev, अचिन्हित पूर्णांक max,
+		  स्थिर काष्ठा ir_raw_timings_pl *timings,
+		  अचिन्हित पूर्णांक n, u64 data);
 
 /*
- * Routines from rc-raw.c to be used internally and by decoders
+ * Routines from rc-raw.c to be used पूर्णांकernally and by decoders
  */
-u64 ir_raw_get_allowed_protocols(void);
-int ir_raw_event_prepare(struct rc_dev *dev);
-int ir_raw_event_register(struct rc_dev *dev);
-void ir_raw_event_free(struct rc_dev *dev);
-void ir_raw_event_unregister(struct rc_dev *dev);
-int ir_raw_handler_register(struct ir_raw_handler *ir_raw_handler);
-void ir_raw_handler_unregister(struct ir_raw_handler *ir_raw_handler);
-void ir_raw_load_modules(u64 *protocols);
-void ir_raw_init(void);
+u64 ir_raw_get_allowed_protocols(व्योम);
+पूर्णांक ir_raw_event_prepare(काष्ठा rc_dev *dev);
+पूर्णांक ir_raw_event_रेजिस्टर(काष्ठा rc_dev *dev);
+व्योम ir_raw_event_मुक्त(काष्ठा rc_dev *dev);
+व्योम ir_raw_event_unरेजिस्टर(काष्ठा rc_dev *dev);
+पूर्णांक ir_raw_handler_रेजिस्टर(काष्ठा ir_raw_handler *ir_raw_handler);
+व्योम ir_raw_handler_unरेजिस्टर(काष्ठा ir_raw_handler *ir_raw_handler);
+व्योम ir_raw_load_modules(u64 *protocols);
+व्योम ir_raw_init(व्योम);
 
 /*
- * lirc interface
+ * lirc पूर्णांकerface
  */
-#ifdef CONFIG_LIRC
-int lirc_dev_init(void);
-void lirc_dev_exit(void);
-void lirc_raw_event(struct rc_dev *dev, struct ir_raw_event ev);
-void lirc_scancode_event(struct rc_dev *dev, struct lirc_scancode *lsc);
-int lirc_register(struct rc_dev *dev);
-void lirc_unregister(struct rc_dev *dev);
-struct rc_dev *rc_dev_get_from_fd(int fd);
-#else
-static inline int lirc_dev_init(void) { return 0; }
-static inline void lirc_dev_exit(void) {}
-static inline void lirc_raw_event(struct rc_dev *dev,
-				  struct ir_raw_event ev) { }
-static inline void lirc_scancode_event(struct rc_dev *dev,
-				       struct lirc_scancode *lsc) { }
-static inline int lirc_register(struct rc_dev *dev) { return 0; }
-static inline void lirc_unregister(struct rc_dev *dev) { }
-#endif
+#अगर_घोषित CONFIG_LIRC
+पूर्णांक lirc_dev_init(व्योम);
+व्योम lirc_dev_निकास(व्योम);
+व्योम lirc_raw_event(काष्ठा rc_dev *dev, काष्ठा ir_raw_event ev);
+व्योम lirc_scancode_event(काष्ठा rc_dev *dev, काष्ठा lirc_scancode *lsc);
+पूर्णांक lirc_रेजिस्टर(काष्ठा rc_dev *dev);
+व्योम lirc_unरेजिस्टर(काष्ठा rc_dev *dev);
+काष्ठा rc_dev *rc_dev_get_from_fd(पूर्णांक fd);
+#अन्यथा
+अटल अंतरभूत पूर्णांक lirc_dev_init(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम lirc_dev_निकास(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम lirc_raw_event(काष्ठा rc_dev *dev,
+				  काष्ठा ir_raw_event ev) अणु पूर्ण
+अटल अंतरभूत व्योम lirc_scancode_event(काष्ठा rc_dev *dev,
+				       काष्ठा lirc_scancode *lsc) अणु पूर्ण
+अटल अंतरभूत पूर्णांक lirc_रेजिस्टर(काष्ठा rc_dev *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम lirc_unरेजिस्टर(काष्ठा rc_dev *dev) अणु पूर्ण
+#पूर्ण_अगर
 
 /*
- * bpf interface
+ * bpf पूर्णांकerface
  */
-#ifdef CONFIG_BPF_LIRC_MODE2
-void lirc_bpf_free(struct rc_dev *dev);
-void lirc_bpf_run(struct rc_dev *dev, u32 sample);
-#else
-static inline void lirc_bpf_free(struct rc_dev *dev) { }
-static inline void lirc_bpf_run(struct rc_dev *dev, u32 sample) { }
-#endif
+#अगर_घोषित CONFIG_BPF_LIRC_MODE2
+व्योम lirc_bpf_मुक्त(काष्ठा rc_dev *dev);
+व्योम lirc_bpf_run(काष्ठा rc_dev *dev, u32 sample);
+#अन्यथा
+अटल अंतरभूत व्योम lirc_bpf_मुक्त(काष्ठा rc_dev *dev) अणु पूर्ण
+अटल अंतरभूत व्योम lirc_bpf_run(काष्ठा rc_dev *dev, u32 sample) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* _RC_CORE_PRIV */
+#पूर्ण_अगर /* _RC_CORE_PRIV */

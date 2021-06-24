@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/reboot.h>
-#include <linux/amba/serial.h>
-extern struct amba_pl010_data ap_uart_data;
-void integrator_init_early(void);
-int integrator_init(bool is_cp);
-void integrator_reserve(void);
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/reboot.h>
+#समावेश <linux/amba/serial.h>
+बाह्य काष्ठा amba_pl010_data ap_uart_data;
+व्योम पूर्णांकegrator_init_early(व्योम);
+पूर्णांक पूर्णांकegrator_init(bool is_cp);
+व्योम पूर्णांकegrator_reserve(व्योम);

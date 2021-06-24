@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -11,28 +12,28 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_IO_H
-#define __ASM_OPENRISC_IO_H
+#अगर_अघोषित __ASM_OPENRISC_IO_H
+#घोषणा __ASM_OPENRISC_IO_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
- * PCI: can we really do 0 here if we have no port IO?
+ * PCI: can we really करो 0 here अगर we have no port IO?
  */
-#define IO_SPACE_LIMIT		0
+#घोषणा IO_SPACE_LIMIT		0
 
 /* OpenRISC has no port IO */
-#define HAVE_ARCH_PIO_SIZE	1
-#define PIO_RESERVED		0X0UL
-#define PIO_OFFSET		0
-#define PIO_MASK		0
+#घोषणा HAVE_ARCH_PIO_SIZE	1
+#घोषणा PIO_RESERVED		0X0UL
+#घोषणा PIO_OFFSET		0
+#घोषणा PIO_MASK		0
 
-#define ioremap ioremap
-void __iomem *ioremap(phys_addr_t offset, unsigned long size);
+#घोषणा ioremap ioremap
+व्योम __iomem *ioremap(phys_addr_t offset, अचिन्हित दीर्घ size);
 
-#define iounmap iounmap
-extern void iounmap(void __iomem *addr);
+#घोषणा iounmap iounmap
+बाह्य व्योम iounmap(व्योम __iomem *addr);
 
-#include <asm-generic/io.h>
+#समावेश <यंत्र-generic/पन.स>
 
-#endif
+#पूर्ण_अगर

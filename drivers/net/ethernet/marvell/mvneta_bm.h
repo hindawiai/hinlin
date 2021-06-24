@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Driver for Marvell NETA network controller Buffer Manager.
+ * Driver क्रम Marvell NETA network controller Buffer Manager.
  *
  * Copyright (C) 2015 Marvell
  *
@@ -10,115 +11,115 @@
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef _MVNETA_BM_H_
-#define _MVNETA_BM_H_
+#अगर_अघोषित _MVNETA_BM_H_
+#घोषणा _MVNETA_BM_H_
 
 /* BM Configuration Register */
-#define MVNETA_BM_CONFIG_REG			0x0
-#define    MVNETA_BM_STATUS_MASK		0x30
-#define    MVNETA_BM_ACTIVE_MASK		BIT(4)
-#define    MVNETA_BM_MAX_IN_BURST_SIZE_MASK	0x60000
-#define    MVNETA_BM_MAX_IN_BURST_SIZE_16BP	BIT(18)
-#define    MVNETA_BM_EMPTY_LIMIT_MASK		BIT(19)
+#घोषणा MVNETA_BM_CONFIG_REG			0x0
+#घोषणा    MVNETA_BM_STATUS_MASK		0x30
+#घोषणा    MVNETA_BM_ACTIVE_MASK		BIT(4)
+#घोषणा    MVNETA_BM_MAX_IN_BURST_SIZE_MASK	0x60000
+#घोषणा    MVNETA_BM_MAX_IN_BURST_SIZE_16BP	BIT(18)
+#घोषणा    MVNETA_BM_EMPTY_LIMIT_MASK		BIT(19)
 
 /* BM Activation Register */
-#define MVNETA_BM_COMMAND_REG			0x4
-#define    MVNETA_BM_START_MASK			BIT(0)
-#define    MVNETA_BM_STOP_MASK			BIT(1)
-#define    MVNETA_BM_PAUSE_MASK			BIT(2)
+#घोषणा MVNETA_BM_COMMAND_REG			0x4
+#घोषणा    MVNETA_BM_START_MASK			BIT(0)
+#घोषणा    MVNETA_BM_STOP_MASK			BIT(1)
+#घोषणा    MVNETA_BM_PAUSE_MASK			BIT(2)
 
-/* BM Xbar interface Register */
-#define MVNETA_BM_XBAR_01_REG			0x8
-#define MVNETA_BM_XBAR_23_REG			0xc
-#define MVNETA_BM_XBAR_POOL_REG(pool)		\
+/* BM Xbar पूर्णांकerface Register */
+#घोषणा MVNETA_BM_XBAR_01_REG			0x8
+#घोषणा MVNETA_BM_XBAR_23_REG			0xc
+#घोषणा MVNETA_BM_XBAR_POOL_REG(pool)		\
 		(((pool) < 2) ? MVNETA_BM_XBAR_01_REG : MVNETA_BM_XBAR_23_REG)
-#define     MVNETA_BM_TARGET_ID_OFFS(pool)	(((pool) & 1) ? 16 : 0)
-#define     MVNETA_BM_TARGET_ID_MASK(pool)	\
+#घोषणा     MVNETA_BM_TARGET_ID_OFFS(pool)	(((pool) & 1) ? 16 : 0)
+#घोषणा     MVNETA_BM_TARGET_ID_MASK(pool)	\
 		(0xf << MVNETA_BM_TARGET_ID_OFFS(pool))
-#define     MVNETA_BM_TARGET_ID_VAL(pool, id)	\
+#घोषणा     MVNETA_BM_TARGET_ID_VAL(pool, id)	\
 		((id) << MVNETA_BM_TARGET_ID_OFFS(pool))
-#define     MVNETA_BM_XBAR_ATTR_OFFS(pool)	(((pool) & 1) ? 20 : 4)
-#define     MVNETA_BM_XBAR_ATTR_MASK(pool)	\
+#घोषणा     MVNETA_BM_XBAR_ATTR_OFFS(pool)	(((pool) & 1) ? 20 : 4)
+#घोषणा     MVNETA_BM_XBAR_ATTR_MASK(pool)	\
 		(0xff << MVNETA_BM_XBAR_ATTR_OFFS(pool))
-#define     MVNETA_BM_XBAR_ATTR_VAL(pool, attr)	\
+#घोषणा     MVNETA_BM_XBAR_ATTR_VAL(pool, attr)	\
 		((attr) << MVNETA_BM_XBAR_ATTR_OFFS(pool))
 
-/* Address of External Buffer Pointers Pool Register */
-#define MVNETA_BM_POOL_BASE_REG(pool)		(0x10 + ((pool) << 4))
-#define     MVNETA_BM_POOL_ENABLE_MASK		BIT(0)
+/* Address of External Buffer Poपूर्णांकers Pool Register */
+#घोषणा MVNETA_BM_POOL_BASE_REG(pool)		(0x10 + ((pool) << 4))
+#घोषणा     MVNETA_BM_POOL_ENABLE_MASK		BIT(0)
 
-/* External Buffer Pointers Pool RD pointer Register */
-#define MVNETA_BM_POOL_READ_PTR_REG(pool)	(0x14 + ((pool) << 4))
-#define     MVNETA_BM_POOL_SET_READ_PTR_MASK	0xfffc
-#define     MVNETA_BM_POOL_GET_READ_PTR_OFFS	16
-#define     MVNETA_BM_POOL_GET_READ_PTR_MASK	0xfffc0000
+/* External Buffer Poपूर्णांकers Pool RD poपूर्णांकer Register */
+#घोषणा MVNETA_BM_POOL_READ_PTR_REG(pool)	(0x14 + ((pool) << 4))
+#घोषणा     MVNETA_BM_POOL_SET_READ_PTR_MASK	0xfffc
+#घोषणा     MVNETA_BM_POOL_GET_READ_PTR_OFFS	16
+#घोषणा     MVNETA_BM_POOL_GET_READ_PTR_MASK	0xfffc0000
 
-/* External Buffer Pointers Pool WR pointer */
-#define MVNETA_BM_POOL_WRITE_PTR_REG(pool)	(0x18 + ((pool) << 4))
-#define     MVNETA_BM_POOL_SET_WRITE_PTR_OFFS	0
-#define     MVNETA_BM_POOL_SET_WRITE_PTR_MASK	0xfffc
-#define     MVNETA_BM_POOL_GET_WRITE_PTR_OFFS	16
-#define     MVNETA_BM_POOL_GET_WRITE_PTR_MASK	0xfffc0000
+/* External Buffer Poपूर्णांकers Pool WR poपूर्णांकer */
+#घोषणा MVNETA_BM_POOL_WRITE_PTR_REG(pool)	(0x18 + ((pool) << 4))
+#घोषणा     MVNETA_BM_POOL_SET_WRITE_PTR_OFFS	0
+#घोषणा     MVNETA_BM_POOL_SET_WRITE_PTR_MASK	0xfffc
+#घोषणा     MVNETA_BM_POOL_GET_WRITE_PTR_OFFS	16
+#घोषणा     MVNETA_BM_POOL_GET_WRITE_PTR_MASK	0xfffc0000
 
-/* External Buffer Pointers Pool Size Register */
-#define MVNETA_BM_POOL_SIZE_REG(pool)		(0x1c + ((pool) << 4))
-#define     MVNETA_BM_POOL_SIZE_MASK		0x3fff
+/* External Buffer Poपूर्णांकers Pool Size Register */
+#घोषणा MVNETA_BM_POOL_SIZE_REG(pool)		(0x1c + ((pool) << 4))
+#घोषणा     MVNETA_BM_POOL_SIZE_MASK		0x3fff
 
 /* BM Interrupt Cause Register */
-#define MVNETA_BM_INTR_CAUSE_REG		(0x50)
+#घोषणा MVNETA_BM_INTR_CAUSE_REG		(0x50)
 
-/* BM interrupt Mask Register */
-#define MVNETA_BM_INTR_MASK_REG			(0x54)
+/* BM पूर्णांकerrupt Mask Register */
+#घोषणा MVNETA_BM_INTR_MASK_REG			(0x54)
 
 /* Other definitions */
-#define MVNETA_BM_SHORT_PKT_SIZE		256
-#define MVNETA_BM_POOLS_NUM			4
-#define MVNETA_BM_POOL_CAP_MIN			128
-#define MVNETA_BM_POOL_CAP_DEF			2048
-#define MVNETA_BM_POOL_CAP_MAX			\
+#घोषणा MVNETA_BM_SHORT_PKT_SIZE		256
+#घोषणा MVNETA_BM_POOLS_NUM			4
+#घोषणा MVNETA_BM_POOL_CAP_MIN			128
+#घोषणा MVNETA_BM_POOL_CAP_DEF			2048
+#घोषणा MVNETA_BM_POOL_CAP_MAX			\
 		(16 * 1024 - MVNETA_BM_POOL_CAP_ALIGN)
-#define MVNETA_BM_POOL_CAP_ALIGN		32
-#define MVNETA_BM_POOL_PTR_ALIGN		32
+#घोषणा MVNETA_BM_POOL_CAP_ALIGN		32
+#घोषणा MVNETA_BM_POOL_PTR_ALIGN		32
 
-#define MVNETA_BM_POOL_ACCESS_OFFS		8
+#घोषणा MVNETA_BM_POOL_ACCESS_OFFS		8
 
-#define MVNETA_BM_BPPI_SIZE			0x100000
+#घोषणा MVNETA_BM_BPPI_SIZE			0x100000
 
-#define MVNETA_RX_BUF_SIZE(pkt_size)   ((pkt_size) + NET_SKB_PAD)
+#घोषणा MVNETA_RX_BUF_SIZE(pkt_size)   ((pkt_size) + NET_SKB_PAD)
 
-enum mvneta_bm_type {
+क्रमागत mvneta_bm_type अणु
 	MVNETA_BM_FREE,
 	MVNETA_BM_LONG,
 	MVNETA_BM_SHORT
-};
+पूर्ण;
 
-struct mvneta_bm {
-	void __iomem *reg_base;
-	struct clk *clk;
-	struct platform_device *pdev;
+काष्ठा mvneta_bm अणु
+	व्योम __iomem *reg_base;
+	काष्ठा clk *clk;
+	काष्ठा platक्रमm_device *pdev;
 
-	struct gen_pool *bppi_pool;
-	/* BPPI virtual base address */
-	void __iomem *bppi_virt_addr;
+	काष्ठा gen_pool *bppi_pool;
+	/* BPPI भव base address */
+	व्योम __iomem *bppi_virt_addr;
 	/* BPPI physical base address */
 	dma_addr_t bppi_phys_addr;
 
 	/* BM pools */
-	struct mvneta_bm_pool *bm_pools;
-};
+	काष्ठा mvneta_bm_pool *bm_pools;
+पूर्ण;
 
-struct mvneta_bm_pool {
-	struct hwbm_pool hwbm_pool;
+काष्ठा mvneta_bm_pool अणु
+	काष्ठा hwbm_pool hwbm_pool;
 	/* Pool number in the range 0-3 */
 	u8 id;
-	enum mvneta_bm_type type;
+	क्रमागत mvneta_bm_type type;
 
 	/* Packet size */
-	int pkt_size;
+	पूर्णांक pkt_size;
 	/* Size of the buffer acces through DMA*/
 	u32 buf_size;
 
-	/* BPPE virtual base address */
+	/* BPPE भव base address */
 	u32 *virt_addr;
 	/* BPPE physical base address */
 	dma_addr_t phys_addr;
@@ -126,67 +127,67 @@ struct mvneta_bm_pool {
 	/* Ports using BM pool */
 	u8 port_map;
 
-	struct mvneta_bm *priv;
-};
+	काष्ठा mvneta_bm *priv;
+पूर्ण;
 
 /* Declarations and definitions */
-#if IS_ENABLED(CONFIG_MVNETA_BM)
-struct mvneta_bm *mvneta_bm_get(struct device_node *node);
-void mvneta_bm_put(struct mvneta_bm *priv);
+#अगर IS_ENABLED(CONFIG_MVNETA_BM)
+काष्ठा mvneta_bm *mvneta_bm_get(काष्ठा device_node *node);
+व्योम mvneta_bm_put(काष्ठा mvneta_bm *priv);
 
-void mvneta_bm_pool_destroy(struct mvneta_bm *priv,
-			    struct mvneta_bm_pool *bm_pool, u8 port_map);
-void mvneta_bm_bufs_free(struct mvneta_bm *priv, struct mvneta_bm_pool *bm_pool,
+व्योम mvneta_bm_pool_destroy(काष्ठा mvneta_bm *priv,
+			    काष्ठा mvneta_bm_pool *bm_pool, u8 port_map);
+व्योम mvneta_bm_bufs_मुक्त(काष्ठा mvneta_bm *priv, काष्ठा mvneta_bm_pool *bm_pool,
 			 u8 port_map);
-int mvneta_bm_construct(struct hwbm_pool *hwbm_pool, void *buf);
-int mvneta_bm_pool_refill(struct mvneta_bm *priv,
-			  struct mvneta_bm_pool *bm_pool);
-struct mvneta_bm_pool *mvneta_bm_pool_use(struct mvneta_bm *priv, u8 pool_id,
-					  enum mvneta_bm_type type, u8 port_id,
-					  int pkt_size);
+पूर्णांक mvneta_bm_स्थिरruct(काष्ठा hwbm_pool *hwbm_pool, व्योम *buf);
+पूर्णांक mvneta_bm_pool_refill(काष्ठा mvneta_bm *priv,
+			  काष्ठा mvneta_bm_pool *bm_pool);
+काष्ठा mvneta_bm_pool *mvneta_bm_pool_use(काष्ठा mvneta_bm *priv, u8 pool_id,
+					  क्रमागत mvneta_bm_type type, u8 port_id,
+					  पूर्णांक pkt_size);
 
-static inline void mvneta_bm_pool_put_bp(struct mvneta_bm *priv,
-					 struct mvneta_bm_pool *bm_pool,
+अटल अंतरभूत व्योम mvneta_bm_pool_put_bp(काष्ठा mvneta_bm *priv,
+					 काष्ठा mvneta_bm_pool *bm_pool,
 					 dma_addr_t buf_phys_addr)
-{
-	writel_relaxed(buf_phys_addr, priv->bppi_virt_addr +
+अणु
+	ग_लिखोl_relaxed(buf_phys_addr, priv->bppi_virt_addr +
 		       (bm_pool->id << MVNETA_BM_POOL_ACCESS_OFFS));
-}
+पूर्ण
 
-static inline u32 mvneta_bm_pool_get_bp(struct mvneta_bm *priv,
-					struct mvneta_bm_pool *bm_pool)
-{
-	return readl_relaxed(priv->bppi_virt_addr +
+अटल अंतरभूत u32 mvneta_bm_pool_get_bp(काष्ठा mvneta_bm *priv,
+					काष्ठा mvneta_bm_pool *bm_pool)
+अणु
+	वापस पढ़ोl_relaxed(priv->bppi_virt_addr +
 			     (bm_pool->id << MVNETA_BM_POOL_ACCESS_OFFS));
-}
-#else
-static inline void mvneta_bm_pool_destroy(struct mvneta_bm *priv,
-					  struct mvneta_bm_pool *bm_pool,
-					  u8 port_map) {}
-static inline void mvneta_bm_bufs_free(struct mvneta_bm *priv,
-				       struct mvneta_bm_pool *bm_pool,
-				       u8 port_map) {}
-static inline int mvneta_bm_construct(struct hwbm_pool *hwbm_pool, void *buf)
-{ return 0; }
-static inline int mvneta_bm_pool_refill(struct mvneta_bm *priv,
-					struct mvneta_bm_pool *bm_pool)
-{ return 0; }
-static inline struct mvneta_bm_pool *mvneta_bm_pool_use(struct mvneta_bm *priv,
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम mvneta_bm_pool_destroy(काष्ठा mvneta_bm *priv,
+					  काष्ठा mvneta_bm_pool *bm_pool,
+					  u8 port_map) अणुपूर्ण
+अटल अंतरभूत व्योम mvneta_bm_bufs_मुक्त(काष्ठा mvneta_bm *priv,
+				       काष्ठा mvneta_bm_pool *bm_pool,
+				       u8 port_map) अणुपूर्ण
+अटल अंतरभूत पूर्णांक mvneta_bm_स्थिरruct(काष्ठा hwbm_pool *hwbm_pool, व्योम *buf)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक mvneta_bm_pool_refill(काष्ठा mvneta_bm *priv,
+					काष्ठा mvneta_bm_pool *bm_pool)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत काष्ठा mvneta_bm_pool *mvneta_bm_pool_use(काष्ठा mvneta_bm *priv,
 							u8 pool_id,
-							enum mvneta_bm_type type,
+							क्रमागत mvneta_bm_type type,
 							u8 port_id,
-							int pkt_size)
-{ return NULL; }
+							पूर्णांक pkt_size)
+अणु वापस शून्य; पूर्ण
 
-static inline void mvneta_bm_pool_put_bp(struct mvneta_bm *priv,
-					 struct mvneta_bm_pool *bm_pool,
-					 dma_addr_t buf_phys_addr) {}
+अटल अंतरभूत व्योम mvneta_bm_pool_put_bp(काष्ठा mvneta_bm *priv,
+					 काष्ठा mvneta_bm_pool *bm_pool,
+					 dma_addr_t buf_phys_addr) अणुपूर्ण
 
-static inline u32 mvneta_bm_pool_get_bp(struct mvneta_bm *priv,
-					struct mvneta_bm_pool *bm_pool)
-{ return 0; }
-static inline struct mvneta_bm *mvneta_bm_get(struct device_node *node)
-{ return NULL; }
-static inline void mvneta_bm_put(struct mvneta_bm *priv) {}
-#endif /* CONFIG_MVNETA_BM */
-#endif
+अटल अंतरभूत u32 mvneta_bm_pool_get_bp(काष्ठा mvneta_bm *priv,
+					काष्ठा mvneta_bm_pool *bm_pool)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत काष्ठा mvneta_bm *mvneta_bm_get(काष्ठा device_node *node)
+अणु वापस शून्य; पूर्ण
+अटल अंतरभूत व्योम mvneta_bm_put(काष्ठा mvneta_bm *priv) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_MVNETA_BM */
+#पूर्ण_अगर

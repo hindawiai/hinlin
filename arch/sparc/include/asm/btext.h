@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC_BTEXT_H
-#define _SPARC_BTEXT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC_BTEXT_H
+#घोषणा _SPARC_BTEXT_H
 
-int btext_find_display(void);
+पूर्णांक btext_find_display(व्योम);
 
-#endif /* _SPARC_BTEXT_H */
+#पूर्ण_अगर /* _SPARC_BTEXT_H */

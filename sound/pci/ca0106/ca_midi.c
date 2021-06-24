@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* 
  *  Copyright 10/16/2005 Tilman Kranz <tilde@tk-sls.de>
- *  Creative Audio MIDI, for the CA0106 Driver
+ *  Creative Audio MIDI, क्रम the CA0106 Driver
  *  Version: 0.0.1
  *
  *  Changelog:
@@ -11,291 +12,291 @@
  *    emu10k1x: Copyright (c) by Francisco Moraes <fmoraes@nc.rr.com>
  */
 
-#include <linux/spinlock.h>
-#include <sound/core.h>
-#include <sound/rawmidi.h>
+#समावेश <linux/spinlock.h>
+#समावेश <sound/core.h>
+#समावेश <sound/rawmidi.h>
 
-#include "ca_midi.h"
+#समावेश "ca_midi.h"
 
-#define ca_midi_write_data(midi, data)	midi->write(midi, data, 0)
-#define ca_midi_write_cmd(midi, data)	midi->write(midi, data, 1)
-#define ca_midi_read_data(midi)		midi->read(midi, 0)
-#define ca_midi_read_stat(midi)		midi->read(midi, 1)
-#define ca_midi_input_avail(midi)	(!(ca_midi_read_stat(midi) & midi->input_avail))
-#define ca_midi_output_ready(midi)	(!(ca_midi_read_stat(midi) & midi->output_ready))
+#घोषणा ca_midi_ग_लिखो_data(midi, data)	midi->ग_लिखो(midi, data, 0)
+#घोषणा ca_midi_ग_लिखो_cmd(midi, data)	midi->ग_लिखो(midi, data, 1)
+#घोषणा ca_midi_पढ़ो_data(midi)		midi->पढ़ो(midi, 0)
+#घोषणा ca_midi_पढ़ो_stat(midi)		midi->पढ़ो(midi, 1)
+#घोषणा ca_midi_input_avail(midi)	(!(ca_midi_पढ़ो_stat(midi) & midi->input_avail))
+#घोषणा ca_midi_output_पढ़ोy(midi)	(!(ca_midi_पढ़ो_stat(midi) & midi->output_पढ़ोy))
 
-static void ca_midi_clear_rx(struct snd_ca_midi *midi)
-{
-	int timeout = 100000;
-	for (; timeout > 0 && ca_midi_input_avail(midi); timeout--)
-		ca_midi_read_data(midi);
-#ifdef CONFIG_SND_DEBUG
-	if (timeout <= 0)
+अटल व्योम ca_midi_clear_rx(काष्ठा snd_ca_midi *midi)
+अणु
+	पूर्णांक समयout = 100000;
+	क्रम (; समयout > 0 && ca_midi_input_avail(midi); समयout--)
+		ca_midi_पढ़ो_data(midi);
+#अगर_घोषित CONFIG_SND_DEBUG
+	अगर (समयout <= 0)
 		pr_err("ca_midi_clear_rx: timeout (status = 0x%x)\n",
-			   ca_midi_read_stat(midi));
-#endif
-}
+			   ca_midi_पढ़ो_stat(midi));
+#पूर्ण_अगर
+पूर्ण
 
-static void ca_midi_interrupt(struct snd_ca_midi *midi, unsigned int status)
-{
-	unsigned char byte;
+अटल व्योम ca_midi_पूर्णांकerrupt(काष्ठा snd_ca_midi *midi, अचिन्हित पूर्णांक status)
+अणु
+	अचिन्हित अक्षर byte;
 
-	if (midi->rmidi == NULL) {
-		midi->interrupt_disable(midi,midi->tx_enable | midi->rx_enable);
-		return;
-	}
+	अगर (midi->rmidi == शून्य) अणु
+		midi->पूर्णांकerrupt_disable(midi,midi->tx_enable | midi->rx_enable);
+		वापस;
+	पूर्ण
 
 	spin_lock(&midi->input_lock);
-	if ((status & midi->ipr_rx) && ca_midi_input_avail(midi)) {
-		if (!(midi->midi_mode & CA_MIDI_MODE_INPUT)) {
+	अगर ((status & midi->ipr_rx) && ca_midi_input_avail(midi)) अणु
+		अगर (!(midi->midi_mode & CA_MIDI_MODE_INPUT)) अणु
 			ca_midi_clear_rx(midi);
-		} else {
-			byte = ca_midi_read_data(midi);
-			if(midi->substream_input)
+		पूर्ण अन्यथा अणु
+			byte = ca_midi_पढ़ो_data(midi);
+			अगर(midi->substream_input)
 				snd_rawmidi_receive(midi->substream_input, &byte, 1);
 
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&midi->input_lock);
 
 	spin_lock(&midi->output_lock);
-	if ((status & midi->ipr_tx) && ca_midi_output_ready(midi)) {
-		if (midi->substream_output &&
-		    snd_rawmidi_transmit(midi->substream_output, &byte, 1) == 1) {
-			ca_midi_write_data(midi, byte);
-		} else {
-			midi->interrupt_disable(midi,midi->tx_enable);
-		}
-	}
+	अगर ((status & midi->ipr_tx) && ca_midi_output_पढ़ोy(midi)) अणु
+		अगर (midi->substream_output &&
+		    snd_rawmidi_transmit(midi->substream_output, &byte, 1) == 1) अणु
+			ca_midi_ग_लिखो_data(midi, byte);
+		पूर्ण अन्यथा अणु
+			midi->पूर्णांकerrupt_disable(midi,midi->tx_enable);
+		पूर्ण
+	पूर्ण
 	spin_unlock(&midi->output_lock);
 
-}
+पूर्ण
 
-static void ca_midi_cmd(struct snd_ca_midi *midi, unsigned char cmd, int ack)
-{
-	unsigned long flags;
-	int timeout, ok;
+अटल व्योम ca_midi_cmd(काष्ठा snd_ca_midi *midi, अचिन्हित अक्षर cmd, पूर्णांक ack)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक समयout, ok;
 
 	spin_lock_irqsave(&midi->input_lock, flags);
-	ca_midi_write_data(midi, 0x00);
+	ca_midi_ग_लिखो_data(midi, 0x00);
 	/* ca_midi_clear_rx(midi); */
 
-	ca_midi_write_cmd(midi, cmd);
-	if (ack) {
+	ca_midi_ग_लिखो_cmd(midi, cmd);
+	अगर (ack) अणु
 		ok = 0;
-		timeout = 10000;
-		while (!ok && timeout-- > 0) {
-			if (ca_midi_input_avail(midi)) {
-				if (ca_midi_read_data(midi) == midi->ack)
+		समयout = 10000;
+		जबतक (!ok && समयout-- > 0) अणु
+			अगर (ca_midi_input_avail(midi)) अणु
+				अगर (ca_midi_पढ़ो_data(midi) == midi->ack)
 					ok = 1;
-			}
-		}
-		if (!ok && ca_midi_read_data(midi) == midi->ack)
+			पूर्ण
+		पूर्ण
+		अगर (!ok && ca_midi_पढ़ो_data(midi) == midi->ack)
 			ok = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		ok = 1;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&midi->input_lock, flags);
-	if (!ok)
+	अगर (!ok)
 		pr_err("ca_midi_cmd: 0x%x failed at 0x%x (status = 0x%x, data = 0x%x)!!!\n",
 			   cmd,
 			   midi->get_dev_id_port(midi->dev_id),
-			   ca_midi_read_stat(midi),
-			   ca_midi_read_data(midi));
-}
+			   ca_midi_पढ़ो_stat(midi),
+			   ca_midi_पढ़ो_data(midi));
+पूर्ण
 
-static int ca_midi_input_open(struct snd_rawmidi_substream *substream)
-{
-	struct snd_ca_midi *midi = substream->rmidi->private_data;
-	unsigned long flags;
+अटल पूर्णांक ca_midi_input_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_ca_midi *midi = substream->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 	
-	if (snd_BUG_ON(!midi->dev_id))
-		return -ENXIO;
-	spin_lock_irqsave(&midi->open_lock, flags);
+	अगर (snd_BUG_ON(!midi->dev_id))
+		वापस -ENXIO;
+	spin_lock_irqsave(&midi->खोलो_lock, flags);
 	midi->midi_mode |= CA_MIDI_MODE_INPUT;
 	midi->substream_input = substream;
-	if (!(midi->midi_mode & CA_MIDI_MODE_OUTPUT)) {
-		spin_unlock_irqrestore(&midi->open_lock, flags);
+	अगर (!(midi->midi_mode & CA_MIDI_MODE_OUTPUT)) अणु
+		spin_unlock_irqrestore(&midi->खोलो_lock, flags);
 		ca_midi_cmd(midi, midi->reset, 1);
 		ca_midi_cmd(midi, midi->enter_uart, 1);
-	} else {
-		spin_unlock_irqrestore(&midi->open_lock, flags);
-	}
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		spin_unlock_irqrestore(&midi->खोलो_lock, flags);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ca_midi_output_open(struct snd_rawmidi_substream *substream)
-{
-	struct snd_ca_midi *midi = substream->rmidi->private_data;
-	unsigned long flags;
+अटल पूर्णांक ca_midi_output_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_ca_midi *midi = substream->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!midi->dev_id))
-		return -ENXIO;
-	spin_lock_irqsave(&midi->open_lock, flags);
+	अगर (snd_BUG_ON(!midi->dev_id))
+		वापस -ENXIO;
+	spin_lock_irqsave(&midi->खोलो_lock, flags);
 	midi->midi_mode |= CA_MIDI_MODE_OUTPUT;
 	midi->substream_output = substream;
-	if (!(midi->midi_mode & CA_MIDI_MODE_INPUT)) {
-		spin_unlock_irqrestore(&midi->open_lock, flags);
+	अगर (!(midi->midi_mode & CA_MIDI_MODE_INPUT)) अणु
+		spin_unlock_irqrestore(&midi->खोलो_lock, flags);
 		ca_midi_cmd(midi, midi->reset, 1);
 		ca_midi_cmd(midi, midi->enter_uart, 1);
-	} else {
-		spin_unlock_irqrestore(&midi->open_lock, flags);
-	}
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		spin_unlock_irqrestore(&midi->खोलो_lock, flags);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ca_midi_input_close(struct snd_rawmidi_substream *substream)
-{
-	struct snd_ca_midi *midi = substream->rmidi->private_data;
-	unsigned long flags;
+अटल पूर्णांक ca_midi_input_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_ca_midi *midi = substream->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!midi->dev_id))
-		return -ENXIO;
-	spin_lock_irqsave(&midi->open_lock, flags);
-	midi->interrupt_disable(midi,midi->rx_enable);
+	अगर (snd_BUG_ON(!midi->dev_id))
+		वापस -ENXIO;
+	spin_lock_irqsave(&midi->खोलो_lock, flags);
+	midi->पूर्णांकerrupt_disable(midi,midi->rx_enable);
 	midi->midi_mode &= ~CA_MIDI_MODE_INPUT;
-	midi->substream_input = NULL;
-	if (!(midi->midi_mode & CA_MIDI_MODE_OUTPUT)) {
-		spin_unlock_irqrestore(&midi->open_lock, flags);
+	midi->substream_input = शून्य;
+	अगर (!(midi->midi_mode & CA_MIDI_MODE_OUTPUT)) अणु
+		spin_unlock_irqrestore(&midi->खोलो_lock, flags);
 		ca_midi_cmd(midi, midi->reset, 0);
-	} else {
-		spin_unlock_irqrestore(&midi->open_lock, flags);
-	}
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		spin_unlock_irqrestore(&midi->खोलो_lock, flags);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ca_midi_output_close(struct snd_rawmidi_substream *substream)
-{
-	struct snd_ca_midi *midi = substream->rmidi->private_data;
-	unsigned long flags;
+अटल पूर्णांक ca_midi_output_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_ca_midi *midi = substream->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!midi->dev_id))
-		return -ENXIO;
+	अगर (snd_BUG_ON(!midi->dev_id))
+		वापस -ENXIO;
 	
-	spin_lock_irqsave(&midi->open_lock, flags);
+	spin_lock_irqsave(&midi->खोलो_lock, flags);
 
-	midi->interrupt_disable(midi,midi->tx_enable);
+	midi->पूर्णांकerrupt_disable(midi,midi->tx_enable);
 	midi->midi_mode &= ~CA_MIDI_MODE_OUTPUT;
-	midi->substream_output = NULL;
+	midi->substream_output = शून्य;
 	
-	if (!(midi->midi_mode & CA_MIDI_MODE_INPUT)) {
-		spin_unlock_irqrestore(&midi->open_lock, flags);
+	अगर (!(midi->midi_mode & CA_MIDI_MODE_INPUT)) अणु
+		spin_unlock_irqrestore(&midi->खोलो_lock, flags);
 		ca_midi_cmd(midi, midi->reset, 0);
-	} else {
-		spin_unlock_irqrestore(&midi->open_lock, flags);
-	}
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		spin_unlock_irqrestore(&midi->खोलो_lock, flags);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void ca_midi_input_trigger(struct snd_rawmidi_substream *substream, int up)
-{
-	struct snd_ca_midi *midi = substream->rmidi->private_data;
+अटल व्योम ca_midi_input_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
+अणु
+	काष्ठा snd_ca_midi *midi = substream->rmidi->निजी_data;
 
-	if (snd_BUG_ON(!midi->dev_id))
-		return;
+	अगर (snd_BUG_ON(!midi->dev_id))
+		वापस;
 
-	if (up) {
-		midi->interrupt_enable(midi,midi->rx_enable);
-	} else {
-		midi->interrupt_disable(midi, midi->rx_enable);
-	}
-}
+	अगर (up) अणु
+		midi->पूर्णांकerrupt_enable(midi,midi->rx_enable);
+	पूर्ण अन्यथा अणु
+		midi->पूर्णांकerrupt_disable(midi, midi->rx_enable);
+	पूर्ण
+पूर्ण
 
-static void ca_midi_output_trigger(struct snd_rawmidi_substream *substream, int up)
-{
-	struct snd_ca_midi *midi = substream->rmidi->private_data;
-	unsigned long flags;
+अटल व्योम ca_midi_output_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
+अणु
+	काष्ठा snd_ca_midi *midi = substream->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!midi->dev_id))
-		return;
+	अगर (snd_BUG_ON(!midi->dev_id))
+		वापस;
 
-	if (up) {
-		int max = 4;
-		unsigned char byte;
+	अगर (up) अणु
+		पूर्णांक max = 4;
+		अचिन्हित अक्षर byte;
 
 		spin_lock_irqsave(&midi->output_lock, flags);
 	
-		/* try to send some amount of bytes here before interrupts */
-		while (max > 0) {
-			if (ca_midi_output_ready(midi)) {
-				if (!(midi->midi_mode & CA_MIDI_MODE_OUTPUT) ||
-				    snd_rawmidi_transmit(substream, &byte, 1) != 1) {
+		/* try to send some amount of bytes here beक्रमe पूर्णांकerrupts */
+		जबतक (max > 0) अणु
+			अगर (ca_midi_output_पढ़ोy(midi)) अणु
+				अगर (!(midi->midi_mode & CA_MIDI_MODE_OUTPUT) ||
+				    snd_rawmidi_transmit(substream, &byte, 1) != 1) अणु
 					/* no more data */
 					spin_unlock_irqrestore(&midi->output_lock, flags);
-					return;
-				}
-				ca_midi_write_data(midi, byte);
+					वापस;
+				पूर्ण
+				ca_midi_ग_लिखो_data(midi, byte);
 				max--;
-			} else {
-				break;
-			}
-		}
+			पूर्ण अन्यथा अणु
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		spin_unlock_irqrestore(&midi->output_lock, flags);
-		midi->interrupt_enable(midi,midi->tx_enable);
+		midi->पूर्णांकerrupt_enable(midi,midi->tx_enable);
 
-	} else {
-		midi->interrupt_disable(midi,midi->tx_enable);
-	}
-}
+	पूर्ण अन्यथा अणु
+		midi->पूर्णांकerrupt_disable(midi,midi->tx_enable);
+	पूर्ण
+पूर्ण
 
-static const struct snd_rawmidi_ops ca_midi_output =
-{
-	.open =		ca_midi_output_open,
-	.close =	ca_midi_output_close,
+अटल स्थिर काष्ठा snd_rawmidi_ops ca_midi_output =
+अणु
+	.खोलो =		ca_midi_output_खोलो,
+	.बंद =	ca_midi_output_बंद,
 	.trigger =	ca_midi_output_trigger,
-};
+पूर्ण;
 
-static const struct snd_rawmidi_ops ca_midi_input =
-{
-	.open =		ca_midi_input_open,
-	.close =	ca_midi_input_close,
+अटल स्थिर काष्ठा snd_rawmidi_ops ca_midi_input =
+अणु
+	.खोलो =		ca_midi_input_खोलो,
+	.बंद =	ca_midi_input_बंद,
 	.trigger =	ca_midi_input_trigger,
-};
+पूर्ण;
 
-static void ca_midi_free(struct snd_ca_midi *midi)
-{
-	midi->interrupt = NULL;
-	midi->interrupt_enable = NULL;
-	midi->interrupt_disable = NULL;
-	midi->read = NULL;
-	midi->write = NULL;
-	midi->get_dev_id_card = NULL;
-	midi->get_dev_id_port = NULL;
-	midi->rmidi = NULL;
-}
+अटल व्योम ca_midi_मुक्त(काष्ठा snd_ca_midi *midi)
+अणु
+	midi->पूर्णांकerrupt = शून्य;
+	midi->पूर्णांकerrupt_enable = शून्य;
+	midi->पूर्णांकerrupt_disable = शून्य;
+	midi->पढ़ो = शून्य;
+	midi->ग_लिखो = शून्य;
+	midi->get_dev_id_card = शून्य;
+	midi->get_dev_id_port = शून्य;
+	midi->rmidi = शून्य;
+पूर्ण
 
-static void ca_rmidi_free(struct snd_rawmidi *rmidi)
-{
-	ca_midi_free(rmidi->private_data);
-}
+अटल व्योम ca_rmidi_मुक्त(काष्ठा snd_rawmidi *rmidi)
+अणु
+	ca_midi_मुक्त(rmidi->निजी_data);
+पूर्ण
 
-int ca_midi_init(void *dev_id, struct snd_ca_midi *midi, int device, char *name)
-{
-	struct snd_rawmidi *rmidi;
-	int err;
+पूर्णांक ca_midi_init(व्योम *dev_id, काष्ठा snd_ca_midi *midi, पूर्णांक device, अक्षर *name)
+अणु
+	काष्ठा snd_rawmidi *rmidi;
+	पूर्णांक err;
 
-	if ((err = snd_rawmidi_new(midi->get_dev_id_card(midi->dev_id), name, device, 1, 1, &rmidi)) < 0)
-		return err;
+	अगर ((err = snd_rawmidi_new(midi->get_dev_id_card(midi->dev_id), name, device, 1, 1, &rmidi)) < 0)
+		वापस err;
 
 	midi->dev_id = dev_id;
-	midi->interrupt = ca_midi_interrupt;
+	midi->पूर्णांकerrupt = ca_midi_पूर्णांकerrupt;
 
-	spin_lock_init(&midi->open_lock);
+	spin_lock_init(&midi->खोलो_lock);
 	spin_lock_init(&midi->input_lock);
 	spin_lock_init(&midi->output_lock);
 
-	strcpy(rmidi->name, name);
+	म_नकल(rmidi->name, name);
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT, &ca_midi_output);
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_INPUT, &ca_midi_input);
 	rmidi->info_flags |= SNDRV_RAWMIDI_INFO_OUTPUT |
 	                     SNDRV_RAWMIDI_INFO_INPUT |
 	                     SNDRV_RAWMIDI_INFO_DUPLEX;
-	rmidi->private_data = midi;
-	rmidi->private_free = ca_rmidi_free;
+	rmidi->निजी_data = midi;
+	rmidi->निजी_मुक्त = ca_rmidi_मुक्त;
 	
 	midi->rmidi = rmidi;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

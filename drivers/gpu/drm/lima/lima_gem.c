@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#include <linux/mm.h>
-#include <linux/sync_file.h>
-#include <linux/pagemap.h>
-#include <linux/shmem_fs.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sync_file.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/shmem_fs.h>
+#समावेश <linux/dma-mapping.h>
 
-#include <drm/drm_file.h>
-#include <drm/drm_syncobj.h>
-#include <drm/drm_utils.h>
+#समावेश <drm/drm_file.h>
+#समावेश <drm/drm_syncobj.h>
+#समावेश <drm/drm_utils.h>
 
-#include <drm/lima_drm.h>
+#समावेश <drm/lima_drm.h>
 
-#include "lima_drv.h"
-#include "lima_gem.h"
-#include "lima_vm.h"
+#समावेश "lima_drv.h"
+#समावेश "lima_gem.h"
+#समावेश "lima_vm.h"
 
-int lima_heap_alloc(struct lima_bo *bo, struct lima_vm *vm)
-{
-	struct page **pages;
-	struct address_space *mapping = bo->base.base.filp->f_mapping;
-	struct device *dev = bo->base.base.dev->dev;
-	size_t old_size = bo->heap_size;
-	size_t new_size = bo->heap_size ? bo->heap_size * 2 :
+पूर्णांक lima_heap_alloc(काष्ठा lima_bo *bo, काष्ठा lima_vm *vm)
+अणु
+	काष्ठा page **pages;
+	काष्ठा address_space *mapping = bo->base.base.filp->f_mapping;
+	काष्ठा device *dev = bo->base.base.dev->dev;
+	माप_प्रकार old_size = bo->heap_size;
+	माप_प्रकार new_size = bo->heap_size ? bo->heap_size * 2 :
 		(lima_heap_init_nr_pages << PAGE_SHIFT);
-	struct sg_table sgt;
-	int i, ret;
+	काष्ठा sg_table sgt;
+	पूर्णांक i, ret;
 
-	if (bo->heap_size >= bo->base.base.size)
-		return -ENOSPC;
+	अगर (bo->heap_size >= bo->base.base.size)
+		वापस -ENOSPC;
 
 	new_size = min(new_size, bo->base.base.size);
 
 	mutex_lock(&bo->base.pages_lock);
 
-	if (bo->base.pages) {
+	अगर (bo->base.pages) अणु
 		pages = bo->base.pages;
-	} else {
-		pages = kvmalloc_array(bo->base.base.size >> PAGE_SHIFT,
-				       sizeof(*pages), GFP_KERNEL | __GFP_ZERO);
-		if (!pages) {
+	पूर्ण अन्यथा अणु
+		pages = kvदो_स्मृति_array(bo->base.base.size >> PAGE_SHIFT,
+				       माप(*pages), GFP_KERNEL | __GFP_ZERO);
+		अगर (!pages) अणु
 			mutex_unlock(&bo->base.pages_lock);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		bo->base.pages = pages;
 		bo->base.pages_use_count = 1;
 
 		mapping_set_unevictable(mapping);
-	}
+	पूर्ण
 
-	for (i = old_size >> PAGE_SHIFT; i < new_size >> PAGE_SHIFT; i++) {
-		struct page *page = shmem_read_mapping_page(mapping, i);
+	क्रम (i = old_size >> PAGE_SHIFT; i < new_size >> PAGE_SHIFT; i++) अणु
+		काष्ठा page *page = shmem_पढ़ो_mapping_page(mapping, i);
 
-		if (IS_ERR(page)) {
+		अगर (IS_ERR(page)) अणु
 			mutex_unlock(&bo->base.pages_lock);
-			return PTR_ERR(page);
-		}
+			वापस PTR_ERR(page);
+		पूर्ण
 		pages[i] = page;
-	}
+	पूर्ण
 
 	mutex_unlock(&bo->base.pages_lock);
 
 	ret = sg_alloc_table_from_pages(&sgt, pages, i, 0,
 					new_size, GFP_KERNEL);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (bo->base.sgt) {
-		dma_unmap_sgtable(dev, bo->base.sgt, DMA_BIDIRECTIONAL, 0);
-		sg_free_table(bo->base.sgt);
-	} else {
-		bo->base.sgt = kmalloc(sizeof(*bo->base.sgt), GFP_KERNEL);
-		if (!bo->base.sgt) {
-			sg_free_table(&sgt);
-			return -ENOMEM;
-		}
-	}
+	अगर (bo->base.sgt) अणु
+		dma_unmap_sgtable(dev, bo->base.sgt, DMA_BIसूचीECTIONAL, 0);
+		sg_मुक्त_table(bo->base.sgt);
+	पूर्ण अन्यथा अणु
+		bo->base.sgt = kदो_स्मृति(माप(*bo->base.sgt), GFP_KERNEL);
+		अगर (!bo->base.sgt) अणु
+			sg_मुक्त_table(&sgt);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	ret = dma_map_sgtable(dev, &sgt, DMA_BIDIRECTIONAL, 0);
-	if (ret) {
-		sg_free_table(&sgt);
-		kfree(bo->base.sgt);
-		bo->base.sgt = NULL;
-		return ret;
-	}
+	ret = dma_map_sgtable(dev, &sgt, DMA_BIसूचीECTIONAL, 0);
+	अगर (ret) अणु
+		sg_मुक्त_table(&sgt);
+		kमुक्त(bo->base.sgt);
+		bo->base.sgt = शून्य;
+		वापस ret;
+	पूर्ण
 
 	*bo->base.sgt = sgt;
 
-	if (vm) {
+	अगर (vm) अणु
 		ret = lima_vm_map_bo(vm, bo, old_size >> PAGE_SHIFT);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	bo->heap_size = new_size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int lima_gem_create_handle(struct drm_device *dev, struct drm_file *file,
+पूर्णांक lima_gem_create_handle(काष्ठा drm_device *dev, काष्ठा drm_file *file,
 			   u32 size, u32 flags, u32 *handle)
-{
-	int err;
+अणु
+	पूर्णांक err;
 	gfp_t mask;
-	struct drm_gem_shmem_object *shmem;
-	struct drm_gem_object *obj;
-	struct lima_bo *bo;
+	काष्ठा drm_gem_shmem_object *shmem;
+	काष्ठा drm_gem_object *obj;
+	काष्ठा lima_bo *bo;
 	bool is_heap = flags & LIMA_BO_FLAG_HEAP;
 
 	shmem = drm_gem_shmem_create(dev, size);
-	if (IS_ERR(shmem))
-		return PTR_ERR(shmem);
+	अगर (IS_ERR(shmem))
+		वापस PTR_ERR(shmem);
 
 	obj = &shmem->base;
 
@@ -121,19 +122,19 @@ int lima_gem_create_handle(struct drm_device *dev, struct drm_file *file,
 	mask |= __GFP_DMA32;
 	mapping_set_gfp_mask(obj->filp->f_mapping, mask);
 
-	if (is_heap) {
+	अगर (is_heap) अणु
 		bo = to_lima_bo(obj);
-		err = lima_heap_alloc(bo, NULL);
-		if (err)
-			goto out;
-	} else {
-		struct sg_table *sgt = drm_gem_shmem_get_pages_sgt(obj);
+		err = lima_heap_alloc(bo, शून्य);
+		अगर (err)
+			जाओ out;
+	पूर्ण अन्यथा अणु
+		काष्ठा sg_table *sgt = drm_gem_shmem_get_pages_sgt(obj);
 
-		if (IS_ERR(sgt)) {
+		अगर (IS_ERR(sgt)) अणु
 			err = PTR_ERR(sgt);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	err = drm_gem_handle_create(file, obj, handle);
 
@@ -141,106 +142,106 @@ out:
 	/* drop reference from allocate - handle holds it now */
 	drm_gem_object_put(obj);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void lima_gem_free_object(struct drm_gem_object *obj)
-{
-	struct lima_bo *bo = to_lima_bo(obj);
+अटल व्योम lima_gem_मुक्त_object(काष्ठा drm_gem_object *obj)
+अणु
+	काष्ठा lima_bo *bo = to_lima_bo(obj);
 
-	if (!list_empty(&bo->va))
+	अगर (!list_empty(&bo->va))
 		dev_err(obj->dev->dev, "lima gem free bo still has va\n");
 
-	drm_gem_shmem_free_object(obj);
-}
+	drm_gem_shmem_मुक्त_object(obj);
+पूर्ण
 
-static int lima_gem_object_open(struct drm_gem_object *obj, struct drm_file *file)
-{
-	struct lima_bo *bo = to_lima_bo(obj);
-	struct lima_drm_priv *priv = to_lima_drm_priv(file);
-	struct lima_vm *vm = priv->vm;
+अटल पूर्णांक lima_gem_object_खोलो(काष्ठा drm_gem_object *obj, काष्ठा drm_file *file)
+अणु
+	काष्ठा lima_bo *bo = to_lima_bo(obj);
+	काष्ठा lima_drm_priv *priv = to_lima_drm_priv(file);
+	काष्ठा lima_vm *vm = priv->vm;
 
-	return lima_vm_bo_add(vm, bo, true);
-}
+	वापस lima_vm_bo_add(vm, bo, true);
+पूर्ण
 
-static void lima_gem_object_close(struct drm_gem_object *obj, struct drm_file *file)
-{
-	struct lima_bo *bo = to_lima_bo(obj);
-	struct lima_drm_priv *priv = to_lima_drm_priv(file);
-	struct lima_vm *vm = priv->vm;
+अटल व्योम lima_gem_object_बंद(काष्ठा drm_gem_object *obj, काष्ठा drm_file *file)
+अणु
+	काष्ठा lima_bo *bo = to_lima_bo(obj);
+	काष्ठा lima_drm_priv *priv = to_lima_drm_priv(file);
+	काष्ठा lima_vm *vm = priv->vm;
 
 	lima_vm_bo_del(vm, bo);
-}
+पूर्ण
 
-static int lima_gem_pin(struct drm_gem_object *obj)
-{
-	struct lima_bo *bo = to_lima_bo(obj);
+अटल पूर्णांक lima_gem_pin(काष्ठा drm_gem_object *obj)
+अणु
+	काष्ठा lima_bo *bo = to_lima_bo(obj);
 
-	if (bo->heap_size)
-		return -EINVAL;
+	अगर (bo->heap_size)
+		वापस -EINVAL;
 
-	return drm_gem_shmem_pin(obj);
-}
+	वापस drm_gem_shmem_pin(obj);
+पूर्ण
 
-static int lima_gem_vmap(struct drm_gem_object *obj, struct dma_buf_map *map)
-{
-	struct lima_bo *bo = to_lima_bo(obj);
+अटल पूर्णांक lima_gem_vmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा lima_bo *bo = to_lima_bo(obj);
 
-	if (bo->heap_size)
-		return -EINVAL;
+	अगर (bo->heap_size)
+		वापस -EINVAL;
 
-	return drm_gem_shmem_vmap(obj, map);
-}
+	वापस drm_gem_shmem_vmap(obj, map);
+पूर्ण
 
-static int lima_gem_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
-{
-	struct lima_bo *bo = to_lima_bo(obj);
+अटल पूर्णांक lima_gem_mmap(काष्ठा drm_gem_object *obj, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा lima_bo *bo = to_lima_bo(obj);
 
-	if (bo->heap_size)
-		return -EINVAL;
+	अगर (bo->heap_size)
+		वापस -EINVAL;
 
-	return drm_gem_shmem_mmap(obj, vma);
-}
+	वापस drm_gem_shmem_mmap(obj, vma);
+पूर्ण
 
-static const struct drm_gem_object_funcs lima_gem_funcs = {
-	.free = lima_gem_free_object,
-	.open = lima_gem_object_open,
-	.close = lima_gem_object_close,
-	.print_info = drm_gem_shmem_print_info,
+अटल स्थिर काष्ठा drm_gem_object_funcs lima_gem_funcs = अणु
+	.मुक्त = lima_gem_मुक्त_object,
+	.खोलो = lima_gem_object_खोलो,
+	.बंद = lima_gem_object_बंद,
+	.prपूर्णांक_info = drm_gem_shmem_prपूर्णांक_info,
 	.pin = lima_gem_pin,
 	.unpin = drm_gem_shmem_unpin,
 	.get_sg_table = drm_gem_shmem_get_sg_table,
 	.vmap = lima_gem_vmap,
 	.vunmap = drm_gem_shmem_vunmap,
 	.mmap = lima_gem_mmap,
-};
+पूर्ण;
 
-struct drm_gem_object *lima_gem_create_object(struct drm_device *dev, size_t size)
-{
-	struct lima_bo *bo;
+काष्ठा drm_gem_object *lima_gem_create_object(काष्ठा drm_device *dev, माप_प्रकार size)
+अणु
+	काष्ठा lima_bo *bo;
 
-	bo = kzalloc(sizeof(*bo), GFP_KERNEL);
-	if (!bo)
-		return NULL;
+	bo = kzalloc(माप(*bo), GFP_KERNEL);
+	अगर (!bo)
+		वापस शून्य;
 
 	mutex_init(&bo->lock);
 	INIT_LIST_HEAD(&bo->va);
 	bo->base.map_wc = true;
 	bo->base.base.funcs = &lima_gem_funcs;
 
-	return &bo->base.base;
-}
+	वापस &bo->base.base;
+पूर्ण
 
-int lima_gem_get_info(struct drm_file *file, u32 handle, u32 *va, u64 *offset)
-{
-	struct drm_gem_object *obj;
-	struct lima_bo *bo;
-	struct lima_drm_priv *priv = to_lima_drm_priv(file);
-	struct lima_vm *vm = priv->vm;
+पूर्णांक lima_gem_get_info(काष्ठा drm_file *file, u32 handle, u32 *va, u64 *offset)
+अणु
+	काष्ठा drm_gem_object *obj;
+	काष्ठा lima_bo *bo;
+	काष्ठा lima_drm_priv *priv = to_lima_drm_priv(file);
+	काष्ठा lima_vm *vm = priv->vm;
 
 	obj = drm_gem_object_lookup(file, handle);
-	if (!obj)
-		return -ENOENT;
+	अगर (!obj)
+		वापस -ENOENT;
 
 	bo = to_lima_bo(obj);
 
@@ -249,171 +250,171 @@ int lima_gem_get_info(struct drm_file *file, u32 handle, u32 *va, u64 *offset)
 	*offset = drm_vma_node_offset_addr(&obj->vma_node);
 
 	drm_gem_object_put(obj);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lima_gem_sync_bo(struct lima_sched_task *task, struct lima_bo *bo,
-			    bool write, bool explicit)
-{
-	int err = 0;
+अटल पूर्णांक lima_gem_sync_bo(काष्ठा lima_sched_task *task, काष्ठा lima_bo *bo,
+			    bool ग_लिखो, bool explicit)
+अणु
+	पूर्णांक err = 0;
 
-	if (!write) {
+	अगर (!ग_लिखो) अणु
 		err = dma_resv_reserve_shared(lima_bo_resv(bo), 1);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	/* explicit sync use user passed dep fence */
-	if (explicit)
-		return 0;
+	अगर (explicit)
+		वापस 0;
 
-	return drm_gem_fence_array_add_implicit(&task->deps, &bo->base.base, write);
-}
+	वापस drm_gem_fence_array_add_implicit(&task->deps, &bo->base.base, ग_लिखो);
+पूर्ण
 
-static int lima_gem_add_deps(struct drm_file *file, struct lima_submit *submit)
-{
-	int i, err;
+अटल पूर्णांक lima_gem_add_deps(काष्ठा drm_file *file, काष्ठा lima_submit *submit)
+अणु
+	पूर्णांक i, err;
 
-	for (i = 0; i < ARRAY_SIZE(submit->in_sync); i++) {
-		struct dma_fence *fence = NULL;
+	क्रम (i = 0; i < ARRAY_SIZE(submit->in_sync); i++) अणु
+		काष्ठा dma_fence *fence = शून्य;
 
-		if (!submit->in_sync[i])
-			continue;
+		अगर (!submit->in_sync[i])
+			जारी;
 
 		err = drm_syncobj_find_fence(file, submit->in_sync[i],
 					     0, 0, &fence);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = drm_gem_fence_array_add(&submit->task->deps, fence);
-		if (err) {
+		अगर (err) अणु
 			dma_fence_put(fence);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int lima_gem_submit(struct drm_file *file, struct lima_submit *submit)
-{
-	int i, err = 0;
-	struct ww_acquire_ctx ctx;
-	struct lima_drm_priv *priv = to_lima_drm_priv(file);
-	struct lima_vm *vm = priv->vm;
-	struct drm_syncobj *out_sync = NULL;
-	struct dma_fence *fence;
-	struct lima_bo **bos = submit->lbos;
+पूर्णांक lima_gem_submit(काष्ठा drm_file *file, काष्ठा lima_submit *submit)
+अणु
+	पूर्णांक i, err = 0;
+	काष्ठा ww_acquire_ctx ctx;
+	काष्ठा lima_drm_priv *priv = to_lima_drm_priv(file);
+	काष्ठा lima_vm *vm = priv->vm;
+	काष्ठा drm_syncobj *out_sync = शून्य;
+	काष्ठा dma_fence *fence;
+	काष्ठा lima_bo **bos = submit->lbos;
 
-	if (submit->out_sync) {
+	अगर (submit->out_sync) अणु
 		out_sync = drm_syncobj_find(file, submit->out_sync);
-		if (!out_sync)
-			return -ENOENT;
-	}
+		अगर (!out_sync)
+			वापस -ENOENT;
+	पूर्ण
 
-	for (i = 0; i < submit->nr_bos; i++) {
-		struct drm_gem_object *obj;
-		struct lima_bo *bo;
+	क्रम (i = 0; i < submit->nr_bos; i++) अणु
+		काष्ठा drm_gem_object *obj;
+		काष्ठा lima_bo *bo;
 
 		obj = drm_gem_object_lookup(file, submit->bos[i].handle);
-		if (!obj) {
+		अगर (!obj) अणु
 			err = -ENOENT;
-			goto err_out0;
-		}
+			जाओ err_out0;
+		पूर्ण
 
 		bo = to_lima_bo(obj);
 
 		/* increase refcnt of gpu va map to prevent unmapped when executing,
-		 * will be decreased when task done
+		 * will be decreased when task करोne
 		 */
 		err = lima_vm_bo_add(vm, bo, false);
-		if (err) {
+		अगर (err) अणु
 			drm_gem_object_put(obj);
-			goto err_out0;
-		}
+			जाओ err_out0;
+		पूर्ण
 
 		bos[i] = bo;
-	}
+	पूर्ण
 
-	err = drm_gem_lock_reservations((struct drm_gem_object **)bos,
+	err = drm_gem_lock_reservations((काष्ठा drm_gem_object **)bos,
 					submit->nr_bos, &ctx);
-	if (err)
-		goto err_out0;
+	अगर (err)
+		जाओ err_out0;
 
 	err = lima_sched_task_init(
 		submit->task, submit->ctx->context + submit->pipe,
 		bos, submit->nr_bos, vm);
-	if (err)
-		goto err_out1;
+	अगर (err)
+		जाओ err_out1;
 
 	err = lima_gem_add_deps(file, submit);
-	if (err)
-		goto err_out2;
+	अगर (err)
+		जाओ err_out2;
 
-	for (i = 0; i < submit->nr_bos; i++) {
+	क्रम (i = 0; i < submit->nr_bos; i++) अणु
 		err = lima_gem_sync_bo(
 			submit->task, bos[i],
 			submit->bos[i].flags & LIMA_SUBMIT_BO_WRITE,
 			submit->flags & LIMA_SUBMIT_FLAG_EXPLICIT_FENCE);
-		if (err)
-			goto err_out2;
-	}
+		अगर (err)
+			जाओ err_out2;
+	पूर्ण
 
 	fence = lima_sched_context_queue_task(
 		submit->ctx->context + submit->pipe, submit->task);
 
-	for (i = 0; i < submit->nr_bos; i++) {
-		if (submit->bos[i].flags & LIMA_SUBMIT_BO_WRITE)
+	क्रम (i = 0; i < submit->nr_bos; i++) अणु
+		अगर (submit->bos[i].flags & LIMA_SUBMIT_BO_WRITE)
 			dma_resv_add_excl_fence(lima_bo_resv(bos[i]), fence);
-		else
+		अन्यथा
 			dma_resv_add_shared_fence(lima_bo_resv(bos[i]), fence);
-	}
+	पूर्ण
 
-	drm_gem_unlock_reservations((struct drm_gem_object **)bos,
+	drm_gem_unlock_reservations((काष्ठा drm_gem_object **)bos,
 				    submit->nr_bos, &ctx);
 
-	for (i = 0; i < submit->nr_bos; i++)
+	क्रम (i = 0; i < submit->nr_bos; i++)
 		drm_gem_object_put(&bos[i]->base.base);
 
-	if (out_sync) {
+	अगर (out_sync) अणु
 		drm_syncobj_replace_fence(out_sync, fence);
 		drm_syncobj_put(out_sync);
-	}
+	पूर्ण
 
 	dma_fence_put(fence);
 
-	return 0;
+	वापस 0;
 
 err_out2:
 	lima_sched_task_fini(submit->task);
 err_out1:
-	drm_gem_unlock_reservations((struct drm_gem_object **)bos,
+	drm_gem_unlock_reservations((काष्ठा drm_gem_object **)bos,
 				    submit->nr_bos, &ctx);
 err_out0:
-	for (i = 0; i < submit->nr_bos; i++) {
-		if (!bos[i])
-			break;
+	क्रम (i = 0; i < submit->nr_bos; i++) अणु
+		अगर (!bos[i])
+			अवरोध;
 		lima_vm_bo_del(vm, bos[i]);
 		drm_gem_object_put(&bos[i]->base.base);
-	}
-	if (out_sync)
+	पूर्ण
+	अगर (out_sync)
 		drm_syncobj_put(out_sync);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int lima_gem_wait(struct drm_file *file, u32 handle, u32 op, s64 timeout_ns)
-{
-	bool write = op & LIMA_GEM_WAIT_WRITE;
-	long ret, timeout;
+पूर्णांक lima_gem_रुको(काष्ठा drm_file *file, u32 handle, u32 op, s64 समयout_ns)
+अणु
+	bool ग_लिखो = op & LIMA_GEM_WAIT_WRITE;
+	दीर्घ ret, समयout;
 
-	if (!op)
-		return 0;
+	अगर (!op)
+		वापस 0;
 
-	timeout = drm_timeout_abs_to_jiffies(timeout_ns);
+	समयout = drm_समयout_असल_to_jअगरfies(समयout_ns);
 
-	ret = drm_gem_dma_resv_wait(file, handle, write, timeout);
-	if (ret == -ETIME)
-		ret = timeout ? -ETIMEDOUT : -EBUSY;
+	ret = drm_gem_dma_resv_रुको(file, handle, ग_लिखो, समयout);
+	अगर (ret == -ETIME)
+		ret = समयout ? -ETIMEDOUT : -EBUSY;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

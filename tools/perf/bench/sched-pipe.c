@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *
  * sched-pipe.c
  *
- * pipe: Benchmark for pipe()
+ * pipe: Benchmark क्रम pipe()
  *
  * Based on pipe-test-1m.c by Ingo Molnar <mingo@redhat.com>
  *  http://people.redhat.com/mingo/cfs-scheduler/tools/pipe-test-1m.c
  * Ported to perf by Hitoshi Mitake <mitake@dcl.info.waseda.ac.jp>
  */
-#include <subcmd/parse-options.h>
-#include "bench.h"
+#समावेश <subcmd/parse-options.h>
+#समावेश "bench.h"
 
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <sys/wait.h>
-#include <string.h>
-#include <errno.h>
-#include <assert.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
-#include <linux/time64.h>
+#समावेश <unistd.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <संकेत.स>
+#समावेश <sys/रुको.h>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <निश्चित.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/types.h>
+#समावेश <sys/syscall.h>
+#समावेश <linux/समय64.h>
 
-#include <pthread.h>
+#समावेश <pthपढ़ो.h>
 
-struct thread_data {
-	int			nr;
-	int			pipe_read;
-	int			pipe_write;
-	pthread_t		pthread;
-};
+काष्ठा thपढ़ो_data अणु
+	पूर्णांक			nr;
+	पूर्णांक			pipe_पढ़ो;
+	पूर्णांक			pipe_ग_लिखो;
+	pthपढ़ो_t		pthपढ़ो;
+पूर्ण;
 
-#define LOOPS_DEFAULT 1000000
-static	int			loops = LOOPS_DEFAULT;
+#घोषणा LOOPS_DEFAULT 1000000
+अटल	पूर्णांक			loops = LOOPS_DEFAULT;
 
-/* Use processes by default: */
-static bool			threaded;
+/* Use processes by शेष: */
+अटल bool			thपढ़ोed;
 
-static const struct option options[] = {
+अटल स्थिर काष्ठा option options[] = अणु
 	OPT_INTEGER('l', "loop",	&loops,		"Specify number of loops"),
-	OPT_BOOLEAN('T', "threaded",	&threaded,	"Specify threads/process based task setup"),
+	OPT_BOOLEAN('T', "threaded",	&thपढ़ोed,	"Specify threads/process based task setup"),
 	OPT_END()
-};
+पूर्ण;
 
-static const char * const bench_sched_pipe_usage[] = {
+अटल स्थिर अक्षर * स्थिर bench_sched_pipe_usage[] = अणु
 	"perf bench sched pipe <options>",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static void *worker_thread(void *__tdata)
-{
-	struct thread_data *td = __tdata;
-	int m = 0, i;
-	int ret;
+अटल व्योम *worker_thपढ़ो(व्योम *__tdata)
+अणु
+	काष्ठा thपढ़ो_data *td = __tdata;
+	पूर्णांक m = 0, i;
+	पूर्णांक ret;
 
-	for (i = 0; i < loops; i++) {
-		if (!td->nr) {
-			ret = read(td->pipe_read, &m, sizeof(int));
-			BUG_ON(ret != sizeof(int));
-			ret = write(td->pipe_write, &m, sizeof(int));
-			BUG_ON(ret != sizeof(int));
-		} else {
-			ret = write(td->pipe_write, &m, sizeof(int));
-			BUG_ON(ret != sizeof(int));
-			ret = read(td->pipe_read, &m, sizeof(int));
-			BUG_ON(ret != sizeof(int));
-		}
-	}
+	क्रम (i = 0; i < loops; i++) अणु
+		अगर (!td->nr) अणु
+			ret = पढ़ो(td->pipe_पढ़ो, &m, माप(पूर्णांक));
+			BUG_ON(ret != माप(पूर्णांक));
+			ret = ग_लिखो(td->pipe_ग_लिखो, &m, माप(पूर्णांक));
+			BUG_ON(ret != माप(पूर्णांक));
+		पूर्ण अन्यथा अणु
+			ret = ग_लिखो(td->pipe_ग_लिखो, &m, माप(पूर्णांक));
+			BUG_ON(ret != माप(पूर्णांक));
+			ret = पढ़ो(td->pipe_पढ़ो, &m, माप(पूर्णांक));
+			BUG_ON(ret != माप(पूर्णांक));
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int bench_sched_pipe(int argc, const char **argv)
-{
-	struct thread_data threads[2], *td;
-	int pipe_1[2], pipe_2[2];
-	struct timeval start, stop, diff;
-	unsigned long long result_usec = 0;
-	int nr_threads = 2;
-	int t;
+पूर्णांक bench_sched_pipe(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा thपढ़ो_data thपढ़ोs[2], *td;
+	पूर्णांक pipe_1[2], pipe_2[2];
+	काष्ठा समयval start, stop, dअगरf;
+	अचिन्हित दीर्घ दीर्घ result_usec = 0;
+	पूर्णांक nr_thपढ़ोs = 2;
+	पूर्णांक t;
 
 	/*
-	 * why does "ret" exist?
-	 * discarding returned value of read(), write()
-	 * causes error in building environment for perf
+	 * why करोes "ret" exist?
+	 * discarding वापसed value of पढ़ो(), ग_लिखो()
+	 * causes error in building environment क्रम perf
 	 */
-	int __maybe_unused ret, wait_stat;
+	पूर्णांक __maybe_unused ret, रुको_stat;
 	pid_t pid, retpid __maybe_unused;
 
 	argc = parse_options(argc, argv, options, bench_sched_pipe_usage, 0);
@@ -96,88 +97,88 @@ int bench_sched_pipe(int argc, const char **argv)
 	BUG_ON(pipe(pipe_1));
 	BUG_ON(pipe(pipe_2));
 
-	gettimeofday(&start, NULL);
+	समय_लोofday(&start, शून्य);
 
-	for (t = 0; t < nr_threads; t++) {
-		td = threads + t;
+	क्रम (t = 0; t < nr_thपढ़ोs; t++) अणु
+		td = thपढ़ोs + t;
 
 		td->nr = t;
 
-		if (t == 0) {
-			td->pipe_read = pipe_1[0];
-			td->pipe_write = pipe_2[1];
-		} else {
-			td->pipe_write = pipe_1[1];
-			td->pipe_read = pipe_2[0];
-		}
-	}
+		अगर (t == 0) अणु
+			td->pipe_पढ़ो = pipe_1[0];
+			td->pipe_ग_लिखो = pipe_2[1];
+		पूर्ण अन्यथा अणु
+			td->pipe_ग_लिखो = pipe_1[1];
+			td->pipe_पढ़ो = pipe_2[0];
+		पूर्ण
+	पूर्ण
 
 
-	if (threaded) {
+	अगर (thपढ़ोed) अणु
 
-		for (t = 0; t < nr_threads; t++) {
-			td = threads + t;
+		क्रम (t = 0; t < nr_thपढ़ोs; t++) अणु
+			td = thपढ़ोs + t;
 
-			ret = pthread_create(&td->pthread, NULL, worker_thread, td);
+			ret = pthपढ़ो_create(&td->pthपढ़ो, शून्य, worker_thपढ़ो, td);
 			BUG_ON(ret);
-		}
+		पूर्ण
 
-		for (t = 0; t < nr_threads; t++) {
-			td = threads + t;
+		क्रम (t = 0; t < nr_thपढ़ोs; t++) अणु
+			td = thपढ़ोs + t;
 
-			ret = pthread_join(td->pthread, NULL);
+			ret = pthपढ़ो_join(td->pthपढ़ो, शून्य);
 			BUG_ON(ret);
-		}
+		पूर्ण
 
-	} else {
-		pid = fork();
-		assert(pid >= 0);
+	पूर्ण अन्यथा अणु
+		pid = विभाजन();
+		निश्चित(pid >= 0);
 
-		if (!pid) {
-			worker_thread(threads + 0);
-			exit(0);
-		} else {
-			worker_thread(threads + 1);
-		}
+		अगर (!pid) अणु
+			worker_thपढ़ो(thपढ़ोs + 0);
+			निकास(0);
+		पूर्ण अन्यथा अणु
+			worker_thपढ़ो(thपढ़ोs + 1);
+		पूर्ण
 
-		retpid = waitpid(pid, &wait_stat, 0);
-		assert((retpid == pid) && WIFEXITED(wait_stat));
-	}
+		retpid = रुकोpid(pid, &रुको_stat, 0);
+		निश्चित((retpid == pid) && WIFEXITED(रुको_stat));
+	पूर्ण
 
-	gettimeofday(&stop, NULL);
-	timersub(&stop, &start, &diff);
+	समय_लोofday(&stop, शून्य);
+	समयrsub(&stop, &start, &dअगरf);
 
-	switch (bench_format) {
-	case BENCH_FORMAT_DEFAULT:
-		printf("# Executed %d pipe operations between two %s\n\n",
-			loops, threaded ? "threads" : "processes");
+	चयन (bench_क्रमmat) अणु
+	हाल BENCH_FORMAT_DEFAULT:
+		म_लिखो("# Executed %d pipe operations between two %s\n\n",
+			loops, thपढ़ोed ? "threads" : "processes");
 
-		result_usec = diff.tv_sec * USEC_PER_SEC;
-		result_usec += diff.tv_usec;
+		result_usec = dअगरf.tv_sec * USEC_PER_SEC;
+		result_usec += dअगरf.tv_usec;
 
-		printf(" %14s: %lu.%03lu [sec]\n\n", "Total time",
-		       (unsigned long) diff.tv_sec,
-		       (unsigned long) (diff.tv_usec / USEC_PER_MSEC));
+		म_लिखो(" %14s: %lu.%03lu [sec]\n\n", "Total time",
+		       (अचिन्हित दीर्घ) dअगरf.tv_sec,
+		       (अचिन्हित दीर्घ) (dअगरf.tv_usec / USEC_PER_MSEC));
 
-		printf(" %14lf usecs/op\n",
-		       (double)result_usec / (double)loops);
-		printf(" %14d ops/sec\n",
-		       (int)((double)loops /
-			     ((double)result_usec / (double)USEC_PER_SEC)));
-		break;
+		म_लिखो(" %14lf usecs/op\n",
+		       (द्विगुन)result_usec / (द्विगुन)loops);
+		म_लिखो(" %14d ops/sec\n",
+		       (पूर्णांक)((द्विगुन)loops /
+			     ((द्विगुन)result_usec / (द्विगुन)USEC_PER_SEC)));
+		अवरोध;
 
-	case BENCH_FORMAT_SIMPLE:
-		printf("%lu.%03lu\n",
-		       (unsigned long) diff.tv_sec,
-		       (unsigned long) (diff.tv_usec / USEC_PER_MSEC));
-		break;
+	हाल BENCH_FORMAT_SIMPLE:
+		म_लिखो("%lu.%03lu\n",
+		       (अचिन्हित दीर्घ) dअगरf.tv_sec,
+		       (अचिन्हित दीर्घ) (dअगरf.tv_usec / USEC_PER_MSEC));
+		अवरोध;
 
-	default:
+	शेष:
 		/* reaching here is something disaster */
-		fprintf(stderr, "Unknown format:%d\n", bench_format);
-		exit(1);
-		break;
-	}
+		ख_लिखो(मानक_त्रुटि, "Unknown format:%d\n", bench_क्रमmat);
+		निकास(1);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

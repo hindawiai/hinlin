@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -26,106 +27,106 @@
  *          Jerome Glisse
  */
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_device.h>
-#include <drm/radeon_drm.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/radeon_drm.h>
 
-#include "atom.h"
-#include "radeon.h"
-#include "radeon_asic.h"
-#include "radeon_reg.h"
+#समावेश "atom.h"
+#समावेश "radeon.h"
+#समावेश "radeon_asic.h"
+#समावेश "radeon_reg.h"
 
 /* 10 khz */
-uint32_t radeon_legacy_get_engine_clock(struct radeon_device *rdev)
-{
-	struct radeon_pll *spll = &rdev->clock.spll;
-	uint32_t fb_div, ref_div, post_div, sclk;
+uपूर्णांक32_t radeon_legacy_get_engine_घड़ी(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_pll *spll = &rdev->घड़ी.spll;
+	uपूर्णांक32_t fb_भाग, ref_भाग, post_भाग, sclk;
 
-	fb_div = RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV);
-	fb_div = (fb_div >> RADEON_SPLL_FB_DIV_SHIFT) & RADEON_SPLL_FB_DIV_MASK;
-	fb_div <<= 1;
-	fb_div *= spll->reference_freq;
+	fb_भाग = RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV);
+	fb_भाग = (fb_भाग >> RADEON_SPLL_FB_DIV_SHIFT) & RADEON_SPLL_FB_DIV_MASK;
+	fb_भाग <<= 1;
+	fb_भाग *= spll->reference_freq;
 
-	ref_div =
+	ref_भाग =
 	    RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV) & RADEON_M_SPLL_REF_DIV_MASK;
 
-	if (ref_div == 0)
-		return 0;
+	अगर (ref_भाग == 0)
+		वापस 0;
 
-	sclk = fb_div / ref_div;
+	sclk = fb_भाग / ref_भाग;
 
-	post_div = RREG32_PLL(RADEON_SCLK_CNTL) & RADEON_SCLK_SRC_SEL_MASK;
-	if (post_div == 2)
+	post_भाग = RREG32_PLL(RADEON_SCLK_CNTL) & RADEON_SCLK_SRC_SEL_MASK;
+	अगर (post_भाग == 2)
 		sclk >>= 1;
-	else if (post_div == 3)
+	अन्यथा अगर (post_भाग == 3)
 		sclk >>= 2;
-	else if (post_div == 4)
+	अन्यथा अगर (post_भाग == 4)
 		sclk >>= 3;
 
-	return sclk;
-}
+	वापस sclk;
+पूर्ण
 
 /* 10 khz */
-uint32_t radeon_legacy_get_memory_clock(struct radeon_device *rdev)
-{
-	struct radeon_pll *mpll = &rdev->clock.mpll;
-	uint32_t fb_div, ref_div, post_div, mclk;
+uपूर्णांक32_t radeon_legacy_get_memory_घड़ी(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_pll *mpll = &rdev->घड़ी.mpll;
+	uपूर्णांक32_t fb_भाग, ref_भाग, post_भाग, mclk;
 
-	fb_div = RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV);
-	fb_div = (fb_div >> RADEON_MPLL_FB_DIV_SHIFT) & RADEON_MPLL_FB_DIV_MASK;
-	fb_div <<= 1;
-	fb_div *= mpll->reference_freq;
+	fb_भाग = RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV);
+	fb_भाग = (fb_भाग >> RADEON_MPLL_FB_DIV_SHIFT) & RADEON_MPLL_FB_DIV_MASK;
+	fb_भाग <<= 1;
+	fb_भाग *= mpll->reference_freq;
 
-	ref_div =
+	ref_भाग =
 	    RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV) & RADEON_M_SPLL_REF_DIV_MASK;
 
-	if (ref_div == 0)
-		return 0;
+	अगर (ref_भाग == 0)
+		वापस 0;
 
-	mclk = fb_div / ref_div;
+	mclk = fb_भाग / ref_भाग;
 
-	post_div = RREG32_PLL(RADEON_MCLK_CNTL) & 0x7;
-	if (post_div == 2)
+	post_भाग = RREG32_PLL(RADEON_MCLK_CNTL) & 0x7;
+	अगर (post_भाग == 2)
 		mclk >>= 1;
-	else if (post_div == 3)
+	अन्यथा अगर (post_भाग == 3)
 		mclk >>= 2;
-	else if (post_div == 4)
+	अन्यथा अगर (post_भाग == 4)
 		mclk >>= 3;
 
-	return mclk;
-}
+	वापस mclk;
+पूर्ण
 
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 /*
- * Read XTAL (ref clock), SCLK and MCLK from Open Firmware device
+ * Read XTAL (ref घड़ी), SCLK and MCLK from Open Firmware device
  * tree. Hopefully, ATI OF driver is kind enough to fill these
  */
-static bool radeon_read_clocks_OF(struct drm_device *dev)
-{
-	struct radeon_device *rdev = dev->dev_private;
-	struct device_node *dp = rdev->pdev->dev.of_node;
-	const u32 *val;
-	struct radeon_pll *p1pll = &rdev->clock.p1pll;
-	struct radeon_pll *p2pll = &rdev->clock.p2pll;
-	struct radeon_pll *spll = &rdev->clock.spll;
-	struct radeon_pll *mpll = &rdev->clock.mpll;
+अटल bool radeon_पढ़ो_घड़ीs_OF(काष्ठा drm_device *dev)
+अणु
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा device_node *dp = rdev->pdev->dev.of_node;
+	स्थिर u32 *val;
+	काष्ठा radeon_pll *p1pll = &rdev->घड़ी.p1pll;
+	काष्ठा radeon_pll *p2pll = &rdev->घड़ी.p2pll;
+	काष्ठा radeon_pll *spll = &rdev->घड़ी.spll;
+	काष्ठा radeon_pll *mpll = &rdev->घड़ी.mpll;
 
-	if (dp == NULL)
-		return false;
-	val = of_get_property(dp, "ATY,RefCLK", NULL);
-	if (!val || !*val) {
+	अगर (dp == शून्य)
+		वापस false;
+	val = of_get_property(dp, "ATY,RefCLK", शून्य);
+	अगर (!val || !*val) अणु
 		pr_warn("radeonfb: No ATY,RefCLK property !\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	p1pll->reference_freq = p2pll->reference_freq = (*val) / 10;
-	p1pll->reference_div = RREG32_PLL(RADEON_PPLL_REF_DIV) & 0x3ff;
-	if (p1pll->reference_div < 2)
-		p1pll->reference_div = 12;
-	p2pll->reference_div = p1pll->reference_div;
+	p1pll->reference_भाग = RREG32_PLL(RADEON_PPLL_REF_DIV) & 0x3ff;
+	अगर (p1pll->reference_भाग < 2)
+		p1pll->reference_भाग = 12;
+	p2pll->reference_भाग = p1pll->reference_भाग;
 
 	/* These aren't in the device-tree */
-	if (rdev->family >= CHIP_R420) {
+	अगर (rdev->family >= CHIP_R420) अणु
 		p1pll->pll_in_min = 100;
 		p1pll->pll_in_max = 1350;
 		p1pll->pll_out_min = 20000;
@@ -134,7 +135,7 @@ static bool radeon_read_clocks_OF(struct drm_device *dev)
 		p2pll->pll_in_max = 1350;
 		p2pll->pll_out_min = 20000;
 		p2pll->pll_out_max = 50000;
-	} else {
+	पूर्ण अन्यथा अणु
 		p1pll->pll_in_min = 40;
 		p1pll->pll_in_max = 500;
 		p1pll->pll_out_min = 12500;
@@ -143,108 +144,108 @@ static bool radeon_read_clocks_OF(struct drm_device *dev)
 		p2pll->pll_in_max = 500;
 		p2pll->pll_out_min = 12500;
 		p2pll->pll_out_max = 35000;
-	}
-	/* not sure what the max should be in all cases */
-	rdev->clock.max_pixel_clock = 35000;
+	पूर्ण
+	/* not sure what the max should be in all हालs */
+	rdev->घड़ी.max_pixel_घड़ी = 35000;
 
 	spll->reference_freq = mpll->reference_freq = p1pll->reference_freq;
-	spll->reference_div = mpll->reference_div =
+	spll->reference_भाग = mpll->reference_भाग =
 		RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV) &
 			    RADEON_M_SPLL_REF_DIV_MASK;
 
-	val = of_get_property(dp, "ATY,SCLK", NULL);
-	if (val && *val)
-		rdev->clock.default_sclk = (*val) / 10;
-	else
-		rdev->clock.default_sclk =
-			radeon_legacy_get_engine_clock(rdev);
+	val = of_get_property(dp, "ATY,SCLK", शून्य);
+	अगर (val && *val)
+		rdev->घड़ी.शेष_sclk = (*val) / 10;
+	अन्यथा
+		rdev->घड़ी.शेष_sclk =
+			radeon_legacy_get_engine_घड़ी(rdev);
 
-	val = of_get_property(dp, "ATY,MCLK", NULL);
-	if (val && *val)
-		rdev->clock.default_mclk = (*val) / 10;
-	else
-		rdev->clock.default_mclk =
-			radeon_legacy_get_memory_clock(rdev);
+	val = of_get_property(dp, "ATY,MCLK", शून्य);
+	अगर (val && *val)
+		rdev->घड़ी.शेष_mclk = (*val) / 10;
+	अन्यथा
+		rdev->घड़ी.शेष_mclk =
+			radeon_legacy_get_memory_घड़ी(rdev);
 
 	DRM_INFO("Using device-tree clock info\n");
 
-	return true;
-}
-#else
-static bool radeon_read_clocks_OF(struct drm_device *dev)
-{
-	return false;
-}
-#endif /* CONFIG_OF */
+	वापस true;
+पूर्ण
+#अन्यथा
+अटल bool radeon_पढ़ो_घड़ीs_OF(काष्ठा drm_device *dev)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF */
 
-void radeon_get_clock_info(struct drm_device *dev)
-{
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_pll *p1pll = &rdev->clock.p1pll;
-	struct radeon_pll *p2pll = &rdev->clock.p2pll;
-	struct radeon_pll *dcpll = &rdev->clock.dcpll;
-	struct radeon_pll *spll = &rdev->clock.spll;
-	struct radeon_pll *mpll = &rdev->clock.mpll;
-	int ret;
+व्योम radeon_get_घड़ी_info(काष्ठा drm_device *dev)
+अणु
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_pll *p1pll = &rdev->घड़ी.p1pll;
+	काष्ठा radeon_pll *p2pll = &rdev->घड़ी.p2pll;
+	काष्ठा radeon_pll *dcpll = &rdev->घड़ी.dcpll;
+	काष्ठा radeon_pll *spll = &rdev->घड़ी.spll;
+	काष्ठा radeon_pll *mpll = &rdev->घड़ी.mpll;
+	पूर्णांक ret;
 
-	if (rdev->is_atom_bios)
-		ret = radeon_atom_get_clock_info(dev);
-	else
-		ret = radeon_combios_get_clock_info(dev);
-	if (!ret)
-		ret = radeon_read_clocks_OF(dev);
+	अगर (rdev->is_atom_bios)
+		ret = radeon_atom_get_घड़ी_info(dev);
+	अन्यथा
+		ret = radeon_combios_get_घड़ी_info(dev);
+	अगर (!ret)
+		ret = radeon_पढ़ो_घड़ीs_OF(dev);
 
-	if (ret) {
-		if (p1pll->reference_div < 2) {
-			if (!ASIC_IS_AVIVO(rdev)) {
-				u32 tmp = RREG32_PLL(RADEON_PPLL_REF_DIV);
-				if (ASIC_IS_R300(rdev))
-					p1pll->reference_div =
-						(tmp & R300_PPLL_REF_DIV_ACC_MASK) >> R300_PPLL_REF_DIV_ACC_SHIFT;
-				else
-					p1pll->reference_div = tmp & RADEON_PPLL_REF_DIV_MASK;
-				if (p1pll->reference_div < 2)
-					p1pll->reference_div = 12;
-			} else
-				p1pll->reference_div = 12;
-		}
-		if (p2pll->reference_div < 2)
-			p2pll->reference_div = 12;
-		if (rdev->family < CHIP_RS600) {
-			if (spll->reference_div < 2)
-				spll->reference_div =
+	अगर (ret) अणु
+		अगर (p1pll->reference_भाग < 2) अणु
+			अगर (!ASIC_IS_AVIVO(rdev)) अणु
+				u32 पंचांगp = RREG32_PLL(RADEON_PPLL_REF_DIV);
+				अगर (ASIC_IS_R300(rdev))
+					p1pll->reference_भाग =
+						(पंचांगp & R300_PPLL_REF_DIV_ACC_MASK) >> R300_PPLL_REF_DIV_ACC_SHIFT;
+				अन्यथा
+					p1pll->reference_भाग = पंचांगp & RADEON_PPLL_REF_DIV_MASK;
+				अगर (p1pll->reference_भाग < 2)
+					p1pll->reference_भाग = 12;
+			पूर्ण अन्यथा
+				p1pll->reference_भाग = 12;
+		पूर्ण
+		अगर (p2pll->reference_भाग < 2)
+			p2pll->reference_भाग = 12;
+		अगर (rdev->family < CHIP_RS600) अणु
+			अगर (spll->reference_भाग < 2)
+				spll->reference_भाग =
 					RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV) &
 					RADEON_M_SPLL_REF_DIV_MASK;
-		}
-		if (mpll->reference_div < 2)
-			mpll->reference_div = spll->reference_div;
-	} else {
-		if (ASIC_IS_AVIVO(rdev)) {
+		पूर्ण
+		अगर (mpll->reference_भाग < 2)
+			mpll->reference_भाग = spll->reference_भाग;
+	पूर्ण अन्यथा अणु
+		अगर (ASIC_IS_AVIVO(rdev)) अणु
 			/* TODO FALLBACK */
-		} else {
+		पूर्ण अन्यथा अणु
 			DRM_INFO("Using generic clock info\n");
 
 			/* may need to be per card */
-			rdev->clock.max_pixel_clock = 35000;
+			rdev->घड़ी.max_pixel_घड़ी = 35000;
 
-			if (rdev->flags & RADEON_IS_IGP) {
+			अगर (rdev->flags & RADEON_IS_IGP) अणु
 				p1pll->reference_freq = 1432;
 				p2pll->reference_freq = 1432;
 				spll->reference_freq = 1432;
 				mpll->reference_freq = 1432;
-			} else {
+			पूर्ण अन्यथा अणु
 				p1pll->reference_freq = 2700;
 				p2pll->reference_freq = 2700;
 				spll->reference_freq = 2700;
 				mpll->reference_freq = 2700;
-			}
-			p1pll->reference_div =
+			पूर्ण
+			p1pll->reference_भाग =
 			    RREG32_PLL(RADEON_PPLL_REF_DIV) & 0x3ff;
-			if (p1pll->reference_div < 2)
-				p1pll->reference_div = 12;
-			p2pll->reference_div = p1pll->reference_div;
+			अगर (p1pll->reference_भाग < 2)
+				p1pll->reference_भाग = 12;
+			p2pll->reference_भाग = p1pll->reference_भाग;
 
-			if (rdev->family >= CHIP_R420) {
+			अगर (rdev->family >= CHIP_R420) अणु
 				p1pll->pll_in_min = 100;
 				p1pll->pll_in_max = 1350;
 				p1pll->pll_out_min = 20000;
@@ -253,7 +254,7 @@ void radeon_get_clock_info(struct drm_device *dev)
 				p2pll->pll_in_max = 1350;
 				p2pll->pll_out_min = 20000;
 				p2pll->pll_out_max = 50000;
-			} else {
+			पूर्ण अन्यथा अणु
 				p1pll->pll_in_min = 40;
 				p1pll->pll_in_max = 500;
 				p1pll->pll_out_min = 12500;
@@ -262,243 +263,243 @@ void radeon_get_clock_info(struct drm_device *dev)
 				p2pll->pll_in_max = 500;
 				p2pll->pll_out_min = 12500;
 				p2pll->pll_out_max = 35000;
-			}
+			पूर्ण
 
-			spll->reference_div =
+			spll->reference_भाग =
 			    RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV) &
 			    RADEON_M_SPLL_REF_DIV_MASK;
-			mpll->reference_div = spll->reference_div;
-			rdev->clock.default_sclk =
-			    radeon_legacy_get_engine_clock(rdev);
-			rdev->clock.default_mclk =
-			    radeon_legacy_get_memory_clock(rdev);
-		}
-	}
+			mpll->reference_भाग = spll->reference_भाग;
+			rdev->घड़ी.शेष_sclk =
+			    radeon_legacy_get_engine_घड़ी(rdev);
+			rdev->घड़ी.शेष_mclk =
+			    radeon_legacy_get_memory_घड़ी(rdev);
+		पूर्ण
+	पूर्ण
 
-	/* pixel clocks */
-	if (ASIC_IS_AVIVO(rdev)) {
-		p1pll->min_post_div = 2;
-		p1pll->max_post_div = 0x7f;
-		p1pll->min_frac_feedback_div = 0;
-		p1pll->max_frac_feedback_div = 9;
-		p2pll->min_post_div = 2;
-		p2pll->max_post_div = 0x7f;
-		p2pll->min_frac_feedback_div = 0;
-		p2pll->max_frac_feedback_div = 9;
-	} else {
-		p1pll->min_post_div = 1;
-		p1pll->max_post_div = 16;
-		p1pll->min_frac_feedback_div = 0;
-		p1pll->max_frac_feedback_div = 0;
-		p2pll->min_post_div = 1;
-		p2pll->max_post_div = 12;
-		p2pll->min_frac_feedback_div = 0;
-		p2pll->max_frac_feedback_div = 0;
-	}
+	/* pixel घड़ीs */
+	अगर (ASIC_IS_AVIVO(rdev)) अणु
+		p1pll->min_post_भाग = 2;
+		p1pll->max_post_भाग = 0x7f;
+		p1pll->min_frac_feedback_भाग = 0;
+		p1pll->max_frac_feedback_भाग = 9;
+		p2pll->min_post_भाग = 2;
+		p2pll->max_post_भाग = 0x7f;
+		p2pll->min_frac_feedback_भाग = 0;
+		p2pll->max_frac_feedback_भाग = 9;
+	पूर्ण अन्यथा अणु
+		p1pll->min_post_भाग = 1;
+		p1pll->max_post_भाग = 16;
+		p1pll->min_frac_feedback_भाग = 0;
+		p1pll->max_frac_feedback_भाग = 0;
+		p2pll->min_post_भाग = 1;
+		p2pll->max_post_भाग = 12;
+		p2pll->min_frac_feedback_भाग = 0;
+		p2pll->max_frac_feedback_भाग = 0;
+	पूर्ण
 
 	/* dcpll is DCE4 only */
-	dcpll->min_post_div = 2;
-	dcpll->max_post_div = 0x7f;
-	dcpll->min_frac_feedback_div = 0;
-	dcpll->max_frac_feedback_div = 9;
-	dcpll->min_ref_div = 2;
-	dcpll->max_ref_div = 0x3ff;
-	dcpll->min_feedback_div = 4;
-	dcpll->max_feedback_div = 0xfff;
+	dcpll->min_post_भाग = 2;
+	dcpll->max_post_भाग = 0x7f;
+	dcpll->min_frac_feedback_भाग = 0;
+	dcpll->max_frac_feedback_भाग = 9;
+	dcpll->min_ref_भाग = 2;
+	dcpll->max_ref_भाग = 0x3ff;
+	dcpll->min_feedback_भाग = 4;
+	dcpll->max_feedback_भाग = 0xfff;
 	dcpll->best_vco = 0;
 
-	p1pll->min_ref_div = 2;
-	p1pll->max_ref_div = 0x3ff;
-	p1pll->min_feedback_div = 4;
-	p1pll->max_feedback_div = 0x7ff;
+	p1pll->min_ref_भाग = 2;
+	p1pll->max_ref_भाग = 0x3ff;
+	p1pll->min_feedback_भाग = 4;
+	p1pll->max_feedback_भाग = 0x7ff;
 	p1pll->best_vco = 0;
 
-	p2pll->min_ref_div = 2;
-	p2pll->max_ref_div = 0x3ff;
-	p2pll->min_feedback_div = 4;
-	p2pll->max_feedback_div = 0x7ff;
+	p2pll->min_ref_भाग = 2;
+	p2pll->max_ref_भाग = 0x3ff;
+	p2pll->min_feedback_भाग = 4;
+	p2pll->max_feedback_भाग = 0x7ff;
 	p2pll->best_vco = 0;
 
-	/* system clock */
-	spll->min_post_div = 1;
-	spll->max_post_div = 1;
-	spll->min_ref_div = 2;
-	spll->max_ref_div = 0xff;
-	spll->min_feedback_div = 4;
-	spll->max_feedback_div = 0xff;
+	/* प्रणाली घड़ी */
+	spll->min_post_भाग = 1;
+	spll->max_post_भाग = 1;
+	spll->min_ref_भाग = 2;
+	spll->max_ref_भाग = 0xff;
+	spll->min_feedback_भाग = 4;
+	spll->max_feedback_भाग = 0xff;
 	spll->best_vco = 0;
 
-	/* memory clock */
-	mpll->min_post_div = 1;
-	mpll->max_post_div = 1;
-	mpll->min_ref_div = 2;
-	mpll->max_ref_div = 0xff;
-	mpll->min_feedback_div = 4;
-	mpll->max_feedback_div = 0xff;
+	/* memory घड़ी */
+	mpll->min_post_भाग = 1;
+	mpll->max_post_भाग = 1;
+	mpll->min_ref_भाग = 2;
+	mpll->max_ref_भाग = 0xff;
+	mpll->min_feedback_भाग = 4;
+	mpll->max_feedback_भाग = 0xff;
 	mpll->best_vco = 0;
 
-	if (!rdev->clock.default_sclk)
-		rdev->clock.default_sclk = radeon_get_engine_clock(rdev);
-	if ((!rdev->clock.default_mclk) && rdev->asic->pm.get_memory_clock)
-		rdev->clock.default_mclk = radeon_get_memory_clock(rdev);
+	अगर (!rdev->घड़ी.शेष_sclk)
+		rdev->घड़ी.शेष_sclk = radeon_get_engine_घड़ी(rdev);
+	अगर ((!rdev->घड़ी.शेष_mclk) && rdev->asic->pm.get_memory_घड़ी)
+		rdev->घड़ी.शेष_mclk = radeon_get_memory_घड़ी(rdev);
 
-	rdev->pm.current_sclk = rdev->clock.default_sclk;
-	rdev->pm.current_mclk = rdev->clock.default_mclk;
+	rdev->pm.current_sclk = rdev->घड़ी.शेष_sclk;
+	rdev->pm.current_mclk = rdev->घड़ी.शेष_mclk;
 
-}
+पूर्ण
 
 /* 10 khz */
-static uint32_t calc_eng_mem_clock(struct radeon_device *rdev,
-				   uint32_t req_clock,
-				   int *fb_div, int *post_div)
-{
-	struct radeon_pll *spll = &rdev->clock.spll;
-	int ref_div = spll->reference_div;
+अटल uपूर्णांक32_t calc_eng_mem_घड़ी(काष्ठा radeon_device *rdev,
+				   uपूर्णांक32_t req_घड़ी,
+				   पूर्णांक *fb_भाग, पूर्णांक *post_भाग)
+अणु
+	काष्ठा radeon_pll *spll = &rdev->घड़ी.spll;
+	पूर्णांक ref_भाग = spll->reference_भाग;
 
-	if (!ref_div)
-		ref_div =
+	अगर (!ref_भाग)
+		ref_भाग =
 		    RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV) &
 		    RADEON_M_SPLL_REF_DIV_MASK;
 
-	if (req_clock < 15000) {
-		*post_div = 8;
-		req_clock *= 8;
-	} else if (req_clock < 30000) {
-		*post_div = 4;
-		req_clock *= 4;
-	} else if (req_clock < 60000) {
-		*post_div = 2;
-		req_clock *= 2;
-	} else
-		*post_div = 1;
+	अगर (req_घड़ी < 15000) अणु
+		*post_भाग = 8;
+		req_घड़ी *= 8;
+	पूर्ण अन्यथा अगर (req_घड़ी < 30000) अणु
+		*post_भाग = 4;
+		req_घड़ी *= 4;
+	पूर्ण अन्यथा अगर (req_घड़ी < 60000) अणु
+		*post_भाग = 2;
+		req_घड़ी *= 2;
+	पूर्ण अन्यथा
+		*post_भाग = 1;
 
-	req_clock *= ref_div;
-	req_clock += spll->reference_freq;
-	req_clock /= (2 * spll->reference_freq);
+	req_घड़ी *= ref_भाग;
+	req_घड़ी += spll->reference_freq;
+	req_घड़ी /= (2 * spll->reference_freq);
 
-	*fb_div = req_clock & 0xff;
+	*fb_भाग = req_घड़ी & 0xff;
 
-	req_clock = (req_clock & 0xffff) << 1;
-	req_clock *= spll->reference_freq;
-	req_clock /= ref_div;
-	req_clock /= *post_div;
+	req_घड़ी = (req_घड़ी & 0xffff) << 1;
+	req_घड़ी *= spll->reference_freq;
+	req_घड़ी /= ref_भाग;
+	req_घड़ी /= *post_भाग;
 
-	return req_clock;
-}
+	वापस req_घड़ी;
+पूर्ण
 
 /* 10 khz */
-void radeon_legacy_set_engine_clock(struct radeon_device *rdev,
-				    uint32_t eng_clock)
-{
-	uint32_t tmp;
-	int fb_div, post_div;
+व्योम radeon_legacy_set_engine_घड़ी(काष्ठा radeon_device *rdev,
+				    uपूर्णांक32_t eng_घड़ी)
+अणु
+	uपूर्णांक32_t पंचांगp;
+	पूर्णांक fb_भाग, post_भाग;
 
-	/* XXX: wait for idle */
+	/* XXX: रुको क्रम idle */
 
-	eng_clock = calc_eng_mem_clock(rdev, eng_clock, &fb_div, &post_div);
+	eng_घड़ी = calc_eng_mem_घड़ी(rdev, eng_घड़ी, &fb_भाग, &post_भाग);
 
-	tmp = RREG32_PLL(RADEON_CLK_PIN_CNTL);
-	tmp &= ~RADEON_DONT_USE_XTALIN;
-	WREG32_PLL(RADEON_CLK_PIN_CNTL, tmp);
+	पंचांगp = RREG32_PLL(RADEON_CLK_PIN_CNTL);
+	पंचांगp &= ~RADEON_DONT_USE_XTALIN;
+	WREG32_PLL(RADEON_CLK_PIN_CNTL, पंचांगp);
 
-	tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-	tmp &= ~RADEON_SCLK_SRC_SEL_MASK;
-	WREG32_PLL(RADEON_SCLK_CNTL, tmp);
+	पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+	पंचांगp &= ~RADEON_SCLK_SRC_SEL_MASK;
+	WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
 
 	udelay(10);
 
-	tmp = RREG32_PLL(RADEON_SPLL_CNTL);
-	tmp |= RADEON_SPLL_SLEEP;
-	WREG32_PLL(RADEON_SPLL_CNTL, tmp);
+	पंचांगp = RREG32_PLL(RADEON_SPLL_CNTL);
+	पंचांगp |= RADEON_SPLL_SLEEP;
+	WREG32_PLL(RADEON_SPLL_CNTL, पंचांगp);
 
 	udelay(2);
 
-	tmp = RREG32_PLL(RADEON_SPLL_CNTL);
-	tmp |= RADEON_SPLL_RESET;
-	WREG32_PLL(RADEON_SPLL_CNTL, tmp);
+	पंचांगp = RREG32_PLL(RADEON_SPLL_CNTL);
+	पंचांगp |= RADEON_SPLL_RESET;
+	WREG32_PLL(RADEON_SPLL_CNTL, पंचांगp);
 
 	udelay(200);
 
-	tmp = RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV);
-	tmp &= ~(RADEON_SPLL_FB_DIV_MASK << RADEON_SPLL_FB_DIV_SHIFT);
-	tmp |= (fb_div & RADEON_SPLL_FB_DIV_MASK) << RADEON_SPLL_FB_DIV_SHIFT;
-	WREG32_PLL(RADEON_M_SPLL_REF_FB_DIV, tmp);
+	पंचांगp = RREG32_PLL(RADEON_M_SPLL_REF_FB_DIV);
+	पंचांगp &= ~(RADEON_SPLL_FB_DIV_MASK << RADEON_SPLL_FB_DIV_SHIFT);
+	पंचांगp |= (fb_भाग & RADEON_SPLL_FB_DIV_MASK) << RADEON_SPLL_FB_DIV_SHIFT;
+	WREG32_PLL(RADEON_M_SPLL_REF_FB_DIV, पंचांगp);
 
-	/* XXX: verify on different asics */
-	tmp = RREG32_PLL(RADEON_SPLL_CNTL);
-	tmp &= ~RADEON_SPLL_PVG_MASK;
-	if ((eng_clock * post_div) >= 90000)
-		tmp |= (0x7 << RADEON_SPLL_PVG_SHIFT);
-	else
-		tmp |= (0x4 << RADEON_SPLL_PVG_SHIFT);
-	WREG32_PLL(RADEON_SPLL_CNTL, tmp);
+	/* XXX: verअगरy on dअगरferent asics */
+	पंचांगp = RREG32_PLL(RADEON_SPLL_CNTL);
+	पंचांगp &= ~RADEON_SPLL_PVG_MASK;
+	अगर ((eng_घड़ी * post_भाग) >= 90000)
+		पंचांगp |= (0x7 << RADEON_SPLL_PVG_SHIFT);
+	अन्यथा
+		पंचांगp |= (0x4 << RADEON_SPLL_PVG_SHIFT);
+	WREG32_PLL(RADEON_SPLL_CNTL, पंचांगp);
 
-	tmp = RREG32_PLL(RADEON_SPLL_CNTL);
-	tmp &= ~RADEON_SPLL_SLEEP;
-	WREG32_PLL(RADEON_SPLL_CNTL, tmp);
+	पंचांगp = RREG32_PLL(RADEON_SPLL_CNTL);
+	पंचांगp &= ~RADEON_SPLL_SLEEP;
+	WREG32_PLL(RADEON_SPLL_CNTL, पंचांगp);
 
 	udelay(2);
 
-	tmp = RREG32_PLL(RADEON_SPLL_CNTL);
-	tmp &= ~RADEON_SPLL_RESET;
-	WREG32_PLL(RADEON_SPLL_CNTL, tmp);
+	पंचांगp = RREG32_PLL(RADEON_SPLL_CNTL);
+	पंचांगp &= ~RADEON_SPLL_RESET;
+	WREG32_PLL(RADEON_SPLL_CNTL, पंचांगp);
 
 	udelay(200);
 
-	tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-	tmp &= ~RADEON_SCLK_SRC_SEL_MASK;
-	switch (post_div) {
-	case 1:
-	default:
-		tmp |= 1;
-		break;
-	case 2:
-		tmp |= 2;
-		break;
-	case 4:
-		tmp |= 3;
-		break;
-	case 8:
-		tmp |= 4;
-		break;
-	}
-	WREG32_PLL(RADEON_SCLK_CNTL, tmp);
+	पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+	पंचांगp &= ~RADEON_SCLK_SRC_SEL_MASK;
+	चयन (post_भाग) अणु
+	हाल 1:
+	शेष:
+		पंचांगp |= 1;
+		अवरोध;
+	हाल 2:
+		पंचांगp |= 2;
+		अवरोध;
+	हाल 4:
+		पंचांगp |= 3;
+		अवरोध;
+	हाल 8:
+		पंचांगp |= 4;
+		अवरोध;
+	पूर्ण
+	WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
 
 	udelay(20);
 
-	tmp = RREG32_PLL(RADEON_CLK_PIN_CNTL);
-	tmp |= RADEON_DONT_USE_XTALIN;
-	WREG32_PLL(RADEON_CLK_PIN_CNTL, tmp);
+	पंचांगp = RREG32_PLL(RADEON_CLK_PIN_CNTL);
+	पंचांगp |= RADEON_DONT_USE_XTALIN;
+	WREG32_PLL(RADEON_CLK_PIN_CNTL, पंचांगp);
 
 	udelay(10);
-}
+पूर्ण
 
-void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
-{
-	uint32_t tmp;
+व्योम radeon_legacy_set_घड़ी_gating(काष्ठा radeon_device *rdev, पूर्णांक enable)
+अणु
+	uपूर्णांक32_t पंचांगp;
 
-	if (enable) {
-		if (rdev->flags & RADEON_SINGLE_CRTC) {
-			tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-			if ((RREG32(RADEON_CONFIG_CNTL) &
+	अगर (enable) अणु
+		अगर (rdev->flags & RADEON_SINGLE_CRTC) अणु
+			पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+			अगर ((RREG32(RADEON_CONFIG_CNTL) &
 			     RADEON_CFG_ATI_REV_ID_MASK) >
-			    RADEON_CFG_ATI_REV_A13) {
-				tmp &=
+			    RADEON_CFG_ATI_REV_A13) अणु
+				पंचांगp &=
 				    ~(RADEON_SCLK_FORCE_CP |
 				      RADEON_SCLK_FORCE_RB);
-			}
-			tmp &=
+			पूर्ण
+			पंचांगp &=
 			    ~(RADEON_SCLK_FORCE_HDP | RADEON_SCLK_FORCE_DISP1 |
 			      RADEON_SCLK_FORCE_TOP | RADEON_SCLK_FORCE_SE |
 			      RADEON_SCLK_FORCE_IDCT | RADEON_SCLK_FORCE_RE |
 			      RADEON_SCLK_FORCE_PB | RADEON_SCLK_FORCE_TAM |
 			      RADEON_SCLK_FORCE_TDM);
-			WREG32_PLL(RADEON_SCLK_CNTL, tmp);
-		} else if (ASIC_IS_R300(rdev)) {
-			if ((rdev->family == CHIP_RS400) ||
-			    (rdev->family == CHIP_RS480)) {
-				tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-				tmp &=
+			WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
+		पूर्ण अन्यथा अगर (ASIC_IS_R300(rdev)) अणु
+			अगर ((rdev->family == CHIP_RS400) ||
+			    (rdev->family == CHIP_RS480)) अणु
+				पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+				पंचांगp &=
 				    ~(RADEON_SCLK_FORCE_DISP2 |
 				      RADEON_SCLK_FORCE_CP |
 				      RADEON_SCLK_FORCE_HDP |
@@ -512,24 +513,24 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 				      RADEON_SCLK_FORCE_TV_SCLK |
 				      R300_SCLK_FORCE_SU |
 				      RADEON_SCLK_FORCE_OV0);
-				tmp |= RADEON_DYN_STOP_LAT_MASK;
-				tmp |=
+				पंचांगp |= RADEON_DYN_STOP_LAT_MASK;
+				पंचांगp |=
 				    RADEON_SCLK_FORCE_TOP |
 				    RADEON_SCLK_FORCE_VIP;
-				WREG32_PLL(RADEON_SCLK_CNTL, tmp);
+				WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
 
-				tmp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
-				tmp &= ~RADEON_SCLK_MORE_FORCEON;
-				tmp |= RADEON_SCLK_MORE_MAX_DYN_STOP_LAT;
-				WREG32_PLL(RADEON_SCLK_MORE_CNTL, tmp);
+				पंचांगp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
+				पंचांगp &= ~RADEON_SCLK_MORE_FORCEON;
+				पंचांगp |= RADEON_SCLK_MORE_MAX_DYN_STOP_LAT;
+				WREG32_PLL(RADEON_SCLK_MORE_CNTL, पंचांगp);
 
-				tmp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
-				tmp |= (RADEON_PIXCLK_ALWAYS_ONb |
+				पंचांगp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
+				पंचांगp |= (RADEON_PIXCLK_ALWAYS_ONb |
 					RADEON_PIXCLK_DAC_ALWAYS_ONb);
-				WREG32_PLL(RADEON_VCLK_ECP_CNTL, tmp);
+				WREG32_PLL(RADEON_VCLK_ECP_CNTL, पंचांगp);
 
-				tmp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
-				tmp |= (RADEON_PIX2CLK_ALWAYS_ONb |
+				पंचांगp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
+				पंचांगp |= (RADEON_PIX2CLK_ALWAYS_ONb |
 					RADEON_PIX2CLK_DAC_ALWAYS_ONb |
 					RADEON_DISP_TVOUT_PIXCLK_TV_ALWAYS_ONb |
 					R300_DVOCLK_ALWAYS_ONb |
@@ -542,19 +543,19 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 					R300_PIXCLK_TVO_ALWAYS_ONb |
 					R300_P2G2CLK_ALWAYS_ONb |
 					R300_P2G2CLK_DAC_ALWAYS_ONb);
-				WREG32_PLL(RADEON_PIXCLKS_CNTL, tmp);
-			} else if (rdev->family >= CHIP_RV350) {
-				tmp = RREG32_PLL(R300_SCLK_CNTL2);
-				tmp &= ~(R300_SCLK_FORCE_TCL |
+				WREG32_PLL(RADEON_PIXCLKS_CNTL, पंचांगp);
+			पूर्ण अन्यथा अगर (rdev->family >= CHIP_RV350) अणु
+				पंचांगp = RREG32_PLL(R300_SCLK_CNTL2);
+				पंचांगp &= ~(R300_SCLK_FORCE_TCL |
 					 R300_SCLK_FORCE_GA |
 					 R300_SCLK_FORCE_CBA);
-				tmp |= (R300_SCLK_TCL_MAX_DYN_STOP_LAT |
+				पंचांगp |= (R300_SCLK_TCL_MAX_DYN_STOP_LAT |
 					R300_SCLK_GA_MAX_DYN_STOP_LAT |
 					R300_SCLK_CBA_MAX_DYN_STOP_LAT);
-				WREG32_PLL(R300_SCLK_CNTL2, tmp);
+				WREG32_PLL(R300_SCLK_CNTL2, पंचांगp);
 
-				tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-				tmp &=
+				पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+				पंचांगp &=
 				    ~(RADEON_SCLK_FORCE_DISP2 |
 				      RADEON_SCLK_FORCE_CP |
 				      RADEON_SCLK_FORCE_HDP |
@@ -568,21 +569,21 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 				      RADEON_SCLK_FORCE_TV_SCLK |
 				      R300_SCLK_FORCE_SU |
 				      RADEON_SCLK_FORCE_OV0);
-				tmp |= RADEON_DYN_STOP_LAT_MASK;
-				WREG32_PLL(RADEON_SCLK_CNTL, tmp);
+				पंचांगp |= RADEON_DYN_STOP_LAT_MASK;
+				WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
 
-				tmp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
-				tmp &= ~RADEON_SCLK_MORE_FORCEON;
-				tmp |= RADEON_SCLK_MORE_MAX_DYN_STOP_LAT;
-				WREG32_PLL(RADEON_SCLK_MORE_CNTL, tmp);
+				पंचांगp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
+				पंचांगp &= ~RADEON_SCLK_MORE_FORCEON;
+				पंचांगp |= RADEON_SCLK_MORE_MAX_DYN_STOP_LAT;
+				WREG32_PLL(RADEON_SCLK_MORE_CNTL, पंचांगp);
 
-				tmp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
-				tmp |= (RADEON_PIXCLK_ALWAYS_ONb |
+				पंचांगp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
+				पंचांगp |= (RADEON_PIXCLK_ALWAYS_ONb |
 					RADEON_PIXCLK_DAC_ALWAYS_ONb);
-				WREG32_PLL(RADEON_VCLK_ECP_CNTL, tmp);
+				WREG32_PLL(RADEON_VCLK_ECP_CNTL, पंचांगp);
 
-				tmp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
-				tmp |= (RADEON_PIX2CLK_ALWAYS_ONb |
+				पंचांगp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
+				पंचांगp |= (RADEON_PIX2CLK_ALWAYS_ONb |
 					RADEON_PIX2CLK_DAC_ALWAYS_ONb |
 					RADEON_DISP_TVOUT_PIXCLK_TV_ALWAYS_ONb |
 					R300_DVOCLK_ALWAYS_ONb |
@@ -595,83 +596,83 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 					R300_PIXCLK_TVO_ALWAYS_ONb |
 					R300_P2G2CLK_ALWAYS_ONb |
 					R300_P2G2CLK_DAC_ALWAYS_ONb);
-				WREG32_PLL(RADEON_PIXCLKS_CNTL, tmp);
+				WREG32_PLL(RADEON_PIXCLKS_CNTL, पंचांगp);
 
-				tmp = RREG32_PLL(RADEON_MCLK_MISC);
-				tmp |= (RADEON_MC_MCLK_DYN_ENABLE |
+				पंचांगp = RREG32_PLL(RADEON_MCLK_MISC);
+				पंचांगp |= (RADEON_MC_MCLK_DYN_ENABLE |
 					RADEON_IO_MCLK_DYN_ENABLE);
-				WREG32_PLL(RADEON_MCLK_MISC, tmp);
+				WREG32_PLL(RADEON_MCLK_MISC, पंचांगp);
 
-				tmp = RREG32_PLL(RADEON_MCLK_CNTL);
-				tmp |= (RADEON_FORCEON_MCLKA |
+				पंचांगp = RREG32_PLL(RADEON_MCLK_CNTL);
+				पंचांगp |= (RADEON_FORCEON_MCLKA |
 					RADEON_FORCEON_MCLKB);
 
-				tmp &= ~(RADEON_FORCEON_YCLKA |
+				पंचांगp &= ~(RADEON_FORCEON_YCLKA |
 					 RADEON_FORCEON_YCLKB |
 					 RADEON_FORCEON_MC);
 
 				/* Some releases of vbios have set DISABLE_MC_MCLKA
 				   and DISABLE_MC_MCLKB bits in the vbios table.  Setting these
-				   bits will cause H/W hang when reading video memory with dynamic clocking
+				   bits will cause H/W hang when पढ़ोing video memory with dynamic घड़ीing
 				   enabled. */
-				if ((tmp & R300_DISABLE_MC_MCLKA) &&
-				    (tmp & R300_DISABLE_MC_MCLKB)) {
+				अगर ((पंचांगp & R300_DISABLE_MC_MCLKA) &&
+				    (पंचांगp & R300_DISABLE_MC_MCLKB)) अणु
 					/* If both bits are set, then check the active channels */
-					tmp = RREG32_PLL(RADEON_MCLK_CNTL);
-					if (rdev->mc.vram_width == 64) {
-						if (RREG32(RADEON_MEM_CNTL) &
+					पंचांगp = RREG32_PLL(RADEON_MCLK_CNTL);
+					अगर (rdev->mc.vram_width == 64) अणु
+						अगर (RREG32(RADEON_MEM_CNTL) &
 						    R300_MEM_USE_CD_CH_ONLY)
-							tmp &=
+							पंचांगp &=
 							    ~R300_DISABLE_MC_MCLKB;
-						else
-							tmp &=
+						अन्यथा
+							पंचांगp &=
 							    ~R300_DISABLE_MC_MCLKA;
-					} else {
-						tmp &= ~(R300_DISABLE_MC_MCLKA |
+					पूर्ण अन्यथा अणु
+						पंचांगp &= ~(R300_DISABLE_MC_MCLKA |
 							 R300_DISABLE_MC_MCLKB);
-					}
-				}
+					पूर्ण
+				पूर्ण
 
-				WREG32_PLL(RADEON_MCLK_CNTL, tmp);
-			} else {
-				tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-				tmp &= ~(R300_SCLK_FORCE_VAP);
-				tmp |= RADEON_SCLK_FORCE_CP;
-				WREG32_PLL(RADEON_SCLK_CNTL, tmp);
+				WREG32_PLL(RADEON_MCLK_CNTL, पंचांगp);
+			पूर्ण अन्यथा अणु
+				पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+				पंचांगp &= ~(R300_SCLK_FORCE_VAP);
+				पंचांगp |= RADEON_SCLK_FORCE_CP;
+				WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
 				mdelay(15);
 
-				tmp = RREG32_PLL(R300_SCLK_CNTL2);
-				tmp &= ~(R300_SCLK_FORCE_TCL |
+				पंचांगp = RREG32_PLL(R300_SCLK_CNTL2);
+				पंचांगp &= ~(R300_SCLK_FORCE_TCL |
 					 R300_SCLK_FORCE_GA |
 					 R300_SCLK_FORCE_CBA);
-				WREG32_PLL(R300_SCLK_CNTL2, tmp);
-			}
-		} else {
-			tmp = RREG32_PLL(RADEON_CLK_PWRMGT_CNTL);
+				WREG32_PLL(R300_SCLK_CNTL2, पंचांगp);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			पंचांगp = RREG32_PLL(RADEON_CLK_PWRMGT_CNTL);
 
-			tmp &= ~(RADEON_ACTIVE_HILO_LAT_MASK |
+			पंचांगp &= ~(RADEON_ACTIVE_HILO_LAT_MASK |
 				 RADEON_DISP_DYN_STOP_LAT_MASK |
 				 RADEON_DYN_STOP_MODE_MASK);
 
-			tmp |= (RADEON_ENGIN_DYNCLK_MODE |
+			पंचांगp |= (RADEON_ENGIN_DYNCLK_MODE |
 				(0x01 << RADEON_ACTIVE_HILO_LAT_SHIFT));
-			WREG32_PLL(RADEON_CLK_PWRMGT_CNTL, tmp);
+			WREG32_PLL(RADEON_CLK_PWRMGT_CNTL, पंचांगp);
 			mdelay(15);
 
-			tmp = RREG32_PLL(RADEON_CLK_PIN_CNTL);
-			tmp |= RADEON_SCLK_DYN_START_CNTL;
-			WREG32_PLL(RADEON_CLK_PIN_CNTL, tmp);
+			पंचांगp = RREG32_PLL(RADEON_CLK_PIN_CNTL);
+			पंचांगp |= RADEON_SCLK_DYN_START_CNTL;
+			WREG32_PLL(RADEON_CLK_PIN_CNTL, पंचांगp);
 			mdelay(15);
 
 			/* When DRI is enabled, setting DYN_STOP_LAT to zero can cause some R200
-			   to lockup randomly, leave them as set by BIOS.
+			   to lockup अक्रमomly, leave them as set by BIOS.
 			 */
-			tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-			/*tmp &= RADEON_SCLK_SRC_SEL_MASK; */
-			tmp &= ~RADEON_SCLK_FORCEON_MASK;
+			पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+			/*पंचांगp &= RADEON_SCLK_SRC_SEL_MASK; */
+			पंचांगp &= ~RADEON_SCLK_FORCEON_MASK;
 
 			/*RAGE_6::A11 A12 A12N1 A13, RV250::A11 A12, R300 */
-			if (((rdev->family == CHIP_RV250) &&
+			अगर (((rdev->family == CHIP_RV250) &&
 			     ((RREG32(RADEON_CONFIG_CNTL) &
 			       RADEON_CFG_ATI_REV_ID_MASK) <
 			      RADEON_CFG_ATI_REV_A13))
@@ -679,46 +680,46 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 				&&
 				((RREG32(RADEON_CONFIG_CNTL) &
 				  RADEON_CFG_ATI_REV_ID_MASK) <=
-				 RADEON_CFG_ATI_REV_A13))) {
-				tmp |= RADEON_SCLK_FORCE_CP;
-				tmp |= RADEON_SCLK_FORCE_VIP;
-			}
+				 RADEON_CFG_ATI_REV_A13))) अणु
+				पंचांगp |= RADEON_SCLK_FORCE_CP;
+				पंचांगp |= RADEON_SCLK_FORCE_VIP;
+			पूर्ण
 
-			WREG32_PLL(RADEON_SCLK_CNTL, tmp);
+			WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
 
-			if ((rdev->family == CHIP_RV200) ||
+			अगर ((rdev->family == CHIP_RV200) ||
 			    (rdev->family == CHIP_RV250) ||
-			    (rdev->family == CHIP_RV280)) {
-				tmp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
-				tmp &= ~RADEON_SCLK_MORE_FORCEON;
+			    (rdev->family == CHIP_RV280)) अणु
+				पंचांगp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
+				पंचांगp &= ~RADEON_SCLK_MORE_FORCEON;
 
 				/* RV200::A11 A12 RV250::A11 A12 */
-				if (((rdev->family == CHIP_RV200) ||
+				अगर (((rdev->family == CHIP_RV200) ||
 				     (rdev->family == CHIP_RV250)) &&
 				    ((RREG32(RADEON_CONFIG_CNTL) &
 				      RADEON_CFG_ATI_REV_ID_MASK) <
-				     RADEON_CFG_ATI_REV_A13)) {
-					tmp |= RADEON_SCLK_MORE_FORCEON;
-				}
-				WREG32_PLL(RADEON_SCLK_MORE_CNTL, tmp);
+				     RADEON_CFG_ATI_REV_A13)) अणु
+					पंचांगp |= RADEON_SCLK_MORE_FORCEON;
+				पूर्ण
+				WREG32_PLL(RADEON_SCLK_MORE_CNTL, पंचांगp);
 				mdelay(15);
-			}
+			पूर्ण
 
 			/* RV200::A11 A12, RV250::A11 A12 */
-			if (((rdev->family == CHIP_RV200) ||
+			अगर (((rdev->family == CHIP_RV200) ||
 			     (rdev->family == CHIP_RV250)) &&
 			    ((RREG32(RADEON_CONFIG_CNTL) &
 			      RADEON_CFG_ATI_REV_ID_MASK) <
-			     RADEON_CFG_ATI_REV_A13)) {
-				tmp = RREG32_PLL(RADEON_PLL_PWRMGT_CNTL);
-				tmp |= RADEON_TCL_BYPASS_DISABLE;
-				WREG32_PLL(RADEON_PLL_PWRMGT_CNTL, tmp);
-			}
+			     RADEON_CFG_ATI_REV_A13)) अणु
+				पंचांगp = RREG32_PLL(RADEON_PLL_PWRMGT_CNTL);
+				पंचांगp |= RADEON_TCL_BYPASS_DISABLE;
+				WREG32_PLL(RADEON_PLL_PWRMGT_CNTL, पंचांगp);
+			पूर्ण
 			mdelay(15);
 
-			/*enable dynamic mode for display clocks (PIXCLK and PIX2CLK) */
-			tmp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
-			tmp |= (RADEON_PIX2CLK_ALWAYS_ONb |
+			/*enable dynamic mode क्रम display घड़ीs (PIXCLK and PIX2CLK) */
+			पंचांगp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
+			पंचांगp |= (RADEON_PIX2CLK_ALWAYS_ONb |
 				RADEON_PIX2CLK_DAC_ALWAYS_ONb |
 				RADEON_PIXCLK_BLEND_ALWAYS_ONb |
 				RADEON_PIXCLK_GV_ALWAYS_ONb |
@@ -726,32 +727,32 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 				RADEON_PIXCLK_LVDS_ALWAYS_ONb |
 				RADEON_PIXCLK_TMDS_ALWAYS_ONb);
 
-			WREG32_PLL(RADEON_PIXCLKS_CNTL, tmp);
+			WREG32_PLL(RADEON_PIXCLKS_CNTL, पंचांगp);
 			mdelay(15);
 
-			tmp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
-			tmp |= (RADEON_PIXCLK_ALWAYS_ONb |
+			पंचांगp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
+			पंचांगp |= (RADEON_PIXCLK_ALWAYS_ONb |
 				RADEON_PIXCLK_DAC_ALWAYS_ONb);
 
-			WREG32_PLL(RADEON_VCLK_ECP_CNTL, tmp);
+			WREG32_PLL(RADEON_VCLK_ECP_CNTL, पंचांगp);
 			mdelay(15);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Turn everything OFF (ForceON to everything) */
-		if (rdev->flags & RADEON_SINGLE_CRTC) {
-			tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-			tmp |= (RADEON_SCLK_FORCE_CP | RADEON_SCLK_FORCE_HDP |
+		अगर (rdev->flags & RADEON_SINGLE_CRTC) अणु
+			पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+			पंचांगp |= (RADEON_SCLK_FORCE_CP | RADEON_SCLK_FORCE_HDP |
 				RADEON_SCLK_FORCE_DISP1 | RADEON_SCLK_FORCE_TOP
 				| RADEON_SCLK_FORCE_E2 | RADEON_SCLK_FORCE_SE |
 				RADEON_SCLK_FORCE_IDCT | RADEON_SCLK_FORCE_VIP |
 				RADEON_SCLK_FORCE_RE | RADEON_SCLK_FORCE_PB |
 				RADEON_SCLK_FORCE_TAM | RADEON_SCLK_FORCE_TDM |
 				RADEON_SCLK_FORCE_RB);
-			WREG32_PLL(RADEON_SCLK_CNTL, tmp);
-		} else if ((rdev->family == CHIP_RS400) ||
-			   (rdev->family == CHIP_RS480)) {
-			tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-			tmp |= (RADEON_SCLK_FORCE_DISP2 | RADEON_SCLK_FORCE_CP |
+			WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
+		पूर्ण अन्यथा अगर ((rdev->family == CHIP_RS400) ||
+			   (rdev->family == CHIP_RS480)) अणु
+			पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+			पंचांगp |= (RADEON_SCLK_FORCE_DISP2 | RADEON_SCLK_FORCE_CP |
 				RADEON_SCLK_FORCE_HDP | RADEON_SCLK_FORCE_DISP1
 				| RADEON_SCLK_FORCE_TOP | RADEON_SCLK_FORCE_E2 |
 				R300_SCLK_FORCE_VAP | RADEON_SCLK_FORCE_IDCT |
@@ -759,20 +760,20 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 				R300_SCLK_FORCE_PX | R300_SCLK_FORCE_TX |
 				R300_SCLK_FORCE_US | RADEON_SCLK_FORCE_TV_SCLK |
 				R300_SCLK_FORCE_SU | RADEON_SCLK_FORCE_OV0);
-			WREG32_PLL(RADEON_SCLK_CNTL, tmp);
+			WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
 
-			tmp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
-			tmp |= RADEON_SCLK_MORE_FORCEON;
-			WREG32_PLL(RADEON_SCLK_MORE_CNTL, tmp);
+			पंचांगp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
+			पंचांगp |= RADEON_SCLK_MORE_FORCEON;
+			WREG32_PLL(RADEON_SCLK_MORE_CNTL, पंचांगp);
 
-			tmp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
-			tmp &= ~(RADEON_PIXCLK_ALWAYS_ONb |
+			पंचांगp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
+			पंचांगp &= ~(RADEON_PIXCLK_ALWAYS_ONb |
 				 RADEON_PIXCLK_DAC_ALWAYS_ONb |
 				 R300_DISP_DAC_PIXCLK_DAC_BLANK_OFF);
-			WREG32_PLL(RADEON_VCLK_ECP_CNTL, tmp);
+			WREG32_PLL(RADEON_VCLK_ECP_CNTL, पंचांगp);
 
-			tmp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
-			tmp &= ~(RADEON_PIX2CLK_ALWAYS_ONb |
+			पंचांगp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
+			पंचांगp &= ~(RADEON_PIX2CLK_ALWAYS_ONb |
 				 RADEON_PIX2CLK_DAC_ALWAYS_ONb |
 				 RADEON_DISP_TVOUT_PIXCLK_TV_ALWAYS_ONb |
 				 R300_DVOCLK_ALWAYS_ONb |
@@ -786,16 +787,16 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 				 R300_P2G2CLK_ALWAYS_ONb |
 				 R300_P2G2CLK_DAC_ALWAYS_ONb |
 				 R300_DISP_DAC_PIXCLK_DAC2_BLANK_OFF);
-			WREG32_PLL(RADEON_PIXCLKS_CNTL, tmp);
-		} else if (rdev->family >= CHIP_RV350) {
-			/* for RV350/M10, no delays are required. */
-			tmp = RREG32_PLL(R300_SCLK_CNTL2);
-			tmp |= (R300_SCLK_FORCE_TCL |
+			WREG32_PLL(RADEON_PIXCLKS_CNTL, पंचांगp);
+		पूर्ण अन्यथा अगर (rdev->family >= CHIP_RV350) अणु
+			/* क्रम RV350/M10, no delays are required. */
+			पंचांगp = RREG32_PLL(R300_SCLK_CNTL2);
+			पंचांगp |= (R300_SCLK_FORCE_TCL |
 				R300_SCLK_FORCE_GA | R300_SCLK_FORCE_CBA);
-			WREG32_PLL(R300_SCLK_CNTL2, tmp);
+			WREG32_PLL(R300_SCLK_CNTL2, पंचांगp);
 
-			tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-			tmp |= (RADEON_SCLK_FORCE_DISP2 | RADEON_SCLK_FORCE_CP |
+			पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+			पंचांगp |= (RADEON_SCLK_FORCE_DISP2 | RADEON_SCLK_FORCE_CP |
 				RADEON_SCLK_FORCE_HDP | RADEON_SCLK_FORCE_DISP1
 				| RADEON_SCLK_FORCE_TOP | RADEON_SCLK_FORCE_E2 |
 				R300_SCLK_FORCE_VAP | RADEON_SCLK_FORCE_IDCT |
@@ -803,27 +804,27 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 				R300_SCLK_FORCE_PX | R300_SCLK_FORCE_TX |
 				R300_SCLK_FORCE_US | RADEON_SCLK_FORCE_TV_SCLK |
 				R300_SCLK_FORCE_SU | RADEON_SCLK_FORCE_OV0);
-			WREG32_PLL(RADEON_SCLK_CNTL, tmp);
+			WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
 
-			tmp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
-			tmp |= RADEON_SCLK_MORE_FORCEON;
-			WREG32_PLL(RADEON_SCLK_MORE_CNTL, tmp);
+			पंचांगp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
+			पंचांगp |= RADEON_SCLK_MORE_FORCEON;
+			WREG32_PLL(RADEON_SCLK_MORE_CNTL, पंचांगp);
 
-			tmp = RREG32_PLL(RADEON_MCLK_CNTL);
-			tmp |= (RADEON_FORCEON_MCLKA |
+			पंचांगp = RREG32_PLL(RADEON_MCLK_CNTL);
+			पंचांगp |= (RADEON_FORCEON_MCLKA |
 				RADEON_FORCEON_MCLKB |
 				RADEON_FORCEON_YCLKA |
 				RADEON_FORCEON_YCLKB | RADEON_FORCEON_MC);
-			WREG32_PLL(RADEON_MCLK_CNTL, tmp);
+			WREG32_PLL(RADEON_MCLK_CNTL, पंचांगp);
 
-			tmp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
-			tmp &= ~(RADEON_PIXCLK_ALWAYS_ONb |
+			पंचांगp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
+			पंचांगp &= ~(RADEON_PIXCLK_ALWAYS_ONb |
 				 RADEON_PIXCLK_DAC_ALWAYS_ONb |
 				 R300_DISP_DAC_PIXCLK_DAC_BLANK_OFF);
-			WREG32_PLL(RADEON_VCLK_ECP_CNTL, tmp);
+			WREG32_PLL(RADEON_VCLK_ECP_CNTL, पंचांगp);
 
-			tmp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
-			tmp &= ~(RADEON_PIX2CLK_ALWAYS_ONb |
+			पंचांगp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
+			पंचांगp &= ~(RADEON_PIX2CLK_ALWAYS_ONb |
 				 RADEON_PIX2CLK_DAC_ALWAYS_ONb |
 				 RADEON_DISP_TVOUT_PIXCLK_TV_ALWAYS_ONb |
 				 R300_DVOCLK_ALWAYS_ONb |
@@ -837,14 +838,14 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 				 R300_P2G2CLK_ALWAYS_ONb |
 				 R300_P2G2CLK_DAC_ALWAYS_ONb |
 				 R300_DISP_DAC_PIXCLK_DAC2_BLANK_OFF);
-			WREG32_PLL(RADEON_PIXCLKS_CNTL, tmp);
-		} else {
-			tmp = RREG32_PLL(RADEON_SCLK_CNTL);
-			tmp |= (RADEON_SCLK_FORCE_CP | RADEON_SCLK_FORCE_E2);
-			tmp |= RADEON_SCLK_FORCE_SE;
+			WREG32_PLL(RADEON_PIXCLKS_CNTL, पंचांगp);
+		पूर्ण अन्यथा अणु
+			पंचांगp = RREG32_PLL(RADEON_SCLK_CNTL);
+			पंचांगp |= (RADEON_SCLK_FORCE_CP | RADEON_SCLK_FORCE_E2);
+			पंचांगp |= RADEON_SCLK_FORCE_SE;
 
-			if (rdev->flags & RADEON_SINGLE_CRTC) {
-				tmp |= (RADEON_SCLK_FORCE_RB |
+			अगर (rdev->flags & RADEON_SINGLE_CRTC) अणु
+				पंचांगp |= (RADEON_SCLK_FORCE_RB |
 					RADEON_SCLK_FORCE_TDM |
 					RADEON_SCLK_FORCE_TAM |
 					RADEON_SCLK_FORCE_PB |
@@ -855,48 +856,48 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 					RADEON_SCLK_FORCE_DISP1 |
 					RADEON_SCLK_FORCE_DISP2 |
 					RADEON_SCLK_FORCE_HDP);
-			} else if ((rdev->family == CHIP_R300) ||
-				   (rdev->family == CHIP_R350)) {
-				tmp |= (RADEON_SCLK_FORCE_HDP |
+			पूर्ण अन्यथा अगर ((rdev->family == CHIP_R300) ||
+				   (rdev->family == CHIP_R350)) अणु
+				पंचांगp |= (RADEON_SCLK_FORCE_HDP |
 					RADEON_SCLK_FORCE_DISP1 |
 					RADEON_SCLK_FORCE_DISP2 |
 					RADEON_SCLK_FORCE_TOP |
 					RADEON_SCLK_FORCE_IDCT |
 					RADEON_SCLK_FORCE_VIP);
-			}
-			WREG32_PLL(RADEON_SCLK_CNTL, tmp);
+			पूर्ण
+			WREG32_PLL(RADEON_SCLK_CNTL, पंचांगp);
 
 			mdelay(16);
 
-			if ((rdev->family == CHIP_R300) ||
-			    (rdev->family == CHIP_R350)) {
-				tmp = RREG32_PLL(R300_SCLK_CNTL2);
-				tmp |= (R300_SCLK_FORCE_TCL |
+			अगर ((rdev->family == CHIP_R300) ||
+			    (rdev->family == CHIP_R350)) अणु
+				पंचांगp = RREG32_PLL(R300_SCLK_CNTL2);
+				पंचांगp |= (R300_SCLK_FORCE_TCL |
 					R300_SCLK_FORCE_GA |
 					R300_SCLK_FORCE_CBA);
-				WREG32_PLL(R300_SCLK_CNTL2, tmp);
+				WREG32_PLL(R300_SCLK_CNTL2, पंचांगp);
 				mdelay(16);
-			}
+			पूर्ण
 
-			if (rdev->flags & RADEON_IS_IGP) {
-				tmp = RREG32_PLL(RADEON_MCLK_CNTL);
-				tmp &= ~(RADEON_FORCEON_MCLKA |
+			अगर (rdev->flags & RADEON_IS_IGP) अणु
+				पंचांगp = RREG32_PLL(RADEON_MCLK_CNTL);
+				पंचांगp &= ~(RADEON_FORCEON_MCLKA |
 					 RADEON_FORCEON_YCLKA);
-				WREG32_PLL(RADEON_MCLK_CNTL, tmp);
+				WREG32_PLL(RADEON_MCLK_CNTL, पंचांगp);
 				mdelay(16);
-			}
+			पूर्ण
 
-			if ((rdev->family == CHIP_RV200) ||
+			अगर ((rdev->family == CHIP_RV200) ||
 			    (rdev->family == CHIP_RV250) ||
-			    (rdev->family == CHIP_RV280)) {
-				tmp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
-				tmp |= RADEON_SCLK_MORE_FORCEON;
-				WREG32_PLL(RADEON_SCLK_MORE_CNTL, tmp);
+			    (rdev->family == CHIP_RV280)) अणु
+				पंचांगp = RREG32_PLL(RADEON_SCLK_MORE_CNTL);
+				पंचांगp |= RADEON_SCLK_MORE_FORCEON;
+				WREG32_PLL(RADEON_SCLK_MORE_CNTL, पंचांगp);
 				mdelay(16);
-			}
+			पूर्ण
 
-			tmp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
-			tmp &= ~(RADEON_PIX2CLK_ALWAYS_ONb |
+			पंचांगp = RREG32_PLL(RADEON_PIXCLKS_CNTL);
+			पंचांगp &= ~(RADEON_PIX2CLK_ALWAYS_ONb |
 				 RADEON_PIX2CLK_DAC_ALWAYS_ONb |
 				 RADEON_PIXCLK_BLEND_ALWAYS_ONb |
 				 RADEON_PIXCLK_GV_ALWAYS_ONb |
@@ -904,14 +905,14 @@ void radeon_legacy_set_clock_gating(struct radeon_device *rdev, int enable)
 				 RADEON_PIXCLK_LVDS_ALWAYS_ONb |
 				 RADEON_PIXCLK_TMDS_ALWAYS_ONb);
 
-			WREG32_PLL(RADEON_PIXCLKS_CNTL, tmp);
+			WREG32_PLL(RADEON_PIXCLKS_CNTL, पंचांगp);
 			mdelay(16);
 
-			tmp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
-			tmp &= ~(RADEON_PIXCLK_ALWAYS_ONb |
+			पंचांगp = RREG32_PLL(RADEON_VCLK_ECP_CNTL);
+			पंचांगp &= ~(RADEON_PIXCLK_ALWAYS_ONb |
 				 RADEON_PIXCLK_DAC_ALWAYS_ONb);
-			WREG32_PLL(RADEON_VCLK_ECP_CNTL, tmp);
-		}
-	}
-}
+			WREG32_PLL(RADEON_VCLK_ECP_CNTL, पंचांगp);
+		पूर्ण
+	पूर्ण
+पूर्ण
 

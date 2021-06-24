@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "../evsel.h"
-#include "../sort.h"
-#include "../hist.h"
-#include "../helpline.h"
-#include "gtk.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "../evsel.h"
+#समावेश "../sort.h"
+#समावेश "../hist.h"
+#समावेश "../helpline.h"
+#समावेश "gtk.h"
 
-#include <signal.h>
+#समावेश <संकेत.स>
 
-void perf_gtk__signal(int sig)
-{
-	perf_gtk__exit(false);
-	psignal(sig, "perf");
-}
+व्योम perf_gtk__संकेत(पूर्णांक sig)
+अणु
+	perf_gtk__निकास(false);
+	pसंकेत(sig, "perf");
+पूर्ण
 
-void perf_gtk__resize_window(GtkWidget *window)
-{
+व्योम perf_gtk__resize_winकरोw(GtkWidget *winकरोw)
+अणु
 	GdkRectangle rect;
 	GdkScreen *screen;
-	int monitor;
-	int height;
-	int width;
+	पूर्णांक monitor;
+	पूर्णांक height;
+	पूर्णांक width;
 
-	screen = gtk_widget_get_screen(window);
+	screen = gtk_widget_get_screen(winकरोw);
 
-	monitor = gdk_screen_get_monitor_at_window(screen, window->window);
+	monitor = gdk_screen_get_monitor_at_winकरोw(screen, winकरोw->winकरोw);
 
 	gdk_screen_get_monitor_geometry(screen, monitor, &rect);
 
 	width	= rect.width * 3 / 4;
 	height	= rect.height * 3 / 4;
 
-	gtk_window_resize(GTK_WINDOW(window), width, height);
-}
+	gtk_winकरोw_resize(GTK_WINDOW(winकरोw), width, height);
+पूर्ण
 
-const char *perf_gtk__get_percent_color(double percent)
-{
-	if (percent >= MIN_RED)
-		return "<span fgcolor='red'>";
-	if (percent >= MIN_GREEN)
-		return "<span fgcolor='dark green'>";
-	return NULL;
-}
+स्थिर अक्षर *perf_gtk__get_percent_color(द्विगुन percent)
+अणु
+	अगर (percent >= MIN_RED)
+		वापस "<span fgcolor='red'>";
+	अगर (percent >= MIN_GREEN)
+		वापस "<span fgcolor='dark green'>";
+	वापस शून्य;
+पूर्ण
 
-#ifdef HAVE_GTK_INFO_BAR_SUPPORT
-GtkWidget *perf_gtk__setup_info_bar(void)
-{
+#अगर_घोषित HAVE_GTK_INFO_BAR_SUPPORT
+GtkWidget *perf_gtk__setup_info_bar(व्योम)
+अणु
 	GtkWidget *info_bar;
 	GtkWidget *label;
 	GtkWidget *content_area;
@@ -60,20 +61,20 @@ GtkWidget *perf_gtk__setup_info_bar(void)
 
 	gtk_info_bar_add_button(GTK_INFO_BAR(info_bar), GTK_STOCK_OK,
 				GTK_RESPONSE_OK);
-	g_signal_connect(info_bar, "response",
-			 G_CALLBACK(gtk_widget_hide), NULL);
+	g_संकेत_connect(info_bar, "response",
+			 G_CALLBACK(gtk_widget_hide), शून्य);
 
 	pgctx->info_bar = info_bar;
 	pgctx->message_label = label;
 
-	return info_bar;
-}
-#endif
+	वापस info_bar;
+पूर्ण
+#पूर्ण_अगर
 
-GtkWidget *perf_gtk__setup_statusbar(void)
-{
+GtkWidget *perf_gtk__setup_statusbar(व्योम)
+अणु
 	GtkWidget *stbar;
-	unsigned ctxid;
+	अचिन्हित ctxid;
 
 	stbar = gtk_statusbar_new();
 
@@ -82,5 +83,5 @@ GtkWidget *perf_gtk__setup_statusbar(void)
 	pgctx->statbar = stbar;
 	pgctx->statbar_ctx_id = ctxid;
 
-	return stbar;
-}
+	वापस stbar;
+पूर्ण

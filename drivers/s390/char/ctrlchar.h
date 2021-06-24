@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  Unified handling of special chars.
+ *  Unअगरied handling of special अक्षरs.
  *
  *    Copyright IBM Corp. 2001
  *    Author(s): Fritz Elfert <felfert@millenux.com> <elfert@de.ibm.com>
  *
  */
 
-#include <linux/tty.h>
-#include <linux/sysrq.h>
-#include <linux/workqueue.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/workqueue.h>
 
-extern unsigned int
-ctrlchar_handle(const unsigned char *buf, int len, struct tty_struct *tty);
-
-
-#define CTRLCHAR_NONE  (1 << 8)
-#define CTRLCHAR_CTRL  (2 << 8)
-#define CTRLCHAR_SYSRQ (3 << 8)
-
-#define CTRLCHAR_MASK (~0xffu)
+बाह्य अचिन्हित पूर्णांक
+ctrlअक्षर_handle(स्थिर अचिन्हित अक्षर *buf, पूर्णांक len, काष्ठा tty_काष्ठा *tty);
 
 
-#ifdef CONFIG_MAGIC_SYSRQ
-struct sysrq_work {
-	int key;
-	struct work_struct work;
-};
+#घोषणा CTRLCHAR_NONE  (1 << 8)
+#घोषणा CTRLCHAR_CTRL  (2 << 8)
+#घोषणा CTRLCHAR_SYSRQ (3 << 8)
 
-void schedule_sysrq_work(struct sysrq_work *sw);
-#endif
+#घोषणा CTRLCHAR_MASK (~0xffu)
+
+
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
+काष्ठा sysrq_work अणु
+	पूर्णांक key;
+	काष्ठा work_काष्ठा work;
+पूर्ण;
+
+व्योम schedule_sysrq_work(काष्ठा sysrq_work *sw);
+#पूर्ण_अगर

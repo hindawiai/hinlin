@@ -1,268 +1,269 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012-2013, Analog Devices Inc.
  * Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/clk.h>
-#include <linux/regmap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/regmap.h>
 
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/initval.h>
-#include <sound/dmaengine_pcm.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/dmaengine_pcm.h>
 
-#define AXI_SPDIF_REG_CTRL	0x0
-#define AXI_SPDIF_REG_STAT	0x4
-#define AXI_SPDIF_REG_TX_FIFO	0xc
+#घोषणा AXI_SPDIF_REG_CTRL	0x0
+#घोषणा AXI_SPDIF_REG_STAT	0x4
+#घोषणा AXI_SPDIF_REG_TX_FIFO	0xc
 
-#define AXI_SPDIF_CTRL_TXDATA BIT(1)
-#define AXI_SPDIF_CTRL_TXEN BIT(0)
-#define AXI_SPDIF_CTRL_CLKDIV_OFFSET 8
-#define AXI_SPDIF_CTRL_CLKDIV_MASK (0xff << 8)
+#घोषणा AXI_SPDIF_CTRL_TXDATA BIT(1)
+#घोषणा AXI_SPDIF_CTRL_TXEN BIT(0)
+#घोषणा AXI_SPDIF_CTRL_CLKDIV_OFFSET 8
+#घोषणा AXI_SPDIF_CTRL_CLKDIV_MASK (0xff << 8)
 
-#define AXI_SPDIF_FREQ_44100	(0x0 << 6)
-#define AXI_SPDIF_FREQ_48000	(0x1 << 6)
-#define AXI_SPDIF_FREQ_32000	(0x2 << 6)
-#define AXI_SPDIF_FREQ_NA	(0x3 << 6)
+#घोषणा AXI_SPDIF_FREQ_44100	(0x0 << 6)
+#घोषणा AXI_SPDIF_FREQ_48000	(0x1 << 6)
+#घोषणा AXI_SPDIF_FREQ_32000	(0x2 << 6)
+#घोषणा AXI_SPDIF_FREQ_NA	(0x3 << 6)
 
-struct axi_spdif {
-	struct regmap *regmap;
-	struct clk *clk;
-	struct clk *clk_ref;
+काष्ठा axi_spdअगर अणु
+	काष्ठा regmap *regmap;
+	काष्ठा clk *clk;
+	काष्ठा clk *clk_ref;
 
-	struct snd_dmaengine_dai_dma_data dma_data;
+	काष्ठा snd_dmaengine_dai_dma_data dma_data;
 
-	struct snd_ratnum ratnum;
-	struct snd_pcm_hw_constraint_ratnums rate_constraints;
-};
+	काष्ठा snd_ratnum ratnum;
+	काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_ratnums rate_स्थिरraपूर्णांकs;
+पूर्ण;
 
-static int axi_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
-	struct snd_soc_dai *dai)
-{
-	struct axi_spdif *spdif = snd_soc_dai_get_drvdata(dai);
-	unsigned int val;
+अटल पूर्णांक axi_spdअगर_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+	काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा axi_spdअगर *spdअगर = snd_soc_dai_get_drvdata(dai);
+	अचिन्हित पूर्णांक val;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		val = AXI_SPDIF_CTRL_TXDATA;
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		val = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	regmap_update_bits(spdif->regmap, AXI_SPDIF_REG_CTRL,
+	regmap_update_bits(spdअगर->regmap, AXI_SPDIF_REG_CTRL,
 		AXI_SPDIF_CTRL_TXDATA, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axi_spdif_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
-{
-	struct axi_spdif *spdif = snd_soc_dai_get_drvdata(dai);
-	unsigned int rate = params_rate(params);
-	unsigned int clkdiv, stat;
+अटल पूर्णांक axi_spdअगर_hw_params(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_pcm_hw_params *params, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा axi_spdअगर *spdअगर = snd_soc_dai_get_drvdata(dai);
+	अचिन्हित पूर्णांक rate = params_rate(params);
+	अचिन्हित पूर्णांक clkभाग, stat;
 
-	switch (params_rate(params)) {
-	case 32000:
+	चयन (params_rate(params)) अणु
+	हाल 32000:
 		stat = AXI_SPDIF_FREQ_32000;
-		break;
-	case 44100:
+		अवरोध;
+	हाल 44100:
 		stat = AXI_SPDIF_FREQ_44100;
-		break;
-	case 48000:
+		अवरोध;
+	हाल 48000:
 		stat = AXI_SPDIF_FREQ_48000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		stat = AXI_SPDIF_FREQ_NA;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	clkdiv = DIV_ROUND_CLOSEST(clk_get_rate(spdif->clk_ref),
+	clkभाग = DIV_ROUND_CLOSEST(clk_get_rate(spdअगर->clk_ref),
 			rate * 64 * 2) - 1;
-	clkdiv <<= AXI_SPDIF_CTRL_CLKDIV_OFFSET;
+	clkभाग <<= AXI_SPDIF_CTRL_CLKDIV_OFFSET;
 
-	regmap_write(spdif->regmap, AXI_SPDIF_REG_STAT, stat);
-	regmap_update_bits(spdif->regmap, AXI_SPDIF_REG_CTRL,
-		AXI_SPDIF_CTRL_CLKDIV_MASK, clkdiv);
+	regmap_ग_लिखो(spdअगर->regmap, AXI_SPDIF_REG_STAT, stat);
+	regmap_update_bits(spdअगर->regmap, AXI_SPDIF_REG_CTRL,
+		AXI_SPDIF_CTRL_CLKDIV_MASK, clkभाग);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axi_spdif_dai_probe(struct snd_soc_dai *dai)
-{
-	struct axi_spdif *spdif = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक axi_spdअगर_dai_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा axi_spdअगर *spdअगर = snd_soc_dai_get_drvdata(dai);
 
-	snd_soc_dai_init_dma_data(dai, &spdif->dma_data, NULL);
+	snd_soc_dai_init_dma_data(dai, &spdअगर->dma_data, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axi_spdif_startup(struct snd_pcm_substream *substream,
-	struct snd_soc_dai *dai)
-{
-	struct axi_spdif *spdif = snd_soc_dai_get_drvdata(dai);
-	int ret;
+अटल पूर्णांक axi_spdअगर_startup(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा axi_spdअगर *spdअगर = snd_soc_dai_get_drvdata(dai);
+	पूर्णांक ret;
 
-	ret = snd_pcm_hw_constraint_ratnums(substream->runtime, 0,
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_ratnums(substream->runसमय, 0,
 			   SNDRV_PCM_HW_PARAM_RATE,
-			   &spdif->rate_constraints);
-	if (ret)
-		return ret;
+			   &spdअगर->rate_स्थिरraपूर्णांकs);
+	अगर (ret)
+		वापस ret;
 
-	ret = clk_prepare_enable(spdif->clk_ref);
-	if (ret)
-		return ret;
+	ret = clk_prepare_enable(spdअगर->clk_ref);
+	अगर (ret)
+		वापस ret;
 
-	regmap_update_bits(spdif->regmap, AXI_SPDIF_REG_CTRL,
+	regmap_update_bits(spdअगर->regmap, AXI_SPDIF_REG_CTRL,
 		AXI_SPDIF_CTRL_TXEN, AXI_SPDIF_CTRL_TXEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void axi_spdif_shutdown(struct snd_pcm_substream *substream,
-	struct snd_soc_dai *dai)
-{
-	struct axi_spdif *spdif = snd_soc_dai_get_drvdata(dai);
+अटल व्योम axi_spdअगर_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा axi_spdअगर *spdअगर = snd_soc_dai_get_drvdata(dai);
 
-	regmap_update_bits(spdif->regmap, AXI_SPDIF_REG_CTRL,
+	regmap_update_bits(spdअगर->regmap, AXI_SPDIF_REG_CTRL,
 		AXI_SPDIF_CTRL_TXEN, 0);
 
-	clk_disable_unprepare(spdif->clk_ref);
-}
+	clk_disable_unprepare(spdअगर->clk_ref);
+पूर्ण
 
-static const struct snd_soc_dai_ops axi_spdif_dai_ops = {
-	.startup = axi_spdif_startup,
-	.shutdown = axi_spdif_shutdown,
-	.trigger = axi_spdif_trigger,
-	.hw_params = axi_spdif_hw_params,
-};
+अटल स्थिर काष्ठा snd_soc_dai_ops axi_spdअगर_dai_ops = अणु
+	.startup = axi_spdअगर_startup,
+	.shutकरोwn = axi_spdअगर_shutकरोwn,
+	.trigger = axi_spdअगर_trigger,
+	.hw_params = axi_spdअगर_hw_params,
+पूर्ण;
 
-static struct snd_soc_dai_driver axi_spdif_dai = {
-	.probe = axi_spdif_dai_probe,
-	.playback = {
+अटल काष्ठा snd_soc_dai_driver axi_spdअगर_dai = अणु
+	.probe = axi_spdअगर_dai_probe,
+	.playback = अणु
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_KNOT,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE,
-	},
-	.ops = &axi_spdif_dai_ops,
-};
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
+	पूर्ण,
+	.ops = &axi_spdअगर_dai_ops,
+पूर्ण;
 
-static const struct snd_soc_component_driver axi_spdif_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver axi_spdअगर_component = अणु
 	.name = "axi-spdif",
-};
+पूर्ण;
 
-static const struct regmap_config axi_spdif_regmap_config = {
+अटल स्थिर काष्ठा regmap_config axi_spdअगर_regmap_config = अणु
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_register = AXI_SPDIF_REG_STAT,
-};
+	.max_रेजिस्टर = AXI_SPDIF_REG_STAT,
+पूर्ण;
 
-static int axi_spdif_probe(struct platform_device *pdev)
-{
-	struct axi_spdif *spdif;
-	struct resource *res;
-	void __iomem *base;
-	int ret;
+अटल पूर्णांक axi_spdअगर_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा axi_spdअगर *spdअगर;
+	काष्ठा resource *res;
+	व्योम __iomem *base;
+	पूर्णांक ret;
 
-	spdif = devm_kzalloc(&pdev->dev, sizeof(*spdif), GFP_KERNEL);
-	if (!spdif)
-		return -ENOMEM;
+	spdअगर = devm_kzalloc(&pdev->dev, माप(*spdअगर), GFP_KERNEL);
+	अगर (!spdअगर)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, spdif);
+	platक्रमm_set_drvdata(pdev, spdअगर);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
-	spdif->regmap = devm_regmap_init_mmio(&pdev->dev, base,
-					    &axi_spdif_regmap_config);
-	if (IS_ERR(spdif->regmap))
-		return PTR_ERR(spdif->regmap);
+	spdअगर->regmap = devm_regmap_init_mmio(&pdev->dev, base,
+					    &axi_spdअगर_regmap_config);
+	अगर (IS_ERR(spdअगर->regmap))
+		वापस PTR_ERR(spdअगर->regmap);
 
-	spdif->clk = devm_clk_get(&pdev->dev, "axi");
-	if (IS_ERR(spdif->clk))
-		return PTR_ERR(spdif->clk);
+	spdअगर->clk = devm_clk_get(&pdev->dev, "axi");
+	अगर (IS_ERR(spdअगर->clk))
+		वापस PTR_ERR(spdअगर->clk);
 
-	spdif->clk_ref = devm_clk_get(&pdev->dev, "ref");
-	if (IS_ERR(spdif->clk_ref))
-		return PTR_ERR(spdif->clk_ref);
+	spdअगर->clk_ref = devm_clk_get(&pdev->dev, "ref");
+	अगर (IS_ERR(spdअगर->clk_ref))
+		वापस PTR_ERR(spdअगर->clk_ref);
 
-	ret = clk_prepare_enable(spdif->clk);
-	if (ret)
-		return ret;
+	ret = clk_prepare_enable(spdअगर->clk);
+	अगर (ret)
+		वापस ret;
 
-	spdif->dma_data.addr = res->start + AXI_SPDIF_REG_TX_FIFO;
-	spdif->dma_data.addr_width = 4;
-	spdif->dma_data.maxburst = 1;
+	spdअगर->dma_data.addr = res->start + AXI_SPDIF_REG_TX_FIFO;
+	spdअगर->dma_data.addr_width = 4;
+	spdअगर->dma_data.maxburst = 1;
 
-	spdif->ratnum.num = clk_get_rate(spdif->clk_ref) / 128;
-	spdif->ratnum.den_step = 1;
-	spdif->ratnum.den_min = 1;
-	spdif->ratnum.den_max = 64;
+	spdअगर->ratnum.num = clk_get_rate(spdअगर->clk_ref) / 128;
+	spdअगर->ratnum.den_step = 1;
+	spdअगर->ratnum.den_min = 1;
+	spdअगर->ratnum.den_max = 64;
 
-	spdif->rate_constraints.rats = &spdif->ratnum;
-	spdif->rate_constraints.nrats = 1;
+	spdअगर->rate_स्थिरraपूर्णांकs.rats = &spdअगर->ratnum;
+	spdअगर->rate_स्थिरraपूर्णांकs.nrats = 1;
 
-	ret = devm_snd_soc_register_component(&pdev->dev, &axi_spdif_component,
-					 &axi_spdif_dai, 1);
-	if (ret)
-		goto err_clk_disable;
+	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev, &axi_spdअगर_component,
+					 &axi_spdअगर_dai, 1);
+	अगर (ret)
+		जाओ err_clk_disable;
 
-	ret = devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
-	if (ret)
-		goto err_clk_disable;
+	ret = devm_snd_dmaengine_pcm_रेजिस्टर(&pdev->dev, शून्य, 0);
+	अगर (ret)
+		जाओ err_clk_disable;
 
-	return 0;
+	वापस 0;
 
 err_clk_disable:
-	clk_disable_unprepare(spdif->clk);
-	return ret;
-}
+	clk_disable_unprepare(spdअगर->clk);
+	वापस ret;
+पूर्ण
 
-static int axi_spdif_dev_remove(struct platform_device *pdev)
-{
-	struct axi_spdif *spdif = platform_get_drvdata(pdev);
+अटल पूर्णांक axi_spdअगर_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा axi_spdअगर *spdअगर = platक्रमm_get_drvdata(pdev);
 
-	clk_disable_unprepare(spdif->clk);
+	clk_disable_unprepare(spdअगर->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id axi_spdif_of_match[] = {
-	{ .compatible = "adi,axi-spdif-tx-1.00.a", },
-	{},
-};
-MODULE_DEVICE_TABLE(of, axi_spdif_of_match);
+अटल स्थिर काष्ठा of_device_id axi_spdअगर_of_match[] = अणु
+	अणु .compatible = "adi,axi-spdif-tx-1.00.a", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, axi_spdअगर_of_match);
 
-static struct platform_driver axi_spdif_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver axi_spdअगर_driver = अणु
+	.driver = अणु
 		.name = "axi-spdif",
-		.of_match_table = axi_spdif_of_match,
-	},
-	.probe = axi_spdif_probe,
-	.remove = axi_spdif_dev_remove,
-};
-module_platform_driver(axi_spdif_driver);
+		.of_match_table = axi_spdअगर_of_match,
+	पूर्ण,
+	.probe = axi_spdअगर_probe,
+	.हटाओ = axi_spdअगर_dev_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(axi_spdअगर_driver);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");
 MODULE_DESCRIPTION("AXI SPDIF driver");

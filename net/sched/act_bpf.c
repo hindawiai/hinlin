@@ -1,413 +1,414 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2015 Jiri Pirko <jiri@resnulli.us>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <linux/filter.h>
-#include <linux/bpf.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/bpf.h>
 
-#include <net/netlink.h>
-#include <net/sock.h>
-#include <net/pkt_sched.h>
-#include <net/pkt_cls.h>
+#समावेश <net/netlink.h>
+#समावेश <net/sock.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/pkt_cls.h>
 
-#include <linux/tc_act/tc_bpf.h>
-#include <net/tc_act/tc_bpf.h>
+#समावेश <linux/tc_act/tc_bpf.h>
+#समावेश <net/tc_act/tc_bpf.h>
 
-#define ACT_BPF_NAME_LEN	256
+#घोषणा ACT_BPF_NAME_LEN	256
 
-struct tcf_bpf_cfg {
-	struct bpf_prog *filter;
-	struct sock_filter *bpf_ops;
-	const char *bpf_name;
+काष्ठा tcf_bpf_cfg अणु
+	काष्ठा bpf_prog *filter;
+	काष्ठा sock_filter *bpf_ops;
+	स्थिर अक्षर *bpf_name;
 	u16 bpf_num_ops;
 	bool is_ebpf;
-};
+पूर्ण;
 
-static unsigned int bpf_net_id;
-static struct tc_action_ops act_bpf_ops;
+अटल अचिन्हित पूर्णांक bpf_net_id;
+अटल काष्ठा tc_action_ops act_bpf_ops;
 
-static int tcf_bpf_act(struct sk_buff *skb, const struct tc_action *act,
-		       struct tcf_result *res)
-{
+अटल पूर्णांक tcf_bpf_act(काष्ठा sk_buff *skb, स्थिर काष्ठा tc_action *act,
+		       काष्ठा tcf_result *res)
+अणु
 	bool at_ingress = skb_at_tc_ingress(skb);
-	struct tcf_bpf *prog = to_bpf(act);
-	struct bpf_prog *filter;
-	int action, filter_res;
+	काष्ठा tcf_bpf *prog = to_bpf(act);
+	काष्ठा bpf_prog *filter;
+	पूर्णांक action, filter_res;
 
-	tcf_lastuse_update(&prog->tcf_tm);
+	tcf_lastuse_update(&prog->tcf_पंचांग);
 	bstats_cpu_update(this_cpu_ptr(prog->common.cpu_bstats), skb);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	filter = rcu_dereference(prog->filter);
-	if (at_ingress) {
+	अगर (at_ingress) अणु
 		__skb_push(skb, skb->mac_len);
-		bpf_compute_data_pointers(skb);
+		bpf_compute_data_poपूर्णांकers(skb);
 		filter_res = BPF_PROG_RUN(filter, skb);
 		__skb_pull(skb, skb->mac_len);
-	} else {
-		bpf_compute_data_pointers(skb);
+	पूर्ण अन्यथा अणु
+		bpf_compute_data_poपूर्णांकers(skb);
 		filter_res = BPF_PROG_RUN(filter, skb);
-	}
-	if (skb_sk_is_prefetched(skb) && filter_res != TC_ACT_OK)
+	पूर्ण
+	अगर (skb_sk_is_prefetched(skb) && filter_res != TC_ACT_OK)
 		skb_orphan(skb);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	/* A BPF program may overwrite the default action opcode.
-	 * Similarly as in cls_bpf, if filter_res == -1 we use the
-	 * default action specified from tc.
+	/* A BPF program may overग_लिखो the शेष action opcode.
+	 * Similarly as in cls_bpf, अगर filter_res == -1 we use the
+	 * शेष action specअगरied from tc.
 	 *
-	 * In case a different well-known TC_ACT opcode has been
-	 * returned, it will overwrite the default one.
+	 * In हाल a dअगरferent well-known TC_ACT opcode has been
+	 * वापसed, it will overग_लिखो the शेष one.
 	 *
-	 * For everything else that is unknown, TC_ACT_UNSPEC is
-	 * returned.
+	 * For everything अन्यथा that is unknown, TC_ACT_UNSPEC is
+	 * वापसed.
 	 */
-	switch (filter_res) {
-	case TC_ACT_PIPE:
-	case TC_ACT_RECLASSIFY:
-	case TC_ACT_OK:
-	case TC_ACT_REDIRECT:
+	चयन (filter_res) अणु
+	हाल TC_ACT_PIPE:
+	हाल TC_ACT_RECLASSIFY:
+	हाल TC_ACT_OK:
+	हाल TC_ACT_REसूचीECT:
 		action = filter_res;
-		break;
-	case TC_ACT_SHOT:
+		अवरोध;
+	हाल TC_ACT_SHOT:
 		action = filter_res;
 		qstats_drop_inc(this_cpu_ptr(prog->common.cpu_qstats));
-		break;
-	case TC_ACT_UNSPEC:
+		अवरोध;
+	हाल TC_ACT_UNSPEC:
 		action = prog->tcf_action;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		action = TC_ACT_UNSPEC;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return action;
-}
+	वापस action;
+पूर्ण
 
-static bool tcf_bpf_is_ebpf(const struct tcf_bpf *prog)
-{
-	return !prog->bpf_ops;
-}
+अटल bool tcf_bpf_is_ebpf(स्थिर काष्ठा tcf_bpf *prog)
+अणु
+	वापस !prog->bpf_ops;
+पूर्ण
 
-static int tcf_bpf_dump_bpf_info(const struct tcf_bpf *prog,
-				 struct sk_buff *skb)
-{
-	struct nlattr *nla;
+अटल पूर्णांक tcf_bpf_dump_bpf_info(स्थिर काष्ठा tcf_bpf *prog,
+				 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *nla;
 
-	if (nla_put_u16(skb, TCA_ACT_BPF_OPS_LEN, prog->bpf_num_ops))
-		return -EMSGSIZE;
+	अगर (nla_put_u16(skb, TCA_ACT_BPF_OPS_LEN, prog->bpf_num_ops))
+		वापस -EMSGSIZE;
 
 	nla = nla_reserve(skb, TCA_ACT_BPF_OPS, prog->bpf_num_ops *
-			  sizeof(struct sock_filter));
-	if (nla == NULL)
-		return -EMSGSIZE;
+			  माप(काष्ठा sock_filter));
+	अगर (nla == शून्य)
+		वापस -EMSGSIZE;
 
-	memcpy(nla_data(nla), prog->bpf_ops, nla_len(nla));
+	स_नकल(nla_data(nla), prog->bpf_ops, nla_len(nla));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcf_bpf_dump_ebpf_info(const struct tcf_bpf *prog,
-				  struct sk_buff *skb)
-{
-	struct nlattr *nla;
+अटल पूर्णांक tcf_bpf_dump_ebpf_info(स्थिर काष्ठा tcf_bpf *prog,
+				  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *nla;
 
-	if (prog->bpf_name &&
+	अगर (prog->bpf_name &&
 	    nla_put_string(skb, TCA_ACT_BPF_NAME, prog->bpf_name))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	if (nla_put_u32(skb, TCA_ACT_BPF_ID, prog->filter->aux->id))
-		return -EMSGSIZE;
+	अगर (nla_put_u32(skb, TCA_ACT_BPF_ID, prog->filter->aux->id))
+		वापस -EMSGSIZE;
 
-	nla = nla_reserve(skb, TCA_ACT_BPF_TAG, sizeof(prog->filter->tag));
-	if (nla == NULL)
-		return -EMSGSIZE;
+	nla = nla_reserve(skb, TCA_ACT_BPF_TAG, माप(prog->filter->tag));
+	अगर (nla == शून्य)
+		वापस -EMSGSIZE;
 
-	memcpy(nla_data(nla), prog->filter->tag, nla_len(nla));
+	स_नकल(nla_data(nla), prog->filter->tag, nla_len(nla));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcf_bpf_dump(struct sk_buff *skb, struct tc_action *act,
-			int bind, int ref)
-{
-	unsigned char *tp = skb_tail_pointer(skb);
-	struct tcf_bpf *prog = to_bpf(act);
-	struct tc_act_bpf opt = {
+अटल पूर्णांक tcf_bpf_dump(काष्ठा sk_buff *skb, काष्ठा tc_action *act,
+			पूर्णांक bind, पूर्णांक ref)
+अणु
+	अचिन्हित अक्षर *tp = skb_tail_poपूर्णांकer(skb);
+	काष्ठा tcf_bpf *prog = to_bpf(act);
+	काष्ठा tc_act_bpf opt = अणु
 		.index   = prog->tcf_index,
-		.refcnt  = refcount_read(&prog->tcf_refcnt) - ref,
-		.bindcnt = atomic_read(&prog->tcf_bindcnt) - bind,
-	};
-	struct tcf_t tm;
-	int ret;
+		.refcnt  = refcount_पढ़ो(&prog->tcf_refcnt) - ref,
+		.bindcnt = atomic_पढ़ो(&prog->tcf_bindcnt) - bind,
+	पूर्ण;
+	काष्ठा tcf_t पंचांग;
+	पूर्णांक ret;
 
 	spin_lock_bh(&prog->tcf_lock);
 	opt.action = prog->tcf_action;
-	if (nla_put(skb, TCA_ACT_BPF_PARMS, sizeof(opt), &opt))
-		goto nla_put_failure;
+	अगर (nla_put(skb, TCA_ACT_BPF_PARMS, माप(opt), &opt))
+		जाओ nla_put_failure;
 
-	if (tcf_bpf_is_ebpf(prog))
+	अगर (tcf_bpf_is_ebpf(prog))
 		ret = tcf_bpf_dump_ebpf_info(prog, skb);
-	else
+	अन्यथा
 		ret = tcf_bpf_dump_bpf_info(prog, skb);
-	if (ret)
-		goto nla_put_failure;
+	अगर (ret)
+		जाओ nla_put_failure;
 
-	tcf_tm_dump(&tm, &prog->tcf_tm);
-	if (nla_put_64bit(skb, TCA_ACT_BPF_TM, sizeof(tm), &tm,
+	tcf_पंचांग_dump(&पंचांग, &prog->tcf_पंचांग);
+	अगर (nla_put_64bit(skb, TCA_ACT_BPF_TM, माप(पंचांग), &पंचांग,
 			  TCA_ACT_BPF_PAD))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	spin_unlock_bh(&prog->tcf_lock);
-	return skb->len;
+	वापस skb->len;
 
 nla_put_failure:
 	spin_unlock_bh(&prog->tcf_lock);
 	nlmsg_trim(skb, tp);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static const struct nla_policy act_bpf_policy[TCA_ACT_BPF_MAX + 1] = {
-	[TCA_ACT_BPF_PARMS]	= { .len = sizeof(struct tc_act_bpf) },
-	[TCA_ACT_BPF_FD]	= { .type = NLA_U32 },
-	[TCA_ACT_BPF_NAME]	= { .type = NLA_NUL_STRING,
-				    .len = ACT_BPF_NAME_LEN },
-	[TCA_ACT_BPF_OPS_LEN]	= { .type = NLA_U16 },
-	[TCA_ACT_BPF_OPS]	= { .type = NLA_BINARY,
-				    .len = sizeof(struct sock_filter) * BPF_MAXINSNS },
-};
+अटल स्थिर काष्ठा nla_policy act_bpf_policy[TCA_ACT_BPF_MAX + 1] = अणु
+	[TCA_ACT_BPF_PARMS]	= अणु .len = माप(काष्ठा tc_act_bpf) पूर्ण,
+	[TCA_ACT_BPF_FD]	= अणु .type = NLA_U32 पूर्ण,
+	[TCA_ACT_BPF_NAME]	= अणु .type = NLA_NUL_STRING,
+				    .len = ACT_BPF_NAME_LEN पूर्ण,
+	[TCA_ACT_BPF_OPS_LEN]	= अणु .type = NLA_U16 पूर्ण,
+	[TCA_ACT_BPF_OPS]	= अणु .type = NLA_BINARY,
+				    .len = माप(काष्ठा sock_filter) * BPF_MAXINSNS पूर्ण,
+पूर्ण;
 
-static int tcf_bpf_init_from_ops(struct nlattr **tb, struct tcf_bpf_cfg *cfg)
-{
-	struct sock_filter *bpf_ops;
-	struct sock_fprog_kern fprog_tmp;
-	struct bpf_prog *fp;
+अटल पूर्णांक tcf_bpf_init_from_ops(काष्ठा nlattr **tb, काष्ठा tcf_bpf_cfg *cfg)
+अणु
+	काष्ठा sock_filter *bpf_ops;
+	काष्ठा sock_fprog_kern fprog_पंचांगp;
+	काष्ठा bpf_prog *fp;
 	u16 bpf_size, bpf_num_ops;
-	int ret;
+	पूर्णांक ret;
 
 	bpf_num_ops = nla_get_u16(tb[TCA_ACT_BPF_OPS_LEN]);
-	if (bpf_num_ops	> BPF_MAXINSNS || bpf_num_ops == 0)
-		return -EINVAL;
+	अगर (bpf_num_ops	> BPF_MAXINSNS || bpf_num_ops == 0)
+		वापस -EINVAL;
 
-	bpf_size = bpf_num_ops * sizeof(*bpf_ops);
-	if (bpf_size != nla_len(tb[TCA_ACT_BPF_OPS]))
-		return -EINVAL;
+	bpf_size = bpf_num_ops * माप(*bpf_ops);
+	अगर (bpf_size != nla_len(tb[TCA_ACT_BPF_OPS]))
+		वापस -EINVAL;
 
 	bpf_ops = kmemdup(nla_data(tb[TCA_ACT_BPF_OPS]), bpf_size, GFP_KERNEL);
-	if (bpf_ops == NULL)
-		return -ENOMEM;
+	अगर (bpf_ops == शून्य)
+		वापस -ENOMEM;
 
-	fprog_tmp.len = bpf_num_ops;
-	fprog_tmp.filter = bpf_ops;
+	fprog_पंचांगp.len = bpf_num_ops;
+	fprog_पंचांगp.filter = bpf_ops;
 
-	ret = bpf_prog_create(&fp, &fprog_tmp);
-	if (ret < 0) {
-		kfree(bpf_ops);
-		return ret;
-	}
+	ret = bpf_prog_create(&fp, &fprog_पंचांगp);
+	अगर (ret < 0) अणु
+		kमुक्त(bpf_ops);
+		वापस ret;
+	पूर्ण
 
 	cfg->bpf_ops = bpf_ops;
 	cfg->bpf_num_ops = bpf_num_ops;
 	cfg->filter = fp;
 	cfg->is_ebpf = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcf_bpf_init_from_efd(struct nlattr **tb, struct tcf_bpf_cfg *cfg)
-{
-	struct bpf_prog *fp;
-	char *name = NULL;
+अटल पूर्णांक tcf_bpf_init_from_efd(काष्ठा nlattr **tb, काष्ठा tcf_bpf_cfg *cfg)
+अणु
+	काष्ठा bpf_prog *fp;
+	अक्षर *name = शून्य;
 	u32 bpf_fd;
 
 	bpf_fd = nla_get_u32(tb[TCA_ACT_BPF_FD]);
 
 	fp = bpf_prog_get_type(bpf_fd, BPF_PROG_TYPE_SCHED_ACT);
-	if (IS_ERR(fp))
-		return PTR_ERR(fp);
+	अगर (IS_ERR(fp))
+		वापस PTR_ERR(fp);
 
-	if (tb[TCA_ACT_BPF_NAME]) {
+	अगर (tb[TCA_ACT_BPF_NAME]) अणु
 		name = nla_memdup(tb[TCA_ACT_BPF_NAME], GFP_KERNEL);
-		if (!name) {
+		अगर (!name) अणु
 			bpf_prog_put(fp);
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	cfg->bpf_name = name;
 	cfg->filter = fp;
 	cfg->is_ebpf = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tcf_bpf_cfg_cleanup(const struct tcf_bpf_cfg *cfg)
-{
-	struct bpf_prog *filter = cfg->filter;
+अटल व्योम tcf_bpf_cfg_cleanup(स्थिर काष्ठा tcf_bpf_cfg *cfg)
+अणु
+	काष्ठा bpf_prog *filter = cfg->filter;
 
-	if (filter) {
-		if (cfg->is_ebpf)
+	अगर (filter) अणु
+		अगर (cfg->is_ebpf)
 			bpf_prog_put(filter);
-		else
+		अन्यथा
 			bpf_prog_destroy(filter);
-	}
+	पूर्ण
 
-	kfree(cfg->bpf_ops);
-	kfree(cfg->bpf_name);
-}
+	kमुक्त(cfg->bpf_ops);
+	kमुक्त(cfg->bpf_name);
+पूर्ण
 
-static void tcf_bpf_prog_fill_cfg(const struct tcf_bpf *prog,
-				  struct tcf_bpf_cfg *cfg)
-{
+अटल व्योम tcf_bpf_prog_fill_cfg(स्थिर काष्ठा tcf_bpf *prog,
+				  काष्ठा tcf_bpf_cfg *cfg)
+अणु
 	cfg->is_ebpf = tcf_bpf_is_ebpf(prog);
 	/* updates to prog->filter are prevented, since it's called either
 	 * with tcf lock or during final cleanup in rcu callback
 	 */
-	cfg->filter = rcu_dereference_protected(prog->filter, 1);
+	cfg->filter = rcu_dereference_रक्षित(prog->filter, 1);
 
 	cfg->bpf_ops = prog->bpf_ops;
 	cfg->bpf_name = prog->bpf_name;
-}
+पूर्ण
 
-static int tcf_bpf_init(struct net *net, struct nlattr *nla,
-			struct nlattr *est, struct tc_action **act,
-			int replace, int bind, bool rtnl_held,
-			struct tcf_proto *tp, u32 flags,
-			struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, bpf_net_id);
-	struct nlattr *tb[TCA_ACT_BPF_MAX + 1];
-	struct tcf_chain *goto_ch = NULL;
-	struct tcf_bpf_cfg cfg, old;
-	struct tc_act_bpf *parm;
-	struct tcf_bpf *prog;
+अटल पूर्णांक tcf_bpf_init(काष्ठा net *net, काष्ठा nlattr *nla,
+			काष्ठा nlattr *est, काष्ठा tc_action **act,
+			पूर्णांक replace, पूर्णांक bind, bool rtnl_held,
+			काष्ठा tcf_proto *tp, u32 flags,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, bpf_net_id);
+	काष्ठा nlattr *tb[TCA_ACT_BPF_MAX + 1];
+	काष्ठा tcf_chain *जाओ_ch = शून्य;
+	काष्ठा tcf_bpf_cfg cfg, old;
+	काष्ठा tc_act_bpf *parm;
+	काष्ठा tcf_bpf *prog;
 	bool is_bpf, is_ebpf;
-	int ret, res = 0;
+	पूर्णांक ret, res = 0;
 	u32 index;
 
-	if (!nla)
-		return -EINVAL;
+	अगर (!nla)
+		वापस -EINVAL;
 
 	ret = nla_parse_nested_deprecated(tb, TCA_ACT_BPF_MAX, nla,
-					  act_bpf_policy, NULL);
-	if (ret < 0)
-		return ret;
+					  act_bpf_policy, शून्य);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!tb[TCA_ACT_BPF_PARMS])
-		return -EINVAL;
+	अगर (!tb[TCA_ACT_BPF_PARMS])
+		वापस -EINVAL;
 
 	parm = nla_data(tb[TCA_ACT_BPF_PARMS]);
 	index = parm->index;
 	ret = tcf_idr_check_alloc(tn, &index, act, bind);
-	if (!ret) {
+	अगर (!ret) अणु
 		ret = tcf_idr_create(tn, index, est, act,
 				     &act_bpf_ops, bind, true, 0);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			tcf_idr_cleanup(tn, index);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		res = ACT_P_CREATED;
-	} else if (ret > 0) {
-		/* Don't override defaults. */
-		if (bind)
-			return 0;
+	पूर्ण अन्यथा अगर (ret > 0) अणु
+		/* Don't override शेषs. */
+		अगर (bind)
+			वापस 0;
 
-		if (!replace) {
+		अगर (!replace) अणु
 			tcf_idr_release(*act, bind);
-			return -EEXIST;
-		}
-	} else {
-		return ret;
-	}
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		वापस ret;
+	पूर्ण
 
-	ret = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
-	if (ret < 0)
-		goto release_idr;
+	ret = tcf_action_check_ctrlact(parm->action, tp, &जाओ_ch, extack);
+	अगर (ret < 0)
+		जाओ release_idr;
 
 	is_bpf = tb[TCA_ACT_BPF_OPS_LEN] && tb[TCA_ACT_BPF_OPS];
 	is_ebpf = tb[TCA_ACT_BPF_FD];
 
-	if ((!is_bpf && !is_ebpf) || (is_bpf && is_ebpf)) {
+	अगर ((!is_bpf && !is_ebpf) || (is_bpf && is_ebpf)) अणु
 		ret = -EINVAL;
-		goto put_chain;
-	}
+		जाओ put_chain;
+	पूर्ण
 
-	memset(&cfg, 0, sizeof(cfg));
+	स_रखो(&cfg, 0, माप(cfg));
 
 	ret = is_bpf ? tcf_bpf_init_from_ops(tb, &cfg) :
 		       tcf_bpf_init_from_efd(tb, &cfg);
-	if (ret < 0)
-		goto put_chain;
+	अगर (ret < 0)
+		जाओ put_chain;
 
 	prog = to_bpf(*act);
 
 	spin_lock_bh(&prog->tcf_lock);
-	if (res != ACT_P_CREATED)
+	अगर (res != ACT_P_CREATED)
 		tcf_bpf_prog_fill_cfg(prog, &old);
 
 	prog->bpf_ops = cfg.bpf_ops;
 	prog->bpf_name = cfg.bpf_name;
 
-	if (cfg.bpf_num_ops)
+	अगर (cfg.bpf_num_ops)
 		prog->bpf_num_ops = cfg.bpf_num_ops;
 
-	goto_ch = tcf_action_set_ctrlact(*act, parm->action, goto_ch);
-	rcu_assign_pointer(prog->filter, cfg.filter);
+	जाओ_ch = tcf_action_set_ctrlact(*act, parm->action, जाओ_ch);
+	rcu_assign_poपूर्णांकer(prog->filter, cfg.filter);
 	spin_unlock_bh(&prog->tcf_lock);
 
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
 
-	if (res != ACT_P_CREATED) {
-		/* make sure the program being replaced is no longer executing */
+	अगर (res != ACT_P_CREATED) अणु
+		/* make sure the program being replaced is no दीर्घer executing */
 		synchronize_rcu();
 		tcf_bpf_cfg_cleanup(&old);
-	}
+	पूर्ण
 
-	return res;
+	वापस res;
 
 put_chain:
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
 
 release_idr:
 	tcf_idr_release(*act, bind);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void tcf_bpf_cleanup(struct tc_action *act)
-{
-	struct tcf_bpf_cfg tmp;
+अटल व्योम tcf_bpf_cleanup(काष्ठा tc_action *act)
+अणु
+	काष्ठा tcf_bpf_cfg पंचांगp;
 
-	tcf_bpf_prog_fill_cfg(to_bpf(act), &tmp);
-	tcf_bpf_cfg_cleanup(&tmp);
-}
+	tcf_bpf_prog_fill_cfg(to_bpf(act), &पंचांगp);
+	tcf_bpf_cfg_cleanup(&पंचांगp);
+पूर्ण
 
-static int tcf_bpf_walker(struct net *net, struct sk_buff *skb,
-			  struct netlink_callback *cb, int type,
-			  const struct tc_action_ops *ops,
-			  struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, bpf_net_id);
+अटल पूर्णांक tcf_bpf_walker(काष्ठा net *net, काष्ठा sk_buff *skb,
+			  काष्ठा netlink_callback *cb, पूर्णांक type,
+			  स्थिर काष्ठा tc_action_ops *ops,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, bpf_net_id);
 
-	return tcf_generic_walker(tn, skb, cb, type, ops, extack);
-}
+	वापस tcf_generic_walker(tn, skb, cb, type, ops, extack);
+पूर्ण
 
-static int tcf_bpf_search(struct net *net, struct tc_action **a, u32 index)
-{
-	struct tc_action_net *tn = net_generic(net, bpf_net_id);
+अटल पूर्णांक tcf_bpf_search(काष्ठा net *net, काष्ठा tc_action **a, u32 index)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, bpf_net_id);
 
-	return tcf_idr_search(tn, a, index);
-}
+	वापस tcf_idr_search(tn, a, index);
+पूर्ण
 
-static struct tc_action_ops act_bpf_ops __read_mostly = {
+अटल काष्ठा tc_action_ops act_bpf_ops __पढ़ो_mostly = अणु
 	.kind		=	"bpf",
 	.id		=	TCA_ID_BPF,
 	.owner		=	THIS_MODULE,
@@ -417,40 +418,40 @@ static struct tc_action_ops act_bpf_ops __read_mostly = {
 	.init		=	tcf_bpf_init,
 	.walk		=	tcf_bpf_walker,
 	.lookup		=	tcf_bpf_search,
-	.size		=	sizeof(struct tcf_bpf),
-};
+	.size		=	माप(काष्ठा tcf_bpf),
+पूर्ण;
 
-static __net_init int bpf_init_net(struct net *net)
-{
-	struct tc_action_net *tn = net_generic(net, bpf_net_id);
+अटल __net_init पूर्णांक bpf_init_net(काष्ठा net *net)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, bpf_net_id);
 
-	return tc_action_net_init(net, tn, &act_bpf_ops);
-}
+	वापस tc_action_net_init(net, tn, &act_bpf_ops);
+पूर्ण
 
-static void __net_exit bpf_exit_net(struct list_head *net_list)
-{
-	tc_action_net_exit(net_list, bpf_net_id);
-}
+अटल व्योम __net_निकास bpf_निकास_net(काष्ठा list_head *net_list)
+अणु
+	tc_action_net_निकास(net_list, bpf_net_id);
+पूर्ण
 
-static struct pernet_operations bpf_net_ops = {
+अटल काष्ठा pernet_operations bpf_net_ops = अणु
 	.init = bpf_init_net,
-	.exit_batch = bpf_exit_net,
+	.निकास_batch = bpf_निकास_net,
 	.id   = &bpf_net_id,
-	.size = sizeof(struct tc_action_net),
-};
+	.size = माप(काष्ठा tc_action_net),
+पूर्ण;
 
-static int __init bpf_init_module(void)
-{
-	return tcf_register_action(&act_bpf_ops, &bpf_net_ops);
-}
+अटल पूर्णांक __init bpf_init_module(व्योम)
+अणु
+	वापस tcf_रेजिस्टर_action(&act_bpf_ops, &bpf_net_ops);
+पूर्ण
 
-static void __exit bpf_cleanup_module(void)
-{
-	tcf_unregister_action(&act_bpf_ops, &bpf_net_ops);
-}
+अटल व्योम __निकास bpf_cleanup_module(व्योम)
+अणु
+	tcf_unरेजिस्टर_action(&act_bpf_ops, &bpf_net_ops);
+पूर्ण
 
 module_init(bpf_init_module);
-module_exit(bpf_cleanup_module);
+module_निकास(bpf_cleanup_module);
 
 MODULE_AUTHOR("Jiri Pirko <jiri@resnulli.us>");
 MODULE_DESCRIPTION("TC BPF based action");

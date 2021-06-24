@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 // Copyright 2020 Cerno
 
-#include <linux/clk-provider.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/reset-controller.h>
-#include <linux/reset/reset-simple.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reset-controller.h>
+#समावेश <linux/reset/reset-simple.h>
 
-#define DVP_HT_RPI_SW_INIT	0x04
-#define DVP_HT_RPI_MISC_CONFIG	0x08
+#घोषणा DVP_HT_RPI_SW_INIT	0x04
+#घोषणा DVP_HT_RPI_MISC_CONFIG	0x08
 
-#define NR_CLOCKS	2
-#define NR_RESETS	6
+#घोषणा NR_CLOCKS	2
+#घोषणा NR_RESETS	6
 
-struct clk_dvp {
-	struct clk_hw_onecell_data	*data;
-	struct reset_simple_data	reset;
-};
+काष्ठा clk_dvp अणु
+	काष्ठा clk_hw_onecell_data	*data;
+	काष्ठा reset_simple_data	reset;
+पूर्ण;
 
-static const struct clk_parent_data clk_dvp_parent = {
+अटल स्थिर काष्ठा clk_parent_data clk_dvp_parent = अणु
 	.index	= 0,
-};
+पूर्ण;
 
-static int clk_dvp_probe(struct platform_device *pdev)
-{
-	struct clk_hw_onecell_data *data;
-	struct clk_dvp *dvp;
-	void __iomem *base;
-	int ret;
+अटल पूर्णांक clk_dvp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk_hw_onecell_data *data;
+	काष्ठा clk_dvp *dvp;
+	व्योम __iomem *base;
+	पूर्णांक ret;
 
-	dvp = devm_kzalloc(&pdev->dev, sizeof(*dvp), GFP_KERNEL);
-	if (!dvp)
-		return -ENOMEM;
-	platform_set_drvdata(pdev, dvp);
+	dvp = devm_kzalloc(&pdev->dev, माप(*dvp), GFP_KERNEL);
+	अगर (!dvp)
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, dvp);
 
 	dvp->data = devm_kzalloc(&pdev->dev,
-				 struct_size(dvp->data, hws, NR_CLOCKS),
+				 काष्ठा_size(dvp->data, hws, NR_CLOCKS),
 				 GFP_KERNEL);
-	if (!dvp->data)
-		return -ENOMEM;
+	अगर (!dvp->data)
+		वापस -ENOMEM;
 	data = dvp->data;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	dvp->reset.rcdev.owner = THIS_MODULE;
 	dvp->reset.rcdev.nr_resets = NR_RESETS;
@@ -52,72 +53,72 @@ static int clk_dvp_probe(struct platform_device *pdev)
 	dvp->reset.membase = base + DVP_HT_RPI_SW_INIT;
 	spin_lock_init(&dvp->reset.lock);
 
-	ret = devm_reset_controller_register(&pdev->dev, &dvp->reset.rcdev);
-	if (ret)
-		return ret;
+	ret = devm_reset_controller_रेजिस्टर(&pdev->dev, &dvp->reset.rcdev);
+	अगर (ret)
+		वापस ret;
 
-	data->hws[0] = clk_hw_register_gate_parent_data(&pdev->dev,
+	data->hws[0] = clk_hw_रेजिस्टर_gate_parent_data(&pdev->dev,
 							"hdmi0-108MHz",
 							&clk_dvp_parent, 0,
 							base + DVP_HT_RPI_MISC_CONFIG, 3,
 							CLK_GATE_SET_TO_DISABLE,
 							&dvp->reset.lock);
-	if (IS_ERR(data->hws[0]))
-		return PTR_ERR(data->hws[0]);
+	अगर (IS_ERR(data->hws[0]))
+		वापस PTR_ERR(data->hws[0]);
 
-	data->hws[1] = clk_hw_register_gate_parent_data(&pdev->dev,
+	data->hws[1] = clk_hw_रेजिस्टर_gate_parent_data(&pdev->dev,
 							"hdmi1-108MHz",
 							&clk_dvp_parent, 0,
 							base + DVP_HT_RPI_MISC_CONFIG, 4,
 							CLK_GATE_SET_TO_DISABLE,
 							&dvp->reset.lock);
-	if (IS_ERR(data->hws[1])) {
+	अगर (IS_ERR(data->hws[1])) अणु
 		ret = PTR_ERR(data->hws[1]);
-		goto unregister_clk0;
-	}
+		जाओ unरेजिस्टर_clk0;
+	पूर्ण
 
 	data->num = NR_CLOCKS;
 	ret = of_clk_add_hw_provider(pdev->dev.of_node, of_clk_hw_onecell_get,
 				     data);
-	if (ret)
-		goto unregister_clk1;
+	अगर (ret)
+		जाओ unरेजिस्टर_clk1;
 
-	return 0;
+	वापस 0;
 
-unregister_clk1:
-	clk_hw_unregister_gate(data->hws[1]);
+unरेजिस्टर_clk1:
+	clk_hw_unरेजिस्टर_gate(data->hws[1]);
 
-unregister_clk0:
-	clk_hw_unregister_gate(data->hws[0]);
-	return ret;
-};
+unरेजिस्टर_clk0:
+	clk_hw_unरेजिस्टर_gate(data->hws[0]);
+	वापस ret;
+पूर्ण;
 
-static int clk_dvp_remove(struct platform_device *pdev)
-{
-	struct clk_dvp *dvp = platform_get_drvdata(pdev);
-	struct clk_hw_onecell_data *data = dvp->data;
+अटल पूर्णांक clk_dvp_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk_dvp *dvp = platक्रमm_get_drvdata(pdev);
+	काष्ठा clk_hw_onecell_data *data = dvp->data;
 
-	clk_hw_unregister_gate(data->hws[1]);
-	clk_hw_unregister_gate(data->hws[0]);
+	clk_hw_unरेजिस्टर_gate(data->hws[1]);
+	clk_hw_unरेजिस्टर_gate(data->hws[0]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id clk_dvp_dt_ids[] = {
-	{ .compatible = "brcm,brcm2711-dvp", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id clk_dvp_dt_ids[] = अणु
+	अणु .compatible = "brcm,brcm2711-dvp", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, clk_dvp_dt_ids);
 
-static struct platform_driver clk_dvp_driver = {
+अटल काष्ठा platक्रमm_driver clk_dvp_driver = अणु
 	.probe	= clk_dvp_probe,
-	.remove	= clk_dvp_remove,
-	.driver	= {
+	.हटाओ	= clk_dvp_हटाओ,
+	.driver	= अणु
 		.name		= "brcm2711-dvp",
 		.of_match_table	= clk_dvp_dt_ids,
-	},
-};
-module_platform_driver(clk_dvp_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(clk_dvp_driver);
 
 MODULE_AUTHOR("Maxime Ripard <maxime@cerno.tech>");
 MODULE_DESCRIPTION("BCM2711 DVP clock driver");

@@ -1,114 +1,115 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_FCNTL_H
-#define _UAPI_LINUX_FCNTL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_FCNTL_H
+#घोषणा _UAPI_LINUX_FCNTL_H
 
-#include <asm/fcntl.h>
-#include <linux/openat2.h>
+#समावेश <यंत्र/fcntl.h>
+#समावेश <linux/खोलोat2.h>
 
-#define F_SETLEASE	(F_LINUX_SPECIFIC_BASE + 0)
-#define F_GETLEASE	(F_LINUX_SPECIFIC_BASE + 1)
+#घोषणा F_SETLEASE	(F_LINUX_SPECIFIC_BASE + 0)
+#घोषणा F_GETLEASE	(F_LINUX_SPECIFIC_BASE + 1)
 
 /*
- * Cancel a blocking posix lock; internal use only until we expose an
+ * Cancel a blocking posix lock; पूर्णांकernal use only until we expose an
  * asynchronous lock api to userspace:
  */
-#define F_CANCELLK	(F_LINUX_SPECIFIC_BASE + 5)
+#घोषणा F_CANCELLK	(F_LINUX_SPECIFIC_BASE + 5)
 
 /* Create a file descriptor with FD_CLOEXEC set. */
-#define F_DUPFD_CLOEXEC	(F_LINUX_SPECIFIC_BASE + 6)
+#घोषणा F_DUPFD_CLOEXEC	(F_LINUX_SPECIFIC_BASE + 6)
 
 /*
  * Request nofications on a directory.
- * See below for events that may be notified.
+ * See below क्रम events that may be notअगरied.
  */
-#define F_NOTIFY	(F_LINUX_SPECIFIC_BASE+2)
+#घोषणा F_NOTIFY	(F_LINUX_SPECIFIC_BASE+2)
 
 /*
  * Set and get of pipe page size array
  */
-#define F_SETPIPE_SZ	(F_LINUX_SPECIFIC_BASE + 7)
-#define F_GETPIPE_SZ	(F_LINUX_SPECIFIC_BASE + 8)
+#घोषणा F_SETPIPE_SZ	(F_LINUX_SPECIFIC_BASE + 7)
+#घोषणा F_GETPIPE_SZ	(F_LINUX_SPECIFIC_BASE + 8)
 
 /*
  * Set/Get seals
  */
-#define F_ADD_SEALS	(F_LINUX_SPECIFIC_BASE + 9)
-#define F_GET_SEALS	(F_LINUX_SPECIFIC_BASE + 10)
+#घोषणा F_ADD_SEALS	(F_LINUX_SPECIFIC_BASE + 9)
+#घोषणा F_GET_SEALS	(F_LINUX_SPECIFIC_BASE + 10)
 
 /*
  * Types of seals
  */
-#define F_SEAL_SEAL	0x0001	/* prevent further seals from being set */
-#define F_SEAL_SHRINK	0x0002	/* prevent file from shrinking */
-#define F_SEAL_GROW	0x0004	/* prevent file from growing */
-#define F_SEAL_WRITE	0x0008	/* prevent writes */
-#define F_SEAL_FUTURE_WRITE	0x0010  /* prevent future writes while mapped */
-/* (1U << 31) is reserved for signed error codes */
+#घोषणा F_SEAL_SEAL	0x0001	/* prevent further seals from being set */
+#घोषणा F_SEAL_SHRINK	0x0002	/* prevent file from shrinking */
+#घोषणा F_SEAL_GROW	0x0004	/* prevent file from growing */
+#घोषणा F_SEAL_WRITE	0x0008	/* prevent ग_लिखोs */
+#घोषणा F_SEAL_FUTURE_WRITE	0x0010  /* prevent future ग_लिखोs जबतक mapped */
+/* (1U << 31) is reserved क्रम चिन्हित error codes */
 
 /*
- * Set/Get write life time hints. {GET,SET}_RW_HINT operate on the
- * underlying inode, while {GET,SET}_FILE_RW_HINT operate only on
- * the specific file.
+ * Set/Get ग_लिखो lअगरe समय hपूर्णांकs. अणुGET,SETपूर्ण_RW_HINT operate on the
+ * underlying inode, जबतक अणुGET,SETपूर्ण_खाता_RW_HINT operate only on
+ * the specअगरic file.
  */
-#define F_GET_RW_HINT		(F_LINUX_SPECIFIC_BASE + 11)
-#define F_SET_RW_HINT		(F_LINUX_SPECIFIC_BASE + 12)
-#define F_GET_FILE_RW_HINT	(F_LINUX_SPECIFIC_BASE + 13)
-#define F_SET_FILE_RW_HINT	(F_LINUX_SPECIFIC_BASE + 14)
+#घोषणा F_GET_RW_HINT		(F_LINUX_SPECIFIC_BASE + 11)
+#घोषणा F_SET_RW_HINT		(F_LINUX_SPECIFIC_BASE + 12)
+#घोषणा F_GET_खाता_RW_HINT	(F_LINUX_SPECIFIC_BASE + 13)
+#घोषणा F_SET_खाता_RW_HINT	(F_LINUX_SPECIFIC_BASE + 14)
 
 /*
- * Valid hint values for F_{GET,SET}_RW_HINT. 0 is "not set", or can be
- * used to clear any hints previously set.
+ * Valid hपूर्णांक values क्रम F_अणुGET,SETपूर्ण_RW_HINT. 0 is "not set", or can be
+ * used to clear any hपूर्णांकs previously set.
  */
-#define RWH_WRITE_LIFE_NOT_SET	0
-#define RWH_WRITE_LIFE_NONE	1
-#define RWH_WRITE_LIFE_SHORT	2
-#define RWH_WRITE_LIFE_MEDIUM	3
-#define RWH_WRITE_LIFE_LONG	4
-#define RWH_WRITE_LIFE_EXTREME	5
+#घोषणा RWH_WRITE_LIFE_NOT_SET	0
+#घोषणा RWH_WRITE_LIFE_NONE	1
+#घोषणा RWH_WRITE_LIFE_SHORT	2
+#घोषणा RWH_WRITE_LIFE_MEDIUM	3
+#घोषणा RWH_WRITE_LIFE_LONG	4
+#घोषणा RWH_WRITE_LIFE_EXTREME	5
 
 /*
- * The originally introduced spelling is remained from the first
- * versions of the patch set that introduced the feature, see commit
+ * The originally पूर्णांकroduced spelling is reमुख्यed from the first
+ * versions of the patch set that पूर्णांकroduced the feature, see commit
  * v4.13-rc1~212^2~51.
  */
-#define RWF_WRITE_LIFE_NOT_SET	RWH_WRITE_LIFE_NOT_SET
+#घोषणा RWF_WRITE_LIFE_NOT_SET	RWH_WRITE_LIFE_NOT_SET
 
 /*
- * Types of directory notifications that may be requested.
+ * Types of directory notअगरications that may be requested.
  */
-#define DN_ACCESS	0x00000001	/* File accessed */
-#define DN_MODIFY	0x00000002	/* File modified */
-#define DN_CREATE	0x00000004	/* File created */
-#define DN_DELETE	0x00000008	/* File removed */
-#define DN_RENAME	0x00000010	/* File renamed */
-#define DN_ATTRIB	0x00000020	/* File changed attibutes */
-#define DN_MULTISHOT	0x80000000	/* Don't remove notifier */
+#घोषणा DN_ACCESS	0x00000001	/* File accessed */
+#घोषणा DN_MODIFY	0x00000002	/* File modअगरied */
+#घोषणा DN_CREATE	0x00000004	/* File created */
+#घोषणा DN_DELETE	0x00000008	/* File हटाओd */
+#घोषणा DN_RENAME	0x00000010	/* File नामd */
+#घोषणा DN_ATTRIB	0x00000020	/* File changed attibutes */
+#घोषणा DN_MULTISHOT	0x80000000	/* Don't हटाओ notअगरier */
 
 /*
- * The constants AT_REMOVEDIR and AT_EACCESS have the same value.  AT_EACCESS is
- * meaningful only to faccessat, while AT_REMOVEDIR is meaningful only to
- * unlinkat.  The two functions do completely different things and therefore,
- * the flags can be allowed to overlap.  For example, passing AT_REMOVEDIR to
+ * The स्थिरants AT_REMOVEसूची and AT_EACCESS have the same value.  AT_EACCESS is
+ * meaningful only to faccessat, जबतक AT_REMOVEसूची is meaningful only to
+ * unlinkat.  The two functions करो completely dअगरferent things and thereक्रमe,
+ * the flags can be allowed to overlap.  For example, passing AT_REMOVEसूची to
  * faccessat would be undefined behavior and thus treating it equivalent to
  * AT_EACCESS is valid undefined behavior.
  */
-#define AT_FDCWD		-100    /* Special value used to indicate
-                                           openat should use the current
+#घोषणा AT_FDCWD		-100    /* Special value used to indicate
+                                           खोलोat should use the current
                                            working directory. */
-#define AT_SYMLINK_NOFOLLOW	0x100   /* Do not follow symbolic links.  */
-#define AT_EACCESS		0x200	/* Test access permitted for
+#घोषणा AT_SYMLINK_NOFOLLOW	0x100   /* Do not follow symbolic links.  */
+#घोषणा AT_EACCESS		0x200	/* Test access permitted क्रम
                                            effective IDs, not real IDs.  */
-#define AT_REMOVEDIR		0x200   /* Remove directory instead of
+#घोषणा AT_REMOVEसूची		0x200   /* Remove directory instead of
                                            unlinking file.  */
-#define AT_SYMLINK_FOLLOW	0x400   /* Follow symbolic links.  */
-#define AT_NO_AUTOMOUNT		0x800	/* Suppress terminal automount traversal */
-#define AT_EMPTY_PATH		0x1000	/* Allow empty relative pathname */
+#घोषणा AT_SYMLINK_FOLLOW	0x400   /* Follow symbolic links.  */
+#घोषणा AT_NO_AUTOMOUNT		0x800	/* Suppress terminal स्वतःmount traversal */
+#घोषणा AT_EMPTY_PATH		0x1000	/* Allow empty relative pathname */
 
-#define AT_STATX_SYNC_TYPE	0x6000	/* Type of synchronisation required from statx() */
-#define AT_STATX_SYNC_AS_STAT	0x0000	/* - Do whatever stat() does */
-#define AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
-#define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
+#घोषणा AT_STATX_SYNC_TYPE	0x6000	/* Type of synchronisation required from statx() */
+#घोषणा AT_STATX_SYNC_AS_STAT	0x0000	/* - Do whatever stat() करोes */
+#घोषणा AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
+#घोषणा AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
 
-#define AT_RECURSIVE		0x8000	/* Apply to the entire subtree */
+#घोषणा AT_RECURSIVE		0x8000	/* Apply to the entire subtree */
 
-#endif /* _UAPI_LINUX_FCNTL_H */
+#पूर्ण_अगर /* _UAPI_LINUX_FCNTL_H */

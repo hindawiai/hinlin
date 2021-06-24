@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,21 +24,21 @@
  *
  */
 
-#ifndef MOD_HDCP_H_
-#define MOD_HDCP_H_
+#अगर_अघोषित MOD_HDCP_H_
+#घोषणा MOD_HDCP_H_
 
-#include "os_types.h"
-#include "signal_types.h"
+#समावेश "os_types.h"
+#समावेश "signal_types.h"
 
 /* Forward Declarations */
-struct mod_hdcp;
+काष्ठा mod_hdcp;
 
-#define MAX_NUM_OF_DISPLAYS 6
-#define MAX_NUM_OF_ATTEMPTS 4
-#define MAX_NUM_OF_ERROR_TRACE 10
+#घोषणा MAX_NUM_OF_DISPLAYS 6
+#घोषणा MAX_NUM_OF_ATTEMPTS 4
+#घोषणा MAX_NUM_OF_ERROR_TRACE 10
 
-/* detailed return status */
-enum mod_hdcp_status {
+/* detailed वापस status */
+क्रमागत mod_hdcp_status अणु
 	MOD_HDCP_STATUS_SUCCESS = 0,
 	MOD_HDCP_STATUS_FAILURE,
 	MOD_HDCP_STATUS_RESET_NEEDED,
@@ -67,9 +68,9 @@ enum mod_hdcp_status {
 	MOD_HDCP_STATUS_HDCP1_DEVICE_COUNT_MISMATCH_FAILURE,
 	MOD_HDCP_STATUS_HDCP1_LINK_INTEGRITY_FAILURE,
 	MOD_HDCP_STATUS_HDCP1_REAUTH_REQUEST_ISSUED,
-	MOD_HDCP_STATUS_HDCP1_LINK_MAINTENANCE_FAILURE,
+	MOD_HDCP_STATUS_HDCP1_LINK_MAINTEन_अंकCE_FAILURE,
 	MOD_HDCP_STATUS_HDCP1_INVALID_BKSV,
-	MOD_HDCP_STATUS_DDC_FAILURE, /* TODO: specific errors */
+	MOD_HDCP_STATUS_DDC_FAILURE, /* TODO: specअगरic errors */
 	MOD_HDCP_STATUS_INVALID_OPERATION,
 	MOD_HDCP_STATUS_HDCP2_NOT_CAPABLE,
 	MOD_HDCP_STATUS_HDCP2_CREATE_SESSION_FAILURE,
@@ -97,208 +98,208 @@ enum mod_hdcp_status {
 	MOD_HDCP_STATUS_HDCP2_REAUTH_REQUEST,
 	MOD_HDCP_STATUS_HDCP2_REAUTH_LINK_INTEGRITY_FAILURE,
 	MOD_HDCP_STATUS_HDCP2_DEVICE_COUNT_MISMATCH_FAILURE,
-};
+पूर्ण;
 
-struct mod_hdcp_displayport {
-	uint8_t rev;
-	uint8_t assr_enabled;
-	uint8_t mst_enabled;
-};
+काष्ठा mod_hdcp_displayport अणु
+	uपूर्णांक8_t rev;
+	uपूर्णांक8_t assr_enabled;
+	uपूर्णांक8_t mst_enabled;
+पूर्ण;
 
-struct mod_hdcp_hdmi {
-	uint8_t reserved;
-};
-enum mod_hdcp_operation_mode {
+काष्ठा mod_hdcp_hdmi अणु
+	uपूर्णांक8_t reserved;
+पूर्ण;
+क्रमागत mod_hdcp_operation_mode अणु
 	MOD_HDCP_MODE_OFF,
 	MOD_HDCP_MODE_DEFAULT,
 	MOD_HDCP_MODE_DP
-};
+पूर्ण;
 
-enum mod_hdcp_display_state {
+क्रमागत mod_hdcp_display_state अणु
 	MOD_HDCP_DISPLAY_INACTIVE = 0,
 	MOD_HDCP_DISPLAY_ACTIVE,
 	MOD_HDCP_DISPLAY_ENCRYPTION_ENABLED
-};
+पूर्ण;
 
-enum mod_hdcp_display_disable_option {
+क्रमागत mod_hdcp_display_disable_option अणु
 	MOD_HDCP_DISPLAY_NOT_DISABLE = 0,
 	MOD_HDCP_DISPLAY_DISABLE_AUTHENTICATION,
 	MOD_HDCP_DISPLAY_DISABLE_ENCRYPTION,
-};
+पूर्ण;
 
-struct mod_hdcp_ddc {
-	void *handle;
-	struct {
-		bool (*read_i2c)(void *handle,
-				uint32_t address,
-				uint8_t offset,
-				uint8_t *data,
-				uint32_t size);
-		bool (*write_i2c)(void *handle,
-				uint32_t address,
-				const uint8_t *data,
-				uint32_t size);
-		bool (*read_dpcd)(void *handle,
-				uint32_t address,
-				uint8_t *data,
-				uint32_t size);
-		bool (*write_dpcd)(void *handle,
-				uint32_t address,
-				const uint8_t *data,
-				uint32_t size);
-	} funcs;
-};
+काष्ठा mod_hdcp_ddc अणु
+	व्योम *handle;
+	काष्ठा अणु
+		bool (*पढ़ो_i2c)(व्योम *handle,
+				uपूर्णांक32_t address,
+				uपूर्णांक8_t offset,
+				uपूर्णांक8_t *data,
+				uपूर्णांक32_t size);
+		bool (*ग_लिखो_i2c)(व्योम *handle,
+				uपूर्णांक32_t address,
+				स्थिर uपूर्णांक8_t *data,
+				uपूर्णांक32_t size);
+		bool (*पढ़ो_dpcd)(व्योम *handle,
+				uपूर्णांक32_t address,
+				uपूर्णांक8_t *data,
+				uपूर्णांक32_t size);
+		bool (*ग_लिखो_dpcd)(व्योम *handle,
+				uपूर्णांक32_t address,
+				स्थिर uपूर्णांक8_t *data,
+				uपूर्णांक32_t size);
+	पूर्ण funcs;
+पूर्ण;
 
-struct mod_hdcp_psp {
-	void *handle;
-	void *funcs;
-};
+काष्ठा mod_hdcp_psp अणु
+	व्योम *handle;
+	व्योम *funcs;
+पूर्ण;
 
-struct mod_hdcp_display_adjustment {
-	uint8_t disable			: 2;
-	uint8_t reserved		: 6;
-};
+काष्ठा mod_hdcp_display_adjusपंचांगent अणु
+	uपूर्णांक8_t disable			: 2;
+	uपूर्णांक8_t reserved		: 6;
+पूर्ण;
 
-struct mod_hdcp_link_adjustment_hdcp1 {
-	uint8_t disable			: 1;
-	uint8_t postpone_encryption	: 1;
-	uint8_t min_auth_retries_wa : 1;
-	uint8_t reserved		: 5;
-};
+काष्ठा mod_hdcp_link_adjusपंचांगent_hdcp1 अणु
+	uपूर्णांक8_t disable			: 1;
+	uपूर्णांक8_t postpone_encryption	: 1;
+	uपूर्णांक8_t min_auth_retries_wa : 1;
+	uपूर्णांक8_t reserved		: 5;
+पूर्ण;
 
-enum mod_hdcp_force_hdcp_type {
+क्रमागत mod_hdcp_क्रमce_hdcp_type अणु
 	MOD_HDCP_FORCE_TYPE_MAX = 0,
 	MOD_HDCP_FORCE_TYPE_0,
 	MOD_HDCP_FORCE_TYPE_1
-};
+पूर्ण;
 
-struct mod_hdcp_link_adjustment_hdcp2 {
-	uint8_t disable			: 1;
-	uint8_t force_type		: 2;
-	uint8_t force_no_stored_km	: 1;
-	uint8_t increase_h_prime_timeout: 1;
-	uint8_t reserved		: 3;
-};
+काष्ठा mod_hdcp_link_adjusपंचांगent_hdcp2 अणु
+	uपूर्णांक8_t disable			: 1;
+	uपूर्णांक8_t क्रमce_type		: 2;
+	uपूर्णांक8_t क्रमce_no_stored_km	: 1;
+	uपूर्णांक8_t increase_h_prime_समयout: 1;
+	uपूर्णांक8_t reserved		: 3;
+पूर्ण;
 
-struct mod_hdcp_link_adjustment {
-	uint8_t auth_delay;
-	struct mod_hdcp_link_adjustment_hdcp1 hdcp1;
-	struct mod_hdcp_link_adjustment_hdcp2 hdcp2;
-};
+काष्ठा mod_hdcp_link_adjusपंचांगent अणु
+	uपूर्णांक8_t auth_delay;
+	काष्ठा mod_hdcp_link_adjusपंचांगent_hdcp1 hdcp1;
+	काष्ठा mod_hdcp_link_adjusपंचांगent_hdcp2 hdcp2;
+पूर्ण;
 
-struct mod_hdcp_error {
-	enum mod_hdcp_status status;
-	uint8_t state_id;
-};
+काष्ठा mod_hdcp_error अणु
+	क्रमागत mod_hdcp_status status;
+	uपूर्णांक8_t state_id;
+पूर्ण;
 
-struct mod_hdcp_trace {
-	struct mod_hdcp_error errors[MAX_NUM_OF_ERROR_TRACE];
-	uint8_t error_count;
-};
+काष्ठा mod_hdcp_trace अणु
+	काष्ठा mod_hdcp_error errors[MAX_NUM_OF_ERROR_TRACE];
+	uपूर्णांक8_t error_count;
+पूर्ण;
 
-enum mod_hdcp_encryption_status {
+क्रमागत mod_hdcp_encryption_status अणु
 	MOD_HDCP_ENCRYPTION_STATUS_HDCP_OFF = 0,
 	MOD_HDCP_ENCRYPTION_STATUS_HDCP1_ON,
 	MOD_HDCP_ENCRYPTION_STATUS_HDCP2_TYPE0_ON,
 	MOD_HDCP_ENCRYPTION_STATUS_HDCP2_TYPE1_ON,
 	MOD_HDCP_ENCRYPTION_STATUS_HDCP2_ON
-};
+पूर्ण;
 
-/* per link events dm has to notify to hdcp module */
-enum mod_hdcp_event {
+/* per link events dm has to notअगरy to hdcp module */
+क्रमागत mod_hdcp_event अणु
 	MOD_HDCP_EVENT_CALLBACK = 0,
 	MOD_HDCP_EVENT_WATCHDOG_TIMEOUT,
 	MOD_HDCP_EVENT_CPIRQ
-};
+पूर्ण;
 
-/* output flags from module requesting timer operations */
-struct mod_hdcp_output {
-	uint8_t callback_needed;
-	uint8_t callback_stop;
-	uint8_t watchdog_timer_needed;
-	uint8_t watchdog_timer_stop;
-	uint16_t callback_delay;
-	uint16_t watchdog_timer_delay;
-};
+/* output flags from module requesting समयr operations */
+काष्ठा mod_hdcp_output अणु
+	uपूर्णांक8_t callback_needed;
+	uपूर्णांक8_t callback_stop;
+	uपूर्णांक8_t watchकरोg_समयr_needed;
+	uपूर्णांक8_t watchकरोg_समयr_stop;
+	uपूर्णांक16_t callback_delay;
+	uपूर्णांक16_t watchकरोg_समयr_delay;
+पूर्ण;
 
 /* used to represent per display info */
-struct mod_hdcp_display {
-	enum mod_hdcp_display_state state;
-	uint8_t index;
-	uint8_t controller;
-	uint8_t dig_fe;
-	union {
-		uint8_t vc_id;
-	};
-	struct mod_hdcp_display_adjustment adjust;
-};
+काष्ठा mod_hdcp_display अणु
+	क्रमागत mod_hdcp_display_state state;
+	uपूर्णांक8_t index;
+	uपूर्णांक8_t controller;
+	uपूर्णांक8_t dig_fe;
+	जोड़ अणु
+		uपूर्णांक8_t vc_id;
+	पूर्ण;
+	काष्ठा mod_hdcp_display_adjusपंचांगent adjust;
+पूर्ण;
 
 /* used to represent per link info */
-/* in case a link has multiple displays, they share the same link info */
-struct mod_hdcp_link {
-	enum mod_hdcp_operation_mode mode;
-	uint8_t dig_be;
-	uint8_t ddc_line;
-	union {
-		struct mod_hdcp_displayport dp;
-		struct mod_hdcp_hdmi hdmi;
-	};
-	struct mod_hdcp_link_adjustment adjust;
-};
+/* in हाल a link has multiple displays, they share the same link info */
+काष्ठा mod_hdcp_link अणु
+	क्रमागत mod_hdcp_operation_mode mode;
+	uपूर्णांक8_t dig_be;
+	uपूर्णांक8_t ddc_line;
+	जोड़ अणु
+		काष्ठा mod_hdcp_displayport dp;
+		काष्ठा mod_hdcp_hdmi hdmi;
+	पूर्ण;
+	काष्ठा mod_hdcp_link_adjusपंचांगent adjust;
+पूर्ण;
 
-/* a query structure for a display's hdcp information */
-struct mod_hdcp_display_query {
-	const struct mod_hdcp_display *display;
-	const struct mod_hdcp_link *link;
-	const struct mod_hdcp_trace *trace;
-	enum mod_hdcp_encryption_status encryption_status;
-};
+/* a query काष्ठाure क्रम a display's hdcp inक्रमmation */
+काष्ठा mod_hdcp_display_query अणु
+	स्थिर काष्ठा mod_hdcp_display *display;
+	स्थिर काष्ठा mod_hdcp_link *link;
+	स्थिर काष्ठा mod_hdcp_trace *trace;
+	क्रमागत mod_hdcp_encryption_status encryption_status;
+पूर्ण;
 
-/* contains values per on external display configuration change */
-struct mod_hdcp_config {
-	struct mod_hdcp_psp psp;
-	struct mod_hdcp_ddc ddc;
-	uint8_t index;
-};
+/* contains values per on बाह्यal display configuration change */
+काष्ठा mod_hdcp_config अणु
+	काष्ठा mod_hdcp_psp psp;
+	काष्ठा mod_hdcp_ddc ddc;
+	uपूर्णांक8_t index;
+पूर्ण;
 
 /* dm allocates memory of mod_hdcp per dc_link on dm init based on memory size*/
-size_t mod_hdcp_get_memory_size(void);
+माप_प्रकार mod_hdcp_get_memory_size(व्योम);
 
 /* called per link on link creation */
-enum mod_hdcp_status mod_hdcp_setup(struct mod_hdcp *hdcp,
-		struct mod_hdcp_config *config);
+क्रमागत mod_hdcp_status mod_hdcp_setup(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_config *config);
 
 /* called per link on link destroy */
-enum mod_hdcp_status mod_hdcp_teardown(struct mod_hdcp *hdcp);
+क्रमागत mod_hdcp_status mod_hdcp_tearकरोwn(काष्ठा mod_hdcp *hdcp);
 
 /* called per display on cp_desired set to true */
-enum mod_hdcp_status mod_hdcp_add_display(struct mod_hdcp *hdcp,
-		struct mod_hdcp_link *link, struct mod_hdcp_display *display,
-		struct mod_hdcp_output *output);
+क्रमागत mod_hdcp_status mod_hdcp_add_display(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_link *link, काष्ठा mod_hdcp_display *display,
+		काष्ठा mod_hdcp_output *output);
 
 /* called per display on cp_desired set to false */
-enum mod_hdcp_status mod_hdcp_remove_display(struct mod_hdcp *hdcp,
-		uint8_t index, struct mod_hdcp_output *output);
+क्रमागत mod_hdcp_status mod_hdcp_हटाओ_display(काष्ठा mod_hdcp *hdcp,
+		uपूर्णांक8_t index, काष्ठा mod_hdcp_output *output);
 
-/* called to query hdcp information on a specific index */
-enum mod_hdcp_status mod_hdcp_query_display(struct mod_hdcp *hdcp,
-		uint8_t index, struct mod_hdcp_display_query *query);
+/* called to query hdcp inक्रमmation on a specअगरic index */
+क्रमागत mod_hdcp_status mod_hdcp_query_display(काष्ठा mod_hdcp *hdcp,
+		uपूर्णांक8_t index, काष्ठा mod_hdcp_display_query *query);
 
 /* called per link on connectivity change */
-enum mod_hdcp_status mod_hdcp_reset_connection(struct mod_hdcp *hdcp,
-		struct mod_hdcp_output *output);
+क्रमागत mod_hdcp_status mod_hdcp_reset_connection(काष्ठा mod_hdcp *hdcp,
+		काष्ठा mod_hdcp_output *output);
 
-/* called per link on events (i.e. callback, watchdog, CP_IRQ) */
-enum mod_hdcp_status mod_hdcp_process_event(struct mod_hdcp *hdcp,
-		enum mod_hdcp_event event, struct mod_hdcp_output *output);
+/* called per link on events (i.e. callback, watchकरोg, CP_IRQ) */
+क्रमागत mod_hdcp_status mod_hdcp_process_event(काष्ठा mod_hdcp *hdcp,
+		क्रमागत mod_hdcp_event event, काष्ठा mod_hdcp_output *output);
 
-/* called to convert enum mod_hdcp_status to c string */
-char *mod_hdcp_status_to_str(int32_t status);
+/* called to convert क्रमागत mod_hdcp_status to c string */
+अक्षर *mod_hdcp_status_to_str(पूर्णांक32_t status);
 
 /* called to convert state id to c string */
-char *mod_hdcp_state_id_to_str(int32_t id);
+अक्षर *mod_hdcp_state_id_to_str(पूर्णांक32_t id);
 
-/* called to convert signal type to operation mode */
-enum mod_hdcp_operation_mode mod_hdcp_signal_type_to_operation_mode(
-		enum signal_type signal);
-#endif /* MOD_HDCP_H_ */
+/* called to convert संकेत type to operation mode */
+क्रमागत mod_hdcp_operation_mode mod_hdcp_संकेत_type_to_operation_mode(
+		क्रमागत संकेत_type संकेत);
+#पूर्ण_अगर /* MOD_HDCP_H_ */

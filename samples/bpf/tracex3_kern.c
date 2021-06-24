@@ -1,72 +1,73 @@
+<शैली गुरु>
 /* Copyright (c) 2013-2015 PLUMgrid, http://plumgrid.com
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  */
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/version.h>
-#include <uapi/linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/version.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__type(key, long);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__type(key, दीर्घ);
 	__type(value, u64);
-	__uint(max_entries, 4096);
-} my_map SEC(".maps");
+	__uपूर्णांक(max_entries, 4096);
+पूर्ण my_map SEC(".maps");
 
-/* kprobe is NOT a stable ABI. If kernel internals change this bpf+kprobe
- * example will no longer be meaningful
+/* kprobe is NOT a stable ABI. If kernel पूर्णांकernals change this bpf+kprobe
+ * example will no दीर्घer be meaningful
  */
 SEC("kprobe/blk_mq_start_request")
-int bpf_prog1(struct pt_regs *ctx)
-{
-	long rq = PT_REGS_PARM1(ctx);
-	u64 val = bpf_ktime_get_ns();
+पूर्णांक bpf_prog1(काष्ठा pt_regs *ctx)
+अणु
+	दीर्घ rq = PT_REGS_PARM1(ctx);
+	u64 val = bpf_kसमय_get_ns();
 
 	bpf_map_update_elem(&my_map, &rq, &val, BPF_ANY);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int log2l(unsigned long long n)
-{
-#define S(k) if (n >= (1ull << k)) { i += k; n >>= k; }
-	int i = -(n == 0);
+अटल अचिन्हित पूर्णांक log2l(अचिन्हित दीर्घ दीर्घ n)
+अणु
+#घोषणा S(k) अगर (n >= (1ull << k)) अणु i += k; n >>= k; पूर्ण
+	पूर्णांक i = -(n == 0);
 	S(32); S(16); S(8); S(4); S(2); S(1);
-	return i;
-#undef S
-}
+	वापस i;
+#अघोषित S
+पूर्ण
 
-#define SLOTS 100
+#घोषणा SLOTS 100
 
-struct {
-	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-	__uint(key_size, sizeof(u32));
-	__uint(value_size, sizeof(u64));
-	__uint(max_entries, SLOTS);
-} lat_map SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uपूर्णांक(key_size, माप(u32));
+	__uपूर्णांक(value_size, माप(u64));
+	__uपूर्णांक(max_entries, SLOTS);
+पूर्ण lat_map SEC(".maps");
 
 SEC("kprobe/blk_account_io_done")
-int bpf_prog2(struct pt_regs *ctx)
-{
-	long rq = PT_REGS_PARM1(ctx);
+पूर्णांक bpf_prog2(काष्ठा pt_regs *ctx)
+अणु
+	दीर्घ rq = PT_REGS_PARM1(ctx);
 	u64 *value, l, base;
 	u32 index;
 
 	value = bpf_map_lookup_elem(&my_map, &rq);
-	if (!value)
-		return 0;
+	अगर (!value)
+		वापस 0;
 
-	u64 cur_time = bpf_ktime_get_ns();
-	u64 delta = cur_time - *value;
+	u64 cur_समय = bpf_kसमय_get_ns();
+	u64 delta = cur_समय - *value;
 
 	bpf_map_delete_elem(&my_map, &rq);
 
 	/* the lines below are computing index = log10(delta)*10
-	 * using integer arithmetic
+	 * using पूर्णांकeger arithmetic
 	 * index = 29 ~ 1 usec
 	 * index = 59 ~ 1 msec
 	 * index = 89 ~ 1 sec
@@ -77,14 +78,14 @@ int bpf_prog2(struct pt_regs *ctx)
 	base = 1ll << l;
 	index = (l * 64 + (delta - base) * 64 / base) * 3 / 64;
 
-	if (index >= SLOTS)
+	अगर (index >= SLOTS)
 		index = SLOTS - 1;
 
 	value = bpf_map_lookup_elem(&lat_map, &index);
-	if (value)
+	अगर (value)
 		*value += 1;
 
-	return 0;
-}
-char _license[] SEC("license") = "GPL";
+	वापस 0;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";
 u32 _version SEC("version") = LINUX_VERSION_CODE;

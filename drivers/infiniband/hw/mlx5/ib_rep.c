@@ -1,173 +1,174 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2018 Mellanox Technologies. All rights reserved.
  */
 
-#include <linux/mlx5/vport.h>
-#include "ib_rep.h"
-#include "srq.h"
+#समावेश <linux/mlx5/vport.h>
+#समावेश "ib_rep.h"
+#समावेश "srq.h"
 
-static int
-mlx5_ib_set_vport_rep(struct mlx5_core_dev *dev, struct mlx5_eswitch_rep *rep)
-{
-	struct mlx5_ib_dev *ibdev;
-	int vport_index;
+अटल पूर्णांक
+mlx5_ib_set_vport_rep(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_eचयन_rep *rep)
+अणु
+	काष्ठा mlx5_ib_dev *ibdev;
+	पूर्णांक vport_index;
 
-	ibdev = mlx5_eswitch_uplink_get_proto_dev(dev->priv.eswitch, REP_IB);
+	ibdev = mlx5_eचयन_uplink_get_proto_dev(dev->priv.eचयन, REP_IB);
 	vport_index = rep->vport_index;
 
 	ibdev->port[vport_index].rep = rep;
 	rep->rep_data[REP_IB].priv = ibdev;
-	write_lock(&ibdev->port[vport_index].roce.netdev_lock);
+	ग_लिखो_lock(&ibdev->port[vport_index].roce.netdev_lock);
 	ibdev->port[vport_index].roce.netdev =
 		mlx5_ib_get_rep_netdev(rep->esw, rep->vport);
-	write_unlock(&ibdev->port[vport_index].roce.netdev_lock);
+	ग_लिखो_unlock(&ibdev->port[vport_index].roce.netdev_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mlx5_ib_vport_rep_load(struct mlx5_core_dev *dev, struct mlx5_eswitch_rep *rep)
-{
-	u32 num_ports = mlx5_eswitch_get_total_vports(dev);
-	const struct mlx5_ib_profile *profile;
-	struct mlx5_ib_dev *ibdev;
-	int vport_index;
-	int ret;
+अटल पूर्णांक
+mlx5_ib_vport_rep_load(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_eचयन_rep *rep)
+अणु
+	u32 num_ports = mlx5_eचयन_get_total_vports(dev);
+	स्थिर काष्ठा mlx5_ib_profile *profile;
+	काष्ठा mlx5_ib_dev *ibdev;
+	पूर्णांक vport_index;
+	पूर्णांक ret;
 
-	if (rep->vport == MLX5_VPORT_UPLINK)
+	अगर (rep->vport == MLX5_VPORT_UPLINK)
 		profile = &raw_eth_profile;
-	else
-		return mlx5_ib_set_vport_rep(dev, rep);
+	अन्यथा
+		वापस mlx5_ib_set_vport_rep(dev, rep);
 
 	ibdev = ib_alloc_device(mlx5_ib_dev, ib_dev);
-	if (!ibdev)
-		return -ENOMEM;
+	अगर (!ibdev)
+		वापस -ENOMEM;
 
-	ibdev->port = kcalloc(num_ports, sizeof(*ibdev->port),
+	ibdev->port = kसुस्मृति(num_ports, माप(*ibdev->port),
 			      GFP_KERNEL);
-	if (!ibdev->port) {
+	अगर (!ibdev->port) अणु
 		ret = -ENOMEM;
-		goto fail_port;
-	}
+		जाओ fail_port;
+	पूर्ण
 
 	ibdev->is_rep = true;
 	vport_index = rep->vport_index;
 	ibdev->port[vport_index].rep = rep;
 	ibdev->port[vport_index].roce.netdev =
-		mlx5_ib_get_rep_netdev(dev->priv.eswitch, rep->vport);
+		mlx5_ib_get_rep_netdev(dev->priv.eचयन, rep->vport);
 	ibdev->mdev = dev;
 	ibdev->num_ports = num_ports;
 
 	ret = __mlx5_ib_add(ibdev, profile);
-	if (ret)
-		goto fail_add;
+	अगर (ret)
+		जाओ fail_add;
 
 	rep->rep_data[REP_IB].priv = ibdev;
 
-	return 0;
+	वापस 0;
 
 fail_add:
-	kfree(ibdev->port);
+	kमुक्त(ibdev->port);
 fail_port:
 	ib_dealloc_device(&ibdev->ib_dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void *mlx5_ib_rep_to_dev(struct mlx5_eswitch_rep *rep)
-{
-	return rep->rep_data[REP_IB].priv;
-}
+अटल व्योम *mlx5_ib_rep_to_dev(काष्ठा mlx5_eचयन_rep *rep)
+अणु
+	वापस rep->rep_data[REP_IB].priv;
+पूर्ण
 
-static void
-mlx5_ib_vport_rep_unload(struct mlx5_eswitch_rep *rep)
-{
-	struct mlx5_ib_dev *dev = mlx5_ib_rep_to_dev(rep);
-	struct mlx5_ib_port *port;
+अटल व्योम
+mlx5_ib_vport_rep_unload(काष्ठा mlx5_eचयन_rep *rep)
+अणु
+	काष्ठा mlx5_ib_dev *dev = mlx5_ib_rep_to_dev(rep);
+	काष्ठा mlx5_ib_port *port;
 
 	port = &dev->port[rep->vport_index];
-	write_lock(&port->roce.netdev_lock);
-	port->roce.netdev = NULL;
-	write_unlock(&port->roce.netdev_lock);
-	rep->rep_data[REP_IB].priv = NULL;
-	port->rep = NULL;
+	ग_लिखो_lock(&port->roce.netdev_lock);
+	port->roce.netdev = शून्य;
+	ग_लिखो_unlock(&port->roce.netdev_lock);
+	rep->rep_data[REP_IB].priv = शून्य;
+	port->rep = शून्य;
 
-	if (rep->vport == MLX5_VPORT_UPLINK)
-		__mlx5_ib_remove(dev, dev->profile, MLX5_IB_STAGE_MAX);
-}
+	अगर (rep->vport == MLX5_VPORT_UPLINK)
+		__mlx5_ib_हटाओ(dev, dev->profile, MLX5_IB_STAGE_MAX);
+पूर्ण
 
-static const struct mlx5_eswitch_rep_ops rep_ops = {
+अटल स्थिर काष्ठा mlx5_eचयन_rep_ops rep_ops = अणु
 	.load = mlx5_ib_vport_rep_load,
 	.unload = mlx5_ib_vport_rep_unload,
 	.get_proto_dev = mlx5_ib_rep_to_dev,
-};
+पूर्ण;
 
-struct net_device *mlx5_ib_get_rep_netdev(struct mlx5_eswitch *esw,
+काष्ठा net_device *mlx5_ib_get_rep_netdev(काष्ठा mlx5_eचयन *esw,
 					  u16 vport_num)
-{
-	return mlx5_eswitch_get_proto_dev(esw, vport_num, REP_ETH);
-}
+अणु
+	वापस mlx5_eचयन_get_proto_dev(esw, vport_num, REP_ETH);
+पूर्ण
 
-struct mlx5_flow_handle *create_flow_rule_vport_sq(struct mlx5_ib_dev *dev,
-						   struct mlx5_ib_sq *sq,
+काष्ठा mlx5_flow_handle *create_flow_rule_vport_sq(काष्ठा mlx5_ib_dev *dev,
+						   काष्ठा mlx5_ib_sq *sq,
 						   u32 port)
-{
-	struct mlx5_eswitch *esw = dev->mdev->priv.eswitch;
-	struct mlx5_eswitch_rep *rep;
+अणु
+	काष्ठा mlx5_eचयन *esw = dev->mdev->priv.eचयन;
+	काष्ठा mlx5_eचयन_rep *rep;
 
-	if (!dev->is_rep || !port)
-		return NULL;
+	अगर (!dev->is_rep || !port)
+		वापस शून्य;
 
-	if (!dev->port[port - 1].rep)
-		return ERR_PTR(-EINVAL);
+	अगर (!dev->port[port - 1].rep)
+		वापस ERR_PTR(-EINVAL);
 
 	rep = dev->port[port - 1].rep;
 
-	return mlx5_eswitch_add_send_to_vport_rule(esw, rep, sq->base.mqp.qpn);
-}
+	वापस mlx5_eचयन_add_send_to_vport_rule(esw, rep, sq->base.mqp.qpn);
+पूर्ण
 
-static int mlx5r_rep_probe(struct auxiliary_device *adev,
-			   const struct auxiliary_device_id *id)
-{
-	struct mlx5_adev *idev = container_of(adev, struct mlx5_adev, adev);
-	struct mlx5_core_dev *mdev = idev->mdev;
-	struct mlx5_eswitch *esw;
+अटल पूर्णांक mlx5r_rep_probe(काष्ठा auxiliary_device *adev,
+			   स्थिर काष्ठा auxiliary_device_id *id)
+अणु
+	काष्ठा mlx5_adev *idev = container_of(adev, काष्ठा mlx5_adev, adev);
+	काष्ठा mlx5_core_dev *mdev = idev->mdev;
+	काष्ठा mlx5_eचयन *esw;
 
-	esw = mdev->priv.eswitch;
-	mlx5_eswitch_register_vport_reps(esw, &rep_ops, REP_IB);
-	return 0;
-}
+	esw = mdev->priv.eचयन;
+	mlx5_eचयन_रेजिस्टर_vport_reps(esw, &rep_ops, REP_IB);
+	वापस 0;
+पूर्ण
 
-static void mlx5r_rep_remove(struct auxiliary_device *adev)
-{
-	struct mlx5_adev *idev = container_of(adev, struct mlx5_adev, adev);
-	struct mlx5_core_dev *mdev = idev->mdev;
-	struct mlx5_eswitch *esw;
+अटल व्योम mlx5r_rep_हटाओ(काष्ठा auxiliary_device *adev)
+अणु
+	काष्ठा mlx5_adev *idev = container_of(adev, काष्ठा mlx5_adev, adev);
+	काष्ठा mlx5_core_dev *mdev = idev->mdev;
+	काष्ठा mlx5_eचयन *esw;
 
-	esw = mdev->priv.eswitch;
-	mlx5_eswitch_unregister_vport_reps(esw, REP_IB);
-}
+	esw = mdev->priv.eचयन;
+	mlx5_eचयन_unरेजिस्टर_vport_reps(esw, REP_IB);
+पूर्ण
 
-static const struct auxiliary_device_id mlx5r_rep_id_table[] = {
-	{ .name = MLX5_ADEV_NAME ".rdma-rep", },
-	{},
-};
+अटल स्थिर काष्ठा auxiliary_device_id mlx5r_rep_id_table[] = अणु
+	अणु .name = MLX5_ADEV_NAME ".rdma-rep", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(auxiliary, mlx5r_rep_id_table);
 
-static struct auxiliary_driver mlx5r_rep_driver = {
+अटल काष्ठा auxiliary_driver mlx5r_rep_driver = अणु
 	.name = "rep",
 	.probe = mlx5r_rep_probe,
-	.remove = mlx5r_rep_remove,
+	.हटाओ = mlx5r_rep_हटाओ,
 	.id_table = mlx5r_rep_id_table,
-};
+पूर्ण;
 
-int mlx5r_rep_init(void)
-{
-	return auxiliary_driver_register(&mlx5r_rep_driver);
-}
+पूर्णांक mlx5r_rep_init(व्योम)
+अणु
+	वापस auxiliary_driver_रेजिस्टर(&mlx5r_rep_driver);
+पूर्ण
 
-void mlx5r_rep_cleanup(void)
-{
-	auxiliary_driver_unregister(&mlx5r_rep_driver);
-}
+व्योम mlx5r_rep_cleanup(व्योम)
+अणु
+	auxiliary_driver_unरेजिस्टर(&mlx5r_rep_driver);
+पूर्ण

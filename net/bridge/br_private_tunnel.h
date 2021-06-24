@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *	Bridge per vlan tunnels
  *
@@ -6,80 +7,80 @@
  *	Roopa Prabhu		<roopa@cumulusnetworks.com>
  */
 
-#ifndef _BR_PRIVATE_TUNNEL_H
-#define _BR_PRIVATE_TUNNEL_H
+#अगर_अघोषित _BR_PRIVATE_TUNNEL_H
+#घोषणा _BR_PRIVATE_TUNNEL_H
 
-struct vtunnel_info {
+काष्ठा vtunnel_info अणु
 	u32	tunid;
 	u16	vid;
 	u16	flags;
-};
+पूर्ण;
 
 /* br_netlink_tunnel.c */
-int br_parse_vlan_tunnel_info(struct nlattr *attr,
-			      struct vtunnel_info *tinfo);
-int br_process_vlan_tunnel_info(const struct net_bridge *br,
-				const struct net_bridge_port *p,
-				int cmd,
-				struct vtunnel_info *tinfo_curr,
-				struct vtunnel_info *tinfo_last,
+पूर्णांक br_parse_vlan_tunnel_info(काष्ठा nlattr *attr,
+			      काष्ठा vtunnel_info *tinfo);
+पूर्णांक br_process_vlan_tunnel_info(स्थिर काष्ठा net_bridge *br,
+				स्थिर काष्ठा net_bridge_port *p,
+				पूर्णांक cmd,
+				काष्ठा vtunnel_info *tinfo_curr,
+				काष्ठा vtunnel_info *tinfo_last,
 				bool *changed);
-int br_get_vlan_tunnel_info_size(struct net_bridge_vlan_group *vg);
-int br_fill_vlan_tunnel_info(struct sk_buff *skb,
-			     struct net_bridge_vlan_group *vg);
+पूर्णांक br_get_vlan_tunnel_info_size(काष्ठा net_bridge_vlan_group *vg);
+पूर्णांक br_fill_vlan_tunnel_info(काष्ठा sk_buff *skb,
+			     काष्ठा net_bridge_vlan_group *vg);
 
-#ifdef CONFIG_BRIDGE_VLAN_FILTERING
+#अगर_घोषित CONFIG_BRIDGE_VLAN_FILTERING
 /* br_vlan_tunnel.c */
-int vlan_tunnel_init(struct net_bridge_vlan_group *vg);
-void vlan_tunnel_deinit(struct net_bridge_vlan_group *vg);
-int nbp_vlan_tunnel_info_delete(const struct net_bridge_port *port, u16 vid);
-int nbp_vlan_tunnel_info_add(const struct net_bridge_port *port, u16 vid,
+पूर्णांक vlan_tunnel_init(काष्ठा net_bridge_vlan_group *vg);
+व्योम vlan_tunnel_deinit(काष्ठा net_bridge_vlan_group *vg);
+पूर्णांक nbp_vlan_tunnel_info_delete(स्थिर काष्ठा net_bridge_port *port, u16 vid);
+पूर्णांक nbp_vlan_tunnel_info_add(स्थिर काष्ठा net_bridge_port *port, u16 vid,
 			     u32 tun_id);
-void nbp_vlan_tunnel_info_flush(struct net_bridge_port *port);
-void vlan_tunnel_info_del(struct net_bridge_vlan_group *vg,
-			  struct net_bridge_vlan *vlan);
-int br_handle_ingress_vlan_tunnel(struct sk_buff *skb,
-				  struct net_bridge_port *p,
-				  struct net_bridge_vlan_group *vg);
-int br_handle_egress_vlan_tunnel(struct sk_buff *skb,
-				 struct net_bridge_vlan *vlan);
-bool vlan_tunid_inrange(const struct net_bridge_vlan *v_curr,
-			const struct net_bridge_vlan *v_last);
-int br_vlan_tunnel_info(const struct net_bridge_port *p, int cmd,
+व्योम nbp_vlan_tunnel_info_flush(काष्ठा net_bridge_port *port);
+व्योम vlan_tunnel_info_del(काष्ठा net_bridge_vlan_group *vg,
+			  काष्ठा net_bridge_vlan *vlan);
+पूर्णांक br_handle_ingress_vlan_tunnel(काष्ठा sk_buff *skb,
+				  काष्ठा net_bridge_port *p,
+				  काष्ठा net_bridge_vlan_group *vg);
+पूर्णांक br_handle_egress_vlan_tunnel(काष्ठा sk_buff *skb,
+				 काष्ठा net_bridge_vlan *vlan);
+bool vlan_tunid_inrange(स्थिर काष्ठा net_bridge_vlan *v_curr,
+			स्थिर काष्ठा net_bridge_vlan *v_last);
+पूर्णांक br_vlan_tunnel_info(स्थिर काष्ठा net_bridge_port *p, पूर्णांक cmd,
 			u16 vid, u32 tun_id, bool *changed);
-#else
-static inline int vlan_tunnel_init(struct net_bridge_vlan_group *vg)
-{
-	return 0;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक vlan_tunnel_init(काष्ठा net_bridge_vlan_group *vg)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int nbp_vlan_tunnel_info_delete(const struct net_bridge_port *port,
+अटल अंतरभूत पूर्णांक nbp_vlan_tunnel_info_delete(स्थिर काष्ठा net_bridge_port *port,
 					      u16 vid)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int nbp_vlan_tunnel_info_add(const struct net_bridge_port *port,
+अटल अंतरभूत पूर्णांक nbp_vlan_tunnel_info_add(स्थिर काष्ठा net_bridge_port *port,
 					   u16 vid, u32 tun_id)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void nbp_vlan_tunnel_info_flush(struct net_bridge_port *port)
-{
-}
+अटल अंतरभूत व्योम nbp_vlan_tunnel_info_flush(काष्ठा net_bridge_port *port)
+अणु
+पूर्ण
 
-static inline void vlan_tunnel_info_del(struct net_bridge_vlan_group *vg,
-					struct net_bridge_vlan *vlan)
-{
-}
+अटल अंतरभूत व्योम vlan_tunnel_info_del(काष्ठा net_bridge_vlan_group *vg,
+					काष्ठा net_bridge_vlan *vlan)
+अणु
+पूर्ण
 
-static inline int br_handle_ingress_vlan_tunnel(struct sk_buff *skb,
-						struct net_bridge_port *p,
-						struct net_bridge_vlan_group *vg)
-{
-	return 0;
-}
-#endif
+अटल अंतरभूत पूर्णांक br_handle_ingress_vlan_tunnel(काष्ठा sk_buff *skb,
+						काष्ठा net_bridge_port *p,
+						काष्ठा net_bridge_vlan_group *vg)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

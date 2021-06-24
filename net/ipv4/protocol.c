@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the  BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the  BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
  *		INET protocol dispatch tables.
  *
@@ -10,67 +11,67 @@
  *		Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
  *
  * Fixes:
- *		Alan Cox	: Ahah! udp icmp errors don't work because
+ *		Alan Cox	: Ahah! udp icmp errors करोn't work because
  *				  udp_err is never called!
- *		Alan Cox	: Added new fields for init and ready for
+ *		Alan Cox	: Added new fields क्रम init and पढ़ोy क्रम
  *				  proper fragmentation (_NO_ 4K limits!)
- *		Richard Colella	: Hang on hash collision
- *		Vince Laviano	: Modified inet_del_protocol() to correctly
- *				  maintain copy bit.
+ *		Riअक्षरd Colella	: Hang on hash collision
+ *		Vince Laviano	: Modअगरied inet_del_protocol() to correctly
+ *				  मुख्यtain copy bit.
  */
-#include <linux/cache.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/spinlock.h>
-#include <net/protocol.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/spinlock.h>
+#समावेश <net/protocol.h>
 
-struct net_protocol __rcu *inet_protos[MAX_INET_PROTOS] __read_mostly;
+काष्ठा net_protocol __rcu *inet_protos[MAX_INET_PROTOS] __पढ़ो_mostly;
 EXPORT_SYMBOL(inet_protos);
-const struct net_offload __rcu *inet_offloads[MAX_INET_PROTOS] __read_mostly;
+स्थिर काष्ठा net_offload __rcu *inet_offloads[MAX_INET_PROTOS] __पढ़ो_mostly;
 EXPORT_SYMBOL(inet_offloads);
 
-int inet_add_protocol(const struct net_protocol *prot, unsigned char protocol)
-{
-	if (!prot->netns_ok) {
+पूर्णांक inet_add_protocol(स्थिर काष्ठा net_protocol *prot, अचिन्हित अक्षर protocol)
+अणु
+	अगर (!prot->netns_ok) अणु
 		pr_err("Protocol %u is not namespace aware, cannot register.\n",
 			protocol);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return !cmpxchg((const struct net_protocol **)&inet_protos[protocol],
-			NULL, prot) ? 0 : -1;
-}
+	वापस !cmpxchg((स्थिर काष्ठा net_protocol **)&inet_protos[protocol],
+			शून्य, prot) ? 0 : -1;
+पूर्ण
 EXPORT_SYMBOL(inet_add_protocol);
 
-int inet_add_offload(const struct net_offload *prot, unsigned char protocol)
-{
-	return !cmpxchg((const struct net_offload **)&inet_offloads[protocol],
-			NULL, prot) ? 0 : -1;
-}
+पूर्णांक inet_add_offload(स्थिर काष्ठा net_offload *prot, अचिन्हित अक्षर protocol)
+अणु
+	वापस !cmpxchg((स्थिर काष्ठा net_offload **)&inet_offloads[protocol],
+			शून्य, prot) ? 0 : -1;
+पूर्ण
 EXPORT_SYMBOL(inet_add_offload);
 
-int inet_del_protocol(const struct net_protocol *prot, unsigned char protocol)
-{
-	int ret;
+पूर्णांक inet_del_protocol(स्थिर काष्ठा net_protocol *prot, अचिन्हित अक्षर protocol)
+अणु
+	पूर्णांक ret;
 
-	ret = (cmpxchg((const struct net_protocol **)&inet_protos[protocol],
-		       prot, NULL) == prot) ? 0 : -1;
+	ret = (cmpxchg((स्थिर काष्ठा net_protocol **)&inet_protos[protocol],
+		       prot, शून्य) == prot) ? 0 : -1;
 
 	synchronize_net();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(inet_del_protocol);
 
-int inet_del_offload(const struct net_offload *prot, unsigned char protocol)
-{
-	int ret;
+पूर्णांक inet_del_offload(स्थिर काष्ठा net_offload *prot, अचिन्हित अक्षर protocol)
+अणु
+	पूर्णांक ret;
 
-	ret = (cmpxchg((const struct net_offload **)&inet_offloads[protocol],
-		       prot, NULL) == prot) ? 0 : -1;
+	ret = (cmpxchg((स्थिर काष्ठा net_offload **)&inet_offloads[protocol],
+		       prot, शून्य) == prot) ? 0 : -1;
 
 	synchronize_net();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(inet_del_offload);

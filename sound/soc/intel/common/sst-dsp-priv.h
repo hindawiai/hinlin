@@ -1,101 +1,102 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Intel Smart Sound Technology
  *
  * Copyright (C) 2013, Intel Corporation. All rights reserved.
  */
 
-#ifndef __SOUND_SOC_SST_DSP_PRIV_H
-#define __SOUND_SOC_SST_DSP_PRIV_H
+#अगर_अघोषित __SOUND_SOC_SST_DSP_PRIV_H
+#घोषणा __SOUND_SOC_SST_DSP_PRIV_H
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/firmware.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/firmware.h>
 
-#include "../skylake/skl-sst-dsp.h"
+#समावेश "../skylake/skl-sst-dsp.h"
 
 /*
- * DSP Operations exported by platform Audio DSP driver.
+ * DSP Operations exported by platक्रमm Audio DSP driver.
  */
-struct sst_ops {
+काष्ठा sst_ops अणु
 	/* Shim IO */
-	void (*write)(void __iomem *addr, u32 offset, u32 value);
-	u32 (*read)(void __iomem *addr, u32 offset);
+	व्योम (*ग_लिखो)(व्योम __iomem *addr, u32 offset, u32 value);
+	u32 (*पढ़ो)(व्योम __iomem *addr, u32 offset);
 
 	/* IRQ handlers */
-	irqreturn_t (*irq_handler)(int irq, void *context);
+	irqवापस_t (*irq_handler)(पूर्णांक irq, व्योम *context);
 
-	/* SST init and free */
-	int (*init)(struct sst_dsp *sst);
-	void (*free)(struct sst_dsp *sst);
-};
+	/* SST init and मुक्त */
+	पूर्णांक (*init)(काष्ठा sst_dsp *sst);
+	व्योम (*मुक्त)(काष्ठा sst_dsp *sst);
+पूर्ण;
 
 /*
  * Audio DSP memory offsets and addresses.
  */
-struct sst_addr {
+काष्ठा sst_addr अणु
 	u32 sram0_base;
 	u32 sram1_base;
 	u32 w0_stat_sz;
 	u32 w0_up_sz;
-	void __iomem *lpe;
-	void __iomem *shim;
-};
+	व्योम __iomem *lpe;
+	व्योम __iomem *shim;
+पूर्ण;
 
 /*
  * Audio DSP Mailbox configuration.
  */
-struct sst_mailbox {
-	void __iomem *in_base;
-	void __iomem *out_base;
-	size_t in_size;
-	size_t out_size;
-};
+काष्ठा sst_mailbox अणु
+	व्योम __iomem *in_base;
+	व्योम __iomem *out_base;
+	माप_प्रकार in_size;
+	माप_प्रकार out_size;
+पूर्ण;
 
 /*
  * Generic SST Shim Interface.
  */
-struct sst_dsp {
+काष्ठा sst_dsp अणु
 
-	/* Shared for all platforms */
+	/* Shared क्रम all platक्रमms */
 
-	/* runtime */
-	struct sst_dsp_device *sst_dev;
+	/* runसमय */
+	काष्ठा sst_dsp_device *sst_dev;
 	spinlock_t spinlock;	/* IPC locking */
-	struct mutex mutex;	/* DSP FW lock */
-	struct device *dev;
-	void *thread_context;
-	int irq;
+	काष्ठा mutex mutex;	/* DSP FW lock */
+	काष्ठा device *dev;
+	व्योम *thपढ़ो_context;
+	पूर्णांक irq;
 	u32 id;
 
 	/* operations */
-	struct sst_ops *ops;
+	काष्ठा sst_ops *ops;
 
 	/* debug FS */
-	struct dentry *debugfs_root;
+	काष्ठा dentry *debugfs_root;
 
 	/* base addresses */
-	struct sst_addr addr;
+	काष्ठा sst_addr addr;
 
 	/* mailbox */
-	struct sst_mailbox mailbox;
+	काष्ठा sst_mailbox mailbox;
 
 	/* SST FW files loaded and their modules */
-	struct list_head module_list;
+	काष्ठा list_head module_list;
 
 	/* SKL data */
 
-	const char *fw_name;
+	स्थिर अक्षर *fw_name;
 
 	/* To allocate CL dma buffers */
-	struct skl_dsp_loader_ops dsp_ops;
-	struct skl_dsp_fw_ops fw_ops;
-	int sst_state;
-	struct skl_cl_dev cl_dev;
-	u32 intr_status;
-	const struct firmware *fw;
-	struct snd_dma_buffer dmab;
-};
+	काष्ठा skl_dsp_loader_ops dsp_ops;
+	काष्ठा skl_dsp_fw_ops fw_ops;
+	पूर्णांक sst_state;
+	काष्ठा skl_cl_dev cl_dev;
+	u32 पूर्णांकr_status;
+	स्थिर काष्ठा firmware *fw;
+	काष्ठा snd_dma_buffer dmab;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

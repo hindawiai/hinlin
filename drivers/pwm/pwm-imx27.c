@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * simple driver for PWM (Pulse Width Modulator) controller
+ * simple driver क्रम PWM (Pulse Width Modulator) controller
  *
  * Derived from pxa PWM driver by eric miao <eric.miao@marvell.com>
  *
@@ -9,218 +10,218 @@
  *   polarity.
  */
 
-#include <linux/bitfield.h>
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pwm.h>
-#include <linux/slab.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/slab.h>
 
-#define MX3_PWMCR			0x00    /* PWM Control Register */
-#define MX3_PWMSR			0x04    /* PWM Status Register */
-#define MX3_PWMSAR			0x0C    /* PWM Sample Register */
-#define MX3_PWMPR			0x10    /* PWM Period Register */
+#घोषणा MX3_PWMCR			0x00    /* PWM Control Register */
+#घोषणा MX3_PWMSR			0x04    /* PWM Status Register */
+#घोषणा MX3_PWMSAR			0x0C    /* PWM Sample Register */
+#घोषणा MX3_PWMPR			0x10    /* PWM Period Register */
 
-#define MX3_PWMCR_FWM			GENMASK(27, 26)
-#define MX3_PWMCR_STOPEN		BIT(25)
-#define MX3_PWMCR_DOZEN			BIT(24)
-#define MX3_PWMCR_WAITEN		BIT(23)
-#define MX3_PWMCR_DBGEN			BIT(22)
-#define MX3_PWMCR_BCTR			BIT(21)
-#define MX3_PWMCR_HCTR			BIT(20)
+#घोषणा MX3_PWMCR_FWM			GENMASK(27, 26)
+#घोषणा MX3_PWMCR_STOPEN		BIT(25)
+#घोषणा MX3_PWMCR_DOZEN			BIT(24)
+#घोषणा MX3_PWMCR_WAITEN		BIT(23)
+#घोषणा MX3_PWMCR_DBGEN			BIT(22)
+#घोषणा MX3_PWMCR_BCTR			BIT(21)
+#घोषणा MX3_PWMCR_HCTR			BIT(20)
 
-#define MX3_PWMCR_POUTC			GENMASK(19, 18)
-#define MX3_PWMCR_POUTC_NORMAL		0
-#define MX3_PWMCR_POUTC_INVERTED	1
-#define MX3_PWMCR_POUTC_OFF		2
+#घोषणा MX3_PWMCR_POUTC			GENMASK(19, 18)
+#घोषणा MX3_PWMCR_POUTC_NORMAL		0
+#घोषणा MX3_PWMCR_POUTC_INVERTED	1
+#घोषणा MX3_PWMCR_POUTC_OFF		2
 
-#define MX3_PWMCR_CLKSRC		GENMASK(17, 16)
-#define MX3_PWMCR_CLKSRC_OFF		0
-#define MX3_PWMCR_CLKSRC_IPG		1
-#define MX3_PWMCR_CLKSRC_IPG_HIGH	2
-#define MX3_PWMCR_CLKSRC_IPG_32K	3
+#घोषणा MX3_PWMCR_CLKSRC		GENMASK(17, 16)
+#घोषणा MX3_PWMCR_CLKSRC_OFF		0
+#घोषणा MX3_PWMCR_CLKSRC_IPG		1
+#घोषणा MX3_PWMCR_CLKSRC_IPG_HIGH	2
+#घोषणा MX3_PWMCR_CLKSRC_IPG_32K	3
 
-#define MX3_PWMCR_PRESCALER		GENMASK(15, 4)
+#घोषणा MX3_PWMCR_PRESCALER		GENMASK(15, 4)
 
-#define MX3_PWMCR_SWR			BIT(3)
+#घोषणा MX3_PWMCR_SWR			BIT(3)
 
-#define MX3_PWMCR_REPEAT		GENMASK(2, 1)
-#define MX3_PWMCR_REPEAT_1X		0
-#define MX3_PWMCR_REPEAT_2X		1
-#define MX3_PWMCR_REPEAT_4X		2
-#define MX3_PWMCR_REPEAT_8X		3
+#घोषणा MX3_PWMCR_REPEAT		GENMASK(2, 1)
+#घोषणा MX3_PWMCR_REPEAT_1X		0
+#घोषणा MX3_PWMCR_REPEAT_2X		1
+#घोषणा MX3_PWMCR_REPEAT_4X		2
+#घोषणा MX3_PWMCR_REPEAT_8X		3
 
-#define MX3_PWMCR_EN			BIT(0)
+#घोषणा MX3_PWMCR_EN			BIT(0)
 
-#define MX3_PWMSR_FWE			BIT(6)
-#define MX3_PWMSR_CMP			BIT(5)
-#define MX3_PWMSR_ROV			BIT(4)
-#define MX3_PWMSR_FE			BIT(3)
+#घोषणा MX3_PWMSR_FWE			BIT(6)
+#घोषणा MX3_PWMSR_CMP			BIT(5)
+#घोषणा MX3_PWMSR_ROV			BIT(4)
+#घोषणा MX3_PWMSR_FE			BIT(3)
 
-#define MX3_PWMSR_FIFOAV		GENMASK(2, 0)
-#define MX3_PWMSR_FIFOAV_EMPTY		0
-#define MX3_PWMSR_FIFOAV_1WORD		1
-#define MX3_PWMSR_FIFOAV_2WORDS		2
-#define MX3_PWMSR_FIFOAV_3WORDS		3
-#define MX3_PWMSR_FIFOAV_4WORDS		4
+#घोषणा MX3_PWMSR_FIFOAV		GENMASK(2, 0)
+#घोषणा MX3_PWMSR_FIFOAV_EMPTY		0
+#घोषणा MX3_PWMSR_FIFOAV_1WORD		1
+#घोषणा MX3_PWMSR_FIFOAV_2WORDS		2
+#घोषणा MX3_PWMSR_FIFOAV_3WORDS		3
+#घोषणा MX3_PWMSR_FIFOAV_4WORDS		4
 
-#define MX3_PWMCR_PRESCALER_SET(x)	FIELD_PREP(MX3_PWMCR_PRESCALER, (x) - 1)
-#define MX3_PWMCR_PRESCALER_GET(x)	(FIELD_GET(MX3_PWMCR_PRESCALER, \
+#घोषणा MX3_PWMCR_PRESCALER_SET(x)	FIELD_PREP(MX3_PWMCR_PRESCALER, (x) - 1)
+#घोषणा MX3_PWMCR_PRESCALER_GET(x)	(FIELD_GET(MX3_PWMCR_PRESCALER, \
 						   (x)) + 1)
 
-#define MX3_PWM_SWR_LOOP		5
+#घोषणा MX3_PWM_SWR_LOOP		5
 
-/* PWMPR register value of 0xffff has the same effect as 0xfffe */
-#define MX3_PWMPR_MAX			0xfffe
+/* PWMPR रेजिस्टर value of 0xffff has the same effect as 0xfffe */
+#घोषणा MX3_PWMPR_MAX			0xfffe
 
-struct pwm_imx27_chip {
-	struct clk	*clk_ipg;
-	struct clk	*clk_per;
-	void __iomem	*mmio_base;
-	struct pwm_chip	chip;
+काष्ठा pwm_imx27_chip अणु
+	काष्ठा clk	*clk_ipg;
+	काष्ठा clk	*clk_per;
+	व्योम __iomem	*mmio_base;
+	काष्ठा pwm_chip	chip;
 
 	/*
-	 * The driver cannot read the current duty cycle from the hardware if
+	 * The driver cannot पढ़ो the current duty cycle from the hardware अगर
 	 * the hardware is disabled. Cache the last programmed duty cycle
-	 * value to return in that case.
+	 * value to वापस in that हाल.
 	 */
-	unsigned int duty_cycle;
-};
+	अचिन्हित पूर्णांक duty_cycle;
+पूर्ण;
 
-#define to_pwm_imx27_chip(chip)	container_of(chip, struct pwm_imx27_chip, chip)
+#घोषणा to_pwm_imx27_chip(chip)	container_of(chip, काष्ठा pwm_imx27_chip, chip)
 
-static int pwm_imx27_clk_prepare_enable(struct pwm_imx27_chip *imx)
-{
-	int ret;
+अटल पूर्णांक pwm_imx27_clk_prepare_enable(काष्ठा pwm_imx27_chip *imx)
+अणु
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(imx->clk_ipg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(imx->clk_per);
-	if (ret) {
+	अगर (ret) अणु
 		clk_disable_unprepare(imx->clk_ipg);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pwm_imx27_clk_disable_unprepare(struct pwm_imx27_chip *imx)
-{
+अटल व्योम pwm_imx27_clk_disable_unprepare(काष्ठा pwm_imx27_chip *imx)
+अणु
 	clk_disable_unprepare(imx->clk_per);
 	clk_disable_unprepare(imx->clk_ipg);
-}
+पूर्ण
 
-static void pwm_imx27_get_state(struct pwm_chip *chip,
-				struct pwm_device *pwm, struct pwm_state *state)
-{
-	struct pwm_imx27_chip *imx = to_pwm_imx27_chip(chip);
+अटल व्योम pwm_imx27_get_state(काष्ठा pwm_chip *chip,
+				काष्ठा pwm_device *pwm, काष्ठा pwm_state *state)
+अणु
+	काष्ठा pwm_imx27_chip *imx = to_pwm_imx27_chip(chip);
 	u32 period, prescaler, pwm_clk, val;
-	u64 tmp;
-	int ret;
+	u64 पंचांगp;
+	पूर्णांक ret;
 
 	ret = pwm_imx27_clk_prepare_enable(imx);
-	if (ret < 0)
-		return;
+	अगर (ret < 0)
+		वापस;
 
-	val = readl(imx->mmio_base + MX3_PWMCR);
+	val = पढ़ोl(imx->mmio_base + MX3_PWMCR);
 
-	if (val & MX3_PWMCR_EN)
+	अगर (val & MX3_PWMCR_EN)
 		state->enabled = true;
-	else
+	अन्यथा
 		state->enabled = false;
 
-	switch (FIELD_GET(MX3_PWMCR_POUTC, val)) {
-	case MX3_PWMCR_POUTC_NORMAL:
+	चयन (FIELD_GET(MX3_PWMCR_POUTC, val)) अणु
+	हाल MX3_PWMCR_POUTC_NORMAL:
 		state->polarity = PWM_POLARITY_NORMAL;
-		break;
-	case MX3_PWMCR_POUTC_INVERTED:
+		अवरोध;
+	हाल MX3_PWMCR_POUTC_INVERTED:
 		state->polarity = PWM_POLARITY_INVERSED;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_warn(chip->dev, "can't set polarity, output disconnected");
-	}
+	पूर्ण
 
 	prescaler = MX3_PWMCR_PRESCALER_GET(val);
 	pwm_clk = clk_get_rate(imx->clk_per);
-	val = readl(imx->mmio_base + MX3_PWMPR);
+	val = पढ़ोl(imx->mmio_base + MX3_PWMPR);
 	period = val >= MX3_PWMPR_MAX ? MX3_PWMPR_MAX : val;
 
 	/* PWMOUT (Hz) = PWMCLK / (PWMPR + 2) */
-	tmp = NSEC_PER_SEC * (u64)(period + 2) * prescaler;
-	state->period = DIV_ROUND_UP_ULL(tmp, pwm_clk);
+	पंचांगp = NSEC_PER_SEC * (u64)(period + 2) * prescaler;
+	state->period = DIV_ROUND_UP_ULL(पंचांगp, pwm_clk);
 
 	/*
-	 * PWMSAR can be read only if PWM is enabled. If the PWM is disabled,
+	 * PWMSAR can be पढ़ो only अगर PWM is enabled. If the PWM is disabled,
 	 * use the cached value.
 	 */
-	if (state->enabled)
-		val = readl(imx->mmio_base + MX3_PWMSAR);
-	else
+	अगर (state->enabled)
+		val = पढ़ोl(imx->mmio_base + MX3_PWMSAR);
+	अन्यथा
 		val = imx->duty_cycle;
 
-	tmp = NSEC_PER_SEC * (u64)(val) * prescaler;
-	state->duty_cycle = DIV_ROUND_UP_ULL(tmp, pwm_clk);
+	पंचांगp = NSEC_PER_SEC * (u64)(val) * prescaler;
+	state->duty_cycle = DIV_ROUND_UP_ULL(पंचांगp, pwm_clk);
 
 	pwm_imx27_clk_disable_unprepare(imx);
-}
+पूर्ण
 
-static void pwm_imx27_sw_reset(struct pwm_chip *chip)
-{
-	struct pwm_imx27_chip *imx = to_pwm_imx27_chip(chip);
-	struct device *dev = chip->dev;
-	int wait_count = 0;
+अटल व्योम pwm_imx27_sw_reset(काष्ठा pwm_chip *chip)
+अणु
+	काष्ठा pwm_imx27_chip *imx = to_pwm_imx27_chip(chip);
+	काष्ठा device *dev = chip->dev;
+	पूर्णांक रुको_count = 0;
 	u32 cr;
 
-	writel(MX3_PWMCR_SWR, imx->mmio_base + MX3_PWMCR);
-	do {
+	ग_लिखोl(MX3_PWMCR_SWR, imx->mmio_base + MX3_PWMCR);
+	करो अणु
 		usleep_range(200, 1000);
-		cr = readl(imx->mmio_base + MX3_PWMCR);
-	} while ((cr & MX3_PWMCR_SWR) &&
-		 (wait_count++ < MX3_PWM_SWR_LOOP));
+		cr = पढ़ोl(imx->mmio_base + MX3_PWMCR);
+	पूर्ण जबतक ((cr & MX3_PWMCR_SWR) &&
+		 (रुको_count++ < MX3_PWM_SWR_LOOP));
 
-	if (cr & MX3_PWMCR_SWR)
+	अगर (cr & MX3_PWMCR_SWR)
 		dev_warn(dev, "software reset timeout\n");
-}
+पूर्ण
 
-static void pwm_imx27_wait_fifo_slot(struct pwm_chip *chip,
-				     struct pwm_device *pwm)
-{
-	struct pwm_imx27_chip *imx = to_pwm_imx27_chip(chip);
-	struct device *dev = chip->dev;
-	unsigned int period_ms;
-	int fifoav;
+अटल व्योम pwm_imx27_रुको_fअगरo_slot(काष्ठा pwm_chip *chip,
+				     काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा pwm_imx27_chip *imx = to_pwm_imx27_chip(chip);
+	काष्ठा device *dev = chip->dev;
+	अचिन्हित पूर्णांक period_ms;
+	पूर्णांक fअगरoav;
 	u32 sr;
 
-	sr = readl(imx->mmio_base + MX3_PWMSR);
-	fifoav = FIELD_GET(MX3_PWMSR_FIFOAV, sr);
-	if (fifoav == MX3_PWMSR_FIFOAV_4WORDS) {
+	sr = पढ़ोl(imx->mmio_base + MX3_PWMSR);
+	fअगरoav = FIELD_GET(MX3_PWMSR_FIFOAV, sr);
+	अगर (fअगरoav == MX3_PWMSR_FIFOAV_4WORDS) अणु
 		period_ms = DIV_ROUND_UP_ULL(pwm_get_period(pwm),
 					 NSEC_PER_MSEC);
 		msleep(period_ms);
 
-		sr = readl(imx->mmio_base + MX3_PWMSR);
-		if (fifoav == FIELD_GET(MX3_PWMSR_FIFOAV, sr))
+		sr = पढ़ोl(imx->mmio_base + MX3_PWMSR);
+		अगर (fअगरoav == FIELD_GET(MX3_PWMSR_FIFOAV, sr))
 			dev_warn(dev, "there is no free FIFO slot\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pwm_imx27_apply(struct pwm_chip *chip, struct pwm_device *pwm,
-			   const struct pwm_state *state)
-{
-	unsigned long period_cycles, duty_cycles, prescale;
-	struct pwm_imx27_chip *imx = to_pwm_imx27_chip(chip);
-	struct pwm_state cstate;
-	unsigned long long c;
-	unsigned long long clkrate;
-	int ret;
+अटल पूर्णांक pwm_imx27_apply(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+			   स्थिर काष्ठा pwm_state *state)
+अणु
+	अचिन्हित दीर्घ period_cycles, duty_cycles, prescale;
+	काष्ठा pwm_imx27_chip *imx = to_pwm_imx27_chip(chip);
+	काष्ठा pwm_state cstate;
+	अचिन्हित दीर्घ दीर्घ c;
+	अचिन्हित दीर्घ दीर्घ clkrate;
+	पूर्णांक ret;
 	u32 cr;
 
 	pwm_get_state(pwm, &cstate);
@@ -228,14 +229,14 @@ static int pwm_imx27_apply(struct pwm_chip *chip, struct pwm_device *pwm,
 	clkrate = clk_get_rate(imx->clk_per);
 	c = clkrate * state->period;
 
-	do_div(c, NSEC_PER_SEC);
+	करो_भाग(c, NSEC_PER_SEC);
 	period_cycles = c;
 
 	prescale = period_cycles / 0x10000 + 1;
 
 	period_cycles /= prescale;
 	c = clkrate * state->duty_cycle;
-	do_div(c, NSEC_PER_SEC);
+	करो_भाग(c, NSEC_PER_SEC);
 	duty_cycles = c;
 	duty_cycles /= prescale;
 
@@ -243,31 +244,31 @@ static int pwm_imx27_apply(struct pwm_chip *chip, struct pwm_device *pwm,
 	 * according to imx pwm RM, the real period value should be PERIOD
 	 * value in PWMPR plus 2.
 	 */
-	if (period_cycles > 2)
+	अगर (period_cycles > 2)
 		period_cycles -= 2;
-	else
+	अन्यथा
 		period_cycles = 0;
 
 	/*
-	 * Wait for a free FIFO slot if the PWM is already enabled, and flush
-	 * the FIFO if the PWM was disabled and is about to be enabled.
+	 * Wait क्रम a मुक्त FIFO slot अगर the PWM is alपढ़ोy enabled, and flush
+	 * the FIFO अगर the PWM was disabled and is about to be enabled.
 	 */
-	if (cstate.enabled) {
-		pwm_imx27_wait_fifo_slot(chip, pwm);
-	} else {
+	अगर (cstate.enabled) अणु
+		pwm_imx27_रुको_fअगरo_slot(chip, pwm);
+	पूर्ण अन्यथा अणु
 		ret = pwm_imx27_clk_prepare_enable(imx);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		pwm_imx27_sw_reset(chip);
-	}
+	पूर्ण
 
-	writel(duty_cycles, imx->mmio_base + MX3_PWMSAR);
-	writel(period_cycles, imx->mmio_base + MX3_PWMPR);
+	ग_लिखोl(duty_cycles, imx->mmio_base + MX3_PWMSAR);
+	ग_लिखोl(period_cycles, imx->mmio_base + MX3_PWMPR);
 
 	/*
-	 * Store the duty cycle for future reference in cases where the
-	 * MX3_PWMSAR register can't be read (i.e. when the PWM is disabled).
+	 * Store the duty cycle क्रम future reference in हालs where the
+	 * MX3_PWMSAR रेजिस्टर can't be पढ़ो (i.e. when the PWM is disabled).
 	 */
 	imx->duty_cycle = duty_cycles;
 
@@ -276,53 +277,53 @@ static int pwm_imx27_apply(struct pwm_chip *chip, struct pwm_device *pwm,
 	     FIELD_PREP(MX3_PWMCR_CLKSRC, MX3_PWMCR_CLKSRC_IPG_HIGH) |
 	     MX3_PWMCR_DBGEN;
 
-	if (state->polarity == PWM_POLARITY_INVERSED)
+	अगर (state->polarity == PWM_POLARITY_INVERSED)
 		cr |= FIELD_PREP(MX3_PWMCR_POUTC,
 				MX3_PWMCR_POUTC_INVERTED);
 
-	if (state->enabled)
+	अगर (state->enabled)
 		cr |= MX3_PWMCR_EN;
 
-	writel(cr, imx->mmio_base + MX3_PWMCR);
+	ग_लिखोl(cr, imx->mmio_base + MX3_PWMCR);
 
-	if (!state->enabled)
+	अगर (!state->enabled)
 		pwm_imx27_clk_disable_unprepare(imx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pwm_ops pwm_imx27_ops = {
+अटल स्थिर काष्ठा pwm_ops pwm_imx27_ops = अणु
 	.apply = pwm_imx27_apply,
 	.get_state = pwm_imx27_get_state,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct of_device_id pwm_imx27_dt_ids[] = {
-	{ .compatible = "fsl,imx27-pwm", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id pwm_imx27_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx27-pwm", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pwm_imx27_dt_ids);
 
-static int pwm_imx27_probe(struct platform_device *pdev)
-{
-	struct pwm_imx27_chip *imx;
-	int ret;
+अटल पूर्णांक pwm_imx27_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pwm_imx27_chip *imx;
+	पूर्णांक ret;
 	u32 pwmcr;
 
-	imx = devm_kzalloc(&pdev->dev, sizeof(*imx), GFP_KERNEL);
-	if (imx == NULL)
-		return -ENOMEM;
+	imx = devm_kzalloc(&pdev->dev, माप(*imx), GFP_KERNEL);
+	अगर (imx == शून्य)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, imx);
+	platक्रमm_set_drvdata(pdev, imx);
 
 	imx->clk_ipg = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(imx->clk_ipg))
-		return dev_err_probe(&pdev->dev, PTR_ERR(imx->clk_ipg),
+	अगर (IS_ERR(imx->clk_ipg))
+		वापस dev_err_probe(&pdev->dev, PTR_ERR(imx->clk_ipg),
 				     "getting ipg clock failed\n");
 
 	imx->clk_per = devm_clk_get(&pdev->dev, "per");
-	if (IS_ERR(imx->clk_per))
-		return dev_err_probe(&pdev->dev, PTR_ERR(imx->clk_per),
+	अगर (IS_ERR(imx->clk_per))
+		वापस dev_err_probe(&pdev->dev, PTR_ERR(imx->clk_per),
 				     "failed to get peripheral clock\n");
 
 	imx->chip.ops = &pwm_imx27_ops;
@@ -332,40 +333,40 @@ static int pwm_imx27_probe(struct platform_device *pdev)
 	imx->chip.of_xlate = of_pwm_xlate_with_flags;
 	imx->chip.of_pwm_n_cells = 3;
 
-	imx->mmio_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(imx->mmio_base))
-		return PTR_ERR(imx->mmio_base);
+	imx->mmio_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(imx->mmio_base))
+		वापस PTR_ERR(imx->mmio_base);
 
 	ret = pwm_imx27_clk_prepare_enable(imx);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* keep clks on if pwm is running */
-	pwmcr = readl(imx->mmio_base + MX3_PWMCR);
-	if (!(pwmcr & MX3_PWMCR_EN))
+	/* keep clks on अगर pwm is running */
+	pwmcr = पढ़ोl(imx->mmio_base + MX3_PWMCR);
+	अगर (!(pwmcr & MX3_PWMCR_EN))
 		pwm_imx27_clk_disable_unprepare(imx);
 
-	return pwmchip_add(&imx->chip);
-}
+	वापस pwmchip_add(&imx->chip);
+पूर्ण
 
-static int pwm_imx27_remove(struct platform_device *pdev)
-{
-	struct pwm_imx27_chip *imx;
+अटल पूर्णांक pwm_imx27_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pwm_imx27_chip *imx;
 
-	imx = platform_get_drvdata(pdev);
+	imx = platक्रमm_get_drvdata(pdev);
 
-	return pwmchip_remove(&imx->chip);
-}
+	वापस pwmchip_हटाओ(&imx->chip);
+पूर्ण
 
-static struct platform_driver imx_pwm_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx_pwm_driver = अणु
+	.driver = अणु
 		.name = "pwm-imx27",
 		.of_match_table = pwm_imx27_dt_ids,
-	},
+	पूर्ण,
 	.probe = pwm_imx27_probe,
-	.remove = pwm_imx27_remove,
-};
-module_platform_driver(imx_pwm_driver);
+	.हटाओ = pwm_imx27_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(imx_pwm_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Sascha Hauer <s.hauer@pengutronix.de>");

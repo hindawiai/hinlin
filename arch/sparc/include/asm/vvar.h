@@ -1,75 +1,76 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
  */
 
-#ifndef _ASM_SPARC_VVAR_DATA_H
-#define _ASM_SPARC_VVAR_DATA_H
+#अगर_अघोषित _ASM_SPARC_VVAR_DATA_H
+#घोषणा _ASM_SPARC_VVAR_DATA_H
 
-#include <asm/clocksource.h>
-#include <asm/processor.h>
-#include <asm/barrier.h>
-#include <linux/time.h>
-#include <linux/types.h>
+#समावेश <यंत्र/घड़ीsource.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/types.h>
 
-struct vvar_data {
-	unsigned int seq;
+काष्ठा vvar_data अणु
+	अचिन्हित पूर्णांक seq;
 
-	int vclock_mode;
-	struct { /* extract of a clocksource struct */
+	पूर्णांक vघड़ी_mode;
+	काष्ठा अणु /* extract of a घड़ीsource काष्ठा */
 		u64	cycle_last;
 		u64	mask;
-		int	mult;
-		int	shift;
-	} clock;
-	/* open coded 'struct timespec' */
-	u64		wall_time_sec;
-	u64		wall_time_snsec;
-	u64		monotonic_time_snsec;
-	u64		monotonic_time_sec;
-	u64		monotonic_time_coarse_sec;
-	u64		monotonic_time_coarse_nsec;
-	u64		wall_time_coarse_sec;
-	u64		wall_time_coarse_nsec;
+		पूर्णांक	mult;
+		पूर्णांक	shअगरt;
+	पूर्ण घड़ी;
+	/* खोलो coded 'struct timespec' */
+	u64		wall_समय_sec;
+	u64		wall_समय_snsec;
+	u64		monotonic_समय_snsec;
+	u64		monotonic_समय_sec;
+	u64		monotonic_समय_coarse_sec;
+	u64		monotonic_समय_coarse_nsec;
+	u64		wall_समय_coarse_sec;
+	u64		wall_समय_coarse_nsec;
 
-	int		tz_minuteswest;
-	int		tz_dsttime;
-};
+	पूर्णांक		tz_minuteswest;
+	पूर्णांक		tz_dstसमय;
+पूर्ण;
 
-extern struct vvar_data *vvar_data;
-extern int vdso_fix_stick;
+बाह्य काष्ठा vvar_data *vvar_data;
+बाह्य पूर्णांक vdso_fix_stick;
 
-static inline unsigned int vvar_read_begin(const struct vvar_data *s)
-{
-	unsigned int ret;
+अटल अंतरभूत अचिन्हित पूर्णांक vvar_पढ़ो_begin(स्थिर काष्ठा vvar_data *s)
+अणु
+	अचिन्हित पूर्णांक ret;
 
 repeat:
 	ret = READ_ONCE(s->seq);
-	if (unlikely(ret & 1)) {
+	अगर (unlikely(ret & 1)) अणु
 		cpu_relax();
-		goto repeat;
-	}
-	smp_rmb(); /* Finish all reads before we return seq */
-	return ret;
-}
+		जाओ repeat;
+	पूर्ण
+	smp_rmb(); /* Finish all पढ़ोs beक्रमe we वापस seq */
+	वापस ret;
+पूर्ण
 
-static inline int vvar_read_retry(const struct vvar_data *s,
-					unsigned int start)
-{
-	smp_rmb(); /* Finish all reads before checking the value of seq */
-	return unlikely(s->seq != start);
-}
+अटल अंतरभूत पूर्णांक vvar_पढ़ो_retry(स्थिर काष्ठा vvar_data *s,
+					अचिन्हित पूर्णांक start)
+अणु
+	smp_rmb(); /* Finish all पढ़ोs beक्रमe checking the value of seq */
+	वापस unlikely(s->seq != start);
+पूर्ण
 
-static inline void vvar_write_begin(struct vvar_data *s)
-{
+अटल अंतरभूत व्योम vvar_ग_लिखो_begin(काष्ठा vvar_data *s)
+अणु
 	++s->seq;
 	smp_wmb(); /* Makes sure that increment of seq is reflected */
-}
+पूर्ण
 
-static inline void vvar_write_end(struct vvar_data *s)
-{
-	smp_wmb(); /* Makes the value of seq current before we increment */
+अटल अंतरभूत व्योम vvar_ग_लिखो_end(काष्ठा vvar_data *s)
+अणु
+	smp_wmb(); /* Makes the value of seq current beक्रमe we increment */
 	++s->seq;
-}
+पूर्ण
 
 
-#endif /* _ASM_SPARC_VVAR_DATA_H */
+#पूर्ण_अगर /* _ASM_SPARC_VVAR_DATA_H */

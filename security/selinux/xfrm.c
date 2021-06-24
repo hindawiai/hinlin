@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  NSA Security-Enhanced Linux (SELinux) security module
  *
@@ -9,7 +10,7 @@
  *
  *  Updated: Venkat Yekkirala <vyekkirala@TrustedCS.com>
  *
- *           Granular IPSec Associations for use in MLS environments.
+ *           Granular IPSec Associations क्रम use in MLS environments.
  *
  *  Copyright (C) 2005 International Business Machines Corporation
  *  Copyright (C) 2006 Trusted Computer Solutions, Inc.
@@ -28,446 +29,446 @@
  *   2. Emulating a reasonable SO_PEERSEC across machines
  *   3. Testing addition of sk_policy's with security context via setsockopt
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/security.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/skbuff.h>
-#include <linux/xfrm.h>
-#include <net/xfrm.h>
-#include <net/checksum.h>
-#include <net/udp.h>
-#include <linux/atomic.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/security.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/xfrm.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/checksum.h>
+#समावेश <net/udp.h>
+#समावेश <linux/atomic.h>
 
-#include "avc.h"
-#include "objsec.h"
-#include "xfrm.h"
+#समावेश "avc.h"
+#समावेश "objsec.h"
+#समावेश "xfrm.h"
 
 /* Labeled XFRM instance counter */
-atomic_t selinux_xfrm_refcount __read_mostly = ATOMIC_INIT(0);
+atomic_t selinux_xfrm_refcount __पढ़ो_mostly = ATOMIC_INIT(0);
 
 /*
- * Returns true if the context is an LSM/SELinux context.
+ * Returns true अगर the context is an LSM/SELinux context.
  */
-static inline int selinux_authorizable_ctx(struct xfrm_sec_ctx *ctx)
-{
-	return (ctx &&
-		(ctx->ctx_doi == XFRM_SC_DOI_LSM) &&
+अटल अंतरभूत पूर्णांक selinux_authorizable_ctx(काष्ठा xfrm_sec_ctx *ctx)
+अणु
+	वापस (ctx &&
+		(ctx->ctx_करोi == XFRM_SC_DOI_LSM) &&
 		(ctx->ctx_alg == XFRM_SC_ALG_SELINUX));
-}
+पूर्ण
 
 /*
- * Returns true if the xfrm contains a security blob for SELinux.
+ * Returns true अगर the xfrm contains a security blob क्रम SELinux.
  */
-static inline int selinux_authorizable_xfrm(struct xfrm_state *x)
-{
-	return selinux_authorizable_ctx(x->security);
-}
+अटल अंतरभूत पूर्णांक selinux_authorizable_xfrm(काष्ठा xfrm_state *x)
+अणु
+	वापस selinux_authorizable_ctx(x->security);
+पूर्ण
 
 /*
  * Allocates a xfrm_sec_state and populates it using the supplied security
  * xfrm_user_sec_ctx context.
  */
-static int selinux_xfrm_alloc_user(struct xfrm_sec_ctx **ctxp,
-				   struct xfrm_user_sec_ctx *uctx,
+अटल पूर्णांक selinux_xfrm_alloc_user(काष्ठा xfrm_sec_ctx **ctxp,
+				   काष्ठा xfrm_user_sec_ctx *uctx,
 				   gfp_t gfp)
-{
-	int rc;
-	const struct task_security_struct *tsec = selinux_cred(current_cred());
-	struct xfrm_sec_ctx *ctx = NULL;
+अणु
+	पूर्णांक rc;
+	स्थिर काष्ठा task_security_काष्ठा *tsec = selinux_cred(current_cred());
+	काष्ठा xfrm_sec_ctx *ctx = शून्य;
 	u32 str_len;
 
-	if (ctxp == NULL || uctx == NULL ||
-	    uctx->ctx_doi != XFRM_SC_DOI_LSM ||
+	अगर (ctxp == शून्य || uctx == शून्य ||
+	    uctx->ctx_करोi != XFRM_SC_DOI_LSM ||
 	    uctx->ctx_alg != XFRM_SC_ALG_SELINUX)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	str_len = uctx->ctx_len;
-	if (str_len >= PAGE_SIZE)
-		return -ENOMEM;
+	अगर (str_len >= PAGE_SIZE)
+		वापस -ENOMEM;
 
-	ctx = kmalloc(sizeof(*ctx) + str_len + 1, gfp);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kदो_स्मृति(माप(*ctx) + str_len + 1, gfp);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
-	ctx->ctx_doi = XFRM_SC_DOI_LSM;
+	ctx->ctx_करोi = XFRM_SC_DOI_LSM;
 	ctx->ctx_alg = XFRM_SC_ALG_SELINUX;
 	ctx->ctx_len = str_len;
-	memcpy(ctx->ctx_str, &uctx[1], str_len);
+	स_नकल(ctx->ctx_str, &uctx[1], str_len);
 	ctx->ctx_str[str_len] = '\0';
 	rc = security_context_to_sid(&selinux_state, ctx->ctx_str, str_len,
 				     &ctx->ctx_sid, gfp);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
 	rc = avc_has_perm(&selinux_state,
 			  tsec->sid, ctx->ctx_sid,
-			  SECCLASS_ASSOCIATION, ASSOCIATION__SETCONTEXT, NULL);
-	if (rc)
-		goto err;
+			  SECCLASS_ASSOCIATION, ASSOCIATION__SETCONTEXT, शून्य);
+	अगर (rc)
+		जाओ err;
 
 	*ctxp = ctx;
 	atomic_inc(&selinux_xfrm_refcount);
-	return 0;
+	वापस 0;
 
 err:
-	kfree(ctx);
-	return rc;
-}
+	kमुक्त(ctx);
+	वापस rc;
+पूर्ण
 
 /*
- * Free the xfrm_sec_ctx structure.
+ * Free the xfrm_sec_ctx काष्ठाure.
  */
-static void selinux_xfrm_free(struct xfrm_sec_ctx *ctx)
-{
-	if (!ctx)
-		return;
+अटल व्योम selinux_xfrm_मुक्त(काष्ठा xfrm_sec_ctx *ctx)
+अणु
+	अगर (!ctx)
+		वापस;
 
 	atomic_dec(&selinux_xfrm_refcount);
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण
 
 /*
  * Authorize the deletion of a labeled SA or policy rule.
  */
-static int selinux_xfrm_delete(struct xfrm_sec_ctx *ctx)
-{
-	const struct task_security_struct *tsec = selinux_cred(current_cred());
+अटल पूर्णांक selinux_xfrm_delete(काष्ठा xfrm_sec_ctx *ctx)
+अणु
+	स्थिर काष्ठा task_security_काष्ठा *tsec = selinux_cred(current_cred());
 
-	if (!ctx)
-		return 0;
+	अगर (!ctx)
+		वापस 0;
 
-	return avc_has_perm(&selinux_state,
+	वापस avc_has_perm(&selinux_state,
 			    tsec->sid, ctx->ctx_sid,
 			    SECCLASS_ASSOCIATION, ASSOCIATION__SETCONTEXT,
-			    NULL);
-}
+			    शून्य);
+पूर्ण
 
 /*
  * LSM hook implementation that authorizes that a flow can use a xfrm policy
  * rule.
  */
-int selinux_xfrm_policy_lookup(struct xfrm_sec_ctx *ctx, u32 fl_secid, u8 dir)
-{
-	int rc;
+पूर्णांक selinux_xfrm_policy_lookup(काष्ठा xfrm_sec_ctx *ctx, u32 fl_secid, u8 dir)
+अणु
+	पूर्णांक rc;
 
 	/* All flows should be treated as polmatch'ing an otherwise applicable
 	 * "non-labeled" policy. This would prevent inadvertent "leaks". */
-	if (!ctx)
-		return 0;
+	अगर (!ctx)
+		वापस 0;
 
 	/* Context sid is either set to label or ANY_ASSOC */
-	if (!selinux_authorizable_ctx(ctx))
-		return -EINVAL;
+	अगर (!selinux_authorizable_ctx(ctx))
+		वापस -EINVAL;
 
 	rc = avc_has_perm(&selinux_state,
 			  fl_secid, ctx->ctx_sid,
-			  SECCLASS_ASSOCIATION, ASSOCIATION__POLMATCH, NULL);
-	return (rc == -EACCES ? -ESRCH : rc);
-}
+			  SECCLASS_ASSOCIATION, ASSOCIATION__POLMATCH, शून्य);
+	वापस (rc == -EACCES ? -ESRCH : rc);
+पूर्ण
 
 /*
  * LSM hook implementation that authorizes that a state matches
  * the given policy, flow combo.
  */
-int selinux_xfrm_state_pol_flow_match(struct xfrm_state *x,
-				      struct xfrm_policy *xp,
-				      const struct flowi_common *flic)
-{
+पूर्णांक selinux_xfrm_state_pol_flow_match(काष्ठा xfrm_state *x,
+				      काष्ठा xfrm_policy *xp,
+				      स्थिर काष्ठा flowi_common *flic)
+अणु
 	u32 state_sid;
 	u32 flic_sid;
 
-	if (!xp->security)
-		if (x->security)
+	अगर (!xp->security)
+		अगर (x->security)
 			/* unlabeled policy and labeled SA can't match */
-			return 0;
-		else
+			वापस 0;
+		अन्यथा
 			/* unlabeled policy and unlabeled SA match all flows */
-			return 1;
-	else
-		if (!x->security)
+			वापस 1;
+	अन्यथा
+		अगर (!x->security)
 			/* unlabeled SA and labeled policy can't match */
-			return 0;
-		else
-			if (!selinux_authorizable_xfrm(x))
+			वापस 0;
+		अन्यथा
+			अगर (!selinux_authorizable_xfrm(x))
 				/* Not a SELinux-labeled SA */
-				return 0;
+				वापस 0;
 
 	state_sid = x->security->ctx_sid;
 	flic_sid = flic->flowic_secid;
 
-	if (flic_sid != state_sid)
-		return 0;
+	अगर (flic_sid != state_sid)
+		वापस 0;
 
-	/* We don't need a separate SA Vs. policy polmatch check since the SA
+	/* We करोn't need a separate SA Vs. policy polmatch check since the SA
 	 * is now of the same label as the flow and a flow Vs. policy polmatch
-	 * check had already happened in selinux_xfrm_policy_lookup() above. */
-	return (avc_has_perm(&selinux_state, flic_sid, state_sid,
+	 * check had alपढ़ोy happened in selinux_xfrm_policy_lookup() above. */
+	वापस (avc_has_perm(&selinux_state, flic_sid, state_sid,
 			     SECCLASS_ASSOCIATION, ASSOCIATION__SENDTO,
-			     NULL) ? 0 : 1);
-}
+			     शून्य) ? 0 : 1);
+पूर्ण
 
-static u32 selinux_xfrm_skb_sid_egress(struct sk_buff *skb)
-{
-	struct dst_entry *dst = skb_dst(skb);
-	struct xfrm_state *x;
+अटल u32 selinux_xfrm_skb_sid_egress(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	काष्ठा xfrm_state *x;
 
-	if (dst == NULL)
-		return SECSID_NULL;
+	अगर (dst == शून्य)
+		वापस SECSID_शून्य;
 	x = dst->xfrm;
-	if (x == NULL || !selinux_authorizable_xfrm(x))
-		return SECSID_NULL;
+	अगर (x == शून्य || !selinux_authorizable_xfrm(x))
+		वापस SECSID_शून्य;
 
-	return x->security->ctx_sid;
-}
+	वापस x->security->ctx_sid;
+पूर्ण
 
-static int selinux_xfrm_skb_sid_ingress(struct sk_buff *skb,
-					u32 *sid, int ckall)
-{
-	u32 sid_session = SECSID_NULL;
-	struct sec_path *sp = skb_sec_path(skb);
+अटल पूर्णांक selinux_xfrm_skb_sid_ingress(काष्ठा sk_buff *skb,
+					u32 *sid, पूर्णांक ckall)
+अणु
+	u32 sid_session = SECSID_शून्य;
+	काष्ठा sec_path *sp = skb_sec_path(skb);
 
-	if (sp) {
-		int i;
+	अगर (sp) अणु
+		पूर्णांक i;
 
-		for (i = sp->len - 1; i >= 0; i--) {
-			struct xfrm_state *x = sp->xvec[i];
-			if (selinux_authorizable_xfrm(x)) {
-				struct xfrm_sec_ctx *ctx = x->security;
+		क्रम (i = sp->len - 1; i >= 0; i--) अणु
+			काष्ठा xfrm_state *x = sp->xvec[i];
+			अगर (selinux_authorizable_xfrm(x)) अणु
+				काष्ठा xfrm_sec_ctx *ctx = x->security;
 
-				if (sid_session == SECSID_NULL) {
+				अगर (sid_session == SECSID_शून्य) अणु
 					sid_session = ctx->ctx_sid;
-					if (!ckall)
-						goto out;
-				} else if (sid_session != ctx->ctx_sid) {
-					*sid = SECSID_NULL;
-					return -EINVAL;
-				}
-			}
-		}
-	}
+					अगर (!ckall)
+						जाओ out;
+				पूर्ण अन्यथा अगर (sid_session != ctx->ctx_sid) अणु
+					*sid = SECSID_शून्य;
+					वापस -EINVAL;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out:
 	*sid = sid_session;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * LSM hook implementation that checks and/or returns the xfrm sid for the
+ * LSM hook implementation that checks and/or वापसs the xfrm sid क्रम the
  * incoming packet.
  */
-int selinux_xfrm_decode_session(struct sk_buff *skb, u32 *sid, int ckall)
-{
-	if (skb == NULL) {
-		*sid = SECSID_NULL;
-		return 0;
-	}
-	return selinux_xfrm_skb_sid_ingress(skb, sid, ckall);
-}
+पूर्णांक selinux_xfrm_decode_session(काष्ठा sk_buff *skb, u32 *sid, पूर्णांक ckall)
+अणु
+	अगर (skb == शून्य) अणु
+		*sid = SECSID_शून्य;
+		वापस 0;
+	पूर्ण
+	वापस selinux_xfrm_skb_sid_ingress(skb, sid, ckall);
+पूर्ण
 
-int selinux_xfrm_skb_sid(struct sk_buff *skb, u32 *sid)
-{
-	int rc;
+पूर्णांक selinux_xfrm_skb_sid(काष्ठा sk_buff *skb, u32 *sid)
+अणु
+	पूर्णांक rc;
 
 	rc = selinux_xfrm_skb_sid_ingress(skb, sid, 0);
-	if (rc == 0 && *sid == SECSID_NULL)
+	अगर (rc == 0 && *sid == SECSID_शून्य)
 		*sid = selinux_xfrm_skb_sid_egress(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * LSM hook implementation that allocs and transfers uctx spec to xfrm_policy.
  */
-int selinux_xfrm_policy_alloc(struct xfrm_sec_ctx **ctxp,
-			      struct xfrm_user_sec_ctx *uctx,
+पूर्णांक selinux_xfrm_policy_alloc(काष्ठा xfrm_sec_ctx **ctxp,
+			      काष्ठा xfrm_user_sec_ctx *uctx,
 			      gfp_t gfp)
-{
-	return selinux_xfrm_alloc_user(ctxp, uctx, gfp);
-}
+अणु
+	वापस selinux_xfrm_alloc_user(ctxp, uctx, gfp);
+पूर्ण
 
 /*
- * LSM hook implementation that copies security data structure from old to new
- * for policy cloning.
+ * LSM hook implementation that copies security data काष्ठाure from old to new
+ * क्रम policy cloning.
  */
-int selinux_xfrm_policy_clone(struct xfrm_sec_ctx *old_ctx,
-			      struct xfrm_sec_ctx **new_ctxp)
-{
-	struct xfrm_sec_ctx *new_ctx;
+पूर्णांक selinux_xfrm_policy_clone(काष्ठा xfrm_sec_ctx *old_ctx,
+			      काष्ठा xfrm_sec_ctx **new_ctxp)
+अणु
+	काष्ठा xfrm_sec_ctx *new_ctx;
 
-	if (!old_ctx)
-		return 0;
+	अगर (!old_ctx)
+		वापस 0;
 
-	new_ctx = kmemdup(old_ctx, sizeof(*old_ctx) + old_ctx->ctx_len,
+	new_ctx = kmemdup(old_ctx, माप(*old_ctx) + old_ctx->ctx_len,
 			  GFP_ATOMIC);
-	if (!new_ctx)
-		return -ENOMEM;
+	अगर (!new_ctx)
+		वापस -ENOMEM;
 	atomic_inc(&selinux_xfrm_refcount);
 	*new_ctxp = new_ctx;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * LSM hook implementation that frees xfrm_sec_ctx security information.
+ * LSM hook implementation that मुक्तs xfrm_sec_ctx security inक्रमmation.
  */
-void selinux_xfrm_policy_free(struct xfrm_sec_ctx *ctx)
-{
-	selinux_xfrm_free(ctx);
-}
+व्योम selinux_xfrm_policy_मुक्त(काष्ठा xfrm_sec_ctx *ctx)
+अणु
+	selinux_xfrm_मुक्त(ctx);
+पूर्ण
 
 /*
  * LSM hook implementation that authorizes deletion of labeled policies.
  */
-int selinux_xfrm_policy_delete(struct xfrm_sec_ctx *ctx)
-{
-	return selinux_xfrm_delete(ctx);
-}
+पूर्णांक selinux_xfrm_policy_delete(काष्ठा xfrm_sec_ctx *ctx)
+अणु
+	वापस selinux_xfrm_delete(ctx);
+पूर्ण
 
 /*
  * LSM hook implementation that allocates a xfrm_sec_state, populates it using
  * the supplied security context, and assigns it to the xfrm_state.
  */
-int selinux_xfrm_state_alloc(struct xfrm_state *x,
-			     struct xfrm_user_sec_ctx *uctx)
-{
-	return selinux_xfrm_alloc_user(&x->security, uctx, GFP_KERNEL);
-}
+पूर्णांक selinux_xfrm_state_alloc(काष्ठा xfrm_state *x,
+			     काष्ठा xfrm_user_sec_ctx *uctx)
+अणु
+	वापस selinux_xfrm_alloc_user(&x->security, uctx, GFP_KERNEL);
+पूर्ण
 
 /*
  * LSM hook implementation that allocates a xfrm_sec_state and populates based
  * on a secid.
  */
-int selinux_xfrm_state_alloc_acquire(struct xfrm_state *x,
-				     struct xfrm_sec_ctx *polsec, u32 secid)
-{
-	int rc;
-	struct xfrm_sec_ctx *ctx;
-	char *ctx_str = NULL;
-	int str_len;
+पूर्णांक selinux_xfrm_state_alloc_acquire(काष्ठा xfrm_state *x,
+				     काष्ठा xfrm_sec_ctx *polsec, u32 secid)
+अणु
+	पूर्णांक rc;
+	काष्ठा xfrm_sec_ctx *ctx;
+	अक्षर *ctx_str = शून्य;
+	पूर्णांक str_len;
 
-	if (!polsec)
-		return 0;
+	अगर (!polsec)
+		वापस 0;
 
-	if (secid == 0)
-		return -EINVAL;
+	अगर (secid == 0)
+		वापस -EINVAL;
 
 	rc = security_sid_to_context(&selinux_state, secid, &ctx_str,
 				     &str_len);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	ctx = kmalloc(sizeof(*ctx) + str_len, GFP_ATOMIC);
-	if (!ctx) {
+	ctx = kदो_स्मृति(माप(*ctx) + str_len, GFP_ATOMIC);
+	अगर (!ctx) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ctx->ctx_doi = XFRM_SC_DOI_LSM;
+	ctx->ctx_करोi = XFRM_SC_DOI_LSM;
 	ctx->ctx_alg = XFRM_SC_ALG_SELINUX;
 	ctx->ctx_sid = secid;
 	ctx->ctx_len = str_len;
-	memcpy(ctx->ctx_str, ctx_str, str_len);
+	स_नकल(ctx->ctx_str, ctx_str, str_len);
 
 	x->security = ctx;
 	atomic_inc(&selinux_xfrm_refcount);
 out:
-	kfree(ctx_str);
-	return rc;
-}
+	kमुक्त(ctx_str);
+	वापस rc;
+पूर्ण
 
 /*
- * LSM hook implementation that frees xfrm_state security information.
+ * LSM hook implementation that मुक्तs xfrm_state security inक्रमmation.
  */
-void selinux_xfrm_state_free(struct xfrm_state *x)
-{
-	selinux_xfrm_free(x->security);
-}
+व्योम selinux_xfrm_state_मुक्त(काष्ठा xfrm_state *x)
+अणु
+	selinux_xfrm_मुक्त(x->security);
+पूर्ण
 
 /*
  * LSM hook implementation that authorizes deletion of labeled SAs.
  */
-int selinux_xfrm_state_delete(struct xfrm_state *x)
-{
-	return selinux_xfrm_delete(x->security);
-}
+पूर्णांक selinux_xfrm_state_delete(काष्ठा xfrm_state *x)
+अणु
+	वापस selinux_xfrm_delete(x->security);
+पूर्ण
 
 /*
  * LSM hook that controls access to unlabelled packets.  If
  * a xfrm_state is authorizable (defined by macro) then it was
- * already authorized by the IPSec process.  If not, then
- * we need to check for unlabelled access since this may not have
+ * alपढ़ोy authorized by the IPSec process.  If not, then
+ * we need to check क्रम unlabelled access since this may not have
  * gone thru the IPSec process.
  */
-int selinux_xfrm_sock_rcv_skb(u32 sk_sid, struct sk_buff *skb,
-			      struct common_audit_data *ad)
-{
-	int i;
-	struct sec_path *sp = skb_sec_path(skb);
+पूर्णांक selinux_xfrm_sock_rcv_skb(u32 sk_sid, काष्ठा sk_buff *skb,
+			      काष्ठा common_audit_data *ad)
+अणु
+	पूर्णांक i;
+	काष्ठा sec_path *sp = skb_sec_path(skb);
 	u32 peer_sid = SECINITSID_UNLABELED;
 
-	if (sp) {
-		for (i = 0; i < sp->len; i++) {
-			struct xfrm_state *x = sp->xvec[i];
+	अगर (sp) अणु
+		क्रम (i = 0; i < sp->len; i++) अणु
+			काष्ठा xfrm_state *x = sp->xvec[i];
 
-			if (x && selinux_authorizable_xfrm(x)) {
-				struct xfrm_sec_ctx *ctx = x->security;
+			अगर (x && selinux_authorizable_xfrm(x)) अणु
+				काष्ठा xfrm_sec_ctx *ctx = x->security;
 				peer_sid = ctx->ctx_sid;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* This check even when there's no association involved is intended,
+	/* This check even when there's no association involved is पूर्णांकended,
 	 * according to Trent Jaeger, to make sure a process can't engage in
 	 * non-IPsec communication unless explicitly allowed by policy. */
-	return avc_has_perm(&selinux_state,
+	वापस avc_has_perm(&selinux_state,
 			    sk_sid, peer_sid,
 			    SECCLASS_ASSOCIATION, ASSOCIATION__RECVFROM, ad);
-}
+पूर्ण
 
 /*
  * POSTROUTE_LAST hook's XFRM processing:
  * If we have no security association, then we need to determine
  * whether the socket is allowed to send to an unlabelled destination.
- * If we do have a authorizable security association, then it has already been
+ * If we करो have a authorizable security association, then it has alपढ़ोy been
  * checked in the selinux_xfrm_state_pol_flow_match hook above.
  */
-int selinux_xfrm_postroute_last(u32 sk_sid, struct sk_buff *skb,
-				struct common_audit_data *ad, u8 proto)
-{
-	struct dst_entry *dst;
+पूर्णांक selinux_xfrm_postroute_last(u32 sk_sid, काष्ठा sk_buff *skb,
+				काष्ठा common_audit_data *ad, u8 proto)
+अणु
+	काष्ठा dst_entry *dst;
 
-	switch (proto) {
-	case IPPROTO_AH:
-	case IPPROTO_ESP:
-	case IPPROTO_COMP:
-		/* We should have already seen this packet once before it
+	चयन (proto) अणु
+	हाल IPPROTO_AH:
+	हाल IPPROTO_ESP:
+	हाल IPPROTO_COMP:
+		/* We should have alपढ़ोy seen this packet once beक्रमe it
 		 * underwent xfrm(s). No need to subject it to the unlabeled
 		 * check. */
-		return 0;
-	default:
-		break;
-	}
+		वापस 0;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	dst = skb_dst(skb);
-	if (dst) {
-		struct dst_entry *iter;
+	अगर (dst) अणु
+		काष्ठा dst_entry *iter;
 
-		for (iter = dst; iter != NULL; iter = xfrm_dst_child(iter)) {
-			struct xfrm_state *x = iter->xfrm;
+		क्रम (iter = dst; iter != शून्य; iter = xfrm_dst_child(iter)) अणु
+			काष्ठा xfrm_state *x = iter->xfrm;
 
-			if (x && selinux_authorizable_xfrm(x))
-				return 0;
-		}
-	}
+			अगर (x && selinux_authorizable_xfrm(x))
+				वापस 0;
+		पूर्ण
+	पूर्ण
 
-	/* This check even when there's no association involved is intended,
+	/* This check even when there's no association involved is पूर्णांकended,
 	 * according to Trent Jaeger, to make sure a process can't engage in
 	 * non-IPsec communication unless explicitly allowed by policy. */
-	return avc_has_perm(&selinux_state, sk_sid, SECINITSID_UNLABELED,
+	वापस avc_has_perm(&selinux_state, sk_sid, SECINITSID_UNLABELED,
 			    SECCLASS_ASSOCIATION, ASSOCIATION__SENDTO, ad);
-}
+पूर्ण

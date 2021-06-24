@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_RAMFS_H
-#define _LINUX_RAMFS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_RAMFS_H
+#घोषणा _LINUX_RAMFS_H
 
-#include <linux/fs_parser.h> // bleh...
+#समावेश <linux/fs_parser.h> // bleh...
 
-struct inode *ramfs_get_inode(struct super_block *sb, const struct inode *dir,
+काष्ठा inode *ramfs_get_inode(काष्ठा super_block *sb, स्थिर काष्ठा inode *dir,
 	 umode_t mode, dev_t dev);
-extern int ramfs_init_fs_context(struct fs_context *fc);
+बाह्य पूर्णांक ramfs_init_fs_context(काष्ठा fs_context *fc);
 
-#ifdef CONFIG_MMU
-static inline int
-ramfs_nommu_expand_for_mapping(struct inode *inode, size_t newsize)
-{
-	return 0;
-}
-#else
-extern int ramfs_nommu_expand_for_mapping(struct inode *inode, size_t newsize);
-#endif
+#अगर_घोषित CONFIG_MMU
+अटल अंतरभूत पूर्णांक
+ramfs_nommu_expand_क्रम_mapping(काष्ठा inode *inode, माप_प्रकार newsize)
+अणु
+	वापस 0;
+पूर्ण
+#अन्यथा
+बाह्य पूर्णांक ramfs_nommu_expand_क्रम_mapping(काष्ठा inode *inode, माप_प्रकार newsize);
+#पूर्ण_अगर
 
-extern const struct fs_parameter_spec ramfs_fs_parameters[];
-extern const struct file_operations ramfs_file_operations;
-extern const struct vm_operations_struct generic_file_vm_ops;
+बाह्य स्थिर काष्ठा fs_parameter_spec ramfs_fs_parameters[];
+बाह्य स्थिर काष्ठा file_operations ramfs_file_operations;
+बाह्य स्थिर काष्ठा vm_operations_काष्ठा generic_file_vm_ops;
 
-#endif
+#पूर्ण_अगर

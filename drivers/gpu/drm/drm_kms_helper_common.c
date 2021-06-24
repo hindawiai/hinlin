@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2015 Intel Corporation
+ * Copyright तऊ 2015 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,68 +22,68 @@
  * IN THE SOFTWARE.
  *
  * Authors:
- *    Rafael Antognolli <rafael.antognolli@intel.com>
+ *    Rafael Antognolli <rafael.antognolli@पूर्णांकel.com>
  *
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <drm/drm_print.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "drm_crtc_helper_internal.h"
+#समावेश "drm_crtc_helper_internal.h"
 
 MODULE_AUTHOR("David Airlie, Jesse Barnes");
 MODULE_DESCRIPTION("DRM KMS helper");
 MODULE_LICENSE("GPL and additional rights");
 
-#if IS_ENABLED(CONFIG_DRM_LOAD_EDID_FIRMWARE)
+#अगर IS_ENABLED(CONFIG_DRM_LOAD_EDID_FIRMWARE)
 
-/* Backward compatibility for drm_kms_helper.edid_firmware */
-static int edid_firmware_set(const char *val, const struct kernel_param *kp)
-{
+/* Backward compatibility क्रम drm_kms_helper.edid_firmware */
+अटल पूर्णांक edid_firmware_set(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
 	DRM_NOTE("drm_kms_helper.edid_firmware is deprecated, please use drm.edid_firmware instead.\n");
 
-	return __drm_set_edid_firmware_path(val);
-}
+	वापस __drm_set_edid_firmware_path(val);
+पूर्ण
 
-static int edid_firmware_get(char *buffer, const struct kernel_param *kp)
-{
-	return __drm_get_edid_firmware_path(buffer, PAGE_SIZE);
-}
+अटल पूर्णांक edid_firmware_get(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस __drm_get_edid_firmware_path(buffer, PAGE_SIZE);
+पूर्ण
 
-static const struct kernel_param_ops edid_firmware_ops = {
+अटल स्थिर काष्ठा kernel_param_ops edid_firmware_ops = अणु
 	.set = edid_firmware_set,
 	.get = edid_firmware_get,
-};
+पूर्ण;
 
-module_param_cb(edid_firmware, &edid_firmware_ops, NULL, 0644);
+module_param_cb(edid_firmware, &edid_firmware_ops, शून्य, 0644);
 __MODULE_PARM_TYPE(edid_firmware, "charp");
 MODULE_PARM_DESC(edid_firmware,
 		 "DEPRECATED. Use drm.edid_firmware module parameter instead.");
 
-#endif
+#पूर्ण_अगर
 
-static int __init drm_kms_helper_init(void)
-{
+अटल पूर्णांक __init drm_kms_helper_init(व्योम)
+अणु
 	/*
-	 * The Kconfig DRM_KMS_HELPER selects FRAMEBUFFER_CONSOLE (if !EXPERT)
-	 * but the module doesn't depend on any fb console symbols.  At least
-	 * attempt to load fbcon to avoid leaving the system without a usable
+	 * The Kconfig DRM_KMS_HELPER selects FRAMEBUFFER_CONSOLE (अगर !EXPERT)
+	 * but the module करोesn't depend on any fb console symbols.  At least
+	 * attempt to load fbcon to aव्योम leaving the प्रणाली without a usable
 	 * console.
 	 */
-	if (IS_ENABLED(CONFIG_DRM_FBDEV_EMULATION) &&
+	अगर (IS_ENABLED(CONFIG_DRM_FBDEV_EMULATION) &&
 	    IS_MODULE(CONFIG_FRAMEBUFFER_CONSOLE) &&
 	    !IS_ENABLED(CONFIG_EXPERT))
-		request_module_nowait("fbcon");
+		request_module_noरुको("fbcon");
 
-	return drm_dp_aux_dev_init();
-}
+	वापस drm_dp_aux_dev_init();
+पूर्ण
 
-static void __exit drm_kms_helper_exit(void)
-{
-	/* Call exit functions from specific kms helpers here */
-	drm_dp_aux_dev_exit();
-}
+अटल व्योम __निकास drm_kms_helper_निकास(व्योम)
+अणु
+	/* Call निकास functions from specअगरic kms helpers here */
+	drm_dp_aux_dev_निकास();
+पूर्ण
 
 module_init(drm_kms_helper_init);
-module_exit(drm_kms_helper_exit);
+module_निकास(drm_kms_helper_निकास);

@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 
-#ifndef _CRYPTO_BLAKE2B_H
-#define _CRYPTO_BLAKE2B_H
+#अगर_अघोषित _CRYPTO_BLAKE2B_H
+#घोषणा _CRYPTO_BLAKE2B_H
 
-#include <linux/bug.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
 
-enum blake2b_lengths {
+क्रमागत blake2b_lengths अणु
 	BLAKE2B_BLOCK_SIZE = 128,
 	BLAKE2B_HASH_SIZE = 64,
 	BLAKE2B_KEY_SIZE = 64,
@@ -17,19 +18,19 @@ enum blake2b_lengths {
 	BLAKE2B_256_HASH_SIZE = 32,
 	BLAKE2B_384_HASH_SIZE = 48,
 	BLAKE2B_512_HASH_SIZE = 64,
-};
+पूर्ण;
 
-struct blake2b_state {
+काष्ठा blake2b_state अणु
 	/* 'h', 't', and 'f' are used in assembly code, so keep them as-is. */
 	u64 h[8];
 	u64 t[2];
 	u64 f[2];
 	u8 buf[BLAKE2B_BLOCK_SIZE];
-	unsigned int buflen;
-	unsigned int outlen;
-};
+	अचिन्हित पूर्णांक buflen;
+	अचिन्हित पूर्णांक outlen;
+पूर्ण;
 
-enum blake2b_iv {
+क्रमागत blake2b_iv अणु
 	BLAKE2B_IV0 = 0x6A09E667F3BCC908ULL,
 	BLAKE2B_IV1 = 0xBB67AE8584CAA73BULL,
 	BLAKE2B_IV2 = 0x3C6EF372FE94F82BULL,
@@ -38,11 +39,11 @@ enum blake2b_iv {
 	BLAKE2B_IV5 = 0x9B05688C2B3E6C1FULL,
 	BLAKE2B_IV6 = 0x1F83D9ABFB41BD6BULL,
 	BLAKE2B_IV7 = 0x5BE0CD19137E2179ULL,
-};
+पूर्ण;
 
-static inline void __blake2b_init(struct blake2b_state *state, size_t outlen,
-				  const void *key, size_t keylen)
-{
+अटल अंतरभूत व्योम __blake2b_init(काष्ठा blake2b_state *state, माप_प्रकार outlen,
+				  स्थिर व्योम *key, माप_प्रकार keylen)
+अणु
 	state->h[0] = BLAKE2B_IV0 ^ (0x01010000 | keylen << 8 | outlen);
 	state->h[1] = BLAKE2B_IV1;
 	state->h[2] = BLAKE2B_IV2;
@@ -57,11 +58,11 @@ static inline void __blake2b_init(struct blake2b_state *state, size_t outlen,
 	state->f[1] = 0;
 	state->buflen = 0;
 	state->outlen = outlen;
-	if (keylen) {
-		memcpy(state->buf, key, keylen);
-		memset(&state->buf[keylen], 0, BLAKE2B_BLOCK_SIZE - keylen);
+	अगर (keylen) अणु
+		स_नकल(state->buf, key, keylen);
+		स_रखो(&state->buf[keylen], 0, BLAKE2B_BLOCK_SIZE - keylen);
 		state->buflen = BLAKE2B_BLOCK_SIZE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif /* _CRYPTO_BLAKE2B_H */
+#पूर्ण_अगर /* _CRYPTO_BLAKE2B_H */

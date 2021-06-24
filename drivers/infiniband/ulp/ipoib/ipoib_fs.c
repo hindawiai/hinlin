@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004 Topspin Communications.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,87 +31,87 @@
  * SOFTWARE.
  */
 
-#include <linux/err.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
 
-struct file_operations;
+काष्ठा file_operations;
 
-#include <linux/debugfs.h>
-#include <linux/export.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/export.h>
 
-#include "ipoib.h"
+#समावेश "ipoib.h"
 
-static struct dentry *ipoib_root;
+अटल काष्ठा dentry *ipoib_root;
 
-static void format_gid(union ib_gid *gid, char *buf)
-{
-	int i, n;
+अटल व्योम क्रमmat_gid(जोड़ ib_gid *gid, अक्षर *buf)
+अणु
+	पूर्णांक i, n;
 
-	for (n = 0, i = 0; i < 8; ++i) {
-		n += sprintf(buf + n, "%x",
+	क्रम (n = 0, i = 0; i < 8; ++i) अणु
+		n += प्र_लिखो(buf + n, "%x",
 			     be16_to_cpu(((__be16 *) gid->raw)[i]));
-		if (i < 7)
+		अगर (i < 7)
 			buf[n++] = ':';
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void *ipoib_mcg_seq_start(struct seq_file *file, loff_t *pos)
-{
-	struct ipoib_mcast_iter *iter;
+अटल व्योम *ipoib_mcg_seq_start(काष्ठा seq_file *file, loff_t *pos)
+अणु
+	काष्ठा ipoib_mcast_iter *iter;
 	loff_t n = *pos;
 
-	iter = ipoib_mcast_iter_init(file->private);
-	if (!iter)
-		return NULL;
+	iter = ipoib_mcast_iter_init(file->निजी);
+	अगर (!iter)
+		वापस शून्य;
 
-	while (n--) {
-		if (ipoib_mcast_iter_next(iter)) {
-			kfree(iter);
-			return NULL;
-		}
-	}
+	जबतक (n--) अणु
+		अगर (ipoib_mcast_iter_next(iter)) अणु
+			kमुक्त(iter);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
-static void *ipoib_mcg_seq_next(struct seq_file *file, void *iter_ptr,
+अटल व्योम *ipoib_mcg_seq_next(काष्ठा seq_file *file, व्योम *iter_ptr,
 				   loff_t *pos)
-{
-	struct ipoib_mcast_iter *iter = iter_ptr;
+अणु
+	काष्ठा ipoib_mcast_iter *iter = iter_ptr;
 
 	(*pos)++;
 
-	if (ipoib_mcast_iter_next(iter)) {
-		kfree(iter);
-		return NULL;
-	}
+	अगर (ipoib_mcast_iter_next(iter)) अणु
+		kमुक्त(iter);
+		वापस शून्य;
+	पूर्ण
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
-static void ipoib_mcg_seq_stop(struct seq_file *file, void *iter_ptr)
-{
-	/* nothing for now */
-}
+अटल व्योम ipoib_mcg_seq_stop(काष्ठा seq_file *file, व्योम *iter_ptr)
+अणु
+	/* nothing क्रम now */
+पूर्ण
 
-static int ipoib_mcg_seq_show(struct seq_file *file, void *iter_ptr)
-{
-	struct ipoib_mcast_iter *iter = iter_ptr;
-	char gid_buf[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
-	union ib_gid mgid;
-	unsigned long created;
-	unsigned int queuelen, complete, send_only;
+अटल पूर्णांक ipoib_mcg_seq_show(काष्ठा seq_file *file, व्योम *iter_ptr)
+अणु
+	काष्ठा ipoib_mcast_iter *iter = iter_ptr;
+	अक्षर gid_buf[माप "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
+	जोड़ ib_gid mgid;
+	अचिन्हित दीर्घ created;
+	अचिन्हित पूर्णांक queuelen, complete, send_only;
 
-	if (!iter)
-		return 0;
+	अगर (!iter)
+		वापस 0;
 
-	ipoib_mcast_iter_read(iter, &mgid, &created, &queuelen,
+	ipoib_mcast_iter_पढ़ो(iter, &mgid, &created, &queuelen,
 			      &complete, &send_only);
 
-	format_gid(&mgid, gid_buf);
+	क्रमmat_gid(&mgid, gid_buf);
 
-	seq_printf(file,
+	seq_म_लिखो(file,
 		   "GID: %s\n"
 		   "  created: %10ld\n"
 		   "  queuelen: %9d\n"
@@ -121,131 +122,131 @@ static int ipoib_mcg_seq_show(struct seq_file *file, void *iter_ptr)
 		   complete ? "yes" : "no",
 		   send_only ? "yes" : "no");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations ipoib_mcg_sops = {
+अटल स्थिर काष्ठा seq_operations ipoib_mcg_sops = अणु
 	.start = ipoib_mcg_seq_start,
 	.next  = ipoib_mcg_seq_next,
 	.stop  = ipoib_mcg_seq_stop,
 	.show  = ipoib_mcg_seq_show,
-};
+पूर्ण;
 
 DEFINE_SEQ_ATTRIBUTE(ipoib_mcg);
 
-static void *ipoib_path_seq_start(struct seq_file *file, loff_t *pos)
-{
-	struct ipoib_path_iter *iter;
+अटल व्योम *ipoib_path_seq_start(काष्ठा seq_file *file, loff_t *pos)
+अणु
+	काष्ठा ipoib_path_iter *iter;
 	loff_t n = *pos;
 
-	iter = ipoib_path_iter_init(file->private);
-	if (!iter)
-		return NULL;
+	iter = ipoib_path_iter_init(file->निजी);
+	अगर (!iter)
+		वापस शून्य;
 
-	while (n--) {
-		if (ipoib_path_iter_next(iter)) {
-			kfree(iter);
-			return NULL;
-		}
-	}
+	जबतक (n--) अणु
+		अगर (ipoib_path_iter_next(iter)) अणु
+			kमुक्त(iter);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
-static void *ipoib_path_seq_next(struct seq_file *file, void *iter_ptr,
+अटल व्योम *ipoib_path_seq_next(काष्ठा seq_file *file, व्योम *iter_ptr,
 				   loff_t *pos)
-{
-	struct ipoib_path_iter *iter = iter_ptr;
+अणु
+	काष्ठा ipoib_path_iter *iter = iter_ptr;
 
 	(*pos)++;
 
-	if (ipoib_path_iter_next(iter)) {
-		kfree(iter);
-		return NULL;
-	}
+	अगर (ipoib_path_iter_next(iter)) अणु
+		kमुक्त(iter);
+		वापस शून्य;
+	पूर्ण
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
-static void ipoib_path_seq_stop(struct seq_file *file, void *iter_ptr)
-{
-	/* nothing for now */
-}
+अटल व्योम ipoib_path_seq_stop(काष्ठा seq_file *file, व्योम *iter_ptr)
+अणु
+	/* nothing क्रम now */
+पूर्ण
 
-static int ipoib_path_seq_show(struct seq_file *file, void *iter_ptr)
-{
-	struct ipoib_path_iter *iter = iter_ptr;
-	char gid_buf[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
-	struct ipoib_path path;
-	int rate;
+अटल पूर्णांक ipoib_path_seq_show(काष्ठा seq_file *file, व्योम *iter_ptr)
+अणु
+	काष्ठा ipoib_path_iter *iter = iter_ptr;
+	अक्षर gid_buf[माप "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
+	काष्ठा ipoib_path path;
+	पूर्णांक rate;
 
-	if (!iter)
-		return 0;
+	अगर (!iter)
+		वापस 0;
 
-	ipoib_path_iter_read(iter, &path);
+	ipoib_path_iter_पढ़ो(iter, &path);
 
-	format_gid(&path.pathrec.dgid, gid_buf);
+	क्रमmat_gid(&path.pathrec.dgid, gid_buf);
 
-	seq_printf(file,
+	seq_म_लिखो(file,
 		   "GID: %s\n"
 		   "  complete: %6s\n",
 		   gid_buf, sa_path_get_dlid(&path.pathrec) ? "yes" : "no");
 
-	if (sa_path_get_dlid(&path.pathrec)) {
+	अगर (sa_path_get_dlid(&path.pathrec)) अणु
 		rate = ib_rate_to_mbps(path.pathrec.rate);
 
-		seq_printf(file,
+		seq_म_लिखो(file,
 			   "  DLID:     0x%04x\n"
 			   "  SL: %12d\n"
 			   "  rate: %8d.%d Gb/sec\n",
 			   be32_to_cpu(sa_path_get_dlid(&path.pathrec)),
 			   path.pathrec.sl,
 			   rate / 1000, rate % 1000);
-	}
+	पूर्ण
 
-	seq_putc(file, '\n');
+	seq_अ_दो(file, '\n');
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations ipoib_path_sops = {
+अटल स्थिर काष्ठा seq_operations ipoib_path_sops = अणु
 	.start = ipoib_path_seq_start,
 	.next  = ipoib_path_seq_next,
 	.stop  = ipoib_path_seq_stop,
 	.show  = ipoib_path_seq_show,
-};
+पूर्ण;
 
 DEFINE_SEQ_ATTRIBUTE(ipoib_path);
 
-void ipoib_create_debug_files(struct net_device *dev)
-{
-	struct ipoib_dev_priv *priv = ipoib_priv(dev);
-	char name[IFNAMSIZ + sizeof("_path")];
+व्योम ipoib_create_debug_files(काष्ठा net_device *dev)
+अणु
+	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
+	अक्षर name[IFNAMSIZ + माप("_path")];
 
-	snprintf(name, sizeof(name), "%s_mcg", dev->name);
+	snम_लिखो(name, माप(name), "%s_mcg", dev->name);
 	priv->mcg_dentry = debugfs_create_file(name, S_IFREG | S_IRUGO,
 					       ipoib_root, dev, &ipoib_mcg_fops);
 
-	snprintf(name, sizeof(name), "%s_path", dev->name);
+	snम_लिखो(name, माप(name), "%s_path", dev->name);
 	priv->path_dentry = debugfs_create_file(name, S_IFREG | S_IRUGO,
 						ipoib_root, dev, &ipoib_path_fops);
-}
+पूर्ण
 
-void ipoib_delete_debug_files(struct net_device *dev)
-{
-	struct ipoib_dev_priv *priv = ipoib_priv(dev);
+व्योम ipoib_delete_debug_files(काष्ठा net_device *dev)
+अणु
+	काष्ठा ipoib_dev_priv *priv = ipoib_priv(dev);
 
-	debugfs_remove(priv->mcg_dentry);
-	debugfs_remove(priv->path_dentry);
-	priv->mcg_dentry = priv->path_dentry = NULL;
-}
+	debugfs_हटाओ(priv->mcg_dentry);
+	debugfs_हटाओ(priv->path_dentry);
+	priv->mcg_dentry = priv->path_dentry = शून्य;
+पूर्ण
 
-void ipoib_register_debugfs(void)
-{
-	ipoib_root = debugfs_create_dir("ipoib", NULL);
-}
+व्योम ipoib_रेजिस्टर_debugfs(व्योम)
+अणु
+	ipoib_root = debugfs_create_dir("ipoib", शून्य);
+पूर्ण
 
-void ipoib_unregister_debugfs(void)
-{
-	debugfs_remove(ipoib_root);
-}
+व्योम ipoib_unरेजिस्टर_debugfs(व्योम)
+अणु
+	debugfs_हटाओ(ipoib_root);
+पूर्ण

@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_CMP_H
-#define _ASM_CMP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_CMP_H
+#घोषणा _ASM_CMP_H
 
 /*
- * Definitions for CMP multitasking on MIPS cores
+ * Definitions क्रम CMP multitasking on MIPS cores
  */
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-extern void cmp_smp_setup(void);
-extern void cmp_smp_finish(void);
-extern void cmp_boot_secondary(int cpu, struct task_struct *t);
-extern void cmp_init_secondary(void);
-extern void cmp_prepare_cpus(unsigned int max_cpus);
+बाह्य व्योम cmp_smp_setup(व्योम);
+बाह्य व्योम cmp_smp_finish(व्योम);
+बाह्य व्योम cmp_boot_secondary(पूर्णांक cpu, काष्ठा task_काष्ठा *t);
+बाह्य व्योम cmp_init_secondary(व्योम);
+बाह्य व्योम cmp_prepare_cpus(अचिन्हित पूर्णांक max_cpus);
 
-/* This is platform specific */
-extern void cmp_send_ipi(int cpu, unsigned int action);
-#endif /*  _ASM_CMP_H */
+/* This is platक्रमm specअगरic */
+बाह्य व्योम cmp_send_ipi(पूर्णांक cpu, अचिन्हित पूर्णांक action);
+#पूर्ण_अगर /*  _ASM_CMP_H */

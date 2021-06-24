@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * data_breakpoint.c - Sample HW Breakpoint file to watch kernel data address
+ * data_अवरोधpoपूर्णांक.c - Sample HW Breakpoपूर्णांक file to watch kernel data address
  *
- * usage: insmod data_breakpoint.ko ksym=<ksym_name>
+ * usage: insmod data_अवरोधpoपूर्णांक.ko ksym=<ksym_name>
  *
- * This file is a kernel module that places a breakpoint over ksym_name kernel
- * variable using Hardware Breakpoint register. The corresponding handler which
- * prints a backtrace is invoked every time a write operation is performed on
+ * This file is a kernel module that places a अवरोधpoपूर्णांक over ksym_name kernel
+ * variable using Hardware Breakpoपूर्णांक रेजिस्टर. The corresponding handler which
+ * prपूर्णांकs a backtrace is invoked every समय a ग_लिखो operation is perक्रमmed on
  * that variable.
  *
  * Copyright (C) IBM Corporation, 2009
  *
  * Author: K.Prasad <prasad@linux.vnet.ibm.com>
  */
-#include <linux/module.h>	/* Needed by all modules */
-#include <linux/kernel.h>	/* Needed for KERN_INFO */
-#include <linux/init.h>		/* Needed for the macros */
-#include <linux/kallsyms.h>
+#समावेश <linux/module.h>	/* Needed by all modules */
+#समावेश <linux/kernel.h>	/* Needed क्रम KERN_INFO */
+#समावेश <linux/init.h>		/* Needed क्रम the macros */
+#समावेश <linux/kallsyms.h>
 
-#include <linux/perf_event.h>
-#include <linux/hw_breakpoint.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
 
-struct perf_event * __percpu *sample_hbp;
+काष्ठा perf_event * __percpu *sample_hbp;
 
-static char ksym_name[KSYM_NAME_LEN] = "jiffies";
+अटल अक्षर ksym_name[KSYM_NAME_LEN] = "jiffies";
 module_param_string(ksym, ksym_name, KSYM_NAME_LEN, S_IRUGO);
 MODULE_PARM_DESC(ksym, "Kernel symbol to monitor; this module will report any"
 			" write operations on the kernel symbol");
 
-static void sample_hbp_handler(struct perf_event *bp,
-			       struct perf_sample_data *data,
-			       struct pt_regs *regs)
-{
-	printk(KERN_INFO "%s value is changed\n", ksym_name);
+अटल व्योम sample_hbp_handler(काष्ठा perf_event *bp,
+			       काष्ठा perf_sample_data *data,
+			       काष्ठा pt_regs *regs)
+अणु
+	prपूर्णांकk(KERN_INFO "%s value is changed\n", ksym_name);
 	dump_stack();
-	printk(KERN_INFO "Dump stack from sample_hbp_handler\n");
-}
+	prपूर्णांकk(KERN_INFO "Dump stack from sample_hbp_handler\n");
+पूर्ण
 
-static int __init hw_break_module_init(void)
-{
-	int ret;
-	struct perf_event_attr attr;
-	void *addr = __symbol_get(ksym_name);
+अटल पूर्णांक __init hw_अवरोध_module_init(व्योम)
+अणु
+	पूर्णांक ret;
+	काष्ठा perf_event_attr attr;
+	व्योम *addr = __symbol_get(ksym_name);
 
-	if (!addr)
-		return -ENXIO;
+	अगर (!addr)
+		वापस -ENXIO;
 
-	hw_breakpoint_init(&attr);
-	attr.bp_addr = (unsigned long)addr;
+	hw_अवरोधpoपूर्णांक_init(&attr);
+	attr.bp_addr = (अचिन्हित दीर्घ)addr;
 	attr.bp_len = HW_BREAKPOINT_LEN_4;
 	attr.bp_type = HW_BREAKPOINT_W;
 
-	sample_hbp = register_wide_hw_breakpoint(&attr, sample_hbp_handler, NULL);
-	if (IS_ERR((void __force *)sample_hbp)) {
-		ret = PTR_ERR((void __force *)sample_hbp);
-		goto fail;
-	}
+	sample_hbp = रेजिस्टर_wide_hw_अवरोधpoपूर्णांक(&attr, sample_hbp_handler, शून्य);
+	अगर (IS_ERR((व्योम __क्रमce *)sample_hbp)) अणु
+		ret = PTR_ERR((व्योम __क्रमce *)sample_hbp);
+		जाओ fail;
+	पूर्ण
 
-	printk(KERN_INFO "HW Breakpoint for %s write installed\n", ksym_name);
+	prपूर्णांकk(KERN_INFO "HW Breakpoint for %s write installed\n", ksym_name);
 
-	return 0;
+	वापस 0;
 
 fail:
-	printk(KERN_INFO "Breakpoint registration failed\n");
+	prपूर्णांकk(KERN_INFO "Breakpoint registration failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit hw_break_module_exit(void)
-{
-	unregister_wide_hw_breakpoint(sample_hbp);
+अटल व्योम __निकास hw_अवरोध_module_निकास(व्योम)
+अणु
+	unरेजिस्टर_wide_hw_अवरोधpoपूर्णांक(sample_hbp);
 	symbol_put(ksym_name);
-	printk(KERN_INFO "HW Breakpoint for %s write uninstalled\n", ksym_name);
-}
+	prपूर्णांकk(KERN_INFO "HW Breakpoint for %s write uninstalled\n", ksym_name);
+पूर्ण
 
-module_init(hw_break_module_init);
-module_exit(hw_break_module_exit);
+module_init(hw_अवरोध_module_init);
+module_निकास(hw_अवरोध_module_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("K.Prasad");

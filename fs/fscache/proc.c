@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* FS-Cache statistics viewing interface
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* FS-Cache statistics viewing पूर्णांकerface
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define FSCACHE_DEBUG_LEVEL OPERATION
-#include <linux/module.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include "internal.h"
+#घोषणा FSCACHE_DEBUG_LEVEL OPERATION
+#समावेश <linux/module.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश "internal.h"
 
 /*
  * initialise the /proc/fs/fscache/ directory
  */
-int __init fscache_proc_init(void)
-{
+पूर्णांक __init fscache_proc_init(व्योम)
+अणु
 	_enter("");
 
-	if (!proc_mkdir("fs/fscache", NULL))
-		goto error_dir;
+	अगर (!proc_सूची_गढ़ो("fs/fscache", शून्य))
+		जाओ error_dir;
 
-#ifdef CONFIG_FSCACHE_STATS
-	if (!proc_create_single("fs/fscache/stats", S_IFREG | 0444, NULL,
+#अगर_घोषित CONFIG_FSCACHE_STATS
+	अगर (!proc_create_single("fs/fscache/stats", S_IFREG | 0444, शून्य,
 			fscache_stats_show))
-		goto error_stats;
-#endif
+		जाओ error_stats;
+#पूर्ण_अगर
 
-#ifdef CONFIG_FSCACHE_HISTOGRAM
-	if (!proc_create_seq("fs/fscache/histogram", S_IFREG | 0444, NULL,
+#अगर_घोषित CONFIG_FSCACHE_HISTOGRAM
+	अगर (!proc_create_seq("fs/fscache/histogram", S_IFREG | 0444, शून्य,
 			 &fscache_histogram_ops))
-		goto error_histogram;
-#endif
+		जाओ error_histogram;
+#पूर्ण_अगर
 
-#ifdef CONFIG_FSCACHE_OBJECT_LIST
-	if (!proc_create("fs/fscache/objects", S_IFREG | 0444, NULL,
+#अगर_घोषित CONFIG_FSCACHE_OBJECT_LIST
+	अगर (!proc_create("fs/fscache/objects", S_IFREG | 0444, शून्य,
 			 &fscache_objlist_proc_ops))
-		goto error_objects;
-#endif
+		जाओ error_objects;
+#पूर्ण_अगर
 
 	_leave(" = 0");
-	return 0;
+	वापस 0;
 
-#ifdef CONFIG_FSCACHE_OBJECT_LIST
+#अगर_घोषित CONFIG_FSCACHE_OBJECT_LIST
 error_objects:
-#endif
-#ifdef CONFIG_FSCACHE_HISTOGRAM
-	remove_proc_entry("fs/fscache/histogram", NULL);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FSCACHE_HISTOGRAM
+	हटाओ_proc_entry("fs/fscache/histogram", शून्य);
 error_histogram:
-#endif
-#ifdef CONFIG_FSCACHE_STATS
-	remove_proc_entry("fs/fscache/stats", NULL);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FSCACHE_STATS
+	हटाओ_proc_entry("fs/fscache/stats", शून्य);
 error_stats:
-#endif
-	remove_proc_entry("fs/fscache", NULL);
+#पूर्ण_अगर
+	हटाओ_proc_entry("fs/fscache", शून्य);
 error_dir:
 	_leave(" = -ENOMEM");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /*
  * clean up the /proc/fs/fscache/ directory
  */
-void fscache_proc_cleanup(void)
-{
-#ifdef CONFIG_FSCACHE_OBJECT_LIST
-	remove_proc_entry("fs/fscache/objects", NULL);
-#endif
-#ifdef CONFIG_FSCACHE_HISTOGRAM
-	remove_proc_entry("fs/fscache/histogram", NULL);
-#endif
-#ifdef CONFIG_FSCACHE_STATS
-	remove_proc_entry("fs/fscache/stats", NULL);
-#endif
-	remove_proc_entry("fs/fscache", NULL);
-}
+व्योम fscache_proc_cleanup(व्योम)
+अणु
+#अगर_घोषित CONFIG_FSCACHE_OBJECT_LIST
+	हटाओ_proc_entry("fs/fscache/objects", शून्य);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FSCACHE_HISTOGRAM
+	हटाओ_proc_entry("fs/fscache/histogram", शून्य);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FSCACHE_STATS
+	हटाओ_proc_entry("fs/fscache/stats", शून्य);
+#पूर्ण_अगर
+	हटाओ_proc_entry("fs/fscache", शून्य);
+पूर्ण

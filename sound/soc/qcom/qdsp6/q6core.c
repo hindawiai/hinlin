@@ -1,158 +1,159 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
 // Copyright (c) 2018, Linaro Limited
 
-#include <linux/slab.h>
-#include <linux/wait.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/jiffies.h>
-#include <linux/soc/qcom/apr.h>
-#include "q6core.h"
-#include "q6dsp-errno.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/soc/qcom/apr.h>
+#समावेश "q6core.h"
+#समावेश "q6dsp-errno.h"
 
-#define ADSP_STATE_READY_TIMEOUT_MS    3000
-#define Q6_READY_TIMEOUT_MS 100
-#define AVCS_CMD_ADSP_EVENT_GET_STATE		0x0001290C
-#define AVCS_CMDRSP_ADSP_EVENT_GET_STATE	0x0001290D
-#define AVCS_GET_VERSIONS       0x00012905
-#define AVCS_GET_VERSIONS_RSP   0x00012906
-#define AVCS_CMD_GET_FWK_VERSION	0x001292c
-#define AVCS_CMDRSP_GET_FWK_VERSION	0x001292d
+#घोषणा ADSP_STATE_READY_TIMEOUT_MS    3000
+#घोषणा Q6_READY_TIMEOUT_MS 100
+#घोषणा AVCS_CMD_ADSP_EVENT_GET_STATE		0x0001290C
+#घोषणा AVCS_CMDRSP_ADSP_EVENT_GET_STATE	0x0001290D
+#घोषणा AVCS_GET_VERSIONS       0x00012905
+#घोषणा AVCS_GET_VERSIONS_RSP   0x00012906
+#घोषणा AVCS_CMD_GET_FWK_VERSION	0x001292c
+#घोषणा AVCS_CMDRSP_GET_FWK_VERSION	0x001292d
 
-struct avcs_svc_info {
-	uint32_t service_id;
-	uint32_t version;
-} __packed;
+काष्ठा avcs_svc_info अणु
+	uपूर्णांक32_t service_id;
+	uपूर्णांक32_t version;
+पूर्ण __packed;
 
-struct avcs_cmdrsp_get_version {
-	uint32_t build_id;
-	uint32_t num_services;
-	struct avcs_svc_info svc_api_info[];
-} __packed;
+काष्ठा avcs_cmdrsp_get_version अणु
+	uपूर्णांक32_t build_id;
+	uपूर्णांक32_t num_services;
+	काष्ठा avcs_svc_info svc_api_info[];
+पूर्ण __packed;
 
-/* for ADSP2.8 and above */
-struct avcs_svc_api_info {
-	uint32_t service_id;
-	uint32_t api_version;
-	uint32_t api_branch_version;
-} __packed;
+/* क्रम ADSP2.8 and above */
+काष्ठा avcs_svc_api_info अणु
+	uपूर्णांक32_t service_id;
+	uपूर्णांक32_t api_version;
+	uपूर्णांक32_t api_branch_version;
+पूर्ण __packed;
 
-struct avcs_cmdrsp_get_fwk_version {
-	uint32_t build_major_version;
-	uint32_t build_minor_version;
-	uint32_t build_branch_version;
-	uint32_t build_subbranch_version;
-	uint32_t num_services;
-	struct avcs_svc_api_info svc_api_info[];
-} __packed;
+काष्ठा avcs_cmdrsp_get_fwk_version अणु
+	uपूर्णांक32_t build_major_version;
+	uपूर्णांक32_t build_minor_version;
+	uपूर्णांक32_t build_branch_version;
+	uपूर्णांक32_t build_subbranch_version;
+	uपूर्णांक32_t num_services;
+	काष्ठा avcs_svc_api_info svc_api_info[];
+पूर्ण __packed;
 
-struct q6core {
-	struct apr_device *adev;
-	wait_queue_head_t wait;
-	uint32_t avcs_state;
-	struct mutex lock;
+काष्ठा q6core अणु
+	काष्ठा apr_device *adev;
+	रुको_queue_head_t रुको;
+	uपूर्णांक32_t avcs_state;
+	काष्ठा mutex lock;
 	bool resp_received;
-	uint32_t num_services;
-	struct avcs_cmdrsp_get_fwk_version *fwk_version;
-	struct avcs_cmdrsp_get_version *svc_version;
+	uपूर्णांक32_t num_services;
+	काष्ठा avcs_cmdrsp_get_fwk_version *fwk_version;
+	काष्ठा avcs_cmdrsp_get_version *svc_version;
 	bool fwk_version_supported;
 	bool get_state_supported;
 	bool get_version_supported;
 	bool is_version_requested;
-};
+पूर्ण;
 
-static struct q6core *g_core;
+अटल काष्ठा q6core *g_core;
 
-static int q6core_callback(struct apr_device *adev, struct apr_resp_pkt *data)
-{
-	struct q6core *core = dev_get_drvdata(&adev->dev);
-	struct aprv2_ibasic_rsp_result_t *result;
-	struct apr_hdr *hdr = &data->hdr;
+अटल पूर्णांक q6core_callback(काष्ठा apr_device *adev, काष्ठा apr_resp_pkt *data)
+अणु
+	काष्ठा q6core *core = dev_get_drvdata(&adev->dev);
+	काष्ठा aprv2_ibasic_rsp_result_t *result;
+	काष्ठा apr_hdr *hdr = &data->hdr;
 
 	result = data->payload;
-	switch (hdr->opcode) {
-	case APR_BASIC_RSP_RESULT:{
+	चयन (hdr->opcode) अणु
+	हाल APR_BASIC_RSP_RESULT:अणु
 		result = data->payload;
-		switch (result->opcode) {
-		case AVCS_GET_VERSIONS:
-			if (result->status == ADSP_EUNSUPPORTED)
+		चयन (result->opcode) अणु
+		हाल AVCS_GET_VERSIONS:
+			अगर (result->status == ADSP_EUNSUPPORTED)
 				core->get_version_supported = false;
 			core->resp_received = true;
-			break;
-		case AVCS_CMD_GET_FWK_VERSION:
-			if (result->status == ADSP_EUNSUPPORTED)
+			अवरोध;
+		हाल AVCS_CMD_GET_FWK_VERSION:
+			अगर (result->status == ADSP_EUNSUPPORTED)
 				core->fwk_version_supported = false;
 			core->resp_received = true;
-			break;
-		case AVCS_CMD_ADSP_EVENT_GET_STATE:
-			if (result->status == ADSP_EUNSUPPORTED)
+			अवरोध;
+		हाल AVCS_CMD_ADSP_EVENT_GET_STATE:
+			अगर (result->status == ADSP_EUNSUPPORTED)
 				core->get_state_supported = false;
 			core->resp_received = true;
-			break;
-		}
-		break;
-	}
-	case AVCS_CMDRSP_GET_FWK_VERSION: {
-		struct avcs_cmdrsp_get_fwk_version *fwk;
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल AVCS_CMDRSP_GET_FWK_VERSION: अणु
+		काष्ठा avcs_cmdrsp_get_fwk_version *fwk;
 
 		fwk = data->payload;
 
 		core->fwk_version = kmemdup(data->payload,
-					    struct_size(fwk, svc_api_info,
+					    काष्ठा_size(fwk, svc_api_info,
 							fwk->num_services),
 					    GFP_ATOMIC);
-		if (!core->fwk_version)
-			return -ENOMEM;
+		अगर (!core->fwk_version)
+			वापस -ENOMEM;
 
 		core->fwk_version_supported = true;
 		core->resp_received = true;
 
-		break;
-	}
-	case AVCS_GET_VERSIONS_RSP: {
-		struct avcs_cmdrsp_get_version *v;
+		अवरोध;
+	पूर्ण
+	हाल AVCS_GET_VERSIONS_RSP: अणु
+		काष्ठा avcs_cmdrsp_get_version *v;
 
 		v = data->payload;
 
 		core->svc_version = kmemdup(data->payload,
-					    struct_size(v, svc_api_info,
+					    काष्ठा_size(v, svc_api_info,
 							v->num_services),
 					    GFP_ATOMIC);
-		if (!core->svc_version)
-			return -ENOMEM;
+		अगर (!core->svc_version)
+			वापस -ENOMEM;
 
 		core->get_version_supported = true;
 		core->resp_received = true;
 
-		break;
-	}
-	case AVCS_CMDRSP_ADSP_EVENT_GET_STATE:
+		अवरोध;
+	पूर्ण
+	हाल AVCS_CMDRSP_ADSP_EVENT_GET_STATE:
 		core->get_state_supported = true;
 		core->avcs_state = result->opcode;
 
 		core->resp_received = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&adev->dev, "Message id from adsp core svc: 0x%x\n",
 			hdr->opcode);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (core->resp_received)
-		wake_up(&core->wait);
+	अगर (core->resp_received)
+		wake_up(&core->रुको);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int q6core_get_fwk_versions(struct q6core *core)
-{
-	struct apr_device *adev = core->adev;
-	struct apr_pkt pkt;
-	int rc;
+अटल पूर्णांक q6core_get_fwk_versions(काष्ठा q6core *core)
+अणु
+	काष्ठा apr_device *adev = core->adev;
+	काष्ठा apr_pkt pkt;
+	पूर्णांक rc;
 
 	pkt.hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
 				      APR_HDR_LEN(APR_HDR_SIZE), APR_PKT_VER);
@@ -160,29 +161,29 @@ static int q6core_get_fwk_versions(struct q6core *core)
 	pkt.hdr.opcode = AVCS_CMD_GET_FWK_VERSION;
 
 	rc = apr_send_pkt(adev, &pkt);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	rc = wait_event_timeout(core->wait, (core->resp_received),
-				msecs_to_jiffies(Q6_READY_TIMEOUT_MS));
-	if (rc > 0 && core->resp_received) {
+	rc = रुको_event_समयout(core->रुको, (core->resp_received),
+				msecs_to_jअगरfies(Q6_READY_TIMEOUT_MS));
+	अगर (rc > 0 && core->resp_received) अणु
 		core->resp_received = false;
 
-		if (!core->fwk_version_supported)
-			return -ENOTSUPP;
-		else
-			return 0;
-	}
+		अगर (!core->fwk_version_supported)
+			वापस -ENOTSUPP;
+		अन्यथा
+			वापस 0;
+	पूर्ण
 
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int q6core_get_svc_versions(struct q6core *core)
-{
-	struct apr_device *adev = core->adev;
-	struct apr_pkt pkt;
-	int rc;
+अटल पूर्णांक q6core_get_svc_versions(काष्ठा q6core *core)
+अणु
+	काष्ठा apr_device *adev = core->adev;
+	काष्ठा apr_pkt pkt;
+	पूर्णांक rc;
 
 	pkt.hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
 				      APR_HDR_LEN(APR_HDR_SIZE), APR_PKT_VER);
@@ -190,24 +191,24 @@ static int q6core_get_svc_versions(struct q6core *core)
 	pkt.hdr.opcode = AVCS_GET_VERSIONS;
 
 	rc = apr_send_pkt(adev, &pkt);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	rc = wait_event_timeout(core->wait, (core->resp_received),
-				msecs_to_jiffies(Q6_READY_TIMEOUT_MS));
-	if (rc > 0 && core->resp_received) {
+	rc = रुको_event_समयout(core->रुको, (core->resp_received),
+				msecs_to_jअगरfies(Q6_READY_TIMEOUT_MS));
+	अगर (rc > 0 && core->resp_received) अणु
 		core->resp_received = false;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool __q6core_is_adsp_ready(struct q6core *core)
-{
-	struct apr_device *adev = core->adev;
-	struct apr_pkt pkt;
-	int rc;
+अटल bool __q6core_is_adsp_पढ़ोy(काष्ठा q6core *core)
+अणु
+	काष्ठा apr_device *adev = core->adev;
+	काष्ठा apr_pkt pkt;
+	पूर्णांक rc;
 
 	core->get_state_supported = false;
 
@@ -217,160 +218,160 @@ static bool __q6core_is_adsp_ready(struct q6core *core)
 	pkt.hdr.opcode = AVCS_CMD_ADSP_EVENT_GET_STATE;
 
 	rc = apr_send_pkt(adev, &pkt);
-	if (rc < 0)
-		return false;
+	अगर (rc < 0)
+		वापस false;
 
-	rc = wait_event_timeout(core->wait, (core->resp_received),
-				msecs_to_jiffies(Q6_READY_TIMEOUT_MS));
-	if (rc > 0 && core->resp_received) {
+	rc = रुको_event_समयout(core->रुको, (core->resp_received),
+				msecs_to_jअगरfies(Q6_READY_TIMEOUT_MS));
+	अगर (rc > 0 && core->resp_received) अणु
 		core->resp_received = false;
 
-		if (core->avcs_state)
-			return true;
-	}
+		अगर (core->avcs_state)
+			वापस true;
+	पूर्ण
 
-	/* assume that the adsp is up if we not support this command */
-	if (!core->get_state_supported)
-		return true;
+	/* assume that the adsp is up अगर we not support this command */
+	अगर (!core->get_state_supported)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * q6core_get_svc_api_info() - Get version number of a service.
  *
  * @svc_id: service id of the service.
- * @ainfo: Valid struct pointer to fill svc api information.
+ * @ainfo: Valid काष्ठा poपूर्णांकer to fill svc api inक्रमmation.
  *
  * Return: zero on success and error code on failure or unsupported
  */
-int q6core_get_svc_api_info(int svc_id, struct q6core_svc_api_info *ainfo)
-{
-	int i;
-	int ret = -ENOTSUPP;
+पूर्णांक q6core_get_svc_api_info(पूर्णांक svc_id, काष्ठा q6core_svc_api_info *ainfo)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret = -ENOTSUPP;
 
-	if (!g_core || !ainfo)
-		return 0;
+	अगर (!g_core || !ainfo)
+		वापस 0;
 
 	mutex_lock(&g_core->lock);
-	if (!g_core->is_version_requested) {
-		if (q6core_get_fwk_versions(g_core) == -ENOTSUPP)
+	अगर (!g_core->is_version_requested) अणु
+		अगर (q6core_get_fwk_versions(g_core) == -ENOTSUPP)
 			q6core_get_svc_versions(g_core);
 		g_core->is_version_requested = true;
-	}
+	पूर्ण
 
-	if (g_core->fwk_version_supported) {
-		for (i = 0; i < g_core->fwk_version->num_services; i++) {
-			struct avcs_svc_api_info *info;
+	अगर (g_core->fwk_version_supported) अणु
+		क्रम (i = 0; i < g_core->fwk_version->num_services; i++) अणु
+			काष्ठा avcs_svc_api_info *info;
 
 			info = &g_core->fwk_version->svc_api_info[i];
-			if (svc_id != info->service_id)
-				continue;
+			अगर (svc_id != info->service_id)
+				जारी;
 
 			ainfo->api_version = info->api_version;
 			ainfo->api_branch_version = info->api_branch_version;
 			ret = 0;
-			break;
-		}
-	} else if (g_core->get_version_supported) {
-		for (i = 0; i < g_core->svc_version->num_services; i++) {
-			struct avcs_svc_info *info;
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (g_core->get_version_supported) अणु
+		क्रम (i = 0; i < g_core->svc_version->num_services; i++) अणु
+			काष्ठा avcs_svc_info *info;
 
 			info = &g_core->svc_version->svc_api_info[i];
-			if (svc_id != info->service_id)
-				continue;
+			अगर (svc_id != info->service_id)
+				जारी;
 
 			ainfo->api_version = info->version;
 			ainfo->api_branch_version = 0;
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&g_core->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(q6core_get_svc_api_info);
 
 /**
- * q6core_is_adsp_ready() - Get status of adsp
+ * q6core_is_adsp_पढ़ोy() - Get status of adsp
  *
- * Return: Will be an true if adsp is ready and false if not.
+ * Return: Will be an true अगर adsp is पढ़ोy and false अगर not.
  */
-bool q6core_is_adsp_ready(void)
-{
-	unsigned long  timeout;
+bool q6core_is_adsp_पढ़ोy(व्योम)
+अणु
+	अचिन्हित दीर्घ  समयout;
 	bool ret = false;
 
-	if (!g_core)
-		return false;
+	अगर (!g_core)
+		वापस false;
 
 	mutex_lock(&g_core->lock);
-	timeout = jiffies + msecs_to_jiffies(ADSP_STATE_READY_TIMEOUT_MS);
-	for (;;) {
-		if (__q6core_is_adsp_ready(g_core)) {
+	समयout = jअगरfies + msecs_to_jअगरfies(ADSP_STATE_READY_TIMEOUT_MS);
+	क्रम (;;) अणु
+		अगर (__q6core_is_adsp_पढ़ोy(g_core)) अणु
 			ret = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!time_after(timeout, jiffies)) {
+		अगर (!समय_after(समयout, jअगरfies)) अणु
 			ret = false;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&g_core->lock);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(q6core_is_adsp_ready);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(q6core_is_adsp_पढ़ोy);
 
-static int q6core_probe(struct apr_device *adev)
-{
-	g_core = kzalloc(sizeof(*g_core), GFP_KERNEL);
-	if (!g_core)
-		return -ENOMEM;
+अटल पूर्णांक q6core_probe(काष्ठा apr_device *adev)
+अणु
+	g_core = kzalloc(माप(*g_core), GFP_KERNEL);
+	अगर (!g_core)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(&adev->dev, g_core);
 
 	mutex_init(&g_core->lock);
 	g_core->adev = adev;
-	init_waitqueue_head(&g_core->wait);
-	return 0;
-}
+	init_रुकोqueue_head(&g_core->रुको);
+	वापस 0;
+पूर्ण
 
-static int q6core_exit(struct apr_device *adev)
-{
-	struct q6core *core = dev_get_drvdata(&adev->dev);
+अटल पूर्णांक q6core_निकास(काष्ठा apr_device *adev)
+अणु
+	काष्ठा q6core *core = dev_get_drvdata(&adev->dev);
 
-	if (core->fwk_version_supported)
-		kfree(core->fwk_version);
-	if (core->get_version_supported)
-		kfree(core->svc_version);
+	अगर (core->fwk_version_supported)
+		kमुक्त(core->fwk_version);
+	अगर (core->get_version_supported)
+		kमुक्त(core->svc_version);
 
-	g_core = NULL;
-	kfree(core);
+	g_core = शून्य;
+	kमुक्त(core);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id q6core_device_id[]  = {
-	{ .compatible = "qcom,q6core" },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id q6core_device_id[]  = अणु
+	अणु .compatible = "qcom,q6core" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, q6core_device_id);
-#endif
+#पूर्ण_अगर
 
-static struct apr_driver qcom_q6core_driver = {
+अटल काष्ठा apr_driver qcom_q6core_driver = अणु
 	.probe = q6core_probe,
-	.remove = q6core_exit,
+	.हटाओ = q6core_निकास,
 	.callback = q6core_callback,
-	.driver = {
+	.driver = अणु
 		.name = "qcom-q6core",
 		.of_match_table = of_match_ptr(q6core_device_id),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_apr_driver(qcom_q6core_driver);
 MODULE_DESCRIPTION("q6 core");

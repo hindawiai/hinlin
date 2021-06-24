@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  Driver for Xceive XC4000 "QAM/8VSB single chip tuner"
+ *  Driver क्रम Xceive XC4000 "QAM/8VSB single chip tuner"
  *
  *  Copyright (c) 2007 Steven Toth <stoth@linuxtv.org>
  */
 
-#ifndef __XC4000_H__
-#define __XC4000_H__
+#अगर_अघोषित __XC4000_H__
+#घोषणा __XC4000_H__
 
-#include <linux/firmware.h>
+#समावेश <linux/firmware.h>
 
-struct dvb_frontend;
-struct i2c_adapter;
+काष्ठा dvb_frontend;
+काष्ठा i2c_adapter;
 
-struct xc4000_config {
+काष्ठा xc4000_config अणु
 	u8	i2c_address;
-	/* if non-zero, power management is enabled by default */
-	u8	default_pm;
-	/* value to be written to XREG_AMPLITUDE in DVB-T mode (0: no write) */
+	/* अगर non-zero, घातer management is enabled by शेष */
+	u8	शेष_pm;
+	/* value to be written to XREG_AMPLITUDE in DVB-T mode (0: no ग_लिखो) */
 	u8	dvb_amplitude;
-	/* if non-zero, register 0x0E is set to filter analog TV video output */
+	/* अगर non-zero, रेजिस्टर 0x0E is set to filter analog TV video output */
 	u8	set_smoothedcvbs;
-	/* IF for DVB-T */
-	u32	if_khz;
-};
+	/* IF क्रम DVB-T */
+	u32	अगर_khz;
+पूर्ण;
 
 /* xc4000 callback command */
-#define XC4000_TUNER_RESET		0
+#घोषणा XC4000_TUNER_RESET		0
 
 /* For each bridge framework, when it attaches either analog or digital,
- * it has to store a reference back to its _core equivalent structure,
+ * it has to store a reference back to its _core equivalent काष्ठाure,
  * so that it can service the hardware by steering gpio's etc.
- * Each bridge implementation is different so cast devptr accordingly.
- * The xc4000 driver cares not for this value, other than ensuring
+ * Each bridge implementation is dअगरferent so cast devptr accordingly.
+ * The xc4000 driver cares not क्रम this value, other than ensuring
  * it's passed back to a bridge during tuner_callback().
  */
 
-#if IS_REACHABLE(CONFIG_MEDIA_TUNER_XC4000)
-extern struct dvb_frontend *xc4000_attach(struct dvb_frontend *fe,
-					  struct i2c_adapter *i2c,
-					  struct xc4000_config *cfg);
-#else
-static inline struct dvb_frontend *xc4000_attach(struct dvb_frontend *fe,
-						 struct i2c_adapter *i2c,
-						 struct xc4000_config *cfg)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_XC4000)
+बाह्य काष्ठा dvb_frontend *xc4000_attach(काष्ठा dvb_frontend *fe,
+					  काष्ठा i2c_adapter *i2c,
+					  काष्ठा xc4000_config *cfg);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *xc4000_attach(काष्ठा dvb_frontend *fe,
+						 काष्ठा i2c_adapter *i2c,
+						 काष्ठा xc4000_config *cfg)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,38 +22,38 @@
  *
  * Authors: Ben Skeggs
  */
-#include "acpi.h"
+#समावेश "acpi.h"
 
-#include <core/device.h>
+#समावेश <core/device.h>
 
-#ifdef CONFIG_ACPI
-static int
-nvkm_acpi_ntfy(struct notifier_block *nb, unsigned long val, void *data)
-{
-	struct nvkm_device *device =
+#अगर_घोषित CONFIG_ACPI
+अटल पूर्णांक
+nvkm_acpi_ntfy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	काष्ठा nvkm_device *device =
 		container_of(nb, typeof(*device), acpi.nb);
-	struct acpi_bus_event *info = data;
+	काष्ठा acpi_bus_event *info = data;
 
-	if (!strcmp(info->device_class, "ac_adapter"))
-		nvkm_event_send(&device->event, 1, 0, NULL, 0);
+	अगर (!म_भेद(info->device_class, "ac_adapter"))
+		nvkm_event_send(&device->event, 1, 0, शून्य, 0);
 
-	return NOTIFY_DONE;
-}
-#endif
+	वापस NOTIFY_DONE;
+पूर्ण
+#पूर्ण_अगर
 
-void
-nvkm_acpi_fini(struct nvkm_device *device)
-{
-#ifdef CONFIG_ACPI
-	unregister_acpi_notifier(&device->acpi.nb);
-#endif
-}
+व्योम
+nvkm_acpi_fini(काष्ठा nvkm_device *device)
+अणु
+#अगर_घोषित CONFIG_ACPI
+	unरेजिस्टर_acpi_notअगरier(&device->acpi.nb);
+#पूर्ण_अगर
+पूर्ण
 
-void
-nvkm_acpi_init(struct nvkm_device *device)
-{
-#ifdef CONFIG_ACPI
-	device->acpi.nb.notifier_call = nvkm_acpi_ntfy;
-	register_acpi_notifier(&device->acpi.nb);
-#endif
-}
+व्योम
+nvkm_acpi_init(काष्ठा nvkm_device *device)
+अणु
+#अगर_घोषित CONFIG_ACPI
+	device->acpi.nb.notअगरier_call = nvkm_acpi_ntfy;
+	रेजिस्टर_acpi_notअगरier(&device->acpi.nb);
+#पूर्ण_अगर
+पूर्ण

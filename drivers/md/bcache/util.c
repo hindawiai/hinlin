@@ -1,287 +1,288 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * random utiility code, for bcache but in theory not specific to bcache
+ * अक्रमom utiility code, क्रम bcache but in theory not specअगरic to bcache
  *
  * Copyright 2010, 2011 Kent Overstreet <kent.overstreet@gmail.com>
  * Copyright 2012 Google, Inc.
  */
 
-#include <linux/bio.h>
-#include <linux/blkdev.h>
-#include <linux/ctype.h>
-#include <linux/debugfs.h>
-#include <linux/module.h>
-#include <linux/seq_file.h>
-#include <linux/types.h>
-#include <linux/sched/clock.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched/घड़ी.h>
 
-#include "util.h"
+#समावेश "util.h"
 
-#define simple_strtoint(c, end, base)	simple_strtol(c, end, base)
-#define simple_strtouint(c, end, base)	simple_strtoul(c, end, base)
+#घोषणा simple_strtoपूर्णांक(c, end, base)	simple_म_से_दीर्घ(c, end, base)
+#घोषणा simple_strtouपूर्णांक(c, end, base)	simple_म_से_अदीर्घ(c, end, base)
 
-#define STRTO_H(name, type)					\
-int bch_ ## name ## _h(const char *cp, type *res)		\
-{								\
-	int u = 0;						\
-	char *e;						\
+#घोषणा STRTO_H(name, type)					\
+पूर्णांक bch_ ## name ## _h(स्थिर अक्षर *cp, type *res)		\
+अणु								\
+	पूर्णांक u = 0;						\
+	अक्षर *e;						\
 	type i = simple_ ## name(cp, &e, 10);			\
 								\
-	switch (tolower(*e)) {					\
-	default:						\
-		return -EINVAL;					\
-	case 'y':						\
-	case 'z':						\
+	चयन (छोटे(*e)) अणु					\
+	शेष:						\
+		वापस -EINVAL;					\
+	हाल 'y':						\
+	हाल 'z':						\
 		u++;						\
 		fallthrough;					\
-	case 'e':						\
+	हाल 'e':						\
 		u++;						\
 		fallthrough;					\
-	case 'p':						\
+	हाल 'p':						\
 		u++;						\
 		fallthrough;					\
-	case 't':						\
+	हाल 't':						\
 		u++;						\
 		fallthrough;					\
-	case 'g':						\
+	हाल 'g':						\
 		u++;						\
 		fallthrough;					\
-	case 'm':						\
+	हाल 'm':						\
 		u++;						\
 		fallthrough;					\
-	case 'k':						\
+	हाल 'k':						\
 		u++;						\
-		if (e++ == cp)					\
-			return -EINVAL;				\
+		अगर (e++ == cp)					\
+			वापस -EINVAL;				\
 		fallthrough;					\
-	case '\n':						\
-	case '\0':						\
-		if (*e == '\n')					\
+	हाल '\n':						\
+	हाल '\0':						\
+		अगर (*e == '\n')					\
 			e++;					\
-	}							\
+	पूर्ण							\
 								\
-	if (*e)							\
-		return -EINVAL;					\
+	अगर (*e)							\
+		वापस -EINVAL;					\
 								\
-	while (u--) {						\
-		if ((type) ~0 > 0 &&				\
+	जबतक (u--) अणु						\
+		अगर ((type) ~0 > 0 &&				\
 		    (type) ~0 / 1024 <= i)			\
-			return -EINVAL;				\
-		if ((i > 0 && ANYSINT_MAX(type) / 1024 < i) ||	\
-		    (i < 0 && -ANYSINT_MAX(type) / 1024 > i))	\
-			return -EINVAL;				\
+			वापस -EINVAL;				\
+		अगर ((i > 0 && ANYSपूर्णांक_उच्च(type) / 1024 < i) ||	\
+		    (i < 0 && -ANYSपूर्णांक_उच्च(type) / 1024 > i))	\
+			वापस -EINVAL;				\
 		i *= 1024;					\
-	}							\
+	पूर्ण							\
 								\
 	*res = i;						\
-	return 0;						\
-}								\
+	वापस 0;						\
+पूर्ण								\
 
-STRTO_H(strtoint, int)
-STRTO_H(strtouint, unsigned int)
-STRTO_H(strtoll, long long)
-STRTO_H(strtoull, unsigned long long)
+STRTO_H(strtoपूर्णांक, पूर्णांक)
+STRTO_H(strtouपूर्णांक, अचिन्हित पूर्णांक)
+STRTO_H(म_से_दीर्घl, दीर्घ दीर्घ)
+STRTO_H(म_से_अदीर्घl, अचिन्हित दीर्घ दीर्घ)
 
 /**
- * bch_hprint - formats @v to human readable string for sysfs.
- * @buf: the (at least 8 byte) buffer to format the result into.
- * @v: signed 64 bit integer
+ * bch_hprपूर्णांक - क्रमmats @v to human पढ़ोable string क्रम sysfs.
+ * @buf: the (at least 8 byte) buffer to क्रमmat the result पूर्णांकo.
+ * @v: चिन्हित 64 bit पूर्णांकeger
  *
- * Returns the number of bytes used by format.
+ * Returns the number of bytes used by क्रमmat.
  */
-ssize_t bch_hprint(char *buf, int64_t v)
-{
-	static const char units[] = "?kMGTPEZY";
-	int u = 0, t;
+sमाप_प्रकार bch_hprपूर्णांक(अक्षर *buf, पूर्णांक64_t v)
+अणु
+	अटल स्थिर अक्षर units[] = "?kMGTPEZY";
+	पूर्णांक u = 0, t;
 
-	uint64_t q;
+	uपूर्णांक64_t q;
 
-	if (v < 0)
+	अगर (v < 0)
 		q = -v;
-	else
+	अन्यथा
 		q = v;
 
-	/* For as long as the number is more than 3 digits, but at least
-	 * once, shift right / divide by 1024.  Keep the remainder for
-	 * a digit after the decimal point.
+	/* For as दीर्घ as the number is more than 3 digits, but at least
+	 * once, shअगरt right / भागide by 1024.  Keep the reमुख्यder क्रम
+	 * a digit after the decimal poपूर्णांक.
 	 */
-	do {
+	करो अणु
 		u++;
 
 		t = q & ~(~0 << 10);
 		q >>= 10;
-	} while (q >= 1000);
+	पूर्ण जबतक (q >= 1000);
 
-	if (v < 0)
-		/* '-', up to 3 digits, '.', 1 digit, 1 character, null;
+	अगर (v < 0)
+		/* '-', up to 3 digits, '.', 1 digit, 1 अक्षरacter, null;
 		 * yields 8 bytes.
 		 */
-		return sprintf(buf, "-%llu.%i%c", q, t * 10 / 1024, units[u]);
-	else
-		return sprintf(buf, "%llu.%i%c", q, t * 10 / 1024, units[u]);
-}
+		वापस प्र_लिखो(buf, "-%llu.%i%c", q, t * 10 / 1024, units[u]);
+	अन्यथा
+		वापस प्र_लिखो(buf, "%llu.%i%c", q, t * 10 / 1024, units[u]);
+पूर्ण
 
-bool bch_is_zero(const char *p, size_t n)
-{
-	size_t i;
+bool bch_is_zero(स्थिर अक्षर *p, माप_प्रकार n)
+अणु
+	माप_प्रकार i;
 
-	for (i = 0; i < n; i++)
-		if (p[i])
-			return false;
-	return true;
-}
+	क्रम (i = 0; i < n; i++)
+		अगर (p[i])
+			वापस false;
+	वापस true;
+पूर्ण
 
-int bch_parse_uuid(const char *s, char *uuid)
-{
-	size_t i, j, x;
+पूर्णांक bch_parse_uuid(स्थिर अक्षर *s, अक्षर *uuid)
+अणु
+	माप_प्रकार i, j, x;
 
-	memset(uuid, 0, 16);
+	स_रखो(uuid, 0, 16);
 
-	for (i = 0, j = 0;
-	     i < strspn(s, "-0123456789:ABCDEFabcdef") && j < 32;
-	     i++) {
+	क्रम (i = 0, j = 0;
+	     i < म_अखोज(s, "-0123456789:ABCDEFabcdef") && j < 32;
+	     i++) अणु
 		x = s[i] | 32;
 
-		switch (x) {
-		case '0'...'9':
+		चयन (x) अणु
+		हाल '0'...'9':
 			x -= '0';
-			break;
-		case 'a'...'f':
+			अवरोध;
+		हाल 'a'...'f':
 			x -= 'a' - 10;
-			break;
-		default:
-			continue;
-		}
+			अवरोध;
+		शेष:
+			जारी;
+		पूर्ण
 
-		if (!(j & 1))
+		अगर (!(j & 1))
 			x <<= 4;
 		uuid[j++ >> 1] |= x;
-	}
-	return i;
-}
+	पूर्ण
+	वापस i;
+पूर्ण
 
-void bch_time_stats_update(struct time_stats *stats, uint64_t start_time)
-{
-	uint64_t now, duration, last;
+व्योम bch_समय_stats_update(काष्ठा समय_stats *stats, uपूर्णांक64_t start_समय)
+अणु
+	uपूर्णांक64_t now, duration, last;
 
 	spin_lock(&stats->lock);
 
-	now		= local_clock();
-	duration	= time_after64(now, start_time)
-		? now - start_time : 0;
-	last		= time_after64(now, stats->last)
+	now		= local_घड़ी();
+	duration	= समय_after64(now, start_समय)
+		? now - start_समय : 0;
+	last		= समय_after64(now, stats->last)
 		? now - stats->last : 0;
 
 	stats->max_duration = max(stats->max_duration, duration);
 
-	if (stats->last) {
+	अगर (stats->last) अणु
 		ewma_add(stats->average_duration, duration, 8, 8);
 
-		if (stats->average_frequency)
+		अगर (stats->average_frequency)
 			ewma_add(stats->average_frequency, last, 8, 8);
-		else
+		अन्यथा
 			stats->average_frequency  = last << 8;
-	} else {
+	पूर्ण अन्यथा अणु
 		stats->average_duration  = duration << 8;
-	}
+	पूर्ण
 
 	stats->last = now ?: 1;
 
 	spin_unlock(&stats->lock);
-}
+पूर्ण
 
 /**
  * bch_next_delay() - update ratelimiting statistics and calculate next delay
- * @d: the struct bch_ratelimit to update
- * @done: the amount of work done, in arbitrary units
+ * @d: the काष्ठा bch_ratelimit to update
+ * @करोne: the amount of work करोne, in arbitrary units
  *
- * Increment @d by the amount of work done, and return how long to delay in
- * jiffies until the next time to do some work.
+ * Increment @d by the amount of work करोne, and वापस how दीर्घ to delay in
+ * jअगरfies until the next समय to करो some work.
  */
-uint64_t bch_next_delay(struct bch_ratelimit *d, uint64_t done)
-{
-	uint64_t now = local_clock();
+uपूर्णांक64_t bch_next_delay(काष्ठा bch_ratelimit *d, uपूर्णांक64_t करोne)
+अणु
+	uपूर्णांक64_t now = local_घड़ी();
 
-	d->next += div_u64(done * NSEC_PER_SEC, atomic_long_read(&d->rate));
+	d->next += भाग_u64(करोne * NSEC_PER_SEC, atomic_दीर्घ_पढ़ो(&d->rate));
 
-	/* Bound the time.  Don't let us fall further than 2 seconds behind
+	/* Bound the समय.  Don't let us fall further than 2 seconds behind
 	 * (this prevents unnecessary backlog that would make it impossible
-	 * to catch up).  If we're ahead of the desired writeback rate,
-	 * don't let us sleep more than 2.5 seconds (so we can notice/respond
-	 * if the control system tells us to speed up!).
+	 * to catch up).  If we're ahead of the desired ग_लिखोback rate,
+	 * करोn't let us sleep more than 2.5 seconds (so we can notice/respond
+	 * अगर the control प्रणाली tells us to speed up!).
 	 */
-	if (time_before64(now + NSEC_PER_SEC * 5LLU / 2LLU, d->next))
+	अगर (समय_beक्रमe64(now + NSEC_PER_SEC * 5LLU / 2LLU, d->next))
 		d->next = now + NSEC_PER_SEC * 5LLU / 2LLU;
 
-	if (time_after64(now - NSEC_PER_SEC * 2, d->next))
+	अगर (समय_after64(now - NSEC_PER_SEC * 2, d->next))
 		d->next = now - NSEC_PER_SEC * 2;
 
-	return time_after64(d->next, now)
-		? div_u64(d->next - now, NSEC_PER_SEC / HZ)
+	वापस समय_after64(d->next, now)
+		? भाग_u64(d->next - now, NSEC_PER_SEC / HZ)
 		: 0;
-}
+पूर्ण
 
 /*
  * Generally it isn't good to access .bi_io_vec and .bi_vcnt directly,
- * the preferred way is bio_add_page, but in this case, bch_bio_map()
+ * the preferred way is bio_add_page, but in this हाल, bch_bio_map()
  * supposes that the bvec table is empty, so it is safe to access
  * .bi_vcnt & .bi_io_vec in this way even after multipage bvec is
  * supported.
  */
-void bch_bio_map(struct bio *bio, void *base)
-{
-	size_t size = bio->bi_iter.bi_size;
-	struct bio_vec *bv = bio->bi_io_vec;
+व्योम bch_bio_map(काष्ठा bio *bio, व्योम *base)
+अणु
+	माप_प्रकार size = bio->bi_iter.bi_size;
+	काष्ठा bio_vec *bv = bio->bi_io_vec;
 
 	BUG_ON(!bio->bi_iter.bi_size);
 	BUG_ON(bio->bi_vcnt);
 
 	bv->bv_offset = base ? offset_in_page(base) : 0;
-	goto start;
+	जाओ start;
 
-	for (; size; bio->bi_vcnt++, bv++) {
+	क्रम (; size; bio->bi_vcnt++, bv++) अणु
 		bv->bv_offset	= 0;
-start:		bv->bv_len	= min_t(size_t, PAGE_SIZE - bv->bv_offset,
+start:		bv->bv_len	= min_t(माप_प्रकार, PAGE_SIZE - bv->bv_offset,
 					size);
-		if (base) {
-			bv->bv_page = is_vmalloc_addr(base)
-				? vmalloc_to_page(base)
+		अगर (base) अणु
+			bv->bv_page = is_vदो_स्मृति_addr(base)
+				? vदो_स्मृति_to_page(base)
 				: virt_to_page(base);
 
 			base += bv->bv_len;
-		}
+		पूर्ण
 
 		size -= bv->bv_len;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * bch_bio_alloc_pages - allocates a single page for each bvec in a bio
- * @bio: bio to allocate pages for
- * @gfp_mask: flags for allocation
+ * bch_bio_alloc_pages - allocates a single page क्रम each bvec in a bio
+ * @bio: bio to allocate pages क्रम
+ * @gfp_mask: flags क्रम allocation
  *
  * Allocates pages up to @bio->bi_vcnt.
  *
  * Returns 0 on success, -ENOMEM on failure. On failure, any allocated pages are
- * freed.
+ * मुक्तd.
  */
-int bch_bio_alloc_pages(struct bio *bio, gfp_t gfp_mask)
-{
-	int i;
-	struct bio_vec *bv;
+पूर्णांक bch_bio_alloc_pages(काष्ठा bio *bio, gfp_t gfp_mask)
+अणु
+	पूर्णांक i;
+	काष्ठा bio_vec *bv;
 
 	/*
 	 * This is called on freshly new bio, so it is safe to access the
 	 * bvec table directly.
 	 */
-	for (i = 0, bv = bio->bi_io_vec; i < bio->bi_vcnt; bv++, i++) {
+	क्रम (i = 0, bv = bio->bi_io_vec; i < bio->bi_vcnt; bv++, i++) अणु
 		bv->bv_page = alloc_page(gfp_mask);
-		if (!bv->bv_page) {
-			while (--bv >= bio->bi_io_vec)
-				__free_page(bv->bv_page);
-			return -ENOMEM;
-		}
-	}
+		अगर (!bv->bv_page) अणु
+			जबतक (--bv >= bio->bi_io_vec)
+				__मुक्त_page(bv->bv_page);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

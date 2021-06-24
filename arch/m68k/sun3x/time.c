@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  linux/arch/m68k/sun3x/time.c
+ *  linux/arch/m68k/sun3x/समय.c
  *
- *  Sun3x-specific time handling
+ *  Sun3x-specअगरic समय handling
  */
 
-#include <linux/types.h>
-#include <linux/kd.h>
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/kernel_stat.h>
-#include <linux/interrupt.h>
-#include <linux/rtc.h>
-#include <linux/bcd.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kd.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/bcd.h>
 
-#include <asm/irq.h>
-#include <asm/io.h>
-#include <asm/machdep.h>
-#include <asm/traps.h>
-#include <asm/sun3x.h>
-#include <asm/sun3ints.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/sun3x.h>
+#समावेश <यंत्र/sun3पूर्णांकs.h>
 
-#include "time.h"
+#समावेश "time.h"
 
-#define M_CONTROL 0xf8
-#define M_SEC     0xf9
-#define M_MIN     0xfa
-#define M_HOUR    0xfb
-#define M_DAY     0xfc
-#define M_DATE    0xfd
-#define M_MONTH   0xfe
-#define M_YEAR    0xff
+#घोषणा M_CONTROL 0xf8
+#घोषणा M_SEC     0xf9
+#घोषणा M_MIN     0xfa
+#घोषणा M_HOUR    0xfb
+#घोषणा M_DAY     0xfc
+#घोषणा M_DATE    0xfd
+#घोषणा M_MONTH   0xfe
+#घोषणा M_YEAR    0xff
 
-#define C_WRITE   0x80
-#define C_READ    0x40
-#define C_SIGN    0x20
-#define C_CALIB   0x1f
+#घोषणा C_WRITE   0x80
+#घोषणा C_READ    0x40
+#घोषणा C_SIGN    0x20
+#घोषणा C_CALIB   0x1f
 
-int sun3x_hwclk(int set, struct rtc_time *t)
-{
-	volatile struct mostek_dt *h =
-		(struct mostek_dt *)(SUN3X_EEPROM+M_CONTROL);
-	unsigned long flags;
+पूर्णांक sun3x_hwclk(पूर्णांक set, काष्ठा rtc_समय *t)
+अणु
+	अस्थिर काष्ठा mostek_dt *h =
+		(काष्ठा mostek_dt *)(SUN3X_EEPROM+M_CONTROL);
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 
-	if(set) {
+	अगर(set) अणु
 		h->csr |= C_WRITE;
-		h->sec = bin2bcd(t->tm_sec);
-		h->min = bin2bcd(t->tm_min);
-		h->hour = bin2bcd(t->tm_hour);
-		h->wday = bin2bcd(t->tm_wday);
-		h->mday = bin2bcd(t->tm_mday);
-		h->month = bin2bcd(t->tm_mon + 1);
-		h->year = bin2bcd(t->tm_year % 100);
+		h->sec = bin2bcd(t->पंचांग_sec);
+		h->min = bin2bcd(t->पंचांग_min);
+		h->hour = bin2bcd(t->पंचांग_hour);
+		h->wday = bin2bcd(t->पंचांग_wday);
+		h->mday = bin2bcd(t->पंचांग_mday);
+		h->month = bin2bcd(t->पंचांग_mon + 1);
+		h->year = bin2bcd(t->पंचांग_year % 100);
 		h->csr &= ~C_WRITE;
-	} else {
+	पूर्ण अन्यथा अणु
 		h->csr |= C_READ;
-		t->tm_sec = bcd2bin(h->sec);
-		t->tm_min = bcd2bin(h->min);
-		t->tm_hour = bcd2bin(h->hour);
-		t->tm_wday = bcd2bin(h->wday);
-		t->tm_mday = bcd2bin(h->mday);
-		t->tm_mon = bcd2bin(h->month) - 1;
-		t->tm_year = bcd2bin(h->year);
+		t->पंचांग_sec = bcd2bin(h->sec);
+		t->पंचांग_min = bcd2bin(h->min);
+		t->पंचांग_hour = bcd2bin(h->hour);
+		t->पंचांग_wday = bcd2bin(h->wday);
+		t->पंचांग_mday = bcd2bin(h->mday);
+		t->पंचांग_mon = bcd2bin(h->month) - 1;
+		t->पंचांग_year = bcd2bin(h->year);
 		h->csr &= ~C_READ;
-		if (t->tm_year < 70)
-			t->tm_year += 100;
-	}
+		अगर (t->पंचांग_year < 70)
+			t->पंचांग_year += 100;
+	पूर्ण
 
 	local_irq_restore(flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if 0
-static irqreturn_t sun3x_timer_tick(int irq, void *dev_id)
-{
-	unsigned long flags;
+#अगर 0
+अटल irqवापस_t sun3x_समयr_tick(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	/* Clear the pending interrupt - pulse the enable line low */
+	/* Clear the pending पूर्णांकerrupt - pulse the enable line low */
 	disable_irq(5);
 	enable_irq(5);
-	legacy_timer_tick(1);
+	legacy_समयr_tick(1);
 	local_irq_restore(flags);
 
-	return IRQ_HANDLED;
-}
-#endif
+	वापस IRQ_HANDLED;
+पूर्ण
+#पूर्ण_अगर
 
-void __init sun3x_sched_init(void)
-{
+व्योम __init sun3x_sched_init(व्योम)
+अणु
 
-	sun3_disable_interrupts();
+	sun3_disable_पूर्णांकerrupts();
 
 
-    /* Pulse enable low to get the clock started */
+    /* Pulse enable low to get the घड़ी started */
 	sun3_disable_irq(5);
 	sun3_enable_irq(5);
-	sun3_enable_interrupts();
-}
+	sun3_enable_पूर्णांकerrupts();
+पूर्ण

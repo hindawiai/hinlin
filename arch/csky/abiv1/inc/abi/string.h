@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ABI_CSKY_STRING_H
-#define __ABI_CSKY_STRING_H
+#अगर_अघोषित __ABI_CSKY_STRING_H
+#घोषणा __ABI_CSKY_STRING_H
 
-#define __HAVE_ARCH_MEMCPY
-extern void *memcpy(void *, const void *, __kernel_size_t);
+#घोषणा __HAVE_ARCH_MEMCPY
+बाह्य व्योम *स_नकल(व्योम *, स्थिर व्योम *, __kernel_माप_प्रकार);
 
-#endif /* __ABI_CSKY_STRING_H */
+#पूर्ण_अगर /* __ABI_CSKY_STRING_H */

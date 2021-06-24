@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright © 2015 Broadcom Corporation
+ * Copyright तऊ 2015 Broadcom Corporation
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/platform_device.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "brcmnand.h"
+#समावेश "brcmnand.h"
 
-static const struct of_device_id brcmstb_nand_of_match[] = {
-	{ .compatible = "brcm,brcmnand" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id brcmstb_nand_of_match[] = अणु
+	अणु .compatible = "brcm,brcmnand" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, brcmstb_nand_of_match);
 
-static int brcmstb_nand_probe(struct platform_device *pdev)
-{
-	return brcmnand_probe(pdev, NULL);
-}
+अटल पूर्णांक brcmstb_nand_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस brcmnand_probe(pdev, शून्य);
+पूर्ण
 
-static struct platform_driver brcmstb_nand_driver = {
+अटल काष्ठा platक्रमm_driver brcmstb_nand_driver = अणु
 	.probe			= brcmstb_nand_probe,
-	.remove			= brcmnand_remove,
-	.driver = {
+	.हटाओ			= brcmnand_हटाओ,
+	.driver = अणु
 		.name		= "brcmstb_nand",
 		.pm		= &brcmnand_pm_ops,
 		.of_match_table = brcmstb_nand_of_match,
-	}
-};
-module_platform_driver(brcmstb_nand_driver);
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(brcmstb_nand_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Brian Norris");

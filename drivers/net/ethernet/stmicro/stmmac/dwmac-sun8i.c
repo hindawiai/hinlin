@@ -1,253 +1,254 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * dwmac-sun8i.c - Allwinner sun8i DWMAC specific glue layer
+ * dwmac-sun8i.c - Allwinner sun8i DWMAC specअगरic glue layer
  *
  * Copyright (C) 2017 Corentin Labbe <clabbe.montjoie@gmail.com>
  */
 
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/mdio-mux.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of_mdio.h>
-#include <linux/of_net.h>
-#include <linux/phy.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/regmap.h>
-#include <linux/stmmac.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/mdio-mux.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_net.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/sपंचांगmac.h>
 
-#include "stmmac.h"
-#include "stmmac_platform.h"
+#समावेश "stmmac.h"
+#समावेश "stmmac_platform.h"
 
 /* General notes on dwmac-sun8i:
  * Locking: no locking is necessary in this file because all necessary locking
- *		is done in the "stmmac files"
+ *		is करोne in the "stmmac files"
  */
 
-/* struct emac_variant - Describe dwmac-sun8i hardware variant
- * @default_syscon_value:	The default value of the EMAC register in syscon
- *				This value is used for disabling properly EMAC
- *				and used as a good starting value in case of the
+/* काष्ठा emac_variant - Describe dwmac-sun8i hardware variant
+ * @शेष_syscon_value:	The शेष value of the EMAC रेजिस्टर in syscon
+ *				This value is used क्रम disabling properly EMAC
+ *				and used as a good starting value in हाल of the
  *				boot process(uboot) leave some stuff.
- * @syscon_field		reg_field for the syscon's gmac register
- * @soc_has_internal_phy:	Does the MAC embed an internal PHY
+ * @syscon_field		reg_field क्रम the syscon's gmac रेजिस्टर
+ * @soc_has_पूर्णांकernal_phy:	Does the MAC embed an पूर्णांकernal PHY
  * @support_mii:		Does the MAC handle MII
  * @support_rmii:		Does the MAC handle RMII
  * @support_rgmii:		Does the MAC handle RGMII
  *
- * @rx_delay_max:		Maximum raw value for RX delay chain
- * @tx_delay_max:		Maximum raw value for TX delay chain
- *				These two also indicate the bitmask for
- *				the RX and TX delay chain registers. A
+ * @rx_delay_max:		Maximum raw value क्रम RX delay chain
+ * @tx_delay_max:		Maximum raw value क्रम TX delay chain
+ *				These two also indicate the biपंचांगask क्रम
+ *				the RX and TX delay chain रेजिस्टरs. A
  *				value of zero indicates this is not supported.
  */
-struct emac_variant {
-	u32 default_syscon_value;
-	const struct reg_field *syscon_field;
-	bool soc_has_internal_phy;
+काष्ठा emac_variant अणु
+	u32 शेष_syscon_value;
+	स्थिर काष्ठा reg_field *syscon_field;
+	bool soc_has_पूर्णांकernal_phy;
 	bool support_mii;
 	bool support_rmii;
 	bool support_rgmii;
 	u8 rx_delay_max;
 	u8 tx_delay_max;
-};
+पूर्ण;
 
-/* struct sunxi_priv_data - hold all sunxi private data
- * @tx_clk:	reference to MAC TX clock
- * @ephy_clk:	reference to the optional EPHY clock for the internal PHY
+/* काष्ठा sunxi_priv_data - hold all sunxi निजी data
+ * @tx_clk:	reference to MAC TX घड़ी
+ * @ephy_clk:	reference to the optional EPHY घड़ी क्रम the पूर्णांकernal PHY
  * @regulator:	reference to the optional regulator
- * @rst_ephy:	reference to the optional EPHY reset for the internal PHY
+ * @rst_ephy:	reference to the optional EPHY reset क्रम the पूर्णांकernal PHY
  * @variant:	reference to the current board variant
- * @regmap:	regmap for using the syscon
- * @internal_phy_powered: Does the internal PHY is enabled
- * @use_internal_phy: Is the internal PHY selected for use
- * @mux_handle:	Internal pointer used by mdio-mux lib
+ * @regmap:	regmap क्रम using the syscon
+ * @पूर्णांकernal_phy_घातered: Does the पूर्णांकernal PHY is enabled
+ * @use_पूर्णांकernal_phy: Is the पूर्णांकernal PHY selected क्रम use
+ * @mux_handle:	Internal poपूर्णांकer used by mdio-mux lib
  */
-struct sunxi_priv_data {
-	struct clk *tx_clk;
-	struct clk *ephy_clk;
-	struct regulator *regulator;
-	struct reset_control *rst_ephy;
-	const struct emac_variant *variant;
-	struct regmap_field *regmap_field;
-	bool internal_phy_powered;
-	bool use_internal_phy;
-	void *mux_handle;
-};
+काष्ठा sunxi_priv_data अणु
+	काष्ठा clk *tx_clk;
+	काष्ठा clk *ephy_clk;
+	काष्ठा regulator *regulator;
+	काष्ठा reset_control *rst_ephy;
+	स्थिर काष्ठा emac_variant *variant;
+	काष्ठा regmap_field *regmap_field;
+	bool पूर्णांकernal_phy_घातered;
+	bool use_पूर्णांकernal_phy;
+	व्योम *mux_handle;
+पूर्ण;
 
-/* EMAC clock register @ 0x30 in the "system control" address range */
-static const struct reg_field sun8i_syscon_reg_field = {
+/* EMAC घड़ी रेजिस्टर @ 0x30 in the "system control" address range */
+अटल स्थिर काष्ठा reg_field sun8i_syscon_reg_field = अणु
 	.reg = 0x30,
 	.lsb = 0,
 	.msb = 31,
-};
+पूर्ण;
 
-/* EMAC clock register @ 0x164 in the CCU address range */
-static const struct reg_field sun8i_ccu_reg_field = {
+/* EMAC घड़ी रेजिस्टर @ 0x164 in the CCU address range */
+अटल स्थिर काष्ठा reg_field sun8i_ccu_reg_field = अणु
 	.reg = 0x164,
 	.lsb = 0,
 	.msb = 31,
-};
+पूर्ण;
 
-static const struct emac_variant emac_variant_h3 = {
-	.default_syscon_value = 0x58000,
+अटल स्थिर काष्ठा emac_variant emac_variant_h3 = अणु
+	.शेष_syscon_value = 0x58000,
 	.syscon_field = &sun8i_syscon_reg_field,
-	.soc_has_internal_phy = true,
+	.soc_has_पूर्णांकernal_phy = true,
 	.support_mii = true,
 	.support_rmii = true,
 	.support_rgmii = true,
 	.rx_delay_max = 31,
 	.tx_delay_max = 7,
-};
+पूर्ण;
 
-static const struct emac_variant emac_variant_v3s = {
-	.default_syscon_value = 0x38000,
+अटल स्थिर काष्ठा emac_variant emac_variant_v3s = अणु
+	.शेष_syscon_value = 0x38000,
 	.syscon_field = &sun8i_syscon_reg_field,
-	.soc_has_internal_phy = true,
+	.soc_has_पूर्णांकernal_phy = true,
 	.support_mii = true
-};
+पूर्ण;
 
-static const struct emac_variant emac_variant_a83t = {
-	.default_syscon_value = 0,
+अटल स्थिर काष्ठा emac_variant emac_variant_a83t = अणु
+	.शेष_syscon_value = 0,
 	.syscon_field = &sun8i_syscon_reg_field,
-	.soc_has_internal_phy = false,
+	.soc_has_पूर्णांकernal_phy = false,
 	.support_mii = true,
 	.support_rgmii = true,
 	.rx_delay_max = 31,
 	.tx_delay_max = 7,
-};
+पूर्ण;
 
-static const struct emac_variant emac_variant_r40 = {
-	.default_syscon_value = 0,
+अटल स्थिर काष्ठा emac_variant emac_variant_r40 = अणु
+	.शेष_syscon_value = 0,
 	.syscon_field = &sun8i_ccu_reg_field,
 	.support_mii = true,
 	.support_rgmii = true,
 	.rx_delay_max = 7,
-};
+पूर्ण;
 
-static const struct emac_variant emac_variant_a64 = {
-	.default_syscon_value = 0,
+अटल स्थिर काष्ठा emac_variant emac_variant_a64 = अणु
+	.शेष_syscon_value = 0,
 	.syscon_field = &sun8i_syscon_reg_field,
-	.soc_has_internal_phy = false,
+	.soc_has_पूर्णांकernal_phy = false,
 	.support_mii = true,
 	.support_rmii = true,
 	.support_rgmii = true,
 	.rx_delay_max = 31,
 	.tx_delay_max = 7,
-};
+पूर्ण;
 
-static const struct emac_variant emac_variant_h6 = {
-	.default_syscon_value = 0x50000,
+अटल स्थिर काष्ठा emac_variant emac_variant_h6 = अणु
+	.शेष_syscon_value = 0x50000,
 	.syscon_field = &sun8i_syscon_reg_field,
 	/* The "Internal PHY" of H6 is not on the die. It's on the
 	 * co-packaged AC200 chip instead.
 	 */
-	.soc_has_internal_phy = false,
+	.soc_has_पूर्णांकernal_phy = false,
 	.support_mii = true,
 	.support_rmii = true,
 	.support_rgmii = true,
 	.rx_delay_max = 31,
 	.tx_delay_max = 7,
-};
+पूर्ण;
 
-#define EMAC_BASIC_CTL0 0x00
-#define EMAC_BASIC_CTL1 0x04
-#define EMAC_INT_STA    0x08
-#define EMAC_INT_EN     0x0C
-#define EMAC_TX_CTL0    0x10
-#define EMAC_TX_CTL1    0x14
-#define EMAC_TX_FLOW_CTL        0x1C
-#define EMAC_TX_DESC_LIST 0x20
-#define EMAC_RX_CTL0    0x24
-#define EMAC_RX_CTL1    0x28
-#define EMAC_RX_DESC_LIST 0x34
-#define EMAC_RX_FRM_FLT 0x38
-#define EMAC_MDIO_CMD   0x48
-#define EMAC_MDIO_DATA  0x4C
-#define EMAC_MACADDR_HI(reg) (0x50 + (reg) * 8)
-#define EMAC_MACADDR_LO(reg) (0x54 + (reg) * 8)
-#define EMAC_TX_DMA_STA 0xB0
-#define EMAC_TX_CUR_DESC        0xB4
-#define EMAC_TX_CUR_BUF 0xB8
-#define EMAC_RX_DMA_STA 0xC0
-#define EMAC_RX_CUR_DESC        0xC4
-#define EMAC_RX_CUR_BUF 0xC8
+#घोषणा EMAC_BASIC_CTL0 0x00
+#घोषणा EMAC_BASIC_CTL1 0x04
+#घोषणा EMAC_INT_STA    0x08
+#घोषणा EMAC_INT_EN     0x0C
+#घोषणा EMAC_TX_CTL0    0x10
+#घोषणा EMAC_TX_CTL1    0x14
+#घोषणा EMAC_TX_FLOW_CTL        0x1C
+#घोषणा EMAC_TX_DESC_LIST 0x20
+#घोषणा EMAC_RX_CTL0    0x24
+#घोषणा EMAC_RX_CTL1    0x28
+#घोषणा EMAC_RX_DESC_LIST 0x34
+#घोषणा EMAC_RX_FRM_FLT 0x38
+#घोषणा EMAC_MDIO_CMD   0x48
+#घोषणा EMAC_MDIO_DATA  0x4C
+#घोषणा EMAC_MACADDR_HI(reg) (0x50 + (reg) * 8)
+#घोषणा EMAC_MACADDR_LO(reg) (0x54 + (reg) * 8)
+#घोषणा EMAC_TX_DMA_STA 0xB0
+#घोषणा EMAC_TX_CUR_DESC        0xB4
+#घोषणा EMAC_TX_CUR_BUF 0xB8
+#घोषणा EMAC_RX_DMA_STA 0xC0
+#घोषणा EMAC_RX_CUR_DESC        0xC4
+#घोषणा EMAC_RX_CUR_BUF 0xC8
 
 /* Use in EMAC_BASIC_CTL0 */
-#define EMAC_DUPLEX_FULL	BIT(0)
-#define EMAC_LOOPBACK		BIT(1)
-#define EMAC_SPEED_1000 0
-#define EMAC_SPEED_100 (0x03 << 2)
-#define EMAC_SPEED_10 (0x02 << 2)
+#घोषणा EMAC_DUPLEX_FULL	BIT(0)
+#घोषणा EMAC_LOOPBACK		BIT(1)
+#घोषणा EMAC_SPEED_1000 0
+#घोषणा EMAC_SPEED_100 (0x03 << 2)
+#घोषणा EMAC_SPEED_10 (0x02 << 2)
 
 /* Use in EMAC_BASIC_CTL1 */
-#define EMAC_BURSTLEN_SHIFT		24
+#घोषणा EMAC_BURSTLEN_SHIFT		24
 
 /* Used in EMAC_RX_FRM_FLT */
-#define EMAC_FRM_FLT_RXALL              BIT(0)
-#define EMAC_FRM_FLT_CTL                BIT(13)
-#define EMAC_FRM_FLT_MULTICAST          BIT(16)
+#घोषणा EMAC_FRM_FLT_RXALL              BIT(0)
+#घोषणा EMAC_FRM_FLT_CTL                BIT(13)
+#घोषणा EMAC_FRM_FLT_MULTICAST          BIT(16)
 
 /* Used in RX_CTL1*/
-#define EMAC_RX_MD              BIT(1)
-#define EMAC_RX_TH_MASK		GENMASK(5, 4)
-#define EMAC_RX_TH_32		0
-#define EMAC_RX_TH_64		(0x1 << 4)
-#define EMAC_RX_TH_96		(0x2 << 4)
-#define EMAC_RX_TH_128		(0x3 << 4)
-#define EMAC_RX_DMA_EN  BIT(30)
-#define EMAC_RX_DMA_START       BIT(31)
+#घोषणा EMAC_RX_MD              BIT(1)
+#घोषणा EMAC_RX_TH_MASK		GENMASK(5, 4)
+#घोषणा EMAC_RX_TH_32		0
+#घोषणा EMAC_RX_TH_64		(0x1 << 4)
+#घोषणा EMAC_RX_TH_96		(0x2 << 4)
+#घोषणा EMAC_RX_TH_128		(0x3 << 4)
+#घोषणा EMAC_RX_DMA_EN  BIT(30)
+#घोषणा EMAC_RX_DMA_START       BIT(31)
 
 /* Used in TX_CTL1*/
-#define EMAC_TX_MD              BIT(1)
-#define EMAC_TX_NEXT_FRM        BIT(2)
-#define EMAC_TX_TH_MASK		GENMASK(10, 8)
-#define EMAC_TX_TH_64		0
-#define EMAC_TX_TH_128		(0x1 << 8)
-#define EMAC_TX_TH_192		(0x2 << 8)
-#define EMAC_TX_TH_256		(0x3 << 8)
-#define EMAC_TX_DMA_EN  BIT(30)
-#define EMAC_TX_DMA_START       BIT(31)
+#घोषणा EMAC_TX_MD              BIT(1)
+#घोषणा EMAC_TX_NEXT_FRM        BIT(2)
+#घोषणा EMAC_TX_TH_MASK		GENMASK(10, 8)
+#घोषणा EMAC_TX_TH_64		0
+#घोषणा EMAC_TX_TH_128		(0x1 << 8)
+#घोषणा EMAC_TX_TH_192		(0x2 << 8)
+#घोषणा EMAC_TX_TH_256		(0x3 << 8)
+#घोषणा EMAC_TX_DMA_EN  BIT(30)
+#घोषणा EMAC_TX_DMA_START       BIT(31)
 
 /* Used in RX_CTL0 */
-#define EMAC_RX_RECEIVER_EN             BIT(31)
-#define EMAC_RX_DO_CRC BIT(27)
-#define EMAC_RX_FLOW_CTL_EN             BIT(16)
+#घोषणा EMAC_RX_RECEIVER_EN             BIT(31)
+#घोषणा EMAC_RX_DO_CRC BIT(27)
+#घोषणा EMAC_RX_FLOW_CTL_EN             BIT(16)
 
 /* Used in TX_CTL0 */
-#define EMAC_TX_TRANSMITTER_EN  BIT(31)
+#घोषणा EMAC_TX_TRANSMITTER_EN  BIT(31)
 
 /* Used in EMAC_TX_FLOW_CTL */
-#define EMAC_TX_FLOW_CTL_EN             BIT(0)
+#घोषणा EMAC_TX_FLOW_CTL_EN             BIT(0)
 
 /* Used in EMAC_INT_STA */
-#define EMAC_TX_INT             BIT(0)
-#define EMAC_TX_DMA_STOP_INT    BIT(1)
-#define EMAC_TX_BUF_UA_INT      BIT(2)
-#define EMAC_TX_TIMEOUT_INT     BIT(3)
-#define EMAC_TX_UNDERFLOW_INT   BIT(4)
-#define EMAC_TX_EARLY_INT       BIT(5)
-#define EMAC_RX_INT             BIT(8)
-#define EMAC_RX_BUF_UA_INT      BIT(9)
-#define EMAC_RX_DMA_STOP_INT    BIT(10)
-#define EMAC_RX_TIMEOUT_INT     BIT(11)
-#define EMAC_RX_OVERFLOW_INT    BIT(12)
-#define EMAC_RX_EARLY_INT       BIT(13)
-#define EMAC_RGMII_STA_INT      BIT(16)
+#घोषणा EMAC_TX_INT             BIT(0)
+#घोषणा EMAC_TX_DMA_STOP_INT    BIT(1)
+#घोषणा EMAC_TX_BUF_UA_INT      BIT(2)
+#घोषणा EMAC_TX_TIMEOUT_INT     BIT(3)
+#घोषणा EMAC_TX_UNDERFLOW_INT   BIT(4)
+#घोषणा EMAC_TX_EARLY_INT       BIT(5)
+#घोषणा EMAC_RX_INT             BIT(8)
+#घोषणा EMAC_RX_BUF_UA_INT      BIT(9)
+#घोषणा EMAC_RX_DMA_STOP_INT    BIT(10)
+#घोषणा EMAC_RX_TIMEOUT_INT     BIT(11)
+#घोषणा EMAC_RX_OVERFLOW_INT    BIT(12)
+#घोषणा EMAC_RX_EARLY_INT       BIT(13)
+#घोषणा EMAC_RGMII_STA_INT      BIT(16)
 
-#define EMAC_INT_MSK_COMMON	EMAC_RGMII_STA_INT
-#define EMAC_INT_MSK_TX		(EMAC_TX_INT | \
+#घोषणा EMAC_INT_MSK_COMMON	EMAC_RGMII_STA_INT
+#घोषणा EMAC_INT_MSK_TX		(EMAC_TX_INT | \
 				 EMAC_TX_DMA_STOP_INT | \
 				 EMAC_TX_BUF_UA_INT | \
 				 EMAC_TX_TIMEOUT_INT | \
 				 EMAC_TX_UNDERFLOW_INT | \
 				 EMAC_TX_EARLY_INT |\
 				 EMAC_INT_MSK_COMMON)
-#define EMAC_INT_MSK_RX		(EMAC_RX_INT | \
+#घोषणा EMAC_INT_MSK_RX		(EMAC_RX_INT | \
 				 EMAC_RX_BUF_UA_INT | \
 				 EMAC_RX_DMA_STOP_INT | \
 				 EMAC_RX_TIMEOUT_INT | \
@@ -255,297 +256,297 @@ static const struct emac_variant emac_variant_h6 = {
 				 EMAC_RX_EARLY_INT | \
 				 EMAC_INT_MSK_COMMON)
 
-#define MAC_ADDR_TYPE_DST BIT(31)
+#घोषणा MAC_ADDR_TYPE_DST BIT(31)
 
-/* H3 specific bits for EPHY */
-#define H3_EPHY_ADDR_SHIFT	20
-#define H3_EPHY_CLK_SEL		BIT(18) /* 1: 24MHz, 0: 25MHz */
-#define H3_EPHY_LED_POL		BIT(17) /* 1: active low, 0: active high */
-#define H3_EPHY_SHUTDOWN	BIT(16) /* 1: shutdown, 0: power up */
-#define H3_EPHY_SELECT		BIT(15) /* 1: internal PHY, 0: external PHY */
-#define H3_EPHY_MUX_MASK	(H3_EPHY_SHUTDOWN | H3_EPHY_SELECT)
-#define DWMAC_SUN8I_MDIO_MUX_INTERNAL_ID	1
-#define DWMAC_SUN8I_MDIO_MUX_EXTERNAL_ID	2
+/* H3 specअगरic bits क्रम EPHY */
+#घोषणा H3_EPHY_ADDR_SHIFT	20
+#घोषणा H3_EPHY_CLK_SEL		BIT(18) /* 1: 24MHz, 0: 25MHz */
+#घोषणा H3_EPHY_LED_POL		BIT(17) /* 1: active low, 0: active high */
+#घोषणा H3_EPHY_SHUTDOWN	BIT(16) /* 1: shutकरोwn, 0: घातer up */
+#घोषणा H3_EPHY_SELECT		BIT(15) /* 1: पूर्णांकernal PHY, 0: बाह्यal PHY */
+#घोषणा H3_EPHY_MUX_MASK	(H3_EPHY_SHUTDOWN | H3_EPHY_SELECT)
+#घोषणा DWMAC_SUN8I_MDIO_MUX_INTERNAL_ID	1
+#घोषणा DWMAC_SUN8I_MDIO_MUX_EXTERNAL_ID	2
 
-/* H3/A64 specific bits */
-#define SYSCON_RMII_EN		BIT(13) /* 1: enable RMII (overrides EPIT) */
+/* H3/A64 specअगरic bits */
+#घोषणा SYSCON_RMII_EN		BIT(13) /* 1: enable RMII (overrides EPIT) */
 
-/* Generic system control EMAC_CLK bits */
-#define SYSCON_ETXDC_SHIFT		10
-#define SYSCON_ERXDC_SHIFT		5
+/* Generic प्रणाली control EMAC_CLK bits */
+#घोषणा SYSCON_ETXDC_SHIFT		10
+#घोषणा SYSCON_ERXDC_SHIFT		5
 /* EMAC PHY Interface Type */
-#define SYSCON_EPIT			BIT(2) /* 1: RGMII, 0: MII */
-#define SYSCON_ETCS_MASK		GENMASK(1, 0)
-#define SYSCON_ETCS_MII		0x0
-#define SYSCON_ETCS_EXT_GMII	0x1
-#define SYSCON_ETCS_INT_GMII	0x2
+#घोषणा SYSCON_EPIT			BIT(2) /* 1: RGMII, 0: MII */
+#घोषणा SYSCON_ETCS_MASK		GENMASK(1, 0)
+#घोषणा SYSCON_ETCS_MII		0x0
+#घोषणा SYSCON_ETCS_EXT_GMII	0x1
+#घोषणा SYSCON_ETCS_INT_GMII	0x2
 
 /* sun8i_dwmac_dma_reset() - reset the EMAC
- * Called from stmmac via stmmac_dma_ops->reset
+ * Called from sपंचांगmac via sपंचांगmac_dma_ops->reset
  */
-static int sun8i_dwmac_dma_reset(void __iomem *ioaddr)
-{
-	writel(0, ioaddr + EMAC_RX_CTL1);
-	writel(0, ioaddr + EMAC_TX_CTL1);
-	writel(0, ioaddr + EMAC_RX_FRM_FLT);
-	writel(0, ioaddr + EMAC_RX_DESC_LIST);
-	writel(0, ioaddr + EMAC_TX_DESC_LIST);
-	writel(0, ioaddr + EMAC_INT_EN);
-	writel(0x1FFFFFF, ioaddr + EMAC_INT_STA);
-	return 0;
-}
+अटल पूर्णांक sun8i_dwmac_dma_reset(व्योम __iomem *ioaddr)
+अणु
+	ग_लिखोl(0, ioaddr + EMAC_RX_CTL1);
+	ग_लिखोl(0, ioaddr + EMAC_TX_CTL1);
+	ग_लिखोl(0, ioaddr + EMAC_RX_FRM_FLT);
+	ग_लिखोl(0, ioaddr + EMAC_RX_DESC_LIST);
+	ग_लिखोl(0, ioaddr + EMAC_TX_DESC_LIST);
+	ग_लिखोl(0, ioaddr + EMAC_INT_EN);
+	ग_लिखोl(0x1FFFFFF, ioaddr + EMAC_INT_STA);
+	वापस 0;
+पूर्ण
 
 /* sun8i_dwmac_dma_init() - initialize the EMAC
- * Called from stmmac via stmmac_dma_ops->init
+ * Called from sपंचांगmac via sपंचांगmac_dma_ops->init
  */
-static void sun8i_dwmac_dma_init(void __iomem *ioaddr,
-				 struct stmmac_dma_cfg *dma_cfg, int atds)
-{
-	writel(EMAC_RX_INT | EMAC_TX_INT, ioaddr + EMAC_INT_EN);
-	writel(0x1FFFFFF, ioaddr + EMAC_INT_STA);
-}
+अटल व्योम sun8i_dwmac_dma_init(व्योम __iomem *ioaddr,
+				 काष्ठा sपंचांगmac_dma_cfg *dma_cfg, पूर्णांक atds)
+अणु
+	ग_लिखोl(EMAC_RX_INT | EMAC_TX_INT, ioaddr + EMAC_INT_EN);
+	ग_लिखोl(0x1FFFFFF, ioaddr + EMAC_INT_STA);
+पूर्ण
 
-static void sun8i_dwmac_dma_init_rx(void __iomem *ioaddr,
-				    struct stmmac_dma_cfg *dma_cfg,
+अटल व्योम sun8i_dwmac_dma_init_rx(व्योम __iomem *ioaddr,
+				    काष्ठा sपंचांगmac_dma_cfg *dma_cfg,
 				    dma_addr_t dma_rx_phy, u32 chan)
-{
+अणु
 	/* Write RX descriptors address */
-	writel(lower_32_bits(dma_rx_phy), ioaddr + EMAC_RX_DESC_LIST);
-}
+	ग_लिखोl(lower_32_bits(dma_rx_phy), ioaddr + EMAC_RX_DESC_LIST);
+पूर्ण
 
-static void sun8i_dwmac_dma_init_tx(void __iomem *ioaddr,
-				    struct stmmac_dma_cfg *dma_cfg,
+अटल व्योम sun8i_dwmac_dma_init_tx(व्योम __iomem *ioaddr,
+				    काष्ठा sपंचांगmac_dma_cfg *dma_cfg,
 				    dma_addr_t dma_tx_phy, u32 chan)
-{
+अणु
 	/* Write TX descriptors address */
-	writel(lower_32_bits(dma_tx_phy), ioaddr + EMAC_TX_DESC_LIST);
-}
+	ग_लिखोl(lower_32_bits(dma_tx_phy), ioaddr + EMAC_TX_DESC_LIST);
+पूर्ण
 
 /* sun8i_dwmac_dump_regs() - Dump EMAC address space
- * Called from stmmac_dma_ops->dump_regs
- * Used for ethtool
+ * Called from sपंचांगmac_dma_ops->dump_regs
+ * Used क्रम ethtool
  */
-static void sun8i_dwmac_dump_regs(void __iomem *ioaddr, u32 *reg_space)
-{
-	int i;
+अटल व्योम sun8i_dwmac_dump_regs(व्योम __iomem *ioaddr, u32 *reg_space)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 0xC8; i += 4) {
-		if (i == 0x32 || i == 0x3C)
-			continue;
-		reg_space[i / 4] = readl(ioaddr + i);
-	}
-}
+	क्रम (i = 0; i < 0xC8; i += 4) अणु
+		अगर (i == 0x32 || i == 0x3C)
+			जारी;
+		reg_space[i / 4] = पढ़ोl(ioaddr + i);
+	पूर्ण
+पूर्ण
 
 /* sun8i_dwmac_dump_mac_regs() - Dump EMAC address space
- * Called from stmmac_ops->dump_regs
- * Used for ethtool
+ * Called from sपंचांगmac_ops->dump_regs
+ * Used क्रम ethtool
  */
-static void sun8i_dwmac_dump_mac_regs(struct mac_device_info *hw,
+अटल व्योम sun8i_dwmac_dump_mac_regs(काष्ठा mac_device_info *hw,
 				      u32 *reg_space)
-{
-	int i;
-	void __iomem *ioaddr = hw->pcsr;
+अणु
+	पूर्णांक i;
+	व्योम __iomem *ioaddr = hw->pcsr;
 
-	for (i = 0; i < 0xC8; i += 4) {
-		if (i == 0x32 || i == 0x3C)
-			continue;
-		reg_space[i / 4] = readl(ioaddr + i);
-	}
-}
+	क्रम (i = 0; i < 0xC8; i += 4) अणु
+		अगर (i == 0x32 || i == 0x3C)
+			जारी;
+		reg_space[i / 4] = पढ़ोl(ioaddr + i);
+	पूर्ण
+पूर्ण
 
-static void sun8i_dwmac_enable_dma_irq(void __iomem *ioaddr, u32 chan,
+अटल व्योम sun8i_dwmac_enable_dma_irq(व्योम __iomem *ioaddr, u32 chan,
 				       bool rx, bool tx)
-{
-	u32 value = readl(ioaddr + EMAC_INT_EN);
+अणु
+	u32 value = पढ़ोl(ioaddr + EMAC_INT_EN);
 
-	if (rx)
+	अगर (rx)
 		value |= EMAC_RX_INT;
-	if (tx)
+	अगर (tx)
 		value |= EMAC_TX_INT;
 
-	writel(value, ioaddr + EMAC_INT_EN);
-}
+	ग_लिखोl(value, ioaddr + EMAC_INT_EN);
+पूर्ण
 
-static void sun8i_dwmac_disable_dma_irq(void __iomem *ioaddr, u32 chan,
+अटल व्योम sun8i_dwmac_disable_dma_irq(व्योम __iomem *ioaddr, u32 chan,
 					bool rx, bool tx)
-{
-	u32 value = readl(ioaddr + EMAC_INT_EN);
+अणु
+	u32 value = पढ़ोl(ioaddr + EMAC_INT_EN);
 
-	if (rx)
+	अगर (rx)
 		value &= ~EMAC_RX_INT;
-	if (tx)
+	अगर (tx)
 		value &= ~EMAC_TX_INT;
 
-	writel(value, ioaddr + EMAC_INT_EN);
-}
+	ग_लिखोl(value, ioaddr + EMAC_INT_EN);
+पूर्ण
 
-static void sun8i_dwmac_dma_start_tx(void __iomem *ioaddr, u32 chan)
-{
+अटल व्योम sun8i_dwmac_dma_start_tx(व्योम __iomem *ioaddr, u32 chan)
+अणु
 	u32 v;
 
-	v = readl(ioaddr + EMAC_TX_CTL1);
+	v = पढ़ोl(ioaddr + EMAC_TX_CTL1);
 	v |= EMAC_TX_DMA_START;
 	v |= EMAC_TX_DMA_EN;
-	writel(v, ioaddr + EMAC_TX_CTL1);
-}
+	ग_लिखोl(v, ioaddr + EMAC_TX_CTL1);
+पूर्ण
 
-static void sun8i_dwmac_enable_dma_transmission(void __iomem *ioaddr)
-{
+अटल व्योम sun8i_dwmac_enable_dma_transmission(व्योम __iomem *ioaddr)
+अणु
 	u32 v;
 
-	v = readl(ioaddr + EMAC_TX_CTL1);
+	v = पढ़ोl(ioaddr + EMAC_TX_CTL1);
 	v |= EMAC_TX_DMA_START;
 	v |= EMAC_TX_DMA_EN;
-	writel(v, ioaddr + EMAC_TX_CTL1);
-}
+	ग_लिखोl(v, ioaddr + EMAC_TX_CTL1);
+पूर्ण
 
-static void sun8i_dwmac_dma_stop_tx(void __iomem *ioaddr, u32 chan)
-{
+अटल व्योम sun8i_dwmac_dma_stop_tx(व्योम __iomem *ioaddr, u32 chan)
+अणु
 	u32 v;
 
-	v = readl(ioaddr + EMAC_TX_CTL1);
+	v = पढ़ोl(ioaddr + EMAC_TX_CTL1);
 	v &= ~EMAC_TX_DMA_EN;
-	writel(v, ioaddr + EMAC_TX_CTL1);
-}
+	ग_लिखोl(v, ioaddr + EMAC_TX_CTL1);
+पूर्ण
 
-static void sun8i_dwmac_dma_start_rx(void __iomem *ioaddr, u32 chan)
-{
+अटल व्योम sun8i_dwmac_dma_start_rx(व्योम __iomem *ioaddr, u32 chan)
+अणु
 	u32 v;
 
-	v = readl(ioaddr + EMAC_RX_CTL1);
+	v = पढ़ोl(ioaddr + EMAC_RX_CTL1);
 	v |= EMAC_RX_DMA_START;
 	v |= EMAC_RX_DMA_EN;
-	writel(v, ioaddr + EMAC_RX_CTL1);
-}
+	ग_लिखोl(v, ioaddr + EMAC_RX_CTL1);
+पूर्ण
 
-static void sun8i_dwmac_dma_stop_rx(void __iomem *ioaddr, u32 chan)
-{
+अटल व्योम sun8i_dwmac_dma_stop_rx(व्योम __iomem *ioaddr, u32 chan)
+अणु
 	u32 v;
 
-	v = readl(ioaddr + EMAC_RX_CTL1);
+	v = पढ़ोl(ioaddr + EMAC_RX_CTL1);
 	v &= ~EMAC_RX_DMA_EN;
-	writel(v, ioaddr + EMAC_RX_CTL1);
-}
+	ग_लिखोl(v, ioaddr + EMAC_RX_CTL1);
+पूर्ण
 
-static int sun8i_dwmac_dma_interrupt(void __iomem *ioaddr,
-				     struct stmmac_extra_stats *x, u32 chan,
+अटल पूर्णांक sun8i_dwmac_dma_पूर्णांकerrupt(व्योम __iomem *ioaddr,
+				     काष्ठा sपंचांगmac_extra_stats *x, u32 chan,
 				     u32 dir)
-{
+अणु
 	u32 v;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	v = readl(ioaddr + EMAC_INT_STA);
+	v = पढ़ोl(ioaddr + EMAC_INT_STA);
 
-	if (dir == DMA_DIR_RX)
+	अगर (dir == DMA_सूची_RX)
 		v &= EMAC_INT_MSK_RX;
-	else if (dir == DMA_DIR_TX)
+	अन्यथा अगर (dir == DMA_सूची_TX)
 		v &= EMAC_INT_MSK_TX;
 
-	if (v & EMAC_TX_INT) {
+	अगर (v & EMAC_TX_INT) अणु
 		ret |= handle_tx;
 		x->tx_normal_irq_n++;
-	}
+	पूर्ण
 
-	if (v & EMAC_TX_DMA_STOP_INT)
+	अगर (v & EMAC_TX_DMA_STOP_INT)
 		x->tx_process_stopped_irq++;
 
-	if (v & EMAC_TX_BUF_UA_INT)
+	अगर (v & EMAC_TX_BUF_UA_INT)
 		x->tx_process_stopped_irq++;
 
-	if (v & EMAC_TX_TIMEOUT_INT)
+	अगर (v & EMAC_TX_TIMEOUT_INT)
 		ret |= tx_hard_error;
 
-	if (v & EMAC_TX_UNDERFLOW_INT) {
+	अगर (v & EMAC_TX_UNDERFLOW_INT) अणु
 		ret |= tx_hard_error;
 		x->tx_undeflow_irq++;
-	}
+	पूर्ण
 
-	if (v & EMAC_TX_EARLY_INT)
+	अगर (v & EMAC_TX_EARLY_INT)
 		x->tx_early_irq++;
 
-	if (v & EMAC_RX_INT) {
+	अगर (v & EMAC_RX_INT) अणु
 		ret |= handle_rx;
 		x->rx_normal_irq_n++;
-	}
+	पूर्ण
 
-	if (v & EMAC_RX_BUF_UA_INT)
+	अगर (v & EMAC_RX_BUF_UA_INT)
 		x->rx_buf_unav_irq++;
 
-	if (v & EMAC_RX_DMA_STOP_INT)
+	अगर (v & EMAC_RX_DMA_STOP_INT)
 		x->rx_process_stopped_irq++;
 
-	if (v & EMAC_RX_TIMEOUT_INT)
+	अगर (v & EMAC_RX_TIMEOUT_INT)
 		ret |= tx_hard_error;
 
-	if (v & EMAC_RX_OVERFLOW_INT) {
+	अगर (v & EMAC_RX_OVERFLOW_INT) अणु
 		ret |= tx_hard_error;
 		x->rx_overflow_irq++;
-	}
+	पूर्ण
 
-	if (v & EMAC_RX_EARLY_INT)
+	अगर (v & EMAC_RX_EARLY_INT)
 		x->rx_early_irq++;
 
-	if (v & EMAC_RGMII_STA_INT)
+	अगर (v & EMAC_RGMII_STA_INT)
 		x->irq_rgmii_n++;
 
-	writel(v, ioaddr + EMAC_INT_STA);
+	ग_लिखोl(v, ioaddr + EMAC_INT_STA);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sun8i_dwmac_dma_operation_mode_rx(void __iomem *ioaddr, int mode,
-					      u32 channel, int fifosz, u8 qmode)
-{
+अटल व्योम sun8i_dwmac_dma_operation_mode_rx(व्योम __iomem *ioaddr, पूर्णांक mode,
+					      u32 channel, पूर्णांक fअगरosz, u8 qmode)
+अणु
 	u32 v;
 
-	v = readl(ioaddr + EMAC_RX_CTL1);
-	if (mode == SF_DMA_MODE) {
+	v = पढ़ोl(ioaddr + EMAC_RX_CTL1);
+	अगर (mode == SF_DMA_MODE) अणु
 		v |= EMAC_RX_MD;
-	} else {
+	पूर्ण अन्यथा अणु
 		v &= ~EMAC_RX_MD;
 		v &= ~EMAC_RX_TH_MASK;
-		if (mode < 32)
+		अगर (mode < 32)
 			v |= EMAC_RX_TH_32;
-		else if (mode < 64)
+		अन्यथा अगर (mode < 64)
 			v |= EMAC_RX_TH_64;
-		else if (mode < 96)
+		अन्यथा अगर (mode < 96)
 			v |= EMAC_RX_TH_96;
-		else if (mode < 128)
+		अन्यथा अगर (mode < 128)
 			v |= EMAC_RX_TH_128;
-	}
-	writel(v, ioaddr + EMAC_RX_CTL1);
-}
+	पूर्ण
+	ग_लिखोl(v, ioaddr + EMAC_RX_CTL1);
+पूर्ण
 
-static void sun8i_dwmac_dma_operation_mode_tx(void __iomem *ioaddr, int mode,
-					      u32 channel, int fifosz, u8 qmode)
-{
+अटल व्योम sun8i_dwmac_dma_operation_mode_tx(व्योम __iomem *ioaddr, पूर्णांक mode,
+					      u32 channel, पूर्णांक fअगरosz, u8 qmode)
+अणु
 	u32 v;
 
-	v = readl(ioaddr + EMAC_TX_CTL1);
-	if (mode == SF_DMA_MODE) {
+	v = पढ़ोl(ioaddr + EMAC_TX_CTL1);
+	अगर (mode == SF_DMA_MODE) अणु
 		v |= EMAC_TX_MD;
-		/* Undocumented bit (called TX_NEXT_FRM in BSP), the original
+		/* Unकरोcumented bit (called TX_NEXT_FRM in BSP), the original
 		 * comment is
-		 * "Operating on second frame increase the performance
-		 * especially when transmit store-and-forward is used."
+		 * "Operating on second frame increase the perक्रमmance
+		 * especially when transmit store-and-क्रमward is used."
 		 */
 		v |= EMAC_TX_NEXT_FRM;
-	} else {
+	पूर्ण अन्यथा अणु
 		v &= ~EMAC_TX_MD;
 		v &= ~EMAC_TX_TH_MASK;
-		if (mode < 64)
+		अगर (mode < 64)
 			v |= EMAC_TX_TH_64;
-		else if (mode < 128)
+		अन्यथा अगर (mode < 128)
 			v |= EMAC_TX_TH_128;
-		else if (mode < 192)
+		अन्यथा अगर (mode < 192)
 			v |= EMAC_TX_TH_192;
-		else if (mode < 256)
+		अन्यथा अगर (mode < 256)
 			v |= EMAC_TX_TH_256;
-	}
-	writel(v, ioaddr + EMAC_TX_CTL1);
-}
+	पूर्ण
+	ग_लिखोl(v, ioaddr + EMAC_TX_CTL1);
+पूर्ण
 
-static const struct stmmac_dma_ops sun8i_dwmac_dma_ops = {
+अटल स्थिर काष्ठा sपंचांगmac_dma_ops sun8i_dwmac_dma_ops = अणु
 	.reset = sun8i_dwmac_dma_reset,
 	.init = sun8i_dwmac_dma_init,
 	.init_rx_chan = sun8i_dwmac_dma_init_rx,
@@ -560,508 +561,508 @@ static const struct stmmac_dma_ops sun8i_dwmac_dma_ops = {
 	.stop_tx = sun8i_dwmac_dma_stop_tx,
 	.start_rx = sun8i_dwmac_dma_start_rx,
 	.stop_rx = sun8i_dwmac_dma_stop_rx,
-	.dma_interrupt = sun8i_dwmac_dma_interrupt,
-};
+	.dma_पूर्णांकerrupt = sun8i_dwmac_dma_पूर्णांकerrupt,
+पूर्ण;
 
-static int sun8i_dwmac_power_internal_phy(struct stmmac_priv *priv);
+अटल पूर्णांक sun8i_dwmac_घातer_पूर्णांकernal_phy(काष्ठा sपंचांगmac_priv *priv);
 
-static int sun8i_dwmac_init(struct platform_device *pdev, void *priv)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct sunxi_priv_data *gmac = priv;
-	int ret;
+अटल पूर्णांक sun8i_dwmac_init(काष्ठा platक्रमm_device *pdev, व्योम *priv)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा sunxi_priv_data *gmac = priv;
+	पूर्णांक ret;
 
-	if (gmac->regulator) {
+	अगर (gmac->regulator) अणु
 		ret = regulator_enable(gmac->regulator);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "Fail to enable regulator\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = clk_prepare_enable(gmac->tx_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Could not enable AHB clock\n");
-		goto err_disable_regulator;
-	}
+		जाओ err_disable_regulator;
+	पूर्ण
 
-	if (gmac->use_internal_phy) {
-		ret = sun8i_dwmac_power_internal_phy(netdev_priv(ndev));
-		if (ret)
-			goto err_disable_clk;
-	}
+	अगर (gmac->use_पूर्णांकernal_phy) अणु
+		ret = sun8i_dwmac_घातer_पूर्णांकernal_phy(netdev_priv(ndev));
+		अगर (ret)
+			जाओ err_disable_clk;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_disable_clk:
 	clk_disable_unprepare(gmac->tx_clk);
 err_disable_regulator:
-	if (gmac->regulator)
+	अगर (gmac->regulator)
 		regulator_disable(gmac->regulator);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sun8i_dwmac_core_init(struct mac_device_info *hw,
-				  struct net_device *dev)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम sun8i_dwmac_core_init(काष्ठा mac_device_info *hw,
+				  काष्ठा net_device *dev)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 v;
 
 	v = (8 << EMAC_BURSTLEN_SHIFT); /* burst len */
-	writel(v, ioaddr + EMAC_BASIC_CTL1);
-}
+	ग_लिखोl(v, ioaddr + EMAC_BASIC_CTL1);
+पूर्ण
 
-static void sun8i_dwmac_set_mac(void __iomem *ioaddr, bool enable)
-{
+अटल व्योम sun8i_dwmac_set_mac(व्योम __iomem *ioaddr, bool enable)
+अणु
 	u32 t, r;
 
-	t = readl(ioaddr + EMAC_TX_CTL0);
-	r = readl(ioaddr + EMAC_RX_CTL0);
-	if (enable) {
+	t = पढ़ोl(ioaddr + EMAC_TX_CTL0);
+	r = पढ़ोl(ioaddr + EMAC_RX_CTL0);
+	अगर (enable) अणु
 		t |= EMAC_TX_TRANSMITTER_EN;
 		r |= EMAC_RX_RECEIVER_EN;
-	} else {
+	पूर्ण अन्यथा अणु
 		t &= ~EMAC_TX_TRANSMITTER_EN;
 		r &= ~EMAC_RX_RECEIVER_EN;
-	}
-	writel(t, ioaddr + EMAC_TX_CTL0);
-	writel(r, ioaddr + EMAC_RX_CTL0);
-}
+	पूर्ण
+	ग_लिखोl(t, ioaddr + EMAC_TX_CTL0);
+	ग_लिखोl(r, ioaddr + EMAC_RX_CTL0);
+पूर्ण
 
 /* Set MAC address at slot reg_n
  * All slot > 0 need to be enabled with MAC_ADDR_TYPE_DST
- * If addr is NULL, clear the slot
+ * If addr is शून्य, clear the slot
  */
-static void sun8i_dwmac_set_umac_addr(struct mac_device_info *hw,
-				      unsigned char *addr,
-				      unsigned int reg_n)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम sun8i_dwmac_set_umac_addr(काष्ठा mac_device_info *hw,
+				      अचिन्हित अक्षर *addr,
+				      अचिन्हित पूर्णांक reg_n)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 v;
 
-	if (!addr) {
-		writel(0, ioaddr + EMAC_MACADDR_HI(reg_n));
-		return;
-	}
+	अगर (!addr) अणु
+		ग_लिखोl(0, ioaddr + EMAC_MACADDR_HI(reg_n));
+		वापस;
+	पूर्ण
 
-	stmmac_set_mac_addr(ioaddr, addr, EMAC_MACADDR_HI(reg_n),
+	sपंचांगmac_set_mac_addr(ioaddr, addr, EMAC_MACADDR_HI(reg_n),
 			    EMAC_MACADDR_LO(reg_n));
-	if (reg_n > 0) {
-		v = readl(ioaddr + EMAC_MACADDR_HI(reg_n));
+	अगर (reg_n > 0) अणु
+		v = पढ़ोl(ioaddr + EMAC_MACADDR_HI(reg_n));
 		v |= MAC_ADDR_TYPE_DST;
-		writel(v, ioaddr + EMAC_MACADDR_HI(reg_n));
-	}
-}
+		ग_लिखोl(v, ioaddr + EMAC_MACADDR_HI(reg_n));
+	पूर्ण
+पूर्ण
 
-static void sun8i_dwmac_get_umac_addr(struct mac_device_info *hw,
-				      unsigned char *addr,
-				      unsigned int reg_n)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम sun8i_dwmac_get_umac_addr(काष्ठा mac_device_info *hw,
+				      अचिन्हित अक्षर *addr,
+				      अचिन्हित पूर्णांक reg_n)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 
-	stmmac_get_mac_addr(ioaddr, addr, EMAC_MACADDR_HI(reg_n),
+	sपंचांगmac_get_mac_addr(ioaddr, addr, EMAC_MACADDR_HI(reg_n),
 			    EMAC_MACADDR_LO(reg_n));
-}
+पूर्ण
 
-/* caution this function must return non 0 to work */
-static int sun8i_dwmac_rx_ipc_enable(struct mac_device_info *hw)
-{
-	void __iomem *ioaddr = hw->pcsr;
+/* caution this function must वापस non 0 to work */
+अटल पूर्णांक sun8i_dwmac_rx_ipc_enable(काष्ठा mac_device_info *hw)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 v;
 
-	v = readl(ioaddr + EMAC_RX_CTL0);
+	v = पढ़ोl(ioaddr + EMAC_RX_CTL0);
 	v |= EMAC_RX_DO_CRC;
-	writel(v, ioaddr + EMAC_RX_CTL0);
+	ग_लिखोl(v, ioaddr + EMAC_RX_CTL0);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void sun8i_dwmac_set_filter(struct mac_device_info *hw,
-				   struct net_device *dev)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम sun8i_dwmac_set_filter(काष्ठा mac_device_info *hw,
+				   काष्ठा net_device *dev)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 v;
-	int i = 1;
-	struct netdev_hw_addr *ha;
-	int macaddrs = netdev_uc_count(dev) + netdev_mc_count(dev) + 1;
+	पूर्णांक i = 1;
+	काष्ठा netdev_hw_addr *ha;
+	पूर्णांक macaddrs = netdev_uc_count(dev) + netdev_mc_count(dev) + 1;
 
 	v = EMAC_FRM_FLT_CTL;
 
-	if (dev->flags & IFF_PROMISC) {
+	अगर (dev->flags & IFF_PROMISC) अणु
 		v = EMAC_FRM_FLT_RXALL;
-	} else if (dev->flags & IFF_ALLMULTI) {
+	पूर्ण अन्यथा अगर (dev->flags & IFF_ALLMULTI) अणु
 		v |= EMAC_FRM_FLT_MULTICAST;
-	} else if (macaddrs <= hw->unicast_filter_entries) {
-		if (!netdev_mc_empty(dev)) {
-			netdev_for_each_mc_addr(ha, dev) {
+	पूर्ण अन्यथा अगर (macaddrs <= hw->unicast_filter_entries) अणु
+		अगर (!netdev_mc_empty(dev)) अणु
+			netdev_क्रम_each_mc_addr(ha, dev) अणु
 				sun8i_dwmac_set_umac_addr(hw, ha->addr, i);
 				i++;
-			}
-		}
-		if (!netdev_uc_empty(dev)) {
-			netdev_for_each_uc_addr(ha, dev) {
+			पूर्ण
+		पूर्ण
+		अगर (!netdev_uc_empty(dev)) अणु
+			netdev_क्रम_each_uc_addr(ha, dev) अणु
 				sun8i_dwmac_set_umac_addr(hw, ha->addr, i);
 				i++;
-			}
-		}
-	} else {
-		if (!(readl(ioaddr + EMAC_RX_FRM_FLT) & EMAC_FRM_FLT_RXALL))
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!(पढ़ोl(ioaddr + EMAC_RX_FRM_FLT) & EMAC_FRM_FLT_RXALL))
 			netdev_info(dev, "Too many address, switching to promiscuous\n");
 		v = EMAC_FRM_FLT_RXALL;
-	}
+	पूर्ण
 
 	/* Disable unused address filter slots */
-	while (i < hw->unicast_filter_entries)
-		sun8i_dwmac_set_umac_addr(hw, NULL, i++);
+	जबतक (i < hw->unicast_filter_entries)
+		sun8i_dwmac_set_umac_addr(hw, शून्य, i++);
 
-	writel(v, ioaddr + EMAC_RX_FRM_FLT);
-}
+	ग_लिखोl(v, ioaddr + EMAC_RX_FRM_FLT);
+पूर्ण
 
-static void sun8i_dwmac_flow_ctrl(struct mac_device_info *hw,
-				  unsigned int duplex, unsigned int fc,
-				  unsigned int pause_time, u32 tx_cnt)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम sun8i_dwmac_flow_ctrl(काष्ठा mac_device_info *hw,
+				  अचिन्हित पूर्णांक duplex, अचिन्हित पूर्णांक fc,
+				  अचिन्हित पूर्णांक छोड़ो_समय, u32 tx_cnt)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 v;
 
-	v = readl(ioaddr + EMAC_RX_CTL0);
-	if (fc == FLOW_AUTO)
+	v = पढ़ोl(ioaddr + EMAC_RX_CTL0);
+	अगर (fc == FLOW_AUTO)
 		v |= EMAC_RX_FLOW_CTL_EN;
-	else
+	अन्यथा
 		v &= ~EMAC_RX_FLOW_CTL_EN;
-	writel(v, ioaddr + EMAC_RX_CTL0);
+	ग_लिखोl(v, ioaddr + EMAC_RX_CTL0);
 
-	v = readl(ioaddr + EMAC_TX_FLOW_CTL);
-	if (fc == FLOW_AUTO)
+	v = पढ़ोl(ioaddr + EMAC_TX_FLOW_CTL);
+	अगर (fc == FLOW_AUTO)
 		v |= EMAC_TX_FLOW_CTL_EN;
-	else
+	अन्यथा
 		v &= ~EMAC_TX_FLOW_CTL_EN;
-	writel(v, ioaddr + EMAC_TX_FLOW_CTL);
-}
+	ग_लिखोl(v, ioaddr + EMAC_TX_FLOW_CTL);
+पूर्ण
 
-static int sun8i_dwmac_reset(struct stmmac_priv *priv)
-{
+अटल पूर्णांक sun8i_dwmac_reset(काष्ठा sपंचांगmac_priv *priv)
+अणु
 	u32 v;
-	int err;
+	पूर्णांक err;
 
-	v = readl(priv->ioaddr + EMAC_BASIC_CTL1);
-	writel(v | 0x01, priv->ioaddr + EMAC_BASIC_CTL1);
+	v = पढ़ोl(priv->ioaddr + EMAC_BASIC_CTL1);
+	ग_लिखोl(v | 0x01, priv->ioaddr + EMAC_BASIC_CTL1);
 
-	/* The timeout was previoulsy set to 10ms, but some board (OrangePI0)
-	 * need more if no cable plugged. 100ms seems OK
+	/* The समयout was previoulsy set to 10ms, but some board (OrangePI0)
+	 * need more अगर no cable plugged. 100ms seems OK
 	 */
-	err = readl_poll_timeout(priv->ioaddr + EMAC_BASIC_CTL1, v,
+	err = पढ़ोl_poll_समयout(priv->ioaddr + EMAC_BASIC_CTL1, v,
 				 !(v & 0x01), 100, 100000);
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(priv->device, "EMAC reset timeout\n");
-		return -EFAULT;
-	}
-	return 0;
-}
+		वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Search in mdio-mux node for internal PHY node and get its clk/reset */
-static int get_ephy_nodes(struct stmmac_priv *priv)
-{
-	struct sunxi_priv_data *gmac = priv->plat->bsp_priv;
-	struct device_node *mdio_mux, *iphynode;
-	struct device_node *mdio_internal;
-	int ret;
+/* Search in mdio-mux node क्रम पूर्णांकernal PHY node and get its clk/reset */
+अटल पूर्णांक get_ephy_nodes(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	काष्ठा sunxi_priv_data *gmac = priv->plat->bsp_priv;
+	काष्ठा device_node *mdio_mux, *iphynode;
+	काष्ठा device_node *mdio_पूर्णांकernal;
+	पूर्णांक ret;
 
 	mdio_mux = of_get_child_by_name(priv->device->of_node, "mdio-mux");
-	if (!mdio_mux) {
+	अगर (!mdio_mux) अणु
 		dev_err(priv->device, "Cannot get mdio-mux node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	mdio_internal = of_get_compatible_child(mdio_mux,
+	mdio_पूर्णांकernal = of_get_compatible_child(mdio_mux,
 						"allwinner,sun8i-h3-mdio-internal");
 	of_node_put(mdio_mux);
-	if (!mdio_internal) {
+	अगर (!mdio_पूर्णांकernal) अणु
 		dev_err(priv->device, "Cannot get internal_mdio node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Seek for internal PHY */
-	for_each_child_of_node(mdio_internal, iphynode) {
+	/* Seek क्रम पूर्णांकernal PHY */
+	क्रम_each_child_of_node(mdio_पूर्णांकernal, iphynode) अणु
 		gmac->ephy_clk = of_clk_get(iphynode, 0);
-		if (IS_ERR(gmac->ephy_clk))
-			continue;
-		gmac->rst_ephy = of_reset_control_get_exclusive(iphynode, NULL);
-		if (IS_ERR(gmac->rst_ephy)) {
+		अगर (IS_ERR(gmac->ephy_clk))
+			जारी;
+		gmac->rst_ephy = of_reset_control_get_exclusive(iphynode, शून्य);
+		अगर (IS_ERR(gmac->rst_ephy)) अणु
 			ret = PTR_ERR(gmac->rst_ephy);
-			if (ret == -EPROBE_DEFER) {
+			अगर (ret == -EPROBE_DEFER) अणु
 				of_node_put(iphynode);
-				of_node_put(mdio_internal);
-				return ret;
-			}
-			continue;
-		}
+				of_node_put(mdio_पूर्णांकernal);
+				वापस ret;
+			पूर्ण
+			जारी;
+		पूर्ण
 		dev_info(priv->device, "Found internal PHY node\n");
 		of_node_put(iphynode);
-		of_node_put(mdio_internal);
-		return 0;
-	}
+		of_node_put(mdio_पूर्णांकernal);
+		वापस 0;
+	पूर्ण
 
-	of_node_put(mdio_internal);
-	return -ENODEV;
-}
+	of_node_put(mdio_पूर्णांकernal);
+	वापस -ENODEV;
+पूर्ण
 
-static int sun8i_dwmac_power_internal_phy(struct stmmac_priv *priv)
-{
-	struct sunxi_priv_data *gmac = priv->plat->bsp_priv;
-	int ret;
+अटल पूर्णांक sun8i_dwmac_घातer_पूर्णांकernal_phy(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	काष्ठा sunxi_priv_data *gmac = priv->plat->bsp_priv;
+	पूर्णांक ret;
 
-	if (gmac->internal_phy_powered) {
+	अगर (gmac->पूर्णांकernal_phy_घातered) अणु
 		dev_warn(priv->device, "Internal PHY already powered\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_info(priv->device, "Powering internal PHY\n");
 	ret = clk_prepare_enable(gmac->ephy_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->device, "Cannot enable internal PHY\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Make sure the EPHY is properly reseted, as U-Boot may leave
-	 * it at deasserted state, and thus it may fail to reset EMAC.
+	 * it at deनिश्चितed state, and thus it may fail to reset EMAC.
 	 *
 	 * This assumes the driver has exclusive access to the EPHY reset.
 	 */
 	ret = reset_control_reset(gmac->rst_ephy);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->device, "Cannot reset internal PHY\n");
 		clk_disable_unprepare(gmac->ephy_clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	gmac->internal_phy_powered = true;
+	gmac->पूर्णांकernal_phy_घातered = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sun8i_dwmac_unpower_internal_phy(struct sunxi_priv_data *gmac)
-{
-	if (!gmac->internal_phy_powered)
-		return;
+अटल व्योम sun8i_dwmac_unघातer_पूर्णांकernal_phy(काष्ठा sunxi_priv_data *gmac)
+अणु
+	अगर (!gmac->पूर्णांकernal_phy_घातered)
+		वापस;
 
 	clk_disable_unprepare(gmac->ephy_clk);
-	reset_control_assert(gmac->rst_ephy);
-	gmac->internal_phy_powered = false;
-}
+	reset_control_निश्चित(gmac->rst_ephy);
+	gmac->पूर्णांकernal_phy_घातered = false;
+पूर्ण
 
-/* MDIO multiplexing switch function
+/* MDIO multiplexing चयन function
  * This function is called by the mdio-mux layer when it thinks the mdio bus
- * multiplexer needs to switch.
- * 'current_child' is the current value of the mux register
+ * multiplexer needs to चयन.
+ * 'current_child' is the current value of the mux रेजिस्टर
  * 'desired_child' is the value of the 'reg' property of the target child MDIO
  * node.
- * The first time this function is called, current_child == -1.
- * If current_child == desired_child, then the mux is already set to the
+ * The first समय this function is called, current_child == -1.
+ * If current_child == desired_child, then the mux is alपढ़ोy set to the
  * correct bus.
  */
-static int mdio_mux_syscon_switch_fn(int current_child, int desired_child,
-				     void *data)
-{
-	struct stmmac_priv *priv = data;
-	struct sunxi_priv_data *gmac = priv->plat->bsp_priv;
+अटल पूर्णांक mdio_mux_syscon_चयन_fn(पूर्णांक current_child, पूर्णांक desired_child,
+				     व्योम *data)
+अणु
+	काष्ठा sपंचांगmac_priv *priv = data;
+	काष्ठा sunxi_priv_data *gmac = priv->plat->bsp_priv;
 	u32 reg, val;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (current_child ^ desired_child) {
-		regmap_field_read(gmac->regmap_field, &reg);
-		switch (desired_child) {
-		case DWMAC_SUN8I_MDIO_MUX_INTERNAL_ID:
+	अगर (current_child ^ desired_child) अणु
+		regmap_field_पढ़ो(gmac->regmap_field, &reg);
+		चयन (desired_child) अणु
+		हाल DWMAC_SUN8I_MDIO_MUX_INTERNAL_ID:
 			dev_info(priv->device, "Switch mux to internal PHY");
 			val = (reg & ~H3_EPHY_MUX_MASK) | H3_EPHY_SELECT;
-			gmac->use_internal_phy = true;
-			break;
-		case DWMAC_SUN8I_MDIO_MUX_EXTERNAL_ID:
+			gmac->use_पूर्णांकernal_phy = true;
+			अवरोध;
+		हाल DWMAC_SUN8I_MDIO_MUX_EXTERNAL_ID:
 			dev_info(priv->device, "Switch mux to external PHY");
 			val = (reg & ~H3_EPHY_MUX_MASK) | H3_EPHY_SHUTDOWN;
-			gmac->use_internal_phy = false;
-			break;
-		default:
+			gmac->use_पूर्णांकernal_phy = false;
+			अवरोध;
+		शेष:
 			dev_err(priv->device, "Invalid child ID %x\n",
 				desired_child);
-			return -EINVAL;
-		}
-		regmap_field_write(gmac->regmap_field, val);
-		if (gmac->use_internal_phy) {
-			ret = sun8i_dwmac_power_internal_phy(priv);
-			if (ret)
-				return ret;
-		} else {
-			sun8i_dwmac_unpower_internal_phy(gmac);
-		}
+			वापस -EINVAL;
+		पूर्ण
+		regmap_field_ग_लिखो(gmac->regmap_field, val);
+		अगर (gmac->use_पूर्णांकernal_phy) अणु
+			ret = sun8i_dwmac_घातer_पूर्णांकernal_phy(priv);
+			अगर (ret)
+				वापस ret;
+		पूर्ण अन्यथा अणु
+			sun8i_dwmac_unघातer_पूर्णांकernal_phy(gmac);
+		पूर्ण
 		/* After changing syscon value, the MAC need reset or it will
 		 * use the last value (and so the last PHY set).
 		 */
 		ret = sun8i_dwmac_reset(priv);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int sun8i_dwmac_register_mdio_mux(struct stmmac_priv *priv)
-{
-	int ret;
-	struct device_node *mdio_mux;
-	struct sunxi_priv_data *gmac = priv->plat->bsp_priv;
+अटल पूर्णांक sun8i_dwmac_रेजिस्टर_mdio_mux(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	पूर्णांक ret;
+	काष्ठा device_node *mdio_mux;
+	काष्ठा sunxi_priv_data *gmac = priv->plat->bsp_priv;
 
 	mdio_mux = of_get_child_by_name(priv->device->of_node, "mdio-mux");
-	if (!mdio_mux)
-		return -ENODEV;
+	अगर (!mdio_mux)
+		वापस -ENODEV;
 
-	ret = mdio_mux_init(priv->device, mdio_mux, mdio_mux_syscon_switch_fn,
+	ret = mdio_mux_init(priv->device, mdio_mux, mdio_mux_syscon_चयन_fn,
 			    &gmac->mux_handle, priv, priv->mii);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sun8i_dwmac_set_syscon(struct device *dev,
-				  struct plat_stmmacenet_data *plat)
-{
-	struct sunxi_priv_data *gmac = plat->bsp_priv;
-	struct device_node *node = dev->of_node;
-	int ret;
+अटल पूर्णांक sun8i_dwmac_set_syscon(काष्ठा device *dev,
+				  काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	काष्ठा sunxi_priv_data *gmac = plat->bsp_priv;
+	काष्ठा device_node *node = dev->of_node;
+	पूर्णांक ret;
 	u32 reg, val;
 
-	ret = regmap_field_read(gmac->regmap_field, &val);
-	if (ret) {
+	ret = regmap_field_पढ़ो(gmac->regmap_field, &val);
+	अगर (ret) अणु
 		dev_err(dev, "Fail to read from regmap field.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	reg = gmac->variant->default_syscon_value;
-	if (reg != val)
+	reg = gmac->variant->शेष_syscon_value;
+	अगर (reg != val)
 		dev_warn(dev,
 			 "Current syscon value is not the default %x (expect %x)\n",
 			 val, reg);
 
-	if (gmac->variant->soc_has_internal_phy) {
-		if (of_property_read_bool(node, "allwinner,leds-active-low"))
+	अगर (gmac->variant->soc_has_पूर्णांकernal_phy) अणु
+		अगर (of_property_पढ़ो_bool(node, "allwinner,leds-active-low"))
 			reg |= H3_EPHY_LED_POL;
-		else
+		अन्यथा
 			reg &= ~H3_EPHY_LED_POL;
 
 		/* Force EPHY xtal frequency to 24MHz. */
 		reg |= H3_EPHY_CLK_SEL;
 
 		ret = of_mdio_parse_addr(dev, plat->phy_node);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "Could not parse MDIO addr\n");
-			return ret;
-		}
-		/* of_mdio_parse_addr returns a valid (0 ~ 31) PHY
+			वापस ret;
+		पूर्ण
+		/* of_mdio_parse_addr वापसs a valid (0 ~ 31) PHY
 		 * address. No need to mask it again.
 		 */
 		reg |= 1 << H3_EPHY_ADDR_SHIFT;
-	} else {
-		/* For SoCs without internal PHY the PHY selection bit should be
-		 * set to 0 (external PHY).
+	पूर्ण अन्यथा अणु
+		/* For SoCs without पूर्णांकernal PHY the PHY selection bit should be
+		 * set to 0 (बाह्यal PHY).
 		 */
 		reg &= ~H3_EPHY_SELECT;
-	}
+	पूर्ण
 
-	if (!of_property_read_u32(node, "allwinner,tx-delay-ps", &val)) {
-		if (val % 100) {
+	अगर (!of_property_पढ़ो_u32(node, "allwinner,tx-delay-ps", &val)) अणु
+		अगर (val % 100) अणु
 			dev_err(dev, "tx-delay must be a multiple of 100\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		val /= 100;
 		dev_dbg(dev, "set tx-delay to %x\n", val);
-		if (val <= gmac->variant->tx_delay_max) {
+		अगर (val <= gmac->variant->tx_delay_max) अणु
 			reg &= ~(gmac->variant->tx_delay_max <<
 				 SYSCON_ETXDC_SHIFT);
 			reg |= (val << SYSCON_ETXDC_SHIFT);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "Invalid TX clock delay: %d\n",
 				val);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (!of_property_read_u32(node, "allwinner,rx-delay-ps", &val)) {
-		if (val % 100) {
+	अगर (!of_property_पढ़ो_u32(node, "allwinner,rx-delay-ps", &val)) अणु
+		अगर (val % 100) अणु
 			dev_err(dev, "rx-delay must be a multiple of 100\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		val /= 100;
 		dev_dbg(dev, "set rx-delay to %x\n", val);
-		if (val <= gmac->variant->rx_delay_max) {
+		अगर (val <= gmac->variant->rx_delay_max) अणु
 			reg &= ~(gmac->variant->rx_delay_max <<
 				 SYSCON_ERXDC_SHIFT);
 			reg |= (val << SYSCON_ERXDC_SHIFT);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "Invalid RX clock delay: %d\n",
 				val);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* Clear interface mode bits */
+	/* Clear पूर्णांकerface mode bits */
 	reg &= ~(SYSCON_ETCS_MASK | SYSCON_EPIT);
-	if (gmac->variant->support_rmii)
+	अगर (gmac->variant->support_rmii)
 		reg &= ~SYSCON_RMII_EN;
 
-	switch (plat->interface) {
-	case PHY_INTERFACE_MODE_MII:
-		/* default */
-		break;
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
+	चयन (plat->पूर्णांकerface) अणु
+	हाल PHY_INTERFACE_MODE_MII:
+		/* शेष */
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
 		reg |= SYSCON_EPIT | SYSCON_ETCS_INT_GMII;
-		break;
-	case PHY_INTERFACE_MODE_RMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RMII:
 		reg |= SYSCON_RMII_EN | SYSCON_ETCS_EXT_GMII;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "Unsupported interface mode: %s",
-			phy_modes(plat->interface));
-		return -EINVAL;
-	}
+			phy_modes(plat->पूर्णांकerface));
+		वापस -EINVAL;
+	पूर्ण
 
-	regmap_field_write(gmac->regmap_field, reg);
+	regmap_field_ग_लिखो(gmac->regmap_field, reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sun8i_dwmac_unset_syscon(struct sunxi_priv_data *gmac)
-{
-	u32 reg = gmac->variant->default_syscon_value;
+अटल व्योम sun8i_dwmac_unset_syscon(काष्ठा sunxi_priv_data *gmac)
+अणु
+	u32 reg = gmac->variant->शेष_syscon_value;
 
-	regmap_field_write(gmac->regmap_field, reg);
-}
+	regmap_field_ग_लिखो(gmac->regmap_field, reg);
+पूर्ण
 
-static void sun8i_dwmac_exit(struct platform_device *pdev, void *priv)
-{
-	struct sunxi_priv_data *gmac = priv;
+अटल व्योम sun8i_dwmac_निकास(काष्ठा platक्रमm_device *pdev, व्योम *priv)
+अणु
+	काष्ठा sunxi_priv_data *gmac = priv;
 
-	if (gmac->variant->soc_has_internal_phy)
-		sun8i_dwmac_unpower_internal_phy(gmac);
+	अगर (gmac->variant->soc_has_पूर्णांकernal_phy)
+		sun8i_dwmac_unघातer_पूर्णांकernal_phy(gmac);
 
 	clk_disable_unprepare(gmac->tx_clk);
 
-	if (gmac->regulator)
+	अगर (gmac->regulator)
 		regulator_disable(gmac->regulator);
-}
+पूर्ण
 
-static void sun8i_dwmac_set_mac_loopback(void __iomem *ioaddr, bool enable)
-{
-	u32 value = readl(ioaddr + EMAC_BASIC_CTL0);
+अटल व्योम sun8i_dwmac_set_mac_loopback(व्योम __iomem *ioaddr, bool enable)
+अणु
+	u32 value = पढ़ोl(ioaddr + EMAC_BASIC_CTL0);
 
-	if (enable)
+	अगर (enable)
 		value |= EMAC_LOOPBACK;
-	else
+	अन्यथा
 		value &= ~EMAC_LOOPBACK;
 
-	writel(value, ioaddr + EMAC_BASIC_CTL0);
-}
+	ग_लिखोl(value, ioaddr + EMAC_BASIC_CTL0);
+पूर्ण
 
-static const struct stmmac_ops sun8i_dwmac_ops = {
+अटल स्थिर काष्ठा sपंचांगmac_ops sun8i_dwmac_ops = अणु
 	.core_init = sun8i_dwmac_core_init,
 	.set_mac = sun8i_dwmac_set_mac,
 	.dump_regs = sun8i_dwmac_dump_mac_regs,
@@ -1071,16 +1072,16 @@ static const struct stmmac_ops sun8i_dwmac_ops = {
 	.set_umac_addr = sun8i_dwmac_set_umac_addr,
 	.get_umac_addr = sun8i_dwmac_get_umac_addr,
 	.set_mac_loopback = sun8i_dwmac_set_mac_loopback,
-};
+पूर्ण;
 
-static struct mac_device_info *sun8i_dwmac_setup(void *ppriv)
-{
-	struct mac_device_info *mac;
-	struct stmmac_priv *priv = ppriv;
+अटल काष्ठा mac_device_info *sun8i_dwmac_setup(व्योम *ppriv)
+अणु
+	काष्ठा mac_device_info *mac;
+	काष्ठा sपंचांगmac_priv *priv = ppriv;
 
-	mac = devm_kzalloc(priv->device, sizeof(*mac), GFP_KERNEL);
-	if (!mac)
-		return NULL;
+	mac = devm_kzalloc(priv->device, माप(*mac), GFP_KERNEL);
+	अगर (!mac)
+		वापस शून्य;
 
 	mac->pcsr = priv->ioaddr;
 	mac->mac = &sun8i_dwmac_ops;
@@ -1089,7 +1090,7 @@ static struct mac_device_info *sun8i_dwmac_setup(void *ppriv)
 	priv->dev->priv_flags |= IFF_UNICAST_FLT;
 
 	/* The loopback bit seems to be re-set when link change
-	 * Simply mask it each time
+	 * Simply mask it each समय
 	 * Speed 10/100/1000 are set in BIT(2)/BIT(3)
 	 */
 	mac->link.speed_mask = GENMASK(3, 2) | EMAC_LOOPBACK;
@@ -1099,252 +1100,252 @@ static struct mac_device_info *sun8i_dwmac_setup(void *ppriv)
 	mac->link.duplex = EMAC_DUPLEX_FULL;
 	mac->mii.addr = EMAC_MDIO_CMD;
 	mac->mii.data = EMAC_MDIO_DATA;
-	mac->mii.reg_shift = 4;
+	mac->mii.reg_shअगरt = 4;
 	mac->mii.reg_mask = GENMASK(8, 4);
-	mac->mii.addr_shift = 12;
+	mac->mii.addr_shअगरt = 12;
 	mac->mii.addr_mask = GENMASK(16, 12);
-	mac->mii.clk_csr_shift = 20;
+	mac->mii.clk_csr_shअगरt = 20;
 	mac->mii.clk_csr_mask = GENMASK(22, 20);
 	mac->unicast_filter_entries = 8;
 
 	/* Synopsys Id is not available */
 	priv->synopsys_id = 0;
 
-	return mac;
-}
+	वापस mac;
+पूर्ण
 
-static struct regmap *sun8i_dwmac_get_syscon_from_dev(struct device_node *node)
-{
-	struct device_node *syscon_node;
-	struct platform_device *syscon_pdev;
-	struct regmap *regmap = NULL;
+अटल काष्ठा regmap *sun8i_dwmac_get_syscon_from_dev(काष्ठा device_node *node)
+अणु
+	काष्ठा device_node *syscon_node;
+	काष्ठा platक्रमm_device *syscon_pdev;
+	काष्ठा regmap *regmap = शून्य;
 
 	syscon_node = of_parse_phandle(node, "syscon", 0);
-	if (!syscon_node)
-		return ERR_PTR(-ENODEV);
+	अगर (!syscon_node)
+		वापस ERR_PTR(-ENODEV);
 
 	syscon_pdev = of_find_device_by_node(syscon_node);
-	if (!syscon_pdev) {
-		/* platform device might not be probed yet */
+	अगर (!syscon_pdev) अणु
+		/* platक्रमm device might not be probed yet */
 		regmap = ERR_PTR(-EPROBE_DEFER);
-		goto out_put_node;
-	}
+		जाओ out_put_node;
+	पूर्ण
 
 	/* If no regmap is found then the other device driver is at fault */
-	regmap = dev_get_regmap(&syscon_pdev->dev, NULL);
-	if (!regmap)
+	regmap = dev_get_regmap(&syscon_pdev->dev, शून्य);
+	अगर (!regmap)
 		regmap = ERR_PTR(-EINVAL);
 
-	platform_device_put(syscon_pdev);
+	platक्रमm_device_put(syscon_pdev);
 out_put_node:
 	of_node_put(syscon_node);
-	return regmap;
-}
+	वापस regmap;
+पूर्ण
 
-static int sun8i_dwmac_probe(struct platform_device *pdev)
-{
-	struct plat_stmmacenet_data *plat_dat;
-	struct stmmac_resources stmmac_res;
-	struct sunxi_priv_data *gmac;
-	struct device *dev = &pdev->dev;
-	phy_interface_t interface;
-	int ret;
-	struct stmmac_priv *priv;
-	struct net_device *ndev;
-	struct regmap *regmap;
+अटल पूर्णांक sun8i_dwmac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा plat_sपंचांगmacenet_data *plat_dat;
+	काष्ठा sपंचांगmac_resources sपंचांगmac_res;
+	काष्ठा sunxi_priv_data *gmac;
+	काष्ठा device *dev = &pdev->dev;
+	phy_पूर्णांकerface_t पूर्णांकerface;
+	पूर्णांक ret;
+	काष्ठा sपंचांगmac_priv *priv;
+	काष्ठा net_device *ndev;
+	काष्ठा regmap *regmap;
 
-	ret = stmmac_get_platform_resources(pdev, &stmmac_res);
-	if (ret)
-		return ret;
+	ret = sपंचांगmac_get_platक्रमm_resources(pdev, &sपंचांगmac_res);
+	अगर (ret)
+		वापस ret;
 
-	gmac = devm_kzalloc(dev, sizeof(*gmac), GFP_KERNEL);
-	if (!gmac)
-		return -ENOMEM;
+	gmac = devm_kzalloc(dev, माप(*gmac), GFP_KERNEL);
+	अगर (!gmac)
+		वापस -ENOMEM;
 
 	gmac->variant = of_device_get_match_data(&pdev->dev);
-	if (!gmac->variant) {
+	अगर (!gmac->variant) अणु
 		dev_err(&pdev->dev, "Missing dwmac-sun8i variant\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	gmac->tx_clk = devm_clk_get(dev, "stmmaceth");
-	if (IS_ERR(gmac->tx_clk)) {
+	अगर (IS_ERR(gmac->tx_clk)) अणु
 		dev_err(dev, "Could not get TX clock\n");
-		return PTR_ERR(gmac->tx_clk);
-	}
+		वापस PTR_ERR(gmac->tx_clk);
+	पूर्ण
 
-	/* Optional regulator for PHY */
+	/* Optional regulator क्रम PHY */
 	gmac->regulator = devm_regulator_get_optional(dev, "phy");
-	if (IS_ERR(gmac->regulator)) {
-		if (PTR_ERR(gmac->regulator) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+	अगर (IS_ERR(gmac->regulator)) अणु
+		अगर (PTR_ERR(gmac->regulator) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 		dev_info(dev, "No regulator found\n");
-		gmac->regulator = NULL;
-	}
+		gmac->regulator = शून्य;
+	पूर्ण
 
-	/* The "GMAC clock control" register might be located in the
-	 * CCU address range (on the R40), or the system control address
+	/* The "GMAC clock control" रेजिस्टर might be located in the
+	 * CCU address range (on the R40), or the प्रणाली control address
 	 * range (on most other sun8i and later SoCs).
 	 *
-	 * The former controls most if not all clocks in the SoC. The
-	 * latter has an SoC identification register, and on some SoCs,
-	 * controls to map device specific SRAM to either the intended
+	 * The क्रमmer controls most अगर not all घड़ीs in the SoC. The
+	 * latter has an SoC identअगरication रेजिस्टर, and on some SoCs,
+	 * controls to map device specअगरic SRAM to either the पूर्णांकended
 	 * peripheral, or the CPU address space.
 	 *
-	 * In either case, there should be a coordinated and restricted
-	 * method of accessing the register needed here. This is done by
+	 * In either हाल, there should be a coordinated and restricted
+	 * method of accessing the रेजिस्टर needed here. This is करोne by
 	 * having the device export a custom regmap, instead of a generic
-	 * syscon, which grants all access to all registers.
+	 * syscon, which grants all access to all रेजिस्टरs.
 	 *
 	 * To support old device trees, we fall back to using the syscon
-	 * interface if possible.
+	 * पूर्णांकerface अगर possible.
 	 */
 	regmap = sun8i_dwmac_get_syscon_from_dev(pdev->dev.of_node);
-	if (IS_ERR(regmap))
+	अगर (IS_ERR(regmap))
 		regmap = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
 							 "syscon");
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		ret = PTR_ERR(regmap);
 		dev_err(&pdev->dev, "Unable to map syscon: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	gmac->regmap_field = devm_regmap_field_alloc(dev, regmap,
 						     *gmac->variant->syscon_field);
-	if (IS_ERR(gmac->regmap_field)) {
+	अगर (IS_ERR(gmac->regmap_field)) अणु
 		ret = PTR_ERR(gmac->regmap_field);
 		dev_err(dev, "Unable to map syscon register: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = of_get_phy_mode(dev->of_node, &interface);
-	if (ret)
-		return -EINVAL;
+	ret = of_get_phy_mode(dev->of_node, &पूर्णांकerface);
+	अगर (ret)
+		वापस -EINVAL;
 
-	plat_dat = stmmac_probe_config_dt(pdev, stmmac_res.mac);
-	if (IS_ERR(plat_dat))
-		return PTR_ERR(plat_dat);
+	plat_dat = sपंचांगmac_probe_config_dt(pdev, sपंचांगmac_res.mac);
+	अगर (IS_ERR(plat_dat))
+		वापस PTR_ERR(plat_dat);
 
-	/* platform data specifying hardware features and callbacks.
+	/* platक्रमm data specअगरying hardware features and callbacks.
 	 * hardware features were copied from Allwinner drivers.
 	 */
-	plat_dat->interface = interface;
+	plat_dat->पूर्णांकerface = पूर्णांकerface;
 	plat_dat->rx_coe = STMMAC_RX_COE_TYPE2;
 	plat_dat->tx_coe = 1;
 	plat_dat->has_sun8i = true;
 	plat_dat->bsp_priv = gmac;
 	plat_dat->init = sun8i_dwmac_init;
-	plat_dat->exit = sun8i_dwmac_exit;
+	plat_dat->निकास = sun8i_dwmac_निकास;
 	plat_dat->setup = sun8i_dwmac_setup;
-	plat_dat->tx_fifo_size = 4096;
-	plat_dat->rx_fifo_size = 16384;
+	plat_dat->tx_fअगरo_size = 4096;
+	plat_dat->rx_fअगरo_size = 16384;
 
 	ret = sun8i_dwmac_set_syscon(&pdev->dev, plat_dat);
-	if (ret)
-		goto dwmac_deconfig;
+	अगर (ret)
+		जाओ dwmac_deconfig;
 
 	ret = sun8i_dwmac_init(pdev, plat_dat->bsp_priv);
-	if (ret)
-		goto dwmac_syscon;
+	अगर (ret)
+		जाओ dwmac_syscon;
 
-	ret = stmmac_dvr_probe(&pdev->dev, plat_dat, &stmmac_res);
-	if (ret)
-		goto dwmac_exit;
+	ret = sपंचांगmac_dvr_probe(&pdev->dev, plat_dat, &sपंचांगmac_res);
+	अगर (ret)
+		जाओ dwmac_निकास;
 
 	ndev = dev_get_drvdata(&pdev->dev);
 	priv = netdev_priv(ndev);
 
-	/* The mux must be registered after parent MDIO
-	 * so after stmmac_dvr_probe()
+	/* The mux must be रेजिस्टरed after parent MDIO
+	 * so after sपंचांगmac_dvr_probe()
 	 */
-	if (gmac->variant->soc_has_internal_phy) {
+	अगर (gmac->variant->soc_has_पूर्णांकernal_phy) अणु
 		ret = get_ephy_nodes(priv);
-		if (ret)
-			goto dwmac_remove;
-		ret = sun8i_dwmac_register_mdio_mux(priv);
-		if (ret) {
+		अगर (ret)
+			जाओ dwmac_हटाओ;
+		ret = sun8i_dwmac_रेजिस्टर_mdio_mux(priv);
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "Failed to register mux\n");
-			goto dwmac_mux;
-		}
-	} else {
+			जाओ dwmac_mux;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = sun8i_dwmac_reset(priv);
-		if (ret)
-			goto dwmac_remove;
-	}
+		अगर (ret)
+			जाओ dwmac_हटाओ;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 dwmac_mux:
 	reset_control_put(gmac->rst_ephy);
 	clk_put(gmac->ephy_clk);
-dwmac_remove:
-	stmmac_dvr_remove(&pdev->dev);
-dwmac_exit:
-	sun8i_dwmac_exit(pdev, gmac);
+dwmac_हटाओ:
+	sपंचांगmac_dvr_हटाओ(&pdev->dev);
+dwmac_निकास:
+	sun8i_dwmac_निकास(pdev, gmac);
 dwmac_syscon:
 	sun8i_dwmac_unset_syscon(gmac);
 dwmac_deconfig:
-	stmmac_remove_config_dt(pdev, plat_dat);
+	sपंचांगmac_हटाओ_config_dt(pdev, plat_dat);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sun8i_dwmac_remove(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct sunxi_priv_data *gmac = priv->plat->bsp_priv;
+अटल पूर्णांक sun8i_dwmac_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	काष्ठा sunxi_priv_data *gmac = priv->plat->bsp_priv;
 
-	if (gmac->variant->soc_has_internal_phy) {
+	अगर (gmac->variant->soc_has_पूर्णांकernal_phy) अणु
 		mdio_mux_uninit(gmac->mux_handle);
-		sun8i_dwmac_unpower_internal_phy(gmac);
+		sun8i_dwmac_unघातer_पूर्णांकernal_phy(gmac);
 		reset_control_put(gmac->rst_ephy);
 		clk_put(gmac->ephy_clk);
-	}
+	पूर्ण
 
-	stmmac_pltfr_remove(pdev);
+	sपंचांगmac_pltfr_हटाओ(pdev);
 	sun8i_dwmac_unset_syscon(gmac);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sun8i_dwmac_shutdown(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct sunxi_priv_data *gmac = priv->plat->bsp_priv;
+अटल व्योम sun8i_dwmac_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	काष्ठा sunxi_priv_data *gmac = priv->plat->bsp_priv;
 
-	sun8i_dwmac_exit(pdev, gmac);
-}
+	sun8i_dwmac_निकास(pdev, gmac);
+पूर्ण
 
-static const struct of_device_id sun8i_dwmac_match[] = {
-	{ .compatible = "allwinner,sun8i-h3-emac",
-		.data = &emac_variant_h3 },
-	{ .compatible = "allwinner,sun8i-v3s-emac",
-		.data = &emac_variant_v3s },
-	{ .compatible = "allwinner,sun8i-a83t-emac",
-		.data = &emac_variant_a83t },
-	{ .compatible = "allwinner,sun8i-r40-gmac",
-		.data = &emac_variant_r40 },
-	{ .compatible = "allwinner,sun50i-a64-emac",
-		.data = &emac_variant_a64 },
-	{ .compatible = "allwinner,sun50i-h6-emac",
-		.data = &emac_variant_h6 },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sun8i_dwmac_match[] = अणु
+	अणु .compatible = "allwinner,sun8i-h3-emac",
+		.data = &emac_variant_h3 पूर्ण,
+	अणु .compatible = "allwinner,sun8i-v3s-emac",
+		.data = &emac_variant_v3s पूर्ण,
+	अणु .compatible = "allwinner,sun8i-a83t-emac",
+		.data = &emac_variant_a83t पूर्ण,
+	अणु .compatible = "allwinner,sun8i-r40-gmac",
+		.data = &emac_variant_r40 पूर्ण,
+	अणु .compatible = "allwinner,sun50i-a64-emac",
+		.data = &emac_variant_a64 पूर्ण,
+	अणु .compatible = "allwinner,sun50i-h6-emac",
+		.data = &emac_variant_h6 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sun8i_dwmac_match);
 
-static struct platform_driver sun8i_dwmac_driver = {
+अटल काष्ठा platक्रमm_driver sun8i_dwmac_driver = अणु
 	.probe  = sun8i_dwmac_probe,
-	.remove = sun8i_dwmac_remove,
-	.shutdown = sun8i_dwmac_shutdown,
-	.driver = {
+	.हटाओ = sun8i_dwmac_हटाओ,
+	.shutकरोwn = sun8i_dwmac_shutकरोwn,
+	.driver = अणु
 		.name           = "dwmac-sun8i",
-		.pm		= &stmmac_pltfr_pm_ops,
+		.pm		= &sपंचांगmac_pltfr_pm_ops,
 		.of_match_table = sun8i_dwmac_match,
-	},
-};
-module_platform_driver(sun8i_dwmac_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(sun8i_dwmac_driver);
 
 MODULE_AUTHOR("Corentin Labbe <clabbe.montjoie@gmail.com>");
 MODULE_DESCRIPTION("Allwinner sun8i DWMAC specific glue layer");

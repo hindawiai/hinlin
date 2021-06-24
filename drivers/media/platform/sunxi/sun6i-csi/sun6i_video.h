@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (c) 2011-2018 Magewell Electronics Co., Ltd. (Nanjing)
  * All rights reserved.
  * Author: Yong Deng <yong.deng@magewell.com>
  */
 
-#ifndef __SUN6I_VIDEO_H__
-#define __SUN6I_VIDEO_H__
+#अगर_अघोषित __SUN6I_VIDEO_H__
+#घोषणा __SUN6I_VIDEO_H__
 
-#include <media/v4l2-dev.h>
-#include <media/videobuf2-core.h>
+#समावेश <media/v4l2-dev.h>
+#समावेश <media/videobuf2-core.h>
 
-struct sun6i_csi;
+काष्ठा sun6i_csi;
 
-struct sun6i_video {
-	struct video_device		vdev;
-	struct media_pad		pad;
-	struct sun6i_csi		*csi;
+काष्ठा sun6i_video अणु
+	काष्ठा video_device		vdev;
+	काष्ठा media_pad		pad;
+	काष्ठा sun6i_csi		*csi;
 
-	struct mutex			lock;
+	काष्ठा mutex			lock;
 
-	struct vb2_queue		vb2_vidq;
+	काष्ठा vb2_queue		vb2_vidq;
 	spinlock_t			dma_queue_lock;
-	struct list_head		dma_queue;
+	काष्ठा list_head		dma_queue;
 
-	unsigned int			sequence;
-	struct v4l2_format		fmt;
+	अचिन्हित पूर्णांक			sequence;
+	काष्ठा v4l2_क्रमmat		fmt;
 	u32				mbus_code;
-};
+पूर्ण;
 
-int sun6i_video_init(struct sun6i_video *video, struct sun6i_csi *csi,
-		     const char *name);
-void sun6i_video_cleanup(struct sun6i_video *video);
+पूर्णांक sun6i_video_init(काष्ठा sun6i_video *video, काष्ठा sun6i_csi *csi,
+		     स्थिर अक्षर *name);
+व्योम sun6i_video_cleanup(काष्ठा sun6i_video *video);
 
-void sun6i_video_frame_done(struct sun6i_video *video);
+व्योम sun6i_video_frame_करोne(काष्ठा sun6i_video *video);
 
-#endif /* __SUN6I_VIDEO_H__ */
+#पूर्ण_अगर /* __SUN6I_VIDEO_H__ */

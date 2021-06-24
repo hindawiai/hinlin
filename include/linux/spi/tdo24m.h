@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __TDO24M_H__
-#define __TDO24M_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __TDO24M_H__
+#घोषणा __TDO24M_H__
 
-enum tdo24m_model {
+क्रमागत tकरो24m_model अणु
 	TDO24M,
 	TDO35S,
-};
+पूर्ण;
 
-struct tdo24m_platform_data {
-	enum tdo24m_model model;
-};
+काष्ठा tकरो24m_platक्रमm_data अणु
+	क्रमागत tकरो24m_model model;
+पूर्ण;
 
-#endif /* __TDO24M_H__ */
+#पूर्ण_अगर /* __TDO24M_H__ */

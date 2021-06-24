@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Export of symbols defined in assembly files and/or libgcc.
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/dma-mapping.h>
-#include <asm/hexagon_vm.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <यंत्र/hexagon_vm.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
 
 /* Additional functions */
 EXPORT_SYMBOL(__clear_user_hexagon);
@@ -21,22 +22,22 @@ EXPORT_SYMBOL(__vmsetie);
 EXPORT_SYMBOL(__vmyield);
 EXPORT_SYMBOL(empty_zero_page);
 EXPORT_SYMBOL(ioremap);
-EXPORT_SYMBOL(memcpy);
-EXPORT_SYMBOL(memset);
+EXPORT_SYMBOL(स_नकल);
+EXPORT_SYMBOL(स_रखो);
 
 /* Additional variables */
 EXPORT_SYMBOL(__phys_offset);
 EXPORT_SYMBOL(_dflt_cache_att);
 
-#define DECLARE_EXPORT(name)     \
-	extern void name(void); EXPORT_SYMBOL(name)
+#घोषणा DECLARE_EXPORT(name)     \
+	बाह्य व्योम name(व्योम); EXPORT_SYMBOL(name)
 
 /* Symbols found in libgcc that assorted kernel modules need */
-DECLARE_EXPORT(__hexagon_memcpy_likely_aligned_min32bytes_mult8bytes);
+DECLARE_EXPORT(__hexagon_स_नकल_likely_aligned_min32bytes_mult8bytes);
 
 /* Additional functions */
-DECLARE_EXPORT(__hexagon_divsi3);
+DECLARE_EXPORT(__hexagon_भागsi3);
 DECLARE_EXPORT(__hexagon_modsi3);
-DECLARE_EXPORT(__hexagon_udivsi3);
+DECLARE_EXPORT(__hexagon_uभागsi3);
 DECLARE_EXPORT(__hexagon_umodsi3);
 DECLARE_EXPORT(csum_tcpudp_magic);

@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  */
 
-#include <linux/string.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/scatterlist.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/scatterlist.h>
 
-#include "usbip_common.h"
-#include "stub.h"
+#समावेश "usbip_common.h"
+#समावेश "stub.h"
 
-#define DRIVER_AUTHOR "Takahiro Hirofuchi"
-#define DRIVER_DESC "USB/IP Host Driver"
+#घोषणा DRIVER_AUTHOR "Takahiro Hirofuchi"
+#घोषणा DRIVER_DESC "USB/IP Host Driver"
 
-struct kmem_cache *stub_priv_cache;
+काष्ठा kmem_cache *stub_priv_cache;
 
 /*
  * busid_tables defines matching busids that usbip can grab. A user can change
  * dynamically what device is locally used and what device is exported to a
  * remote host.
  */
-#define MAX_BUSID 16
-static struct bus_id_priv busid_table[MAX_BUSID];
-static DEFINE_SPINLOCK(busid_table_lock);
+#घोषणा MAX_BUSID 16
+अटल काष्ठा bus_id_priv busid_table[MAX_BUSID];
+अटल DEFINE_SPINLOCK(busid_table_lock);
 
-static void init_busid_table(void)
-{
-	int i;
+अटल व्योम init_busid_table(व्योम)
+अणु
+	पूर्णांक i;
 
 	/*
 	 * This also sets the bus_table[i].status to
 	 * STUB_BUSID_OTHER, which is 0.
 	 */
-	memset(busid_table, 0, sizeof(busid_table));
+	स_रखो(busid_table, 0, माप(busid_table));
 
-	for (i = 0; i < MAX_BUSID; i++)
+	क्रम (i = 0; i < MAX_BUSID; i++)
 		spin_lock_init(&busid_table[i].busid_lock);
-}
+पूर्ण
 
 /*
  * Find the index of the busid by name.
  * Must be called with busid_table_lock held.
  */
-static int get_busid_idx(const char *busid)
-{
-	int i;
-	int idx = -1;
+अटल पूर्णांक get_busid_idx(स्थिर अक्षर *busid)
+अणु
+	पूर्णांक i;
+	पूर्णांक idx = -1;
 
-	for (i = 0; i < MAX_BUSID; i++) {
+	क्रम (i = 0; i < MAX_BUSID; i++) अणु
 		spin_lock(&busid_table[i].busid_lock);
-		if (busid_table[i].name[0])
-			if (!strncmp(busid_table[i].name, busid, BUSID_SIZE)) {
+		अगर (busid_table[i].name[0])
+			अगर (!म_भेदन(busid_table[i].name, busid, BUSID_SIZE)) अणु
 				idx = i;
 				spin_unlock(&busid_table[i].busid_lock);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 		spin_unlock(&busid_table[i].busid_lock);
-	}
-	return idx;
-}
+	पूर्ण
+	वापस idx;
+पूर्ण
 
 /* Returns holding busid_lock. Should call put_busid_priv() to unlock */
-struct bus_id_priv *get_busid_priv(const char *busid)
-{
-	int idx;
-	struct bus_id_priv *bid = NULL;
+काष्ठा bus_id_priv *get_busid_priv(स्थिर अक्षर *busid)
+अणु
+	पूर्णांक idx;
+	काष्ठा bus_id_priv *bid = शून्य;
 
 	spin_lock(&busid_table_lock);
 	idx = get_busid_idx(busid);
-	if (idx >= 0) {
+	अगर (idx >= 0) अणु
 		bid = &(busid_table[idx]);
-		/* get busid_lock before returning */
+		/* get busid_lock beक्रमe वापसing */
 		spin_lock(&bid->busid_lock);
-	}
+	पूर्ण
 	spin_unlock(&busid_table_lock);
 
-	return bid;
-}
+	वापस bid;
+पूर्ण
 
-void put_busid_priv(struct bus_id_priv *bid)
-{
-	if (bid)
+व्योम put_busid_priv(काष्ठा bus_id_priv *bid)
+अणु
+	अगर (bid)
 		spin_unlock(&bid->busid_lock);
-}
+पूर्ण
 
-static int add_match_busid(char *busid)
-{
-	int i;
-	int ret = -1;
+अटल पूर्णांक add_match_busid(अक्षर *busid)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret = -1;
 
 	spin_lock(&busid_table_lock);
-	/* already registered? */
-	if (get_busid_idx(busid) >= 0) {
+	/* alपढ़ोy रेजिस्टरed? */
+	अगर (get_busid_idx(busid) >= 0) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < MAX_BUSID; i++) {
+	क्रम (i = 0; i < MAX_BUSID; i++) अणु
 		spin_lock(&busid_table[i].busid_lock);
-		if (!busid_table[i].name[0]) {
+		अगर (!busid_table[i].name[0]) अणु
 			strlcpy(busid_table[i].name, busid, BUSID_SIZE);
-			if ((busid_table[i].status != STUB_BUSID_ALLOC) &&
+			अगर ((busid_table[i].status != STUB_BUSID_ALLOC) &&
 			    (busid_table[i].status != STUB_BUSID_REMOV))
 				busid_table[i].status = STUB_BUSID_ADDED;
 			ret = 0;
 			spin_unlock(&busid_table[i].busid_lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		spin_unlock(&busid_table[i].busid_lock);
-	}
+	पूर्ण
 
 out:
 	spin_unlock(&busid_table_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int del_match_busid(char *busid)
-{
-	int idx;
-	int ret = -1;
+पूर्णांक del_match_busid(अक्षर *busid)
+अणु
+	पूर्णांक idx;
+	पूर्णांक ret = -1;
 
 	spin_lock(&busid_table_lock);
 	idx = get_busid_idx(busid);
-	if (idx < 0)
-		goto out;
+	अगर (idx < 0)
+		जाओ out;
 
 	/* found */
 	ret = 0;
 
 	spin_lock(&busid_table[idx].busid_lock);
 
-	if (busid_table[idx].status == STUB_BUSID_OTHER)
-		memset(busid_table[idx].name, 0, BUSID_SIZE);
+	अगर (busid_table[idx].status == STUB_BUSID_OTHER)
+		स_रखो(busid_table[idx].name, 0, BUSID_SIZE);
 
-	if ((busid_table[idx].status != STUB_BUSID_OTHER) &&
+	अगर ((busid_table[idx].status != STUB_BUSID_OTHER) &&
 	    (busid_table[idx].status != STUB_BUSID_ADDED))
 		busid_table[idx].status = STUB_BUSID_REMOV;
 
@@ -143,287 +144,287 @@ int del_match_busid(char *busid)
 out:
 	spin_unlock(&busid_table_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t match_busid_show(struct device_driver *drv, char *buf)
-{
-	int i;
-	char *out = buf;
+अटल sमाप_प्रकार match_busid_show(काष्ठा device_driver *drv, अक्षर *buf)
+अणु
+	पूर्णांक i;
+	अक्षर *out = buf;
 
 	spin_lock(&busid_table_lock);
-	for (i = 0; i < MAX_BUSID; i++) {
+	क्रम (i = 0; i < MAX_BUSID; i++) अणु
 		spin_lock(&busid_table[i].busid_lock);
-		if (busid_table[i].name[0])
-			out += sprintf(out, "%s ", busid_table[i].name);
+		अगर (busid_table[i].name[0])
+			out += प्र_लिखो(out, "%s ", busid_table[i].name);
 		spin_unlock(&busid_table[i].busid_lock);
-	}
+	पूर्ण
 	spin_unlock(&busid_table_lock);
-	out += sprintf(out, "\n");
+	out += प्र_लिखो(out, "\n");
 
-	return out - buf;
-}
+	वापस out - buf;
+पूर्ण
 
-static ssize_t match_busid_store(struct device_driver *dev, const char *buf,
-				 size_t count)
-{
-	int len;
-	char busid[BUSID_SIZE];
+अटल sमाप_प्रकार match_busid_store(काष्ठा device_driver *dev, स्थिर अक्षर *buf,
+				 माप_प्रकार count)
+अणु
+	पूर्णांक len;
+	अक्षर busid[BUSID_SIZE];
 
-	if (count < 5)
-		return -EINVAL;
+	अगर (count < 5)
+		वापस -EINVAL;
 
 	/* busid needs to include \0 termination */
 	len = strlcpy(busid, buf + 4, BUSID_SIZE);
-	if (sizeof(busid) <= len)
-		return -EINVAL;
+	अगर (माप(busid) <= len)
+		वापस -EINVAL;
 
-	if (!strncmp(buf, "add ", 4)) {
-		if (add_match_busid(busid) < 0)
-			return -ENOMEM;
+	अगर (!म_भेदन(buf, "add ", 4)) अणु
+		अगर (add_match_busid(busid) < 0)
+			वापस -ENOMEM;
 
 		pr_debug("add busid %s\n", busid);
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	if (!strncmp(buf, "del ", 4)) {
-		if (del_match_busid(busid) < 0)
-			return -ENODEV;
+	अगर (!म_भेदन(buf, "del ", 4)) अणु
+		अगर (del_match_busid(busid) < 0)
+			वापस -ENODEV;
 
 		pr_debug("del busid %s\n", busid);
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	return -EINVAL;
-}
-static DRIVER_ATTR_RW(match_busid);
+	वापस -EINVAL;
+पूर्ण
+अटल DRIVER_ATTR_RW(match_busid);
 
-static int do_rebind(char *busid, struct bus_id_priv *busid_priv)
-{
-	int ret = 0;
+अटल पूर्णांक करो_rebind(अक्षर *busid, काष्ठा bus_id_priv *busid_priv)
+अणु
+	पूर्णांक ret = 0;
 
-	/* device_attach() callers should hold parent lock for USB */
-	if (busid_priv->udev->dev.parent)
+	/* device_attach() callers should hold parent lock क्रम USB */
+	अगर (busid_priv->udev->dev.parent)
 		device_lock(busid_priv->udev->dev.parent);
 	ret = device_attach(&busid_priv->udev->dev);
-	if (busid_priv->udev->dev.parent)
+	अगर (busid_priv->udev->dev.parent)
 		device_unlock(busid_priv->udev->dev.parent);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&busid_priv->udev->dev, "rebind failed\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void stub_device_rebind(void)
-{
-#if IS_MODULE(CONFIG_USBIP_HOST)
-	struct bus_id_priv *busid_priv;
-	int i;
+अटल व्योम stub_device_rebind(व्योम)
+अणु
+#अगर IS_MODULE(CONFIG_USBIP_HOST)
+	काष्ठा bus_id_priv *busid_priv;
+	पूर्णांक i;
 
 	/* update status to STUB_BUSID_OTHER so probe ignores the device */
 	spin_lock(&busid_table_lock);
-	for (i = 0; i < MAX_BUSID; i++) {
-		if (busid_table[i].name[0] &&
-		    busid_table[i].shutdown_busid) {
+	क्रम (i = 0; i < MAX_BUSID; i++) अणु
+		अगर (busid_table[i].name[0] &&
+		    busid_table[i].shutकरोwn_busid) अणु
 			busid_priv = &(busid_table[i]);
 			busid_priv->status = STUB_BUSID_OTHER;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&busid_table_lock);
 
-	/* now run rebind - no need to hold locks. driver files are removed */
-	for (i = 0; i < MAX_BUSID; i++) {
-		if (busid_table[i].name[0] &&
-		    busid_table[i].shutdown_busid) {
+	/* now run rebind - no need to hold locks. driver files are हटाओd */
+	क्रम (i = 0; i < MAX_BUSID; i++) अणु
+		अगर (busid_table[i].name[0] &&
+		    busid_table[i].shutकरोwn_busid) अणु
 			busid_priv = &(busid_table[i]);
-			do_rebind(busid_table[i].name, busid_priv);
-		}
-	}
-#endif
-}
+			करो_rebind(busid_table[i].name, busid_priv);
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static ssize_t rebind_store(struct device_driver *dev, const char *buf,
-				 size_t count)
-{
-	int ret;
-	int len;
-	struct bus_id_priv *bid;
+अटल sमाप_प्रकार rebind_store(काष्ठा device_driver *dev, स्थिर अक्षर *buf,
+				 माप_प्रकार count)
+अणु
+	पूर्णांक ret;
+	पूर्णांक len;
+	काष्ठा bus_id_priv *bid;
 
 	/* buf length should be less that BUSID_SIZE */
 	len = strnlen(buf, BUSID_SIZE);
 
-	if (!(len < BUSID_SIZE))
-		return -EINVAL;
+	अगर (!(len < BUSID_SIZE))
+		वापस -EINVAL;
 
 	bid = get_busid_priv(buf);
-	if (!bid)
-		return -ENODEV;
+	अगर (!bid)
+		वापस -ENODEV;
 
-	/* mark the device for deletion so probe ignores it during rescan */
+	/* mark the device क्रम deletion so probe ignores it during rescan */
 	bid->status = STUB_BUSID_OTHER;
 	/* release the busid lock */
 	put_busid_priv(bid);
 
-	ret = do_rebind((char *) buf, bid);
-	if (ret < 0)
-		return ret;
+	ret = करो_rebind((अक्षर *) buf, bid);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* delete device from busid_table */
-	del_match_busid((char *) buf);
+	del_match_busid((अक्षर *) buf);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DRIVER_ATTR_WO(rebind);
+अटल DRIVER_ATTR_WO(rebind);
 
-static struct stub_priv *stub_priv_pop_from_listhead(struct list_head *listhead)
-{
-	struct stub_priv *priv, *tmp;
+अटल काष्ठा stub_priv *stub_priv_pop_from_listhead(काष्ठा list_head *listhead)
+अणु
+	काष्ठा stub_priv *priv, *पंचांगp;
 
-	list_for_each_entry_safe(priv, tmp, listhead, list) {
+	list_क्रम_each_entry_safe(priv, पंचांगp, listhead, list) अणु
 		list_del_init(&priv->list);
-		return priv;
-	}
+		वापस priv;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void stub_free_priv_and_urb(struct stub_priv *priv)
-{
-	struct urb *urb;
-	int i;
+व्योम stub_मुक्त_priv_and_urb(काष्ठा stub_priv *priv)
+अणु
+	काष्ठा urb *urb;
+	पूर्णांक i;
 
-	for (i = 0; i < priv->num_urbs; i++) {
+	क्रम (i = 0; i < priv->num_urbs; i++) अणु
 		urb = priv->urbs[i];
 
-		if (!urb)
-			return;
+		अगर (!urb)
+			वापस;
 
-		kfree(urb->setup_packet);
-		urb->setup_packet = NULL;
+		kमुक्त(urb->setup_packet);
+		urb->setup_packet = शून्य;
 
 
-		if (urb->transfer_buffer && !priv->sgl) {
-			kfree(urb->transfer_buffer);
-			urb->transfer_buffer = NULL;
-		}
+		अगर (urb->transfer_buffer && !priv->sgl) अणु
+			kमुक्त(urb->transfer_buffer);
+			urb->transfer_buffer = शून्य;
+		पूर्ण
 
-		if (urb->num_sgs) {
-			sgl_free(urb->sg);
-			urb->sg = NULL;
+		अगर (urb->num_sgs) अणु
+			sgl_मुक्त(urb->sg);
+			urb->sg = शून्य;
 			urb->num_sgs = 0;
-		}
+		पूर्ण
 
-		usb_free_urb(urb);
-	}
-	if (!list_empty(&priv->list))
+		usb_मुक्त_urb(urb);
+	पूर्ण
+	अगर (!list_empty(&priv->list))
 		list_del(&priv->list);
-	if (priv->sgl)
-		sgl_free(priv->sgl);
-	kfree(priv->urbs);
-	kmem_cache_free(stub_priv_cache, priv);
-}
+	अगर (priv->sgl)
+		sgl_मुक्त(priv->sgl);
+	kमुक्त(priv->urbs);
+	kmem_cache_मुक्त(stub_priv_cache, priv);
+पूर्ण
 
-static struct stub_priv *stub_priv_pop(struct stub_device *sdev)
-{
-	unsigned long flags;
-	struct stub_priv *priv;
+अटल काष्ठा stub_priv *stub_priv_pop(काष्ठा stub_device *sdev)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा stub_priv *priv;
 
 	spin_lock_irqsave(&sdev->priv_lock, flags);
 
 	priv = stub_priv_pop_from_listhead(&sdev->priv_init);
-	if (priv)
-		goto done;
+	अगर (priv)
+		जाओ करोne;
 
 	priv = stub_priv_pop_from_listhead(&sdev->priv_tx);
-	if (priv)
-		goto done;
+	अगर (priv)
+		जाओ करोne;
 
-	priv = stub_priv_pop_from_listhead(&sdev->priv_free);
+	priv = stub_priv_pop_from_listhead(&sdev->priv_मुक्त);
 
-done:
+करोne:
 	spin_unlock_irqrestore(&sdev->priv_lock, flags);
 
-	return priv;
-}
+	वापस priv;
+पूर्ण
 
-void stub_device_cleanup_urbs(struct stub_device *sdev)
-{
-	struct stub_priv *priv;
-	int i;
+व्योम stub_device_cleanup_urbs(काष्ठा stub_device *sdev)
+अणु
+	काष्ठा stub_priv *priv;
+	पूर्णांक i;
 
 	dev_dbg(&sdev->udev->dev, "Stub device cleaning up urbs\n");
 
-	while ((priv = stub_priv_pop(sdev))) {
-		for (i = 0; i < priv->num_urbs; i++)
-			usb_kill_urb(priv->urbs[i]);
+	जबतक ((priv = stub_priv_pop(sdev))) अणु
+		क्रम (i = 0; i < priv->num_urbs; i++)
+			usb_समाप्त_urb(priv->urbs[i]);
 
-		stub_free_priv_and_urb(priv);
-	}
-}
+		stub_मुक्त_priv_and_urb(priv);
+	पूर्ण
+पूर्ण
 
-static int __init usbip_host_init(void)
-{
-	int ret;
+अटल पूर्णांक __init usbip_host_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	init_busid_table();
 
 	stub_priv_cache = KMEM_CACHE(stub_priv, SLAB_HWCACHE_ALIGN);
-	if (!stub_priv_cache) {
+	अगर (!stub_priv_cache) अणु
 		pr_err("kmem_cache_create failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	ret = usb_register_device_driver(&stub_driver, THIS_MODULE);
-	if (ret) {
+	ret = usb_रेजिस्टर_device_driver(&stub_driver, THIS_MODULE);
+	अगर (ret) अणु
 		pr_err("usb_register failed %d\n", ret);
-		goto err_usb_register;
-	}
+		जाओ err_usb_रेजिस्टर;
+	पूर्ण
 
 	ret = driver_create_file(&stub_driver.drvwrap.driver,
 				 &driver_attr_match_busid);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("driver_create_file failed\n");
-		goto err_create_file;
-	}
+		जाओ err_create_file;
+	पूर्ण
 
 	ret = driver_create_file(&stub_driver.drvwrap.driver,
 				 &driver_attr_rebind);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("driver_create_file failed\n");
-		goto err_create_file;
-	}
+		जाओ err_create_file;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 err_create_file:
-	usb_deregister_device_driver(&stub_driver);
-err_usb_register:
+	usb_deरेजिस्टर_device_driver(&stub_driver);
+err_usb_रेजिस्टर:
 	kmem_cache_destroy(stub_priv_cache);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit usbip_host_exit(void)
-{
-	driver_remove_file(&stub_driver.drvwrap.driver,
+अटल व्योम __निकास usbip_host_निकास(व्योम)
+अणु
+	driver_हटाओ_file(&stub_driver.drvwrap.driver,
 			   &driver_attr_match_busid);
 
-	driver_remove_file(&stub_driver.drvwrap.driver,
+	driver_हटाओ_file(&stub_driver.drvwrap.driver,
 			   &driver_attr_rebind);
 
 	/*
-	 * deregister() calls stub_disconnect() for all devices. Device
-	 * specific data is cleared in stub_disconnect().
+	 * deरेजिस्टर() calls stub_disconnect() क्रम all devices. Device
+	 * specअगरic data is cleared in stub_disconnect().
 	 */
-	usb_deregister_device_driver(&stub_driver);
+	usb_deरेजिस्टर_device_driver(&stub_driver);
 
 	/* initiate scan to attach devices */
 	stub_device_rebind();
 
 	kmem_cache_destroy(stub_priv_cache);
-}
+पूर्ण
 
 module_init(usbip_host_init);
-module_exit(usbip_host_exit);
+module_निकास(usbip_host_निकास);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);

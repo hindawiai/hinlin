@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Linux driver for Philips webcam
-   USB and Video4Linux interface part.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Linux driver क्रम Philips webcam
+   USB and Video4Linux पूर्णांकerface part.
    (C) 1999-2004 Nemosoft Unv.
    (C) 2004-2006 Luc Saillard (luc@saillard.org)
    (C) 2011 Hans de Goede <hdegoede@redhat.com>
 
-   NOTE: this version of pwc is an unofficial (modified) release of pwc & pcwx
+   NOTE: this version of pwc is an unofficial (modअगरied) release of pwc & pcwx
    driver and thus may have bugs that are not present in the original version.
    Please send bug reports and support requests to <luc@saillard.org>.
    The decompression routines have been implemented by reverse-engineering the
@@ -14,60 +15,60 @@
 
 */
 
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/poll.h>
-#include <linux/vmalloc.h>
-#include <linux/jiffies.h>
-#include <asm/io.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <यंत्र/पन.स>
 
-#include "pwc.h"
+#समावेश "pwc.h"
 
-#define PWC_CID_CUSTOM(ctrl) ((V4L2_CID_USER_BASE | 0xf000) + custom_ ## ctrl)
+#घोषणा PWC_CID_CUSTOM(ctrl) ((V4L2_CID_USER_BASE | 0xf000) + custom_ ## ctrl)
 
-static int pwc_g_volatile_ctrl(struct v4l2_ctrl *ctrl);
-static int pwc_s_ctrl(struct v4l2_ctrl *ctrl);
+अटल पूर्णांक pwc_g_अस्थिर_ctrl(काष्ठा v4l2_ctrl *ctrl);
+अटल पूर्णांक pwc_s_ctrl(काष्ठा v4l2_ctrl *ctrl);
 
-static const struct v4l2_ctrl_ops pwc_ctrl_ops = {
-	.g_volatile_ctrl = pwc_g_volatile_ctrl,
+अटल स्थिर काष्ठा v4l2_ctrl_ops pwc_ctrl_ops = अणु
+	.g_अस्थिर_ctrl = pwc_g_अस्थिर_ctrl,
 	.s_ctrl = pwc_s_ctrl,
-};
+पूर्ण;
 
-enum { awb_indoor, awb_outdoor, awb_fl, awb_manual, awb_auto };
-enum { custom_autocontour, custom_contour, custom_noise_reduction,
+क्रमागत अणु awb_inकरोor, awb_outकरोor, awb_fl, awb_manual, awb_स्वतः पूर्ण;
+क्रमागत अणु custom_स्वतःcontour, custom_contour, custom_noise_reduction,
 	custom_awb_speed, custom_awb_delay,
-	custom_save_user, custom_restore_user, custom_restore_factory };
+	custom_save_user, custom_restore_user, custom_restore_factory पूर्ण;
 
-static const char * const pwc_auto_whitebal_qmenu[] = {
+अटल स्थिर अक्षर * स्थिर pwc_स्वतः_whitebal_qmenu[] = अणु
 	"Indoor (Incandescant Lighting) Mode",
 	"Outdoor (Sunlight) Mode",
 	"Indoor (Fluorescent Lighting) Mode",
 	"Manual Mode",
 	"Auto Mode",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_auto_white_balance_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_स्वतः_white_balance_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
 	.id	= V4L2_CID_AUTO_WHITE_BALANCE,
 	.type	= V4L2_CTRL_TYPE_MENU,
-	.max	= awb_auto,
-	.qmenu	= pwc_auto_whitebal_qmenu,
-};
+	.max	= awb_स्वतः,
+	.qmenu	= pwc_स्वतः_whitebal_qmenu,
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_autocontour_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_स्वतःcontour_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
-	.id	= PWC_CID_CUSTOM(autocontour),
+	.id	= PWC_CID_CUSTOM(स्वतःcontour),
 	.type	= V4L2_CTRL_TYPE_BOOLEAN,
 	.name	= "Auto contour",
 	.min	= 0,
 	.max	= 1,
 	.step	= 1,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_contour_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_contour_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
 	.id	= PWC_CID_CUSTOM(contour),
 	.type	= V4L2_CTRL_TYPE_INTEGER,
@@ -76,27 +77,27 @@ static const struct v4l2_ctrl_config pwc_contour_cfg = {
 	.min	= 0,
 	.max	= 63,
 	.step	= 1,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_backlight_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_backlight_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
 	.id	= V4L2_CID_BACKLIGHT_COMPENSATION,
 	.type	= V4L2_CTRL_TYPE_BOOLEAN,
 	.min	= 0,
 	.max	= 1,
 	.step	= 1,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_flicker_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_flicker_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
 	.id	= V4L2_CID_BAND_STOP_FILTER,
 	.type	= V4L2_CTRL_TYPE_BOOLEAN,
 	.min	= 0,
 	.max	= 1,
 	.step	= 1,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_noise_reduction_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_noise_reduction_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
 	.id	= PWC_CID_CUSTOM(noise_reduction),
 	.type	= V4L2_CTRL_TYPE_INTEGER,
@@ -104,30 +105,30 @@ static const struct v4l2_ctrl_config pwc_noise_reduction_cfg = {
 	.min	= 0,
 	.max	= 3,
 	.step	= 1,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_save_user_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_save_user_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
 	.id	= PWC_CID_CUSTOM(save_user),
 	.type	= V4L2_CTRL_TYPE_BUTTON,
 	.name    = "Save User Settings",
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_restore_user_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_restore_user_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
 	.id	= PWC_CID_CUSTOM(restore_user),
 	.type	= V4L2_CTRL_TYPE_BUTTON,
 	.name    = "Restore User Settings",
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_restore_factory_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_restore_factory_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
 	.id	= PWC_CID_CUSTOM(restore_factory),
 	.type	= V4L2_CTRL_TYPE_BUTTON,
 	.name    = "Restore Factory Settings",
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_awb_speed_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_awb_speed_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
 	.id	= PWC_CID_CUSTOM(awb_speed),
 	.type	= V4L2_CTRL_TYPE_INTEGER,
@@ -135,9 +136,9 @@ static const struct v4l2_ctrl_config pwc_awb_speed_cfg = {
 	.min	= 1,
 	.max	= 32,
 	.step	= 1,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config pwc_awb_delay_cfg = {
+अटल स्थिर काष्ठा v4l2_ctrl_config pwc_awb_delay_cfg = अणु
 	.ops	= &pwc_ctrl_ops,
 	.id	= PWC_CID_CUSTOM(awb_delay),
 	.type	= V4L2_CTRL_TYPE_INTEGER,
@@ -145,233 +146,233 @@ static const struct v4l2_ctrl_config pwc_awb_delay_cfg = {
 	.min	= 0,
 	.max	= 63,
 	.step	= 1,
-};
+पूर्ण;
 
-int pwc_init_controls(struct pwc_device *pdev)
-{
-	struct v4l2_ctrl_handler *hdl;
-	struct v4l2_ctrl_config cfg;
-	int r, def;
+पूर्णांक pwc_init_controls(काष्ठा pwc_device *pdev)
+अणु
+	काष्ठा v4l2_ctrl_handler *hdl;
+	काष्ठा v4l2_ctrl_config cfg;
+	पूर्णांक r, def;
 
 	hdl = &pdev->ctrl_handler;
 	r = v4l2_ctrl_handler_init(hdl, 20);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* Brightness, contrast, saturation, gamma */
 	r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL, BRIGHTNESS_FORMATTER, &def);
-	if (r || def > 127)
+	अगर (r || def > 127)
 		def = 63;
 	pdev->brightness = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 				V4L2_CID_BRIGHTNESS, 0, 127, 1, def);
 
 	r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL, CONTRAST_FORMATTER, &def);
-	if (r || def > 63)
+	अगर (r || def > 63)
 		def = 31;
 	pdev->contrast = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 				V4L2_CID_CONTRAST, 0, 63, 1, def);
 
-	if (pdev->type >= 675) {
-		if (pdev->type < 730)
+	अगर (pdev->type >= 675) अणु
+		अगर (pdev->type < 730)
 			pdev->saturation_fmt = SATURATION_MODE_FORMATTER2;
-		else
+		अन्यथा
 			pdev->saturation_fmt = SATURATION_MODE_FORMATTER1;
 		r = pwc_get_s8_ctrl(pdev, GET_CHROM_CTL, pdev->saturation_fmt,
 				    &def);
-		if (r || def < -100 || def > 100)
+		अगर (r || def < -100 || def > 100)
 			def = 0;
 		pdev->saturation = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 				      V4L2_CID_SATURATION, -100, 100, 1, def);
-	}
+	पूर्ण
 
 	r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL, GAMMA_FORMATTER, &def);
-	if (r || def > 31)
+	अगर (r || def > 31)
 		def = 15;
 	pdev->gamma = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 				V4L2_CID_GAMMA, 0, 31, 1, def);
 
-	/* auto white balance, red gain, blue gain */
+	/* स्वतः white balance, red gain, blue gain */
 	r = pwc_get_u8_ctrl(pdev, GET_CHROM_CTL, WB_MODE_FORMATTER, &def);
-	if (r || def > awb_auto)
-		def = awb_auto;
-	cfg = pwc_auto_white_balance_cfg;
+	अगर (r || def > awb_स्वतः)
+		def = awb_स्वतः;
+	cfg = pwc_स्वतः_white_balance_cfg;
 	cfg.name = v4l2_ctrl_get_name(cfg.id);
 	cfg.def = def;
-	pdev->auto_white_balance = v4l2_ctrl_new_custom(hdl, &cfg, NULL);
-	/* check auto controls to avoid NULL deref in v4l2_ctrl_auto_cluster */
-	if (!pdev->auto_white_balance)
-		return hdl->error;
+	pdev->स्वतः_white_balance = v4l2_ctrl_new_custom(hdl, &cfg, शून्य);
+	/* check स्वतः controls to aव्योम शून्य deref in v4l2_ctrl_स्वतः_cluster */
+	अगर (!pdev->स्वतः_white_balance)
+		वापस hdl->error;
 
 	r = pwc_get_u8_ctrl(pdev, GET_CHROM_CTL,
 			    PRESET_MANUAL_RED_GAIN_FORMATTER, &def);
-	if (r)
+	अगर (r)
 		def = 127;
 	pdev->red_balance = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 				V4L2_CID_RED_BALANCE, 0, 255, 1, def);
 
 	r = pwc_get_u8_ctrl(pdev, GET_CHROM_CTL,
 			    PRESET_MANUAL_BLUE_GAIN_FORMATTER, &def);
-	if (r)
+	अगर (r)
 		def = 127;
 	pdev->blue_balance = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 				V4L2_CID_BLUE_BALANCE, 0, 255, 1, def);
 
-	v4l2_ctrl_auto_cluster(3, &pdev->auto_white_balance, awb_manual, true);
+	v4l2_ctrl_स्वतः_cluster(3, &pdev->स्वतः_white_balance, awb_manual, true);
 
-	/* autogain, gain */
+	/* स्वतःgain, gain */
 	r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL, AGC_MODE_FORMATTER, &def);
-	if (r || (def != 0 && def != 0xff))
+	अगर (r || (def != 0 && def != 0xff))
 		def = 0;
-	/* Note a register value if 0 means auto gain is on */
-	pdev->autogain = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
+	/* Note a रेजिस्टर value अगर 0 means स्वतः gain is on */
+	pdev->स्वतःgain = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 				V4L2_CID_AUTOGAIN, 0, 1, 1, def == 0);
-	if (!pdev->autogain)
-		return hdl->error;
+	अगर (!pdev->स्वतःgain)
+		वापस hdl->error;
 
 	r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL, PRESET_AGC_FORMATTER, &def);
-	if (r || def > 63)
+	अगर (r || def > 63)
 		def = 31;
 	pdev->gain = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 				V4L2_CID_GAIN, 0, 63, 1, def);
 
-	/* auto exposure, exposure */
-	if (DEVICE_USE_CODEC2(pdev->type)) {
+	/* स्वतः exposure, exposure */
+	अगर (DEVICE_USE_CODEC2(pdev->type)) अणु
 		r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL, SHUTTER_MODE_FORMATTER,
 				    &def);
-		if (r || (def != 0 && def != 0xff))
+		अगर (r || (def != 0 && def != 0xff))
 			def = 0;
 		/*
-		 * def = 0 auto, def = ff manual
-		 * menu idx 0 = auto, idx 1 = manual
+		 * def = 0 स्वतः, def = ff manual
+		 * menu idx 0 = स्वतः, idx 1 = manual
 		 */
-		pdev->exposure_auto = v4l2_ctrl_new_std_menu(hdl,
+		pdev->exposure_स्वतः = v4l2_ctrl_new_std_menu(hdl,
 					&pwc_ctrl_ops,
 					V4L2_CID_EXPOSURE_AUTO,
 					1, 0, def != 0);
-		if (!pdev->exposure_auto)
-			return hdl->error;
+		अगर (!pdev->exposure_स्वतः)
+			वापस hdl->error;
 
 		/* GET_LUM_CTL, PRESET_SHUTTER_FORMATTER is unreliable */
 		r = pwc_get_u16_ctrl(pdev, GET_STATUS_CTL,
 				     READ_SHUTTER_FORMATTER, &def);
-		if (r || def > 655)
+		अगर (r || def > 655)
 			def = 655;
 		pdev->exposure = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 					V4L2_CID_EXPOSURE, 0, 655, 1, def);
-		/* CODEC2: separate auto gain & auto exposure */
-		v4l2_ctrl_auto_cluster(2, &pdev->autogain, 0, true);
-		v4l2_ctrl_auto_cluster(2, &pdev->exposure_auto,
+		/* CODEC2: separate स्वतः gain & स्वतः exposure */
+		v4l2_ctrl_स्वतः_cluster(2, &pdev->स्वतःgain, 0, true);
+		v4l2_ctrl_स्वतः_cluster(2, &pdev->exposure_स्वतः,
 				       V4L2_EXPOSURE_MANUAL, true);
-	} else if (DEVICE_USE_CODEC3(pdev->type)) {
+	पूर्ण अन्यथा अगर (DEVICE_USE_CODEC3(pdev->type)) अणु
 		/* GET_LUM_CTL, PRESET_SHUTTER_FORMATTER is unreliable */
 		r = pwc_get_u16_ctrl(pdev, GET_STATUS_CTL,
 				     READ_SHUTTER_FORMATTER, &def);
-		if (r || def > 255)
+		अगर (r || def > 255)
 			def = 255;
 		pdev->exposure = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 					V4L2_CID_EXPOSURE, 0, 255, 1, def);
-		/* CODEC3: both gain and exposure controlled by autogain */
-		pdev->autogain_expo_cluster[0] = pdev->autogain;
-		pdev->autogain_expo_cluster[1] = pdev->gain;
-		pdev->autogain_expo_cluster[2] = pdev->exposure;
-		v4l2_ctrl_auto_cluster(3, pdev->autogain_expo_cluster,
+		/* CODEC3: both gain and exposure controlled by स्वतःgain */
+		pdev->स्वतःgain_expo_cluster[0] = pdev->स्वतःgain;
+		pdev->स्वतःgain_expo_cluster[1] = pdev->gain;
+		pdev->स्वतःgain_expo_cluster[2] = pdev->exposure;
+		v4l2_ctrl_स्वतः_cluster(3, pdev->स्वतःgain_expo_cluster,
 				       0, true);
-	}
+	पूर्ण
 
 	/* color / bw setting */
 	r = pwc_get_u8_ctrl(pdev, GET_CHROM_CTL, COLOUR_MODE_FORMATTER,
 			 &def);
-	if (r || (def != 0 && def != 0xff))
+	अगर (r || (def != 0 && def != 0xff))
 		def = 0xff;
 	/* def = 0 bw, def = ff color, menu idx 0 = color, idx 1 = bw */
 	pdev->colorfx = v4l2_ctrl_new_std_menu(hdl, &pwc_ctrl_ops,
 				V4L2_CID_COLORFX, 1, 0, def == 0);
 
-	/* autocontour, contour */
+	/* स्वतःcontour, contour */
 	r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL, AUTO_CONTOUR_FORMATTER, &def);
-	if (r || (def != 0 && def != 0xff))
+	अगर (r || (def != 0 && def != 0xff))
 		def = 0;
-	cfg = pwc_autocontour_cfg;
+	cfg = pwc_स्वतःcontour_cfg;
 	cfg.def = def == 0;
-	pdev->autocontour = v4l2_ctrl_new_custom(hdl, &cfg, NULL);
-	if (!pdev->autocontour)
-		return hdl->error;
+	pdev->स्वतःcontour = v4l2_ctrl_new_custom(hdl, &cfg, शून्य);
+	अगर (!pdev->स्वतःcontour)
+		वापस hdl->error;
 
 	r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL, PRESET_CONTOUR_FORMATTER, &def);
-	if (r || def > 63)
+	अगर (r || def > 63)
 		def = 31;
 	cfg = pwc_contour_cfg;
 	cfg.def = def;
-	pdev->contour = v4l2_ctrl_new_custom(hdl, &cfg, NULL);
+	pdev->contour = v4l2_ctrl_new_custom(hdl, &cfg, शून्य);
 
-	v4l2_ctrl_auto_cluster(2, &pdev->autocontour, 0, false);
+	v4l2_ctrl_स्वतः_cluster(2, &pdev->स्वतःcontour, 0, false);
 
 	/* backlight */
 	r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL,
 			    BACK_LIGHT_COMPENSATION_FORMATTER, &def);
-	if (r || (def != 0 && def != 0xff))
+	अगर (r || (def != 0 && def != 0xff))
 		def = 0;
 	cfg = pwc_backlight_cfg;
 	cfg.name = v4l2_ctrl_get_name(cfg.id);
 	cfg.def = def == 0;
-	pdev->backlight = v4l2_ctrl_new_custom(hdl, &cfg, NULL);
+	pdev->backlight = v4l2_ctrl_new_custom(hdl, &cfg, शून्य);
 
 	/* flikker rediction */
 	r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL,
 			    FLICKERLESS_MODE_FORMATTER, &def);
-	if (r || (def != 0 && def != 0xff))
+	अगर (r || (def != 0 && def != 0xff))
 		def = 0;
 	cfg = pwc_flicker_cfg;
 	cfg.name = v4l2_ctrl_get_name(cfg.id);
 	cfg.def = def == 0;
-	pdev->flicker = v4l2_ctrl_new_custom(hdl, &cfg, NULL);
+	pdev->flicker = v4l2_ctrl_new_custom(hdl, &cfg, शून्य);
 
 	/* Dynamic noise reduction */
 	r = pwc_get_u8_ctrl(pdev, GET_LUM_CTL,
 			    DYNAMIC_NOISE_CONTROL_FORMATTER, &def);
-	if (r || def > 3)
+	अगर (r || def > 3)
 		def = 2;
 	cfg = pwc_noise_reduction_cfg;
 	cfg.def = def;
-	pdev->noise_reduction = v4l2_ctrl_new_custom(hdl, &cfg, NULL);
+	pdev->noise_reduction = v4l2_ctrl_new_custom(hdl, &cfg, शून्य);
 
 	/* Save / Restore User / Factory Settings */
-	pdev->save_user = v4l2_ctrl_new_custom(hdl, &pwc_save_user_cfg, NULL);
+	pdev->save_user = v4l2_ctrl_new_custom(hdl, &pwc_save_user_cfg, शून्य);
 	pdev->restore_user = v4l2_ctrl_new_custom(hdl, &pwc_restore_user_cfg,
-						  NULL);
-	if (pdev->restore_user)
+						  शून्य);
+	अगर (pdev->restore_user)
 		pdev->restore_user->flags |= V4L2_CTRL_FLAG_UPDATE;
 	pdev->restore_factory = v4l2_ctrl_new_custom(hdl,
 						     &pwc_restore_factory_cfg,
-						     NULL);
-	if (pdev->restore_factory)
+						     शून्य);
+	अगर (pdev->restore_factory)
 		pdev->restore_factory->flags |= V4L2_CTRL_FLAG_UPDATE;
 
 	/* Auto White Balance speed & delay */
 	r = pwc_get_u8_ctrl(pdev, GET_CHROM_CTL,
 			    AWB_CONTROL_SPEED_FORMATTER, &def);
-	if (r || def < 1 || def > 32)
+	अगर (r || def < 1 || def > 32)
 		def = 1;
 	cfg = pwc_awb_speed_cfg;
 	cfg.def = def;
-	pdev->awb_speed = v4l2_ctrl_new_custom(hdl, &cfg, NULL);
+	pdev->awb_speed = v4l2_ctrl_new_custom(hdl, &cfg, शून्य);
 
 	r = pwc_get_u8_ctrl(pdev, GET_CHROM_CTL,
 			    AWB_CONTROL_DELAY_FORMATTER, &def);
-	if (r || def > 63)
+	अगर (r || def > 63)
 		def = 0;
 	cfg = pwc_awb_delay_cfg;
 	cfg.def = def;
-	pdev->awb_delay = v4l2_ctrl_new_custom(hdl, &cfg, NULL);
+	pdev->awb_delay = v4l2_ctrl_new_custom(hdl, &cfg, शून्य);
 
-	if (!(pdev->features & FEATURE_MOTOR_PANTILT))
-		return hdl->error;
+	अगर (!(pdev->features & FEATURE_MOTOR_PANTILT))
+		वापस hdl->error;
 
 	/* Motor pan / tilt / reset */
 	pdev->motor_pan = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 				V4L2_CID_PAN_RELATIVE, -4480, 4480, 64, 0);
-	if (!pdev->motor_pan)
-		return hdl->error;
+	अगर (!pdev->motor_pan)
+		वापस hdl->error;
 	pdev->motor_tilt = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
 				V4L2_CID_TILT_RELATIVE, -1920, 1920, 64, 0);
 	pdev->motor_pan_reset = v4l2_ctrl_new_std(hdl, &pwc_ctrl_ops,
@@ -380,17 +381,17 @@ int pwc_init_controls(struct pwc_device *pdev)
 				V4L2_CID_TILT_RESET, 0, 0, 0, 0);
 	v4l2_ctrl_cluster(4, &pdev->motor_pan);
 
-	return hdl->error;
-}
+	वापस hdl->error;
+पूर्ण
 
-static void pwc_vidioc_fill_fmt(struct v4l2_format *f,
-	int width, int height, u32 pixfmt)
-{
-	memset(&f->fmt.pix, 0, sizeof(struct v4l2_pix_format));
+अटल व्योम pwc_vidioc_fill_fmt(काष्ठा v4l2_क्रमmat *f,
+	पूर्णांक width, पूर्णांक height, u32 pixfmt)
+अणु
+	स_रखो(&f->fmt.pix, 0, माप(काष्ठा v4l2_pix_क्रमmat));
 	f->fmt.pix.width        = width;
 	f->fmt.pix.height       = height;
 	f->fmt.pix.field        = V4L2_FIELD_NONE;
-	f->fmt.pix.pixelformat  = pixfmt;
+	f->fmt.pix.pixelक्रमmat  = pixfmt;
 	f->fmt.pix.bytesperline = f->fmt.pix.width;
 	f->fmt.pix.sizeimage	= f->fmt.pix.height * f->fmt.pix.width * 3 / 2;
 	f->fmt.pix.colorspace	= V4L2_COLORSPACE_SRGB;
@@ -399,621 +400,621 @@ static void pwc_vidioc_fill_fmt(struct v4l2_format *f,
 			f->fmt.pix.height,
 			f->fmt.pix.bytesperline,
 			f->fmt.pix.sizeimage,
-			(f->fmt.pix.pixelformat)&255,
-			(f->fmt.pix.pixelformat>>8)&255,
-			(f->fmt.pix.pixelformat>>16)&255,
-			(f->fmt.pix.pixelformat>>24)&255);
-}
+			(f->fmt.pix.pixelक्रमmat)&255,
+			(f->fmt.pix.pixelक्रमmat>>8)&255,
+			(f->fmt.pix.pixelक्रमmat>>16)&255,
+			(f->fmt.pix.pixelक्रमmat>>24)&255);
+पूर्ण
 
 /* ioctl(VIDIOC_TRY_FMT) */
-static int pwc_vidioc_try_fmt(struct pwc_device *pdev, struct v4l2_format *f)
-{
-	int size;
+अटल पूर्णांक pwc_vidioc_try_fmt(काष्ठा pwc_device *pdev, काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक size;
 
-	if (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+	अगर (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE) अणु
 		PWC_DEBUG_IOCTL("Bad video type must be V4L2_BUF_TYPE_VIDEO_CAPTURE\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (f->fmt.pix.pixelformat) {
-		case V4L2_PIX_FMT_YUV420:
-			break;
-		case V4L2_PIX_FMT_PWC1:
-			if (DEVICE_USE_CODEC23(pdev->type)) {
+	चयन (f->fmt.pix.pixelक्रमmat) अणु
+		हाल V4L2_PIX_FMT_YUV420:
+			अवरोध;
+		हाल V4L2_PIX_FMT_PWC1:
+			अगर (DEVICE_USE_CODEC23(pdev->type)) अणु
 				PWC_DEBUG_IOCTL("codec1 is only supported for old pwc webcam\n");
-				f->fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-			}
-			break;
-		case V4L2_PIX_FMT_PWC2:
-			if (DEVICE_USE_CODEC1(pdev->type)) {
+				f->fmt.pix.pixelक्रमmat = V4L2_PIX_FMT_YUV420;
+			पूर्ण
+			अवरोध;
+		हाल V4L2_PIX_FMT_PWC2:
+			अगर (DEVICE_USE_CODEC1(pdev->type)) अणु
 				PWC_DEBUG_IOCTL("codec23 is only supported for new pwc webcam\n");
-				f->fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-			}
-			break;
-		default:
+				f->fmt.pix.pixelक्रमmat = V4L2_PIX_FMT_YUV420;
+			पूर्ण
+			अवरोध;
+		शेष:
 			PWC_DEBUG_IOCTL("Unsupported pixel format\n");
-			f->fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
-	}
+			f->fmt.pix.pixelक्रमmat = V4L2_PIX_FMT_YUV420;
+	पूर्ण
 
 	size = pwc_get_size(pdev, f->fmt.pix.width, f->fmt.pix.height);
 	pwc_vidioc_fill_fmt(f,
 			    pwc_image_sizes[size][0],
 			    pwc_image_sizes[size][1],
-			    f->fmt.pix.pixelformat);
+			    f->fmt.pix.pixelक्रमmat);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ioctl(VIDIOC_SET_FMT) */
 
-static int pwc_s_fmt_vid_cap(struct file *file, void *fh, struct v4l2_format *f)
-{
-	struct pwc_device *pdev = video_drvdata(file);
-	int ret, pixelformat, compression = 0;
+अटल पूर्णांक pwc_s_fmt_vid_cap(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा pwc_device *pdev = video_drvdata(file);
+	पूर्णांक ret, pixelक्रमmat, compression = 0;
 
 	ret = pwc_vidioc_try_fmt(pdev, f);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (vb2_is_busy(&pdev->vb_queue))
-		return -EBUSY;
+	अगर (vb2_is_busy(&pdev->vb_queue))
+		वापस -EBUSY;
 
-	pixelformat = f->fmt.pix.pixelformat;
+	pixelक्रमmat = f->fmt.pix.pixelक्रमmat;
 
 	PWC_DEBUG_IOCTL("Trying to set format to: width=%d height=%d fps=%d format=%c%c%c%c\n",
 			f->fmt.pix.width, f->fmt.pix.height, pdev->vframes,
-			(pixelformat)&255,
-			(pixelformat>>8)&255,
-			(pixelformat>>16)&255,
-			(pixelformat>>24)&255);
+			(pixelक्रमmat)&255,
+			(pixelक्रमmat>>8)&255,
+			(pixelक्रमmat>>16)&255,
+			(pixelक्रमmat>>24)&255);
 
 	ret = pwc_set_video_mode(pdev, f->fmt.pix.width, f->fmt.pix.height,
-				 pixelformat, 30, &compression, 0);
+				 pixelक्रमmat, 30, &compression, 0);
 
 	PWC_DEBUG_IOCTL("pwc_set_video_mode(), return=%d\n", ret);
 
 	pwc_vidioc_fill_fmt(f, pdev->width, pdev->height, pdev->pixfmt);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pwc_querycap(struct file *file, void *fh, struct v4l2_capability *cap)
-{
-	struct pwc_device *pdev = video_drvdata(file);
+अटल पूर्णांक pwc_querycap(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा pwc_device *pdev = video_drvdata(file);
 
-	strscpy(cap->driver, PWC_NAME, sizeof(cap->driver));
-	strscpy(cap->card, pdev->vdev.name, sizeof(cap->card));
-	usb_make_path(pdev->udev, cap->bus_info, sizeof(cap->bus_info));
-	return 0;
-}
+	strscpy(cap->driver, PWC_NAME, माप(cap->driver));
+	strscpy(cap->card, pdev->vdev.name, माप(cap->card));
+	usb_make_path(pdev->udev, cap->bus_info, माप(cap->bus_info));
+	वापस 0;
+पूर्ण
 
-static int pwc_enum_input(struct file *file, void *fh, struct v4l2_input *i)
-{
-	if (i->index)	/* Only one INPUT is supported */
-		return -EINVAL;
+अटल पूर्णांक pwc_क्रमागत_input(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_input *i)
+अणु
+	अगर (i->index)	/* Only one INPUT is supported */
+		वापस -EINVAL;
 
-	strscpy(i->name, "Camera", sizeof(i->name));
+	strscpy(i->name, "Camera", माप(i->name));
 	i->type = V4L2_INPUT_TYPE_CAMERA;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwc_g_input(struct file *file, void *fh, unsigned int *i)
-{
+अटल पूर्णांक pwc_g_input(काष्ठा file *file, व्योम *fh, अचिन्हित पूर्णांक *i)
+अणु
 	*i = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwc_s_input(struct file *file, void *fh, unsigned int i)
-{
-	return i ? -EINVAL : 0;
-}
+अटल पूर्णांक pwc_s_input(काष्ठा file *file, व्योम *fh, अचिन्हित पूर्णांक i)
+अणु
+	वापस i ? -EINVAL : 0;
+पूर्ण
 
-static int pwc_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct pwc_device *pdev =
-		container_of(ctrl->handler, struct pwc_device, ctrl_handler);
-	int ret = 0;
+अटल पूर्णांक pwc_g_अस्थिर_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा pwc_device *pdev =
+		container_of(ctrl->handler, काष्ठा pwc_device, ctrl_handler);
+	पूर्णांक ret = 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_AUTO_WHITE_BALANCE:
-		if (pdev->color_bal_valid &&
-			(pdev->auto_white_balance->val != awb_auto ||
-			 time_before(jiffies,
-				pdev->last_color_bal_update + HZ / 4))) {
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_AUTO_WHITE_BALANCE:
+		अगर (pdev->color_bal_valid &&
+			(pdev->स्वतः_white_balance->val != awb_स्वतः ||
+			 समय_beक्रमe(jअगरfies,
+				pdev->last_color_bal_update + HZ / 4))) अणु
 			pdev->red_balance->val  = pdev->last_red_balance;
 			pdev->blue_balance->val = pdev->last_blue_balance;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ret = pwc_get_u8_ctrl(pdev, GET_STATUS_CTL,
 				      READ_RED_GAIN_FORMATTER,
 				      &pdev->red_balance->val);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		ret = pwc_get_u8_ctrl(pdev, GET_STATUS_CTL,
 				      READ_BLUE_GAIN_FORMATTER,
 				      &pdev->blue_balance->val);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		pdev->last_red_balance  = pdev->red_balance->val;
 		pdev->last_blue_balance = pdev->blue_balance->val;
-		pdev->last_color_bal_update = jiffies;
+		pdev->last_color_bal_update = jअगरfies;
 		pdev->color_bal_valid = true;
-		break;
-	case V4L2_CID_AUTOGAIN:
-		if (pdev->gain_valid && time_before(jiffies,
-				pdev->last_gain_update + HZ / 4)) {
+		अवरोध;
+	हाल V4L2_CID_AUTOGAIN:
+		अगर (pdev->gain_valid && समय_beक्रमe(jअगरfies,
+				pdev->last_gain_update + HZ / 4)) अणु
 			pdev->gain->val = pdev->last_gain;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ret = pwc_get_u8_ctrl(pdev, GET_STATUS_CTL,
 				      READ_AGC_FORMATTER, &pdev->gain->val);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		pdev->last_gain = pdev->gain->val;
-		pdev->last_gain_update = jiffies;
+		pdev->last_gain_update = jअगरfies;
 		pdev->gain_valid = true;
-		if (!DEVICE_USE_CODEC3(pdev->type))
-			break;
-		/* For CODEC3 where autogain also controls expo */
+		अगर (!DEVICE_USE_CODEC3(pdev->type))
+			अवरोध;
+		/* For CODEC3 where स्वतःgain also controls expo */
 		fallthrough;
-	case V4L2_CID_EXPOSURE_AUTO:
-		if (pdev->exposure_valid && time_before(jiffies,
-				pdev->last_exposure_update + HZ / 4)) {
+	हाल V4L2_CID_EXPOSURE_AUTO:
+		अगर (pdev->exposure_valid && समय_beक्रमe(jअगरfies,
+				pdev->last_exposure_update + HZ / 4)) अणु
 			pdev->exposure->val = pdev->last_exposure;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ret = pwc_get_u16_ctrl(pdev, GET_STATUS_CTL,
 				       READ_SHUTTER_FORMATTER,
 				       &pdev->exposure->val);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		pdev->last_exposure = pdev->exposure->val;
-		pdev->last_exposure_update = jiffies;
+		pdev->last_exposure_update = jअगरfies;
 		pdev->exposure_valid = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		PWC_ERROR("g_ctrl %s error %d\n", ctrl->name, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pwc_set_awb(struct pwc_device *pdev)
-{
-	int ret;
+अटल पूर्णांक pwc_set_awb(काष्ठा pwc_device *pdev)
+अणु
+	पूर्णांक ret;
 
-	if (pdev->auto_white_balance->is_new) {
+	अगर (pdev->स्वतः_white_balance->is_new) अणु
 		ret = pwc_set_u8_ctrl(pdev, SET_CHROM_CTL,
 				      WB_MODE_FORMATTER,
-				      pdev->auto_white_balance->val);
-		if (ret)
-			return ret;
+				      pdev->स्वतः_white_balance->val);
+		अगर (ret)
+			वापस ret;
 
-		if (pdev->auto_white_balance->val != awb_manual)
+		अगर (pdev->स्वतः_white_balance->val != awb_manual)
 			pdev->color_bal_valid = false; /* Force cache update */
 
 		/*
 		 * If this is a preset, update our red / blue balance values
-		 * so that events get generated for the new preset values
+		 * so that events get generated क्रम the new preset values
 		 */
-		if (pdev->auto_white_balance->val == awb_indoor ||
-		    pdev->auto_white_balance->val == awb_outdoor ||
-		    pdev->auto_white_balance->val == awb_fl)
-			pwc_g_volatile_ctrl(pdev->auto_white_balance);
-	}
-	if (pdev->auto_white_balance->val != awb_manual)
-		return 0;
+		अगर (pdev->स्वतः_white_balance->val == awb_inकरोor ||
+		    pdev->स्वतः_white_balance->val == awb_outकरोor ||
+		    pdev->स्वतः_white_balance->val == awb_fl)
+			pwc_g_अस्थिर_ctrl(pdev->स्वतः_white_balance);
+	पूर्ण
+	अगर (pdev->स्वतः_white_balance->val != awb_manual)
+		वापस 0;
 
-	if (pdev->red_balance->is_new) {
+	अगर (pdev->red_balance->is_new) अणु
 		ret = pwc_set_u8_ctrl(pdev, SET_CHROM_CTL,
 				      PRESET_MANUAL_RED_GAIN_FORMATTER,
 				      pdev->red_balance->val);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (pdev->blue_balance->is_new) {
+	अगर (pdev->blue_balance->is_new) अणु
 		ret = pwc_set_u8_ctrl(pdev, SET_CHROM_CTL,
 				      PRESET_MANUAL_BLUE_GAIN_FORMATTER,
 				      pdev->blue_balance->val);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* For CODEC2 models which have separate autogain and auto exposure */
-static int pwc_set_autogain(struct pwc_device *pdev)
-{
-	int ret;
+/* For CODEC2 models which have separate स्वतःgain and स्वतः exposure */
+अटल पूर्णांक pwc_set_स्वतःgain(काष्ठा pwc_device *pdev)
+अणु
+	पूर्णांक ret;
 
-	if (pdev->autogain->is_new) {
+	अगर (pdev->स्वतःgain->is_new) अणु
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      AGC_MODE_FORMATTER,
-				      pdev->autogain->val ? 0 : 0xff);
-		if (ret)
-			return ret;
+				      pdev->स्वतःgain->val ? 0 : 0xff);
+		अगर (ret)
+			वापस ret;
 
-		if (pdev->autogain->val)
+		अगर (pdev->स्वतःgain->val)
 			pdev->gain_valid = false; /* Force cache update */
-	}
+	पूर्ण
 
-	if (pdev->autogain->val)
-		return 0;
+	अगर (pdev->स्वतःgain->val)
+		वापस 0;
 
-	if (pdev->gain->is_new) {
+	अगर (pdev->gain->is_new) अणु
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      PRESET_AGC_FORMATTER,
 				      pdev->gain->val);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* For CODEC2 models which have separate autogain and auto exposure */
-static int pwc_set_exposure_auto(struct pwc_device *pdev)
-{
-	int ret;
-	int is_auto = pdev->exposure_auto->val == V4L2_EXPOSURE_AUTO;
+/* For CODEC2 models which have separate स्वतःgain and स्वतः exposure */
+अटल पूर्णांक pwc_set_exposure_स्वतः(काष्ठा pwc_device *pdev)
+अणु
+	पूर्णांक ret;
+	पूर्णांक is_स्वतः = pdev->exposure_स्वतः->val == V4L2_EXPOSURE_AUTO;
 
-	if (pdev->exposure_auto->is_new) {
+	अगर (pdev->exposure_स्वतः->is_new) अणु
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      SHUTTER_MODE_FORMATTER,
-				      is_auto ? 0 : 0xff);
-		if (ret)
-			return ret;
+				      is_स्वतः ? 0 : 0xff);
+		अगर (ret)
+			वापस ret;
 
-		if (is_auto)
+		अगर (is_स्वतः)
 			pdev->exposure_valid = false; /* Force cache update */
-	}
+	पूर्ण
 
-	if (is_auto)
-		return 0;
+	अगर (is_स्वतः)
+		वापस 0;
 
-	if (pdev->exposure->is_new) {
+	अगर (pdev->exposure->is_new) अणु
 		ret = pwc_set_u16_ctrl(pdev, SET_LUM_CTL,
 				       PRESET_SHUTTER_FORMATTER,
 				       pdev->exposure->val);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* For CODEC3 models which have autogain controlling both gain and exposure */
-static int pwc_set_autogain_expo(struct pwc_device *pdev)
-{
-	int ret;
+/* For CODEC3 models which have स्वतःgain controlling both gain and exposure */
+अटल पूर्णांक pwc_set_स्वतःgain_expo(काष्ठा pwc_device *pdev)
+अणु
+	पूर्णांक ret;
 
-	if (pdev->autogain->is_new) {
+	अगर (pdev->स्वतःgain->is_new) अणु
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      AGC_MODE_FORMATTER,
-				      pdev->autogain->val ? 0 : 0xff);
-		if (ret)
-			return ret;
+				      pdev->स्वतःgain->val ? 0 : 0xff);
+		अगर (ret)
+			वापस ret;
 
-		if (pdev->autogain->val) {
+		अगर (pdev->स्वतःgain->val) अणु
 			pdev->gain_valid     = false; /* Force cache update */
 			pdev->exposure_valid = false; /* Force cache update */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pdev->autogain->val)
-		return 0;
+	अगर (pdev->स्वतःgain->val)
+		वापस 0;
 
-	if (pdev->gain->is_new) {
+	अगर (pdev->gain->is_new) अणु
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      PRESET_AGC_FORMATTER,
 				      pdev->gain->val);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (pdev->exposure->is_new) {
+	अगर (pdev->exposure->is_new) अणु
 		ret = pwc_set_u16_ctrl(pdev, SET_LUM_CTL,
 				       PRESET_SHUTTER_FORMATTER,
 				       pdev->exposure->val);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int pwc_set_motor(struct pwc_device *pdev)
-{
-	int ret;
+अटल पूर्णांक pwc_set_motor(काष्ठा pwc_device *pdev)
+अणु
+	पूर्णांक ret;
 
 	pdev->ctrl_buf[0] = 0;
-	if (pdev->motor_pan_reset->is_new)
+	अगर (pdev->motor_pan_reset->is_new)
 		pdev->ctrl_buf[0] |= 0x01;
-	if (pdev->motor_tilt_reset->is_new)
+	अगर (pdev->motor_tilt_reset->is_new)
 		pdev->ctrl_buf[0] |= 0x02;
-	if (pdev->motor_pan_reset->is_new || pdev->motor_tilt_reset->is_new) {
+	अगर (pdev->motor_pan_reset->is_new || pdev->motor_tilt_reset->is_new) अणु
 		ret = send_control_msg(pdev, SET_MPT_CTL,
 				       PT_RESET_CONTROL_FORMATTER,
 				       pdev->ctrl_buf, 1);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	memset(pdev->ctrl_buf, 0, 4);
-	if (pdev->motor_pan->is_new) {
+	स_रखो(pdev->ctrl_buf, 0, 4);
+	अगर (pdev->motor_pan->is_new) अणु
 		pdev->ctrl_buf[0] = pdev->motor_pan->val & 0xFF;
 		pdev->ctrl_buf[1] = (pdev->motor_pan->val >> 8);
-	}
-	if (pdev->motor_tilt->is_new) {
+	पूर्ण
+	अगर (pdev->motor_tilt->is_new) अणु
 		pdev->ctrl_buf[2] = pdev->motor_tilt->val & 0xFF;
 		pdev->ctrl_buf[3] = (pdev->motor_tilt->val >> 8);
-	}
-	if (pdev->motor_pan->is_new || pdev->motor_tilt->is_new) {
+	पूर्ण
+	अगर (pdev->motor_pan->is_new || pdev->motor_tilt->is_new) अणु
 		ret = send_control_msg(pdev, SET_MPT_CTL,
 				       PT_RELATIVE_CONTROL_FORMATTER,
 				       pdev->ctrl_buf, 4);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwc_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct pwc_device *pdev =
-		container_of(ctrl->handler, struct pwc_device, ctrl_handler);
-	int ret = 0;
+अटल पूर्णांक pwc_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा pwc_device *pdev =
+		container_of(ctrl->handler, काष्ठा pwc_device, ctrl_handler);
+	पूर्णांक ret = 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_BRIGHTNESS:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_BRIGHTNESS:
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      BRIGHTNESS_FORMATTER, ctrl->val);
-		break;
-	case V4L2_CID_CONTRAST:
+		अवरोध;
+	हाल V4L2_CID_CONTRAST:
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      CONTRAST_FORMATTER, ctrl->val);
-		break;
-	case V4L2_CID_SATURATION:
+		अवरोध;
+	हाल V4L2_CID_SATURATION:
 		ret = pwc_set_s8_ctrl(pdev, SET_CHROM_CTL,
 				      pdev->saturation_fmt, ctrl->val);
-		break;
-	case V4L2_CID_GAMMA:
+		अवरोध;
+	हाल V4L2_CID_GAMMA:
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      GAMMA_FORMATTER, ctrl->val);
-		break;
-	case V4L2_CID_AUTO_WHITE_BALANCE:
+		अवरोध;
+	हाल V4L2_CID_AUTO_WHITE_BALANCE:
 		ret = pwc_set_awb(pdev);
-		break;
-	case V4L2_CID_AUTOGAIN:
-		if (DEVICE_USE_CODEC2(pdev->type))
-			ret = pwc_set_autogain(pdev);
-		else if (DEVICE_USE_CODEC3(pdev->type))
-			ret = pwc_set_autogain_expo(pdev);
-		else
+		अवरोध;
+	हाल V4L2_CID_AUTOGAIN:
+		अगर (DEVICE_USE_CODEC2(pdev->type))
+			ret = pwc_set_स्वतःgain(pdev);
+		अन्यथा अगर (DEVICE_USE_CODEC3(pdev->type))
+			ret = pwc_set_स्वतःgain_expo(pdev);
+		अन्यथा
 			ret = -EINVAL;
-		break;
-	case V4L2_CID_EXPOSURE_AUTO:
-		if (DEVICE_USE_CODEC2(pdev->type))
-			ret = pwc_set_exposure_auto(pdev);
-		else
+		अवरोध;
+	हाल V4L2_CID_EXPOSURE_AUTO:
+		अगर (DEVICE_USE_CODEC2(pdev->type))
+			ret = pwc_set_exposure_स्वतः(pdev);
+		अन्यथा
 			ret = -EINVAL;
-		break;
-	case V4L2_CID_COLORFX:
+		अवरोध;
+	हाल V4L2_CID_COLORFX:
 		ret = pwc_set_u8_ctrl(pdev, SET_CHROM_CTL,
 				      COLOUR_MODE_FORMATTER,
 				      ctrl->val ? 0 : 0xff);
-		break;
-	case PWC_CID_CUSTOM(autocontour):
-		if (pdev->autocontour->is_new) {
+		अवरोध;
+	हाल PWC_CID_CUSTOM(स्वतःcontour):
+		अगर (pdev->स्वतःcontour->is_new) अणु
 			ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 					AUTO_CONTOUR_FORMATTER,
-					pdev->autocontour->val ? 0 : 0xff);
-		}
-		if (ret == 0 && pdev->contour->is_new) {
+					pdev->स्वतःcontour->val ? 0 : 0xff);
+		पूर्ण
+		अगर (ret == 0 && pdev->contour->is_new) अणु
 			ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 					      PRESET_CONTOUR_FORMATTER,
 					      pdev->contour->val);
-		}
-		break;
-	case V4L2_CID_BACKLIGHT_COMPENSATION:
+		पूर्ण
+		अवरोध;
+	हाल V4L2_CID_BACKLIGHT_COMPENSATION:
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      BACK_LIGHT_COMPENSATION_FORMATTER,
 				      ctrl->val ? 0 : 0xff);
-		break;
-	case V4L2_CID_BAND_STOP_FILTER:
+		अवरोध;
+	हाल V4L2_CID_BAND_STOP_FILTER:
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      FLICKERLESS_MODE_FORMATTER,
 				      ctrl->val ? 0 : 0xff);
-		break;
-	case PWC_CID_CUSTOM(noise_reduction):
+		अवरोध;
+	हाल PWC_CID_CUSTOM(noise_reduction):
 		ret = pwc_set_u8_ctrl(pdev, SET_LUM_CTL,
 				      DYNAMIC_NOISE_CONTROL_FORMATTER,
 				      ctrl->val);
-		break;
-	case PWC_CID_CUSTOM(save_user):
+		अवरोध;
+	हाल PWC_CID_CUSTOM(save_user):
 		ret = pwc_button_ctrl(pdev, SAVE_USER_DEFAULTS_FORMATTER);
-		break;
-	case PWC_CID_CUSTOM(restore_user):
+		अवरोध;
+	हाल PWC_CID_CUSTOM(restore_user):
 		ret = pwc_button_ctrl(pdev, RESTORE_USER_DEFAULTS_FORMATTER);
-		break;
-	case PWC_CID_CUSTOM(restore_factory):
+		अवरोध;
+	हाल PWC_CID_CUSTOM(restore_factory):
 		ret = pwc_button_ctrl(pdev,
 				      RESTORE_FACTORY_DEFAULTS_FORMATTER);
-		break;
-	case PWC_CID_CUSTOM(awb_speed):
+		अवरोध;
+	हाल PWC_CID_CUSTOM(awb_speed):
 		ret = pwc_set_u8_ctrl(pdev, SET_CHROM_CTL,
 				      AWB_CONTROL_SPEED_FORMATTER,
 				      ctrl->val);
-		break;
-	case PWC_CID_CUSTOM(awb_delay):
+		अवरोध;
+	हाल PWC_CID_CUSTOM(awb_delay):
 		ret = pwc_set_u8_ctrl(pdev, SET_CHROM_CTL,
 				      AWB_CONTROL_DELAY_FORMATTER,
 				      ctrl->val);
-		break;
-	case V4L2_CID_PAN_RELATIVE:
+		अवरोध;
+	हाल V4L2_CID_PAN_RELATIVE:
 		ret = pwc_set_motor(pdev);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		PWC_ERROR("s_ctrl %s error %d\n", ctrl->name, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pwc_enum_fmt_vid_cap(struct file *file, void *fh, struct v4l2_fmtdesc *f)
-{
-	struct pwc_device *pdev = video_drvdata(file);
+अटल पूर्णांक pwc_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_fmtdesc *f)
+अणु
+	काष्ठा pwc_device *pdev = video_drvdata(file);
 
-	/* We only support two format: the raw format, and YUV */
-	switch (f->index) {
-	case 0:
-		/* RAW format */
-		f->pixelformat = pdev->type <= 646 ? V4L2_PIX_FMT_PWC1 : V4L2_PIX_FMT_PWC2;
-		break;
-	case 1:
-		f->pixelformat = V4L2_PIX_FMT_YUV420;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	/* We only support two क्रमmat: the raw क्रमmat, and YUV */
+	चयन (f->index) अणु
+	हाल 0:
+		/* RAW क्रमmat */
+		f->pixelक्रमmat = pdev->type <= 646 ? V4L2_PIX_FMT_PWC1 : V4L2_PIX_FMT_PWC2;
+		अवरोध;
+	हाल 1:
+		f->pixelक्रमmat = V4L2_PIX_FMT_YUV420;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int pwc_g_fmt_vid_cap(struct file *file, void *fh, struct v4l2_format *f)
-{
-	struct pwc_device *pdev = video_drvdata(file);
+अटल पूर्णांक pwc_g_fmt_vid_cap(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा pwc_device *pdev = video_drvdata(file);
 
-	if (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+	अगर (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
 
 	PWC_DEBUG_IOCTL("ioctl(VIDIOC_G_FMT) return size %dx%d\n",
 			pdev->width, pdev->height);
 	pwc_vidioc_fill_fmt(f, pdev->width, pdev->height, pdev->pixfmt);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwc_try_fmt_vid_cap(struct file *file, void *fh, struct v4l2_format *f)
-{
-	struct pwc_device *pdev = video_drvdata(file);
+अटल पूर्णांक pwc_try_fmt_vid_cap(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा pwc_device *pdev = video_drvdata(file);
 
-	return pwc_vidioc_try_fmt(pdev, f);
-}
+	वापस pwc_vidioc_try_fmt(pdev, f);
+पूर्ण
 
-static int pwc_enum_framesizes(struct file *file, void *fh,
-					 struct v4l2_frmsizeenum *fsize)
-{
-	struct pwc_device *pdev = video_drvdata(file);
-	unsigned int i = 0, index = fsize->index;
+अटल पूर्णांक pwc_क्रमागत_framesizes(काष्ठा file *file, व्योम *fh,
+					 काष्ठा v4l2_frmsizeक्रमागत *fsize)
+अणु
+	काष्ठा pwc_device *pdev = video_drvdata(file);
+	अचिन्हित पूर्णांक i = 0, index = fsize->index;
 
-	if (fsize->pixel_format == V4L2_PIX_FMT_YUV420 ||
-	    (fsize->pixel_format == V4L2_PIX_FMT_PWC1 &&
+	अगर (fsize->pixel_क्रमmat == V4L2_PIX_FMT_YUV420 ||
+	    (fsize->pixel_क्रमmat == V4L2_PIX_FMT_PWC1 &&
 			DEVICE_USE_CODEC1(pdev->type)) ||
-	    (fsize->pixel_format == V4L2_PIX_FMT_PWC2 &&
-			DEVICE_USE_CODEC23(pdev->type))) {
-		for (i = 0; i < PSZ_MAX; i++) {
-			if (!(pdev->image_mask & (1UL << i)))
-				continue;
-			if (!index--) {
+	    (fsize->pixel_क्रमmat == V4L2_PIX_FMT_PWC2 &&
+			DEVICE_USE_CODEC23(pdev->type))) अणु
+		क्रम (i = 0; i < PSZ_MAX; i++) अणु
+			अगर (!(pdev->image_mask & (1UL << i)))
+				जारी;
+			अगर (!index--) अणु
 				fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
 				fsize->discrete.width = pwc_image_sizes[i][0];
 				fsize->discrete.height = pwc_image_sizes[i][1];
-				return 0;
-			}
-		}
-	}
-	return -EINVAL;
-}
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int pwc_enum_frameintervals(struct file *file, void *fh,
-					   struct v4l2_frmivalenum *fival)
-{
-	struct pwc_device *pdev = video_drvdata(file);
-	int size = -1;
-	unsigned int i;
+अटल पूर्णांक pwc_क्रमागत_frameपूर्णांकervals(काष्ठा file *file, व्योम *fh,
+					   काष्ठा v4l2_frmivalक्रमागत *fival)
+अणु
+	काष्ठा pwc_device *pdev = video_drvdata(file);
+	पूर्णांक size = -1;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < PSZ_MAX; i++) {
-		if (pwc_image_sizes[i][0] == fival->width &&
-				pwc_image_sizes[i][1] == fival->height) {
+	क्रम (i = 0; i < PSZ_MAX; i++) अणु
+		अगर (pwc_image_sizes[i][0] == fival->width &&
+				pwc_image_sizes[i][1] == fival->height) अणु
 			size = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* TODO: Support raw format */
-	if (size < 0 || fival->pixel_format != V4L2_PIX_FMT_YUV420)
-		return -EINVAL;
+	/* TODO: Support raw क्रमmat */
+	अगर (size < 0 || fival->pixel_क्रमmat != V4L2_PIX_FMT_YUV420)
+		वापस -EINVAL;
 
 	i = pwc_get_fps(pdev, fival->index, size);
-	if (!i)
-		return -EINVAL;
+	अगर (!i)
+		वापस -EINVAL;
 
 	fival->type = V4L2_FRMIVAL_TYPE_DISCRETE;
 	fival->discrete.numerator = 1;
 	fival->discrete.denominator = i;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwc_g_parm(struct file *file, void *fh,
-		      struct v4l2_streamparm *parm)
-{
-	struct pwc_device *pdev = video_drvdata(file);
+अटल पूर्णांक pwc_g_parm(काष्ठा file *file, व्योम *fh,
+		      काष्ठा v4l2_streamparm *parm)
+अणु
+	काष्ठा pwc_device *pdev = video_drvdata(file);
 
-	if (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+	अगर (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
 
-	memset(parm, 0, sizeof(*parm));
+	स_रखो(parm, 0, माप(*parm));
 
 	parm->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	parm->parm.capture.readbuffers = MIN_FRAMES;
+	parm->parm.capture.पढ़ोbuffers = MIN_FRAMES;
 	parm->parm.capture.capability |= V4L2_CAP_TIMEPERFRAME;
-	parm->parm.capture.timeperframe.denominator = pdev->vframes;
-	parm->parm.capture.timeperframe.numerator = 1;
+	parm->parm.capture.समयperframe.denominator = pdev->vframes;
+	parm->parm.capture.समयperframe.numerator = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwc_s_parm(struct file *file, void *fh,
-		      struct v4l2_streamparm *parm)
-{
-	struct pwc_device *pdev = video_drvdata(file);
-	int compression = 0;
-	int ret, fps;
+अटल पूर्णांक pwc_s_parm(काष्ठा file *file, व्योम *fh,
+		      काष्ठा v4l2_streamparm *parm)
+अणु
+	काष्ठा pwc_device *pdev = video_drvdata(file);
+	पूर्णांक compression = 0;
+	पूर्णांक ret, fps;
 
-	if (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+	अगर (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
 
-	/* If timeperframe == 0, then reset the framerate to the nominal value.
+	/* If समयperframe == 0, then reset the framerate to the nominal value.
 	   We pick a high framerate here, and let pwc_set_video_mode() figure
 	   out the best match. */
-	if (parm->parm.capture.timeperframe.numerator == 0 ||
-	    parm->parm.capture.timeperframe.denominator == 0)
+	अगर (parm->parm.capture.समयperframe.numerator == 0 ||
+	    parm->parm.capture.समयperframe.denominator == 0)
 		fps = 30;
-	else
-		fps = parm->parm.capture.timeperframe.denominator /
-		      parm->parm.capture.timeperframe.numerator;
+	अन्यथा
+		fps = parm->parm.capture.समयperframe.denominator /
+		      parm->parm.capture.समयperframe.numerator;
 
-	if (vb2_is_busy(&pdev->vb_queue))
-		return -EBUSY;
+	अगर (vb2_is_busy(&pdev->vb_queue))
+		वापस -EBUSY;
 
 	ret = pwc_set_video_mode(pdev, pdev->width, pdev->height, pdev->pixfmt,
 				 fps, &compression, 0);
 
 	pwc_g_parm(file, fh, parm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct v4l2_ioctl_ops pwc_ioctl_ops = {
+स्थिर काष्ठा v4l2_ioctl_ops pwc_ioctl_ops = अणु
 	.vidioc_querycap		    = pwc_querycap,
-	.vidioc_enum_input		    = pwc_enum_input,
+	.vidioc_क्रमागत_input		    = pwc_क्रमागत_input,
 	.vidioc_g_input			    = pwc_g_input,
 	.vidioc_s_input			    = pwc_s_input,
-	.vidioc_enum_fmt_vid_cap	    = pwc_enum_fmt_vid_cap,
+	.vidioc_क्रमागत_fmt_vid_cap	    = pwc_क्रमागत_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap		    = pwc_g_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap		    = pwc_s_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap		    = pwc_try_fmt_vid_cap,
@@ -1024,10 +1025,10 @@ const struct v4l2_ioctl_ops pwc_ioctl_ops = {
 	.vidioc_streamon		    = vb2_ioctl_streamon,
 	.vidioc_streamoff		    = vb2_ioctl_streamoff,
 	.vidioc_log_status		    = v4l2_ctrl_log_status,
-	.vidioc_enum_framesizes		    = pwc_enum_framesizes,
-	.vidioc_enum_frameintervals	    = pwc_enum_frameintervals,
+	.vidioc_क्रमागत_framesizes		    = pwc_क्रमागत_framesizes,
+	.vidioc_क्रमागत_frameपूर्णांकervals	    = pwc_क्रमागत_frameपूर्णांकervals,
 	.vidioc_g_parm			    = pwc_g_parm,
 	.vidioc_s_parm			    = pwc_s_parm,
 	.vidioc_subscribe_event		    = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event	    = v4l2_event_unsubscribe,
-};
+पूर्ण;

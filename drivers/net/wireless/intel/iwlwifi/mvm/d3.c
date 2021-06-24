@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2012-2014, 2018-2021 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
-#include <linux/etherdevice.h>
-#include <linux/ip.h>
-#include <linux/fs.h>
-#include <net/cfg80211.h>
-#include <net/ipv6.h>
-#include <net/tcp.h>
-#include <net/addrconf.h>
-#include "iwl-modparams.h"
-#include "fw-api.h"
-#include "mvm.h"
-#include "fw/img.h"
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/fs.h>
+#समावेश <net/cfg80211.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/tcp.h>
+#समावेश <net/addrconf.h>
+#समावेश "iwl-modparams.h"
+#समावेश "fw-api.h"
+#समावेश "mvm.h"
+#समावेश "fw/img.h"
 
-void iwl_mvm_set_rekey_data(struct ieee80211_hw *hw,
-			    struct ieee80211_vif *vif,
-			    struct cfg80211_gtk_rekey_data *data)
-{
-	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+व्योम iwl_mvm_set_rekey_data(काष्ठा ieee80211_hw *hw,
+			    काष्ठा ieee80211_vअगर *vअगर,
+			    काष्ठा cfg80211_gtk_rekey_data *data)
+अणु
+	काष्ठा iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
 	mutex_lock(&mvm->mutex);
 
-	mvmvif->rekey_data.kek_len = data->kek_len;
-	mvmvif->rekey_data.kck_len = data->kck_len;
-	memcpy(mvmvif->rekey_data.kek, data->kek, data->kek_len);
-	memcpy(mvmvif->rekey_data.kck, data->kck, data->kck_len);
-	mvmvif->rekey_data.akm = data->akm & 0xFF;
-	mvmvif->rekey_data.replay_ctr =
+	mvmvअगर->rekey_data.kek_len = data->kek_len;
+	mvmvअगर->rekey_data.kck_len = data->kck_len;
+	स_नकल(mvmvअगर->rekey_data.kek, data->kek, data->kek_len);
+	स_नकल(mvmvअगर->rekey_data.kck, data->kck, data->kck_len);
+	mvmvअगर->rekey_data.akm = data->akm & 0xFF;
+	mvmvअगर->rekey_data.replay_ctr =
 		cpu_to_le64(be64_to_cpup((__be64 *)data->replay_ctr));
-	mvmvif->rekey_data.valid = true;
+	mvmvअगर->rekey_data.valid = true;
 
 	mutex_unlock(&mvm->mutex);
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-void iwl_mvm_ipv6_addr_change(struct ieee80211_hw *hw,
-			      struct ieee80211_vif *vif,
-			      struct inet6_dev *idev)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct inet6_ifaddr *ifa;
-	int idx = 0;
+#अगर IS_ENABLED(CONFIG_IPV6)
+व्योम iwl_mvm_ipv6_addr_change(काष्ठा ieee80211_hw *hw,
+			      काष्ठा ieee80211_vअगर *vअगर,
+			      काष्ठा inet6_dev *idev)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा inet6_अगरaddr *अगरa;
+	पूर्णांक idx = 0;
 
-	memset(mvmvif->tentative_addrs, 0, sizeof(mvmvif->tentative_addrs));
+	स_रखो(mvmvअगर->tentative_addrs, 0, माप(mvmvअगर->tentative_addrs));
 
-	read_lock_bh(&idev->lock);
-	list_for_each_entry(ifa, &idev->addr_list, if_list) {
-		mvmvif->target_ipv6_addrs[idx] = ifa->addr;
-		if (ifa->flags & IFA_F_TENTATIVE)
-			__set_bit(idx, mvmvif->tentative_addrs);
+	पढ़ो_lock_bh(&idev->lock);
+	list_क्रम_each_entry(अगरa, &idev->addr_list, अगर_list) अणु
+		mvmvअगर->target_ipv6_addrs[idx] = अगरa->addr;
+		अगर (अगरa->flags & IFA_F_TENTATIVE)
+			__set_bit(idx, mvmvअगर->tentative_addrs);
 		idx++;
-		if (idx >= IWL_PROTO_OFFLOAD_NUM_IPV6_ADDRS_MAX)
-			break;
-	}
-	read_unlock_bh(&idev->lock);
+		अगर (idx >= IWL_PROTO_OFFLOAD_NUM_IPV6_ADDRS_MAX)
+			अवरोध;
+	पूर्ण
+	पढ़ो_unlock_bh(&idev->lock);
 
-	mvmvif->num_target_ipv6_addrs = idx;
-}
-#endif
+	mvmvअगर->num_target_ipv6_addrs = idx;
+पूर्ण
+#पूर्ण_अगर
 
-void iwl_mvm_set_default_unicast_key(struct ieee80211_hw *hw,
-				     struct ieee80211_vif *vif, int idx)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+व्योम iwl_mvm_set_शेष_unicast_key(काष्ठा ieee80211_hw *hw,
+				     काष्ठा ieee80211_vअगर *vअगर, पूर्णांक idx)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
-	mvmvif->tx_key_idx = idx;
-}
+	mvmvअगर->tx_key_idx = idx;
+पूर्ण
 
-static void iwl_mvm_convert_p1k(u16 *p1k, __le16 *out)
-{
-	int i;
+अटल व्योम iwl_mvm_convert_p1k(u16 *p1k, __le16 *out)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < IWL_P1K_SIZE; i++)
+	क्रम (i = 0; i < IWL_P1K_SIZE; i++)
 		out[i] = cpu_to_le16(p1k[i]);
-}
+पूर्ण
 
-static const u8 *iwl_mvm_find_max_pn(struct ieee80211_key_conf *key,
-				     struct iwl_mvm_key_pn *ptk_pn,
-				     struct ieee80211_key_seq *seq,
-				     int tid, int queues)
-{
-	const u8 *ret = seq->ccmp.pn;
-	int i;
+अटल स्थिर u8 *iwl_mvm_find_max_pn(काष्ठा ieee80211_key_conf *key,
+				     काष्ठा iwl_mvm_key_pn *ptk_pn,
+				     काष्ठा ieee80211_key_seq *seq,
+				     पूर्णांक tid, पूर्णांक queues)
+अणु
+	स्थिर u8 *ret = seq->ccmp.pn;
+	पूर्णांक i;
 
-	/* get the PN from mac80211, used on the default queue */
+	/* get the PN from mac80211, used on the शेष queue */
 	ieee80211_get_key_rx_seq(key, tid, seq);
 
-	/* and use the internal data for the other queues */
-	for (i = 1; i < queues; i++) {
-		const u8 *tmp = ptk_pn->q[i].pn[tid];
+	/* and use the पूर्णांकernal data क्रम the other queues */
+	क्रम (i = 1; i < queues; i++) अणु
+		स्थिर u8 *पंचांगp = ptk_pn->q[i].pn[tid];
 
-		if (memcmp(ret, tmp, IEEE80211_CCMP_PN_LEN) <= 0)
-			ret = tmp;
-	}
+		अगर (स_भेद(ret, पंचांगp, IEEE80211_CCMP_PN_LEN) <= 0)
+			ret = पंचांगp;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct wowlan_key_data {
-	struct iwl_wowlan_rsc_tsc_params_cmd *rsc_tsc;
-	struct iwl_wowlan_tkip_params_cmd *tkip;
-	struct iwl_wowlan_kek_kck_material_cmd_v3 *kek_kck_cmd;
+काष्ठा wowlan_key_data अणु
+	काष्ठा iwl_wowlan_rsc_tsc_params_cmd *rsc_tsc;
+	काष्ठा iwl_wowlan_tkip_params_cmd *tkip;
+	काष्ठा iwl_wowlan_kek_kck_material_cmd_v3 *kek_kck_cmd;
 	bool error, use_rsc_tsc, use_tkip, configure_keys;
-	int wep_key_idx;
-};
+	पूर्णांक wep_key_idx;
+पूर्ण;
 
-static void iwl_mvm_wowlan_program_keys(struct ieee80211_hw *hw,
-					struct ieee80211_vif *vif,
-					struct ieee80211_sta *sta,
-					struct ieee80211_key_conf *key,
-					void *_data)
-{
-	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct wowlan_key_data *data = _data;
-	struct aes_sc *aes_sc, *aes_tx_sc = NULL;
-	struct tkip_sc *tkip_sc, *tkip_tx_sc = NULL;
-	struct iwl_p1k_cache *rx_p1ks;
+अटल व्योम iwl_mvm_wowlan_program_keys(काष्ठा ieee80211_hw *hw,
+					काष्ठा ieee80211_vअगर *vअगर,
+					काष्ठा ieee80211_sta *sta,
+					काष्ठा ieee80211_key_conf *key,
+					व्योम *_data)
+अणु
+	काष्ठा iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा wowlan_key_data *data = _data;
+	काष्ठा aes_sc *aes_sc, *aes_tx_sc = शून्य;
+	काष्ठा tkip_sc *tkip_sc, *tkip_tx_sc = शून्य;
+	काष्ठा iwl_p1k_cache *rx_p1ks;
 	u8 *rx_mic_key;
-	struct ieee80211_key_seq seq;
+	काष्ठा ieee80211_key_seq seq;
 	u32 cur_rx_iv32 = 0;
 	u16 p1k[IWL_P1K_SIZE];
-	int ret, i;
+	पूर्णांक ret, i;
 
-	switch (key->cipher) {
-	case WLAN_CIPHER_SUITE_WEP40:
-	case WLAN_CIPHER_SUITE_WEP104: { /* hack it for now */
-		struct {
-			struct iwl_mvm_wep_key_cmd wep_key_cmd;
-			struct iwl_mvm_wep_key wep_key;
-		} __packed wkc = {
+	चयन (key->cipher) अणु
+	हाल WLAN_CIPHER_SUITE_WEP40:
+	हाल WLAN_CIPHER_SUITE_WEP104: अणु /* hack it क्रम now */
+		काष्ठा अणु
+			काष्ठा iwl_mvm_wep_key_cmd wep_key_cmd;
+			काष्ठा iwl_mvm_wep_key wep_key;
+		पूर्ण __packed wkc = अणु
 			.wep_key_cmd.mac_id_n_color =
-				cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id,
-								mvmvif->color)),
+				cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id,
+								mvmvअगर->color)),
 			.wep_key_cmd.num_keys = 1,
 			/* firmware sets STA_KEY_FLG_WEP_13BYTES */
 			.wep_key_cmd.decryption_type = STA_KEY_FLG_WEP,
 			.wep_key.key_index = key->keyidx,
 			.wep_key.key_size = key->keylen,
-		};
+		पूर्ण;
 
 		/*
-		 * This will fail -- the key functions don't set support
+		 * This will fail -- the key functions करोn't set support
 		 * pairwise WEP keys. However, that's better than silently
 		 * failing WoWLAN. Or maybe not?
 		 */
-		if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
-			break;
+		अगर (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
+			अवरोध;
 
-		memcpy(&wkc.wep_key.key[3], key->key, key->keylen);
-		if (key->keyidx == mvmvif->tx_key_idx) {
+		स_नकल(&wkc.wep_key.key[3], key->key, key->keylen);
+		अगर (key->keyidx == mvmvअगर->tx_key_idx) अणु
 			/* TX key must be at offset 0 */
 			wkc.wep_key.key_offset = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* others start at 1 */
 			data->wep_key_idx++;
 			wkc.wep_key.key_offset = data->wep_key_idx;
-		}
+		पूर्ण
 
-		if (data->configure_keys) {
+		अगर (data->configure_keys) अणु
 			mutex_lock(&mvm->mutex);
 			ret = iwl_mvm_send_cmd_pdu(mvm, WEP_KEY, 0,
-						   sizeof(wkc), &wkc);
+						   माप(wkc), &wkc);
 			data->error = ret != 0;
 
 			mvm->ptk_ivlen = key->iv_len;
@@ -173,30 +174,30 @@ static void iwl_mvm_wowlan_program_keys(struct ieee80211_hw *hw,
 			mvm->gtk_ivlen = key->iv_len;
 			mvm->gtk_icvlen = key->icv_len;
 			mutex_unlock(&mvm->mutex);
-		}
+		पूर्ण
 
-		/* don't upload key again */
-		return;
-	}
-	default:
+		/* करोn't upload key again */
+		वापस;
+	पूर्ण
+	शेष:
 		data->error = true;
-		return;
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
+		वापस;
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
 		data->kek_kck_cmd->igtk_cipher = cpu_to_le32(STA_KEY_FLG_GCMP);
-		return;
-	case WLAN_CIPHER_SUITE_AES_CMAC:
+		वापस;
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
 		data->kek_kck_cmd->igtk_cipher = cpu_to_le32(STA_KEY_FLG_CCM);
 		/*
-		 * Ignore CMAC keys -- the WoWLAN firmware doesn't support them
-		 * but we also shouldn't abort suspend due to that. It does have
-		 * support for the IGTK key renewal, but doesn't really use the
-		 * IGTK for anything. This means we could spuriously wake up or
+		 * Ignore CMAC keys -- the WoWLAN firmware करोesn't support them
+		 * but we also shouldn't पात suspend due to that. It करोes have
+		 * support क्रम the IGTK key renewal, but करोesn't really use the
+		 * IGTK क्रम anything. This means we could spuriously wake up or
 		 * be deauthenticated, but that was considered acceptable.
 		 */
-		return;
-	case WLAN_CIPHER_SUITE_TKIP:
-		if (sta) {
+		वापस;
+	हाल WLAN_CIPHER_SUITE_TKIP:
+		अगर (sta) अणु
 			u64 pn64;
 
 			tkip_sc =
@@ -206,7 +207,7 @@ static void iwl_mvm_wowlan_program_keys(struct ieee80211_hw *hw,
 
 			rx_p1ks = data->tkip->rx_uni;
 
-			pn64 = atomic64_read(&key->tx_pn);
+			pn64 = atomic64_पढ़ो(&key->tx_pn);
 			tkip_tx_sc->iv16 = cpu_to_le16(TKIP_PN_TO_IV16(pn64));
 			tkip_tx_sc->iv32 = cpu_to_le32(TKIP_PN_TO_IV32(pn64));
 
@@ -214,52 +215,52 @@ static void iwl_mvm_wowlan_program_keys(struct ieee80211_hw *hw,
 						  p1k);
 			iwl_mvm_convert_p1k(p1k, data->tkip->tx.p1k);
 
-			memcpy(data->tkip->mic_keys.tx,
+			स_नकल(data->tkip->mic_keys.tx,
 			       &key->key[NL80211_TKIP_DATA_OFFSET_TX_MIC_KEY],
 			       IWL_MIC_KEY_SIZE);
 
 			rx_mic_key = data->tkip->mic_keys.rx_unicast;
-		} else {
+		पूर्ण अन्यथा अणु
 			tkip_sc =
 			  data->rsc_tsc->params.all_tsc_rsc.tkip.multicast_rsc;
 			rx_p1ks = data->tkip->rx_multi;
 			rx_mic_key = data->tkip->mic_keys.rx_mcast;
 			data->kek_kck_cmd->gtk_cipher =
 				cpu_to_le32(STA_KEY_FLG_TKIP);
-		}
+		पूर्ण
 
 		/*
 		 * For non-QoS this relies on the fact that both the uCode and
-		 * mac80211 use TID 0 (as they need to to avoid replay attacks)
-		 * for checking the IV in the frames.
+		 * mac80211 use TID 0 (as they need to to aव्योम replay attacks)
+		 * क्रम checking the IV in the frames.
 		 */
-		for (i = 0; i < IWL_NUM_RSC; i++) {
+		क्रम (i = 0; i < IWL_NUM_RSC; i++) अणु
 			ieee80211_get_key_rx_seq(key, i, &seq);
 			tkip_sc[i].iv16 = cpu_to_le16(seq.tkip.iv16);
 			tkip_sc[i].iv32 = cpu_to_le32(seq.tkip.iv32);
 			/* wrapping isn't allowed, AP must rekey */
-			if (seq.tkip.iv32 > cur_rx_iv32)
+			अगर (seq.tkip.iv32 > cur_rx_iv32)
 				cur_rx_iv32 = seq.tkip.iv32;
-		}
+		पूर्ण
 
-		ieee80211_get_tkip_rx_p1k(key, vif->bss_conf.bssid,
+		ieee80211_get_tkip_rx_p1k(key, vअगर->bss_conf.bssid,
 					  cur_rx_iv32, p1k);
 		iwl_mvm_convert_p1k(p1k, rx_p1ks[0].p1k);
-		ieee80211_get_tkip_rx_p1k(key, vif->bss_conf.bssid,
+		ieee80211_get_tkip_rx_p1k(key, vअगर->bss_conf.bssid,
 					  cur_rx_iv32 + 1, p1k);
 		iwl_mvm_convert_p1k(p1k, rx_p1ks[1].p1k);
 
-		memcpy(rx_mic_key,
+		स_नकल(rx_mic_key,
 		       &key->key[NL80211_TKIP_DATA_OFFSET_RX_MIC_KEY],
 		       IWL_MIC_KEY_SIZE);
 
 		data->use_tkip = true;
 		data->use_rsc_tsc = true;
-		break;
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
-		if (sta) {
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
+		अगर (sta) अणु
 			u64 pn64;
 
 			aes_sc =
@@ -267,35 +268,35 @@ static void iwl_mvm_wowlan_program_keys(struct ieee80211_hw *hw,
 			aes_tx_sc =
 				&data->rsc_tsc->params.all_tsc_rsc.aes.tsc;
 
-			pn64 = atomic64_read(&key->tx_pn);
+			pn64 = atomic64_पढ़ो(&key->tx_pn);
 			aes_tx_sc->pn = cpu_to_le64(pn64);
-		} else {
+		पूर्ण अन्यथा अणु
 			aes_sc =
 			   data->rsc_tsc->params.all_tsc_rsc.aes.multicast_rsc;
 			data->kek_kck_cmd->gtk_cipher =
 				key->cipher == WLAN_CIPHER_SUITE_CCMP ?
 				cpu_to_le32(STA_KEY_FLG_CCM) :
 				cpu_to_le32(STA_KEY_FLG_GCMP);
-		}
+		पूर्ण
 
 		/*
 		 * For non-QoS this relies on the fact that both the uCode and
-		 * mac80211/our RX code use TID 0 for checking the PN.
+		 * mac80211/our RX code use TID 0 क्रम checking the PN.
 		 */
-		if (sta && iwl_mvm_has_new_rx_api(mvm)) {
-			struct iwl_mvm_sta *mvmsta;
-			struct iwl_mvm_key_pn *ptk_pn;
-			const u8 *pn;
+		अगर (sta && iwl_mvm_has_new_rx_api(mvm)) अणु
+			काष्ठा iwl_mvm_sta *mvmsta;
+			काष्ठा iwl_mvm_key_pn *ptk_pn;
+			स्थिर u8 *pn;
 
 			mvmsta = iwl_mvm_sta_from_mac80211(sta);
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			ptk_pn = rcu_dereference(mvmsta->ptk_pn[key->keyidx]);
-			if (WARN_ON(!ptk_pn)) {
-				rcu_read_unlock();
-				break;
-			}
+			अगर (WARN_ON(!ptk_pn)) अणु
+				rcu_पढ़ो_unlock();
+				अवरोध;
+			पूर्ण
 
-			for (i = 0; i < IWL_MAX_TID_COUNT; i++) {
+			क्रम (i = 0; i < IWL_MAX_TID_COUNT; i++) अणु
 				pn = iwl_mvm_find_max_pn(key, ptk_pn, &seq, i,
 						mvm->trans->num_rx_queues);
 				aes_sc[i].pn = cpu_to_le64((u64)pn[5] |
@@ -304,11 +305,11 @@ static void iwl_mvm_wowlan_program_keys(struct ieee80211_hw *hw,
 							   ((u64)pn[2] << 24) |
 							   ((u64)pn[1] << 32) |
 							   ((u64)pn[0] << 40));
-			}
+			पूर्ण
 
-			rcu_read_unlock();
-		} else {
-			for (i = 0; i < IWL_NUM_RSC; i++) {
+			rcu_पढ़ो_unlock();
+		पूर्ण अन्यथा अणु
+			क्रम (i = 0; i < IWL_NUM_RSC; i++) अणु
 				u8 *pn = seq.ccmp.pn;
 
 				ieee80211_get_key_rx_seq(key, i, &seq);
@@ -318,328 +319,328 @@ static void iwl_mvm_wowlan_program_keys(struct ieee80211_hw *hw,
 							   ((u64)pn[2] << 24) |
 							   ((u64)pn[1] << 32) |
 							   ((u64)pn[0] << 40));
-			}
-		}
+			पूर्ण
+		पूर्ण
 		data->use_rsc_tsc = true;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	IWL_DEBUG_WOWLAN(mvm, "GTK cipher %d\n", data->kek_kck_cmd->gtk_cipher);
 
-	if (data->configure_keys) {
+	अगर (data->configure_keys) अणु
 		mutex_lock(&mvm->mutex);
 		/*
 		 * The D3 firmware hardcodes the key offset 0 as the key it
 		 * uses to transmit packets to the AP, i.e. the PTK.
 		 */
-		if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE) {
+		अगर (key->flags & IEEE80211_KEY_FLAG_PAIRWISE) अणु
 			mvm->ptk_ivlen = key->iv_len;
 			mvm->ptk_icvlen = key->icv_len;
-			ret = iwl_mvm_set_sta_key(mvm, vif, sta, key, 0);
-		} else {
+			ret = iwl_mvm_set_sta_key(mvm, vअगर, sta, key, 0);
+		पूर्ण अन्यथा अणु
 			/*
-			 * firmware only supports TSC/RSC for a single key,
-			 * so if there are multiple keep overwriting them
-			 * with new ones -- this relies on mac80211 doing
+			 * firmware only supports TSC/RSC क्रम a single key,
+			 * so अगर there are multiple keep overwriting them
+			 * with new ones -- this relies on mac80211 करोing
 			 * list_add_tail().
 			 */
 			mvm->gtk_ivlen = key->iv_len;
 			mvm->gtk_icvlen = key->icv_len;
-			ret = iwl_mvm_set_sta_key(mvm, vif, sta, key, 1);
-		}
+			ret = iwl_mvm_set_sta_key(mvm, vअगर, sta, key, 1);
+		पूर्ण
 		mutex_unlock(&mvm->mutex);
 		data->error = ret != 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int iwl_mvm_send_patterns_v1(struct iwl_mvm *mvm,
-				    struct cfg80211_wowlan *wowlan)
-{
-	struct iwl_wowlan_patterns_cmd_v1 *pattern_cmd;
-	struct iwl_host_cmd cmd = {
+अटल पूर्णांक iwl_mvm_send_patterns_v1(काष्ठा iwl_mvm *mvm,
+				    काष्ठा cfg80211_wowlan *wowlan)
+अणु
+	काष्ठा iwl_wowlan_patterns_cmd_v1 *pattern_cmd;
+	काष्ठा iwl_host_cmd cmd = अणु
 		.id = WOWLAN_PATTERNS,
 		.dataflags[0] = IWL_HCMD_DFL_NOCOPY,
-	};
-	int i, err;
+	पूर्ण;
+	पूर्णांक i, err;
 
-	if (!wowlan->n_patterns)
-		return 0;
+	अगर (!wowlan->n_patterns)
+		वापस 0;
 
-	cmd.len[0] = struct_size(pattern_cmd, patterns, wowlan->n_patterns);
+	cmd.len[0] = काष्ठा_size(pattern_cmd, patterns, wowlan->n_patterns);
 
-	pattern_cmd = kmalloc(cmd.len[0], GFP_KERNEL);
-	if (!pattern_cmd)
-		return -ENOMEM;
+	pattern_cmd = kदो_स्मृति(cmd.len[0], GFP_KERNEL);
+	अगर (!pattern_cmd)
+		वापस -ENOMEM;
 
 	pattern_cmd->n_patterns = cpu_to_le32(wowlan->n_patterns);
 
-	for (i = 0; i < wowlan->n_patterns; i++) {
-		int mask_len = DIV_ROUND_UP(wowlan->patterns[i].pattern_len, 8);
+	क्रम (i = 0; i < wowlan->n_patterns; i++) अणु
+		पूर्णांक mask_len = DIV_ROUND_UP(wowlan->patterns[i].pattern_len, 8);
 
-		memcpy(&pattern_cmd->patterns[i].mask,
+		स_नकल(&pattern_cmd->patterns[i].mask,
 		       wowlan->patterns[i].mask, mask_len);
-		memcpy(&pattern_cmd->patterns[i].pattern,
+		स_नकल(&pattern_cmd->patterns[i].pattern,
 		       wowlan->patterns[i].pattern,
 		       wowlan->patterns[i].pattern_len);
 		pattern_cmd->patterns[i].mask_size = mask_len;
 		pattern_cmd->patterns[i].pattern_size =
 			wowlan->patterns[i].pattern_len;
-	}
+	पूर्ण
 
 	cmd.data[0] = pattern_cmd;
 	err = iwl_mvm_send_cmd(mvm, &cmd);
-	kfree(pattern_cmd);
-	return err;
-}
+	kमुक्त(pattern_cmd);
+	वापस err;
+पूर्ण
 
-static int iwl_mvm_send_patterns(struct iwl_mvm *mvm,
-				 struct cfg80211_wowlan *wowlan)
-{
-	struct iwl_wowlan_patterns_cmd *pattern_cmd;
-	struct iwl_host_cmd cmd = {
+अटल पूर्णांक iwl_mvm_send_patterns(काष्ठा iwl_mvm *mvm,
+				 काष्ठा cfg80211_wowlan *wowlan)
+अणु
+	काष्ठा iwl_wowlan_patterns_cmd *pattern_cmd;
+	काष्ठा iwl_host_cmd cmd = अणु
 		.id = WOWLAN_PATTERNS,
 		.dataflags[0] = IWL_HCMD_DFL_NOCOPY,
-	};
-	int i, err;
+	पूर्ण;
+	पूर्णांक i, err;
 
-	if (!wowlan->n_patterns)
-		return 0;
+	अगर (!wowlan->n_patterns)
+		वापस 0;
 
-	cmd.len[0] = sizeof(*pattern_cmd) +
-		wowlan->n_patterns * sizeof(struct iwl_wowlan_pattern_v2);
+	cmd.len[0] = माप(*pattern_cmd) +
+		wowlan->n_patterns * माप(काष्ठा iwl_wowlan_pattern_v2);
 
-	pattern_cmd = kmalloc(cmd.len[0], GFP_KERNEL);
-	if (!pattern_cmd)
-		return -ENOMEM;
+	pattern_cmd = kदो_स्मृति(cmd.len[0], GFP_KERNEL);
+	अगर (!pattern_cmd)
+		वापस -ENOMEM;
 
 	pattern_cmd->n_patterns = cpu_to_le32(wowlan->n_patterns);
 
-	for (i = 0; i < wowlan->n_patterns; i++) {
-		int mask_len = DIV_ROUND_UP(wowlan->patterns[i].pattern_len, 8);
+	क्रम (i = 0; i < wowlan->n_patterns; i++) अणु
+		पूर्णांक mask_len = DIV_ROUND_UP(wowlan->patterns[i].pattern_len, 8);
 
 		pattern_cmd->patterns[i].pattern_type =
 			WOWLAN_PATTERN_TYPE_BITMASK;
 
-		memcpy(&pattern_cmd->patterns[i].u.bitmask.mask,
+		स_नकल(&pattern_cmd->patterns[i].u.biपंचांगask.mask,
 		       wowlan->patterns[i].mask, mask_len);
-		memcpy(&pattern_cmd->patterns[i].u.bitmask.pattern,
+		स_नकल(&pattern_cmd->patterns[i].u.biपंचांगask.pattern,
 		       wowlan->patterns[i].pattern,
 		       wowlan->patterns[i].pattern_len);
-		pattern_cmd->patterns[i].u.bitmask.mask_size = mask_len;
-		pattern_cmd->patterns[i].u.bitmask.pattern_size =
+		pattern_cmd->patterns[i].u.biपंचांगask.mask_size = mask_len;
+		pattern_cmd->patterns[i].u.biपंचांगask.pattern_size =
 			wowlan->patterns[i].pattern_len;
-	}
+	पूर्ण
 
 	cmd.data[0] = pattern_cmd;
 	err = iwl_mvm_send_cmd(mvm, &cmd);
-	kfree(pattern_cmd);
-	return err;
-}
+	kमुक्त(pattern_cmd);
+	वापस err;
+पूर्ण
 
-static int iwl_mvm_d3_reprogram(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
-				struct ieee80211_sta *ap_sta)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct ieee80211_chanctx_conf *ctx;
-	u8 chains_static, chains_dynamic;
-	struct cfg80211_chan_def chandef;
-	int ret, i;
-	struct iwl_binding_cmd_v1 binding_cmd = {};
-	struct iwl_time_quota_cmd quota_cmd = {};
-	struct iwl_time_quota_data *quota;
+अटल पूर्णांक iwl_mvm_d3_reprogram(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर,
+				काष्ठा ieee80211_sta *ap_sta)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा ieee80211_chanctx_conf *ctx;
+	u8 chains_अटल, chains_dynamic;
+	काष्ठा cfg80211_chan_def chandef;
+	पूर्णांक ret, i;
+	काष्ठा iwl_binding_cmd_v1 binding_cmd = अणुपूर्ण;
+	काष्ठा iwl_समय_quota_cmd quota_cmd = अणुपूर्ण;
+	काष्ठा iwl_समय_quota_data *quota;
 	u32 status;
 
-	if (WARN_ON_ONCE(iwl_mvm_is_cdb_supported(mvm)))
-		return -EINVAL;
+	अगर (WARN_ON_ONCE(iwl_mvm_is_cdb_supported(mvm)))
+		वापस -EINVAL;
 
 	/* add back the PHY */
-	if (WARN_ON(!mvmvif->phy_ctxt))
-		return -EINVAL;
+	अगर (WARN_ON(!mvmvअगर->phy_ctxt))
+		वापस -EINVAL;
 
-	rcu_read_lock();
-	ctx = rcu_dereference(vif->chanctx_conf);
-	if (WARN_ON(!ctx)) {
-		rcu_read_unlock();
-		return -EINVAL;
-	}
+	rcu_पढ़ो_lock();
+	ctx = rcu_dereference(vअगर->chanctx_conf);
+	अगर (WARN_ON(!ctx)) अणु
+		rcu_पढ़ो_unlock();
+		वापस -EINVAL;
+	पूर्ण
 	chandef = ctx->def;
-	chains_static = ctx->rx_chains_static;
+	chains_अटल = ctx->rx_chains_अटल;
 	chains_dynamic = ctx->rx_chains_dynamic;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	ret = iwl_mvm_phy_ctxt_add(mvm, mvmvif->phy_ctxt, &chandef,
-				   chains_static, chains_dynamic);
-	if (ret)
-		return ret;
+	ret = iwl_mvm_phy_ctxt_add(mvm, mvmvअगर->phy_ctxt, &chandef,
+				   chains_अटल, chains_dynamic);
+	अगर (ret)
+		वापस ret;
 
 	/* add back the MAC */
-	mvmvif->uploaded = false;
+	mvmvअगर->uploaded = false;
 
-	if (WARN_ON(!vif->bss_conf.assoc))
-		return -EINVAL;
+	अगर (WARN_ON(!vअगर->bss_conf.assoc))
+		वापस -EINVAL;
 
-	ret = iwl_mvm_mac_ctxt_add(mvm, vif);
-	if (ret)
-		return ret;
+	ret = iwl_mvm_mac_ctxt_add(mvm, vअगर);
+	अगर (ret)
+		वापस ret;
 
 	/* add back binding - XXX refactor? */
 	binding_cmd.id_and_color =
-		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->phy_ctxt->id,
-						mvmvif->phy_ctxt->color));
+		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->phy_ctxt->id,
+						mvmvअगर->phy_ctxt->color));
 	binding_cmd.action = cpu_to_le32(FW_CTXT_ACTION_ADD);
 	binding_cmd.phy =
-		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->phy_ctxt->id,
-						mvmvif->phy_ctxt->color));
-	binding_cmd.macs[0] = cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id,
-							      mvmvif->color));
-	for (i = 1; i < MAX_MACS_IN_BINDING; i++)
+		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->phy_ctxt->id,
+						mvmvअगर->phy_ctxt->color));
+	binding_cmd.macs[0] = cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id,
+							      mvmvअगर->color));
+	क्रम (i = 1; i < MAX_MACS_IN_BINDING; i++)
 		binding_cmd.macs[i] = cpu_to_le32(FW_CTXT_INVALID);
 
 	status = 0;
 	ret = iwl_mvm_send_cmd_pdu_status(mvm, BINDING_CONTEXT_CMD,
 					  IWL_BINDING_CMD_SIZE_V1, &binding_cmd,
 					  &status);
-	if (ret) {
+	अगर (ret) अणु
 		IWL_ERR(mvm, "Failed to add binding: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (status) {
+	अगर (status) अणु
 		IWL_ERR(mvm, "Binding command failed: %u\n", status);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	ret = iwl_mvm_sta_send_to_fw(mvm, ap_sta, false, 0);
-	if (ret)
-		return ret;
-	rcu_assign_pointer(mvm->fw_id_to_mac_id[mvmvif->ap_sta_id], ap_sta);
+	अगर (ret)
+		वापस ret;
+	rcu_assign_poपूर्णांकer(mvm->fw_id_to_mac_id[mvmvअगर->ap_sta_id], ap_sta);
 
-	ret = iwl_mvm_mac_ctxt_changed(mvm, vif, false, NULL);
-	if (ret)
-		return ret;
+	ret = iwl_mvm_mac_ctxt_changed(mvm, vअगर, false, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	/* and some quota */
 	quota = iwl_mvm_quota_cmd_get_quota(mvm, &quota_cmd, 0);
 	quota->id_and_color =
-		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->phy_ctxt->id,
-						mvmvif->phy_ctxt->color));
+		cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->phy_ctxt->id,
+						mvmvअगर->phy_ctxt->color));
 	quota->quota = cpu_to_le32(IWL_MVM_MAX_QUOTA);
 	quota->max_duration = cpu_to_le32(IWL_MVM_MAX_QUOTA);
 
-	for (i = 1; i < MAX_BINDINGS; i++) {
+	क्रम (i = 1; i < MAX_BINDINGS; i++) अणु
 		quota = iwl_mvm_quota_cmd_get_quota(mvm, &quota_cmd, i);
 		quota->id_and_color = cpu_to_le32(FW_CTXT_INVALID);
-	}
+	पूर्ण
 
 	ret = iwl_mvm_send_cmd_pdu(mvm, TIME_QUOTA_CMD, 0,
 				   iwl_mvm_quota_cmd_size(mvm), &quota_cmd);
-	if (ret)
+	अगर (ret)
 		IWL_ERR(mvm, "Failed to send quota: %d\n", ret);
 
-	if (iwl_mvm_is_lar_supported(mvm) && iwl_mvm_init_fw_regd(mvm))
+	अगर (iwl_mvm_is_lar_supported(mvm) && iwl_mvm_init_fw_regd(mvm))
 		IWL_ERR(mvm, "Failed to initialize D3 LAR information\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_mvm_get_last_nonqos_seq(struct iwl_mvm *mvm,
-				       struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct iwl_nonqos_seq_query_cmd query_cmd = {
+अटल पूर्णांक iwl_mvm_get_last_nonqos_seq(काष्ठा iwl_mvm *mvm,
+				       काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा iwl_nonqos_seq_query_cmd query_cmd = अणु
 		.get_set_flag = cpu_to_le32(IWL_NONQOS_SEQ_GET),
 		.mac_id_n_color =
-			cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id,
-							mvmvif->color)),
-	};
-	struct iwl_host_cmd cmd = {
+			cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id,
+							mvmvअगर->color)),
+	पूर्ण;
+	काष्ठा iwl_host_cmd cmd = अणु
 		.id = NON_QOS_TX_COUNTER_CMD,
 		.flags = CMD_WANT_SKB,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 	u32 size;
 
 	cmd.data[0] = &query_cmd;
-	cmd.len[0] = sizeof(query_cmd);
+	cmd.len[0] = माप(query_cmd);
 
 	err = iwl_mvm_send_cmd(mvm, &cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	size = iwl_rx_packet_payload_len(cmd.resp_pkt);
-	if (size < sizeof(__le16)) {
+	अगर (size < माप(__le16)) अणु
 		err = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = le16_to_cpup((__le16 *)cmd.resp_pkt->data);
-		/* firmware returns next, not last-used seqno */
+		/* firmware वापसs next, not last-used seqno */
 		err = (u16) (err - 0x10);
-	}
+	पूर्ण
 
-	iwl_free_resp(&cmd);
-	return err;
-}
+	iwl_मुक्त_resp(&cmd);
+	वापस err;
+पूर्ण
 
-void iwl_mvm_set_last_nonqos_seq(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct iwl_nonqos_seq_query_cmd query_cmd = {
+व्योम iwl_mvm_set_last_nonqos_seq(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा iwl_nonqos_seq_query_cmd query_cmd = अणु
 		.get_set_flag = cpu_to_le32(IWL_NONQOS_SEQ_SET),
 		.mac_id_n_color =
-			cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvif->id,
-							mvmvif->color)),
-		.value = cpu_to_le16(mvmvif->seqno),
-	};
+			cpu_to_le32(FW_CMD_ID_AND_COLOR(mvmvअगर->id,
+							mvmvअगर->color)),
+		.value = cpu_to_le16(mvmvअगर->seqno),
+	पूर्ण;
 
-	/* return if called during restart, not resume from D3 */
-	if (!mvmvif->seqno_valid)
-		return;
+	/* वापस अगर called during restart, not resume from D3 */
+	अगर (!mvmvअगर->seqno_valid)
+		वापस;
 
-	mvmvif->seqno_valid = false;
+	mvmvअगर->seqno_valid = false;
 
-	if (iwl_mvm_send_cmd_pdu(mvm, NON_QOS_TX_COUNTER_CMD, 0,
-				 sizeof(query_cmd), &query_cmd))
+	अगर (iwl_mvm_send_cmd_pdu(mvm, NON_QOS_TX_COUNTER_CMD, 0,
+				 माप(query_cmd), &query_cmd))
 		IWL_ERR(mvm, "failed to set non-QoS seqno\n");
-}
+पूर्ण
 
-static int iwl_mvm_switch_to_d3(struct iwl_mvm *mvm)
-{
+अटल पूर्णांक iwl_mvm_चयन_to_d3(काष्ठा iwl_mvm *mvm)
+अणु
 	iwl_mvm_scan_stop(mvm, IWL_MVM_SCAN_REGULAR, true);
 
 	iwl_mvm_stop_device(mvm);
 	/*
 	 * Set the HW restart bit -- this is mostly true as we're
 	 * going to load new firmware and reprogram that, though
-	 * the reprogramming is going to be manual to avoid adding
+	 * the reprogramming is going to be manual to aव्योम adding
 	 * all the MACs that aren't support.
-	 * We don't have to clear up everything though because the
+	 * We करोn't have to clear up everything though because the
 	 * reprogramming is manual. When we resume, we'll actually
-	 * go through a proper restart sequence again to switch
-	 * back to the runtime firmware image.
+	 * go through a proper restart sequence again to चयन
+	 * back to the runसमय firmware image.
 	 */
 	set_bit(IWL_MVM_STATUS_IN_HW_RESTART, &mvm->status);
 
 	/* the fw is reset, so all the keys are cleared */
-	memset(mvm->fw_key_table, 0, sizeof(mvm->fw_key_table));
+	स_रखो(mvm->fw_key_table, 0, माप(mvm->fw_key_table));
 
 	mvm->ptk_ivlen = 0;
 	mvm->ptk_icvlen = 0;
 	mvm->ptk_ivlen = 0;
 	mvm->ptk_icvlen = 0;
 
-	return iwl_mvm_load_d3_fw(mvm);
-}
+	वापस iwl_mvm_load_d3_fw(mvm);
+पूर्ण
 
-static int
-iwl_mvm_get_wowlan_config(struct iwl_mvm *mvm,
-			  struct cfg80211_wowlan *wowlan,
-			  struct iwl_wowlan_config_cmd *wowlan_config_cmd,
-			  struct ieee80211_vif *vif, struct iwl_mvm_vif *mvmvif,
-			  struct ieee80211_sta *ap_sta)
-{
-	int ret;
-	struct iwl_mvm_sta *mvm_ap_sta = iwl_mvm_sta_from_mac80211(ap_sta);
+अटल पूर्णांक
+iwl_mvm_get_wowlan_config(काष्ठा iwl_mvm *mvm,
+			  काष्ठा cfg80211_wowlan *wowlan,
+			  काष्ठा iwl_wowlan_config_cmd *wowlan_config_cmd,
+			  काष्ठा ieee80211_vअगर *vअगर, काष्ठा iwl_mvm_vअगर *mvmvअगर,
+			  काष्ठा ieee80211_sta *ap_sta)
+अणु
+	पूर्णांक ret;
+	काष्ठा iwl_mvm_sta *mvm_ap_sta = iwl_mvm_sta_from_mac80211(ap_sta);
 
-	/* TODO: wowlan_config_cmd->wowlan_ba_teardown_tids */
+	/* TODO: wowlan_config_cmd->wowlan_ba_tearकरोwn_tids */
 
 	wowlan_config_cmd->is_11n_connection =
 					ap_sta->ht_cap.ht_supported;
@@ -647,39 +648,39 @@ iwl_mvm_get_wowlan_config(struct iwl_mvm *mvm,
 		ENABLE_NBNS_FILTERING | ENABLE_DHCP_FILTERING;
 
 	/* Query the last used seqno and set it */
-	ret = iwl_mvm_get_last_nonqos_seq(mvm, vif);
-	if (ret < 0)
-		return ret;
+	ret = iwl_mvm_get_last_nonqos_seq(mvm, vअगर);
+	अगर (ret < 0)
+		वापस ret;
 
 	wowlan_config_cmd->non_qos_seq = cpu_to_le16(ret);
 
 	iwl_mvm_set_wowlan_qos_seq(mvm_ap_sta, wowlan_config_cmd);
 
-	if (wowlan->disconnect)
+	अगर (wowlan->disconnect)
 		wowlan_config_cmd->wakeup_filter |=
 			cpu_to_le32(IWL_WOWLAN_WAKEUP_BEACON_MISS |
 				    IWL_WOWLAN_WAKEUP_LINK_CHANGE);
-	if (wowlan->magic_pkt)
+	अगर (wowlan->magic_pkt)
 		wowlan_config_cmd->wakeup_filter |=
 			cpu_to_le32(IWL_WOWLAN_WAKEUP_MAGIC_PACKET);
-	if (wowlan->gtk_rekey_failure)
+	अगर (wowlan->gtk_rekey_failure)
 		wowlan_config_cmd->wakeup_filter |=
 			cpu_to_le32(IWL_WOWLAN_WAKEUP_GTK_REKEY_FAIL);
-	if (wowlan->eap_identity_req)
+	अगर (wowlan->eap_identity_req)
 		wowlan_config_cmd->wakeup_filter |=
 			cpu_to_le32(IWL_WOWLAN_WAKEUP_EAP_IDENT_REQ);
-	if (wowlan->four_way_handshake)
+	अगर (wowlan->four_way_handshake)
 		wowlan_config_cmd->wakeup_filter |=
 			cpu_to_le32(IWL_WOWLAN_WAKEUP_4WAY_HANDSHAKE);
-	if (wowlan->n_patterns)
+	अगर (wowlan->n_patterns)
 		wowlan_config_cmd->wakeup_filter |=
 			cpu_to_le32(IWL_WOWLAN_WAKEUP_PATTERN_MATCH);
 
-	if (wowlan->rfkill_release)
+	अगर (wowlan->rfसमाप्त_release)
 		wowlan_config_cmd->wakeup_filter |=
 			cpu_to_le32(IWL_WOWLAN_WAKEUP_RF_KILL_DEASSERT);
 
-	if (wowlan->tcp) {
+	अगर (wowlan->tcp) अणु
 		/*
 		 * Set the "link change" (really "link lost") flag as well
 		 * since that implies losing the TCP connection.
@@ -689,309 +690,309 @@ iwl_mvm_get_wowlan_config(struct iwl_mvm *mvm,
 				    IWL_WOWLAN_WAKEUP_REMOTE_SIGNATURE_TABLE |
 				    IWL_WOWLAN_WAKEUP_REMOTE_WAKEUP_PACKET |
 				    IWL_WOWLAN_WAKEUP_LINK_CHANGE);
-	}
+	पूर्ण
 
-	if (wowlan->any) {
+	अगर (wowlan->any) अणु
 		wowlan_config_cmd->wakeup_filter |=
 			cpu_to_le32(IWL_WOWLAN_WAKEUP_BEACON_MISS |
 				    IWL_WOWLAN_WAKEUP_LINK_CHANGE |
 				    IWL_WOWLAN_WAKEUP_RX_FRAME |
 				    IWL_WOWLAN_WAKEUP_BCN_FILTERING);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_mvm_wowlan_config_key_params(struct iwl_mvm *mvm,
-					    struct ieee80211_vif *vif,
+अटल पूर्णांक iwl_mvm_wowlan_config_key_params(काष्ठा iwl_mvm *mvm,
+					    काष्ठा ieee80211_vअगर *vअगर,
 					    u32 cmd_flags)
-{
-	struct iwl_wowlan_kek_kck_material_cmd_v3 kek_kck_cmd = {};
-	struct iwl_wowlan_tkip_params_cmd tkip_cmd = {};
-	bool unified = fw_has_capa(&mvm->fw->ucode_capa,
+अणु
+	काष्ठा iwl_wowlan_kek_kck_material_cmd_v3 kek_kck_cmd = अणुपूर्ण;
+	काष्ठा iwl_wowlan_tkip_params_cmd tkip_cmd = अणुपूर्ण;
+	bool unअगरied = fw_has_capa(&mvm->fw->ucode_capa,
 				   IWL_UCODE_TLV_CAPA_CNSLDTD_D3_D0_IMG);
-	struct wowlan_key_data key_data = {
-		.configure_keys = !unified,
+	काष्ठा wowlan_key_data key_data = अणु
+		.configure_keys = !unअगरied,
 		.use_rsc_tsc = false,
 		.tkip = &tkip_cmd,
 		.use_tkip = false,
 		.kek_kck_cmd = &kek_kck_cmd,
-	};
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	int ret;
+	पूर्ण;
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	पूर्णांक ret;
 	u8 cmd_ver;
-	size_t cmd_size;
+	माप_प्रकार cmd_size;
 
-	key_data.rsc_tsc = kzalloc(sizeof(*key_data.rsc_tsc), GFP_KERNEL);
-	if (!key_data.rsc_tsc)
-		return -ENOMEM;
+	key_data.rsc_tsc = kzalloc(माप(*key_data.rsc_tsc), GFP_KERNEL);
+	अगर (!key_data.rsc_tsc)
+		वापस -ENOMEM;
 
 	/*
-	 * if we have to configure keys, call ieee80211_iter_keys(),
+	 * अगर we have to configure keys, call ieee80211_iter_keys(),
 	 * as we need non-atomic context in order to take the
 	 * required locks.
 	 */
 	/*
-	 * Note that currently we don't propagate cmd_flags
-	 * to the iterator. In case of key_data.configure_keys,
+	 * Note that currently we करोn't propagate cmd_flags
+	 * to the iterator. In हाल of key_data.configure_keys,
 	 * all the configured commands are SYNC, and
 	 * iwl_mvm_wowlan_program_keys() will take care of
 	 * locking/unlocking mvm->mutex.
 	 */
-	ieee80211_iter_keys(mvm->hw, vif, iwl_mvm_wowlan_program_keys,
+	ieee80211_iter_keys(mvm->hw, vअगर, iwl_mvm_wowlan_program_keys,
 			    &key_data);
 
-	if (key_data.error) {
+	अगर (key_data.error) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (key_data.use_rsc_tsc) {
-		int ver = iwl_fw_lookup_cmd_ver(mvm->fw, LONG_GROUP,
+	अगर (key_data.use_rsc_tsc) अणु
+		पूर्णांक ver = iwl_fw_lookup_cmd_ver(mvm->fw, LONG_GROUP,
 						WOWLAN_TSC_RSC_PARAM,
 						IWL_FW_CMD_VER_UNKNOWN);
-		int size;
+		पूर्णांक size;
 
-		if (ver == 4) {
-			size = sizeof(*key_data.rsc_tsc);
+		अगर (ver == 4) अणु
+			size = माप(*key_data.rsc_tsc);
 			key_data.rsc_tsc->sta_id =
-				cpu_to_le32(mvmvif->ap_sta_id);
+				cpu_to_le32(mvmvअगर->ap_sta_id);
 
-		} else if (ver == 2 || ver == IWL_FW_CMD_VER_UNKNOWN) {
-			size = sizeof(key_data.rsc_tsc->params);
-		} else {
+		पूर्ण अन्यथा अगर (ver == 2 || ver == IWL_FW_CMD_VER_UNKNOWN) अणु
+			size = माप(key_data.rsc_tsc->params);
+		पूर्ण अन्यथा अणु
 			ret = 0;
 			WARN_ON_ONCE(1);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = iwl_mvm_send_cmd_pdu(mvm, WOWLAN_TSC_RSC_PARAM,
 					   cmd_flags,
 					   size,
 					   key_data.rsc_tsc);
 
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	if (key_data.use_tkip &&
+	अगर (key_data.use_tkip &&
 	    !fw_has_api(&mvm->fw->ucode_capa,
-			IWL_UCODE_TLV_API_TKIP_MIC_KEYS)) {
-		int ver = iwl_fw_lookup_cmd_ver(mvm->fw, LONG_GROUP,
+			IWL_UCODE_TLV_API_TKIP_MIC_KEYS)) अणु
+		पूर्णांक ver = iwl_fw_lookup_cmd_ver(mvm->fw, LONG_GROUP,
 						WOWLAN_TKIP_PARAM,
 						IWL_FW_CMD_VER_UNKNOWN);
-		int size;
+		पूर्णांक size;
 
-		if (ver == 2) {
-			size = sizeof(tkip_cmd);
+		अगर (ver == 2) अणु
+			size = माप(tkip_cmd);
 			key_data.tkip->sta_id =
-				cpu_to_le32(mvmvif->ap_sta_id);
-		} else if (ver == 1 || ver == IWL_FW_CMD_VER_UNKNOWN) {
-			size = sizeof(struct iwl_wowlan_tkip_params_cmd_ver_1);
-		} else {
+				cpu_to_le32(mvmvअगर->ap_sta_id);
+		पूर्ण अन्यथा अगर (ver == 1 || ver == IWL_FW_CMD_VER_UNKNOWN) अणु
+			size = माप(काष्ठा iwl_wowlan_tkip_params_cmd_ver_1);
+		पूर्ण अन्यथा अणु
 			ret =  -EINVAL;
 			WARN_ON_ONCE(1);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* send relevant data according to CMD version */
 		ret = iwl_mvm_send_cmd_pdu(mvm,
 					   WOWLAN_TKIP_PARAM,
 					   cmd_flags, size,
 					   &tkip_cmd);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	/* configure rekey data only if offloaded rekey is supported (d3) */
-	if (mvmvif->rekey_data.valid) {
+	/* configure rekey data only अगर offloaded rekey is supported (d3) */
+	अगर (mvmvअगर->rekey_data.valid) अणु
 		cmd_ver = iwl_fw_lookup_cmd_ver(mvm->fw,
 						IWL_ALWAYS_LONG_GROUP,
 						WOWLAN_KEK_KCK_MATERIAL,
 						IWL_FW_CMD_VER_UNKNOWN);
-		if (WARN_ON(cmd_ver != 2 && cmd_ver != 3 &&
+		अगर (WARN_ON(cmd_ver != 2 && cmd_ver != 3 &&
 			    cmd_ver != IWL_FW_CMD_VER_UNKNOWN))
-			return -EINVAL;
-		if (cmd_ver == 3)
-			cmd_size = sizeof(struct iwl_wowlan_kek_kck_material_cmd_v3);
-		else
-			cmd_size = sizeof(struct iwl_wowlan_kek_kck_material_cmd_v2);
+			वापस -EINVAL;
+		अगर (cmd_ver == 3)
+			cmd_size = माप(काष्ठा iwl_wowlan_kek_kck_material_cmd_v3);
+		अन्यथा
+			cmd_size = माप(काष्ठा iwl_wowlan_kek_kck_material_cmd_v2);
 
-		memcpy(kek_kck_cmd.kck, mvmvif->rekey_data.kck,
-		       mvmvif->rekey_data.kck_len);
-		kek_kck_cmd.kck_len = cpu_to_le16(mvmvif->rekey_data.kck_len);
-		memcpy(kek_kck_cmd.kek, mvmvif->rekey_data.kek,
-		       mvmvif->rekey_data.kek_len);
-		kek_kck_cmd.kek_len = cpu_to_le16(mvmvif->rekey_data.kek_len);
-		kek_kck_cmd.replay_ctr = mvmvif->rekey_data.replay_ctr;
-		kek_kck_cmd.akm = cpu_to_le32(mvmvif->rekey_data.akm);
+		स_नकल(kek_kck_cmd.kck, mvmvअगर->rekey_data.kck,
+		       mvmvअगर->rekey_data.kck_len);
+		kek_kck_cmd.kck_len = cpu_to_le16(mvmvअगर->rekey_data.kck_len);
+		स_नकल(kek_kck_cmd.kek, mvmvअगर->rekey_data.kek,
+		       mvmvअगर->rekey_data.kek_len);
+		kek_kck_cmd.kek_len = cpu_to_le16(mvmvअगर->rekey_data.kek_len);
+		kek_kck_cmd.replay_ctr = mvmvअगर->rekey_data.replay_ctr;
+		kek_kck_cmd.akm = cpu_to_le32(mvmvअगर->rekey_data.akm);
 
 		IWL_DEBUG_WOWLAN(mvm, "setting akm %d\n",
-				 mvmvif->rekey_data.akm);
+				 mvmvअगर->rekey_data.akm);
 
 		ret = iwl_mvm_send_cmd_pdu(mvm,
 					   WOWLAN_KEK_KCK_MATERIAL, cmd_flags,
 					   cmd_size,
 					   &kek_kck_cmd);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 	ret = 0;
 out:
-	kfree(key_data.rsc_tsc);
-	return ret;
-}
+	kमुक्त(key_data.rsc_tsc);
+	वापस ret;
+पूर्ण
 
-static int
-iwl_mvm_wowlan_config(struct iwl_mvm *mvm,
-		      struct cfg80211_wowlan *wowlan,
-		      struct iwl_wowlan_config_cmd *wowlan_config_cmd,
-		      struct ieee80211_vif *vif, struct iwl_mvm_vif *mvmvif,
-		      struct ieee80211_sta *ap_sta)
-{
-	int ret;
-	bool unified_image = fw_has_capa(&mvm->fw->ucode_capa,
+अटल पूर्णांक
+iwl_mvm_wowlan_config(काष्ठा iwl_mvm *mvm,
+		      काष्ठा cfg80211_wowlan *wowlan,
+		      काष्ठा iwl_wowlan_config_cmd *wowlan_config_cmd,
+		      काष्ठा ieee80211_vअगर *vअगर, काष्ठा iwl_mvm_vअगर *mvmvअगर,
+		      काष्ठा ieee80211_sta *ap_sta)
+अणु
+	पूर्णांक ret;
+	bool unअगरied_image = fw_has_capa(&mvm->fw->ucode_capa,
 					 IWL_UCODE_TLV_CAPA_CNSLDTD_D3_D0_IMG);
 
 	mvm->offload_tid = wowlan_config_cmd->offloading_tid;
 
-	if (!unified_image) {
-		ret = iwl_mvm_switch_to_d3(mvm);
-		if (ret)
-			return ret;
+	अगर (!unअगरied_image) अणु
+		ret = iwl_mvm_चयन_to_d3(mvm);
+		अगर (ret)
+			वापस ret;
 
-		ret = iwl_mvm_d3_reprogram(mvm, vif, ap_sta);
-		if (ret)
-			return ret;
-	}
+		ret = iwl_mvm_d3_reprogram(mvm, vअगर, ap_sta);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/*
 	 * This needs to be unlocked due to lock ordering
-	 * constraints. Since we're in the suspend path
+	 * स्थिरraपूर्णांकs. Since we're in the suspend path
 	 * that isn't really a problem though.
 	 */
 	mutex_unlock(&mvm->mutex);
-	ret = iwl_mvm_wowlan_config_key_params(mvm, vif, CMD_ASYNC);
+	ret = iwl_mvm_wowlan_config_key_params(mvm, vअगर, CMD_ASYNC);
 	mutex_lock(&mvm->mutex);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = iwl_mvm_send_cmd_pdu(mvm, WOWLAN_CONFIGURATION, 0,
-				   sizeof(*wowlan_config_cmd),
+				   माप(*wowlan_config_cmd),
 				   wowlan_config_cmd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (fw_has_api(&mvm->fw->ucode_capa,
+	अगर (fw_has_api(&mvm->fw->ucode_capa,
 		       IWL_UCODE_TLV_API_WOWLAN_TCP_SYN_WAKE))
 		ret = iwl_mvm_send_patterns(mvm, wowlan);
-	else
+	अन्यथा
 		ret = iwl_mvm_send_patterns_v1(mvm, wowlan);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return iwl_mvm_send_proto_offload(mvm, vif, false, true, 0);
-}
+	वापस iwl_mvm_send_proto_offload(mvm, vअगर, false, true, 0);
+पूर्ण
 
-static int
-iwl_mvm_netdetect_config(struct iwl_mvm *mvm,
-			 struct cfg80211_wowlan *wowlan,
-			 struct cfg80211_sched_scan_request *nd_config,
-			 struct ieee80211_vif *vif)
-{
-	int ret;
-	bool unified_image = fw_has_capa(&mvm->fw->ucode_capa,
+अटल पूर्णांक
+iwl_mvm_netdetect_config(काष्ठा iwl_mvm *mvm,
+			 काष्ठा cfg80211_wowlan *wowlan,
+			 काष्ठा cfg80211_sched_scan_request *nd_config,
+			 काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	पूर्णांक ret;
+	bool unअगरied_image = fw_has_capa(&mvm->fw->ucode_capa,
 					 IWL_UCODE_TLV_CAPA_CNSLDTD_D3_D0_IMG);
 
-	if (!unified_image) {
-		ret = iwl_mvm_switch_to_d3(mvm);
-		if (ret)
-			return ret;
-	} else {
+	अगर (!unअगरied_image) अणु
+		ret = iwl_mvm_चयन_to_d3(mvm);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		/* In theory, we wouldn't have to stop a running sched
-		 * scan in order to start another one (for
-		 * net-detect).  But in practice this doesn't seem to
+		 * scan in order to start another one (क्रम
+		 * net-detect).  But in practice this करोesn't seem to
 		 * work properly, so stop any running sched_scan now.
 		 */
 		ret = iwl_mvm_scan_stop(mvm, IWL_MVM_SCAN_SCHED, true);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = iwl_mvm_sched_scan_start(mvm, vif, nd_config, &mvm->nd_ies,
+	ret = iwl_mvm_sched_scan_start(mvm, vअगर, nd_config, &mvm->nd_ies,
 				       IWL_MVM_SCAN_NETDETECT);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (WARN_ON(mvm->nd_match_sets || mvm->nd_channels))
-		return -EBUSY;
+	अगर (WARN_ON(mvm->nd_match_sets || mvm->nd_channels))
+		वापस -EBUSY;
 
 	/* save the sched scan matchsets... */
-	if (nd_config->n_match_sets) {
+	अगर (nd_config->n_match_sets) अणु
 		mvm->nd_match_sets = kmemdup(nd_config->match_sets,
-					     sizeof(*nd_config->match_sets) *
+					     माप(*nd_config->match_sets) *
 					     nd_config->n_match_sets,
 					     GFP_KERNEL);
-		if (mvm->nd_match_sets)
+		अगर (mvm->nd_match_sets)
 			mvm->n_nd_match_sets = nd_config->n_match_sets;
-	}
+	पूर्ण
 
-	/* ...and the sched scan channels for later reporting */
+	/* ...and the sched scan channels क्रम later reporting */
 	mvm->nd_channels = kmemdup(nd_config->channels,
-				   sizeof(*nd_config->channels) *
+				   माप(*nd_config->channels) *
 				   nd_config->n_channels,
 				   GFP_KERNEL);
-	if (mvm->nd_channels)
+	अगर (mvm->nd_channels)
 		mvm->n_nd_channels = nd_config->n_channels;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void iwl_mvm_free_nd(struct iwl_mvm *mvm)
-{
-	kfree(mvm->nd_match_sets);
-	mvm->nd_match_sets = NULL;
+अटल व्योम iwl_mvm_मुक्त_nd(काष्ठा iwl_mvm *mvm)
+अणु
+	kमुक्त(mvm->nd_match_sets);
+	mvm->nd_match_sets = शून्य;
 	mvm->n_nd_match_sets = 0;
-	kfree(mvm->nd_channels);
-	mvm->nd_channels = NULL;
+	kमुक्त(mvm->nd_channels);
+	mvm->nd_channels = शून्य;
 	mvm->n_nd_channels = 0;
-}
+पूर्ण
 
-static int __iwl_mvm_suspend(struct ieee80211_hw *hw,
-			     struct cfg80211_wowlan *wowlan,
+अटल पूर्णांक __iwl_mvm_suspend(काष्ठा ieee80211_hw *hw,
+			     काष्ठा cfg80211_wowlan *wowlan,
 			     bool test)
-{
-	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
-	struct ieee80211_vif *vif = NULL;
-	struct iwl_mvm_vif *mvmvif = NULL;
-	struct ieee80211_sta *ap_sta = NULL;
-	struct iwl_d3_manager_config d3_cfg_cmd_data = {
+अणु
+	काष्ठा iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
+	काष्ठा ieee80211_vअगर *vअगर = शून्य;
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = शून्य;
+	काष्ठा ieee80211_sta *ap_sta = शून्य;
+	काष्ठा iwl_d3_manager_config d3_cfg_cmd_data = अणु
 		/*
-		 * Program the minimum sleep time to 10 seconds, as many
-		 * platforms have issues processing a wakeup signal while
+		 * Program the minimum sleep समय to 10 seconds, as many
+		 * platक्रमms have issues processing a wakeup संकेत जबतक
 		 * still being in the process of suspending.
 		 */
-		.min_sleep_time = cpu_to_le32(10 * 1000 * 1000),
-	};
-	struct iwl_host_cmd d3_cfg_cmd = {
+		.min_sleep_समय = cpu_to_le32(10 * 1000 * 1000),
+	पूर्ण;
+	काष्ठा iwl_host_cmd d3_cfg_cmd = अणु
 		.id = D3_CONFIG_CMD,
 		.flags = CMD_WANT_SKB | CMD_SEND_IN_D3,
 		.data[0] = &d3_cfg_cmd_data,
-		.len[0] = sizeof(d3_cfg_cmd_data),
-	};
-	int ret;
-	int len __maybe_unused;
-	bool unified_image = fw_has_capa(&mvm->fw->ucode_capa,
+		.len[0] = माप(d3_cfg_cmd_data),
+	पूर्ण;
+	पूर्णांक ret;
+	पूर्णांक len __maybe_unused;
+	bool unअगरied_image = fw_has_capa(&mvm->fw->ucode_capa,
 					 IWL_UCODE_TLV_CAPA_CNSLDTD_D3_D0_IMG);
 
-	if (!wowlan) {
+	अगर (!wowlan) अणु
 		/*
-		 * mac80211 shouldn't get here, but for D3 test
-		 * it doesn't warrant a warning
+		 * mac80211 shouldn't get here, but क्रम D3 test
+		 * it करोesn't warrant a warning
 		 */
 		WARN_ON(!test);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&mvm->mutex);
 
@@ -999,267 +1000,267 @@ static int __iwl_mvm_suspend(struct ieee80211_hw *hw,
 
 	synchronize_net();
 
-	vif = iwl_mvm_get_bss_vif(mvm);
-	if (IS_ERR_OR_NULL(vif)) {
+	vअगर = iwl_mvm_get_bss_vअगर(mvm);
+	अगर (IS_ERR_OR_शून्य(vअगर)) अणु
 		ret = 1;
-		goto out_noreset;
-	}
+		जाओ out_noreset;
+	पूर्ण
 
-	mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
-	if (mvmvif->ap_sta_id == IWL_MVM_INVALID_STA) {
-		/* if we're not associated, this must be netdetect */
-		if (!wowlan->nd_config) {
+	अगर (mvmvअगर->ap_sta_id == IWL_MVM_INVALID_STA) अणु
+		/* अगर we're not associated, this must be netdetect */
+		अगर (!wowlan->nd_config) अणु
 			ret = 1;
-			goto out_noreset;
-		}
+			जाओ out_noreset;
+		पूर्ण
 
 		ret = iwl_mvm_netdetect_config(
-			mvm, wowlan, wowlan->nd_config, vif);
-		if (ret)
-			goto out;
+			mvm, wowlan, wowlan->nd_config, vअगर);
+		अगर (ret)
+			जाओ out;
 
 		mvm->net_detect = true;
-	} else {
-		struct iwl_wowlan_config_cmd wowlan_config_cmd = {};
+	पूर्ण अन्यथा अणु
+		काष्ठा iwl_wowlan_config_cmd wowlan_config_cmd = अणुपूर्ण;
 
-		wowlan_config_cmd.sta_id = mvmvif->ap_sta_id;
+		wowlan_config_cmd.sta_id = mvmvअगर->ap_sta_id;
 
-		ap_sta = rcu_dereference_protected(
-			mvm->fw_id_to_mac_id[mvmvif->ap_sta_id],
+		ap_sta = rcu_dereference_रक्षित(
+			mvm->fw_id_to_mac_id[mvmvअगर->ap_sta_id],
 			lockdep_is_held(&mvm->mutex));
-		if (IS_ERR_OR_NULL(ap_sta)) {
+		अगर (IS_ERR_OR_शून्य(ap_sta)) अणु
 			ret = -EINVAL;
-			goto out_noreset;
-		}
+			जाओ out_noreset;
+		पूर्ण
 
 		ret = iwl_mvm_get_wowlan_config(mvm, wowlan, &wowlan_config_cmd,
-						vif, mvmvif, ap_sta);
-		if (ret)
-			goto out_noreset;
+						vअगर, mvmvअगर, ap_sta);
+		अगर (ret)
+			जाओ out_noreset;
 		ret = iwl_mvm_wowlan_config(mvm, wowlan, &wowlan_config_cmd,
-					    vif, mvmvif, ap_sta);
-		if (ret)
-			goto out;
+					    vअगर, mvmvअगर, ap_sta);
+		अगर (ret)
+			जाओ out;
 
 		mvm->net_detect = false;
-	}
+	पूर्ण
 
-	ret = iwl_mvm_power_update_device(mvm);
-	if (ret)
-		goto out;
+	ret = iwl_mvm_घातer_update_device(mvm);
+	अगर (ret)
+		जाओ out;
 
-	ret = iwl_mvm_power_update_mac(mvm);
-	if (ret)
-		goto out;
+	ret = iwl_mvm_घातer_update_mac(mvm);
+	अगर (ret)
+		जाओ out;
 
-#ifdef CONFIG_IWLWIFI_DEBUGFS
-	if (mvm->d3_wake_sysassert)
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
+	अगर (mvm->d3_wake_sysनिश्चित)
 		d3_cfg_cmd_data.wakeup_flags |=
 			cpu_to_le32(IWL_WAKEUP_D3_CONFIG_FW_ERROR);
-#endif
+#पूर्ण_अगर
 
 	/*
 	 * Prior to 9000 device family the driver needs to stop the dbg
-	 * recording before entering D3. In later devices the FW stops the
-	 * recording automatically.
+	 * recording beक्रमe entering D3. In later devices the FW stops the
+	 * recording स्वतःmatically.
 	 */
-	if (mvm->trans->trans_cfg->device_family < IWL_DEVICE_FAMILY_9000)
-		iwl_fw_dbg_stop_restart_recording(&mvm->fwrt, NULL, true);
+	अगर (mvm->trans->trans_cfg->device_family < IWL_DEVICE_FAMILY_9000)
+		iwl_fw_dbg_stop_restart_recording(&mvm->fwrt, शून्य, true);
 
-	mvm->trans->system_pm_mode = IWL_PLAT_PM_MODE_D3;
+	mvm->trans->प्रणाली_pm_mode = IWL_PLAT_PM_MODE_D3;
 
-	/* must be last -- this switches firmware state */
+	/* must be last -- this चयनes firmware state */
 	ret = iwl_mvm_send_cmd(mvm, &d3_cfg_cmd);
-	if (ret)
-		goto out;
-#ifdef CONFIG_IWLWIFI_DEBUGFS
+	अगर (ret)
+		जाओ out;
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
 	len = iwl_rx_packet_payload_len(d3_cfg_cmd.resp_pkt);
-	if (len >= sizeof(u32)) {
+	अगर (len >= माप(u32)) अणु
 		mvm->d3_test_pme_ptr =
 			le32_to_cpup((__le32 *)d3_cfg_cmd.resp_pkt->data);
-	}
-#endif
-	iwl_free_resp(&d3_cfg_cmd);
+	पूर्ण
+#पूर्ण_अगर
+	iwl_मुक्त_resp(&d3_cfg_cmd);
 
 	clear_bit(IWL_MVM_STATUS_IN_HW_RESTART, &mvm->status);
 
-	ret = iwl_trans_d3_suspend(mvm->trans, test, !unified_image);
+	ret = iwl_trans_d3_suspend(mvm->trans, test, !unअगरied_image);
  out:
-	if (ret < 0) {
-		iwl_mvm_free_nd(mvm);
+	अगर (ret < 0) अणु
+		iwl_mvm_मुक्त_nd(mvm);
 
-		if (!unified_image) {
-			if (mvm->fw_restart > 0) {
+		अगर (!unअगरied_image) अणु
+			अगर (mvm->fw_restart > 0) अणु
 				mvm->fw_restart--;
 				ieee80211_restart_hw(mvm->hw);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		clear_bit(IWL_MVM_STATUS_IN_D3, &mvm->status);
-	}
+	पूर्ण
  out_noreset:
 	mutex_unlock(&mvm->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int iwl_mvm_suspend(struct ieee80211_hw *hw, struct cfg80211_wowlan *wowlan)
-{
-	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
+पूर्णांक iwl_mvm_suspend(काष्ठा ieee80211_hw *hw, काष्ठा cfg80211_wowlan *wowlan)
+अणु
+	काष्ठा iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
 
-	iwl_mvm_pause_tcm(mvm, true);
+	iwl_mvm_छोड़ो_tcm(mvm, true);
 
-	iwl_fw_runtime_suspend(&mvm->fwrt);
+	iwl_fw_runसमय_suspend(&mvm->fwrt);
 
-	return __iwl_mvm_suspend(hw, wowlan, false);
-}
+	वापस __iwl_mvm_suspend(hw, wowlan, false);
+पूर्ण
 
-/* converted data from the different status responses */
-struct iwl_wowlan_status_data {
+/* converted data from the dअगरferent status responses */
+काष्ठा iwl_wowlan_status_data अणु
 	u16 pattern_number;
 	u16 qos_seq_ctr[8];
 	u32 wakeup_reasons;
 	u32 wake_packet_length;
 	u32 wake_packet_bufsize;
-	const u8 *wake_packet;
-};
+	स्थिर u8 *wake_packet;
+पूर्ण;
 
-static void iwl_mvm_report_wakeup_reasons(struct iwl_mvm *mvm,
-					  struct ieee80211_vif *vif,
-					  struct iwl_wowlan_status_data *status)
-{
-	struct sk_buff *pkt = NULL;
-	struct cfg80211_wowlan_wakeup wakeup = {
+अटल व्योम iwl_mvm_report_wakeup_reasons(काष्ठा iwl_mvm *mvm,
+					  काष्ठा ieee80211_vअगर *vअगर,
+					  काष्ठा iwl_wowlan_status_data *status)
+अणु
+	काष्ठा sk_buff *pkt = शून्य;
+	काष्ठा cfg80211_wowlan_wakeup wakeup = अणु
 		.pattern_idx = -1,
-	};
-	struct cfg80211_wowlan_wakeup *wakeup_report = &wakeup;
+	पूर्ण;
+	काष्ठा cfg80211_wowlan_wakeup *wakeup_report = &wakeup;
 	u32 reasons = status->wakeup_reasons;
 
-	if (reasons == IWL_WOWLAN_WAKEUP_BY_NON_WIRELESS) {
-		wakeup_report = NULL;
-		goto report;
-	}
+	अगर (reasons == IWL_WOWLAN_WAKEUP_BY_NON_WIRELESS) अणु
+		wakeup_report = शून्य;
+		जाओ report;
+	पूर्ण
 
 	pm_wakeup_event(mvm->dev, 0);
 
-	if (reasons & IWL_WOWLAN_WAKEUP_BY_MAGIC_PACKET)
+	अगर (reasons & IWL_WOWLAN_WAKEUP_BY_MAGIC_PACKET)
 		wakeup.magic_pkt = true;
 
-	if (reasons & IWL_WOWLAN_WAKEUP_BY_PATTERN)
+	अगर (reasons & IWL_WOWLAN_WAKEUP_BY_PATTERN)
 		wakeup.pattern_idx =
 			status->pattern_number;
 
-	if (reasons & (IWL_WOWLAN_WAKEUP_BY_DISCONNECTION_ON_MISSED_BEACON |
+	अगर (reasons & (IWL_WOWLAN_WAKEUP_BY_DISCONNECTION_ON_MISSED_BEACON |
 		       IWL_WOWLAN_WAKEUP_BY_DISCONNECTION_ON_DEAUTH))
 		wakeup.disconnect = true;
 
-	if (reasons & IWL_WOWLAN_WAKEUP_BY_GTK_REKEY_FAILURE)
+	अगर (reasons & IWL_WOWLAN_WAKEUP_BY_GTK_REKEY_FAILURE)
 		wakeup.gtk_rekey_failure = true;
 
-	if (reasons & IWL_WOWLAN_WAKEUP_BY_RFKILL_DEASSERTED)
-		wakeup.rfkill_release = true;
+	अगर (reasons & IWL_WOWLAN_WAKEUP_BY_RFKILL_DEASSERTED)
+		wakeup.rfसमाप्त_release = true;
 
-	if (reasons & IWL_WOWLAN_WAKEUP_BY_EAPOL_REQUEST)
+	अगर (reasons & IWL_WOWLAN_WAKEUP_BY_EAPOL_REQUEST)
 		wakeup.eap_identity_req = true;
 
-	if (reasons & IWL_WOWLAN_WAKEUP_BY_FOUR_WAY_HANDSHAKE)
+	अगर (reasons & IWL_WOWLAN_WAKEUP_BY_FOUR_WAY_HANDSHAKE)
 		wakeup.four_way_handshake = true;
 
-	if (reasons & IWL_WOWLAN_WAKEUP_BY_REM_WAKE_LINK_LOSS)
+	अगर (reasons & IWL_WOWLAN_WAKEUP_BY_REM_WAKE_LINK_LOSS)
 		wakeup.tcp_connlost = true;
 
-	if (reasons & IWL_WOWLAN_WAKEUP_BY_REM_WAKE_SIGNATURE_TABLE)
+	अगर (reasons & IWL_WOWLAN_WAKEUP_BY_REM_WAKE_SIGNATURE_TABLE)
 		wakeup.tcp_nomoretokens = true;
 
-	if (reasons & IWL_WOWLAN_WAKEUP_BY_REM_WAKE_WAKEUP_PACKET)
+	अगर (reasons & IWL_WOWLAN_WAKEUP_BY_REM_WAKE_WAKEUP_PACKET)
 		wakeup.tcp_match = true;
 
-	if (status->wake_packet_bufsize) {
-		int pktsize = status->wake_packet_bufsize;
-		int pktlen = status->wake_packet_length;
-		const u8 *pktdata = status->wake_packet;
-		struct ieee80211_hdr *hdr = (void *)pktdata;
-		int truncated = pktlen - pktsize;
+	अगर (status->wake_packet_bufsize) अणु
+		पूर्णांक pktsize = status->wake_packet_bufsize;
+		पूर्णांक pktlen = status->wake_packet_length;
+		स्थिर u8 *pktdata = status->wake_packet;
+		काष्ठा ieee80211_hdr *hdr = (व्योम *)pktdata;
+		पूर्णांक truncated = pktlen - pktsize;
 
 		/* this would be a firmware bug */
-		if (WARN_ON_ONCE(truncated < 0))
+		अगर (WARN_ON_ONCE(truncated < 0))
 			truncated = 0;
 
-		if (ieee80211_is_data(hdr->frame_control)) {
-			int hdrlen = ieee80211_hdrlen(hdr->frame_control);
-			int ivlen = 0, icvlen = 4; /* also FCS */
+		अगर (ieee80211_is_data(hdr->frame_control)) अणु
+			पूर्णांक hdrlen = ieee80211_hdrlen(hdr->frame_control);
+			पूर्णांक ivlen = 0, icvlen = 4; /* also FCS */
 
 			pkt = alloc_skb(pktsize, GFP_KERNEL);
-			if (!pkt)
-				goto report;
+			अगर (!pkt)
+				जाओ report;
 
 			skb_put_data(pkt, pktdata, hdrlen);
 			pktdata += hdrlen;
 			pktsize -= hdrlen;
 
-			if (ieee80211_has_protected(hdr->frame_control)) {
+			अगर (ieee80211_has_रक्षित(hdr->frame_control)) अणु
 				/*
 				 * This is unlocked and using gtk_i(c)vlen,
 				 * but since everything is under RTNL still
 				 * that's not really a problem - changing
-				 * it would be difficult.
+				 * it would be dअगरficult.
 				 */
-				if (is_multicast_ether_addr(hdr->addr1)) {
+				अगर (is_multicast_ether_addr(hdr->addr1)) अणु
 					ivlen = mvm->gtk_ivlen;
 					icvlen += mvm->gtk_icvlen;
-				} else {
+				पूर्ण अन्यथा अणु
 					ivlen = mvm->ptk_ivlen;
 					icvlen += mvm->ptk_icvlen;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			/* if truncated, FCS/ICV is (partially) gone */
-			if (truncated >= icvlen) {
+			/* अगर truncated, FCS/ICV is (partially) gone */
+			अगर (truncated >= icvlen) अणु
 				icvlen = 0;
 				truncated -= icvlen;
-			} else {
+			पूर्ण अन्यथा अणु
 				icvlen -= truncated;
 				truncated = 0;
-			}
+			पूर्ण
 
 			pktsize -= ivlen + icvlen;
 			pktdata += ivlen;
 
 			skb_put_data(pkt, pktdata, pktsize);
 
-			if (ieee80211_data_to_8023(pkt, vif->addr, vif->type))
-				goto report;
+			अगर (ieee80211_data_to_8023(pkt, vअगर->addr, vअगर->type))
+				जाओ report;
 			wakeup.packet = pkt->data;
 			wakeup.packet_present_len = pkt->len;
 			wakeup.packet_len = pkt->len - truncated;
 			wakeup.packet_80211 = false;
-		} else {
-			int fcslen = 4;
+		पूर्ण अन्यथा अणु
+			पूर्णांक fcslen = 4;
 
-			if (truncated >= 4) {
+			अगर (truncated >= 4) अणु
 				truncated -= 4;
 				fcslen = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				fcslen -= truncated;
 				truncated = 0;
-			}
+			पूर्ण
 			pktsize -= fcslen;
 			wakeup.packet = status->wake_packet;
 			wakeup.packet_present_len = pktsize;
 			wakeup.packet_len = pktlen - truncated;
 			wakeup.packet_80211 = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
  report:
-	ieee80211_report_wowlan_wakeup(vif, wakeup_report, GFP_KERNEL);
-	kfree_skb(pkt);
-}
+	ieee80211_report_wowlan_wakeup(vअगर, wakeup_report, GFP_KERNEL);
+	kमुक्त_skb(pkt);
+पूर्ण
 
-static void iwl_mvm_aes_sc_to_seq(struct aes_sc *sc,
-				  struct ieee80211_key_seq *seq)
-{
+अटल व्योम iwl_mvm_aes_sc_to_seq(काष्ठा aes_sc *sc,
+				  काष्ठा ieee80211_key_seq *seq)
+अणु
 	u64 pn;
 
 	pn = le64_to_cpu(sc->pn);
@@ -1269,128 +1270,128 @@ static void iwl_mvm_aes_sc_to_seq(struct aes_sc *sc,
 	seq->ccmp.pn[3] = pn >> 16;
 	seq->ccmp.pn[4] = pn >> 8;
 	seq->ccmp.pn[5] = pn;
-}
+पूर्ण
 
-static void iwl_mvm_tkip_sc_to_seq(struct tkip_sc *sc,
-				   struct ieee80211_key_seq *seq)
-{
+अटल व्योम iwl_mvm_tkip_sc_to_seq(काष्ठा tkip_sc *sc,
+				   काष्ठा ieee80211_key_seq *seq)
+अणु
 	seq->tkip.iv32 = le32_to_cpu(sc->iv32);
 	seq->tkip.iv16 = le16_to_cpu(sc->iv16);
-}
+पूर्ण
 
-static void iwl_mvm_set_aes_rx_seq(struct iwl_mvm *mvm, struct aes_sc *scs,
-				   struct ieee80211_sta *sta,
-				   struct ieee80211_key_conf *key)
-{
-	int tid;
+अटल व्योम iwl_mvm_set_aes_rx_seq(काष्ठा iwl_mvm *mvm, काष्ठा aes_sc *scs,
+				   काष्ठा ieee80211_sta *sta,
+				   काष्ठा ieee80211_key_conf *key)
+अणु
+	पूर्णांक tid;
 
 	BUILD_BUG_ON(IWL_NUM_RSC != IEEE80211_NUM_TIDS);
 
-	if (sta && iwl_mvm_has_new_rx_api(mvm)) {
-		struct iwl_mvm_sta *mvmsta;
-		struct iwl_mvm_key_pn *ptk_pn;
+	अगर (sta && iwl_mvm_has_new_rx_api(mvm)) अणु
+		काष्ठा iwl_mvm_sta *mvmsta;
+		काष्ठा iwl_mvm_key_pn *ptk_pn;
 
 		mvmsta = iwl_mvm_sta_from_mac80211(sta);
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		ptk_pn = rcu_dereference(mvmsta->ptk_pn[key->keyidx]);
-		if (WARN_ON(!ptk_pn)) {
-			rcu_read_unlock();
-			return;
-		}
+		अगर (WARN_ON(!ptk_pn)) अणु
+			rcu_पढ़ो_unlock();
+			वापस;
+		पूर्ण
 
-		for (tid = 0; tid < IWL_MAX_TID_COUNT; tid++) {
-			struct ieee80211_key_seq seq = {};
-			int i;
+		क्रम (tid = 0; tid < IWL_MAX_TID_COUNT; tid++) अणु
+			काष्ठा ieee80211_key_seq seq = अणुपूर्ण;
+			पूर्णांक i;
 
 			iwl_mvm_aes_sc_to_seq(&scs[tid], &seq);
 			ieee80211_set_key_rx_seq(key, tid, &seq);
-			for (i = 1; i < mvm->trans->num_rx_queues; i++)
-				memcpy(ptk_pn->q[i].pn[tid],
+			क्रम (i = 1; i < mvm->trans->num_rx_queues; i++)
+				स_नकल(ptk_pn->q[i].pn[tid],
 				       seq.ccmp.pn, IEEE80211_CCMP_PN_LEN);
-		}
-		rcu_read_unlock();
-	} else {
-		for (tid = 0; tid < IWL_NUM_RSC; tid++) {
-			struct ieee80211_key_seq seq = {};
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण अन्यथा अणु
+		क्रम (tid = 0; tid < IWL_NUM_RSC; tid++) अणु
+			काष्ठा ieee80211_key_seq seq = अणुपूर्ण;
 
 			iwl_mvm_aes_sc_to_seq(&scs[tid], &seq);
 			ieee80211_set_key_rx_seq(key, tid, &seq);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void iwl_mvm_set_tkip_rx_seq(struct tkip_sc *scs,
-				    struct ieee80211_key_conf *key)
-{
-	int tid;
+अटल व्योम iwl_mvm_set_tkip_rx_seq(काष्ठा tkip_sc *scs,
+				    काष्ठा ieee80211_key_conf *key)
+अणु
+	पूर्णांक tid;
 
 	BUILD_BUG_ON(IWL_NUM_RSC != IEEE80211_NUM_TIDS);
 
-	for (tid = 0; tid < IWL_NUM_RSC; tid++) {
-		struct ieee80211_key_seq seq = {};
+	क्रम (tid = 0; tid < IWL_NUM_RSC; tid++) अणु
+		काष्ठा ieee80211_key_seq seq = अणुपूर्ण;
 
 		iwl_mvm_tkip_sc_to_seq(&scs[tid], &seq);
 		ieee80211_set_key_rx_seq(key, tid, &seq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void iwl_mvm_set_key_rx_seq(struct iwl_mvm *mvm,
-				   struct ieee80211_key_conf *key,
-				   struct iwl_wowlan_status *status)
-{
-	union iwl_all_tsc_rsc *rsc = &status->gtk[0].rsc.all_tsc_rsc;
+अटल व्योम iwl_mvm_set_key_rx_seq(काष्ठा iwl_mvm *mvm,
+				   काष्ठा ieee80211_key_conf *key,
+				   काष्ठा iwl_wowlan_status *status)
+अणु
+	जोड़ iwl_all_tsc_rsc *rsc = &status->gtk[0].rsc.all_tsc_rsc;
 
-	switch (key->cipher) {
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
-		iwl_mvm_set_aes_rx_seq(mvm, rsc->aes.multicast_rsc, NULL, key);
-		break;
-	case WLAN_CIPHER_SUITE_TKIP:
+	चयन (key->cipher) अणु
+	हाल WLAN_CIPHER_SUITE_CCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
+		iwl_mvm_set_aes_rx_seq(mvm, rsc->aes.multicast_rsc, शून्य, key);
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_TKIP:
 		iwl_mvm_set_tkip_rx_seq(rsc->tkip.multicast_rsc, key);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct iwl_mvm_d3_gtk_iter_data {
-	struct iwl_mvm *mvm;
-	struct iwl_wowlan_status *status;
-	void *last_gtk;
+काष्ठा iwl_mvm_d3_gtk_iter_data अणु
+	काष्ठा iwl_mvm *mvm;
+	काष्ठा iwl_wowlan_status *status;
+	व्योम *last_gtk;
 	u32 cipher;
 	bool find_phase, unhandled_cipher;
-	int num_keys;
-};
+	पूर्णांक num_keys;
+पूर्ण;
 
-static void iwl_mvm_d3_update_keys(struct ieee80211_hw *hw,
-				   struct ieee80211_vif *vif,
-				   struct ieee80211_sta *sta,
-				   struct ieee80211_key_conf *key,
-				   void *_data)
-{
-	struct iwl_mvm_d3_gtk_iter_data *data = _data;
+अटल व्योम iwl_mvm_d3_update_keys(काष्ठा ieee80211_hw *hw,
+				   काष्ठा ieee80211_vअगर *vअगर,
+				   काष्ठा ieee80211_sta *sta,
+				   काष्ठा ieee80211_key_conf *key,
+				   व्योम *_data)
+अणु
+	काष्ठा iwl_mvm_d3_gtk_iter_data *data = _data;
 
-	if (data->unhandled_cipher)
-		return;
+	अगर (data->unhandled_cipher)
+		वापस;
 
-	switch (key->cipher) {
-	case WLAN_CIPHER_SUITE_WEP40:
-	case WLAN_CIPHER_SUITE_WEP104:
-		/* ignore WEP completely, nothing to do */
-		return;
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
-	case WLAN_CIPHER_SUITE_TKIP:
+	चयन (key->cipher) अणु
+	हाल WLAN_CIPHER_SUITE_WEP40:
+	हाल WLAN_CIPHER_SUITE_WEP104:
+		/* ignore WEP completely, nothing to करो */
+		वापस;
+	हाल WLAN_CIPHER_SUITE_CCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
+	हाल WLAN_CIPHER_SUITE_TKIP:
 		/* we support these */
-		break;
-	default:
-		/* everything else (even CMAC for MFP) - disconnect from AP */
+		अवरोध;
+	शेष:
+		/* everything अन्यथा (even CMAC क्रम MFP) - disconnect from AP */
 		data->unhandled_cipher = true;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	data->num_keys++;
 
@@ -1398,241 +1399,241 @@ static void iwl_mvm_d3_update_keys(struct ieee80211_hw *hw,
 	 * pairwise key - update sequence counters only;
 	 * note that this assumes no TDLS sessions are active
 	 */
-	if (sta) {
-		struct ieee80211_key_seq seq = {};
-		union iwl_all_tsc_rsc *sc =
+	अगर (sta) अणु
+		काष्ठा ieee80211_key_seq seq = अणुपूर्ण;
+		जोड़ iwl_all_tsc_rsc *sc =
 			&data->status->gtk[0].rsc.all_tsc_rsc;
 
-		if (data->find_phase)
-			return;
+		अगर (data->find_phase)
+			वापस;
 
-		switch (key->cipher) {
-		case WLAN_CIPHER_SUITE_CCMP:
-		case WLAN_CIPHER_SUITE_GCMP:
-		case WLAN_CIPHER_SUITE_GCMP_256:
+		चयन (key->cipher) अणु
+		हाल WLAN_CIPHER_SUITE_CCMP:
+		हाल WLAN_CIPHER_SUITE_GCMP:
+		हाल WLAN_CIPHER_SUITE_GCMP_256:
 			iwl_mvm_set_aes_rx_seq(data->mvm, sc->aes.unicast_rsc,
 					       sta, key);
 			atomic64_set(&key->tx_pn, le64_to_cpu(sc->aes.tsc.pn));
-			break;
-		case WLAN_CIPHER_SUITE_TKIP:
+			अवरोध;
+		हाल WLAN_CIPHER_SUITE_TKIP:
 			iwl_mvm_tkip_sc_to_seq(&sc->tkip.tsc, &seq);
 			iwl_mvm_set_tkip_rx_seq(sc->tkip.unicast_rsc, key);
 			atomic64_set(&key->tx_pn,
 				     (u64)seq.tkip.iv16 |
 				     ((u64)seq.tkip.iv32 << 16));
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* that's it for this key */
-		return;
-	}
+		/* that's it क्रम this key */
+		वापस;
+	पूर्ण
 
-	if (data->find_phase) {
+	अगर (data->find_phase) अणु
 		data->last_gtk = key;
 		data->cipher = key->cipher;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (data->status->num_of_gtk_rekeys)
-		ieee80211_remove_key(key);
-	else if (data->last_gtk == key)
+	अगर (data->status->num_of_gtk_rekeys)
+		ieee80211_हटाओ_key(key);
+	अन्यथा अगर (data->last_gtk == key)
 		iwl_mvm_set_key_rx_seq(data->mvm, key, data->status);
-}
+पूर्ण
 
-static bool iwl_mvm_setup_connection_keep(struct iwl_mvm *mvm,
-					  struct ieee80211_vif *vif,
-					  struct iwl_wowlan_status *status)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	struct iwl_mvm_d3_gtk_iter_data gtkdata = {
+अटल bool iwl_mvm_setup_connection_keep(काष्ठा iwl_mvm *mvm,
+					  काष्ठा ieee80211_vअगर *vअगर,
+					  काष्ठा iwl_wowlan_status *status)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	काष्ठा iwl_mvm_d3_gtk_iter_data gtkdata = अणु
 		.mvm = mvm,
 		.status = status,
-	};
+	पूर्ण;
 	u32 disconnection_reasons =
 		IWL_WOWLAN_WAKEUP_BY_DISCONNECTION_ON_MISSED_BEACON |
 		IWL_WOWLAN_WAKEUP_BY_DISCONNECTION_ON_DEAUTH;
 
-	if (!status || !vif->bss_conf.bssid)
-		return false;
+	अगर (!status || !vअगर->bss_conf.bssid)
+		वापस false;
 
-	if (le32_to_cpu(status->wakeup_reasons) & disconnection_reasons)
-		return false;
+	अगर (le32_to_cpu(status->wakeup_reasons) & disconnection_reasons)
+		वापस false;
 
-	/* find last GTK that we used initially, if any */
+	/* find last GTK that we used initially, अगर any */
 	gtkdata.find_phase = true;
-	ieee80211_iter_keys(mvm->hw, vif,
+	ieee80211_iter_keys(mvm->hw, vअगर,
 			    iwl_mvm_d3_update_keys, &gtkdata);
 	/* not trying to keep connections with MFP/unhandled ciphers */
-	if (gtkdata.unhandled_cipher)
-		return false;
-	if (!gtkdata.num_keys)
-		goto out;
-	if (!gtkdata.last_gtk)
-		return false;
+	अगर (gtkdata.unhandled_cipher)
+		वापस false;
+	अगर (!gtkdata.num_keys)
+		जाओ out;
+	अगर (!gtkdata.last_gtk)
+		वापस false;
 
 	/*
 	 * invalidate all other GTKs that might still exist and update
 	 * the one that we used
 	 */
 	gtkdata.find_phase = false;
-	ieee80211_iter_keys(mvm->hw, vif,
+	ieee80211_iter_keys(mvm->hw, vअगर,
 			    iwl_mvm_d3_update_keys, &gtkdata);
 
 	IWL_DEBUG_WOWLAN(mvm, "num of GTK rekeying %d\n",
 			 le32_to_cpu(status->num_of_gtk_rekeys));
-	if (status->num_of_gtk_rekeys) {
-		struct ieee80211_key_conf *key;
-		struct {
-			struct ieee80211_key_conf conf;
+	अगर (status->num_of_gtk_rekeys) अणु
+		काष्ठा ieee80211_key_conf *key;
+		काष्ठा अणु
+			काष्ठा ieee80211_key_conf conf;
 			u8 key[32];
-		} conf = {
+		पूर्ण conf = अणु
 			.conf.cipher = gtkdata.cipher,
 			.conf.keyidx =
 				iwlmvm_wowlan_gtk_idx(&status->gtk[0]),
-		};
+		पूर्ण;
 		__be64 replay_ctr;
 
 		IWL_DEBUG_WOWLAN(mvm,
 				 "Received from FW GTK cipher %d, key index %d\n",
 				 conf.conf.cipher, conf.conf.keyidx);
-		switch (gtkdata.cipher) {
-		case WLAN_CIPHER_SUITE_CCMP:
-		case WLAN_CIPHER_SUITE_GCMP:
+		चयन (gtkdata.cipher) अणु
+		हाल WLAN_CIPHER_SUITE_CCMP:
+		हाल WLAN_CIPHER_SUITE_GCMP:
 			BUILD_BUG_ON(WLAN_KEY_LEN_CCMP != WLAN_KEY_LEN_GCMP);
-			BUILD_BUG_ON(sizeof(conf.key) < WLAN_KEY_LEN_CCMP);
+			BUILD_BUG_ON(माप(conf.key) < WLAN_KEY_LEN_CCMP);
 			conf.conf.keylen = WLAN_KEY_LEN_CCMP;
-			memcpy(conf.conf.key, status->gtk[0].key,
+			स_नकल(conf.conf.key, status->gtk[0].key,
 			       WLAN_KEY_LEN_CCMP);
-			break;
-		case WLAN_CIPHER_SUITE_GCMP_256:
-			BUILD_BUG_ON(sizeof(conf.key) < WLAN_KEY_LEN_GCMP_256);
+			अवरोध;
+		हाल WLAN_CIPHER_SUITE_GCMP_256:
+			BUILD_BUG_ON(माप(conf.key) < WLAN_KEY_LEN_GCMP_256);
 			conf.conf.keylen = WLAN_KEY_LEN_GCMP_256;
-			memcpy(conf.conf.key, status->gtk[0].key,
+			स_नकल(conf.conf.key, status->gtk[0].key,
 			       WLAN_KEY_LEN_GCMP_256);
-			break;
-		case WLAN_CIPHER_SUITE_TKIP:
-			BUILD_BUG_ON(sizeof(conf.key) < WLAN_KEY_LEN_TKIP);
+			अवरोध;
+		हाल WLAN_CIPHER_SUITE_TKIP:
+			BUILD_BUG_ON(माप(conf.key) < WLAN_KEY_LEN_TKIP);
 			conf.conf.keylen = WLAN_KEY_LEN_TKIP;
-			memcpy(conf.conf.key, status->gtk[0].key, 16);
-			/* leave TX MIC key zeroed, we don't use it anyway */
-			memcpy(conf.conf.key +
+			स_नकल(conf.conf.key, status->gtk[0].key, 16);
+			/* leave TX MIC key zeroed, we करोn't use it anyway */
+			स_नकल(conf.conf.key +
 			       NL80211_TKIP_DATA_OFFSET_RX_MIC_KEY,
 			       status->gtk[0].tkip_mic_key, 8);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		key = ieee80211_gtk_rekey_add(vif, &conf.conf);
-		if (IS_ERR(key))
-			return false;
+		key = ieee80211_gtk_rekey_add(vअगर, &conf.conf);
+		अगर (IS_ERR(key))
+			वापस false;
 		iwl_mvm_set_key_rx_seq(mvm, key, status);
 
 		replay_ctr =
 			cpu_to_be64(le64_to_cpu(status->replay_ctr));
 
-		ieee80211_gtk_rekey_notify(vif, vif->bss_conf.bssid,
-					   (void *)&replay_ctr, GFP_KERNEL);
-	}
+		ieee80211_gtk_rekey_notअगरy(vअगर, vअगर->bss_conf.bssid,
+					   (व्योम *)&replay_ctr, GFP_KERNEL);
+	पूर्ण
 
 out:
-	mvmvif->seqno_valid = true;
+	mvmvअगर->seqno_valid = true;
 	/* +0x10 because the set API expects next-to-use, not last-used */
-	mvmvif->seqno = le16_to_cpu(status->non_qos_seq_ctr) + 0x10;
+	mvmvअगर->seqno = le16_to_cpu(status->non_qos_seq_ctr) + 0x10;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* Occasionally, templates would be nice. This is one of those times ... */
-#define iwl_mvm_parse_wowlan_status_common(_ver)			\
-static struct iwl_wowlan_status *					\
-iwl_mvm_parse_wowlan_status_common_ ## _ver(struct iwl_mvm *mvm,	\
-					    void *_data, int len)	\
-{									\
-	struct iwl_wowlan_status *status;				\
-	struct iwl_wowlan_status_ ##_ver *data = _data;			\
-	int data_size;							\
+/* Occasionally, ढाँचाs would be nice. This is one of those बार ... */
+#घोषणा iwl_mvm_parse_wowlan_status_common(_ver)			\
+अटल काष्ठा iwl_wowlan_status *					\
+iwl_mvm_parse_wowlan_status_common_ ## _ver(काष्ठा iwl_mvm *mvm,	\
+					    व्योम *_data, पूर्णांक len)	\
+अणु									\
+	काष्ठा iwl_wowlan_status *status;				\
+	काष्ठा iwl_wowlan_status_ ##_ver *data = _data;			\
+	पूर्णांक data_size;							\
 									\
-	if (len < sizeof(*data)) {					\
+	अगर (len < माप(*data)) अणु					\
 		IWL_ERR(mvm, "Invalid WoWLAN status response!\n");	\
-		return ERR_PTR(-EIO);					\
-	}								\
+		वापस ERR_PTR(-EIO);					\
+	पूर्ण								\
 									\
 	data_size = ALIGN(le32_to_cpu(data->wake_packet_bufsize), 4);	\
-	if (len != sizeof(*data) + data_size) {				\
+	अगर (len != माप(*data) + data_size) अणु				\
 		IWL_ERR(mvm, "Invalid WoWLAN status response!\n");	\
-		return ERR_PTR(-EIO);					\
-	}								\
+		वापस ERR_PTR(-EIO);					\
+	पूर्ण								\
 									\
-	status = kzalloc(sizeof(*status) + data_size, GFP_KERNEL);	\
-	if (!status)							\
-		return ERR_PTR(-ENOMEM);				\
+	status = kzalloc(माप(*status) + data_size, GFP_KERNEL);	\
+	अगर (!status)							\
+		वापस ERR_PTR(-ENOMEM);				\
 									\
 	/* copy all the common fields */				\
 	status->replay_ctr = data->replay_ctr;				\
 	status->pattern_number = data->pattern_number;			\
 	status->non_qos_seq_ctr = data->non_qos_seq_ctr;		\
-	memcpy(status->qos_seq_ctr, data->qos_seq_ctr,			\
-	       sizeof(status->qos_seq_ctr));				\
+	स_नकल(status->qos_seq_ctr, data->qos_seq_ctr,			\
+	       माप(status->qos_seq_ctr));				\
 	status->wakeup_reasons = data->wakeup_reasons;			\
 	status->num_of_gtk_rekeys = data->num_of_gtk_rekeys;		\
 	status->received_beacons = data->received_beacons;		\
 	status->wake_packet_length = data->wake_packet_length;		\
 	status->wake_packet_bufsize = data->wake_packet_bufsize;	\
-	memcpy(status->wake_packet, data->wake_packet,			\
+	स_नकल(status->wake_packet, data->wake_packet,			\
 	       le32_to_cpu(status->wake_packet_bufsize));		\
 									\
-	return status;							\
-}
+	वापस status;							\
+पूर्ण
 
 iwl_mvm_parse_wowlan_status_common(v6)
 iwl_mvm_parse_wowlan_status_common(v7)
 iwl_mvm_parse_wowlan_status_common(v9)
 
-struct iwl_wowlan_status *iwl_mvm_send_wowlan_get_status(struct iwl_mvm *mvm)
-{
-	struct iwl_wowlan_status *status;
-	struct iwl_host_cmd cmd = {
+काष्ठा iwl_wowlan_status *iwl_mvm_send_wowlan_get_status(काष्ठा iwl_mvm *mvm)
+अणु
+	काष्ठा iwl_wowlan_status *status;
+	काष्ठा iwl_host_cmd cmd = अणु
 		.id = WOWLAN_GET_STATUSES,
 		.flags = CMD_WANT_SKB,
-	};
-	int ret, len;
-	u8 notif_ver;
+	पूर्ण;
+	पूर्णांक ret, len;
+	u8 notअगर_ver;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
 	ret = iwl_mvm_send_cmd(mvm, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		IWL_ERR(mvm, "failed to query wakeup status (%d)\n", ret);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	len = iwl_rx_packet_payload_len(cmd.resp_pkt);
 
-	/* default to 7 (when we have IWL_UCODE_TLV_API_WOWLAN_KEY_MATERIAL) */
-	notif_ver = iwl_fw_lookup_notif_ver(mvm->fw, LEGACY_GROUP,
+	/* शेष to 7 (when we have IWL_UCODE_TLV_API_WOWLAN_KEY_MATERIAL) */
+	notअगर_ver = iwl_fw_lookup_notअगर_ver(mvm->fw, LEGACY_GROUP,
 					    WOWLAN_GET_STATUSES, 7);
 
-	if (!fw_has_api(&mvm->fw->ucode_capa,
-			IWL_UCODE_TLV_API_WOWLAN_KEY_MATERIAL)) {
-		struct iwl_wowlan_status_v6 *v6 = (void *)cmd.resp_pkt->data;
+	अगर (!fw_has_api(&mvm->fw->ucode_capa,
+			IWL_UCODE_TLV_API_WOWLAN_KEY_MATERIAL)) अणु
+		काष्ठा iwl_wowlan_status_v6 *v6 = (व्योम *)cmd.resp_pkt->data;
 
 		status = iwl_mvm_parse_wowlan_status_common_v6(mvm,
 							       cmd.resp_pkt->data,
 							       len);
-		if (IS_ERR(status))
-			goto out_free_resp;
+		अगर (IS_ERR(status))
+			जाओ out_मुक्त_resp;
 
-		BUILD_BUG_ON(sizeof(v6->gtk.decrypt_key) >
-			     sizeof(status->gtk[0].key));
-		BUILD_BUG_ON(sizeof(v6->gtk.tkip_mic_key) >
-			     sizeof(status->gtk[0].tkip_mic_key));
+		BUILD_BUG_ON(माप(v6->gtk.decrypt_key) >
+			     माप(status->gtk[0].key));
+		BUILD_BUG_ON(माप(v6->gtk.tkip_mic_key) >
+			     माप(status->gtk[0].tkip_mic_key));
 
 		/* copy GTK info to the right place */
-		memcpy(status->gtk[0].key, v6->gtk.decrypt_key,
-		       sizeof(v6->gtk.decrypt_key));
-		memcpy(status->gtk[0].tkip_mic_key, v6->gtk.tkip_mic_key,
-		       sizeof(v6->gtk.tkip_mic_key));
-		memcpy(&status->gtk[0].rsc, &v6->gtk.rsc,
-		       sizeof(status->gtk[0].rsc));
+		स_नकल(status->gtk[0].key, v6->gtk.decrypt_key,
+		       माप(v6->gtk.decrypt_key));
+		स_नकल(status->gtk[0].tkip_mic_key, v6->gtk.tkip_mic_key,
+		       माप(v6->gtk.tkip_mic_key));
+		स_नकल(&status->gtk[0].rsc, &v6->gtk.rsc,
+		       माप(status->gtk[0].rsc));
 
 		/* hardcode the key length to 16 since v6 only supports 16 */
 		status->gtk[0].key_len = 16;
@@ -1643,74 +1644,74 @@ struct iwl_wowlan_status *iwl_mvm_send_wowlan_get_status(struct iwl_mvm *mvm)
 		 * currently used key.
 		 */
 		status->gtk[0].key_flags = v6->gtk.key_index | BIT(7);
-	} else if (notif_ver == 7) {
-		struct iwl_wowlan_status_v7 *v7 = (void *)cmd.resp_pkt->data;
+	पूर्ण अन्यथा अगर (notअगर_ver == 7) अणु
+		काष्ठा iwl_wowlan_status_v7 *v7 = (व्योम *)cmd.resp_pkt->data;
 
 		status = iwl_mvm_parse_wowlan_status_common_v7(mvm,
 							       cmd.resp_pkt->data,
 							       len);
-		if (IS_ERR(status))
-			goto out_free_resp;
+		अगर (IS_ERR(status))
+			जाओ out_मुक्त_resp;
 
 		status->gtk[0] = v7->gtk[0];
 		status->igtk[0] = v7->igtk[0];
-	} else if (notif_ver == 9) {
-		struct iwl_wowlan_status_v9 *v9 = (void *)cmd.resp_pkt->data;
+	पूर्ण अन्यथा अगर (notअगर_ver == 9) अणु
+		काष्ठा iwl_wowlan_status_v9 *v9 = (व्योम *)cmd.resp_pkt->data;
 
 		status = iwl_mvm_parse_wowlan_status_common_v9(mvm,
 							       cmd.resp_pkt->data,
 							       len);
-		if (IS_ERR(status))
-			goto out_free_resp;
+		अगर (IS_ERR(status))
+			जाओ out_मुक्त_resp;
 
 		status->gtk[0] = v9->gtk[0];
 		status->igtk[0] = v9->igtk[0];
 
-		status->tid_tear_down = v9->tid_tear_down;
-	} else {
+		status->tid_tear_करोwn = v9->tid_tear_करोwn;
+	पूर्ण अन्यथा अणु
 		IWL_ERR(mvm,
 			"Firmware advertises unknown WoWLAN status response %d!\n",
-			notif_ver);
+			notअगर_ver);
 		status = ERR_PTR(-EIO);
-	}
+	पूर्ण
 
-out_free_resp:
-	iwl_free_resp(&cmd);
-	return status;
-}
+out_मुक्त_resp:
+	iwl_मुक्त_resp(&cmd);
+	वापस status;
+पूर्ण
 
-static struct iwl_wowlan_status *
-iwl_mvm_get_wakeup_status(struct iwl_mvm *mvm)
-{
-	int ret;
+अटल काष्ठा iwl_wowlan_status *
+iwl_mvm_get_wakeup_status(काष्ठा iwl_mvm *mvm)
+अणु
+	पूर्णांक ret;
 
-	/* only for tracing for now */
-	ret = iwl_mvm_send_cmd_pdu(mvm, OFFLOADS_QUERY_CMD, 0, 0, NULL);
-	if (ret)
+	/* only क्रम tracing क्रम now */
+	ret = iwl_mvm_send_cmd_pdu(mvm, OFFLOADS_QUERY_CMD, 0, 0, शून्य);
+	अगर (ret)
 		IWL_ERR(mvm, "failed to query offload statistics (%d)\n", ret);
 
-	return iwl_mvm_send_wowlan_get_status(mvm);
-}
+	वापस iwl_mvm_send_wowlan_get_status(mvm);
+पूर्ण
 
 /* releases the MVM mutex */
-static bool iwl_mvm_query_wakeup_reasons(struct iwl_mvm *mvm,
-					 struct ieee80211_vif *vif)
-{
-	struct iwl_wowlan_status_data status;
-	struct iwl_wowlan_status *fw_status;
-	int i;
+अटल bool iwl_mvm_query_wakeup_reasons(काष्ठा iwl_mvm *mvm,
+					 काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_wowlan_status_data status;
+	काष्ठा iwl_wowlan_status *fw_status;
+	पूर्णांक i;
 	bool keep;
-	struct iwl_mvm_sta *mvm_ap_sta;
+	काष्ठा iwl_mvm_sta *mvm_ap_sta;
 
 	fw_status = iwl_mvm_get_wakeup_status(mvm);
-	if (IS_ERR_OR_NULL(fw_status))
-		goto out_unlock;
+	अगर (IS_ERR_OR_शून्य(fw_status))
+		जाओ out_unlock;
 
 	IWL_DEBUG_WOWLAN(mvm, "wakeup reason 0x%x\n",
 			 le32_to_cpu(fw_status->wakeup_reasons));
 
 	status.pattern_number = le16_to_cpu(fw_status->pattern_number);
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		status.qos_seq_ctr[i] =
 			le16_to_cpu(fw_status->qos_seq_ctr[i]);
 	status.wakeup_reasons = le32_to_cpu(fw_status->wakeup_reasons);
@@ -1720,207 +1721,207 @@ static bool iwl_mvm_query_wakeup_reasons(struct iwl_mvm *mvm,
 		le32_to_cpu(fw_status->wake_packet_bufsize);
 	status.wake_packet = fw_status->wake_packet;
 
-	/* still at hard-coded place 0 for D3 image */
-	mvm_ap_sta = iwl_mvm_sta_from_staid_protected(mvm, 0);
-	if (!mvm_ap_sta)
-		goto out_free;
+	/* still at hard-coded place 0 क्रम D3 image */
+	mvm_ap_sta = iwl_mvm_sta_from_staid_रक्षित(mvm, 0);
+	अगर (!mvm_ap_sta)
+		जाओ out_मुक्त;
 
-	for (i = 0; i < IWL_MAX_TID_COUNT; i++) {
+	क्रम (i = 0; i < IWL_MAX_TID_COUNT; i++) अणु
 		u16 seq = status.qos_seq_ctr[i];
 		/* firmware stores last-used value, we store next value */
 		seq += 0x10;
 		mvm_ap_sta->tid_data[i].seq_number = seq;
-	}
+	पूर्ण
 
-	if (mvm->trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_22000) {
+	अगर (mvm->trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_22000) अणु
 		i = mvm->offload_tid;
 		iwl_trans_set_q_ptrs(mvm->trans,
 				     mvm_ap_sta->tid_data[i].txq_id,
 				     mvm_ap_sta->tid_data[i].seq_number >> 4);
-	}
+	पूर्ण
 
-	/* now we have all the data we need, unlock to avoid mac80211 issues */
+	/* now we have all the data we need, unlock to aव्योम mac80211 issues */
 	mutex_unlock(&mvm->mutex);
 
-	iwl_mvm_report_wakeup_reasons(mvm, vif, &status);
+	iwl_mvm_report_wakeup_reasons(mvm, vअगर, &status);
 
-	keep = iwl_mvm_setup_connection_keep(mvm, vif, fw_status);
+	keep = iwl_mvm_setup_connection_keep(mvm, vअगर, fw_status);
 
-	kfree(fw_status);
-	return keep;
+	kमुक्त(fw_status);
+	वापस keep;
 
-out_free:
-	kfree(fw_status);
+out_मुक्त:
+	kमुक्त(fw_status);
 out_unlock:
 	mutex_unlock(&mvm->mutex);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#define ND_QUERY_BUF_LEN (sizeof(struct iwl_scan_offload_profile_match) * \
-			  IWL_SCAN_MAX_PROFILES)
+#घोषणा ND_QUERY_BUF_LEN (माप(काष्ठा iwl_scan_offload_profile_match) * \
+			  IWL_SCAN_MAX_PROखाताS)
 
-struct iwl_mvm_nd_query_results {
+काष्ठा iwl_mvm_nd_query_results अणु
 	u32 matched_profiles;
 	u8 matches[ND_QUERY_BUF_LEN];
-};
+पूर्ण;
 
-static int
-iwl_mvm_netdetect_query_results(struct iwl_mvm *mvm,
-				struct iwl_mvm_nd_query_results *results)
-{
-	struct iwl_scan_offload_profiles_query *query;
-	struct iwl_host_cmd cmd = {
-		.id = SCAN_OFFLOAD_PROFILES_QUERY_CMD,
+अटल पूर्णांक
+iwl_mvm_netdetect_query_results(काष्ठा iwl_mvm *mvm,
+				काष्ठा iwl_mvm_nd_query_results *results)
+अणु
+	काष्ठा iwl_scan_offload_profiles_query *query;
+	काष्ठा iwl_host_cmd cmd = अणु
+		.id = SCAN_OFFLOAD_PROखाताS_QUERY_CMD,
 		.flags = CMD_WANT_SKB,
-	};
-	int ret, len;
-	size_t query_len, matches_len;
-	int max_profiles = iwl_umac_scan_get_max_profiles(mvm->fw);
+	पूर्ण;
+	पूर्णांक ret, len;
+	माप_प्रकार query_len, matches_len;
+	पूर्णांक max_profiles = iwl_umac_scan_get_max_profiles(mvm->fw);
 
 	ret = iwl_mvm_send_cmd(mvm, &cmd);
-	if (ret) {
+	अगर (ret) अणु
 		IWL_ERR(mvm, "failed to query matched profiles (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (fw_has_api(&mvm->fw->ucode_capa,
-		       IWL_UCODE_TLV_API_SCAN_OFFLOAD_CHANS)) {
-		query_len = sizeof(struct iwl_scan_offload_profiles_query);
-		matches_len = sizeof(struct iwl_scan_offload_profile_match) *
+	अगर (fw_has_api(&mvm->fw->ucode_capa,
+		       IWL_UCODE_TLV_API_SCAN_OFFLOAD_CHANS)) अणु
+		query_len = माप(काष्ठा iwl_scan_offload_profiles_query);
+		matches_len = माप(काष्ठा iwl_scan_offload_profile_match) *
 			max_profiles;
-	} else {
-		query_len = sizeof(struct iwl_scan_offload_profiles_query_v1);
-		matches_len = sizeof(struct iwl_scan_offload_profile_match_v1) *
+	पूर्ण अन्यथा अणु
+		query_len = माप(काष्ठा iwl_scan_offload_profiles_query_v1);
+		matches_len = माप(काष्ठा iwl_scan_offload_profile_match_v1) *
 			max_profiles;
-	}
+	पूर्ण
 
 	len = iwl_rx_packet_payload_len(cmd.resp_pkt);
-	if (len < query_len) {
+	अगर (len < query_len) अणु
 		IWL_ERR(mvm, "Invalid scan offload profiles query response!\n");
 		ret = -EIO;
-		goto out_free_resp;
-	}
+		जाओ out_मुक्त_resp;
+	पूर्ण
 
-	query = (void *)cmd.resp_pkt->data;
+	query = (व्योम *)cmd.resp_pkt->data;
 
 	results->matched_profiles = le32_to_cpu(query->matched_profiles);
-	memcpy(results->matches, query->matches, matches_len);
+	स_नकल(results->matches, query->matches, matches_len);
 
-#ifdef CONFIG_IWLWIFI_DEBUGFS
-	mvm->last_netdetect_scans = le32_to_cpu(query->n_scans_done);
-#endif
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
+	mvm->last_netdetect_scans = le32_to_cpu(query->n_scans_करोne);
+#पूर्ण_अगर
 
-out_free_resp:
-	iwl_free_resp(&cmd);
-	return ret;
-}
+out_मुक्त_resp:
+	iwl_मुक्त_resp(&cmd);
+	वापस ret;
+पूर्ण
 
-static int iwl_mvm_query_num_match_chans(struct iwl_mvm *mvm,
-					 struct iwl_mvm_nd_query_results *query,
-					 int idx)
-{
-	int n_chans = 0, i;
+अटल पूर्णांक iwl_mvm_query_num_match_chans(काष्ठा iwl_mvm *mvm,
+					 काष्ठा iwl_mvm_nd_query_results *query,
+					 पूर्णांक idx)
+अणु
+	पूर्णांक n_chans = 0, i;
 
-	if (fw_has_api(&mvm->fw->ucode_capa,
-		       IWL_UCODE_TLV_API_SCAN_OFFLOAD_CHANS)) {
-		struct iwl_scan_offload_profile_match *matches =
-			(struct iwl_scan_offload_profile_match *)query->matches;
+	अगर (fw_has_api(&mvm->fw->ucode_capa,
+		       IWL_UCODE_TLV_API_SCAN_OFFLOAD_CHANS)) अणु
+		काष्ठा iwl_scan_offload_profile_match *matches =
+			(काष्ठा iwl_scan_offload_profile_match *)query->matches;
 
-		for (i = 0; i < SCAN_OFFLOAD_MATCHING_CHANNELS_LEN; i++)
+		क्रम (i = 0; i < SCAN_OFFLOAD_MATCHING_CHANNELS_LEN; i++)
 			n_chans += hweight8(matches[idx].matching_channels[i]);
-	} else {
-		struct iwl_scan_offload_profile_match_v1 *matches =
-			(struct iwl_scan_offload_profile_match_v1 *)query->matches;
+	पूर्ण अन्यथा अणु
+		काष्ठा iwl_scan_offload_profile_match_v1 *matches =
+			(काष्ठा iwl_scan_offload_profile_match_v1 *)query->matches;
 
-		for (i = 0; i < SCAN_OFFLOAD_MATCHING_CHANNELS_LEN_V1; i++)
+		क्रम (i = 0; i < SCAN_OFFLOAD_MATCHING_CHANNELS_LEN_V1; i++)
 			n_chans += hweight8(matches[idx].matching_channels[i]);
-	}
+	पूर्ण
 
-	return n_chans;
-}
+	वापस n_chans;
+पूर्ण
 
-static void iwl_mvm_query_set_freqs(struct iwl_mvm *mvm,
-				    struct iwl_mvm_nd_query_results *query,
-				    struct cfg80211_wowlan_nd_match *match,
-				    int idx)
-{
-	int i;
+अटल व्योम iwl_mvm_query_set_freqs(काष्ठा iwl_mvm *mvm,
+				    काष्ठा iwl_mvm_nd_query_results *query,
+				    काष्ठा cfg80211_wowlan_nd_match *match,
+				    पूर्णांक idx)
+अणु
+	पूर्णांक i;
 
-	if (fw_has_api(&mvm->fw->ucode_capa,
-		       IWL_UCODE_TLV_API_SCAN_OFFLOAD_CHANS)) {
-		struct iwl_scan_offload_profile_match *matches =
-			(struct iwl_scan_offload_profile_match *)query->matches;
+	अगर (fw_has_api(&mvm->fw->ucode_capa,
+		       IWL_UCODE_TLV_API_SCAN_OFFLOAD_CHANS)) अणु
+		काष्ठा iwl_scan_offload_profile_match *matches =
+			(काष्ठा iwl_scan_offload_profile_match *)query->matches;
 
-		for (i = 0; i < SCAN_OFFLOAD_MATCHING_CHANNELS_LEN * 8; i++)
-			if (matches[idx].matching_channels[i / 8] & (BIT(i % 8)))
+		क्रम (i = 0; i < SCAN_OFFLOAD_MATCHING_CHANNELS_LEN * 8; i++)
+			अगर (matches[idx].matching_channels[i / 8] & (BIT(i % 8)))
 				match->channels[match->n_channels++] =
 					mvm->nd_channels[i]->center_freq;
-	} else {
-		struct iwl_scan_offload_profile_match_v1 *matches =
-			(struct iwl_scan_offload_profile_match_v1 *)query->matches;
+	पूर्ण अन्यथा अणु
+		काष्ठा iwl_scan_offload_profile_match_v1 *matches =
+			(काष्ठा iwl_scan_offload_profile_match_v1 *)query->matches;
 
-		for (i = 0; i < SCAN_OFFLOAD_MATCHING_CHANNELS_LEN_V1 * 8; i++)
-			if (matches[idx].matching_channels[i / 8] & (BIT(i % 8)))
+		क्रम (i = 0; i < SCAN_OFFLOAD_MATCHING_CHANNELS_LEN_V1 * 8; i++)
+			अगर (matches[idx].matching_channels[i / 8] & (BIT(i % 8)))
 				match->channels[match->n_channels++] =
 					mvm->nd_channels[i]->center_freq;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void iwl_mvm_query_netdetect_reasons(struct iwl_mvm *mvm,
-					    struct ieee80211_vif *vif)
-{
-	struct cfg80211_wowlan_nd_info *net_detect = NULL;
-	struct cfg80211_wowlan_wakeup wakeup = {
+अटल व्योम iwl_mvm_query_netdetect_reasons(काष्ठा iwl_mvm *mvm,
+					    काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा cfg80211_wowlan_nd_info *net_detect = शून्य;
+	काष्ठा cfg80211_wowlan_wakeup wakeup = अणु
 		.pattern_idx = -1,
-	};
-	struct cfg80211_wowlan_wakeup *wakeup_report = &wakeup;
-	struct iwl_mvm_nd_query_results query;
-	struct iwl_wowlan_status *fw_status;
-	unsigned long matched_profiles;
+	पूर्ण;
+	काष्ठा cfg80211_wowlan_wakeup *wakeup_report = &wakeup;
+	काष्ठा iwl_mvm_nd_query_results query;
+	काष्ठा iwl_wowlan_status *fw_status;
+	अचिन्हित दीर्घ matched_profiles;
 	u32 reasons = 0;
-	int i, n_matches, ret;
+	पूर्णांक i, n_matches, ret;
 
 	fw_status = iwl_mvm_get_wakeup_status(mvm);
-	if (!IS_ERR_OR_NULL(fw_status)) {
+	अगर (!IS_ERR_OR_शून्य(fw_status)) अणु
 		reasons = le32_to_cpu(fw_status->wakeup_reasons);
-		kfree(fw_status);
-	}
+		kमुक्त(fw_status);
+	पूर्ण
 
-	if (reasons & IWL_WOWLAN_WAKEUP_BY_RFKILL_DEASSERTED)
-		wakeup.rfkill_release = true;
+	अगर (reasons & IWL_WOWLAN_WAKEUP_BY_RFKILL_DEASSERTED)
+		wakeup.rfसमाप्त_release = true;
 
-	if (reasons != IWL_WOWLAN_WAKEUP_BY_NON_WIRELESS)
-		goto out;
+	अगर (reasons != IWL_WOWLAN_WAKEUP_BY_NON_WIRELESS)
+		जाओ out;
 
 	ret = iwl_mvm_netdetect_query_results(mvm, &query);
-	if (ret || !query.matched_profiles) {
-		wakeup_report = NULL;
-		goto out;
-	}
+	अगर (ret || !query.matched_profiles) अणु
+		wakeup_report = शून्य;
+		जाओ out;
+	पूर्ण
 
 	matched_profiles = query.matched_profiles;
-	if (mvm->n_nd_match_sets) {
-		n_matches = hweight_long(matched_profiles);
-	} else {
+	अगर (mvm->n_nd_match_sets) अणु
+		n_matches = hweight_दीर्घ(matched_profiles);
+	पूर्ण अन्यथा अणु
 		IWL_ERR(mvm, "no net detect match information available\n");
 		n_matches = 0;
-	}
+	पूर्ण
 
-	net_detect = kzalloc(struct_size(net_detect, matches, n_matches),
+	net_detect = kzalloc(काष्ठा_size(net_detect, matches, n_matches),
 			     GFP_KERNEL);
-	if (!net_detect || !n_matches)
-		goto out_report_nd;
+	अगर (!net_detect || !n_matches)
+		जाओ out_report_nd;
 
-	for_each_set_bit(i, &matched_profiles, mvm->n_nd_match_sets) {
-		struct cfg80211_wowlan_nd_match *match;
-		int idx, n_channels = 0;
+	क्रम_each_set_bit(i, &matched_profiles, mvm->n_nd_match_sets) अणु
+		काष्ठा cfg80211_wowlan_nd_match *match;
+		पूर्णांक idx, n_channels = 0;
 
 		n_channels = iwl_mvm_query_num_match_chans(mvm, &query, i);
 
-		match = kzalloc(struct_size(match, channels, n_channels),
+		match = kzalloc(काष्ठा_size(match, channels, n_channels),
 				GFP_KERNEL);
-		if (!match)
-			goto out_report_nd;
+		अगर (!match)
+			जाओ out_report_nd;
 
 		net_detect->matches[net_detect->n_matches++] = match;
 
@@ -1929,336 +1930,336 @@ static void iwl_mvm_query_netdetect_reasons(struct iwl_mvm *mvm,
 		 */
 		idx = mvm->n_nd_match_sets - i - 1;
 		match->ssid.ssid_len = mvm->nd_match_sets[idx].ssid.ssid_len;
-		memcpy(match->ssid.ssid, mvm->nd_match_sets[idx].ssid.ssid,
+		स_नकल(match->ssid.ssid, mvm->nd_match_sets[idx].ssid.ssid,
 		       match->ssid.ssid_len);
 
-		if (mvm->n_nd_channels < n_channels)
-			continue;
+		अगर (mvm->n_nd_channels < n_channels)
+			जारी;
 
 		iwl_mvm_query_set_freqs(mvm, &query, match, i);
-	}
+	पूर्ण
 
 out_report_nd:
 	wakeup.net_detect = net_detect;
 out:
-	iwl_mvm_free_nd(mvm);
+	iwl_mvm_मुक्त_nd(mvm);
 
 	mutex_unlock(&mvm->mutex);
-	ieee80211_report_wowlan_wakeup(vif, wakeup_report, GFP_KERNEL);
+	ieee80211_report_wowlan_wakeup(vअगर, wakeup_report, GFP_KERNEL);
 
-	if (net_detect) {
-		for (i = 0; i < net_detect->n_matches; i++)
-			kfree(net_detect->matches[i]);
-		kfree(net_detect);
-	}
-}
+	अगर (net_detect) अणु
+		क्रम (i = 0; i < net_detect->n_matches; i++)
+			kमुक्त(net_detect->matches[i]);
+		kमुक्त(net_detect);
+	पूर्ण
+पूर्ण
 
-static void iwl_mvm_d3_disconnect_iter(void *data, u8 *mac,
-				       struct ieee80211_vif *vif)
-{
+अटल व्योम iwl_mvm_d3_disconnect_iter(व्योम *data, u8 *mac,
+				       काष्ठा ieee80211_vअगर *vअगर)
+अणु
 	/* skip the one we keep connection on */
-	if (data == vif)
-		return;
+	अगर (data == vअगर)
+		वापस;
 
-	if (vif->type == NL80211_IFTYPE_STATION)
-		ieee80211_resume_disconnect(vif);
-}
+	अगर (vअगर->type == NL80211_IFTYPE_STATION)
+		ieee80211_resume_disconnect(vअगर);
+पूर्ण
 
-static bool iwl_mvm_rt_status(struct iwl_trans *trans, u32 base, u32 *err_id)
-{
-	struct error_table_start {
-		/* cf. struct iwl_error_event_table */
+अटल bool iwl_mvm_rt_status(काष्ठा iwl_trans *trans, u32 base, u32 *err_id)
+अणु
+	काष्ठा error_table_start अणु
+		/* cf. काष्ठा iwl_error_event_table */
 		u32 valid;
 		__le32 err_id;
-	} err_info;
+	पूर्ण err_info;
 
-	if (!base)
-		return false;
+	अगर (!base)
+		वापस false;
 
-	iwl_trans_read_mem_bytes(trans, base,
-				 &err_info, sizeof(err_info));
-	if (err_info.valid && err_id)
+	iwl_trans_पढ़ो_mem_bytes(trans, base,
+				 &err_info, माप(err_info));
+	अगर (err_info.valid && err_id)
 		*err_id = le32_to_cpu(err_info.err_id);
 
-	return !!err_info.valid;
-}
+	वापस !!err_info.valid;
+पूर्ण
 
-static bool iwl_mvm_check_rt_status(struct iwl_mvm *mvm,
-				   struct ieee80211_vif *vif)
-{
+अटल bool iwl_mvm_check_rt_status(काष्ठा iwl_mvm *mvm,
+				   काष्ठा ieee80211_vअगर *vअगर)
+अणु
 	u32 err_id;
 
-	/* check for lmac1 error */
-	if (iwl_mvm_rt_status(mvm->trans,
+	/* check क्रम lmac1 error */
+	अगर (iwl_mvm_rt_status(mvm->trans,
 			      mvm->trans->dbg.lmac_error_event_table[0],
-			      &err_id)) {
-		if (err_id == RF_KILL_INDICATOR_FOR_WOWLAN) {
-			struct cfg80211_wowlan_wakeup wakeup = {
-				.rfkill_release = true,
-			};
-			ieee80211_report_wowlan_wakeup(vif, &wakeup,
+			      &err_id)) अणु
+		अगर (err_id == RF_KILL_INDICATOR_FOR_WOWLAN) अणु
+			काष्ठा cfg80211_wowlan_wakeup wakeup = अणु
+				.rfसमाप्त_release = true,
+			पूर्ण;
+			ieee80211_report_wowlan_wakeup(vअगर, &wakeup,
 						       GFP_KERNEL);
-		}
-		return true;
-	}
+		पूर्ण
+		वापस true;
+	पूर्ण
 
-	/* check if we have lmac2 set and check for error */
-	if (iwl_mvm_rt_status(mvm->trans,
-			      mvm->trans->dbg.lmac_error_event_table[1], NULL))
-		return true;
+	/* check अगर we have lmac2 set and check क्रम error */
+	अगर (iwl_mvm_rt_status(mvm->trans,
+			      mvm->trans->dbg.lmac_error_event_table[1], शून्य))
+		वापस true;
 
-	/* check for umac error */
-	if (iwl_mvm_rt_status(mvm->trans,
-			      mvm->trans->dbg.umac_error_event_table, NULL))
-		return true;
+	/* check क्रम umac error */
+	अगर (iwl_mvm_rt_status(mvm->trans,
+			      mvm->trans->dbg.umac_error_event_table, शून्य))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int __iwl_mvm_resume(struct iwl_mvm *mvm, bool test)
-{
-	struct ieee80211_vif *vif = NULL;
-	int ret = 1;
-	enum iwl_d3_status d3_status;
+अटल पूर्णांक __iwl_mvm_resume(काष्ठा iwl_mvm *mvm, bool test)
+अणु
+	काष्ठा ieee80211_vअगर *vअगर = शून्य;
+	पूर्णांक ret = 1;
+	क्रमागत iwl_d3_status d3_status;
 	bool keep = false;
-	bool unified_image = fw_has_capa(&mvm->fw->ucode_capa,
+	bool unअगरied_image = fw_has_capa(&mvm->fw->ucode_capa,
 					 IWL_UCODE_TLV_CAPA_CNSLDTD_D3_D0_IMG);
 	bool d0i3_first = fw_has_capa(&mvm->fw->ucode_capa,
 				      IWL_UCODE_TLV_CAPA_D0I3_END_FIRST);
 
 	mutex_lock(&mvm->mutex);
 
-	mvm->last_reset_or_resume_time_jiffies = jiffies;
+	mvm->last_reset_or_resume_समय_jअगरfies = jअगरfies;
 
-	/* get the BSS vif pointer again */
-	vif = iwl_mvm_get_bss_vif(mvm);
-	if (IS_ERR_OR_NULL(vif))
-		goto err;
+	/* get the BSS vअगर poपूर्णांकer again */
+	vअगर = iwl_mvm_get_bss_vअगर(mvm);
+	अगर (IS_ERR_OR_शून्य(vअगर))
+		जाओ err;
 
-	iwl_fw_dbg_read_d3_debug_data(&mvm->fwrt);
+	iwl_fw_dbg_पढ़ो_d3_debug_data(&mvm->fwrt);
 
-	if (iwl_mvm_check_rt_status(mvm, vif)) {
+	अगर (iwl_mvm_check_rt_status(mvm, vअगर)) अणु
 		set_bit(STATUS_FW_ERROR, &mvm->trans->status);
 		iwl_mvm_dump_nic_error_log(mvm);
-		iwl_dbg_tlv_time_point(&mvm->fwrt,
-				       IWL_FW_INI_TIME_POINT_FW_ASSERT, NULL);
-		iwl_fw_dbg_collect_desc(&mvm->fwrt, &iwl_dump_desc_assert,
+		iwl_dbg_tlv_समय_poपूर्णांक(&mvm->fwrt,
+				       IWL_FW_INI_TIME_POINT_FW_ASSERT, शून्य);
+		iwl_fw_dbg_collect_desc(&mvm->fwrt, &iwl_dump_desc_निश्चित,
 					false, 0);
 		ret = 1;
-		mvm->trans->system_pm_mode = IWL_PLAT_PM_MODE_DISABLED;
-		goto err;
-	}
+		mvm->trans->प्रणाली_pm_mode = IWL_PLAT_PM_MODE_DISABLED;
+		जाओ err;
+	पूर्ण
 
-	ret = iwl_trans_d3_resume(mvm->trans, &d3_status, test, !unified_image);
-	if (ret)
-		goto err;
+	ret = iwl_trans_d3_resume(mvm->trans, &d3_status, test, !unअगरied_image);
+	अगर (ret)
+		जाओ err;
 
-	if (d3_status != IWL_D3_STATUS_ALIVE) {
+	अगर (d3_status != IWL_D3_STATUS_ALIVE) अणु
 		IWL_INFO(mvm, "Device was reset during suspend\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (d0i3_first) {
-		struct iwl_host_cmd cmd = {
+	अगर (d0i3_first) अणु
+		काष्ठा iwl_host_cmd cmd = अणु
 			.id = D0I3_END_CMD,
 			.flags = CMD_WANT_SKB | CMD_SEND_IN_D3,
-		};
-		int len;
+		पूर्ण;
+		पूर्णांक len;
 
 		ret = iwl_mvm_send_cmd(mvm, &cmd);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			IWL_ERR(mvm, "Failed to send D0I3_END_CMD first (%d)\n",
 				ret);
-			goto err;
-		}
-		switch (mvm->cmd_ver.d0i3_resp) {
-		case 0:
-			break;
-		case 1:
+			जाओ err;
+		पूर्ण
+		चयन (mvm->cmd_ver.d0i3_resp) अणु
+		हाल 0:
+			अवरोध;
+		हाल 1:
 			len = iwl_rx_packet_payload_len(cmd.resp_pkt);
-			if (len != sizeof(u32)) {
+			अगर (len != माप(u32)) अणु
 				IWL_ERR(mvm,
 					"Error with D0I3_END_CMD response size (%d)\n",
 					len);
-				goto err;
-			}
-			if (IWL_D0I3_RESET_REQUIRE &
-			    le32_to_cpu(*(__le32 *)cmd.resp_pkt->data)) {
-				iwl_write32(mvm->trans, CSR_RESET,
+				जाओ err;
+			पूर्ण
+			अगर (IWL_D0I3_RESET_REQUIRE &
+			    le32_to_cpu(*(__le32 *)cmd.resp_pkt->data)) अणु
+				iwl_ग_लिखो32(mvm->trans, CSR_RESET,
 					    CSR_RESET_REG_FLAG_FORCE_NMI);
-				iwl_free_resp(&cmd);
-			}
-			break;
-		default:
+				iwl_मुक्त_resp(&cmd);
+			पूर्ण
+			अवरोध;
+		शेष:
 			WARN_ON(1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	mvm->trans->system_pm_mode = IWL_PLAT_PM_MODE_DISABLED;
+	mvm->trans->प्रणाली_pm_mode = IWL_PLAT_PM_MODE_DISABLED;
 
 	/*
 	 * Query the current location and source from the D3 firmware so we
-	 * can play it back when we re-intiailize the D0 firmware
+	 * can play it back when we re-पूर्णांकiailize the D0 firmware
 	 */
-	iwl_mvm_update_changed_regdom(mvm);
+	iwl_mvm_update_changed_regकरोm(mvm);
 
 	/* Re-configure PPAG settings */
 	iwl_mvm_ppag_send_cmd(mvm);
 
-	if (!unified_image)
-		/*  Re-configure default SAR profile */
+	अगर (!unअगरied_image)
+		/*  Re-configure शेष SAR profile */
 		iwl_mvm_sar_select_profile(mvm, 1, 1);
 
-	if (mvm->net_detect) {
-		/* If this is a non-unified image, we restart the FW,
+	अगर (mvm->net_detect) अणु
+		/* If this is a non-unअगरied image, we restart the FW,
 		 * so no need to stop the netdetect scan.  If that
-		 * fails, continue and try to get the wake-up reasons,
+		 * fails, जारी and try to get the wake-up reasons,
 		 * but trigger a HW restart by keeping a failure code
 		 * in ret.
 		 */
-		if (unified_image)
+		अगर (unअगरied_image)
 			ret = iwl_mvm_scan_stop(mvm, IWL_MVM_SCAN_NETDETECT,
 						false);
 
-		iwl_mvm_query_netdetect_reasons(mvm, vif);
+		iwl_mvm_query_netdetect_reasons(mvm, vअगर);
 		/* has unlocked the mutex, so skip that */
-		goto out;
-	} else {
-		keep = iwl_mvm_query_wakeup_reasons(mvm, vif);
-#ifdef CONFIG_IWLWIFI_DEBUGFS
-		if (keep)
-			mvm->keep_vif = vif;
-#endif
+		जाओ out;
+	पूर्ण अन्यथा अणु
+		keep = iwl_mvm_query_wakeup_reasons(mvm, vअगर);
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
+		अगर (keep)
+			mvm->keep_vअगर = vअगर;
+#पूर्ण_अगर
 		/* has unlocked the mutex, so skip that */
-		goto out_iterate;
-	}
+		जाओ out_iterate;
+	पूर्ण
 
 err:
-	iwl_mvm_free_nd(mvm);
+	iwl_mvm_मुक्त_nd(mvm);
 	mutex_unlock(&mvm->mutex);
 
 out_iterate:
-	if (!test)
-		ieee80211_iterate_active_interfaces_mtx(mvm->hw,
+	अगर (!test)
+		ieee80211_iterate_active_पूर्णांकerfaces_mtx(mvm->hw,
 			IEEE80211_IFACE_ITER_NORMAL,
-			iwl_mvm_d3_disconnect_iter, keep ? vif : NULL);
+			iwl_mvm_d3_disconnect_iter, keep ? vअगर : शून्य);
 
 out:
 	clear_bit(IWL_MVM_STATUS_IN_D3, &mvm->status);
 
-	/* no need to reset the device in unified images, if successful */
-	if (unified_image && !ret) {
-		/* nothing else to do if we already sent D0I3_END_CMD */
-		if (d0i3_first)
-			return 0;
+	/* no need to reset the device in unअगरied images, अगर successful */
+	अगर (unअगरied_image && !ret) अणु
+		/* nothing अन्यथा to करो अगर we alपढ़ोy sent D0I3_END_CMD */
+		अगर (d0i3_first)
+			वापस 0;
 
-		ret = iwl_mvm_send_cmd_pdu(mvm, D0I3_END_CMD, 0, 0, NULL);
-		if (!ret)
-			return 0;
-	}
+		ret = iwl_mvm_send_cmd_pdu(mvm, D0I3_END_CMD, 0, 0, शून्य);
+		अगर (!ret)
+			वापस 0;
+	पूर्ण
 
 	/*
-	 * Reconfigure the device in one of the following cases:
-	 * 1. We are not using a unified image
-	 * 2. We are using a unified image but had an error while exiting D3
+	 * Reconfigure the device in one of the following हालs:
+	 * 1. We are not using a unअगरied image
+	 * 2. We are using a unअगरied image but had an error जबतक निकासing D3
 	 */
 	set_bit(IWL_MVM_STATUS_HW_RESTART_REQUESTED, &mvm->status);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int iwl_mvm_resume(struct ieee80211_hw *hw)
-{
-	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
-	int ret;
+पूर्णांक iwl_mvm_resume(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
+	पूर्णांक ret;
 
 	ret = __iwl_mvm_resume(mvm, false);
 
 	iwl_mvm_resume_tcm(mvm);
 
-	iwl_fw_runtime_resume(&mvm->fwrt);
+	iwl_fw_runसमय_resume(&mvm->fwrt);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void iwl_mvm_set_wakeup(struct ieee80211_hw *hw, bool enabled)
-{
-	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
+व्योम iwl_mvm_set_wakeup(काष्ठा ieee80211_hw *hw, bool enabled)
+अणु
+	काष्ठा iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
 
 	device_set_wakeup_enable(mvm->trans->dev, enabled);
-}
+पूर्ण
 
-#ifdef CONFIG_IWLWIFI_DEBUGFS
-static int iwl_mvm_d3_test_open(struct inode *inode, struct file *file)
-{
-	struct iwl_mvm *mvm = inode->i_private;
-	int err;
+#अगर_घोषित CONFIG_IWLWIFI_DEBUGFS
+अटल पूर्णांक iwl_mvm_d3_test_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा iwl_mvm *mvm = inode->i_निजी;
+	पूर्णांक err;
 
-	if (mvm->d3_test_active)
-		return -EBUSY;
+	अगर (mvm->d3_test_active)
+		वापस -EBUSY;
 
-	file->private_data = inode->i_private;
+	file->निजी_data = inode->i_निजी;
 
-	iwl_mvm_pause_tcm(mvm, true);
+	iwl_mvm_छोड़ो_tcm(mvm, true);
 
-	iwl_fw_runtime_suspend(&mvm->fwrt);
+	iwl_fw_runसमय_suspend(&mvm->fwrt);
 
-	/* start pseudo D3 */
+	/* start pseuकरो D3 */
 	rtnl_lock();
 	err = __iwl_mvm_suspend(mvm->hw, mvm->hw->wiphy->wowlan_config, true);
 	rtnl_unlock();
-	if (err > 0)
+	अगर (err > 0)
 		err = -EINVAL;
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mvm->d3_test_active = true;
-	mvm->keep_vif = NULL;
-	return 0;
-}
+	mvm->keep_vअगर = शून्य;
+	वापस 0;
+पूर्ण
 
-static ssize_t iwl_mvm_d3_test_read(struct file *file, char __user *user_buf,
-				    size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	u32 pme_asserted;
+अटल sमाप_प्रकार iwl_mvm_d3_test_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	u32 pme_निश्चितed;
 
-	while (true) {
-		/* read pme_ptr if available */
-		if (mvm->d3_test_pme_ptr) {
-			pme_asserted = iwl_trans_read_mem32(mvm->trans,
+	जबतक (true) अणु
+		/* पढ़ो pme_ptr अगर available */
+		अगर (mvm->d3_test_pme_ptr) अणु
+			pme_निश्चितed = iwl_trans_पढ़ो_mem32(mvm->trans,
 						mvm->d3_test_pme_ptr);
-			if (pme_asserted)
-				break;
-		}
+			अगर (pme_निश्चितed)
+				अवरोध;
+		पूर्ण
 
-		if (msleep_interruptible(100))
-			break;
-	}
+		अगर (msleep_पूर्णांकerruptible(100))
+			अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void iwl_mvm_d3_test_disconn_work_iter(void *_data, u8 *mac,
-					      struct ieee80211_vif *vif)
-{
+अटल व्योम iwl_mvm_d3_test_disconn_work_iter(व्योम *_data, u8 *mac,
+					      काष्ठा ieee80211_vअगर *vअगर)
+अणु
 	/* skip the one we keep connection on */
-	if (_data == vif)
-		return;
+	अगर (_data == vअगर)
+		वापस;
 
-	if (vif->type == NL80211_IFTYPE_STATION)
-		ieee80211_connection_loss(vif);
-}
+	अगर (vअगर->type == NL80211_IFTYPE_STATION)
+		ieee80211_connection_loss(vअगर);
+पूर्ण
 
-static int iwl_mvm_d3_test_release(struct inode *inode, struct file *file)
-{
-	struct iwl_mvm *mvm = inode->i_private;
-	bool unified_image = fw_has_capa(&mvm->fw->ucode_capa,
+अटल पूर्णांक iwl_mvm_d3_test_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा iwl_mvm *mvm = inode->i_निजी;
+	bool unअगरied_image = fw_has_capa(&mvm->fw->ucode_capa,
 					 IWL_UCODE_TLV_CAPA_CNSLDTD_D3_D0_IMG);
 
 	mvm->d3_test_active = false;
 
-	iwl_fw_dbg_read_d3_debug_data(&mvm->fwrt);
+	iwl_fw_dbg_पढ़ो_d3_debug_data(&mvm->fwrt);
 
 	rtnl_lock();
 	__iwl_mvm_resume(mvm, true);
@@ -2266,36 +2267,36 @@ static int iwl_mvm_d3_test_release(struct inode *inode, struct file *file)
 
 	iwl_mvm_resume_tcm(mvm);
 
-	iwl_fw_runtime_resume(&mvm->fwrt);
+	iwl_fw_runसमय_resume(&mvm->fwrt);
 
-	iwl_abort_notification_waits(&mvm->notif_wait);
-	if (!unified_image) {
-		int remaining_time = 10;
+	iwl_पात_notअगरication_रुकोs(&mvm->notअगर_रुको);
+	अगर (!unअगरied_image) अणु
+		पूर्णांक reमुख्यing_समय = 10;
 
 		ieee80211_restart_hw(mvm->hw);
 
-		/* wait for restart and disconnect all interfaces */
-		while (test_bit(IWL_MVM_STATUS_IN_HW_RESTART, &mvm->status) &&
-		       remaining_time > 0) {
-			remaining_time--;
+		/* रुको क्रम restart and disconnect all पूर्णांकerfaces */
+		जबतक (test_bit(IWL_MVM_STATUS_IN_HW_RESTART, &mvm->status) &&
+		       reमुख्यing_समय > 0) अणु
+			reमुख्यing_समय--;
 			msleep(1000);
-		}
+		पूर्ण
 
-		if (remaining_time == 0)
+		अगर (reमुख्यing_समय == 0)
 			IWL_ERR(mvm, "Timed out waiting for HW restart!\n");
-	}
+	पूर्ण
 
-	ieee80211_iterate_active_interfaces_atomic(
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(
 		mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
-		iwl_mvm_d3_test_disconn_work_iter, mvm->keep_vif);
+		iwl_mvm_d3_test_disconn_work_iter, mvm->keep_vअगर);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct file_operations iwl_dbgfs_d3_test_ops = {
+स्थिर काष्ठा file_operations iwl_dbgfs_d3_test_ops = अणु
 	.llseek = no_llseek,
-	.open = iwl_mvm_d3_test_open,
-	.read = iwl_mvm_d3_test_read,
+	.खोलो = iwl_mvm_d3_test_खोलो,
+	.पढ़ो = iwl_mvm_d3_test_पढ़ो,
 	.release = iwl_mvm_d3_test_release,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर

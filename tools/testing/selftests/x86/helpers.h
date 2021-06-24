@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#ifndef __SELFTESTS_X86_HELPERS_H
-#define __SELFTESTS_X86_HELPERS_H
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#अगर_अघोषित __SELFTESTS_X86_HELPERS_H
+#घोषणा __SELFTESTS_X86_HELPERS_H
 
-#include <asm/processor-flags.h>
+#समावेश <यंत्र/processor-flags.h>
 
-static inline unsigned long get_eflags(void)
-{
-#ifdef __x86_64__
-	return __builtin_ia32_readeflags_u64();
-#else
-	return __builtin_ia32_readeflags_u32();
-#endif
-}
+अटल अंतरभूत अचिन्हित दीर्घ get_eflags(व्योम)
+अणु
+#अगर_घोषित __x86_64__
+	वापस __builtin_ia32_पढ़ोeflags_u64();
+#अन्यथा
+	वापस __builtin_ia32_पढ़ोeflags_u32();
+#पूर्ण_अगर
+पूर्ण
 
-static inline void set_eflags(unsigned long eflags)
-{
-#ifdef __x86_64__
-	__builtin_ia32_writeeflags_u64(eflags);
-#else
-	__builtin_ia32_writeeflags_u32(eflags);
-#endif
-}
+अटल अंतरभूत व्योम set_eflags(अचिन्हित दीर्घ eflags)
+अणु
+#अगर_घोषित __x86_64__
+	__builtin_ia32_ग_लिखोeflags_u64(eflags);
+#अन्यथा
+	__builtin_ia32_ग_लिखोeflags_u32(eflags);
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* __SELFTESTS_X86_HELPERS_H */
+#पूर्ण_अगर /* __SELFTESTS_X86_HELPERS_H */

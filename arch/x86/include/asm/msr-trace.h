@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM msr
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM msr
 
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE msr-trace
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता msr-trace
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH asm/
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH यंत्र/
 
-#if !defined(_TRACE_MSR_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_MSR_H
+#अगर !defined(_TRACE_MSR_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_MSR_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 /*
- * Tracing for x86 model specific registers. Directly maps to the
- * RDMSR/WRMSR instructions.
+ * Tracing क्रम x86 model specअगरic रेजिस्टरs. Directly maps to the
+ * RDMSR/WRMSR inकाष्ठाions.
  */
 
 DECLARE_EVENT_CLASS(msr_trace_class,
-	    TP_PROTO(unsigned msr, u64 val, int failed),
+	    TP_PROTO(अचिन्हित msr, u64 val, पूर्णांक failed),
 	    TP_ARGS(msr, val, failed),
 	    TP_STRUCT__entry(
-		    __field(	unsigned,	msr )
+		    __field(	अचिन्हित,	msr )
 		    __field(    u64,		val )
-		    __field(    int,		failed )
+		    __field(    पूर्णांक,		failed )
 	    ),
 	    TP_fast_assign(
 		    __entry->msr = msr;
 		    __entry->val = val;
 		    __entry->failed = failed;
 	    ),
-	    TP_printk("%x, value %llx%s",
+	    TP_prपूर्णांकk("%x, value %llx%s",
 		      __entry->msr,
 		      __entry->val,
 		      __entry->failed ? " #GP" : "")
 );
 
-DEFINE_EVENT(msr_trace_class, read_msr,
-	     TP_PROTO(unsigned msr, u64 val, int failed),
+DEFINE_EVENT(msr_trace_class, पढ़ो_msr,
+	     TP_PROTO(अचिन्हित msr, u64 val, पूर्णांक failed),
 	     TP_ARGS(msr, val, failed)
 );
 
-DEFINE_EVENT(msr_trace_class, write_msr,
-	     TP_PROTO(unsigned msr, u64 val, int failed),
+DEFINE_EVENT(msr_trace_class, ग_लिखो_msr,
+	     TP_PROTO(अचिन्हित msr, u64 val, पूर्णांक failed),
 	     TP_ARGS(msr, val, failed)
 );
 
 DEFINE_EVENT(msr_trace_class, rdpmc,
-	     TP_PROTO(unsigned msr, u64 val, int failed),
+	     TP_PROTO(अचिन्हित msr, u64 val, पूर्णांक failed),
 	     TP_ARGS(msr, val, failed)
 );
 
-#endif /* _TRACE_MSR_H */
+#पूर्ण_अगर /* _TRACE_MSR_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

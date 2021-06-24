@@ -1,336 +1,337 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
-#include <linux/of.h>
-#include <linux/of_net.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/etherdevice.h>
-#include "mt76.h"
+#समावेश <linux/of.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/etherdevice.h>
+#समावेश "mt76.h"
 
-int mt76_get_of_eeprom(struct mt76_dev *dev, void *eep, int offset, int len)
-{
-#if defined(CONFIG_OF) && defined(CONFIG_MTD)
-	struct device_node *np = dev->dev->of_node;
-	struct mtd_info *mtd;
-	const __be32 *list;
-	const char *part;
+पूर्णांक mt76_get_of_eeprom(काष्ठा mt76_dev *dev, व्योम *eep, पूर्णांक offset, पूर्णांक len)
+अणु
+#अगर defined(CONFIG_OF) && defined(CONFIG_MTD)
+	काष्ठा device_node *np = dev->dev->of_node;
+	काष्ठा mtd_info *mtd;
+	स्थिर __be32 *list;
+	स्थिर अक्षर *part;
 	phandle phandle;
-	int size;
-	size_t retlen;
-	int ret;
+	पूर्णांक size;
+	माप_प्रकार retlen;
+	पूर्णांक ret;
 
-	if (!np)
-		return -ENOENT;
+	अगर (!np)
+		वापस -ENOENT;
 
 	list = of_get_property(np, "mediatek,mtd-eeprom", &size);
-	if (!list)
-		return -ENOENT;
+	अगर (!list)
+		वापस -ENOENT;
 
 	phandle = be32_to_cpup(list++);
-	if (!phandle)
-		return -ENOENT;
+	अगर (!phandle)
+		वापस -ENOENT;
 
 	np = of_find_node_by_phandle(phandle);
-	if (!np)
-		return -EINVAL;
+	अगर (!np)
+		वापस -EINVAL;
 
-	part = of_get_property(np, "label", NULL);
-	if (!part)
+	part = of_get_property(np, "label", शून्य);
+	अगर (!part)
 		part = np->name;
 
 	mtd = get_mtd_device_nm(part);
-	if (IS_ERR(mtd)) {
+	अगर (IS_ERR(mtd)) अणु
 		ret =  PTR_ERR(mtd);
-		goto out_put_node;
-	}
+		जाओ out_put_node;
+	पूर्ण
 
-	if (size <= sizeof(*list)) {
+	अगर (size <= माप(*list)) अणु
 		ret = -EINVAL;
-		goto out_put_node;
-	}
+		जाओ out_put_node;
+	पूर्ण
 
 	offset = be32_to_cpup(list);
-	ret = mtd_read(mtd, offset, len, &retlen, eep);
+	ret = mtd_पढ़ो(mtd, offset, len, &retlen, eep);
 	put_mtd_device(mtd);
-	if (ret)
-		goto out_put_node;
+	अगर (ret)
+		जाओ out_put_node;
 
-	if (retlen < len) {
+	अगर (retlen < len) अणु
 		ret = -EINVAL;
-		goto out_put_node;
-	}
+		जाओ out_put_node;
+	पूर्ण
 
-	if (of_property_read_bool(dev->dev->of_node, "big-endian")) {
+	अगर (of_property_पढ़ो_bool(dev->dev->of_node, "big-endian")) अणु
 		u8 *data = (u8 *)eep;
-		int i;
+		पूर्णांक i;
 
 		/* convert eeprom data in Little Endian */
-		for (i = 0; i < round_down(len, 2); i += 2)
+		क्रम (i = 0; i < round_करोwn(len, 2); i += 2)
 			put_unaligned_le16(get_unaligned_be16(&data[i]),
 					   &data[i]);
-	}
+	पूर्ण
 
-#ifdef CONFIG_NL80211_TESTMODE
+#अगर_घोषित CONFIG_NL80211_TESTMODE
 	dev->test_mtd.name = devm_kstrdup(dev->dev, part, GFP_KERNEL);
 	dev->test_mtd.offset = offset;
-#endif
+#पूर्ण_अगर
 
 out_put_node:
 	of_node_put(np);
-	return ret;
-#else
-	return -ENOENT;
-#endif
-}
+	वापस ret;
+#अन्यथा
+	वापस -ENOENT;
+#पूर्ण_अगर
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_get_of_eeprom);
 
-void
-mt76_eeprom_override(struct mt76_phy *phy)
-{
-	struct mt76_dev *dev = phy->dev;
-	struct device_node *np = dev->dev->of_node;
+व्योम
+mt76_eeprom_override(काष्ठा mt76_phy *phy)
+अणु
+	काष्ठा mt76_dev *dev = phy->dev;
+	काष्ठा device_node *np = dev->dev->of_node;
 
 	of_get_mac_address(np, phy->macaddr);
 
-	if (!is_valid_ether_addr(phy->macaddr)) {
-		eth_random_addr(phy->macaddr);
+	अगर (!is_valid_ether_addr(phy->macaddr)) अणु
+		eth_अक्रमom_addr(phy->macaddr);
 		dev_info(dev->dev,
 			 "Invalid MAC address, using random address %pM\n",
 			 phy->macaddr);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_eeprom_override);
 
-static bool mt76_string_prop_find(struct property *prop, const char *str)
-{
-	const char *cp = NULL;
+अटल bool mt76_string_prop_find(काष्ठा property *prop, स्थिर अक्षर *str)
+अणु
+	स्थिर अक्षर *cp = शून्य;
 
-	if (!prop || !str || !str[0])
-		return false;
+	अगर (!prop || !str || !str[0])
+		वापस false;
 
-	while ((cp = of_prop_next_string(prop, cp)) != NULL)
-		if (!strcasecmp(cp, str))
-			return true;
+	जबतक ((cp = of_prop_next_string(prop, cp)) != शून्य)
+		अगर (!strहालcmp(cp, str))
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static struct device_node *
-mt76_find_power_limits_node(struct mt76_dev *dev)
-{
-	struct device_node *np = dev->dev->of_node;
-	const char *const region_names[] = {
+अटल काष्ठा device_node *
+mt76_find_घातer_limits_node(काष्ठा mt76_dev *dev)
+अणु
+	काष्ठा device_node *np = dev->dev->of_node;
+	स्थिर अक्षर *स्थिर region_names[] = अणु
 		[NL80211_DFS_ETSI] = "etsi",
 		[NL80211_DFS_FCC] = "fcc",
 		[NL80211_DFS_JP] = "jp",
-	};
-	struct device_node *cur, *fallback = NULL;
-	const char *region_name = NULL;
+	पूर्ण;
+	काष्ठा device_node *cur, *fallback = शून्य;
+	स्थिर अक्षर *region_name = शून्य;
 
-	if (dev->region < ARRAY_SIZE(region_names))
+	अगर (dev->region < ARRAY_SIZE(region_names))
 		region_name = region_names[dev->region];
 
 	np = of_get_child_by_name(np, "power-limits");
-	if (!np)
-		return NULL;
+	अगर (!np)
+		वापस शून्य;
 
-	for_each_child_of_node(np, cur) {
-		struct property *country = of_find_property(cur, "country", NULL);
-		struct property *regd = of_find_property(cur, "regdomain", NULL);
+	क्रम_each_child_of_node(np, cur) अणु
+		काष्ठा property *country = of_find_property(cur, "country", शून्य);
+		काष्ठा property *regd = of_find_property(cur, "regdomain", शून्य);
 
-		if (!country && !regd) {
+		अगर (!country && !regd) अणु
 			fallback = cur;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (mt76_string_prop_find(country, dev->alpha2) ||
+		अगर (mt76_string_prop_find(country, dev->alpha2) ||
 		    mt76_string_prop_find(regd, region_name))
-			return cur;
-	}
+			वापस cur;
+	पूर्ण
 
-	return fallback;
-}
+	वापस fallback;
+पूर्ण
 
-static const __be32 *
-mt76_get_of_array(struct device_node *np, char *name, size_t *len, int min)
-{
-	struct property *prop = of_find_property(np, name, NULL);
+अटल स्थिर __be32 *
+mt76_get_of_array(काष्ठा device_node *np, अक्षर *name, माप_प्रकार *len, पूर्णांक min)
+अणु
+	काष्ठा property *prop = of_find_property(np, name, शून्य);
 
-	if (!prop || !prop->value || prop->length < min * 4)
-		return NULL;
+	अगर (!prop || !prop->value || prop->length < min * 4)
+		वापस शून्य;
 
 	*len = prop->length;
 
-	return prop->value;
-}
+	वापस prop->value;
+पूर्ण
 
-static struct device_node *
-mt76_find_channel_node(struct device_node *np, struct ieee80211_channel *chan)
-{
-	struct device_node *cur;
-	const __be32 *val;
-	size_t len;
+अटल काष्ठा device_node *
+mt76_find_channel_node(काष्ठा device_node *np, काष्ठा ieee80211_channel *chan)
+अणु
+	काष्ठा device_node *cur;
+	स्थिर __be32 *val;
+	माप_प्रकार len;
 
-	for_each_child_of_node(np, cur) {
+	क्रम_each_child_of_node(np, cur) अणु
 		val = mt76_get_of_array(cur, "channels", &len, 2);
-		if (!val)
-			continue;
+		अगर (!val)
+			जारी;
 
-		while (len >= 2 * sizeof(*val)) {
-			if (chan->hw_value >= be32_to_cpu(val[0]) &&
+		जबतक (len >= 2 * माप(*val)) अणु
+			अगर (chan->hw_value >= be32_to_cpu(val[0]) &&
 			    chan->hw_value <= be32_to_cpu(val[1]))
-				return cur;
+				वापस cur;
 
 			val += 2;
-			len -= 2 * sizeof(*val);
-		}
-	}
+			len -= 2 * माप(*val);
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static s8
-mt76_get_txs_delta(struct device_node *np, u8 nss)
-{
-	const __be32 *val;
-	size_t len;
+अटल s8
+mt76_get_txs_delta(काष्ठा device_node *np, u8 nss)
+अणु
+	स्थिर __be32 *val;
+	माप_प्रकार len;
 
 	val = mt76_get_of_array(np, "txs-delta", &len, nss);
-	if (!val)
-		return 0;
+	अगर (!val)
+		वापस 0;
 
-	return be32_to_cpu(val[nss - 1]);
-}
+	वापस be32_to_cpu(val[nss - 1]);
+पूर्ण
 
-static void
-mt76_apply_array_limit(s8 *pwr, size_t pwr_len, const __be32 *data,
-		       s8 target_power, s8 nss_delta, s8 *max_power)
-{
-	int i;
+अटल व्योम
+mt76_apply_array_limit(s8 *pwr, माप_प्रकार pwr_len, स्थिर __be32 *data,
+		       s8 target_घातer, s8 nss_delta, s8 *max_घातer)
+अणु
+	पूर्णांक i;
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
-	for (i = 0; i < pwr_len; i++) {
-		pwr[i] = min_t(s8, target_power,
+	क्रम (i = 0; i < pwr_len; i++) अणु
+		pwr[i] = min_t(s8, target_घातer,
 			       be32_to_cpu(data[i]) + nss_delta);
-		*max_power = max(*max_power, pwr[i]);
-	}
-}
+		*max_घातer = max(*max_घातer, pwr[i]);
+	पूर्ण
+पूर्ण
 
-static void
-mt76_apply_multi_array_limit(s8 *pwr, size_t pwr_len, s8 pwr_num,
-			     const __be32 *data, size_t len, s8 target_power,
-			     s8 nss_delta, s8 *max_power)
-{
-	int i, cur;
+अटल व्योम
+mt76_apply_multi_array_limit(s8 *pwr, माप_प्रकार pwr_len, s8 pwr_num,
+			     स्थिर __be32 *data, माप_प्रकार len, s8 target_घातer,
+			     s8 nss_delta, s8 *max_घातer)
+अणु
+	पूर्णांक i, cur;
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
 	len /= 4;
 	cur = be32_to_cpu(data[0]);
-	for (i = 0; i < pwr_num; i++) {
-		if (len < pwr_len + 1)
-			break;
+	क्रम (i = 0; i < pwr_num; i++) अणु
+		अगर (len < pwr_len + 1)
+			अवरोध;
 
 		mt76_apply_array_limit(pwr + pwr_len * i, pwr_len, data + 1,
-				       target_power, nss_delta, max_power);
-		if (--cur > 0)
-			continue;
+				       target_घातer, nss_delta, max_घातer);
+		अगर (--cur > 0)
+			जारी;
 
 		data += pwr_len + 1;
 		len -= pwr_len + 1;
-		if (!len)
-			break;
+		अगर (!len)
+			अवरोध;
 
 		cur = be32_to_cpu(data[0]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-s8 mt76_get_rate_power_limits(struct mt76_phy *phy,
-			      struct ieee80211_channel *chan,
-			      struct mt76_power_limits *dest,
-			      s8 target_power)
-{
-	struct mt76_dev *dev = phy->dev;
-	struct device_node *np;
-	const __be32 *val;
-	char name[16];
+s8 mt76_get_rate_घातer_limits(काष्ठा mt76_phy *phy,
+			      काष्ठा ieee80211_channel *chan,
+			      काष्ठा mt76_घातer_limits *dest,
+			      s8 target_घातer)
+अणु
+	काष्ठा mt76_dev *dev = phy->dev;
+	काष्ठा device_node *np;
+	स्थिर __be32 *val;
+	अक्षर name[16];
 	u32 mcs_rates = dev->drv->mcs_rates;
 	u32 ru_rates = ARRAY_SIZE(dest->ru[0]);
-	char band;
-	size_t len;
-	s8 max_power = 0;
+	अक्षर band;
+	माप_प्रकार len;
+	s8 max_घातer = 0;
 	s8 txs_delta;
 
-	if (!mcs_rates)
+	अगर (!mcs_rates)
 		mcs_rates = 10;
 
-	memset(dest, target_power, sizeof(*dest));
+	स_रखो(dest, target_घातer, माप(*dest));
 
-	if (!IS_ENABLED(CONFIG_OF))
-		return target_power;
+	अगर (!IS_ENABLED(CONFIG_OF))
+		वापस target_घातer;
 
-	np = mt76_find_power_limits_node(dev);
-	if (!np)
-		return target_power;
+	np = mt76_find_घातer_limits_node(dev);
+	अगर (!np)
+		वापस target_घातer;
 
-	switch (chan->band) {
-	case NL80211_BAND_2GHZ:
+	चयन (chan->band) अणु
+	हाल NL80211_BAND_2GHZ:
 		band = '2';
-		break;
-	case NL80211_BAND_5GHZ:
+		अवरोध;
+	हाल NL80211_BAND_5GHZ:
 		band = '5';
-		break;
-	default:
-		return target_power;
-	}
+		अवरोध;
+	शेष:
+		वापस target_घातer;
+	पूर्ण
 
-	snprintf(name, sizeof(name), "txpower-%cg", band);
+	snम_लिखो(name, माप(name), "txpower-%cg", band);
 	np = of_get_child_by_name(np, name);
-	if (!np)
-		return target_power;
+	अगर (!np)
+		वापस target_घातer;
 
 	np = mt76_find_channel_node(np, chan);
-	if (!np)
-		return target_power;
+	अगर (!np)
+		वापस target_घातer;
 
 	txs_delta = mt76_get_txs_delta(np, hweight8(phy->antenna_mask));
 
 	val = mt76_get_of_array(np, "rates-cck", &len, ARRAY_SIZE(dest->cck));
 	mt76_apply_array_limit(dest->cck, ARRAY_SIZE(dest->cck), val,
-			       target_power, txs_delta, &max_power);
+			       target_घातer, txs_delta, &max_घातer);
 
 	val = mt76_get_of_array(np, "rates-ofdm",
 				&len, ARRAY_SIZE(dest->ofdm));
 	mt76_apply_array_limit(dest->ofdm, ARRAY_SIZE(dest->ofdm), val,
-			       target_power, txs_delta, &max_power);
+			       target_घातer, txs_delta, &max_घातer);
 
 	val = mt76_get_of_array(np, "rates-mcs", &len, mcs_rates + 1);
 	mt76_apply_multi_array_limit(dest->mcs[0], ARRAY_SIZE(dest->mcs[0]),
 				     ARRAY_SIZE(dest->mcs), val, len,
-				     target_power, txs_delta, &max_power);
+				     target_घातer, txs_delta, &max_घातer);
 
 	val = mt76_get_of_array(np, "rates-ru", &len, ru_rates + 1);
 	mt76_apply_multi_array_limit(dest->ru[0], ARRAY_SIZE(dest->ru[0]),
 				     ARRAY_SIZE(dest->ru), val, len,
-				     target_power, txs_delta, &max_power);
+				     target_घातer, txs_delta, &max_घातer);
 
-	return max_power;
-}
-EXPORT_SYMBOL_GPL(mt76_get_rate_power_limits);
+	वापस max_घातer;
+पूर्ण
+EXPORT_SYMBOL_GPL(mt76_get_rate_घातer_limits);
 
-int
-mt76_eeprom_init(struct mt76_dev *dev, int len)
-{
+पूर्णांक
+mt76_eeprom_init(काष्ठा mt76_dev *dev, पूर्णांक len)
+अणु
 	dev->eeprom.size = len;
 	dev->eeprom.data = devm_kzalloc(dev->dev, len, GFP_KERNEL);
-	if (!dev->eeprom.data)
-		return -ENOMEM;
+	अगर (!dev->eeprom.data)
+		वापस -ENOMEM;
 
-	return !mt76_get_of_eeprom(dev, dev->eeprom.data, 0, len);
-}
+	वापस !mt76_get_of_eeprom(dev, dev->eeprom.data, 0, len);
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_eeprom_init);

@@ -1,16 +1,17 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#ifndef __MOCK_GEM_OBJECT_H__
-#define __MOCK_GEM_OBJECT_H__
+#अगर_अघोषित __MOCK_GEM_OBJECT_H__
+#घोषणा __MOCK_GEM_OBJECT_H__
 
-#include "gem/i915_gem_object_types.h"
+#समावेश "gem/i915_gem_object_types.h"
 
-struct mock_object {
-	struct drm_i915_gem_object base;
-};
+काष्ठा mock_object अणु
+	काष्ठा drm_i915_gem_object base;
+पूर्ण;
 
-#endif /* !__MOCK_GEM_OBJECT_H__ */
+#पूर्ण_अगर /* !__MOCK_GEM_OBJECT_H__ */

@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2007-2008 Extreme Engineering Solutions, Inc.
  *
- * Author: Nate Case <ncase@xes-inc.com>
+ * Author: Nate Case <nहाल@xes-inc.com>
  *
- * LED driver for various PCA955x I2C LED drivers
+ * LED driver क्रम various PCA955x I2C LED drivers
  *
  * Supported devices:
  *
@@ -16,18 +17,18 @@
  *	PCA9553/01	4-bit driver		0x62
  *	PCA9553/02	4-bit driver		0x63
  *
- * Philips PCA955x LED driver chips follow a register map as shown below:
+ * Philips PCA955x LED driver chips follow a रेजिस्टर map as shown below:
  *
  *	Control Register		Description
  *	----------------		-----------
- *	0x0				Input register 0
+ *	0x0				Input रेजिस्टर 0
  *					..
- *	NUM_INPUT_REGS - 1		Last Input register X
+ *	NUM_INPUT_REGS - 1		Last Input रेजिस्टर X
  *
  *	NUM_INPUT_REGS			Frequency prescaler 0
- *	NUM_INPUT_REGS + 1		PWM register 0
+ *	NUM_INPUT_REGS + 1		PWM रेजिस्टर 0
  *	NUM_INPUT_REGS + 2		Frequency prescaler 1
- *	NUM_INPUT_REGS + 3		PWM register 1
+ *	NUM_INPUT_REGS + 3		PWM रेजिस्टर 1
  *
  *	NUM_INPUT_REGS + 4		LED selector 0
  *	NUM_INPUT_REGS + 4
@@ -37,216 +38,216 @@
  *  bits the chip supports.
  */
 
-#include <linux/ctype.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/gpio/driver.h>
-#include <linux/i2c.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/property.h>
-#include <linux/slab.h>
-#include <linux/string.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/property.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
 
-#include <dt-bindings/leds/leds-pca955x.h>
+#समावेश <dt-bindings/leds/leds-pca955x.h>
 
-/* LED select registers determine the source that drives LED outputs */
-#define PCA955X_LS_LED_ON	0x0	/* Output LOW */
-#define PCA955X_LS_LED_OFF	0x1	/* Output HI-Z */
-#define PCA955X_LS_BLINK0	0x2	/* Blink at PWM0 rate */
-#define PCA955X_LS_BLINK1	0x3	/* Blink at PWM1 rate */
+/* LED select रेजिस्टरs determine the source that drives LED outमाला_दो */
+#घोषणा PCA955X_LS_LED_ON	0x0	/* Output LOW */
+#घोषणा PCA955X_LS_LED_OFF	0x1	/* Output HI-Z */
+#घोषणा PCA955X_LS_BLINK0	0x2	/* Blink at PWM0 rate */
+#घोषणा PCA955X_LS_BLINK1	0x3	/* Blink at PWM1 rate */
 
-#define PCA955X_GPIO_INPUT	LED_OFF
-#define PCA955X_GPIO_HIGH	LED_OFF
-#define PCA955X_GPIO_LOW	LED_FULL
+#घोषणा PCA955X_GPIO_INPUT	LED_OFF
+#घोषणा PCA955X_GPIO_HIGH	LED_OFF
+#घोषणा PCA955X_GPIO_LOW	LED_FULL
 
-enum pca955x_type {
+क्रमागत pca955x_type अणु
 	pca9550,
 	pca9551,
 	pca9552,
 	ibm_pca9552,
 	pca9553,
-};
+पूर्ण;
 
-struct pca955x_chipdef {
-	int			bits;
+काष्ठा pca955x_chipdef अणु
+	पूर्णांक			bits;
 	u8			slv_addr;	/* 7-bit slave address mask */
-	int			slv_addr_shift;	/* Number of bits to ignore */
-};
+	पूर्णांक			slv_addr_shअगरt;	/* Number of bits to ignore */
+पूर्ण;
 
-static struct pca955x_chipdef pca955x_chipdefs[] = {
-	[pca9550] = {
+अटल काष्ठा pca955x_chipdef pca955x_chipdefs[] = अणु
+	[pca9550] = अणु
 		.bits		= 2,
 		.slv_addr	= /* 110000x */ 0x60,
-		.slv_addr_shift	= 1,
-	},
-	[pca9551] = {
+		.slv_addr_shअगरt	= 1,
+	पूर्ण,
+	[pca9551] = अणु
 		.bits		= 8,
 		.slv_addr	= /* 1100xxx */ 0x60,
-		.slv_addr_shift	= 3,
-	},
-	[pca9552] = {
+		.slv_addr_shअगरt	= 3,
+	पूर्ण,
+	[pca9552] = अणु
 		.bits		= 16,
 		.slv_addr	= /* 1100xxx */ 0x60,
-		.slv_addr_shift	= 3,
-	},
-	[ibm_pca9552] = {
+		.slv_addr_shअगरt	= 3,
+	पूर्ण,
+	[ibm_pca9552] = अणु
 		.bits		= 16,
 		.slv_addr	= /* 0110xxx */ 0x30,
-		.slv_addr_shift	= 3,
-	},
-	[pca9553] = {
+		.slv_addr_shअगरt	= 3,
+	पूर्ण,
+	[pca9553] = अणु
 		.bits		= 4,
 		.slv_addr	= /* 110001x */ 0x62,
-		.slv_addr_shift	= 1,
-	},
-};
+		.slv_addr_shअगरt	= 1,
+	पूर्ण,
+पूर्ण;
 
-static const struct i2c_device_id pca955x_id[] = {
-	{ "pca9550", pca9550 },
-	{ "pca9551", pca9551 },
-	{ "pca9552", pca9552 },
-	{ "ibm-pca9552", ibm_pca9552 },
-	{ "pca9553", pca9553 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id pca955x_id[] = अणु
+	अणु "pca9550", pca9550 पूर्ण,
+	अणु "pca9551", pca9551 पूर्ण,
+	अणु "pca9552", pca9552 पूर्ण,
+	अणु "ibm-pca9552", ibm_pca9552 पूर्ण,
+	अणु "pca9553", pca9553 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, pca955x_id);
 
-struct pca955x {
-	struct mutex lock;
-	struct pca955x_led *leds;
-	struct pca955x_chipdef	*chipdef;
-	struct i2c_client	*client;
-#ifdef CONFIG_LEDS_PCA955X_GPIO
-	struct gpio_chip gpio;
-#endif
-};
+काष्ठा pca955x अणु
+	काष्ठा mutex lock;
+	काष्ठा pca955x_led *leds;
+	काष्ठा pca955x_chipdef	*chipdef;
+	काष्ठा i2c_client	*client;
+#अगर_घोषित CONFIG_LEDS_PCA955X_GPIO
+	काष्ठा gpio_chip gpio;
+#पूर्ण_अगर
+पूर्ण;
 
-struct pca955x_led {
-	struct pca955x	*pca955x;
-	struct led_classdev	led_cdev;
-	int			led_num;	/* 0 .. 15 potentially */
-	char			name[32];
+काष्ठा pca955x_led अणु
+	काष्ठा pca955x	*pca955x;
+	काष्ठा led_classdev	led_cdev;
+	पूर्णांक			led_num;	/* 0 .. 15 potentially */
+	अक्षर			name[32];
 	u32			type;
-	const char		*default_trigger;
-};
+	स्थिर अक्षर		*शेष_trigger;
+पूर्ण;
 
-struct pca955x_platform_data {
-	struct pca955x_led	*leds;
-	int			num_leds;
-};
+काष्ठा pca955x_platक्रमm_data अणु
+	काष्ठा pca955x_led	*leds;
+	पूर्णांक			num_leds;
+पूर्ण;
 
-/* 8 bits per input register */
-static inline int pca95xx_num_input_regs(int bits)
-{
-	return (bits + 7) / 8;
-}
+/* 8 bits per input रेजिस्टर */
+अटल अंतरभूत पूर्णांक pca95xx_num_input_regs(पूर्णांक bits)
+अणु
+	वापस (bits + 7) / 8;
+पूर्ण
 
-/* 4 bits per LED selector register */
-static inline int pca95xx_num_led_regs(int bits)
-{
-	return (bits + 3)  / 4;
-}
+/* 4 bits per LED selector रेजिस्टर */
+अटल अंतरभूत पूर्णांक pca95xx_num_led_regs(पूर्णांक bits)
+अणु
+	वापस (bits + 3)  / 4;
+पूर्ण
 
 /*
- * Return an LED selector register value based on an existing one, with
- * the appropriate 2-bit state value set for the given LED number (0-3).
+ * Return an LED selector रेजिस्टर value based on an existing one, with
+ * the appropriate 2-bit state value set क्रम the given LED number (0-3).
  */
-static inline u8 pca955x_ledsel(u8 oldval, int led_num, int state)
-{
-	return (oldval & (~(0x3 << (led_num << 1)))) |
+अटल अंतरभूत u8 pca955x_ledsel(u8 oldval, पूर्णांक led_num, पूर्णांक state)
+अणु
+	वापस (oldval & (~(0x3 << (led_num << 1)))) |
 		((state & 0x3) << (led_num << 1));
-}
+पूर्ण
 
 /*
- * Write to frequency prescaler register, used to program the
+ * Write to frequency prescaler रेजिस्टर, used to program the
  * period of the PWM output.  period = (PSCx + 1) / 38
  */
-static int pca955x_write_psc(struct i2c_client *client, int n, u8 val)
-{
-	struct pca955x *pca955x = i2c_get_clientdata(client);
-	int ret;
+अटल पूर्णांक pca955x_ग_लिखो_psc(काष्ठा i2c_client *client, पूर्णांक n, u8 val)
+अणु
+	काष्ठा pca955x *pca955x = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(client,
+	ret = i2c_smbus_ग_लिखो_byte_data(client,
 		pca95xx_num_input_regs(pca955x->chipdef->bits) + 2*n,
 		val);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&client->dev, "%s: reg 0x%x, val 0x%x, err %d\n",
 			__func__, n, val, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Write to PWM register, which determines the duty cycle of the
+ * Write to PWM रेजिस्टर, which determines the duty cycle of the
  * output.  LED is OFF when the count is less than the value of this
- * register, and ON when it is greater.  If PWMx == 0, LED is always OFF.
+ * रेजिस्टर, and ON when it is greater.  If PWMx == 0, LED is always OFF.
  *
  * Duty cycle is (256 - PWMx) / 256
  */
-static int pca955x_write_pwm(struct i2c_client *client, int n, u8 val)
-{
-	struct pca955x *pca955x = i2c_get_clientdata(client);
-	int ret;
+अटल पूर्णांक pca955x_ग_लिखो_pwm(काष्ठा i2c_client *client, पूर्णांक n, u8 val)
+अणु
+	काष्ठा pca955x *pca955x = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(client,
+	ret = i2c_smbus_ग_लिखो_byte_data(client,
 		pca95xx_num_input_regs(pca955x->chipdef->bits) + 1 + 2*n,
 		val);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&client->dev, "%s: reg 0x%x, val 0x%x, err %d\n",
 			__func__, n, val, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Write to LED selector register, which determines the source that
+ * Write to LED selector रेजिस्टर, which determines the source that
  * drives the LED output.
  */
-static int pca955x_write_ls(struct i2c_client *client, int n, u8 val)
-{
-	struct pca955x *pca955x = i2c_get_clientdata(client);
-	int ret;
+अटल पूर्णांक pca955x_ग_लिखो_ls(काष्ठा i2c_client *client, पूर्णांक n, u8 val)
+अणु
+	काष्ठा pca955x *pca955x = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(client,
+	ret = i2c_smbus_ग_लिखो_byte_data(client,
 		pca95xx_num_input_regs(pca955x->chipdef->bits) + 4 + n,
 		val);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&client->dev, "%s: reg 0x%x, val 0x%x, err %d\n",
 			__func__, n, val, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Read the LED selector register, which determines the source that
+ * Read the LED selector रेजिस्टर, which determines the source that
  * drives the LED output.
  */
-static int pca955x_read_ls(struct i2c_client *client, int n, u8 *val)
-{
-	struct pca955x *pca955x = i2c_get_clientdata(client);
-	int ret;
+अटल पूर्णांक pca955x_पढ़ो_ls(काष्ठा i2c_client *client, पूर्णांक n, u8 *val)
+अणु
+	काष्ठा pca955x *pca955x = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(client,
+	ret = i2c_smbus_पढ़ो_byte_data(client,
 		pca95xx_num_input_regs(pca955x->chipdef->bits) + 4 + n);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "%s: reg 0x%x, err %d\n",
 			__func__, n, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	*val = (u8)ret;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pca955x_led_set(struct led_classdev *led_cdev,
-			    enum led_brightness value)
-{
-	struct pca955x_led *pca955x_led;
-	struct pca955x *pca955x;
+अटल पूर्णांक pca955x_led_set(काष्ठा led_classdev *led_cdev,
+			    क्रमागत led_brightness value)
+अणु
+	काष्ठा pca955x_led *pca955x_led;
+	काष्ठा pca955x *pca955x;
 	u8 ls;
-	int chip_ls;	/* which LSx to use (0-3 potentially) */
-	int ls_led;	/* which set of bits within LSx to use (0-3) */
-	int ret;
+	पूर्णांक chip_ls;	/* which LSx to use (0-3 potentially) */
+	पूर्णांक ls_led;	/* which set of bits within LSx to use (0-3) */
+	पूर्णांक ret;
 
-	pca955x_led = container_of(led_cdev, struct pca955x_led, led_cdev);
+	pca955x_led = container_of(led_cdev, काष्ठा pca955x_led, led_cdev);
 	pca955x = pca955x_led->pca955x;
 
 	chip_ls = pca955x_led->led_num / 4;
@@ -254,227 +255,227 @@ static int pca955x_led_set(struct led_classdev *led_cdev,
 
 	mutex_lock(&pca955x->lock);
 
-	ret = pca955x_read_ls(pca955x->client, chip_ls, &ls);
-	if (ret)
-		goto out;
+	ret = pca955x_पढ़ो_ls(pca955x->client, chip_ls, &ls);
+	अगर (ret)
+		जाओ out;
 
-	switch (value) {
-	case LED_FULL:
+	चयन (value) अणु
+	हाल LED_FULL:
 		ls = pca955x_ledsel(ls, ls_led, PCA955X_LS_LED_ON);
-		break;
-	case LED_OFF:
+		अवरोध;
+	हाल LED_OFF:
 		ls = pca955x_ledsel(ls, ls_led, PCA955X_LS_LED_OFF);
-		break;
-	case LED_HALF:
+		अवरोध;
+	हाल LED_HALF:
 		ls = pca955x_ledsel(ls, ls_led, PCA955X_LS_BLINK0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/*
-		 * Use PWM1 for all other values.  This has the unwanted
+		 * Use PWM1 क्रम all other values.  This has the unwanted
 		 * side effect of making all LEDs on the chip share the
-		 * same brightness level if set to a value other than
+		 * same brightness level अगर set to a value other than
 		 * OFF, HALF, or FULL.  But, this is probably better than
-		 * just turning off for all other values.
+		 * just turning off क्रम all other values.
 		 */
-		ret = pca955x_write_pwm(pca955x->client, 1, 255 - value);
-		if (ret)
-			goto out;
+		ret = pca955x_ग_लिखो_pwm(pca955x->client, 1, 255 - value);
+		अगर (ret)
+			जाओ out;
 		ls = pca955x_ledsel(ls, ls_led, PCA955X_LS_BLINK1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	ret = pca955x_write_ls(pca955x->client, chip_ls, ls);
+	ret = pca955x_ग_लिखो_ls(pca955x->client, chip_ls, ls);
 
 out:
 	mutex_unlock(&pca955x->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_LEDS_PCA955X_GPIO
+#अगर_घोषित CONFIG_LEDS_PCA955X_GPIO
 /*
- * Read the INPUT register, which contains the state of LEDs.
+ * Read the INPUT रेजिस्टर, which contains the state of LEDs.
  */
-static int pca955x_read_input(struct i2c_client *client, int n, u8 *val)
-{
-	int ret = i2c_smbus_read_byte_data(client, n);
+अटल पूर्णांक pca955x_पढ़ो_input(काष्ठा i2c_client *client, पूर्णांक n, u8 *val)
+अणु
+	पूर्णांक ret = i2c_smbus_पढ़ो_byte_data(client, n);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "%s: reg 0x%x, err %d\n",
 			__func__, n, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	*val = (u8)ret;
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int pca955x_gpio_request_pin(struct gpio_chip *gc, unsigned int offset)
-{
-	struct pca955x *pca955x = gpiochip_get_data(gc);
-	struct pca955x_led *led = &pca955x->leds[offset];
+अटल पूर्णांक pca955x_gpio_request_pin(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा pca955x *pca955x = gpiochip_get_data(gc);
+	काष्ठा pca955x_led *led = &pca955x->leds[offset];
 
-	if (led->type == PCA955X_TYPE_GPIO)
-		return 0;
+	अगर (led->type == PCA955X_TYPE_GPIO)
+		वापस 0;
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int pca955x_set_value(struct gpio_chip *gc, unsigned int offset,
-			     int val)
-{
-	struct pca955x *pca955x = gpiochip_get_data(gc);
-	struct pca955x_led *led = &pca955x->leds[offset];
+अटल पूर्णांक pca955x_set_value(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset,
+			     पूर्णांक val)
+अणु
+	काष्ठा pca955x *pca955x = gpiochip_get_data(gc);
+	काष्ठा pca955x_led *led = &pca955x->leds[offset];
 
-	if (val)
-		return pca955x_led_set(&led->led_cdev, PCA955X_GPIO_HIGH);
+	अगर (val)
+		वापस pca955x_led_set(&led->led_cdev, PCA955X_GPIO_HIGH);
 
-	return pca955x_led_set(&led->led_cdev, PCA955X_GPIO_LOW);
-}
+	वापस pca955x_led_set(&led->led_cdev, PCA955X_GPIO_LOW);
+पूर्ण
 
-static void pca955x_gpio_set_value(struct gpio_chip *gc, unsigned int offset,
-				   int val)
-{
+अटल व्योम pca955x_gpio_set_value(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset,
+				   पूर्णांक val)
+अणु
 	pca955x_set_value(gc, offset, val);
-}
+पूर्ण
 
-static int pca955x_gpio_get_value(struct gpio_chip *gc, unsigned int offset)
-{
-	struct pca955x *pca955x = gpiochip_get_data(gc);
-	struct pca955x_led *led = &pca955x->leds[offset];
+अटल पूर्णांक pca955x_gpio_get_value(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा pca955x *pca955x = gpiochip_get_data(gc);
+	काष्ठा pca955x_led *led = &pca955x->leds[offset];
 	u8 reg = 0;
 
-	/* There is nothing we can do about errors */
-	pca955x_read_input(pca955x->client, led->led_num / 8, &reg);
+	/* There is nothing we can करो about errors */
+	pca955x_पढ़ो_input(pca955x->client, led->led_num / 8, &reg);
 
-	return !!(reg & (1 << (led->led_num % 8)));
-}
+	वापस !!(reg & (1 << (led->led_num % 8)));
+पूर्ण
 
-static int pca955x_gpio_direction_input(struct gpio_chip *gc,
-					unsigned int offset)
-{
-	struct pca955x *pca955x = gpiochip_get_data(gc);
-	struct pca955x_led *led = &pca955x->leds[offset];
+अटल पूर्णांक pca955x_gpio_direction_input(काष्ठा gpio_chip *gc,
+					अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा pca955x *pca955x = gpiochip_get_data(gc);
+	काष्ठा pca955x_led *led = &pca955x->leds[offset];
 
 	/* To use as input ensure pin is not driven. */
-	return pca955x_led_set(&led->led_cdev, PCA955X_GPIO_INPUT);
-}
+	वापस pca955x_led_set(&led->led_cdev, PCA955X_GPIO_INPUT);
+पूर्ण
 
-static int pca955x_gpio_direction_output(struct gpio_chip *gc,
-					 unsigned int offset, int val)
-{
-	return pca955x_set_value(gc, offset, val);
-}
-#endif /* CONFIG_LEDS_PCA955X_GPIO */
+अटल पूर्णांक pca955x_gpio_direction_output(काष्ठा gpio_chip *gc,
+					 अचिन्हित पूर्णांक offset, पूर्णांक val)
+अणु
+	वापस pca955x_set_value(gc, offset, val);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_LEDS_PCA955X_GPIO */
 
-static struct pca955x_platform_data *
-pca955x_get_pdata(struct i2c_client *client, struct pca955x_chipdef *chip)
-{
-	struct pca955x_platform_data *pdata;
-	struct fwnode_handle *child;
-	int count;
+अटल काष्ठा pca955x_platक्रमm_data *
+pca955x_get_pdata(काष्ठा i2c_client *client, काष्ठा pca955x_chipdef *chip)
+अणु
+	काष्ठा pca955x_platक्रमm_data *pdata;
+	काष्ठा fwnode_handle *child;
+	पूर्णांक count;
 
 	count = device_get_child_node_count(&client->dev);
-	if (!count || count > chip->bits)
-		return ERR_PTR(-ENODEV);
+	अगर (!count || count > chip->bits)
+		वापस ERR_PTR(-ENODEV);
 
-	pdata = devm_kzalloc(&client->dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(&client->dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस ERR_PTR(-ENOMEM);
 
-	pdata->leds = devm_kcalloc(&client->dev,
-				   chip->bits, sizeof(struct pca955x_led),
+	pdata->leds = devm_kसुस्मृति(&client->dev,
+				   chip->bits, माप(काष्ठा pca955x_led),
 				   GFP_KERNEL);
-	if (!pdata->leds)
-		return ERR_PTR(-ENOMEM);
+	अगर (!pdata->leds)
+		वापस ERR_PTR(-ENOMEM);
 
-	device_for_each_child_node(&client->dev, child) {
-		const char *name;
+	device_क्रम_each_child_node(&client->dev, child) अणु
+		स्थिर अक्षर *name;
 		u32 reg;
-		int res;
+		पूर्णांक res;
 
-		res = fwnode_property_read_u32(child, "reg", &reg);
-		if ((res != 0) || (reg >= chip->bits))
-			continue;
+		res = fwnode_property_पढ़ो_u32(child, "reg", &reg);
+		अगर ((res != 0) || (reg >= chip->bits))
+			जारी;
 
-		res = fwnode_property_read_string(child, "label", &name);
-		if ((res != 0) && is_of_node(child))
+		res = fwnode_property_पढ़ो_string(child, "label", &name);
+		अगर ((res != 0) && is_of_node(child))
 			name = to_of_node(child)->name;
 
-		snprintf(pdata->leds[reg].name, sizeof(pdata->leds[reg].name),
+		snम_लिखो(pdata->leds[reg].name, माप(pdata->leds[reg].name),
 			 "%s", name);
 
 		pdata->leds[reg].type = PCA955X_TYPE_LED;
-		fwnode_property_read_u32(child, "type", &pdata->leds[reg].type);
-		fwnode_property_read_string(child, "linux,default-trigger",
-					&pdata->leds[reg].default_trigger);
-	}
+		fwnode_property_पढ़ो_u32(child, "type", &pdata->leds[reg].type);
+		fwnode_property_पढ़ो_string(child, "linux,default-trigger",
+					&pdata->leds[reg].शेष_trigger);
+	पूर्ण
 
 	pdata->num_leds = chip->bits;
 
-	return pdata;
-}
+	वापस pdata;
+पूर्ण
 
-static const struct of_device_id of_pca955x_match[] = {
-	{ .compatible = "nxp,pca9550", .data = (void *)pca9550 },
-	{ .compatible = "nxp,pca9551", .data = (void *)pca9551 },
-	{ .compatible = "nxp,pca9552", .data = (void *)pca9552 },
-	{ .compatible = "ibm,pca9552", .data = (void *)ibm_pca9552 },
-	{ .compatible = "nxp,pca9553", .data = (void *)pca9553 },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_pca955x_match[] = अणु
+	अणु .compatible = "nxp,pca9550", .data = (व्योम *)pca9550 पूर्ण,
+	अणु .compatible = "nxp,pca9551", .data = (व्योम *)pca9551 पूर्ण,
+	अणु .compatible = "nxp,pca9552", .data = (व्योम *)pca9552 पूर्ण,
+	अणु .compatible = "ibm,pca9552", .data = (व्योम *)ibm_pca9552 पूर्ण,
+	अणु .compatible = "nxp,pca9553", .data = (व्योम *)pca9553 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_pca955x_match);
 
-static int pca955x_probe(struct i2c_client *client,
-					const struct i2c_device_id *id)
-{
-	struct pca955x *pca955x;
-	struct pca955x_led *pca955x_led;
-	struct pca955x_chipdef *chip;
-	struct i2c_adapter *adapter;
-	int i, err;
-	struct pca955x_platform_data *pdata;
-	int ngpios = 0;
+अटल पूर्णांक pca955x_probe(काष्ठा i2c_client *client,
+					स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा pca955x *pca955x;
+	काष्ठा pca955x_led *pca955x_led;
+	काष्ठा pca955x_chipdef *chip;
+	काष्ठा i2c_adapter *adapter;
+	पूर्णांक i, err;
+	काष्ठा pca955x_platक्रमm_data *pdata;
+	पूर्णांक ngpios = 0;
 
 	chip = &pca955x_chipdefs[id->driver_data];
 	adapter = client->adapter;
 	pdata = dev_get_platdata(&client->dev);
-	if (!pdata) {
+	अगर (!pdata) अणु
 		pdata =	pca955x_get_pdata(client, chip);
-		if (IS_ERR(pdata))
-			return PTR_ERR(pdata);
-	}
+		अगर (IS_ERR(pdata))
+			वापस PTR_ERR(pdata);
+	पूर्ण
 
 	/* Make sure the slave address / chip type combo given is possible */
-	if ((client->addr & ~((1 << chip->slv_addr_shift) - 1)) !=
-	    chip->slv_addr) {
+	अगर ((client->addr & ~((1 << chip->slv_addr_shअगरt) - 1)) !=
+	    chip->slv_addr) अणु
 		dev_err(&client->dev, "invalid slave address %02x\n",
 				client->addr);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dev_info(&client->dev, "leds-pca955x: Using %s %d-bit LED driver at "
 			"slave address 0x%02x\n",
 			client->name, chip->bits, client->addr);
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -EIO;
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -EIO;
 
-	if (pdata->num_leds != chip->bits) {
+	अगर (pdata->num_leds != chip->bits) अणु
 		dev_err(&client->dev,
 			"board info claims %d LEDs on a %d-bit chip\n",
 			pdata->num_leds, chip->bits);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	pca955x = devm_kzalloc(&client->dev, sizeof(*pca955x), GFP_KERNEL);
-	if (!pca955x)
-		return -ENOMEM;
+	pca955x = devm_kzalloc(&client->dev, माप(*pca955x), GFP_KERNEL);
+	अगर (!pca955x)
+		वापस -ENOMEM;
 
-	pca955x->leds = devm_kcalloc(&client->dev,
-			chip->bits, sizeof(*pca955x_led), GFP_KERNEL);
-	if (!pca955x->leds)
-		return -ENOMEM;
+	pca955x->leds = devm_kसुस्मृति(&client->dev,
+			chip->bits, माप(*pca955x_led), GFP_KERNEL);
+	अगर (!pca955x->leds)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, pca955x);
 
@@ -482,71 +483,71 @@ static int pca955x_probe(struct i2c_client *client,
 	pca955x->client = client;
 	pca955x->chipdef = chip;
 
-	for (i = 0; i < chip->bits; i++) {
+	क्रम (i = 0; i < chip->bits; i++) अणु
 		pca955x_led = &pca955x->leds[i];
 		pca955x_led->led_num = i;
 		pca955x_led->pca955x = pca955x;
 		pca955x_led->type = pdata->leds[i].type;
 
-		switch (pca955x_led->type) {
-		case PCA955X_TYPE_NONE:
-			break;
-		case PCA955X_TYPE_GPIO:
+		चयन (pca955x_led->type) अणु
+		हाल PCA955X_TYPE_NONE:
+			अवरोध;
+		हाल PCA955X_TYPE_GPIO:
 			ngpios++;
-			break;
-		case PCA955X_TYPE_LED:
+			अवरोध;
+		हाल PCA955X_TYPE_LED:
 			/*
-			 * Platform data can specify LED names and
-			 * default triggers
+			 * Platक्रमm data can specअगरy LED names and
+			 * शेष triggers
 			 */
-			if (pdata->leds[i].name[0] == '\0')
-				snprintf(pdata->leds[i].name,
-					sizeof(pdata->leds[i].name), "%d", i);
+			अगर (pdata->leds[i].name[0] == '\0')
+				snम_लिखो(pdata->leds[i].name,
+					माप(pdata->leds[i].name), "%d", i);
 
-			snprintf(pca955x_led->name,
-				sizeof(pca955x_led->name), "pca955x:%s",
+			snम_लिखो(pca955x_led->name,
+				माप(pca955x_led->name), "pca955x:%s",
 				pdata->leds[i].name);
 
-			if (pdata->leds[i].default_trigger)
-				pca955x_led->led_cdev.default_trigger =
-					pdata->leds[i].default_trigger;
+			अगर (pdata->leds[i].शेष_trigger)
+				pca955x_led->led_cdev.शेष_trigger =
+					pdata->leds[i].शेष_trigger;
 
 			pca955x_led->led_cdev.name = pca955x_led->name;
 			pca955x_led->led_cdev.brightness_set_blocking =
 				pca955x_led_set;
 
-			err = devm_led_classdev_register(&client->dev,
+			err = devm_led_classdev_रेजिस्टर(&client->dev,
 							&pca955x_led->led_cdev);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 
 			/* Turn off LED */
 			err = pca955x_led_set(&pca955x_led->led_cdev, LED_OFF);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	/* PWM0 is used for half brightness or 50% duty cycle */
-	err = pca955x_write_pwm(client, 0, 255 - LED_HALF);
-	if (err)
-		return err;
+	/* PWM0 is used क्रम half brightness or 50% duty cycle */
+	err = pca955x_ग_लिखो_pwm(client, 0, 255 - LED_HALF);
+	अगर (err)
+		वापस err;
 
-	/* PWM1 is used for variable brightness, default to OFF */
-	err = pca955x_write_pwm(client, 1, 0);
-	if (err)
-		return err;
+	/* PWM1 is used क्रम variable brightness, शेष to OFF */
+	err = pca955x_ग_लिखो_pwm(client, 1, 0);
+	अगर (err)
+		वापस err;
 
-	/* Set to fast frequency so we do not see flashing */
-	err = pca955x_write_psc(client, 0, 0);
-	if (err)
-		return err;
-	err = pca955x_write_psc(client, 1, 0);
-	if (err)
-		return err;
+	/* Set to fast frequency so we करो not see flashing */
+	err = pca955x_ग_लिखो_psc(client, 0, 0);
+	अगर (err)
+		वापस err;
+	err = pca955x_ग_लिखो_psc(client, 1, 0);
+	अगर (err)
+		वापस err;
 
-#ifdef CONFIG_LEDS_PCA955X_GPIO
-	if (ngpios) {
+#अगर_घोषित CONFIG_LEDS_PCA955X_GPIO
+	अगर (ngpios) अणु
 		pca955x->gpio.label = "gpio-pca955x";
 		pca955x->gpio.direction_input = pca955x_gpio_direction_input;
 		pca955x->gpio.direction_output = pca955x_gpio_direction_output;
@@ -561,29 +562,29 @@ static int pca955x_probe(struct i2c_client *client,
 
 		err = devm_gpiochip_add_data(&client->dev, &pca955x->gpio,
 					     pca955x);
-		if (err) {
-			/* Use data->gpio.dev as a flag for freeing gpiochip */
-			pca955x->gpio.parent = NULL;
+		अगर (err) अणु
+			/* Use data->gpio.dev as a flag क्रम मुक्तing gpiochip */
+			pca955x->gpio.parent = शून्य;
 			dev_warn(&client->dev, "could not add gpiochip\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		dev_info(&client->dev, "gpios %i...%i\n",
 			 pca955x->gpio.base, pca955x->gpio.base +
 			 pca955x->gpio.ngpio - 1);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct i2c_driver pca955x_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver pca955x_driver = अणु
+	.driver = अणु
 		.name	= "leds-pca955x",
 		.of_match_table = of_pca955x_match,
-	},
+	पूर्ण,
 	.probe	= pca955x_probe,
 	.id_table = pca955x_id,
-};
+पूर्ण;
 
 module_i2c_driver(pca955x_driver);
 

@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * motu-stream.c - a part of driver for MOTU FireWire series
+ * motu-stream.c - a part of driver क्रम MOTU FireWire series
  *
  * Copyright (c) 2015-2017 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
-#include "motu.h"
+#समावेश "motu.h"
 
-#define	CALLBACK_TIMEOUT	200
+#घोषणा	CALLBACK_TIMEOUT	200
 
-#define ISOC_COMM_CONTROL_OFFSET		0x0b00
-#define  ISOC_COMM_CONTROL_MASK			0xffff0000
-#define  CHANGE_RX_ISOC_COMM_STATE		0x80000000
-#define  RX_ISOC_COMM_IS_ACTIVATED		0x40000000
-#define  RX_ISOC_COMM_CHANNEL_MASK		0x3f000000
-#define  RX_ISOC_COMM_CHANNEL_SHIFT		24
-#define  CHANGE_TX_ISOC_COMM_STATE		0x00800000
-#define  TX_ISOC_COMM_IS_ACTIVATED		0x00400000
-#define  TX_ISOC_COMM_CHANNEL_MASK		0x003f0000
-#define  TX_ISOC_COMM_CHANNEL_SHIFT		16
+#घोषणा ISOC_COMM_CONTROL_OFFSET		0x0b00
+#घोषणा  ISOC_COMM_CONTROL_MASK			0xffff0000
+#घोषणा  CHANGE_RX_ISOC_COMM_STATE		0x80000000
+#घोषणा  RX_ISOC_COMM_IS_ACTIVATED		0x40000000
+#घोषणा  RX_ISOC_COMM_CHANNEL_MASK		0x3f000000
+#घोषणा  RX_ISOC_COMM_CHANNEL_SHIFT		24
+#घोषणा  CHANGE_TX_ISOC_COMM_STATE		0x00800000
+#घोषणा  TX_ISOC_COMM_IS_ACTIVATED		0x00400000
+#घोषणा  TX_ISOC_COMM_CHANNEL_MASK		0x003f0000
+#घोषणा  TX_ISOC_COMM_CHANNEL_SHIFT		16
 
-#define PACKET_FORMAT_OFFSET			0x0b10
-#define  TX_PACKET_EXCLUDE_DIFFERED_DATA_CHUNKS	0x00000080
-#define  RX_PACKET_EXCLUDE_DIFFERED_DATA_CHUNKS	0x00000040
-#define  TX_PACKET_TRANSMISSION_SPEED_MASK	0x0000000f
+#घोषणा PACKET_FORMAT_OFFSET			0x0b10
+#घोषणा  TX_PACKET_EXCLUDE_DIFFERED_DATA_CHUNKS	0x00000080
+#घोषणा  RX_PACKET_EXCLUDE_DIFFERED_DATA_CHUNKS	0x00000040
+#घोषणा  TX_PACKET_TRANSMISSION_SPEED_MASK	0x0000000f
 
-static int keep_resources(struct snd_motu *motu, unsigned int rate,
-			  struct amdtp_stream *stream)
-{
-	struct fw_iso_resources *resources;
-	struct snd_motu_packet_format *packet_format;
-	unsigned int midi_ports = 0;
-	int err;
+अटल पूर्णांक keep_resources(काष्ठा snd_motu *motu, अचिन्हित पूर्णांक rate,
+			  काष्ठा amdtp_stream *stream)
+अणु
+	काष्ठा fw_iso_resources *resources;
+	काष्ठा snd_motu_packet_क्रमmat *packet_क्रमmat;
+	अचिन्हित पूर्णांक midi_ports = 0;
+	पूर्णांक err;
 
-	if (stream == &motu->rx_stream) {
+	अगर (stream == &motu->rx_stream) अणु
 		resources = &motu->rx_resources;
-		packet_format = &motu->rx_packet_formats;
+		packet_क्रमmat = &motu->rx_packet_क्रमmats;
 
-		if ((motu->spec->flags & SND_MOTU_SPEC_RX_MIDI_2ND_Q) ||
+		अगर ((motu->spec->flags & SND_MOTU_SPEC_RX_MIDI_2ND_Q) ||
 		    (motu->spec->flags & SND_MOTU_SPEC_RX_MIDI_3RD_Q))
 			midi_ports = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		resources = &motu->tx_resources;
-		packet_format = &motu->tx_packet_formats;
+		packet_क्रमmat = &motu->tx_packet_क्रमmats;
 
-		if ((motu->spec->flags & SND_MOTU_SPEC_TX_MIDI_2ND_Q) ||
+		अगर ((motu->spec->flags & SND_MOTU_SPEC_TX_MIDI_2ND_Q) ||
 		    (motu->spec->flags & SND_MOTU_SPEC_TX_MIDI_3RD_Q))
 			midi_ports = 1;
-	}
+	पूर्ण
 
 	err = amdtp_motu_set_parameters(stream, rate, midi_ports,
-					packet_format);
-	if (err < 0)
-		return err;
+					packet_क्रमmat);
+	अगर (err < 0)
+		वापस err;
 
-	return fw_iso_resources_allocate(resources,
+	वापस fw_iso_resources_allocate(resources,
 				amdtp_stream_get_max_payload(stream),
 				fw_parent_device(motu->unit)->max_speed);
-}
+पूर्ण
 
-static int begin_session(struct snd_motu *motu)
-{
+अटल पूर्णांक begin_session(काष्ठा snd_motu *motu)
+अणु
 	__be32 reg;
 	u32 data;
-	int err;
+	पूर्णांक err;
 
 	// Configure the unit to start isochronous communication.
-	err = snd_motu_transaction_read(motu, ISOC_COMM_CONTROL_OFFSET, &reg,
-					sizeof(reg));
-	if (err < 0)
-		return err;
+	err = snd_motu_transaction_पढ़ो(motu, ISOC_COMM_CONTROL_OFFSET, &reg,
+					माप(reg));
+	अगर (err < 0)
+		वापस err;
 	data = be32_to_cpu(reg) & ~ISOC_COMM_CONTROL_MASK;
 
 	data |= CHANGE_RX_ISOC_COMM_STATE | RX_ISOC_COMM_IS_ACTIVATED |
@@ -78,331 +79,331 @@ static int begin_session(struct snd_motu *motu)
 		(motu->tx_resources.channel << TX_ISOC_COMM_CHANNEL_SHIFT);
 
 	reg = cpu_to_be32(data);
-	return snd_motu_transaction_write(motu, ISOC_COMM_CONTROL_OFFSET, &reg,
-					  sizeof(reg));
-}
+	वापस snd_motu_transaction_ग_लिखो(motu, ISOC_COMM_CONTROL_OFFSET, &reg,
+					  माप(reg));
+पूर्ण
 
-static void finish_session(struct snd_motu *motu)
-{
+अटल व्योम finish_session(काष्ठा snd_motu *motu)
+अणु
 	__be32 reg;
 	u32 data;
-	int err;
+	पूर्णांक err;
 
-	err = snd_motu_protocol_switch_fetching_mode(motu, false);
-	if (err < 0)
-		return;
+	err = snd_motu_protocol_चयन_fetching_mode(motu, false);
+	अगर (err < 0)
+		वापस;
 
-	err = snd_motu_transaction_read(motu, ISOC_COMM_CONTROL_OFFSET, &reg,
-					sizeof(reg));
-	if (err < 0)
-		return;
+	err = snd_motu_transaction_पढ़ो(motu, ISOC_COMM_CONTROL_OFFSET, &reg,
+					माप(reg));
+	अगर (err < 0)
+		वापस;
 	data = be32_to_cpu(reg);
 
 	data &= ~(RX_ISOC_COMM_IS_ACTIVATED | TX_ISOC_COMM_IS_ACTIVATED);
 	data |= CHANGE_RX_ISOC_COMM_STATE | CHANGE_TX_ISOC_COMM_STATE;
 
 	reg = cpu_to_be32(data);
-	snd_motu_transaction_write(motu, ISOC_COMM_CONTROL_OFFSET, &reg,
-				   sizeof(reg));
-}
+	snd_motu_transaction_ग_लिखो(motu, ISOC_COMM_CONTROL_OFFSET, &reg,
+				   माप(reg));
+पूर्ण
 
-int snd_motu_stream_cache_packet_formats(struct snd_motu *motu)
-{
-	int err;
+पूर्णांक snd_motu_stream_cache_packet_क्रमmats(काष्ठा snd_motu *motu)
+अणु
+	पूर्णांक err;
 
-	err = snd_motu_protocol_cache_packet_formats(motu);
-	if (err < 0)
-		return err;
+	err = snd_motu_protocol_cache_packet_क्रमmats(motu);
+	अगर (err < 0)
+		वापस err;
 
-	if (motu->spec->flags & SND_MOTU_SPEC_TX_MIDI_2ND_Q) {
-		motu->tx_packet_formats.midi_flag_offset = 4;
-		motu->tx_packet_formats.midi_byte_offset = 6;
-	} else if (motu->spec->flags & SND_MOTU_SPEC_TX_MIDI_3RD_Q) {
-		motu->tx_packet_formats.midi_flag_offset = 8;
-		motu->tx_packet_formats.midi_byte_offset = 7;
-	}
+	अगर (motu->spec->flags & SND_MOTU_SPEC_TX_MIDI_2ND_Q) अणु
+		motu->tx_packet_क्रमmats.midi_flag_offset = 4;
+		motu->tx_packet_क्रमmats.midi_byte_offset = 6;
+	पूर्ण अन्यथा अगर (motu->spec->flags & SND_MOTU_SPEC_TX_MIDI_3RD_Q) अणु
+		motu->tx_packet_क्रमmats.midi_flag_offset = 8;
+		motu->tx_packet_क्रमmats.midi_byte_offset = 7;
+	पूर्ण
 
-	if (motu->spec->flags & SND_MOTU_SPEC_RX_MIDI_2ND_Q) {
-		motu->rx_packet_formats.midi_flag_offset = 4;
-		motu->rx_packet_formats.midi_byte_offset = 6;
-	} else if (motu->spec->flags & SND_MOTU_SPEC_RX_MIDI_3RD_Q) {
-		motu->rx_packet_formats.midi_flag_offset = 8;
-		motu->rx_packet_formats.midi_byte_offset = 7;
-	}
+	अगर (motu->spec->flags & SND_MOTU_SPEC_RX_MIDI_2ND_Q) अणु
+		motu->rx_packet_क्रमmats.midi_flag_offset = 4;
+		motu->rx_packet_क्रमmats.midi_byte_offset = 6;
+	पूर्ण अन्यथा अगर (motu->spec->flags & SND_MOTU_SPEC_RX_MIDI_3RD_Q) अणु
+		motu->rx_packet_क्रमmats.midi_flag_offset = 8;
+		motu->rx_packet_क्रमmats.midi_byte_offset = 7;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_motu_stream_reserve_duplex(struct snd_motu *motu, unsigned int rate,
-				   unsigned int frames_per_period,
-				   unsigned int frames_per_buffer)
-{
-	unsigned int curr_rate;
-	int err;
+पूर्णांक snd_motu_stream_reserve_duplex(काष्ठा snd_motu *motu, अचिन्हित पूर्णांक rate,
+				   अचिन्हित पूर्णांक frames_per_period,
+				   अचिन्हित पूर्णांक frames_per_buffer)
+अणु
+	अचिन्हित पूर्णांक curr_rate;
+	पूर्णांक err;
 
-	err = snd_motu_protocol_get_clock_rate(motu, &curr_rate);
-	if (err < 0)
-		return err;
-	if (rate == 0)
+	err = snd_motu_protocol_get_घड़ी_rate(motu, &curr_rate);
+	अगर (err < 0)
+		वापस err;
+	अगर (rate == 0)
 		rate = curr_rate;
 
-	if (motu->substreams_counter == 0 || curr_rate != rate) {
-		amdtp_domain_stop(&motu->domain);
+	अगर (motu->substreams_counter == 0 || curr_rate != rate) अणु
+		amdtp_करोमुख्य_stop(&motu->करोमुख्य);
 		finish_session(motu);
 
-		fw_iso_resources_free(&motu->tx_resources);
-		fw_iso_resources_free(&motu->rx_resources);
+		fw_iso_resources_मुक्त(&motu->tx_resources);
+		fw_iso_resources_मुक्त(&motu->rx_resources);
 
-		err = snd_motu_protocol_set_clock_rate(motu, rate);
-		if (err < 0) {
+		err = snd_motu_protocol_set_घड़ी_rate(motu, rate);
+		अगर (err < 0) अणु
 			dev_err(&motu->unit->device,
 				"fail to set sampling rate: %d\n", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		err = snd_motu_stream_cache_packet_formats(motu);
-		if (err < 0)
-			return err;
+		err = snd_motu_stream_cache_packet_क्रमmats(motu);
+		अगर (err < 0)
+			वापस err;
 
 		err = keep_resources(motu, rate, &motu->tx_stream);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = keep_resources(motu, rate, &motu->rx_stream);
-		if (err < 0) {
-			fw_iso_resources_free(&motu->tx_resources);
-			return err;
-		}
+		अगर (err < 0) अणु
+			fw_iso_resources_मुक्त(&motu->tx_resources);
+			वापस err;
+		पूर्ण
 
-		err = amdtp_domain_set_events_per_period(&motu->domain,
+		err = amdtp_करोमुख्य_set_events_per_period(&motu->करोमुख्य,
 					frames_per_period, frames_per_buffer);
-		if (err < 0) {
-			fw_iso_resources_free(&motu->tx_resources);
-			fw_iso_resources_free(&motu->rx_resources);
-			return err;
-		}
-	}
+		अगर (err < 0) अणु
+			fw_iso_resources_मुक्त(&motu->tx_resources);
+			fw_iso_resources_मुक्त(&motu->rx_resources);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ensure_packet_formats(struct snd_motu *motu)
-{
+अटल पूर्णांक ensure_packet_क्रमmats(काष्ठा snd_motu *motu)
+अणु
 	__be32 reg;
 	u32 data;
-	int err;
+	पूर्णांक err;
 
-	err = snd_motu_transaction_read(motu, PACKET_FORMAT_OFFSET, &reg,
-					sizeof(reg));
-	if (err < 0)
-		return err;
+	err = snd_motu_transaction_पढ़ो(motu, PACKET_FORMAT_OFFSET, &reg,
+					माप(reg));
+	अगर (err < 0)
+		वापस err;
 	data = be32_to_cpu(reg);
 
 	data &= ~(TX_PACKET_EXCLUDE_DIFFERED_DATA_CHUNKS |
 		  RX_PACKET_EXCLUDE_DIFFERED_DATA_CHUNKS|
 		  TX_PACKET_TRANSMISSION_SPEED_MASK);
-	if (motu->spec->tx_fixed_pcm_chunks[0] == motu->tx_packet_formats.pcm_chunks[0])
+	अगर (motu->spec->tx_fixed_pcm_chunks[0] == motu->tx_packet_क्रमmats.pcm_chunks[0])
 		data |= TX_PACKET_EXCLUDE_DIFFERED_DATA_CHUNKS;
-	if (motu->spec->rx_fixed_pcm_chunks[0] == motu->rx_packet_formats.pcm_chunks[0])
+	अगर (motu->spec->rx_fixed_pcm_chunks[0] == motu->rx_packet_क्रमmats.pcm_chunks[0])
 		data |= RX_PACKET_EXCLUDE_DIFFERED_DATA_CHUNKS;
 	data |= fw_parent_device(motu->unit)->max_speed;
 
 	reg = cpu_to_be32(data);
-	return snd_motu_transaction_write(motu, PACKET_FORMAT_OFFSET, &reg,
-					  sizeof(reg));
-}
+	वापस snd_motu_transaction_ग_लिखो(motu, PACKET_FORMAT_OFFSET, &reg,
+					  माप(reg));
+पूर्ण
 
-int snd_motu_stream_start_duplex(struct snd_motu *motu)
-{
-	unsigned int generation = motu->rx_resources.generation;
-	int err = 0;
+पूर्णांक snd_motu_stream_start_duplex(काष्ठा snd_motu *motu)
+अणु
+	अचिन्हित पूर्णांक generation = motu->rx_resources.generation;
+	पूर्णांक err = 0;
 
-	if (motu->substreams_counter == 0)
-		return 0;
+	अगर (motu->substreams_counter == 0)
+		वापस 0;
 
-	if (amdtp_streaming_error(&motu->rx_stream) ||
-	    amdtp_streaming_error(&motu->tx_stream)) {
-		amdtp_domain_stop(&motu->domain);
+	अगर (amdtp_streaming_error(&motu->rx_stream) ||
+	    amdtp_streaming_error(&motu->tx_stream)) अणु
+		amdtp_करोमुख्य_stop(&motu->करोमुख्य);
 		finish_session(motu);
-	}
+	पूर्ण
 
-	if (generation != fw_parent_device(motu->unit)->card->generation) {
+	अगर (generation != fw_parent_device(motu->unit)->card->generation) अणु
 		err = fw_iso_resources_update(&motu->rx_resources);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = fw_iso_resources_update(&motu->tx_resources);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (!amdtp_stream_running(&motu->rx_stream)) {
-		int spd = fw_parent_device(motu->unit)->max_speed;
+	अगर (!amdtp_stream_running(&motu->rx_stream)) अणु
+		पूर्णांक spd = fw_parent_device(motu->unit)->max_speed;
 
-		err = ensure_packet_formats(motu);
-		if (err < 0)
-			return err;
+		err = ensure_packet_क्रमmats(motu);
+		अगर (err < 0)
+			वापस err;
 
 		err = begin_session(motu);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&motu->unit->device,
 				"fail to start isochronous comm: %d\n", err);
-			goto stop_streams;
-		}
+			जाओ stop_streams;
+		पूर्ण
 
-		err = amdtp_domain_add_stream(&motu->domain, &motu->tx_stream,
+		err = amdtp_करोमुख्य_add_stream(&motu->करोमुख्य, &motu->tx_stream,
 					      motu->tx_resources.channel, spd);
-		if (err < 0)
-			goto stop_streams;
+		अगर (err < 0)
+			जाओ stop_streams;
 
-		err = amdtp_domain_add_stream(&motu->domain, &motu->rx_stream,
+		err = amdtp_करोमुख्य_add_stream(&motu->करोमुख्य, &motu->rx_stream,
 					      motu->rx_resources.channel, spd);
-		if (err < 0)
-			goto stop_streams;
+		अगर (err < 0)
+			जाओ stop_streams;
 
-		err = amdtp_domain_start(&motu->domain, 0);
-		if (err < 0)
-			goto stop_streams;
+		err = amdtp_करोमुख्य_start(&motu->करोमुख्य, 0);
+		अगर (err < 0)
+			जाओ stop_streams;
 
-		if (!amdtp_stream_wait_callback(&motu->tx_stream,
+		अगर (!amdtp_stream_रुको_callback(&motu->tx_stream,
 						CALLBACK_TIMEOUT) ||
-		    !amdtp_stream_wait_callback(&motu->rx_stream,
-						CALLBACK_TIMEOUT)) {
+		    !amdtp_stream_रुको_callback(&motu->rx_stream,
+						CALLBACK_TIMEOUT)) अणु
 			err = -ETIMEDOUT;
-			goto stop_streams;
-		}
+			जाओ stop_streams;
+		पूर्ण
 
-		err = snd_motu_protocol_switch_fetching_mode(motu, true);
-		if (err < 0) {
+		err = snd_motu_protocol_चयन_fetching_mode(motu, true);
+		अगर (err < 0) अणु
 			dev_err(&motu->unit->device,
 				"fail to enable frame fetching: %d\n", err);
-			goto stop_streams;
-		}
-	}
+			जाओ stop_streams;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 stop_streams:
-	amdtp_domain_stop(&motu->domain);
+	amdtp_करोमुख्य_stop(&motu->करोमुख्य);
 	finish_session(motu);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void snd_motu_stream_stop_duplex(struct snd_motu *motu)
-{
-	if (motu->substreams_counter == 0) {
-		amdtp_domain_stop(&motu->domain);
+व्योम snd_motu_stream_stop_duplex(काष्ठा snd_motu *motu)
+अणु
+	अगर (motu->substreams_counter == 0) अणु
+		amdtp_करोमुख्य_stop(&motu->करोमुख्य);
 		finish_session(motu);
 
-		fw_iso_resources_free(&motu->tx_resources);
-		fw_iso_resources_free(&motu->rx_resources);
-	}
-}
+		fw_iso_resources_मुक्त(&motu->tx_resources);
+		fw_iso_resources_मुक्त(&motu->rx_resources);
+	पूर्ण
+पूर्ण
 
-static int init_stream(struct snd_motu *motu, struct amdtp_stream *s)
-{
-	struct fw_iso_resources *resources;
-	enum amdtp_stream_direction dir;
-	int err;
+अटल पूर्णांक init_stream(काष्ठा snd_motu *motu, काष्ठा amdtp_stream *s)
+अणु
+	काष्ठा fw_iso_resources *resources;
+	क्रमागत amdtp_stream_direction dir;
+	पूर्णांक err;
 
-	if (s == &motu->tx_stream) {
+	अगर (s == &motu->tx_stream) अणु
 		resources = &motu->tx_resources;
 		dir = AMDTP_IN_STREAM;
-	} else {
+	पूर्ण अन्यथा अणु
 		resources = &motu->rx_resources;
 		dir = AMDTP_OUT_STREAM;
-	}
+	पूर्ण
 
 	err = fw_iso_resources_init(resources, motu->unit);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = amdtp_motu_init(s, motu->unit, dir, motu->spec);
-	if (err < 0)
+	अगर (err < 0)
 		fw_iso_resources_destroy(resources);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void destroy_stream(struct snd_motu *motu, struct amdtp_stream *s)
-{
+अटल व्योम destroy_stream(काष्ठा snd_motu *motu, काष्ठा amdtp_stream *s)
+अणु
 	amdtp_stream_destroy(s);
 
-	if (s == &motu->tx_stream)
+	अगर (s == &motu->tx_stream)
 		fw_iso_resources_destroy(&motu->tx_resources);
-	else
+	अन्यथा
 		fw_iso_resources_destroy(&motu->rx_resources);
-}
+पूर्ण
 
-int snd_motu_stream_init_duplex(struct snd_motu *motu)
-{
-	int err;
+पूर्णांक snd_motu_stream_init_duplex(काष्ठा snd_motu *motu)
+अणु
+	पूर्णांक err;
 
 	err = init_stream(motu, &motu->tx_stream);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = init_stream(motu, &motu->rx_stream);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		destroy_stream(motu, &motu->tx_stream);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = amdtp_domain_init(&motu->domain);
-	if (err < 0) {
+	err = amdtp_करोमुख्य_init(&motu->करोमुख्य);
+	अगर (err < 0) अणु
 		destroy_stream(motu, &motu->tx_stream);
 		destroy_stream(motu, &motu->rx_stream);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-// This function should be called before starting streams or after stopping
+// This function should be called beक्रमe starting streams or after stopping
 // streams.
-void snd_motu_stream_destroy_duplex(struct snd_motu *motu)
-{
-	amdtp_domain_destroy(&motu->domain);
+व्योम snd_motu_stream_destroy_duplex(काष्ठा snd_motu *motu)
+अणु
+	amdtp_करोमुख्य_destroy(&motu->करोमुख्य);
 
 	destroy_stream(motu, &motu->rx_stream);
 	destroy_stream(motu, &motu->tx_stream);
 
 	motu->substreams_counter = 0;
-}
+पूर्ण
 
-static void motu_lock_changed(struct snd_motu *motu)
-{
+अटल व्योम motu_lock_changed(काष्ठा snd_motu *motu)
+अणु
 	motu->dev_lock_changed = true;
-	wake_up(&motu->hwdep_wait);
-}
+	wake_up(&motu->hwdep_रुको);
+पूर्ण
 
-int snd_motu_stream_lock_try(struct snd_motu *motu)
-{
-	int err;
+पूर्णांक snd_motu_stream_lock_try(काष्ठा snd_motu *motu)
+अणु
+	पूर्णांक err;
 
 	spin_lock_irq(&motu->lock);
 
-	if (motu->dev_lock_count < 0) {
+	अगर (motu->dev_lock_count < 0) अणु
 		err = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (motu->dev_lock_count++ == 0)
+	अगर (motu->dev_lock_count++ == 0)
 		motu_lock_changed(motu);
 	err = 0;
 out:
 	spin_unlock_irq(&motu->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void snd_motu_stream_lock_release(struct snd_motu *motu)
-{
+व्योम snd_motu_stream_lock_release(काष्ठा snd_motu *motu)
+अणु
 	spin_lock_irq(&motu->lock);
 
-	if (WARN_ON(motu->dev_lock_count <= 0))
-		goto out;
+	अगर (WARN_ON(motu->dev_lock_count <= 0))
+		जाओ out;
 
-	if (--motu->dev_lock_count == 0)
+	अगर (--motu->dev_lock_count == 0)
 		motu_lock_changed(motu);
 out:
 	spin_unlock_irq(&motu->lock);
-}
+पूर्ण

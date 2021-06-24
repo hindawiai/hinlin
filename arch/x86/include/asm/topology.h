@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Written by: Matthew Dobson, IBM Corporation
  *
@@ -5,7 +6,7 @@
  *
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -13,214 +14,214 @@
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
- * NON INFRINGEMENT.  See the GNU General Public License for more
+ * NON INFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * Send feedback to <colpatch@us.ibm.com>
  */
-#ifndef _ASM_X86_TOPOLOGY_H
-#define _ASM_X86_TOPOLOGY_H
+#अगर_अघोषित _ASM_X86_TOPOLOGY_H
+#घोषणा _ASM_X86_TOPOLOGY_H
 
 /*
  * to preserve the visibility of NUMA_NO_NODE definition,
  * moved to there from here.  May be used independent of
  * CONFIG_NUMA.
  */
-#include <linux/numa.h>
+#समावेश <linux/numa.h>
 
-#ifdef CONFIG_NUMA
-#include <linux/cpumask.h>
+#अगर_घोषित CONFIG_NUMA
+#समावेश <linux/cpumask.h>
 
-#include <asm/mpspec.h>
-#include <asm/percpu.h>
+#समावेश <यंत्र/mpspec.h>
+#समावेश <यंत्र/percpu.h>
 
 /* Mappings between logical cpu number and node number */
-DECLARE_EARLY_PER_CPU(int, x86_cpu_to_node_map);
+DECLARE_EARLY_PER_CPU(पूर्णांक, x86_cpu_to_node_map);
 
-#ifdef CONFIG_DEBUG_PER_CPU_MAPS
+#अगर_घोषित CONFIG_DEBUG_PER_CPU_MAPS
 /*
  * override generic percpu implementation of cpu_to_node
  */
-extern int __cpu_to_node(int cpu);
-#define cpu_to_node __cpu_to_node
+बाह्य पूर्णांक __cpu_to_node(पूर्णांक cpu);
+#घोषणा cpu_to_node __cpu_to_node
 
-extern int early_cpu_to_node(int cpu);
+बाह्य पूर्णांक early_cpu_to_node(पूर्णांक cpu);
 
-#else	/* !CONFIG_DEBUG_PER_CPU_MAPS */
+#अन्यथा	/* !CONFIG_DEBUG_PER_CPU_MAPS */
 
-/* Same function but used if called before per_cpu areas are setup */
-static inline int early_cpu_to_node(int cpu)
-{
-	return early_per_cpu(x86_cpu_to_node_map, cpu);
-}
+/* Same function but used अगर called beक्रमe per_cpu areas are setup */
+अटल अंतरभूत पूर्णांक early_cpu_to_node(पूर्णांक cpu)
+अणु
+	वापस early_per_cpu(x86_cpu_to_node_map, cpu);
+पूर्ण
 
-#endif /* !CONFIG_DEBUG_PER_CPU_MAPS */
+#पूर्ण_अगर /* !CONFIG_DEBUG_PER_CPU_MAPS */
 
 /* Mappings between node number and cpus on that node. */
-extern cpumask_var_t node_to_cpumask_map[MAX_NUMNODES];
+बाह्य cpumask_var_t node_to_cpumask_map[MAX_NUMNODES];
 
-#ifdef CONFIG_DEBUG_PER_CPU_MAPS
-extern const struct cpumask *cpumask_of_node(int node);
-#else
-/* Returns a pointer to the cpumask of CPUs on Node 'node'. */
-static inline const struct cpumask *cpumask_of_node(int node)
-{
-	return node_to_cpumask_map[node];
-}
-#endif
+#अगर_घोषित CONFIG_DEBUG_PER_CPU_MAPS
+बाह्य स्थिर काष्ठा cpumask *cpumask_of_node(पूर्णांक node);
+#अन्यथा
+/* Returns a poपूर्णांकer to the cpumask of CPUs on Node 'node'. */
+अटल अंतरभूत स्थिर काष्ठा cpumask *cpumask_of_node(पूर्णांक node)
+अणु
+	वापस node_to_cpumask_map[node];
+पूर्ण
+#पूर्ण_अगर
 
-extern void setup_node_to_cpumask_map(void);
+बाह्य व्योम setup_node_to_cpumask_map(व्योम);
 
-#define pcibus_to_node(bus) __pcibus_to_node(bus)
+#घोषणा pcibus_to_node(bus) __pcibus_to_node(bus)
 
-extern int __node_distance(int, int);
-#define node_distance(a, b) __node_distance(a, b)
+बाह्य पूर्णांक __node_distance(पूर्णांक, पूर्णांक);
+#घोषणा node_distance(a, b) __node_distance(a, b)
 
-#else /* !CONFIG_NUMA */
+#अन्यथा /* !CONFIG_NUMA */
 
-static inline int numa_node_id(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक numa_node_id(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 /*
  * indicate override:
  */
-#define numa_node_id numa_node_id
+#घोषणा numa_node_id numa_node_id
 
-static inline int early_cpu_to_node(int cpu)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक early_cpu_to_node(पूर्णांक cpu)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void setup_node_to_cpumask_map(void) { }
+अटल अंतरभूत व्योम setup_node_to_cpumask_map(व्योम) अणु पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#include <asm-generic/topology.h>
+#समावेश <यंत्र-generic/topology.h>
 
-extern const struct cpumask *cpu_coregroup_mask(int cpu);
+बाह्य स्थिर काष्ठा cpumask *cpu_coregroup_mask(पूर्णांक cpu);
 
-#define topology_logical_package_id(cpu)	(cpu_data(cpu).logical_proc_id)
-#define topology_physical_package_id(cpu)	(cpu_data(cpu).phys_proc_id)
-#define topology_logical_die_id(cpu)		(cpu_data(cpu).logical_die_id)
-#define topology_die_id(cpu)			(cpu_data(cpu).cpu_die_id)
-#define topology_core_id(cpu)			(cpu_data(cpu).cpu_core_id)
+#घोषणा topology_logical_package_id(cpu)	(cpu_data(cpu).logical_proc_id)
+#घोषणा topology_physical_package_id(cpu)	(cpu_data(cpu).phys_proc_id)
+#घोषणा topology_logical_die_id(cpu)		(cpu_data(cpu).logical_die_id)
+#घोषणा topology_die_id(cpu)			(cpu_data(cpu).cpu_die_id)
+#घोषणा topology_core_id(cpu)			(cpu_data(cpu).cpu_core_id)
 
-extern unsigned int __max_die_per_package;
+बाह्य अचिन्हित पूर्णांक __max_die_per_package;
 
-#ifdef CONFIG_SMP
-#define topology_die_cpumask(cpu)		(per_cpu(cpu_die_map, cpu))
-#define topology_core_cpumask(cpu)		(per_cpu(cpu_core_map, cpu))
-#define topology_sibling_cpumask(cpu)		(per_cpu(cpu_sibling_map, cpu))
+#अगर_घोषित CONFIG_SMP
+#घोषणा topology_die_cpumask(cpu)		(per_cpu(cpu_die_map, cpu))
+#घोषणा topology_core_cpumask(cpu)		(per_cpu(cpu_core_map, cpu))
+#घोषणा topology_sibling_cpumask(cpu)		(per_cpu(cpu_sibling_map, cpu))
 
-extern unsigned int __max_logical_packages;
-#define topology_max_packages()			(__max_logical_packages)
+बाह्य अचिन्हित पूर्णांक __max_logical_packages;
+#घोषणा topology_max_packages()			(__max_logical_packages)
 
-static inline int topology_max_die_per_package(void)
-{
-	return __max_die_per_package;
-}
+अटल अंतरभूत पूर्णांक topology_max_die_per_package(व्योम)
+अणु
+	वापस __max_die_per_package;
+पूर्ण
 
-extern int __max_smt_threads;
+बाह्य पूर्णांक __max_smt_thपढ़ोs;
 
-static inline int topology_max_smt_threads(void)
-{
-	return __max_smt_threads;
-}
+अटल अंतरभूत पूर्णांक topology_max_smt_thपढ़ोs(व्योम)
+अणु
+	वापस __max_smt_thपढ़ोs;
+पूर्ण
 
-int topology_update_package_map(unsigned int apicid, unsigned int cpu);
-int topology_update_die_map(unsigned int dieid, unsigned int cpu);
-int topology_phys_to_logical_pkg(unsigned int pkg);
-int topology_phys_to_logical_die(unsigned int die, unsigned int cpu);
-bool topology_is_primary_thread(unsigned int cpu);
-bool topology_smt_supported(void);
-#else
-#define topology_max_packages()			(1)
-static inline int
-topology_update_package_map(unsigned int apicid, unsigned int cpu) { return 0; }
-static inline int
-topology_update_die_map(unsigned int dieid, unsigned int cpu) { return 0; }
-static inline int topology_phys_to_logical_pkg(unsigned int pkg) { return 0; }
-static inline int topology_phys_to_logical_die(unsigned int die,
-		unsigned int cpu) { return 0; }
-static inline int topology_max_die_per_package(void) { return 1; }
-static inline int topology_max_smt_threads(void) { return 1; }
-static inline bool topology_is_primary_thread(unsigned int cpu) { return true; }
-static inline bool topology_smt_supported(void) { return false; }
-#endif
+पूर्णांक topology_update_package_map(अचिन्हित पूर्णांक apicid, अचिन्हित पूर्णांक cpu);
+पूर्णांक topology_update_die_map(अचिन्हित पूर्णांक dieid, अचिन्हित पूर्णांक cpu);
+पूर्णांक topology_phys_to_logical_pkg(अचिन्हित पूर्णांक pkg);
+पूर्णांक topology_phys_to_logical_die(अचिन्हित पूर्णांक die, अचिन्हित पूर्णांक cpu);
+bool topology_is_primary_thपढ़ो(अचिन्हित पूर्णांक cpu);
+bool topology_smt_supported(व्योम);
+#अन्यथा
+#घोषणा topology_max_packages()			(1)
+अटल अंतरभूत पूर्णांक
+topology_update_package_map(अचिन्हित पूर्णांक apicid, अचिन्हित पूर्णांक cpu) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक
+topology_update_die_map(अचिन्हित पूर्णांक dieid, अचिन्हित पूर्णांक cpu) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक topology_phys_to_logical_pkg(अचिन्हित पूर्णांक pkg) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक topology_phys_to_logical_die(अचिन्हित पूर्णांक die,
+		अचिन्हित पूर्णांक cpu) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक topology_max_die_per_package(व्योम) अणु वापस 1; पूर्ण
+अटल अंतरभूत पूर्णांक topology_max_smt_thपढ़ोs(व्योम) अणु वापस 1; पूर्ण
+अटल अंतरभूत bool topology_is_primary_thपढ़ो(अचिन्हित पूर्णांक cpu) अणु वापस true; पूर्ण
+अटल अंतरभूत bool topology_smt_supported(व्योम) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-static inline void arch_fix_phys_package_id(int num, u32 slot)
-{
-}
+अटल अंतरभूत व्योम arch_fix_phys_package_id(पूर्णांक num, u32 slot)
+अणु
+पूर्ण
 
-struct pci_bus;
-int x86_pci_root_bus_node(int bus);
-void x86_pci_root_bus_resources(int bus, struct list_head *resources);
+काष्ठा pci_bus;
+पूर्णांक x86_pci_root_bus_node(पूर्णांक bus);
+व्योम x86_pci_root_bus_resources(पूर्णांक bus, काष्ठा list_head *resources);
 
-extern bool x86_topology_update;
+बाह्य bool x86_topology_update;
 
-#ifdef CONFIG_SCHED_MC_PRIO
-#include <asm/percpu.h>
+#अगर_घोषित CONFIG_SCHED_MC_PRIO
+#समावेश <यंत्र/percpu.h>
 
-DECLARE_PER_CPU_READ_MOSTLY(int, sched_core_priority);
-extern unsigned int __read_mostly sysctl_sched_itmt_enabled;
+DECLARE_PER_CPU_READ_MOSTLY(पूर्णांक, sched_core_priority);
+बाह्य अचिन्हित पूर्णांक __पढ़ो_mostly sysctl_sched_iपंचांगt_enabled;
 
 /* Interface to set priority of a cpu */
-void sched_set_itmt_core_prio(int prio, int core_cpu);
+व्योम sched_set_iपंचांगt_core_prio(पूर्णांक prio, पूर्णांक core_cpu);
 
-/* Interface to notify scheduler that system supports ITMT */
-int sched_set_itmt_support(void);
+/* Interface to notअगरy scheduler that प्रणाली supports ITMT */
+पूर्णांक sched_set_iपंचांगt_support(व्योम);
 
-/* Interface to notify scheduler that system revokes ITMT support */
-void sched_clear_itmt_support(void);
+/* Interface to notअगरy scheduler that प्रणाली revokes ITMT support */
+व्योम sched_clear_iपंचांगt_support(व्योम);
 
-#else /* CONFIG_SCHED_MC_PRIO */
+#अन्यथा /* CONFIG_SCHED_MC_PRIO */
 
-#define sysctl_sched_itmt_enabled	0
-static inline void sched_set_itmt_core_prio(int prio, int core_cpu)
-{
-}
-static inline int sched_set_itmt_support(void)
-{
-	return 0;
-}
-static inline void sched_clear_itmt_support(void)
-{
-}
-#endif /* CONFIG_SCHED_MC_PRIO */
+#घोषणा sysctl_sched_iपंचांगt_enabled	0
+अटल अंतरभूत व्योम sched_set_iपंचांगt_core_prio(पूर्णांक prio, पूर्णांक core_cpu)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक sched_set_iपंचांगt_support(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम sched_clear_iपंचांगt_support(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SCHED_MC_PRIO */
 
-#if defined(CONFIG_SMP) && defined(CONFIG_X86_64)
-#include <asm/cpufeature.h>
+#अगर defined(CONFIG_SMP) && defined(CONFIG_X86_64)
+#समावेश <यंत्र/cpufeature.h>
 
 DECLARE_STATIC_KEY_FALSE(arch_scale_freq_key);
 
-#define arch_scale_freq_invariant() static_branch_likely(&arch_scale_freq_key)
+#घोषणा arch_scale_freq_invariant() अटल_branch_likely(&arch_scale_freq_key)
 
-DECLARE_PER_CPU(unsigned long, arch_freq_scale);
+DECLARE_PER_CPU(अचिन्हित दीर्घ, arch_freq_scale);
 
-static inline long arch_scale_freq_capacity(int cpu)
-{
-	return per_cpu(arch_freq_scale, cpu);
-}
-#define arch_scale_freq_capacity arch_scale_freq_capacity
+अटल अंतरभूत दीर्घ arch_scale_freq_capacity(पूर्णांक cpu)
+अणु
+	वापस per_cpu(arch_freq_scale, cpu);
+पूर्ण
+#घोषणा arch_scale_freq_capacity arch_scale_freq_capacity
 
-extern void arch_scale_freq_tick(void);
-#define arch_scale_freq_tick arch_scale_freq_tick
+बाह्य व्योम arch_scale_freq_tick(व्योम);
+#घोषणा arch_scale_freq_tick arch_scale_freq_tick
 
-extern void arch_set_max_freq_ratio(bool turbo_disabled);
-#else
-static inline void arch_set_max_freq_ratio(bool turbo_disabled)
-{
-}
-#endif
+बाह्य व्योम arch_set_max_freq_ratio(bool turbo_disabled);
+#अन्यथा
+अटल अंतरभूत व्योम arch_set_max_freq_ratio(bool turbo_disabled)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_CPPC_LIB
-void init_freq_invariance_cppc(void);
-#define init_freq_invariance_cppc init_freq_invariance_cppc
-#endif
+#अगर_घोषित CONFIG_ACPI_CPPC_LIB
+व्योम init_freq_invariance_cppc(व्योम);
+#घोषणा init_freq_invariance_cppc init_freq_invariance_cppc
+#पूर्ण_अगर
 
-#endif /* _ASM_X86_TOPOLOGY_H */
+#पूर्ण_अगर /* _ASM_X86_TOPOLOGY_H */

@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Cryptographic API.
  *
- * T10 Data Integrity Field CRC16 Crypto Transform
+ * T10 Data Integrity Field CRC16 Crypto Transक्रमm
  *
  * Copyright (c) 2007 Oracle Corporation.  All rights reserved.
  * Written by Martin K. Petersen <martin.petersen@oracle.com>
  * Copyright (C) 2013 Intel Corporation
- * Author: Tim Chen <tim.c.chen@linux.intel.com>
+ * Author: Tim Chen <tim.c.chen@linux.पूर्णांकel.com>
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
@@ -24,96 +25,96 @@
  *
  */
 
-#include <linux/module.h>
-#include <linux/crc-t10dif.h>
-#include <crypto/internal/hash.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/crc-t10dअगर.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
 
-struct chksum_desc_ctx {
+काष्ठा chksum_desc_ctx अणु
 	__u16 crc;
-};
+पूर्ण;
 
 /*
- * Steps through buffer one byte at a time, calculates reflected
+ * Steps through buffer one byte at a समय, calculates reflected
  * crc using table.
  */
 
-static int chksum_init(struct shash_desc *desc)
-{
-	struct chksum_desc_ctx *ctx = shash_desc_ctx(desc);
+अटल पूर्णांक chksum_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा chksum_desc_ctx *ctx = shash_desc_ctx(desc);
 
 	ctx->crc = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chksum_update(struct shash_desc *desc, const u8 *data,
-			 unsigned int length)
-{
-	struct chksum_desc_ctx *ctx = shash_desc_ctx(desc);
+अटल पूर्णांक chksum_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			 अचिन्हित पूर्णांक length)
+अणु
+	काष्ठा chksum_desc_ctx *ctx = shash_desc_ctx(desc);
 
-	ctx->crc = crc_t10dif_generic(ctx->crc, data, length);
-	return 0;
-}
+	ctx->crc = crc_t10dअगर_generic(ctx->crc, data, length);
+	वापस 0;
+पूर्ण
 
-static int chksum_final(struct shash_desc *desc, u8 *out)
-{
-	struct chksum_desc_ctx *ctx = shash_desc_ctx(desc);
+अटल पूर्णांक chksum_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा chksum_desc_ctx *ctx = shash_desc_ctx(desc);
 
 	*(__u16 *)out = ctx->crc;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __chksum_finup(__u16 crc, const u8 *data, unsigned int len, u8 *out)
-{
-	*(__u16 *)out = crc_t10dif_generic(crc, data, len);
-	return 0;
-}
+अटल पूर्णांक __chksum_finup(__u16 crc, स्थिर u8 *data, अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	*(__u16 *)out = crc_t10dअगर_generic(crc, data, len);
+	वापस 0;
+पूर्ण
 
-static int chksum_finup(struct shash_desc *desc, const u8 *data,
-			unsigned int len, u8 *out)
-{
-	struct chksum_desc_ctx *ctx = shash_desc_ctx(desc);
+अटल पूर्णांक chksum_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	काष्ठा chksum_desc_ctx *ctx = shash_desc_ctx(desc);
 
-	return __chksum_finup(ctx->crc, data, len, out);
-}
+	वापस __chksum_finup(ctx->crc, data, len, out);
+पूर्ण
 
-static int chksum_digest(struct shash_desc *desc, const u8 *data,
-			 unsigned int length, u8 *out)
-{
-	return __chksum_finup(0, data, length, out);
-}
+अटल पूर्णांक chksum_digest(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			 अचिन्हित पूर्णांक length, u8 *out)
+अणु
+	वापस __chksum_finup(0, data, length, out);
+पूर्ण
 
-static struct shash_alg alg = {
+अटल काष्ठा shash_alg alg = अणु
 	.digestsize		=	CRC_T10DIF_DIGEST_SIZE,
 	.init		=	chksum_init,
 	.update		=	chksum_update,
 	.final		=	chksum_final,
 	.finup		=	chksum_finup,
 	.digest		=	chksum_digest,
-	.descsize		=	sizeof(struct chksum_desc_ctx),
-	.base			=	{
+	.descsize		=	माप(काष्ठा chksum_desc_ctx),
+	.base			=	अणु
 		.cra_name		=	"crct10dif",
 		.cra_driver_name	=	"crct10dif-generic",
 		.cra_priority		=	100,
 		.cra_blocksize		=	CRC_T10DIF_BLOCK_SIZE,
 		.cra_module		=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init crct10dif_mod_init(void)
-{
-	return crypto_register_shash(&alg);
-}
+अटल पूर्णांक __init crct10dअगर_mod_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_shash(&alg);
+पूर्ण
 
-static void __exit crct10dif_mod_fini(void)
-{
-	crypto_unregister_shash(&alg);
-}
+अटल व्योम __निकास crct10dअगर_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&alg);
+पूर्ण
 
-subsys_initcall(crct10dif_mod_init);
-module_exit(crct10dif_mod_fini);
+subsys_initcall(crct10dअगर_mod_init);
+module_निकास(crct10dअगर_mod_fini);
 
 MODULE_AUTHOR("Tim Chen <tim.c.chen@linux.intel.com>");
 MODULE_DESCRIPTION("T10 DIF CRC calculation.");

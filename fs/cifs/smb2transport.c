@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- *   fs/cifs/smb2transport.c
+ *   fs/cअगरs/smb2transport.c
  *
  *   Copyright (C) International Business Machines  Corp., 2002, 2011
  *                 Etersoft, 2012
@@ -7,7 +8,7 @@
  *              Jeremy Allison (jra@samba.org) 2006
  *              Pavel Shilovsky (pshilovsky@samba.org) 2012
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -15,418 +16,418 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   the GNU Lesser General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, write to the Free Software
+ *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <linux/fs.h>
-#include <linux/list.h>
-#include <linux/wait.h>
-#include <linux/net.h>
-#include <linux/delay.h>
-#include <linux/uaccess.h>
-#include <asm/processor.h>
-#include <linux/mempool.h>
-#include <linux/highmem.h>
-#include <crypto/aead.h>
-#include "smb2pdu.h"
-#include "cifsglob.h"
-#include "cifsproto.h"
-#include "smb2proto.h"
-#include "cifs_debug.h"
-#include "smb2status.h"
-#include "smb2glob.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/list.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/net.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <crypto/aead.h>
+#समावेश "smb2pdu.h"
+#समावेश "cifsglob.h"
+#समावेश "cifsproto.h"
+#समावेश "smb2proto.h"
+#समावेश "cifs_debug.h"
+#समावेश "smb2status.h"
+#समावेश "smb2glob.h"
 
-static int
-smb3_crypto_shash_allocate(struct TCP_Server_Info *server)
-{
-	struct cifs_secmech *p = &server->secmech;
-	int rc;
+अटल पूर्णांक
+smb3_crypto_shash_allocate(काष्ठा TCP_Server_Info *server)
+अणु
+	काष्ठा cअगरs_secmech *p = &server->secmech;
+	पूर्णांक rc;
 
-	rc = cifs_alloc_hash("hmac(sha256)",
+	rc = cअगरs_alloc_hash("hmac(sha256)",
 			     &p->hmacsha256,
 			     &p->sdeschmacsha256);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
-	rc = cifs_alloc_hash("cmac(aes)", &p->cmacaes, &p->sdesccmacaes);
-	if (rc)
-		goto err;
+	rc = cअगरs_alloc_hash("cmac(aes)", &p->cmacaes, &p->sdesccmacaes);
+	अगर (rc)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 err:
-	cifs_free_hash(&p->hmacsha256, &p->sdeschmacsha256);
-	return rc;
-}
+	cअगरs_मुक्त_hash(&p->hmacsha256, &p->sdeschmacsha256);
+	वापस rc;
+पूर्ण
 
-int
-smb311_crypto_shash_allocate(struct TCP_Server_Info *server)
-{
-	struct cifs_secmech *p = &server->secmech;
-	int rc = 0;
+पूर्णांक
+smb311_crypto_shash_allocate(काष्ठा TCP_Server_Info *server)
+अणु
+	काष्ठा cअगरs_secmech *p = &server->secmech;
+	पूर्णांक rc = 0;
 
-	rc = cifs_alloc_hash("hmac(sha256)",
+	rc = cअगरs_alloc_hash("hmac(sha256)",
 			     &p->hmacsha256,
 			     &p->sdeschmacsha256);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	rc = cifs_alloc_hash("cmac(aes)", &p->cmacaes, &p->sdesccmacaes);
-	if (rc)
-		goto err;
+	rc = cअगरs_alloc_hash("cmac(aes)", &p->cmacaes, &p->sdesccmacaes);
+	अगर (rc)
+		जाओ err;
 
-	rc = cifs_alloc_hash("sha512", &p->sha512, &p->sdescsha512);
-	if (rc)
-		goto err;
+	rc = cअगरs_alloc_hash("sha512", &p->sha512, &p->sdescsha512);
+	अगर (rc)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
-	cifs_free_hash(&p->cmacaes, &p->sdesccmacaes);
-	cifs_free_hash(&p->hmacsha256, &p->sdeschmacsha256);
-	return rc;
-}
+	cअगरs_मुक्त_hash(&p->cmacaes, &p->sdesccmacaes);
+	cअगरs_मुक्त_hash(&p->hmacsha256, &p->sdeschmacsha256);
+	वापस rc;
+पूर्ण
 
 
-static
-int smb2_get_sign_key(__u64 ses_id, struct TCP_Server_Info *server, u8 *key)
-{
-	struct cifs_chan *chan;
-	struct cifs_ses *ses = NULL;
-	struct TCP_Server_Info *it = NULL;
-	int i;
-	int rc = 0;
+अटल
+पूर्णांक smb2_get_sign_key(__u64 ses_id, काष्ठा TCP_Server_Info *server, u8 *key)
+अणु
+	काष्ठा cअगरs_chan *chan;
+	काष्ठा cअगरs_ses *ses = शून्य;
+	काष्ठा TCP_Server_Info *it = शून्य;
+	पूर्णांक i;
+	पूर्णांक rc = 0;
 
-	spin_lock(&cifs_tcp_ses_lock);
+	spin_lock(&cअगरs_tcp_ses_lock);
 
-	list_for_each_entry(it, &cifs_tcp_ses_list, tcp_ses_list) {
-		list_for_each_entry(ses, &it->smb_ses_list, smb_ses_list) {
-			if (ses->Suid == ses_id)
-				goto found;
-		}
-	}
-	cifs_server_dbg(VFS, "%s: Could not find session 0x%llx\n",
+	list_क्रम_each_entry(it, &cअगरs_tcp_ses_list, tcp_ses_list) अणु
+		list_क्रम_each_entry(ses, &it->smb_ses_list, smb_ses_list) अणु
+			अगर (ses->Suid == ses_id)
+				जाओ found;
+		पूर्ण
+	पूर्ण
+	cअगरs_server_dbg(VFS, "%s: Could not find session 0x%llx\n",
 			__func__, ses_id);
 	rc = -ENOENT;
-	goto out;
+	जाओ out;
 
 found:
-	if (ses->binding) {
+	अगर (ses->binding) अणु
 		/*
 		 * If we are in the process of binding a new channel
 		 * to an existing session, use the master connection
 		 * session key
 		 */
-		memcpy(key, ses->smb3signingkey, SMB3_SIGN_KEY_SIZE);
-		goto out;
-	}
+		स_नकल(key, ses->smb3signingkey, SMB3_SIGN_KEY_SIZE);
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Otherwise, use the channel key.
 	 */
 
-	for (i = 0; i < ses->chan_count; i++) {
+	क्रम (i = 0; i < ses->chan_count; i++) अणु
 		chan = ses->chans + i;
-		if (chan->server == server) {
-			memcpy(key, chan->signkey, SMB3_SIGN_KEY_SIZE);
-			goto out;
-		}
-	}
+		अगर (chan->server == server) अणु
+			स_नकल(key, chan->signkey, SMB3_SIGN_KEY_SIZE);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	cifs_dbg(VFS,
+	cअगरs_dbg(VFS,
 		 "%s: Could not find channel signing key for session 0x%llx\n",
 		 __func__, ses_id);
 	rc = -ENOENT;
 
 out:
-	spin_unlock(&cifs_tcp_ses_lock);
-	return rc;
-}
+	spin_unlock(&cअगरs_tcp_ses_lock);
+	वापस rc;
+पूर्ण
 
-static struct cifs_ses *
-smb2_find_smb_ses_unlocked(struct TCP_Server_Info *server, __u64 ses_id)
-{
-	struct cifs_ses *ses;
+अटल काष्ठा cअगरs_ses *
+smb2_find_smb_ses_unlocked(काष्ठा TCP_Server_Info *server, __u64 ses_id)
+अणु
+	काष्ठा cअगरs_ses *ses;
 
-	list_for_each_entry(ses, &server->smb_ses_list, smb_ses_list) {
-		if (ses->Suid != ses_id)
-			continue;
-		return ses;
-	}
+	list_क्रम_each_entry(ses, &server->smb_ses_list, smb_ses_list) अणु
+		अगर (ses->Suid != ses_id)
+			जारी;
+		वापस ses;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct cifs_ses *
-smb2_find_smb_ses(struct TCP_Server_Info *server, __u64 ses_id)
-{
-	struct cifs_ses *ses;
+काष्ठा cअगरs_ses *
+smb2_find_smb_ses(काष्ठा TCP_Server_Info *server, __u64 ses_id)
+अणु
+	काष्ठा cअगरs_ses *ses;
 
-	spin_lock(&cifs_tcp_ses_lock);
+	spin_lock(&cअगरs_tcp_ses_lock);
 	ses = smb2_find_smb_ses_unlocked(server, ses_id);
-	spin_unlock(&cifs_tcp_ses_lock);
+	spin_unlock(&cअगरs_tcp_ses_lock);
 
-	return ses;
-}
+	वापस ses;
+पूर्ण
 
-static struct cifs_tcon *
-smb2_find_smb_sess_tcon_unlocked(struct cifs_ses *ses, __u32  tid)
-{
-	struct cifs_tcon *tcon;
+अटल काष्ठा cअगरs_tcon *
+smb2_find_smb_sess_tcon_unlocked(काष्ठा cअगरs_ses *ses, __u32  tid)
+अणु
+	काष्ठा cअगरs_tcon *tcon;
 
-	list_for_each_entry(tcon, &ses->tcon_list, tcon_list) {
-		if (tcon->tid != tid)
-			continue;
+	list_क्रम_each_entry(tcon, &ses->tcon_list, tcon_list) अणु
+		अगर (tcon->tid != tid)
+			जारी;
 		++tcon->tc_count;
-		return tcon;
-	}
+		वापस tcon;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Obtain tcon corresponding to the tid in the given
- * cifs_ses
+ * cअगरs_ses
  */
 
-struct cifs_tcon *
-smb2_find_smb_tcon(struct TCP_Server_Info *server, __u64 ses_id, __u32  tid)
-{
-	struct cifs_ses *ses;
-	struct cifs_tcon *tcon;
+काष्ठा cअगरs_tcon *
+smb2_find_smb_tcon(काष्ठा TCP_Server_Info *server, __u64 ses_id, __u32  tid)
+अणु
+	काष्ठा cअगरs_ses *ses;
+	काष्ठा cअगरs_tcon *tcon;
 
-	spin_lock(&cifs_tcp_ses_lock);
+	spin_lock(&cअगरs_tcp_ses_lock);
 	ses = smb2_find_smb_ses_unlocked(server, ses_id);
-	if (!ses) {
-		spin_unlock(&cifs_tcp_ses_lock);
-		return NULL;
-	}
+	अगर (!ses) अणु
+		spin_unlock(&cअगरs_tcp_ses_lock);
+		वापस शून्य;
+	पूर्ण
 	tcon = smb2_find_smb_sess_tcon_unlocked(ses, tid);
-	spin_unlock(&cifs_tcp_ses_lock);
+	spin_unlock(&cअगरs_tcp_ses_lock);
 
-	return tcon;
-}
+	वापस tcon;
+पूर्ण
 
-int
-smb2_calc_signature(struct smb_rqst *rqst, struct TCP_Server_Info *server,
+पूर्णांक
+smb2_calc_signature(काष्ठा smb_rqst *rqst, काष्ठा TCP_Server_Info *server,
 			bool allocate_crypto)
-{
-	int rc;
-	unsigned char smb2_signature[SMB2_HMACSHA256_SIZE];
-	unsigned char *sigptr = smb2_signature;
-	struct kvec *iov = rqst->rq_iov;
-	struct smb2_sync_hdr *shdr = (struct smb2_sync_hdr *)iov[0].iov_base;
-	struct cifs_ses *ses;
-	struct shash_desc *shash;
-	struct crypto_shash *hash;
-	struct sdesc *sdesc = NULL;
-	struct smb_rqst drqst;
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर smb2_signature[SMB2_HMACSHA256_SIZE];
+	अचिन्हित अक्षर *sigptr = smb2_signature;
+	काष्ठा kvec *iov = rqst->rq_iov;
+	काष्ठा smb2_sync_hdr *shdr = (काष्ठा smb2_sync_hdr *)iov[0].iov_base;
+	काष्ठा cअगरs_ses *ses;
+	काष्ठा shash_desc *shash;
+	काष्ठा crypto_shash *hash;
+	काष्ठा sdesc *sdesc = शून्य;
+	काष्ठा smb_rqst drqst;
 
 	ses = smb2_find_smb_ses(server, shdr->SessionId);
-	if (!ses) {
-		cifs_server_dbg(VFS, "%s: Could not find session\n", __func__);
-		return 0;
-	}
+	अगर (!ses) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not find session\n", __func__);
+		वापस 0;
+	पूर्ण
 
-	memset(smb2_signature, 0x0, SMB2_HMACSHA256_SIZE);
-	memset(shdr->Signature, 0x0, SMB2_SIGNATURE_SIZE);
+	स_रखो(smb2_signature, 0x0, SMB2_HMACSHA256_SIZE);
+	स_रखो(shdr->Signature, 0x0, SMB2_SIGNATURE_SIZE);
 
-	if (allocate_crypto) {
-		rc = cifs_alloc_hash("hmac(sha256)", &hash, &sdesc);
-		if (rc) {
-			cifs_server_dbg(VFS,
+	अगर (allocate_crypto) अणु
+		rc = cअगरs_alloc_hash("hmac(sha256)", &hash, &sdesc);
+		अगर (rc) अणु
+			cअगरs_server_dbg(VFS,
 					"%s: sha256 alloc failed\n", __func__);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 		shash = &sdesc->shash;
-	} else {
+	पूर्ण अन्यथा अणु
 		hash = server->secmech.hmacsha256;
 		shash = &server->secmech.sdeschmacsha256->shash;
-	}
+	पूर्ण
 
 	rc = crypto_shash_setkey(hash, ses->auth_key.response,
 			SMB2_NTLMV2_SESSKEY_SIZE);
-	if (rc) {
-		cifs_server_dbg(VFS,
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS,
 				"%s: Could not update with response\n",
 				__func__);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rc = crypto_shash_init(shash);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not init sha256", __func__);
-		goto out;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not init sha256", __func__);
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * For SMB2+, __cifs_calc_signature() expects to sign only the actual
+	 * For SMB2+, __cअगरs_calc_signature() expects to sign only the actual
 	 * data, that is, iov[0] should not contain a rfc1002 length.
 	 *
-	 * Sign the rfc1002 length prior to passing the data (iov[1-N]) down to
-	 * __cifs_calc_signature().
+	 * Sign the rfc1002 length prior to passing the data (iov[1-N]) करोwn to
+	 * __cअगरs_calc_signature().
 	 */
 	drqst = *rqst;
-	if (drqst.rq_nvec >= 2 && iov[0].iov_len == 4) {
+	अगर (drqst.rq_nvec >= 2 && iov[0].iov_len == 4) अणु
 		rc = crypto_shash_update(shash, iov[0].iov_base,
 					 iov[0].iov_len);
-		if (rc) {
-			cifs_server_dbg(VFS,
+		अगर (rc) अणु
+			cअगरs_server_dbg(VFS,
 					"%s: Could not update with payload\n",
 					__func__);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		drqst.rq_iov++;
 		drqst.rq_nvec--;
-	}
+	पूर्ण
 
-	rc = __cifs_calc_signature(&drqst, server, sigptr, shash);
-	if (!rc)
-		memcpy(shdr->Signature, sigptr, SMB2_SIGNATURE_SIZE);
+	rc = __cअगरs_calc_signature(&drqst, server, sigptr, shash);
+	अगर (!rc)
+		स_नकल(shdr->Signature, sigptr, SMB2_SIGNATURE_SIZE);
 
 out:
-	if (allocate_crypto)
-		cifs_free_hash(&hash, &sdesc);
-	return rc;
-}
+	अगर (allocate_crypto)
+		cअगरs_मुक्त_hash(&hash, &sdesc);
+	वापस rc;
+पूर्ण
 
-static int generate_key(struct cifs_ses *ses, struct kvec label,
-			struct kvec context, __u8 *key, unsigned int key_size)
-{
-	unsigned char zero = 0x0;
-	__u8 i[4] = {0, 0, 0, 1};
-	__u8 L128[4] = {0, 0, 0, 128};
-	__u8 L256[4] = {0, 0, 1, 0};
-	int rc = 0;
-	unsigned char prfhash[SMB2_HMACSHA256_SIZE];
-	unsigned char *hashptr = prfhash;
-	struct TCP_Server_Info *server = ses->server;
+अटल पूर्णांक generate_key(काष्ठा cअगरs_ses *ses, काष्ठा kvec label,
+			काष्ठा kvec context, __u8 *key, अचिन्हित पूर्णांक key_size)
+अणु
+	अचिन्हित अक्षर zero = 0x0;
+	__u8 i[4] = अणु0, 0, 0, 1पूर्ण;
+	__u8 L128[4] = अणु0, 0, 0, 128पूर्ण;
+	__u8 L256[4] = अणु0, 0, 1, 0पूर्ण;
+	पूर्णांक rc = 0;
+	अचिन्हित अक्षर prfhash[SMB2_HMACSHA256_SIZE];
+	अचिन्हित अक्षर *hashptr = prfhash;
+	काष्ठा TCP_Server_Info *server = ses->server;
 
-	memset(prfhash, 0x0, SMB2_HMACSHA256_SIZE);
-	memset(key, 0x0, key_size);
+	स_रखो(prfhash, 0x0, SMB2_HMACSHA256_SIZE);
+	स_रखो(key, 0x0, key_size);
 
 	rc = smb3_crypto_shash_allocate(server);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: crypto alloc failed\n", __func__);
-		goto smb3signkey_ret;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: crypto alloc failed\n", __func__);
+		जाओ smb3signkey_ret;
+	पूर्ण
 
 	rc = crypto_shash_setkey(server->secmech.hmacsha256,
 		ses->auth_key.response, SMB2_NTLMV2_SESSKEY_SIZE);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not set with session key\n", __func__);
-		goto smb3signkey_ret;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not set with session key\n", __func__);
+		जाओ smb3signkey_ret;
+	पूर्ण
 
 	rc = crypto_shash_init(&server->secmech.sdeschmacsha256->shash);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not init sign hmac\n", __func__);
-		goto smb3signkey_ret;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not init sign hmac\n", __func__);
+		जाओ smb3signkey_ret;
+	पूर्ण
 
 	rc = crypto_shash_update(&server->secmech.sdeschmacsha256->shash,
 				i, 4);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not update with n\n", __func__);
-		goto smb3signkey_ret;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not update with n\n", __func__);
+		जाओ smb3signkey_ret;
+	पूर्ण
 
 	rc = crypto_shash_update(&server->secmech.sdeschmacsha256->shash,
 				label.iov_base, label.iov_len);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not update with label\n", __func__);
-		goto smb3signkey_ret;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not update with label\n", __func__);
+		जाओ smb3signkey_ret;
+	पूर्ण
 
 	rc = crypto_shash_update(&server->secmech.sdeschmacsha256->shash,
 				&zero, 1);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not update with zero\n", __func__);
-		goto smb3signkey_ret;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not update with zero\n", __func__);
+		जाओ smb3signkey_ret;
+	पूर्ण
 
 	rc = crypto_shash_update(&server->secmech.sdeschmacsha256->shash,
 				context.iov_base, context.iov_len);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not update with context\n", __func__);
-		goto smb3signkey_ret;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not update with context\n", __func__);
+		जाओ smb3signkey_ret;
+	पूर्ण
 
-	if ((server->cipher_type == SMB2_ENCRYPTION_AES256_CCM) ||
-		(server->cipher_type == SMB2_ENCRYPTION_AES256_GCM)) {
+	अगर ((server->cipher_type == SMB2_ENCRYPTION_AES256_CCM) ||
+		(server->cipher_type == SMB2_ENCRYPTION_AES256_GCM)) अणु
 		rc = crypto_shash_update(&server->secmech.sdeschmacsha256->shash,
 				L256, 4);
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = crypto_shash_update(&server->secmech.sdeschmacsha256->shash,
 				L128, 4);
-	}
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not update with L\n", __func__);
-		goto smb3signkey_ret;
-	}
+	पूर्ण
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not update with L\n", __func__);
+		जाओ smb3signkey_ret;
+	पूर्ण
 
 	rc = crypto_shash_final(&server->secmech.sdeschmacsha256->shash,
 				hashptr);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not generate sha256 hash\n", __func__);
-		goto smb3signkey_ret;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not generate sha256 hash\n", __func__);
+		जाओ smb3signkey_ret;
+	पूर्ण
 
-	memcpy(key, hashptr, key_size);
+	स_नकल(key, hashptr, key_size);
 
 smb3signkey_ret:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-struct derivation {
-	struct kvec label;
-	struct kvec context;
-};
+काष्ठा derivation अणु
+	काष्ठा kvec label;
+	काष्ठा kvec context;
+पूर्ण;
 
-struct derivation_triplet {
-	struct derivation signing;
-	struct derivation encryption;
-	struct derivation decryption;
-};
+काष्ठा derivation_triplet अणु
+	काष्ठा derivation signing;
+	काष्ठा derivation encryption;
+	काष्ठा derivation decryption;
+पूर्ण;
 
-static int
-generate_smb3signingkey(struct cifs_ses *ses,
-			const struct derivation_triplet *ptriplet)
-{
-	int rc;
-#ifdef CONFIG_CIFS_DEBUG_DUMP_KEYS
-	struct TCP_Server_Info *server = ses->server;
-#endif
+अटल पूर्णांक
+generate_smb3signingkey(काष्ठा cअगरs_ses *ses,
+			स्थिर काष्ठा derivation_triplet *ptriplet)
+अणु
+	पूर्णांक rc;
+#अगर_घोषित CONFIG_CIFS_DEBUG_DUMP_KEYS
+	काष्ठा TCP_Server_Info *server = ses->server;
+#पूर्ण_अगर
 
 	/*
 	 * All channels use the same encryption/decryption keys but
 	 * they have their own signing key.
 	 *
-	 * When we generate the keys, check if it is for a new channel
-	 * (binding) in which case we only need to generate a signing
-	 * key and store it in the channel as to not overwrite the
+	 * When we generate the keys, check अगर it is क्रम a new channel
+	 * (binding) in which हाल we only need to generate a signing
+	 * key and store it in the channel as to not overग_लिखो the
 	 * master connection signing key stored in the session
 	 */
 
-	if (ses->binding) {
+	अगर (ses->binding) अणु
 		rc = generate_key(ses, ptriplet->signing.label,
 				  ptriplet->signing.context,
-				  cifs_ses_binding_channel(ses)->signkey,
+				  cअगरs_ses_binding_channel(ses)->signkey,
 				  SMB3_SIGN_KEY_SIZE);
-		if (rc)
-			return rc;
-	} else {
+		अगर (rc)
+			वापस rc;
+	पूर्ण अन्यथा अणु
 		rc = generate_key(ses, ptriplet->signing.label,
 				  ptriplet->signing.context,
 				  ses->smb3signingkey,
 				  SMB3_SIGN_KEY_SIZE);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
-		memcpy(ses->chans[0].signkey, ses->smb3signingkey,
+		स_नकल(ses->chans[0].signkey, ses->smb3signingkey,
 		       SMB3_SIGN_KEY_SIZE);
 
 		rc = generate_key(ses, ptriplet->encryption.label,
@@ -437,48 +438,48 @@ generate_smb3signingkey(struct cifs_ses *ses,
 				  ptriplet->decryption.context,
 				  ses->smb3decryptionkey,
 				  SMB3_ENC_DEC_KEY_SIZE);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-#ifdef CONFIG_CIFS_DEBUG_DUMP_KEYS
-	cifs_dbg(VFS, "%s: dumping generated AES session keys\n", __func__);
+#अगर_घोषित CONFIG_CIFS_DEBUG_DUMP_KEYS
+	cअगरs_dbg(VFS, "%s: dumping generated AES session keys\n", __func__);
 	/*
 	 * The session id is opaque in terms of endianness, so we can't
-	 * print it as a long long. we dump it as we got it on the wire
+	 * prपूर्णांक it as a दीर्घ दीर्घ. we dump it as we got it on the wire
 	 */
-	cifs_dbg(VFS, "Session Id    %*ph\n", (int)sizeof(ses->Suid),
+	cअगरs_dbg(VFS, "Session Id    %*ph\n", (पूर्णांक)माप(ses->Suid),
 			&ses->Suid);
-	cifs_dbg(VFS, "Cipher type   %d\n", server->cipher_type);
-	cifs_dbg(VFS, "Session Key   %*ph\n",
+	cअगरs_dbg(VFS, "Cipher type   %d\n", server->cipher_type);
+	cअगरs_dbg(VFS, "Session Key   %*ph\n",
 		 SMB2_NTLMV2_SESSKEY_SIZE, ses->auth_key.response);
-	cifs_dbg(VFS, "Signing Key   %*ph\n",
+	cअगरs_dbg(VFS, "Signing Key   %*ph\n",
 		 SMB3_SIGN_KEY_SIZE, ses->smb3signingkey);
-	if ((server->cipher_type == SMB2_ENCRYPTION_AES256_CCM) ||
-		(server->cipher_type == SMB2_ENCRYPTION_AES256_GCM)) {
-		cifs_dbg(VFS, "ServerIn Key  %*ph\n",
+	अगर ((server->cipher_type == SMB2_ENCRYPTION_AES256_CCM) ||
+		(server->cipher_type == SMB2_ENCRYPTION_AES256_GCM)) अणु
+		cअगरs_dbg(VFS, "ServerIn Key  %*ph\n",
 				SMB3_GCM256_CRYPTKEY_SIZE, ses->smb3encryptionkey);
-		cifs_dbg(VFS, "ServerOut Key %*ph\n",
+		cअगरs_dbg(VFS, "ServerOut Key %*ph\n",
 				SMB3_GCM256_CRYPTKEY_SIZE, ses->smb3decryptionkey);
-	} else {
-		cifs_dbg(VFS, "ServerIn Key  %*ph\n",
+	पूर्ण अन्यथा अणु
+		cअगरs_dbg(VFS, "ServerIn Key  %*ph\n",
 				SMB3_GCM128_CRYPTKEY_SIZE, ses->smb3encryptionkey);
-		cifs_dbg(VFS, "ServerOut Key %*ph\n",
+		cअगरs_dbg(VFS, "ServerOut Key %*ph\n",
 				SMB3_GCM128_CRYPTKEY_SIZE, ses->smb3decryptionkey);
-	}
-#endif
-	return rc;
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस rc;
+पूर्ण
 
-int
-generate_smb30signingkey(struct cifs_ses *ses)
+पूर्णांक
+generate_smb30signingkey(काष्ठा cअगरs_ses *ses)
 
-{
-	struct derivation_triplet triplet;
-	struct derivation *d;
+अणु
+	काष्ठा derivation_triplet triplet;
+	काष्ठा derivation *d;
 
 	d = &triplet.signing;
 	d->label.iov_base = "SMB2AESCMAC";
@@ -498,15 +499,15 @@ generate_smb30signingkey(struct cifs_ses *ses)
 	d->context.iov_base = "ServerOut";
 	d->context.iov_len = 10;
 
-	return generate_smb3signingkey(ses, &triplet);
-}
+	वापस generate_smb3signingkey(ses, &triplet);
+पूर्ण
 
-int
-generate_smb311signingkey(struct cifs_ses *ses)
+पूर्णांक
+generate_smb311signingkey(काष्ठा cअगरs_ses *ses)
 
-{
-	struct derivation_triplet triplet;
-	struct derivation *d;
+अणु
+	काष्ठा derivation_triplet triplet;
+	काष्ठा derivation *d;
 
 	d = &triplet.signing;
 	d->label.iov_base = "SMBSigningKey";
@@ -526,376 +527,376 @@ generate_smb311signingkey(struct cifs_ses *ses)
 	d->context.iov_base = ses->preauth_sha_hash;
 	d->context.iov_len = 64;
 
-	return generate_smb3signingkey(ses, &triplet);
-}
+	वापस generate_smb3signingkey(ses, &triplet);
+पूर्ण
 
-int
-smb3_calc_signature(struct smb_rqst *rqst, struct TCP_Server_Info *server,
+पूर्णांक
+smb3_calc_signature(काष्ठा smb_rqst *rqst, काष्ठा TCP_Server_Info *server,
 			bool allocate_crypto)
-{
-	int rc;
-	unsigned char smb3_signature[SMB2_CMACAES_SIZE];
-	unsigned char *sigptr = smb3_signature;
-	struct kvec *iov = rqst->rq_iov;
-	struct smb2_sync_hdr *shdr = (struct smb2_sync_hdr *)iov[0].iov_base;
-	struct shash_desc *shash;
-	struct crypto_shash *hash;
-	struct sdesc *sdesc = NULL;
-	struct smb_rqst drqst;
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर smb3_signature[SMB2_CMACAES_SIZE];
+	अचिन्हित अक्षर *sigptr = smb3_signature;
+	काष्ठा kvec *iov = rqst->rq_iov;
+	काष्ठा smb2_sync_hdr *shdr = (काष्ठा smb2_sync_hdr *)iov[0].iov_base;
+	काष्ठा shash_desc *shash;
+	काष्ठा crypto_shash *hash;
+	काष्ठा sdesc *sdesc = शून्य;
+	काष्ठा smb_rqst drqst;
 	u8 key[SMB3_SIGN_KEY_SIZE];
 
 	rc = smb2_get_sign_key(shdr->SessionId, server, key);
-	if (rc)
-		return 0;
+	अगर (rc)
+		वापस 0;
 
-	if (allocate_crypto) {
-		rc = cifs_alloc_hash("cmac(aes)", &hash, &sdesc);
-		if (rc)
-			return rc;
+	अगर (allocate_crypto) अणु
+		rc = cअगरs_alloc_hash("cmac(aes)", &hash, &sdesc);
+		अगर (rc)
+			वापस rc;
 
 		shash = &sdesc->shash;
-	} else {
+	पूर्ण अन्यथा अणु
 		hash = server->secmech.cmacaes;
 		shash = &server->secmech.sdesccmacaes->shash;
-	}
+	पूर्ण
 
-	memset(smb3_signature, 0x0, SMB2_CMACAES_SIZE);
-	memset(shdr->Signature, 0x0, SMB2_SIGNATURE_SIZE);
+	स_रखो(smb3_signature, 0x0, SMB2_CMACAES_SIZE);
+	स_रखो(shdr->Signature, 0x0, SMB2_SIGNATURE_SIZE);
 
 	rc = crypto_shash_setkey(hash, key, SMB2_CMACAES_SIZE);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not set key for cmac aes\n", __func__);
-		goto out;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not set key for cmac aes\n", __func__);
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * we already allocate sdesccmacaes when we init smb3 signing key,
-	 * so unlike smb2 case we do not have to check here if secmech are
+	 * we alपढ़ोy allocate sdesccmacaes when we init smb3 signing key,
+	 * so unlike smb2 हाल we करो not have to check here अगर secmech are
 	 * initialized
 	 */
 	rc = crypto_shash_init(shash);
-	if (rc) {
-		cifs_server_dbg(VFS, "%s: Could not init cmac aes\n", __func__);
-		goto out;
-	}
+	अगर (rc) अणु
+		cअगरs_server_dbg(VFS, "%s: Could not init cmac aes\n", __func__);
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * For SMB2+, __cifs_calc_signature() expects to sign only the actual
+	 * For SMB2+, __cअगरs_calc_signature() expects to sign only the actual
 	 * data, that is, iov[0] should not contain a rfc1002 length.
 	 *
-	 * Sign the rfc1002 length prior to passing the data (iov[1-N]) down to
-	 * __cifs_calc_signature().
+	 * Sign the rfc1002 length prior to passing the data (iov[1-N]) करोwn to
+	 * __cअगरs_calc_signature().
 	 */
 	drqst = *rqst;
-	if (drqst.rq_nvec >= 2 && iov[0].iov_len == 4) {
+	अगर (drqst.rq_nvec >= 2 && iov[0].iov_len == 4) अणु
 		rc = crypto_shash_update(shash, iov[0].iov_base,
 					 iov[0].iov_len);
-		if (rc) {
-			cifs_server_dbg(VFS, "%s: Could not update with payload\n",
+		अगर (rc) अणु
+			cअगरs_server_dbg(VFS, "%s: Could not update with payload\n",
 				 __func__);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		drqst.rq_iov++;
 		drqst.rq_nvec--;
-	}
+	पूर्ण
 
-	rc = __cifs_calc_signature(&drqst, server, sigptr, shash);
-	if (!rc)
-		memcpy(shdr->Signature, sigptr, SMB2_SIGNATURE_SIZE);
+	rc = __cअगरs_calc_signature(&drqst, server, sigptr, shash);
+	अगर (!rc)
+		स_नकल(shdr->Signature, sigptr, SMB2_SIGNATURE_SIZE);
 
 out:
-	if (allocate_crypto)
-		cifs_free_hash(&hash, &sdesc);
-	return rc;
-}
+	अगर (allocate_crypto)
+		cअगरs_मुक्त_hash(&hash, &sdesc);
+	वापस rc;
+पूर्ण
 
 /* must be called with server->srv_mutex held */
-static int
-smb2_sign_rqst(struct smb_rqst *rqst, struct TCP_Server_Info *server)
-{
-	int rc = 0;
-	struct smb2_sync_hdr *shdr;
-	struct smb2_sess_setup_req *ssr;
+अटल पूर्णांक
+smb2_sign_rqst(काष्ठा smb_rqst *rqst, काष्ठा TCP_Server_Info *server)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा smb2_sync_hdr *shdr;
+	काष्ठा smb2_sess_setup_req *ssr;
 	bool is_binding;
-	bool is_signed;
+	bool is_चिन्हित;
 
-	shdr = (struct smb2_sync_hdr *)rqst->rq_iov[0].iov_base;
-	ssr = (struct smb2_sess_setup_req *)shdr;
+	shdr = (काष्ठा smb2_sync_hdr *)rqst->rq_iov[0].iov_base;
+	ssr = (काष्ठा smb2_sess_setup_req *)shdr;
 
 	is_binding = shdr->Command == SMB2_SESSION_SETUP &&
 		(ssr->Flags & SMB2_SESSION_REQ_FLAG_BINDING);
-	is_signed = shdr->Flags & SMB2_FLAGS_SIGNED;
+	is_चिन्हित = shdr->Flags & SMB2_FLAGS_SIGNED;
 
-	if (!is_signed)
-		return 0;
-	if (server->tcpStatus == CifsNeedNegotiate)
-		return 0;
-	if (!is_binding && !server->session_estab) {
-		strncpy(shdr->Signature, "BSRSPYL", 8);
-		return 0;
-	}
+	अगर (!is_चिन्हित)
+		वापस 0;
+	अगर (server->tcpStatus == CअगरsNeedNegotiate)
+		वापस 0;
+	अगर (!is_binding && !server->session_estab) अणु
+		म_नकलन(shdr->Signature, "BSRSPYL", 8);
+		वापस 0;
+	पूर्ण
 
 	rc = server->ops->calc_signature(rqst, server, false);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int
-smb2_verify_signature(struct smb_rqst *rqst, struct TCP_Server_Info *server)
-{
-	unsigned int rc;
-	char server_response_sig[SMB2_SIGNATURE_SIZE];
-	struct smb2_sync_hdr *shdr =
-			(struct smb2_sync_hdr *)rqst->rq_iov[0].iov_base;
+पूर्णांक
+smb2_verअगरy_signature(काष्ठा smb_rqst *rqst, काष्ठा TCP_Server_Info *server)
+अणु
+	अचिन्हित पूर्णांक rc;
+	अक्षर server_response_sig[SMB2_SIGNATURE_SIZE];
+	काष्ठा smb2_sync_hdr *shdr =
+			(काष्ठा smb2_sync_hdr *)rqst->rq_iov[0].iov_base;
 
-	if ((shdr->Command == SMB2_NEGOTIATE) ||
+	अगर ((shdr->Command == SMB2_NEGOTIATE) ||
 	    (shdr->Command == SMB2_SESSION_SETUP) ||
 	    (shdr->Command == SMB2_OPLOCK_BREAK) ||
 	    server->ignore_signature ||
 	    (!server->session_estab))
-		return 0;
+		वापस 0;
 
 	/*
-	 * BB what if signatures are supposed to be on for session but
-	 * server does not send one? BB
+	 * BB what अगर signatures are supposed to be on क्रम session but
+	 * server करोes not send one? BB
 	 */
 
-	/* Do not need to verify session setups with signature "BSRSPYL " */
-	if (memcmp(shdr->Signature, "BSRSPYL ", 8) == 0)
-		cifs_dbg(FYI, "dummy signature received for smb command 0x%x\n",
+	/* Do not need to verअगरy session setups with signature "BSRSPYL " */
+	अगर (स_भेद(shdr->Signature, "BSRSPYL ", 8) == 0)
+		cअगरs_dbg(FYI, "dummy signature received for smb command 0x%x\n",
 			 shdr->Command);
 
 	/*
-	 * Save off the origiginal signature so we can modify the smb and check
+	 * Save off the origiginal signature so we can modअगरy the smb and check
 	 * our calculated signature against what the server sent.
 	 */
-	memcpy(server_response_sig, shdr->Signature, SMB2_SIGNATURE_SIZE);
+	स_नकल(server_response_sig, shdr->Signature, SMB2_SIGNATURE_SIZE);
 
-	memset(shdr->Signature, 0, SMB2_SIGNATURE_SIZE);
+	स_रखो(shdr->Signature, 0, SMB2_SIGNATURE_SIZE);
 
 	rc = server->ops->calc_signature(rqst, server, true);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (memcmp(server_response_sig, shdr->Signature, SMB2_SIGNATURE_SIZE)) {
-		cifs_dbg(VFS, "sign fail cmd 0x%x message id 0x%llx\n",
+	अगर (स_भेद(server_response_sig, shdr->Signature, SMB2_SIGNATURE_SIZE)) अणु
+		cअगरs_dbg(VFS, "sign fail cmd 0x%x message id 0x%llx\n",
 			shdr->Command, shdr->MessageId);
-		return -EACCES;
-	} else
-		return 0;
-}
+		वापस -EACCES;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
 /*
- * Set message id for the request. Should be called after wait_for_free_request
+ * Set message id क्रम the request. Should be called after रुको_क्रम_मुक्त_request
  * and when srv_mutex is held.
  */
-static inline void
-smb2_seq_num_into_buf(struct TCP_Server_Info *server,
-		      struct smb2_sync_hdr *shdr)
-{
-	unsigned int i, num = le16_to_cpu(shdr->CreditCharge);
+अटल अंतरभूत व्योम
+smb2_seq_num_पूर्णांकo_buf(काष्ठा TCP_Server_Info *server,
+		      काष्ठा smb2_sync_hdr *shdr)
+अणु
+	अचिन्हित पूर्णांक i, num = le16_to_cpu(shdr->CreditCharge);
 
 	shdr->MessageId = get_next_mid64(server);
 	/* skip message numbers according to CreditCharge field */
-	for (i = 1; i < num; i++)
+	क्रम (i = 1; i < num; i++)
 		get_next_mid(server);
-}
+पूर्ण
 
-static struct mid_q_entry *
-smb2_mid_entry_alloc(const struct smb2_sync_hdr *shdr,
-		     struct TCP_Server_Info *server)
-{
-	struct mid_q_entry *temp;
-	unsigned int credits = le16_to_cpu(shdr->CreditCharge);
+अटल काष्ठा mid_q_entry *
+smb2_mid_entry_alloc(स्थिर काष्ठा smb2_sync_hdr *shdr,
+		     काष्ठा TCP_Server_Info *server)
+अणु
+	काष्ठा mid_q_entry *temp;
+	अचिन्हित पूर्णांक credits = le16_to_cpu(shdr->CreditCharge);
 
-	if (server == NULL) {
-		cifs_dbg(VFS, "Null TCP session in smb2_mid_entry_alloc\n");
-		return NULL;
-	}
+	अगर (server == शून्य) अणु
+		cअगरs_dbg(VFS, "Null TCP session in smb2_mid_entry_alloc\n");
+		वापस शून्य;
+	पूर्ण
 
-	temp = mempool_alloc(cifs_mid_poolp, GFP_NOFS);
-	memset(temp, 0, sizeof(struct mid_q_entry));
+	temp = mempool_alloc(cअगरs_mid_poolp, GFP_NOFS);
+	स_रखो(temp, 0, माप(काष्ठा mid_q_entry));
 	kref_init(&temp->refcount);
 	temp->mid = le64_to_cpu(shdr->MessageId);
 	temp->credits = credits > 0 ? credits : 1;
 	temp->pid = current->pid;
 	temp->command = shdr->Command; /* Always LE */
-	temp->when_alloc = jiffies;
+	temp->when_alloc = jअगरfies;
 	temp->server = server;
 
 	/*
-	 * The default is for the mid to be synchronous, so the
-	 * default callback just wakes up the current task.
+	 * The शेष is क्रम the mid to be synchronous, so the
+	 * शेष callback just wakes up the current task.
 	 */
-	get_task_struct(current);
+	get_task_काष्ठा(current);
 	temp->creator = current;
-	temp->callback = cifs_wake_up_task;
+	temp->callback = cअगरs_wake_up_task;
 	temp->callback_data = current;
 
 	atomic_inc(&midCount);
 	temp->mid_state = MID_REQUEST_ALLOCATED;
 	trace_smb3_cmd_enter(shdr->TreeId, shdr->SessionId,
 		le16_to_cpu(shdr->Command), temp->mid);
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
-static int
-smb2_get_mid_entry(struct cifs_ses *ses, struct TCP_Server_Info *server,
-		   struct smb2_sync_hdr *shdr, struct mid_q_entry **mid)
-{
-	if (server->tcpStatus == CifsExiting)
-		return -ENOENT;
+अटल पूर्णांक
+smb2_get_mid_entry(काष्ठा cअगरs_ses *ses, काष्ठा TCP_Server_Info *server,
+		   काष्ठा smb2_sync_hdr *shdr, काष्ठा mid_q_entry **mid)
+अणु
+	अगर (server->tcpStatus == CअगरsExiting)
+		वापस -ENOENT;
 
-	if (server->tcpStatus == CifsNeedReconnect) {
-		cifs_dbg(FYI, "tcp session dead - return to caller to retry\n");
-		return -EAGAIN;
-	}
+	अगर (server->tcpStatus == CअगरsNeedReconnect) अणु
+		cअगरs_dbg(FYI, "tcp session dead - return to caller to retry\n");
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (server->tcpStatus == CifsNeedNegotiate &&
+	अगर (server->tcpStatus == CअगरsNeedNegotiate &&
 	   shdr->Command != SMB2_NEGOTIATE)
-		return -EAGAIN;
+		वापस -EAGAIN;
 
-	if (ses->status == CifsNew) {
-		if ((shdr->Command != SMB2_SESSION_SETUP) &&
+	अगर (ses->status == CअगरsNew) अणु
+		अगर ((shdr->Command != SMB2_SESSION_SETUP) &&
 		    (shdr->Command != SMB2_NEGOTIATE))
-			return -EAGAIN;
-		/* else ok - we are setting up session */
-	}
+			वापस -EAGAIN;
+		/* अन्यथा ok - we are setting up session */
+	पूर्ण
 
-	if (ses->status == CifsExiting) {
-		if (shdr->Command != SMB2_LOGOFF)
-			return -EAGAIN;
-		/* else ok - we are shutting down the session */
-	}
+	अगर (ses->status == CअगरsExiting) अणु
+		अगर (shdr->Command != SMB2_LOGOFF)
+			वापस -EAGAIN;
+		/* अन्यथा ok - we are shutting करोwn the session */
+	पूर्ण
 
 	*mid = smb2_mid_entry_alloc(shdr, server);
-	if (*mid == NULL)
-		return -ENOMEM;
+	अगर (*mid == शून्य)
+		वापस -ENOMEM;
 	spin_lock(&GlobalMid_Lock);
 	list_add_tail(&(*mid)->qhead, &server->pending_mid_q);
 	spin_unlock(&GlobalMid_Lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-smb2_check_receive(struct mid_q_entry *mid, struct TCP_Server_Info *server,
+पूर्णांक
+smb2_check_receive(काष्ठा mid_q_entry *mid, काष्ठा TCP_Server_Info *server,
 		   bool log_error)
-{
-	unsigned int len = mid->resp_buf_size;
-	struct kvec iov[1];
-	struct smb_rqst rqst = { .rq_iov = iov,
-				 .rq_nvec = 1 };
+अणु
+	अचिन्हित पूर्णांक len = mid->resp_buf_size;
+	काष्ठा kvec iov[1];
+	काष्ठा smb_rqst rqst = अणु .rq_iov = iov,
+				 .rq_nvec = 1 पूर्ण;
 
-	iov[0].iov_base = (char *)mid->resp_buf;
+	iov[0].iov_base = (अक्षर *)mid->resp_buf;
 	iov[0].iov_len = len;
 
 	dump_smb(mid->resp_buf, min_t(u32, 80, len));
-	/* convert the length into a more usable form */
-	if (len > 24 && server->sign && !mid->decrypted) {
-		int rc;
+	/* convert the length पूर्णांकo a more usable क्रमm */
+	अगर (len > 24 && server->sign && !mid->decrypted) अणु
+		पूर्णांक rc;
 
-		rc = smb2_verify_signature(&rqst, server);
-		if (rc)
-			cifs_server_dbg(VFS, "SMB signature verification returned error = %d\n",
+		rc = smb2_verअगरy_signature(&rqst, server);
+		अगर (rc)
+			cअगरs_server_dbg(VFS, "SMB signature verification returned error = %d\n",
 				 rc);
-	}
+	पूर्ण
 
-	return map_smb2_to_linux_error(mid->resp_buf, log_error);
-}
+	वापस map_smb2_to_linux_error(mid->resp_buf, log_error);
+पूर्ण
 
-struct mid_q_entry *
-smb2_setup_request(struct cifs_ses *ses, struct TCP_Server_Info *server,
-		   struct smb_rqst *rqst)
-{
-	int rc;
-	struct smb2_sync_hdr *shdr =
-			(struct smb2_sync_hdr *)rqst->rq_iov[0].iov_base;
-	struct mid_q_entry *mid;
+काष्ठा mid_q_entry *
+smb2_setup_request(काष्ठा cअगरs_ses *ses, काष्ठा TCP_Server_Info *server,
+		   काष्ठा smb_rqst *rqst)
+अणु
+	पूर्णांक rc;
+	काष्ठा smb2_sync_hdr *shdr =
+			(काष्ठा smb2_sync_hdr *)rqst->rq_iov[0].iov_base;
+	काष्ठा mid_q_entry *mid;
 
-	smb2_seq_num_into_buf(server, shdr);
+	smb2_seq_num_पूर्णांकo_buf(server, shdr);
 
 	rc = smb2_get_mid_entry(ses, server, shdr, &mid);
-	if (rc) {
+	अगर (rc) अणु
 		revert_current_mid_from_hdr(server, shdr);
-		return ERR_PTR(rc);
-	}
+		वापस ERR_PTR(rc);
+	पूर्ण
 
 	rc = smb2_sign_rqst(rqst, server);
-	if (rc) {
+	अगर (rc) अणु
 		revert_current_mid_from_hdr(server, shdr);
-		cifs_delete_mid(mid);
-		return ERR_PTR(rc);
-	}
+		cअगरs_delete_mid(mid);
+		वापस ERR_PTR(rc);
+	पूर्ण
 
-	return mid;
-}
+	वापस mid;
+पूर्ण
 
-struct mid_q_entry *
-smb2_setup_async_request(struct TCP_Server_Info *server, struct smb_rqst *rqst)
-{
-	int rc;
-	struct smb2_sync_hdr *shdr =
-			(struct smb2_sync_hdr *)rqst->rq_iov[0].iov_base;
-	struct mid_q_entry *mid;
+काष्ठा mid_q_entry *
+smb2_setup_async_request(काष्ठा TCP_Server_Info *server, काष्ठा smb_rqst *rqst)
+अणु
+	पूर्णांक rc;
+	काष्ठा smb2_sync_hdr *shdr =
+			(काष्ठा smb2_sync_hdr *)rqst->rq_iov[0].iov_base;
+	काष्ठा mid_q_entry *mid;
 
-	if (server->tcpStatus == CifsNeedNegotiate &&
+	अगर (server->tcpStatus == CअगरsNeedNegotiate &&
 	   shdr->Command != SMB2_NEGOTIATE)
-		return ERR_PTR(-EAGAIN);
+		वापस ERR_PTR(-EAGAIN);
 
-	smb2_seq_num_into_buf(server, shdr);
+	smb2_seq_num_पूर्णांकo_buf(server, shdr);
 
 	mid = smb2_mid_entry_alloc(shdr, server);
-	if (mid == NULL) {
+	अगर (mid == शून्य) अणु
 		revert_current_mid_from_hdr(server, shdr);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	rc = smb2_sign_rqst(rqst, server);
-	if (rc) {
+	अगर (rc) अणु
 		revert_current_mid_from_hdr(server, shdr);
 		DeleteMidQEntry(mid);
-		return ERR_PTR(rc);
-	}
+		वापस ERR_PTR(rc);
+	पूर्ण
 
-	return mid;
-}
+	वापस mid;
+पूर्ण
 
-int
-smb3_crypto_aead_allocate(struct TCP_Server_Info *server)
-{
-	struct crypto_aead *tfm;
+पूर्णांक
+smb3_crypto_aead_allocate(काष्ठा TCP_Server_Info *server)
+अणु
+	काष्ठा crypto_aead *tfm;
 
-	if (!server->secmech.ccmaesencrypt) {
-		if ((server->cipher_type == SMB2_ENCRYPTION_AES128_GCM) ||
+	अगर (!server->secmech.ccmaesencrypt) अणु
+		अगर ((server->cipher_type == SMB2_ENCRYPTION_AES128_GCM) ||
 		    (server->cipher_type == SMB2_ENCRYPTION_AES256_GCM))
 			tfm = crypto_alloc_aead("gcm(aes)", 0, 0);
-		else
+		अन्यथा
 			tfm = crypto_alloc_aead("ccm(aes)", 0, 0);
-		if (IS_ERR(tfm)) {
-			cifs_server_dbg(VFS, "%s: Failed alloc encrypt aead\n",
+		अगर (IS_ERR(tfm)) अणु
+			cअगरs_server_dbg(VFS, "%s: Failed alloc encrypt aead\n",
 				 __func__);
-			return PTR_ERR(tfm);
-		}
+			वापस PTR_ERR(tfm);
+		पूर्ण
 		server->secmech.ccmaesencrypt = tfm;
-	}
+	पूर्ण
 
-	if (!server->secmech.ccmaesdecrypt) {
-		if ((server->cipher_type == SMB2_ENCRYPTION_AES128_GCM) ||
+	अगर (!server->secmech.ccmaesdecrypt) अणु
+		अगर ((server->cipher_type == SMB2_ENCRYPTION_AES128_GCM) ||
 		    (server->cipher_type == SMB2_ENCRYPTION_AES256_GCM))
 			tfm = crypto_alloc_aead("gcm(aes)", 0, 0);
-		else
+		अन्यथा
 			tfm = crypto_alloc_aead("ccm(aes)", 0, 0);
-		if (IS_ERR(tfm)) {
-			crypto_free_aead(server->secmech.ccmaesencrypt);
-			server->secmech.ccmaesencrypt = NULL;
-			cifs_server_dbg(VFS, "%s: Failed to alloc decrypt aead\n",
+		अगर (IS_ERR(tfm)) अणु
+			crypto_मुक्त_aead(server->secmech.ccmaesencrypt);
+			server->secmech.ccmaesencrypt = शून्य;
+			cअगरs_server_dbg(VFS, "%s: Failed to alloc decrypt aead\n",
 				 __func__);
-			return PTR_ERR(tfm);
-		}
+			वापस PTR_ERR(tfm);
+		पूर्ण
 		server->secmech.ccmaesdecrypt = tfm;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * OpenFirmware regulator support routines
  *
  */
 
-#ifndef __LINUX_OF_REG_H
-#define __LINUX_OF_REG_H
+#अगर_अघोषित __LINUX_OF_REG_H
+#घोषणा __LINUX_OF_REG_H
 
-struct regulator_desc;
+काष्ठा regulator_desc;
 
-struct of_regulator_match {
-	const char *name;
-	void *driver_data;
-	struct regulator_init_data *init_data;
-	struct device_node *of_node;
-	const struct regulator_desc *desc;
-};
+काष्ठा of_regulator_match अणु
+	स्थिर अक्षर *name;
+	व्योम *driver_data;
+	काष्ठा regulator_init_data *init_data;
+	काष्ठा device_node *of_node;
+	स्थिर काष्ठा regulator_desc *desc;
+पूर्ण;
 
-#if defined(CONFIG_OF)
-extern struct regulator_init_data
-	*of_get_regulator_init_data(struct device *dev,
-				    struct device_node *node,
-				    const struct regulator_desc *desc);
-extern int of_regulator_match(struct device *dev, struct device_node *node,
-			      struct of_regulator_match *matches,
-			      unsigned int num_matches);
-#else
-static inline struct regulator_init_data
-	*of_get_regulator_init_data(struct device *dev,
-				    struct device_node *node,
-				    const struct regulator_desc *desc)
-{
-	return NULL;
-}
+#अगर defined(CONFIG_OF)
+बाह्य काष्ठा regulator_init_data
+	*of_get_regulator_init_data(काष्ठा device *dev,
+				    काष्ठा device_node *node,
+				    स्थिर काष्ठा regulator_desc *desc);
+बाह्य पूर्णांक of_regulator_match(काष्ठा device *dev, काष्ठा device_node *node,
+			      काष्ठा of_regulator_match *matches,
+			      अचिन्हित पूर्णांक num_matches);
+#अन्यथा
+अटल अंतरभूत काष्ठा regulator_init_data
+	*of_get_regulator_init_data(काष्ठा device *dev,
+				    काष्ठा device_node *node,
+				    स्थिर काष्ठा regulator_desc *desc)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int of_regulator_match(struct device *dev,
-				     struct device_node *node,
-				     struct of_regulator_match *matches,
-				     unsigned int num_matches)
-{
-	return 0;
-}
-#endif /* CONFIG_OF */
+अटल अंतरभूत पूर्णांक of_regulator_match(काष्ठा device *dev,
+				     काष्ठा device_node *node,
+				     काष्ठा of_regulator_match *matches,
+				     अचिन्हित पूर्णांक num_matches)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF */
 
-#endif /* __LINUX_OF_REG_H */
+#पूर्ण_अगर /* __LINUX_OF_REG_H */

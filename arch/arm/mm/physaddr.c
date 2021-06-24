@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bug.h>
-#include <linux/export.h>
-#include <linux/types.h>
-#include <linux/mmdebug.h>
-#include <linux/mm.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bug.h>
+#समावेश <linux/export.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mmdebug.h>
+#समावेश <linux/mm.h>
 
-#include <asm/sections.h>
-#include <asm/memory.h>
-#include <asm/fixmap.h>
-#include <asm/dma.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/memory.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/dma.h>
 
-#include "mm.h"
+#समावेश "mm.h"
 
-static inline bool __virt_addr_valid(unsigned long x)
-{
+अटल अंतरभूत bool __virt_addr_valid(अचिन्हित दीर्घ x)
+अणु
 	/*
-	 * high_memory does not get immediately defined, and there
+	 * high_memory करोes not get immediately defined, and there
 	 * are early callers of __pa() against PAGE_OFFSET
 	 */
-	if (!high_memory && x >= PAGE_OFFSET)
-		return true;
+	अगर (!high_memory && x >= PAGE_OFFSET)
+		वापस true;
 
-	if (high_memory && x >= PAGE_OFFSET && x < (unsigned long)high_memory)
-		return true;
+	अगर (high_memory && x >= PAGE_OFFSET && x < (अचिन्हित दीर्घ)high_memory)
+		वापस true;
 
 	/*
-	 * MAX_DMA_ADDRESS is a virtual address that may not correspond to an
+	 * MAX_DMA_ADDRESS is a भव address that may not correspond to an
 	 * actual physical address. Enough code relies on __pa(MAX_DMA_ADDRESS)
-	 * that we just need to work around it and always return true.
+	 * that we just need to work around it and always वापस true.
 	 */
-	if (x == MAX_DMA_ADDRESS)
-		return true;
+	अगर (x == MAX_DMA_ADDRESS)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-phys_addr_t __virt_to_phys(unsigned long x)
-{
+phys_addr_t __virt_to_phys(अचिन्हित दीर्घ x)
+अणु
 	WARN(!__virt_addr_valid(x),
 	     "virt_to_phys used for non-linear address: %pK (%pS)\n",
-	     (void *)x, (void *)x);
+	     (व्योम *)x, (व्योम *)x);
 
-	return __virt_to_phys_nodebug(x);
-}
+	वापस __virt_to_phys_nodebug(x);
+पूर्ण
 EXPORT_SYMBOL(__virt_to_phys);
 
-phys_addr_t __phys_addr_symbol(unsigned long x)
-{
+phys_addr_t __phys_addr_symbol(अचिन्हित दीर्घ x)
+अणु
 	/* This is bounds checking against the kernel image only.
 	 * __pa_symbol should only be used on kernel symbol addresses.
 	 */
-	VIRTUAL_BUG_ON(x < (unsigned long)KERNEL_START ||
-		       x > (unsigned long)KERNEL_END);
+	VIRTUAL_BUG_ON(x < (अचिन्हित दीर्घ)KERNEL_START ||
+		       x > (अचिन्हित दीर्घ)KERNEL_END);
 
-	return __pa_symbol_nodebug(x);
-}
+	वापस __pa_symbol_nodebug(x);
+पूर्ण
 EXPORT_SYMBOL(__phys_addr_symbol);

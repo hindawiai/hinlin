@@ -1,2 +1,3 @@
-#define KCRC_ALIGN 2
-#include <asm-generic/export.h>
+<शैली गुरु>
+#घोषणा KCRC_ALIGN 2
+#समावेश <यंत्र-generic/export.h>

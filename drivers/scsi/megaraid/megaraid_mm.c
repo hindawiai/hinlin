@@ -1,143 +1,144 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  *			Linux MegaRAID device driver
  *
  * Copyright (c) 2003-2004  LSI Logic Corporation.
  *
- * FILE		: megaraid_mm.c
+ * खाता		: megaraid_mm.c
  * Version	: v2.20.2.7 (Jul 16 2006)
  *
  * Common management module
  */
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include "megaraid_mm.h"
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश "megaraid_mm.h"
 
 
-// Entry points for char node driver
-static DEFINE_MUTEX(mraid_mm_mutex);
-static int mraid_mm_open(struct inode *, struct file *);
-static long mraid_mm_unlocked_ioctl(struct file *, uint, unsigned long);
+// Entry poपूर्णांकs क्रम अक्षर node driver
+अटल DEFINE_MUTEX(mraid_mm_mutex);
+अटल पूर्णांक mraid_mm_खोलो(काष्ठा inode *, काष्ठा file *);
+अटल दीर्घ mraid_mm_unlocked_ioctl(काष्ठा file *, uपूर्णांक, अचिन्हित दीर्घ);
 
 
-// routines to convert to and from the old the format
-static int mimd_to_kioc(mimd_t __user *, mraid_mmadp_t *, uioc_t *);
-static int kioc_to_mimd(uioc_t *, mimd_t __user *);
+// routines to convert to and from the old the क्रमmat
+अटल पूर्णांक mimd_to_kioc(mimd_t __user *, mraid_mmadp_t *, uioc_t *);
+अटल पूर्णांक kioc_to_mimd(uioc_t *, mimd_t __user *);
 
 
 // Helper functions
-static int handle_drvrcmd(void __user *, uint8_t, int *);
-static int lld_ioctl(mraid_mmadp_t *, uioc_t *);
-static void ioctl_done(uioc_t *);
-static void lld_timedout(struct timer_list *);
-static void hinfo_to_cinfo(mraid_hba_info_t *, mcontroller_t *);
-static mraid_mmadp_t *mraid_mm_get_adapter(mimd_t __user *, int *);
-static uioc_t *mraid_mm_alloc_kioc(mraid_mmadp_t *);
-static void mraid_mm_dealloc_kioc(mraid_mmadp_t *, uioc_t *);
-static int mraid_mm_attach_buf(mraid_mmadp_t *, uioc_t *, int);
-static int mraid_mm_setup_dma_pools(mraid_mmadp_t *);
-static void mraid_mm_free_adp_resources(mraid_mmadp_t *);
-static void mraid_mm_teardown_dma_pools(mraid_mmadp_t *);
+अटल पूर्णांक handle_drvrcmd(व्योम __user *, uपूर्णांक8_t, पूर्णांक *);
+अटल पूर्णांक lld_ioctl(mraid_mmadp_t *, uioc_t *);
+अटल व्योम ioctl_करोne(uioc_t *);
+अटल व्योम lld_समयकरोut(काष्ठा समयr_list *);
+अटल व्योम hinfo_to_cinfo(mraid_hba_info_t *, mcontroller_t *);
+अटल mraid_mmadp_t *mraid_mm_get_adapter(mimd_t __user *, पूर्णांक *);
+अटल uioc_t *mraid_mm_alloc_kioc(mraid_mmadp_t *);
+अटल व्योम mraid_mm_dealloc_kioc(mraid_mmadp_t *, uioc_t *);
+अटल पूर्णांक mraid_mm_attach_buf(mraid_mmadp_t *, uioc_t *, पूर्णांक);
+अटल पूर्णांक mraid_mm_setup_dma_pools(mraid_mmadp_t *);
+अटल व्योम mraid_mm_मुक्त_adp_resources(mraid_mmadp_t *);
+अटल व्योम mraid_mm_tearकरोwn_dma_pools(mraid_mmadp_t *);
 
 MODULE_AUTHOR("LSI Logic Corporation");
 MODULE_DESCRIPTION("LSI Logic Management Module");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(LSI_COMMON_MOD_VERSION);
 
-static int dbglevel = CL_ANN;
-module_param_named(dlevel, dbglevel, int, 0);
+अटल पूर्णांक dbglevel = CL_ANN;
+module_param_named(dlevel, dbglevel, पूर्णांक, 0);
 MODULE_PARM_DESC(dlevel, "Debug level (default=0)");
 
-EXPORT_SYMBOL(mraid_mm_register_adp);
-EXPORT_SYMBOL(mraid_mm_unregister_adp);
+EXPORT_SYMBOL(mraid_mm_रेजिस्टर_adp);
+EXPORT_SYMBOL(mraid_mm_unरेजिस्टर_adp);
 EXPORT_SYMBOL(mraid_mm_adapter_app_handle);
 
-static uint32_t drvr_ver	= 0x02200207;
+अटल uपूर्णांक32_t drvr_ver	= 0x02200207;
 
-static int adapters_count_g;
-static struct list_head adapters_list_g;
+अटल पूर्णांक adapters_count_g;
+अटल काष्ठा list_head adapters_list_g;
 
-static wait_queue_head_t wait_q;
+अटल रुको_queue_head_t रुको_q;
 
-static const struct file_operations lsi_fops = {
-	.open	= mraid_mm_open,
+अटल स्थिर काष्ठा file_operations lsi_fops = अणु
+	.खोलो	= mraid_mm_खोलो,
 	.unlocked_ioctl = mraid_mm_unlocked_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
 	.owner	= THIS_MODULE,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-static struct miscdevice megaraid_mm_dev = {
+अटल काष्ठा miscdevice megaraid_mm_dev = अणु
 	.minor	= MISC_DYNAMIC_MINOR,
 	.name   = "megadev0",
 	.fops   = &lsi_fops,
-};
+पूर्ण;
 
 /**
- * mraid_mm_open - open routine for char node interface
+ * mraid_mm_खोलो - खोलो routine क्रम अक्षर node पूर्णांकerface
  * @inode	: unused
  * @filep	: unused
  *
- * Allow ioctl operations by apps only if they have superuser privilege.
+ * Allow ioctl operations by apps only अगर they have superuser privilege.
  */
-static int
-mraid_mm_open(struct inode *inode, struct file *filep)
-{
+अटल पूर्णांक
+mraid_mm_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
 	/*
-	 * Only allow superuser to access private ioctl interface
+	 * Only allow superuser to access निजी ioctl पूर्णांकerface
 	 */
-	if (!capable(CAP_SYS_ADMIN)) return (-EACCES);
+	अगर (!capable(CAP_SYS_ADMIN)) वापस (-EACCES);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mraid_mm_ioctl - module entry-point for ioctls
- * @filep	: file operations pointer (ignored)
+ * mraid_mm_ioctl - module entry-poपूर्णांक क्रम ioctls
+ * @filep	: file operations poपूर्णांकer (ignored)
  * @cmd		: ioctl command
  * @arg		: user ioctl packet
  */
-static int
-mraid_mm_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
-{
+अटल पूर्णांक
+mraid_mm_ioctl(काष्ठा file *filep, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
 	uioc_t		*kioc;
-	char		signature[EXT_IOCTL_SIGN_SZ]	= {0};
-	int		rval;
+	अक्षर		signature[EXT_IOCTL_SIGN_SZ]	= अणु0पूर्ण;
+	पूर्णांक		rval;
 	mraid_mmadp_t	*adp;
-	uint8_t		old_ioctl;
-	int		drvrcmd_rval;
-	void __user *argp = (void __user *)arg;
+	uपूर्णांक8_t		old_ioctl;
+	पूर्णांक		drvrcmd_rval;
+	व्योम __user *argp = (व्योम __user *)arg;
 
 	/*
-	 * Make sure only USCSICMD are issued through this interface.
-	 * MIMD application would still fire different command.
+	 * Make sure only USCSICMD are issued through this पूर्णांकerface.
+	 * MIMD application would still fire dअगरferent command.
 	 */
 
-	if ((_IOC_TYPE(cmd) != MEGAIOC_MAGIC) && (cmd != USCSICMD)) {
-		return (-EINVAL);
-	}
+	अगर ((_IOC_TYPE(cmd) != MEGAIOC_MAGIC) && (cmd != USCSICMD)) अणु
+		वापस (-EINVAL);
+	पूर्ण
 
 	/*
-	 * Look for signature to see if this is the new or old ioctl format.
+	 * Look क्रम signature to see अगर this is the new or old ioctl क्रमmat.
 	 */
-	if (copy_from_user(signature, argp, EXT_IOCTL_SIGN_SZ)) {
+	अगर (copy_from_user(signature, argp, EXT_IOCTL_SIGN_SZ)) अणु
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid cmm: copy from usr addr failed\n"));
-		return (-EFAULT);
-	}
+		वापस (-EFAULT);
+	पूर्ण
 
-	if (memcmp(signature, EXT_IOCTL_SIGN, EXT_IOCTL_SIGN_SZ) == 0)
+	अगर (स_भेद(signature, EXT_IOCTL_SIGN, EXT_IOCTL_SIGN_SZ) == 0)
 		old_ioctl = 0;
-	else
+	अन्यथा
 		old_ioctl = 1;
 
 	/*
-	 * At present, we don't support the new ioctl packet
+	 * At present, we करोn't support the new ioctl packet
 	 */
-	if (!old_ioctl )
-		return (-EINVAL);
+	अगर (!old_ioctl )
+		वापस (-EINVAL);
 
 	/*
 	 * If it is a driver ioctl (as opposed to fw ioctls), then we can
@@ -145,58 +146,58 @@ mraid_mm_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 	 */
 	rval = handle_drvrcmd(argp, old_ioctl, &drvrcmd_rval);
 
-	if (rval < 0)
-		return rval;
-	else if (rval == 0)
-		return drvrcmd_rval;
+	अगर (rval < 0)
+		वापस rval;
+	अन्यथा अगर (rval == 0)
+		वापस drvrcmd_rval;
 
 	rval = 0;
-	if ((adp = mraid_mm_get_adapter(argp, &rval)) == NULL) {
-		return rval;
-	}
+	अगर ((adp = mraid_mm_get_adapter(argp, &rval)) == शून्य) अणु
+		वापस rval;
+	पूर्ण
 
 	/*
-	 * Check if adapter can accept ioctl. We may have marked it offline
-	 * if any previous kioc had timedout on this controller.
+	 * Check अगर adapter can accept ioctl. We may have marked it offline
+	 * अगर any previous kioc had समयकरोut on this controller.
 	 */
-	if (!adp->quiescent) {
+	अगर (!adp->quiescent) अणु
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid cmm: controller cannot accept cmds due to "
 			"earlier errors\n" ));
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	/*
 	 * The following call will block till a kioc is available
-	 * or return NULL if the list head is empty for the pointer
+	 * or वापस शून्य अगर the list head is empty क्रम the poपूर्णांकer
 	 * of type mraid_mmapt passed to mraid_mm_alloc_kioc
 	 */
 	kioc = mraid_mm_alloc_kioc(adp);
-	if (!kioc)
-		return -ENXIO;
+	अगर (!kioc)
+		वापस -ENXIO;
 
 	/*
 	 * User sent the old mimd_t ioctl packet. Convert it to uioc_t.
 	 */
-	if ((rval = mimd_to_kioc(argp, adp, kioc))) {
+	अगर ((rval = mimd_to_kioc(argp, adp, kioc))) अणु
 		mraid_mm_dealloc_kioc(adp, kioc);
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
-	kioc->done = ioctl_done;
+	kioc->करोne = ioctl_करोne;
 
 	/*
 	 * Issue the IOCTL to the low level driver. After the IOCTL completes
-	 * release the kioc if and only if it was _not_ timedout. If it was
-	 * timedout, that means that resources are still with low level driver.
+	 * release the kioc अगर and only अगर it was _not_ समयकरोut. If it was
+	 * समयकरोut, that means that resources are still with low level driver.
 	 */
-	if ((rval = lld_ioctl(adp, kioc))) {
+	अगर ((rval = lld_ioctl(adp, kioc))) अणु
 
-		if (!kioc->timedout)
+		अगर (!kioc->समयकरोut)
 			mraid_mm_dealloc_kioc(adp, kioc);
 
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
 	/*
 	 * Convert the kioc back to user space
@@ -204,217 +205,217 @@ mraid_mm_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 	rval = kioc_to_mimd(kioc, argp);
 
 	/*
-	 * Return the kioc to free pool
+	 * Return the kioc to मुक्त pool
 	 */
 	mraid_mm_dealloc_kioc(adp, kioc);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static long
-mraid_mm_unlocked_ioctl(struct file *filep, unsigned int cmd,
-		        unsigned long arg)
-{
-	int err;
+अटल दीर्घ
+mraid_mm_unlocked_ioctl(काष्ठा file *filep, अचिन्हित पूर्णांक cmd,
+		        अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक err;
 
 	mutex_lock(&mraid_mm_mutex);
 	err = mraid_mm_ioctl(filep, cmd, arg);
 	mutex_unlock(&mraid_mm_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * mraid_mm_get_adapter - Returns corresponding adapters for the mimd packet
+ * mraid_mm_get_adapter - Returns corresponding adapters क्रम the mimd packet
  * @umimd	: User space mimd_t ioctl packet
- * @rval	: returned success/error status
+ * @rval	: वापसed success/error status
  *
- * The function return value is a pointer to the located @adapter.
+ * The function वापस value is a poपूर्णांकer to the located @adapter.
  */
-static mraid_mmadp_t *
-mraid_mm_get_adapter(mimd_t __user *umimd, int *rval)
-{
+अटल mraid_mmadp_t *
+mraid_mm_get_adapter(mimd_t __user *umimd, पूर्णांक *rval)
+अणु
 	mraid_mmadp_t	*adapter;
 	mimd_t		mimd;
-	uint32_t	adapno;
-	int		iterator;
+	uपूर्णांक32_t	adapno;
+	पूर्णांक		iterator;
 
 
-	if (copy_from_user(&mimd, umimd, sizeof(mimd_t))) {
+	अगर (copy_from_user(&mimd, umimd, माप(mimd_t))) अणु
 		*rval = -EFAULT;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	adapno = GETADAP(mimd.ui.fcs.adapno);
 
-	if (adapno >= adapters_count_g) {
+	अगर (adapno >= adapters_count_g) अणु
 		*rval = -ENODEV;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	adapter = NULL;
+	adapter = शून्य;
 	iterator = 0;
 
-	list_for_each_entry(adapter, &adapters_list_g, list) {
-		if (iterator++ == adapno) break;
-	}
+	list_क्रम_each_entry(adapter, &adapters_list_g, list) अणु
+		अगर (iterator++ == adapno) अवरोध;
+	पूर्ण
 
-	if (!adapter) {
+	अगर (!adapter) अणु
 		*rval = -ENODEV;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return adapter;
-}
+	वापस adapter;
+पूर्ण
 
 /**
- * handle_drvrcmd - Checks if the opcode is a driver cmd and if it is, handles it.
+ * handle_drvrcmd - Checks अगर the opcode is a driver cmd and अगर it is, handles it.
  * @arg		: packet sent by the user app
- * @old_ioctl	: mimd if 1; uioc otherwise
- * @rval	: pointer for command's returned value (not function status)
+ * @old_ioctl	: mimd अगर 1; uioc otherwise
+ * @rval	: poपूर्णांकer क्रम command's वापसed value (not function status)
  */
-static int
-handle_drvrcmd(void __user *arg, uint8_t old_ioctl, int *rval)
-{
+अटल पूर्णांक
+handle_drvrcmd(व्योम __user *arg, uपूर्णांक8_t old_ioctl, पूर्णांक *rval)
+अणु
 	mimd_t		__user *umimd;
 	mimd_t		kmimd;
-	uint8_t		opcode;
-	uint8_t		subopcode;
+	uपूर्णांक8_t		opcode;
+	uपूर्णांक8_t		subopcode;
 
-	if (old_ioctl)
-		goto old_packet;
-	else
-		goto new_packet;
+	अगर (old_ioctl)
+		जाओ old_packet;
+	अन्यथा
+		जाओ new_packet;
 
 new_packet:
-	return (-ENOTSUPP);
+	वापस (-ENOTSUPP);
 
 old_packet:
 	*rval = 0;
 	umimd = arg;
 
-	if (copy_from_user(&kmimd, umimd, sizeof(mimd_t)))
-		return (-EFAULT);
+	अगर (copy_from_user(&kmimd, umimd, माप(mimd_t)))
+		वापस (-EFAULT);
 
 	opcode		= kmimd.ui.fcs.opcode;
 	subopcode	= kmimd.ui.fcs.subopcode;
 
 	/*
 	 * If the opcode is 0x82 and the subopcode is either GET_DRVRVER or
-	 * GET_NUMADP, then we can handle. Otherwise we should return 1 to
+	 * GET_NUMADP, then we can handle. Otherwise we should वापस 1 to
 	 * indicate that we cannot handle this.
 	 */
-	if (opcode != 0x82)
-		return 1;
+	अगर (opcode != 0x82)
+		वापस 1;
 
-	switch (subopcode) {
+	चयन (subopcode) अणु
 
-	case MEGAIOC_QDRVRVER:
+	हाल MEGAIOC_QDRVRVER:
 
-		if (copy_to_user(kmimd.data, &drvr_ver, sizeof(uint32_t)))
-			return (-EFAULT);
+		अगर (copy_to_user(kmimd.data, &drvr_ver, माप(uपूर्णांक32_t)))
+			वापस (-EFAULT);
 
-		return 0;
+		वापस 0;
 
-	case MEGAIOC_QNADAP:
+	हाल MEGAIOC_QNADAP:
 
 		*rval = adapters_count_g;
 
-		if (copy_to_user(kmimd.data, &adapters_count_g,
-				sizeof(uint32_t)))
-			return (-EFAULT);
+		अगर (copy_to_user(kmimd.data, &adapters_count_g,
+				माप(uपूर्णांक32_t)))
+			वापस (-EFAULT);
 
-		return 0;
+		वापस 0;
 
-	default:
+	शेष:
 		/* cannot handle */
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
- * mimd_to_kioc	- Converter from old to new ioctl format
+ * mimd_to_kioc	- Converter from old to new ioctl क्रमmat
  * @umimd	: user space old MIMD IOCTL
  * @adp		: adapter softstate
- * @kioc	: kernel space new format IOCTL
+ * @kioc	: kernel space new क्रमmat IOCTL
  *
- * Routine to convert MIMD interface IOCTL to new interface IOCTL packet. The
- * new packet is in kernel space so that driver can perform operations on it
- * freely.
+ * Routine to convert MIMD पूर्णांकerface IOCTL to new पूर्णांकerface IOCTL packet. The
+ * new packet is in kernel space so that driver can perक्रमm operations on it
+ * मुक्तly.
  */
 
-static int
+अटल पूर्णांक
 mimd_to_kioc(mimd_t __user *umimd, mraid_mmadp_t *adp, uioc_t *kioc)
-{
+अणु
 	mbox64_t		*mbox64;
 	mbox_t			*mbox;
 	mraid_passthru_t	*pthru32;
-	uint32_t		adapno;
-	uint8_t			opcode;
-	uint8_t			subopcode;
+	uपूर्णांक32_t		adapno;
+	uपूर्णांक8_t			opcode;
+	uपूर्णांक8_t			subopcode;
 	mimd_t			mimd;
 
-	if (copy_from_user(&mimd, umimd, sizeof(mimd_t)))
-		return (-EFAULT);
+	अगर (copy_from_user(&mimd, umimd, माप(mimd_t)))
+		वापस (-EFAULT);
 
 	/*
 	 * Applications are not allowed to send extd pthru
 	 */
-	if ((mimd.mbox[0] == MBOXCMD_PASSTHRU64) ||
+	अगर ((mimd.mbox[0] == MBOXCMD_PASSTHRU64) ||
 			(mimd.mbox[0] == MBOXCMD_EXTPTHRU))
-		return (-EINVAL);
+		वापस (-EINVAL);
 
 	opcode		= mimd.ui.fcs.opcode;
 	subopcode	= mimd.ui.fcs.subopcode;
 	adapno		= GETADAP(mimd.ui.fcs.adapno);
 
-	if (adapno >= adapters_count_g)
-		return (-ENODEV);
+	अगर (adapno >= adapters_count_g)
+		वापस (-ENODEV);
 
 	kioc->adapno	= adapno;
 	kioc->mb_type	= MBOX_LEGACY;
 	kioc->app_type	= APPTYPE_MIMD;
 
-	switch (opcode) {
+	चयन (opcode) अणु
 
-	case 0x82:
+	हाल 0x82:
 
-		if (subopcode == MEGAIOC_QADAPINFO) {
+		अगर (subopcode == MEGAIOC_QADAPINFO) अणु
 
 			kioc->opcode	= GET_ADAP_INFO;
 			kioc->data_dir	= UIOC_RD;
-			kioc->xferlen	= sizeof(mraid_hba_info_t);
+			kioc->xferlen	= माप(mraid_hba_info_t);
 
-			if (mraid_mm_attach_buf(adp, kioc, kioc->xferlen))
-				return (-ENOMEM);
-		}
-		else {
+			अगर (mraid_mm_attach_buf(adp, kioc, kioc->xferlen))
+				वापस (-ENOMEM);
+		पूर्ण
+		अन्यथा अणु
 			con_log(CL_ANN, (KERN_WARNING
 					"megaraid cmm: Invalid subop\n"));
-			return (-EINVAL);
-		}
+			वापस (-EINVAL);
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case 0x81:
+	हाल 0x81:
 
 		kioc->opcode		= MBOX_CMD;
 		kioc->xferlen		= mimd.ui.fcs.length;
 		kioc->user_data_len	= kioc->xferlen;
 		kioc->user_data		= mimd.ui.fcs.buffer;
 
-		if (mraid_mm_attach_buf(adp, kioc, kioc->xferlen))
-			return (-ENOMEM);
+		अगर (mraid_mm_attach_buf(adp, kioc, kioc->xferlen))
+			वापस (-ENOMEM);
 
-		if (mimd.outlen) kioc->data_dir  = UIOC_RD;
-		if (mimd.inlen) kioc->data_dir |= UIOC_WR;
+		अगर (mimd.outlen) kioc->data_dir  = UIOC_RD;
+		अगर (mimd.inlen) kioc->data_dir |= UIOC_WR;
 
-		break;
+		अवरोध;
 
-	case 0x80:
+	हाल 0x80:
 
 		kioc->opcode		= MBOX_CMD;
 		kioc->xferlen		= (mimd.outlen > mimd.inlen) ?
@@ -422,115 +423,115 @@ mimd_to_kioc(mimd_t __user *umimd, mraid_mmadp_t *adp, uioc_t *kioc)
 		kioc->user_data_len	= kioc->xferlen;
 		kioc->user_data		= mimd.data;
 
-		if (mraid_mm_attach_buf(adp, kioc, kioc->xferlen))
-			return (-ENOMEM);
+		अगर (mraid_mm_attach_buf(adp, kioc, kioc->xferlen))
+			वापस (-ENOMEM);
 
-		if (mimd.outlen) kioc->data_dir  = UIOC_RD;
-		if (mimd.inlen) kioc->data_dir |= UIOC_WR;
+		अगर (mimd.outlen) kioc->data_dir  = UIOC_RD;
+		अगर (mimd.inlen) kioc->data_dir |= UIOC_WR;
 
-		break;
+		अवरोध;
 
-	default:
-		return (-EINVAL);
-	}
+	शेष:
+		वापस (-EINVAL);
+	पूर्ण
 
 	/*
-	 * If driver command, nothing else to do
+	 * If driver command, nothing अन्यथा to करो
 	 */
-	if (opcode == 0x82)
-		return 0;
+	अगर (opcode == 0x82)
+		वापस 0;
 
 	/*
 	 * This is a mailbox cmd; copy the mailbox from mimd
 	 */
-	mbox64	= (mbox64_t *)((unsigned long)kioc->cmdbuf);
+	mbox64	= (mbox64_t *)((अचिन्हित दीर्घ)kioc->cmdbuf);
 	mbox	= &mbox64->mbox32;
-	memcpy(mbox, mimd.mbox, 14);
+	स_नकल(mbox, mimd.mbox, 14);
 
-	if (mbox->cmd != MBOXCMD_PASSTHRU) {	// regular DCMD
+	अगर (mbox->cmd != MBOXCMD_PASSTHRU) अणु	// regular DCMD
 
-		mbox->xferaddr	= (uint32_t)kioc->buf_paddr;
+		mbox->xferaddr	= (uपूर्णांक32_t)kioc->buf_paddr;
 
-		if (kioc->data_dir & UIOC_WR) {
-			if (copy_from_user(kioc->buf_vaddr, kioc->user_data,
-							kioc->xferlen)) {
-				return (-EFAULT);
-			}
-		}
+		अगर (kioc->data_dir & UIOC_WR) अणु
+			अगर (copy_from_user(kioc->buf_vaddr, kioc->user_data,
+							kioc->xferlen)) अणु
+				वापस (-EFAULT);
+			पूर्ण
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * This is a regular 32-bit pthru cmd; mbox points to pthru struct.
-	 * Just like in above case, the beginning for memblk is treated as
+	 * This is a regular 32-bit pthru cmd; mbox poपूर्णांकs to pthru काष्ठा.
+	 * Just like in above हाल, the beginning क्रम memblk is treated as
 	 * a mailbox. The passthru will begin at next 1K boundary. And the
 	 * data will start 1K after that.
 	 */
 	pthru32			= kioc->pthru32;
 	kioc->user_pthru	= &umimd->pthru;
-	mbox->xferaddr		= (uint32_t)kioc->pthru32_h;
+	mbox->xferaddr		= (uपूर्णांक32_t)kioc->pthru32_h;
 
-	if (copy_from_user(pthru32, kioc->user_pthru,
-			sizeof(mraid_passthru_t))) {
-		return (-EFAULT);
-	}
+	अगर (copy_from_user(pthru32, kioc->user_pthru,
+			माप(mraid_passthru_t))) अणु
+		वापस (-EFAULT);
+	पूर्ण
 
 	pthru32->dataxferaddr	= kioc->buf_paddr;
-	if (kioc->data_dir & UIOC_WR) {
-		if (pthru32->dataxferlen > kioc->xferlen)
-			return -EINVAL;
-		if (copy_from_user(kioc->buf_vaddr, kioc->user_data,
-						pthru32->dataxferlen)) {
-			return (-EFAULT);
-		}
-	}
+	अगर (kioc->data_dir & UIOC_WR) अणु
+		अगर (pthru32->dataxferlen > kioc->xferlen)
+			वापस -EINVAL;
+		अगर (copy_from_user(kioc->buf_vaddr, kioc->user_data,
+						pthru32->dataxferlen)) अणु
+			वापस (-EFAULT);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mraid_mm_attach_buf - Attach a free dma buffer for required size
+ * mraid_mm_attach_buf - Attach a मुक्त dma buffer क्रम required size
  * @adp		: Adapter softstate
  * @kioc	: kioc that the buffer needs to be attached to
- * @xferlen	: required length for buffer
+ * @xferlen	: required length क्रम buffer
  *
- * First we search for a pool with smallest buffer that is >= @xferlen. If
- * that pool has no free buffer, we will try for the next bigger size. If none
+ * First we search क्रम a pool with smallest buffer that is >= @xferlen. If
+ * that pool has no मुक्त buffer, we will try क्रम the next bigger size. If none
  * is available, we will try to allocate the smallest buffer that is >=
  * @xferlen and attach it the pool.
  */
-static int
-mraid_mm_attach_buf(mraid_mmadp_t *adp, uioc_t *kioc, int xferlen)
-{
+अटल पूर्णांक
+mraid_mm_attach_buf(mraid_mmadp_t *adp, uioc_t *kioc, पूर्णांक xferlen)
+अणु
 	mm_dmapool_t	*pool;
-	int		right_pool = -1;
-	unsigned long	flags;
-	int		i;
+	पूर्णांक		right_pool = -1;
+	अचिन्हित दीर्घ	flags;
+	पूर्णांक		i;
 
 	kioc->pool_index	= -1;
-	kioc->buf_vaddr		= NULL;
+	kioc->buf_vaddr		= शून्य;
 	kioc->buf_paddr		= 0;
-	kioc->free_buf		= 0;
+	kioc->मुक्त_buf		= 0;
 
 	/*
-	 * We need xferlen amount of memory. See if we can get it from our
-	 * dma pools. If we don't get exact size, we will try bigger buffer
+	 * We need xferlen amount of memory. See अगर we can get it from our
+	 * dma pools. If we करोn't get exact size, we will try bigger buffer
 	 */
 
-	for (i = 0; i < MAX_DMA_POOLS; i++) {
+	क्रम (i = 0; i < MAX_DMA_POOLS; i++) अणु
 
 		pool = &adp->dma_pool_list[i];
 
-		if (xferlen > pool->buf_size)
-			continue;
+		अगर (xferlen > pool->buf_size)
+			जारी;
 
-		if (right_pool == -1)
+		अगर (right_pool == -1)
 			right_pool = i;
 
 		spin_lock_irqsave(&pool->lock, flags);
 
-		if (!pool->in_use) {
+		अगर (!pool->in_use) अणु
 
 			pool->in_use		= 1;
 			kioc->pool_index	= i;
@@ -538,22 +539,22 @@ mraid_mm_attach_buf(mraid_mmadp_t *adp, uioc_t *kioc, int xferlen)
 			kioc->buf_paddr		= pool->paddr;
 
 			spin_unlock_irqrestore(&pool->lock, flags);
-			return 0;
-		}
-		else {
+			वापस 0;
+		पूर्ण
+		अन्यथा अणु
 			spin_unlock_irqrestore(&pool->lock, flags);
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * If xferlen doesn't match any of our pools, return error
+	 * If xferlen करोesn't match any of our pools, वापस error
 	 */
-	if (right_pool == -1)
-		return -EINVAL;
+	अगर (right_pool == -1)
+		वापस -EINVAL;
 
 	/*
-	 * We did not get any buffer from the preallocated pool. Let us try
+	 * We did not get any buffer from the pपुनः_स्मृतिated pool. Let us try
 	 * to allocate one new buffer. NOTE: This is a blocking call.
 	 */
 	pool = &adp->dma_pool_list[right_pool];
@@ -561,242 +562,242 @@ mraid_mm_attach_buf(mraid_mmadp_t *adp, uioc_t *kioc, int xferlen)
 	spin_lock_irqsave(&pool->lock, flags);
 
 	kioc->pool_index	= right_pool;
-	kioc->free_buf		= 1;
+	kioc->मुक्त_buf		= 1;
 	kioc->buf_vaddr		= dma_pool_alloc(pool->handle, GFP_ATOMIC,
 							&kioc->buf_paddr);
 	spin_unlock_irqrestore(&pool->lock, flags);
 
-	if (!kioc->buf_vaddr)
-		return -ENOMEM;
+	अगर (!kioc->buf_vaddr)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mraid_mm_alloc_kioc - Returns a uioc_t from free list
- * @adp	: Adapter softstate for this module
+ * mraid_mm_alloc_kioc - Returns a uioc_t from मुक्त list
+ * @adp	: Adapter softstate क्रम this module
  *
  * The kioc_semaphore is initialized with number of kioc nodes in the
- * free kioc pool. If the kioc pool is empty, this function blocks till
- * a kioc becomes free.
+ * मुक्त kioc pool. If the kioc pool is empty, this function blocks till
+ * a kioc becomes मुक्त.
  */
-static uioc_t *
+अटल uioc_t *
 mraid_mm_alloc_kioc(mraid_mmadp_t *adp)
-{
+अणु
 	uioc_t			*kioc;
-	struct list_head*	head;
-	unsigned long		flags;
+	काष्ठा list_head*	head;
+	अचिन्हित दीर्घ		flags;
 
-	down(&adp->kioc_semaphore);
+	करोwn(&adp->kioc_semaphore);
 
 	spin_lock_irqsave(&adp->kioc_pool_lock, flags);
 
 	head = &adp->kioc_pool;
 
-	if (list_empty(head)) {
+	अगर (list_empty(head)) अणु
 		up(&adp->kioc_semaphore);
 		spin_unlock_irqrestore(&adp->kioc_pool_lock, flags);
 
 		con_log(CL_ANN, ("megaraid cmm: kioc list empty!\n"));
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	kioc = list_entry(head->next, uioc_t, list);
 	list_del_init(&kioc->list);
 
 	spin_unlock_irqrestore(&adp->kioc_pool_lock, flags);
 
-	memset((caddr_t)(unsigned long)kioc->cmdbuf, 0, sizeof(mbox64_t));
-	memset((caddr_t) kioc->pthru32, 0, sizeof(mraid_passthru_t));
+	स_रखो((caddr_t)(अचिन्हित दीर्घ)kioc->cmdbuf, 0, माप(mbox64_t));
+	स_रखो((caddr_t) kioc->pthru32, 0, माप(mraid_passthru_t));
 
-	kioc->buf_vaddr		= NULL;
+	kioc->buf_vaddr		= शून्य;
 	kioc->buf_paddr		= 0;
 	kioc->pool_index	=-1;
-	kioc->free_buf		= 0;
-	kioc->user_data		= NULL;
+	kioc->मुक्त_buf		= 0;
+	kioc->user_data		= शून्य;
 	kioc->user_data_len	= 0;
-	kioc->user_pthru	= NULL;
-	kioc->timedout		= 0;
+	kioc->user_pthru	= शून्य;
+	kioc->समयकरोut		= 0;
 
-	return kioc;
-}
+	वापस kioc;
+पूर्ण
 
 /**
- * mraid_mm_dealloc_kioc - Return kioc to free pool
+ * mraid_mm_dealloc_kioc - Return kioc to मुक्त pool
  * @adp		: Adapter softstate
- * @kioc	: uioc_t node to be returned to free pool
+ * @kioc	: uioc_t node to be वापसed to मुक्त pool
  */
-static void
+अटल व्योम
 mraid_mm_dealloc_kioc(mraid_mmadp_t *adp, uioc_t *kioc)
-{
+अणु
 	mm_dmapool_t	*pool;
-	unsigned long	flags;
+	अचिन्हित दीर्घ	flags;
 
-	if (kioc->pool_index != -1) {
+	अगर (kioc->pool_index != -1) अणु
 		pool = &adp->dma_pool_list[kioc->pool_index];
 
 		/* This routine may be called in non-isr context also */
 		spin_lock_irqsave(&pool->lock, flags);
 
 		/*
-		 * While attaching the dma buffer, if we didn't get the 
+		 * While attaching the dma buffer, अगर we didn't get the 
 		 * required buffer from the pool, we would have allocated 
-		 * it at the run time and set the free_buf flag. We must 
-		 * free that buffer. Otherwise, just mark that the buffer is 
+		 * it at the run समय and set the मुक्त_buf flag. We must 
+		 * मुक्त that buffer. Otherwise, just mark that the buffer is 
 		 * not in use
 		 */
-		if (kioc->free_buf == 1)
-			dma_pool_free(pool->handle, kioc->buf_vaddr, 
+		अगर (kioc->मुक्त_buf == 1)
+			dma_pool_मुक्त(pool->handle, kioc->buf_vaddr, 
 							kioc->buf_paddr);
-		else
+		अन्यथा
 			pool->in_use = 0;
 
 		spin_unlock_irqrestore(&pool->lock, flags);
-	}
+	पूर्ण
 
-	/* Return the kioc to the free pool */
+	/* Return the kioc to the मुक्त pool */
 	spin_lock_irqsave(&adp->kioc_pool_lock, flags);
 	list_add(&kioc->list, &adp->kioc_pool);
 	spin_unlock_irqrestore(&adp->kioc_pool_lock, flags);
 
-	/* increment the free kioc count */
+	/* increment the मुक्त kioc count */
 	up(&adp->kioc_semaphore);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
  * lld_ioctl - Routine to issue ioctl to low level drvr
  * @adp		: The adapter handle
  * @kioc	: The ioctl packet with kernel addresses
  */
-static int
+अटल पूर्णांक
 lld_ioctl(mraid_mmadp_t *adp, uioc_t *kioc)
-{
-	int			rval;
-	struct uioc_timeout	timeout = { };
+अणु
+	पूर्णांक			rval;
+	काष्ठा uioc_समयout	समयout = अणु पूर्ण;
 
 	kioc->status	= -ENODATA;
 	rval		= adp->issue_uioc(adp->drvr_data, kioc, IOCTL_ISSUE);
 
-	if (rval) return rval;
+	अगर (rval) वापस rval;
 
 	/*
-	 * Start the timer
+	 * Start the समयr
 	 */
-	if (adp->timeout > 0) {
-		timeout.uioc = kioc;
-		timer_setup_on_stack(&timeout.timer, lld_timedout, 0);
+	अगर (adp->समयout > 0) अणु
+		समयout.uioc = kioc;
+		समयr_setup_on_stack(&समयout.समयr, lld_समयकरोut, 0);
 
-		timeout.timer.expires	= jiffies + adp->timeout * HZ;
+		समयout.समयr.expires	= jअगरfies + adp->समयout * HZ;
 
-		add_timer(&timeout.timer);
-	}
+		add_समयr(&समयout.समयr);
+	पूर्ण
 
 	/*
 	 * Wait till the low level driver completes the ioctl. After this
-	 * call, the ioctl either completed successfully or timedout.
+	 * call, the ioctl either completed successfully or समयकरोut.
 	 */
-	wait_event(wait_q, (kioc->status != -ENODATA));
-	if (timeout.timer.function) {
-		del_timer_sync(&timeout.timer);
-		destroy_timer_on_stack(&timeout.timer);
-	}
+	रुको_event(रुको_q, (kioc->status != -ENODATA));
+	अगर (समयout.समयr.function) अणु
+		del_समयr_sync(&समयout.समयr);
+		destroy_समयr_on_stack(&समयout.समयr);
+	पूर्ण
 
 	/*
-	 * If the command had timedout, we mark the controller offline
-	 * before returning
+	 * If the command had समयकरोut, we mark the controller offline
+	 * beक्रमe वापसing
 	 */
-	if (kioc->timedout) {
+	अगर (kioc->समयकरोut) अणु
 		adp->quiescent = 0;
-	}
+	पूर्ण
 
-	return kioc->status;
-}
+	वापस kioc->status;
+पूर्ण
 
 
 /**
- * ioctl_done - callback from the low level driver
+ * ioctl_करोne - callback from the low level driver
  * @kioc	: completed ioctl packet
  */
-static void
-ioctl_done(uioc_t *kioc)
-{
-	uint32_t	adapno;
-	int		iterator;
+अटल व्योम
+ioctl_करोne(uioc_t *kioc)
+अणु
+	uपूर्णांक32_t	adapno;
+	पूर्णांक		iterator;
 	mraid_mmadp_t*	adapter;
 
 	/*
-	 * When the kioc returns from driver, make sure it still doesn't
-	 * have ENODATA in status. Otherwise, driver will hang on wait_event
-	 * forever
+	 * When the kioc वापसs from driver, make sure it still करोesn't
+	 * have ENODATA in status. Otherwise, driver will hang on रुको_event
+	 * क्रमever
 	 */
-	if (kioc->status == -ENODATA) {
+	अगर (kioc->status == -ENODATA) अणु
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid cmm: lld didn't change status!\n"));
 
 		kioc->status = -EINVAL;
-	}
+	पूर्ण
 
 	/*
-	 * Check if this kioc was timedout before. If so, nobody is waiting
-	 * on this kioc. We don't have to wake up anybody. Instead, we just
-	 * have to free the kioc
+	 * Check अगर this kioc was समयकरोut beक्रमe. If so, nobody is रुकोing
+	 * on this kioc. We करोn't have to wake up anybody. Instead, we just
+	 * have to मुक्त the kioc
 	 */
-	if (kioc->timedout) {
+	अगर (kioc->समयकरोut) अणु
 		iterator	= 0;
-		adapter		= NULL;
+		adapter		= शून्य;
 		adapno		= kioc->adapno;
 
 		con_log(CL_ANN, ( KERN_WARNING "megaraid cmm: completed "
 					"ioctl that was timedout before\n"));
 
-		list_for_each_entry(adapter, &adapters_list_g, list) {
-			if (iterator++ == adapno) break;
-		}
+		list_क्रम_each_entry(adapter, &adapters_list_g, list) अणु
+			अगर (iterator++ == adapno) अवरोध;
+		पूर्ण
 
-		kioc->timedout = 0;
+		kioc->समयकरोut = 0;
 
-		if (adapter) {
+		अगर (adapter) अणु
 			mraid_mm_dealloc_kioc( adapter, kioc );
-		}
-	}
-	else {
-		wake_up(&wait_q);
-	}
-}
+		पूर्ण
+	पूर्ण
+	अन्यथा अणु
+		wake_up(&रुको_q);
+	पूर्ण
+पूर्ण
 
 
 /**
- * lld_timedout	- callback from the expired timer
- * @t		: timer that timed out
+ * lld_समयकरोut	- callback from the expired समयr
+ * @t		: समयr that समयd out
  */
-static void
-lld_timedout(struct timer_list *t)
-{
-	struct uioc_timeout *timeout = from_timer(timeout, t, timer);
-	uioc_t *kioc	= timeout->uioc;
+अटल व्योम
+lld_समयकरोut(काष्ठा समयr_list *t)
+अणु
+	काष्ठा uioc_समयout *समयout = from_समयr(समयout, t, समयr);
+	uioc_t *kioc	= समयout->uioc;
 
 	kioc->status 	= -ETIME;
-	kioc->timedout	= 1;
+	kioc->समयकरोut	= 1;
 
 	con_log(CL_ANN, (KERN_WARNING "megaraid cmm: ioctl timed out\n"));
 
-	wake_up(&wait_q);
-}
+	wake_up(&रुको_q);
+पूर्ण
 
 
 /**
- * kioc_to_mimd	- Converter from new back to old format
+ * kioc_to_mimd	- Converter from new back to old क्रमmat
  * @kioc	: Kernel space IOCTL packet (successfully issued)
  * @mimd	: User space MIMD packet
  */
-static int
+अटल पूर्णांक
 kioc_to_mimd(uioc_t *kioc, mimd_t __user *mimd)
-{
+अणु
 	mimd_t			kmimd;
-	uint8_t			opcode;
-	uint8_t			subopcode;
+	uपूर्णांक8_t			opcode;
+	uपूर्णांक8_t			subopcode;
 
 	mbox64_t		*mbox64;
 	mraid_passthru_t	__user *upthru32;
@@ -805,109 +806,109 @@ kioc_to_mimd(uioc_t *kioc, mimd_t __user *mimd)
 	mraid_hba_info_t	*hinfo;
 
 
-	if (copy_from_user(&kmimd, mimd, sizeof(mimd_t)))
-		return (-EFAULT);
+	अगर (copy_from_user(&kmimd, mimd, माप(mimd_t)))
+		वापस (-EFAULT);
 
 	opcode		= kmimd.ui.fcs.opcode;
 	subopcode	= kmimd.ui.fcs.subopcode;
 
-	if (opcode == 0x82) {
-		switch (subopcode) {
+	अगर (opcode == 0x82) अणु
+		चयन (subopcode) अणु
 
-		case MEGAIOC_QADAPINFO:
+		हाल MEGAIOC_QADAPINFO:
 
-			hinfo = (mraid_hba_info_t *)(unsigned long)
+			hinfo = (mraid_hba_info_t *)(अचिन्हित दीर्घ)
 					kioc->buf_vaddr;
 
 			hinfo_to_cinfo(hinfo, &cinfo);
 
-			if (copy_to_user(kmimd.data, &cinfo, sizeof(cinfo)))
-				return (-EFAULT);
+			अगर (copy_to_user(kmimd.data, &cinfo, माप(cinfo)))
+				वापस (-EFAULT);
 
-			return 0;
+			वापस 0;
 
-		default:
-			return (-EINVAL);
-		}
+		शेष:
+			वापस (-EINVAL);
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	mbox64 = (mbox64_t *)(unsigned long)kioc->cmdbuf;
+	mbox64 = (mbox64_t *)(अचिन्हित दीर्घ)kioc->cmdbuf;
 
-	if (kioc->user_pthru) {
+	अगर (kioc->user_pthru) अणु
 
 		upthru32 = kioc->user_pthru;
 		kpthru32 = kioc->pthru32;
 
-		if (copy_to_user(&upthru32->scsistatus,
+		अगर (copy_to_user(&upthru32->scsistatus,
 					&kpthru32->scsistatus,
-					sizeof(uint8_t))) {
-			return (-EFAULT);
-		}
-	}
+					माप(uपूर्णांक8_t))) अणु
+			वापस (-EFAULT);
+		पूर्ण
+	पूर्ण
 
-	if (kioc->user_data) {
-		if (copy_to_user(kioc->user_data, kioc->buf_vaddr,
-					kioc->user_data_len)) {
-			return (-EFAULT);
-		}
-	}
+	अगर (kioc->user_data) अणु
+		अगर (copy_to_user(kioc->user_data, kioc->buf_vaddr,
+					kioc->user_data_len)) अणु
+			वापस (-EFAULT);
+		पूर्ण
+	पूर्ण
 
-	if (copy_to_user(&mimd->mbox[17],
-			&mbox64->mbox32.status, sizeof(uint8_t))) {
-		return (-EFAULT);
-	}
+	अगर (copy_to_user(&mimd->mbox[17],
+			&mbox64->mbox32.status, माप(uपूर्णांक8_t))) अणु
+		वापस (-EFAULT);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
- * hinfo_to_cinfo - Convert new format hba info into old format
- * @hinfo	: New format, more comprehensive adapter info
- * @cinfo	: Old format adapter info to support mimd_t apps
+ * hinfo_to_cinfo - Convert new क्रमmat hba info पूर्णांकo old क्रमmat
+ * @hinfo	: New क्रमmat, more comprehensive adapter info
+ * @cinfo	: Old क्रमmat adapter info to support mimd_t apps
  */
-static void
+अटल व्योम
 hinfo_to_cinfo(mraid_hba_info_t *hinfo, mcontroller_t *cinfo)
-{
-	if (!hinfo || !cinfo)
-		return;
+अणु
+	अगर (!hinfo || !cinfo)
+		वापस;
 
 	cinfo->base		= hinfo->baseport;
 	cinfo->irq		= hinfo->irq;
 	cinfo->numldrv		= hinfo->num_ldrv;
 	cinfo->pcibus		= hinfo->pci_bus;
 	cinfo->pcidev		= hinfo->pci_slot;
-	cinfo->pcifun		= PCI_FUNC(hinfo->pci_dev_fn);
+	cinfo->pcअगरun		= PCI_FUNC(hinfo->pci_dev_fn);
 	cinfo->pciid		= hinfo->pci_device_id;
-	cinfo->pcivendor	= hinfo->pci_vendor_id;
+	cinfo->pcivenकरोr	= hinfo->pci_venकरोr_id;
 	cinfo->pcislot		= hinfo->pci_slot;
 	cinfo->uid		= hinfo->unique_id;
-}
+पूर्ण
 
 
 /**
- * mraid_mm_register_adp - Registration routine for low level drivers
+ * mraid_mm_रेजिस्टर_adp - Registration routine क्रम low level drivers
  * @lld_adp	: Adapter object
  */
-int
-mraid_mm_register_adp(mraid_mmadp_t *lld_adp)
-{
+पूर्णांक
+mraid_mm_रेजिस्टर_adp(mraid_mmadp_t *lld_adp)
+अणु
 	mraid_mmadp_t	*adapter;
 	mbox64_t	*mbox_list;
 	uioc_t		*kioc;
-	uint32_t	rval;
-	int		i;
+	uपूर्णांक32_t	rval;
+	पूर्णांक		i;
 
 
-	if (lld_adp->drvr_type != DRVRTYPE_MBOX)
-		return (-EINVAL);
+	अगर (lld_adp->drvr_type != DRVRTYPE_MBOX)
+		वापस (-EINVAL);
 
-	adapter = kzalloc(sizeof(mraid_mmadp_t), GFP_KERNEL);
+	adapter = kzalloc(माप(mraid_mmadp_t), GFP_KERNEL);
 
-	if (!adapter)
-		return -ENOMEM;
+	अगर (!adapter)
+		वापस -ENOMEM;
 
 
 	adapter->unique_id	= lld_adp->unique_id;
@@ -915,27 +916,27 @@ mraid_mm_register_adp(mraid_mmadp_t *lld_adp)
 	adapter->drvr_data	= lld_adp->drvr_data;
 	adapter->pdev		= lld_adp->pdev;
 	adapter->issue_uioc	= lld_adp->issue_uioc;
-	adapter->timeout	= lld_adp->timeout;
+	adapter->समयout	= lld_adp->समयout;
 	adapter->max_kioc	= lld_adp->max_kioc;
 	adapter->quiescent	= 1;
 
 	/*
-	 * Allocate single blocks of memory for all required kiocs,
-	 * mailboxes and passthru structures.
+	 * Allocate single blocks of memory क्रम all required kiocs,
+	 * mailboxes and passthru काष्ठाures.
 	 */
-	adapter->kioc_list	= kmalloc_array(lld_adp->max_kioc,
-						  sizeof(uioc_t),
+	adapter->kioc_list	= kदो_स्मृति_array(lld_adp->max_kioc,
+						  माप(uioc_t),
 						  GFP_KERNEL);
-	adapter->mbox_list	= kmalloc_array(lld_adp->max_kioc,
-						  sizeof(mbox64_t),
+	adapter->mbox_list	= kदो_स्मृति_array(lld_adp->max_kioc,
+						  माप(mbox64_t),
 						  GFP_KERNEL);
 	adapter->pthru_dma_pool = dma_pool_create("megaraid mm pthru pool",
 						&adapter->pdev->dev,
-						sizeof(mraid_passthru_t),
+						माप(mraid_passthru_t),
 						16, 0);
 
-	if (!adapter->kioc_list || !adapter->mbox_list ||
-			!adapter->pthru_dma_pool) {
+	अगर (!adapter->kioc_list || !adapter->mbox_list ||
+			!adapter->pthru_dma_pool) अणु
 
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid cmm: out of memory, %s %d\n", __func__,
@@ -943,11 +944,11 @@ mraid_mm_register_adp(mraid_mmadp_t *lld_adp)
 
 		rval = (-ENOMEM);
 
-		goto memalloc_error;
-	}
+		जाओ meदो_स्मृति_error;
+	पूर्ण
 
 	/*
-	 * Slice kioc_list and make a kioc_pool with the individiual kiocs
+	 * Slice kioc_list and make a kioc_pool with the inभागidiual kiocs
 	 */
 	INIT_LIST_HEAD(&adapter->kioc_pool);
 	spin_lock_init(&adapter->kioc_pool_lock);
@@ -955,14 +956,14 @@ mraid_mm_register_adp(mraid_mmadp_t *lld_adp)
 
 	mbox_list	= (mbox64_t *)adapter->mbox_list;
 
-	for (i = 0; i < lld_adp->max_kioc; i++) {
+	क्रम (i = 0; i < lld_adp->max_kioc; i++) अणु
 
 		kioc		= adapter->kioc_list + i;
-		kioc->cmdbuf	= (uint64_t)(unsigned long)(mbox_list + i);
+		kioc->cmdbuf	= (uपूर्णांक64_t)(अचिन्हित दीर्घ)(mbox_list + i);
 		kioc->pthru32	= dma_pool_alloc(adapter->pthru_dma_pool,
 						GFP_KERNEL, &kioc->pthru32_h);
 
-		if (!kioc->pthru32) {
+		अगर (!kioc->pthru32) अणु
 
 			con_log(CL_ANN, (KERN_WARNING
 				"megaraid cmm: out of memory, %s %d\n",
@@ -970,104 +971,104 @@ mraid_mm_register_adp(mraid_mmadp_t *lld_adp)
 
 			rval = (-ENOMEM);
 
-			goto pthru_dma_pool_error;
-		}
+			जाओ pthru_dma_pool_error;
+		पूर्ण
 
 		list_add_tail(&kioc->list, &adapter->kioc_pool);
-	}
+	पूर्ण
 
-	// Setup the dma pools for data buffers
-	if ((rval = mraid_mm_setup_dma_pools(adapter)) != 0) {
-		goto dma_pool_error;
-	}
+	// Setup the dma pools क्रम data buffers
+	अगर ((rval = mraid_mm_setup_dma_pools(adapter)) != 0) अणु
+		जाओ dma_pool_error;
+	पूर्ण
 
 	list_add_tail(&adapter->list, &adapters_list_g);
 
 	adapters_count_g++;
 
-	return 0;
+	वापस 0;
 
 dma_pool_error:
 	/* Do nothing */
 
 pthru_dma_pool_error:
 
-	for (i = 0; i < lld_adp->max_kioc; i++) {
+	क्रम (i = 0; i < lld_adp->max_kioc; i++) अणु
 		kioc = adapter->kioc_list + i;
-		if (kioc->pthru32) {
-			dma_pool_free(adapter->pthru_dma_pool, kioc->pthru32,
+		अगर (kioc->pthru32) अणु
+			dma_pool_मुक्त(adapter->pthru_dma_pool, kioc->pthru32,
 				kioc->pthru32_h);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-memalloc_error:
+meदो_स्मृति_error:
 
-	kfree(adapter->kioc_list);
-	kfree(adapter->mbox_list);
+	kमुक्त(adapter->kioc_list);
+	kमुक्त(adapter->mbox_list);
 
 	dma_pool_destroy(adapter->pthru_dma_pool);
 
-	kfree(adapter);
+	kमुक्त(adapter);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 
 /**
- * mraid_mm_adapter_app_handle - return the application handle for this adapter
- * @unique_id	: adapter unique identifier
+ * mraid_mm_adapter_app_handle - वापस the application handle क्रम this adapter
+ * @unique_id	: adapter unique identअगरier
  *
  * For the given driver data, locate the adapter in our global list and
- * return the corresponding handle, which is also used by applications to
- * uniquely identify an adapter.
+ * वापस the corresponding handle, which is also used by applications to
+ * uniquely identअगरy an adapter.
  *
- * Return adapter handle if found in the list.
- * Return 0 if adapter could not be located, should never happen though.
+ * Return adapter handle अगर found in the list.
+ * Return 0 अगर adapter could not be located, should never happen though.
  */
-uint32_t
-mraid_mm_adapter_app_handle(uint32_t unique_id)
-{
+uपूर्णांक32_t
+mraid_mm_adapter_app_handle(uपूर्णांक32_t unique_id)
+अणु
 	mraid_mmadp_t	*adapter;
-	mraid_mmadp_t	*tmp;
-	int		index = 0;
+	mraid_mmadp_t	*पंचांगp;
+	पूर्णांक		index = 0;
 
-	list_for_each_entry_safe(adapter, tmp, &adapters_list_g, list) {
+	list_क्रम_each_entry_safe(adapter, पंचांगp, &adapters_list_g, list) अणु
 
-		if (adapter->unique_id == unique_id) {
+		अगर (adapter->unique_id == unique_id) अणु
 
-			return MKADAP(index);
-		}
+			वापस MKADAP(index);
+		पूर्ण
 
 		index++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
  * mraid_mm_setup_dma_pools - Set up dma buffer pools per adapter
  * @adp	: Adapter softstate
  *
- * We maintain a pool of dma buffers per each adapter. Each pool has one
- * buffer. E.g, we may have 5 dma pools - one each for 4k, 8k ... 64k buffers.
+ * We मुख्यtain a pool of dma buffers per each adapter. Each pool has one
+ * buffer. E.g, we may have 5 dma pools - one each क्रम 4k, 8k ... 64k buffers.
  * We have just one 4k buffer in 4k pool, one 8k buffer in 8k pool etc. We
- * dont' want to waste too much memory by allocating more buffers per each
+ * करोnt' want to waste too much memory by allocating more buffers per each
  * pool.
  */
-static int
+अटल पूर्णांक
 mraid_mm_setup_dma_pools(mraid_mmadp_t *adp)
-{
+अणु
 	mm_dmapool_t	*pool;
-	int		bufsize;
-	int		i;
+	पूर्णांक		bufsize;
+	पूर्णांक		i;
 
 	/*
 	 * Create MAX_DMA_POOLS number of pools
 	 */
 	bufsize = MRAID_MM_INIT_BUFF_SIZE;
 
-	for (i = 0; i < MAX_DMA_POOLS; i++){
+	क्रम (i = 0; i < MAX_DMA_POOLS; i++)अणु
 
 		pool = &adp->dma_pool_list[i];
 
@@ -1078,160 +1079,160 @@ mraid_mm_setup_dma_pools(mraid_mmadp_t *adp)
 						&adp->pdev->dev, bufsize,
 						16, 0);
 
-		if (!pool->handle) {
-			goto dma_pool_setup_error;
-		}
+		अगर (!pool->handle) अणु
+			जाओ dma_pool_setup_error;
+		पूर्ण
 
 		pool->vaddr = dma_pool_alloc(pool->handle, GFP_KERNEL,
 							&pool->paddr);
 
-		if (!pool->vaddr)
-			goto dma_pool_setup_error;
+		अगर (!pool->vaddr)
+			जाओ dma_pool_setup_error;
 
 		bufsize = bufsize * 2;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 dma_pool_setup_error:
 
-	mraid_mm_teardown_dma_pools(adp);
-	return (-ENOMEM);
-}
+	mraid_mm_tearकरोwn_dma_pools(adp);
+	वापस (-ENOMEM);
+पूर्ण
 
 
 /**
- * mraid_mm_unregister_adp - Unregister routine for low level drivers
+ * mraid_mm_unरेजिस्टर_adp - Unरेजिस्टर routine क्रम low level drivers
  * @unique_id	: UID of the adpater
  *
  * Assumes no outstanding ioctls to llds.
  */
-int
-mraid_mm_unregister_adp(uint32_t unique_id)
-{
+पूर्णांक
+mraid_mm_unरेजिस्टर_adp(uपूर्णांक32_t unique_id)
+अणु
 	mraid_mmadp_t	*adapter;
-	mraid_mmadp_t	*tmp;
+	mraid_mmadp_t	*पंचांगp;
 
-	list_for_each_entry_safe(adapter, tmp, &adapters_list_g, list) {
+	list_क्रम_each_entry_safe(adapter, पंचांगp, &adapters_list_g, list) अणु
 
 
-		if (adapter->unique_id == unique_id) {
+		अगर (adapter->unique_id == unique_id) अणु
 
 			adapters_count_g--;
 
 			list_del_init(&adapter->list);
 
-			mraid_mm_free_adp_resources(adapter);
+			mraid_mm_मुक्त_adp_resources(adapter);
 
-			kfree(adapter);
+			kमुक्त(adapter);
 
 			con_log(CL_ANN, (
 				"megaraid cmm: Unregistered one adapter:%#x\n",
 				unique_id));
 
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return (-ENODEV);
-}
+	वापस (-ENODEV);
+पूर्ण
 
 /**
- * mraid_mm_free_adp_resources - Free adapter softstate
+ * mraid_mm_मुक्त_adp_resources - Free adapter softstate
  * @adp	: Adapter softstate
  */
-static void
-mraid_mm_free_adp_resources(mraid_mmadp_t *adp)
-{
+अटल व्योम
+mraid_mm_मुक्त_adp_resources(mraid_mmadp_t *adp)
+अणु
 	uioc_t	*kioc;
-	int	i;
+	पूर्णांक	i;
 
-	mraid_mm_teardown_dma_pools(adp);
+	mraid_mm_tearकरोwn_dma_pools(adp);
 
-	for (i = 0; i < adp->max_kioc; i++) {
+	क्रम (i = 0; i < adp->max_kioc; i++) अणु
 
 		kioc = adp->kioc_list + i;
 
-		dma_pool_free(adp->pthru_dma_pool, kioc->pthru32,
+		dma_pool_मुक्त(adp->pthru_dma_pool, kioc->pthru32,
 				kioc->pthru32_h);
-	}
+	पूर्ण
 
-	kfree(adp->kioc_list);
-	kfree(adp->mbox_list);
+	kमुक्त(adp->kioc_list);
+	kमुक्त(adp->mbox_list);
 
 	dma_pool_destroy(adp->pthru_dma_pool);
 
 
-	return;
-}
+	वापस;
+पूर्ण
 
 
 /**
- * mraid_mm_teardown_dma_pools - Free all per adapter dma buffers
+ * mraid_mm_tearकरोwn_dma_pools - Free all per adapter dma buffers
  * @adp	: Adapter softstate
  */
-static void
-mraid_mm_teardown_dma_pools(mraid_mmadp_t *adp)
-{
-	int		i;
+अटल व्योम
+mraid_mm_tearकरोwn_dma_pools(mraid_mmadp_t *adp)
+अणु
+	पूर्णांक		i;
 	mm_dmapool_t	*pool;
 
-	for (i = 0; i < MAX_DMA_POOLS; i++) {
+	क्रम (i = 0; i < MAX_DMA_POOLS; i++) अणु
 
 		pool = &adp->dma_pool_list[i];
 
-		if (pool->handle) {
+		अगर (pool->handle) अणु
 
-			if (pool->vaddr)
-				dma_pool_free(pool->handle, pool->vaddr,
+			अगर (pool->vaddr)
+				dma_pool_मुक्त(pool->handle, pool->vaddr,
 							pool->paddr);
 
 			dma_pool_destroy(pool->handle);
-			pool->handle = NULL;
-		}
-	}
+			pool->handle = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
- * mraid_mm_init	- Module entry point
+ * mraid_mm_init	- Module entry poपूर्णांक
  */
-static int __init
-mraid_mm_init(void)
-{
-	int err;
+अटल पूर्णांक __init
+mraid_mm_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	// Announce the driver version
 	con_log(CL_ANN, (KERN_INFO "megaraid cmm: %s %s\n",
 		LSI_COMMON_MOD_VERSION, LSI_COMMON_MOD_EXT_VERSION));
 
-	err = misc_register(&megaraid_mm_dev);
-	if (err < 0) {
+	err = misc_रेजिस्टर(&megaraid_mm_dev);
+	अगर (err < 0) अणु
 		con_log(CL_ANN, ("megaraid cmm: cannot register misc device\n"));
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	init_waitqueue_head(&wait_q);
+	init_रुकोqueue_head(&रुको_q);
 
 	INIT_LIST_HEAD(&adapters_list_g);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
- * mraid_mm_exit	- Module exit point
+ * mraid_mm_निकास	- Module निकास poपूर्णांक
  */
-static void __exit
-mraid_mm_exit(void)
-{
+अटल व्योम __निकास
+mraid_mm_निकास(व्योम)
+अणु
 	con_log(CL_DLEVEL1 , ("exiting common mod\n"));
 
-	misc_deregister(&megaraid_mm_dev);
-}
+	misc_deरेजिस्टर(&megaraid_mm_dev);
+पूर्ण
 
 module_init(mraid_mm_init);
-module_exit(mraid_mm_exit);
+module_निकास(mraid_mm_निकास);
 
 /* vi: set ts=8 sw=8 tw=78: */

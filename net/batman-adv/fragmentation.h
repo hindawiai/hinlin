@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
- * Martin Hundebøll <martin@hundeboll.net>
+ * Martin Hundebथचll <martin@hundeboll.net>
  */
 
-#ifndef _NET_BATMAN_ADV_FRAGMENTATION_H_
-#define _NET_BATMAN_ADV_FRAGMENTATION_H_
+#अगर_अघोषित _NET_BATMAN_ADV_FRAGMENTATION_H_
+#घोषणा _NET_BATMAN_ADV_FRAGMENTATION_H_
 
-#include "main.h"
+#समावेश "main.h"
 
-#include <linux/compiler.h>
-#include <linux/list.h>
-#include <linux/skbuff.h>
-#include <linux/stddef.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/list.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/types.h>
 
-void batadv_frag_purge_orig(struct batadv_orig_node *orig,
-			    bool (*check_cb)(struct batadv_frag_table_entry *));
-bool batadv_frag_skb_fwd(struct sk_buff *skb,
-			 struct batadv_hard_iface *recv_if,
-			 struct batadv_orig_node *orig_node_src);
-bool batadv_frag_skb_buffer(struct sk_buff **skb,
-			    struct batadv_orig_node *orig_node);
-int batadv_frag_send_packet(struct sk_buff *skb,
-			    struct batadv_orig_node *orig_node,
-			    struct batadv_neigh_node *neigh_node);
+व्योम batadv_frag_purge_orig(काष्ठा batadv_orig_node *orig,
+			    bool (*check_cb)(काष्ठा batadv_frag_table_entry *));
+bool batadv_frag_skb_fwd(काष्ठा sk_buff *skb,
+			 काष्ठा batadv_hard_अगरace *recv_अगर,
+			 काष्ठा batadv_orig_node *orig_node_src);
+bool batadv_frag_skb_buffer(काष्ठा sk_buff **skb,
+			    काष्ठा batadv_orig_node *orig_node);
+पूर्णांक batadv_frag_send_packet(काष्ठा sk_buff *skb,
+			    काष्ठा batadv_orig_node *orig_node,
+			    काष्ठा batadv_neigh_node *neigh_node);
 
 /**
- * batadv_frag_check_entry() - check if a list of fragments has timed out
+ * batadv_frag_check_entry() - check अगर a list of fragments has समयd out
  * @frags_entry: table entry to check
  *
- * Return: true if the frags entry has timed out, false otherwise.
+ * Return: true अगर the frags entry has समयd out, false otherwise.
  */
-static inline bool
-batadv_frag_check_entry(struct batadv_frag_table_entry *frags_entry)
-{
-	if (!hlist_empty(&frags_entry->fragment_list) &&
-	    batadv_has_timed_out(frags_entry->timestamp, BATADV_FRAG_TIMEOUT))
-		return true;
-	return false;
-}
+अटल अंतरभूत bool
+batadv_frag_check_entry(काष्ठा batadv_frag_table_entry *frags_entry)
+अणु
+	अगर (!hlist_empty(&frags_entry->fragment_list) &&
+	    batadv_has_समयd_out(frags_entry->बारtamp, BATADV_FRAG_TIMEOUT))
+		वापस true;
+	वापस false;
+पूर्ण
 
-#endif /* _NET_BATMAN_ADV_FRAGMENTATION_H_ */
+#पूर्ण_अगर /* _NET_BATMAN_ADV_FRAGMENTATION_H_ */

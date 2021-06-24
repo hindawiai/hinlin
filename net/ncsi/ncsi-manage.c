@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright Gavin Shan, IBM Corporation 2016.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <net/ncsi.h>
-#include <net/net_namespace.h>
-#include <net/sock.h>
-#include <net/addrconf.h>
-#include <net/ipv6.h>
-#include <net/genetlink.h>
+#समावेश <net/ncsi.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/sock.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/genetlink.h>
 
-#include "internal.h"
-#include "ncsi-pkt.h"
-#include "ncsi-netlink.h"
+#समावेश "internal.h"
+#समावेश "ncsi-pkt.h"
+#समावेश "ncsi-netlink.h"
 
 LIST_HEAD(ncsi_dev_list);
 DEFINE_SPINLOCK(ncsi_dev_lock);
 
-bool ncsi_channel_has_link(struct ncsi_channel *channel)
-{
-	return !!(channel->modes[NCSI_MODE_LINK].data[2] & 0x1);
-}
+bool ncsi_channel_has_link(काष्ठा ncsi_channel *channel)
+अणु
+	वापस !!(channel->modes[NCSI_MODE_LINK].data[2] & 0x1);
+पूर्ण
 
-bool ncsi_channel_is_last(struct ncsi_dev_priv *ndp,
-			  struct ncsi_channel *channel)
-{
-	struct ncsi_package *np;
-	struct ncsi_channel *nc;
+bool ncsi_channel_is_last(काष्ठा ncsi_dev_priv *ndp,
+			  काष्ठा ncsi_channel *channel)
+अणु
+	काष्ठा ncsi_package *np;
+	काष्ठा ncsi_channel *nc;
 
 	NCSI_FOR_EACH_PACKAGE(ndp, np)
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
-			if (nc == channel)
-				continue;
-			if (nc->state == NCSI_CHANNEL_ACTIVE &&
+		NCSI_FOR_EACH_CHANNEL(np, nc) अणु
+			अगर (nc == channel)
+				जारी;
+			अगर (nc->state == NCSI_CHANNEL_ACTIVE &&
 			    ncsi_channel_has_link(nc))
-				return false;
-		}
+				वापस false;
+		पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void ncsi_report_link(struct ncsi_dev_priv *ndp, bool force_down)
-{
-	struct ncsi_dev *nd = &ndp->ndev;
-	struct ncsi_package *np;
-	struct ncsi_channel *nc;
-	unsigned long flags;
+अटल व्योम ncsi_report_link(काष्ठा ncsi_dev_priv *ndp, bool क्रमce_करोwn)
+अणु
+	काष्ठा ncsi_dev *nd = &ndp->ndev;
+	काष्ठा ncsi_package *np;
+	काष्ठा ncsi_channel *nc;
+	अचिन्हित दीर्घ flags;
 
 	nd->state = ncsi_dev_state_functional;
-	if (force_down) {
+	अगर (क्रमce_करोwn) अणु
 		nd->link_up = 0;
-		goto report;
-	}
+		जाओ report;
+	पूर्ण
 
 	nd->link_up = 0;
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
+	NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
+		NCSI_FOR_EACH_CHANNEL(np, nc) अणु
 			spin_lock_irqsave(&nc->lock, flags);
 
-			if (!list_empty(&nc->link) ||
-			    nc->state != NCSI_CHANNEL_ACTIVE) {
+			अगर (!list_empty(&nc->link) ||
+			    nc->state != NCSI_CHANNEL_ACTIVE) अणु
 				spin_unlock_irqrestore(&nc->lock, flags);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (ncsi_channel_has_link(nc)) {
+			अगर (ncsi_channel_has_link(nc)) अणु
 				spin_unlock_irqrestore(&nc->lock, flags);
 				nd->link_up = 1;
-				goto report;
-			}
+				जाओ report;
+			पूर्ण
 
 			spin_unlock_irqrestore(&nc->lock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 report:
 	nd->handler(nd);
-}
+पूर्ण
 
-static void ncsi_channel_monitor(struct timer_list *t)
-{
-	struct ncsi_channel *nc = from_timer(nc, t, monitor.timer);
-	struct ncsi_package *np = nc->package;
-	struct ncsi_dev_priv *ndp = np->ndp;
-	struct ncsi_channel_mode *ncm;
-	struct ncsi_cmd_arg nca;
+अटल व्योम ncsi_channel_monitor(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ncsi_channel *nc = from_समयr(nc, t, monitor.समयr);
+	काष्ठा ncsi_package *np = nc->package;
+	काष्ठा ncsi_dev_priv *ndp = np->ndp;
+	काष्ठा ncsi_channel_mode *ncm;
+	काष्ठा ncsi_cmd_arg nca;
 	bool enabled, chained;
-	unsigned int monitor_state;
-	unsigned long flags;
-	int state, ret;
+	अचिन्हित पूर्णांक monitor_state;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक state, ret;
 
 	spin_lock_irqsave(&nc->lock, flags);
 	state = nc->state;
@@ -105,13 +106,13 @@ static void ncsi_channel_monitor(struct timer_list *t)
 	monitor_state = nc->monitor.state;
 	spin_unlock_irqrestore(&nc->lock, flags);
 
-	if (!enabled)
-		return;		/* expected race disabling timer */
-	if (WARN_ON_ONCE(chained))
-		goto bad_state;
+	अगर (!enabled)
+		वापस;		/* expected race disabling समयr */
+	अगर (WARN_ON_ONCE(chained))
+		जाओ bad_state;
 
-	if (state != NCSI_CHANNEL_INACTIVE &&
-	    state != NCSI_CHANNEL_ACTIVE) {
+	अगर (state != NCSI_CHANNEL_INACTIVE &&
+	    state != NCSI_CHANNEL_ACTIVE) अणु
 bad_state:
 		netdev_warn(ndp->ndev.dev,
 			    "Bad NCSI monitor state channel %d 0x%x %s queue\n",
@@ -119,25 +120,25 @@ bad_state:
 		spin_lock_irqsave(&nc->lock, flags);
 		nc->monitor.enabled = false;
 		spin_unlock_irqrestore(&nc->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (monitor_state) {
-	case NCSI_CHANNEL_MONITOR_START:
-	case NCSI_CHANNEL_MONITOR_RETRY:
+	चयन (monitor_state) अणु
+	हाल NCSI_CHANNEL_MONITOR_START:
+	हाल NCSI_CHANNEL_MONITOR_RETRY:
 		nca.ndp = ndp;
 		nca.package = np->id;
 		nca.channel = nc->id;
 		nca.type = NCSI_PKT_CMD_GLS;
 		nca.req_flags = 0;
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret)
+		अगर (ret)
 			netdev_err(ndp->ndev.dev, "Error %d sending GLS\n",
 				   ret);
-		break;
-	case NCSI_CHANNEL_MONITOR_WAIT ... NCSI_CHANNEL_MONITOR_WAIT_MAX:
-		break;
-	default:
+		अवरोध;
+	हाल NCSI_CHANNEL_MONITOR_WAIT ... NCSI_CHANNEL_MONITOR_WAIT_MAX:
+		अवरोध;
+	शेष:
 		netdev_err(ndp->ndev.dev, "NCSI Channel %d timed out!\n",
 			   nc->id);
 		ncsi_report_link(ndp, true);
@@ -155,18 +156,18 @@ bad_state:
 		list_add_tail_rcu(&nc->link, &ndp->channel_queue);
 		spin_unlock_irqrestore(&ndp->lock, flags);
 		ncsi_process_next_channel(ndp);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&nc->lock, flags);
 	nc->monitor.state++;
 	spin_unlock_irqrestore(&nc->lock, flags);
-	mod_timer(&nc->monitor.timer, jiffies + HZ);
-}
+	mod_समयr(&nc->monitor.समयr, jअगरfies + HZ);
+पूर्ण
 
-void ncsi_start_channel_monitor(struct ncsi_channel *nc)
-{
-	unsigned long flags;
+व्योम ncsi_start_channel_monitor(काष्ठा ncsi_channel *nc)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&nc->lock, flags);
 	WARN_ON_ONCE(nc->monitor.enabled);
@@ -174,322 +175,322 @@ void ncsi_start_channel_monitor(struct ncsi_channel *nc)
 	nc->monitor.state = NCSI_CHANNEL_MONITOR_START;
 	spin_unlock_irqrestore(&nc->lock, flags);
 
-	mod_timer(&nc->monitor.timer, jiffies + HZ);
-}
+	mod_समयr(&nc->monitor.समयr, jअगरfies + HZ);
+पूर्ण
 
-void ncsi_stop_channel_monitor(struct ncsi_channel *nc)
-{
-	unsigned long flags;
+व्योम ncsi_stop_channel_monitor(काष्ठा ncsi_channel *nc)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&nc->lock, flags);
-	if (!nc->monitor.enabled) {
+	अगर (!nc->monitor.enabled) अणु
 		spin_unlock_irqrestore(&nc->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	nc->monitor.enabled = false;
 	spin_unlock_irqrestore(&nc->lock, flags);
 
-	del_timer_sync(&nc->monitor.timer);
-}
+	del_समयr_sync(&nc->monitor.समयr);
+पूर्ण
 
-struct ncsi_channel *ncsi_find_channel(struct ncsi_package *np,
-				       unsigned char id)
-{
-	struct ncsi_channel *nc;
+काष्ठा ncsi_channel *ncsi_find_channel(काष्ठा ncsi_package *np,
+				       अचिन्हित अक्षर id)
+अणु
+	काष्ठा ncsi_channel *nc;
 
-	NCSI_FOR_EACH_CHANNEL(np, nc) {
-		if (nc->id == id)
-			return nc;
-	}
+	NCSI_FOR_EACH_CHANNEL(np, nc) अणु
+		अगर (nc->id == id)
+			वापस nc;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct ncsi_channel *ncsi_add_channel(struct ncsi_package *np, unsigned char id)
-{
-	struct ncsi_channel *nc, *tmp;
-	int index;
-	unsigned long flags;
+काष्ठा ncsi_channel *ncsi_add_channel(काष्ठा ncsi_package *np, अचिन्हित अक्षर id)
+अणु
+	काष्ठा ncsi_channel *nc, *पंचांगp;
+	पूर्णांक index;
+	अचिन्हित दीर्घ flags;
 
-	nc = kzalloc(sizeof(*nc), GFP_ATOMIC);
-	if (!nc)
-		return NULL;
+	nc = kzalloc(माप(*nc), GFP_ATOMIC);
+	अगर (!nc)
+		वापस शून्य;
 
 	nc->id = id;
 	nc->package = np;
 	nc->state = NCSI_CHANNEL_INACTIVE;
 	nc->monitor.enabled = false;
-	timer_setup(&nc->monitor.timer, ncsi_channel_monitor, 0);
+	समयr_setup(&nc->monitor.समयr, ncsi_channel_monitor, 0);
 	spin_lock_init(&nc->lock);
 	INIT_LIST_HEAD(&nc->link);
-	for (index = 0; index < NCSI_CAP_MAX; index++)
+	क्रम (index = 0; index < NCSI_CAP_MAX; index++)
 		nc->caps[index].index = index;
-	for (index = 0; index < NCSI_MODE_MAX; index++)
+	क्रम (index = 0; index < NCSI_MODE_MAX; index++)
 		nc->modes[index].index = index;
 
 	spin_lock_irqsave(&np->lock, flags);
-	tmp = ncsi_find_channel(np, id);
-	if (tmp) {
+	पंचांगp = ncsi_find_channel(np, id);
+	अगर (पंचांगp) अणु
 		spin_unlock_irqrestore(&np->lock, flags);
-		kfree(nc);
-		return tmp;
-	}
+		kमुक्त(nc);
+		वापस पंचांगp;
+	पूर्ण
 
 	list_add_tail_rcu(&nc->node, &np->channels);
 	np->channel_num++;
 	spin_unlock_irqrestore(&np->lock, flags);
 
-	return nc;
-}
+	वापस nc;
+पूर्ण
 
-static void ncsi_remove_channel(struct ncsi_channel *nc)
-{
-	struct ncsi_package *np = nc->package;
-	unsigned long flags;
+अटल व्योम ncsi_हटाओ_channel(काष्ठा ncsi_channel *nc)
+अणु
+	काष्ठा ncsi_package *np = nc->package;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&nc->lock, flags);
 
 	/* Release filters */
-	kfree(nc->mac_filter.addrs);
-	kfree(nc->vlan_filter.vids);
+	kमुक्त(nc->mac_filter.addrs);
+	kमुक्त(nc->vlan_filter.vids);
 
 	nc->state = NCSI_CHANNEL_INACTIVE;
 	spin_unlock_irqrestore(&nc->lock, flags);
 	ncsi_stop_channel_monitor(nc);
 
-	/* Remove and free channel */
+	/* Remove and मुक्त channel */
 	spin_lock_irqsave(&np->lock, flags);
 	list_del_rcu(&nc->node);
 	np->channel_num--;
 	spin_unlock_irqrestore(&np->lock, flags);
 
-	kfree(nc);
-}
+	kमुक्त(nc);
+पूर्ण
 
-struct ncsi_package *ncsi_find_package(struct ncsi_dev_priv *ndp,
-				       unsigned char id)
-{
-	struct ncsi_package *np;
+काष्ठा ncsi_package *ncsi_find_package(काष्ठा ncsi_dev_priv *ndp,
+				       अचिन्हित अक्षर id)
+अणु
+	काष्ठा ncsi_package *np;
 
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		if (np->id == id)
-			return np;
-	}
+	NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
+		अगर (np->id == id)
+			वापस np;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct ncsi_package *ncsi_add_package(struct ncsi_dev_priv *ndp,
-				      unsigned char id)
-{
-	struct ncsi_package *np, *tmp;
-	unsigned long flags;
+काष्ठा ncsi_package *ncsi_add_package(काष्ठा ncsi_dev_priv *ndp,
+				      अचिन्हित अक्षर id)
+अणु
+	काष्ठा ncsi_package *np, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
-	np = kzalloc(sizeof(*np), GFP_ATOMIC);
-	if (!np)
-		return NULL;
+	np = kzalloc(माप(*np), GFP_ATOMIC);
+	अगर (!np)
+		वापस शून्य;
 
 	np->id = id;
 	np->ndp = ndp;
 	spin_lock_init(&np->lock);
 	INIT_LIST_HEAD(&np->channels);
-	np->channel_whitelist = UINT_MAX;
+	np->channel_whitelist = अच_पूर्णांक_उच्च;
 
 	spin_lock_irqsave(&ndp->lock, flags);
-	tmp = ncsi_find_package(ndp, id);
-	if (tmp) {
+	पंचांगp = ncsi_find_package(ndp, id);
+	अगर (पंचांगp) अणु
 		spin_unlock_irqrestore(&ndp->lock, flags);
-		kfree(np);
-		return tmp;
-	}
+		kमुक्त(np);
+		वापस पंचांगp;
+	पूर्ण
 
 	list_add_tail_rcu(&np->node, &ndp->packages);
 	ndp->package_num++;
 	spin_unlock_irqrestore(&ndp->lock, flags);
 
-	return np;
-}
+	वापस np;
+पूर्ण
 
-void ncsi_remove_package(struct ncsi_package *np)
-{
-	struct ncsi_dev_priv *ndp = np->ndp;
-	struct ncsi_channel *nc, *tmp;
-	unsigned long flags;
+व्योम ncsi_हटाओ_package(काष्ठा ncsi_package *np)
+अणु
+	काष्ठा ncsi_dev_priv *ndp = np->ndp;
+	काष्ठा ncsi_channel *nc, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	/* Release all child channels */
-	list_for_each_entry_safe(nc, tmp, &np->channels, node)
-		ncsi_remove_channel(nc);
+	list_क्रम_each_entry_safe(nc, पंचांगp, &np->channels, node)
+		ncsi_हटाओ_channel(nc);
 
-	/* Remove and free package */
+	/* Remove and मुक्त package */
 	spin_lock_irqsave(&ndp->lock, flags);
 	list_del_rcu(&np->node);
 	ndp->package_num--;
 	spin_unlock_irqrestore(&ndp->lock, flags);
 
-	kfree(np);
-}
+	kमुक्त(np);
+पूर्ण
 
-void ncsi_find_package_and_channel(struct ncsi_dev_priv *ndp,
-				   unsigned char id,
-				   struct ncsi_package **np,
-				   struct ncsi_channel **nc)
-{
-	struct ncsi_package *p;
-	struct ncsi_channel *c;
+व्योम ncsi_find_package_and_channel(काष्ठा ncsi_dev_priv *ndp,
+				   अचिन्हित अक्षर id,
+				   काष्ठा ncsi_package **np,
+				   काष्ठा ncsi_channel **nc)
+अणु
+	काष्ठा ncsi_package *p;
+	काष्ठा ncsi_channel *c;
 
 	p = ncsi_find_package(ndp, NCSI_PACKAGE_INDEX(id));
-	c = p ? ncsi_find_channel(p, NCSI_CHANNEL_INDEX(id)) : NULL;
+	c = p ? ncsi_find_channel(p, NCSI_CHANNEL_INDEX(id)) : शून्य;
 
-	if (np)
+	अगर (np)
 		*np = p;
-	if (nc)
+	अगर (nc)
 		*nc = c;
-}
+पूर्ण
 
 /* For two consecutive NCSI commands, the packet IDs shouldn't
  * be same. Otherwise, the bogus response might be replied. So
  * the available IDs are allocated in round-robin fashion.
  */
-struct ncsi_request *ncsi_alloc_request(struct ncsi_dev_priv *ndp,
-					unsigned int req_flags)
-{
-	struct ncsi_request *nr = NULL;
-	int i, limit = ARRAY_SIZE(ndp->requests);
-	unsigned long flags;
+काष्ठा ncsi_request *ncsi_alloc_request(काष्ठा ncsi_dev_priv *ndp,
+					अचिन्हित पूर्णांक req_flags)
+अणु
+	काष्ठा ncsi_request *nr = शून्य;
+	पूर्णांक i, limit = ARRAY_SIZE(ndp->requests);
+	अचिन्हित दीर्घ flags;
 
-	/* Check if there is one available request until the ceiling */
+	/* Check अगर there is one available request until the उच्चमानing */
 	spin_lock_irqsave(&ndp->lock, flags);
-	for (i = ndp->request_id; i < limit; i++) {
-		if (ndp->requests[i].used)
-			continue;
+	क्रम (i = ndp->request_id; i < limit; i++) अणु
+		अगर (ndp->requests[i].used)
+			जारी;
 
 		nr = &ndp->requests[i];
 		nr->used = true;
 		nr->flags = req_flags;
 		ndp->request_id = i + 1;
-		goto found;
-	}
+		जाओ found;
+	पूर्ण
 
 	/* Fail back to check from the starting cursor */
-	for (i = NCSI_REQ_START_IDX; i < ndp->request_id; i++) {
-		if (ndp->requests[i].used)
-			continue;
+	क्रम (i = NCSI_REQ_START_IDX; i < ndp->request_id; i++) अणु
+		अगर (ndp->requests[i].used)
+			जारी;
 
 		nr = &ndp->requests[i];
 		nr->used = true;
 		nr->flags = req_flags;
 		ndp->request_id = i + 1;
-		goto found;
-	}
+		जाओ found;
+	पूर्ण
 
 found:
 	spin_unlock_irqrestore(&ndp->lock, flags);
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-void ncsi_free_request(struct ncsi_request *nr)
-{
-	struct ncsi_dev_priv *ndp = nr->ndp;
-	struct sk_buff *cmd, *rsp;
-	unsigned long flags;
+व्योम ncsi_मुक्त_request(काष्ठा ncsi_request *nr)
+अणु
+	काष्ठा ncsi_dev_priv *ndp = nr->ndp;
+	काष्ठा sk_buff *cmd, *rsp;
+	अचिन्हित दीर्घ flags;
 	bool driven;
 
-	if (nr->enabled) {
+	अगर (nr->enabled) अणु
 		nr->enabled = false;
-		del_timer_sync(&nr->timer);
-	}
+		del_समयr_sync(&nr->समयr);
+	पूर्ण
 
 	spin_lock_irqsave(&ndp->lock, flags);
 	cmd = nr->cmd;
 	rsp = nr->rsp;
-	nr->cmd = NULL;
-	nr->rsp = NULL;
+	nr->cmd = शून्य;
+	nr->rsp = शून्य;
 	nr->used = false;
 	driven = !!(nr->flags & NCSI_REQ_FLAG_EVENT_DRIVEN);
 	spin_unlock_irqrestore(&ndp->lock, flags);
 
-	if (driven && cmd && --ndp->pending_req_num == 0)
+	अगर (driven && cmd && --ndp->pending_req_num == 0)
 		schedule_work(&ndp->work);
 
 	/* Release command and response */
 	consume_skb(cmd);
 	consume_skb(rsp);
-}
+पूर्ण
 
-struct ncsi_dev *ncsi_find_dev(struct net_device *dev)
-{
-	struct ncsi_dev_priv *ndp;
+काष्ठा ncsi_dev *ncsi_find_dev(काष्ठा net_device *dev)
+अणु
+	काष्ठा ncsi_dev_priv *ndp;
 
-	NCSI_FOR_EACH_DEV(ndp) {
-		if (ndp->ndev.dev == dev)
-			return &ndp->ndev;
-	}
+	NCSI_FOR_EACH_DEV(ndp) अणु
+		अगर (ndp->ndev.dev == dev)
+			वापस &ndp->ndev;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void ncsi_request_timeout(struct timer_list *t)
-{
-	struct ncsi_request *nr = from_timer(nr, t, timer);
-	struct ncsi_dev_priv *ndp = nr->ndp;
-	struct ncsi_cmd_pkt *cmd;
-	struct ncsi_package *np;
-	struct ncsi_channel *nc;
-	unsigned long flags;
+अटल व्योम ncsi_request_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ncsi_request *nr = from_समयr(nr, t, समयr);
+	काष्ठा ncsi_dev_priv *ndp = nr->ndp;
+	काष्ठा ncsi_cmd_pkt *cmd;
+	काष्ठा ncsi_package *np;
+	काष्ठा ncsi_channel *nc;
+	अचिन्हित दीर्घ flags;
 
-	/* If the request already had associated response,
+	/* If the request alपढ़ोy had associated response,
 	 * let the response handler to release it.
 	 */
 	spin_lock_irqsave(&ndp->lock, flags);
 	nr->enabled = false;
-	if (nr->rsp || !nr->cmd) {
+	अगर (nr->rsp || !nr->cmd) अणु
 		spin_unlock_irqrestore(&ndp->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_unlock_irqrestore(&ndp->lock, flags);
 
-	if (nr->flags == NCSI_REQ_FLAG_NETLINK_DRIVEN) {
-		if (nr->cmd) {
+	अगर (nr->flags == NCSI_REQ_FLAG_NETLINK_DRIVEN) अणु
+		अगर (nr->cmd) अणु
 			/* Find the package */
-			cmd = (struct ncsi_cmd_pkt *)
+			cmd = (काष्ठा ncsi_cmd_pkt *)
 			      skb_network_header(nr->cmd);
 			ncsi_find_package_and_channel(ndp,
 						      cmd->cmd.common.channel,
 						      &np, &nc);
-			ncsi_send_netlink_timeout(nr, np, nc);
-		}
-	}
+			ncsi_send_netlink_समयout(nr, np, nc);
+		पूर्ण
+	पूर्ण
 
 	/* Release the request */
-	ncsi_free_request(nr);
-}
+	ncsi_मुक्त_request(nr);
+पूर्ण
 
-static void ncsi_suspend_channel(struct ncsi_dev_priv *ndp)
-{
-	struct ncsi_dev *nd = &ndp->ndev;
-	struct ncsi_package *np;
-	struct ncsi_channel *nc, *tmp;
-	struct ncsi_cmd_arg nca;
-	unsigned long flags;
-	int ret;
+अटल व्योम ncsi_suspend_channel(काष्ठा ncsi_dev_priv *ndp)
+अणु
+	काष्ठा ncsi_dev *nd = &ndp->ndev;
+	काष्ठा ncsi_package *np;
+	काष्ठा ncsi_channel *nc, *पंचांगp;
+	काष्ठा ncsi_cmd_arg nca;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	np = ndp->active_package;
 	nc = ndp->active_channel;
 	nca.ndp = ndp;
 	nca.req_flags = NCSI_REQ_FLAG_EVENT_DRIVEN;
-	switch (nd->state) {
-	case ncsi_dev_state_suspend:
+	चयन (nd->state) अणु
+	हाल ncsi_dev_state_suspend:
 		nd->state = ncsi_dev_state_suspend_select;
 		fallthrough;
-	case ncsi_dev_state_suspend_select:
+	हाल ncsi_dev_state_suspend_select:
 		ndp->pending_req_num = 1;
 
 		nca.type = NCSI_PKT_CMD_SP;
 		nca.package = np->id;
 		nca.channel = NCSI_RESERVED_CHANNEL;
-		if (ndp->flags & NCSI_DEV_HWA)
+		अगर (ndp->flags & NCSI_DEV_HWA)
 			nca.bytes[0] = 0;
-		else
+		अन्यथा
 			nca.bytes[0] = 1;
 
 		/* To retrieve the last link states of channels in current
@@ -497,34 +498,34 @@ static void ncsi_suspend_channel(struct ncsi_dev_priv *ndp)
 		 * another one. It means we will possibly select another
 		 * channel as next active one. The link states of channels
 		 * are most important factor of the selection. So we need
-		 * accurate link states. Unfortunately, the link states on
-		 * inactive channels can't be updated with LSC AEN in time.
+		 * accurate link states. Unक्रमtunately, the link states on
+		 * inactive channels can't be updated with LSC AEN in समय.
 		 */
-		if (ndp->flags & NCSI_DEV_RESHUFFLE)
+		अगर (ndp->flags & NCSI_DEV_RESHUFFLE)
 			nd->state = ncsi_dev_state_suspend_gls;
-		else
+		अन्यथा
 			nd->state = ncsi_dev_state_suspend_dcnt;
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
-		break;
-	case ncsi_dev_state_suspend_gls:
+		अवरोध;
+	हाल ncsi_dev_state_suspend_gls:
 		ndp->pending_req_num = np->channel_num;
 
 		nca.type = NCSI_PKT_CMD_GLS;
 		nca.package = np->id;
 
 		nd->state = ncsi_dev_state_suspend_dcnt;
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
+		NCSI_FOR_EACH_CHANNEL(np, nc) अणु
 			nca.channel = nc->id;
 			ret = ncsi_xmit_cmd(&nca);
-			if (ret)
-				goto error;
-		}
+			अगर (ret)
+				जाओ error;
+		पूर्ण
 
-		break;
-	case ncsi_dev_state_suspend_dcnt:
+		अवरोध;
+	हाल ncsi_dev_state_suspend_dcnt:
 		ndp->pending_req_num = 1;
 
 		nca.type = NCSI_PKT_CMD_DCNT;
@@ -533,11 +534,11 @@ static void ncsi_suspend_channel(struct ncsi_dev_priv *ndp)
 
 		nd->state = ncsi_dev_state_suspend_dc;
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
-		break;
-	case ncsi_dev_state_suspend_dc:
+		अवरोध;
+	हाल ncsi_dev_state_suspend_dc:
 		ndp->pending_req_num = 1;
 
 		nca.type = NCSI_PKT_CMD_DC;
@@ -547,75 +548,75 @@ static void ncsi_suspend_channel(struct ncsi_dev_priv *ndp)
 
 		nd->state = ncsi_dev_state_suspend_deselect;
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
-		NCSI_FOR_EACH_CHANNEL(np, tmp) {
+		NCSI_FOR_EACH_CHANNEL(np, पंचांगp) अणु
 			/* If there is another channel active on this package
-			 * do not deselect the package.
+			 * करो not deselect the package.
 			 */
-			if (tmp != nc && tmp->state == NCSI_CHANNEL_ACTIVE) {
-				nd->state = ncsi_dev_state_suspend_done;
-				break;
-			}
-		}
-		break;
-	case ncsi_dev_state_suspend_deselect:
+			अगर (पंचांगp != nc && पंचांगp->state == NCSI_CHANNEL_ACTIVE) अणु
+				nd->state = ncsi_dev_state_suspend_करोne;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल ncsi_dev_state_suspend_deselect:
 		ndp->pending_req_num = 1;
 
 		nca.type = NCSI_PKT_CMD_DP;
 		nca.package = np->id;
 		nca.channel = NCSI_RESERVED_CHANNEL;
 
-		nd->state = ncsi_dev_state_suspend_done;
+		nd->state = ncsi_dev_state_suspend_करोne;
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
-		break;
-	case ncsi_dev_state_suspend_done:
+		अवरोध;
+	हाल ncsi_dev_state_suspend_करोne:
 		spin_lock_irqsave(&nc->lock, flags);
 		nc->state = NCSI_CHANNEL_INACTIVE;
 		spin_unlock_irqrestore(&nc->lock, flags);
-		if (ndp->flags & NCSI_DEV_RESET)
+		अगर (ndp->flags & NCSI_DEV_RESET)
 			ncsi_reset_dev(nd);
-		else
+		अन्यथा
 			ncsi_process_next_channel(ndp);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_warn(nd->dev, "Wrong NCSI state 0x%x in suspend\n",
 			    nd->state);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 error:
 	nd->state = ncsi_dev_state_functional;
-}
+पूर्ण
 
-/* Check the VLAN filter bitmap for a set filter, and construct a
- * "Set VLAN Filter - Disable" packet if found.
+/* Check the VLAN filter biपंचांगap क्रम a set filter, and स्थिरruct a
+ * "Set VLAN Filter - Disable" packet अगर found.
  */
-static int clear_one_vid(struct ncsi_dev_priv *ndp, struct ncsi_channel *nc,
-			 struct ncsi_cmd_arg *nca)
-{
-	struct ncsi_channel_vlan_filter *ncf;
-	unsigned long flags;
-	void *bitmap;
-	int index;
+अटल पूर्णांक clear_one_vid(काष्ठा ncsi_dev_priv *ndp, काष्ठा ncsi_channel *nc,
+			 काष्ठा ncsi_cmd_arg *nca)
+अणु
+	काष्ठा ncsi_channel_vlan_filter *ncf;
+	अचिन्हित दीर्घ flags;
+	व्योम *biपंचांगap;
+	पूर्णांक index;
 	u16 vid;
 
 	ncf = &nc->vlan_filter;
-	bitmap = &ncf->bitmap;
+	biपंचांगap = &ncf->biपंचांगap;
 
 	spin_lock_irqsave(&nc->lock, flags);
-	index = find_next_bit(bitmap, ncf->n_vids, 0);
-	if (index >= ncf->n_vids) {
+	index = find_next_bit(biपंचांगap, ncf->n_vids, 0);
+	अगर (index >= ncf->n_vids) अणु
 		spin_unlock_irqrestore(&nc->lock, flags);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	vid = ncf->vids[index];
 
-	clear_bit(index, bitmap);
+	clear_bit(index, biपंचांगap);
 	ncf->vids[index] = 0;
 	spin_unlock_irqrestore(&nc->lock, flags);
 
@@ -624,60 +625,60 @@ static int clear_one_vid(struct ncsi_dev_priv *ndp, struct ncsi_channel *nc,
 	/* HW filter index starts at 1 */
 	nca->bytes[6] = index + 1;
 	nca->bytes[7] = 0x00;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Find an outstanding VLAN tag and constuct a "Set VLAN Filter - Enable"
+/* Find an outstanding VLAN tag and स्थिरuct a "Set VLAN Filter - Enable"
  * packet.
  */
-static int set_one_vid(struct ncsi_dev_priv *ndp, struct ncsi_channel *nc,
-		       struct ncsi_cmd_arg *nca)
-{
-	struct ncsi_channel_vlan_filter *ncf;
-	struct vlan_vid *vlan = NULL;
-	unsigned long flags;
-	int i, index;
-	void *bitmap;
+अटल पूर्णांक set_one_vid(काष्ठा ncsi_dev_priv *ndp, काष्ठा ncsi_channel *nc,
+		       काष्ठा ncsi_cmd_arg *nca)
+अणु
+	काष्ठा ncsi_channel_vlan_filter *ncf;
+	काष्ठा vlan_vid *vlan = शून्य;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, index;
+	व्योम *biपंचांगap;
 	u16 vid;
 
-	if (list_empty(&ndp->vlan_vids))
-		return -1;
+	अगर (list_empty(&ndp->vlan_vids))
+		वापस -1;
 
 	ncf = &nc->vlan_filter;
-	bitmap = &ncf->bitmap;
+	biपंचांगap = &ncf->biपंचांगap;
 
 	spin_lock_irqsave(&nc->lock, flags);
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(vlan, &ndp->vlan_vids, list) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(vlan, &ndp->vlan_vids, list) अणु
 		vid = vlan->vid;
-		for (i = 0; i < ncf->n_vids; i++)
-			if (ncf->vids[i] == vid) {
+		क्रम (i = 0; i < ncf->n_vids; i++)
+			अगर (ncf->vids[i] == vid) अणु
 				vid = 0;
-				break;
-			}
-		if (vid)
-			break;
-	}
-	rcu_read_unlock();
+				अवरोध;
+			पूर्ण
+		अगर (vid)
+			अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (!vid) {
+	अगर (!vid) अणु
 		/* No VLAN ID is not set */
 		spin_unlock_irqrestore(&nc->lock, flags);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	index = find_next_zero_bit(bitmap, ncf->n_vids, 0);
-	if (index < 0 || index >= ncf->n_vids) {
+	index = find_next_zero_bit(biपंचांगap, ncf->n_vids, 0);
+	अगर (index < 0 || index >= ncf->n_vids) अणु
 		netdev_err(ndp->ndev.dev,
 			   "Channel %u already has all VLAN filters set\n",
 			   nc->id);
 		spin_unlock_irqrestore(&nc->lock, flags);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	ncf->vids[index] = vid;
-	set_bit(index, bitmap);
+	set_bit(index, biपंचांगap);
 	spin_unlock_irqrestore(&nc->lock, flags);
 
 	nca->type = NCSI_PKT_CMD_SVF;
@@ -686,44 +687,44 @@ static int set_one_vid(struct ncsi_dev_priv *ndp, struct ncsi_channel *nc,
 	nca->bytes[6] = index + 1;
 	nca->bytes[7] = 0x01;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_NCSI_OEM_CMD_GET_MAC)
+#अगर IS_ENABLED(CONFIG_NCSI_OEM_CMD_GET_MAC)
 
 /* NCSI OEM Command APIs */
-static int ncsi_oem_gma_handler_bcm(struct ncsi_cmd_arg *nca)
-{
-	unsigned char data[NCSI_OEM_BCM_CMD_GMA_LEN];
-	int ret = 0;
+अटल पूर्णांक ncsi_oem_gma_handler_bcm(काष्ठा ncsi_cmd_arg *nca)
+अणु
+	अचिन्हित अक्षर data[NCSI_OEM_BCM_CMD_GMA_LEN];
+	पूर्णांक ret = 0;
 
 	nca->payload = NCSI_OEM_BCM_CMD_GMA_LEN;
 
-	memset(data, 0, NCSI_OEM_BCM_CMD_GMA_LEN);
-	*(unsigned int *)data = ntohl(NCSI_OEM_MFR_BCM_ID);
+	स_रखो(data, 0, NCSI_OEM_BCM_CMD_GMA_LEN);
+	*(अचिन्हित पूर्णांक *)data = ntohl(NCSI_OEM_MFR_BCM_ID);
 	data[5] = NCSI_OEM_BCM_CMD_GMA;
 
 	nca->data = data;
 
 	ret = ncsi_xmit_cmd(nca);
-	if (ret)
+	अगर (ret)
 		netdev_err(nca->ndp->ndev.dev,
 			   "NCSI: Failed to transmit cmd 0x%x during configure\n",
 			   nca->type);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ncsi_oem_gma_handler_mlx(struct ncsi_cmd_arg *nca)
-{
-	union {
+अटल पूर्णांक ncsi_oem_gma_handler_mlx(काष्ठा ncsi_cmd_arg *nca)
+अणु
+	जोड़ अणु
 		u8 data_u8[NCSI_OEM_MLX_CMD_GMA_LEN];
-		u32 data_u32[NCSI_OEM_MLX_CMD_GMA_LEN / sizeof(u32)];
-	} u;
-	int ret = 0;
+		u32 data_u32[NCSI_OEM_MLX_CMD_GMA_LEN / माप(u32)];
+	पूर्ण u;
+	पूर्णांक ret = 0;
 
 	nca->payload = NCSI_OEM_MLX_CMD_GMA_LEN;
 
-	memset(&u, 0, sizeof(u));
+	स_रखो(&u, 0, माप(u));
 	u.data_u32[0] = ntohl(NCSI_OEM_MFR_MLX_ID);
 	u.data_u8[5] = NCSI_OEM_MLX_CMD_GMA;
 	u.data_u8[6] = NCSI_OEM_MLX_CMD_GMA_PARAM;
@@ -731,26 +732,26 @@ static int ncsi_oem_gma_handler_mlx(struct ncsi_cmd_arg *nca)
 	nca->data = u.data_u8;
 
 	ret = ncsi_xmit_cmd(nca);
-	if (ret)
+	अगर (ret)
 		netdev_err(nca->ndp->ndev.dev,
 			   "NCSI: Failed to transmit cmd 0x%x during configure\n",
 			   nca->type);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ncsi_oem_smaf_mlx(struct ncsi_cmd_arg *nca)
-{
-	union {
+अटल पूर्णांक ncsi_oem_smaf_mlx(काष्ठा ncsi_cmd_arg *nca)
+अणु
+	जोड़ अणु
 		u8 data_u8[NCSI_OEM_MLX_CMD_SMAF_LEN];
-		u32 data_u32[NCSI_OEM_MLX_CMD_SMAF_LEN / sizeof(u32)];
-	} u;
-	int ret = 0;
+		u32 data_u32[NCSI_OEM_MLX_CMD_SMAF_LEN / माप(u32)];
+	पूर्ण u;
+	पूर्णांक ret = 0;
 
-	memset(&u, 0, sizeof(u));
+	स_रखो(&u, 0, माप(u));
 	u.data_u32[0] = ntohl(NCSI_OEM_MFR_MLX_ID);
 	u.data_u8[5] = NCSI_OEM_MLX_CMD_SMAF;
 	u.data_u8[6] = NCSI_OEM_MLX_CMD_SMAF_PARAM;
-	memcpy(&u.data_u8[MLX_SMAF_MAC_ADDR_OFFSET],
+	स_नकल(&u.data_u8[MLX_SMAF_MAC_ADDR_OFFSET],
 	       nca->ndp->ndev.dev->dev_addr,	ETH_ALEN);
 	u.data_u8[MLX_SMAF_MED_SUPPORT_OFFSET] =
 		(MLX_MC_RBT_AVL | MLX_MC_RBT_SUPPORT);
@@ -759,169 +760,169 @@ static int ncsi_oem_smaf_mlx(struct ncsi_cmd_arg *nca)
 	nca->data = u.data_u8;
 
 	ret = ncsi_xmit_cmd(nca);
-	if (ret)
+	अगर (ret)
 		netdev_err(nca->ndp->ndev.dev,
 			   "NCSI: Failed to transmit cmd 0x%x during probe\n",
 			   nca->type);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* OEM Command handlers initialization */
-static struct ncsi_oem_gma_handler {
-	unsigned int	mfr_id;
-	int		(*handler)(struct ncsi_cmd_arg *nca);
-} ncsi_oem_gma_handlers[] = {
-	{ NCSI_OEM_MFR_BCM_ID, ncsi_oem_gma_handler_bcm },
-	{ NCSI_OEM_MFR_MLX_ID, ncsi_oem_gma_handler_mlx }
-};
+अटल काष्ठा ncsi_oem_gma_handler अणु
+	अचिन्हित पूर्णांक	mfr_id;
+	पूर्णांक		(*handler)(काष्ठा ncsi_cmd_arg *nca);
+पूर्ण ncsi_oem_gma_handlers[] = अणु
+	अणु NCSI_OEM_MFR_BCM_ID, ncsi_oem_gma_handler_bcm पूर्ण,
+	अणु NCSI_OEM_MFR_MLX_ID, ncsi_oem_gma_handler_mlx पूर्ण
+पूर्ण;
 
-static int ncsi_gma_handler(struct ncsi_cmd_arg *nca, unsigned int mf_id)
-{
-	struct ncsi_oem_gma_handler *nch = NULL;
-	int i;
+अटल पूर्णांक ncsi_gma_handler(काष्ठा ncsi_cmd_arg *nca, अचिन्हित पूर्णांक mf_id)
+अणु
+	काष्ठा ncsi_oem_gma_handler *nch = शून्य;
+	पूर्णांक i;
 
-	/* This function should only be called once, return if flag set */
-	if (nca->ndp->gma_flag == 1)
-		return -1;
+	/* This function should only be called once, वापस अगर flag set */
+	अगर (nca->ndp->gma_flag == 1)
+		वापस -1;
 
-	/* Find gma handler for given manufacturer id */
-	for (i = 0; i < ARRAY_SIZE(ncsi_oem_gma_handlers); i++) {
-		if (ncsi_oem_gma_handlers[i].mfr_id == mf_id) {
-			if (ncsi_oem_gma_handlers[i].handler)
+	/* Find gma handler क्रम given manufacturer id */
+	क्रम (i = 0; i < ARRAY_SIZE(ncsi_oem_gma_handlers); i++) अणु
+		अगर (ncsi_oem_gma_handlers[i].mfr_id == mf_id) अणु
+			अगर (ncsi_oem_gma_handlers[i].handler)
 				nch = &ncsi_oem_gma_handlers[i];
-			break;
-			}
-	}
+			अवरोध;
+			पूर्ण
+	पूर्ण
 
-	if (!nch) {
+	अगर (!nch) अणु
 		netdev_err(nca->ndp->ndev.dev,
 			   "NCSI: No GMA handler available for MFR-ID (0x%x)\n",
 			   mf_id);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/* Get Mac address from NCSI device */
-	return nch->handler(nca);
-}
+	वापस nch->handler(nca);
+पूर्ण
 
-#endif /* CONFIG_NCSI_OEM_CMD_GET_MAC */
+#पूर्ण_अगर /* CONFIG_NCSI_OEM_CMD_GET_MAC */
 
-/* Determine if a given channel from the channel_queue should be used for Tx */
-static bool ncsi_channel_is_tx(struct ncsi_dev_priv *ndp,
-			       struct ncsi_channel *nc)
-{
-	struct ncsi_channel_mode *ncm;
-	struct ncsi_channel *channel;
-	struct ncsi_package *np;
+/* Determine अगर a given channel from the channel_queue should be used क्रम Tx */
+अटल bool ncsi_channel_is_tx(काष्ठा ncsi_dev_priv *ndp,
+			       काष्ठा ncsi_channel *nc)
+अणु
+	काष्ठा ncsi_channel_mode *ncm;
+	काष्ठा ncsi_channel *channel;
+	काष्ठा ncsi_package *np;
 
-	/* Check if any other channel has Tx enabled; a channel may have already
-	 * been configured and removed from the channel queue.
+	/* Check अगर any other channel has Tx enabled; a channel may have alपढ़ोy
+	 * been configured and हटाओd from the channel queue.
 	 */
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		if (!ndp->multi_package && np != nc->package)
-			continue;
-		NCSI_FOR_EACH_CHANNEL(np, channel) {
+	NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
+		अगर (!ndp->multi_package && np != nc->package)
+			जारी;
+		NCSI_FOR_EACH_CHANNEL(np, channel) अणु
 			ncm = &channel->modes[NCSI_MODE_TX_ENABLE];
-			if (ncm->enable)
-				return false;
-		}
-	}
+			अगर (ncm->enable)
+				वापस false;
+		पूर्ण
+	पूर्ण
 
 	/* This channel is the preferred channel and has link */
-	list_for_each_entry_rcu(channel, &ndp->channel_queue, link) {
+	list_क्रम_each_entry_rcu(channel, &ndp->channel_queue, link) अणु
 		np = channel->package;
-		if (np->preferred_channel &&
-		    ncsi_channel_has_link(np->preferred_channel)) {
-			return np->preferred_channel == nc;
-		}
-	}
+		अगर (np->preferred_channel &&
+		    ncsi_channel_has_link(np->preferred_channel)) अणु
+			वापस np->preferred_channel == nc;
+		पूर्ण
+	पूर्ण
 
 	/* This channel has link */
-	if (ncsi_channel_has_link(nc))
-		return true;
+	अगर (ncsi_channel_has_link(nc))
+		वापस true;
 
-	list_for_each_entry_rcu(channel, &ndp->channel_queue, link)
-		if (ncsi_channel_has_link(channel))
-			return false;
+	list_क्रम_each_entry_rcu(channel, &ndp->channel_queue, link)
+		अगर (ncsi_channel_has_link(channel))
+			वापस false;
 
-	/* No other channel has link; default to this one */
-	return true;
-}
+	/* No other channel has link; शेष to this one */
+	वापस true;
+पूर्ण
 
 /* Change the active Tx channel in a multi-channel setup */
-int ncsi_update_tx_channel(struct ncsi_dev_priv *ndp,
-			   struct ncsi_package *package,
-			   struct ncsi_channel *disable,
-			   struct ncsi_channel *enable)
-{
-	struct ncsi_cmd_arg nca;
-	struct ncsi_channel *nc;
-	struct ncsi_package *np;
-	int ret = 0;
+पूर्णांक ncsi_update_tx_channel(काष्ठा ncsi_dev_priv *ndp,
+			   काष्ठा ncsi_package *package,
+			   काष्ठा ncsi_channel *disable,
+			   काष्ठा ncsi_channel *enable)
+अणु
+	काष्ठा ncsi_cmd_arg nca;
+	काष्ठा ncsi_channel *nc;
+	काष्ठा ncsi_package *np;
+	पूर्णांक ret = 0;
 
-	if (!package->multi_channel && !ndp->multi_package)
+	अगर (!package->multi_channel && !ndp->multi_package)
 		netdev_warn(ndp->ndev.dev,
 			    "NCSI: Trying to update Tx channel in single-channel mode\n");
 	nca.ndp = ndp;
 	nca.req_flags = 0;
 
 	/* Find current channel with Tx enabled */
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		if (disable)
-			break;
-		if (!ndp->multi_package && np != package)
-			continue;
+	NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
+		अगर (disable)
+			अवरोध;
+		अगर (!ndp->multi_package && np != package)
+			जारी;
 
 		NCSI_FOR_EACH_CHANNEL(np, nc)
-			if (nc->modes[NCSI_MODE_TX_ENABLE].enable) {
+			अगर (nc->modes[NCSI_MODE_TX_ENABLE].enable) अणु
 				disable = nc;
-				break;
-			}
-	}
+				अवरोध;
+			पूर्ण
+	पूर्ण
 
-	/* Find a suitable channel for Tx */
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		if (enable)
-			break;
-		if (!ndp->multi_package && np != package)
-			continue;
-		if (!(ndp->package_whitelist & (0x1 << np->id)))
-			continue;
+	/* Find a suitable channel क्रम Tx */
+	NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
+		अगर (enable)
+			अवरोध;
+		अगर (!ndp->multi_package && np != package)
+			जारी;
+		अगर (!(ndp->package_whitelist & (0x1 << np->id)))
+			जारी;
 
-		if (np->preferred_channel &&
-		    ncsi_channel_has_link(np->preferred_channel)) {
+		अगर (np->preferred_channel &&
+		    ncsi_channel_has_link(np->preferred_channel)) अणु
 			enable = np->preferred_channel;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
-			if (!(np->channel_whitelist & 0x1 << nc->id))
-				continue;
-			if (nc->state != NCSI_CHANNEL_ACTIVE)
-				continue;
-			if (ncsi_channel_has_link(nc)) {
+		NCSI_FOR_EACH_CHANNEL(np, nc) अणु
+			अगर (!(np->channel_whitelist & 0x1 << nc->id))
+				जारी;
+			अगर (nc->state != NCSI_CHANNEL_ACTIVE)
+				जारी;
+			अगर (ncsi_channel_has_link(nc)) अणु
 				enable = nc;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (disable == enable)
-		return -1;
+	अगर (disable == enable)
+		वापस -1;
 
-	if (!enable)
-		return -1;
+	अगर (!enable)
+		वापस -1;
 
-	if (disable) {
+	अगर (disable) अणु
 		nca.channel = disable->id;
 		nca.package = disable->package->id;
 		nca.type = NCSI_PKT_CMD_DCNT;
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret)
+		अगर (ret)
 			netdev_err(ndp->ndev.dev,
 				   "Error %d sending DCNT\n",
 				   ret);
-	}
+	पूर्ण
 
 	netdev_info(ndp->ndev.dev, "NCSI: channel %u enables Tx\n", enable->id);
 
@@ -929,51 +930,51 @@ int ncsi_update_tx_channel(struct ncsi_dev_priv *ndp,
 	nca.package = enable->package->id;
 	nca.type = NCSI_PKT_CMD_ECNT;
 	ret = ncsi_xmit_cmd(&nca);
-	if (ret)
+	अगर (ret)
 		netdev_err(ndp->ndev.dev,
 			   "Error %d sending ECNT\n",
 			   ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ncsi_configure_channel(struct ncsi_dev_priv *ndp)
-{
-	struct ncsi_package *np = ndp->active_package;
-	struct ncsi_channel *nc = ndp->active_channel;
-	struct ncsi_channel *hot_nc = NULL;
-	struct ncsi_dev *nd = &ndp->ndev;
-	struct net_device *dev = nd->dev;
-	struct ncsi_cmd_arg nca;
-	unsigned char index;
-	unsigned long flags;
-	int ret;
+अटल व्योम ncsi_configure_channel(काष्ठा ncsi_dev_priv *ndp)
+अणु
+	काष्ठा ncsi_package *np = ndp->active_package;
+	काष्ठा ncsi_channel *nc = ndp->active_channel;
+	काष्ठा ncsi_channel *hot_nc = शून्य;
+	काष्ठा ncsi_dev *nd = &ndp->ndev;
+	काष्ठा net_device *dev = nd->dev;
+	काष्ठा ncsi_cmd_arg nca;
+	अचिन्हित अक्षर index;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	nca.ndp = ndp;
 	nca.req_flags = NCSI_REQ_FLAG_EVENT_DRIVEN;
-	switch (nd->state) {
-	case ncsi_dev_state_config:
-	case ncsi_dev_state_config_sp:
+	चयन (nd->state) अणु
+	हाल ncsi_dev_state_config:
+	हाल ncsi_dev_state_config_sp:
 		ndp->pending_req_num = 1;
 
-		/* Select the specific package */
+		/* Select the specअगरic package */
 		nca.type = NCSI_PKT_CMD_SP;
-		if (ndp->flags & NCSI_DEV_HWA)
+		अगर (ndp->flags & NCSI_DEV_HWA)
 			nca.bytes[0] = 0;
-		else
+		अन्यथा
 			nca.bytes[0] = 1;
 		nca.package = np->id;
 		nca.channel = NCSI_RESERVED_CHANNEL;
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(ndp->ndev.dev,
 				   "NCSI: Failed to transmit CMD_SP\n");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		nd->state = ncsi_dev_state_config_cis;
-		break;
-	case ncsi_dev_state_config_cis:
+		अवरोध;
+	हाल ncsi_dev_state_config_cis:
 		ndp->pending_req_num = 1;
 
 		/* Clear initial state */
@@ -981,152 +982,152 @@ static void ncsi_configure_channel(struct ncsi_dev_priv *ndp)
 		nca.package = np->id;
 		nca.channel = nc->id;
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(ndp->ndev.dev,
 				   "NCSI: Failed to transmit CMD_CIS\n");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		nd->state = ncsi_dev_state_config_oem_gma;
-		break;
-	case ncsi_dev_state_config_oem_gma:
+		अवरोध;
+	हाल ncsi_dev_state_config_oem_gma:
 		nd->state = ncsi_dev_state_config_clear_vids;
 		ret = -1;
 
-#if IS_ENABLED(CONFIG_NCSI_OEM_CMD_GET_MAC)
+#अगर IS_ENABLED(CONFIG_NCSI_OEM_CMD_GET_MAC)
 		nca.type = NCSI_PKT_CMD_OEM;
 		nca.package = np->id;
 		nca.channel = nc->id;
 		ndp->pending_req_num = 1;
 		ret = ncsi_gma_handler(&nca, nc->version.mf_id);
-#endif /* CONFIG_NCSI_OEM_CMD_GET_MAC */
+#पूर्ण_अगर /* CONFIG_NCSI_OEM_CMD_GET_MAC */
 
-		if (ret < 0)
+		अगर (ret < 0)
 			schedule_work(&ndp->work);
 
-		break;
-	case ncsi_dev_state_config_clear_vids:
-	case ncsi_dev_state_config_svf:
-	case ncsi_dev_state_config_ev:
-	case ncsi_dev_state_config_sma:
-	case ncsi_dev_state_config_ebf:
-	case ncsi_dev_state_config_dgmf:
-	case ncsi_dev_state_config_ecnt:
-	case ncsi_dev_state_config_ec:
-	case ncsi_dev_state_config_ae:
-	case ncsi_dev_state_config_gls:
+		अवरोध;
+	हाल ncsi_dev_state_config_clear_vids:
+	हाल ncsi_dev_state_config_svf:
+	हाल ncsi_dev_state_config_ev:
+	हाल ncsi_dev_state_config_sma:
+	हाल ncsi_dev_state_config_ebf:
+	हाल ncsi_dev_state_config_dgmf:
+	हाल ncsi_dev_state_config_ecnt:
+	हाल ncsi_dev_state_config_ec:
+	हाल ncsi_dev_state_config_ae:
+	हाल ncsi_dev_state_config_gls:
 		ndp->pending_req_num = 1;
 
 		nca.package = np->id;
 		nca.channel = nc->id;
 
-		/* Clear any active filters on the channel before setting */
-		if (nd->state == ncsi_dev_state_config_clear_vids) {
+		/* Clear any active filters on the channel beक्रमe setting */
+		अगर (nd->state == ncsi_dev_state_config_clear_vids) अणु
 			ret = clear_one_vid(ndp, nc, &nca);
-			if (ret) {
+			अगर (ret) अणु
 				nd->state = ncsi_dev_state_config_svf;
 				schedule_work(&ndp->work);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			/* Repeat */
 			nd->state = ncsi_dev_state_config_clear_vids;
 		/* Add known VLAN tags to the filter */
-		} else if (nd->state == ncsi_dev_state_config_svf) {
+		पूर्ण अन्यथा अगर (nd->state == ncsi_dev_state_config_svf) अणु
 			ret = set_one_vid(ndp, nc, &nca);
-			if (ret) {
+			अगर (ret) अणु
 				nd->state = ncsi_dev_state_config_ev;
 				schedule_work(&ndp->work);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			/* Repeat */
 			nd->state = ncsi_dev_state_config_svf;
 		/* Enable/Disable the VLAN filter */
-		} else if (nd->state == ncsi_dev_state_config_ev) {
-			if (list_empty(&ndp->vlan_vids)) {
+		पूर्ण अन्यथा अगर (nd->state == ncsi_dev_state_config_ev) अणु
+			अगर (list_empty(&ndp->vlan_vids)) अणु
 				nca.type = NCSI_PKT_CMD_DV;
-			} else {
+			पूर्ण अन्यथा अणु
 				nca.type = NCSI_PKT_CMD_EV;
 				nca.bytes[3] = NCSI_CAP_VLAN_NO;
-			}
+			पूर्ण
 			nd->state = ncsi_dev_state_config_sma;
-		} else if (nd->state == ncsi_dev_state_config_sma) {
+		पूर्ण अन्यथा अगर (nd->state == ncsi_dev_state_config_sma) अणु
 		/* Use first entry in unicast filter table. Note that
 		 * the MAC filter table starts from entry 1 instead of
 		 * 0.
 		 */
 			nca.type = NCSI_PKT_CMD_SMA;
-			for (index = 0; index < 6; index++)
+			क्रम (index = 0; index < 6; index++)
 				nca.bytes[index] = dev->dev_addr[index];
 			nca.bytes[6] = 0x1;
 			nca.bytes[7] = 0x1;
 			nd->state = ncsi_dev_state_config_ebf;
-		} else if (nd->state == ncsi_dev_state_config_ebf) {
+		पूर्ण अन्यथा अगर (nd->state == ncsi_dev_state_config_ebf) अणु
 			nca.type = NCSI_PKT_CMD_EBF;
 			nca.dwords[0] = nc->caps[NCSI_CAP_BC].cap;
-			/* if multicast global filtering is supported then
+			/* अगर multicast global filtering is supported then
 			 * disable it so that all multicast packet will be
-			 * forwarded to management controller
+			 * क्रमwarded to management controller
 			 */
-			if (nc->caps[NCSI_CAP_GENERIC].cap &
+			अगर (nc->caps[NCSI_CAP_GENERIC].cap &
 			    NCSI_CAP_GENERIC_MC)
 				nd->state = ncsi_dev_state_config_dgmf;
-			else if (ncsi_channel_is_tx(ndp, nc))
+			अन्यथा अगर (ncsi_channel_is_tx(ndp, nc))
 				nd->state = ncsi_dev_state_config_ecnt;
-			else
+			अन्यथा
 				nd->state = ncsi_dev_state_config_ec;
-		} else if (nd->state == ncsi_dev_state_config_dgmf) {
+		पूर्ण अन्यथा अगर (nd->state == ncsi_dev_state_config_dgmf) अणु
 			nca.type = NCSI_PKT_CMD_DGMF;
-			if (ncsi_channel_is_tx(ndp, nc))
+			अगर (ncsi_channel_is_tx(ndp, nc))
 				nd->state = ncsi_dev_state_config_ecnt;
-			else
+			अन्यथा
 				nd->state = ncsi_dev_state_config_ec;
-		} else if (nd->state == ncsi_dev_state_config_ecnt) {
-			if (np->preferred_channel &&
+		पूर्ण अन्यथा अगर (nd->state == ncsi_dev_state_config_ecnt) अणु
+			अगर (np->preferred_channel &&
 			    nc != np->preferred_channel)
 				netdev_info(ndp->ndev.dev,
 					    "NCSI: Tx failed over to channel %u\n",
 					    nc->id);
 			nca.type = NCSI_PKT_CMD_ECNT;
 			nd->state = ncsi_dev_state_config_ec;
-		} else if (nd->state == ncsi_dev_state_config_ec) {
-			/* Enable AEN if it's supported */
+		पूर्ण अन्यथा अगर (nd->state == ncsi_dev_state_config_ec) अणु
+			/* Enable AEN अगर it's supported */
 			nca.type = NCSI_PKT_CMD_EC;
 			nd->state = ncsi_dev_state_config_ae;
-			if (!(nc->caps[NCSI_CAP_AEN].cap & NCSI_CAP_AEN_MASK))
+			अगर (!(nc->caps[NCSI_CAP_AEN].cap & NCSI_CAP_AEN_MASK))
 				nd->state = ncsi_dev_state_config_gls;
-		} else if (nd->state == ncsi_dev_state_config_ae) {
+		पूर्ण अन्यथा अगर (nd->state == ncsi_dev_state_config_ae) अणु
 			nca.type = NCSI_PKT_CMD_AE;
 			nca.bytes[0] = 0;
 			nca.dwords[1] = nc->caps[NCSI_CAP_AEN].cap;
 			nd->state = ncsi_dev_state_config_gls;
-		} else if (nd->state == ncsi_dev_state_config_gls) {
+		पूर्ण अन्यथा अगर (nd->state == ncsi_dev_state_config_gls) अणु
 			nca.type = NCSI_PKT_CMD_GLS;
-			nd->state = ncsi_dev_state_config_done;
-		}
+			nd->state = ncsi_dev_state_config_करोne;
+		पूर्ण
 
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(ndp->ndev.dev,
 				   "NCSI: Failed to transmit CMD %x\n",
 				   nca.type);
-			goto error;
-		}
-		break;
-	case ncsi_dev_state_config_done:
+			जाओ error;
+		पूर्ण
+		अवरोध;
+	हाल ncsi_dev_state_config_करोne:
 		netdev_dbg(ndp->ndev.dev, "NCSI: channel %u config done\n",
 			   nc->id);
 		spin_lock_irqsave(&nc->lock, flags);
 		nc->state = NCSI_CHANNEL_ACTIVE;
 
-		if (ndp->flags & NCSI_DEV_RESET) {
+		अगर (ndp->flags & NCSI_DEV_RESET) अणु
 			/* A reset event happened during config, start it now */
 			nc->reconfigure_needed = false;
 			spin_unlock_irqrestore(&nc->lock, flags);
 			ncsi_reset_dev(nd);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (nc->reconfigure_needed) {
+		अगर (nc->reconfigure_needed) अणु
 			/* This channel's configuration has been updated
 			 * part-way during the config state - start the
 			 * channel configuration over
@@ -1141,17 +1142,17 @@ static void ncsi_configure_channel(struct ncsi_dev_priv *ndp)
 
 			netdev_dbg(dev, "Dirty NCSI channel state reset\n");
 			ncsi_process_next_channel(ndp);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (nc->modes[NCSI_MODE_LINK].data[2] & 0x1) {
+		अगर (nc->modes[NCSI_MODE_LINK].data[2] & 0x1) अणु
 			hot_nc = nc;
-		} else {
-			hot_nc = NULL;
+		पूर्ण अन्यथा अणु
+			hot_nc = शून्य;
 			netdev_dbg(ndp->ndev.dev,
 				   "NCSI: channel %u link down after config\n",
 				   nc->id);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&nc->lock, flags);
 
 		/* Update the hot channel */
@@ -1161,69 +1162,69 @@ static void ncsi_configure_channel(struct ncsi_dev_priv *ndp)
 
 		ncsi_start_channel_monitor(nc);
 		ncsi_process_next_channel(ndp);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_alert(dev, "Wrong NCSI state 0x%x in config\n",
 			     nd->state);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
 error:
 	ncsi_report_link(ndp, true);
-}
+पूर्ण
 
-static int ncsi_choose_active_channel(struct ncsi_dev_priv *ndp)
-{
-	struct ncsi_channel *nc, *found, *hot_nc;
-	struct ncsi_channel_mode *ncm;
-	unsigned long flags, cflags;
-	struct ncsi_package *np;
+अटल पूर्णांक ncsi_choose_active_channel(काष्ठा ncsi_dev_priv *ndp)
+अणु
+	काष्ठा ncsi_channel *nc, *found, *hot_nc;
+	काष्ठा ncsi_channel_mode *ncm;
+	अचिन्हित दीर्घ flags, cflags;
+	काष्ठा ncsi_package *np;
 	bool with_link;
 
 	spin_lock_irqsave(&ndp->lock, flags);
 	hot_nc = ndp->hot_channel;
 	spin_unlock_irqrestore(&ndp->lock, flags);
 
-	/* By default the search is done once an inactive channel with up
+	/* By शेष the search is करोne once an inactive channel with up
 	 * link is found, unless a preferred channel is set.
 	 * If multi_package or multi_channel are configured all channels in the
 	 * whitelist are added to the channel queue.
 	 */
-	found = NULL;
+	found = शून्य;
 	with_link = false;
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		if (!(ndp->package_whitelist & (0x1 << np->id)))
-			continue;
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
-			if (!(np->channel_whitelist & (0x1 << nc->id)))
-				continue;
+	NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
+		अगर (!(ndp->package_whitelist & (0x1 << np->id)))
+			जारी;
+		NCSI_FOR_EACH_CHANNEL(np, nc) अणु
+			अगर (!(np->channel_whitelist & (0x1 << nc->id)))
+				जारी;
 
 			spin_lock_irqsave(&nc->lock, cflags);
 
-			if (!list_empty(&nc->link) ||
-			    nc->state != NCSI_CHANNEL_INACTIVE) {
+			अगर (!list_empty(&nc->link) ||
+			    nc->state != NCSI_CHANNEL_INACTIVE) अणु
 				spin_unlock_irqrestore(&nc->lock, cflags);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (!found)
+			अगर (!found)
 				found = nc;
 
-			if (nc == hot_nc)
+			अगर (nc == hot_nc)
 				found = nc;
 
 			ncm = &nc->modes[NCSI_MODE_LINK];
-			if (ncm->data[2] & 0x1) {
+			अगर (ncm->data[2] & 0x1) अणु
 				found = nc;
 				with_link = true;
-			}
+			पूर्ण
 
 			/* If multi_channel is enabled configure all valid
 			 * channels whether or not they currently have link
 			 * so they will have AENs enabled.
 			 */
-			if (with_link || np->multi_channel) {
+			अगर (with_link || np->multi_channel) अणु
 				spin_lock_irqsave(&ndp->lock, flags);
 				list_add_tail_rcu(&nc->link,
 						  &ndp->channel_queue);
@@ -1233,98 +1234,98 @@ static int ncsi_choose_active_channel(struct ncsi_dev_priv *ndp)
 					   "NCSI: Channel %u added to queue (link %s)\n",
 					   nc->id,
 					   ncm->data[2] & 0x1 ? "up" : "down");
-			}
+			पूर्ण
 
 			spin_unlock_irqrestore(&nc->lock, cflags);
 
-			if (with_link && !np->multi_channel)
-				break;
-		}
-		if (with_link && !ndp->multi_package)
-			break;
-	}
+			अगर (with_link && !np->multi_channel)
+				अवरोध;
+		पूर्ण
+		अगर (with_link && !ndp->multi_package)
+			अवरोध;
+	पूर्ण
 
-	if (list_empty(&ndp->channel_queue) && found) {
+	अगर (list_empty(&ndp->channel_queue) && found) अणु
 		netdev_info(ndp->ndev.dev,
 			    "NCSI: No channel with link found, configuring channel %u\n",
 			    found->id);
 		spin_lock_irqsave(&ndp->lock, flags);
 		list_add_tail_rcu(&found->link, &ndp->channel_queue);
 		spin_unlock_irqrestore(&ndp->lock, flags);
-	} else if (!found) {
+	पूर्ण अन्यथा अगर (!found) अणु
 		netdev_warn(ndp->ndev.dev,
 			    "NCSI: No channel found to configure!\n");
 		ncsi_report_link(ndp, true);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return ncsi_process_next_channel(ndp);
-}
+	वापस ncsi_process_next_channel(ndp);
+पूर्ण
 
-static bool ncsi_check_hwa(struct ncsi_dev_priv *ndp)
-{
-	struct ncsi_package *np;
-	struct ncsi_channel *nc;
-	unsigned int cap;
+अटल bool ncsi_check_hwa(काष्ठा ncsi_dev_priv *ndp)
+अणु
+	काष्ठा ncsi_package *np;
+	काष्ठा ncsi_channel *nc;
+	अचिन्हित पूर्णांक cap;
 	bool has_channel = false;
 
-	/* The hardware arbitration is disabled if any one channel
-	 * doesn't support explicitly.
+	/* The hardware arbitration is disabled अगर any one channel
+	 * करोesn't support explicitly.
 	 */
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
+	NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
+		NCSI_FOR_EACH_CHANNEL(np, nc) अणु
 			has_channel = true;
 
 			cap = nc->caps[NCSI_CAP_GENERIC].cap;
-			if (!(cap & NCSI_CAP_GENERIC_HWA) ||
+			अगर (!(cap & NCSI_CAP_GENERIC_HWA) ||
 			    (cap & NCSI_CAP_GENERIC_HWA_MASK) !=
-			    NCSI_CAP_GENERIC_HWA_SUPPORT) {
+			    NCSI_CAP_GENERIC_HWA_SUPPORT) अणु
 				ndp->flags &= ~NCSI_DEV_HWA;
-				return false;
-			}
-		}
-	}
+				वापस false;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (has_channel) {
+	अगर (has_channel) अणु
 		ndp->flags |= NCSI_DEV_HWA;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	ndp->flags &= ~NCSI_DEV_HWA;
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void ncsi_probe_channel(struct ncsi_dev_priv *ndp)
-{
-	struct ncsi_dev *nd = &ndp->ndev;
-	struct ncsi_package *np;
-	struct ncsi_channel *nc;
-	struct ncsi_cmd_arg nca;
-	unsigned char index;
-	int ret;
+अटल व्योम ncsi_probe_channel(काष्ठा ncsi_dev_priv *ndp)
+अणु
+	काष्ठा ncsi_dev *nd = &ndp->ndev;
+	काष्ठा ncsi_package *np;
+	काष्ठा ncsi_channel *nc;
+	काष्ठा ncsi_cmd_arg nca;
+	अचिन्हित अक्षर index;
+	पूर्णांक ret;
 
 	nca.ndp = ndp;
 	nca.req_flags = NCSI_REQ_FLAG_EVENT_DRIVEN;
-	switch (nd->state) {
-	case ncsi_dev_state_probe:
+	चयन (nd->state) अणु
+	हाल ncsi_dev_state_probe:
 		nd->state = ncsi_dev_state_probe_deselect;
 		fallthrough;
-	case ncsi_dev_state_probe_deselect:
+	हाल ncsi_dev_state_probe_deselect:
 		ndp->pending_req_num = 8;
 
 		/* Deselect all possible packages */
 		nca.type = NCSI_PKT_CMD_DP;
 		nca.channel = NCSI_RESERVED_CHANNEL;
-		for (index = 0; index < 8; index++) {
+		क्रम (index = 0; index < 8; index++) अणु
 			nca.package = index;
 			ret = ncsi_xmit_cmd(&nca);
-			if (ret)
-				goto error;
-		}
+			अगर (ret)
+				जाओ error;
+		पूर्ण
 
 		nd->state = ncsi_dev_state_probe_package;
-		break;
-	case ncsi_dev_state_probe_package:
+		अवरोध;
+	हाल ncsi_dev_state_probe_package:
 		ndp->pending_req_num = 1;
 
 		nca.type = NCSI_PKT_CMD_SP;
@@ -1332,97 +1333,97 @@ static void ncsi_probe_channel(struct ncsi_dev_priv *ndp)
 		nca.package = ndp->package_probe_id;
 		nca.channel = NCSI_RESERVED_CHANNEL;
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 		nd->state = ncsi_dev_state_probe_channel;
-		break;
-	case ncsi_dev_state_probe_channel:
+		अवरोध;
+	हाल ncsi_dev_state_probe_channel:
 		ndp->active_package = ncsi_find_package(ndp,
 							ndp->package_probe_id);
-		if (!ndp->active_package) {
+		अगर (!ndp->active_package) अणु
 			/* No response */
 			nd->state = ncsi_dev_state_probe_dp;
 			schedule_work(&ndp->work);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		nd->state = ncsi_dev_state_probe_cis;
-		if (IS_ENABLED(CONFIG_NCSI_OEM_CMD_GET_MAC) &&
+		अगर (IS_ENABLED(CONFIG_NCSI_OEM_CMD_GET_MAC) &&
 		    ndp->mlx_multi_host)
 			nd->state = ncsi_dev_state_probe_mlx_gma;
 
 		schedule_work(&ndp->work);
-		break;
-#if IS_ENABLED(CONFIG_NCSI_OEM_CMD_GET_MAC)
-	case ncsi_dev_state_probe_mlx_gma:
+		अवरोध;
+#अगर IS_ENABLED(CONFIG_NCSI_OEM_CMD_GET_MAC)
+	हाल ncsi_dev_state_probe_mlx_gma:
 		ndp->pending_req_num = 1;
 
 		nca.type = NCSI_PKT_CMD_OEM;
 		nca.package = ndp->active_package->id;
 		nca.channel = 0;
 		ret = ncsi_oem_gma_handler_mlx(&nca);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
 		nd->state = ncsi_dev_state_probe_mlx_smaf;
-		break;
-	case ncsi_dev_state_probe_mlx_smaf:
+		अवरोध;
+	हाल ncsi_dev_state_probe_mlx_smaf:
 		ndp->pending_req_num = 1;
 
 		nca.type = NCSI_PKT_CMD_OEM;
 		nca.package = ndp->active_package->id;
 		nca.channel = 0;
 		ret = ncsi_oem_smaf_mlx(&nca);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
 		nd->state = ncsi_dev_state_probe_cis;
-		break;
-#endif /* CONFIG_NCSI_OEM_CMD_GET_MAC */
-	case ncsi_dev_state_probe_cis:
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_NCSI_OEM_CMD_GET_MAC */
+	हाल ncsi_dev_state_probe_cis:
 		ndp->pending_req_num = NCSI_RESERVED_CHANNEL;
 
 		/* Clear initial state */
 		nca.type = NCSI_PKT_CMD_CIS;
 		nca.package = ndp->active_package->id;
-		for (index = 0; index < NCSI_RESERVED_CHANNEL; index++) {
+		क्रम (index = 0; index < NCSI_RESERVED_CHANNEL; index++) अणु
 			nca.channel = index;
 			ret = ncsi_xmit_cmd(&nca);
-			if (ret)
-				goto error;
-		}
+			अगर (ret)
+				जाओ error;
+		पूर्ण
 
 		nd->state = ncsi_dev_state_probe_gvi;
-		break;
-	case ncsi_dev_state_probe_gvi:
-	case ncsi_dev_state_probe_gc:
-	case ncsi_dev_state_probe_gls:
+		अवरोध;
+	हाल ncsi_dev_state_probe_gvi:
+	हाल ncsi_dev_state_probe_gc:
+	हाल ncsi_dev_state_probe_gls:
 		np = ndp->active_package;
 		ndp->pending_req_num = np->channel_num;
 
 		/* Retrieve version, capability or link status */
-		if (nd->state == ncsi_dev_state_probe_gvi)
+		अगर (nd->state == ncsi_dev_state_probe_gvi)
 			nca.type = NCSI_PKT_CMD_GVI;
-		else if (nd->state == ncsi_dev_state_probe_gc)
+		अन्यथा अगर (nd->state == ncsi_dev_state_probe_gc)
 			nca.type = NCSI_PKT_CMD_GC;
-		else
+		अन्यथा
 			nca.type = NCSI_PKT_CMD_GLS;
 
 		nca.package = np->id;
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
+		NCSI_FOR_EACH_CHANNEL(np, nc) अणु
 			nca.channel = nc->id;
 			ret = ncsi_xmit_cmd(&nca);
-			if (ret)
-				goto error;
-		}
+			अगर (ret)
+				जाओ error;
+		पूर्ण
 
-		if (nd->state == ncsi_dev_state_probe_gvi)
+		अगर (nd->state == ncsi_dev_state_probe_gvi)
 			nd->state = ncsi_dev_state_probe_gc;
-		else if (nd->state == ncsi_dev_state_probe_gc)
+		अन्यथा अगर (nd->state == ncsi_dev_state_probe_gc)
 			nd->state = ncsi_dev_state_probe_gls;
-		else
+		अन्यथा
 			nd->state = ncsi_dev_state_probe_dp;
-		break;
-	case ncsi_dev_state_probe_dp:
+		अवरोध;
+	हाल ncsi_dev_state_probe_dp:
 		ndp->pending_req_num = 1;
 
 		/* Deselect the current package */
@@ -1430,73 +1431,73 @@ static void ncsi_probe_channel(struct ncsi_dev_priv *ndp)
 		nca.package = ndp->package_probe_id;
 		nca.channel = NCSI_RESERVED_CHANNEL;
 		ret = ncsi_xmit_cmd(&nca);
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 
 		/* Probe next package */
 		ndp->package_probe_id++;
-		if (ndp->package_probe_id >= 8) {
+		अगर (ndp->package_probe_id >= 8) अणु
 			/* Probe finished */
 			ndp->flags |= NCSI_DEV_PROBED;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		nd->state = ncsi_dev_state_probe_package;
-		ndp->active_package = NULL;
-		break;
-	default:
+		ndp->active_package = शून्य;
+		अवरोध;
+	शेष:
 		netdev_warn(nd->dev, "Wrong NCSI state 0x%0x in enumeration\n",
 			    nd->state);
-	}
+	पूर्ण
 
-	if (ndp->flags & NCSI_DEV_PROBED) {
-		/* Check if all packages have HWA support */
+	अगर (ndp->flags & NCSI_DEV_PROBED) अणु
+		/* Check अगर all packages have HWA support */
 		ncsi_check_hwa(ndp);
 		ncsi_choose_active_channel(ndp);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 error:
 	netdev_err(ndp->ndev.dev,
 		   "NCSI: Failed to transmit cmd 0x%x during probe\n",
 		   nca.type);
 	ncsi_report_link(ndp, true);
-}
+पूर्ण
 
-static void ncsi_dev_work(struct work_struct *work)
-{
-	struct ncsi_dev_priv *ndp = container_of(work,
-			struct ncsi_dev_priv, work);
-	struct ncsi_dev *nd = &ndp->ndev;
+अटल व्योम ncsi_dev_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ncsi_dev_priv *ndp = container_of(work,
+			काष्ठा ncsi_dev_priv, work);
+	काष्ठा ncsi_dev *nd = &ndp->ndev;
 
-	switch (nd->state & ncsi_dev_state_major) {
-	case ncsi_dev_state_probe:
+	चयन (nd->state & ncsi_dev_state_major) अणु
+	हाल ncsi_dev_state_probe:
 		ncsi_probe_channel(ndp);
-		break;
-	case ncsi_dev_state_suspend:
+		अवरोध;
+	हाल ncsi_dev_state_suspend:
 		ncsi_suspend_channel(ndp);
-		break;
-	case ncsi_dev_state_config:
+		अवरोध;
+	हाल ncsi_dev_state_config:
 		ncsi_configure_channel(ndp);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_warn(nd->dev, "Wrong NCSI state 0x%x in workqueue\n",
 			    nd->state);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int ncsi_process_next_channel(struct ncsi_dev_priv *ndp)
-{
-	struct ncsi_channel *nc;
-	int old_state;
-	unsigned long flags;
+पूर्णांक ncsi_process_next_channel(काष्ठा ncsi_dev_priv *ndp)
+अणु
+	काष्ठा ncsi_channel *nc;
+	पूर्णांक old_state;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ndp->lock, flags);
 	nc = list_first_or_null_rcu(&ndp->channel_queue,
-				    struct ncsi_channel, link);
-	if (!nc) {
+				    काष्ठा ncsi_channel, link);
+	अगर (!nc) अणु
 		spin_unlock_irqrestore(&ndp->lock, flags);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	list_del_init(&nc->link);
 	spin_unlock_irqrestore(&ndp->lock, flags);
@@ -1509,70 +1510,70 @@ int ncsi_process_next_channel(struct ncsi_dev_priv *ndp)
 	ndp->active_channel = nc;
 	ndp->active_package = nc->package;
 
-	switch (old_state) {
-	case NCSI_CHANNEL_INACTIVE:
+	चयन (old_state) अणु
+	हाल NCSI_CHANNEL_INACTIVE:
 		ndp->ndev.state = ncsi_dev_state_config;
 		netdev_dbg(ndp->ndev.dev, "NCSI: configuring channel %u\n",
 	                   nc->id);
 		ncsi_configure_channel(ndp);
-		break;
-	case NCSI_CHANNEL_ACTIVE:
+		अवरोध;
+	हाल NCSI_CHANNEL_ACTIVE:
 		ndp->ndev.state = ncsi_dev_state_suspend;
 		netdev_dbg(ndp->ndev.dev, "NCSI: suspending channel %u\n",
 			   nc->id);
 		ncsi_suspend_channel(ndp);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_err(ndp->ndev.dev, "Invalid state 0x%x on %d:%d\n",
 			   old_state, nc->package->id, nc->id);
 		ncsi_report_link(ndp, false);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
-	ndp->active_channel = NULL;
-	ndp->active_package = NULL;
-	if (ndp->flags & NCSI_DEV_RESHUFFLE) {
+	ndp->active_channel = शून्य;
+	ndp->active_package = शून्य;
+	अगर (ndp->flags & NCSI_DEV_RESHUFFLE) अणु
 		ndp->flags &= ~NCSI_DEV_RESHUFFLE;
-		return ncsi_choose_active_channel(ndp);
-	}
+		वापस ncsi_choose_active_channel(ndp);
+	पूर्ण
 
 	ncsi_report_link(ndp, false);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int ncsi_kick_channels(struct ncsi_dev_priv *ndp)
-{
-	struct ncsi_dev *nd = &ndp->ndev;
-	struct ncsi_channel *nc;
-	struct ncsi_package *np;
-	unsigned long flags;
-	unsigned int n = 0;
+अटल पूर्णांक ncsi_kick_channels(काष्ठा ncsi_dev_priv *ndp)
+अणु
+	काष्ठा ncsi_dev *nd = &ndp->ndev;
+	काष्ठा ncsi_channel *nc;
+	काष्ठा ncsi_package *np;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक n = 0;
 
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
+	NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
+		NCSI_FOR_EACH_CHANNEL(np, nc) अणु
 			spin_lock_irqsave(&nc->lock, flags);
 
 			/* Channels may be busy, mark dirty instead of
-			 * kicking if;
+			 * kicking अगर;
 			 * a) not ACTIVE (configured)
 			 * b) in the channel_queue (to be configured)
 			 * c) it's ndev is in the config state
 			 */
-			if (nc->state != NCSI_CHANNEL_ACTIVE) {
-				if ((ndp->ndev.state & 0xff00) ==
+			अगर (nc->state != NCSI_CHANNEL_ACTIVE) अणु
+				अगर ((ndp->ndev.state & 0xff00) ==
 						ncsi_dev_state_config ||
-						!list_empty(&nc->link)) {
+						!list_empty(&nc->link)) अणु
 					netdev_dbg(nd->dev,
 						   "NCSI: channel %p marked dirty\n",
 						   nc);
 					nc->reconfigure_needed = true;
-				}
+				पूर्ण
 				spin_unlock_irqrestore(&nc->lock, flags);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			spin_unlock_irqrestore(&nc->lock, flags);
 
@@ -1587,50 +1588,50 @@ static int ncsi_kick_channels(struct ncsi_dev_priv *ndp)
 
 			netdev_dbg(nd->dev, "NCSI: kicked channel %p\n", nc);
 			n++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-int ncsi_vlan_rx_add_vid(struct net_device *dev, __be16 proto, u16 vid)
-{
-	struct ncsi_dev_priv *ndp;
-	unsigned int n_vids = 0;
-	struct vlan_vid *vlan;
-	struct ncsi_dev *nd;
+पूर्णांक ncsi_vlan_rx_add_vid(काष्ठा net_device *dev, __be16 proto, u16 vid)
+अणु
+	काष्ठा ncsi_dev_priv *ndp;
+	अचिन्हित पूर्णांक n_vids = 0;
+	काष्ठा vlan_vid *vlan;
+	काष्ठा ncsi_dev *nd;
 	bool found = false;
 
-	if (vid == 0)
-		return 0;
+	अगर (vid == 0)
+		वापस 0;
 
 	nd = ncsi_find_dev(dev);
-	if (!nd) {
+	अगर (!nd) अणु
 		netdev_warn(dev, "NCSI: No net_device?\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ndp = TO_NCSI_DEV_PRIV(nd);
 
-	/* Add the VLAN id to our internal list */
-	list_for_each_entry_rcu(vlan, &ndp->vlan_vids, list) {
+	/* Add the VLAN id to our पूर्णांकernal list */
+	list_क्रम_each_entry_rcu(vlan, &ndp->vlan_vids, list) अणु
 		n_vids++;
-		if (vlan->vid == vid) {
+		अगर (vlan->vid == vid) अणु
 			netdev_dbg(dev, "NCSI: vid %u already registered\n",
 				   vid);
-			return 0;
-		}
-	}
-	if (n_vids >= NCSI_MAX_VLAN_VIDS) {
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	अगर (n_vids >= NCSI_MAX_VLAN_VIDS) अणु
 		netdev_warn(dev,
 			    "tried to add vlan id %u but NCSI max already registered (%u)\n",
 			    vid, NCSI_MAX_VLAN_VIDS);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	vlan = kzalloc(sizeof(*vlan), GFP_KERNEL);
-	if (!vlan)
-		return -ENOMEM;
+	vlan = kzalloc(माप(*vlan), GFP_KERNEL);
+	अगर (!vlan)
+		वापस -ENOMEM;
 
 	vlan->proto = proto;
 	vlan->vid = vid;
@@ -1640,87 +1641,87 @@ int ncsi_vlan_rx_add_vid(struct net_device *dev, __be16 proto, u16 vid)
 
 	found = ncsi_kick_channels(ndp) != 0;
 
-	return found ? ncsi_process_next_channel(ndp) : 0;
-}
+	वापस found ? ncsi_process_next_channel(ndp) : 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ncsi_vlan_rx_add_vid);
 
-int ncsi_vlan_rx_kill_vid(struct net_device *dev, __be16 proto, u16 vid)
-{
-	struct vlan_vid *vlan, *tmp;
-	struct ncsi_dev_priv *ndp;
-	struct ncsi_dev *nd;
+पूर्णांक ncsi_vlan_rx_समाप्त_vid(काष्ठा net_device *dev, __be16 proto, u16 vid)
+अणु
+	काष्ठा vlan_vid *vlan, *पंचांगp;
+	काष्ठा ncsi_dev_priv *ndp;
+	काष्ठा ncsi_dev *nd;
 	bool found = false;
 
-	if (vid == 0)
-		return 0;
+	अगर (vid == 0)
+		वापस 0;
 
 	nd = ncsi_find_dev(dev);
-	if (!nd) {
+	अगर (!nd) अणु
 		netdev_warn(dev, "NCSI: no net_device?\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ndp = TO_NCSI_DEV_PRIV(nd);
 
-	/* Remove the VLAN id from our internal list */
-	list_for_each_entry_safe(vlan, tmp, &ndp->vlan_vids, list)
-		if (vlan->vid == vid) {
+	/* Remove the VLAN id from our पूर्णांकernal list */
+	list_क्रम_each_entry_safe(vlan, पंचांगp, &ndp->vlan_vids, list)
+		अगर (vlan->vid == vid) अणु
 			netdev_dbg(dev, "NCSI: vid %u found, removing\n", vid);
 			list_del_rcu(&vlan->list);
 			found = true;
-			kfree(vlan);
-		}
+			kमुक्त(vlan);
+		पूर्ण
 
-	if (!found) {
+	अगर (!found) अणु
 		netdev_err(dev, "NCSI: vid %u wasn't registered!\n", vid);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	found = ncsi_kick_channels(ndp) != 0;
 
-	return found ? ncsi_process_next_channel(ndp) : 0;
-}
-EXPORT_SYMBOL_GPL(ncsi_vlan_rx_kill_vid);
+	वापस found ? ncsi_process_next_channel(ndp) : 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ncsi_vlan_rx_समाप्त_vid);
 
-struct ncsi_dev *ncsi_register_dev(struct net_device *dev,
-				   void (*handler)(struct ncsi_dev *ndev))
-{
-	struct ncsi_dev_priv *ndp;
-	struct ncsi_dev *nd;
-	struct platform_device *pdev;
-	struct device_node *np;
-	unsigned long flags;
-	int i;
+काष्ठा ncsi_dev *ncsi_रेजिस्टर_dev(काष्ठा net_device *dev,
+				   व्योम (*handler)(काष्ठा ncsi_dev *ndev))
+अणु
+	काष्ठा ncsi_dev_priv *ndp;
+	काष्ठा ncsi_dev *nd;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा device_node *np;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	/* Check if the device has been registered or not */
+	/* Check अगर the device has been रेजिस्टरed or not */
 	nd = ncsi_find_dev(dev);
-	if (nd)
-		return nd;
+	अगर (nd)
+		वापस nd;
 
 	/* Create NCSI device */
-	ndp = kzalloc(sizeof(*ndp), GFP_ATOMIC);
-	if (!ndp)
-		return NULL;
+	ndp = kzalloc(माप(*ndp), GFP_ATOMIC);
+	अगर (!ndp)
+		वापस शून्य;
 
 	nd = &ndp->ndev;
-	nd->state = ncsi_dev_state_registered;
+	nd->state = ncsi_dev_state_रेजिस्टरed;
 	nd->dev = dev;
 	nd->handler = handler;
 	ndp->pending_req_num = 0;
 	INIT_LIST_HEAD(&ndp->channel_queue);
 	INIT_LIST_HEAD(&ndp->vlan_vids);
 	INIT_WORK(&ndp->work, ncsi_dev_work);
-	ndp->package_whitelist = UINT_MAX;
+	ndp->package_whitelist = अच_पूर्णांक_उच्च;
 
-	/* Initialize private NCSI device */
+	/* Initialize निजी NCSI device */
 	spin_lock_init(&ndp->lock);
 	INIT_LIST_HEAD(&ndp->packages);
 	ndp->request_id = NCSI_REQ_START_IDX;
-	for (i = 0; i < ARRAY_SIZE(ndp->requests); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(ndp->requests); i++) अणु
 		ndp->requests[i].id = i;
 		ndp->requests[i].ndp = ndp;
-		timer_setup(&ndp->requests[i].timer, ncsi_request_timeout, 0);
-	}
+		समयr_setup(&ndp->requests[i].समयr, ncsi_request_समयout, 0);
+	पूर्ण
 
 	spin_lock_irqsave(&ncsi_dev_lock, flags);
 	list_add_tail_rcu(&ndp->node, &ncsi_dev_list);
@@ -1732,51 +1733,51 @@ struct ncsi_dev *ncsi_register_dev(struct net_device *dev,
 	ndp->ptype.dev = dev;
 	dev_add_pack(&ndp->ptype);
 
-	pdev = to_platform_device(dev->dev.parent);
-	if (pdev) {
+	pdev = to_platक्रमm_device(dev->dev.parent);
+	अगर (pdev) अणु
 		np = pdev->dev.of_node;
-		if (np && of_get_property(np, "mlx,multi-host", NULL))
+		अगर (np && of_get_property(np, "mlx,multi-host", शून्य))
 			ndp->mlx_multi_host = true;
-	}
+	पूर्ण
 
-	return nd;
-}
-EXPORT_SYMBOL_GPL(ncsi_register_dev);
+	वापस nd;
+पूर्ण
+EXPORT_SYMBOL_GPL(ncsi_रेजिस्टर_dev);
 
-int ncsi_start_dev(struct ncsi_dev *nd)
-{
-	struct ncsi_dev_priv *ndp = TO_NCSI_DEV_PRIV(nd);
+पूर्णांक ncsi_start_dev(काष्ठा ncsi_dev *nd)
+अणु
+	काष्ठा ncsi_dev_priv *ndp = TO_NCSI_DEV_PRIV(nd);
 
-	if (nd->state != ncsi_dev_state_registered &&
+	अगर (nd->state != ncsi_dev_state_रेजिस्टरed &&
 	    nd->state != ncsi_dev_state_functional)
-		return -ENOTTY;
+		वापस -ENOTTY;
 
-	if (!(ndp->flags & NCSI_DEV_PROBED)) {
+	अगर (!(ndp->flags & NCSI_DEV_PROBED)) अणु
 		ndp->package_probe_id = 0;
 		nd->state = ncsi_dev_state_probe;
 		schedule_work(&ndp->work);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return ncsi_reset_dev(nd);
-}
+	वापस ncsi_reset_dev(nd);
+पूर्ण
 EXPORT_SYMBOL_GPL(ncsi_start_dev);
 
-void ncsi_stop_dev(struct ncsi_dev *nd)
-{
-	struct ncsi_dev_priv *ndp = TO_NCSI_DEV_PRIV(nd);
-	struct ncsi_package *np;
-	struct ncsi_channel *nc;
+व्योम ncsi_stop_dev(काष्ठा ncsi_dev *nd)
+अणु
+	काष्ठा ncsi_dev_priv *ndp = TO_NCSI_DEV_PRIV(nd);
+	काष्ठा ncsi_package *np;
+	काष्ठा ncsi_channel *nc;
 	bool chained;
-	int old_state;
-	unsigned long flags;
+	पूर्णांक old_state;
+	अचिन्हित दीर्घ flags;
 
 	/* Stop the channel monitor on any active channels. Don't reset the
 	 * channel state so we know which were active when ncsi_start_dev()
 	 * is next called.
 	 */
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
+	NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
+		NCSI_FOR_EACH_CHANNEL(np, nc) अणु
 			ncsi_stop_channel_monitor(nc);
 
 			spin_lock_irqsave(&nc->lock, flags);
@@ -1786,88 +1787,88 @@ void ncsi_stop_dev(struct ncsi_dev *nd)
 
 			WARN_ON_ONCE(chained ||
 				     old_state == NCSI_CHANNEL_INVISIBLE);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	netdev_dbg(ndp->ndev.dev, "NCSI: Stopping device\n");
 	ncsi_report_link(ndp, true);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ncsi_stop_dev);
 
-int ncsi_reset_dev(struct ncsi_dev *nd)
-{
-	struct ncsi_dev_priv *ndp = TO_NCSI_DEV_PRIV(nd);
-	struct ncsi_channel *nc, *active, *tmp;
-	struct ncsi_package *np;
-	unsigned long flags;
+पूर्णांक ncsi_reset_dev(काष्ठा ncsi_dev *nd)
+अणु
+	काष्ठा ncsi_dev_priv *ndp = TO_NCSI_DEV_PRIV(nd);
+	काष्ठा ncsi_channel *nc, *active, *पंचांगp;
+	काष्ठा ncsi_package *np;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ndp->lock, flags);
 
-	if (!(ndp->flags & NCSI_DEV_RESET)) {
+	अगर (!(ndp->flags & NCSI_DEV_RESET)) अणु
 		/* Haven't been called yet, check states */
-		switch (nd->state & ncsi_dev_state_major) {
-		case ncsi_dev_state_registered:
-		case ncsi_dev_state_probe:
-			/* Not even probed yet - do nothing */
+		चयन (nd->state & ncsi_dev_state_major) अणु
+		हाल ncsi_dev_state_रेजिस्टरed:
+		हाल ncsi_dev_state_probe:
+			/* Not even probed yet - करो nothing */
 			spin_unlock_irqrestore(&ndp->lock, flags);
-			return 0;
-		case ncsi_dev_state_suspend:
-		case ncsi_dev_state_config:
-			/* Wait for the channel to finish its suspend/config
-			 * operation; once it finishes it will check for
+			वापस 0;
+		हाल ncsi_dev_state_suspend:
+		हाल ncsi_dev_state_config:
+			/* Wait क्रम the channel to finish its suspend/config
+			 * operation; once it finishes it will check क्रम
 			 * NCSI_DEV_RESET and reset the state.
 			 */
 			ndp->flags |= NCSI_DEV_RESET;
 			spin_unlock_irqrestore(&ndp->lock, flags);
-			return 0;
-		}
-	} else {
-		switch (nd->state) {
-		case ncsi_dev_state_suspend_done:
-		case ncsi_dev_state_config_done:
-		case ncsi_dev_state_functional:
+			वापस 0;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (nd->state) अणु
+		हाल ncsi_dev_state_suspend_करोne:
+		हाल ncsi_dev_state_config_करोne:
+		हाल ncsi_dev_state_functional:
 			/* Ok */
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/* Current reset operation happening */
 			spin_unlock_irqrestore(&ndp->lock, flags);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (!list_empty(&ndp->channel_queue)) {
-		/* Clear any channel queue we may have interrupted */
-		list_for_each_entry_safe(nc, tmp, &ndp->channel_queue, link)
+	अगर (!list_empty(&ndp->channel_queue)) अणु
+		/* Clear any channel queue we may have पूर्णांकerrupted */
+		list_क्रम_each_entry_safe(nc, पंचांगp, &ndp->channel_queue, link)
 			list_del_init(&nc->link);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&ndp->lock, flags);
 
-	active = NULL;
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
+	active = शून्य;
+	NCSI_FOR_EACH_PACKAGE(ndp, np) अणु
+		NCSI_FOR_EACH_CHANNEL(np, nc) अणु
 			spin_lock_irqsave(&nc->lock, flags);
 
-			if (nc->state == NCSI_CHANNEL_ACTIVE) {
+			अगर (nc->state == NCSI_CHANNEL_ACTIVE) अणु
 				active = nc;
 				nc->state = NCSI_CHANNEL_INVISIBLE;
 				spin_unlock_irqrestore(&nc->lock, flags);
 				ncsi_stop_channel_monitor(nc);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			spin_unlock_irqrestore(&nc->lock, flags);
-		}
-		if (active)
-			break;
-	}
+		पूर्ण
+		अगर (active)
+			अवरोध;
+	पूर्ण
 
-	if (!active) {
+	अगर (!active) अणु
 		/* Done */
 		spin_lock_irqsave(&ndp->lock, flags);
 		ndp->flags &= ~NCSI_DEV_RESET;
 		spin_unlock_irqrestore(&ndp->lock, flags);
-		return ncsi_choose_active_channel(ndp);
-	}
+		वापस ncsi_choose_active_channel(ndp);
+	पूर्ण
 
 	spin_lock_irqsave(&ndp->lock, flags);
 	ndp->flags |= NCSI_DEV_RESET;
@@ -1877,24 +1878,24 @@ int ncsi_reset_dev(struct ncsi_dev *nd)
 
 	nd->state = ncsi_dev_state_suspend;
 	schedule_work(&ndp->work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ncsi_unregister_dev(struct ncsi_dev *nd)
-{
-	struct ncsi_dev_priv *ndp = TO_NCSI_DEV_PRIV(nd);
-	struct ncsi_package *np, *tmp;
-	unsigned long flags;
+व्योम ncsi_unरेजिस्टर_dev(काष्ठा ncsi_dev *nd)
+अणु
+	काष्ठा ncsi_dev_priv *ndp = TO_NCSI_DEV_PRIV(nd);
+	काष्ठा ncsi_package *np, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
-	dev_remove_pack(&ndp->ptype);
+	dev_हटाओ_pack(&ndp->ptype);
 
-	list_for_each_entry_safe(np, tmp, &ndp->packages, node)
-		ncsi_remove_package(np);
+	list_क्रम_each_entry_safe(np, पंचांगp, &ndp->packages, node)
+		ncsi_हटाओ_package(np);
 
 	spin_lock_irqsave(&ncsi_dev_lock, flags);
 	list_del_rcu(&ndp->node);
 	spin_unlock_irqrestore(&ncsi_dev_lock, flags);
 
-	kfree(ndp);
-}
-EXPORT_SYMBOL_GPL(ncsi_unregister_dev);
+	kमुक्त(ndp);
+पूर्ण
+EXPORT_SYMBOL_GPL(ncsi_unरेजिस्टर_dev);

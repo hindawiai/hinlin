@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * rcar-fcp.h  --  R-Car Frame Compression Processor Driver
  *
  * Copyright (C) 2016 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
-#ifndef __MEDIA_RCAR_FCP_H__
-#define __MEDIA_RCAR_FCP_H__
+#अगर_अघोषित __MEDIA_RCAR_FCP_H__
+#घोषणा __MEDIA_RCAR_FCP_H__
 
-struct device_node;
-struct rcar_fcp_device;
+काष्ठा device_node;
+काष्ठा rcar_fcp_device;
 
-#if IS_ENABLED(CONFIG_VIDEO_RENESAS_FCP)
-struct rcar_fcp_device *rcar_fcp_get(const struct device_node *np);
-void rcar_fcp_put(struct rcar_fcp_device *fcp);
-struct device *rcar_fcp_get_device(struct rcar_fcp_device *fcp);
-int rcar_fcp_enable(struct rcar_fcp_device *fcp);
-void rcar_fcp_disable(struct rcar_fcp_device *fcp);
-#else
-static inline struct rcar_fcp_device *rcar_fcp_get(const struct device_node *np)
-{
-	return ERR_PTR(-ENOENT);
-}
-static inline void rcar_fcp_put(struct rcar_fcp_device *fcp) { }
-static inline struct device *rcar_fcp_get_device(struct rcar_fcp_device *fcp)
-{
-	return NULL;
-}
-static inline int rcar_fcp_enable(struct rcar_fcp_device *fcp)
-{
-	return 0;
-}
-static inline void rcar_fcp_disable(struct rcar_fcp_device *fcp) { }
-#endif
+#अगर IS_ENABLED(CONFIG_VIDEO_RENESAS_FCP)
+काष्ठा rcar_fcp_device *rcar_fcp_get(स्थिर काष्ठा device_node *np);
+व्योम rcar_fcp_put(काष्ठा rcar_fcp_device *fcp);
+काष्ठा device *rcar_fcp_get_device(काष्ठा rcar_fcp_device *fcp);
+पूर्णांक rcar_fcp_enable(काष्ठा rcar_fcp_device *fcp);
+व्योम rcar_fcp_disable(काष्ठा rcar_fcp_device *fcp);
+#अन्यथा
+अटल अंतरभूत काष्ठा rcar_fcp_device *rcar_fcp_get(स्थिर काष्ठा device_node *np)
+अणु
+	वापस ERR_PTR(-ENOENT);
+पूर्ण
+अटल अंतरभूत व्योम rcar_fcp_put(काष्ठा rcar_fcp_device *fcp) अणु पूर्ण
+अटल अंतरभूत काष्ठा device *rcar_fcp_get_device(काष्ठा rcar_fcp_device *fcp)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत पूर्णांक rcar_fcp_enable(काष्ठा rcar_fcp_device *fcp)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम rcar_fcp_disable(काष्ठा rcar_fcp_device *fcp) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* __MEDIA_RCAR_FCP_H__ */
+#पूर्ण_अगर /* __MEDIA_RCAR_FCP_H__ */

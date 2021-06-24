@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
-#include <perf/cpumap.h>
-#include <string.h>
-#include "cpumap.h"
-#include "evlist.h"
-#include "evsel.h"
-#include "header.h"
-#include "machine.h"
-#include "util/synthetic-events.h"
-#include "tool.h"
-#include "tests.h"
-#include "debug.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
+#समावेश <perf/cpumap.h>
+#समावेश <माला.स>
+#समावेश "cpumap.h"
+#समावेश "evlist.h"
+#समावेश "evsel.h"
+#समावेश "header.h"
+#समावेश "machine.h"
+#समावेश "util/synthetic-events.h"
+#समावेश "tool.h"
+#समावेश "tests.h"
+#समावेश "debug.h"
 
-static int process_event_unit(struct perf_tool *tool __maybe_unused,
-			      union perf_event *event,
-			      struct perf_sample *sample __maybe_unused,
-			      struct machine *machine __maybe_unused)
-{
-	struct perf_record_event_update *ev = (struct perf_record_event_update *)event;
+अटल पूर्णांक process_event_unit(काष्ठा perf_tool *tool __maybe_unused,
+			      जोड़ perf_event *event,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा perf_record_event_update *ev = (काष्ठा perf_record_event_update *)event;
 
 	TEST_ASSERT_VAL("wrong id", ev->id == 123);
 	TEST_ASSERT_VAL("wrong id", ev->type == PERF_EVENT_UPDATE__UNIT);
-	TEST_ASSERT_VAL("wrong unit", !strcmp(ev->data, "KRAVA"));
-	return 0;
-}
+	TEST_ASSERT_VAL("wrong unit", !म_भेद(ev->data, "KRAVA"));
+	वापस 0;
+पूर्ण
 
-static int process_event_scale(struct perf_tool *tool __maybe_unused,
-			       union perf_event *event,
-			       struct perf_sample *sample __maybe_unused,
-			       struct machine *machine __maybe_unused)
-{
-	struct perf_record_event_update *ev = (struct perf_record_event_update *)event;
-	struct perf_record_event_update_scale *ev_data;
+अटल पूर्णांक process_event_scale(काष्ठा perf_tool *tool __maybe_unused,
+			       जोड़ perf_event *event,
+			       काष्ठा perf_sample *sample __maybe_unused,
+			       काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा perf_record_event_update *ev = (काष्ठा perf_record_event_update *)event;
+	काष्ठा perf_record_event_update_scale *ev_data;
 
-	ev_data = (struct perf_record_event_update_scale *)ev->data;
+	ev_data = (काष्ठा perf_record_event_update_scale *)ev->data;
 
 	TEST_ASSERT_VAL("wrong id", ev->id == 123);
 	TEST_ASSERT_VAL("wrong id", ev->type == PERF_EVENT_UPDATE__SCALE);
 	TEST_ASSERT_VAL("wrong scale", ev_data->scale == 0.123);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct event_name {
-	struct perf_tool tool;
-	const char *name;
-};
+काष्ठा event_name अणु
+	काष्ठा perf_tool tool;
+	स्थिर अक्षर *name;
+पूर्ण;
 
-static int process_event_name(struct perf_tool *tool,
-			      union perf_event *event,
-			      struct perf_sample *sample __maybe_unused,
-			      struct machine *machine __maybe_unused)
-{
-	struct event_name *tmp = container_of(tool, struct event_name, tool);
-	struct perf_record_event_update *ev = (struct perf_record_event_update *)event;
+अटल पूर्णांक process_event_name(काष्ठा perf_tool *tool,
+			      जोड़ perf_event *event,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा event_name *पंचांगp = container_of(tool, काष्ठा event_name, tool);
+	काष्ठा perf_record_event_update *ev = (काष्ठा perf_record_event_update *)event;
 
 	TEST_ASSERT_VAL("wrong id", ev->id == 123);
 	TEST_ASSERT_VAL("wrong id", ev->type == PERF_EVENT_UPDATE__NAME);
-	TEST_ASSERT_VAL("wrong name", !strcmp(ev->data, tmp->name));
-	return 0;
-}
+	TEST_ASSERT_VAL("wrong name", !म_भेद(ev->data, पंचांगp->name));
+	वापस 0;
+पूर्ण
 
-static int process_event_cpus(struct perf_tool *tool __maybe_unused,
-			      union perf_event *event,
-			      struct perf_sample *sample __maybe_unused,
-			      struct machine *machine __maybe_unused)
-{
-	struct perf_record_event_update *ev = (struct perf_record_event_update *)event;
-	struct perf_record_event_update_cpus *ev_data;
-	struct perf_cpu_map *map;
+अटल पूर्णांक process_event_cpus(काष्ठा perf_tool *tool __maybe_unused,
+			      जोड़ perf_event *event,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा perf_record_event_update *ev = (काष्ठा perf_record_event_update *)event;
+	काष्ठा perf_record_event_update_cpus *ev_data;
+	काष्ठा perf_cpu_map *map;
 
-	ev_data = (struct perf_record_event_update_cpus *) ev->data;
+	ev_data = (काष्ठा perf_record_event_update_cpus *) ev->data;
 
 	map = cpu_map__new_data(&ev_data->cpus);
 
@@ -80,14 +81,14 @@ static int process_event_cpus(struct perf_tool *tool __maybe_unused,
 	TEST_ASSERT_VAL("wrong cpus", map->map[1] == 2);
 	TEST_ASSERT_VAL("wrong cpus", map->map[2] == 3);
 	perf_cpu_map__put(map);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int test__event_update(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	struct evsel *evsel;
-	struct event_name tmp;
-	struct evlist *evlist = evlist__new_default();
+पूर्णांक test__event_update(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	काष्ठा evsel *evsel;
+	काष्ठा event_name पंचांगp;
+	काष्ठा evlist *evlist = evlist__new_शेष();
 
 	TEST_ASSERT_VAL("failed to get evlist", evlist);
 
@@ -101,23 +102,23 @@ int test__event_update(struct test *test __maybe_unused, int subtest __maybe_unu
 	evsel->unit = strdup("KRAVA");
 
 	TEST_ASSERT_VAL("failed to synthesize attr update unit",
-			!perf_event__synthesize_event_update_unit(NULL, evsel, process_event_unit));
+			!perf_event__synthesize_event_update_unit(शून्य, evsel, process_event_unit));
 
 	evsel->scale = 0.123;
 
 	TEST_ASSERT_VAL("failed to synthesize attr update scale",
-			!perf_event__synthesize_event_update_scale(NULL, evsel, process_event_scale));
+			!perf_event__synthesize_event_update_scale(शून्य, evsel, process_event_scale));
 
-	tmp.name = evsel__name(evsel);
+	पंचांगp.name = evsel__name(evsel);
 
 	TEST_ASSERT_VAL("failed to synthesize attr update name",
-			!perf_event__synthesize_event_update_name(&tmp.tool, evsel, process_event_name));
+			!perf_event__synthesize_event_update_name(&पंचांगp.tool, evsel, process_event_name));
 
 	evsel->core.own_cpus = perf_cpu_map__new("1,2,3");
 
 	TEST_ASSERT_VAL("failed to synthesize attr update cpus",
-			!perf_event__synthesize_event_update_cpus(&tmp.tool, evsel, process_event_cpus));
+			!perf_event__synthesize_event_update_cpus(&पंचांगp.tool, evsel, process_event_cpus));
 
 	perf_cpu_map__put(evsel->core.own_cpus);
-	return 0;
-}
+	वापस 0;
+पूर्ण

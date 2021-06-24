@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC64_TLB_H
-#define _SPARC64_TLB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC64_TLB_H
+#घोषणा _SPARC64_TLB_H
 
-#include <linux/swap.h>
-#include <linux/pagemap.h>
-#include <asm/tlbflush.h>
-#include <asm/mmu_context.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/pagemap.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/mmu_context.h>
 
-#ifdef CONFIG_SMP
-void smp_flush_tlb_pending(struct mm_struct *,
-				  unsigned long, unsigned long *);
-#endif
+#अगर_घोषित CONFIG_SMP
+व्योम smp_flush_tlb_pending(काष्ठा mm_काष्ठा *,
+				  अचिन्हित दीर्घ, अचिन्हित दीर्घ *);
+#पूर्ण_अगर
 
-#ifdef CONFIG_SMP
-void smp_flush_tlb_mm(struct mm_struct *mm);
-#define do_flush_tlb_mm(mm) smp_flush_tlb_mm(mm)
-#else
-#define do_flush_tlb_mm(mm) __flush_tlb_mm(CTX_HWBITS(mm->context), SECONDARY_CONTEXT)
-#endif
+#अगर_घोषित CONFIG_SMP
+व्योम smp_flush_tlb_mm(काष्ठा mm_काष्ठा *mm);
+#घोषणा करो_flush_tlb_mm(mm) smp_flush_tlb_mm(mm)
+#अन्यथा
+#घोषणा करो_flush_tlb_mm(mm) __flush_tlb_mm(CTX_HWBITS(mm->context), SECONDARY_CONTEXT)
+#पूर्ण_अगर
 
-void __flush_tlb_pending(unsigned long, unsigned long, unsigned long *);
-void flush_tlb_pending(void);
+व्योम __flush_tlb_pending(अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ *);
+व्योम flush_tlb_pending(व्योम);
 
-#define tlb_start_vma(tlb, vma) do { } while (0)
-#define tlb_end_vma(tlb, vma)	do { } while (0)
-#define tlb_flush(tlb)	flush_tlb_pending()
+#घोषणा tlb_start_vma(tlb, vma) करो अणु पूर्ण जबतक (0)
+#घोषणा tlb_end_vma(tlb, vma)	करो अणु पूर्ण जबतक (0)
+#घोषणा tlb_flush(tlb)	flush_tlb_pending()
 
 /*
- * SPARC64's hardware TLB fill does not use the Linux page-tables
- * and therefore we don't need a TLBI when freeing page-table pages.
+ * SPARC64's hardware TLB fill करोes not use the Linux page-tables
+ * and thereक्रमe we करोn't need a TLBI when मुक्तing page-table pages.
  */
 
-#ifdef CONFIG_MMU_GATHER_RCU_TABLE_FREE
-#define tlb_needs_table_invalidate()	(false)
-#endif
+#अगर_घोषित CONFIG_MMU_GATHER_RCU_TABLE_FREE
+#घोषणा tlb_needs_table_invalidate()	(false)
+#पूर्ण_अगर
 
-#include <asm-generic/tlb.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-#endif /* _SPARC64_TLB_H */
+#पूर्ण_अगर /* _SPARC64_TLB_H */

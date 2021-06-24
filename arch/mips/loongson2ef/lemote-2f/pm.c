@@ -1,145 +1,146 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Lemote loongson2f family machines' specific suspend support
+ *  Lemote loongson2f family machines' specअगरic suspend support
  *
  *  Copyright (C) 2009 Lemote Inc.
  *  Author: Wu Zhangjin <wuzhangjin@gmail.com>
  */
 
-#include <linux/suspend.h>
-#include <linux/interrupt.h>
-#include <linux/pm.h>
-#include <linux/i8042.h>
-#include <linux/export.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/i8042.h>
+#समावेश <linux/export.h>
 
-#include <asm/i8259.h>
-#include <asm/mipsregs.h>
-#include <asm/bootinfo.h>
+#समावेश <यंत्र/i8259.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/bootinfo.h>
 
-#include <loongson.h>
+#समावेश <loongson.h>
 
-#include <cs5536/cs5536_mfgpt.h>
-#include "ec_kb3310b.h"
+#समावेश <cs5536/cs5536_mfgpt.h>
+#समावेश "ec_kb3310b.h"
 
-#define I8042_KBD_IRQ		1
-#define I8042_CTR_KBDINT	0x01
-#define I8042_CTR_KBDDIS	0x10
+#घोषणा I8042_KBD_IRQ		1
+#घोषणा I8042_CTR_KBDINT	0x01
+#घोषणा I8042_CTR_KBDDIS	0x10
 
-static unsigned char i8042_ctr;
+अटल अचिन्हित अक्षर i8042_ctr;
 
-static int i8042_enable_kbd_port(void)
-{
-	if (i8042_command(&i8042_ctr, I8042_CMD_CTL_RCTR)) {
+अटल पूर्णांक i8042_enable_kbd_port(व्योम)
+अणु
+	अगर (i8042_command(&i8042_ctr, I8042_CMD_CTL_RCTR)) अणु
 		pr_err("i8042.c: Can't read CTR while enabling i8042 kbd port."
 		       "\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	i8042_ctr &= ~I8042_CTR_KBDDIS;
 	i8042_ctr |= I8042_CTR_KBDINT;
 
-	if (i8042_command(&i8042_ctr, I8042_CMD_CTL_WCTR)) {
+	अगर (i8042_command(&i8042_ctr, I8042_CMD_CTL_WCTR)) अणु
 		i8042_ctr &= ~I8042_CTR_KBDINT;
 		i8042_ctr |= I8042_CTR_KBDDIS;
 		pr_err("i8042.c: Failed to enable KBD port.\n");
 
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void setup_wakeup_events(void)
-{
-	int irq_mask;
+व्योम setup_wakeup_events(व्योम)
+अणु
+	पूर्णांक irq_mask;
 
-	switch (mips_machtype) {
-	case MACH_LEMOTE_ML2F7:
-	case MACH_LEMOTE_YL2F89:
-		/* open the keyboard irq in i8259A */
+	चयन (mips_machtype) अणु
+	हाल MACH_LEMOTE_ML2F7:
+	हाल MACH_LEMOTE_YL2F89:
+		/* खोलो the keyboard irq in i8259A */
 		outb((0xff & ~(1 << I8042_KBD_IRQ)), PIC_MASTER_IMR);
 		irq_mask = inb(PIC_MASTER_IMR);
 
 		/* enable keyboard port */
 		i8042_enable_kbd_port();
 
-		/* Wakeup CPU via SCI lid open event */
+		/* Wakeup CPU via SCI lid खोलो event */
 		outb(irq_mask & ~(1 << PIC_CASCADE_IR), PIC_MASTER_IMR);
 		inb(PIC_MASTER_IMR);
 		outb(0xff & ~(1 << (SCI_IRQ_NUM - 8)), PIC_SLAVE_IMR);
 		inb(PIC_SLAVE_IMR);
 
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static struct delayed_work lid_task;
-static int initialized;
+अटल काष्ठा delayed_work lid_task;
+अटल पूर्णांक initialized;
 /* yeeloong_report_lid_status will be implemented in yeeloong_laptop.c */
 sci_handler yeeloong_report_lid_status;
 EXPORT_SYMBOL(yeeloong_report_lid_status);
-static void yeeloong_lid_update_task(struct work_struct *work)
-{
-	if (yeeloong_report_lid_status)
+अटल व्योम yeeloong_lid_update_task(काष्ठा work_काष्ठा *work)
+अणु
+	अगर (yeeloong_report_lid_status)
 		yeeloong_report_lid_status(BIT_LID_DETECT_ON);
-}
+पूर्ण
 
-int wakeup_loongson(void)
-{
-	int irq;
+पूर्णांक wakeup_loongson(व्योम)
+अणु
+	पूर्णांक irq;
 
-	/* query the interrupt number */
+	/* query the पूर्णांकerrupt number */
 	irq = mach_i8259_irq();
-	if (irq < 0)
-		return 0;
+	अगर (irq < 0)
+		वापस 0;
 
-	printk(KERN_INFO "%s: irq = %d\n", __func__, irq);
+	prपूर्णांकk(KERN_INFO "%s: irq = %d\n", __func__, irq);
 
-	if (irq == I8042_KBD_IRQ)
-		return 1;
-	else if (irq == SCI_IRQ_NUM) {
-		int ret, sci_event;
+	अगर (irq == I8042_KBD_IRQ)
+		वापस 1;
+	अन्यथा अगर (irq == SCI_IRQ_NUM) अणु
+		पूर्णांक ret, sci_event;
 		/* query the event number */
 		ret = ec_query_seq(CMD_GET_EVENT_NUM);
-		if (ret < 0)
-			return 0;
+		अगर (ret < 0)
+			वापस 0;
 		sci_event = ec_get_event_num();
-		if (sci_event < 0)
-			return 0;
-		if (sci_event == EVENT_LID) {
-			int lid_status;
+		अगर (sci_event < 0)
+			वापस 0;
+		अगर (sci_event == EVENT_LID) अणु
+			पूर्णांक lid_status;
 			/* check the LID status */
-			lid_status = ec_read(REG_LID_DETECT);
-			/* wakeup cpu when people open the LID */
-			if (lid_status == BIT_LID_DETECT_ON) {
+			lid_status = ec_पढ़ो(REG_LID_DETECT);
+			/* wakeup cpu when people खोलो the LID */
+			अगर (lid_status == BIT_LID_DETECT_ON) अणु
 				/* If we call it directly here, the WARNING
-				 * will be sent out by getnstimeofday
+				 * will be sent out by getnsसमयofday
 				 * via "WARN_ON(timekeeping_suspended);"
 				 * because we can not schedule in suspend mode.
 				 */
-				if (initialized == 0) {
+				अगर (initialized == 0) अणु
 					INIT_DELAYED_WORK(&lid_task,
 						yeeloong_lid_update_task);
 					initialized = 1;
-				}
+				पूर्ण
 				schedule_delayed_work(&lid_task, 1);
-				return 1;
-			}
-		}
-	}
+				वापस 1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __weak mach_suspend(void)
-{
+व्योम __weak mach_suspend(व्योम)
+अणु
 	disable_mfgpt0_counter();
-}
+पूर्ण
 
-void __weak mach_resume(void)
-{
+व्योम __weak mach_resume(व्योम)
+अणु
 	enable_mfgpt0_counter();
-}
+पूर्ण

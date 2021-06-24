@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* IA64-specific clocksource additions */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* IA64-specअगरic घड़ीsource additions */
 
-#ifndef _ASM_IA64_CLOCKSOURCE_H
-#define _ASM_IA64_CLOCKSOURCE_H
+#अगर_अघोषित _ASM_IA64_CLOCKSOURCE_H
+#घोषणा _ASM_IA64_CLOCKSOURCE_H
 
-struct arch_clocksource_data {
-	void *fsys_mmio;        /* used by fsyscall asm code */
-};
+काष्ठा arch_घड़ीsource_data अणु
+	व्योम *fsys_mmio;        /* used by fsyscall यंत्र code */
+पूर्ण;
 
-#endif /* _ASM_IA64_CLOCKSOURCE_H */
+#पूर्ण_अगर /* _ASM_IA64_CLOCKSOURCE_H */

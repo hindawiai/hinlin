@@ -1,208 +1,209 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  * Copyright (C) 2002 Ralf Baechle DO1GRB (ralf@gnu.org)
  */
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/jiffies.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <net/ax25.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <net/rose.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <net/rose.h>
 
-static void rose_heartbeat_expiry(struct timer_list *t);
-static void rose_timer_expiry(struct timer_list *);
-static void rose_idletimer_expiry(struct timer_list *);
+अटल व्योम rose_heartbeat_expiry(काष्ठा समयr_list *t);
+अटल व्योम rose_समयr_expiry(काष्ठा समयr_list *);
+अटल व्योम rose_idleसमयr_expiry(काष्ठा समयr_list *);
 
-void rose_start_heartbeat(struct sock *sk)
-{
-	del_timer(&sk->sk_timer);
+व्योम rose_start_heartbeat(काष्ठा sock *sk)
+अणु
+	del_समयr(&sk->sk_समयr);
 
-	sk->sk_timer.function = rose_heartbeat_expiry;
-	sk->sk_timer.expires  = jiffies + 5 * HZ;
+	sk->sk_समयr.function = rose_heartbeat_expiry;
+	sk->sk_समयr.expires  = jअगरfies + 5 * HZ;
 
-	add_timer(&sk->sk_timer);
-}
+	add_समयr(&sk->sk_समयr);
+पूर्ण
 
-void rose_start_t1timer(struct sock *sk)
-{
-	struct rose_sock *rose = rose_sk(sk);
+व्योम rose_start_t1समयr(काष्ठा sock *sk)
+अणु
+	काष्ठा rose_sock *rose = rose_sk(sk);
 
-	del_timer(&rose->timer);
+	del_समयr(&rose->समयr);
 
-	rose->timer.function = rose_timer_expiry;
-	rose->timer.expires  = jiffies + rose->t1;
+	rose->समयr.function = rose_समयr_expiry;
+	rose->समयr.expires  = jअगरfies + rose->t1;
 
-	add_timer(&rose->timer);
-}
+	add_समयr(&rose->समयr);
+पूर्ण
 
-void rose_start_t2timer(struct sock *sk)
-{
-	struct rose_sock *rose = rose_sk(sk);
+व्योम rose_start_t2समयr(काष्ठा sock *sk)
+अणु
+	काष्ठा rose_sock *rose = rose_sk(sk);
 
-	del_timer(&rose->timer);
+	del_समयr(&rose->समयr);
 
-	rose->timer.function = rose_timer_expiry;
-	rose->timer.expires  = jiffies + rose->t2;
+	rose->समयr.function = rose_समयr_expiry;
+	rose->समयr.expires  = jअगरfies + rose->t2;
 
-	add_timer(&rose->timer);
-}
+	add_समयr(&rose->समयr);
+पूर्ण
 
-void rose_start_t3timer(struct sock *sk)
-{
-	struct rose_sock *rose = rose_sk(sk);
+व्योम rose_start_t3समयr(काष्ठा sock *sk)
+अणु
+	काष्ठा rose_sock *rose = rose_sk(sk);
 
-	del_timer(&rose->timer);
+	del_समयr(&rose->समयr);
 
-	rose->timer.function = rose_timer_expiry;
-	rose->timer.expires  = jiffies + rose->t3;
+	rose->समयr.function = rose_समयr_expiry;
+	rose->समयr.expires  = jअगरfies + rose->t3;
 
-	add_timer(&rose->timer);
-}
+	add_समयr(&rose->समयr);
+पूर्ण
 
-void rose_start_hbtimer(struct sock *sk)
-{
-	struct rose_sock *rose = rose_sk(sk);
+व्योम rose_start_hbसमयr(काष्ठा sock *sk)
+अणु
+	काष्ठा rose_sock *rose = rose_sk(sk);
 
-	del_timer(&rose->timer);
+	del_समयr(&rose->समयr);
 
-	rose->timer.function = rose_timer_expiry;
-	rose->timer.expires  = jiffies + rose->hb;
+	rose->समयr.function = rose_समयr_expiry;
+	rose->समयr.expires  = jअगरfies + rose->hb;
 
-	add_timer(&rose->timer);
-}
+	add_समयr(&rose->समयr);
+पूर्ण
 
-void rose_start_idletimer(struct sock *sk)
-{
-	struct rose_sock *rose = rose_sk(sk);
+व्योम rose_start_idleसमयr(काष्ठा sock *sk)
+अणु
+	काष्ठा rose_sock *rose = rose_sk(sk);
 
-	del_timer(&rose->idletimer);
+	del_समयr(&rose->idleसमयr);
 
-	if (rose->idle > 0) {
-		rose->idletimer.function = rose_idletimer_expiry;
-		rose->idletimer.expires  = jiffies + rose->idle;
+	अगर (rose->idle > 0) अणु
+		rose->idleसमयr.function = rose_idleसमयr_expiry;
+		rose->idleसमयr.expires  = jअगरfies + rose->idle;
 
-		add_timer(&rose->idletimer);
-	}
-}
+		add_समयr(&rose->idleसमयr);
+	पूर्ण
+पूर्ण
 
-void rose_stop_heartbeat(struct sock *sk)
-{
-	del_timer(&sk->sk_timer);
-}
+व्योम rose_stop_heartbeat(काष्ठा sock *sk)
+अणु
+	del_समयr(&sk->sk_समयr);
+पूर्ण
 
-void rose_stop_timer(struct sock *sk)
-{
-	del_timer(&rose_sk(sk)->timer);
-}
+व्योम rose_stop_समयr(काष्ठा sock *sk)
+अणु
+	del_समयr(&rose_sk(sk)->समयr);
+पूर्ण
 
-void rose_stop_idletimer(struct sock *sk)
-{
-	del_timer(&rose_sk(sk)->idletimer);
-}
+व्योम rose_stop_idleसमयr(काष्ठा sock *sk)
+अणु
+	del_समयr(&rose_sk(sk)->idleसमयr);
+पूर्ण
 
-static void rose_heartbeat_expiry(struct timer_list *t)
-{
-	struct sock *sk = from_timer(sk, t, sk_timer);
-	struct rose_sock *rose = rose_sk(sk);
+अटल व्योम rose_heartbeat_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sock *sk = from_समयr(sk, t, sk_समयr);
+	काष्ठा rose_sock *rose = rose_sk(sk);
 
 	bh_lock_sock(sk);
-	switch (rose->state) {
-	case ROSE_STATE_0:
-		/* Magic here: If we listen() and a new link dies before it
-		   is accepted() it isn't 'dead' so doesn't get removed. */
-		if (sock_flag(sk, SOCK_DESTROY) ||
-		    (sk->sk_state == TCP_LISTEN && sock_flag(sk, SOCK_DEAD))) {
+	चयन (rose->state) अणु
+	हाल ROSE_STATE_0:
+		/* Magic here: If we listen() and a new link dies beक्रमe it
+		   is accepted() it isn't 'dead' so doesn't get हटाओd. */
+		अगर (sock_flag(sk, SOCK_DESTROY) ||
+		    (sk->sk_state == TCP_LISTEN && sock_flag(sk, SOCK_DEAD))) अणु
 			bh_unlock_sock(sk);
 			rose_destroy_socket(sk);
-			return;
-		}
-		break;
+			वापस;
+		पूर्ण
+		अवरोध;
 
-	case ROSE_STATE_3:
+	हाल ROSE_STATE_3:
 		/*
-		 * Check for the state of the receive buffer.
+		 * Check क्रम the state of the receive buffer.
 		 */
-		if (atomic_read(&sk->sk_rmem_alloc) < (sk->sk_rcvbuf / 2) &&
-		    (rose->condition & ROSE_COND_OWN_RX_BUSY)) {
+		अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) < (sk->sk_rcvbuf / 2) &&
+		    (rose->condition & ROSE_COND_OWN_RX_BUSY)) अणु
 			rose->condition &= ~ROSE_COND_OWN_RX_BUSY;
 			rose->condition &= ~ROSE_COND_ACK_PENDING;
 			rose->vl         = rose->vr;
-			rose_write_internal(sk, ROSE_RR);
-			rose_stop_timer(sk);	/* HB */
-			break;
-		}
-		break;
-	}
+			rose_ग_लिखो_पूर्णांकernal(sk, ROSE_RR);
+			rose_stop_समयr(sk);	/* HB */
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	rose_start_heartbeat(sk);
 	bh_unlock_sock(sk);
-}
+पूर्ण
 
-static void rose_timer_expiry(struct timer_list *t)
-{
-	struct rose_sock *rose = from_timer(rose, t, timer);
-	struct sock *sk = &rose->sock;
+अटल व्योम rose_समयr_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा rose_sock *rose = from_समयr(rose, t, समयr);
+	काष्ठा sock *sk = &rose->sock;
 
 	bh_lock_sock(sk);
-	switch (rose->state) {
-	case ROSE_STATE_1:	/* T1 */
-	case ROSE_STATE_4:	/* T2 */
-		rose_write_internal(sk, ROSE_CLEAR_REQUEST);
+	चयन (rose->state) अणु
+	हाल ROSE_STATE_1:	/* T1 */
+	हाल ROSE_STATE_4:	/* T2 */
+		rose_ग_लिखो_पूर्णांकernal(sk, ROSE_CLEAR_REQUEST);
 		rose->state = ROSE_STATE_2;
-		rose_start_t3timer(sk);
-		break;
+		rose_start_t3समयr(sk);
+		अवरोध;
 
-	case ROSE_STATE_2:	/* T3 */
+	हाल ROSE_STATE_2:	/* T3 */
 		rose->neighbour->use--;
 		rose_disconnect(sk, ETIMEDOUT, -1, -1);
-		break;
+		अवरोध;
 
-	case ROSE_STATE_3:	/* HB */
-		if (rose->condition & ROSE_COND_ACK_PENDING) {
+	हाल ROSE_STATE_3:	/* HB */
+		अगर (rose->condition & ROSE_COND_ACK_PENDING) अणु
 			rose->condition &= ~ROSE_COND_ACK_PENDING;
 			rose_enquiry_response(sk);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 	bh_unlock_sock(sk);
-}
+पूर्ण
 
-static void rose_idletimer_expiry(struct timer_list *t)
-{
-	struct rose_sock *rose = from_timer(rose, t, idletimer);
-	struct sock *sk = &rose->sock;
+अटल व्योम rose_idleसमयr_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा rose_sock *rose = from_समयr(rose, t, idleसमयr);
+	काष्ठा sock *sk = &rose->sock;
 
 	bh_lock_sock(sk);
 	rose_clear_queues(sk);
 
-	rose_write_internal(sk, ROSE_CLEAR_REQUEST);
+	rose_ग_लिखो_पूर्णांकernal(sk, ROSE_CLEAR_REQUEST);
 	rose_sk(sk)->state = ROSE_STATE_2;
 
-	rose_start_t3timer(sk);
+	rose_start_t3समयr(sk);
 
 	sk->sk_state     = TCP_CLOSE;
 	sk->sk_err       = 0;
-	sk->sk_shutdown |= SEND_SHUTDOWN;
+	sk->sk_shutकरोwn |= SEND_SHUTDOWN;
 
-	if (!sock_flag(sk, SOCK_DEAD)) {
+	अगर (!sock_flag(sk, SOCK_DEAD)) अणु
 		sk->sk_state_change(sk);
 		sock_set_flag(sk, SOCK_DEAD);
-	}
+	पूर्ण
 	bh_unlock_sock(sk);
-}
+पूर्ण

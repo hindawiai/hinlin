@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_PTRACE_H
-#define _LINUX_PTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_PTRACE_H
+#घोषणा _LINUX_PTRACE_H
 
-#include <linux/compiler.h>		/* For unlikely.  */
-#include <linux/sched.h>		/* For struct task_struct.  */
-#include <linux/sched/signal.h>		/* For send_sig(), same_thread_group(), etc. */
-#include <linux/err.h>			/* for IS_ERR_VALUE */
-#include <linux/bug.h>			/* For BUG_ON.  */
-#include <linux/pid_namespace.h>	/* For task_active_pid_ns.  */
-#include <uapi/linux/ptrace.h>
-#include <linux/seccomp.h>
+#समावेश <linux/compiler.h>		/* For unlikely.  */
+#समावेश <linux/sched.h>		/* For काष्ठा task_काष्ठा.  */
+#समावेश <linux/sched/संकेत.स>		/* For send_sig(), same_thपढ़ो_group(), etc. */
+#समावेश <linux/err.h>			/* क्रम IS_ERR_VALUE */
+#समावेश <linux/bug.h>			/* For BUG_ON.  */
+#समावेश <linux/pid_namespace.h>	/* For task_active_pid_ns.  */
+#समावेश <uapi/linux/ptrace.h>
+#समावेश <linux/seccomp.h>
 
-/* Add sp to seccomp_data, as seccomp is user API, we don't want to modify it */
-struct syscall_info {
+/* Add sp to seccomp_data, as seccomp is user API, we करोn't want to modअगरy it */
+काष्ठा syscall_info अणु
 	__u64			sp;
-	struct seccomp_data	data;
-};
+	काष्ठा seccomp_data	data;
+पूर्ण;
 
-extern int ptrace_access_vm(struct task_struct *tsk, unsigned long addr,
-			    void *buf, int len, unsigned int gup_flags);
+बाह्य पूर्णांक ptrace_access_vm(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ addr,
+			    व्योम *buf, पूर्णांक len, अचिन्हित पूर्णांक gup_flags);
 
 /*
  * Ptrace flags
  *
- * The owner ship rules for task->ptrace which holds the ptrace
+ * The owner ship rules क्रम task->ptrace which holds the ptrace
  * flags is simple.  When a task is running it owns it's task->ptrace
  * flags.  When the a task is stopped the ptracer owns task->ptrace.
  */
 
-#define PT_SEIZED	0x00010000	/* SEIZE used, enable new behavior */
-#define PT_PTRACED	0x00000001
-#define PT_DTRACE	0x00000002	/* delayed trace (used on m68k, i386) */
+#घोषणा PT_SEIZED	0x00010000	/* SEIZE used, enable new behavior */
+#घोषणा PT_PTRACED	0x00000001
+#घोषणा PT_DTRACE	0x00000002	/* delayed trace (used on m68k, i386) */
 
-#define PT_OPT_FLAG_SHIFT	3
+#घोषणा PT_OPT_FLAG_SHIFT	3
 /* PT_TRACE_* event enable flags */
-#define PT_EVENT_FLAG(event)	(1 << (PT_OPT_FLAG_SHIFT + (event)))
-#define PT_TRACESYSGOOD		PT_EVENT_FLAG(0)
-#define PT_TRACE_FORK		PT_EVENT_FLAG(PTRACE_EVENT_FORK)
-#define PT_TRACE_VFORK		PT_EVENT_FLAG(PTRACE_EVENT_VFORK)
-#define PT_TRACE_CLONE		PT_EVENT_FLAG(PTRACE_EVENT_CLONE)
-#define PT_TRACE_EXEC		PT_EVENT_FLAG(PTRACE_EVENT_EXEC)
-#define PT_TRACE_VFORK_DONE	PT_EVENT_FLAG(PTRACE_EVENT_VFORK_DONE)
-#define PT_TRACE_EXIT		PT_EVENT_FLAG(PTRACE_EVENT_EXIT)
-#define PT_TRACE_SECCOMP	PT_EVENT_FLAG(PTRACE_EVENT_SECCOMP)
+#घोषणा PT_EVENT_FLAG(event)	(1 << (PT_OPT_FLAG_SHIFT + (event)))
+#घोषणा PT_TRACESYSGOOD		PT_EVENT_FLAG(0)
+#घोषणा PT_TRACE_FORK		PT_EVENT_FLAG(PTRACE_EVENT_FORK)
+#घोषणा PT_TRACE_VFORK		PT_EVENT_FLAG(PTRACE_EVENT_VFORK)
+#घोषणा PT_TRACE_CLONE		PT_EVENT_FLAG(PTRACE_EVENT_CLONE)
+#घोषणा PT_TRACE_EXEC		PT_EVENT_FLAG(PTRACE_EVENT_EXEC)
+#घोषणा PT_TRACE_VFORK_DONE	PT_EVENT_FLAG(PTRACE_EVENT_VFORK_DONE)
+#घोषणा PT_TRACE_EXIT		PT_EVENT_FLAG(PTRACE_EVENT_EXIT)
+#घोषणा PT_TRACE_SECCOMP	PT_EVENT_FLAG(PTRACE_EVENT_SECCOMP)
 
-#define PT_EXITKILL		(PTRACE_O_EXITKILL << PT_OPT_FLAG_SHIFT)
-#define PT_SUSPEND_SECCOMP	(PTRACE_O_SUSPEND_SECCOMP << PT_OPT_FLAG_SHIFT)
+#घोषणा PT_EXITKILL		(PTRACE_O_EXITKILL << PT_OPT_FLAG_SHIFT)
+#घोषणा PT_SUSPEND_SECCOMP	(PTRACE_O_SUSPEND_SECCOMP << PT_OPT_FLAG_SHIFT)
 
 /* single stepping state bits (used on ARM and PA-RISC) */
-#define PT_SINGLESTEP_BIT	31
-#define PT_SINGLESTEP		(1<<PT_SINGLESTEP_BIT)
-#define PT_BLOCKSTEP_BIT	30
-#define PT_BLOCKSTEP		(1<<PT_BLOCKSTEP_BIT)
+#घोषणा PT_SINGLESTEP_BIT	31
+#घोषणा PT_SINGLESTEP		(1<<PT_SINGLESTEP_BIT)
+#घोषणा PT_BLOCKSTEP_BIT	30
+#घोषणा PT_BLOCKSTEP		(1<<PT_BLOCKSTEP_BIT)
 
-extern long arch_ptrace(struct task_struct *child, long request,
-			unsigned long addr, unsigned long data);
-extern int ptrace_readdata(struct task_struct *tsk, unsigned long src, char __user *dst, int len);
-extern int ptrace_writedata(struct task_struct *tsk, char __user *src, unsigned long dst, int len);
-extern void ptrace_disable(struct task_struct *);
-extern int ptrace_request(struct task_struct *child, long request,
-			  unsigned long addr, unsigned long data);
-extern void ptrace_notify(int exit_code);
-extern void __ptrace_link(struct task_struct *child,
-			  struct task_struct *new_parent,
-			  const struct cred *ptracer_cred);
-extern void __ptrace_unlink(struct task_struct *child);
-extern void exit_ptrace(struct task_struct *tracer, struct list_head *dead);
-#define PTRACE_MODE_READ	0x01
-#define PTRACE_MODE_ATTACH	0x02
-#define PTRACE_MODE_NOAUDIT	0x04
-#define PTRACE_MODE_FSCREDS	0x08
-#define PTRACE_MODE_REALCREDS	0x10
+बाह्य दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
+			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data);
+बाह्य पूर्णांक ptrace_पढ़ोdata(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ src, अक्षर __user *dst, पूर्णांक len);
+बाह्य पूर्णांक ptrace_ग_लिखोdata(काष्ठा task_काष्ठा *tsk, अक्षर __user *src, अचिन्हित दीर्घ dst, पूर्णांक len);
+बाह्य व्योम ptrace_disable(काष्ठा task_काष्ठा *);
+बाह्य पूर्णांक ptrace_request(काष्ठा task_काष्ठा *child, दीर्घ request,
+			  अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data);
+बाह्य व्योम ptrace_notअगरy(पूर्णांक निकास_code);
+बाह्य व्योम __ptrace_link(काष्ठा task_काष्ठा *child,
+			  काष्ठा task_काष्ठा *new_parent,
+			  स्थिर काष्ठा cred *ptracer_cred);
+बाह्य व्योम __ptrace_unlink(काष्ठा task_काष्ठा *child);
+बाह्य व्योम निकास_ptrace(काष्ठा task_काष्ठा *tracer, काष्ठा list_head *dead);
+#घोषणा PTRACE_MODE_READ	0x01
+#घोषणा PTRACE_MODE_ATTACH	0x02
+#घोषणा PTRACE_MODE_NOAUDIT	0x04
+#घोषणा PTRACE_MODE_FSCREDS	0x08
+#घोषणा PTRACE_MODE_REALCREDS	0x10
 
-/* shorthands for READ/ATTACH and FSCREDS/REALCREDS combinations */
-#define PTRACE_MODE_READ_FSCREDS (PTRACE_MODE_READ | PTRACE_MODE_FSCREDS)
-#define PTRACE_MODE_READ_REALCREDS (PTRACE_MODE_READ | PTRACE_MODE_REALCREDS)
-#define PTRACE_MODE_ATTACH_FSCREDS (PTRACE_MODE_ATTACH | PTRACE_MODE_FSCREDS)
-#define PTRACE_MODE_ATTACH_REALCREDS (PTRACE_MODE_ATTACH | PTRACE_MODE_REALCREDS)
+/* लघुhands क्रम READ/ATTACH and FSCREDS/REALCREDS combinations */
+#घोषणा PTRACE_MODE_READ_FSCREDS (PTRACE_MODE_READ | PTRACE_MODE_FSCREDS)
+#घोषणा PTRACE_MODE_READ_REALCREDS (PTRACE_MODE_READ | PTRACE_MODE_REALCREDS)
+#घोषणा PTRACE_MODE_ATTACH_FSCREDS (PTRACE_MODE_ATTACH | PTRACE_MODE_FSCREDS)
+#घोषणा PTRACE_MODE_ATTACH_REALCREDS (PTRACE_MODE_ATTACH | PTRACE_MODE_REALCREDS)
 
 /**
  * ptrace_may_access - check whether the caller is permitted to access
@@ -87,215 +88,215 @@ extern void exit_ptrace(struct task_struct *tracer, struct list_head *dead);
  * Returns true on success, false on denial.
  *
  * One of the flags PTRACE_MODE_FSCREDS and PTRACE_MODE_REALCREDS must
- * be set in @mode to specify whether the access was requested through
- * a filesystem syscall (should use effective capabilities and fsuid
+ * be set in @mode to specअगरy whether the access was requested through
+ * a fileप्रणाली syscall (should use effective capabilities and fsuid
  * of the caller) or through an explicit syscall such as
- * process_vm_writev or ptrace (and should use the real credentials).
+ * process_vm_ग_लिखोv or ptrace (and should use the real credentials).
  */
-extern bool ptrace_may_access(struct task_struct *task, unsigned int mode);
+बाह्य bool ptrace_may_access(काष्ठा task_काष्ठा *task, अचिन्हित पूर्णांक mode);
 
-static inline int ptrace_reparented(struct task_struct *child)
-{
-	return !same_thread_group(child->real_parent, child->parent);
-}
+अटल अंतरभूत पूर्णांक ptrace_reparented(काष्ठा task_काष्ठा *child)
+अणु
+	वापस !same_thपढ़ो_group(child->real_parent, child->parent);
+पूर्ण
 
-static inline void ptrace_unlink(struct task_struct *child)
-{
-	if (unlikely(child->ptrace))
+अटल अंतरभूत व्योम ptrace_unlink(काष्ठा task_काष्ठा *child)
+अणु
+	अगर (unlikely(child->ptrace))
 		__ptrace_unlink(child);
-}
+पूर्ण
 
-int generic_ptrace_peekdata(struct task_struct *tsk, unsigned long addr,
-			    unsigned long data);
-int generic_ptrace_pokedata(struct task_struct *tsk, unsigned long addr,
-			    unsigned long data);
+पूर्णांक generic_ptrace_peekdata(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ addr,
+			    अचिन्हित दीर्घ data);
+पूर्णांक generic_ptrace_pokedata(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ addr,
+			    अचिन्हित दीर्घ data);
 
 /**
- * ptrace_parent - return the task that is tracing the given task
+ * ptrace_parent - वापस the task that is tracing the given task
  * @task: task to consider
  *
- * Returns %NULL if no one is tracing @task, or the &struct task_struct
- * pointer to its tracer.
+ * Returns %शून्य अगर no one is tracing @task, or the &काष्ठा task_काष्ठा
+ * poपूर्णांकer to its tracer.
  *
- * Must called under rcu_read_lock().  The pointer returned might be kept
+ * Must called under rcu_पढ़ो_lock().  The poपूर्णांकer वापसed might be kept
  * live only by RCU.  During exec, this may be called with task_lock() held
  * on @task, still held from when check_unsafe_exec() was called.
  */
-static inline struct task_struct *ptrace_parent(struct task_struct *task)
-{
-	if (unlikely(task->ptrace))
-		return rcu_dereference(task->parent);
-	return NULL;
-}
+अटल अंतरभूत काष्ठा task_काष्ठा *ptrace_parent(काष्ठा task_काष्ठा *task)
+अणु
+	अगर (unlikely(task->ptrace))
+		वापस rcu_dereference(task->parent);
+	वापस शून्य;
+पूर्ण
 
 /**
  * ptrace_event_enabled - test whether a ptrace event is enabled
- * @task: ptracee of interest
+ * @task: ptracee of पूर्णांकerest
  * @event: %PTRACE_EVENT_* to test
  *
- * Test whether @event is enabled for ptracee @task.
+ * Test whether @event is enabled क्रम ptracee @task.
  *
- * Returns %true if @event is enabled, %false otherwise.
+ * Returns %true अगर @event is enabled, %false otherwise.
  */
-static inline bool ptrace_event_enabled(struct task_struct *task, int event)
-{
-	return task->ptrace & PT_EVENT_FLAG(event);
-}
+अटल अंतरभूत bool ptrace_event_enabled(काष्ठा task_काष्ठा *task, पूर्णांक event)
+अणु
+	वापस task->ptrace & PT_EVENT_FLAG(event);
+पूर्ण
 
 /**
- * ptrace_event - possibly stop for a ptrace event notification
+ * ptrace_event - possibly stop क्रम a ptrace event notअगरication
  * @event:	%PTRACE_EVENT_* value to report
- * @message:	value for %PTRACE_GETEVENTMSG to return
+ * @message:	value क्रम %PTRACE_GETEVENTMSG to वापस
  *
- * Check whether @event is enabled and, if so, report @event and @message
+ * Check whether @event is enabled and, अगर so, report @event and @message
  * to the ptrace parent.
  *
  * Called without locks.
  */
-static inline void ptrace_event(int event, unsigned long message)
-{
-	if (unlikely(ptrace_event_enabled(current, event))) {
+अटल अंतरभूत व्योम ptrace_event(पूर्णांक event, अचिन्हित दीर्घ message)
+अणु
+	अगर (unlikely(ptrace_event_enabled(current, event))) अणु
 		current->ptrace_message = message;
-		ptrace_notify((event << 8) | SIGTRAP);
-	} else if (event == PTRACE_EVENT_EXEC) {
+		ptrace_notअगरy((event << 8) | SIGTRAP);
+	पूर्ण अन्यथा अगर (event == PTRACE_EVENT_EXEC) अणु
 		/* legacy EXEC report via SIGTRAP */
-		if ((current->ptrace & (PT_PTRACED|PT_SEIZED)) == PT_PTRACED)
+		अगर ((current->ptrace & (PT_PTRACED|PT_SEIZED)) == PT_PTRACED)
 			send_sig(SIGTRAP, current, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ptrace_event_pid - possibly stop for a ptrace event notification
+ * ptrace_event_pid - possibly stop क्रम a ptrace event notअगरication
  * @event:	%PTRACE_EVENT_* value to report
- * @pid:	process identifier for %PTRACE_GETEVENTMSG to return
+ * @pid:	process identअगरier क्रम %PTRACE_GETEVENTMSG to वापस
  *
- * Check whether @event is enabled and, if so, report @event and @pid
+ * Check whether @event is enabled and, अगर so, report @event and @pid
  * to the ptrace parent.  @pid is reported as the pid_t seen from the
  * ptrace parent's pid namespace.
  *
  * Called without locks.
  */
-static inline void ptrace_event_pid(int event, struct pid *pid)
-{
+अटल अंतरभूत व्योम ptrace_event_pid(पूर्णांक event, काष्ठा pid *pid)
+अणु
 	/*
-	 * FIXME: There's a potential race if a ptracer in a different pid
+	 * FIXME: There's a potential race अगर a ptracer in a dअगरferent pid
 	 * namespace than parent attaches between computing message below and
 	 * when we acquire tasklist_lock in ptrace_stop().  If this happens,
 	 * the ptracer will get a bogus pid from PTRACE_GETEVENTMSG.
 	 */
-	unsigned long message = 0;
-	struct pid_namespace *ns;
+	अचिन्हित दीर्घ message = 0;
+	काष्ठा pid_namespace *ns;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ns = task_active_pid_ns(rcu_dereference(current->parent));
-	if (ns)
+	अगर (ns)
 		message = pid_nr_ns(pid, ns);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	ptrace_event(event, message);
-}
+पूर्ण
 
 /**
- * ptrace_init_task - initialize ptrace state for a new child
+ * ptrace_init_task - initialize ptrace state क्रम a new child
  * @child:		new child task
- * @ptrace:		true if child should be ptrace'd by parent's tracer
+ * @ptrace:		true अगर child should be ptrace'd by parent's tracer
  *
  * This is called immediately after adding @child to its parent's children
- * list.  @ptrace is false in the normal case, and true to ptrace @child.
+ * list.  @ptrace is false in the normal हाल, and true to ptrace @child.
  *
- * Called with current's siglock and write_lock_irq(&tasklist_lock) held.
+ * Called with current's siglock and ग_लिखो_lock_irq(&tasklist_lock) held.
  */
-static inline void ptrace_init_task(struct task_struct *child, bool ptrace)
-{
+अटल अंतरभूत व्योम ptrace_init_task(काष्ठा task_काष्ठा *child, bool ptrace)
+अणु
 	INIT_LIST_HEAD(&child->ptrace_entry);
 	INIT_LIST_HEAD(&child->ptraced);
 	child->jobctl = 0;
 	child->ptrace = 0;
 	child->parent = child->real_parent;
 
-	if (unlikely(ptrace) && current->ptrace) {
+	अगर (unlikely(ptrace) && current->ptrace) अणु
 		child->ptrace = current->ptrace;
 		__ptrace_link(child, current->parent, current->ptracer_cred);
 
-		if (child->ptrace & PT_SEIZED)
+		अगर (child->ptrace & PT_SEIZED)
 			task_set_jobctl_pending(child, JOBCTL_TRAP_STOP);
-		else
-			sigaddset(&child->pending.signal, SIGSTOP);
-	}
-	else
-		child->ptracer_cred = NULL;
-}
+		अन्यथा
+			sigaddset(&child->pending.संकेत, SIGSTOP);
+	पूर्ण
+	अन्यथा
+		child->ptracer_cred = शून्य;
+पूर्ण
 
 /**
  * ptrace_release_task - final ptrace-related cleanup of a zombie being reaped
  * @task:	task in %EXIT_DEAD state
  *
- * Called with write_lock(&tasklist_lock) held.
+ * Called with ग_लिखो_lock(&tasklist_lock) held.
  */
-static inline void ptrace_release_task(struct task_struct *task)
-{
+अटल अंतरभूत व्योम ptrace_release_task(काष्ठा task_काष्ठा *task)
+अणु
 	BUG_ON(!list_empty(&task->ptraced));
 	ptrace_unlink(task);
 	BUG_ON(!list_empty(&task->ptrace_entry));
-}
+पूर्ण
 
-#ifndef force_successful_syscall_return
+#अगर_अघोषित क्रमce_successful_syscall_वापस
 /*
- * System call handlers that, upon successful completion, need to return a
- * negative value should call force_successful_syscall_return() right before
- * returning.  On architectures where the syscall convention provides for a
- * separate error flag (e.g., alpha, ia64, ppc{,64}, sparc{,64}, possibly
+ * System call handlers that, upon successful completion, need to वापस a
+ * negative value should call क्रमce_successful_syscall_वापस() right beक्रमe
+ * वापसing.  On architectures where the syscall convention provides क्रम a
+ * separate error flag (e.g., alpha, ia64, ppcअणु,64पूर्ण, sparcअणु,64पूर्ण, possibly
  * others), this macro can be used to ensure that the error flag will not get
- * set.  On architectures which do not support a separate error flag, the macro
+ * set.  On architectures which करो not support a separate error flag, the macro
  * is a no-op and the spurious error condition needs to be filtered out by some
  * other means (e.g., in user-level, by passing an extra argument to the
- * syscall handler, or something along those lines).
+ * syscall handler, or something aदीर्घ those lines).
  */
-#define force_successful_syscall_return() do { } while (0)
-#endif
+#घोषणा क्रमce_successful_syscall_वापस() करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifndef is_syscall_success
+#अगर_अघोषित is_syscall_success
 /*
- * On most systems we can tell if a syscall is a success based on if the retval
- * is an error value.  On some systems like ia64 and powerpc they have different
+ * On most प्रणालीs we can tell अगर a syscall is a success based on अगर the retval
+ * is an error value.  On some प्रणालीs like ia64 and घातerpc they have dअगरferent
  * indicators of success/failure and must define their own.
  */
-#define is_syscall_success(regs) (!IS_ERR_VALUE((unsigned long)(regs_return_value(regs))))
-#endif
+#घोषणा is_syscall_success(regs) (!IS_ERR_VALUE((अचिन्हित दीर्घ)(regs_वापस_value(regs))))
+#पूर्ण_अगर
 
 /*
- * <asm/ptrace.h> should define the following things inside #ifdef __KERNEL__.
+ * <यंत्र/ptrace.h> should define the following things inside #अगर_घोषित __KERNEL__.
  *
- * These do-nothing inlines are used when the arch does not
- * implement single-step.  The kerneldoc comments are here
- * to document the interface for all arch definitions.
+ * These करो-nothing अंतरभूतs are used when the arch करोes not
+ * implement single-step.  The kernelकरोc comments are here
+ * to करोcument the पूर्णांकerface क्रम all arch definitions.
  */
 
-#ifndef arch_has_single_step
+#अगर_अघोषित arch_has_single_step
 /**
- * arch_has_single_step - does this CPU support user-mode single-step?
+ * arch_has_single_step - करोes this CPU support user-mode single-step?
  *
  * If this is defined, then there must be function declarations or
- * inlines for user_enable_single_step() and user_disable_single_step().
- * arch_has_single_step() should evaluate to nonzero iff the machine
- * supports instruction single-step for user mode.
- * It can be a constant or it can test a CPU feature bit.
+ * अंतरभूतs क्रम user_enable_single_step() and user_disable_single_step().
+ * arch_has_single_step() should evaluate to nonzero अगरf the machine
+ * supports inकाष्ठाion single-step क्रम user mode.
+ * It can be a स्थिरant or it can test a CPU feature bit.
  */
-#define arch_has_single_step()		(0)
+#घोषणा arch_has_single_step()		(0)
 
 /**
  * user_enable_single_step - single-step in user-mode task
  * @task: either current or a task stopped in %TASK_TRACED
  *
- * This can only be called when arch_has_single_step() has returned nonzero.
- * Set @task so that when it returns to user mode, it will trap after the
- * next single instruction executes.  If arch_has_block_step() is defined,
+ * This can only be called when arch_has_single_step() has वापसed nonzero.
+ * Set @task so that when it वापसs to user mode, it will trap after the
+ * next single inकाष्ठाion executes.  If arch_has_block_step() is defined,
  * this must clear the effects of user_enable_block_step() too.
  */
-static inline void user_enable_single_step(struct task_struct *task)
-{
+अटल अंतरभूत व्योम user_enable_single_step(काष्ठा task_काष्ठा *task)
+अणु
 	BUG();			/* This can never be called.  */
-}
+पूर्ण
 
 /**
  * user_disable_single_step - cancel user-mode single-step
@@ -303,118 +304,118 @@ static inline void user_enable_single_step(struct task_struct *task)
  *
  * Clear @task of the effects of user_enable_single_step() and
  * user_enable_block_step().  This can be called whether or not either
- * of those was ever called on @task, and even if arch_has_single_step()
- * returned zero.
+ * of those was ever called on @task, and even अगर arch_has_single_step()
+ * वापसed zero.
  */
-static inline void user_disable_single_step(struct task_struct *task)
-{
-}
-#else
-extern void user_enable_single_step(struct task_struct *);
-extern void user_disable_single_step(struct task_struct *);
-#endif	/* arch_has_single_step */
+अटल अंतरभूत व्योम user_disable_single_step(काष्ठा task_काष्ठा *task)
+अणु
+पूर्ण
+#अन्यथा
+बाह्य व्योम user_enable_single_step(काष्ठा task_काष्ठा *);
+बाह्य व्योम user_disable_single_step(काष्ठा task_काष्ठा *);
+#पूर्ण_अगर	/* arch_has_single_step */
 
-#ifndef arch_has_block_step
+#अगर_अघोषित arch_has_block_step
 /**
- * arch_has_block_step - does this CPU support user-mode block-step?
+ * arch_has_block_step - करोes this CPU support user-mode block-step?
  *
- * If this is defined, then there must be a function declaration or inline
- * for user_enable_block_step(), and arch_has_single_step() must be defined
- * too.  arch_has_block_step() should evaluate to nonzero iff the machine
- * supports step-until-branch for user mode.  It can be a constant or it
+ * If this is defined, then there must be a function declaration or अंतरभूत
+ * क्रम user_enable_block_step(), and arch_has_single_step() must be defined
+ * too.  arch_has_block_step() should evaluate to nonzero अगरf the machine
+ * supports step-until-branch क्रम user mode.  It can be a स्थिरant or it
  * can test a CPU feature bit.
  */
-#define arch_has_block_step()		(0)
+#घोषणा arch_has_block_step()		(0)
 
 /**
  * user_enable_block_step - step until branch in user-mode task
  * @task: either current or a task stopped in %TASK_TRACED
  *
- * This can only be called when arch_has_block_step() has returned nonzero,
- * and will never be called when single-instruction stepping is being used.
- * Set @task so that when it returns to user mode, it will trap after the
+ * This can only be called when arch_has_block_step() has वापसed nonzero,
+ * and will never be called when single-inकाष्ठाion stepping is being used.
+ * Set @task so that when it वापसs to user mode, it will trap after the
  * next branch or trap taken.
  */
-static inline void user_enable_block_step(struct task_struct *task)
-{
+अटल अंतरभूत व्योम user_enable_block_step(काष्ठा task_काष्ठा *task)
+अणु
 	BUG();			/* This can never be called.  */
-}
-#else
-extern void user_enable_block_step(struct task_struct *);
-#endif	/* arch_has_block_step */
+पूर्ण
+#अन्यथा
+बाह्य व्योम user_enable_block_step(काष्ठा task_काष्ठा *);
+#पूर्ण_अगर	/* arch_has_block_step */
 
-#ifdef ARCH_HAS_USER_SINGLE_STEP_REPORT
-extern void user_single_step_report(struct pt_regs *regs);
-#else
-static inline void user_single_step_report(struct pt_regs *regs)
-{
+#अगर_घोषित ARCH_HAS_USER_SINGLE_STEP_REPORT
+बाह्य व्योम user_single_step_report(काष्ठा pt_regs *regs);
+#अन्यथा
+अटल अंतरभूत व्योम user_single_step_report(काष्ठा pt_regs *regs)
+अणु
 	kernel_siginfo_t info;
 	clear_siginfo(&info);
 	info.si_signo = SIGTRAP;
-	info.si_errno = 0;
+	info.si_त्रुटि_सं = 0;
 	info.si_code = SI_USER;
 	info.si_pid = 0;
 	info.si_uid = 0;
-	force_sig_info(&info);
-}
-#endif
+	क्रमce_sig_info(&info);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef arch_ptrace_stop_needed
+#अगर_अघोषित arch_ptrace_stop_needed
 /**
  * arch_ptrace_stop_needed - Decide whether arch_ptrace_stop() should be called
- * @code:	current->exit_code value ptrace will stop with
- * @info:	siginfo_t pointer (or %NULL) for signal ptrace will stop with
+ * @code:	current->निकास_code value ptrace will stop with
+ * @info:	siginfo_t poपूर्णांकer (or %शून्य) क्रम संकेत ptrace will stop with
  *
  * This is called with the siglock held, to decide whether or not it's
  * necessary to release the siglock and call arch_ptrace_stop() with the
- * same @code and @info arguments.  It can be defined to a constant if
+ * same @code and @info arguments.  It can be defined to a स्थिरant अगर
  * arch_ptrace_stop() is never required, or always is.  On machines where
  * this makes sense, it should be defined to a quick test to optimize out
  * calling arch_ptrace_stop() when it would be superfluous.  For example,
- * if the thread has not been back to user mode since the last stop, the
- * thread state might indicate that nothing needs to be done.
+ * अगर the thपढ़ो has not been back to user mode since the last stop, the
+ * thपढ़ो state might indicate that nothing needs to be करोne.
  *
- * This is guaranteed to be invoked once before a task stops for ptrace and
- * may include arch-specific operations necessary prior to a ptrace stop.
+ * This is guaranteed to be invoked once beक्रमe a task stops क्रम ptrace and
+ * may include arch-specअगरic operations necessary prior to a ptrace stop.
  */
-#define arch_ptrace_stop_needed(code, info)	(0)
-#endif
+#घोषणा arch_ptrace_stop_needed(code, info)	(0)
+#पूर्ण_अगर
 
-#ifndef arch_ptrace_stop
+#अगर_अघोषित arch_ptrace_stop
 /**
- * arch_ptrace_stop - Do machine-specific work before stopping for ptrace
- * @code:	current->exit_code value ptrace will stop with
- * @info:	siginfo_t pointer (or %NULL) for signal ptrace will stop with
+ * arch_ptrace_stop - Do machine-specअगरic work beक्रमe stopping क्रम ptrace
+ * @code:	current->निकास_code value ptrace will stop with
+ * @info:	siginfo_t poपूर्णांकer (or %शून्य) क्रम संकेत ptrace will stop with
  *
  * This is called with no locks held when arch_ptrace_stop_needed() has
- * just returned nonzero.  It is allowed to block, e.g. for user memory
- * access.  The arch can have machine-specific work to be done before
- * ptrace stops.  On ia64, register backing store gets written back to user
+ * just वापसed nonzero.  It is allowed to block, e.g. क्रम user memory
+ * access.  The arch can have machine-specअगरic work to be करोne beक्रमe
+ * ptrace stops.  On ia64, रेजिस्टर backing store माला_लो written back to user
  * memory here.  Since this can be costly (requires dropping the siglock),
- * we only do it when the arch requires it for this particular stop, as
+ * we only करो it when the arch requires it क्रम this particular stop, as
  * indicated by arch_ptrace_stop_needed().
  */
-#define arch_ptrace_stop(code, info)		do { } while (0)
-#endif
+#घोषणा arch_ptrace_stop(code, info)		करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifndef current_pt_regs
-#define current_pt_regs() task_pt_regs(current)
-#endif
+#अगर_अघोषित current_pt_regs
+#घोषणा current_pt_regs() task_pt_regs(current)
+#पूर्ण_अगर
 
 /*
  * unlike current_pt_regs(), this one is equal to task_pt_regs(current)
  * on *all* architectures; the only reason to have a per-arch definition
  * is optimisation.
  */
-#ifndef signal_pt_regs
-#define signal_pt_regs() task_pt_regs(current)
-#endif
+#अगर_अघोषित संकेत_pt_regs
+#घोषणा संकेत_pt_regs() task_pt_regs(current)
+#पूर्ण_अगर
 
-#ifndef current_user_stack_pointer
-#define current_user_stack_pointer() user_stack_pointer(current_pt_regs())
-#endif
+#अगर_अघोषित current_user_stack_poपूर्णांकer
+#घोषणा current_user_stack_poपूर्णांकer() user_stack_poपूर्णांकer(current_pt_regs())
+#पूर्ण_अगर
 
-extern int task_current_syscall(struct task_struct *target, struct syscall_info *info);
+बाह्य पूर्णांक task_current_syscall(काष्ठा task_काष्ठा *target, काष्ठा syscall_info *info);
 
-extern void sigaction_compat_abi(struct k_sigaction *act, struct k_sigaction *oact);
-#endif
+बाह्य व्योम sigaction_compat_abi(काष्ठा k_sigaction *act, काष्ठा k_sigaction *oact);
+#पूर्ण_अगर

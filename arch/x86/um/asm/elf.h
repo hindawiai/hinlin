@@ -1,39 +1,40 @@
+<शैली गुरु>
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  * Licensed under the GPL
  */
-#ifndef __UM_ELF_X86_H
-#define __UM_ELF_X86_H
+#अगर_अघोषित __UM_ELF_X86_H
+#घोषणा __UM_ELF_X86_H
 
-#include <asm/user.h>
-#include <skas.h>
+#समावेश <यंत्र/user.h>
+#समावेश <skas.h>
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 
-#define R_386_NONE	0
-#define R_386_32	1
-#define R_386_PC32	2
-#define R_386_GOT32	3
-#define R_386_PLT32	4
-#define R_386_COPY	5
-#define R_386_GLOB_DAT	6
-#define R_386_JMP_SLOT	7
-#define R_386_RELATIVE	8
-#define R_386_GOTOFF	9
-#define R_386_GOTPC	10
-#define R_386_NUM	11
+#घोषणा R_386_NONE	0
+#घोषणा R_386_32	1
+#घोषणा R_386_PC32	2
+#घोषणा R_386_GOT32	3
+#घोषणा R_386_PLT32	4
+#घोषणा R_386_COPY	5
+#घोषणा R_386_GLOB_DAT	6
+#घोषणा R_386_JMP_SLOT	7
+#घोषणा R_386_RELATIVE	8
+#घोषणा R_386_GOTOFF	9
+#घोषणा R_386_GOTPC	10
+#घोषणा R_386_NUM	11
 
 /*
- * This is used to ensure we don't load something for the wrong architecture.
+ * This is used to ensure we करोn't load something क्रम the wrong architecture.
  */
-#define elf_check_arch(x) \
+#घोषणा elf_check_arch(x) \
 	(((x)->e_machine == EM_386) || ((x)->e_machine == EM_486))
 
-#define ELF_CLASS	ELFCLASS32
-#define ELF_DATA        ELFDATA2LSB
-#define ELF_ARCH        EM_386
+#घोषणा ELF_CLASS	ELFCLASS32
+#घोषणा ELF_DATA        ELFDATA2LSB
+#घोषणा ELF_ARCH        EM_386
 
-#define ELF_PLAT_INIT(regs, load_addr) do { \
+#घोषणा ELF_PLAT_INIT(regs, load_addr) करो अणु \
 	PT_REGS_BX(regs) = 0; \
 	PT_REGS_CX(regs) = 0; \
 	PT_REGS_DX(regs) = 0; \
@@ -41,11 +42,11 @@
 	PT_REGS_DI(regs) = 0; \
 	PT_REGS_BP(regs) = 0; \
 	PT_REGS_AX(regs) = 0; \
-} while (0)
+पूर्ण जबतक (0)
 
-/* Shamelessly stolen from include/asm-i386/elf.h */
+/* Shamelessly stolen from include/यंत्र-i386/elf.h */
 
-#define ELF_CORE_COPY_REGS(pr_reg, regs) do {	\
+#घोषणा ELF_CORE_COPY_REGS(pr_reg, regs) करो अणु	\
 	pr_reg[0] = PT_REGS_BX(regs);		\
 	pr_reg[1] = PT_REGS_CX(regs);		\
 	pr_reg[2] = PT_REGS_DX(regs);		\
@@ -64,71 +65,71 @@
 	pr_reg[14] = PT_REGS_EFLAGS(regs);	\
 	pr_reg[15] = PT_REGS_SP(regs);		\
 	pr_reg[16] = PT_REGS_SS(regs);		\
-} while (0);
+पूर्ण जबतक (0);
 
-extern char * elf_aux_platform;
-#define ELF_PLATFORM (elf_aux_platform)
+बाह्य अक्षर * elf_aux_platक्रमm;
+#घोषणा ELF_PLATFORM (elf_aux_platक्रमm)
 
-extern unsigned long vsyscall_ehdr;
-extern unsigned long vsyscall_end;
-extern unsigned long __kernel_vsyscall;
+बाह्य अचिन्हित दीर्घ vsyscall_ehdr;
+बाह्य अचिन्हित दीर्घ vsyscall_end;
+बाह्य अचिन्हित दीर्घ __kernel_vsyscall;
 
 /*
- * This is the range that is readable by user mode, and things
+ * This is the range that is पढ़ोable by user mode, and things
  * acting like user mode such as get_user_pages.
  */
-#define FIXADDR_USER_START      vsyscall_ehdr
-#define FIXADDR_USER_END        vsyscall_end
+#घोषणा FIXADDR_USER_START      vsyscall_ehdr
+#घोषणा FIXADDR_USER_END        vsyscall_end
 
 
 /*
  * Architecture-neutral AT_ values in 0-17, leave some room
- * for more of them, start the x86-specific ones at 32.
+ * क्रम more of them, start the x86-specअगरic ones at 32.
  */
-#define AT_SYSINFO		32
-#define AT_SYSINFO_EHDR		33
+#घोषणा AT_SYSINFO		32
+#घोषणा AT_SYSINFO_EHDR		33
 
-#define ARCH_DLINFO						\
-do {								\
-	if ( vsyscall_ehdr ) {					\
+#घोषणा ARCH_DLINFO						\
+करो अणु								\
+	अगर ( vsyscall_ehdr ) अणु					\
 		NEW_AUX_ENT(AT_SYSINFO,	__kernel_vsyscall);	\
 		NEW_AUX_ENT(AT_SYSINFO_EHDR, vsyscall_ehdr);	\
-	}							\
-} while (0)
+	पूर्ण							\
+पूर्ण जबतक (0)
 
-#else
+#अन्यथा
 
-/* x86-64 relocation types, taken from asm-x86_64/elf.h */
-#define R_X86_64_NONE		0	/* No reloc */
-#define R_X86_64_64		1	/* Direct 64 bit  */
-#define R_X86_64_PC32		2	/* PC relative 32 bit signed */
-#define R_X86_64_GOT32		3	/* 32 bit GOT entry */
-#define R_X86_64_PLT32		4	/* 32 bit PLT address */
-#define R_X86_64_COPY		5	/* Copy symbol at runtime */
-#define R_X86_64_GLOB_DAT	6	/* Create GOT entry */
-#define R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
-#define R_X86_64_RELATIVE	8	/* Adjust by program base */
-#define R_X86_64_GOTPCREL	9	/* 32 bit signed pc relative
+/* x86-64 relocation types, taken from यंत्र-x86_64/elf.h */
+#घोषणा R_X86_64_NONE		0	/* No reloc */
+#घोषणा R_X86_64_64		1	/* Direct 64 bit  */
+#घोषणा R_X86_64_PC32		2	/* PC relative 32 bit चिन्हित */
+#घोषणा R_X86_64_GOT32		3	/* 32 bit GOT entry */
+#घोषणा R_X86_64_PLT32		4	/* 32 bit PLT address */
+#घोषणा R_X86_64_COPY		5	/* Copy symbol at runसमय */
+#घोषणा R_X86_64_GLOB_DAT	6	/* Create GOT entry */
+#घोषणा R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
+#घोषणा R_X86_64_RELATIVE	8	/* Adjust by program base */
+#घोषणा R_X86_64_GOTPCREL	9	/* 32 bit चिन्हित pc relative
 					   offset to GOT */
-#define R_X86_64_32		10	/* Direct 32 bit zero extended */
-#define R_X86_64_32S		11	/* Direct 32 bit sign extended */
-#define R_X86_64_16		12	/* Direct 16 bit zero extended */
-#define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
-#define R_X86_64_8		14	/* Direct 8 bit sign extended  */
-#define R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
-#define R_X86_64_PC64		24	/* Place relative 64-bit signed */
+#घोषणा R_X86_64_32		10	/* Direct 32 bit zero extended */
+#घोषणा R_X86_64_32S		11	/* Direct 32 bit sign extended */
+#घोषणा R_X86_64_16		12	/* Direct 16 bit zero extended */
+#घोषणा R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
+#घोषणा R_X86_64_8		14	/* Direct 8 bit sign extended  */
+#घोषणा R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
+#घोषणा R_X86_64_PC64		24	/* Place relative 64-bit चिन्हित */
 
 /*
- * This is used to ensure we don't load something for the wrong architecture.
+ * This is used to ensure we करोn't load something क्रम the wrong architecture.
  */
-#define elf_check_arch(x) \
+#घोषणा elf_check_arch(x) \
 	((x)->e_machine == EM_X86_64)
 
-#define ELF_CLASS	ELFCLASS64
-#define ELF_DATA        ELFDATA2LSB
-#define ELF_ARCH        EM_X86_64
+#घोषणा ELF_CLASS	ELFCLASS64
+#घोषणा ELF_DATA        ELFDATA2LSB
+#घोषणा ELF_ARCH        EM_X86_64
 
-#define ELF_PLAT_INIT(regs, load_addr)    do { \
+#घोषणा ELF_PLAT_INIT(regs, load_addr)    करो अणु \
 	PT_REGS_BX(regs) = 0; \
 	PT_REGS_CX(regs) = 0; \
 	PT_REGS_DX(regs) = 0; \
@@ -144,9 +145,9 @@ do {								\
 	PT_REGS_R13(regs) = 0; \
 	PT_REGS_R14(regs) = 0; \
 	PT_REGS_R15(regs) = 0; \
-} while (0)
+पूर्ण जबतक (0)
 
-#define ELF_CORE_COPY_REGS(pr_reg, _regs)		\
+#घोषणा ELF_CORE_COPY_REGS(pr_reg, _regs)		\
 	(pr_reg)[0] = (_regs)->regs.gp[0];			\
 	(pr_reg)[1] = (_regs)->regs.gp[1];			\
 	(pr_reg)[2] = (_regs)->regs.gp[2];			\
@@ -168,50 +169,50 @@ do {								\
 	(pr_reg)[18] = (_regs)->regs.gp[18];			\
 	(pr_reg)[19] = (_regs)->regs.gp[19];			\
 	(pr_reg)[20] = (_regs)->regs.gp[20];			\
-	(pr_reg)[21] = current->thread.arch.fs;			\
+	(pr_reg)[21] = current->thपढ़ो.arch.fs;			\
 	(pr_reg)[22] = 0;					\
 	(pr_reg)[23] = 0;					\
 	(pr_reg)[24] = 0;					\
 	(pr_reg)[25] = 0;					\
 	(pr_reg)[26] = 0;
 
-#define ELF_PLATFORM "x86_64"
+#घोषणा ELF_PLATFORM "x86_64"
 
 /* No user-accessible fixmap addresses, i.e. vsyscall */
-#define FIXADDR_USER_START      0
-#define FIXADDR_USER_END        0
+#घोषणा FIXADDR_USER_START      0
+#घोषणा FIXADDR_USER_END        0
 
-#define ARCH_HAS_SETUP_ADDITIONAL_PAGES 1
-struct linux_binprm;
-extern int arch_setup_additional_pages(struct linux_binprm *bprm,
-	int uses_interp);
+#घोषणा ARCH_HAS_SETUP_ADDITIONAL_PAGES 1
+काष्ठा linux_binprm;
+बाह्य पूर्णांक arch_setup_additional_pages(काष्ठा linux_binprm *bprm,
+	पूर्णांक uses_पूर्णांकerp);
 
-extern unsigned long um_vdso_addr;
-#define AT_SYSINFO_EHDR 33
-#define ARCH_DLINFO	NEW_AUX_ENT(AT_SYSINFO_EHDR, um_vdso_addr)
+बाह्य अचिन्हित दीर्घ um_vdso_addr;
+#घोषणा AT_SYSINFO_EHDR 33
+#घोषणा ARCH_DLINFO	NEW_AUX_ENT(AT_SYSINFO_EHDR, um_vdso_addr)
 
-#endif
+#पूर्ण_अगर
 
-typedef unsigned long elf_greg_t;
+प्रकार अचिन्हित दीर्घ elf_greg_t;
 
-#define ELF_NGREG (sizeof(struct user_regs_struct) / sizeof(elf_greg_t))
-typedef elf_greg_t elf_gregset_t[ELF_NGREG];
+#घोषणा ELF_NGREG (माप(काष्ठा user_regs_काष्ठा) / माप(elf_greg_t))
+प्रकार elf_greg_t elf_gregset_t[ELF_NGREG];
 
-typedef struct user_i387_struct elf_fpregset_t;
+प्रकार काष्ठा user_i387_काष्ठा elf_fpregset_t;
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-extern int elf_core_copy_fpregs(struct task_struct *t, elf_fpregset_t *fpu);
+बाह्य पूर्णांक elf_core_copy_fpregs(काष्ठा task_काष्ठा *t, elf_fpregset_t *fpu);
 
-#define ELF_CORE_COPY_FPREGS(t, fpu) elf_core_copy_fpregs(t, fpu)
+#घोषणा ELF_CORE_COPY_FPREGS(t, fpu) elf_core_copy_fpregs(t, fpu)
 
-#define ELF_EXEC_PAGESIZE 4096
+#घोषणा ELF_EXEC_PAGESIZE 4096
 
-#define ELF_ET_DYN_BASE (TASK_SIZE / 3 * 2)
+#घोषणा ELF_ET_DYN_BASE (TASK_SIZE / 3 * 2)
 
-extern long elf_aux_hwcap;
-#define ELF_HWCAP (elf_aux_hwcap)
+बाह्य दीर्घ elf_aux_hwcap;
+#घोषणा ELF_HWCAP (elf_aux_hwcap)
 
-#define SET_PERSONALITY(ex) do {} while(0)
+#घोषणा SET_PERSONALITY(ex) करो अणुपूर्ण जबतक(0)
 
-#endif
+#पूर्ण_अगर

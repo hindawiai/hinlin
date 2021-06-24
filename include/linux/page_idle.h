@@ -1,140 +1,141 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_MM_PAGE_IDLE_H
-#define _LINUX_MM_PAGE_IDLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_MM_PAGE_IDLE_H
+#घोषणा _LINUX_MM_PAGE_IDLE_H
 
-#include <linux/bitops.h>
-#include <linux/page-flags.h>
-#include <linux/page_ext.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/page-flags.h>
+#समावेश <linux/page_ext.h>
 
-#ifdef CONFIG_IDLE_PAGE_TRACKING
+#अगर_घोषित CONFIG_IDLE_PAGE_TRACKING
 
-#ifdef CONFIG_64BIT
-static inline bool page_is_young(struct page *page)
-{
-	return PageYoung(page);
-}
+#अगर_घोषित CONFIG_64BIT
+अटल अंतरभूत bool page_is_young(काष्ठा page *page)
+अणु
+	वापस PageYoung(page);
+पूर्ण
 
-static inline void set_page_young(struct page *page)
-{
+अटल अंतरभूत व्योम set_page_young(काष्ठा page *page)
+अणु
 	SetPageYoung(page);
-}
+पूर्ण
 
-static inline bool test_and_clear_page_young(struct page *page)
-{
-	return TestClearPageYoung(page);
-}
+अटल अंतरभूत bool test_and_clear_page_young(काष्ठा page *page)
+अणु
+	वापस TestClearPageYoung(page);
+पूर्ण
 
-static inline bool page_is_idle(struct page *page)
-{
-	return PageIdle(page);
-}
+अटल अंतरभूत bool page_is_idle(काष्ठा page *page)
+अणु
+	वापस PageIdle(page);
+पूर्ण
 
-static inline void set_page_idle(struct page *page)
-{
+अटल अंतरभूत व्योम set_page_idle(काष्ठा page *page)
+अणु
 	SetPageIdle(page);
-}
+पूर्ण
 
-static inline void clear_page_idle(struct page *page)
-{
+अटल अंतरभूत व्योम clear_page_idle(काष्ठा page *page)
+अणु
 	ClearPageIdle(page);
-}
-#else /* !CONFIG_64BIT */
+पूर्ण
+#अन्यथा /* !CONFIG_64BIT */
 /*
  * If there is not enough space to store Idle and Young bits in page flags, use
  * page ext flags instead.
  */
-extern struct page_ext_operations page_idle_ops;
+बाह्य काष्ठा page_ext_operations page_idle_ops;
 
-static inline bool page_is_young(struct page *page)
-{
-	struct page_ext *page_ext = lookup_page_ext(page);
+अटल अंतरभूत bool page_is_young(काष्ठा page *page)
+अणु
+	काष्ठा page_ext *page_ext = lookup_page_ext(page);
 
-	if (unlikely(!page_ext))
-		return false;
+	अगर (unlikely(!page_ext))
+		वापस false;
 
-	return test_bit(PAGE_EXT_YOUNG, &page_ext->flags);
-}
+	वापस test_bit(PAGE_EXT_YOUNG, &page_ext->flags);
+पूर्ण
 
-static inline void set_page_young(struct page *page)
-{
-	struct page_ext *page_ext = lookup_page_ext(page);
+अटल अंतरभूत व्योम set_page_young(काष्ठा page *page)
+अणु
+	काष्ठा page_ext *page_ext = lookup_page_ext(page);
 
-	if (unlikely(!page_ext))
-		return;
+	अगर (unlikely(!page_ext))
+		वापस;
 
 	set_bit(PAGE_EXT_YOUNG, &page_ext->flags);
-}
+पूर्ण
 
-static inline bool test_and_clear_page_young(struct page *page)
-{
-	struct page_ext *page_ext = lookup_page_ext(page);
+अटल अंतरभूत bool test_and_clear_page_young(काष्ठा page *page)
+अणु
+	काष्ठा page_ext *page_ext = lookup_page_ext(page);
 
-	if (unlikely(!page_ext))
-		return false;
+	अगर (unlikely(!page_ext))
+		वापस false;
 
-	return test_and_clear_bit(PAGE_EXT_YOUNG, &page_ext->flags);
-}
+	वापस test_and_clear_bit(PAGE_EXT_YOUNG, &page_ext->flags);
+पूर्ण
 
-static inline bool page_is_idle(struct page *page)
-{
-	struct page_ext *page_ext = lookup_page_ext(page);
+अटल अंतरभूत bool page_is_idle(काष्ठा page *page)
+अणु
+	काष्ठा page_ext *page_ext = lookup_page_ext(page);
 
-	if (unlikely(!page_ext))
-		return false;
+	अगर (unlikely(!page_ext))
+		वापस false;
 
-	return test_bit(PAGE_EXT_IDLE, &page_ext->flags);
-}
+	वापस test_bit(PAGE_EXT_IDLE, &page_ext->flags);
+पूर्ण
 
-static inline void set_page_idle(struct page *page)
-{
-	struct page_ext *page_ext = lookup_page_ext(page);
+अटल अंतरभूत व्योम set_page_idle(काष्ठा page *page)
+अणु
+	काष्ठा page_ext *page_ext = lookup_page_ext(page);
 
-	if (unlikely(!page_ext))
-		return;
+	अगर (unlikely(!page_ext))
+		वापस;
 
 	set_bit(PAGE_EXT_IDLE, &page_ext->flags);
-}
+पूर्ण
 
-static inline void clear_page_idle(struct page *page)
-{
-	struct page_ext *page_ext = lookup_page_ext(page);
+अटल अंतरभूत व्योम clear_page_idle(काष्ठा page *page)
+अणु
+	काष्ठा page_ext *page_ext = lookup_page_ext(page);
 
-	if (unlikely(!page_ext))
-		return;
+	अगर (unlikely(!page_ext))
+		वापस;
 
 	clear_bit(PAGE_EXT_IDLE, &page_ext->flags);
-}
-#endif /* CONFIG_64BIT */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-#else /* !CONFIG_IDLE_PAGE_TRACKING */
+#अन्यथा /* !CONFIG_IDLE_PAGE_TRACKING */
 
-static inline bool page_is_young(struct page *page)
-{
-	return false;
-}
+अटल अंतरभूत bool page_is_young(काष्ठा page *page)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void set_page_young(struct page *page)
-{
-}
+अटल अंतरभूत व्योम set_page_young(काष्ठा page *page)
+अणु
+पूर्ण
 
-static inline bool test_and_clear_page_young(struct page *page)
-{
-	return false;
-}
+अटल अंतरभूत bool test_and_clear_page_young(काष्ठा page *page)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool page_is_idle(struct page *page)
-{
-	return false;
-}
+अटल अंतरभूत bool page_is_idle(काष्ठा page *page)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void set_page_idle(struct page *page)
-{
-}
+अटल अंतरभूत व्योम set_page_idle(काष्ठा page *page)
+अणु
+पूर्ण
 
-static inline void clear_page_idle(struct page *page)
-{
-}
+अटल अंतरभूत व्योम clear_page_idle(काष्ठा page *page)
+अणु
+पूर्ण
 
-#endif /* CONFIG_IDLE_PAGE_TRACKING */
+#पूर्ण_अगर /* CONFIG_IDLE_PAGE_TRACKING */
 
-#endif /* _LINUX_MM_PAGE_IDLE_H */
+#पूर्ण_अगर /* _LINUX_MM_PAGE_IDLE_H */

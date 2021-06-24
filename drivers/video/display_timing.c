@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * generic display timing functions
  *
  * Copyright (c) 2012 Steffen Trumtrar <s.trumtrar@pengutronix.de>, Pengutronix
  */
 
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <video/display_timing.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <video/display_timing.h>
 
-void display_timings_release(struct display_timings *disp)
-{
-	if (disp->timings) {
-		unsigned int i;
+व्योम display_timings_release(काष्ठा display_timings *disp)
+अणु
+	अगर (disp->timings) अणु
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; i < disp->num_timings; i++)
-			kfree(disp->timings[i]);
-		kfree(disp->timings);
-	}
-	kfree(disp);
-}
+		क्रम (i = 0; i < disp->num_timings; i++)
+			kमुक्त(disp->timings[i]);
+		kमुक्त(disp->timings);
+	पूर्ण
+	kमुक्त(disp);
+पूर्ण
 EXPORT_SYMBOL_GPL(display_timings_release);

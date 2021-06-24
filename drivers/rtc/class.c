@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * RTC subsystem, base class
+ * RTC subप्रणाली, base class
  *
  * Copyright (C) 2005 Tower Technologies
  * Author: Alessandro Zummo <a.zummo@towertech.it>
@@ -8,204 +9,204 @@
  * class skeleton from drivers/hwmon/hwmon.c
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/rtc.h>
-#include <linux/kdev_t.h>
-#include <linux/idr.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
 
-#include "rtc-core.h"
+#समावेश "rtc-core.h"
 
-static DEFINE_IDA(rtc_ida);
-struct class *rtc_class;
+अटल DEFINE_IDA(rtc_ida);
+काष्ठा class *rtc_class;
 
-static void rtc_device_release(struct device *dev)
-{
-	struct rtc_device *rtc = to_rtc_device(dev);
+अटल व्योम rtc_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा rtc_device *rtc = to_rtc_device(dev);
 
-	ida_simple_remove(&rtc_ida, rtc->id);
+	ida_simple_हटाओ(&rtc_ida, rtc->id);
 	mutex_destroy(&rtc->ops_lock);
-	kfree(rtc);
-}
+	kमुक्त(rtc);
+पूर्ण
 
-#ifdef CONFIG_RTC_HCTOSYS_DEVICE
-/* Result of the last RTC to system clock attempt. */
-int rtc_hctosys_ret = -ENODEV;
+#अगर_घोषित CONFIG_RTC_HCTOSYS_DEVICE
+/* Result of the last RTC to प्रणाली घड़ी attempt. */
+पूर्णांक rtc_hctosys_ret = -ENODEV;
 
 /* IMPORTANT: the RTC only stores whole seconds. It is arbitrary
- * whether it stores the most close value or the value with partial
+ * whether it stores the most बंद value or the value with partial
  * seconds truncated. However, it is important that we use it to store
  * the truncated value. This is because otherwise it is necessary,
- * in an rtc sync function, to read both xtime.tv_sec and
- * xtime.tv_nsec. On some processors (i.e. ARM), an atomic read
- * of >32bits is not possible. So storing the most close value would
- * slow down the sync API. So here we have the truncated value and
+ * in an rtc sync function, to पढ़ो both xसमय.tv_sec and
+ * xसमय.tv_nsec. On some processors (i.e. ARM), an atomic पढ़ो
+ * of >32bits is not possible. So storing the most बंद value would
+ * slow करोwn the sync API. So here we have the truncated value and
  * the best guess is to add 0.5s.
  */
 
-static void rtc_hctosys(struct rtc_device *rtc)
-{
-	int err;
-	struct rtc_time tm;
-	struct timespec64 tv64 = {
+अटल व्योम rtc_hctosys(काष्ठा rtc_device *rtc)
+अणु
+	पूर्णांक err;
+	काष्ठा rtc_समय पंचांग;
+	काष्ठा बारpec64 tv64 = अणु
 		.tv_nsec = NSEC_PER_SEC >> 1,
-	};
+	पूर्ण;
 
-	err = rtc_read_time(rtc, &tm);
-	if (err) {
+	err = rtc_पढ़ो_समय(rtc, &पंचांग);
+	अगर (err) अणु
 		dev_err(rtc->dev.parent,
 			"hctosys: unable to read the hardware clock\n");
-		goto err_read;
-	}
+		जाओ err_पढ़ो;
+	पूर्ण
 
-	tv64.tv_sec = rtc_tm_to_time64(&tm);
+	tv64.tv_sec = rtc_पंचांग_to_समय64(&पंचांग);
 
-#if BITS_PER_LONG == 32
-	if (tv64.tv_sec > INT_MAX) {
-		err = -ERANGE;
-		goto err_read;
-	}
-#endif
+#अगर BITS_PER_LONG == 32
+	अगर (tv64.tv_sec > पूर्णांक_उच्च) अणु
+		err = -दुस्फल;
+		जाओ err_पढ़ो;
+	पूर्ण
+#पूर्ण_अगर
 
-	err = do_settimeofday64(&tv64);
+	err = करो_समय_रखोofday64(&tv64);
 
 	dev_info(rtc->dev.parent, "setting system clock to %ptR UTC (%lld)\n",
-		 &tm, (long long)tv64.tv_sec);
+		 &पंचांग, (दीर्घ दीर्घ)tv64.tv_sec);
 
-err_read:
+err_पढ़ो:
 	rtc_hctosys_ret = err;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_PM_SLEEP) && defined(CONFIG_RTC_HCTOSYS_DEVICE)
+#अगर defined(CONFIG_PM_SLEEP) && defined(CONFIG_RTC_HCTOSYS_DEVICE)
 /*
  * On suspend(), measure the delta between one RTC and the
- * system's wall clock; restore it on resume().
+ * प्रणाली's wall घड़ी; restore it on resume().
  */
 
-static struct timespec64 old_rtc, old_system, old_delta;
+अटल काष्ठा बारpec64 old_rtc, old_प्रणाली, old_delta;
 
-static int rtc_suspend(struct device *dev)
-{
-	struct rtc_device	*rtc = to_rtc_device(dev);
-	struct rtc_time		tm;
-	struct timespec64	delta, delta_delta;
-	int err;
+अटल पूर्णांक rtc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा rtc_device	*rtc = to_rtc_device(dev);
+	काष्ठा rtc_समय		पंचांग;
+	काष्ठा बारpec64	delta, delta_delta;
+	पूर्णांक err;
 
-	if (timekeeping_rtc_skipsuspend())
-		return 0;
+	अगर (समयkeeping_rtc_skipsuspend())
+		वापस 0;
 
-	if (strcmp(dev_name(&rtc->dev), CONFIG_RTC_HCTOSYS_DEVICE) != 0)
-		return 0;
+	अगर (म_भेद(dev_name(&rtc->dev), CONFIG_RTC_HCTOSYS_DEVICE) != 0)
+		वापस 0;
 
-	/* snapshot the current RTC and system time at suspend*/
-	err = rtc_read_time(rtc, &tm);
-	if (err < 0) {
+	/* snapshot the current RTC and प्रणाली समय at suspend*/
+	err = rtc_पढ़ो_समय(rtc, &पंचांग);
+	अगर (err < 0) अणु
 		pr_debug("%s:  fail to read rtc time\n", dev_name(&rtc->dev));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ktime_get_real_ts64(&old_system);
-	old_rtc.tv_sec = rtc_tm_to_time64(&tm);
+	kसमय_get_real_ts64(&old_प्रणाली);
+	old_rtc.tv_sec = rtc_पंचांग_to_समय64(&पंचांग);
 
 	/*
-	 * To avoid drift caused by repeated suspend/resumes,
-	 * which each can add ~1 second drift error,
-	 * try to compensate so the difference in system time
-	 * and rtc time stays close to constant.
+	 * To aव्योम drअगरt caused by repeated suspend/resumes,
+	 * which each can add ~1 second drअगरt error,
+	 * try to compensate so the dअगरference in प्रणाली समय
+	 * and rtc समय stays बंद to स्थिरant.
 	 */
-	delta = timespec64_sub(old_system, old_rtc);
-	delta_delta = timespec64_sub(delta, old_delta);
-	if (delta_delta.tv_sec < -2 || delta_delta.tv_sec >= 2) {
+	delta = बारpec64_sub(old_प्रणाली, old_rtc);
+	delta_delta = बारpec64_sub(delta, old_delta);
+	अगर (delta_delta.tv_sec < -2 || delta_delta.tv_sec >= 2) अणु
 		/*
-		 * if delta_delta is too large, assume time correction
+		 * अगर delta_delta is too large, assume समय correction
 		 * has occurred and set old_delta to the current delta.
 		 */
 		old_delta = delta;
-	} else {
-		/* Otherwise try to adjust old_system to compensate */
-		old_system = timespec64_sub(old_system, delta_delta);
-	}
+	पूर्ण अन्यथा अणु
+		/* Otherwise try to adjust old_प्रणाली to compensate */
+		old_प्रणाली = बारpec64_sub(old_प्रणाली, delta_delta);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtc_resume(struct device *dev)
-{
-	struct rtc_device	*rtc = to_rtc_device(dev);
-	struct rtc_time		tm;
-	struct timespec64	new_system, new_rtc;
-	struct timespec64	sleep_time;
-	int err;
+अटल पूर्णांक rtc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा rtc_device	*rtc = to_rtc_device(dev);
+	काष्ठा rtc_समय		पंचांग;
+	काष्ठा बारpec64	new_प्रणाली, new_rtc;
+	काष्ठा बारpec64	sleep_समय;
+	पूर्णांक err;
 
-	if (timekeeping_rtc_skipresume())
-		return 0;
+	अगर (समयkeeping_rtc_skipresume())
+		वापस 0;
 
 	rtc_hctosys_ret = -ENODEV;
-	if (strcmp(dev_name(&rtc->dev), CONFIG_RTC_HCTOSYS_DEVICE) != 0)
-		return 0;
+	अगर (म_भेद(dev_name(&rtc->dev), CONFIG_RTC_HCTOSYS_DEVICE) != 0)
+		वापस 0;
 
-	/* snapshot the current rtc and system time at resume */
-	ktime_get_real_ts64(&new_system);
-	err = rtc_read_time(rtc, &tm);
-	if (err < 0) {
+	/* snapshot the current rtc and प्रणाली समय at resume */
+	kसमय_get_real_ts64(&new_प्रणाली);
+	err = rtc_पढ़ो_समय(rtc, &पंचांग);
+	अगर (err < 0) अणु
 		pr_debug("%s:  fail to read rtc time\n", dev_name(&rtc->dev));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	new_rtc.tv_sec = rtc_tm_to_time64(&tm);
+	new_rtc.tv_sec = rtc_पंचांग_to_समय64(&पंचांग);
 	new_rtc.tv_nsec = 0;
 
-	if (new_rtc.tv_sec < old_rtc.tv_sec) {
+	अगर (new_rtc.tv_sec < old_rtc.tv_sec) अणु
 		pr_debug("%s:  time travel!\n", dev_name(&rtc->dev));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* calculate the RTC time delta (sleep time)*/
-	sleep_time = timespec64_sub(new_rtc, old_rtc);
+	/* calculate the RTC समय delta (sleep समय)*/
+	sleep_समय = बारpec64_sub(new_rtc, old_rtc);
 
 	/*
 	 * Since these RTC suspend/resume handlers are not called
 	 * at the very end of suspend or the start of resume,
-	 * some run-time may pass on either sides of the sleep time
-	 * so subtract kernel run-time between rtc_suspend to rtc_resume
+	 * some run-समय may pass on either sides of the sleep समय
+	 * so subtract kernel run-समय between rtc_suspend to rtc_resume
 	 * to keep things accurate.
 	 */
-	sleep_time = timespec64_sub(sleep_time,
-				    timespec64_sub(new_system, old_system));
+	sleep_समय = बारpec64_sub(sleep_समय,
+				    बारpec64_sub(new_प्रणाली, old_प्रणाली));
 
-	if (sleep_time.tv_sec >= 0)
-		timekeeping_inject_sleeptime64(&sleep_time);
+	अगर (sleep_समय.tv_sec >= 0)
+		समयkeeping_inject_sleepसमय64(&sleep_समय);
 	rtc_hctosys_ret = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(rtc_class_dev_pm_ops, rtc_suspend, rtc_resume);
-#define RTC_CLASS_DEV_PM_OPS	(&rtc_class_dev_pm_ops)
-#else
-#define RTC_CLASS_DEV_PM_OPS	NULL
-#endif
+अटल SIMPLE_DEV_PM_OPS(rtc_class_dev_pm_ops, rtc_suspend, rtc_resume);
+#घोषणा RTC_CLASS_DEV_PM_OPS	(&rtc_class_dev_pm_ops)
+#अन्यथा
+#घोषणा RTC_CLASS_DEV_PM_OPS	शून्य
+#पूर्ण_अगर
 
-/* Ensure the caller will set the id before releasing the device */
-static struct rtc_device *rtc_allocate_device(void)
-{
-	struct rtc_device *rtc;
+/* Ensure the caller will set the id beक्रमe releasing the device */
+अटल काष्ठा rtc_device *rtc_allocate_device(व्योम)
+अणु
+	काष्ठा rtc_device *rtc;
 
-	rtc = kzalloc(sizeof(*rtc), GFP_KERNEL);
-	if (!rtc)
-		return NULL;
+	rtc = kzalloc(माप(*rtc), GFP_KERNEL);
+	अगर (!rtc)
+		वापस शून्य;
 
 	device_initialize(&rtc->dev);
 
 	/*
-	 * Drivers can revise this default after allocating the device.
-	 * The default is what most RTCs do: Increment seconds exactly one
-	 * second after the write happened. This adds a default transport
-	 * time of 5ms which is at least halfways close to reality.
+	 * Drivers can revise this शेष after allocating the device.
+	 * The शेष is what most RTCs करो: Increment seconds exactly one
+	 * second after the ग_लिखो happened. This adds a शेष transport
+	 * समय of 5ms which is at least halfways बंद to reality.
 	 */
 	rtc->set_offset_nsec = NSEC_PER_SEC + 5 * NSEC_PER_MSEC;
 
@@ -217,73 +218,73 @@ static struct rtc_device *rtc_allocate_device(void)
 
 	mutex_init(&rtc->ops_lock);
 	spin_lock_init(&rtc->irq_lock);
-	init_waitqueue_head(&rtc->irq_queue);
+	init_रुकोqueue_head(&rtc->irq_queue);
 
-	/* Init timerqueue */
-	timerqueue_init_head(&rtc->timerqueue);
-	INIT_WORK(&rtc->irqwork, rtc_timer_do_work);
-	/* Init aie timer */
-	rtc_timer_init(&rtc->aie_timer, rtc_aie_update_irq, rtc);
-	/* Init uie timer */
-	rtc_timer_init(&rtc->uie_rtctimer, rtc_uie_update_irq, rtc);
-	/* Init pie timer */
-	hrtimer_init(&rtc->pie_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	rtc->pie_timer.function = rtc_pie_update_irq;
+	/* Init समयrqueue */
+	समयrqueue_init_head(&rtc->समयrqueue);
+	INIT_WORK(&rtc->irqwork, rtc_समयr_करो_work);
+	/* Init aie समयr */
+	rtc_समयr_init(&rtc->aie_समयr, rtc_aie_update_irq, rtc);
+	/* Init uie समयr */
+	rtc_समयr_init(&rtc->uie_rtस_समयr, rtc_uie_update_irq, rtc);
+	/* Init pie समयr */
+	hrसमयr_init(&rtc->pie_समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	rtc->pie_समयr.function = rtc_pie_update_irq;
 	rtc->pie_enabled = 0;
 
 	set_bit(RTC_FEATURE_ALARM, rtc->features);
 
-	return rtc;
-}
+	वापस rtc;
+पूर्ण
 
-static int rtc_device_get_id(struct device *dev)
-{
-	int of_id = -1, id = -1;
+अटल पूर्णांक rtc_device_get_id(काष्ठा device *dev)
+अणु
+	पूर्णांक of_id = -1, id = -1;
 
-	if (dev->of_node)
+	अगर (dev->of_node)
 		of_id = of_alias_get_id(dev->of_node, "rtc");
-	else if (dev->parent && dev->parent->of_node)
+	अन्यथा अगर (dev->parent && dev->parent->of_node)
 		of_id = of_alias_get_id(dev->parent->of_node, "rtc");
 
-	if (of_id >= 0) {
+	अगर (of_id >= 0) अणु
 		id = ida_simple_get(&rtc_ida, of_id, of_id + 1, GFP_KERNEL);
-		if (id < 0)
+		अगर (id < 0)
 			dev_warn(dev, "/aliases ID %d not available\n", of_id);
-	}
+	पूर्ण
 
-	if (id < 0)
+	अगर (id < 0)
 		id = ida_simple_get(&rtc_ida, 0, 0, GFP_KERNEL);
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
-static void rtc_device_get_offset(struct rtc_device *rtc)
-{
-	time64_t range_secs;
+अटल व्योम rtc_device_get_offset(काष्ठा rtc_device *rtc)
+अणु
+	समय64_t range_secs;
 	u32 start_year;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * If RTC driver did not implement the range of RTC hardware device,
 	 * then we can not expand the RTC range by adding or subtracting one
 	 * offset.
 	 */
-	if (rtc->range_min == rtc->range_max)
-		return;
+	अगर (rtc->range_min == rtc->range_max)
+		वापस;
 
-	ret = device_property_read_u32(rtc->dev.parent, "start-year",
+	ret = device_property_पढ़ो_u32(rtc->dev.parent, "start-year",
 				       &start_year);
-	if (!ret) {
-		rtc->start_secs = mktime64(start_year, 1, 1, 0, 0, 0);
-		rtc->set_start_time = true;
-	}
+	अगर (!ret) अणु
+		rtc->start_secs = स_गढ़ो64(start_year, 1, 1, 0, 0, 0);
+		rtc->set_start_समय = true;
+	पूर्ण
 
 	/*
-	 * If user did not implement the start time for RTC driver, then no
+	 * If user did not implement the start समय क्रम RTC driver, then no
 	 * need to expand the RTC range.
 	 */
-	if (!rtc->set_start_time)
-		return;
+	अगर (!rtc->set_start_समय)
+		वापस;
 
 	range_secs = rtc->range_max - rtc->range_min + 1;
 
@@ -293,114 +294,114 @@ static void rtc_device_get_offset(struct rtc_device *rtc)
 	 * range (start_secs + rtc->range_max - rtc->range_min) is less than
 	 * rtc->range_min, which means the minimum seconds (rtc->range_min) of
 	 * RTC hardware will be mapped to start_secs by adding one offset, so
-	 * the offset seconds calculation formula should be:
+	 * the offset seconds calculation क्रमmula should be:
 	 * rtc->offset_secs = rtc->start_secs - rtc->range_min;
 	 *
 	 * If the start_secs is larger than the minimum seconds (rtc->range_min)
 	 * supported by RTC hardware, then there is one region is overlapped
 	 * between the original RTC hardware range and the new expanded range,
-	 * and this overlapped region do not need to be mapped into the new
-	 * expanded range due to it is valid for RTC device. So the minimum
+	 * and this overlapped region करो not need to be mapped पूर्णांकo the new
+	 * expanded range due to it is valid क्रम RTC device. So the minimum
 	 * seconds of RTC hardware (rtc->range_min) should be mapped to
-	 * rtc->range_max + 1, then the offset seconds formula should be:
+	 * rtc->range_max + 1, then the offset seconds क्रमmula should be:
 	 * rtc->offset_secs = rtc->range_max - rtc->range_min + 1;
 	 *
 	 * If the start_secs is less than the minimum seconds (rtc->range_min),
-	 * which is similar to case 2. So the start_secs should be mapped to
+	 * which is similar to हाल 2. So the start_secs should be mapped to
 	 * start_secs + rtc->range_max - rtc->range_min + 1, then the
-	 * offset seconds formula should be:
+	 * offset seconds क्रमmula should be:
 	 * rtc->offset_secs = -(rtc->range_max - rtc->range_min + 1);
 	 *
 	 * Otherwise the offset seconds should be 0.
 	 */
-	if (rtc->start_secs > rtc->range_max ||
+	अगर (rtc->start_secs > rtc->range_max ||
 	    rtc->start_secs + range_secs - 1 < rtc->range_min)
 		rtc->offset_secs = rtc->start_secs - rtc->range_min;
-	else if (rtc->start_secs > rtc->range_min)
+	अन्यथा अगर (rtc->start_secs > rtc->range_min)
 		rtc->offset_secs = range_secs;
-	else if (rtc->start_secs < rtc->range_min)
+	अन्यथा अगर (rtc->start_secs < rtc->range_min)
 		rtc->offset_secs = -range_secs;
-	else
+	अन्यथा
 		rtc->offset_secs = 0;
-}
+पूर्ण
 
-static void devm_rtc_unregister_device(void *data)
-{
-	struct rtc_device *rtc = data;
+अटल व्योम devm_rtc_unरेजिस्टर_device(व्योम *data)
+अणु
+	काष्ठा rtc_device *rtc = data;
 
 	mutex_lock(&rtc->ops_lock);
 	/*
-	 * Remove innards of this RTC, then disable it, before
-	 * letting any rtc_class_open() users access it again
+	 * Remove innards of this RTC, then disable it, beक्रमe
+	 * letting any rtc_class_खोलो() users access it again
 	 */
 	rtc_proc_del_device(rtc);
-	cdev_device_del(&rtc->char_dev, &rtc->dev);
-	rtc->ops = NULL;
+	cdev_device_del(&rtc->अक्षर_dev, &rtc->dev);
+	rtc->ops = शून्य;
 	mutex_unlock(&rtc->ops_lock);
-}
+पूर्ण
 
-static void devm_rtc_release_device(void *res)
-{
-	struct rtc_device *rtc = res;
+अटल व्योम devm_rtc_release_device(व्योम *res)
+अणु
+	काष्ठा rtc_device *rtc = res;
 
 	put_device(&rtc->dev);
-}
+पूर्ण
 
-struct rtc_device *devm_rtc_allocate_device(struct device *dev)
-{
-	struct rtc_device *rtc;
-	int id, err;
+काष्ठा rtc_device *devm_rtc_allocate_device(काष्ठा device *dev)
+अणु
+	काष्ठा rtc_device *rtc;
+	पूर्णांक id, err;
 
 	id = rtc_device_get_id(dev);
-	if (id < 0)
-		return ERR_PTR(id);
+	अगर (id < 0)
+		वापस ERR_PTR(id);
 
 	rtc = rtc_allocate_device();
-	if (!rtc) {
-		ida_simple_remove(&rtc_ida, id);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!rtc) अणु
+		ida_simple_हटाओ(&rtc_ida, id);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	rtc->id = id;
 	rtc->dev.parent = dev;
 	dev_set_name(&rtc->dev, "rtc%d", id);
 
 	err = devm_add_action_or_reset(dev, devm_rtc_release_device, rtc);
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	return rtc;
-}
+	वापस rtc;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_rtc_allocate_device);
 
-int __devm_rtc_register_device(struct module *owner, struct rtc_device *rtc)
-{
-	struct rtc_wkalrm alrm;
-	int err;
+पूर्णांक __devm_rtc_रेजिस्टर_device(काष्ठा module *owner, काष्ठा rtc_device *rtc)
+अणु
+	काष्ठा rtc_wkalrm alrm;
+	पूर्णांक err;
 
-	if (!rtc->ops) {
+	अगर (!rtc->ops) अणु
 		dev_dbg(&rtc->dev, "no ops set\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!rtc->ops->set_alarm)
+	अगर (!rtc->ops->set_alarm)
 		clear_bit(RTC_FEATURE_ALARM, rtc->features);
 
 	rtc->owner = owner;
 	rtc_device_get_offset(rtc);
 
-	/* Check to see if there is an ALARM already set in hw */
-	err = __rtc_read_alarm(rtc, &alrm);
-	if (!err && !rtc_valid_tm(&alrm.time))
+	/* Check to see अगर there is an ALARM alपढ़ोy set in hw */
+	err = __rtc_पढ़ो_alarm(rtc, &alrm);
+	अगर (!err && !rtc_valid_पंचांग(&alrm.समय))
 		rtc_initialize_alarm(rtc, &alrm);
 
 	rtc_dev_prepare(rtc);
 
-	err = cdev_device_add(&rtc->char_dev, &rtc->dev);
-	if (err)
+	err = cdev_device_add(&rtc->अक्षर_dev, &rtc->dev);
+	अगर (err)
 		dev_warn(rtc->dev.parent, "failed to add char device %d:%d\n",
 			 MAJOR(rtc->dev.devt), rtc->id);
-	else
+	अन्यथा
 		dev_dbg(rtc->dev.parent, "char device (%d:%d)\n",
 			MAJOR(rtc->dev.devt), rtc->id);
 
@@ -409,61 +410,61 @@ int __devm_rtc_register_device(struct module *owner, struct rtc_device *rtc)
 	dev_info(rtc->dev.parent, "registered as %s\n",
 		 dev_name(&rtc->dev));
 
-#ifdef CONFIG_RTC_HCTOSYS_DEVICE
-	if (!strcmp(dev_name(&rtc->dev), CONFIG_RTC_HCTOSYS_DEVICE))
+#अगर_घोषित CONFIG_RTC_HCTOSYS_DEVICE
+	अगर (!म_भेद(dev_name(&rtc->dev), CONFIG_RTC_HCTOSYS_DEVICE))
 		rtc_hctosys(rtc);
-#endif
+#पूर्ण_अगर
 
-	return devm_add_action_or_reset(rtc->dev.parent,
-					devm_rtc_unregister_device, rtc);
-}
-EXPORT_SYMBOL_GPL(__devm_rtc_register_device);
+	वापस devm_add_action_or_reset(rtc->dev.parent,
+					devm_rtc_unरेजिस्टर_device, rtc);
+पूर्ण
+EXPORT_SYMBOL_GPL(__devm_rtc_रेजिस्टर_device);
 
 /**
- * devm_rtc_device_register - resource managed rtc_device_register()
- * @dev: the device to register
+ * devm_rtc_device_रेजिस्टर - resource managed rtc_device_रेजिस्टर()
+ * @dev: the device to रेजिस्टर
  * @name: the name of the device (unused)
- * @ops: the rtc operations structure
+ * @ops: the rtc operations काष्ठाure
  * @owner: the module owner
  *
- * @return a struct rtc on success, or an ERR_PTR on error
+ * @वापस a काष्ठा rtc on success, or an ERR_PTR on error
  *
- * Managed rtc_device_register(). The rtc_device returned from this function
- * are automatically freed on driver detach.
+ * Managed rtc_device_रेजिस्टर(). The rtc_device वापसed from this function
+ * are स्वतःmatically मुक्तd on driver detach.
  * This function is deprecated, use devm_rtc_allocate_device and
- * rtc_register_device instead
+ * rtc_रेजिस्टर_device instead
  */
-struct rtc_device *devm_rtc_device_register(struct device *dev,
-					    const char *name,
-					    const struct rtc_class_ops *ops,
-					    struct module *owner)
-{
-	struct rtc_device *rtc;
-	int err;
+काष्ठा rtc_device *devm_rtc_device_रेजिस्टर(काष्ठा device *dev,
+					    स्थिर अक्षर *name,
+					    स्थिर काष्ठा rtc_class_ops *ops,
+					    काष्ठा module *owner)
+अणु
+	काष्ठा rtc_device *rtc;
+	पूर्णांक err;
 
 	rtc = devm_rtc_allocate_device(dev);
-	if (IS_ERR(rtc))
-		return rtc;
+	अगर (IS_ERR(rtc))
+		वापस rtc;
 
 	rtc->ops = ops;
 
-	err = __devm_rtc_register_device(owner, rtc);
-	if (err)
-		return ERR_PTR(err);
+	err = __devm_rtc_रेजिस्टर_device(owner, rtc);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	return rtc;
-}
-EXPORT_SYMBOL_GPL(devm_rtc_device_register);
+	वापस rtc;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_rtc_device_रेजिस्टर);
 
-static int __init rtc_init(void)
-{
+अटल पूर्णांक __init rtc_init(व्योम)
+अणु
 	rtc_class = class_create(THIS_MODULE, "rtc");
-	if (IS_ERR(rtc_class)) {
+	अगर (IS_ERR(rtc_class)) अणु
 		pr_err("couldn't create class\n");
-		return PTR_ERR(rtc_class);
-	}
+		वापस PTR_ERR(rtc_class);
+	पूर्ण
 	rtc_class->pm = RTC_CLASS_DEV_PM_OPS;
 	rtc_dev_init();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(rtc_init);

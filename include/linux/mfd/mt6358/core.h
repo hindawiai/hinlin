@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2020 MediaTek Inc.
  */
 
-#ifndef __MFD_MT6358_CORE_H__
-#define __MFD_MT6358_CORE_H__
+#अगर_अघोषित __MFD_MT6358_CORE_H__
+#घोषणा __MFD_MT6358_CORE_H__
 
-#define MT6358_REG_WIDTH 16
+#घोषणा MT6358_REG_WIDTH 16
 
-struct irq_top_t {
-	int hwirq_base;
-	unsigned int num_int_regs;
-	unsigned int num_int_bits;
-	unsigned int en_reg;
-	unsigned int en_reg_shift;
-	unsigned int sta_reg;
-	unsigned int sta_reg_shift;
-	unsigned int top_offset;
-};
+काष्ठा irq_top_t अणु
+	पूर्णांक hwirq_base;
+	अचिन्हित पूर्णांक num_पूर्णांक_regs;
+	अचिन्हित पूर्णांक num_पूर्णांक_bits;
+	अचिन्हित पूर्णांक en_reg;
+	अचिन्हित पूर्णांक en_reg_shअगरt;
+	अचिन्हित पूर्णांक sta_reg;
+	अचिन्हित पूर्णांक sta_reg_shअगरt;
+	अचिन्हित पूर्णांक top_offset;
+पूर्ण;
 
-struct pmic_irq_data {
-	unsigned int num_top;
-	unsigned int num_pmic_irqs;
-	unsigned short top_int_status_reg;
+काष्ठा pmic_irq_data अणु
+	अचिन्हित पूर्णांक num_top;
+	अचिन्हित पूर्णांक num_pmic_irqs;
+	अचिन्हित लघु top_पूर्णांक_status_reg;
 	bool *enable_hwirq;
 	bool *cache_hwirq;
-};
+पूर्ण;
 
-enum mt6358_irq_top_status_shift {
+क्रमागत mt6358_irq_top_status_shअगरt अणु
 	MT6358_BUCK_TOP = 0,
 	MT6358_LDO_TOP,
 	MT6358_PSC_TOP,
@@ -36,9 +37,9 @@ enum mt6358_irq_top_status_shift {
 	MT6358_HK_TOP,
 	MT6358_AUD_TOP,
 	MT6358_MISC_TOP,
-};
+पूर्ण;
 
-enum mt6358_irq_numbers {
+क्रमागत mt6358_irq_numbers अणु
 	MT6358_IRQ_VPROC11_OC = 0,
 	MT6358_IRQ_VPROC12_OC,
 	MT6358_IRQ_VCORE_OC,
@@ -121,38 +122,38 @@ enum mt6358_irq_numbers {
 	MT6358_IRQ_ACCDET_EINT1,
 	MT6358_IRQ_SPI_CMD_ALERT = 144,
 	MT6358_IRQ_NR,
-};
+पूर्ण;
 
-#define MT6358_IRQ_BUCK_BASE MT6358_IRQ_VPROC11_OC
-#define MT6358_IRQ_LDO_BASE MT6358_IRQ_VFE28_OC
-#define MT6358_IRQ_PSC_BASE MT6358_IRQ_PWRKEY
-#define MT6358_IRQ_SCK_BASE MT6358_IRQ_RTC
-#define MT6358_IRQ_BM_BASE MT6358_IRQ_FG_BAT0_H
-#define MT6358_IRQ_HK_BASE MT6358_IRQ_BAT_H
-#define MT6358_IRQ_AUD_BASE MT6358_IRQ_AUDIO
-#define MT6358_IRQ_MISC_BASE MT6358_IRQ_SPI_CMD_ALERT
+#घोषणा MT6358_IRQ_BUCK_BASE MT6358_IRQ_VPROC11_OC
+#घोषणा MT6358_IRQ_LDO_BASE MT6358_IRQ_VFE28_OC
+#घोषणा MT6358_IRQ_PSC_BASE MT6358_IRQ_PWRKEY
+#घोषणा MT6358_IRQ_SCK_BASE MT6358_IRQ_RTC
+#घोषणा MT6358_IRQ_BM_BASE MT6358_IRQ_FG_BAT0_H
+#घोषणा MT6358_IRQ_HK_BASE MT6358_IRQ_BAT_H
+#घोषणा MT6358_IRQ_AUD_BASE MT6358_IRQ_AUDIO
+#घोषणा MT6358_IRQ_MISC_BASE MT6358_IRQ_SPI_CMD_ALERT
 
-#define MT6358_IRQ_BUCK_BITS (MT6358_IRQ_VCORE_PREOC - MT6358_IRQ_BUCK_BASE + 1)
-#define MT6358_IRQ_LDO_BITS (MT6358_IRQ_VBIF28_OC - MT6358_IRQ_LDO_BASE + 1)
-#define MT6358_IRQ_PSC_BITS (MT6358_IRQ_VCDT_HV_DET - MT6358_IRQ_PSC_BASE + 1)
-#define MT6358_IRQ_SCK_BITS (MT6358_IRQ_RTC - MT6358_IRQ_SCK_BASE + 1)
-#define MT6358_IRQ_BM_BITS (MT6358_IRQ_BIF - MT6358_IRQ_BM_BASE + 1)
-#define MT6358_IRQ_HK_BITS (MT6358_IRQ_NAG_C_DLTV - MT6358_IRQ_HK_BASE + 1)
-#define MT6358_IRQ_AUD_BITS (MT6358_IRQ_ACCDET_EINT1 - MT6358_IRQ_AUD_BASE + 1)
-#define MT6358_IRQ_MISC_BITS	\
+#घोषणा MT6358_IRQ_BUCK_BITS (MT6358_IRQ_VCORE_PREOC - MT6358_IRQ_BUCK_BASE + 1)
+#घोषणा MT6358_IRQ_LDO_BITS (MT6358_IRQ_VBIF28_OC - MT6358_IRQ_LDO_BASE + 1)
+#घोषणा MT6358_IRQ_PSC_BITS (MT6358_IRQ_VCDT_HV_DET - MT6358_IRQ_PSC_BASE + 1)
+#घोषणा MT6358_IRQ_SCK_BITS (MT6358_IRQ_RTC - MT6358_IRQ_SCK_BASE + 1)
+#घोषणा MT6358_IRQ_BM_BITS (MT6358_IRQ_BIF - MT6358_IRQ_BM_BASE + 1)
+#घोषणा MT6358_IRQ_HK_BITS (MT6358_IRQ_NAG_C_DLTV - MT6358_IRQ_HK_BASE + 1)
+#घोषणा MT6358_IRQ_AUD_BITS (MT6358_IRQ_ACCDET_EINT1 - MT6358_IRQ_AUD_BASE + 1)
+#घोषणा MT6358_IRQ_MISC_BITS	\
 	(MT6358_IRQ_SPI_CMD_ALERT - MT6358_IRQ_MISC_BASE + 1)
 
-#define MT6358_TOP_GEN(sp)	\
-{	\
+#घोषणा MT6358_TOP_GEN(sp)	\
+अणु	\
 	.hwirq_base = MT6358_IRQ_##sp##_BASE,	\
-	.num_int_regs =	\
+	.num_पूर्णांक_regs =	\
 		((MT6358_IRQ_##sp##_BITS - 1) / MT6358_REG_WIDTH) + 1,	\
-	.num_int_bits = MT6358_IRQ_##sp##_BITS, \
+	.num_पूर्णांक_bits = MT6358_IRQ_##sp##_BITS, \
 	.en_reg = MT6358_##sp##_TOP_INT_CON0,	\
-	.en_reg_shift = 0x6,	\
+	.en_reg_shअगरt = 0x6,	\
 	.sta_reg = MT6358_##sp##_TOP_INT_STATUS0,	\
-	.sta_reg_shift = 0x2,	\
+	.sta_reg_shअगरt = 0x2,	\
 	.top_offset = MT6358_##sp##_TOP,	\
-}
+पूर्ण
 
-#endif /* __MFD_MT6358_CORE_H__ */
+#पूर्ण_अगर /* __MFD_MT6358_CORE_H__ */

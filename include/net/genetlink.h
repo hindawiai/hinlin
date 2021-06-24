@@ -1,204 +1,205 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_GENERIC_NETLINK_H
-#define __NET_GENERIC_NETLINK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_GENERIC_NETLINK_H
+#घोषणा __NET_GENERIC_NETLINK_H
 
-#include <linux/genetlink.h>
-#include <net/netlink.h>
-#include <net/net_namespace.h>
+#समावेश <linux/genetlink.h>
+#समावेश <net/netlink.h>
+#समावेश <net/net_namespace.h>
 
-#define GENLMSG_DEFAULT_SIZE (NLMSG_DEFAULT_SIZE - GENL_HDRLEN)
+#घोषणा GENLMSG_DEFAULT_SIZE (NLMSG_DEFAULT_SIZE - GENL_HDRLEN)
 
 /**
- * struct genl_multicast_group - generic netlink multicast group
+ * काष्ठा genl_multicast_group - generic netlink multicast group
  * @name: name of the multicast group, names are per-family
  */
-struct genl_multicast_group {
-	char			name[GENL_NAMSIZ];
+काष्ठा genl_multicast_group अणु
+	अक्षर			name[GENL_NAMSIZ];
 	u8			flags;
-};
+पूर्ण;
 
-struct genl_ops;
-struct genl_info;
+काष्ठा genl_ops;
+काष्ठा genl_info;
 
 /**
- * struct genl_family - generic netlink family
- * @id: protocol family identifier (private)
- * @hdrsize: length of user specific header in bytes
+ * काष्ठा genl_family - generic netlink family
+ * @id: protocol family identअगरier (निजी)
+ * @hdrsize: length of user specअगरic header in bytes
  * @name: name of family
  * @version: protocol version
  * @maxattr: maximum number of attributes supported
  * @policy: netlink policy
- * @netnsok: set to true if the family can handle network
+ * @netnsok: set to true अगर the family can handle network
  *	namespaces and should be presented in all of them
  * @parallel_ops: operations can be called in parallel and aren't
  *	synchronized by the core genetlink code
- * @pre_doit: called before an operation's doit callback, it may
- *	do additional, common, filtering and return an error
- * @post_doit: called after an operation's doit callback, it may
- *	undo operations done by pre_doit, for example release locks
+ * @pre_करोit: called beक्रमe an operation's करोit callback, it may
+ *	करो additional, common, filtering and वापस an error
+ * @post_करोit: called after an operation's करोit callback, it may
+ *	unकरो operations करोne by pre_करोit, क्रम example release locks
  * @mcgrps: multicast groups used by this family
  * @n_mcgrps: number of multicast groups
  * @mcgrp_offset: starting number of multicast group IDs in this family
- *	(private)
+ *	(निजी)
  * @ops: the operations supported by this family
  * @n_ops: number of operations supported by this family
- * @small_ops: the small-struct operations supported by this family
- * @n_small_ops: number of small-struct operations supported by this family
+ * @small_ops: the small-काष्ठा operations supported by this family
+ * @n_small_ops: number of small-काष्ठा operations supported by this family
  */
-struct genl_family {
-	int			id;		/* private */
-	unsigned int		hdrsize;
-	char			name[GENL_NAMSIZ];
-	unsigned int		version;
-	unsigned int		maxattr;
-	unsigned int		mcgrp_offset;	/* private */
+काष्ठा genl_family अणु
+	पूर्णांक			id;		/* निजी */
+	अचिन्हित पूर्णांक		hdrsize;
+	अक्षर			name[GENL_NAMSIZ];
+	अचिन्हित पूर्णांक		version;
+	अचिन्हित पूर्णांक		maxattr;
+	अचिन्हित पूर्णांक		mcgrp_offset;	/* निजी */
 	u8			netnsok:1;
 	u8			parallel_ops:1;
 	u8			n_ops;
 	u8			n_small_ops;
 	u8			n_mcgrps;
-	const struct nla_policy *policy;
-	int			(*pre_doit)(const struct genl_ops *ops,
-					    struct sk_buff *skb,
-					    struct genl_info *info);
-	void			(*post_doit)(const struct genl_ops *ops,
-					     struct sk_buff *skb,
-					     struct genl_info *info);
-	const struct genl_ops *	ops;
-	const struct genl_small_ops *small_ops;
-	const struct genl_multicast_group *mcgrps;
-	struct module		*module;
-};
+	स्थिर काष्ठा nla_policy *policy;
+	पूर्णांक			(*pre_करोit)(स्थिर काष्ठा genl_ops *ops,
+					    काष्ठा sk_buff *skb,
+					    काष्ठा genl_info *info);
+	व्योम			(*post_करोit)(स्थिर काष्ठा genl_ops *ops,
+					     काष्ठा sk_buff *skb,
+					     काष्ठा genl_info *info);
+	स्थिर काष्ठा genl_ops *	ops;
+	स्थिर काष्ठा genl_small_ops *small_ops;
+	स्थिर काष्ठा genl_multicast_group *mcgrps;
+	काष्ठा module		*module;
+पूर्ण;
 
 /**
- * struct genl_info - receiving information
+ * काष्ठा genl_info - receiving inक्रमmation
  * @snd_seq: sending sequence number
  * @snd_portid: netlink portid of sender
  * @nlhdr: netlink message header
  * @genlhdr: generic netlink message header
- * @userhdr: user specific header
+ * @userhdr: user specअगरic header
  * @attrs: netlink attributes
  * @_net: network namespace
- * @user_ptr: user pointers
- * @extack: extended ACK report struct
+ * @user_ptr: user poपूर्णांकers
+ * @extack: extended ACK report काष्ठा
  */
-struct genl_info {
+काष्ठा genl_info अणु
 	u32			snd_seq;
 	u32			snd_portid;
-	struct nlmsghdr *	nlhdr;
-	struct genlmsghdr *	genlhdr;
-	void *			userhdr;
-	struct nlattr **	attrs;
+	काष्ठा nlmsghdr *	nlhdr;
+	काष्ठा genlmsghdr *	genlhdr;
+	व्योम *			userhdr;
+	काष्ठा nlattr **	attrs;
 	possible_net_t		_net;
-	void *			user_ptr[2];
-	struct netlink_ext_ack *extack;
-};
+	व्योम *			user_ptr[2];
+	काष्ठा netlink_ext_ack *extack;
+पूर्ण;
 
-static inline struct net *genl_info_net(struct genl_info *info)
-{
-	return read_pnet(&info->_net);
-}
+अटल अंतरभूत काष्ठा net *genl_info_net(काष्ठा genl_info *info)
+अणु
+	वापस पढ़ो_pnet(&info->_net);
+पूर्ण
 
-static inline void genl_info_net_set(struct genl_info *info, struct net *net)
-{
-	write_pnet(&info->_net, net);
-}
+अटल अंतरभूत व्योम genl_info_net_set(काष्ठा genl_info *info, काष्ठा net *net)
+अणु
+	ग_लिखो_pnet(&info->_net, net);
+पूर्ण
 
-#define GENL_SET_ERR_MSG(info, msg) NL_SET_ERR_MSG((info)->extack, msg)
+#घोषणा GENL_SET_ERR_MSG(info, msg) NL_SET_ERR_MSG((info)->extack, msg)
 
-enum genl_validate_flags {
+क्रमागत genl_validate_flags अणु
 	GENL_DONT_VALIDATE_STRICT		= BIT(0),
 	GENL_DONT_VALIDATE_DUMP			= BIT(1),
 	GENL_DONT_VALIDATE_DUMP_STRICT		= BIT(2),
-};
+पूर्ण;
 
 /**
- * struct genl_small_ops - generic netlink operations (small version)
- * @cmd: command identifier
- * @internal_flags: flags used by the family
+ * काष्ठा genl_small_ops - generic netlink operations (small version)
+ * @cmd: command identअगरier
+ * @पूर्णांकernal_flags: flags used by the family
  * @flags: flags
- * @validate: validation flags from enum genl_validate_flags
- * @doit: standard command callback
- * @dumpit: callback for dumpers
+ * @validate: validation flags from क्रमागत genl_validate_flags
+ * @करोit: standard command callback
+ * @dumpit: callback क्रम dumpers
  *
- * This is a cut-down version of struct genl_ops for users who don't need
+ * This is a cut-करोwn version of काष्ठा genl_ops क्रम users who करोn't need
  * most of the ancillary infra and want to save space.
  */
-struct genl_small_ops {
-	int	(*doit)(struct sk_buff *skb, struct genl_info *info);
-	int	(*dumpit)(struct sk_buff *skb, struct netlink_callback *cb);
+काष्ठा genl_small_ops अणु
+	पूर्णांक	(*करोit)(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+	पूर्णांक	(*dumpit)(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
 	u8	cmd;
-	u8	internal_flags;
+	u8	पूर्णांकernal_flags;
 	u8	flags;
 	u8	validate;
-};
+पूर्ण;
 
 /**
- * struct genl_ops - generic netlink operations
- * @cmd: command identifier
- * @internal_flags: flags used by the family
+ * काष्ठा genl_ops - generic netlink operations
+ * @cmd: command identअगरier
+ * @पूर्णांकernal_flags: flags used by the family
  * @flags: flags
  * @maxattr: maximum number of attributes supported
  * @policy: netlink policy (takes precedence over family policy)
- * @validate: validation flags from enum genl_validate_flags
- * @doit: standard command callback
- * @start: start callback for dumps
- * @dumpit: callback for dumpers
- * @done: completion callback for dumps
+ * @validate: validation flags from क्रमागत genl_validate_flags
+ * @करोit: standard command callback
+ * @start: start callback क्रम dumps
+ * @dumpit: callback क्रम dumpers
+ * @करोne: completion callback क्रम dumps
  */
-struct genl_ops {
-	int		       (*doit)(struct sk_buff *skb,
-				       struct genl_info *info);
-	int		       (*start)(struct netlink_callback *cb);
-	int		       (*dumpit)(struct sk_buff *skb,
-					 struct netlink_callback *cb);
-	int		       (*done)(struct netlink_callback *cb);
-	const struct nla_policy *policy;
-	unsigned int		maxattr;
+काष्ठा genl_ops अणु
+	पूर्णांक		       (*करोit)(काष्ठा sk_buff *skb,
+				       काष्ठा genl_info *info);
+	पूर्णांक		       (*start)(काष्ठा netlink_callback *cb);
+	पूर्णांक		       (*dumpit)(काष्ठा sk_buff *skb,
+					 काष्ठा netlink_callback *cb);
+	पूर्णांक		       (*करोne)(काष्ठा netlink_callback *cb);
+	स्थिर काष्ठा nla_policy *policy;
+	अचिन्हित पूर्णांक		maxattr;
 	u8			cmd;
-	u8			internal_flags;
+	u8			पूर्णांकernal_flags;
 	u8			flags;
 	u8			validate;
-};
+पूर्ण;
 
 /**
- * struct genl_info - info that is available during dumpit op call
- * @family: generic netlink family - for internal genl code usage
- * @ops: generic netlink ops - for internal genl code usage
+ * काष्ठा genl_info - info that is available during dumpit op call
+ * @family: generic netlink family - क्रम पूर्णांकernal genl code usage
+ * @ops: generic netlink ops - क्रम पूर्णांकernal genl code usage
  * @attrs: netlink attributes
  */
-struct genl_dumpit_info {
-	const struct genl_family *family;
-	struct genl_ops op;
-	struct nlattr **attrs;
-};
+काष्ठा genl_dumpit_info अणु
+	स्थिर काष्ठा genl_family *family;
+	काष्ठा genl_ops op;
+	काष्ठा nlattr **attrs;
+पूर्ण;
 
-static inline const struct genl_dumpit_info *
-genl_dumpit_info(struct netlink_callback *cb)
-{
-	return cb->data;
-}
+अटल अंतरभूत स्थिर काष्ठा genl_dumpit_info *
+genl_dumpit_info(काष्ठा netlink_callback *cb)
+अणु
+	वापस cb->data;
+पूर्ण
 
-int genl_register_family(struct genl_family *family);
-int genl_unregister_family(const struct genl_family *family);
-void genl_notify(const struct genl_family *family, struct sk_buff *skb,
-		 struct genl_info *info, u32 group, gfp_t flags);
+पूर्णांक genl_रेजिस्टर_family(काष्ठा genl_family *family);
+पूर्णांक genl_unरेजिस्टर_family(स्थिर काष्ठा genl_family *family);
+व्योम genl_notअगरy(स्थिर काष्ठा genl_family *family, काष्ठा sk_buff *skb,
+		 काष्ठा genl_info *info, u32 group, gfp_t flags);
 
-void *genlmsg_put(struct sk_buff *skb, u32 portid, u32 seq,
-		  const struct genl_family *family, int flags, u8 cmd);
+व्योम *genlmsg_put(काष्ठा sk_buff *skb, u32 portid, u32 seq,
+		  स्थिर काष्ठा genl_family *family, पूर्णांक flags, u8 cmd);
 
 /**
- * genlmsg_nlhdr - Obtain netlink header from user specified header
- * @user_hdr: user header as returned from genlmsg_put()
+ * genlmsg_nlhdr - Obtain netlink header from user specअगरied header
+ * @user_hdr: user header as वापसed from genlmsg_put()
  *
- * Returns pointer to netlink header.
+ * Returns poपूर्णांकer to netlink header.
  */
-static inline struct nlmsghdr *genlmsg_nlhdr(void *user_hdr)
-{
-	return (struct nlmsghdr *)((char *)user_hdr -
+अटल अंतरभूत काष्ठा nlmsghdr *genlmsg_nlhdr(व्योम *user_hdr)
+अणु
+	वापस (काष्ठा nlmsghdr *)((अक्षर *)user_hdr -
 				   GENL_HDRLEN -
 				   NLMSG_HDRLEN);
-}
+पूर्ण
 
 /**
  * genlmsg_parse_deprecated - parse attributes of a genetlink message
@@ -207,17 +208,17 @@ static inline struct nlmsghdr *genlmsg_nlhdr(void *user_hdr)
  * @tb: destination array with maxtype+1 elements
  * @maxtype: maximum attribute type to be expected
  * @policy: validation policy
- * @extack: extended ACK report struct
+ * @extack: extended ACK report काष्ठा
  */
-static inline int genlmsg_parse_deprecated(const struct nlmsghdr *nlh,
-					   const struct genl_family *family,
-					   struct nlattr *tb[], int maxtype,
-					   const struct nla_policy *policy,
-					   struct netlink_ext_ack *extack)
-{
-	return __nlmsg_parse(nlh, family->hdrsize + GENL_HDRLEN, tb, maxtype,
+अटल अंतरभूत पूर्णांक genlmsg_parse_deprecated(स्थिर काष्ठा nlmsghdr *nlh,
+					   स्थिर काष्ठा genl_family *family,
+					   काष्ठा nlattr *tb[], पूर्णांक maxtype,
+					   स्थिर काष्ठा nla_policy *policy,
+					   काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस __nlmsg_parse(nlh, family->hdrsize + GENL_HDRLEN, tb, maxtype,
 			     policy, NL_VALIDATE_LIBERAL, extack);
-}
+पूर्ण
 
 /**
  * genlmsg_parse - parse attributes of a genetlink message
@@ -226,31 +227,31 @@ static inline int genlmsg_parse_deprecated(const struct nlmsghdr *nlh,
  * @tb: destination array with maxtype+1 elements
  * @maxtype: maximum attribute type to be expected
  * @policy: validation policy
- * @extack: extended ACK report struct
+ * @extack: extended ACK report काष्ठा
  */
-static inline int genlmsg_parse(const struct nlmsghdr *nlh,
-				const struct genl_family *family,
-				struct nlattr *tb[], int maxtype,
-				const struct nla_policy *policy,
-				struct netlink_ext_ack *extack)
-{
-	return __nlmsg_parse(nlh, family->hdrsize + GENL_HDRLEN, tb, maxtype,
+अटल अंतरभूत पूर्णांक genlmsg_parse(स्थिर काष्ठा nlmsghdr *nlh,
+				स्थिर काष्ठा genl_family *family,
+				काष्ठा nlattr *tb[], पूर्णांक maxtype,
+				स्थिर काष्ठा nla_policy *policy,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस __nlmsg_parse(nlh, family->hdrsize + GENL_HDRLEN, tb, maxtype,
 			     policy, NL_VALIDATE_STRICT, extack);
-}
+पूर्ण
 
 /**
- * genl_dump_check_consistent - check if sequence is consistent and advertise if not
- * @cb: netlink callback structure that stores the sequence number
- * @user_hdr: user header as returned from genlmsg_put()
+ * genl_dump_check_consistent - check अगर sequence is consistent and advertise अगर not
+ * @cb: netlink callback काष्ठाure that stores the sequence number
+ * @user_hdr: user header as वापसed from genlmsg_put()
  *
  * Cf. nl_dump_check_consistent(), this just provides a wrapper to make it
  * simpler to use with generic netlink.
  */
-static inline void genl_dump_check_consistent(struct netlink_callback *cb,
-					      void *user_hdr)
-{
+अटल अंतरभूत व्योम genl_dump_check_consistent(काष्ठा netlink_callback *cb,
+					      व्योम *user_hdr)
+अणु
 	nl_dump_check_consistent(cb, genlmsg_nlhdr(user_hdr));
-}
+पूर्ण
 
 /**
  * genlmsg_put_reply - Add generic netlink header to a reply message
@@ -260,183 +261,183 @@ static inline void genl_dump_check_consistent(struct netlink_callback *cb,
  * @flags: netlink message flags
  * @cmd: generic netlink command
  *
- * Returns pointer to user specific header
+ * Returns poपूर्णांकer to user specअगरic header
  */
-static inline void *genlmsg_put_reply(struct sk_buff *skb,
-				      struct genl_info *info,
-				      const struct genl_family *family,
-				      int flags, u8 cmd)
-{
-	return genlmsg_put(skb, info->snd_portid, info->snd_seq, family,
+अटल अंतरभूत व्योम *genlmsg_put_reply(काष्ठा sk_buff *skb,
+				      काष्ठा genl_info *info,
+				      स्थिर काष्ठा genl_family *family,
+				      पूर्णांक flags, u8 cmd)
+अणु
+	वापस genlmsg_put(skb, info->snd_portid, info->snd_seq, family,
 			   flags, cmd);
-}
+पूर्ण
 
 /**
  * genlmsg_end - Finalize a generic netlink message
  * @skb: socket buffer the message is stored in
- * @hdr: user specific header
+ * @hdr: user specअगरic header
  */
-static inline void genlmsg_end(struct sk_buff *skb, void *hdr)
-{
+अटल अंतरभूत व्योम genlmsg_end(काष्ठा sk_buff *skb, व्योम *hdr)
+अणु
 	nlmsg_end(skb, hdr - GENL_HDRLEN - NLMSG_HDRLEN);
-}
+पूर्ण
 
 /**
- * genlmsg_cancel - Cancel construction of a generic netlink message
+ * genlmsg_cancel - Cancel स्थिरruction of a generic netlink message
  * @skb: socket buffer the message is stored in
  * @hdr: generic netlink message header
  */
-static inline void genlmsg_cancel(struct sk_buff *skb, void *hdr)
-{
-	if (hdr)
+अटल अंतरभूत व्योम genlmsg_cancel(काष्ठा sk_buff *skb, व्योम *hdr)
+अणु
+	अगर (hdr)
 		nlmsg_cancel(skb, hdr - GENL_HDRLEN - NLMSG_HDRLEN);
-}
+पूर्ण
 
 /**
- * genlmsg_multicast_netns - multicast a netlink message to a specific netns
+ * genlmsg_multicast_netns - multicast a netlink message to a specअगरic netns
  * @family: the generic netlink family
  * @net: the net namespace
  * @skb: netlink message as socket buffer
- * @portid: own netlink portid to avoid sending to yourself
+ * @portid: own netlink portid to aव्योम sending to yourself
  * @group: offset of multicast group in groups array
  * @flags: allocation flags
  */
-static inline int genlmsg_multicast_netns(const struct genl_family *family,
-					  struct net *net, struct sk_buff *skb,
-					  u32 portid, unsigned int group, gfp_t flags)
-{
-	if (WARN_ON_ONCE(group >= family->n_mcgrps))
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक genlmsg_multicast_netns(स्थिर काष्ठा genl_family *family,
+					  काष्ठा net *net, काष्ठा sk_buff *skb,
+					  u32 portid, अचिन्हित पूर्णांक group, gfp_t flags)
+अणु
+	अगर (WARN_ON_ONCE(group >= family->n_mcgrps))
+		वापस -EINVAL;
 	group = family->mcgrp_offset + group;
-	return nlmsg_multicast(net->genl_sock, skb, portid, group, flags);
-}
+	वापस nlmsg_multicast(net->genl_sock, skb, portid, group, flags);
+पूर्ण
 
 /**
- * genlmsg_multicast - multicast a netlink message to the default netns
+ * genlmsg_multicast - multicast a netlink message to the शेष netns
  * @family: the generic netlink family
  * @skb: netlink message as socket buffer
- * @portid: own netlink portid to avoid sending to yourself
+ * @portid: own netlink portid to aव्योम sending to yourself
  * @group: offset of multicast group in groups array
  * @flags: allocation flags
  */
-static inline int genlmsg_multicast(const struct genl_family *family,
-				    struct sk_buff *skb, u32 portid,
-				    unsigned int group, gfp_t flags)
-{
-	return genlmsg_multicast_netns(family, &init_net, skb,
+अटल अंतरभूत पूर्णांक genlmsg_multicast(स्थिर काष्ठा genl_family *family,
+				    काष्ठा sk_buff *skb, u32 portid,
+				    अचिन्हित पूर्णांक group, gfp_t flags)
+अणु
+	वापस genlmsg_multicast_netns(family, &init_net, skb,
 				       portid, group, flags);
-}
+पूर्ण
 
 /**
  * genlmsg_multicast_allns - multicast a netlink message to all net namespaces
  * @family: the generic netlink family
  * @skb: netlink message as socket buffer
- * @portid: own netlink portid to avoid sending to yourself
+ * @portid: own netlink portid to aव्योम sending to yourself
  * @group: offset of multicast group in groups array
  * @flags: allocation flags
  *
- * This function must hold the RTNL or rcu_read_lock().
+ * This function must hold the RTNL or rcu_पढ़ो_lock().
  */
-int genlmsg_multicast_allns(const struct genl_family *family,
-			    struct sk_buff *skb, u32 portid,
-			    unsigned int group, gfp_t flags);
+पूर्णांक genlmsg_multicast_allns(स्थिर काष्ठा genl_family *family,
+			    काष्ठा sk_buff *skb, u32 portid,
+			    अचिन्हित पूर्णांक group, gfp_t flags);
 
 /**
  * genlmsg_unicast - unicast a netlink message
  * @skb: netlink message as socket buffer
  * @portid: netlink portid of the destination socket
  */
-static inline int genlmsg_unicast(struct net *net, struct sk_buff *skb, u32 portid)
-{
-	return nlmsg_unicast(net->genl_sock, skb, portid);
-}
+अटल अंतरभूत पूर्णांक genlmsg_unicast(काष्ठा net *net, काष्ठा sk_buff *skb, u32 portid)
+अणु
+	वापस nlmsg_unicast(net->genl_sock, skb, portid);
+पूर्ण
 
 /**
  * genlmsg_reply - reply to a request
  * @skb: netlink message to be sent back
- * @info: receiver information
+ * @info: receiver inक्रमmation
  */
-static inline int genlmsg_reply(struct sk_buff *skb, struct genl_info *info)
-{
-	return genlmsg_unicast(genl_info_net(info), skb, info->snd_portid);
-}
+अटल अंतरभूत पूर्णांक genlmsg_reply(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	वापस genlmsg_unicast(genl_info_net(info), skb, info->snd_portid);
+पूर्ण
 
 /**
  * gennlmsg_data - head of message payload
  * @gnlh: genetlink message header
  */
-static inline void *genlmsg_data(const struct genlmsghdr *gnlh)
-{
-	return ((unsigned char *) gnlh + GENL_HDRLEN);
-}
+अटल अंतरभूत व्योम *genlmsg_data(स्थिर काष्ठा genlmsghdr *gnlh)
+अणु
+	वापस ((अचिन्हित अक्षर *) gnlh + GENL_HDRLEN);
+पूर्ण
 
 /**
  * genlmsg_len - length of message payload
  * @gnlh: genetlink message header
  */
-static inline int genlmsg_len(const struct genlmsghdr *gnlh)
-{
-	struct nlmsghdr *nlh = (struct nlmsghdr *)((unsigned char *)gnlh -
+अटल अंतरभूत पूर्णांक genlmsg_len(स्थिर काष्ठा genlmsghdr *gnlh)
+अणु
+	काष्ठा nlmsghdr *nlh = (काष्ठा nlmsghdr *)((अचिन्हित अक्षर *)gnlh -
 							NLMSG_HDRLEN);
-	return (nlh->nlmsg_len - GENL_HDRLEN - NLMSG_HDRLEN);
-}
+	वापस (nlh->nlmsg_len - GENL_HDRLEN - NLMSG_HDRLEN);
+पूर्ण
 
 /**
  * genlmsg_msg_size - length of genetlink message not including padding
  * @payload: length of message payload
  */
-static inline int genlmsg_msg_size(int payload)
-{
-	return GENL_HDRLEN + payload;
-}
+अटल अंतरभूत पूर्णांक genlmsg_msg_size(पूर्णांक payload)
+अणु
+	वापस GENL_HDRLEN + payload;
+पूर्ण
 
 /**
  * genlmsg_total_size - length of genetlink message including padding
  * @payload: length of message payload
  */
-static inline int genlmsg_total_size(int payload)
-{
-	return NLMSG_ALIGN(genlmsg_msg_size(payload));
-}
+अटल अंतरभूत पूर्णांक genlmsg_total_size(पूर्णांक payload)
+अणु
+	वापस NLMSG_ALIGN(genlmsg_msg_size(payload));
+पूर्ण
 
 /**
  * genlmsg_new - Allocate a new generic netlink message
  * @payload: size of the message payload
  * @flags: the type of memory to allocate.
  */
-static inline struct sk_buff *genlmsg_new(size_t payload, gfp_t flags)
-{
-	return nlmsg_new(genlmsg_total_size(payload), flags);
-}
+अटल अंतरभूत काष्ठा sk_buff *genlmsg_new(माप_प्रकार payload, gfp_t flags)
+अणु
+	वापस nlmsg_new(genlmsg_total_size(payload), flags);
+पूर्ण
 
 /**
  * genl_set_err - report error to genetlink broadcast listeners
  * @family: the generic netlink family
  * @net: the network namespace to report the error to
- * @portid: the PORTID of a process that we want to skip (if any)
+ * @portid: the PORTID of a process that we want to skip (अगर any)
  * @group: the broadcast group that will notice the error
  * 	(this is the offset of the multicast group in the groups array)
  * @code: error code, must be negative (as usual in kernelspace)
  *
- * This function returns the number of broadcast listeners that have set the
+ * This function वापसs the number of broadcast listeners that have set the
  * NETLINK_RECV_NO_ENOBUFS socket option.
  */
-static inline int genl_set_err(const struct genl_family *family,
-			       struct net *net, u32 portid,
-			       u32 group, int code)
-{
-	if (WARN_ON_ONCE(group >= family->n_mcgrps))
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक genl_set_err(स्थिर काष्ठा genl_family *family,
+			       काष्ठा net *net, u32 portid,
+			       u32 group, पूर्णांक code)
+अणु
+	अगर (WARN_ON_ONCE(group >= family->n_mcgrps))
+		वापस -EINVAL;
 	group = family->mcgrp_offset + group;
-	return netlink_set_err(net->genl_sock, portid, group, code);
-}
+	वापस netlink_set_err(net->genl_sock, portid, group, code);
+पूर्ण
 
-static inline int genl_has_listeners(const struct genl_family *family,
-				     struct net *net, unsigned int group)
-{
-	if (WARN_ON_ONCE(group >= family->n_mcgrps))
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक genl_has_listeners(स्थिर काष्ठा genl_family *family,
+				     काष्ठा net *net, अचिन्हित पूर्णांक group)
+अणु
+	अगर (WARN_ON_ONCE(group >= family->n_mcgrps))
+		वापस -EINVAL;
 	group = family->mcgrp_offset + group;
-	return netlink_has_listeners(net->genl_sock, group);
-}
-#endif	/* __NET_GENERIC_NETLINK_H */
+	वापस netlink_has_listeners(net->genl_sock, group);
+पूर्ण
+#पूर्ण_अगर	/* __NET_GENERIC_NETLINK_H */

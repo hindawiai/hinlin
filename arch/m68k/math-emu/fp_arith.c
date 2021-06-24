@@ -1,699 +1,700 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
-   fp_arith.c: floating-point math routines for the Linux-m68k
-   floating point emulator.
+   fp_arith.c: भग्नing-poपूर्णांक math routines क्रम the Linux-m68k
+   भग्नing poपूर्णांक emulator.
 
    Copyright (c) 1998-1999 David Huggins-Daines.
 
-   Somewhat based on the AlphaLinux floating point emulator, by David
+   Somewhat based on the AlphaLinux भग्नing poपूर्णांक emulator, by David
    Mosberger-Tang.
 
  */
 
-#include "fp_emu.h"
-#include "multi_arith.h"
-#include "fp_arith.h"
+#समावेश "fp_emu.h"
+#समावेश "multi_arith.h"
+#समावेश "fp_arith.h"
 
-const struct fp_ext fp_QNaN =
-{
+स्थिर काष्ठा fp_ext fp_QNaN =
+अणु
 	.exp = 0x7fff,
-	.mant = { .m64 = ~0 }
-};
+	.mant = अणु .m64 = ~0 पूर्ण
+पूर्ण;
 
-const struct fp_ext fp_Inf =
-{
+स्थिर काष्ठा fp_ext fp_Inf =
+अणु
 	.exp = 0x7fff,
-};
+पूर्ण;
 
 /* let's start with the easy ones */
 
-struct fp_ext *
-fp_fabs(struct fp_ext *dest, struct fp_ext *src)
-{
-	dprint(PINSTR, "fabs\n");
+काष्ठा fp_ext *
+fp_भ_असल(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	dprपूर्णांक(PINSTR, "fabs\n");
 
 	fp_monadic_check(dest, src);
 
 	dest->sign = 0;
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-struct fp_ext *
-fp_fneg(struct fp_ext *dest, struct fp_ext *src)
-{
-	dprint(PINSTR, "fneg\n");
+काष्ठा fp_ext *
+fp_fneg(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	dprपूर्णांक(PINSTR, "fneg\n");
 
 	fp_monadic_check(dest, src);
 
 	dest->sign = !dest->sign;
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
 /* Now, the slightly harder ones */
 
 /* fp_fadd: Implements the kernel of the FADD, FSADD, FDADD, FSUB,
-   FDSUB, and FCMP instructions. */
+   FDSUB, and FCMP inकाष्ठाions. */
 
-struct fp_ext *
-fp_fadd(struct fp_ext *dest, struct fp_ext *src)
-{
-	int diff;
+काष्ठा fp_ext *
+fp_fadd(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	पूर्णांक dअगरf;
 
-	dprint(PINSTR, "fadd\n");
+	dprपूर्णांक(PINSTR, "fadd\n");
 
 	fp_dyadic_check(dest, src);
 
-	if (IS_INF(dest)) {
+	अगर (IS_INF(dest)) अणु
 		/* infinity - infinity == NaN */
-		if (IS_INF(src) && (src->sign != dest->sign))
+		अगर (IS_INF(src) && (src->sign != dest->sign))
 			fp_set_nan(dest);
-		return dest;
-	}
-	if (IS_INF(src)) {
+		वापस dest;
+	पूर्ण
+	अगर (IS_INF(src)) अणु
 		fp_copy_ext(dest, src);
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
-	if (IS_ZERO(dest)) {
-		if (IS_ZERO(src)) {
-			if (src->sign != dest->sign) {
-				if (FPDATA->rnd == FPCR_ROUND_RM)
+	अगर (IS_ZERO(dest)) अणु
+		अगर (IS_ZERO(src)) अणु
+			अगर (src->sign != dest->sign) अणु
+				अगर (FPDATA->rnd == FPCR_ROUND_RM)
 					dest->sign = 1;
-				else
+				अन्यथा
 					dest->sign = 0;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			fp_copy_ext(dest, src);
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
 	dest->lowmant = src->lowmant = 0;
 
-	if ((diff = dest->exp - src->exp) > 0)
-		fp_denormalize(src, diff);
-	else if ((diff = -diff) > 0)
-		fp_denormalize(dest, diff);
+	अगर ((dअगरf = dest->exp - src->exp) > 0)
+		fp_denormalize(src, dअगरf);
+	अन्यथा अगर ((dअगरf = -dअगरf) > 0)
+		fp_denormalize(dest, dअगरf);
 
-	if (dest->sign == src->sign) {
-		if (fp_addmant(dest, src))
-			if (!fp_addcarry(dest))
-				return dest;
-	} else {
-		if (dest->mant.m64 < src->mant.m64) {
+	अगर (dest->sign == src->sign) अणु
+		अगर (fp_addmant(dest, src))
+			अगर (!fp_addcarry(dest))
+				वापस dest;
+	पूर्ण अन्यथा अणु
+		अगर (dest->mant.m64 < src->mant.m64) अणु
 			fp_submant(dest, src, dest);
 			dest->sign = !dest->sign;
-		} else
+		पूर्ण अन्यथा
 			fp_submant(dest, dest, src);
-	}
+	पूर्ण
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
 /* fp_fsub: Implements the kernel of the FSUB, FSSUB, and FDSUB
-   instructions.
+   inकाष्ठाions.
 
    Remember that the arguments are in assembler-syntax order! */
 
-struct fp_ext *
-fp_fsub(struct fp_ext *dest, struct fp_ext *src)
-{
-	dprint(PINSTR, "fsub ");
+काष्ठा fp_ext *
+fp_fsub(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	dprपूर्णांक(PINSTR, "fsub ");
 
 	src->sign = !src->sign;
-	return fp_fadd(dest, src);
-}
+	वापस fp_fadd(dest, src);
+पूर्ण
 
 
-struct fp_ext *
-fp_fcmp(struct fp_ext *dest, struct fp_ext *src)
-{
-	dprint(PINSTR, "fcmp ");
+काष्ठा fp_ext *
+fp_fcmp(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	dprपूर्णांक(PINSTR, "fcmp ");
 
 	FPDATA->temp[1] = *dest;
 	src->sign = !src->sign;
-	return fp_fadd(&FPDATA->temp[1], src);
-}
+	वापस fp_fadd(&FPDATA->temp[1], src);
+पूर्ण
 
-struct fp_ext *
-fp_ftst(struct fp_ext *dest, struct fp_ext *src)
-{
-	dprint(PINSTR, "ftst\n");
+काष्ठा fp_ext *
+fp_ftst(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	dprपूर्णांक(PINSTR, "ftst\n");
 
-	(void)dest;
+	(व्योम)dest;
 
-	return src;
-}
+	वापस src;
+पूर्ण
 
-struct fp_ext *
-fp_fmul(struct fp_ext *dest, struct fp_ext *src)
-{
-	union fp_mant128 temp;
-	int exp;
+काष्ठा fp_ext *
+fp_fmul(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	जोड़ fp_mant128 temp;
+	पूर्णांक exp;
 
-	dprint(PINSTR, "fmul\n");
+	dprपूर्णांक(PINSTR, "fmul\n");
 
 	fp_dyadic_check(dest, src);
 
-	/* calculate the correct sign now, as it's necessary for infinities */
+	/* calculate the correct sign now, as it's necessary क्रम infinities */
 	dest->sign = src->sign ^ dest->sign;
 
 	/* Handle infinities */
-	if (IS_INF(dest)) {
-		if (IS_ZERO(src))
+	अगर (IS_INF(dest)) अणु
+		अगर (IS_ZERO(src))
 			fp_set_nan(dest);
-		return dest;
-	}
-	if (IS_INF(src)) {
-		if (IS_ZERO(dest))
+		वापस dest;
+	पूर्ण
+	अगर (IS_INF(src)) अणु
+		अगर (IS_ZERO(dest))
 			fp_set_nan(dest);
-		else
+		अन्यथा
 			fp_copy_ext(dest, src);
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
 	/* Of course, as we all know, zero * anything = zero.  You may
 	   not have known that it might be a positive or negative
 	   zero... */
-	if (IS_ZERO(dest) || IS_ZERO(src)) {
+	अगर (IS_ZERO(dest) || IS_ZERO(src)) अणु
 		dest->exp = 0;
 		dest->mant.m64 = 0;
 		dest->lowmant = 0;
 
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
 	exp = dest->exp + src->exp - 0x3ffe;
 
-	/* shift up the mantissa for denormalized numbers,
+	/* shअगरt up the mantissa क्रम denormalized numbers,
 	   so that the highest bit is set, this makes the
-	   shift of the result below easier */
-	if ((long)dest->mant.m32[0] >= 0)
+	   shअगरt of the result below easier */
+	अगर ((दीर्घ)dest->mant.m32[0] >= 0)
 		exp -= fp_overnormalize(dest);
-	if ((long)src->mant.m32[0] >= 0)
+	अगर ((दीर्घ)src->mant.m32[0] >= 0)
 		exp -= fp_overnormalize(src);
 
-	/* now, do a 64-bit multiply with expansion */
+	/* now, करो a 64-bit multiply with expansion */
 	fp_multiplymant(&temp, dest, src);
 
-	/* normalize it back to 64 bits and stuff it back into the
-	   destination struct */
-	if ((long)temp.m32[0] > 0) {
+	/* normalize it back to 64 bits and stuff it back पूर्णांकo the
+	   destination काष्ठा */
+	अगर ((दीर्घ)temp.m32[0] > 0) अणु
 		exp--;
-		fp_putmant128(dest, &temp, 1);
-	} else
-		fp_putmant128(dest, &temp, 0);
+		fp_puपंचांगant128(dest, &temp, 1);
+	पूर्ण अन्यथा
+		fp_puपंचांगant128(dest, &temp, 0);
 
-	if (exp >= 0x7fff) {
+	अगर (exp >= 0x7fff) अणु
 		fp_set_ovrflw(dest);
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 	dest->exp = exp;
-	if (exp < 0) {
+	अगर (exp < 0) अणु
 		fp_set_sr(FPSR_EXC_UNFL);
 		fp_denormalize(dest, -exp);
-	}
+	पूर्ण
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-/* fp_fdiv: Implements the "kernel" of the FDIV, FSDIV, FDDIV and
-   FSGLDIV instructions.
+/* fp_fभाग: Implements the "kernel" of the FDIV, FSDIV, FDDIV and
+   FSGLDIV inकाष्ठाions.
 
-   Note that the order of the operands is counter-intuitive: instead
+   Note that the order of the opeअक्रमs is counter-पूर्णांकuitive: instead
    of src / dest, the result is actually dest / src. */
 
-struct fp_ext *
-fp_fdiv(struct fp_ext *dest, struct fp_ext *src)
-{
-	union fp_mant128 temp;
-	int exp;
+काष्ठा fp_ext *
+fp_fभाग(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	जोड़ fp_mant128 temp;
+	पूर्णांक exp;
 
-	dprint(PINSTR, "fdiv\n");
+	dprपूर्णांक(PINSTR, "fdiv\n");
 
 	fp_dyadic_check(dest, src);
 
-	/* calculate the correct sign now, as it's necessary for infinities */
+	/* calculate the correct sign now, as it's necessary क्रम infinities */
 	dest->sign = src->sign ^ dest->sign;
 
 	/* Handle infinities */
-	if (IS_INF(dest)) {
+	अगर (IS_INF(dest)) अणु
 		/* infinity / infinity = NaN (quiet, as always) */
-		if (IS_INF(src))
+		अगर (IS_INF(src))
 			fp_set_nan(dest);
-		/* infinity / anything else = infinity (with approprate sign) */
-		return dest;
-	}
-	if (IS_INF(src)) {
+		/* infinity / anything अन्यथा = infinity (with approprate sign) */
+		वापस dest;
+	पूर्ण
+	अगर (IS_INF(src)) अणु
 		/* anything / infinity = zero (with appropriate sign) */
 		dest->exp = 0;
 		dest->mant.m64 = 0;
 		dest->lowmant = 0;
 
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
 	/* zeroes */
-	if (IS_ZERO(dest)) {
+	अगर (IS_ZERO(dest)) अणु
 		/* zero / zero = NaN */
-		if (IS_ZERO(src))
+		अगर (IS_ZERO(src))
 			fp_set_nan(dest);
-		/* zero / anything else = zero */
-		return dest;
-	}
-	if (IS_ZERO(src)) {
+		/* zero / anything अन्यथा = zero */
+		वापस dest;
+	पूर्ण
+	अगर (IS_ZERO(src)) अणु
 		/* anything / zero = infinity (with appropriate sign) */
 		fp_set_sr(FPSR_EXC_DZ);
 		dest->exp = 0x7fff;
 		dest->mant.m64 = 0;
 
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
 	exp = dest->exp - src->exp + 0x3fff;
 
-	/* shift up the mantissa for denormalized numbers,
+	/* shअगरt up the mantissa क्रम denormalized numbers,
 	   so that the highest bit is set, this makes lots
 	   of things below easier */
-	if ((long)dest->mant.m32[0] >= 0)
+	अगर ((दीर्घ)dest->mant.m32[0] >= 0)
 		exp -= fp_overnormalize(dest);
-	if ((long)src->mant.m32[0] >= 0)
+	अगर ((दीर्घ)src->mant.m32[0] >= 0)
 		exp -= fp_overnormalize(src);
 
-	/* now, do the 64-bit divide */
-	fp_dividemant(&temp, dest, src);
+	/* now, करो the 64-bit भागide */
+	fp_भागidemant(&temp, dest, src);
 
-	/* normalize it back to 64 bits and stuff it back into the
-	   destination struct */
-	if (!temp.m32[0]) {
+	/* normalize it back to 64 bits and stuff it back पूर्णांकo the
+	   destination काष्ठा */
+	अगर (!temp.m32[0]) अणु
 		exp--;
-		fp_putmant128(dest, &temp, 32);
-	} else
-		fp_putmant128(dest, &temp, 31);
+		fp_puपंचांगant128(dest, &temp, 32);
+	पूर्ण अन्यथा
+		fp_puपंचांगant128(dest, &temp, 31);
 
-	if (exp >= 0x7fff) {
+	अगर (exp >= 0x7fff) अणु
 		fp_set_ovrflw(dest);
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 	dest->exp = exp;
-	if (exp < 0) {
+	अगर (exp < 0) अणु
 		fp_set_sr(FPSR_EXC_UNFL);
 		fp_denormalize(dest, -exp);
-	}
+	पूर्ण
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-struct fp_ext *
-fp_fsglmul(struct fp_ext *dest, struct fp_ext *src)
-{
-	int exp;
+काष्ठा fp_ext *
+fp_fsglmul(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	पूर्णांक exp;
 
-	dprint(PINSTR, "fsglmul\n");
+	dprपूर्णांक(PINSTR, "fsglmul\n");
 
 	fp_dyadic_check(dest, src);
 
-	/* calculate the correct sign now, as it's necessary for infinities */
+	/* calculate the correct sign now, as it's necessary क्रम infinities */
 	dest->sign = src->sign ^ dest->sign;
 
 	/* Handle infinities */
-	if (IS_INF(dest)) {
-		if (IS_ZERO(src))
+	अगर (IS_INF(dest)) अणु
+		अगर (IS_ZERO(src))
 			fp_set_nan(dest);
-		return dest;
-	}
-	if (IS_INF(src)) {
-		if (IS_ZERO(dest))
+		वापस dest;
+	पूर्ण
+	अगर (IS_INF(src)) अणु
+		अगर (IS_ZERO(dest))
 			fp_set_nan(dest);
-		else
+		अन्यथा
 			fp_copy_ext(dest, src);
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
 	/* Of course, as we all know, zero * anything = zero.  You may
 	   not have known that it might be a positive or negative
 	   zero... */
-	if (IS_ZERO(dest) || IS_ZERO(src)) {
+	अगर (IS_ZERO(dest) || IS_ZERO(src)) अणु
 		dest->exp = 0;
 		dest->mant.m64 = 0;
 		dest->lowmant = 0;
 
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
 	exp = dest->exp + src->exp - 0x3ffe;
 
-	/* do a 32-bit multiply */
+	/* करो a 32-bit multiply */
 	fp_mul64(dest->mant.m32[0], dest->mant.m32[1],
 		 dest->mant.m32[0] & 0xffffff00,
 		 src->mant.m32[0] & 0xffffff00);
 
-	if (exp >= 0x7fff) {
+	अगर (exp >= 0x7fff) अणु
 		fp_set_ovrflw(dest);
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 	dest->exp = exp;
-	if (exp < 0) {
+	अगर (exp < 0) अणु
 		fp_set_sr(FPSR_EXC_UNFL);
 		fp_denormalize(dest, -exp);
-	}
+	पूर्ण
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-struct fp_ext *
-fp_fsgldiv(struct fp_ext *dest, struct fp_ext *src)
-{
-	int exp;
-	unsigned long quot, rem;
+काष्ठा fp_ext *
+fp_fsgद_भाग(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	पूर्णांक exp;
+	अचिन्हित दीर्घ quot, rem;
 
-	dprint(PINSTR, "fsgldiv\n");
+	dprपूर्णांक(PINSTR, "fsgldiv\n");
 
 	fp_dyadic_check(dest, src);
 
-	/* calculate the correct sign now, as it's necessary for infinities */
+	/* calculate the correct sign now, as it's necessary क्रम infinities */
 	dest->sign = src->sign ^ dest->sign;
 
 	/* Handle infinities */
-	if (IS_INF(dest)) {
+	अगर (IS_INF(dest)) अणु
 		/* infinity / infinity = NaN (quiet, as always) */
-		if (IS_INF(src))
+		अगर (IS_INF(src))
 			fp_set_nan(dest);
-		/* infinity / anything else = infinity (with approprate sign) */
-		return dest;
-	}
-	if (IS_INF(src)) {
+		/* infinity / anything अन्यथा = infinity (with approprate sign) */
+		वापस dest;
+	पूर्ण
+	अगर (IS_INF(src)) अणु
 		/* anything / infinity = zero (with appropriate sign) */
 		dest->exp = 0;
 		dest->mant.m64 = 0;
 		dest->lowmant = 0;
 
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
 	/* zeroes */
-	if (IS_ZERO(dest)) {
+	अगर (IS_ZERO(dest)) अणु
 		/* zero / zero = NaN */
-		if (IS_ZERO(src))
+		अगर (IS_ZERO(src))
 			fp_set_nan(dest);
-		/* zero / anything else = zero */
-		return dest;
-	}
-	if (IS_ZERO(src)) {
+		/* zero / anything अन्यथा = zero */
+		वापस dest;
+	पूर्ण
+	अगर (IS_ZERO(src)) अणु
 		/* anything / zero = infinity (with appropriate sign) */
 		fp_set_sr(FPSR_EXC_DZ);
 		dest->exp = 0x7fff;
 		dest->mant.m64 = 0;
 
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
 	exp = dest->exp - src->exp + 0x3fff;
 
 	dest->mant.m32[0] &= 0xffffff00;
 	src->mant.m32[0] &= 0xffffff00;
 
-	/* do the 32-bit divide */
-	if (dest->mant.m32[0] >= src->mant.m32[0]) {
+	/* करो the 32-bit भागide */
+	अगर (dest->mant.m32[0] >= src->mant.m32[0]) अणु
 		fp_sub64(dest->mant, src->mant);
-		fp_div64(quot, rem, dest->mant.m32[0], 0, src->mant.m32[0]);
+		fp_भाग64(quot, rem, dest->mant.m32[0], 0, src->mant.m32[0]);
 		dest->mant.m32[0] = 0x80000000 | (quot >> 1);
-		dest->mant.m32[1] = (quot & 1) | rem;	/* only for rounding */
-	} else {
-		fp_div64(quot, rem, dest->mant.m32[0], 0, src->mant.m32[0]);
+		dest->mant.m32[1] = (quot & 1) | rem;	/* only क्रम rounding */
+	पूर्ण अन्यथा अणु
+		fp_भाग64(quot, rem, dest->mant.m32[0], 0, src->mant.m32[0]);
 		dest->mant.m32[0] = quot;
-		dest->mant.m32[1] = rem;		/* only for rounding */
+		dest->mant.m32[1] = rem;		/* only क्रम rounding */
 		exp--;
-	}
+	पूर्ण
 
-	if (exp >= 0x7fff) {
+	अगर (exp >= 0x7fff) अणु
 		fp_set_ovrflw(dest);
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 	dest->exp = exp;
-	if (exp < 0) {
+	अगर (exp < 0) अणु
 		fp_set_sr(FPSR_EXC_UNFL);
 		fp_denormalize(dest, -exp);
-	}
+	पूर्ण
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-/* fp_roundint: Internal rounding function for use by several of these
-   emulated instructions.
+/* fp_roundपूर्णांक: Internal rounding function क्रम use by several of these
+   emulated inकाष्ठाions.
 
    This one rounds off the fractional part using the rounding mode
-   specified. */
+   specअगरied. */
 
-static void fp_roundint(struct fp_ext *dest, int mode)
-{
-	union fp_mant64 oldmant;
-	unsigned long mask;
+अटल व्योम fp_roundपूर्णांक(काष्ठा fp_ext *dest, पूर्णांक mode)
+अणु
+	जोड़ fp_mant64 oldmant;
+	अचिन्हित दीर्घ mask;
 
-	if (!fp_normalize_ext(dest))
-		return;
+	अगर (!fp_normalize_ext(dest))
+		वापस;
 
 	/* infinities and zeroes */
-	if (IS_INF(dest) || IS_ZERO(dest))
-		return;
+	अगर (IS_INF(dest) || IS_ZERO(dest))
+		वापस;
 
 	/* first truncate the lower bits */
 	oldmant = dest->mant;
-	switch (dest->exp) {
-	case 0 ... 0x3ffe:
+	चयन (dest->exp) अणु
+	हाल 0 ... 0x3ffe:
 		dest->mant.m64 = 0;
-		break;
-	case 0x3fff ... 0x401e:
+		अवरोध;
+	हाल 0x3fff ... 0x401e:
 		dest->mant.m32[0] &= 0xffffffffU << (0x401e - dest->exp);
 		dest->mant.m32[1] = 0;
-		if (oldmant.m64 == dest->mant.m64)
-			return;
-		break;
-	case 0x401f ... 0x403e:
+		अगर (oldmant.m64 == dest->mant.m64)
+			वापस;
+		अवरोध;
+	हाल 0x401f ... 0x403e:
 		dest->mant.m32[1] &= 0xffffffffU << (0x403e - dest->exp);
-		if (oldmant.m32[1] == dest->mant.m32[1])
-			return;
-		break;
-	default:
-		return;
-	}
+		अगर (oldmant.m32[1] == dest->mant.m32[1])
+			वापस;
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 	fp_set_sr(FPSR_EXC_INEX2);
 
 	/* We might want to normalize upwards here... however, since
-	   we know that this is only called on the output of fp_fdiv,
-	   or with the input to fp_fint or fp_fintrz, and the inputs
+	   we know that this is only called on the output of fp_fभाग,
+	   or with the input to fp_fपूर्णांक or fp_fपूर्णांकrz, and the inमाला_दो
 	   to all these functions are either normal or denormalized
 	   (no subnormals allowed!), there's really no need.
 
-	   In the case of fp_fdiv, observe that 0x80000000 / 0xffff =
-	   0xffff8000, and the same holds for 128-bit / 64-bit. (i.e. the
-	   smallest possible normal dividend and the largest possible normal
-	   divisor will still produce a normal quotient, therefore, (normal
-	   << 64) / normal is normal in all cases) */
+	   In the हाल of fp_fभाग, observe that 0x80000000 / 0xffff =
+	   0xffff8000, and the same holds क्रम 128-bit / 64-bit. (i.e. the
+	   smallest possible normal भागidend and the largest possible normal
+	   भागisor will still produce a normal quotient, thereक्रमe, (normal
+	   << 64) / normal is normal in all हालs) */
 
-	switch (mode) {
-	case FPCR_ROUND_RN:
-		switch (dest->exp) {
-		case 0 ... 0x3ffd:
-			return;
-		case 0x3ffe:
+	चयन (mode) अणु
+	हाल FPCR_ROUND_RN:
+		चयन (dest->exp) अणु
+		हाल 0 ... 0x3ffd:
+			वापस;
+		हाल 0x3ffe:
 			/* As noted above, the input is always normal, so the
-			   guard bit (bit 63) is always set.  therefore, the
-			   only case in which we will NOT round to 1.0 is when
+			   guard bit (bit 63) is always set.  thereक्रमe, the
+			   only हाल in which we will NOT round to 1.0 is when
 			   the input is exactly 0.5. */
-			if (oldmant.m64 == (1ULL << 63))
-				return;
-			break;
-		case 0x3fff ... 0x401d:
+			अगर (oldmant.m64 == (1ULL << 63))
+				वापस;
+			अवरोध;
+		हाल 0x3fff ... 0x401d:
 			mask = 1 << (0x401d - dest->exp);
-			if (!(oldmant.m32[0] & mask))
-				return;
-			if (oldmant.m32[0] & (mask << 1))
-				break;
-			if (!(oldmant.m32[0] << (dest->exp - 0x3ffd)) &&
+			अगर (!(oldmant.m32[0] & mask))
+				वापस;
+			अगर (oldmant.m32[0] & (mask << 1))
+				अवरोध;
+			अगर (!(oldmant.m32[0] << (dest->exp - 0x3ffd)) &&
 					!oldmant.m32[1])
-				return;
-			break;
-		case 0x401e:
-			if (oldmant.m32[1] & 0x80000000)
-				return;
-			if (oldmant.m32[0] & 1)
-				break;
-			if (!(oldmant.m32[1] << 1))
-				return;
-			break;
-		case 0x401f ... 0x403d:
+				वापस;
+			अवरोध;
+		हाल 0x401e:
+			अगर (oldmant.m32[1] & 0x80000000)
+				वापस;
+			अगर (oldmant.m32[0] & 1)
+				अवरोध;
+			अगर (!(oldmant.m32[1] << 1))
+				वापस;
+			अवरोध;
+		हाल 0x401f ... 0x403d:
 			mask = 1 << (0x403d - dest->exp);
-			if (!(oldmant.m32[1] & mask))
-				return;
-			if (oldmant.m32[1] & (mask << 1))
-				break;
-			if (!(oldmant.m32[1] << (dest->exp - 0x401d)))
-				return;
-			break;
-		default:
-			return;
-		}
-		break;
-	case FPCR_ROUND_RZ:
-		return;
-	default:
-		if (dest->sign ^ (mode - FPCR_ROUND_RM))
-			break;
-		return;
-	}
+			अगर (!(oldmant.m32[1] & mask))
+				वापस;
+			अगर (oldmant.m32[1] & (mask << 1))
+				अवरोध;
+			अगर (!(oldmant.m32[1] << (dest->exp - 0x401d)))
+				वापस;
+			अवरोध;
+		शेष:
+			वापस;
+		पूर्ण
+		अवरोध;
+	हाल FPCR_ROUND_RZ:
+		वापस;
+	शेष:
+		अगर (dest->sign ^ (mode - FPCR_ROUND_RM))
+			अवरोध;
+		वापस;
+	पूर्ण
 
-	switch (dest->exp) {
-	case 0 ... 0x3ffe:
+	चयन (dest->exp) अणु
+	हाल 0 ... 0x3ffe:
 		dest->exp = 0x3fff;
 		dest->mant.m64 = 1ULL << 63;
-		break;
-	case 0x3fff ... 0x401e:
+		अवरोध;
+	हाल 0x3fff ... 0x401e:
 		mask = 1 << (0x401e - dest->exp);
-		if (dest->mant.m32[0] += mask)
-			break;
+		अगर (dest->mant.m32[0] += mask)
+			अवरोध;
 		dest->mant.m32[0] = 0x80000000;
 		dest->exp++;
-		break;
-	case 0x401f ... 0x403e:
+		अवरोध;
+	हाल 0x401f ... 0x403e:
 		mask = 1 << (0x403e - dest->exp);
-		if (dest->mant.m32[1] += mask)
-			break;
-		if (dest->mant.m32[0] += 1)
-                        break;
+		अगर (dest->mant.m32[1] += mask)
+			अवरोध;
+		अगर (dest->mant.m32[0] += 1)
+                        अवरोध;
 		dest->mant.m32[0] = 0x80000000;
                 dest->exp++;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* modrem_kernel: Implementation of the FREM and FMOD instructions
-   (which are exactly the same, except for the rounding used on the
-   intermediate value) */
+/* modrem_kernel: Implementation of the FREM and FMOD inकाष्ठाions
+   (which are exactly the same, except क्रम the rounding used on the
+   पूर्णांकermediate value) */
 
-static struct fp_ext *
-modrem_kernel(struct fp_ext *dest, struct fp_ext *src, int mode)
-{
-	struct fp_ext tmp;
+अटल काष्ठा fp_ext *
+modrem_kernel(काष्ठा fp_ext *dest, काष्ठा fp_ext *src, पूर्णांक mode)
+अणु
+	काष्ठा fp_ext पंचांगp;
 
 	fp_dyadic_check(dest, src);
 
 	/* Infinities and zeros */
-	if (IS_INF(dest) || IS_ZERO(src)) {
+	अगर (IS_INF(dest) || IS_ZERO(src)) अणु
 		fp_set_nan(dest);
-		return dest;
-	}
-	if (IS_ZERO(dest) || IS_INF(src))
-		return dest;
+		वापस dest;
+	पूर्ण
+	अगर (IS_ZERO(dest) || IS_INF(src))
+		वापस dest;
 
-	/* FIXME: there is almost certainly a smarter way to do this */
-	fp_copy_ext(&tmp, dest);
-	fp_fdiv(&tmp, src);		/* NOTE: src might be modified */
-	fp_roundint(&tmp, mode);
-	fp_fmul(&tmp, src);
-	fp_fsub(dest, &tmp);
+	/* FIXME: there is almost certainly a smarter way to करो this */
+	fp_copy_ext(&पंचांगp, dest);
+	fp_fभाग(&पंचांगp, src);		/* NOTE: src might be modअगरied */
+	fp_roundपूर्णांक(&पंचांगp, mode);
+	fp_fmul(&पंचांगp, src);
+	fp_fsub(dest, &पंचांगp);
 
 	/* set the quotient byte */
 	fp_set_quotient((dest->mant.m64 & 0x7f) | (dest->sign << 7));
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-/* fp_fmod: Implements the kernel of the FMOD instruction.
+/* fp_भ_शेष: Implements the kernel of the FMOD inकाष्ठाion.
 
    Again, the argument order is backwards.  The result, as defined in
    the Motorola manuals, is:
 
-   fmod(src,dest) = (dest - (src * floor(dest / src))) */
+   भ_शेष(src,dest) = (dest - (src * न्यूनमान(dest / src))) */
 
-struct fp_ext *
-fp_fmod(struct fp_ext *dest, struct fp_ext *src)
-{
-	dprint(PINSTR, "fmod\n");
-	return modrem_kernel(dest, src, FPCR_ROUND_RZ);
-}
+काष्ठा fp_ext *
+fp_भ_शेष(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	dprपूर्णांक(PINSTR, "fmod\n");
+	वापस modrem_kernel(dest, src, FPCR_ROUND_RZ);
+पूर्ण
 
-/* fp_frem: Implements the kernel of the FREM instruction.
+/* fp_frem: Implements the kernel of the FREM inकाष्ठाion.
 
    frem(src,dest) = (dest - (src * round(dest / src)))
  */
 
-struct fp_ext *
-fp_frem(struct fp_ext *dest, struct fp_ext *src)
-{
-	dprint(PINSTR, "frem\n");
-	return modrem_kernel(dest, src, FPCR_ROUND_RN);
-}
+काष्ठा fp_ext *
+fp_frem(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	dprपूर्णांक(PINSTR, "frem\n");
+	वापस modrem_kernel(dest, src, FPCR_ROUND_RN);
+पूर्ण
 
-struct fp_ext *
-fp_fint(struct fp_ext *dest, struct fp_ext *src)
-{
-	dprint(PINSTR, "fint\n");
-
-	fp_copy_ext(dest, src);
-
-	fp_roundint(dest, FPDATA->rnd);
-
-	return dest;
-}
-
-struct fp_ext *
-fp_fintrz(struct fp_ext *dest, struct fp_ext *src)
-{
-	dprint(PINSTR, "fintrz\n");
+काष्ठा fp_ext *
+fp_fपूर्णांक(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	dprपूर्णांक(PINSTR, "fint\n");
 
 	fp_copy_ext(dest, src);
 
-	fp_roundint(dest, FPCR_ROUND_RZ);
+	fp_roundपूर्णांक(dest, FPDATA->rnd);
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-struct fp_ext *
-fp_fscale(struct fp_ext *dest, struct fp_ext *src)
-{
-	int scale, oldround;
+काष्ठा fp_ext *
+fp_fपूर्णांकrz(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	dprपूर्णांक(PINSTR, "fintrz\n");
 
-	dprint(PINSTR, "fscale\n");
+	fp_copy_ext(dest, src);
+
+	fp_roundपूर्णांक(dest, FPCR_ROUND_RZ);
+
+	वापस dest;
+पूर्ण
+
+काष्ठा fp_ext *
+fp_fscale(काष्ठा fp_ext *dest, काष्ठा fp_ext *src)
+अणु
+	पूर्णांक scale, oldround;
+
+	dprपूर्णांक(PINSTR, "fscale\n");
 
 	fp_dyadic_check(dest, src);
 
 	/* Infinities */
-	if (IS_INF(src)) {
+	अगर (IS_INF(src)) अणु
 		fp_set_nan(dest);
-		return dest;
-	}
-	if (IS_INF(dest))
-		return dest;
+		वापस dest;
+	पूर्ण
+	अगर (IS_INF(dest))
+		वापस dest;
 
 	/* zeroes */
-	if (IS_ZERO(src) || IS_ZERO(dest))
-		return dest;
+	अगर (IS_ZERO(src) || IS_ZERO(dest))
+		वापस dest;
 
 	/* Source exponent out of range */
-	if (src->exp >= 0x400c) {
+	अगर (src->exp >= 0x400c) अणु
 		fp_set_ovrflw(dest);
-		return dest;
-	}
+		वापस dest;
+	पूर्ण
 
 	/* src must be rounded with round to zero. */
 	oldround = FPDATA->rnd;
 	FPDATA->rnd = FPCR_ROUND_RZ;
-	scale = fp_conv_ext2long(src);
+	scale = fp_conv_ext2दीर्घ(src);
 	FPDATA->rnd = oldround;
 
 	/* new exponent */
 	scale += dest->exp;
 
-	if (scale >= 0x7fff) {
+	अगर (scale >= 0x7fff) अणु
 		fp_set_ovrflw(dest);
-	} else if (scale <= 0) {
+	पूर्ण अन्यथा अगर (scale <= 0) अणु
 		fp_set_sr(FPSR_EXC_UNFL);
 		fp_denormalize(dest, -scale);
-	} else
+	पूर्ण अन्यथा
 		dest->exp = scale;
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 

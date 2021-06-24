@@ -1,109 +1,110 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Greybus Bridged-Phy Bus driver
  *
  * Copyright 2016 Google Inc.
  */
 
-#ifndef __GBPHY_H
-#define __GBPHY_H
+#अगर_अघोषित __GBPHY_H
+#घोषणा __GBPHY_H
 
-struct gbphy_device {
+काष्ठा gbphy_device अणु
 	u32 id;
-	struct greybus_descriptor_cport *cport_desc;
-	struct gb_bundle *bundle;
-	struct list_head list;
-	struct device dev;
-};
-#define to_gbphy_dev(d) container_of(d, struct gbphy_device, dev)
+	काष्ठा greybus_descriptor_cport *cport_desc;
+	काष्ठा gb_bundle *bundle;
+	काष्ठा list_head list;
+	काष्ठा device dev;
+पूर्ण;
+#घोषणा to_gbphy_dev(d) container_of(d, काष्ठा gbphy_device, dev)
 
-static inline void *gb_gbphy_get_data(struct gbphy_device *gdev)
-{
-	return dev_get_drvdata(&gdev->dev);
-}
+अटल अंतरभूत व्योम *gb_gbphy_get_data(काष्ठा gbphy_device *gdev)
+अणु
+	वापस dev_get_drvdata(&gdev->dev);
+पूर्ण
 
-static inline void gb_gbphy_set_data(struct gbphy_device *gdev, void *data)
-{
+अटल अंतरभूत व्योम gb_gbphy_set_data(काष्ठा gbphy_device *gdev, व्योम *data)
+अणु
 	dev_set_drvdata(&gdev->dev, data);
-}
+पूर्ण
 
-struct gbphy_device_id {
+काष्ठा gbphy_device_id अणु
 	__u8 protocol_id;
-};
+पूर्ण;
 
-#define GBPHY_PROTOCOL(p)		\
+#घोषणा GBPHY_PROTOCOL(p)		\
 	.protocol_id	= (p),
 
-struct gbphy_driver {
-	const char *name;
-	int (*probe)(struct gbphy_device *device,
-		     const struct gbphy_device_id *id);
-	void (*remove)(struct gbphy_device *device);
-	const struct gbphy_device_id *id_table;
+काष्ठा gbphy_driver अणु
+	स्थिर अक्षर *name;
+	पूर्णांक (*probe)(काष्ठा gbphy_device *device,
+		     स्थिर काष्ठा gbphy_device_id *id);
+	व्योम (*हटाओ)(काष्ठा gbphy_device *device);
+	स्थिर काष्ठा gbphy_device_id *id_table;
 
-	struct device_driver driver;
-};
-#define to_gbphy_driver(d) container_of(d, struct gbphy_driver, driver)
+	काष्ठा device_driver driver;
+पूर्ण;
+#घोषणा to_gbphy_driver(d) container_of(d, काष्ठा gbphy_driver, driver)
 
-int gb_gbphy_register_driver(struct gbphy_driver *driver,
-			     struct module *owner, const char *mod_name);
-void gb_gbphy_deregister_driver(struct gbphy_driver *driver);
+पूर्णांक gb_gbphy_रेजिस्टर_driver(काष्ठा gbphy_driver *driver,
+			     काष्ठा module *owner, स्थिर अक्षर *mod_name);
+व्योम gb_gbphy_deरेजिस्टर_driver(काष्ठा gbphy_driver *driver);
 
-#define gb_gbphy_register(driver) \
-	gb_gbphy_register_driver(driver, THIS_MODULE, KBUILD_MODNAME)
-#define gb_gbphy_deregister(driver) \
-	gb_gbphy_deregister_driver(driver)
+#घोषणा gb_gbphy_रेजिस्टर(driver) \
+	gb_gbphy_रेजिस्टर_driver(driver, THIS_MODULE, KBUILD_MODNAME)
+#घोषणा gb_gbphy_deरेजिस्टर(driver) \
+	gb_gbphy_deरेजिस्टर_driver(driver)
 
 /**
- * module_gbphy_driver() - Helper macro for registering a gbphy driver
- * @__gbphy_driver: gbphy_driver structure
+ * module_gbphy_driver() - Helper macro क्रम रेजिस्टरing a gbphy driver
+ * @__gbphy_driver: gbphy_driver काष्ठाure
  *
- * Helper macro for gbphy drivers to set up proper module init / exit
- * functions.  Replaces module_init() and module_exit() and keeps people from
- * printing pointless things to the kernel log when their driver is loaded.
+ * Helper macro क्रम gbphy drivers to set up proper module init / निकास
+ * functions.  Replaces module_init() and module_निकास() and keeps people from
+ * prपूर्णांकing poपूर्णांकless things to the kernel log when their driver is loaded.
  */
-#define module_gbphy_driver(__gbphy_driver)	\
-	module_driver(__gbphy_driver, gb_gbphy_register, gb_gbphy_deregister)
+#घोषणा module_gbphy_driver(__gbphy_driver)	\
+	module_driver(__gbphy_driver, gb_gbphy_रेजिस्टर, gb_gbphy_deरेजिस्टर)
 
-#ifdef CONFIG_PM
-static inline int gbphy_runtime_get_sync(struct gbphy_device *gbphy_dev)
-{
-	struct device *dev = &gbphy_dev->dev;
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल अंतरभूत पूर्णांक gbphy_runसमय_get_sync(काष्ठा gbphy_device *gbphy_dev)
+अणु
+	काष्ठा device *dev = &gbphy_dev->dev;
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(dev);
-	if (ret < 0) {
+	ret = pm_runसमय_get_sync(dev);
+	अगर (ret < 0) अणु
 		dev_err(dev, "pm_runtime_get_sync failed: %d\n", ret);
-		pm_runtime_put_noidle(dev);
-		return ret;
-	}
+		pm_runसमय_put_noidle(dev);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void gbphy_runtime_put_autosuspend(struct gbphy_device *gbphy_dev)
-{
-	struct device *dev = &gbphy_dev->dev;
+अटल अंतरभूत व्योम gbphy_runसमय_put_स्वतःsuspend(काष्ठा gbphy_device *gbphy_dev)
+अणु
+	काष्ठा device *dev = &gbphy_dev->dev;
 
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
-}
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
+पूर्ण
 
-static inline void gbphy_runtime_get_noresume(struct gbphy_device *gbphy_dev)
-{
-	pm_runtime_get_noresume(&gbphy_dev->dev);
-}
+अटल अंतरभूत व्योम gbphy_runसमय_get_noresume(काष्ठा gbphy_device *gbphy_dev)
+अणु
+	pm_runसमय_get_noresume(&gbphy_dev->dev);
+पूर्ण
 
-static inline void gbphy_runtime_put_noidle(struct gbphy_device *gbphy_dev)
-{
-	pm_runtime_put_noidle(&gbphy_dev->dev);
-}
-#else
-static inline int gbphy_runtime_get_sync(struct gbphy_device *gbphy_dev) { return 0; }
-static inline void gbphy_runtime_put_autosuspend(struct gbphy_device *gbphy_dev) {}
-static inline void gbphy_runtime_get_noresume(struct gbphy_device *gbphy_dev) {}
-static inline void gbphy_runtime_put_noidle(struct gbphy_device *gbphy_dev) {}
-#endif
+अटल अंतरभूत व्योम gbphy_runसमय_put_noidle(काष्ठा gbphy_device *gbphy_dev)
+अणु
+	pm_runसमय_put_noidle(&gbphy_dev->dev);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक gbphy_runसमय_get_sync(काष्ठा gbphy_device *gbphy_dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम gbphy_runसमय_put_स्वतःsuspend(काष्ठा gbphy_device *gbphy_dev) अणुपूर्ण
+अटल अंतरभूत व्योम gbphy_runसमय_get_noresume(काष्ठा gbphy_device *gbphy_dev) अणुपूर्ण
+अटल अंतरभूत व्योम gbphy_runसमय_put_noidle(काष्ठा gbphy_device *gbphy_dev) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* __GBPHY_H */
+#पूर्ण_अगर /* __GBPHY_H */
 

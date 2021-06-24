@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright Altera Corporation (C) 2013-2015. All rights reserved
  *
@@ -6,645 +7,645 @@
  * Description: Altera PCIe host controller driver
  */
 
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/of_pci.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "../pci.h"
+#समावेश "../pci.h"
 
-#define RP_TX_REG0			0x2000
-#define RP_TX_REG1			0x2004
-#define RP_TX_CNTRL			0x2008
-#define RP_TX_EOP			0x2
-#define RP_TX_SOP			0x1
-#define RP_RXCPL_STATUS			0x2010
-#define RP_RXCPL_EOP			0x2
-#define RP_RXCPL_SOP			0x1
-#define RP_RXCPL_REG0			0x2014
-#define RP_RXCPL_REG1			0x2018
-#define P2A_INT_STATUS			0x3060
-#define P2A_INT_STS_ALL			0xf
-#define P2A_INT_ENABLE			0x3070
-#define P2A_INT_ENA_ALL			0xf
-#define RP_LTSSM			0x3c64
-#define RP_LTSSM_MASK			0x1f
-#define LTSSM_L0			0xf
+#घोषणा RP_TX_REG0			0x2000
+#घोषणा RP_TX_REG1			0x2004
+#घोषणा RP_TX_CNTRL			0x2008
+#घोषणा RP_TX_EOP			0x2
+#घोषणा RP_TX_SOP			0x1
+#घोषणा RP_RXCPL_STATUS			0x2010
+#घोषणा RP_RXCPL_EOP			0x2
+#घोषणा RP_RXCPL_SOP			0x1
+#घोषणा RP_RXCPL_REG0			0x2014
+#घोषणा RP_RXCPL_REG1			0x2018
+#घोषणा P2A_INT_STATUS			0x3060
+#घोषणा P2A_INT_STS_ALL			0xf
+#घोषणा P2A_INT_ENABLE			0x3070
+#घोषणा P2A_INT_ENA_ALL			0xf
+#घोषणा RP_LTSSM			0x3c64
+#घोषणा RP_LTSSM_MASK			0x1f
+#घोषणा LTSSM_L0			0xf
 
-#define S10_RP_TX_CNTRL			0x2004
-#define S10_RP_RXCPL_REG		0x2008
-#define S10_RP_RXCPL_STATUS		0x200C
-#define S10_RP_CFG_ADDR(pcie, reg)	\
+#घोषणा S10_RP_TX_CNTRL			0x2004
+#घोषणा S10_RP_RXCPL_REG		0x2008
+#घोषणा S10_RP_RXCPL_STATUS		0x200C
+#घोषणा S10_RP_CFG_ADDR(pcie, reg)	\
 	(((pcie)->hip_base) + (reg) + (1 << 20))
-#define S10_RP_SECONDARY(pcie)		\
-	readb(S10_RP_CFG_ADDR(pcie, PCI_SECONDARY_BUS))
+#घोषणा S10_RP_SECONDARY(pcie)		\
+	पढ़ोb(S10_RP_CFG_ADDR(pcie, PCI_SECONDARY_BUS))
 
 /* TLP configuration type 0 and 1 */
-#define TLP_FMTTYPE_CFGRD0		0x04	/* Configuration Read Type 0 */
-#define TLP_FMTTYPE_CFGWR0		0x44	/* Configuration Write Type 0 */
-#define TLP_FMTTYPE_CFGRD1		0x05	/* Configuration Read Type 1 */
-#define TLP_FMTTYPE_CFGWR1		0x45	/* Configuration Write Type 1 */
-#define TLP_PAYLOAD_SIZE		0x01
-#define TLP_READ_TAG			0x1d
-#define TLP_WRITE_TAG			0x10
-#define RP_DEVFN			0
-#define TLP_REQ_ID(bus, devfn)		(((bus) << 8) | (devfn))
-#define TLP_CFG_DW0(pcie, cfg)		\
+#घोषणा TLP_FMTTYPE_CFGRD0		0x04	/* Configuration Read Type 0 */
+#घोषणा TLP_FMTTYPE_CFGWR0		0x44	/* Configuration Write Type 0 */
+#घोषणा TLP_FMTTYPE_CFGRD1		0x05	/* Configuration Read Type 1 */
+#घोषणा TLP_FMTTYPE_CFGWR1		0x45	/* Configuration Write Type 1 */
+#घोषणा TLP_PAYLOAD_SIZE		0x01
+#घोषणा TLP_READ_TAG			0x1d
+#घोषणा TLP_WRITE_TAG			0x10
+#घोषणा RP_DEVFN			0
+#घोषणा TLP_REQ_ID(bus, devfn)		(((bus) << 8) | (devfn))
+#घोषणा TLP_CFG_DW0(pcie, cfg)		\
 		(((cfg) << 24) |	\
 		  TLP_PAYLOAD_SIZE)
-#define TLP_CFG_DW1(pcie, tag, be)	\
+#घोषणा TLP_CFG_DW1(pcie, tag, be)	\
 	(((TLP_REQ_ID(pcie->root_bus_nr,  RP_DEVFN)) << 16) | (tag << 8) | (be))
-#define TLP_CFG_DW2(bus, devfn, offset)	\
+#घोषणा TLP_CFG_DW2(bus, devfn, offset)	\
 				(((bus) << 24) | ((devfn) << 16) | (offset))
-#define TLP_COMP_STATUS(s)		(((s) >> 13) & 7)
-#define TLP_BYTE_COUNT(s)		(((s) >> 0) & 0xfff)
-#define TLP_HDR_SIZE			3
-#define TLP_LOOP			500
+#घोषणा TLP_COMP_STATUS(s)		(((s) >> 13) & 7)
+#घोषणा TLP_BYTE_COUNT(s)		(((s) >> 0) & 0xfff)
+#घोषणा TLP_HDR_SIZE			3
+#घोषणा TLP_LOOP			500
 
-#define LINK_UP_TIMEOUT			HZ
-#define LINK_RETRAIN_TIMEOUT		HZ
+#घोषणा LINK_UP_TIMEOUT			HZ
+#घोषणा LINK_RETRAIN_TIMEOUT		HZ
 
-#define DWORD_MASK			3
+#घोषणा DWORD_MASK			3
 
-#define S10_TLP_FMTTYPE_CFGRD0		0x05
-#define S10_TLP_FMTTYPE_CFGRD1		0x04
-#define S10_TLP_FMTTYPE_CFGWR0		0x45
-#define S10_TLP_FMTTYPE_CFGWR1		0x44
+#घोषणा S10_TLP_FMTTYPE_CFGRD0		0x05
+#घोषणा S10_TLP_FMTTYPE_CFGRD1		0x04
+#घोषणा S10_TLP_FMTTYPE_CFGWR0		0x45
+#घोषणा S10_TLP_FMTTYPE_CFGWR1		0x44
 
-enum altera_pcie_version {
+क्रमागत altera_pcie_version अणु
 	ALTERA_PCIE_V1 = 0,
 	ALTERA_PCIE_V2,
-};
+पूर्ण;
 
-struct altera_pcie {
-	struct platform_device	*pdev;
-	void __iomem		*cra_base;
-	void __iomem		*hip_base;
-	int			irq;
+काष्ठा altera_pcie अणु
+	काष्ठा platक्रमm_device	*pdev;
+	व्योम __iomem		*cra_base;
+	व्योम __iomem		*hip_base;
+	पूर्णांक			irq;
 	u8			root_bus_nr;
-	struct irq_domain	*irq_domain;
-	struct resource		bus_range;
-	const struct altera_pcie_data	*pcie_data;
-};
+	काष्ठा irq_करोमुख्य	*irq_करोमुख्य;
+	काष्ठा resource		bus_range;
+	स्थिर काष्ठा altera_pcie_data	*pcie_data;
+पूर्ण;
 
-struct altera_pcie_ops {
-	int (*tlp_read_pkt)(struct altera_pcie *pcie, u32 *value);
-	void (*tlp_write_pkt)(struct altera_pcie *pcie, u32 *headers,
+काष्ठा altera_pcie_ops अणु
+	पूर्णांक (*tlp_पढ़ो_pkt)(काष्ठा altera_pcie *pcie, u32 *value);
+	व्योम (*tlp_ग_लिखो_pkt)(काष्ठा altera_pcie *pcie, u32 *headers,
 			      u32 data, bool align);
-	bool (*get_link_status)(struct altera_pcie *pcie);
-	int (*rp_read_cfg)(struct altera_pcie *pcie, int where,
-			   int size, u32 *value);
-	int (*rp_write_cfg)(struct altera_pcie *pcie, u8 busno,
-			    int where, int size, u32 value);
-};
+	bool (*get_link_status)(काष्ठा altera_pcie *pcie);
+	पूर्णांक (*rp_पढ़ो_cfg)(काष्ठा altera_pcie *pcie, पूर्णांक where,
+			   पूर्णांक size, u32 *value);
+	पूर्णांक (*rp_ग_लिखो_cfg)(काष्ठा altera_pcie *pcie, u8 busno,
+			    पूर्णांक where, पूर्णांक size, u32 value);
+पूर्ण;
 
-struct altera_pcie_data {
-	const struct altera_pcie_ops *ops;
-	enum altera_pcie_version version;
-	u32 cap_offset;		/* PCIe capability structure register offset */
+काष्ठा altera_pcie_data अणु
+	स्थिर काष्ठा altera_pcie_ops *ops;
+	क्रमागत altera_pcie_version version;
+	u32 cap_offset;		/* PCIe capability काष्ठाure रेजिस्टर offset */
 	u32 cfgrd0;
 	u32 cfgrd1;
 	u32 cfgwr0;
 	u32 cfgwr1;
-};
+पूर्ण;
 
-struct tlp_rp_regpair_t {
+काष्ठा tlp_rp_regpair_t अणु
 	u32 ctrl;
 	u32 reg0;
 	u32 reg1;
-};
+पूर्ण;
 
-static inline void cra_writel(struct altera_pcie *pcie, const u32 value,
-			      const u32 reg)
-{
-	writel_relaxed(value, pcie->cra_base + reg);
-}
+अटल अंतरभूत व्योम cra_ग_लिखोl(काष्ठा altera_pcie *pcie, स्थिर u32 value,
+			      स्थिर u32 reg)
+अणु
+	ग_लिखोl_relaxed(value, pcie->cra_base + reg);
+पूर्ण
 
-static inline u32 cra_readl(struct altera_pcie *pcie, const u32 reg)
-{
-	return readl_relaxed(pcie->cra_base + reg);
-}
+अटल अंतरभूत u32 cra_पढ़ोl(काष्ठा altera_pcie *pcie, स्थिर u32 reg)
+अणु
+	वापस पढ़ोl_relaxed(pcie->cra_base + reg);
+पूर्ण
 
-static bool altera_pcie_link_up(struct altera_pcie *pcie)
-{
-	return !!((cra_readl(pcie, RP_LTSSM) & RP_LTSSM_MASK) == LTSSM_L0);
-}
+अटल bool altera_pcie_link_up(काष्ठा altera_pcie *pcie)
+अणु
+	वापस !!((cra_पढ़ोl(pcie, RP_LTSSM) & RP_LTSSM_MASK) == LTSSM_L0);
+पूर्ण
 
-static bool s10_altera_pcie_link_up(struct altera_pcie *pcie)
-{
-	void __iomem *addr = S10_RP_CFG_ADDR(pcie,
+अटल bool s10_altera_pcie_link_up(काष्ठा altera_pcie *pcie)
+अणु
+	व्योम __iomem *addr = S10_RP_CFG_ADDR(pcie,
 				   pcie->pcie_data->cap_offset +
 				   PCI_EXP_LNKSTA);
 
-	return !!(readw(addr) & PCI_EXP_LNKSTA_DLLLA);
-}
+	वापस !!(पढ़ोw(addr) & PCI_EXP_LNKSTA_DLLLA);
+पूर्ण
 
 /*
  * Altera PCIe port uses BAR0 of RC's configuration space as the translation
- * from PCI bus to native BUS.  Entire DDR region is mapped into PCIe space
- * using these registers, so it can be reached by DMA from EP devices.
- * This BAR0 will also access to MSI vector when receiving MSI/MSIX interrupt
- * from EP devices, eventually trigger interrupt to GIC.  The BAR0 of bridge
- * should be hidden during enumeration to avoid the sizing and resource
+ * from PCI bus to native BUS.  Entire DDR region is mapped पूर्णांकo PCIe space
+ * using these रेजिस्टरs, so it can be reached by DMA from EP devices.
+ * This BAR0 will also access to MSI vector when receiving MSI/MSIX पूर्णांकerrupt
+ * from EP devices, eventually trigger पूर्णांकerrupt to GIC.  The BAR0 of bridge
+ * should be hidden during क्रमागतeration to aव्योम the sizing and resource
  * allocation by PCIe core.
  */
-static bool altera_pcie_hide_rc_bar(struct pci_bus *bus, unsigned int  devfn,
-				    int offset)
-{
-	if (pci_is_root_bus(bus) && (devfn == 0) &&
+अटल bool altera_pcie_hide_rc_bar(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक  devfn,
+				    पूर्णांक offset)
+अणु
+	अगर (pci_is_root_bus(bus) && (devfn == 0) &&
 	    (offset == PCI_BASE_ADDRESS_0))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void tlp_write_tx(struct altera_pcie *pcie,
-			 struct tlp_rp_regpair_t *tlp_rp_regdata)
-{
-	cra_writel(pcie, tlp_rp_regdata->reg0, RP_TX_REG0);
-	cra_writel(pcie, tlp_rp_regdata->reg1, RP_TX_REG1);
-	cra_writel(pcie, tlp_rp_regdata->ctrl, RP_TX_CNTRL);
-}
+अटल व्योम tlp_ग_लिखो_tx(काष्ठा altera_pcie *pcie,
+			 काष्ठा tlp_rp_regpair_t *tlp_rp_regdata)
+अणु
+	cra_ग_लिखोl(pcie, tlp_rp_regdata->reg0, RP_TX_REG0);
+	cra_ग_लिखोl(pcie, tlp_rp_regdata->reg1, RP_TX_REG1);
+	cra_ग_लिखोl(pcie, tlp_rp_regdata->ctrl, RP_TX_CNTRL);
+पूर्ण
 
-static void s10_tlp_write_tx(struct altera_pcie *pcie, u32 reg0, u32 ctrl)
-{
-	cra_writel(pcie, reg0, RP_TX_REG0);
-	cra_writel(pcie, ctrl, S10_RP_TX_CNTRL);
-}
+अटल व्योम s10_tlp_ग_लिखो_tx(काष्ठा altera_pcie *pcie, u32 reg0, u32 ctrl)
+अणु
+	cra_ग_लिखोl(pcie, reg0, RP_TX_REG0);
+	cra_ग_लिखोl(pcie, ctrl, S10_RP_TX_CNTRL);
+पूर्ण
 
-static bool altera_pcie_valid_device(struct altera_pcie *pcie,
-				     struct pci_bus *bus, int dev)
-{
+अटल bool altera_pcie_valid_device(काष्ठा altera_pcie *pcie,
+				     काष्ठा pci_bus *bus, पूर्णांक dev)
+अणु
 	/* If there is no link, then there is no device */
-	if (bus->number != pcie->root_bus_nr) {
-		if (!pcie->pcie_data->ops->get_link_status(pcie))
-			return false;
-	}
+	अगर (bus->number != pcie->root_bus_nr) अणु
+		अगर (!pcie->pcie_data->ops->get_link_status(pcie))
+			वापस false;
+	पूर्ण
 
 	/* access only one slot on each root port */
-	if (bus->number == pcie->root_bus_nr && dev > 0)
-		return false;
+	अगर (bus->number == pcie->root_bus_nr && dev > 0)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int tlp_read_packet(struct altera_pcie *pcie, u32 *value)
-{
-	int i;
+अटल पूर्णांक tlp_पढ़ो_packet(काष्ठा altera_pcie *pcie, u32 *value)
+अणु
+	पूर्णांक i;
 	bool sop = false;
 	u32 ctrl;
 	u32 reg0, reg1;
 	u32 comp_status = 1;
 
 	/*
-	 * Minimum 2 loops to read TLP headers and 1 loop to read data
+	 * Minimum 2 loops to पढ़ो TLP headers and 1 loop to पढ़ो data
 	 * payload.
 	 */
-	for (i = 0; i < TLP_LOOP; i++) {
-		ctrl = cra_readl(pcie, RP_RXCPL_STATUS);
-		if ((ctrl & RP_RXCPL_SOP) || (ctrl & RP_RXCPL_EOP) || sop) {
-			reg0 = cra_readl(pcie, RP_RXCPL_REG0);
-			reg1 = cra_readl(pcie, RP_RXCPL_REG1);
+	क्रम (i = 0; i < TLP_LOOP; i++) अणु
+		ctrl = cra_पढ़ोl(pcie, RP_RXCPL_STATUS);
+		अगर ((ctrl & RP_RXCPL_SOP) || (ctrl & RP_RXCPL_EOP) || sop) अणु
+			reg0 = cra_पढ़ोl(pcie, RP_RXCPL_REG0);
+			reg1 = cra_पढ़ोl(pcie, RP_RXCPL_REG1);
 
-			if (ctrl & RP_RXCPL_SOP) {
+			अगर (ctrl & RP_RXCPL_SOP) अणु
 				sop = true;
 				comp_status = TLP_COMP_STATUS(reg1);
-			}
+			पूर्ण
 
-			if (ctrl & RP_RXCPL_EOP) {
-				if (comp_status)
-					return PCIBIOS_DEVICE_NOT_FOUND;
+			अगर (ctrl & RP_RXCPL_EOP) अणु
+				अगर (comp_status)
+					वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-				if (value)
+				अगर (value)
 					*value = reg0;
 
-				return PCIBIOS_SUCCESSFUL;
-			}
-		}
+				वापस PCIBIOS_SUCCESSFUL;
+			पूर्ण
+		पूर्ण
 		udelay(5);
-	}
+	पूर्ण
 
-	return PCIBIOS_DEVICE_NOT_FOUND;
-}
+	वापस PCIBIOS_DEVICE_NOT_FOUND;
+पूर्ण
 
-static int s10_tlp_read_packet(struct altera_pcie *pcie, u32 *value)
-{
+अटल पूर्णांक s10_tlp_पढ़ो_packet(काष्ठा altera_pcie *pcie, u32 *value)
+अणु
 	u32 ctrl;
 	u32 comp_status;
 	u32 dw[4];
 	u32 count;
-	struct device *dev = &pcie->pdev->dev;
+	काष्ठा device *dev = &pcie->pdev->dev;
 
-	for (count = 0; count < TLP_LOOP; count++) {
-		ctrl = cra_readl(pcie, S10_RP_RXCPL_STATUS);
-		if (ctrl & RP_RXCPL_SOP) {
+	क्रम (count = 0; count < TLP_LOOP; count++) अणु
+		ctrl = cra_पढ़ोl(pcie, S10_RP_RXCPL_STATUS);
+		अगर (ctrl & RP_RXCPL_SOP) अणु
 			/* Read first DW */
-			dw[0] = cra_readl(pcie, S10_RP_RXCPL_REG);
-			break;
-		}
+			dw[0] = cra_पढ़ोl(pcie, S10_RP_RXCPL_REG);
+			अवरोध;
+		पूर्ण
 
 		udelay(5);
-	}
+	पूर्ण
 
-	/* SOP detection failed, return error */
-	if (count == TLP_LOOP)
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	/* SOP detection failed, वापस error */
+	अगर (count == TLP_LOOP)
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
 	count = 1;
 
-	/* Poll for EOP */
-	while (count < ARRAY_SIZE(dw)) {
-		ctrl = cra_readl(pcie, S10_RP_RXCPL_STATUS);
-		dw[count++] = cra_readl(pcie, S10_RP_RXCPL_REG);
-		if (ctrl & RP_RXCPL_EOP) {
+	/* Poll क्रम EOP */
+	जबतक (count < ARRAY_SIZE(dw)) अणु
+		ctrl = cra_पढ़ोl(pcie, S10_RP_RXCPL_STATUS);
+		dw[count++] = cra_पढ़ोl(pcie, S10_RP_RXCPL_REG);
+		अगर (ctrl & RP_RXCPL_EOP) अणु
 			comp_status = TLP_COMP_STATUS(dw[1]);
-			if (comp_status)
-				return PCIBIOS_DEVICE_NOT_FOUND;
+			अगर (comp_status)
+				वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-			if (value && TLP_BYTE_COUNT(dw[1]) == sizeof(u32) &&
+			अगर (value && TLP_BYTE_COUNT(dw[1]) == माप(u32) &&
 			    count == 4)
 				*value = dw[3];
 
-			return PCIBIOS_SUCCESSFUL;
-		}
-	}
+			वापस PCIBIOS_SUCCESSFUL;
+		पूर्ण
+	पूर्ण
 
 	dev_warn(dev, "Malformed TLP packet\n");
 
-	return PCIBIOS_DEVICE_NOT_FOUND;
-}
+	वापस PCIBIOS_DEVICE_NOT_FOUND;
+पूर्ण
 
-static void tlp_write_packet(struct altera_pcie *pcie, u32 *headers,
+अटल व्योम tlp_ग_लिखो_packet(काष्ठा altera_pcie *pcie, u32 *headers,
 			     u32 data, bool align)
-{
-	struct tlp_rp_regpair_t tlp_rp_regdata;
+अणु
+	काष्ठा tlp_rp_regpair_t tlp_rp_regdata;
 
 	tlp_rp_regdata.reg0 = headers[0];
 	tlp_rp_regdata.reg1 = headers[1];
 	tlp_rp_regdata.ctrl = RP_TX_SOP;
-	tlp_write_tx(pcie, &tlp_rp_regdata);
+	tlp_ग_लिखो_tx(pcie, &tlp_rp_regdata);
 
-	if (align) {
+	अगर (align) अणु
 		tlp_rp_regdata.reg0 = headers[2];
 		tlp_rp_regdata.reg1 = 0;
 		tlp_rp_regdata.ctrl = 0;
-		tlp_write_tx(pcie, &tlp_rp_regdata);
+		tlp_ग_लिखो_tx(pcie, &tlp_rp_regdata);
 
 		tlp_rp_regdata.reg0 = data;
 		tlp_rp_regdata.reg1 = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		tlp_rp_regdata.reg0 = headers[2];
 		tlp_rp_regdata.reg1 = data;
-	}
+	पूर्ण
 
 	tlp_rp_regdata.ctrl = RP_TX_EOP;
-	tlp_write_tx(pcie, &tlp_rp_regdata);
-}
+	tlp_ग_लिखो_tx(pcie, &tlp_rp_regdata);
+पूर्ण
 
-static void s10_tlp_write_packet(struct altera_pcie *pcie, u32 *headers,
+अटल व्योम s10_tlp_ग_लिखो_packet(काष्ठा altera_pcie *pcie, u32 *headers,
 				 u32 data, bool dummy)
-{
-	s10_tlp_write_tx(pcie, headers[0], RP_TX_SOP);
-	s10_tlp_write_tx(pcie, headers[1], 0);
-	s10_tlp_write_tx(pcie, headers[2], 0);
-	s10_tlp_write_tx(pcie, data, RP_TX_EOP);
-}
+अणु
+	s10_tlp_ग_लिखो_tx(pcie, headers[0], RP_TX_SOP);
+	s10_tlp_ग_लिखो_tx(pcie, headers[1], 0);
+	s10_tlp_ग_लिखो_tx(pcie, headers[2], 0);
+	s10_tlp_ग_लिखो_tx(pcie, data, RP_TX_EOP);
+पूर्ण
 
-static void get_tlp_header(struct altera_pcie *pcie, u8 bus, u32 devfn,
-			   int where, u8 byte_en, bool read, u32 *headers)
-{
+अटल व्योम get_tlp_header(काष्ठा altera_pcie *pcie, u8 bus, u32 devfn,
+			   पूर्णांक where, u8 byte_en, bool पढ़ो, u32 *headers)
+अणु
 	u8 cfg;
-	u8 cfg0 = read ? pcie->pcie_data->cfgrd0 : pcie->pcie_data->cfgwr0;
-	u8 cfg1 = read ? pcie->pcie_data->cfgrd1 : pcie->pcie_data->cfgwr1;
-	u8 tag = read ? TLP_READ_TAG : TLP_WRITE_TAG;
+	u8 cfg0 = पढ़ो ? pcie->pcie_data->cfgrd0 : pcie->pcie_data->cfgwr0;
+	u8 cfg1 = पढ़ो ? pcie->pcie_data->cfgrd1 : pcie->pcie_data->cfgwr1;
+	u8 tag = पढ़ो ? TLP_READ_TAG : TLP_WRITE_TAG;
 
-	if (pcie->pcie_data->version == ALTERA_PCIE_V1)
+	अगर (pcie->pcie_data->version == ALTERA_PCIE_V1)
 		cfg = (bus == pcie->root_bus_nr) ? cfg0 : cfg1;
-	else
+	अन्यथा
 		cfg = (bus > S10_RP_SECONDARY(pcie)) ? cfg0 : cfg1;
 
 	headers[0] = TLP_CFG_DW0(pcie, cfg);
 	headers[1] = TLP_CFG_DW1(pcie, tag, byte_en);
 	headers[2] = TLP_CFG_DW2(bus, devfn, where);
-}
+पूर्ण
 
-static int tlp_cfg_dword_read(struct altera_pcie *pcie, u8 bus, u32 devfn,
-			      int where, u8 byte_en, u32 *value)
-{
+अटल पूर्णांक tlp_cfg_dword_पढ़ो(काष्ठा altera_pcie *pcie, u8 bus, u32 devfn,
+			      पूर्णांक where, u8 byte_en, u32 *value)
+अणु
 	u32 headers[TLP_HDR_SIZE];
 
 	get_tlp_header(pcie, bus, devfn, where, byte_en, true,
 		       headers);
 
-	pcie->pcie_data->ops->tlp_write_pkt(pcie, headers, 0, false);
+	pcie->pcie_data->ops->tlp_ग_लिखो_pkt(pcie, headers, 0, false);
 
-	return pcie->pcie_data->ops->tlp_read_pkt(pcie, value);
-}
+	वापस pcie->pcie_data->ops->tlp_पढ़ो_pkt(pcie, value);
+पूर्ण
 
-static int tlp_cfg_dword_write(struct altera_pcie *pcie, u8 bus, u32 devfn,
-			       int where, u8 byte_en, u32 value)
-{
+अटल पूर्णांक tlp_cfg_dword_ग_लिखो(काष्ठा altera_pcie *pcie, u8 bus, u32 devfn,
+			       पूर्णांक where, u8 byte_en, u32 value)
+अणु
 	u32 headers[TLP_HDR_SIZE];
-	int ret;
+	पूर्णांक ret;
 
 	get_tlp_header(pcie, bus, devfn, where, byte_en, false,
 		       headers);
 
 	/* check alignment to Qword */
-	if ((where & 0x7) == 0)
-		pcie->pcie_data->ops->tlp_write_pkt(pcie, headers,
+	अगर ((where & 0x7) == 0)
+		pcie->pcie_data->ops->tlp_ग_लिखो_pkt(pcie, headers,
 						    value, true);
-	else
-		pcie->pcie_data->ops->tlp_write_pkt(pcie, headers,
+	अन्यथा
+		pcie->pcie_data->ops->tlp_ग_लिखो_pkt(pcie, headers,
 						    value, false);
 
-	ret = pcie->pcie_data->ops->tlp_read_pkt(pcie, NULL);
-	if (ret != PCIBIOS_SUCCESSFUL)
-		return ret;
+	ret = pcie->pcie_data->ops->tlp_पढ़ो_pkt(pcie, शून्य);
+	अगर (ret != PCIBIOS_SUCCESSFUL)
+		वापस ret;
 
 	/*
-	 * Monitor changes to PCI_PRIMARY_BUS register on root port
+	 * Monitor changes to PCI_PRIMARY_BUS रेजिस्टर on root port
 	 * and update local copy of root bus number accordingly.
 	 */
-	if ((bus == pcie->root_bus_nr) && (where == PCI_PRIMARY_BUS))
+	अगर ((bus == pcie->root_bus_nr) && (where == PCI_PRIMARY_BUS))
 		pcie->root_bus_nr = (u8)(value);
 
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int s10_rp_read_cfg(struct altera_pcie *pcie, int where,
-			   int size, u32 *value)
-{
-	void __iomem *addr = S10_RP_CFG_ADDR(pcie, where);
+अटल पूर्णांक s10_rp_पढ़ो_cfg(काष्ठा altera_pcie *pcie, पूर्णांक where,
+			   पूर्णांक size, u32 *value)
+अणु
+	व्योम __iomem *addr = S10_RP_CFG_ADDR(pcie, where);
 
-	switch (size) {
-	case 1:
-		*value = readb(addr);
-		break;
-	case 2:
-		*value = readw(addr);
-		break;
-	default:
-		*value = readl(addr);
-		break;
-	}
+	चयन (size) अणु
+	हाल 1:
+		*value = पढ़ोb(addr);
+		अवरोध;
+	हाल 2:
+		*value = पढ़ोw(addr);
+		अवरोध;
+	शेष:
+		*value = पढ़ोl(addr);
+		अवरोध;
+	पूर्ण
 
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int s10_rp_write_cfg(struct altera_pcie *pcie, u8 busno,
-			    int where, int size, u32 value)
-{
-	void __iomem *addr = S10_RP_CFG_ADDR(pcie, where);
+अटल पूर्णांक s10_rp_ग_लिखो_cfg(काष्ठा altera_pcie *pcie, u8 busno,
+			    पूर्णांक where, पूर्णांक size, u32 value)
+अणु
+	व्योम __iomem *addr = S10_RP_CFG_ADDR(pcie, where);
 
-	switch (size) {
-	case 1:
-		writeb(value, addr);
-		break;
-	case 2:
-		writew(value, addr);
-		break;
-	default:
-		writel(value, addr);
-		break;
-	}
+	चयन (size) अणु
+	हाल 1:
+		ग_लिखोb(value, addr);
+		अवरोध;
+	हाल 2:
+		ग_लिखोw(value, addr);
+		अवरोध;
+	शेष:
+		ग_लिखोl(value, addr);
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * Monitor changes to PCI_PRIMARY_BUS register on root port
+	 * Monitor changes to PCI_PRIMARY_BUS रेजिस्टर on root port
 	 * and update local copy of root bus number accordingly.
 	 */
-	if (busno == pcie->root_bus_nr && where == PCI_PRIMARY_BUS)
+	अगर (busno == pcie->root_bus_nr && where == PCI_PRIMARY_BUS)
 		pcie->root_bus_nr = value & 0xff;
 
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int _altera_pcie_cfg_read(struct altera_pcie *pcie, u8 busno,
-				 unsigned int devfn, int where, int size,
+अटल पूर्णांक _altera_pcie_cfg_पढ़ो(काष्ठा altera_pcie *pcie, u8 busno,
+				 अचिन्हित पूर्णांक devfn, पूर्णांक where, पूर्णांक size,
 				 u32 *value)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u32 data;
 	u8 byte_en;
 
-	if (busno == pcie->root_bus_nr && pcie->pcie_data->ops->rp_read_cfg)
-		return pcie->pcie_data->ops->rp_read_cfg(pcie, where,
+	अगर (busno == pcie->root_bus_nr && pcie->pcie_data->ops->rp_पढ़ो_cfg)
+		वापस pcie->pcie_data->ops->rp_पढ़ो_cfg(pcie, where,
 							 size, value);
 
-	switch (size) {
-	case 1:
+	चयन (size) अणु
+	हाल 1:
 		byte_en = 1 << (where & 3);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		byte_en = 3 << (where & 3);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		byte_en = 0xf;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	ret = tlp_cfg_dword_read(pcie, busno, devfn,
+	ret = tlp_cfg_dword_पढ़ो(pcie, busno, devfn,
 				 (where & ~DWORD_MASK), byte_en, &data);
-	if (ret != PCIBIOS_SUCCESSFUL)
-		return ret;
+	अगर (ret != PCIBIOS_SUCCESSFUL)
+		वापस ret;
 
-	switch (size) {
-	case 1:
+	चयन (size) अणु
+	हाल 1:
 		*value = (data >> (8 * (where & 0x3))) & 0xff;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*value = (data >> (8 * (where & 0x2))) & 0xffff;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*value = data;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int _altera_pcie_cfg_write(struct altera_pcie *pcie, u8 busno,
-				  unsigned int devfn, int where, int size,
+अटल पूर्णांक _altera_pcie_cfg_ग_लिखो(काष्ठा altera_pcie *pcie, u8 busno,
+				  अचिन्हित पूर्णांक devfn, पूर्णांक where, पूर्णांक size,
 				  u32 value)
-{
+अणु
 	u32 data32;
-	u32 shift = 8 * (where & 3);
+	u32 shअगरt = 8 * (where & 3);
 	u8 byte_en;
 
-	if (busno == pcie->root_bus_nr && pcie->pcie_data->ops->rp_write_cfg)
-		return pcie->pcie_data->ops->rp_write_cfg(pcie, busno,
+	अगर (busno == pcie->root_bus_nr && pcie->pcie_data->ops->rp_ग_लिखो_cfg)
+		वापस pcie->pcie_data->ops->rp_ग_लिखो_cfg(pcie, busno,
 						     where, size, value);
 
-	switch (size) {
-	case 1:
-		data32 = (value & 0xff) << shift;
+	चयन (size) अणु
+	हाल 1:
+		data32 = (value & 0xff) << shअगरt;
 		byte_en = 1 << (where & 3);
-		break;
-	case 2:
-		data32 = (value & 0xffff) << shift;
+		अवरोध;
+	हाल 2:
+		data32 = (value & 0xffff) << shअगरt;
 		byte_en = 3 << (where & 3);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		data32 = value;
 		byte_en = 0xf;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return tlp_cfg_dword_write(pcie, busno, devfn, (where & ~DWORD_MASK),
+	वापस tlp_cfg_dword_ग_लिखो(pcie, busno, devfn, (where & ~DWORD_MASK),
 				   byte_en, data32);
-}
+पूर्ण
 
-static int altera_pcie_cfg_read(struct pci_bus *bus, unsigned int devfn,
-				int where, int size, u32 *value)
-{
-	struct altera_pcie *pcie = bus->sysdata;
+अटल पूर्णांक altera_pcie_cfg_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				पूर्णांक where, पूर्णांक size, u32 *value)
+अणु
+	काष्ठा altera_pcie *pcie = bus->sysdata;
 
-	if (altera_pcie_hide_rc_bar(bus, devfn, where))
-		return PCIBIOS_BAD_REGISTER_NUMBER;
+	अगर (altera_pcie_hide_rc_bar(bus, devfn, where))
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
 
-	if (!altera_pcie_valid_device(pcie, bus, PCI_SLOT(devfn))) {
+	अगर (!altera_pcie_valid_device(pcie, bus, PCI_SLOT(devfn))) अणु
 		*value = 0xffffffff;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	पूर्ण
 
-	return _altera_pcie_cfg_read(pcie, bus->number, devfn, where, size,
+	वापस _altera_pcie_cfg_पढ़ो(pcie, bus->number, devfn, where, size,
 				     value);
-}
+पूर्ण
 
-static int altera_pcie_cfg_write(struct pci_bus *bus, unsigned int devfn,
-				 int where, int size, u32 value)
-{
-	struct altera_pcie *pcie = bus->sysdata;
+अटल पूर्णांक altera_pcie_cfg_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				 पूर्णांक where, पूर्णांक size, u32 value)
+अणु
+	काष्ठा altera_pcie *pcie = bus->sysdata;
 
-	if (altera_pcie_hide_rc_bar(bus, devfn, where))
-		return PCIBIOS_BAD_REGISTER_NUMBER;
+	अगर (altera_pcie_hide_rc_bar(bus, devfn, where))
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
 
-	if (!altera_pcie_valid_device(pcie, bus, PCI_SLOT(devfn)))
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (!altera_pcie_valid_device(pcie, bus, PCI_SLOT(devfn)))
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	return _altera_pcie_cfg_write(pcie, bus->number, devfn, where, size,
+	वापस _altera_pcie_cfg_ग_लिखो(pcie, bus->number, devfn, where, size,
 				     value);
-}
+पूर्ण
 
-static struct pci_ops altera_pcie_ops = {
-	.read = altera_pcie_cfg_read,
-	.write = altera_pcie_cfg_write,
-};
+अटल काष्ठा pci_ops altera_pcie_ops = अणु
+	.पढ़ो = altera_pcie_cfg_पढ़ो,
+	.ग_लिखो = altera_pcie_cfg_ग_लिखो,
+पूर्ण;
 
-static int altera_read_cap_word(struct altera_pcie *pcie, u8 busno,
-				unsigned int devfn, int offset, u16 *value)
-{
+अटल पूर्णांक altera_पढ़ो_cap_word(काष्ठा altera_pcie *pcie, u8 busno,
+				अचिन्हित पूर्णांक devfn, पूर्णांक offset, u16 *value)
+अणु
 	u32 data;
-	int ret;
+	पूर्णांक ret;
 
-	ret = _altera_pcie_cfg_read(pcie, busno, devfn,
+	ret = _altera_pcie_cfg_पढ़ो(pcie, busno, devfn,
 				    pcie->pcie_data->cap_offset + offset,
-				    sizeof(*value),
+				    माप(*value),
 				    &data);
 	*value = data;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int altera_write_cap_word(struct altera_pcie *pcie, u8 busno,
-				 unsigned int devfn, int offset, u16 value)
-{
-	return _altera_pcie_cfg_write(pcie, busno, devfn,
+अटल पूर्णांक altera_ग_लिखो_cap_word(काष्ठा altera_pcie *pcie, u8 busno,
+				 अचिन्हित पूर्णांक devfn, पूर्णांक offset, u16 value)
+अणु
+	वापस _altera_pcie_cfg_ग_लिखो(pcie, busno, devfn,
 				      pcie->pcie_data->cap_offset + offset,
-				      sizeof(value),
+				      माप(value),
 				      value);
-}
+पूर्ण
 
-static void altera_wait_link_retrain(struct altera_pcie *pcie)
-{
-	struct device *dev = &pcie->pdev->dev;
+अटल व्योम altera_रुको_link_retrain(काष्ठा altera_pcie *pcie)
+अणु
+	काष्ठा device *dev = &pcie->pdev->dev;
 	u16 reg16;
-	unsigned long start_jiffies;
+	अचिन्हित दीर्घ start_jअगरfies;
 
-	/* Wait for link training end. */
-	start_jiffies = jiffies;
-	for (;;) {
-		altera_read_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN,
+	/* Wait क्रम link training end. */
+	start_jअगरfies = jअगरfies;
+	क्रम (;;) अणु
+		altera_पढ़ो_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN,
 				     PCI_EXP_LNKSTA, &reg16);
-		if (!(reg16 & PCI_EXP_LNKSTA_LT))
-			break;
+		अगर (!(reg16 & PCI_EXP_LNKSTA_LT))
+			अवरोध;
 
-		if (time_after(jiffies, start_jiffies + LINK_RETRAIN_TIMEOUT)) {
+		अगर (समय_after(jअगरfies, start_jअगरfies + LINK_RETRAIN_TIMEOUT)) अणु
 			dev_err(dev, "link retrain timeout\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		udelay(100);
-	}
+	पूर्ण
 
-	/* Wait for link is up */
-	start_jiffies = jiffies;
-	for (;;) {
-		if (pcie->pcie_data->ops->get_link_status(pcie))
-			break;
+	/* Wait क्रम link is up */
+	start_jअगरfies = jअगरfies;
+	क्रम (;;) अणु
+		अगर (pcie->pcie_data->ops->get_link_status(pcie))
+			अवरोध;
 
-		if (time_after(jiffies, start_jiffies + LINK_UP_TIMEOUT)) {
+		अगर (समय_after(jअगरfies, start_jअगरfies + LINK_UP_TIMEOUT)) अणु
 			dev_err(dev, "link up timeout\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		udelay(100);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void altera_pcie_retrain(struct altera_pcie *pcie)
-{
+अटल व्योम altera_pcie_retrain(काष्ठा altera_pcie *pcie)
+अणु
 	u16 linkcap, linkstat, linkctl;
 
-	if (!pcie->pcie_data->ops->get_link_status(pcie))
-		return;
+	अगर (!pcie->pcie_data->ops->get_link_status(pcie))
+		वापस;
 
 	/*
-	 * Set the retrain bit if the PCIe rootport support > 2.5GB/s, but
+	 * Set the retrain bit अगर the PCIe rootport support > 2.5GB/s, but
 	 * current speed is 2.5 GB/s.
 	 */
-	altera_read_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN, PCI_EXP_LNKCAP,
+	altera_पढ़ो_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN, PCI_EXP_LNKCAP,
 			     &linkcap);
-	if ((linkcap & PCI_EXP_LNKCAP_SLS) <= PCI_EXP_LNKCAP_SLS_2_5GB)
-		return;
+	अगर ((linkcap & PCI_EXP_LNKCAP_SLS) <= PCI_EXP_LNKCAP_SLS_2_5GB)
+		वापस;
 
-	altera_read_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN, PCI_EXP_LNKSTA,
+	altera_पढ़ो_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN, PCI_EXP_LNKSTA,
 			     &linkstat);
-	if ((linkstat & PCI_EXP_LNKSTA_CLS) == PCI_EXP_LNKSTA_CLS_2_5GB) {
-		altera_read_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN,
+	अगर ((linkstat & PCI_EXP_LNKSTA_CLS) == PCI_EXP_LNKSTA_CLS_2_5GB) अणु
+		altera_पढ़ो_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN,
 				     PCI_EXP_LNKCTL, &linkctl);
 		linkctl |= PCI_EXP_LNKCTL_RL;
-		altera_write_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN,
+		altera_ग_लिखो_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN,
 				      PCI_EXP_LNKCTL, linkctl);
 
-		altera_wait_link_retrain(pcie);
-	}
-}
+		altera_रुको_link_retrain(pcie);
+	पूर्ण
+पूर्ण
 
-static int altera_pcie_intx_map(struct irq_domain *domain, unsigned int irq,
+अटल पूर्णांक altera_pcie_पूर्णांकx_map(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक irq,
 				irq_hw_number_t hwirq)
-{
+अणु
 	irq_set_chip_and_handler(irq, &dummy_irq_chip, handle_simple_irq);
-	irq_set_chip_data(irq, domain->host_data);
-	return 0;
-}
+	irq_set_chip_data(irq, करोमुख्य->host_data);
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops intx_domain_ops = {
-	.map = altera_pcie_intx_map,
-	.xlate = pci_irqd_intx_xlate,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops पूर्णांकx_करोमुख्य_ops = अणु
+	.map = altera_pcie_पूर्णांकx_map,
+	.xlate = pci_irqd_पूर्णांकx_xlate,
+पूर्ण;
 
-static void altera_pcie_isr(struct irq_desc *desc)
-{
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct altera_pcie *pcie;
-	struct device *dev;
-	unsigned long status;
+अटल व्योम altera_pcie_isr(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा altera_pcie *pcie;
+	काष्ठा device *dev;
+	अचिन्हित दीर्घ status;
 	u32 bit;
 	u32 virq;
 
@@ -652,90 +653,90 @@ static void altera_pcie_isr(struct irq_desc *desc)
 	pcie = irq_desc_get_handler_data(desc);
 	dev = &pcie->pdev->dev;
 
-	while ((status = cra_readl(pcie, P2A_INT_STATUS)
-		& P2A_INT_STS_ALL) != 0) {
-		for_each_set_bit(bit, &status, PCI_NUM_INTX) {
-			/* clear interrupts */
-			cra_writel(pcie, 1 << bit, P2A_INT_STATUS);
+	जबतक ((status = cra_पढ़ोl(pcie, P2A_INT_STATUS)
+		& P2A_INT_STS_ALL) != 0) अणु
+		क्रम_each_set_bit(bit, &status, PCI_NUM_INTX) अणु
+			/* clear पूर्णांकerrupts */
+			cra_ग_लिखोl(pcie, 1 << bit, P2A_INT_STATUS);
 
-			virq = irq_find_mapping(pcie->irq_domain, bit);
-			if (virq)
+			virq = irq_find_mapping(pcie->irq_करोमुख्य, bit);
+			अगर (virq)
 				generic_handle_irq(virq);
-			else
+			अन्यथा
 				dev_err(dev, "unexpected IRQ, INT%d\n", bit);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
-static int altera_pcie_init_irq_domain(struct altera_pcie *pcie)
-{
-	struct device *dev = &pcie->pdev->dev;
-	struct device_node *node = dev->of_node;
+अटल पूर्णांक altera_pcie_init_irq_करोमुख्य(काष्ठा altera_pcie *pcie)
+अणु
+	काष्ठा device *dev = &pcie->pdev->dev;
+	काष्ठा device_node *node = dev->of_node;
 
 	/* Setup INTx */
-	pcie->irq_domain = irq_domain_add_linear(node, PCI_NUM_INTX,
-					&intx_domain_ops, pcie);
-	if (!pcie->irq_domain) {
+	pcie->irq_करोमुख्य = irq_करोमुख्य_add_linear(node, PCI_NUM_INTX,
+					&पूर्णांकx_करोमुख्य_ops, pcie);
+	अगर (!pcie->irq_करोमुख्य) अणु
 		dev_err(dev, "Failed to get a INTx IRQ domain\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void altera_pcie_irq_teardown(struct altera_pcie *pcie)
-{
-	irq_set_chained_handler_and_data(pcie->irq, NULL, NULL);
-	irq_domain_remove(pcie->irq_domain);
+अटल व्योम altera_pcie_irq_tearकरोwn(काष्ठा altera_pcie *pcie)
+अणु
+	irq_set_chained_handler_and_data(pcie->irq, शून्य, शून्य);
+	irq_करोमुख्य_हटाओ(pcie->irq_करोमुख्य);
 	irq_dispose_mapping(pcie->irq);
-}
+पूर्ण
 
-static int altera_pcie_parse_dt(struct altera_pcie *pcie)
-{
-	struct platform_device *pdev = pcie->pdev;
+अटल पूर्णांक altera_pcie_parse_dt(काष्ठा altera_pcie *pcie)
+अणु
+	काष्ठा platक्रमm_device *pdev = pcie->pdev;
 
-	pcie->cra_base = devm_platform_ioremap_resource_byname(pdev, "Cra");
-	if (IS_ERR(pcie->cra_base))
-		return PTR_ERR(pcie->cra_base);
+	pcie->cra_base = devm_platक्रमm_ioremap_resource_byname(pdev, "Cra");
+	अगर (IS_ERR(pcie->cra_base))
+		वापस PTR_ERR(pcie->cra_base);
 
-	if (pcie->pcie_data->version == ALTERA_PCIE_V2) {
+	अगर (pcie->pcie_data->version == ALTERA_PCIE_V2) अणु
 		pcie->hip_base =
-			devm_platform_ioremap_resource_byname(pdev, "Hip");
-		if (IS_ERR(pcie->hip_base))
-			return PTR_ERR(pcie->hip_base);
-	}
+			devm_platक्रमm_ioremap_resource_byname(pdev, "Hip");
+		अगर (IS_ERR(pcie->hip_base))
+			वापस PTR_ERR(pcie->hip_base);
+	पूर्ण
 
 	/* setup IRQ */
-	pcie->irq = platform_get_irq(pdev, 0);
-	if (pcie->irq < 0)
-		return pcie->irq;
+	pcie->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (pcie->irq < 0)
+		वापस pcie->irq;
 
 	irq_set_chained_handler_and_data(pcie->irq, altera_pcie_isr, pcie);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void altera_pcie_host_init(struct altera_pcie *pcie)
-{
+अटल व्योम altera_pcie_host_init(काष्ठा altera_pcie *pcie)
+अणु
 	altera_pcie_retrain(pcie);
-}
+पूर्ण
 
-static const struct altera_pcie_ops altera_pcie_ops_1_0 = {
-	.tlp_read_pkt = tlp_read_packet,
-	.tlp_write_pkt = tlp_write_packet,
+अटल स्थिर काष्ठा altera_pcie_ops altera_pcie_ops_1_0 = अणु
+	.tlp_पढ़ो_pkt = tlp_पढ़ो_packet,
+	.tlp_ग_लिखो_pkt = tlp_ग_लिखो_packet,
 	.get_link_status = altera_pcie_link_up,
-};
+पूर्ण;
 
-static const struct altera_pcie_ops altera_pcie_ops_2_0 = {
-	.tlp_read_pkt = s10_tlp_read_packet,
-	.tlp_write_pkt = s10_tlp_write_packet,
+अटल स्थिर काष्ठा altera_pcie_ops altera_pcie_ops_2_0 = अणु
+	.tlp_पढ़ो_pkt = s10_tlp_पढ़ो_packet,
+	.tlp_ग_लिखो_pkt = s10_tlp_ग_लिखो_packet,
 	.get_link_status = s10_altera_pcie_link_up,
-	.rp_read_cfg = s10_rp_read_cfg,
-	.rp_write_cfg = s10_rp_write_cfg,
-};
+	.rp_पढ़ो_cfg = s10_rp_पढ़ो_cfg,
+	.rp_ग_लिखो_cfg = s10_rp_ग_लिखो_cfg,
+पूर्ण;
 
-static const struct altera_pcie_data altera_pcie_1_0_data = {
+अटल स्थिर काष्ठा altera_pcie_data altera_pcie_1_0_data = अणु
 	.ops = &altera_pcie_ops_1_0,
 	.cap_offset = 0x80,
 	.version = ALTERA_PCIE_V1,
@@ -743,9 +744,9 @@ static const struct altera_pcie_data altera_pcie_1_0_data = {
 	.cfgrd1 = TLP_FMTTYPE_CFGRD1,
 	.cfgwr0 = TLP_FMTTYPE_CFGWR0,
 	.cfgwr1 = TLP_FMTTYPE_CFGWR1,
-};
+पूर्ण;
 
-static const struct altera_pcie_data altera_pcie_2_0_data = {
+अटल स्थिर काष्ठा altera_pcie_data altera_pcie_2_0_data = अणु
 	.ops = &altera_pcie_ops_2_0,
 	.version = ALTERA_PCIE_V2,
 	.cap_offset = 0x70,
@@ -753,84 +754,84 @@ static const struct altera_pcie_data altera_pcie_2_0_data = {
 	.cfgrd1 = S10_TLP_FMTTYPE_CFGRD1,
 	.cfgwr0 = S10_TLP_FMTTYPE_CFGWR0,
 	.cfgwr1 = S10_TLP_FMTTYPE_CFGWR1,
-};
+पूर्ण;
 
-static const struct of_device_id altera_pcie_of_match[] = {
-	{.compatible = "altr,pcie-root-port-1.0",
-	 .data = &altera_pcie_1_0_data },
-	{.compatible = "altr,pcie-root-port-2.0",
-	 .data = &altera_pcie_2_0_data },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id altera_pcie_of_match[] = अणु
+	अणु.compatible = "altr,pcie-root-port-1.0",
+	 .data = &altera_pcie_1_0_data पूर्ण,
+	अणु.compatible = "altr,pcie-root-port-2.0",
+	 .data = &altera_pcie_2_0_data पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int altera_pcie_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct altera_pcie *pcie;
-	struct pci_host_bridge *bridge;
-	int ret;
-	const struct of_device_id *match;
+अटल पूर्णांक altera_pcie_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा altera_pcie *pcie;
+	काष्ठा pci_host_bridge *bridge;
+	पूर्णांक ret;
+	स्थिर काष्ठा of_device_id *match;
 
-	bridge = devm_pci_alloc_host_bridge(dev, sizeof(*pcie));
-	if (!bridge)
-		return -ENOMEM;
+	bridge = devm_pci_alloc_host_bridge(dev, माप(*pcie));
+	अगर (!bridge)
+		वापस -ENOMEM;
 
 	pcie = pci_host_bridge_priv(bridge);
 	pcie->pdev = pdev;
-	platform_set_drvdata(pdev, pcie);
+	platक्रमm_set_drvdata(pdev, pcie);
 
 	match = of_match_device(altera_pcie_of_match, &pdev->dev);
-	if (!match)
-		return -ENODEV;
+	अगर (!match)
+		वापस -ENODEV;
 
 	pcie->pcie_data = match->data;
 
 	ret = altera_pcie_parse_dt(pcie);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Parsing DT failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = altera_pcie_init_irq_domain(pcie);
-	if (ret) {
+	ret = altera_pcie_init_irq_करोमुख्य(pcie);
+	अगर (ret) अणु
 		dev_err(dev, "Failed creating IRQ Domain\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* clear all interrupts */
-	cra_writel(pcie, P2A_INT_STS_ALL, P2A_INT_STATUS);
-	/* enable all interrupts */
-	cra_writel(pcie, P2A_INT_ENA_ALL, P2A_INT_ENABLE);
+	/* clear all पूर्णांकerrupts */
+	cra_ग_लिखोl(pcie, P2A_INT_STS_ALL, P2A_INT_STATUS);
+	/* enable all पूर्णांकerrupts */
+	cra_ग_लिखोl(pcie, P2A_INT_ENA_ALL, P2A_INT_ENABLE);
 	altera_pcie_host_init(pcie);
 
 	bridge->sysdata = pcie;
 	bridge->busnr = pcie->root_bus_nr;
 	bridge->ops = &altera_pcie_ops;
 
-	return pci_host_probe(bridge);
-}
+	वापस pci_host_probe(bridge);
+पूर्ण
 
-static int altera_pcie_remove(struct platform_device *pdev)
-{
-	struct altera_pcie *pcie = platform_get_drvdata(pdev);
-	struct pci_host_bridge *bridge = pci_host_bridge_from_priv(pcie);
+अटल पूर्णांक altera_pcie_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा altera_pcie *pcie = platक्रमm_get_drvdata(pdev);
+	काष्ठा pci_host_bridge *bridge = pci_host_bridge_from_priv(pcie);
 
 	pci_stop_root_bus(bridge->bus);
-	pci_remove_root_bus(bridge->bus);
-	altera_pcie_irq_teardown(pcie);
+	pci_हटाओ_root_bus(bridge->bus);
+	altera_pcie_irq_tearकरोwn(pcie);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver altera_pcie_driver = {
+अटल काष्ठा platक्रमm_driver altera_pcie_driver = अणु
 	.probe		= altera_pcie_probe,
-	.remove		= altera_pcie_remove,
-	.driver = {
+	.हटाओ		= altera_pcie_हटाओ,
+	.driver = अणु
 		.name	= "altera-pcie",
 		.of_match_table = altera_pcie_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, altera_pcie_of_match);
-module_platform_driver(altera_pcie_driver);
+module_platक्रमm_driver(altera_pcie_driver);
 MODULE_LICENSE("GPL v2");

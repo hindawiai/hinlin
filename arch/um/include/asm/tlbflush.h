@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#ifndef __UM_TLBFLUSH_H
-#define __UM_TLBFLUSH_H
+#अगर_अघोषित __UM_TLBFLUSH_H
+#घोषणा __UM_TLBFLUSH_H
 
-#include <linux/mm.h>
+#समावेश <linux/mm.h>
 
 /*
  * TLB flushing:
  *
- *  - flush_tlb() flushes the current mm struct TLBs
+ *  - flush_tlb() flushes the current mm काष्ठा TLBs
  *  - flush_tlb_all() flushes all processes TLBs
- *  - flush_tlb_mm(mm) flushes the specified mm context TLB's
+ *  - flush_tlb_mm(mm) flushes the specअगरied mm context TLB's
  *  - flush_tlb_page(vma, vmaddr) flushes one page
  *  - flush_tlb_kernel_vm() flushes the kernel vm area
  *  - flush_tlb_range(vma, start, end) flushes a range of pages
  */
 
-extern void flush_tlb_all(void);
-extern void flush_tlb_mm(struct mm_struct *mm);
-extern void flush_tlb_range(struct vm_area_struct *vma, unsigned long start, 
-			    unsigned long end);
-extern void flush_tlb_page(struct vm_area_struct *vma, unsigned long address);
-extern void flush_tlb_kernel_vm(void);
-extern void flush_tlb_kernel_range(unsigned long start, unsigned long end);
-extern void __flush_tlb_one(unsigned long addr);
+बाह्य व्योम flush_tlb_all(व्योम);
+बाह्य व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start, 
+			    अचिन्हित दीर्घ end);
+बाह्य व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address);
+बाह्य व्योम flush_tlb_kernel_vm(व्योम);
+बाह्य व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+बाह्य व्योम __flush_tlb_one(अचिन्हित दीर्घ addr);
 
-#endif
+#पूर्ण_अगर

@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_CLOEXEC_H
-#define __PERF_CLOEXEC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_CLOEXEC_H
+#घोषणा __PERF_CLOEXEC_H
 
-unsigned long perf_event_open_cloexec_flag(void);
+अचिन्हित दीर्घ perf_event_खोलो_cloexec_flag(व्योम);
 
-#endif /* __PERF_CLOEXEC_H */
+#पूर्ण_अगर /* __PERF_CLOEXEC_H */

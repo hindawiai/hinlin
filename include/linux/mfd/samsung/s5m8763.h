@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (c) 2011 Samsung Electronics Co., Ltd
  *              http://www.samsung.com
  */
 
-#ifndef __LINUX_MFD_S5M8763_H
-#define __LINUX_MFD_S5M8763_H
+#अगर_अघोषित __LINUX_MFD_S5M8763_H
+#घोषणा __LINUX_MFD_S5M8763_H
 
-/* S5M8763 registers */
-enum s5m8763_reg {
+/* S5M8763 रेजिस्टरs */
+क्रमागत s5m8763_reg अणु
 	S5M8763_REG_IRQ1,
 	S5M8763_REG_IRQ2,
 	S5M8763_REG_IRQ3,
@@ -55,10 +56,10 @@ enum s5m8763_reg {
 	S5M8763_REG_BKCHR,
 	S5M8763_REG_LBCNFG1,
 	S5M8763_REG_LBCNFG2,
-};
+पूर्ण;
 
 /* S5M8763 regulator ids */
-enum s5m8763_regulators {
+क्रमागत s5m8763_regulators अणु
 	S5M8763_LDO1,
 	S5M8763_LDO2,
 	S5M8763_LDO3,
@@ -84,7 +85,7 @@ enum s5m8763_regulators {
 	S5M8763_ENCHGVI,
 	S5M8763_ESAFEUSB1,
 	S5M8763_ESAFEUSB2,
-};
+पूर्ण;
 
-#define S5M8763_ENRAMP                  (1 << 4)
-#endif /* __LINUX_MFD_S5M8763_H */
+#घोषणा S5M8763_ENRAMP                  (1 << 4)
+#पूर्ण_अगर /* __LINUX_MFD_S5M8763_H */

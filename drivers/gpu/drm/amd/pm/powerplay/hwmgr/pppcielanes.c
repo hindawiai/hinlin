@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,17 +22,17 @@
  *
  */
 
-#include <linux/types.h>
-#include "atom-types.h"
-#include "atombios.h"
-#include "pppcielanes.h"
+#समावेश <linux/types.h>
+#समावेश "atom-types.h"
+#समावेश "atombios.h"
+#समावेश "pppcielanes.h"
 
-/** \file
+/** \पile
  * Functions related to PCIe lane changes.
  */
 
 /* For converting from number of lanes to lane bits.  */
-static const unsigned char pp_r600_encode_lanes[] = {
+अटल स्थिर अचिन्हित अक्षर pp_r600_encode_lanes[] = अणु
 	0,          /*  0 Not Supported  */
 	1,          /*  1 Lane  */
 	2,          /*  2 Lanes  */
@@ -49,16 +50,16 @@ static const unsigned char pp_r600_encode_lanes[] = {
 	0,          /* 14 Not Supported  */
 	0,          /* 15 Not Supported  */
 	6           /* 16 Lanes  */
-};
+पूर्ण;
 
-static const unsigned char pp_r600_decoded_lanes[8] = { 16, 1, 2, 4, 8, 12, 16, };
+अटल स्थिर अचिन्हित अक्षर pp_r600_decoded_lanes[8] = अणु 16, 1, 2, 4, 8, 12, 16, पूर्ण;
 
-uint8_t encode_pcie_lane_width(uint32_t num_lanes)
-{
-	return pp_r600_encode_lanes[num_lanes];
-}
+uपूर्णांक8_t encode_pcie_lane_width(uपूर्णांक32_t num_lanes)
+अणु
+	वापस pp_r600_encode_lanes[num_lanes];
+पूर्ण
 
-uint8_t decode_pcie_lane_width(uint32_t num_lanes)
-{
-	return pp_r600_decoded_lanes[num_lanes];
-}
+uपूर्णांक8_t decode_pcie_lane_width(uपूर्णांक32_t num_lanes)
+अणु
+	वापस pp_r600_decoded_lanes[num_lanes];
+पूर्ण

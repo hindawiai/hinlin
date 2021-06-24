@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Conexant CX24120/CX24118 - DVB-S/S2 demod/tuner driver
  *
  * Copyright (C) 2008 Patrick Boettcher <pb@linuxtv.org>
- * Copyright (C) 2009 Sergey Tyurin <forum.free-x.de>
+ * Copyright (C) 2009 Sergey Tyurin <क्रमum.मुक्त-x.de>
  * Updated 2012 by Jannis Achstetter <jannis_achstetter@web.de>
  * Copyright (C) 2015 Jemma Denson <jdenson@gmail.com>
  */
 
-#ifndef CX24120_H
-#define CX24120_H
+#अगर_अघोषित CX24120_H
+#घोषणा CX24120_H
 
-#include <linux/dvb/frontend.h>
-#include <linux/firmware.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/firmware.h>
 
-struct cx24120_initial_mpeg_config {
+काष्ठा cx24120_initial_mpeg_config अणु
 	u8 x1;
 	u8 x2;
 	u8 x3;
-};
+पूर्ण;
 
-struct cx24120_config {
+काष्ठा cx24120_config अणु
 	u8 i2c_addr;
 	u32 xtal_khz;
-	struct cx24120_initial_mpeg_config initial_mpeg_config;
+	काष्ठा cx24120_initial_mpeg_config initial_mpeg_config;
 
-	int (*request_firmware)(struct dvb_frontend *fe,
-				const struct firmware **fw, char *name);
+	पूर्णांक (*request_firmware)(काष्ठा dvb_frontend *fe,
+				स्थिर काष्ठा firmware **fw, अक्षर *name);
 
-	/* max bytes I2C provider can write at once */
+	/* max bytes I2C provider can ग_लिखो at once */
 	u16 i2c_wr_max;
-};
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_CX24120)
-struct dvb_frontend *cx24120_attach(const struct cx24120_config *config,
-				    struct i2c_adapter *i2c);
-#else
-static inline
-struct dvb_frontend *cx24120_attach(const struct cx24120_config *config,
-				    struct i2c_adapter *i2c)
-{
+#अगर IS_REACHABLE(CONFIG_DVB_CX24120)
+काष्ठा dvb_frontend *cx24120_attach(स्थिर काष्ठा cx24120_config *config,
+				    काष्ठा i2c_adapter *i2c);
+#अन्यथा
+अटल अंतरभूत
+काष्ठा dvb_frontend *cx24120_attach(स्थिर काष्ठा cx24120_config *config,
+				    काष्ठा i2c_adapter *i2c)
+अणु
 	pr_warn("%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* CX24120_H */
+#पूर्ण_अगर /* CX24120_H */

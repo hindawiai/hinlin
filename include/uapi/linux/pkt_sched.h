@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_PKT_SCHED_H
-#define __LINUX_PKT_SCHED_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_PKT_SCHED_H
+#घोषणा __LINUX_PKT_SCHED_H
 
-#include <linux/const.h>
-#include <linux/types.h>
+#समावेश <linux/स्थिर.h>
+#समावेश <linux/types.h>
 
-/* Logical priority bands not depending on specific packet scheduler.
-   Every scheduler will map them to real traffic classes, if it has
-   no more precise mechanism to classify packets.
+/* Logical priority bands not depending on specअगरic packet scheduler.
+   Every scheduler will map them to real traffic classes, अगर it has
+   no more precise mechanism to classअगरy packets.
 
    These numbers have no special meaning, though their coincidence
    with obsolete IPv6 values is not occasional :-). New IPv6 drafts
-   preferred full anarchy inspired by diffserv group.
+   preferred full anarchy inspired by dअगरfserv group.
 
-   Note: TC_PRIO_BESTEFFORT does not mean that it is the most unhappy
+   Note: TC_PRIO_BESTEFFORT करोes not mean that it is the most unhappy
    class, actually, as rule it will be handled with more care than
    filler or even bulk.
  */
 
-#define TC_PRIO_BESTEFFORT		0
-#define TC_PRIO_FILLER			1
-#define TC_PRIO_BULK			2
-#define TC_PRIO_INTERACTIVE_BULK	4
-#define TC_PRIO_INTERACTIVE		6
-#define TC_PRIO_CONTROL			7
+#घोषणा TC_PRIO_BESTEFFORT		0
+#घोषणा TC_PRIO_FILLER			1
+#घोषणा TC_PRIO_BULK			2
+#घोषणा TC_PRIO_INTERACTIVE_BULK	4
+#घोषणा TC_PRIO_INTERACTIVE		6
+#घोषणा TC_PRIO_CONTROL			7
 
-#define TC_PRIO_MAX			15
+#घोषणा TC_PRIO_MAX			15
 
-/* Generic queue statistics, available for all the elements.
-   Particular schedulers may have also their private records.
+/* Generic queue statistics, available क्रम all the elements.
+   Particular schedulers may have also their निजी records.
  */
 
-struct tc_stats {
+काष्ठा tc_stats अणु
 	__u64	bytes;			/* Number of enqueued bytes */
 	__u32	packets;		/* Number of enqueued packets	*/
 	__u32	drops;			/* Packets dropped because of lack of resources */
@@ -41,131 +42,131 @@ struct tc_stats {
 	__u32	pps;			/* Current flow packet rate */
 	__u32	qlen;
 	__u32	backlog;
-};
+पूर्ण;
 
-struct tc_estimator {
-	signed char	interval;
-	unsigned char	ewma_log;
-};
+काष्ठा tc_estimator अणु
+	चिन्हित अक्षर	पूर्णांकerval;
+	अचिन्हित अक्षर	ewma_log;
+पूर्ण;
 
 /* "Handles"
    ---------
 
-    All the traffic control objects have 32bit identifiers, or "handles".
+    All the traffic control objects have 32bit identअगरiers, or "handles".
 
-    They can be considered as opaque numbers from user API viewpoint,
+    They can be considered as opaque numbers from user API viewpoपूर्णांक,
     but actually they always consist of two fields: major and
-    minor numbers, which are interpreted by kernel specially,
+    minor numbers, which are पूर्णांकerpreted by kernel specially,
     that may be used by applications, though not recommended.
 
     F.e. qdisc handles always have minor number equal to zero,
     classes (or flows) have major equal to parent qdisc major, and
-    minor uniquely identifying class inside qdisc.
+    minor uniquely identअगरying class inside qdisc.
 
     Macros to manipulate handles:
  */
 
-#define TC_H_MAJ_MASK (0xFFFF0000U)
-#define TC_H_MIN_MASK (0x0000FFFFU)
-#define TC_H_MAJ(h) ((h)&TC_H_MAJ_MASK)
-#define TC_H_MIN(h) ((h)&TC_H_MIN_MASK)
-#define TC_H_MAKE(maj,min) (((maj)&TC_H_MAJ_MASK)|((min)&TC_H_MIN_MASK))
+#घोषणा TC_H_MAJ_MASK (0xFFFF0000U)
+#घोषणा TC_H_MIN_MASK (0x0000FFFFU)
+#घोषणा TC_H_MAJ(h) ((h)&TC_H_MAJ_MASK)
+#घोषणा TC_H_MIN(h) ((h)&TC_H_MIN_MASK)
+#घोषणा TC_H_MAKE(maj,min) (((maj)&TC_H_MAJ_MASK)|((min)&TC_H_MIN_MASK))
 
-#define TC_H_UNSPEC	(0U)
-#define TC_H_ROOT	(0xFFFFFFFFU)
-#define TC_H_INGRESS    (0xFFFFFFF1U)
-#define TC_H_CLSACT	TC_H_INGRESS
+#घोषणा TC_H_UNSPEC	(0U)
+#घोषणा TC_H_ROOT	(0xFFFFFFFFU)
+#घोषणा TC_H_INGRESS    (0xFFFFFFF1U)
+#घोषणा TC_H_CLSACT	TC_H_INGRESS
 
-#define TC_H_MIN_PRIORITY	0xFFE0U
-#define TC_H_MIN_INGRESS	0xFFF2U
-#define TC_H_MIN_EGRESS		0xFFF3U
+#घोषणा TC_H_MIN_PRIORITY	0xFFE0U
+#घोषणा TC_H_MIN_INGRESS	0xFFF2U
+#घोषणा TC_H_MIN_EGRESS		0xFFF3U
 
 /* Need to corrospond to iproute2 tc/tc_core.h "enum link_layer" */
-enum tc_link_layer {
+क्रमागत tc_link_layer अणु
 	TC_LINKLAYER_UNAWARE, /* Indicate unaware old iproute2 util */
 	TC_LINKLAYER_ETHERNET,
 	TC_LINKLAYER_ATM,
-};
-#define TC_LINKLAYER_MASK 0x0F /* limit use to lower 4 bits */
+पूर्ण;
+#घोषणा TC_LINKLAYER_MASK 0x0F /* limit use to lower 4 bits */
 
-struct tc_ratespec {
-	unsigned char	cell_log;
+काष्ठा tc_ratespec अणु
+	अचिन्हित अक्षर	cell_log;
 	__u8		linklayer; /* lower 4 bits */
-	unsigned short	overhead;
-	short		cell_align;
-	unsigned short	mpu;
+	अचिन्हित लघु	overhead;
+	लघु		cell_align;
+	अचिन्हित लघु	mpu;
 	__u32		rate;
-};
+पूर्ण;
 
-#define TC_RTAB_SIZE	1024
+#घोषणा TC_RTAB_SIZE	1024
 
-struct tc_sizespec {
-	unsigned char	cell_log;
-	unsigned char	size_log;
-	short		cell_align;
-	int		overhead;
-	unsigned int	linklayer;
-	unsigned int	mpu;
-	unsigned int	mtu;
-	unsigned int	tsize;
-};
+काष्ठा tc_sizespec अणु
+	अचिन्हित अक्षर	cell_log;
+	अचिन्हित अक्षर	size_log;
+	लघु		cell_align;
+	पूर्णांक		overhead;
+	अचिन्हित पूर्णांक	linklayer;
+	अचिन्हित पूर्णांक	mpu;
+	अचिन्हित पूर्णांक	mtu;
+	अचिन्हित पूर्णांक	tsize;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_STAB_UNSPEC,
 	TCA_STAB_BASE,
 	TCA_STAB_DATA,
 	__TCA_STAB_MAX
-};
+पूर्ण;
 
-#define TCA_STAB_MAX (__TCA_STAB_MAX - 1)
+#घोषणा TCA_STAB_MAX (__TCA_STAB_MAX - 1)
 
 /* FIFO section */
 
-struct tc_fifo_qopt {
-	__u32	limit;	/* Queue length: bytes for bfifo, packets for pfifo */
-};
+काष्ठा tc_fअगरo_qopt अणु
+	__u32	limit;	/* Queue length: bytes क्रम bfअगरo, packets क्रम pfअगरo */
+पूर्ण;
 
 /* SKBPRIO section */
 
 /*
  * Priorities go from zero to (SKBPRIO_MAX_PRIORITY - 1).
- * SKBPRIO_MAX_PRIORITY should be at least 64 in order for skbprio to be able
+ * SKBPRIO_MAX_PRIORITY should be at least 64 in order क्रम skbprio to be able
  * to map one to one the DS field of IPV4 and IPV6 headers.
  * Memory allocation grows linearly with SKBPRIO_MAX_PRIORITY.
  */
 
-#define SKBPRIO_MAX_PRIORITY 64
+#घोषणा SKBPRIO_MAX_PRIORITY 64
 
-struct tc_skbprio_qopt {
+काष्ठा tc_skbprio_qopt अणु
 	__u32	limit;		/* Queue length in packets. */
-};
+पूर्ण;
 
 /* PRIO section */
 
-#define TCQ_PRIO_BANDS	16
-#define TCQ_MIN_PRIO_BANDS 2
+#घोषणा TCQ_PRIO_BANDS	16
+#घोषणा TCQ_MIN_PRIO_BANDS 2
 
-struct tc_prio_qopt {
-	int	bands;			/* Number of bands */
+काष्ठा tc_prio_qopt अणु
+	पूर्णांक	bands;			/* Number of bands */
 	__u8	priomap[TC_PRIO_MAX+1];	/* Map: logical priority -> PRIO band */
-};
+पूर्ण;
 
 /* MULTIQ section */
 
-struct tc_multiq_qopt {
+काष्ठा tc_multiq_qopt अणु
 	__u16	bands;			/* Number of bands */
 	__u16	max_bands;		/* Maximum number of queues */
-};
+पूर्ण;
 
 /* PLUG section */
 
-#define TCQ_PLUG_BUFFER                0
-#define TCQ_PLUG_RELEASE_ONE           1
-#define TCQ_PLUG_RELEASE_INDEFINITE    2
-#define TCQ_PLUG_LIMIT                 3
+#घोषणा TCQ_PLUG_BUFFER                0
+#घोषणा TCQ_PLUG_RELEASE_ONE           1
+#घोषणा TCQ_PLUG_RELEASE_INDEFINITE    2
+#घोषणा TCQ_PLUG_LIMIT                 3
 
-struct tc_plug_qopt {
-	/* TCQ_PLUG_BUFFER: Inset a plug into the queue and
+काष्ठा tc_plug_qopt अणु
+	/* TCQ_PLUG_BUFFER: Inset a plug पूर्णांकo the queue and
 	 *  buffer any incoming packets
 	 * TCQ_PLUG_RELEASE_ONE: Dequeue packets from queue head
 	 *   to beginning of the next plug.
@@ -174,21 +175,21 @@ struct tc_plug_qopt {
 	 *   command is received (just act as a pass-thru queue).
 	 * TCQ_PLUG_LIMIT: Increase/decrease queue size
 	 */
-	int             action;
+	पूर्णांक             action;
 	__u32           limit;
-};
+पूर्ण;
 
 /* TBF section */
 
-struct tc_tbf_qopt {
-	struct tc_ratespec rate;
-	struct tc_ratespec peakrate;
+काष्ठा tc_tbf_qopt अणु
+	काष्ठा tc_ratespec rate;
+	काष्ठा tc_ratespec peakrate;
 	__u32		limit;
 	__u32		buffer;
 	__u32		mtu;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_TBF_UNSPEC,
 	TCA_TBF_PARMS,
 	TCA_TBF_RTAB,
@@ -199,59 +200,59 @@ enum {
 	TCA_TBF_PBURST,
 	TCA_TBF_PAD,
 	__TCA_TBF_MAX,
-};
+पूर्ण;
 
-#define TCA_TBF_MAX (__TCA_TBF_MAX - 1)
+#घोषणा TCA_TBF_MAX (__TCA_TBF_MAX - 1)
 
 
 /* TEQL section */
 
-/* TEQL does not require any parameters */
+/* TEQL करोes not require any parameters */
 
 /* SFQ section */
 
-struct tc_sfq_qopt {
-	unsigned	quantum;	/* Bytes per round allocated to flow */
-	int		perturb_period;	/* Period of hash perturbation */
+काष्ठा tc_sfq_qopt अणु
+	अचिन्हित	quantum;	/* Bytes per round allocated to flow */
+	पूर्णांक		perturb_period;	/* Period of hash perturbation */
 	__u32		limit;		/* Maximal packets in queue */
-	unsigned	divisor;	/* Hash divisor  */
-	unsigned	flows;		/* Maximal number of flows  */
-};
+	अचिन्हित	भागisor;	/* Hash भागisor  */
+	अचिन्हित	flows;		/* Maximal number of flows  */
+पूर्ण;
 
-struct tc_sfqred_stats {
+काष्ठा tc_sfqred_stats अणु
 	__u32           prob_drop;      /* Early drops, below max threshold */
-	__u32           forced_drop;	/* Early drops, after max threshold */
+	__u32           क्रमced_drop;	/* Early drops, after max threshold */
 	__u32           prob_mark;      /* Marked packets, below max threshold */
-	__u32           forced_mark;    /* Marked packets, after max threshold */
+	__u32           क्रमced_mark;    /* Marked packets, after max threshold */
 	__u32           prob_mark_head; /* Marked packets, below max threshold */
-	__u32           forced_mark_head;/* Marked packets, after max threshold */
-};
+	__u32           क्रमced_mark_head;/* Marked packets, after max threshold */
+पूर्ण;
 
-struct tc_sfq_qopt_v1 {
-	struct tc_sfq_qopt v0;
-	unsigned int	depth;		/* max number of packets per flow */
-	unsigned int	headdrop;
+काष्ठा tc_sfq_qopt_v1 अणु
+	काष्ठा tc_sfq_qopt v0;
+	अचिन्हित पूर्णांक	depth;		/* max number of packets per flow */
+	अचिन्हित पूर्णांक	headdrop;
 /* SFQRED parameters */
 	__u32		limit;		/* HARD maximal flow queue length (bytes) */
 	__u32		qth_min;	/* Min average length threshold (bytes) */
 	__u32		qth_max;	/* Max average length threshold (bytes) */
-	unsigned char   Wlog;		/* log(W)		*/
-	unsigned char   Plog;		/* log(P_max/(qth_max-qth_min))	*/
-	unsigned char   Scell_log;	/* cell size for idle damping */
-	unsigned char	flags;
+	अचिन्हित अक्षर   Wlog;		/* log(W)		*/
+	अचिन्हित अक्षर   Plog;		/* log(P_max/(qth_max-qth_min))	*/
+	अचिन्हित अक्षर   Scell_log;	/* cell size क्रम idle damping */
+	अचिन्हित अक्षर	flags;
 	__u32		max_P;		/* probability, high resolution */
 /* SFQRED stats */
-	struct tc_sfqred_stats stats;
-};
+	काष्ठा tc_sfqred_stats stats;
+पूर्ण;
 
 
-struct tc_sfq_xstats {
+काष्ठा tc_sfq_xstats अणु
 	__s32		allot;
-};
+पूर्ण;
 
 /* RED section */
 
-enum {
+क्रमागत अणु
 	TCA_RED_UNSPEC,
 	TCA_RED_PARMS,
 	TCA_RED_STAB,
@@ -260,51 +261,51 @@ enum {
 	TCA_RED_EARLY_DROP_BLOCK, /* u32 */
 	TCA_RED_MARK_BLOCK,	/* u32 */
 	__TCA_RED_MAX,
-};
+पूर्ण;
 
-#define TCA_RED_MAX (__TCA_RED_MAX - 1)
+#घोषणा TCA_RED_MAX (__TCA_RED_MAX - 1)
 
-struct tc_red_qopt {
+काष्ठा tc_red_qopt अणु
 	__u32		limit;		/* HARD maximal queue length (bytes)	*/
 	__u32		qth_min;	/* Min average length threshold (bytes) */
 	__u32		qth_max;	/* Max average length threshold (bytes) */
-	unsigned char   Wlog;		/* log(W)		*/
-	unsigned char   Plog;		/* log(P_max/(qth_max-qth_min))	*/
-	unsigned char   Scell_log;	/* cell size for idle damping */
+	अचिन्हित अक्षर   Wlog;		/* log(W)		*/
+	अचिन्हित अक्षर   Plog;		/* log(P_max/(qth_max-qth_min))	*/
+	अचिन्हित अक्षर   Scell_log;	/* cell size क्रम idle damping */
 
-	/* This field can be used for flags that a RED-like qdisc has
-	 * historically supported. E.g. when configuring RED, it can be used for
-	 * ECN, HARDDROP and ADAPTATIVE. For SFQ it can be used for ECN,
+	/* This field can be used क्रम flags that a RED-like qdisc has
+	 * historically supported. E.g. when configuring RED, it can be used क्रम
+	 * ECN, HARDDROP and ADAPTATIVE. For SFQ it can be used क्रम ECN,
 	 * HARDDROP. Etc. Because this field has not been validated, and is
 	 * copied back on dump, any bits besides those to which a given qdisc
-	 * has assigned a historical meaning need to be considered for free use
+	 * has asचिन्हित a historical meaning need to be considered क्रम मुक्त use
 	 * by userspace tools.
 	 *
-	 * Any further flags need to be passed differently, e.g. through an
+	 * Any further flags need to be passed dअगरferently, e.g. through an
 	 * attribute (such as TCA_RED_FLAGS above). Such attribute should allow
 	 * passing both recent and historic flags in one value.
 	 */
-	unsigned char	flags;
-#define TC_RED_ECN		1
-#define TC_RED_HARDDROP		2
-#define TC_RED_ADAPTATIVE	4
-#define TC_RED_NODROP		8
-};
+	अचिन्हित अक्षर	flags;
+#घोषणा TC_RED_ECN		1
+#घोषणा TC_RED_HARDDROP		2
+#घोषणा TC_RED_ADAPTATIVE	4
+#घोषणा TC_RED_NODROP		8
+पूर्ण;
 
-#define TC_RED_HISTORIC_FLAGS (TC_RED_ECN | TC_RED_HARDDROP | TC_RED_ADAPTATIVE)
+#घोषणा TC_RED_HISTORIC_FLAGS (TC_RED_ECN | TC_RED_HARDDROP | TC_RED_ADAPTATIVE)
 
-struct tc_red_xstats {
+काष्ठा tc_red_xstats अणु
 	__u32           early;          /* Early drops */
 	__u32           pdrop;          /* Drops due to queue limits */
 	__u32           other;          /* Drops due to drop() calls */
 	__u32           marked;         /* Marked packets */
-};
+पूर्ण;
 
 /* GRED section */
 
-#define MAX_DPs 16
+#घोषणा MAX_DPs 16
 
-enum {
+क्रमागत अणु
        TCA_GRED_UNSPEC,
        TCA_GRED_PARMS,
        TCA_GRED_STAB,
@@ -313,18 +314,18 @@ enum {
        TCA_GRED_LIMIT,
        TCA_GRED_VQ_LIST,	/* nested TCA_GRED_VQ_ENTRY */
        __TCA_GRED_MAX,
-};
+पूर्ण;
 
-#define TCA_GRED_MAX (__TCA_GRED_MAX - 1)
+#घोषणा TCA_GRED_MAX (__TCA_GRED_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_GRED_VQ_ENTRY_UNSPEC,
 	TCA_GRED_VQ_ENTRY,	/* nested TCA_GRED_VQ_* */
 	__TCA_GRED_VQ_ENTRY_MAX,
-};
-#define TCA_GRED_VQ_ENTRY_MAX (__TCA_GRED_VQ_ENTRY_MAX - 1)
+पूर्ण;
+#घोषणा TCA_GRED_VQ_ENTRY_MAX (__TCA_GRED_VQ_ENTRY_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_GRED_VQ_UNSPEC,
 	TCA_GRED_VQ_PAD,
 	TCA_GRED_VQ_DP,			/* u32 */
@@ -339,211 +340,211 @@ enum {
 	TCA_GRED_VQ_STAT_OTHER,		/* u32 */
 	TCA_GRED_VQ_FLAGS,		/* u32 */
 	__TCA_GRED_VQ_MAX
-};
+पूर्ण;
 
-#define TCA_GRED_VQ_MAX (__TCA_GRED_VQ_MAX - 1)
+#घोषणा TCA_GRED_VQ_MAX (__TCA_GRED_VQ_MAX - 1)
 
-struct tc_gred_qopt {
+काष्ठा tc_gred_qopt अणु
 	__u32		limit;        /* HARD maximal queue length (bytes)    */
 	__u32		qth_min;      /* Min average length threshold (bytes) */
 	__u32		qth_max;      /* Max average length threshold (bytes) */
 	__u32		DP;           /* up to 2^32 DPs */
 	__u32		backlog;
 	__u32		qave;
-	__u32		forced;
+	__u32		क्रमced;
 	__u32		early;
 	__u32		other;
 	__u32		pdrop;
 	__u8		Wlog;         /* log(W)               */
 	__u8		Plog;         /* log(P_max/(qth_max-qth_min)) */
-	__u8		Scell_log;    /* cell size for idle damping */
+	__u8		Scell_log;    /* cell size क्रम idle damping */
 	__u8		prio;         /* prio of this VQ */
 	__u32		packets;
 	__u32		bytesin;
-};
+पूर्ण;
 
 /* gred setup */
-struct tc_gred_sopt {
+काष्ठा tc_gred_sopt अणु
 	__u32		DPs;
 	__u32		def_DP;
 	__u8		grio;
 	__u8		flags;
 	__u16		pad1;
-};
+पूर्ण;
 
 /* CHOKe section */
 
-enum {
+क्रमागत अणु
 	TCA_CHOKE_UNSPEC,
 	TCA_CHOKE_PARMS,
 	TCA_CHOKE_STAB,
 	TCA_CHOKE_MAX_P,
 	__TCA_CHOKE_MAX,
-};
+पूर्ण;
 
-#define TCA_CHOKE_MAX (__TCA_CHOKE_MAX - 1)
+#घोषणा TCA_CHOKE_MAX (__TCA_CHOKE_MAX - 1)
 
-struct tc_choke_qopt {
+काष्ठा tc_choke_qopt अणु
 	__u32		limit;		/* Hard queue length (packets)	*/
 	__u32		qth_min;	/* Min average threshold (packets) */
 	__u32		qth_max;	/* Max average threshold (packets) */
-	unsigned char   Wlog;		/* log(W)		*/
-	unsigned char   Plog;		/* log(P_max/(qth_max-qth_min))	*/
-	unsigned char   Scell_log;	/* cell size for idle damping */
-	unsigned char	flags;		/* see RED flags */
-};
+	अचिन्हित अक्षर   Wlog;		/* log(W)		*/
+	अचिन्हित अक्षर   Plog;		/* log(P_max/(qth_max-qth_min))	*/
+	अचिन्हित अक्षर   Scell_log;	/* cell size क्रम idle damping */
+	अचिन्हित अक्षर	flags;		/* see RED flags */
+पूर्ण;
 
-struct tc_choke_xstats {
+काष्ठा tc_choke_xstats अणु
 	__u32		early;          /* Early drops */
 	__u32		pdrop;          /* Drops due to queue limits */
 	__u32		other;          /* Drops due to drop() calls */
 	__u32		marked;         /* Marked packets */
 	__u32		matched;	/* Drops due to flow match */
-};
+पूर्ण;
 
 /* HTB section */
-#define TC_HTB_NUMPRIO		8
-#define TC_HTB_MAXDEPTH		8
-#define TC_HTB_PROTOVER		3 /* the same as HTB and TC's major */
+#घोषणा TC_HTB_NUMPRIO		8
+#घोषणा TC_HTB_MAXDEPTH		8
+#घोषणा TC_HTB_PROTOVER		3 /* the same as HTB and TC's major */
 
-struct tc_htb_opt {
-	struct tc_ratespec 	rate;
-	struct tc_ratespec 	ceil;
+काष्ठा tc_htb_opt अणु
+	काष्ठा tc_ratespec 	rate;
+	काष्ठा tc_ratespec 	उच्चमान;
 	__u32	buffer;
 	__u32	cbuffer;
 	__u32	quantum;
 	__u32	level;		/* out only */
 	__u32	prio;
-};
-struct tc_htb_glob {
+पूर्ण;
+काष्ठा tc_htb_glob अणु
 	__u32 version;		/* to match HTB/TC */
-    	__u32 rate2quantum;	/* bps->quantum divisor */
-    	__u32 defcls;		/* default class number */
+    	__u32 rate2quantum;	/* bps->quantum भागisor */
+    	__u32 defcls;		/* शेष class number */
 	__u32 debug;		/* debug flags */
 
 	/* stats */
 	__u32 direct_pkts; /* count of non shaped packets */
-};
-enum {
+पूर्ण;
+क्रमागत अणु
 	TCA_HTB_UNSPEC,
 	TCA_HTB_PARMS,
 	TCA_HTB_INIT,
 	TCA_HTB_CTAB,
 	TCA_HTB_RTAB,
-	TCA_HTB_DIRECT_QLEN,
+	TCA_HTB_सूचीECT_QLEN,
 	TCA_HTB_RATE64,
 	TCA_HTB_CEIL64,
 	TCA_HTB_PAD,
 	TCA_HTB_OFFLOAD,
 	__TCA_HTB_MAX,
-};
+पूर्ण;
 
-#define TCA_HTB_MAX (__TCA_HTB_MAX - 1)
+#घोषणा TCA_HTB_MAX (__TCA_HTB_MAX - 1)
 
-struct tc_htb_xstats {
+काष्ठा tc_htb_xstats अणु
 	__u32 lends;
 	__u32 borrows;
 	__u32 giants;	/* unused since 'Make HTB scheduler work with TSO.' */
 	__s32 tokens;
 	__s32 ctokens;
-};
+पूर्ण;
 
 /* HFSC section */
 
-struct tc_hfsc_qopt {
-	__u16	defcls;		/* default class */
-};
+काष्ठा tc_hfsc_qopt अणु
+	__u16	defcls;		/* शेष class */
+पूर्ण;
 
-struct tc_service_curve {
+काष्ठा tc_service_curve अणु
 	__u32	m1;		/* slope of the first segment in bps */
 	__u32	d;		/* x-projection of the first segment in us */
 	__u32	m2;		/* slope of the second segment in bps */
-};
+पूर्ण;
 
-struct tc_hfsc_stats {
-	__u64	work;		/* total work done */
-	__u64	rtwork;		/* work done by real-time criteria */
+काष्ठा tc_hfsc_stats अणु
+	__u64	work;		/* total work करोne */
+	__u64	rtwork;		/* work करोne by real-समय criteria */
 	__u32	period;		/* current period */
 	__u32	level;		/* class level in hierarchy */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_HFSC_UNSPEC,
 	TCA_HFSC_RSC,
 	TCA_HFSC_FSC,
 	TCA_HFSC_USC,
 	__TCA_HFSC_MAX,
-};
+पूर्ण;
 
-#define TCA_HFSC_MAX (__TCA_HFSC_MAX - 1)
+#घोषणा TCA_HFSC_MAX (__TCA_HFSC_MAX - 1)
 
 
 /* CBQ section */
 
-#define TC_CBQ_MAXPRIO		8
-#define TC_CBQ_MAXLEVEL		8
-#define TC_CBQ_DEF_EWMA		5
+#घोषणा TC_CBQ_MAXPRIO		8
+#घोषणा TC_CBQ_MAXLEVEL		8
+#घोषणा TC_CBQ_DEF_EWMA		5
 
-struct tc_cbq_lssopt {
-	unsigned char	change;
-	unsigned char	flags;
-#define TCF_CBQ_LSS_BOUNDED	1
-#define TCF_CBQ_LSS_ISOLATED	2
-	unsigned char  	ewma_log;
-	unsigned char  	level;
-#define TCF_CBQ_LSS_FLAGS	1
-#define TCF_CBQ_LSS_EWMA	2
-#define TCF_CBQ_LSS_MAXIDLE	4
-#define TCF_CBQ_LSS_MINIDLE	8
-#define TCF_CBQ_LSS_OFFTIME	0x10
-#define TCF_CBQ_LSS_AVPKT	0x20
+काष्ठा tc_cbq_lssopt अणु
+	अचिन्हित अक्षर	change;
+	अचिन्हित अक्षर	flags;
+#घोषणा TCF_CBQ_LSS_BOUNDED	1
+#घोषणा TCF_CBQ_LSS_ISOLATED	2
+	अचिन्हित अक्षर  	ewma_log;
+	अचिन्हित अक्षर  	level;
+#घोषणा TCF_CBQ_LSS_FLAGS	1
+#घोषणा TCF_CBQ_LSS_EWMA	2
+#घोषणा TCF_CBQ_LSS_MAXIDLE	4
+#घोषणा TCF_CBQ_LSS_MINIDLE	8
+#घोषणा TCF_CBQ_LSS_OFFTIME	0x10
+#घोषणा TCF_CBQ_LSS_AVPKT	0x20
 	__u32		maxidle;
 	__u32		minidle;
-	__u32		offtime;
+	__u32		offसमय;
 	__u32		avpkt;
-};
+पूर्ण;
 
-struct tc_cbq_wrropt {
-	unsigned char	flags;
-	unsigned char	priority;
-	unsigned char	cpriority;
-	unsigned char	__reserved;
+काष्ठा tc_cbq_wrropt अणु
+	अचिन्हित अक्षर	flags;
+	अचिन्हित अक्षर	priority;
+	अचिन्हित अक्षर	cpriority;
+	अचिन्हित अक्षर	__reserved;
 	__u32		allot;
 	__u32		weight;
-};
+पूर्ण;
 
-struct tc_cbq_ovl {
-	unsigned char	strategy;
-#define	TC_CBQ_OVL_CLASSIC	0
-#define	TC_CBQ_OVL_DELAY	1
-#define	TC_CBQ_OVL_LOWPRIO	2
-#define	TC_CBQ_OVL_DROP		3
-#define	TC_CBQ_OVL_RCLASSIC	4
-	unsigned char	priority2;
+काष्ठा tc_cbq_ovl अणु
+	अचिन्हित अक्षर	strategy;
+#घोषणा	TC_CBQ_OVL_CLASSIC	0
+#घोषणा	TC_CBQ_OVL_DELAY	1
+#घोषणा	TC_CBQ_OVL_LOWPRIO	2
+#घोषणा	TC_CBQ_OVL_DROP		3
+#घोषणा	TC_CBQ_OVL_RCLASSIC	4
+	अचिन्हित अक्षर	priority2;
 	__u16		pad;
 	__u32		penalty;
-};
+पूर्ण;
 
-struct tc_cbq_police {
-	unsigned char	police;
-	unsigned char	__res1;
-	unsigned short	__res2;
-};
+काष्ठा tc_cbq_police अणु
+	अचिन्हित अक्षर	police;
+	अचिन्हित अक्षर	__res1;
+	अचिन्हित लघु	__res2;
+पूर्ण;
 
-struct tc_cbq_fopt {
+काष्ठा tc_cbq_fopt अणु
 	__u32		split;
 	__u32		defmap;
 	__u32		defchange;
-};
+पूर्ण;
 
-struct tc_cbq_xstats {
+काष्ठा tc_cbq_xstats अणु
 	__u32		borrows;
 	__u32		overactions;
 	__s32		avgidle;
-	__s32		undertime;
-};
+	__s32		underसमय;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_CBQ_UNSPEC,
 	TCA_CBQ_LSSOPT,
 	TCA_CBQ_WRROPT,
@@ -553,13 +554,13 @@ enum {
 	TCA_CBQ_RTAB,
 	TCA_CBQ_POLICE,
 	__TCA_CBQ_MAX,
-};
+पूर्ण;
 
-#define TCA_CBQ_MAX	(__TCA_CBQ_MAX - 1)
+#घोषणा TCA_CBQ_MAX	(__TCA_CBQ_MAX - 1)
 
 /* dsmark section */
 
-enum {
+क्रमागत अणु
 	TCA_DSMARK_UNSPEC,
 	TCA_DSMARK_INDICES,
 	TCA_DSMARK_DEFAULT_INDEX,
@@ -567,28 +568,28 @@ enum {
 	TCA_DSMARK_MASK,
 	TCA_DSMARK_VALUE,
 	__TCA_DSMARK_MAX,
-};
+पूर्ण;
 
-#define TCA_DSMARK_MAX (__TCA_DSMARK_MAX - 1)
+#घोषणा TCA_DSMARK_MAX (__TCA_DSMARK_MAX - 1)
 
 /* ATM  section */
 
-enum {
+क्रमागत अणु
 	TCA_ATM_UNSPEC,
 	TCA_ATM_FD,		/* file/socket descriptor */
-	TCA_ATM_PTR,		/* pointer to descriptor - later */
+	TCA_ATM_PTR,		/* poपूर्णांकer to descriptor - later */
 	TCA_ATM_HDR,		/* LL header */
-	TCA_ATM_EXCESS,		/* excess traffic class (0 for CLP)  */
-	TCA_ATM_ADDR,		/* PVC address (for output only) */
-	TCA_ATM_STATE,		/* VC state (ATM_VS_*; for output only) */
+	TCA_ATM_EXCESS,		/* excess traffic class (0 क्रम CLP)  */
+	TCA_ATM_ADDR,		/* PVC address (क्रम output only) */
+	TCA_ATM_STATE,		/* VC state (ATM_VS_*; क्रम output only) */
 	__TCA_ATM_MAX,
-};
+पूर्ण;
 
-#define TCA_ATM_MAX	(__TCA_ATM_MAX - 1)
+#घोषणा TCA_ATM_MAX	(__TCA_ATM_MAX - 1)
 
 /* Network emulator */
 
-enum {
+क्रमागत अणु
 	TCA_NETEM_UNSPEC,
 	TCA_NETEM_CORR,
 	TCA_NETEM_DELAY_DIST,
@@ -604,161 +605,161 @@ enum {
 	TCA_NETEM_SLOT,
 	TCA_NETEM_SLOT_DIST,
 	__TCA_NETEM_MAX,
-};
+पूर्ण;
 
-#define TCA_NETEM_MAX (__TCA_NETEM_MAX - 1)
+#घोषणा TCA_NETEM_MAX (__TCA_NETEM_MAX - 1)
 
-struct tc_netem_qopt {
+काष्ठा tc_netem_qopt अणु
 	__u32	latency;	/* added delay (us) */
-	__u32   limit;		/* fifo limit (packets) */
-	__u32	loss;		/* random packet loss (0=none ~0=100%) */
-	__u32	gap;		/* re-ordering gap (0 for none) */
-	__u32   duplicate;	/* random packet dup  (0=none ~0=100%) */
-	__u32	jitter;		/* random jitter in latency (us) */
-};
+	__u32   limit;		/* fअगरo limit (packets) */
+	__u32	loss;		/* अक्रमom packet loss (0=none ~0=100%) */
+	__u32	gap;		/* re-ordering gap (0 क्रम none) */
+	__u32   duplicate;	/* अक्रमom packet dup  (0=none ~0=100%) */
+	__u32	jitter;		/* अक्रमom jitter in latency (us) */
+पूर्ण;
 
-struct tc_netem_corr {
+काष्ठा tc_netem_corr अणु
 	__u32	delay_corr;	/* delay correlation */
 	__u32	loss_corr;	/* packet loss correlation */
 	__u32	dup_corr;	/* duplicate correlation  */
-};
+पूर्ण;
 
-struct tc_netem_reorder {
+काष्ठा tc_netem_reorder अणु
 	__u32	probability;
 	__u32	correlation;
-};
+पूर्ण;
 
-struct tc_netem_corrupt {
+काष्ठा tc_netem_corrupt अणु
 	__u32	probability;
 	__u32	correlation;
-};
+पूर्ण;
 
-struct tc_netem_rate {
+काष्ठा tc_netem_rate अणु
 	__u32	rate;	/* byte/s */
 	__s32	packet_overhead;
 	__u32	cell_size;
 	__s32	cell_overhead;
-};
+पूर्ण;
 
-struct tc_netem_slot {
+काष्ठा tc_netem_slot अणु
 	__s64   min_delay; /* nsec */
 	__s64   max_delay;
 	__s32   max_packets;
 	__s32   max_bytes;
 	__s64	dist_delay; /* nsec */
 	__s64	dist_jitter; /* nsec */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	NETEM_LOSS_UNSPEC,
 	NETEM_LOSS_GI,		/* General Intuitive - 4 state model */
 	NETEM_LOSS_GE,		/* Gilbert Elliot models */
 	__NETEM_LOSS_MAX
-};
-#define NETEM_LOSS_MAX (__NETEM_LOSS_MAX - 1)
+पूर्ण;
+#घोषणा NETEM_LOSS_MAX (__NETEM_LOSS_MAX - 1)
 
-/* State transition probabilities for 4 state model */
-struct tc_netem_gimodel {
+/* State transition probabilities क्रम 4 state model */
+काष्ठा tc_netem_gimodel अणु
 	__u32	p13;
 	__u32	p31;
 	__u32	p32;
 	__u32	p14;
 	__u32	p23;
-};
+पूर्ण;
 
 /* Gilbert-Elliot models */
-struct tc_netem_gemodel {
+काष्ठा tc_netem_gemodel अणु
 	__u32 p;
 	__u32 r;
 	__u32 h;
 	__u32 k1;
-};
+पूर्ण;
 
-#define NETEM_DIST_SCALE	8192
-#define NETEM_DIST_MAX		16384
+#घोषणा NETEM_DIST_SCALE	8192
+#घोषणा NETEM_DIST_MAX		16384
 
 /* DRR */
 
-enum {
+क्रमागत अणु
 	TCA_DRR_UNSPEC,
 	TCA_DRR_QUANTUM,
 	__TCA_DRR_MAX
-};
+पूर्ण;
 
-#define TCA_DRR_MAX	(__TCA_DRR_MAX - 1)
+#घोषणा TCA_DRR_MAX	(__TCA_DRR_MAX - 1)
 
-struct tc_drr_stats {
+काष्ठा tc_drr_stats अणु
 	__u32	deficit;
-};
+पूर्ण;
 
 /* MQPRIO */
-#define TC_QOPT_BITMASK 15
-#define TC_QOPT_MAX_QUEUE 16
+#घोषणा TC_QOPT_BITMASK 15
+#घोषणा TC_QOPT_MAX_QUEUE 16
 
-enum {
+क्रमागत अणु
 	TC_MQPRIO_HW_OFFLOAD_NONE,	/* no offload requested */
 	TC_MQPRIO_HW_OFFLOAD_TCS,	/* offload TCs, no queue counts */
 	__TC_MQPRIO_HW_OFFLOAD_MAX
-};
+पूर्ण;
 
-#define TC_MQPRIO_HW_OFFLOAD_MAX (__TC_MQPRIO_HW_OFFLOAD_MAX - 1)
+#घोषणा TC_MQPRIO_HW_OFFLOAD_MAX (__TC_MQPRIO_HW_OFFLOAD_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TC_MQPRIO_MODE_DCB,
 	TC_MQPRIO_MODE_CHANNEL,
 	__TC_MQPRIO_MODE_MAX
-};
+पूर्ण;
 
-#define __TC_MQPRIO_MODE_MAX (__TC_MQPRIO_MODE_MAX - 1)
+#घोषणा __TC_MQPRIO_MODE_MAX (__TC_MQPRIO_MODE_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TC_MQPRIO_SHAPER_DCB,
 	TC_MQPRIO_SHAPER_BW_RATE,	/* Add new shapers below */
 	__TC_MQPRIO_SHAPER_MAX
-};
+पूर्ण;
 
-#define __TC_MQPRIO_SHAPER_MAX (__TC_MQPRIO_SHAPER_MAX - 1)
+#घोषणा __TC_MQPRIO_SHAPER_MAX (__TC_MQPRIO_SHAPER_MAX - 1)
 
-struct tc_mqprio_qopt {
+काष्ठा tc_mqprio_qopt अणु
 	__u8	num_tc;
 	__u8	prio_tc_map[TC_QOPT_BITMASK + 1];
 	__u8	hw;
 	__u16	count[TC_QOPT_MAX_QUEUE];
 	__u16	offset[TC_QOPT_MAX_QUEUE];
-};
+पूर्ण;
 
-#define TC_MQPRIO_F_MODE		0x1
-#define TC_MQPRIO_F_SHAPER		0x2
-#define TC_MQPRIO_F_MIN_RATE		0x4
-#define TC_MQPRIO_F_MAX_RATE		0x8
+#घोषणा TC_MQPRIO_F_MODE		0x1
+#घोषणा TC_MQPRIO_F_SHAPER		0x2
+#घोषणा TC_MQPRIO_F_MIN_RATE		0x4
+#घोषणा TC_MQPRIO_F_MAX_RATE		0x8
 
-enum {
+क्रमागत अणु
 	TCA_MQPRIO_UNSPEC,
 	TCA_MQPRIO_MODE,
 	TCA_MQPRIO_SHAPER,
 	TCA_MQPRIO_MIN_RATE64,
 	TCA_MQPRIO_MAX_RATE64,
 	__TCA_MQPRIO_MAX,
-};
+पूर्ण;
 
-#define TCA_MQPRIO_MAX (__TCA_MQPRIO_MAX - 1)
+#घोषणा TCA_MQPRIO_MAX (__TCA_MQPRIO_MAX - 1)
 
 /* SFB */
 
-enum {
+क्रमागत अणु
 	TCA_SFB_UNSPEC,
 	TCA_SFB_PARMS,
 	__TCA_SFB_MAX,
-};
+पूर्ण;
 
-#define TCA_SFB_MAX (__TCA_SFB_MAX - 1)
+#घोषणा TCA_SFB_MAX (__TCA_SFB_MAX - 1)
 
 /*
- * Note: increment, decrement are Q0.16 fixed-point values.
+ * Note: increment, decrement are Q0.16 fixed-poपूर्णांक values.
  */
-struct tc_sfb_qopt {
-	__u32 rehash_interval;	/* delay between hash move, in ms */
-	__u32 warmup_time;	/* double buffering warmup time in ms (warmup_time < rehash_interval) */
+काष्ठा tc_sfb_qopt अणु
+	__u32 rehash_पूर्णांकerval;	/* delay between hash move, in ms */
+	__u32 warmup_समय;	/* द्विगुन buffering warmup समय in ms (warmup_समय < rehash_पूर्णांकerval) */
 	__u32 max;		/* max len of qlen_min */
 	__u32 bin_size;		/* maximum queue length per bin */
 	__u32 increment;	/* probability increment, (d1 in Blue) */
@@ -766,9 +767,9 @@ struct tc_sfb_qopt {
 	__u32 limit;		/* max SFB queue length */
 	__u32 penalty_rate;	/* inelastic flows are rate limited to 'rate' pps */
 	__u32 penalty_burst;
-};
+पूर्ण;
 
-struct tc_sfb_xstats {
+काष्ठा tc_sfb_xstats अणु
 	__u32 earlydrop;
 	__u32 penaltydrop;
 	__u32 bucketdrop;
@@ -778,28 +779,28 @@ struct tc_sfb_xstats {
 	__u32 maxqlen;
 	__u32 maxprob;
 	__u32 avgprob;
-};
+पूर्ण;
 
-#define SFB_MAX_PROB 0xFFFF
+#घोषणा SFB_MAX_PROB 0xFFFF
 
 /* QFQ */
-enum {
+क्रमागत अणु
 	TCA_QFQ_UNSPEC,
 	TCA_QFQ_WEIGHT,
 	TCA_QFQ_LMAX,
 	__TCA_QFQ_MAX
-};
+पूर्ण;
 
-#define TCA_QFQ_MAX	(__TCA_QFQ_MAX - 1)
+#घोषणा TCA_QFQ_MAX	(__TCA_QFQ_MAX - 1)
 
-struct tc_qfq_stats {
+काष्ठा tc_qfq_stats अणु
 	__u32 weight;
 	__u32 lmax;
-};
+पूर्ण;
 
 /* CODEL */
 
-enum {
+क्रमागत अणु
 	TCA_CODEL_UNSPEC,
 	TCA_CODEL_TARGET,
 	TCA_CODEL_LIMIT,
@@ -807,27 +808,27 @@ enum {
 	TCA_CODEL_ECN,
 	TCA_CODEL_CE_THRESHOLD,
 	__TCA_CODEL_MAX
-};
+पूर्ण;
 
-#define TCA_CODEL_MAX	(__TCA_CODEL_MAX - 1)
+#घोषणा TCA_CODEL_MAX	(__TCA_CODEL_MAX - 1)
 
-struct tc_codel_xstats {
+काष्ठा tc_codel_xstats अणु
 	__u32	maxpacket; /* largest packet we've seen so far */
-	__u32	count;	   /* how many drops we've done since the last time we
+	__u32	count;	   /* how many drops we've करोne since the last समय we
 			    * entered dropping state
 			    */
 	__u32	lastcount; /* count at entry to dropping state */
 	__u32	ldelay;    /* in-queue delay seen by most recently dequeued packet */
-	__s32	drop_next; /* time to drop next packet */
-	__u32	drop_overlimit; /* number of time max qdisc packet limit was hit */
+	__s32	drop_next; /* समय to drop next packet */
+	__u32	drop_overlimit; /* number of समय max qdisc packet limit was hit */
 	__u32	ecn_mark;  /* number of packets we ECN marked instead of dropped */
 	__u32	dropping;  /* are we in dropping state ? */
 	__u32	ce_mark;   /* number of CE marked packets because of ce_threshold */
-};
+पूर्ण;
 
 /* FQ_CODEL */
 
-enum {
+क्रमागत अणु
 	TCA_FQ_CODEL_UNSPEC,
 	TCA_FQ_CODEL_TARGET,
 	TCA_FQ_CODEL_LIMIT,
@@ -839,24 +840,24 @@ enum {
 	TCA_FQ_CODEL_DROP_BATCH_SIZE,
 	TCA_FQ_CODEL_MEMORY_LIMIT,
 	__TCA_FQ_CODEL_MAX
-};
+पूर्ण;
 
-#define TCA_FQ_CODEL_MAX	(__TCA_FQ_CODEL_MAX - 1)
+#घोषणा TCA_FQ_CODEL_MAX	(__TCA_FQ_CODEL_MAX - 1)
 
-enum {
+क्रमागत अणु
 	TCA_FQ_CODEL_XSTATS_QDISC,
 	TCA_FQ_CODEL_XSTATS_CLASS,
-};
+पूर्ण;
 
-struct tc_fq_codel_qd_stats {
+काष्ठा tc_fq_codel_qd_stats अणु
 	__u32	maxpacket;	/* largest packet we've seen so far */
-	__u32	drop_overlimit; /* number of time max qdisc
+	__u32	drop_overlimit; /* number of समय max qdisc
 				 * packet limit was hit
 				 */
 	__u32	ecn_mark;	/* number of packets we ECN marked
 				 * instead of being dropped
 				 */
-	__u32	new_flow_count; /* number of time packets
+	__u32	new_flow_count; /* number of समय packets
 				 * created a 'new flow'
 				 */
 	__u32	new_flows_len;	/* count of flows in new list */
@@ -864,9 +865,9 @@ struct tc_fq_codel_qd_stats {
 	__u32	ce_mark;	/* packets above ce_threshold */
 	__u32	memory_usage;	/* in bytes */
 	__u32	drop_overmemory;
-};
+पूर्ण;
 
-struct tc_fq_codel_cl_stats {
+काष्ठा tc_fq_codel_cl_stats अणु
 	__s32	deficit;
 	__u32	ldelay;		/* in-queue delay seen by most recently
 				 * dequeued packet
@@ -875,19 +876,19 @@ struct tc_fq_codel_cl_stats {
 	__u32	lastcount;
 	__u32	dropping;
 	__s32	drop_next;
-};
+पूर्ण;
 
-struct tc_fq_codel_xstats {
+काष्ठा tc_fq_codel_xstats अणु
 	__u32	type;
-	union {
-		struct tc_fq_codel_qd_stats qdisc_stats;
-		struct tc_fq_codel_cl_stats class_stats;
-	};
-};
+	जोड़ अणु
+		काष्ठा tc_fq_codel_qd_stats qdisc_stats;
+		काष्ठा tc_fq_codel_cl_stats class_stats;
+	पूर्ण;
+पूर्ण;
 
 /* FQ */
 
-enum {
+क्रमागत अणु
 	TCA_FQ_UNSPEC,
 
 	TCA_FQ_PLIMIT,		/* limit of total number of packets in queue */
@@ -896,11 +897,11 @@ enum {
 
 	TCA_FQ_QUANTUM,		/* RR quantum */
 
-	TCA_FQ_INITIAL_QUANTUM,		/* RR quantum for new flow */
+	TCA_FQ_INITIAL_QUANTUM,		/* RR quantum क्रम new flow */
 
 	TCA_FQ_RATE_ENABLE,	/* enable/disable rate limiting */
 
-	TCA_FQ_FLOW_DEFAULT_RATE,/* obsolete, do not use */
+	TCA_FQ_FLOW_DEFAULT_RATE,/* obsolete, करो not use */
 
 	TCA_FQ_FLOW_MAX_RATE,	/* per flow max rate */
 
@@ -914,26 +915,26 @@ enum {
 
 	TCA_FQ_CE_THRESHOLD,	/* DCTCP-like CE-marking threshold */
 
-	TCA_FQ_TIMER_SLACK,	/* timer slack */
+	TCA_FQ_TIMER_SLACK,	/* समयr slack */
 
-	TCA_FQ_HORIZON,		/* time horizon in us */
+	TCA_FQ_HORIZON,		/* समय horizon in us */
 
 	TCA_FQ_HORIZON_DROP,	/* drop packets beyond horizon, or cap their EDT */
 
 	__TCA_FQ_MAX
-};
+पूर्ण;
 
-#define TCA_FQ_MAX	(__TCA_FQ_MAX - 1)
+#घोषणा TCA_FQ_MAX	(__TCA_FQ_MAX - 1)
 
-struct tc_fq_qd_stats {
+काष्ठा tc_fq_qd_stats अणु
 	__u64	gc_flows;
 	__u64	highprio_packets;
 	__u64	tcp_retrans;
 	__u64	throttled;
 	__u64	flows_plimit;
-	__u64	pkts_too_long;
+	__u64	pkts_too_दीर्घ;
 	__u64	allocation_errors;
-	__s64	time_next_delayed_flow;
+	__s64	समय_next_delayed_flow;
 	__u32	flows;
 	__u32	inactive_flows;
 	__u32	throttled_flows;
@@ -941,11 +942,11 @@ struct tc_fq_qd_stats {
 	__u64	ce_mark;		/* packets above ce_threshold */
 	__u64	horizon_drops;
 	__u64	horizon_caps;
-};
+पूर्ण;
 
 /* Heavy-Hitter Filter */
 
-enum {
+क्रमागत अणु
 	TCA_HHF_UNSPEC,
 	TCA_HHF_BACKLOG_LIMIT,
 	TCA_HHF_QUANTUM,
@@ -955,21 +956,21 @@ enum {
 	TCA_HHF_EVICT_TIMEOUT,
 	TCA_HHF_NON_HH_WEIGHT,
 	__TCA_HHF_MAX
-};
+पूर्ण;
 
-#define TCA_HHF_MAX	(__TCA_HHF_MAX - 1)
+#घोषणा TCA_HHF_MAX	(__TCA_HHF_MAX - 1)
 
-struct tc_hhf_xstats {
-	__u32	drop_overlimit; /* number of times max qdisc packet limit
+काष्ठा tc_hhf_xstats अणु
+	__u32	drop_overlimit; /* number of बार max qdisc packet limit
 				 * was hit
 				 */
-	__u32	hh_overlimit;   /* number of times max heavy-hitters was hit */
+	__u32	hh_overlimit;   /* number of बार max heavy-hitters was hit */
 	__u32	hh_tot_count;   /* number of captured heavy-hitters so far */
 	__u32	hh_cur_count;   /* number of current heavy-hitters */
-};
+पूर्ण;
 
 /* PIE */
-enum {
+क्रमागत अणु
 	TCA_PIE_UNSPEC,
 	TCA_PIE_TARGET,
 	TCA_PIE_LIMIT,
@@ -980,14 +981,14 @@ enum {
 	TCA_PIE_BYTEMODE,
 	TCA_PIE_DQ_RATE_ESTIMATOR,
 	__TCA_PIE_MAX
-};
-#define TCA_PIE_MAX   (__TCA_PIE_MAX - 1)
+पूर्ण;
+#घोषणा TCA_PIE_MAX   (__TCA_PIE_MAX - 1)
 
-struct tc_pie_xstats {
+काष्ठा tc_pie_xstats अणु
 	__u64 prob;			/* current probability */
 	__u32 delay;			/* current delay in ms */
 	__u32 avg_dq_rate;		/* current average dq_rate in
-					 * bits/pie_time
+					 * bits/pie_समय
 					 */
 	__u32 dq_rate_estimating;	/* is avg_dq_rate being calculated? */
 	__u32 packets_in;		/* total number of packets enqueued */
@@ -997,10 +998,10 @@ struct tc_pie_xstats {
 					 */
 	__u32 maxq;			/* maximum queue size */
 	__u32 ecn_mark;			/* packets marked with ecn*/
-};
+पूर्ण;
 
 /* FQ PIE */
-enum {
+क्रमागत अणु
 	TCA_FQ_PIE_UNSPEC,
 	TCA_FQ_PIE_LIMIT,
 	TCA_FQ_PIE_FLOWS,
@@ -1015,10 +1016,10 @@ enum {
 	TCA_FQ_PIE_BYTEMODE,
 	TCA_FQ_PIE_DQ_RATE_ESTIMATOR,
 	__TCA_FQ_PIE_MAX
-};
-#define TCA_FQ_PIE_MAX   (__TCA_FQ_PIE_MAX - 1)
+पूर्ण;
+#घोषणा TCA_FQ_PIE_MAX   (__TCA_FQ_PIE_MAX - 1)
 
-struct tc_fq_pie_xstats {
+काष्ठा tc_fq_pie_xstats अणु
 	__u32 packets_in;	/* total number of packets enqueued */
 	__u32 dropped;		/* packets dropped due to fq_pie_action */
 	__u32 overlimit;	/* dropped due to lack of space in queue */
@@ -1028,48 +1029,48 @@ struct tc_fq_pie_xstats {
 	__u32 new_flows_len;	/* count of flows in new list */
 	__u32 old_flows_len;	/* count of flows in old list */
 	__u32 memory_usage;	/* total memory across all queues */
-};
+पूर्ण;
 
 /* CBS */
-struct tc_cbs_qopt {
+काष्ठा tc_cbs_qopt अणु
 	__u8 offload;
 	__u8 _pad[3];
 	__s32 hicredit;
 	__s32 locredit;
 	__s32 idleslope;
 	__s32 sendslope;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_CBS_UNSPEC,
 	TCA_CBS_PARMS,
 	__TCA_CBS_MAX,
-};
+पूर्ण;
 
-#define TCA_CBS_MAX (__TCA_CBS_MAX - 1)
+#घोषणा TCA_CBS_MAX (__TCA_CBS_MAX - 1)
 
 
 /* ETF */
-struct tc_etf_qopt {
+काष्ठा tc_etf_qopt अणु
 	__s32 delta;
-	__s32 clockid;
+	__s32 घड़ीid;
 	__u32 flags;
-#define TC_ETF_DEADLINE_MODE_ON	_BITUL(0)
-#define TC_ETF_OFFLOAD_ON	_BITUL(1)
-#define TC_ETF_SKIP_SOCK_CHECK	_BITUL(2)
-};
+#घोषणा TC_ETF_DEADLINE_MODE_ON	_BITUL(0)
+#घोषणा TC_ETF_OFFLOAD_ON	_BITUL(1)
+#घोषणा TC_ETF_SKIP_SOCK_CHECK	_BITUL(2)
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_ETF_UNSPEC,
 	TCA_ETF_PARMS,
 	__TCA_ETF_MAX,
-};
+पूर्ण;
 
-#define TCA_ETF_MAX (__TCA_ETF_MAX - 1)
+#घोषणा TCA_ETF_MAX (__TCA_ETF_MAX - 1)
 
 
 /* CAKE */
-enum {
+क्रमागत अणु
 	TCA_CAKE_UNSPEC,
 	TCA_CAKE_PAD,
 	TCA_CAKE_BASE_RATE64,
@@ -1090,10 +1091,10 @@ enum {
 	TCA_CAKE_SPLIT_GSO,
 	TCA_CAKE_FWMARK,
 	__TCA_CAKE_MAX
-};
-#define TCA_CAKE_MAX	(__TCA_CAKE_MAX - 1)
+पूर्ण;
+#घोषणा TCA_CAKE_MAX	(__TCA_CAKE_MAX - 1)
 
-enum {
+क्रमागत अणु
 	__TCA_CAKE_STATS_INVALID,
 	TCA_CAKE_STATS_PAD,
 	TCA_CAKE_STATS_CAPACITY_ESTIMATE64,
@@ -1112,10 +1113,10 @@ enum {
 	TCA_CAKE_STATS_P_DROP,
 	TCA_CAKE_STATS_BLUE_TIMER_US,
 	__TCA_CAKE_STATS_MAX
-};
-#define TCA_CAKE_STATS_MAX (__TCA_CAKE_STATS_MAX - 1)
+पूर्ण;
+#घोषणा TCA_CAKE_STATS_MAX (__TCA_CAKE_STATS_MAX - 1)
 
-enum {
+क्रमागत अणु
 	__TCA_CAKE_TIN_STATS_INVALID,
 	TCA_CAKE_TIN_STATS_PAD,
 	TCA_CAKE_TIN_STATS_SENT_PACKETS,
@@ -1131,7 +1132,7 @@ enum {
 	TCA_CAKE_TIN_STATS_THRESHOLD_RATE64,
 	TCA_CAKE_TIN_STATS_TARGET_US,
 	TCA_CAKE_TIN_STATS_INTERVAL_US,
-	TCA_CAKE_TIN_STATS_WAY_INDIRECT_HITS,
+	TCA_CAKE_TIN_STATS_WAY_INसूचीECT_HITS,
 	TCA_CAKE_TIN_STATS_WAY_MISSES,
 	TCA_CAKE_TIN_STATS_WAY_COLLISIONS,
 	TCA_CAKE_TIN_STATS_PEAK_DELAY_US,
@@ -1143,11 +1144,11 @@ enum {
 	TCA_CAKE_TIN_STATS_MAX_SKBLEN,
 	TCA_CAKE_TIN_STATS_FLOW_QUANTUM,
 	__TCA_CAKE_TIN_STATS_MAX
-};
-#define TCA_CAKE_TIN_STATS_MAX (__TCA_CAKE_TIN_STATS_MAX - 1)
-#define TC_CAKE_MAX_TINS (8)
+पूर्ण;
+#घोषणा TCA_CAKE_TIN_STATS_MAX (__TCA_CAKE_TIN_STATS_MAX - 1)
+#घोषणा TC_CAKE_MAX_TINS (8)
 
-enum {
+क्रमागत अणु
 	CAKE_FLOW_NONE = 0,
 	CAKE_FLOW_SRC_IP,
 	CAKE_FLOW_DST_IP,
@@ -1157,65 +1158,65 @@ enum {
 	CAKE_FLOW_DUAL_DST, /* = CAKE_FLOW_DST_IP | CAKE_FLOW_FLOWS */
 	CAKE_FLOW_TRIPLE,   /* = CAKE_FLOW_HOSTS  | CAKE_FLOW_FLOWS */
 	CAKE_FLOW_MAX,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CAKE_DIFFSERV_DIFFSERV3 = 0,
 	CAKE_DIFFSERV_DIFFSERV4,
 	CAKE_DIFFSERV_DIFFSERV8,
 	CAKE_DIFFSERV_BESTEFFORT,
 	CAKE_DIFFSERV_PRECEDENCE,
 	CAKE_DIFFSERV_MAX
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CAKE_ACK_NONE = 0,
 	CAKE_ACK_FILTER,
 	CAKE_ACK_AGGRESSIVE,
 	CAKE_ACK_MAX
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CAKE_ATM_NONE = 0,
 	CAKE_ATM_ATM,
 	CAKE_ATM_PTM,
 	CAKE_ATM_MAX
-};
+पूर्ण;
 
 
 /* TAPRIO */
-enum {
+क्रमागत अणु
 	TC_TAPRIO_CMD_SET_GATES = 0x00,
 	TC_TAPRIO_CMD_SET_AND_HOLD = 0x01,
 	TC_TAPRIO_CMD_SET_AND_RELEASE = 0x02,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_TAPRIO_SCHED_ENTRY_UNSPEC,
 	TCA_TAPRIO_SCHED_ENTRY_INDEX, /* u32 */
 	TCA_TAPRIO_SCHED_ENTRY_CMD, /* u8 */
 	TCA_TAPRIO_SCHED_ENTRY_GATE_MASK, /* u32 */
 	TCA_TAPRIO_SCHED_ENTRY_INTERVAL, /* u32 */
 	__TCA_TAPRIO_SCHED_ENTRY_MAX,
-};
-#define TCA_TAPRIO_SCHED_ENTRY_MAX (__TCA_TAPRIO_SCHED_ENTRY_MAX - 1)
+पूर्ण;
+#घोषणा TCA_TAPRIO_SCHED_ENTRY_MAX (__TCA_TAPRIO_SCHED_ENTRY_MAX - 1)
 
-/* The format for schedule entry list is:
+/* The क्रमmat क्रम schedule entry list is:
  * [TCA_TAPRIO_SCHED_ENTRY_LIST]
  *   [TCA_TAPRIO_SCHED_ENTRY]
  *     [TCA_TAPRIO_SCHED_ENTRY_CMD]
  *     [TCA_TAPRIO_SCHED_ENTRY_GATES]
  *     [TCA_TAPRIO_SCHED_ENTRY_INTERVAL]
  */
-enum {
+क्रमागत अणु
 	TCA_TAPRIO_SCHED_UNSPEC,
 	TCA_TAPRIO_SCHED_ENTRY,
 	__TCA_TAPRIO_SCHED_MAX,
-};
+पूर्ण;
 
-#define TCA_TAPRIO_SCHED_MAX (__TCA_TAPRIO_SCHED_MAX - 1)
+#घोषणा TCA_TAPRIO_SCHED_MAX (__TCA_TAPRIO_SCHED_MAX - 1)
 
-/* The format for the admin sched (dump only):
+/* The क्रमmat क्रम the admin sched (dump only):
  * [TCA_TAPRIO_SCHED_ADMIN_SCHED]
  *   [TCA_TAPRIO_ATTR_SCHED_BASE_TIME]
  *   [TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST]
@@ -1225,12 +1226,12 @@ enum {
  *       [TCA_TAPRIO_ATTR_SCHED_ENTRY_INTERVAL]
  */
 
-#define TCA_TAPRIO_ATTR_FLAG_TXTIME_ASSIST	_BITUL(0)
-#define TCA_TAPRIO_ATTR_FLAG_FULL_OFFLOAD	_BITUL(1)
+#घोषणा TCA_TAPRIO_ATTR_FLAG_TXTIME_ASSIST	_BITUL(0)
+#घोषणा TCA_TAPRIO_ATTR_FLAG_FULL_OFFLOAD	_BITUL(1)
 
-enum {
+क्रमागत अणु
 	TCA_TAPRIO_ATTR_UNSPEC,
-	TCA_TAPRIO_ATTR_PRIOMAP, /* struct tc_mqprio_qopt */
+	TCA_TAPRIO_ATTR_PRIOMAP, /* काष्ठा tc_mqprio_qopt */
 	TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST, /* nested of entry */
 	TCA_TAPRIO_ATTR_SCHED_BASE_TIME, /* s64 */
 	TCA_TAPRIO_ATTR_SCHED_SINGLE_ENTRY, /* single entry */
@@ -1242,15 +1243,15 @@ enum {
 	TCA_TAPRIO_ATTR_FLAGS, /* u32 */
 	TCA_TAPRIO_ATTR_TXTIME_DELAY, /* u32 */
 	__TCA_TAPRIO_ATTR_MAX,
-};
+पूर्ण;
 
-#define TCA_TAPRIO_ATTR_MAX (__TCA_TAPRIO_ATTR_MAX - 1)
+#घोषणा TCA_TAPRIO_ATTR_MAX (__TCA_TAPRIO_ATTR_MAX - 1)
 
 /* ETS */
 
-#define TCQ_ETS_MAX_BANDS 16
+#घोषणा TCQ_ETS_MAX_BANDS 16
 
-enum {
+क्रमागत अणु
 	TCA_ETS_UNSPEC,
 	TCA_ETS_NBANDS,		/* u8 */
 	TCA_ETS_NSTRICT,	/* u8 */
@@ -1259,8 +1260,8 @@ enum {
 	TCA_ETS_PRIOMAP,	/* nested TCA_ETS_PRIOMAP_BAND */
 	TCA_ETS_PRIOMAP_BAND,	/* u8 */
 	__TCA_ETS_MAX,
-};
+पूर्ण;
 
-#define TCA_ETS_MAX (__TCA_ETS_MAX - 1)
+#घोषणा TCA_ETS_MAX (__TCA_ETS_MAX - 1)
 
-#endif
+#पूर्ण_अगर

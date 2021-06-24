@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef I2C_PCA9564_PLATFORM_H
-#define I2C_PCA9564_PLATFORM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित I2C_PCA9564_PLATFORM_H
+#घोषणा I2C_PCA9564_PLATFORM_H
 
-struct i2c_pca9564_pf_platform_data {
-	int i2c_clock_speed;	/* values are defined in linux/i2c-algo-pca.h */
-	int timeout;		/* timeout in jiffies */
-};
+काष्ठा i2c_pca9564_pf_platक्रमm_data अणु
+	पूर्णांक i2c_घड़ी_speed;	/* values are defined in linux/i2c-algo-pca.h */
+	पूर्णांक समयout;		/* समयout in jअगरfies */
+पूर्ण;
 
-#endif /* I2C_PCA9564_PLATFORM_H */
+#पूर्ण_अगर /* I2C_PCA9564_PLATFORM_H */

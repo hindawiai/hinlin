@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
- * Copyright (C) 2013 Richard Weinberger <richrd@nod.at>
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2013 Riअक्षरd Weinberger <richrd@nod.at>
  */
 
-#include <linux/kallsyms.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/task_stack.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/task_stack.h>
 
-#include <asm/sysrq.h>
-#include <asm/stacktrace.h>
-#include <os.h>
+#समावेश <यंत्र/sysrq.h>
+#समावेश <यंत्र/stacktrace.h>
+#समावेश <os.h>
 
-static void _print_addr(void *data, unsigned long address, int reliable)
-{
-	const char *loglvl = data;
+अटल व्योम _prपूर्णांक_addr(व्योम *data, अचिन्हित दीर्घ address, पूर्णांक reliable)
+अणु
+	स्थिर अक्षर *loglvl = data;
 
-	printk("%s [<%08lx>] %s%pS\n", loglvl, address, reliable ? "" : "? ",
-		(void *)address);
-}
+	prपूर्णांकk("%s [<%08lx>] %s%pS\n", loglvl, address, reliable ? "" : "? ",
+		(व्योम *)address);
+पूर्ण
 
-static const struct stacktrace_ops stackops = {
-	.address = _print_addr
-};
+अटल स्थिर काष्ठा stacktrace_ops stackops = अणु
+	.address = _prपूर्णांक_addr
+पूर्ण;
 
-void show_stack(struct task_struct *task, unsigned long *stack,
-		       const char *loglvl)
-{
-	struct pt_regs *segv_regs = current->thread.segv_regs;
-	int i;
+व्योम show_stack(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *stack,
+		       स्थिर अक्षर *loglvl)
+अणु
+	काष्ठा pt_regs *segv_regs = current->thपढ़ो.segv_regs;
+	पूर्णांक i;
 
-	if (!segv_regs && os_is_signal_stack()) {
+	अगर (!segv_regs && os_is_संकेत_stack()) अणु
 		pr_err("Received SIGSEGV in SIGSEGV handler,"
 				" aborting stack trace!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!stack)
-		stack = get_stack_pointer(task, segv_regs);
+	अगर (!stack)
+		stack = get_stack_poपूर्णांकer(task, segv_regs);
 
-	printk("%sStack:\n", loglvl);
-	for (i = 0; i < 3 * STACKSLOTS_PER_LINE; i++) {
-		if (kstack_end(stack))
-			break;
-		if (i && ((i % STACKSLOTS_PER_LINE) == 0))
+	prपूर्णांकk("%sStack:\n", loglvl);
+	क्रम (i = 0; i < 3 * STACKSLOTS_PER_LINE; i++) अणु
+		अगर (kstack_end(stack))
+			अवरोध;
+		अगर (i && ((i % STACKSLOTS_PER_LINE) == 0))
 			pr_cont("\n");
 		pr_cont(" %08lx", *stack++);
-	}
+	पूर्ण
 
-	printk("%sCall Trace:\n", loglvl);
-	dump_trace(current, &stackops, (void *)loglvl);
-}
+	prपूर्णांकk("%sCall Trace:\n", loglvl);
+	dump_trace(current, &stackops, (व्योम *)loglvl);
+पूर्ण

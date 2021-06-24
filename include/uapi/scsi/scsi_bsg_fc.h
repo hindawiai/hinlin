@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  *  FC Transport BSG Interface
  *
  *  Copyright (C) 2008   James Smart, Emulex Corporation
  */
 
-#ifndef SCSI_BSG_FC_H
-#define SCSI_BSG_FC_H
+#अगर_अघोषित SCSI_BSG_FC_H
+#घोषणा SCSI_BSG_FC_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
- * This file intended to be included by both kernel and user space
+ * This file पूर्णांकended to be included by both kernel and user space
  */
 
 /*
  * FC Transport SGIO v4 BSG Message Support
  */
 
-/* Default BSG request timeout (in seconds) */
-#define FC_DEFAULT_BSG_TIMEOUT		(10 * HZ)
+/* Default BSG request समयout (in seconds) */
+#घोषणा FC_DEFAULT_BSG_TIMEOUT		(10 * HZ)
 
 
 /*
  * Request Message Codes supported by the FC Transport
  */
 
-/* define the class masks for the message codes */
-#define FC_BSG_CLS_MASK		0xF0000000	/* find object class */
-#define FC_BSG_HST_MASK		0x80000000	/* fc host class */
-#define FC_BSG_RPT_MASK		0x40000000	/* fc rport class */
+/* define the class masks क्रम the message codes */
+#घोषणा FC_BSG_CLS_MASK		0xF0000000	/* find object class */
+#घोषणा FC_BSG_HST_MASK		0x80000000	/* fc host class */
+#घोषणा FC_BSG_RPT_MASK		0x40000000	/* fc rport class */
 
 	/* fc_host Message Codes */
-#define FC_BSG_HST_ADD_RPORT		(FC_BSG_HST_MASK | 0x00000001)
-#define FC_BSG_HST_DEL_RPORT		(FC_BSG_HST_MASK | 0x00000002)
-#define FC_BSG_HST_ELS_NOLOGIN		(FC_BSG_HST_MASK | 0x00000003)
-#define FC_BSG_HST_CT			(FC_BSG_HST_MASK | 0x00000004)
-#define FC_BSG_HST_VENDOR		(FC_BSG_HST_MASK | 0x000000FF)
+#घोषणा FC_BSG_HST_ADD_RPORT		(FC_BSG_HST_MASK | 0x00000001)
+#घोषणा FC_BSG_HST_DEL_RPORT		(FC_BSG_HST_MASK | 0x00000002)
+#घोषणा FC_BSG_HST_ELS_NOLOGIN		(FC_BSG_HST_MASK | 0x00000003)
+#घोषणा FC_BSG_HST_CT			(FC_BSG_HST_MASK | 0x00000004)
+#घोषणा FC_BSG_HST_VENDOR		(FC_BSG_HST_MASK | 0x000000FF)
 
 	/* fc_rport Message Codes */
-#define FC_BSG_RPT_ELS			(FC_BSG_RPT_MASK | 0x00000001)
-#define FC_BSG_RPT_CT			(FC_BSG_RPT_MASK | 0x00000002)
+#घोषणा FC_BSG_RPT_ELS			(FC_BSG_RPT_MASK | 0x00000001)
+#घोषणा FC_BSG_RPT_CT			(FC_BSG_RPT_MASK | 0x00000002)
 
 
 
 /*
- * FC Address Identifiers in Message Structures :
+ * FC Address Identअगरiers in Message Structures :
  *
- *   Whenever a command payload contains a FC Address Identifier
+ *   Whenever a command payload contains a FC Address Identअगरier
  *   (aka port_id), the value is effectively in big-endian
  *   order, thus the array elements are decoded as follows:
- *     element [0] is bits 23:16 of the FC Address Identifier
- *     element [1] is bits 15:8 of the FC Address Identifier
- *     element [2] is bits 7:0 of the FC Address Identifier
+ *     element [0] is bits 23:16 of the FC Address Identअगरier
+ *     element [1] is bits 15:8 of the FC Address Identअगरier
+ *     element [2] is bits 7:0 of the FC Address Identअगरier
  */
 
 
@@ -64,15 +65,15 @@
 
 /* Request:
  * This message requests the FC host to login to the remote port
- * at the specified N_Port_Id.  The remote port is to be enumerated
+ * at the specअगरied N_Port_Id.  The remote port is to be क्रमागतerated
  * with the transport upon completion of the login.
  */
-struct fc_bsg_host_add_rport {
+काष्ठा fc_bsg_host_add_rport अणु
 	__u8	reserved;
 
 	/* FC Address Identier of the remote port to login to */
 	__u8	port_id[3];
-};
+पूर्ण;
 
 /* Response:
  * There is no additional response data - fc_bsg_reply->result is sufficient
@@ -82,18 +83,18 @@ struct fc_bsg_host_add_rport {
 /* FC_BSG_HST_DEL_RPORT : */
 
 /* Request:
- * This message requests the FC host to remove an enumerated
+ * This message requests the FC host to हटाओ an क्रमागतerated
  * remote port and to terminate the login to it.
  *
- * Note: The driver is free to reject this request if it desires to
- * remain logged in with the remote port.
+ * Note: The driver is मुक्त to reject this request अगर it desires to
+ * reमुख्य logged in with the remote port.
  */
-struct fc_bsg_host_del_rport {
+काष्ठा fc_bsg_host_del_rport अणु
 	__u8	reserved;
 
 	/* FC Address Identier of the remote port to logout of */
 	__u8	port_id[3];
-};
+पूर्ण;
 
 /* Response:
  * There is no additional response data - fc_bsg_reply->result is sufficient
@@ -103,12 +104,12 @@ struct fc_bsg_host_del_rport {
 /* FC_BSG_HST_ELS_NOLOGIN : */
 
 /* Request:
- * This message requests the FC_Host to send an ELS to a specific
- * N_Port_ID. The host does not need to log into the remote port,
- * nor does it need to enumerate the rport for further traffic
- * (although, the FC host is free to do so if it desires).
+ * This message requests the FC_Host to send an ELS to a specअगरic
+ * N_Port_ID. The host करोes not need to log पूर्णांकo the remote port,
+ * nor करोes it need to क्रमागतerate the rport क्रम further traffic
+ * (although, the FC host is मुक्त to करो so अगर it desires).
  */
-struct fc_bsg_host_els {
+काष्ठा fc_bsg_host_els अणु
 	/*
 	 * ELS Command Code being sent (must be the same as byte 0
 	 * of the payload)
@@ -117,25 +118,25 @@ struct fc_bsg_host_els {
 
 	/* FC Address Identier of the remote port to send the ELS to */
 	__u8	port_id[3];
-};
+पूर्ण;
 
 /* Response:
  */
 /* fc_bsg_ctels_reply->status values */
-#define FC_CTELS_STATUS_OK	0x00000000
-#define FC_CTELS_STATUS_REJECT	0x00000001
-#define FC_CTELS_STATUS_P_RJT	0x00000002
-#define FC_CTELS_STATUS_F_RJT	0x00000003
-#define FC_CTELS_STATUS_P_BSY	0x00000004
-#define FC_CTELS_STATUS_F_BSY	0x00000006
-struct fc_bsg_ctels_reply {
+#घोषणा FC_CTELS_STATUS_OK	0x00000000
+#घोषणा FC_CTELS_STATUS_REJECT	0x00000001
+#घोषणा FC_CTELS_STATUS_P_RJT	0x00000002
+#घोषणा FC_CTELS_STATUS_F_RJT	0x00000003
+#घोषणा FC_CTELS_STATUS_P_BSY	0x00000004
+#घोषणा FC_CTELS_STATUS_F_BSY	0x00000006
+काष्ठा fc_bsg_ctels_reply अणु
 	/*
 	 * Note: An ELS LS_RJT may be reported in 2 ways:
-	 *  a) A status of FC_CTELS_STATUS_OK is returned. The caller
-	 *     is to look into the ELS receive payload to determine
+	 *  a) A status of FC_CTELS_STATUS_OK is वापसed. The caller
+	 *     is to look पूर्णांकo the ELS receive payload to determine
 	 *     LS_ACC or LS_RJT (by contents of word 0). The reject
 	 *     data will be in word 1.
-	 *  b) A status of FC_CTELS_STATUS_REJECT is returned, The
+	 *  b) A status of FC_CTELS_STATUS_REJECT is वापसed, The
 	 *     rjt_data field will contain valid data.
 	 *
 	 * Note: ELS LS_ACC is determined by an FC_CTELS_STATUS_OK, and
@@ -143,11 +144,11 @@ struct fc_bsg_ctels_reply {
 	 *   (e.g. value is 0x02xxxxxx).
 	 *
 	 * Note: Similarly, a CT Reject may be reported in 2 ways:
-	 *  a) A status of FC_CTELS_STATUS_OK is returned. The caller
-	 *     is to look into the CT receive payload to determine
+	 *  a) A status of FC_CTELS_STATUS_OK is वापसed. The caller
+	 *     is to look पूर्णांकo the CT receive payload to determine
 	 *     Accept or Reject (by contents of word 2). The reject
 	 *     data will be in word 3.
-	 *  b) A status of FC_CTELS_STATUS_REJECT is returned, The
+	 *  b) A status of FC_CTELS_STATUS_REJECT is वापसed, The
 	 *     rjt_data field will contain valid data.
 	 *
 	 * Note: x_RJT/BSY status will indicae that the rjt_data field
@@ -155,69 +156,69 @@ struct fc_bsg_ctels_reply {
 	 */
 	__u32	status;		/* See FC_CTELS_STATUS_xxx */
 
-	/* valid if status is not FC_CTELS_STATUS_OK */
-	struct	{
-		__u8	action;		/* fragment_id for CT REJECT */
+	/* valid अगर status is not FC_CTELS_STATUS_OK */
+	काष्ठा	अणु
+		__u8	action;		/* fragment_id क्रम CT REJECT */
 		__u8	reason_code;
 		__u8	reason_explanation;
-		__u8	vendor_unique;
-	} rjt_data;
-};
+		__u8	venकरोr_unique;
+	पूर्ण rjt_data;
+पूर्ण;
 
 
 /* FC_BSG_HST_CT : */
 
 /* Request:
- * This message requests that a CT Request be performed with the
- * indicated N_Port_ID. The driver is responsible for logging in with
- * the fabric and/or N_Port_ID, etc as per FC rules. This request does
- * not mandate that the driver must enumerate the destination in the
- * transport. The driver is allowed to decide whether to enumerate it,
- * and whether to tear it down after the request.
+ * This message requests that a CT Request be perक्रमmed with the
+ * indicated N_Port_ID. The driver is responsible क्रम logging in with
+ * the fabric and/or N_Port_ID, etc as per FC rules. This request करोes
+ * not mandate that the driver must क्रमागतerate the destination in the
+ * transport. The driver is allowed to decide whether to क्रमागतerate it,
+ * and whether to tear it करोwn after the request.
  */
-struct fc_bsg_host_ct {
+काष्ठा fc_bsg_host_ct अणु
 	__u8	reserved;
 
 	/* FC Address Identier of the remote port to send the ELS to */
 	__u8	port_id[3];
 
 	/*
-	 * We need words 0-2 of the generic preamble for the LLD's
+	 * We need words 0-2 of the generic preamble क्रम the LLD's
 	 */
 	__u32	preamble_word0;	/* revision & IN_ID */
 	__u32	preamble_word1;	/* GS_Type, GS_SubType, Options, Rsvd */
 	__u32	preamble_word2;	/* Cmd Code, Max Size */
 
-};
+पूर्ण;
 /* Response:
  *
- * The reply structure is an fc_bsg_ctels_reply structure
+ * The reply काष्ठाure is an fc_bsg_ctels_reply काष्ठाure
  */
 
 
 /* FC_BSG_HST_VENDOR : */
 
 /* Request:
- * Note: When specifying vendor_id, be sure to read the Vendor Type and ID
- *   formatting requirements specified in scsi_netlink.h
+ * Note: When specअगरying venकरोr_id, be sure to पढ़ो the Venकरोr Type and ID
+ *   क्रमmatting requirements specअगरied in scsi_netlink.h
  */
-struct fc_bsg_host_vendor {
+काष्ठा fc_bsg_host_venकरोr अणु
 	/*
-	 * Identifies the vendor that the message is formatted for. This
+	 * Identअगरies the venकरोr that the message is क्रमmatted क्रम. This
 	 * should be the recipient of the message.
 	 */
-	__u64 vendor_id;
+	__u64 venकरोr_id;
 
-	/* start of vendor command area */
-	__u32 vendor_cmd[0];
-};
+	/* start of venकरोr command area */
+	__u32 venकरोr_cmd[0];
+पूर्ण;
 
 /* Response:
  */
-struct fc_bsg_host_vendor_reply {
-	/* start of vendor response area */
-	__u32 vendor_rsp[0];
-};
+काष्ठा fc_bsg_host_venकरोr_reply अणु
+	/* start of venकरोr response area */
+	__u32 venकरोr_rsp[0];
+पूर्ण;
 
 
 
@@ -228,67 +229,67 @@ struct fc_bsg_host_vendor_reply {
 /* FC_BSG_RPT_ELS : */
 
 /* Request:
- * This message requests that an ELS be performed with the rport.
+ * This message requests that an ELS be perक्रमmed with the rport.
  */
-struct fc_bsg_rport_els {
+काष्ठा fc_bsg_rport_els अणु
 	/*
 	 * ELS Command Code being sent (must be the same as
 	 * byte 0 of the payload)
 	 */
 	__u8 els_code;
-};
+पूर्ण;
 
 /* Response:
  *
- * The reply structure is an fc_bsg_ctels_reply structure
+ * The reply काष्ठाure is an fc_bsg_ctels_reply काष्ठाure
  */
 
 
 /* FC_BSG_RPT_CT : */
 
 /* Request:
- * This message requests that a CT Request be performed with the rport.
+ * This message requests that a CT Request be perक्रमmed with the rport.
  */
-struct fc_bsg_rport_ct {
+काष्ठा fc_bsg_rport_ct अणु
 	/*
-	 * We need words 0-2 of the generic preamble for the LLD's
+	 * We need words 0-2 of the generic preamble क्रम the LLD's
 	 */
 	__u32	preamble_word0;	/* revision & IN_ID */
 	__u32	preamble_word1;	/* GS_Type, GS_SubType, Options, Rsvd */
 	__u32	preamble_word2;	/* Cmd Code, Max Size */
-};
+पूर्ण;
 /* Response:
  *
- * The reply structure is an fc_bsg_ctels_reply structure
+ * The reply काष्ठाure is an fc_bsg_ctels_reply काष्ठाure
  */
 
 
 
 
-/* request (CDB) structure of the sg_io_v4 */
-struct fc_bsg_request {
+/* request (CDB) काष्ठाure of the sg_io_v4 */
+काष्ठा fc_bsg_request अणु
 	__u32 msgcode;
-	union {
-		struct fc_bsg_host_add_rport	h_addrport;
-		struct fc_bsg_host_del_rport	h_delrport;
-		struct fc_bsg_host_els		h_els;
-		struct fc_bsg_host_ct		h_ct;
-		struct fc_bsg_host_vendor	h_vendor;
+	जोड़ अणु
+		काष्ठा fc_bsg_host_add_rport	h_addrport;
+		काष्ठा fc_bsg_host_del_rport	h_delrport;
+		काष्ठा fc_bsg_host_els		h_els;
+		काष्ठा fc_bsg_host_ct		h_ct;
+		काष्ठा fc_bsg_host_venकरोr	h_venकरोr;
 
-		struct fc_bsg_rport_els		r_els;
-		struct fc_bsg_rport_ct		r_ct;
-	} rqst_data;
-} __attribute__((packed));
+		काष्ठा fc_bsg_rport_els		r_els;
+		काष्ठा fc_bsg_rport_ct		r_ct;
+	पूर्ण rqst_data;
+पूर्ण __attribute__((packed));
 
 
-/* response (request sense data) structure of the sg_io_v4 */
-struct fc_bsg_reply {
+/* response (request sense data) काष्ठाure of the sg_io_v4 */
+काष्ठा fc_bsg_reply अणु
 	/*
-	 * The completion result. Result exists in two forms:
-	 *  if negative, it is an -Exxx system errno value. There will
-	 *    be no further reply information supplied.
-	 *  else, it's the 4-byte scsi error result, with driver, host,
-	 *    msg and status fields. The per-msgcode reply structure
+	 * The completion result. Result exists in two क्रमms:
+	 *  अगर negative, it is an -Exxx प्रणाली त्रुटि_सं value. There will
+	 *    be no further reply inक्रमmation supplied.
+	 *  अन्यथा, it's the 4-byte scsi error result, with driver, host,
+	 *    msg and status fields. The per-msgcode reply काष्ठाure
 	 *    will contain valid data.
 	 */
 	__u32 result;
@@ -296,13 +297,13 @@ struct fc_bsg_reply {
 	/* If there was reply_payload, how much was recevied ? */
 	__u32 reply_payload_rcv_len;
 
-	union {
-		struct fc_bsg_host_vendor_reply		vendor_reply;
+	जोड़ अणु
+		काष्ठा fc_bsg_host_venकरोr_reply		venकरोr_reply;
 
-		struct fc_bsg_ctels_reply		ctels_reply;
-	} reply_data;
-};
+		काष्ठा fc_bsg_ctels_reply		ctels_reply;
+	पूर्ण reply_data;
+पूर्ण;
 
 
-#endif /* SCSI_BSG_FC_H */
+#पूर्ण_अगर /* SCSI_BSG_FC_H */
 

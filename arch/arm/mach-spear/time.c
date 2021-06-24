@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * arch/arm/plat-spear/time.c
+ * arch/arm/plat-spear/समय.c
  *
  * Copyright (C) 2010 ST Microelectronics
  * Shiraz Hashim<shiraz.linux.kernel@gmail.com>
@@ -9,243 +10,243 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of_irq.h>
-#include <linux/of_address.h>
-#include <linux/time.h>
-#include <linux/irq.h>
-#include <asm/mach/time.h>
-#include "generic.h"
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/irq.h>
+#समावेश <यंत्र/mach/समय.स>
+#समावेश "generic.h"
 
 /*
- * We would use TIMER0 and TIMER1 as clockevent and clocksource.
- * Timer0 and Timer1 both belong to same gpt block in cpu subbsystem. Further
- * they share same functional clock. Any change in one's functional clock will
- * also affect other timer.
+ * We would use TIMER0 and TIMER1 as घड़ीevent and घड़ीsource.
+ * Timer0 and Timer1 both beदीर्घ to same gpt block in cpu subbप्रणाली. Further
+ * they share same functional घड़ी. Any change in one's functional घड़ी will
+ * also affect other समयr.
  */
 
-#define CLKEVT	0	/* gpt0, channel0 as clockevent */
-#define CLKSRC	1	/* gpt0, channel1 as clocksource */
+#घोषणा CLKEVT	0	/* gpt0, channel0 as घड़ीevent */
+#घोषणा CLKSRC	1	/* gpt0, channel1 as घड़ीsource */
 
 /* Register offsets, x is channel number */
-#define CR(x)		((x) * 0x80 + 0x80)
-#define IR(x)		((x) * 0x80 + 0x84)
-#define LOAD(x)		((x) * 0x80 + 0x88)
-#define COUNT(x)	((x) * 0x80 + 0x8C)
+#घोषणा CR(x)		((x) * 0x80 + 0x80)
+#घोषणा IR(x)		((x) * 0x80 + 0x84)
+#घोषणा LOAD(x)		((x) * 0x80 + 0x88)
+#घोषणा COUNT(x)	((x) * 0x80 + 0x8C)
 
 /* Reg bit definitions */
-#define CTRL_INT_ENABLE		0x0100
-#define CTRL_ENABLE		0x0020
-#define CTRL_ONE_SHOT		0x0010
+#घोषणा CTRL_INT_ENABLE		0x0100
+#घोषणा CTRL_ENABLE		0x0020
+#घोषणा CTRL_ONE_SHOT		0x0010
 
-#define CTRL_PRESCALER1		0x0
-#define CTRL_PRESCALER2		0x1
-#define CTRL_PRESCALER4		0x2
-#define CTRL_PRESCALER8		0x3
-#define CTRL_PRESCALER16	0x4
-#define CTRL_PRESCALER32	0x5
-#define CTRL_PRESCALER64	0x6
-#define CTRL_PRESCALER128	0x7
-#define CTRL_PRESCALER256	0x8
+#घोषणा CTRL_PRESCALER1		0x0
+#घोषणा CTRL_PRESCALER2		0x1
+#घोषणा CTRL_PRESCALER4		0x2
+#घोषणा CTRL_PRESCALER8		0x3
+#घोषणा CTRL_PRESCALER16	0x4
+#घोषणा CTRL_PRESCALER32	0x5
+#घोषणा CTRL_PRESCALER64	0x6
+#घोषणा CTRL_PRESCALER128	0x7
+#घोषणा CTRL_PRESCALER256	0x8
 
-#define INT_STATUS		0x1
+#घोषणा INT_STATUS		0x1
 
 /*
- * Minimum clocksource/clockevent timer range in seconds
+ * Minimum घड़ीsource/घड़ीevent समयr range in seconds
  */
-#define SPEAR_MIN_RANGE 4
+#घोषणा SPEAR_MIN_RANGE 4
 
-static __iomem void *gpt_base;
-static struct clk *gpt_clk;
+अटल __iomem व्योम *gpt_base;
+अटल काष्ठा clk *gpt_clk;
 
-static int clockevent_next_event(unsigned long evt,
-				 struct clock_event_device *clk_event_dev);
+अटल पूर्णांक घड़ीevent_next_event(अचिन्हित दीर्घ evt,
+				 काष्ठा घड़ी_event_device *clk_event_dev);
 
-static void __init spear_clocksource_init(void)
-{
+अटल व्योम __init spear_घड़ीsource_init(व्योम)
+अणु
 	u32 tick_rate;
 	u16 val;
 
 	/* program the prescaler (/256)*/
-	writew(CTRL_PRESCALER256, gpt_base + CR(CLKSRC));
+	ग_लिखोw(CTRL_PRESCALER256, gpt_base + CR(CLKSRC));
 
-	/* find out actual clock driving Timer */
+	/* find out actual घड़ी driving Timer */
 	tick_rate = clk_get_rate(gpt_clk);
 	tick_rate >>= CTRL_PRESCALER256;
 
-	writew(0xFFFF, gpt_base + LOAD(CLKSRC));
+	ग_लिखोw(0xFFFF, gpt_base + LOAD(CLKSRC));
 
-	val = readw(gpt_base + CR(CLKSRC));
-	val &= ~CTRL_ONE_SHOT;	/* autoreload mode */
+	val = पढ़ोw(gpt_base + CR(CLKSRC));
+	val &= ~CTRL_ONE_SHOT;	/* स्वतःreload mode */
 	val |= CTRL_ENABLE ;
-	writew(val, gpt_base + CR(CLKSRC));
+	ग_लिखोw(val, gpt_base + CR(CLKSRC));
 
-	/* register the clocksource */
-	clocksource_mmio_init(gpt_base + COUNT(CLKSRC), "tmr1", tick_rate,
-		200, 16, clocksource_mmio_readw_up);
-}
+	/* रेजिस्टर the घड़ीsource */
+	घड़ीsource_mmio_init(gpt_base + COUNT(CLKSRC), "tmr1", tick_rate,
+		200, 16, घड़ीsource_mmio_पढ़ोw_up);
+पूर्ण
 
-static inline void timer_shutdown(struct clock_event_device *evt)
-{
-	u16 val = readw(gpt_base + CR(CLKEVT));
+अटल अंतरभूत व्योम समयr_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	u16 val = पढ़ोw(gpt_base + CR(CLKEVT));
 
-	/* stop the timer */
+	/* stop the समयr */
 	val &= ~CTRL_ENABLE;
-	writew(val, gpt_base + CR(CLKEVT));
-}
+	ग_लिखोw(val, gpt_base + CR(CLKEVT));
+पूर्ण
 
-static int spear_shutdown(struct clock_event_device *evt)
-{
-	timer_shutdown(evt);
+अटल पूर्णांक spear_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	समयr_shutकरोwn(evt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int spear_set_oneshot(struct clock_event_device *evt)
-{
+अटल पूर्णांक spear_set_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
 	u16 val;
 
-	/* stop the timer */
-	timer_shutdown(evt);
+	/* stop the समयr */
+	समयr_shutकरोwn(evt);
 
-	val = readw(gpt_base + CR(CLKEVT));
+	val = पढ़ोw(gpt_base + CR(CLKEVT));
 	val |= CTRL_ONE_SHOT;
-	writew(val, gpt_base + CR(CLKEVT));
+	ग_लिखोw(val, gpt_base + CR(CLKEVT));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int spear_set_periodic(struct clock_event_device *evt)
-{
+अटल पूर्णांक spear_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
 	u32 period;
 	u16 val;
 
-	/* stop the timer */
-	timer_shutdown(evt);
+	/* stop the समयr */
+	समयr_shutकरोwn(evt);
 
 	period = clk_get_rate(gpt_clk) / HZ;
 	period >>= CTRL_PRESCALER16;
-	writew(period, gpt_base + LOAD(CLKEVT));
+	ग_लिखोw(period, gpt_base + LOAD(CLKEVT));
 
-	val = readw(gpt_base + CR(CLKEVT));
+	val = पढ़ोw(gpt_base + CR(CLKEVT));
 	val &= ~CTRL_ONE_SHOT;
 	val |= CTRL_ENABLE | CTRL_INT_ENABLE;
-	writew(val, gpt_base + CR(CLKEVT));
+	ग_लिखोw(val, gpt_base + CR(CLKEVT));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct clock_event_device clkevt = {
+अटल काष्ठा घड़ी_event_device clkevt = अणु
 	.name = "tmr0",
 	.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT,
-	.set_state_shutdown = spear_shutdown,
+	.set_state_shutकरोwn = spear_shutकरोwn,
 	.set_state_periodic = spear_set_periodic,
 	.set_state_oneshot = spear_set_oneshot,
-	.tick_resume = spear_shutdown,
-	.set_next_event = clockevent_next_event,
-	.shift = 0,	/* to be computed */
-};
+	.tick_resume = spear_shutकरोwn,
+	.set_next_event = घड़ीevent_next_event,
+	.shअगरt = 0,	/* to be computed */
+पूर्ण;
 
-static int clockevent_next_event(unsigned long cycles,
-				 struct clock_event_device *clk_event_dev)
-{
-	u16 val = readw(gpt_base + CR(CLKEVT));
+अटल पूर्णांक घड़ीevent_next_event(अचिन्हित दीर्घ cycles,
+				 काष्ठा घड़ी_event_device *clk_event_dev)
+अणु
+	u16 val = पढ़ोw(gpt_base + CR(CLKEVT));
 
-	if (val & CTRL_ENABLE)
-		writew(val & ~CTRL_ENABLE, gpt_base + CR(CLKEVT));
+	अगर (val & CTRL_ENABLE)
+		ग_लिखोw(val & ~CTRL_ENABLE, gpt_base + CR(CLKEVT));
 
-	writew(cycles, gpt_base + LOAD(CLKEVT));
+	ग_लिखोw(cycles, gpt_base + LOAD(CLKEVT));
 
 	val |= CTRL_ENABLE | CTRL_INT_ENABLE;
-	writew(val, gpt_base + CR(CLKEVT));
+	ग_लिखोw(val, gpt_base + CR(CLKEVT));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t spear_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = &clkevt;
+अटल irqवापस_t spear_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = &clkevt;
 
-	writew(INT_STATUS, gpt_base + IR(CLKEVT));
+	ग_लिखोw(INT_STATUS, gpt_base + IR(CLKEVT));
 
 	evt->event_handler(evt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void __init spear_clockevent_init(int irq)
-{
+अटल व्योम __init spear_घड़ीevent_init(पूर्णांक irq)
+अणु
 	u32 tick_rate;
 
 	/* program the prescaler */
-	writew(CTRL_PRESCALER16, gpt_base + CR(CLKEVT));
+	ग_लिखोw(CTRL_PRESCALER16, gpt_base + CR(CLKEVT));
 
 	tick_rate = clk_get_rate(gpt_clk);
 	tick_rate >>= CTRL_PRESCALER16;
 
 	clkevt.cpumask = cpumask_of(0);
 
-	clockevents_config_and_register(&clkevt, tick_rate, 3, 0xfff0);
+	घड़ीevents_config_and_रेजिस्टर(&clkevt, tick_rate, 3, 0xfff0);
 
-	if (request_irq(irq, spear_timer_interrupt, IRQF_TIMER, "timer", NULL))
+	अगर (request_irq(irq, spear_समयr_पूर्णांकerrupt, IRQF_TIMER, "timer", शून्य))
 		pr_err("Failed to request irq %d (timer)\n", irq);
-}
+पूर्ण
 
-static const struct of_device_id timer_of_match[] __initconst = {
-	{ .compatible = "st,spear-timer", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id समयr_of_match[] __initस्थिर = अणु
+	अणु .compatible = "st,spear-timer", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-void __init spear_setup_of_timer(void)
-{
-	struct device_node *np;
-	int irq, ret;
+व्योम __init spear_setup_of_समयr(व्योम)
+अणु
+	काष्ठा device_node *np;
+	पूर्णांक irq, ret;
 
-	np = of_find_matching_node(NULL, timer_of_match);
-	if (!np) {
+	np = of_find_matching_node(शून्य, समयr_of_match);
+	अगर (!np) अणु
 		pr_err("%s: No timer passed via DT\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	irq = irq_of_parse_and_map(np, 0);
-	if (!irq) {
+	अगर (!irq) अणु
 		pr_err("%s: No irq passed for timer via DT\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	gpt_base = of_iomap(np, 0);
-	if (!gpt_base) {
+	अगर (!gpt_base) अणु
 		pr_err("%s: of iomap failed\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	gpt_clk = clk_get_sys("gpt0", NULL);
-	if (IS_ERR(gpt_clk)) {
+	gpt_clk = clk_get_sys("gpt0", शून्य);
+	अगर (IS_ERR(gpt_clk)) अणु
 		pr_err("%s:couldn't get clk for gpt\n", __func__);
-		goto err_iomap;
-	}
+		जाओ err_iomap;
+	पूर्ण
 
 	ret = clk_prepare_enable(gpt_clk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("%s:couldn't prepare-enable gpt clock\n", __func__);
-		goto err_prepare_enable_clk;
-	}
+		जाओ err_prepare_enable_clk;
+	पूर्ण
 
-	spear_clockevent_init(irq);
-	spear_clocksource_init();
+	spear_घड़ीevent_init(irq);
+	spear_घड़ीsource_init();
 
-	return;
+	वापस;
 
 err_prepare_enable_clk:
 	clk_put(gpt_clk);
 err_iomap:
 	iounmap(gpt_base);
-}
+पूर्ण

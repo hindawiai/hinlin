@@ -1,217 +1,218 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  linux/drivers/mmc/sdio_ops.c
  *
  *  Copyright 2006-2007 Pierre Ossman
  */
 
-#include <linux/scatterlist.h>
+#समावेश <linux/scatterlist.h>
 
-#include <linux/mmc/host.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/mmc.h>
-#include <linux/mmc/sdio.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/mmc.h>
+#समावेश <linux/mmc/sdपन.स>
 
-#include "core.h"
-#include "sdio_ops.h"
+#समावेश "core.h"
+#समावेश "sdio_ops.h"
 
-int mmc_send_io_op_cond(struct mmc_host *host, u32 ocr, u32 *rocr)
-{
-	struct mmc_command cmd = {};
-	int i, err = 0;
+पूर्णांक mmc_send_io_op_cond(काष्ठा mmc_host *host, u32 ocr, u32 *rocr)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	पूर्णांक i, err = 0;
 
 	cmd.opcode = SD_IO_SEND_OP_COND;
 	cmd.arg = ocr;
 	cmd.flags = MMC_RSP_SPI_R4 | MMC_RSP_R4 | MMC_CMD_BCR;
 
-	for (i = 100; i; i--) {
-		err = mmc_wait_for_cmd(host, &cmd, MMC_CMD_RETRIES);
-		if (err)
-			break;
+	क्रम (i = 100; i; i--) अणु
+		err = mmc_रुको_क्रम_cmd(host, &cmd, MMC_CMD_RETRIES);
+		अगर (err)
+			अवरोध;
 
-		/* if we're just probing, do a single pass */
-		if (ocr == 0)
-			break;
+		/* अगर we're just probing, करो a single pass */
+		अगर (ocr == 0)
+			अवरोध;
 
-		/* otherwise wait until reset completes */
-		if (mmc_host_is_spi(host)) {
+		/* otherwise रुको until reset completes */
+		अगर (mmc_host_is_spi(host)) अणु
 			/*
 			 * Both R1_SPI_IDLE and MMC_CARD_BUSY indicate
 			 * an initialized card under SPI, but some cards
 			 * (Marvell's) only behave when looking at this
 			 * one.
 			 */
-			if (cmd.resp[1] & MMC_CARD_BUSY)
-				break;
-		} else {
-			if (cmd.resp[0] & MMC_CARD_BUSY)
-				break;
-		}
+			अगर (cmd.resp[1] & MMC_CARD_BUSY)
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर (cmd.resp[0] & MMC_CARD_BUSY)
+				अवरोध;
+		पूर्ण
 
 		err = -ETIMEDOUT;
 
 		mmc_delay(10);
-	}
+	पूर्ण
 
-	if (rocr)
+	अगर (rocr)
 		*rocr = cmd.resp[mmc_host_is_spi(host) ? 1 : 0];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_io_rw_direct_host(struct mmc_host *host, int write, unsigned fn,
-	unsigned addr, u8 in, u8 *out)
-{
-	struct mmc_command cmd = {};
-	int err;
+अटल पूर्णांक mmc_io_rw_direct_host(काष्ठा mmc_host *host, पूर्णांक ग_लिखो, अचिन्हित fn,
+	अचिन्हित addr, u8 in, u8 *out)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	पूर्णांक err;
 
-	if (fn > 7)
-		return -EINVAL;
+	अगर (fn > 7)
+		वापस -EINVAL;
 
 	/* sanity check */
-	if (addr & ~0x1FFFF)
-		return -EINVAL;
+	अगर (addr & ~0x1FFFF)
+		वापस -EINVAL;
 
-	cmd.opcode = SD_IO_RW_DIRECT;
-	cmd.arg = write ? 0x80000000 : 0x00000000;
+	cmd.opcode = SD_IO_RW_सूचीECT;
+	cmd.arg = ग_लिखो ? 0x80000000 : 0x00000000;
 	cmd.arg |= fn << 28;
-	cmd.arg |= (write && out) ? 0x08000000 : 0x00000000;
+	cmd.arg |= (ग_लिखो && out) ? 0x08000000 : 0x00000000;
 	cmd.arg |= addr << 9;
 	cmd.arg |= in;
 	cmd.flags = MMC_RSP_SPI_R5 | MMC_RSP_R5 | MMC_CMD_AC;
 
-	err = mmc_wait_for_cmd(host, &cmd, 0);
-	if (err)
-		return err;
+	err = mmc_रुको_क्रम_cmd(host, &cmd, 0);
+	अगर (err)
+		वापस err;
 
-	if (mmc_host_is_spi(host)) {
-		/* host driver already reported errors */
-	} else {
-		if (cmd.resp[0] & R5_ERROR)
-			return -EIO;
-		if (cmd.resp[0] & R5_FUNCTION_NUMBER)
-			return -EINVAL;
-		if (cmd.resp[0] & R5_OUT_OF_RANGE)
-			return -ERANGE;
-	}
+	अगर (mmc_host_is_spi(host)) अणु
+		/* host driver alपढ़ोy reported errors */
+	पूर्ण अन्यथा अणु
+		अगर (cmd.resp[0] & R5_ERROR)
+			वापस -EIO;
+		अगर (cmd.resp[0] & R5_FUNCTION_NUMBER)
+			वापस -EINVAL;
+		अगर (cmd.resp[0] & R5_OUT_OF_RANGE)
+			वापस -दुस्फल;
+	पूर्ण
 
-	if (out) {
-		if (mmc_host_is_spi(host))
+	अगर (out) अणु
+		अगर (mmc_host_is_spi(host))
 			*out = (cmd.resp[0] >> 8) & 0xFF;
-		else
+		अन्यथा
 			*out = cmd.resp[0] & 0xFF;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mmc_io_rw_direct(struct mmc_card *card, int write, unsigned fn,
-	unsigned addr, u8 in, u8 *out)
-{
-	return mmc_io_rw_direct_host(card->host, write, fn, addr, in, out);
-}
+पूर्णांक mmc_io_rw_direct(काष्ठा mmc_card *card, पूर्णांक ग_लिखो, अचिन्हित fn,
+	अचिन्हित addr, u8 in, u8 *out)
+अणु
+	वापस mmc_io_rw_direct_host(card->host, ग_लिखो, fn, addr, in, out);
+पूर्ण
 
-int mmc_io_rw_extended(struct mmc_card *card, int write, unsigned fn,
-	unsigned addr, int incr_addr, u8 *buf, unsigned blocks, unsigned blksz)
-{
-	struct mmc_request mrq = {};
-	struct mmc_command cmd = {};
-	struct mmc_data data = {};
-	struct scatterlist sg, *sg_ptr;
-	struct sg_table sgtable;
-	unsigned int nents, left_size, i;
-	unsigned int seg_size = card->host->max_seg_size;
-	int err;
+पूर्णांक mmc_io_rw_extended(काष्ठा mmc_card *card, पूर्णांक ग_लिखो, अचिन्हित fn,
+	अचिन्हित addr, पूर्णांक incr_addr, u8 *buf, अचिन्हित blocks, अचिन्हित blksz)
+अणु
+	काष्ठा mmc_request mrq = अणुपूर्ण;
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	काष्ठा mmc_data data = अणुपूर्ण;
+	काष्ठा scatterlist sg, *sg_ptr;
+	काष्ठा sg_table sgtable;
+	अचिन्हित पूर्णांक nents, left_size, i;
+	अचिन्हित पूर्णांक seg_size = card->host->max_seg_size;
+	पूर्णांक err;
 
 	WARN_ON(blksz == 0);
 
 	/* sanity check */
-	if (addr & ~0x1FFFF)
-		return -EINVAL;
+	अगर (addr & ~0x1FFFF)
+		वापस -EINVAL;
 
 	mrq.cmd = &cmd;
 	mrq.data = &data;
 
 	cmd.opcode = SD_IO_RW_EXTENDED;
-	cmd.arg = write ? 0x80000000 : 0x00000000;
+	cmd.arg = ग_लिखो ? 0x80000000 : 0x00000000;
 	cmd.arg |= fn << 28;
 	cmd.arg |= incr_addr ? 0x04000000 : 0x00000000;
 	cmd.arg |= addr << 9;
-	if (blocks == 0)
+	अगर (blocks == 0)
 		cmd.arg |= (blksz == 512) ? 0 : blksz;	/* byte mode */
-	else
+	अन्यथा
 		cmd.arg |= 0x08000000 | blocks;		/* block mode */
 	cmd.flags = MMC_RSP_SPI_R5 | MMC_RSP_R5 | MMC_CMD_ADTC;
 
 	data.blksz = blksz;
 	/* Code in host drivers/fwk assumes that "blocks" always is >=1 */
 	data.blocks = blocks ? blocks : 1;
-	data.flags = write ? MMC_DATA_WRITE : MMC_DATA_READ;
+	data.flags = ग_लिखो ? MMC_DATA_WRITE : MMC_DATA_READ;
 
 	left_size = data.blksz * data.blocks;
 	nents = DIV_ROUND_UP(left_size, seg_size);
-	if (nents > 1) {
-		if (sg_alloc_table(&sgtable, nents, GFP_KERNEL))
-			return -ENOMEM;
+	अगर (nents > 1) अणु
+		अगर (sg_alloc_table(&sgtable, nents, GFP_KERNEL))
+			वापस -ENOMEM;
 
 		data.sg = sgtable.sgl;
 		data.sg_len = nents;
 
-		for_each_sg(data.sg, sg_ptr, data.sg_len, i) {
+		क्रम_each_sg(data.sg, sg_ptr, data.sg_len, i) अणु
 			sg_set_buf(sg_ptr, buf + i * seg_size,
 				   min(seg_size, left_size));
 			left_size -= seg_size;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		data.sg = &sg;
 		data.sg_len = 1;
 
 		sg_init_one(&sg, buf, left_size);
-	}
+	पूर्ण
 
-	mmc_set_data_timeout(&data, card);
+	mmc_set_data_समयout(&data, card);
 
 	mmc_pre_req(card->host, &mrq);
 
-	mmc_wait_for_req(card->host, &mrq);
+	mmc_रुको_क्रम_req(card->host, &mrq);
 
-	if (cmd.error)
+	अगर (cmd.error)
 		err = cmd.error;
-	else if (data.error)
+	अन्यथा अगर (data.error)
 		err = data.error;
-	else if (mmc_host_is_spi(card->host))
-		/* host driver already reported errors */
+	अन्यथा अगर (mmc_host_is_spi(card->host))
+		/* host driver alपढ़ोy reported errors */
 		err = 0;
-	else if (cmd.resp[0] & R5_ERROR)
+	अन्यथा अगर (cmd.resp[0] & R5_ERROR)
 		err = -EIO;
-	else if (cmd.resp[0] & R5_FUNCTION_NUMBER)
+	अन्यथा अगर (cmd.resp[0] & R5_FUNCTION_NUMBER)
 		err = -EINVAL;
-	else if (cmd.resp[0] & R5_OUT_OF_RANGE)
-		err = -ERANGE;
-	else
+	अन्यथा अगर (cmd.resp[0] & R5_OUT_OF_RANGE)
+		err = -दुस्फल;
+	अन्यथा
 		err = 0;
 
 	mmc_post_req(card->host, &mrq, err);
 
-	if (nents > 1)
-		sg_free_table(&sgtable);
+	अगर (nents > 1)
+		sg_मुक्त_table(&sgtable);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int sdio_reset(struct mmc_host *host)
-{
-	int ret;
-	u8 abort;
+पूर्णांक sdio_reset(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक ret;
+	u8 पात;
 
-	/* SDIO Simplified Specification V2.0, 4.4 Reset for SDIO */
+	/* SDIO Simplअगरied Specअगरication V2.0, 4.4 Reset क्रम SDIO */
 
-	ret = mmc_io_rw_direct_host(host, 0, 0, SDIO_CCCR_ABORT, 0, &abort);
-	if (ret)
-		abort = 0x08;
-	else
-		abort |= 0x08;
+	ret = mmc_io_rw_direct_host(host, 0, 0, SDIO_CCCR_ABORT, 0, &पात);
+	अगर (ret)
+		पात = 0x08;
+	अन्यथा
+		पात |= 0x08;
 
-	return mmc_io_rw_direct_host(host, 1, 0, SDIO_CCCR_ABORT, abort, NULL);
-}
+	वापस mmc_io_rw_direct_host(host, 1, 0, SDIO_CCCR_ABORT, पात, शून्य);
+पूर्ण
 

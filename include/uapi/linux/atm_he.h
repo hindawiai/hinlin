@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-/* atm_he.h */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* aपंचांग_he.h */
 
-#ifndef LINUX_ATM_HE_H
-#define LINUX_ATM_HE_H
+#अगर_अघोषित LINUX_ATM_HE_H
+#घोषणा LINUX_ATM_HE_H
 
-#include <linux/atmioc.h>
+#समावेश <linux/aपंचांगioc.h>
 
-#define HE_GET_REG	_IOW('a', ATMIOC_SARPRV, struct atmif_sioc)
+#घोषणा HE_GET_REG	_IOW('a', ATMIOC_SARPRV, काष्ठा aपंचांगअगर_sioc)
 
-#define HE_REGTYPE_PCI	1
-#define HE_REGTYPE_RCM	2
-#define HE_REGTYPE_TCM	3
-#define HE_REGTYPE_MBOX	4
+#घोषणा HE_REGTYPE_PCI	1
+#घोषणा HE_REGTYPE_RCM	2
+#घोषणा HE_REGTYPE_TCM	3
+#घोषणा HE_REGTYPE_MBOX	4
 
-struct he_ioctl_reg {
-	unsigned addr, val;
-	char type;
-};
+काष्ठा he_ioctl_reg अणु
+	अचिन्हित addr, val;
+	अक्षर type;
+पूर्ण;
 
-#endif /* LINUX_ATM_HE_H */
+#पूर्ण_अगर /* LINUX_ATM_HE_H */

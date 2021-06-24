@@ -1,511 +1,512 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/blkdev.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
 
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_devinfo.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_devinfo.h>
 
-#include "scsi_priv.h"
+#समावेश "scsi_priv.h"
 
 
 /*
- * scsi_dev_info_list: structure to hold black/white listed devices.
+ * scsi_dev_info_list: काष्ठाure to hold black/white listed devices.
  */
-struct scsi_dev_info_list {
-	struct list_head dev_info_list;
-	char vendor[8];
-	char model[16];
+काष्ठा scsi_dev_info_list अणु
+	काष्ठा list_head dev_info_list;
+	अक्षर venकरोr[8];
+	अक्षर model[16];
 	blist_flags_t flags;
-	unsigned compatible; /* for use with scsi_static_device_list entries */
-};
+	अचिन्हित compatible; /* क्रम use with scsi_अटल_device_list entries */
+पूर्ण;
 
-struct scsi_dev_info_list_table {
-	struct list_head node;	/* our node for being on the master list */
-	struct list_head scsi_dev_info_list; /* head of dev info list */
-	const char *name;	/* name of list for /proc (NULL for global) */
-	int key;		/* unique numeric identifier */
-};
+काष्ठा scsi_dev_info_list_table अणु
+	काष्ठा list_head node;	/* our node क्रम being on the master list */
+	काष्ठा list_head scsi_dev_info_list; /* head of dev info list */
+	स्थिर अक्षर *name;	/* name of list क्रम /proc (शून्य क्रम global) */
+	पूर्णांक key;		/* unique numeric identअगरier */
+पूर्ण;
 
 
-static blist_flags_t scsi_default_dev_flags;
-static LIST_HEAD(scsi_dev_info_list);
-static char scsi_dev_flags[256];
+अटल blist_flags_t scsi_शेष_dev_flags;
+अटल LIST_HEAD(scsi_dev_info_list);
+अटल अक्षर scsi_dev_flags[256];
 
 /*
- * scsi_static_device_list: deprecated list of devices that require
- * settings that differ from the default, includes black-listed (broken)
+ * scsi_अटल_device_list: deprecated list of devices that require
+ * settings that dअगरfer from the शेष, includes black-listed (broken)
  * devices. The entries here are added to the tail of scsi_dev_info_list
  * via scsi_dev_info_list_init.
  *
- * Do not add to this list, use the command line or proc interface to add
+ * Do not add to this list, use the command line or proc पूर्णांकerface to add
  * to the scsi_dev_info_list. This table will eventually go away.
  */
-static struct {
-	char *vendor;
-	char *model;
-	char *revision;	/* revision known to be bad, unused */
+अटल काष्ठा अणु
+	अक्षर *venकरोr;
+	अक्षर *model;
+	अक्षर *revision;	/* revision known to be bad, unused */
 	blist_flags_t flags;
-} scsi_static_device_list[] __initdata = {
+पूर्ण scsi_अटल_device_list[] __initdata = अणु
 	/*
 	 * The following devices are known not to tolerate a lun != 0 scan
-	 * for one reason or another. Some will respond to all luns,
+	 * क्रम one reason or another. Some will respond to all luns,
 	 * others will lock up.
 	 */
-	{"Aashima", "IMAGERY 2400SP", "1.03", BLIST_NOLUN},	/* locks up */
-	{"CHINON", "CD-ROM CDS-431", "H42", BLIST_NOLUN},	/* locks up */
-	{"CHINON", "CD-ROM CDS-535", "Q14", BLIST_NOLUN},	/* locks up */
-	{"DENON", "DRD-25X", "V", BLIST_NOLUN},			/* locks up */
-	{"HITACHI", "DK312C", "CM81", BLIST_NOLUN},	/* responds to all lun */
-	{"HITACHI", "DK314C", "CR21", BLIST_NOLUN},	/* responds to all lun */
-	{"IBM", "2104-DU3", NULL, BLIST_NOLUN},		/* locks up */
-	{"IBM", "2104-TU3", NULL, BLIST_NOLUN},		/* locks up */
-	{"IMS", "CDD521/10", "2.06", BLIST_NOLUN},	/* locks up */
-	{"MAXTOR", "XT-3280", "PR02", BLIST_NOLUN},	/* locks up */
-	{"MAXTOR", "XT-4380S", "B3C", BLIST_NOLUN},	/* locks up */
-	{"MAXTOR", "MXT-1240S", "I1.2", BLIST_NOLUN},	/* locks up */
-	{"MAXTOR", "XT-4170S", "B5A", BLIST_NOLUN},	/* locks up */
-	{"MAXTOR", "XT-8760S", "B7B", BLIST_NOLUN},	/* locks up */
-	{"MEDIAVIS", "RENO CD-ROMX2A", "2.03", BLIST_NOLUN},	/* responds to all lun */
-	{"MICROTEK", "ScanMakerIII", "2.30", BLIST_NOLUN},	/* responds to all lun */
-	{"NEC", "CD-ROM DRIVE:841", "1.0", BLIST_NOLUN},/* locks up */
-	{"PHILIPS", "PCA80SC", "V4-2", BLIST_NOLUN},	/* responds to all lun */
-	{"RODIME", "RO3000S", "2.33", BLIST_NOLUN},	/* locks up */
-	{"SUN", "SENA", NULL, BLIST_NOLUN},		/* responds to all luns */
+	अणु"Aashima", "IMAGERY 2400SP", "1.03", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"CHINON", "CD-ROM CDS-431", "H42", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"CHINON", "CD-ROM CDS-535", "Q14", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"DENON", "DRD-25X", "V", BLIST_NOLUNपूर्ण,			/* locks up */
+	अणु"HITACHI", "DK312C", "CM81", BLIST_NOLUNपूर्ण,	/* responds to all lun */
+	अणु"HITACHI", "DK314C", "CR21", BLIST_NOLUNपूर्ण,	/* responds to all lun */
+	अणु"IBM", "2104-DU3", शून्य, BLIST_NOLUNपूर्ण,		/* locks up */
+	अणु"IBM", "2104-TU3", शून्य, BLIST_NOLUNपूर्ण,		/* locks up */
+	अणु"IMS", "CDD521/10", "2.06", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"MAXTOR", "XT-3280", "PR02", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"MAXTOR", "XT-4380S", "B3C", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"MAXTOR", "MXT-1240S", "I1.2", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"MAXTOR", "XT-4170S", "B5A", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"MAXTOR", "XT-8760S", "B7B", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"MEDIAVIS", "RENO CD-ROMX2A", "2.03", BLIST_NOLUNपूर्ण,	/* responds to all lun */
+	अणु"MICROTEK", "ScanMakerIII", "2.30", BLIST_NOLUNपूर्ण,	/* responds to all lun */
+	अणु"NEC", "CD-ROM DRIVE:841", "1.0", BLIST_NOLUNपूर्ण,/* locks up */
+	अणु"PHILIPS", "PCA80SC", "V4-2", BLIST_NOLUNपूर्ण,	/* responds to all lun */
+	अणु"RODIME", "RO3000S", "2.33", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"SUN", "SENA", शून्य, BLIST_NOLUNपूर्ण,		/* responds to all luns */
 	/*
-	 * The following causes a failed REQUEST SENSE on lun 1 for
+	 * The following causes a failed REQUEST SENSE on lun 1 क्रम
 	 * aha152x controller, which causes SCSI code to reset bus.
 	 */
-	{"SANYO", "CRD-250S", "1.20", BLIST_NOLUN},
+	अणु"SANYO", "CRD-250S", "1.20", BLIST_NOLUNपूर्ण,
 	/*
-	 * The following causes a failed REQUEST SENSE on lun 1 for
+	 * The following causes a failed REQUEST SENSE on lun 1 क्रम
 	 * aha152x controller, which causes SCSI code to reset bus.
 	 */
-	{"SEAGATE", "ST157N", "\004|j", BLIST_NOLUN},
-	{"SEAGATE", "ST296", "921", BLIST_NOLUN},	/* responds to all lun */
-	{"SEAGATE", "ST1581", "6538", BLIST_NOLUN},	/* responds to all lun */
-	{"SONY", "CD-ROM CDU-541", "4.3d", BLIST_NOLUN},
-	{"SONY", "CD-ROM CDU-55S", "1.0i", BLIST_NOLUN},
-	{"SONY", "CD-ROM CDU-561", "1.7x", BLIST_NOLUN},
-	{"SONY", "CD-ROM CDU-8012", NULL, BLIST_NOLUN},
-	{"SONY", "SDT-5000", "3.17", BLIST_SELECT_NO_ATN},
-	{"TANDBERG", "TDC 3600", "U07", BLIST_NOLUN},	/* locks up */
-	{"TEAC", "CD-R55S", "1.0H", BLIST_NOLUN},	/* locks up */
+	अणु"SEAGATE", "ST157N", "\004|j", BLIST_NOLUNपूर्ण,
+	अणु"SEAGATE", "ST296", "921", BLIST_NOLUNपूर्ण,	/* responds to all lun */
+	अणु"SEAGATE", "ST1581", "6538", BLIST_NOLUNपूर्ण,	/* responds to all lun */
+	अणु"SONY", "CD-ROM CDU-541", "4.3d", BLIST_NOLUNपूर्ण,
+	अणु"SONY", "CD-ROM CDU-55S", "1.0i", BLIST_NOLUNपूर्ण,
+	अणु"SONY", "CD-ROM CDU-561", "1.7x", BLIST_NOLUNपूर्ण,
+	अणु"SONY", "CD-ROM CDU-8012", शून्य, BLIST_NOLUNपूर्ण,
+	अणु"SONY", "SDT-5000", "3.17", BLIST_SELECT_NO_ATNपूर्ण,
+	अणु"TANDBERG", "TDC 3600", "U07", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"TEAC", "CD-R55S", "1.0H", BLIST_NOLUNपूर्ण,	/* locks up */
 	/*
-	 * The following causes a failed REQUEST SENSE on lun 1 for
+	 * The following causes a failed REQUEST SENSE on lun 1 क्रम
 	 * seagate controller, which causes SCSI code to reset bus.
 	 */
-	{"TEAC", "CD-ROM", "1.06", BLIST_NOLUN},
-	{"TEAC", "MT-2ST/45S2-27", "RV M", BLIST_NOLUN},	/* responds to all lun */
+	अणु"TEAC", "CD-ROM", "1.06", BLIST_NOLUNपूर्ण,
+	अणु"TEAC", "MT-2ST/45S2-27", "RV M", BLIST_NOLUNपूर्ण,	/* responds to all lun */
 	/*
-	 * The following causes a failed REQUEST SENSE on lun 1 for
+	 * The following causes a failed REQUEST SENSE on lun 1 क्रम
 	 * seagate controller, which causes SCSI code to reset bus.
 	 */
-	{"HP", "C1750A", "3226", BLIST_NOLUN},		/* scanjet iic */
-	{"HP", "C1790A", NULL, BLIST_NOLUN},		/* scanjet iip */
-	{"HP", "C2500A", NULL, BLIST_NOLUN},		/* scanjet iicx */
-	{"MEDIAVIS", "CDR-H93MV", "1.31", BLIST_NOLUN},	/* locks up */
-	{"MICROTEK", "ScanMaker II", "5.61", BLIST_NOLUN},	/* responds to all lun */
-	{"MITSUMI", "CD-R CR-2201CS", "6119", BLIST_NOLUN},	/* locks up */
-	{"NEC", "D3856", "0009", BLIST_NOLUN},
-	{"QUANTUM", "LPS525S", "3110", BLIST_NOLUN},	/* locks up */
-	{"QUANTUM", "PD1225S", "3110", BLIST_NOLUN},	/* locks up */
-	{"QUANTUM", "FIREBALL ST4.3S", "0F0C", BLIST_NOLUN},	/* locks up */
-	{"RELISYS", "Scorpio", NULL, BLIST_NOLUN},	/* responds to all lun */
-	{"SANKYO", "CP525", "6.64", BLIST_NOLUN},	/* causes failed REQ SENSE, extra reset */
-	{"TEXEL", "CD-ROM", "1.06", BLIST_NOLUN | BLIST_BORKEN},
-	{"transtec", "T5008", "0001", BLIST_NOREPORTLUN },
-	{"YAMAHA", "CDR100", "1.00", BLIST_NOLUN},	/* locks up */
-	{"YAMAHA", "CDR102", "1.00", BLIST_NOLUN},	/* locks up */
-	{"YAMAHA", "CRW8424S", "1.0", BLIST_NOLUN},	/* locks up */
-	{"YAMAHA", "CRW6416S", "1.0c", BLIST_NOLUN},	/* locks up */
-	{"", "Scanner", "1.80", BLIST_NOLUN},	/* responds to all lun */
+	अणु"HP", "C1750A", "3226", BLIST_NOLUNपूर्ण,		/* scanjet iic */
+	अणु"HP", "C1790A", शून्य, BLIST_NOLUNपूर्ण,		/* scanjet iip */
+	अणु"HP", "C2500A", शून्य, BLIST_NOLUNपूर्ण,		/* scanjet iicx */
+	अणु"MEDIAVIS", "CDR-H93MV", "1.31", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"MICROTEK", "ScanMaker II", "5.61", BLIST_NOLUNपूर्ण,	/* responds to all lun */
+	अणु"MITSUMI", "CD-R CR-2201CS", "6119", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"NEC", "D3856", "0009", BLIST_NOLUNपूर्ण,
+	अणु"QUANTUM", "LPS525S", "3110", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"QUANTUM", "PD1225S", "3110", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"QUANTUM", "FIREBALL ST4.3S", "0F0C", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"RELISYS", "Scorpio", शून्य, BLIST_NOLUNपूर्ण,	/* responds to all lun */
+	अणु"SANKYO", "CP525", "6.64", BLIST_NOLUNपूर्ण,	/* causes failed REQ SENSE, extra reset */
+	अणु"TEXEL", "CD-ROM", "1.06", BLIST_NOLUN | BLIST_BORKENपूर्ण,
+	अणु"transtec", "T5008", "0001", BLIST_NOREPORTLUN पूर्ण,
+	अणु"YAMAHA", "CDR100", "1.00", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"YAMAHA", "CDR102", "1.00", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"YAMAHA", "CRW8424S", "1.0", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"YAMAHA", "CRW6416S", "1.0c", BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"", "Scanner", "1.80", BLIST_NOLUNपूर्ण,	/* responds to all lun */
 
 	/*
 	 * Other types of devices that have special flags.
 	 * Note that all USB devices should have the BLIST_INQUIRY_36 flag.
 	 */
-	{"3PARdata", "VV", NULL, BLIST_REPORTLUN2},
-	{"ADAPTEC", "AACRAID", NULL, BLIST_FORCELUN},
-	{"ADAPTEC", "Adaptec 5400S", NULL, BLIST_FORCELUN},
-	{"AIX", "VDASD", NULL, BLIST_TRY_VPD_PAGES},
-	{"AFT PRO", "-IX CF", "0.0>", BLIST_FORCELUN},
-	{"BELKIN", "USB 2 HS-CF", "1.95",  BLIST_FORCELUN | BLIST_INQUIRY_36},
-	{"BROWNIE", "1200U3P", NULL, BLIST_NOREPORTLUN},
-	{"BROWNIE", "1600U3P", NULL, BLIST_NOREPORTLUN},
-	{"CANON", "IPUBJD", NULL, BLIST_SPARSELUN},
-	{"CBOX3", "USB Storage-SMC", "300A", BLIST_FORCELUN | BLIST_INQUIRY_36},
-	{"CMD", "CRA-7280", NULL, BLIST_SPARSELUN},	/* CMD RAID Controller */
-	{"CNSI", "G7324", NULL, BLIST_SPARSELUN},	/* Chaparral G7324 RAID */
-	{"CNSi", "G8324", NULL, BLIST_SPARSELUN},	/* Chaparral G8324 RAID */
-	{"COMPAQ", "ARRAY CONTROLLER", NULL, BLIST_SPARSELUN | BLIST_LARGELUN |
-		BLIST_MAX_512 | BLIST_REPORTLUN2},	/* Compaq RA4x00 */
-	{"COMPAQ", "LOGICAL VOLUME", NULL, BLIST_FORCELUN | BLIST_MAX_512}, /* Compaq RA4x00 */
-	{"COMPAQ", "CR3500", NULL, BLIST_FORCELUN},
-	{"COMPAQ", "MSA1000", NULL, BLIST_SPARSELUN | BLIST_NOSTARTONADD},
-	{"COMPAQ", "MSA1000 VOLUME", NULL, BLIST_SPARSELUN | BLIST_NOSTARTONADD},
-	{"COMPAQ", "HSV110", NULL, BLIST_REPORTLUN2 | BLIST_NOSTARTONADD},
-	{"DDN", "SAN DataDirector", "*", BLIST_SPARSELUN},
-	{"DEC", "HSG80", NULL, BLIST_REPORTLUN2 | BLIST_NOSTARTONADD},
-	{"DELL", "PV660F", NULL, BLIST_SPARSELUN},
-	{"DELL", "PV660F   PSEUDO", NULL, BLIST_SPARSELUN},
-	{"DELL", "PSEUDO DEVICE .", NULL, BLIST_SPARSELUN},	/* Dell PV 530F */
-	{"DELL", "PV530F", NULL, BLIST_SPARSELUN},
-	{"DELL", "PERCRAID", NULL, BLIST_FORCELUN},
-	{"DGC", "RAID", NULL, BLIST_SPARSELUN},	/* EMC CLARiiON, storage on LUN 0 */
-	{"DGC", "DISK", NULL, BLIST_SPARSELUN},	/* EMC CLARiiON, no storage on LUN 0 */
-	{"EMC",  "Invista", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
-	{"EMC", "SYMMETRIX", NULL, BLIST_SPARSELUN | BLIST_LARGELUN |
-	 BLIST_REPORTLUN2 | BLIST_RETRY_ITF},
-	{"EMULEX", "MD21/S2     ESDI", NULL, BLIST_SINGLELUN},
-	{"easyRAID", "16P", NULL, BLIST_NOREPORTLUN},
-	{"easyRAID", "X6P", NULL, BLIST_NOREPORTLUN},
-	{"easyRAID", "F8", NULL, BLIST_NOREPORTLUN},
-	{"FSC", "CentricStor", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
-	{"FUJITSU", "ETERNUS_DXM", "*", BLIST_RETRY_ASC_C1},
-	{"Generic", "USB SD Reader", "1.00", BLIST_FORCELUN | BLIST_INQUIRY_36},
-	{"Generic", "USB Storage-SMC", NULL, BLIST_FORCELUN | BLIST_INQUIRY_36}, /* FW: 0180 and 0207 */
-	{"HITACHI", "DF400", "*", BLIST_REPORTLUN2},
-	{"HITACHI", "DF500", "*", BLIST_REPORTLUN2},
-	{"HITACHI", "DISK-SUBSYSTEM", "*", BLIST_REPORTLUN2},
-	{"HITACHI", "HUS1530", "*", BLIST_NO_DIF},
-	{"HITACHI", "OPEN-", "*", BLIST_REPORTLUN2 | BLIST_TRY_VPD_PAGES},
-	{"HP", "A6189A", NULL, BLIST_SPARSELUN | BLIST_LARGELUN},	/* HP VA7400 */
-	{"HP", "OPEN-", "*", BLIST_REPORTLUN2 | BLIST_TRY_VPD_PAGES}, /* HP XP Arrays */
-	{"HP", "NetRAID-4M", NULL, BLIST_FORCELUN},
-	{"HP", "HSV100", NULL, BLIST_REPORTLUN2 | BLIST_NOSTARTONADD},
-	{"HP", "C1557A", NULL, BLIST_FORCELUN},
-	{"HP", "C3323-300", "4269", BLIST_NOTQ},
-	{"HP", "C5713A", NULL, BLIST_NOREPORTLUN},
-	{"HP", "DISK-SUBSYSTEM", "*", BLIST_REPORTLUN2},
-	{"HPE", "OPEN-", "*", BLIST_REPORTLUN2 | BLIST_TRY_VPD_PAGES},
-	{"IBM", "AuSaV1S2", NULL, BLIST_FORCELUN},
-	{"IBM", "ProFibre 4000R", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
-	{"IBM", "2105", NULL, BLIST_RETRY_HWERROR},
-	{"iomega", "jaz 1GB", "J.86", BLIST_NOTQ | BLIST_NOLUN},
-	{"IOMEGA", "ZIP", NULL, BLIST_NOTQ | BLIST_NOLUN},
-	{"IOMEGA", "Io20S         *F", NULL, BLIST_KEY},
-	{"INSITE", "Floptical   F*8I", NULL, BLIST_KEY},
-	{"INSITE", "I325VM", NULL, BLIST_KEY},
-	{"Intel", "Multi-Flex", NULL, BLIST_NO_RSOC},
-	{"iRiver", "iFP Mass Driver", NULL, BLIST_NOT_LOCKABLE | BLIST_INQUIRY_36},
-	{"LASOUND", "CDX7405", "3.10", BLIST_MAX5LUN | BLIST_SINGLELUN},
-	{"Marvell", "Console", NULL, BLIST_SKIP_VPD_PAGES},
-	{"Marvell", "91xx Config", "1.01", BLIST_SKIP_VPD_PAGES},
-	{"MATSHITA", "PD-1", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-	{"MATSHITA", "DMC-LC5", NULL, BLIST_NOT_LOCKABLE | BLIST_INQUIRY_36},
-	{"MATSHITA", "DMC-LC40", NULL, BLIST_NOT_LOCKABLE | BLIST_INQUIRY_36},
-	{"Medion", "Flash XL  MMC/SD", "2.6D", BLIST_FORCELUN},
-	{"MegaRAID", "LD", NULL, BLIST_FORCELUN},
-	{"MICROP", "4110", NULL, BLIST_NOTQ},
-	{"MSFT", "Virtual HD", NULL, BLIST_MAX_1024 | BLIST_NO_RSOC},
-	{"MYLEX", "DACARMRB", "*", BLIST_REPORTLUN2},
-	{"nCipher", "Fastness Crypto", NULL, BLIST_FORCELUN},
-	{"NAKAMICH", "MJ-4.8S", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-	{"NAKAMICH", "MJ-5.16S", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-	{"NEC", "PD-1 ODX654P", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-	{"NEC", "iStorage", NULL, BLIST_REPORTLUN2},
-	{"NRC", "MBR-7", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-	{"NRC", "MBR-7.4", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-	{"PIONEER", "CD-ROM DRM-600", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-	{"PIONEER", "CD-ROM DRM-602X", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-	{"PIONEER", "CD-ROM DRM-604X", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-	{"PIONEER", "CD-ROM DRM-624X", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
-	{"Promise", "VTrak E610f", NULL, BLIST_SPARSELUN | BLIST_NO_RSOC},
-	{"Promise", "", NULL, BLIST_SPARSELUN},
-	{"QEMU", "QEMU CD-ROM", NULL, BLIST_SKIP_VPD_PAGES},
-	{"QNAP", "iSCSI Storage", NULL, BLIST_MAX_1024},
-	{"SYNOLOGY", "iSCSI Storage", NULL, BLIST_MAX_1024},
-	{"QUANTUM", "XP34301", "1071", BLIST_NOTQ},
-	{"REGAL", "CDC-4X", NULL, BLIST_MAX5LUN | BLIST_SINGLELUN},
-	{"SanDisk", "ImageMate CF-SD1", NULL, BLIST_FORCELUN},
-	{"SEAGATE", "ST34555N", "0930", BLIST_NOTQ},	/* Chokes on tagged INQUIRY */
-	{"SEAGATE", "ST3390N", "9546", BLIST_NOTQ},
-	{"SEAGATE", "ST900MM0006", NULL, BLIST_SKIP_VPD_PAGES},
-	{"SGI", "RAID3", "*", BLIST_SPARSELUN},
-	{"SGI", "RAID5", "*", BLIST_SPARSELUN},
-	{"SGI", "TP9100", "*", BLIST_REPORTLUN2},
-	{"SGI", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-	{"IBM", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-	{"SUN", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-	{"DELL", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-	{"STK", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-	{"NETAPP", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-	{"LSI", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-	{"ENGENIO", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-	{"LENOVO", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-	{"FUJITSU", "Universal Xport", "*", BLIST_NO_ULD_ATTACH},
-	{"SanDisk", "Cruzer Blade", NULL, BLIST_TRY_VPD_PAGES |
-		BLIST_INQUIRY_36},
-	{"SMSC", "USB 2 HS-CF", NULL, BLIST_SPARSELUN | BLIST_INQUIRY_36},
-	{"SONY", "CD-ROM CDU-8001", NULL, BLIST_BORKEN},
-	{"SONY", "TSL", NULL, BLIST_FORCELUN},		/* DDS3 & DDS4 autoloaders */
-	{"ST650211", "CF", NULL, BLIST_RETRY_HWERROR},
-	{"SUN", "T300", "*", BLIST_SPARSELUN},
-	{"SUN", "T4", "*", BLIST_SPARSELUN},
-	{"Tornado-", "F4", "*", BLIST_NOREPORTLUN},
-	{"TOSHIBA", "CDROM", NULL, BLIST_ISROM},
-	{"TOSHIBA", "CD-ROM", NULL, BLIST_ISROM},
-	{"Traxdata", "CDR4120", NULL, BLIST_NOLUN},	/* locks up */
-	{"USB2.0", "SMARTMEDIA/XD", NULL, BLIST_FORCELUN | BLIST_INQUIRY_36},
-	{"WangDAT", "Model 2600", "01.7", BLIST_SELECT_NO_ATN},
-	{"WangDAT", "Model 3200", "02.2", BLIST_SELECT_NO_ATN},
-	{"WangDAT", "Model 1300", "02.4", BLIST_SELECT_NO_ATN},
-	{"WDC WD25", "00JB-00FUA0", NULL, BLIST_NOREPORTLUN},
-	{"XYRATEX", "RS", "*", BLIST_SPARSELUN | BLIST_LARGELUN},
-	{"Zzyzx", "RocketStor 500S", NULL, BLIST_SPARSELUN},
-	{"Zzyzx", "RocketStor 2000", NULL, BLIST_SPARSELUN},
-	{ NULL, NULL, NULL, 0 },
-};
+	अणु"3PARdata", "VV", शून्य, BLIST_REPORTLUN2पूर्ण,
+	अणु"ADAPTEC", "AACRAID", शून्य, BLIST_FORCELUNपूर्ण,
+	अणु"ADAPTEC", "Adaptec 5400S", शून्य, BLIST_FORCELUNपूर्ण,
+	अणु"AIX", "VDASD", शून्य, BLIST_TRY_VPD_PAGESपूर्ण,
+	अणु"AFT PRO", "-IX CF", "0.0>", BLIST_FORCELUNपूर्ण,
+	अणु"BELKIN", "USB 2 HS-CF", "1.95",  BLIST_FORCELUN | BLIST_INQUIRY_36पूर्ण,
+	अणु"BROWNIE", "1200U3P", शून्य, BLIST_NOREPORTLUNपूर्ण,
+	अणु"BROWNIE", "1600U3P", शून्य, BLIST_NOREPORTLUNपूर्ण,
+	अणु"CANON", "IPUBJD", शून्य, BLIST_SPARSELUNपूर्ण,
+	अणु"CBOX3", "USB Storage-SMC", "300A", BLIST_FORCELUN | BLIST_INQUIRY_36पूर्ण,
+	अणु"CMD", "CRA-7280", शून्य, BLIST_SPARSELUNपूर्ण,	/* CMD RAID Controller */
+	अणु"CNSI", "G7324", शून्य, BLIST_SPARSELUNपूर्ण,	/* Chaparral G7324 RAID */
+	अणु"CNSi", "G8324", शून्य, BLIST_SPARSELUNपूर्ण,	/* Chaparral G8324 RAID */
+	अणु"COMPAQ", "ARRAY CONTROLLER", शून्य, BLIST_SPARSELUN | BLIST_LARGELUN |
+		BLIST_MAX_512 | BLIST_REPORTLUN2पूर्ण,	/* Compaq RA4x00 */
+	अणु"COMPAQ", "LOGICAL VOLUME", शून्य, BLIST_FORCELUN | BLIST_MAX_512पूर्ण, /* Compaq RA4x00 */
+	अणु"COMPAQ", "CR3500", शून्य, BLIST_FORCELUNपूर्ण,
+	अणु"COMPAQ", "MSA1000", शून्य, BLIST_SPARSELUN | BLIST_NOSTARTONADDपूर्ण,
+	अणु"COMPAQ", "MSA1000 VOLUME", शून्य, BLIST_SPARSELUN | BLIST_NOSTARTONADDपूर्ण,
+	अणु"COMPAQ", "HSV110", शून्य, BLIST_REPORTLUN2 | BLIST_NOSTARTONADDपूर्ण,
+	अणु"DDN", "SAN DataDirector", "*", BLIST_SPARSELUNपूर्ण,
+	अणु"DEC", "HSG80", शून्य, BLIST_REPORTLUN2 | BLIST_NOSTARTONADDपूर्ण,
+	अणु"DELL", "PV660F", शून्य, BLIST_SPARSELUNपूर्ण,
+	अणु"DELL", "PV660F   PSEUDO", शून्य, BLIST_SPARSELUNपूर्ण,
+	अणु"DELL", "PSEUDO DEVICE .", शून्य, BLIST_SPARSELUNपूर्ण,	/* Dell PV 530F */
+	अणु"DELL", "PV530F", शून्य, BLIST_SPARSELUNपूर्ण,
+	अणु"DELL", "PERCRAID", शून्य, BLIST_FORCELUNपूर्ण,
+	अणु"DGC", "RAID", शून्य, BLIST_SPARSELUNपूर्ण,	/* EMC CLARiiON, storage on LUN 0 */
+	अणु"DGC", "DISK", शून्य, BLIST_SPARSELUNपूर्ण,	/* EMC CLARiiON, no storage on LUN 0 */
+	अणु"EMC",  "Invista", "*", BLIST_SPARSELUN | BLIST_LARGELUNपूर्ण,
+	अणु"EMC", "SYMMETRIX", शून्य, BLIST_SPARSELUN | BLIST_LARGELUN |
+	 BLIST_REPORTLUN2 | BLIST_RETRY_ITFपूर्ण,
+	अणु"EMULEX", "MD21/S2     ESDI", शून्य, BLIST_SINGLELUNपूर्ण,
+	अणु"easyRAID", "16P", शून्य, BLIST_NOREPORTLUNपूर्ण,
+	अणु"easyRAID", "X6P", शून्य, BLIST_NOREPORTLUNपूर्ण,
+	अणु"easyRAID", "F8", शून्य, BLIST_NOREPORTLUNपूर्ण,
+	अणु"FSC", "CentricStor", "*", BLIST_SPARSELUN | BLIST_LARGELUNपूर्ण,
+	अणु"FUJITSU", "ETERNUS_DXM", "*", BLIST_RETRY_ASC_C1पूर्ण,
+	अणु"Generic", "USB SD Reader", "1.00", BLIST_FORCELUN | BLIST_INQUIRY_36पूर्ण,
+	अणु"Generic", "USB Storage-SMC", शून्य, BLIST_FORCELUN | BLIST_INQUIRY_36पूर्ण, /* FW: 0180 and 0207 */
+	अणु"HITACHI", "DF400", "*", BLIST_REPORTLUN2पूर्ण,
+	अणु"HITACHI", "DF500", "*", BLIST_REPORTLUN2पूर्ण,
+	अणु"HITACHI", "DISK-SUBSYSTEM", "*", BLIST_REPORTLUN2पूर्ण,
+	अणु"HITACHI", "HUS1530", "*", BLIST_NO_DIFपूर्ण,
+	अणु"HITACHI", "OPEN-", "*", BLIST_REPORTLUN2 | BLIST_TRY_VPD_PAGESपूर्ण,
+	अणु"HP", "A6189A", शून्य, BLIST_SPARSELUN | BLIST_LARGELUNपूर्ण,	/* HP VA7400 */
+	अणु"HP", "OPEN-", "*", BLIST_REPORTLUN2 | BLIST_TRY_VPD_PAGESपूर्ण, /* HP XP Arrays */
+	अणु"HP", "NetRAID-4M", शून्य, BLIST_FORCELUNपूर्ण,
+	अणु"HP", "HSV100", शून्य, BLIST_REPORTLUN2 | BLIST_NOSTARTONADDपूर्ण,
+	अणु"HP", "C1557A", शून्य, BLIST_FORCELUNपूर्ण,
+	अणु"HP", "C3323-300", "4269", BLIST_NOTQपूर्ण,
+	अणु"HP", "C5713A", शून्य, BLIST_NOREPORTLUNपूर्ण,
+	अणु"HP", "DISK-SUBSYSTEM", "*", BLIST_REPORTLUN2पूर्ण,
+	अणु"HPE", "OPEN-", "*", BLIST_REPORTLUN2 | BLIST_TRY_VPD_PAGESपूर्ण,
+	अणु"IBM", "AuSaV1S2", शून्य, BLIST_FORCELUNपूर्ण,
+	अणु"IBM", "ProFibre 4000R", "*", BLIST_SPARSELUN | BLIST_LARGELUNपूर्ण,
+	अणु"IBM", "2105", शून्य, BLIST_RETRY_HWERRORपूर्ण,
+	अणु"iomega", "jaz 1GB", "J.86", BLIST_NOTQ | BLIST_NOLUNपूर्ण,
+	अणु"IOMEGA", "ZIP", शून्य, BLIST_NOTQ | BLIST_NOLUNपूर्ण,
+	अणु"IOMEGA", "Io20S         *F", शून्य, BLIST_KEYपूर्ण,
+	अणु"INSITE", "Floptical   F*8I", शून्य, BLIST_KEYपूर्ण,
+	अणु"INSITE", "I325VM", शून्य, BLIST_KEYपूर्ण,
+	अणु"Intel", "Multi-Flex", शून्य, BLIST_NO_RSOCपूर्ण,
+	अणु"iRiver", "iFP Mass Driver", शून्य, BLIST_NOT_LOCKABLE | BLIST_INQUIRY_36पूर्ण,
+	अणु"LASOUND", "CDX7405", "3.10", BLIST_MAX5LUN | BLIST_SINGLELUNपूर्ण,
+	अणु"Marvell", "Console", शून्य, BLIST_SKIP_VPD_PAGESपूर्ण,
+	अणु"Marvell", "91xx Config", "1.01", BLIST_SKIP_VPD_PAGESपूर्ण,
+	अणु"MATSHITA", "PD-1", शून्य, BLIST_FORCELUN | BLIST_SINGLELUNपूर्ण,
+	अणु"MATSHITA", "DMC-LC5", शून्य, BLIST_NOT_LOCKABLE | BLIST_INQUIRY_36पूर्ण,
+	अणु"MATSHITA", "DMC-LC40", शून्य, BLIST_NOT_LOCKABLE | BLIST_INQUIRY_36पूर्ण,
+	अणु"Medion", "Flash XL  MMC/SD", "2.6D", BLIST_FORCELUNपूर्ण,
+	अणु"MegaRAID", "LD", शून्य, BLIST_FORCELUNपूर्ण,
+	अणु"MICROP", "4110", शून्य, BLIST_NOTQपूर्ण,
+	अणु"MSFT", "Virtual HD", शून्य, BLIST_MAX_1024 | BLIST_NO_RSOCपूर्ण,
+	अणु"MYLEX", "DACARMRB", "*", BLIST_REPORTLUN2पूर्ण,
+	अणु"nCipher", "Fastness Crypto", शून्य, BLIST_FORCELUNपूर्ण,
+	अणु"NAKAMICH", "MJ-4.8S", शून्य, BLIST_FORCELUN | BLIST_SINGLELUNपूर्ण,
+	अणु"NAKAMICH", "MJ-5.16S", शून्य, BLIST_FORCELUN | BLIST_SINGLELUNपूर्ण,
+	अणु"NEC", "PD-1 ODX654P", शून्य, BLIST_FORCELUN | BLIST_SINGLELUNपूर्ण,
+	अणु"NEC", "iStorage", शून्य, BLIST_REPORTLUN2पूर्ण,
+	अणु"NRC", "MBR-7", शून्य, BLIST_FORCELUN | BLIST_SINGLELUNपूर्ण,
+	अणु"NRC", "MBR-7.4", शून्य, BLIST_FORCELUN | BLIST_SINGLELUNपूर्ण,
+	अणु"PIONEER", "CD-ROM DRM-600", शून्य, BLIST_FORCELUN | BLIST_SINGLELUNपूर्ण,
+	अणु"PIONEER", "CD-ROM DRM-602X", शून्य, BLIST_FORCELUN | BLIST_SINGLELUNपूर्ण,
+	अणु"PIONEER", "CD-ROM DRM-604X", शून्य, BLIST_FORCELUN | BLIST_SINGLELUNपूर्ण,
+	अणु"PIONEER", "CD-ROM DRM-624X", शून्य, BLIST_FORCELUN | BLIST_SINGLELUNपूर्ण,
+	अणु"Promise", "VTrak E610f", शून्य, BLIST_SPARSELUN | BLIST_NO_RSOCपूर्ण,
+	अणु"Promise", "", शून्य, BLIST_SPARSELUNपूर्ण,
+	अणु"QEMU", "QEMU CD-ROM", शून्य, BLIST_SKIP_VPD_PAGESपूर्ण,
+	अणु"QNAP", "iSCSI Storage", शून्य, BLIST_MAX_1024पूर्ण,
+	अणु"SYNOLOGY", "iSCSI Storage", शून्य, BLIST_MAX_1024पूर्ण,
+	अणु"QUANTUM", "XP34301", "1071", BLIST_NOTQपूर्ण,
+	अणु"REGAL", "CDC-4X", शून्य, BLIST_MAX5LUN | BLIST_SINGLELUNपूर्ण,
+	अणु"SanDisk", "ImageMate CF-SD1", शून्य, BLIST_FORCELUNपूर्ण,
+	अणु"SEAGATE", "ST34555N", "0930", BLIST_NOTQपूर्ण,	/* Chokes on tagged INQUIRY */
+	अणु"SEAGATE", "ST3390N", "9546", BLIST_NOTQपूर्ण,
+	अणु"SEAGATE", "ST900MM0006", शून्य, BLIST_SKIP_VPD_PAGESपूर्ण,
+	अणु"SGI", "RAID3", "*", BLIST_SPARSELUNपूर्ण,
+	अणु"SGI", "RAID5", "*", BLIST_SPARSELUNपूर्ण,
+	अणु"SGI", "TP9100", "*", BLIST_REPORTLUN2पूर्ण,
+	अणु"SGI", "Universal Xport", "*", BLIST_NO_ULD_ATTACHपूर्ण,
+	अणु"IBM", "Universal Xport", "*", BLIST_NO_ULD_ATTACHपूर्ण,
+	अणु"SUN", "Universal Xport", "*", BLIST_NO_ULD_ATTACHपूर्ण,
+	अणु"DELL", "Universal Xport", "*", BLIST_NO_ULD_ATTACHपूर्ण,
+	अणु"STK", "Universal Xport", "*", BLIST_NO_ULD_ATTACHपूर्ण,
+	अणु"NETAPP", "Universal Xport", "*", BLIST_NO_ULD_ATTACHपूर्ण,
+	अणु"LSI", "Universal Xport", "*", BLIST_NO_ULD_ATTACHपूर्ण,
+	अणु"ENGENIO", "Universal Xport", "*", BLIST_NO_ULD_ATTACHपूर्ण,
+	अणु"LENOVO", "Universal Xport", "*", BLIST_NO_ULD_ATTACHपूर्ण,
+	अणु"FUJITSU", "Universal Xport", "*", BLIST_NO_ULD_ATTACHपूर्ण,
+	अणु"SanDisk", "Cruzer Blade", शून्य, BLIST_TRY_VPD_PAGES |
+		BLIST_INQUIRY_36पूर्ण,
+	अणु"SMSC", "USB 2 HS-CF", शून्य, BLIST_SPARSELUN | BLIST_INQUIRY_36पूर्ण,
+	अणु"SONY", "CD-ROM CDU-8001", शून्य, BLIST_BORKENपूर्ण,
+	अणु"SONY", "TSL", शून्य, BLIST_FORCELUNपूर्ण,		/* DDS3 & DDS4 स्वतःloaders */
+	अणु"ST650211", "CF", शून्य, BLIST_RETRY_HWERRORपूर्ण,
+	अणु"SUN", "T300", "*", BLIST_SPARSELUNपूर्ण,
+	अणु"SUN", "T4", "*", BLIST_SPARSELUNपूर्ण,
+	अणु"Tornado-", "F4", "*", BLIST_NOREPORTLUNपूर्ण,
+	अणु"TOSHIBA", "CDROM", शून्य, BLIST_ISROMपूर्ण,
+	अणु"TOSHIBA", "CD-ROM", शून्य, BLIST_ISROMपूर्ण,
+	अणु"Traxdata", "CDR4120", शून्य, BLIST_NOLUNपूर्ण,	/* locks up */
+	अणु"USB2.0", "SMARTMEDIA/XD", शून्य, BLIST_FORCELUN | BLIST_INQUIRY_36पूर्ण,
+	अणु"WangDAT", "Model 2600", "01.7", BLIST_SELECT_NO_ATNपूर्ण,
+	अणु"WangDAT", "Model 3200", "02.2", BLIST_SELECT_NO_ATNपूर्ण,
+	अणु"WangDAT", "Model 1300", "02.4", BLIST_SELECT_NO_ATNपूर्ण,
+	अणु"WDC WD25", "00JB-00FUA0", शून्य, BLIST_NOREPORTLUNपूर्ण,
+	अणु"XYRATEX", "RS", "*", BLIST_SPARSELUN | BLIST_LARGELUNपूर्ण,
+	अणु"Zzyzx", "RocketStor 500S", शून्य, BLIST_SPARSELUNपूर्ण,
+	अणु"Zzyzx", "RocketStor 2000", शून्य, BLIST_SPARSELUNपूर्ण,
+	अणु शून्य, शून्य, शून्य, 0 पूर्ण,
+पूर्ण;
 
-static struct scsi_dev_info_list_table *scsi_devinfo_lookup_by_key(int key)
-{
-	struct scsi_dev_info_list_table *devinfo_table;
-	int found = 0;
+अटल काष्ठा scsi_dev_info_list_table *scsi_devinfo_lookup_by_key(पूर्णांक key)
+अणु
+	काष्ठा scsi_dev_info_list_table *devinfo_table;
+	पूर्णांक found = 0;
 
-	list_for_each_entry(devinfo_table, &scsi_dev_info_list, node)
-		if (devinfo_table->key == key) {
+	list_क्रम_each_entry(devinfo_table, &scsi_dev_info_list, node)
+		अगर (devinfo_table->key == key) अणु
 			found = 1;
-			break;
-		}
-	if (!found)
-		return ERR_PTR(-EINVAL);
+			अवरोध;
+		पूर्ण
+	अगर (!found)
+		वापस ERR_PTR(-EINVAL);
 
-	return devinfo_table;
-}
+	वापस devinfo_table;
+पूर्ण
 
 /*
- * scsi_strcpy_devinfo: called from scsi_dev_info_list_add to copy into
- * devinfo vendor and model strings.
+ * scsi_म_नकल_devinfo: called from scsi_dev_info_list_add to copy पूर्णांकo
+ * devinfo venकरोr and model strings.
  */
-static void scsi_strcpy_devinfo(char *name, char *to, size_t to_length,
-				char *from, int compatible)
-{
-	size_t from_length;
+अटल व्योम scsi_म_नकल_devinfo(अक्षर *name, अक्षर *to, माप_प्रकार to_length,
+				अक्षर *from, पूर्णांक compatible)
+अणु
+	माप_प्रकार from_length;
 
-	from_length = strlen(from);
+	from_length = म_माप(from);
 	/* This zero-pads the destination */
-	strncpy(to, from, to_length);
-	if (from_length < to_length && !compatible) {
+	म_नकलन(to, from, to_length);
+	अगर (from_length < to_length && !compatible) अणु
 		/*
-		 * space pad the string if it is short.
+		 * space pad the string अगर it is लघु.
 		 */
-		memset(&to[from_length], ' ', to_length - from_length);
-	}
-	if (from_length > to_length)
-		 printk(KERN_WARNING "%s: %s string '%s' is too long\n",
+		स_रखो(&to[from_length], ' ', to_length - from_length);
+	पूर्ण
+	अगर (from_length > to_length)
+		 prपूर्णांकk(KERN_WARNING "%s: %s string '%s' is too long\n",
 			__func__, name, from);
-}
+पूर्ण
 
 /**
  * scsi_dev_info_list_add - add one dev_info list entry.
- * @compatible: if true, null terminate short strings.  Otherwise space pad.
- * @vendor:	vendor string
+ * @compatible: अगर true, null terminate लघु strings.  Otherwise space pad.
+ * @venकरोr:	venकरोr string
  * @model:	model (product) string
- * @strflags:	integer string
- * @flags:	if strflags NULL, use this flag value
+ * @strflags:	पूर्णांकeger string
+ * @flags:	अगर strflags शून्य, use this flag value
  *
  * Description:
- *	Create and add one dev_info entry for @vendor, @model, @strflags or
- *	@flag. If @compatible, add to the tail of the list, do not space
- *	pad, and set devinfo->compatible. The scsi_static_device_list entries
- *	are added with @compatible 1 and @clfags NULL.
+ *	Create and add one dev_info entry क्रम @venकरोr, @model, @strflags or
+ *	@flag. If @compatible, add to the tail of the list, करो not space
+ *	pad, and set devinfo->compatible. The scsi_अटल_device_list entries
+ *	are added with @compatible 1 and @clfags शून्य.
  *
  * Returns: 0 OK, -error on failure.
  **/
-static int scsi_dev_info_list_add(int compatible, char *vendor, char *model,
-			    char *strflags, blist_flags_t flags)
-{
-	return scsi_dev_info_list_add_keyed(compatible, vendor, model,
+अटल पूर्णांक scsi_dev_info_list_add(पूर्णांक compatible, अक्षर *venकरोr, अक्षर *model,
+			    अक्षर *strflags, blist_flags_t flags)
+अणु
+	वापस scsi_dev_info_list_add_keyed(compatible, venकरोr, model,
 					    strflags, flags,
 					    SCSI_DEVINFO_GLOBAL);
-}
+पूर्ण
 
 /**
  * scsi_dev_info_list_add_keyed - add one dev_info list entry.
- * @compatible: if true, null terminate short strings.  Otherwise space pad.
- * @vendor:	vendor string
+ * @compatible: अगर true, null terminate लघु strings.  Otherwise space pad.
+ * @venकरोr:	venकरोr string
  * @model:	model (product) string
- * @strflags:	integer string
- * @flags:	if strflags NULL, use this flag value
- * @key:	specify list to use
+ * @strflags:	पूर्णांकeger string
+ * @flags:	अगर strflags शून्य, use this flag value
+ * @key:	specअगरy list to use
  *
  * Description:
- *	Create and add one dev_info entry for @vendor, @model,
- *	@strflags or @flag in list specified by @key. If @compatible,
- *	add to the tail of the list, do not space pad, and set
- *	devinfo->compatible. The scsi_static_device_list entries are
- *	added with @compatible 1 and @clfags NULL.
+ *	Create and add one dev_info entry क्रम @venकरोr, @model,
+ *	@strflags or @flag in list specअगरied by @key. If @compatible,
+ *	add to the tail of the list, करो not space pad, and set
+ *	devinfo->compatible. The scsi_अटल_device_list entries are
+ *	added with @compatible 1 and @clfags शून्य.
  *
  * Returns: 0 OK, -error on failure.
  **/
-int scsi_dev_info_list_add_keyed(int compatible, char *vendor, char *model,
-				 char *strflags, blist_flags_t flags,
-				 enum scsi_devinfo_key key)
-{
-	struct scsi_dev_info_list *devinfo;
-	struct scsi_dev_info_list_table *devinfo_table =
+पूर्णांक scsi_dev_info_list_add_keyed(पूर्णांक compatible, अक्षर *venकरोr, अक्षर *model,
+				 अक्षर *strflags, blist_flags_t flags,
+				 क्रमागत scsi_devinfo_key key)
+अणु
+	काष्ठा scsi_dev_info_list *devinfo;
+	काष्ठा scsi_dev_info_list_table *devinfo_table =
 		scsi_devinfo_lookup_by_key(key);
 
-	if (IS_ERR(devinfo_table))
-		return PTR_ERR(devinfo_table);
+	अगर (IS_ERR(devinfo_table))
+		वापस PTR_ERR(devinfo_table);
 
-	devinfo = kmalloc(sizeof(*devinfo), GFP_KERNEL);
-	if (!devinfo) {
-		printk(KERN_ERR "%s: no memory\n", __func__);
-		return -ENOMEM;
-	}
+	devinfo = kदो_स्मृति(माप(*devinfo), GFP_KERNEL);
+	अगर (!devinfo) अणु
+		prपूर्णांकk(KERN_ERR "%s: no memory\n", __func__);
+		वापस -ENOMEM;
+	पूर्ण
 
-	scsi_strcpy_devinfo("vendor", devinfo->vendor, sizeof(devinfo->vendor),
-			    vendor, compatible);
-	scsi_strcpy_devinfo("model", devinfo->model, sizeof(devinfo->model),
+	scsi_म_नकल_devinfo("vendor", devinfo->venकरोr, माप(devinfo->venकरोr),
+			    venकरोr, compatible);
+	scsi_म_नकल_devinfo("model", devinfo->model, माप(devinfo->model),
 			    model, compatible);
 
-	if (strflags) {
-		unsigned long long val;
-		int ret = kstrtoull(strflags, 0, &val);
+	अगर (strflags) अणु
+		अचिन्हित दीर्घ दीर्घ val;
+		पूर्णांक ret = kम_से_अदीर्घl(strflags, 0, &val);
 
-		if (ret != 0) {
-			kfree(devinfo);
-			return ret;
-		}
-		flags = (__force blist_flags_t)val;
-	}
-	if (flags & __BLIST_UNUSED_MASK) {
+		अगर (ret != 0) अणु
+			kमुक्त(devinfo);
+			वापस ret;
+		पूर्ण
+		flags = (__क्रमce blist_flags_t)val;
+	पूर्ण
+	अगर (flags & __BLIST_UNUSED_MASK) अणु
 		pr_err("scsi_devinfo (%s:%s): unsupported flags 0x%llx",
-		       vendor, model, flags & __BLIST_UNUSED_MASK);
-		kfree(devinfo);
-		return -EINVAL;
-	}
+		       venकरोr, model, flags & __BLIST_UNUSED_MASK);
+		kमुक्त(devinfo);
+		वापस -EINVAL;
+	पूर्ण
 	devinfo->flags = flags;
 	devinfo->compatible = compatible;
 
-	if (compatible)
+	अगर (compatible)
 		list_add_tail(&devinfo->dev_info_list,
 			      &devinfo_table->scsi_dev_info_list);
-	else
+	अन्यथा
 		list_add(&devinfo->dev_info_list,
 			 &devinfo_table->scsi_dev_info_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(scsi_dev_info_list_add_keyed);
 
 /**
  * scsi_dev_info_list_find - find a matching dev_info list entry.
- * @vendor:	full vendor string
+ * @venकरोr:	full venकरोr string
  * @model:	full model (product) string
- * @key:	specify list to use
+ * @key:	specअगरy list to use
  *
  * Description:
- *	Finds the first dev_info entry matching @vendor, @model
- *	in list specified by @key.
+ *	Finds the first dev_info entry matching @venकरोr, @model
+ *	in list specअगरied by @key.
  *
- * Returns: pointer to matching entry, or ERR_PTR on failure.
+ * Returns: poपूर्णांकer to matching entry, or ERR_PTR on failure.
  **/
-static struct scsi_dev_info_list *scsi_dev_info_list_find(const char *vendor,
-		const char *model, enum scsi_devinfo_key key)
-{
-	struct scsi_dev_info_list *devinfo;
-	struct scsi_dev_info_list_table *devinfo_table =
+अटल काष्ठा scsi_dev_info_list *scsi_dev_info_list_find(स्थिर अक्षर *venकरोr,
+		स्थिर अक्षर *model, क्रमागत scsi_devinfo_key key)
+अणु
+	काष्ठा scsi_dev_info_list *devinfo;
+	काष्ठा scsi_dev_info_list_table *devinfo_table =
 		scsi_devinfo_lookup_by_key(key);
-	size_t vmax, mmax, mlen;
-	const char *vskip, *mskip;
+	माप_प्रकार vmax, mmax, mlen;
+	स्थिर अक्षर *vskip, *mskip;
 
-	if (IS_ERR(devinfo_table))
-		return (struct scsi_dev_info_list *) devinfo_table;
+	अगर (IS_ERR(devinfo_table))
+		वापस (काष्ठा scsi_dev_info_list *) devinfo_table;
 
-	/* Prepare for "compatible" matches */
+	/* Prepare क्रम "compatible" matches */
 
 	/*
 	 * XXX why skip leading spaces? If an odd INQUIRY
 	 * value, that should have been part of the
-	 * scsi_static_device_list[] entry, such as "  FOO"
-	 * rather than "FOO". Since this code is already
-	 * here, and we don't know what device it is
+	 * scsi_अटल_device_list[] entry, such as "  FOO"
+	 * rather than "FOO". Since this code is alपढ़ोy
+	 * here, and we करोn't know what device it is
 	 * trying to work with, leave it as-is.
 	 */
-	vmax = sizeof(devinfo->vendor);
-	vskip = vendor;
-	while (vmax > 0 && *vskip == ' ') {
+	vmax = माप(devinfo->venकरोr);
+	vskip = venकरोr;
+	जबतक (vmax > 0 && *vskip == ' ') अणु
 		vmax--;
 		vskip++;
-	}
+	पूर्ण
 	/* Also skip trailing spaces */
-	while (vmax > 0 && vskip[vmax - 1] == ' ')
+	जबतक (vmax > 0 && vskip[vmax - 1] == ' ')
 		--vmax;
 
-	mmax = sizeof(devinfo->model);
+	mmax = माप(devinfo->model);
 	mskip = model;
-	while (mmax > 0 && *mskip == ' ') {
+	जबतक (mmax > 0 && *mskip == ' ') अणु
 		mmax--;
 		mskip++;
-	}
-	while (mmax > 0 && mskip[mmax - 1] == ' ')
+	पूर्ण
+	जबतक (mmax > 0 && mskip[mmax - 1] == ' ')
 		--mmax;
 
-	list_for_each_entry(devinfo, &devinfo_table->scsi_dev_info_list,
-			    dev_info_list) {
-		if (devinfo->compatible) {
+	list_क्रम_each_entry(devinfo, &devinfo_table->scsi_dev_info_list,
+			    dev_info_list) अणु
+		अगर (devinfo->compatible) अणु
 			/*
-			 * vendor strings must be an exact match
+			 * venकरोr strings must be an exact match
 			 */
-			if (vmax != strnlen(devinfo->vendor,
-					    sizeof(devinfo->vendor)) ||
-			    memcmp(devinfo->vendor, vskip, vmax))
-				continue;
+			अगर (vmax != strnlen(devinfo->venकरोr,
+					    माप(devinfo->venकरोr)) ||
+			    स_भेद(devinfo->venकरोr, vskip, vmax))
+				जारी;
 
 			/*
-			 * @model specifies the full string, and
+			 * @model specअगरies the full string, and
 			 * must be larger or equal to devinfo->model
 			 */
-			mlen = strnlen(devinfo->model, sizeof(devinfo->model));
-			if (mmax < mlen || memcmp(devinfo->model, mskip, mlen))
-				continue;
-			return devinfo;
-		} else {
-			if (!memcmp(devinfo->vendor, vendor,
-				    sizeof(devinfo->vendor)) &&
-			    !memcmp(devinfo->model, model,
-				    sizeof(devinfo->model)))
-				return devinfo;
-		}
-	}
+			mlen = strnlen(devinfo->model, माप(devinfo->model));
+			अगर (mmax < mlen || स_भेद(devinfo->model, mskip, mlen))
+				जारी;
+			वापस devinfo;
+		पूर्ण अन्यथा अणु
+			अगर (!स_भेद(devinfo->venकरोr, venकरोr,
+				    माप(devinfo->venकरोr)) &&
+			    !स_भेद(devinfo->model, model,
+				    माप(devinfo->model)))
+				वापस devinfo;
+		पूर्ण
+	पूर्ण
 
-	return ERR_PTR(-ENOENT);
-}
+	वापस ERR_PTR(-ENOENT);
+पूर्ण
 
 /**
- * scsi_dev_info_list_del_keyed - remove one dev_info list entry.
- * @vendor:	vendor string
+ * scsi_dev_info_list_del_keyed - हटाओ one dev_info list entry.
+ * @venकरोr:	venकरोr string
  * @model:	model (product) string
- * @key:	specify list to use
+ * @key:	specअगरy list to use
  *
  * Description:
- *	Remove and destroy one dev_info entry for @vendor, @model
- *	in list specified by @key.
+ *	Remove and destroy one dev_info entry क्रम @venकरोr, @model
+ *	in list specअगरied by @key.
  *
  * Returns: 0 OK, -error on failure.
  **/
-int scsi_dev_info_list_del_keyed(char *vendor, char *model,
-				 enum scsi_devinfo_key key)
-{
-	struct scsi_dev_info_list *found;
+पूर्णांक scsi_dev_info_list_del_keyed(अक्षर *venकरोr, अक्षर *model,
+				 क्रमागत scsi_devinfo_key key)
+अणु
+	काष्ठा scsi_dev_info_list *found;
 
-	found = scsi_dev_info_list_find(vendor, model, key);
-	if (IS_ERR(found))
-		return PTR_ERR(found);
+	found = scsi_dev_info_list_find(venकरोr, model, key);
+	अगर (IS_ERR(found))
+		वापस PTR_ERR(found);
 
 	list_del(&found->dev_info_list);
-	kfree(found);
-	return 0;
-}
+	kमुक्त(found);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(scsi_dev_info_list_del_keyed);
 
 /**
@@ -514,283 +515,283 @@ EXPORT_SYMBOL(scsi_dev_info_list_del_keyed);
  *
  * Description:
  *	Parse dev_list, and add entries to the scsi_dev_info_list.
- *	dev_list is of the form "vendor:product:flag,vendor:product:flag".
- *	dev_list is modified via strsep. Can be called for command line
- *	addition, for proc or mabye a sysfs interface.
+ *	dev_list is of the क्रमm "vendor:product:flag,vendor:product:flag".
+ *	dev_list is modअगरied via strsep. Can be called क्रम command line
+ *	addition, क्रम proc or mabye a sysfs पूर्णांकerface.
  *
- * Returns: 0 if OK, -error on failure.
+ * Returns: 0 अगर OK, -error on failure.
  **/
-static int scsi_dev_info_list_add_str(char *dev_list)
-{
-	char *vendor, *model, *strflags, *next;
-	char *next_check;
-	int res = 0;
+अटल पूर्णांक scsi_dev_info_list_add_str(अक्षर *dev_list)
+अणु
+	अक्षर *venकरोr, *model, *strflags, *next;
+	अक्षर *next_check;
+	पूर्णांक res = 0;
 
 	next = dev_list;
-	if (next && next[0] == '"') {
+	अगर (next && next[0] == '"') अणु
 		/*
 		 * Ignore both the leading and trailing quote.
 		 */
 		next++;
 		next_check = ",\"";
-	} else {
+	पूर्ण अन्यथा अणु
 		next_check = ",";
-	}
+	पूर्ण
 
 	/*
-	 * For the leading and trailing '"' case, the for loop comes
-	 * through the last time with vendor[0] == '\0'.
+	 * For the leading and trailing '"' हाल, the क्रम loop comes
+	 * through the last समय with venकरोr[0] == '\0'.
 	 */
-	for (vendor = strsep(&next, ":"); vendor && (vendor[0] != '\0')
-	     && (res == 0); vendor = strsep(&next, ":")) {
-		strflags = NULL;
+	क्रम (venकरोr = strsep(&next, ":"); venकरोr && (venकरोr[0] != '\0')
+	     && (res == 0); venकरोr = strsep(&next, ":")) अणु
+		strflags = शून्य;
 		model = strsep(&next, ":");
-		if (model)
+		अगर (model)
 			strflags = strsep(&next, next_check);
-		if (!model || !strflags) {
-			printk(KERN_ERR "%s: bad dev info string '%s' '%s'"
-			       " '%s'\n", __func__, vendor, model,
+		अगर (!model || !strflags) अणु
+			prपूर्णांकk(KERN_ERR "%s: bad dev info string '%s' '%s'"
+			       " '%s'\n", __func__, venकरोr, model,
 			       strflags);
 			res = -EINVAL;
-		} else
-			res = scsi_dev_info_list_add(0 /* compatible */, vendor,
+		पूर्ण अन्यथा
+			res = scsi_dev_info_list_add(0 /* compatible */, venकरोr,
 						     model, strflags, 0);
-	}
-	return res;
-}
+	पूर्ण
+	वापस res;
+पूर्ण
 
 /**
- * scsi_get_device_flags - get device specific flags from the dynamic
+ * scsi_get_device_flags - get device specअगरic flags from the dynamic
  *	device list.
- * @sdev:       &scsi_device to get flags for
- * @vendor:	vendor name
+ * @sdev:       &scsi_device to get flags क्रम
+ * @venकरोr:	venकरोr name
  * @model:	model name
  *
  * Description:
- *     Search the global scsi_dev_info_list (specified by list zero)
- *     for an entry matching @vendor and @model, if found, return the
- *     matching flags value, else return the host or global default
- *     settings.  Called during scan time.
+ *     Search the global scsi_dev_info_list (specअगरied by list zero)
+ *     क्रम an entry matching @venकरोr and @model, अगर found, वापस the
+ *     matching flags value, अन्यथा वापस the host or global शेष
+ *     settings.  Called during scan समय.
  **/
-blist_flags_t scsi_get_device_flags(struct scsi_device *sdev,
-				    const unsigned char *vendor,
-				    const unsigned char *model)
-{
-	return scsi_get_device_flags_keyed(sdev, vendor, model,
+blist_flags_t scsi_get_device_flags(काष्ठा scsi_device *sdev,
+				    स्थिर अचिन्हित अक्षर *venकरोr,
+				    स्थिर अचिन्हित अक्षर *model)
+अणु
+	वापस scsi_get_device_flags_keyed(sdev, venकरोr, model,
 					   SCSI_DEVINFO_GLOBAL);
-}
+पूर्ण
 
 
 /**
- * scsi_get_device_flags_keyed - get device specific flags from the dynamic device list
- * @sdev:       &scsi_device to get flags for
- * @vendor:	vendor name
+ * scsi_get_device_flags_keyed - get device specअगरic flags from the dynamic device list
+ * @sdev:       &scsi_device to get flags क्रम
+ * @venकरोr:	venकरोr name
  * @model:	model name
  * @key:	list to look up
  *
  * Description:
- *     Search the scsi_dev_info_list specified by @key for an entry
- *     matching @vendor and @model, if found, return the matching
- *     flags value, else return the host or global default settings.
- *     Called during scan time.
+ *     Search the scsi_dev_info_list specअगरied by @key क्रम an entry
+ *     matching @venकरोr and @model, अगर found, वापस the matching
+ *     flags value, अन्यथा वापस the host or global शेष settings.
+ *     Called during scan समय.
  **/
-blist_flags_t scsi_get_device_flags_keyed(struct scsi_device *sdev,
-				const unsigned char *vendor,
-				const unsigned char *model,
-				enum scsi_devinfo_key key)
-{
-	struct scsi_dev_info_list *devinfo;
+blist_flags_t scsi_get_device_flags_keyed(काष्ठा scsi_device *sdev,
+				स्थिर अचिन्हित अक्षर *venकरोr,
+				स्थिर अचिन्हित अक्षर *model,
+				क्रमागत scsi_devinfo_key key)
+अणु
+	काष्ठा scsi_dev_info_list *devinfo;
 
-	devinfo = scsi_dev_info_list_find(vendor, model, key);
-	if (!IS_ERR(devinfo))
-		return devinfo->flags;
+	devinfo = scsi_dev_info_list_find(venकरोr, model, key);
+	अगर (!IS_ERR(devinfo))
+		वापस devinfo->flags;
 
-	/* key or device not found: return nothing */
-	if (key != SCSI_DEVINFO_GLOBAL)
-		return 0;
+	/* key or device not found: वापस nothing */
+	अगर (key != SCSI_DEVINFO_GLOBAL)
+		वापस 0;
 
-	/* except for the global list, where we have an exception */
-	if (sdev->sdev_bflags)
-		return sdev->sdev_bflags;
+	/* except क्रम the global list, where we have an exception */
+	अगर (sdev->sdev_bflags)
+		वापस sdev->sdev_bflags;
 
-	return scsi_default_dev_flags;
-}
+	वापस scsi_शेष_dev_flags;
+पूर्ण
 EXPORT_SYMBOL(scsi_get_device_flags_keyed);
 
-#ifdef CONFIG_SCSI_PROC_FS
-struct double_list {
-	struct list_head *top;
-	struct list_head *bottom;
-};
+#अगर_घोषित CONFIG_SCSI_PROC_FS
+काष्ठा द्विगुन_list अणु
+	काष्ठा list_head *top;
+	काष्ठा list_head *bottom;
+पूर्ण;
 
-static int devinfo_seq_show(struct seq_file *m, void *v)
-{
-	struct double_list *dl = v;
-	struct scsi_dev_info_list_table *devinfo_table =
-		list_entry(dl->top, struct scsi_dev_info_list_table, node);
-	struct scsi_dev_info_list *devinfo =
-		list_entry(dl->bottom, struct scsi_dev_info_list,
+अटल पूर्णांक devinfo_seq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा द्विगुन_list *dl = v;
+	काष्ठा scsi_dev_info_list_table *devinfo_table =
+		list_entry(dl->top, काष्ठा scsi_dev_info_list_table, node);
+	काष्ठा scsi_dev_info_list *devinfo =
+		list_entry(dl->bottom, काष्ठा scsi_dev_info_list,
 			   dev_info_list);
 
-	if (devinfo_table->scsi_dev_info_list.next == dl->bottom &&
+	अगर (devinfo_table->scsi_dev_info_list.next == dl->bottom &&
 	    devinfo_table->name)
-		seq_printf(m, "[%s]:\n", devinfo_table->name);
+		seq_म_लिखो(m, "[%s]:\n", devinfo_table->name);
 
-	seq_printf(m, "'%.8s' '%.16s' 0x%llx\n",
-		   devinfo->vendor, devinfo->model, devinfo->flags);
-	return 0;
-}
+	seq_म_लिखो(m, "'%.8s' '%.16s' 0x%llx\n",
+		   devinfo->venकरोr, devinfo->model, devinfo->flags);
+	वापस 0;
+पूर्ण
 
-static void *devinfo_seq_start(struct seq_file *m, loff_t *ppos)
-{
-	struct double_list *dl = kmalloc(sizeof(*dl), GFP_KERNEL);
+अटल व्योम *devinfo_seq_start(काष्ठा seq_file *m, loff_t *ppos)
+अणु
+	काष्ठा द्विगुन_list *dl = kदो_स्मृति(माप(*dl), GFP_KERNEL);
 	loff_t pos = *ppos;
 
-	if (!dl)
-		return NULL;
+	अगर (!dl)
+		वापस शून्य;
 
-	list_for_each(dl->top, &scsi_dev_info_list) {
-		struct scsi_dev_info_list_table *devinfo_table =
-			list_entry(dl->top, struct scsi_dev_info_list_table,
+	list_क्रम_each(dl->top, &scsi_dev_info_list) अणु
+		काष्ठा scsi_dev_info_list_table *devinfo_table =
+			list_entry(dl->top, काष्ठा scsi_dev_info_list_table,
 				   node);
-		list_for_each(dl->bottom, &devinfo_table->scsi_dev_info_list)
-			if (pos-- == 0)
-				return dl;
-	}
+		list_क्रम_each(dl->bottom, &devinfo_table->scsi_dev_info_list)
+			अगर (pos-- == 0)
+				वापस dl;
+	पूर्ण
 
-	kfree(dl);
-	return NULL;
-}
+	kमुक्त(dl);
+	वापस शून्य;
+पूर्ण
 
-static void *devinfo_seq_next(struct seq_file *m, void *v, loff_t *ppos)
-{
-	struct double_list *dl = v;
-	struct scsi_dev_info_list_table *devinfo_table =
-		list_entry(dl->top, struct scsi_dev_info_list_table, node);
+अटल व्योम *devinfo_seq_next(काष्ठा seq_file *m, व्योम *v, loff_t *ppos)
+अणु
+	काष्ठा द्विगुन_list *dl = v;
+	काष्ठा scsi_dev_info_list_table *devinfo_table =
+		list_entry(dl->top, काष्ठा scsi_dev_info_list_table, node);
 
 	++*ppos;
 	dl->bottom = dl->bottom->next;
-	while (&devinfo_table->scsi_dev_info_list == dl->bottom) {
+	जबतक (&devinfo_table->scsi_dev_info_list == dl->bottom) अणु
 		dl->top = dl->top->next;
-		if (dl->top == &scsi_dev_info_list) {
-			kfree(dl);
-			return NULL;
-		}
+		अगर (dl->top == &scsi_dev_info_list) अणु
+			kमुक्त(dl);
+			वापस शून्य;
+		पूर्ण
 		devinfo_table = list_entry(dl->top,
-					   struct scsi_dev_info_list_table,
+					   काष्ठा scsi_dev_info_list_table,
 					   node);
 		dl->bottom = devinfo_table->scsi_dev_info_list.next;
-	}
+	पूर्ण
 
-	return dl;
-}
+	वापस dl;
+पूर्ण
 
-static void devinfo_seq_stop(struct seq_file *m, void *v)
-{
-	kfree(v);
-}
+अटल व्योम devinfo_seq_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+	kमुक्त(v);
+पूर्ण
 
-static const struct seq_operations scsi_devinfo_seq_ops = {
+अटल स्थिर काष्ठा seq_operations scsi_devinfo_seq_ops = अणु
 	.start	= devinfo_seq_start,
 	.next	= devinfo_seq_next,
 	.stop	= devinfo_seq_stop,
 	.show	= devinfo_seq_show,
-};
+पूर्ण;
 
-static int proc_scsi_devinfo_open(struct inode *inode, struct file *file)
-{
-	return seq_open(file, &scsi_devinfo_seq_ops);
-}
+अटल पूर्णांक proc_scsi_devinfo_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस seq_खोलो(file, &scsi_devinfo_seq_ops);
+पूर्ण
 
 /*
- * proc_scsi_dev_info_write - allow additions to scsi_dev_info_list via /proc.
+ * proc_scsi_dev_info_ग_लिखो - allow additions to scsi_dev_info_list via /proc.
  *
- * Description: Adds a black/white list entry for vendor and model with an
- * integer value of flag to the scsi device info list.
+ * Description: Adds a black/white list entry क्रम venकरोr and model with an
+ * पूर्णांकeger value of flag to the scsi device info list.
  * To use, echo "vendor:model:flag" > /proc/scsi/device_info
  */
-static ssize_t proc_scsi_devinfo_write(struct file *file,
-				       const char __user *buf,
-				       size_t length, loff_t *ppos)
-{
-	char *buffer;
-	ssize_t err = length;
+अटल sमाप_प्रकार proc_scsi_devinfo_ग_लिखो(काष्ठा file *file,
+				       स्थिर अक्षर __user *buf,
+				       माप_प्रकार length, loff_t *ppos)
+अणु
+	अक्षर *buffer;
+	sमाप_प्रकार err = length;
 
-	if (!buf || length>PAGE_SIZE)
-		return -EINVAL;
-	if (!(buffer = (char *) __get_free_page(GFP_KERNEL)))
-		return -ENOMEM;
-	if (copy_from_user(buffer, buf, length)) {
+	अगर (!buf || length>PAGE_SIZE)
+		वापस -EINVAL;
+	अगर (!(buffer = (अक्षर *) __get_मुक्त_page(GFP_KERNEL)))
+		वापस -ENOMEM;
+	अगर (copy_from_user(buffer, buf, length)) अणु
 		err =-EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (length < PAGE_SIZE)
+	अगर (length < PAGE_SIZE)
 		buffer[length] = '\0';
-	else if (buffer[PAGE_SIZE-1]) {
+	अन्यथा अगर (buffer[PAGE_SIZE-1]) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	scsi_dev_info_list_add_str(buffer);
 
 out:
-	free_page((unsigned long)buffer);
-	return err;
-}
+	मुक्त_page((अचिन्हित दीर्घ)buffer);
+	वापस err;
+पूर्ण
 
-static const struct proc_ops scsi_devinfo_proc_ops = {
-	.proc_open	= proc_scsi_devinfo_open,
-	.proc_read	= seq_read,
-	.proc_write	= proc_scsi_devinfo_write,
+अटल स्थिर काष्ठा proc_ops scsi_devinfo_proc_ops = अणु
+	.proc_खोलो	= proc_scsi_devinfo_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_ग_लिखो	= proc_scsi_devinfo_ग_लिखो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= seq_release,
-};
-#endif /* CONFIG_SCSI_PROC_FS */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_SCSI_PROC_FS */
 
-module_param_string(dev_flags, scsi_dev_flags, sizeof(scsi_dev_flags), 0);
+module_param_string(dev_flags, scsi_dev_flags, माप(scsi_dev_flags), 0);
 MODULE_PARM_DESC(dev_flags,
 	 "Given scsi_dev_flags=vendor:model:flags[,v:m:f] add black/white"
 	 " list entries for vendor and model with an integer value of flags"
 	 " to the scsi device info list");
 
-module_param_named(default_dev_flags, scsi_default_dev_flags, ullong, 0644);
-MODULE_PARM_DESC(default_dev_flags,
+module_param_named(शेष_dev_flags, scsi_शेष_dev_flags, ulदीर्घ, 0644);
+MODULE_PARM_DESC(शेष_dev_flags,
 		 "scsi default device flag uint64_t value");
 
 /**
- * scsi_exit_devinfo - remove /proc/scsi/device_info & the scsi_dev_info_list
+ * scsi_निकास_devinfo - हटाओ /proc/scsi/device_info & the scsi_dev_info_list
  **/
-void scsi_exit_devinfo(void)
-{
-#ifdef CONFIG_SCSI_PROC_FS
-	remove_proc_entry("scsi/device_info", NULL);
-#endif
+व्योम scsi_निकास_devinfo(व्योम)
+अणु
+#अगर_घोषित CONFIG_SCSI_PROC_FS
+	हटाओ_proc_entry("scsi/device_info", शून्य);
+#पूर्ण_अगर
 
-	scsi_dev_info_remove_list(SCSI_DEVINFO_GLOBAL);
-}
+	scsi_dev_info_हटाओ_list(SCSI_DEVINFO_GLOBAL);
+पूर्ण
 
 /**
  * scsi_dev_info_add_list - add a new devinfo list
  * @key:	key of the list to add
- * @name:	Name of the list to add (for /proc/scsi/device_info)
+ * @name:	Name of the list to add (क्रम /proc/scsi/device_info)
  *
- * Adds the requested list, returns zero on success, -EEXIST if the
- * key is already registered to a list, or other error on failure.
+ * Adds the requested list, वापसs zero on success, -EEXIST अगर the
+ * key is alपढ़ोy रेजिस्टरed to a list, or other error on failure.
  */
-int scsi_dev_info_add_list(enum scsi_devinfo_key key, const char *name)
-{
-	struct scsi_dev_info_list_table *devinfo_table =
+पूर्णांक scsi_dev_info_add_list(क्रमागत scsi_devinfo_key key, स्थिर अक्षर *name)
+अणु
+	काष्ठा scsi_dev_info_list_table *devinfo_table =
 		scsi_devinfo_lookup_by_key(key);
 
-	if (!IS_ERR(devinfo_table))
-		/* list already exists */
-		return -EEXIST;
+	अगर (!IS_ERR(devinfo_table))
+		/* list alपढ़ोy exists */
+		वापस -EEXIST;
 
-	devinfo_table = kmalloc(sizeof(*devinfo_table), GFP_KERNEL);
+	devinfo_table = kदो_स्मृति(माप(*devinfo_table), GFP_KERNEL);
 
-	if (!devinfo_table)
-		return -ENOMEM;
+	अगर (!devinfo_table)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&devinfo_table->node);
 	INIT_LIST_HEAD(&devinfo_table->scsi_dev_info_list);
@@ -798,86 +799,86 @@ int scsi_dev_info_add_list(enum scsi_devinfo_key key, const char *name)
 	devinfo_table->key = key;
 	list_add_tail(&devinfo_table->node, &scsi_dev_info_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(scsi_dev_info_add_list);
 
 /**
- * scsi_dev_info_remove_list - destroy an added devinfo list
+ * scsi_dev_info_हटाओ_list - destroy an added devinfo list
  * @key: key of the list to destroy
  *
- * Iterates over the entire list first, freeing all the values, then
- * frees the list itself.  Returns 0 on success or -EINVAL if the key
+ * Iterates over the entire list first, मुक्तing all the values, then
+ * मुक्तs the list itself.  Returns 0 on success or -EINVAL अगर the key
  * can't be found.
  */
-int scsi_dev_info_remove_list(enum scsi_devinfo_key key)
-{
-	struct list_head *lh, *lh_next;
-	struct scsi_dev_info_list_table *devinfo_table =
+पूर्णांक scsi_dev_info_हटाओ_list(क्रमागत scsi_devinfo_key key)
+अणु
+	काष्ठा list_head *lh, *lh_next;
+	काष्ठा scsi_dev_info_list_table *devinfo_table =
 		scsi_devinfo_lookup_by_key(key);
 
-	if (IS_ERR(devinfo_table))
+	अगर (IS_ERR(devinfo_table))
 		/* no such list */
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* remove from the master list */
+	/* हटाओ from the master list */
 	list_del(&devinfo_table->node);
 
-	list_for_each_safe(lh, lh_next, &devinfo_table->scsi_dev_info_list) {
-		struct scsi_dev_info_list *devinfo;
+	list_क्रम_each_safe(lh, lh_next, &devinfo_table->scsi_dev_info_list) अणु
+		काष्ठा scsi_dev_info_list *devinfo;
 
-		devinfo = list_entry(lh, struct scsi_dev_info_list,
+		devinfo = list_entry(lh, काष्ठा scsi_dev_info_list,
 				     dev_info_list);
-		kfree(devinfo);
-	}
-	kfree(devinfo_table);
+		kमुक्त(devinfo);
+	पूर्ण
+	kमुक्त(devinfo_table);
 
-	return 0;
-}
-EXPORT_SYMBOL(scsi_dev_info_remove_list);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(scsi_dev_info_हटाओ_list);
 
 /**
  * scsi_init_devinfo - set up the dynamic device list.
  *
  * Description:
  *	Add command line entries from scsi_dev_flags, then add
- *	scsi_static_device_list entries to the scsi device info list.
+ *	scsi_अटल_device_list entries to the scsi device info list.
  */
-int __init scsi_init_devinfo(void)
-{
-#ifdef CONFIG_SCSI_PROC_FS
-	struct proc_dir_entry *p;
-#endif
-	int error, i;
+पूर्णांक __init scsi_init_devinfo(व्योम)
+अणु
+#अगर_घोषित CONFIG_SCSI_PROC_FS
+	काष्ठा proc_dir_entry *p;
+#पूर्ण_अगर
+	पूर्णांक error, i;
 
-	error = scsi_dev_info_add_list(SCSI_DEVINFO_GLOBAL, NULL);
-	if (error)
-		return error;
+	error = scsi_dev_info_add_list(SCSI_DEVINFO_GLOBAL, शून्य);
+	अगर (error)
+		वापस error;
 
 	error = scsi_dev_info_list_add_str(scsi_dev_flags);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	for (i = 0; scsi_static_device_list[i].vendor; i++) {
+	क्रम (i = 0; scsi_अटल_device_list[i].venकरोr; i++) अणु
 		error = scsi_dev_info_list_add(1 /* compatibile */,
-				scsi_static_device_list[i].vendor,
-				scsi_static_device_list[i].model,
-				NULL,
-				scsi_static_device_list[i].flags);
-		if (error)
-			goto out;
-	}
+				scsi_अटल_device_list[i].venकरोr,
+				scsi_अटल_device_list[i].model,
+				शून्य,
+				scsi_अटल_device_list[i].flags);
+		अगर (error)
+			जाओ out;
+	पूर्ण
 
-#ifdef CONFIG_SCSI_PROC_FS
-	p = proc_create("scsi/device_info", 0, NULL, &scsi_devinfo_proc_ops);
-	if (!p) {
+#अगर_घोषित CONFIG_SCSI_PROC_FS
+	p = proc_create("scsi/device_info", 0, शून्य, &scsi_devinfo_proc_ops);
+	अगर (!p) अणु
 		error = -ENOMEM;
-		goto out;
-	}
-#endif /* CONFIG_SCSI_PROC_FS */
+		जाओ out;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_SCSI_PROC_FS */
 
  out:
-	if (error)
-		scsi_exit_devinfo();
-	return error;
-}
+	अगर (error)
+		scsi_निकास_devinfo();
+	वापस error;
+पूर्ण

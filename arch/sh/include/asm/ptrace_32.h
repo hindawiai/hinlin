@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_PTRACE_32_H
-#define __ASM_SH_PTRACE_32_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_PTRACE_32_H
+#घोषणा __ASM_SH_PTRACE_32_H
 
-#include <uapi/asm/ptrace_32.h>
+#समावेश <uapi/यंत्र/ptrace_32.h>
 
 
-#define MAX_REG_OFFSET		offsetof(struct pt_regs, tra)
-static inline long regs_return_value(struct pt_regs *regs)
-{
-	return regs->regs[0];
-}
+#घोषणा MAX_REG_OFFSET		दुरत्व(काष्ठा pt_regs, tra)
+अटल अंतरभूत दीर्घ regs_वापस_value(काष्ठा pt_regs *regs)
+अणु
+	वापस regs->regs[0];
+पूर्ण
 
-#endif /* __ASM_SH_PTRACE_32_H */
+#पूर्ण_अगर /* __ASM_SH_PTRACE_32_H */

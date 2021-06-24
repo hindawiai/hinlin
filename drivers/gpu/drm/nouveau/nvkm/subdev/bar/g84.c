@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,43 +22,43 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include "nv50.h"
+#समावेश "nv50.h"
 
-#include <subdev/timer.h>
+#समावेश <subdev/समयr.h>
 
-void
-g84_bar_flush(struct nvkm_bar *bar)
-{
-	struct nvkm_device *device = bar->subdev.device;
-	unsigned long flags;
+व्योम
+g84_bar_flush(काष्ठा nvkm_bar *bar)
+अणु
+	काष्ठा nvkm_device *device = bar->subdev.device;
+	अचिन्हित दीर्घ flags;
 	spin_lock_irqsave(&bar->lock, flags);
 	nvkm_wr32(device, 0x070000, 0x00000001);
 	nvkm_msec(device, 2000,
-		if (!(nvkm_rd32(device, 0x070000) & 0x00000002))
-			break;
+		अगर (!(nvkm_rd32(device, 0x070000) & 0x00000002))
+			अवरोध;
 	);
 	spin_unlock_irqrestore(&bar->lock, flags);
-}
+पूर्ण
 
-static const struct nvkm_bar_func
-g84_bar_func = {
+अटल स्थिर काष्ठा nvkm_bar_func
+g84_bar_func = अणु
 	.dtor = nv50_bar_dtor,
 	.oneinit = nv50_bar_oneinit,
 	.init = nv50_bar_init,
 	.bar1.init = nv50_bar_bar1_init,
 	.bar1.fini = nv50_bar_bar1_fini,
-	.bar1.wait = nv50_bar_bar1_wait,
+	.bar1.रुको = nv50_bar_bar1_रुको,
 	.bar1.vmm = nv50_bar_bar1_vmm,
 	.bar2.init = nv50_bar_bar2_init,
 	.bar2.fini = nv50_bar_bar2_fini,
-	.bar2.wait = nv50_bar_bar1_wait,
+	.bar2.रुको = nv50_bar_bar1_रुको,
 	.bar2.vmm = nv50_bar_bar2_vmm,
 	.flush = g84_bar_flush,
-};
+पूर्ण;
 
-int
-g84_bar_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	    struct nvkm_bar **pbar)
-{
-	return nv50_bar_new_(&g84_bar_func, device, type, inst, 0x200, pbar);
-}
+पूर्णांक
+g84_bar_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	    काष्ठा nvkm_bar **pbar)
+अणु
+	वापस nv50_bar_new_(&g84_bar_func, device, type, inst, 0x200, pbar);
+पूर्ण

@@ -1,193 +1,194 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#include <linux/stddef.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <net/caif/caif_layer.h>
-#include <net/caif/cfpkt.h>
-#include <net/caif/cfserl.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/cfpkt.h>
+#समावेश <net/caअगर/cfserl.h>
 
-#define container_obj(layr) ((struct cfserl *) layr)
+#घोषणा container_obj(layr) ((काष्ठा cfserl *) layr)
 
-#define CFSERL_STX 0x02
-#define SERIAL_MINIUM_PACKET_SIZE 4
-#define SERIAL_MAX_FRAMESIZE 4096
-struct cfserl {
-	struct cflayer layer;
-	struct cfpkt *incomplete_frm;
+#घोषणा CFSERL_STX 0x02
+#घोषणा SERIAL_MINIUM_PACKET_SIZE 4
+#घोषणा SERIAL_MAX_FRAMESIZE 4096
+काष्ठा cfserl अणु
+	काष्ठा cflayer layer;
+	काष्ठा cfpkt *incomplete_frm;
 	/* Protects parallel processing of incoming packets */
 	spinlock_t sync;
 	bool usestx;
-};
+पूर्ण;
 
-static int cfserl_receive(struct cflayer *layr, struct cfpkt *pkt);
-static int cfserl_transmit(struct cflayer *layr, struct cfpkt *pkt);
-static void cfserl_ctrlcmd(struct cflayer *layr, enum caif_ctrlcmd ctrl,
-			   int phyid);
+अटल पूर्णांक cfserl_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
+अटल पूर्णांक cfserl_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
+अटल व्योम cfserl_ctrlcmd(काष्ठा cflayer *layr, क्रमागत caअगर_ctrlcmd ctrl,
+			   पूर्णांक phyid);
 
-void cfserl_release(struct cflayer *layer)
-{
-	kfree(layer);
-}
+व्योम cfserl_release(काष्ठा cflayer *layer)
+अणु
+	kमुक्त(layer);
+पूर्ण
 
-struct cflayer *cfserl_create(int instance, bool use_stx)
-{
-	struct cfserl *this = kzalloc(sizeof(struct cfserl), GFP_ATOMIC);
-	if (!this)
-		return NULL;
-	caif_assert(offsetof(struct cfserl, layer) == 0);
+काष्ठा cflayer *cfserl_create(पूर्णांक instance, bool use_stx)
+अणु
+	काष्ठा cfserl *this = kzalloc(माप(काष्ठा cfserl), GFP_ATOMIC);
+	अगर (!this)
+		वापस शून्य;
+	caअगर_निश्चित(दुरत्व(काष्ठा cfserl, layer) == 0);
 	this->layer.receive = cfserl_receive;
 	this->layer.transmit = cfserl_transmit;
 	this->layer.ctrlcmd = cfserl_ctrlcmd;
 	this->usestx = use_stx;
 	spin_lock_init(&this->sync);
-	snprintf(this->layer.name, CAIF_LAYER_NAME_SZ, "ser1");
-	return &this->layer;
-}
+	snम_लिखो(this->layer.name, CAIF_LAYER_NAME_SZ, "ser1");
+	वापस &this->layer;
+पूर्ण
 
-static int cfserl_receive(struct cflayer *l, struct cfpkt *newpkt)
-{
-	struct cfserl *layr = container_obj(l);
+अटल पूर्णांक cfserl_receive(काष्ठा cflayer *l, काष्ठा cfpkt *newpkt)
+अणु
+	काष्ठा cfserl *layr = container_obj(l);
 	u16 pkt_len;
-	struct cfpkt *pkt = NULL;
-	struct cfpkt *tail_pkt = NULL;
-	u8 tmp8;
-	u16 tmp;
+	काष्ठा cfpkt *pkt = शून्य;
+	काष्ठा cfpkt *tail_pkt = शून्य;
+	u8 पंचांगp8;
+	u16 पंचांगp;
 	u8 stx = CFSERL_STX;
-	int ret;
+	पूर्णांक ret;
 	u16 expectlen = 0;
 
-	caif_assert(newpkt != NULL);
+	caअगर_निश्चित(newpkt != शून्य);
 	spin_lock(&layr->sync);
 
-	if (layr->incomplete_frm != NULL) {
+	अगर (layr->incomplete_frm != शून्य) अणु
 		layr->incomplete_frm =
 		    cfpkt_append(layr->incomplete_frm, newpkt, expectlen);
 		pkt = layr->incomplete_frm;
-		if (pkt == NULL) {
+		अगर (pkt == शून्य) अणु
 			spin_unlock(&layr->sync);
-			return -ENOMEM;
-		}
-	} else {
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pkt = newpkt;
-	}
-	layr->incomplete_frm = NULL;
+	पूर्ण
+	layr->incomplete_frm = शून्य;
 
-	do {
-		/* Search for STX at start of pkt if STX is used */
-		if (layr->usestx) {
-			cfpkt_extr_head(pkt, &tmp8, 1);
-			if (tmp8 != CFSERL_STX) {
-				while (cfpkt_more(pkt)
-				       && tmp8 != CFSERL_STX) {
-					cfpkt_extr_head(pkt, &tmp8, 1);
-				}
-				if (!cfpkt_more(pkt)) {
+	करो अणु
+		/* Search क्रम STX at start of pkt अगर STX is used */
+		अगर (layr->usestx) अणु
+			cfpkt_extr_head(pkt, &पंचांगp8, 1);
+			अगर (पंचांगp8 != CFSERL_STX) अणु
+				जबतक (cfpkt_more(pkt)
+				       && पंचांगp8 != CFSERL_STX) अणु
+					cfpkt_extr_head(pkt, &पंचांगp8, 1);
+				पूर्ण
+				अगर (!cfpkt_more(pkt)) अणु
 					cfpkt_destroy(pkt);
-					layr->incomplete_frm = NULL;
+					layr->incomplete_frm = शून्य;
 					spin_unlock(&layr->sync);
-					return -EPROTO;
-				}
-			}
-		}
+					वापस -EPROTO;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		pkt_len = cfpkt_getlen(pkt);
 
 		/*
 		 *  pkt_len is the accumulated length of the packet data
 		 *  we have received so far.
-		 *  Exit if frame doesn't hold length.
+		 *  Exit अगर frame करोesn't hold length.
 		 */
 
-		if (pkt_len < 2) {
-			if (layr->usestx)
+		अगर (pkt_len < 2) अणु
+			अगर (layr->usestx)
 				cfpkt_add_head(pkt, &stx, 1);
 			layr->incomplete_frm = pkt;
 			spin_unlock(&layr->sync);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/*
 		 *  Find length of frame.
-		 *  expectlen is the length we need for a full frame.
+		 *  expectlen is the length we need क्रम a full frame.
 		 */
-		cfpkt_peek_head(pkt, &tmp, 2);
-		expectlen = le16_to_cpu(tmp) + 2;
+		cfpkt_peek_head(pkt, &पंचांगp, 2);
+		expectlen = le16_to_cpu(पंचांगp) + 2;
 		/*
 		 * Frame error handling
 		 */
-		if (expectlen < SERIAL_MINIUM_PACKET_SIZE
-		    || expectlen > SERIAL_MAX_FRAMESIZE) {
-			if (!layr->usestx) {
-				if (pkt != NULL)
+		अगर (expectlen < SERIAL_MINIUM_PACKET_SIZE
+		    || expectlen > SERIAL_MAX_FRAMESIZE) अणु
+			अगर (!layr->usestx) अणु
+				अगर (pkt != शून्य)
 					cfpkt_destroy(pkt);
-				layr->incomplete_frm = NULL;
+				layr->incomplete_frm = शून्य;
 				expectlen = 0;
 				spin_unlock(&layr->sync);
-				return -EPROTO;
-			}
-			continue;
-		}
+				वापस -EPROTO;
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		if (pkt_len < expectlen) {
+		अगर (pkt_len < expectlen) अणु
 			/* Too little received data */
-			if (layr->usestx)
+			अगर (layr->usestx)
 				cfpkt_add_head(pkt, &stx, 1);
 			layr->incomplete_frm = pkt;
 			spin_unlock(&layr->sync);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/*
-		 * Enough data for at least one frame.
-		 * Split the frame, if too long
+		 * Enough data क्रम at least one frame.
+		 * Split the frame, अगर too दीर्घ
 		 */
-		if (pkt_len > expectlen)
+		अगर (pkt_len > expectlen)
 			tail_pkt = cfpkt_split(pkt, expectlen);
-		else
-			tail_pkt = NULL;
+		अन्यथा
+			tail_pkt = शून्य;
 
 		/* Send the first part of packet upwards.*/
 		spin_unlock(&layr->sync);
 		ret = layr->layer.up->receive(layr->layer.up, pkt);
 		spin_lock(&layr->sync);
-		if (ret == -EILSEQ) {
-			if (layr->usestx) {
-				if (tail_pkt != NULL)
+		अगर (ret == -EILSEQ) अणु
+			अगर (layr->usestx) अणु
+				अगर (tail_pkt != शून्य)
 					pkt = cfpkt_append(pkt, tail_pkt, 0);
-				/* Start search for next STX if frame failed */
-				continue;
-			} else {
+				/* Start search क्रम next STX अगर frame failed */
+				जारी;
+			पूर्ण अन्यथा अणु
 				cfpkt_destroy(pkt);
-				pkt = NULL;
-			}
-		}
+				pkt = शून्य;
+			पूर्ण
+		पूर्ण
 
 		pkt = tail_pkt;
 
-	} while (pkt != NULL);
+	पूर्ण जबतक (pkt != शून्य);
 
 	spin_unlock(&layr->sync);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cfserl_transmit(struct cflayer *layer, struct cfpkt *newpkt)
-{
-	struct cfserl *layr = container_obj(layer);
-	u8 tmp8 = CFSERL_STX;
-	if (layr->usestx)
-		cfpkt_add_head(newpkt, &tmp8, 1);
-	return layer->dn->transmit(layer->dn, newpkt);
-}
+अटल पूर्णांक cfserl_transmit(काष्ठा cflayer *layer, काष्ठा cfpkt *newpkt)
+अणु
+	काष्ठा cfserl *layr = container_obj(layer);
+	u8 पंचांगp8 = CFSERL_STX;
+	अगर (layr->usestx)
+		cfpkt_add_head(newpkt, &पंचांगp8, 1);
+	वापस layer->dn->transmit(layer->dn, newpkt);
+पूर्ण
 
-static void cfserl_ctrlcmd(struct cflayer *layr, enum caif_ctrlcmd ctrl,
-			   int phyid)
-{
+अटल व्योम cfserl_ctrlcmd(काष्ठा cflayer *layr, क्रमागत caअगर_ctrlcmd ctrl,
+			   पूर्णांक phyid)
+अणु
 	layr->up->ctrlcmd(layr->up, ctrl, phyid);
-}
+पूर्ण

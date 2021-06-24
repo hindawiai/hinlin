@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * vivid-vbi-out.h - vbi output support functions.
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#ifndef _VIVID_VBI_OUT_H_
-#define _VIVID_VBI_OUT_H_
+#अगर_अघोषित _VIVID_VBI_OUT_H_
+#घोषणा _VIVID_VBI_OUT_H_
 
-void vivid_sliced_vbi_out_process(struct vivid_dev *dev, struct vivid_buffer *buf);
-int vidioc_g_fmt_vbi_out(struct file *file, void *priv,
-					struct v4l2_format *f);
-int vidioc_s_fmt_vbi_out(struct file *file, void *priv,
-					struct v4l2_format *f);
-int vidioc_g_fmt_sliced_vbi_out(struct file *file, void *fh, struct v4l2_format *fmt);
-int vidioc_try_fmt_sliced_vbi_out(struct file *file, void *fh, struct v4l2_format *fmt);
-int vidioc_s_fmt_sliced_vbi_out(struct file *file, void *fh, struct v4l2_format *fmt);
+व्योम vivid_sliced_vbi_out_process(काष्ठा vivid_dev *dev, काष्ठा vivid_buffer *buf);
+पूर्णांक vidioc_g_fmt_vbi_out(काष्ठा file *file, व्योम *priv,
+					काष्ठा v4l2_क्रमmat *f);
+पूर्णांक vidioc_s_fmt_vbi_out(काष्ठा file *file, व्योम *priv,
+					काष्ठा v4l2_क्रमmat *f);
+पूर्णांक vidioc_g_fmt_sliced_vbi_out(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *fmt);
+पूर्णांक vidioc_try_fmt_sliced_vbi_out(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *fmt);
+पूर्णांक vidioc_s_fmt_sliced_vbi_out(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_क्रमmat *fmt);
 
-extern const struct vb2_ops vivid_vbi_out_qops;
+बाह्य स्थिर काष्ठा vb2_ops vivid_vbi_out_qops;
 
-#endif
+#पूर्ण_अगर

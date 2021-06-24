@@ -1,165 +1,166 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2010 Broadcom Corporation
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _BRCM_MAIN_H_
-#define _BRCM_MAIN_H_
+#अगर_अघोषित _BRCM_MAIN_H_
+#घोषणा _BRCM_MAIN_H_
 
-#include <linux/etherdevice.h>
+#समावेश <linux/etherdevice.h>
 
-#include <brcmu_utils.h>
-#include "types.h"
-#include "d11.h"
-#include "scb.h"
+#समावेश <brcmu_utils.h>
+#समावेश "types.h"
+#समावेश "d11.h"
+#समावेश "scb.h"
 
-#define	INVCHANNEL		255	/* invalid channel */
+#घोषणा	INVCHANNEL		255	/* invalid channel */
 
-/* max # brcms_c_module_register() calls */
-#define BRCMS_MAXMODULES	22
+/* max # brcms_c_module_रेजिस्टर() calls */
+#घोषणा BRCMS_MAXMODULES	22
 
-#define SEQNUM_SHIFT		4
-#define SEQNUM_MAX		0x1000
+#घोषणा SEQNUM_SHIFT		4
+#घोषणा SEQNUM_MAX		0x1000
 
-#define NTXRATE			64	/* # tx MPDUs rate is reported for */
+#घोषणा NTXRATE			64	/* # tx MPDUs rate is reported क्रम */
 
-/* Maximum wait time for a MAC suspend */
-/* uS: 83mS is max packet time (64KB ampdu @ 6Mbps) */
-#define	BRCMS_MAX_MAC_SUSPEND	83000
+/* Maximum रुको समय क्रम a MAC suspend */
+/* uS: 83mS is max packet समय (64KB ampdu @ 6Mbps) */
+#घोषणा	BRCMS_MAX_MAC_SUSPEND	83000
 
-/* responses for probe requests older that this are tossed, zero to disable */
-#define BRCMS_PRB_RESP_TIMEOUT	0	/* Disable probe response timeout */
+/* responses क्रम probe requests older that this are tossed, zero to disable */
+#घोषणा BRCMS_PRB_RESP_TIMEOUT	0	/* Disable probe response समयout */
 
-/* transmit buffer max headroom for protocol headers */
-#define TXOFF (D11_TXH_LEN + D11_PHY_HDR_LEN)
+/* transmit buffer max headroom क्रम protocol headers */
+#घोषणा TXOFF (D11_TXH_LEN + D11_PHY_HDR_LEN)
 
-/* Macros for doing definition and get/set of bitfields
+/* Macros क्रम करोing definition and get/set of bitfields
  * Usage example, e.g. a three-bit field (bits 4-6):
- *    #define <NAME>_M	BITFIELD_MASK(3)
- *    #define <NAME>_S	4
+ *    #घोषणा <NAME>_M	BITFIELD_MASK(3)
+ *    #घोषणा <NAME>_S	4
  * ...
  *    regval = R_REG(osh, &regs->regfoo);
  *    field = GFIELD(regval, <NAME>);
  *    regval = SFIELD(regval, <NAME>, 1);
  *    W_REG(osh, &regs->regfoo, regval);
  */
-#define BITFIELD_MASK(width) \
-		(((unsigned)1 << (width)) - 1)
-#define GFIELD(val, field) \
+#घोषणा BITFIELD_MASK(width) \
+		(((अचिन्हित)1 << (width)) - 1)
+#घोषणा GFIELD(val, field) \
 		(((val) >> field ## _S) & field ## _M)
-#define SFIELD(val, field, bits) \
+#घोषणा SFIELD(val, field, bits) \
 		(((val) & (~(field ## _M << field ## _S))) | \
-		 ((unsigned)(bits) << field ## _S))
+		 ((अचिन्हित)(bits) << field ## _S))
 
-#define	SW_TIMER_MAC_STAT_UPD		30	/* periodic MAC stats update */
+#घोषणा	SW_TIMER_MAC_STAT_UPD		30	/* periodic MAC stats update */
 
 /* max # supported core revisions (0 .. MAXCOREREV - 1) */
-#define	MAXCOREREV		28
+#घोषणा	MAXCOREREV		28
 
 /* Double check that unsupported cores are not enabled */
-#if CONF_MSK(D11CONF, 0x4f) || CONF_GE(D11CONF, MAXCOREREV)
-#error "Configuration for D11CONF includes unsupported versions."
-#endif				/* Bad versions */
+#अगर CONF_MSK(D11CONF, 0x4f) || CONF_GE(D11CONF, MAXCOREREV)
+#त्रुटि "Configuration for D11CONF includes unsupported versions."
+#पूर्ण_अगर				/* Bad versions */
 
-/* values for shortslot_override */
-#define BRCMS_SHORTSLOT_AUTO	-1 /* Driver will manage Shortslot setting */
-#define BRCMS_SHORTSLOT_OFF	0  /* Turn off short slot */
-#define BRCMS_SHORTSLOT_ON	1  /* Turn on short slot */
+/* values क्रम लघुslot_override */
+#घोषणा BRCMS_SHORTSLOT_AUTO	-1 /* Driver will manage Shortslot setting */
+#घोषणा BRCMS_SHORTSLOT_OFF	0  /* Turn off लघु slot */
+#घोषणा BRCMS_SHORTSLOT_ON	1  /* Turn on लघु slot */
 
-/* value for short/long and mixmode/greenfield preamble */
-#define BRCMS_LONG_PREAMBLE	(0)
-#define BRCMS_SHORT_PREAMBLE	(1 << 0)
-#define BRCMS_GF_PREAMBLE		(1 << 1)
-#define BRCMS_MM_PREAMBLE		(1 << 2)
-#define BRCMS_IS_MIMO_PREAMBLE(_pre) (((_pre) == BRCMS_GF_PREAMBLE) || \
+/* value क्रम लघु/दीर्घ and mixmode/greenfield preamble */
+#घोषणा BRCMS_LONG_PREAMBLE	(0)
+#घोषणा BRCMS_SHORT_PREAMBLE	(1 << 0)
+#घोषणा BRCMS_GF_PREAMBLE		(1 << 1)
+#घोषणा BRCMS_MM_PREAMBLE		(1 << 2)
+#घोषणा BRCMS_IS_MIMO_PREAMBLE(_pre) (((_pre) == BRCMS_GF_PREAMBLE) || \
 				      ((_pre) == BRCMS_MM_PREAMBLE))
 
 /* TxFrameID */
 /* seq and frag bits: SEQNUM_SHIFT, FRAGNUM_MASK (802.11.h) */
 /* rate epoch bits: TXFID_RATE_SHIFT, TXFID_RATE_MASK ((wlc_rate.c) */
-#define TXFID_QUEUE_MASK	0x0007	/* Bits 0-2 */
-#define TXFID_SEQ_MASK		0x7FE0	/* Bits 5-15 */
-#define TXFID_SEQ_SHIFT		5	/* Number of bit shifts */
-#define	TXFID_RATE_PROBE_MASK	0x8000	/* Bit 15 for rate probe */
-#define TXFID_RATE_MASK		0x0018	/* Mask for bits 3 and 4 */
-#define TXFID_RATE_SHIFT	3	/* Shift 3 bits for rate mask */
+#घोषणा TXFID_QUEUE_MASK	0x0007	/* Bits 0-2 */
+#घोषणा TXFID_SEQ_MASK		0x7FE0	/* Bits 5-15 */
+#घोषणा TXFID_SEQ_SHIFT		5	/* Number of bit shअगरts */
+#घोषणा	TXFID_RATE_PROBE_MASK	0x8000	/* Bit 15 क्रम rate probe */
+#घोषणा TXFID_RATE_MASK		0x0018	/* Mask क्रम bits 3 and 4 */
+#घोषणा TXFID_RATE_SHIFT	3	/* Shअगरt 3 bits क्रम rate mask */
 
 /* promote boardrev */
-#define BOARDREV_PROMOTABLE	0xFF	/* from */
-#define BOARDREV_PROMOTED	1	/* to */
+#घोषणा BOARDREV_PROMOTABLE	0xFF	/* from */
+#घोषणा BOARDREV_PROMOTED	1	/* to */
 
-#define DATA_BLOCK_TX_SUPR	(1 << 4)
+#घोषणा DATA_BLOCK_TX_SUPR	(1 << 4)
 
 /* Ucode MCTL_WAKE override bits */
-#define BRCMS_WAKE_OVERRIDE_CLKCTL	0x01
-#define BRCMS_WAKE_OVERRIDE_PHYREG	0x02
-#define BRCMS_WAKE_OVERRIDE_MACSUSPEND	0x04
-#define BRCMS_WAKE_OVERRIDE_TXFIFO	0x08
-#define BRCMS_WAKE_OVERRIDE_FORCEFAST	0x10
+#घोषणा BRCMS_WAKE_OVERRIDE_CLKCTL	0x01
+#घोषणा BRCMS_WAKE_OVERRIDE_PHYREG	0x02
+#घोषणा BRCMS_WAKE_OVERRIDE_MACSUSPEND	0x04
+#घोषणा BRCMS_WAKE_OVERRIDE_TXFIFO	0x08
+#घोषणा BRCMS_WAKE_OVERRIDE_FORCEFAST	0x10
 
 /* stuff pulled in from wlc.c */
 
 /* Interrupt bit error summary.  Don't include I_RU: we refill DMA at other
- * times; and if we run out, constant I_RU interrupts may cause lockup.  We
+ * बार; and अगर we run out, स्थिरant I_RU पूर्णांकerrupts may cause lockup.  We
  * will still get error counts from rx0ovfl.
  */
-#define	I_ERRORS	(I_PC | I_PD | I_DE | I_RO | I_XU)
-/* default software intmasks */
-#define	DEF_RXINTMASK	(I_RI)	/* enable rx int on rxfifo only */
-#define	DEF_MACINTMASK	(MI_TXSTOP | MI_TBTT | MI_ATIMWINEND | MI_PMQ | \
+#घोषणा	I_ERRORS	(I_PC | I_PD | I_DE | I_RO | I_XU)
+/* शेष software पूर्णांकmasks */
+#घोषणा	DEF_RXINTMASK	(I_RI)	/* enable rx पूर्णांक on rxfअगरo only */
+#घोषणा	DEF_MACINTMASK	(MI_TXSTOP | MI_TBTT | MI_ATIMWINEND | MI_PMQ | \
 			 MI_PHYTXERR | MI_DMAINT | MI_TFS | MI_BG_NOISE | \
 			 MI_CCA | MI_TO | MI_GP0 | MI_RFDISABLE | MI_PWRUP)
 
-#define	MAXTXPKTS		6	/* max # pkts pending */
+#घोषणा	MAXTXPKTS		6	/* max # pkts pending */
 
 /* frameburst */
-#define	MAXTXFRAMEBURST		8 /* vanilla xpress mode: max frames/burst */
-#define	MAXFRAMEBURST_TXOP	10000	/* Frameburst TXOP in usec */
+#घोषणा	MAXTXFRAMEBURST		8 /* vanilla xpress mode: max frames/burst */
+#घोषणा	MAXFRAMEBURST_TXOP	10000	/* Frameburst TXOP in usec */
 
-#define	NFIFO			6	/* # tx/rx fifopairs */
+#घोषणा	NFIFO			6	/* # tx/rx fअगरopairs */
 
 /* PLL requests */
 
 /* pll is shared on old chips */
-#define BRCMS_PLLREQ_SHARED	0x1
-/* hold pll for radio monitor register checking */
-#define BRCMS_PLLREQ_RADIO_MON	0x2
-/* hold/release pll for some short operation */
-#define BRCMS_PLLREQ_FLIP		0x4
+#घोषणा BRCMS_PLLREQ_SHARED	0x1
+/* hold pll क्रम radio monitor रेजिस्टर checking */
+#घोषणा BRCMS_PLLREQ_RADIO_MON	0x2
+/* hold/release pll क्रम some लघु operation */
+#घोषणा BRCMS_PLLREQ_FLIP		0x4
 
-#define	CHANNEL_BANDUNIT(wlc, ch) \
+#घोषणा	CHANNEL_BANDUNIT(wlc, ch) \
 	(((ch) <= CH_MAX_2G_CHANNEL) ? BAND_2G_INDEX : BAND_5G_INDEX)
 
-#define	OTHERBANDUNIT(wlc) \
-	((uint)((wlc)->band->bandunit ? BAND_2G_INDEX : BAND_5G_INDEX))
+#घोषणा	OTHERBANDUNIT(wlc) \
+	((uपूर्णांक)((wlc)->band->bandunit ? BAND_2G_INDEX : BAND_5G_INDEX))
 
 /*
- * 802.11 protection information
+ * 802.11 protection inक्रमmation
  *
- * _g: use g spec protection, driver internal.
- * g_override: override for use of g spec protection.
- * gmode_user: user config gmode, operating band->gmode is different.
- * overlap: Overlap BSS/IBSS protection for both 11g and 11n.
- * nmode_user: user config nmode, operating pub->nmode is different.
+ * _g: use g spec protection, driver पूर्णांकernal.
+ * g_override: override क्रम use of g spec protection.
+ * gmode_user: user config gmode, operating band->gmode is dअगरferent.
+ * overlap: Overlap BSS/IBSS protection क्रम both 11g and 11n.
+ * nmode_user: user config nmode, operating pub->nmode is dअगरferent.
  * n_cfg: use OFDM protection on MIMO frames.
- * n_cfg_override: override for use of N protection.
+ * n_cfg_override: override क्रम use of N protection.
  * nongf: non-GF present protection.
- * nongf_override: override for use of GF protection.
- * n_pam_override: override for preamble: MM or GF.
+ * nongf_override: override क्रम use of GF protection.
+ * n_pam_override: override क्रम preamble: MM or GF.
  * n_obss: indicated OBSS Non-HT STA present.
 */
-struct brcms_protection {
+काष्ठा brcms_protection अणु
 	bool _g;
 	s8 g_override;
 	u8 gmode_user;
@@ -171,30 +172,30 @@ struct brcms_protection {
 	s8 nongf_override;
 	s8 n_pam_override;
 	bool n_obss;
-};
+पूर्ण;
 
 /*
  * anything affecting the single/dual streams/antenna operation
  *
- * hw_txchain: HW txchain bitmap cfg.
- * txchain: txchain bitmap being used.
+ * hw_txchain: HW txchain biपंचांगap cfg.
+ * txchain: txchain biपंचांगap being used.
  * txstreams: number of txchains being used.
- * hw_rxchain: HW rxchain bitmap cfg.
- * rxchain: rxchain bitmap being used.
+ * hw_rxchain: HW rxchain biपंचांगap cfg.
+ * rxchain: rxchain biपंचांगap being used.
  * rxstreams: number of rxchains being used.
  * ant_rx_ovr: rx antenna override.
  * txant: userTx antenna setting.
  * phytxant: phyTx antenna setting in txheader.
  * ss_opmode: singlestream Operational mode, 0:siso; 1:cdd.
- * ss_algosel_auto: if true, use wlc->stf->ss_algo_channel;
- *			else use wlc->band->stf->ss_mode_band.
+ * ss_algosel_स्वतः: अगर true, use wlc->stf->ss_algo_channel;
+ *			अन्यथा use wlc->band->stf->ss_mode_band.
  * ss_algo_channel: ss based on per-channel algo: 0: SISO, 1: CDD 2: STBC.
- * rxchain_restore_delay: delay time to restore default rxchain.
+ * rxchain_restore_delay: delay समय to restore शेष rxchain.
  * ldpc: AUTO/ON/OFF ldpc cap supported.
- * txcore[MAX_STREAMS_SUPPORTED + 1]: bitmap of selected core for each Nsts.
+ * txcore[MAX_STREAMS_SUPPORTED + 1]: biपंचांगap of selected core क्रम each Nsts.
  * spatial_policy:
  */
-struct brcms_stf {
+काष्ठा brcms_stf अणु
 	u8 hw_txchain;
 	u8 txchain;
 	u8 txstreams;
@@ -205,97 +206,97 @@ struct brcms_stf {
 	s8 txant;
 	u16 phytxant;
 	u8 ss_opmode;
-	bool ss_algosel_auto;
+	bool ss_algosel_स्वतः;
 	u16 ss_algo_channel;
 	u8 rxchain_restore_delay;
 	s8 ldpc;
 	u8 txcore[MAX_STREAMS_SUPPORTED + 1];
 	s8 spatial_policy;
-};
+पूर्ण;
 
-#define BRCMS_STF_SS_STBC_TX(wlc, scb) \
+#घोषणा BRCMS_STF_SS_STBC_TX(wlc, scb) \
 	(((wlc)->stf->txstreams > 1) && (((wlc)->band->band_stf_stbc_tx == ON) \
 	 || (((scb)->flags & SCB_STBCCAP) && \
 	     (wlc)->band->band_stf_stbc_tx == AUTO && \
 	     isset(&((wlc)->stf->ss_algo_channel), PHY_TXC1_MODE_STBC))))
 
-#define BRCMS_STBC_CAP_PHY(wlc) (BRCMS_ISNPHY(wlc->band) && \
+#घोषणा BRCMS_STBC_CAP_PHY(wlc) (BRCMS_ISNPHY(wlc->band) && \
 				 NREV_GE(wlc->band->phyrev, 3))
 
-#define BRCMS_SGI_CAP_PHY(wlc) ((BRCMS_ISNPHY(wlc->band) && \
+#घोषणा BRCMS_SGI_CAP_PHY(wlc) ((BRCMS_ISNPHY(wlc->band) && \
 				 NREV_GE(wlc->band->phyrev, 3)) || \
 				BRCMS_ISLCNPHY(wlc->band))
 
-#define BRCMS_CHAN_PHYTYPE(x)     (((x) & RXS_CHAN_PHYTYPE_MASK) \
+#घोषणा BRCMS_CHAN_PHYTYPE(x)     (((x) & RXS_CHAN_PHYTYPE_MASK) \
 				   >> RXS_CHAN_PHYTYPE_SHIFT)
-#define BRCMS_CHAN_CHANNEL(x)     (((x) & RXS_CHAN_ID_MASK) \
+#घोषणा BRCMS_CHAN_CHANNEL(x)     (((x) & RXS_CHAN_ID_MASK) \
 				   >> RXS_CHAN_ID_SHIFT)
 
 /*
  * core state (mac)
  */
-struct brcms_core {
-	uint coreidx;		/* # sb enumerated core */
+काष्ठा brcms_core अणु
+	uपूर्णांक coreidx;		/* # sb क्रमागतerated core */
 
-	/* fifo */
-	uint *txavail[NFIFO];	/* # tx descriptors available */
+	/* fअगरo */
+	uपूर्णांक *txavail[NFIFO];	/* # tx descriptors available */
 
-	struct macstat *macstat_snapshot;	/* mac hw prev read values */
-};
+	काष्ठा macstat *macstat_snapshot;	/* mac hw prev पढ़ो values */
+पूर्ण;
 
 /*
  * band state (phy+ana+radio)
  */
-struct brcms_band {
-	int bandtype;		/* BRCM_BAND_2G, BRCM_BAND_5G */
-	uint bandunit;		/* bandstate[] index */
+काष्ठा brcms_band अणु
+	पूर्णांक bandtype;		/* BRCM_BAND_2G, BRCM_BAND_5G */
+	uपूर्णांक bandunit;		/* bandstate[] index */
 
 	u16 phytype;		/* phytype */
 	u16 phyrev;
 	u16 radioid;
 	u16 radiorev;
-	struct brcms_phy_pub *pi; /* pointer to phy specific information */
+	काष्ठा brcms_phy_pub *pi; /* poपूर्णांकer to phy specअगरic inक्रमmation */
 	bool abgphy_encore;
 
 	u8 gmode;		/* currently active gmode */
 
-	struct scb *hwrs_scb;	/* permanent scb for hw rateset */
+	काष्ठा scb *hwrs_scb;	/* permanent scb क्रम hw rateset */
 
-	/* band-specific copy of default_bss.rateset */
-	struct brcms_c_rateset defrateset;
+	/* band-specअगरic copy of शेष_bss.rateset */
+	काष्ठा brcms_c_rateset defrateset;
 
 	u8 band_stf_ss_mode;	/* Configured STF type, 0:siso; 1:cdd */
-	s8 band_stf_stbc_tx;	/* STBC TX 0:off; 1:force on; -1:auto */
-	/* rates supported by chip (phy-specific) */
-	struct brcms_c_rateset hw_rateset;
+	s8 band_stf_stbc_tx;	/* STBC TX 0:off; 1:क्रमce on; -1:स्वतः */
+	/* rates supported by chip (phy-specअगरic) */
+	काष्ठा brcms_c_rateset hw_rateset;
 	u8 basic_rate[BRCM_MAXRATE + 1]; /* basic rates indexed by rate */
 	bool mimo_cap_40;	/* 40 MHz cap enabled on this band */
 	s8 antgain;		/* antenna gain from srom */
 
-	u16 CWmin; /* minimum size of contention window, in unit of aSlotTime */
-	u16 CWmax; /* maximum size of contention window, in unit of aSlotTime */
-	struct ieee80211_supported_band band;
-};
+	u16 CWmin; /* minimum size of contention winकरोw, in unit of aSlotTime */
+	u16 CWmax; /* maximum size of contention winकरोw, in unit of aSlotTime */
+	काष्ठा ieee80211_supported_band band;
+पूर्ण;
 
 /* module control blocks */
-struct modulecb {
-	/* module name : NULL indicates empty array member */
-	char name[32];
+काष्ठा modulecb अणु
+	/* module name : शून्य indicates empty array member */
+	अक्षर name[32];
 	/* handle passed when handler 'doiovar' is called */
-	struct brcms_info *hdl;
+	काष्ठा brcms_info *hdl;
 
-	int (*down_fn)(void *handle); /* down handler. Note: the int returned
-				       * by the down function is a count of the
-				       * number of timers that could not be
-				       * freed.
+	पूर्णांक (*करोwn_fn)(व्योम *handle); /* करोwn handler. Note: the पूर्णांक वापसed
+				       * by the करोwn function is a count of the
+				       * number of समयrs that could not be
+				       * मुक्तd.
 				       */
 
-};
+पूर्ण;
 
-struct brcms_hw_band {
-	int bandtype;		/* BRCM_BAND_2G, BRCM_BAND_5G */
-	uint bandunit;		/* bandstate[] index */
-	u16 mhfs[MHFMAX];	/* MHF array shadow */
+काष्ठा brcms_hw_band अणु
+	पूर्णांक bandtype;		/* BRCM_BAND_2G, BRCM_BAND_5G */
+	uपूर्णांक bandunit;		/* bandstate[] index */
+	u16 mhfs[MHFMAX];	/* MHF array shaकरोw */
 	u8 bandhw_stf_ss_mode;	/* HW configured STF type, 0:siso; 1:cdd */
 	u16 CWmin;
 	u16 CWmax;
@@ -305,184 +306,184 @@ struct brcms_hw_band {
 	u16 phyrev;
 	u16 radioid;
 	u16 radiorev;
-	struct brcms_phy_pub *pi; /* pointer to phy specific information */
+	काष्ठा brcms_phy_pub *pi; /* poपूर्णांकer to phy specअगरic inक्रमmation */
 	bool abgphy_encore;
-};
+पूर्ण;
 
-struct brcms_hardware {
-	bool _piomode;		/* true if pio mode */
-	struct brcms_c_info *wlc;
+काष्ठा brcms_hardware अणु
+	bool _piomode;		/* true अगर pio mode */
+	काष्ठा brcms_c_info *wlc;
 
-	/* fifo */
-	struct dma_pub *di[NFIFO];	/* dma handles, per fifo */
+	/* fअगरo */
+	काष्ठा dma_pub *di[NFIFO];	/* dma handles, per fअगरo */
 
-	uint unit;		/* device instance number */
+	uपूर्णांक unit;		/* device instance number */
 
 	/* version info */
-	u16 vendorid;	/* PCI vendor id */
+	u16 venकरोrid;	/* PCI venकरोr id */
 	u16 deviceid;	/* PCI device id */
-	uint corerev;		/* core revision */
+	uपूर्णांक corerev;		/* core revision */
 	u8 sromrev;		/* version # of the srom */
 	u16 boardrev;	/* version # of particular board */
-	u32 boardflags;	/* Board specific flags from srom */
-	u32 boardflags2;	/* More board flags if sromrev >= 4 */
+	u32 boardflags;	/* Board specअगरic flags from srom */
+	u32 boardflags2;	/* More board flags अगर sromrev >= 4 */
 	u32 machwcap;	/* MAC capabilities */
 	u32 machwcap_backup;	/* backup of machwcap */
 
-	struct si_pub *sih;	/* SI handle (cookie for siutils calls) */
-	struct bcma_device *d11core;	/* pointer to 802.11 core */
-	struct phy_shim_info *physhim; /* phy shim layer handler */
-	struct shared_phy *phy_sh;	/* pointer to shared phy state */
-	struct brcms_hw_band *band;/* pointer to active per-band state */
+	काष्ठा si_pub *sih;	/* SI handle (cookie क्रम siutils calls) */
+	काष्ठा bcma_device *d11core;	/* poपूर्णांकer to 802.11 core */
+	काष्ठा phy_shim_info *physhim; /* phy shim layer handler */
+	काष्ठा shared_phy *phy_sh;	/* poपूर्णांकer to shared phy state */
+	काष्ठा brcms_hw_band *band;/* poपूर्णांकer to active per-band state */
 	/* band state per phy/radio */
-	struct brcms_hw_band *bandstate[MAXBANDS];
+	काष्ठा brcms_hw_band *bandstate[MAXBANDS];
 	u16 bmac_phytxant;	/* cache of high phytxant state */
-	bool shortslot;		/* currently using 11g ShortSlot timing */
-	u16 SRL;		/* 802.11 dot11ShortRetryLimit */
-	u16 LRL;		/* 802.11 dot11LongRetryLimit */
+	bool लघुslot;		/* currently using 11g ShortSlot timing */
+	u16 SRL;		/* 802.11 करोt11ShortRetryLimit */
+	u16 LRL;		/* 802.11 करोt11LongRetryLimit */
 	u16 SFBL;		/* Short Frame Rate Fallback Limit */
 	u16 LFBL;		/* Long Frame Rate Fallback Limit */
 
 	bool up;		/* d11 hardware up and running */
-	uint now;		/* # elapsed seconds */
-	uint _nbands;		/* # bands supported */
-	u16 chanspec;	/* bmac chanspec shadow */
+	uपूर्णांक now;		/* # elapsed seconds */
+	uपूर्णांक _nbands;		/* # bands supported */
+	u16 chanspec;	/* bmac chanspec shaकरोw */
 
-	uint *txavail[NFIFO];	/* # tx descriptors available */
-	const u16 *xmtfifo_sz;	/* fifo size in 256B for each xmt fifo */
+	uपूर्णांक *txavail[NFIFO];	/* # tx descriptors available */
+	स्थिर u16 *xmtfअगरo_sz;	/* fअगरo size in 256B क्रम each xmt fअगरo */
 
 	u32 pllreq;		/* pll requests to keep PLL on */
 
-	u8 suspended_fifos;	/* Which TX fifo to remain awake for */
+	u8 suspended_fअगरos;	/* Which TX fअगरo to reमुख्य awake क्रम */
 	u32 maccontrol;	/* Cached value of maccontrol */
-	uint mac_suspend_depth;	/* current depth of mac_suspend levels */
-	u32 wake_override;	/* bit flags to force MAC to WAKE mode */
+	uपूर्णांक mac_suspend_depth;	/* current depth of mac_suspend levels */
+	u32 wake_override;	/* bit flags to क्रमce MAC to WAKE mode */
 	u32 mute_override;	/* Prevent ucode from sending beacons */
 	u8 etheraddr[ETH_ALEN];	/* currently configured ethernet address */
-	bool noreset;		/* true= do not reset hw, used by WLC_OUT */
-	bool forcefastclk;	/* true if h/w is forcing to use fast clk */
-	bool clk;		/* core is out of reset and has clock */
-	bool sbclk;		/* sb has clock */
-	bool phyclk;		/* phy is out of reset and has clock */
+	bool noreset;		/* true= करो not reset hw, used by WLC_OUT */
+	bool क्रमcefastclk;	/* true अगर h/w is क्रमcing to use fast clk */
+	bool clk;		/* core is out of reset and has घड़ी */
+	bool sbclk;		/* sb has घड़ी */
+	bool phyclk;		/* phy is out of reset and has घड़ी */
 
-	bool ucode_loaded;	/* true after ucode downloaded */
+	bool ucode_loaded;	/* true after ucode करोwnloaded */
 
 
 	u8 hw_stf_ss_opmode;	/* STF single stream operation mode */
-	u8 antsel_type;	/* Type of boardlevel mimo antenna switch-logic
+	u8 antsel_type;	/* Type of boardlevel mimo antenna चयन-logic
 				 * 0 = N/A, 1 = 2x4 board, 2 = 2x3 CB2 board
 				 */
 	u32 antsel_avail;	/*
-				 * put struct antsel_info here if more info is
+				 * put काष्ठा antsel_info here अगर more info is
 				 * needed
 				 */
-};
+पूर्ण;
 
 /*
- * Principal common driver data structure.
+ * Principal common driver data काष्ठाure.
  *
- * pub: pointer to driver public state.
- * wl: pointer to specific private state.
+ * pub: poपूर्णांकer to driver खुला state.
+ * wl: poपूर्णांकer to specअगरic निजी state.
  * hw: HW related state.
- * clkreq_override: setting for clkreq for PCIE : Auto, 0, 1.
- * fastpwrup_dly: time in us needed to bring up d11 fast clock.
- * macintstatus: bit channel between isr and dpc.
- * macintmask: sw runtime master macintmask value.
- * defmacintmask: default "on" macintmask value.
- * clk: core is out of reset and has clock.
- * core: pointer to active io core.
- * band: pointer to active per-band state.
+ * clkreq_override: setting क्रम clkreq क्रम PCIE : Auto, 0, 1.
+ * fastpwrup_dly: समय in us needed to bring up d11 fast घड़ी.
+ * macपूर्णांकstatus: bit channel between isr and dpc.
+ * macपूर्णांकmask: sw runसमय master macपूर्णांकmask value.
+ * defmacपूर्णांकmask: शेष "on" macपूर्णांकmask value.
+ * clk: core is out of reset and has घड़ी.
+ * core: poपूर्णांकer to active io core.
+ * band: poपूर्णांकer to active per-band state.
  * corestate: per-core state (one per hw core).
  * bandstate: per-band state (one per phy/radio).
  * qvalid: DirFrmQValid and BcMcFrmQValid.
  * ampdu: ampdu module handler.
  * asi: antsel module handler.
  * cmi: channel manager module handler.
- * vendorid: PCI vendor id.
+ * venकरोrid: PCI venकरोr id.
  * deviceid: PCI device id.
  * ucode_rev: microcode revision.
- * machwcap: MAC capabilities, BMAC shadow.
+ * machwcap: MAC capabilities, BMAC shaकरोw.
  * perm_etheraddr: original sprom local ethernet address.
- * bandlocked: disable auto multi-band switching.
- * bandinit_pending: track band init in auto band.
- * radio_monitor: radio timer is running.
- * going_down: down path intermediate variable.
- * wdtimer: timer for watchdog routine.
- * radio_timer: timer for hw radio button monitor routine.
- * monitor: monitor (MPDU sniffing) mode.
- * bcnmisc_monitor: bcns promisc mode override for monitor.
- * _rifs: enable per-packet rifs.
- * bcn_li_bcn: beacon listen interval in # beacons.
- * bcn_li_dtim: beacon listen interval in # dtims.
- * WDarmed: watchdog timer is armed.
- * WDlast: last time wlc_watchdog() was called.
- * edcf_txop[IEEE80211_NUM_ACS]: current txop for each ac.
+ * bandlocked: disable स्वतः multi-band चयनing.
+ * bandinit_pending: track band init in स्वतः band.
+ * radio_monitor: radio समयr is running.
+ * going_करोwn: करोwn path पूर्णांकermediate variable.
+ * wdसमयr: समयr क्रम watchकरोg routine.
+ * radio_समयr: समयr क्रम hw radio button monitor routine.
+ * monitor: monitor (MPDU snअगरfing) mode.
+ * bcnmisc_monitor: bcns promisc mode override क्रम monitor.
+ * _rअगरs: enable per-packet rअगरs.
+ * bcn_li_bcn: beacon listen पूर्णांकerval in # beacons.
+ * bcn_li_dtim: beacon listen पूर्णांकerval in # dtims.
+ * WDarmed: watchकरोg समयr is armed.
+ * WDlast: last समय wlc_watchकरोg() was called.
+ * edcf_txop[IEEE80211_NUM_ACS]: current txop क्रम each ac.
  * wme_retries: per-AC retry limits.
- * bsscfg: set of BSS configurations, idx 0 is default and always valid.
+ * bsscfg: set of BSS configurations, idx 0 is शेष and always valid.
  * cfg: the primary bsscfg (can be AP or STA).
  * modulecb:
  * mimoft: SIGN or 11N.
  * cck_40txbw: 11N, cck tx b/w override when in 40MHZ mode.
  * ofdm_40txbw: 11N, ofdm tx b/w override when in 40MHZ mode.
  * mimo_40txbw: 11N, mimo tx b/w override when in 40MHZ mode.
- * default_bss: configured BSS parameters.
+ * शेष_bss: configured BSS parameters.
  * mc_fid_counter: BC/MC FIFO frame ID counter.
- * country_default: saved country for leaving 802.11d auto-country mode.
- * autocountry_default: initial country for 802.11d auto-country mode.
- * prb_resp_timeout: do not send prb resp if request older
+ * country_शेष: saved country क्रम leaving 802.11d स्वतः-country mode.
+ * स्वतःcountry_शेष: initial country क्रम 802.11d स्वतः-country mode.
+ * prb_resp_समयout: करो not send prb resp अगर request older
  *		     than this, 0 = disable.
  * home_chanspec: shared home chanspec.
  * chanspec: target operational channel.
  * usr_fragthresh: user configured fragmentation threshold.
- * fragthresh[NFIFO]: per-fifo fragmentation thresholds.
- * RTSThresh: 802.11 dot11RTSThreshold.
- * SRL: 802.11 dot11ShortRetryLimit.
- * LRL: 802.11 dot11LongRetryLimit.
+ * fragthresh[NFIFO]: per-fअगरo fragmentation thresholds.
+ * RTSThresh: 802.11 करोt11RTSThreshold.
+ * SRL: 802.11 करोt11ShortRetryLimit.
+ * LRL: 802.11 करोt11LongRetryLimit.
  * SFBL: Short Frame Rate Fallback Limit.
  * LFBL: Long Frame Rate Fallback Limit.
- * shortslot: currently using 11g ShortSlot timing.
- * shortslot_override: 11g ShortSlot override.
+ * लघुslot: currently using 11g ShortSlot timing.
+ * लघुslot_override: 11g ShortSlot override.
  * include_legacy_erp: include Legacy ERP info elt ID 47 as well as g ID 42.
  * PLCPHdr_override: 802.11b Preamble Type override.
  * stf:
  * bcn_rspec: save bcn ratespec purpose.
- * tempsense_lasttime;
- * tx_duty_cycle_ofdm: maximum allowed duty cycle for OFDM.
- * tx_duty_cycle_cck: maximum allowed duty cycle for CCK.
+ * tempsense_lastसमय;
+ * tx_duty_cycle_ofdm: maximum allowed duty cycle क्रम OFDM.
+ * tx_duty_cycle_cck: maximum allowed duty cycle क्रम CCK.
  * wiphy:
  * pri_scb: primary Station Control Block
  */
-struct brcms_c_info {
-	struct brcms_pub *pub;
-	struct brcms_info *wl;
-	struct brcms_hardware *hw;
+काष्ठा brcms_c_info अणु
+	काष्ठा brcms_pub *pub;
+	काष्ठा brcms_info *wl;
+	काष्ठा brcms_hardware *hw;
 
-	/* clock */
+	/* घड़ी */
 	u16 fastpwrup_dly;
 
-	/* interrupt */
-	u32 macintstatus;
-	u32 macintmask;
-	u32 defmacintmask;
+	/* पूर्णांकerrupt */
+	u32 macपूर्णांकstatus;
+	u32 macपूर्णांकmask;
+	u32 defmacपूर्णांकmask;
 
 	bool clk;
 
 	/* multiband */
-	struct brcms_core *core;
-	struct brcms_band *band;
-	struct brcms_core *corestate;
-	struct brcms_band *bandstate[MAXBANDS];
+	काष्ठा brcms_core *core;
+	काष्ठा brcms_band *band;
+	काष्ठा brcms_core *corestate;
+	काष्ठा brcms_band *bandstate[MAXBANDS];
 
 	/* packet queue */
-	uint qvalid;
+	uपूर्णांक qvalid;
 
-	struct ampdu_info *ampdu;
-	struct antsel_info *asi;
-	struct brcms_cm_info *cmi;
+	काष्ठा ampdu_info *ampdu;
+	काष्ठा antsel_info *asi;
+	काष्ठा brcms_cm_info *cmi;
 
-	u16 vendorid;
+	u16 venकरोrid;
 	u16 deviceid;
-	uint ucode_rev;
+	uपूर्णांक ucode_rev;
 
 	u8 perm_etheraddr[ETH_ALEN];
 
@@ -490,20 +491,20 @@ struct brcms_c_info {
 	bool bandinit_pending;
 
 	bool radio_monitor;
-	bool going_down;
+	bool going_करोwn;
 
-	bool beacon_template_virgin;
+	bool beacon_ढाँचा_virgin;
 
-	struct brcms_timer *wdtimer;
-	struct brcms_timer *radio_timer;
+	काष्ठा brcms_समयr *wdसमयr;
+	काष्ठा brcms_समयr *radio_समयr;
 
 	/* promiscuous */
-	uint filter_flags;
+	uपूर्णांक filter_flags;
 
 	/* driver feature */
-	bool _rifs;
+	bool _rअगरs;
 
-	/* AP-STA synchronization, power save */
+	/* AP-STA synchronization, घातer save */
 	u8 bcn_li_bcn;
 	u8 bcn_li_dtim;
 
@@ -515,22 +516,22 @@ struct brcms_c_info {
 
 	u16 wme_retries[IEEE80211_NUM_ACS];
 
-	struct brcms_bss_cfg *bsscfg;
+	काष्ठा brcms_bss_cfg *bsscfg;
 
-	struct modulecb *modulecb;
+	काष्ठा modulecb *modulecb;
 
 	u8 mimoft;
 	s8 cck_40txbw;
 	s8 ofdm_40txbw;
 	s8 mimo_40txbw;
 
-	struct brcms_bss_info *default_bss;
+	काष्ठा brcms_bss_info *शेष_bss;
 
 	u16 mc_fid_counter;
 
-	char country_default[BRCM_CNTRY_BUF_SZ];
-	char autocountry_default[BRCM_CNTRY_BUF_SZ];
-	u16 prb_resp_timeout;
+	अक्षर country_शेष[BRCM_CNTRY_BUF_SZ];
+	अक्षर स्वतःcountry_शेष[BRCM_CNTRY_BUF_SZ];
+	u16 prb_resp_समयout;
 
 	u16 home_chanspec;
 
@@ -545,56 +546,56 @@ struct brcms_c_info {
 	u16 LFBL;
 
 	/* network config */
-	bool shortslot;
-	s8 shortslot_override;
+	bool लघुslot;
+	s8 लघुslot_override;
 	bool include_legacy_erp;
 
-	struct brcms_protection *protection;
+	काष्ठा brcms_protection *protection;
 	s8 PLCPHdr_override;
 
-	struct brcms_stf *stf;
+	काष्ठा brcms_stf *stf;
 
 	u32 bcn_rspec;
 
-	uint tempsense_lasttime;
+	uपूर्णांक tempsense_lastसमय;
 
 	u16 tx_duty_cycle_ofdm;
 	u16 tx_duty_cycle_cck;
 
-	struct wiphy *wiphy;
-	struct scb pri_scb;
-	struct ieee80211_vif *vif;
+	काष्ठा wiphy *wiphy;
+	काष्ठा scb pri_scb;
+	काष्ठा ieee80211_vअगर *vअगर;
 
-	struct sk_buff *beacon;
+	काष्ठा sk_buff *beacon;
 	u16 beacon_tim_offset;
 	u16 beacon_dtim_period;
-	struct sk_buff *probe_resp;
-};
+	काष्ठा sk_buff *probe_resp;
+पूर्ण;
 
-/* antsel module specific state */
-struct antsel_info {
-	struct brcms_c_info *wlc;	/* pointer to main wlc structure */
-	struct brcms_pub *pub;		/* pointer to public fn */
-	u8 antsel_type;	/* Type of boardlevel mimo antenna switch-logic
+/* antsel module specअगरic state */
+काष्ठा antsel_info अणु
+	काष्ठा brcms_c_info *wlc;	/* poपूर्णांकer to मुख्य wlc काष्ठाure */
+	काष्ठा brcms_pub *pub;		/* poपूर्णांकer to खुला fn */
+	u8 antsel_type;	/* Type of boardlevel mimo antenna चयन-logic
 				 * 0 = N/A, 1 = 2x4 board, 2 = 2x3 CB2 board
 				 */
-	u8 antsel_antswitch;	/* board level antenna switch type */
+	u8 antsel_antचयन;	/* board level antenna चयन type */
 	bool antsel_avail;	/* Ant selection availability (SROM based) */
-	struct brcms_antselcfg antcfg_11n; /* antenna configuration */
-	struct brcms_antselcfg antcfg_cur; /* current antenna config (auto) */
-};
+	काष्ठा brcms_antselcfg antcfg_11n; /* antenna configuration */
+	काष्ठा brcms_antselcfg antcfg_cur; /* current antenna config (स्वतः) */
+पूर्ण;
 
-enum brcms_bss_type {
+क्रमागत brcms_bss_type अणु
 	BRCMS_TYPE_STATION,
 	BRCMS_TYPE_AP,
 	BRCMS_TYPE_ADHOC,
-};
+पूर्ण;
 
 /*
  * BSS configuration state
  *
- * wlc: wlc to which this bsscfg belongs to.
- * type: interface type
+ * wlc: wlc to which this bsscfg beदीर्घs to.
+ * type: पूर्णांकerface type
  * SSID_len: the length of SSID
  * SSID: SSID string
  *
@@ -606,65 +607,65 @@ enum brcms_bss_type {
  * current_bss: BSS parms in ASSOCIATED state
  *
  *
- * ID: 'unique' ID of this bsscfg, assigned at bsscfg allocation
+ * ID: 'unique' ID of this bsscfg, asचिन्हित at bsscfg allocation
  */
-struct brcms_bss_cfg {
-	struct brcms_c_info *wlc;
-	enum brcms_bss_type type;
+काष्ठा brcms_bss_cfg अणु
+	काष्ठा brcms_c_info *wlc;
+	क्रमागत brcms_bss_type type;
 	u8 SSID_len;
 	u8 SSID[IEEE80211_MAX_SSID_LEN];
 	u8 BSSID[ETH_ALEN];
-	struct brcms_bss_info *current_bss;
-};
+	काष्ठा brcms_bss_info *current_bss;
+पूर्ण;
 
-int brcms_c_txfifo(struct brcms_c_info *wlc, uint fifo, struct sk_buff *p);
-int brcms_b_xmtfifo_sz_get(struct brcms_hardware *wlc_hw, uint fifo,
-			   uint *blocks);
+पूर्णांक brcms_c_txfअगरo(काष्ठा brcms_c_info *wlc, uपूर्णांक fअगरo, काष्ठा sk_buff *p);
+पूर्णांक brcms_b_xmtfअगरo_sz_get(काष्ठा brcms_hardware *wlc_hw, uपूर्णांक fअगरo,
+			   uपूर्णांक *blocks);
 
-int brcms_c_set_gmode(struct brcms_c_info *wlc, u8 gmode, bool config);
-void brcms_c_mac_promisc(struct brcms_c_info *wlc, uint filter_flags);
-u16 brcms_c_calc_lsig_len(struct brcms_c_info *wlc, u32 ratespec, uint mac_len);
-u32 brcms_c_rspec_to_rts_rspec(struct brcms_c_info *wlc, u32 rspec,
+पूर्णांक brcms_c_set_gmode(काष्ठा brcms_c_info *wlc, u8 gmode, bool config);
+व्योम brcms_c_mac_promisc(काष्ठा brcms_c_info *wlc, uपूर्णांक filter_flags);
+u16 brcms_c_calc_lsig_len(काष्ठा brcms_c_info *wlc, u32 ratespec, uपूर्णांक mac_len);
+u32 brcms_c_rspec_to_rts_rspec(काष्ठा brcms_c_info *wlc, u32 rspec,
 			       bool use_rspec, u16 mimo_ctlchbw);
-u16 brcms_c_compute_rtscts_dur(struct brcms_c_info *wlc, bool cts_only,
+u16 brcms_c_compute_rtscts_dur(काष्ठा brcms_c_info *wlc, bool cts_only,
 			       u32 rts_rate, u32 frame_rate,
 			       u8 rts_preamble_type, u8 frame_preamble_type,
-			       uint frame_len, bool ba);
-void brcms_c_inval_dma_pkts(struct brcms_hardware *hw,
-			    struct ieee80211_sta *sta, void (*dma_callback_fn));
-void brcms_c_update_probe_resp(struct brcms_c_info *wlc, bool suspend);
-int brcms_c_set_nmode(struct brcms_c_info *wlc);
-void brcms_c_beacon_phytxctl_txant_upd(struct brcms_c_info *wlc, u32 bcn_rate);
-void brcms_b_antsel_type_set(struct brcms_hardware *wlc_hw, u8 antsel_type);
-void brcms_b_set_chanspec(struct brcms_hardware *wlc_hw, u16 chanspec,
-			  bool mute, struct txpwr_limits *txpwr);
-void brcms_b_write_shm(struct brcms_hardware *wlc_hw, uint offset, u16 v);
-u16 brcms_b_read_shm(struct brcms_hardware *wlc_hw, uint offset);
-void brcms_b_mhf(struct brcms_hardware *wlc_hw, u8 idx, u16 mask, u16 val,
-		 int bands);
-void brcms_b_corereset(struct brcms_hardware *wlc_hw, u32 flags);
-void brcms_b_mctrl(struct brcms_hardware *wlc_hw, u32 mask, u32 val);
-void brcms_b_phy_reset(struct brcms_hardware *wlc_hw);
-void brcms_b_bw_set(struct brcms_hardware *wlc_hw, u16 bw);
-void brcms_b_core_phypll_reset(struct brcms_hardware *wlc_hw);
-void brcms_c_ucode_wake_override_set(struct brcms_hardware *wlc_hw,
+			       uपूर्णांक frame_len, bool ba);
+व्योम brcms_c_inval_dma_pkts(काष्ठा brcms_hardware *hw,
+			    काष्ठा ieee80211_sta *sta, व्योम (*dma_callback_fn));
+व्योम brcms_c_update_probe_resp(काष्ठा brcms_c_info *wlc, bool suspend);
+पूर्णांक brcms_c_set_nmode(काष्ठा brcms_c_info *wlc);
+व्योम brcms_c_beacon_phytxctl_txant_upd(काष्ठा brcms_c_info *wlc, u32 bcn_rate);
+व्योम brcms_b_antsel_type_set(काष्ठा brcms_hardware *wlc_hw, u8 antsel_type);
+व्योम brcms_b_set_chanspec(काष्ठा brcms_hardware *wlc_hw, u16 chanspec,
+			  bool mute, काष्ठा txpwr_limits *txpwr);
+व्योम brcms_b_ग_लिखो_shm(काष्ठा brcms_hardware *wlc_hw, uपूर्णांक offset, u16 v);
+u16 brcms_b_पढ़ो_shm(काष्ठा brcms_hardware *wlc_hw, uपूर्णांक offset);
+व्योम brcms_b_mhf(काष्ठा brcms_hardware *wlc_hw, u8 idx, u16 mask, u16 val,
+		 पूर्णांक bands);
+व्योम brcms_b_corereset(काष्ठा brcms_hardware *wlc_hw, u32 flags);
+व्योम brcms_b_mctrl(काष्ठा brcms_hardware *wlc_hw, u32 mask, u32 val);
+व्योम brcms_b_phy_reset(काष्ठा brcms_hardware *wlc_hw);
+व्योम brcms_b_bw_set(काष्ठा brcms_hardware *wlc_hw, u16 bw);
+व्योम brcms_b_core_phypll_reset(काष्ठा brcms_hardware *wlc_hw);
+व्योम brcms_c_ucode_wake_override_set(काष्ठा brcms_hardware *wlc_hw,
 				     u32 override_bit);
-void brcms_c_ucode_wake_override_clear(struct brcms_hardware *wlc_hw,
+व्योम brcms_c_ucode_wake_override_clear(काष्ठा brcms_hardware *wlc_hw,
 				       u32 override_bit);
-void brcms_b_write_template_ram(struct brcms_hardware *wlc_hw, int offset,
-				int len, void *buf);
-u16 brcms_b_rate_shm_offset(struct brcms_hardware *wlc_hw, u8 rate);
-void brcms_b_copyto_objmem(struct brcms_hardware *wlc_hw, uint offset,
-			   const void *buf, int len, u32 sel);
-void brcms_b_copyfrom_objmem(struct brcms_hardware *wlc_hw, uint offset,
-			     void *buf, int len, u32 sel);
-void brcms_b_switch_macfreq(struct brcms_hardware *wlc_hw, u8 spurmode);
-u16 brcms_b_get_txant(struct brcms_hardware *wlc_hw);
-void brcms_b_phyclk_fgc(struct brcms_hardware *wlc_hw, bool clk);
-void brcms_b_macphyclk_set(struct brcms_hardware *wlc_hw, bool clk);
-void brcms_b_core_phypll_ctl(struct brcms_hardware *wlc_hw, bool on);
-void brcms_b_txant_set(struct brcms_hardware *wlc_hw, u16 phytxant);
-void brcms_b_band_stf_ss_set(struct brcms_hardware *wlc_hw, u8 stf_mode);
-void brcms_c_init_scb(struct scb *scb);
+व्योम brcms_b_ग_लिखो_ढाँचा_ram(काष्ठा brcms_hardware *wlc_hw, पूर्णांक offset,
+				पूर्णांक len, व्योम *buf);
+u16 brcms_b_rate_shm_offset(काष्ठा brcms_hardware *wlc_hw, u8 rate);
+व्योम brcms_b_copyto_objmem(काष्ठा brcms_hardware *wlc_hw, uपूर्णांक offset,
+			   स्थिर व्योम *buf, पूर्णांक len, u32 sel);
+व्योम brcms_b_copyfrom_objmem(काष्ठा brcms_hardware *wlc_hw, uपूर्णांक offset,
+			     व्योम *buf, पूर्णांक len, u32 sel);
+व्योम brcms_b_चयन_macfreq(काष्ठा brcms_hardware *wlc_hw, u8 spurmode);
+u16 brcms_b_get_txant(काष्ठा brcms_hardware *wlc_hw);
+व्योम brcms_b_phyclk_fgc(काष्ठा brcms_hardware *wlc_hw, bool clk);
+व्योम brcms_b_macphyclk_set(काष्ठा brcms_hardware *wlc_hw, bool clk);
+व्योम brcms_b_core_phypll_ctl(काष्ठा brcms_hardware *wlc_hw, bool on);
+व्योम brcms_b_txant_set(काष्ठा brcms_hardware *wlc_hw, u16 phytxant);
+व्योम brcms_b_band_stf_ss_set(काष्ठा brcms_hardware *wlc_hw, u8 stf_mode);
+व्योम brcms_c_init_scb(काष्ठा scb *scb);
 
-#endif				/* _BRCM_MAIN_H_ */
+#पूर्ण_अगर				/* _BRCM_MAIN_H_ */

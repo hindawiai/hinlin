@@ -1,175 +1,176 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  */
 
-#include "gem/i915_gem_mman.h"
-#include "gt/intel_engine_user.h"
+#समावेश "gem/i915_gem_mman.h"
+#समावेश "gt/intel_engine_user.h"
 
-#include "i915_drv.h"
-#include "i915_perf.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_perf.h"
 
-int i915_getparam_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *file_priv)
-{
-	struct drm_i915_private *i915 = to_i915(dev);
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
-	const struct sseu_dev_info *sseu = &i915->gt.info.sseu;
+पूर्णांक i915_getparam_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_i915_निजी *i915 = to_i915(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+	स्थिर काष्ठा sseu_dev_info *sseu = &i915->gt.info.sseu;
 	drm_i915_getparam_t *param = data;
-	int value;
+	पूर्णांक value;
 
-	switch (param->param) {
-	case I915_PARAM_IRQ_ACTIVE:
-	case I915_PARAM_ALLOW_BATCHBUFFER:
-	case I915_PARAM_LAST_DISPATCH:
-	case I915_PARAM_HAS_EXEC_CONSTANTS:
+	चयन (param->param) अणु
+	हाल I915_PARAM_IRQ_ACTIVE:
+	हाल I915_PARAM_ALLOW_BATCHBUFFER:
+	हाल I915_PARAM_LAST_DISPATCH:
+	हाल I915_PARAM_HAS_EXEC_CONSTANTS:
 		/* Reject all old ums/dri params. */
-		return -ENODEV;
-	case I915_PARAM_CHIPSET_ID:
+		वापस -ENODEV;
+	हाल I915_PARAM_CHIPSET_ID:
 		value = pdev->device;
-		break;
-	case I915_PARAM_REVISION:
+		अवरोध;
+	हाल I915_PARAM_REVISION:
 		value = pdev->revision;
-		break;
-	case I915_PARAM_NUM_FENCES_AVAIL:
+		अवरोध;
+	हाल I915_PARAM_NUM_FENCES_AVAIL:
 		value = i915->ggtt.num_fences;
-		break;
-	case I915_PARAM_HAS_OVERLAY:
+		अवरोध;
+	हाल I915_PARAM_HAS_OVERLAY:
 		value = !!i915->overlay;
-		break;
-	case I915_PARAM_HAS_BSD:
-		value = !!intel_engine_lookup_user(i915,
+		अवरोध;
+	हाल I915_PARAM_HAS_BSD:
+		value = !!पूर्णांकel_engine_lookup_user(i915,
 						   I915_ENGINE_CLASS_VIDEO, 0);
-		break;
-	case I915_PARAM_HAS_BLT:
-		value = !!intel_engine_lookup_user(i915,
+		अवरोध;
+	हाल I915_PARAM_HAS_BLT:
+		value = !!पूर्णांकel_engine_lookup_user(i915,
 						   I915_ENGINE_CLASS_COPY, 0);
-		break;
-	case I915_PARAM_HAS_VEBOX:
-		value = !!intel_engine_lookup_user(i915,
+		अवरोध;
+	हाल I915_PARAM_HAS_VEBOX:
+		value = !!पूर्णांकel_engine_lookup_user(i915,
 						   I915_ENGINE_CLASS_VIDEO_ENHANCE, 0);
-		break;
-	case I915_PARAM_HAS_BSD2:
-		value = !!intel_engine_lookup_user(i915,
+		अवरोध;
+	हाल I915_PARAM_HAS_BSD2:
+		value = !!पूर्णांकel_engine_lookup_user(i915,
 						   I915_ENGINE_CLASS_VIDEO, 1);
-		break;
-	case I915_PARAM_HAS_LLC:
+		अवरोध;
+	हाल I915_PARAM_HAS_LLC:
 		value = HAS_LLC(i915);
-		break;
-	case I915_PARAM_HAS_WT:
+		अवरोध;
+	हाल I915_PARAM_HAS_WT:
 		value = HAS_WT(i915);
-		break;
-	case I915_PARAM_HAS_ALIASING_PPGTT:
+		अवरोध;
+	हाल I915_PARAM_HAS_ALIASING_PPGTT:
 		value = INTEL_PPGTT(i915);
-		break;
-	case I915_PARAM_HAS_SEMAPHORES:
+		अवरोध;
+	हाल I915_PARAM_HAS_SEMAPHORES:
 		value = !!(i915->caps.scheduler & I915_SCHEDULER_CAP_SEMAPHORES);
-		break;
-	case I915_PARAM_HAS_SECURE_BATCHES:
+		अवरोध;
+	हाल I915_PARAM_HAS_SECURE_BATCHES:
 		value = HAS_SECURE_BATCHES(i915) && capable(CAP_SYS_ADMIN);
-		break;
-	case I915_PARAM_CMD_PARSER_VERSION:
+		अवरोध;
+	हाल I915_PARAM_CMD_PARSER_VERSION:
 		value = i915_cmd_parser_get_version(i915);
-		break;
-	case I915_PARAM_SUBSLICE_TOTAL:
-		value = intel_sseu_subslice_total(sseu);
-		if (!value)
-			return -ENODEV;
-		break;
-	case I915_PARAM_EU_TOTAL:
+		अवरोध;
+	हाल I915_PARAM_SUBSLICE_TOTAL:
+		value = पूर्णांकel_sseu_subslice_total(sseu);
+		अगर (!value)
+			वापस -ENODEV;
+		अवरोध;
+	हाल I915_PARAM_EU_TOTAL:
 		value = sseu->eu_total;
-		if (!value)
-			return -ENODEV;
-		break;
-	case I915_PARAM_HAS_GPU_RESET:
+		अगर (!value)
+			वापस -ENODEV;
+		अवरोध;
+	हाल I915_PARAM_HAS_GPU_RESET:
 		value = i915->params.enable_hangcheck &&
-			intel_has_gpu_reset(&i915->gt);
-		if (value && intel_has_reset_engine(&i915->gt))
+			पूर्णांकel_has_gpu_reset(&i915->gt);
+		अगर (value && पूर्णांकel_has_reset_engine(&i915->gt))
 			value = 2;
-		break;
-	case I915_PARAM_HAS_RESOURCE_STREAMER:
+		अवरोध;
+	हाल I915_PARAM_HAS_RESOURCE_STREAMER:
 		value = 0;
-		break;
-	case I915_PARAM_HAS_POOLED_EU:
+		अवरोध;
+	हाल I915_PARAM_HAS_POOLED_EU:
 		value = HAS_POOLED_EU(i915);
-		break;
-	case I915_PARAM_MIN_EU_IN_POOL:
+		अवरोध;
+	हाल I915_PARAM_MIN_EU_IN_POOL:
 		value = sseu->min_eu_in_pool;
-		break;
-	case I915_PARAM_HUC_STATUS:
-		value = intel_huc_check_status(&i915->gt.uc.huc);
-		if (value < 0)
-			return value;
-		break;
-	case I915_PARAM_MMAP_GTT_VERSION:
+		अवरोध;
+	हाल I915_PARAM_HUC_STATUS:
+		value = पूर्णांकel_huc_check_status(&i915->gt.uc.huc);
+		अगर (value < 0)
+			वापस value;
+		अवरोध;
+	हाल I915_PARAM_MMAP_GTT_VERSION:
 		/* Though we've started our numbering from 1, and so class all
 		 * earlier versions as 0, in effect their value is undefined as
-		 * the ioctl will report EINVAL for the unknown param!
+		 * the ioctl will report EINVAL क्रम the unknown param!
 		 */
 		value = i915_gem_mmap_gtt_version();
-		break;
-	case I915_PARAM_HAS_SCHEDULER:
+		अवरोध;
+	हाल I915_PARAM_HAS_SCHEDULER:
 		value = i915->caps.scheduler;
-		break;
+		अवरोध;
 
-	case I915_PARAM_MMAP_VERSION:
-		/* Remember to bump this if the version changes! */
-	case I915_PARAM_HAS_GEM:
-	case I915_PARAM_HAS_PAGEFLIPPING:
-	case I915_PARAM_HAS_EXECBUF2: /* depends on GEM */
-	case I915_PARAM_HAS_RELAXED_FENCING:
-	case I915_PARAM_HAS_COHERENT_RINGS:
-	case I915_PARAM_HAS_RELAXED_DELTA:
-	case I915_PARAM_HAS_GEN7_SOL_RESET:
-	case I915_PARAM_HAS_WAIT_TIMEOUT:
-	case I915_PARAM_HAS_PRIME_VMAP_FLUSH:
-	case I915_PARAM_HAS_PINNED_BATCHES:
-	case I915_PARAM_HAS_EXEC_NO_RELOC:
-	case I915_PARAM_HAS_EXEC_HANDLE_LUT:
-	case I915_PARAM_HAS_COHERENT_PHYS_GTT:
-	case I915_PARAM_HAS_EXEC_SOFTPIN:
-	case I915_PARAM_HAS_EXEC_ASYNC:
-	case I915_PARAM_HAS_EXEC_FENCE:
-	case I915_PARAM_HAS_EXEC_CAPTURE:
-	case I915_PARAM_HAS_EXEC_BATCH_FIRST:
-	case I915_PARAM_HAS_EXEC_FENCE_ARRAY:
-	case I915_PARAM_HAS_EXEC_SUBMIT_FENCE:
-	case I915_PARAM_HAS_EXEC_TIMELINE_FENCES:
-		/* For the time being all of these are always true;
-		 * if some supported hardware does not have one of these
+	हाल I915_PARAM_MMAP_VERSION:
+		/* Remember to bump this अगर the version changes! */
+	हाल I915_PARAM_HAS_GEM:
+	हाल I915_PARAM_HAS_PAGEFLIPPING:
+	हाल I915_PARAM_HAS_EXECBUF2: /* depends on GEM */
+	हाल I915_PARAM_HAS_RELAXED_FENCING:
+	हाल I915_PARAM_HAS_COHERENT_RINGS:
+	हाल I915_PARAM_HAS_RELAXED_DELTA:
+	हाल I915_PARAM_HAS_GEN7_SOL_RESET:
+	हाल I915_PARAM_HAS_WAIT_TIMEOUT:
+	हाल I915_PARAM_HAS_PRIME_VMAP_FLUSH:
+	हाल I915_PARAM_HAS_PINNED_BATCHES:
+	हाल I915_PARAM_HAS_EXEC_NO_RELOC:
+	हाल I915_PARAM_HAS_EXEC_HANDLE_LUT:
+	हाल I915_PARAM_HAS_COHERENT_PHYS_GTT:
+	हाल I915_PARAM_HAS_EXEC_SOFTPIN:
+	हाल I915_PARAM_HAS_EXEC_ASYNC:
+	हाल I915_PARAM_HAS_EXEC_FENCE:
+	हाल I915_PARAM_HAS_EXEC_CAPTURE:
+	हाल I915_PARAM_HAS_EXEC_BATCH_FIRST:
+	हाल I915_PARAM_HAS_EXEC_FENCE_ARRAY:
+	हाल I915_PARAM_HAS_EXEC_SUBMIT_FENCE:
+	हाल I915_PARAM_HAS_EXEC_TIMELINE_FENCES:
+		/* For the समय being all of these are always true;
+		 * अगर some supported hardware करोes not have one of these
 		 * features this value needs to be provided from
 		 * INTEL_INFO(), a feature macro, or similar.
 		 */
 		value = 1;
-		break;
-	case I915_PARAM_HAS_CONTEXT_ISOLATION:
-		value = intel_engines_has_context_isolation(i915);
-		break;
-	case I915_PARAM_SLICE_MASK:
+		अवरोध;
+	हाल I915_PARAM_HAS_CONTEXT_ISOLATION:
+		value = पूर्णांकel_engines_has_context_isolation(i915);
+		अवरोध;
+	हाल I915_PARAM_SLICE_MASK:
 		value = sseu->slice_mask;
-		if (!value)
-			return -ENODEV;
-		break;
-	case I915_PARAM_SUBSLICE_MASK:
+		अगर (!value)
+			वापस -ENODEV;
+		अवरोध;
+	हाल I915_PARAM_SUBSLICE_MASK:
 		value = sseu->subslice_mask[0];
-		if (!value)
-			return -ENODEV;
-		break;
-	case I915_PARAM_CS_TIMESTAMP_FREQUENCY:
-		value = i915->gt.clock_frequency;
-		break;
-	case I915_PARAM_MMAP_GTT_COHERENT:
+		अगर (!value)
+			वापस -ENODEV;
+		अवरोध;
+	हाल I915_PARAM_CS_TIMESTAMP_FREQUENCY:
+		value = i915->gt.घड़ी_frequency;
+		अवरोध;
+	हाल I915_PARAM_MMAP_GTT_COHERENT:
 		value = INTEL_INFO(i915)->has_coherent_ggtt;
-		break;
-	case I915_PARAM_PERF_REVISION:
+		अवरोध;
+	हाल I915_PARAM_PERF_REVISION:
 		value = i915_perf_ioctl_version();
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_DEBUG("Unknown parameter %d\n", param->param);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (put_user(value, param->value))
-		return -EFAULT;
+	अगर (put_user(value, param->value))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

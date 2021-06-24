@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __INTEL_PMIC_H
-#define __INTEL_PMIC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __INTEL_PMIC_H
+#घोषणा __INTEL_PMIC_H
 
-struct pmic_table {
-	int address;	/* operation region address */
-	int reg;	/* corresponding thermal register */
-	int bit;	/* control bit for power */
-};
+काष्ठा pmic_table अणु
+	पूर्णांक address;	/* operation region address */
+	पूर्णांक reg;	/* corresponding thermal रेजिस्टर */
+	पूर्णांक bit;	/* control bit क्रम घातer */
+पूर्ण;
 
-struct intel_pmic_opregion_data {
-	int (*get_power)(struct regmap *r, int reg, int bit, u64 *value);
-	int (*update_power)(struct regmap *r, int reg, int bit, bool on);
-	int (*get_raw_temp)(struct regmap *r, int reg);
-	int (*update_aux)(struct regmap *r, int reg, int raw_temp);
-	int (*get_policy)(struct regmap *r, int reg, int bit, u64 *value);
-	int (*update_policy)(struct regmap *r, int reg, int bit, int enable);
-	int (*exec_mipi_pmic_seq_element)(struct regmap *r, u16 i2c_address,
+काष्ठा पूर्णांकel_pmic_opregion_data अणु
+	पूर्णांक (*get_घातer)(काष्ठा regmap *r, पूर्णांक reg, पूर्णांक bit, u64 *value);
+	पूर्णांक (*update_घातer)(काष्ठा regmap *r, पूर्णांक reg, पूर्णांक bit, bool on);
+	पूर्णांक (*get_raw_temp)(काष्ठा regmap *r, पूर्णांक reg);
+	पूर्णांक (*update_aux)(काष्ठा regmap *r, पूर्णांक reg, पूर्णांक raw_temp);
+	पूर्णांक (*get_policy)(काष्ठा regmap *r, पूर्णांक reg, पूर्णांक bit, u64 *value);
+	पूर्णांक (*update_policy)(काष्ठा regmap *r, पूर्णांक reg, पूर्णांक bit, पूर्णांक enable);
+	पूर्णांक (*exec_mipi_pmic_seq_element)(काष्ठा regmap *r, u16 i2c_address,
 					  u32 reg_address, u32 value, u32 mask);
-	struct pmic_table *power_table;
-	int power_table_count;
-	struct pmic_table *thermal_table;
-	int thermal_table_count;
+	काष्ठा pmic_table *घातer_table;
+	पूर्णांक घातer_table_count;
+	काष्ठा pmic_table *thermal_table;
+	पूर्णांक thermal_table_count;
 	/* For generic exec_mipi_pmic_seq_element handling */
-	int pmic_i2c_address;
-};
+	पूर्णांक pmic_i2c_address;
+पूर्ण;
 
-int intel_pmic_install_opregion_handler(struct device *dev, acpi_handle handle, struct regmap *regmap, struct intel_pmic_opregion_data *d);
+पूर्णांक पूर्णांकel_pmic_install_opregion_handler(काष्ठा device *dev, acpi_handle handle, काष्ठा regmap *regmap, काष्ठा पूर्णांकel_pmic_opregion_data *d);
 
-#endif
+#पूर्ण_अगर

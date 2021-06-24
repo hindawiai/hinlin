@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *   S/390 common I/O routines -- blacklisting of specific devices
+ *   S/390 common I/O routines -- blacklisting of specअगरic devices
  *
  *    Copyright IBM Corp. 1999, 2013
  *    Author(s): Ingo Adlung (adlung@de.ibm.com)
@@ -8,25 +9,25 @@
  *		 Arnd Bergmann (arndb@de.ibm.com)
  */
 
-#define KMSG_COMPONENT "cio"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "cio"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/init.h>
-#include <linux/vmalloc.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/ctype.h>
-#include <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/device.h>
 
-#include <linux/uaccess.h>
-#include <asm/cio.h>
-#include <asm/ipl.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/cपन.स>
+#समावेश <यंत्र/ipl.h>
 
-#include "blacklist.h"
-#include "cio.h"
-#include "cio_debug.h"
-#include "css.h"
-#include "device.h"
+#समावेश "blacklist.h"
+#समावेश "cio.h"
+#समावेश "cio_debug.h"
+#समावेश "css.h"
+#समावेश "device.h"
 
 /*
  * "Blacklisting" of certain devices:
@@ -36,389 +37,389 @@
  * These can be single devices or ranges of devices
  */
 
-/* 65536 bits for each set to indicate if a devno is blacklisted or not */
-#define __BL_DEV_WORDS ((__MAX_SUBCHANNEL + (8*sizeof(long) - 1)) / \
-			 (8*sizeof(long)))
-static unsigned long bl_dev[__MAX_SSID + 1][__BL_DEV_WORDS];
-typedef enum {add, free} range_action;
+/* 65536 bits क्रम each set to indicate अगर a devno is blacklisted or not */
+#घोषणा __BL_DEV_WORDS ((__MAX_SUBCHANNEL + (8*माप(दीर्घ) - 1)) / \
+			 (8*माप(दीर्घ)))
+अटल अचिन्हित दीर्घ bl_dev[__MAX_SSID + 1][__BL_DEV_WORDS];
+प्रकार क्रमागत अणुadd, मुक्तपूर्ण range_action;
 
 /*
  * Function: blacklist_range
  * (Un-)blacklist the devices from-to
  */
-static int blacklist_range(range_action action, unsigned int from_ssid,
-			   unsigned int to_ssid, unsigned int from,
-			   unsigned int to, int msgtrigger)
-{
-	if ((from_ssid > to_ssid) || ((from_ssid == to_ssid) && (from > to))) {
-		if (msgtrigger)
+अटल पूर्णांक blacklist_range(range_action action, अचिन्हित पूर्णांक from_ssid,
+			   अचिन्हित पूर्णांक to_ssid, अचिन्हित पूर्णांक from,
+			   अचिन्हित पूर्णांक to, पूर्णांक msgtrigger)
+अणु
+	अगर ((from_ssid > to_ssid) || ((from_ssid == to_ssid) && (from > to))) अणु
+		अगर (msgtrigger)
 			pr_warn("0.%x.%04x to 0.%x.%04x is not a valid range for cio_ignore\n",
 				from_ssid, from, to_ssid, to);
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	while ((from_ssid < to_ssid) || ((from_ssid == to_ssid) &&
-	       (from <= to))) {
-		if (action == add)
+	जबतक ((from_ssid < to_ssid) || ((from_ssid == to_ssid) &&
+	       (from <= to))) अणु
+		अगर (action == add)
 			set_bit(from, bl_dev[from_ssid]);
-		else
+		अन्यथा
 			clear_bit(from, bl_dev[from_ssid]);
 		from++;
-		if (from > __MAX_SUBCHANNEL) {
+		अगर (from > __MAX_SUBCHANNEL) अणु
 			from_ssid++;
 			from = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pure_hex(char **cp, unsigned int *val, int min_digit,
-		    int max_digit, int max_val)
-{
-	int diff;
+अटल पूर्णांक pure_hex(अक्षर **cp, अचिन्हित पूर्णांक *val, पूर्णांक min_digit,
+		    पूर्णांक max_digit, पूर्णांक max_val)
+अणु
+	पूर्णांक dअगरf;
 
-	diff = 0;
+	dअगरf = 0;
 	*val = 0;
 
-	while (diff <= max_digit) {
-		int value = hex_to_bin(**cp);
+	जबतक (dअगरf <= max_digit) अणु
+		पूर्णांक value = hex_to_bin(**cp);
 
-		if (value < 0)
-			break;
+		अगर (value < 0)
+			अवरोध;
 		*val = *val * 16 + value;
 		(*cp)++;
-		diff++;
-	}
+		dअगरf++;
+	पूर्ण
 
-	if ((diff < min_digit) || (diff > max_digit) || (*val > max_val))
-		return 1;
+	अगर ((dअगरf < min_digit) || (dअगरf > max_digit) || (*val > max_val))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int parse_busid(char *str, unsigned int *cssid, unsigned int *ssid,
-		       unsigned int *devno, int msgtrigger)
-{
-	char *str_work;
-	int val, rc, ret;
+अटल पूर्णांक parse_busid(अक्षर *str, अचिन्हित पूर्णांक *cssid, अचिन्हित पूर्णांक *ssid,
+		       अचिन्हित पूर्णांक *devno, पूर्णांक msgtrigger)
+अणु
+	अक्षर *str_work;
+	पूर्णांक val, rc, ret;
 
 	rc = 1;
 
-	if (*str == '\0')
-		goto out;
+	अगर (*str == '\0')
+		जाओ out;
 
 	/* old style */
 	str_work = str;
-	val = simple_strtoul(str, &str_work, 16);
+	val = simple_म_से_अदीर्घ(str, &str_work, 16);
 
-	if (*str_work == '\0') {
-		if (val <= __MAX_SUBCHANNEL) {
+	अगर (*str_work == '\0') अणु
+		अगर (val <= __MAX_SUBCHANNEL) अणु
 			*devno = val;
 			*ssid = 0;
 			*cssid = 0;
 			rc = 0;
-		}
-		goto out;
-	}
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
 	/* new style */
 	str_work = str;
 	ret = pure_hex(&str_work, cssid, 1, 2, __MAX_CSSID);
-	if (ret || (str_work[0] != '.'))
-		goto out;
+	अगर (ret || (str_work[0] != '.'))
+		जाओ out;
 	str_work++;
 	ret = pure_hex(&str_work, ssid, 1, 1, __MAX_SSID);
-	if (ret || (str_work[0] != '.'))
-		goto out;
+	अगर (ret || (str_work[0] != '.'))
+		जाओ out;
 	str_work++;
 	ret = pure_hex(&str_work, devno, 4, 4, __MAX_SUBCHANNEL);
-	if (ret || (str_work[0] != '\0'))
-		goto out;
+	अगर (ret || (str_work[0] != '\0'))
+		जाओ out;
 
 	rc = 0;
 out:
-	if (rc && msgtrigger)
+	अगर (rc && msgtrigger)
 		pr_warn("%s is not a valid device for the cio_ignore kernel parameter\n",
 			str);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int blacklist_parse_parameters(char *str, range_action action,
-				      int msgtrigger)
-{
-	unsigned int from_cssid, to_cssid, from_ssid, to_ssid, from, to;
-	int rc, totalrc;
-	char *parm;
+अटल पूर्णांक blacklist_parse_parameters(अक्षर *str, range_action action,
+				      पूर्णांक msgtrigger)
+अणु
+	अचिन्हित पूर्णांक from_cssid, to_cssid, from_ssid, to_ssid, from, to;
+	पूर्णांक rc, totalrc;
+	अक्षर *parm;
 	range_action ra;
 
 	totalrc = 0;
 
-	while ((parm = strsep(&str, ","))) {
+	जबतक ((parm = strsep(&str, ","))) अणु
 		rc = 0;
 		ra = action;
-		if (*parm == '!') {
-			if (ra == add)
-				ra = free;
-			else
+		अगर (*parm == '!') अणु
+			अगर (ra == add)
+				ra = मुक्त;
+			अन्यथा
 				ra = add;
 			parm++;
-		}
-		if (strcmp(parm, "all") == 0) {
+		पूर्ण
+		अगर (म_भेद(parm, "all") == 0) अणु
 			from_cssid = 0;
 			from_ssid = 0;
 			from = 0;
 			to_cssid = __MAX_CSSID;
 			to_ssid = __MAX_SSID;
 			to = __MAX_SUBCHANNEL;
-		} else if (strcmp(parm, "ipldev") == 0) {
-			if (ipl_info.type == IPL_TYPE_CCW) {
+		पूर्ण अन्यथा अगर (म_भेद(parm, "ipldev") == 0) अणु
+			अगर (ipl_info.type == IPL_TYPE_CCW) अणु
 				from_cssid = 0;
 				from_ssid = ipl_info.data.ccw.dev_id.ssid;
 				from = ipl_info.data.ccw.dev_id.devno;
-			} else if (ipl_info.type == IPL_TYPE_FCP ||
-				   ipl_info.type == IPL_TYPE_FCP_DUMP) {
+			पूर्ण अन्यथा अगर (ipl_info.type == IPL_TYPE_FCP ||
+				   ipl_info.type == IPL_TYPE_FCP_DUMP) अणु
 				from_cssid = 0;
 				from_ssid = ipl_info.data.fcp.dev_id.ssid;
 				from = ipl_info.data.fcp.dev_id.devno;
-			} else {
-				continue;
-			}
+			पूर्ण अन्यथा अणु
+				जारी;
+			पूर्ण
 			to_cssid = from_cssid;
 			to_ssid = from_ssid;
 			to = from;
-		} else if (strcmp(parm, "condev") == 0) {
-			if (console_devno == -1)
-				continue;
+		पूर्ण अन्यथा अगर (म_भेद(parm, "condev") == 0) अणु
+			अगर (console_devno == -1)
+				जारी;
 
 			from_cssid = to_cssid = 0;
 			from_ssid = to_ssid = 0;
 			from = to = console_devno;
-		} else {
+		पूर्ण अन्यथा अणु
 			rc = parse_busid(strsep(&parm, "-"), &from_cssid,
 					 &from_ssid, &from, msgtrigger);
-			if (!rc) {
-				if (parm != NULL)
+			अगर (!rc) अणु
+				अगर (parm != शून्य)
 					rc = parse_busid(parm, &to_cssid,
 							 &to_ssid, &to,
 							 msgtrigger);
-				else {
+				अन्यथा अणु
 					to_cssid = from_cssid;
 					to_ssid = from_ssid;
 					to = from;
-				}
-			}
-		}
-		if (!rc) {
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		अगर (!rc) अणु
 			rc = blacklist_range(ra, from_ssid, to_ssid, from, to,
 					     msgtrigger);
-			if (rc)
+			अगर (rc)
 				totalrc = -EINVAL;
-		} else
+		पूर्ण अन्यथा
 			totalrc = -EINVAL;
-	}
+	पूर्ण
 
-	return totalrc;
-}
+	वापस totalrc;
+पूर्ण
 
-static int __init
-blacklist_setup (char *str)
-{
+अटल पूर्णांक __init
+blacklist_setup (अक्षर *str)
+अणु
 	CIO_MSG_EVENT(6, "Reading blacklist parameters\n");
-	if (blacklist_parse_parameters(str, add, 1))
-		return 0;
-	return 1;
-}
+	अगर (blacklist_parse_parameters(str, add, 1))
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 __setup ("cio_ignore=", blacklist_setup);
 
-/* Checking if devices are blacklisted */
+/* Checking अगर devices are blacklisted */
 
 /*
  * Function: is_blacklisted
- * Returns 1 if the given devicenumber can be found in the blacklist,
+ * Returns 1 अगर the given devicक्रमागतber can be found in the blacklist,
  * otherwise 0.
  * Used by validate_subchannel()
  */
-int
-is_blacklisted (int ssid, int devno)
-{
-	return test_bit (devno, bl_dev[ssid]);
-}
+पूर्णांक
+is_blacklisted (पूर्णांक ssid, पूर्णांक devno)
+अणु
+	वापस test_bit (devno, bl_dev[ssid]);
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 /*
  * Function: blacklist_parse_proc_parameters
  * parse the stuff which is piped to /proc/cio_ignore
  */
-static int blacklist_parse_proc_parameters(char *buf)
-{
-	int rc;
-	char *parm;
+अटल पूर्णांक blacklist_parse_proc_parameters(अक्षर *buf)
+अणु
+	पूर्णांक rc;
+	अक्षर *parm;
 
 	parm = strsep(&buf, " ");
 
-	if (strcmp("free", parm) == 0) {
-		rc = blacklist_parse_parameters(buf, free, 0);
+	अगर (म_भेद("free", parm) == 0) अणु
+		rc = blacklist_parse_parameters(buf, मुक्त, 0);
 		css_schedule_eval_all_unreg(0);
-	} else if (strcmp("add", parm) == 0)
+	पूर्ण अन्यथा अगर (म_भेद("add", parm) == 0)
 		rc = blacklist_parse_parameters(buf, add, 0);
-	else if (strcmp("purge", parm) == 0)
-		return ccw_purge_blacklisted();
-	else
-		return -EINVAL;
+	अन्यथा अगर (म_भेद("purge", parm) == 0)
+		वापस ccw_purge_blacklisted();
+	अन्यथा
+		वापस -EINVAL;
 
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* Iterator struct for all devices. */
-struct ccwdev_iter {
-	int devno;
-	int ssid;
-	int in_range;
-};
+/* Iterator काष्ठा क्रम all devices. */
+काष्ठा ccwdev_iter अणु
+	पूर्णांक devno;
+	पूर्णांक ssid;
+	पूर्णांक in_range;
+पूर्ण;
 
-static void *
-cio_ignore_proc_seq_start(struct seq_file *s, loff_t *offset)
-{
-	struct ccwdev_iter *iter = s->private;
+अटल व्योम *
+cio_ignore_proc_seq_start(काष्ठा seq_file *s, loff_t *offset)
+अणु
+	काष्ठा ccwdev_iter *iter = s->निजी;
 
-	if (*offset >= (__MAX_SUBCHANNEL + 1) * (__MAX_SSID + 1))
-		return NULL;
-	memset(iter, 0, sizeof(*iter));
+	अगर (*offset >= (__MAX_SUBCHANNEL + 1) * (__MAX_SSID + 1))
+		वापस शून्य;
+	स_रखो(iter, 0, माप(*iter));
 	iter->ssid = *offset / (__MAX_SUBCHANNEL + 1);
 	iter->devno = *offset % (__MAX_SUBCHANNEL + 1);
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
-static void
-cio_ignore_proc_seq_stop(struct seq_file *s, void *it)
-{
-}
+अटल व्योम
+cio_ignore_proc_seq_stop(काष्ठा seq_file *s, व्योम *it)
+अणु
+पूर्ण
 
-static void *
-cio_ignore_proc_seq_next(struct seq_file *s, void *it, loff_t *offset)
-{
-	struct ccwdev_iter *iter;
+अटल व्योम *
+cio_ignore_proc_seq_next(काष्ठा seq_file *s, व्योम *it, loff_t *offset)
+अणु
+	काष्ठा ccwdev_iter *iter;
 	loff_t p = *offset;
 
 	(*offset)++;
-	if (p >= (__MAX_SUBCHANNEL + 1) * (__MAX_SSID + 1))
-		return NULL;
+	अगर (p >= (__MAX_SUBCHANNEL + 1) * (__MAX_SSID + 1))
+		वापस शून्य;
 	iter = it;
-	if (iter->devno == __MAX_SUBCHANNEL) {
+	अगर (iter->devno == __MAX_SUBCHANNEL) अणु
 		iter->devno = 0;
 		iter->ssid++;
-		if (iter->ssid > __MAX_SSID)
-			return NULL;
-	} else
+		अगर (iter->ssid > __MAX_SSID)
+			वापस शून्य;
+	पूर्ण अन्यथा
 		iter->devno++;
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
-static int
-cio_ignore_proc_seq_show(struct seq_file *s, void *it)
-{
-	struct ccwdev_iter *iter;
+अटल पूर्णांक
+cio_ignore_proc_seq_show(काष्ठा seq_file *s, व्योम *it)
+अणु
+	काष्ठा ccwdev_iter *iter;
 
 	iter = it;
-	if (!is_blacklisted(iter->ssid, iter->devno))
+	अगर (!is_blacklisted(iter->ssid, iter->devno))
 		/* Not blacklisted, nothing to output. */
-		return 0;
-	if (!iter->in_range) {
+		वापस 0;
+	अगर (!iter->in_range) अणु
 		/* First device in range. */
-		if ((iter->devno == __MAX_SUBCHANNEL) ||
-		    !is_blacklisted(iter->ssid, iter->devno + 1)) {
+		अगर ((iter->devno == __MAX_SUBCHANNEL) ||
+		    !is_blacklisted(iter->ssid, iter->devno + 1)) अणु
 			/* Singular device. */
-			seq_printf(s, "0.%x.%04x\n", iter->ssid, iter->devno);
-			return 0;
-		}
+			seq_म_लिखो(s, "0.%x.%04x\n", iter->ssid, iter->devno);
+			वापस 0;
+		पूर्ण
 		iter->in_range = 1;
-		seq_printf(s, "0.%x.%04x-", iter->ssid, iter->devno);
-		return 0;
-	}
-	if ((iter->devno == __MAX_SUBCHANNEL) ||
-	    !is_blacklisted(iter->ssid, iter->devno + 1)) {
+		seq_म_लिखो(s, "0.%x.%04x-", iter->ssid, iter->devno);
+		वापस 0;
+	पूर्ण
+	अगर ((iter->devno == __MAX_SUBCHANNEL) ||
+	    !is_blacklisted(iter->ssid, iter->devno + 1)) अणु
 		/* Last device in range. */
 		iter->in_range = 0;
-		seq_printf(s, "0.%x.%04x\n", iter->ssid, iter->devno);
-	}
-	return 0;
-}
+		seq_म_लिखो(s, "0.%x.%04x\n", iter->ssid, iter->devno);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static ssize_t
-cio_ignore_write(struct file *file, const char __user *user_buf,
-		 size_t user_len, loff_t *offset)
-{
-	char *buf;
-	ssize_t rc, ret, i;
+अटल sमाप_प्रकार
+cio_ignore_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
+		 माप_प्रकार user_len, loff_t *offset)
+अणु
+	अक्षर *buf;
+	sमाप_प्रकार rc, ret, i;
 
-	if (*offset)
-		return -EINVAL;
-	if (user_len > 65536)
+	अगर (*offset)
+		वापस -EINVAL;
+	अगर (user_len > 65536)
 		user_len = 65536;
 	buf = vzalloc(user_len + 1); /* maybe better use the stack? */
-	if (buf == NULL)
-		return -ENOMEM;
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
-	if (strncpy_from_user (buf, user_buf, user_len) < 0) {
+	अगर (म_नकलन_from_user (buf, user_buf, user_len) < 0) अणु
 		rc = -EFAULT;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	i = user_len - 1;
-	while ((i >= 0) && (isspace(buf[i]) || (buf[i] == 0))) {
+	जबतक ((i >= 0) && (है_खाली(buf[i]) || (buf[i] == 0))) अणु
 		buf[i] = '\0';
 		i--;
-	}
+	पूर्ण
 	ret = blacklist_parse_proc_parameters(buf);
-	if (ret)
+	अगर (ret)
 		rc = ret;
-	else
+	अन्यथा
 		rc = user_len;
 
-out_free:
-	vfree (buf);
-	return rc;
-}
+out_मुक्त:
+	vमुक्त (buf);
+	वापस rc;
+पूर्ण
 
-static const struct seq_operations cio_ignore_proc_seq_ops = {
+अटल स्थिर काष्ठा seq_operations cio_ignore_proc_seq_ops = अणु
 	.start = cio_ignore_proc_seq_start,
 	.stop  = cio_ignore_proc_seq_stop,
 	.next  = cio_ignore_proc_seq_next,
 	.show  = cio_ignore_proc_seq_show,
-};
+पूर्ण;
 
-static int
-cio_ignore_proc_open(struct inode *inode, struct file *file)
-{
-	return seq_open_private(file, &cio_ignore_proc_seq_ops,
-				sizeof(struct ccwdev_iter));
-}
+अटल पूर्णांक
+cio_ignore_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस seq_खोलो_निजी(file, &cio_ignore_proc_seq_ops,
+				माप(काष्ठा ccwdev_iter));
+पूर्ण
 
-static const struct proc_ops cio_ignore_proc_ops = {
-	.proc_open	= cio_ignore_proc_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops cio_ignore_proc_ops = अणु
+	.proc_खोलो	= cio_ignore_proc_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
-	.proc_release	= seq_release_private,
-	.proc_write	= cio_ignore_write,
-};
+	.proc_release	= seq_release_निजी,
+	.proc_ग_लिखो	= cio_ignore_ग_लिखो,
+पूर्ण;
 
-static int
-cio_ignore_proc_init (void)
-{
-	struct proc_dir_entry *entry;
+अटल पूर्णांक
+cio_ignore_proc_init (व्योम)
+अणु
+	काष्ठा proc_dir_entry *entry;
 
-	entry = proc_create("cio_ignore", S_IFREG | S_IRUGO | S_IWUSR, NULL,
+	entry = proc_create("cio_ignore", S_IFREG | S_IRUGO | S_IWUSR, शून्य,
 			    &cio_ignore_proc_ops);
-	if (!entry)
-		return -ENOENT;
-	return 0;
-}
+	अगर (!entry)
+		वापस -ENOENT;
+	वापस 0;
+पूर्ण
 
 __initcall (cio_ignore_proc_init);
 
-#endif /* CONFIG_PROC_FS */
+#पूर्ण_अगर /* CONFIG_PROC_FS */

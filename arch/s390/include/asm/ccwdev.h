@@ -1,236 +1,237 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright IBM Corp. 2002, 2009
  *
  * Author(s): Arnd Bergmann <arndb@de.ibm.com>
  *
- * Interface for CCW device drivers
+ * Interface क्रम CCW device drivers
  */
-#ifndef _S390_CCWDEV_H_
-#define _S390_CCWDEV_H_
+#अगर_अघोषित _S390_CCWDEV_H_
+#घोषणा _S390_CCWDEV_H_
 
-#include <linux/device.h>
-#include <linux/mod_devicetable.h>
-#include <asm/chsc.h>
-#include <asm/fcx.h>
-#include <asm/irq.h>
-#include <asm/schid.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <यंत्र/chsc.h>
+#समावेश <यंत्र/fcx.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/schid.h>
 
-/* structs from asm/cio.h */
-struct irb;
-struct ccw1;
-struct ccw_dev_id;
+/* काष्ठाs from यंत्र/cपन.स */
+काष्ठा irb;
+काष्ठा ccw1;
+काष्ठा ccw_dev_id;
 
-/* simplified initializers for struct ccw_device:
+/* simplअगरied initializers क्रम काष्ठा ccw_device:
  * CCW_DEVICE and CCW_DEVICE_DEVTYPE initialize one
  * entry in your MODULE_DEVICE_TABLE and set the match_flag correctly */
-#define CCW_DEVICE(cu, cum) 						\
+#घोषणा CCW_DEVICE(cu, cum) 						\
 	.cu_type=(cu), .cu_model=(cum),					\
 	.match_flags=(CCW_DEVICE_ID_MATCH_CU_TYPE			\
 		   | (cum ? CCW_DEVICE_ID_MATCH_CU_MODEL : 0))
 
-#define CCW_DEVICE_DEVTYPE(cu, cum, dev, devm)				\
+#घोषणा CCW_DEVICE_DEVTYPE(cu, cum, dev, devm)				\
 	.cu_type=(cu), .cu_model=(cum), .dev_type=(dev), .dev_model=(devm),\
 	.match_flags=CCW_DEVICE_ID_MATCH_CU_TYPE			\
 		   | ((cum) ? CCW_DEVICE_ID_MATCH_CU_MODEL : 0) 	\
 		   | CCW_DEVICE_ID_MATCH_DEVICE_TYPE			\
 		   | ((devm) ? CCW_DEVICE_ID_MATCH_DEVICE_MODEL : 0)
 
-/* scan through an array of device ids and return the first
+/* scan through an array of device ids and वापस the first
  * entry that matches the device.
  *
  * the array must end with an entry containing zero match_flags
  */
-static inline const struct ccw_device_id *
-ccw_device_id_match(const struct ccw_device_id *array,
-			const struct ccw_device_id *match)
-{
-	const struct ccw_device_id *id = array;
+अटल अंतरभूत स्थिर काष्ठा ccw_device_id *
+ccw_device_id_match(स्थिर काष्ठा ccw_device_id *array,
+			स्थिर काष्ठा ccw_device_id *match)
+अणु
+	स्थिर काष्ठा ccw_device_id *id = array;
 
-	for (id = array; id->match_flags; id++) {
-		if ((id->match_flags & CCW_DEVICE_ID_MATCH_CU_TYPE)
+	क्रम (id = array; id->match_flags; id++) अणु
+		अगर ((id->match_flags & CCW_DEVICE_ID_MATCH_CU_TYPE)
 		    && (id->cu_type != match->cu_type))
-			continue;
+			जारी;
 
-		if ((id->match_flags & CCW_DEVICE_ID_MATCH_CU_MODEL)
+		अगर ((id->match_flags & CCW_DEVICE_ID_MATCH_CU_MODEL)
 		    && (id->cu_model != match->cu_model))
-			continue;
+			जारी;
 
-		if ((id->match_flags & CCW_DEVICE_ID_MATCH_DEVICE_TYPE)
+		अगर ((id->match_flags & CCW_DEVICE_ID_MATCH_DEVICE_TYPE)
 		    && (id->dev_type != match->dev_type))
-			continue;
+			जारी;
 
-		if ((id->match_flags & CCW_DEVICE_ID_MATCH_DEVICE_MODEL)
+		अगर ((id->match_flags & CCW_DEVICE_ID_MATCH_DEVICE_MODEL)
 		    && (id->dev_model != match->dev_model))
-			continue;
+			जारी;
 
-		return id;
-	}
+		वापस id;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * struct ccw_device - channel attached device
- * @ccwlock: pointer to device lock
+ * काष्ठा ccw_device - channel attached device
+ * @ccwlock: poपूर्णांकer to device lock
  * @id: id of this device
- * @drv: ccw driver for this device
- * @dev: embedded device structure
+ * @drv: ccw driver क्रम this device
+ * @dev: embedded device काष्ठाure
  * @online: online status of device
- * @handler: interrupt handler
+ * @handler: पूर्णांकerrupt handler
  *
  * @handler is a member of the device rather than the driver since a driver
- * can have different interrupt handlers for different ccw devices
+ * can have dअगरferent पूर्णांकerrupt handlers क्रम dअगरferent ccw devices
  * (multi-subchannel drivers).
  */
-struct ccw_device {
+काष्ठा ccw_device अणु
 	spinlock_t *ccwlock;
-/* private: */
-	struct ccw_device_private *private;	/* cio private information */
-/* public: */
-	struct ccw_device_id id;
-	struct ccw_driver *drv;
-	struct device dev;
-	int online;
-	void (*handler) (struct ccw_device *, unsigned long, struct irb *);
-};
+/* निजी: */
+	काष्ठा ccw_device_निजी *निजी;	/* cio निजी inक्रमmation */
+/* खुला: */
+	काष्ठा ccw_device_id id;
+	काष्ठा ccw_driver *drv;
+	काष्ठा device dev;
+	पूर्णांक online;
+	व्योम (*handler) (काष्ठा ccw_device *, अचिन्हित दीर्घ, काष्ठा irb *);
+पूर्ण;
 
 /*
- * Possible events used by the path_event notifier.
+ * Possible events used by the path_event notअगरier.
  */
-#define PE_NONE				0x0
-#define PE_PATH_GONE			0x1 /* A path is no longer available. */
-#define PE_PATH_AVAILABLE		0x2 /* A path has become available and
-					       was successfully verified. */
-#define PE_PATHGROUP_ESTABLISHED	0x4 /* A pathgroup was reset and had
+#घोषणा PE_NONE				0x0
+#घोषणा PE_PATH_GONE			0x1 /* A path is no दीर्घer available. */
+#घोषणा PE_PATH_AVAILABLE		0x2 /* A path has become available and
+					       was successfully verअगरied. */
+#घोषणा PE_PATHGROUP_ESTABLISHED	0x4 /* A pathgroup was reset and had
 					       to be established again. */
-#define PE_PATH_FCES_EVENT		0x8 /* The FCES Status of a path has
+#घोषणा PE_PATH_FCES_EVENT		0x8 /* The FCES Status of a path has
 					     * changed. */
 
 /*
  * Possible CIO actions triggered by the unit check handler.
  */
-enum uc_todo {
+क्रमागत uc_toकरो अणु
 	UC_TODO_RETRY,
 	UC_TODO_RETRY_ON_NEW_PATH,
 	UC_TODO_STOP
-};
+पूर्ण;
 
 /**
- * struct ccw_driver - device driver for channel attached devices
+ * काष्ठा ccw_driver - device driver क्रम channel attached devices
  * @ids: ids supported by this driver
  * @probe: function called on probe
- * @remove: function called on remove
+ * @हटाओ: function called on हटाओ
  * @set_online: called when setting device online
  * @set_offline: called when setting device offline
- * @notify: notify driver of device state changes
- * @path_event: notify driver of channel path events
- * @shutdown: called at device shutdown
- * @uc_handler: callback for unit check handler
- * @driver: embedded device driver structure
- * @int_class: interruption class to use for accounting interrupts
+ * @notअगरy: notअगरy driver of device state changes
+ * @path_event: notअगरy driver of channel path events
+ * @shutकरोwn: called at device shutकरोwn
+ * @uc_handler: callback क्रम unit check handler
+ * @driver: embedded device driver काष्ठाure
+ * @पूर्णांक_class: पूर्णांकerruption class to use क्रम accounting पूर्णांकerrupts
  */
-struct ccw_driver {
-	struct ccw_device_id *ids;
-	int (*probe) (struct ccw_device *);
-	void (*remove) (struct ccw_device *);
-	int (*set_online) (struct ccw_device *);
-	int (*set_offline) (struct ccw_device *);
-	int (*notify) (struct ccw_device *, int);
-	void (*path_event) (struct ccw_device *, int *);
-	void (*shutdown) (struct ccw_device *);
-	enum uc_todo (*uc_handler) (struct ccw_device *, struct irb *);
-	struct device_driver driver;
-	enum interruption_class int_class;
-};
+काष्ठा ccw_driver अणु
+	काष्ठा ccw_device_id *ids;
+	पूर्णांक (*probe) (काष्ठा ccw_device *);
+	व्योम (*हटाओ) (काष्ठा ccw_device *);
+	पूर्णांक (*set_online) (काष्ठा ccw_device *);
+	पूर्णांक (*set_offline) (काष्ठा ccw_device *);
+	पूर्णांक (*notअगरy) (काष्ठा ccw_device *, पूर्णांक);
+	व्योम (*path_event) (काष्ठा ccw_device *, पूर्णांक *);
+	व्योम (*shutकरोwn) (काष्ठा ccw_device *);
+	क्रमागत uc_toकरो (*uc_handler) (काष्ठा ccw_device *, काष्ठा irb *);
+	काष्ठा device_driver driver;
+	क्रमागत पूर्णांकerruption_class पूर्णांक_class;
+पूर्ण;
 
-extern struct ccw_device *get_ccwdev_by_busid(struct ccw_driver *cdrv,
-					      const char *bus_id);
+बाह्य काष्ठा ccw_device *get_ccwdev_by_busid(काष्ठा ccw_driver *cdrv,
+					      स्थिर अक्षर *bus_id);
 
 /* devices drivers call these during module load and unload.
- * When a driver is registered, its probe method is called
- * when new devices for its type pop up */
-extern int  ccw_driver_register   (struct ccw_driver *driver);
-extern void ccw_driver_unregister (struct ccw_driver *driver);
-extern int ccw_device_set_options_mask(struct ccw_device *, unsigned long);
-extern int ccw_device_set_options(struct ccw_device *, unsigned long);
-extern void ccw_device_clear_options(struct ccw_device *, unsigned long);
-int ccw_device_is_pathgroup(struct ccw_device *cdev);
-int ccw_device_is_multipath(struct ccw_device *cdev);
+ * When a driver is रेजिस्टरed, its probe method is called
+ * when new devices क्रम its type pop up */
+बाह्य पूर्णांक  ccw_driver_रेजिस्टर   (काष्ठा ccw_driver *driver);
+बाह्य व्योम ccw_driver_unरेजिस्टर (काष्ठा ccw_driver *driver);
+बाह्य पूर्णांक ccw_device_set_options_mask(काष्ठा ccw_device *, अचिन्हित दीर्घ);
+बाह्य पूर्णांक ccw_device_set_options(काष्ठा ccw_device *, अचिन्हित दीर्घ);
+बाह्य व्योम ccw_device_clear_options(काष्ठा ccw_device *, अचिन्हित दीर्घ);
+पूर्णांक ccw_device_is_pathgroup(काष्ठा ccw_device *cdev);
+पूर्णांक ccw_device_is_multipath(काष्ठा ccw_device *cdev);
 
-/* Allow for i/o completion notification after primary interrupt status. */
-#define CCWDEV_EARLY_NOTIFICATION	0x0001
-/* Report all interrupt conditions. */
-#define CCWDEV_REPORT_ALL	 	0x0002
-/* Try to perform path grouping. */
-#define CCWDEV_DO_PATHGROUP             0x0004
-/* Allow forced onlining of boxed devices. */
-#define CCWDEV_ALLOW_FORCE              0x0008
+/* Allow क्रम i/o completion notअगरication after primary पूर्णांकerrupt status. */
+#घोषणा CCWDEV_EARLY_NOTIFICATION	0x0001
+/* Report all पूर्णांकerrupt conditions. */
+#घोषणा CCWDEV_REPORT_ALL	 	0x0002
+/* Try to perक्रमm path grouping. */
+#घोषणा CCWDEV_DO_PATHGROUP             0x0004
+/* Allow क्रमced onlining of boxed devices. */
+#घोषणा CCWDEV_ALLOW_FORCE              0x0008
 /* Try to use multipath mode. */
-#define CCWDEV_DO_MULTIPATH		0x0010
+#घोषणा CCWDEV_DO_MULTIPATH		0x0010
 
-extern int ccw_device_start(struct ccw_device *, struct ccw1 *,
-			    unsigned long, __u8, unsigned long);
-extern int ccw_device_start_timeout(struct ccw_device *, struct ccw1 *,
-				    unsigned long, __u8, unsigned long, int);
-extern int ccw_device_start_key(struct ccw_device *, struct ccw1 *,
-				unsigned long, __u8, __u8, unsigned long);
-extern int ccw_device_start_timeout_key(struct ccw_device *, struct ccw1 *,
-					unsigned long, __u8, __u8,
-					unsigned long, int);
-
-
-extern int ccw_device_resume(struct ccw_device *);
-extern int ccw_device_halt(struct ccw_device *, unsigned long);
-extern int ccw_device_clear(struct ccw_device *, unsigned long);
-int ccw_device_tm_start_key(struct ccw_device *cdev, struct tcw *tcw,
-			    unsigned long intparm, u8 lpm, u8 key);
-int ccw_device_tm_start_key(struct ccw_device *, struct tcw *,
-			    unsigned long, u8, u8);
-int ccw_device_tm_start_timeout_key(struct ccw_device *, struct tcw *,
-			    unsigned long, u8, u8, int);
-int ccw_device_tm_start(struct ccw_device *, struct tcw *,
-			    unsigned long, u8);
-int ccw_device_tm_start_timeout(struct ccw_device *, struct tcw *,
-			    unsigned long, u8, int);
-int ccw_device_tm_intrg(struct ccw_device *cdev);
-
-int ccw_device_get_mdc(struct ccw_device *cdev, u8 mask);
-
-extern int ccw_device_set_online(struct ccw_device *cdev);
-extern int ccw_device_set_offline(struct ccw_device *cdev);
+बाह्य पूर्णांक ccw_device_start(काष्ठा ccw_device *, काष्ठा ccw1 *,
+			    अचिन्हित दीर्घ, __u8, अचिन्हित दीर्घ);
+बाह्य पूर्णांक ccw_device_start_समयout(काष्ठा ccw_device *, काष्ठा ccw1 *,
+				    अचिन्हित दीर्घ, __u8, अचिन्हित दीर्घ, पूर्णांक);
+बाह्य पूर्णांक ccw_device_start_key(काष्ठा ccw_device *, काष्ठा ccw1 *,
+				अचिन्हित दीर्घ, __u8, __u8, अचिन्हित दीर्घ);
+बाह्य पूर्णांक ccw_device_start_समयout_key(काष्ठा ccw_device *, काष्ठा ccw1 *,
+					अचिन्हित दीर्घ, __u8, __u8,
+					अचिन्हित दीर्घ, पूर्णांक);
 
 
-extern struct ciw *ccw_device_get_ciw(struct ccw_device *, __u32 cmd);
-extern __u8 ccw_device_get_path_mask(struct ccw_device *);
-extern void ccw_device_get_id(struct ccw_device *, struct ccw_dev_id *);
+बाह्य पूर्णांक ccw_device_resume(काष्ठा ccw_device *);
+बाह्य पूर्णांक ccw_device_halt(काष्ठा ccw_device *, अचिन्हित दीर्घ);
+बाह्य पूर्णांक ccw_device_clear(काष्ठा ccw_device *, अचिन्हित दीर्घ);
+पूर्णांक ccw_device_पंचांग_start_key(काष्ठा ccw_device *cdev, काष्ठा tcw *tcw,
+			    अचिन्हित दीर्घ पूर्णांकparm, u8 lpm, u8 key);
+पूर्णांक ccw_device_पंचांग_start_key(काष्ठा ccw_device *, काष्ठा tcw *,
+			    अचिन्हित दीर्घ, u8, u8);
+पूर्णांक ccw_device_पंचांग_start_समयout_key(काष्ठा ccw_device *, काष्ठा tcw *,
+			    अचिन्हित दीर्घ, u8, u8, पूर्णांक);
+पूर्णांक ccw_device_पंचांग_start(काष्ठा ccw_device *, काष्ठा tcw *,
+			    अचिन्हित दीर्घ, u8);
+पूर्णांक ccw_device_पंचांग_start_समयout(काष्ठा ccw_device *, काष्ठा tcw *,
+			    अचिन्हित दीर्घ, u8, पूर्णांक);
+पूर्णांक ccw_device_पंचांग_पूर्णांकrg(काष्ठा ccw_device *cdev);
 
-#define get_ccwdev_lock(x) (x)->ccwlock
+पूर्णांक ccw_device_get_mdc(काष्ठा ccw_device *cdev, u8 mask);
 
-#define to_ccwdev(n) container_of(n, struct ccw_device, dev)
-#define to_ccwdrv(n) container_of(n, struct ccw_driver, driver)
+बाह्य पूर्णांक ccw_device_set_online(काष्ठा ccw_device *cdev);
+बाह्य पूर्णांक ccw_device_set_offline(काष्ठा ccw_device *cdev);
 
-extern struct ccw_device *ccw_device_create_console(struct ccw_driver *);
-extern void ccw_device_destroy_console(struct ccw_device *);
-extern int ccw_device_enable_console(struct ccw_device *);
-extern void ccw_device_wait_idle(struct ccw_device *);
-extern int ccw_device_force_console(struct ccw_device *);
 
-extern void *ccw_device_dma_zalloc(struct ccw_device *cdev, size_t size);
-extern void ccw_device_dma_free(struct ccw_device *cdev,
-				void *cpu_addr, size_t size);
+बाह्य काष्ठा ciw *ccw_device_get_ciw(काष्ठा ccw_device *, __u32 cmd);
+बाह्य __u8 ccw_device_get_path_mask(काष्ठा ccw_device *);
+बाह्य व्योम ccw_device_get_id(काष्ठा ccw_device *, काष्ठा ccw_dev_id *);
 
-int ccw_device_siosl(struct ccw_device *);
+#घोषणा get_ccwdev_lock(x) (x)->ccwlock
 
-extern void ccw_device_get_schid(struct ccw_device *, struct subchannel_id *);
+#घोषणा to_ccwdev(n) container_of(n, काष्ठा ccw_device, dev)
+#घोषणा to_ccwdrv(n) container_of(n, काष्ठा ccw_driver, driver)
 
-struct channel_path_desc_fmt0 *ccw_device_get_chp_desc(struct ccw_device *, int);
-u8 *ccw_device_get_util_str(struct ccw_device *cdev, int chp_idx);
-int ccw_device_pnso(struct ccw_device *cdev,
-		    struct chsc_pnso_area *pnso_area, u8 oc,
-		    struct chsc_pnso_resume_token resume_token, int cnc);
-int ccw_device_get_cssid(struct ccw_device *cdev, u8 *cssid);
-int ccw_device_get_iid(struct ccw_device *cdev, u8 *iid);
-int ccw_device_get_chpid(struct ccw_device *cdev, int chp_idx, u8 *chpid);
-int ccw_device_get_chid(struct ccw_device *cdev, int chp_idx, u16 *chid);
-#endif /* _S390_CCWDEV_H_ */
+बाह्य काष्ठा ccw_device *ccw_device_create_console(काष्ठा ccw_driver *);
+बाह्य व्योम ccw_device_destroy_console(काष्ठा ccw_device *);
+बाह्य पूर्णांक ccw_device_enable_console(काष्ठा ccw_device *);
+बाह्य व्योम ccw_device_रुको_idle(काष्ठा ccw_device *);
+बाह्य पूर्णांक ccw_device_क्रमce_console(काष्ठा ccw_device *);
+
+बाह्य व्योम *ccw_device_dma_zalloc(काष्ठा ccw_device *cdev, माप_प्रकार size);
+बाह्य व्योम ccw_device_dma_मुक्त(काष्ठा ccw_device *cdev,
+				व्योम *cpu_addr, माप_प्रकार size);
+
+पूर्णांक ccw_device_siosl(काष्ठा ccw_device *);
+
+बाह्य व्योम ccw_device_get_schid(काष्ठा ccw_device *, काष्ठा subchannel_id *);
+
+काष्ठा channel_path_desc_fmt0 *ccw_device_get_chp_desc(काष्ठा ccw_device *, पूर्णांक);
+u8 *ccw_device_get_util_str(काष्ठा ccw_device *cdev, पूर्णांक chp_idx);
+पूर्णांक ccw_device_pnso(काष्ठा ccw_device *cdev,
+		    काष्ठा chsc_pnso_area *pnso_area, u8 oc,
+		    काष्ठा chsc_pnso_resume_token resume_token, पूर्णांक cnc);
+पूर्णांक ccw_device_get_cssid(काष्ठा ccw_device *cdev, u8 *cssid);
+पूर्णांक ccw_device_get_iid(काष्ठा ccw_device *cdev, u8 *iid);
+पूर्णांक ccw_device_get_chpid(काष्ठा ccw_device *cdev, पूर्णांक chp_idx, u8 *chpid);
+पूर्णांक ccw_device_get_chid(काष्ठा ccw_device *cdev, पूर्णांक chp_idx, u16 *chid);
+#पूर्ण_अगर /* _S390_CCWDEV_H_ */

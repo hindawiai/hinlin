@@ -1,104 +1,105 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for the Conexant CX23885/7/8 PCIe bridge
+ *  Driver क्रम the Conexant CX23885/7/8 PCIe bridge
  *
  *  Infrared device support routines - non-input, non-vl42_subdev routines
  *
  *  Copyright (C) 2009  Andy Walls <awalls@md.metrocast.net>
  */
 
-#include "cx23885.h"
-#include "cx23885-ir.h"
-#include "cx23885-input.h"
+#समावेश "cx23885.h"
+#समावेश "cx23885-ir.h"
+#समावेश "cx23885-input.h"
 
-#include <media/v4l2-device.h>
+#समावेश <media/v4l2-device.h>
 
-#define CX23885_IR_RX_FIFO_SERVICE_REQ		0
-#define CX23885_IR_RX_END_OF_RX_DETECTED	1
-#define CX23885_IR_RX_HW_FIFO_OVERRUN		2
-#define CX23885_IR_RX_SW_FIFO_OVERRUN		3
+#घोषणा CX23885_IR_RX_FIFO_SERVICE_REQ		0
+#घोषणा CX23885_IR_RX_END_OF_RX_DETECTED	1
+#घोषणा CX23885_IR_RX_HW_FIFO_OVERRUN		2
+#घोषणा CX23885_IR_RX_SW_FIFO_OVERRUN		3
 
-#define CX23885_IR_TX_FIFO_SERVICE_REQ		0
+#घोषणा CX23885_IR_TX_FIFO_SERVICE_REQ		0
 
 
-void cx23885_ir_rx_work_handler(struct work_struct *work)
-{
-	struct cx23885_dev *dev =
-			     container_of(work, struct cx23885_dev, ir_rx_work);
+व्योम cx23885_ir_rx_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cx23885_dev *dev =
+			     container_of(work, काष्ठा cx23885_dev, ir_rx_work);
 	u32 events = 0;
-	unsigned long *notifications = &dev->ir_rx_notifications;
+	अचिन्हित दीर्घ *notअगरications = &dev->ir_rx_notअगरications;
 
-	if (test_and_clear_bit(CX23885_IR_RX_SW_FIFO_OVERRUN, notifications))
+	अगर (test_and_clear_bit(CX23885_IR_RX_SW_FIFO_OVERRUN, notअगरications))
 		events |= V4L2_SUBDEV_IR_RX_SW_FIFO_OVERRUN;
-	if (test_and_clear_bit(CX23885_IR_RX_HW_FIFO_OVERRUN, notifications))
+	अगर (test_and_clear_bit(CX23885_IR_RX_HW_FIFO_OVERRUN, notअगरications))
 		events |= V4L2_SUBDEV_IR_RX_HW_FIFO_OVERRUN;
-	if (test_and_clear_bit(CX23885_IR_RX_END_OF_RX_DETECTED, notifications))
+	अगर (test_and_clear_bit(CX23885_IR_RX_END_OF_RX_DETECTED, notअगरications))
 		events |= V4L2_SUBDEV_IR_RX_END_OF_RX_DETECTED;
-	if (test_and_clear_bit(CX23885_IR_RX_FIFO_SERVICE_REQ, notifications))
+	अगर (test_and_clear_bit(CX23885_IR_RX_FIFO_SERVICE_REQ, notअगरications))
 		events |= V4L2_SUBDEV_IR_RX_FIFO_SERVICE_REQ;
 
-	if (events == 0)
-		return;
+	अगर (events == 0)
+		वापस;
 
-	if (dev->kernel_ir)
+	अगर (dev->kernel_ir)
 		cx23885_input_rx_work_handler(dev, events);
-}
+पूर्ण
 
-void cx23885_ir_tx_work_handler(struct work_struct *work)
-{
-	struct cx23885_dev *dev =
-			     container_of(work, struct cx23885_dev, ir_tx_work);
+व्योम cx23885_ir_tx_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cx23885_dev *dev =
+			     container_of(work, काष्ठा cx23885_dev, ir_tx_work);
 	u32 events = 0;
-	unsigned long *notifications = &dev->ir_tx_notifications;
+	अचिन्हित दीर्घ *notअगरications = &dev->ir_tx_notअगरications;
 
-	if (test_and_clear_bit(CX23885_IR_TX_FIFO_SERVICE_REQ, notifications))
+	अगर (test_and_clear_bit(CX23885_IR_TX_FIFO_SERVICE_REQ, notअगरications))
 		events |= V4L2_SUBDEV_IR_TX_FIFO_SERVICE_REQ;
 
-	if (events == 0)
-		return;
+	अगर (events == 0)
+		वापस;
 
-}
+पूर्ण
 
 /* Possibly called in an IRQ context */
-void cx23885_ir_rx_v4l2_dev_notify(struct v4l2_subdev *sd, u32 events)
-{
-	struct cx23885_dev *dev = to_cx23885(sd->v4l2_dev);
-	unsigned long *notifications = &dev->ir_rx_notifications;
+व्योम cx23885_ir_rx_v4l2_dev_notअगरy(काष्ठा v4l2_subdev *sd, u32 events)
+अणु
+	काष्ठा cx23885_dev *dev = to_cx23885(sd->v4l2_dev);
+	अचिन्हित दीर्घ *notअगरications = &dev->ir_rx_notअगरications;
 
-	if (events & V4L2_SUBDEV_IR_RX_FIFO_SERVICE_REQ)
-		set_bit(CX23885_IR_RX_FIFO_SERVICE_REQ, notifications);
-	if (events & V4L2_SUBDEV_IR_RX_END_OF_RX_DETECTED)
-		set_bit(CX23885_IR_RX_END_OF_RX_DETECTED, notifications);
-	if (events & V4L2_SUBDEV_IR_RX_HW_FIFO_OVERRUN)
-		set_bit(CX23885_IR_RX_HW_FIFO_OVERRUN, notifications);
-	if (events & V4L2_SUBDEV_IR_RX_SW_FIFO_OVERRUN)
-		set_bit(CX23885_IR_RX_SW_FIFO_OVERRUN, notifications);
+	अगर (events & V4L2_SUBDEV_IR_RX_FIFO_SERVICE_REQ)
+		set_bit(CX23885_IR_RX_FIFO_SERVICE_REQ, notअगरications);
+	अगर (events & V4L2_SUBDEV_IR_RX_END_OF_RX_DETECTED)
+		set_bit(CX23885_IR_RX_END_OF_RX_DETECTED, notअगरications);
+	अगर (events & V4L2_SUBDEV_IR_RX_HW_FIFO_OVERRUN)
+		set_bit(CX23885_IR_RX_HW_FIFO_OVERRUN, notअगरications);
+	अगर (events & V4L2_SUBDEV_IR_RX_SW_FIFO_OVERRUN)
+		set_bit(CX23885_IR_RX_SW_FIFO_OVERRUN, notअगरications);
 
 	/*
-	 * For the integrated AV core, we are already in a workqueue context.
-	 * For the CX23888 integrated IR, we are in an interrupt context.
+	 * For the पूर्णांकegrated AV core, we are alपढ़ोy in a workqueue context.
+	 * For the CX23888 पूर्णांकegrated IR, we are in an पूर्णांकerrupt context.
 	 */
-	if (sd == dev->sd_cx25840)
+	अगर (sd == dev->sd_cx25840)
 		cx23885_ir_rx_work_handler(&dev->ir_rx_work);
-	else
+	अन्यथा
 		schedule_work(&dev->ir_rx_work);
-}
+पूर्ण
 
 /* Possibly called in an IRQ context */
-void cx23885_ir_tx_v4l2_dev_notify(struct v4l2_subdev *sd, u32 events)
-{
-	struct cx23885_dev *dev = to_cx23885(sd->v4l2_dev);
-	unsigned long *notifications = &dev->ir_tx_notifications;
+व्योम cx23885_ir_tx_v4l2_dev_notअगरy(काष्ठा v4l2_subdev *sd, u32 events)
+अणु
+	काष्ठा cx23885_dev *dev = to_cx23885(sd->v4l2_dev);
+	अचिन्हित दीर्घ *notअगरications = &dev->ir_tx_notअगरications;
 
-	if (events & V4L2_SUBDEV_IR_TX_FIFO_SERVICE_REQ)
-		set_bit(CX23885_IR_TX_FIFO_SERVICE_REQ, notifications);
+	अगर (events & V4L2_SUBDEV_IR_TX_FIFO_SERVICE_REQ)
+		set_bit(CX23885_IR_TX_FIFO_SERVICE_REQ, notअगरications);
 
 	/*
-	 * For the integrated AV core, we are already in a workqueue context.
-	 * For the CX23888 integrated IR, we are in an interrupt context.
+	 * For the पूर्णांकegrated AV core, we are alपढ़ोy in a workqueue context.
+	 * For the CX23888 पूर्णांकegrated IR, we are in an पूर्णांकerrupt context.
 	 */
-	if (sd == dev->sd_cx25840)
+	अगर (sd == dev->sd_cx25840)
 		cx23885_ir_tx_work_handler(&dev->ir_tx_work);
-	else
+	अन्यथा
 		schedule_work(&dev->ir_tx_work);
-}
+पूर्ण

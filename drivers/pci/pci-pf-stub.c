@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0
-/* pci-pf-stub - simple stub driver for PCI SR-IOV PF device
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* pci-pf-stub - simple stub driver क्रम PCI SR-IOV PF device
  *
- * This driver is meant to act as a "whitelist" for devices that provide
- * SR-IOV functionality while at the same time not actually needing a
+ * This driver is meant to act as a "whitelist" क्रम devices that provide
+ * SR-IOV functionality जबतक at the same समय not actually needing a
  * driver of their own.
  */
 
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
 /*
  * pci_pf_stub_whitelist - White list of devices to bind pci-pf-stub onto
  *
  * This table provides the list of IDs this driver is supposed to bind
  * onto.  You could think of this as a list of "quirked" devices where we
- * are adding support for SR-IOV here since there are no other drivers
+ * are adding support क्रम SR-IOV here since there are no other drivers
  * that they would be running under.
  */
-static const struct pci_device_id pci_pf_stub_whitelist[] = {
-	{ PCI_VDEVICE(AMAZON, 0x0053) },
+अटल स्थिर काष्ठा pci_device_id pci_pf_stub_whitelist[] = अणु
+	अणु PCI_VDEVICE(AMAZON, 0x0053) पूर्ण,
 	/* required last entry */
-	{ 0 }
-};
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, pci_pf_stub_whitelist);
 
-static int pci_pf_stub_probe(struct pci_dev *dev,
-			     const struct pci_device_id *id)
-{
+अटल पूर्णांक pci_pf_stub_probe(काष्ठा pci_dev *dev,
+			     स्थिर काष्ठा pci_device_id *id)
+अणु
 	pci_info(dev, "claimed by pci-pf-stub\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pci_driver pf_stub_driver = {
+अटल काष्ठा pci_driver pf_stub_driver = अणु
 	.name			= "pci-pf-stub",
 	.id_table		= pci_pf_stub_whitelist,
 	.probe			= pci_pf_stub_probe,
 	.sriov_configure	= pci_sriov_configure_simple,
-};
+पूर्ण;
 module_pci_driver(pf_stub_driver);
 
 MODULE_LICENSE("GPL");

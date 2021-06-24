@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Linux/PA-RISC Project (http://www.parisc-linux.org/)
  *
- * Floating-point emulation code
+ * Floating-poपूर्णांक emulation code
  *  Copyright (C) 2001 Hewlett-Packard (Paul Bame) <bame@debian.org>
  */
 
-#ifdef __NO_PA_HDRS
-    PA header file -- do not include this header file for non-PA builds.
-#endif
+#अगर_घोषित __NO_PA_HDRS
+    PA header file -- करो not include this header file क्रम non-PA builds.
+#पूर्ण_अगर
 
 
-/* amount is assumed to be a constant between 0 and 32 (non-inclusive) */
-#define Shiftdouble(left,right,amount,dest)			\
-    /* int left, right, amount, dest; */			\
-    dest = ((left) << (32-(amount))) | ((unsigned int)(right) >> (amount))
+/* amount is assumed to be a स्थिरant between 0 and 32 (non-inclusive) */
+#घोषणा Shअगरtद्विगुन(left,right,amount,dest)			\
+    /* पूर्णांक left, right, amount, dest; */			\
+    dest = ((left) << (32-(amount))) | ((अचिन्हित पूर्णांक)(right) >> (amount))
 
 /* amount must be less than 32 */
-#define Variableshiftdouble(left,right,amount,dest)		\
-    /* unsigned int left, right;  int amount, dest; */		\
-    if (amount == 0) dest = right;				\
-    else dest = ((((unsigned) left)&0x7fffffff) << (32-(amount))) |	\
-          ((unsigned) right >> (amount))
+#घोषणा Variableshअगरtद्विगुन(left,right,amount,dest)		\
+    /* अचिन्हित पूर्णांक left, right;  पूर्णांक amount, dest; */		\
+    अगर (amount == 0) dest = right;				\
+    अन्यथा dest = ((((अचिन्हित) left)&0x7fffffff) << (32-(amount))) |	\
+          ((अचिन्हित) right >> (amount))
 
 /* amount must be between 0 and 32 (non-inclusive) */
-#define Variable_shift_double(left,right,amount,dest)		\
-    /* unsigned int left, right;  int amount, dest; */		\
-    dest = (left << (32-(amount))) | ((unsigned) right >> (amount))
+#घोषणा Variable_shअगरt_द्विगुन(left,right,amount,dest)		\
+    /* अचिन्हित पूर्णांक left, right;  पूर्णांक amount, dest; */		\
+    dest = (left << (32-(amount))) | ((अचिन्हित) right >> (amount))

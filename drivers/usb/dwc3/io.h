@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * io.h - DesignWare USB3 DRD IO Header
+ * पन.स - DesignWare USB3 DRD IO Header
  *
  * Copyright (C) 2010-2011 Texas Instruments Incorporated - https://www.ti.com
  *
@@ -8,16 +9,16 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
-#ifndef __DRIVERS_USB_DWC3_IO_H
-#define __DRIVERS_USB_DWC3_IO_H
+#अगर_अघोषित __DRIVERS_USB_DWC3_IO_H
+#घोषणा __DRIVERS_USB_DWC3_IO_H
 
-#include <linux/io.h>
-#include "trace.h"
-#include "debug.h"
-#include "core.h"
+#समावेश <linux/पन.स>
+#समावेश "trace.h"
+#समावेश "debug.h"
+#समावेश "core.h"
 
-static inline u32 dwc3_readl(void __iomem *base, u32 offset)
-{
+अटल अंतरभूत u32 dwc3_पढ़ोl(व्योम __iomem *base, u32 offset)
+अणु
 	u32 value;
 
 	/*
@@ -25,33 +26,33 @@ static inline u32 dwc3_readl(void __iomem *base, u32 offset)
 	 * space, see dwc3_probe in core.c.
 	 * However, the offsets are given starting from xHCI address space.
 	 */
-	value = readl(base + offset - DWC3_GLOBALS_REGS_START);
+	value = पढ़ोl(base + offset - DWC3_GLOBALS_REGS_START);
 
 	/*
 	 * When tracing we want to make it easy to find the correct address on
-	 * documentation, so we revert it back to the proper addresses, the
-	 * same way they are described on SNPS documentation
+	 * करोcumentation, so we revert it back to the proper addresses, the
+	 * same way they are described on SNPS करोcumentation
 	 */
-	trace_dwc3_readl(base - DWC3_GLOBALS_REGS_START, offset, value);
+	trace_dwc3_पढ़ोl(base - DWC3_GLOBALS_REGS_START, offset, value);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static inline void dwc3_writel(void __iomem *base, u32 offset, u32 value)
-{
+अटल अंतरभूत व्योम dwc3_ग_लिखोl(व्योम __iomem *base, u32 offset, u32 value)
+अणु
 	/*
 	 * We requested the mem region starting from the Globals address
 	 * space, see dwc3_probe in core.c.
 	 * However, the offsets are given starting from xHCI address space.
 	 */
-	writel(value, base + offset - DWC3_GLOBALS_REGS_START);
+	ग_लिखोl(value, base + offset - DWC3_GLOBALS_REGS_START);
 
 	/*
 	 * When tracing we want to make it easy to find the correct address on
-	 * documentation, so we revert it back to the proper addresses, the
-	 * same way they are described on SNPS documentation
+	 * करोcumentation, so we revert it back to the proper addresses, the
+	 * same way they are described on SNPS करोcumentation
 	 */
-	trace_dwc3_writel(base - DWC3_GLOBALS_REGS_START, offset, value);
-}
+	trace_dwc3_ग_लिखोl(base - DWC3_GLOBALS_REGS_START, offset, value);
+पूर्ण
 
-#endif /* __DRIVERS_USB_DWC3_IO_H */
+#पूर्ण_अगर /* __DRIVERS_USB_DWC3_IO_H */

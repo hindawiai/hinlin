@@ -1,241 +1,242 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * linux/drivers/clocksource/acpi_pm.c
+ * linux/drivers/घड़ीsource/acpi_pm.c
  *
- * This file contains the ACPI PM based clocksource.
+ * This file contains the ACPI PM based घड़ीsource.
  *
- * This code was largely moved from the i386 timer_pm.c file
- * which was (C) Dominik Brodowski <linux@brodo.de> 2003
+ * This code was largely moved from the i386 समयr_pm.c file
+ * which was (C) Dominik Broकरोwski <linux@broकरो.de> 2003
  * and contained the following comments:
  *
  * Driver to use the Power Management Timer (PMTMR) available in some
- * southbridges as primary timing source for the Linux kernel.
+ * southbridges as primary timing source क्रम the Linux kernel.
  *
- * Based on parts of linux/drivers/acpi/hardware/hwtimer.c, timer_pit.c,
- * timer_hpet.c, and on Arjan van de Ven's implementation for 2.4.
+ * Based on parts of linux/drivers/acpi/hardware/hwसमयr.c, समयr_pit.c,
+ * समयr_hpet.c, and on Arjan van de Ven's implementation क्रम 2.4.
  */
 
-#include <linux/acpi_pmtmr.h>
-#include <linux/clocksource.h>
-#include <linux/timex.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <asm/io.h>
+#समावेश <linux/acpi_pmपंचांगr.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/पन.स>
 
 /*
  * The I/O port the PMTMR resides at.
  * The location is detected during setup_arch(),
  * in arch/i386/kernel/acpi/boot.c
  */
-u32 pmtmr_ioport __read_mostly;
+u32 pmपंचांगr_ioport __पढ़ो_mostly;
 
-static inline u32 read_pmtmr(void)
-{
+अटल अंतरभूत u32 पढ़ो_pmपंचांगr(व्योम)
+अणु
 	/* mask the output to 24 bits */
-	return inl(pmtmr_ioport) & ACPI_PM_MASK;
-}
+	वापस inl(pmपंचांगr_ioport) & ACPI_PM_MASK;
+पूर्ण
 
-u32 acpi_pm_read_verified(void)
-{
+u32 acpi_pm_पढ़ो_verअगरied(व्योम)
+अणु
 	u32 v1 = 0, v2 = 0, v3 = 0;
 
 	/*
 	 * It has been reported that because of various broken
-	 * chipsets (ICH4, PIIX4 and PIIX4E) where the ACPI PM clock
-	 * source is not latched, you must read it multiple
-	 * times to ensure a safe value is read:
+	 * chipsets (ICH4, PIIX4 and PIIX4E) where the ACPI PM घड़ी
+	 * source is not latched, you must पढ़ो it multiple
+	 * बार to ensure a safe value is पढ़ो:
 	 */
-	do {
-		v1 = read_pmtmr();
-		v2 = read_pmtmr();
-		v3 = read_pmtmr();
-	} while (unlikely((v1 > v2 && v1 < v3) || (v2 > v3 && v2 < v1)
+	करो अणु
+		v1 = पढ़ो_pmपंचांगr();
+		v2 = पढ़ो_pmपंचांगr();
+		v3 = पढ़ो_pmपंचांगr();
+	पूर्ण जबतक (unlikely((v1 > v2 && v1 < v3) || (v2 > v3 && v2 < v1)
 			  || (v3 > v1 && v3 < v2)));
 
-	return v2;
-}
+	वापस v2;
+पूर्ण
 
-static u64 acpi_pm_read(struct clocksource *cs)
-{
-	return (u64)read_pmtmr();
-}
+अटल u64 acpi_pm_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	वापस (u64)पढ़ो_pmपंचांगr();
+पूर्ण
 
-static struct clocksource clocksource_acpi_pm = {
+अटल काष्ठा घड़ीsource घड़ीsource_acpi_pm = अणु
 	.name		= "acpi_pm",
 	.rating		= 200,
-	.read		= acpi_pm_read,
+	.पढ़ो		= acpi_pm_पढ़ो,
 	.mask		= (u64)ACPI_PM_MASK,
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-};
+पूर्ण;
 
 
-#ifdef CONFIG_PCI
-static int acpi_pm_good;
-static int __init acpi_pm_good_setup(char *__str)
-{
+#अगर_घोषित CONFIG_PCI
+अटल पूर्णांक acpi_pm_good;
+अटल पूर्णांक __init acpi_pm_good_setup(अक्षर *__str)
+अणु
 	acpi_pm_good = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("acpi_pm_good", acpi_pm_good_setup);
 
-static u64 acpi_pm_read_slow(struct clocksource *cs)
-{
-	return (u64)acpi_pm_read_verified();
-}
+अटल u64 acpi_pm_पढ़ो_slow(काष्ठा घड़ीsource *cs)
+अणु
+	वापस (u64)acpi_pm_पढ़ो_verअगरied();
+पूर्ण
 
-static inline void acpi_pm_need_workaround(void)
-{
-	clocksource_acpi_pm.read = acpi_pm_read_slow;
-	clocksource_acpi_pm.rating = 120;
-}
+अटल अंतरभूत व्योम acpi_pm_need_workaround(व्योम)
+अणु
+	घड़ीsource_acpi_pm.पढ़ो = acpi_pm_पढ़ो_slow;
+	घड़ीsource_acpi_pm.rating = 120;
+पूर्ण
 
 /*
  * PIIX4 Errata:
  *
- * The power management timer may return improper results when read.
- * Although the timer value settles properly after incrementing,
- * while incrementing there is a 3 ns window every 69.8 ns where the
- * timer value is indeterminate (a 4.2% chance that the data will be
- * incorrect when read). As a result, the ACPI free running count up
- * timer specification is violated due to erroneous reads.
+ * The घातer management समयr may वापस improper results when पढ़ो.
+ * Although the समयr value settles properly after incrementing,
+ * जबतक incrementing there is a 3 ns winकरोw every 69.8 ns where the
+ * समयr value is indeterminate (a 4.2% chance that the data will be
+ * incorrect when पढ़ो). As a result, the ACPI मुक्त running count up
+ * समयr specअगरication is violated due to erroneous पढ़ोs.
  */
-static void acpi_pm_check_blacklist(struct pci_dev *dev)
-{
-	if (acpi_pm_good)
-		return;
+अटल व्योम acpi_pm_check_blacklist(काष्ठा pci_dev *dev)
+अणु
+	अगर (acpi_pm_good)
+		वापस;
 
 	/* the bug has been fixed in PIIX4M */
-	if (dev->revision < 3) {
+	अगर (dev->revision < 3) अणु
 		pr_warn("* Found PM-Timer Bug on the chipset. Due to workarounds for a bug,\n"
 			"* this clock source is slow. Consider trying other clock sources\n");
 
 		acpi_pm_need_workaround();
-	}
-}
+	पूर्ण
+पूर्ण
 DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82371AB_3,
 			acpi_pm_check_blacklist);
 
-static void acpi_pm_check_graylist(struct pci_dev *dev)
-{
-	if (acpi_pm_good)
-		return;
+अटल व्योम acpi_pm_check_graylist(काष्ठा pci_dev *dev)
+अणु
+	अगर (acpi_pm_good)
+		वापस;
 
 	pr_warn("* The chipset may have PM-Timer Bug. Due to workarounds for a bug,\n"
 		"* this clock source is slow. If you are sure your timer does not have\n"
 		"* this bug, please use \"acpi_pm_good\" to disable the workaround\n");
 
 	acpi_pm_need_workaround();
-}
+पूर्ण
 DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_0,
 			acpi_pm_check_graylist);
 DECLARE_PCI_FIXUP_EARLY(PCI_VENDOR_ID_SERVERWORKS, PCI_DEVICE_ID_SERVERWORKS_LE,
 			acpi_pm_check_graylist);
-#endif
+#पूर्ण_अगर
 
-#ifndef CONFIG_X86_64
-#include <asm/mach_timer.h>
-#define PMTMR_EXPECTED_RATE \
+#अगर_अघोषित CONFIG_X86_64
+#समावेश <यंत्र/mach_समयr.h>
+#घोषणा PMTMR_EXPECTED_RATE \
   ((CALIBRATE_LATCH * (PMTMR_TICKS_PER_SEC >> 10)) / (PIT_TICK_RATE>>10))
 /*
  * Some boards have the PMTMR running way too fast. We check
- * the PMTMR rate against PIT channel 2 to catch these cases.
+ * the PMTMR rate against PIT channel 2 to catch these हालs.
  */
-static int verify_pmtmr_rate(void)
-{
+अटल पूर्णांक verअगरy_pmपंचांगr_rate(व्योम)
+अणु
 	u64 value1, value2;
-	unsigned long count, delta;
+	अचिन्हित दीर्घ count, delta;
 
 	mach_prepare_counter();
-	value1 = clocksource_acpi_pm.read(&clocksource_acpi_pm);
+	value1 = घड़ीsource_acpi_pm.पढ़ो(&घड़ीsource_acpi_pm);
 	mach_countup(&count);
-	value2 = clocksource_acpi_pm.read(&clocksource_acpi_pm);
+	value2 = घड़ीsource_acpi_pm.पढ़ो(&घड़ीsource_acpi_pm);
 	delta = (value2 - value1) & ACPI_PM_MASK;
 
 	/* Check that the PMTMR delta is within 5% of what we expect */
-	if (delta < (PMTMR_EXPECTED_RATE * 19) / 20 ||
-	    delta > (PMTMR_EXPECTED_RATE * 21) / 20) {
+	अगर (delta < (PMTMR_EXPECTED_RATE * 19) / 20 ||
+	    delta > (PMTMR_EXPECTED_RATE * 21) / 20) अणु
 		pr_info("PM-Timer running at invalid rate: %lu%% of normal - aborting.\n",
 			100UL * delta / PMTMR_EXPECTED_RATE);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
-#else
-#define verify_pmtmr_rate() (0)
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा verअगरy_pmपंचांगr_rate() (0)
+#पूर्ण_अगर
 
-/* Number of monotonicity checks to perform during initialization */
-#define ACPI_PM_MONOTONICITY_CHECKS 10
-/* Number of reads we try to get two different values */
-#define ACPI_PM_READ_CHECKS 10000
+/* Number of monotonicity checks to perक्रमm during initialization */
+#घोषणा ACPI_PM_MONOTONICITY_CHECKS 10
+/* Number of पढ़ोs we try to get two dअगरferent values */
+#घोषणा ACPI_PM_READ_CHECKS 10000
 
-static int __init init_acpi_pm_clocksource(void)
-{
+अटल पूर्णांक __init init_acpi_pm_घड़ीsource(व्योम)
+अणु
 	u64 value1, value2;
-	unsigned int i, j = 0;
+	अचिन्हित पूर्णांक i, j = 0;
 
-	if (!pmtmr_ioport)
-		return -ENODEV;
+	अगर (!pmपंचांगr_ioport)
+		वापस -ENODEV;
 
 	/* "verify" this timing source: */
-	for (j = 0; j < ACPI_PM_MONOTONICITY_CHECKS; j++) {
+	क्रम (j = 0; j < ACPI_PM_MONOTONICITY_CHECKS; j++) अणु
 		udelay(100 * j);
-		value1 = clocksource_acpi_pm.read(&clocksource_acpi_pm);
-		for (i = 0; i < ACPI_PM_READ_CHECKS; i++) {
-			value2 = clocksource_acpi_pm.read(&clocksource_acpi_pm);
-			if (value2 == value1)
-				continue;
-			if (value2 > value1)
-				break;
-			if ((value2 < value1) && ((value2) < 0xFFF))
-				break;
+		value1 = घड़ीsource_acpi_pm.पढ़ो(&घड़ीsource_acpi_pm);
+		क्रम (i = 0; i < ACPI_PM_READ_CHECKS; i++) अणु
+			value2 = घड़ीsource_acpi_pm.पढ़ो(&घड़ीsource_acpi_pm);
+			अगर (value2 == value1)
+				जारी;
+			अगर (value2 > value1)
+				अवरोध;
+			अगर ((value2 < value1) && ((value2) < 0xFFF))
+				अवरोध;
 			pr_info("PM-Timer had inconsistent results: %#llx, %#llx - aborting.\n",
 				value1, value2);
-			pmtmr_ioport = 0;
-			return -EINVAL;
-		}
-		if (i == ACPI_PM_READ_CHECKS) {
+			pmपंचांगr_ioport = 0;
+			वापस -EINVAL;
+		पूर्ण
+		अगर (i == ACPI_PM_READ_CHECKS) अणु
 			pr_info("PM-Timer failed consistency check  (%#llx) - aborting.\n",
 				value1);
-			pmtmr_ioport = 0;
-			return -ENODEV;
-		}
-	}
+			pmपंचांगr_ioport = 0;
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	if (verify_pmtmr_rate() != 0){
-		pmtmr_ioport = 0;
-		return -ENODEV;
-	}
+	अगर (verअगरy_pmपंचांगr_rate() != 0)अणु
+		pmपंचांगr_ioport = 0;
+		वापस -ENODEV;
+	पूर्ण
 
-	return clocksource_register_hz(&clocksource_acpi_pm,
+	वापस घड़ीsource_रेजिस्टर_hz(&घड़ीsource_acpi_pm,
 						PMTMR_TICKS_PER_SEC);
-}
+पूर्ण
 
 /* We use fs_initcall because we want the PCI fixups to have run
- * but we still need to load before device_initcall
+ * but we still need to load beक्रमe device_initcall
  */
-fs_initcall(init_acpi_pm_clocksource);
+fs_initcall(init_acpi_pm_घड़ीsource);
 
 /*
- * Allow an override of the IOPort. Stupid BIOSes do not tell us about
+ * Allow an override of the IOPort. Stupid BIOSes करो not tell us about
  * the PMTimer, but we might know where it is.
  */
-static int __init parse_pmtmr(char *arg)
-{
-	unsigned int base;
-	int ret;
+अटल पूर्णांक __init parse_pmपंचांगr(अक्षर *arg)
+अणु
+	अचिन्हित पूर्णांक base;
+	पूर्णांक ret;
 
-	ret = kstrtouint(arg, 16, &base);
-	if (ret)
-		return ret;
+	ret = kstrtouपूर्णांक(arg, 16, &base);
+	अगर (ret)
+		वापस ret;
 
-	pr_info("PMTMR IOPort override: 0x%04x -> 0x%04x\n", pmtmr_ioport,
+	pr_info("PMTMR IOPort override: 0x%04x -> 0x%04x\n", pmपंचांगr_ioport,
 		base);
-	pmtmr_ioport = base;
+	pmपंचांगr_ioport = base;
 
-	return 1;
-}
-__setup("pmtmr=", parse_pmtmr);
+	वापस 1;
+पूर्ण
+__setup("pmtmr=", parse_pmपंचांगr);

@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2013 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/input.h>
-#include <linux/usb.h>
-#include <linux/hid.h>
-#include <linux/mutex.h>
-#include <linux/videodev2.h>
-#include <asm/unaligned.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-event.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/input.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/videodev2.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-event.h>
 
 /*
  * 'Thanko's Raremono' is a Japanese si4734-based AM/FM/SW USB receiver:
  *
- * http://www.raremono.jp/product/484.html/
+ * http://www.raremono.jp/product/484.hपंचांगl/
  *
  * The USB protocol has been reversed engineered using wireshark, initially
  * by Dinesh Ram <dinesh.ram@cern.ch> and finished by Hans Verkuil
@@ -39,40 +40,40 @@ MODULE_LICENSE("GPL v2");
 /*
  * The Device announces itself as Cygnal Integrated Products, Inc.
  *
- * The vendor and product IDs (and in fact all other lsusb information as
- * well) are identical to the si470x Silicon Labs USB FM Radio Reference
+ * The venकरोr and product IDs (and in fact all other lsusb inक्रमmation as
+ * well) are identical to the si470x Silicon Lअसल USB FM Radio Reference
  * Design board, even though this card has a si4734 device. Clearly the
  * designer of this product never bothered to change the USB IDs.
  */
 
 /* USB Device ID List */
-static const struct usb_device_id usb_raremono_device_table[] = {
-	{USB_DEVICE_AND_INTERFACE_INFO(0x10c4, 0x818a, USB_CLASS_HID, 0, 0) },
-	{ }						/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id usb_raremono_device_table[] = अणु
+	अणुUSB_DEVICE_AND_INTERFACE_INFO(0x10c4, 0x818a, USB_CLASS_HID, 0, 0) पूर्ण,
+	अणु पूर्ण						/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, usb_raremono_device_table);
 
-#define BUFFER_LENGTH 64
+#घोषणा BUFFER_LENGTH 64
 
 /* Timeout is set to a high value, could probably be reduced. Need more tests */
-#define USB_TIMEOUT 10000
+#घोषणा USB_TIMEOUT 10000
 
 /* Frequency limits in KHz */
-#define FM_FREQ_RANGE_LOW	64000
-#define FM_FREQ_RANGE_HIGH	108000
+#घोषणा FM_FREQ_RANGE_LOW	64000
+#घोषणा FM_FREQ_RANGE_HIGH	108000
 
-#define AM_FREQ_RANGE_LOW	520
-#define AM_FREQ_RANGE_HIGH	1710
+#घोषणा AM_FREQ_RANGE_LOW	520
+#घोषणा AM_FREQ_RANGE_HIGH	1710
 
-#define SW_FREQ_RANGE_LOW	2300
-#define SW_FREQ_RANGE_HIGH	26100
+#घोषणा SW_FREQ_RANGE_LOW	2300
+#घोषणा SW_FREQ_RANGE_HIGH	26100
 
-enum { BAND_FM, BAND_AM, BAND_SW };
+क्रमागत अणु BAND_FM, BAND_AM, BAND_SW पूर्ण;
 
-static const struct v4l2_frequency_band bands[] = {
+अटल स्थिर काष्ठा v4l2_frequency_band bands[] = अणु
 	/* Band FM */
-	{
+	अणु
 		.type = V4L2_TUNER_RADIO,
 		.index = 0,
 		.capability = V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_STEREO |
@@ -80,137 +81,137 @@ static const struct v4l2_frequency_band bands[] = {
 		.rangelow   = FM_FREQ_RANGE_LOW * 16,
 		.rangehigh  = FM_FREQ_RANGE_HIGH * 16,
 		.modulation = V4L2_BAND_MODULATION_FM,
-	},
+	पूर्ण,
 	/* Band AM */
-	{
+	अणु
 		.type = V4L2_TUNER_RADIO,
 		.index = 1,
 		.capability = V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_FREQ_BANDS,
 		.rangelow   = AM_FREQ_RANGE_LOW * 16,
 		.rangehigh  = AM_FREQ_RANGE_HIGH * 16,
 		.modulation = V4L2_BAND_MODULATION_AM,
-	},
+	पूर्ण,
 	/* Band SW */
-	{
+	अणु
 		.type = V4L2_TUNER_RADIO,
 		.index = 2,
 		.capability = V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_FREQ_BANDS,
 		.rangelow   = SW_FREQ_RANGE_LOW * 16,
 		.rangehigh  = SW_FREQ_RANGE_HIGH * 16,
 		.modulation = V4L2_BAND_MODULATION_AM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct raremono_device {
-	struct usb_device *usbdev;
-	struct usb_interface *intf;
-	struct video_device vdev;
-	struct v4l2_device v4l2_dev;
-	struct mutex lock;
+काष्ठा raremono_device अणु
+	काष्ठा usb_device *usbdev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	काष्ठा video_device vdev;
+	काष्ठा v4l2_device v4l2_dev;
+	काष्ठा mutex lock;
 
 	u8 *buffer;
 	u32 band;
-	unsigned curfreq;
-};
+	अचिन्हित curfreq;
+पूर्ण;
 
-static inline struct raremono_device *to_raremono_dev(struct v4l2_device *v4l2_dev)
-{
-	return container_of(v4l2_dev, struct raremono_device, v4l2_dev);
-}
+अटल अंतरभूत काष्ठा raremono_device *to_raremono_dev(काष्ठा v4l2_device *v4l2_dev)
+अणु
+	वापस container_of(v4l2_dev, काष्ठा raremono_device, v4l2_dev);
+पूर्ण
 
 /* Set frequency. */
-static int raremono_cmd_main(struct raremono_device *radio, unsigned band, unsigned freq)
-{
-	unsigned band_offset;
-	int ret;
+अटल पूर्णांक raremono_cmd_मुख्य(काष्ठा raremono_device *radio, अचिन्हित band, अचिन्हित freq)
+अणु
+	अचिन्हित band_offset;
+	पूर्णांक ret;
 
-	switch (band) {
-	case BAND_FM:
+	चयन (band) अणु
+	हाल BAND_FM:
 		band_offset = 1;
 		freq /= 10;
-		break;
-	case BAND_AM:
+		अवरोध;
+	हाल BAND_AM:
 		band_offset = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		band_offset = 2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	radio->buffer[0] = 0x04 + band_offset;
 	radio->buffer[1] = freq >> 8;
 	radio->buffer[2] = freq & 0xff;
 
 	ret = usb_control_msg(radio->usbdev, usb_sndctrlpipe(radio->usbdev, 0),
 			HID_REQ_SET_REPORT,
-			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT,
+			USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_OUT,
 			0x0300 + radio->buffer[0], 2,
 			radio->buffer, 3, USB_TIMEOUT);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_warn(radio->v4l2_dev.dev, "%s failed (%d)\n", __func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	radio->curfreq = (band == BAND_FM) ? freq * 10 : freq;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Handle unplugging the device.
- * We call video_unregister_device in any case.
+ * We call video_unरेजिस्टर_device in any हाल.
  * The last function called in this procedure is
  * usb_raremono_device_release.
  */
-static void usb_raremono_disconnect(struct usb_interface *intf)
-{
-	struct raremono_device *radio = to_raremono_dev(usb_get_intfdata(intf));
+अटल व्योम usb_raremono_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा raremono_device *radio = to_raremono_dev(usb_get_पूर्णांकfdata(पूर्णांकf));
 
-	dev_info(&intf->dev, "Thanko's Raremono disconnected\n");
+	dev_info(&पूर्णांकf->dev, "Thanko's Raremono disconnected\n");
 
 	mutex_lock(&radio->lock);
-	usb_set_intfdata(intf, NULL);
-	video_unregister_device(&radio->vdev);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	video_unरेजिस्टर_device(&radio->vdev);
 	v4l2_device_disconnect(&radio->v4l2_dev);
 	mutex_unlock(&radio->lock);
 	v4l2_device_put(&radio->v4l2_dev);
-}
+पूर्ण
 
 /*
- * Linux Video interface
+ * Linux Video पूर्णांकerface
  */
-static int vidioc_querycap(struct file *file, void *priv,
-					struct v4l2_capability *v)
-{
-	struct raremono_device *radio = video_drvdata(file);
+अटल पूर्णांक vidioc_querycap(काष्ठा file *file, व्योम *priv,
+					काष्ठा v4l2_capability *v)
+अणु
+	काष्ठा raremono_device *radio = video_drvdata(file);
 
-	strscpy(v->driver, "radio-raremono", sizeof(v->driver));
-	strscpy(v->card, "Thanko's Raremono", sizeof(v->card));
-	usb_make_path(radio->usbdev, v->bus_info, sizeof(v->bus_info));
-	return 0;
-}
+	strscpy(v->driver, "radio-raremono", माप(v->driver));
+	strscpy(v->card, "Thanko's Raremono", माप(v->card));
+	usb_make_path(radio->usbdev, v->bus_info, माप(v->bus_info));
+	वापस 0;
+पूर्ण
 
-static int vidioc_enum_freq_bands(struct file *file, void *priv,
-		struct v4l2_frequency_band *band)
-{
-	if (band->tuner != 0)
-		return -EINVAL;
+अटल पूर्णांक vidioc_क्रमागत_freq_bands(काष्ठा file *file, व्योम *priv,
+		काष्ठा v4l2_frequency_band *band)
+अणु
+	अगर (band->tuner != 0)
+		वापस -EINVAL;
 
-	if (band->index >= ARRAY_SIZE(bands))
-		return -EINVAL;
+	अगर (band->index >= ARRAY_SIZE(bands))
+		वापस -EINVAL;
 
 	*band = bands[band->index];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_tuner(struct file *file, void *priv,
-		struct v4l2_tuner *v)
-{
-	struct raremono_device *radio = video_drvdata(file);
-	int ret;
+अटल पूर्णांक vidioc_g_tuner(काष्ठा file *file, व्योम *priv,
+		काष्ठा v4l2_tuner *v)
+अणु
+	काष्ठा raremono_device *radio = video_drvdata(file);
+	पूर्णांक ret;
 
-	if (v->index > 0)
-		return -EINVAL;
+	अगर (v->index > 0)
+		वापस -EINVAL;
 
-	strscpy(v->name, "AM/FM/SW", sizeof(v->name));
+	strscpy(v->name, "AM/FM/SW", माप(v->name));
 	v->capability = V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_STEREO |
 		V4L2_TUNER_CAP_FREQ_BANDS;
 	v->rangelow = AM_FREQ_RANGE_LOW * 16;
@@ -218,106 +219,106 @@ static int vidioc_g_tuner(struct file *file, void *priv,
 	v->rxsubchans = V4L2_TUNER_SUB_STEREO | V4L2_TUNER_SUB_MONO;
 	v->audmode = (radio->curfreq < FM_FREQ_RANGE_LOW) ?
 		V4L2_TUNER_MODE_MONO : V4L2_TUNER_MODE_STEREO;
-	memset(radio->buffer, 1, BUFFER_LENGTH);
+	स_रखो(radio->buffer, 1, BUFFER_LENGTH);
 	ret = usb_control_msg(radio->usbdev, usb_rcvctrlpipe(radio->usbdev, 0),
 			1, 0xa1, 0x030d, 2, radio->buffer, BUFFER_LENGTH, USB_TIMEOUT);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_warn(radio->v4l2_dev.dev, "%s failed (%d)\n", __func__, ret);
-		return ret;
-	}
-	v->signal = ((radio->buffer[1] & 0xf) << 8 | radio->buffer[2]) << 4;
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	v->संकेत = ((radio->buffer[1] & 0xf) << 8 | radio->buffer[2]) << 4;
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_tuner(struct file *file, void *priv,
-					const struct v4l2_tuner *v)
-{
-	return v->index ? -EINVAL : 0;
-}
+अटल पूर्णांक vidioc_s_tuner(काष्ठा file *file, व्योम *priv,
+					स्थिर काष्ठा v4l2_tuner *v)
+अणु
+	वापस v->index ? -EINVAL : 0;
+पूर्ण
 
-static int vidioc_s_frequency(struct file *file, void *priv,
-				const struct v4l2_frequency *f)
-{
-	struct raremono_device *radio = video_drvdata(file);
+अटल पूर्णांक vidioc_s_frequency(काष्ठा file *file, व्योम *priv,
+				स्थिर काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा raremono_device *radio = video_drvdata(file);
 	u32 freq;
-	unsigned band;
+	अचिन्हित band;
 
-	if (f->tuner != 0 || f->type != V4L2_TUNER_RADIO)
-		return -EINVAL;
+	अगर (f->tuner != 0 || f->type != V4L2_TUNER_RADIO)
+		वापस -EINVAL;
 
-	if (f->frequency >= (FM_FREQ_RANGE_LOW + SW_FREQ_RANGE_HIGH) * 8)
+	अगर (f->frequency >= (FM_FREQ_RANGE_LOW + SW_FREQ_RANGE_HIGH) * 8)
 		band = BAND_FM;
-	else if (f->frequency <= (AM_FREQ_RANGE_HIGH + SW_FREQ_RANGE_LOW) * 8)
+	अन्यथा अगर (f->frequency <= (AM_FREQ_RANGE_HIGH + SW_FREQ_RANGE_LOW) * 8)
 		band = BAND_AM;
-	else
+	अन्यथा
 		band = BAND_SW;
 
 	freq = clamp_t(u32, f->frequency, bands[band].rangelow, bands[band].rangehigh);
-	return raremono_cmd_main(radio, band, freq / 16);
-}
+	वापस raremono_cmd_मुख्य(radio, band, freq / 16);
+पूर्ण
 
-static int vidioc_g_frequency(struct file *file, void *priv,
-				struct v4l2_frequency *f)
-{
-	struct raremono_device *radio = video_drvdata(file);
+अटल पूर्णांक vidioc_g_frequency(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा raremono_device *radio = video_drvdata(file);
 
-	if (f->tuner != 0)
-		return -EINVAL;
+	अगर (f->tuner != 0)
+		वापस -EINVAL;
 	f->type = V4L2_TUNER_RADIO;
 	f->frequency = radio->curfreq * 16;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void raremono_device_release(struct v4l2_device *v4l2_dev)
-{
-	struct raremono_device *radio = to_raremono_dev(v4l2_dev);
+अटल व्योम raremono_device_release(काष्ठा v4l2_device *v4l2_dev)
+अणु
+	काष्ठा raremono_device *radio = to_raremono_dev(v4l2_dev);
 
-	kfree(radio->buffer);
-	kfree(radio);
-}
+	kमुक्त(radio->buffer);
+	kमुक्त(radio);
+पूर्ण
 
-/* File system interface */
-static const struct v4l2_file_operations usb_raremono_fops = {
+/* File प्रणाली पूर्णांकerface */
+अटल स्थिर काष्ठा v4l2_file_operations usb_raremono_fops = अणु
 	.owner		= THIS_MODULE,
-	.open           = v4l2_fh_open,
+	.खोलो           = v4l2_fh_खोलो,
 	.release        = v4l2_fh_release,
 	.unlocked_ioctl	= video_ioctl2,
-};
+पूर्ण;
 
-static const struct v4l2_ioctl_ops usb_raremono_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops usb_raremono_ioctl_ops = अणु
 	.vidioc_querycap = vidioc_querycap,
 	.vidioc_g_tuner = vidioc_g_tuner,
 	.vidioc_s_tuner = vidioc_s_tuner,
 	.vidioc_g_frequency = vidioc_g_frequency,
 	.vidioc_s_frequency = vidioc_s_frequency,
-	.vidioc_enum_freq_bands = vidioc_enum_freq_bands,
-};
+	.vidioc_क्रमागत_freq_bands = vidioc_क्रमागत_freq_bands,
+पूर्ण;
 
-/* check if the device is present and register with v4l and usb if it is */
-static int usb_raremono_probe(struct usb_interface *intf,
-				const struct usb_device_id *id)
-{
-	struct raremono_device *radio;
-	int retval = 0;
+/* check अगर the device is present and रेजिस्टर with v4l and usb अगर it is */
+अटल पूर्णांक usb_raremono_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+				स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा raremono_device *radio;
+	पूर्णांक retval = 0;
 
-	radio = kzalloc(sizeof(*radio), GFP_KERNEL);
-	if (!radio)
-		return -ENOMEM;
-	radio->buffer = kmalloc(BUFFER_LENGTH, GFP_KERNEL);
-	if (!radio->buffer) {
-		kfree(radio);
-		return -ENOMEM;
-	}
+	radio = kzalloc(माप(*radio), GFP_KERNEL);
+	अगर (!radio)
+		वापस -ENOMEM;
+	radio->buffer = kदो_स्मृति(BUFFER_LENGTH, GFP_KERNEL);
+	अगर (!radio->buffer) अणु
+		kमुक्त(radio);
+		वापस -ENOMEM;
+	पूर्ण
 
-	radio->usbdev = interface_to_usbdev(intf);
-	radio->intf = intf;
+	radio->usbdev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	radio->पूर्णांकf = पूर्णांकf;
 
 	/*
-	 * This device uses the same USB IDs as the si470x SiLabs reference
-	 * design. So do an additional check: attempt to read the device ID
-	 * from the si470x: the lower 12 bits are 0x0242 for the si470x. The
-	 * Raremono always returns 0x0800 (the meaning of that is unknown, but
+	 * This device uses the same USB IDs as the si470x SiLअसल reference
+	 * design. So करो an additional check: attempt to पढ़ो the device ID
+	 * from the si470x: the lower 12 bits are 0x0242 क्रम the si470x. The
+	 * Raremono always वापसs 0x0800 (the meaning of that is unknown, but
 	 * at least it works).
 	 *
 	 * We use this check to determine which device we are dealing with.
@@ -326,29 +327,29 @@ static int usb_raremono_probe(struct usb_interface *intf,
 	retval = usb_control_msg(radio->usbdev,
 		usb_rcvctrlpipe(radio->usbdev, 0),
 		HID_REQ_GET_REPORT,
-		USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+		USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 		1, 2,
 		radio->buffer, 3, 500);
-	if (retval != 3 ||
-	    (get_unaligned_be16(&radio->buffer[1]) & 0xfff) == 0x0242) {
-		dev_info(&intf->dev, "this is not Thanko's Raremono.\n");
+	अगर (retval != 3 ||
+	    (get_unaligned_be16(&radio->buffer[1]) & 0xfff) == 0x0242) अणु
+		dev_info(&पूर्णांकf->dev, "this is not Thanko's Raremono.\n");
 		retval = -ENODEV;
-		goto free_mem;
-	}
+		जाओ मुक्त_mem;
+	पूर्ण
 
-	dev_info(&intf->dev, "Thanko's Raremono connected: (%04X:%04X)\n",
-			id->idVendor, id->idProduct);
+	dev_info(&पूर्णांकf->dev, "Thanko's Raremono connected: (%04X:%04X)\n",
+			id->idVenकरोr, id->idProduct);
 
-	retval = v4l2_device_register(&intf->dev, &radio->v4l2_dev);
-	if (retval < 0) {
-		dev_err(&intf->dev, "couldn't register v4l2_device\n");
-		goto free_mem;
-	}
+	retval = v4l2_device_रेजिस्टर(&पूर्णांकf->dev, &radio->v4l2_dev);
+	अगर (retval < 0) अणु
+		dev_err(&पूर्णांकf->dev, "couldn't register v4l2_device\n");
+		जाओ मुक्त_mem;
+	पूर्ण
 
 	mutex_init(&radio->lock);
 
 	strscpy(radio->vdev.name, radio->v4l2_dev.name,
-		sizeof(radio->vdev.name));
+		माप(radio->vdev.name));
 	radio->vdev.v4l2_dev = &radio->v4l2_dev;
 	radio->vdev.fops = &usb_raremono_fops;
 	radio->vdev.ioctl_ops = &usb_raremono_ioctl_ops;
@@ -357,33 +358,33 @@ static int usb_raremono_probe(struct usb_interface *intf,
 	radio->vdev.device_caps = V4L2_CAP_TUNER | V4L2_CAP_RADIO;
 	radio->v4l2_dev.release = raremono_device_release;
 
-	usb_set_intfdata(intf, &radio->v4l2_dev);
+	usb_set_पूर्णांकfdata(पूर्णांकf, &radio->v4l2_dev);
 
 	video_set_drvdata(&radio->vdev, radio);
 
-	raremono_cmd_main(radio, BAND_FM, 95160);
+	raremono_cmd_मुख्य(radio, BAND_FM, 95160);
 
-	retval = video_register_device(&radio->vdev, VFL_TYPE_RADIO, -1);
-	if (retval == 0) {
-		dev_info(&intf->dev, "V4L2 device registered as %s\n",
+	retval = video_रेजिस्टर_device(&radio->vdev, VFL_TYPE_RADIO, -1);
+	अगर (retval == 0) अणु
+		dev_info(&पूर्णांकf->dev, "V4L2 device registered as %s\n",
 				video_device_node_name(&radio->vdev));
-		return 0;
-	}
-	dev_err(&intf->dev, "could not register video device\n");
-	v4l2_device_unregister(&radio->v4l2_dev);
+		वापस 0;
+	पूर्ण
+	dev_err(&पूर्णांकf->dev, "could not register video device\n");
+	v4l2_device_unरेजिस्टर(&radio->v4l2_dev);
 
-free_mem:
-	kfree(radio->buffer);
-	kfree(radio);
-	return retval;
-}
+मुक्त_mem:
+	kमुक्त(radio->buffer);
+	kमुक्त(radio);
+	वापस retval;
+पूर्ण
 
-/* USB subsystem interface */
-static struct usb_driver usb_raremono_driver = {
+/* USB subप्रणाली पूर्णांकerface */
+अटल काष्ठा usb_driver usb_raremono_driver = अणु
 	.name			= "radio-raremono",
 	.probe			= usb_raremono_probe,
 	.disconnect		= usb_raremono_disconnect,
 	.id_table		= usb_raremono_device_table,
-};
+पूर्ण;
 
 module_usb_driver(usb_raremono_driver);

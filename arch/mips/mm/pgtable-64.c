@@ -1,35 +1,36 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1999, 2000 by Silicon Graphics
  * Copyright (C) 2003 by Ralf Baechle
  */
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <asm/fixmap.h>
-#include <asm/pgalloc.h>
-#include <asm/tlbflush.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/tlbflush.h>
 
-void pgd_init(unsigned long page)
-{
-	unsigned long *p, *end;
-	unsigned long entry;
+व्योम pgd_init(अचिन्हित दीर्घ page)
+अणु
+	अचिन्हित दीर्घ *p, *end;
+	अचिन्हित दीर्घ entry;
 
-#if !defined(__PAGETABLE_PUD_FOLDED)
-	entry = (unsigned long)invalid_pud_table;
-#elif !defined(__PAGETABLE_PMD_FOLDED)
-	entry = (unsigned long)invalid_pmd_table;
-#else
-	entry = (unsigned long)invalid_pte_table;
-#endif
+#अगर !defined(__PAGETABLE_PUD_FOLDED)
+	entry = (अचिन्हित दीर्घ)invalid_pud_table;
+#या_अगर !defined(__PAGETABLE_PMD_FOLDED)
+	entry = (अचिन्हित दीर्घ)invalid_pmd_table;
+#अन्यथा
+	entry = (अचिन्हित दीर्घ)invalid_pte_table;
+#पूर्ण_अगर
 
-	p = (unsigned long *) page;
+	p = (अचिन्हित दीर्घ *) page;
 	end = p + PTRS_PER_PGD;
 
-	do {
+	करो अणु
 		p[0] = entry;
 		p[1] = entry;
 		p[2] = entry;
@@ -39,18 +40,18 @@ void pgd_init(unsigned long page)
 		p[-3] = entry;
 		p[-2] = entry;
 		p[-1] = entry;
-	} while (p != end);
-}
+	पूर्ण जबतक (p != end);
+पूर्ण
 
-#ifndef __PAGETABLE_PMD_FOLDED
-void pmd_init(unsigned long addr, unsigned long pagetable)
-{
-	unsigned long *p, *end;
+#अगर_अघोषित __PAGETABLE_PMD_FOLDED
+व्योम pmd_init(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ pagetable)
+अणु
+	अचिन्हित दीर्घ *p, *end;
 
-	p = (unsigned long *) addr;
+	p = (अचिन्हित दीर्घ *) addr;
 	end = p + PTRS_PER_PMD;
 
-	do {
+	करो अणु
 		p[0] = pagetable;
 		p[1] = pagetable;
 		p[2] = pagetable;
@@ -60,20 +61,20 @@ void pmd_init(unsigned long addr, unsigned long pagetable)
 		p[-3] = pagetable;
 		p[-2] = pagetable;
 		p[-1] = pagetable;
-	} while (p != end);
-}
+	पूर्ण जबतक (p != end);
+पूर्ण
 EXPORT_SYMBOL_GPL(pmd_init);
-#endif
+#पूर्ण_अगर
 
-#ifndef __PAGETABLE_PUD_FOLDED
-void pud_init(unsigned long addr, unsigned long pagetable)
-{
-	unsigned long *p, *end;
+#अगर_अघोषित __PAGETABLE_PUD_FOLDED
+व्योम pud_init(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ pagetable)
+अणु
+	अचिन्हित दीर्घ *p, *end;
 
-	p = (unsigned long *)addr;
+	p = (अचिन्हित दीर्घ *)addr;
 	end = p + PTRS_PER_PUD;
 
-	do {
+	करो अणु
 		p[0] = pagetable;
 		p[1] = pagetable;
 		p[2] = pagetable;
@@ -83,42 +84,42 @@ void pud_init(unsigned long addr, unsigned long pagetable)
 		p[-3] = pagetable;
 		p[-2] = pagetable;
 		p[-1] = pagetable;
-	} while (p != end);
-}
-#endif
+	पूर्ण जबतक (p != end);
+पूर्ण
+#पूर्ण_अगर
 
-pmd_t mk_pmd(struct page *page, pgprot_t prot)
-{
+pmd_t mk_pmd(काष्ठा page *page, pgprot_t prot)
+अणु
 	pmd_t pmd;
 
 	pmd_val(pmd) = (page_to_pfn(page) << _PFN_SHIFT) | pgprot_val(prot);
 
-	return pmd;
-}
+	वापस pmd;
+पूर्ण
 
-void set_pmd_at(struct mm_struct *mm, unsigned long addr,
+व्योम set_pmd_at(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 		pmd_t *pmdp, pmd_t pmd)
-{
+अणु
 	*pmdp = pmd;
-}
+पूर्ण
 
-void __init pagetable_init(void)
-{
-	unsigned long vaddr;
+व्योम __init pagetable_init(व्योम)
+अणु
+	अचिन्हित दीर्घ vaddr;
 	pgd_t *pgd_base;
 
 	/* Initialize the entire pgd.  */
-	pgd_init((unsigned long)swapper_pg_dir);
-#ifndef __PAGETABLE_PUD_FOLDED
-	pud_init((unsigned long)invalid_pud_table, (unsigned long)invalid_pmd_table);
-#endif
-#ifndef __PAGETABLE_PMD_FOLDED
-	pmd_init((unsigned long)invalid_pmd_table, (unsigned long)invalid_pte_table);
-#endif
+	pgd_init((अचिन्हित दीर्घ)swapper_pg_dir);
+#अगर_अघोषित __PAGETABLE_PUD_FOLDED
+	pud_init((अचिन्हित दीर्घ)invalid_pud_table, (अचिन्हित दीर्घ)invalid_pmd_table);
+#पूर्ण_अगर
+#अगर_अघोषित __PAGETABLE_PMD_FOLDED
+	pmd_init((अचिन्हित दीर्घ)invalid_pmd_table, (अचिन्हित दीर्घ)invalid_pte_table);
+#पूर्ण_अगर
 	pgd_base = swapper_pg_dir;
 	/*
 	 * Fixed mappings:
 	 */
 	vaddr = __fix_to_virt(__end_of_fixed_addresses - 1) & PMD_MASK;
 	fixrange_init(vaddr, vaddr + FIXADDR_SIZE, pgd_base);
-}
+पूर्ण

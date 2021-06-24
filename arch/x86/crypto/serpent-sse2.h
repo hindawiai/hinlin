@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ASM_X86_SERPENT_SSE2_H
-#define ASM_X86_SERPENT_SSE2_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ASM_X86_SERPENT_SSE2_H
+#घोषणा ASM_X86_SERPENT_SSE2_H
 
-#include <linux/crypto.h>
-#include <crypto/serpent.h>
+#समावेश <linux/crypto.h>
+#समावेश <crypto/serpent.h>
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 
-#define SERPENT_PARALLEL_BLOCKS 4
+#घोषणा SERPENT_PARALLEL_BLOCKS 4
 
-asmlinkage void __serpent_enc_blk_4way(const struct serpent_ctx *ctx, u8 *dst,
-				       const u8 *src, bool xor);
-asmlinkage void serpent_dec_blk_4way(const struct serpent_ctx *ctx, u8 *dst,
-				     const u8 *src);
+यंत्रlinkage व्योम __serpent_enc_blk_4way(स्थिर काष्ठा serpent_ctx *ctx, u8 *dst,
+				       स्थिर u8 *src, bool xor);
+यंत्रlinkage व्योम serpent_dec_blk_4way(स्थिर काष्ठा serpent_ctx *ctx, u8 *dst,
+				     स्थिर u8 *src);
 
-static inline void serpent_enc_blk_xway(const void *ctx, u8 *dst, const u8 *src)
-{
+अटल अंतरभूत व्योम serpent_enc_blk_xway(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src)
+अणु
 	__serpent_enc_blk_4way(ctx, dst, src, false);
-}
+पूर्ण
 
-static inline void serpent_enc_blk_xway_xor(const struct serpent_ctx *ctx,
-					    u8 *dst, const u8 *src)
-{
+अटल अंतरभूत व्योम serpent_enc_blk_xway_xor(स्थिर काष्ठा serpent_ctx *ctx,
+					    u8 *dst, स्थिर u8 *src)
+अणु
 	__serpent_enc_blk_4way(ctx, dst, src, true);
-}
+पूर्ण
 
-static inline void serpent_dec_blk_xway(const void *ctx, u8 *dst, const u8 *src)
-{
+अटल अंतरभूत व्योम serpent_dec_blk_xway(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src)
+अणु
 	serpent_dec_blk_4way(ctx, dst, src);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-#define SERPENT_PARALLEL_BLOCKS 8
+#घोषणा SERPENT_PARALLEL_BLOCKS 8
 
-asmlinkage void __serpent_enc_blk_8way(const struct serpent_ctx *ctx, u8 *dst,
-				       const u8 *src, bool xor);
-asmlinkage void serpent_dec_blk_8way(const struct serpent_ctx *ctx, u8 *dst,
-				     const u8 *src);
+यंत्रlinkage व्योम __serpent_enc_blk_8way(स्थिर काष्ठा serpent_ctx *ctx, u8 *dst,
+				       स्थिर u8 *src, bool xor);
+यंत्रlinkage व्योम serpent_dec_blk_8way(स्थिर काष्ठा serpent_ctx *ctx, u8 *dst,
+				     स्थिर u8 *src);
 
-static inline void serpent_enc_blk_xway(const void *ctx, u8 *dst, const u8 *src)
-{
+अटल अंतरभूत व्योम serpent_enc_blk_xway(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src)
+अणु
 	__serpent_enc_blk_8way(ctx, dst, src, false);
-}
+पूर्ण
 
-static inline void serpent_enc_blk_xway_xor(const struct serpent_ctx *ctx,
-					    u8 *dst, const u8 *src)
-{
+अटल अंतरभूत व्योम serpent_enc_blk_xway_xor(स्थिर काष्ठा serpent_ctx *ctx,
+					    u8 *dst, स्थिर u8 *src)
+अणु
 	__serpent_enc_blk_8way(ctx, dst, src, true);
-}
+पूर्ण
 
-static inline void serpent_dec_blk_xway(const void *ctx, u8 *dst, const u8 *src)
-{
+अटल अंतरभूत व्योम serpent_dec_blk_xway(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src)
+अणु
 	serpent_dec_blk_8way(ctx, dst, src);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

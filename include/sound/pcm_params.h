@@ -1,371 +1,372 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __SOUND_PCM_PARAMS_H
-#define __SOUND_PCM_PARAMS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __SOUND_PCM_PARAMS_H
+#घोषणा __SOUND_PCM_PARAMS_H
 
 /*
  *  PCM params helpers
  *  Copyright (c) by Abramo Bagnara <abramo@alsa-project.org>
  */
 
-#include <sound/pcm.h>
+#समावेश <sound/pcm.h>
 
-int snd_pcm_hw_param_first(struct snd_pcm_substream *pcm, 
-			   struct snd_pcm_hw_params *params,
-			   snd_pcm_hw_param_t var, int *dir);
-int snd_pcm_hw_param_last(struct snd_pcm_substream *pcm, 
-			  struct snd_pcm_hw_params *params,
-			  snd_pcm_hw_param_t var, int *dir);
-int snd_pcm_hw_param_value(const struct snd_pcm_hw_params *params,
-			   snd_pcm_hw_param_t var, int *dir);
+पूर्णांक snd_pcm_hw_param_first(काष्ठा snd_pcm_substream *pcm, 
+			   काष्ठा snd_pcm_hw_params *params,
+			   snd_pcm_hw_param_t var, पूर्णांक *dir);
+पूर्णांक snd_pcm_hw_param_last(काष्ठा snd_pcm_substream *pcm, 
+			  काष्ठा snd_pcm_hw_params *params,
+			  snd_pcm_hw_param_t var, पूर्णांक *dir);
+पूर्णांक snd_pcm_hw_param_value(स्थिर काष्ठा snd_pcm_hw_params *params,
+			   snd_pcm_hw_param_t var, पूर्णांक *dir);
 
-#define SNDRV_MASK_BITS	64	/* we use so far 64bits only */
-#define SNDRV_MASK_SIZE	(SNDRV_MASK_BITS / 32)
-#define MASK_OFS(i)	((i) >> 5)
-#define MASK_BIT(i)	(1U << ((i) & 31))
+#घोषणा SNDRV_MASK_BITS	64	/* we use so far 64bits only */
+#घोषणा SNDRV_MASK_SIZE	(SNDRV_MASK_BITS / 32)
+#घोषणा MASK_OFS(i)	((i) >> 5)
+#घोषणा MASK_BIT(i)	(1U << ((i) & 31))
 
-static inline void snd_mask_none(struct snd_mask *mask)
-{
-	memset(mask, 0, sizeof(*mask));
-}
+अटल अंतरभूत व्योम snd_mask_none(काष्ठा snd_mask *mask)
+अणु
+	स_रखो(mask, 0, माप(*mask));
+पूर्ण
 
-static inline void snd_mask_any(struct snd_mask *mask)
-{
-	memset(mask, 0xff, SNDRV_MASK_SIZE * sizeof(u_int32_t));
-}
+अटल अंतरभूत व्योम snd_mask_any(काष्ठा snd_mask *mask)
+अणु
+	स_रखो(mask, 0xff, SNDRV_MASK_SIZE * माप(u_पूर्णांक32_t));
+पूर्ण
 
-static inline int snd_mask_empty(const struct snd_mask *mask)
-{
-	int i;
-	for (i = 0; i < SNDRV_MASK_SIZE; i++)
-		if (mask->bits[i])
-			return 0;
-	return 1;
-}
+अटल अंतरभूत पूर्णांक snd_mask_empty(स्थिर काष्ठा snd_mask *mask)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < SNDRV_MASK_SIZE; i++)
+		अगर (mask->bits[i])
+			वापस 0;
+	वापस 1;
+पूर्ण
 
-static inline unsigned int snd_mask_min(const struct snd_mask *mask)
-{
-	int i;
-	for (i = 0; i < SNDRV_MASK_SIZE; i++) {
-		if (mask->bits[i])
-			return __ffs(mask->bits[i]) + (i << 5);
-	}
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक snd_mask_min(स्थिर काष्ठा snd_mask *mask)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < SNDRV_MASK_SIZE; i++) अणु
+		अगर (mask->bits[i])
+			वापस __ffs(mask->bits[i]) + (i << 5);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline unsigned int snd_mask_max(const struct snd_mask *mask)
-{
-	int i;
-	for (i = SNDRV_MASK_SIZE - 1; i >= 0; i--) {
-		if (mask->bits[i])
-			return __fls(mask->bits[i]) + (i << 5);
-	}
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक snd_mask_max(स्थिर काष्ठा snd_mask *mask)
+अणु
+	पूर्णांक i;
+	क्रम (i = SNDRV_MASK_SIZE - 1; i >= 0; i--) अणु
+		अगर (mask->bits[i])
+			वापस __fls(mask->bits[i]) + (i << 5);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline void snd_mask_set(struct snd_mask *mask, unsigned int val)
-{
+अटल अंतरभूत व्योम snd_mask_set(काष्ठा snd_mask *mask, अचिन्हित पूर्णांक val)
+अणु
 	mask->bits[MASK_OFS(val)] |= MASK_BIT(val);
-}
+पूर्ण
 
 /* Most of drivers need only this one */
-static inline void snd_mask_set_format(struct snd_mask *mask,
-				       snd_pcm_format_t format)
-{
-	snd_mask_set(mask, (__force unsigned int)format);
-}
+अटल अंतरभूत व्योम snd_mask_set_क्रमmat(काष्ठा snd_mask *mask,
+				       snd_pcm_क्रमmat_t क्रमmat)
+अणु
+	snd_mask_set(mask, (__क्रमce अचिन्हित पूर्णांक)क्रमmat);
+पूर्ण
 
-static inline void snd_mask_reset(struct snd_mask *mask, unsigned int val)
-{
+अटल अंतरभूत व्योम snd_mask_reset(काष्ठा snd_mask *mask, अचिन्हित पूर्णांक val)
+अणु
 	mask->bits[MASK_OFS(val)] &= ~MASK_BIT(val);
-}
+पूर्ण
 
-static inline void snd_mask_set_range(struct snd_mask *mask,
-				      unsigned int from, unsigned int to)
-{
-	unsigned int i;
-	for (i = from; i <= to; i++)
+अटल अंतरभूत व्योम snd_mask_set_range(काष्ठा snd_mask *mask,
+				      अचिन्हित पूर्णांक from, अचिन्हित पूर्णांक to)
+अणु
+	अचिन्हित पूर्णांक i;
+	क्रम (i = from; i <= to; i++)
 		mask->bits[MASK_OFS(i)] |= MASK_BIT(i);
-}
+पूर्ण
 
-static inline void snd_mask_reset_range(struct snd_mask *mask,
-					unsigned int from, unsigned int to)
-{
-	unsigned int i;
-	for (i = from; i <= to; i++)
+अटल अंतरभूत व्योम snd_mask_reset_range(काष्ठा snd_mask *mask,
+					अचिन्हित पूर्णांक from, अचिन्हित पूर्णांक to)
+अणु
+	अचिन्हित पूर्णांक i;
+	क्रम (i = from; i <= to; i++)
 		mask->bits[MASK_OFS(i)] &= ~MASK_BIT(i);
-}
+पूर्ण
 
-static inline void snd_mask_leave(struct snd_mask *mask, unsigned int val)
-{
-	unsigned int v;
+अटल अंतरभूत व्योम snd_mask_leave(काष्ठा snd_mask *mask, अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक v;
 	v = mask->bits[MASK_OFS(val)] & MASK_BIT(val);
 	snd_mask_none(mask);
 	mask->bits[MASK_OFS(val)] = v;
-}
+पूर्ण
 
-static inline void snd_mask_intersect(struct snd_mask *mask,
-				      const struct snd_mask *v)
-{
-	int i;
-	for (i = 0; i < SNDRV_MASK_SIZE; i++)
+अटल अंतरभूत व्योम snd_mask_पूर्णांकersect(काष्ठा snd_mask *mask,
+				      स्थिर काष्ठा snd_mask *v)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < SNDRV_MASK_SIZE; i++)
 		mask->bits[i] &= v->bits[i];
-}
+पूर्ण
 
-static inline int snd_mask_eq(const struct snd_mask *mask,
-			      const struct snd_mask *v)
-{
-	return ! memcmp(mask, v, SNDRV_MASK_SIZE * sizeof(u_int32_t));
-}
+अटल अंतरभूत पूर्णांक snd_mask_eq(स्थिर काष्ठा snd_mask *mask,
+			      स्थिर काष्ठा snd_mask *v)
+अणु
+	वापस ! स_भेद(mask, v, SNDRV_MASK_SIZE * माप(u_पूर्णांक32_t));
+पूर्ण
 
-static inline void snd_mask_copy(struct snd_mask *mask,
-				 const struct snd_mask *v)
-{
+अटल अंतरभूत व्योम snd_mask_copy(काष्ठा snd_mask *mask,
+				 स्थिर काष्ठा snd_mask *v)
+अणु
 	*mask = *v;
-}
+पूर्ण
 
-static inline int snd_mask_test(const struct snd_mask *mask, unsigned int val)
-{
-	return mask->bits[MASK_OFS(val)] & MASK_BIT(val);
-}
+अटल अंतरभूत पूर्णांक snd_mask_test(स्थिर काष्ठा snd_mask *mask, अचिन्हित पूर्णांक val)
+अणु
+	वापस mask->bits[MASK_OFS(val)] & MASK_BIT(val);
+पूर्ण
 
 /* Most of drivers need only this one */
-static inline int snd_mask_test_format(const struct snd_mask *mask,
-				       snd_pcm_format_t format)
-{
-	return snd_mask_test(mask, (__force unsigned int)format);
-}
+अटल अंतरभूत पूर्णांक snd_mask_test_क्रमmat(स्थिर काष्ठा snd_mask *mask,
+				       snd_pcm_क्रमmat_t क्रमmat)
+अणु
+	वापस snd_mask_test(mask, (__क्रमce अचिन्हित पूर्णांक)क्रमmat);
+पूर्ण
 
-static inline int snd_mask_single(const struct snd_mask *mask)
-{
-	int i, c = 0;
-	for (i = 0; i < SNDRV_MASK_SIZE; i++) {
-		if (! mask->bits[i])
-			continue;
-		if (mask->bits[i] & (mask->bits[i] - 1))
-			return 0;
-		if (c)
-			return 0;
+अटल अंतरभूत पूर्णांक snd_mask_single(स्थिर काष्ठा snd_mask *mask)
+अणु
+	पूर्णांक i, c = 0;
+	क्रम (i = 0; i < SNDRV_MASK_SIZE; i++) अणु
+		अगर (! mask->bits[i])
+			जारी;
+		अगर (mask->bits[i] & (mask->bits[i] - 1))
+			वापस 0;
+		अगर (c)
+			वापस 0;
 		c++;
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static inline int snd_mask_refine(struct snd_mask *mask,
-				  const struct snd_mask *v)
-{
-	struct snd_mask old;
+अटल अंतरभूत पूर्णांक snd_mask_refine(काष्ठा snd_mask *mask,
+				  स्थिर काष्ठा snd_mask *v)
+अणु
+	काष्ठा snd_mask old;
 	snd_mask_copy(&old, mask);
-	snd_mask_intersect(mask, v);
-	if (snd_mask_empty(mask))
-		return -EINVAL;
-	return !snd_mask_eq(mask, &old);
-}
+	snd_mask_पूर्णांकersect(mask, v);
+	अगर (snd_mask_empty(mask))
+		वापस -EINVAL;
+	वापस !snd_mask_eq(mask, &old);
+पूर्ण
 
-static inline int snd_mask_refine_first(struct snd_mask *mask)
-{
-	if (snd_mask_single(mask))
-		return 0;
+अटल अंतरभूत पूर्णांक snd_mask_refine_first(काष्ठा snd_mask *mask)
+अणु
+	अगर (snd_mask_single(mask))
+		वापस 0;
 	snd_mask_leave(mask, snd_mask_min(mask));
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int snd_mask_refine_last(struct snd_mask *mask)
-{
-	if (snd_mask_single(mask))
-		return 0;
+अटल अंतरभूत पूर्णांक snd_mask_refine_last(काष्ठा snd_mask *mask)
+अणु
+	अगर (snd_mask_single(mask))
+		वापस 0;
 	snd_mask_leave(mask, snd_mask_max(mask));
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int snd_mask_refine_min(struct snd_mask *mask, unsigned int val)
-{
-	if (snd_mask_min(mask) >= val)
-		return 0;
+अटल अंतरभूत पूर्णांक snd_mask_refine_min(काष्ठा snd_mask *mask, अचिन्हित पूर्णांक val)
+अणु
+	अगर (snd_mask_min(mask) >= val)
+		वापस 0;
 	snd_mask_reset_range(mask, 0, val - 1);
-	if (snd_mask_empty(mask))
-		return -EINVAL;
-	return 1;
-}
+	अगर (snd_mask_empty(mask))
+		वापस -EINVAL;
+	वापस 1;
+पूर्ण
 
-static inline int snd_mask_refine_max(struct snd_mask *mask, unsigned int val)
-{
-	if (snd_mask_max(mask) <= val)
-		return 0;
+अटल अंतरभूत पूर्णांक snd_mask_refine_max(काष्ठा snd_mask *mask, अचिन्हित पूर्णांक val)
+अणु
+	अगर (snd_mask_max(mask) <= val)
+		वापस 0;
 	snd_mask_reset_range(mask, val + 1, SNDRV_MASK_BITS);
-	if (snd_mask_empty(mask))
-		return -EINVAL;
-	return 1;
-}
+	अगर (snd_mask_empty(mask))
+		वापस -EINVAL;
+	वापस 1;
+पूर्ण
 
-static inline int snd_mask_refine_set(struct snd_mask *mask, unsigned int val)
-{
-	int changed;
+अटल अंतरभूत पूर्णांक snd_mask_refine_set(काष्ठा snd_mask *mask, अचिन्हित पूर्णांक val)
+अणु
+	पूर्णांक changed;
 	changed = !snd_mask_single(mask);
 	snd_mask_leave(mask, val);
-	if (snd_mask_empty(mask))
-		return -EINVAL;
-	return changed;
-}
+	अगर (snd_mask_empty(mask))
+		वापस -EINVAL;
+	वापस changed;
+पूर्ण
 
-static inline int snd_mask_value(const struct snd_mask *mask)
-{
-	return snd_mask_min(mask);
-}
+अटल अंतरभूत पूर्णांक snd_mask_value(स्थिर काष्ठा snd_mask *mask)
+अणु
+	वापस snd_mask_min(mask);
+पूर्ण
 
-static inline void snd_interval_any(struct snd_interval *i)
-{
+अटल अंतरभूत व्योम snd_पूर्णांकerval_any(काष्ठा snd_पूर्णांकerval *i)
+अणु
 	i->min = 0;
-	i->openmin = 0;
-	i->max = UINT_MAX;
-	i->openmax = 0;
-	i->integer = 0;
+	i->खोलोmin = 0;
+	i->max = अच_पूर्णांक_उच्च;
+	i->खोलोmax = 0;
+	i->पूर्णांकeger = 0;
 	i->empty = 0;
-}
+पूर्ण
 
-static inline void snd_interval_none(struct snd_interval *i)
-{
+अटल अंतरभूत व्योम snd_पूर्णांकerval_none(काष्ठा snd_पूर्णांकerval *i)
+अणु
 	i->empty = 1;
-}
+पूर्ण
 
-static inline int snd_interval_checkempty(const struct snd_interval *i)
-{
-	return (i->min > i->max ||
-		(i->min == i->max && (i->openmin || i->openmax)));
-}
+अटल अंतरभूत पूर्णांक snd_पूर्णांकerval_checkempty(स्थिर काष्ठा snd_पूर्णांकerval *i)
+अणु
+	वापस (i->min > i->max ||
+		(i->min == i->max && (i->खोलोmin || i->खोलोmax)));
+पूर्ण
 
-static inline int snd_interval_empty(const struct snd_interval *i)
-{
-	return i->empty;
-}
+अटल अंतरभूत पूर्णांक snd_पूर्णांकerval_empty(स्थिर काष्ठा snd_पूर्णांकerval *i)
+अणु
+	वापस i->empty;
+पूर्ण
 
-static inline int snd_interval_single(const struct snd_interval *i)
-{
-	return (i->min == i->max || 
-		(i->min + 1 == i->max && (i->openmin || i->openmax)));
-}
+अटल अंतरभूत पूर्णांक snd_पूर्णांकerval_single(स्थिर काष्ठा snd_पूर्णांकerval *i)
+अणु
+	वापस (i->min == i->max || 
+		(i->min + 1 == i->max && (i->खोलोmin || i->खोलोmax)));
+पूर्ण
 
-static inline int snd_interval_value(const struct snd_interval *i)
-{
-	if (i->openmin && !i->openmax)
-		return i->max;
-	return i->min;
-}
+अटल अंतरभूत पूर्णांक snd_पूर्णांकerval_value(स्थिर काष्ठा snd_पूर्णांकerval *i)
+अणु
+	अगर (i->खोलोmin && !i->खोलोmax)
+		वापस i->max;
+	वापस i->min;
+पूर्ण
 
-static inline int snd_interval_min(const struct snd_interval *i)
-{
-	return i->min;
-}
+अटल अंतरभूत पूर्णांक snd_पूर्णांकerval_min(स्थिर काष्ठा snd_पूर्णांकerval *i)
+अणु
+	वापस i->min;
+पूर्ण
 
-static inline int snd_interval_max(const struct snd_interval *i)
-{
-	unsigned int v;
+अटल अंतरभूत पूर्णांक snd_पूर्णांकerval_max(स्थिर काष्ठा snd_पूर्णांकerval *i)
+अणु
+	अचिन्हित पूर्णांक v;
 	v = i->max;
-	if (i->openmax)
+	अगर (i->खोलोmax)
 		v--;
-	return v;
-}
+	वापस v;
+पूर्ण
 
-static inline int snd_interval_test(const struct snd_interval *i, unsigned int val)
-{
-	return !((i->min > val || (i->min == val && i->openmin) ||
-		  i->max < val || (i->max == val && i->openmax)));
-}
+अटल अंतरभूत पूर्णांक snd_पूर्णांकerval_test(स्थिर काष्ठा snd_पूर्णांकerval *i, अचिन्हित पूर्णांक val)
+अणु
+	वापस !((i->min > val || (i->min == val && i->खोलोmin) ||
+		  i->max < val || (i->max == val && i->खोलोmax)));
+पूर्ण
 
-static inline void snd_interval_copy(struct snd_interval *d, const struct snd_interval *s)
-{
+अटल अंतरभूत व्योम snd_पूर्णांकerval_copy(काष्ठा snd_पूर्णांकerval *d, स्थिर काष्ठा snd_पूर्णांकerval *s)
+अणु
 	*d = *s;
-}
+पूर्ण
 
-static inline int snd_interval_setinteger(struct snd_interval *i)
-{
-	if (i->integer)
-		return 0;
-	if (i->openmin && i->openmax && i->min == i->max)
-		return -EINVAL;
-	i->integer = 1;
-	return 1;
-}
+अटल अंतरभूत पूर्णांक snd_पूर्णांकerval_setपूर्णांकeger(काष्ठा snd_पूर्णांकerval *i)
+अणु
+	अगर (i->पूर्णांकeger)
+		वापस 0;
+	अगर (i->खोलोmin && i->खोलोmax && i->min == i->max)
+		वापस -EINVAL;
+	i->पूर्णांकeger = 1;
+	वापस 1;
+पूर्ण
 
-static inline int snd_interval_eq(const struct snd_interval *i1, const struct snd_interval *i2)
-{
-	if (i1->empty)
-		return i2->empty;
-	if (i2->empty)
-		return i1->empty;
-	return i1->min == i2->min && i1->openmin == i2->openmin &&
-		i1->max == i2->max && i1->openmax == i2->openmax;
-}
+अटल अंतरभूत पूर्णांक snd_पूर्णांकerval_eq(स्थिर काष्ठा snd_पूर्णांकerval *i1, स्थिर काष्ठा snd_पूर्णांकerval *i2)
+अणु
+	अगर (i1->empty)
+		वापस i2->empty;
+	अगर (i2->empty)
+		वापस i1->empty;
+	वापस i1->min == i2->min && i1->खोलोmin == i2->खोलोmin &&
+		i1->max == i2->max && i1->खोलोmax == i2->खोलोmax;
+पूर्ण
 
 /**
  * params_access - get the access type from the hw params
  * @p: hw params
  */
-static inline snd_pcm_access_t params_access(const struct snd_pcm_hw_params *p)
-{
-	return (__force snd_pcm_access_t)snd_mask_min(hw_param_mask_c(p,
+अटल अंतरभूत snd_pcm_access_t params_access(स्थिर काष्ठा snd_pcm_hw_params *p)
+अणु
+	वापस (__क्रमce snd_pcm_access_t)snd_mask_min(hw_param_mask_c(p,
 		SNDRV_PCM_HW_PARAM_ACCESS));
-}
+पूर्ण
 
 /**
- * params_format - get the sample format from the hw params
+ * params_क्रमmat - get the sample क्रमmat from the hw params
  * @p: hw params
  */
-static inline snd_pcm_format_t params_format(const struct snd_pcm_hw_params *p)
-{
-	return (__force snd_pcm_format_t)snd_mask_min(hw_param_mask_c(p,
+अटल अंतरभूत snd_pcm_क्रमmat_t params_क्रमmat(स्थिर काष्ठा snd_pcm_hw_params *p)
+अणु
+	वापस (__क्रमce snd_pcm_क्रमmat_t)snd_mask_min(hw_param_mask_c(p,
 		SNDRV_PCM_HW_PARAM_FORMAT));
-}
+पूर्ण
 
 /**
- * params_subformat - get the sample subformat from the hw params
+ * params_subक्रमmat - get the sample subक्रमmat from the hw params
  * @p: hw params
  */
-static inline snd_pcm_subformat_t
-params_subformat(const struct snd_pcm_hw_params *p)
-{
-	return (__force snd_pcm_subformat_t)snd_mask_min(hw_param_mask_c(p,
+अटल अंतरभूत snd_pcm_subक्रमmat_t
+params_subक्रमmat(स्थिर काष्ठा snd_pcm_hw_params *p)
+अणु
+	वापस (__क्रमce snd_pcm_subक्रमmat_t)snd_mask_min(hw_param_mask_c(p,
 		SNDRV_PCM_HW_PARAM_SUBFORMAT));
-}
+पूर्ण
 
 /**
  * params_period_bytes - get the period size (in bytes) from the hw params
  * @p: hw params
  */
-static inline unsigned int
-params_period_bytes(const struct snd_pcm_hw_params *p)
-{
-	return hw_param_interval_c(p, SNDRV_PCM_HW_PARAM_PERIOD_BYTES)->min;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक
+params_period_bytes(स्थिर काष्ठा snd_pcm_hw_params *p)
+अणु
+	वापस hw_param_पूर्णांकerval_c(p, SNDRV_PCM_HW_PARAM_PERIOD_BYTES)->min;
+पूर्ण
 
 /**
- * params_width - get the number of bits of the sample format from the hw params
+ * params_width - get the number of bits of the sample क्रमmat from the hw params
  * @p: hw params
  *
- * This function returns the number of bits per sample that the selected sample
- * format of the hw params has.
+ * This function वापसs the number of bits per sample that the selected sample
+ * क्रमmat of the hw params has.
  */
-static inline int params_width(const struct snd_pcm_hw_params *p)
-{
-	return snd_pcm_format_width(params_format(p));
-}
+अटल अंतरभूत पूर्णांक params_width(स्थिर काष्ठा snd_pcm_hw_params *p)
+अणु
+	वापस snd_pcm_क्रमmat_width(params_क्रमmat(p));
+पूर्ण
 
 /*
- * params_physical_width - get the storage size of the sample format from the hw params
+ * params_physical_width - get the storage size of the sample क्रमmat from the hw params
  * @p: hw params
  *
- * This functions returns the number of bits per sample that the selected sample
- * format of the hw params takes up in memory. This will be equal or larger than
+ * This functions वापसs the number of bits per sample that the selected sample
+ * क्रमmat of the hw params takes up in memory. This will be equal or larger than
  * params_width().
  */
-static inline int params_physical_width(const struct snd_pcm_hw_params *p)
-{
-	return snd_pcm_format_physical_width(params_format(p));
-}
+अटल अंतरभूत पूर्णांक params_physical_width(स्थिर काष्ठा snd_pcm_hw_params *p)
+अणु
+	वापस snd_pcm_क्रमmat_physical_width(params_क्रमmat(p));
+पूर्ण
 
-static inline void
-params_set_format(struct snd_pcm_hw_params *p, snd_pcm_format_t fmt)
-{
-	snd_mask_set_format(hw_param_mask(p, SNDRV_PCM_HW_PARAM_FORMAT), fmt);
-}
+अटल अंतरभूत व्योम
+params_set_क्रमmat(काष्ठा snd_pcm_hw_params *p, snd_pcm_क्रमmat_t fmt)
+अणु
+	snd_mask_set_क्रमmat(hw_param_mask(p, SNDRV_PCM_HW_PARAM_FORMAT), fmt);
+पूर्ण
 
-#endif /* __SOUND_PCM_PARAMS_H */
+#पूर्ण_अगर /* __SOUND_PCM_PARAMS_H */

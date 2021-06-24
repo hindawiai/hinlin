@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
 /*
- * sisusb - usb kernel driver for SiS315(E) based USB2VGA dongles
+ * sisusb - usb kernel driver क्रम SiS315(E) based USB2VGA करोngles
  *
  * Main part
  *
@@ -11,21 +12,21 @@
  *
  * Otherwise, the following license terms apply:
  *
- * * Redistribution and use in source and binary forms, with or without
- * * modification, are permitted provided that the following conditions
+ * * Redistribution and use in source and binary क्रमms, with or without
+ * * modअगरication, are permitted provided that the following conditions
  * * are met:
  * * 1) Redistributions of source code must retain the above copyright
  * *    notice, this list of conditions and the following disclaimer.
- * * 2) Redistributions in binary form must reproduce the above copyright
+ * * 2) Redistributions in binary क्रमm must reproduce the above copyright
  * *    notice, this list of conditions and the following disclaimer in the
- * *    documentation and/or other materials provided with the distribution.
- * * 3) The name of the author may not be used to endorse or promote products
- * *    derived from this software without specific psisusbr written permission.
+ * *    करोcumentation and/or other materials provided with the distribution.
+ * * 3) The name of the author may not be used to enकरोrse or promote products
+ * *    derived from this software without specअगरic psisusbr written permission.
  * *
  * * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESSED OR
  * * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY सूचीECT, INसूचीECT,
  * * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -37,64 +38,64 @@
  *
  */
 
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/signal.h>
-#include <linux/errno.h>
-#include <linux/poll.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/kref.h>
-#include <linux/usb.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/poll.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "sisusb.h"
-#include "sisusb_init.h"
+#समावेश "sisusb.h"
+#समावेश "sisusb_init.h"
 
-#ifdef CONFIG_USB_SISUSBVGA_CON
-#include <linux/font.h>
-#endif
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
+#समावेश <linux/font.h>
+#पूर्ण_अगर
 
-#define SISUSB_DONTSYNC
+#घोषणा SISUSB_DONTSYNC
 
 /* Forward declarations / clean-up routines */
 
-#ifdef CONFIG_USB_SISUSBVGA_CON
-static int sisusb_first_vc;
-static int sisusb_last_vc;
-module_param_named(first, sisusb_first_vc, int, 0);
-module_param_named(last, sisusb_last_vc, int, 0);
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
+अटल पूर्णांक sisusb_first_vc;
+अटल पूर्णांक sisusb_last_vc;
+module_param_named(first, sisusb_first_vc, पूर्णांक, 0);
+module_param_named(last, sisusb_last_vc, पूर्णांक, 0);
 MODULE_PARM_DESC(first, "Number of first console to take over (1 - MAX_NR_CONSOLES)");
 MODULE_PARM_DESC(last, "Number of last console to take over (1 - MAX_NR_CONSOLES)");
-#endif
+#पूर्ण_अगर
 
-static struct usb_driver sisusb_driver;
+अटल काष्ठा usb_driver sisusb_driver;
 
-static void sisusb_free_buffers(struct sisusb_usb_data *sisusb)
-{
-	int i;
+अटल व्योम sisusb_मुक्त_buffers(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NUMOBUFS; i++) {
-		kfree(sisusb->obuf[i]);
-		sisusb->obuf[i] = NULL;
-	}
-	kfree(sisusb->ibuf);
-	sisusb->ibuf = NULL;
-}
+	क्रम (i = 0; i < NUMOBUFS; i++) अणु
+		kमुक्त(sisusb->obuf[i]);
+		sisusb->obuf[i] = शून्य;
+	पूर्ण
+	kमुक्त(sisusb->ibuf);
+	sisusb->ibuf = शून्य;
+पूर्ण
 
-static void sisusb_free_urbs(struct sisusb_usb_data *sisusb)
-{
-	int i;
+अटल व्योम sisusb_मुक्त_urbs(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NUMOBUFS; i++) {
-		usb_free_urb(sisusb->sisurbout[i]);
-		sisusb->sisurbout[i] = NULL;
-	}
-	usb_free_urb(sisusb->sisurbin);
-	sisusb->sisurbin = NULL;
-}
+	क्रम (i = 0; i < NUMOBUFS; i++) अणु
+		usb_मुक्त_urb(sisusb->sisurbout[i]);
+		sisusb->sisurbout[i] = शून्य;
+	पूर्ण
+	usb_मुक्त_urb(sisusb->sisurbin);
+	sisusb->sisurbin = शून्य;
+पूर्ण
 
 /* Level 0: USB transport layer */
 
@@ -102,120 +103,120 @@ static void sisusb_free_urbs(struct sisusb_usb_data *sisusb)
 
 /* out-urb management */
 
-/* Return 1 if all free, 0 otherwise */
-static int sisusb_all_free(struct sisusb_usb_data *sisusb)
-{
-	int i;
+/* Return 1 अगर all मुक्त, 0 otherwise */
+अटल पूर्णांक sisusb_all_मुक्त(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < sisusb->numobufs; i++) {
+	क्रम (i = 0; i < sisusb->numobufs; i++) अणु
 
-		if (sisusb->urbstatus[i] & SU_URB_BUSY)
-			return 0;
+		अगर (sisusb->urbstatus[i] & SU_URB_BUSY)
+			वापस 0;
 
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Kill all busy URBs */
-static void sisusb_kill_all_busy(struct sisusb_usb_data *sisusb)
-{
-	int i;
+अटल व्योम sisusb_समाप्त_all_busy(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक i;
 
-	if (sisusb_all_free(sisusb))
-		return;
+	अगर (sisusb_all_मुक्त(sisusb))
+		वापस;
 
-	for (i = 0; i < sisusb->numobufs; i++) {
+	क्रम (i = 0; i < sisusb->numobufs; i++) अणु
 
-		if (sisusb->urbstatus[i] & SU_URB_BUSY)
-			usb_kill_urb(sisusb->sisurbout[i]);
+		अगर (sisusb->urbstatus[i] & SU_URB_BUSY)
+			usb_समाप्त_urb(sisusb->sisurbout[i]);
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Return 1 if ok, 0 if error (not all complete within timeout) */
-static int sisusb_wait_all_out_complete(struct sisusb_usb_data *sisusb)
-{
-	int timeout = 5 * HZ, i = 1;
+/* Return 1 अगर ok, 0 अगर error (not all complete within समयout) */
+अटल पूर्णांक sisusb_रुको_all_out_complete(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक समयout = 5 * HZ, i = 1;
 
-	wait_event_timeout(sisusb->wait_q, (i = sisusb_all_free(sisusb)),
-			timeout);
+	रुको_event_समयout(sisusb->रुको_q, (i = sisusb_all_मुक्त(sisusb)),
+			समयout);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int sisusb_outurb_available(struct sisusb_usb_data *sisusb)
-{
-	int i;
+अटल पूर्णांक sisusb_outurb_available(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < sisusb->numobufs; i++) {
+	क्रम (i = 0; i < sisusb->numobufs; i++) अणु
 
-		if ((sisusb->urbstatus[i] & (SU_URB_BUSY|SU_URB_ALLOC)) == 0)
-			return i;
+		अगर ((sisusb->urbstatus[i] & (SU_URB_BUSY|SU_URB_ALLOC)) == 0)
+			वापस i;
 
-	}
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int sisusb_get_free_outbuf(struct sisusb_usb_data *sisusb)
-{
-	int i, timeout = 5 * HZ;
+अटल पूर्णांक sisusb_get_मुक्त_outbuf(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक i, समयout = 5 * HZ;
 
-	wait_event_timeout(sisusb->wait_q,
-			((i = sisusb_outurb_available(sisusb)) >= 0), timeout);
+	रुको_event_समयout(sisusb->रुको_q,
+			((i = sisusb_outurb_available(sisusb)) >= 0), समयout);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int sisusb_alloc_outbuf(struct sisusb_usb_data *sisusb)
-{
-	int i;
+अटल पूर्णांक sisusb_alloc_outbuf(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक i;
 
 	i = sisusb_outurb_available(sisusb);
 
-	if (i >= 0)
+	अगर (i >= 0)
 		sisusb->urbstatus[i] |= SU_URB_ALLOC;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static void sisusb_free_outbuf(struct sisusb_usb_data *sisusb, int index)
-{
-	if ((index >= 0) && (index < sisusb->numobufs))
+अटल व्योम sisusb_मुक्त_outbuf(काष्ठा sisusb_usb_data *sisusb, पूर्णांक index)
+अणु
+	अगर ((index >= 0) && (index < sisusb->numobufs))
 		sisusb->urbstatus[index] &= ~SU_URB_ALLOC;
-}
+पूर्ण
 
 /* completion callback */
 
-static void sisusb_bulk_completeout(struct urb *urb)
-{
-	struct sisusb_urb_context *context = urb->context;
-	struct sisusb_usb_data *sisusb;
+अटल व्योम sisusb_bulk_completeout(काष्ठा urb *urb)
+अणु
+	काष्ठा sisusb_urb_context *context = urb->context;
+	काष्ठा sisusb_usb_data *sisusb;
 
-	if (!context)
-		return;
+	अगर (!context)
+		वापस;
 
 	sisusb = context->sisusb;
 
-	if (!sisusb || !sisusb->sisusb_dev || !sisusb->present)
-		return;
+	अगर (!sisusb || !sisusb->sisusb_dev || !sisusb->present)
+		वापस;
 
-#ifndef SISUSB_DONTSYNC
-	if (context->actual_length)
+#अगर_अघोषित SISUSB_DONTSYNC
+	अगर (context->actual_length)
 		*(context->actual_length) += urb->actual_length;
-#endif
+#पूर्ण_अगर
 
 	sisusb->urbstatus[context->urbindex] &= ~SU_URB_BUSY;
-	wake_up(&sisusb->wait_q);
-}
+	wake_up(&sisusb->रुको_q);
+पूर्ण
 
-static int sisusb_bulkout_msg(struct sisusb_usb_data *sisusb, int index,
-		unsigned int pipe, void *data, int len, int *actual_length,
-		int timeout, unsigned int tflags)
-{
-	struct urb *urb = sisusb->sisurbout[index];
-	int retval, byteswritten = 0;
+अटल पूर्णांक sisusb_bulkout_msg(काष्ठा sisusb_usb_data *sisusb, पूर्णांक index,
+		अचिन्हित पूर्णांक pipe, व्योम *data, पूर्णांक len, पूर्णांक *actual_length,
+		पूर्णांक समयout, अचिन्हित पूर्णांक tflags)
+अणु
+	काष्ठा urb *urb = sisusb->sisurbout[index];
+	पूर्णांक retval, byteswritten = 0;
 
 	/* Set up URB */
 	urb->transfer_flags = 0;
@@ -228,8 +229,8 @@ static int sisusb_bulkout_msg(struct sisusb_usb_data *sisusb, int index,
 	urb->actual_length = 0;
 
 	/* Set up context */
-	sisusb->urbout_context[index].actual_length = (timeout) ?
-			NULL : actual_length;
+	sisusb->urbout_context[index].actual_length = (समयout) ?
+			शून्य : actual_length;
 
 	/* Declare this urb/buffer in use */
 	sisusb->urbstatus[index] |= SU_URB_BUSY;
@@ -237,49 +238,49 @@ static int sisusb_bulkout_msg(struct sisusb_usb_data *sisusb, int index,
 	/* Submit URB */
 	retval = usb_submit_urb(urb, GFP_KERNEL);
 
-	/* If OK, and if timeout > 0, wait for completion */
-	if ((retval == 0) && timeout) {
-		wait_event_timeout(sisusb->wait_q,
+	/* If OK, and अगर समयout > 0, रुको क्रम completion */
+	अगर ((retval == 0) && समयout) अणु
+		रुको_event_समयout(sisusb->रुको_q,
 				(!(sisusb->urbstatus[index] & SU_URB_BUSY)),
-				timeout);
-		if (sisusb->urbstatus[index] & SU_URB_BUSY) {
-			/* URB timed out... kill it and report error */
-			usb_kill_urb(urb);
+				समयout);
+		अगर (sisusb->urbstatus[index] & SU_URB_BUSY) अणु
+			/* URB समयd out... समाप्त it and report error */
+			usb_समाप्त_urb(urb);
 			retval = -ETIMEDOUT;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Otherwise, report urb status */
 			retval = urb->status;
 			byteswritten = urb->actual_length;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (actual_length)
+	अगर (actual_length)
 		*actual_length = byteswritten;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* 2. in-bulks */
 
 /* completion callback */
 
-static void sisusb_bulk_completein(struct urb *urb)
-{
-	struct sisusb_usb_data *sisusb = urb->context;
+अटल व्योम sisusb_bulk_completein(काष्ठा urb *urb)
+अणु
+	काष्ठा sisusb_usb_data *sisusb = urb->context;
 
-	if (!sisusb || !sisusb->sisusb_dev || !sisusb->present)
-		return;
+	अगर (!sisusb || !sisusb->sisusb_dev || !sisusb->present)
+		वापस;
 
 	sisusb->completein = 1;
-	wake_up(&sisusb->wait_q);
-}
+	wake_up(&sisusb->रुको_q);
+पूर्ण
 
-static int sisusb_bulkin_msg(struct sisusb_usb_data *sisusb,
-		unsigned int pipe, void *data, int len,
-		int *actual_length, int timeout, unsigned int tflags)
-{
-	struct urb *urb = sisusb->sisurbin;
-	int retval, readbytes = 0;
+अटल पूर्णांक sisusb_bulkin_msg(काष्ठा sisusb_usb_data *sisusb,
+		अचिन्हित पूर्णांक pipe, व्योम *data, पूर्णांक len,
+		पूर्णांक *actual_length, पूर्णांक समयout, अचिन्हित पूर्णांक tflags)
+अणु
+	काष्ठा urb *urb = sisusb->sisurbin;
+	पूर्णांक retval, पढ़ोbytes = 0;
 
 	urb->transfer_flags = 0;
 
@@ -291,176 +292,176 @@ static int sisusb_bulkin_msg(struct sisusb_usb_data *sisusb,
 
 	sisusb->completein = 0;
 	retval = usb_submit_urb(urb, GFP_KERNEL);
-	if (retval == 0) {
-		wait_event_timeout(sisusb->wait_q, sisusb->completein, timeout);
-		if (!sisusb->completein) {
-			/* URB timed out... kill it and report error */
-			usb_kill_urb(urb);
+	अगर (retval == 0) अणु
+		रुको_event_समयout(sisusb->रुको_q, sisusb->completein, समयout);
+		अगर (!sisusb->completein) अणु
+			/* URB समयd out... समाप्त it and report error */
+			usb_समाप्त_urb(urb);
 			retval = -ETIMEDOUT;
-		} else {
-			/* URB completed within timeout */
+		पूर्ण अन्यथा अणु
+			/* URB completed within समयout */
 			retval = urb->status;
-			readbytes = urb->actual_length;
-		}
-	}
+			पढ़ोbytes = urb->actual_length;
+		पूर्ण
+	पूर्ण
 
-	if (actual_length)
-		*actual_length = readbytes;
+	अगर (actual_length)
+		*actual_length = पढ़ोbytes;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
 /* Level 1:  */
 
 /* Send a bulk message of variable size
  *
- * To copy the data from userspace, give pointer to "userbuffer",
+ * To copy the data from userspace, give poपूर्णांकer to "userbuffer",
  * to copy from (non-DMA) kernel memory, give "kernbuffer". If
- * both of these are NULL, it is assumed, that the transfer
+ * both of these are शून्य, it is assumed, that the transfer
  * buffer "sisusb->obuf[index]" is set up with the data to send.
- * Index is ignored if either kernbuffer or userbuffer is set.
- * If async is nonzero, URBs will be sent without waiting for
+ * Index is ignored अगर either kernbuffer or userbuffer is set.
+ * If async is nonzero, URBs will be sent without रुकोing क्रम
  * completion of the previous URB.
  *
- * (return 0 on success)
+ * (वापस 0 on success)
  */
 
-static int sisusb_send_bulk_msg(struct sisusb_usb_data *sisusb, int ep, int len,
-		char *kernbuffer, const char __user *userbuffer, int index,
-		ssize_t *bytes_written, unsigned int tflags, int async)
-{
-	int result = 0, retry, count = len;
-	int passsize, thispass, transferred_len = 0;
-	int fromuser = (userbuffer != NULL) ? 1 : 0;
-	int fromkern = (kernbuffer != NULL) ? 1 : 0;
-	unsigned int pipe;
-	char *buffer;
+अटल पूर्णांक sisusb_send_bulk_msg(काष्ठा sisusb_usb_data *sisusb, पूर्णांक ep, पूर्णांक len,
+		अक्षर *kernbuffer, स्थिर अक्षर __user *userbuffer, पूर्णांक index,
+		sमाप_प्रकार *bytes_written, अचिन्हित पूर्णांक tflags, पूर्णांक async)
+अणु
+	पूर्णांक result = 0, retry, count = len;
+	पूर्णांक passsize, thispass, transferred_len = 0;
+	पूर्णांक fromuser = (userbuffer != शून्य) ? 1 : 0;
+	पूर्णांक fromkern = (kernbuffer != शून्य) ? 1 : 0;
+	अचिन्हित पूर्णांक pipe;
+	अक्षर *buffer;
 
 	(*bytes_written) = 0;
 
 	/* Sanity check */
-	if (!sisusb || !sisusb->present || !sisusb->sisusb_dev)
-		return -ENODEV;
+	अगर (!sisusb || !sisusb->present || !sisusb->sisusb_dev)
+		वापस -ENODEV;
 
-	/* If we copy data from kernel or userspace, force the
+	/* If we copy data from kernel or userspace, क्रमce the
 	 * allocation of a buffer/urb. If we have the data in
-	 * the transfer buffer[index] already, reuse the buffer/URB
-	 * if the length is > buffer size. (So, transmitting
+	 * the transfer buffer[index] alपढ़ोy, reuse the buffer/URB
+	 * अगर the length is > buffer size. (So, transmitting
 	 * large data amounts directly from the transfer buffer
 	 * treats the buffer as a ring buffer. However, we need
-	 * to sync in this case.)
+	 * to sync in this हाल.)
 	 */
-	if (fromuser || fromkern)
+	अगर (fromuser || fromkern)
 		index = -1;
-	else if (len > sisusb->obufsize)
+	अन्यथा अगर (len > sisusb->obufsize)
 		async = 0;
 
 	pipe = usb_sndbulkpipe(sisusb->sisusb_dev, ep);
 
-	do {
+	करो अणु
 		passsize = thispass = (sisusb->obufsize < count) ?
 				sisusb->obufsize : count;
 
-		if (index < 0)
-			index = sisusb_get_free_outbuf(sisusb);
+		अगर (index < 0)
+			index = sisusb_get_मुक्त_outbuf(sisusb);
 
-		if (index < 0)
-			return -EIO;
+		अगर (index < 0)
+			वापस -EIO;
 
 		buffer = sisusb->obuf[index];
 
-		if (fromuser) {
+		अगर (fromuser) अणु
 
-			if (copy_from_user(buffer, userbuffer, passsize))
-				return -EFAULT;
+			अगर (copy_from_user(buffer, userbuffer, passsize))
+				वापस -EFAULT;
 
 			userbuffer += passsize;
 
-		} else if (fromkern) {
+		पूर्ण अन्यथा अगर (fromkern) अणु
 
-			memcpy(buffer, kernbuffer, passsize);
+			स_नकल(buffer, kernbuffer, passsize);
 			kernbuffer += passsize;
 
-		}
+		पूर्ण
 
 		retry = 5;
-		while (thispass) {
+		जबतक (thispass) अणु
 
-			if (!sisusb->sisusb_dev)
-				return -ENODEV;
+			अगर (!sisusb->sisusb_dev)
+				वापस -ENODEV;
 
 			result = sisusb_bulkout_msg(sisusb, index, pipe,
 					buffer, thispass, &transferred_len,
 					async ? 0 : 5 * HZ, tflags);
 
-			if (result == -ETIMEDOUT) {
+			अगर (result == -ETIMEDOUT) अणु
 
-				/* Will not happen if async */
-				if (!retry--)
-					return -ETIME;
+				/* Will not happen अगर async */
+				अगर (!retry--)
+					वापस -ETIME;
 
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if ((result == 0) && !async && transferred_len) {
+			अगर ((result == 0) && !async && transferred_len) अणु
 
 				thispass -= transferred_len;
 				buffer += transferred_len;
 
-			} else
-				break;
-		}
+			पूर्ण अन्यथा
+				अवरोध;
+		पूर्ण
 
-		if (result)
-			return result;
+		अगर (result)
+			वापस result;
 
 		(*bytes_written) += passsize;
 		count            -= passsize;
 
 		/* Force new allocation in next iteration */
-		if (fromuser || fromkern)
+		अगर (fromuser || fromkern)
 			index = -1;
 
-	} while (count > 0);
+	पूर्ण जबतक (count > 0);
 
-	if (async) {
-#ifdef SISUSB_DONTSYNC
+	अगर (async) अणु
+#अगर_घोषित SISUSB_DONTSYNC
 		(*bytes_written) = len;
 		/* Some URBs/buffers might be busy */
-#else
-		sisusb_wait_all_out_complete(sisusb);
+#अन्यथा
+		sisusb_रुको_all_out_complete(sisusb);
 		(*bytes_written) = transferred_len;
 		/* All URBs and all buffers are available */
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	return ((*bytes_written) == len) ? 0 : -EIO;
-}
+	वापस ((*bytes_written) == len) ? 0 : -EIO;
+पूर्ण
 
 /* Receive a bulk message of variable size
  *
- * To copy the data to userspace, give pointer to "userbuffer",
+ * To copy the data to userspace, give poपूर्णांकer to "userbuffer",
  * to copy to kernel memory, give "kernbuffer". One of them
- * MUST be set. (There is no technique for letting the caller
- * read directly from the ibuf.)
+ * MUST be set. (There is no technique क्रम letting the caller
+ * पढ़ो directly from the ibuf.)
  *
  */
 
-static int sisusb_recv_bulk_msg(struct sisusb_usb_data *sisusb, int ep, int len,
-		void *kernbuffer, char __user *userbuffer, ssize_t *bytes_read,
-		unsigned int tflags)
-{
-	int result = 0, retry, count = len;
-	int bufsize, thispass, transferred_len;
-	unsigned int pipe;
-	char *buffer;
+अटल पूर्णांक sisusb_recv_bulk_msg(काष्ठा sisusb_usb_data *sisusb, पूर्णांक ep, पूर्णांक len,
+		व्योम *kernbuffer, अक्षर __user *userbuffer, sमाप_प्रकार *bytes_पढ़ो,
+		अचिन्हित पूर्णांक tflags)
+अणु
+	पूर्णांक result = 0, retry, count = len;
+	पूर्णांक bufsize, thispass, transferred_len;
+	अचिन्हित पूर्णांक pipe;
+	अक्षर *buffer;
 
-	(*bytes_read) = 0;
+	(*bytes_पढ़ो) = 0;
 
 	/* Sanity check */
-	if (!sisusb || !sisusb->present || !sisusb->sisusb_dev)
-		return -ENODEV;
+	अगर (!sisusb || !sisusb->present || !sisusb->sisusb_dev)
+		वापस -ENODEV;
 
 	pipe = usb_rcvbulkpipe(sisusb->sisusb_dev, ep);
 	buffer = sisusb->ibuf;
@@ -468,181 +469,181 @@ static int sisusb_recv_bulk_msg(struct sisusb_usb_data *sisusb, int ep, int len,
 
 	retry = 5;
 
-#ifdef SISUSB_DONTSYNC
-	if (!(sisusb_wait_all_out_complete(sisusb)))
-		return -EIO;
-#endif
+#अगर_घोषित SISUSB_DONTSYNC
+	अगर (!(sisusb_रुको_all_out_complete(sisusb)))
+		वापस -EIO;
+#पूर्ण_अगर
 
-	while (count > 0) {
+	जबतक (count > 0) अणु
 
-		if (!sisusb->sisusb_dev)
-			return -ENODEV;
+		अगर (!sisusb->sisusb_dev)
+			वापस -ENODEV;
 
 		thispass = (bufsize < count) ? bufsize : count;
 
 		result = sisusb_bulkin_msg(sisusb, pipe, buffer, thispass,
 				&transferred_len, 5 * HZ, tflags);
 
-		if (transferred_len)
+		अगर (transferred_len)
 			thispass = transferred_len;
 
-		else if (result == -ETIMEDOUT) {
+		अन्यथा अगर (result == -ETIMEDOUT) अणु
 
-			if (!retry--)
-				return -ETIME;
+			अगर (!retry--)
+				वापस -ETIME;
 
-			continue;
+			जारी;
 
-		} else
-			return -EIO;
+		पूर्ण अन्यथा
+			वापस -EIO;
 
 
-		if (thispass) {
+		अगर (thispass) अणु
 
-			(*bytes_read) += thispass;
+			(*bytes_पढ़ो) += thispass;
 			count         -= thispass;
 
-			if (userbuffer) {
+			अगर (userbuffer) अणु
 
-				if (copy_to_user(userbuffer, buffer, thispass))
-					return -EFAULT;
+				अगर (copy_to_user(userbuffer, buffer, thispass))
+					वापस -EFAULT;
 
 				userbuffer += thispass;
 
-			} else {
+			पूर्ण अन्यथा अणु
 
-				memcpy(kernbuffer, buffer, thispass);
+				स_नकल(kernbuffer, buffer, thispass);
 				kernbuffer += thispass;
 
-			}
+			पूर्ण
 
-		}
+		पूर्ण
 
-	}
+	पूर्ण
 
-	return ((*bytes_read) == len) ? 0 : -EIO;
-}
+	वापस ((*bytes_पढ़ो) == len) ? 0 : -EIO;
+पूर्ण
 
-static int sisusb_send_packet(struct sisusb_usb_data *sisusb, int len,
-		struct sisusb_packet *packet)
-{
-	int ret;
-	ssize_t bytes_transferred = 0;
-	__le32 tmp;
+अटल पूर्णांक sisusb_send_packet(काष्ठा sisusb_usb_data *sisusb, पूर्णांक len,
+		काष्ठा sisusb_packet *packet)
+अणु
+	पूर्णांक ret;
+	sमाप_प्रकार bytes_transferred = 0;
+	__le32 पंचांगp;
 
-	if (len == 6)
+	अगर (len == 6)
 		packet->data = 0;
 
-#ifdef SISUSB_DONTSYNC
-	if (!(sisusb_wait_all_out_complete(sisusb)))
-		return 1;
-#endif
+#अगर_घोषित SISUSB_DONTSYNC
+	अगर (!(sisusb_रुको_all_out_complete(sisusb)))
+		वापस 1;
+#पूर्ण_अगर
 
 	/* Eventually correct endianness */
 	SISUSB_CORRECT_ENDIANNESS_PACKET(packet);
 
 	/* 1. send the packet */
 	ret = sisusb_send_bulk_msg(sisusb, SISUSB_EP_GFX_OUT, len,
-			(char *)packet, NULL, 0, &bytes_transferred, 0, 0);
+			(अक्षर *)packet, शून्य, 0, &bytes_transferred, 0, 0);
 
-	if ((ret == 0) && (len == 6)) {
+	अगर ((ret == 0) && (len == 6)) अणु
 
-		/* 2. if packet len == 6, it means we read, so wait for 32bit
-		 *    return value and write it to packet->data
+		/* 2. अगर packet len == 6, it means we पढ़ो, so रुको क्रम 32bit
+		 *    वापस value and ग_लिखो it to packet->data
 		 */
 		ret = sisusb_recv_bulk_msg(sisusb, SISUSB_EP_GFX_IN, 4,
-				(char *)&tmp, NULL, &bytes_transferred, 0);
+				(अक्षर *)&पंचांगp, शून्य, &bytes_transferred, 0);
 
-		packet->data = le32_to_cpu(tmp);
-	}
+		packet->data = le32_to_cpu(पंचांगp);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_send_bridge_packet(struct sisusb_usb_data *sisusb, int len,
-		struct sisusb_packet *packet, unsigned int tflags)
-{
-	int ret;
-	ssize_t bytes_transferred = 0;
-	__le32 tmp;
+अटल पूर्णांक sisusb_send_bridge_packet(काष्ठा sisusb_usb_data *sisusb, पूर्णांक len,
+		काष्ठा sisusb_packet *packet, अचिन्हित पूर्णांक tflags)
+अणु
+	पूर्णांक ret;
+	sमाप_प्रकार bytes_transferred = 0;
+	__le32 पंचांगp;
 
-	if (len == 6)
+	अगर (len == 6)
 		packet->data = 0;
 
-#ifdef SISUSB_DONTSYNC
-	if (!(sisusb_wait_all_out_complete(sisusb)))
-		return 1;
-#endif
+#अगर_घोषित SISUSB_DONTSYNC
+	अगर (!(sisusb_रुको_all_out_complete(sisusb)))
+		वापस 1;
+#पूर्ण_अगर
 
 	/* Eventually correct endianness */
 	SISUSB_CORRECT_ENDIANNESS_PACKET(packet);
 
 	/* 1. send the packet */
 	ret = sisusb_send_bulk_msg(sisusb, SISUSB_EP_BRIDGE_OUT, len,
-			(char *)packet, NULL, 0, &bytes_transferred, tflags, 0);
+			(अक्षर *)packet, शून्य, 0, &bytes_transferred, tflags, 0);
 
-	if ((ret == 0) && (len == 6)) {
+	अगर ((ret == 0) && (len == 6)) अणु
 
-		/* 2. if packet len == 6, it means we read, so wait for 32bit
-		 *    return value and write it to packet->data
+		/* 2. अगर packet len == 6, it means we पढ़ो, so रुको क्रम 32bit
+		 *    वापस value and ग_लिखो it to packet->data
 		 */
 		ret = sisusb_recv_bulk_msg(sisusb, SISUSB_EP_BRIDGE_IN, 4,
-				(char *)&tmp, NULL, &bytes_transferred, 0);
+				(अक्षर *)&पंचांगp, शून्य, &bytes_transferred, 0);
 
-		packet->data = le32_to_cpu(tmp);
-	}
+		packet->data = le32_to_cpu(पंचांगp);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* access video memory and mmio (return 0 on success) */
+/* access video memory and mmio (वापस 0 on success) */
 
 /* Low level */
 
 /* The following routines assume being used to transfer byte, word,
- * long etc.
+ * दीर्घ etc.
  * This means that
- *   - the write routines expect "data" in machine endianness format.
+ *   - the ग_लिखो routines expect "data" in machine endianness क्रमmat.
  *     The data will be converted to leXX in sisusb_xxx_packet.
- *   - the read routines can expect read data in machine-endianess.
+ *   - the पढ़ो routines can expect पढ़ो data in machine-endianess.
  */
 
-static int sisusb_write_memio_byte(struct sisusb_usb_data *sisusb, int type,
+अटल पूर्णांक sisusb_ग_लिखो_memio_byte(काष्ठा sisusb_usb_data *sisusb, पूर्णांक type,
 		u32 addr, u8 data)
-{
-	struct sisusb_packet packet;
+अणु
+	काष्ठा sisusb_packet packet;
 
 	packet.header  = (1 << (addr & 3)) | (type << 6);
 	packet.address = addr & ~3;
 	packet.data    = data << ((addr & 3) << 3);
-	return sisusb_send_packet(sisusb, 10, &packet);
-}
+	वापस sisusb_send_packet(sisusb, 10, &packet);
+पूर्ण
 
-static int sisusb_write_memio_word(struct sisusb_usb_data *sisusb, int type,
+अटल पूर्णांक sisusb_ग_लिखो_memio_word(काष्ठा sisusb_usb_data *sisusb, पूर्णांक type,
 		u32 addr, u16 data)
-{
-	struct sisusb_packet packet;
-	int ret = 0;
+अणु
+	काष्ठा sisusb_packet packet;
+	पूर्णांक ret = 0;
 
 	packet.address = addr & ~3;
 
-	switch (addr & 3) {
-	case 0:
+	चयन (addr & 3) अणु
+	हाल 0:
 		packet.header = (type << 6) | 0x0003;
 		packet.data   = (u32)data;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		packet.header = (type << 6) | 0x0006;
 		packet.data   = (u32)data << 8;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		packet.header = (type << 6) | 0x000c;
 		packet.data   = (u32)data << 16;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		packet.header = (type << 6) | 0x0008;
 		packet.data   = (u32)data << 24;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
@@ -650,31 +651,31 @@ static int sisusb_write_memio_word(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		packet.data   = (u32)data >> 8;
 		ret |= sisusb_send_packet(sisusb, 10, &packet);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_write_memio_24bit(struct sisusb_usb_data *sisusb, int type,
+अटल पूर्णांक sisusb_ग_लिखो_memio_24bit(काष्ठा sisusb_usb_data *sisusb, पूर्णांक type,
 		u32 addr, u32 data)
-{
-	struct sisusb_packet packet;
-	int ret = 0;
+अणु
+	काष्ठा sisusb_packet packet;
+	पूर्णांक ret = 0;
 
 	packet.address = addr & ~3;
 
-	switch (addr & 3) {
-	case 0:
+	चयन (addr & 3) अणु
+	हाल 0:
 		packet.header  = (type << 6) | 0x0007;
 		packet.data    = data & 0x00ffffff;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		packet.header  = (type << 6) | 0x000e;
 		packet.data    = data << 8;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		packet.header  = (type << 6) | 0x000c;
 		packet.data    = data << 16;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
@@ -682,8 +683,8 @@ static int sisusb_write_memio_24bit(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		packet.data    = (data >> 16) & 0x00ff;
 		ret |= sisusb_send_packet(sisusb, 10, &packet);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		packet.header  = (type << 6) | 0x0008;
 		packet.data    = data << 24;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
@@ -691,26 +692,26 @@ static int sisusb_write_memio_24bit(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		packet.data    = (data >> 8) & 0xffff;
 		ret |= sisusb_send_packet(sisusb, 10, &packet);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_write_memio_long(struct sisusb_usb_data *sisusb, int type,
+अटल पूर्णांक sisusb_ग_लिखो_memio_दीर्घ(काष्ठा sisusb_usb_data *sisusb, पूर्णांक type,
 		u32 addr, u32 data)
-{
-	struct sisusb_packet packet;
-	int ret = 0;
+अणु
+	काष्ठा sisusb_packet packet;
+	पूर्णांक ret = 0;
 
 	packet.address = addr & ~3;
 
-	switch (addr & 3) {
-	case 0:
+	चयन (addr & 3) अणु
+	हाल 0:
 		packet.header  = (type << 6) | 0x000f;
 		packet.data    = data;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		packet.header  = (type << 6) | 0x000e;
 		packet.data    = data << 8;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
@@ -718,8 +719,8 @@ static int sisusb_write_memio_long(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		packet.data    = data >> 24;
 		ret |= sisusb_send_packet(sisusb, 10, &packet);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		packet.header  = (type << 6) | 0x000c;
 		packet.data    = data << 16;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
@@ -727,8 +728,8 @@ static int sisusb_write_memio_long(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		packet.data    = data >> 16;
 		ret |= sisusb_send_packet(sisusb, 10, &packet);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		packet.header  = (type << 6) | 0x0008;
 		packet.data    = data << 24;
 		ret = sisusb_send_packet(sisusb, 10, &packet);
@@ -736,123 +737,123 @@ static int sisusb_write_memio_long(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		packet.data    = data >> 8;
 		ret |= sisusb_send_packet(sisusb, 10, &packet);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* The xxx_bulk routines copy a buffer of variable size. They treat the
- * buffer as chars, therefore lsb/msb has to be corrected if using the
- * byte/word/long/etc routines for speed-up
+ * buffer as अक्षरs, thereक्रमe lsb/msb has to be corrected अगर using the
+ * byte/word/दीर्घ/etc routines क्रम speed-up
  *
  * If data is from userland, set "userbuffer" (and clear "kernbuffer"),
- * if data is in kernel space, set "kernbuffer" (and clear "userbuffer");
- * if neither "kernbuffer" nor "userbuffer" are given, it is assumed
- * that the data already is in the transfer buffer "sisusb->obuf[index]".
+ * अगर data is in kernel space, set "kernbuffer" (and clear "userbuffer");
+ * अगर neither "kernbuffer" nor "userbuffer" are given, it is assumed
+ * that the data alपढ़ोy is in the transfer buffer "sisusb->obuf[index]".
  */
 
-static int sisusb_write_mem_bulk(struct sisusb_usb_data *sisusb, u32 addr,
-		char *kernbuffer, int length, const char __user *userbuffer,
-		int index, ssize_t *bytes_written)
-{
-	struct sisusb_packet packet;
-	int  ret = 0;
-	static int msgcount;
+अटल पूर्णांक sisusb_ग_लिखो_mem_bulk(काष्ठा sisusb_usb_data *sisusb, u32 addr,
+		अक्षर *kernbuffer, पूर्णांक length, स्थिर अक्षर __user *userbuffer,
+		पूर्णांक index, sमाप_प्रकार *bytes_written)
+अणु
+	काष्ठा sisusb_packet packet;
+	पूर्णांक  ret = 0;
+	अटल पूर्णांक msgcount;
 	u8   swap8, fromkern = kernbuffer ? 1 : 0;
 	u16  swap16;
 	u32  swap32, flag = (length >> 28) & 1;
 	u8 buf[4];
 
-	/* if neither kernbuffer not userbuffer are given, assume
+	/* अगर neither kernbuffer not userbuffer are given, assume
 	 * data in obuf
 	 */
-	if (!fromkern && !userbuffer)
+	अगर (!fromkern && !userbuffer)
 		kernbuffer = sisusb->obuf[index];
 
 	(*bytes_written = 0);
 
 	length &= 0x00ffffff;
 
-	while (length) {
-		switch (length) {
-		case 1:
-			if (userbuffer) {
-				if (get_user(swap8, (u8 __user *)userbuffer))
-					return -EFAULT;
-			} else
+	जबतक (length) अणु
+		चयन (length) अणु
+		हाल 1:
+			अगर (userbuffer) अणु
+				अगर (get_user(swap8, (u8 __user *)userbuffer))
+					वापस -EFAULT;
+			पूर्ण अन्यथा
 				swap8 = kernbuffer[0];
 
-			ret = sisusb_write_memio_byte(sisusb, SISUSB_TYPE_MEM,
+			ret = sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_MEM,
 					addr, swap8);
 
-			if (!ret)
+			अगर (!ret)
 				(*bytes_written)++;
 
-			return ret;
+			वापस ret;
 
-		case 2:
-			if (userbuffer) {
-				if (get_user(swap16, (u16 __user *)userbuffer))
-					return -EFAULT;
-			} else
+		हाल 2:
+			अगर (userbuffer) अणु
+				अगर (get_user(swap16, (u16 __user *)userbuffer))
+					वापस -EFAULT;
+			पूर्ण अन्यथा
 				swap16 = *((u16 *)kernbuffer);
 
-			ret = sisusb_write_memio_word(sisusb, SISUSB_TYPE_MEM,
+			ret = sisusb_ग_लिखो_memio_word(sisusb, SISUSB_TYPE_MEM,
 					addr, swap16);
 
-			if (!ret)
+			अगर (!ret)
 				(*bytes_written) += 2;
 
-			return ret;
+			वापस ret;
 
-		case 3:
-			if (userbuffer) {
-				if (copy_from_user(&buf, userbuffer, 3))
-					return -EFAULT;
-#ifdef __BIG_ENDIAN
+		हाल 3:
+			अगर (userbuffer) अणु
+				अगर (copy_from_user(&buf, userbuffer, 3))
+					वापस -EFAULT;
+#अगर_घोषित __BIG_ENDIAN
 				swap32 = (buf[0] << 16) |
 					 (buf[1] <<  8) |
 					 buf[2];
-#else
+#अन्यथा
 				swap32 = (buf[2] << 16) |
 					 (buf[1] <<  8) |
 					 buf[0];
-#endif
-			} else
-#ifdef __BIG_ENDIAN
+#पूर्ण_अगर
+			पूर्ण अन्यथा
+#अगर_घोषित __BIG_ENDIAN
 				swap32 = (kernbuffer[0] << 16) |
 					 (kernbuffer[1] <<  8) |
 					 kernbuffer[2];
-#else
+#अन्यथा
 				swap32 = (kernbuffer[2] << 16) |
 					 (kernbuffer[1] <<  8) |
 					 kernbuffer[0];
-#endif
+#पूर्ण_अगर
 
-			ret = sisusb_write_memio_24bit(sisusb, SISUSB_TYPE_MEM,
+			ret = sisusb_ग_लिखो_memio_24bit(sisusb, SISUSB_TYPE_MEM,
 					addr, swap32);
 
-			if (!ret)
+			अगर (!ret)
 				(*bytes_written) += 3;
 
-			return ret;
+			वापस ret;
 
-		case 4:
-			if (userbuffer) {
-				if (get_user(swap32, (u32 __user *)userbuffer))
-					return -EFAULT;
-			} else
+		हाल 4:
+			अगर (userbuffer) अणु
+				अगर (get_user(swap32, (u32 __user *)userbuffer))
+					वापस -EFAULT;
+			पूर्ण अन्यथा
 				swap32 = *((u32 *)kernbuffer);
 
-			ret = sisusb_write_memio_long(sisusb, SISUSB_TYPE_MEM,
+			ret = sisusb_ग_लिखो_memio_दीर्घ(sisusb, SISUSB_TYPE_MEM,
 					addr, swap32);
-			if (!ret)
+			अगर (!ret)
 				(*bytes_written) += 4;
 
-			return ret;
+			वापस ret;
 
-		default:
-			if ((length & ~3) > 0x10000) {
+		शेष:
+			अगर ((length & ~3) > 0x10000) अणु
 
 				packet.header  = 0x001f;
 				packet.address = 0x000001d4;
@@ -869,31 +870,31 @@ static int sisusb_write_mem_bulk(struct sisusb_usb_data *sisusb, u32 addr,
 				packet.data    = flag | 0x16;
 				ret |= sisusb_send_bridge_packet(sisusb, 10,
 						&packet, 0);
-				if (userbuffer) {
+				अगर (userbuffer) अणु
 					ret |= sisusb_send_bulk_msg(sisusb,
 							SISUSB_EP_GFX_LBULK_OUT,
 							(length & ~3),
-							NULL, userbuffer, 0,
+							शून्य, userbuffer, 0,
 							bytes_written, 0, 1);
 					userbuffer += (*bytes_written);
-				} else if (fromkern) {
+				पूर्ण अन्यथा अगर (fromkern) अणु
 					ret |= sisusb_send_bulk_msg(sisusb,
 							SISUSB_EP_GFX_LBULK_OUT,
 							(length & ~3),
-							kernbuffer, NULL, 0,
+							kernbuffer, शून्य, 0,
 							bytes_written, 0, 1);
 					kernbuffer += (*bytes_written);
-				} else {
+				पूर्ण अन्यथा अणु
 					ret |= sisusb_send_bulk_msg(sisusb,
 							SISUSB_EP_GFX_LBULK_OUT,
 							(length & ~3),
-							NULL, NULL, index,
+							शून्य, शून्य, index,
 							bytes_written, 0, 1);
 					kernbuffer += ((*bytes_written) &
 							(sisusb->obufsize-1));
-				}
+				पूर्ण
 
-			} else {
+			पूर्ण अन्यथा अणु
 
 				packet.header  = 0x001f;
 				packet.address = 0x00000194;
@@ -905,106 +906,106 @@ static int sisusb_write_mem_bulk(struct sisusb_usb_data *sisusb, u32 addr,
 				packet.data    = (length & ~3);
 				ret |= sisusb_send_bridge_packet(sisusb, 10,
 						&packet, 0);
-				if (sisusb->flagb0 != 0x16) {
+				अगर (sisusb->flagb0 != 0x16) अणु
 					packet.header  = 0x001f;
 					packet.address = 0x00000180;
 					packet.data    = flag | 0x16;
 					ret |= sisusb_send_bridge_packet(sisusb,
 							10, &packet, 0);
 					sisusb->flagb0 = 0x16;
-				}
-				if (userbuffer) {
+				पूर्ण
+				अगर (userbuffer) अणु
 					ret |= sisusb_send_bulk_msg(sisusb,
 							SISUSB_EP_GFX_BULK_OUT,
 							(length & ~3),
-							NULL, userbuffer, 0,
+							शून्य, userbuffer, 0,
 							bytes_written, 0, 1);
 					userbuffer += (*bytes_written);
-				} else if (fromkern) {
+				पूर्ण अन्यथा अगर (fromkern) अणु
 					ret |= sisusb_send_bulk_msg(sisusb,
 							SISUSB_EP_GFX_BULK_OUT,
 							(length & ~3),
-							kernbuffer, NULL, 0,
+							kernbuffer, शून्य, 0,
 							bytes_written, 0, 1);
 					kernbuffer += (*bytes_written);
-				} else {
+				पूर्ण अन्यथा अणु
 					ret |= sisusb_send_bulk_msg(sisusb,
 							SISUSB_EP_GFX_BULK_OUT,
 							(length & ~3),
-							NULL, NULL, index,
+							शून्य, शून्य, index,
 							bytes_written, 0, 1);
 					kernbuffer += ((*bytes_written) &
 							(sisusb->obufsize-1));
-				}
-			}
-			if (ret) {
+				पूर्ण
+			पूर्ण
+			अगर (ret) अणु
 				msgcount++;
-				if (msgcount < 500)
+				अगर (msgcount < 500)
 					dev_err(&sisusb->sisusb_dev->dev,
 							"Wrote %zd of %d bytes, error %d\n",
 							*bytes_written, length,
 							ret);
-				else if (msgcount == 500)
+				अन्यथा अगर (msgcount == 500)
 					dev_err(&sisusb->sisusb_dev->dev,
 							"Too many errors, logging stopped\n");
-			}
+			पूर्ण
 			addr += (*bytes_written);
 			length -= (*bytes_written);
-		}
+		पूर्ण
 
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
-	}
+	पूर्ण
 
-	return ret ? -EIO : 0;
-}
+	वापस ret ? -EIO : 0;
+पूर्ण
 
-/* Remember: Read data in packet is in machine-endianess! So for
- * byte, word, 24bit, long no endian correction is necessary.
+/* Remember: Read data in packet is in machine-endianess! So क्रम
+ * byte, word, 24bit, दीर्घ no endian correction is necessary.
  */
 
-static int sisusb_read_memio_byte(struct sisusb_usb_data *sisusb, int type,
+अटल पूर्णांक sisusb_पढ़ो_memio_byte(काष्ठा sisusb_usb_data *sisusb, पूर्णांक type,
 		u32 addr, u8 *data)
-{
-	struct sisusb_packet packet;
-	int ret;
+अणु
+	काष्ठा sisusb_packet packet;
+	पूर्णांक ret;
 
 	CLEARPACKET(&packet);
 	packet.header  = (1 << (addr & 3)) | (type << 6);
 	packet.address = addr & ~3;
 	ret = sisusb_send_packet(sisusb, 6, &packet);
 	*data = (u8)(packet.data >> ((addr & 3) << 3));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_read_memio_word(struct sisusb_usb_data *sisusb, int type,
+अटल पूर्णांक sisusb_पढ़ो_memio_word(काष्ठा sisusb_usb_data *sisusb, पूर्णांक type,
 		u32 addr, u16 *data)
-{
-	struct sisusb_packet packet;
-	int ret = 0;
+अणु
+	काष्ठा sisusb_packet packet;
+	पूर्णांक ret = 0;
 
 	CLEARPACKET(&packet);
 
 	packet.address = addr & ~3;
 
-	switch (addr & 3) {
-	case 0:
+	चयन (addr & 3) अणु
+	हाल 0:
 		packet.header = (type << 6) | 0x0003;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = (u16)(packet.data);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		packet.header = (type << 6) | 0x0006;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = (u16)(packet.data >> 8);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		packet.header = (type << 6) | 0x000c;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = (u16)(packet.data >> 16);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		packet.header = (type << 6) | 0x0008;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = (u16)(packet.data >> 24);
@@ -1012,31 +1013,31 @@ static int sisusb_read_memio_word(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		ret |= sisusb_send_packet(sisusb, 6, &packet);
 		*data |= (u16)(packet.data << 8);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_read_memio_24bit(struct sisusb_usb_data *sisusb, int type,
+अटल पूर्णांक sisusb_पढ़ो_memio_24bit(काष्ठा sisusb_usb_data *sisusb, पूर्णांक type,
 		u32 addr, u32 *data)
-{
-	struct sisusb_packet packet;
-	int ret = 0;
+अणु
+	काष्ठा sisusb_packet packet;
+	पूर्णांक ret = 0;
 
 	packet.address = addr & ~3;
 
-	switch (addr & 3) {
-	case 0:
+	चयन (addr & 3) अणु
+	हाल 0:
 		packet.header  = (type << 6) | 0x0007;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = packet.data & 0x00ffffff;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		packet.header  = (type << 6) | 0x000e;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = packet.data >> 8;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		packet.header  = (type << 6) | 0x000c;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = packet.data >> 16;
@@ -1044,8 +1045,8 @@ static int sisusb_read_memio_24bit(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		ret |= sisusb_send_packet(sisusb, 6, &packet);
 		*data |= ((packet.data & 0xff) << 16);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		packet.header  = (type << 6) | 0x0008;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = packet.data >> 24;
@@ -1053,26 +1054,26 @@ static int sisusb_read_memio_24bit(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		ret |= sisusb_send_packet(sisusb, 6, &packet);
 		*data |= ((packet.data & 0xffff) << 8);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_read_memio_long(struct sisusb_usb_data *sisusb, int type,
+अटल पूर्णांक sisusb_पढ़ो_memio_दीर्घ(काष्ठा sisusb_usb_data *sisusb, पूर्णांक type,
 		u32 addr, u32 *data)
-{
-	struct sisusb_packet packet;
-	int ret = 0;
+अणु
+	काष्ठा sisusb_packet packet;
+	पूर्णांक ret = 0;
 
 	packet.address = addr & ~3;
 
-	switch (addr & 3) {
-	case 0:
+	चयन (addr & 3) अणु
+	हाल 0:
 		packet.header  = (type << 6) | 0x000f;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = packet.data;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		packet.header  = (type << 6) | 0x000e;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = packet.data >> 8;
@@ -1080,8 +1081,8 @@ static int sisusb_read_memio_long(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		ret |= sisusb_send_packet(sisusb, 6, &packet);
 		*data |= (packet.data << 24);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		packet.header  = (type << 6) | 0x000c;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = packet.data >> 16;
@@ -1089,8 +1090,8 @@ static int sisusb_read_memio_long(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		ret |= sisusb_send_packet(sisusb, 6, &packet);
 		*data |= (packet.data << 16);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		packet.header  = (type << 6) | 0x0008;
 		ret = sisusb_send_packet(sisusb, 6, &packet);
 		*data = packet.data >> 24;
@@ -1098,350 +1099,350 @@ static int sisusb_read_memio_long(struct sisusb_usb_data *sisusb, int type,
 		packet.address = (addr & ~3) + 4;
 		ret |= sisusb_send_packet(sisusb, 6, &packet);
 		*data |= (packet.data << 8);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_read_mem_bulk(struct sisusb_usb_data *sisusb, u32 addr,
-		char *kernbuffer, int length, char __user *userbuffer,
-		ssize_t *bytes_read)
-{
-	int ret = 0;
-	char buf[4];
+अटल पूर्णांक sisusb_पढ़ो_mem_bulk(काष्ठा sisusb_usb_data *sisusb, u32 addr,
+		अक्षर *kernbuffer, पूर्णांक length, अक्षर __user *userbuffer,
+		sमाप_प्रकार *bytes_पढ़ो)
+अणु
+	पूर्णांक ret = 0;
+	अक्षर buf[4];
 	u16 swap16;
 	u32 swap32;
 
-	(*bytes_read = 0);
+	(*bytes_पढ़ो = 0);
 
 	length &= 0x00ffffff;
 
-	while (length) {
-		switch (length) {
-		case 1:
-			ret |= sisusb_read_memio_byte(sisusb, SISUSB_TYPE_MEM,
+	जबतक (length) अणु
+		चयन (length) अणु
+		हाल 1:
+			ret |= sisusb_पढ़ो_memio_byte(sisusb, SISUSB_TYPE_MEM,
 					addr, &buf[0]);
-			if (!ret) {
-				(*bytes_read)++;
-				if (userbuffer) {
-					if (put_user(buf[0], (u8 __user *)userbuffer))
-						return -EFAULT;
-				} else
+			अगर (!ret) अणु
+				(*bytes_पढ़ो)++;
+				अगर (userbuffer) अणु
+					अगर (put_user(buf[0], (u8 __user *)userbuffer))
+						वापस -EFAULT;
+				पूर्ण अन्यथा
 					kernbuffer[0] = buf[0];
-			}
-			return ret;
+			पूर्ण
+			वापस ret;
 
-		case 2:
-			ret |= sisusb_read_memio_word(sisusb, SISUSB_TYPE_MEM,
+		हाल 2:
+			ret |= sisusb_पढ़ो_memio_word(sisusb, SISUSB_TYPE_MEM,
 					addr, &swap16);
-			if (!ret) {
-				(*bytes_read) += 2;
-				if (userbuffer) {
-					if (put_user(swap16, (u16 __user *)userbuffer))
-						return -EFAULT;
-				} else {
+			अगर (!ret) अणु
+				(*bytes_पढ़ो) += 2;
+				अगर (userbuffer) अणु
+					अगर (put_user(swap16, (u16 __user *)userbuffer))
+						वापस -EFAULT;
+				पूर्ण अन्यथा अणु
 					*((u16 *)kernbuffer) = swap16;
-				}
-			}
-			return ret;
+				पूर्ण
+			पूर्ण
+			वापस ret;
 
-		case 3:
-			ret |= sisusb_read_memio_24bit(sisusb, SISUSB_TYPE_MEM,
+		हाल 3:
+			ret |= sisusb_पढ़ो_memio_24bit(sisusb, SISUSB_TYPE_MEM,
 					addr, &swap32);
-			if (!ret) {
-				(*bytes_read) += 3;
-#ifdef __BIG_ENDIAN
+			अगर (!ret) अणु
+				(*bytes_पढ़ो) += 3;
+#अगर_घोषित __BIG_ENDIAN
 				buf[0] = (swap32 >> 16) & 0xff;
 				buf[1] = (swap32 >> 8) & 0xff;
 				buf[2] = swap32 & 0xff;
-#else
+#अन्यथा
 				buf[2] = (swap32 >> 16) & 0xff;
 				buf[1] = (swap32 >> 8) & 0xff;
 				buf[0] = swap32 & 0xff;
-#endif
-				if (userbuffer) {
-					if (copy_to_user(userbuffer,
+#पूर्ण_अगर
+				अगर (userbuffer) अणु
+					अगर (copy_to_user(userbuffer,
 							&buf[0], 3))
-						return -EFAULT;
-				} else {
+						वापस -EFAULT;
+				पूर्ण अन्यथा अणु
 					kernbuffer[0] = buf[0];
 					kernbuffer[1] = buf[1];
 					kernbuffer[2] = buf[2];
-				}
-			}
-			return ret;
+				पूर्ण
+			पूर्ण
+			वापस ret;
 
-		default:
-			ret |= sisusb_read_memio_long(sisusb, SISUSB_TYPE_MEM,
+		शेष:
+			ret |= sisusb_पढ़ो_memio_दीर्घ(sisusb, SISUSB_TYPE_MEM,
 					addr, &swap32);
-			if (!ret) {
-				(*bytes_read) += 4;
-				if (userbuffer) {
-					if (put_user(swap32, (u32 __user *)userbuffer))
-						return -EFAULT;
+			अगर (!ret) अणु
+				(*bytes_पढ़ो) += 4;
+				अगर (userbuffer) अणु
+					अगर (put_user(swap32, (u32 __user *)userbuffer))
+						वापस -EFAULT;
 
 					userbuffer += 4;
-				} else {
+				पूर्ण अन्यथा अणु
 					*((u32 *)kernbuffer) = swap32;
 					kernbuffer += 4;
-				}
+				पूर्ण
 				addr += 4;
 				length -= 4;
-			}
-		}
-		if (ret)
-			break;
-	}
+			पूर्ण
+		पूर्ण
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* High level: Gfx (indexed) register access */
+/* High level: Gfx (indexed) रेजिस्टर access */
 
-#ifdef CONFIG_USB_SISUSBVGA_CON
-int sisusb_setreg(struct sisusb_usb_data *sisusb, u32 port, u8 data)
-{
-	return sisusb_write_memio_byte(sisusb, SISUSB_TYPE_IO, port, data);
-}
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
+पूर्णांक sisusb_setreg(काष्ठा sisusb_usb_data *sisusb, u32 port, u8 data)
+अणु
+	वापस sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_IO, port, data);
+पूर्ण
 
-int sisusb_getreg(struct sisusb_usb_data *sisusb, u32 port, u8 *data)
-{
-	return sisusb_read_memio_byte(sisusb, SISUSB_TYPE_IO, port, data);
-}
-#endif
+पूर्णांक sisusb_getreg(काष्ठा sisusb_usb_data *sisusb, u32 port, u8 *data)
+अणु
+	वापस sisusb_पढ़ो_memio_byte(sisusb, SISUSB_TYPE_IO, port, data);
+पूर्ण
+#पूर्ण_अगर
 
-int sisusb_setidxreg(struct sisusb_usb_data *sisusb, u32 port,
+पूर्णांक sisusb_setidxreg(काष्ठा sisusb_usb_data *sisusb, u32 port,
 		u8 index, u8 data)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	ret = sisusb_write_memio_byte(sisusb, SISUSB_TYPE_IO, port, index);
-	ret |= sisusb_write_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, data);
-	return ret;
-}
+	ret = sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_IO, port, index);
+	ret |= sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, data);
+	वापस ret;
+पूर्ण
 
-int sisusb_getidxreg(struct sisusb_usb_data *sisusb, u32 port,
+पूर्णांक sisusb_getidxreg(काष्ठा sisusb_usb_data *sisusb, u32 port,
 		u8 index, u8 *data)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	ret = sisusb_write_memio_byte(sisusb, SISUSB_TYPE_IO, port, index);
-	ret |= sisusb_read_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, data);
-	return ret;
-}
+	ret = sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_IO, port, index);
+	ret |= sisusb_पढ़ो_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, data);
+	वापस ret;
+पूर्ण
 
-int sisusb_setidxregandor(struct sisusb_usb_data *sisusb, u32 port, u8 idx,
+पूर्णांक sisusb_setidxreganकरोr(काष्ठा sisusb_usb_data *sisusb, u32 port, u8 idx,
 		u8 myand, u8 myor)
-{
-	int ret;
-	u8 tmp;
+अणु
+	पूर्णांक ret;
+	u8 पंचांगp;
 
-	ret = sisusb_write_memio_byte(sisusb, SISUSB_TYPE_IO, port, idx);
-	ret |= sisusb_read_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, &tmp);
-	tmp &= myand;
-	tmp |= myor;
-	ret |= sisusb_write_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, tmp);
-	return ret;
-}
+	ret = sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_IO, port, idx);
+	ret |= sisusb_पढ़ो_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, &पंचांगp);
+	पंचांगp &= myand;
+	पंचांगp |= myor;
+	ret |= sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, पंचांगp);
+	वापस ret;
+पूर्ण
 
-static int sisusb_setidxregmask(struct sisusb_usb_data *sisusb,
+अटल पूर्णांक sisusb_setidxregmask(काष्ठा sisusb_usb_data *sisusb,
 		u32 port, u8 idx, u8 data, u8 mask)
-{
-	int ret;
-	u8 tmp;
+अणु
+	पूर्णांक ret;
+	u8 पंचांगp;
 
-	ret = sisusb_write_memio_byte(sisusb, SISUSB_TYPE_IO, port, idx);
-	ret |= sisusb_read_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, &tmp);
-	tmp &= ~(mask);
-	tmp |= (data & mask);
-	ret |= sisusb_write_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, tmp);
-	return ret;
-}
+	ret = sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_IO, port, idx);
+	ret |= sisusb_पढ़ो_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, &पंचांगp);
+	पंचांगp &= ~(mask);
+	पंचांगp |= (data & mask);
+	ret |= sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_IO, port + 1, पंचांगp);
+	वापस ret;
+पूर्ण
 
-int sisusb_setidxregor(struct sisusb_usb_data *sisusb, u32 port,
+पूर्णांक sisusb_setidxregor(काष्ठा sisusb_usb_data *sisusb, u32 port,
 		u8 index, u8 myor)
-{
-	return sisusb_setidxregandor(sisusb, port, index, 0xff, myor);
-}
+अणु
+	वापस sisusb_setidxreganकरोr(sisusb, port, index, 0xff, myor);
+पूर्ण
 
-int sisusb_setidxregand(struct sisusb_usb_data *sisusb, u32 port,
+पूर्णांक sisusb_setidxregand(काष्ठा sisusb_usb_data *sisusb, u32 port,
 		u8 idx, u8 myand)
-{
-	return sisusb_setidxregandor(sisusb, port, idx, myand, 0x00);
-}
+अणु
+	वापस sisusb_setidxreganकरोr(sisusb, port, idx, myand, 0x00);
+पूर्ण
 
-/* Write/read video ram */
+/* Write/पढ़ो video ram */
 
-#ifdef CONFIG_USB_SISUSBVGA_CON
-int sisusb_writeb(struct sisusb_usb_data *sisusb, u32 adr, u8 data)
-{
-	return sisusb_write_memio_byte(sisusb, SISUSB_TYPE_MEM, adr, data);
-}
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
+पूर्णांक sisusb_ग_लिखोb(काष्ठा sisusb_usb_data *sisusb, u32 adr, u8 data)
+अणु
+	वापस sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_MEM, adr, data);
+पूर्ण
 
-int sisusb_readb(struct sisusb_usb_data *sisusb, u32 adr, u8 *data)
-{
-	return sisusb_read_memio_byte(sisusb, SISUSB_TYPE_MEM, adr, data);
-}
+पूर्णांक sisusb_पढ़ोb(काष्ठा sisusb_usb_data *sisusb, u32 adr, u8 *data)
+अणु
+	वापस sisusb_पढ़ो_memio_byte(sisusb, SISUSB_TYPE_MEM, adr, data);
+पूर्ण
 
-int sisusb_copy_memory(struct sisusb_usb_data *sisusb, u8 *src,
-		u32 dest, int length)
-{
-	size_t dummy;
+पूर्णांक sisusb_copy_memory(काष्ठा sisusb_usb_data *sisusb, u8 *src,
+		u32 dest, पूर्णांक length)
+अणु
+	माप_प्रकार dummy;
 
-	return sisusb_write_mem_bulk(sisusb, dest, src, length,
-			NULL, 0, &dummy);
-}
+	वापस sisusb_ग_लिखो_mem_bulk(sisusb, dest, src, length,
+			शून्य, 0, &dummy);
+पूर्ण
 
-#ifdef SISUSBENDIANTEST
-static int sisusb_read_memory(struct sisusb_usb_data *sisusb, char *dest,
-		u32 src, int length)
-{
-	size_t dummy;
+#अगर_घोषित SISUSBENDIANTEST
+अटल पूर्णांक sisusb_पढ़ो_memory(काष्ठा sisusb_usb_data *sisusb, अक्षर *dest,
+		u32 src, पूर्णांक length)
+अणु
+	माप_प्रकार dummy;
 
-	return sisusb_read_mem_bulk(sisusb, src, dest, length,
-			NULL, &dummy);
-}
-#endif
-#endif
+	वापस sisusb_पढ़ो_mem_bulk(sisusb, src, dest, length,
+			शून्य, &dummy);
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#ifdef SISUSBENDIANTEST
-static void sisusb_testreadwrite(struct sisusb_usb_data *sisusb)
-{
-	static u8 srcbuffer[] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 };
-	char destbuffer[10];
-	int i, j;
+#अगर_घोषित SISUSBENDIANTEST
+अटल व्योम sisusb_testपढ़ोग_लिखो(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	अटल u8 srcbuffer[] = अणु 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 पूर्ण;
+	अक्षर destbuffer[10];
+	पूर्णांक i, j;
 
 	sisusb_copy_memory(sisusb, srcbuffer, sisusb->vrambase, 7);
 
-	for (i = 1; i <= 7; i++) {
+	क्रम (i = 1; i <= 7; i++) अणु
 		dev_dbg(&sisusb->sisusb_dev->dev,
 				"sisusb: rwtest %d bytes\n", i);
-		sisusb_read_memory(sisusb, destbuffer, sisusb->vrambase, i);
-		for (j = 0; j < i; j++) {
+		sisusb_पढ़ो_memory(sisusb, destbuffer, sisusb->vrambase, i);
+		क्रम (j = 0; j < i; j++) अणु
 			dev_dbg(&sisusb->sisusb_dev->dev,
 					"rwtest read[%d] = %x\n",
 					j, destbuffer[j]);
-		}
-	}
-}
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-/* access pci config registers (reg numbers 0, 4, 8, etc) */
+/* access pci config रेजिस्टरs (reg numbers 0, 4, 8, etc) */
 
-static int sisusb_write_pci_config(struct sisusb_usb_data *sisusb,
-		int regnum, u32 data)
-{
-	struct sisusb_packet packet;
+अटल पूर्णांक sisusb_ग_लिखो_pci_config(काष्ठा sisusb_usb_data *sisusb,
+		पूर्णांक regnum, u32 data)
+अणु
+	काष्ठा sisusb_packet packet;
 
 	packet.header = 0x008f;
 	packet.address = regnum | 0x10000;
 	packet.data = data;
-	return sisusb_send_packet(sisusb, 10, &packet);
-}
+	वापस sisusb_send_packet(sisusb, 10, &packet);
+पूर्ण
 
-static int sisusb_read_pci_config(struct sisusb_usb_data *sisusb,
-		int regnum, u32 *data)
-{
-	struct sisusb_packet packet;
-	int ret;
+अटल पूर्णांक sisusb_पढ़ो_pci_config(काष्ठा sisusb_usb_data *sisusb,
+		पूर्णांक regnum, u32 *data)
+अणु
+	काष्ठा sisusb_packet packet;
+	पूर्णांक ret;
 
 	packet.header = 0x008f;
 	packet.address = (u32)regnum | 0x10000;
 	ret = sisusb_send_packet(sisusb, 6, &packet);
 	*data = packet.data;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Clear video RAM */
 
-static int sisusb_clear_vram(struct sisusb_usb_data *sisusb,
-		u32 address, int length)
-{
-	int ret, i;
-	ssize_t j;
+अटल पूर्णांक sisusb_clear_vram(काष्ठा sisusb_usb_data *sisusb,
+		u32 address, पूर्णांक length)
+अणु
+	पूर्णांक ret, i;
+	sमाप_प्रकार j;
 
-	if (address < sisusb->vrambase)
-		return 1;
+	अगर (address < sisusb->vrambase)
+		वापस 1;
 
-	if (address >= sisusb->vrambase + sisusb->vramsize)
-		return 1;
+	अगर (address >= sisusb->vrambase + sisusb->vramsize)
+		वापस 1;
 
-	if (address + length > sisusb->vrambase + sisusb->vramsize)
+	अगर (address + length > sisusb->vrambase + sisusb->vramsize)
 		length = sisusb->vrambase + sisusb->vramsize - address;
 
-	if (length <= 0)
-		return 0;
+	अगर (length <= 0)
+		वापस 0;
 
-	/* allocate free buffer/urb and clear the buffer */
+	/* allocate मुक्त buffer/urb and clear the buffer */
 	i = sisusb_alloc_outbuf(sisusb);
-	if (i < 0)
-		return -EBUSY;
+	अगर (i < 0)
+		वापस -EBUSY;
 
-	memset(sisusb->obuf[i], 0, sisusb->obufsize);
+	स_रखो(sisusb->obuf[i], 0, sisusb->obufsize);
 
-	/* We can write a length > buffer size here. The buffer
+	/* We can ग_लिखो a length > buffer size here. The buffer
 	 * data will simply be re-used (like a ring-buffer).
 	 */
-	ret = sisusb_write_mem_bulk(sisusb, address, NULL, length, NULL, i, &j);
+	ret = sisusb_ग_लिखो_mem_bulk(sisusb, address, शून्य, length, शून्य, i, &j);
 
 	/* Free the buffer/urb */
-	sisusb_free_outbuf(sisusb, i);
+	sisusb_मुक्त_outbuf(sisusb, i);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Initialize the graphics core (return 0 on success)
- * This resets the graphics hardware and puts it into
+/* Initialize the graphics core (वापस 0 on success)
+ * This resets the graphics hardware and माला_दो it पूर्णांकo
  * a defined mode (640x480@60Hz)
  */
 
-#define GETREG(r, d) sisusb_read_memio_byte(sisusb, SISUSB_TYPE_IO, r, d)
-#define SETREG(r, d) sisusb_write_memio_byte(sisusb, SISUSB_TYPE_IO, r, d)
-#define SETIREG(r, i, d) sisusb_setidxreg(sisusb, r, i, d)
-#define GETIREG(r, i, d) sisusb_getidxreg(sisusb, r, i, d)
-#define SETIREGOR(r, i, o) sisusb_setidxregor(sisusb, r, i, o)
-#define SETIREGAND(r, i, a) sisusb_setidxregand(sisusb, r, i, a)
-#define SETIREGANDOR(r, i, a, o) sisusb_setidxregandor(sisusb, r, i, a, o)
-#define READL(a, d) sisusb_read_memio_long(sisusb, SISUSB_TYPE_MEM, a, d)
-#define WRITEL(a, d) sisusb_write_memio_long(sisusb, SISUSB_TYPE_MEM, a, d)
-#define READB(a, d) sisusb_read_memio_byte(sisusb, SISUSB_TYPE_MEM, a, d)
-#define WRITEB(a, d) sisusb_write_memio_byte(sisusb, SISUSB_TYPE_MEM, a, d)
+#घोषणा GETREG(r, d) sisusb_पढ़ो_memio_byte(sisusb, SISUSB_TYPE_IO, r, d)
+#घोषणा SETREG(r, d) sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_IO, r, d)
+#घोषणा SETIREG(r, i, d) sisusb_setidxreg(sisusb, r, i, d)
+#घोषणा GETIREG(r, i, d) sisusb_getidxreg(sisusb, r, i, d)
+#घोषणा SETIREGOR(r, i, o) sisusb_setidxregor(sisusb, r, i, o)
+#घोषणा SETIREGAND(r, i, a) sisusb_setidxregand(sisusb, r, i, a)
+#घोषणा SETIREGANDOR(r, i, a, o) sisusb_setidxreganकरोr(sisusb, r, i, a, o)
+#घोषणा READL(a, d) sisusb_पढ़ो_memio_दीर्घ(sisusb, SISUSB_TYPE_MEM, a, d)
+#घोषणा WRITEL(a, d) sisusb_ग_लिखो_memio_दीर्घ(sisusb, SISUSB_TYPE_MEM, a, d)
+#घोषणा READB(a, d) sisusb_पढ़ो_memio_byte(sisusb, SISUSB_TYPE_MEM, a, d)
+#घोषणा WRITEB(a, d) sisusb_ग_लिखो_memio_byte(sisusb, SISUSB_TYPE_MEM, a, d)
 
-static int sisusb_triggersr16(struct sisusb_usb_data *sisusb, u8 ramtype)
-{
-	int ret;
-	u8 tmp8;
+अटल पूर्णांक sisusb_triggersr16(काष्ठा sisusb_usb_data *sisusb, u8 ramtype)
+अणु
+	पूर्णांक ret;
+	u8 पंचांगp8;
 
-	ret = GETIREG(SISSR, 0x16, &tmp8);
-	if (ramtype <= 1) {
-		tmp8 &= 0x3f;
-		ret |= SETIREG(SISSR, 0x16, tmp8);
-		tmp8 |= 0x80;
-		ret |= SETIREG(SISSR, 0x16, tmp8);
-	} else {
-		tmp8 |= 0xc0;
-		ret |= SETIREG(SISSR, 0x16, tmp8);
-		tmp8 &= 0x0f;
-		ret |= SETIREG(SISSR, 0x16, tmp8);
-		tmp8 |= 0x80;
-		ret |= SETIREG(SISSR, 0x16, tmp8);
-		tmp8 &= 0x0f;
-		ret |= SETIREG(SISSR, 0x16, tmp8);
-		tmp8 |= 0xd0;
-		ret |= SETIREG(SISSR, 0x16, tmp8);
-		tmp8 &= 0x0f;
-		ret |= SETIREG(SISSR, 0x16, tmp8);
-		tmp8 |= 0xa0;
-		ret |= SETIREG(SISSR, 0x16, tmp8);
-	}
-	return ret;
-}
+	ret = GETIREG(SISSR, 0x16, &पंचांगp8);
+	अगर (ramtype <= 1) अणु
+		पंचांगp8 &= 0x3f;
+		ret |= SETIREG(SISSR, 0x16, पंचांगp8);
+		पंचांगp8 |= 0x80;
+		ret |= SETIREG(SISSR, 0x16, पंचांगp8);
+	पूर्ण अन्यथा अणु
+		पंचांगp8 |= 0xc0;
+		ret |= SETIREG(SISSR, 0x16, पंचांगp8);
+		पंचांगp8 &= 0x0f;
+		ret |= SETIREG(SISSR, 0x16, पंचांगp8);
+		पंचांगp8 |= 0x80;
+		ret |= SETIREG(SISSR, 0x16, पंचांगp8);
+		पंचांगp8 &= 0x0f;
+		ret |= SETIREG(SISSR, 0x16, पंचांगp8);
+		पंचांगp8 |= 0xd0;
+		ret |= SETIREG(SISSR, 0x16, पंचांगp8);
+		पंचांगp8 &= 0x0f;
+		ret |= SETIREG(SISSR, 0x16, पंचांगp8);
+		पंचांगp8 |= 0xa0;
+		ret |= SETIREG(SISSR, 0x16, पंचांगp8);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int sisusb_getbuswidth(struct sisusb_usb_data *sisusb,
-		int *bw, int *chab)
-{
-	int ret;
-	u8  ramtype, done = 0;
+अटल पूर्णांक sisusb_getbuswidth(काष्ठा sisusb_usb_data *sisusb,
+		पूर्णांक *bw, पूर्णांक *chab)
+अणु
+	पूर्णांक ret;
+	u8  ramtype, करोne = 0;
 	u32 t0, t1, t2, t3;
 	u32 ramptr = SISUSB_PCI_MEMBASE;
 
@@ -1450,12 +1451,12 @@ static int sisusb_getbuswidth(struct sisusb_usb_data *sisusb,
 
 	ret |= SETIREG(SISSR, 0x13, 0x00);
 
-	if (ramtype <= 1) {
+	अगर (ramtype <= 1) अणु
 		ret |= SETIREG(SISSR, 0x14, 0x12);
 		ret |= SETIREGAND(SISSR, 0x15, 0xef);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret |= SETIREG(SISSR, 0x14, 0x02);
-	}
+	पूर्ण
 
 	ret |= sisusb_triggersr16(sisusb, ramtype);
 	ret |= WRITEL(ramptr +  0, 0x01234567);
@@ -1471,17 +1472,17 @@ static int sisusb_getbuswidth(struct sisusb_usb_data *sisusb,
 	ret |= READL(ramptr +  8, &t2);
 	ret |= READL(ramptr + 12, &t3);
 
-	if (ramtype <= 1) {
+	अगर (ramtype <= 1) अणु
 
 		*chab = 0; *bw = 64;
 
-		if ((t3 != 0xcdef0123) || (t2 != 0x89abcdef)) {
-			if ((t1 == 0x456789ab) && (t0 == 0x01234567)) {
+		अगर ((t3 != 0xcdef0123) || (t2 != 0x89abcdef)) अणु
+			अगर ((t1 == 0x456789ab) && (t0 == 0x01234567)) अणु
 				*chab = 0; *bw = 64;
 				ret |= SETIREGAND(SISSR, 0x14, 0xfd);
-			}
-		}
-		if ((t1 != 0x456789ab) || (t0 != 0x01234567)) {
+			पूर्ण
+		पूर्ण
+		अगर ((t1 != 0x456789ab) || (t0 != 0x01234567)) अणु
 			*chab = 1; *bw = 64;
 			ret |= SETIREGANDOR(SISSR, 0x14, 0xfc, 0x01);
 
@@ -1494,32 +1495,32 @@ static int sisusb_getbuswidth(struct sisusb_usb_data *sisusb,
 			ret |= WRITEL(ramptr + 20, 0xaaaaaaaa);
 			ret |= READL(ramptr +  4, &t1);
 
-			if (t1 != 0xcdef0123) {
+			अगर (t1 != 0xcdef0123) अणु
 				*bw = 32;
 				ret |= SETIREGOR(SISSR, 0x15, 0x10);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 
-		*chab = 0; *bw = 64;	/* default: cha, bw = 64 */
+		*chab = 0; *bw = 64;	/* शेष: cha, bw = 64 */
 
-		done = 0;
+		करोne = 0;
 
-		if (t1 == 0x456789ab) {
-			if (t0 == 0x01234567) {
+		अगर (t1 == 0x456789ab) अणु
+			अगर (t0 == 0x01234567) अणु
 				*chab = 0; *bw = 64;
-				done = 1;
-			}
-		} else {
-			if (t0 == 0x01234567) {
+				करोne = 1;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (t0 == 0x01234567) अणु
 				*chab = 0; *bw = 32;
 				ret |= SETIREG(SISSR, 0x14, 0x00);
-				done = 1;
-			}
-		}
+				करोne = 1;
+			पूर्ण
+		पूर्ण
 
-		if (!done) {
+		अगर (!करोne) अणु
 			ret |= SETIREG(SISSR, 0x14, 0x03);
 			ret |= sisusb_triggersr16(sisusb, ramtype);
 
@@ -1534,244 +1535,244 @@ static int sisusb_getbuswidth(struct sisusb_usb_data *sisusb,
 			ret |= READL(ramptr +  0, &t0);
 			ret |= READL(ramptr +  4, &t1);
 
-			if (t1 == 0x456789ab) {
-				if (t0 == 0x01234567) {
+			अगर (t1 == 0x456789ab) अणु
+				अगर (t0 == 0x01234567) अणु
 					*chab = 1; *bw = 64;
-					return ret;
-				} /* else error */
-			} else {
-				if (t0 == 0x01234567) {
+					वापस ret;
+				पूर्ण /* अन्यथा error */
+			पूर्ण अन्यथा अणु
+				अगर (t0 == 0x01234567) अणु
 					*chab = 1; *bw = 32;
 					ret |= SETIREG(SISSR, 0x14, 0x01);
-				} /* else error */
-			}
-		}
-	}
-	return ret;
-}
+				पूर्ण /* अन्यथा error */
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int sisusb_verify_mclk(struct sisusb_usb_data *sisusb)
-{
-	int ret = 0;
+अटल पूर्णांक sisusb_verअगरy_mclk(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक ret = 0;
 	u32 ramptr = SISUSB_PCI_MEMBASE;
-	u8 tmp1, tmp2, i, j;
+	u8 पंचांगp1, पंचांगp2, i, j;
 
 	ret |= WRITEB(ramptr, 0xaa);
 	ret |= WRITEB(ramptr + 16, 0x55);
-	ret |= READB(ramptr, &tmp1);
-	ret |= READB(ramptr + 16, &tmp2);
-	if ((tmp1 != 0xaa) || (tmp2 != 0x55)) {
-		for (i = 0, j = 16; i < 2; i++, j += 16) {
-			ret |= GETIREG(SISSR, 0x21, &tmp1);
-			ret |= SETIREGAND(SISSR, 0x21, (tmp1 & 0xfb));
+	ret |= READB(ramptr, &पंचांगp1);
+	ret |= READB(ramptr + 16, &पंचांगp2);
+	अगर ((पंचांगp1 != 0xaa) || (पंचांगp2 != 0x55)) अणु
+		क्रम (i = 0, j = 16; i < 2; i++, j += 16) अणु
+			ret |= GETIREG(SISSR, 0x21, &पंचांगp1);
+			ret |= SETIREGAND(SISSR, 0x21, (पंचांगp1 & 0xfb));
 			ret |= SETIREGOR(SISSR, 0x3c, 0x01);  /* not on 330 */
 			ret |= SETIREGAND(SISSR, 0x3c, 0xfe); /* not on 330 */
-			ret |= SETIREG(SISSR, 0x21, tmp1);
+			ret |= SETIREG(SISSR, 0x21, पंचांगp1);
 			ret |= WRITEB(ramptr + 16 + j, j);
-			ret |= READB(ramptr + 16 + j, &tmp1);
-			if (tmp1 == j) {
+			ret |= READB(ramptr + 16 + j, &पंचांगp1);
+			अगर (पंचांगp1 == j) अणु
 				ret |= WRITEB(ramptr + j, j);
-				break;
-			}
-		}
-	}
-	return ret;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int sisusb_set_rank(struct sisusb_usb_data *sisusb, int *iret,
-		int index, u8 rankno, u8 chab, const u8 dramtype[][5], int bw)
-{
-	int ret = 0, ranksize;
-	u8 tmp;
+अटल पूर्णांक sisusb_set_rank(काष्ठा sisusb_usb_data *sisusb, पूर्णांक *iret,
+		पूर्णांक index, u8 rankno, u8 chab, स्थिर u8 dramtype[][5], पूर्णांक bw)
+अणु
+	पूर्णांक ret = 0, ranksize;
+	u8 पंचांगp;
 
 	*iret = 0;
 
-	if ((rankno == 2) && (dramtype[index][0] == 2))
-		return ret;
+	अगर ((rankno == 2) && (dramtype[index][0] == 2))
+		वापस ret;
 
 	ranksize = dramtype[index][3] / 2 * bw / 32;
 
-	if ((ranksize * rankno) > 128)
-		return ret;
+	अगर ((ranksize * rankno) > 128)
+		वापस ret;
 
-	tmp = 0;
-	while ((ranksize >>= 1) > 0)
-		tmp += 0x10;
+	पंचांगp = 0;
+	जबतक ((ranksize >>= 1) > 0)
+		पंचांगp += 0x10;
 
-	tmp |= ((rankno - 1) << 2);
-	tmp |= ((bw / 64) & 0x02);
-	tmp |= (chab & 0x01);
+	पंचांगp |= ((rankno - 1) << 2);
+	पंचांगp |= ((bw / 64) & 0x02);
+	पंचांगp |= (chab & 0x01);
 
-	ret = SETIREG(SISSR, 0x14, tmp);
+	ret = SETIREG(SISSR, 0x14, पंचांगp);
 	ret |= sisusb_triggersr16(sisusb, 0); /* sic! */
 
 	*iret = 1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_check_rbc(struct sisusb_usb_data *sisusb, int *iret,
-		u32 inc, int testn)
-{
-	int ret = 0, i;
-	u32 j, tmp;
+अटल पूर्णांक sisusb_check_rbc(काष्ठा sisusb_usb_data *sisusb, पूर्णांक *iret,
+		u32 inc, पूर्णांक testn)
+अणु
+	पूर्णांक ret = 0, i;
+	u32 j, पंचांगp;
 
 	*iret = 0;
 
-	for (i = 0, j = 0; i < testn; i++) {
+	क्रम (i = 0, j = 0; i < testn; i++) अणु
 		ret |= WRITEL(sisusb->vrambase + j, j);
 		j += inc;
-	}
+	पूर्ण
 
-	for (i = 0, j = 0; i < testn; i++) {
-		ret |= READL(sisusb->vrambase + j, &tmp);
-		if (tmp != j)
-			return ret;
+	क्रम (i = 0, j = 0; i < testn; i++) अणु
+		ret |= READL(sisusb->vrambase + j, &पंचांगp);
+		अगर (पंचांगp != j)
+			वापस ret;
 
 		j += inc;
-	}
+	पूर्ण
 
 	*iret = 1;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_check_ranks(struct sisusb_usb_data *sisusb,
-		int *iret, int rankno, int idx, int bw, const u8 rtype[][5])
-{
-	int ret = 0, i, i2ret;
+अटल पूर्णांक sisusb_check_ranks(काष्ठा sisusb_usb_data *sisusb,
+		पूर्णांक *iret, पूर्णांक rankno, पूर्णांक idx, पूर्णांक bw, स्थिर u8 rtype[][5])
+अणु
+	पूर्णांक ret = 0, i, i2ret;
 	u32 inc;
 
 	*iret = 0;
 
-	for (i = rankno; i >= 1; i--) {
+	क्रम (i = rankno; i >= 1; i--) अणु
 		inc = 1 << (rtype[idx][2] + rtype[idx][1] + rtype[idx][0] +
 				bw / 64 + i);
 		ret |= sisusb_check_rbc(sisusb, &i2ret, inc, 2);
-		if (!i2ret)
-			return ret;
-	}
+		अगर (!i2ret)
+			वापस ret;
+	पूर्ण
 
 	inc = 1 << (rtype[idx][2] + bw / 64 + 2);
 	ret |= sisusb_check_rbc(sisusb, &i2ret, inc, 4);
-	if (!i2ret)
-		return ret;
+	अगर (!i2ret)
+		वापस ret;
 
 	inc = 1 << (10 + bw / 64);
 	ret |= sisusb_check_rbc(sisusb, &i2ret, inc, 2);
-	if (!i2ret)
-		return ret;
+	अगर (!i2ret)
+		वापस ret;
 
 	*iret = 1;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_get_sdram_size(struct sisusb_usb_data *sisusb, int *iret,
-		int bw, int chab)
-{
-	int ret = 0, i2ret = 0, i, j;
-	static const u8 sdramtype[13][5] = {
-		{ 2, 12, 9, 64, 0x35 },
-		{ 1, 13, 9, 64, 0x44 },
-		{ 2, 12, 8, 32, 0x31 },
-		{ 2, 11, 9, 32, 0x25 },
-		{ 1, 12, 9, 32, 0x34 },
-		{ 1, 13, 8, 32, 0x40 },
-		{ 2, 11, 8, 16, 0x21 },
-		{ 1, 12, 8, 16, 0x30 },
-		{ 1, 11, 9, 16, 0x24 },
-		{ 1, 11, 8,  8, 0x20 },
-		{ 2,  9, 8,  4, 0x01 },
-		{ 1, 10, 8,  4, 0x10 },
-		{ 1,  9, 8,  2, 0x00 }
-	};
+अटल पूर्णांक sisusb_get_sdram_size(काष्ठा sisusb_usb_data *sisusb, पूर्णांक *iret,
+		पूर्णांक bw, पूर्णांक chab)
+अणु
+	पूर्णांक ret = 0, i2ret = 0, i, j;
+	अटल स्थिर u8 sdramtype[13][5] = अणु
+		अणु 2, 12, 9, 64, 0x35 पूर्ण,
+		अणु 1, 13, 9, 64, 0x44 पूर्ण,
+		अणु 2, 12, 8, 32, 0x31 पूर्ण,
+		अणु 2, 11, 9, 32, 0x25 पूर्ण,
+		अणु 1, 12, 9, 32, 0x34 पूर्ण,
+		अणु 1, 13, 8, 32, 0x40 पूर्ण,
+		अणु 2, 11, 8, 16, 0x21 पूर्ण,
+		अणु 1, 12, 8, 16, 0x30 पूर्ण,
+		अणु 1, 11, 9, 16, 0x24 पूर्ण,
+		अणु 1, 11, 8,  8, 0x20 पूर्ण,
+		अणु 2,  9, 8,  4, 0x01 पूर्ण,
+		अणु 1, 10, 8,  4, 0x10 पूर्ण,
+		अणु 1,  9, 8,  2, 0x00 पूर्ण
+	पूर्ण;
 
 	*iret = 1; /* error */
 
-	for (i = 0; i < 13; i++) {
+	क्रम (i = 0; i < 13; i++) अणु
 		ret |= SETIREGANDOR(SISSR, 0x13, 0x80, sdramtype[i][4]);
-		for (j = 2; j > 0; j--) {
+		क्रम (j = 2; j > 0; j--) अणु
 			ret |= sisusb_set_rank(sisusb, &i2ret, i, j, chab,
 					sdramtype, bw);
-			if (!i2ret)
-				continue;
+			अगर (!i2ret)
+				जारी;
 
 			ret |= sisusb_check_ranks(sisusb, &i2ret, j, i, bw,
 					sdramtype);
-			if (i2ret) {
+			अगर (i2ret) अणु
 				*iret = 0;	/* ram size found */
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_setup_screen(struct sisusb_usb_data *sisusb,
-		int clrall, int drwfr)
-{
-	int ret = 0;
+अटल पूर्णांक sisusb_setup_screen(काष्ठा sisusb_usb_data *sisusb,
+		पूर्णांक clrall, पूर्णांक drwfr)
+अणु
+	पूर्णांक ret = 0;
 	u32 address;
-	int i, length, modex, modey, bpp;
+	पूर्णांक i, length, modex, modey, bpp;
 
 	modex = 640; modey = 480; bpp = 2;
 
 	address = sisusb->vrambase;	/* Clear video ram */
 
-	if (clrall)
+	अगर (clrall)
 		length = sisusb->vramsize;
-	else
+	अन्यथा
 		length = modex * bpp * modey;
 
 	ret = sisusb_clear_vram(sisusb, address, length);
 
-	if (!ret && drwfr) {
-		for (i = 0; i < modex; i++) {
+	अगर (!ret && drwfr) अणु
+		क्रम (i = 0; i < modex; i++) अणु
 			address = sisusb->vrambase + (i * bpp);
-			ret |= sisusb_write_memio_word(sisusb, SISUSB_TYPE_MEM,
+			ret |= sisusb_ग_लिखो_memio_word(sisusb, SISUSB_TYPE_MEM,
 					address, 0xf100);
 			address += (modex * (modey-1) * bpp);
-			ret |= sisusb_write_memio_word(sisusb, SISUSB_TYPE_MEM,
+			ret |= sisusb_ग_लिखो_memio_word(sisusb, SISUSB_TYPE_MEM,
 					address, 0xf100);
-		}
-		for (i = 0; i < modey; i++) {
+		पूर्ण
+		क्रम (i = 0; i < modey; i++) अणु
 			address = sisusb->vrambase + ((i * modex) * bpp);
-			ret |= sisusb_write_memio_word(sisusb, SISUSB_TYPE_MEM,
+			ret |= sisusb_ग_लिखो_memio_word(sisusb, SISUSB_TYPE_MEM,
 					address, 0xf100);
 			address += ((modex - 1) * bpp);
-			ret |= sisusb_write_memio_word(sisusb, SISUSB_TYPE_MEM,
+			ret |= sisusb_ग_लिखो_memio_word(sisusb, SISUSB_TYPE_MEM,
 					address, 0xf100);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sisusb_set_default_mode(struct sisusb_usb_data *sisusb,
-		int touchengines)
-{
-	int i, j, modex, bpp, du;
-	u8 sr31, cr63, tmp8;
-	static const char attrdata[] = {
+अटल व्योम sisusb_set_शेष_mode(काष्ठा sisusb_usb_data *sisusb,
+		पूर्णांक touchengines)
+अणु
+	पूर्णांक i, j, modex, bpp, du;
+	u8 sr31, cr63, पंचांगp8;
+	अटल स्थिर अक्षर attrdata[] = अणु
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 		0x01, 0x00, 0x00, 0x00
-	};
-	static const char crtcrdata[] = {
+	पूर्ण;
+	अटल स्थिर अक्षर crtcrdata[] = अणु
 		0x5f, 0x4f, 0x50, 0x82, 0x54, 0x80, 0x0b, 0x3e,
 		0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0xea, 0x8c, 0xdf, 0x28, 0x40, 0xe7, 0x04, 0xa3,
 		0xff
-	};
-	static const char grcdata[] = {
+	पूर्ण;
+	अटल स्थिर अक्षर grcdata[] = अणु
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0f,
 		0xff
-	};
-	static const char crtcdata[] = {
+	पूर्ण;
+	अटल स्थिर अक्षर crtcdata[] = अणु
 		0x5f, 0x4f, 0x4f, 0x83, 0x55, 0x81, 0x0b, 0x3e,
 		0xe9, 0x8b, 0xdf, 0xe8, 0x0c, 0x00, 0x00, 0x05,
 		0x00
-	};
+	पूर्ण;
 
 	modex = 640; bpp = 2;
 
@@ -1788,40 +1789,40 @@ static void sisusb_set_default_mode(struct sisusb_usb_data *sisusb,
 	SETIREG(SISSR, 0x03, 0x00);
 	SETIREG(SISSR, 0x04, 0x0e);
 	SETREG(SISMISCW, 0x23);		/* misc */
-	for (i = 0; i <= 0x18; i++) {	/* crtc */
+	क्रम (i = 0; i <= 0x18; i++) अणु	/* crtc */
 		SETIREG(SISCR, i, crtcrdata[i]);
-	}
-	for (i = 0; i <= 0x13; i++) {	/* att */
-		GETREG(SISINPSTAT, &tmp8);
+	पूर्ण
+	क्रम (i = 0; i <= 0x13; i++) अणु	/* att */
+		GETREG(SISINPSTAT, &पंचांगp8);
 		SETREG(SISAR, i);
 		SETREG(SISAR, attrdata[i]);
-	}
-	GETREG(SISINPSTAT, &tmp8);
+	पूर्ण
+	GETREG(SISINPSTAT, &पंचांगp8);
 	SETREG(SISAR, 0x14);
 	SETREG(SISAR, 0x00);
-	GETREG(SISINPSTAT, &tmp8);
+	GETREG(SISINPSTAT, &पंचांगp8);
 	SETREG(SISAR, 0x20);
-	GETREG(SISINPSTAT, &tmp8);
-	for (i = 0; i <= 0x08; i++) {	/* grc */
+	GETREG(SISINPSTAT, &पंचांगp8);
+	क्रम (i = 0; i <= 0x08; i++) अणु	/* grc */
 		SETIREG(SISGR, i, grcdata[i]);
-	}
+	पूर्ण
 	SETIREGAND(SISGR, 0x05, 0xbf);
-	for (i = 0x0A; i <= 0x0E; i++) {	/* clr ext */
+	क्रम (i = 0x0A; i <= 0x0E; i++) अणु	/* clr ext */
 		SETIREG(SISSR, i, 0x00);
-	}
+	पूर्ण
 	SETIREGAND(SISSR, 0x37, 0xfe);
 	SETREG(SISMISCW, 0xef);		/* sync */
 	SETIREG(SISCR, 0x11, 0x00);	/* crtc */
-	for (j = 0x00, i = 0; i <= 7; i++, j++)
+	क्रम (j = 0x00, i = 0; i <= 7; i++, j++)
 		SETIREG(SISCR, j, crtcdata[i]);
 
-	for (j = 0x10; i <= 10; i++, j++)
+	क्रम (j = 0x10; i <= 10; i++, j++)
 		SETIREG(SISCR, j, crtcdata[i]);
 
-	for (j = 0x15; i <= 12; i++, j++)
+	क्रम (j = 0x15; i <= 12; i++, j++)
 		SETIREG(SISCR, j, crtcdata[i]);
 
-	for (j = 0x0A; i <= 15; i++, j++)
+	क्रम (j = 0x0A; i <= 15; i++, j++)
 		SETIREG(SISSR, j, crtcdata[i]);
 
 	SETIREG(SISSR, 0x0E, (crtcdata[16] & 0xE0));
@@ -1831,8 +1832,8 @@ static void sisusb_set_default_mode(struct sisusb_usb_data *sisusb,
 	SETIREGANDOR(SISSR, 0x0e, 0xf0, ((du >> 8) & 0x0f));
 	SETIREG(SISCR, 0x13, (du & 0xff));
 	du <<= 5;
-	tmp8 = du >> 8;
-	SETIREG(SISSR, 0x10, tmp8);
+	पंचांगp8 = du >> 8;
+	SETIREG(SISSR, 0x10, पंचांगp8);
 	SETIREG(SISSR, 0x31, 0x00);	/* VCLK */
 	SETIREG(SISSR, 0x2b, 0x1b);
 	SETIREG(SISSR, 0x2c, 0xe1);
@@ -1863,36 +1864,36 @@ static void sisusb_set_default_mode(struct sisusb_usb_data *sisusb,
 	SETIREG(SISCR, 0x63, (cr63 & 0xbf));
 	SETIREG(SISSR, 0x31, (sr31 & 0xfb));
 
-	if (touchengines) {
+	अगर (touchengines) अणु
 		SETIREG(SISSR, 0x20, 0xa1);	/* enable engines */
 		SETIREGOR(SISSR, 0x1e, 0x5a);
 
 		SETIREG(SISSR, 0x26, 0x01);	/* disable cmdqueue */
 		SETIREG(SISSR, 0x27, 0x1f);
 		SETIREG(SISSR, 0x26, 0x00);
-	}
+	पूर्ण
 
 	SETIREG(SISCR, 0x34, 0x44);	/* we just set std mode #44 */
-}
+पूर्ण
 
-static int sisusb_init_gfxcore(struct sisusb_usb_data *sisusb)
-{
-	int ret = 0, i, j, bw, chab, iret, retry = 3;
-	u8 tmp8, ramtype;
-	u32 tmp32;
-	static const char mclktable[] = {
+अटल पूर्णांक sisusb_init_gfxcore(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	पूर्णांक ret = 0, i, j, bw, chab, iret, retry = 3;
+	u8 पंचांगp8, ramtype;
+	u32 पंचांगp32;
+	अटल स्थिर अक्षर mclktable[] = अणु
 		0x3b, 0x22, 0x01, 143,
 		0x3b, 0x22, 0x01, 143,
 		0x3b, 0x22, 0x01, 143,
 		0x3b, 0x22, 0x01, 143
-	};
-	static const char eclktable[] = {
+	पूर्ण;
+	अटल स्थिर अक्षर eclktable[] = अणु
 		0x3b, 0x22, 0x01, 143,
 		0x3b, 0x22, 0x01, 143,
 		0x3b, 0x22, 0x01, 143,
 		0x3b, 0x22, 0x01, 143
-	};
-	static const char ramtypetable1[] = {
+	पूर्ण;
+	अटल स्थिर अक्षर ramtypetable1[] = अणु
 		0x00, 0x04, 0x60, 0x60,
 		0x0f, 0x0f, 0x1f, 0x1f,
 		0xba, 0xba, 0xba, 0xba,
@@ -1900,52 +1901,52 @@ static int sisusb_init_gfxcore(struct sisusb_usb_data *sisusb)
 		0xa0, 0xa0, 0xa0, 0xa8,
 		0x00, 0x00, 0x02, 0x02,
 		0x30, 0x30, 0x40, 0x40
-	};
-	static const char ramtypetable2[] = {
+	पूर्ण;
+	अटल स्थिर अक्षर ramtypetable2[] = अणु
 		0x77, 0x77, 0x44, 0x44,
 		0x77, 0x77, 0x44, 0x44,
 		0x00, 0x00, 0x00, 0x00,
 		0x5b, 0x5b, 0xab, 0xab,
 		0x00, 0x00, 0xf0, 0xf8
-	};
+	पूर्ण;
 
-	while (retry--) {
+	जबतक (retry--) अणु
 
 		/* Enable VGA */
-		ret = GETREG(SISVGAEN, &tmp8);
-		ret |= SETREG(SISVGAEN, (tmp8 | 0x01));
+		ret = GETREG(SISVGAEN, &पंचांगp8);
+		ret |= SETREG(SISVGAEN, (पंचांगp8 | 0x01));
 
 		/* Enable GPU access to VRAM */
-		ret |= GETREG(SISMISCR, &tmp8);
-		ret |= SETREG(SISMISCW, (tmp8 | 0x01));
+		ret |= GETREG(SISMISCR, &पंचांगp8);
+		ret |= SETREG(SISMISCW, (पंचांगp8 | 0x01));
 
-		if (ret)
-			continue;
+		अगर (ret)
+			जारी;
 
-		/* Reset registers */
+		/* Reset रेजिस्टरs */
 		ret |= SETIREGAND(SISCR, 0x5b, 0xdf);
 		ret |= SETIREG(SISSR, 0x05, 0x86);
 		ret |= SETIREGOR(SISSR, 0x20, 0x01);
 
 		ret |= SETREG(SISMISCW, 0x67);
 
-		for (i = 0x06; i <= 0x1f; i++)
+		क्रम (i = 0x06; i <= 0x1f; i++)
 			ret |= SETIREG(SISSR, i, 0x00);
 
-		for (i = 0x21; i <= 0x27; i++)
+		क्रम (i = 0x21; i <= 0x27; i++)
 			ret |= SETIREG(SISSR, i, 0x00);
 
-		for (i = 0x31; i <= 0x3d; i++)
+		क्रम (i = 0x31; i <= 0x3d; i++)
 			ret |= SETIREG(SISSR, i, 0x00);
 
-		for (i = 0x12; i <= 0x1b; i++)
+		क्रम (i = 0x12; i <= 0x1b; i++)
 			ret |= SETIREG(SISSR, i, 0x00);
 
-		for (i = 0x79; i <= 0x7c; i++)
+		क्रम (i = 0x79; i <= 0x7c; i++)
 			ret |= SETIREG(SISCR, i, 0x00);
 
-		if (ret)
-			continue;
+		अगर (ret)
+			जारी;
 
 		ret |= SETIREG(SISCR, 0x63, 0x80);
 
@@ -1963,17 +1964,17 @@ static int sisusb_init_gfxcore(struct sisusb_usb_data *sisusb)
 		ret |= SETIREG(SISSR, 0x07, 0x18);
 		ret |= SETIREG(SISSR, 0x11, 0x0f);
 
-		if (ret)
-			continue;
+		अगर (ret)
+			जारी;
 
-		for (i = 0x15, j = 0; i <= 0x1b; i++, j++) {
+		क्रम (i = 0x15, j = 0; i <= 0x1b; i++, j++) अणु
 			ret |= SETIREG(SISSR, i,
 					ramtypetable1[(j*4) + ramtype]);
-		}
-		for (i = 0x40, j = 0; i <= 0x44; i++, j++) {
+		पूर्ण
+		क्रम (i = 0x40, j = 0; i <= 0x44; i++, j++) अणु
 			ret |= SETIREG(SISCR, i,
 					ramtypetable2[(j*4) + ramtype]);
-		}
+		पूर्ण
 
 		ret |= SETIREG(SISCR, 0x49, 0xaa);
 
@@ -1989,35 +1990,35 @@ static int sisusb_init_gfxcore(struct sisusb_usb_data *sisusb)
 
 		ret |= SETIREGAND(SISCAP, 0x3f, 0xef);
 
-		if (ret)
-			continue;
+		अगर (ret)
+			जारी;
 
 		ret |= SETIREG(SISPART1, 0x00, 0x00);
 
-		ret |= GETIREG(SISSR, 0x13, &tmp8);
-		tmp8 >>= 4;
+		ret |= GETIREG(SISSR, 0x13, &पंचांगp8);
+		पंचांगp8 >>= 4;
 
 		ret |= SETIREG(SISPART1, 0x02, 0x00);
 		ret |= SETIREG(SISPART1, 0x2e, 0x08);
 
-		ret |= sisusb_read_pci_config(sisusb, 0x50, &tmp32);
-		tmp32 &= 0x00f00000;
-		tmp8 = (tmp32 == 0x100000) ? 0x33 : 0x03;
-		ret |= SETIREG(SISSR, 0x25, tmp8);
-		tmp8 = (tmp32 == 0x100000) ? 0xaa : 0x88;
-		ret |= SETIREG(SISCR, 0x49, tmp8);
+		ret |= sisusb_पढ़ो_pci_config(sisusb, 0x50, &पंचांगp32);
+		पंचांगp32 &= 0x00f00000;
+		पंचांगp8 = (पंचांगp32 == 0x100000) ? 0x33 : 0x03;
+		ret |= SETIREG(SISSR, 0x25, पंचांगp8);
+		पंचांगp8 = (पंचांगp32 == 0x100000) ? 0xaa : 0x88;
+		ret |= SETIREG(SISCR, 0x49, पंचांगp8);
 
 		ret |= SETIREG(SISSR, 0x27, 0x1f);
 		ret |= SETIREG(SISSR, 0x31, 0x00);
 		ret |= SETIREG(SISSR, 0x32, 0x11);
 		ret |= SETIREG(SISSR, 0x33, 0x00);
 
-		if (ret)
-			continue;
+		अगर (ret)
+			जारी;
 
 		ret |= SETIREG(SISCR, 0x83, 0x00);
 
-		sisusb_set_default_mode(sisusb, 0);
+		sisusb_set_शेष_mode(sisusb, 0);
 
 		ret |= SETIREGAND(SISSR, 0x21, 0xdf);
 		ret |= SETIREGOR(SISSR, 0x01, 0x20);
@@ -2030,22 +2031,22 @@ static int sisusb_init_gfxcore(struct sisusb_usb_data *sisusb)
 		ret |= SETIREGOR(SISSR, 0x19, 0x03);
 
 		ret |= sisusb_getbuswidth(sisusb, &bw, &chab);
-		ret |= sisusb_verify_mclk(sisusb);
+		ret |= sisusb_verअगरy_mclk(sisusb);
 
-		if (ramtype <= 1) {
+		अगर (ramtype <= 1) अणु
 			ret |= sisusb_get_sdram_size(sisusb, &iret, bw, chab);
-			if (iret) {
+			अगर (iret) अणु
 				dev_err(&sisusb->sisusb_dev->dev,
 						"RAM size detection failed, assuming 8MB video RAM\n");
 				ret |= SETIREG(SISSR, 0x14, 0x31);
 				/* TODO */
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			dev_err(&sisusb->sisusb_dev->dev,
 					"DDR RAM device found, assuming 8MB video RAM\n");
 			ret |= SETIREG(SISSR, 0x14, 0x31);
 			/* *** TODO *** */
-		}
+		पूर्ण
 
 		/* Enable refresh */
 		ret |= SETIREG(SISSR, 0x16, ramtypetable1[4 + ramtype]);
@@ -2057,76 +2058,76 @@ static int sisusb_init_gfxcore(struct sisusb_usb_data *sisusb)
 		ret |= SETIREG(SISSR, 0x22, 0xfb);
 		ret |= SETIREG(SISSR, 0x21, 0xa5);
 
-		if (ret == 0)
-			break;
-	}
+		अगर (ret == 0)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#undef SETREG
-#undef GETREG
-#undef SETIREG
-#undef GETIREG
-#undef SETIREGOR
-#undef SETIREGAND
-#undef SETIREGANDOR
-#undef READL
-#undef WRITEL
+#अघोषित SETREG
+#अघोषित GETREG
+#अघोषित SETIREG
+#अघोषित GETIREG
+#अघोषित SETIREGOR
+#अघोषित SETIREGAND
+#अघोषित SETIREGANDOR
+#अघोषित READL
+#अघोषित WRITEL
 
-static void sisusb_get_ramconfig(struct sisusb_usb_data *sisusb)
-{
-	u8 tmp8, tmp82, ramtype;
-	int bw = 0;
-	char *ramtypetext1 = NULL;
-	static const char ram_datarate[4] = {'S', 'S', 'D', 'D'};
-	static const char ram_dynamictype[4] = {'D', 'G', 'D', 'G'};
-	static const int busSDR[4]  = {64, 64, 128, 128};
-	static const int busDDR[4]  = {32, 32,  64,  64};
-	static const int busDDRA[4] = {64+32, 64+32, (64+32)*2, (64+32)*2};
+अटल व्योम sisusb_get_ramconfig(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	u8 पंचांगp8, पंचांगp82, ramtype;
+	पूर्णांक bw = 0;
+	अक्षर *ramtypetext1 = शून्य;
+	अटल स्थिर अक्षर ram_datarate[4] = अणु'S', 'S', 'D', 'D'पूर्ण;
+	अटल स्थिर अक्षर ram_dynamictype[4] = अणु'D', 'G', 'D', 'G'पूर्ण;
+	अटल स्थिर पूर्णांक busSDR[4]  = अणु64, 64, 128, 128पूर्ण;
+	अटल स्थिर पूर्णांक busDDR[4]  = अणु32, 32,  64,  64पूर्ण;
+	अटल स्थिर पूर्णांक busDDRA[4] = अणु64+32, 64+32, (64+32)*2, (64+32)*2पूर्ण;
 
-	sisusb_getidxreg(sisusb, SISSR, 0x14, &tmp8);
-	sisusb_getidxreg(sisusb, SISSR, 0x15, &tmp82);
+	sisusb_getidxreg(sisusb, SISSR, 0x14, &पंचांगp8);
+	sisusb_getidxreg(sisusb, SISSR, 0x15, &पंचांगp82);
 	sisusb_getidxreg(sisusb, SISSR, 0x3a, &ramtype);
-	sisusb->vramsize = (1 << ((tmp8 & 0xf0) >> 4)) * 1024 * 1024;
+	sisusb->vramsize = (1 << ((पंचांगp8 & 0xf0) >> 4)) * 1024 * 1024;
 	ramtype &= 0x03;
-	switch ((tmp8 >> 2) & 0x03) {
-	case 0:
+	चयन ((पंचांगp8 >> 2) & 0x03) अणु
+	हाल 0:
 		ramtypetext1 = "1 ch/1 r";
-		if (tmp82 & 0x10)
+		अगर (पंचांगp82 & 0x10)
 			bw = 32;
-		else
-			bw = busSDR[(tmp8 & 0x03)];
+		अन्यथा
+			bw = busSDR[(पंचांगp8 & 0x03)];
 
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		ramtypetext1 = "1 ch/2 r";
 		sisusb->vramsize <<= 1;
-		bw = busSDR[(tmp8 & 0x03)];
-		break;
-	case 2:
+		bw = busSDR[(पंचांगp8 & 0x03)];
+		अवरोध;
+	हाल 2:
 		ramtypetext1 = "asymmetric";
 		sisusb->vramsize += sisusb->vramsize/2;
-		bw = busDDRA[(tmp8 & 0x03)];
-		break;
-	case 3:
+		bw = busDDRA[(पंचांगp8 & 0x03)];
+		अवरोध;
+	हाल 3:
 		ramtypetext1 = "2 channel";
 		sisusb->vramsize <<= 1;
-		bw = busDDR[(tmp8 & 0x03)];
-		break;
-	}
+		bw = busDDR[(पंचांगp8 & 0x03)];
+		अवरोध;
+	पूर्ण
 
 	dev_info(&sisusb->sisusb_dev->dev,
 			"%dMB %s %cDR S%cRAM, bus width %d\n",
 			sisusb->vramsize >> 20, ramtypetext1,
 			ram_datarate[ramtype], ram_dynamictype[ramtype], bw);
-}
+पूर्ण
 
-static int sisusb_do_init_gfxdevice(struct sisusb_usb_data *sisusb)
-{
-	struct sisusb_packet packet;
-	int ret;
-	u32 tmp32;
+अटल पूर्णांक sisusb_करो_init_gfxdevice(काष्ठा sisusb_usb_data *sisusb)
+अणु
+	काष्ठा sisusb_packet packet;
+	पूर्णांक ret;
+	u32 पंचांगp32;
 
 	/* Do some magic */
 	packet.header  = 0x001f;
@@ -2156,208 +2157,208 @@ static int sisusb_do_init_gfxdevice(struct sisusb_usb_data *sisusb)
 	ret |= sisusb_send_bridge_packet(sisusb, 10, &packet, 0);
 
 	/* Init BAR 0 (VRAM) */
-	ret |= sisusb_read_pci_config(sisusb, 0x10, &tmp32);
-	ret |= sisusb_write_pci_config(sisusb, 0x10, 0xfffffff0);
-	ret |= sisusb_read_pci_config(sisusb, 0x10, &tmp32);
-	tmp32 &= 0x0f;
-	tmp32 |= SISUSB_PCI_MEMBASE;
-	ret |= sisusb_write_pci_config(sisusb, 0x10, tmp32);
+	ret |= sisusb_पढ़ो_pci_config(sisusb, 0x10, &पंचांगp32);
+	ret |= sisusb_ग_लिखो_pci_config(sisusb, 0x10, 0xfffffff0);
+	ret |= sisusb_पढ़ो_pci_config(sisusb, 0x10, &पंचांगp32);
+	पंचांगp32 &= 0x0f;
+	पंचांगp32 |= SISUSB_PCI_MEMBASE;
+	ret |= sisusb_ग_लिखो_pci_config(sisusb, 0x10, पंचांगp32);
 
 	/* Init BAR 1 (MMIO) */
-	ret |= sisusb_read_pci_config(sisusb, 0x14, &tmp32);
-	ret |= sisusb_write_pci_config(sisusb, 0x14, 0xfffffff0);
-	ret |= sisusb_read_pci_config(sisusb, 0x14, &tmp32);
-	tmp32 &= 0x0f;
-	tmp32 |= SISUSB_PCI_MMIOBASE;
-	ret |= sisusb_write_pci_config(sisusb, 0x14, tmp32);
+	ret |= sisusb_पढ़ो_pci_config(sisusb, 0x14, &पंचांगp32);
+	ret |= sisusb_ग_लिखो_pci_config(sisusb, 0x14, 0xfffffff0);
+	ret |= sisusb_पढ़ो_pci_config(sisusb, 0x14, &पंचांगp32);
+	पंचांगp32 &= 0x0f;
+	पंचांगp32 |= SISUSB_PCI_MMIOBASE;
+	ret |= sisusb_ग_लिखो_pci_config(sisusb, 0x14, पंचांगp32);
 
 	/* Init BAR 2 (i/o ports) */
-	ret |= sisusb_read_pci_config(sisusb, 0x18, &tmp32);
-	ret |= sisusb_write_pci_config(sisusb, 0x18, 0xfffffff0);
-	ret |= sisusb_read_pci_config(sisusb, 0x18, &tmp32);
-	tmp32 &= 0x0f;
-	tmp32 |= SISUSB_PCI_IOPORTBASE;
-	ret |= sisusb_write_pci_config(sisusb, 0x18, tmp32);
+	ret |= sisusb_पढ़ो_pci_config(sisusb, 0x18, &पंचांगp32);
+	ret |= sisusb_ग_लिखो_pci_config(sisusb, 0x18, 0xfffffff0);
+	ret |= sisusb_पढ़ो_pci_config(sisusb, 0x18, &पंचांगp32);
+	पंचांगp32 &= 0x0f;
+	पंचांगp32 |= SISUSB_PCI_IOPORTBASE;
+	ret |= sisusb_ग_लिखो_pci_config(sisusb, 0x18, पंचांगp32);
 
 	/* Enable memory and i/o access */
-	ret |= sisusb_read_pci_config(sisusb, 0x04, &tmp32);
-	tmp32 |= 0x3;
-	ret |= sisusb_write_pci_config(sisusb, 0x04, tmp32);
+	ret |= sisusb_पढ़ो_pci_config(sisusb, 0x04, &पंचांगp32);
+	पंचांगp32 |= 0x3;
+	ret |= sisusb_ग_लिखो_pci_config(sisusb, 0x04, पंचांगp32);
 
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		/* Some further magic */
 		packet.header  = 0x001f;
 		packet.address = 0x00000050;
 		packet.data    = 0x000000ff;
 		ret |= sisusb_send_bridge_packet(sisusb, 10, &packet, 0);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Initialize the graphics device (return 0 on success)
- * This initializes the net2280 as well as the PCI registers
+/* Initialize the graphics device (वापस 0 on success)
+ * This initializes the net2280 as well as the PCI रेजिस्टरs
  * of the graphics board.
  */
 
-static int sisusb_init_gfxdevice(struct sisusb_usb_data *sisusb, int initscreen)
-{
-	int ret = 0, test = 0;
-	u32 tmp32;
+अटल पूर्णांक sisusb_init_gfxdevice(काष्ठा sisusb_usb_data *sisusb, पूर्णांक initscreen)
+अणु
+	पूर्णांक ret = 0, test = 0;
+	u32 पंचांगp32;
 
-	if (sisusb->devinit == 1) {
-		/* Read PCI BARs and see if they have been set up */
-		ret |= sisusb_read_pci_config(sisusb, 0x10, &tmp32);
-		if (ret)
-			return ret;
+	अगर (sisusb->devinit == 1) अणु
+		/* Read PCI BARs and see अगर they have been set up */
+		ret |= sisusb_पढ़ो_pci_config(sisusb, 0x10, &पंचांगp32);
+		अगर (ret)
+			वापस ret;
 
-		if ((tmp32 & 0xfffffff0) == SISUSB_PCI_MEMBASE)
+		अगर ((पंचांगp32 & 0xfffffff0) == SISUSB_PCI_MEMBASE)
 			test++;
 
-		ret |= sisusb_read_pci_config(sisusb, 0x14, &tmp32);
-		if (ret)
-			return ret;
+		ret |= sisusb_पढ़ो_pci_config(sisusb, 0x14, &पंचांगp32);
+		अगर (ret)
+			वापस ret;
 
-		if ((tmp32 & 0xfffffff0) == SISUSB_PCI_MMIOBASE)
+		अगर ((पंचांगp32 & 0xfffffff0) == SISUSB_PCI_MMIOBASE)
 			test++;
 
-		ret |= sisusb_read_pci_config(sisusb, 0x18, &tmp32);
-		if (ret)
-			return ret;
+		ret |= sisusb_पढ़ो_pci_config(sisusb, 0x18, &पंचांगp32);
+		अगर (ret)
+			वापस ret;
 
-		if ((tmp32 & 0xfffffff0) == SISUSB_PCI_IOPORTBASE)
+		अगर ((पंचांगp32 & 0xfffffff0) == SISUSB_PCI_IOPORTBASE)
 			test++;
-	}
+	पूर्ण
 
 	/* No? So reset the device */
-	if ((sisusb->devinit == 0) || (test != 3)) {
+	अगर ((sisusb->devinit == 0) || (test != 3)) अणु
 
-		ret |= sisusb_do_init_gfxdevice(sisusb);
+		ret |= sisusb_करो_init_gfxdevice(sisusb);
 
-		if (ret == 0)
+		अगर (ret == 0)
 			sisusb->devinit = 1;
 
-	}
+	पूर्ण
 
-	if (sisusb->devinit) {
+	अगर (sisusb->devinit) अणु
 		/* Initialize the graphics core */
-		if (sisusb_init_gfxcore(sisusb) == 0) {
+		अगर (sisusb_init_gfxcore(sisusb) == 0) अणु
 			sisusb->gfxinit = 1;
 			sisusb_get_ramconfig(sisusb);
-			sisusb_set_default_mode(sisusb, 1);
+			sisusb_set_शेष_mode(sisusb, 1);
 			ret |= sisusb_setup_screen(sisusb, 1, initscreen);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-#ifdef CONFIG_USB_SISUSBVGA_CON
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
 
-/* Set up default text mode:
+/* Set up शेष text mode:
  * - Set text mode (0x03)
- * - Upload default font
- * - Upload user font (if available)
+ * - Upload शेष font
+ * - Upload user font (अगर available)
  */
 
-int sisusb_reset_text_mode(struct sisusb_usb_data *sisusb, int init)
-{
-	int ret = 0, slot = sisusb->font_slot, i;
-	const struct font_desc *myfont;
+पूर्णांक sisusb_reset_text_mode(काष्ठा sisusb_usb_data *sisusb, पूर्णांक init)
+अणु
+	पूर्णांक ret = 0, slot = sisusb->font_slot, i;
+	स्थिर काष्ठा font_desc *myfont;
 	u8 *tempbuf;
 	u16 *tempbufb;
-	static const char bootstring[] =
+	अटल स्थिर अक्षर bootstring[] =
 		"SiSUSB VGA text console, (C) 2005 Thomas Winischhofer.";
-	static const char bootlogo[] = "(o_ //\\ V_/_";
+	अटल स्थिर अक्षर bootlogo[] = "(o_ //\\ V_/_";
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	if (!sisusb->SiS_Pr)
-		return 1;
+	अगर (!sisusb->SiS_Pr)
+		वापस 1;
 
 	sisusb->SiS_Pr->IOAddress = SISUSB_PCI_IOPORTBASE + 0x30;
-	sisusb->SiS_Pr->sisusb = (void *)sisusb;
+	sisusb->SiS_Pr->sisusb = (व्योम *)sisusb;
 
 	/* Set mode 0x03 */
 	SiSUSBSetMode(sisusb->SiS_Pr, 0x03);
 
 	myfont = find_font("VGA8x16");
-	if (!myfont)
-		return 1;
+	अगर (!myfont)
+		वापस 1;
 
-	tempbuf = vmalloc(8192);
-	if (!tempbuf)
-		return 1;
+	tempbuf = vदो_स्मृति(8192);
+	अगर (!tempbuf)
+		वापस 1;
 
-	for (i = 0; i < 256; i++)
-		memcpy(tempbuf + (i * 32), myfont->data + (i * 16), 16);
+	क्रम (i = 0; i < 256; i++)
+		स_नकल(tempbuf + (i * 32), myfont->data + (i * 16), 16);
 
-	/* Upload default font */
-	ret = sisusbcon_do_font_op(sisusb, 1, 0, tempbuf, 8192,
-			0, 1, NULL, 16, 0);
+	/* Upload शेष font */
+	ret = sisusbcon_करो_font_op(sisusb, 1, 0, tempbuf, 8192,
+			0, 1, शून्य, 16, 0);
 
-	vfree(tempbuf);
+	vमुक्त(tempbuf);
 
 	/* Upload user font (and reset current slot) */
-	if (sisusb->font_backup) {
-		ret |= sisusbcon_do_font_op(sisusb, 1, 2, sisusb->font_backup,
-				8192, sisusb->font_backup_512, 1, NULL,
+	अगर (sisusb->font_backup) अणु
+		ret |= sisusbcon_करो_font_op(sisusb, 1, 2, sisusb->font_backup,
+				8192, sisusb->font_backup_512, 1, शून्य,
 				sisusb->font_backup_height, 0);
-		if (slot != 2)
-			sisusbcon_do_font_op(sisusb, 1, 0, NULL, 0, 0, 1,
-					NULL, 16, 0);
-	}
+		अगर (slot != 2)
+			sisusbcon_करो_font_op(sisusb, 1, 0, शून्य, 0, 0, 1,
+					शून्य, 16, 0);
+	पूर्ण
 
-	if (init && !sisusb->scrbuf) {
+	अगर (init && !sisusb->scrbuf) अणु
 
-		tempbuf = vmalloc(8192);
-		if (tempbuf) {
+		tempbuf = vदो_स्मृति(8192);
+		अगर (tempbuf) अणु
 
 			i = 4096;
 			tempbufb = (u16 *)tempbuf;
-			while (i--)
+			जबतक (i--)
 				*(tempbufb++) = 0x0720;
 
 			i = 0;
 			tempbufb = (u16 *)tempbuf;
-			while (bootlogo[i]) {
+			जबतक (bootlogo[i]) अणु
 				*(tempbufb++) = 0x0700 | bootlogo[i++];
-				if (!(i % 4))
+				अगर (!(i % 4))
 					tempbufb += 76;
-			}
+			पूर्ण
 
 			i = 0;
 			tempbufb = (u16 *)tempbuf + 6;
-			while (bootstring[i])
+			जबतक (bootstring[i])
 				*(tempbufb++) = 0x0700 | bootstring[i++];
 
 			ret |= sisusb_copy_memory(sisusb, tempbuf,
 					sisusb->vrambase, 8192);
 
-			vfree(tempbuf);
+			vमुक्त(tempbuf);
 
-		}
+		पूर्ण
 
-	} else if (sisusb->scrbuf) {
+	पूर्ण अन्यथा अगर (sisusb->scrbuf) अणु
 		ret |= sisusb_copy_memory(sisusb, (u8 *)sisusb->scrbuf,
 				sisusb->vrambase, sisusb->scrbuf_size);
-	}
+	पूर्ण
 
-	if (sisusb->sisusb_cursor_size_from >= 0 &&
-			sisusb->sisusb_cursor_size_to >= 0) {
+	अगर (sisusb->sisusb_cursor_size_from >= 0 &&
+			sisusb->sisusb_cursor_माप_प्रकारo >= 0) अणु
 		sisusb_setidxreg(sisusb, SISCR, 0x0a,
 				sisusb->sisusb_cursor_size_from);
-		sisusb_setidxregandor(sisusb, SISCR, 0x0b, 0xe0,
-				sisusb->sisusb_cursor_size_to);
-	} else {
+		sisusb_setidxreganकरोr(sisusb, SISCR, 0x0b, 0xe0,
+				sisusb->sisusb_cursor_माप_प्रकारo);
+	पूर्ण अन्यथा अणु
 		sisusb_setidxreg(sisusb, SISCR, 0x0a, 0x2d);
 		sisusb_setidxreg(sisusb, SISCR, 0x0b, 0x0e);
-		sisusb->sisusb_cursor_size_to = -1;
-	}
+		sisusb->sisusb_cursor_माप_प्रकारo = -1;
+	पूर्ण
 
 	slot = sisusb->sisusb_cursor_loc;
-	if (slot < 0)
+	अगर (slot < 0)
 		slot = 0;
 
 	sisusb->sisusb_cursor_loc = -1;
@@ -2368,191 +2369,191 @@ int sisusb_reset_text_mode(struct sisusb_usb_data *sisusb, int init)
 	sisusb_setidxreg(sisusb, SISCR, 0x0c, (sisusb->cur_start_addr >> 8));
 	sisusb_setidxreg(sisusb, SISCR, 0x0d, (sisusb->cur_start_addr & 0xff));
 
-	sisusb->textmodedestroyed = 0;
+	sisusb->texपंचांगodedestroyed = 0;
 
-	/* sisusb->lock is down */
+	/* sisusb->lock is करोwn */
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /* fops */
 
-static int sisusb_open(struct inode *inode, struct file *file)
-{
-	struct sisusb_usb_data *sisusb;
-	struct usb_interface *interface;
-	int subminor = iminor(inode);
+अटल पूर्णांक sisusb_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
+	पूर्णांक subminor = iminor(inode);
 
-	interface = usb_find_interface(&sisusb_driver, subminor);
-	if (!interface)
-		return -ENODEV;
+	पूर्णांकerface = usb_find_पूर्णांकerface(&sisusb_driver, subminor);
+	अगर (!पूर्णांकerface)
+		वापस -ENODEV;
 
-	sisusb = usb_get_intfdata(interface);
-	if (!sisusb)
-		return -ENODEV;
+	sisusb = usb_get_पूर्णांकfdata(पूर्णांकerface);
+	अगर (!sisusb)
+		वापस -ENODEV;
 
 	mutex_lock(&sisusb->lock);
 
-	if (!sisusb->present || !sisusb->ready) {
+	अगर (!sisusb->present || !sisusb->पढ़ोy) अणु
 		mutex_unlock(&sisusb->lock);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (sisusb->isopen) {
+	अगर (sisusb->isखोलो) अणु
 		mutex_unlock(&sisusb->lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!sisusb->devinit) {
-		if (sisusb->sisusb_dev->speed == USB_SPEED_HIGH ||
-				sisusb->sisusb_dev->speed >= USB_SPEED_SUPER) {
-			if (sisusb_init_gfxdevice(sisusb, 0)) {
+	अगर (!sisusb->devinit) अणु
+		अगर (sisusb->sisusb_dev->speed == USB_SPEED_HIGH ||
+				sisusb->sisusb_dev->speed >= USB_SPEED_SUPER) अणु
+			अगर (sisusb_init_gfxdevice(sisusb, 0)) अणु
 				mutex_unlock(&sisusb->lock);
 				dev_err(&sisusb->sisusb_dev->dev,
 						"Failed to initialize device\n");
-				return -EIO;
-			}
-		} else {
+				वापस -EIO;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			mutex_unlock(&sisusb->lock);
 			dev_err(&sisusb->sisusb_dev->dev,
 					"Device not attached to USB 2.0 hub\n");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	/* Increment usage count for our sisusb */
+	/* Increment usage count क्रम our sisusb */
 	kref_get(&sisusb->kref);
 
-	sisusb->isopen = 1;
+	sisusb->isखोलो = 1;
 
-	file->private_data = sisusb;
+	file->निजी_data = sisusb;
 
 	mutex_unlock(&sisusb->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void sisusb_delete(struct kref *kref)
-{
-	struct sisusb_usb_data *sisusb = to_sisusb_dev(kref);
+व्योम sisusb_delete(काष्ठा kref *kref)
+अणु
+	काष्ठा sisusb_usb_data *sisusb = to_sisusb_dev(kref);
 
-	if (!sisusb)
-		return;
+	अगर (!sisusb)
+		वापस;
 
 	usb_put_dev(sisusb->sisusb_dev);
 
-	sisusb->sisusb_dev = NULL;
-	sisusb_free_buffers(sisusb);
-	sisusb_free_urbs(sisusb);
-#ifdef CONFIG_USB_SISUSBVGA_CON
-	kfree(sisusb->SiS_Pr);
-#endif
-	kfree(sisusb);
-}
+	sisusb->sisusb_dev = शून्य;
+	sisusb_मुक्त_buffers(sisusb);
+	sisusb_मुक्त_urbs(sisusb);
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
+	kमुक्त(sisusb->SiS_Pr);
+#पूर्ण_अगर
+	kमुक्त(sisusb);
+पूर्ण
 
-static int sisusb_release(struct inode *inode, struct file *file)
-{
-	struct sisusb_usb_data *sisusb;
+अटल पूर्णांक sisusb_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
 
-	sisusb = file->private_data;
-	if (!sisusb)
-		return -ENODEV;
+	sisusb = file->निजी_data;
+	अगर (!sisusb)
+		वापस -ENODEV;
 
 	mutex_lock(&sisusb->lock);
 
-	if (sisusb->present) {
-		/* Wait for all URBs to finish if device still present */
-		if (!sisusb_wait_all_out_complete(sisusb))
-			sisusb_kill_all_busy(sisusb);
-	}
+	अगर (sisusb->present) अणु
+		/* Wait क्रम all URBs to finish अगर device still present */
+		अगर (!sisusb_रुको_all_out_complete(sisusb))
+			sisusb_समाप्त_all_busy(sisusb);
+	पूर्ण
 
-	sisusb->isopen = 0;
-	file->private_data = NULL;
+	sisusb->isखोलो = 0;
+	file->निजी_data = शून्य;
 
 	mutex_unlock(&sisusb->lock);
 
 	/* decrement the usage count on our device */
 	kref_put(&sisusb->kref, sisusb_delete);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t sisusb_read(struct file *file, char __user *buffer,
-		size_t count, loff_t *ppos)
-{
-	struct sisusb_usb_data *sisusb;
-	ssize_t bytes_read = 0;
-	int errno = 0;
+अटल sमाप_प्रकार sisusb_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
+		माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	sमाप_प्रकार bytes_पढ़ो = 0;
+	पूर्णांक त्रुटि_सं = 0;
 	u8 buf8;
 	u16 buf16;
 	u32 buf32, address;
 
-	sisusb = file->private_data;
-	if (!sisusb)
-		return -ENODEV;
+	sisusb = file->निजी_data;
+	अगर (!sisusb)
+		वापस -ENODEV;
 
 	mutex_lock(&sisusb->lock);
 
 	/* Sanity check */
-	if (!sisusb->present || !sisusb->ready || !sisusb->sisusb_dev) {
+	अगर (!sisusb->present || !sisusb->पढ़ोy || !sisusb->sisusb_dev) अणु
 		mutex_unlock(&sisusb->lock);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if ((*ppos) >= SISUSB_PCI_PSEUDO_IOPORTBASE &&
-			(*ppos) <  SISUSB_PCI_PSEUDO_IOPORTBASE + 128) {
+	अगर ((*ppos) >= SISUSB_PCI_PSEUDO_IOPORTBASE &&
+			(*ppos) <  SISUSB_PCI_PSEUDO_IOPORTBASE + 128) अणु
 
 		address = (*ppos) - SISUSB_PCI_PSEUDO_IOPORTBASE +
 				SISUSB_PCI_IOPORTBASE;
 
 		/* Read i/o ports
-		 * Byte, word and long(32) can be read. As this
-		 * emulates inX instructions, the data returned is
+		 * Byte, word and दीर्घ(32) can be पढ़ो. As this
+		 * emulates inX inकाष्ठाions, the data वापसed is
 		 * in machine-endianness.
 		 */
-		switch (count) {
-		case 1:
-			if (sisusb_read_memio_byte(sisusb, SISUSB_TYPE_IO,
+		चयन (count) अणु
+		हाल 1:
+			अगर (sisusb_पढ़ो_memio_byte(sisusb, SISUSB_TYPE_IO,
 					address, &buf8))
-				errno = -EIO;
-			else if (put_user(buf8, (u8 __user *)buffer))
-				errno = -EFAULT;
-			else
-				bytes_read = 1;
+				त्रुटि_सं = -EIO;
+			अन्यथा अगर (put_user(buf8, (u8 __user *)buffer))
+				त्रुटि_सं = -EFAULT;
+			अन्यथा
+				bytes_पढ़ो = 1;
 
-			break;
+			अवरोध;
 
-		case 2:
-			if (sisusb_read_memio_word(sisusb, SISUSB_TYPE_IO,
+		हाल 2:
+			अगर (sisusb_पढ़ो_memio_word(sisusb, SISUSB_TYPE_IO,
 					address, &buf16))
-				errno = -EIO;
-			else if (put_user(buf16, (u16 __user *)buffer))
-				errno = -EFAULT;
-			else
-				bytes_read = 2;
+				त्रुटि_सं = -EIO;
+			अन्यथा अगर (put_user(buf16, (u16 __user *)buffer))
+				त्रुटि_सं = -EFAULT;
+			अन्यथा
+				bytes_पढ़ो = 2;
 
-			break;
+			अवरोध;
 
-		case 4:
-			if (sisusb_read_memio_long(sisusb, SISUSB_TYPE_IO,
+		हाल 4:
+			अगर (sisusb_पढ़ो_memio_दीर्घ(sisusb, SISUSB_TYPE_IO,
 					address, &buf32))
-				errno = -EIO;
-			else if (put_user(buf32, (u32 __user *)buffer))
-				errno = -EFAULT;
-			else
-				bytes_read = 4;
+				त्रुटि_सं = -EIO;
+			अन्यथा अगर (put_user(buf32, (u32 __user *)buffer))
+				त्रुटि_सं = -EFAULT;
+			अन्यथा
+				bytes_पढ़ो = 4;
 
-			break;
+			अवरोध;
 
-		default:
-			errno = -EIO;
+		शेष:
+			त्रुटि_सं = -EIO;
 
-		}
+		पूर्ण
 
-	} else if ((*ppos) >= SISUSB_PCI_PSEUDO_MEMBASE && (*ppos) <
-			SISUSB_PCI_PSEUDO_MEMBASE + sisusb->vramsize) {
+	पूर्ण अन्यथा अगर ((*ppos) >= SISUSB_PCI_PSEUDO_MEMBASE && (*ppos) <
+			SISUSB_PCI_PSEUDO_MEMBASE + sisusb->vramsize) अणु
 
 		address = (*ppos) - SISUSB_PCI_PSEUDO_MEMBASE +
 				SISUSB_PCI_MEMBASE;
@@ -2560,15 +2561,15 @@ static ssize_t sisusb_read(struct file *file, char __user *buffer,
 		/* Read video ram
 		 * Remember: Data delivered is never endian-corrected
 		 */
-		errno = sisusb_read_mem_bulk(sisusb, address,
-				NULL, count, buffer, &bytes_read);
+		त्रुटि_सं = sisusb_पढ़ो_mem_bulk(sisusb, address,
+				शून्य, count, buffer, &bytes_पढ़ो);
 
-		if (bytes_read)
-			errno = bytes_read;
+		अगर (bytes_पढ़ो)
+			त्रुटि_सं = bytes_पढ़ो;
 
-	} else  if ((*ppos) >= SISUSB_PCI_PSEUDO_MMIOBASE &&
+	पूर्ण अन्यथा  अगर ((*ppos) >= SISUSB_PCI_PSEUDO_MMIOBASE &&
 				(*ppos) <  SISUSB_PCI_PSEUDO_MMIOBASE +
-				SISUSB_PCI_MMIOSIZE) {
+				SISUSB_PCI_MMIOSIZE) अणु
 
 		address = (*ppos) - SISUSB_PCI_PSEUDO_MMIOBASE +
 				SISUSB_PCI_MMIOBASE;
@@ -2576,359 +2577,359 @@ static ssize_t sisusb_read(struct file *file, char __user *buffer,
 		/* Read MMIO
 		 * Remember: Data delivered is never endian-corrected
 		 */
-		errno = sisusb_read_mem_bulk(sisusb, address,
-				NULL, count, buffer, &bytes_read);
+		त्रुटि_सं = sisusb_पढ़ो_mem_bulk(sisusb, address,
+				शून्य, count, buffer, &bytes_पढ़ो);
 
-		if (bytes_read)
-			errno = bytes_read;
+		अगर (bytes_पढ़ो)
+			त्रुटि_सं = bytes_पढ़ो;
 
-	} else  if ((*ppos) >= SISUSB_PCI_PSEUDO_PCIBASE &&
-			(*ppos) <= SISUSB_PCI_PSEUDO_PCIBASE + 0x5c) {
+	पूर्ण अन्यथा  अगर ((*ppos) >= SISUSB_PCI_PSEUDO_PCIBASE &&
+			(*ppos) <= SISUSB_PCI_PSEUDO_PCIBASE + 0x5c) अणु
 
-		if (count != 4) {
+		अगर (count != 4) अणु
 			mutex_unlock(&sisusb->lock);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		address = (*ppos) - SISUSB_PCI_PSEUDO_PCIBASE;
 
-		/* Read PCI config register
+		/* Read PCI config रेजिस्टर
 		 * Return value delivered in machine endianness.
 		 */
-		if (sisusb_read_pci_config(sisusb, address, &buf32))
-			errno = -EIO;
-		else if (put_user(buf32, (u32 __user *)buffer))
-			errno = -EFAULT;
-		else
-			bytes_read = 4;
+		अगर (sisusb_पढ़ो_pci_config(sisusb, address, &buf32))
+			त्रुटि_सं = -EIO;
+		अन्यथा अगर (put_user(buf32, (u32 __user *)buffer))
+			त्रुटि_सं = -EFAULT;
+		अन्यथा
+			bytes_पढ़ो = 4;
 
-	} else {
+	पूर्ण अन्यथा अणु
 
-		errno = -EBADFD;
+		त्रुटि_सं = -EBADFD;
 
-	}
+	पूर्ण
 
-	(*ppos) += bytes_read;
+	(*ppos) += bytes_पढ़ो;
 
 	mutex_unlock(&sisusb->lock);
 
-	return errno ? errno : bytes_read;
-}
+	वापस त्रुटि_सं ? त्रुटि_सं : bytes_पढ़ो;
+पूर्ण
 
-static ssize_t sisusb_write(struct file *file, const char __user *buffer,
-		size_t count, loff_t *ppos)
-{
-	struct sisusb_usb_data *sisusb;
-	int errno = 0;
-	ssize_t bytes_written = 0;
+अटल sमाप_प्रकार sisusb_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
+		माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	पूर्णांक त्रुटि_सं = 0;
+	sमाप_प्रकार bytes_written = 0;
 	u8 buf8;
 	u16 buf16;
 	u32 buf32, address;
 
-	sisusb = file->private_data;
-	if (!sisusb)
-		return -ENODEV;
+	sisusb = file->निजी_data;
+	अगर (!sisusb)
+		वापस -ENODEV;
 
 	mutex_lock(&sisusb->lock);
 
 	/* Sanity check */
-	if (!sisusb->present || !sisusb->ready || !sisusb->sisusb_dev) {
+	अगर (!sisusb->present || !sisusb->पढ़ोy || !sisusb->sisusb_dev) अणु
 		mutex_unlock(&sisusb->lock);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if ((*ppos) >= SISUSB_PCI_PSEUDO_IOPORTBASE &&
-			(*ppos) <  SISUSB_PCI_PSEUDO_IOPORTBASE + 128) {
+	अगर ((*ppos) >= SISUSB_PCI_PSEUDO_IOPORTBASE &&
+			(*ppos) <  SISUSB_PCI_PSEUDO_IOPORTBASE + 128) अणु
 
 		address = (*ppos) - SISUSB_PCI_PSEUDO_IOPORTBASE +
 				SISUSB_PCI_IOPORTBASE;
 
 		/* Write i/o ports
-		 * Byte, word and long(32) can be written. As this
-		 * emulates outX instructions, the data is expected
+		 * Byte, word and दीर्घ(32) can be written. As this
+		 * emulates outX inकाष्ठाions, the data is expected
 		 * in machine-endianness.
 		 */
-		switch (count) {
-		case 1:
-			if (get_user(buf8, (u8 __user *)buffer))
-				errno = -EFAULT;
-			else if (sisusb_write_memio_byte(sisusb,
+		चयन (count) अणु
+		हाल 1:
+			अगर (get_user(buf8, (u8 __user *)buffer))
+				त्रुटि_सं = -EFAULT;
+			अन्यथा अगर (sisusb_ग_लिखो_memio_byte(sisusb,
 					SISUSB_TYPE_IO, address, buf8))
-				errno = -EIO;
-			else
+				त्रुटि_सं = -EIO;
+			अन्यथा
 				bytes_written = 1;
 
-			break;
+			अवरोध;
 
-		case 2:
-			if (get_user(buf16, (u16 __user *)buffer))
-				errno = -EFAULT;
-			else if (sisusb_write_memio_word(sisusb,
+		हाल 2:
+			अगर (get_user(buf16, (u16 __user *)buffer))
+				त्रुटि_सं = -EFAULT;
+			अन्यथा अगर (sisusb_ग_लिखो_memio_word(sisusb,
 					SISUSB_TYPE_IO, address, buf16))
-				errno = -EIO;
-			else
+				त्रुटि_सं = -EIO;
+			अन्यथा
 				bytes_written = 2;
 
-			break;
+			अवरोध;
 
-		case 4:
-			if (get_user(buf32, (u32 __user *)buffer))
-				errno = -EFAULT;
-			else if (sisusb_write_memio_long(sisusb,
+		हाल 4:
+			अगर (get_user(buf32, (u32 __user *)buffer))
+				त्रुटि_सं = -EFAULT;
+			अन्यथा अगर (sisusb_ग_लिखो_memio_दीर्घ(sisusb,
 					SISUSB_TYPE_IO, address, buf32))
-				errno = -EIO;
-			else
+				त्रुटि_सं = -EIO;
+			अन्यथा
 				bytes_written = 4;
 
-			break;
+			अवरोध;
 
-		default:
-			errno = -EIO;
-		}
+		शेष:
+			त्रुटि_सं = -EIO;
+		पूर्ण
 
-	} else if ((*ppos) >= SISUSB_PCI_PSEUDO_MEMBASE &&
+	पूर्ण अन्यथा अगर ((*ppos) >= SISUSB_PCI_PSEUDO_MEMBASE &&
 			(*ppos) <  SISUSB_PCI_PSEUDO_MEMBASE +
-			sisusb->vramsize) {
+			sisusb->vramsize) अणु
 
 		address = (*ppos) - SISUSB_PCI_PSEUDO_MEMBASE +
 				SISUSB_PCI_MEMBASE;
 
 		/* Write video ram.
-		 * Buffer is copied 1:1, therefore, on big-endian
+		 * Buffer is copied 1:1, thereक्रमe, on big-endian
 		 * machines, the data must be swapped by userland
-		 * in advance (if applicable; no swapping in 8bpp
-		 * mode or if YUV data is being transferred).
+		 * in advance (अगर applicable; no swapping in 8bpp
+		 * mode or अगर YUV data is being transferred).
 		 */
-		errno = sisusb_write_mem_bulk(sisusb, address, NULL,
+		त्रुटि_सं = sisusb_ग_लिखो_mem_bulk(sisusb, address, शून्य,
 				count, buffer, 0, &bytes_written);
 
-		if (bytes_written)
-			errno = bytes_written;
+		अगर (bytes_written)
+			त्रुटि_सं = bytes_written;
 
-	} else  if ((*ppos) >= SISUSB_PCI_PSEUDO_MMIOBASE &&
+	पूर्ण अन्यथा  अगर ((*ppos) >= SISUSB_PCI_PSEUDO_MMIOBASE &&
 			(*ppos) <  SISUSB_PCI_PSEUDO_MMIOBASE +
-			SISUSB_PCI_MMIOSIZE) {
+			SISUSB_PCI_MMIOSIZE) अणु
 
 		address = (*ppos) - SISUSB_PCI_PSEUDO_MMIOBASE +
 				SISUSB_PCI_MMIOBASE;
 
 		/* Write MMIO.
-		 * Buffer is copied 1:1, therefore, on big-endian
+		 * Buffer is copied 1:1, thereक्रमe, on big-endian
 		 * machines, the data must be swapped by userland
 		 * in advance.
 		 */
-		errno = sisusb_write_mem_bulk(sisusb, address, NULL,
+		त्रुटि_सं = sisusb_ग_लिखो_mem_bulk(sisusb, address, शून्य,
 				count, buffer, 0, &bytes_written);
 
-		if (bytes_written)
-			errno = bytes_written;
+		अगर (bytes_written)
+			त्रुटि_सं = bytes_written;
 
-	} else  if ((*ppos) >= SISUSB_PCI_PSEUDO_PCIBASE &&
+	पूर्ण अन्यथा  अगर ((*ppos) >= SISUSB_PCI_PSEUDO_PCIBASE &&
 				(*ppos) <= SISUSB_PCI_PSEUDO_PCIBASE +
-				SISUSB_PCI_PCONFSIZE) {
+				SISUSB_PCI_PCONFSIZE) अणु
 
-		if (count != 4) {
+		अगर (count != 4) अणु
 			mutex_unlock(&sisusb->lock);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		address = (*ppos) - SISUSB_PCI_PSEUDO_PCIBASE;
 
-		/* Write PCI config register.
+		/* Write PCI config रेजिस्टर.
 		 * Given value expected in machine endianness.
 		 */
-		if (get_user(buf32, (u32 __user *)buffer))
-			errno = -EFAULT;
-		else if (sisusb_write_pci_config(sisusb, address, buf32))
-			errno = -EIO;
-		else
+		अगर (get_user(buf32, (u32 __user *)buffer))
+			त्रुटि_सं = -EFAULT;
+		अन्यथा अगर (sisusb_ग_लिखो_pci_config(sisusb, address, buf32))
+			त्रुटि_सं = -EIO;
+		अन्यथा
 			bytes_written = 4;
 
 
-	} else {
+	पूर्ण अन्यथा अणु
 
 		/* Error */
-		errno = -EBADFD;
+		त्रुटि_सं = -EBADFD;
 
-	}
+	पूर्ण
 
 	(*ppos) += bytes_written;
 
 	mutex_unlock(&sisusb->lock);
 
-	return errno ? errno : bytes_written;
-}
+	वापस त्रुटि_सं ? त्रुटि_सं : bytes_written;
+पूर्ण
 
-static loff_t sisusb_lseek(struct file *file, loff_t offset, int orig)
-{
-	struct sisusb_usb_data *sisusb;
+अटल loff_t sisusb_lseek(काष्ठा file *file, loff_t offset, पूर्णांक orig)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
 	loff_t ret;
 
-	sisusb = file->private_data;
-	if (!sisusb)
-		return -ENODEV;
+	sisusb = file->निजी_data;
+	अगर (!sisusb)
+		वापस -ENODEV;
 
 	mutex_lock(&sisusb->lock);
 
 	/* Sanity check */
-	if (!sisusb->present || !sisusb->ready || !sisusb->sisusb_dev) {
+	अगर (!sisusb->present || !sisusb->पढ़ोy || !sisusb->sisusb_dev) अणु
 		mutex_unlock(&sisusb->lock);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = no_seek_end_llseek(file, offset, orig);
 
 	mutex_unlock(&sisusb->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sisusb_handle_command(struct sisusb_usb_data *sisusb,
-		struct sisusb_command *y, unsigned long arg)
-{
-	int	retval, length;
+अटल पूर्णांक sisusb_handle_command(काष्ठा sisusb_usb_data *sisusb,
+		काष्ठा sisusb_command *y, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक	retval, length;
 	u32	port, address;
 
 	/* All our commands require the device
 	 * to be initialized.
 	 */
-	if (!sisusb->devinit)
-		return -ENODEV;
+	अगर (!sisusb->devinit)
+		वापस -ENODEV;
 
 	port = y->data3 -
 		SISUSB_PCI_PSEUDO_IOPORTBASE +
 		SISUSB_PCI_IOPORTBASE;
 
-	switch (y->operation) {
-	case SUCMD_GET:
+	चयन (y->operation) अणु
+	हाल SUCMD_GET:
 		retval = sisusb_getidxreg(sisusb, port, y->data0, &y->data1);
-		if (!retval) {
-			if (copy_to_user((void __user *)arg, y, sizeof(*y)))
+		अगर (!retval) अणु
+			अगर (copy_to_user((व्योम __user *)arg, y, माप(*y)))
 				retval = -EFAULT;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case SUCMD_SET:
+	हाल SUCMD_SET:
 		retval = sisusb_setidxreg(sisusb, port, y->data0, y->data1);
-		break;
+		अवरोध;
 
-	case SUCMD_SETOR:
+	हाल SUCMD_SETOR:
 		retval = sisusb_setidxregor(sisusb, port, y->data0, y->data1);
-		break;
+		अवरोध;
 
-	case SUCMD_SETAND:
+	हाल SUCMD_SETAND:
 		retval = sisusb_setidxregand(sisusb, port, y->data0, y->data1);
-		break;
+		अवरोध;
 
-	case SUCMD_SETANDOR:
-		retval = sisusb_setidxregandor(sisusb, port, y->data0,
+	हाल SUCMD_SETANDOR:
+		retval = sisusb_setidxreganकरोr(sisusb, port, y->data0,
 				y->data1, y->data2);
-		break;
+		अवरोध;
 
-	case SUCMD_SETMASK:
+	हाल SUCMD_SETMASK:
 		retval = sisusb_setidxregmask(sisusb, port, y->data0,
 				y->data1, y->data2);
-		break;
+		अवरोध;
 
-	case SUCMD_CLRSCR:
+	हाल SUCMD_CLRSCR:
 		/* Gfx core must be initialized */
-		if (!sisusb->gfxinit)
-			return -ENODEV;
+		अगर (!sisusb->gfxinit)
+			वापस -ENODEV;
 
 		length = (y->data0 << 16) | (y->data1 << 8) | y->data2;
 		address = y->data3 - SISUSB_PCI_PSEUDO_MEMBASE +
 				SISUSB_PCI_MEMBASE;
 		retval = sisusb_clear_vram(sisusb, address, length);
-		break;
+		अवरोध;
 
-	case SUCMD_HANDLETEXTMODE:
+	हाल SUCMD_HANDLETEXTMODE:
 		retval = 0;
-#ifdef CONFIG_USB_SISUSBVGA_CON
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
 		/* Gfx core must be initialized, SiS_Pr must exist */
-		if (!sisusb->gfxinit || !sisusb->SiS_Pr)
-			return -ENODEV;
+		अगर (!sisusb->gfxinit || !sisusb->SiS_Pr)
+			वापस -ENODEV;
 
-		switch (y->data0) {
-		case 0:
+		चयन (y->data0) अणु
+		हाल 0:
 			retval = sisusb_reset_text_mode(sisusb, 0);
-			break;
-		case 1:
-			sisusb->textmodedestroyed = 1;
-			break;
-		}
-#endif
-		break;
+			अवरोध;
+		हाल 1:
+			sisusb->texपंचांगodedestroyed = 1;
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर
+		अवरोध;
 
-#ifdef CONFIG_USB_SISUSBVGA_CON
-	case SUCMD_SETMODE:
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
+	हाल SUCMD_SETMODE:
 		/* Gfx core must be initialized, SiS_Pr must exist */
-		if (!sisusb->gfxinit || !sisusb->SiS_Pr)
-			return -ENODEV;
+		अगर (!sisusb->gfxinit || !sisusb->SiS_Pr)
+			वापस -ENODEV;
 
 		retval = 0;
 
 		sisusb->SiS_Pr->IOAddress = SISUSB_PCI_IOPORTBASE + 0x30;
-		sisusb->SiS_Pr->sisusb = (void *)sisusb;
+		sisusb->SiS_Pr->sisusb = (व्योम *)sisusb;
 
-		if (SiSUSBSetMode(sisusb->SiS_Pr, y->data3))
+		अगर (SiSUSBSetMode(sisusb->SiS_Pr, y->data3))
 			retval = -EINVAL;
 
-		break;
+		अवरोध;
 
-	case SUCMD_SETVESAMODE:
+	हाल SUCMD_SETVESAMODE:
 		/* Gfx core must be initialized, SiS_Pr must exist */
-		if (!sisusb->gfxinit || !sisusb->SiS_Pr)
-			return -ENODEV;
+		अगर (!sisusb->gfxinit || !sisusb->SiS_Pr)
+			वापस -ENODEV;
 
 		retval = 0;
 
 		sisusb->SiS_Pr->IOAddress = SISUSB_PCI_IOPORTBASE + 0x30;
-		sisusb->SiS_Pr->sisusb = (void *)sisusb;
+		sisusb->SiS_Pr->sisusb = (व्योम *)sisusb;
 
-		if (SiSUSBSetVESAMode(sisusb->SiS_Pr, y->data3))
+		अगर (SiSUSBSetVESAMode(sisusb->SiS_Pr, y->data3))
 			retval = -EINVAL;
 
-		break;
-#endif
+		अवरोध;
+#पूर्ण_अगर
 
-	default:
+	शेष:
 		retval = -EINVAL;
-	}
+	पूर्ण
 
-	if (retval > 0)
+	अगर (retval > 0)
 		retval = -EIO;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static long sisusb_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct sisusb_usb_data *sisusb;
-	struct sisusb_info x;
-	struct sisusb_command y;
-	long retval = 0;
+अटल दीर्घ sisusb_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
+	काष्ठा sisusb_info x;
+	काष्ठा sisusb_command y;
+	दीर्घ retval = 0;
 	u32 __user *argp = (u32 __user *)arg;
 
-	sisusb = file->private_data;
-	if (!sisusb)
-		return -ENODEV;
+	sisusb = file->निजी_data;
+	अगर (!sisusb)
+		वापस -ENODEV;
 
 	mutex_lock(&sisusb->lock);
 
 	/* Sanity check */
-	if (!sisusb->present || !sisusb->ready || !sisusb->sisusb_dev) {
+	अगर (!sisusb->present || !sisusb->पढ़ोy || !sisusb->sisusb_dev) अणु
 		retval = -ENODEV;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	switch (cmd) {
-	case SISUSB_GET_CONFIG_SIZE:
+	चयन (cmd) अणु
+	हाल SISUSB_GET_CONFIG_SIZE:
 
-		if (put_user(sizeof(x), argp))
+		अगर (put_user(माप(x), argp))
 			retval = -EFAULT;
 
-		break;
+		अवरोध;
 
-	case SISUSB_GET_CONFIG:
+	हाल SISUSB_GET_CONFIG:
 
 		x.sisusb_id = SISUSB_ID;
 		x.sisusb_version = SISUSB_VERSION;
@@ -2942,86 +2943,86 @@ static long sisusb_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		x.sisusb_vramsize = sisusb->vramsize;
 		x.sisusb_minor = sisusb->minor;
 		x.sisusb_fbdevactive = 0;
-#ifdef CONFIG_USB_SISUSBVGA_CON
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
 		x.sisusb_conactive  = sisusb->haveconsole ? 1 : 0;
-#else
+#अन्यथा
 		x.sisusb_conactive  = 0;
-#endif
-		memset(x.sisusb_reserved, 0, sizeof(x.sisusb_reserved));
+#पूर्ण_अगर
+		स_रखो(x.sisusb_reserved, 0, माप(x.sisusb_reserved));
 
-		if (copy_to_user((void __user *)arg, &x, sizeof(x)))
+		अगर (copy_to_user((व्योम __user *)arg, &x, माप(x)))
 			retval = -EFAULT;
 
-		break;
+		अवरोध;
 
-	case SISUSB_COMMAND:
+	हाल SISUSB_COMMAND:
 
-		if (copy_from_user(&y, (void __user *)arg, sizeof(y)))
+		अगर (copy_from_user(&y, (व्योम __user *)arg, माप(y)))
 			retval = -EFAULT;
-		else
+		अन्यथा
 			retval = sisusb_handle_command(sisusb, &y, arg);
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		retval = -ENOTTY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 err_out:
 	mutex_unlock(&sisusb->lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long sisusb_compat_ioctl(struct file *f, unsigned int cmd,
-		unsigned long arg)
-{
-	switch (cmd) {
-	case SISUSB_GET_CONFIG_SIZE:
-	case SISUSB_GET_CONFIG:
-	case SISUSB_COMMAND:
-		return sisusb_ioctl(f, cmd, arg);
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ sisusb_compat_ioctl(काष्ठा file *f, अचिन्हित पूर्णांक cmd,
+		अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल SISUSB_GET_CONFIG_SIZE:
+	हाल SISUSB_GET_CONFIG:
+	हाल SISUSB_COMMAND:
+		वापस sisusb_ioctl(f, cmd, arg);
 
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
-#endif
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static const struct file_operations usb_sisusb_fops = {
+अटल स्थिर काष्ठा file_operations usb_sisusb_fops = अणु
 	.owner =	THIS_MODULE,
-	.open =		sisusb_open,
+	.खोलो =		sisusb_खोलो,
 	.release =	sisusb_release,
-	.read =		sisusb_read,
-	.write =	sisusb_write,
+	.पढ़ो =		sisusb_पढ़ो,
+	.ग_लिखो =	sisusb_ग_लिखो,
 	.llseek =	sisusb_lseek,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl = sisusb_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.unlocked_ioctl = sisusb_ioctl
-};
+पूर्ण;
 
-static struct usb_class_driver usb_sisusb_class = {
+अटल काष्ठा usb_class_driver usb_sisusb_class = अणु
 	.name =		"sisusbvga%d",
 	.fops =		&usb_sisusb_fops,
 	.minor_base =	SISUSB_MINOR
-};
+पूर्ण;
 
-static int sisusb_probe(struct usb_interface *intf,
-		const struct usb_device_id *id)
-{
-	struct usb_device *dev = interface_to_usbdev(intf);
-	struct sisusb_usb_data *sisusb;
-	int retval = 0, i;
+अटल पूर्णांक sisusb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा sisusb_usb_data *sisusb;
+	पूर्णांक retval = 0, i;
 
 	dev_info(&dev->dev, "USB2VGA dongle found at address %d\n",
 			dev->devnum);
 
-	/* Allocate memory for our private */
-	sisusb = kzalloc(sizeof(*sisusb), GFP_KERNEL);
-	if (!sisusb)
-		return -ENOMEM;
+	/* Allocate memory क्रम our निजी */
+	sisusb = kzalloc(माप(*sisusb), GFP_KERNEL);
+	अगर (!sisusb)
+		वापस -ENOMEM;
 
 	kref_init(&sisusb->kref);
 
@@ -3032,197 +3033,197 @@ static int sisusb_probe(struct usb_interface *intf,
 	sisusb->mmiobase   = SISUSB_PCI_MMIOBASE;
 	sisusb->mmiosize   = SISUSB_PCI_MMIOSIZE;
 	sisusb->ioportbase = SISUSB_PCI_IOPORTBASE;
-	/* Everything else is zero */
+	/* Everything अन्यथा is zero */
 
 	/* Register device */
-	retval = usb_register_dev(intf, &usb_sisusb_class);
-	if (retval) {
+	retval = usb_रेजिस्टर_dev(पूर्णांकf, &usb_sisusb_class);
+	अगर (retval) अणु
 		dev_err(&sisusb->sisusb_dev->dev,
 				"Failed to get a minor for device %d\n",
 				dev->devnum);
 		retval = -ENODEV;
-		goto error_1;
-	}
+		जाओ error_1;
+	पूर्ण
 
-	sisusb->minor = intf->minor;
+	sisusb->minor = पूर्णांकf->minor;
 
 	/* Allocate buffers */
 	sisusb->ibufsize = SISUSB_IBUF_SIZE;
-	sisusb->ibuf = kmalloc(SISUSB_IBUF_SIZE, GFP_KERNEL);
-	if (!sisusb->ibuf) {
+	sisusb->ibuf = kदो_स्मृति(SISUSB_IBUF_SIZE, GFP_KERNEL);
+	अगर (!sisusb->ibuf) अणु
 		retval = -ENOMEM;
-		goto error_2;
-	}
+		जाओ error_2;
+	पूर्ण
 
 	sisusb->numobufs = 0;
 	sisusb->obufsize = SISUSB_OBUF_SIZE;
-	for (i = 0; i < NUMOBUFS; i++) {
-		sisusb->obuf[i] = kmalloc(SISUSB_OBUF_SIZE, GFP_KERNEL);
-		if (!sisusb->obuf[i]) {
-			if (i == 0) {
+	क्रम (i = 0; i < NUMOBUFS; i++) अणु
+		sisusb->obuf[i] = kदो_स्मृति(SISUSB_OBUF_SIZE, GFP_KERNEL);
+		अगर (!sisusb->obuf[i]) अणु
+			अगर (i == 0) अणु
 				retval = -ENOMEM;
-				goto error_3;
-			}
-			break;
-		}
+				जाओ error_3;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 		sisusb->numobufs++;
-	}
+	पूर्ण
 
 	/* Allocate URBs */
 	sisusb->sisurbin = usb_alloc_urb(0, GFP_KERNEL);
-	if (!sisusb->sisurbin) {
+	अगर (!sisusb->sisurbin) अणु
 		retval = -ENOMEM;
-		goto error_3;
-	}
+		जाओ error_3;
+	पूर्ण
 	sisusb->completein = 1;
 
-	for (i = 0; i < sisusb->numobufs; i++) {
+	क्रम (i = 0; i < sisusb->numobufs; i++) अणु
 		sisusb->sisurbout[i] = usb_alloc_urb(0, GFP_KERNEL);
-		if (!sisusb->sisurbout[i]) {
+		अगर (!sisusb->sisurbout[i]) अणु
 			retval = -ENOMEM;
-			goto error_4;
-		}
-		sisusb->urbout_context[i].sisusb = (void *)sisusb;
+			जाओ error_4;
+		पूर्ण
+		sisusb->urbout_context[i].sisusb = (व्योम *)sisusb;
 		sisusb->urbout_context[i].urbindex = i;
 		sisusb->urbstatus[i] = 0;
-	}
+	पूर्ण
 
 	dev_info(&sisusb->sisusb_dev->dev, "Allocated %d output buffers\n",
 			sisusb->numobufs);
 
-#ifdef CONFIG_USB_SISUSBVGA_CON
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
 	/* Allocate our SiS_Pr */
-	sisusb->SiS_Pr = kmalloc(sizeof(struct SiS_Private), GFP_KERNEL);
-	if (!sisusb->SiS_Pr) {
+	sisusb->SiS_Pr = kदो_स्मृति(माप(काष्ठा SiS_Private), GFP_KERNEL);
+	अगर (!sisusb->SiS_Pr) अणु
 		retval = -ENOMEM;
-		goto error_4;
-	}
-#endif
+		जाओ error_4;
+	पूर्ण
+#पूर्ण_अगर
 
-	/* Do remaining init stuff */
+	/* Do reमुख्यing init stuff */
 
-	init_waitqueue_head(&sisusb->wait_q);
+	init_रुकोqueue_head(&sisusb->रुको_q);
 
-	usb_set_intfdata(intf, sisusb);
+	usb_set_पूर्णांकfdata(पूर्णांकf, sisusb);
 
 	usb_get_dev(sisusb->sisusb_dev);
 
 	sisusb->present = 1;
 
-	if (dev->speed == USB_SPEED_HIGH || dev->speed >= USB_SPEED_SUPER) {
-		int initscreen = 1;
-#ifdef CONFIG_USB_SISUSBVGA_CON
-		if (sisusb_first_vc > 0 && sisusb_last_vc > 0 &&
+	अगर (dev->speed == USB_SPEED_HIGH || dev->speed >= USB_SPEED_SUPER) अणु
+		पूर्णांक initscreen = 1;
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
+		अगर (sisusb_first_vc > 0 && sisusb_last_vc > 0 &&
 				sisusb_first_vc <= sisusb_last_vc &&
 				sisusb_last_vc <= MAX_NR_CONSOLES)
 			initscreen = 0;
-#endif
-		if (sisusb_init_gfxdevice(sisusb, initscreen))
+#पूर्ण_अगर
+		अगर (sisusb_init_gfxdevice(sisusb, initscreen))
 			dev_err(&sisusb->sisusb_dev->dev,
 					"Failed to early initialize device\n");
 
-	} else
+	पूर्ण अन्यथा
 		dev_info(&sisusb->sisusb_dev->dev,
 				"Not attached to USB 2.0 hub, deferring init\n");
 
-	sisusb->ready = 1;
+	sisusb->पढ़ोy = 1;
 
-#ifdef SISUSBENDIANTEST
+#अगर_घोषित SISUSBENDIANTEST
 	dev_dbg(&sisusb->sisusb_dev->dev, "*** RWTEST ***\n");
-	sisusb_testreadwrite(sisusb);
+	sisusb_testपढ़ोग_लिखो(sisusb);
 	dev_dbg(&sisusb->sisusb_dev->dev, "*** RWTEST END ***\n");
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_USB_SISUSBVGA_CON
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
 	sisusb_console_init(sisusb, sisusb_first_vc, sisusb_last_vc);
-#endif
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
 error_4:
-	sisusb_free_urbs(sisusb);
+	sisusb_मुक्त_urbs(sisusb);
 error_3:
-	sisusb_free_buffers(sisusb);
+	sisusb_मुक्त_buffers(sisusb);
 error_2:
-	usb_deregister_dev(intf, &usb_sisusb_class);
+	usb_deरेजिस्टर_dev(पूर्णांकf, &usb_sisusb_class);
 error_1:
-	kfree(sisusb);
-	return retval;
-}
+	kमुक्त(sisusb);
+	वापस retval;
+पूर्ण
 
-static void sisusb_disconnect(struct usb_interface *intf)
-{
-	struct sisusb_usb_data *sisusb;
+अटल व्योम sisusb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा sisusb_usb_data *sisusb;
 
 	/* This should *not* happen */
-	sisusb = usb_get_intfdata(intf);
-	if (!sisusb)
-		return;
+	sisusb = usb_get_पूर्णांकfdata(पूर्णांकf);
+	अगर (!sisusb)
+		वापस;
 
-#ifdef CONFIG_USB_SISUSBVGA_CON
-	sisusb_console_exit(sisusb);
-#endif
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
+	sisusb_console_निकास(sisusb);
+#पूर्ण_अगर
 
-	usb_deregister_dev(intf, &usb_sisusb_class);
+	usb_deरेजिस्टर_dev(पूर्णांकf, &usb_sisusb_class);
 
 	mutex_lock(&sisusb->lock);
 
-	/* Wait for all URBs to complete and kill them in case (MUST do) */
-	if (!sisusb_wait_all_out_complete(sisusb))
-		sisusb_kill_all_busy(sisusb);
+	/* Wait क्रम all URBs to complete and समाप्त them in हाल (MUST करो) */
+	अगर (!sisusb_रुको_all_out_complete(sisusb))
+		sisusb_समाप्त_all_busy(sisusb);
 
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 
 	sisusb->present = 0;
-	sisusb->ready = 0;
+	sisusb->पढ़ोy = 0;
 
 	mutex_unlock(&sisusb->lock);
 
 	/* decrement our usage count */
 	kref_put(&sisusb->kref, sisusb_delete);
-}
+पूर्ण
 
-static const struct usb_device_id sisusb_table[] = {
-	{ USB_DEVICE(0x0711, 0x0550) },
-	{ USB_DEVICE(0x0711, 0x0900) },
-	{ USB_DEVICE(0x0711, 0x0901) },
-	{ USB_DEVICE(0x0711, 0x0902) },
-	{ USB_DEVICE(0x0711, 0x0903) },
-	{ USB_DEVICE(0x0711, 0x0918) },
-	{ USB_DEVICE(0x0711, 0x0920) },
-	{ USB_DEVICE(0x0711, 0x0950) },
-	{ USB_DEVICE(0x0711, 0x5200) },
-	{ USB_DEVICE(0x182d, 0x021c) },
-	{ USB_DEVICE(0x182d, 0x0269) },
-	{ }
-};
+अटल स्थिर काष्ठा usb_device_id sisusb_table[] = अणु
+	अणु USB_DEVICE(0x0711, 0x0550) पूर्ण,
+	अणु USB_DEVICE(0x0711, 0x0900) पूर्ण,
+	अणु USB_DEVICE(0x0711, 0x0901) पूर्ण,
+	अणु USB_DEVICE(0x0711, 0x0902) पूर्ण,
+	अणु USB_DEVICE(0x0711, 0x0903) पूर्ण,
+	अणु USB_DEVICE(0x0711, 0x0918) पूर्ण,
+	अणु USB_DEVICE(0x0711, 0x0920) पूर्ण,
+	अणु USB_DEVICE(0x0711, 0x0950) पूर्ण,
+	अणु USB_DEVICE(0x0711, 0x5200) पूर्ण,
+	अणु USB_DEVICE(0x182d, 0x021c) पूर्ण,
+	अणु USB_DEVICE(0x182d, 0x0269) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, sisusb_table);
 
-static struct usb_driver sisusb_driver = {
+अटल काष्ठा usb_driver sisusb_driver = अणु
 	.name =		"sisusb",
 	.probe =	sisusb_probe,
 	.disconnect =	sisusb_disconnect,
 	.id_table =	sisusb_table,
-};
+पूर्ण;
 
-static int __init usb_sisusb_init(void)
-{
+अटल पूर्णांक __init usb_sisusb_init(व्योम)
+अणु
 
-#ifdef CONFIG_USB_SISUSBVGA_CON
+#अगर_घोषित CONFIG_USB_SISUSBVGA_CON
 	sisusb_init_concode();
-#endif
+#पूर्ण_अगर
 
-	return usb_register(&sisusb_driver);
-}
+	वापस usb_रेजिस्टर(&sisusb_driver);
+पूर्ण
 
-static void __exit usb_sisusb_exit(void)
-{
-	usb_deregister(&sisusb_driver);
-}
+अटल व्योम __निकास usb_sisusb_निकास(व्योम)
+अणु
+	usb_deरेजिस्टर(&sisusb_driver);
+पूर्ण
 
 module_init(usb_sisusb_init);
-module_exit(usb_sisusb_exit);
+module_निकास(usb_sisusb_निकास);
 
 MODULE_AUTHOR("Thomas Winischhofer <thomas@winischhofer.net>");
 MODULE_DESCRIPTION("sisusbvga - Driver for Net2280/SiS315-based USB2VGA dongles");

@@ -1,48 +1,49 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2014-2015 Broadcom Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
-#ifndef __CYGNUS_SSP_H__
-#define __CYGNUS_SSP_H__
+#अगर_अघोषित __CYGNUS_SSP_H__
+#घोषणा __CYGNUS_SSP_H__
 
-#define CYGNUS_TDM_DAI_MAX_SLOTS 16
+#घोषणा CYGNUS_TDM_DAI_MAX_SLOTS 16
 
-#define CYGNUS_MAX_PLAYBACK_PORTS 4
-#define CYGNUS_MAX_CAPTURE_PORTS 3
-#define CYGNUS_MAX_I2S_PORTS 3
-#define CYGNUS_MAX_PORTS  CYGNUS_MAX_PLAYBACK_PORTS
-#define CYGNUS_AUIDO_MAX_NUM_CLKS 3
+#घोषणा CYGNUS_MAX_PLAYBACK_PORTS 4
+#घोषणा CYGNUS_MAX_CAPTURE_PORTS 3
+#घोषणा CYGNUS_MAX_I2S_PORTS 3
+#घोषणा CYGNUS_MAX_PORTS  CYGNUS_MAX_PLAYBACK_PORTS
+#घोषणा CYGNUS_AUIDO_MAX_NUM_CLKS 3
 
-#define CYGNUS_SSP_FRAMEBITS_DIV 1
+#घोषणा CYGNUS_SSP_FRAMEBITS_DIV 1
 
-#define CYGNUS_SSPMODE_I2S 0
-#define CYGNUS_SSPMODE_TDM 1
-#define CYGNUS_SSPMODE_UNKNOWN -1
+#घोषणा CYGNUS_SSPMODE_I2S 0
+#घोषणा CYGNUS_SSPMODE_TDM 1
+#घोषणा CYGNUS_SSPMODE_UNKNOWN -1
 
-#define CYGNUS_SSP_CLKSRC_PLL      0
+#घोषणा CYGNUS_SSP_CLKSRC_PLL      0
 
 /* Max string length of our dt property names */
-#define PROP_LEN_MAX 40
+#घोषणा PROP_LEN_MAX 40
 
-struct ringbuf_regs {
-	unsigned rdaddr;
-	unsigned wraddr;
-	unsigned baseaddr;
-	unsigned endaddr;
-	unsigned fmark;   /* freemark for play, fullmark for caputure */
-	unsigned period_bytes;
-	unsigned buf_size;
-};
+काष्ठा ringbuf_regs अणु
+	अचिन्हित rdaddr;
+	अचिन्हित wraddr;
+	अचिन्हित baseaddr;
+	अचिन्हित endaddr;
+	अचिन्हित fmark;   /* मुक्तmark क्रम play, fullmark क्रम caputure */
+	अचिन्हित period_bytes;
+	अचिन्हित buf_size;
+पूर्ण;
 
-#define RINGBUF_REG_PLAYBACK(num) ((struct ringbuf_regs) { \
+#घोषणा RINGBUF_REG_PLAYBACK(num) ((काष्ठा ringbuf_regs) अणु \
 	.rdaddr = SRC_RBUF_ ##num## _RDADDR_OFFSET, \
 	.wraddr = SRC_RBUF_ ##num## _WRADDR_OFFSET, \
 	.baseaddr = SRC_RBUF_ ##num## _BASEADDR_OFFSET, \
@@ -50,9 +51,9 @@ struct ringbuf_regs {
 	.fmark = SRC_RBUF_ ##num## _FREE_MARK_OFFSET, \
 	.period_bytes = 0, \
 	.buf_size = 0, \
-})
+पूर्ण)
 
-#define RINGBUF_REG_CAPTURE(num) ((struct ringbuf_regs)  { \
+#घोषणा RINGBUF_REG_CAPTURE(num) ((काष्ठा ringbuf_regs)  अणु \
 	.rdaddr = DST_RBUF_ ##num## _RDADDR_OFFSET, \
 	.wraddr = DST_RBUF_ ##num## _WRADDR_OFFSET, \
 	.baseaddr = DST_RBUF_ ##num## _BASEADDR_OFFSET, \
@@ -60,14 +61,14 @@ struct ringbuf_regs {
 	.fmark = DST_RBUF_ ##num## _FULL_MARK_OFFSET, \
 	.period_bytes = 0, \
 	.buf_size = 0, \
-})
+पूर्ण)
 
-enum cygnus_audio_port_type {
+क्रमागत cygnus_audio_port_type अणु
 	PORT_TDM,
 	PORT_SPDIF,
-};
+पूर्ण;
 
-struct cygnus_ssp_regs {
+काष्ठा cygnus_ssp_regs अणु
 	u32 i2s_stream_cfg;
 	u32 i2s_cfg;
 	u32 i2s_cap_stream_cfg;
@@ -79,61 +80,61 @@ struct cygnus_ssp_regs {
 	u32 bf_sourcech_ctrl;
 	u32 bf_sourcech_cfg;
 	u32 bf_sourcech_grp;
-};
+पूर्ण;
 
-struct cygnus_track_clk {
+काष्ठा cygnus_track_clk अणु
 	bool cap_en;
 	bool play_en;
 	bool cap_clk_en;
 	bool play_clk_en;
-};
+पूर्ण;
 
-struct cygnus_aio_port {
-	int portnum;
-	int mode;
+काष्ठा cygnus_aio_port अणु
+	पूर्णांक portnum;
+	पूर्णांक mode;
 	bool is_slave;
-	int streams_on;   /* will be 0 if both capture and play are off */
-	int fsync_width;
-	int port_type;
+	पूर्णांक streams_on;   /* will be 0 अगर both capture and play are off */
+	पूर्णांक fsync_width;
+	पूर्णांक port_type;
 
 	u32 mclk;
 	u32 lrclk;
 	u32 bit_per_frame;
 	u32 pll_clk_num;
 
-	struct cygnus_audio *cygaud;
-	struct cygnus_ssp_regs regs;
+	काष्ठा cygnus_audio *cygaud;
+	काष्ठा cygnus_ssp_regs regs;
 
-	struct ringbuf_regs play_rb_regs;
-	struct ringbuf_regs capture_rb_regs;
+	काष्ठा ringbuf_regs play_rb_regs;
+	काष्ठा ringbuf_regs capture_rb_regs;
 
-	struct snd_pcm_substream *play_stream;
-	struct snd_pcm_substream *capture_stream;
+	काष्ठा snd_pcm_substream *play_stream;
+	काष्ठा snd_pcm_substream *capture_stream;
 
-	struct cygnus_track_clk clk_trace;
-};
+	काष्ठा cygnus_track_clk clk_trace;
+पूर्ण;
 
 
-struct cygnus_audio {
-	struct cygnus_aio_port  portinfo[CYGNUS_MAX_PORTS];
+काष्ठा cygnus_audio अणु
+	काष्ठा cygnus_aio_port  portinfo[CYGNUS_MAX_PORTS];
 
-	int irq_num;
-	void __iomem *audio;
-	struct device *dev;
-	void __iomem *i2s_in;
+	पूर्णांक irq_num;
+	व्योम __iomem *audio;
+	काष्ठा device *dev;
+	व्योम __iomem *i2s_in;
 
-	struct clk *audio_clk[CYGNUS_AUIDO_MAX_NUM_CLKS];
-	int active_ports;
-	unsigned long vco_rate;
-};
+	काष्ठा clk *audio_clk[CYGNUS_AUIDO_MAX_NUM_CLKS];
+	पूर्णांक active_ports;
+	अचिन्हित दीर्घ vco_rate;
+पूर्ण;
 
-extern int cygnus_ssp_get_mode(struct snd_soc_dai *cpu_dai);
-extern int cygnus_ssp_add_pll_tweak_controls(struct snd_soc_pcm_runtime *rtd);
-extern int cygnus_ssp_set_custom_fsync_width(struct snd_soc_dai *cpu_dai,
-						int len);
-extern int cygnus_soc_platform_register(struct device *dev,
-					struct cygnus_audio *cygaud);
-extern int cygnus_soc_platform_unregister(struct device *dev);
-extern int cygnus_ssp_set_custom_fsync_width(struct snd_soc_dai *cpu_dai,
-	int len);
-#endif
+बाह्य पूर्णांक cygnus_ssp_get_mode(काष्ठा snd_soc_dai *cpu_dai);
+बाह्य पूर्णांक cygnus_ssp_add_pll_tweak_controls(काष्ठा snd_soc_pcm_runसमय *rtd);
+बाह्य पूर्णांक cygnus_ssp_set_custom_fsync_width(काष्ठा snd_soc_dai *cpu_dai,
+						पूर्णांक len);
+बाह्य पूर्णांक cygnus_soc_platक्रमm_रेजिस्टर(काष्ठा device *dev,
+					काष्ठा cygnus_audio *cygaud);
+बाह्य पूर्णांक cygnus_soc_platक्रमm_unरेजिस्टर(काष्ठा device *dev);
+बाह्य पूर्णांक cygnus_ssp_set_custom_fsync_width(काष्ठा snd_soc_dai *cpu_dai,
+	पूर्णांक len);
+#पूर्ण_अगर

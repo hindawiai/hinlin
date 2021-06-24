@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  * Copyright (C) 2015 Nobuo Iwata
  */
 
-#include <linux/kthread.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
 
-#include "usbip_common.h"
+#समावेश "usbip_common.h"
 
-struct usbip_event {
-	struct list_head node;
-	struct usbip_device *ud;
-};
+काष्ठा usbip_event अणु
+	काष्ठा list_head node;
+	काष्ठा usbip_device *ud;
+पूर्ण;
 
-static DEFINE_SPINLOCK(event_lock);
-static LIST_HEAD(event_list);
+अटल DEFINE_SPINLOCK(event_lock);
+अटल LIST_HEAD(event_list);
 
-static void set_event(struct usbip_device *ud, unsigned long event)
-{
-	unsigned long flags;
+अटल व्योम set_event(काष्ठा usbip_device *ud, अचिन्हित दीर्घ event)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ud->lock, flags);
 	ud->event |= event;
 	spin_unlock_irqrestore(&ud->lock, flags);
-}
+पूर्ण
 
-static void unset_event(struct usbip_device *ud, unsigned long event)
-{
-	unsigned long flags;
+अटल व्योम unset_event(काष्ठा usbip_device *ud, अचिन्हित दीर्घ event)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ud->lock, flags);
 	ud->event &= ~event;
 	spin_unlock_irqrestore(&ud->lock, flags);
-}
+पूर्ण
 
-static struct usbip_device *get_event(void)
-{
-	struct usbip_event *ue = NULL;
-	struct usbip_device *ud = NULL;
-	unsigned long flags;
+अटल काष्ठा usbip_device *get_event(व्योम)
+अणु
+	काष्ठा usbip_event *ue = शून्य;
+	काष्ठा usbip_device *ud = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&event_lock, flags);
-	if (!list_empty(&event_list)) {
-		ue = list_first_entry(&event_list, struct usbip_event, node);
+	अगर (!list_empty(&event_list)) अणु
+		ue = list_first_entry(&event_list, काष्ठा usbip_event, node);
 		list_del(&ue->node);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&event_lock, flags);
 
-	if (ue) {
+	अगर (ue) अणु
 		ud = ue->ud;
-		kfree(ue);
-	}
-	return ud;
-}
+		kमुक्त(ue);
+	पूर्ण
+	वापस ud;
+पूर्ण
 
-static struct task_struct *worker_context;
+अटल काष्ठा task_काष्ठा *worker_context;
 
-static void event_handler(struct work_struct *work)
-{
-	struct usbip_device *ud;
+अटल व्योम event_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा usbip_device *ud;
 
-	if (worker_context == NULL) {
+	अगर (worker_context == शून्य) अणु
 		worker_context = current;
-	}
+	पूर्ण
 
-	while ((ud = get_event()) != NULL) {
+	जबतक ((ud = get_event()) != शून्य) अणु
 		usbip_dbg_eh("pending event %lx\n", ud->event);
 
 		mutex_lock(&ud->sysfs_lock);
 		/*
-		 * NOTE: shutdown must come first.
-		 * Shutdown the device.
+		 * NOTE: shutकरोwn must come first.
+		 * Shutकरोwn the device.
 		 */
-		if (ud->event & USBIP_EH_SHUTDOWN) {
-			ud->eh_ops.shutdown(ud);
+		अगर (ud->event & USBIP_EH_SHUTDOWN) अणु
+			ud->eh_ops.shutकरोwn(ud);
 			unset_event(ud, USBIP_EH_SHUTDOWN);
-		}
+		पूर्ण
 
 		/* Reset the device. */
-		if (ud->event & USBIP_EH_RESET) {
+		अगर (ud->event & USBIP_EH_RESET) अणु
 			ud->eh_ops.reset(ud);
 			unset_event(ud, USBIP_EH_RESET);
-		}
+		पूर्ण
 
 		/* Mark the device as unusable. */
-		if (ud->event & USBIP_EH_UNUSABLE) {
+		अगर (ud->event & USBIP_EH_UNUSABLE) अणु
 			ud->eh_ops.unusable(ud);
 			unset_event(ud, USBIP_EH_UNUSABLE);
-		}
+		पूर्ण
 		mutex_unlock(&ud->sysfs_lock);
 
-		wake_up(&ud->eh_waitq);
-	}
-}
+		wake_up(&ud->eh_रुकोq);
+	पूर्ण
+पूर्ण
 
-int usbip_start_eh(struct usbip_device *ud)
-{
-	init_waitqueue_head(&ud->eh_waitq);
+पूर्णांक usbip_start_eh(काष्ठा usbip_device *ud)
+अणु
+	init_रुकोqueue_head(&ud->eh_रुकोq);
 	ud->event = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(usbip_start_eh);
 
-void usbip_stop_eh(struct usbip_device *ud)
-{
-	unsigned long pending = ud->event & ~USBIP_EH_BYE;
+व्योम usbip_stop_eh(काष्ठा usbip_device *ud)
+अणु
+	अचिन्हित दीर्घ pending = ud->event & ~USBIP_EH_BYE;
 
-	if (!(ud->event & USBIP_EH_BYE))
+	अगर (!(ud->event & USBIP_EH_BYE))
 		usbip_dbg_eh("usbip_eh stopping but not removed\n");
 
-	if (pending)
+	अगर (pending)
 		usbip_dbg_eh("usbip_eh waiting completion %lx\n", pending);
 
-	wait_event_interruptible(ud->eh_waitq, !(ud->event & ~USBIP_EH_BYE));
+	रुको_event_पूर्णांकerruptible(ud->eh_रुकोq, !(ud->event & ~USBIP_EH_BYE));
 	usbip_dbg_eh("usbip_eh has stopped\n");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(usbip_stop_eh);
 
-#define WORK_QUEUE_NAME "usbip_event"
+#घोषणा WORK_QUEUE_NAME "usbip_event"
 
-static struct workqueue_struct *usbip_queue;
-static DECLARE_WORK(usbip_work, event_handler);
+अटल काष्ठा workqueue_काष्ठा *usbip_queue;
+अटल DECLARE_WORK(usbip_work, event_handler);
 
-int usbip_init_eh(void)
-{
-	usbip_queue = create_singlethread_workqueue(WORK_QUEUE_NAME);
-	if (usbip_queue == NULL) {
+पूर्णांक usbip_init_eh(व्योम)
+अणु
+	usbip_queue = create_singlethपढ़ो_workqueue(WORK_QUEUE_NAME);
+	अगर (usbip_queue == शून्य) अणु
 		pr_err("failed to create usbip_event\n");
-		return -ENOMEM;
-	}
-	return 0;
-}
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void usbip_finish_eh(void)
-{
+व्योम usbip_finish_eh(व्योम)
+अणु
 	flush_workqueue(usbip_queue);
 	destroy_workqueue(usbip_queue);
-	usbip_queue = NULL;
-}
+	usbip_queue = शून्य;
+पूर्ण
 
-void usbip_event_add(struct usbip_device *ud, unsigned long event)
-{
-	struct usbip_event *ue;
-	unsigned long flags;
+व्योम usbip_event_add(काष्ठा usbip_device *ud, अचिन्हित दीर्घ event)
+अणु
+	काष्ठा usbip_event *ue;
+	अचिन्हित दीर्घ flags;
 
-	if (ud->event & USBIP_EH_BYE)
-		return;
+	अगर (ud->event & USBIP_EH_BYE)
+		वापस;
 
 	set_event(ud, event);
 
 	spin_lock_irqsave(&event_lock, flags);
 
-	list_for_each_entry_reverse(ue, &event_list, node) {
-		if (ue->ud == ud)
-			goto out;
-	}
+	list_क्रम_each_entry_reverse(ue, &event_list, node) अणु
+		अगर (ue->ud == ud)
+			जाओ out;
+	पूर्ण
 
-	ue = kmalloc(sizeof(struct usbip_event), GFP_ATOMIC);
-	if (ue == NULL)
-		goto out;
+	ue = kदो_स्मृति(माप(काष्ठा usbip_event), GFP_ATOMIC);
+	अगर (ue == शून्य)
+		जाओ out;
 
 	ue->ud = ud;
 
@@ -170,28 +171,28 @@ void usbip_event_add(struct usbip_device *ud, unsigned long event)
 
 out:
 	spin_unlock_irqrestore(&event_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(usbip_event_add);
 
-int usbip_event_happened(struct usbip_device *ud)
-{
-	int happened = 0;
-	unsigned long flags;
+पूर्णांक usbip_event_happened(काष्ठा usbip_device *ud)
+अणु
+	पूर्णांक happened = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ud->lock, flags);
-	if (ud->event != 0)
+	अगर (ud->event != 0)
 		happened = 1;
 	spin_unlock_irqrestore(&ud->lock, flags);
 
-	return happened;
-}
+	वापस happened;
+पूर्ण
 EXPORT_SYMBOL_GPL(usbip_event_happened);
 
-int usbip_in_eh(struct task_struct *task)
-{
-	if (task == worker_context)
-		return 1;
+पूर्णांक usbip_in_eh(काष्ठा task_काष्ठा *task)
+अणु
+	अगर (task == worker_context)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(usbip_in_eh);

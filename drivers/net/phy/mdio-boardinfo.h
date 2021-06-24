@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * mdio-boardinfo.h - board info interface internal to the mdio_bus
+ * mdio-boardinfo.h - board info पूर्णांकerface पूर्णांकernal to the mdio_bus
  * component
  */
 
-#ifndef __MDIO_BOARD_INFO_H
-#define __MDIO_BOARD_INFO_H
+#अगर_अघोषित __MDIO_BOARD_INFO_H
+#घोषणा __MDIO_BOARD_INFO_H
 
-#include <linux/phy.h>
-#include <linux/mutex.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/mutex.h>
 
-struct mdio_board_entry {
-	struct list_head	list;
-	struct mdio_board_info	board_info;
-};
+काष्ठा mdio_board_entry अणु
+	काष्ठा list_head	list;
+	काष्ठा mdio_board_info	board_info;
+पूर्ण;
 
-void mdiobus_setup_mdiodev_from_board_info(struct mii_bus *bus,
-					   int (*cb)
-					   (struct mii_bus *bus,
-					    struct mdio_board_info *bi));
+व्योम mdiobus_setup_mdiodev_from_board_info(काष्ठा mii_bus *bus,
+					   पूर्णांक (*cb)
+					   (काष्ठा mii_bus *bus,
+					    काष्ठा mdio_board_info *bi));
 
-#endif /* __MDIO_BOARD_INFO_H */
+#पूर्ण_अगर /* __MDIO_BOARD_INFO_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Camera Flash and Torch On/Off Trigger
  *
@@ -9,44 +10,44 @@
  * Author: Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/leds.h>
 
 DEFINE_LED_TRIGGER(ledtrig_flash);
 DEFINE_LED_TRIGGER(ledtrig_torch);
 
-void ledtrig_flash_ctrl(bool on)
-{
-	enum led_brightness brt = on ? LED_FULL : LED_OFF;
+व्योम ledtrig_flash_ctrl(bool on)
+अणु
+	क्रमागत led_brightness brt = on ? LED_FULL : LED_OFF;
 
 	led_trigger_event(ledtrig_flash, brt);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ledtrig_flash_ctrl);
 
-void ledtrig_torch_ctrl(bool on)
-{
-	enum led_brightness brt = on ? LED_FULL : LED_OFF;
+व्योम ledtrig_torch_ctrl(bool on)
+अणु
+	क्रमागत led_brightness brt = on ? LED_FULL : LED_OFF;
 
 	led_trigger_event(ledtrig_torch, brt);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ledtrig_torch_ctrl);
 
-static int __init ledtrig_camera_init(void)
-{
-	led_trigger_register_simple("flash", &ledtrig_flash);
-	led_trigger_register_simple("torch", &ledtrig_torch);
-	return 0;
-}
+अटल पूर्णांक __init ledtrig_camera_init(व्योम)
+अणु
+	led_trigger_रेजिस्टर_simple("flash", &ledtrig_flash);
+	led_trigger_रेजिस्टर_simple("torch", &ledtrig_torch);
+	वापस 0;
+पूर्ण
 module_init(ledtrig_camera_init);
 
-static void __exit ledtrig_camera_exit(void)
-{
-	led_trigger_unregister_simple(ledtrig_torch);
-	led_trigger_unregister_simple(ledtrig_flash);
-}
-module_exit(ledtrig_camera_exit);
+अटल व्योम __निकास ledtrig_camera_निकास(व्योम)
+अणु
+	led_trigger_unरेजिस्टर_simple(ledtrig_torch);
+	led_trigger_unरेजिस्टर_simple(ledtrig_flash);
+पूर्ण
+module_निकास(ledtrig_camera_निकास);
 
 MODULE_DESCRIPTION("LED Trigger for Camera Flash/Torch Control");
 MODULE_AUTHOR("Milo Kim");

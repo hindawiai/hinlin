@@ -1,160 +1,161 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCI Endpoint *Controller* Address Space Management
+ * PCI Endpoपूर्णांक *Controller* Address Space Management
  *
  * Copyright (C) 2017 Texas Instruments
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <linux/pci-epc.h>
+#समावेश <linux/pci-epc.h>
 
 /**
  * pci_epc_mem_get_order() - determine the allocation order of a memory size
- * @mem: address space of the endpoint controller
- * @size: the size for which to get the order
+ * @mem: address space of the endpoपूर्णांक controller
+ * @size: the size क्रम which to get the order
  *
- * Reimplement get_order() for mem->page_size since the generic get_order
- * always gets order with a constant PAGE_SIZE.
+ * Reimplement get_order() क्रम mem->page_size since the generic get_order
+ * always माला_लो order with a स्थिरant PAGE_SIZE.
  */
-static int pci_epc_mem_get_order(struct pci_epc_mem *mem, size_t size)
-{
-	int order;
-	unsigned int page_shift = ilog2(mem->window.page_size);
+अटल पूर्णांक pci_epc_mem_get_order(काष्ठा pci_epc_mem *mem, माप_प्रकार size)
+अणु
+	पूर्णांक order;
+	अचिन्हित पूर्णांक page_shअगरt = ilog2(mem->winकरोw.page_size);
 
 	size--;
-	size >>= page_shift;
-#if BITS_PER_LONG == 32
+	size >>= page_shअगरt;
+#अगर BITS_PER_LONG == 32
 	order = fls(size);
-#else
+#अन्यथा
 	order = fls64(size);
-#endif
-	return order;
-}
+#पूर्ण_अगर
+	वापस order;
+पूर्ण
 
 /**
- * pci_epc_multi_mem_init() - initialize the pci_epc_mem structure
+ * pci_epc_multi_mem_init() - initialize the pci_epc_mem काष्ठाure
  * @epc: the EPC device that invoked pci_epc_mem_init
- * @windows: pointer to windows supported by the device
- * @num_windows: number of windows device supports
+ * @winकरोws: poपूर्णांकer to winकरोws supported by the device
+ * @num_winकरोws: number of winकरोws device supports
  *
- * Invoke to initialize the pci_epc_mem structure used by the
- * endpoint functions to allocate mapped PCI address.
+ * Invoke to initialize the pci_epc_mem काष्ठाure used by the
+ * endpoपूर्णांक functions to allocate mapped PCI address.
  */
-int pci_epc_multi_mem_init(struct pci_epc *epc,
-			   struct pci_epc_mem_window *windows,
-			   unsigned int num_windows)
-{
-	struct pci_epc_mem *mem = NULL;
-	unsigned long *bitmap = NULL;
-	unsigned int page_shift;
-	size_t page_size;
-	int bitmap_size;
-	int pages;
-	int ret;
-	int i;
+पूर्णांक pci_epc_multi_mem_init(काष्ठा pci_epc *epc,
+			   काष्ठा pci_epc_mem_winकरोw *winकरोws,
+			   अचिन्हित पूर्णांक num_winकरोws)
+अणु
+	काष्ठा pci_epc_mem *mem = शून्य;
+	अचिन्हित दीर्घ *biपंचांगap = शून्य;
+	अचिन्हित पूर्णांक page_shअगरt;
+	माप_प्रकार page_size;
+	पूर्णांक biपंचांगap_size;
+	पूर्णांक pages;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	epc->num_windows = 0;
+	epc->num_winकरोws = 0;
 
-	if (!windows || !num_windows)
-		return -EINVAL;
+	अगर (!winकरोws || !num_winकरोws)
+		वापस -EINVAL;
 
-	epc->windows = kcalloc(num_windows, sizeof(*epc->windows), GFP_KERNEL);
-	if (!epc->windows)
-		return -ENOMEM;
+	epc->winकरोws = kसुस्मृति(num_winकरोws, माप(*epc->winकरोws), GFP_KERNEL);
+	अगर (!epc->winकरोws)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_windows; i++) {
-		page_size = windows[i].page_size;
-		if (page_size < PAGE_SIZE)
+	क्रम (i = 0; i < num_winकरोws; i++) अणु
+		page_size = winकरोws[i].page_size;
+		अगर (page_size < PAGE_SIZE)
 			page_size = PAGE_SIZE;
-		page_shift = ilog2(page_size);
-		pages = windows[i].size >> page_shift;
-		bitmap_size = BITS_TO_LONGS(pages) * sizeof(long);
+		page_shअगरt = ilog2(page_size);
+		pages = winकरोws[i].size >> page_shअगरt;
+		biपंचांगap_size = BITS_TO_LONGS(pages) * माप(दीर्घ);
 
-		mem = kzalloc(sizeof(*mem), GFP_KERNEL);
-		if (!mem) {
+		mem = kzalloc(माप(*mem), GFP_KERNEL);
+		अगर (!mem) अणु
 			ret = -ENOMEM;
 			i--;
-			goto err_mem;
-		}
+			जाओ err_mem;
+		पूर्ण
 
-		bitmap = kzalloc(bitmap_size, GFP_KERNEL);
-		if (!bitmap) {
+		biपंचांगap = kzalloc(biपंचांगap_size, GFP_KERNEL);
+		अगर (!biपंचांगap) अणु
 			ret = -ENOMEM;
-			kfree(mem);
+			kमुक्त(mem);
 			i--;
-			goto err_mem;
-		}
+			जाओ err_mem;
+		पूर्ण
 
-		mem->window.phys_base = windows[i].phys_base;
-		mem->window.size = windows[i].size;
-		mem->window.page_size = page_size;
-		mem->bitmap = bitmap;
+		mem->winकरोw.phys_base = winकरोws[i].phys_base;
+		mem->winकरोw.size = winकरोws[i].size;
+		mem->winकरोw.page_size = page_size;
+		mem->biपंचांगap = biपंचांगap;
 		mem->pages = pages;
 		mutex_init(&mem->lock);
-		epc->windows[i] = mem;
-	}
+		epc->winकरोws[i] = mem;
+	पूर्ण
 
-	epc->mem = epc->windows[0];
-	epc->num_windows = num_windows;
+	epc->mem = epc->winकरोws[0];
+	epc->num_winकरोws = num_winकरोws;
 
-	return 0;
+	वापस 0;
 
 err_mem:
-	for (; i >= 0; i--) {
-		mem = epc->windows[i];
-		kfree(mem->bitmap);
-		kfree(mem);
-	}
-	kfree(epc->windows);
+	क्रम (; i >= 0; i--) अणु
+		mem = epc->winकरोws[i];
+		kमुक्त(mem->biपंचांगap);
+		kमुक्त(mem);
+	पूर्ण
+	kमुक्त(epc->winकरोws);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_multi_mem_init);
 
-int pci_epc_mem_init(struct pci_epc *epc, phys_addr_t base,
-		     size_t size, size_t page_size)
-{
-	struct pci_epc_mem_window mem_window;
+पूर्णांक pci_epc_mem_init(काष्ठा pci_epc *epc, phys_addr_t base,
+		     माप_प्रकार size, माप_प्रकार page_size)
+अणु
+	काष्ठा pci_epc_mem_winकरोw mem_winकरोw;
 
-	mem_window.phys_base = base;
-	mem_window.size = size;
-	mem_window.page_size = page_size;
+	mem_winकरोw.phys_base = base;
+	mem_winकरोw.size = size;
+	mem_winकरोw.page_size = page_size;
 
-	return pci_epc_multi_mem_init(epc, &mem_window, 1);
-}
+	वापस pci_epc_multi_mem_init(epc, &mem_winकरोw, 1);
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_mem_init);
 
 /**
- * pci_epc_mem_exit() - cleanup the pci_epc_mem structure
- * @epc: the EPC device that invoked pci_epc_mem_exit
+ * pci_epc_mem_निकास() - cleanup the pci_epc_mem काष्ठाure
+ * @epc: the EPC device that invoked pci_epc_mem_निकास
  *
- * Invoke to cleanup the pci_epc_mem structure allocated in
+ * Invoke to cleanup the pci_epc_mem काष्ठाure allocated in
  * pci_epc_mem_init().
  */
-void pci_epc_mem_exit(struct pci_epc *epc)
-{
-	struct pci_epc_mem *mem;
-	int i;
+व्योम pci_epc_mem_निकास(काष्ठा pci_epc *epc)
+अणु
+	काष्ठा pci_epc_mem *mem;
+	पूर्णांक i;
 
-	if (!epc->num_windows)
-		return;
+	अगर (!epc->num_winकरोws)
+		वापस;
 
-	for (i = 0; i < epc->num_windows; i++) {
-		mem = epc->windows[i];
-		kfree(mem->bitmap);
-		kfree(mem);
-	}
-	kfree(epc->windows);
+	क्रम (i = 0; i < epc->num_winकरोws; i++) अणु
+		mem = epc->winकरोws[i];
+		kमुक्त(mem->biपंचांगap);
+		kमुक्त(mem);
+	पूर्ण
+	kमुक्त(epc->winकरोws);
 
-	epc->windows = NULL;
-	epc->mem = NULL;
-	epc->num_windows = 0;
-}
-EXPORT_SYMBOL_GPL(pci_epc_mem_exit);
+	epc->winकरोws = शून्य;
+	epc->mem = शून्य;
+	epc->num_winकरोws = 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_epc_mem_निकास);
 
 /**
  * pci_epc_mem_alloc_addr() - allocate memory address from EPC addr space
@@ -163,100 +164,100 @@ EXPORT_SYMBOL_GPL(pci_epc_mem_exit);
  * @size: the size of the address space that has to be allocated
  *
  * Invoke to allocate memory address from the EPC address space. This
- * is usually done to map the remote RC address into the local system.
+ * is usually करोne to map the remote RC address पूर्णांकo the local प्रणाली.
  */
-void __iomem *pci_epc_mem_alloc_addr(struct pci_epc *epc,
-				     phys_addr_t *phys_addr, size_t size)
-{
-	void __iomem *virt_addr = NULL;
-	struct pci_epc_mem *mem;
-	unsigned int page_shift;
-	size_t align_size;
-	int pageno;
-	int order;
-	int i;
+व्योम __iomem *pci_epc_mem_alloc_addr(काष्ठा pci_epc *epc,
+				     phys_addr_t *phys_addr, माप_प्रकार size)
+अणु
+	व्योम __iomem *virt_addr = शून्य;
+	काष्ठा pci_epc_mem *mem;
+	अचिन्हित पूर्णांक page_shअगरt;
+	माप_प्रकार align_size;
+	पूर्णांक pageno;
+	पूर्णांक order;
+	पूर्णांक i;
 
-	for (i = 0; i < epc->num_windows; i++) {
-		mem = epc->windows[i];
+	क्रम (i = 0; i < epc->num_winकरोws; i++) अणु
+		mem = epc->winकरोws[i];
 		mutex_lock(&mem->lock);
-		align_size = ALIGN(size, mem->window.page_size);
+		align_size = ALIGN(size, mem->winकरोw.page_size);
 		order = pci_epc_mem_get_order(mem, align_size);
 
-		pageno = bitmap_find_free_region(mem->bitmap, mem->pages,
+		pageno = biपंचांगap_find_मुक्त_region(mem->biपंचांगap, mem->pages,
 						 order);
-		if (pageno >= 0) {
-			page_shift = ilog2(mem->window.page_size);
-			*phys_addr = mem->window.phys_base +
-				((phys_addr_t)pageno << page_shift);
+		अगर (pageno >= 0) अणु
+			page_shअगरt = ilog2(mem->winकरोw.page_size);
+			*phys_addr = mem->winकरोw.phys_base +
+				((phys_addr_t)pageno << page_shअगरt);
 			virt_addr = ioremap(*phys_addr, align_size);
-			if (!virt_addr) {
-				bitmap_release_region(mem->bitmap,
+			अगर (!virt_addr) अणु
+				biपंचांगap_release_region(mem->biपंचांगap,
 						      pageno, order);
 				mutex_unlock(&mem->lock);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			mutex_unlock(&mem->lock);
-			return virt_addr;
-		}
+			वापस virt_addr;
+		पूर्ण
 		mutex_unlock(&mem->lock);
-	}
+	पूर्ण
 
-	return virt_addr;
-}
+	वापस virt_addr;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_epc_mem_alloc_addr);
 
-static struct pci_epc_mem *pci_epc_get_matching_window(struct pci_epc *epc,
+अटल काष्ठा pci_epc_mem *pci_epc_get_matching_winकरोw(काष्ठा pci_epc *epc,
 						       phys_addr_t phys_addr)
-{
-	struct pci_epc_mem *mem;
-	int i;
+अणु
+	काष्ठा pci_epc_mem *mem;
+	पूर्णांक i;
 
-	for (i = 0; i < epc->num_windows; i++) {
-		mem = epc->windows[i];
+	क्रम (i = 0; i < epc->num_winकरोws; i++) अणु
+		mem = epc->winकरोws[i];
 
-		if (phys_addr >= mem->window.phys_base &&
-		    phys_addr < (mem->window.phys_base + mem->window.size))
-			return mem;
-	}
+		अगर (phys_addr >= mem->winकरोw.phys_base &&
+		    phys_addr < (mem->winकरोw.phys_base + mem->winकरोw.size))
+			वापस mem;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * pci_epc_mem_free_addr() - free the allocated memory address
+ * pci_epc_mem_मुक्त_addr() - मुक्त the allocated memory address
  * @epc: the EPC device on which memory was allocated
  * @phys_addr: the allocated physical address
- * @virt_addr: virtual address of the allocated mem space
+ * @virt_addr: भव address of the allocated mem space
  * @size: the size of the allocated address space
  *
- * Invoke to free the memory allocated using pci_epc_mem_alloc_addr.
+ * Invoke to मुक्त the memory allocated using pci_epc_mem_alloc_addr.
  */
-void pci_epc_mem_free_addr(struct pci_epc *epc, phys_addr_t phys_addr,
-			   void __iomem *virt_addr, size_t size)
-{
-	struct pci_epc_mem *mem;
-	unsigned int page_shift;
-	size_t page_size;
-	int pageno;
-	int order;
+व्योम pci_epc_mem_मुक्त_addr(काष्ठा pci_epc *epc, phys_addr_t phys_addr,
+			   व्योम __iomem *virt_addr, माप_प्रकार size)
+अणु
+	काष्ठा pci_epc_mem *mem;
+	अचिन्हित पूर्णांक page_shअगरt;
+	माप_प्रकार page_size;
+	पूर्णांक pageno;
+	पूर्णांक order;
 
-	mem = pci_epc_get_matching_window(epc, phys_addr);
-	if (!mem) {
+	mem = pci_epc_get_matching_winकरोw(epc, phys_addr);
+	अगर (!mem) अणु
 		pr_err("failed to get matching window\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	page_size = mem->window.page_size;
-	page_shift = ilog2(page_size);
+	page_size = mem->winकरोw.page_size;
+	page_shअगरt = ilog2(page_size);
 	iounmap(virt_addr);
-	pageno = (phys_addr - mem->window.phys_base) >> page_shift;
+	pageno = (phys_addr - mem->winकरोw.phys_base) >> page_shअगरt;
 	size = ALIGN(size, page_size);
 	order = pci_epc_mem_get_order(mem, size);
 	mutex_lock(&mem->lock);
-	bitmap_release_region(mem->bitmap, pageno, order);
+	biपंचांगap_release_region(mem->biपंचांगap, pageno, order);
 	mutex_unlock(&mem->lock);
-}
-EXPORT_SYMBOL_GPL(pci_epc_mem_free_addr);
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_epc_mem_मुक्त_addr);
 
 MODULE_DESCRIPTION("PCI EPC Address Space Management");
 MODULE_AUTHOR("Kishon Vijay Abraham I <kishon@ti.com>");

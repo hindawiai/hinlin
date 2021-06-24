@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0 or BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 or BSD-3-Clause
 
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/net.h>
-#include <linux/scatterlist.h>
-#include <linux/highmem.h>
-#include <net/tcp.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/net.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <net/tcp.h>
 
-#include <rdma/iw_cm.h>
-#include <rdma/ib_verbs.h>
-#include <rdma/ib_user_verbs.h>
+#समावेश <rdma/iw_cm.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/ib_user_verbs.h>
 
-#include "siw.h"
-#include "siw_verbs.h"
-#include "siw_mem.h"
+#समावेश "siw.h"
+#समावेश "siw_verbs.h"
+#समावेश "siw_mem.h"
 
-#define MAX_HDR_INLINE					\
-	(((uint32_t)(sizeof(struct siw_rreq_pkt) -	\
-		     sizeof(struct iwarp_send))) & 0xF8)
+#घोषणा MAX_HDR_INLINE					\
+	(((uपूर्णांक32_t)(माप(काष्ठा siw_rreq_pkt) -	\
+		     माप(काष्ठा iwarp_send))) & 0xF8)
 
-static struct page *siw_get_pblpage(struct siw_mem *mem, u64 addr, int *idx)
-{
-	struct siw_pbl *pbl = mem->pbl;
+अटल काष्ठा page *siw_get_pblpage(काष्ठा siw_mem *mem, u64 addr, पूर्णांक *idx)
+अणु
+	काष्ठा siw_pbl *pbl = mem->pbl;
 	u64 offset = addr - mem->va;
-	dma_addr_t paddr = siw_pbl_get_buffer(pbl, offset, NULL, idx);
+	dma_addr_t paddr = siw_pbl_get_buffer(pbl, offset, शून्य, idx);
 
-	if (paddr)
-		return virt_to_page(paddr);
+	अगर (paddr)
+		वापस virt_to_page(paddr);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Copy short payload at provided destination payload address
+ * Copy लघु payload at provided destination payload address
  */
-static int siw_try_1seg(struct siw_iwarp_tx *c_tx, void *paddr)
-{
-	struct siw_wqe *wqe = &c_tx->wqe_active;
-	struct siw_sge *sge = &wqe->sqe.sge[0];
+अटल पूर्णांक siw_try_1seg(काष्ठा siw_iwarp_tx *c_tx, व्योम *paddr)
+अणु
+	काष्ठा siw_wqe *wqe = &c_tx->wqe_active;
+	काष्ठा siw_sge *sge = &wqe->sqe.sge[0];
 	u32 bytes = sge->length;
 
-	if (bytes > MAX_HDR_INLINE || wqe->sqe.num_sge != 1)
-		return MAX_HDR_INLINE + 1;
+	अगर (bytes > MAX_HDR_INLINE || wqe->sqe.num_sge != 1)
+		वापस MAX_HDR_INLINE + 1;
 
-	if (!bytes)
-		return 0;
+	अगर (!bytes)
+		वापस 0;
 
-	if (tx_flags(wqe) & SIW_WQE_INLINE) {
-		memcpy(paddr, &wqe->sqe.sge[1], bytes);
-	} else {
-		struct siw_mem *mem = wqe->mem[0];
+	अगर (tx_flags(wqe) & SIW_WQE_INLINE) अणु
+		स_नकल(paddr, &wqe->sqe.sge[1], bytes);
+	पूर्ण अन्यथा अणु
+		काष्ठा siw_mem *mem = wqe->mem[0];
 
-		if (!mem->mem_obj) {
+		अगर (!mem->mem_obj) अणु
 			/* Kernel client using kva */
-			memcpy(paddr,
-			       (const void *)(uintptr_t)sge->laddr, bytes);
-		} else if (c_tx->in_syscall) {
-			if (copy_from_user(paddr, u64_to_user_ptr(sge->laddr),
+			स_नकल(paddr,
+			       (स्थिर व्योम *)(uपूर्णांकptr_t)sge->laddr, bytes);
+		पूर्ण अन्यथा अगर (c_tx->in_syscall) अणु
+			अगर (copy_from_user(paddr, u64_to_user_ptr(sge->laddr),
 					   bytes))
-				return -EFAULT;
-		} else {
-			unsigned int off = sge->laddr & ~PAGE_MASK;
-			struct page *p;
-			char *buffer;
-			int pbl_idx = 0;
+				वापस -EFAULT;
+		पूर्ण अन्यथा अणु
+			अचिन्हित पूर्णांक off = sge->laddr & ~PAGE_MASK;
+			काष्ठा page *p;
+			अक्षर *buffer;
+			पूर्णांक pbl_idx = 0;
 
-			if (!mem->is_pbl)
+			अगर (!mem->is_pbl)
 				p = siw_get_upage(mem->umem, sge->laddr);
-			else
+			अन्यथा
 				p = siw_get_pblpage(mem, sge->laddr, &pbl_idx);
 
-			if (unlikely(!p))
-				return -EFAULT;
+			अगर (unlikely(!p))
+				वापस -EFAULT;
 
 			buffer = kmap(p);
 
-			if (likely(PAGE_SIZE - off >= bytes)) {
-				memcpy(paddr, buffer + off, bytes);
-			} else {
-				unsigned long part = bytes - (PAGE_SIZE - off);
+			अगर (likely(PAGE_SIZE - off >= bytes)) अणु
+				स_नकल(paddr, buffer + off, bytes);
+			पूर्ण अन्यथा अणु
+				अचिन्हित दीर्घ part = bytes - (PAGE_SIZE - off);
 
-				memcpy(paddr, buffer + off, part);
+				स_नकल(paddr, buffer + off, part);
 				kunmap(p);
 
-				if (!mem->is_pbl)
+				अगर (!mem->is_pbl)
 					p = siw_get_upage(mem->umem,
 							  sge->laddr + part);
-				else
+				अन्यथा
 					p = siw_get_pblpage(mem,
 							    sge->laddr + part,
 							    &pbl_idx);
-				if (unlikely(!p))
-					return -EFAULT;
+				अगर (unlikely(!p))
+					वापस -EFAULT;
 
 				buffer = kmap(p);
-				memcpy(paddr + part, buffer, bytes - part);
-			}
+				स_नकल(paddr + part, buffer, bytes - part);
+			पूर्ण
 			kunmap(p);
-		}
-	}
-	return (int)bytes;
-}
+		पूर्ण
+	पूर्ण
+	वापस (पूर्णांक)bytes;
+पूर्ण
 
-#define PKT_FRAGMENTED 1
-#define PKT_COMPLETE 0
+#घोषणा PKT_FRAGMENTED 1
+#घोषणा PKT_COMPLETE 0
 
 /*
  * siw_qp_prepare_tx()
  *
- * Prepare tx state for sending out one fpdu. Builds complete pkt
- * if no user data or only immediate data are present.
+ * Prepare tx state क्रम sending out one fpdu. Builds complete pkt
+ * अगर no user data or only immediate data are present.
  *
- * returns PKT_COMPLETE if complete pkt built, PKT_FRAGMENTED otherwise.
+ * वापसs PKT_COMPLETE अगर complete pkt built, PKT_FRAGMENTED otherwise.
  */
-static int siw_qp_prepare_tx(struct siw_iwarp_tx *c_tx)
-{
-	struct siw_wqe *wqe = &c_tx->wqe_active;
-	char *crc = NULL;
-	int data = 0;
+अटल पूर्णांक siw_qp_prepare_tx(काष्ठा siw_iwarp_tx *c_tx)
+अणु
+	काष्ठा siw_wqe *wqe = &c_tx->wqe_active;
+	अक्षर *crc = शून्य;
+	पूर्णांक data = 0;
 
-	switch (tx_type(wqe)) {
-	case SIW_OP_READ:
-	case SIW_OP_READ_LOCAL_INV:
-		memcpy(&c_tx->pkt.ctrl,
+	चयन (tx_type(wqe)) अणु
+	हाल SIW_OP_READ:
+	हाल SIW_OP_READ_LOCAL_INV:
+		स_नकल(&c_tx->pkt.ctrl,
 		       &iwarp_pktinfo[RDMAP_RDMA_READ_REQ].ctrl,
-		       sizeof(struct iwarp_ctrl));
+		       माप(काष्ठा iwarp_ctrl));
 
 		c_tx->pkt.rreq.rsvd = 0;
 		c_tx->pkt.rreq.ddp_qn = htonl(RDMAP_UNTAGGED_QN_RDMA_READ);
@@ -139,20 +140,20 @@ static int siw_qp_prepare_tx(struct siw_iwarp_tx *c_tx)
 			cpu_to_be64(wqe->sqe.sge[0].laddr);
 		c_tx->pkt.rreq.source_stag = htonl(wqe->sqe.rkey);
 		c_tx->pkt.rreq.source_to = cpu_to_be64(wqe->sqe.raddr);
-		c_tx->pkt.rreq.read_size = htonl(wqe->sqe.sge[0].length);
+		c_tx->pkt.rreq.पढ़ो_size = htonl(wqe->sqe.sge[0].length);
 
-		c_tx->ctrl_len = sizeof(struct iwarp_rdma_rreq);
-		crc = (char *)&c_tx->pkt.rreq_pkt.crc;
-		break;
+		c_tx->ctrl_len = माप(काष्ठा iwarp_rdma_rreq);
+		crc = (अक्षर *)&c_tx->pkt.rreq_pkt.crc;
+		अवरोध;
 
-	case SIW_OP_SEND:
-		if (tx_flags(wqe) & SIW_WQE_SOLICITED)
-			memcpy(&c_tx->pkt.ctrl,
+	हाल SIW_OP_SEND:
+		अगर (tx_flags(wqe) & SIW_WQE_SOLICITED)
+			स_नकल(&c_tx->pkt.ctrl,
 			       &iwarp_pktinfo[RDMAP_SEND_SE].ctrl,
-			       sizeof(struct iwarp_ctrl));
-		else
-			memcpy(&c_tx->pkt.ctrl, &iwarp_pktinfo[RDMAP_SEND].ctrl,
-			       sizeof(struct iwarp_ctrl));
+			       माप(काष्ठा iwarp_ctrl));
+		अन्यथा
+			स_नकल(&c_tx->pkt.ctrl, &iwarp_pktinfo[RDMAP_SEND].ctrl,
+			       माप(काष्ठा iwarp_ctrl));
 
 		c_tx->pkt.send.ddp_qn = RDMAP_UNTAGGED_QN_SEND;
 		c_tx->pkt.send.ddp_msn =
@@ -161,21 +162,21 @@ static int siw_qp_prepare_tx(struct siw_iwarp_tx *c_tx)
 
 		c_tx->pkt.send_inv.inval_stag = 0;
 
-		c_tx->ctrl_len = sizeof(struct iwarp_send);
+		c_tx->ctrl_len = माप(काष्ठा iwarp_send);
 
-		crc = (char *)&c_tx->pkt.send_pkt.crc;
+		crc = (अक्षर *)&c_tx->pkt.send_pkt.crc;
 		data = siw_try_1seg(c_tx, crc);
-		break;
+		अवरोध;
 
-	case SIW_OP_SEND_REMOTE_INV:
-		if (tx_flags(wqe) & SIW_WQE_SOLICITED)
-			memcpy(&c_tx->pkt.ctrl,
+	हाल SIW_OP_SEND_REMOTE_INV:
+		अगर (tx_flags(wqe) & SIW_WQE_SOLICITED)
+			स_नकल(&c_tx->pkt.ctrl,
 			       &iwarp_pktinfo[RDMAP_SEND_SE_INVAL].ctrl,
-			       sizeof(struct iwarp_ctrl));
-		else
-			memcpy(&c_tx->pkt.ctrl,
+			       माप(काष्ठा iwarp_ctrl));
+		अन्यथा
+			स_नकल(&c_tx->pkt.ctrl,
 			       &iwarp_pktinfo[RDMAP_SEND_INVAL].ctrl,
-			       sizeof(struct iwarp_ctrl));
+			       माप(काष्ठा iwarp_ctrl));
 
 		c_tx->pkt.send.ddp_qn = RDMAP_UNTAGGED_QN_SEND;
 		c_tx->pkt.send.ddp_msn =
@@ -184,180 +185,180 @@ static int siw_qp_prepare_tx(struct siw_iwarp_tx *c_tx)
 
 		c_tx->pkt.send_inv.inval_stag = cpu_to_be32(wqe->sqe.rkey);
 
-		c_tx->ctrl_len = sizeof(struct iwarp_send_inv);
+		c_tx->ctrl_len = माप(काष्ठा iwarp_send_inv);
 
-		crc = (char *)&c_tx->pkt.send_pkt.crc;
+		crc = (अक्षर *)&c_tx->pkt.send_pkt.crc;
 		data = siw_try_1seg(c_tx, crc);
-		break;
+		अवरोध;
 
-	case SIW_OP_WRITE:
-		memcpy(&c_tx->pkt.ctrl, &iwarp_pktinfo[RDMAP_RDMA_WRITE].ctrl,
-		       sizeof(struct iwarp_ctrl));
+	हाल SIW_OP_WRITE:
+		स_नकल(&c_tx->pkt.ctrl, &iwarp_pktinfo[RDMAP_RDMA_WRITE].ctrl,
+		       माप(काष्ठा iwarp_ctrl));
 
-		c_tx->pkt.rwrite.sink_stag = htonl(wqe->sqe.rkey);
-		c_tx->pkt.rwrite.sink_to = cpu_to_be64(wqe->sqe.raddr);
-		c_tx->ctrl_len = sizeof(struct iwarp_rdma_write);
+		c_tx->pkt.rग_लिखो.sink_stag = htonl(wqe->sqe.rkey);
+		c_tx->pkt.rग_लिखो.sink_to = cpu_to_be64(wqe->sqe.raddr);
+		c_tx->ctrl_len = माप(काष्ठा iwarp_rdma_ग_लिखो);
 
-		crc = (char *)&c_tx->pkt.write_pkt.crc;
+		crc = (अक्षर *)&c_tx->pkt.ग_लिखो_pkt.crc;
 		data = siw_try_1seg(c_tx, crc);
-		break;
+		अवरोध;
 
-	case SIW_OP_READ_RESPONSE:
-		memcpy(&c_tx->pkt.ctrl,
+	हाल SIW_OP_READ_RESPONSE:
+		स_नकल(&c_tx->pkt.ctrl,
 		       &iwarp_pktinfo[RDMAP_RDMA_READ_RESP].ctrl,
-		       sizeof(struct iwarp_ctrl));
+		       माप(काष्ठा iwarp_ctrl));
 
 		/* NBO */
 		c_tx->pkt.rresp.sink_stag = cpu_to_be32(wqe->sqe.rkey);
 		c_tx->pkt.rresp.sink_to = cpu_to_be64(wqe->sqe.raddr);
 
-		c_tx->ctrl_len = sizeof(struct iwarp_rdma_rresp);
+		c_tx->ctrl_len = माप(काष्ठा iwarp_rdma_rresp);
 
-		crc = (char *)&c_tx->pkt.write_pkt.crc;
+		crc = (अक्षर *)&c_tx->pkt.ग_लिखो_pkt.crc;
 		data = siw_try_1seg(c_tx, crc);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		siw_dbg_qp(tx_qp(c_tx), "stale wqe type %d\n", tx_type(wqe));
-		return -EOPNOTSUPP;
-	}
-	if (unlikely(data < 0))
-		return data;
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	अगर (unlikely(data < 0))
+		वापस data;
 
 	c_tx->ctrl_sent = 0;
 
-	if (data <= MAX_HDR_INLINE) {
-		if (data) {
+	अगर (data <= MAX_HDR_INLINE) अणु
+		अगर (data) अणु
 			wqe->processed = data;
 
 			c_tx->pkt.ctrl.mpa_len =
 				htons(c_tx->ctrl_len + data - MPA_HDR_SIZE);
 
-			/* Add pad, if needed */
-			data += -(int)data & 0x3;
+			/* Add pad, अगर needed */
+			data += -(पूर्णांक)data & 0x3;
 			/* advance CRC location after payload */
 			crc += data;
 			c_tx->ctrl_len += data;
 
-			if (!(c_tx->pkt.ctrl.ddp_rdmap_ctrl & DDP_FLAG_TAGGED))
+			अगर (!(c_tx->pkt.ctrl.ddp_rdmap_ctrl & DDP_FLAG_TAGGED))
 				c_tx->pkt.c_untagged.ddp_mo = 0;
-			else
+			अन्यथा
 				c_tx->pkt.c_tagged.ddp_to =
 					cpu_to_be64(wqe->sqe.raddr);
-		}
+		पूर्ण
 
 		*(u32 *)crc = 0;
 		/*
-		 * Do complete CRC if enabled and short packet
+		 * Do complete CRC अगर enabled and लघु packet
 		 */
-		if (c_tx->mpa_crc_hd) {
+		अगर (c_tx->mpa_crc_hd) अणु
 			crypto_shash_init(c_tx->mpa_crc_hd);
-			if (crypto_shash_update(c_tx->mpa_crc_hd,
+			अगर (crypto_shash_update(c_tx->mpa_crc_hd,
 						(u8 *)&c_tx->pkt,
 						c_tx->ctrl_len))
-				return -EINVAL;
+				वापस -EINVAL;
 			crypto_shash_final(c_tx->mpa_crc_hd, (u8 *)crc);
-		}
+		पूर्ण
 		c_tx->ctrl_len += MPA_CRC_SIZE;
 
-		return PKT_COMPLETE;
-	}
+		वापस PKT_COMPLETE;
+	पूर्ण
 	c_tx->ctrl_len += MPA_CRC_SIZE;
 	c_tx->sge_idx = 0;
 	c_tx->sge_off = 0;
 	c_tx->pbl_idx = 0;
 
 	/*
-	 * Allow direct sending out of user buffer if WR is non signalled
+	 * Allow direct sending out of user buffer अगर WR is non संकेतled
 	 * and payload is over threshold.
 	 * Per RDMA verbs, the application should not change the send buffer
 	 * until the work completed. In iWarp, work completion is only
-	 * local delivery to TCP. TCP may reuse the buffer for
-	 * retransmission. Changing unsent data also breaks the CRC,
-	 * if applied.
+	 * local delivery to TCP. TCP may reuse the buffer क्रम
+	 * retransmission. Changing unsent data also अवरोधs the CRC,
+	 * अगर applied.
 	 */
-	if (c_tx->zcopy_tx && wqe->bytes >= SENDPAGE_THRESH &&
+	अगर (c_tx->zcopy_tx && wqe->bytes >= SENDPAGE_THRESH &&
 	    !(tx_flags(wqe) & SIW_WQE_SIGNALLED))
 		c_tx->use_sendpage = 1;
-	else
+	अन्यथा
 		c_tx->use_sendpage = 0;
 
-	return PKT_FRAGMENTED;
-}
+	वापस PKT_FRAGMENTED;
+पूर्ण
 
 /*
  * Send out one complete control type FPDU, or header of FPDU carrying
- * data. Used for fixed sized packets like Read.Requests or zero length
+ * data. Used क्रम fixed sized packets like Read.Requests or zero length
  * SENDs, WRITEs, READ.Responses, or header only.
  */
-static int siw_tx_ctrl(struct siw_iwarp_tx *c_tx, struct socket *s,
-			      int flags)
-{
-	struct msghdr msg = { .msg_flags = flags };
-	struct kvec iov = { .iov_base =
-				    (char *)&c_tx->pkt.ctrl + c_tx->ctrl_sent,
-			    .iov_len = c_tx->ctrl_len - c_tx->ctrl_sent };
+अटल पूर्णांक siw_tx_ctrl(काष्ठा siw_iwarp_tx *c_tx, काष्ठा socket *s,
+			      पूर्णांक flags)
+अणु
+	काष्ठा msghdr msg = अणु .msg_flags = flags पूर्ण;
+	काष्ठा kvec iov = अणु .iov_base =
+				    (अक्षर *)&c_tx->pkt.ctrl + c_tx->ctrl_sent,
+			    .iov_len = c_tx->ctrl_len - c_tx->ctrl_sent पूर्ण;
 
-	int rv = kernel_sendmsg(s, &msg, &iov, 1,
+	पूर्णांक rv = kernel_sendmsg(s, &msg, &iov, 1,
 				c_tx->ctrl_len - c_tx->ctrl_sent);
 
-	if (rv >= 0) {
+	अगर (rv >= 0) अणु
 		c_tx->ctrl_sent += rv;
 
-		if (c_tx->ctrl_sent == c_tx->ctrl_len)
+		अगर (c_tx->ctrl_sent == c_tx->ctrl_len)
 			rv = 0;
-		else
+		अन्यथा
 			rv = -EAGAIN;
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
 /*
- * 0copy TCP transmit interface: Use do_tcp_sendpages.
+ * 0copy TCP transmit पूर्णांकerface: Use करो_tcp_sendpages.
  *
  * Using sendpage to push page by page appears to be less efficient
- * than using sendmsg, even if data are copied.
+ * than using sendmsg, even अगर data are copied.
  *
- * A general performance limitation might be the extra four bytes
+ * A general perक्रमmance limitation might be the extra four bytes
  * trailer checksum segment to be pushed after user data.
  */
-static int siw_tcp_sendpages(struct socket *s, struct page **page, int offset,
-			     size_t size)
-{
-	struct sock *sk = s->sk;
-	int i = 0, rv = 0, sent = 0,
+अटल पूर्णांक siw_tcp_sendpages(काष्ठा socket *s, काष्ठा page **page, पूर्णांक offset,
+			     माप_प्रकार size)
+अणु
+	काष्ठा sock *sk = s->sk;
+	पूर्णांक i = 0, rv = 0, sent = 0,
 	    flags = MSG_MORE | MSG_DONTWAIT | MSG_SENDPAGE_NOTLAST;
 
-	while (size) {
-		size_t bytes = min_t(size_t, PAGE_SIZE - offset, size);
+	जबतक (size) अणु
+		माप_प्रकार bytes = min_t(माप_प्रकार, PAGE_SIZE - offset, size);
 
-		if (size + offset <= PAGE_SIZE)
+		अगर (size + offset <= PAGE_SIZE)
 			flags = MSG_MORE | MSG_DONTWAIT;
 
 		tcp_rate_check_app_limited(sk);
 try_page_again:
 		lock_sock(sk);
-		rv = do_tcp_sendpages(sk, page[i], offset, bytes, flags);
+		rv = करो_tcp_sendpages(sk, page[i], offset, bytes, flags);
 		release_sock(sk);
 
-		if (rv > 0) {
+		अगर (rv > 0) अणु
 			size -= rv;
 			sent += rv;
-			if (rv != bytes) {
+			अगर (rv != bytes) अणु
 				offset += rv;
 				bytes -= rv;
-				goto try_page_again;
-			}
+				जाओ try_page_again;
+			पूर्ण
 			offset = 0;
-		} else {
-			if (rv == -EAGAIN || rv == 0)
-				break;
-			return rv;
-		}
+		पूर्ण अन्यथा अणु
+			अगर (rv == -EAGAIN || rv == 0)
+				अवरोध;
+			वापस rv;
+		पूर्ण
 		i++;
-	}
-	return sent;
-}
+	पूर्ण
+	वापस sent;
+पूर्ण
 
 /*
  * siw_0copy_tx()
@@ -366,45 +367,45 @@ try_page_again:
  * SGE's, all referenced pages of each SGE are pushed in one
  * shot.
  */
-static int siw_0copy_tx(struct socket *s, struct page **page,
-			struct siw_sge *sge, unsigned int offset,
-			unsigned int size)
-{
-	int i = 0, sent = 0, rv;
-	int sge_bytes = min(sge->length - offset, size);
+अटल पूर्णांक siw_0copy_tx(काष्ठा socket *s, काष्ठा page **page,
+			काष्ठा siw_sge *sge, अचिन्हित पूर्णांक offset,
+			अचिन्हित पूर्णांक size)
+अणु
+	पूर्णांक i = 0, sent = 0, rv;
+	पूर्णांक sge_bytes = min(sge->length - offset, size);
 
 	offset = (sge->laddr + offset) & ~PAGE_MASK;
 
-	while (sent != size) {
+	जबतक (sent != size) अणु
 		rv = siw_tcp_sendpages(s, &page[i], offset, sge_bytes);
-		if (rv >= 0) {
+		अगर (rv >= 0) अणु
 			sent += rv;
-			if (size == sent || sge_bytes > rv)
-				break;
+			अगर (size == sent || sge_bytes > rv)
+				अवरोध;
 
 			i += PAGE_ALIGN(sge_bytes + offset) >> PAGE_SHIFT;
 			sge++;
 			sge_bytes = min(sge->length, size - sent);
 			offset = sge->laddr & ~PAGE_MASK;
-		} else {
+		पूर्ण अन्यथा अणु
 			sent = rv;
-			break;
-		}
-	}
-	return sent;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस sent;
+पूर्ण
 
-#define MAX_TRAILER (MPA_CRC_SIZE + 4)
+#घोषणा MAX_TRAILER (MPA_CRC_SIZE + 4)
 
-static void siw_unmap_pages(struct page **pp, unsigned long kmap_mask)
-{
-	while (kmap_mask) {
-		if (kmap_mask & BIT(0))
+अटल व्योम siw_unmap_pages(काष्ठा page **pp, अचिन्हित दीर्घ kmap_mask)
+अणु
+	जबतक (kmap_mask) अणु
+		अगर (kmap_mask & BIT(0))
 			kunmap(*pp);
 		pp++;
 		kmap_mask >>= 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * siw_tx_hdt() tries to push a complete packet to TCP where all
@@ -415,310 +416,310 @@ static void siw_unmap_pages(struct page **pp, unsigned long kmap_mask)
  * and trailer:
  * MAX_ARRAY = 64KB/PAGE_SIZE + 1 + (2 * (SIW_MAX_SGE - 1) + HDR + TRL
  */
-#define MAX_ARRAY ((0xffff / PAGE_SIZE) + 1 + (2 * (SIW_MAX_SGE - 1) + 2))
+#घोषणा MAX_ARRAY ((0xffff / PAGE_SIZE) + 1 + (2 * (SIW_MAX_SGE - 1) + 2))
 
 /*
  * Write out iov referencing hdr, data and trailer of current FPDU.
- * Update transmit state dependent on write return status
+ * Update transmit state dependent on ग_लिखो वापस status
  */
-static int siw_tx_hdt(struct siw_iwarp_tx *c_tx, struct socket *s)
-{
-	struct siw_wqe *wqe = &c_tx->wqe_active;
-	struct siw_sge *sge = &wqe->sqe.sge[c_tx->sge_idx];
-	struct kvec iov[MAX_ARRAY];
-	struct page *page_array[MAX_ARRAY];
-	struct msghdr msg = { .msg_flags = MSG_DONTWAIT | MSG_EOR };
+अटल पूर्णांक siw_tx_hdt(काष्ठा siw_iwarp_tx *c_tx, काष्ठा socket *s)
+अणु
+	काष्ठा siw_wqe *wqe = &c_tx->wqe_active;
+	काष्ठा siw_sge *sge = &wqe->sqe.sge[c_tx->sge_idx];
+	काष्ठा kvec iov[MAX_ARRAY];
+	काष्ठा page *page_array[MAX_ARRAY];
+	काष्ठा msghdr msg = अणु .msg_flags = MSG_DONTWAIT | MSG_EOR पूर्ण;
 
-	int seg = 0, do_crc = c_tx->do_crc, is_kva = 0, rv;
-	unsigned int data_len = c_tx->bytes_unsent, hdr_len = 0, trl_len = 0,
+	पूर्णांक seg = 0, करो_crc = c_tx->करो_crc, is_kva = 0, rv;
+	अचिन्हित पूर्णांक data_len = c_tx->bytes_unsent, hdr_len = 0, trl_len = 0,
 		     sge_off = c_tx->sge_off, sge_idx = c_tx->sge_idx,
 		     pbl_idx = c_tx->pbl_idx;
-	unsigned long kmap_mask = 0L;
+	अचिन्हित दीर्घ kmap_mask = 0L;
 
-	if (c_tx->state == SIW_SEND_HDR) {
-		if (c_tx->use_sendpage) {
+	अगर (c_tx->state == SIW_SEND_HDR) अणु
+		अगर (c_tx->use_sendpage) अणु
 			rv = siw_tx_ctrl(c_tx, s, MSG_DONTWAIT | MSG_MORE);
-			if (rv)
-				goto done;
+			अगर (rv)
+				जाओ करोne;
 
 			c_tx->state = SIW_SEND_DATA;
-		} else {
+		पूर्ण अन्यथा अणु
 			iov[0].iov_base =
-				(char *)&c_tx->pkt.ctrl + c_tx->ctrl_sent;
+				(अक्षर *)&c_tx->pkt.ctrl + c_tx->ctrl_sent;
 			iov[0].iov_len = hdr_len =
 				c_tx->ctrl_len - c_tx->ctrl_sent;
 			seg = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	wqe->processed += data_len;
 
-	while (data_len) { /* walk the list of SGE's */
-		unsigned int sge_len = min(sge->length - sge_off, data_len);
-		unsigned int fp_off = (sge->laddr + sge_off) & ~PAGE_MASK;
-		struct siw_mem *mem;
+	जबतक (data_len) अणु /* walk the list of SGE's */
+		अचिन्हित पूर्णांक sge_len = min(sge->length - sge_off, data_len);
+		अचिन्हित पूर्णांक fp_off = (sge->laddr + sge_off) & ~PAGE_MASK;
+		काष्ठा siw_mem *mem;
 
-		if (!(tx_flags(wqe) & SIW_WQE_INLINE)) {
+		अगर (!(tx_flags(wqe) & SIW_WQE_INLINE)) अणु
 			mem = wqe->mem[sge_idx];
-			is_kva = mem->mem_obj == NULL ? 1 : 0;
-		} else {
+			is_kva = mem->mem_obj == शून्य ? 1 : 0;
+		पूर्ण अन्यथा अणु
 			is_kva = 1;
-		}
-		if (is_kva && !c_tx->use_sendpage) {
+		पूर्ण
+		अगर (is_kva && !c_tx->use_sendpage) अणु
 			/*
-			 * tx from kernel virtual address: either inline data
-			 * or memory region with assigned kernel buffer
+			 * tx from kernel भव address: either अंतरभूत data
+			 * or memory region with asचिन्हित kernel buffer
 			 */
 			iov[seg].iov_base =
-				(void *)(uintptr_t)(sge->laddr + sge_off);
+				(व्योम *)(uपूर्णांकptr_t)(sge->laddr + sge_off);
 			iov[seg].iov_len = sge_len;
 
-			if (do_crc)
+			अगर (करो_crc)
 				crypto_shash_update(c_tx->mpa_crc_hd,
 						    iov[seg].iov_base,
 						    sge_len);
 			sge_off += sge_len;
 			data_len -= sge_len;
 			seg++;
-			goto sge_done;
-		}
+			जाओ sge_करोne;
+		पूर्ण
 
-		while (sge_len) {
-			size_t plen = min((int)PAGE_SIZE - fp_off, sge_len);
+		जबतक (sge_len) अणु
+			माप_प्रकार plen = min((पूर्णांक)PAGE_SIZE - fp_off, sge_len);
 
-			if (!is_kva) {
-				struct page *p;
+			अगर (!is_kva) अणु
+				काष्ठा page *p;
 
-				if (mem->is_pbl)
+				अगर (mem->is_pbl)
 					p = siw_get_pblpage(
 						mem, sge->laddr + sge_off,
 						&pbl_idx);
-				else
+				अन्यथा
 					p = siw_get_upage(mem->umem,
 							  sge->laddr + sge_off);
-				if (unlikely(!p)) {
+				अगर (unlikely(!p)) अणु
 					siw_unmap_pages(page_array, kmap_mask);
 					wqe->processed -= c_tx->bytes_unsent;
 					rv = -EFAULT;
-					goto done_crc;
-				}
+					जाओ करोne_crc;
+				पूर्ण
 				page_array[seg] = p;
 
-				if (!c_tx->use_sendpage) {
+				अगर (!c_tx->use_sendpage) अणु
 					iov[seg].iov_base = kmap(p) + fp_off;
 					iov[seg].iov_len = plen;
 
-					/* Remember for later kunmap() */
+					/* Remember क्रम later kunmap() */
 					kmap_mask |= BIT(seg);
 
-					if (do_crc)
+					अगर (करो_crc)
 						crypto_shash_update(
 							c_tx->mpa_crc_hd,
 							iov[seg].iov_base,
 							plen);
-				} else if (do_crc) {
+				पूर्ण अन्यथा अगर (करो_crc) अणु
 					crypto_shash_update(c_tx->mpa_crc_hd,
 							    kmap(p) + fp_off,
 							    plen);
 					kunmap(p);
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				u64 va = sge->laddr + sge_off;
 
 				page_array[seg] = virt_to_page(va & PAGE_MASK);
-				if (do_crc)
+				अगर (करो_crc)
 					crypto_shash_update(
 						c_tx->mpa_crc_hd,
-						(void *)(uintptr_t)va,
+						(व्योम *)(uपूर्णांकptr_t)va,
 						plen);
-			}
+			पूर्ण
 
 			sge_len -= plen;
 			sge_off += plen;
 			data_len -= plen;
 			fp_off = 0;
 
-			if (++seg > (int)MAX_ARRAY) {
+			अगर (++seg > (पूर्णांक)MAX_ARRAY) अणु
 				siw_dbg_qp(tx_qp(c_tx), "to many fragments\n");
 				siw_unmap_pages(page_array, kmap_mask);
 				wqe->processed -= c_tx->bytes_unsent;
 				rv = -EMSGSIZE;
-				goto done_crc;
-			}
-		}
-sge_done:
+				जाओ करोne_crc;
+			पूर्ण
+		पूर्ण
+sge_करोne:
 		/* Update SGE variables at end of SGE */
-		if (sge_off == sge->length &&
-		    (data_len != 0 || wqe->processed < wqe->bytes)) {
+		अगर (sge_off == sge->length &&
+		    (data_len != 0 || wqe->processed < wqe->bytes)) अणु
 			sge_idx++;
 			sge++;
 			sge_off = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* trailer */
-	if (likely(c_tx->state != SIW_SEND_TRAILER)) {
+	अगर (likely(c_tx->state != SIW_SEND_TRAILER)) अणु
 		iov[seg].iov_base = &c_tx->trailer.pad[4 - c_tx->pad];
 		iov[seg].iov_len = trl_len = MAX_TRAILER - (4 - c_tx->pad);
-	} else {
+	पूर्ण अन्यथा अणु
 		iov[seg].iov_base = &c_tx->trailer.pad[c_tx->ctrl_sent];
 		iov[seg].iov_len = trl_len = MAX_TRAILER - c_tx->ctrl_sent;
-	}
+	पूर्ण
 
-	if (c_tx->pad) {
+	अगर (c_tx->pad) अणु
 		*(u32 *)c_tx->trailer.pad = 0;
-		if (do_crc)
+		अगर (करो_crc)
 			crypto_shash_update(c_tx->mpa_crc_hd,
 				(u8 *)&c_tx->trailer.crc - c_tx->pad,
 				c_tx->pad);
-	}
-	if (!c_tx->mpa_crc_hd)
+	पूर्ण
+	अगर (!c_tx->mpa_crc_hd)
 		c_tx->trailer.crc = 0;
-	else if (do_crc)
+	अन्यथा अगर (करो_crc)
 		crypto_shash_final(c_tx->mpa_crc_hd, (u8 *)&c_tx->trailer.crc);
 
 	data_len = c_tx->bytes_unsent;
 
-	if (c_tx->use_sendpage) {
+	अगर (c_tx->use_sendpage) अणु
 		rv = siw_0copy_tx(s, page_array, &wqe->sqe.sge[c_tx->sge_idx],
 				  c_tx->sge_off, data_len);
-		if (rv == data_len) {
+		अगर (rv == data_len) अणु
 			rv = kernel_sendmsg(s, &msg, &iov[seg], 1, trl_len);
-			if (rv > 0)
+			अगर (rv > 0)
 				rv += data_len;
-			else
+			अन्यथा
 				rv = data_len;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rv = kernel_sendmsg(s, &msg, iov, seg + 1,
 				    hdr_len + data_len + trl_len);
 		siw_unmap_pages(page_array, kmap_mask);
-	}
-	if (rv < (int)hdr_len) {
+	पूर्ण
+	अगर (rv < (पूर्णांक)hdr_len) अणु
 		/* Not even complete hdr pushed or negative rv */
 		wqe->processed -= data_len;
-		if (rv >= 0) {
+		अगर (rv >= 0) अणु
 			c_tx->ctrl_sent += rv;
 			rv = -EAGAIN;
-		}
-		goto done_crc;
-	}
+		पूर्ण
+		जाओ करोne_crc;
+	पूर्ण
 	rv -= hdr_len;
 
-	if (rv >= (int)data_len) {
+	अगर (rv >= (पूर्णांक)data_len) अणु
 		/* all user data pushed to TCP or no data to push */
-		if (data_len > 0 && wqe->processed < wqe->bytes) {
-			/* Save the current state for next tx */
+		अगर (data_len > 0 && wqe->processed < wqe->bytes) अणु
+			/* Save the current state क्रम next tx */
 			c_tx->sge_idx = sge_idx;
 			c_tx->sge_off = sge_off;
 			c_tx->pbl_idx = pbl_idx;
-		}
+		पूर्ण
 		rv -= data_len;
 
-		if (rv == trl_len) /* all pushed */
+		अगर (rv == trl_len) /* all pushed */
 			rv = 0;
-		else {
+		अन्यथा अणु
 			c_tx->state = SIW_SEND_TRAILER;
 			c_tx->ctrl_len = MAX_TRAILER;
 			c_tx->ctrl_sent = rv + 4 - c_tx->pad;
 			c_tx->bytes_unsent = 0;
 			rv = -EAGAIN;
-		}
+		पूर्ण
 
-	} else if (data_len > 0) {
+	पूर्ण अन्यथा अगर (data_len > 0) अणु
 		/* Maybe some user data pushed to TCP */
 		c_tx->state = SIW_SEND_DATA;
 		wqe->processed -= data_len - rv;
 
-		if (rv) {
+		अगर (rv) अणु
 			/*
 			 * Some bytes out. Recompute tx state based
 			 * on old state and bytes pushed
 			 */
-			unsigned int sge_unsent;
+			अचिन्हित पूर्णांक sge_unsent;
 
 			c_tx->bytes_unsent -= rv;
 			sge = &wqe->sqe.sge[c_tx->sge_idx];
 			sge_unsent = sge->length - c_tx->sge_off;
 
-			while (sge_unsent <= rv) {
+			जबतक (sge_unsent <= rv) अणु
 				rv -= sge_unsent;
 				c_tx->sge_idx++;
 				c_tx->sge_off = 0;
 				sge++;
 				sge_unsent = sge->length;
-			}
+			पूर्ण
 			c_tx->sge_off += rv;
-		}
+		पूर्ण
 		rv = -EAGAIN;
-	}
-done_crc:
-	c_tx->do_crc = 0;
-done:
-	return rv;
-}
+	पूर्ण
+करोne_crc:
+	c_tx->करो_crc = 0;
+करोne:
+	वापस rv;
+पूर्ण
 
-static void siw_update_tcpseg(struct siw_iwarp_tx *c_tx,
-				     struct socket *s)
-{
-	struct tcp_sock *tp = tcp_sk(s->sk);
+अटल व्योम siw_update_tcpseg(काष्ठा siw_iwarp_tx *c_tx,
+				     काष्ठा socket *s)
+अणु
+	काष्ठा tcp_sock *tp = tcp_sk(s->sk);
 
-	if (tp->gso_segs) {
-		if (c_tx->gso_seg_limit == 0)
+	अगर (tp->gso_segs) अणु
+		अगर (c_tx->gso_seg_limit == 0)
 			c_tx->tcp_seglen = tp->mss_cache * tp->gso_segs;
-		else
+		अन्यथा
 			c_tx->tcp_seglen =
 				tp->mss_cache *
 				min_t(u16, c_tx->gso_seg_limit, tp->gso_segs);
-	} else {
+	पूर्ण अन्यथा अणु
 		c_tx->tcp_seglen = tp->mss_cache;
-	}
+	पूर्ण
 	/* Loopback may give odd numbers */
 	c_tx->tcp_seglen &= 0xfffffff8;
-}
+पूर्ण
 
 /*
  * siw_prepare_fpdu()
  *
- * Prepares transmit context to send out one FPDU if FPDU will contain
+ * Prepares transmit context to send out one FPDU अगर FPDU will contain
  * user data and user data are not immediate data.
- * Computes maximum FPDU length to fill up TCP MSS if possible.
+ * Computes maximum FPDU length to fill up TCP MSS अगर possible.
  *
  * @qp:		QP from which to transmit
  * @wqe:	Current WQE causing transmission
  *
- * TODO: Take into account real available sendspace on socket
- *       to avoid header misalignment due to send pausing within
+ * TODO: Take पूर्णांकo account real available sendspace on socket
+ *       to aव्योम header misalignment due to send pausing within
  *       fpdu transmission
  */
-static void siw_prepare_fpdu(struct siw_qp *qp, struct siw_wqe *wqe)
-{
-	struct siw_iwarp_tx *c_tx = &qp->tx_ctx;
-	int data_len;
+अटल व्योम siw_prepare_fpdu(काष्ठा siw_qp *qp, काष्ठा siw_wqe *wqe)
+अणु
+	काष्ठा siw_iwarp_tx *c_tx = &qp->tx_ctx;
+	पूर्णांक data_len;
 
 	c_tx->ctrl_len =
 		iwarp_pktinfo[__rdmap_get_opcode(&c_tx->pkt.ctrl)].hdr_len;
 	c_tx->ctrl_sent = 0;
 
 	/*
-	 * Update target buffer offset if any
+	 * Update target buffer offset अगर any
 	 */
-	if (!(c_tx->pkt.ctrl.ddp_rdmap_ctrl & DDP_FLAG_TAGGED))
+	अगर (!(c_tx->pkt.ctrl.ddp_rdmap_ctrl & DDP_FLAG_TAGGED))
 		/* Untagged message */
 		c_tx->pkt.c_untagged.ddp_mo = cpu_to_be32(wqe->processed);
-	else /* Tagged message */
+	अन्यथा /* Tagged message */
 		c_tx->pkt.c_tagged.ddp_to =
 			cpu_to_be64(wqe->sqe.raddr + wqe->processed);
 
 	data_len = wqe->bytes - wqe->processed;
-	if (data_len + c_tx->ctrl_len + MPA_CRC_SIZE > c_tx->tcp_seglen) {
-		/* Trim DDP payload to fit into current TCP segment */
+	अगर (data_len + c_tx->ctrl_len + MPA_CRC_SIZE > c_tx->tcp_seglen) अणु
+		/* Trim DDP payload to fit पूर्णांकo current TCP segment */
 		data_len = c_tx->tcp_seglen - (c_tx->ctrl_len + MPA_CRC_SIZE);
 		c_tx->pkt.ctrl.ddp_rdmap_ctrl &= ~DDP_FLAG_LAST;
 		c_tx->pad = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		c_tx->pkt.ctrl.ddp_rdmap_ctrl |= DDP_FLAG_LAST;
 		c_tx->pad = -data_len & 0x3;
-	}
+	पूर्ण
 	c_tx->bytes_unsent = data_len;
 
 	c_tx->pkt.ctrl.mpa_len =
@@ -727,230 +728,230 @@ static void siw_prepare_fpdu(struct siw_qp *qp, struct siw_wqe *wqe)
 	/*
 	 * Init MPA CRC computation
 	 */
-	if (c_tx->mpa_crc_hd) {
+	अगर (c_tx->mpa_crc_hd) अणु
 		crypto_shash_init(c_tx->mpa_crc_hd);
 		crypto_shash_update(c_tx->mpa_crc_hd, (u8 *)&c_tx->pkt,
 				    c_tx->ctrl_len);
-		c_tx->do_crc = 1;
-	}
-}
+		c_tx->करो_crc = 1;
+	पूर्ण
+पूर्ण
 
 /*
  * siw_check_sgl_tx()
  *
- * Check permissions for a list of SGE's (SGL).
+ * Check permissions क्रम a list of SGE's (SGL).
  * A successful check will have all memory referenced
- * for transmission resolved and assigned to the WQE.
+ * क्रम transmission resolved and asचिन्हित to the WQE.
  *
- * @pd:		Protection Domain SGL should belong to
+ * @pd:		Protection Doमुख्य SGL should beदीर्घ to
  * @wqe:	WQE to be checked
  * @perms:	requested access permissions
  *
  */
 
-static int siw_check_sgl_tx(struct ib_pd *pd, struct siw_wqe *wqe,
-			    enum ib_access_flags perms)
-{
-	struct siw_sge *sge = &wqe->sqe.sge[0];
-	int i, len, num_sge = wqe->sqe.num_sge;
+अटल पूर्णांक siw_check_sgl_tx(काष्ठा ib_pd *pd, काष्ठा siw_wqe *wqe,
+			    क्रमागत ib_access_flags perms)
+अणु
+	काष्ठा siw_sge *sge = &wqe->sqe.sge[0];
+	पूर्णांक i, len, num_sge = wqe->sqe.num_sge;
 
-	if (unlikely(num_sge > SIW_MAX_SGE))
-		return -EINVAL;
+	अगर (unlikely(num_sge > SIW_MAX_SGE))
+		वापस -EINVAL;
 
-	for (i = 0, len = 0; num_sge; num_sge--, i++, sge++) {
+	क्रम (i = 0, len = 0; num_sge; num_sge--, i++, sge++) अणु
 		/*
-		 * rdma verbs: do not check stag for a zero length sge
+		 * rdma verbs: करो not check stag क्रम a zero length sge
 		 */
-		if (sge->length) {
-			int rv = siw_check_sge(pd, sge, &wqe->mem[i], perms, 0,
+		अगर (sge->length) अणु
+			पूर्णांक rv = siw_check_sge(pd, sge, &wqe->mem[i], perms, 0,
 					       sge->length);
 
-			if (unlikely(rv != E_ACCESS_OK))
-				return rv;
-		}
+			अगर (unlikely(rv != E_ACCESS_OK))
+				वापस rv;
+		पूर्ण
 		len += sge->length;
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 
 /*
  * siw_qp_sq_proc_tx()
  *
  * Process one WQE which needs transmission on the wire.
  */
-static int siw_qp_sq_proc_tx(struct siw_qp *qp, struct siw_wqe *wqe)
-{
-	struct siw_iwarp_tx *c_tx = &qp->tx_ctx;
-	struct socket *s = qp->attrs.sk;
-	int rv = 0, burst_len = qp->tx_ctx.burst;
-	enum rdmap_ecode ecode = RDMAP_ECODE_CATASTROPHIC_STREAM;
+अटल पूर्णांक siw_qp_sq_proc_tx(काष्ठा siw_qp *qp, काष्ठा siw_wqe *wqe)
+अणु
+	काष्ठा siw_iwarp_tx *c_tx = &qp->tx_ctx;
+	काष्ठा socket *s = qp->attrs.sk;
+	पूर्णांक rv = 0, burst_len = qp->tx_ctx.burst;
+	क्रमागत rdmap_ecode ecode = RDMAP_ECODE_CATASTROPHIC_STREAM;
 
-	if (unlikely(wqe->wr_status == SIW_WR_IDLE))
-		return 0;
+	अगर (unlikely(wqe->wr_status == SIW_WR_IDLE))
+		वापस 0;
 
-	if (!burst_len)
+	अगर (!burst_len)
 		burst_len = SQ_USER_MAXBURST;
 
-	if (wqe->wr_status == SIW_WR_QUEUED) {
-		if (!(wqe->sqe.flags & SIW_WQE_INLINE)) {
-			if (tx_type(wqe) == SIW_OP_READ_RESPONSE)
+	अगर (wqe->wr_status == SIW_WR_QUEUED) अणु
+		अगर (!(wqe->sqe.flags & SIW_WQE_INLINE)) अणु
+			अगर (tx_type(wqe) == SIW_OP_READ_RESPONSE)
 				wqe->sqe.num_sge = 1;
 
-			if (tx_type(wqe) != SIW_OP_READ &&
-			    tx_type(wqe) != SIW_OP_READ_LOCAL_INV) {
+			अगर (tx_type(wqe) != SIW_OP_READ &&
+			    tx_type(wqe) != SIW_OP_READ_LOCAL_INV) अणु
 				/*
 				 * Reference memory to be tx'd w/o checking
-				 * access for LOCAL_READ permission, since
+				 * access क्रम LOCAL_READ permission, since
 				 * not defined in RDMA core.
 				 */
 				rv = siw_check_sgl_tx(qp->pd, wqe, 0);
-				if (rv < 0) {
-					if (tx_type(wqe) ==
+				अगर (rv < 0) अणु
+					अगर (tx_type(wqe) ==
 					    SIW_OP_READ_RESPONSE)
 						ecode = siw_rdmap_error(-rv);
 					rv = -EINVAL;
-					goto tx_error;
-				}
+					जाओ tx_error;
+				पूर्ण
 				wqe->bytes = rv;
-			} else {
+			पूर्ण अन्यथा अणु
 				wqe->bytes = 0;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			wqe->bytes = wqe->sqe.sge[0].length;
-			if (!rdma_is_kernel_res(&qp->base_qp.res)) {
-				if (wqe->bytes > SIW_MAX_INLINE) {
+			अगर (!rdma_is_kernel_res(&qp->base_qp.res)) अणु
+				अगर (wqe->bytes > SIW_MAX_INLINE) अणु
 					rv = -EINVAL;
-					goto tx_error;
-				}
+					जाओ tx_error;
+				पूर्ण
 				wqe->sqe.sge[0].laddr =
-					(u64)(uintptr_t)&wqe->sqe.sge[1];
-			}
-		}
+					(u64)(uपूर्णांकptr_t)&wqe->sqe.sge[1];
+			पूर्ण
+		पूर्ण
 		wqe->wr_status = SIW_WR_INPROGRESS;
 		wqe->processed = 0;
 
 		siw_update_tcpseg(c_tx, s);
 
 		rv = siw_qp_prepare_tx(c_tx);
-		if (rv == PKT_FRAGMENTED) {
+		अगर (rv == PKT_FRAGMENTED) अणु
 			c_tx->state = SIW_SEND_HDR;
 			siw_prepare_fpdu(qp, wqe);
-		} else if (rv == PKT_COMPLETE) {
+		पूर्ण अन्यथा अगर (rv == PKT_COMPLETE) अणु
 			c_tx->state = SIW_SEND_SHORT_FPDU;
-		} else {
-			goto tx_error;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			जाओ tx_error;
+		पूर्ण
+	पूर्ण
 
 next_segment:
 	siw_dbg_qp(qp, "wr type %d, state %d, data %u, sent %u, id %llx\n",
 		   tx_type(wqe), wqe->wr_status, wqe->bytes, wqe->processed,
 		   wqe->sqe.id);
 
-	if (--burst_len == 0) {
+	अगर (--burst_len == 0) अणु
 		rv = -EINPROGRESS;
-		goto tx_done;
-	}
-	if (c_tx->state == SIW_SEND_SHORT_FPDU) {
-		enum siw_opcode tx_type = tx_type(wqe);
-		unsigned int msg_flags;
+		जाओ tx_करोne;
+	पूर्ण
+	अगर (c_tx->state == SIW_SEND_SHORT_FPDU) अणु
+		क्रमागत siw_opcode tx_type = tx_type(wqe);
+		अचिन्हित पूर्णांक msg_flags;
 
-		if (siw_sq_empty(qp) || !siw_tcp_nagle || burst_len == 1)
+		अगर (siw_sq_empty(qp) || !siw_tcp_nagle || burst_len == 1)
 			/*
-			 * End current TCP segment, if SQ runs empty,
+			 * End current TCP segment, अगर SQ runs empty,
 			 * or siw_tcp_nagle is not set, or we bail out
 			 * soon due to no burst credit left.
 			 */
 			msg_flags = MSG_DONTWAIT;
-		else
+		अन्यथा
 			msg_flags = MSG_DONTWAIT | MSG_MORE;
 
 		rv = siw_tx_ctrl(c_tx, s, msg_flags);
 
-		if (!rv && tx_type != SIW_OP_READ &&
+		अगर (!rv && tx_type != SIW_OP_READ &&
 		    tx_type != SIW_OP_READ_LOCAL_INV)
 			wqe->processed = wqe->bytes;
 
-		goto tx_done;
+		जाओ tx_करोne;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		rv = siw_tx_hdt(c_tx, s);
-	}
-	if (!rv) {
+	पूर्ण
+	अगर (!rv) अणु
 		/*
-		 * One segment sent. Processing completed if last
+		 * One segment sent. Processing completed अगर last
 		 * segment, Do next segment otherwise.
 		 */
-		if (unlikely(c_tx->tx_suspend)) {
+		अगर (unlikely(c_tx->tx_suspend)) अणु
 			/*
 			 * Verbs, 6.4.: Try stopping sending after a full
-			 * DDP segment if the connection goes down
-			 * (== peer halfclose)
+			 * DDP segment अगर the connection goes करोwn
+			 * (== peer halख_बंद)
 			 */
 			rv = -ECONNABORTED;
-			goto tx_done;
-		}
-		if (c_tx->pkt.ctrl.ddp_rdmap_ctrl & DDP_FLAG_LAST) {
+			जाओ tx_करोne;
+		पूर्ण
+		अगर (c_tx->pkt.ctrl.ddp_rdmap_ctrl & DDP_FLAG_LAST) अणु
 			siw_dbg_qp(qp, "WQE completed\n");
-			goto tx_done;
-		}
+			जाओ tx_करोne;
+		पूर्ण
 		c_tx->state = SIW_SEND_HDR;
 
 		siw_update_tcpseg(c_tx, s);
 
 		siw_prepare_fpdu(qp, wqe);
-		goto next_segment;
-	}
-tx_done:
+		जाओ next_segment;
+	पूर्ण
+tx_करोne:
 	qp->tx_ctx.burst = burst_len;
-	return rv;
+	वापस rv;
 
 tx_error:
-	if (ecode != RDMAP_ECODE_CATASTROPHIC_STREAM)
+	अगर (ecode != RDMAP_ECODE_CATASTROPHIC_STREAM)
 		siw_init_terminate(qp, TERM_ERROR_LAYER_RDMAP,
 				   RDMAP_ETYPE_REMOTE_PROTECTION, ecode, 1);
-	else
+	अन्यथा
 		siw_init_terminate(qp, TERM_ERROR_LAYER_RDMAP,
 				   RDMAP_ETYPE_CATASTROPHIC,
 				   RDMAP_ECODE_UNSPECIFIED, 1);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int siw_fastreg_mr(struct ib_pd *pd, struct siw_sqe *sqe)
-{
-	struct ib_mr *base_mr = (struct ib_mr *)(uintptr_t)sqe->base_mr;
-	struct siw_device *sdev = to_siw_dev(pd->device);
-	struct siw_mem *mem;
-	int rv = 0;
+अटल पूर्णांक siw_fastreg_mr(काष्ठा ib_pd *pd, काष्ठा siw_sqe *sqe)
+अणु
+	काष्ठा ib_mr *base_mr = (काष्ठा ib_mr *)(uपूर्णांकptr_t)sqe->base_mr;
+	काष्ठा siw_device *sdev = to_siw_dev(pd->device);
+	काष्ठा siw_mem *mem;
+	पूर्णांक rv = 0;
 
 	siw_dbg_pd(pd, "STag 0x%08x\n", sqe->rkey);
 
-	if (unlikely(!base_mr)) {
+	अगर (unlikely(!base_mr)) अणु
 		pr_warn("siw: fastreg: STag 0x%08x unknown\n", sqe->rkey);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (unlikely(base_mr->rkey >> 8 != sqe->rkey  >> 8)) {
+	अगर (unlikely(base_mr->rkey >> 8 != sqe->rkey  >> 8)) अणु
 		pr_warn("siw: fastreg: STag 0x%08x: bad MR\n", sqe->rkey);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mem = siw_mem_id2obj(sdev, sqe->rkey  >> 8);
-	if (unlikely(!mem)) {
+	अगर (unlikely(!mem)) अणु
 		pr_warn("siw: fastreg: STag 0x%08x unknown\n", sqe->rkey);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (unlikely(mem->pd != pd)) {
+	अगर (unlikely(mem->pd != pd)) अणु
 		pr_warn("siw: fastreg: PD mismatch\n");
 		rv = -EINVAL;
-		goto out;
-	}
-	if (unlikely(mem->stag_valid)) {
+		जाओ out;
+	पूर्ण
+	अगर (unlikely(mem->stag_valid)) अणु
 		pr_warn("siw: fastreg: STag 0x%08x already valid\n", sqe->rkey);
 		rv = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/* Refresh STag since user may have changed key part */
 	mem->stag = sqe->rkey;
 	mem->perms = sqe->access;
@@ -960,310 +961,310 @@ static int siw_fastreg_mr(struct ib_pd *pd, struct siw_sqe *sqe)
 	mem->stag_valid = 1;
 out:
 	siw_mem_put(mem);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int siw_qp_sq_proc_local(struct siw_qp *qp, struct siw_wqe *wqe)
-{
-	int rv;
+अटल पूर्णांक siw_qp_sq_proc_local(काष्ठा siw_qp *qp, काष्ठा siw_wqe *wqe)
+अणु
+	पूर्णांक rv;
 
-	switch (tx_type(wqe)) {
-	case SIW_OP_REG_MR:
+	चयन (tx_type(wqe)) अणु
+	हाल SIW_OP_REG_MR:
 		rv = siw_fastreg_mr(qp->pd, &wqe->sqe);
-		break;
+		अवरोध;
 
-	case SIW_OP_INVAL_STAG:
+	हाल SIW_OP_INVAL_STAG:
 		rv = siw_invalidate_stag(qp->pd, wqe->sqe.rkey);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		rv = -EINVAL;
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
 /*
  * siw_qp_sq_process()
  *
- * Core TX path routine for RDMAP/DDP/MPA using a TCP kernel socket.
- * Sends RDMAP payload for the current SQ WR @wqe of @qp in one or more
+ * Core TX path routine क्रम RDMAP/DDP/MPA using a TCP kernel socket.
+ * Sends RDMAP payload क्रम the current SQ WR @wqe of @qp in one or more
  * MPA FPDUs, each containing a DDP segment.
  *
  * SQ processing may occur in user context as a result of posting
  * new WQE's or from siw_sq_work_handler() context. Processing in
  * user context is limited to non-kernel verbs users.
  *
- * SQ processing may get paused anytime, possibly in the middle of a WR
- * or FPDU, if insufficient send space is available. SQ processing
- * gets resumed from siw_sq_work_handler(), if send space becomes
+ * SQ processing may get छोड़ोd anyसमय, possibly in the middle of a WR
+ * or FPDU, अगर insufficient send space is available. SQ processing
+ * माला_लो resumed from siw_sq_work_handler(), अगर send space becomes
  * available again.
  *
- * Must be called with the QP state read-locked.
+ * Must be called with the QP state पढ़ो-locked.
  *
  * Note:
  * An outbound RREQ can be satisfied by the corresponding RRESP
- * _before_ it gets assigned to the ORQ. This happens regularly
- * in RDMA READ via loopback case. Since both outbound RREQ and
+ * _beक्रमe_ it माला_लो asचिन्हित to the ORQ. This happens regularly
+ * in RDMA READ via loopback हाल. Since both outbound RREQ and
  * inbound RRESP can be handled by the same CPU, locking the ORQ
  * is dead-lock prone and thus not an option. With that, the
- * RREQ gets assigned to the ORQ _before_ being sent - see
- * siw_activate_tx() - and pulled back in case of send failure.
+ * RREQ माला_लो asचिन्हित to the ORQ _beक्रमe_ being sent - see
+ * siw_activate_tx() - and pulled back in हाल of send failure.
  */
-int siw_qp_sq_process(struct siw_qp *qp)
-{
-	struct siw_wqe *wqe = tx_wqe(qp);
-	enum siw_opcode tx_type;
-	unsigned long flags;
-	int rv = 0;
+पूर्णांक siw_qp_sq_process(काष्ठा siw_qp *qp)
+अणु
+	काष्ठा siw_wqe *wqe = tx_wqe(qp);
+	क्रमागत siw_opcode tx_type;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rv = 0;
 
 	siw_dbg_qp(qp, "enter for type %d\n", tx_type(wqe));
 
 next_wqe:
 	/*
-	 * Stop QP processing if SQ state changed
+	 * Stop QP processing अगर SQ state changed
 	 */
-	if (unlikely(qp->tx_ctx.tx_suspend)) {
+	अगर (unlikely(qp->tx_ctx.tx_suspend)) अणु
 		siw_dbg_qp(qp, "tx suspended\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	tx_type = tx_type(wqe);
 
-	if (tx_type <= SIW_OP_READ_RESPONSE)
+	अगर (tx_type <= SIW_OP_READ_RESPONSE)
 		rv = siw_qp_sq_proc_tx(qp, wqe);
-	else
+	अन्यथा
 		rv = siw_qp_sq_proc_local(qp, wqe);
 
-	if (!rv) {
+	अगर (!rv) अणु
 		/*
-		 * WQE processing done
+		 * WQE processing करोne
 		 */
-		switch (tx_type) {
-		case SIW_OP_SEND:
-		case SIW_OP_SEND_REMOTE_INV:
-		case SIW_OP_WRITE:
+		चयन (tx_type) अणु
+		हाल SIW_OP_SEND:
+		हाल SIW_OP_SEND_REMOTE_INV:
+		हाल SIW_OP_WRITE:
 			siw_wqe_put_mem(wqe, tx_type);
 			fallthrough;
 
-		case SIW_OP_INVAL_STAG:
-		case SIW_OP_REG_MR:
-			if (tx_flags(wqe) & SIW_WQE_SIGNALLED)
+		हाल SIW_OP_INVAL_STAG:
+		हाल SIW_OP_REG_MR:
+			अगर (tx_flags(wqe) & SIW_WQE_SIGNALLED)
 				siw_sqe_complete(qp, &wqe->sqe, wqe->bytes,
 						 SIW_WC_SUCCESS);
-			break;
+			अवरोध;
 
-		case SIW_OP_READ:
-		case SIW_OP_READ_LOCAL_INV:
+		हाल SIW_OP_READ:
+		हाल SIW_OP_READ_LOCAL_INV:
 			/*
-			 * already enqueued to ORQ queue
+			 * alपढ़ोy enqueued to ORQ queue
 			 */
-			break;
+			अवरोध;
 
-		case SIW_OP_READ_RESPONSE:
+		हाल SIW_OP_READ_RESPONSE:
 			siw_wqe_put_mem(wqe, tx_type);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			WARN(1, "undefined WQE type %d\n", tx_type);
 			rv = -EINVAL;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		spin_lock_irqsave(&qp->sq_lock, flags);
 		wqe->wr_status = SIW_WR_IDLE;
 		rv = siw_activate_tx(qp);
 		spin_unlock_irqrestore(&qp->sq_lock, flags);
 
-		if (rv <= 0)
-			goto done;
+		अगर (rv <= 0)
+			जाओ करोne;
 
-		goto next_wqe;
+		जाओ next_wqe;
 
-	} else if (rv == -EAGAIN) {
+	पूर्ण अन्यथा अगर (rv == -EAGAIN) अणु
 		siw_dbg_qp(qp, "sq paused: hd/tr %d of %d, data %d\n",
 			   qp->tx_ctx.ctrl_sent, qp->tx_ctx.ctrl_len,
 			   qp->tx_ctx.bytes_unsent);
 		rv = 0;
-		goto done;
-	} else if (rv == -EINPROGRESS) {
+		जाओ करोne;
+	पूर्ण अन्यथा अगर (rv == -EINPROGRESS) अणु
 		rv = siw_sq_start(qp);
-		goto done;
-	} else {
+		जाओ करोne;
+	पूर्ण अन्यथा अणु
 		/*
 		 * WQE processing failed.
 		 * Verbs 8.3.2:
-		 * o It turns any WQE into a signalled WQE.
+		 * o It turns any WQE पूर्णांकo a संकेतled WQE.
 		 * o Local catastrophic error must be surfaced
-		 * o QP must be moved into Terminate state: done by code
-		 *   doing socket state change processing
+		 * o QP must be moved पूर्णांकo Terminate state: करोne by code
+		 *   करोing socket state change processing
 		 *
 		 * o TODO: Termination message must be sent.
 		 * o TODO: Implement more precise work completion errors,
-		 *         see enum ib_wc_status in ib_verbs.h
+		 *         see क्रमागत ib_wc_status in ib_verbs.h
 		 */
 		siw_dbg_qp(qp, "wqe type %d processing failed: %d\n",
 			   tx_type(wqe), rv);
 
 		spin_lock_irqsave(&qp->sq_lock, flags);
 		/*
-		 * RREQ may have already been completed by inbound RRESP!
+		 * RREQ may have alपढ़ोy been completed by inbound RRESP!
 		 */
-		if ((tx_type == SIW_OP_READ ||
-		     tx_type == SIW_OP_READ_LOCAL_INV) && qp->attrs.orq_size) {
+		अगर ((tx_type == SIW_OP_READ ||
+		     tx_type == SIW_OP_READ_LOCAL_INV) && qp->attrs.orq_size) अणु
 			/* Cleanup pending entry in ORQ */
 			qp->orq_put--;
 			qp->orq[qp->orq_put % qp->attrs.orq_size].flags = 0;
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&qp->sq_lock, flags);
 		/*
 		 * immediately suspends further TX processing
 		 */
-		if (!qp->tx_ctx.tx_suspend)
+		अगर (!qp->tx_ctx.tx_suspend)
 			siw_qp_cm_drop(qp, 0);
 
-		switch (tx_type) {
-		case SIW_OP_SEND:
-		case SIW_OP_SEND_REMOTE_INV:
-		case SIW_OP_SEND_WITH_IMM:
-		case SIW_OP_WRITE:
-		case SIW_OP_READ:
-		case SIW_OP_READ_LOCAL_INV:
+		चयन (tx_type) अणु
+		हाल SIW_OP_SEND:
+		हाल SIW_OP_SEND_REMOTE_INV:
+		हाल SIW_OP_SEND_WITH_IMM:
+		हाल SIW_OP_WRITE:
+		हाल SIW_OP_READ:
+		हाल SIW_OP_READ_LOCAL_INV:
 			siw_wqe_put_mem(wqe, tx_type);
 			fallthrough;
 
-		case SIW_OP_INVAL_STAG:
-		case SIW_OP_REG_MR:
+		हाल SIW_OP_INVAL_STAG:
+		हाल SIW_OP_REG_MR:
 			siw_sqe_complete(qp, &wqe->sqe, wqe->bytes,
 					 SIW_WC_LOC_QP_OP_ERR);
 
 			siw_qp_event(qp, IB_EVENT_QP_FATAL);
 
-			break;
+			अवरोध;
 
-		case SIW_OP_READ_RESPONSE:
+		हाल SIW_OP_READ_RESPONSE:
 			siw_dbg_qp(qp, "proc. read.response failed: %d\n", rv);
 
 			siw_qp_event(qp, IB_EVENT_QP_REQ_ERR);
 
 			siw_wqe_put_mem(wqe, SIW_OP_READ_RESPONSE);
 
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			WARN(1, "undefined WQE type %d\n", tx_type);
 			rv = -EINVAL;
-		}
+		पूर्ण
 		wqe->wr_status = SIW_WR_IDLE;
-	}
-done:
-	return rv;
-}
+	पूर्ण
+करोne:
+	वापस rv;
+पूर्ण
 
-static void siw_sq_resume(struct siw_qp *qp)
-{
-	if (down_read_trylock(&qp->state_lock)) {
-		if (likely(qp->attrs.state == SIW_QP_STATE_RTS &&
-			   !qp->tx_ctx.tx_suspend)) {
-			int rv = siw_qp_sq_process(qp);
+अटल व्योम siw_sq_resume(काष्ठा siw_qp *qp)
+अणु
+	अगर (करोwn_पढ़ो_trylock(&qp->state_lock)) अणु
+		अगर (likely(qp->attrs.state == SIW_QP_STATE_RTS &&
+			   !qp->tx_ctx.tx_suspend)) अणु
+			पूर्णांक rv = siw_qp_sq_process(qp);
 
-			up_read(&qp->state_lock);
+			up_पढ़ो(&qp->state_lock);
 
-			if (unlikely(rv < 0)) {
+			अगर (unlikely(rv < 0)) अणु
 				siw_dbg_qp(qp, "SQ task failed: err %d\n", rv);
 
-				if (!qp->tx_ctx.tx_suspend)
+				अगर (!qp->tx_ctx.tx_suspend)
 					siw_qp_cm_drop(qp, 0);
-			}
-		} else {
-			up_read(&qp->state_lock);
-		}
-	} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			up_पढ़ो(&qp->state_lock);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		siw_dbg_qp(qp, "Resume SQ while QP locked\n");
-	}
+	पूर्ण
 	siw_qp_put(qp);
-}
+पूर्ण
 
-struct tx_task_t {
-	struct llist_head active;
-	wait_queue_head_t waiting;
-};
+काष्ठा tx_task_t अणु
+	काष्ठा llist_head active;
+	रुको_queue_head_t रुकोing;
+पूर्ण;
 
-static DEFINE_PER_CPU(struct tx_task_t, siw_tx_task_g);
+अटल DEFINE_PER_CPU(काष्ठा tx_task_t, siw_tx_task_g);
 
-void siw_stop_tx_thread(int nr_cpu)
-{
-	kthread_stop(siw_tx_thread[nr_cpu]);
-	wake_up(&per_cpu(siw_tx_task_g, nr_cpu).waiting);
-}
+व्योम siw_stop_tx_thपढ़ो(पूर्णांक nr_cpu)
+अणु
+	kthपढ़ो_stop(siw_tx_thपढ़ो[nr_cpu]);
+	wake_up(&per_cpu(siw_tx_task_g, nr_cpu).रुकोing);
+पूर्ण
 
-int siw_run_sq(void *data)
-{
-	const int nr_cpu = (unsigned int)(long)data;
-	struct llist_node *active;
-	struct siw_qp *qp;
-	struct tx_task_t *tx_task = &per_cpu(siw_tx_task_g, nr_cpu);
+पूर्णांक siw_run_sq(व्योम *data)
+अणु
+	स्थिर पूर्णांक nr_cpu = (अचिन्हित पूर्णांक)(दीर्घ)data;
+	काष्ठा llist_node *active;
+	काष्ठा siw_qp *qp;
+	काष्ठा tx_task_t *tx_task = &per_cpu(siw_tx_task_g, nr_cpu);
 
 	init_llist_head(&tx_task->active);
-	init_waitqueue_head(&tx_task->waiting);
+	init_रुकोqueue_head(&tx_task->रुकोing);
 
-	while (1) {
-		struct llist_node *fifo_list = NULL;
+	जबतक (1) अणु
+		काष्ठा llist_node *fअगरo_list = शून्य;
 
-		wait_event_interruptible(tx_task->waiting,
+		रुको_event_पूर्णांकerruptible(tx_task->रुकोing,
 					 !llist_empty(&tx_task->active) ||
-						 kthread_should_stop());
+						 kthपढ़ो_should_stop());
 
-		if (kthread_should_stop())
-			break;
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
 
 		active = llist_del_all(&tx_task->active);
 		/*
-		 * llist_del_all returns a list with newest entry first.
-		 * Re-order list for fairness among QP's.
+		 * llist_del_all वापसs a list with newest entry first.
+		 * Re-order list क्रम fairness among QP's.
 		 */
-		while (active) {
-			struct llist_node *tmp = active;
+		जबतक (active) अणु
+			काष्ठा llist_node *पंचांगp = active;
 
 			active = llist_next(active);
-			tmp->next = fifo_list;
-			fifo_list = tmp;
-		}
-		while (fifo_list) {
-			qp = container_of(fifo_list, struct siw_qp, tx_list);
-			fifo_list = llist_next(fifo_list);
-			qp->tx_list.next = NULL;
+			पंचांगp->next = fअगरo_list;
+			fअगरo_list = पंचांगp;
+		पूर्ण
+		जबतक (fअगरo_list) अणु
+			qp = container_of(fअगरo_list, काष्ठा siw_qp, tx_list);
+			fअगरo_list = llist_next(fअगरo_list);
+			qp->tx_list.next = शून्य;
 
 			siw_sq_resume(qp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	active = llist_del_all(&tx_task->active);
-	if (active) {
-		llist_for_each_entry(qp, active, tx_list) {
-			qp->tx_list.next = NULL;
+	अगर (active) अणु
+		llist_क्रम_each_entry(qp, active, tx_list) अणु
+			qp->tx_list.next = शून्य;
 			siw_sq_resume(qp);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int siw_sq_start(struct siw_qp *qp)
-{
-	if (tx_wqe(qp)->wr_status == SIW_WR_IDLE)
-		return 0;
+पूर्णांक siw_sq_start(काष्ठा siw_qp *qp)
+अणु
+	अगर (tx_wqe(qp)->wr_status == SIW_WR_IDLE)
+		वापस 0;
 
-	if (unlikely(!cpu_online(qp->tx_cpu))) {
+	अगर (unlikely(!cpu_online(qp->tx_cpu))) अणु
 		siw_put_tx_cpu(qp->tx_cpu);
 		qp->tx_cpu = siw_get_tx_cpu(qp->sdev);
-		if (qp->tx_cpu < 0) {
+		अगर (qp->tx_cpu < 0) अणु
 			pr_warn("siw: no tx cpu available\n");
 
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 	siw_qp_get(qp);
 
 	llist_add(&qp->tx_list, &per_cpu(siw_tx_task_g, qp->tx_cpu).active);
 
-	wake_up(&per_cpu(siw_tx_task_g, qp->tx_cpu).waiting);
+	wake_up(&per_cpu(siw_tx_task_g, qp->tx_cpu).रुकोing);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

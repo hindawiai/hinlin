@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * leds-lp3944.h - platform data structure for lp3944 led controller
+ * leds-lp3944.h - platक्रमm data काष्ठाure क्रम lp3944 led controller
  *
  * Copyright (C) 2009 Antonio Ospite <ospite@studenti.unina.it>
  */
 
-#ifndef __LINUX_LEDS_LP3944_H
-#define __LINUX_LEDS_LP3944_H
+#अगर_अघोषित __LINUX_LEDS_LP3944_H
+#घोषणा __LINUX_LEDS_LP3944_H
 
-#define LP3944_LED0 0
-#define LP3944_LED1 1
-#define LP3944_LED2 2
-#define LP3944_LED3 3
-#define LP3944_LED4 4
-#define LP3944_LED5 5
-#define LP3944_LED6 6
-#define LP3944_LED7 7
-#define LP3944_LEDS_MAX 8
+#घोषणा LP3944_LED0 0
+#घोषणा LP3944_LED1 1
+#घोषणा LP3944_LED2 2
+#घोषणा LP3944_LED3 3
+#घोषणा LP3944_LED4 4
+#घोषणा LP3944_LED5 5
+#घोषणा LP3944_LED6 6
+#घोषणा LP3944_LED7 7
+#घोषणा LP3944_LEDS_MAX 8
 
-#define LP3944_LED_STATUS_MASK	0x03
-enum lp3944_status {
+#घोषणा LP3944_LED_STATUS_MASK	0x03
+क्रमागत lp3944_status अणु
 	LP3944_LED_STATUS_OFF  = 0x0,
 	LP3944_LED_STATUS_ON   = 0x1,
 	LP3944_LED_STATUS_DIM0 = 0x2,
 	LP3944_LED_STATUS_DIM1 = 0x3
-};
+पूर्ण;
 
-enum lp3944_type {
+क्रमागत lp3944_type अणु
 	LP3944_LED_TYPE_NONE,
 	LP3944_LED_TYPE_LED,
 	LP3944_LED_TYPE_LED_INVERTED,
-};
+पूर्ण;
 
-struct lp3944_led {
-	char *name;
-	enum lp3944_type type;
-	enum lp3944_status status;
-};
+काष्ठा lp3944_led अणु
+	अक्षर *name;
+	क्रमागत lp3944_type type;
+	क्रमागत lp3944_status status;
+पूर्ण;
 
-struct lp3944_platform_data {
-	struct lp3944_led leds[LP3944_LEDS_MAX];
+काष्ठा lp3944_platक्रमm_data अणु
+	काष्ठा lp3944_led leds[LP3944_LEDS_MAX];
 	u8 leds_size;
-};
+पूर्ण;
 
-#endif /* __LINUX_LEDS_LP3944_H */
+#पूर्ण_अगर /* __LINUX_LEDS_LP3944_H */
